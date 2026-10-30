@@ -16,6 +16,9 @@ tools/smoke.sh            # one-minute check of the single-player path
 tools/engine-tests.sh     # the engine's TEST ALL suite, about 15 minutes
 ```
 
+On Windows, `CoffeeMud\build.bat` and `CoffeeMud\sud.bat` do the same as
+the first two. `build.bat` always compiles from clean; run it after pulling.
+
 `sud.sh` takes `NAME=VALUE` arguments that override `coffeemud.ini`, for
 example `DBSERVICE=jdbc:fakedb:/some/scratch/copy` to play against a copy of
 the database.

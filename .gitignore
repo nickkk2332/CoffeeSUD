@@ -6,3 +6,6 @@ CoffeeMud/.sources.list
 
 # Runtime logs
 CoffeeMud/mud*.log
+
+# Source list written by make.bat
+CoffeeMud/sources.txt
