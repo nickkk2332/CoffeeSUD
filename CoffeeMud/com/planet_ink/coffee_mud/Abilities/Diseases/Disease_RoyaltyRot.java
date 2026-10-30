@@ -166,7 +166,7 @@ public class Disease_RoyaltyRot extends Disease
 			&&(msg.source().location()!=null))
 			{
 				final double moveCost = msg.source().location().pointsPerMove()/5.0 * (msg.source().isAttributeSet(Attrib.AUTORUN)?2.0:1.0);
-				if((Math.abs(Math.random())*100.0) <= moveCost)
+				if((Math.abs(CMath.random())*100.0) <= moveCost)
 				{
 					final Disease_RoyaltyRot myA=this;
 					if(CMLib.flags().isStanding(msg.source()))

@@ -39,7 +39,7 @@ public class Goblin extends StdMOB
 	{
 		return "Goblin";
 	}
-	Random randomizer = new Random(GameTime.now());
+	Random randomizer = CMath.newRandom();
 	int birthType=0;
 
 	public Goblin()

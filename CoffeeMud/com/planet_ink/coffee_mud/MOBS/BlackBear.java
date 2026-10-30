@@ -43,7 +43,7 @@ public class BlackBear extends StdMOB
 	public BlackBear()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a Black Bear";
 		setDescription("A bear, husky with black fur.");

@@ -43,7 +43,7 @@ public class Hawk extends StdMOB
 	public Hawk()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a hawk";
 		setDescription("a hunting bird with a narrow face, shark beak, and nasty talons.");

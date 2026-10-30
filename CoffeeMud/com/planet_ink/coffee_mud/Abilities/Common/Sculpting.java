@@ -514,7 +514,7 @@ public class Sculpting extends EnhancedCraftingSkill implements ItemCraftor, Men
 				if(CMParms.contains(allTypes, "LOCK"))
 				{
 					((Container)buildingI).setDoorsNLocks(true,false,true,true,false,true);
-					((Container)buildingI).setKeyName(Double.toString(Math.random()));
+					((Container)buildingI).setKeyName(Double.toString(CMath.random()));
 					key=CMClass.getItem("GenKey");
 					((DoorKey)key).setKey(((Container)buildingI).keyName());
 					key.setName(L("a key"));

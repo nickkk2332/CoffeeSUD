@@ -2286,12 +2286,46 @@ public class CMath
 	/**
 	 * Replaces the internal Random object with the one
 	 * passed in.  Intended to be used for debugging purposes
-	 * only.
+	 * only.  The dice library keeps the one it was given when
+	 * it started, so this does not change its rolls.
 	 * @param rand the random object to use
 	 */
 	public final static void setRand(final Random rand)
 	{
 		CMath.rand = rand;
+	}
+
+	/**
+	 * Returns the game's shared random number generator.  The dice
+	 * library rolls with it, as does {@link #random()}, so that one
+	 * seed (see {@link #seedRand(long)}) governs the game's chance.
+	 * @return the shared generator
+	 */
+	public final static Random getRand()
+	{
+		return rand;
+	}
+
+	/**
+	 * Restarts the shared random number generator from the given
+	 * seed, so that the rolls that follow come out the same each
+	 * time the same seed is given.
+	 * @param seed the seed
+	 */
+	public final static void seedRand(final long seed)
+	{
+		rand.setSeed(seed);
+	}
+
+	/**
+	 * Returns a new random number generator for something that
+	 * keeps its own, seeded from the shared one, so that it too
+	 * follows the game's seed.
+	 * @return a new generator
+	 */
+	public final static Random newRandom()
+	{
+		return new Random(rand.nextLong());
 	}
 
 	/**

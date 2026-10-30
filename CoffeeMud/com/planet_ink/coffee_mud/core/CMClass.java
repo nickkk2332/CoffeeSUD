@@ -879,7 +879,7 @@ public class CMClass extends ClassLoader
 	 */
 	public static final Race randomRace()
 	{
-		return c().races.elementAt((int) Math.round(Math.floor(Math.random() * (c().races.size()))));
+		return c().races.elementAt((int) Math.round(Math.floor(CMath.random() * (c().races.size()))));
 	}
 
 	/**
@@ -889,7 +889,7 @@ public class CMClass extends ClassLoader
 	 */
 	public static final Item randomBasicItemPrototype()
 	{
-		return c().items.elementAt((int) Math.round(Math.floor(Math.random() * (c().items.size()))));
+		return c().items.elementAt((int) Math.round(Math.floor(CMath.random() * (c().items.size()))));
 	}
 
 	/**
@@ -899,7 +899,7 @@ public class CMClass extends ClassLoader
 	 */
 	public static final CharClass randomCharClass()
 	{
-		return c().charClasses.elementAt((int) Math.round(Math.floor(Math.random() * (c().charClasses.size()))));
+		return c().charClasses.elementAt((int) Math.round(Math.floor(CMath.random() * (c().charClasses.size()))));
 	}
 
 	/**
@@ -909,7 +909,7 @@ public class CMClass extends ClassLoader
 	 */
 	public static final Ability randomAbility()
 	{
-		return c().abilities.elementAt((int) Math.round(Math.floor(Math.random() * (c().abilities.size()))));
+		return c().abilities.elementAt((int) Math.round(Math.floor(CMath.random() * (c().abilities.size()))));
 	}
 
 	/**
@@ -939,7 +939,7 @@ public class CMClass extends ClassLoader
 			else
 				return null;
 		}
-		return areaTypes.get((int) Math.round(Math.floor(Math.random() * areaTypes.size())));
+		return areaTypes.get((int) Math.round(Math.floor(CMath.random() * areaTypes.size())));
 	}
 
 	/**

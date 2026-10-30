@@ -882,7 +882,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	{
 		if(CMSecurity.isDebugging(CMSecurity.DbgFlag.MUDPERCOLATOR))
 			Log.debugOut("MudPercolator","Using LayoutManager:"+layoutManager.name());
-		final Random random=new Random(System.currentTimeMillis());
+		final Random random=CMath.newRandom();
 		final List<LayoutNode> roomsToLayOut = layoutManager.generate(size,direction);
 		if((roomsToLayOut==null)||(roomsToLayOut.size()==0))
 			throw new CMException("Unable to fill area of size "+size+" off layout "+layoutManager.name());

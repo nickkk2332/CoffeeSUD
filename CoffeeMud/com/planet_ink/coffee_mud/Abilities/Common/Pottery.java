@@ -523,7 +523,7 @@ public class Pottery extends EnhancedCraftingSkill implements ItemCraftor
 			if(misctype.indexOf("LOCK")>=0)
 			{
 				((Container)buildingI).setDoorsNLocks(true,false,true,true,false,true);
-				((Container)buildingI).setKeyName(Double.toString(Math.random()));
+				((Container)buildingI).setKeyName(Double.toString(CMath.random()));
 				key=(DoorKey)CMClass.getItem("GenKey");
 				key.setKey(((Container)buildingI).keyName());
 				key.setName(L("a key"));

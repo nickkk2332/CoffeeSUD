@@ -111,15 +111,15 @@ public class Ring_Protection extends Ring_Ornamental implements MiscMagic
 		switch(this.phyStats().level())
 		{
 			case GOLD_RING_OPAL:
-				if(Math.random()>.15)
+				if(CMath.random()>.15)
 					return false;
 				return true;
 			case GOLD_RING_SAPPHIRE:
-				if(Math.random()>.15)
+				if(CMath.random()>.15)
 					return false;
 				return true;
 			case MITHRIL_RING:
-				if(Math.random()>.05)
+				if(CMath.random()>.05)
 					return false;
 				return true;
 			default:
@@ -201,7 +201,7 @@ public class Ring_Protection extends Ring_Ornamental implements MiscMagic
 				material=RawMaterial.RESOURCE_GEM;
 				break;
 			default:
-				final double pct=Math.random();
+				final double pct=CMath.random();
 				if(basePhyStats().ability()==0)
 					basePhyStats().setAbility((int)Math.round(pct*49));
 				baseGoldValue+=basePhyStats().ability()*100;

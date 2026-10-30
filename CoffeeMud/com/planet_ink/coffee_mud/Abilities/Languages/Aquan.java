@@ -71,7 +71,7 @@ public class Aquan extends AnimalSpeak
 		if(animalSounds == null)
 		{
 			final List<String> sounds=new XVector<String>(soundBase);
-			final Random r=new Random(GameTime.now());
+			final Random r=CMath.newRandom();
 			for(int i=0;i<soundBase.length * 2;i++)
 			{
 				final String s=soundBase[r.nextInt(soundBase.length)]+soundBase[r.nextInt(soundBase.length)];

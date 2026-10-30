@@ -43,7 +43,7 @@ public class Horse extends StdRideable
 	public Horse()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a horse";
 		setDescription("It\\`s a beautiful brown steed.");

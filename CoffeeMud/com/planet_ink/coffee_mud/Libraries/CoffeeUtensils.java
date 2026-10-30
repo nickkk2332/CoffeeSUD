@@ -340,7 +340,7 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 	public Trap makeADeprecatedTrap(final Physical unlockThis)
 	{
 		Trap theTrap=null;
-		final int roll=(int)Math.round(Math.random()*100.0);
+		final int roll=(int)Math.round(CMath.random()*100.0);
 		if(unlockThis instanceof Exit)
 		{
 			if(((Exit)unlockThis).hasADoor())
@@ -970,10 +970,10 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 					}
 					CMLib.beanCounter().getTotalAbsoluteNativeValue(mob); // converts mob.get-Money();
 					if(mob.getMoneyVariation()>0.0)
-						CMLib.beanCounter().addMoney(mob, Math.random()*mob.getMoneyVariation());
+						CMLib.beanCounter().addMoney(mob, CMath.random()*mob.getMoneyVariation());
 					else
 					if(mob.getMoneyVariation()<0.0)
-						CMLib.beanCounter().subtractMoney(mob, -(Math.random()*mob.getMoneyVariation()));
+						CMLib.beanCounter().subtractMoney(mob, -(CMath.random()*mob.getMoneyVariation()));
 					mob.recoverPhyStats();
 					mob.recoverCharStats();
 					mob.recoverMaxState();

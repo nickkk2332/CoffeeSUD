@@ -223,7 +223,7 @@ public class GenSpaceShip extends GenBoardable implements Electronics, SpaceShip
 			final String registryNum=getElectronicsKey();
 			super.rename(newName);
 			CMLib.tech().unregisterElectronics(null, registryNum);
-			final String newRegistryNum=Double.toString(Math.random());
+			final String newRegistryNum=Double.toString(CMath.random());
 			area.addBlurbFlag("REGISTRY Registry#"+newRegistryNum.substring(newRegistryNum.indexOf('.')+1));
 		}
 	}

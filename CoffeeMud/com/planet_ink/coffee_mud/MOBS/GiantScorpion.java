@@ -45,7 +45,7 @@ public class GiantScorpion extends StdMOB
 	public GiantScorpion()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a Giant Scorpion";
 		setDescription("The giant scorpion has a green carapace and yellowish green legs and pincers. The segmented tail is black, with a vicious stinger on the end.");
@@ -103,7 +103,7 @@ public class GiantScorpion extends StdMOB
 		{
 			final MOB target = getVictim();
 			// ===== if it is less than three so roll for it
-			final int roll = (int)Math.round(Math.random()*99);
+			final int roll = (int)Math.round(CMath.random()*99);
 
 			// ===== check the result
 			if (roll<20)

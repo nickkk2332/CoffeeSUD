@@ -35,7 +35,7 @@ public class Dice extends StdLibrary implements DiceLibrary
 	public synchronized Random getRandomizer()
 	{
 		if(randomizer == null)
-			randomizer = new Random(System.currentTimeMillis());
+			randomizer = CMath.getRand();
 		return randomizer;
 	}
 
@@ -43,7 +43,7 @@ public class Dice extends StdLibrary implements DiceLibrary
 	{
 		super();
 		baseNpcHitpointsFormula=CMath.compileMathExpression(CMProps.getVar(CMProps.Str.FORMULA_NPCHITPOINTS));
-		randomizer = new Random(System.currentTimeMillis());
+		randomizer = CMath.getRand();
 	}
 
 	@Override

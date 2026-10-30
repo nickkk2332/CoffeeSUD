@@ -43,7 +43,7 @@ public class Jaguar extends StdMOB
 	public Jaguar()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a jaguar";
 		setDescription("A powerful cat with a deep chest and muscular limbs.  It\\`s covered in light yellow fur with black spots.");

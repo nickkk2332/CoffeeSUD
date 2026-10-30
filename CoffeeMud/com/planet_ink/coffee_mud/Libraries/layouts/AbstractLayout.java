@@ -1,6 +1,7 @@
 package com.planet_ink.coffee_mud.Libraries.layouts;
 import java.util.*;
 
+import com.planet_ink.coffee_mud.core.CMath;
 import com.planet_ink.coffee_mud.core.CMLib;
 import com.planet_ink.coffee_mud.core.CMStrings;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
@@ -36,7 +37,7 @@ import com.planet_ink.coffee_mud.core.Directions;
  */
 public abstract class AbstractLayout implements LayoutManager
 {
-	Random r = new Random();
+	Random r = CMath.newRandom();
 
 	public int diff(final int width, final int height, final int num)
 	{

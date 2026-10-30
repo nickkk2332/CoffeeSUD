@@ -43,7 +43,7 @@ public class Beaver extends StdMOB
 	public Beaver()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a beaver";
 		setDescription("It\\`s a small rodent with a large tail and sharp teeth.");

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
+import com.planet_ink.coffee_mud.core.CMath;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.LayoutFlags;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.LayoutNode;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.LayoutRuns;
@@ -33,7 +34,7 @@ import com.planet_ink.coffee_mud.core.Directions;
 
 public class LayoutSet
 {
-	Random r = new Random();
+	Random r = CMath.newRandom();
 
 	private long total  = 0;
 	private final Map<Long, LayoutNode> used = new Hashtable<Long, LayoutNode>();

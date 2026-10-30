@@ -43,7 +43,7 @@ public class Raven extends StdMOB
 	public Raven()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a raven";
 		setDescription("It\\`s a small black bird with a long yellow beak.");

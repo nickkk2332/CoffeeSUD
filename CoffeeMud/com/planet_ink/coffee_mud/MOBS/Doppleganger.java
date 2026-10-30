@@ -51,7 +51,7 @@ public class Doppleganger extends StdMOB
 
 	protected void revert()
 	{
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 		_name="a doppleganger";
 		setDescription("A formless biped creature, with wicked black eyes.");
 		setDisplayText("A formless biped stands here.");

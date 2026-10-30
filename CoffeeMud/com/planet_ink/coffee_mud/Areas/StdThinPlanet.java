@@ -49,8 +49,8 @@ public class StdThinPlanet extends StdThinArea implements SpaceObject
 		super();
 
 		myClock = (TimeClock)CMClass.getCommon("DefaultTimeClock");
-		coordinates=new Coord3D(new long[]{Math.round(Long.MAX_VALUE*Math.random()),Math.round(Long.MAX_VALUE*Math.random()),Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(GameTime.now());
+		coordinates=new Coord3D(new long[]{Math.round(Long.MAX_VALUE*CMath.random()),Math.round(Long.MAX_VALUE*CMath.random()),Math.round(Long.MAX_VALUE*CMath.random())});
+		final Random random=CMath.newRandom();
 		radius=SpaceObject.Distance.PlanetRadius.dm + (random.nextLong() % (SpaceObject.Distance.PlanetRadius.dm / 20));
 	}
 

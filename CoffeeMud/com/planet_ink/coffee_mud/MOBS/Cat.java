@@ -44,7 +44,7 @@ public class Cat extends StdMOB
 	{
 		super();
 
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a cat";
 		setDescription("It\\`s furry with four legs, and a long fluffy tail.");

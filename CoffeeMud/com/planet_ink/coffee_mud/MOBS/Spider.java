@@ -43,7 +43,7 @@ public class Spider extends StdMOB
 	public Spider()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a spider";
 		setDescription("The spider has a carapace, 8 legs and a maw.");

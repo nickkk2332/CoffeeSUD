@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
+import com.planet_ink.coffee_mud.core.CMath;
 import com.planet_ink.coffee_mud.core.Directions;
 import com.planet_ink.coffee_mud.core.Log;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.LayoutFlags;
@@ -49,7 +50,7 @@ public class SpottedMeshLayout extends MeshLayout
 			return;
 		int numLeafs = (int)Math.round(Math.ceil(set.size()/7.0));
 		int tries = numLeafs * 10;
-		final Random r = new Random(System.nanoTime());
+		final Random r = CMath.newRandom();
 		final Map<Integer,Integer> opDirs = new HashMap<Integer,Integer>();
 		for(int d=0;d<4;d++)
 			opDirs.put(Integer.valueOf(d), Integer.valueOf(Directions.getOpDirectionCode(d)));

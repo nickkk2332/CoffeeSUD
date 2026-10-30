@@ -1,8 +1,8 @@
 #!/bin/sh
 # Single-player smoke test.  Plays scripted sessions against a scratch copy
 # of the database: one creates a character and plays a little, the next
-# loads that character again, then come pause and turn-based time.  Fails
-# if expected text is missing.
+# loads that character again, then come pause, turn-based time, and the
+# random seed.  Fails if expected text is missing.
 #   tools/smoke.sh            run the test
 #   KEEP=1 tools/smoke.sh     keep the scratch folder and print its path
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -32,7 +32,9 @@ expect()  # expect OUTFILE TEXT
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 echo "Session 1: create a character and play"
-play new.txt 'Hero\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nlook\ninventory\nscore\nnorth\nlook\nsouth\nget book\nread book\nquit\nY\n'
+# the seed, with the clock stopped while the character is made, fixes the
+# stat rolls, which can otherwise rule out the Apprentice class
+play new.txt 'Hero\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\ntimemode realtime\nlook\ninventory\nscore\nnorth\nlook\nsouth\nget book\nread book\nquit\nY\n' RANDOMSEED=42 TIMEMODE=TURNS
 expect new.txt "Welcome to CoffeeSUD"
 expect new.txt "Character creation complete!"
 expect new.txt "You are carrying:"
@@ -83,6 +85,22 @@ if awk -F/ '{h[NR]=$1; n=$2+1} END {
 	echo "  ok    turns.txt: the clock waited for the player, moved one hour per WAITed tick, then ran"
 else
 	echo "  FAIL  turns.txt: clock readings were $(tr '\n' ' ' < "$W/hours")"; FAIL=1
+fi
+
+echo "Session 5: the same RANDOMSEED rolls the same new character"
+printf 'Zorb\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nquit\nY\n' > "$W/seed.script"
+for i in 1 2; do
+	cp -r "$GAME/resources/fakedb" "$W/seeddb$i"
+	python3 "$ROOT/tools/sudplay.py" "$W/seed.script" "DBSERVICE=jdbc:fakedb:$W/seeddb$i" RANDOMSEED=42 TIMEMODE=TURNS > "$W/seed$i.txt" 2>&1 &
+done
+wait
+for i in 1 2; do
+	grep -aE "^(Strength|Intelligence|Dexterity|Constitution|Charisma|Wisdom) *: *[0-9]+ */|tall and weigh" "$W/seed$i.txt" > "$W/rolls$i"
+done
+if [ -s "$W/rolls1" ] && cmp -s "$W/rolls1" "$W/rolls2"; then
+	echo "  ok    seed: both characters rolled $(tr -s ' ' < "$W/rolls1" | tr '\n' ' ' | cut -c1-60)..."
+else
+	echo "  FAIL  seed: the rolls differ or are missing"; FAIL=1
 fi
 
 if grep -q "exit [^0]" "$W/exits"; then

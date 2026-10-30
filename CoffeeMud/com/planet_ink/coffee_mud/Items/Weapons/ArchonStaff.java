@@ -424,7 +424,7 @@ public class ArchonStaff extends Staff implements Wand, MiscMagic, ArchonOnly
 					if(!safetyCheck(mob,message))
 						return;
 					mob.location().show(mob,target,CMMsg.MSG_OK_VISUAL,L("@x1 wielded by <S-NAME> shoots forth magical green flames at <T-NAME>.",this.name()));
-					int flameDamage = (int) Math.round( Math.random() * 6 );
+					int flameDamage = (int) Math.round( CMath.random() * 6 );
 					flameDamage *= 3;
 					CMLib.combat().postDamage(mob,target,null,(++flameDamage),CMMsg.MASK_ALWAYS|CMMsg.TYP_FIRE,Weapon.TYPE_BURNING,(this.name()+" <DAMAGE> <T-NAME>!")+CMLib.protocol().msp("fireball.wav",30));
 					return;
@@ -511,7 +511,7 @@ public class ArchonStaff extends Staff implements Wand, MiscMagic, ArchonOnly
 					msg.source().location().send(msg.source(), msg2);
 					if(msg2.value()<=0)
 					{
-						int flameDamage = (int) Math.round( Math.random() * 6 );
+						int flameDamage = (int) Math.round( CMath.random() * 6 );
 						flameDamage *= basePhyStats().level();
 						if(!((MOB)msg.target()).amDead())
 							CMLib.combat().postDamage(msg.source(),(MOB)msg.target(),null,flameDamage,CMMsg.TYP_FIRE,

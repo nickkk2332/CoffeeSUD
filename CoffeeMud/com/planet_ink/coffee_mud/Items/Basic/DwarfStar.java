@@ -47,10 +47,10 @@ public class DwarfStar extends GenSpaceBody
 		setDisplayText("an unknown dwarf star is shining here");
 		setDescription("it`s somewhat bright");
 		coordinates=new Coord3D(new long[]{
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random())});
-		Random random=new Random(GameTime.now());
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random())});
+		Random random=CMath.newRandom();
 		radius=SpaceObject.Distance.StarDRadius.dm + (random.nextLong() % Math.round(CMath.mul(SpaceObject.Distance.StarDRadius.dm,0.30)));
 		basePhyStats().setDisposition(PhyStats.IS_LIGHTSOURCE|PhyStats.IS_GLOWING);
 		this.setMaterial(RawMaterial.RESOURCE_HYDROGEN);

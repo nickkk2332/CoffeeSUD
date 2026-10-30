@@ -43,7 +43,7 @@ public class Worm extends StdMOB
 	public Worm()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a worm";
 		setDescription("A long squirmy slithering thing.");

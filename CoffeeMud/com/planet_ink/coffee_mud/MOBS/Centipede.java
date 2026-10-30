@@ -43,7 +43,7 @@ public class Centipede extends StdMOB
 	public Centipede()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a centipede";
 		setDescription("The centipede is a long worm-like insect with a deadly maw and numerous legs.");

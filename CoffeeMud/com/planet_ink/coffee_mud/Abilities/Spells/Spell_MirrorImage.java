@@ -75,7 +75,7 @@ public class Spell_MirrorImage extends Spell
 		return Ability.ACODE_SPELL | Ability.DOMAIN_ILLUSION;
 	}
 
-	private final Random	randomizer		= new Random(GameTime.now());
+	private final Random	randomizer		= CMath.newRandom();
 	protected int			numberOfImages	= 1;
 	protected boolean		notAgain		= false;
 

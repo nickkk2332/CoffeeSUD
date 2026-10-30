@@ -77,7 +77,7 @@ public class FlamingSword extends Longsword
 				room.send(msg.source(), msg2);
 				if(msg2.value()<=0)
 				{
-					int flameDamage = (int) Math.round( Math.random() * 6 );
+					int flameDamage = (int) Math.round( CMath.random() * 6 );
 					flameDamage *= basePhyStats().level();
 					CMLib.combat().postDamage(msg.source(),(MOB)msg.target(),null,flameDamage,
 							CMMsg.TYP_FIRE,Weapon.TYPE_BURNING,name()+" <DAMAGE> <T-NAME>!");

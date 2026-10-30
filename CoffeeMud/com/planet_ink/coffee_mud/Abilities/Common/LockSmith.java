@@ -231,7 +231,7 @@ public class LockSmith extends CraftingSkill
 			commonFaiL(mob,commands,"Locksmith what or where? Enter the name of a container or door direction. Put the word \"boltlock\" in front of the door direction to make a one-way lock.  Put the word \"delock\" in front of the door direction to remove the locks.");
 			return false;
 		}
-		keyCode=""+Math.random();
+		keyCode=""+CMath.random();
 		String startStr=null;
 		int duration=8;
 		activity = CraftingActivity.CRAFTING;

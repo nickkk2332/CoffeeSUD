@@ -622,7 +622,7 @@ public class Carpentry extends EnhancedCraftingSkill implements ItemCraftor
 				if(CMParms.contains(allTypes, "LOCK"))
 				{
 					((Container)buildingI).setDoorsNLocks(true,false,true,true,false,true);
-					((Container)buildingI).setKeyName(Double.toString(Math.random()));
+					((Container)buildingI).setKeyName(Double.toString(CMath.random()));
 					key=(DoorKey)CMClass.getItem("GenKey");
 					key.setKey(((Container)buildingI).keyName());
 					key.setName(L("a key"));

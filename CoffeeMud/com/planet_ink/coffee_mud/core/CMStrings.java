@@ -4095,7 +4095,7 @@ public class CMStrings
 			case '?':
 			{
 				index[0] = i[0];
-				result.numValue=Math.round((Math.random() * (rightValue.numValue-leftValue.numValue)) + leftValue.numValue);
+				result.numValue=Math.round((CMath.random() * (rightValue.numValue-leftValue.numValue)) + leftValue.numValue);
 				return result;
 			}
 			default:

@@ -512,7 +512,7 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 					}
 					else
 					{
-						if((!subjectToWearAndTear()) || (Math.random() < CMath.div(usesRemaining(), 100)))
+						if((!subjectToWearAndTear()) || (CMath.random() < CMath.div(usesRemaining(), 100)))
 						{
 							for(final CMMsg msg2 : msgs)
 							{
@@ -618,8 +618,8 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 							damageFailChance = CMath.div(usesRemaining(), 100);
 							damageFailChance += (0.35 * getFinalManufacturer().getReliabilityPct());
 						}
-						if((Math.random()<getInstalledFactor())
-						&& (Math.random()<damageFailChance))
+						if((CMath.random()<getInstalledFactor())
+						&& (CMath.random()<damageFailChance))
 						{
 							final Room R=CMLib.map().roomLocation(this);
 							final List<CMMsg> trailers = new LinkedList<CMMsg>();

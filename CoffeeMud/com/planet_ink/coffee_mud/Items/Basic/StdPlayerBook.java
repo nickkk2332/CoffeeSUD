@@ -191,7 +191,7 @@ public class StdPlayerBook extends StdBook
 		String subkey=super.getParm("KEY");
 		if((subkey == null)||(subkey.length()==0))
 		{
-			subkey=Math.random()+"_"+Math.random();
+			subkey=CMath.random()+"_"+CMath.random();
 			setReadableText("KEY=\""+subkey+"\" "+super.readableText());
 		}
 		final String cat="BOOK_"+subkey;

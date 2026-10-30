@@ -43,7 +43,7 @@ public class FlyingInsect extends StdMOB
 	public FlyingInsect()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a flying insect";
 		setDescription("The small flying bug is too tiny to tell whether it bites or stings.");

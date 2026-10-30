@@ -43,7 +43,7 @@ public class MountainLion extends StdMOB
 	public MountainLion()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a lion";
 		setDescription("Mountain Lions have sleek tan fur and watchful eyes.");

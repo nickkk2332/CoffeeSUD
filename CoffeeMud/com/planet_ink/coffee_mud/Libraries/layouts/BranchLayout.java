@@ -1,6 +1,7 @@
 package com.planet_ink.coffee_mud.Libraries.layouts;
 import java.util.*;
 
+import com.planet_ink.coffee_mud.core.CMath;
 import com.planet_ink.coffee_mud.core.Directions;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.LayoutNode;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.LayoutRuns;
@@ -163,7 +164,7 @@ public class BranchLayout extends AbstractLayout
             for (int i = 0; i < branchesPerCorridor && i < availableNodes.size(); i++)
             {
                 final int nodeIdx = availableNodes.get(i).intValue();
-                final int branchDir = Math.random() < 0.5 ? Directions.EAST : Directions.WEST;
+                final int branchDir = CMath.random() < 0.5 ? Directions.EAST : Directions.WEST;
                 if (lSet.spaceAvailable(2))
                     addBranch(lSet, nsCorridor.get(nodeIdx), branchDir);
             }
@@ -178,7 +179,7 @@ public class BranchLayout extends AbstractLayout
             for (int i = 0; i < branchesPerCorridor && i < availableNodes.size(); i++)
             {
                 final int nodeIdx = availableNodes.get(i).intValue();
-                final int branchDir = Math.random() < 0.5 ? Directions.NORTH : Directions.SOUTH;
+                final int branchDir = CMath.random() < 0.5 ? Directions.NORTH : Directions.SOUTH;
                 if (lSet.spaceAvailable(2))
                     addBranch(lSet, ewCorridor.get(nodeIdx), branchDir);
             }

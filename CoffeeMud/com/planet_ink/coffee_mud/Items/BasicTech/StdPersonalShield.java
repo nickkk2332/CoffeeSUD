@@ -105,7 +105,7 @@ public class StdPersonalShield extends StdElecItem implements Armor
 
 	protected boolean doesShield(final MOB mob, final CMMsg msg, final double successFactor)
 	{
-		return (Math.random() >= successFactor) && activated();
+		return (CMath.random() >= successFactor) && activated();
 	}
 
 	@Override

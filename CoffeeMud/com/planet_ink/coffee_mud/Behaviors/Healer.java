@@ -83,7 +83,7 @@ public class Healer extends ActiveTicker
 				return true;
 
 			final double aChance=CMath.div(mob.curState().getMana(),mob.maxState().getMana());
-			if((Math.random()>aChance)||(mob.curState().getMana()<50))
+			if((CMath.random()>aChance)||(mob.curState().getMana()<50))
 				return true;
 
 			if(thisRoom.numPCInhabitants()>0)

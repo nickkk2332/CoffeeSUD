@@ -126,7 +126,7 @@ public class Prayer_FlameWeapon extends Prayer
 						msg.source().location().send(msg.source(), msg2);
 						if(msg2.value()<=0)
 						{
-							int flameDamage = (int) Math.round( Math.random() * 6 );
+							int flameDamage = (int) Math.round( CMath.random() * 6 );
 							flameDamage *= (super.getXLEVELLevel(invoker())+(super.getX1Level(invoker())));
 							msg.addTrailerMsg(CMClass.getMsg(msg.source(),msg.target(),CMMsg.MSG_OK_ACTION,L("^RThe flame around @x1 @x2 <T-NAME>!^?",affected.name(),CMLib.combat().standardHitWord(Weapon.TYPE_BURNING,flameDamage))));
 							final CMMsg msg3=CMClass.getMsg(msg.source(),msg.target(),null,CMMsg.MASK_ALWAYS|CMMsg.TYP_FIRE,CMMsg.MSG_DAMAGE,CMMsg.NO_EFFECT,null);

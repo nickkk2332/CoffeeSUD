@@ -166,7 +166,7 @@ public class AstroEngineering extends TechSkill
 		}
 		final Pair<String,Integer> expertise=mob.fetchExpertise(experName+"%");
 		final int currentExpertise=(expertise!=null)?expertise.second.intValue():0;
-		if(((int)Math.round(Math.sqrt((mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)))*34.0*Math.random()))>=currentExpertise)
+		if(((int)Math.round(Math.sqrt((mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)))*34.0*CMath.random()))>=currentExpertise)
 		{
 			mob.addExpertise(experName+"%"+(currentExpertise+1));
 			lastCastHelp=GameTime.now();

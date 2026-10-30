@@ -43,7 +43,7 @@ public class DireWolf extends StdMOB
 	public DireWolf()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a dire wolf";
 		setDescription("An over-sized powerful wolf with grey fur and red eyes.");

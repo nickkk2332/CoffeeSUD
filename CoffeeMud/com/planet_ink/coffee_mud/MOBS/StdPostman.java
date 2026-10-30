@@ -205,7 +205,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 		CMLib.catalog().updateCatalogIntegrity(thisThang);
 		CMLib.database().DBCreatePlayerData(mob,
 				postalChain(),
-				postalBranch()+";"+thisThang+Math.random(),
+				postalBranch()+";"+thisThang+CMath.random(),
 				from+";"
 				+to+";"
 				+holdTime+";"

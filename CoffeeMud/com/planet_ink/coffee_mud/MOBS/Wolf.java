@@ -43,7 +43,7 @@ public class Wolf extends StdMOB
 	public Wolf()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a wolf";
 		setDescription("A powerful wolf with grey fur and amber eyes.");

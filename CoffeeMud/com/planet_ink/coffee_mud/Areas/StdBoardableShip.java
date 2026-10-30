@@ -1393,7 +1393,7 @@ public class StdBoardableShip implements Area, Boardable, PrivateProperty
 			&&(CMLib.map().getRoom(Name()+"#"+i)==null))
 				return Name()+"#"+i;
 		}
-		return Name()+"#"+(int)Math.round(Math.random()*Integer.MAX_VALUE);
+		return Name()+"#"+(int)Math.round(CMath.random()*Integer.MAX_VALUE);
 	}
 
 	/** Manipulation of Behavior objects, which includes

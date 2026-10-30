@@ -43,7 +43,7 @@ public class FireGiant extends StdMOB
 	public FireGiant()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a Fire Giant";
 		setDescription("A tall humanoid standing about 18 feet tall, 12 foot chest, coal black skin and fire red-orange hair.");

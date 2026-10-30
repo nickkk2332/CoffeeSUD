@@ -95,7 +95,7 @@ public class GenKineticField extends GenPersonalShield
 			return false;
 		if((!(msg.tool() instanceof Technical))
 		&& (msg.tool() instanceof Weapon)
-		&& (Math.random() >= successFactor))
+		&& (CMath.random() >= successFactor))
 		{
 			return true;
 		}

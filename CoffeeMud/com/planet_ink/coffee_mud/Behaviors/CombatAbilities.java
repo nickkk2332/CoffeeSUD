@@ -636,7 +636,7 @@ public class CombatAbilities extends ActiveTicker
 				bucket.add(tryA);
 			if(CMath.bset(tryA.usageType(),Ability.USAGE_MANA))
 			{
-				if((Math.random()>CMath.div(mob.curState().getMana(), mob.maxState().getMana()))
+				if((CMath.random()>CMath.div(mob.curState().getMana(), mob.maxState().getMana()))
 				||(mob.curState().getMana() < tryA.usageCost(mob,false)[0]))
 				{
 				   if((CMLib.dice().rollPercentage()>30)
@@ -649,14 +649,14 @@ public class CombatAbilities extends ActiveTicker
 			}
 			if(CMath.bset(tryA.usageType(),Ability.USAGE_MOVEMENT))
 			{
-				if((Math.random()>CMath.div(mob.curState().getMovement(),mob.maxState().getMovement()))
+				if((CMath.random()>CMath.div(mob.curState().getMovement(),mob.maxState().getMovement()))
 				||(mob.curState().getMovement()<tryA.usageCost(mob,false)[1]))
 			 	   throw new CMException("Not enough movement");
 				mob.curState().adjMovement(5,mob.maxState());
 			}
 			if(CMath.bset(tryA.usageType(),Ability.USAGE_HITPOINTS))
 			{
-				if((Math.random()>CMath.div(mob.curState().getHitPoints(),mob.maxState().getHitPoints()))
+				if((CMath.random()>CMath.div(mob.curState().getHitPoints(),mob.maxState().getHitPoints()))
 				   ||(mob.curState().getHitPoints()<tryA.usageCost(mob,false)[2]))
 				 	   throw new CMException("Not enough hp");
 			}

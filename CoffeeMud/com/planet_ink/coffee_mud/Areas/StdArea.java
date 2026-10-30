@@ -675,7 +675,7 @@ public class StdArea implements Area
 			&& (CMLib.map().findRoomIDArea(Name() + "#" + i) == null))
 				return Name() + "#" + i;
 		}
-		return Name() + "#" + (int) Math.round(Math.random() * Integer.MAX_VALUE);
+		return Name() + "#" + (int) Math.round(CMath.random() * Integer.MAX_VALUE);
 	}
 
 	@Override

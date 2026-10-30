@@ -47,10 +47,10 @@ public class Star extends GenSpaceBody
 		setDisplayText("an unknown star is shining here");
 		setDescription("it`s very bright");
 		coordinates=new Coord3D(new long[]{
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(GameTime.now());
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random())});
+		final Random random=CMath.newRandom();
 		radius=SpaceObject.Distance.StarGRadius.dm + (random.nextLong() % Math.round(CMath.mul(SpaceObject.Distance.StarGRadius.dm,0.30)));
 		basePhyStats().setDisposition(PhyStats.IS_LIGHTSOURCE|PhyStats.IS_GLOWING);
 		recoverPhyStats();

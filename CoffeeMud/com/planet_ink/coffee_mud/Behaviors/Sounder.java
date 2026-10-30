@@ -42,7 +42,7 @@ public class Sounder extends StdBehavior
 
 	protected int	minTicks	= 23;
 	protected int	maxTicks	= 23;
-	protected int	tickDown	= (int) Math.round(Math.random() * (maxTicks - minTicks)) + minTicks;
+	protected int	tickDown	= (int) Math.round(CMath.random() * (maxTicks - minTicks)) + minTicks;
 
 	@Override
 	protected int canImproveCode()
@@ -74,7 +74,7 @@ public class Sounder extends StdBehavior
 
 	protected void tickReset()
 	{
-		tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
+		tickDown=(int)Math.round(CMath.random()*(maxTicks-minTicks))+minTicks;
 	}
 
 	@Override

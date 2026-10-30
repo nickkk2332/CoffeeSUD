@@ -80,9 +80,9 @@ public class Prop_Artifact extends Property
 				final String classID = ""+affected;
 				x=classID.indexOf('@');
 				if(x<0)
-					itemID = affected.ID()+"@"+classID.hashCode()+Math.random();
+					itemID = affected.ID()+"@"+classID.hashCode()+CMath.random();
 				else
-					itemID = affected.ID()+classID.substring(0, x).hashCode()+classID.substring(x)+Math.random();
+					itemID = affected.ID()+classID.substring(0, x).hashCode()+classID.substring(x)+CMath.random();
 				miscText += ";" + itemID;
 			}
 		}
@@ -125,9 +125,9 @@ public class Prop_Artifact extends Property
 			final String classID = ""+affected;
 			x=classID.indexOf('@');
 			if(x<0)
-				itemID = affected.ID()+"@"+classID.hashCode()+Math.random();
+				itemID = affected.ID()+"@"+classID.hashCode()+CMath.random();
 			else
-				itemID = affected.ID()+classID.substring(0, x).hashCode()+classID.substring(x)+Math.random();
+				itemID = affected.ID()+classID.substring(0, x).hashCode()+classID.substring(x)+CMath.random();
 			super.setMiscText(text+";"+itemID);
 		}
 		autodrop=CMParms.getParmBool(text,"AUTODROP",true);

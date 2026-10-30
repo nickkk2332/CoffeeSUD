@@ -69,7 +69,7 @@ public class DaggerOfVenom extends Dagger
 		   &&(msg.tool()==this)
 		   &&(msg.target() instanceof MOB))
 		{
-			final int chance = (int)Math.round(Math.random() * 20.0);
+			final int chance = (int)Math.round(CMath.random() * 20.0);
 			if(chance == 10)
 			{
 				final Ability poison = CMClass.getAbility("Poison");

@@ -43,7 +43,7 @@ public class StoneGiant extends StdMOB
 	public StoneGiant()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a Stone Giant";
 		setDescription("A tall humanoid standing about 18 feet tall with gray, hairless flesh.");

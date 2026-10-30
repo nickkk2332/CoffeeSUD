@@ -404,7 +404,7 @@ public class Torturesmithing extends EnhancedCraftingSkill implements ItemCrafto
 			if(CMParms.contains(allTypes, "LOCK"))
 			{
 				((Container)buildingI).setDoorsNLocks(true,false,true,true,false,true);
-				((Container)buildingI).setKeyName(Double.toString(Math.random()));
+				((Container)buildingI).setKeyName(Double.toString(CMath.random()));
 			}
 			else
 				((Container)buildingI).setContainTypes(getContainerType(misctype));

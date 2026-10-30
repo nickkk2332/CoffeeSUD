@@ -43,7 +43,7 @@ public class LargeBat extends StdMOB
 	public LargeBat()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a large bat";
 		setDescription("It looks like a bat, just larger.");

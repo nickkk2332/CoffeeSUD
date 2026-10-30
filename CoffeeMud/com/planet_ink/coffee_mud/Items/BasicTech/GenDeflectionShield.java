@@ -90,6 +90,6 @@ public class GenDeflectionShield extends GenPersonalShield
 	@Override
 	protected boolean doesShield(final MOB mob, final CMMsg msg, final double successFactor)
 	{
-		return activated() ?( (Math.random() >= successFactor) ) : false ;
+		return activated() ?( (CMath.random() >= successFactor) ) : false ;
 	}
 }

@@ -47,10 +47,10 @@ public class MassiveStar extends GenSpaceBody
 		setDisplayText("an unknown massive star is shining here");
 		setDescription("it`s very very bright");
 		coordinates=new Coord3D(new long[]{
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(GameTime.now());
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random())});
+		final Random random=CMath.newRandom();
 		radius=SpaceObject.Distance.StarBRadius.dm + (random.nextLong() % Math.round(CMath.mul(SpaceObject.Distance.StarBRadius.dm,0.30)));
 		basePhyStats().setDisposition(PhyStats.IS_LIGHTSOURCE|PhyStats.IS_GLOWING);
 		this.setMaterial(RawMaterial.RESOURCE_HYDROGEN);

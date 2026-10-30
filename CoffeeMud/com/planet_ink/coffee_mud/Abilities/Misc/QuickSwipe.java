@@ -248,7 +248,7 @@ public class QuickSwipe extends StdAbility
 				pct=0.05;
 			if(levelDiff>10)
 				pct=0.03;
-			double goldTaken=CMLib.beanCounter().getTotalAbsoluteNativeValue(target)*pct*Math.random();
+			double goldTaken=CMLib.beanCounter().getTotalAbsoluteNativeValue(target)*pct*CMath.random();
 			if(goldTaken<(CMLib.ableMapper().qualifyingClassLevel(mob,this)))
 				goldTaken=CMLib.ableMapper().qualifyingClassLevel(mob,this);
 			if(goldTaken>CMLib.beanCounter().getTotalAbsoluteNativeValue(target))

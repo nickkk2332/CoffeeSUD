@@ -94,7 +94,7 @@ public class GenIntegrityShield extends GenPersonalShield
 			return false;
 		if((msg.tool() instanceof Electronics)
 		&& (msg.tool() instanceof Weapon)
-		&& (Math.random() >= successFactor)
+		&& (CMath.random() >= successFactor)
 		&& ((((Weapon)msg.tool()).weaponDamageType()==Weapon.TYPE_MELTING)||(((Weapon)msg.tool()).weaponDamageType()==Weapon.TYPE_SLASHING)))
 		{
 			return true;

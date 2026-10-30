@@ -52,17 +52,17 @@ public class ActiveTicker extends StdBehavior
 	protected int chance=100;
 	protected volatile int grpCount = 0;
 	//protected short speed=1;
-	protected int tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
+	protected int tickDown=(int)Math.round(CMath.random()*(maxTicks-minTicks))+minTicks;
 
 	protected void tickReset()
 	{
 		if(minGroup == 1)
-			tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
+			tickDown=(int)Math.round(CMath.random()*(maxTicks-minTicks))+minTicks;
 		else
 		{
 			if(++grpCount >=minGroup)
 			{
-				tickDown=(int)Math.round(Math.random()*(maxTicks-minTicks))+minTicks;
+				tickDown=(int)Math.round(CMath.random()*(maxTicks-minTicks))+minTicks;
 				grpCount=0;
 			}
 			else

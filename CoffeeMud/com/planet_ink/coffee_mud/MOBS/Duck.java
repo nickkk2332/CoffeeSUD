@@ -43,7 +43,7 @@ public class Duck extends StdMOB
 	public Duck()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a duck";
 		setDescription("It\\`s a small duck with orange webbed feet and a wagging tail.");

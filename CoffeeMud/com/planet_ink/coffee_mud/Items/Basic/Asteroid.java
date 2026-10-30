@@ -47,10 +47,10 @@ public class Asteroid extends GenSpaceBody
 		setDisplayText("an asteroid is here");
 		setDescription("it`s a big rock");
 		coordinates=new Coord3D(new long[]{
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(GameTime.now());
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random())});
+		final Random random=CMath.newRandom();
 		radius=(5*SpaceObject.Distance.Kilometer.dm) + (random.nextLong() % (4*SpaceObject.Distance.Kilometer.dm));
 		recoverPhyStats();
 	}

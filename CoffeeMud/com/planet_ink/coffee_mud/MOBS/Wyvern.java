@@ -45,7 +45,7 @@ public class Wyvern extends StdMOB
 	public Wyvern()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a wyvern";
 		setDescription("A distant cousin to the dragon, a wyvern is 35-foot-long dark brown to gray body of the wyvern is half tail. Its leathery batlike wings are over 50 feet from tip to tip..");
@@ -108,7 +108,7 @@ public class Wyvern extends StdMOB
 		{
 			final MOB target = getVictim();
 			// ===== if it is less than three so roll for it
-			final int roll = (int)Math.round(Math.random()*99);
+			final int roll = (int)Math.round(CMath.random()*99);
 
 			// ===== check the result
 			if (roll<20)

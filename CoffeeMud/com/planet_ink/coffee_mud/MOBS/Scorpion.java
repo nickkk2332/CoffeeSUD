@@ -43,7 +43,7 @@ public class Scorpion extends StdMOB
 	public Scorpion()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a Scorpion";
 		setDescription("The scorpion has a black carapace, legs and pincers. The segmented tail has a vicious stinger on the end.");

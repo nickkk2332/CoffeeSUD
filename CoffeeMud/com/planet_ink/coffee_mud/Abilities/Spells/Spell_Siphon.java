@@ -39,7 +39,7 @@ public class Spell_Siphon extends Spell
 	{
 		super();
 		if(randomizer==null)
-			randomizer = new Random(GameTime.now());
+			randomizer = CMath.newRandom();
 	}
 
 	@Override

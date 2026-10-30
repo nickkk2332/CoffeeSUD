@@ -112,7 +112,7 @@ public class Fighter_CriticalShot extends FighterSkill
 		&&((mob.fetchAbility(ID())==null)
 			||proficiencyCheck(null,(-75)+mob.charStats().getStat(CharStats.STAT_DEXTERITY)+(2*getXLEVELLevel(mob)),false)))
 		{
-			final double pctRecovery=(CMath.div(proficiency(),100.0)*Math.random());
+			final double pctRecovery=(CMath.div(proficiency(),100.0)*CMath.random());
 			final int bonus=(int)Math.round(CMath.mul((msg.value()),pctRecovery));
 			msg.setValue(msg.value()+bonus);
 			helpProficiency(mob, 0);

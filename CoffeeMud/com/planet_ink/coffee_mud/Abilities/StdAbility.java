@@ -1834,7 +1834,7 @@ public class StdAbility implements Ability
 		if(A.proficiency()< maxProficiency)
 		{
 			final int currentProficiency=A.proficiency()+adjustment;
-			if(((int)Math.round(Math.sqrt((mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)))*34.0*Math.random()))>=currentProficiency)
+			if(((int)Math.round(Math.sqrt((mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)))*34.0*CMath.random()))>=currentProficiency)
 			{
 				final int adjustedChance=CMLib.ableMapper().getProfGainChance(mob, A);
 				if(CMLib.dice().rollPercentage()<adjustedChance)

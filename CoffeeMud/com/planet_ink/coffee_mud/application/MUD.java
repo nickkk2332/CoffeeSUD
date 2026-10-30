@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.net.*;
@@ -558,6 +560,23 @@ public class MUD extends Thread implements MudHost
 	}
 
 	/**
+	 * Returns the RANDOMSEED setting, the seed for the game's random number
+	 * generator.  The generator is seeded with it when the world starts
+	 * loading and again when play starts.
+	 * @return the seed, or null if none is set
+	 */
+	protected static Long randomSeedSetting()
+	{
+		final String seed=CMProps.instance().getStr("RANDOMSEED","").trim();
+		if(seed.length()==0)
+			return null;
+		if(CMath.isLong(seed))
+			return Long.valueOf(CMath.s_long(seed));
+		Log.errOut("MUD","RANDOMSEED is not a whole number: "+seed);
+		return null;
+	}
+
+	/**
 	 * The single-player replacement for the listener loop: once the host has
 	 * booted, one session is attached to this process's console.  When that
 	 * session ends, the whole game shuts down.
@@ -571,8 +590,37 @@ public class MUD extends Thread implements MudHost
 		if(acceptConns)
 		{
 			setState(MudState.ACCEPTING);
-			if(CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN"))
+			final boolean turns=CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN");
+			if(turns)
 				GameTime.setTurnBased(true);
+			final Long seed=randomSeedSetting();
+			if(seed!=null)
+			{
+				if(turns)
+				{
+					// seeded once the stopped world is still, so that nothing that was
+					// due when the clock stopped rolls dice after the seed
+					final CountDownLatch seeded=new CountDownLatch(1);
+					ServiceEngine.runWhenStill(new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							CMath.seedRand(seed.longValue());
+							seeded.countDown();
+						}
+					});
+					try
+					{
+						seeded.await(5, TimeUnit.SECONDS);
+					}
+					catch(final InterruptedException e)
+					{
+					}
+				}
+				else
+					CMath.seedRand(seed.longValue());
+			}
 			final Session S=(Session)CMClass.getCommon("ConsoleSession");
 			if((S!=null) && S.initialize(null, threadGroup().getName()))
 			{
@@ -2031,6 +2079,9 @@ public class MUD extends Thread implements MudHost
 			System.exit(-1);
 			return;
 		}
+		final Long bootSeed=randomSeedSetting();
+		if(bootSeed!=null)
+			CMath.seedRand(bootSeed.longValue());
 		Log.shareWith(MudHost.MAIN_HOST);
 		Log.instance().configureLogFile("mud",page.getInt("NUMLOGS"));
 		for(final Log.Type logType : Log.Type.values())

@@ -47,10 +47,10 @@ public class Moonlet extends GenSpaceBody
 		setDisplayText("a small moon is floating here");
 		setDescription("it`s not a space station");
 		coordinates=new Coord3D(new long[]{
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random()),
-				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(GameTime.now());
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random()),
+				Math.round(Long.MAX_VALUE*CMath.random())});
+		final Random random=CMath.newRandom();
 		radius=(SpaceObject.Distance.MoonRadius.dm/10) + (random.nextLong() % Math.round(CMath.mul(SpaceObject.Distance.MoonRadius.dm,0.099)));
 		recoverPhyStats();
 	}

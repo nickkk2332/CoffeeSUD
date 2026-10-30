@@ -1158,7 +1158,7 @@ public class DefaultFaction implements Faction, MsgListener
 	@Override
 	public int randomFaction()
 	{
-		final Random gen = new Random();
+		final Random gen = CMath.newRandom();
 		return maximum - gen.nextInt(maximum-minimum);
 	}
 
@@ -2722,7 +2722,7 @@ public class DefaultFaction implements Faction, MsgListener
 		@Override
 		public int random()
 		{
-			final Random gen = new Random();
+			final Random gen = CMath.newRandom();
 			return high - gen.nextInt(high-low);
 		}
 

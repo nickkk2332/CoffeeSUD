@@ -73,6 +73,8 @@ public class ServiceEngine implements ThreadEngine
 	 */
 	private static volatile Thread			gameThread	= null;
 	private static volatile ServiceEngine	gameEngine	= null;
+	/** jobs waiting for the stopped world to have nothing left to run */
+	private static final List<Runnable>		stillJobs	= new LinkedList<Runnable>();
 
 	@Override
 	public String ID()
@@ -387,6 +389,40 @@ public class ServiceEngine implements ThreadEngine
 		final ServiceEngine E=gameEngine;
 		if((E!=null)&&(Thread.currentThread()==gameThread))
 			E.runGameJobs();
+	}
+
+	/**
+	 * Runs the given job once the stopped game clock has nothing left to run:
+	 * the scheduler has looked at the stopped clock, run everything that was
+	 * due, and no time is being asked for.  Nothing in the world then changes
+	 * until the player acts, which makes this the place to seed the dice.
+	 * Only call this while the clock is stopped, or the job waits until it is.
+	 * @param R the job
+	 */
+	public static void runWhenStill(final Runnable R)
+	{
+		synchronized(stillJobs)
+		{
+			stillJobs.add(R);
+		}
+	}
+
+	/**
+	 * Runs the jobs waiting for the stopped world to have nothing left to do.
+	 */
+	protected void runStillJobs()
+	{
+		while(true)
+		{
+			final Runnable R;
+			synchronized(stillJobs)
+			{
+				if(stillJobs.isEmpty())
+					return;
+				R=stillJobs.remove(0);
+			}
+			runOnThisThread(R);
+		}
 	}
 
 	/**
@@ -1971,6 +2007,7 @@ public class ServiceEngine implements ThreadEngine
 					GameTime.checkStop();
 					if(GameTime.isAdvancing())
 						continue; // take the next step at once
+					runStillJobs();
 				}
 				final long afterWork=System.currentTimeMillis();
 				if(nextWake > afterWork)

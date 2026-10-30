@@ -43,7 +43,7 @@ public class Owl extends StdMOB
 	public Owl()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="an owl";
 		setDescription("a hunting bird with a round face, small beak, and watchful eyes.");

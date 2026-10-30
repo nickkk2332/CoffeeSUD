@@ -53,7 +53,7 @@ public class Gnoll extends StdMOB
 		setWimpHitPoint(0);
 
 		Weapon h=CMClass.getWeapon("MorningStar");
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 		final int percentage = randomizer.nextInt() % 100;
 		if((percentage & 1) == 0)
 		{

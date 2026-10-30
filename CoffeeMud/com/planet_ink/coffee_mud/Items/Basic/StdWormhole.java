@@ -52,7 +52,7 @@ public class StdWormhole extends StdSpaceBody implements SpaceObject.SpaceGatewa
 	{
 		super();
 		setName("a wormhole");
-		final Random random=new Random(GameTime.now());
+		final Random random=CMath.newRandom();
 		radius=SpaceObject.Distance.PlanetRadius.dm + (random.nextLong() % (SpaceObject.Distance.PlanetRadius.dm / 2));
 		basePhyStats().setWeight(99999999);
 		basePhyStats().setLevel(1);

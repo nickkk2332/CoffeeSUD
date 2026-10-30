@@ -949,7 +949,7 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 				{
 					data=icatalog.get(d).second;
 					if((data.getSpawn()==(live?CataSpawn.LIVE:CataSpawn.DROP))
-					&&(Math.random() <= data.getRate())
+					&&(CMath.random() <= data.getRate())
 					&&(CMLib.masking().maskCheck(data.getMaskV(),M,true))
 					&&(data.numReferences()<data.getCap()))
 					{
@@ -1088,7 +1088,7 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 					if((data.getSpawn()==CataSpawn.ROOM)
 					&&(data.getCap()>0)
 					&&(data.numReferences()<data.getCap())
-					&&(Math.random()<data.getRate()))
+					&&(CMath.random()<data.getRate()))
 					{
 						final List<Room> choiceCache = new ArrayList<Room>();
 						int maxFails = (data.getCap() - data.numReferences()) * 10;
@@ -1116,7 +1116,7 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 					if((data.getSpawn()==CataSpawn.ROOM)
 					&&(data.getCap()>0)
 					&&(data.numReferences()<data.getCap())
-					&&(Math.random()<data.getRate()))
+					&&(CMath.random()<data.getRate()))
 					{
 						final List<Room> choiceCache = new ArrayList<Room>();
 						int maxFails = (data.getCap() - data.numReferences()) * 10;

@@ -384,7 +384,7 @@ public class ItemGenerator extends ActiveTicker
 		{
 			final double totalValue=items.totalValue;
 			final int maxValue=items.maxValue;
-			double pickedTotal=Math.random()*totalValue;
+			double pickedTotal=CMath.random()*totalValue;
 			double value=-1;
 			for(int i=2;i<items.size();i++)
 			{

@@ -133,7 +133,7 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 		{
 			area=CMClass.getAreaType(getAreaClassType());
 			CMLib.flags().setSavable(area, false);
-			final String num=Double.toString(Math.random());
+			final String num=Double.toString(CMath.random());
 			final int x=num.indexOf('.')+1;
 			final int len=((num.length()-x)/2)+1;
 			area.setName(L("UNNAMED_@x1",num.substring(x,x+len)));
@@ -312,7 +312,7 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 		s.setReadableText(readableText()); // in case this was first call to getArea()
 		/* Should we rename?
 		final Area A=s.getArea();
-		final String num=Double.toString(Math.random());
+		final String num=Double.toString(CMath.random());
 		final int x=num.indexOf('.')+1;
 		final int len=((num.length()-x)/2)+1;
 		String oldName=A.Name();

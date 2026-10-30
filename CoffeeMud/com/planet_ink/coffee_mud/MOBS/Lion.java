@@ -43,7 +43,7 @@ public class Lion extends StdMOB
 	public Lion()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a lion";
 		setDescription("Lions have reddish-orange fur and great furry manes.");

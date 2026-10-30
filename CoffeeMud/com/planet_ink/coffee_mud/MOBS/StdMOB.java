@@ -4179,7 +4179,7 @@ public class StdMOB implements MOB
 						{
 							final MOB killerM = CMLib.combat().getBreatheKiller(this);
 							// R.show(this, this, CMMsg.MSG_OK_VISUAL,
-							CMLib.combat().postDamage(killerM, this, this, (int) Math.round(CMath.mul(Math.random(), basePhyStats().level() + 2)),
+							CMLib.combat().postDamage(killerM, this, this, (int) Math.round(CMath.mul(CMath.random(), basePhyStats().level() + 2)),
 									CMMsg.MASK_ALWAYS | CMMsg.TYP_WATER, -1,
 									L("^Z<T-NAME> can't breathe!^.^?") + CMLib.protocol().msp("choke.wav", 10));
 							recoverTickCter = CMProps.getIntVar(CMProps.Int.RECOVERRATE)
@@ -4198,7 +4198,7 @@ public class StdMOB implements MOB
 									msgStr = null;
 								else
 									msgStr = L("^Z<T-NAME> <T-IS-ARE> drowning in @x1!^.^?", RawMaterial.CODES.NAME(atmo).toLowerCase()) + CMLib.protocol().msp("choke.wav", 10);
-								CMLib.combat().postDamage(killerM, this, this, (int) Math.round(CMath.mul(Math.random(), basePhyStats().level() + 2)),
+								CMLib.combat().postDamage(killerM, this, this, (int) Math.round(CMath.mul(CMath.random(), basePhyStats().level() + 2)),
 										CMMsg.MASK_ALWAYS | CMMsg.TYP_WATER, -1, msgStr);
 								recoverTickCter = CMProps.getIntVar(CMProps.Int.RECOVERRATE)
 										* (CharState.REAL_TICK_ADJUST_FACTOR + charStats().getStat(CharStats.STAT_RECOVERRATE5_ADJ));
@@ -4214,7 +4214,7 @@ public class StdMOB implements MOB
 								else
 									msgStr = L("^Z<T-NAME> <T-IS-ARE> choking on @x1!^.^?", RawMaterial.CODES.NAME(atmo).toLowerCase());
 								final MOB killerM = CMLib.combat().getBreatheKiller(this);
-								CMLib.combat().postDamage(killerM, this, this, (int) Math.round(CMath.mul(Math.random(), basePhyStats().level() + 2)),
+								CMLib.combat().postDamage(killerM, this, this, (int) Math.round(CMath.mul(CMath.random(), basePhyStats().level() + 2)),
 										CMMsg.MASK_ALWAYS | CMMsg.TYP_GAS, -1, msgStr);
 								recoverTickCter = CMProps.getIntVar(CMProps.Int.RECOVERRATE)
 										* (CharState.REAL_TICK_ADJUST_FACTOR + charStats().getStat(CharStats.STAT_RECOVERRATE5_ADJ));

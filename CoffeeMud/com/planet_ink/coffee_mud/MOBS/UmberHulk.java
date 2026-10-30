@@ -39,7 +39,7 @@ public class UmberHulk extends StdMOB
 	{
 		return "UmberHulk";
 	}
-	Random randomizer = new Random();
+	Random randomizer = CMath.newRandom();
 	int confuseDown=3;
 
 	public UmberHulk()

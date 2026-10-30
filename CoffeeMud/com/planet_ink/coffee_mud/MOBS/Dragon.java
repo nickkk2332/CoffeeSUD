@@ -93,7 +93,7 @@ public class Dragon extends StdMOB implements MOBPossessor
 	public Dragon()
 	{
 		// ===== creates a random color and age of dragon
-		this((short)Math.round(Math.random()*DRAGONCOLORCOUNT));
+		this((short)Math.round(CMath.random()*DRAGONCOLORCOUNT));
 	}
 
 	// ===== constructs a dragon of a specified color, but a random age
@@ -128,7 +128,7 @@ public class Dragon extends StdMOB implements MOBPossessor
 		birthColor=colorValue;
 
 		// ===== is it a male or female
-		final short gend = (short)Math.round(Math.random());
+		final short gend = (short)Math.round(CMath.random());
 		if (gend == 0)
 		{
 			baseCharStats().setStat(CharStats.STAT_GENDER,'F');
@@ -469,7 +469,7 @@ public class Dragon extends StdMOB implements MOBPossessor
 			weaponType= Weapon.TYPE_FROSTING;
 			break;
 		case GOLD:
-			if ((int)Math.round(Math.random())==1)
+			if ((int)Math.round(CMath.random())==1)
 			{
 				msgText = "The dragon torches <T-NAME> with fiery breath!.";
 				affectCode = CMMsg.TYP_FIRE;
@@ -506,9 +506,9 @@ public class Dragon extends StdMOB implements MOBPossessor
 				if (room.okMessage(this,message))
 				{
 					room.send(this,message);
-					int damage=((short)Math.round(CMath.div(CMath.mul(Math.random(),7*DragonAge()),2.0)));
+					int damage=((short)Math.round(CMath.div(CMath.mul(CMath.random(),7*DragonAge()),2.0)));
 					if(message.value()<=0)
-						damage=((short)Math.round(Math.random()*7)*DragonAge());
+						damage=((short)Math.round(CMath.random()*7)*DragonAge());
 					if(dragonbreath==null)
 						dragonbreath=CMClass.getAbility("Dragonbreath");
 					CMLib.combat().postDamage(this,target,dragonbreath,damage,CMMsg.MASK_ALWAYS|affectCode,weaponType,L("The blast <DAMAGE> <T-NAME>."));
@@ -538,7 +538,7 @@ public class Dragon extends StdMOB implements MOBPossessor
 			if (tastyMorselM.phyStats().weight()<1500)
 			{
 				// ===== if it is less than three so roll for it
-				final int roll = (int)Math.round(Math.random()*99);
+				final int roll = (int)Math.round(CMath.random()*99);
 
 				// ===== check the result
 				if (roll<2)

@@ -43,7 +43,7 @@ public class Puppy extends StdMOB
 	public Puppy()
 	{
 		super();
-		final Random randomizer = new Random(GameTime.now());
+		final Random randomizer = CMath.newRandom();
 
 		_name="a puppy";
 		setDescription("It\\`s small, cute, and furry with four legs, just like a puppy ought to be.");

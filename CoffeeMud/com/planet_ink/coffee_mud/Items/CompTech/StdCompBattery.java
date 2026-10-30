@@ -95,7 +95,7 @@ public class StdCompBattery extends StdElecCompItem implements PowerSource, Tech
 				if(activated()
 				&& ((subjectToWearAndTear())
 				&&(usesRemaining()<=100)
-				&&(Math.random()>CMath.div(usesRemaining(), 100))))
+				&&(CMath.random()>CMath.div(usesRemaining(), 100))))
 				{
 					final Room R=CMLib.map().roomLocation(this);
 					if(R!=null)
