@@ -303,9 +303,6 @@ public class VFShell
 						break;
 					case PLAYERS:
 						break;
-					case POLLS:
-						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.Polls());
-						break;
 					case PROTOCOL:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.CMProtocols());
 						break;

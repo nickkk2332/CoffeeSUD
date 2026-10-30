@@ -9,7 +9,6 @@ import com.planet_ink.coffee_mud.core.database.GCClassLoader;
 import com.planet_ink.coffee_mud.core.database.GRaceLoader;
 import com.planet_ink.coffee_mud.core.database.JournalLoader;
 import com.planet_ink.coffee_mud.core.database.MOBloader;
-import com.planet_ink.coffee_mud.core.database.PollLoader;
 import com.planet_ink.coffee_mud.core.database.QuestLoader;
 import com.planet_ink.coffee_mud.core.database.RoomLoader;
 import com.planet_ink.coffee_mud.core.database.StatLoader;
@@ -81,7 +80,6 @@ public interface DatabaseEngine extends CMLibrary
 		DBPLAYERDATA,
 		DBMAP,
 		DBSTATS,
-		DBPOLLS,
 		DBVFS,
 		DBJOURNALS,
 		DBQUEST,
@@ -2426,126 +2424,6 @@ public interface DatabaseEngine extends CMLibrary
 	public long DBReadOldestStatMs();
 
 	/**
-	 * Table category: DBPOLLS
-	 * Creates a new poll in the DBPOLLS table.  Most of the arguments are
-	 * self explanatory.
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-	 * @see DatabaseEngine#DBUpdatePoll(String, String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePollResults(String, String)
-	 * @see DatabaseEngine#DBDeletePoll(String)
-	 * @see DatabaseEngine#DBReadPollList()
-	 * @see DatabaseEngine#DBReadPoll(String)
-	 *
-	 * @param name the unique name of the poll
-	 * @param player the user/character id of the creator
-	 * @param subject the title/subject of the poll
-	 * @param description the long descriptions
-	 * @param optionXML choices format &lt;OPTIONS&gt;&lt;OPTION&gt;option text...
-	 * @param flag flag bitmap, see {@link com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN}
-	 * @param qualZapper the zapper mask for who can answer the poll
-	 * @param results &lt;RESULTS&gt;&lt;RESULT&gt;&lt;USER&gt;&lt;IP&gt;&lt;ANS&gt;
-	 * @param expiration the rl date/timestamp of when the poll auto-closes
-	 */
-	public void DBCreatePoll(String name, String player, String subject, String description, String optionXML,
-							 int flag, String qualZapper, String results, long expiration);
-
-	/**
-	 * Table category: DBPOLLS
-	 * Updates and/or renames a poll in the DBPOLLS table.  Most of the arguments are
-	 * self explanatory.
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-	 * @see DatabaseEngine#DBCreatePoll(String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePollResults(String, String)
-	 * @see DatabaseEngine#DBDeletePoll(String)
-	 * @see DatabaseEngine#DBReadPollList()
-	 * @see DatabaseEngine#DBReadPoll(String)
-	 *
-	 * @param OldName required, the unique old name of the poll, or current name
-	 * @param name the unique new name of the poll, or the current one
-	 * @param player the user/character id of the creator
-	 * @param subject the title/subject of the poll
-	 * @param description the long descriptions
-	 * @param optionXML choices format &lt;OPTIONS&gt;&lt;OPTION&gt;option text...
-	 * @param flag flag bitmap, see {@link com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN}
-	 * @param qualZapper the zapper mask for who can answer the poll
-	 * @param results xml doc: &lt;RESULTS&gt;&lt;RESULT&gt;&lt;USER&gt;&lt;IP&gt;&lt;ANS&gt;
-	 * @param expiration the rl date/timestamp of when the poll auto-closes
-	 */
-	public void DBUpdatePoll(String OldName, String name, String player, String subject, String description,
-							 String optionXML, int flag, String qualZapper, String results, long expiration);
-
-	/**
-	 * Table category: DBPOLLS
-	 * Updates the results xml array for an existing poll.  Called when a new result is added, removed,
-	 * or modified.
-	 *
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-	 * @see DatabaseEngine#DBCreatePoll(String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePoll(String, String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBDeletePoll(String)
-	 * @see DatabaseEngine#DBReadPollList()
-	 * @see DatabaseEngine#DBReadPoll(String)
-	 *
-	 * @param name the unique name of the poll
-	 * @param results xml doc: &lt;RESULTS&gt;&lt;RESULT&gt;&lt;USER&gt;&lt;IP&gt;&lt;ANS&gt;
-	 */
-	public void DBUpdatePollResults(String name, String results);
-
-	/**
-	 * Table category: DBPOLLS
-	 * Deletes a poll, and all its options and results, forever.
-	 *
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-	 * @see DatabaseEngine#DBCreatePoll(String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePoll(String, String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePollResults(String, String)
-	 * @see DatabaseEngine#DBReadPollList()
-	 * @see DatabaseEngine#DBReadPoll(String)
-	 *
-	 * @param name the unique name of the poll to kill
-	 */
-	public void DBDeletePoll(String name);
-
-	/**
-	 * Table category: DBPOLLS
-	 * Reads the raw data for all the polls from DBPOLLs table.
-	 *
-	 * @see PollData
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-	 * @see DatabaseEngine#DBCreatePoll(String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePoll(String, String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePollResults(String, String)
-	 * @see DatabaseEngine#DBDeletePoll(String)
-	 * @see DatabaseEngine#DBReadPoll(String)
-	 *
-	 * @return the list of PollData objects
-	 */
-	public List<PollData> DBReadPollList();
-
-	/**
-	 * Table category: DBPOLLS
-	 * Reads the raw data for a specific poll of a given name.
-	 *
-	 * @see PollData
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll
-	 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-	 * @see DatabaseEngine#DBCreatePoll(String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePoll(String, String, String, String, String, String, int, String, String, long)
-	 * @see DatabaseEngine#DBUpdatePollResults(String, String)
-	 * @see DatabaseEngine#DBDeletePoll(String)
-	 * @see DatabaseEngine#DBReadPoll(String)
-	 *
-	 * @param name the unique name of the poll to read
-	 * @return the raw poll data for that poll, as a PollData object
-	 */
-	public PollData DBReadPoll(String name);
-
-	/**
 	 * Table category: DBVFS
 	 * Reads the root of the VFS (DBFS) database filesystem.
 	 * It returns the CMFile.CMVFSDir virtual object describing
@@ -2875,87 +2753,6 @@ public interface DatabaseEngine extends CMLibrary
 		 * @return this
 		 */
 		public PlayerData xml(String xml);
-	}
-
-	/**
-	 * Table category: DBPOLLS
-	 * Raw record entry for the DBPOLLS table, where each
-	 * record represents an entire poll and all of its
-	 * results.
-	 *
-	 * @author Bo Zimmerman
-	 */
-	public static interface PollData
-	{
-		/**
-		 * The unique Name of the poll
-		 *
-		 * @return unique Name of the poll
-		 */
-		public String name();
-
-		/**
-		 * Special flag bitmap for this poll.
-		 *
-		 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ABSTAIN
-		 * @see com.planet_ink.coffee_mud.Common.interfaces.Poll#FLAG_ACTIVE
-		 *
-		 * @return flag bitmap
-		 */
-		public long flag();
-
-		/**
-		 * The player Name of the author of the poll.
-		 *
-		 * @return Name of the author of the poll.
-		 */
-		public String authorName();
-
-		/**
-		 * The short title of the poll.
-		 *
-		 * @return short title of the poll.
-		 */
-		public String subject();
-
-		/**
-		 * The long description of the poll.
-		 *
-		 * @return long description of the poll.
-		 */
-		public String description();
-
-		/**
-		 * The options/multiple-choices for this
-		 * poll.  In XML document format.
-		 *
-		 * @return the options to choose from xml
-		 */
-		public String optionsXml();
-
-		/**
-		 * The Zapper Mask to decide who may participate
-		 * in this poll.
-		 *
-		 * @return the qualifying zapper mask
-		 */
-		public String qualifyingMask();
-
-		/**
-		 * The player name keyed results/choices for
-		 * this poll.  In XML document format.
-		 *
-		 * @return the results chosen in xml
-		 */
-		public String resultsXml();
-
-		/**
-		 * The real-timestamp after which this poll
-		 * is expired.
-		 *
-		 * @return the expiration timestamp of the poll
-		 */
-		public long expiration();
 	}
 
 	/**

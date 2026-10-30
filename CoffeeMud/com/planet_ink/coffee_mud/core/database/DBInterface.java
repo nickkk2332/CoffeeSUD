@@ -69,7 +69,6 @@ public class DBInterface implements DatabaseEngine
 	RoomLoader		RoomLoader		= null;
 	DataLoader		DataLoader		= null;
 	StatLoader		StatLoader		= null;
-	PollLoader		PollLoader		= null;
 	VFSLoader		VFSLoader		= null;
 	JournalLoader	JournalLoader	= null;
 	QuestLoader		QuestLoader		= null;
@@ -102,7 +101,6 @@ public class DBInterface implements DatabaseEngine
 				this.RoomLoader = ((DBInterface) baseEngine).RoomLoader;
 				this.DataLoader = ((DBInterface) baseEngine).DataLoader;
 				this.StatLoader = ((DBInterface) baseEngine).StatLoader;
-				this.PollLoader = ((DBInterface) baseEngine).PollLoader;
 				this.VFSLoader = ((DBInterface) baseEngine).VFSLoader;
 				this.JournalLoader = ((DBInterface) baseEngine).JournalLoader;
 				this.QuestLoader = ((DBInterface) baseEngine).QuestLoader;
@@ -126,8 +124,6 @@ public class DBInterface implements DatabaseEngine
 			this.DataLoader = 		new DataLoader(this, privacyV.contains(DatabaseTables.DBPLAYERDATA.toString()) ? DB : oldBaseDB);
 		if((this.StatLoader == null) || privacyV.contains(DatabaseTables.DBSTATS.toString()))
 			this.StatLoader = 		new StatLoader(privacyV.contains(DatabaseTables.DBSTATS.toString()) ? DB : oldBaseDB);
-		if((this.PollLoader == null) || privacyV.contains(DatabaseTables.DBPOLLS.toString()))
-			this.PollLoader = 		new PollLoader(privacyV.contains(DatabaseTables.DBPOLLS.toString()) ? DB : oldBaseDB);
 		if((this.VFSLoader == null) || privacyV.contains(DatabaseTables.DBVFS.toString()))
 			this.VFSLoader = 		new VFSLoader(privacyV.contains(DatabaseTables.DBVFS.toString()) ? DB : oldBaseDB);
 		if((this.JournalLoader == null) || privacyV.contains(DatabaseTables.DBJOURNALS.toString()))
@@ -1383,42 +1379,6 @@ public class DBInterface implements DatabaseEngine
 	public int pingAllConnections()
 	{
 		return DB.pingAllConnections("SELECT 1 FROM CMCHAR");
-	}
-
-	@Override
-	public void DBCreatePoll(final String name, final String player, final String subject, final String description, final String optionXML, final int flag, final String qualZapper, final String results, final long expiration)
-	{
-		PollLoader.DBCreate(name, player, subject, description, optionXML, flag, qualZapper, results, expiration);
-	}
-
-	@Override
-	public void DBUpdatePoll(final String oldName, final String name, final String player, final String subject, final String description, final String optionXML, final int flag, final String qualZapper, final String results, final long expiration)
-	{
-		PollLoader.DBUpdate(oldName, name, player, subject, description, optionXML, flag, qualZapper, results, expiration);
-	}
-
-	@Override
-	public void DBUpdatePollResults(final String name, final String results)
-	{
-		PollLoader.DBUpdate(name, results);
-	}
-
-	@Override
-	public void DBDeletePoll(final String name)
-	{
-		PollLoader.DBDelete(name);
-	}
-
-	@Override
-	public List<PollData> DBReadPollList()
-	{
-		return PollLoader.DBReadList();
-	}
-
-	@Override
-	public PollData DBReadPoll(final String name)
-	{
-		return PollLoader.DBRead(name);
 	}
 
 	@Override

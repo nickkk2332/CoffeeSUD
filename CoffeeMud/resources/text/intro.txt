@@ -10,8 +10,8 @@
          `\ `\ | Powered By CoffeeMud v5.11  |
            `\ `| (C) 2000-2025 Bo Zimmerman  |
            _/ /\ www.coffeemud.org           /
-          (__/  \  This file is:            /
-       _..---""` \ resources/text/intro.txt/`""---.._
+          (__/  \                           /
+       _..---""` \                         /`""---.._
     .-'           \                       /          '-.
    :               `-.__             __.-'              :
    :                  ) ""---...---"" (                 :

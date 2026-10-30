@@ -1724,7 +1724,7 @@ public class Create extends StdCommand
 	{
 		return L("EXIT, ITEM, QUEST, FACTION, COMPONENT, GOVERNMENT, HOLIDAY, COMMAND, "
 			 + "CLAN, MOB, RACE, MIXEDRACE, ABILITY, LANGUAGE, CRAFTSKILL, HELP/AHELP, "
-			 + "ACHIEVEMENT, MANUFACTURER, ALLQUALIFY, CLASS, POLL, DEBUGFLAG, "
+			 + "ACHIEVEMENT, MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, "
 			 + "WEBSERVER, DISABLEFLAG, ENABLEFLAG, NEWS, USER, TRAP, WRIGHTSKILL, COMMAND, "
 			 + "GATHERSKILL, POISON, TWEAK, CRON, TITLE, AWARD, or ROOM");
 	}
@@ -2263,21 +2263,6 @@ public class Create extends StdCommand
 				return errorOut(mob);
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 			mobs(mob,commands);
-		}
-		else
-		if(commandType.equals("POLL"))
-		{
-			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.POLLS))
-				return errorOut(mob);
-			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
-			final Poll P=(Poll)CMClass.getCommon("DefaultPoll");
-			while(CMLib.polls().getPoll(P.getName())!=null)
-				P.setName(P.getName()+"!");
-			P.setFlags(Poll.FLAG_ACTIVE);
-			CMLib.polls().createPoll(P);
-			CMLib.polls().modifyVote(P, mob);
-			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^SThe world has grown more uncertain.^?"));
-			Log.sysOut("CreateEdit",mob.Name()+" created Poll "+P.getName()+".");
 		}
 		else
 		if(commandType.equals("QUEST"))

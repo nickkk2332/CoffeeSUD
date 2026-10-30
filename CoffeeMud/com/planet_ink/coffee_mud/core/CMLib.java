@@ -125,7 +125,6 @@ public class CMLib
 		DICE(DiceLibrary.class),
 		FACTIONS(FactionManager.class),
 		CLANS(ClanManager.class),
-		POLLS(PollManager.class),
 		TIME(TimeManager.class),
 		COLOR(ColorLibrary.class),
 		LOGIN(CharCreationLibrary.class),
@@ -762,16 +761,6 @@ public class CMLib
 	}
 
 	/**
-	 * Returns a reference to this threads player poll collection/management library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.PollManager
-	 * @return a reference to this threads player poll collection/management library.
-	 */
-	public static final PollManager polls()
-	{
-		return (PollManager)l().libraries[Library.POLLS.ordinal()];
-	}
-
-	/**
 	 * Returns a reference to this threads real time utility library.
 	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.TimeManager
 	 * @return a reference to this threads real time utility library.
@@ -1270,16 +1259,6 @@ public class CMLib
 	public final ClanManager _clans()
 	{
 		return (ClanManager)libraries[Library.CLANS.ordinal()];
-	}
-
-	/**
-	 * Returns a reference to this instances player poll collection/management library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.PollManager
-	 * @return a reference to this instances player poll collection/management library.
-	 */
-	public final PollManager _polls()
-	{
-		return (PollManager)libraries[Library.POLLS.ordinal()];
 	}
 
 	/**

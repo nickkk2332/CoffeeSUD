@@ -70,7 +70,7 @@ public class Destroy extends StdCommand
 		return L("EXIT, ITEM, AREA, USER, MOB, QUEST, FACTION, "
 			+ "SESSION, TICKS, THREAD, HOLIDAY, JOURNAL, SOCIAL, ACHIEVEMENT, CLASS, ABILITY, MANUFACTURER, "
 			+ "LANGUAGE, COMPONENT, RACE, EXPERTISE, TITLE, CLAN, BAN, GOVERNMENT, NOPURGE, BUG, TYPO, IDEA, "
-			+ "WEBSERVER, POLL, DEBUGFLAG, DISABLEFLAG, ENABLEFLAG, CRAFTSKILL, GATHERSKILL, CRON, COMMAND, "
+			+ "WEBSERVER, DEBUGFLAG, DISABLEFLAG, ENABLEFLAG, CRAFTSKILL, GATHERSKILL, CRON, COMMAND, "
 			+ "TRAP, POISON, TWEAK, WRIGHTSKILL, AWARD, DELETE:, or a ROOM");
 	}
 
@@ -2159,34 +2159,6 @@ public class Destroy extends StdCommand
 				return errorOut(mob);
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 			manufacturer(mob,commands);
-		}
-		else
-		if(commandType.equals("POLL"))
-		{
-			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.POLLS))
-				return errorOut(mob);
-			final String name=CMParms.combine(commands,2);
-			Poll P=null;
-			if(CMath.isInteger(name))
-				P=CMLib.polls().getPoll(CMath.s_int(name)-1);
-			else
-			if(name.length()>0)
-				P=CMLib.polls().getPoll(name);
-			if(P==null)
-			{
-				mob.tell(L("POLL '@x1' not found. Try LIST POLLS.",name));
-				mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
-				return false;
-			}
-			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
-			if((mob.session()!=null)&&(mob.session().confirm(L("Destroy POLL @x1, are you SURE? (Y/n)? ",P.getName()),"Y")))
-			{
-				CMLib.polls().deletePoll(P);
-				mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^SThe world has grown a bit more certain.^?"));
-				Log.sysOut("CreateEdit",mob.Name()+" modified Poll "+P.getName()+".");
-			}
-			else
-				mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
 		}
 		else
 		if(commandType.equals("QUEST"))

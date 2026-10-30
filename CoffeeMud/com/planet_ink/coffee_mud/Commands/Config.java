@@ -44,6 +44,11 @@ public class Config extends StdCommand
 	}
 
 	private final String[] access=I(new String[]{"CONFIG","AUTO","CONFIGURATION"});
+
+	/** options that concern other players, which a single-player game has none of */
+	private static final Set<MOB.Attrib> NOT_HERE = EnumSet.of(MOB.Attrib.PLAYERKILL,
+		MOB.Attrib.AUTONOTIFY, MOB.Attrib.AUTOFORWARD, MOB.Attrib.DAILYMESSAGE, MOB.Attrib.PRIVACY);
+
 	@Override
 	public String[] getAccessWords()
 	{
@@ -68,7 +73,7 @@ public class Config extends StdCommand
 			MOB.Attrib finalA=null;
 			for(final MOB.Attrib a : MOB.Attrib.values())
 			{
-				if(name.equalsIgnoreCase(a.getName()))
+				if(name.equalsIgnoreCase(a.getName())&&(!NOT_HERE.contains(a)))
 					finalA=a;
 			}
 			if(finalA==null)
@@ -82,6 +87,8 @@ public class Config extends StdCommand
 						if((a==MOB.Attrib.SYSOPMSGS)&&(!(CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.SYSMSGS))))
 							continue;
 						if((a==MOB.Attrib.AUTOMAP)&&(CMProps.getIntVar(CMProps.Int.AWARERANGE)<=0))
+							continue;
+						if(NOT_HERE.contains(a))
 							continue;
 						sorted.add(a.getName());
 					}
@@ -243,7 +250,10 @@ public class Config extends StdCommand
 				{
 					final StringBuilder str=new StringBuilder("");
 					for(final MOB.Attrib A : MOB.Attrib.values())
-						str.append(A.getName()).append(", ");
+					{
+						if(!NOT_HERE.contains(A))
+							str.append(A.getName()).append(", ");
+					}
 					postStr=L("Options include: @x1.",str.substring(0,str.length()-2));
 					mob.tell(postStr);
 					return true;
@@ -455,6 +465,8 @@ public class Config extends StdCommand
 			if((a==MOB.Attrib.SYSOPMSGS)&&(!(CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.SYSMSGS))))
 				continue;
 			if((a==MOB.Attrib.AUTOMAP)&&(CMProps.getIntVar(CMProps.Int.AWARERANGE)<=0))
+				continue;
+			if(NOT_HERE.contains(a))
 				continue;
 
 			if(mob.playerStats()!=null)

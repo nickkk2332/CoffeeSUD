@@ -534,30 +534,12 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	public void showTheNews(final MOB mob)
 	{
 		reloadTerminal(mob);
-		Command C=CMClass.getCommand("PollCmd");
-		try
-		{
-			C.execute(mob, null, 0);
-		}
-		catch (final Exception e)
-		{
-		}
-
 		if((mob.session()==null)
 		||(mob.isMonster())
 		||(mob.isAttributeSet(MOB.Attrib.DAILYMESSAGE)))
 			return;
 
-		C=CMClass.getCommand("MOTD");
-		try
-		{
-			 C.execute(mob,CMParms.parse("MOTD NEW PAUSE"),0);
-		}
-		catch(final Exception e)
-		{
-		}
-
-		C=CMClass.getCommand("CalendarCmd");
+		Command C=CMClass.getCommand("CalendarCmd");
 		try
 		{
 			C.execute(mob, CMParms.parse("CALENDAR SOON"), 0);

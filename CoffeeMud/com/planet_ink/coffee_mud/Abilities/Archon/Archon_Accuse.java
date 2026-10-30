@@ -106,7 +106,7 @@ public class Archon_Accuse extends ArchonSkill
 		}
 		if((commands.size()<2)||(commands.get(0).equals("?")))
 		{
-			mob.tell(L("Accuse who of what? Add a ! to the end to announce, or a number to the end to set punishment degree."));
+			mob.tell(L("Accuse who of what? Add a ! to the end to accuse loudly, or a number to the end to set punishment degree."));
 			return false;
 		}
 
@@ -133,7 +133,7 @@ public class Archon_Accuse extends ArchonSkill
 
 		if((commands.size()<2)||(commands.get(0).equals("?")))
 		{
-			mob.tell(L("Accuse who of what? Add a ! to the end to announce, or a number to the end to set punishment degree."));
+			mob.tell(L("Accuse who of what? Add a ! to the end to accuse loudly, or a number to the end to set punishment degree."));
 			return false;
 		}
 
@@ -194,17 +194,6 @@ public class Archon_Accuse extends ArchonSkill
 				B.addWarrant(A2,target,null,crimeLocs,crimeFlags,crime,sentence,desc);
 
 				super.restoreCombatState(oldFightState);
-				if(announce)
-				{
-					final Command C=CMClass.getCommand("Announce");
-					try
-					{
-						C.execute(mob,new XVector<String>("ANNOUNCE",L("@x1 is accused of @x2!",target.name(),crimeDesc)),MUDCmdProcessor.METAFLAG_FORCED);
-					}
-					catch (final Exception e)
-					{
-					}
-				}
 			}
 		}
 		else

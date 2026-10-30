@@ -2034,15 +2034,6 @@ public class DefaultSession implements Session
 								this.afkTime = 0;
 								this.needPrompt=true;
 							}
-							else
-							if((mob!=null)
-							&&(CMSecurity.isAllowedEverywhere(mob, CMSecurity.SecFlag.SHUTDOWN)))
-							{
-								final Command C = CMClass.getCommand("ProxyCtl");
-								if(C!=null)
-									C.execute(mob, new XVector<String>("PROXYCTL",command,jsonStr),
-											MUDCmdProcessor.METAFLAG_ASMESSAGE);
-							}
 						}
 					}
 					catch(final Exception e)

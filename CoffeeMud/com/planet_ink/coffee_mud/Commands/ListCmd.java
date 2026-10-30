@@ -4558,30 +4558,6 @@ public class ListCmd extends StdCommand
 		return buf;
 	}
 
-	public void listPolls(final MOB mob, final List<String> commands)
-	{
-		final Iterator<Poll> i=CMLib.polls().getPollList();
-		if(!i.hasNext())
-			mob.tell(L("\n\rNo polls available.  Fix that by entering CREATE POLL!"));
-		else
-		{
-			final StringBuilder str=new StringBuilder("");
-			int v=1;
-			for(;i.hasNext();v++)
-			{
-				final Poll P=i.next();
-				str.append(CMStrings.padRight(""+v,2)+": "+P.getName());
-				if(!CMath.bset(P.getFlags(),Poll.FLAG_ACTIVE))
-					str.append(L(" (inactive)"));
-				else
-				if(P.getExpiration()>0)
-					str.append(L(" (expires: @x1)",CMLib.time().date2String(P.getExpiration())));
-				str.append("\n\r");
-			}
-			mob.tell(str.toString());
-		}
-	}
-
 	public void listFileUse(final MOB mob, final Session S, String fileName)
 	{
 		if(S!=null)
@@ -4781,7 +4757,6 @@ public class ListCmd extends StdCommand
 		FACTIONS("FACTIONS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDFACTIONS}),
 		MATERIALS("MATERIALS",new SecFlag[]{SecFlag.CMDITEMS,SecFlag.CMDROOMS,SecFlag.CMDAREAS}),
 		OBJCOUNTERS("OBJCOUNTERS",new SecFlag[]{SecFlag.LISTADMIN}),
-		POLLS("POLLS",new SecFlag[]{SecFlag.POLLS,SecFlag.LISTADMIN}),
 		CONTENTS("CONTENTS",new SecFlag[]{SecFlag.CMDROOMS,SecFlag.CMDITEMS,SecFlag.CMDMOBS,SecFlag.CMDAREAS}),
 		EXPIRES("EXPIRES",new SecFlag[]{SecFlag.CMDMOBS,SecFlag.CMDITEMS,SecFlag.CMDROOMS,SecFlag.CMDAREAS,SecFlag.CMDEXITS,SecFlag.CMDRACES,SecFlag.CMDCLASSES}),
 		TITLES("TITLES",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.TITLES}),
@@ -6429,9 +6404,6 @@ public class ListCmd extends StdCommand
 		case OBJCOUNTERS:
 			s.println("\n\r^xCounter Report: NO LONGER AVAILABLE^.^N\n\r");
 			break;// +CMClass.getCounterReport()); break;
-		case POLLS:
-			listPolls(mob, commands);
-			break;
 		case CONTENTS:
 			s.wraplessPrintln(listContent(mob, commands).toString());
 			break;

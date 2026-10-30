@@ -79,11 +79,10 @@ to change the world (see Authoring).
   at random, so the script picks Apprentice, the one class every roll allows.
 
 Still to do:
-- A title screen (continue, new character, quit) listing saved characters.
-- Rewrite the multiplayer texts: intro, new-character text, rules, help.
-- Builder mode: a launch setting that makes the player an Archon with the
-  in-game editors, instead of the manual in the start room. Normal play does
-  not have them.
+- A title screen (continue, new character, quit). The launcher already lists
+  the saved games (phase 4); the profile (phase 5) adds the characters.
+- Builder mode as a launch setting that makes the player an Archon was done
+  in phase 4 (step 4f), and the multiplayer texts in phase 5 (step 5a).
 
 ### 2. Remove the network and multiplayer services: mostly done
 
@@ -288,11 +287,52 @@ Steps:
 - A purpose-built visual editor comes later, once the content format is
   settled.
 
-### 5. Single-player society
+### 5. Single-player society: in progress
 
 Accounts, channels, clans, polls, journals, mail, auctions, who lists and
 player killing assume other people. Each is removed or turned into its
 NPC-facing half (hirelings, an NPC auctioneer, notice boards).
+
+Steps:
+- **5a. What needs other people: done.**
+  - Removed, with their help: `WHOIS`, `WIZLIST`, `CHANWHO`, `FRIENDS`,
+    `IGNORE`, `AUTONOTIFY`, `POLL` and the whole poll system (its `CREATE`,
+    `MODIFY`, `DESTROY` and `LIST`, library and database calls),
+    `PLAYERKILL` and `DUEL` (`PLAYERKILL=NEVER`, since every player is the
+    same person), `AUCTION` (auctions held on a channel), `ANNOUNCE`, `BOOT`,
+    `BAN`, `PASSWORD`, `AUTOFORWARD`, `SUBSCRIBE`, `PROXYCTL`, `RULES` and
+    `MOTD`/`NEWS`.
+  - Channels: only `INFO` (world news, now with conquests) and `QUESTCHAT`
+    (which quests announce on) are left; the chat, clan, admin and auction
+    channels are gone, and so are the report journals (`BUG`, `TYPO`,
+    `IDEA`, `TASK`, `STUCK`) and the web forums.
+  - `CONFIG` no longer offers `PLAYERKILL`, `AUTONOTIFY`, `AUTOFORWARD`,
+    `MOTD` or `PRIVACY`. They stay in the option bits saved with each
+    character, which are numbered by position, so old characters still load.
+  - The new-character texts lost the rules, the web site and the beta-test
+    note, and the intermud help, left from phase 2, is gone.
+  - Kept, as the half that faces NPCs or the party: `WHO` (the characters in
+    the game: with a party, all of yours), `TELL`, `REPLY` and `WHISPER`
+    (NPCs listen), `GTELL`, `SERVE` (deities), mail and post offices
+    (characters can send each other things), journals as boards in the
+    world, auction houses (an auctioneer that bids is content for later),
+    hirelings, `SNOOP` (to watch a party member), `AUTOTELLNOTIFY` (tells to
+    your other characters), and `SWITCH` and `ACCOUNT`, which become the
+    profile.
+  - Clans stay for now: NPCs belong to clans, areas can be conquered by
+    them, and a party could form one. The clan commands are a later decision.
+- **5b. The profile.** The account (`PlayerAccount`) as the profile, made
+  with the first character, with no account name or password to type:
+  listing the characters, making a new one, and switching between them
+  (`SWITCH` already moves a session to another character of the same
+  account). A save holds the profile.
+- **5c. The party.** Profile characters brought into the world beside the
+  one being played, each on a session of its own with no terminal behind
+  it; commands to add them to the party, send them back and leave them in
+  the world; `CONTROL` and `AS`; saves that hold every character in the
+  world and where each one is.
+- **5d. Party turns** in turn-based time, as designed below.
+- **5e. One window per character**, as designed below.
 
 Several characters at once fits here, as a profile and a party:
 - The profile is the player's stored record of all their characters.

@@ -2980,7 +2980,6 @@ public class CMSecurity
 		MSSP("MSSP protocol support"),
 		STATS("statistics system"),
 		STATSTHREAD("statistics auto-saving"),
-		POLLCACHE("player poll caching"),
 		SESSIONTHREAD("session monitoring"),
 		SMTPCLIENT("email client"),
 		THINGRIDS("thin uncached grids"),

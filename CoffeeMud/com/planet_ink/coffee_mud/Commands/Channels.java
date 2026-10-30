@@ -169,7 +169,7 @@ public class Channels extends StdCommand
 				if(names.length==0)
 					buf.append("None!");
 				else
-					buf.append("\n\rUse NOCHANNELNAME (ex: NOGOSSIP) to turn a channel off.");
+					buf.append("\n\rUse NOCHANNELNAME (ex: NOINFO) to turn a channel off.");
 			}
 		}
 		mob.tell(buf.toString());

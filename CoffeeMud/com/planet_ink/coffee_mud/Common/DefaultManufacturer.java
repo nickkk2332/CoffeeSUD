@@ -10,8 +10,6 @@ import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
 import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
-import com.planet_ink.coffee_mud.Common.interfaces.Poll.PollOption;
-import com.planet_ink.coffee_mud.Common.interfaces.Poll.PollResult;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.Technical.TechType;
@@ -69,7 +67,7 @@ public class DefaultManufacturer implements Manufacturer
 		}
 		catch(final Exception e)
 		{
-			return new DefaultPoll();
+			return new DefaultManufacturer();
 		}
 	}
 

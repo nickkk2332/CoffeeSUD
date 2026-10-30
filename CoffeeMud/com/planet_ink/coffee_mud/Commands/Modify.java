@@ -2618,7 +2618,7 @@ public class Modify extends StdCommand
 		return L("ITEM, RACE, CLASS, ABILITY, LANGUAGE, CRAFTSKILL, GATHERSKILL, WRIGHTSKILL, "
 			+ "ALLQUALIFY, AREA, EXIT, COMPONENT, RECIPE, EXPERTISE, QUEST, COMMAND, "
 			+ "MOB, USER, HOLIDAY, ACHIEVEMENT, MANUFACTURER, HELP/AHELP, TRAP, CRON, "
-			+ "GOVERNMENT, JSCRIPT, FACTION, SOCIAL, CLAN, POLL, NEWS, DAY, MONTH, YEAR, "
+			+ "GOVERNMENT, JSCRIPT, FACTION, SOCIAL, CLAN, NEWS, DAY, MONTH, YEAR, "
 			+ "TIME, HOUR, POISON, TWEAK, UPDATE:, or ROOM");
 	}
 
@@ -2989,29 +2989,6 @@ public class Modify extends StdCommand
 				return errorOut(mob);
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 			expertises(mob,commands);
-		}
-		else
-		if(commandType.equals("POLL"))
-		{
-			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.POLLS))
-				return errorOut(mob);
-			final String name=CMParms.combine(commands,2);
-			Poll P=null;
-			if(CMath.isInteger(name))
-				P=CMLib.polls().getPoll(CMath.s_int(name)-1);
-			else
-			if(name.length()>0)
-				P=CMLib.polls().getPoll(name);
-			if(P==null)
-			{
-				mob.tell(L("POLL '@x1' not found. Try LIST POLLS.",name));
-				mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
-				return false;
-			}
-			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms around the idea of @x1.^?",P.getSubject()));
-			CMLib.polls().modifyVote(P, mob);
-			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^SThe world's uncertainty has changed.^?"));
-			Log.sysOut("CreateEdit",mob.Name()+" modified Poll "+P.getName()+".");
 		}
 		else
 		if(commandType.equals("HOLIDAY"))

@@ -960,7 +960,7 @@ public class MUD extends Thread implements MudHost
 			{CMLib.Library.QUEST,CMLib.Library.TECH,CMLib.Library.SESSIONS},
 			{CMLib.Library.STATS,CMLib.Library.THREADS},
 			{CMLib.Library.SOCIALS,CMLib.Library.CLANS,CMLib.Library.CHANNELS,CMLib.Library.JOURNALS,
-				CMLib.Library.POLLS,CMLib.Library.HELP,CMLib.Library.CATALOG,CMLib.Library.MAP,
+				CMLib.Library.HELP,CMLib.Library.CATALOG,CMLib.Library.MAP,
 				CMLib.Library.PLAYERS
 			}
 		};
