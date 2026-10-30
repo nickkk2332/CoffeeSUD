@@ -1,0 +1,82 @@
+<AREA>
+ <ACLAS>StdArea</ACLAS>
+ <ANAME>New Area</ANAME>
+ <ADESC />
+ <ACLIM>0</ACLIM>
+ <ASUBS />
+ <ATECH>0</ATECH>
+ <ADATA>
+  <ARCHP />
+  <PARENTS />
+  <CHILDREN />
+  <PREJFC />
+  <IGNMSK />
+  <BUDGET />
+  <DEVALR />
+  <INVRER>0</INVRER>
+  <CURRENCY />
+  <IPRICS />
+  <IMG />
+  <BEHAVES />
+  <AFFECS />
+  <AUTHOR />
+  <BLURBS />
+  <AATMO>-1</AATMO>
+ </ADATA>
+ <AROOMS>
+  <AROOM>
+   <ROOMID>New Area#0</ROOMID>
+   <RAREA>New Area</RAREA>
+   <RCLAS>StdRoom</RCLAS>
+   <RDISP>New Room</RDISP>
+   <RDESC>Brand new database room! You need to change this text with the MODIFY ROOM command.  If your character is not an Archon, pick up the book you see here and read it immediately!</RDESC>
+   <RTEXT>&lt;RCLIM&gt;-1&lt;/RCLIM&gt;&lt;RATMO&gt;-1&lt;/RATMO&gt;&lt;IMG /&gt;&lt;BEHAVES /&gt;&lt;AFFECS /&gt;</RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>0</XDIRE>
+     <XDOOR>New Area#1</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS />
+    <ROOMITEMS>
+     <RITEM>
+      <ICLAS>ManualArchon</ICLAS>
+      <ILOCA />
+      <IREJV>0</IREJV>
+      <IUSES>2147483647</IUSES>
+      <ILEVL>0</ILEVL>
+      <IABLE>0</IABLE>
+      <ITEXT />
+     </RITEM>
+    </ROOMITEMS>
+   </ROOMCONTENT>
+  </AROOM>
+  <AROOM>
+   <ROOMID>New Area#1</ROOMID>
+   <RAREA>New Area</RAREA>
+   <RCLAS>StoneRoom</RCLAS>
+   <RDISP>Rocky Room</RDISP>
+   <RDESC>You`re standing in a dull room of stone.</RDESC>
+   <RTEXT>&lt;RCLIM&gt;0&lt;/RCLIM&gt;&lt;RATMO&gt;-1&lt;/RATMO&gt;&lt;IMG /&gt;&lt;BEHAVES /&gt;&lt;AFFECS&gt;&lt;AFF&gt;&lt;ACLASS&gt;Prop_Smell&lt;/ACLASS&gt;&lt;ATEXT&gt;stinky&lt;/ATEXT&gt;&lt;/AFF&gt;&lt;/AFFECS&gt;</RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>1</XDIRE>
+     <XDOOR>New Area#0</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS />
+    <ROOMITEMS />
+   </ROOMCONTENT>
+  </AROOM>
+ </AROOMS>
+</AREA>

@@ -29,6 +29,7 @@ import com.planet_ink.coffee_mud.core.database.DBInterface;
 import com.planet_ink.coffee_mud.core.threads.CMRunnable;
 import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
+import com.planet_ink.coffee_mud.core.save.WorldFiles;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -791,6 +792,8 @@ public class MUD extends Thread implements MudHost
 
 	private static void shutdownAll(final Session S, final boolean keepItDown, final String externalCommand)
 	{
+		if(consoleMode && CMProps.isState(CMProps.HostState.RUNNING))
+			WorldFiles.exportAll(); // in builder mode, the world goes to its files before it is torn down
 		CMProps.setAllStates(CMProps.HostState.SHUTTINGDOWN);
 		bootSync.set(false);
 		final AtomicLong shutdownStateTime = new AtomicLong(System.currentTimeMillis());
@@ -1662,7 +1665,10 @@ public class MUD extends Thread implements MudHost
 					CMProps.setState(CMProps.HostState.LOADINGMAP);
 					Log.sysOut(Thread.currentThread().getName(),"Loading map...");
 					CMProps.setUpLowVar(CMProps.Str.MUDSTATUS,"Booting: loading rooms....");
-					CMLib.database().DBReadAllRooms(null);
+					if(consoleMode)
+						WorldFiles.loadWorld();
+					else
+						CMLib.database().DBReadAllRooms(null);
 					CMProps.setUpLowVar(CMProps.Str.MUDSTATUS,"Booting: loading space....");
 					CMLib.database().DBReadSpace();
 					CMProps.setUpLowVar(CMProps.Str.MUDSTATUS,"Booting: preparing map....");

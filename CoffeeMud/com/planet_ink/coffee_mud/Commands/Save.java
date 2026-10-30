@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.core.interfaces.TickableGroup.LocalType;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
+import com.planet_ink.coffee_mud.core.save.WorldFiles;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
@@ -138,6 +139,11 @@ public class Save extends StdCommand
 	{
 		if(CMProps.isSinglePlayer())
 		{
+			if(SaveGame.isBuilderMode() && (!isBuilderSave(commands)) && builderAllowed(mob))
+			{
+				reportWorldFiles(mob, WorldFiles.exportAll());
+				return false;
+			}
 			if(!isBuilderSave(commands))
 			{
 				final String slot=(commands.size()>1)?CMParms.combine(commands,1).trim():null;
@@ -155,6 +161,39 @@ public class Save extends StdCommand
 			}
 			SaveGame.warnAboutBuilding(mob);
 		}
+		final boolean result=builderSave(mob, commands);
+		if(CMProps.isSinglePlayer() && SaveGame.isBuilderMode())
+			reportWorldFiles(mob, WorldFiles.exportAll());
+		return result;
+	}
+
+	/**
+	 * In builder mode, tells the builder what writing the world files did.
+	 * @param mob the builder
+	 * @param changed what {@link WorldFiles#exportAll()} returned
+	 */
+	protected void reportWorldFiles(final MOB mob, final int changed)
+	{
+		if(changed < 0)
+			mob.tell(L("The world files were not written.  If the world did not load whole from them, fix them and start again."));
+		else
+		if(changed == 0)
+			mob.tell(L("The world files are up to date."));
+		else
+			mob.tell(L("The world files are written: @x1 changed.",""+changed));
+	}
+
+	/**
+	 * The builder's SAVE: writes rooms, areas, players and the like to the
+	 * database.
+	 * @param mob the builder
+	 * @param commands the command words
+	 * @return as for execute
+	 * @throws java.io.IOException as for execute
+	 */
+	protected boolean builderSave(final MOB mob, final List<String> commands)
+		throws java.io.IOException
+	{
 		if((commands.size()==1)&&CMSecurity.isSaveFlag(CMSecurity.SaveFlag.NOPLAYERS))
 		{
 			if(!mob.isMonster())

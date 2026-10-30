@@ -56,6 +56,8 @@ public final class SaveGame
 	private static volatile String		currentSlot	= null;
 	/** the working database of this game, or null if saves are off */
 	private static volatile File			workingDb	= null;
+	/** the folder of the fake database this game plays on, or null if it is not one */
+	private static volatile File			databaseDir	= null;
 	/** the header of the save this boot restored, until play starts */
 	private static volatile Properties	restoring	= null;
 	private static final Map<String, String> bootOverrides = new Hashtable<String, String>();
@@ -92,6 +94,16 @@ public final class SaveGame
 	public static boolean isAvailable()
 	{
 		return (!builderMode) && (workingDb != null);
+	}
+
+	/**
+	 * Returns the folder of the fake database this game plays on: the
+	 * content's in builder mode, else this game's working copy.
+	 * @return the folder, or null if the database is not a fake one
+	 */
+	public static File databaseDir()
+	{
+		return databaseDir;
 	}
 
 	/**
@@ -151,12 +163,18 @@ public final class SaveGame
 	{
 		bootOverrides.clear();
 		workingDb = null;
+		databaseDir = null;
 		restoring = null;
 		final String slot = nextBoot;
 		nextBoot = null;
+		final boolean fakeDb = (contentDbService != null) && contentDbService.startsWith(FAKEDB);
 		if(builderMode)
+		{
+			if(fakeDb)
+				databaseDir = new File(contentDbService.substring(FAKEDB.length()));
 			return;
-		if((contentDbService == null) || (!contentDbService.startsWith(FAKEDB)))
+		}
+		if(!fakeDb)
 		{
 			System.out.println("Saved games need the fake database, so they are off.");
 			Log.errOut("SaveGame", "Saved games need a fake database, but DBSERVICE is " + contentDbService);
@@ -173,6 +191,7 @@ public final class SaveGame
 			Log.errOut("SaveGame", e);
 			return;
 		}
+		databaseDir = workingDb;
 		bootOverrides.put("DBSERVICE", FAKEDB + workingDb.getPath());
 		if(slot == null)
 		{

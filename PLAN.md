@@ -26,6 +26,9 @@ example `DBSERVICE=jdbc:fakedb:/some/scratch/copy` to play against a copy of
 the database, `TIMEMODE=TURNS` to start turn-based, or `RANDOMSEED=42` to
 fix the dice.
 
+The world is in `CoffeeMud/world/`, one `.cmare` file per area (see phase 4,
+step 4e).
+
 When it starts, it lists the saved games and asks which to restore, or starts
 a new game. `RESTORE=NAME` restores that save without asking, `RESTORE=NEW`
 starts a new game without asking, and `BUILDER=1` plays on the content itself
@@ -141,7 +144,7 @@ Still to do:
   boot is threaded, and real time depends on timing. Phase 4 saves the
   generator's state with the game, which is what keeps a reload from rerolling.
 
-### 4. Save games: done, but for moving content out of the database
+### 4. Save games: done
 
 Before this phase the database held the built world and the player
 characters only. Killed mobs respawned, dropped items vanished, timed effects
@@ -202,7 +205,24 @@ Steps:
   - Not exact: a quest that was waiting to start gets a new wait; items a
     quest had given to mobs other than the player come back where the quest
     put them; spawned copies of spawnable quests start over.
-- Later, with content in files: the fake database goes.
+- **4e. The world in files: done.** The world (areas, rooms, exits, and
+  the mobs and items placed in them) is in `CoffeeMud/world/`, one `.cmare`
+  file per area, in the format EXPORT writes and IMPORT reads, laid out a
+  tag to a line so that git shows what changed. The files are the world; the
+  database's world tables are a copy, which the rest of the engine goes on
+  reading. The database keeps a checksum of the files it was built from
+  (`world.sum`); at startup, if the files differ (edited by hand, or pulled),
+  its world tables are emptied, but for space objects, and the files
+  imported. A normal game does this in its own copy, so the content is still
+  never written in play; builder mode does it in the content. Builder mode
+  writes the world back to the files on SAVE (plain SAVE just writes them)
+  and when it quits, rewriting only the files that changed, and not at all if
+  a file failed to load, so that a broken file is never written over. The
+  Archon's manual, which IMPORT refuses from files of unknown origin, is let
+  in from the world's own files.
+- Still in the fake database: quests, custom races, classes and abilities,
+  files kept in the database, the builder's characters, and, in each save,
+  the game-state tables. They go next, and with them the fake database.
 
 ### Authoring
 
@@ -215,14 +235,17 @@ Steps:
   itself, so edits and the builder's `SAVE ROOM`, `SAVE AREA` and the like go
   into the world. Rooms, exits, areas, races, classes and abilities are
   written as they are made; mobs and items placed with `CREATE` become part
-  of a room when it is saved with `SAVE ROOM` or `SAVE AREA`.
+  of a room when it is saved with `SAVE ROOM` or `SAVE AREA`. The world goes
+  to its files in `CoffeeMud/world/` on the builder's SAVE (a plain SAVE just
+  writes them) and when builder mode quits.
 - In a normal game the same commands change only that game's copy of the
   world, and every building command (`CREATE`, `MODIFY`, `DESTROY`, `COPY`,
   `GMODIFY`, `MERGE`, `IMPORT`, `GENERATE`, `LINK`, `CATALOG`, the builder's
   `SAVE`) says so: mobs and items made, changed or destroyed stay that way in
   the game's saves, but changes to rooms, exits, areas and the like last only
   until the game ends.
-- Content can also be written by hand as `.cmare` XML.
+- The world files can also be edited by hand, or new ones added; the next
+  start rebuilds the world from them.
 - The MUDGrinder web editor is gone with the web server. `archive/mudgrinder`
   keeps a browsable snapshot of it (open `snapshot/index.html` from disk), its
   page templates and the Java behind them, as a reference for a future visual
@@ -290,3 +313,7 @@ hand-built starting area.
   startup and during play, a changed world, effects, a running quest, a
   follower and a carried item's effect coming back, and the content staying
   untouched.
+- The world is in `.cmare` files, one per area, rebuilt into the database
+  when they change and written back by builder mode. Smoke test covers a
+  hand edit picked up in play without touching the content, and a builder's
+  edit written to the file and used by the next game.

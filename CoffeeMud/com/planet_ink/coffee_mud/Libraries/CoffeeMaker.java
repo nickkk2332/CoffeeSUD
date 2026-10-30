@@ -7,6 +7,7 @@ import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMClass.CMObjectType;
 import com.planet_ink.coffee_mud.core.CMSecurity.DisFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.WorldFiles;
 import com.planet_ink.coffee_mud.core.database.DBConnector.DBPreparedBatchEntry;
 import com.planet_ink.coffee_mud.core.exceptions.CMException;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
@@ -1135,7 +1136,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 					{
 						final String iClass=iblk.getValFromPieces("ICLAS");
 						final Item newItem=CMClass.getItem(iClass);
-						if(newItem instanceof ArchonOnly)
+						if((newItem instanceof ArchonOnly)&&(!WorldFiles.isImporting())) // the world's own files may hold them
 							break;
 						if(newItem==null)
 							return unpackErr("Room","null 'iClass': "+iClass+" in room "+newRoom.roomID(),iblk);

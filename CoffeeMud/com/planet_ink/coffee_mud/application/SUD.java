@@ -13,6 +13,7 @@ import java.util.Properties;
 import com.planet_ink.coffee_mud.core.CMProps;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.save.SaveSlots;
+import com.planet_ink.coffee_mud.core.save.WorldFiles;
 
 /*
    Copyright 2026 CoffeeSUD contributors
@@ -43,6 +44,7 @@ import com.planet_ink.coffee_mud.core.save.SaveSlots;
  * <li>SAVEDIR=PATH is where saves go; the default is "saves".</li>
  * <li>BUILDER=1 plays on the content database itself, to change the world,
  * with no saves.</li>
+ * <li>WORLDDIR=PATH is the folder of world files; the default is "world".</li>
  * </ul>
  *
  * Any NAME=VALUE argument overrides the ini file, as with {@link MUD}.
@@ -69,6 +71,7 @@ public class SUD
 		final boolean builderMode = builder.equals("1") || builder.startsWith("Y") || builder.startsWith("T") || builder.equals("ON");
 		final File saveDir = new File(settings.getProperty("SAVEDIR", "saves").trim());
 		SaveGame.configure(saveDir, builderMode);
+		WorldFiles.configure(new File(settings.getProperty("WORLDDIR", "world").trim()));
 		if(builderMode)
 			System.out.println("Builder mode: changes go straight into the world, and there are no saved games.");
 		else

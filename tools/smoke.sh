@@ -4,7 +4,8 @@
 # plays a little and saves, the next restores the save, then come pause,
 # turn-based time, the random seed, saving and restoring during play, a
 # changed world coming back as it was saved, and, in a world of their own,
-# a running quest, a follower, a lit torch and a wolf's rolled stats.
+# a running quest, a follower, a lit torch and a wolf's rolled stats, then
+# the world files: a hand edit picked up, and a builder's edit written.
 # Fails if expected text is missing, or if play wrote to the content.
 #   tools/smoke.sh            run the test
 #   KEEP=1 tools/smoke.sh     keep the scratch folder and print its path
@@ -12,8 +13,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="$ROOT/CoffeeMud"
 W="$(mktemp -d "${TMPDIR:-/tmp}/sudsmoke.XXXXXX")"
 cp -r "$GAME/resources/fakedb" "$W/db"
-(cd "$W/db" && cksum * > "$W/content.sums")
+cp -r "$GAME/world" "$W/world"
+(cd "$W/db" && cksum * > "$W/content.sums"; cd "$W/world" && cksum * >> "$W/content.sums")
 cp -r "$GAME/resources/fakedb" "$W/qdb"
+cp -r "$GAME/world" "$W/qworld"
 # the quest sessions load their quest and their helper script from here
 mkdir -p "$GAME/resources/quests/_smoke"
 cp "$ROOT/tools/fixtures/smoke/"* "$GAME/resources/quests/_smoke/"
@@ -23,7 +26,7 @@ FAIL=0
 play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
 {
 	OUTFILE="$1"; printf "$2" > "$W/$OUTFILE.script"; shift 2
-	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "SAVEDIR=$W/saves" "$@" > "$W/$OUTFILE" 2>&1
+	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "WORLDDIR=$W/world" "SAVEDIR=$W/saves" "$@" > "$W/$OUTFILE" 2>&1
 	set -- "$OUTFILE"
 	echo "$1: exit $?" >> "$W/exits"
 }
@@ -163,18 +166,18 @@ else
 fi
 
 echo "Session 9: in builder mode, add a quest to a world of its own"
-play qbuild.txt 'Builder\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\ncreate quest LOAD=quests/_smoke/smoke.quest\nsave quests\nquit\nY\n' "DBSERVICE=jdbc:fakedb:$W/qdb" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+play qbuild.txt 'Builder\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\ncreate quest LOAD=quests/_smoke/smoke.quest\nsave quests\nquit\nY\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 expect qbuild.txt "Quest 'smoketest' added."
 expect qbuild.txt "Quest list saved."
 
 echo "Session 10: start the quest, gain a follower, light the torch, and save"
-play quest.txt 'Builder\ntimemode turns\nmodify quest smoketest start\ncreate mob dog\ncreate mob wolf\nstat wolf\njrun /resources/quests/_smoke/followfx.js\ngroup\nsave quests1\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" RESTORE=NEW
+play quest.txt 'Builder\ntimemode turns\nmodify quest smoketest start\ncreate mob dog\ncreate mob wolf\nstat wolf\njrun /resources/quests/_smoke/followfx.js\ngroup\nsave quests1\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=NEW
 expect quest.txt "This game plays on a copy of the world."
 expect quest.txt "Quest 'smoketest' started."
 expect quest.txt "] a dog"
 
 echo "Session 11: restore the quest, the follower, the torch and the wolf"
-play quest2.txt 'list quests\ngroup\nstat wolf\nsave quests2\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" RESTORE=quests1
+play quest2.txt 'list quests\ngroup\nstat wolf\nsave quests2\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=quests1
 expect quest2.txt "Restored 'quests1'."
 expect quest2.txt "] a dog"
 if grep -aq "smoketest *running" "$W/quest2.txt"; then
@@ -201,10 +204,37 @@ else
 	echo "  FAIL  quests2: the quest's rabbit is not where it was"; FAIL=1
 fi
 
-if (cd "$W/db" && cksum * | cmp -s - "$W/content.sums"); then
-	echo "  ok    the content database was not written"
+echo "Session 12: edit a world file by hand, and play"
+sed -i 's#<RDISP>Rocky Room</RDISP>#<RDISP>Mossy Room</RDISP>#' "$W/qworld/"*.cmare
+(cd "$W/qdb" && cksum *) > "$W/qdb.sums"
+play handedit.txt 'Builder\nnorth\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=NEW
+expect handedit.txt "rebuilding the world from them"
+expect handedit.txt "Mossy Room"
+if (cd "$W/qdb" && cksum * | cmp -s - "$W/qdb.sums"); then
+	echo "  ok    handedit.txt: the game rebuilt its own copy, not the content"
 else
-	echo "  FAIL  play wrote to the content database"; FAIL=1
+	echo "  FAIL  handedit.txt: playing wrote to the content database"; FAIL=1
+fi
+
+echo "Session 13: in builder mode, rename a room and quit"
+play builder.txt 'Builder\nnorth\nmodify room name The Grassy Knoll\nquit\nY\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" BUILDER=1
+if grep -q "<RDISP>The Grassy Knoll</RDISP>" "$W/qworld/"*.cmare; then
+	echo "  ok    builder.txt: the world file has the new name"
+else
+	echo "  FAIL  builder.txt: the world file was not written"; FAIL=1
+fi
+play builder2.txt 'Builder\nnorth\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=NEW
+expect builder2.txt "The Grassy Knoll"
+if grep -q "rebuilding the world" "$W/builder2.txt"; then
+	echo "  FAIL  builder2.txt: rebuilt the world though builder mode had just written it"; FAIL=1
+else
+	echo "  ok    builder2.txt: the next game used the database builder mode left"
+fi
+
+if (cd "$W/db" && cksum *; cd "$W/world" && cksum *) | cmp -s - "$W/content.sums"; then
+	echo "  ok    the content database and world files were not written"
+else
+	echo "  FAIL  play wrote to the content database or world files"; FAIL=1
 fi
 if grep -q "exit [^0]" "$W/exits"; then
 	echo "  FAIL  a session did not exit cleanly:"; cat "$W/exits"; FAIL=1
