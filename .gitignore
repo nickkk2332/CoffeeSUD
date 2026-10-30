@@ -15,3 +15,8 @@ CoffeeMud/saves/
 
 # Smoke test fixtures, copied in for a run (see tools/fixtures/smoke)
 CoffeeMud/resources/quests/_smoke/
+
+# The content database is a cache built from CoffeeMud/world (see
+# core/save/WorldFiles.java); only its schema is kept
+CoffeeMud/resources/fakedb/*
+!CoffeeMud/resources/fakedb/fakedb.schema

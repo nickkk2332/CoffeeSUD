@@ -1533,6 +1533,8 @@ public class MUD extends Thread implements MudHost
 						}
 					}
 					databases.add(currentDBconnector);
+					if(consoleMode)
+						WorldFiles.afterDatabaseConnect(); // before the classes load: custom ones come from the database
 				}
 				else
 				{

@@ -9,4 +9,4 @@
 CoffeeMud/resources/fakedb/** binary
 # World files are compared by checksum with what the database was built from,
 # so they keep the same bytes on every platform
-CoffeeMud/world/*.cmare text eol=lf
+CoffeeMud/world/** text eol=lf

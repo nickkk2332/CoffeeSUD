@@ -12,7 +12,7 @@ of the engine; its chapters explain each subsystem.
 ```sh
 CoffeeMud/build.sh        # compiles in place (about a minute from clean)
 CoffeeMud/sud.sh          # play in this terminal
-tools/smoke.sh            # four-minute check of the single-player path
+tools/smoke.sh            # ten-minute check of the single-player path
 tools/engine-tests.sh     # the engine's TEST ALL suite, about 15 minutes
 ```
 
@@ -26,8 +26,11 @@ example `DBSERVICE=jdbc:fakedb:/some/scratch/copy` to play against a copy of
 the database, `TIMEMODE=TURNS` to start turn-based, or `RANDOMSEED=42` to
 fix the dice.
 
-The world is in `CoffeeMud/world/`, one `.cmare` file per area (see phase 4,
-step 4e).
+Everything a new game starts from is in `CoffeeMud/world/` (see phase 4,
+step 4f): the areas, custom races, classes, abilities and commands, the
+catalog, and the quests. The database in `CoffeeMud/resources/fakedb` is only
+a cache of those files; just its schema is in git, and the first start after
+a checkout, or after the files change, rebuilds it from them.
 
 When it starts, it lists the saved games and asks which to restore, or starts
 a new game. `RESTORE=NAME` restores that save without asking, `RESTORE=NEW`
@@ -155,7 +158,10 @@ were stripped at shutdown and running quests restarted. The target:
   variables, clocks, weather, factions;
 - loading rebuilds the world from content and applies the save; several slots;
 - the fake JDBC database (`com/planet_ink/fakedb`) and most of
-  `DatabaseEngine` go once nothing reads them.
+  `DatabaseEngine` go once nothing reads them. (After 4f the fake database
+  holds nothing that is not rebuilt from the world files or kept in a save,
+  so it stays, as the engine's working store, until there is a reason to
+  replace it.)
 
 Steps:
 - **4a. Saved games: done.** The content database (`DBSERVICE`) is never
@@ -220,9 +226,35 @@ Steps:
   a file failed to load, so that a broken file is never written over. The
   Archon's manual, which IMPORT refuses from files of unknown origin, is let
   in from the world's own files.
-- Still in the fake database: quests, custom races, classes and abilities,
-  files kept in the database, the builder's characters, and, in each save,
-  the game-state tables. They go next, and with them the fake database.
+- **4f. All the content in files: done.** The rest of what a new game
+  starts from moved to `CoffeeMud/world/` too, and the database became a
+  cache of the files:
+  - `areas/`: one `.cmare` file per area, as in 4e;
+  - `custom.cmare`: the custom races, classes, abilities and commands, as the
+    database held them;
+  - `catalog.cmare`: the catalog of mobs and items, each with its category and
+    catalog data;
+  - `quests/`: one `.quest` file per quest, holding the quest's script as the
+    database held it (most are a `LOAD=` line naming a script in
+    `resources/quests`).
+
+  The database in `resources/fakedb` is a cache, out of git but for its
+  schema. When it is not current with the files (no `world.sum`, or a
+  different one), it is rebuilt from nothing: custom objects first, before
+  the engine loads its classes, so that they load like any other; then the
+  areas, the catalog and the quests when the map loads. A normal game
+  rebuilds in its own working database and then copies the content tables and
+  the checksum back into the cache, so the next game starts at once; it still
+  never writes the world files. Builder mode empties the cache's content
+  tables and rebuilds in place, and writes all of the files back on SAVE and
+  when it quits. Builder mode also makes the player an Archon on login, as
+  the Archon's manual does, so the editors are at hand without finding it.
+  - Gone with the old database: the builder characters and account kept in
+    it, and files kept in the database's own file system. Builder mode's
+    characters live in the cache, so they last until it is deleted, and are
+    not in normal games, which start with no characters.
+  - Not in files: space objects (ships, planets and the like, outside any
+    room), which a rebuild loses; there are none in the shipped world.
 
 ### Authoring
 
@@ -231,13 +263,15 @@ Steps:
   GENERATE for random areas, and MOBPROG and JavaScript scripting. They are
   used in builder mode, and from phase 4 on they edit the world's content (what
   a new game starts from), never a save.
-- Builder mode is `sud.sh BUILDER=1`: the game runs on the content database
-  itself, so edits and the builder's `SAVE ROOM`, `SAVE AREA` and the like go
-  into the world. Rooms, exits, areas, races, classes and abilities are
-  written as they are made; mobs and items placed with `CREATE` become part
-  of a room when it is saved with `SAVE ROOM` or `SAVE AREA`. The world goes
-  to its files in `CoffeeMud/world/` on the builder's SAVE (a plain SAVE just
-  writes them) and when builder mode quits.
+- Builder mode is `sud.sh BUILDER=1`: the game runs on the database cache
+  itself and makes the player an Archon, so edits and the builder's
+  `SAVE ROOM`, `SAVE AREA` and the like go into the world. Rooms, exits,
+  areas, races, classes, abilities, catalog entries and quests are written
+  to the cache as they are made; mobs and items placed with `CREATE` become
+  part of a room when it is saved with `SAVE ROOM` or `SAVE AREA`, and a new
+  quest is kept with `SAVE QUESTS`. Everything goes to its files in
+  `CoffeeMud/world/` on the builder's SAVE (a plain SAVE just writes them) and
+  when builder mode quits, rewriting only the files that changed.
 - In a normal game the same commands change only that game's copy of the
   world, and every building command (`CREATE`, `MODIFY`, `DESTROY`, `COPY`,
   `GMODIFY`, `MERGE`, `IMPORT`, `GENERATE`, `LINK`, `CATALOG`, the builder's
@@ -245,7 +279,8 @@ Steps:
   the game's saves, but changes to rooms, exits, areas and the like last only
   until the game ends.
 - The world files can also be edited by hand, or new ones added; the next
-  start rebuilds the world from them.
+  start rebuilds the world from them. Commit them to share a change; the
+  cache is never committed.
 - The MUDGrinder web editor is gone with the web server. `archive/mudgrinder`
   keeps a browsable snapshot of it (open `snapshot/index.html` from disk), its
   page templates and the Java behind them, as a reference for a future visual
@@ -317,3 +352,11 @@ hand-built starting area.
   when they change and written back by builder mode. Smoke test covers a
   hand edit picked up in play without touching the content, and a builder's
   edit written to the file and used by the next game.
+- All the content is in files: custom races, classes, abilities and commands,
+  the catalog and the quests joined the areas, and the database became a
+  cache, rebuilt from the files when they change; only its schema is in git.
+  Builder mode makes the player an Archon. Smoke and engine tests start from
+  the bare schema, as a fresh checkout does; the smoke test covers the first
+  game building and caching the world, the next using the cache, and a quest
+  made in builder mode written to its own file. A rebuild from the files into
+  an empty database, written back out, gives the same files.

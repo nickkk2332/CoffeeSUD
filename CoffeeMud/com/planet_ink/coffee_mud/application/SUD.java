@@ -42,8 +42,8 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  * <li>RESTORE=NAME restores that save without asking; RESTORE=NEW starts a
  * new game without asking.</li>
  * <li>SAVEDIR=PATH is where saves go; the default is "saves".</li>
- * <li>BUILDER=1 plays on the content database itself, to change the world,
- * with no saves.</li>
+ * <li>BUILDER=1 plays on the database cache itself, as an Archon, to change
+ * the world files, with no saves.</li>
  * <li>WORLDDIR=PATH is the folder of world files; the default is "world".</li>
  * </ul>
  *

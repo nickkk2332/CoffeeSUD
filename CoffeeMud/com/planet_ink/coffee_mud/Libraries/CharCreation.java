@@ -4077,6 +4077,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.playerStats().leveledDateTime(0);
 		CMLib.database().DBCreateCharacter(mob);
 		CMLib.players().addPlayer(mob);
+		if(CMProps.isSinglePlayer())
+			SaveGame.playerLoggedIn(mob);
 
 		executeScript(mob,charCrScripts.get("END"));
 

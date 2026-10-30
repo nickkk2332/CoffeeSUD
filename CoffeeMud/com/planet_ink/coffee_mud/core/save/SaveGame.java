@@ -4,7 +4,9 @@ import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
+import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 
@@ -35,11 +37,15 @@ import java.util.concurrent.TimeUnit;
  * The launcher picks what the first boot plays: a new game or a save.  Before
  * each boot, {@link #beforeBoot(String)} makes the working database and sets
  * the game clock; after it, {@link #afterBoot(Session)} has the world's clocks
- * read their dates, restores the dice, and logs the saved character in.  Restoring during play asks the engine to
- * restart in the same process, which boots again with the chosen save.
+ * read their dates, restores the dice, and logs the saved character in.
+ * Restoring during play asks the engine to restart in the same process, which
+ * boots again with the chosen save.
  *
- * In builder mode the game runs on the content database itself, as a server
- * would, and there are no saves.
+ * The content database is a cache of what is built from the world files (see
+ * {@link WorldFiles}).  A normal game plays on a copy of its content tables,
+ * or, when the files have changed, on a database built from them.  In builder
+ * mode the game runs on the cache itself, makes the player an Archon, and has
+ * no saves; what the builder changes goes back to the world files.
  */
 public final class SaveGame
 {
@@ -168,31 +174,42 @@ public final class SaveGame
 		final String slot = nextBoot;
 		nextBoot = null;
 		final boolean fakeDb = (contentDbService != null) && contentDbService.startsWith(FAKEDB);
-		if(builderMode)
-		{
-			if(fakeDb)
-				databaseDir = new File(contentDbService.substring(FAKEDB.length()));
-			return;
-		}
 		if(!fakeDb)
 		{
-			System.out.println("Saved games need the fake database, so they are off.");
-			Log.errOut("SaveGame", "Saved games need a fake database, but DBSERVICE is " + contentDbService);
+			System.out.println("The world files and saved games need the fake database, so they are off.");
+			Log.errOut("SaveGame", "The world files and saved games need a fake database, but DBSERVICE is " + contentDbService);
+			WorldFiles.beginBoot(false, null);
 			return;
 		}
-		final File contentDb = new File(contentDbService.substring(FAKEDB.length()));
+		// the content database is a cache of what is built from the world files
+		final File cache = new File(contentDbService.substring(FAKEDB.length()));
+		final boolean current = WorldFiles.isCacheCurrent(cache);
+		if(builderMode)
+		{
+			// builder mode plays on the cache, and keeps its characters there
+			databaseDir = cache;
+			if(!current)
+				WorldFiles.clearContentTables(cache);
+			WorldFiles.beginBoot(!current, null);
+			return;
+		}
 		try
 		{
-			workingDb = SaveSlots.prepareWorkingDatabase(contentDb, saveDir, slot);
+			workingDb = SaveSlots.prepareWorkingDatabase(cache, saveDir, slot, current ? WorldFiles.CONTENT_TABLES : new String[0]);
 		}
 		catch(final IOException e)
 		{
 			System.out.println("Saved games are off: " + e.getMessage());
 			Log.errOut("SaveGame", e);
+			databaseDir = cache;
+			if(!current)
+				WorldFiles.clearContentTables(cache);
+			WorldFiles.beginBoot(!current, null);
 			return;
 		}
 		databaseDir = workingDb;
 		bootOverrides.put("DBSERVICE", FAKEDB + workingDb.getPath());
+		WorldFiles.beginBoot(!current, cache);
 		if(slot == null)
 		{
 			currentSlot = null;
@@ -262,6 +279,28 @@ public final class SaveGame
 	public static void playerLoggedIn(final MOB mob)
 	{
 		WorldState.finishRestore(mob);
+		if(builderMode)
+			makeArchon(mob);
+	}
+
+	/**
+	 * In builder mode, makes the player an Archon, with the in-game editors,
+	 * as reading the Archon's manual does: by having them read one.
+	 * @param mob the player
+	 */
+	private static void makeArchon(final MOB mob)
+	{
+		final CharClass current = mob.baseCharStats().getCurrentClass();
+		if((current != null) && current.ID().equals("Archon"))
+			return;
+		final Item manual = CMClass.getMiscMagic("ManualArchon");
+		if(manual == null)
+			return;
+		mob.tell(CMLib.lang().L("Builder mode makes you an Archon, with the in-game editors."));
+		mob.addItem(manual);
+		manual.executeMsg(mob, CMClass.getMsg(mob, manual, null, CMMsg.MSG_READ, null));
+		if(!manual.amDestroyed())
+			manual.destroy();
 	}
 
 	/**

@@ -22,12 +22,12 @@ import java.util.*;
  * Saved games on disk.  This knows only about files, so that the launcher
  * can list the saves before the engine starts.
  *
- * The world's content lives in the fake database that DBSERVICE names, and
- * play never writes to it: each game runs on a working copy, made fresh at
- * every start.  A save keeps the tables of that copy that hold the game's
- * state (characters, accounts, player data, journals, clans) along with a
- * header and the live world; restoring makes a fresh copy of the content and
- * puts the saved tables over it.
+ * Each game runs on a working database, made fresh at every start from the
+ * content tables of the cache that DBSERVICE names (see WorldFiles).  A save
+ * keeps the tables of that database that hold the game's state (characters,
+ * accounts, player data, journals, clans) along with a header and the live
+ * world; restoring makes a fresh working database and puts the saved tables
+ * in it.
  *
  * <pre>
  * SAVEDIR/
@@ -248,17 +248,19 @@ public final class SaveSlots
 	}
 
 	/**
-	 * Makes the working database for a new game or a restored one: a fresh
-	 * copy of the content database, with a save's tables over it if one is
-	 * given.  Working databases left from earlier games are deleted first,
-	 * where they can be.
+	 * Makes the working database for a new game or a restored one: the
+	 * content database's schema and the given tables from it, with a save's
+	 * tables over them if one is given.  Tables not copied start empty.
+	 * Working databases left from earlier games are deleted first, where they
+	 * can be.
 	 * @param contentDb the content database's folder
 	 * @param saveDir the folder that holds the saves
 	 * @param slot the save to restore, or null for a new game
+	 * @param tables the tables to copy from the content database
 	 * @return the working database's folder
 	 * @throws IOException if it cannot be made
 	 */
-	public static File prepareWorkingDatabase(final File contentDb, final File saveDir, final String slot) throws IOException
+	public static File prepareWorkingDatabase(final File contentDb, final File saveDir, final String slot, final String[] tables) throws IOException
 	{
 		if(!saveDir.isDirectory() && !saveDir.mkdirs())
 			throw new IOException("Cannot make the save folder " + saveDir.getPath());
@@ -268,21 +270,23 @@ public final class SaveSlots
 			work = new File(saveDir, WORKING_PREFIX + System.currentTimeMillis() + "-" + i);
 		if(!work.mkdirs())
 			throw new IOException("Cannot make the working database " + work.getPath());
-		final File[] content = contentDb.listFiles();
-		if(content == null)
-			throw new IOException("Cannot read the content database " + contentDb.getPath());
-		for(final File F : content)
+		final File schema = new File(contentDb, "fakedb.schema");
+		if(!schema.isFile())
+			throw new IOException("There is no fake database in " + contentDb.getPath());
+		copy(schema, new File(work, schema.getName()));
+		for(final String table : tables)
 		{
+			final File F = new File(contentDb, TABLE_PREFIX + table);
 			if(F.isFile())
 				copy(F, new File(work, F.getName()));
 		}
 		if(slot != null)
 		{
 			final File savedTables = new File(new File(saveDir, slot), DB_DIR);
-			final File[] tables = savedTables.listFiles();
-			if(tables == null)
+			final File[] saved = savedTables.listFiles();
+			if(saved == null)
 				throw new IOException("The save '" + slot + "' has no tables");
-			for(final File F : tables)
+			for(final File F : saved)
 			{
 				if(F.isFile())
 					copy(F, new File(work, F.getName()));

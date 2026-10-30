@@ -8,7 +8,9 @@ W="$(mktemp -d "${TMPDIR:-/tmp}/sudtests.XXXXXX")"
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 # play a copy, so the source tree can be rebuilt while this runs
 cp -r "$GAME" "$W/game"
-cp -r "$GAME/resources/fakedb" "$W/db"
+# an empty database, as a fresh checkout has: the game builds the world
+# from the world files
+mkdir "$W/db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/db/"
 
 printf 'Zorblax\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\ntest all\n#expect ZapperAnyclasslevel:\nquit\nY\n' > "$W/script"
 SUD_GAME_DIR="$W/game" SUDPLAY_LIMIT=2400 python3 "$ROOT/tools/sudplay.py" "$W/script" "DBSERVICE=jdbc:fakedb:$W/db" "SAVEDIR=$W/saves" RESTORE=NEW > "$W/out.txt" 2>&1
