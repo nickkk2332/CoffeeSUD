@@ -3,7 +3,8 @@
 
     sudplay.py SCRIPTFILE [NAME=VALUE ...]
 
-Starts CoffeeMud/sud.sh with the given ini overrides and types the script one
+Starts CoffeeMud/sud.sh (or $SUD_GAME_DIR/sud.sh) with the given ini
+overrides and types the script one
 line at a time.  Each line is sent only after the game has answered the
 previous one and gone quiet, the way a person waits to read before typing;
 some questions are asked asynchronously, and an answer sent too early is
@@ -30,7 +31,8 @@ def main():
     script = open(sys.argv[1]).read().split('\n')
     if script and script[-1] == '':
         script.pop()
-    game = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'CoffeeMud', 'sud.sh')
+    game_dir = os.environ.get('SUD_GAME_DIR') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'CoffeeMud')
+    game = os.path.join(game_dir, 'sud.sh')
     proc = subprocess.Popen([game] + sys.argv[2:], stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lock = threading.Lock()

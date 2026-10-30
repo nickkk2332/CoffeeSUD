@@ -295,7 +295,7 @@ public class Email extends StdCommand
 										mob.tell(L("Aborted."));
 										return;
 									}
-									CMLib.smtp().emailOrJournal(mob.Name(), mob.Name(), targM.Name(), subject, message);
+									CMLib.journals().postToMailbox(mob.Name(), targM.Name(), subject, message);
 									mob.tell(L("Your email has been sent."));
 								}
 								else

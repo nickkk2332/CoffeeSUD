@@ -2140,37 +2140,6 @@ public class Create extends StdCommand
 			else
 			{
 				mob.tell(L("'@x1' is now debugging",named));
-				if(flag == CMSecurity.DbgFlag.HTTPACCESS)
-				{
-					for(final MudHost host : CMLib.hosts())
-					{
-						try
-						{
-							host.executeCommand("WEBSERVER ADMIN ACCESS BOTH");
-							host.executeCommand("WEBSERVER PUB ACCESS BOTH");
-						}
-						catch (final Exception e)
-						{
-							mob.tell(e.getMessage());
-						}
-					}
-				}
-				else
-				if(flag == CMSecurity.DbgFlag.HTTPREQ)
-				{
-					for(final MudHost host : CMLib.hosts())
-					{
-						try
-						{
-							host.executeCommand("WEBSERVER ADMIN DEBUG BOTH");
-							host.executeCommand("WEBSERVER PUB DEBUG BOTH");
-						}
-						catch (final Exception e)
-						{
-							mob.tell(e.getMessage());
-						}
-					}
-				}
 				CMSecurity.setDebugVar(flag);
 			}
 			return true;
@@ -2390,42 +2359,6 @@ public class Create extends StdCommand
 					if(CMLib.clans().getClan(C.clanID())==null)
 						CMLib.clans().addClan(C);
 				}
-			}
-		}
-		else
-		if(commandType.equals("WEBSERVER"))
-		{
-			if(!CMSecurity.isASysOp(mob))
-				return errorOut(mob);
-			if(commands.size()<3)
-			{
-				mob.tell(L("You must specify a web server name."));
-				return false;
-			}
-			else
-			{
-				try
-				{
-					mob.tell(CMLib.hosts().get(0).executeCommand("START WEB "+commands.get(2)));
-				}
-				catch (final Exception e)
-				{
-					mob.tell(L("Failure: @x1",e.getMessage()));
-				}
-			}
-		}
-		else
-		if(commandType.equals("SMTP"))
-		{
-			if(!CMSecurity.isASysOp(mob))
-				return errorOut(mob);
-			try
-			{
-				mob.tell(CMLib.hosts().get(0).executeCommand("START "+commandType));
-			}
-			catch (final Exception e)
-			{
-				mob.tell(L("Failure: @x1",e.getMessage()));
 			}
 		}
 		else

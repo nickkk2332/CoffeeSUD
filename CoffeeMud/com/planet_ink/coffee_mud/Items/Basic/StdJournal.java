@@ -464,9 +464,7 @@ public class StdJournal extends StdItem implements Book
 											final String replyMsg=mob.session().prompt(L("Enter your email response\n\r: "));
 											if((replyMsg.trim().length()>0) && (read != null))
 											{
-												CMLib.smtp().emailOrJournal(mob.Name(),
-																			 mob.Name(), fromTP.name(),
-																			 "RE: "+read.subj(),
+												CMLib.journals().postToMailbox(mob.Name(), fromTP.name(), "RE: "+read.subj(),
 																			 replyMsg);
 												mob.tell(L("Email queued."));
 											}

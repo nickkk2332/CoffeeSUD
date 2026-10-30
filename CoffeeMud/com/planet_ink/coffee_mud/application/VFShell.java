@@ -320,9 +320,6 @@ public class VFShell
 					case SLAVERY:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.SlaveryParser());
 						break;
-					case SMTP:
-						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.SMTPclient());
-						break;
 					case SOCIALS:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.Socials());
 						break;

@@ -2401,13 +2401,13 @@ public class DefaultClan implements Clan
 									warned.add(name);
 									if(activeMembers<minimumMembers)
 									{
-										CMLib.smtp().emailIfPossible("AutoPurge",CMStrings.capitalizeAndLower(name),"AutoPurge: "+name(),
+										CMLib.journals().postToMailbox("AutoPurge", CMStrings.capitalizeAndLower(name), "AutoPurge: "+name(),
 												""+getGovernmentName()+" "+name()+" is in danger of being deleted if at least "+(minimumMembers-activeMembers)
 												+" members do not log on within 24 hours.");
 									}
 									else
 									{
-										CMLib.smtp().emailIfPossible("AutoPurge",CMStrings.capitalizeAndLower(name),"AutoPurge: "+name(),
+										CMLib.journals().postToMailbox("AutoPurge", CMStrings.capitalizeAndLower(name), "AutoPurge: "+name(),
 												""+getGovernmentName()+" "+name()+" is in danger of being deleted if does not have a leader log on within 24 hours.");
 									}
 								}

@@ -401,7 +401,7 @@ public class DefaultLawSet implements Law
 
 	protected boolean sendGameMail(final String mailBox, final String subject, final String message)
 	{
-		CMLib.smtp().emailOrJournal(mailBox,mailBox, mailBox, subject, message);
+		CMLib.journals().postToMailbox(mailBox, mailBox, subject, message);
 		return true;
 	}
 

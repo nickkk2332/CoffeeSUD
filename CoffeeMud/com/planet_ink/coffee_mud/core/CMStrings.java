@@ -6099,4 +6099,44 @@ public class CMStrings
 		}
 		return ismatch;
 	}
+
+	private final static String EMAIL_VALID_LOCAL_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'*+-/=?^_`{|}~.";
+	private final static String EMAIL_VALID_DOMAIN_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.";
+
+	/**
+	 * Checks whether the given string is a well-formed email address.
+	 * @param addy the email address
+	 * @return true if it is well-formed, false otherwise
+	 */
+	public final static boolean isValidEmailAddress(final String addy)
+	{
+		if(addy==null)
+			return false;
+		final int x=addy.indexOf('@');
+		if(x<0)
+			return false;
+		final String localPart=addy.substring(0,x).trim();
+		final String network=addy.substring(x+1);
+		if((localPart.length()==0)||(localPart.length()>64)||(network.length()==0)||(network.length()>255))
+			return false;
+		if(localPart.startsWith("\"")&&localPart.endsWith("\""))
+		{
+			if(localPart.substring(1,localPart.length()-1).indexOf('"')>=0)
+				return false;
+		}
+		else
+		for(int l=0;l<localPart.length();l++)
+		{
+			if(EMAIL_VALID_LOCAL_CHARS.indexOf(localPart.charAt(l))<0)
+				return false;
+		}
+		if(localPart.startsWith(".")||localPart.endsWith("."))
+			return false;
+		for(int l=0;l<network.length();l++)
+		{
+			if(EMAIL_VALID_DOMAIN_CHARS.indexOf(network.charAt(l))<0)
+				return false;
+		}
+		return !(network.startsWith("-")||network.endsWith("-")||network.startsWith("."));
+	}
 }

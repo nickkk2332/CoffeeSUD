@@ -2322,7 +2322,7 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 						if((msgs.length>0) && (msgs[1].length()>0))
 							subscribedMsg = CMLib.coffeeFilter().fullInFilter(CMStrings.replaceAll(msgs[1],"<NAME>",journalName));
 					}
-					CMLib.smtp().emailOrJournal(journalName,journalName,userName,subscribeTitle,subscribedMsg);
+					CMLib.journals().postToMailbox(journalName, userName, subscribeTitle,subscribedMsg);
 				}
 			}
 		}
@@ -2362,7 +2362,7 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 						if((msgs.length>3) && (msgs[1].length()>0))
 							unsubscribedMsg = CMLib.coffeeFilter().fullInFilter(CMStrings.replaceAll(msgs[3],"<NAME>",journalName));
 					}
-					CMLib.smtp().emailOrJournal(journalName,journalName,userName,unsubscribeTitle,unsubscribedMsg);
+					CMLib.journals().postToMailbox(journalName, userName, unsubscribeTitle,unsubscribedMsg);
 				}
 			}
 		}
@@ -2382,5 +2382,21 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 			if(expireDays > 0)
 				this.itemJournals.put(itemJournal.Name(), Integer.valueOf(expireDays));
 		}
+	}
+
+	@Override
+	public void postToMailbox(final String from, final String to, final String subject, final String message)
+	{
+		final String mailbox=CMProps.getVar(CMProps.Str.MAILBOX);
+		if(CMProps.getIntVar(CMProps.Int.MAXMAILBOX)>0)
+		{
+			final int count=CMLib.database().DBCountJournal(mailbox,null,to);
+			if(count>=CMProps.getIntVar(CMProps.Int.MAXMAILBOX))
+			{
+				Log.warnOut("Unable to leave mail for "+to+" because their mailbox is full.");
+				return;
+			}
+		}
+		CMLib.database().DBWriteJournal(mailbox, from, to, subject, message);
 	}
 }

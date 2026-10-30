@@ -121,7 +121,6 @@ public class CMLib
 		QUEST(QuestManager.class),
 		ABLEMAP(AbilityMapper.class),
 		ENCODER(TextEncoders.class),
-		SMTP(SMTPLibrary.class),
 		DICE(DiceLibrary.class),
 		FACTIONS(FactionManager.class),
 		CLANS(ClanManager.class),
@@ -722,16 +721,6 @@ public class CMLib
 	}
 
 	/**
-	 * Returns a reference to this threads email sending library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.SMTPLibrary
-	 * @return a reference to this threads email sending library.
-	 */
-	public static final SMTPLibrary smtp()
-	{
-		return (SMTPLibrary)l().libraries[Library.SMTP.ordinal()];
-	}
-
-	/**
 	 * Returns a reference to this threads localization library.
 	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.LanguageLibrary
 	 * @return a reference to this threads localization library.
@@ -1240,16 +1229,6 @@ public class CMLib
 	public final TextEncoders _encoder()
 	{
 		return (TextEncoders)libraries[Library.ENCODER.ordinal()];
-	}
-
-	/**
-	 * Returns a reference to this instances email sending library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.SMTPLibrary
-	 * @return a reference to this instances email sending library.
-	 */
-	public final SMTPLibrary _smtp()
-	{
-		return (SMTPLibrary)libraries[Library.SMTP.ordinal()];
 	}
 
 	/**

@@ -2572,7 +2572,7 @@ public class CMPlayers extends StdLibrary implements PlayerLibrary
 
 		final String msg=L("Your character, @x1, is going to be autopurged by the system in @x2.  ",to,textTimeLeft)+
 						 L("If you would like to keep this character active, please re-login.  This is an automated message, please do not reply.");
-		CMLib.smtp().emailOrJournal(from, from, to, subj, CMLib.coffeeFilter().simpleOutFilter(msg));
+		CMLib.journals().postToMailbox(from, to, subj, CMLib.coffeeFilter().simpleOutFilter(msg));
 	}
 
 	/**

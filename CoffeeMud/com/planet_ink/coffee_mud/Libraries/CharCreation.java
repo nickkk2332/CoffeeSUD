@@ -728,8 +728,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			acct.setPassword(password);
 			CMLib.database().DBCreateAccount(acct);
 			CMLib.players().addAccount(acct);
-			CMLib.smtp().emailOrJournal(acct.getAccountName(), "noreply",
-				acct.getAccountName(), L("Password for @x1",acct.getAccountName()),
+			CMLib.journals().postToMailbox(acct.getAccountName(), acct.getAccountName(), L("Password for @x1",acct.getAccountName()),
 				L("Your password for @x1 is '@x2'.\n\r"
 				+ "You can login by pointing your mud client at @x3 port(s): @x4.\n\r"
 				+ "After creating a character, you may use the PASSWORD command to change it once you are online.",
@@ -1456,7 +1455,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final boolean emailReq=(!CMProps.getVar(CMProps.Str.EMAILREQ).toUpperCase().startsWith("OPTION"));
 		final String newEmail=loginObj.lastInput;
 		if((emailReq||emailPassword)
-		&& ((newEmail==null)||(newEmail.trim().length()==0)||(!CMLib.smtp().isValidEmailAddress(newEmail))))
+		&& ((newEmail==null)||(newEmail.trim().length()==0)||(!CMStrings.isValidEmailAddress(newEmail))))
 		{
 			session.println(L("\n\rA valid email address is required.\n\r"));
 			loginObj.state=LoginState.ACCTCREATE_EMAILPROMPT;
@@ -1481,7 +1480,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final String newEmail=loginObj.savedInput;
 		boolean emailConfirmed=false;
 		if((newEmail.length()>0)&&(newEmail.equalsIgnoreCase(loginObj.lastInput)))
-			emailConfirmed=CMLib.smtp().isValidEmailAddress(newEmail);
+			emailConfirmed=CMStrings.isValidEmailAddress(newEmail);
 		loginObj.acct.setEmail("");
 		if(emailConfirmed||((!emailReq)&&(newEmail.trim().length()==0)))
 		{
@@ -1747,8 +1746,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 					}
 				}
 			}
-			CMLib.smtp().emailOrJournal(loginObj.player.name(), "noreply",
-				loginObj.player.name(), L("Password for @x1",loginObj.player.name()),
+			CMLib.journals().postToMailbox(loginObj.player.name(), loginObj.player.name(), L("Password for @x1",loginObj.player.name()),
 				L("Your password for @x1 at @x2 is '@x3'.",loginObj.player.name(),CMProps.getVar(CMProps.Str.MUDDOMAIN),password));
 			session.stopSession(true,false,false, false);
 			loginObj.reset=true;
@@ -2257,7 +2255,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			{
 				final String password=CMLib.encoder().generateRandomPassword();
 				acct.setPassword(password);
-				CMLib.smtp().emailOrJournal(acct.getAccountName(), "noreply", acct.getAccountName(), L("Password for @x1",acct.getAccountName()),
+				CMLib.journals().postToMailbox(acct.getAccountName(), acct.getAccountName(), L("Password for @x1",acct.getAccountName()),
 					L("Your password for @x1 is: @x2\n\r"
 					+ "You can login by pointing your mud client at @x3 port(s): @x4.\n\r"
 					+ "After creating a character, you may use the PASSWORD command to change it once you are online.",
@@ -2674,7 +2672,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final boolean emailReq=(!CMProps.getVar(CMProps.Str.EMAILREQ).toUpperCase().startsWith("OPTION"));
 		final String newEmail=loginObj.lastInput;
 		if((emailReq||emailPassword)
-		&& ((newEmail==null)||(newEmail.trim().length()==0)||(!CMLib.smtp().isValidEmailAddress(newEmail))))
+		&& ((newEmail==null)||(newEmail.trim().length()==0)||(!CMStrings.isValidEmailAddress(newEmail))))
 		{
 			session.println(L("\n\rA valid email address is required.\n\r"));
 			loginObj.state=LoginState.CHARCR_EMAILPROMPT;
@@ -2700,7 +2698,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final String newEmail=loginObj.savedInput;
 		boolean emailConfirmed=false;
 		if((newEmail.length()>0)&&(newEmail.equalsIgnoreCase(loginObj.lastInput)))
-			emailConfirmed=CMLib.smtp().isValidEmailAddress(newEmail);
+			emailConfirmed=CMStrings.isValidEmailAddress(newEmail);
 		loginObj.mob.playerStats().setEmail("");
 		if(emailConfirmed||((!emailReq)&&(newEmail.trim().length()==0)))
 		{
@@ -4057,7 +4055,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			final String password=CMLib.encoder().generateRandomPassword();
 			mob.playerStats().setPassword(password);
 			CMLib.database().DBUpdatePassword(mob.Name(),mob.playerStats().getPasswordStr());
-			CMLib.smtp().emailOrJournal(mob.Name(), "noreply", mob.Name(), L("Password for @x1",mob.Name()),
+			CMLib.journals().postToMailbox(mob.Name(), mob.Name(), L("Password for @x1",mob.Name()),
 				L("Your password for @x1 is: @x2\n\r"
 				+ "You can login by pointing your mud client at @x3 port(s): @x4.\n\r"
 				+ "You may use the PASSWORD command to change it once you are online.",

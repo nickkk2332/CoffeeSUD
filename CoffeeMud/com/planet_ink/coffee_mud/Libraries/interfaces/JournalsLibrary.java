@@ -166,6 +166,17 @@ public interface JournalsLibrary extends CMLibrary
 	public int loadForumJournals(String list);
 
 	/**
+	 * Leaves a message in the recipient's in-game mailbox, the journal named
+	 * by the MAILBOX ini setting, unless their mailbox is full.
+	 *
+	 * @param from the name of the sender
+	 * @param to the name of the recipient
+	 * @param subject the subject of the message
+	 * @param message the message text
+	 */
+	public void postToMailbox(String from, String to, String subject, String message);
+
+	/**
 	 * Returns an enumeration of all normal forumJournals (not
 	 * clan ones).  Unsorted for speed.
 	 *
@@ -648,60 +659,6 @@ public interface JournalsLibrary extends CMLibrary
 		 * Arbitrary transfer targets for admins
 		 */
 		ASSIGN;
-	}
-
-	/**
-	 * An accessor interface for a view of a journal that is
-	 * exposed to an email system.  The built-in SMTP server
-	 * in CoffeeMud is such a system.
-	 *
-	 * @see SMTPLibrary
-	 *
-	 * @author Bo Zimmerman
-	 *
-	 */
-	public static interface SMTPJournal
-	{
-		/**
-		 * Returns the name of the journal
-		 *
-		 * @return the name of the journal
-		 */
-		public String  name();
-
-		/**
-		 * Returns whether the journal allows forwarding to email addresses?
-		 *
-		 * @return whether the journal allows forwarding to email addresses?
-		 */
-		public boolean forward();
-
-		/**
-		 * Returns whether the journal allows non-subscribe posts via email
-		 *
-		 * @return whether the journal allows non-subscribe posts via email
-		 */
-		public boolean subscribeOnly();
-
-		/**
-		 * Returns whether the journal supports message expiration deletions
-		 * @return whether the journal supports message expiration deletions
-		 */
-		public boolean keepAll();
-
-		/**
-		 * Returns the email posting zapper mask
-		 *
-		 * @return the email posting zapper mask
-		 */
-		public String  criteriaStr();
-
-		/**
-		 * Returns the email posting zapper mask
-		 *
-		 * @return the email posting zapper mask
-		 */
-		public MaskingLibrary.CompiledZMask criteria();
 	}
 
 	/**

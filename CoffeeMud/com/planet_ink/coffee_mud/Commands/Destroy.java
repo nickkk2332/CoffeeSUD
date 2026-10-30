@@ -1895,37 +1895,6 @@ public class Destroy extends StdCommand
 			else
 			{
 				mob.tell(L("'@x1' is no longer debugging",named));
-				if(flag == CMSecurity.DbgFlag.HTTPACCESS)
-				{
-					for(final MudHost host : CMLib.hosts())
-					{
-						try
-						{
-							host.executeCommand("WEBSERVER ADMIN ACCESS OFF");
-							host.executeCommand("WEBSERVER PUB ACCESS OFF");
-						}
-						catch (final Exception e)
-						{
-							mob.tell(e.getMessage());
-						}
-					}
-				}
-				else
-				if(flag == CMSecurity.DbgFlag.HTTPREQ)
-				{
-					for(final MudHost host : CMLib.hosts())
-					{
-						try
-						{
-							host.executeCommand("WEBSERVER ADMIN DEBUG OFF");
-							host.executeCommand("WEBSERVER PUB DEBUG OFF");
-						}
-						catch (final Exception e)
-						{
-							mob.tell(e.getMessage());
-						}
-					}
-				}
 				CMSecurity.removeDebugVar(flag);
 			}
 			return false;
@@ -2185,42 +2154,6 @@ public class Destroy extends StdCommand
 				return errorOut(mob);
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 			manufacturer(mob,commands);
-		}
-		else
-		if(commandType.equals("WEBSERVER"))
-		{
-			if(!CMSecurity.isASysOp(mob))
-				return errorOut(mob);
-			if(commands.size()<3)
-			{
-				mob.tell(L("You must specify a web server name."));
-				return false;
-			}
-			else
-			{
-				try
-				{
-					mob.tell(CMLib.hosts().get(0).executeCommand("STOP WEB "+commands.get(2)));
-				}
-				catch (final Exception e)
-				{
-					mob.tell(L("Failure: @x1",e.getMessage()));
-				}
-			}
-		}
-		else
-		if(commandType.equals("SMTP"))
-		{
-			if(!CMSecurity.isASysOp(mob))
-				return errorOut(mob);
-			try
-			{
-				mob.tell(CMLib.hosts().get(0).executeCommand("STOP "+commandType));
-			}
-			catch (final Exception e)
-			{
-				mob.tell(L("Failure: @x1",e.getMessage()));
-			}
 		}
 		else
 		if(commandType.equals("POLL"))

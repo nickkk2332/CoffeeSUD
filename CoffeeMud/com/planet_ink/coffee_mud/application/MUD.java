@@ -28,7 +28,6 @@ import com.planet_ink.coffee_mud.core.database.DBConnection;
 import com.planet_ink.coffee_mud.core.database.DBInterface;
 import com.planet_ink.coffee_mud.core.threads.CMRunnable;
 import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
-import com.planet_ink.coffee_mud.core.smtp.SMTPserver;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -100,7 +99,6 @@ public class MUD extends Thread implements MudHost
 	protected static volatile int	 	 grpid				= 0;
 	protected static boolean			 bringDown			= false;
 	protected static String				 execExternalCommand= null;
-	protected static SMTPserver			 smtpServerThread	= null;
 	protected static List<DBConnector>	 databases			= new Vector<DBConnector>();
 	protected static final ServiceEngine serviceEngine		= new ServiceEngine();
 	protected static AtomicBoolean 		 bootSync			= new AtomicBoolean(false);
@@ -969,17 +967,6 @@ public class MUD extends Thread implements MudHost
 		Log.sysOut(Thread.currentThread().getName(),"All users logged off.");
 		if(debugMem) shutdownMemReport("Sessions");
 
-		if(smtpServerThread!=null)
-		{
-			CMProps.setUpAllLowVar(CMProps.Str.MUDSTATUS,"Shutting down...smtp server");
-			smtpServerThread.shutdown();
-			smtpServerThread = null;
-			Log.sysOut(Thread.currentThread().getName(),"SMTP Server stopped.");
-			if(S!=null)
-				S.println(CMLib.lang().L("SMTP Server stopped"));
-			if(debugMem) shutdownMemReport("SMTP Server");
-		}
-
 		shutdownStateTime.set(System.currentTimeMillis());
 		for(final CMLib.Library lib : libraryShutdownLists[1])
 			shutdownLibrarySet(lib, S, shutdownStateTime, debugMem);
@@ -1494,18 +1481,6 @@ public class MUD extends Thread implements MudHost
 				Log.errOut(e);
 				Log.errOut("Database error! Panic shutdown!");
 				return false;
-			}
-
-			smtpServerThread = new SMTPserver(CMLib.mud(0)); // initializes variables, even if it's not used
-			if(page.getPrivateStr("RUNSMTPSERVER").equalsIgnoreCase("true"))
-			{
-				smtpServerThread.start();
-				serviceEngine.startTickDown(Thread.currentThread().getThreadGroup(),smtpServerThread,Tickable.TICKID_EMAIL,CMProps.getTickMillis(),(int)CMProps.getTicksPerMinute() * 5);
-			}
-			else
-			{
-				smtpServerThread = null;
-				CMProps.setBoolAllVar(CMProps.Bool.EMAILFORWARDING,false);
 			}
 
 			CMProps.setUpLowVar(CMProps.Str.MUDSTATUS,"Booting: loading base classes");
@@ -2207,28 +2182,8 @@ public class MUD extends Thread implements MudHost
 	}
 
 	/**
-	 * Executes a command on the CoffeeMud server concerning resources
-	 * presently still managed by the main server and not a library.
-	 *
-	 * The following commands are currently supported:
-	 *
-	 * GET SMTP PORT Returns the port number the SMTP server is running on,
-	 *   or -1 if it is not running.
-	 * TICK SMTP Forces the SMTP server to run a tick.
-	 * START WEB [name] Starts the web server with the given name, as defined
-	 *   in the ini file.
-	 * STOP WEB [name] Stops the web server with the given name, as defined
-	 *   in the ini file.
-	 * START SMTP Starts the SMTP server.
-	 * STOP SMTP Stops the SMTP server.
-	 * WEBSERVER [name] PORT Returns the port number the web server with the
-	 *   given name is running on.
-	 * WEBSERVER [name] DEBUG [flags] Sets the debug flags for the web server
-	 *   with the given name. Flags are defined in the ini file.
-	 * WEBSERVER [name] ACCESS [flags] Sets the access log flags for the web
-	 *   server with the given name.
-	 *
-	 * Flags are defined in the ini file.
+	 * Executes a command on the host.  The single-player host has none left:
+	 * the web and mail servers that these commands controlled are gone.
 	 *
 	 * @param cmd The command to execute
 	 * @return The result of the command
@@ -2236,73 +2191,6 @@ public class MUD extends Thread implements MudHost
 	@Override
 	public String executeCommand(final String cmd) throws Exception
 	{
-		final List<String> V=CMParms.parse(cmd);
-		if(V.size()==0)
-			throw new CMException("Unknown command!");
-		final String word=V.get(0);
-		if(word.equalsIgnoreCase("GET")&&(V.size()>1))
-		{
-			final String what=V.get(1);
-			if(what.equalsIgnoreCase("SMTP")&&(V.size()>2))
-			{
-				final String what2=V.get(2);
-				if(what2.equalsIgnoreCase("PORT"))
-					return ""+((smtpServerThread==null)?-1:smtpServerThread.getSMTPPort());
-				return "";
-			}
-			else
-				return CMLib.lang().L("Failure");
-		}
-		else
-		if(word.equalsIgnoreCase("TICK")&&(V.size()>1))
-		{
-			final String what=V.get(1);
-			if(what.equalsIgnoreCase("SMTP"))
-			{
-				if((smtpServerThread != null)
-				&&(smtpServerThread.tick(smtpServerThread, Tickable.TICKID_EMAIL)))
-					return CMLib.lang().L("Done");
-				else
-					return CMLib.lang().L("Failure");
-			}
-			else
-				return CMLib.lang().L("Failure");
-		}
-		else
-		if(word.equalsIgnoreCase("START")&&(V.size()>1))
-		{
-			final String what=V.get(1);
-			if(what.equalsIgnoreCase("SMTP"))
-			{
-				if(smtpServerThread==null)
-				{
-					smtpServerThread = new SMTPserver(CMLib.mud(0)); // initializes variables, even if it's not used
-					smtpServerThread.start();
-					serviceEngine.startTickDown(Thread.currentThread().getThreadGroup(),
-							smtpServerThread,
-							Tickable.TICKID_EMAIL,
-							CMProps.getTickMillis(),(int)CMProps.getTicksPerMinute() * 5);
-					return CMLib.lang().L("Done");
-				}
-				return CMLib.lang().L("Failure");
-			}
-		}
-		else
-		if(word.equalsIgnoreCase("STOP")&&(V.size()>1))
-		{
-			final String what=V.get(1);
-			if(what.equalsIgnoreCase("SMTP"))
-			{
-				if(smtpServerThread!=null)
-				{
-					smtpServerThread.shutdown();
-					serviceEngine.unTickAll(smtpServerThread);
-					smtpServerThread = null;
-					return CMLib.lang().L("Done");
-				}
-				return CMLib.lang().L("Failure");
-			}
-		}
-		throw new CMException("Unknown command: "+word);
+		throw new CMException("Unknown command: "+cmd);
 	}
 }

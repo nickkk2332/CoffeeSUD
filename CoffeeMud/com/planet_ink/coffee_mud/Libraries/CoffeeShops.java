@@ -2646,12 +2646,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			else
 			if(M.playerStats()!=null)
 			{
-				CMLib.smtp().emailIfPossible(CMProps.getVar(CMProps.Str.SMTPSERVERNAME),
-											"auction@"+CMProps.getVar(CMProps.Str.MUDDOMAIN).toLowerCase(),
-											"noreply@"+CMProps.getVar(CMProps.Str.MUDDOMAIN).toLowerCase(),
-											M.playerStats().getEmail(),
-											"Auction Update for item: "+regardingItem,
-											resp);
+				CMLib.journals().postToMailbox("Auction", M.Name(), "Auction Update for item: "+regardingItem, resp);
 			}
 		}
 		catch (final Exception e)

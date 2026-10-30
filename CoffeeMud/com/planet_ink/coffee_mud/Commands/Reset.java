@@ -937,7 +937,7 @@ public class Reset extends StdCommand
 				mob.tell(L("'@x1' is not a player or account.",name));
 				return false;
 			}
-			if(CMLib.smtp().isValidEmailAddress(stat.getEmail()))
+			if(CMStrings.isValidEmailAddress(stat.getEmail()))
 			{
 				if((mob.session()==null)||(mob.session().confirm(L("Generate a random password for '@x1' and email to '@x2' (Y/n)?",finalName,stat.getEmail()),"Y")))
 				{
@@ -948,8 +948,7 @@ public class Reset extends StdCommand
 						CMLib.database().DBUpdateAccount((PlayerAccount)stat);
 					if(M!=null)
 						CMLib.database().DBUpdatePassword(M.Name(),stat.getPasswordStr());
-					CMLib.smtp().emailOrJournal(finalName, "noreply",
-							stat.getEmail(), L("Password for @x1",finalName),
+					CMLib.journals().postToMailbox(finalName, stat.getEmail(), L("Password for @x1",finalName),
 							L("Your password for @x1 at @x2 has been reset by @x3.  ",finalName,CMProps.getVar(CMProps.Str.MUDDOMAIN),mob.Name())+
 							L("It is now: '@x1'.",password));
 					mob.tell(L("The password has been reset, and this action has been logged."));
@@ -965,8 +964,7 @@ public class Reset extends StdCommand
 					CMLib.database().DBUpdateAccount((PlayerAccount)stat);
 				if(M!=null)
 					CMLib.database().DBUpdatePassword(M.Name(),stat.getPasswordStr());
-				CMLib.smtp().emailOrJournal(finalName, "noreply",
-						stat.getEmail(), L("Password for @x1",finalName),
+				CMLib.journals().postToMailbox(finalName, stat.getEmail(), L("Password for @x1",finalName),
 						L("Your password for @x1 at @x2 has been reset by @x3. ",finalName,CMProps.getVar(CMProps.Str.MUDDOMAIN),mob.Name())+
 						L("It is now: '@x1'.",password));
 				mob.tell(L("The password has been reset, and this action has been logged."));
