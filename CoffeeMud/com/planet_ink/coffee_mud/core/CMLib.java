@@ -1,6 +1,7 @@
 package com.planet_ink.coffee_mud.core;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.threads.CMFactoryThread;
+import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMSecurity.DbgFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
@@ -1521,6 +1522,7 @@ public class CMLib
 	 */
 	public static final boolean s_sleep(final long millis)
 	{
+		ServiceEngine.beforeSleep();
 		try
 		{
 			Thread.sleep(millis);

@@ -60,6 +60,19 @@ public class ServiceEngine implements ThreadEngine
 	private volatile CMRunnable[]	unsuspendedRunnables= null;
 	private volatile long			nextWakeAtTime		= 0;
 	private final List<CMRunnable>	schedTicks			= new LinkedList<CMRunnable>();
+	private final Object			wakeSignal			= new Object();
+	private boolean					wakeRequested		= false;
+	private final Set<Runnable>		gameJobs			= new LinkedHashSet<Runnable>();
+
+	/**
+	 * In single-player, once the game is running, the scheduler's thread runs
+	 * the whole game: every tick, every delayed job and every job handed to
+	 * executeRunnable, one at a time and in a known order.  This is that
+	 * thread, or null while the game runs on the worker pools (booting,
+	 * shutting down, or multi-player).
+	 */
+	private static volatile Thread			gameThread	= null;
+	private static volatile ServiceEngine	gameEngine	= null;
 
 	@Override
 	public String ID()
@@ -246,8 +259,7 @@ public class ServiceEngine implements ThreadEngine
 				if((this.nextWakeAtTime == 0) || (wakeAt < this.nextWakeAtTime))
 				{
 					this.nextWakeAtTime = wakeAt;
-					if(drivingThread!=null)
-						drivingThread.interrupt();
+					wakeScheduler();
 				}
 			}
 		}
@@ -261,6 +273,8 @@ public class ServiceEngine implements ThreadEngine
 	@Override
 	public void executeRunnable(final String threadGroupName, final Runnable R)
 	{
+		if(queueForGameThread(R))
+			return;
 		try
 		{
 			getPoolExecutor(threadGroupName).execute(R);
@@ -275,6 +289,8 @@ public class ServiceEngine implements ThreadEngine
 	@Override
 	public void executeRunnable(final char threadGroupId, final Runnable R)
 	{
+		if(queueForGameThread(R))
+			return;
 		try
 		{
 			getPoolExecutor(threadGroupId).execute(R);
@@ -289,6 +305,8 @@ public class ServiceEngine implements ThreadEngine
 	@Override
 	public void executeRunnable(final Runnable R)
 	{
+		if(queueForGameThread(R))
+			return;
 		try
 		{
 			getPoolExecutor(null).execute(R);
@@ -297,6 +315,115 @@ public class ServiceEngine implements ThreadEngine
 		{
 			Log.errOut("ServiceEngine","ExecRun: "+e.getMessage());
 			Log.debugOut("ServiceEngine",e);
+		}
+	}
+
+	/**
+	 * If the game runs on one thread, queues the given job for it and returns
+	 * true.  The job runs after whatever the game thread is doing now.
+	 * @param R the job
+	 * @return true if queued, false if the caller should use a worker pool
+	 */
+	protected boolean queueForGameThread(final Runnable R)
+	{
+		final Thread T=gameThread;
+		if(T==null)
+			return false;
+		synchronized(gameJobs)
+		{
+			gameJobs.add(R);
+		}
+		if(Thread.currentThread()!=T)
+			wakeScheduler();
+		return true;
+	}
+
+	/**
+	 * Runs the jobs queued for the game thread, including any queued while
+	 * they run.  Only the game thread calls this.
+	 */
+	protected void runGameJobs()
+	{
+		while(true)
+		{
+			final Runnable R;
+			synchronized(gameJobs)
+			{
+				final Iterator<Runnable> i=gameJobs.iterator();
+				if(!i.hasNext())
+					return;
+				R=i.next();
+				i.remove();
+			}
+			runOnThisThread(R);
+		}
+	}
+
+	/**
+	 * Runs one piece of work on the calling thread, logging anything it throws
+	 * so that the game thread keeps going.
+	 * @param R the work
+	 */
+	protected void runOnThisThread(final Runnable R)
+	{
+		try
+		{
+			R.run();
+		}
+		catch(final Throwable t)
+		{
+			Log.errOut("ServiceEngine",t);
+		}
+	}
+
+	/**
+	 * Called before the calling thread sleeps.  When that is the game thread,
+	 * it first runs the jobs queued for it, since nothing else will while it
+	 * sleeps; code that hands work off and then sleeps until it is done still
+	 * finishes.
+	 */
+	public static void beforeSleep()
+	{
+		final ServiceEngine E=gameEngine;
+		if((E!=null)&&(Thread.currentThread()==gameThread))
+			E.runGameJobs();
+	}
+
+	/**
+	 * Returns whether the calling thread is the single-player game thread.
+	 * @return true on the game thread
+	 */
+	public static boolean isGameThread()
+	{
+		return (gameThread!=null) && (Thread.currentThread()==gameThread);
+	}
+
+	/**
+	 * Wakes the scheduler to look again at what is due.  This signals rather
+	 * than interrupts, since the scheduler's thread may be running game code
+	 * whose own sleeps an interrupt would cut short.
+	 */
+	protected void wakeScheduler()
+	{
+		synchronized(wakeSignal)
+		{
+			wakeRequested=true;
+			wakeSignal.notifyAll();
+		}
+	}
+
+	/**
+	 * Sleeps the scheduler until the given time has passed or it is woken.
+	 * @param ms the longest time to sleep
+	 * @throws InterruptedException if interrupted
+	 */
+	protected void sleepScheduler(final long ms) throws InterruptedException
+	{
+		synchronized(wakeSignal)
+		{
+			if((!wakeRequested)&&(ms>0))
+				wakeSignal.wait(ms);
+			wakeRequested=false;
 		}
 	}
 
@@ -319,16 +446,14 @@ public class ServiceEngine implements ThreadEngine
 	protected void delTickGroup(final TickableGroup tock)
 	{
 		allTicks.remove(tock);
-		if(drivingThread!=null)
-			drivingThread.interrupt();
+		wakeScheduler();
 	}
 
 	protected void addTickGroup(final TickableGroup tock)
 	{
 		if(!allTicks.contains(tock))
 			allTicks.add(tock);
-		if(drivingThread!=null)
-			drivingThread.interrupt();
+		wakeScheduler();
 	}
 
 	protected ThreadGroup getAreaThemeThreadGroup(final Tickable E)
@@ -1698,10 +1823,18 @@ public class ServiceEngine implements ThreadEngine
 		while(!CMProps.isState(CMProps.HostState.RUNNING))
 			CMLib.s_sleep(1000);
 		final CMProps props = CMProps.instance();
+		if(CMProps.isSinglePlayer())
+		{
+			gameEngine=this;
+			gameThread=Thread.currentThread();
+		}
 		while(!props._isState(HostState.SHUTTINGDOWN))
 		{
 			try
 			{
+				final boolean oneThread=(gameThread==Thread.currentThread());
+				if(oneThread)
+					runGameJobs();
 				while(isAllSuspended() && (!props._isState(HostState.SHUTTINGDOWN)))
 				{
 					if((unsuspendedRunnables!=null)&&(unsuspendedRunnables.length>0))
@@ -1753,8 +1886,14 @@ public class ServiceEngine implements ThreadEngine
 						}
 					}
 					for(final CMRunnable R : runThese)
-						getPoolExecutor((char)R.getGroupID()).execute(R);
+					{
+						if(oneThread)
+							runOnThisThread(R);
+						else
+							getPoolExecutor((char)R.getGroupID()).execute(R);
+					}
 				}
+				final List<TickableGroup> dueGroups = new ArrayList<TickableGroup>();
 				synchronized(allTicks)
 				{
 					for(final TickableGroup T : allTicks)
@@ -1762,13 +1901,16 @@ public class ServiceEngine implements ThreadEngine
 						if(paused && (!T.isRealTime()))
 							continue;
 						final long groupNow = T.isRealTime() ? now : gameNow;
-						if(!T.isAwake() && (!getPoolExecutor(T.getThreadGroupName()).isActiveOrQueued(T)))
+						if(!T.isAwake() && (oneThread || !getPoolExecutor(T.getThreadGroupName()).isActiveOrQueued(T)))
 						{
 							if (T.getNextTickTime() <= groupNow)
 							{
 								if(now + T.getTickInterval() < nextWake)
 									nextWake = now + T.getTickInterval();
-								getPoolExecutor(T.getThreadGroupName()).execute(T);
+								if(oneThread)
+									dueGroups.add(T);
+								else
+									getPoolExecutor(T.getThreadGroupName()).execute(T);
 							}
 							else
 							if (nextWake > now + (T.getNextTickTime() - groupNow))
@@ -1781,10 +1923,17 @@ public class ServiceEngine implements ThreadEngine
 							nextWake = now + T.getTickInterval();
 					}
 				}
-				if(nextWake > now)
+				// on one thread, the due groups run here, outside the lock, so that
+				// a command waiting for the player's answer never holds it
+				for(final TickableGroup T : dueGroups)
+					runOnThisThread(T);
+				if(oneThread)
+					runGameJobs();
+				final long afterWork=System.currentTimeMillis();
+				if(nextWake > afterWork)
 				{
 					nextWakeAtTime = nextWake;
-					Thread.sleep(nextWake-now);
+					sleepScheduler(nextWake-afterWork);
 				}
 			}
 			catch(final InterruptedException e)
@@ -1795,6 +1944,8 @@ public class ServiceEngine implements ThreadEngine
 				Log.errOut("Scheduler",e);
 			}
 		}
+		gameThread=null;
+		gameEngine=null;
 		threadPools=new CMThreadPoolExecutor[256];
 		drivingThread=null;
 		supportClient=null;
