@@ -22,7 +22,6 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.JournalsLibrary.MsgMkrReso
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException;
 
 import java.util.*;
 
@@ -96,312 +95,306 @@ public class MOTD extends StdCommand
 		&&(parm.equals("AGAIN")||parm.equals("NEW")||oldOk))
 		{
 			final StringBuffer buf=new StringBuffer("");
-			try
+			String msg = motdFile.text().toString();
+			if(msg.length()>0)
 			{
-				String msg = motdFile.text().toString();
-				if(msg.length()>0)
-				{
-					if(msg.startsWith("<cmvp>"))
-						msg=new String(CMLib.webMacroFilter().virtualPageFilter(msg.substring(6).getBytes()));
-					buf.append(msg+"\n\r--------------------------------------\n\r");
-				}
+				if(msg.startsWith("<cmvp>"))
+					msg=new String(TextMacros.filter(msg.substring(6).getBytes()));
+				buf.append(msg+"\n\r--------------------------------------\n\r");
+			}
 
-				final MultiList<JournalEntry> multiJournal=new MultiList<JournalEntry>();
-				multiJournal.addAll(CMLib.database().DBReadJournalMsgsByUpdateDate("SYSTEM_NEWS", false, max));
-				if(max>multiJournal.size())
-					multiJournal.addAll(CMLib.database().DBReadJournalMsgsByUpdateDate("CoffeeMud News", false, max-multiJournal.size())); // deprecated
-				// now have a list of all messages, with newest at top, sorted downward so oldest at the bottom.
-				if(!oldOk)
+			final MultiList<JournalEntry> multiJournal=new MultiList<JournalEntry>();
+			multiJournal.addAll(CMLib.database().DBReadJournalMsgsByUpdateDate("SYSTEM_NEWS", false, max));
+			if(max>multiJournal.size())
+				multiJournal.addAll(CMLib.database().DBReadJournalMsgsByUpdateDate("CoffeeMud News", false, max-multiJournal.size())); // deprecated
+			// now have a list of all messages, with newest at top, sorted downward so oldest at the bottom.
+			if(!oldOk)
+			{
+				for(final Iterator<JournalEntry> i=multiJournal.iterator();i.hasNext();)
 				{
-					for(final Iterator<JournalEntry> i=multiJournal.iterator();i.hasNext();)
-					{
-						final JournalEntry E = i.next();
-						final long compdate=E.update();
-						if(compdate<pStats.getLastDateTime())
-							i.remove();
-					}
+					final JournalEntry E = i.next();
+					final long compdate=E.update();
+					if(compdate<pStats.getLastDateTime())
+						i.remove();
 				}
+			}
 
-				int firstToShow = (max-1<multiJournal.size()-1) ? max-1 : multiJournal.size()-1;
-				//should read these descending, trim to the max, then iterate.
+			int firstToShow = (max-1<multiJournal.size()-1) ? max-1 : multiJournal.size()-1;
+			//should read these descending, trim to the max, then iterate.
+			for(int i=firstToShow;i>=0;i--)
+			{
+				final JournalEntry entry=multiJournal.get(i);
+				final String from=entry.from();
+				final long last=entry.date();
+				String to=entry.to();
+				final String subject=entry.subj();
+				String message=entry.msg();
+				boolean allMine=to.equalsIgnoreCase(mob.Name())
+								||from.equalsIgnoreCase(mob.Name());
+				if(to.toUpperCase().trim().startsWith("MASK=")&&CMLib.masking().maskCheck(to.trim().substring(5),mob,true))
+				{
+					allMine=true;
+					to=CMLib.masking().maskDesc(to.trim().substring(5),true);
+				}
+				if(to.equalsIgnoreCase("ALL")||allMine)
+				{
+					if(message.startsWith("<cmvp>"))
+						message=new String(TextMacros.filter(message.substring(6).getBytes()));
+					buf.append("\n\rNews: "+CMLib.time().date2String(last)
+							 +"\n\rFROM: "+CMStrings.padRight(from,15)
+							 +"\n\rTO  : "+CMStrings.padRight(to,15)
+							 +"\n\rSUBJ: "+subject+"\n\r"+message);
+					buf.append("\n\r--------------------------------------\n\r");
+				}
+			}
+
+			for(final Pair<Clan,Integer> clanPair : CMLib.clans().findPrivilegedClans(mob, Clan.Function.CLAN_BENEFITS))
+			{
+				multiJournal.clear();
+				multiJournal.addAll(CMLib.database().DBReadJournalMsgsByUpdateDate("CLAN_MOTD_"+clanPair.first.clanID(), false, max));
+				firstToShow = (max-1<multiJournal.size()-1) ? max-1 : multiJournal.size()-1;
 				for(int i=firstToShow;i>=0;i--)
 				{
 					final JournalEntry entry=multiJournal.get(i);
-					final String from=entry.from();
-					final long last=entry.date();
-					String to=entry.to();
 					final String subject=entry.subj();
-					String message=entry.msg();
-					boolean allMine=to.equalsIgnoreCase(mob.Name())
-									||from.equalsIgnoreCase(mob.Name());
-					if(to.toUpperCase().trim().startsWith("MASK=")&&CMLib.masking().maskCheck(to.trim().substring(5),mob,true))
-					{
-						allMine=true;
-						to=CMLib.masking().maskDesc(to.trim().substring(5),true);
-					}
-					if(to.equalsIgnoreCase("ALL")||allMine)
-					{
-						if(message.startsWith("<cmvp>"))
-							message=new String(CMLib.webMacroFilter().virtualPageFilter(message.substring(6).getBytes()));
-						buf.append("\n\rNews: "+CMLib.time().date2String(last)
-								 +"\n\rFROM: "+CMStrings.padRight(from,15)
-								 +"\n\rTO  : "+CMStrings.padRight(to,15)
-								 +"\n\rSUBJ: "+subject+"\n\r"+message);
-						buf.append("\n\r--------------------------------------\n\r");
-					}
+					final String message=entry.msg();
+					buf.append("\n\r"+subject+":^N\n\r"+message);
+					buf.append("\n\r^N--------------------------------------\n\r");
 				}
+			}
 
-				for(final Pair<Clan,Integer> clanPair : CMLib.clans().findPrivilegedClans(mob, Clan.Function.CLAN_BENEFITS))
+			final List<String> postalChains=new ArrayList<String>();
+			final List<String> postalBranches=new ArrayList<String>();
+			PostOffice P=null;
+			for(final Enumeration<PostOffice> e=CMLib.city().postOffices();e.hasMoreElements();)
+			{
+				P=e.nextElement();
+				if(!postalChains.contains(P.postalChain()))
+					postalChains.add(P.postalChain());
+				if(!postalBranches.contains(P.postalBranch()))
+					postalBranches.add(P.postalBranch());
+			}
+			if((postalChains.size()>0)&&(P!=null))
+			{
+				List<PlayerData> V=CMLib.database().DBReadPlayerData(mob.Name(),postalChains);
+				final Map<PostOffice,int[]> res=getPostalResults(V,pStats.getLastDateTime());
+				for(final Iterator<PostOffice> e=res.keySet().iterator();e.hasNext();)
 				{
-					multiJournal.clear();
-					multiJournal.addAll(CMLib.database().DBReadJournalMsgsByUpdateDate("CLAN_MOTD_"+clanPair.first.clanID(), false, max));
-					firstToShow = (max-1<multiJournal.size()-1) ? max-1 : multiJournal.size()-1;
-					for(int i=firstToShow;i>=0;i--)
-					{
-						final JournalEntry entry=multiJournal.get(i);
-						final String subject=entry.subj();
-						final String message=entry.msg();
-						buf.append("\n\r"+subject+":^N\n\r"+message);
-						buf.append("\n\r^N--------------------------------------\n\r");
-					}
+					P=e.next();
+					final int[] ct=res.get(P);
+					buf.append("\n\r"+report("You have",P,ct));
 				}
-
-				final List<String> postalChains=new ArrayList<String>();
-				final List<String> postalBranches=new ArrayList<String>();
-				PostOffice P=null;
-				for(final Enumeration<PostOffice> e=CMLib.city().postOffices();e.hasMoreElements();)
+				final Map<PostOffice,int[]> res2=new Hashtable<PostOffice,int[]>();
+				for(final Pair<Clan,Integer> clanPair : CMLib.clans().findPrivilegedClans(mob, Clan.Function.WITHDRAW))
 				{
-					P=e.nextElement();
-					if(!postalChains.contains(P.postalChain()))
-						postalChains.add(P.postalChain());
-					if(!postalBranches.contains(P.postalBranch()))
-						postalBranches.add(P.postalBranch());
-				}
-				if((postalChains.size()>0)&&(P!=null))
-				{
-					List<PlayerData> V=CMLib.database().DBReadPlayerData(mob.Name(),postalChains);
-					final Map<PostOffice,int[]> res=getPostalResults(V,pStats.getLastDateTime());
-					for(final Iterator<PostOffice> e=res.keySet().iterator();e.hasNext();)
+					if(clanPair!=null)
 					{
-						P=e.next();
-						final int[] ct=res.get(P);
-						buf.append("\n\r"+report("You have",P,ct));
-					}
-					final Map<PostOffice,int[]> res2=new Hashtable<PostOffice,int[]>();
-					for(final Pair<Clan,Integer> clanPair : CMLib.clans().findPrivilegedClans(mob, Clan.Function.WITHDRAW))
-					{
-						if(clanPair!=null)
+						final Clan C=clanPair.first;
+						if(C.getAuthority(clanPair.second.intValue(),Clan.Function.WITHDRAW)!=Clan.Authority.CAN_NOT_DO)
 						{
-							final Clan C=clanPair.first;
-							if(C.getAuthority(clanPair.second.intValue(),Clan.Function.WITHDRAW)!=Clan.Authority.CAN_NOT_DO)
+							V=CMLib.database().DBReadPlayerData(C.name(),postalChains);
+							if(V.size()>0)
 							{
-								V=CMLib.database().DBReadPlayerData(C.name(),postalChains);
-								if(V.size()>0)
-								{
-									res2.putAll(getPostalResults(V,pStats.getLastDateTime()));
-								}
-							}
-							for(final Iterator<PostOffice> e=res2.keySet().iterator();e.hasNext();)
-							{
-								P=e.next();
-								final int[] ct=res2.get(P);
-								buf.append("\n\r"+report("Your "+C.getGovernmentName()+" "+C.getName()+" has",P,ct));
+								res2.putAll(getPostalResults(V,pStats.getLastDateTime()));
 							}
 						}
-					}
-					if((res.size()>0)||(res2.size()>0))
-						buf.append("\n\r--------------------------------------\n\r");
-				}
-
-				final List<JournalsLibrary.CommandJournal> myEchoableCommandJournals=new ArrayList<JournalsLibrary.CommandJournal>();
-				for(final Enumeration<JournalsLibrary.CommandJournal> e=CMLib.journals().commandJournals();e.hasMoreElements();)
-				{
-					final JournalsLibrary.CommandJournal CMJ=e.nextElement();
-					if((CMJ.getFlag(JournalsLibrary.CommandJournalFlags.ADMINECHO)!=null)
-					&&((CMSecurity.isJournalAccessAllowed(mob,CMJ.NAME()))
-						||CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.LISTADMIN)))
-							myEchoableCommandJournals.add(CMJ);
-				}
-				boolean CJseparator=false;
-				for(int cj=0;cj<myEchoableCommandJournals.size();cj++)
-				{
-					final JournalsLibrary.CommandJournal CMJ=myEchoableCommandJournals.get(cj);
-					final List<JournalEntry> items=CMLib.database().DBReadJournalMsgsNewerThan("SYSTEM_"+CMJ.NAME()+"S", "ALL", pStats.getLastDateTime());
-					if(items!=null)
-					{
-						for(int i=0;i<items.size();i++)
+						for(final Iterator<PostOffice> e=res2.keySet().iterator();e.hasNext();)
 						{
-							final JournalEntry entry=items.get(i);
-							final String from=entry.from();
-							final String message=entry.msg();
-							buf.append("\n\rNEW "+CMJ.NAME()+" from "+from+": "+message+"\n\r");
-							CJseparator=true;
+							P=e.next();
+							final int[] ct=res2.get(P);
+							buf.append("\n\r"+report("Your "+C.getGovernmentName()+" "+C.getName()+" has",P,ct));
 						}
 					}
 				}
-				if(CJseparator)
+				if((res.size()>0)||(res2.size()>0))
 					buf.append("\n\r--------------------------------------\n\r");
+			}
 
-				if(CMProps.getVar(CMProps.Str.MAILBOX).length()>0)
+			final List<JournalsLibrary.CommandJournal> myEchoableCommandJournals=new ArrayList<JournalsLibrary.CommandJournal>();
+			for(final Enumeration<JournalsLibrary.CommandJournal> e=CMLib.journals().commandJournals();e.hasMoreElements();)
+			{
+				final JournalsLibrary.CommandJournal CMJ=e.nextElement();
+				if((CMJ.getFlag(JournalsLibrary.CommandJournalFlags.ADMINECHO)!=null)
+				&&((CMSecurity.isJournalAccessAllowed(mob,CMJ.NAME()))
+					||CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.LISTADMIN)))
+						myEchoableCommandJournals.add(CMJ);
+			}
+			boolean CJseparator=false;
+			for(int cj=0;cj<myEchoableCommandJournals.size();cj++)
+			{
+				final JournalsLibrary.CommandJournal CMJ=myEchoableCommandJournals.get(cj);
+				final List<JournalEntry> items=CMLib.database().DBReadJournalMsgsNewerThan("SYSTEM_"+CMJ.NAME()+"S", "ALL", pStats.getLastDateTime());
+				if(items!=null)
 				{
-					final String[] queries=new String[] { mob.Name(),"ALL","MASK=%" };
-					final List<JournalEntry> msgs=CMLib.database().DBReadJournalMsgsByUpdateDate(CMProps.getVar(CMProps.Str.MAILBOX), false, max, queries);
-					for(int num=0;num<msgs.size();num++)
+					for(int i=0;i<items.size();i++)
 					{
-						final JournalEntry thismsg=msgs.get(num);
-						final String to=thismsg.to();
-						if(to.equalsIgnoreCase("all")
-						||to.equalsIgnoreCase(mob.Name())
-						||(to.toUpperCase().trim().startsWith("MASK=")&&CMLib.masking().maskCheck(to.trim().substring(5),mob,true)))
-						{
-							buf.append(L("\n\r^ZYou have mail waiting. Enter 'EMAIL BOX' to read.^?^.\n\r"));
-							break;
-						}
-					}
-				}
-
-				if((CMSecurity.isAllowed(mob, mob.location(), CMSecurity.SecFlag.CMDPLAYERS))
-				&&(CMProps.getBoolVar(CMProps.Bool.ACCOUNTEXPIRATION)))
-				{
-					final List<String> l=CMLib.login().getExpiredAcctOrCharsList();
-					if(l.size()>0)
-					{
-						if(CMProps.isUsingAccountSystem())
-							buf.append(L("\n\r^XThere are currently @x1 expired accounts",""+l.size()));
-						else
-							buf.append(L("\n\r^XThere are currently @x1 expired characters",""+l.size()));
-						buf.append(L(".  Enter LIST EXPIRED to view them.^?^.\n\r"));
-					}
-				}
-
-				final List<Quest> qQVec=CMLib.quests().getPlayerPersistentQuests(mob);
-				final Session session = mob.session();
-				if(session!=null)
-				{
-					if(buf.length()>0)
-					{
-						if(qQVec.size()>0)
-							buf.append(L("\n\r^HYou are on @x1 quest(s).  Enter QUESTS to see them!.^?^.\n\r",""+qQVec.size()));
-						session.wraplessPrintln("\n\r--------------------------------------\n\r"+buf.toString());
-						if (pause)
-						{
-							session.prompt(L("\n\rPress ENTER: "), 10000);
-							session.println("\n\r");
-						}
-					}
-					else
-					if(qQVec.size()>0)
-						session.println(L("\n\r^HYou are on @x1 quest(s).  Enter QUESTS to see them!.^?^.\n\r",""+qQVec.size()));
-					else
-					if(parm.equals("AGAIN"))
-						session.println(L("No @x1 to re-read.",what));
-
-					// check for new commandjournal postings that require a reply-to-self...
-					for(final Enumeration<JournalsLibrary.CommandJournal> e=CMLib.journals().commandJournals();e.hasMoreElements();)
-					{
-						final JournalsLibrary.CommandJournal CMJ=e.nextElement();
-						if(CMJ.getFlag(CommandJournalFlags.MOTD)==null)
-							continue;
-						final List<JournalEntry> items=CMLib.database().DBReadJournalMsgsNewerThan(CMJ.JOURNAL_NAME(), mob.Name(), -1);
-						if((items!=null)&&(items.size()>0))
-						{
-							if(session.confirm(L("You have messages waiting response in @x1. Read now (y/N)? ", CMJ.NAME()),"N",5000))
-							{
-								int count=1;
-								final Item journalItem=CMClass.getItem("StdJournal");
-								journalItem.setName(CMJ.JOURNAL_NAME());
-								journalItem.setReadableText("FILTER="+mob.Name());
-								while(count<=items.size())
-								{
-									final CMMsg msg2=CMClass.getMsg(mob,journalItem,null,CMMsg.MSG_READ,null,CMMsg.MSG_READ,""+count,CMMsg.MSG_READ,null);
-									msg2.setValue(1);
-									mob.phyStats().setSensesMask(mob.phyStats().sensesMask()|PhyStats.CAN_SEE_DARK);
-									journalItem.executeMsg(mob,msg2);
-									mob.recoverPhyStats();
-									if(msg2.value()==0)
-										break;
-									else
-									if(msg2.value()<0)
-										items.remove(count-1);
-									else
-									if(msg2.value()>0)
-										count++;
-								}
-							}
-						}
-					}
-					if((pStats.getSubscriptions().size()>0))
-					{
-						for(String sub : pStats.getSubscriptions())
-						{
-							if(sub.startsWith(" P :"))
-							{
-								sub=sub.substring(4).trim();
-								final List<JournalEntry> items=CMLib.database().DBReadJournalMsgsNewerThan(sub, null, pStats.getLastDateTime());
-								int newPosts = 0;
-								int newReplies=0;
-								final Map<String,JournalEntry> newEntries = new HashMap<String,JournalEntry>();
-								for(final JournalEntry J : items)
-									newEntries.put(J.key(), J);
-								for(final JournalEntry J : items)
-								{
-									if((J.to().equalsIgnoreCase(mob.Name())||J.to().equalsIgnoreCase("ALL"))
-									&&(!J.from().equalsIgnoreCase(mob.Name())))
-									{
-										if((J.parent()==null)
-										||(J.parent().length()==0))
-											newPosts++;
-										else
-										{
-											if(!newEntries.containsKey(J.parent()))
-											{
-												final JournalEntry E=CMLib.database().DBReadJournalEntry(sub, J.parent());
-												if(E!=null)
-													newEntries.put(E.key(), E);
-											}
-											final JournalEntry E=newEntries.get(J.parent());
-											if((E!=null)&&(E.from().equalsIgnoreCase(mob.Name())))
-												newReplies++;
-										}
-									}
-								}
-								if((session!=null)
-								&&(!session.isStopped()))
-								{
-									if((newPosts > 0) && (newReplies > 0))
-										session.println(L("The journal @x1 has @x2 new entries and @x3 replies for you.",sub,""+newPosts,""+newReplies));
-									else
-									if(newPosts > 0)
-										session.println(L("The journal @x1 has @x2 new entries.",sub,""+newPosts));
-									else
-									if(newReplies > 0)
-										session.println(L("The journal @x1 has @x2 new replies for you.",sub,""+newReplies));
-								}
-							}
-							else
-							if(sub.startsWith(" C :"))
-							{
-								sub=sub.substring(4).trim();
-								final int chanIdx = CMLib.channels().getChannelIndex(sub);
-								final int lowestIndex = CMLib.channels().getChannelQueIndex(chanIdx, mob, pStats.getLastDateTime());
-								if(lowestIndex >= 0)
-								{
-									final String channelName = CMLib.channels().getChannel(chanIdx).name();
-									final int lastIndex = CMLib.channels().getChannelQuePageEnd(chanIdx, mob);
-									session.println(L("You missed the last @x1 message(s) on the @x2 channel.",""+(lastIndex-lowestIndex)+1,channelName));
-									/*
-									final Command C = CMClass.getCommand("Channel");
-									final List<String> cmd = new XVector<String>(channelName,"LAST",(""+(lastIndex-lowestIndex)));
-									C.execute(mob, cmd, metaFlags);
-									*/
-								}
-							}
-						}
+						final JournalEntry entry=items.get(i);
+						final String from=entry.from();
+						final String message=entry.msg();
+						buf.append("\n\rNEW "+CMJ.NAME()+" from "+from+": "+message+"\n\r");
+						CJseparator=true;
 					}
 				}
 			}
-			catch(final HTTPRedirectException e)
+			if(CJseparator)
+				buf.append("\n\r--------------------------------------\n\r");
+
+			if(CMProps.getVar(CMProps.Str.MAILBOX).length()>0)
 			{
+				final String[] queries=new String[] { mob.Name(),"ALL","MASK=%" };
+				final List<JournalEntry> msgs=CMLib.database().DBReadJournalMsgsByUpdateDate(CMProps.getVar(CMProps.Str.MAILBOX), false, max, queries);
+				for(int num=0;num<msgs.size();num++)
+				{
+					final JournalEntry thismsg=msgs.get(num);
+					final String to=thismsg.to();
+					if(to.equalsIgnoreCase("all")
+					||to.equalsIgnoreCase(mob.Name())
+					||(to.toUpperCase().trim().startsWith("MASK=")&&CMLib.masking().maskCheck(to.trim().substring(5),mob,true)))
+					{
+						buf.append(L("\n\r^ZYou have mail waiting. Enter 'EMAIL BOX' to read.^?^.\n\r"));
+						break;
+					}
+				}
+			}
+
+			if((CMSecurity.isAllowed(mob, mob.location(), CMSecurity.SecFlag.CMDPLAYERS))
+			&&(CMProps.getBoolVar(CMProps.Bool.ACCOUNTEXPIRATION)))
+			{
+				final List<String> l=CMLib.login().getExpiredAcctOrCharsList();
+				if(l.size()>0)
+				{
+					if(CMProps.isUsingAccountSystem())
+						buf.append(L("\n\r^XThere are currently @x1 expired accounts",""+l.size()));
+					else
+						buf.append(L("\n\r^XThere are currently @x1 expired characters",""+l.size()));
+					buf.append(L(".  Enter LIST EXPIRED to view them.^?^.\n\r"));
+				}
+			}
+
+			final List<Quest> qQVec=CMLib.quests().getPlayerPersistentQuests(mob);
+			final Session session = mob.session();
+			if(session!=null)
+			{
+				if(buf.length()>0)
+				{
+					if(qQVec.size()>0)
+						buf.append(L("\n\r^HYou are on @x1 quest(s).  Enter QUESTS to see them!.^?^.\n\r",""+qQVec.size()));
+					session.wraplessPrintln("\n\r--------------------------------------\n\r"+buf.toString());
+					if (pause)
+					{
+						session.prompt(L("\n\rPress ENTER: "), 10000);
+						session.println("\n\r");
+					}
+				}
+				else
+				if(qQVec.size()>0)
+					session.println(L("\n\r^HYou are on @x1 quest(s).  Enter QUESTS to see them!.^?^.\n\r",""+qQVec.size()));
+				else
+				if(parm.equals("AGAIN"))
+					session.println(L("No @x1 to re-read.",what));
+
+				// check for new commandjournal postings that require a reply-to-self...
+				for(final Enumeration<JournalsLibrary.CommandJournal> e=CMLib.journals().commandJournals();e.hasMoreElements();)
+				{
+					final JournalsLibrary.CommandJournal CMJ=e.nextElement();
+					if(CMJ.getFlag(CommandJournalFlags.MOTD)==null)
+						continue;
+					final List<JournalEntry> items=CMLib.database().DBReadJournalMsgsNewerThan(CMJ.JOURNAL_NAME(), mob.Name(), -1);
+					if((items!=null)&&(items.size()>0))
+					{
+						if(session.confirm(L("You have messages waiting response in @x1. Read now (y/N)? ", CMJ.NAME()),"N",5000))
+						{
+							int count=1;
+							final Item journalItem=CMClass.getItem("StdJournal");
+							journalItem.setName(CMJ.JOURNAL_NAME());
+							journalItem.setReadableText("FILTER="+mob.Name());
+							while(count<=items.size())
+							{
+								final CMMsg msg2=CMClass.getMsg(mob,journalItem,null,CMMsg.MSG_READ,null,CMMsg.MSG_READ,""+count,CMMsg.MSG_READ,null);
+								msg2.setValue(1);
+								mob.phyStats().setSensesMask(mob.phyStats().sensesMask()|PhyStats.CAN_SEE_DARK);
+								journalItem.executeMsg(mob,msg2);
+								mob.recoverPhyStats();
+								if(msg2.value()==0)
+									break;
+								else
+								if(msg2.value()<0)
+									items.remove(count-1);
+								else
+								if(msg2.value()>0)
+									count++;
+							}
+						}
+					}
+				}
+				if((pStats.getSubscriptions().size()>0))
+				{
+					for(String sub : pStats.getSubscriptions())
+					{
+						if(sub.startsWith(" P :"))
+						{
+							sub=sub.substring(4).trim();
+							final List<JournalEntry> items=CMLib.database().DBReadJournalMsgsNewerThan(sub, null, pStats.getLastDateTime());
+							int newPosts = 0;
+							int newReplies=0;
+							final Map<String,JournalEntry> newEntries = new HashMap<String,JournalEntry>();
+							for(final JournalEntry J : items)
+								newEntries.put(J.key(), J);
+							for(final JournalEntry J : items)
+							{
+								if((J.to().equalsIgnoreCase(mob.Name())||J.to().equalsIgnoreCase("ALL"))
+								&&(!J.from().equalsIgnoreCase(mob.Name())))
+								{
+									if((J.parent()==null)
+									||(J.parent().length()==0))
+										newPosts++;
+									else
+									{
+										if(!newEntries.containsKey(J.parent()))
+										{
+											final JournalEntry E=CMLib.database().DBReadJournalEntry(sub, J.parent());
+											if(E!=null)
+												newEntries.put(E.key(), E);
+										}
+										final JournalEntry E=newEntries.get(J.parent());
+										if((E!=null)&&(E.from().equalsIgnoreCase(mob.Name())))
+											newReplies++;
+									}
+								}
+							}
+							if((session!=null)
+							&&(!session.isStopped()))
+							{
+								if((newPosts > 0) && (newReplies > 0))
+									session.println(L("The journal @x1 has @x2 new entries and @x3 replies for you.",sub,""+newPosts,""+newReplies));
+								else
+								if(newPosts > 0)
+									session.println(L("The journal @x1 has @x2 new entries.",sub,""+newPosts));
+								else
+								if(newReplies > 0)
+									session.println(L("The journal @x1 has @x2 new replies for you.",sub,""+newReplies));
+							}
+						}
+						else
+						if(sub.startsWith(" C :"))
+						{
+							sub=sub.substring(4).trim();
+							final int chanIdx = CMLib.channels().getChannelIndex(sub);
+							final int lowestIndex = CMLib.channels().getChannelQueIndex(chanIdx, mob, pStats.getLastDateTime());
+							if(lowestIndex >= 0)
+							{
+								final String channelName = CMLib.channels().getChannel(chanIdx).name();
+								final int lastIndex = CMLib.channels().getChannelQuePageEnd(chanIdx, mob);
+								session.println(L("You missed the last @x1 message(s) on the @x2 channel.",""+(lastIndex-lowestIndex)+1,channelName));
+								/*
+								final Command C = CMClass.getCommand("Channel");
+								final List<String> cmd = new XVector<String>(channelName,"LAST",(""+(lastIndex-lowestIndex)));
+								C.execute(mob, cmd, metaFlags);
+								*/
+							}
+						}
+					}
+				}
 			}
 			return false;
 		}

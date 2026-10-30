@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -84,9 +83,4 @@ public class EditorNA extends AbilityParmEditorImpl
 		return "";
 	}
 
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String, String> parms, final String oldVal, final String fieldName)
-	{
-		return "";
-	}
 }

@@ -52,7 +52,7 @@ public class Rules extends StdCommand
 		StringBuffer credits=new CMFile(Resources.buildResourcePath("text")+"rules.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			credits = CMLib.webMacroFilter().virtualPageFilter(credits);
+			credits = TextMacros.filter(credits);
 		}
 		catch (final Exception e)
 		{

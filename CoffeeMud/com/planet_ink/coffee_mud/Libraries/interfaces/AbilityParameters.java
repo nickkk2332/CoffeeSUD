@@ -14,7 +14,6 @@ import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_web.interfaces.*;
 
 import java.util.*;
 
@@ -189,37 +188,6 @@ public interface AbilityParameters extends CMLibrary
 		 * @return default value to use when no previous value is available
 		 */
 		public String defaultValue();
-
-		/**
-		 * The current web value of this field, sufficient to be put into the VALUE field
-		 * of a text or hidden tag.
-		 * @param httpReq the request objects, containing access to url parameters
-		 * @param parms the tag url parameters map
-		 * @param oldVal the original previous value of this field
-		 * @param fieldName the name of the field
-		 * @return current web value of this field
-		 */
-		public String webValue(HTTPRequest httpReq, java.util.Map<String,String> parms, String oldVal, String fieldName);
-
-		/**
-		 * Returns the html tag field, complete with current value, for this editor
-		 * @param httpReq the request objects, containing access to url parameters
-		 * @param parms the tag url parameters map
-		 * @param oldVal the original previous value of this field
-		 * @param fieldName the name of the field
-		 * @return the html tag field, complete with current value, for this editor
-		 */
-		public String webField(HTTPRequest httpReq, java.util.Map<String,String> parms, String oldVal, String fieldName);
-
-		/**
-		 * The current web value of this field, sufficient to be put into the overview table
-		 * showing the value of all the fields.
-		 * @param httpReq the request objects, containing access to url parameters
-		 * @param parms the tag url parameters map
-		 * @param oldVal the original previous value of this field
-		 * @return current web value of this field for an overview table
-		 */
-		public String webTableField(HTTPRequest httpReq, java.util.Map<String,String> parms, String oldVal);
 
 		/**
 		 * Createa a new value field from an item, given the specific craftor to which this editor was made.

@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -74,31 +73,6 @@ public class EditorWearLoc extends AbilityParmEditorImpl
 	public String defaultValue()
 	{
 		return "NECK";
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		return httpReq.getUrlParameter(fieldName+"_WEARLOC");
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String value = webValue(httpReq,parms,oldVal,fieldName);
-		final StringBuffer str = new StringBuffer("");
-		str.append("\n\r<SELECT NAME="+fieldName+"_WORLOC>");
-		final Wearable.CODES codes = Wearable.CODES.instance();
-		for(int i=1;i<codes.total();i++)
-		{
-			final String locstr=codes.name(i);
-			str.append("<OPTION VALUE=\""+locstr+"\"");
-			if(locstr.equalsIgnoreCase(value))
-				str.append(" SELECTED");
-			str.append(">"+locstr);
-		}
-		str.append("</SELECT>");
-		return str.toString();
 	}
 
 	@Override

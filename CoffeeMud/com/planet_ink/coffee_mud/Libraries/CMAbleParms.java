@@ -1,6 +1,5 @@
 package com.planet_ink.coffee_mud.Libraries;
 
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.AbilityParmEditor;
@@ -1544,118 +1543,9 @@ public class CMAbleParms extends StdLibrary implements AbilityParameters
 		}
 
 		@Override
-		public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-		{
-			final String webValue = httpReq.getUrlParameter(fieldName);
-			switch(fieldType)
-			{
-			case ONEWORD:
-			case STRINGORNULL:
-			case STRING:
-			case NUMBER:
-			case NUMBERORNULL:
-			case NUMBER_PAIR:
-				return (webValue == null)?oldVal:webValue;
-			case MULTICHOICES:
-			{
-				if(webValue == null)
-					return oldVal;
-				String id="";
-				long num=0;
-				int index=0;
-				for(;httpReq.isUrlParameter(fieldName+id);id=""+(++index))
-				{
-					final String newVal = httpReq.getUrlParameter(fieldName+id);
-					if(CMath.s_long(newVal)<=0)
-						return newVal;
-					num |= CMath.s_long(newVal);
-				}
-				return ""+num;
-			}
-			case CHOICES:
-				return (webValue == null)?oldVal:webValue;
-			case SPECIAL:
-				break;
-			}
-			return "";
-		}
-
-		@Override
-		public String webTableField(final HTTPRequest httpReq, final java.util.Map<String, String> parms, final String oldVal)
-		{
-			return oldVal;
-		}
-
-		@Override
 		public String commandLineValue(final String oldVal)
 		{
 			return oldVal;
-		}
-
-		@Override
-		public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-		{
-			int textSize = 50;
-			final String webValue = webValue(httpReq,parms,oldVal,fieldName);
-			String onChange = null;
-			final Vector<String> choiceValues = new Vector<String>();
-			switch(fieldType)
-			{
-			case ONEWORD:
-				textSize = 10;
-			//$FALL-THROUGH$
-			case STRINGORNULL:
-			case STRING:
-				return "\n\r<INPUT TYPE=TEXT NAME=" + fieldName + " SIZE=" + textSize + " VALUE=\"" + webValue + "\">";
-			case NUMBER:
-			case NUMBERORNULL:
-			case NUMBER_PAIR:
-				return "\n\r<INPUT TYPE=TEXT NAME=" + fieldName + " SIZE=10 VALUE=\"" + webValue + "\">";
-			case MULTICHOICES:
-			{
-				onChange = " MULTIPLE ";
-				if(!parms.containsKey("NOSELECT"))
-					onChange+= "ONCHANGE=\"MultiSelect(this);\"";
-				if(CMath.isInteger(webValue))
-				{
-					final int bits = CMath.s_int(webValue);
-					for(int i=0;i<choices.size();i++)
-					{
-						final int bitVal =CMath.s_int(choices.get(i).first);
-						if((bitVal>0)&&(CMath.bset(bits,bitVal)))
-							choiceValues.addElement(choices.get(i).first);
-					}
-				}
-			}
-			//$FALL-THROUGH$
-			case CHOICES:
-			{
-				if(choiceValues.size()==0)
-					choiceValues.addElement(webValue);
-				if((onChange == null)&&(!parms.containsKey("NOSELECT")))
-					onChange = " ONCHANGE=\"Select(this);\"";
-				else
-				if(onChange==null)
-					onChange="";
-				final StringBuffer str= new StringBuffer("");
-				str.append("\n\r<SELECT NAME="+fieldName+onChange+">");
-				for(int i=0;i<choices.size();i++)
-				{
-					final String option = (choices.get(i).first);
-					str.append("<OPTION VALUE=\""+option+"\" ");
-					for(int c=0;c<choiceValues.size();c++)
-					{
-						if(option.equalsIgnoreCase(choiceValues.elementAt(c)))
-							str.append("SELECTED");
-					}
-					str.append(">"+(choices.get(i).second));
-				}
-				return str.toString()+"</SELECT>";
-			}
-			case SPECIAL:
-				break;
-			}
-			return "";
 		}
 
 		public abstract void createChoices();

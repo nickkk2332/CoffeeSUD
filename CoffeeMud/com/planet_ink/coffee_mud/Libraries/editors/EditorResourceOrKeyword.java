@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -61,56 +60,9 @@ public class EditorResourceOrKeyword extends AbilityParmEditorImpl
 	}
 
 	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		if(httpReq.isUrlParameter(fieldName+"_WHICH"))
-		{
-			final String which=httpReq.getUrlParameter(fieldName+"_WHICH");
-			if(which.trim().length()>0)
-				return httpReq.getUrlParameter(fieldName+"_RESOURCE");
-			return httpReq.getUrlParameter(fieldName+"_WORD");
-		}
-		return oldVal;
-	}
-
-	@Override
 	public String convertFromItem(final ItemCraftor A, final Item I)
 	{
 		return "";
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		String value=webValue(httpReq,parms,oldVal,fieldName);
-		if(value.endsWith("$"))
-			value = value.substring(0,oldVal.length()-1);
-		value = value.trim();
-		final StringBuffer str = new StringBuffer("");
-		str.append("\n\r<INPUT TYPE=RADIO NAME="+fieldName+"_WHICH ");
-		final boolean rsc=(value.trim().length()==0)||(RawMaterial.CODES.FIND_IgnoreCase(value)>=0);
-		if(rsc)
-			str.append("CHECKED ");
-		str.append("VALUE=\"RESOURCE\">");
-		str.append("\n\r<SELECT NAME="+fieldName+"_RESOURCE>");
-		final String[] Ss=RawMaterial.CODES.NAMES().clone();
-		Arrays.sort(Ss);
-		for(final String S : Ss)
-		{
-			final String VALUE = S.equals("NOTHING")?"":S;
-			str.append("<OPTION VALUE=\""+VALUE+"\"");
-			if(rsc&&(value.equalsIgnoreCase(VALUE)))
-				str.append(" SELECTED");
-			str.append(">"+CMStrings.capitalizeAndLower(S));
-		}
-		str.append("</SELECT>");
-		str.append("<BR>");
-		str.append("\n\r<INPUT TYPE=RADIO NAME="+fieldName+"_WHICH ");
-		if(!rsc)
-			str.append("CHECKED ");
-		str.append("VALUE=\"\">");
-		str.append("\n\r<INPUT TYPE=TEXT NAME="+fieldName+"_WORD VALUE=\""+(rsc?"":value)+"\">");
-		return str.toString();
 	}
 
 	@Override

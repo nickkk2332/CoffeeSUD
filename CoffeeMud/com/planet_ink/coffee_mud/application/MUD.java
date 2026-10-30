@@ -23,19 +23,12 @@ import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterProto;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterQuery;
 import com.planet_ink.coffee_mud.core.database.DBConnector;
 import com.planet_ink.coffee_mud.core.database.DBConnection;
 import com.planet_ink.coffee_mud.core.database.DBInterface;
 import com.planet_ink.coffee_mud.core.threads.CMRunnable;
 import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
 import com.planet_ink.coffee_mud.core.smtp.SMTPserver;
-import com.planet_ink.coffee_web.http.MIMEType;
-import com.planet_ink.coffee_web.interfaces.FileManager;
-import com.planet_ink.coffee_web.server.WebServer;
-import com.planet_ink.coffee_web.util.CWConfig;
-import com.planet_ink.coffee_web.util.CWThread;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -107,7 +100,6 @@ public class MUD extends Thread implements MudHost
 	protected static volatile int	 	 grpid				= 0;
 	protected static boolean			 bringDown			= false;
 	protected static String				 execExternalCommand= null;
-	protected static List<WebServer>	 webServers			= new Vector<WebServer>();
 	protected static SMTPserver			 smtpServerThread	= null;
 	protected static List<DBConnector>	 databases			= new Vector<DBConnector>();
 	protected static final ServiceEngine serviceEngine		= new ServiceEngine();
@@ -339,7 +331,7 @@ public class MUD extends Thread implements MudHost
 							}
 							try
 							{
-								introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+								introText = TextMacros.filter(introText);
 							}
 							catch (final Exception ex)
 							{
@@ -376,7 +368,7 @@ public class MUD extends Thread implements MudHost
 						StringBuffer introText=Resources.getFileResource(introFilename,true);
 						try
 						{
-							introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+							introText = TextMacros.filter(introText);
 						}
 						catch (final Exception ex)
 						{
@@ -587,7 +579,7 @@ public class MUD extends Thread implements MudHost
 				StringBuffer introText=Resources.getFileResource("text/intro.txt",true);
 				try
 				{
-					introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+					introText = TextMacros.filter(introText);
 				}
 				catch (final Exception ex)
 				{
@@ -1026,27 +1018,6 @@ public class MUD extends Thread implements MudHost
 		if(debugMem) shutdownMemReport("Database Connections");
 
 		shutdownStateTime.set(System.currentTimeMillis());
-		for(int i=0;i<webServers.size();i++)
-		{
-			final WebServer webServerThread=webServers.get(i);
-			CMProps.setUpAllLowVar(CMProps.Str.MUDSTATUS,"Shutting down web server "+webServerThread.getName()+"...");
-			try
-			{
-				shutdownStateTime.set(System.currentTimeMillis());
-				webServerThread.close();
-			}
-			catch (final Throwable ex)
-			{
-				Log.errOut(ex);
-			}
-			Log.sysOut(Thread.currentThread().getName(),"Web server "+webServerThread.getName()+" stopped.");
-			if(S!=null)
-				S.println(CMLib.lang().L("Web server @x1 stopped",webServerThread.getName()));
-			if(debugMem) shutdownMemReport("Web Server "+webServerThread.getName());
-		}
-		webServers.clear();
-
-		shutdownStateTime.set(System.currentTimeMillis());
 		CMProps.setUpAllLowVar(CMProps.Str.MUDSTATUS,"Shutting down...unloading macros");
 		CMLib.lang().clear();
 		if(debugMem) shutdownMemReport("Macros");
@@ -1102,76 +1073,6 @@ public class MUD extends Thread implements MudHost
 		if(keepItDown)
 			CMProps.setAllStates(CMProps.HostState.STOPPED);
 		Log.debugOut("Final Used memory = "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-	}
-
-	/**
-	 * Starts up a web server of the given name, using the given properties to
-	 * determine if it should be started, and with what debugging options.
-	 *
-	 * @param page the properties to use
-	 * @param serverName the name of the server (and .ini file) to start
-	 * @return true if the server was started, false otherwise
-	 */
-	private static boolean startWebServer(final CMProps page, final String serverName)
-	{
-		try
-		{
-			final StringBuffer commonProps=new CMFile("web/common.ini", null, CMFile.FLAG_LOGERRORS).text();
-			final StringBuffer finalProps=new CMFile("web/"+serverName+".ini", null, CMFile.FLAG_LOGERRORS).text();
-			commonProps.append("\n").append(finalProps.toString());
-			final CWConfig config=new CWConfig();
-			config.setFileManager(new CMFile.CMFileManager());
-			WebServer.initConfig(config, Log.instance(), new ByteArrayInputStream(commonProps.toString().getBytes()));
-			if(CMSecurity.isDebugging(DbgFlag.HTTPREQ))
-				config.setDebugFlag(page.getStr("DBGMSGS"));
-			if(CMSecurity.isDebugging(DbgFlag.HTTPACCESS))
-				config.setAccessLogFlag(page.getStr("ACCMSGS"));
-			final WebServer webServer=new WebServer(serverName+Thread.currentThread().getThreadGroup().getName().charAt(0),config);
-			config.setCoffeeWebServer(webServer);
-			webServer.start();
-			webServers.add(webServer);
-			return true;
-		}
-		catch(final Exception e)
-		{
-			Log.errOut("HTTP server "+serverName+" NOT started: "+e.getMessage());
-			return false;
-		}
-	}
-
-	/**
-	 * Stops the web server with the given name.
-	 *
-	 * @param serverName the name of the server to stop
-	 * @return true if it was stopped, false otherwise
-	 */
-	private static boolean stopWebServer(final String serverName)
-	{
-		try
-		{
-			final String oldStatus = CMProps.getVar(CMProps.Str.MUDSTATUS);
-			for(int i=0;i<webServers.size();i++)
-			{
-				final WebServer webServerThread=webServers.get(i);
-				if((webServerThread.getName().length() < 1)||(webServerThread.getName().indexOf('-')<0))
-					continue;
-				final String name = webServerThread.getName().substring(webServerThread.getName().indexOf('-')+1,webServerThread.getName().length()-1);
-				if(name.equals(serverName))
-				{
-					CMProps.setUpAllLowVar(CMProps.Str.MUDSTATUS,"Shutting down web server "+webServerThread.getName()+"...");
-					webServerThread.close();
-					Log.sysOut(Thread.currentThread().getName(),"Web server "+webServerThread.getName()+" stopped.");
-					webServers.remove(webServerThread);
-					CMProps.setUpAllLowVar(CMProps.Str.MUDSTATUS,oldStatus);
-					return true;
-				}
-			}
-		}
-		catch(final Exception e)
-		{
-			Log.errOut("HTTP server "+serverName+" NOT stopped: "+e.getMessage());
-		}
-		return false;
 	}
 
 	@Override
@@ -1318,25 +1219,7 @@ public class MUD extends Thread implements MudHost
 	@Override
 	public String geWebHostUrl()
 	{
-		WebServer server=null;
-		for(final WebServer serv : webServers)
-		{
-			if(!CMath.s_bool(serv.getConfig().getMiscProp("ADMIN")))
-			{
-				server=serv;
-				break;
-			}
-		}
-		if((server == null) && (webServers.size()>0))
-			server = webServers.get(0);
-		if(server == null)
-			return "/";
-		final int[] ports = server.getConfig().getHttpListenPorts();
-		if((ports == null)||(ports.length==0))
-			return "/";
-		if(CMParms.contains(ports, 80))
-			return "http://" + CMProps.getVar(Str.MUDDOMAIN)+"/";
-		return "http://" + CMProps.getVar(Str.MUDDOMAIN)+":"+ports[0]+"/";
+		return "/";
 	}
 
 	/**
@@ -1613,19 +1496,6 @@ public class MUD extends Thread implements MudHost
 				return false;
 			}
 
-			String webServersList=page.getPrivateStr("RUNWEBSERVERS");
-			if(webServersList.equalsIgnoreCase("true"))
-				webServersList="pub,admin";
-			if((webServersList.length()>0)&&(!webServersList.equalsIgnoreCase("false")))
-			{
-				final List<String> serverNames=CMParms.parseCommas(webServersList,true);
-				for(int s=0;s<serverNames.size();s++)
-				{
-					final String serverName=serverNames.get(s);
-					startWebServer(page, serverName);
-				}
-			}
-
 			smtpServerThread = new SMTPserver(CMLib.mud(0)); // initializes variables, even if it's not used
 			if(page.getPrivateStr("RUNSMTPSERVER").equalsIgnoreCase("true"))
 			{
@@ -1687,9 +1557,7 @@ public class MUD extends Thread implements MudHost
 				if((tCode==MAIN_HOST)||(checkPrivate&&CMProps.isPrivateToMe(CMLib.Library.CHANNELS.name())))
 				{
 					final String normalChannels=page.getStr("CHANNELS");
-					final String i3Channels=page.getBoolean("RUNI3SERVER") ? page.getStr("ICHANNELS") : "";
-					final String imc2Channels=page.getBoolean("RUNIMC2CLIENT") ? page.getStr("IMC2CHANNELS") : "";
-					numChannelsLoaded=CMLib.channels().loadChannels(normalChannels, i3Channels, imc2Channels);
+					numChannelsLoaded=CMLib.channels().loadChannels(normalChannels);
 				}
 				if((tCode==MAIN_HOST)||(checkPrivate&&CMProps.isPrivateToMe(CMLib.Library.JOURNALS.name())))
 				{
@@ -1908,7 +1776,7 @@ public class MUD extends Thread implements MudHost
 			// wait for ini to be loaded, and for other matters
 			if(threadCode!=MAIN_HOST)
 			{
-				while((CMLib.library(MAIN_HOST,CMLib.Library.INTERMUD)==null)&&(!MUD.bringDown))
+				while((CMLib.library(MAIN_HOST,CMLib.Library.THREADS)==null)&&(!MUD.bringDown))
 				{
 					if(!checkedSleep(500))
 						break;
@@ -1982,7 +1850,6 @@ public class MUD extends Thread implements MudHost
 			else
 			{
 				CMLib.registerLibrary(CMLib.library(MAIN_HOST,CMLib.Library.THREADS));
-				CMLib.registerLibrary(CMLib.library(MAIN_HOST,CMLib.Library.INTERMUD));
 			}
 			CMProps.setVar(CMProps.Str.INIPATH,iniFile,false);
 			CMProps.setUpLowVar(CMProps.Str.MUD_NAME,name.replace('\'','`'));
@@ -2100,10 +1967,7 @@ public class MUD extends Thread implements MudHost
 	@Override
 	public List<Runnable> getOverdueThreads()
 	{
-		final Vector<Runnable> V=new Vector<Runnable>();
-		for(int w=0;w<webServers.size();w++)
-			V.addAll(webServers.get(w).getOverdueThreads());
-		return V;
+		return new Vector<Runnable>();
 	}
 
 	/**
@@ -2408,16 +2272,6 @@ public class MUD extends Thread implements MudHost
 		if(word.equalsIgnoreCase("START")&&(V.size()>1))
 		{
 			final String what=V.get(1);
-			if(what.equalsIgnoreCase("WEB"))
-			{
-				if(V.size()<3)
-					return "Need Server Name";
-				if(startWebServer(CMProps.instance(),V.get(2)))
-					return CMLib.lang().L("Done");
-				else
-					return CMLib.lang().L("Failure");
-			}
-			else
 			if(what.equalsIgnoreCase("SMTP"))
 			{
 				if(smtpServerThread==null)
@@ -2437,16 +2291,6 @@ public class MUD extends Thread implements MudHost
 		if(word.equalsIgnoreCase("STOP")&&(V.size()>1))
 		{
 			final String what=V.get(1);
-			if(what.equalsIgnoreCase("WEB"))
-			{
-				if(V.size()<3)
-					return CMLib.lang().L("Need Server Name");
-				if(stopWebServer(V.get(2)))
-					return CMLib.lang().L("Done");
-				else
-					return CMLib.lang().L("Failure");
-			}
-			else
 			if(what.equalsIgnoreCase("SMTP"))
 			{
 				if(smtpServerThread!=null)
@@ -2458,55 +2302,6 @@ public class MUD extends Thread implements MudHost
 				}
 				return CMLib.lang().L("Failure");
 			}
-		}
-		else
-		if(word.equalsIgnoreCase("WEBSERVER")&&(V.size()>2))
-		{
-			final String var = V.get(2);
-			WebServer server=null;
-			for(final WebServer serv : webServers)
-			{
-				if(serv.getName().equalsIgnoreCase(V.get(1)))
-				{
-					server=serv;
-					break;
-				}
-				else
-				if(CMath.s_bool(serv.getConfig().getMiscProp("ADMIN")))
-				{
-					if(V.get(1).equalsIgnoreCase("ADMIN"))
-					{
-						server=serv;
-						break;
-					}
-				}
-				else
-				{
-					if(V.get(1).equalsIgnoreCase("PUB"))
-					{
-						server=serv;
-						break;
-					}
-				}
-			}
-			if(server==null)
-				throw new CMException("Unknown server: "+var);
-			if(var.equalsIgnoreCase("PORT"))
-			{
-				final int[] ports = server.getConfig().getHttpListenPorts();
-				if(ports.length==0)
-					return "";
-				return Integer.toString(ports[0]);
-			}
-			else
-			if((V.size()>3)&&(var.equalsIgnoreCase("DEBUG")))
-				server.getConfig().setDebugFlag(V.get(3));
-			else
-			if((V.size()>3)&&(var.equalsIgnoreCase("ACCESS")))
-				server.getConfig().setDebugFlag(V.get(3));
-			else
-				throw new CMException("Unknown variable: "+var);
-			return "";
 		}
 		throw new CMException("Unknown command: "+word);
 	}

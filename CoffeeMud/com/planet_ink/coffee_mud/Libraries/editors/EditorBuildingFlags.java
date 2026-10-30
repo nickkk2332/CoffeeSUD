@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -85,48 +84,6 @@ public class EditorBuildingFlags extends AbilityParmEditorImpl
 	public String[] fakeUserInput(final String oldVal)
 	{
 		return CMParms.parseSpaces(oldVal, true).toArray(new String[0]);
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String webValue = httpReq.getUrlParameter(fieldName);
-		if(webValue == null)
-			return oldVal;
-		final StringBuilder s=new StringBuilder("");
-		String id="";
-		int index=0;
-		final Pair<String[],String[]> codesFlags = getBuildingCodesNFlags();
-		for(;httpReq.isUrlParameter(fieldName+id);id=""+(++index))
-		{
-			final String newVal = httpReq.getUrlParameter(fieldName+id);
-			if(CMParms.containsIgnoreCase(codesFlags.second, newVal.toUpperCase().trim()))
-				s.append(" ").append(newVal.toUpperCase().trim());
-		}
-		return s.toString().trim();
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final StringBuffer str = new StringBuffer("");
-		final String webValue = webValue(httpReq,parms,oldVal,fieldName);
-		String onChange = null;
-		onChange = " MULTIPLE ";
-		if(!parms.containsKey("NOSELECT"))
-			onChange+= "ONCHANGE=\"MultiSelect(this);\"";
-		final Pair<String[],String[]> codesFlags = getBuildingCodesNFlags();
-		final String[] fakeValues = this.fakeUserInput(webValue);
-		str.append("\n\r<SELECT NAME="+fieldName+onChange+">");
-		for(int i=0;i<codesFlags.second.length;i++)
-		{
-			final String option = (codesFlags.second[i]);
-			str.append("<OPTION VALUE=\""+option+"\" ");
-			if(CMParms.containsIgnoreCase(fakeValues, option))
-				str.append("SELECTED");
-			str.append(">"+option);
-		}
-		return str.toString()+"</SELECT>";
 	}
 
 	@Override

@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -72,69 +71,6 @@ public class EditorCodedWearLocation extends AbilityParmEditorImpl
 	public String defaultValue()
 	{
 		return "NECK";
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final short[] layerAtt = new short[1];
-		final short[] layers = new short[1];
-		final long[] wornLoc = new long[1];
-		final boolean[] logicalAnd = new boolean[1];
-		final double[] hardBonus=new double[1];
-		CMLib.ableParms().parseWearLocation(layerAtt,layers,wornLoc,logicalAnd,hardBonus,oldVal);
-		if(httpReq.isUrlParameter(fieldName+"_WORNDATA"))
-		{
-			wornLoc[0]=CMath.s_long(httpReq.getUrlParameter(fieldName+"_WORNDATA"));
-			for(int i=1;;i++)
-				if(httpReq.isUrlParameter(fieldName+"_WORNDATA"+(Integer.toString(i))))
-					wornLoc[0]=wornLoc[0]|CMath.s_long(httpReq.getUrlParameter(fieldName+"_WORNDATA"+(Integer.toString(i))));
-				else
-					break;
-			logicalAnd[0] = httpReq.getUrlParameter(fieldName+"_ISTWOHANDED").equalsIgnoreCase("on");
-			layers[0] = CMath.s_short(httpReq.getUrlParameter(fieldName+"_LAYER"));
-			layerAtt[0] = 0;
-			if((httpReq.isUrlParameter(fieldName+"_SEETHRU"))
-			&&(httpReq.getUrlParameter(fieldName+"_SEETHRU").equalsIgnoreCase("on")))
-				layerAtt[0] |= Armor.LAYERMASK_SEETHROUGH;
-			if((httpReq.isUrlParameter(fieldName+"_MULTIWEAR"))
-			&&(httpReq.getUrlParameter(fieldName+"_MULTIWEAR").equalsIgnoreCase("on")))
-				layerAtt[0] |= Armor.LAYERMASK_MULTIWEAR;
-		}
-		return reconvert(layerAtt,layers,wornLoc,logicalAnd,hardBonus);
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String value = webValue(httpReq,parms,oldVal,fieldName);
-		final short[] layerAtt = new short[1];
-		final short[] layers = new short[1];
-		final long[] wornLoc = new long[1];
-		final boolean[] logicalAnd = new boolean[1];
-		final double[] hardBonus=new double[1];
-		CMLib.ableParms().parseWearLocation(layerAtt,layers,wornLoc,logicalAnd,hardBonus,value);
-		final StringBuffer str = new StringBuffer("");
-		str.append("\n\r<SELECT NAME="+fieldName+"_WORNDATA MULTIPLE>");
-		final Wearable.CODES codes = Wearable.CODES.instance();
-		for(int i=1;i<codes.total();i++)
-		{
-			final String climstr=codes.name(i);
-			final int mask=(int)CMath.pow(2,i-1);
-			str.append("<OPTION VALUE="+mask);
-			if((wornLoc[0]&mask)>0)
-				str.append(" SELECTED");
-			str.append(">"+climstr);
-		}
-		str.append("</SELECT>");
-		str.append("<BR>\n\r<INPUT TYPE=RADIO NAME="+fieldName+"_ISTWOHANDED value=\"on\" "+(logicalAnd[0]?"CHECKED":"")+">Is worn on All above Locations.");
-		str.append("<BR>\n\r<INPUT TYPE=RADIO NAME="+fieldName+"_ISTWOHANDED value=\"\" "+(logicalAnd[0]?"":"CHECKED")+">Is worn on ANY of the above Locations.");
-		str.append("<BR>\n\rLayer: <INPUT TYPE=TEXT NAME="+fieldName+"_LAYER SIZE=5 VALUE=\""+layers[0]+"\">");
-		final boolean seeThru = CMath.bset(layerAtt[0],Armor.LAYERMASK_SEETHROUGH);
-		final boolean multiWear = CMath.bset(layerAtt[0],Armor.LAYERMASK_MULTIWEAR);
-		str.append("&nbsp;&nbsp;\n\r<INPUT TYPE=CHECKBOX NAME="+fieldName+"_SEETHRU value=\"on\" "+(seeThru?"CHECKED":"")+">Is see-through.");
-		str.append("&nbsp;&nbsp;\n\r<INPUT TYPE=CHECKBOX NAME="+fieldName+"_MULTIWEAR value=\"on\" "+(multiWear?"CHECKED":"")+">Is multi-wear.");
-		return str.toString();
 	}
 
 	public String reconvert(final short[] layerAtt, final short[] layers, final long[] wornLoc, final boolean[] logicalAnd, final double[] hardBonus)

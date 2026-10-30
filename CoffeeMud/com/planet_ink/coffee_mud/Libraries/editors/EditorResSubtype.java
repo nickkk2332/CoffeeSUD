@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -82,9 +81,4 @@ public class EditorResSubtype extends AbilityParmEditorImpl
 		return super.commandLinePrompt(mob, oldVal, showNumber, showFlag).toUpperCase().trim();
 	}
 
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		return super.webValue(httpReq,parms,oldVal,fieldName).toUpperCase().trim();
-	}
 }

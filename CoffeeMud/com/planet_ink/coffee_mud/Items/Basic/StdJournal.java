@@ -18,7 +18,6 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.PlayerLibrary.ThinPlayer;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException;
 
 import java.util.*;
 import java.io.IOException;
@@ -953,14 +952,8 @@ public class StdJournal extends StdItem implements Book
 				buf.append("*");
 			else
 				buf.append(" ");
-			try
-			{
-				if(message.startsWith("<cmvp>"))
-					message=new String(CMLib.webMacroFilter().virtualPageFilter(message.substring(6).getBytes()));
-			}
-			catch(final HTTPRedirectException e)
-			{
-			}
+			if(message.startsWith("<cmvp>"))
+				message=new String(TextMacros.filter(message.substring(6).getBytes()));
 
 			if((allMine)||(to.equals("ALL")))
 			{

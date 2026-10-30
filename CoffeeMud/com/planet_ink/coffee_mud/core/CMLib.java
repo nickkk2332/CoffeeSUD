@@ -97,8 +97,6 @@ public class CMLib
 	{
 		DATABASE(DatabaseEngine.class),
 		THREADS(ThreadEngine.class),
-		INTERMUD(IntermudInterface.class),
-		WEBMACS(WebMacroLibrary.class),
 		LISTER(ListingLibrary.class),
 		MONEY(MoneyLibrary.class),
 		SHOPS(ShoppingLibrary.class),
@@ -383,16 +381,6 @@ public class CMLib
 	}
 
 	/**
-	 * Returns a reference to this threads Intermud3 access library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface
-	 * @return a reference to this threads Intermud3 access library.
-	 */
-	public static final IntermudInterface intermud()
-	{
-		return (IntermudInterface)l().libraries[Library.INTERMUD.ordinal()];
-	}
-
-	/**
 	 * Returns a reference to this threads item balancing library.
 	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.ItemBalanceLibrary
 	 * @return a reference to this threads item balancing library.
@@ -400,16 +388,6 @@ public class CMLib
 	public static final ItemBalanceLibrary itemBuilder()
 	{
 		return (ItemBalanceLibrary)l().libraries[Library.TIMS.ordinal()];
-	}
-
-	/**
-	 * Returns a reference to this threads web macro filtering library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.WebMacroLibrary
-	 * @return a reference to this threads web macro filtering library.
-	 */
-	public static final WebMacroLibrary webMacroFilter()
-	{
-		return (WebMacroLibrary)l().libraries[Library.WEBMACS.ordinal()];
 	}
 
 	/**
@@ -935,16 +913,6 @@ public class CMLib
 	}
 
 	/**
-	 * Returns a reference to this instances Intermud3 access library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface
-	 * @return a reference to this instances Intermud3 access library.
-	 */
-	public final IntermudInterface _intermud()
-	{
-		return (IntermudInterface)libraries[Library.INTERMUD.ordinal()];
-	}
-
-	/**
 	 * Returns a reference to this instances item balancing library.
 	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.ItemBalanceLibrary
 	 * @return a reference to this instances item balancing library.
@@ -952,16 +920,6 @@ public class CMLib
 	public final ItemBalanceLibrary _itemBuilder()
 	{
 		return (ItemBalanceLibrary)libraries[Library.TIMS.ordinal()];
-	}
-
-	/**
-	 * Returns a reference to this instances web macro filtering library.
-	 * @see com.planet_ink.coffee_mud.Libraries.interfaces.WebMacroLibrary
-	 * @return a reference to this instances web macro filtering library.
-	 */
-	public final WebMacroLibrary _webMacroFilter()
-	{
-		return (WebMacroLibrary)libraries[Library.WEBMACS.ordinal()];
 	}
 
 	/**

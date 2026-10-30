@@ -7,8 +7,11 @@ Starts CoffeeMud/sud.sh with the given ini overrides and types the script one
 line at a time.  Each line is sent only after the game has answered the
 previous one and gone quiet, the way a person waits to read before typing;
 some questions are asked asynchronously, and an answer sent too early is
-read as a command.  The transcript goes to standard output.  Exits with the
-game's exit code, or 124 if it does not finish in time.
+read as a command.  A script line "#expect TEXT" instead waits (up to
+EXPECT_LIMIT seconds) until TEXT has appeared in the output since the last
+line was sent, for commands that run longer than a pause.  The transcript
+goes to standard output.  Exits with the game's exit code, or 124 if it does
+not finish in time.
 """
 import os
 import subprocess
@@ -19,7 +22,8 @@ import time
 QUIET = 0.8        # seconds of silence that mean "the game is waiting"
 REPLY_LIMIT = 30   # most seconds to wait for an answer to one line
 BOOT_LIMIT = 120   # most seconds to wait for the first prompt
-TOTAL_LIMIT = 300
+EXPECT_LIMIT = 1800
+TOTAL_LIMIT = int(os.environ.get('SUDPLAY_LIMIT', '300'))
 
 
 def main():
@@ -30,7 +34,7 @@ def main():
     proc = subprocess.Popen([game] + sys.argv[2:], stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lock = threading.Lock()
-    state = {'last': time.time(), 'count': 0}
+    state = {'last': time.time(), 'count': 0, 'text': bytearray()}
 
     def pump():
         while True:
@@ -42,6 +46,7 @@ def main():
             with lock:
                 state['last'] = time.time()
                 state['count'] += len(b)
+                state['text'] += b
 
     reader = threading.Thread(target=pump, daemon=True)
     reader.start()
@@ -58,11 +63,23 @@ def main():
             time.sleep(0.1)
 
     wait_for_reply(0, BOOT_LIMIT)
+    sent_at = 0
     for line in script:
         if proc.poll() is not None:
             break
+        if line.startswith('#expect '):
+            want = line[len('#expect '):].encode()
+            end = time.time() + EXPECT_LIMIT
+            while time.time() < end and proc.poll() is None:
+                with lock:
+                    if want in state['text'][sent_at:]:
+                        break
+                time.sleep(0.5)
+            wait_for_reply(state['count'], QUIET)
+            continue
         with lock:
             before = state['count']
+            sent_at = len(state['text'])
         try:
             proc.stdin.write((line + '\n').encode())
             proc.stdin.flush()

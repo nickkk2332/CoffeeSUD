@@ -614,11 +614,7 @@ public class DefaultSocial implements Social
 					}
 				}
 			}
-			if (((target == null) && (makeTarget))
-			|| ((targetMud.length() > 0)
-				&& (imudChanName != null)
-				&& (CMLib.intermud().isAnyNonCM1Online())
-				&& (CMLib.intermud().isAnyImudChannel(imudChanName))))
+			if ((target == null) && (makeTarget))
 			{
 				target = CMClass.getFactoryMOB();
 				target.setName(targetStr);

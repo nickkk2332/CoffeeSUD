@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.core;
-import com.planet_ink.coffee_mud.WebMacros.interfaces.*;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.CMSecurity.DisFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
@@ -178,8 +177,6 @@ public class CMClass extends ClassLoader
 	SOFTWARE("com.planet_ink.coffee_mud.Items.interfaces.Software"),
 	/** stat constant for item type objects */
 	ITEM("com.planet_ink.coffee_mud.Items.interfaces.Item"),
-	/** stat constant for webmacros type objects */
-	WEBMACRO("com.planet_ink.coffee_mud.WebMacros.interfaces.WebMacro"),
 	/** stat constant for common type objects */
 	COMMON("com.planet_ink.coffee_mud.Common.interfaces.CMCommon"),
 	/** stat constant for library type objects */
@@ -210,7 +207,6 @@ public class CMClass extends ClassLoader
 	};
 
 	/** static int for the web macro object with the longest name, used for web optimization */
-	public static int longestWebMacro=-1;
 
 	protected Hashtable<String, CMCommon>	common			= new Hashtable<String, CMCommon>();
 	protected XVector<Race>					races			= new XVector<Race>();
@@ -230,7 +226,6 @@ public class CMClass extends ClassLoader
 	protected XVector<Area>					areaTypes		= new XVector<Area>();
 	protected XVector<Command>				commands		= new XVector<Command>();
 	protected XVector<CMLibrary>			libraries		= new XVector<CMLibrary>();
-	protected Hashtable<String, WebMacro>	webMacros		= new Hashtable<String, WebMacro>();
 	protected Hashtable<String, Command>	commandWords	= new Hashtable<String, Command>();
 
 	protected static final LinkedList<CMMsg>MSGS_CACHE		= new LinkedList<CMMsg>();
@@ -360,8 +355,6 @@ public class CMClass extends ClassLoader
 				return O instanceof ClanItem;
 			case TECH:
 				return O instanceof Electronics;
-			case WEBMACRO:
-				return O instanceof WebMacro;
 			case COMMON:
 				return O instanceof CMCommon;
 			case LIBRARY:
@@ -419,8 +412,6 @@ public class CMClass extends ClassLoader
 				return CMClass.getClanItem(ID);
 			case TECH:
 				return CMClass.getTech(ID);
-			case WEBMACRO:
-				return CMClass.getWebMacro(ID);
 			case COMMON:
 				return CMClass.getCommon(ID);
 			case LIBRARY:
@@ -457,8 +448,6 @@ public class CMClass extends ClassLoader
 			return CMObjectType.EXIT;
 		if(O instanceof Behavior)
 			return CMObjectType.BEHAVIOR;
-		if(O instanceof WebMacro)
-			return CMObjectType.WEBMACRO;
 		if(O instanceof Area)
 			return CMObjectType.AREA;
 		if(O instanceof CMLibrary)
@@ -573,8 +562,6 @@ public class CMClass extends ClassLoader
 			return c().clanItems;
 		case TECH:
 			return c().tech;
-		case WEBMACRO:
-			return c().webMacros;
 		case COMMON:
 			return c().common;
 		case LIBRARY:
@@ -883,18 +870,6 @@ public class CMClass extends ClassLoader
 	public static final Enumeration<Ability> abilities(final Filterer<Ability> f)
 	{
 		return new FilteredEnumeration<Ability>(c().abilities.elements(), f);
-	}
-
-	/**
-	 * An enumeration of all the stored webmacros in this classloader for this
-	 * thread
-	 *
-	 * @return an enumeration of all the stored webmacros in this classloader
-	 *  	   for this thread
-	 */
-	public static final Enumeration<WebMacro> webmacros()
-	{
-		return c().webMacros.elements();
 	}
 
 	/**
@@ -1243,18 +1218,6 @@ public class CMClass extends ClassLoader
 	}
 
 	/**
-	 * Returns a reference to the prototype for the web macro of the given ID
-	 * from your classloader
-	 *
-	 * @param macroName the ID() of the object to return
-	 * @return a reference to the prototype for the web macro of the given ID
-	 */
-	public static final WebMacro getWebMacro(final String macroName)
-	{
-		return c().webMacros.get(macroName);
-	}
-
-	/**
 	 * Returns a reference to the prototype for the race of the given ID from
 	 * your classloader
 	 *
@@ -1462,8 +1425,7 @@ public class CMClass extends ClassLoader
 	{
 		return races.size()+charClasses.size()+MOBs.size()+abilities.size()+locales.size()+exits.size()
 			  +items.size()+behaviors.size()+weapons.size()+armor.size()+miscMagic.size()+clanItems.size()
-			  +tech.size()+areaTypes.size()+common.size()+libraries.size()+commands.size()
-			  +webMacros.size();
+			  +tech.size()+areaTypes.size()+common.size()+libraries.size()+commands.size();
 	}
 
 	/**
@@ -3168,20 +3130,6 @@ public class CMClass extends ClassLoader
 			if(c.common.size()==0)
 				return false;
 
-			if((tCode!=MudHost.MAIN_HOST)&&(!CMProps.isPrivateToMe(CMClass.CMObjectType.WEBMACRO.name())))
-				c.webMacros=baseC.webMacros;
-			else
-			{
-				c.webMacros=CMClass.loadHashListToObj(prefix+"WebMacros/", "%DEFAULT%",CMObjectType.WEBMACRO.ancestorName);
-				Log.sysOut(Thread.currentThread().getName(),"WebMacros loaded  : "+c.webMacros.size());
-				for(final Enumeration<String> e=c.webMacros.keys();e.hasMoreElements();)
-				{
-					final String key=e.nextElement();
-					if(key.length()>longestWebMacro)
-						longestWebMacro=key.length();
-				}
-			}
-
 			if((tCode!=MudHost.MAIN_HOST)&&(!CMProps.isPrivateToMe(CMClass.CMObjectType.RACE.name())))
 				c.races=baseC.races;
 			else
@@ -3916,7 +3864,6 @@ public class CMClass extends ClassLoader
 		areaTypes.clear();
 		clanItems.clear();
 		commands.clear();
-		webMacros.clear();
 		commandWords.clear();
 	}
 }

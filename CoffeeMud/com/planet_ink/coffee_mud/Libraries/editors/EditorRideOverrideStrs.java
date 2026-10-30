@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -91,75 +90,6 @@ public class EditorRideOverrideStrs extends AbilityParmEditorImpl
 	public boolean confirmValue(final String oldVal)
 	{
 		return true;
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String[] finput = this.fakeUserInput(oldVal);
-		String stateStr=finput[0];
-		String stateSubjectStr=finput[1];
-		String riderStr=finput[2];
-		String mountStr=finput[3];
-		String dismountStr=finput[4];
-		String putStr=finput[5];
-		if(httpReq.isUrlParameter(fieldName+"_RSTATESTR"))
-			stateStr = httpReq.getUrlParameter(fieldName+"_RSTATESTR");
-		if(httpReq.isUrlParameter(fieldName+"_RSTATESUBJSTR"))
-			stateSubjectStr = httpReq.getUrlParameter(fieldName+"_RSTATESUBJSTR");
-		if(httpReq.isUrlParameter(fieldName+"_RRIDERSTR"))
-			riderStr = httpReq.getUrlParameter(fieldName+"_RRIDERSTR");
-		if(httpReq.isUrlParameter(fieldName+"_RMOUNTSTR"))
-			mountStr = httpReq.getUrlParameter(fieldName+"_RMOUNTSTR");
-		if(httpReq.isUrlParameter(fieldName+"_RDISMOUNTSTR"))
-			dismountStr = httpReq.getUrlParameter(fieldName+"_RDISMOUNTSTR");
-		if(httpReq.isUrlParameter(fieldName+"_RPUTSTR"))
-			putStr = httpReq.getUrlParameter(fieldName+"_RPUTSTR");
-		final StringBuilder str=new StringBuilder("");
-		str.append(stateStr.replace(';', ',')).append(';');
-		str.append(stateSubjectStr.replace(';', ',')).append(';');
-		str.append(riderStr.replace(';', ',')).append(';');
-		str.append(mountStr.replace(';', ',')).append(';');
-		str.append(dismountStr.replace(';', ',')).append(';');
-		str.append(putStr.replace(';', ','));
-		if(str.length()==5)
-			return "";
-		return str.toString();
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String value = webValue(httpReq, parms, oldVal, fieldName);
-		final StringBuffer str = new StringBuffer("");
-		str.append("<TABLE WIDTH=100% BORDER=\"1\" CELLSPACING=0 CELLPADDING=0>");
-		final String[] vals = this.fakeUserInput(value);
-		str.append("<TR>");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("State")+"</FONT></TD>");
-		str.append("<TD><INPUT TYPE=TEXT SIZE=50 NAME="+fieldName+"_RSTATESTR VALUE=\""+vals[0]+"\">");
-		str.append("</TR>");
-		str.append("<TR>");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("State Subj.")+"</FONT></TD>");
-		str.append("<TD><INPUT TYPE=TEXT SIZE=50 NAME="+fieldName+"_RSTATESUBJSTR VALUE=\""+vals[1]+"\">");
-		str.append("</TR>");
-		str.append("<TR>");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("Rider")+"</FONT></TD>");
-		str.append("<TD><INPUT TYPE=TEXT SIZE=50 NAME="+fieldName+"_RRIDERSTR VALUE=\""+vals[2]+"\">");
-		str.append("</TR>");
-		str.append("<TR>");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("Mount")+"</FONT></TD>");
-		str.append("<TD><INPUT TYPE=TEXT SIZE=50 NAME="+fieldName+"_RMOUNTSTR VALUE=\""+vals[3]+"\">");
-		str.append("</TR>");
-		str.append("<TR>");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("Dismount")+"</FONT></TD>");
-		str.append("<TD><INPUT TYPE=TEXT SIZE=50 NAME="+fieldName+"_RDISMOUNTSTR VALUE=\""+vals[4]+"\">");
-		str.append("</TR>");
-		str.append("<TR>");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("Put")+"</FONT></TD>");
-		str.append("<TD><INPUT TYPE=TEXT SIZE=50 NAME="+fieldName+"_RPUTSTR VALUE=\""+vals[5]+"\">");
-		str.append("</TR>");
-		str.append("</TABLE>");
-		return str.toString();
 	}
 
 	@Override

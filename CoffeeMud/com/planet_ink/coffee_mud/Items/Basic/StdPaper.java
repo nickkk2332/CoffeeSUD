@@ -18,7 +18,6 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.JournalsLibrary.MsgMkrReso
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException;
 
 import java.util.*;
 import java.io.IOException;

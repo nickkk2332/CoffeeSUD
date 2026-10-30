@@ -55,27 +55,7 @@ public class ChanWho extends StdCommand
 			mob.tell(L("You must specify a channel name. Try CHANNELS for a list."));
 			return false;
 		}
-		final int x=channel.indexOf('@');
-		String mud=null;
 		final ChannelsLibrary channels = CMLib.channels();
-		if(x>0)
-		{
-			mud=channel.substring(x+1);
-			final int channelInt=channels.getChannelIndex(channel.substring(0,x).toUpperCase());
-			if(channelInt<0)
-			{
-				mob.tell(L("You must specify a valid channel name. Try CHANNELS for a list."));
-				return false;
-			}
-			channel=channels.getChannel(channelInt).name().toUpperCase();
-			if((channel.length()==0)||(channelInt<0))
-			{
-				mob.tell(L("You must specify a valid channel name. Try CHANNELS for a list."));
-				return false;
-			}
-			CMLib.intermud().chanWho(mob,channel,mud);
-			return false;
-		}
 		final int channelInt=channels.getChannelIndex(channel.toUpperCase());
 		if(channelInt<0)
 		{

@@ -1,8 +1,6 @@
 package com.planet_ink.coffee_mud.Commands;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
-import com.planet_ink.coffee_mud.WebMacros.BankAccountInfo;
-import com.planet_ink.coffee_mud.WebMacros.BankAccountInfo.BankAccountStuff;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.MoneyLibrary.DebtItem;
 import com.planet_ink.coffee_mud.core.*;

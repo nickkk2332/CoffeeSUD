@@ -1826,7 +1826,7 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 				final PlayerData pData = PDs.get(ID);
 				CMClass.CMObjectType typ=CMLib.coffeeMaker().getUnknownTypeFromXML(pData.xml());
 				if(typ == null)
-					typ=CMClass.CMObjectType.WEBMACRO;
+					typ=CMClass.CMObjectType.COMMON;
 				final String typName;
 				if(!pData.who().equalsIgnoreCase(playerName))
 					typName="*"+typ.toString();

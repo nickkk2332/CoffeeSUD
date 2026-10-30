@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -75,48 +74,6 @@ public class EditorResourceNameAmountMaterialRequired extends AbilityParmEditorI
 	public int appliesToClass(final Object o)
 	{
 		return 0;
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		if(httpReq.isUrlParameter(fieldName+"_RESOURCE"))
-		{
-			final String rsc=httpReq.getUrlParameter(fieldName+"_RESOURCE");
-			final String amt=httpReq.getUrlParameter(fieldName+"_AMOUNT");
-			if((rsc.trim().length()==0)||(rsc.equalsIgnoreCase("NOTHING"))||(CMath.s_int(amt)<=0))
-				return "";
-			return rsc+"/"+amt;
-		}
-		return oldVal;
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String value=webValue(httpReq,parms,oldVal,fieldName);
-		String rsc = "";
-		int amt = 0;
-		final int x=value.indexOf('/');
-		if(x>0)
-		{
-			rsc = value.substring(0,x);
-			amt = CMath.s_int(value.substring(x+1));
-		}
-		final StringBuffer str=new StringBuffer("");
-		str.append("\n\r<SELECT NAME="+fieldName+"_RESOURCE MULTIPLE>");
-		final String[] Ss=RawMaterial.CODES.NAMES().clone();
-		Arrays.sort(Ss);
-		for(final String S : Ss)
-		{
-			str.append("<OPTION VALUE=\""+S+"\" "
-					+((S.equalsIgnoreCase(rsc))?"SELECTED":"")+">"
-					+CMStrings.capitalizeAndLower(S));
-		}
-		str.append("</SELECT>");
-		str.append("&nbsp;&nbsp;Amount: ");
-		str.append("<INPUT TYPE=TEXT NAME="+fieldName+"_AMOUNT VALUE="+amt+">");
-		return str.toString();
 	}
 
 	@Override

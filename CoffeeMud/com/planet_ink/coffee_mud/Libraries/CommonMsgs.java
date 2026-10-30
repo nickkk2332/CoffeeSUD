@@ -510,16 +510,8 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 
 	protected void postTell(final MOB mob, final MOB target, final String text)
 	{
-		String targetName=target.name();
-		if(targetName.indexOf('@')>=0)
-		{
-			final String mudName=targetName.substring(targetName.indexOf('@')+1);
-			targetName=targetName.substring(0,targetName.indexOf('@'));
-			if(!CMLib.intermud().isAnyNonCM1Online())
-				mob.tell(L("Intermud is unavailable."));
-			else
-				CMLib.intermud().imudTell(mob,targetName,mudName,text);
-		}
+		if(target.name().indexOf('@')>=0) // a player on another mud
+			mob.tell(L("That person doesn't appear to be here."));
 		else
 		{
 			final boolean ignore=(

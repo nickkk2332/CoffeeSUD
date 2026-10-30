@@ -9,7 +9,6 @@ import com.planet_ink.coffee_mud.Locales.interfaces.Room;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 import com.planet_ink.coffee_mud.core.database.DBConnections;
 import com.planet_ink.coffee_mud.core.interfaces.MudHost;
-import com.planet_ink.coffee_web.interfaces.FileManager;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -2227,80 +2226,4 @@ public class CMFile extends File
 		return this.getAbsolutePath();
 	}
 
-	/**
-	 * FileManager handler for CMFile, used by WebServer
-	 * @author Bo Zimmerman
-	 */
-	public static class CMFileManager implements FileManager
-	{
-		private CMFile getFinalFile(CMFile F)
-		{
-			if((!F.exists())&&(F.getParent()!=null))
-			{
-				final ClanManager clanLib = CMLib.clans();
-				if(clanLib!=null)
-				{
-					String templatePath = clanLib.getClanWebTemplateDir(F.getAbsolutePath());
-					if(templatePath==null)
-					{
-						templatePath = clanLib.getClanWebTemplateDir(F.getParent());
-						if(templatePath!=null)
-							templatePath += "/"+F.getName();
-					}
-					if(templatePath!=null)
-						F=new CMFile(templatePath,null);
-				}
-			}
-			return F;
-		}
-
-		@Override
-		public char getFileSeparator()
-		{
-			return '/';
-		}
-
-		@Override
-		public File createFileFromPath(final String localPath)
-		{
-			return new CMFile(localPath, null);
-		}
-
-		@Override
-		public File createFileFromPath(final File parent, final String localPath)
-		{
-			return createFileFromPath(parent.getAbsolutePath() + '/' + localPath);
-		}
-
-		@Override
-		public byte[] readFile(final File file) throws IOException, FileNotFoundException
-		{
-			return getFinalFile((CMFile)file).raw();
-		}
-
-		@Override
-		public InputStream getFileStream(final File file) throws IOException, FileNotFoundException
-		{
-			return getFinalFile((CMFile)file).getRawStream();
-		}
-
-		@Override
-		public RandomAccessFile getRandomAccessFile(final File file) throws IOException, FileNotFoundException
-		{
-			return new RandomAccessFile(new File(getFinalFile((CMFile)file).getLocalPathAndName()),"r");
-		}
-
-		@Override
-		public boolean supportsRandomAccess(final File file)
-		{
-			return getFinalFile((CMFile)file).isLocalFile();
-		}
-
-		@Override
-		public boolean allowedToReadData(final File file)
-		{
-			final CMFile F=getFinalFile((CMFile)file);
-			return F.exists() && F.canRead();
-		}
-	}
 }

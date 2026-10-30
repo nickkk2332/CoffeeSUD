@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -108,24 +107,6 @@ public class EditorContainerTypeOrLidlock extends AbilityParmEditorImpl
 	}
 
 	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String webValue = httpReq.getUrlParameter(fieldName);
-		if(webValue == null)
-			return oldVal;
-		String id="";
-		int index=0;
-		final StringBuilder str=new StringBuilder("");
-		for(;httpReq.isUrlParameter(fieldName+id);id=""+(++index))
-		{
-			final String newVal = httpReq.getUrlParameter(fieldName+id);
-			if((newVal!=null)&&(newVal.length()>0)&&(choices().containsFirst(newVal)))
-				str.append(newVal).append("|");
-		}
-		return str.toString();
-	}
-
-	@Override
 	public String commandLinePrompt(final MOB mob, final String oldVal, final int[] showNumber, final int showFlag)
 	throws java.io.IOException
 	{
@@ -144,25 +125,4 @@ public class EditorContainerTypeOrLidlock extends AbilityParmEditorImpl
 		return true;
 	}
 
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String webValue = webValue(httpReq,parms,oldVal,fieldName);
-		final List<String> webVals=CMParms.parseAny(webValue.toUpperCase().trim(), "|", true);
-		String onChange = null;
-		onChange = " MULTIPLE ";
-		if(!parms.containsKey("NOSELECT"))
-			onChange+= "ONCHANGE=\"MultiSelect(this);\"";
-		final StringBuilder str=new StringBuilder("");
-		str.append("\n\r<SELECT NAME="+fieldName+onChange+">");
-		for(int i=0;i<choices().size();i++)
-		{
-			final String option = (choices().get(i).first);
-			str.append("<OPTION VALUE=\""+option+"\" ");
-			if(webVals.contains(option))
-				str.append("SELECTED");
-			str.append(">"+(choices().get(i).second));
-		}
-		return str.toString()+"</SELECT>";
-	}
 }

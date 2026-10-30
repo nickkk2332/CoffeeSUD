@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -98,53 +97,6 @@ public class EditorExitNames extends AbilityParmEditorImpl
 		while(V.size()<6)
 			V.add("");
 		return CMParms.toStringArray(V);
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		if(httpReq.isUrlParameter(fieldName+"_W1"))
-		{
-			final StringBuilder str=new StringBuilder("");
-			str.append(httpReq.getUrlParameter(fieldName+"_W1")).append("|");
-			str.append(httpReq.getUrlParameter(fieldName+"_W2")).append("|");
-			str.append(httpReq.getUrlParameter(fieldName+"_W3")).append("|");
-			str.append(httpReq.getUrlParameter(fieldName+"_W4")).append("|");
-			str.append(httpReq.getUrlParameter(fieldName+"_W5")).append("|");
-			str.append(httpReq.getUrlParameter(fieldName+"_W6"));
-			String s=str.toString();
-			while(s.endsWith("|"))
-				s=s.substring(0,s.length()-1);
-			return s;
-		}
-		else
-		{
-			return oldVal;
-		}
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String[] fieldNames = new String[]{
-			CMLib.lang().L("Noun"),
-			CMLib.lang().L("Open"),
-			CMLib.lang().L("Close"),
-			CMLib.lang().L("Closed Display"),
-			CMLib.lang().L("Open Display"),
-			CMLib.lang().L("Description")
-		};
-		final StringBuffer str = new StringBuffer("");
-		str.append("<TABLE WIDTH=100% BORDER=\"1\" CELLSPACING=0 CELLPADDING=0>");
-		final String[] vals = this.fakeUserInput(oldVal);
-		for(int i=0;i<fieldNames.length;i++)
-		{
-			str.append("<TR><TD WIDTH=30%><FONT COLOR=WHITE>"+fieldNames[i]+"</FONT></TD>");
-			str.append("<TD><INPUT TYPE=TEXT SIZE=30 NAME="+fieldName+"_W"+(i+1)+" VALUE=\""+vals[i]+"\">");
-			str.append("</TD></TR>");
-		}
-		str.append("</TABLE>");
-		return str.toString();
 	}
 
 	@Override

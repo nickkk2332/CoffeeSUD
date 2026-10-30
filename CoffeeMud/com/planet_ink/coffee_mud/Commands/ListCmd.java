@@ -37,7 +37,6 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
 import com.planet_ink.coffee_mud.Tests.interfaces.CMTest;
 import com.planet_ink.coffee_mud.core.threads.*;
-import com.planet_ink.coffee_web.interfaces.HTTPRequest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -2357,14 +2356,8 @@ public class ListCmd extends StdCommand
 						help=help.toString().substring(6);
 					else
 						help="";
-					try
-					{
-						if((help!=null)&&(help.toString().indexOf('@')>=0))
-							help = CMLib.webMacroFilter().virtualPageFilter(help.toString());
-					}
-					catch (final com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException x)
-					{
-					}
+					if((help!=null)&&(help.toString().indexOf('@')>=0))
+						help = TextMacros.filter(help.toString());
 					String eqStr="";
 					if(R.outfit(null)!=null)
 					{
@@ -2486,14 +2479,8 @@ public class ListCmd extends StdCommand
 					help=help.toString().substring(11);
 				else
 					help="";
-				try
-				{
-					if((help!=null)&&(help.toString().indexOf('@')>=0))
-						help = CMLib.webMacroFilter().virtualPageFilter(help.toString());
-				}
-				catch (final com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException x)
-				{
-				}
+				if((help!=null)&&(help.toString().indexOf('@')>=0))
+					help = TextMacros.filter(help.toString());
 				final List<Item> items=C.outfit(null);
 				final StringBuilder outfit=new StringBuilder("");
 				if(items !=null)
@@ -5081,14 +5068,8 @@ public class ListCmd extends StdCommand
 				String help=CMLib.help().getHelpText(s,null,false,true);
 				if(help==null)
 					continue;
-				try
-				{
-					if(help.toString().indexOf('@')>=0)
-						help = CMLib.webMacroFilter().virtualPageFilter(help.toString());
-				}
-				catch (final com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException x)
-				{
-				}
+				if(help.toString().indexOf('@')>=0)
+					help = TextMacros.filter(help.toString());
 				String helpStr=help.toString();
 				if(helpStr.startsWith("<ABILITY>"))
 					continue;
@@ -5493,14 +5474,8 @@ public class ListCmd extends StdCommand
 				String helpStr="";
 				if(help==null)
 					help=CMLib.help().getHelpText(A.name(),null,archon,true);
-				try
-				{
-					if((help!=null)&&(help.toString().indexOf('@')>=0))
-						help = CMLib.webMacroFilter().virtualPageFilter(help.toString());
-				}
-				catch (final com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException x)
-				{
-				}
+				if((help!=null)&&(help.toString().indexOf('@')>=0))
+					help = TextMacros.filter(help.toString());
 				if((help!=null)&&(help.toString().startsWith("<ABILITY>")
 				||help.toString().startsWith("Property")
 				||help.toString().startsWith("Disease")))
@@ -5634,14 +5609,8 @@ public class ListCmd extends StdCommand
 					help=CMLib.help().getHelpText(B.name(),null,false,true);
 				if((help!=null)&&(help.toString().length()>0))
 				{
-					try
-					{
-						if(help.toString().indexOf('@')>=0)
-							help = CMLib.webMacroFilter().virtualPageFilter(help.toString());
-					}
-					catch (final com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException x)
-					{
-					}
+					if(help.toString().indexOf('@')>=0)
+						help = TextMacros.filter(help.toString());
 					helpStr=help.toString();
 					if(helpStr.startsWith("Behavior"))
 					{

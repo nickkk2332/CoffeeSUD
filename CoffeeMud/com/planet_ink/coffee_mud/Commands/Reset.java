@@ -986,9 +986,7 @@ public class Reset extends StdCommand
 				CMProps.instance().resetSecurityVars();
 				CMProps.instance().resetSystemVars();
 				final String normalChannels=ipage.getStr("CHANNELS");
-				final String i3Channels=ipage.getBoolean("RUNI3SERVER") ? ipage.getStr("ICHANNELS") : "";
-				final String imc2Channels=ipage.getBoolean("RUNIMC2CLIENT") ? ipage.getStr("IMC2CHANNELS") : "";
-				CMLib.channels().loadChannels(normalChannels,i3Channels,imc2Channels);
+				CMLib.channels().loadChannels(normalChannels);
 				CMLib.journals().loadCommandJournals(ipage.getStr("COMMANDJOURNALS"));
 				CMLib.journals().loadForumJournals(ipage.getStr("FORUMJOURNALS"));
 				mob.tell(L("Done."));

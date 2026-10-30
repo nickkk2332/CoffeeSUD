@@ -14,7 +14,6 @@ import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.ChannelsLibrary.CMChannel;
 import com.planet_ink.coffee_mud.Libraries.interfaces.ChannelsLibrary.ChannelFlag;
 import com.planet_ink.coffee_mud.Libraries.interfaces.ChannelsLibrary.ChannelMsg;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterProto;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
@@ -241,14 +240,6 @@ public interface ChannelsLibrary extends CMLibrary
 	public String getExtraChannelDesc(String channelName);
 
 	/**
-	 * Returns all the CMChannel objects for any channels flagged
-	 * as being mapped to the given external service.
-	 * @param proto which intermud service to fetch channels for
-	 * @return all the CMChannel objects for the protocol only
-	 */
-	public List<CMChannel> getIMudChannelsList(InterProto proto);
-
-	/**
 	 * Returns an array of all the names of all the channels.
 	 * @see ChannelsLibrary#getNumChannels()
 	 * @return an array of all the names of all the channels.
@@ -298,14 +289,12 @@ public interface ChannelsLibrary extends CMLibrary
 	public void restoreInvalidSnoopers(Session mySession, List<Session> invalid);
 
 	/**
-	 * Clears the channels list and then reloads it from the three given comma-delimited
+	 * Clears the channels list and then reloads it from the given comma-delimited
 	 * list of coded strings.
 	 * @param list the main game channel list
-	 * @param ilist the list of i3 channels
-	 * @param imc2list the list of imc2 channels
 	 * @return the total number of channels loaded
 	 */
-	public int loadChannels(String list, String ilist, String imc2list);
+	public int loadChannels(String list);
 
 	/**
 	 * Sends the given channel message from the given sender to the given session on the
@@ -338,14 +327,13 @@ public interface ChannelsLibrary extends CMLibrary
 	 * @see ChannelsLibrary.CMChannel
 	 * @see ChannelsLibrary.ChannelFlag
 	 * @param name the channel name
-	 * @param imudNames empty map, or map of service protocols to remote channel names
 	 * @param mask the zapper mask for who may read the channel
 	 * @param flags the channel flags to set for the given channel
 	 * @param colorOverrideANSI empty string for default, or the color code for this channel
 	 * @param colorOverrideWords empty string for default, or the color code for this channel
 	 * @return the newly created channel object
 	 */
-	public CMChannel createNewChannel(final String name, final Map<InterProto,String> imudNames,
+	public CMChannel createNewChannel(final String name,
 									  final String mask, final Set<ChannelFlag> flags,
 									  final String colorOverrideANSI, final String colorOverrideWords);
 
@@ -360,34 +348,6 @@ public interface ChannelsLibrary extends CMLibrary
 		 * @return name of the channel
 		 */
 		public String name();
-
-		/**
-		 * An empty string, or the name of the I3 channel that
-		 * this channel is mapped to.
-		 * @return the name of the I3 channel or ""
-		 */
-		public String i3name();
-
-		/**
-		 * An empty string, or the name of the IMC2 channel that
-		 * this channel is mapped to.
-		 * @return the name of the IMC2 channel or ""
-		 */
-		public String imc2Name();
-
-		/**
-		 * An empty string, or the name of the grapevine channel that
-		 * this channel is mapped to.
-		 * @return the name of the grapevine channel or ""
-		 */
-		public String grapevineName();
-
-		/**
-		 * An empty string, or the name of the discord channel that
-		 * this channel is mapped to.
-		 * @return the name of the discord channel or ""
-		 */
-		public String discordName();
 
 		/**
 		 * The zapper mask to filter in those who may read this

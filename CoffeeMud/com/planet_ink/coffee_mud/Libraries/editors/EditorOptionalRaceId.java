@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -82,38 +81,6 @@ public class EditorOptionalRaceId extends AbilityParmEditorImpl
 				return false;
 		}
 		return true;
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		Vector<String> raceIDs=null;
-		if(httpReq.isUrlParameter(fieldName+"_RACE"))
-		{
-			String id="";
-			raceIDs=new Vector<String>();
-			for(int i=0;httpReq.isUrlParameter(fieldName+"_RACE"+id);id=""+(++i))
-				raceIDs.addElement(httpReq.getUrlParameter(fieldName+"_RACE"+id).toUpperCase().trim());
-		}
-		else
-			raceIDs = CMParms.parse(oldVal.toUpperCase().trim());
-		return CMParms.combine(raceIDs,0);
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final Vector<String> raceIDs=CMParms.parse(webValue(httpReq,parms,oldVal,fieldName).toUpperCase());
-		final StringBuffer str = new StringBuffer("");
-		str.append("\n\r<SELECT NAME="+fieldName+"_RACE MULTIPLE>");
-		str.append("<OPTION VALUE=\"\" "+((raceIDs.size()==0)?"SELECTED":"")+">");
-		for(final Enumeration<Race> e=CMClass.races();e.hasMoreElements();)
-		{
-			final Race R=e.nextElement();
-			str.append("<OPTION VALUE=\""+R.ID()+"\" "+((raceIDs.contains(R.ID().toUpperCase()))?"SELECTED":"")+">"+R.name());
-		}
-		str.append("</SELECT>");
-		return str.toString();
 	}
 
 	@Override

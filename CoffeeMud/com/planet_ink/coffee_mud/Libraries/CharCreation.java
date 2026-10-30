@@ -30,7 +30,6 @@ import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB.Attrib;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_web.util.CWThread;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -752,7 +751,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer doneText=new CMFile(Resources.buildResourcePath("text")+"doneacct.txt",null,CMFile.FLAG_LOGERRORS).text();
 			try
 			{
-				doneText = CMLib.webMacroFilter().virtualPageFilter(doneText);
+				doneText = TextMacros.filter(doneText);
 			}
 			catch (final Exception ex)
 			{
@@ -893,7 +892,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer rejectText=Resources.getFileResource("text/nologins.txt",true);
 			try
 			{
-				rejectText = CMLib.webMacroFilter().virtualPageFilter(rejectText);
+				rejectText = TextMacros.filter(rejectText);
 			}
 			catch (final Exception ex)
 			{
@@ -1404,7 +1403,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"newacct.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+			introText = TextMacros.filter(introText);
 		}
 		catch (final Exception ex)
 		{
@@ -1433,7 +1432,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer emailIntro=new CMFile(Resources.buildResourcePath("text")+"email.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			 emailIntro = CMLib.webMacroFilter().virtualPageFilter(emailIntro);
+			 emailIntro = TextMacros.filter(emailIntro);
 		}
 		catch(final Exception ex)
 		{
@@ -1779,7 +1778,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"selchar.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+			introText = TextMacros.filter(introText);
 		}
 		catch (final Exception ex)
 		{
@@ -1825,7 +1824,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				final Map<String,String> map=new HashMap<String,String>();
 				map.put("canexport", Boolean.toString((acct.isSet(AccountFlag.CANEXPORT))));
 				map.put("emailok", Boolean.toString(!CMProps.getVar(CMProps.Str.EMAILREQ).toUpperCase().startsWith("DISABLE")));
-				accountHelp = CMLib.webMacroFilter().virtualPageFilter(accountHelp,map,new HashMap<String,Object>());
+				accountHelp = TextMacros.filter(accountHelp);
 			}
 			catch(final Exception ex)
 			{
@@ -1919,7 +1918,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				final Map<String,String> map=new HashMap<String,String>();
 				map.put("canexport", Boolean.toString((acct.isSet(AccountFlag.CANEXPORT))));
 				map.put("emailok", Boolean.toString(!CMProps.getVar(CMProps.Str.EMAILREQ).toUpperCase().startsWith("DISABLE")));
-				accountHelp = CMLib.webMacroFilter().virtualPageFilter(accountHelp,map,new HashMap<String,Object>());
+				accountHelp = TextMacros.filter(accountHelp);
 			}
 			catch(final Exception ex)
 			{
@@ -2559,7 +2558,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"newchar.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+			introText = TextMacros.filter(introText);
 		}
 		catch (final Exception ex)
 		{
@@ -2651,7 +2650,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer emailIntro=new CMFile(Resources.buildResourcePath("text")+"email.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			 emailIntro = CMLib.webMacroFilter().virtualPageFilter(emailIntro);
+			 emailIntro = TextMacros.filter(emailIntro);
 		}
 		catch(final Exception ex)
 		{
@@ -2856,7 +2855,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"themes.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+			introText = TextMacros.filter(introText);
 		}
 		catch (final Exception ex)
 		{
@@ -2974,7 +2973,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"races.txt",null,CMFile.FLAG_LOGERRORS).text();
 			try
 			{
-				introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+				introText = TextMacros.filter(introText);
 			}
 			catch (final Exception ex)
 			{
@@ -3115,7 +3114,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer genderIntro=new CMFile(Resources.buildResourcePath("text")+"gender.txt",null,0).text();
 		try
 		{
-			genderIntro = CMLib.webMacroFilter().virtualPageFilter(genderIntro);
+			genderIntro = TextMacros.filter(genderIntro);
 		}
 		catch(final Exception ex)
 		{
@@ -3202,7 +3201,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"stats.txt",null,CMFile.FLAG_LOGERRORS).text();
 			try
 			{
-				introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+				introText = TextMacros.filter(introText);
 			}
 			catch (final Exception ex)
 			{
@@ -3377,7 +3376,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"stats.txt",null,CMFile.FLAG_LOGERRORS).text();
 			try
 			{
-				 introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+				 introText = TextMacros.filter(introText);
 			}
 			catch(final Exception ex)
 			{
@@ -3778,7 +3777,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer intro = new CMFile(Resources.makeFileResourceName(F.choiceIntro()),null,CMFile.FLAG_LOGERRORS).text();
 			try
 			{
-				intro = CMLib.webMacroFilter().virtualPageFilter(intro);
+				intro = TextMacros.filter(intro);
 			}
 			catch (final Exception ex)
 			{
@@ -4038,7 +4037,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"newchardone.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
-			introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+			introText = TextMacros.filter(introText);
 		}
 		catch (final Exception ex)
 		{
@@ -4470,7 +4469,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			clan.first.updateClanPrivileges(mob);
 		if(mob.location()!=null)
 			CMLib.players().changePlayersLocation(mob, mob.location());
-		CMLib.intermud().registerPlayerOnline(mob);
 		return LoginResult.NORMAL_LOGIN;
 	}
 

@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -78,34 +77,6 @@ public class EditorResourceNameOrHerbName extends AbilityParmEditorImpl
 		if(oldVal.endsWith("$"))
 			return new String[]{oldVal.substring(0,oldVal.length()-1)};
 		return new String[]{oldVal};
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, String oldVal, final String fieldName)
-	{
-		final AbilityParmEditor A = CMLib.ableParms().getEditors().get("RESOURCE_OR_KEYWORD");
-		if(oldVal.endsWith("$"))
-			oldVal = oldVal.substring(0,oldVal.length()-1);
-		final String value = A.webValue(httpReq,parms,oldVal,fieldName);
-		final int r=RawMaterial.CODES.FIND_IgnoreCase(value);
-		if(r>=0)
-			return RawMaterial.CODES.NAME(r);
-		return (value.trim().length()==0)?"":(value+"$");
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final AbilityParmEditor A = CMLib.ableParms().getEditors().get("RESOURCE_OR_KEYWORD");
-		return A.webField(httpReq,parms,oldVal,fieldName);
-	}
-
-	@Override
-	public String webTableField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal)
-	{
-		if(oldVal.endsWith("$"))
-			return oldVal.substring(0,oldVal.length()-1);
-		return oldVal;
 	}
 
 	@Override

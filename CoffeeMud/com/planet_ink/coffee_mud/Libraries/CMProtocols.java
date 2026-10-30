@@ -1,7 +1,6 @@
 package com.planet_ink.coffee_mud.Libraries;
 import com.planet_ink.coffee_mud.core.exceptions.BadEmailAddressException;
 import com.planet_ink.coffee_mud.core.interfaces.*;
-import com.planet_ink.coffee_web.util.CWThread;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMProps.ListFile;
 import com.planet_ink.coffee_mud.core.CMProps.Str;
@@ -11,7 +10,6 @@ import com.planet_ink.coffee_mud.core.MiniJSON.MJSONException;
 import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.CharCreationLibrary.LoginSession;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterProto;
 import com.planet_ink.coffee_mud.Libraries.interfaces.PlayerLibrary.ThinPlayer;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
@@ -3585,26 +3583,11 @@ public class CMProtocols extends StdLibrary implements ProtocolLibrary
 			final long uptime = (System.currentTimeMillis() / 1000) - CMLib.host().getUptimeSecs();
 			pkg.put("UPTIME",Long.toString(uptime));
 			pkg.put("HOSTNAME",host.getHost());
-			if(Thread.currentThread() instanceof CWThread)
-			{
-				final String webServerPort=Integer.toString(((CWThread)Thread.currentThread()).getConfig().getHttpListenPorts()[0]);
-				pkg.put("WEBSITE",("http://"+host.getHost()+":"+webServerPort));
-			}
-			else
-				pkg.put("WEBSITE",host.geWebHostUrl());
+			pkg.put("WEBSITE",host.geWebHostUrl());
 			pkg.put("LANGUAGE",host.getLanguage());
 			pkg.put("ICON", host.geWebHostUrl()+"images/cm.jpg");
 		}
 		pkg.put("CHARSET", CMProps.getVar(CMProps.Str.CHARSETINPUT));
-		final List<String> intermuds = new ArrayList<String>(2);
-		if(CMLib.intermud().isOnline(InterProto.I3))
-			intermuds.add("I3");
-		if(CMLib.intermud().isOnline(InterProto.IMC2))
-			intermuds.add("IMC2");
-		if(CMLib.intermud().isOnline(InterProto.Grapevine))
-			intermuds.add("Grapevine");
-		if(intermuds.size()>0)
-			pkg.put("INTERMUD", intermuds.toArray(new String[intermuds.size()]));
 		pkg.put("FAMILY","CoffeeMUD");
 		pkg.put("CRAWL DELAY","-1");
 		{

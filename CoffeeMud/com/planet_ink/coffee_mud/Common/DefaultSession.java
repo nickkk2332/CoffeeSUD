@@ -2855,8 +2855,6 @@ public class DefaultSession implements Session
 		if(disconnect)
 		{
 			doPing(SessionPing.DISCONNECT, null);
-			if(mob != null)
-				CMLib.intermud().registerPlayerOffline(mob);
 		}
 		setKillFlag(true);
 		setStatus(SessionStatus.LOGOUT5);

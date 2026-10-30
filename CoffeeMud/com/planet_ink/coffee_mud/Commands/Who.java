@@ -256,16 +256,6 @@ public class Who extends StdCommand
 		throws java.io.IOException
 	{
 		String mobName=CMParms.combine(commands,1);
-		if((mobName!=null)
-		&&(mob!=null)
-		&&(mobName.startsWith("@")))
-		{
-			if(!CMLib.intermud().isAnyNonCM1Online())
-				mob.tell(L("Intermud is unavailable."));
-			else
-				CMLib.intermud().imudWho(mob,mobName.substring(1));
-			return false;
-		}
 
 		Filterer<MOB> mobFilter = null;
 		final Comparator<MOB> mobSort = new Comparator<MOB>()

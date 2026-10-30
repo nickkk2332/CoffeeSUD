@@ -268,8 +268,6 @@ public class VFShell
 					case HELP:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.MUDHelp());
 						break;
-					case INTERMUD:
-						break;
 					case JOURNALS:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.CMJournals());
 						break;
@@ -349,9 +347,6 @@ public class VFShell
 						break;
 					case UTENSILS:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.CoffeeUtensils());
-						break;
-					case WEBMACS:
-						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.WebMacroCreamer());
 						break;
 					case WORLDHUNT:
 						CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.WorldHuntUtils());

@@ -15,12 +15,9 @@ import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AchievementLibrary.Achievement;
 import com.planet_ink.coffee_mud.Libraries.interfaces.HelpLibrary.HelpSection;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterProto;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_mud.WebMacros.Authenticate;
 
 import java.util.*;
 import java.io.IOException;
@@ -2430,17 +2427,6 @@ public class Create extends StdCommand
 			{
 				mob.tell(L("Failure: @x1",e.getMessage()));
 			}
-		}
-		else
-		if(CMath.s_valueOf(InterProto.class,commandType)!=null)
-		{
-			final InterProto proto = (InterProto)CMath.s_valueOf(InterProto.class,commandType);
-			if(!CMSecurity.isASysOp(mob))
-				return errorOut(mob);
-			if(CMLib.intermud().startIntermud(proto, false))
-				mob.tell(L("Done."));
-			else
-				mob.tell(L("Failure."));
 		}
 		else
 		if(commandType.equals("GOVERNMENT"))

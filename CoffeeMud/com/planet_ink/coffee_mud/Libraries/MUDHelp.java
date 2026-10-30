@@ -831,14 +831,8 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 				str=prepend.toString()+"\n\r"+str;
 			}
 		}
-		try
-		{
-			if((str!=null)&&(str.indexOf('@')>=0))
-				return CMLib.webMacroFilter().virtualPageFilter(str);
-		}
-		catch (final com.planet_ink.coffee_mud.core.exceptions.HTTPRedirectException x)
-		{
-		}
+		if((str!=null)&&(str.indexOf('@')>=0))
+			return TextMacros.filter(str);
 		return str;
 	}
 

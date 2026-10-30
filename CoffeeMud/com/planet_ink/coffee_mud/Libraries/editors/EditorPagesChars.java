@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -78,43 +77,6 @@ public class EditorPagesChars extends AbilityParmEditorImpl
 	public boolean confirmValue(final String oldVal)
 	{
 		return oldVal.trim().length() > 0;
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		int maxPages=1;
-		int maxCharsPage=0;
-		if(oldVal.length()>0)
-		{
-			final int x=oldVal.indexOf('/');
-			if(x>0)
-			{
-				maxPages=CMath.s_int(oldVal.substring(0,x));
-				maxCharsPage=CMath.s_int(oldVal.substring(x+1));
-			}
-		}
-		if(httpReq.isUrlParameter(fieldName+"_MAXPAGES"))
-			maxPages = CMath.s_int(httpReq.getUrlParameter(fieldName+"_MAXPAGES"));
-		if(httpReq.isUrlParameter(fieldName+"_MAXCHARSPAGE"))
-			maxCharsPage = CMath.s_int(httpReq.getUrlParameter(fieldName+"_MAXCHARSPAGE"));
-		return ""+maxPages+"/"+maxCharsPage;
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final String value = webValue(httpReq, parms, oldVal, fieldName);
-		final StringBuffer str = new StringBuffer("");
-		str.append("<TABLE WIDTH=100% BORDER=\"1\" CELLSPACING=0 CELLPADDING=0><TR>");
-		final String[] vals = this.fakeUserInput(value);
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("Max Pages")+"</FONT></TD>");
-		str.append("<TD WIDTH=25%><INPUT TYPE=TEXT SIZE=5 NAME="+fieldName+"_MAXPAGES VALUE=\""+vals[0]+"\">");
-		str.append("<TD WIDTH=25%><FONT COLOR=WHITE>"+L("Max Chars Page")+"</FONT></TD>");
-		str.append("<TD WIDTH=25%><INPUT TYPE=TEXT SIZE=5 NAME="+fieldName+"_MAXCHARSPAGE VALUE=\""+vals[1]+"\">");
-		str.append("</TD>");
-		str.append("</TR></TABLE>");
-		return str.toString();
 	}
 
 	@Override

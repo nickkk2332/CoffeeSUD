@@ -11,7 +11,6 @@ import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterProto;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
@@ -403,115 +402,6 @@ public class Transfer extends At
 		else
 		if(cmd.toString().equalsIgnoreCase("here")||cmd.toString().equalsIgnoreCase("."))
 			targetRoom=curRoom;
-		else
-		if((cmd.toString().indexOf('@')>0)&&(cmd.toString().indexOf(' ')>0))
-		{
-			cmd = new StringBuffer(CMParms.combine(commands,1).trim());
-			final int at = cmd.toString().indexOf('@');
-			final String foreignThing=cmd.toString().substring(0,at).trim();
-			String server=cmd.toString().substring(cmd.toString().lastIndexOf('@')+1);
-			int port;
-			try
-			{
-				port = CMath.s_int(CMLib.intermud().queryService(InterProto.CM1,IntermudInterface.InterQuery.PORT));
-			}
-			catch (final Exception e)
-			{
-				Log.errOut(e);
-				return false;
-			}
-			final int ddex=server.indexOf('$');
-			final int ddex2=(ddex<0)?-1:server.indexOf('$',ddex+1);
-			if((ddex<0)||(ddex2<0))
-			{
-				mob.tell(L("Server format:  @user$pass$server:port"));
-				return false;
-			}
-			final String user=server.substring(0,ddex);
-			final String pass=server.substring(ddex+1,ddex2);
-			server=server.substring(ddex2+1);
-			if(port<=0)
-				port=27733;
-			final int pdex=server.lastIndexOf(':');
-			if(pdex>0)
-			{
-				port=CMath.s_int(server.substring(pdex+1));
-				server=server.substring(0,pdex);
-			}
-			final java.net.Socket sock=new java.net.Socket(server,port);
-			try
-			{
-				final PrintWriter writer=new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
-				final BufferedReader reader=new BufferedReader(new InputStreamReader(sock.getInputStream()));
-				mob.tell(getComResponse(writer,reader));
-				writer.write("LOGIN "+user+" "+pass+"\n\r");
-				mob.tell("LOGIN "+user+" ....: "+getComResponse(writer,reader));
-				writer.write("TARGET "+foreignThing+"\n\r");
-				mob.tell("TARGET "+foreignThing+": "+getComResponse(writer,reader));
-				for(int i=0;i<xferObjV.size();i++)
-				{
-					if(xferObjV.get(i) instanceof Item)
-					{
-						final Item I=(Item)xferObjV.get(i);
-						final Room itemRoom=CMLib.map().roomLocation(I);
-						if((CMSecurity.isAllowed(mob, itemRoom, CMSecurity.SecFlag.TRANSFER))
-						&&(CMSecurity.isAllowed(mob, targetRoom, CMSecurity.SecFlag.TRANSFER)))
-						{
-							writer.write("BLOCK\n\r");
-							final String s=getComResponse(writer,reader);
-							mob.tell(s);
-							String blockEnd;
-							if(s.startsWith("[OK ")&&(s.endsWith("]")))
-							{
-								blockEnd=s.substring(4,s.length()-1);
-								final String itemXML=CMLib.coffeeMaker().getItemXML(I);
-								writer.write("IMPORT <ITEMS>"+itemXML.trim()+"</ITEMS>"+blockEnd+"\n");
-								mob.tell(getComResponse(writer,reader));
-							}
-							else
-								mob.tell(L("Communication failure."));
-						}
-					}
-					else
-					if(xferObjV.get(i) instanceof MOB)
-					{
-						final MOB M=(MOB)xferObjV.get(i);
-						final Room mobRoom=CMLib.map().roomLocation(M);
-						if((mobRoom!=null)
-						&&(CMSecurity.isAllowed(mob, mobRoom, CMSecurity.SecFlag.TRANSFER))
-						&&(CMSecurity.isAllowed(mob, targetRoom, CMSecurity.SecFlag.TRANSFER)))
-						{
-							writer.write("BLOCK\n\r");
-							final String s=getComResponse(writer,reader);
-							mob.tell(s);
-							String blockEnd;
-							if(s.startsWith("[OK ")&&(s.endsWith("]")))
-							{
-								blockEnd=s.substring(4,s.length()-1);
-								final String mobXML=CMLib.coffeeMaker().getMobXML(M);
-								writer.write("IMPORT <MOBS>"+mobXML.trim()+"</MOBS>"+blockEnd+"\n");
-								mob.tell(getComResponse(writer,reader));
-							}
-							else
-								mob.tell(L("Communication failure."));
-						}
-					}
-				}
-				if(mob.playerStats().getTranPoofOut().length()==0)
-					mob.tell(L("Done."));
-				writer.write("QUIT\n\r");
-				CMLib.s_sleep(500);
-				return true;
-			}
-			catch(final IOException e)
-			{
-				mob.tell(e.getMessage());
-			}
-			finally
-			{
-				sock.close();
-			}
-		}
 		else
 		if(cmd.toString().toLowerCase().startsWith("space:"))
 		{

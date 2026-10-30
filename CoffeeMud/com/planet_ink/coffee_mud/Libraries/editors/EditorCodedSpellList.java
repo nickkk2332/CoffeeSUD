@@ -1,5 +1,4 @@
 package com.planet_ink.coffee_mud.Libraries.editors;
-import com.planet_ink.coffee_web.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityMapper.AbilityMapping;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AbilityParameters.*;
@@ -110,100 +109,6 @@ public class EditorCodedSpellList extends AbilityParmEditorImpl
 		V.addAll(V2);
 		V.addElement("");
 		return CMParms.toStringArray(V);
-	}
-
-	@Override
-	public String webValue(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		List<CMObject> spells=null;
-		if(httpReq.isUrlParameter(fieldName+"_AFFECT1"))
-		{
-			spells = new Vector<CMObject>();
-			int num=1;
-			String behav=httpReq.getUrlParameter(fieldName+"_AFFECT"+num);
-			String theparm=httpReq.getUrlParameter(fieldName+"_ADATA"+num);
-			while((behav!=null)&&(theparm!=null))
-			{
-				if(behav.length()>0)
-				{
-					final Ability A=CMClass.getAbility(behav);
-					if(A!=null)
-					{
-						if(theparm.trim().length()>0)
-							A.setMiscText(theparm);
-						spells.add(A);
-					}
-					else
-					{
-						final Behavior B=CMClass.getBehavior(behav);
-						if(B!=null)
-						{
-							if(theparm.trim().length()>0)
-								B.setParms(theparm);
-							spells.add(B);
-						}
-					}
-				}
-				num++;
-				behav=httpReq.getUrlParameter(fieldName+"_AFFECT"+num);
-				theparm=httpReq.getUrlParameter(fieldName+"_ADATA"+num);
-			}
-		}
-		else
-			spells = CMLib.coffeeMaker().getCodedSpellsOrBehaviors(oldVal);
-		try
-		{
-			return CMLib.coffeeMaker().packCodedSpellsOrBehaviors(spells);
-		}
-		catch(final Exception e)
-		{
-			return oldVal;
-		}
-	}
-
-	@Override
-	public String webField(final HTTPRequest httpReq, final java.util.Map<String,String> parms, final String oldVal, final String fieldName)
-	{
-		final List<CMObject> spells=CMLib.coffeeMaker().getCodedSpellsOrBehaviors(webValue(httpReq,parms,oldVal,fieldName));
-		final StringBuffer str = new StringBuffer("");
-		str.append("<TABLE WIDTH=100% BORDER=\"1\" CELLSPACING=0 CELLPADDING=0>");
-		for(int i=0;i<spells.size();i++)
-		{
-			final CMObject A=spells.get(i);
-			str.append("<TR><TD WIDTH=50%>");
-			str.append("\n\r<SELECT ONCHANGE=\"EditAffect(this);\" NAME="+fieldName+"_AFFECT"+(i+1)+">");
-			str.append("<OPTION VALUE=\"\">Delete!");
-			str.append("<OPTION VALUE=\""+A.ID()+"\" SELECTED>"+A.ID());
-			str.append("</SELECT>");
-			str.append("</TD><TD WIDTH=50%>");
-			final String parmstr=(A instanceof Ability)?((Ability)A).text():((Behavior)A).getParms();
-			final String theparm=CMStrings.replaceAll(parmstr,"\"","&quot;");
-			str.append("\n\r<INPUT TYPE=TEXT SIZE=30 NAME="+fieldName+"_ADATA"+(i+1)+" VALUE=\""+theparm+"\">");
-			str.append("</TD></TR>");
-		}
-		str.append("<TR><TD WIDTH=50%>");
-		str.append("\n\r<SELECT ONCHANGE=\"AddAffect(this);\" NAME="+fieldName+"_AFFECT"+(spells.size()+1)+">");
-		str.append("<OPTION SELECTED VALUE=\"\">Select an Effect/Behav");
-		for(final Enumeration<Ability> a=CMClass.abilities();a.hasMoreElements();)
-		{
-			final Ability A=a.nextElement();
-			if((A.classificationCode()&Ability.ALL_DOMAINS)==Ability.DOMAIN_ARCHON)
-				continue;
-			final String cnam=A.ID();
-			str.append("<OPTION VALUE=\""+cnam+"\">"+cnam);
-		}
-		for(final Enumeration<Behavior> b=CMClass.behaviors();b.hasMoreElements();)
-		{
-			final Behavior B=b.nextElement();
-			final String cnam=B.ID();
-			str.append("<OPTION VALUE=\""+cnam+"\">"+cnam);
-		}
-		str.append("</SELECT>");
-		str.append("</TD><TD WIDTH=50%>");
-		str.append("\n\r<INPUT TYPE=TEXT SIZE=30 NAME="+fieldName+"_ADATA"+(spells.size()+1)+" VALUE=\"\">");
-		str.append("</TD></TR>");
-		str.append("</TABLE>");
-		return str.toString();
 	}
 
 	@Override

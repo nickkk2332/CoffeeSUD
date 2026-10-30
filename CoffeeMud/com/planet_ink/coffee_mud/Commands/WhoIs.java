@@ -56,42 +56,6 @@ public class WhoIs extends Who
 			return false;
 		}
 
-		final int x=mobName.indexOf("@");
-		if(x>=0)
-		{
-			if(!CMLib.intermud().isAnyNonCM1Online())
-				mob.tell(L("Intermud is unavailable."));
-			else
-			if(x==0)
-			{
-				final String mudName = mobName.substring(1);
-				if((mudName.toLowerCase().equals("coffeemuds")||mudName.toLowerCase().equals("all"))
-				&& (CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.I3)))
-				{
-					final List<String> muds = CMLib.intermud().getAllMudList(mudName.toLowerCase().equals("coffeemuds"));
-					long time=0;
-					for(final String mud : muds)
-					{
-						CMLib.s_sleep(time + 1000);
-						long lastTime=System.currentTimeMillis();
-						CMLib.intermud().imudWho(mob,mud);
-						lastTime = System.currentTimeMillis() - lastTime;
-						if(lastTime > time)
-							time=lastTime;
-					}
-				}
-				else
-					CMLib.intermud().imudWho(mob,mudName);
-			}
-			else
-			{
-				final String mudName=mobName.substring(x+1);
-				mobName=mobName.substring(0,x);
-				CMLib.intermud().imudFinger(mob,mobName,mudName);
-			}
-			return false;
-		}
-
 		final int[] colWidths=getShortColWidths(mob);
 		final LinkedList<MOB> lst = new LinkedList<MOB>();
 		for(final Session S : CMLib.sessions().localOnlineIterable())

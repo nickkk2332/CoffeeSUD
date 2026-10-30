@@ -21,7 +21,6 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AchievementLibrary.Achievement;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AreaGenerationLibrary.UpdateSet;
 import com.planet_ink.coffee_mud.Libraries.interfaces.HelpLibrary.HelpSection;
-import com.planet_ink.coffee_mud.Libraries.interfaces.IntermudInterface.InterProto;
 import com.planet_ink.coffee_mud.Libraries.interfaces.JournalsLibrary.CommandJournalFlags;
 import com.planet_ink.coffee_mud.Libraries.interfaces.PlayerLibrary.ThinPlayer;
 
@@ -2222,15 +2221,6 @@ public class Destroy extends StdCommand
 			{
 				mob.tell(L("Failure: @x1",e.getMessage()));
 			}
-		}
-		else
-		if(CMath.s_valueOf(InterProto.class,commandType)!=null)
-		{
-			final InterProto proto = (InterProto)CMath.s_valueOf(InterProto.class,commandType);
-			if(!CMSecurity.isASysOp(mob))
-				return errorOut(mob);
-			CMLib.intermud().stopIntermud(proto);
-			mob.tell(L("Done."));
 		}
 		else
 		if(commandType.equals("POLL"))

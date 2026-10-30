@@ -159,16 +159,6 @@ public class Tell extends StdCommand
 			combinedCommands=CMLib.coffeeFilter().secondaryUserInputFilter(combinedCommands);
 		if(targetM==null)
 		{
-			if(targetName.indexOf('@')>=0)
-			{
-				final String mudName=targetName.substring(targetName.indexOf('@')+1);
-				targetName=targetName.substring(0,targetName.indexOf('@'));
-				if(CMLib.intermud().isAnyNonCM1Online())
-					CMLib.intermud().imudTell(mob,targetName,mudName,combinedCommands);
-				else
-					CMLib.commands().postCommandFail(mob,origCmds,L("Intermud is unavailable."));
-				return false;
-			}
 			CMLib.commands().postCommandFail(mob,origCmds,L("That person doesn't appear to be online."));
 			return false;
 		}

@@ -16,10 +16,6 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.planet_ink.coffee_mud.WebMacros.interfaces.*;
-import com.planet_ink.coffee_web.http.HTTPMethod;
-import com.planet_ink.coffee_web.http.MultiPartData;
-import com.planet_ink.coffee_web.interfaces.HTTPRequest;
 
 import java.io.*;
 import java.math.BigDecimal;
