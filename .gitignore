@@ -2,7 +2,7 @@
 *.class
 CoffeeMud/.build-stamp
 CoffeeMud/.build.log
-CoffeeMud/.sources.list
+CoffeeMud/.sources*.list
 
 # Runtime logs
 CoffeeMud/mud*.log
