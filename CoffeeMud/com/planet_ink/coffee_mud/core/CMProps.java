@@ -1029,6 +1029,28 @@ public class CMProps extends Properties
 		}
 	}
 
+	private static volatile boolean singlePlayer = false;
+
+	/**
+	 * Returns whether this is the single-player game, with one local player
+	 * and no logins, passwords or other connections.
+	 * @return true for single-player, false for a multi-player server
+	 */
+	public static final boolean isSinglePlayer()
+	{
+		return singlePlayer;
+	}
+
+	/**
+	 * Marks this process as the single-player game.
+	 * @param truefalse true for single-player
+	 * @see CMProps#isSinglePlayer()
+	 */
+	public static final void setSinglePlayer(final boolean truefalse)
+	{
+		singlePlayer = truefalse;
+	}
+
 	public static final boolean isUsingAccountSystem()
 	{
 		return getIntVar(Int.COMMONACCOUNTSYSTEM) > 1;

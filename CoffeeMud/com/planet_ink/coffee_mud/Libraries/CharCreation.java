@@ -56,6 +56,8 @@ import java.util.*;
 */
 public class CharCreation extends StdLibrary implements CharCreationLibrary
 {
+	private static final String SINGLE_PLAYER_PASSWORD = "singleplayer";
+
 	@Override
 	public String ID()
 	{
@@ -1138,7 +1140,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		}
 
 		// an input eating pause for stray characters (esp from WINTIN)
-		final long startTime = System.currentTimeMillis() + 500;
+		final long startTime = System.currentTimeMillis() + (CMProps.isSinglePlayer() ? 0 : 500);
 		while(System.currentTimeMillis() < startTime)
 		{
 			try
@@ -1284,7 +1286,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		loginObj.password=loginObj.lastInput;
 		session.changeTelnetMode(Session.TELNET_ECHO, false);
-		if(CMLib.encoder().passwordCheck(loginObj.password, loginObj.player.password()))
+		if(CMProps.isSinglePlayer()
+		||CMLib.encoder().passwordCheck(loginObj.password, loginObj.player.password()))
 		{
 			if((loginObj.player.accountName()==null)
 			||(loginObj.player.accountName().trim().length()==0))
@@ -1544,6 +1547,13 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 					return LoginResult.NO_LOGIN;
 				}
 			}
+			if(CMProps.isSinglePlayer())
+			{
+				// the one local player owns every character, so there is nothing to check
+				loginObj.state=LoginState.LOGIN_PASS_RECEIVED;
+				loginObj.lastInput="";
+				return null;
+			}
 			try
 			{
 				session.blockingIn(10,false);
@@ -1614,7 +1624,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		loginObj.password=loginObj.lastInput;
 		session.changeTelnetMode(Session.TELNET_ECHO, false);
-		if(CMLib.encoder().passwordCheck(loginObj.password, loginObj.player.password()))
+		if(CMProps.isSinglePlayer()
+		||CMLib.encoder().passwordCheck(loginObj.password, loginObj.player.password()))
 		{
 			final LoginResult prelimResults = prelimChecks(session,loginObj.mob,loginObj.login,loginObj.player.email());
 			if(prelimResults!=null)
@@ -2558,6 +2569,13 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 		final boolean emailPassword=((CMProps.getVar(CMProps.Str.EMAILREQ).toUpperCase().startsWith("PASS"))
 				 &&(CMProps.getVar(CMProps.Str.MAILBOX).length()>0));
+		if(CMProps.isSinglePlayer())
+		{
+			// characters still need a stored password, but nobody ever types it
+			loginObj.lastInput=SINGLE_PLAYER_PASSWORD;
+			loginObj.state=LoginState.CHARCR_PASSWORDDONE;
+			return null;
+		}
 		if((!emailPassword)&&(password.length()==0))
 		{
 			session.changeTelnetMode(Session.TELNET_ECHO, true);

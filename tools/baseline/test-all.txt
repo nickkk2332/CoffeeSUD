@@ -1,0 +1,51 @@
+# TEST all on the unmodified CoffeeMud 5.11 server (tools/mudbot.py, 2026-10-30)
+AreaTrails         : Passed
+ClockConversion    : Passed
+Cmparms            : Passed
+Cmuniqsortsvec     : Passed
+DateMasks          : Passed
+Parseany           : Passed
+PropFightspellcast : Passed
+PropHaveadjuster   : Passed
+PropHaveenabler    : Passed
+PropHaveresister   : Passed
+PropHavespellcast  : Passed
+PropHavezapper     : Passed
+PropHereadjuster   : Passed
+PropHerespellcast  : Passed
+PropReqalignments  : Passed
+PropReqcapacity    : Passed
+PropReqclasses     : Passed
+PropReqentry       : Passed
+PropReqheight      : Passed
+PropReqlevels      : Passed
+PropReqnomob       : Passed
+PropReqpkill       : Passed
+PropReqraces       : Passed
+PropReqstat        : Passed
+PropReqtattoo      : Passed
+PropResistance     : Passed
+PropRideadjuster   : Passed
+PropRideenabler    : Passed
+PropRideresister   : Passed
+PropRidespellcast  : Passed
+PropRidezapper     : Passed
+PropSpelladder     : Passed
+PropUsespellcast   : Passed
+PropUsespellcast2  : Passed
+PropWearadjuster   : Passed
+PropWearenabler    : Passed
+PropWearresister   : Passed
+PropWearspellcast  : Passed
+PropWearzapper     : Passed
+Spaceangles        : OF Test #5 failed: 360.0,0.0
+Spacebasics        : Passed
+Spacecollisions    : Passed
+Spaceinterception  : FAILED! #0: 395km,135km,42.99km: 317.0 mark 22.5: 587.0
+Spaceinterception2 : Failed #0: 46.8km,147km,453km: 18.07 mark 168.79: 318.0
+Spaceintersect     : Passed
+Spacemoves         : Passed
+Spacemoves2        : Passed
+Spaceturns         : Passed
+Wearing            : Passed
+ZapperAnyclasslevel: Passed

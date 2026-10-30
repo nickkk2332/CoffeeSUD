@@ -114,6 +114,7 @@ public class MUD extends Thread implements MudHost
 	protected static AtomicBoolean 		 bootSync			= new AtomicBoolean(false);
 	protected static Map<String,String>	 clArgs				= new Hashtable<String,String>();
 	protected static boolean			 skipMapLoads		= false;
+	protected static boolean			 consoleMode		= false;
 
 	protected static LinkedList<Quad<Socket,Closeable,Long,Session>> closeables	= new LinkedList<Quad<Socket,Closeable,Long,Session>>();
 
@@ -483,6 +484,11 @@ public class MUD extends Thread implements MudHost
 	@Override
 	public void run()
 	{
+		if(consoleMode)
+		{
+			runConsole();
+			return;
+		}
 		setState(MudState.STARTING);
 		int q_len = 6;
 		Socket sock=null;
@@ -557,6 +563,65 @@ public class MUD extends Thread implements MudHost
 			Log.sysOut(Thread.currentThread().getName(),"MUD on port "+port+" ("+publicPort+") stopped!");
 		else
 			Log.sysOut(Thread.currentThread().getName(),"MUD on port "+port+" stopped!");
+		setState(MudState.STOPPED);
+		CMLib.hosts().remove(this);
+	}
+
+	/**
+	 * The single-player replacement for the listener loop: once the host has
+	 * booted, one session is attached to this process's console.  When that
+	 * session ends, the whole game shuts down.
+	 */
+	private void runConsole()
+	{
+		CMLib.hosts().add(this);
+		setState(MudState.WAITING);
+		while((!acceptConns) && (!bringDown) && (!CMProps.isState(CMProps.HostState.SHUTTINGDOWN)))
+			checkedSleep(100);
+		if(acceptConns)
+		{
+			setState(MudState.ACCEPTING);
+			final Session S=(Session)CMClass.getCommon("ConsoleSession");
+			if((S!=null) && S.initialize(null, threadGroup().getName()))
+			{
+				StringBuffer introText=Resources.getFileResource("text/intro.txt",true);
+				try
+				{
+					introText = CMLib.webMacroFilter().virtualPageFilter(introText);
+				}
+				catch (final Exception ex)
+				{
+				}
+				S.handshake(introText.toString());
+				CMLib.sessions().add(S);
+				while((!S.isStopped())
+				&& (!bringDown)
+				&& (!CMProps.isState(CMProps.HostState.SHUTTINGDOWN)))
+					checkedSleep(250);
+			}
+			else
+				Log.errOut(Thread.currentThread().getName(),"Unable to attach the console session.");
+		}
+		if(!CMProps.isState(CMProps.HostState.SHUTTINGDOWN))
+		{
+			// shutdown kills every host thread, including this one, so it runs on its own thread
+			final Thread shutdownThread=new Thread(threadGroup(), new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					globalShutdown(null,true,null);
+				}
+			}, "ConsoleShutdown");
+			shutdownThread.start();
+			try
+			{
+				shutdownThread.join();
+			}
+			catch(final InterruptedException e)
+			{
+			}
+		}
 		setState(MudState.STOPPED);
 		CMLib.hosts().remove(this);
 	}

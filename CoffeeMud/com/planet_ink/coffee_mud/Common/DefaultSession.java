@@ -610,47 +610,7 @@ public class DefaultSession implements Session
 			charWriter=new SesInputStream(inMaxBytesPerChar);
 			in=new BufferedReader(new InputStreamReader(charWriter,charSet));
 			out=new PrintWriter(new OutputStreamWriter(rawout,CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
-			CMLib.s_sleep(250);
-			this.readlineContinue(10000); // must handle big mpcp and similar requests
-			if(status == SessionStatus.HANDSHAKE_OPEN)
-			{
-				if(!mcpDisabled)
-					rawBytesOut(rawout,("\n\r#$#mcp version: 2.1 to: 2.1\n\r").getBytes(CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
-				rawBytesOut(rawout,("\n\rConnecting to "+CMProps.getVar(CMProps.Str.MUD_NAME)+"...\n\r").getBytes("US-ASCII"));
-				setServerTelnetMode(TELNET_ANSI,true);
-				setClientTelnetMode(TELNET_ANSI,true);
-				setServerTelnetMode(TELNET_ANSI16,false);
-				setClientTelnetMode(TELNET_ANSI16,false);
-				setServerTelnetMode(TELNET_ANSI256,false);
-				setClientTelnetMode(TELNET_ANSI256,false);
-				setClientTelnetMode(TELNET_TERMTYPE,true);
-				changeTelnetModeBackwards(rawout,TELNET_NEWENVIRON,true);
-				changeTelnetMode(rawout,TELNET_TERMTYPE,true);
-				negotiateTelnetMode(rawout,TELNET_TERMTYPE);
-				if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MCCP))
-					changeTelnetMode(rawout,TELNET_COMPRESS2,true);
-				if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MXP))
-					changeTelnetMode(rawout,TELNET_MXP,true);
-				if(!CMSecurity.isDisabled(CMSecurity.DisFlag.GMCP))
-					changeTelnetMode(rawout,TELNET_GMCP,true);
-				if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSP))
-					changeTelnetMode(rawout,TELNET_MSP,true);
-				if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSDP))
-					changeTelnetMode(rawout,TELNET_MSDP,true);
-				//changeTelnetMode(rawout,TELNET_SUPRESS_GO_AHEAD,true);
-				changeTelnetMode(rawout,TELNET_NAWS,true);
-				changeTelnetMode(rawout,TELNET_ECHO,false);
-				setClientTelnetMode(TELNET_LINEMODE,true);
-				changeTelnetModeBackwards(rawout,TELNET_LINEMODE,true);
-				//changeTelnetMode(rawout,TELNET_BINARY,true);
-				if(mightSupportTelnetMode(TELNET_GA))
-					rawBytesOut(rawout,TELNETGABYTES);
-				if((!CMSecurity.isDisabled(CMSecurity.DisFlag.MSSP))
-				&&(mightSupportTelnetMode(TELNET_MSSP)))
-					changeTelnetMode(rawout,TELNET_MSSP,true);
-				return true;
-			}
-			return false;
+			return openHandshake();
 		}
 		catch(final Exception e)
 		{
@@ -660,6 +620,56 @@ public class DefaultSession implements Session
 				Log.errOut(e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * Sends the opening telnet negotiation to a newly connected client.
+	 * @return true if the session should proceed, false otherwise
+	 * @throws IOException if the connection fails
+	 */
+	protected boolean openHandshake() throws IOException
+	{
+		CMLib.s_sleep(250);
+		this.readlineContinue(10000); // must handle big mpcp and similar requests
+		if(status == SessionStatus.HANDSHAKE_OPEN)
+		{
+			if(!mcpDisabled)
+				rawBytesOut(rawout,("\n\r#$#mcp version: 2.1 to: 2.1\n\r").getBytes(CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
+			rawBytesOut(rawout,("\n\rConnecting to "+CMProps.getVar(CMProps.Str.MUD_NAME)+"...\n\r").getBytes("US-ASCII"));
+			setServerTelnetMode(TELNET_ANSI,true);
+			setClientTelnetMode(TELNET_ANSI,true);
+			setServerTelnetMode(TELNET_ANSI16,false);
+			setClientTelnetMode(TELNET_ANSI16,false);
+			setServerTelnetMode(TELNET_ANSI256,false);
+			setClientTelnetMode(TELNET_ANSI256,false);
+			setClientTelnetMode(TELNET_TERMTYPE,true);
+			changeTelnetModeBackwards(rawout,TELNET_NEWENVIRON,true);
+			changeTelnetMode(rawout,TELNET_TERMTYPE,true);
+			negotiateTelnetMode(rawout,TELNET_TERMTYPE);
+			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MCCP))
+				changeTelnetMode(rawout,TELNET_COMPRESS2,true);
+			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MXP))
+				changeTelnetMode(rawout,TELNET_MXP,true);
+			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.GMCP))
+				changeTelnetMode(rawout,TELNET_GMCP,true);
+			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSP))
+				changeTelnetMode(rawout,TELNET_MSP,true);
+			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSDP))
+				changeTelnetMode(rawout,TELNET_MSDP,true);
+			//changeTelnetMode(rawout,TELNET_SUPRESS_GO_AHEAD,true);
+			changeTelnetMode(rawout,TELNET_NAWS,true);
+			changeTelnetMode(rawout,TELNET_ECHO,false);
+			setClientTelnetMode(TELNET_LINEMODE,true);
+			changeTelnetModeBackwards(rawout,TELNET_LINEMODE,true);
+			//changeTelnetMode(rawout,TELNET_BINARY,true);
+			if(mightSupportTelnetMode(TELNET_GA))
+				rawBytesOut(rawout,TELNETGABYTES);
+			if((!CMSecurity.isDisabled(CMSecurity.DisFlag.MSSP))
+			&&(mightSupportTelnetMode(TELNET_MSSP)))
+				changeTelnetMode(rawout,TELNET_MSSP,true);
+			return true;
+		}
+		return false;
 	}
 
 	protected void compress2Off() throws IOException

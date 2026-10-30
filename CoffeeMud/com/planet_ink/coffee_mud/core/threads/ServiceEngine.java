@@ -1862,10 +1862,13 @@ public class ServiceEngine implements ThreadEngine
 		{
 			debugDumpThreadGroup(topTG,str);
 		}
-		final PrintStream sysOut=System.out;
-		final PrintStream errOut=System.out;
-		errOut.println(str.toString());
-		sysOut.println(str.toString());
+		if(!CMProps.isSinglePlayer()) // the console belongs to the player
+		{
+			final PrintStream sysOut=System.out;
+			final PrintStream errOut=System.out;
+			errOut.println(str.toString());
+			sysOut.println(str.toString());
+		}
 		Log.errOut(str.toString());
 	}
 }
