@@ -399,6 +399,33 @@ public class ServiceEngine implements ThreadEngine
 	}
 
 	/**
+	 * Returns how long the game clock must move before the next game-time
+	 * tick group or delayed job comes due, or 0 if one is due already.
+	 * Groups that are running now are left out, since they cannot run again
+	 * until they finish.
+	 * @param gameNow the game time now
+	 * @return the milliseconds until the next game work, or Long.MAX_VALUE
+	 */
+	protected long msToNextGameWork(final long gameNow)
+	{
+		long next=Long.MAX_VALUE;
+		synchronized(allTicks)
+		{
+			for(final TickableGroup T : allTicks)
+			{
+				if((!T.isRealTime())&&(!T.isAwake()))
+					next=Math.min(next, T.getNextTickTime()-gameNow);
+			}
+		}
+		synchronized(schedTicks)
+		{
+			for(final CMRunnable R : schedTicks)
+				next=Math.min(next, R.getStartTime()-gameNow);
+		}
+		return Math.max(0, next);
+	}
+
+	/**
 	 * Wakes the scheduler to look again at what is due.  This signals rather
 	 * than interrupts, since the scheduler's thread may be running game code
 	 * whose own sleeps an interrupt would cut short.
@@ -587,8 +614,13 @@ public class ServiceEngine implements ThreadEngine
 			final Iterator<TickClient> set=almostTock.getTickSet(E,tickID);
 			if(set.hasNext())
 			{
+				// the client ticks on the group's tick that brings its countdown to 0
 				final TickClient client = set.next();
-				return client.getTimeMSToNextTick();
+				if(client.isSuspended() || client.isAwake())
+					return -1;
+				final long groupNow = almostTock.isRealTime() ? System.currentTimeMillis() : GameTime.now();
+				final long toGroupTick = Math.max(0, almostTock.getNextTickTime() - groupNow);
+				return toGroupTick + (Math.max(1, client.getCurrentTickDown()) - 1) * almostTock.getTickInterval();
 			}
 		}
 		return -1;
@@ -1856,15 +1888,20 @@ public class ServiceEngine implements ThreadEngine
 						Thread.sleep(2000);
 				}
 				// Real-time groups run by the system clock.  Everything else runs by
-				// the game clock, which stands still while the game is paused; while
-				// it runs, both clocks move at the same rate, so a wait on either can
-				// be slept on the system clock.
+				// the game clock.  While the game clock runs, both clocks move at the
+				// same rate, so a wait on either can be slept on the system clock.
+				// While it is stopped, game work comes due only when the clock is
+				// asked to move, and it moves here one step at a time: up to the next
+				// thing due, which then runs, and so on until the time asked for is
+				// used up.
+				final boolean stopped=GameTime.isStopped();
+				if(stopped && GameTime.isAdvancing())
+					GameTime.takeAdvance(msToNextGameWork(GameTime.now()));
 				final long now=System.currentTimeMillis();
 				final long gameNow=GameTime.now();
-				final boolean paused=GameTime.isPaused();
 				globalTickID = (now - globalStartTime) / props.tickMillis();
-				long nextWake=now + (paused ? 250 : 3600000);
-				if((this.schedTicks.size() > 0) && (!paused))
+				long nextWake=now + (stopped ? 250 : 3600000);
+				if(this.schedTicks.size() > 0)
 				{
 					final List<CMRunnable> runThese = new LinkedList<CMRunnable>();
 					synchronized(this.schedTicks)
@@ -1880,7 +1917,7 @@ public class ServiceEngine implements ThreadEngine
 									r.remove();
 								}
 								else
-								if(now + (R.getStartTime() - gameNow) < nextWake)
+								if((!stopped) && (now + (R.getStartTime() - gameNow) < nextWake))
 									nextWake = now + (R.getStartTime() - gameNow);
 							}
 						}
@@ -1898,14 +1935,14 @@ public class ServiceEngine implements ThreadEngine
 				{
 					for(final TickableGroup T : allTicks)
 					{
-						if(paused && (!T.isRealTime()))
-							continue;
 						final long groupNow = T.isRealTime() ? now : gameNow;
+						// a stopped game clock does not come due by waiting
+						final boolean wakeFor = T.isRealTime() || (!stopped);
 						if(!T.isAwake() && (oneThread || !getPoolExecutor(T.getThreadGroupName()).isActiveOrQueued(T)))
 						{
 							if (T.getNextTickTime() <= groupNow)
 							{
-								if(now + T.getTickInterval() < nextWake)
+								if(wakeFor && (now + T.getTickInterval() < nextWake))
 									nextWake = now + T.getTickInterval();
 								if(oneThread)
 									dueGroups.add(T);
@@ -1913,13 +1950,13 @@ public class ServiceEngine implements ThreadEngine
 									getPoolExecutor(T.getThreadGroupName()).execute(T);
 							}
 							else
-							if (nextWake > now + (T.getNextTickTime() - groupNow))
+							if (wakeFor && (nextWake > now + (T.getNextTickTime() - groupNow)))
 							{
 								nextWake = now + (T.getNextTickTime() - groupNow);
 							}
 						}
 						else
-						if(now + T.getTickInterval() < nextWake)
+						if(wakeFor && (now + T.getTickInterval() < nextWake))
 							nextWake = now + T.getTickInterval();
 					}
 				}
@@ -1929,6 +1966,12 @@ public class ServiceEngine implements ThreadEngine
 					runOnThisThread(T);
 				if(oneThread)
 					runGameJobs();
+				if(stopped)
+				{
+					GameTime.checkStop();
+					if(GameTime.isAdvancing())
+						continue; // take the next step at once
+				}
 				final long afterWork=System.currentTimeMillis();
 				if(nextWake > afterWork)
 				{

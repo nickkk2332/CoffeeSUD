@@ -2131,11 +2131,21 @@ public class StdMOB implements MOB
 					return false;
 				QMCommand cmd = commandQue.getFirst();
 				final double diff = actions() - cmd.actionCost;
-				if((cmd.actionCost > 0.0) && (session() != null) && GameTime.isPaused())
-					return false; // takes time, and the game is paused
+				final long reqEllapse = commandMillis(cmd.actionCost);
+				if((cmd.actionCost > 0.0) && (session() != null) && GameTime.isStopped())
+				{
+					// takes time, and the clock is stopped
+					if(GameTime.isPaused() || GameTime.isAdvancing())
+						return false; // until the game resumes, or the world catches up
+					final long wait = turnWaitMillis(cmd, diff, lastCommandTime + reqEllapse);
+					if(wait > 0)
+					{
+						GameTime.requestAdvance(wait);
+						return false;
+					}
+				}
 				if(diff >= 0.0)
 				{
-					final long reqEllapse = Math.round(cmd.actionCost / phyStats().speed() * CMProps.getTickMillisD());
 					final long nextTime = lastCommandTime + reqEllapse;
 					if((GameTime.now() < nextTime) && (session() != null))
 						return false;
@@ -2148,6 +2158,9 @@ public class StdMOB implements MOB
 			{
 				lastCommandTime = GameTime.now();
 				doCommand(doCommand.commandObj, doCommand.commandVector, doCommand.metaFlags);
+				// in turn-based play, the world then moves on by as long as it took
+				if((doCommand.actionCost > 0.0) && (session() != null) && GameTime.isTurnBased())
+					GameTime.requestAdvance(commandMillis(doCommand.actionCost));
 				synchronized(commandQue)
 				{
 					if(!commandQue.isEmpty())
@@ -2216,6 +2229,41 @@ public class StdMOB implements MOB
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Returns how long a command that costs the given actions takes, at this
+	 * mob's speed.
+	 * @param actionCost the actions it costs
+	 * @return its length in milliseconds
+	 */
+	protected long commandMillis(final double actionCost)
+	{
+		final double speed = phyStats().speed();
+		if(speed <= 0.0)
+			return CMProps.getTickMillis();
+		return Math.round(actionCost / speed * CMProps.getTickMillisD());
+	}
+
+	/**
+	 * In turn-based play, returns how far the clock must move before the
+	 * first queued command can go on: to the time it may start, or, if this
+	 * mob lacks the actions, to its next tick (when they come back) or to the
+	 * command's next once-a-second check, whichever is sooner.
+	 * @param cmd the first queued command
+	 * @param diff the actions left over if it ran now
+	 * @param nextTime the earliest time it may start
+	 * @return milliseconds to wait, or 0 to go on now
+	 */
+	private long turnWaitMillis(final QMCommand cmd, final double diff, final long nextTime)
+	{
+		final long now = GameTime.now();
+		if(diff >= 0.0)
+			return Math.max(0, nextTime - now);
+		long toTick = CMLib.threads().getTimeMsToNextTick(this, Tickable.TICKID_MOB);
+		if(toTick < 0)
+			toTick = CMProps.getTickMillis();
+		return Math.max(0, Math.min(toTick, cmd.nextCheck - now));
 	}
 
 	@Override

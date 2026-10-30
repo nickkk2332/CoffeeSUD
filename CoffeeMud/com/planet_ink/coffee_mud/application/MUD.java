@@ -571,6 +571,8 @@ public class MUD extends Thread implements MudHost
 		if(acceptConns)
 		{
 			setState(MudState.ACCEPTING);
+			if(CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN"))
+				GameTime.setTurnBased(true);
 			final Session S=(Session)CMClass.getCommon("ConsoleSession");
 			if((S!=null) && S.initialize(null, threadGroup().getName()))
 			{

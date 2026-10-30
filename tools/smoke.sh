@@ -1,7 +1,8 @@
 #!/bin/sh
-# Single-player smoke test.  Plays two scripted sessions against a scratch
-# copy of the database: the first creates a character and plays a little,
-# the second loads that character again.  Fails if expected text is missing.
+# Single-player smoke test.  Plays scripted sessions against a scratch copy
+# of the database: one creates a character and plays a little, the next
+# loads that character again, then come pause and turn-based time.  Fails
+# if expected text is missing.
 #   tools/smoke.sh            run the test
 #   KEEP=1 tools/smoke.sh     keep the scratch folder and print its path
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,8 +13,8 @@ FAIL=0
 
 play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
 {
-	OUTFILE="$1"; printf "$2" > "$W/script"; shift 2
-	python3 "$ROOT/tools/sudplay.py" "$W/script" "DBSERVICE=jdbc:fakedb:$W/db" "$@" > "$W/$OUTFILE" 2>&1
+	OUTFILE="$1"; printf "$2" > "$W/$OUTFILE.script"; shift 2
+	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "$@" > "$W/$OUTFILE" 2>&1
 	set -- "$OUTFILE"
 	echo "$1: exit $?" >> "$W/exits"
 }
@@ -64,6 +65,25 @@ else
 	echo "  ok    pause.txt: NORTH waited for RESUME"
 fi
 expect pause.txt "Rocky Room"
+
+echo "Session 4: turn-based time, and a fight one WAIT at a time"
+play turns.txt 'Hero\ntimemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 9\ntime\nquit\nY\n' MILLISPERMUDHOUR=4000
+expect turns.txt "Time is now turn-based."
+expect turns.txt "New Room"
+expect turns.txt "the world already waits for you"
+expect turns.txt "You stop waiting."
+expect turns.txt "Time now runs in real time."
+# the five TIME answers: before and after 6 idle seconds, after WAIT, after
+# WAIT 3, and after 9 seconds of real time; TIME shows the hour as H/L, where
+# L is the day's last hour, numbered from 0
+grep -ao "(Hour: [0-9]*/[0-9]*)" "$W/turns.txt" | tr -d '()' | sed 's/Hour: //' > "$W/hours"
+if awk -F/ '{h[NR]=$1; n=$2+1} END {
+	ok=(NR==5) && (h[1]==h[2]) && ((h[3]-h[2]+n)%n==1) && ((h[4]-h[3]+n)%n==3) && (h[5]!=h[4])
+	exit !ok }' "$W/hours"; then
+	echo "  ok    turns.txt: the clock waited for the player, moved one hour per WAITed tick, then ran"
+else
+	echo "  FAIL  turns.txt: clock readings were $(tr '\n' ' ' < "$W/hours")"; FAIL=1
+fi
 
 if grep -q "exit [^0]" "$W/exits"; then
 	echo "  FAIL  a session did not exit cleanly:"; cat "$W/exits"; FAIL=1

@@ -1085,13 +1085,13 @@ public class DefaultTimeClock implements TimeClock
 	{
 		tickStatus=Tickable.STATUS_NOT;
 		if(((loadName==null)||(loaded))
-		&&(((GameTime.now()-lastTicked)<=CMProps.getMillisPerMudHour())))
+		&&(((GameTime.now()-lastTicked)<CMProps.getMillisPerMudHour())))
 			return true;
 		boolean process = false;
 		boolean timeToTick=false;
 		synchronized(this)
 		{
-			timeToTick = ((GameTime.now()-lastTicked)>CMProps.getMillisPerMudHour());
+			timeToTick = ((GameTime.now()-lastTicked)>=CMProps.getMillisPerMudHour());
 			lastTicked=GameTime.now();
 			if((loadName!=null)&&(!loaded))
 			{

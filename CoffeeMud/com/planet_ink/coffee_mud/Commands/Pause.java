@@ -38,6 +38,8 @@ import java.io.IOException;
  * In single-player, PAUSE stops the game clock and PAUSE again (or RESUME,
  * UNPAUSE, PAUSE RESUME) starts it.  While it is stopped nothing in the
  * world ticks, and commands that take time wait in the player's queue.
+ * When time is turn-based (see TIMEMODE) the world already waits, so PAUSE
+ * just says so.
  * On a multi-player server, PAUSE suspends every ticking object instead.
  * PAUSE AREA, PAUSE ROOM or PAUSE [name] suspends or resumes the ticks of
  * just that object; that needs the PAUSE security flag.
@@ -72,6 +74,9 @@ public class Pause extends StdCommand
 		if(CMProps.isSinglePlayer()
 		&&((commands.size()<2)||resumeWord||cmd.equalsIgnoreCase("RESUME")))
 		{
+			if(GameTime.isTurnBased())
+				mob.tell(L("Time is turn-based, so the world already waits for you.  TIMEMODE REALTIME makes it run on its own."));
+			else
 			if(GameTime.isPaused())
 			{
 				GameTime.resume();
