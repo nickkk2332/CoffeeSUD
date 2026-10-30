@@ -3,3 +3,7 @@
 
 # cmd.exe needs CRLF line endings in batch files
 *.bat text eol=crlf
+
+# The flat-file database is random-access data addressed by byte offset,
+# not text: converting its line endings corrupts it.
+CoffeeMud/resources/fakedb/** binary
