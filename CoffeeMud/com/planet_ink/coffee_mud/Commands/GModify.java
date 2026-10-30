@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.Commands;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
@@ -812,6 +813,7 @@ public class GModify extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		SaveGame.warnAboutBuilding(mob);
 		final boolean noisy=CMSecurity.isDebugging(CMSecurity.DbgFlag.GMODIFY);
 		List<Places> placesToDo=new ArrayList<Places>();
 		final String whole=CMParms.combine(commands,0);

@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMClass.CMObjectType;
 import com.planet_ink.coffee_mud.core.CMSecurity.SecFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.exceptions.MQLException;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
@@ -1428,6 +1429,10 @@ public class Destroy extends StdCommand
 	public boolean execute(final MOB mob, List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if((commands.size()>0)
+		&&commands.get(0).equalsIgnoreCase("DESTROY")
+		&&CMSecurity.isAllowedContainsAny(mob, mob.location(), CMSecurity.SECURITY_CMD_GROUP))
+			SaveGame.warnAboutBuilding(mob);
 		if((!CMSecurity.isAllowedAnywhereContainsAny(mob,CMSecurity.SECURITY_CMD_GROUP))
 		&&(!CMSecurity.isAllowedContainsAny(mob,mob.location(),CMSecurity.SECURITY_KILL_GROUP))
 		&&(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.BAN))

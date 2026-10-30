@@ -3,6 +3,7 @@ import com.planet_ink.coffee_mud.core.exceptions.CMException;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
@@ -91,6 +92,7 @@ public class Generate extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		SaveGame.warnAboutBuilding(mob);
 		boolean save=true;
 		final List<String> origCommands = new XVector<String>(commands);
 		if(commands.size()>1)

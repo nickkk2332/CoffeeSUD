@@ -198,8 +198,15 @@ Steps:
   a new game starts from), never a save.
 - Builder mode is `sud.sh BUILDER=1`: the game runs on the content database
   itself, so edits and the builder's `SAVE ROOM`, `SAVE AREA` and the like go
-  into the world. In a normal game they go into that game's copy and last
-  only as long as it does; `SAVE` warns about this.
+  into the world. Rooms, exits, areas, races, classes and abilities are
+  written as they are made; mobs and items placed with `CREATE` become part
+  of a room when it is saved with `SAVE ROOM` or `SAVE AREA`.
+- In a normal game the same commands change only that game's copy of the
+  world, and every building command (`CREATE`, `MODIFY`, `DESTROY`, `COPY`,
+  `GMODIFY`, `MERGE`, `IMPORT`, `GENERATE`, `LINK`, `CATALOG`, the builder's
+  `SAVE`) says so: mobs and items made, changed or destroyed stay that way in
+  the game's saves, but changes to rooms, exits, areas and the like last only
+  until the game ends.
 - Content can also be written by hand as `.cmare` XML.
 - The MUDGrinder web editor is gone with the web server. `archive/mudgrinder`
   keeps a browsable snapshot of it (open `snapshot/index.html` from disk), its

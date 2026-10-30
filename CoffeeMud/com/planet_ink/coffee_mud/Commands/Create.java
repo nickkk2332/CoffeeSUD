@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.Commands;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.exceptions.CMException;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Abilities.interfaces.PlanarAbility.PlanarVar;
@@ -1882,6 +1883,7 @@ public class Create extends StdCommand
 	public boolean execute(final MOB mob, List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		SaveGame.warnAboutBuilding(mob);
 		String commandType="";
 		if(commands.size()>1)
 			commandType=commands.get(1).toUpperCase();

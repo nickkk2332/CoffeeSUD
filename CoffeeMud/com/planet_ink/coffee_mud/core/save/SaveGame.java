@@ -246,6 +246,22 @@ public final class SaveGame
 	}
 
 	/**
+	 * In a normal game, tells a builder that what they are about to change
+	 * may not last: the game plays on a copy of the world, and its saves keep
+	 * what is in the rooms, not the rooms themselves.
+	 * @param mob the builder
+	 */
+	public static void warnAboutBuilding(final MOB mob)
+	{
+		if(CMProps.isSinglePlayer() && (!builderMode) && (workingDb != null))
+		{
+			mob.tell(CMLib.lang().L("^HThis game plays on a copy of the world.^?  Mobs and items you make, change or "
+				+ "destroy stay that way in this game's saves, but changes to rooms, exits, areas and the like last "
+				+ "only until the game ends.  Start CoffeeSUD with BUILDER=1 to change the world itself."));
+		}
+	}
+
+	/**
 	 * Returns the save a player's game goes to when they do not name one:
 	 * the one it came from or was last saved to, else their name.
 	 * @param mob the player

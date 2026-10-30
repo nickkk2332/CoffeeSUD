@@ -153,8 +153,7 @@ public class Save extends StdCommand
 				mob.tell(L("You are not allowed to do that."));
 				return false;
 			}
-			if(!SaveGame.isBuilderMode())
-				mob.tell(L("This game plays on a copy of the world, so this lasts only until the game ends.  Start CoffeeSUD with BUILDER=1 to change the world itself."));
+			SaveGame.warnAboutBuilding(mob);
 		}
 		if((commands.size()==1)&&CMSecurity.isSaveFlag(CMSecurity.SaveFlag.NOPLAYERS))
 		{

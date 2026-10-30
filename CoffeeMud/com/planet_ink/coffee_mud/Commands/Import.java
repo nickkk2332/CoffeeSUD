@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.core.interfaces.TickableGroup.LocalType;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMClass.CMObjectType;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
@@ -7750,6 +7751,7 @@ public class Import extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		SaveGame.warnAboutBuilding(mob);
 		final List<Object> objCommands = new ArrayList<Object>(commands.size());
 		for(final String s : commands)
 			objCommands.add(s);

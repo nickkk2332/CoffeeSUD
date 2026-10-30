@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.Commands;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.database.DBConnection;
 import com.planet_ink.coffee_mud.core.database.DBConnector;
 import com.planet_ink.coffee_mud.core.database.DBInterface;
@@ -216,6 +217,7 @@ public class Merge extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		SaveGame.warnAboutBuilding(mob);
 		final boolean noisy=CMSecurity.isDebugging(CMSecurity.DbgFlag.MERGE);
 		Vector<Places> placesToDo=new Vector<Places>();
 		commands.remove(0);
