@@ -2917,6 +2917,8 @@ public class DefaultSession implements Session
 				.append("'^>\n\r");
 		}
 		buf.append(CMLib.utensils().buildPrompt(mob, mob.playerStats().getPrompt()));
+		if(GameTime.isPaused())
+			buf.append(L("(paused) "));
 		promptPrint("^<Prompt^>"+buf.toString()+"^</Prompt^>^.^N");
 	}
 

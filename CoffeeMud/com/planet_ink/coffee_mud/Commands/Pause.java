@@ -34,13 +34,21 @@ import java.io.IOException;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+/**
+ * In single-player, PAUSE stops the game clock and PAUSE again (or RESUME,
+ * UNPAUSE, PAUSE RESUME) starts it.  While it is stopped nothing in the
+ * world ticks, and commands that take time wait in the player's queue.
+ * On a multi-player server, PAUSE suspends every ticking object instead.
+ * PAUSE AREA, PAUSE ROOM or PAUSE [name] suspends or resumes the ticks of
+ * just that object; that needs the PAUSE security flag.
+ */
 public class Pause extends StdCommand
 {
 	public Pause()
 	{
 	}
 
-	private final String[]	access	= I(new String[] { "PAUSE" });
+	private final String[]	access	= I(new String[] { "PAUSE", "RESUME", "UNPAUSE" });
 
 	@Override
 	public String[] getAccessWords()
@@ -60,6 +68,28 @@ public class Pause extends StdCommand
 	{
 
 		final String cmd=CMParms.combine(commands,1);
+		final boolean resumeWord=(commands.size()>0)&&(!commands.get(0).toUpperCase().startsWith("P"));
+		if(CMProps.isSinglePlayer()
+		&&((commands.size()<2)||resumeWord||cmd.equalsIgnoreCase("RESUME")))
+		{
+			if(GameTime.isPaused())
+			{
+				GameTime.resume();
+				mob.tell(L("The world moves again."));
+			}
+			else
+			if(resumeWord||cmd.equalsIgnoreCase("RESUME"))
+				mob.tell(L("The game is not paused."));
+			else
+			{
+				GameTime.pause();
+				mob.tell(L("The world holds still.  Commands that take time will wait until you RESUME."));
+			}
+		}
+		else
+		if((!CMSecurity.isAllowed(mob, mob.location(), CMSecurity.SecFlag.PAUSE)))
+			mob.tell(L("You are not allowed to do that."));
+		else
 		if(commands.size()<2)
 		{
 			if(!CMLib.threads().isAllSuspended())
@@ -122,13 +152,13 @@ public class Pause extends StdCommand
 	@Override
 	public boolean canBeOrdered()
 	{
-		return true;
+		return !CMProps.isSinglePlayer();
 	}
 
 	@Override
 	public boolean securityCheck(final MOB mob)
 	{
-		return CMSecurity.isAllowed(mob, mob.location(), CMSecurity.SecFlag.PAUSE);
+		return CMProps.isSinglePlayer() || CMSecurity.isAllowed(mob, mob.location(), CMSecurity.SecFlag.PAUSE);
 	}
 
 }

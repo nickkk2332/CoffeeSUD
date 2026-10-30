@@ -43,6 +43,7 @@ public class StdTickGroup implements TickableGroup, Cloneable
 	private final String		name;
 	private final String		threadGroupName;
 	private final boolean		solitaryTicker;
+	private final boolean		realTime;
 
 	private volatile long		nextTickTime;
 	private volatile long		lastStart		= 0;
@@ -62,9 +63,10 @@ public class StdTickGroup implements TickableGroup, Cloneable
 		name = "Tick."+(tickObjReference+1);
 		tickObjectCounter=tickObjReference++;
 		tickTime=sleep;
-		nextTickTime=System.currentTimeMillis() + tickTime;
 		myEngine=null;
 		solitaryTicker=isSolitary;
+		realTime=false;
+		nextTickTime=clockNow() + tickTime;
 		this.threadGroupName=threadGroupName;
 	}
 
@@ -73,21 +75,38 @@ public class StdTickGroup implements TickableGroup, Cloneable
 		name = "Tick."+ a_name + "." +(tickObjReference+1);
 		tickObjectCounter=tickObjReference++;
 		tickTime=sleep;
-		nextTickTime=System.currentTimeMillis() + tickTime;
 		myEngine=null;
 		solitaryTicker=isSolitary;
+		realTime=false;
+		nextTickTime=clockNow() + tickTime;
 		this.threadGroupName=threadGroupName;
 	}
 
-	public StdTickGroup(final ThreadEngine theEngine, final long sleep, final String threadGroupName, final boolean isSolitary)
+	public StdTickGroup(final ThreadEngine theEngine, final long sleep, final String threadGroupName, final boolean isSolitary, final boolean isRealTime)
 	{
 		name = "Tick."+(tickObjReference+1);
 		tickObjectCounter=tickObjReference++;
 		myEngine=theEngine;
 		tickTime=sleep;
-		nextTickTime=System.currentTimeMillis() + tickTime;
 		solitaryTicker=isSolitary;
+		realTime=isRealTime;
+		nextTickTime=clockNow() + tickTime;
 		this.threadGroupName=threadGroupName;
+	}
+
+	/**
+	 * Returns the current time on the clock this group runs by.
+	 * @return the system time for real-time groups, otherwise the game time
+	 */
+	protected final long clockNow()
+	{
+		return realTime ? System.currentTimeMillis() : GameTime.now();
+	}
+
+	@Override
+	public boolean isRealTime()
+	{
+		return realTime;
 	}
 
 	public StdTickGroup copyOf()
@@ -333,7 +352,7 @@ public class StdTickGroup implements TickableGroup, Cloneable
 	public void run()
 	{
 		lastStart=System.currentTimeMillis();
-		nextTickTime=System.currentTimeMillis() + tickTime;
+		nextTickTime=clockNow() + tickTime;
 		//final String oldThreadName=Thread.currentThread().getName();
 		try
 		{

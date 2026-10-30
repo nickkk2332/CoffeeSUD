@@ -2131,6 +2131,8 @@ public class StdMOB implements MOB
 					return false;
 				QMCommand cmd = commandQue.getFirst();
 				final double diff = actions() - cmd.actionCost;
+				if((cmd.actionCost > 0.0) && (session() != null) && GameTime.isPaused())
+					return false; // takes time, and the game is paused
 				if(diff >= 0.0)
 				{
 					final long reqEllapse = Math.round(cmd.actionCost / phyStats().speed() * CMProps.getTickMillisD());

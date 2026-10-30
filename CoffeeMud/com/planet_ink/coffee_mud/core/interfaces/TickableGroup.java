@@ -65,10 +65,20 @@ public interface TickableGroup extends CMRunnable
 	public long getTickInterval();
 
 	/**
-	 * Returns the next time, in ms, when this group should tick.
+	 * Returns the next time, in ms, when this group should tick, on the clock
+	 * the group runs by.
+	 * @see TickableGroup#isRealTime()
 	 * @return the next time, in ms, when this group should tick.
 	 */
 	public long getNextTickTime();
+
+	/**
+	 * Returns whether this group runs by the system clock, and so keeps
+	 * ticking while the game is paused, rather than by the game clock.
+	 * @see com.planet_ink.coffee_mud.core.GameTime
+	 * @return true for the system clock, false for the game clock
+	 */
+	public boolean isRealTime();
 
 	/**
 	 * Orders this group to do any necessary cleanup before going away.

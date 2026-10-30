@@ -10,10 +10,11 @@ W="$(mktemp -d "${TMPDIR:-/tmp}/sudsmoke.XXXXXX")"
 cp -r "$GAME/resources/fakedb" "$W/db"
 FAIL=0
 
-play()  # play OUTFILE SCRIPT
+play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
 {
-	printf "$2" > "$W/script"
-	python3 "$ROOT/tools/sudplay.py" "$W/script" "DBSERVICE=jdbc:fakedb:$W/db" > "$W/$1" 2>&1
+	OUTFILE="$1"; printf "$2" > "$W/script"; shift 2
+	python3 "$ROOT/tools/sudplay.py" "$W/script" "DBSERVICE=jdbc:fakedb:$W/db" "$@" > "$W/$OUTFILE" 2>&1
+	set -- "$OUTFILE"
 	echo "$1: exit $?" >> "$W/exits"
 }
 
@@ -43,6 +44,26 @@ echo "Session 2: load the saved character"
 play load.txt 'Hero\nscore\nquit\nY\n'
 expect load.txt "You are Hero the Archon."
 expect load.txt "Bye!"
+
+echo "Session 3: pause and resume (one mud hour per 4-second tick)"
+play pause.txt 'Hero\ntime\n#sleep 9\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000
+expect pause.txt "The world holds still."
+expect pause.txt "(paused) "
+expect pause.txt "The world moves again."
+# the four TIME answers: running, running, paused, paused
+grep -ao "(Hour: [0-9]*/[0-9]*)" "$W/pause.txt" > "$W/hours"
+if [ "$(sed -n 1p "$W/hours")" != "$(sed -n 2p "$W/hours")" ] && [ "$(sed -n 3p "$W/hours")" = "$(sed -n 4p "$W/hours")" ]; then
+	echo "  ok    pause.txt: the clock ran, then stood still while paused"
+else
+	echo "  FAIL  pause.txt: clock readings were $(tr '\n' ' ' < "$W/hours")"; FAIL=1
+fi
+# NORTH waited for RESUME: no Rocky Room before the world moved again
+if sed -n '/(paused)/,/The world moves again/p' "$W/pause.txt" | grep -q "^Rocky Room"; then
+	echo "  FAIL  pause.txt: a command that takes time ran while paused"; FAIL=1
+else
+	echo "  ok    pause.txt: NORTH waited for RESUME"
+fi
+expect pause.txt "Rocky Room"
 
 if grep -q "exit [^0]" "$W/exits"; then
 	echo "  FAIL  a session did not exit cleanly:"; cat "$W/exits"; FAIL=1

@@ -10,7 +10,8 @@ previous one and gone quiet, the way a person waits to read before typing;
 some questions are asked asynchronously, and an answer sent too early is
 read as a command.  A script line "#expect TEXT" instead waits (up to
 EXPECT_LIMIT seconds) until TEXT has appeared in the output since the last
-line was sent, for commands that run longer than a pause.  The transcript
+line was sent, for commands that run longer than a pause, and "#sleep N"
+waits N seconds, to let game time pass.  The transcript
 goes to standard output.  Exits with the game's exit code, or 124 if it does
 not finish in time.
 """
@@ -69,6 +70,9 @@ def main():
     for line in script:
         if proc.poll() is not None:
             break
+        if line.startswith('#sleep '):
+            time.sleep(float(line.split()[1]))
+            continue
         if line.startswith('#expect '):
             want = line[len('#expect '):].encode()
             end = time.time() + EXPECT_LIMIT
