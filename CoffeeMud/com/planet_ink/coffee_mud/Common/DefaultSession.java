@@ -3617,6 +3617,9 @@ public class DefaultSession implements Session
 				return;
 			}
 			else
+			if(GameTime.isAdvancing())
+				return; // the next command waits until the world has caught up
+			else
 				input=readlineContinue(PINGTIMEOUT);
 			if(input==null)
 			{
