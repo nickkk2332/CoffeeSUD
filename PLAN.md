@@ -127,13 +127,21 @@ Accounts, channels, clans, polls, journals, mail, auctions, who lists and
 player killing assume other people. Each is removed or turned into its
 NPC-facing half (hirelings, an NPC auctioneer, notice boards).
 
-Several characters at once fits here. The engine already runs many player
-characters in one world, so this is mostly interface and saving:
-- a party in one window: a command moves the console to another of your
-  characters, and the rest stay in the world, following or waiting;
-- optionally one window per character, all in the same world, through a
-  connection that only accepts this machine.
-A save then holds every character in the party.
+Several characters at once fits here, as a profile and a party:
+- The profile is the player's stored record of all their characters.
+  CoffeeMud's account (`PlayerAccount`) already holds several characters and
+  is switched off in single-player only because it asks for logins; it can
+  become the profile.
+- From the profile the player can create a new character (later possibly
+  behind a cheat setting), bring one into the world, add them to the party,
+  send them back to the profile, or leave them in the world as an ordinary
+  character.
+- Party members use the normal follower system (FOLLOW, ORDER).
+- The engine already runs many player characters in one world, so the work
+  is the commands for the above and saving: a save holds the profile, every
+  character in it and where each one is.
+- Optionally later: one window per character, all in the same world, through
+  a connection that only accepts this machine.
 
 ### 6. Content
 
@@ -145,8 +153,8 @@ hand-built starting area.
 
 - **Time model (decided):** both, by a setting; real time with pause is the
   default.
-- **Several characters:** a switchable party in one window, separate windows,
-  or both.
+- **Several characters (decided):** a profile holding all the player's
+  characters, with a party built on the follower system (phase 5).
 - **Interface:** terminal only, or a graphical or web front end later on the
   same session code.
 
