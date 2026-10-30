@@ -307,8 +307,50 @@ Several characters at once fits here, as a profile and a party:
 - The engine already runs many player characters in one world, so the work
   is the commands for the above and saving: a save holds the profile, every
   character in it and where each one is.
-- Optionally later: one window per character, all in the same world, through
-  a connection that only accepts this machine.
+- Controlling the party, two ways that can be used together:
+  - One window, switching: commands go to the character being controlled,
+    changed with something like `CONTROL <name>`, or one command goes to
+    another with `AS <name> <command>`. This comes first.
+  - One window per character, so that several can be given commands without
+    switching. The game opens the windows itself, in the same process, with
+    no network connection: to the engine a session is an input and an output
+    stream, as `ConsoleSession` already shows with the terminal, so a
+    `WindowSession` does the same with a window. A window needs only
+    scrolling text with colour, an input line and command history (MUD
+    output is lines, not a screen to redraw), in Swing, which comes with
+    Java. Later it can show what a terminal cannot, such as health bars, the
+    party and a map. Windows are a setting (`WINDOWS=1`), not a replacement:
+    the terminal stays, for those who want it and for the tests. The cost is
+    that the player's own MUD client cannot be used.
+  - Characters not being given commands act as followers: they follow the
+    leader and, with `AUTOASSIST`, join fights.
+- Time with a party:
+  - In real time each character acts as the player types for them, and
+    `PAUSE` stops them all.
+  - In turn-based time the leader (the first character, or whichever the
+    player makes leader) decides when the world moves, by one of two modes,
+    chosen with a setting and a command (`PARTYTURNS LEADER` or
+    `PARTYTURNS ALL`), as `TIMEMODE` is:
+    - **The leader drives** (`LEADER`): giving a companion orders does not
+      move time. When the leader acts, the turn resolves: companions with
+      orders carry them out, those without do what followers do, and then the
+      leader acts. The player can play the leader alone and step in for a
+      companion only when needed.
+    - **Everyone acts** (`ALL`): the world waits until every enabled
+      character has an action, then they act in order. Characters the player
+      disables act as followers.
+  - Suggested details, to settle when it is built:
+    - A turn in `ALL` is one combat round (one 4-second tick), and each
+      character acts once in it. A fully timed system, where each character
+      is ready again when their last action ends, is more exact but harder
+      to follow.
+    - The order is the party's order by default, with a command to change
+      it; initiative from dexterity is the alternative.
+    - A character still busy with a long action (a spell being cast, say) is
+      skipped until it ends.
+    - The leader's `WAIT` passes the turn for everyone.
+    - If the leader dies or leaves the party, the next character in order
+      leads; the player can also hand the lead over.
 
 ### 6. Content
 
