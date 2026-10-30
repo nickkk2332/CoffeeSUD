@@ -9,6 +9,7 @@ import com.planet_ink.coffee_mud.core.CMProps.ListFile;
 import com.planet_ink.coffee_mud.core.CMProps.Str;
 import com.planet_ink.coffee_mud.core.CMSecurity.DisFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.AchievementLibrary.AchievementLoadFlag;
 import com.planet_ink.coffee_mud.Libraries.interfaces.CharCreationLibrary.LoginSession;
@@ -4467,6 +4468,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			clan.first.updateClanPrivileges(mob);
 		if(mob.location()!=null)
 			CMLib.players().changePlayersLocation(mob, mob.location());
+		if(CMProps.isSinglePlayer())
+			SaveGame.playerLoggedIn(mob);
 		return LoginResult.NORMAL_LOGIN;
 	}
 

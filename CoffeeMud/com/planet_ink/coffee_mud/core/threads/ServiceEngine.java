@@ -426,6 +426,16 @@ public class ServiceEngine implements ThreadEngine
 	}
 
 	/**
+	 * Returns whether the single-player game thread has started, so that
+	 * work handed to executeRunnable runs on it.
+	 * @return true once it has started
+	 */
+	public static boolean hasGameThread()
+	{
+		return gameThread!=null;
+	}
+
+	/**
 	 * Returns whether the calling thread is the single-player game thread.
 	 * @return true on the game thread
 	 */

@@ -2,7 +2,8 @@
 # Single-player smoke test.  Plays scripted sessions against a scratch copy
 # of the database, with saves in a scratch folder: one creates a character,
 # plays a little and saves, the next restores the save, then come pause,
-# turn-based time, the random seed, and saving and restoring during play.
+# turn-based time, the random seed, saving and restoring during play, and
+# a changed world coming back as it was saved.
 # Fails if expected text is missing, or if play wrote to the content.
 #   tools/smoke.sh            run the test
 #   KEEP=1 tools/smoke.sh     keep the scratch folder and print its path
@@ -122,6 +123,37 @@ if sed -n "/Restored 'second'/,\$p" "$W/restore.txt" | grep -q "^Rocky Room"; th
 	echo "  ok    restore.txt: back in Rocky Room after restoring"
 else
 	echo "  FAIL  restore.txt: not back in Rocky Room after restoring"; FAIL=1
+fi
+
+echo "Session 7: change the world, put timed effects on things, and save"
+play world.txt 'timemode turns\nsouth\ndrop waterskin\nnorth\ncreate mob wolf\ncreate mob rabbit\nkill rabbit\nwait 3\nlook\nfreeze wolf\nhush hero\nscore\nsave world\nquit\nn\n' RESTORE=hero
+expect world.txt "A wolf"
+expect world.txt "Game saved as 'world'."
+
+echo "Session 8: restore the changed world"
+play world2.txt 'score\nlook\nsouth\nlook\nnorth\nwait 100\nlook\nquit\nn\n' RESTORE=world
+expect world2.txt "Restored 'world'."
+# the wolf is back, the rabbit stays dead until its time to come back, and
+# the waterskin lies where it was dropped
+sed -n "/Restored 'world'/,/You wait/p" "$W/world2.txt" > "$W/before"
+if grep -q "A wolf" "$W/before" && grep -qi "waterskin" "$W/before" && ! grep -q "A rabbit hops by" "$W/before"; then
+	echo "  ok    world2.txt: the wolf and the waterskin came back, and the dead rabbit did not"
+else
+	echo "  FAIL  world2.txt: the restored world is not as it was saved"; FAIL=1
+fi
+if sed -n "/You wait/,\$p" "$W/world2.txt" | grep -q "A rabbit hops by"; then
+	echo "  ok    world2.txt: the rabbit came back on its time"
+else
+	echo "  FAIL  world2.txt: the rabbit did not come back after its time"; FAIL=1
+fi
+# a timed effect on the player comes back (the first SCORE shows it), and
+# so do their hit points, mana and movement
+expect world2.txt "(Hushed)"
+if [ -n "$(grep -a "movement\." "$W/world.txt" | tail -1)" ] \
+&& [ "$(grep -a "movement\." "$W/world.txt" | tail -1)" = "$(grep -a "movement\." "$W/world2.txt" | head -1)" ]; then
+	echo "  ok    world2.txt: hit points, mana and movement came back as saved"
+else
+	echo "  FAIL  world2.txt: hit points, mana or movement changed across the save"; FAIL=1
 fi
 
 if (cd "$W/db" && cksum * | cmp -s - "$W/content.sums"); then

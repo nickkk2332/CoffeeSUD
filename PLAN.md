@@ -167,10 +167,26 @@ Steps:
   asks. `SAVES` lists them, and `QUIT` offers to save first. `BUILDER=1`
   plays on the content database itself, as before, with no saves. The
   calendar keeps its hour, and how far into it, across a save.
-- **4b. The live world.** What is in each room, which mobs are dead and when
-  they come back, taken items due to reappear, doors and weather.
-- **4c. Effects and the rest.** Timed effects with their remaining time on
-  the player, mobs, items and rooms; quests and script variables.
+- **4b. The live world: done.** A save also holds `world.xml`: what is in
+  every room (mobs, with where they belong, their hit points and what they
+  carry; items on the floor, inside each other, with when they rot), mobs
+  that are dead and how many ticks until they come back, items taken from
+  where they belong that are due to come back there, which doors are open or
+  locked, and each area's weather. Restoring boots the world as built,
+  empties its rooms and puts all that back before the character logs in. The
+  player and their followers come back from the character's tables. Left
+  out: mobs that cannot be saved, such as summoned ones, and for the engine's
+  built-in mob classes (Goblin, Wolf and the like) the stats their
+  constructors roll; generic mobs, which builders make, keep everything.
+- **4c. Effects and the rest: done but for quests.** Effects with time left
+  (spells, poisons, an Archon's freeze) are saved on the player, mobs, items,
+  rooms and exits, with the ticks each has left and who caused it, and put
+  back once the player is in the game, since the player is often who caused
+  them. The player's hit points, mana and movement come back as they were,
+  and so do the variables that scripts share. Not yet: running quests start
+  over when a save is restored (they own the mobs and items they spawned and
+  their own step state), and timed effects on what the player carries are
+  lost, since those items come back from the character's tables.
 - Later, with content in files: the fake database goes.
 
 ### Authoring
@@ -244,3 +260,8 @@ hand-built starting area.
   unchanged at 47 of 50 after each step. Fixed on the way: the world clock
   skipped every other hour when ticks fell exactly on the hour, and launching
   two games at once could start two clean builds over each other.
+- Phase 4 (so far): play runs on a copy of the content, which is never
+  written; SAVE, RESTORE and SAVES, with the saves listed at startup; the
+  live world, timed effects and script variables in each save. Smoke test
+  covers saving, restoring at startup and during play, a changed world and
+  effects coming back, and the content staying untouched.

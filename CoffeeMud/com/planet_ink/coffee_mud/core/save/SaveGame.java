@@ -10,6 +10,8 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /*
    Copyright 2026 CoffeeSUD contributors
@@ -28,7 +30,7 @@ import java.util.*;
 */
 /**
  * Saving and restoring single-player games.  See {@link SaveSlots} for what
- * a save holds on disk.
+ * a save holds on disk, and {@link WorldState} for the live world in it.
  *
  * The launcher picks what the first boot plays: a new game or a save.  Before
  * each boot, {@link #beforeBoot(String)} makes the working database and sets
@@ -192,13 +194,14 @@ public final class SaveGame
 
 	/**
 	 * Called when the console session is ready and before it logs in: has
-	 * the world's clocks read their dates and, when restoring, puts back the
-	 * dice and has the session log the saved character in.
+	 * the world's clocks read their dates and, when restoring, puts the live
+	 * world back as it was saved, then the dice, and has the session log the
+	 * saved character in.
 	 * @param S the console session
 	 */
 	public static void afterBoot(final Session S)
 	{
-		CMLib.threads().executeRunnable(new Runnable()
+		runOnGameThread(new Runnable()
 		{
 			@Override
 			public void run()
@@ -210,12 +213,36 @@ public final class SaveGame
 		if(header == null)
 			return;
 		restoring = null;
+		final String world = SaveSlots.readFile(saveDir, currentSlot, WorldState.FILE);
+		if(world != null)
+		{
+			runOnGameThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					WorldState.apply(world);
+				}
+			});
+		}
+		// last, so that play rolls on exactly where the saved game left off
 		final String dice = header.getProperty("dice");
 		if(dice != null)
 			CMath.setRandState(parseLong(dice, 0));
 		final String name = header.getProperty("character", "");
 		if(name.length() > 0)
 			S.setStat("LOGIN_ACCOUNT", name);
+	}
+
+	/**
+	 * Called when a player enters the game.  After a restore, puts back what
+	 * the database does not keep: their hit points and timed effects, and
+	 * the timed effects on the rest of the world.
+	 * @param mob the player
+	 */
+	public static void playerLoggedIn(final MOB mob)
+	{
+		WorldState.finishRestore(mob);
 	}
 
 	/**
@@ -279,6 +306,7 @@ public final class SaveGame
 		if(dice != null)
 			header.setProperty("dice", dice.toString());
 		final Map<String, String> files = new HashMap<String, String>();
+		files.put(WorldState.FILE, WorldState.capture(mob));
 		try
 		{
 			SaveSlots.write(saveDir, slot, workingDb, header, files);
@@ -342,6 +370,41 @@ public final class SaveGame
 			str.append("\n\r");
 		}
 		return str.toString();
+	}
+
+	/**
+	 * Runs a job on the game thread, as soon as it has started, and waits
+	 * for it to finish, so that nothing else in the world happens while it
+	 * runs.
+	 * @param R the job
+	 */
+	private static void runOnGameThread(final Runnable R)
+	{
+		for(int i = 0; (i < 200) && (!ServiceEngine.hasGameThread()); i++)
+			CMLib.s_sleep(50);
+		final CountDownLatch done = new CountDownLatch(1);
+		CMLib.threads().executeRunnable(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					R.run();
+				}
+				finally
+				{
+					done.countDown();
+				}
+			}
+		});
+		try
+		{
+			done.await(120, TimeUnit.SECONDS);
+		}
+		catch(final InterruptedException e)
+		{
+		}
 	}
 
 	/**
