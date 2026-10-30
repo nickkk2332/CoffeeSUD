@@ -28,6 +28,7 @@ import com.planet_ink.coffee_mud.core.database.DBConnection;
 import com.planet_ink.coffee_mud.core.database.DBInterface;
 import com.planet_ink.coffee_mud.core.threads.CMRunnable;
 import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -107,6 +108,8 @@ public class MUD extends Thread implements MudHost
 	protected static Map<String,String>	 clArgs				= new Hashtable<String,String>();
 	protected static boolean			 skipMapLoads		= false;
 	protected static boolean			 consoleMode		= false;
+	/** true while globalShutdown runs; a restart's next boot waits for it */
+	private static volatile boolean		 shutdownRunning	= false;
 
 	protected static LinkedList<Quad<Socket,Closeable,Long,Session>> closeables	= new LinkedList<Quad<Socket,Closeable,Long,Session>>();
 
@@ -590,10 +593,14 @@ public class MUD extends Thread implements MudHost
 		if(acceptConns)
 		{
 			setState(MudState.ACCEPTING);
-			final boolean turns=CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN");
+			// a restored game keeps the time mode, clock and dice it was saved with
+			final boolean restoring=SaveGame.isRestoring();
+			final boolean turns=restoring
+				?GameTime.isTurnBased()
+				:CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN");
 			if(turns)
 				GameTime.setTurnBased(true);
-			final Long seed=randomSeedSetting();
+			final Long seed=restoring?null:randomSeedSetting();
 			if(seed!=null)
 			{
 				if(turns)
@@ -624,14 +631,21 @@ public class MUD extends Thread implements MudHost
 			final Session S=(Session)CMClass.getCommon("ConsoleSession");
 			if((S!=null) && S.initialize(null, threadGroup().getName()))
 			{
-				StringBuffer introText=Resources.getFileResource("text/intro.txt",true);
-				try
+				StringBuffer introText;
+				if(SaveGame.isRestoring())
+					introText=new StringBuffer("Restored '"+SaveGame.currentSlot()+"'.\n\r");
+				else
 				{
-					introText = TextMacros.filter(introText);
+					introText=Resources.getFileResource("text/intro.txt",true);
+					try
+					{
+						introText = TextMacros.filter(introText);
+					}
+					catch (final Exception ex)
+					{
+					}
 				}
-				catch (final Exception ex)
-				{
-				}
+				SaveGame.afterBoot(S);
 				S.handshake(introText.toString());
 				CMLib.sessions().add(S);
 				while((!S.isStopped())
@@ -763,6 +777,19 @@ public class MUD extends Thread implements MudHost
 	 * @param externalCommand an external command to run if restarting, or null
 	 */
 	public static void globalShutdown(final Session S, final boolean keepItDown, final String externalCommand)
+	{
+		shutdownRunning=true;
+		try
+		{
+			shutdownAll(S,keepItDown,externalCommand);
+		}
+		finally
+		{
+			shutdownRunning=false;
+		}
+	}
+
+	private static void shutdownAll(final Session S, final boolean keepItDown, final String externalCommand)
 	{
 		CMProps.setAllStates(CMProps.HostState.SHUTTINGDOWN);
 		bootSync.set(false);
@@ -1831,6 +1858,11 @@ public class MUD extends Thread implements MudHost
 				page.put(skey,clArgs.get(key));
 				CMProps.getCommandLineOverrides().put(skey, clArgs.get(key));
 			}
+			for(final Map.Entry<String,String> e : SaveGame.bootOverrides().entrySet())
+			{
+				page.put(e.getKey(),e.getValue());
+				CMProps.getCommandLineOverrides().put(e.getKey(),e.getValue());
+			}
 			page.resetSystemVars();
 			CMProps.setState(CMProps.HostState.BOOTING);
 			serviceEngine.activate();
@@ -2089,6 +2121,8 @@ public class MUD extends Thread implements MudHost
 
 		while(!bringDown)
 		{
+			if(consoleMode)
+				SaveGame.beforeBoot(page.getStr("DBSERVICE"));
 			CMProps.setAllStates(CMProps.HostState.BOOTING);
 			final PrintStream eolStream = System.out;
 			eolStream.println();
@@ -2184,6 +2218,10 @@ public class MUD extends Thread implements MudHost
 						e.printStackTrace(); Log.errOut(Thread.currentThread().getName(),e);
 					}
 					Runtime.getRuntime().removeShutdownHook(shutdownHook);
+					// the host can end before the shutdown that ended it is done, as
+					// when a console game restarts to restore a save
+					for(int i=0;(i<1200)&&shutdownRunning;i++)
+						checkedSleep(100);
 				}
 			}
 

@@ -1,20 +1,22 @@
 #!/bin/sh
 # Single-player smoke test.  Plays scripted sessions against a scratch copy
-# of the database: one creates a character and plays a little, the next
-# loads that character again, then come pause, turn-based time, and the
-# random seed.  Fails if expected text is missing.
+# of the database, with saves in a scratch folder: one creates a character,
+# plays a little and saves, the next restores the save, then come pause,
+# turn-based time, the random seed, and saving and restoring during play.
+# Fails if expected text is missing, or if play wrote to the content.
 #   tools/smoke.sh            run the test
 #   KEEP=1 tools/smoke.sh     keep the scratch folder and print its path
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="$ROOT/CoffeeMud"
 W="$(mktemp -d "${TMPDIR:-/tmp}/sudsmoke.XXXXXX")"
 cp -r "$GAME/resources/fakedb" "$W/db"
+(cd "$W/db" && cksum * > "$W/content.sums")
 FAIL=0
 
 play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
 {
 	OUTFILE="$1"; printf "$2" > "$W/$OUTFILE.script"; shift 2
-	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "$@" > "$W/$OUTFILE" 2>&1
+	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "SAVEDIR=$W/saves" "$@" > "$W/$OUTFILE" 2>&1
 	set -- "$OUTFILE"
 	echo "$1: exit $?" >> "$W/exits"
 }
@@ -34,22 +36,25 @@ expect()  # expect OUTFILE TEXT
 echo "Session 1: create a character and play"
 # the seed, with the clock stopped while the character is made, fixes the
 # stat rolls, which can otherwise rule out the Apprentice class
-play new.txt 'Hero\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\ntimemode realtime\nlook\ninventory\nscore\nnorth\nlook\nsouth\nget book\nread book\nquit\nY\n' RANDOMSEED=42 TIMEMODE=TURNS
+play new.txt 'Hero\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\ntimemode realtime\nlook\ninventory\nscore\nnorth\nlook\nsouth\nget book\nread book\nquit\nY\n' RANDOMSEED=42 TIMEMODE=TURNS RESTORE=NEW
 expect new.txt "Welcome to CoffeeSUD"
 expect new.txt "Character creation complete!"
 expect new.txt "You are carrying:"
 expect new.txt "You are Hero the level 1 Apprentice."
 expect new.txt "Rocky Room"
 expect new.txt "The manual glows softly"
+expect new.txt "Game saved as 'hero'."
 expect new.txt "Bye!"
 
-echo "Session 2: load the saved character"
-play load.txt 'Hero\nscore\nquit\nY\n'
+echo "Session 2: restore the save from the list at startup"
+play load.txt '1\nscore\nquit\nY\n'
+expect load.txt "1) hero"
+expect load.txt "Restored 'hero'."
 expect load.txt "You are Hero the Archon."
 expect load.txt "Bye!"
 
 echo "Session 3: pause and resume (one mud hour per 4-second tick)"
-play pause.txt 'Hero\ntime\n#sleep 9\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000
+play pause.txt 'time\n#sleep 9\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect pause.txt "The world holds still."
 expect pause.txt "(paused) "
 expect pause.txt "The world moves again."
@@ -69,7 +74,7 @@ fi
 expect pause.txt "Rocky Room"
 
 echo "Session 4: turn-based time, and a fight one WAIT at a time"
-play turns.txt 'Hero\ntimemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 9\ntime\nquit\nY\n' MILLISPERMUDHOUR=4000
+play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 9\ntime\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect turns.txt "Time is now turn-based."
 expect turns.txt "New Room"
 expect turns.txt "the world already waits for you"
@@ -77,12 +82,15 @@ expect turns.txt "You stop waiting."
 expect turns.txt "Time now runs in real time."
 # the five TIME answers: before and after 6 idle seconds, after WAIT, after
 # WAIT 3, and after 9 seconds of real time; TIME shows the hour as H/L, where
-# L is the day's last hour, numbered from 0
+# L is the day's last hour, numbered from 0.  The hour turns on an area's
+# tick, so four ticks of waiting turn it three or four times, depending on
+# where in the hour the restored game was.
 grep -ao "(Hour: [0-9]*/[0-9]*)" "$W/turns.txt" | tr -d '()' | sed 's/Hour: //' > "$W/hours"
 if awk -F/ '{h[NR]=$1; n=$2+1} END {
-	ok=(NR==5) && (h[1]==h[2]) && ((h[3]-h[2]+n)%n==1) && ((h[4]-h[3]+n)%n==3) && (h[5]!=h[4])
+	moved=(h[4]-h[2]+n)%n
+	ok=(NR==5) && (h[1]==h[2]) && (moved==3 || moved==4) && (h[5]!=h[4])
 	exit !ok }' "$W/hours"; then
-	echo "  ok    turns.txt: the clock waited for the player, moved one hour per WAITed tick, then ran"
+	echo "  ok    turns.txt: the clock waited for the player, moved an hour a tick while WAITing, then ran"
 else
 	echo "  FAIL  turns.txt: clock readings were $(tr '\n' ' ' < "$W/hours")"; FAIL=1
 fi
@@ -91,7 +99,7 @@ echo "Session 5: the same RANDOMSEED rolls the same new character"
 printf 'Zorb\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nquit\nY\n' > "$W/seed.script"
 for i in 1 2; do
 	cp -r "$GAME/resources/fakedb" "$W/seeddb$i"
-	python3 "$ROOT/tools/sudplay.py" "$W/seed.script" "DBSERVICE=jdbc:fakedb:$W/seeddb$i" RANDOMSEED=42 TIMEMODE=TURNS > "$W/seed$i.txt" 2>&1 &
+	python3 "$ROOT/tools/sudplay.py" "$W/seed.script" "DBSERVICE=jdbc:fakedb:$W/seeddb$i" "SAVEDIR=$W/seedsaves$i" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS > "$W/seed$i.txt" 2>&1 &
 done
 wait
 for i in 1 2; do
@@ -103,6 +111,24 @@ else
 	echo "  FAIL  seed: the rolls differ or are missing"; FAIL=1
 fi
 
+echo "Session 6: save, move, and restore during play"
+play restore.txt 'north\nsave second\nsouth\nrestore second\ny\nsaves\nquit\nn\n' RESTORE=hero
+expect restore.txt "Game saved as 'second'."
+expect restore.txt "Restoring 'second'..."
+expect restore.txt "Restored 'second'."
+expect restore.txt "second       Hero"
+# the restored game puts Hero back where 'second' was saved
+if sed -n "/Restored 'second'/,\$p" "$W/restore.txt" | grep -q "^Rocky Room"; then
+	echo "  ok    restore.txt: back in Rocky Room after restoring"
+else
+	echo "  FAIL  restore.txt: not back in Rocky Room after restoring"; FAIL=1
+fi
+
+if (cd "$W/db" && cksum * | cmp -s - "$W/content.sums"); then
+	echo "  ok    the content database was not written"
+else
+	echo "  FAIL  play wrote to the content database"; FAIL=1
+fi
 if grep -q "exit [^0]" "$W/exits"; then
 	echo "  FAIL  a session did not exit cleanly:"; cat "$W/exits"; FAIL=1
 fi

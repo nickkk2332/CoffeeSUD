@@ -6,7 +6,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingDeque;
+
+import com.planet_ink.coffee_mud.core.ConsoleInput;
 
 /*
    Copyright 2026 CoffeeSUD contributors
@@ -41,7 +42,7 @@ public class ConsoleSession extends DefaultSession
 	@Override
 	public boolean initialize(final Socket s, final String groupName)
 	{
-		return super.initialize(new ConsoleSocket(System.in, System.out), groupName);
+		return super.initialize(new ConsoleSocket(System.out), groupName);
 	}
 
 	@Override
@@ -62,9 +63,9 @@ public class ConsoleSession extends DefaultSession
 		private final ConsoleOutput	out;
 		private volatile boolean	closed	= false;
 
-		public ConsoleSocket(final InputStream stdin, final PrintStream stdout)
+		public ConsoleSocket(final PrintStream stdout)
 		{
-			in = new ConsoleInput(stdin);
+			in = ConsoleInput.instance();
 			out = new ConsoleOutput(stdout);
 		}
 
@@ -134,80 +135,6 @@ public class ConsoleSession extends DefaultSession
 		@Override
 		public void setKeepAlive(final boolean on)
 		{
-		}
-	}
-
-	/**
-	 * Standard input, read by a background thread so that the session can
-	 * poll it without blocking.  Once standard input ends and every byte has
-	 * been consumed, the stream reports itself finished, after a short grace
-	 * period so that the output of the last command is not cut off.
-	 */
-	protected static class ConsoleInput extends InputStream
-	{
-		private static final long				GRACE_MS	= 1500;
-		private final LinkedBlockingDeque<Integer>	bytes		= new LinkedBlockingDeque<Integer>();
-		private volatile long					eofTime		= 0;
-		private volatile long					lastReadTime= System.currentTimeMillis();
-
-		public ConsoleInput(final InputStream stdin)
-		{
-			final Thread pump = new Thread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					try
-					{
-						int b;
-						while((b = stdin.read()) >= 0)
-							bytes.add(Integer.valueOf(b));
-					}
-					catch(final IOException e)
-					{
-					}
-					eofTime = System.currentTimeMillis();
-				}
-			}, "ConsoleInput");
-			pump.setDaemon(true);
-			pump.start();
-		}
-
-		public boolean isFinished()
-		{
-			return (eofTime != 0)
-				&& bytes.isEmpty()
-				&& (System.currentTimeMillis() - Math.max(eofTime, lastReadTime) > GRACE_MS);
-		}
-
-		@Override
-		public int available()
-		{
-			return bytes.size();
-		}
-
-		@Override
-		public int read()
-		{
-			final Integer b = bytes.poll();
-			if(b == null)
-				return -1;
-			lastReadTime = System.currentTimeMillis();
-			return b.intValue();
-		}
-
-		@Override
-		public int read(final byte[] buf, final int off, final int len)
-		{
-			if(len == 0)
-				return 0;
-			int n = 0;
-			Integer b;
-			while((n < len) && ((b = bytes.poll()) != null))
-				buf[off + n++] = (byte)b.intValue();
-			if(n > 0)
-				lastReadTime = System.currentTimeMillis();
-			return (n == 0) ? -1 : n;
 		}
 	}
 

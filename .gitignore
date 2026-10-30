@@ -9,3 +9,6 @@ CoffeeMud/mud*.log
 
 # Source list written by make.bat
 CoffeeMud/sources.txt
+
+# Saved games (see CoffeeMud/coffeemud.ini, SAVEDIR)
+CoffeeMud/saves/

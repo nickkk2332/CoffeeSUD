@@ -26,6 +26,11 @@ example `DBSERVICE=jdbc:fakedb:/some/scratch/copy` to play against a copy of
 the database, `TIMEMODE=TURNS` to start turn-based, or `RANDOMSEED=42` to
 fix the dice.
 
+When it starts, it lists the saved games and asks which to restore, or starts
+a new game. `RESTORE=NAME` restores that save without asking, `RESTORE=NEW`
+starts a new game without asking, and `BUILDER=1` plays on the content itself
+to change the world (see Authoring).
+
 ## Ground rules
 
 - Every step keeps the build green and the smoke test passing, and is
@@ -136,11 +141,11 @@ Still to do:
   boot is threaded, and real time depends on timing. Phase 4 saves the
   generator's state with the game, which is what keeps a reload from rerolling.
 
-### 4. Save games
+### 4. Save games: in progress
 
-Today the database stores the built world and the player characters only.
-Killed mobs respawn, dropped items vanish, timed effects are stripped at
-shutdown and running quests restart. The target:
+Before this phase the database held the built world and the player
+characters only. Killed mobs respawned, dropped items vanished, timed effects
+were stripped at shutdown and running quests restarted. The target:
 - the built world is read-only content; a save is a separate file;
 - saving pauses the clock and writes the whole live state: rooms, mobs, items,
   the player, effects with their remaining time, quest progress, script
@@ -149,6 +154,25 @@ shutdown and running quests restart. The target:
 - the fake JDBC database (`com/planet_ink/fakedb`) and most of
   `DatabaseEngine` go once nothing reads them.
 
+Steps:
+- **4a. Saved games: done.** The content database (`DBSERVICE`) is never
+  written in play: each game runs on a working copy made fresh when it starts
+  (`saves/.play-*`). `SAVE [name]` writes `saves/NAME/`: the working copy's
+  tables that hold the game's state (characters with their items, abilities
+  and followers, accounts, player data such as the calendar and bank
+  accounts, journals, clans) and a header with the game clock, the time mode,
+  the pause and the dice. `RESTORE NAME` restarts the engine in the same
+  process, boots a fresh copy of the content with the save's tables over it,
+  and logs the character in; at startup the launcher lists the saves and
+  asks. `SAVES` lists them, and `QUIT` offers to save first. `BUILDER=1`
+  plays on the content database itself, as before, with no saves. The
+  calendar keeps its hour, and how far into it, across a save.
+- **4b. The live world.** What is in each room, which mobs are dead and when
+  they come back, taken items due to reappear, doors and weather.
+- **4c. Effects and the rest.** Timed effects with their remaining time on
+  the player, mobs, items and rooms; quests and script variables.
+- Later, with content in files: the fake database goes.
+
 ### Authoring
 
 - The in-game editors stay: CREATE, MODIFY, DESTROY, COPY, GMODIFY, MERGE,
@@ -156,6 +180,10 @@ shutdown and running quests restart. The target:
   GENERATE for random areas, and MOBPROG and JavaScript scripting. They are
   used in builder mode, and from phase 4 on they edit the world's content (what
   a new game starts from), never a save.
+- Builder mode is `sud.sh BUILDER=1`: the game runs on the content database
+  itself, so edits and the builder's `SAVE ROOM`, `SAVE AREA` and the like go
+  into the world. In a normal game they go into that game's copy and last
+  only as long as it does; `SAVE` warns about this.
 - Content can also be written by hand as `.cmare` XML.
 - The MUDGrinder web editor is gone with the web server. `archive/mudgrinder`
   keeps a browsable snapshot of it (open `snapshot/index.html` from disk), its

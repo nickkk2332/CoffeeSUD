@@ -3,6 +3,7 @@ import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.interfaces.TickableGroup.LocalType;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
@@ -135,6 +136,26 @@ public class Save extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if(CMProps.isSinglePlayer())
+		{
+			if(!isBuilderSave(commands))
+			{
+				final String slot=(commands.size()>1)?CMParms.combine(commands,1).trim():null;
+				final String problem=SaveGame.save(mob, slot);
+				if(problem!=null)
+					mob.tell(problem);
+				else
+					mob.tell(L("Game saved as '@x1'.",SaveGame.currentSlot()));
+				return false;
+			}
+			if(!builderAllowed(mob))
+			{
+				mob.tell(L("You are not allowed to do that."));
+				return false;
+			}
+			if(!SaveGame.isBuilderMode())
+				mob.tell(L("This game plays on a copy of the world, so this lasts only until the game ends.  Start CoffeeSUD with BUILDER=1 to change the world itself."));
+		}
 		if((commands.size()==1)&&CMSecurity.isSaveFlag(CMSecurity.SaveFlag.NOPLAYERS))
 		{
 			if(!mob.isMonster())
@@ -400,8 +421,34 @@ public class Save extends StdCommand
 		return true;
 	}
 
+	/** the words that make SAVE the builder's, which writes the world, not a saved game */
+	private static final Set<String> BUILDER_WORDS=new XHashSet<String>(new String[] {
+		"USERS","PLAYERS","CHARACTERS","USER","PLAYER","CHARACTER","CHAR",
+		"GRACES","ITEMS","AREA","REWORLD","ROOM","MOBS","QUESTS","FACTION"
+	});
+
+	/**
+	 * Returns whether these words ask for the builder's SAVE, which writes
+	 * rooms, areas, players and the like to the database, rather than for a
+	 * saved game.
+	 * @param commands the command words
+	 * @return true for the builder's SAVE
+	 */
+	protected boolean isBuilderSave(final List<String> commands)
+	{
+		if(commands.size()<2)
+			return false;
+		return BUILDER_WORDS.contains(commands.get(1).toUpperCase())
+			|| BUILDER_WORDS.contains(commands.get(commands.size()-1).toUpperCase());
+	}
+
 	@Override
 	public boolean securityCheck(final MOB mob)
+	{
+		return CMProps.isSinglePlayer() || builderAllowed(mob);
+	}
+
+	protected boolean builderAllowed(final MOB mob)
 	{
 		return CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDROOMS)
 			 ||CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDPLAYERS)

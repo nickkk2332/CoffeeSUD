@@ -1021,6 +1021,7 @@ public class DefaultTimeClock implements TimeClock
 			+"<NIGHTHR>"+getDawnToDusk()[TimeOfDay.NIGHT.ordinal()]+"</NIGHTHR>"
 			+"<WEEK>"+CMParms.toListString(getWeekNames())+"</WEEK>"
 			+"<YEARS>"+CMParms.toListString(getYearNames())+"</YEARS>"
+			+"<INTOHOUR>"+Math.max(0,Math.min(CMProps.getMillisPerMudHour(),GameTime.now()-lastTicked))+"</INTOHOUR>"
 			);
 		}
 	}
@@ -1146,6 +1147,13 @@ public class DefaultTimeClock implements TimeClock
 				}
 			}
 			CMLib.map().getClockCache().put(loadName, this);
+			// a saved clock goes on from where it was in its hour, rather than
+			// starting a new hour; a clock that was never saved starts at dawn
+			if(getHourOfDay()>=0)
+			{
+				timeToTick=false;
+				lastTicked=GameTime.now()-CMLib.xml().getLongFromPieces(V,"INTOHOUR");
+			}
 		}
 		if(timeToTick)
 			tickTock(1);

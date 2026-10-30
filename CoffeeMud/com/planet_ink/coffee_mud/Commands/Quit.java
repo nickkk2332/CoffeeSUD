@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.Commands;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
@@ -90,6 +91,11 @@ public class Quit extends StdCommand
 					mob.tell(L("Quitting requires: ")+CMLib.masking().maskDesc(CMProps.getVar(CMProps.Str.LOGOUTMASK), false));
 					return false;
 				}
+				if(SaveGame.isAvailable())
+				{
+					promptSaveAndQuit(mob, session);
+					return false;
+				}
 				session.prompt(new InputCallback(InputCallback.Type.CONFIRM, "N", 30000)
 				{
 					@Override
@@ -123,6 +129,58 @@ public class Quit extends StdCommand
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * In a single-player game that can be saved, asks whether to save before
+	 * quitting, since a game that is not saved is lost.
+	 * @param mob the player
+	 * @param session their session
+	 */
+	protected void promptSaveAndQuit(final MOB mob, final Session session)
+	{
+		final String slot=SaveGame.defaultSlot(mob);
+		session.prompt(new InputCallback(InputCallback.Type.CHOOSE, "Y", "YNC", 0)
+		{
+			@Override
+			public void showPrompt()
+			{
+				session.promptPrint(L("\n\rQuit -- save the game as '@x1' first (Y/n), or cancel (c)? ",slot));
+			}
+
+			@Override
+			public void timedOut()
+			{
+			}
+
+			@Override
+			public void callBack()
+			{
+				final String answer=this.input.trim().toUpperCase();
+				if(answer.startsWith("C"))
+					return;
+				if(!answer.startsWith("N"))
+				{
+					final String problem=SaveGame.save(mob, slot);
+					if(problem!=null)
+					{
+						mob.tell(problem);
+						mob.tell(L("You have not quit."));
+						return;
+					}
+					mob.tell(L("Game saved as '@x1'.",slot));
+				}
+				final CMMsg msg=CMClass.getMsg(mob,null,CMMsg.MSG_QUIT,null);
+				final Room R=mob.location();
+				if((R!=null)&&(R.okMessage(mob,msg)))
+				{
+					CMLib.map().sendGlobalMessage(mob,CMMsg.TYP_QUIT, msg);
+					mob.tell(L("Bye!"));
+					session.stopSession(true,false, false, false);
+					CMLib.commands().monitorGlobalMessage(R, msg);
+				}
+			}
+		});
 	}
 
 	@Override

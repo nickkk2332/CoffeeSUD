@@ -11,7 +11,7 @@ cp -r "$GAME" "$W/game"
 cp -r "$GAME/resources/fakedb" "$W/db"
 
 printf 'Zorblax\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\ntest all\n#expect ZapperAnyclasslevel:\nquit\nY\n' > "$W/script"
-SUD_GAME_DIR="$W/game" SUDPLAY_LIMIT=2400 python3 "$ROOT/tools/sudplay.py" "$W/script" "DBSERVICE=jdbc:fakedb:$W/db" > "$W/out.txt" 2>&1
+SUD_GAME_DIR="$W/game" SUDPLAY_LIMIT=2400 python3 "$ROOT/tools/sudplay.py" "$W/script" "DBSERVICE=jdbc:fakedb:$W/db" "SAVEDIR=$W/saves" RESTORE=NEW > "$W/out.txt" 2>&1
 
 # one "Name: PASS" or "Name: FAIL" line per test; failure messages are left
 # out because some tests report random numbers.  Game messages can arrive

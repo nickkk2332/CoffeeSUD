@@ -49,7 +49,7 @@ public class CMath
 	private static final DecimalFormat	TWO_PLACES		= new DecimalFormat("0.#####%");
 	private static final int[]			INTEGER_BITMASKS= new int[31];
 	private static final long[]			LONG_BITMASKS	= new long[63];
-	private static Random 				rand			= new Random(System.currentTimeMillis());
+	private static Random 				rand			= new GameRandom(System.currentTimeMillis());
 	private final static boolean[]		IS_HEX_DIGITS	= new boolean[128];
 
 	@SuppressWarnings("rawtypes")
@@ -2315,6 +2315,33 @@ public class CMath
 	public final static void seedRand(final long seed)
 	{
 		rand.setSeed(seed);
+	}
+
+	/**
+	 * Returns the state of the shared random number generator, so
+	 * that a saved game can go on rolling where it left off.
+	 * @return the state, or null if the generator was replaced by
+	 * one whose state cannot be read
+	 * @see #setRandState(long)
+	 */
+	public final static Long getRandState()
+	{
+		final Random r = rand;
+		if(r instanceof GameRandom)
+			return Long.valueOf(((GameRandom)r).getState());
+		return null;
+	}
+
+	/**
+	 * Sets the state of the shared random number generator, as
+	 * returned by {@link #getRandState()}.
+	 * @param state the state
+	 */
+	public final static void setRandState(final long state)
+	{
+		final Random r = rand;
+		if(r instanceof GameRandom)
+			((GameRandom)r).setState(state);
 	}
 
 	/**
