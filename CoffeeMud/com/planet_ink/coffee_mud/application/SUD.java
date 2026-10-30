@@ -23,8 +23,8 @@ import com.planet_ink.coffee_mud.core.CMProps;
 */
 /**
  * The single-player entry point.  Boots the CoffeeMud engine with no network
- * listeners or outside services, plays one character through this process's
- * console, and exits when that character quits.
+ * listener, plays one character through this process's console, and exits
+ * when that character quits.
  *
  * Any NAME=VALUE argument overrides the ini file, as with {@link MUD}.
  */
@@ -32,12 +32,6 @@ public class SUD
 {
 	private static final String[] SINGLE_PLAYER_SETTINGS =
 	{
-		"RUNWEBSERVERS=false",
-		"RUNSMTPSERVER=false",
-		"RUNI3SERVER=false",
-		"RUNIMC2CLIENT=false",
-		"RUNCM1SERVER=false",
-		"RUNGVSERVER=false",
 		"COMMONACCOUNTSYSTEM=0",
 		"EMAILREQ=DISABLED",
 		"SYSMSGS=FILE",
