@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Quest Manager</title>
+	<script language="JavaScript">
+	<!--
+		function openUp(named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			var w2=window.open("/ahelp.cmvp?HELPTOPIC="+named,"Help",strFeatures,false);
+		}
+		function GoForIt()
+		{
+			
+				if(confirm('Create this quest?'))
+				{
+					document.QUEST.FUNCTION.value='CREATE';
+					document.QUEST.submit();
+				}
+			
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="QUEST" target="_top" method="POST" action="quest.html">
+
+<input type="HIDDEN" name="QUEST" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+
+<p align="RIGHT"><a href="javascript:openUp('QUESTS');"><font color="PINK"><i>help</i></font></a></p>
+<br>
+
+<textarea rows="25" cols="85" name="RAWTEXT">set name MyQuest
+#   Set the quest name
+
+	set duration 450
+#   The duration of the quest is 30 minutes (450 ticks).  
+#   The scripts on the mobs will do the rest...
+
+#    Some Sample Commands below: Use help for more!
+#
+#set wait 200
+#set interval 25
+#   For auto-quests: wait about 15 mins between quests
+#set area Midgaard
+#   inform the quest that it occurs in Midgaard
+#set mobtype ShopKeeper
+#   load up any mob from the above area of type shopkeeper. 
+#   This command will set a room!
+#give script LOAD=quests/robbed/shopkeeper.script
+#   load the above behavior into the last mob 
+#   (in this case, the shopkeeper)
+#set locale CityStreet 
+#   find any locale in Midgaard of type CityStreet
+#set mob "the thief"
+#   load up any mob from area with that name.  
+#   Since a room was set above,  this will move the mob into 
+#   the room (locale CityStreet)
+#give script "LOAD=quests/robbed/thief.script"
+#   load the above behavior into the last mob 
+#   (in this case, the thief)
+</textarea>
+
+<br>
+<table width="100%" border="0">
+<tbody><tr><td align="CENTER" width="50%">
+	<input type="BUTTON" name="Submit" value="Submit" onclick="GoForIt();">
+</td>
+<td width="50%" align="CENTER">
+	<input type="BUTTON" name="Close" value="Close" onclick="window.close();">
+</td>
+</tr>
+</tbody></table>
+</form>
+<script>
+<!--
+	function sizing()
+	{
+		document.QUEST.RAWTEXT.style.width=document.body.clientWidth-47;
+		document.QUEST.RAWTEXT.style.height=document.body.clientHeight-195;
+	}
+	window.onresize = sizing;
+-->
+</script>
+
+
+
+
+
+</body></html>

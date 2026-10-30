@@ -1,0 +1,10 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Not captured</title>
+<style>body{background:#000;color:#ddd;font-family:sans-serif;padding:2em}a{color:cyan}</style></head>
+<body><h2>Not in the snapshot</h2>
+<p>This MUDGrinder page, <code id="p"></code>, either changes the world (save, delete, create) or was
+not reached while the snapshot was taken. The snapshot has no server behind it.</p>
+<p>The page's template and the Java behind it are in <code>archive/mudgrinder/web</code> and
+<code>archive/mudgrinder/WebMacros</code>.</p>
+<p><a href="javascript:history.back()">Back</a> | <a href="index.html">Grinder menu</a></p>
+<script>document.getElementById('p').textContent=decodeURIComponent(location.hash.substring(1))||'(unknown)';</script>
+</body></html>

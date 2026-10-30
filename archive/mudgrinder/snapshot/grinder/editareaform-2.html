@@ -1,0 +1,262 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function OpenUp(file,named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/"+file+"?HELPTOPIC="+named,
+			            "Help",strFeatures, false);
+		}
+		function EditBehavior(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddBehavior(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditAffect(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddAffect(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+        function EditSubOp(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddSubOp(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function EditAreaParent(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAreaParent(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function EditAreaChild(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAreaChild(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+		function ReShow()
+		{
+			document.AREAEDIT.action="editareaform.html";
+			document.AREAEDIT.target='MAP';
+			document.AREAEDIT.submit();
+		}
+	//-->
+	</script>
+</head>
+<body>
+<center>
+<h3>Modify Area Data for 'New Area'.</h3>
+<p><font color="RED"></font></p><h1></h1>
+<br>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="../notcaptured.html#/grinder/editareadone.cmvp">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="ACTION" value="MODIFYAREA">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<table width="770" border="1" cellspacing="0" cellpaddin="0">
+<tbody><tr>
+	<td width="170"><font color="#66FFFF"><b>Area Class:</b></font></td>
+    <td width="600" colspan="2">
+	<select name="CLASSES">
+	<option value="Moon">Moon</option><option value="Planet">Planet</option><option value="StdArea" selected="">StdArea</option><option value="StdAutoGenInstance">StdAutoGenInstance</option><option value="StdBoardableShip">StdBoardableShip</option><option value="StdGridArea">StdGridArea</option><option value="StdPlanet">StdPlanet</option><option value="StdSpaceShip">StdSpaceShip</option><option value="StdThinArea">StdThinArea</option><option value="StdThinGridArea">StdThinGridArea</option><option value="StdThinInstance">StdThinInstance</option><option value="StdThinPlanet">StdThinPlanet</option><option value="StdTimeZone">StdTimeZone</option><option value="SubThinInstance">SubThinInstance
+	</option></select>
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Area Name:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="NAME" size="20" value="New Area"></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Description:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="DESCRIPTION" size="60" value=""></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Author:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="AUTHOR" size="60" maxlength="255" value=""></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Currency:</b></font></td>
+    <td colspan="2">
+    <input type="TEXT" name="CURRENCY" size="80" maxlength="255" value=""><br>
+	<select name="CURRENCIES" onclick="document.AREAEDIT.CURRENCY.value=this.options[this.selectedIndex].value">
+	<option value="" selected="">Default</option><option value="GOLD">GOLD</option><option value="COPPER">COPPER</option><option value="CREDIT">CREDIT</option><option value="DOLLAR">DOLLAR</option><option value="VICTORY">VICTORY
+	</option></select>
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Player Lvl:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="PLAYERLEVEL" size="5" maxlength="15" value="0">
+    <font size="-1" color="WHITE">(0 = Use Med. MOB Level)</font>
+    </td>
+</tr>
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Economic Prejudices:</b></font>
+	</td><td width="450" colspan="2"><input type="TEXT" name="SHOPPREJ" size="60" maxlength="255" value="">
+	<a href="javascript:OpenUp('ihelp.cmvp','PREJUDICE');"><font color="WHITE"><i>?</i></font></a>
+</td></tr>
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Economic Ignorable Mask:</b></font>
+	</td><td width="450" colspan="2"><input type="TEXT" name="IGNOREMASK" size="60" maxlength="255" value="">
+	<a href="javascript:OpenUp('ihelp.cmvp','IGNOREMASK');"><font color="WHITE"><i>?</i></font></a>
+</td></tr>
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Economic Item Pricing:</b></font>
+    </td><td width="450" colspan="2">
+    	<font color="WHITE">
+		<table width="100%" border="0" cellspacing="0" cellpadding="0"><tbody><tr><td width="20%">Price Factor</td><td>Item type Mask</td></tr><tr><td><input type="TEXT" size="5" name="IPRIC1"></td><td><input type="TEXT" size="50" name="IPRICM1"></td></tr></tbody></table>
+		</font>
+		<a href="javascript:OpenUp('ihelp.cmvp','PRICEFACTORS');"><font color="WHITE"><i>?</i></font></a>
+		<input type="BUTTON" name="RESHOW2" value="Submit" onclick="ReShow();">
+		<a href="javascript:OpenUp('ahelp.cmvp','MASKS')"><font color="WHITE"><i>mask help</i></font></a>
+	</td>
+</tr>
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Shops Budgets:</b></font></td>
+    <td width="450" colspan="2"><input type="TEXT" name="BUDGET" size="30" value="">
+	<a href="javascript:OpenUp('ihelp.cmvp','BUDGET');"><font color="WHITE"><i>?</i></font></a>
+    </td>
+</tr>
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Economic Deval. Rate(s):</b></font></td>
+    <td width="450" colspan="2"><input type="TEXT" name="DEVALRATE" size="7" value="">
+	<a href="javascript:OpenUp('ihelp.cmvp','DEVALUERATE');"><font color="WHITE"><i>?</i></font></a>
+    </td>
+</tr>
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Shops Inv. Reset (Ticks):</b></font></td>
+    <td width="450" colspan="2"><input type="TEXT" name="INVRESETRATE" size="7" value="0">
+	<a href="javascript:OpenUp('ihelp.cmvp','INVRESETRATE');"><font color="WHITE"><i>?</i></font></a>
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Climate:</b></font></td>
+    <td colspan="2">
+	<select name="CLIMATE" multiple="">
+	<option value="-1">Inherited</option><option value="1">WET</option><option value="2">COLD</option><option value="4">WINDY</option><option value="8">HOT</option><option value="16">DRY</option><option value="32">VOID
+	</option></select>
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Atmosphere:</b></font></td>
+    <td colspan="2">
+	<select name="ATMOSPHERE">
+	<option value="-1" selected="">Inherited</option><option value="1066">ADAMANTITE</option><option value="3242">AGATE</option><option value="4021">AIR</option><option value="2733">ALABASTER</option><option value="3207">ALEXANDRITE</option><option value="955">ALUMINUM</option><option value="3153">AMBER</option><option value="3151">AMETHYST</option><option value="3521">ANTIMATTER</option><option value="1807">APPLES</option><option value="3154">AQUAMARINE</option><option value="1951">ASH</option><option value="1185">ATLANTITE</option><option value="1327">BALSA</option><option value="1436">BAMBOO</option><option value="1917">BANANAS</option><option value="1887">BARLEY</option><option value="2705">BASALT</option><option value="1955">BEANS</option><option value="1420">BEECHWOOD</option><option value="2050">BEEF</option><option value="1808">BERRIES</option><option value="1908">BLACKBERRIES</option><option value="2903">BLOOD</option><option value="3205">BLOODSTONE</option><option value="1905">BLUEBERRIES</option><option value="2648">BONE</option><option value="1907">BOYSENBERRIES</option><option value="812">BRASS</option><option value="1898">BREAD</option><option value="803">BRONZE</option><option value="1814">CACTUS</option><option value="2199">CARP</option><option value="1802">CARROTS</option><option value="2203">CATFISH</option><option value="1417">CEDAR</option><option value="1954">CHEESE</option><option value="1913">CHERRIES</option><option value="1419">CHERRYWOOD</option><option value="1602">CHINA</option><option value="4026">CHLORINE</option><option value="942">CHROMIUM</option><option value="3155">CHRYSOBERYL</option><option value="3243">CITRINE</option><option value="1601">CLAY</option><option value="2649">COAL</option><option value="1878">COCOA</option><option value="1916">COCONUTS</option><option value="2892">COFFEE</option><option value="1867">COFFEEBEANS</option><option value="807">COPPER</option><option value="1800">CORN</option><option value="314">COTTON</option><option value="1899">CRACKER</option><option value="1956">CRANBERRIES</option><option value="1604">CRYSTAL</option><option value="1815">DATES</option><option value="456">DENIM</option><option value="3763">DEUTERIUM</option><option value="3266">DIAMELS</option><option value="3139">DIAMOND</option><option value="3013">DIESEL</option><option value="3273">DILITHIUM</option><option value="2765">DIRT</option><option value="2981">DRAGONBLOOD</option><option value="2214">DRAGONMEAT</option><option value="944">DRAGONSCALES</option><option value="959">DURANIUM</option><option value="2669">DUST</option><option value="2662">EBONY</option><option value="2121">EGGS</option><option value="3506">ELECTRICITY</option><option value="1418">ELM</option><option value="3240">EMERALD</option><option value="3439">ENERGY</option><option value="313">FEATHERS</option><option value="3773">FIBREGLASS</option><option value="2054">FISH</option><option value="2587">FLINT</option><option value="4024">FLOURINE</option><option value="1891">FLOWERS</option><option value="1806">FRUIT</option><option value="1998">FUNGUS</option><option value="309">FUR</option><option value="1914">GARLIC</option><option value="3152">GARNET</option><option value="3012">GASOLINE</option><option value="3141">GEM</option><option value="1599">GLASS</option><option value="805">GOLD</option><option value="2588">GRANITE</option><option value="1811">GRAPES</option><option value="1805">GREENS</option><option value="315">HEMP</option><option value="1889">HERBS</option><option value="1331">HICKORY</option><option value="311">HIDE</option><option value="2910">HONEY</option><option value="1866">HOPS</option><option value="4023">HYDROGEN</option><option value="801">IRON</option><option value="1364">IRONWOOD</option><option value="2663">IVORY</option><option value="3104">JADE</option><option value="2906">LAMP OIL</option><option value="3204">LAPIS</option><option value="802">LEAD</option><option value="566">LEATHER</option><option value="1810">LEMONS</option><option value="1918">LIMES</option><option value="2586">LIMESTONE</option><option value="2878">LIQUID</option><option value="2908">LIQUOR</option><option value="1329">MAPLE</option><option value="2590">MARBLE</option><option value="2049">MEAT</option><option value="1424">MESQUITE</option><option value="2888">MILK</option><option value="1065">MITHRIL</option><option value="3206">MOONSTONE</option><option value="1888">MUSHROOMS</option><option value="2053">MUTTON</option><option value="976">NICKEL</option><option value="4025">NITROGEN</option><option value="0">NOTHING</option><option value="1897">NUTS</option><option value="1328">OAK</option><option value="2589">OBSIDIAN</option><option value="1812">OLIVES</option><option value="1912">ONIONS</option><option value="3200">ONYX</option><option value="3149">OPAL</option><option value="1809">ORANGES</option><option value="4022">OXYGEN</option><option value="975">PALLADIUM</option><option value="2368">PAPER</option><option value="1910">PEACHES</option><option value="3142">PEARL</option><option value="1804">PEPPERS</option><option value="2976">PERFUME</option><option value="3202">PERIDOT</option><option value="3011">PETROLEUM</option><option value="1326">PINE</option><option value="1915">PINEAPPLES</option><option value="1902">PIPEWEED</option><option value="3505">PLASMA</option><option value="3684">PLASTIC</option><option value="839">PLATINUM</option><option value="1911">PLUMS</option><option value="2907">POISON</option><option value="455">POLYESTER</option><option value="2051">PORK</option><option value="1813">POTATOES</option><option value="2052">POULTRY</option><option value="2707">PUMICE</option><option value="3203">QUARTZ</option><option value="1906">RASPBERRIES</option><option value="1330">REDWOOD</option><option value="1452">REED</option><option value="1801">RICE</option><option value="3685">RUBBER</option><option value="3239">RUBY</option><option value="2198">SALMON</option><option value="2763">SALT</option><option value="2877">SALT WATER</option><option value="2591">SAND</option><option value="2708">SANDSTONE</option><option value="2943">SAP</option><option value="3241">SAPPHIRE</option><option value="564">SCALES</option><option value="1816">SEAWEED</option><option value="2706">SHALE</option><option value="2201">SHRIMP</option><option value="2758">SILICON</option><option value="341">SILK</option><option value="804">SILVER</option><option value="2996">SLIME</option><option value="1909">SMURFBERRIES</option><option value="1949">SOAP</option><option value="2709">SOAPSTONE</option><option value="1996">SPICE</option><option value="414">SPIDERSTEEL</option><option value="1423">SPRUCE</option><option value="811">STEEL</option><option value="2585">STONE</option><option value="1904">STRAWBERRIES</option><option value="1885">SUGAR</option><option value="1422">SYCAMORE</option><option value="3018">TAR</option><option value="1416">TEAK</option><option value="808">TIN</option><option value="956">TITANIUM</option><option value="1803">TOMATOES</option><option value="3150">TOPAZ</option><option value="2200">TROUT</option><option value="2202">TUNA</option><option value="3201">TURQUOISE</option><option value="958">ULTRANIUM</option><option value="2752">URANIUM</option><option value="2001">VEGETABLE</option><option value="1890">VINE</option><option value="2876">WATER</option><option value="2152">WAX</option><option value="1799">WHEAT</option><option value="943">WHITE GOLD</option><option value="1421">WILLOW</option><option value="1325">WOOD</option><option value="312">WOOL</option><option value="1388">YEW</option><option value="806">ZINC
+	</option></select>
+	</td>
+</tr>
+
+<tr>
+	<td><font color="#66FFFF"><b>'Blurb' Flags:</b></font></td>
+    <td colspan="2"><table width="100%" border="1" cellspacing="0" cellpadding="0"><tbody><tr><td width="30%">Flag</td><td>Description</td></tr><tr><td><input type="TEXT" size="15" name="BLURBFLAG1"></td><td><input type="TEXT" size="50" name="BLURB1"></td></tr></tbody></table></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>GIF filename:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="IMAGE" size="50" value=""></td>
+</tr>
+
+
+<tr>
+	<td><font color="#66FFFF"><b>Tech Level:</b></font></td>
+    <td colspan="2">
+	<select name="THEME">
+	<option value="0" selected="">Inherited</option><option value="1">Fantasy</option><option value="2">Technical</option><option value="3">Fantasy &amp; Technical</option><option value="4">Heroic</option><option value="5">Heroic &amp; Fantasy</option><option value="6">Heroic &amp; Technical</option><option value="7">All Allowed
+	</option></select>
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Staff:</b></font></td>
+    <td colspan="2">
+	<table width="100%" border="1" cellspacing="0" cellpadding="0">
+<tbody><tr><td><select onchange="AddSubOp(this);" name="SUBOP1"><option value="" selected="">Select a Player</option><option value="Rot">Rot</option><option value="Zorblax">Zorblax</option></select></td></tr>
+</tbody></table>
+
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Parent Areas:</b></font></td>
+    <td colspan="2">
+	<table width="100%" border="1" cellspacing="0" cellpadding="0">
+<tbody><tr><td><select onchange="AddAreaParent(this);" name="PARENT1"><option value="" selected="">Select an Area</option><option value="New Area">New Area</option></select></td></tr>
+</tbody></table>
+
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Children Areas:</b></font></td>
+    <td colspan="2">
+	<table width="100%" border="1" cellspacing="0" cellpadding="0">
+<tbody><tr><td><select onchange="AddAreaChild(this);" name="CHILDREN1"><option value="" selected="">Select an Area</option><option value="New Area">New Area</option></select></td></tr>
+</tbody></table>
+
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Tags:</b></font>
+	</td>
+    <td colspan="2">
+    <input type="TEXT" name="TAGS" size="30" value="">
+    <font size="-1"><i>Semicolon delimited</i>
+    </font></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Behaviors:</b></font>
+	<br><a target="HELP" href="../behaviors.html"><font color="WHITE"><i>help</i></font></a></td>
+    <td colspan="2">
+	<table width="100%" border="1" cellspacing="0" cellpadding="0"><tbody><tr><td width="50%"><select onchange="AddBehavior(this);" name="BEHAV1"><option selected="" value="">Select a Behavior</option><option value="ActiveTicker">ActiveTicker</option><option value="Arrest">Arrest</option><option value="Bardness">Bardness</option><option value="Clericness">Clericness</option><option value="CombatAbilities">CombatAbilities</option><option value="Concierge">Concierge</option><option value="Conquerable">Conquerable</option><option value="Druidness">Druidness</option><option value="Emoter">Emoter</option><option value="FaithHelper">FaithHelper</option><option value="FasterRecovery">FasterRecovery</option><option value="Fighterness">Fighterness</option><option value="InstantDeath">InstantDeath</option><option value="ItemGenerator">ItemGenerator</option><option value="LinkedWeather">LinkedWeather</option><option value="MOBTeacher">MOBTeacher</option><option value="Mageness">Mageness</option><option value="ProtectedCitizens">ProtectedCitizens</option><option value="PuddleMaker">PuddleMaker</option><option value="RandomItems">RandomItems</option><option value="RandomMonsters">RandomMonsters</option><option value="RandomQuests">RandomQuests</option><option value="RandomTraps">RandomTraps</option><option value="ResetWhole">ResetWhole</option><option value="ResourceOverride">ResourceOverride</option><option value="ScriptableEverymob">ScriptableEverymob</option><option value="Sounder">Sounder</option><option value="Thiefness">Thiefness</option><option value="WaterCurrents">WaterCurrents</option><option value="WeatherAffects">WeatherAffects</option></select></td><td width="50%"><input type="TEXT" size="30" name="BDATA1" value=""></td></tr></tbody></table>
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Affects:</b></font>
+	<br><a target="HELP" href="../affects.html"><font color="WHITE"><i>help</i></font></a></td>
+    <td colspan="2">
+	<table width="100%" border="1" cellspacing="0" cellpadding="0"><tbody><tr><td width="50%"><select onchange="AddAffect(this);" name="AFFECT1"><option selected="" value="">Select an Effect</option><option value="Adorable">Adorable</option><option value="AmbianceAdder">AmbianceAdder</option><option value="AutoStack">AutoStack</option><option value="BlackMarketeering">BlackMarketeering</option><option value="BookLoaning">BookLoaning</option><option value="Chant_CalmSeas">Chant_CalmSeas</option><option value="Chant_ControlWeather">Chant_ControlWeather</option><option value="Chant_DruidicConnection">Chant_DruidicConnection</option><option value="Chant_PlaneWalking">Chant_PlaneWalking</option><option value="Chant_TideMoon">Chant_TideMoon</option><option value="ExtAbility">ExtAbility</option><option value="ExtraData">ExtraData</option><option value="Fighter_CaravanCommander">Fighter_CaravanCommander</option><option value="Fighter_CommandMount">Fighter_CommandMount</option><option value="GenTweakAbility">GenTweakAbility</option><option value="Immunities">Immunities</option><option value="InstanceArea">InstanceArea</option><option value="Merchant">Merchant</option><option value="Milkable">Milkable</option><option value="Paladin_CommandHorse">Paladin_CommandHorse</option><option value="Prayer_PlanarTravel">Prayer_PlanarTravel</option><option value="Prop_AbilityImmunity">Prop_AbilityImmunity</option><option value="Prop_Adjuster">Prop_Adjuster</option><option value="Prop_AffectReTick">Prop_AffectReTick</option><option value="Prop_AreaForSale">Prop_AreaForSale</option><option value="Prop_CommonTwister">Prop_CommonTwister</option><option value="Prop_Crawlspace">Prop_Crawlspace</option><option value="Prop_EnlargeRoom">Prop_EnlargeRoom</option><option value="Prop_Fumble">Prop_Fumble</option><option value="Prop_HereEnabler">Prop_HereEnabler</option><option value="Prop_Hidden">Prop_Hidden</option><option value="Prop_ImproveGather">Prop_ImproveGather</option><option value="Prop_InstantDeath">Prop_InstantDeath</option><option value="Prop_LanguageSpeaker">Prop_LanguageSpeaker</option><option value="Prop_LimitedContents">Prop_LimitedContents</option><option value="Prop_MagicFreedom">Prop_MagicFreedom</option><option value="Prop_ModExperience">Prop_ModExperience</option><option value="Prop_ModFaction">Prop_ModFaction</option><option value="Prop_NoChannel">Prop_NoChannel</option><option value="Prop_NoCharm">Prop_NoCharm</option><option value="Prop_NoOrdering">Prop_NoOrdering</option><option value="Prop_NoPKill">Prop_NoPKill</option><option value="Prop_NoRecall">Prop_NoRecall</option><option value="Prop_NoSummon">Prop_NoSummon</option><option value="Prop_NoTeleport">Prop_NoTeleport</option><option value="Prop_NoTeleportOut">Prop_NoTeleportOut</option><option value="Prop_NoTelling">Prop_NoTelling</option><option value="Prop_PeaceMaker">Prop_PeaceMaker</option><option value="Prop_PropSetter">Prop_PropSetter</option><option value="Prop_QuestGiver">Prop_QuestGiver</option><option value="Prop_ReqAlignments">Prop_ReqAlignments</option><option value="Prop_ReqCapacity">Prop_ReqCapacity</option><option value="Prop_ReqClasses">Prop_ReqClasses</option><option value="Prop_ReqEntry">Prop_ReqEntry</option><option value="Prop_ReqHeight">Prop_ReqHeight</option><option value="Prop_ReqLevels">Prop_ReqLevels</option><option value="Prop_ReqNoMOB">Prop_ReqNoMOB</option><option value="Prop_ReqPKill">Prop_ReqPKill</option><option value="Prop_ReqRaces">Prop_ReqRaces</option><option value="Prop_ReqStat">Prop_ReqStat</option><option value="Prop_ReqTattoo">Prop_ReqTattoo</option><option value="Prop_RestrictSkills">Prop_RestrictSkills</option><option value="Prop_RestrictSpells">Prop_RestrictSpells</option><option value="Prop_RoomDark">Prop_RoomDark</option><option value="Prop_RoomLit">Prop_RoomLit</option><option value="Prop_RoomRedirect">Prop_RoomRedirect</option><option value="Prop_RoomUnmappable">Prop_RoomUnmappable</option><option value="Prop_ShortEffects">Prop_ShortEffects</option><option value="Prop_Smell">Prop_Smell</option><option value="Prop_Socials">Prop_Socials</option><option value="Prop_Sounder">Prop_Sounder</option><option value="Prop_SparringRoom">Prop_SparringRoom</option><option value="Prop_SpellAdder">Prop_SpellAdder</option><option value="Prop_TattooAdder">Prop_TattooAdder</option><option value="Prop_Weather">Prop_Weather</option><option value="Scavenge">Scavenge</option><option value="SlaveMarketeering">SlaveMarketeering</option><option value="SmellsLikeCherries">SmellsLikeCherries</option><option value="SoundEcho">SoundEcho</option><option value="Spell_GreaterClaireaudience">Spell_GreaterClaireaudience</option><option value="Spell_GreaterClairevoyance">Spell_GreaterClairevoyance</option><option value="Spell_GreaterScry">Spell_GreaterScry</option><option value="Spell_Planeshift">Spell_Planeshift</option><option value="StdAbility">StdAbility</option><option value="StdPlanarAbility">StdPlanarAbility</option><option value="ThinAbility">ThinAbility</option></select></td><td width="50%"><input type="TEXT" size="30" name="ADATA1" value=""></td></tr></tbody></table>
+	</td>
+</tr>
+<tr>
+    <td width="700" colspan="3" align="CENTER">
+	<input type="SUBMIT" name="FINISHED" value="Finished">
+	
+	</td>
+</tr>
+</tbody></table>
+</form>
+</center>
+
+
+
+
+</body></html>

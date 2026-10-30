@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<title>System Log File</title>
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		function Previous()
+		{
+			document.RESOURCES.PAGE.value=Number(document.RESOURCES.PAGE.value)-1;
+			Clicked('/grinder/log.cmvp');
+		}
+		function Next()
+		{
+			document.RESOURCES.PAGE.value=Number(document.RESOURCES.PAGE.value)+1;
+			Clicked('/grinder/log.cmvp');
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="log.html">
+	
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="65%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><font color="WHITE" size="-1">
+			<b>Page Len:</b>
+			  
+			<input name="PAGELEN" type="TEXT" size="4" value="250">
+			</font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/log.cmvp');"><font color="WHITE" size="-1"><b>Refresh</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+	<font color="WHITE"><pre>	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+20261030.1108.19 error cweb-admin0#13 Exception in virtualPageFilter() - java.lang.NullPointerException
+20261030.1108.19 error cweb-admin0#13 null
+java.lang.NullPointerException
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at java.base/java.util.TreeMap.getEntry(TreeMap.java:380)
+	at java.base/java.util.TreeMap.get(TreeMap.java:290)
+	at com.planet_ink.coffee_mud.WebMacros.AllQualifyData.runMacro(AllQualifyData.java:68)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.runMacro(WebMacroCreamer.java:902)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.virtualPageFilter(WebMacroCreamer.java:806)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.convertOutput(WebMacroCreamer.java:102)
+	at com.planet_ink.coffee_web.http.HTTPReqProcessor.generateOutput(HTTPReqProcessor.java:753)
+	at com.planet_ink.coffee_web.http.HTTPReader.processBuffer(HTTPReader.java:703)
+	at com.planet_ink.coffee_web.http.HTTPReader.run(HTTPReader.java:933)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+DataBuffer Not Closed (0)!
+DataBuffer Not Closed (0)!
+DataBuffer Not Closed (0)!
+DataBuffer Not Closed (0)!
+20261030.1108.21 error cweb-admin0#10 Exception in virtualPageFilter() - java.lang.NullPointerException
+20261030.1108.21 error cweb-admin0#10 null
+java.lang.NullPointerException
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at java.base/java.util.TreeMap.getEntry(TreeMap.java:380)
+	at java.base/java.util.TreeMap.get(TreeMap.java:290)
+	at com.planet_ink.coffee_mud.WebMacros.AllQualifyData.runMacro(AllQualifyData.java:68)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.runMacro(WebMacroCreamer.java:902)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.virtualPageFilter(WebMacroCreamer.java:806)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.convertOutput(WebMacroCreamer.java:102)
+	at com.planet_ink.coffee_web.http.HTTPReqProcessor.generateOutput(HTTPReqProcessor.java:753)
+	at com.planet_ink.coffee_web.http.HTTPReader.processBuffer(HTTPReader.java:703)
+	at com.planet_ink.coffee_web.http.HTTPReader.run(HTTPReader.java:933)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+20261030.1109.33 error cweb-admin0#14 Exception in virtualPageFilter() - Cannot load from object array because "this.grid" is null
+20261030.1109.33 error cweb-admin0#14 Cannot load from object array because "this.grid" is null
+java.lang.NullPointerException: Cannot load from object array because "this.grid" is null
+	at com.planet_ink.coffee_mud.WebMacros.grinder.GrinderFlatMap.getHTMLMap(GrinderFlatMap.java:1167)
+	at com.planet_ink.coffee_mud.WebMacros.grinder.GrinderFlatMap.getHTMLMap(GrinderFlatMap.java:1149)
+	at com.planet_ink.coffee_mud.WebMacros.MUDGrinder.runMacro(MUDGrinder.java:279)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.runMacro(WebMacroCreamer.java:902)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.virtualPageFilter(WebMacroCreamer.java:806)
+	at com.planet_ink.coffee_mud.Libraries.WebMacroCreamer.convertOutput(WebMacroCreamer.java:102)
+	at com.planet_ink.coffee_web.http.HTTPReqProcessor.generateOutput(HTTPReqProcessor.java:753)
+	at com.planet_ink.coffee_web.http.HTTPReader.processBuffer(HTTPReader.java:703)
+	at com.planet_ink.coffee_web.http.HTTPReader.run(HTTPReader.java:933)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+</pre></font>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" valign="TOP" align="CENTER">
+	
+	<input type="BUTTON" name="PREV" value="PREVIOUS" onclick="Previous()">
+	
+	</td>
+	<td width="33%" valign="TOP" align="CENTER">
+	<input type="BUTTON" name="REFRESH" value="REFRESH" onclick="Clicked('/grinder/log.cmvp');">
+	</td>
+	<td width="33%" valign="TOP" align="CENTER">
+	
+	</td>
+	</tr>
+	</tbody></table>
+	<input type="HIDDEN" name="PAGE" value="1">
+	</form>
+
+
+
+
+</body></html>

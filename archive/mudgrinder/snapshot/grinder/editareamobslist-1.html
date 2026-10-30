@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Area New Area Mobs List</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.RESOURCES.target='_top';
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		function Refresh()
+		{
+			document.RESOURCES.action="editareamobslist.html";
+			document.RESOURCES.submit();
+		}
+		function PickName(name)
+		{
+			document.RESOURCES.MOBNAME.value=name;
+			document.RESOURCES.MOBHASH.value='';
+			document.RESOURCES.ROOM.value='';
+			Refresh();
+		}
+		function PickHash(hash)
+		{
+			document.RESOURCES.MOBHASH.value=hash;
+			document.RESOURCES.ROOM.value='';
+			Refresh();
+		}
+		function PickRoom(id)
+		{
+			document.RESOURCES.ROOM.value=id;
+			Refresh();
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="MAP" method="POST" action="editareascriptslist.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MOBNAME" value="">
+<input type="HIDDEN" name="MOBHASH" value="">
+<input type="HIDDEN" name="ROOM" value="">
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 New Area MOBs Manager</h2></font></td></tr>
+	<tr>
+	<td width="30%"><b><font color="YELLOW">Mobs</font></b></td>
+	<td width="70%"><b><font color="YELLOW"></font></b></td>
+	</tr>
+	<tr>
+	<td width="20%">
+	<ul>
+	
+	
+	</ul>
+	</td>
+	<td>
+		
+		<!-- TODO -->
+	</td>
+	</tr>
+	</tbody></table>
+	<p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="CENTER">
+	</td>
+    <td align="CENTER"><input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();"></td>
+	<td width="33%" align="CENTER">
+	</td>
+	</tr>
+	</tbody></table>
+	</p><center>
+	</center>
+</form>
+
+
+
+
+</center></body></html>

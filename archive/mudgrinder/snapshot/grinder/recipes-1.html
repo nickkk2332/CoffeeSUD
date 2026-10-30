@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<link rel="grinder icon" href="../images/grinder.ico">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Skill Recipe Lists</title>
+	<script language="JavaScript">
+	<!--
+		function Recipe(rownum)
+		{
+			if(rownum>=0 || window.confirm('Create a new recipe?'))
+			{
+				var recipeid=document.RESOURCES.RECIPEABILITY.value+'&ABILITYRECIPEROW='+rownum;
+				if(rownum<0)
+				{
+					if((document.RESOURCES.NEWCLASSFIELD) && (document.RESOURCES.NEWCLASSFIELD.value != ''))
+						recipeid +='&CLASSFIELD='+document.RESOURCES.NEWCLASSFIELD.value;
+					else
+						recipeid +='&CLASSFIELD='+document.RESOURCES.NEWCLASSFIELD1.value;
+				}
+				var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=550,width=750,alwaysRaised=yes,dependent=yes";
+				w=window.open("recipe.cmvp?RECIPEABILITY="+recipeid,
+					"Recipe",strFeatures, false);
+			}
+		}
+		function Select(val)
+		{
+			Recipe(val);
+		}
+		function AddRecipe() 
+		{
+			if(document.RESOURCES.RECIPEABILITY.selectedIndex<=0)
+			{
+				if(window.alert) alert('You must select a skill first.');
+				return;
+			}
+			Recipe(-1);
+		}
+		function Clicked(action)
+		{
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		function Refresh()
+		{
+			document.RESOURCES.action="recipes.html";
+			document.RESOURCES.submit();
+		}
+		
+        function EditItemDone()
+        {
+        	// sadly, nothing to do
+        }
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/abilities.cmvp');"><font color="WHITE" size="-1"><b>Abilities Manager</b></font></a></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/allqualifys.cmvp');"><font color="WHITE" size="-1"><b>All-Qualifies List</b></font></a></td></tr>
+		
+			<tr><td><a href="javascript:Clicked('/grinder/components.cmvp');"><font color="WHITE" size="-1"><b>Skill Components</b></font></a></td></tr>
+		
+		<tr><td><a href="javascript:Refresh();"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+	<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="recipes.html">
+	<input type="HIDDEN" name="NEWCLASSFIELD1" value="">
+	<input type="HIDDEN" name="ITEM_NUM" value="">
+	
+	<font color="YELLOW"><b>Common Skill:
+		<select name="RECIPEABILITY" onchange="Refresh();">
+			<option selected="" value="">Select a skill
+				
+			 
+				 
+				</option><option value="Alchemy">Alchemy 
+			 
+				 
+				</option><option value="Apothecary">Apothecary 
+			 
+				 
+				</option><option value="Armorsmithing">Armorsmithing 
+			 
+				 
+				</option><option value="Baking">Baking 
+			 
+				 
+				</option><option value="Blacksmithing">Blacksmithing 
+			 
+				 
+				</option><option value="Boatwright">Boatwrighting 
+			 
+				 
+				</option><option value="BodyPiercing">Body Piercing 
+			 
+				 
+				</option><option value="CageBuilding">Cage Building 
+			 
+				 
+				</option><option value="CaravanBuilding">Caravan Building 
+			 
+				 
+				</option><option value="Carpentry">Carpentry 
+			 
+				 
+				</option><option value="Chant_EndowGemstones">Endow Gemstones 
+			 
+				 
+				</option><option value="Chant_EndowIounStone">Endow Ioun Stone 
+			 
+				 
+				</option><option value="ClanCrafting">Clan Crafting 
+			 
+				 
+				</option><option value="ClanShipwrighting">Clan Ship Building 
+			 
+				 
+				</option><option value="Cobbling">Cobbling 
+			 
+				 
+				</option><option value="Construction">Construction 
+			 
+				 
+				</option><option value="Cooking">Cooking 
+			 
+				 
+				</option><option value="Costuming">Costuming 
+			 
+				 
+				</option><option value="Decorating">Decorating 
+			 
+				 
+				</option><option value="Distilling">Distilling 
+			 
+				 
+				</option><option value="DrugCutting">Drug Cutting 
+			 
+				 
+				</option><option value="Dyeing">Dyeing 
+			 
+				 
+				</option><option value="Embellishing">Embellishing 
+			 
+				 
+				</option><option value="Excavation">Excavation 
+			 
+				 
+				</option><option value="Fletching">Fletching 
+			 
+				 
+				</option><option value="FoodPrep">Food Prep 
+			 
+				 
+				</option><option value="GaolFood">Gaol Food 
+			 
+				 
+				</option><option value="GlassBlowing">Glass Blowing 
+			 
+				 
+				</option><option value="Gunsmithing">Gunsmithing 
+			 
+				 
+				</option><option value="Herbalism">Herbalism 
+			 
+				 
+				</option><option value="Herbology">Herbology 
+			 
+				 
+				</option><option value="ImprovedAlchemy">Improved Alchemy 
+			 
+				 
+				</option><option value="ImprovedHerbalism">Improved Herbalism 
+			 
+				 
+				</option><option value="InstrumentMaking">Instrument Making 
+			 
+				 
+				</option><option value="Irrigation">Irrigation 
+			 
+				 
+				</option><option value="JewelMaking">Jewel Making 
+			 
+				 
+				</option><option value="Lacquerring">Lacquering 
+			 
+				 
+				</option><option value="Landscaping">Landscaping 
+			 
+				 
+				</option><option value="LeatherWorking">Leather Working 
+			 
+				 
+				</option><option value="LegendaryWeaponsmithing">Legendary Weaponsmithing 
+			 
+				 
+				</option><option value="Masonry">Masonry 
+			 
+				 
+				</option><option value="MasterArmorsmithing">Master Armorsmithing 
+			 
+				 
+				</option><option value="MasterBaking">Master Baking 
+			 
+				 
+				</option><option value="MasterCooking">Master Cooking 
+			 
+				 
+				</option><option value="MasterCostuming">Master Costuming 
+			 
+				 
+				</option><option value="MasterDistilling">Master Distilling 
+			 
+				 
+				</option><option value="MasterDyeing">Master Dyeing 
+			 
+				 
+				</option><option value="MasterFoodPrep">Master Food Prep 
+			 
+				 
+				</option><option value="MasterHerbology">Master Herbology 
+			 
+				 
+				</option><option value="MasterLacquerring">Master Lacquering 
+			 
+				 
+				</option><option value="MasterLeatherWorking">Master Leather Working 
+			 
+				 
+				</option><option value="MasterMycology">Master Mycology 
+			 
+				 
+				</option><option value="MasterSmokeRings">Master Smoke Rings 
+			 
+				 
+				</option><option value="MasterTailoring">Master Tailoring 
+			 
+				 
+				</option><option value="MasterWeaponsmithing">Master Weaponsmithing 
+			 
+				 
+				</option><option value="Mycology">Mycology 
+			 
+				 
+				</option><option value="Painting">Painting 
+			 
+				 
+				</option><option value="PaperMaking">Paper Making 
+			 
+				 
+				</option><option value="Pottery">Pottery 
+			 
+				 
+				</option><option value="Rodsmithing">Rodsmithing 
+			 
+				 
+				</option><option value="ScrimShaw">Scrimshawing 
+			 
+				 
+				</option><option value="ScrollScribing">Scroll Scribing 
+			 
+				 
+				</option><option value="Sculpting">Sculpting 
+			 
+				 
+				</option><option value="ShardMaking">Shard Making 
+			 
+				 
+				</option><option value="Shipwright">Ship Building 
+			 
+				 
+				</option><option value="Siegecraft">Siegecrafting 
+			 
+				 
+				</option><option value="Smelting">Smelting 
+			 
+				 
+				</option><option value="SmokeRings">Smoke Rings 
+			 
+				 
+				</option><option value="StaffMaking">Staff Making 
+			 
+				 
+				</option><option value="Tailoring">Tailoring 
+			 
+				 
+				</option><option value="Textiling">Textiling 
+			 
+				 
+				</option><option value="Thief_MakeBomb">Make Bombs 
+			 
+				 
+				</option><option value="Thief_MinorTrap">Lay Minor Traps 
+			 
+				 
+				</option><option value="Thief_Trap">Lay Traps 
+			 
+				 
+				</option><option value="Torturesmithing">Torturesmithing 
+			 
+				 
+				</option><option value="Wainwrighting">Wainwrighting 
+			 
+				 
+				</option><option value="WandMaking">Wand Making 
+			 
+				 
+				</option><option value="Weaponsmithing">Weaponsmithing 
+			 
+				 
+				</option><option value="Weaving">Weaving 
+			 
+				 
+				</option><option value="Welding">Welding 
+			
+		</option></select>
+	</b></font>
+	<center>
+	
+	 
+	<center>
+	</center>
+
+
+
+
+
+</center></form></body></html>

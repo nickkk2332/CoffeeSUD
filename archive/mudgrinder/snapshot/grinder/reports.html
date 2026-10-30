@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>System Resources</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		var w=null;
+		function Threads()
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("thread.cmvp?TICKGROUPCOUNTER=0",
+				"Thread",strFeatures, false);
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><a href="javascript:Threads();"><font color="WHITE" size="-1"><b>Tick Groups List</b></font></a></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/reports.cmvp');"><font color="WHITE" size="-1"><b>Refresh</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="resources.html">
+
+</form></center>
+<p>
+<font color="#CCFFFF"><b>CoffeeMud System Report:</b></font></p><p>
+<font color="WHITE">
+The system has been running for <font color="#CCFFFF">9m 17s 823ms</font>.<br>
+The system has been running since <font color="#CCFFFF">10/30/2026 11:00 AM</font>.<br>
+The system is utilizing <font color="#CCFFFF">116090</font>kb out of <font color="#CCFFFF">233832</font>kb.<br>
+<br>
+<font color="#CCFFFF"><b>Tickables report:</b></font><br>
+There are <font color="#CCFFFF">15</font> ticking objects in <font color="#CCFFFF">13</font> groups.<br>
+The ticking objects have consumed: <font color="#CCFFFF">1s 295ms, Average=0ms</font>.<br>
+<!--
+The most active group, #<FONT COLOR=#CCFFFF>2</FONT>, has consumed: <FONT COLOR=#CCFFFF>1s 175ms, Average=8ms</FONT>.<BR>
+The most active object has been '<FONT COLOR=#CCFFFF>THSessions0</FONT>', from group #<FONT COLOR=#CCFFFF>5</FONT>.<BR>
+That object has consumed: <FONT COLOR=#CCFFFF>47ms, Average=0ms</FONT>.<BR>
+-->
+<br>
+<font color="#CCFFFF"><b>Services report:</b></font><br>
+There are <font color="#CCFFFF">0</font> active out of <font color="#CCFFFF">5</font> live threads.<br>
+
+
+	
+	
+	Thread THThreads has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread MUDFight0 has consumed: <font color="#CCFFFF">1ms, Average=0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THChannels0 has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THJournals0 has consumed: <font color="#CCFFFF">0ms, Average=0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THSessions0 has consumed: <font color="#CCFFFF">47ms, Average=0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THStats0 has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THMap0 has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THClans0 has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THCatalog0 has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THPlayers0 has consumed: <font color="#CCFFFF">0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THWired0 has consumed: <font color="#CCFFFF">5ms, Average=0ms</font> 
+	(Sleeping).<br>
+	
+
+	
+	
+	Thread THSpace0 has consumed: <font color="#CCFFFF">7ms, Average=0ms</font> 
+	(Sleeping).<br>
+	
+
+<br>
+<font color="#CCFFFF"><b>Session report:</b></font><br>
+There are <font color="#CCFFFF">0</font> ticking players logged on.<br>
+The ticking players have consumed: <font color="#CCFFFF">0ms</font>.<br>
+<!--
+The most active mob has been '<FONT COLOR=#CCFFFF></FONT>'<BR>
+That mob has consumed: <FONT COLOR=#CCFFFF>0ms</FONT>.<BR>
+-->
+</font>
+	</p><p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="100%" align="CENTER">
+	<input type="BUTTON" name="REFRESH" value="REFRESH" onclick="Clicked('/grinder/reports.cmvp');">
+	</td>
+	</tr>
+	</tbody></table>
+
+
+</p></body></html>

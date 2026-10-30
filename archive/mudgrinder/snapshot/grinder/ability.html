@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+	<meta charset="utf-8">
+    <link rel="grinder icon" href="../images/grinder.ico">
+    <link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+    <title>Ability Manager</title>
+    <script language="JavaScript">
+    <!--
+        function openUp2(named)
+        {
+            var strFeatures="top=200,left=50,resizeable=no,scrollbars=yes,height=400,width=600,alwaysRaised=yes,dependent=yes";
+            w=window.open("/property.cmvp?ABILITY="+named,
+                        "Ability",strFeatures, false);
+        }
+		function openUpHelp(named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=600,alwaysRaised=yes,dependent=yes";
+			w=window.open("/ahelp.cmvp?HELPTOPIC="+named,
+						"Help",strFeatures, false);
+		}
+        function AddMember(v)
+        {
+            ReShow();
+        }
+        function EditMember(v)
+        {
+            ReShow();
+        }
+        function Delete()
+        {
+            if(confirm('Delete this generic ability?! Confirm!'))
+            {
+                if(confirm('Press OK to Delete this ability!'))
+                {
+                    document.RESOURCES.action="../notcaptured.html#/grinder/abilitydo.cmvp";
+                    document.RESOURCES.FUNCTION.value='DELABILITY';
+                    document.RESOURCES.submit();
+                }
+            }
+        }
+        function EditDone()
+        {
+            
+                
+                    if(confirm('Submitting these changes will convert your standard Ability to a Generic Ability.  Are you absolutely sure?'))
+                
+            
+                {
+                    document.RESOURCES.action="../notcaptured.html#/grinder/abilitydo.cmvp";
+                    document.RESOURCES.FUNCTION.value='EDITABILITY';
+                    document.RESOURCES.submit();
+                }
+        }
+		function AddNewItem()
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=600,alwaysRaised=yes,dependent=yes";
+			w=window.open("edititemform.cmvp?ITEM=NEW&ROOM=ANY&RESPONSEFIELD=RESOURCES.NEWITEM&REPLACEFIELD=NEWITEM","Skill_Item",strFeatures, false);
+		}
+		function EditItemDone()
+		{
+            document.RESOURCES.action="ability.html";
+			document.RESOURCES.FUNCTION.value='';
+			document.RESOURCES.submit();
+		}
+        function ReShow()
+        {
+            document.RESOURCES.FUNCTION.value='';
+            document.RESOURCES.action="ability.html";
+            document.RESOURCES.submit();
+        }
+        function EditInterpret()
+        {
+            document.RESOURCES.FUNCTION.value='';
+            document.RESOURCES.action="ability.html";
+            document.RESOURCES.submit();
+        }
+        function EditAffect(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAffect(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function Cancel()
+        {
+            window.close();
+        }
+        function OpenUp(file,named)
+        {
+            var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=600,alwaysRaised=yes,dependent=yes";
+            w=window.open("/"+file+"?HELPTOPIC="+named,
+                        "Help",strFeatures, false);
+        }
+        function Clicked(action)
+        {
+            document.RESOURCES.action=action;
+            document.RESOURCES.submit();
+        }
+    //-->
+    </script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="ability.html">
+<input type="HIDDEN" name="NEWABILITYID" value="">
+<input type="HIDDEN" name="REPLACE" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+<input type="HIDDEN" name="NEWITEM" value="">
+<input type="HIDDEN" name="ABILITY" value="">
+<input type="HIDDEN" name="NEWABILITY" value="">
+<input type="HIDDEN" name="NEWLANGUAGE" value="">
+<input type="HIDDEN" name="NEWCRAFTSKILL" value="">
+<input type="HIDDEN" name="NEWWRIGHTSKILL" value="">
+<input type="HIDDEN" name="NEWGATHERINGSKILL" value="">
+<input type="HIDDEN" name="NEWTRAP" value="">
+<input type="HIDDEN" name="NEWPOISON" value="">
+<center>
+
+    Select a ability above to view/edit.
+
+<br>
+<table width="100%" border="0">
+<tbody><tr>
+    
+</tr>
+</tbody></table>
+
+
+
+
+
+</center></form></body></html>

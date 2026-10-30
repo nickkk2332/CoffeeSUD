@@ -1,0 +1,701 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+
+	<meta charset="utf-8">
+
+	<title>Browsing: </title>
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<script language="JavaScript">
+	<!--
+		function OpenFile(action)
+		{
+			var strFeatures="top=0,left=75,resizable=yes,scrollbars=yes,height=600,width=750,alwaysRaised=yes,dependent=yes";
+			w=window.open("browsefile.cmvp?"+action,"Filer",strFeatures, false);
+		}
+		function NewDir(named)
+		{
+			var path=document.BROWSE.PATH.value;
+			if((path.length>0)&&(path.lastIndexOf('/')!=path.length-1))
+				path=path+'/';
+			document.BROWSE.PATH.value=path+named+"/";
+			document.BROWSE.submit();
+		}
+		function CreateDir()
+		{
+			var named=prompt('Enter new directory name:','');
+			if((named=='')||(named==null)) return;
+			document.BROWSE.FUNCTION.value="NEWDIR";
+			var path=document.BROWSE.PATH.value;
+			if((path.length>0)&&(path.lastIndexOf('/')!=path.length-1))
+				path=path+'/';
+			document.BROWSE.PATH.value=path+named+"/";
+			document.BROWSE.submit();
+		}
+		function DeleteDir()
+		{
+			document.BROWSE.FUNCTION.value="DELDIR";
+			var path=document.BROWSE.PATH.value;
+			if((path.length>0)&&(path.lastIndexOf('/')!=path.length-1))
+				path=path+'/';
+			document.BROWSE.PATH.value=path;
+			document.BROWSE.submit();
+		}
+		function RenameFile(action)
+		{
+			var newName = window.prompt('New name/path',action);
+			if((newName != null) && (newName != action))
+			{
+				document.BROWSE.FILE.value=action;
+				document.BROWSE.FUNCTION.value="RENAME";
+				document.BROWSE.NEWFILE.value=newName;
+				document.BROWSE.submit();
+			}
+		}
+		function NewFile(action)
+		{
+			OpenFile(action);
+		}
+		function BackDir()
+		{
+			var l=document.BROWSE.PATH.value.length;
+			if(l>1)
+			{
+				var x=document.BROWSE.PATH.value.substring(0,l-1).lastIndexOf('/');
+				if(x>=0)
+					document.BROWSE.PATH.value=document.BROWSE.PATH.value.substring(0,x+1);
+				else
+					return;
+			}
+			document.BROWSE.submit();			
+		}
+		function DownloadFile(action)
+		{
+			document.location.href='/FileData?'+action;
+		}
+		function RefreshDir()
+		{
+			document.BROWSE.FUNCTION.value='';
+			document.BROWSE.FILE.value='';
+			document.BROWSE.submit();
+		}
+		function DeleteFile(action)
+		{
+			if(confirm('Delete file '+action+'?'))
+			{
+				document.BROWSE.FUNCTION.value='DELETE';
+				document.BROWSE.FILE.value=action;
+				document.BROWSE.submit();
+			}
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="BROWSE" target="_top" method="POST" action="browse.html">
+
+<input type="HIDDEN" name="PATH" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+<input type="HIDDEN" name="FILE" value="">
+<input type="HIDDEN" name="NEWFILE" value="">
+
+
+
+
+
+<font color="RED">Search not completed! No expression given!</font><br>
+<table width="100%" cellpadding="0" cellspacing="0">
+<tbody><tr><td align="LEFT" width="75%">
+<a href="javascript:BackDir()"><font color="YELLOW">..</font><img border="0" src="images/folder_up.gif" alt="Back" title="Back"></a>
+</td><td width="5%">
+<a href="javascript:RefreshDir();"><img border="0" src="images/folder_refresh.gif" alt="Refresh directory" title="Refresh directory"></a>
+</td><td colspan="2" align="RIGHT">
+<a href="javascript:CreateDir();"><img border="0" src="images/folder_add.gif" alt="Add a new directory" title="Add a new directory"></a>
+</td><td colspan="2">
+<a href="javascript:DeleteDir();"><img border="0" src="images/folder_delete.gif" alt="Delete this directory" title="Delete this directory"></a>
+</td></tr>
+
+
+
+	
+		<tr bgcolor="#"><td colspan="7">
+		<a href="javascript:NewDir('.github')" style="text-decoration:none">
+		<b>
+		<font color="YELLOW">.github</font>
+		</b>
+		</a>
+		</td></tr>
+	
+
+
+	
+		<tr bgcolor="#"><td colspan="7">
+		<a href="javascript:NewDir('com')" style="text-decoration:none">
+		<b>
+		<font color="YELLOW">com</font>
+		</b>
+		</a>
+		</td></tr>
+	
+
+
+	
+		<tr bgcolor="#"><td colspan="7">
+		<a href="javascript:NewDir('guides')" style="text-decoration:none">
+		<b>
+		<font color="YELLOW">guides</font>
+		</b>
+		</a>
+		</td></tr>
+	
+
+
+	
+		<tr bgcolor="#"><td colspan="7">
+		<a href="javascript:NewDir('lib')" style="text-decoration:none">
+		<b>
+		<font color="YELLOW">lib</font>
+		</b>
+		</a>
+		</td></tr>
+	
+
+
+	
+		<tr bgcolor="#"><td colspan="7">
+		<a href="javascript:NewDir('resources')" style="text-decoration:none">
+		<b>
+		<font color="YELLOW">resources</font>
+		</b>
+		</a>
+		</td></tr>
+	
+
+
+	
+		<tr bgcolor="#"><td colspan="7">
+		<a href="javascript:NewDir('web')" style="text-decoration:none">
+		<b>
+		<font color="YELLOW">web</font>
+		</b>
+		</a>
+		</td></tr>
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">.build-stamp</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=.build-stamp&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('.build-stamp')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=.build-stamp&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('.build-stamp')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">.build.log</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=.build.log&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('.build.log')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=.build.log&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('.build.log')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">_config.yml</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=_config.yml&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('_config.yml')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=_config.yml&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('_config.yml')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">build.sh</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=build.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('build.sh')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=build.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('build.sh')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">build.xml</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=build.xml&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('build.xml')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=build.xml&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('build.xml')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">CHANGES</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=CHANGES&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('CHANGES')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=CHANGES&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('CHANGES')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">coffee.ico</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=coffee.ico&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('coffee.ico')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=coffee.ico&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('coffee.ico')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">coffeemud.ini</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=coffeemud.ini&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('coffeemud.ini')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=coffeemud.ini&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('coffeemud.ini')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		<i> 	
+		<font color="WHITE">coffeemud_properties.ini</font>
+		</i> 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=coffeemud_properties.ini&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('coffeemud_properties.ini')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=coffeemud_properties.ini&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('coffeemud_properties.ini')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">config.sh</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=config.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('config.sh')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=config.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('config.sh')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">LICENSE</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=LICENSE&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('LICENSE')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=LICENSE&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('LICENSE')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">make.bat</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=make.bat&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('make.bat')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=make.bat&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('make.bat')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">Makefile</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=Makefile&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('Makefile')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=Makefile&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('Makefile')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">mud.bat</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=mud.bat&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('mud.bat')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=mud.bat&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('mud.bat')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">mud.log</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=mud.log&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('mud.log')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=mud.log&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('mud.log')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">mud.sh</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=mud.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('mud.sh')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=mud.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('mud.sh')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">NOTICE</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=NOTICE&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('NOTICE')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=NOTICE&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('NOTICE')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">README</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=README&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('README')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=README&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('README')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">sources.txt</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=sources.txt&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('sources.txt')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=sources.txt&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('sources.txt')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">TODO</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=TODO&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('TODO')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=TODO&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('TODO')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#404040"><td colspan="2">
+		 	
+		<font color="WHITE">upgrade.bat</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=upgrade.bat&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('upgrade.bat')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=upgrade.bat&amp;bgcol=404040&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('upgrade.bat')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+
+	 
+		  
+		<tr bgcolor="#000000"><td colspan="2">
+		 	
+		<font color="WHITE">upgrade.sh</font>
+		 	
+		</td><td>
+		<a href="javascript:OpenFile('function=NAMESEARCH&amp;file=upgrade.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/edit.gif" alt="Edit" title="Edit"></a>
+		</td><td>
+		<a href="javascript:RenameFile('upgrade.sh')"><img border="0" src="images/rename.gif" alt="Rename/Move" title="Rename/Move"></a>
+		</td><td>
+		<a href="javascript:DownloadFile('function=NAMESEARCH&amp;file=upgrade.sh&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=')"><img border="0" src="images/download.gif" alt="Download" title="Download"></a>
+		</td><td>
+		<a href="javascript:DeleteFile('upgrade.sh')"><img border="0" src="images/delete.gif" alt="Delete" title="Delete"></a>
+		</td></tr>
+	 
+
+</tbody></table>
+<a href="javascript:NewFile('function=NAMESEARCH&amp;file=&amp;bgcol=000000&amp;bestfilebrowse=%2F&amp;path=');"><img border="0" src="images/document_new.gif" alt="Create New File" title="Create New File"><font color="AQUA">*new text file*</font></a><br>
+</form>
+<hr>
+<form accept-charset="UTF-8" name="UPLOADNAMESEARCH" target="_top" enctype="multipart/form-data" action="browse.html" method="POST">
+<font color="CYAN">*search for filenames (reg. exp.)*</font>
+<input type="HIDDEN" name="PATH" value="">
+<input type="HIDDEN" name="FUNCTION" value="NAMESEARCH">
+<input type="TEXT" name="SEARCHSTR" value="" size="30"><br>
+<input type="SUBMIT" name="SUBMIT" value="SUBMIT">
+</form>
+<hr>
+<form accept-charset="UTF-8" name="UPLOADSEARCH" target="_top" enctype="multipart/form-data" action="browse.html" method="POST">
+<font color="CYAN">*search inside files (reg. exp.)*</font>
+<input type="HIDDEN" name="PATH" value="">
+<input type="HIDDEN" name="FUNCTION" value="SEARCH">
+<input type="TEXT" name="SEARCHSTR" value="" size="30"><br>
+<input type="SUBMIT" name="SUBMIT" value="SUBMIT">
+</form>
+<hr>
+<form accept-charset="UTF-8" name="UPLOADUPLOAD" target="_top" enctype="multipart/form-data" action="browse.html" method="POST">
+<font color="CYAN">*upload a file*</font>
+<input type="HIDDEN" name="PATH" value="">
+<input type="HIDDEN" name="FUNCTION" value="UPLOAD">
+<font color="WHITE"><input type="FILE" name="FILE"></font><br>
+<input type="SUBMIT" name="SUBMIT" value="SUBMIT">
+</form>
+
+
+
+
+</body></html>

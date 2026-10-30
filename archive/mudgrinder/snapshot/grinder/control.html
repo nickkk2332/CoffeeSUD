@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<title>Control Panel</title>
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.INIFORM.action=action;
+			document.INIFORM.submit();
+		}
+		function ClickedINI(action)
+		{
+			document.INIFORM.action=action;
+			document.INIFORM.submit();
+		}
+		function inipage(action)
+		{
+			document.INIFORM.action="control.html";
+			document.INIFORM.INIPAGE.value=action;
+			document.INIFORM.submit();
+		}
+		function Disable(checked,field)
+		{
+			document.INIFORM.action="control.html";
+			document.INIFORM.INIPAGE.value="SWITCHES";
+			document.INIFORM.QUERY.value='CHANGEDISABLE';
+			document.INIFORM.FIELD.value=field;
+			if(field == 'MISC')
+			{
+				document.INIFORM.VALUE.value=checked;
+			}
+			else
+			{
+				if(checked)	
+					document.INIFORM.VALUE.value='';
+				else
+					document.INIFORM.VALUE.value='on';
+			}
+			document.INIFORM.submit();
+		}
+		function Enable(checked,field)
+		{
+			document.INIFORM.action="control.html";
+			document.INIFORM.INIPAGE.value="SWITCHES";
+			document.INIFORM.QUERY.value='CHANGEENABLE';
+			document.INIFORM.FIELD.value=field;
+			if(field == 'MISC')
+			{
+				document.INIFORM.VALUE.value=checked;
+			}
+			else
+			{
+				if(checked)	
+					document.INIFORM.VALUE.value='';
+				else
+					document.INIFORM.VALUE.value='on';
+			}
+			document.INIFORM.submit();
+		}
+		function Debug(checked,field)
+		{
+			document.INIFORM.action="control.html";
+			document.INIFORM.INIPAGE.value="SWITCHES";
+			document.INIFORM.QUERY.value='CHANGEDEBUG';
+			document.INIFORM.FIELD.value=field;
+			if(checked) 
+				document.INIFORM.VALUE.value='';
+			else	
+				document.INIFORM.VALUE.value='on';
+			document.INIFORM.submit();
+		}
+		function Reset(checked,field,value)
+		{
+			document.INIFORM.action="control.html";
+			document.INIFORM.INIPAGE.value="SWITCHES";
+			document.INIFORM.QUERY.value='RESET';
+			document.INIFORM.FIELD.value=field;
+			document.INIFORM.VALUE.value=value;
+			document.INIFORM.submit();
+		}
+		function Query(checked,field,value)
+		{
+			document.INIFORM.action="control.html";
+			document.INIFORM.INIPAGE.value="SWITCHES";
+			document.INIFORM.QUERY.value='QUERY';
+			document.INIFORM.FIELD.value=field;
+			document.INIFORM.VALUE.value=value;
+			document.INIFORM.submit();
+		}
+		function AddRemove(prepend,key,near,action)
+		{
+			if((prepend.length>0)&&(key.indexOf(prepend)==0))
+			{
+				if(alert) alert('Do not include '+prepend+' in your tag.  It will be done automatically.');
+				return;
+			}
+			if(key.indexOf("=")>=0)
+			{
+				if(alert) alert('Do not include = in your key.  You\'ll be able to modify the value separately.');
+				return;
+			}
+			if(key.length==0)
+			{
+				if(alert) alert('You must enter a key.');
+				return;
+			}
+			document.INIFORM.action="control.html";
+			document.INIFORM.CONTROL.value=action;
+			document.INIFORM.KEY.value=prepend+key;
+			document.INIFORM.NEAR.value=near;
+			document.INIFORM.submit();
+		}
+		function openUp(named)
+		{
+			var strFeatures="top=200,left=50,resizeable=no,scrollbars=yes,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/property.cmvp?ABILITY="+named,
+						"Ability",strFeatures, false);
+		}
+		function openUp2(named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/ahelp.cmvp?HELPTOPIC="+named,
+						"Help",strFeatures, false);
+		}
+		function openUp3(named)
+		{
+			var strFeatures="top=200,left=50,resizeable=no,scrollbars=yes,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/behavior.cmvp?BEHAVIOR="+named,
+						"Behavior",strFeatures, false);
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+        <tr><td><a href="javascript:Clicked('/grinder/recovery.cmvp')"><font size="-1" color="WHITE"><b>Recovery Analysis</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+	
+	<center>
+	<font color="RED"><b></b></font></center>
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="4" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud Control Panel</h2></font></td></tr>
+	</tbody></table>
+	<br>
+	<form accept-charset="UTF-8" name="INIFORM" target="_top" method="POST" action="control.html">
+	<a name="INICHANGES"></a>
+	<input type="HIDDEN" name="INIPAGE" value="">
+	
+	
+	
+	<input type="HIDDEN" name="KEY" value="">
+	<input type="HIDDEN" name="NEAR" value="">
+	<input type="HIDDEN" name="CONTROL" value="">
+	<table width="100%" border="1">
+	<tbody><tr>
+	</tr><tr><td width="100%" colspan="11" bgcolor="WHITE" align="LEFT"><font color="BLACK"><b>INI Settings</b></font></td></tr>
+	<tr bgcolor="WHITE">
+	<td width="9%"><a href="javascript:inipage('SWITCHES')"><font color="BLACK">Switches</font></a></td>
+	<td width="9%"><a href="javascript:inipage('SECURITY')"><font color="BLACK">Security</font></a></td>
+	<td width="9%"><a href="javascript:inipage('ROOMS')"><font color="BLACK">Default Rooms</font></a></td>
+	<td width="9%"><a href="javascript:inipage('CHANNELS')"><font color="BLACK">Channels</font></a></td>
+	<td width="9%"><a href="javascript:inipage('ABILITIES')"><font color="BLACK">Abilities</font></a></td>
+	<td width="9%"><a href="javascript:inipage('CLAN')"><font color="BLACK">Clan</font></a></td>
+	<td width="9%"><a href="javascript:inipage('COMBAT')"><font color="BLACK">Combat</font></a></td>
+	<td width="9%"><a href="javascript:inipage('PLAYER')"><font color="BLACK">Player Settings</font></a></td>
+	<td width="9%"><a href="javascript:inipage('ECONOMY')"><font color="BLACK">Economy</font></a></td>
+	<td width="9%"><a href="javascript:inipage('CALENDAR')"><font color="BLACK">Calendar</font></a></td>
+	<td width="9%"><a href="javascript:inipage('MISC')"><font color="BLACK">Miscellaneous</font></a></td>
+	</tr>
+	<tr><td width="100%" colspan="11" valign="TOP">
+	
+	<br><br>
+	<font color="WHITE"><b>Instructions: Select a tab above to view a new page.  
+	Click the button below to submit your changes before moving to a new page.<p>
+	<br><br>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	   </p><p></p><center><input type="BUTTON" name="INISUBMIT" value="Submit Changes" onclick="AddRemove('',' ','','UPDATE');"></center>
+	
+	</b></font></td></tr>
+	</tbody></table>
+	</form>
+
+
+
+
+</body></html>

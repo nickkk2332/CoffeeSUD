@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+		function Create(action)
+		{
+			document.AREAEDIT.CREATEEXIT.value="TRUE";
+			Clicked(action);
+		}
+	//-->
+	</script>
+</head>
+<body>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="editexit.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<input type="HIDDEN" name="ROOM" value="">
+<input type="HIDDEN" name="LINK" value="">
+<input type="HIDDEN" name="OLDROOM" value="">
+<input type="HIDDEN" name="OLDLINK" value="">
+<input type="HIDDEN" name="CREATEEXIT" value="">
+
+
+
+<br>
+<input type="BUTTON" name="EDITEXIT" value="Create Exit" onclick="Create('editexit.cmvp');">
+<input type="BUTTON" name="DELEXIT" value="Delete Link" onclick="if(confirm('Are you sure you want to delete this link?'))Clicked('delexit.cmvp');">
+<input type="BUTTON" name="CANCEL" value="Cancel" onclick="Clicked('/grinder/modarea.cmvp');">
+
+
+
+
+</form></body></html>

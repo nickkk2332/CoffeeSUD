@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+	//-->
+	</script>
+</head>
+<body>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="editarea.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<input type="HIDDEN" name="ROOM" value="New Area#0">
+<input type="HIDDEN" name="LINK" value="">
+<input type="HIDDEN" name="LINKSTO" value="">
+<input type="HIDDEN" name="OLDROOM" value="">
+<input type="HIDDEN" name="OLDLINK" value="">
+<input type="HIDDEN" name="MULTIROOMFLAG" value="">
+<input type="HIDDEN" name="MULTIROOMLIST" value="">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tbody><tr><td width="65%" align="LEFT">
+<img src="images/grinder.gif" width="80" height="80" alt="" align="LEFT" border="0">
+<b>Room: New Area#0 (New Room)</b>
+<br>
+<input type="BUTTON" name="EDITROOM" value="Edit Room" onclick="Clicked('/grinder/editroom.cmvp');">
+<input type="BUTTON" name="DELROOM" value="Delete Room" onclick="if(confirm('Are you sure you want to delete this room?'))Clicked('/grinder/deleteroom.cmvp');">
+<input type="BUTTON" name="RESETROOM" value="Reset Room" onclick="Clicked('/grinder/resetroom.cmvp');">
+<input type="BUTTON" name="CANCEL" value="Cancel" onclick="Clicked('/grinder/modarea.cmvp');">
+</td><td align="RIGHT" valign="TOP">
+	<font color="YELLOW"><b></b></font>
+	<br>
+	<textarea name="MULTISHOW" size="50" wrap="" style="background-color:black;border:0;color:white;font-size:9;text-align:right" rows="4"></textarea>
+</td></tr></tbody></table>
+<script language="JavaScript">
+<!--
+	var rooms=document.AREAEDIT.MULTIROOMLIST.value;
+	var outer=rooms.indexOf(';');
+	while(outer>=0)
+	{
+		if(outer>0)
+		{
+			var roomid=rooms.substr(0,outer);
+			var inner=roomid.indexOf('#');
+			if(inner>0)
+				roomid=roomid.substr(inner);
+			document.AREAEDIT.MULTISHOW.value=document.AREAEDIT.MULTISHOW.value+' '+roomid;
+		}
+		rooms=rooms.substr(outer+1);
+		outer=rooms.indexOf(';');
+	}
+//-->
+</script>
+</form>
+
+
+
+
+</body></html>

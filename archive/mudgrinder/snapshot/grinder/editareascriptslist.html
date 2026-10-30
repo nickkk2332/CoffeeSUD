@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Scripts List</title>
+	<script language="JavaScript">
+	<!--
+		function AreaScriptCustom(path, rsc)
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("areascripthoststable.cmvp?AREA=New+Area&AREASCRIPT="+path,"Script",strFeatures, false);
+		}
+		
+		function AreaHosts(action)
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("areascripthoststable.cmvp?AREA=New+Area&AREASCRIPT="+action,"Script",strFeatures, false);
+		}
+		
+		function AreaScript(path, file, rsc)
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=750,alwaysRaised=yes,dependent=yes";
+			w=window.open("browsefile.cmvp?AREA=New+Area&PATH="+path+"&FILE="+file+"&RESOURCE="+rsc,"Script",strFeatures, false);
+		}
+		
+		function Clicked(action)
+		{
+			document.RESOURCES.target='_top';
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		function Refresh()
+		{
+			document.RESOURCES.action="editareascriptslist.html";
+			document.RESOURCES.submit();
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="MAP" method="POST" action="editareascriptslist.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 New Area Script Manager</h2></font></td></tr>
+	<tr>
+	<td width="10%"><b><font color="YELLOW">#</font></b></td>
+	<td width="90%"><b><font color="YELLOW">Path</font></b></td>
+	</tr>
+	
+	
+	</tbody></table>
+	<p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="CENTER">
+	</td>
+    <td align="CENTER"><input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();"></td>
+	<td width="33%" align="CENTER">
+	</td>
+	</tr>
+	</tbody></table>
+	</p><center>
+	</center>
+</form>
+
+
+
+
+</center></body></html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<title>File/Script Editor</title>
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<script language="JavaScript">
+	<!--
+		function openUp(named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			var w2=window.open("/ahelp.cmvp?HELPTOPIC="+named,"Help",strFeatures,false);
+		}
+		function GoForIt()
+		{
+			if(document.FILEBROWSE.FILE.value=='')
+			{
+				if(alert) alert('No file name specified!');
+				return;
+			}
+			if(confirm('Save your changes?'))
+			{
+				document.FILEBROWSE.FUNCTION.value='CREATE';
+				document.FILEBROWSE.submit();
+			}
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="FILEBROWSE" target="_top" method="POST" action="browsefile.html">
+
+<input type="HIDDEN" name="PATH" value="">
+<input type="HIDDEN" name="RESOURCE" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+<input type="HIDDEN" name="NEW" value="">
+<p align="RIGHT"><a href="javascript:openUp('SCRIPTABLE');"><font color="PINK"><i>scriptable help</i></font></a></p>
+<font color="YELLOW">File: <b>
+
+	/<input type="TEXT" size="30" maxlength="50" name="FILE" value="new.script">
+
+</b></font><br>
+
+<textarea rows="25" cols="85" name="RAWTEXT"></textarea>
+
+<br><font color="WHITE" size="-1">
+<input type="RADIO" name="FILESAVETO" value="DEFAULT" checked="">Save Default (VFS)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="RADIO" name="FILESAVETO" value="VFS">Save VFS
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="RADIO" name="FILESAVETO" value="LOCAL">Save Local
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="RADIO" name="FILESAVETO" value="BOTH">Save Both
+
+</font>
+<br>
+<br>
+<table width="100%" border="0">
+<tbody><tr><td align="CENTER" width="50%">
+	<input type="BUTTON" name="Submit" value="Submit" onclick="GoForIt();">
+</td>
+<td width="50%" align="CENTER">
+	<input type="BUTTON" name="Close" value="Close" onclick="window.close();">
+</td>
+</tr>
+</tbody></table>
+</form>
+<script>
+<!--
+	function sizing()
+	{
+		document.FILEBROWSE.RAWTEXT.style.width=document.body.clientWidth-47;
+		document.FILEBROWSE.RAWTEXT.style.height=document.body.clientHeight-195;
+	}
+	window.onresize = sizing;
+-->
+</script>
+
+
+
+
+
+</body></html>

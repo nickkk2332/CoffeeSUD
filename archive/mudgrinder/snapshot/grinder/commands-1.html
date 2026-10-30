@@ -1,0 +1,3773 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+    <link rel="grinder icon" href="../images/grinder.ico">
+    <link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+    <title>Commands List</title>
+    <script language="JavaScript">
+    <!--
+        function Command(cmdid,action)
+        {
+            if(cmdid.indexOf(' ')>=0)
+            {
+                if(window.alert) window.alert('No spaces are allowed in your ID!');
+                return;
+            }
+            var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=750,alwaysRaised=yes,dependent=yes";
+            w=window.open("command.cmvp?COMMAND="+cmdid+action,
+            	"Command",strFeatures, false);
+        }
+        function Clicked(action)
+        {
+            document.RESOURCES.action=action;
+            document.RESOURCES.submit();
+        }
+        function Refresh()
+        {
+            document.RESOURCES.action="commands.html";
+            document.RESOURCES.submit();
+        }
+    //-->
+    </script>
+</head>
+<body bgcolor="BLACK">
+    <table width="100%" border="0">
+    <tbody><tr>
+    <td width="33%" align="LEFT" valign="TOP"></td>
+    <td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+    <td width="33%" align="RIGHT" valign="TOP">
+        <table width="50%" border="1">
+        <tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+        <tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+        <tr><td><a href="javascript:Refresh();"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+        </tbody></table>
+    </td>
+    </tr>
+    </tbody></table>
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="commands.html">
+
+    <table width="100%" border="1">
+    <tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Commands</h2></font></td></tr>
+	<tr>
+    <td width="18%"><b><font color="YELLOW">ID</font></b></td>
+    <td width="50%"><b><font color="YELLOW">Words</font></b></td>
+    <td width="8%"><b><font color="YELLOW">Generic</font></b></td>
+    <td width="8%"><b><font color="YELLOW">Order</font></b></td>
+    <td width="8%"><b><font color="YELLOW">Nor. Cost</font></b></td>
+    <td width="8%"><b><font color="YELLOW">Cbt. Cost</font></b></td>
+    </tr>
+    
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Abilities','')"><font color="#FFFF8F"><u><b>Abilities</b></u></font></a></td>
+            <td><font color="WHITE"><b>ABILITIES, ABILITYS, ABLES</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Above','')"><font color="#FFFF8F"><u><b>Above</b></u></font></a></td>
+            <td><font color="WHITE"><b>ABOVE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Account','')"><font color="#FFFF8F"><u><b>Account</b></u></font></a></td>
+            <td><font color="WHITE"><b>ACCOUNT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Achievements','')"><font color="#FFFF8F"><u><b>Achievements</b></u></font></a></td>
+            <td><font color="WHITE"><b>ACHIEVEMENTS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Activate','')"><font color="#FFFF8F"><u><b>Activate</b></u></font></a></td>
+            <td><font color="WHITE"><b>ACTIVATE, ACT, A, &gt;</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Affect','')"><font color="#FFFF8F"><u><b>Affect</b></u></font></a></td>
+            <td><font color="WHITE"><b>AFFECTS, AFFECT, AFF, AF</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AFK','')"><font color="#FFFF8F"><u><b>AFK</b></u></font></a></td>
+            <td><font color="WHITE"><b>AFK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Aft','')"><font color="#FFFF8F"><u><b>Aft</b></u></font></a></td>
+            <td><font color="WHITE"><b>AFT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('After','')"><font color="#FFFF8F"><u><b>After</b></u></font></a></td>
+            <td><font color="WHITE"><b>AFTER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AHelp','')"><font color="#FFFF8F"><u><b>AHelp</b></u></font></a></td>
+            <td><font color="WHITE"><b>ARCHELP, AHELP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Alias','')"><font color="#FFFF8F"><u><b>Alias</b></u></font></a></td>
+            <td><font color="WHITE"><b>ALIAS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Announce','')"><font color="#FFFF8F"><u><b>Announce</b></u></font></a></td>
+            <td><font color="WHITE"><b>ANNOUNCE, ANNOUNCETO, ANNOUNCEMSG</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ANSI','')"><font color="#FFFF8F"><u><b>ANSI</b></u></font></a></td>
+            <td><font color="WHITE"><b>ANSI, COLOR, COLOUR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Areas','')"><font color="#FFFF8F"><u><b>Areas</b></u></font></a></td>
+            <td><font color="WHITE"><b>AREAS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('As','')"><font color="#FFFF8F"><u><b>As</b></u></font></a></td>
+            <td><font color="WHITE"><b>AS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Assist','')"><font color="#FFFF8F"><u><b>Assist</b></u></font></a></td>
+            <td><font color="WHITE"><b>ASSIST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ASync','')"><font color="#FFFF8F"><u><b>ASync</b></u></font></a></td>
+            <td><font color="WHITE"><b>ASYNC</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('At','')"><font color="#FFFF8F"><u><b>At</b></u></font></a></td>
+            <td><font color="WHITE"><b>AT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ATopics','')"><font color="#FFFF8F"><u><b>ATopics</b></u></font></a></td>
+            <td><font color="WHITE"><b>ARCTOPICS, ATOPICS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Auction','')"><font color="#FFFF8F"><u><b>Auction</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUCTION</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoAffects','')"><font color="#FFFF8F"><u><b>AutoAffects</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOAFFECTS, AUTOAFF, AAF</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoAssist','')"><font color="#FFFF8F"><u><b>AutoAssist</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOASSIST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoAttack','')"><font color="#FFFF8F"><u><b>AutoAttack</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOATTACK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoDraw','')"><font color="#FFFF8F"><u><b>AutoDraw</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTODRAW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoExits','')"><font color="#FFFF8F"><u><b>AutoExits</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOEXITS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Autoforward','')"><font color="#FFFF8F"><u><b>Autoforward</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOFORWARD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoGold','')"><font color="#FFFF8F"><u><b>AutoGold</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOGOLD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoGuard','')"><font color="#FFFF8F"><u><b>AutoGuard</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOGUARD, GUARD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoImprovement','')"><font color="#FFFF8F"><u><b>AutoImprovement</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOIMPROVEMENT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoInvoke','')"><font color="#FFFF8F"><u><b>AutoInvoke</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOINVOKE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoLoot','')"><font color="#FFFF8F"><u><b>AutoLoot</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOLOOT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoMap','')"><font color="#FFFF8F"><u><b>AutoMap</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOMAP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoMelee','')"><font color="#FFFF8F"><u><b>AutoMelee</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOMELEE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoNotify','')"><font color="#FFFF8F"><u><b>AutoNotify</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTONOTIFY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoRun','')"><font color="#FFFF8F"><u><b>AutoRun</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTORUN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoTellNotify','')"><font color="#FFFF8F"><u><b>AutoTellNotify</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOTELLNOTIFY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('AutoWeather','')"><font color="#FFFF8F"><u><b>AutoWeather</b></u></font></a></td>
+            <td><font color="WHITE"><b>AUTOWEATHER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Back','')"><font color="#FFFF8F"><u><b>Back</b></u></font></a></td>
+            <td><font color="WHITE"><b>BACK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Ban','')"><font color="#FFFF8F"><u><b>Ban</b></u></font></a></td>
+            <td><font color="WHITE"><b>BAN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Beacon','')"><font color="#FFFF8F"><u><b>Beacon</b></u></font></a></td>
+            <td><font color="WHITE"><b>BEACON</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Below','')"><font color="#FFFF8F"><u><b>Below</b></u></font></a></td>
+            <td><font color="WHITE"><b>BELOW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Bid','')"><font color="#FFFF8F"><u><b>Bid</b></u></font></a></td>
+            <td><font color="WHITE"><b>BID</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Boot','')"><font color="#FFFF8F"><u><b>Boot</b></u></font></a></td>
+            <td><font color="WHITE"><b>BOOT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Borrow','')"><font color="#FFFF8F"><u><b>Borrow</b></u></font></a></td>
+            <td><font color="WHITE"><b>BORROW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Brief','')"><font color="#FFFF8F"><u><b>Brief</b></u></font></a></td>
+            <td><font color="WHITE"><b>BRIEF</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Buy','')"><font color="#FFFF8F"><u><b>Buy</b></u></font></a></td>
+            <td><font color="WHITE"><b>BUY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('CalendarCmd','')"><font color="#FFFF8F"><u><b>CalendarCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>CALENDAR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Catalog','')"><font color="#FFFF8F"><u><b>Catalog</b></u></font></a></td>
+            <td><font color="WHITE"><b>CATALOG</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Channel','')"><font color="#FFFF8F"><u><b>Channel</b></u></font></a></td>
+            <td><font color="WHITE"><b>GOSSIP, GRATZ, CHAT, OOC, QUESTCHAT, WIZ, CLANTALK, INFO, WIZINFO, ICOFF</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Channels','')"><font color="#FFFF8F"><u><b>Channels</b></u></font></a></td>
+            <td><font color="WHITE"><b>CHANNELS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Chants','')"><font color="#FFFF8F"><u><b>Chants</b></u></font></a></td>
+            <td><font color="WHITE"><b>CHANTS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ChanWho','')"><font color="#FFFF8F"><u><b>ChanWho</b></u></font></a></td>
+            <td><font color="WHITE"><b>CHANWHO</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('CharGen','')"><font color="#FFFF8F"><u><b>CharGen</b></u></font></a></td>
+            <td><font color="WHITE"><b>CHARGEN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanAccept','')"><font color="#FFFF8F"><u><b>ClanAccept</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANACCEPT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanApply','')"><font color="#FFFF8F"><u><b>ClanApply</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANAPPLY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanAssign','')"><font color="#FFFF8F"><u><b>ClanAssign</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANASSIGN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanCreate','')"><font color="#FFFF8F"><u><b>ClanCreate</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANCREATE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanDeclare','')"><font color="#FFFF8F"><u><b>ClanDeclare</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANDECLARE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanDetails','')"><font color="#FFFF8F"><u><b>ClanDetails</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANDETAILS, CLAN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanDonateSet','')"><font color="#FFFF8F"><u><b>ClanDonateSet</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANDONATESET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanDues','')"><font color="#FFFF8F"><u><b>ClanDues</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANDUES</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanExile','')"><font color="#FFFF8F"><u><b>ClanExile</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANEXILE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanHomeSet','')"><font color="#FFFF8F"><u><b>ClanHomeSet</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANHOMESET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanKills','')"><font color="#FFFF8F"><u><b>ClanKills</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANKILLS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanList','')"><font color="#FFFF8F"><u><b>ClanList</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANLIST, CLANS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanMorgueSet','')"><font color="#FFFF8F"><u><b>ClanMorgueSet</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANMORGUESET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanMOTD','')"><font color="#FFFF8F"><u><b>ClanMOTD</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANMOTD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanPremise','')"><font color="#FFFF8F"><u><b>ClanPremise</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANPREMISE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanPVPKills','')"><font color="#FFFF8F"><u><b>ClanPVPKills</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANPVPKILLS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanQual','')"><font color="#FFFF8F"><u><b>ClanQual</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANQUAL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanReject','')"><font color="#FFFF8F"><u><b>ClanReject</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANREJECT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanResign','')"><font color="#FFFF8F"><u><b>ClanResign</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANRESIGN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanTax','')"><font color="#FFFF8F"><u><b>ClanTax</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANTAX</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanVote','')"><font color="#FFFF8F"><u><b>ClanVote</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANVOTE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ClanWho','')"><font color="#FFFF8F"><u><b>ClanWho</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLANWHO, CLWH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Cloak','')"><font color="#FFFF8F"><u><b>Cloak</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLOAK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Close','')"><font color="#FFFF8F"><u><b>Close</b></u></font></a></td>
+            <td><font color="WHITE"><b>CLOSE, CLOS, CLO, CL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ColorSet','')"><font color="#FFFF8F"><u><b>ColorSet</b></u></font></a></td>
+            <td><font color="WHITE"><b>COLORSET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('CommandJournal','')"><font color="#FFFF8F"><u><b>CommandJournal</b></u></font></a></td>
+            <td><font color="WHITE"><b></b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Commands','')"><font color="#FFFF8F"><u><b>Commands</b></u></font></a></td>
+            <td><font color="WHITE"><b>COMMANDS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Compare','')"><font color="#FFFF8F"><u><b>Compare</b></u></font></a></td>
+            <td><font color="WHITE"><b>COMPARE, COMP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Compress','')"><font color="#FFFF8F"><u><b>Compress</b></u></font></a></td>
+            <td><font color="WHITE"><b>COMPRESS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Config','')"><font color="#FFFF8F"><u><b>Config</b></u></font></a></td>
+            <td><font color="WHITE"><b>CONFIG, AUTO, CONFIGURATION</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Consider','')"><font color="#FFFF8F"><u><b>Consider</b></u></font></a></td>
+            <td><font color="WHITE"><b>CONSIDER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Copy','')"><font color="#FFFF8F"><u><b>Copy</b></u></font></a></td>
+            <td><font color="WHITE"><b>COPY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Crawl','')"><font color="#FFFF8F"><u><b>Crawl</b></u></font></a></td>
+            <td><font color="WHITE"><b>CRAWL, CR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>1.0</b></font></td>
+            <td><font color="WHITE"><b>2.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Create','')"><font color="#FFFF8F"><u><b>Create</b></u></font></a></td>
+            <td><font color="WHITE"><b>CREATE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Credits','')"><font color="#FFFF8F"><u><b>Credits</b></u></font></a></td>
+            <td><font color="WHITE"><b>CREDITS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Deactivate','')"><font color="#FFFF8F"><u><b>Deactivate</b></u></font></a></td>
+            <td><font color="WHITE"><b>DEACTIVATE, DEACT, DEA, &lt;</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('DeferCmd','')"><font color="#FFFF8F"><u><b>DeferCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b></b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Deities','')"><font color="#FFFF8F"><u><b>Deities</b></u></font></a></td>
+            <td><font color="WHITE"><b>DEITIES, GODS, DEITY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Deposit','')"><font color="#FFFF8F"><u><b>Deposit</b></u></font></a></td>
+            <td><font color="WHITE"><b>DEPOSIT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Description','')"><font color="#FFFF8F"><u><b>Description</b></u></font></a></td>
+            <td><font color="WHITE"><b>DESCRIPTION</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Destroy','')"><font color="#FFFF8F"><u><b>Destroy</b></u></font></a></td>
+            <td><font color="WHITE"><b>DESTROY, JUNK, TEAR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Deviations','')"><font color="#FFFF8F"><u><b>Deviations</b></u></font></a></td>
+            <td><font color="WHITE"><b>DEVIATIONS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('DieRoll','')"><font color="#FFFF8F"><u><b>DieRoll</b></u></font></a></td>
+            <td><font color="WHITE"><b>DIEROLL, DROLL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Dig','')"><font color="#FFFF8F"><u><b>Dig</b></u></font></a></td>
+            <td><font color="WHITE"><b>DIG</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>10.0</b></font></td>
+            <td><font color="WHITE"><b>30.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Disembark','')"><font color="#FFFF8F"><u><b>Disembark</b></u></font></a></td>
+            <td><font color="WHITE"><b>DISEMBARK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Dismount','')"><font color="#FFFF8F"><u><b>Dismount</b></u></font></a></td>
+            <td><font color="WHITE"><b>DISMOUNT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Display','')"><font color="#FFFF8F"><u><b>Display</b></u></font></a></td>
+            <td><font color="WHITE"><b>DISPLAY, SHOW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Down','')"><font color="#FFFF8F"><u><b>Down</b></u></font></a></td>
+            <td><font color="WHITE"><b>DOWN, D</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Draw','')"><font color="#FFFF8F"><u><b>Draw</b></u></font></a></td>
+            <td><font color="WHITE"><b>DRAW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Dress','')"><font color="#FFFF8F"><u><b>Dress</b></u></font></a></td>
+            <td><font color="WHITE"><b>DRESS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('DrinkCmd','')"><font color="#FFFF8F"><u><b>DrinkCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>DRINK, DR, DRI</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Drop','')"><font color="#FFFF8F"><u><b>Drop</b></u></font></a></td>
+            <td><font color="WHITE"><b>DROP, DRO</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Duel','')"><font color="#FFFF8F"><u><b>Duel</b></u></font></a></td>
+            <td><font color="WHITE"><b>DUEL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('DumpFile','')"><font color="#FFFF8F"><u><b>DumpFile</b></u></font></a></td>
+            <td><font color="WHITE"><b>DUMPFILE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('East','')"><font color="#FFFF8F"><u><b>East</b></u></font></a></td>
+            <td><font color="WHITE"><b>EAST, E</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Eat','')"><font color="#FFFF8F"><u><b>Eat</b></u></font></a></td>
+            <td><font color="WHITE"><b>EAT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Email','')"><font color="#FFFF8F"><u><b>Email</b></u></font></a></td>
+            <td><font color="WHITE"><b>EMAIL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Emote','')"><font color="#FFFF8F"><u><b>Emote</b></u></font></a></td>
+            <td><font color="WHITE"><b>EMOTE, ,, ;, :</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Empty','')"><font color="#FFFF8F"><u><b>Empty</b></u></font></a></td>
+            <td><font color="WHITE"><b>EMPTY, EMP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Enter','')"><font color="#FFFF8F"><u><b>Enter</b></u></font></a></td>
+            <td><font color="WHITE"><b>ENTER, EN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Equipment','')"><font color="#FFFF8F"><u><b>Equipment</b></u></font></a></td>
+            <td><font color="WHITE"><b>EQUIPMENT, EQ, EQUIP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Every','')"><font color="#FFFF8F"><u><b>Every</b></u></font></a></td>
+            <td><font color="WHITE"><b>EVERY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Examine','')"><font color="#FFFF8F"><u><b>Examine</b></u></font></a></td>
+            <td><font color="WHITE"><b>EXAMINE, EXAM, EXA, LONGLOOK, LLOOK, LL, ID</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Exits','')"><font color="#FFFF8F"><u><b>Exits</b></u></font></a></td>
+            <td><font color="WHITE"><b>EXITS, EX</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Experience','')"><font color="#FFFF8F"><u><b>Experience</b></u></font></a></td>
+            <td><font color="WHITE"><b>EXPERIENCE, EXPER, XP, EXP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Expertises','')"><font color="#FFFF8F"><u><b>Expertises</b></u></font></a></td>
+            <td><font color="WHITE"><b>EXPERTISES, EXPS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Expire','')"><font color="#FFFF8F"><u><b>Expire</b></u></font></a></td>
+            <td><font color="WHITE"><b>EXPIRE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Export','')"><font color="#FFFF8F"><u><b>Export</b></u></font></a></td>
+            <td><font color="WHITE"><b>EXPORT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('FactionList','')"><font color="#FFFF8F"><u><b>FactionList</b></u></font></a></td>
+            <td><font color="WHITE"><b>FACTIONS, FAC</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Feed','')"><font color="#FFFF8F"><u><b>Feed</b></u></font></a></td>
+            <td><font color="WHITE"><b>FEED</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Fill','')"><font color="#FFFF8F"><u><b>Fill</b></u></font></a></td>
+            <td><font color="WHITE"><b>FILL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Fire','')"><font color="#FFFF8F"><u><b>Fire</b></u></font></a></td>
+            <td><font color="WHITE"><b>FIRE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Flee','')"><font color="#FFFF8F"><u><b>Flee</b></u></font></a></td>
+            <td><font color="WHITE"><b>FLEE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Follow','')"><font color="#FFFF8F"><u><b>Follow</b></u></font></a></td>
+            <td><font color="WHITE"><b>FOLLOW, FOL, FO, F</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Foreward','')"><font color="#FFFF8F"><u><b>Foreward</b></u></font></a></td>
+            <td><font color="WHITE"><b>FOREWARD, FORE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Formation','')"><font color="#FFFF8F"><u><b>Formation</b></u></font></a></td>
+            <td><font color="WHITE"><b>FORMATION</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Friends','')"><font color="#FFFF8F"><u><b>Friends</b></u></font></a></td>
+            <td><font color="WHITE"><b>FRIENDS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Gain','')"><font color="#FFFF8F"><u><b>Gain</b></u></font></a></td>
+            <td><font color="WHITE"><b>GAIN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Gait','')"><font color="#FFFF8F"><u><b>Gait</b></u></font></a></td>
+            <td><font color="WHITE"><b>GAIT, NOGAIT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('GConsider','')"><font color="#FFFF8F"><u><b>GConsider</b></u></font></a></td>
+            <td><font color="WHITE"><b>GCONSIDER, GCOS, GCO</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('GenCommand','')"><font color="#FFFF8F"><u><b>GenCommand</b></u></font></a></td>
+            <td><font color="WHITE"><b></b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Generate','')"><font color="#FFFF8F"><u><b>Generate</b></u></font></a></td>
+            <td><font color="WHITE"><b>GENERATE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Get','')"><font color="#FFFF8F"><u><b>Get</b></u></font></a></td>
+            <td><font color="WHITE"><b>GET, G</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Give','')"><font color="#FFFF8F"><u><b>Give</b></u></font></a></td>
+            <td><font color="WHITE"><b>GIVE, GI</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('GModify','')"><font color="#FFFF8F"><u><b>GModify</b></u></font></a></td>
+            <td><font color="WHITE"><b>GMODIFY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Go','')"><font color="#FFFF8F"><u><b>Go</b></u></font></a></td>
+            <td><font color="WHITE"><b>GO, WALK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Goto','')"><font color="#FFFF8F"><u><b>Goto</b></u></font></a></td>
+            <td><font color="WHITE"><b>GOTO</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Grapevine','')"><font color="#FFFF8F"><u><b>Grapevine</b></u></font></a></td>
+            <td><font color="WHITE"><b>GRAPEVINE, GV</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Group','')"><font color="#FFFF8F"><u><b>Group</b></u></font></a></td>
+            <td><font color="WHITE"><b>GROUP, GR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('GTell','')"><font color="#FFFF8F"><u><b>GTell</b></u></font></a></td>
+            <td><font color="WHITE"><b>GTELL, FTELL, GT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Help','')"><font color="#FFFF8F"><u><b>Help</b></u></font></a></td>
+            <td><font color="WHITE"><b>HELP, ?</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('HelpList','')"><font color="#FFFF8F"><u><b>HelpList</b></u></font></a></td>
+            <td><font color="WHITE"><b>HELPLIST, HLIST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Hire','')"><font color="#FFFF8F"><u><b>Hire</b></u></font></a></td>
+            <td><font color="WHITE"><b>HIRE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('History','')"><font color="#FFFF8F"><u><b>History</b></u></font></a></td>
+            <td><font color="WHITE"><b>HISTORY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Hold','')"><font color="#FFFF8F"><u><b>Hold</b></u></font></a></td>
+            <td><font color="WHITE"><b>HOLD, HOL, HO, H</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('I3Cmd','')"><font color="#FFFF8F"><u><b>I3Cmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>I3</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Ignore','')"><font color="#FFFF8F"><u><b>Ignore</b></u></font></a></td>
+            <td><font color="WHITE"><b>IGNORE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('IMC2','')"><font color="#FFFF8F"><u><b>IMC2</b></u></font></a></td>
+            <td><font color="WHITE"><b>IMC2</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Import','')"><font color="#FFFF8F"><u><b>Import</b></u></font></a></td>
+            <td><font color="WHITE"><b>IMPORT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Inventory','')"><font color="#FFFF8F"><u><b>Inventory</b></u></font></a></td>
+            <td><font color="WHITE"><b>INVENTORY, INV, I</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('JConsole','')"><font color="#FFFF8F"><u><b>JConsole</b></u></font></a></td>
+            <td><font color="WHITE"><b>JCONSOLE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('JRun','')"><font color="#FFFF8F"><u><b>JRun</b></u></font></a></td>
+            <td><font color="WHITE"><b>JRUN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Kill','')"><font color="#FFFF8F"><u><b>Kill</b></u></font></a></td>
+            <td><font color="WHITE"><b>KILL, K, ATTACK, MURDER, FIGHT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Knock','')"><font color="#FFFF8F"><u><b>Knock</b></u></font></a></td>
+            <td><font color="WHITE"><b>KNOCK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Languages','')"><font color="#FFFF8F"><u><b>Languages</b></u></font></a></td>
+            <td><font color="WHITE"><b>LANGUAGES, LANGS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Learn','')"><font color="#FFFF8F"><u><b>Learn</b></u></font></a></td>
+            <td><font color="WHITE"><b>LEARN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Leave','')"><font color="#FFFF8F"><u><b>Leave</b></u></font></a></td>
+            <td><font color="WHITE"><b>LEAVE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Left','')"><font color="#FFFF8F"><u><b>Left</b></u></font></a></td>
+            <td><font color="WHITE"><b>LEFT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('LineWrap','')"><font color="#FFFF8F"><u><b>LineWrap</b></u></font></a></td>
+            <td><font color="WHITE"><b>LINEWRAP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Link','')"><font color="#FFFF8F"><u><b>Link</b></u></font></a></td>
+            <td><font color="WHITE"><b>LINK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ListCmd','')"><font color="#FFFF8F"><u><b>ListCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>LIST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('LLM','')"><font color="#FFFF8F"><u><b>LLM</b></u></font></a></td>
+            <td><font color="WHITE"><b>LLM</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Load','')"><font color="#FFFF8F"><u><b>Load</b></u></font></a></td>
+            <td><font color="WHITE"><b>LOAD, RELOAD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Lock','')"><font color="#FFFF8F"><u><b>Lock</b></u></font></a></td>
+            <td><font color="WHITE"><b>LOCK, LOC</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Logoff','')"><font color="#FFFF8F"><u><b>Logoff</b></u></font></a></td>
+            <td><font color="WHITE"><b>LOGOFF, LOGOUT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Look','')"><font color="#FFFF8F"><u><b>Look</b></u></font></a></td>
+            <td><font color="WHITE"><b>LOOK, LOO, LO, L</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Mend','')"><font color="#FFFF8F"><u><b>Mend</b></u></font></a></td>
+            <td><font color="WHITE"><b>MEND</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Merge','')"><font color="#FFFF8F"><u><b>Merge</b></u></font></a></td>
+            <td><font color="WHITE"><b>MERGE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('MetaMsgCommand','')"><font color="#FFFF8F"><u><b>MetaMsgCommand</b></u></font></a></td>
+            <td><font color="WHITE"><b>METAMSGCOMMAND</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Modify','')"><font color="#FFFF8F"><u><b>Modify</b></u></font></a></td>
+            <td><font color="WHITE"><b>MODIFY, MOD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Mood','')"><font color="#FFFF8F"><u><b>Mood</b></u></font></a></td>
+            <td><font color="WHITE"><b>MOOD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('MOTD','')"><font color="#FFFF8F"><u><b>MOTD</b></u></font></a></td>
+            <td><font color="WHITE"><b>MOTD, NEWS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Mount','')"><font color="#FFFF8F"><u><b>Mount</b></u></font></a></td>
+            <td><font color="WHITE"><b>MOUNT, BOARD, RIDE, M</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('MPCommand','')"><font color="#FFFF8F"><u><b>MPCommand</b></u></font></a></td>
+            <td><font color="WHITE"><b>MPASOUND, MPECHO, MPSLAY, MPJUNK, MPMLOAD, MPOLOAD, MPECHOAT, MPECHOAROUND, MPCAST, MPKILL, MPEXP, MPPURGE, MPUNAFFECT, MPGOTO, MPAT, MPSET, MPTRANSFER, MPFORCE, MPSETVAR, MPENDQUEST, MPQUESTWIN, MPSTARTQUEST, MPCALLFUNC, MPBEACON, MPALARM, MPWHILE, MPDAMAGE, MPTRACKTO, MPAFFECT, MPBEHAVE, MPUNBEHAVE, MPTATTOO, MPGSET, MPSAVEVAR, MPENABLE, MPDISABLE, MPLOADVAR, MPM2I2M, MPOLOADROOM, MPHIDE, MPUNHIDE, MPOPEN, MPCLOSE, MPLOCK, MPUNLOCK, MPTITLE, MPSETCLANDATA, MPPLAYERCLASS, MPWALKTO, MPFACTION, MPNOTRIGGER, MPSTOP, MPRESET, MPQUESTPOINTS, MPTRAINS, MPPRACS, MPARGSET, MPLOADQUESTOBJ, MPQSET, MPLOG, MPCHANNEL, MPUNLOADSCRIPT, MPSTEPQUEST, MPREJUV, MPSCRIPT, MPSETINTERNAL, MPPROMPT, MPCONFIRM, MPCHOOSE, MPMONEY, MPHEAL, MPPOSSESS, MPSPEAK, MPSETCLAN, MPRLOAD, MPACCTATTOO, MPOLOADSHOP, MPMLOADSHOP, MPRPEXP, MPCASTEXT, MPLINK, MPUNLINK, MPPUT, MPHIT, MPACHIEVE, MPACCUSE, MPLLM</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('MPRun','')"><font color="#FFFF8F"><u><b>MPRun</b></u></font></a></td>
+            <td><font color="WHITE"><b>MPRUN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('MXP','')"><font color="#FFFF8F"><u><b>MXP</b></u></font></a></td>
+            <td><font color="WHITE"><b>MXP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoANSI','')"><font color="#FFFF8F"><u><b>NoANSI</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOANSI, NOCOLOR, NOCOLOUR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoBattleSpam','')"><font color="#FFFF8F"><u><b>NoBattleSpam</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOBATTLESPAM</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoChannel','')"><font color="#FFFF8F"><u><b>NoChannel</b></u></font></a></td>
+            <td><font color="WHITE"><b></b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoFollow','')"><font color="#FFFF8F"><u><b>NoFollow</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOFOLLOW, NOFOL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NOMXP','')"><font color="#FFFF8F"><u><b>NOMXP</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOMXP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoPurge','')"><font color="#FFFF8F"><u><b>NoPurge</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOPURGE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('North','')"><font color="#FFFF8F"><u><b>North</b></u></font></a></td>
+            <td><font color="WHITE"><b>NORTH, N</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Northeast','')"><font color="#FFFF8F"><u><b>Northeast</b></u></font></a></td>
+            <td><font color="WHITE"><b>NORTHEAST, NE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Northwest','')"><font color="#FFFF8F"><u><b>Northwest</b></u></font></a></td>
+            <td><font color="WHITE"><b>NORTHWEST, NW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoSell','')"><font color="#FFFF8F"><u><b>NoSell</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOSELL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoSounds','')"><font color="#FFFF8F"><u><b>NoSounds</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOSOUNDS, NOMSP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoSpam','')"><font color="#FFFF8F"><u><b>NoSpam</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOSPAM</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('NoTeach','')"><font color="#FFFF8F"><u><b>NoTeach</b></u></font></a></td>
+            <td><font color="WHITE"><b>NOTEACH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Open','')"><font color="#FFFF8F"><u><b>Open</b></u></font></a></td>
+            <td><font color="WHITE"><b>OPEN, OP, O</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Order','')"><font color="#FFFF8F"><u><b>Order</b></u></font></a></td>
+            <td><font color="WHITE"><b>ORDER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('OutFit','')"><font color="#FFFF8F"><u><b>OutFit</b></u></font></a></td>
+            <td><font color="WHITE"><b>OUTFIT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>4.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Package','')"><font color="#FFFF8F"><u><b>Package</b></u></font></a></td>
+            <td><font color="WHITE"><b>PACKAGE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('PageBreak','')"><font color="#FFFF8F"><u><b>PageBreak</b></u></font></a></td>
+            <td><font color="WHITE"><b>PAGEBREAK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Password','')"><font color="#FFFF8F"><u><b>Password</b></u></font></a></td>
+            <td><font color="WHITE"><b>PASSWORD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Pause','')"><font color="#FFFF8F"><u><b>Pause</b></u></font></a></td>
+            <td><font color="WHITE"><b>PAUSE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('PlayerKill','')"><font color="#FFFF8F"><u><b>PlayerKill</b></u></font></a></td>
+            <td><font color="WHITE"><b>PLAYERKILL, PKILL, PVP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('PollCmd','')"><font color="#FFFF8F"><u><b>PollCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>POLL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Poof','')"><font color="#FFFF8F"><u><b>Poof</b></u></font></a></td>
+            <td><font color="WHITE"><b>POOF</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Portside','')"><font color="#FFFF8F"><u><b>Portside</b></u></font></a></td>
+            <td><font color="WHITE"><b>PORTSIDE, PORT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Pose','')"><font color="#FFFF8F"><u><b>Pose</b></u></font></a></td>
+            <td><font color="WHITE"><b>POSE, NOPOSE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Possess','')"><font color="#FFFF8F"><u><b>Possess</b></u></font></a></td>
+            <td><font color="WHITE"><b>POSSESS, POSS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Pour','')"><font color="#FFFF8F"><u><b>Pour</b></u></font></a></td>
+            <td><font color="WHITE"><b>POUR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Powers','')"><font color="#FFFF8F"><u><b>Powers</b></u></font></a></td>
+            <td><font color="WHITE"><b>POWERS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Practice','')"><font color="#FFFF8F"><u><b>Practice</b></u></font></a></td>
+            <td><font color="WHITE"><b>PRACTICE, PRAC</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Prayers','')"><font color="#FFFF8F"><u><b>Prayers</b></u></font></a></td>
+            <td><font color="WHITE"><b>PRAYERS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('PreviousCmd','')"><font color="#FFFF8F"><u><b>PreviousCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>!</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Prompt','')"><font color="#FFFF8F"><u><b>Prompt</b></u></font></a></td>
+            <td><font color="WHITE"><b>PROMPT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('ProxyCtl','')"><font color="#FFFF8F"><u><b>ProxyCtl</b></u></font></a></td>
+            <td><font color="WHITE"><b>PROXYCTL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Pull','')"><font color="#FFFF8F"><u><b>Pull</b></u></font></a></td>
+            <td><font color="WHITE"><b>PULL, DRAG</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Purge','')"><font color="#FFFF8F"><u><b>Purge</b></u></font></a></td>
+            <td><font color="WHITE"><b>PURGE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Push','')"><font color="#FFFF8F"><u><b>Push</b></u></font></a></td>
+            <td><font color="WHITE"><b>PUSH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Put','')"><font color="#FFFF8F"><u><b>Put</b></u></font></a></td>
+            <td><font color="WHITE"><b>PUT, PU, P</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Qualify','')"><font color="#FFFF8F"><u><b>Qualify</b></u></font></a></td>
+            <td><font color="WHITE"><b>QUALIFY, QUAL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Questwins','')"><font color="#FFFF8F"><u><b>Questwins</b></u></font></a></td>
+            <td><font color="WHITE"><b>QUESTS, QUESTWINS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Quiet','')"><font color="#FFFF8F"><u><b>Quiet</b></u></font></a></td>
+            <td><font color="WHITE"><b>QUIET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Quit','')"><font color="#FFFF8F"><u><b>Quit</b></u></font></a></td>
+            <td><font color="WHITE"><b>QUIT, QUI, Q</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Read','')"><font color="#FFFF8F"><u><b>Read</b></u></font></a></td>
+            <td><font color="WHITE"><b>READ</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Rebuke','')"><font color="#FFFF8F"><u><b>Rebuke</b></u></font></a></td>
+            <td><font color="WHITE"><b>REBUKE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Remort','')"><font color="#FFFF8F"><u><b>Remort</b></u></font></a></td>
+            <td><font color="WHITE"><b>REMORT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Remove','')"><font color="#FFFF8F"><u><b>Remove</b></u></font></a></td>
+            <td><font color="WHITE"><b>REMOVE, REM</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Replay','')"><font color="#FFFF8F"><u><b>Replay</b></u></font></a></td>
+            <td><font color="WHITE"><b>REPLAY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Reply','')"><font color="#FFFF8F"><u><b>Reply</b></u></font></a></td>
+            <td><font color="WHITE"><b>REPLY, REP, RE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Report','')"><font color="#FFFF8F"><u><b>Report</b></u></font></a></td>
+            <td><font color="WHITE"><b>REPORT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Request','')"><font color="#FFFF8F"><u><b>Request</b></u></font></a></td>
+            <td><font color="WHITE"><b>REQUEST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Reset','')"><font color="#FFFF8F"><u><b>Reset</b></u></font></a></td>
+            <td><font color="WHITE"><b>RESET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Restring','')"><font color="#FFFF8F"><u><b>Restring</b></u></font></a></td>
+            <td><font color="WHITE"><b>RESTRING</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Retire','')"><font color="#FFFF8F"><u><b>Retire</b></u></font></a></td>
+            <td><font color="WHITE"><b>RETIRE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Right','')"><font color="#FFFF8F"><u><b>Right</b></u></font></a></td>
+            <td><font color="WHITE"><b>RIGHT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Rules','')"><font color="#FFFF8F"><u><b>Rules</b></u></font></a></td>
+            <td><font color="WHITE"><b>RULES</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Run','')"><font color="#FFFF8F"><u><b>Run</b></u></font></a></td>
+            <td><font color="WHITE"><b>RUN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.05</b></font></td>
+            <td><font color="WHITE"><b>0.25</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Save','')"><font color="#FFFF8F"><u><b>Save</b></u></font></a></td>
+            <td><font color="WHITE"><b>SAVE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Say','')"><font color="#FFFF8F"><u><b>Say</b></u></font></a></td>
+            <td><font color="WHITE"><b>SAY, ASK, `, SA, SAYTO</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Score','')"><font color="#FFFF8F"><u><b>Score</b></u></font></a></td>
+            <td><font color="WHITE"><b>SCORE, SC</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Sell','')"><font color="#FFFF8F"><u><b>Sell</b></u></font></a></td>
+            <td><font color="WHITE"><b>SELL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Serve','')"><font color="#FFFF8F"><u><b>Serve</b></u></font></a></td>
+            <td><font color="WHITE"><b>SERVE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('SetCmd','')"><font color="#FFFF8F"><u><b>SetCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>SET</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Sheath','')"><font color="#FFFF8F"><u><b>Sheath</b></u></font></a></td>
+            <td><font color="WHITE"><b>SHEATH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.1</b></font></td>
+            <td><font color="WHITE"><b>0.5</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Shell','')"><font color="#FFFF8F"><u><b>Shell</b></u></font></a></td>
+            <td><font color="WHITE"><b>SHELL, CMFS, .</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Shutdown','')"><font color="#FFFF8F"><u><b>Shutdown</b></u></font></a></td>
+            <td><font color="WHITE"><b>SHUTDOWN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Sit','')"><font color="#FFFF8F"><u><b>Sit</b></u></font></a></td>
+            <td><font color="WHITE"><b>SIT, REST, R</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Skills','')"><font color="#FFFF8F"><u><b>Skills</b></u></font></a></td>
+            <td><font color="WHITE"><b>SKILLS, SK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Sleep','')"><font color="#FFFF8F"><u><b>Sleep</b></u></font></a></td>
+            <td><font color="WHITE"><b>SLEEP, SL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Sniff','')"><font color="#FFFF8F"><u><b>Sniff</b></u></font></a></td>
+            <td><font color="WHITE"><b>SNIFF, SMELL</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.25</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Snoop','')"><font color="#FFFF8F"><u><b>Snoop</b></u></font></a></td>
+            <td><font color="WHITE"><b>SNOOP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('SocialsCmd','')"><font color="#FFFF8F"><u><b>SocialsCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>SOCIALS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Songs','')"><font color="#FFFF8F"><u><b>Songs</b></u></font></a></td>
+            <td><font color="WHITE"><b>SONGS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Sounds','')"><font color="#FFFF8F"><u><b>Sounds</b></u></font></a></td>
+            <td><font color="WHITE"><b>SOUNDS, MSP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('South','')"><font color="#FFFF8F"><u><b>South</b></u></font></a></td>
+            <td><font color="WHITE"><b>SOUTH, S</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Southeast','')"><font color="#FFFF8F"><u><b>Southeast</b></u></font></a></td>
+            <td><font color="WHITE"><b>SOUTHEAST, SE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Southwest','')"><font color="#FFFF8F"><u><b>Southwest</b></u></font></a></td>
+            <td><font color="WHITE"><b>SOUTHWEST, SW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Spells','')"><font color="#FFFF8F"><u><b>Spells</b></u></font></a></td>
+            <td><font color="WHITE"><b>SPELLS, SP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Split','')"><font color="#FFFF8F"><u><b>Split</b></u></font></a></td>
+            <td><font color="WHITE"><b>SPLIT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Stand','')"><font color="#FFFF8F"><u><b>Stand</b></u></font></a></td>
+            <td><font color="WHITE"><b>STAND, ST, STA, STAN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Starboard','')"><font color="#FFFF8F"><u><b>Starboard</b></u></font></a></td>
+            <td><font color="WHITE"><b>STARBOARD, STB</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Stat','')"><font color="#FFFF8F"><u><b>Stat</b></u></font></a></td>
+            <td><font color="WHITE"><b>STAT</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('StdCommand','')"><font color="#FFFF8F"><u><b>StdCommand</b></u></font></a></td>
+            <td><font color="WHITE"><b></b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Subscribe','')"><font color="#FFFF8F"><u><b>Subscribe</b></u></font></a></td>
+            <td><font color="WHITE"><b>SUBSCRIBE, SUBSCRIPTIONS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Switch','')"><font color="#FFFF8F"><u><b>Switch</b></u></font></a></td>
+            <td><font color="WHITE"><b>SWITCH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('SysMsgs','')"><font color="#FFFF8F"><u><b>SysMsgs</b></u></font></a></td>
+            <td><font color="WHITE"><b>SYSMSGS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Take','')"><font color="#FFFF8F"><u><b>Take</b></u></font></a></td>
+            <td><font color="WHITE"><b>TAKE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Teach','')"><font color="#FFFF8F"><u><b>Teach</b></u></font></a></td>
+            <td><font color="WHITE"><b>TEACH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Tell','')"><font color="#FFFF8F"><u><b>Tell</b></u></font></a></td>
+            <td><font color="WHITE"><b>TELL, T</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Template','')"><font color="#FFFF8F"><u><b>Template</b></u></font></a></td>
+            <td><font color="WHITE"><b>TEMPLATE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Test','')"><font color="#FFFF8F"><u><b>Test</b></u></font></a></td>
+            <td><font color="WHITE"><b>TEST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Throw','')"><font color="#FFFF8F"><u><b>Throw</b></u></font></a></td>
+            <td><font color="WHITE"><b>THROW, TOSS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('TickTock','')"><font color="#FFFF8F"><u><b>TickTock</b></u></font></a></td>
+            <td><font color="WHITE"><b>TICKTOCK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Time','')"><font color="#FFFF8F"><u><b>Time</b></u></font></a></td>
+            <td><font color="WHITE"><b>TIME, DATE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Title','')"><font color="#FFFF8F"><u><b>Title</b></u></font></a></td>
+            <td><font color="WHITE"><b>TITLE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Top','')"><font color="#FFFF8F"><u><b>Top</b></u></font></a></td>
+            <td><font color="WHITE"><b>TOP</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Topics','')"><font color="#FFFF8F"><u><b>Topics</b></u></font></a></td>
+            <td><font color="WHITE"><b>TOPICS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('TrailTo','')"><font color="#FFFF8F"><u><b>TrailTo</b></u></font></a></td>
+            <td><font color="WHITE"><b>TRAILTO</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Train','')"><font color="#FFFF8F"><u><b>Train</b></u></font></a></td>
+            <td><font color="WHITE"><b>TRAIN, TR, TRA</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Transfer','')"><font color="#FFFF8F"><u><b>Transfer</b></u></font></a></td>
+            <td><font color="WHITE"><b>TRANSFER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('TypeCmd','')"><font color="#FFFF8F"><u><b>TypeCmd</b></u></font></a></td>
+            <td><font color="WHITE"><b>TYPE, =</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Undress','')"><font color="#FFFF8F"><u><b>Undress</b></u></font></a></td>
+            <td><font color="WHITE"><b>UNDRESS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('UnLink','')"><font color="#FFFF8F"><u><b>UnLink</b></u></font></a></td>
+            <td><font color="WHITE"><b>UNLINK</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Unload','')"><font color="#FFFF8F"><u><b>Unload</b></u></font></a></td>
+            <td><font color="WHITE"><b>UNLOAD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Unlock','')"><font color="#FFFF8F"><u><b>Unlock</b></u></font></a></td>
+            <td><font color="WHITE"><b>UNLOCK, UNL, UN</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Up','')"><font color="#FFFF8F"><u><b>Up</b></u></font></a></td>
+            <td><font color="WHITE"><b>UP, U</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Value','')"><font color="#FFFF8F"><u><b>Value</b></u></font></a></td>
+            <td><font color="WHITE"><b>VALUE, VAL, V</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Vassals','')"><font color="#FFFF8F"><u><b>Vassals</b></u></font></a></td>
+            <td><font color="WHITE"><b>VASSALS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Ver','')"><font color="#FFFF8F"><u><b>Ver</b></u></font></a></td>
+            <td><font color="WHITE"><b>VERSION, VER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('View','')"><font color="#FFFF8F"><u><b>View</b></u></font></a></td>
+            <td><font color="WHITE"><b>VIEW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Visible','')"><font color="#FFFF8F"><u><b>Visible</b></u></font></a></td>
+            <td><font color="WHITE"><b>VISIBLE, VIS</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.25</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Wake','')"><font color="#FFFF8F"><u><b>Wake</b></u></font></a></td>
+            <td><font color="WHITE"><b>WAKE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Wealth','')"><font color="#FFFF8F"><u><b>Wealth</b></u></font></a></td>
+            <td><font color="WHITE"><b>WEALTH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Wear','')"><font color="#FFFF8F"><u><b>Wear</b></u></font></a></td>
+            <td><font color="WHITE"><b>WEAR</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Weather','')"><font color="#FFFF8F"><u><b>Weather</b></u></font></a></td>
+            <td><font color="WHITE"><b>WEATHER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('West','')"><font color="#FFFF8F"><u><b>West</b></u></font></a></td>
+            <td><font color="WHITE"><b>WEST, W</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>0.2</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Where','')"><font color="#FFFF8F"><u><b>Where</b></u></font></a></td>
+            <td><font color="WHITE"><b>WHERE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Whisper','')"><font color="#FFFF8F"><u><b>Whisper</b></u></font></a></td>
+            <td><font color="WHITE"><b>WHISPER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Who','')"><font color="#FFFF8F"><u><b>Who</b></u></font></a></td>
+            <td><font color="WHITE"><b>WHO, WH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('WhoIs','')"><font color="#FFFF8F"><u><b>WhoIs</b></u></font></a></td>
+            <td><font color="WHITE"><b>WHOIS, FINGER</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Wield','')"><font color="#FFFF8F"><u><b>Wield</b></u></font></a></td>
+            <td><font color="WHITE"><b>WIELD</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('WillQualify','')"><font color="#FFFF8F"><u><b>WillQualify</b></u></font></a></td>
+            <td><font color="WHITE"><b>WILLQUALIFY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Wimpy','')"><font color="#FFFF8F"><u><b>Wimpy</b></u></font></a></td>
+            <td><font color="WHITE"><b>WIMPY</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Withdraw','')"><font color="#FFFF8F"><u><b>Withdraw</b></u></font></a></td>
+            <td><font color="WHITE"><b>WITHDRAW</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('WizEmote','')"><font color="#FFFF8F"><u><b>WizEmote</b></u></font></a></td>
+            <td><font color="WHITE"><b>WIZEMOTE</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('WizInv','')"><font color="#FFFF8F"><u><b>WizInv</b></u></font></a></td>
+            <td><font color="WHITE"><b>WIZINVISIBLE, WIZINV, NOWIZINV</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('WizList','')"><font color="#FFFF8F"><u><b>WizList</b></u></font></a></td>
+            <td><font color="WHITE"><b>WIZLIST</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Worth','')"><font color="#FFFF8F"><u><b>Worth</b></u></font></a></td>
+            <td><font color="WHITE"><b>WORTH</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Xml','')"><font color="#FFFF8F"><u><b>Xml</b></u></font></a></td>
+            <td><font color="WHITE"><b>XML</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            <td><font color="WHITE"><b>0.0</b></font></td>
+            </tr>
+       
+    
+    
+        
+            <tr>
+            <td><a href="javascript:Command('Yell','')"><font color="#FFFF8F"><u><b>Yell</b></u></font></a></td>
+            <td><font color="WHITE"><b>YELL, YELLTO, YELLAT, Y</b></font></td>
+            <td><font color="WHITE"><b>false</b></font></td>
+            <td><font color="WHITE"><b>true</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            <td><font color="WHITE"><b>-1.0</b></font></td>
+            </tr>
+       
+    
+    <tr>
+    <td colspan="4">
+    	<a href="javascript:if(document.RESOURCES.NEWCOMMAND.value!='')Command(document.RESOURCES.NEWCOMMAND.value,'&amp;NEWCOMMAND='+document.RESOURCES.NEWCOMMAND.value)">
+    	<font color="CYAN"><b><u>Create New:</u></b></font></a><font color="CYAN"><b> <input type="TEXT" name="NEWCOMMAND" size="70"></b></font>
+    </td>
+    </tr>
+    </tbody></table>
+    <p>
+    <table width="100%" border="0">
+    <tbody><tr>
+    <td width="33%" align="CENTER">
+    </td>
+    <td align="CENTER"><input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();"></td>
+    <td width="33%" align="CENTER">
+    </td>
+    </tr>
+    </tbody></table>
+    </p><center>
+    </center>
+</form>
+
+
+
+
+</center></body></html>

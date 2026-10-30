@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+
+	<meta charset="utf-8">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Players List</title>
+	<script language="JavaScript">
+	<!--
+		function Sort(action)
+		{
+			document.RESOURCES.SORTBY.value=action;
+			document.RESOURCES.action="accounts.html";
+			document.RESOURCES.submit();
+		}
+		function Account(action)
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("account.cmvp?ACCOUNT="+action,"Account",strFeatures, false);
+		}
+		function Clicked(action)
+		{
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		function Player(action)
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("player.cmvp?PLAYER="+action,"Player",strFeatures, false);
+		}
+		
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0"><tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP">
+		<img src="images/grinder.gif" width="78" height="122" alt="" border="0">
+	</td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		
+		
+			<tr><td><a href="javascript:Clicked('banners.cmvp');"><font color="WHITE" size="-1"><b>Banned List</b></font></a></td></tr>
+			<tr><td><a href="javascript:Clicked('whitelists.cmvp');"><font color="WHITE" size="-1"><b>Whitelists</b></font></a></td></tr>
+		
+		
+		<tr><td><a href="javascript:Clicked('masscreate.cmvp');"><font color="WHITE" size="-1"><b>Mass Creator</b></font></a></td></tr>
+		
+		<tr><td><a href="javascript:Sort('');"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="accounts.html">
+<input type="HIDDEN" name="SORTBY" value="">
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Account Manager</h2></font></td></tr>
+	<tr>
+	<td width="30%"><b><a href="javascript:Sort('NAME')"><font color="YELLOW">Name</font></a></b></td>
+	
+		<td width="20%"><b><a href="javascript:Sort('LAST')"><font color="YELLOW">Last On</font></a></b></td>
+	
+	<td width="15%"><b><a href="javascript:Sort('EMAIL')"><font color="YELLOW">Email</font></a></b></td>
+	<td width="35%"><b><font color="YELLOW">Players</font></b></td>
+	</tr>
+	
+	
+	<tr>
+	
+	<td><a href="javascript:Account('Zorblax')"><font color="#FFFF8F"><u><b>Zorblax</b></u></font></a></td>
+	
+		<td><font color="WHITE">10/30/2026 11:02 AM</font></td>
+	
+	<td><font color="WHITE"></font></td>
+	<td><font color="WHITE">
+		
+		
+			
+			<a href="javascript:Player('Zorblax')"><font color="WHITE"><b>Zorblax</b></font></a>&nbsp;
+		
+	</font></td>
+	</tr>
+	
+	<tr>
+	
+	<td><a href="javascript:Account('Rotadmin')"><font color="#FFFF8F"><u><b>Rotadmin</b></u></font></a></td>
+	
+		<td><font color="WHITE">10/25/2026 8:04 AM</font></td>
+	
+	<td><font color="WHITE"></font></td>
+	<td><font color="WHITE">
+		
+		
+			
+			<a href="javascript:Player('Rot')"><font color="WHITE"><b>Rot</b></font></a>&nbsp;
+		
+	</font></td>
+	</tr>
+	
+	</tbody></table>
+	<p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="CENTER">
+	</td>
+	<td width="33%" align="CENTER">
+		<input type="BUTTON" name="REFRESH" value="REFRESH" onclick="Sort('');">
+	</td>
+	<td width="33%" align="CENTER">
+	</td>
+	</tr>
+	</tbody></table>
+	</p><center>
+	</center>
+</form>
+
+
+
+
+</center></body></html>

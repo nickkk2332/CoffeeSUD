@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta charset="utf-8">
+
+<script language="JavaScript">
+<!--
+	function Refresh()
+	{
+		document.NEWAREA.submit();
+	}
+	
+	function Finished()
+	{
+		var aindex=document.NEWAREA.AREA.selectedIndex;
+		var rindex=document.NEWAREA.ROOM.selectedIndex;
+		var avalue=document.NEWAREA.AREA.options[aindex].value;
+		var rvalue=document.NEWAREA.ROOM.options[rindex].value;
+		if(avalue=='')
+		{
+			if(window.alert) alert('Please select an area');
+			return;
+		}
+		if(rvalue=='')
+		{
+			if(window.alert) alert('Please select a room');
+			return;
+		}
+		opener.pickedRoom(avalue,rvalue,document.NEWAREA.REST.value);
+		window.close();
+	}
+//-->
+</script>
+</head>
+<body bgcolor="BLACK">
+<center>
+<form accept-charset="UTF-8" name="NEWAREA" method="POST" action="pickroom.html" target="_top">
+<input type="HIDDEN" name="REST" value="">
+<table width="85%" border="1">
+<tbody><tr><td width="100%" colspan="2" align="CENTER" bgcolor="WHITE"><font color="BLACK">Select a Room</font></td></tr>
+<tr>
+	<td width="20%"><font color="WHITE">Area</font></td>
+	<td width="80%">
+		
+		<select name="AREA" onchange="Refresh()">
+		<option value="">Select an Area
+		
+		
+			
+			</option><option value="New Area">New Area
+		
+		</option></select>
+		
+	</td>
+</tr>
+<tr>
+	<td width="20%"><font color="WHITE">Room</font></td>
+	<td width="80%">
+		
+		<select name="ROOM">
+		
+			<option value="">Select an Area
+		
+		</option></select>
+		
+	</td>
+</tr>
+</tbody></table>
+<br>
+<input type="BUTTON" name="BFINISHED" value="Finished" onclick="Finished();">
+</form>
+</center>
+
+
+</body></html>

@@ -1,0 +1,402 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		var properTarget='MAP';
+	
+		function AddNewItem()
+		{
+			document.AREAEDIT.action="../notcaptured.html#/grinder/addmobitem.cmvp";
+			document.AREAEDIT.target='_top';
+			document.AREAEDIT.SHOPITEM.value='';
+			document.AREAEDIT.submit();
+		}
+		function AddNewShopItem()
+		{
+			document.AREAEDIT.action="../notcaptured.html#/grinder/addmobitem.cmvp";
+			document.AREAEDIT.target='_top';
+			document.AREAEDIT.SHOPITEM.value=document.AREAEDIT.MOB.value;
+			document.AREAEDIT.submit();
+		}
+		function AddNewShopMOB()
+		{
+			document.AREAEDIT.action="../notcaptured.html#/grinder/addmobmob.cmvp";
+			document.AREAEDIT.target='_top';
+			document.AREAEDIT.SETSHOPMOB.value='NEW';
+			document.AREAEDIT.submit();
+		}
+		function AddItem(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function DelItem(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function EditItem(ME)
+		{
+			document.AREAEDIT.ITEM.value=ME;
+			document.AREAEDIT.action="../notcaptured.html#/grinder/editmobitem.cmvp";
+			document.AREAEDIT.target='_top';
+			document.AREAEDIT.SHOPITEM.value='';
+			document.AREAEDIT.submit();
+		}
+		function EditShopItem(ME)
+		{
+			document.AREAEDIT.ITEM.value=ME;
+			document.AREAEDIT.action="../notcaptured.html#/grinder/editmobitem.cmvp";
+			document.AREAEDIT.target='_top';
+			document.AREAEDIT.SHOPITEM.value=document.AREAEDIT.MOB.value;
+			document.AREAEDIT.submit();
+		}
+		function EditShopMob(ME)
+		{
+			document.AREAEDIT.ITEM.value=ME;
+			document.AREAEDIT.action="../notcaptured.html#/grinder/editmobmob.cmvp";
+			document.AREAEDIT.target='_top';
+			document.AREAEDIT.SETSHOPMOB.value=ME;
+			document.AREAEDIT.submit();
+		}
+		function EditBehavior(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddBehavior(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditFaction(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddFaction(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditAffect(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddAffect(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function ChangedClass()
+		{
+			document.AREAEDIT.CHANGEDCLASS.value="true";
+			document.AREAEDIT.action="editmobform.html";
+			document.AREAEDIT.submit();
+		}
+		function ChangedLevel()
+		{
+			document.AREAEDIT.CHANGEDLEVEL.value="true";
+			document.AREAEDIT.action="editmobform.html";
+			document.AREAEDIT.submit();
+		}
+		function ReShow()
+		{
+			document.AREAEDIT.action="editmobform.html";
+			//document.AREAEDIT.target=properTarget;
+			document.AREAEDIT.submit();
+		}
+		function OpenUp(file,named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/"+file+"?HELPTOPIC="+named,
+			            "Help",strFeatures, false);
+		}
+		function DelMob()
+		{
+			if(window.confirm('Confirm: Delete this MOB?'))
+			{
+				document.AREAEDIT.DELMOB.value='';
+				document.AREAEDIT.submit();
+			}
+		}
+		
+		function adjfieldval(field,val)
+		{
+			eval('field = document.AREAEDIT.'+field+';');
+			field.value = val;
+		}
+		function Trigger(field, value)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/grinder/trigger.cmvp?FIELD="+field+"&"+field+"="+encodeURIComponent(value),
+			            "Trigger/Ritual Worksheet",strFeatures, false);
+		}
+	//-->
+	</script>
+</head>
+<body>
+<center>
+
+	<h3>Modify MOB</h3>
+
+<p><font color="RED"></font></p><h1></h1>
+<br>
+
+	<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="../notcaptured.html#/grinder/editnewmobdone.cmvp">
+	<input type="HIDDEN" name="ROOM" value="ANY">
+	<script language="JavaScript">
+	<!--
+		properTarget='_top';
+	//-->
+	</script>
+
+
+<input type="HIDDEN" name="CHANGEDCLASS" value="">
+<input type="HIDDEN" name="CHANGEDLEVEL" value="">
+<input type="HIDDEN" name="MOB" value="">
+<input type="HIDDEN" name="SETSHOPMOB" value="">
+<input type="HIDDEN" name="SHOPMOB" value="">
+<input type="HIDDEN" name="SHOPITEM" value="">
+<input type="HIDDEN" name="ITEM" value="">
+<input type="HIDDEN" name="ACTION" value="MODIFYMOB">
+
+<table width="600" border="1" cellspacing="0" cellpaddin="0">
+<tbody><tr>
+	<td width="150"><font color="#66FFFF"><b>MOB Class:</b></font></td>
+    <td width="450" colspan="2">
+	
+		<select name="CLASSES" onchange="ChangedClass();">
+		@break[error]endif[error]if?MobData?ISGENERIC@
+</select></td></tr><tr>
+	<td><font color="#66FFFF"><b>Name:</b></font></td>
+	
+        
+            <td colspan="2"><input type="TEXT" name="NAME" size="60" value="@break[error]endif[error]endif[error]if?CheckReqParm?&lt;MOB=CATALOG-&amp;@
+&lt;TR&gt;
+    &lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Catalog Category:</b></td>
+    <td colspan="2"><input type="TEXT" name="CATACAT" size="60" value="@break[error]endif@
+&lt;TR&gt;
+	&lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Display:</b></td>
+    <td colspan="2"><input type="TEXT" name="DISPLAYTEXT" size="60" maxlength="255" value="@break@"></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Description:</b></font></td>
+    <td colspan="2">
+		<textarea name="DESCRIPTION" rows="2" cols="60">@break@</textarea>
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>GIF filename:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="IMAGE" size="50" value="@break[error]else@
+&lt;TR&gt;
+	&lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Parameters:</b></td>
+    <td colspan="2"><input type="TEXT" name="MISCTEXT" size="60" maxlength="255" value="@break[error]endif@
+&lt;TR&gt;
+	&lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Level:</b></td>
+    <td colspan="2"><input type="TEXT" name="LEVEL" size="5" value="@break@">
+    <input type="BUTTON" onclick="ChangedLevel();" name="BUTTCHANGEDLEVEL" value="ReScore">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Rejuv. Ticks:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="REJUV" size="5" value="@break[error]if?!MobData?ISGENERIC@
+&lt;TR&gt;
+	&lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Magic Level:</b></td>
+    <td colspan="2"><input type="TEXT" name="ABILITY" size="5" value="@break[error]endif[error]if?MobData?ISGENERIC@
+&lt;TR&gt;
+	&lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Race:</b></td>
+    <td colspan="2">
+    <select name="RACE">
+    @break@
+    </select>
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Gender:</b></font></td>
+    <td colspan="2"><font color="WHITE">
+    @break@
+    </font>
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Height:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="HEIGHT" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Weight:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="WEIGHT" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Clan (ID):</b></font></td>
+    <td colspan="2">@break@</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Hit Points Mod.:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="ABILITY" size="5" value="@break@">
+	&nbsp;&nbsp;<font color="#66FFFF">(Total Hit Points=((Level*Level) + (Random * Level * THIS)))
+    </font></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Attack Speed:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="SPEED" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Attack Bonus:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="ATTACK" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Damage Bonus:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="DAMAGE" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Armor:</b></font></td>
+    <td colspan="2"><input type="TEXT" name="ARMOR" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Factions:</b></font></td>
+    	<td colspan="2">
+	@break@
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Money:</b></font></td>
+    <td colspan="2">
+        <input type="TEXT" name="MONEY" size="5" value="@break@">
+        &nbsp;&nbsp;
+        <font color="#66FFFF"><b>Variation:</b></font>
+        <input type="TEXT" name="VARMONEY" size="5" value="@break@">
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Abilities:</b></font>
+	<br><a target="HELP" href="../abilities.html"><font color="WHITE"><i>help</i></font></a></td>
+    <td colspan="2">
+	@break@
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Behaviors:</b></font>
+	<br><a target="HELP" href="../behaviors.html"><font color="WHITE"><i>help</i></font></a></td>
+    <td colspan="2">
+	@break@
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Affects:</b></font>
+	<br><a target="HELP" href="../affects.html"><font color="WHITE"><i>help</i></font></a></td>
+    <td colspan="2">
+	@break@
+	</td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>MOB Flags:</b></font></td>
+    <td colspan="2"><font color="WHITE">
+    	<table width="100%" border="0" cellpadding="0">
+    		<tbody><tr><td width="50%" valign="TOP">
+			<input type="CHECKBOX" name="ISINVISIBLE" @break@="">Is Invisible<br>
+			<input type="CHECKBOX" name="ISHIDDEN" @break@="">Is Hidden<br>
+			<input type="CHECKBOX" name="ISSNEAKING" @break@="">Is Sneaker<br>
+			<input type="CHECKBOX" name="ISUNSEEN" @break@="">Is Unseeable<br>
+			<input type="CHECKBOX" name="ISBONUS" @break@="">Is Magical<br>
+			<input type="CHECKBOX" name="ISLIGHT" @break@="">Is Glowing (burning)<br>
+			<input type="CHECKBOX" name="ISFLYING" @break@="">Is Flying<br>
+			</td><td width="50%" valign="TOP">
+			<input type="CHECKBOX" name="ISCLIMBING" @break@="">Is Climbing<br>
+			<input type="CHECKBOX" name="ISSLEEPING" @break@="">Is Sleeping<br>
+			<input type="CHECKBOX" name="ISSITTING" @break@="">Is Sitting<br>
+			<input type="CHECKBOX" name="ISSWIMMING" @break@="">Is Swimming<br>
+			<input type="CHECKBOX" name="ISEVIL" @break@="">Has Evil Aura<br>
+			<input type="CHECKBOX" name="ISGOOD" @break@="">Has Good Aura<br>
+			</td></tr>
+		</tbody></table>
+		</font>
+    </td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>MOB Senses:</b></font></td>
+    <td colspan="2"><font color="WHITE">
+    	<table width="100%" border="0" cellpadding="0">
+    		<tbody><tr><td width="50%" valign="TOP">
+			<input type="CHECKBOX" name="CANNOTSEE" @break@="">Is Blind<br>
+			<input type="CHECKBOX" name="CANSEEHIDDEN" @break@="">See Hidden<br>
+			<input type="CHECKBOX" name="CANSEEINVISIBLE" @break@="">See Invisible <br>
+			<input type="CHECKBOX" name="CANSEESNEAKERS" @break@="">See Sneakers<br>
+			<input type="CHECKBOX" name="CANSEEDARK" @break@="">Darkvision<br>
+			<input type="CHECKBOX" name="CANSEEINFRARED" @break@="">Infravision<br>
+			</td><td width="50%" valign="TOP">
+			<input type="CHECKBOX" name="CANNOTHEAR" @break@="">Is Deaf<br>
+			<input type="CHECKBOX" name="CANNOTMOVE" @break@="">Is Paralyzed<br>
+			<input type="CHECKBOX" name="CANNOTSMELL" @break@="">Can't Smell<br>
+			<input type="CHECKBOX" name="CANNOTTASTE" @break@="">Can't Taste<br>
+			<input type="CHECKBOX" name="CANNOTSPEAK" @break@="">Is Mute<br>
+			</td></tr>
+		</tbody></table>
+		</font>
+    </td>
+</tr>
+
+
+
+
+<tr>
+	<td><font color="#66FFFF"><b>Tattoos:</b></font>
+	</td>
+    <td colspan="2">
+    <input type="TEXT" name="TATTOOS" size="30" value="@break@">
+    <font size="-1"><i>Semicolon delimited</i>
+    </font></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Tags:</b></font>
+	</td>
+    <td colspan="2">
+    <input type="TEXT" name="TAGS" size="30" value="@break@">
+    <font size="-1"><i>Semicolon delimited</i>
+    </font></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>Expertise:</b></font>
+	</td>
+    <td colspan="2">
+    <input type="TEXT" name="EXPERTISES" size="30" value="@break@">
+    <font size="-1"><i>Semicolon delimited</i>
+    </font></td>
+</tr>
+<tr>
+	<td><font color="#66FFFF"><b>MOB Inventory:</b></font></td>
+    <td colspan="2">
+    @break[error]endif[error]if?CheckReqParm?<mob=catalog-@ <tr=""></mob=catalog-@></td><td width="600" colspan="3"><font color="#66FFFF"><b>* Edit this mob later to set Auto-Spawn information.</b></font></td></tr>
+	
+
+<tr>
+	
+	    <td colspan="3" align="CENTER">
+			<input type="SUBMIT" name="FINISHED" value="Finished">
+		</td>
+	
+</tr>
+</tbody></table>
+</form>
+</center>
+
+
+
+
+</body></html>

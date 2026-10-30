@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function OpenUp(file,named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("/"+file+"?HELPTOPIC="+named,
+			            "Help",strFeatures, false);
+		}
+		function EditBehavior(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddBehavior(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditAffect(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddAffect(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+        function EditSubOp(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddSubOp(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function EditAreaParent(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAreaParent(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function EditAreaChild(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAreaChild(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+		function ReShow()
+		{
+			document.AREAEDIT.action="editareaform.html";
+			document.AREAEDIT.target='MAP';
+			document.AREAEDIT.submit();
+		}
+	//-->
+	</script>
+</head>
+<body>
+<center>
+
+<h3>Stat Deviations for items and mobs in 'New Area'.</h3>
+
+<br>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="modarea.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="ACTION" value="MODIFYAREA">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<table width="770" border="1" cellspacing="0" cellpaddin="0">
+<tbody><tr>
+
+	<td width="170"><font color="#66FFFF"><b>Deviations from Normalized Stats:</b></font></td>
+
+    <td width="600" colspan="2">
+	<pre>	
+		Deviations Report:
+
+  
+	
+	</pre>
+	
+	</td>
+</tr>
+</tbody></table>
+
+	<input type="SUBMIT" name="IRRELEVANT" value="Finished">
+
+</form>
+</center>
+
+
+
+
+</body></html>

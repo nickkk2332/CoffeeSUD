@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+	<meta charset="utf-8">
+    <link rel="grinder icon" href="../images/grinder.ico">
+    <link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+    <title> All Qualify Information</title>
+    <script language="JavaScript">
+    <!--
+        function openUp(named)
+        {
+            var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+            var w2=window.open("/ahelp.cmvp?HELPTOPIC="+named,"Help",strFeatures,false);
+        }
+        function Delete()
+        {
+            if(confirm('Delete this All Qualify definition?! Confirm!'))
+            {
+                if(confirm('Press OK to Delete this All Qualify definition!'))
+                {
+                    document.RESOURCES.action="../notcaptured.html#/grinder/allqualifydo.cmvp";
+                    document.RESOURCES.FUNCTION.value='DELALLQUALIFY';
+                    document.RESOURCES.submit();
+                }
+            }
+        }
+        function EditDone()
+        {
+            if(confirm('Submit your changes to this All Qualify item?'))
+            {
+                document.RESOURCES.action="../notcaptured.html#/grinder/allqualifydo.cmvp";
+                document.RESOURCES.FUNCTION.value='EDITALLQUALIFY';
+                document.RESOURCES.submit();
+            }
+        }
+        function ReShow()
+        {
+            document.RESOURCES.FUNCTION.value='';
+            document.RESOURCES.action="allqualify.html";
+            document.RESOURCES.submit();
+        }
+        function EditAffect(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAffect(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function Cancel()
+        {
+            window.close();
+        }
+        function OpenUp(file,named)
+        {
+            var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+            w=window.open("/"+file+"?HELPTOPIC="+named,
+                        "Help",strFeatures, false);
+        }
+    //-->
+    </script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="../notcaptured.html#/grinder/component.cmvp">
+<input type="HIDDEN" name="FUNCTION" value="">
+<input type="HIDDEN" name="ALLQUALID" value="">
+<input type="HIDDEN" name="ALLQUALWHICH" value="">
+<center><font color="WHITE"> All Qualify Information</font></center>
+<p>
+<table width="100%" border="1" cellspacing="0" cellpadding="0">
+    <tbody><tr>
+        <td width="25%"><font color="YELLOW">Skill: </font></td>
+        <td width="75%"><font color="WHITE">@AllQualifyData?NAME@ (@RequestParameter?ALLQUALWHICH@)</font></td>
+    </tr>
+    <tr>
+        <td width="25%"><font color="YELLOW">Level: </font></td>
+        <td width="75%"><input type="TEXT" size="5" name="LEVEL" value="@AllQualifyData?LEVEL@"></td>
+    </tr>
+    <tr>
+        <td width="25%"><font color="YELLOW">Default Proficiency: </font></td>
+        <td width="75%"><input type="TEXT" size="5" name="PROF" value="@AllQualifyData?PROF@"></td>
+    </tr>
+    <tr>
+        <td width="25%"><font color="YELLOW">Zapper Mask: </font><a href="javascript:openUp('ZAPPERMASKS')"><font color="WHITE">?</font></a></td>
+        <td width="75%"><input type="TEXT" size="60" name="MASK" value="@AllQualifyData?MASK@"></td>
+    </tr>
+    <tr>
+        <td width="25%"><font color="YELLOW">Auto-Gained: </font></td>
+        <td width="75%">
+        <input type="CHECKBOX" name="AUTOGAIN" @allqualifydata?autogain@="">
+        </td>
+    </tr>
+    <tr>
+        <td width="25%"><font color="YELLOW">Visibility: </font></td>
+        <td width="75%">
+            <select name="SECRET">
+                @AllQualifyData?SECRET@
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td width="25%"><font color="YELLOW">Required Skills: </font></td>
+        <td width="75%">
+            
+                @AllQualifyData?REQUIRES&amp;RESET@
+                @loop@
+                    @AllQualifyData?REQUIRES&amp;NEXT@
+                    
+                 @back@
+                 <table width="100%" border="1">
+                <tbody><tr><td width="75%"><font color="YELLOW">Skill ID</font></td>
+                <td width="25%"><font color="YELLOW">Req Prof</font></td></tr><tr>
+                        <td>
+                            <select name="@RequestParameter?REQUIRESNAME1@" onchange="ReShow()">
+                            @AllQualifyData?REQUIRES&amp;ABLEEDIT@
+                            </select>
+                        </td>
+                        <td>
+                            <input type="TEXT" size="5" name="@RequestParameter?REQUIRESNAME2@" value="@RequestParameter?@@RequestParameter?REQUIRESNAME2@@ @">
+                        </td>
+                    </tr><tr>
+                     <td>
+                         <select name="@RequestParameter?REQUIRESNAME1@" onchange="ReShow()">
+                         @AllQualifyData?REQUIRES&amp;ABLEEDIT@
+                         </select>
+                     </td>
+                     <td>
+                         <input type="TEXT" size="5" name="@RequestParameter?REQUIRESNAME2@" value="@RequestParameter?@@RequestParameter?REQUIRESNAME2@@ @">
+                     </td>
+                 </tr>
+            </tbody></table>
+        </td>
+    </tr>
+</tbody></table>
+<br>
+<table width="100%" border="0">
+<tbody><tr>
+    <td align="CENTER"><input type="BUTTON" name="FINISHED" value="Finished" onclick="EditDone();"></td>
+    <td align="CENTER"><input type="BUTTON" name="DELETE" value="Delete" onclick="Delete();"></td>
+    <td align="CENTER"><input type="BUTTON" name="CANCEL" value="Cancel" onclick="Cancel();"></td>
+</tr>
+</tbody></table>
+</p></form>
+
+
+@endif@
+@endif@
+</body></html>

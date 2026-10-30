@@ -1,0 +1,357 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<link rel="grinder icon" href="../images/grinder.ico">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Questmaker</title>
+	<script language="JavaScript">
+	<!--
+	    var w;
+		function ClickedBack()
+		{
+			document.QUESTS.FUNCTION.value='BACK';
+			document.QUESTS.submit();
+		}
+		function ClickedNext()
+		{
+			document.QUESTS.FUNCTION.value='NEXT';
+			document.QUESTS.submit();
+		}
+		function ClickedFinish()
+		{
+			document.QUESTS.FUNCTION.value='FINISH';
+			document.QUESTS.submit();
+		}
+		function Close(val)
+		{
+			if(window.confirm('Cancelling will lose all your hard work.  Are you SURE?!'))
+				window.close();
+		}
+		function AddNewItem()
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("edititemform.cmvp?ITEM=NEW&ROOM=ANY","Quest_Item",strFeatures, false);
+		}
+		function EditItemDone()
+		{
+			document.QUESTS.FUNCTION.value='RESHOW';
+			document.QUESTS.submit();
+		}
+		function AddNewMob()
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("editmobform.cmvp?MOB=NEW&ROOM=ANY","Quest_MOB",strFeatures, false);
+		}
+		function Refresh()
+		{
+			document.QUESTS.FUNCTION.value='RESHOW';
+			document.QUESTS.submit();
+		}
+		function EditMobDone()
+		{
+			document.QUESTS.FUNCTION.value='RESHOW';
+			document.QUESTS.submit();
+		}
+		function openUp(named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+			var w2=window.open("/ahelp.cmvp?HELPTOPIC="+named,"Help",strFeatures,false);
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="10%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="20" height="30" alt="" border="0"></td>
+	<td width="20%" align="LEFT" valign="TOP"><font color="WHITE"><b>QuestMaker!</b></font></td>
+	<td width="50%" align="RIGHT" valign="TOP">
+		<a href="javascript:openUp('SCRIPTABLE');"><font color="PINK"><i>scriptable help</i></font></a><br>
+		<a href="javascript:openUp('QUESTS');"><font color="PINK"><i>quest help</i></font></a><br>
+		<a href="javascript:openUp('ZAPPERMASKS');"><font color="PINK"><i>zapper-mask help</i></font></a><br>
+	</td>
+	<td width="20%" align="RIGHT" valign="TOP"><input type="BUTTON" name="BACK" value="Cancel" onclick="Close('');"></td>
+	</tr>
+	</tbody></table>
+	
+		<form accept-charset="UTF-8" name="QUESTS" target="_top" method="POST" action="questmaker.html">
+		 <!-- this will update qmpage?-->
+		
+		<input type="HIDDEN" name="FUNCTION" value="">
+		<input type="HIDDEN" name="QMPAGE" value="">
+		<input type="HIDDEN" name="QMOLDTEMPLATE" value="">
+		
+			<font color="YELLOW"><h3>Select a Template</h3></font>
+			<font color="WHITE">
+			Welcome to the QuestMaker Wizard.  Your first step is to select
+			a template upon which to base your new Quest. Competitve 
+			quests are quests where players compete to complete it, while
+			Normal quests are independently completed by players. 
+			After you've made a selection, click NEXT at the bottom.
+			</font><p><font color="WHITE">
+			Template type:
+			</font>
+			<select name="QUEST_TEMPLATE_FILTER" onchange="Refresh();">
+				<option value="" selected="">All
+				</option><option value="Normal*">All Normal Types
+				</option><option value="Competitive*">All Competitive Types
+				</option><option value="Auto">All Auto Types
+				</option><option value="*Capture*">All Capture
+				</option><option value="*Collect*">All Collect
+				</option><option value="*Dispel*">All Dispel
+				</option><option value="*Delivery*">All Delivery
+				</option><option value="*Escort*">All Escort
+				</option><option value="*Killer*">All Killer
+				</option><option value="*Mystery*">All Mystery
+				</option><option value="*Protect*">All Protection
+				</option><option value="*Travel*">All Travel
+			</option></select><br>
+			</p><hr>
+		
+		
+		<table width="100%"><tbody><tr height="1"><td width="30%" height="1"></td><td width="70%" valign="TOP" align="LEFT" height="1"></td></tr>
+		<tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_capture1.quest"> <font size="-1" color="YELLOW"><b>Normal Capture #1</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more other existing mobs captured. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_capture2.quest"> <font size="-1" color="YELLOW"><b>Normal Capture #2</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more other mobs that you create captured. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_capture3.quest"> <font size="-1" color="YELLOW"><b>Normal Capture #3</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs another single existing mob captured. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_capture4.quest"> <font size="-1" color="YELLOW"><b>Normal Capture #4</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs a single mob that you create captured. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_collect1.quest"> <font size="-1" color="YELLOW"><b>Normal Collect #1</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will be scattered among existing mobs whom you will designate. A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_collect2.quest"> <font size="-1" color="YELLOW"><b>Normal Collect #2</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will be scattered among rooms or areas which you will designate. A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_collect3.quest"> <font size="-1" color="YELLOW"><b>Normal Collect #3</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will be scattered among mobs which you will create for the task A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_collect4.quest"> <font size="-1" color="YELLOW"><b>Normal Collect #4</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will have to be obtained from your existing world, or generated with common skills. A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_collect5.quest"> <font size="-1" color="YELLOW"><b>Normal Collect #5</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs some amount of local currency brought to him/her. A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_delivery1.quest"> <font size="-1" color="YELLOW"><b>Normal Delivery #1</b></font></td><td><font size="-1" color="WHITE">The player is given a custom item by an existing mob in your world to deliver to one or more existing mobs somewhere else in your world.  A reward is optionally given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_delivery2.quest"> <font size="-1" color="YELLOW"><b>Normal Delivery #2</b></font></td><td><font size="-1" color="WHITE">The player delivers a custom-Item from one existing mob in your world to an existing container in your world, such as a pit or mailbox, or a room where the item needs to be dropped. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_delivery3.quest"> <font size="-1" color="YELLOW"><b>Normal Delivery #3</b></font></td><td><font size="-1" color="WHITE">The player is given a custom item by an existing mob in your world to deliver to one or more mobs you will create, somewhere else in your world.  A reward is optionally given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_delivery4.quest"> <font size="-1" color="YELLOW"><b>Normal Delivery #4</b></font></td><td><font size="-1" color="WHITE">The player is asked by an existing mob in your world to pay one or more existing mobs somewhere else in your world.  A reward is optionally given after payment. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_dispel1.quest"> <font size="-1" color="YELLOW"><b>Normal Dispel #1</b></font></td><td><font size="-1" color="WHITE">The player must dispel or otherwise remove a spell, disease, poison, or other affect from 1 or more affected mobs on your map. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_escort1.quest"> <font size="-1" color="YELLOW"><b>Normal Escort #1</b></font></td><td><font size="-1" color="WHITE">The player must escort a mob or mobs that you will create from the location of an existing Announcer mob on the map to a room of your choosing.  You may also optionally create a mob or mobs to attack the player along the way. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_escort2.quest"> <font size="-1" color="YELLOW"><b>Normal Escort #2</b></font></td><td><font size="-1" color="WHITE">The player must escort a mob or mobs that you will create from the location of an existing Announcer mob on the map to any room in an AREA of your choosing.  You may also optionally create a mob or mobs to attack the player along the way. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_killer1.quest"> <font size="-1" color="YELLOW"><b>Normal Killer #1</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more other existing mobs killed. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_killer2.quest"> <font size="-1" color="YELLOW"><b>Normal Killer #2</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more mobs which you will create killed. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_mystery1.quest"> <font size="-1" color="YELLOW"><b>Normal Mystery #1</b></font></td><td><font size="-1" color="WHITE">A 3-Level mystery where players must question existing mobs from your world to discover WHO did something, what ITEM they did it with, and what their MOTIVE was. The witnesses are existing mobs and the suspects and items are CREATED by you. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_mystery2.quest"> <font size="-1" color="YELLOW"><b>Normal Mystery #2</b></font></td><td><font size="-1" color="WHITE">A 2-Level mystery where players must question existing mobs from your world to discover WHO did something, and what their MOTIVE was. The witnesses are existing mobs and the suspects are CREATED by you. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_protect1.quest"> <font size="-1" color="YELLOW"><b>Normal Protect #1</b></font></td><td><font size="-1" color="WHITE">The player must protect a mob that you will create from mobs you also you create to attack the protected mob.  This quest is given by an existing Announcer mob in your world. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_protect2.quest"> <font size="-1" color="YELLOW"><b>Normal Protect #2</b></font></td><td><font size="-1" color="WHITE">The player must protect an existing mob from mobs that you create to attack the protected mob.  This quest is given by an existing Announcer mob in your world, which may be the same as the protected mob. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_travel1.quest"> <font size="-1" color="YELLOW"><b>Normal Travel #1</b></font></td><td><font size="-1" color="WHITE">The player must travel to some location on your map at the behest of an existing announcer mob. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_travel2.quest"> <font size="-1" color="YELLOW"><b>Normal Travel #2</b></font></td><td><font size="-1" color="WHITE">The player travels at the behest of one existing mob in your world to another existing mob somewhere else in your world.  A reward is optionally given upon arrival. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_travel3.quest"> <font size="-1" color="YELLOW"><b>Normal Travel #3</b></font></td><td><font size="-1" color="WHITE">The player must travel to a particular location on your map at the behest of an existing announcer mob, and then use a skill that generates a message. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="normal_travel4.quest"> <font size="-1" color="YELLOW"><b>Normal Travel #4</b></font></td><td><font size="-1" color="WHITE">The player travels at the behest of one existing mob in your world to another existing mob somewhere else in your world and deliver a verbal message to them.  A reward is optionally given upon arrival. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_capture1.quest"> <font size="-1" color="YELLOW"><b>Competitive Capture #1</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more other existing mobs captured and brought to him.  Finding and defeating the mob or mobs in combat will cause the captured mob to follow the player peacefully.  There is also a peaceful mode for finding lost mobs. A reward is given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_capture2.quest"> <font size="-1" color="YELLOW"><b>Competitive Capture #2</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more mobs which you will create captured and brought to him.  Finding and defeating the mob or mobs in combat will cause the captured mob to follow the player peacefully.    There is also a peaceful mode for finding lost mobs. A reward is given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_capture3.quest"> <font size="-1" color="YELLOW"><b>Competitive Capture #3</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one existing mob captured and brought to him.  Finding and defeating the mob in combat will cause the captured mob to follow the player peacefully.  There is also a peaceful mode for finding lost mobs. A reward is given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_collect1.quest"> <font size="-1" color="YELLOW"><b>Competitive Collect #1</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will be scattered on the ground at locations you will select. A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_collect2.quest"> <font size="-1" color="YELLOW"><b>Competitive Collect #2</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will be scattered among existing mobs whom you will designate. A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_collect3.quest"> <font size="-1" color="YELLOW"><b>Competitive Collect #3</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will create brought back to him/her. The items will be scattered among mobs which you will create for the task A reward is given upon completion of the task and returning the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_collect4.quest"> <font size="-1" color="YELLOW"><b>Competitive Collect #4</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more items which you will DESCRIBE as a Zapper-Mask brought to him/her. The items will have to be obtained from your existing world, or generated with common skills. A reward is given upon completion of the task and bringing the items to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_collect5.quest"> <font size="-1" color="YELLOW"><b>Competitive Collect #5</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs some amount of local currency brought to him/her. A reward is given upon completion of the task and bringing the money to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_delivery1.quest"> <font size="-1" color="YELLOW"><b>Competitive Delivery #1</b></font></td><td><font size="-1" color="WHITE">The player delivers a custom-Item from one existing mob in your world to one or more others.  A reward is given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_delivery2.quest"> <font size="-1" color="YELLOW"><b>Competitive Delivery #2</b></font></td><td><font size="-1" color="WHITE">The player delivers a custom-Item from one existing mob in your world to an existing container in your world, such as a pit or mailbox, or a room where the item needs to be dropped. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_delivery3.quest"> <font size="-1" color="YELLOW"><b>Competitive Delivery #3</b></font></td><td><font size="-1" color="WHITE">The player delivers a custom-Item from one existing mob in your world to one or more others that you create.  A reward is given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_delivery4.quest"> <font size="-1" color="YELLOW"><b>Competitive Delivery #4</b></font></td><td><font size="-1" color="WHITE">The player delivers money to one or more existing mobs in your world at the behest of one other.  A reward is given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_dispel1.quest"> <font size="-1" color="YELLOW"><b>Competitive Dispel #1</b></font></td><td><font size="-1" color="WHITE">The player must dispel or otherwise remove a spell, disease, poison, or other affect from 1 or more affected mobs on your map. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_escort1.quest"> <font size="-1" color="YELLOW"><b>Competitive Escort #1</b></font></td><td><font size="-1" color="WHITE">The player must escort a mob or mobs that you will create from the location of an existing Announcer mob on the map to a room of your choosing.  You may also optionally create a mob or mobs to attack the player along the way. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_escort2.quest"> <font size="-1" color="YELLOW"><b>Competitive Escort #2</b></font></td><td><font size="-1" color="WHITE">The player must escort a mob or mobs that you will create from the location of an existing Announcer mob on the map to any room in an AREA of your choosing.  You may also optionally create a mob or mobs to attack the player along the way. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_invasion1.quest"> <font size="-1" color="YELLOW"><b>Competitive Invasion #1</b></font></td><td><font size="-1" color="WHITE">The player must repel an invasion by a set of mobs, which you will create, who will enter an existing area and behave aggressively towards the inhabitants. An Announcer mob will offer an optional prize to the first player who accepts the quest and kills X of the mobs. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_invasion2.quest"> <font size="-1" color="YELLOW"><b>Competitive Invasion #2</b></font></td><td><font size="-1" color="WHITE">The player must repel an invasion by a set of existing mobs, from elsewhere in your world, who will enter an existing area and behave aggressively towards the inhabitants. An Announcer mob will offer an optional prize to the first player who accepts the quest and kills X of the mobs. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_killer1.quest"> <font size="-1" color="YELLOW"><b>Competitive Killer #1</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more other existing mobs killed. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_killer2.quest"> <font size="-1" color="YELLOW"><b>Competitive Killer #2</b></font></td><td><font size="-1" color="WHITE">An existing mob in your world needs one or more mobs which you will create killed. A reward is given upon completion of the task and returning to the announcer. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_mystery1.quest"> <font size="-1" color="YELLOW"><b>Competitive Mystery #1</b></font></td><td><font size="-1" color="WHITE">A 3-Level mystery where players must question existing mobs from your world to discover WHO did something, what ITEM they did it with, and what their MOTIVE was. The victim and quest-announcer/manager are also existing mobs, and the victim may optionally start off dead.  The suspects and items are CREATED by you. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_mystery2.quest"> <font size="-1" color="YELLOW"><b>Competitive Mystery #2</b></font></td><td><font size="-1" color="WHITE">A 2-Level mystery where players must question existing mobs from your world to discover WHO did something and what their MOTIVE was. The victim and quest-announcer/manager are also existing mobs, and the victim may optionally start off dead.  The suspects are CREATED by you. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_protect1.quest"> <font size="-1" color="YELLOW"><b>Competitive Protect #1</b></font></td><td><font size="-1" color="WHITE">The player must protect a mob or mobs that you will create at the behest of an existing Announcer mob on the map from mob or mobs that you create which will attack the protected mob. When all the attackers are defeated, and the protected mob survives, the quest is completed. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_protect2.quest"> <font size="-1" color="YELLOW"><b>Competitive Protect #2</b></font></td><td><font size="-1" color="WHITE">The player must protect an existing mob or mobs at the behest of an existing Announcer mob (which may be the same) from mob or mobs that you create which will attack the protected mob. When all the attackers are defeated, and the protected mob survives, the quest is completed. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_travel1.quest"> <font size="-1" color="YELLOW"><b>Competitive Travel #1</b></font></td><td><font size="-1" color="WHITE">The player must travel to some location on your map at the behest of an existing announcer mob. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="competitive_travel2.quest"> <font size="-1" color="YELLOW"><b>Competitive Travel #2</b></font></td><td><font size="-1" color="WHITE">The player travels at the behest of one existing mob in your world to another existing mob somewhere else in your world.  A reward is optionally given upon arrival. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_capture1.quest"> <font size="-1" color="YELLOW"><b>Auto Capture #1</b></font></td><td><font size="-1" color="WHITE">The player needs one or more other existing mobs captured. A reward is granted upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_capture2.quest"> <font size="-1" color="YELLOW"><b>Auto Capture #2</b></font></td><td><font size="-1" color="WHITE">The player needs one or more other mobs that you create captured. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_capture3.quest"> <font size="-1" color="YELLOW"><b>Auto Capture #3</b></font></td><td><font size="-1" color="WHITE">The player needs another single existing mob captured. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_capture4.quest"> <font size="-1" color="YELLOW"><b>Auto Capture #4</b></font></td><td><font size="-1" color="WHITE">A player needs a single mob that you create captured. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_collect1.quest"> <font size="-1" color="YELLOW"><b>Auto Collect #1</b></font></td><td><font size="-1" color="WHITE">The player needs one or more items which you will create gathered up. The items will be scattered among existing mobs whom you will designate. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_collect2.quest"> <font size="-1" color="YELLOW"><b>Auto Collect #2</b></font></td><td><font size="-1" color="WHITE">A player needs one or more items which you will create gathered up. The items will be scattered among rooms or areas which you will designate. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_collect3.quest"> <font size="-1" color="YELLOW"><b>Auto Collect #3</b></font></td><td><font size="-1" color="WHITE">The player needs one or more items which you will create gathered up. The items will be scattered among mobs which you will create for the task A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_collect4.quest"> <font size="-1" color="YELLOW"><b>Auto Collect #4</b></font></td><td><font size="-1" color="WHITE">The player needs one or more items which you will create gathered up. The items will have to be obtained from your existing world, or generated with common skills. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_collect5.quest"> <font size="-1" color="YELLOW"><b>Auto  Collect #5</b></font></td><td><font size="-1" color="WHITE">The player needs some amount of local currency brought to him/her. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_delivery1.quest"> <font size="-1" color="YELLOW"><b>Auto Delivery #1</b></font></td><td><font size="-1" color="WHITE">The player is given a custom item to deliver to one or more existing mobs somewhere else in your world.  A reward is optionally given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_delivery2.quest"> <font size="-1" color="YELLOW"><b>Auto Delivery #2</b></font></td><td><font size="-1" color="WHITE">The player delivers a custom-Item to an existing container in your world, such as a pit or mailbox, or a room where the item needs to be dropped. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_delivery3.quest"> <font size="-1" color="YELLOW"><b>Auto Delivery #3</b></font></td><td><font size="-1" color="WHITE">The player is given a custom item to deliver to one or more mobs you will create, somewhere else in your world.  A reward is optionally given upon delivery. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_delivery4.quest"> <font size="-1" color="YELLOW"><b>Auto Delivery #4</b></font></td><td><font size="-1" color="WHITE">The player must  pay one or more existing mobs somewhere else in your world.  A reward is optionally given after payment. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_dispel1.quest"> <font size="-1" color="YELLOW"><b>Auto Dispel #1</b></font></td><td><font size="-1" color="WHITE">The player must dispel or otherwise remove a spell, disease, poison, or other affect from 1 or more affected mobs on your map. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_escort1.quest"> <font size="-1" color="YELLOW"><b>Auto Escort #1</b></font></td><td><font size="-1" color="WHITE">The player must escort a mob or mobs that you will create from their current location to another of your choosing.  You may also optionally create a mob or mobs to attack the player along the way. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_escort2.quest"> <font size="-1" color="YELLOW"><b>Auto Escort #2</b></font></td><td><font size="-1" color="WHITE">The player must escort a mob or mobs that you will create from their current location to any room in an AREA of your choosing.  You may also optionally create a mob or mobs to attack the player along the way. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_killer1.quest"> <font size="-1" color="YELLOW"><b>Auto Killer #1</b></font></td><td><font size="-1" color="WHITE">The player needs one or more other existing mobs killed. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_killer2.quest"> <font size="-1" color="YELLOW"><b>Auto Killer #2</b></font></td><td><font size="-1" color="WHITE">The player needs one or more mobs which you will create killed. A reward is given upon completion of the task. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_protect1.quest"> <font size="-1" color="YELLOW"><b>Auto Protect #1</b></font></td><td><font size="-1" color="WHITE">The player must protect a mob that you will create from mobs you also you create to attack the protected mob. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_travel1.quest"> <font size="-1" color="YELLOW"><b>Auto Travel #1</b></font></td><td><font size="-1" color="WHITE">The player must travel to some location on your map. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_travel2.quest"> <font size="-1" color="YELLOW"><b>Auto Travel #2</b></font></td><td><font size="-1" color="WHITE">The player travels to an existing mob somewhere else in your world.  A reward is optionally given upon arrival. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_travel3.quest"> <font size="-1" color="YELLOW"><b>Auto Travel #3</b></font></td><td><font size="-1" color="WHITE">The player must travel to a particular location on your map and then use a skill that generates a message. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr><tr><td valign="TOP"><input type="RADIO" name="QMTEMPLATE" value="auto_travel4.quest"> <font size="-1" color="YELLOW"><b>Auto Travel #4</b></font></td><td><font size="-1" color="WHITE">The player travels to an existing mob somewhere else in your world and deliver a verbal message to them.  A reward is optionally given upon arrival. 
+
+
+</font></td></tr><tr><td><br></td><td><br></td></tr>
+		</tbody></table>
+	<p>
+	<table width="100%" border="0"><tbody><tr>
+	
+	<td width="33%" align="CENTER" valign="TOP">
+	</td>
+	
+		<td width="33%" align="CENTER" valign="TOP"><input type="BUTTON" name="NEXT" value="Next" onclick="ClickedNext();"></td>
+	
+	</tr>
+	</tbody></table>
+
+</p></form>
+
+
+
+
+
+</body></html>

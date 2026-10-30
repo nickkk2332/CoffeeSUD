@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+    <link rel="grinder icon" href="../images/grinder.ico">
+    <link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+    <title>Factions List</title>
+    <script language="JavaScript">
+    <!--
+        function NewFaction(factionid,action)
+        {
+            if(factionid.indexOf(' ')>=0)
+            {
+                if(window.alert) window.alert('No spaces are allowed in your ID!');
+                return;
+            }
+            if(factionid.indexOf('.')<0)
+            {
+                if(window.alert) window.alert('Since Faction IDs are files, it should be given an .extention.');
+                return;
+            }
+            if(confirm('Load/Create a file in your resources directory called '+factionid+'?'))
+            {
+                var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=550,width=750,alwaysRaised=yes,dependent=yes";
+                w=window.open("faction.cmvp?FACTION="+factionid+action,
+                	"Faction",strFeatures, false);
+            }
+        }
+        function Faction(factionid,action)
+        {
+            var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=550,width=750,alwaysRaised=yes,dependent=yes";
+            w=window.open("faction.cmvp?FACTION="+factionid+action,
+            	"Faction",strFeatures, false);
+        }
+        function Clicked(action)
+        {
+            document.RESOURCES.action=action;
+            document.RESOURCES.submit();
+        }
+        function Refresh()
+        {
+            document.RESOURCES.action="factions.html";
+            document.RESOURCES.submit();
+        }
+        function ChangePreload(which)
+        {
+            document.RESOURCES.action="factions.html";
+            document.RESOURCES.COMMAND.value='TOGGLEPRELOAD';
+            document.RESOURCES.FACTION.value=which;
+            document.RESOURCES.submit();
+        }
+    //-->
+    </script>
+</head>
+<body bgcolor="BLACK">
+    <table width="100%" border="0">
+    <tbody><tr>
+    <td width="33%" align="LEFT" valign="TOP"></td>
+    <td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+    <td width="33%" align="RIGHT" valign="TOP">
+        <table width="50%" border="1">
+        <tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+        <tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+        <tr><td><a href="javascript:Refresh();"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+        </tbody></table>
+    </td>
+    </tr>
+    </tbody></table>
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="factions.html">
+    
+    <input type="HIDDEN" name="COMMAND" value="">
+    <input type="HIDDEN" name="FACTION" value="">
+    
+    <table width="100%" border="1">
+    <tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Faction Manager</h2></font></td></tr>
+    <tr>
+    <td width="30%"><b><font color="YELLOW">ID</font></b></td>
+    <td width="30%"><b><font color="YELLOW">Name(s)</font></b></td>
+    <td width="10%"><b><font color="YELLOW">Min Value</font></b></td>
+    <td width="10%"><b><font color="YELLOW">Max Value</font></b></td>
+    <td width="20%"><b><font color="YELLOW">PreLoad</font></b></td>
+    </tr>
+    
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_CONCORDANT_OPPOSITION','')"><font color="#FFFF8F"><u><b>PLANE_CONCORDANT_OPPOSITION</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of CONCORDANT OPPOSITION Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_CONCORDANT_OPPOSITION" onclick="ChangePreload('PLANE_CONCORDANT_OPPOSITION');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_LIMBO','')"><font color="#FFFF8F"><u><b>PLANE_LIMBO</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Limbo Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_LIMBO" onclick="ChangePreload('PLANE_LIMBO');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_TARTERUS','')"><font color="#FFFF8F"><u><b>PLANE_TARTERUS</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Tarterus Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_TARTERUS" onclick="ChangePreload('PLANE_TARTERUS');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_ABYSS','')"><font color="#FFFF8F"><u><b>PLANE_ABYSS</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Abyss Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_ABYSS" onclick="ChangePreload('PLANE_ABYSS');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_HAPPY_HUNTING_GROUNDS','')"><font color="#FFFF8F"><u><b>PLANE_HAPPY_HUNTING_GROUNDS</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of HAPPY HUNTING GROUNDS Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_HAPPY_HUNTING_GROUNDS" onclick="ChangePreload('PLANE_HAPPY_HUNTING_GROUNDS');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_ACHERON','')"><font color="#FFFF8F"><u><b>PLANE_ACHERON</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Acheron Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_ACHERON" onclick="ChangePreload('PLANE_ACHERON');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('ALIGNMENT.INI','')"><font color="#FFFF8F"><u><b>ALIGNMENT.INI</b></u></font></a></td>
+        <td><font color="WHITE"><b>alignment</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_ALIGNMENT.INI" checked="" onclick="ChangePreload('ALIGNMENT.INI');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_ELYSIUM','')"><font color="#FFFF8F"><u><b>PLANE_ELYSIUM</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Elysium Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_ELYSIUM" onclick="ChangePreload('PLANE_ELYSIUM');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_GLADSHEIM','')"><font color="#FFFF8F"><u><b>PLANE_GLADSHEIM</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Gladsheim Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_GLADSHEIM" onclick="ChangePreload('PLANE_GLADSHEIM');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_GEHENNA','')"><font color="#FFFF8F"><u><b>PLANE_GEHENNA</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Gehenna Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_GEHENNA" onclick="ChangePreload('PLANE_GEHENNA');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_SEVEN_HEAVENS','')"><font color="#FFFF8F"><u><b>PLANE_SEVEN_HEAVENS</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of SEVEN HEAVENS Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_SEVEN_HEAVENS" onclick="ChangePreload('PLANE_SEVEN_HEAVENS');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_PANDEMONIUM','')"><font color="#FFFF8F"><u><b>PLANE_PANDEMONIUM</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Pandemonium Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_PANDEMONIUM" onclick="ChangePreload('PLANE_PANDEMONIUM');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_OLYMPUS','')"><font color="#FFFF8F"><u><b>PLANE_OLYMPUS</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Olympus Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_OLYMPUS" onclick="ChangePreload('PLANE_OLYMPUS');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_HADES','')"><font color="#FFFF8F"><u><b>PLANE_HADES</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Hades Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_HADES" onclick="ChangePreload('PLANE_HADES');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_NIRVANA','')"><font color="#FFFF8F"><u><b>PLANE_NIRVANA</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Nirvana Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_NIRVANA" onclick="ChangePreload('PLANE_NIRVANA');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_TWIN_PARADISES','')"><font color="#FFFF8F"><u><b>PLANE_TWIN_PARADISES</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of TWIN PARADISES Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_TWIN_PARADISES" onclick="ChangePreload('PLANE_TWIN_PARADISES');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_ARCADIA','')"><font color="#FFFF8F"><u><b>PLANE_ARCADIA</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of Arcadia Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_ARCADIA" onclick="ChangePreload('PLANE_ARCADIA');"></td>
+        </tr>
+    
+    
+        <tr>
+        <td><a href="javascript:Faction('PLANE_NINE_HELLS','')"><font color="#FFFF8F"><u><b>PLANE_NINE_HELLS</b></u></font></a></td>
+        <td><font color="WHITE"><b>Plane of NINE HELLS Reputation</b></font></td>
+        <td><font color="WHITE"><b>-10000</b></font></td>
+        <td><font color="WHITE"><b>10000</b></font></td>
+        <td><input type="CHECKBOX" name="PRELOAD_PLANE_NINE_HELLS" onclick="ChangePreload('PLANE_NINE_HELLS');"></td>
+        </tr>
+    
+    <tr>
+    <td colspan="5">
+    	<a href="javascript:if(document.RESOURCES.NEWFACTION.value!='')NewFaction(document.RESOURCES.NEWFACTION.value,'&amp;NEWFACTION='+document.RESOURCES.NEWFACTION.value)">
+    	<font color="CYAN"><b><u>Load/Create New Faction ini file:</u></b></font></a><font color="CYAN"><b> <input type="TEXT" name="NEWFACTION" size="70"></b></font>
+   	</td>
+    </tr>
+    </tbody></table>
+    <p>
+    <table width="100%" border="0">
+    <tbody><tr>
+    <td width="33%" align="CENTER">
+    </td>
+    <td align="CENTER"><input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();"></td>
+    <td width="33%" align="CENTER">
+    </td>
+    </tr>
+    </tbody></table>
+    </p><center>
+    </center>
+</form>
+
+
+
+
+</center></body></html>

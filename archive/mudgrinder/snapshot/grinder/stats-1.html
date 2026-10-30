@@ -1,0 +1,438 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Statistics Report</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.CONTROL.action=action;
+			document.CONTROL.submit();
+		}
+		function ClickedBox(skillRpt,questRpt,areaRpt,socRpt,cmdRpt,crimeRpt)
+		{
+			var newVal='';
+			if(socRpt=='SOCRPT') 
+				 newVal='on';
+			if(cmdRpt=='CMDRPT') 
+				 newVal='on';
+			if(crimeRpt=='CRIMERPT') 
+				 newVal='on';
+			if(skillRpt=='SKILLRPT') 
+			{
+				 if(confirm('Generating a skills report may require several minutes of intense calculation.  Are you sure?'))
+					 newVal='on';
+				 else
+				 {
+				 	 if(document.CONTROL.QUESTRPT.value!='')
+						 document.CONTROL.RPTTYP[0].checked=true;
+					 else
+				 	 if(document.CONTROL.AREARPT.value!='')
+						 document.CONTROL.RPTTYP[3].checked=true;
+					 else
+				 	 if(document.CONTROL.SOCRPT.value!='')
+						 document.CONTROL.RPTTYP[4].checked=true;
+					 else
+				 	 if(document.CONTROL.CMDRPT.value!='')
+						 document.CONTROL.RPTTYP[5].checked=true;
+					 else
+						 document.CONTROL.RPTTYP[2].checked=true;
+					 document.CONTROL.RPTTYP[1].checked=false;
+					 return;
+				 }
+			} 
+			if((skillRpt!=document.CONTROL.SKILLRPT.value)
+			||(areaRpt!=document.CONTROL.AREARPT.value)
+			||(questRpt!=document.CONTROL.QUESTRPT.value)
+			||(cmdRpt!=document.CONTROL.CMDRPT.value)
+			||(crimeRpt!=document.CONTROL.CRIMERPT.value)
+			||(socRpt!=document.CONTROL.SOCRPT.value))
+			{
+				document.CONTROL.QUESTRPT.value=questRpt;
+				document.CONTROL.AREARPT.value=areaRpt;
+				document.CONTROL.SKILLRPT.value=skillRpt;
+				document.CONTROL.CMDRPT.value=cmdRpt;
+				document.CONTROL.CRIMERPT.value=crimeRpt;
+				document.CONTROL.SOCRPT.value=socRpt;
+				Clicked('/grinder/stats.cmvp');
+			}
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/stats.cmvp');"><font color="WHITE" size="-1"><b>Refresh</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+<center>
+<form accept-charset="UTF-8" name="CONTROL" target="_top" method="POST" action="stats.html">
+
+<input type="HIDDEN" name="SKILLRPT" value="">
+<input type="HIDDEN" name="SOCRPT" value="">
+<input type="HIDDEN" name="CRIMERPT" value="">
+<input type="HIDDEN" name="CMDRPT" value="">
+<input type="HIDDEN" name="QUESTRPT" value="">
+<input type="HIDDEN" name="AREARPT" value="">
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="17" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud Statistics Report</h2></font></td></tr>
+	<tr>
+		<td width="100%" colspan="17">
+			<select name="DAYS" onchange="Clicked('/grinder/stats.cmvp');">
+			
+				<option value="1" selected="">1
+			
+				</option><option value="2">2
+			
+				</option><option value="3">3
+			
+				</option><option value="4">4
+			
+				</option><option value="5">5
+			
+				</option><option value="6">6
+			
+				</option><option value="7">7
+			
+				</option><option value="8">8
+			
+				</option><option value="9">9
+			
+				</option><option value="10">10
+			
+				</option><option value="11">11
+			
+				</option><option value="12">12
+			
+				</option><option value="13">13
+			
+				</option><option value="14">14
+			
+				</option><option value="15">15
+			
+				</option><option value="16">16
+			
+				</option><option value="17">17
+			
+				</option><option value="18">18
+			
+				</option><option value="19">19
+			
+				</option><option value="20">20
+			
+				</option><option value="21">21
+			
+				</option><option value="22">22
+			
+				</option><option value="23">23
+			
+				</option><option value="24">24
+			
+				</option><option value="25">25
+			
+				</option><option value="26">26
+			
+				</option><option value="27">27
+			
+				</option><option value="28">28
+			
+				</option><option value="29">29
+			
+				</option><option value="30">30
+			
+				</option><option value="31">31
+			
+				</option><option value="32">32
+			
+				</option><option value="33">33
+			
+				</option><option value="34">34
+			
+				</option><option value="35">35
+			
+				</option><option value="36">36
+			
+				</option><option value="37">37
+			
+				</option><option value="38">38
+			
+				</option><option value="39">39
+			
+				</option><option value="40">40
+			
+				</option><option value="41">41
+			
+				</option><option value="42">42
+			
+				</option><option value="43">43
+			
+				</option><option value="44">44
+			
+				</option><option value="45">45
+			
+				</option><option value="46">46
+			
+				</option><option value="47">47
+			
+				</option><option value="48">48
+			
+				</option><option value="49">49
+			
+				</option><option value="50">50
+			
+				</option><option value="51">51
+			
+				</option><option value="52">52
+			
+				</option><option value="53">53
+			
+				</option><option value="54">54
+			
+				</option><option value="55">55
+			
+				</option><option value="56">56
+			
+				</option><option value="57">57
+			
+				</option><option value="58">58
+			
+				</option><option value="59">59
+			
+				</option><option value="60">60
+			
+				</option><option value="61">61
+			
+				</option><option value="62">62
+			
+				</option><option value="63">63
+			
+				</option><option value="64">64
+			
+				</option><option value="65">65
+			
+				</option><option value="66">66
+			
+				</option><option value="67">67
+			
+				</option><option value="68">68
+			
+				</option><option value="69">69
+			
+				</option><option value="70">70
+			
+				</option><option value="71">71
+			
+				</option><option value="72">72
+			
+				</option><option value="73">73
+			
+				</option><option value="74">74
+			
+				</option><option value="75">75
+			
+				</option><option value="76">76
+			
+				</option><option value="77">77
+			
+				</option><option value="78">78
+			
+				</option><option value="79">79
+			
+				</option><option value="80">80
+			
+				</option><option value="81">81
+			
+				</option><option value="82">82
+			
+				</option><option value="83">83
+			
+				</option><option value="84">84
+			
+				</option><option value="85">85
+			
+				</option><option value="86">86
+			
+				</option><option value="87">87
+			
+				</option><option value="88">88
+			
+				</option><option value="89">89
+			
+				</option><option value="90">90
+			
+				</option><option value="91">91
+			
+				</option><option value="92">92
+			
+				</option><option value="93">93
+			
+				</option><option value="94">94
+			
+				</option><option value="95">95
+			
+				</option><option value="96">96
+			
+				</option><option value="97">97
+			
+				</option><option value="98">98
+			
+				</option><option value="99">99
+			
+			</option></select>
+			<select name="SCALE" onchange="Clicked('/grinder/stats.cmvp');">
+			<option value="1" selected="">Days
+			</option><option value="7">Weeks
+			</option><option value="30">Months
+			</option><option value="365">Years
+			</option></select>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" checked="" value="USAGERPT" onclick="ClickedBox('USAGERPT','','','');"><font color="WHITE">Usage Report</font>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" value="SKILLRPT" onclick="ClickedBox('SKILLRPT','','','','','');"><font color="WHITE">Skills Report</font>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" value="QUESTRPT" onclick="ClickedBox('','QUESTRPT','','','','');"><font color="WHITE">Quest Report</font>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" value="AREARPT" onclick="ClickedBox('','','AREARPT','','','');"><font color="WHITE">Area Report</font>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" value="SOCRPT" onclick="ClickedBox('','','','SOCRPT','','');"><font color="WHITE">Socials Report</font>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" value="CMDRPT" onclick="ClickedBox('','','','','CMDRPT','');"><font color="WHITE">Command Report</font>
+			<input type="RADIO" name="RPTTYP" id="RPTTYP" value="CRIMERPT" onclick="ClickedBox('','','','','','CRIMERPT');"><font color="WHITE">Crime Report</font>
+		</td>
+	</tr>
+	<tr>
+		<td width="100%" colspan="17" align="LEFT">
+			
+			<font color="WHITE">Filter:</font>
+			<select name="CODEPART" onchange="SelCombo(document.CONTROL.CODE,'*'); Clicked('/grinder/stats.cmvp');">
+			<option value="BASECLASS" selected="">chars of class type ...
+			</option><option value="CLASS">chars of class...
+			</option><option value="RACE">chars of race...
+			</option><option value="LEVEL">chars of level...
+			</option><option value="GENDER">chars of gender...
+			</option><option value="CLASS">chars of race...
+			</option><option value="AREAS">chars in area...
+			</option></select>
+			<select name="CODE" onchange="Clicked('/grinder/stats.cmvp');">
+			<option value="*">ALL
+			
+			
+				
+				
+				
+				</option><option value="BMage">Mage
+				
+				
+				</option><option value="BCommoner">Commoner
+				
+				
+				</option><option value="BThief">Thief
+				
+				
+				</option><option value="BFighter">Fighter
+				
+				
+				</option><option value="BBard">Bard
+				
+				
+				</option><option value="BDruid">Druid
+				
+				
+				</option><option value="BCleric">Cleric
+				
+				
+			
+			
+			
+			
+			
+			
+			</option></select>
+			<script language="JavaScript">
+			<!--
+				function SelCombo(ME,val)
+				{
+					for(var x=0;x<ME.options.length;x++)
+						if(ME.options[x].value==val)
+						{ ME.selectedIndex=x; return;}
+				}	
+				SelCombo(document.CONTROL.CODEPART,'BASECLASS');
+				SelCombo(document.CONTROL.DAYS,'1');
+				SelCombo(document.CONTROL.SCALE,'1');
+				SelCombo(document.CONTROL.CODE,'*');
+			//-->
+			</script>
+		</td>
+		
+	</tr>
+	
+	
+	
+	<tr><td width="100%" colspan="17"><br></td></tr>
+	<tr>
+		
+			
+				
+					
+						
+							
+								<td width="15%"><font color="WHITE"><b>Date Range</b></font></td>
+							
+							<td width="6%"><font color="WHITE" size="-1"><b>Newbies</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Logins</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Tot. Mn.</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Avg. Mn.</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Avg. Char On *</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Most Char On *</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Avg. Plyr On *</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Most Plyr On *</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Deaths</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>PKills</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Levels</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Class +-</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Purges</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Marriage</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Births</b></font></td>
+							<td width="6%"><font color="WHITE" size="-1"><b>Divorces</b></font></td>
+						
+					
+				
+			
+		
+	</tr>
+		
+			
+				
+					
+						
+							
+								<tr><td><font color="WHITE" size="-1">10/30/2026 - 10/30/2026</font></td><td><font color="WHITE" size="-1">1</font></td><td><font color="WHITE" size="-1">3</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0.0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0.0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">99</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td><td><font color="WHITE" size="-1">0</font></td></tr>
+							
+						
+					
+				
+			
+		
+	</tbody></table>
+	<center>
+	<table width="100%" border="0">
+	<tbody><tr><td width="100%" align="CENTER">
+	<br>
+	<input type="BUTTON" name="REFRESH" value="Refresh" onclick="Clicked('/grinder/stats.cmvp');">
+	</td></tr></tbody></table>
+	<font color="WHITE">* This statistic always applies to all users, regardless of filter.</font><p>
+	</p></center>
+</form>
+
+
+
+
+</center></body></html>

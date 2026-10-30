@@ -1,0 +1,356 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<title>Journal Browser</title>
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<script language="JavaScript">
+	<!--
+		function ShowAllWarning()
+		{
+			var obj = document.getElementsByName("PROCESSALL");
+			if((obj!=null)&&(obj.length>0))
+			{
+				if(!window.confirm('You may have un-submitted changes.  Proceed?'))
+					return false;
+			}
+			return true;
+		}
+		
+		function Clicked(action,message,journal,journalcardinal,page,fun)
+		{
+			document.JOURNAL.action=action;
+			document.JOURNAL.JOURNAL.value=journal;
+			document.JOURNAL.JOURNALMESSAGE.value=message;
+			document.JOURNAL.JOURNALCARDINAL.value=journalcardinal;
+			document.JOURNAL.JOURNALPAGE.value=page; // for page support
+			document.JOURNAL.FUNCTION.value=fun;
+			document.JOURNAL.submit();
+		}
+		function Clicked0(action)
+		{
+			Clicked(action,'','','','','');
+		}
+		function Clicked1(journal)
+		{
+			Clicked("journal.cmvp#"+journal,'',journal,'','','');
+		}
+		function Clicked2(journal,message,cardinal)
+		{
+			Clicked("journal.cmvp#"+journal,message,journal,cardinal,document.JOURNAL.JOURNALPAGE.value,'');
+		}
+		function Clicked3(journal,message,action,cardinal)
+		{
+			Clicked("journal.cmvp#"+journal,message,journal,cardinal,document.JOURNAL.JOURNALPAGE.value,action);
+		}
+		function Clicked4(journal,message,action,cardinal,page)
+		{
+			Clicked("journal.cmvp#"+journal,message,journal,cardinal,page,action);
+		}
+		function ClickedSearch(journal)
+		{
+			if(!ShowAllWarning())
+				return;
+			Clicked("journal.cmvp#"+journal,'',journal,'','0','');
+		}
+		function FirstPage()
+		{
+			if(!ShowAllWarning())
+				return;
+			var journal='';
+			Clicked("journal.cmvp#"+journal,'',journal,'','0','');
+		}
+		function Trash(ch,tm)
+		{
+			if(window.confirm('Delete message?'))
+			{
+				document.JOURNAL.CHANNEL.value=ch;
+				document.JOURNAL.CHANNELMESSAGE.value=tm;
+				Clicked("journal.cmvp#"+ch,'','','','0','DELETE');
+			}
+		}
+		var allpages = '';
+		var currjournal='';
+		function LastPage()
+		{
+			if(!ShowAllWarning())
+				return;
+			var journal='';
+			Clicked("journal.cmvp#"+currjournal,'',currjournal,'',allpages,'');
+		}
+		
+		function PrevPage(journal)
+		{
+			if(!ShowAllWarning())
+				return;
+			var pages=document.JOURNAL.JOURNALPAGE.value;
+			if(pages == '')
+				pages=allpages;
+			var x=pages.lastIndexOf(',');
+			if(x>0)
+				pages = pages.substr(0,x);
+			x=pages.lastIndexOf(',');
+			if(x<0)
+				Clicked("journal.cmvp#"+currjournal,'',currjournal,'','0','');
+			else
+				Clicked("journal.cmvp#"+currjournal,'',currjournal,'',pages,'');
+		}
+		function NextPage()
+		{
+			if(!ShowAllWarning())
+				return;
+			var pages=document.JOURNAL.JOURNALPAGE.value;
+			if(pages.length >= allpages.length)
+				return; // already there
+			if((pages=='')||(pages=='0'))
+			{
+				var x=allpages.indexOf(',');
+				if(x>0)
+					pages=allpages.substr(0,x);
+			}
+			var x=allpages.indexOf(',',pages.length+1);
+			if(x<0)
+				x=allpages.length;
+			Clicked("journal.cmvp#"+currjournal,'',currjournal,'',allpages.substr(0,x),'');
+		}
+		function sfideas()
+		{
+			document.JOURNAL.action="sfideas.html";
+			document.JOURNAL.submit();
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked0('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><a href="javascript:Clicked2('','','');"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+<center>
+<form accept-charset="UTF-8" name="JOURNAL" target="_top" method="POST" action="journal.html">
+
+<input type="HIDDEN" name="JOURNAL" value="">
+<input type="HIDDEN" name="CHANNEL" value="">
+<input type="HIDDEN" name="CHANNELMESSAGE" value="">
+<input type="HIDDEN" name="CHANNELBACKLOGPAGE" value="0">
+<input type="HIDDEN" name="JOURNALMESSAGE" value="">
+<input type="HIDDEN" name="JOURNALPAGE" value="">
+<input type="HIDDEN" name="JOURNALCARDINAL" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+<table width="100%" border="1">
+	
+		
+	
+	<tbody><tr><td width="100%" colspan="2" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Journal/Message Browser<a href="javascript:sfideas();"><font color="WHITE">.</font></a></h2></font></td></tr>
+		
+		
+		
+			<input type="HIDDEN" name="JOURNALMESSAGESEARCH" value="">
+		
+		
+		
+		
+		
+			
+			
+			<tr><td width="30%" valign="TOP">
+			<a name="SYSTEM_BUGS" href="javascript:Clicked1('SYSTEM_BUGS')"><font color="YELLOW">SYSTEM_BUGS</font></a>
+			
+			</td><td><br></td></tr>
+			
+		
+			
+			
+			<tr><td width="30%" valign="TOP">
+			<a name="SYSTEM_IDEAS" href="javascript:Clicked1('SYSTEM_IDEAS')"><font color="YELLOW">SYSTEM_IDEAS</font></a>
+			
+			</td><td><br></td></tr>
+			
+		
+			
+			
+			<tr><td width="30%" valign="TOP">
+			<a name="SYSTEM_NEWS" href="javascript:Clicked1('SYSTEM_NEWS')"><font color="YELLOW">SYSTEM_NEWS</font></a>
+			
+			</td><td><br></td></tr>
+			
+		
+			
+			
+			<tr><td width="30%" valign="TOP">
+			<a name="SYSTEM_STUCKS" href="javascript:Clicked1('SYSTEM_STUCKS')"><font color="YELLOW">SYSTEM_STUCKS</font></a>
+			
+			</td><td><br></td></tr>
+			
+		
+			
+			
+			<tr><td width="30%" valign="TOP">
+			<a name="SYSTEM_TASKS" href="javascript:Clicked1('SYSTEM_TASKS')"><font color="YELLOW">SYSTEM_TASKS</font></a>
+			
+			</td><td><br></td></tr>
+			
+		
+			
+			
+			<tr><td width="30%" valign="TOP">
+			<a name="SYSTEM_TYPOS" href="javascript:Clicked1('SYSTEM_TYPOS')"><font color="YELLOW">SYSTEM_TYPOS</font></a>
+			
+			</td><td><br></td></tr>
+			
+		
+		
+		
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">GOSSIP</font></a><br></td>
+			<td>
+				
+				
+					
+					
+					<input type="HIDDEN" name="CHANNELBACKLOGPAGE" value="0">
+					<p>
+					<b>Back logs for GOSSIP</b><br>
+					
+					
+					<table width="100%" border="0">
+					<tbody><tr>
+						<td width="20%">
+							
+						</td>
+						<td>
+							
+						</td>
+					</tr>
+					</tbody></table>
+				
+				
+			</p></td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">GRATZ</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">CHAT</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">OOC</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">QUESTCHAT</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">WIZ</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">INFO</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">WIZINFO</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">ICOFF</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+			
+			<tr>
+			<td> <a href="journal-2.html"><font color="YELLOW">AUCTION</font></a><br></td>
+			<td>
+				
+				
+				
+			</td>
+			</tr>
+		
+
+
+
+
+</tbody></table>
+	<p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="100%" align="CENTER">
+	
+	
+	<input type="BUTTON" name="REFRESH" value="REFRESH" onclick="Clicked2('','','');">
+	</td>
+	</tr>
+	</tbody></table>
+</p></form>
+
+
+
+
+
+</center></body></html>

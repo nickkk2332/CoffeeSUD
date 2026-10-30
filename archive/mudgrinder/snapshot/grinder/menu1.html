@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+		function Clicked(action)
+		{
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+	//-->
+	</script>
+</head>
+<body>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="quickfind.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+<tbody><tr>
+	<td width="10%" valign="TOP"><img src="images/grinder.gif" width="80" height="80" alt="" border="0"></td>
+	<td width="50%" align="LEFT" valign="TOP">
+	&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="TEXT" name="QUICKFIND" value="">
+	<input type="SUBMIT" name="FINDIT" value="Quick Find" onclick="Clicked('/grinder/quickfind.cmvp');">
+	</td>
+	<td width="40%" align="RIGHT" style="position:absolute; top: 0; bottom: 0;">
+		<table width="200" border="0" height="100%">
+		
+			<tbody><tr><td align="RIGHT">
+			
+			
+			<input type="BUTTON" name="EDITAREA" value="Edit Area" onclick="Clicked('/grinder/editarea.cmvp');">
+			
+			</td></tr>
+			<tr><td align="RIGHT">
+			<input type="BUTTON" name="DEVIABUTT" value="Deviations" onclick="Clicked('/grinder/deviations.cmvp');">
+			
+			<input type="BUTTON" name="EXPORT" value="Export Data" onclick="Clicked('/AreaXML');">
+			
+			</td></tr>
+			<tr><td align="RIGHT">
+			<input type="BUTTON" name="SCRIPTS" value="Scripts" onclick="Clicked('/grinder/editareascripts.cmvp');">
+			<input type="BUTTON" name="EXPORT" value="MOBs" onclick="Clicked('/grinder/editareamobs.cmvp');">
+			<input type="BUTTON" name="EXPORT" value="Items" onclick="Clicked('/grinder/editareaitems.cmvp');">
+			</td></tr>
+			<tr valign="BOTTOM"><td align="RIGHT" height="40%">
+			<input type="BUTTON" name="LOGOUT" value="Main Menu" onclick="Clicked('/grinder/loggedin.cmvp');">
+			</td></tr>
+			</tbody></table>
+		
+		</td></tr></tbody></table>
+	
+
+
+</form>
+
+
+
+
+</body></html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+	<meta charset="utf-8">
+
+    <link rel="grinder icon" href="../images/grinder.ico">
+    <link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+    <title>Recipe Row Editor</title>
+    <script language="JavaScript">
+    <!--
+        function openUp2(named)
+        {
+            var strFeatures="top=200,left=50,resizeable=no,scrollbars=yes,height=400,width=650,alwaysRaised=yes,dependent=yes";
+            w=window.open("/property.cmvp?ABILITY="+named,
+                        "Ability",strFeatures, false);
+        }
+        function EditAffect(ME)
+        {
+            if(ME.selectedIndex==0)
+                ReShow();
+        }
+        function AddAffect(ME)
+        {
+            if(ME.selectedIndex>0)
+                ReShow();
+        }
+        function Delete()
+        {
+            if(confirm('Delete this recipe?! Confirm!'))
+            {
+                document.RESOURCES.action="../notcaptured.html#/grinder/recipedo.cmvp";
+                document.RESOURCES.FUNCTION.value='DELRECIPE';
+                document.RESOURCES.submit();
+            }
+        }
+        function Select(box)
+        {
+        }
+        function EditDone()
+        {
+		    
+                if(confirm('Submit your changes to this recipe?'))
+            
+                {
+                    document.RESOURCES.action="../notcaptured.html#/grinder/recipedo.cmvp";
+                    document.RESOURCES.FUNCTION.value='SAVE';
+                    document.RESOURCES.submit();
+                }
+        }
+        function ReShow()
+        {
+            document.RESOURCES.FUNCTION.value='';
+            document.RESOURCES.action="recipe.html";
+            document.RESOURCES.submit();
+        }
+        function Cancel()
+        {
+            window.close();
+        }
+        function OpenUp(file,named)
+        {
+            var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+            w=window.open("/"+file+"?HELPTOPIC="+named,
+                        "Help",strFeatures, false);
+        }
+        function Clicked(action)
+        {
+            document.RESOURCES.action=action;
+            document.RESOURCES.submit();
+        }
+        function SwitchToItemEditor(itemId,rownum)
+        {
+        	var editorData = 'ITEM='+itemId;
+        	editorData += '&ROOM=ANY';
+        	editorData += '&RESPONSEFIELD=RESOURCES.ITEM_NUM';
+        	editorData += '&REPLACEFIELD=';
+        	editorData += '&FINISHEDREDIRECT=recipedo.cmvp%3FFUNCTION%3DSAVE%26RECIPEABILITY%3D%26ABILITYRECIPEROW%3D'+rownum;
+            document.location.href="edititemform.html"+editorData;
+        }
+    //-->
+    </script>
+</head>
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="recipe.html">
+
+<input type="HIDDEN" name="REPLACE" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+<input type="HIDDEN" name="RECIPEABILITY" value="">
+<input type="HIDDEN" name="ABILITYRECIPEROW" value="">
+
+<center>
+
+    Select a common skill to modify.
+
+<br>
+</center>
+<table width="100%" border="0">
+<tbody><tr>
+    
+</tr>
+</tbody></table>
+</form>
+
+
+
+
+</body></html>

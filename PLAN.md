@@ -69,8 +69,9 @@ the database.
 Still to do:
 - A title screen (continue, new character, quit) listing saved characters.
 - Rewrite the multiplayer texts: intro, new-character text, rules, help.
-- A debug switch that makes the player an Archon, instead of the manual in the
-  start room.
+- Builder mode: a launch setting that makes the player an Archon with the
+  in-game editors, instead of the manual in the start room. Normal play does
+  not have them.
 
 ### 2. Remove the network and multiplayer services: mostly done
 
@@ -121,6 +122,21 @@ shutdown and running quests restart. The target:
 - the fake JDBC database (`com/planet_ink/fakedb`) and most of
   `DatabaseEngine` go once nothing reads them.
 
+### Authoring
+
+- The in-game editors stay: CREATE, MODIFY, DESTROY, COPY, GMODIFY, MERGE,
+  the field editor (`CMGenEditor`), IMPORT and EXPORT of `.cmare` area files,
+  GENERATE for random areas, and MOBPROG and JavaScript scripting. They are
+  used in builder mode, and from phase 4 on they edit the world's content (what
+  a new game starts from), never a save.
+- Content can also be written by hand as `.cmare` XML.
+- The MUDGrinder web editor is gone with the web server. `archive/mudgrinder`
+  keeps a browsable snapshot of it (open `snapshot/index.html` from disk), its
+  page templates and the Java behind them, as a reference for a future visual
+  editor.
+- A purpose-built visual editor comes later, once the content format is
+  settled.
+
 ### 5. Single-player society
 
 Accounts, channels, clans, polls, journals, mail, auctions, who lists and
@@ -153,6 +169,8 @@ hand-built starting area.
 
 - **Time model (decided):** both, by a setting; real time with pause is the
   default.
+- **Authoring (decided):** in-game editors in builder mode and hand-edited
+  files now; the MUDGrinder archived for reference; a new visual editor later.
 - **Several characters (decided):** a profile holding all the player's
   characters, with a party built on the follower system (phase 5).
 - **Interface:** terminal only, or a graphical or web front end later on the

@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+	
+	
+	
+	    
+	
+	
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		var properTarget='MAP';
+		
+        function OpenUp(file,named)
+        {
+            var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+            w=window.open("/"+file+"?HELPTOPIC="+named,
+                        "Help",strFeatures, false);
+        }
+        function OpenClick(file,named)
+        {
+            var strFeatures="top=50,left=50,scrollbars=yes,resizeable=yes,height=550,width=750,alwaysRaised=yes,dependent=yes";
+            w=window.open(file+"?AREA=ITEM%23%3CP%3D%3E%3CR%3DANY%3E%3CM%3D%3E%3CI%3D%3E%3CSI%3D%3E","Map",strFeatures);
+        }
+		function EditBehavior(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddBehavior(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditAffect(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddAffect(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function ChangedClass()
+		{
+			document.AREAEDIT.CHANGEDCLASS.value="true";
+			ReShow();
+		}
+		function ChangedLevel()
+		{
+			
+			
+			document.AREAEDIT.CHANGEDLEVEL.value="true";
+			ReShow();
+		}
+		function ReShow()
+		{
+			document.AREAEDIT.action="edititemform.html";
+			//document.AREAEDIT.target=properTarget;
+			document.AREAEDIT.submit();
+		}
+        function DelItem()
+        {
+            if(confirm('Confirm: Delete this item?'))
+            {
+                document.AREAEDIT.DELITEM.value="";
+                document.AREAEDIT.submit();
+            }
+        }
+		
+	//-->
+	</script>
+</head>
+<body>
+<center>
+
+	
+		<h3>Create/Modify an Item.</h3>
+	
+
+
+
+	
+		<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="../notcaptured.html#/grinder/editnewitemdone.cmvp">
+		<input type="HIDDEN" name="ROOM" value="ANY">
+		<input type="HIDDEN" name="MOB" value="">
+		<script language="JavaScript">
+		<!--
+			properTarget='_top';
+		//-->
+		</script>
+	
+
+
+<input type="HIDDEN" name="RESPONSEFIELD" value="">
+<input type="HIDDEN" name="REPLACEFIELD" value="">
+<input type="HIDDEN" name="DELITEM" value="">
+<input type="HIDDEN" name="FINISHEDREDIRECT" value="">
+<input type="HIDDEN" name="CHANGEDCLASS" value="">
+<input type="HIDDEN" name="CHANGEDLEVEL" value="">
+<input type="HIDDEN" name="ITEM" value="">
+<input type="HIDDEN" name="SHOPITEM" value="">
+<input type="HIDDEN" name="ACTION" value="MODIFYITEM">
+<input type="HIDDEN" name="SINGLEMOB" value="">
+
+		
+		
+	
+[error]
+
+
+
+
+
+    <table width="600" border="1" cellspacing="0" cellpaddin="0">
+<tbody><tr>
+	<td width="150"><font color="#66FFFF"><b>Item Class:</b></font></td>
+    <td width="450" colspan="2">
+    
+		<select name="CLASSES" onchange="ChangedClass();">
+		
+			@break[error]endif[error]endif[error]if?CheckReqParm?<item=catalog-&@ <tr="">
+    </item=catalog-&@></select></td><td width="150"><font color="#66FFFF"><b>Catalog Category:</b></font></td>
+    <td width="450" colspan="2"><input type="TEXT" name="CATACAT" size="60" value="@break[error]endif[error]if?!ItemData?ISGENERIC@
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Class Level:</b></td>
+		<td width="450" colspan="2"><input type="TEXT" name="LEVEL" size="5" value="@break[error]if?ItemData?ISELECTRONIC@
+		&lt;TR&gt;
+			&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Tech Level:</b></td>
+			<td width="450" colspan="2"><input type="TEXT" name="ABILITY" size="5" value="@break[error]else@
+		&lt;TR&gt;
+			&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Magic Level:</b></td>
+			<td width="450" colspan="2"><input type="TEXT" name="ABILITY" size="5" value="@break[error]endif@
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Rejuv. Ticks:</b></td>
+		<td width="450" colspan="2"><input type="TEXT" name="REJUV" size="5" value="@break@">
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Uses Code:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="USESREMAIN" size="5" value="@break[error]if?ItemData?ISARMOR[error]if?ItemData?ISCONTAINER@ &lt;!-- armor that is container respects size! --&gt; 
+		&lt;TR&gt;
+			&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Size (0=resizable):</b></td>
+			<td width="450" colspan="2"><input type="TEXT" name="HEIGHT" size="5" value="@break[error]endif[error]endif@
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Parameters:</b></td>
+		<td width="450" colspan="2"><input type="TEXT" name="MISCTEXT" size="60" maxlength="255" value="@break[error]else[error]block?LIDLOCKBLOCK[error]if?ItemData?ISCONTAINER@
+		&lt;/TR&gt;
+		&lt;TR&gt;
+			&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Has a Lid:</b></td>
+			<td width="450" colspan="2"><input type="CHECKBOX" name="HASALID" @break@="" onclick="ReShow();"></td>
+		</tr><tr>
+        <td width="150"><font color="#66FFFF"><b>Item Name:</b></font></td>
+        
+            
+                <td width="450" colspan="2"><input type="TEXT" name="NAME" size="60" value="@break[error]endif[error]endif@
+    &lt;/TR&gt;
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Displayed:</b></td>
+		<td width="450" colspan="2"><input type="TEXT" name="DISPLAYTEXT" size="60" maxlength="255" value="@break@"></td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Description:</b></font></td>
+		<td width="450" colspan="2"><textarea rows="3" cols="50" name="DESCRIPTION">@break@</textarea></td>
+	</tr>
+	<tr>
+		<td width="100"><font color="#66FFFF"><b>GIF filename:</b></font></td>
+		<td width="500" colspan="2"><input type="TEXT" name="IMAGE" size="50" value="@break@"></td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Class Level:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="LEVEL" size="5" value="@break[error]if?ItemData?ISARMOR@
+			&lt;INPUT TYPE=BUTTON ONCLICK=" changedlevel();"="">
+			<font size="-1" color="#66FFFF">(<i>Power Level:</i><font color="WHITE">@break[error]endif[error]if?ItemData?ISWEAPON@
+			<input type="BUTTON" onclick="ChangedLevel();" name="BUTTCHANGEDLEVEL" value="ReScore">
+			<font size="-1" color="#66FFFF">(<i>Power Level:</i><font color="WHITE">@break[error]endif[error]if?ItemData?ISBOOK@
+	</font></font></font></font></td></tr><tr>
+		<td width="150"><font color="#66FFFF"><b>Max Pages:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="MAXPAGES" size="5" value="@break@">
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Max Chars/Page:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="MAXCHARSPAGE" size="5" value="@break[error]endif[error]if?ItemData?ISRECIPE@
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Common Skill:</b></td>
+		<td width="450" colspan="2">
+		<select name="RECIPESKILL" onchange="ReShow();">
+		@break@
+		</select>
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Coded Recipe:</b></font></td>
+		<td width="450" colspan="2">
+			<font color="white" size="-1">@break[error]ItemData?RECIPEDATA&amp;RECIPEPREFIX=<input type="TEXT" name="RECIPEDATA###" size="60" maxlength="255" value="&amp;RECIPEPOSTFIX="><br>&amp;RECIPEFIELDNAME=RECIPEDATA###[error]endif[error]if?!ItemData?ISCOIN@
+	</font></td></tr><tr>
+		<td width="150"><font color="#66FFFF"><b>Base Gold Value:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="VALUE" size="5" value="@break[error]endif[error]if?ItemData?ISLIMB@
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Limb Race ID:</b></td>
+		<td width="450" colspan="2">
+		<select name="RACEID">
+		@break@
+		</select>
+		</td>
+	</tr>
+	
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Weight:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="WEIGHT" size="5" value="@break@">
+		</td>
+	</tr>
+	<tr>
+		<td width="150">
+		<font color="#66FFFF"><b>Rejuv. Ticks:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="REJUV" size="5" value="@break[error]if?ItemData?ISMOBITEM@(1-100% chance, 0 = always avail, -1 = 1 time)(0=Never Rejuv,# ticks)
+		&lt;/TD&gt;
+	&lt;/TR&gt;
+	&lt;TR&gt;
+		&lt;TD WIDTH=150&gt;&lt;FONT COLOR=" #66ffff"=""><b>Behaviors:</b>
+		<br><a target="HELP" href="../behaviors.html"><font color="WHITE"><i>help</i></font></a></td>
+		<td width="450" colspan="2">
+		@break@
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Affects:</b></font>
+		<br><a target="HELP" href="../affects.html"><font color="WHITE"><i>help</i></font></a></td>
+		<td width="450" colspan="2">
+		@break@
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Item Flags:</b></font></td>
+		<td width="450" colspan="2"><font color="WHITE">
+			<table border="0" cellpadding="0">
+			<tbody><tr><td width="50%"><font color="WHITE">
+			
+			<input type="CHECKBOX" name="ISGETTABLE" @break@="">Is Gettable<br>
+			<input type="CHECKBOX" name="ISDROPPABLE" @break@="">Is Droppable<br>
+			<input type="CHECKBOX" name="ISREMOVABLE" @break@="">Is Removable<br>
+			<input type="CHECKBOX" name="ISINVISIBLE" @break@="">Is Invisible<br>
+			<input type="CHECKBOX" name="ISHIDDEN" @break@="">Is Hidden<br>
+			<input type="CHECKBOX" name="ISUNSEEN" @break@="">Is Unseeable<br>
+			</font></td><td width="50%"><font color="WHITE">
+			<input type="CHECKBOX" name="ISBONUS" @break@="">Is Magical<br>
+			<input type="CHECKBOX" name="ISLIGHT" @break@="">Is Glowing (burning)<br>
+			<input type="CHECKBOX" name="ISEVIL" @break@="">Is Evil<br>
+			<input type="CHECKBOX" name="ISGOOD" @break@="">Is Good<br>
+			<input type="CHECKBOX" name="NONLOCATABLE" @break@="">Hidden from Locate Object<br>
+			<input type="CHECKBOX" name="BLENDEDVIEW" @break@="">Blended into Room Display<br>
+			
+			</font></td></tr></tbody></table>
+			</font>
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Material:</b></font>
+		</td><td width="450" colspan="2">
+		<select name="MATERIALS">
+		@break@
+		</select>
+		</td>
+	</tr>
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+
+	
+	
+
+	
+	
+
+	
+	
+	
+	
+	
+		
+			
+				
+			
+		
+	
+	
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Magic Level:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="ABILITY" size="5" value="@break[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif[error]endif@
+&lt;TR&gt;
+	&lt;TD&gt;&lt;FONT COLOR=" #66ffff"=""><b>Tags:</b>
+	</td>
+    <td colspan="2">
+    <input type="TEXT" name="TAGS" size="30" value="@break@">
+    <font size="-1"><i>Semicolon delimited</i>
+    </font></td>
+</tr>
+
+<tr>
+<td width="600" colspan="3" align="CENTER">
+    
+	    
+        	<input type="SUBMIT" name="FINISHED" value="Finished">
+        
+    
+</td>
+</tr>
+</tbody></table>
+</form>
+</center>
+
+
+
+
+</body></html>

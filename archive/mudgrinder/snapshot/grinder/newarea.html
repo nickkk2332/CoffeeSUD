@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+</head>
+
+<body>
+
+<center>
+<img src="images/grinder.gif" width="78" height="122" alt="" border="0"><br>
+<h3>MUDGrinder -- Create a New Area</h3>
+<br>
+<form accept-charset="UTF-8" name="NEWAREA" method="POST" action="../notcaptured.html#/grinder/newarea2.cmvp" target="_top">
+
+<table width="330" border="1">
+<tbody><tr><td align="RIGHT"><font color="WHITE"><b>Select an area class:</b></font></td>
+<td><select name="AREATYPE">
+	<option value="Moon">Moon</option><option value="Planet">Planet</option><option selected="" value="StdArea">StdArea</option><option value="StdAutoGenInstance">StdAutoGenInstance</option><option value="StdBoardableShip">StdBoardableShip</option><option value="StdGridArea">StdGridArea</option><option value="StdPlanet">StdPlanet</option><option value="StdSpaceShip">StdSpaceShip</option><option value="StdThinArea">StdThinArea</option><option value="StdThinGridArea">StdThinGridArea</option><option value="StdThinInstance">StdThinInstance</option><option value="StdThinPlanet">StdThinPlanet</option><option value="StdTimeZone">StdTimeZone</option><option value="SubThinInstance">SubThinInstance
+</option></select>
+</td></tr>
+<tr><td align="RIGHT"><font color="WHITE"><b>Enter a name:</b></font></td>
+<td><input type="TEXT" name="AREA" value="">
+</td></tr>
+<tr><td align="CENTER" colspan="2"><input name="CREATEIT" type="SUBMIT" value="Create">
+</td></tr></tbody></table>
+</form>
+
+	<p>
+	</p><form accept-charset="UTF-8" name="UPLOAD" target="_top" enctype="multipart/form-data" action="../notcaptured.html#/grinder/importarea.cmvp" method="POST">
+	
+	<center><font color="WHITE"><i>or</i></font></center>
+	<p>
+	<table width="200" border="1">
+	<tbody><tr><td align="CENTER"><font color="WHITE"><b>Select an area file to import:</b></font></td></tr>
+	<tr><td align="CENTER"><input type="FILE" name="FILE"><p>
+	<input type="CHECKBOX" name="DELFIRST"><font color="WHITE">Delete area if exists</font><br>
+	</p></td></tr>
+	<tr><td align="CENTER"><input name="CREATEIT" type="SUBMIT" value="Create"></td></tr></tbody></table>
+	<input type="HIDDEN" name="MAPSTYLE" value="">
+	<input type="HIDDEN" name="MAPLEVEL" value="">
+	</p></form>
+
+
+
+ 
+ 
+</center></body></html>

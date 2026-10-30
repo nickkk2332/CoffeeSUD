@@ -1,0 +1,377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<link rel="coffeemud icon" href="images/coffeemud.ico">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="coffeemud.css">
+	<title>Cross Class Skills</title>
+    <script language="JavaScript">
+    <!--
+        function Clicked(action)
+        {
+            document.RESOURCES.action=action;
+            document.RESOURCES.submit();
+        }
+        function Refresh()
+        {
+            document.RESOURCES.action="crossclass.html";
+            document.RESOURCES.submit();
+        }
+    //-->
+    </script>
+</head>
+
+<body bgcolor="BLACK">
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="crossclass.html">
+
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+        <tr><td><a href="javascript:Clicked('/grinder/charclasses.cmvp')"><font size="-1" color="WHITE"><b>Character Classes</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+	<font color="WHITE">
+	
+<h1>Cross Class Information</h1><p>
+<a href="#STAT">Stats Chart</a></p><p>
+<a href="#CROSS">Skills Chart</a></p><p>
+<a href="#BAL">Balance Chart</a></p><p>
+<br><font color="WHITE">
+<a name="STAT">Chart Key</a>: Under each stat TYPE are three groups () () ().  The first group is a 10th level
+character, the second group is a 50th level char, and the last group is a 90th level char.  
+Within each group are three stats (x/x/x).  The first stat is the character with an attribute
+score of 10, the second stat is an attribute score of 18, and the last stat is the maximum value for that class (often also 18, but possibly 22 or 25).</font></p><p><font color="WHITE"><br></font>
+Base Class: 
+
+<select name="BASECLASS" onchange="Refresh()">
+<option value="">
+
+</option><option value="ALL">All
+
+
+</option><option value="Mage">Mage
+
+
+</option><option value="Commoner">Commoner
+
+
+</option><option value="Thief">Thief
+
+
+</option><option value="Fighter">Fighter
+
+
+</option><option value="Bard">Bard
+
+
+</option><option value="Druid">Druid
+
+
+</option><option value="Cleric">Cleric
+
+</option></select>
+
+<table width="100%">
+<tbody><tr><td><font color="WHITE">BASECLASS</font></td><td><font color="WHITE">HP</font></td><td><font color="WHITE">MANA</font></td><td><font color="WHITE">MV</font></td></tr>
+
+
+
+</tbody></table>
+<br><font color="WHITE"><a name="STAT">Base Class Version of Above</a><br></font>
+<table width="100%" border="1">
+<tbody><tr><td><font color="WHITE">BASECLASS</font></td><td><font color="WHITE">HP</font></td><td><font color="WHITE">MANA</font></td><td><font color="WHITE">MV</font></td></tr>
+
+
+
+</tbody></table>
+</p><p><br>
+</p><hr>
+<center><a name="CROSS"><h2>Cross Class Skills Chart</h2></a></center><p>
+</p><hr>
+
+
+
+<p>
+<br>
+</p><center><a name="BAL"><h2>Cross Class Balance Chart</h2></a></center><p>
+</p><hr>
+
+
+
+
+
+<p><br>
+</p><hr>
+<center><a name="CROSS"><h2>Cross Class Domains Chart</h2></a></center><p>
+</p><hr>
+<table width="100%" border="1">
+<tbody><tr><td><font color="WHITE">CLASS</font></td>  <td><font color="WHITE">NOTHING</font></td> <td><font color="WHITE">DIVINATION</font></td> <td><font color="WHITE">ABJURATION</font></td> <td><font color="WHITE">ILLUSION</font></td> <td><font color="WHITE">INVOCATION/EVOCATION</font></td> <td><font color="WHITE">ALTERATION</font></td> <td><font color="WHITE">TRANSMUTATION</font></td> <td><font color="WHITE">ENCHANTMENT/CHARM</font></td> <td><font color="WHITE">CONJURATION</font></td> <td><font color="WHITE">ARCHON</font></td> <td><font color="WHITE">SINGING</font></td> <td><font color="WHITE">DANCING</font></td> <td><font color="WHITE">PLAYING</font></td> <td><font color="WHITE">DECEPTIVE</font></td> <td><font color="WHITE">FIND/REMOVE_TRAPS</font></td> <td><font color="WHITE">BINDING</font></td> <td><font color="WHITE">STEALING</font></td> <td><font color="WHITE">STEALTHY</font></td> <td><font color="WHITE">TRAPPING</font></td> <td><font color="WHITE">ALERT</font></td> <td><font color="WHITE">HOLY_PROTECTION</font></td> <td><font color="WHITE">HEALING</font></td> <td><font color="WHITE">VEXING</font></td> <td><font color="WHITE">BLESSING</font></td> <td><font color="WHITE">CURSING</font></td> <td><font color="WHITE">EVANGELISM</font></td> <td><font color="WHITE">MOON_SUMMONING</font></td> <td><font color="WHITE">MOON_ALTERING</font></td> <td><font color="WHITE">GATHERING</font></td> <td><font color="WHITE">CRAFTING</font></td> <td><font color="WHITE">PLANT_GROWTH</font></td> <td><font color="WHITE">SHAPE_SHIFTING</font></td> <td><font color="WHITE">FOOLISHNESS</font></td> <td><font color="WHITE">WARDING</font></td> <td><font color="WHITE">DEATH_LORE</font></td> <td><font color="WHITE">WEATHER_MASTERY</font></td> <td><font color="WHITE">CORRUPTION</font></td> <td><font color="WHITE">RESTORATION</font></td> <td><font color="WHITE">NEUTRALIZATION</font></td> <td><font color="WHITE">CREATION</font></td> <td><font color="WHITE">COMMUNING</font></td> <td><font color="WHITE">PRESERVING</font></td> <td><font color="WHITE">ENDURING</font></td> <td><font color="WHITE">PLANT_CONTROL</font></td> <td><font color="WHITE">ANIMAL_AFFINITY</font></td> <td><font color="WHITE">DEEP_MAGIC</font></td> <td><font color="WHITE">BREEDING</font></td> <td><font color="WHITE">WEAPON_USE</font></td> <td><font color="WHITE">ROCK_CONTROL</font></td> <td><font color="WHITE">KICKING</font></td> <td><font color="WHITE">PUNCHING</font></td> <td><font color="WHITE">GRAPPLING</font></td> <td><font color="WHITE">CALLIGRAPHY</font></td> <td><font color="WHITE">POISONING</font></td> <td><font color="WHITE">ARCANE_LORE</font></td> <td><font color="WHITE">ACROBATIC</font></td> <td><font color="WHITE">INFLUENTIAL</font></td> <td><font color="WHITE">STREET_SMARTS</font></td> <td><font color="WHITE">NATURE_LORE</font></td> <td><font color="WHITE">DIRTY_FIGHTING</font></td> <td><font color="WHITE">COMBAT_LORE</font></td> <td><font color="WHITE">COMBAT_FLUIDITY</font></td> <td><font color="WHITE">EVASIVE</font></td> <td><font color="WHITE">MARTIAL_LORE</font></td> <td><font color="WHITE">RACIAL_ABILITY</font></td> <td><font color="WHITE">ARTISTIC</font></td> <td><font color="WHITE">ANATOMY</font></td> <td><font color="WHITE">ARMOR_USE</font></td> <td><font color="WHITE">SHIELD_USE</font></td> <td><font color="WHITE">CRIMINAL</font></td> <td><font color="WHITE">LEGAL</font></td> <td><font color="WHITE">FITNESS</font></td> <td><font color="WHITE">THEATRE</font></td> <td><font color="WHITE">BUILDING</font></td> <td><font color="WHITE">WATER_LORE</font></td> <td><font color="WHITE">WATER_CONTROL</font></td> <td><font color="WHITE">SEA_TRAVEL</font></td> <td><font color="WHITE">EDUCATION_LORE</font></td> <td><font color="WHITE">EPICUREAN</font></td> <td><font color="WHITE">COSMOLOGY</font></td> <td><font color="WHITE">ROPE_USE</font></td> <td><font color="WHITE">TRAVEL</font></td></tr>
+
+
+
+	<tr><td><font color="WHITE">Unassigned</font></td>
+			 
+			 
+			
+			<td><font color="LTGREEN">438</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">5</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">8</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">5</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">6</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">7</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">6</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">6</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">13</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">5</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">4</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">35</font></td>
+			 
+			
+			<td><font color="LTGREEN">3</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">1</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">2</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			 
+			
+			<td><font color="LTGREEN">0</font></td>
+			
+	</tr>
+</tbody></table>
+
+
+
+
+</font></form></body></html>

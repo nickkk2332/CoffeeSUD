@@ -1,0 +1,264 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+
+	<meta charset="utf-8">
+	<!--map.cmvp-->
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<title>CoffeeMud MUDGrinder</title>
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<script language="JavaScript">
+	<!--
+		var shiftDown=true;
+		function RC(room)
+		{
+			document.SELECTAREA.MULTIROOMFLAG.value=shiftDown?"on":"";
+			if(shiftDown)
+			{
+				if(document.SELECTAREA.MULTIROOMLIST.value.indexOf(room+';')<0)
+					document.SELECTAREA.MULTIROOMLIST.value=document.SELECTAREA.MULTIROOMLIST.value+room+';';
+			}
+			else
+				document.SELECTAREA.MULTIROOMLIST.value='';
+			Clicked('rmmenu.cmvp','',room,'');
+		}
+		function EC(dir,room)
+		{
+			Clicked('lnkxmenu.cmvp',dir,room,'');
+		}
+		function CEX(dir,room,room2)
+		{
+			Clicked('edxmenu.cmvp',dir,room,room2);
+		}
+		function CNEX(dir,room,room2)
+		{
+			Clicked('crxmenu.cmvp',dir,room,room2);
+		}
+		function Clicked(action,link,room,linksto)
+		{
+			document.SELECTAREA.OLDROOM.value=document.SELECTAREA.ROOM.value;
+			document.SELECTAREA.OLDLINK.value=document.SELECTAREA.LINK.value;
+			document.SELECTAREA.ROOM.value=room;
+			document.SELECTAREA.LINK.value=link;
+			document.SELECTAREA.LINKSTO.value=linksto;
+			document.SELECTAREA.action='/grinder/'+action;
+			document.SELECTAREA.submit();
+		}
+
+		function mouseDown(e) 
+		{
+			var ctrlPressed=0;
+			var altPressed=0;
+			var shiftPressed=0;
+
+			if (parseInt(navigator.appVersion)>3) 
+			{
+				var evt = navigator.appName=="Netscape" ? e:event;
+				if (navigator.appName=="Netscape" && parseInt(navigator.appVersion)==4) 
+				{
+					var mString =(e.modifiers+32).toString(2).substring(3,6);
+					shiftDown=(mString.charAt(1)=="1");
+				}
+				else 
+				{
+					shiftDown=evt.ctrlKey;
+				}
+			 }
+ 			 return true;
+		 }
+		 
+		 if (parseInt(navigator.appVersion)>3) 
+		 {
+		 	document.onmousedown = mouseDown;
+		 	if (navigator.appName=="Netscape") 
+		  		document.captureEvents(Event.MOUSEDOWN);
+		 }
+		
+		 function preloadImages() 
+		 {
+			var image1 = new Image();
+			image1.src = 'images\DD.gif';
+			var image2 = new Image();
+			image2.src = 'images\DDR.gif';
+			var image3 = new Image();
+			image3.src = 'images\DE.gif';
+			var image4 = new Image();
+			image4.src = 'images\DER.gif';
+			var image5 = new Image();
+			image5.src = 'images\DN.gif';
+			var image6 = new Image();
+			image6.src = 'images\DNR.gif';
+			var image7 = new Image();
+			image7.src = 'images\DS.gif';
+			var image8 = new Image();
+			image8.src = 'images\DSR.gif';
+			var image9 = new Image();
+			image9.src = 'images\DU.gif';
+			var image10 = new Image();
+			image10.src = 'images\DUR.gif';
+			var image11 = new Image();
+			image11.src = 'images\DW.gif';
+			var image12 = new Image();
+			image12.src = 'images\DWR.gif';
+			var image13 = new Image();
+			image13.src = 'images\ED.gif';
+			var image14 = new Image();
+			image14.src = 'images\EE.gif';
+			var image15 = new Image();
+			image15.src = 'images\EN.gif';
+			var image16 = new Image();
+			image16.src = 'images\ES.gif';
+			var image17 = new Image();
+			image17.src = 'images\EU.gif';
+			var image18 = new Image();
+			image18.src = 'images\EW.gif';
+			var image19 = new Image();
+			image19.src = 'images\OD.gif';
+			var image20 = new Image();
+			image20.src = 'images\ODR.gif';
+			var image21 = new Image();
+			image21.src = 'images\OE.gif';
+			var image22 = new Image();
+			image22.src = 'images\OER.gif';
+			var image23 = new Image();
+			image23.src = 'images\ON.gif';
+			var image24 = new Image();
+			image24.src = 'images\ONR.gif';
+			var image25 = new Image();
+			image25.src = 'images\OS.gif';
+			var image26 = new Image();
+			image26.src = 'images\OSR.gif';
+			var image27 = new Image();
+			image27.src = 'images\OU.gif';
+			var image28 = new Image();
+			image28.src = 'images\OUR.gif';
+			var image29 = new Image();
+			image29.src = 'images\OW.gif';
+			var image30 = new Image();
+			image30.src = 'images\OWR.gif';
+			var image31 = new Image();
+			image31.src = 'images\UD.gif';
+			var image32 = new Image();
+			image32.src = 'images\UDR.gif';
+			var image33 = new Image();
+			image33.src = 'images\UE.gif';
+			var image34 = new Image();
+			image34.src = 'images\UER.gif';
+			var image35 = new Image();
+			image35.src = 'images\UN.gif';
+			var image36 = new Image();
+			image36.src = 'images\UNR.gif';
+			var image37 = new Image();
+			image37.src = 'images\US.gif';
+			var image38 = new Image();
+			image38.src = 'images\USR.gif';
+			var image39 = new Image();
+			image39.src = 'images\UU.gif';
+			var image40 = new Image();
+			image40.src = 'images\UUR.gif';
+			var image41 = new Image();
+			image41.src = 'images\UW.gif';
+			var image42 = new Image();
+			image42.src = 'images\UWR.gif';
+		}
+
+		function showSelected() 
+		{
+			showDiv(document.all.layerSelect.value);
+		}
+
+		function showDiv(pass) 
+		{ 
+		  document.SELECTAREA.MAPLEVEL.value=pass;
+		  var divs = document.getElementsByTagName('div'); 
+		  for(i=0;i<divs.length;i++)
+		  { 
+		    if((divs[i].id.match(pass))||(divs[i].id.match('layersMenu')))
+		    {//if they are 'see' divs 
+		      if (document.getElementById) // DOM3 = IE5, NS6 
+		        divs[i].style.visibility="visible";// show/hide 
+		      else 
+		        if (document.layers) // Netscape 4 
+		          document.layers[divs[i]].display = 'visible'; 
+		        else // IE 4 
+		          document.all.divs[i].visibility = 'visible'; 
+		    } else { 
+		      if (document.getElementById) 
+		        divs[i].style.visibility="hidden"; 
+		      else 
+		        if (document.layers) // Netscape 4 
+		          document.divs[i].visibility = 'hidden'; 
+		        else // IE 4 
+		          document.all.divs[i].visibility = 'hidden'; 
+		    } 
+		  } 
+		} 
+
+		function setVariables() 
+		{
+		  if (navigator.appName == "Netscape") 
+		  {
+		    v=".top=";
+		    w=".left=";
+		    dS="document.";
+		    sD="";
+		    x="window.pageXOffset";
+		    y="window.pageYOffset";
+		  }
+		  else 
+		  {
+		    v=".pixelTop=";
+		    w=".pixelLeft=";
+		    dS="";
+		    sD=".style";
+		    x="document.body.scrollLeft";
+		    y="document.body.scrollTop";
+		   }
+		}
+		
+		function checkLocation() 
+		{
+		  object="layersMenu";
+		  yy=eval(y);
+		  xx=eval(x);
+		  if (navigator.appName != "Netscape") 
+		  {
+			  eval(dS+object+sD+v+yy);
+			  eval(dS+object+sD+w+xx);
+		  }
+		  setTimeout("checkLocation()",10);
+		}
+
+
+
+	//-->
+	</script>
+</head>
+
+
+	<body>
+
+
+<form accept-charset="UTF-8" name="SELECTAREA" method="POST" action="" target="MENU">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<input type="HIDDEN" name="ROOM" value="">
+<input type="HIDDEN" name="LINK" value="">
+<input type="HIDDEN" name="LINKSTO" value="">
+<input type="HIDDEN" name="OLDROOM" value="">
+<input type="HIDDEN" name="OLDLINK" value="">
+<input type="HIDDEN" name="MULTIROOMFLAG" value="">
+<input type="HIDDEN" name="MULTIROOMLIST" value="">
+<input type="HIDDEN" name="ACTION" value="">
+<table width="130" border="0" cellspacing="0" cellpadding="0"><tbody><tr height="1"><td width="20"><br></td><td width="30"><br></td><td width="30"><br></td><td width="30"><br></td><td width="20"><br></td></tr><tr height="1"><td width="20"><br></td><td width="30"><br></td><td width="30"><br></td><td width="30"><br></td><td width="20"><br></td></tr><tr height="1"><td width="20"><br></td><td width="30"><br></td><td width="30"><br></td><td width="30"><br></td><td width="20"><br></td></tr><tr height="1"><td width="20"><br></td><td width="30"><br></td><td width="30"><br></td><td width="30"><br></td><td width="20"><br></td></tr><tr height="1"><td width="20"><br></td><td width="30"><br></td><td width="30"><br></td><td width="30"><br></td><td width="20"><br></td></tr><tr height="20"><td></td><td><br></td><td><a href="javascript:EC('North','New Area#1');"><img border="0" src="images/EN.gif"></a></td><td><a href="javascript:EC('Up','New Area#1');"><img border="0" src="images/EU.gif"></a></td><td></td></tr><tr height="20"><td><br></td><td colspan="3" rowspan="3" valign="TOP" bgcolor="#CC00FF"><a name="New+Area%231" href="javascript:RC('New Area#1');"><font size="-1"><b>#1</b></font></a><br><font size="-2">(StoneRoom)<br>Rocky Room</font></td><td><br></td></tr><tr height="20"><td><a href="javascript:EC('West','New Area#1');"><img border="0" src="images/EW.gif"></a></td><td><a href="javascript:EC('East','New Area#1');"><img border="0" src="images/EE.gif"></a></td></tr><tr height="20"><td><br></td><td><br></td></tr><tr height="20"><td></td><td><br></td><td><a href="javascript:CEX('South','New Area#1','New Area#0');"><img src="images/OS.gif" border="0" alt="South to New Area#0"></a></td><td><a href="javascript:EC('Down','New Area#1');"><img border="0" src="images/ED.gif"></a></td><td></td></tr><tr height="20"><td></td><td><br></td><td><a href="javascript:CEX('North','New Area#0','New Area#1');"><img src="images/ON.gif" border="0" alt="North to New Area#1"></a></td><td><a href="javascript:EC('Up','New Area#0');"><img border="0" src="images/EU.gif"></a></td><td></td></tr><tr height="20"><td><br></td><td colspan="3" rowspan="3" valign="TOP" bgcolor="#CCCCCC"><a name="New+Area%230" href="javascript:RC('New Area#0');"><font size="-1"><b>#0</b></font></a><br><font size="-2">(StdRoom)<br>New Room</font></td><td><br></td></tr><tr height="20"><td><a href="javascript:EC('West','New Area#0');"><img border="0" src="images/EW.gif"></a></td><td><a href="javascript:EC('East','New Area#0');"><img border="0" src="images/EE.gif"></a></td></tr><tr height="20"><td><br></td><td><br></td></tr><tr height="20"><td></td><td><br></td><td><a href="javascript:EC('South','New Area#0');"><img border="0" src="images/ES.gif"></a></td><td><a href="javascript:EC('Down','New Area#0');"><img border="0" src="images/ED.gif"></a></td><td></td></tr></tbody></table>
+</form>
+
+
+
+
+
+</body></html>

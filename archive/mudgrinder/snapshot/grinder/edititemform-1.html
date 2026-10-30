@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+	
+	
+	
+	    
+	
+	
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		var properTarget='MAP';
+		
+        function OpenUp(file,named)
+        {
+            var strFeatures="top=200,left=50,scrollbars=yes,resizeable=no,height=400,width=650,alwaysRaised=yes,dependent=yes";
+            w=window.open("/"+file+"?HELPTOPIC="+named,
+                        "Help",strFeatures, false);
+        }
+        function OpenClick(file,named)
+        {
+            var strFeatures="top=50,left=50,scrollbars=yes,resizeable=yes,height=550,width=750,alwaysRaised=yes,dependent=yes";
+            w=window.open(file+"?AREA=ITEM%23%3CP%3D%3E%3CR%3DANY%3E%3CM%3D%3E%3CI%3DNEW%3E%3CSI%3D%3E","Map",strFeatures);
+        }
+		function EditBehavior(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddBehavior(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditAffect(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddAffect(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function ChangedClass()
+		{
+			document.AREAEDIT.CHANGEDCLASS.value="true";
+			ReShow();
+		}
+		function ChangedLevel()
+		{
+			
+			
+			document.AREAEDIT.CHANGEDLEVEL.value="true";
+			ReShow();
+		}
+		function ReShow()
+		{
+			document.AREAEDIT.action="edititemform.html";
+			//document.AREAEDIT.target=properTarget;
+			document.AREAEDIT.submit();
+		}
+        function DelItem()
+        {
+            if(confirm('Confirm: Delete this item?'))
+            {
+                document.AREAEDIT.DELITEM.value="NEW";
+                document.AREAEDIT.submit();
+            }
+        }
+		
+	//-->
+	</script>
+</head>
+<body>
+<center>
+
+	
+		<h3>Create/Modify an Item.</h3>
+	
+
+
+
+	
+		<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="../notcaptured.html#/grinder/editnewitemdone.cmvp">
+		<input type="HIDDEN" name="ROOM" value="ANY">
+		<input type="HIDDEN" name="MOB" value="">
+		<script language="JavaScript">
+		<!--
+			properTarget='_top';
+		//-->
+		</script>
+	
+
+
+<input type="HIDDEN" name="RESPONSEFIELD" value="RESOURCES.REPLACE">
+<input type="HIDDEN" name="REPLACEFIELD" value="">
+<input type="HIDDEN" name="DELITEM" value="">
+<input type="HIDDEN" name="FINISHEDREDIRECT" value="">
+<input type="HIDDEN" name="CHANGEDCLASS" value="">
+<input type="HIDDEN" name="CHANGEDLEVEL" value="">
+<input type="HIDDEN" name="ITEM" value="NEW">
+<input type="HIDDEN" name="SHOPITEM" value="">
+<input type="HIDDEN" name="ACTION" value="MODIFYITEM">
+<input type="HIDDEN" name="SINGLEMOB" value="">
+<table width="600" border="1" cellspacing="0" cellpaddin="0">
+<tbody><tr>
+	<td width="150"><font color="#66FFFF"><b>Item Class:</b></font></td>
+    <td width="450" colspan="2">
+    
+		<select name="CLASSES" onchange="ChangedClass();">
+		
+			<option value="Apple">Apple</option><option value="Arquebus">Arquebus</option><option value="Asteroid">Asteroid</option><option value="Backpack">Backpack</option><option value="BagOfHolding">BagOfHolding</option><option value="BandedArmor">BandedArmor</option><option value="BardMap">BardMap</option><option value="BattleAxe">BattleAxe</option><option value="Bed">Bed</option><option value="Boat">Boat</option><option value="Broom">Broom</option><option value="Cestus">Cestus</option><option value="ChainMailArmor">ChainMailArmor</option><option value="ChainMailVest">ChainMailVest</option><option value="Chair">Chair</option><option value="Claymore">Claymore</option><option value="CloseableContainer">CloseableContainer</option><option value="Corpse">Corpse</option><option value="CubicGate">CubicGate</option><option value="Dagger">Dagger</option><option value="DaggerOfVenom">DaggerOfVenom</option><option value="Dirk">Dirk</option><option value="DragonClaw">DragonClaw</option><option value="Dress">Dress</option><option value="DrowChainMailArmor">DrowChainMailArmor</option><option value="DrowDagger">DrowDagger</option><option value="DrowMace">DrowMace</option><option value="DrowQuarterstaff">DrowQuarterstaff</option><option value="DrowSword">DrowSword</option><option value="DruidicMonument">DruidicMonument</option><option value="DwarfStar">DwarfStar</option><option value="EternityBarkArmor">EternityBarkArmor</option><option value="EternityLeafArmor">EternityLeafArmor</option><option value="EternityLeafShield">EternityLeafShield</option><option value="EternityQuarterstaff">EternityQuarterstaff</option><option value="FieldPlate">FieldPlate</option><option value="FlamingSword">FlamingSword</option><option value="FullPlate">FullPlate</option><option value="GasGiant">GasGiant</option><option value="Gem">Gem</option><option value="GenAirShip">GenAirShip</option><option value="GenAmmunition">GenAmmunition</option><option value="GenArmor">GenArmor</option><option value="GenBagOfHolding">GenBagOfHolding</option><option value="GenBalloon">GenBalloon</option><option value="GenBed">GenBed</option><option value="GenBelt">GenBelt</option><option value="GenBoardable">GenBoardable</option><option value="GenBoat">GenBoat</option><option value="GenBoffWeapon">GenBoffWeapon</option><option value="GenBook">GenBook</option><option value="GenBow">GenBow</option><option value="GenBurnOven">GenBurnOven</option><option value="GenCage">GenCage</option><option value="GenCageRideable">GenCageRideable</option><option value="GenCaged">GenCaged</option><option value="GenCaravan">GenCaravan</option><option value="GenCastle">GenCastle</option><option value="GenChair">GenChair</option><option value="GenCigar">GenCigar</option><option value="GenClanApron">GenClanApron</option><option value="GenClanArmor">GenClanArmor</option><option value="GenClanCard">GenClanCard</option><option value="GenClanCastle">GenClanCastle</option><option value="GenClanCommonContainer">GenClanCommonContainer</option><option value="GenClanCommonItem">GenClanCommonItem</option><option value="GenClanConcierge">GenClanConcierge</option><option value="GenClanContainer">GenClanContainer</option><option value="GenClanDonationList">GenClanDonationList</option><option value="GenClanFlag">GenClanFlag</option><option value="GenClanItem">GenClanItem</option><option value="GenClanPamphlet">GenClanPamphlet</option><option value="GenClanSailorsCap">GenClanSailorsCap</option><option value="GenClanSpecialItem">GenClanSpecialItem</option><option value="GenClanTabbard">GenClanTabbard</option><option value="GenCloak">GenCloak</option><option value="GenCoins">GenCoins</option><option value="GenContainer">GenContainer</option><option value="GenCorpse">GenCorpse</option><option value="GenDice">GenDice</option><option value="GenDissertation">GenDissertation</option><option value="GenDress">GenDress</option><option value="GenDrink">GenDrink</option><option value="GenEarring">GenEarring</option><option value="GenEmptyDrink">GenEmptyDrink</option><option value="GenFatWallpaper">GenFatWallpaper</option><option value="GenFixture">GenFixture</option><option value="GenFood">GenFood</option><option value="GenFoodResource">GenFoodResource</option><option value="GenFountain">GenFountain</option><option value="GenFurniture">GenFurniture</option><option value="GenGangline">GenGangline</option><option value="GenGiftContainer">GenGiftContainer</option><option value="GenGrapples">GenGrapples</option><option value="GenHandBow">GenHandBow</option><option value="GenInstrument">GenInstrument</option><option value="GenItem" selected="">GenItem</option><option value="GenJournal">GenJournal</option><option value="GenKey">GenKey</option><option value="GenLantern">GenLantern</option><option value="GenLasso">GenLasso</option><option value="GenLawBook">GenLawBook</option><option value="GenLightSource">GenLightSource</option><option value="GenLimb">GenLimb</option><option value="GenLiquidResource">GenLiquidResource</option><option value="GenMagicInstrument">GenMagicInstrument</option><option value="GenMap">GenMap</option><option value="GenMirror">GenMirror</option><option value="GenMobilePortal">GenMobilePortal</option><option value="GenMultiPotion">GenMultiPotion</option><option value="GenNavigableBoardable">GenNavigableBoardable</option><option value="GenNet">GenNet</option><option value="GenPackagedItems">GenPackagedItems</option><option value="GenPackagedStack">GenPackagedStack</option><option value="GenPackagedVariety">GenPackagedVariety</option><option value="GenPants">GenPants</option><option value="GenPaper">GenPaper</option><option value="GenPerfume">GenPerfume</option><option value="GenPiano">GenPiano</option><option value="GenPill">GenPill</option><option value="GenPipe">GenPipe</option><option value="GenPlayerBook">GenPlayerBook</option><option value="GenPlayingCard">GenPlayingCard</option><option value="GenPortal">GenPortal</option><option value="GenPotion">GenPotion</option><option value="GenPowder">GenPowder</option><option value="GenQuestBoard">GenQuestBoard</option><option value="GenReadable">GenReadable</option><option value="GenRecipe">GenRecipe</option><option value="GenResource">GenResource</option><option value="GenRideable">GenRideable</option><option value="GenRuinedItem">GenRuinedItem</option><option value="GenSailingShip">GenSailingShip</option><option value="GenScale">GenScale</option><option value="GenScroll">GenScroll</option><option value="GenShield">GenShield</option><option value="GenShirt">GenShirt</option><option value="GenShoes">GenShoes</option><option value="GenSiegableBoardable">GenSiegableBoardable</option><option value="GenSiegeWeapon">GenSiegeWeapon</option><option value="GenSling">GenSling</option><option value="GenSpaceBody">GenSpaceBody</option><option value="GenSpear">GenSpear</option><option value="GenStaff">GenStaff</option><option value="GenStove">GenStove</option><option value="GenTable">GenTable</option><option value="GenTent">GenTent</option><option value="GenThinArmor">GenThinArmor</option><option value="GenTitle">GenTitle</option><option value="GenTub">GenTub</option><option value="GenWallpaper">GenWallpaper</option><option value="GenWand">GenWand</option><option value="GenWater">GenWater</option><option value="GenWeapon">GenWeapon</option><option value="GenWormhole">GenWormhole</option><option value="Glaive">Glaive</option><option value="GlovesSpeed">GlovesSpeed</option><option value="GlowingMageArmor">GlowingMageArmor</option><option value="GreatHelm">GreatHelm</option><option value="Halberd">Halberd</option><option value="Hat">Hat</option><option value="Hat_Intelligence">Hat_Intelligence</option><option value="Helmet">Helmet</option><option value="HerbChest">HerbChest</option><option value="HideArmor">HideArmor</option><option value="HoleInTheGround">HoleInTheGround</option><option value="HolyAvenger">HolyAvenger</option><option value="Hood">Hood</option><option value="HorseCart">HorseCart</option><option value="Javelin">Javelin</option><option value="Katana">Katana</option><option value="Lantern">Lantern</option><option value="LargeChest">LargeChest</option><option value="LargeSack">LargeSack</option><option value="LeatherArmor">LeatherArmor</option><option value="LeatherBoots">LeatherBoots</option><option value="LeatherBracers">LeatherBracers</option><option value="LeatherCap">LeatherCap</option><option value="LeatherGauntlets">LeatherGauntlets</option><option value="LifeFountain">LifeFountain</option><option value="LightSource">LightSource</option><option value="LockableContainer">LockableContainer</option><option value="Longsword">Longsword</option><option value="Mace">Mace</option><option value="MassiveStar">MassiveStar</option><option value="MetalBracers">MetalBracers</option><option value="MichaelsMithrilChain">MichaelsMithrilChain</option><option value="Moonlet">Moonlet</option><option value="Natural">Natural</option><option value="NeedleChest">NeedleChest</option><option value="OilFlask">OilFlask</option><option value="PaddedArmor">PaddedArmor</option><option value="Pan">Pan</option><option value="Pants">Pants</option><option value="Parchment">Parchment</option><option value="PortableHole">PortableHole</option><option value="Pot">Pot</option><option value="PracticePoint">PracticePoint</option><option value="Quarterstaff">Quarterstaff</option><option value="QuestPoint">QuestPoint</option><option value="Rapier">Rapier</option><option value="Ration">Ration</option><option value="Ring">Ring</option><option value="RingMail">RingMail</option><option value="RingOfColdProtection">RingOfColdProtection</option><option value="RingOfElectricity">RingOfElectricity</option><option value="RingOfFortitude">RingOfFortitude</option><option value="RingOfJustice">RingOfJustice</option><option value="RingOfMagicResistance">RingOfMagicResistance</option><option value="Ring_Ornamental">Ring_Ornamental</option><option value="Ring_Protection">Ring_Protection</option><option value="Robes">Robes</option><option value="Ruler">Ruler</option><option value="Sabre">Sabre</option><option value="ScaleMail">ScaleMail</option><option value="Scimitar">Scimitar</option><option value="ScrollSpell">ScrollSpell</option><option value="SeaMap">SeaMap</option><option value="ShieldWeapon">ShieldWeapon</option><option value="Shirt">Shirt</option><option value="Shoes">Shoes</option><option value="Shortsword">Shortsword</option><option value="Sickle">Sickle</option><option value="SmallChest">SmallChest</option><option value="SmallDagger">SmallDagger</option><option value="SmallHammer">SmallHammer</option><option value="SmallMace">SmallMace</option><option value="SmallSack">SmallSack</option><option value="Spear">Spear</option><option value="SplintMail">SplintMail</option><option value="Spring">Spring</option><option value="Staff">Staff</option><option value="Star">Star</option><option value="StdArmor">StdArmor</option><option value="StdBoardable">StdBoardable</option><option value="StdBoffWeapon">StdBoffWeapon</option><option value="StdBook">StdBook</option><option value="StdBow">StdBow</option><option value="StdCage">StdCage</option><option value="StdCageRideable">StdCageRideable</option><option value="StdClanApron">StdClanApron</option><option value="StdClanArmor">StdClanArmor</option><option value="StdClanCard">StdClanCard</option><option value="StdClanCommonContainer">StdClanCommonContainer</option><option value="StdClanCommonItem">StdClanCommonItem</option><option value="StdClanConcierge">StdClanConcierge</option><option value="StdClanContainer">StdClanContainer</option><option value="StdClanDonationList">StdClanDonationList</option><option value="StdClanFlag">StdClanFlag</option><option value="StdClanItem">StdClanItem</option><option value="StdClanPamphlet">StdClanPamphlet</option><option value="StdClanSailorsCap">StdClanSailorsCap</option><option value="StdClanSpecialItem">StdClanSpecialItem</option><option value="StdClanTabbard">StdClanTabbard</option><option value="StdCoins">StdCoins</option><option value="StdContainer">StdContainer</option><option value="StdDeckOfCards">StdDeckOfCards</option><option value="StdDice">StdDice</option><option value="StdDissertation">StdDissertation</option><option value="StdDrink">StdDrink</option><option value="StdFood">StdFood</option><option value="StdGrapples">StdGrapples</option><option value="StdHandOfCards">StdHandOfCards</option><option value="StdInnKey">StdInnKey</option><option value="StdItem">StdItem</option><option value="StdJournal">StdJournal</option><option value="StdKey">StdKey</option><option value="StdLasso">StdLasso</option><option value="StdLawBook">StdLawBook</option><option value="StdLimb">StdLimb</option><option value="StdMap">StdMap</option><option value="StdNavigableBoardable">StdNavigableBoardable</option><option value="StdNet">StdNet</option><option value="StdPaper">StdPaper</option><option value="StdPerfume">StdPerfume</option><option value="StdPill">StdPill</option><option value="StdPlayerBook">StdPlayerBook</option><option value="StdPlayingCard">StdPlayingCard</option><option value="StdPortal">StdPortal</option><option value="StdPotion">StdPotion</option><option value="StdPowder">StdPowder</option><option value="StdQuestBoard">StdQuestBoard</option><option value="StdRideable">StdRideable</option><option value="StdScroll">StdScroll</option><option value="StdShield">StdShield</option><option value="StdSiegableBoardable">StdSiegableBoardable</option><option value="StdSiegeWeapon">StdSiegeWeapon</option><option value="StdSling">StdSling</option><option value="StdSmokable">StdSmokable</option><option value="StdSpaceBody">StdSpaceBody</option><option value="StdSpear">StdSpear</option><option value="StdThinArmor">StdThinArmor</option><option value="StdThinItem">StdThinItem</option><option value="StdTitle">StdTitle</option><option value="StdTub">StdTub</option><option value="StdWand">StdWand</option><option value="StdWeapon">StdWeapon</option><option value="StdWormhole">StdWormhole</option><option value="SteelGauntlets">SteelGauntlets</option><option value="Stiletto">Stiletto</option><option value="StuddedLeatherArmor">StuddedLeatherArmor</option><option value="Sword">Sword</option><option value="ThreadbareRobes">ThreadbareRobes</option><option value="ThrowingStone">ThrowingStone</option><option value="Torch">Torch</option><option value="TrainingSession">TrainingSession</option><option value="TrappedChest">TrappedChest</option><option value="Trident">Trident</option><option value="TwoHandedSword">TwoHandedSword</option><option value="WalkingBoots">WalkingBoots</option><option value="Wand_Fire">Wand_Fire</option><option value="Wand_Nourishment">Wand_Nourishment</option><option value="WarHammer">WarHammer</option><option value="Waterskin">Waterskin</option><option value="Whip">Whip</option><option value="Wineskin">Wineskin
+		
+		</option></select>
+	
+	</td>
+</tr>
+
+
+
+
+
+
+
+
+    <tr>
+        <td width="150"><font color="#66FFFF"><b>Item Name:</b></font></td>
+        
+            
+                <td width="450" colspan="2"><input type="TEXT" name="NAME" size="60" value="a generic item"></td>
+            
+        
+    </tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Displayed:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="DISPLAYTEXT" size="60" maxlength="255" value="a generic item sits here."></td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Description:</b></font></td>
+		<td width="450" colspan="2"><textarea rows="3" cols="50" name="DESCRIPTION"></textarea></td>
+	</tr>
+	<tr>
+		<td width="100"><font color="#66FFFF"><b>GIF filename:</b></font></td>
+		<td width="500" colspan="2"><input type="TEXT" name="IMAGE" size="50" value=""></td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Class Level:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="LEVEL" size="5" value="1">
+		
+		
+		</td>
+	</tr>
+	
+	
+	
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Base Gold Value:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="VALUE" size="5" value="5">
+		</td>
+	</tr>
+	
+	
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Weight:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="WEIGHT" size="5" value="2">
+		</td>
+	</tr>
+	<tr>
+		<td width="150">
+		<font color="#66FFFF"><b>Rejuv. Ticks:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="REJUV" size="5" value="0">
+		<i>(0=Never Rejuv,# ticks)
+		</i></td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Behaviors:</b></font>
+		<br><a target="HELP" href="../behaviors.html"><font color="WHITE"><i>help</i></font></a></td>
+		<td width="450" colspan="2">
+		<table width="100%" border="1" cellspacing="0" cellpadding="0"><tbody><tr><td width="50%"><select onchange="AddBehavior(this);" name="BEHAV1"><option selected="" value="">Select a Behavior</option><option value="ActiveTicker">ActiveTicker</option><option value="Bardness">Bardness</option><option value="Clericness">Clericness</option><option value="CombatAbilities">CombatAbilities</option><option value="Concierge">Concierge</option><option value="Decay">Decay</option><option value="DelayedTransporter">DelayedTransporter</option><option value="Druidness">Druidness</option><option value="Emoter">Emoter</option><option value="FasterRecovery">FasterRecovery</option><option value="Fighterness">Fighterness</option><option value="Follower">Follower</option><option value="InstantDeath">InstantDeath</option><option value="ItemGenerator">ItemGenerator</option><option value="MOBTeacher">MOBTeacher</option><option value="Mageness">Mageness</option><option value="Mime">Mime</option><option value="Patroller">Patroller</option><option value="RandomItems">RandomItems</option><option value="Scriptable">Scriptable</option><option value="Sounder">Sounder</option><option value="TaxiBehavior">TaxiBehavior</option><option value="Thiefness">Thiefness</option></select></td><td width="50%"><input type="TEXT" size="30" name="BDATA1" value=""></td></tr></tbody></table>
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Affects:</b></font>
+		<br><a target="HELP" href="../affects.html"><font color="WHITE"><i>help</i></font></a></td>
+		<td width="450" colspan="2">
+		<table width="100%" border="1" cellspacing="0" cellpadding="0"><tbody><tr><td width="50%"><select onchange="AddAffect(this);" name="AFFECT1"><option selected="" value="">Select an Effect</option><option value="Adorable">Adorable</option><option value="Age">Age</option><option value="AlligatorSpeak">AlligatorSpeak</option><option value="AmbianceAdder">AmbianceAdder</option><option value="AnimalSpeak">AnimalSpeak</option><option value="Antidote">Antidote</option><option value="ApeSpeak">ApeSpeak</option><option value="Aquan">Aquan</option><option value="BatSpeak">BatSpeak</option><option value="BearSpeak">BearSpeak</option><option value="BigCatSpeak">BigCatSpeak</option><option value="BirdSpeak">BirdSpeak</option><option value="BlackMarketeering">BlackMarketeering</option><option value="Blah">Blah</option><option value="Bleeding">Bleeding</option><option value="Bomb_AcidBurst">Bomb_AcidBurst</option><option value="Bomb_Explosive">Bomb_Explosive</option><option value="Bomb_FlameBurst">Bomb_FlameBurst</option><option value="Bomb_Heat">Bomb_Heat</option><option value="Bomb_Noxious">Bomb_Noxious</option><option value="Bomb_Pepper">Bomb_Pepper</option><option value="Bomb_Poison">Bomb_Poison</option><option value="Bomb_Shaped">Bomb_Shaped</option><option value="Bomb_Smoke">Bomb_Smoke</option><option value="Bomb_Sonic">Bomb_Sonic</option><option value="Bomb_SpellBlast">Bomb_SpellBlast</option><option value="Bomb_Spores">Bomb_Spores</option><option value="Bomb_Sticky">Bomb_Sticky</option><option value="Bomb_Water">Bomb_Water</option><option value="BookLoaning">BookLoaning</option><option value="Burning">Burning</option><option value="CatSpeak">CatSpeak</option><option value="Chant_AntTrain">Chant_AntTrain</option><option value="Chant_Brittle">Chant_Brittle</option><option value="Chant_ChargeMetal">Chant_ChargeMetal</option><option value="Chant_EndureRust">Chant_EndureRust</option><option value="Chant_FavorableWinds">Chant_FavorableWinds</option><option value="Chant_FilterWater">Chant_FilterWater</option><option value="Chant_FungalBloom">Chant_FungalBloom</option><option value="Chant_Grapevine">Chant_Grapevine</option><option value="Chant_GrowOak">Chant_GrowOak</option><option value="Chant_MassFungalGrowth">Chant_MassFungalGrowth</option><option value="Chant_Mold">Chant_Mold</option><option value="Chant_Nectar">Chant_Nectar</option><option value="Chant_NectarWeave">Chant_NectarWeave</option><option value="Chant_PlaneWalking">Chant_PlaneWalking</option><option value="Chant_PlantBed">Chant_PlantBed</option><option value="Chant_PlantChoke">Chant_PlantChoke</option><option value="Chant_PlantConstriction">Chant_PlantConstriction</option><option value="Chant_PlantWall">Chant_PlantWall</option><option value="Chant_ReefWalking">Chant_ReefWalking</option><option value="Chant_Shillelagh">Chant_Shillelagh</option><option value="Chant_SummonCoral">Chant_SummonCoral</option><option value="Chant_SummonFlower">Chant_SummonFlower</option><option value="Chant_SummonFungus">Chant_SummonFungus</option><option value="Chant_SummonHouseplant">Chant_SummonHouseplant</option><option value="Chant_SummonIvy">Chant_SummonIvy</option><option value="Chant_SummonPlants">Chant_SummonPlants</option><option value="Chant_SummonPool">Chant_SummonPool</option><option value="Chant_SummonSeaweed">Chant_SummonSeaweed</option><option value="Chant_SummonTree">Chant_SummonTree</option><option value="Chant_SummonWater">Chant_SummonWater</option><option value="Chant_SweetScent">Chant_SweetScent</option><option value="Chant_TapGrapevine">Chant_TapGrapevine</option><option value="Chant_Unbreakable">Chant_Unbreakable</option><option value="Chant_WhisperWard">Chant_WhisperWard</option><option value="ChickenSpeak">ChickenSpeak</option><option value="ChimpSpeak">ChimpSpeak</option><option value="Common">Common</option><option value="Copyright">Copyright</option><option value="CowSpeak">CowSpeak</option><option value="Dance_Swords">Dance_Swords</option><option value="DeerSpeak">DeerSpeak</option><option value="DiseaseCure">DiseaseCure</option><option value="DogSpeak">DogSpeak</option><option value="Draconic">Draconic</option><option value="Drowish">Drowish</option><option value="Druidic">Druidic</option><option value="Drunken">Drunken</option><option value="DuckSpeak">DuckSpeak</option><option value="Dusty">Dusty</option><option value="Dwarven">Dwarven</option><option value="ElephantSpeak">ElephantSpeak</option><option value="Elvish">Elvish</option><option value="Encrypto">Encrypto</option><option value="ExtAbility">ExtAbility</option><option value="ExtraData">ExtraData</option><option value="Falling">Falling</option><option value="Fey">Fey</option><option value="Fighter_ArmorTweaking">Fighter_ArmorTweaking</option><option value="Fighter_CommandMount">Fighter_CommandMount</option><option value="Fighter_RearGuard">Fighter_RearGuard</option><option value="Fighter_Vanguard">Fighter_Vanguard</option><option value="Fighter_WeaponSharpening">Fighter_WeaponSharpening</option><option value="FowlSpeak">FowlSpeak</option><option value="FoxSpeak">FoxSpeak</option><option value="FrogSpeak">FrogSpeak</option><option value="GenLanguage">GenLanguage</option><option value="GenPoison">GenPoison</option><option value="GenTrap">GenTrap</option><option value="GenTweakAbility">GenTweakAbility</option><option value="Gigantic">Gigantic</option><option value="Gnomish">Gnomish</option><option value="GoatSpeak">GoatSpeak</option><option value="Goblinese">Goblinese</option><option value="GooseSpeak">GooseSpeak</option><option value="GravityFloat">GravityFloat</option><option value="GreatBirdSpeak">GreatBirdSpeak</option><option value="HorseSpeak">HorseSpeak</option><option value="Ignan">Ignan</option><option value="Inebriation">Inebriation</option><option value="InstanceArea">InstanceArea</option><option value="InvisibleInk">InvisibleInk</option><option value="ItemRejuv">ItemRejuv</option><option value="Krakenspeak">Krakenspeak</option><option value="Merchant">Merchant</option><option value="Milkable">Milkable</option><option value="MonkeySpeak">MonkeySpeak</option><option value="MooseSpeak">MooseSpeak</option><option value="Orcish">Orcish</option><option value="OwlSpeak">OwlSpeak</option><option value="Paladin_CommandHorse">Paladin_CommandHorse</option><option value="PigLatin">PigLatin</option><option value="PigSpeak">PigSpeak</option><option value="PirateTalk">PirateTalk</option><option value="Poison">Poison</option><option value="Poison_Alcohol">Poison_Alcohol</option><option value="Poison_Anesthesia">Poison_Anesthesia</option><option value="Poison_BeeSting">Poison_BeeSting</option><option value="Poison_Bloodboil">Poison_Bloodboil</option><option value="Poison_Caffeine">Poison_Caffeine</option><option value="Poison_Clarity">Poison_Clarity</option><option value="Poison_Decreptifier">Poison_Decreptifier</option><option value="Poison_Firebreather">Poison_Firebreather</option><option value="Poison_Ghoultouch">Poison_Ghoultouch</option><option value="Poison_Glowgell">Poison_Glowgell</option><option value="Poison_GoblinDrip">Poison_GoblinDrip</option><option value="Poison_Hallucinogen">Poison_Hallucinogen</option><option value="Poison_Hazia">Poison_Hazia</option><option value="Poison_Heartstopper">Poison_Heartstopper</option><option value="Poison_Liquor">Poison_Liquor</option><option value="Poison_Mindsap">Poison_Mindsap</option><option value="Poison_Peppersauce">Poison_Peppersauce</option><option value="Poison_Rotten">Poison_Rotten</option><option value="Poison_Sickening">Poison_Sickening</option><option value="Poison_Slumberall">Poison_Slumberall</option><option value="Poison_Sting">Poison_Sting</option><option value="Poison_Venom">Poison_Venom</option><option value="Poison_XXX">Poison_XXX</option><option value="Power_WebSpinning">Power_WebSpinning</option><option value="Prayer_AddictingCurse">Prayer_AddictingCurse</option><option value="Prayer_AmplifyUnholyWeapon">Prayer_AmplifyUnholyWeapon</option><option value="Prayer_AuraFear">Prayer_AuraFear</option><option value="Prayer_Bless">Prayer_Bless</option><option value="Prayer_BlessItem">Prayer_BlessItem</option><option value="Prayer_Bloatbomb">Prayer_Bloatbomb</option><option value="Prayer_CreateIdol">Prayer_CreateIdol</option><option value="Prayer_Curse">Prayer_Curse</option><option value="Prayer_CurseItem">Prayer_CurseItem</option><option value="Prayer_CurseMetal">Prayer_CurseMetal</option><option value="Prayer_EternalItem">Prayer_EternalItem</option><option value="Prayer_FlameWeapon">Prayer_FlameWeapon</option><option value="Prayer_FountainLife">Prayer_FountainLife</option><option value="Prayer_FreezeMetal">Prayer_FreezeMetal</option><option value="Prayer_InfuseBalance">Prayer_InfuseBalance</option><option value="Prayer_InfuseDiscipline">Prayer_InfuseDiscipline</option><option value="Prayer_InfuseHoliness">Prayer_InfuseHoliness</option><option value="Prayer_InfuseImpunity">Prayer_InfuseImpunity</option><option value="Prayer_InfuseModeration">Prayer_InfuseModeration</option><option value="Prayer_InfuseUnholiness">Prayer_InfuseUnholiness</option><option value="Prayer_LesserWardingGlyph">Prayer_LesserWardingGlyph</option><option value="Prayer_Monolith">Prayer_Monolith</option><option value="Prayer_PlanarTravel">Prayer_PlanarTravel</option><option value="Prayer_ProtectItem">Prayer_ProtectItem</option><option value="Prayer_ProtectSacredItem">Prayer_ProtectSacredItem</option><option value="Prayer_Purify">Prayer_Purify</option><option value="Prayer_Refuge">Prayer_Refuge</option><option value="Prayer_Rot">Prayer_Rot</option><option value="Prayer_WaterToWine">Prayer_WaterToWine</option><option value="Prop_AbilityImmunity">Prop_AbilityImmunity</option><option value="Prop_AbsorbDamage">Prop_AbsorbDamage</option><option value="Prop_AddDamage">Prop_AddDamage</option><option value="Prop_Adjuster">Prop_Adjuster</option><option value="Prop_AffectReTick">Prop_AffectReTick</option><option value="Prop_Artifact">Prop_Artifact</option><option value="Prop_ClanEquipment">Prop_ClanEquipment</option><option value="Prop_Climbable">Prop_Climbable</option><option value="Prop_CloseCommand">Prop_CloseCommand</option><option value="Prop_ClosedDayNight">Prop_ClosedDayNight</option><option value="Prop_ClosedSeason">Prop_ClosedSeason</option><option value="Prop_CommonTwister">Prop_CommonTwister</option><option value="Prop_Doppleganger">Prop_Doppleganger</option><option value="Prop_FightSpellCast">Prop_FightSpellCast</option><option value="Prop_Fumble">Prop_Fumble</option><option value="Prop_HaveAdjuster">Prop_HaveAdjuster</option><option value="Prop_HaveEnabler">Prop_HaveEnabler</option><option value="Prop_HaveResister">Prop_HaveResister</option><option value="Prop_HaveSpellCast">Prop_HaveSpellCast</option><option value="Prop_HaveZapper">Prop_HaveZapper</option><option value="Prop_Hidden">Prop_Hidden</option><option value="Prop_IceBox">Prop_IceBox</option><option value="Prop_ImproveGather">Prop_ImproveGather</option><option value="Prop_InstantDeath">Prop_InstantDeath</option><option value="Prop_Invisibility">Prop_Invisibility</option><option value="Prop_ItemBinder">Prop_ItemBinder</option><option value="Prop_ItemNoRuin">Prop_ItemNoRuin</option><option value="Prop_ItemSlot">Prop_ItemSlot</option><option value="Prop_ItemSlotFiller">Prop_ItemSlotFiller</option><option value="Prop_ItemTransporter">Prop_ItemTransporter</option><option value="Prop_ItemTransReceiver">Prop_ItemTransReceiver</option><option value="Prop_LangTranslator">Prop_LangTranslator</option><option value="Prop_LanguageSpeaker">Prop_LanguageSpeaker</option><option value="Prop_LimitedContents">Prop_LimitedContents</option><option value="Prop_LimitedEquip">Prop_LimitedEquip</option><option value="Prop_LimitedItems">Prop_LimitedItems</option><option value="Prop_LocationBound">Prop_LocationBound</option><option value="Prop_ModExperience">Prop_ModExperience</option><option value="Prop_ModFaction">Prop_ModFaction</option><option value="Prop_MoveRestrictor">Prop_MoveRestrictor</option><option value="Prop_MultiEffects">Prop_MultiEffects</option><option value="Prop_NoCraftability">Prop_NoCraftability</option><option value="Prop_NoDamage">Prop_NoDamage</option><option value="Prop_NoPurge">Prop_NoPurge</option><option value="Prop_NoRecall">Prop_NoRecall</option><option value="Prop_OpenCommand">Prop_OpenCommand</option><option value="Prop_OpenPassword">Prop_OpenPassword</option><option value="Prop_OutfitContainer">Prop_OutfitContainer</option><option value="Prop_PrivateProperty">Prop_PrivateProperty</option><option value="Prop_PropSetter">Prop_PropSetter</option><option value="Prop_QuestGiver">Prop_QuestGiver</option><option value="Prop_ReqStat">Prop_ReqStat</option><option value="Prop_ReqTattoo">Prop_ReqTattoo</option><option value="Prop_RestrictSkills">Prop_RestrictSkills</option><option value="Prop_RideAdjuster">Prop_RideAdjuster</option><option value="Prop_RideEnabler">Prop_RideEnabler</option><option value="Prop_RideResister">Prop_RideResister</option><option value="Prop_RideSpellCast">Prop_RideSpellCast</option><option value="Prop_RideZapper">Prop_RideZapper</option><option value="Prop_RoomView">Prop_RoomView</option><option value="Prop_RoomWatch">Prop_RoomWatch</option><option value="Prop_ScrapExplode">Prop_ScrapExplode</option><option value="Prop_ShortEffects">Prop_ShortEffects</option><option value="Prop_Smell">Prop_Smell</option><option value="Prop_Socials">Prop_Socials</option><option value="Prop_Sounder">Prop_Sounder</option><option value="Prop_SpellAdder">Prop_SpellAdder</option><option value="Prop_SpellReflecting">Prop_SpellReflecting</option><option value="Prop_StayAboard">Prop_StayAboard</option><option value="Prop_TattooAdder">Prop_TattooAdder</option><option value="Prop_TicketTaker">Prop_TicketTaker</option><option value="Prop_Trashcan">Prop_Trashcan</option><option value="Prop_Uncampable">Prop_Uncampable</option><option value="Prop_UseAdjuster">Prop_UseAdjuster</option><option value="Prop_UseEmoter">Prop_UseEmoter</option><option value="Prop_UseEmoter2">Prop_UseEmoter2</option><option value="Prop_UseSpellCast">Prop_UseSpellCast</option><option value="Prop_UseSpellCast2">Prop_UseSpellCast2</option><option value="Prop_WeaponImmunity">Prop_WeaponImmunity</option><option value="Prop_WearAdjuster">Prop_WearAdjuster</option><option value="Prop_WearEnabler">Prop_WearEnabler</option><option value="Prop_WearOverride">Prop_WearOverride</option><option value="Prop_WearResister">Prop_WearResister</option><option value="Prop_WearSpellCast">Prop_WearSpellCast</option><option value="Prop_WearZapper">Prop_WearZapper</option><option value="RabbitSpeak">RabbitSpeak</option><option value="RavenSpeak">RavenSpeak</option><option value="RodentSpeak">RodentSpeak</option><option value="Scavenge">Scavenge</option><option value="Semaphore">Semaphore</option><option value="SheepSpeak">SheepSpeak</option><option value="SignLanguage">SignLanguage</option><option value="Sinking">Sinking</option><option value="Skill_Chirgury">Skill_Chirgury</option><option value="Skill_CombatRepairs">Skill_CombatRepairs</option><option value="Skill_Lassoing">Skill_Lassoing</option><option value="Skill_NavalTactics">Skill_NavalTactics</option><option value="Skill_ScrollFamiliarity">Skill_ScrollFamiliarity</option><option value="Skill_StrikeTheSet">Skill_StrikeTheSet</option><option value="Skill_TieDown">Skill_TieDown</option><option value="Skill_TuneInstrument">Skill_TuneInstrument</option><option value="SlaveMarketeering">SlaveMarketeering</option><option value="SmellsLikeCherries">SmellsLikeCherries</option><option value="SnakeSpeak">SnakeSpeak</option><option value="Spell_Alarm">Spell_Alarm</option><option value="Spell_AlterSubstance">Spell_AlterSubstance</option><option value="Spell_Anchor">Spell_Anchor</option><option value="Spell_ArcanePossession">Spell_ArcanePossession</option><option value="Spell_Boomerang">Spell_Boomerang</option><option value="Spell_Cogniportive">Spell_Cogniportive</option><option value="Spell_ContinualLight">Spell_ContinualLight</option><option value="Spell_Deflection">Spell_Deflection</option><option value="Spell_EnchantArrows">Spell_EnchantArrows</option><option value="Spell_Fabricate">Spell_Fabricate</option><option value="Spell_FakeArmor">Spell_FakeArmor</option><option value="Spell_FakeSpring">Spell_FakeSpring</option><option value="Spell_FakeWeapon">Spell_FakeWeapon</option><option value="Spell_FlamingArrows">Spell_FlamingArrows</option><option value="Spell_FlamingSword">Spell_FlamingSword</option><option value="Spell_FloatingDisc">Spell_FloatingDisc</option><option value="Spell_Fly">Spell_Fly</option><option value="Spell_FoolsGold">Spell_FoolsGold</option><option value="Spell_GreaterInvisibility">Spell_GreaterInvisibility</option><option value="Spell_GreaterLevitate">Spell_GreaterLevitate</option><option value="Spell_Harden">Spell_Harden</option><option value="Spell_HardenBullets">Spell_HardenBullets</option><option value="Spell_HeatMetal">Spell_HeatMetal</option><option value="Spell_ImprovedHarden">Spell_ImprovedHarden</option><option value="Spell_ImprovedRepairingAura">Spell_ImprovedRepairingAura</option><option value="Spell_InvisibilitySphere">Spell_InvisibilitySphere</option><option value="Spell_KeenEdge">Spell_KeenEdge</option><option value="Spell_LesserPermanency">Spell_LesserPermanency</option><option value="Spell_Levitate">Spell_Levitate</option><option value="Spell_LightenItem">Spell_LightenItem</option><option value="Spell_MagicalAura">Spell_MagicalAura</option><option value="Spell_MagicBullets">Spell_MagicBullets</option><option value="Spell_MagicMouth">Spell_MagicMouth</option><option value="Spell_MassRepairingAura">Spell_MassRepairingAura</option><option value="Spell_MysticLoom">Spell_MysticLoom</option><option value="Spell_MysticShine">Spell_MysticShine</option><option value="Spell_Permanency">Spell_Permanency</option><option value="Spell_Planeshift">Spell_Planeshift</option><option value="Spell_PolymorphObject">Spell_PolymorphObject</option><option value="Spell_PurgeInvisibility">Spell_PurgeInvisibility</option><option value="Spell_RepairingAura">Spell_RepairingAura</option><option value="Spell_ShoddyAura">Spell_ShoddyAura</option><option value="Spell_Shrink">Spell_Shrink</option><option value="Spell_Simulacrum">Spell_Simulacrum</option><option value="Spell_SpyingStone">Spell_SpyingStone</option><option value="Spell_StoreAromas">Spell_StoreAromas</option><option value="Spell_SuppressAroma">Spell_SuppressAroma</option><option value="Spell_WallOfAir">Spell_WallOfAir</option><option value="Spell_WallOfDarkness">Spell_WallOfDarkness</option><option value="Spell_WallOfFire">Spell_WallOfFire</option><option value="Spell_WallOfForce">Spell_WallOfForce</option><option value="Spell_WallOfIce">Spell_WallOfIce</option><option value="Spell_WallOfStone">Spell_WallOfStone</option><option value="Spell_WizardLock">Spell_WizardLock</option><option value="Spell_WizardsChest">Spell_WizardsChest</option><option value="Spell_WizardsMark">Spell_WizardsMark</option><option value="StdAbility">StdAbility</option><option value="StdBomb">StdBomb</option><option value="StdLanguage">StdLanguage</option><option value="StdPlanarAbility">StdPlanarAbility</option><option value="TemporaryAffects">TemporaryAffects</option><option value="Thief_Belay">Thief_Belay</option><option value="Thief_BuriedTreasure">Thief_BuriedTreasure</option><option value="Thief_ConcealDoor">Thief_ConcealDoor</option><option value="Thief_ConcealItem">Thief_ConcealItem</option><option value="Thief_ConcealPathway">Thief_ConcealPathway</option><option value="Thief_ConcealWalkway">Thief_ConcealWalkway</option><option value="Thief_Graverobbing">Thief_Graverobbing</option><option value="Thief_HideShip">Thief_HideShip</option><option value="Thief_MarkTrapped">Thief_MarkTrapped</option><option value="Thief_MerchantFlag">Thief_MerchantFlag</option><option value="Thief_MinorTrap">Thief_MinorTrap</option><option value="Thief_RammingSpeed">Thief_RammingSpeed</option><option value="Thief_SilentRunning">Thief_SilentRunning</option><option value="Thief_Smuggle">Thief_Smuggle</option><option value="Thief_TapRoom">Thief_TapRoom</option><option value="Thief_TarAndFeather">Thief_TarAndFeather</option><option value="Thief_Trap">Thief_Trap</option><option value="ThievesCant">ThievesCant</option><option value="ThinAbility">ThinAbility</option><option value="Trap_AcidSpray">Trap_AcidSpray</option><option value="Trap_Boomerang">Trap_Boomerang</option><option value="Trap_ElectricShock">Trap_ElectricShock</option><option value="Trap_Get">Trap_Get</option><option value="Trap_GetBlade">Trap_GetBlade</option><option value="Trap_GetGas">Trap_GetGas</option><option value="Trap_GetNeedle">Trap_GetNeedle</option><option value="Trap_GetSpell">Trap_GetSpell</option><option value="Trap_Gluey">Trap_Gluey</option><option value="Trap_Greasy">Trap_Greasy</option><option value="Trap_Ignition">Trap_Ignition</option><option value="Trap_Infected">Trap_Infected</option><option value="Trap_Launcher">Trap_Launcher</option><option value="Trap_Needle">Trap_Needle</option><option value="Trap_NeedlePrick">Trap_NeedlePrick</option><option value="Trap_Noise">Trap_Noise</option><option value="Trap_Open">Trap_Open</option><option value="Trap_OpenBlade">Trap_OpenBlade</option><option value="Trap_OpenGas">Trap_OpenGas</option><option value="Trap_OpenNeedle">Trap_OpenNeedle</option><option value="Trap_OpenSpell">Trap_OpenSpell</option><option value="Trap_PoisonGas">Trap_PoisonGas</option><option value="Trap_Popper">Trap_Popper</option><option value="Trap_SleepGas">Trap_SleepGas</option><option value="Trap_Spark">Trap_Spark</option><option value="Trap_SpellBlast">Trap_SpellBlast</option><option value="Trap_SporeTrap">Trap_SporeTrap</option><option value="Trap_Trap">Trap_Trap</option><option value="Trap_Unlock">Trap_Unlock</option><option value="Trap_UnlockBlade">Trap_UnlockBlade</option><option value="Trap_UnlockGas">Trap_UnlockGas</option><option value="Trap_UnlockNeedle">Trap_UnlockNeedle</option><option value="Trap_UnlockSpell">Trap_UnlockSpell</option><option value="Trap_Vanishing">Trap_Vanishing</option><option value="Trap_WeaponSwing">Trap_WeaponSwing</option><option value="TriggeredAffects">TriggeredAffects</option><option value="Undercommon">Undercommon</option><option value="UniPoison">UniPoison</option><option value="WolfSpeak">WolfSpeak</option><option value="WormSpeak">WormSpeak</option></select></td><td width="50%"><input type="TEXT" size="30" name="ADATA1" value=""></td></tr></tbody></table>
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Item Flags:</b></font></td>
+		<td width="450" colspan="2"><font color="WHITE">
+			<table border="0" cellpadding="0">
+			<tbody><tr><td width="50%"><font color="WHITE">
+			
+			<input type="CHECKBOX" name="ISGETTABLE" checked="">Is Gettable<br>
+			<input type="CHECKBOX" name="ISDROPPABLE" checked="">Is Droppable<br>
+			<input type="CHECKBOX" name="ISREMOVABLE" checked="">Is Removable<br>
+			<input type="CHECKBOX" name="ISINVISIBLE">Is Invisible<br>
+			<input type="CHECKBOX" name="ISHIDDEN">Is Hidden<br>
+			<input type="CHECKBOX" name="ISUNSEEN">Is Unseeable<br>
+			</font></td><td width="50%"><font color="WHITE">
+			<input type="CHECKBOX" name="ISBONUS">Is Magical<br>
+			<input type="CHECKBOX" name="ISLIGHT">Is Glowing (burning)<br>
+			<input type="CHECKBOX" name="ISEVIL">Is Evil<br>
+			<input type="CHECKBOX" name="ISGOOD">Is Good<br>
+			<input type="CHECKBOX" name="NONLOCATABLE">Hidden from Locate Object<br>
+			<input type="CHECKBOX" name="BLENDEDVIEW">Blended into Room Display<br>
+			
+			</font></td></tr></tbody></table>
+			</font>
+		</td>
+	</tr>
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Material:</b></font>
+		</td><td width="450" colspan="2">
+		<select name="MATERIALS">
+		<option value="1066">ADAMANTITE</option><option value="3242">AGATE</option><option value="4021">AIR</option><option value="2733">ALABASTER</option><option value="3207">ALEXANDRITE</option><option value="955">ALUMINUM</option><option value="3153">AMBER</option><option value="3151">AMETHYST</option><option value="3521">ANTIMATTER</option><option value="1807">APPLES</option><option value="3154">AQUAMARINE</option><option value="1951">ASH</option><option value="1185">ATLANTITE</option><option value="1327">BALSA</option><option value="1436">BAMBOO</option><option value="1917">BANANAS</option><option value="1887">BARLEY</option><option value="2705">BASALT</option><option value="1955">BEANS</option><option value="1420">BEECHWOOD</option><option value="2050">BEEF</option><option value="1808">BERRIES</option><option value="1908">BLACKBERRIES</option><option value="2903">BLOOD</option><option value="3205">BLOODSTONE</option><option value="1905">BLUEBERRIES</option><option value="2648">BONE</option><option value="1907">BOYSENBERRIES</option><option value="812">BRASS</option><option value="1898">BREAD</option><option value="803">BRONZE</option><option value="1814">CACTUS</option><option value="2199">CARP</option><option value="1802">CARROTS</option><option value="2203">CATFISH</option><option value="1417">CEDAR</option><option value="1954">CHEESE</option><option value="1913">CHERRIES</option><option value="1419">CHERRYWOOD</option><option value="1602">CHINA</option><option value="4026">CHLORINE</option><option value="942">CHROMIUM</option><option value="3155">CHRYSOBERYL</option><option value="3243">CITRINE</option><option value="1601">CLAY</option><option value="2649">COAL</option><option value="1878">COCOA</option><option value="1916">COCONUTS</option><option value="2892">COFFEE</option><option value="1867">COFFEEBEANS</option><option value="807">COPPER</option><option value="1800">CORN</option><option value="314">COTTON</option><option value="1899">CRACKER</option><option value="1956">CRANBERRIES</option><option value="1604">CRYSTAL</option><option value="1815">DATES</option><option value="456">DENIM</option><option value="3763">DEUTERIUM</option><option value="3266">DIAMELS</option><option value="3139">DIAMOND</option><option value="3013">DIESEL</option><option value="3273">DILITHIUM</option><option value="2765">DIRT</option><option value="2981">DRAGONBLOOD</option><option value="2214">DRAGONMEAT</option><option value="944">DRAGONSCALES</option><option value="959">DURANIUM</option><option value="2669">DUST</option><option value="2662">EBONY</option><option value="2121">EGGS</option><option value="3506">ELECTRICITY</option><option value="1418">ELM</option><option value="3240">EMERALD</option><option value="3439">ENERGY</option><option value="313">FEATHERS</option><option value="3773">FIBREGLASS</option><option value="2054">FISH</option><option value="2587">FLINT</option><option value="4024">FLOURINE</option><option value="1891">FLOWERS</option><option value="1806">FRUIT</option><option value="1998">FUNGUS</option><option value="309">FUR</option><option value="1914">GARLIC</option><option value="3152">GARNET</option><option value="3012">GASOLINE</option><option value="3141">GEM</option><option value="1599">GLASS</option><option value="805">GOLD</option><option value="2588">GRANITE</option><option value="1811">GRAPES</option><option value="1805">GREENS</option><option value="315">HEMP</option><option value="1889">HERBS</option><option value="1331">HICKORY</option><option value="311">HIDE</option><option value="2910">HONEY</option><option value="1866">HOPS</option><option value="4023">HYDROGEN</option><option value="801">IRON</option><option value="1364">IRONWOOD</option><option value="2663">IVORY</option><option value="3104">JADE</option><option value="2906">LAMP OIL</option><option value="3204">LAPIS</option><option value="802">LEAD</option><option value="566">LEATHER</option><option value="1810">LEMONS</option><option value="1918">LIMES</option><option value="2586">LIMESTONE</option><option value="2878">LIQUID</option><option value="2908">LIQUOR</option><option value="1329">MAPLE</option><option value="2590">MARBLE</option><option value="2049">MEAT</option><option value="1424">MESQUITE</option><option value="2888">MILK</option><option value="1065">MITHRIL</option><option value="3206">MOONSTONE</option><option value="1888">MUSHROOMS</option><option value="2053">MUTTON</option><option value="976">NICKEL</option><option value="4025">NITROGEN</option><option value="0">NOTHING</option><option value="1897">NUTS</option><option value="1328" selected="">OAK</option><option value="2589">OBSIDIAN</option><option value="1812">OLIVES</option><option value="1912">ONIONS</option><option value="3200">ONYX</option><option value="3149">OPAL</option><option value="1809">ORANGES</option><option value="4022">OXYGEN</option><option value="975">PALLADIUM</option><option value="2368">PAPER</option><option value="1910">PEACHES</option><option value="3142">PEARL</option><option value="1804">PEPPERS</option><option value="2976">PERFUME</option><option value="3202">PERIDOT</option><option value="3011">PETROLEUM</option><option value="1326">PINE</option><option value="1915">PINEAPPLES</option><option value="1902">PIPEWEED</option><option value="3505">PLASMA</option><option value="3684">PLASTIC</option><option value="839">PLATINUM</option><option value="1911">PLUMS</option><option value="2907">POISON</option><option value="455">POLYESTER</option><option value="2051">PORK</option><option value="1813">POTATOES</option><option value="2052">POULTRY</option><option value="2707">PUMICE</option><option value="3203">QUARTZ</option><option value="1906">RASPBERRIES</option><option value="1330">REDWOOD</option><option value="1452">REED</option><option value="1801">RICE</option><option value="3685">RUBBER</option><option value="3239">RUBY</option><option value="2198">SALMON</option><option value="2763">SALT</option><option value="2877">SALT WATER</option><option value="2591">SAND</option><option value="2708">SANDSTONE</option><option value="2943">SAP</option><option value="3241">SAPPHIRE</option><option value="564">SCALES</option><option value="1816">SEAWEED</option><option value="2706">SHALE</option><option value="2201">SHRIMP</option><option value="2758">SILICON</option><option value="341">SILK</option><option value="804">SILVER</option><option value="2996">SLIME</option><option value="1909">SMURFBERRIES</option><option value="1949">SOAP</option><option value="2709">SOAPSTONE</option><option value="1996">SPICE</option><option value="414">SPIDERSTEEL</option><option value="1423">SPRUCE</option><option value="811">STEEL</option><option value="2585">STONE</option><option value="1904">STRAWBERRIES</option><option value="1885">SUGAR</option><option value="1422">SYCAMORE</option><option value="3018">TAR</option><option value="1416">TEAK</option><option value="808">TIN</option><option value="956">TITANIUM</option><option value="1803">TOMATOES</option><option value="3150">TOPAZ</option><option value="2200">TROUT</option><option value="2202">TUNA</option><option value="3201">TURQUOISE</option><option value="958">ULTRANIUM</option><option value="2752">URANIUM</option><option value="2001">VEGETABLE</option><option value="1890">VINE</option><option value="2876">WATER</option><option value="2152">WAX</option><option value="1799">WHEAT</option><option value="943">WHITE GOLD</option><option value="1421">WILLOW</option><option value="1325">WOOD</option><option value="312">WOOL</option><option value="1388">YEW</option><option value="806">ZINC
+		</option></select>
+		</td>
+	</tr>
+	
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Secret Identity:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="SECRETIDENTITY" size="60" maxlength="255" value=""></td>
+	</tr>
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+
+	
+	
+
+	
+	
+
+	
+	
+	
+	
+	
+		
+			
+				
+					<tr>
+						<td width="150"><font color="#66FFFF"><b>Is Readable:</b></font></td>
+						<td width="450" colspan="2"><input type="CHECKBOX" onclick="ReShow();" name="ISREADABLE"></td>
+					</tr>
+					
+					<tr>
+						<td width="150"><font color="#66FFFF"><b>
+						Uses Code:</b></font></td>
+						<td width="450" colspan="2"><input type="TEXT" name="USESREMAIN" size="5" value="2147483647">
+						</td>
+					</tr>
+				
+			
+		
+	
+	
+	<tr>
+		<td width="150"><font color="#66FFFF"><b>Magic Level:</b></font></td>
+		<td width="450" colspan="2"><input type="TEXT" name="ABILITY" size="5" value="0">
+		</td>
+	</tr>
+	
+
+
+
+	
+	
+	
+	
+
+
+
+
+
+<tr>
+	<td><font color="#66FFFF"><b>Tags:</b></font>
+	</td>
+    <td colspan="2">
+    <input type="TEXT" name="TAGS" size="30" value="">
+    <font size="-1"><i>Semicolon delimited</i>
+    </font></td>
+</tr>
+
+<tr>
+<td width="600" colspan="3" align="CENTER">
+    
+	    
+        	<input type="SUBMIT" name="FINISHED" value="Finished">
+        
+    
+</td>
+</tr>
+</tbody></table>
+</form>
+</center>
+
+
+
+
+</body></html>

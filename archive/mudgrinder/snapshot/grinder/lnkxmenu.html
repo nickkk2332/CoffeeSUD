@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function Clicked(action)
+		{
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+
+		function Clicked2(action)
+		{
+			document.AREAEDIT.CLASSES.value='Open';
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+
+		function LinkExternally(action)
+		{
+			document.AREAEDIT.target='MENU';
+			document.AREAEDIT.action=action;
+			document.AREAEDIT.submit();
+		}
+	//-->
+	</script>
+</head>
+<body>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="editarea.html">
+
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<input type="HIDDEN" name="ROOM" value="New Area#0">
+<input type="HIDDEN" name="LINK" value="N">
+<input type="HIDDEN" name="LINKSTO" value="">
+<input type="HIDDEN" name="CLASSES" value="">
+<input type="HIDDEN" name="OLDROOM" value="">
+<input type="HIDDEN" name="OLDLINK" value="">
+<img src="images/grinder.gif" width="80" height="80" alt="" align="LEFT" border="0">
+<b>Unused N Exit From New Area#0 (New Room)</b>
+<br>
+
+<input type="BUTTON" name="LINKTOAREA" value="Link Areas" onclick="LinkExternally('/grinder/linkarea.cmvp');">
+
+<input type="BUTTON" name="NEWROOM" value="Create New Room" onclick="Clicked('/grinder/createroom.cmvp');">
+<input type="BUTTON" name="NEWEXIT" value="Create Unlinked Exit" onclick="Clicked2('/grinder/editexitform.cmvp');">
+<input type="CHECKBOX" name="COPYROOM"><font size="-1"><b>Copy New Area#0</b></font>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="BUTTON" name="CANCEL" value="Cancel" onclick="Clicked('/grinder/modarea.cmvp');"><p></p>
+
+
+
+
+</form></body></html>

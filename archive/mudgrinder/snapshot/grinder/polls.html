@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+    <link rel="grinder icon" href="../images/grinder.ico">
+    <link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+    <title>Polls List</title>
+    <script language="JavaScript">
+    <!--
+        function Poll(action)
+        {
+            var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=500,width=650,alwaysRaised=yes,dependent=yes";
+            w=window.open("poll.cmvp?POLL="+action,
+            	"Poll",strFeatures, false);
+        }
+        function Clicked(action)
+        {
+            document.RESOURCES.action=action;
+            document.RESOURCES.submit();
+        }
+        function Refresh()
+        {
+            document.RESOURCES.action="polls.html";
+            document.RESOURCES.submit();
+        }
+    //-->
+    </script>
+</head>
+<body bgcolor="BLACK">
+    <table width="100%" border="0">
+    <tbody><tr>
+    <td width="33%" align="LEFT" valign="TOP"></td>
+    <td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+    <td width="33%" align="RIGHT" valign="TOP">
+        <table width="50%" border="1">
+        <tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+        <tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+        <tr><td><a href="javascript:Refresh();"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+        </tbody></table>
+    </td>
+    </tr>
+    </tbody></table>
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="polls.html">
+
+    <table width="100%" border="1">
+    <tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Poll Manager</h2></font></td></tr>
+	<tr>
+    <td width="25%"><b><font color="YELLOW">Name</font></b></td>
+    <td width="40%"><b><font color="YELLOW">Header</font></b></td>
+    <td width="21%"><b><font color="YELLOW">Expires</font></b></td>
+    <td width="7%"><b><font color="YELLOW">Options</font></b></td>
+    <td width="7%"><b><font color="YELLOW">Results</font></b></td>
+    </tr>
+    
+    
+    <tr>
+    <td colspan="5">
+    	<a href="javascript:if(document.RESOURCES.NEWPOLL.value!='')Poll(document.RESOURCES.NEWPOLL.value+'&amp;NEWPOLL='+document.RESOURCES.NEWPOLL.value)">
+    	<font color="CYAN"><b><u>Create New:</u></b></font></a><font color="CYAN"><b> <input type="TEXT" name="NEWPOLL" size="70"></b></font>
+    </td>
+    </tr>
+    </tbody></table>
+    <p>
+    <table width="100%" border="0">
+    <tbody><tr>
+    <td width="33%" align="CENTER">
+    </td>
+    <td align="CENTER"><input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();"></td>
+    <td width="33%" align="CENTER">
+    </td>
+    </tr>
+    </tbody></table>
+    </p><center>
+    </center>
+</form>
+
+
+
+
+</center></body></html>

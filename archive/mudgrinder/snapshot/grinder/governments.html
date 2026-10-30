@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Clan Governments List</title>
+	<script language="JavaScript">
+	<!--
+		function Government(action)
+		{
+			var strFeatures="top=0,left=75,resizeable=no,scrollbars=yes,height=600,width=785,alwaysRaised=yes,dependent=yes";
+			w=window.open("government.cmvp?GOVERNMENT="+action,
+				"Government",strFeatures, false);
+		}
+		function Clicked(action)
+		{
+			document.RESOURCES.action=action;
+			document.RESOURCES.submit();
+		}
+		function Refresh()
+		{
+			document.RESOURCES.action="governments.html";
+			document.RESOURCES.submit();
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><a href="javascript:Clicked('/grinder/clans.cmvp');"><font color="WHITE" size="-1"><b>Clan Manager</b></font></a></td></tr>
+		<tr><td><a href="javascript:Refresh();"><font color="WHITE" size="-1"><b>Refresh Page</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+<center>
+<form accept-charset="UTF-8" name="RESOURCES" target="_top" method="POST" action="governments.html">
+
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Clan Governments</h2></font></td></tr>
+	<tr>
+	<td width="5%"><b><font color="YELLOW">#</font></b></td>
+	<td width="25%"><b><font color="YELLOW">Name</font></b></td>
+	<td width="70%"><b><font color="YELLOW">Description</font></b></td>
+	</tr>
+	
+	
+	
+	<tr>
+	<td><a href="javascript:Government('0')"><font color="#FFFF8F"><u><b>0</b></u></font></a></td>
+	<td><font color="WHITE">GANG</font></td>
+	<td><font color="WHITE">ruled by a boss who assigns underlings</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('1')"><font color="#FFFF8F"><u><b>1</b></u></font></a></td>
+	<td><font color="WHITE">GUILD</font></td>
+	<td><font color="WHITE">ruled by a numerous bosses who assign underlings</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('2')"><font color="#FFFF8F"><u><b>2</b></u></font></a></td>
+	<td><font color="WHITE">UNION</font></td>
+	<td><font color="WHITE">ruled by an elected set of leaders and staff</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('3')"><font color="#FFFF8F"><u><b>3</b></u></font></a></td>
+	<td><font color="WHITE">FELLOWSHIP</font></td>
+	<td><font color="WHITE">all decisions and staff are set through the vote</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('4')"><font color="#FFFF8F"><u><b>4</b></u></font></a></td>
+	<td><font color="WHITE">THEOCRACY</font></td>
+	<td><font color="WHITE">clerics rule, can conquer through conversion</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('5')"><font color="#FFFF8F"><u><b>5</b></u></font></a></td>
+	<td><font color="WHITE">FAMILY</font></td>
+	<td><font color="WHITE">patron/matron rules a private group only family can join</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('6')"><font color="#FFFF8F"><u><b>6</b></u></font></a></td>
+	<td><font color="WHITE">ANARCHY</font></td>
+	<td><font color="WHITE">anyone can join, anyone can do anything</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('7')"><font color="#FFFF8F"><u><b>7</b></u></font></a></td>
+	<td><font color="WHITE">PROFESSION</font></td>
+	<td><font color="WHITE">a clan for professions that should also grant a class to members</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('8')"><font color="#FFFF8F"><u><b>8</b></u></font></a></td>
+	<td><font color="WHITE">CO-OP</font></td>
+	<td><font color="WHITE">neither boss can tax, order underlings, or do clan relations</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('9')"><font color="#FFFF8F"><u><b>9</b></u></font></a></td>
+	<td><font color="WHITE">MERITOCRACY</font></td>
+	<td><font color="WHITE">ruled by those who donate the most XP to their clan</font></td>
+	</tr>
+	
+	
+	<tr>
+	<td><a href="javascript:Government('10')"><font color="#FFFF8F"><u><b>10</b></u></font></a></td>
+	<td><font color="WHITE">PLUTOCRACY</font></td>
+	<td><font color="WHITE">ruled by those who donate the most money to the clan</font></td>
+	</tr>
+	
+	<tr>
+	<td colspan="5"><a href="javascript:if(document.RESOURCES.GOVTNAME.value!='')Government('_NEWONE_&amp;NAME='+document.RESOURCES.GOVTNAME.value)">
+		<font color="CYAN"><b><u>Create New:</u></b></font></a><font color="CYAN"><b> <input type="TEXT" name="GOVTNAME" size="70"></b></font>
+	</td>
+	</tr>
+	</tbody></table>
+	<p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="CENTER">
+	</td>
+    <td align="CENTER"><input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();"></td>
+	<td width="33%" align="CENTER">
+	</td>
+	</tr>
+	</tbody></table>
+	</p><center>
+	</center>
+</form>
+
+
+
+
+</center></body></html>

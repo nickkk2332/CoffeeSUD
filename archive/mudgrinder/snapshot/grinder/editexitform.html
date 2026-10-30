@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+	<!-- tell spiders to sod off -->
+	<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+	<title>CoffeeMud MUDGrinder</title>
+	<script language="JavaScript">
+	<!--
+		function EditBehavior(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddBehavior(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function EditAffect(ME)
+		{
+			if(ME.selectedIndex==0)
+				ReShow();
+		}
+		function AddAffect(ME)
+		{
+			if(ME.selectedIndex>0)
+				ReShow();
+		}
+		function ChangedClass()
+		{
+			document.AREAEDIT.CHANGEDCLASS.value="true";
+			ReShow();
+		}
+		function ReShow()
+		{
+			document.AREAEDIT.action="editexitform.html";
+			//document.AREAEDIT.target='MAP';
+			document.AREAEDIT.submit();
+		}
+	//-->
+	</script>
+</head>
+<body>
+<center>
+<h3>Modify N Exit from 'New Area#0'.</h3>
+<p><font color="RED"></font></p><h1></h1>
+<br>
+<form accept-charset="UTF-8" name="AREAEDIT" target="_top" method="POST" action="../notcaptured.html#/grinder/editexitdone.cmvp">
+
+<input type="HIDDEN" name="ROOM" value="New Area#0">
+<input type="HIDDEN" name="CHANGEDCLASS" value="">
+<input type="HIDDEN" name="LINK" value="N">
+<input type="HIDDEN" name="AREA" value="New Area">
+<input type="HIDDEN" name="MAPSTYLE" value="">
+<input type="HIDDEN" name="MAPLEVEL" value="">
+<input type="HIDDEN" name="ACTION" value="MODIFYEXIT">
+<table width="600" border="1" cellspacing="0" cellpadding="0">
+<tbody><tr>
+	<td width="150"><font color="#66FFFF"><b>Exit Class:</b></font></td>
+    <td width="450" colspan="2">
+	<select name="CLASSES" onchange="ChangedClass();">
+	<option value="AjarDoor">AjarDoor</option><option value="ClimbableExit">ClimbableExit</option><option value="Door">Door</option><option value="FlyingExit">FlyingExit</option><option value="GapExit">GapExit</option><option value="Gate">Gate</option><option value="GenAirLock">GenAirLock</option><option value="GenCurtain">GenCurtain</option><option value="GenDoor">GenDoor</option><option value="GenExit">GenExit</option><option value="Grate">Grate</option><option value="HiddenClosedDoorway">HiddenClosedDoorway</option><option value="HiddenWalkway">HiddenWalkway</option><option value="Impassable">Impassable</option><option value="LockedDoor">LockedDoor</option><option value="LockedGate">LockedGate</option><option value="NamedRedirectable">NamedRedirectable</option><option value="NeedleDoor">NeedleDoor</option><option value="Open">Open</option><option value="OpenDescriptable">OpenDescriptable</option><option value="OpenNameable">OpenNameable</option><option value="OpenPrepositional">OpenPrepositional</option><option value="PitOpen">PitOpen</option><option value="Skyway">Skyway</option><option value="StdClosedDoorway">StdClosedDoorway</option><option value="StdExit">StdExit</option><option value="StdLockedDoorway">StdLockedDoorway</option><option value="StdOpenDoorway" selected="">StdOpenDoorway</option><option value="TrappedDoor">TrappedDoor</option><option value="TrappedLockedDoor">TrappedLockedDoor</option><option value="UnseenWalkway">UnseenWalkway
+	</option></select>
+	</td>
+</tr>
+
+<tr>
+	<td width="150"><font color="#66FFFF"><b>Parameters:</b></font></td>
+    <td width="450" colspan="2"><input type="TEXT" name="MISCTEXT" size="60" maxlength="255" value=""></td>
+</tr>
+
+
+<tr>
+    <td width="600" colspan="3" align="CENTER">
+	<input type="SUBMIT" name="FINISHED" value="Finished">
+	
+	</td>
+</tr>
+<tr>
+    <td width="600" colspan="3" align="CENTER">
+	<input type="CHECKBOX" name="MAKESAME">Duplicate in Opposite exit.
+	
+	</td>
+</tr>
+</tbody></table>
+</form>
+</center>
+
+
+
+
+</body></html>

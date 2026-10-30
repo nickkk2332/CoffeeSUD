@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><script src="../shim.js"></script><meta http-equiv="Pragma" content="no-cache">
+
+
+
+	<meta charset="utf-8">
+
+ 	<link rel="grinder icon" href="../images/grinder.ico">
+ 	<link rel="STYLESHEET" type="TEXT/CSS" href="grinder.css">
+	<title>Manage Quests/Scripts</title>
+	<script language="JavaScript">
+	<!--
+		function Browse(named)
+		{
+			var strFeatures="top=200,left=50,scrollbars=yes,resizeable=yes,height=400,width=250,alwaysRaised=yes,dependent=yes";
+			var w2=window.open("/grinder/browse.cmvp?PATH="+named,"Browse",strFeatures,false);
+		}
+		function Refresh()
+		{
+			document.QUESTS.QUEST.value="";
+			document.QUESTS.FUNCTION.value="";
+			document.QUESTS.action="quests.html";
+			document.QUESTS.submit();
+		}
+		function Quest(action)
+		{
+			var strFeatures="top=0,left=75,resizeable=yes,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("quest.cmvp?QUEST="+action,
+				"Quest",strFeatures, false);
+		}
+		function QuestWizard(action)
+		{
+			var strFeatures="top=0,left=75,resizeable=yes,scrollbars=yes,height=600,width=650,alwaysRaised=yes,dependent=yes";
+			w=window.open("questmaker.cmvp",
+				"Quest",strFeatures, false);
+		}
+		function Clicked(quest, action)
+		{
+			if((action=='DELETE')&&(!confirm('Confirm: Delete this quest?')))
+				return;
+			document.QUESTS.QUEST.value=quest;
+			document.QUESTS.FUNCTION.value=action;
+			document.QUESTS.action="quests.html";
+			document.QUESTS.submit();
+		}
+		function Clicked2(action)
+		{
+			Load(action);
+		}
+		function Load(action)
+		{
+			document.QUESTS.QUEST.value="";
+			document.QUESTS.FUNCTION.value="";
+			document.QUESTS.action=action;
+			document.QUESTS.submit();
+		}
+	//-->
+	</script>
+</head>
+<body bgcolor="BLACK">
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="LEFT" valign="TOP"></td>
+	<td width="33%" align="CENTER" valign="TOP"><img src="images/grinder.gif" width="78" height="122" alt="" border="0"></td>
+	<td width="33%" align="RIGHT" valign="TOP">
+		<table width="50%" border="1">
+		<tbody><tr><td bgcolor="WHITE" align="CENTER"><font color="BLACK" size="-1"><b>Menu</b></font></td></tr>
+		<tr><td><a href="javascript:Load('/grinder/loggedin.cmvp');"><font color="WHITE" size="-1"><b>MUDGrinder Menu</b></font></a></td></tr>
+		<tr><td><a href="javascript:QuestWizard();"><font color="WHITE" size="-1"><b>Quest Maker Wizard</b></font></a></td></tr>
+		<tr><td><a href="javascript:Quest('');"><font color="WHITE" size="-1"><b>New Quest Script</b></font></a></td></tr>
+		<tr><td><a href="javascript:Browse('/resources/quests/');"><font color="WHITE" size="-1"><b>Browse Quest Scripts</b></font></a></td></tr>
+		<tr><td><a href="javascript:Refresh();"><font color="WHITE" size="-1"><b>Refresh</b></font></a></td></tr>
+		</tbody></table>
+	</td>
+	</tr>
+	</tbody></table>
+<center>
+<form accept-charset="UTF-8" name="QUESTS" target="_top" method="POST" action="quests.html">
+
+<input type="HIDDEN" name="QUEST" value="">
+<input type="HIDDEN" name="FUNCTION" value="">
+	
+	<table width="100%" border="1">
+	<tbody><tr><td width="100%" colspan="6" bgcolor="WHITE" align="CENTER"><font color="BLACK"><h2>CoffeeMud CoffeeMud-MainServer/5.11.0.1 Quests Manager</h2></font></td></tr>
+	<tr>
+	<td width="35%"><b><font color="YELLOW">Name</font></b></td>
+	<td width="15%"><b><font color="YELLOW">Area</font></b></td>
+	<td width="30%"><b><font color="YELLOW">Status</font></b></td>
+	<td width="20%"><b><font color="YELLOW">Control</font></b></td>
+	
+	</tr>
+	
+	
+	<tr>
+	
+	<td>
+		
+		<a href="javascript:Quest('holidays')"><font color="#FFFF8F"><u><b>holidays</b></u></font></a>
+	</td>
+	<td><font color="WHITE"><b></b></font></td>
+	<td><font color="WHITE">
+    
+        
+            
+                Waiting (8 minutes left)
+            
+        
+    
+	</font>
+	</td>
+	<td>
+    
+        
+            <input type="BUTTON" name="Start" value="Start" onclick="Clicked('com.planet_ink.coffee_mud.Common.DefaultQuest*f568212','START');">
+        
+        <input type="BUTTON" name="Disable" value="Disable" onclick="Clicked('com.planet_ink.coffee_mud.Common.DefaultQuest*f568212','DISABLE');">
+    
+	<input type="BUTTON" name="Delete" value="Delete" onclick="Clicked('com.planet_ink.coffee_mud.Common.DefaultQuest*f568212','DELETE');">
+	</td>
+	</tr>
+	
+	</tbody></table>
+	<p>
+	<table width="100%" border="0">
+	<tbody><tr>
+	<td width="33%" align="CENTER">
+		<input type="BUTTON" name="Create" value="New Quest" onclick="Quest('');">
+	</td>
+	<td width="33%" align="CENTER">
+		<input type="BUTTON" name="CreateWizard" value="Quest Wizard" onclick="QuestWizard('');">
+	</td>
+	<td width="33%" align="CENTER">
+		<input type="BUTTON" name="REFRESH" value="Refresh" onclick="Refresh();">
+	</td>
+	</tr>
+	</tbody></table>
+	</p><center>
+	</center>
+</form>
+
+
+
+
+</center></body></html>
