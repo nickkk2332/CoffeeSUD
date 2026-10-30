@@ -18,6 +18,8 @@ tools/engine-tests.sh     # the engine's TEST ALL suite, about 15 minutes
 
 On Windows, `CoffeeMud\build.bat` and `CoffeeMud\sud.bat` do the same as
 the first two. `build.bat` always compiles from clean; run it after pulling.
+Both find Java through `findjava.bat`: the JDK in `JAVA_HOME` first, then each
+`javac` on PATH, skipping any that do not run.
 
 `sud.sh` takes `NAME=VALUE` arguments that override `coffeemud.ini`, for
 example `DBSERVICE=jdbc:fakedb:/some/scratch/copy` to play against a copy of
@@ -87,9 +89,11 @@ Still to do:
   `DefaultSession`, leaving a plain text session. The console session already
   never turns them on, so this is cleanup rather than behaviour.
 - the telnet listener in `MUD.run`, and with it `tools/mudserver.sh` and
-  `tools/mudbot.py`.
-- host groups: `CMLib` and `CMClass` keep one instance per thread group so
-  several muds can share a process. One game needs one instance.
+  `tools/mudbot.py`, unless several windows (phase 5) need a local-only
+  listener.
+- host groups: `CMLib` and `CMClass` keep one set of libraries and classes
+  per thread group, so that several separate muds, each with its own world and
+  ini file, can run in one Java process. One game needs one set.
 
 ### 3. One thread and a game clock
 
@@ -98,8 +102,10 @@ Still to do:
 - Add a game clock and move game logic off `System.currentTimeMillis()`
   (about 1,500 calls in 400 files; log timestamps and I/O timeouts stay on the
   wall clock). Cooldowns and timers then survive pausing and reloading.
-- Pause, and optionally a turn-based mode where time advances only with the
-  player's actions.
+- Both time models, chosen by a setting. The default is real time with pause:
+  the world runs on its 4-second tick, and pausing (also while saving) stops
+  it. Turn-based mode advances the world only when the player acts, by the
+  ticks that action costs.
 - Seed the dice so a session can be replayed.
 
 ### 4. Save games
@@ -121,6 +127,14 @@ Accounts, channels, clans, polls, journals, mail, auctions, who lists and
 player killing assume other people. Each is removed or turned into its
 NPC-facing half (hirelings, an NPC auctioneer, notice boards).
 
+Several characters at once fits here. The engine already runs many player
+characters in one world, so this is mostly interface and saving:
+- a party in one window: a command moves the console to another of your
+  characters, and the rest stay in the world, following or waiting;
+- optionally one window per character, all in the same world, through a
+  connection that only accepts this machine.
+A save then holds every character in the party.
+
 ### 6. Content
 
 The shipped world is two rooms. Options: the example areas in
@@ -129,8 +143,10 @@ hand-built starting area.
 
 ## Open decisions
 
-- **Time model:** real time with pause, turn-based, or a switch between them.
-  Phase 3 makes all three possible; the default is a design choice.
+- **Time model (decided):** both, by a setting; real time with pause is the
+  default.
+- **Several characters:** a switchable party in one window, separate windows,
+  or both.
 - **Interface:** terminal only, or a graphical or web front end later on the
   same session code.
 
