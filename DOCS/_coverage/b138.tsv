@@ -1,0 +1,12 @@
+# b138 core/database [part 1/2: DatabaseEngine .. DDLGenerator]
+file	lines
+com/planet_ink/coffee_mud/Libraries/interfaces/DatabaseEngine.java	3409
+com/planet_ink/coffee_mud/core/database/DDLGenerator.java	1880
+com/planet_ink/coffee_mud/core/database/DBInterface.java	1822
+com/planet_ink/coffee_mud/core/database/DBConnections.java	1168
+com/planet_ink/coffee_mud/core/database/DBConnection.java	811
+com/planet_ink/coffee_mud/core/database/ADataLoader.java	733
+com/planet_ink/coffee_mud/core/database/BackLogLoader.java	628
+com/planet_ink/coffee_mud/core/database/DBConnector.java	560
+com/planet_ink/coffee_mud/core/database/ClanLoader.java	314
+com/planet_ink/coffee_mud/core/database/DBCopyConversions.java	171

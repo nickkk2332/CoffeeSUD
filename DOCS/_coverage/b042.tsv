@@ -1,0 +1,24 @@
+# b042 Abilities/Common [part 1/7: Alchemy .. Branding]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Common/BookLoaning.java	1776
+com/planet_ink/coffee_mud/Abilities/Common/Blacksmithing.java	657
+com/planet_ink/coffee_mud/Abilities/Common/Alchemy.java	644
+com/planet_ink/coffee_mud/Abilities/Common/Armorsmithing.java	600
+com/planet_ink/coffee_mud/Abilities/Common/Boatwright.java	572
+com/planet_ink/coffee_mud/Abilities/Common/BodyPiercing.java	395
+com/planet_ink/coffee_mud/Abilities/Common/Branding.java	360
+com/planet_ink/coffee_mud/Abilities/Common/AnimalTraining.java	346
+com/planet_ink/coffee_mud/Abilities/Common/AttributeTraining.java	310
+com/planet_ink/coffee_mud/Abilities/Common/Baiting.java	306
+com/planet_ink/coffee_mud/Abilities/Common/AnimalTrapping.java	305
+com/planet_ink/coffee_mud/Abilities/Common/BookNaming.java	282
+com/planet_ink/coffee_mud/Abilities/Common/AnimalHusbandry.java	281
+com/planet_ink/coffee_mud/Abilities/Common/AnimalTaming.java	259
+com/planet_ink/coffee_mud/Abilities/Common/ArtisanalFocus.java	256
+com/planet_ink/coffee_mud/Abilities/Common/Apothecary.java	242
+com/planet_ink/coffee_mud/Abilities/Common/BookEditing.java	235
+com/planet_ink/coffee_mud/Abilities/Common/AnimalBonding.java	209
+com/planet_ink/coffee_mud/Abilities/Common/Bandaging.java	200
+com/planet_ink/coffee_mud/Abilities/Common/AnimalTrading.java	199
+com/planet_ink/coffee_mud/Abilities/Common/Baking.java	117
+com/planet_ink/coffee_mud/Abilities/Common/BlackMarketeering.java	87

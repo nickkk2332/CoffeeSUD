@@ -1,0 +1,10 @@
+# b005 Standalone applications and tools
+file	lines
+com/planet_ink/coffee_mud/application/MUDProxy.java	2521
+com/planet_ink/coffee_mud/application/UpgradeTool.java	1981
+com/planet_ink/coffee_mud/application/VFShell.java	1309
+com/planet_ink/coffee_mud/application/AutoPlayTester.java	629
+com/planet_ink/coffee_mud/application/OffLine.java	618
+com/planet_ink/coffee_mud/application/I3Router.java	475
+com/planet_ink/coffee_mud/application/LocalizationHelper.java	471
+com/planet_ink/coffee_mud/application/RebuildRefDocs.java	135

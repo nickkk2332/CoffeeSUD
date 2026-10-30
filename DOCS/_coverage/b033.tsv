@@ -1,0 +1,12 @@
+# b033 Journals, channels and socials
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMJournals.java	2389
+com/planet_ink/coffee_mud/Libraries/Socials.java	1268
+com/planet_ink/coffee_mud/Libraries/CMChannels.java	1234
+com/planet_ink/coffee_mud/Common/DefaultSocial.java	1062
+com/planet_ink/coffee_mud/Libraries/interfaces/JournalsLibrary.java	857
+com/planet_ink/coffee_mud/Libraries/interfaces/ChannelsLibrary.java	521
+com/planet_ink/coffee_mud/Common/DefaultJournalEntry.java	473
+com/planet_ink/coffee_mud/Common/interfaces/Social.java	422
+com/planet_ink/coffee_mud/Common/interfaces/JournalEntry.java	339
+com/planet_ink/coffee_mud/Libraries/interfaces/SocialsList.java	229

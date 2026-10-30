@@ -1,0 +1,19 @@
+# b062 Abilities/Languages [part 1/2: AlligatorSpeak .. Draconic]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Languages/Draconic.java	10325
+com/planet_ink/coffee_mud/Abilities/Languages/AnimalSpeak.java	142
+com/planet_ink/coffee_mud/Abilities/Languages/Common.java	105
+com/planet_ink/coffee_mud/Abilities/Languages/Aquan.java	87
+com/planet_ink/coffee_mud/Abilities/Languages/Blah.java	80
+com/planet_ink/coffee_mud/Abilities/Languages/ApeSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/BatSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/BigCatSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/BirdSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/CatSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/ChickenSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/ChimpSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/CowSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/DeerSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/DogSpeak.java	67
+com/planet_ink/coffee_mud/Abilities/Languages/AlligatorSpeak.java	61
+com/planet_ink/coffee_mud/Abilities/Languages/BearSpeak.java	61

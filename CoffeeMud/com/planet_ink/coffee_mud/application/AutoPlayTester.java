@@ -1,0 +1,629 @@
+package com.planet_ink.coffee_mud.application;
+import java.util.*;
+import java.io.*;
+import java.net.*;
+import java.util.regex.*;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptableObject;
+
+import com.planet_ink.coffee_mud.Common.interfaces.Session;
+import com.planet_ink.coffee_mud.core.CMStrings;
+/*
+   Copyright 2010-2025 Bo Zimmerman
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+/**
+ * A simple telnet client that can be scripted using javascript
+ * to automate testing of a CoffeeMud server.
+ * Usage: AutoPlayTester [host] [port] [character name] [script path]
+ * The script path should point to a javascript file.
+ *
+ * @author Bo Zimmerman
+ *
+ */
+public class AutoPlayTester
+{
+	private Socket						sock			= null;
+	private BufferedReader				in				= null;
+	private BufferedWriter				out				= null;
+	private final LinkedList<String>	inbuffer		= new LinkedList<String>();
+	private final LinkedList<String>	outbuffer		= new LinkedList<String>();
+	private final LinkedList<String>	gmcpMessages	= new LinkedList<String>();
+	private String						name			= "boobie";
+	private String						host			= "localhost";
+	private int							port			= 5555;
+	private String						filename		= "resources/autoplayer/autoplay.js";
+	private int							lastc			= 0;
+	private int							telnetState		= 0;
+	private int							telnetCommand	= -1;
+	private int							telnetOption	= -1;
+
+	private static final PrintStream	outStream = System.out;
+
+	/**
+	 * Constructs a new AutoPlayTester object
+	 *
+	 * @param host the host to connect to
+	 * @param port the port to connect to
+	 * @param charName the character name to use
+	 * @param script the script file path to use
+	 */
+	public AutoPlayTester(final String host, final int port, final String charName, final String script)
+	{
+		this.host=host;
+		this.port=port;
+		this.name=CMStrings.capitalizeAndLower(charName);
+		this.filename=script;
+	}
+
+	/**
+	 * Fills the input buffer with any available data from the socket. Handles
+	 * telnet negotiation and GMCP messages.
+	 *
+	 * @return the input buffer
+	 * @throws IOException if an I/O error occurs
+	 */
+	public LinkedList<String> bufferFill() throws IOException
+	{
+		int c;
+		final StringBuffer buf=new StringBuffer("");
+		final StringBuffer telnetSubBuf = new StringBuffer("");
+		try
+		{
+			while((c=in.read()) >=0)
+			{
+				switch(telnetState)
+				{
+				case 0:
+					if(c==Session.TELNET_IAC)
+						telnetState=1;
+					else
+					{
+						if(c==13 || c==10)
+						{
+							if((c==13 && lastc != 10)
+							||(c==10 && lastc != 13))
+							{
+								inbuffer.add(globalReactionary(buf.toString()));
+								buf.setLength(0);
+							}
+						}
+						else
+							buf.append((char)c);
+						lastc=c;
+					}
+					break;
+				case 1: // IAC seen
+					switch(c)
+					{
+					case Session.TELNET_IAC:
+						{
+							buf.append((char)Session.TELNET_IAC);
+							lastc=Session.TELNET_IAC;
+							telnetState=0;
+							break;
+						}
+					case Session.TELNET_WILL:
+					case Session.TELNET_WONT:
+					case Session.TELNET_DO:
+					case Session.TELNET_DONT:
+						{
+							telnetCommand=c;
+							telnetState=2;
+							break;
+						}
+					case Session.TELNET_SB:
+						telnetState=3;
+						break;
+					case Session.TELNET_GA:
+					case Session.TELNET_AYT:
+					case Session.TELNET_EC:
+					case Session.TELNET_NOP:
+					default:
+						telnetState=0;
+						break;
+					}
+					break;
+				case 2: // after WILL/WONT/DO/DONT, option received
+					telnetOption=c;
+					switch(telnetCommand)
+					{
+					case Session.TELNET_WILL:
+						switch(telnetOption)
+						{
+						case Session.TELNET_GMCP:
+							{
+								byte[] response= {(byte)Session.TELNET_IAC,(byte)Session.TELNET_DO,(byte)Session.TELNET_GMCP};
+								sock.getOutputStream().write(response);
+								sock.getOutputStream().flush();
+								response= new byte[]{(byte)Session.TELNET_IAC,(byte)Session.TELNET_SB,(byte)Session.TELNET_GMCP};
+								sock.getOutputStream().write(response);
+								sock.getOutputStream().write("Core.Hello {\"client\":\"CoffeeMud AutoPlayer\",\"version\":\"1.0\"}".getBytes());
+								response= new byte[]{(byte)Session.TELNET_IAC,(byte)Session.TELNET_SE};
+								sock.getOutputStream().write(response);
+								sock.getOutputStream().flush();
+								response= new byte[]{(byte)Session.TELNET_IAC,(byte)Session.TELNET_SB,(byte)Session.TELNET_GMCP};
+								sock.getOutputStream().write(response);
+								sock.getOutputStream().write("Core.Supports.Set [\"Core 1\", \"Char 1\", \"Room 1\", \"Group 1\", \"Comm 1\", \"Room.Info 1\", \"Char.Login 1\"]".getBytes());
+								response= new byte[]{(byte)Session.TELNET_IAC,(byte)Session.TELNET_SE};
+								sock.getOutputStream().write(response);
+								sock.getOutputStream().flush();
+								break;
+							}
+						}
+						break;
+					case Session.TELNET_WONT:
+						switch(telnetOption)
+						{
+						case Session.TELNET_GMCP:
+							break;
+						}
+						break;
+					case Session.TELNET_DO:
+						switch(telnetOption)
+						{
+						case Session.TELNET_GMCP:
+							break;
+						}
+						break;
+					case Session.TELNET_DONT:
+						switch(telnetOption)
+						{
+						case Session.TELNET_GMCP:
+							break;
+						}
+						break;
+					}
+					telnetState=0;
+					break;
+				case 3: // after SB, option received
+					telnetOption=c;
+					telnetSubBuf.setLength(0);
+					telnetState=4;
+					break;
+				case 4: // subnegotiation data
+					if(c==Session.TELNET_IAC)
+						telnetState=5;
+					else
+						telnetSubBuf.append((char)c);
+					break;
+				case 5: // IAC in subnegotiation
+					if(c==Session.TELNET_SE)
+					{
+						switch(telnetOption)
+						{
+						case Session.TELNET_GMCP:
+							gmcpMessages.add(telnetSubBuf.toString());
+							break;
+						case Session.TELNET_MPCP:
+							break;
+						}
+						telnetState=0;
+					}
+					else
+					if(c==Session.TELNET_IAC)
+					{
+						telnetSubBuf.append((char)Session.TELNET_IAC);
+						telnetState=4;
+					}
+					else
+						telnetState=0;
+					break;
+				}
+			}
+		}
+		catch(final Exception e)
+		{}
+		if(buf.length()>0)
+			inbuffer.add(globalReactionary(buf.toString()));
+		return inbuffer;
+	}
+
+	/**
+	 * A hook for reacting to any incoming text before it is placed in the input
+	 * buffer.
+	 *
+	 * @param s the incoming text
+	 * @return the text to be placed in the input buffer
+	 */
+	public String globalReactionary(final String s)
+	{
+		outStream.println(s);
+		return s;
+	}
+
+	/**
+	 * Sleeps for the given amount of time, ignoring any exceptions.
+	 *
+	 * @param time the time to sleep in milliseconds
+	 */
+	public void s_sleep(final long time)
+	{
+		try
+		{
+			Thread.sleep(time);
+		}
+		catch(final Exception e)
+		{
+		}
+	}
+
+	/**
+	 * Waits for a line matching the given regular expression to appear in the
+	 * input buffer. If the regular expression contains capturing groups, the
+	 * contents of those groups are returned in an array.
+	 *
+	 * @param regEx the regular expression to match
+	 * @param num the number of capturing groups to return
+	 * @return an array of strings containing the contents of the capturing
+	 *         groups, or a single element array containing the entire line if
+	 *         there are no capturing groups
+	 * @throws IOException if an I/O error occurs or if the wait times out
+	 */
+	public String[] waitFor(final String regEx, final int num) throws IOException
+	{
+		final long waitUntil = System.currentTimeMillis() + (60 * 1000);
+		final StringBuilder buildUp=new StringBuilder("");
+		final Pattern p=Pattern.compile(regEx);
+		while(System.currentTimeMillis() < waitUntil)
+		{
+			bufferFill();
+			if(inbuffer.size()==0)
+				s_sleep(100);
+			else
+			{
+				final String s=inbuffer.removeFirst();
+				outbuffer.add(s);
+				if(buildUp.length()>0)
+					buildUp.append(" ");
+				buildUp.append(s);
+				while(outbuffer.size() > 1000)
+					outbuffer.removeFirst();
+				Matcher m=p.matcher(s);
+				if(!m.matches())
+					m=p.matcher(buildUp.toString());
+				if(m.matches())
+				{
+					if(m.groupCount()>=num)
+					{
+						final String[] set=new String[num];
+						for(int i=0;i<num;i++)
+							set[i]=m.group(i+1);
+						return set;
+					}
+					return new String[]{s};
+				}
+			}
+		}
+		throw new IOException("wait for "+regEx+" timed out.");
+	}
+
+	/**
+	 * Writes a line to the output stream, followed by a newline, and flushes
+	 * the stream.
+	 *
+	 * @param s the line to write
+	 * @throws IOException if an I/O error occurs
+	 */
+	public void writeln(final String s) throws IOException
+	{
+		outStream.println(s);
+		s_sleep(500);
+		out.write(s+"\n");
+		out.flush();
+	}
+
+	/**
+	 * Connects to the server using the established host and port
+	 * @return true if the connection was successful, false otherwise
+	 */
+	public boolean connect()
+	{
+		try
+		{
+			sock=new Socket(host,port);
+			sock.setSoTimeout(100);
+			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+			s_sleep(1000);
+			return true;
+		}
+		catch(final java.io.IOException e)
+		{
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	/**
+	 * Reads in a javascript file, processing any //include directives
+	 *
+	 * @param filename the file to read
+	 * @return the contents of the file, with any includes processed
+	 */
+	public String getJavaScript(final String filename)
+	{
+		final StringBuilder js=new StringBuilder("");
+		try
+		{
+			final BufferedReader br=new BufferedReader(new FileReader(filename));
+			String s=br.readLine();
+			while(s!=null)
+			{
+				if(s.trim().startsWith("//include "))
+					js.append(getJavaScript(s.trim().substring(10)));
+				else
+					js.append(s).append("\n");
+				s=br.readLine();
+			}
+			br.close();
+		}
+		catch(final Exception e)
+		{
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return js.toString();
+	}
+
+	/**
+	 * Runs the script specified in the constructor
+	 */
+	public void run()
+	{
+		outStream.println("Executing: "+filename);
+		final String js=getJavaScript(filename);
+
+		final Context cx = Context.enter();
+		try
+		{
+			final JScriptEvent scope = new JScriptEvent(this);
+			cx.initStandardObjects(scope);
+			scope.defineFunctionProperties(JScriptEvent.functions, JScriptEvent.class,
+										   ScriptableObject.DONTENUM);
+			cx.evaluateString(scope, js.toString(),"<cmd>", 1, null);
+		}
+		catch(final Exception e)
+		{
+			System.err.println("JSCRIPT Error: "+e.getMessage());
+		}
+		Context.exit();
+	}
+
+	/**
+	 * A Rhino context class that exposes certain AutoPlayTester methods to javascript
+	 *
+	 * @author Bo Zimmerman
+	 *
+	 */
+	protected static class JScriptEvent extends ScriptableObject
+	{
+		@Override
+		public String getClassName()
+		{
+			return "JScriptEvent";
+		}
+
+		static final long serialVersionUID=43;
+		protected AutoPlayTester testObj;
+		public static final String[] functions={ "tester", "toJavaString", "writeLine", "connect", "stdout",
+												 "stderr", "waitFor", "waitForOptions","waitForMultiMatch", "startsWith",
+												 "name","rand","sleep","clearOutbuffer","getAccumulated", "pollGMCP",
+												 "sendGMCP"};
+
+		public AutoPlayTester tester()
+		{
+			return testObj;
+		}
+
+		public String toJavaString(final Object O)
+		{
+			return Context.toString(O);
+		}
+
+		public boolean startsWith(final Object O1, final Object O2)
+		{
+			try
+			{
+				return toJavaString(O1).startsWith(toJavaString(O2));
+			}
+			catch (final Exception e)
+			{
+				return false;
+			}
+		}
+
+		public boolean connect()
+		{
+			return testObj.connect();
+		}
+
+		public String name()
+		{
+			return testObj.name;
+		}
+
+		public void clearOutbuffer()
+		{
+			testObj.outbuffer.clear();
+		}
+
+		public String getAccumulated()
+		{
+			final StringBuilder str = new StringBuilder("");
+			for(final String s : testObj.outbuffer)
+				str.append(s).append("\n");
+			return str.toString();
+		}
+
+		public String pollGMCP()
+		{
+			if (testObj.gmcpMessages.size() == 0)
+				return "";
+			return testObj.gmcpMessages.removeFirst();
+		}
+
+		public void sendGMCP(final String json)
+		{
+			try
+			{
+				byte[] response;
+				response= new byte[]{(byte)Session.TELNET_IAC,(byte)Session.TELNET_SB,(byte)Session.TELNET_GMCP};
+				testObj.sock.getOutputStream().write(response);
+				testObj.sock.getOutputStream().write(json.getBytes());
+				response= new byte[]{(byte)Session.TELNET_IAC,(byte)Session.TELNET_SE};
+				testObj.sock.getOutputStream().write(response);
+				testObj.sock.getOutputStream().flush();
+			}
+			catch (final IOException e)
+			{
+			}
+		}
+
+		public void stdout(final Object O)
+		{
+			try
+			{
+				outStream.println(toJavaString(O));
+			}
+			catch (final Exception e)
+			{
+			}
+		}
+
+		public void sleep(final Object O)
+		{
+			try
+			{
+				Thread.sleep(Long.valueOf(toJavaString(O)).longValue());
+			}
+			catch (final Exception e)
+			{
+			}
+		}
+
+		public void stderr(final Object O)
+		{
+			try
+			{
+				System.err.println(toJavaString(O));
+			}
+			catch (final Exception e)
+			{
+			}
+		}
+
+		public int rand(final int x)
+		{
+			final int y = (int) Math.round(Math.floor(Math.random() * ((x) - 0.001)));
+			return (y > 0) ? y : -y;
+		}
+
+		public Object waitFor(final Object regexO)
+		{
+			try
+			{
+				return testObj.waitFor(toJavaString(regexO),1)[0];
+			}
+			catch (final Exception e)
+			{
+				return null;
+			}
+		}
+
+		public Object waitForOptions(final Object regexO)
+		{
+			try
+			{
+				//Object o = Context.jsToJava(regexO, String[].class);
+				return "";
+				//return ""+testObj.waitForOptions((String[])o);
+			}
+			catch (final Exception e)
+			{
+				return null;
+			}
+		}
+
+		public Object waitForMultiMatch(final Object regexO, final Object numMatches)
+		{
+			try
+			{
+				return testObj.waitFor(toJavaString(regexO),Integer.parseInt(toJavaString(numMatches)));
+			}
+			catch (final Exception e)
+			{
+				return null;
+			}
+		}
+
+		public boolean writeLine(final Object O)
+		{
+			try
+			{
+				testObj.writeln(toJavaString(O));
+				return true;
+			}
+			catch (final Exception e)
+			{
+				return false;
+			}
+		}
+
+		public JScriptEvent(final AutoPlayTester testObj)
+		{
+			this.testObj=testObj;
+		}
+	}
+
+	/**
+	 * Converts a string to an integer, returning 0 if the conversion fails
+	 *
+	 * @param INT the string to convert
+	 * @return the integer value of the string, or 0 if the conversion fails
+	 */
+	public final static int s_int(final String INT)
+	{
+		try
+		{
+			return Integer.parseInt(INT);
+		}
+		catch (final Exception e)
+		{
+			return 0;
+		}
+	}
+
+	/**
+	 * Usage: AutoPlayTester [host] [port] [character name] [script path] The
+	 * script path should point to a javascript file.
+	 *
+	 * @param args the command line arguments
+	 */
+	public static void main(final String[] args)
+	{
+		if(args.length<4)
+		{
+			outStream.println("AutoPlayTester (** Not Sufficiently Implemented**)");
+			outStream.println("AutoPlayTester [host] [port] [character name] [script path]");
+			System.exit(-1);
+		}
+		final StringBuilder path=new StringBuilder(args[3]);
+		for(int i=4;i<args.length;i++)
+			path.append(" ").append(args[i]);
+		final AutoPlayTester player = new AutoPlayTester(args[0],s_int(args[1]),args[2],path.toString());
+		player.run();
+	}
+}

@@ -1,0 +1,12 @@
+# b034 Catalog, XML, statistics and web macro engine
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMCatalog.java	1980
+com/planet_ink/coffee_mud/Libraries/XMLManager.java	1953
+com/planet_ink/coffee_mud/Libraries/WebMacroCreamer.java	1801
+com/planet_ink/coffee_mud/Libraries/interfaces/WebMacroLibrary.java	833
+com/planet_ink/coffee_mud/Libraries/interfaces/CatalogLibrary.java	815
+com/planet_ink/coffee_mud/Libraries/interfaces/XMLLibrary.java	678
+com/planet_ink/coffee_mud/Common/DefaultCoffeeTableRow.java	360
+com/planet_ink/coffee_mud/Common/interfaces/CoffeeTableRow.java	221
+com/planet_ink/coffee_mud/Libraries/CoffeeTables.java	195
+com/planet_ink/coffee_mud/Libraries/interfaces/StatisticsLibrary.java	68

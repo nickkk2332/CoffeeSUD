@@ -1,0 +1,23 @@
+# b104 Behaviors [part 3/5: InstantDeath .. NastyAbilities]
+file	lines
+com/planet_ink/coffee_mud/Behaviors/MudChat.java	1755
+com/planet_ink/coffee_mud/Behaviors/Nanny.java	1095
+com/planet_ink/coffee_mud/Behaviors/ItemGenerator.java	597
+com/planet_ink/coffee_mud/Behaviors/MOBEater.java	593
+com/planet_ink/coffee_mud/Behaviors/MOBTeacher.java	562
+com/planet_ink/coffee_mud/Behaviors/MovingRoom.java	545
+com/planet_ink/coffee_mud/Behaviors/Mobile.java	385
+com/planet_ink/coffee_mud/Behaviors/MoneyChanger.java	314
+com/planet_ink/coffee_mud/Behaviors/Mime.java	205
+com/planet_ink/coffee_mud/Behaviors/InstantDeath.java	189
+com/planet_ink/coffee_mud/Behaviors/NastyAbilities.java	188
+com/planet_ink/coffee_mud/Behaviors/ItemMender.java	161
+com/planet_ink/coffee_mud/Behaviors/ItemIdentifier.java	159
+com/planet_ink/coffee_mud/Behaviors/ItemRefitter.java	157
+com/planet_ink/coffee_mud/Behaviors/MOBHunter.java	157
+com/planet_ink/coffee_mud/Behaviors/MobileAggressive.java	152
+com/planet_ink/coffee_mud/Behaviors/MOBReSave.java	135
+com/planet_ink/coffee_mud/Behaviors/MobileGoodGuardian.java	134
+com/planet_ink/coffee_mud/Behaviors/Mageness.java	123
+com/planet_ink/coffee_mud/Behaviors/MOBHelper.java	112
+com/planet_ink/coffee_mud/Behaviors/LinkedWeather.java	100

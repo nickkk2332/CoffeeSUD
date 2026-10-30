@@ -1,0 +1,13 @@
+# b171 Rooms, grids and exits: models and base classes
+file	lines
+com/planet_ink/coffee_mud/Locales/StdRoom.java	3363
+com/planet_ink/coffee_mud/Exits/StdExit.java	1422
+com/planet_ink/coffee_mud/Locales/StdGrid.java	1284
+com/planet_ink/coffee_mud/Locales/StdThinGrid.java	1139
+com/planet_ink/coffee_mud/Locales/interfaces/Room.java	1003
+com/planet_ink/coffee_mud/Exits/GenExit.java	486
+com/planet_ink/coffee_mud/Locales/StdMaze.java	212
+com/planet_ink/coffee_mud/Locales/interfaces/GridLocale.java	183
+com/planet_ink/coffee_mud/Exits/interfaces/Exit.java	133
+com/planet_ink/coffee_mud/Locales/interfaces/LocationRoom.java	69
+com/planet_ink/coffee_mud/Exits/interfaces/PrepositionExit.java	67

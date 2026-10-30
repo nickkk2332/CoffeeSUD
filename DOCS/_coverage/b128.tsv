@@ -1,0 +1,21 @@
+# b128 Items/Basic [part 5/5: StdPaper .. Wineskin]
+file	lines
+com/planet_ink/coffee_mud/Items/Basic/StdSiegableBoardable.java	1531
+com/planet_ink/coffee_mud/Items/Basic/StdRideable.java	1209
+com/planet_ink/coffee_mud/Items/Basic/StdThinItem.java	758
+com/planet_ink/coffee_mud/Items/Basic/StdTitle.java	744
+com/planet_ink/coffee_mud/Items/Basic/StdPortal.java	629
+com/planet_ink/coffee_mud/Items/Basic/StdTub.java	427
+com/planet_ink/coffee_mud/Items/Basic/StdSmokable.java	411
+com/planet_ink/coffee_mud/Items/Basic/StdQuestBoard.java	353
+com/planet_ink/coffee_mud/Items/Basic/StdSpaceBody.java	274
+com/planet_ink/coffee_mud/Items/Basic/StdRideableWrapper.java	237
+com/planet_ink/coffee_mud/Items/Basic/StdPlayerBook.java	202
+com/planet_ink/coffee_mud/Items/Basic/StdPaper.java	180
+com/planet_ink/coffee_mud/Items/Basic/StdPerfume.java	159
+com/planet_ink/coffee_mud/Items/Basic/StdWormhole.java	121
+com/planet_ink/coffee_mud/Items/Basic/StdPortalWrapper.java	120
+com/planet_ink/coffee_mud/Items/Basic/Torch.java	65
+com/planet_ink/coffee_mud/Items/Basic/Wineskin.java	60
+com/planet_ink/coffee_mud/Items/Basic/Waterskin.java	59
+com/planet_ink/coffee_mud/Items/Basic/TrappedChest.java	51

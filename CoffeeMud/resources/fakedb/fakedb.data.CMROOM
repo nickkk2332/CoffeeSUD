@@ -1,0 +1,15 @@
+V1HEE842440
+-
+Brand new database room! You need to change this text with the MODIFY ROOM command.  If your character is not an Archon, pick up the book you see here and read it immediately! 
+New Room 
+<RCLIM>-1</RCLIM><RATMO>-1</RATMO><IMG /><BEHAVES /><AFFECS /> 
+New Area
+New Area#0
+StdRoom
+-
+You`re standing in a dull room of stone. 
+Rocky Room 
+<RCLIM>0</RCLIM><RATMO>-1</RATMO><IMG /><BEHAVES /><AFFECS><AFF><ACLASS>Prop_Smell</ACLASS><ATEXT>stinky</ATEXT></AFF></AFFECS> 
+New Area
+New Area#1
+StoneRoom

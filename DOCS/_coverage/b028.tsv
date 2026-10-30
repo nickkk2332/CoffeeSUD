@@ -1,0 +1,6 @@
+# b028 Ability mapping, qualification and expertise
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMAbleMap.java	2912
+com/planet_ink/coffee_mud/Libraries/interfaces/AbilityMapper.java	1500
+com/planet_ink/coffee_mud/Libraries/ColumbiaUniv.java	1438
+com/planet_ink/coffee_mud/Libraries/interfaces/ExpertiseLibrary.java	619

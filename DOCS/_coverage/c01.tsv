@@ -1,0 +1,16 @@
+# c01 content: Configuration files: coffeemud.ini, lists, laws and web settings
+file	bytes
+coffeemud.ini	124607
+resources/lists.ini	58843
+resources/mxp_images.ini	23507
+resources/laws.ini	15771
+web/common.ini	15134
+resources/parser_en_TX.properties	11214
+resources/lawtoc.ini	10817
+resources/movingroom.xml	10736
+resources/translation_en_TX.properties	5830
+web/email.ini	5003
+web/admin.ini	3908
+web/pub.ini	3678
+resources/titles.ini	1304
+web/cm1.ini	332

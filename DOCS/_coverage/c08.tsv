@@ -1,0 +1,16 @@
+# c08 content: Player help files
+file	bytes
+resources/help/skill_help.ini	255838
+resources/help/spell_help.ini	151497
+resources/help/prayer_help.ini	128439
+resources/help/common_help.ini	118407
+resources/help/misc_help.ini	116618
+resources/help/help.ini	116425
+resources/help/chant_help.ini	116264
+resources/help/songs_help.ini	29523
+resources/help/diseases.ini	20252
+resources/help/traps.ini	17528
+resources/help/poisons.ini	5083
+resources/help/help.txt	1069
+resources/help/accts.txt	661
+resources/help/acctmenu.txt	407

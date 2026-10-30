@@ -1,0 +1,9 @@
+# b035 Space, galaxy map and technology power
+file	lines
+com/planet_ink/coffee_mud/Libraries/CoffeeDark.java	1785
+com/planet_ink/coffee_mud/Libraries/GroundWired.java	1091
+com/planet_ink/coffee_mud/Libraries/interfaces/GalacticMap.java	827
+com/planet_ink/coffee_mud/core/interfaces/SpaceObject.java	340
+com/planet_ink/coffee_mud/Libraries/interfaces/TechLibrary.java	259
+com/planet_ink/coffee_mud/Common/DefaultManufacturer.java	242
+com/planet_ink/coffee_mud/Common/interfaces/Manufacturer.java	147

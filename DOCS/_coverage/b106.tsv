@@ -1,0 +1,18 @@
+# b106 Behaviors [part 5/5: Scavenger .. WimpyAggressive]
+file	lines
+com/planet_ink/coffee_mud/Behaviors/StockMarket.java	2294
+com/planet_ink/coffee_mud/Behaviors/WeatherAffects.java	1393
+com/planet_ink/coffee_mud/Behaviors/WaterCurrents.java	921
+com/planet_ink/coffee_mud/Behaviors/Sounder.java	543
+com/planet_ink/coffee_mud/Behaviors/TaxCollector.java	455
+com/planet_ink/coffee_mud/Behaviors/StdBehavior.java	410
+com/planet_ink/coffee_mud/Behaviors/ScriptableEverymob.java	290
+com/planet_ink/coffee_mud/Behaviors/Scriptable.java	278
+com/planet_ink/coffee_mud/Behaviors/TaxiBehavior.java	255
+com/planet_ink/coffee_mud/Behaviors/Scavenger.java	211
+com/planet_ink/coffee_mud/Behaviors/VeryAggressive.java	183
+com/planet_ink/coffee_mud/Behaviors/Wimpy.java	145
+com/planet_ink/coffee_mud/Behaviors/Thiefness.java	138
+com/planet_ink/coffee_mud/Behaviors/WimpyAggressive.java	128
+com/planet_ink/coffee_mud/Behaviors/Vagrant.java	110
+com/planet_ink/coffee_mud/Behaviors/TargetPlayer.java	107

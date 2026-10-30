@@ -1,0 +1,6 @@
+# b015 Senses, flags and miscellaneous utilities
+file	lines
+com/planet_ink/coffee_mud/Libraries/CoffeeUtensils.java	3877
+com/planet_ink/coffee_mud/Libraries/Sense.java	3140
+com/planet_ink/coffee_mud/Libraries/interfaces/CMFlagLibrary.java	2045
+com/planet_ink/coffee_mud/Libraries/interfaces/CMMiscUtils.java	565

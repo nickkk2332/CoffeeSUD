@@ -1,0 +1,18 @@
+# b102 Behaviors [part 1/5: Behavior .. CombatAbilities]
+file	lines
+com/planet_ink/coffee_mud/Behaviors/Arrest.java	4148
+com/planet_ink/coffee_mud/Behaviors/CombatAbilities.java	1066
+com/planet_ink/coffee_mud/Behaviors/BribeGateGuard.java	609
+com/planet_ink/coffee_mud/Behaviors/interfaces/LegalBehavior.java	370
+com/planet_ink/coffee_mud/Behaviors/Aggressive.java	353
+com/planet_ink/coffee_mud/Behaviors/interfaces/Behavior.java	196
+com/planet_ink/coffee_mud/Behaviors/ClanHelper.java	183
+com/planet_ink/coffee_mud/Behaviors/Beggar.java	169
+com/planet_ink/coffee_mud/Behaviors/ActiveTicker.java	166
+com/planet_ink/coffee_mud/Behaviors/AntiVagrant.java	162
+com/planet_ink/coffee_mud/Behaviors/BrotherHelper.java	137
+com/planet_ink/coffee_mud/Behaviors/AlignHelper.java	115
+com/planet_ink/coffee_mud/Behaviors/Clericness.java	68
+com/planet_ink/coffee_mud/Behaviors/Bardness.java	66
+com/planet_ink/coffee_mud/Behaviors/interfaces/ChattyBehavior.java	54
+com/planet_ink/coffee_mud/Behaviors/interfaces/MobileBehavior.java	46

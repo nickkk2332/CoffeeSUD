@@ -1,0 +1,9 @@
+# b173 Mobs: the MOB model, StdMOB and generic NPC classes
+file	lines
+com/planet_ink/coffee_mud/MOBS/StdMOB.java	6287
+com/planet_ink/coffee_mud/MOBS/interfaces/MOB.java	1149
+com/planet_ink/coffee_mud/MOBS/interfaces/Deity.java	767
+com/planet_ink/coffee_mud/MOBS/StdShopKeeper.java	655
+com/planet_ink/coffee_mud/MOBS/GenShopkeeper.java	249
+com/planet_ink/coffee_mud/MOBS/interfaces/Banker.java	248
+com/planet_ink/coffee_mud/MOBS/GenMob.java	121

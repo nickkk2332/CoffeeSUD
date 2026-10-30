@@ -1,0 +1,15 @@
+# b139 core/database [part 2/2: DDLValidator .. VFSLoader]
+file	lines
+com/planet_ink/coffee_mud/core/database/MOBloader.java	3706
+com/planet_ink/coffee_mud/core/database/RoomLoader.java	2635
+com/planet_ink/coffee_mud/core/database/JournalLoader.java	1306
+com/planet_ink/coffee_mud/core/database/DDLValidator.java	1257
+com/planet_ink/coffee_mud/core/database/PDataLoader.java	817
+com/planet_ink/coffee_mud/core/database/PollLoader.java	303
+com/planet_ink/coffee_mud/core/database/GRaceLoader.java	282
+com/planet_ink/coffee_mud/core/database/VFSLoader.java	276
+com/planet_ink/coffee_mud/core/database/QuestLoader.java	240
+com/planet_ink/coffee_mud/core/database/StatLoader.java	193
+com/planet_ink/coffee_mud/core/database/GCommandLoader.java	155
+com/planet_ink/coffee_mud/core/database/GAbilityLoader.java	113
+com/planet_ink/coffee_mud/core/database/GCClassLoader.java	110

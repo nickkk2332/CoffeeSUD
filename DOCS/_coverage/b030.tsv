@@ -1,0 +1,16 @@
+# b030 Shops, money and auctions
+file	lines
+com/planet_ink/coffee_mud/Libraries/CoffeeShops.java	2909
+com/planet_ink/coffee_mud/Libraries/BeanCounter.java	1958
+com/planet_ink/coffee_mud/Libraries/interfaces/MoneyLibrary.java	1680
+com/planet_ink/coffee_mud/Common/DefaultCoffeeShop.java	961
+com/planet_ink/coffee_mud/Libraries/interfaces/ShoppingLibrary.java	579
+com/planet_ink/coffee_mud/Common/interfaces/CoffeeShop.java	547
+com/planet_ink/coffee_mud/Common/AuctionCoffeeShop.java	337
+com/planet_ink/coffee_mud/Common/DefaultAuction.java	290
+com/planet_ink/coffee_mud/core/interfaces/Economics.java	280
+com/planet_ink/coffee_mud/core/interfaces/ShopKeeper.java	245
+com/planet_ink/coffee_mud/Common/interfaces/AuctionData.java	227
+com/planet_ink/coffee_mud/Common/DoubleCoffeeShop.java	213
+com/planet_ink/coffee_mud/Common/DefaultAuctionPolicy.java	206
+com/planet_ink/coffee_mud/Common/interfaces/AuctionPolicy.java	157

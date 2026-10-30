@@ -1,0 +1,17 @@
+# b168 siplet: the browser telnet client (com/planet_ink/siplet)
+file	lines
+com/planet_ink/siplet/support/MiniJSON.java	1916
+com/planet_ink/siplet/support/Util.java	1735
+com/planet_ink/siplet/support/MXP.java	1409
+com/planet_ink/siplet/support/TelnetFilter.java	1198
+com/planet_ink/siplet/support/MXPElement.java	449
+com/planet_ink/siplet/applet/Siplet.java	411
+com/planet_ink/siplet/support/IACReader.java	252
+com/planet_ink/siplet/support/MSDP.java	250
+com/planet_ink/siplet/support/MSP.java	217
+com/planet_ink/siplet/support/GMCP.java	127
+com/planet_ink/siplet/support/MSPplayer.java	113
+com/planet_ink/siplet/support/PeekInputStream.java	100
+com/planet_ink/siplet/support/QInputStream.java	82
+com/planet_ink/siplet/support/ColorSupport.java	73
+com/planet_ink/siplet/support/MXPEntity.java	44

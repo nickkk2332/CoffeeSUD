@@ -1,0 +1,27 @@
+# b170 Commands: the base class and the core verbs
+file	lines
+com/planet_ink/coffee_mud/Commands/Train.java	699
+com/planet_ink/coffee_mud/Commands/Score.java	442
+com/planet_ink/coffee_mud/Commands/Say.java	434
+com/planet_ink/coffee_mud/Commands/Look.java	351
+com/planet_ink/coffee_mud/Commands/StdCommand.java	316
+com/planet_ink/coffee_mud/Commands/Put.java	305
+com/planet_ink/coffee_mud/Commands/Get.java	284
+com/planet_ink/coffee_mud/Commands/Go.java	283
+com/planet_ink/coffee_mud/Commands/Drop.java	258
+com/planet_ink/coffee_mud/Commands/Kill.java	240
+com/planet_ink/coffee_mud/Commands/Give.java	231
+com/planet_ink/coffee_mud/Commands/Sleep.java	221
+com/planet_ink/coffee_mud/Commands/Inventory.java	220
+com/planet_ink/coffee_mud/Commands/Follow.java	210
+com/planet_ink/coffee_mud/Commands/Wear.java	203
+com/planet_ink/coffee_mud/Commands/Flee.java	184
+com/planet_ink/coffee_mud/Commands/interfaces/Command.java	181
+com/planet_ink/coffee_mud/Commands/Practice.java	170
+com/planet_ink/coffee_mud/Commands/Open.java	164
+com/planet_ink/coffee_mud/Commands/Eat.java	157
+com/planet_ink/coffee_mud/Commands/Teach.java	144
+com/planet_ink/coffee_mud/Commands/Wield.java	137
+com/planet_ink/coffee_mud/Commands/DrinkCmd.java	128
+com/planet_ink/coffee_mud/Commands/Sit.java	120
+com/planet_ink/coffee_mud/Commands/Gain.java	80

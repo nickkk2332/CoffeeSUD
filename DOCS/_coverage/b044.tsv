@@ -1,0 +1,24 @@
+# b044 Abilities/Common [part 3/7: CraftingSkill .. Floristry]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Common/CraftingSkill.java	2459
+com/planet_ink/coffee_mud/Abilities/Common/EnhancedCraftingSkill.java	913
+com/planet_ink/coffee_mud/Abilities/Common/Fletching.java	578
+com/planet_ink/coffee_mud/Abilities/Common/Farming.java	558
+com/planet_ink/coffee_mud/Abilities/Common/Dissertating.java	521
+com/planet_ink/coffee_mud/Abilities/Common/Decorating.java	445
+com/planet_ink/coffee_mud/Abilities/Common/Embellishing.java	368
+com/planet_ink/coffee_mud/Abilities/Common/FireBuilding.java	351
+com/planet_ink/coffee_mud/Abilities/Common/Enrolling.java	298
+com/planet_ink/coffee_mud/Abilities/Common/Fishing.java	275
+com/planet_ink/coffee_mud/Abilities/Common/Drilling.java	273
+com/planet_ink/coffee_mud/Abilities/Common/Floristry.java	232
+com/planet_ink/coffee_mud/Abilities/Common/Digging.java	229
+com/planet_ink/coffee_mud/Abilities/Common/Domesticating.java	227
+com/planet_ink/coffee_mud/Abilities/Common/Dyeing.java	222
+com/planet_ink/coffee_mud/Abilities/Common/FishLore.java	185
+com/planet_ink/coffee_mud/Abilities/Common/Engraving.java	179
+com/planet_ink/coffee_mud/Abilities/Common/Embroidering.java	152
+com/planet_ink/coffee_mud/Abilities/Common/Distilling.java	151
+com/planet_ink/coffee_mud/Abilities/Common/DiligentStudying.java	125
+com/planet_ink/coffee_mud/Abilities/Common/DrugCutting.java	116
+com/planet_ink/coffee_mud/Abilities/Common/Excavation.java	114

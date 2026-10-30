@@ -1,0 +1,6 @@
+# b022 Movement, tracking and world hunting
+file	lines
+com/planet_ink/coffee_mud/Libraries/MUDTracker.java	4301
+com/planet_ink/coffee_mud/Libraries/interfaces/TrackingLibrary.java	1150
+com/planet_ink/coffee_mud/Libraries/WorldHuntUtils.java	1129
+com/planet_ink/coffee_mud/Libraries/interfaces/WorldHuntLibrary.java	305

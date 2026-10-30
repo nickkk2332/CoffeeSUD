@@ -1,0 +1,188 @@
+bucket	category	chapter	files	lines	label
+b001	engine	engine/b001-class-registry-library-registry-and-resources.md	5	7310	Class registry, library registry and resources
+b002	engine	engine/b002-configuration-properties-and-security.md	2	7033	Configuration properties and security
+b003	engine	engine/b003-core-object-model-environmental-interfaces-and-the-message-c.md	60	8958	Core object model: environmental interfaces and the message (CMMsg) system
+b004	engine	engine/b004-server-boot-tick-engine-and-threads.md	11	5977	Server boot, tick engine and threads
+b005	engine	engine/b005-standalone-applications-and-tools.md	8	8139	Standalone applications and tools
+b006	engine	engine/b006-string-and-number-utilities.md	3	9099	String and number utilities
+b007	engine	engine/b007-parameter-parsing-and-mini-data-formats-json-tson-lpc.md	4	9695	Parameter parsing and mini data formats (JSON, TSON, LPC)
+b008	engine	engine/b008-files-logging-directions-and-encoders.md	18	9933	Files, logging, directions and encoders
+b009	actors	actors/b009-physical-character-and-state-stats.md	9	5221	Physical, character and state stats
+b010	actors	actors/b010-player-stats-accounts-and-pride-stats.md	7	5681	Player stats, accounts and pride stats
+b011	engine	engine/b011-sessions-the-player-connection-and-input-loop.md	5	7682	Sessions: the player connection and input loop
+b012	engine	engine/b012-protocols-telnet-options-mxp-msp-gmcp-encoders-and-mail.md	10	7789	Protocols: telnet options, MXP, MSP, GMCP, encoders and mail
+b013	engine	engine/b013-text-output-colour-codes-filters-translation-and-help.md	10	7737	Text output: colour codes, filters, translation and help
+b014	engine	engine/b014-english-parsing-and-common-command-messages.md	4	8994	English parsing and common command messages
+b015	engine	engine/b015-senses-flags-and-miscellaneous-utilities.md	4	9627	Senses, flags and miscellaneous utilities
+b016	engine	engine/b016-object-builder-and-xml-serialisation-coffeemaker.md	2	8042	Object builder and XML serialisation (CoffeeMaker)
+b017	admin	admin/b017-generic-object-editor-cmgeneditor.md	2	13810	Generic object editor (CMGenEditor)
+b018	rules	rules/b018-zapper-masks-the-eligibility-language.md	2	10892	Zapper masks: the eligibility language
+b019	society	society/b019-achievements-and-auto-awards.md	4	12306	Achievements and auto-awards
+b020	world	world/b020-random-area-generation-mudpercolator-and-layouts.md	16	11143	Random area generation (MUDPercolator) and layouts
+b021	actors	actors/b021-character-creation-experience-and-levels.md	4	8108	Character creation, experience and levels
+b022	world	world/b022-movement-tracking-and-world-hunting.md	4	6885	Movement, tracking and world hunting
+b023	world	world/b023-world-map-room-sets-and-area-statistics.md	9	6721	World map, room sets and area statistics
+b024	world	world/b024-time-calendar-and-climate.md	6	4840	Time, calendar and climate
+b025	rules	rules/b025-combat-dice-and-item-balance.md	6	7269	Combat, dice and item balance
+b026	actors	actors/b026-player-registry-polls-and-listings.md	8	7429	Player registry, polls and listings
+b027	society	society/b027-clans-and-clan-governments.md	8	10101	Clans and clan governments
+b028	rules	rules/b028-ability-mapping-qualification-and-expertise.md	4	6469	Ability mapping, qualification and expertise
+b029	rules	rules/b029-ability-parameters-recipe-formats-and-components.md	6	5081	Ability parameters (recipe formats) and components
+b030	society	society/b030-shops-money-and-auctions.md	14	10589	Shops, money and auctions
+b031	society	society/b031-quests.md	4	11190	Quests
+b032	society	society/b032-factions.md	4	8199	Factions
+b033	society	society/b033-journals-channels-and-socials.md	10	8794	Journals, channels and socials
+b034	admin	admin/b034-catalog-xml-statistics-and-web-macro-engine.md	10	8904	Catalog, XML, statistics and web macro engine
+b035	world	world/b035-space-galaxy-map-and-technology-power.md	7	4691	Space, galaxy map and technology power
+b036	society	society/b036-law-property-titles-materials-and-follower-orders.md	11	8105	Law, property titles, materials and follower orders
+b037	engine	engine/b037-scripting-engine-mobprog-scriptable.md	2	17243	Scripting engine (MOBPROG / Scriptable)
+b038	engine	engine/b038-triggers-javascript-engine-and-intermud-client.md	6	6032	Triggers, JavaScript engine and intermud client
+b039	skills	skills/b039-abilities-small-families-part1.md	40	7809	Abilities/(small families) [part 1/3: ArchonSkill .. Paladin_InciteFight]
+b040	skills	skills/b040-abilities-small-families-part2.md	42	7856	Abilities/(small families) [part 2/3: Paladin_MountedCharge .. Ranger_Enemy2]
+b041	skills	skills/b041-abilities-small-families-part3.md	70	7848	Abilities/(small families) [part 3/3: Ranger_Enemy3 .. TechSkill]
+b042	crafting	crafting/b042-abilities-common-part1.md	22	8638	Abilities/Common [part 1/7: Alchemy .. Branding]
+b043	crafting	crafting/b043-abilities-common-part2.md	16	9397	Abilities/Common [part 2/7: BuildingSkill .. Costuming]
+b044	crafting	crafting/b044-abilities-common-part3.md	22	8971	Abilities/Common [part 3/7: CraftingSkill .. Floristry]
+b045	crafting	crafting/b045-abilities-common-part4.md	22	9076	Abilities/Common [part 4/7: FlowerArranging .. JewelMaking]
+b046	crafting	crafting/b046-abilities-common-part5.md	42	8947	Abilities/Common [part 5/7: Labeling .. Painting]
+b047	crafting	crafting/b047-abilities-common-part6.md	26	8951	Abilities/Common [part 6/7: PaintingSkill .. Smelting]
+b048	crafting	crafting/b048-abilities-common-part7.md	22	8865	Abilities/Common [part 7/7: SmokeRings .. Welding]
+b049	conditions	conditions/b049-abilities-diseases-part1.md	36	6749	Abilities/Diseases [part 1/2: Disease .. Disease_Leeches]
+b050	conditions	conditions/b050-abilities-diseases-part2.md	34	6898	Abilities/Diseases [part 2/2: Disease_Lepresy .. Disease_Zika]
+b051	magic	magic/b051-abilities-druid-part1.md	51	9533	Abilities/Druid [part 1/7: Chant .. Chant_ControlPlant]
+b052	magic	magic/b052-abilities-druid-part2.md	49	9578	Abilities/Druid [part 2/7: Chant_ControlWeather .. Chant_FindDriftwood]
+b053	magic	magic/b053-abilities-druid-part3.md	49	9409	Abilities/Druid [part 3/7: Chant_FindGem .. Chant_ManicMoon]
+b054	magic	magic/b054-abilities-druid-part4.md	50	9520	Abilities/Druid [part 4/7: Chant_MassFungalGrowth .. Chant_Rockfeet]
+b055	magic	magic/b055-abilities-druid-part5.md	49	9520	Abilities/Druid [part 5/7: Chant_Rockthought .. Chant_SummonFog]
+b056	magic	magic/b056-abilities-druid-part6.md	47	9566	Abilities/Druid [part 6/7: Chant_SummonFood .. Chant_UnicornsHealth]
+b057	magic	magic/b057-abilities-druid-part7.md	46	9481	Abilities/Druid [part 7/7: Chant_Uplift .. Druid_WaterCover]
+b058	rules	rules/b058-abilities-base-classes.md	19	10871	Abilities (base classes)
+b059	skills	skills/b059-abilities-fighter-part1.md	52	9567	Abilities/Fighter [part 1/3: FighterGrappleSkill .. Fighter_DesperateMoves]
+b060	skills	skills/b060-abilities-fighter-part2.md	56	9449	Abilities/Fighter [part 2/3: Fighter_DismountingBlow .. Fighter_PressurePoints]
+b061	skills	skills/b061-abilities-fighter-part3.md	52	9681	Abilities/Fighter [part 3/3: Fighter_RacialMount .. MonkSkill]
+b062	skills	skills/b062-abilities-languages-part1.md	17	11531	Abilities/Languages [part 1/2: AlligatorSpeak .. Draconic]
+b063	skills	skills/b063-abilities-languages-part2.md	42	13113	Abilities/Languages [part 2/2: Drowish .. WormSpeak]
+b064	skills	skills/b064-abilities-misc-part1.md	27	9612	Abilities/Misc [part 1/3: Acidbreath .. Falling]
+b065	skills	skills/b065-abilities-misc-part2.md	20	8887	Abilities/Misc [part 2/3: Firebreath .. PoisonousBite]
+b066	skills	skills/b066-abilities-misc-part3.md	31	9715	Abilities/Misc [part 3/3: Pregnancy .. WingFlying]
+b067	magic	magic/b067-abilities-prayers-part1.md	38	8516	Abilities/Prayers [part 1/8: Prayer .. Prayer_BladeBarrier]
+b068	magic	magic/b068-abilities-prayers-part2.md	53	8696	Abilities/Prayers [part 2/8: Prayer_Bless .. Prayer_DarkeningAura]
+b069	magic	magic/b069-abilities-prayers-part3.md	52	8598	Abilities/Prayers [part 3/8: Prayer_Deafness .. Prayer_EmpowerShield]
+b070	magic	magic/b070-abilities-prayers-part4.md	49	8681	Abilities/Prayers [part 4/8: Prayer_EmpowerUnholyArmor .. Prayer_HuntLaw]
+b071	magic	magic/b071-abilities-prayers-part5.md	40	8658	Abilities/Prayers [part 5/8: Prayer_IceHealing .. Prayer_Mercy]
+b072	magic	magic/b072-abilities-prayers-part6.md	42	8637	Abilities/Prayers [part 6/8: Prayer_MinorInfusion .. Prayer_Purify]
+b073	magic	magic/b073-abilities-prayers-part7.md	46	8550	Abilities/Prayers [part 7/8: Prayer_ReadLanguage .. Prayer_SenseInvisible]
+b074	magic	magic/b074-abilities-prayers-part8.md	46	8672	Abilities/Prayers [part 8/8: Prayer_SenseLaw .. Prayer_WordOfLaw]
+b075	conditions	conditions/b075-abilities-properties-part1.md	23	8805	Abilities/Properties [part 1/4: Prop_AbilityImmunity .. Prop_HaveAdjuster]
+b076	conditions	conditions/b076-abilities-properties-part2.md	33	8494	Abilities/Properties [part 2/4: Prop_HaveEnabler .. Prop_NarrowLedge]
+b077	conditions	conditions/b077-abilities-properties-part3.md	47	8621	Abilities/Properties [part 3/4: Prop_NewDeathMsg .. Prop_RoomPlusForSale]
+b078	conditions	conditions/b078-abilities-properties-part4.md	42	8711	Abilities/Properties [part 4/4: Prop_RoomRedirect .. Property]
+b079	skills	skills/b079-abilities-skills-part1.md	36	9290	Abilities/Skills [part 1/4: Skill_AbandonShip .. Skill_CrowsNest]
+b080	skills	skills/b080-abilities-skills-part2.md	41	9123	Abilities/Skills [part 2/4: Skill_CulturalAdaptation .. Skill_InterceptShip]
+b081	skills	skills/b081-abilities-skills-part3.md	36	9234	Abilities/Skills [part 3/4: Skill_JailKey .. Skill_ScrollFamiliarity]
+b082	skills	skills/b082-abilities-skills-part4.md	39	9385	Abilities/Skills [part 4/4: Skill_SeaCharting .. StdSkill]
+b083	magic	magic/b083-abilities-songs-part1.md	63	7777	Abilities/Songs [part 1/3: BardSkill .. Play_Reveille]
+b084	magic	magic/b084-abilities-songs-part2.md	39	7729	Abilities/Songs [part 2/3: Play_Rhythm .. Skill_Shuffle]
+b085	magic	magic/b085-abilities-songs-part3.md	54	7742	Abilities/Songs [part 3/3: Skill_Slapstick .. Song_Valor]
+b086	magic	magic/b086-abilities-spells-part1.md	52	9155	Abilities/Spells [part 1/9: Spell .. Spell_Clairevoyance]
+b087	magic	magic/b087-abilities-spells-part2.md	44	8924	Abilities/Spells [part 2/9: Spell_ClanDonate .. Spell_DetectWater]
+b088	magic	magic/b088-abilities-spells-part3.md	53	9138	Abilities/Spells [part 3/9: Spell_DetectWeaknesses .. Spell_FlamingArrows]
+b089	magic	magic/b089-abilities-spells-part4.md	51	9127	Abilities/Spells [part 4/9: Spell_FlamingEnsnarement .. Spell_Immunity]
+b090	magic	magic/b090-abilities-spells-part5.md	51	9175	Abilities/Spells [part 5/9: Spell_Imprisonment .. Spell_Majesty]
+b091	magic	magic/b091-abilities-spells-part6.md	44	9066	Abilities/Spells [part 6/9: Spell_MajorGlobe .. Spell_PlanarDistortion]
+b092	magic	magic/b092-abilities-spells-part7.md	51	8943	Abilities/Spells [part 7/9: Spell_PlanarEnthrall .. Spell_Shield]
+b093	magic	magic/b093-abilities-spells-part8.md	44	8998	Abilities/Spells [part 8/9: Spell_ShockingGrasp .. Spell_TimeStop]
+b094	magic	magic/b094-abilities-spells-part9.md	34	9085	Abilities/Spells [part 9/9: Spell_Timeport .. Spell_Youth]
+b095	skills	skills/b095-abilities-thief-part1.md	41	9128	Abilities/Thief [part 1/5: ThiefSkill .. Thief_DeepCut]
+b096	skills	skills/b096-abilities-thief-part2.md	44	9259	Abilities/Thief [part 2/5: Thief_DetectBombs .. Thief_InciteDivineFeud]
+b097	skills	skills/b097-abilities-thief-part3.md	39	9122	Abilities/Thief [part 3/5: Thief_Informant .. Thief_PubContacts]
+b098	skills	skills/b098-abilities-thief-part4.md	40	9036	Abilities/Thief [part 4/5: Thief_Racketeer .. Thief_SneakAttack]
+b099	skills	skills/b099-abilities-thief-part5.md	32	9182	Abilities/Thief [part 5/5: Thief_Snipe .. Thief_WildernessSounds]
+b100	conditions	conditions/b100-abilities-traps.md	82	12475	Abilities/Traps
+b101	world	world/b101-areas.md	19	10752	Areas
+b102	behaviors	behaviors/b102-behaviors-part1.md	16	7908	Behaviors [part 1/5: Behavior .. CombatAbilities]
+b103	behaviors	behaviors/b103-behaviors-part2.md	27	7605	Behaviors [part 2/5: CombatAssister .. Hireling]
+b104	behaviors	behaviors/b104-behaviors-part3.md	21	7818	Behaviors [part 3/5: InstantDeath .. NastyAbilities]
+b105	behaviors	behaviors/b105-behaviors-part4.md	22	7786	Behaviors [part 4/5: NeutralAbilities .. Sailor]
+b106	behaviors	behaviors/b106-behaviors-part5.md	16	7861	Behaviors [part 5/5: Scavenger .. WimpyAggressive]
+b107	actors	actors/b107-charclasses-part1.md	23	7531	CharClasses [part 1/3: CharClass .. Fighter]
+b108	actors	actors/b108-charclasses-part2.md	16	7774	CharClasses [part 2/3: Gaian .. Paladin]
+b109	actors	actors/b109-charclasses-part3.md	18	7391	CharClasses [part 3/3: Pirate .. Wizard]
+b110	commands	commands/b110-commands-part1.md	48	7581	Commands [part 1/12: Command .. Buy]
+b111	commands	commands/b111-commands-part2.md	28	7801	Commands [part 2/12: CalendarCmd .. ClanVote]
+b112	commands	commands/b112-commands-part3.md	19	6672	Commands [part 3/12: ClanWho .. Description]
+b113	commands	commands/b113-commands-part4.md	28	8789	Commands [part 4/12: Destroy .. Export]
+b114	commands	commands/b114-commands-part5.md	30	6487	Commands [part 5/12: FactionList .. Ignore]
+b115	commands	commands/b115-commands-part6.md	4	8448	Commands [part 6/12: Import .. JRun]
+b116	commands	commands/b116-commands-part7.md	10	8805	Commands [part 7/12: Kill .. ListCmd]
+b117	commands	commands/b117-commands-part8.md	12	6582	Commands [part 8/12: Load .. Modify]
+b118	commands	commands/b118-commands-part9.md	46	7564	Commands [part 9/12: Mood .. Rebuke]
+b119	commands	commands/b119-commands-part10.md	20	7971	Commands [part 10/12: Remort .. Shell]
+b120	commands	commands/b120-commands-part11.md	30	7238	Commands [part 11/12: Shout .. Time]
+b121	commands	commands/b121-commands-part12.md	36	7621	Commands [part 12/12: Title .. Yell]
+b122	world	world/b122-exits.md	33	4102	Exits
+b123	items	items/b123-items-armor.md	52	4591	Items/Armor
+b124	items	items/b124-items-basic-part1.md	46	7824	Items/Basic [part 1/5: Apple .. GenKey]
+b125	items	items/b125-items-basic-part2.md	36	8095	Items/Basic [part 2/5: GenLantern .. GenWormhole]
+b126	items	items/b126-items-basic-part3.md	35	7247	Items/Basic [part 3/5: HoleInTheGround .. StdInnKey]
+b127	items	items/b127-items-basic-part4.md	8	9052	Items/Basic [part 4/5: StdItem .. StdNavigableBoardable]
+b128	items	items/b128-items-basic-part5.md	19	7590	Items/Basic [part 5/5: StdPaper .. Wineskin]
+b129	items	items/b129-items-basictech.md	42	8196	Items/BasicTech
+b130	items	items/b130-items-clanitems.md	31	6112	Items/ClanItems
+b131	items	items/b131-items-comptech-part1.md	27	6350	Items/CompTech [part 1/2: GenBussardCollector .. GenSpaceDrive]
+b132	items	items/b132-items-comptech-part2.md	22	6356	Items/CompTech [part 2/2: GenWarpDrive .. StdShipWeapon]
+b133	items	items/b133-items-miscmagic.md	47	8760	Items/MiscMagic
+b134	items	items/b134-items-software.md	13	8906	Items/Software
+b135	items	items/b135-items-weapons.md	63	8069	Items/Weapons
+b136	items	items/b136-items-interfaces.md	52	8664	Items/interfaces
+b137	engine	engine/b137-libraries-editors.md	103	10803	Libraries/editors
+b138	engine	engine/b138-core-database-part1.md	10	11496	core/database [part 1/2: DatabaseEngine .. DDLGenerator]
+b139	engine	engine/b139-core-database-part2.md	13	11393	core/database [part 2/2: DDLValidator .. VFSLoader]
+b140	engine	engine/b140-libraries-intermud-part1.md	45	11457	Libraries/intermud [part 1/2: DiscordClient .. ListenThread]
+b141	engine	engine/b141-libraries-intermud-part2.md	74	11520	Libraries/intermud [part 2/2: NetPeer .. siteinfo]
+b142	world	world/b142-locales-part1.md	60	6700	Locales [part 1/3: GridLocale .. MountainsGrid]
+b143	world	world/b143-locales-part2.md	31	7131	Locales [part 2/3: MountainsMaze .. StdRoom]
+b144	world	world/b144-locales-part3.md	40	6301	Locales [part 3/3: StdThinGrid .. WoodsThinGrid]
+b145	actors	actors/b145-mobs-part1.md	58	8295	MOBS [part 1/4: Auctioneer .. FrostGiant]
+b146	actors	actors/b146-mobs-part2.md	68	8011	MOBS [part 2/4: GardenSnake .. StdAuctioneer]
+b147	actors	actors/b147-mobs-part3.md	6	10773	MOBS [part 3/4: StdBanker .. StdMOB]
+b148	actors	actors/b148-mobs-part4.md	26	6148	MOBS [part 4/4: StdMobWrapper .. Zombie]
+b149	actors	actors/b149-races-part1.md	30	7482	Races [part 1/8: Race .. ClayGolem]
+b150	actors	actors/b150-races-part2.md	37	7355	Races [part 2/8: Clockwork .. Elephant]
+b151	actors	actors/b151-races-part3.md	31	7589	Races [part 3/8: Elf .. GiantSeaHorse]
+b152	actors	actors/b152-races-part4.md	34	7658	Races [part 4/8: GiantSpider .. Kobold]
+b153	actors	actors/b153-races-part5.md	32	7471	Races [part 5/8: Lich .. Pachyderm]
+b154	actors	actors/b154-races-part6.md	31	7330	Races [part 6/8: Pegacorn .. Sheep]
+b155	actors	actors/b155-races-part7.md	26	7647	Races [part 7/8: Shrimp .. Treant]
+b156	actors	actors/b156-races-part8.md	31	7375	Races [part 8/8: TreeGolem .. Zombie]
+b157	engine	engine/b157-tests.md	87	13862	Tests
+b158	admin	admin/b158-webmacros-part1.md	68	11952	WebMacros [part 1/4: WebMacro .. CharClassData]
+b159	admin	admin/b159-webmacros-part2.md	59	10985	WebMacros [part 2/4: CharClassID .. IsAccountSystem]
+b160	admin	admin/b160-webmacros-part3.md	39	11431	WebMacros [part 3/4: IsDisabled .. PostalBoxInfo]
+b161	admin	admin/b161-webmacros-part4.md	49	11512	WebMacros [part 4/4: PrideStat .. WhiteListMgr]
+b162	admin	admin/b162-webmacros-grinder.md	22	9593	WebMacros/grinder
+b163	engine	engine/b163-core-collections-part1.md	56	11866	core/collections [part 1/3: ArrayEnumerator .. KeyPairSearchTree]
+b164	engine	engine/b164-core-collections-part2.md	41	12068	core/collections [part 2/3: KeyPairWildSearchTree .. ReadOnlyNavigableMap]
+b165	engine	engine/b165-core-collections-part3.md	56	11798	core/collections [part 3/3: ReadOnlyNavigableSet .. XVector]
+b166	admin	admin/b166-coffee-web-the-embedded-web-server-com-planet-ink-coffee-web.md	58	12706	coffee_web: the embedded web server (com/planet_ink/coffee_web)
+b167	engine	engine/b167-fakedb-the-flat-file-sql-database-com-planet-ink-fakedb.md	28	15820	fakedb: the flat-file SQL database (com/planet_ink/fakedb)
+b168	admin	admin/b168-siplet-the-browser-telnet-client-com-planet-ink-siplet.md	15	8376	siplet: the browser telnet client (com/planet_ink/siplet)
+b169	actors	actors/b169-character-classes-and-races-models-and-base-classes.md	9	9720	Character classes and races: models and base classes
+b170	commands	commands/b170-commands-the-base-class-and-the-core-verbs.md	25	6162	Commands: the base class and the core verbs
+b171	world	world/b171-rooms-grids-and-exits-models-and-base-classes.md	11	9361	Rooms, grids and exits: models and base classes
+b172	items	items/b172-items-base-item-classes-item-container-food-drink-coins-armo.md	11	6594	Items: base item classes (item, container, food, drink, coins, armour, weapon, wand, scroll, potion)
+b173	actors	actors/b173-mobs-the-mob-model-stdmob-and-generic-npc-classes.md	7	9476	Mobs: the MOB model, StdMOB and generic NPC classes
+c01	content	content/c01-configuration-files-coffeemud-ini-lists-laws-and-web-setting.md	14	0	content: Configuration files: coffeemud.ini, lists, laws and web settings
+c02	content	content/c02-achievements-awards-and-clan-governments.md	3	0	content: Achievements, awards and clan governments
+c03	content	content/c03-socials-mudchat-lines-factions-and-screen-texts.md	29	0	content: Socials, MUDChat lines, factions and screen texts
+c04	content	content/c04-crafting-recipes-and-skill-data-part-1.md	29	0	content: Crafting recipes and skill data, part 1
+c05	content	content/c05-crafting-recipes-and-skill-data-part-2.md	65	0	content: Crafting recipes and skill data, part 2
+c06	content	content/c06-random-quest-templates-random-and-holiday-quests.md	52	0	content: Random quest templates (random and holiday quests)
+c07	content	content/c07-quest-templates-for-builders.md	74	0	content: Quest templates for builders
+c08	content	content/c08-player-help-files.md	14	0	content: Player help files
+c09	content	content/c09-archon-admin-help-behaviours-properties-and-zapper-masks.md	6	0	content: Archon (admin) help: behaviours, properties and zapper masks
+c10	content	content/c10-random-area-definitions-examples-and-sample-scripts.md	62	0	content: Random-area definitions, examples and sample scripts
+c11	content	content/c11-guides-for-players-and-builders.md	8	0	content: Guides for players and builders
+c12	content	content/c12-guides-for-administrators-and-scripters-archonguide-and-scri.md	2	0	content: Guides for administrators and scripters: ArchonGuide and Scriptable
+c13	content	content/c13-guides-for-programmers-and-operators.md	100	0	content: Guides for programmers and operators
+c14	content	content/c14-web-server-pages-libraries-and-project-notes.md	1200	0	content: Web server pages, libraries and project notes

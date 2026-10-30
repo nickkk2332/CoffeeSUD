@@ -1,0 +1,24 @@
+# b105 Behaviors [part 4/5: NeutralAbilities .. Sailor]
+file	lines
+com/planet_ink/coffee_mud/Behaviors/PokerDealer.java	1758
+com/planet_ink/coffee_mud/Behaviors/Sailor.java	938
+com/planet_ink/coffee_mud/Behaviors/Patroller.java	662
+com/planet_ink/coffee_mud/Behaviors/RandomItems.java	458
+com/planet_ink/coffee_mud/Behaviors/RandomTraps.java	435
+com/planet_ink/coffee_mud/Behaviors/RandomMonsters.java	420
+com/planet_ink/coffee_mud/Behaviors/ProtectedCitizens.java	344
+com/planet_ink/coffee_mud/Behaviors/RandomQuests.java	324
+com/planet_ink/coffee_mud/Behaviors/ResourceOverride.java	317
+com/planet_ink/coffee_mud/Behaviors/ProtectedCitizen.java	253
+com/planet_ink/coffee_mud/Behaviors/PuddleMaker.java	250
+com/planet_ink/coffee_mud/Behaviors/ResetWhole.java	225
+com/planet_ink/coffee_mud/Behaviors/RandomTeleporter.java	215
+com/planet_ink/coffee_mud/Behaviors/NeutralAbilities.java	180
+com/planet_ink/coffee_mud/Behaviors/NiceAbilities.java	170
+com/planet_ink/coffee_mud/Behaviors/ROMGangMember.java	159
+com/planet_ink/coffee_mud/Behaviors/ROMPatrolman.java	158
+com/planet_ink/coffee_mud/Behaviors/RaceHelper.java	121
+com/planet_ink/coffee_mud/Behaviors/PlayerHelper.java	118
+com/planet_ink/coffee_mud/Behaviors/ObjectGuardian.java	117
+com/planet_ink/coffee_mud/Behaviors/QuestChat.java	97
+com/planet_ink/coffee_mud/Behaviors/NoCombatAssist.java	67

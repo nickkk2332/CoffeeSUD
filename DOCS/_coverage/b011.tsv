@@ -1,0 +1,7 @@
+# b011 Sessions: the player connection and input loop
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultSession.java	4629
+com/planet_ink/coffee_mud/Common/interfaces/Session.java	1557
+com/planet_ink/coffee_mud/Common/FakeSession.java	856
+com/planet_ink/coffee_mud/Libraries/Sessions.java	414
+com/planet_ink/coffee_mud/Libraries/interfaces/SessionsList.java	226

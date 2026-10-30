@@ -1,0 +1,11 @@
+# b169 Character classes and races: models and base classes
+file	lines
+com/planet_ink/coffee_mud/Races/StdRace.java	2204
+com/planet_ink/coffee_mud/Races/GenRace.java	1689
+com/planet_ink/coffee_mud/CharClasses/GenCharClass.java	1612
+com/planet_ink/coffee_mud/CharClasses/StdCharClass.java	1590
+com/planet_ink/coffee_mud/CharClasses/interfaces/CharClass.java	779
+com/planet_ink/coffee_mud/Races/interfaces/Race.java	652
+com/planet_ink/coffee_mud/CharClasses/Mage.java	554
+com/planet_ink/coffee_mud/CharClasses/Fighter.java	378
+com/planet_ink/coffee_mud/Races/Human.java	262

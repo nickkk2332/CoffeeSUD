@@ -1,0 +1,21 @@
+# b112 Commands [part 3/12: ClanWho .. Description]
+file	lines
+com/planet_ink/coffee_mud/Commands/Create.java	2682
+com/planet_ink/coffee_mud/Commands/Config.java	559
+com/planet_ink/coffee_mud/Commands/ColorSet.java	502
+com/planet_ink/coffee_mud/Commands/Copy.java	475
+com/planet_ink/coffee_mud/Commands/CommandJournal.java	432
+com/planet_ink/coffee_mud/Commands/Consider.java	310
+com/planet_ink/coffee_mud/Commands/Deities.java	208
+com/planet_ink/coffee_mud/Commands/Compare.java	200
+com/planet_ink/coffee_mud/Commands/ClanWho.java	168
+com/planet_ink/coffee_mud/Commands/Close.java	160
+com/planet_ink/coffee_mud/Commands/Deactivate.java	155
+com/planet_ink/coffee_mud/Commands/DeferCmd.java	125
+com/planet_ink/coffee_mud/Commands/Commands.java	120
+com/planet_ink/coffee_mud/Commands/Deposit.java	118
+com/planet_ink/coffee_mud/Commands/Cloak.java	109
+com/planet_ink/coffee_mud/Commands/Crawl.java	105
+com/planet_ink/coffee_mud/Commands/Compress.java	92
+com/planet_ink/coffee_mud/Commands/Description.java	79
+com/planet_ink/coffee_mud/Commands/Credits.java	73

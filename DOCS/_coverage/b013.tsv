@@ -1,0 +1,12 @@
+# b013 Text output: colour codes, filters, translation and help
+file	lines
+com/planet_ink/coffee_mud/Libraries/MUDHelp.java	2104
+com/planet_ink/coffee_mud/Libraries/CoffeeFilter.java	2087
+com/planet_ink/coffee_mud/Libraries/DirtyLanguage.java	1049
+com/planet_ink/coffee_mud/Libraries/Brown.java	955
+com/planet_ink/coffee_mud/Libraries/interfaces/ColorLibrary.java	555
+com/planet_ink/coffee_mud/Libraries/interfaces/HelpLibrary.java	294
+com/planet_ink/coffee_mud/Libraries/interfaces/TelnetFilter.java	200
+com/planet_ink/coffee_mud/Common/DefaultFormatting.java	169
+com/planet_ink/coffee_mud/Libraries/interfaces/LanguageLibrary.java	164
+com/planet_ink/coffee_mud/Common/interfaces/Formatting.java	160

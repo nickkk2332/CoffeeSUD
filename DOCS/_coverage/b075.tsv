@@ -1,0 +1,25 @@
+# b075 Abilities/Properties [part 1/4: Prop_AbilityImmunity .. Prop_HaveAdjuster]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_HaveAdjuster.java	1535
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_AbsorbDamage.java	620
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Artifact.java	616
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_ClosedDayNight.java	586
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Familiar.java	525
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_ClanEquipment.java	462
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_AffectReTick.java	457
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_AreaForSale.java	421
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Doppleganger.java	395
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_AddDamage.java	393
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_EnterAdjuster.java	347
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_FightSpellCast.java	328
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Fumble.java	322
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_CommonTwister.java	245
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_AbilityImmunity.java	207
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_CombatAdjuster.java	206
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_AstralSpirit.java	205
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_ClosedSeason.java	193
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_CloseCommand.java	192
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Climbable.java	178
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Crawlspace.java	140
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_EnlargeRoom.java	134
+com/planet_ink/coffee_mud/Abilities/Properties/Prop_Adjuster.java	98

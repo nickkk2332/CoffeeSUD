@@ -1,0 +1,13 @@
+# b036 Law, property titles, materials and follower orders
+file	lines
+com/planet_ink/coffee_mud/Libraries/RawCMaterial.java	1609
+com/planet_ink/coffee_mud/Libraries/SlaveryParser.java	1156
+com/planet_ink/coffee_mud/Common/DefaultLawSet.java	1081
+com/planet_ink/coffee_mud/Libraries/MUDLaw.java	1033
+com/planet_ink/coffee_mud/Common/interfaces/Law.java	842
+com/planet_ink/coffee_mud/Libraries/interfaces/MaterialLibrary.java	665
+com/planet_ink/coffee_mud/Libraries/interfaces/LegalLibrary.java	631
+com/planet_ink/coffee_mud/Common/interfaces/LegalWarrant.java	384
+com/planet_ink/coffee_mud/Common/DefaultArrestWarrant.java	342
+com/planet_ink/coffee_mud/core/interfaces/LandTitle.java	188
+com/planet_ink/coffee_mud/Libraries/interfaces/SlaveryLibrary.java	174

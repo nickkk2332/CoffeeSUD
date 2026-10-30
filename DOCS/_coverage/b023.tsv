@@ -1,0 +1,11 @@
+# b023 World map, room sets and area statistics
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMMap.java	3073
+com/planet_ink/coffee_mud/Libraries/interfaces/WorldMap.java	1048
+com/planet_ink/coffee_mud/Common/DefaultRoomnumberSet.java	545
+com/planet_ink/coffee_mud/Common/OrderedRoomnumberSet.java	545
+com/planet_ink/coffee_mud/Common/DefaultAreaIStats.java	512
+com/planet_ink/coffee_mud/Libraries/interfaces/CityMap.java	386
+com/planet_ink/coffee_mud/Libraries/CityCafe.java	382
+com/planet_ink/coffee_mud/Common/interfaces/RoomnumberSet.java	151
+com/planet_ink/coffee_mud/Common/interfaces/AreaIStats.java	79

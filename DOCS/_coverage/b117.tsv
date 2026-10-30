@@ -1,0 +1,14 @@
+# b117 Commands [part 8/12: Load .. Modify]
+file	lines
+com/planet_ink/coffee_mud/Commands/Modify.java	3427
+com/planet_ink/coffee_mud/Commands/Merge.java	1068
+com/planet_ink/coffee_mud/Commands/MOTD.java	535
+com/planet_ink/coffee_mud/Commands/Load.java	353
+com/planet_ink/coffee_mud/Commands/Look.java	351
+com/planet_ink/coffee_mud/Commands/Lock.java	151
+com/planet_ink/coffee_mud/Commands/Logoff.java	140
+com/planet_ink/coffee_mud/Commands/Mend.java	126
+com/planet_ink/coffee_mud/Commands/MPRun.java	123
+com/planet_ink/coffee_mud/Commands/MXP.java	121
+com/planet_ink/coffee_mud/Commands/MPCommand.java	99
+com/planet_ink/coffee_mud/Commands/MetaMsgCommand.java	88

@@ -1,0 +1,4 @@
+# b018 Zapper masks: the eligibility language
+file	lines
+com/planet_ink/coffee_mud/Libraries/MUDZapper.java	10244
+com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java	648

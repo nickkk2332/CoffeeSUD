@@ -1,0 +1,4 @@
+# b037 Scripting engine (MOBPROG / Scriptable)
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java	16435
+com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java	808

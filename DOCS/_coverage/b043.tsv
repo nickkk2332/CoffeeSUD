@@ -1,0 +1,18 @@
+# b043 Abilities/Common [part 2/7: BuildingSkill .. Costuming]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Common/BuildingSkill.java	2035
+com/planet_ink/coffee_mud/Abilities/Common/Cooking.java	1573
+com/planet_ink/coffee_mud/Abilities/Common/CommonSkill.java	1016
+com/planet_ink/coffee_mud/Abilities/Common/Carpentry.java	749
+com/planet_ink/coffee_mud/Abilities/Common/ClanCrafting.java	693
+com/planet_ink/coffee_mud/Abilities/Common/Costuming.java	651
+com/planet_ink/coffee_mud/Abilities/Common/Cobbling.java	541
+com/planet_ink/coffee_mud/Abilities/Common/Composting.java	447
+com/planet_ink/coffee_mud/Abilities/Common/Cataloging.java	409
+com/planet_ink/coffee_mud/Abilities/Common/CargoLoading.java	364
+com/planet_ink/coffee_mud/Abilities/Common/Butchering.java	238
+com/planet_ink/coffee_mud/Abilities/Common/Chopping.java	222
+com/planet_ink/coffee_mud/Abilities/Common/ClanShipwrighting.java	138
+com/planet_ink/coffee_mud/Abilities/Common/CageBuilding.java	110
+com/planet_ink/coffee_mud/Abilities/Common/CaravanBuilding.java	106
+com/planet_ink/coffee_mud/Abilities/Common/Construction.java	105

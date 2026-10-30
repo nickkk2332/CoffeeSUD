@@ -1,0 +1,5 @@
+# b006 String and number utilities
+file	lines
+com/planet_ink/coffee_mud/core/CMStrings.java	6112
+com/planet_ink/coffee_mud/core/CMath.java	2778
+com/planet_ink/coffee_mud/core/BigCMath.java	209

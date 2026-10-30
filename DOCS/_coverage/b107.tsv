@@ -1,0 +1,25 @@
+# b107 CharClasses [part 1/3: CharClass .. Fighter]
+file	lines
+com/planet_ink/coffee_mud/CharClasses/interfaces/CharClass.java	779
+com/planet_ink/coffee_mud/CharClasses/Druid.java	653
+com/planet_ink/coffee_mud/CharClasses/Cleric.java	539
+com/planet_ink/coffee_mud/CharClasses/Bard.java	463
+com/planet_ink/coffee_mud/CharClasses/Charlatan.java	442
+com/planet_ink/coffee_mud/CharClasses/Barbarian.java	441
+com/planet_ink/coffee_mud/CharClasses/Artisan.java	436
+com/planet_ink/coffee_mud/CharClasses/Arcanist.java	415
+com/planet_ink/coffee_mud/CharClasses/Beastmaster.java	406
+com/planet_ink/coffee_mud/CharClasses/Delver.java	385
+com/planet_ink/coffee_mud/CharClasses/Fighter.java	378
+com/planet_ink/coffee_mud/CharClasses/Cavalier.java	376
+com/planet_ink/coffee_mud/CharClasses/Apprentice.java	308
+com/planet_ink/coffee_mud/CharClasses/Doomsayer.java	294
+com/planet_ink/coffee_mud/CharClasses/Archon.java	237
+com/planet_ink/coffee_mud/CharClasses/Assassin.java	198
+com/planet_ink/coffee_mud/CharClasses/Burglar.java	197
+com/planet_ink/coffee_mud/CharClasses/Diviner.java	108
+com/planet_ink/coffee_mud/CharClasses/Alterer.java	97
+com/planet_ink/coffee_mud/CharClasses/Abjurer.java	96
+com/planet_ink/coffee_mud/CharClasses/Evoker.java	96
+com/planet_ink/coffee_mud/CharClasses/Enchanter.java	95
+com/planet_ink/coffee_mud/CharClasses/Conjurer.java	92

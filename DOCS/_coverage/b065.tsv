@@ -1,0 +1,22 @@
+# b065 Abilities/Misc [part 2/3: Firebreath .. PoisonousBite]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Misc/InstanceArea.java	2669
+com/planet_ink/coffee_mud/Abilities/Misc/Mood.java	1673
+com/planet_ink/coffee_mud/Abilities/Misc/Injury.java	823
+com/planet_ink/coffee_mud/Abilities/Misc/Phobias.java	474
+com/planet_ink/coffee_mud/Abilities/Misc/GravityFloat.java	452
+com/planet_ink/coffee_mud/Abilities/Misc/Milkable.java	428
+com/planet_ink/coffee_mud/Abilities/Misc/Grazing.java	266
+com/planet_ink/coffee_mud/Abilities/Misc/Immunities.java	258
+com/planet_ink/coffee_mud/Abilities/Misc/ItemRejuv.java	258
+com/planet_ink/coffee_mud/Abilities/Misc/Gait.java	252
+com/planet_ink/coffee_mud/Abilities/Misc/Hamstring.java	215
+com/planet_ink/coffee_mud/Abilities/Misc/FoodBegging.java	212
+com/planet_ink/coffee_mud/Abilities/Misc/Paralysis.java	183
+com/planet_ink/coffee_mud/Abilities/Misc/Loyalty.java	174
+com/planet_ink/coffee_mud/Abilities/Misc/PoisonousBite.java	164
+com/planet_ink/coffee_mud/Abilities/Misc/Gore.java	130
+com/planet_ink/coffee_mud/Abilities/Misc/Firebreath.java	67
+com/planet_ink/coffee_mud/Abilities/Misc/Gasbreath.java	67
+com/planet_ink/coffee_mud/Abilities/Misc/Frostbreath.java	61
+com/planet_ink/coffee_mud/Abilities/Misc/Lighteningbreath.java	61

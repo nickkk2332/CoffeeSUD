@@ -1,0 +1,12 @@
+# b116 Commands [part 7/12: Kill .. ListCmd]
+file	lines
+com/planet_ink/coffee_mud/Commands/ListCmd.java	7491
+com/planet_ink/coffee_mud/Commands/Link.java	253
+com/planet_ink/coffee_mud/Commands/Kill.java	240
+com/planet_ink/coffee_mud/Commands/Learn.java	173
+com/planet_ink/coffee_mud/Commands/Leave.java	143
+com/planet_ink/coffee_mud/Commands/Knock.java	142
+com/planet_ink/coffee_mud/Commands/LineWrap.java	107
+com/planet_ink/coffee_mud/Commands/LLM.java	97
+com/planet_ink/coffee_mud/Commands/Left.java	92
+com/planet_ink/coffee_mud/Commands/Languages.java	67

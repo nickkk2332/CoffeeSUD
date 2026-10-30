@@ -1,0 +1,4 @@
+# b002 Configuration properties and security
+file	lines
+com/planet_ink/coffee_mud/core/CMProps.java	3965
+com/planet_ink/coffee_mud/core/CMSecurity.java	3068

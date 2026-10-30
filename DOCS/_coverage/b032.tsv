@@ -1,0 +1,6 @@
+# b032 Factions
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultFaction.java	3557
+com/planet_ink/coffee_mud/Libraries/Factions.java	2109
+com/planet_ink/coffee_mud/Common/interfaces/Faction.java	1903
+com/planet_ink/coffee_mud/Libraries/interfaces/FactionManager.java	630

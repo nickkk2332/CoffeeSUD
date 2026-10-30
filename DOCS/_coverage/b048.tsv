@@ -1,0 +1,24 @@
+# b048 Abilities/Common [part 7/7: SmokeRings .. Welding]
+file	lines
+com/planet_ink/coffee_mud/Abilities/Common/Studying.java	984
+com/planet_ink/coffee_mud/Abilities/Common/Weaving.java	672
+com/planet_ink/coffee_mud/Abilities/Common/StaffMaking.java	616
+com/planet_ink/coffee_mud/Abilities/Common/Weaponsmithing.java	613
+com/planet_ink/coffee_mud/Abilities/Common/WandMaking.java	599
+com/planet_ink/coffee_mud/Abilities/Common/Tailoring.java	588
+com/planet_ink/coffee_mud/Abilities/Common/Surveying.java	513
+com/planet_ink/coffee_mud/Abilities/Common/Wainwrighting.java	492
+com/planet_ink/coffee_mud/Abilities/Common/Textiling.java	471
+com/planet_ink/coffee_mud/Abilities/Common/Torturesmithing.java	469
+com/planet_ink/coffee_mud/Abilities/Common/Titling.java	354
+com/planet_ink/coffee_mud/Abilities/Common/Tattooing.java	304
+com/planet_ink/coffee_mud/Abilities/Common/Taxidermy.java	291
+com/planet_ink/coffee_mud/Abilities/Common/Transcribing.java	286
+com/planet_ink/coffee_mud/Abilities/Common/SnakeOilSelling.java	276
+com/planet_ink/coffee_mud/Abilities/Common/SmokeRings.java	239
+com/planet_ink/coffee_mud/Abilities/Common/Tanning.java	235
+com/planet_ink/coffee_mud/Abilities/Common/Trawling.java	227
+com/planet_ink/coffee_mud/Abilities/Common/Unbinding.java	204
+com/planet_ink/coffee_mud/Abilities/Common/Speculate.java	173
+com/planet_ink/coffee_mud/Abilities/Common/SpellCraftingSkill.java	156
+com/planet_ink/coffee_mud/Abilities/Common/Welding.java	103

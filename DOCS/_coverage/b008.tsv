@@ -1,0 +1,20 @@
+# b008 Files, logging, directions and encoders
+file	lines
+com/planet_ink/coffee_mud/core/CMFile.java	2306
+com/planet_ink/coffee_mud/core/Log.java	2045
+com/planet_ink/coffee_mud/core/Directions.java	1659
+com/planet_ink/coffee_mud/core/smtp/ProcessSMTPrequest.java	1115
+com/planet_ink/coffee_mud/core/B64Encoder.java	982
+com/planet_ink/coffee_mud/core/smtp/SMTPserver.java	751
+com/planet_ink/coffee_mud/core/CoffeeIOPipe.java	403
+com/planet_ink/coffee_mud/core/smtp/MassMailer.java	310
+com/planet_ink/coffee_mud/core/exceptions/HTTPServerException.java	47
+com/planet_ink/coffee_mud/core/exceptions/HTTPRedirectException.java	42
+com/planet_ink/coffee_mud/core/exceptions/BadEmailAddressException.java	40
+com/planet_ink/coffee_mud/core/exceptions/CoffeeMudException.java	38
+com/planet_ink/coffee_mud/core/exceptions/CharStatOutOfRangeException.java	34
+com/planet_ink/coffee_mud/core/exceptions/CMException.java	34
+com/planet_ink/coffee_mud/core/exceptions/CMDataException.java	34
+com/planet_ink/coffee_mud/core/exceptions/MQLException.java	34
+com/planet_ink/coffee_mud/core/exceptions/StatOutOfRangeException.java	33
+com/planet_ink/coffee_mud/core/exceptions/ScriptParseException.java	26

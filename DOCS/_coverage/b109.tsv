@@ -1,0 +1,20 @@
+# b109 CharClasses [part 3/3: Pirate .. Wizard]
+file	lines
+com/planet_ink/coffee_mud/CharClasses/StdCharClass.java	1590
+com/planet_ink/coffee_mud/CharClasses/Reliquist.java	687
+com/planet_ink/coffee_mud/CharClasses/Scholar.java	538
+com/planet_ink/coffee_mud/CharClasses/Pirate.java	490
+com/planet_ink/coffee_mud/CharClasses/Sailor.java	462
+com/planet_ink/coffee_mud/CharClasses/SkyWatcher.java	446
+com/planet_ink/coffee_mud/CharClasses/Ranger.java	396
+com/planet_ink/coffee_mud/CharClasses/Prancer.java	340
+com/planet_ink/coffee_mud/CharClasses/Purist.java	340
+com/planet_ink/coffee_mud/CharClasses/Thief.java	332
+com/planet_ink/coffee_mud/CharClasses/Shaman.java	300
+com/planet_ink/coffee_mud/CharClasses/Templar.java	286
+com/planet_ink/coffee_mud/CharClasses/Trapper.java	275
+com/planet_ink/coffee_mud/CharClasses/PlayerClass.java	258
+com/planet_ink/coffee_mud/CharClasses/SpecialistMage.java	220
+com/planet_ink/coffee_mud/CharClasses/Wizard.java	199
+com/planet_ink/coffee_mud/CharClasses/Qualifier.java	139
+com/planet_ink/coffee_mud/CharClasses/Transmuter.java	93

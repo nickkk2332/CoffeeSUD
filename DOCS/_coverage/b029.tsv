@@ -1,0 +1,8 @@
+# b029 Ability parameters (recipe formats) and components
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMAbleParms.java	2073
+com/planet_ink/coffee_mud/Libraries/CMAbleComps.java	1612
+com/planet_ink/coffee_mud/Libraries/interfaces/AbilityParameters.java	500
+com/planet_ink/coffee_mud/Libraries/interfaces/AbilityComponents.java	427
+com/planet_ink/coffee_mud/Common/DefaultAbilityComponent.java	237
+com/planet_ink/coffee_mud/Common/interfaces/AbilityComponent.java	232

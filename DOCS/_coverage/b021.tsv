@@ -1,0 +1,6 @@
+# b021 Character creation, experience and levels
+file	lines
+com/planet_ink/coffee_mud/Libraries/CharCreation.java	5394
+com/planet_ink/coffee_mud/Libraries/CoffeeLevels.java	1746
+com/planet_ink/coffee_mud/Libraries/interfaces/CharCreationLibrary.java	565
+com/planet_ink/coffee_mud/Libraries/interfaces/ExpLevelLibrary.java	403

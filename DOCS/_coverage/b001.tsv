@@ -1,0 +1,7 @@
+# b001 Class registry, library registry and resources
+file	lines
+com/planet_ink/coffee_mud/core/CMClass.java	3971
+com/planet_ink/coffee_mud/core/CMLib.java	1785
+com/planet_ink/coffee_mud/core/Resources.java	1295
+com/planet_ink/coffee_mud/Libraries/StdLibrary.java	181
+com/planet_ink/coffee_mud/Libraries/interfaces/CMLibrary.java	78

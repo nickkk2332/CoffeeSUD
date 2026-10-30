@@ -1,0 +1,10 @@
+# b027 Clans and clan governments
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultClan.java	3038
+com/planet_ink/coffee_mud/Libraries/Clans.java	2443
+com/planet_ink/coffee_mud/Common/DefaultClanGovernment.java	1547
+com/planet_ink/coffee_mud/Common/interfaces/Clan.java	1318
+com/planet_ink/coffee_mud/Common/interfaces/ClanGovernment.java	615
+com/planet_ink/coffee_mud/Libraries/interfaces/ClanManager.java	558
+com/planet_ink/coffee_mud/Common/DefaultClanPosition.java	378
+com/planet_ink/coffee_mud/Common/interfaces/ClanPosition.java	204

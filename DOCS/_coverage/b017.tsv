@@ -1,0 +1,4 @@
+# b017 Generic object editor (CMGenEditor)
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMGenEditor.java	12704
+com/planet_ink/coffee_mud/Libraries/interfaces/GenericEditor.java	1106

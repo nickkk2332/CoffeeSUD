@@ -1,0 +1,4 @@
+# b016 Object builder and XML serialisation (CoffeeMaker)
+file	lines
+com/planet_ink/coffee_mud/Libraries/CoffeeMaker.java	6719
+com/planet_ink/coffee_mud/Libraries/interfaces/GenericBuilder.java	1323

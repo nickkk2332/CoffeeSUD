@@ -1,0 +1,12 @@
+# b012 Protocols: telnet options, MXP, MSP, GMCP, encoders and mail
+file	lines
+com/planet_ink/coffee_mud/Libraries/CMProtocols.java	5149
+com/planet_ink/coffee_mud/Libraries/SMTPclient.java	686
+com/planet_ink/coffee_mud/Common/DefaultHttpClient.java	629
+com/planet_ink/coffee_mud/Libraries/interfaces/ProtocolLibrary.java	407
+com/planet_ink/coffee_mud/Libraries/CMEncoder.java	297
+com/planet_ink/coffee_mud/Common/interfaces/HttpClient.java	220
+com/planet_ink/coffee_mud/Libraries/interfaces/SMTPLibrary.java	147
+com/planet_ink/coffee_mud/Libraries/interfaces/TextEncoders.java	119
+com/planet_ink/coffee_mud/Libraries/mcppkgs/MCPNegotiatePackage.java	69
+com/planet_ink/coffee_mud/Libraries/mcppkgs/MCPMooSimpleEditPackage.java	66

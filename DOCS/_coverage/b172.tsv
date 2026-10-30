@@ -1,0 +1,13 @@
+# b172 Items: base item classes (item, container, food, drink, coins, armour, weapon, wand, scroll, potion)
+file	lines
+com/planet_ink/coffee_mud/Items/Basic/StdItem.java	2386
+com/planet_ink/coffee_mud/Items/Basic/StdContainer.java	783
+com/planet_ink/coffee_mud/Items/Armor/StdArmor.java	746
+com/planet_ink/coffee_mud/Items/Weapons/StdWeapon.java	527
+com/planet_ink/coffee_mud/Items/MiscMagic/StdScroll.java	437
+com/planet_ink/coffee_mud/Items/MiscMagic/StdWand.java	421
+com/planet_ink/coffee_mud/Items/Basic/StdDrink.java	414
+com/planet_ink/coffee_mud/Items/MiscMagic/StdPotion.java	307
+com/planet_ink/coffee_mud/Items/Basic/StdCoins.java	251
+com/planet_ink/coffee_mud/Items/Basic/StdFood.java	194
+com/planet_ink/coffee_mud/Items/Basic/GenItem.java	128

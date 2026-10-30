@@ -1,0 +1,18 @@
+# b108 CharClasses [part 2/3: Gaian .. Paladin]
+file	lines
+com/planet_ink/coffee_mud/CharClasses/GenCharClass.java	1612
+com/planet_ink/coffee_mud/CharClasses/Gypsy.java	637
+com/planet_ink/coffee_mud/CharClasses/Gaoler.java	603
+com/planet_ink/coffee_mud/CharClasses/Mage.java	554
+com/planet_ink/coffee_mud/CharClasses/Paladin.java	549
+com/planet_ink/coffee_mud/CharClasses/Mer.java	529
+com/planet_ink/coffee_mud/CharClasses/Gaian.java	491
+com/planet_ink/coffee_mud/CharClasses/Oracle.java	373
+com/planet_ink/coffee_mud/CharClasses/Minstrel.java	355
+com/planet_ink/coffee_mud/CharClasses/Healer.java	351
+com/planet_ink/coffee_mud/CharClasses/Monk.java	349
+com/planet_ink/coffee_mud/CharClasses/Necromancer.java	344
+com/planet_ink/coffee_mud/CharClasses/Jester.java	339
+com/planet_ink/coffee_mud/CharClasses/Monger.java	311
+com/planet_ink/coffee_mud/CharClasses/Missionary.java	280
+com/planet_ink/coffee_mud/CharClasses/Illusionist.java	97

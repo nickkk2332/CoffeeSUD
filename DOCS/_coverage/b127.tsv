@@ -1,0 +1,10 @@
+# b127 Items/Basic [part 4/5: StdItem .. StdNavigableBoardable]
+file	lines
+com/planet_ink/coffee_mud/Items/Basic/StdItem.java	2386
+com/planet_ink/coffee_mud/Items/Basic/StdNavigableBoardable.java	1983
+com/planet_ink/coffee_mud/Items/Basic/StdLawBook.java	1603
+com/planet_ink/coffee_mud/Items/Basic/StdJournal.java	1140
+com/planet_ink/coffee_mud/Items/Basic/StdMap.java	804
+com/planet_ink/coffee_mud/Items/Basic/StdItemWrapper.java	772
+com/planet_ink/coffee_mud/Items/Basic/StdLimb.java	290
+com/planet_ink/coffee_mud/Items/Basic/StdKey.java	74

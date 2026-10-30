@@ -1,0 +1,8 @@
+# b025 Combat, dice and item balance
+file	lines
+com/planet_ink/coffee_mud/Libraries/MUDFight.java	3817
+com/planet_ink/coffee_mud/Libraries/TimsLibrary.java	1626
+com/planet_ink/coffee_mud/Libraries/interfaces/CombatLibrary.java	854
+com/planet_ink/coffee_mud/Libraries/Dice.java	414
+com/planet_ink/coffee_mud/Libraries/interfaces/DiceLibrary.java	391
+com/planet_ink/coffee_mud/Libraries/interfaces/ItemBalanceLibrary.java	167

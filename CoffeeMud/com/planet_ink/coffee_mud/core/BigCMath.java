@@ -1,0 +1,209 @@
+package com.planet_ink.coffee_mud.core;
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.Map.Entry;
+import java.io.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
+
+/*
+   Copyright 2024-2025 Bo Zimmerman
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+/**
+ * A core singleton class handling various BigDecimal mathematical operations and
+ * functions
+ */
+public class BigCMath
+{
+	public static final BigDecimal		ZERO			= BigDecimal.ZERO;
+	public static final BigDecimal		ONE				= BigDecimal.valueOf(1L);
+	public static final BigDecimal		TWO				= BigDecimal.valueOf(2L);
+	public static final BigDecimal		THREE			= BigDecimal.valueOf(3L);
+	public static final BigDecimal		FOUR			= BigDecimal.valueOf(4L);
+	public static final BigDecimal		FIVE			= BigDecimal.valueOf(5L);
+	public static final BigDecimal		TEN				= BigDecimal.valueOf(10L);
+	public static final BigDecimal		ONE_THOUSAND	= BigDecimal.valueOf(1000);
+	public static final BigDecimal		ZERO_ALMOST		= BigDecimal.valueOf(0.000001);
+	public static final BigDecimal		POINT01			= BigDecimal.valueOf(0.01);
+	public static final BigDecimal		POINT1			= BigDecimal.valueOf(0.1);
+	public static final BigDecimal		POINT2			= BigDecimal.valueOf(0.2);
+	public static final BigDecimal		ONEPOINT01		= BigDecimal.valueOf(1.01);
+	public static final BigDecimal		ALMOST_ZERO		= ZERO_ALMOST;
+	public static final BigDecimal		MIN_ONE			= BigDecimal.valueOf(-1L);
+
+	public static final BigDecimal		PI;
+	public static final BigDecimal		PI_TIMES_2;
+	public static final BigDecimal		PI_BY_2;
+	public static final BigDecimal		PI_BY_4;
+	public static final BigDecimal		PIPLUS;
+	public static final BigDecimal		PIPLUS_TIMES_2;
+
+	public final static int			 SCALE	= 34;
+	public final static RoundingMode ROUND	= RoundingMode.HALF_UP;
+
+	static
+	{
+		PI = new BigDecimal("3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679");
+		PI.setScale(SCALE, ROUND);
+		PI_TIMES_2 = PI.multiply(TWO);
+		PI_BY_2 = PI.divide(TWO, SCALE, ROUND);
+		PI_BY_4 = PI.divide(FOUR, SCALE, ROUND);
+		PIPLUS = BigCMath.PI.add(BigDecimal.valueOf(0.000000000000001));
+		PIPLUS_TIMES_2 = PIPLUS.multiply(BigCMath.TWO);
+	}
+
+	public static BigDecimal max(final BigDecimal one, final BigDecimal two)
+	{
+		if (one == null)
+			return two;
+		if (two == null)
+			return one;
+		return one.compareTo(two) >= 0 ? one : two;
+	}
+
+	public static BigDecimal sqrt(final BigDecimal value)
+	{
+		if(value.doubleValue()<=0)
+			return BigCMath.ZERO;
+		final BigDecimal x = new BigDecimal(Math.sqrt(value.doubleValue()));
+		return x.add(new BigDecimal(value.subtract(x.multiply(x)).doubleValue() / (x.doubleValue() * 2.0)));
+		/*
+		final int SCALE=BigCMath.SCALE*2;
+		BigDecimal x0 = BigDecimal.valueOf(0);
+		BigDecimal x1 = BigDecimal.valueOf(Math.sqrt(A.doubleValue()));
+		try
+		{
+			int times=0;
+			while ((!x0.equals(x1))&&(++times<20))
+			{
+				x0 = x1;
+				x1 = A.divide(x0, SCALE, RoundingMode.UP);
+				x1 = x1.add(x0);
+				x1 = x1.divide(BigCMath.TWO, SCALE, RoundingMode.UP);
+			}
+			x1.setScale(BigCMath.SCALE, ROUND);
+		}
+		catch(Exception e)
+		{
+			Log.errOut(""+A);
+		}
+		return x1;
+		*/
+	}
+
+	/**
+	 * Returns the cosine of a BigDecimal value.
+	 *
+	 * @param d the value
+	 * @return the cosine of a BigDecimal value.
+	 */
+	public static BigDecimal cos(final BigDecimal d)
+	{
+		return BigDecimal.valueOf(Math.cos(d.doubleValue()));
+	}
+
+	/**
+	 * Returns the arc-cosine of a BigDecimal value.
+	 *
+	 * @param d the value
+	 * @return the arc-cosine of a BigDecimal value.
+	 */
+	public static BigDecimal acos(final BigDecimal d)
+	{
+		return BigDecimal.valueOf(Math.acos(d.doubleValue()));
+	}
+
+	/**
+	 * Returns the sine of a BigDecimal value.
+	 *
+	 * @param d the value
+	 * @return the sine of a BigDecimal value.
+	 */
+	public static BigDecimal sin(final BigDecimal d)
+	{
+		return BigDecimal.valueOf(Math.sin(d.doubleValue()));
+	}
+
+	/**
+	 * Returns the arc-sine of a BigDecimal value.
+	 * @param d the value
+	 * @return the arc-sine of a BigDecimal value.
+	 */
+	public static BigDecimal asin(final BigDecimal d)
+	{
+		return BigDecimal.valueOf(Math.asin(d.doubleValue()));
+	}
+
+	/**
+	 * Returns the tangent of a BigDecimal value.
+	 *
+	 * @param d the value
+	 * @return the tangent of a BigDecimal value.
+	 */
+	public static BigDecimal tan(final BigDecimal d)
+	{
+		return BigDecimal.valueOf(Math.tan(d.doubleValue()));
+	}
+
+	/**
+	 * Returns the arc-tangent2 of a BigDecimal value.
+	 *
+	 * @param invX the value
+	 * @param invY the value
+	 * @return the arc-tangent of a BigDecimal value.
+	 */
+	public static BigDecimal atan2(final BigDecimal invX, final BigDecimal invY)
+	{
+		return BigDecimal.valueOf(Math.atan2(invX.doubleValue(), invY.doubleValue()));
+	}
+
+	/**
+	 * Returns the arc-tangent of a BigDecimal value.
+	 *
+	 * @param invX the value
+	 * @return the arc-tangent of a BigDecimal value.
+	 */
+	public static BigDecimal atan(final BigDecimal invX)
+	{
+		return atan(invX, SCALE);
+	}
+
+	/**
+	 * Returns the arc-tangent of a BigDecimal value.
+	 *
+	 * @param invX the value
+	 * @param scale the scale to use
+	 * @return the arc-tangent of a BigDecimal value.
+	 */
+	public static BigDecimal atan(final BigDecimal invX, final int scale)
+	{
+		final BigDecimal invXsq = invX.multiply(invX);
+		BigDecimal num = BigDecimal.ONE.divide(invX, SCALE, ROUND);
+		BigDecimal result = num;
+		BigDecimal term;
+		int i=1;
+		do
+		{
+			num=num.divide(invXsq, SCALE, ROUND);
+			final BigDecimal denom=TWO.multiply(BigDecimal.valueOf(i).add(BigDecimal.ONE));
+			term = num.divide(denom, SCALE, ROUND);
+			result = ((i % 2) == 0) ? result.add(term) : result.subtract(term);
+			i++;
+		} while(term.compareTo(BigDecimal.ZERO) != 0);
+		return result;
+	}
+
+}

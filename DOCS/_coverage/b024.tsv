@@ -1,0 +1,8 @@
+# b024 Time, calendar and climate
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultTimeClock.java	1378
+com/planet_ink/coffee_mud/Libraries/CoffeeTime.java	1169
+com/planet_ink/coffee_mud/Common/interfaces/TimeClock.java	977
+com/planet_ink/coffee_mud/Common/DefaultClimate.java	639
+com/planet_ink/coffee_mud/Libraries/interfaces/TimeManager.java	479
+com/planet_ink/coffee_mud/Common/interfaces/Climate.java	198

@@ -1,0 +1,6 @@
+# b007 Parameter parsing and mini data formats (JSON, TSON, LPC)
+file	lines
+com/planet_ink/coffee_mud/core/CMParms.java	5437
+com/planet_ink/coffee_mud/core/MiniJSON.java	1916
+com/planet_ink/coffee_mud/core/MiniTSON.java	1188
+com/planet_ink/coffee_mud/core/MiniLPC.java	1154

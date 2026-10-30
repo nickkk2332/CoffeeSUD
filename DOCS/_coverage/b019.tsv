@@ -1,0 +1,6 @@
+# b019 Achievements and auto-awards
+file	lines
+com/planet_ink/coffee_mud/Libraries/Achievements.java	10219
+com/planet_ink/coffee_mud/Libraries/interfaces/AchievementLibrary.java	897
+com/planet_ink/coffee_mud/Libraries/AutoAwards.java	894
+com/planet_ink/coffee_mud/Libraries/interfaces/AutoAwardsLibrary.java	296

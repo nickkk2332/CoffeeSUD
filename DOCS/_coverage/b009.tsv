@@ -1,0 +1,11 @@
+# b009 Physical, character and state stats
+file	lines
+com/planet_ink/coffee_mud/Common/interfaces/CharStats.java	1540
+com/planet_ink/coffee_mud/Common/DefaultCharStats.java	1299
+com/planet_ink/coffee_mud/Common/interfaces/PhyStats.java	694
+com/planet_ink/coffee_mud/Common/DefaultPhyStats.java	516
+com/planet_ink/coffee_mud/Common/DefaultCharState.java	482
+com/planet_ink/coffee_mud/Common/interfaces/CharState.java	266
+com/planet_ink/coffee_mud/Common/DefaultTattoo.java	193
+com/planet_ink/coffee_mud/Common/DefaultTattooable.java	158
+com/planet_ink/coffee_mud/Common/interfaces/Tattoo.java	73

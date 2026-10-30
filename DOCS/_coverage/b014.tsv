@@ -1,0 +1,6 @@
+# b014 English parsing and common command messages
+file	lines
+com/planet_ink/coffee_mud/Libraries/EnglishParser.java	4102
+com/planet_ink/coffee_mud/Libraries/CommonMsgs.java	3051
+com/planet_ink/coffee_mud/Libraries/interfaces/EnglishParsing.java	1132
+com/planet_ink/coffee_mud/Libraries/interfaces/CommonCommands.java	709

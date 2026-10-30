@@ -1,0 +1,15 @@
+# b134 Items/Software
+file	lines
+com/planet_ink/coffee_mud/Items/Software/ShipNavProgram.java	2516
+com/planet_ink/coffee_mud/Items/Software/DatabaseProgram.java	1342
+com/planet_ink/coffee_mud/Items/Software/RocketShipProgram.java	742
+com/planet_ink/coffee_mud/Items/Software/ShipDiagProgram.java	700
+com/planet_ink/coffee_mud/Items/Software/GenShipProgram.java	648
+com/planet_ink/coffee_mud/Items/Software/StdProgram.java	645
+com/planet_ink/coffee_mud/Items/Software/ShipSensorProgram.java	438
+com/planet_ink/coffee_mud/Items/Software/ShipTacticalProgram.java	424
+com/planet_ink/coffee_mud/Items/Software/EmissionScanProgram.java	346
+com/planet_ink/coffee_mud/Items/Software/LifeScanProgram.java	332
+com/planet_ink/coffee_mud/Items/Software/ShipTelnetProgram.java	279
+com/planet_ink/coffee_mud/Items/Software/HealthScanProgram.java	266
+com/planet_ink/coffee_mud/Items/Software/GenSoftware.java	228

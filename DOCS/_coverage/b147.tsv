@@ -1,0 +1,8 @@
+# b147 MOBS [part 3/4: StdBanker .. StdMOB]
+file	lines
+com/planet_ink/coffee_mud/MOBS/StdMOB.java	6287
+com/planet_ink/coffee_mud/MOBS/StdDeity.java	1589
+com/planet_ink/coffee_mud/MOBS/StdBanker.java	1104
+com/planet_ink/coffee_mud/MOBS/StdLibrarian.java	914
+com/planet_ink/coffee_mud/MOBS/StdCraftBroker.java	742
+com/planet_ink/coffee_mud/MOBS/StdFactoryMOB.java	137

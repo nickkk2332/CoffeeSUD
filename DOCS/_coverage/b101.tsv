@@ -1,0 +1,21 @@
+# b101 Areas
+file	lines
+com/planet_ink/coffee_mud/Areas/StdArea.java	2907
+com/planet_ink/coffee_mud/Areas/StdBoardableShip.java	2348
+com/planet_ink/coffee_mud/Areas/StdThinInstance.java	935
+com/planet_ink/coffee_mud/Areas/interfaces/Area.java	918
+com/planet_ink/coffee_mud/Areas/StdAutoGenInstance.java	913
+com/planet_ink/coffee_mud/Areas/StdSpaceShip.java	895
+com/planet_ink/coffee_mud/Areas/StdGridArea.java	274
+com/planet_ink/coffee_mud/Areas/StdPlanet.java	229
+com/planet_ink/coffee_mud/Areas/StdThinPlanet.java	196
+com/planet_ink/coffee_mud/Areas/StdThinArea.java	194
+com/planet_ink/coffee_mud/Areas/PlayerInstanceArea.java	192
+com/planet_ink/coffee_mud/Areas/interfaces/GridZones.java	159
+com/planet_ink/coffee_mud/Areas/SubThinInstance.java	141
+com/planet_ink/coffee_mud/Areas/StdThinGridArea.java	136
+com/planet_ink/coffee_mud/Areas/StdTimeZone.java	80
+com/planet_ink/coffee_mud/Areas/Moon.java	73
+com/planet_ink/coffee_mud/Areas/interfaces/AutoGenArea.java	70
+com/planet_ink/coffee_mud/Areas/Planet.java	56
+com/planet_ink/coffee_mud/Areas/interfaces/SubArea.java	36

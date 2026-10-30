@@ -1,0 +1,8 @@
+# b038 Triggers, JavaScript engine and intermud client
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultTriggerer.java	1944
+com/planet_ink/coffee_mud/Libraries/IntermudClient.java	1724
+com/planet_ink/coffee_mud/Common/JavaScriptingEngine.java	1473
+com/planet_ink/coffee_mud/Common/interfaces/Triggerer.java	344
+com/planet_ink/coffee_mud/Libraries/interfaces/IntermudInterface.java	341
+com/planet_ink/coffee_mud/Common/NonTriggerer.java	206

@@ -1,0 +1,22 @@
+# b119 Commands [part 10/12: Remort .. Shell]
+file	lines
+com/planet_ink/coffee_mud/Commands/Reset.java	2669
+com/planet_ink/coffee_mud/Commands/Shell.java	1256
+com/planet_ink/coffee_mud/Commands/Remort.java	789
+com/planet_ink/coffee_mud/Commands/Score.java	442
+com/planet_ink/coffee_mud/Commands/Say.java	434
+com/planet_ink/coffee_mud/Commands/Save.java	428
+com/planet_ink/coffee_mud/Commands/Sheath.java	274
+com/planet_ink/coffee_mud/Commands/Report.java	262
+com/planet_ink/coffee_mud/Commands/Request.java	158
+com/planet_ink/coffee_mud/Commands/Restring.java	157
+com/planet_ink/coffee_mud/Commands/Retire.java	148
+com/planet_ink/coffee_mud/Commands/Sell.java	147
+com/planet_ink/coffee_mud/Commands/Reply.java	146
+com/planet_ink/coffee_mud/Commands/Remove.java	130
+com/planet_ink/coffee_mud/Commands/Serve.java	117
+com/planet_ink/coffee_mud/Commands/SetCmd.java	95
+com/planet_ink/coffee_mud/Commands/Right.java	92
+com/planet_ink/coffee_mud/Commands/Run.java	79
+com/planet_ink/coffee_mud/Commands/Replay.java	75
+com/planet_ink/coffee_mud/Commands/Rules.java	73

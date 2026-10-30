@@ -1,0 +1,21 @@
+# b058 Abilities (base classes)
+file	lines
+com/planet_ink/coffee_mud/Abilities/StdAbility.java	3018
+com/planet_ink/coffee_mud/Abilities/StdPlanarAbility.java	2235
+com/planet_ink/coffee_mud/Abilities/GenAbility.java	1516
+com/planet_ink/coffee_mud/Abilities/interfaces/Ability.java	1109
+com/planet_ink/coffee_mud/Abilities/GenTweakAbility.java	667
+com/planet_ink/coffee_mud/Abilities/ThinAbility.java	665
+com/planet_ink/coffee_mud/Abilities/interfaces/PlanarAbility.java	341
+com/planet_ink/coffee_mud/Abilities/ExtAbility.java	202
+com/planet_ink/coffee_mud/Abilities/interfaces/ItemCraftor.java	189
+com/planet_ink/coffee_mud/Abilities/interfaces/Trap.java	184
+com/planet_ink/coffee_mud/Abilities/interfaces/Language.java	139
+com/planet_ink/coffee_mud/Abilities/interfaces/DiseaseAffect.java	95
+com/planet_ink/coffee_mud/Abilities/interfaces/CraftorAbility.java	86
+com/planet_ink/coffee_mud/Abilities/interfaces/LimbDamage.java	86
+com/planet_ink/coffee_mud/Abilities/interfaces/ExtendableAbility.java	84
+com/planet_ink/coffee_mud/Abilities/interfaces/ItemTicker.java	80
+com/planet_ink/coffee_mud/Abilities/interfaces/TriggeredAffect.java	80
+com/planet_ink/coffee_mud/Abilities/interfaces/MendingSkill.java	48
+com/planet_ink/coffee_mud/Abilities/interfaces/HealthCondition.java	47

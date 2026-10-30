@@ -1,0 +1,9 @@
+# b010 Player stats, accounts and pride stats
+file	lines
+com/planet_ink/coffee_mud/Common/DefaultPlayerStats.java	2540
+com/planet_ink/coffee_mud/Common/interfaces/PlayerStats.java	1312
+com/planet_ink/coffee_mud/Common/DefaultPlayerAccount.java	1013
+com/planet_ink/coffee_mud/Common/interfaces/AccountStats.java	372
+com/planet_ink/coffee_mud/Common/interfaces/PlayerAccount.java	207
+com/planet_ink/coffee_mud/Common/DefaultPrideStats.java	159
+com/planet_ink/coffee_mud/Common/interfaces/PrideStats.java	78

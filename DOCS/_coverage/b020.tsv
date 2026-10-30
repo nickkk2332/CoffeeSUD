@@ -1,0 +1,18 @@
+# b020 Random area generation (MUDPercolator) and layouts
+file	lines
+com/planet_ink/coffee_mud/Libraries/MUDPercolator.java	8243
+com/planet_ink/coffee_mud/Libraries/interfaces/AreaGenerationLibrary.java	568
+com/planet_ink/coffee_mud/Libraries/layouts/LayoutSet.java	342
+com/planet_ink/coffee_mud/Libraries/layouts/DefaultLayoutNode.java	278
+com/planet_ink/coffee_mud/Libraries/layouts/BranchLayout.java	219
+com/planet_ink/coffee_mud/Libraries/layouts/BoxCityLayout.java	199
+com/planet_ink/coffee_mud/Libraries/layouts/ApartmentLayout.java	171
+com/planet_ink/coffee_mud/Libraries/layouts/TreeLayout.java	166
+com/planet_ink/coffee_mud/Libraries/layouts/GridCityLayout.java	152
+com/planet_ink/coffee_mud/Libraries/layouts/LayoutTester.java	149
+com/planet_ink/coffee_mud/Libraries/layouts/MeshLayout.java	126
+com/planet_ink/coffee_mud/Libraries/layouts/BoxCitySquareLayout.java	119
+com/planet_ink/coffee_mud/Libraries/layouts/MazeLayout.java	116
+com/planet_ink/coffee_mud/Libraries/layouts/CrossLayout.java	110
+com/planet_ink/coffee_mud/Libraries/layouts/SpottedMeshLayout.java	105
+com/planet_ink/coffee_mud/Libraries/layouts/AbstractLayout.java	80

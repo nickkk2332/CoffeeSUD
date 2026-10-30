@@ -1,0 +1,99 @@
+package com.planet_ink.coffee_mud.core.collections;
+import java.util.*;
+/*
+   Copyright 2010-2025 Bo Zimmerman
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+/**
+ * A list iterator that converts the objects in a backing list iterator from one
+ * type to another using a Converter.
+ *
+ * @param <K> the backing collection type
+ * @param <L> the outward facing collection type
+ */
+public class ConvertingListIterator<K,L> implements ListIterator<L>
+{
+	private final ListIterator<K> iter;
+	private final Converter<K,L> converter;
+
+	/**
+	 * Construct a new ConvertingListIterator
+	 *
+	 * @param i the backing list iterator
+	 * @param conv the converter
+	 */
+	public ConvertingListIterator(final ListIterator<K> i, final Converter<K,L> conv)
+	{
+		iter=i;
+		converter=conv;
+	}
+
+	@Override
+	public void add(final L arg0)
+	{
+		throw new java.lang.IllegalArgumentException();
+	}
+
+	@Override
+	public boolean hasNext()
+	{
+		return iter.hasNext();
+	}
+
+	@Override
+	public boolean hasPrevious()
+	{
+		return iter.hasPrevious();
+	}
+
+	@Override
+	public L next()
+	{
+		return converter.convert(iter.next());
+	}
+
+	@Override
+	public int nextIndex()
+	{
+		return iter.nextIndex();
+	}
+
+	@Override
+	public L previous()
+	{
+		return converter.convert(iter.previous());
+	}
+
+	@Override
+	public int previousIndex()
+	{
+		return iter.previousIndex();
+	}
+
+	@Override
+	public void remove()
+	{
+		iter.remove();
+	}
+
+	/**
+	 * Not supported.
+	 */
+	@Override
+	public void set(final L arg0)
+	{
+		throw new java.lang.IllegalArgumentException();
+	}
+
+}
