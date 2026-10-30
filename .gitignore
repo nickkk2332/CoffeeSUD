@@ -12,3 +12,6 @@ CoffeeMud/sources.txt
 
 # Saved games (see CoffeeMud/coffeemud.ini, SAVEDIR)
 CoffeeMud/saves/
+
+# Smoke test fixtures, copied in for a run (see tools/fixtures/smoke)
+CoffeeMud/resources/quests/_smoke/

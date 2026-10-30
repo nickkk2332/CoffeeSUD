@@ -1,0 +1,6 @@
+set name smoketest
+set duration 1000
+import mobs quests/_smoke/mobs.cmare
+set room any
+load mob any
+step break

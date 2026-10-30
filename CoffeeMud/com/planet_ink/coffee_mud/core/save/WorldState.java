@@ -46,13 +46,18 @@ import java.util.*;
  * <li>which doors are open or locked, and each area's weather;</li>
  * <li>effects with time left to run, on the player, mobs, items, rooms and
  * exits, which the database drops;</li>
- * <li>the player's hit points, mana and movement, and the variables that
- * scripts share.</li>
+ * <li>the player's hit points, mana and movement, what they carry and who
+ * follows them, which the character's tables hold only in part;</li>
+ * <li>the stats that the engine's built-in mob classes roll when made;</li>
+ * <li>each quest's winners, whether it is running, its step and time left,
+ * and where its mobs and items are;</li>
+ * <li>the variables that scripts share.</li>
  * </ul>
- * Players and the mobs following them are otherwise not here: they are saved
- * with the player.  Mobs that cannot be saved, such as summoned ones, are
- * left out.  Timed effects go back on once the player is in the game (see
- * {@link #finishRestore(MOB)}), since the player is often who caused them.
+ * Mobs that cannot be saved, such as summoned ones, are left out unless they
+ * follow the player, and things a quest is using are left to the quest.  The
+ * player's inventory, followers and timed effects go back once the player is
+ * in the game (see {@link #finishRestore(MOB)}), since the player is often
+ * who caused the effects.
  */
 public final class WorldState
 {
@@ -83,6 +88,24 @@ public final class WorldState
 			str.append(xml.convertXMLtoTag("MANA", player.curState().getMana()));
 			str.append(xml.convertXMLtoTag("MOVE", player.curState().getMovement()));
 			str.append(effectsXML(player));
+			final List<Item> inventory = new ArrayList<Item>();
+			for(int i = 0; i < player.numItems(); i++)
+			{
+				final Item I = player.getItem(i);
+				if((I != null) && (!I.amDestroyed()))
+					inventory.add(I);
+			}
+			str.append("<INVENTORY>").append(itemsXML(inventory)).append("</INVENTORY>");
+			str.append("<FOLLOWERS>");
+			final List<MOB> followers = followersOf(player);
+			for(final MOB F : followers)
+			{
+				str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\">");
+				str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(F.location()))));
+				str.append(mobXML(F, "MOB"));
+				str.append("</FOLLOWER>");
+			}
+			str.append("</FOLLOWERS>");
 			str.append("</PLAYER>\n");
 		}
 		str.append("<ROOMS>\n");
@@ -152,6 +175,7 @@ public final class WorldState
 		}
 		str.append("</WEATHER>\n");
 		str.append(scriptVarsXML());
+		str.append(questsXML(player));
 		str.append("</WORLD>\n");
 		return str.toString();
 	}
@@ -233,6 +257,13 @@ public final class WorldState
 		final XMLTag vars = world.getPieceFromPieces("SCRIPTVARS");
 		if(vars != null)
 			setScriptVars(vars);
+		final XMLTag quests = world.getPieceFromPieces("QUESTS");
+		if(quests != null)
+		{
+			setQuests(quests);
+			if(vars != null)
+				setScriptVars(vars); // a quest started again may have reset its own
+		}
 		player = world.getPieceFromPieces("PLAYER");
 		final XMLTag weather = world.getPieceFromPieces("WEATHER");
 		if(weather != null)
@@ -257,7 +288,7 @@ public final class WorldState
 	 */
 	private static boolean isSavedHere(final MOB M)
 	{
-		if((M == null) || (!M.isMonster()) || (!M.isSavable()) || M.amDestroyed())
+		if((M == null) || (!M.isMonster()) || (!M.isSavable()) || M.amDestroyed() || isQuestObject(M))
 			return false;
 		final MOB leader = M.getGroupLeader();
 		return (leader == null) || leader.isMonster();
@@ -286,6 +317,9 @@ public final class WorldState
 		{
 			final Item I = i.next();
 			if((I.ultimateContainer(null) instanceof DeadBody) && ((DeadBody)I.ultimateContainer(null)).isPlayerCorpse())
+				i.remove();
+			else
+			if(isQuestObject(I) || isQuestObject(I.ultimateContainer(null)))
 				i.remove();
 		}
 		return items;
@@ -368,6 +402,15 @@ public final class WorldState
 		str.append(xml.convertXMLtoTag("ABILITY", M.basePhyStats().ability()));
 		str.append(xml.convertXMLtoTag("REJUV", M.basePhyStats().rejuv()));
 		str.append(xml.convertXMLtoTag("TEXT", xml.parseOutAngleBrackets(M.text())));
+		if(!M.isGeneric())
+		{
+			// the built-in classes roll these when made, and their text does not hold them
+			str.append("<BASE>");
+			str.append(statsXML("PHY", M.basePhyStats()));
+			str.append(statsXML("CHAR", M.baseCharStats()));
+			str.append(statsXML("STATE", M.baseState()));
+			str.append("</BASE>");
+		}
 		final Room start = M.getStartRoom();
 		if(start != null)
 			str.append(xml.convertXMLtoTag("START", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(start))));
@@ -521,6 +564,13 @@ public final class WorldState
 		M.basePhyStats().setLevel(tag.getIntFromPieces("LEVEL"));
 		M.basePhyStats().setAbility(tag.getIntFromPieces("ABILITY"));
 		M.basePhyStats().setRejuv(tag.getIntFromPieces("REJUV"));
+		final XMLTag base = tag.getPieceFromPieces("BASE");
+		if(base != null)
+		{
+			setStats(M.basePhyStats(), base.getPieceFromPieces("PHY"));
+			setStats(M.baseCharStats(), base.getPieceFromPieces("CHAR"));
+			setStats(M.baseState(), base.getPieceFromPieces("STATE"));
+		}
 		final Room start = getRoom(tag.getValFromPieces("START"));
 		if(start != null)
 			M.setStartRoom(start);
@@ -535,12 +585,13 @@ public final class WorldState
 	 * hurts it had.
 	 * @param tag the mob's tag
 	 * @param R the room
+	 * @return the mob, or null if it could not be made
 	 */
-	private static void bringBack(final XMLTag tag, final Room R)
+	private static MOB bringBack(final XMLTag tag, final Room R)
 	{
 		final MOB M = makeMob(tag);
 		if(M == null)
-			return;
+			return null;
 		M.bringToLife(R, true);
 		CMLib.map().registerWorldObjectLoaded(R.getArea(), R, M);
 		final XMLTag inventory = tag.getPieceFromPieces("INVENTORY");
@@ -557,6 +608,7 @@ public final class WorldState
 		M.curState().setMana(Math.min(tag.getIntFromPieces("MANA"), M.maxState().getMana()));
 		M.curState().setMovement(Math.min(tag.getIntFromPieces("MOVE"), M.maxState().getMovement()));
 		laterEffects(M, tag);
+		return M;
 	}
 
 	/**
@@ -617,7 +669,7 @@ public final class WorldState
 			for(int m = 0; m < R.numInhabitants(); m++)
 			{
 				final MOB M = R.fetchInhabitant(m);
-				if((M != null) && M.isMonster())
+				if((M != null) && M.isMonster() && (!isQuestObject(M)))
 					mobs.add(M);
 			}
 			for(final MOB M : mobs)
@@ -626,7 +678,7 @@ public final class WorldState
 			for(int i = 0; i < R.numItems(); i++)
 			{
 				final Item I = R.getItem(i);
-				if(I != null)
+				if((I != null) && (!isQuestObject(I)) && (!isQuestObject(I.ultimateContainer(null))))
 					items.add(I);
 			}
 			for(final Item I : items)
@@ -708,6 +760,20 @@ public final class WorldState
 		if((playerTag != null)
 		&& (mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")))))
 		{
+			final XMLTag inventory = playerTag.getPieceFromPieces("INVENTORY");
+			if(inventory != null)
+			{
+				// the character's tables hold the same items, but not their timed
+				// effects, nor what quests gave that cannot be saved there
+				mob.delAllItems(true);
+				for(final Item I : unpackItems(inventory).items)
+					mob.addItem(I);
+			}
+			final XMLTag followers = playerTag.getPieceFromPieces("FOLLOWERS");
+			if(followers != null)
+				bringBackFollowers(mob, followers);
+			mob.recoverCharStats();
+			mob.recoverPhyStats();
 			mob.recoverMaxState();
 			mob.curState().setHitPoints(Math.max(1, Math.min(playerTag.getIntFromPieces("HP"), mob.maxState().getHitPoints())));
 			mob.curState().setMana(Math.min(playerTag.getIntFromPieces("MANA"), mob.maxState().getMana()));
@@ -847,6 +913,270 @@ public final class WorldState
 				scope._submitResource(hostKey, H);
 			}
 			H.put(xml.restoreAngleBrackets(tag.getValFromPieces("NAME")), xml.restoreAngleBrackets(tag.getValFromPieces("VALUE")));
+		}
+	}
+
+	/**
+	 * Returns the mobs following a player, and those following them, each
+	 * after the one it follows.
+	 * @param player the player
+	 * @return the followers
+	 */
+	private static List<MOB> followersOf(final MOB player)
+	{
+		final List<MOB> all = new ArrayList<MOB>();
+		final List<MOB> leaders = new ArrayList<MOB>();
+		leaders.add(player);
+		for(int l = 0; l < leaders.size(); l++)
+		{
+			final MOB leader = leaders.get(l);
+			for(int f = 0; f < leader.numFollowers(); f++)
+			{
+				final MOB F = leader.fetchFollower(f);
+				if((F != null)
+				&& F.isMonster()
+				&& (!F.amDestroyed())
+				&& (F.location() != null)
+				&& (F.amFollowing() == leader)
+				&& (!all.contains(F)))
+				{
+					all.add(F);
+					leaders.add(F);
+				}
+			}
+		}
+		return all;
+	}
+
+	/**
+	 * Puts back the restored player's followers as they were saved, in place
+	 * of those the character's tables brought back, which lack their hurts,
+	 * their timed effects, and any that could not be saved there, such as
+	 * summoned ones.
+	 * @param mob the player
+	 * @param followers the FOLLOWERS tag
+	 */
+	private static void bringBackFollowers(final MOB mob, final XMLTag followers)
+	{
+		final List<MOB> loaded = followersOf(mob);
+		for(final MOB F : loaded)
+		{
+			F.setFollowing(null);
+			F.destroy();
+		}
+		final List<MOB> made = new ArrayList<MOB>();
+		for(final XMLTag tag : followers.contents())
+		{
+			final XMLTag mobTag = tag.getPieceFromPieces("MOB");
+			Room R = getRoom(tag.getValFromPieces("ROOM"));
+			if(R == null)
+				R = mob.location();
+			final MOB F = ((mobTag == null) || (R == null)) ? null : bringBack(mobTag, R);
+			made.add(F);
+			if(F != null)
+			{
+				final int leader = CMath.s_int(tag.getParmValue("LEADER"));
+				final MOB L = ((leader >= 0) && (leader < made.size() - 1) && (made.get(leader) != null)) ? made.get(leader) : mob;
+				F.setFollowing(L);
+			}
+		}
+	}
+
+	/**
+	 * Writes every stat of a set of stats.
+	 * @param tag the tag to write them in
+	 * @param stats the stats
+	 * @return the XML
+	 */
+	private static String statsXML(final String tag, final Modifiable stats)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder str = new StringBuilder("<" + tag + ">");
+		for(final String code : stats.getStatCodes())
+		{
+			str.append("<S>").append(xml.convertXMLtoTag("N", code))
+			   .append(xml.convertXMLtoTag("V", xml.parseOutAngleBrackets(stats.getStat(code))))
+			   .append("</S>");
+		}
+		return str.append("</" + tag + ">").toString();
+	}
+
+	/**
+	 * Sets stats written by {@link #statsXML(String, Modifiable)}.
+	 * @param stats the stats
+	 * @param tag their tag, or null
+	 */
+	private static void setStats(final Modifiable stats, final XMLTag tag)
+	{
+		if(tag == null)
+			return;
+		for(final XMLTag S : tag.contents())
+		{
+			final String code = S.getValFromPieces("N");
+			if(stats.isStat(code))
+				stats.setStat(code, CMLib.xml().restoreAngleBrackets(S.getValFromPieces("V")));
+		}
+	}
+
+	/**
+	 * Returns whether something is in a running quest's hands, so that the
+	 * quest, not the world, saves and restores it.
+	 * @param E the thing
+	 * @return true if a quest has it
+	 */
+	private static boolean isQuestObject(final Environmental E)
+	{
+		return (E != null) && (CMLib.quests().objectInUse(E) != null);
+	}
+
+	/**
+	 * Writes each quest's state: who has won it, whether it is running, on
+	 * which step and with how long left, and where the mobs and items it is
+	 * using are, or that they are gone.
+	 * @param player the player, whose carried quest items are saved with them
+	 * @return the XML
+	 */
+	private static String questsXML(final MOB player)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder str = new StringBuilder("<QUESTS>\n");
+		for(final Enumeration<Quest> q = CMLib.quests().enumQuests(); q.hasMoreElements();)
+		{
+			final Quest Q = q.nextElement();
+			if((Q == null) || Q.isCopy())
+				continue;
+			str.append("<QUEST>");
+			str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(Q.name())));
+			str.append(xml.convertXMLtoTag("WINNERS", xml.parseOutAngleBrackets(Q.getWinnerStr())));
+			str.append(xml.convertXMLtoTag("RUNNING", Q.running()));
+			if(Q.running())
+			{
+				str.append(xml.convertXMLtoTag("STEP", Q.getStat("STEPNUM")));
+				str.append(xml.convertXMLtoTag("REMAINING", Q.ticksRemaining()));
+				for(int i = 1; i < 10000; i++)
+				{
+					final MOB M = Q.getQuestMob(i);
+					if(M == null)
+						break;
+					str.append("<QMOB I=\"").append(i).append("\">");
+					if(M.amDead() || M.amDestroyed() || (M.location() == null))
+						str.append("<GONE />");
+					else
+					{
+						str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(M.location()))));
+						str.append(xml.convertXMLtoTag("HP", M.curState().getHitPoints()));
+						if(!M.isGeneric())
+						{
+							str.append("<BASE>");
+							str.append(statsXML("PHY", M.basePhyStats()));
+							str.append(statsXML("CHAR", M.baseCharStats()));
+							str.append(statsXML("STATE", M.baseState()));
+							str.append("</BASE>");
+						}
+					}
+					str.append("</QMOB>");
+				}
+				for(int i = 1; i < 10000; i++)
+				{
+					final Item I = Q.getQuestItem(i);
+					if(I == null)
+						break;
+					final ItemPossessor owner = I.owner();
+					str.append("<QITEM I=\"").append(i).append("\">");
+					if(I.amDestroyed() || (owner == null) || (owner == player))
+						str.append("<GONE />");
+					else
+					if(owner instanceof Room)
+						str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID((Room)owner))));
+					str.append("</QITEM>");
+				}
+			}
+			str.append("</QUEST>\n");
+		}
+		return str.append("</QUESTS>\n").toString();
+	}
+
+	/**
+	 * Puts each quest in the state it was saved in: its winners, then, if it
+	 * was running, starts it if the boot did not, moves it to its step, gives
+	 * it the time it had left, and puts its mobs and items where they were,
+	 * or does away with those that were gone; if it was not running, stops it
+	 * if the boot started it.  A quest started again spawns afresh what it
+	 * uses, which is then made to match the save.
+	 * @param quests the QUESTS tag
+	 */
+	private static void setQuests(final XMLTag quests)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		for(final XMLTag tag : quests.contents())
+		{
+			final Quest Q = CMLib.quests().fetchQuest(xml.restoreAngleBrackets(tag.getValFromPieces("NAME")));
+			if((Q == null) || Q.isCopy())
+				continue;
+			Q.setWinners(xml.restoreAngleBrackets(tag.getValFromPieces("WINNERS")));
+			if(!tag.getBoolFromPieces("RUNNING", false))
+			{
+				if(Q.running())
+					Q.stopQuest();
+				continue;
+			}
+			if(!Q.running())
+				Q.startQuest();
+			if(!Q.running())
+			{
+				Log.errOut("WorldState", "Quest '" + Q.name() + "' was running when saved, but did not start again.");
+				continue;
+			}
+			final int step = tag.getIntFromPieces("STEP", 1);
+			if((step > 1) && (CMath.s_int(Q.getStat("STEPNUM")) != step))
+				Q.setQuestStep(step);
+			if(Q.running())
+			{
+				Q.setStat("REMAINING", Integer.toString(Math.max(1, tag.getIntFromPieces("REMAINING", 1))));
+				for(final XMLTag piece : tag.contents())
+				{
+					if(piece.tag().equalsIgnoreCase("QMOB"))
+					{
+						final MOB M = Q.getQuestMob(CMath.s_int(piece.getParmValue("I")));
+						if(M == null)
+							continue;
+						if(piece.getPieceFromPieces("GONE") != null)
+							M.destroy();
+						else
+						{
+							final Room R = getRoom(piece.getValFromPieces("ROOM"));
+							if((R != null) && (M.location() != R))
+								R.bringMobHere(M, false);
+							final XMLTag base = piece.getPieceFromPieces("BASE");
+							if(base != null)
+							{
+								setStats(M.basePhyStats(), base.getPieceFromPieces("PHY"));
+								setStats(M.baseCharStats(), base.getPieceFromPieces("CHAR"));
+								setStats(M.baseState(), base.getPieceFromPieces("STATE"));
+								M.recoverCharStats();
+								M.recoverPhyStats();
+								M.recoverMaxState();
+							}
+							M.curState().setHitPoints(Math.max(1, Math.min(piece.getIntFromPieces("HP"), M.maxState().getHitPoints())));
+						}
+					}
+					else
+					if(piece.tag().equalsIgnoreCase("QITEM"))
+					{
+						final Item I = Q.getQuestItem(CMath.s_int(piece.getParmValue("I")));
+						if(I == null)
+							continue;
+						if(piece.getPieceFromPieces("GONE") != null)
+							I.destroy();
+						else
+						{
+							final Room R = getRoom(piece.getValFromPieces("ROOM"));
+							if((R != null) && (I.owner() != R))
+								R.moveItemTo(I);
+						}
+					}
+				}
+			}
 		}
 	}
 

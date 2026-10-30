@@ -2,8 +2,9 @@
 # Single-player smoke test.  Plays scripted sessions against a scratch copy
 # of the database, with saves in a scratch folder: one creates a character,
 # plays a little and saves, the next restores the save, then come pause,
-# turn-based time, the random seed, saving and restoring during play, and
-# a changed world coming back as it was saved.
+# turn-based time, the random seed, saving and restoring during play, a
+# changed world coming back as it was saved, and, in a world of their own,
+# a running quest, a follower, a lit torch and a wolf's rolled stats.
 # Fails if expected text is missing, or if play wrote to the content.
 #   tools/smoke.sh            run the test
 #   KEEP=1 tools/smoke.sh     keep the scratch folder and print its path
@@ -12,6 +13,11 @@ GAME="$ROOT/CoffeeMud"
 W="$(mktemp -d "${TMPDIR:-/tmp}/sudsmoke.XXXXXX")"
 cp -r "$GAME/resources/fakedb" "$W/db"
 (cd "$W/db" && cksum * > "$W/content.sums")
+cp -r "$GAME/resources/fakedb" "$W/qdb"
+# the quest sessions load their quest and their helper script from here
+mkdir -p "$GAME/resources/quests/_smoke"
+cp "$ROOT/tools/fixtures/smoke/"* "$GAME/resources/quests/_smoke/"
+trap 'rm -rf "$GAME/resources/quests/_smoke"' EXIT
 FAIL=0
 
 play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
@@ -154,6 +160,45 @@ if [ -n "$(grep -a "movement\." "$W/world.txt" | tail -1)" ] \
 	echo "  ok    world2.txt: hit points, mana and movement came back as saved"
 else
 	echo "  FAIL  world2.txt: hit points, mana or movement changed across the save"; FAIL=1
+fi
+
+echo "Session 9: in builder mode, add a quest to a world of its own"
+play qbuild.txt 'Builder\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\ncreate quest LOAD=quests/_smoke/smoke.quest\nsave quests\nquit\nY\n' "DBSERVICE=jdbc:fakedb:$W/qdb" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+expect qbuild.txt "Quest 'smoketest' added."
+expect qbuild.txt "Quest list saved."
+
+echo "Session 10: start the quest, gain a follower, light the torch, and save"
+play quest.txt 'Builder\ntimemode turns\nmodify quest smoketest start\ncreate mob dog\ncreate mob wolf\nstat wolf\njrun /resources/quests/_smoke/followfx.js\ngroup\nsave quests1\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" RESTORE=NEW
+expect quest.txt "This game plays on a copy of the world."
+expect quest.txt "Quest 'smoketest' started."
+expect quest.txt "] a dog"
+
+echo "Session 11: restore the quest, the follower, the torch and the wolf"
+play quest2.txt 'list quests\ngroup\nstat wolf\nsave quests2\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" RESTORE=quests1
+expect quest2.txt "Restored 'quests1'."
+expect quest2.txt "] a dog"
+if grep -aq "smoketest *running" "$W/quest2.txt"; then
+	echo "  ok    quest2.txt: the quest is still running"
+else
+	echo "  FAIL  quest2.txt: the quest is not running after restoring"; FAIL=1
+fi
+if [ -n "$(grep -a "Weight:" "$W/quest.txt")" ] && [ "$(grep -a "Weight:" "$W/quest.txt")" = "$(grep -a "Weight:" "$W/quest2.txt")" ]; then
+	echo "  ok    quest2.txt: the wolf kept the weight it rolled"
+else
+	echo "  FAIL  quest2.txt: the wolf's rolled stats changed"; FAIL=1
+fi
+# saved again after restoring: the torch is still lit, and the quest's
+# rabbit is where it was
+if grep -q "<ID>Spell_Light</ID>" "$W/saves/quests2/world.xml"; then
+	echo "  ok    quests2: the carried torch's timed light came back"
+else
+	echo "  FAIL  quests2: the carried torch's timed light was lost"; FAIL=1
+fi
+if [ -n "$(grep -o "<QMOB[^/]*</ROOM>" "$W/saves/quests1/world.xml")" ] \
+&& [ "$(grep -o "<QMOB[^/]*</ROOM>" "$W/saves/quests1/world.xml")" = "$(grep -o "<QMOB[^/]*</ROOM>" "$W/saves/quests2/world.xml")" ]; then
+	echo "  ok    quests2: the quest's rabbit came back where it was"
+else
+	echo "  FAIL  quests2: the quest's rabbit is not where it was"; FAIL=1
 fi
 
 if (cd "$W/db" && cksum * | cmp -s - "$W/content.sums"); then

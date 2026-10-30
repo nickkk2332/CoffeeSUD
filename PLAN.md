@@ -141,7 +141,7 @@ Still to do:
   boot is threaded, and real time depends on timing. Phase 4 saves the
   generator's state with the game, which is what keeps a reload from rerolling.
 
-### 4. Save games: in progress
+### 4. Save games: done, but for moving content out of the database
 
 Before this phase the database held the built world and the player
 characters only. Killed mobs respawned, dropped items vanished, timed effects
@@ -178,15 +178,30 @@ Steps:
   out: mobs that cannot be saved, such as summoned ones, and for the engine's
   built-in mob classes (Goblin, Wolf and the like) the stats their
   constructors roll; generic mobs, which builders make, keep everything.
-- **4c. Effects and the rest: done but for quests.** Effects with time left
-  (spells, poisons, an Archon's freeze) are saved on the player, mobs, items,
-  rooms and exits, with the ticks each has left and who caused it, and put
-  back once the player is in the game, since the player is often who caused
-  them. The player's hit points, mana and movement come back as they were,
-  and so do the variables that scripts share. Not yet: running quests start
-  over when a save is restored (they own the mobs and items they spawned and
-  their own step state), and timed effects on what the player carries are
-  lost, since those items come back from the character's tables.
+- **4c. Effects and the rest: done.** Effects with time left (spells,
+  poisons, an Archon's freeze) are saved on the player, mobs, items, rooms
+  and exits, with the ticks each has left and who caused it, and put back
+  once the player is in the game, since the player is often who caused them.
+  The player's hit points, mana and movement come back as they were, and so
+  do the variables that scripts share.
+- **4d. Quests, what the player carries, followers: done.**
+  - The player's inventory and followers are saved whole with the world and
+    put back in place of what the character's tables bring back, so timed
+    effects on carried items, a follower's hurts and effects, and summoned
+    followers, which the tables cannot hold, all come back.
+  - The engine's built-in mob classes (Goblin, Wolf and the like) roll their
+    stats when made; those stats are now saved, so a restored wolf is the
+    same wolf.
+  - Quests: each quest's winners, and whether it was running, on which step
+    and with how long left. A quest running in the save is started again if
+    the boot did not, moved to its step and given its time; the mobs and
+    items it spawns afresh are then made to match the save (moved to where
+    they were, with their hurts and stats, or done away with if they were
+    gone). A quest not running in the save is stopped if the boot started
+    it. Quest-owned things are left to the quest, not saved as room content.
+  - Not exact: a quest that was waiting to start gets a new wait; items a
+    quest had given to mobs other than the player come back where the quest
+    put them; spawned copies of spawnable quests start over.
 - Later, with content in files: the fake database goes.
 
 ### Authoring
@@ -267,8 +282,11 @@ hand-built starting area.
   unchanged at 47 of 50 after each step. Fixed on the way: the world clock
   skipped every other hour when ticks fell exactly on the hour, and launching
   two games at once could start two clean builds over each other.
-- Phase 4 (so far): play runs on a copy of the content, which is never
-  written; SAVE, RESTORE and SAVES, with the saves listed at startup; the
-  live world, timed effects and script variables in each save. Smoke test
-  covers saving, restoring at startup and during play, a changed world and
-  effects coming back, and the content staying untouched.
+- Phase 4: play runs on a copy of the content, which is never written;
+  SAVE, RESTORE and SAVES, with the saves listed at startup; the live world,
+  timed effects, script variables, the player's inventory and followers,
+  built-in mobs' rolled stats and running quests in each save; building
+  commands warn in a normal game. Smoke test covers saving, restoring at
+  startup and during play, a changed world, effects, a running quest, a
+  follower and a carried item's effect coming back, and the content staying
+  untouched.
