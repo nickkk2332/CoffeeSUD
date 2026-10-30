@@ -50,7 +50,7 @@ public class DatabaseProgram extends GenShipProgram
 		return "DatabaseProgram";
 	}
 
-	protected volatile long				nextPowerCycleTmr	= System.currentTimeMillis() + (8 * 1000);
+	protected volatile long				nextPowerCycleTmr	= GameTime.now() + (8 * 1000);
 	protected final StringBuffer		scr					= new StringBuffer("");
 	protected JSONObject				data				= new JSONObject();
 	protected BoundedCube				spaceCube			= null;
@@ -221,7 +221,7 @@ public class DatabaseProgram extends GenShipProgram
 	@Override
 	protected boolean checkPowerCurrent(final int value)
 	{
-		nextPowerCycleTmr = System.currentTimeMillis() + (8 * 1000);
+		nextPowerCycleTmr = GameTime.now() + (8 * 1000);
 		return true;
 	}
 
@@ -1231,7 +1231,7 @@ public class DatabaseProgram extends GenShipProgram
 	protected void onPowerCurrent(final int value)
 	{
 		super.onPowerCurrent(value);
-		if (System.currentTimeMillis() > nextPowerCycleTmr)
+		if (GameTime.now() > nextPowerCycleTmr)
 		{
 			this.shutdown();
 		}

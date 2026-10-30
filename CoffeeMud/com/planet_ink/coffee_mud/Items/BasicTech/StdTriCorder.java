@@ -45,7 +45,7 @@ public class StdTriCorder extends StdElecContainer implements Computer
 	protected final static int POWER_RATE		= 4; // how often (in ticks) an activated tricorder loses a tick of power. at 1000 power, this is 1 hr/rate (4 hrs total)
 
 	protected MOB 			  lastReader		= null;
-	protected volatile long   nextSoftwareCheck = System.currentTimeMillis()+(10*1000);
+	protected volatile long   nextSoftwareCheck = GameTime.now()+(10*1000);
 	protected List<Software>  software		 	= null;
 	protected String 		  currentMenu		= "";
 	protected int			  nextPowerCycleCtr = POWER_RATE+1;
@@ -107,7 +107,7 @@ public class StdTriCorder extends StdElecContainer implements Computer
 	@Override
 	public List<Software> getSoftware()
 	{
-		if((software==null)||(System.currentTimeMillis()>nextSoftwareCheck))
+		if((software==null)||(GameTime.now()>nextSoftwareCheck))
 		{
 			final List<Item> list=getContents();
 			final LinkedList<Software> softwareList=new LinkedList<Software>();
@@ -116,7 +116,7 @@ public class StdTriCorder extends StdElecContainer implements Computer
 				if(I instanceof Software)
 					softwareList.add((Software)I);
 			}
-			nextSoftwareCheck=System.currentTimeMillis()+(10*1000);
+			nextSoftwareCheck=GameTime.now()+(10*1000);
 			software=softwareList;
 		}
 		return software;

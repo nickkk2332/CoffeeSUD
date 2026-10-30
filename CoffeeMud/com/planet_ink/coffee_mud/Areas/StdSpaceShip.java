@@ -52,8 +52,8 @@ public class StdSpaceShip extends StdBoardableShip implements SpaceShip
 	protected int			atmosphere		= RawMaterial.RESOURCE_AIR;
 	protected long			radius			= 50;
 	protected double		omlCoeff		= SpaceObject.ATMOSPHERIC_DRAG_STREAMLINE + ((SpaceObject.ATMOSPHERIC_DRAG_BRICK - SpaceObject.ATMOSPHERIC_DRAG_STREAMLINE) / 2.0);
-	protected volatile long	nextStaleCheck	= System.currentTimeMillis() + STALE_AIR_INTERVAL;
-	protected volatile long	nextStaleWarn	= System.currentTimeMillis() + STALE_WARN_INTERVAL;
+	protected volatile long	nextStaleCheck	= GameTime.now() + STALE_AIR_INTERVAL;
+	protected volatile long	nextStaleWarn	= GameTime.now() + STALE_WARN_INTERVAL;
 	protected Set<String> 	staleAirList	= new HashSet<String>();
 	protected Ability 		gravityFloaterA = null;
 	protected volatile int	gravLossDown	= 0;
@@ -608,7 +608,7 @@ public class StdSpaceShip extends StdBoardableShip implements SpaceShip
 
 	protected void doStaleCheck()
 	{
-		nextStaleCheck=System.currentTimeMillis()+STALE_AIR_INTERVAL;
+		nextStaleCheck=GameTime.now()+STALE_AIR_INTERVAL;
 		for(final Enumeration<Room> r=getProperMap();r.hasMoreElements();)
 		{
 			final Room R=r.nextElement();
@@ -768,10 +768,10 @@ public class StdSpaceShip extends StdBoardableShip implements SpaceShip
 				moveAtmosphereOut(doneRooms,exitRoom,atmo);
 			}
 		}
-		if((System.currentTimeMillis() > nextStaleWarn)
+		if((GameTime.now() > nextStaleWarn)
 		&&(staleAirList.size()>0))
 		{
-			nextStaleWarn = System.currentTimeMillis() + STALE_WARN_INTERVAL;
+			nextStaleWarn = GameTime.now() + STALE_WARN_INTERVAL;
 			for(final Enumeration<Room> r=getProperMap();r.hasMoreElements();)
 			{
 				final Room R=r.nextElement();
@@ -792,12 +792,12 @@ public class StdSpaceShip extends StdBoardableShip implements SpaceShip
 				}
 			}
 		}
-		if(System.currentTimeMillis() >= nextStaleCheck)
+		if(GameTime.now() >= nextStaleCheck)
 		{
 			final int numStaleRooms = staleAirList.size();
 			doStaleCheck();
 			if(staleAirList.size()>numStaleRooms)
-				nextStaleWarn = System.currentTimeMillis() + STALE_WARN_INTERVAL;
+				nextStaleWarn = GameTime.now() + STALE_WARN_INTERVAL;
 			// the following message is uninteresting, because doStaleCheck ALWAYS generates rooms
 			//if(CMSecurity.isDebugging(DbgFlag.SPACESHIP) && (staleAirList.size()>0))
 			//	Log.debugOut("Used up the air in "+Name()+", stale rooms: "+staleAirList.size());

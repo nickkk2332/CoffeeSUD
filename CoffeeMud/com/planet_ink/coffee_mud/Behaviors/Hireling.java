@@ -166,7 +166,7 @@ public class Hireling extends StdBehavior
 		if(onTheJobUntil==0)
 			return true;
 		final MOB observer=(MOB)ticking;
-		if(System.currentTimeMillis()>onTheJobUntil)
+		if(GameTime.now()>onTheJobUntil)
 		{
 			final Double D=partials.get(workingFor);
 			partials.remove(workingFor);
@@ -218,13 +218,13 @@ public class Hireling extends StdBehavior
 			}
 		}
 		else
-		if(System.currentTimeMillis() > nextWarn)
+		if(GameTime.now() > nextWarn)
 		{
-			final long l = onTheJobUntil - System.currentTimeMillis();
+			final long l = onTheJobUntil - GameTime.now();
 			if((l/2) < 20000)
 				nextWarn = Long.MAX_VALUE;
 			else
-				nextWarn = System.currentTimeMillis() + (l/2);
+				nextWarn = GameTime.now() + (l/2);
 			if(l > 0)
 				CMLib.commands().postSay(observer, null, L("I'm on the job for @x1 more.",CMLib.time().date2EllapsedTime(l,TimeUnit.MINUTES, false)));
 		}
@@ -310,7 +310,7 @@ public class Hireling extends StdBehavior
 				}
 				else
 				{
-					final long l = onTheJobUntil - System.currentTimeMillis();
+					final long l = onTheJobUntil - GameTime.now();
 					if(l > 0)
 						CMLib.commands().postSay(observer, null, L("I'm on the job for @x1 more.",CMLib.time().date2EllapsedTime(l,TimeUnit.MINUTES, false)));
 					else
@@ -396,8 +396,8 @@ public class Hireling extends StdBehavior
 					}
 					workingFor=source.Name();
 					final long duration = (minutes()*TimeManager.MILI_MINUTE);
-					onTheJobUntil=System.currentTimeMillis() + duration;
-					nextWarn = System.currentTimeMillis() + (duration/2);
+					onTheJobUntil=GameTime.now() + duration;
+					nextWarn = GameTime.now() + (duration/2);
 					CMLib.commands().postFollow(observer,source,false);
 					observer.setFollowing(source);
 					CMLib.commands().postSay(observer,source,L("Ok.  You've got me for at least @x1 \"hours\".  My skills include: @x2.  I'll follow you.  Just ORDER me to do what you want.",""+gamehours(),skills.substring(2)),true,false);

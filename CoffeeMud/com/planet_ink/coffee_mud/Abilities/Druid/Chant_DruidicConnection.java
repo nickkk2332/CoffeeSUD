@@ -72,7 +72,7 @@ public class Chant_DruidicConnection extends Chant
 		return 0;
 	}
 
-	protected long[]	lastTime	= new long[] { System.currentTimeMillis() };
+	protected long[]	lastTime	= new long[] { GameTime.now() };
 
 	@Override
 	public boolean bubbleAffect()
@@ -94,14 +94,14 @@ public class Chant_DruidicConnection extends Chant
 			return false;
 		}
 
-		final long ellapsed=System.currentTimeMillis()-lastTime[0];
+		final long ellapsed=GameTime.now()-lastTime[0];
 		if(affected instanceof Area)
 		{
 			final int hoursPerDay=((Area)affected).getTimeObj().getHoursInDay();
 			final long millisPerHoursPerDay=hoursPerDay*CMProps.getMillisPerMudHour();
 			if(ellapsed>=millisPerHoursPerDay)
 			{
-				lastTime[0]=System.currentTimeMillis();
+				lastTime[0]=GameTime.now();
 				final List<Room> V=Druid_MyPlants.myAreaPlantRooms(invoker(),(Area)affected);
 				int pct=0;
 				if(((Area)affected).getIStat(Area.Stats.VISITABLE_ROOMS)>10)
@@ -234,7 +234,7 @@ public class Chant_DruidicConnection extends Chant
 					A.setSavable(false);
 					A.makeLongLasting();
 					A.lastTime=this.lastTime;
-					this.lastTime[0]=System.currentTimeMillis();
+					this.lastTime[0]=GameTime.now();
 					mob.addEffect(A);
 					A.setAffectedOne(target);
 					for(final Enumeration<Room> e=target.getMetroMap();e.hasMoreElements();)

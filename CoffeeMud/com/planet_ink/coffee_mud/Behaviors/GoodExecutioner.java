@@ -48,7 +48,7 @@ public class GoodExecutioner  extends StdBehavior
 
 	private boolean			doPlayers		= false;
 	private boolean			norecurse		= false;
-	protected long			deepBreath		= System.currentTimeMillis();
+	protected long			deepBreath		= GameTime.now();
 
 	private final PairList<String,Long>	protectedOnes	= new PairVector<String,Long>();
 
@@ -102,7 +102,7 @@ public class GoodExecutioner  extends StdBehavior
 		final MOB source=msg.source();
 		if(!canFreelyBehaveNormal(affecting))
 		{
-			deepBreath=System.currentTimeMillis();
+			deepBreath=GameTime.now();
 			return;
 		}
 		if(msg.sourceMinor()==CMMsg.TYP_LIFE)
@@ -115,18 +115,18 @@ public class GoodExecutioner  extends StdBehavior
 			{
 				final int x = protectedOnes.indexOfFirst(msg.source().Name());
 				if(x>=0)
-					protectedOnes.get(x).second=Long.valueOf(System.currentTimeMillis());
+					protectedOnes.get(x).second=Long.valueOf(GameTime.now());
 				else
-					protectedOnes.add(msg.source().Name(),Long.valueOf(System.currentTimeMillis()));
+					protectedOnes.add(msg.source().Name(),Long.valueOf(GameTime.now()));
 			}
 		}
-		if((deepBreath==0)||(System.currentTimeMillis()-deepBreath)>6000)
+		if((deepBreath==0)||(GameTime.now()-deepBreath)>6000)
 		{
 			synchronized(protectedOnes)
 			{
 				for(int p=protectedOnes.size()-1;p>=0;p--)
 				{
-					if((System.currentTimeMillis()-protectedOnes.get(p).second.longValue())>(30 * 1000))
+					if((GameTime.now()-protectedOnes.get(p).second.longValue())>(30 * 1000))
 						protectedOnes.remove(p);
 				}
 				if(protectedOnes.containsFirst(msg.source().Name()))

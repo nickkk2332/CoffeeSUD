@@ -146,7 +146,7 @@ public class Spell_SpottersOrders extends Spell
 				groupMembers=new LinkedList<Triad<MOB,Ability,long[]>>();
 				for(final MOB M : grp)
 				{
-					final long[] time=new long[]{System.currentTimeMillis()-1};
+					final long[] time=new long[]{GameTime.now()-1};
 					final Triad<MOB,Ability,long[]> P=new Triad<MOB,Ability,long[]>(M,null,time);
 					groupMembers.add(P);
 				}
@@ -158,9 +158,9 @@ public class Spell_SpottersOrders extends Spell
 					ishouldhaveit=false;
 				if(ishouldhaveit)
 				{
-					if(System.currentTimeMillis() > P.third[0])
+					if(GameTime.now() > P.third[0])
 					{
-						P.third[0]=System.currentTimeMillis() + (CMLib.dice().roll(1, 4, 0) * CMProps.getTickMillis()) -1;
+						P.third[0]=GameTime.now() + (CMLib.dice().roll(1, 4, 0) * CMProps.getTickMillis()) -1;
 						if(mob!=P.first)
 							P.first.tell(mob,spottedM,null,L("<S-NAME> telepathically imparts the weaknesses of <T-NAME> to you."));
 					}

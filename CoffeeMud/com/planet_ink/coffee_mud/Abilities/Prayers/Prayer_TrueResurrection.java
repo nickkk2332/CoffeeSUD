@@ -148,7 +148,7 @@ public class Prayer_TrueResurrection extends Prayer_Resurrect
 			{
 				final TimeClock C=CMLib.time().localClock(mob);
 				final long millisPerMudDay = C.getHoursInDay() * CMProps.getMillisPerMudHour();
-				final long expires = System.currentTimeMillis() - millisPerMudDay;
+				final long expires = GameTime.now() - millisPerMudDay;
 				final List<String> removeThese = new ArrayList<String>(1);
 				for(final String key : lastCasts.keySet())
 				{
@@ -170,7 +170,7 @@ public class Prayer_TrueResurrection extends Prayer_Resurrect
 		&& (givenTarget != null)
 		&&(givenTarget.amDestroyed())
 		&&success)
-			lastCasts.put(argCorpseName, Long.valueOf(System.currentTimeMillis()));
+			lastCasts.put(argCorpseName, Long.valueOf(GameTime.now()));
 		return success;
 	}
 }

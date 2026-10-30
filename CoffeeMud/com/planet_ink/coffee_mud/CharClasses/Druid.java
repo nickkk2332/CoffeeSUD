@@ -520,10 +520,10 @@ public class Druid extends StdCharClass
 			Object[] stuff=animalChecking.get(host);
 			final Room room=msg.source().location();
 			if((stuff==null)
-			||(System.currentTimeMillis()-((Long)stuff[0]).longValue()>(room.getArea().getTimeObj().getDaysInMonth()*room.getArea().getTimeObj().getHoursInDay()*CMProps.getMillisPerMudHour())))
+			||(GameTime.now()-((Long)stuff[0]).longValue()>(room.getArea().getTimeObj().getDaysInMonth()*room.getArea().getTimeObj().getHoursInDay()*CMProps.getMillisPerMudHour())))
 			{
 				stuff=new Object[3];
-				stuff[0]=Long.valueOf(System.currentTimeMillis());
+				stuff[0]=Long.valueOf(GameTime.now());
 				animalChecking.remove(host);
 				animalChecking.put(host,stuff);
 				stuff[1]=Integer.valueOf(0);

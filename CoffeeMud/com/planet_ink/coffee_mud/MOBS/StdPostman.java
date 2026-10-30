@@ -434,7 +434,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 			return 0.0;
 		double amt=0.0;
 		final TimeClock TC=CMLib.time().localClock(getStartRoom());
-		final long time=System.currentTimeMillis()-CMath.s_long(data.time);
+		final long time=GameTime.now()-CMath.s_long(data.time);
 		final long millisPerMudMonth=TC.getDaysInMonth()*CMProps.getMillisPerMudHour()*TC.getHoursInDay();
 		if(time<=0)
 			return amt;
@@ -553,10 +553,10 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 			synchronized(postalTimes)
 			{
 				Long L=postalTimes.get(postalChain()+"/"+postalBranch());
-				if((L==null)||(L.longValue()<System.currentTimeMillis()))
+				if((L==null)||(L.longValue()<GameTime.now()))
 				{
 					proceed=(L!=null);
-					L=Long.valueOf(System.currentTimeMillis()+postalWaitTime());
+					L=Long.valueOf(GameTime.now()+postalWaitTime());
 					postalTimes.remove(postalChain()+"/"+postalBranch());
 					postalTimes.put(postalChain()+"/"+postalBranch(),L);
 				}
@@ -601,7 +601,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 						P=CMLib.city().getPostOffice(postalChain(),deliveryBranch);
 						final Item I=makeItem(V2);
 						if((P!=null)&&(I!=null))
-							P.addToBox(fromWhom,I,V2.to,"POSTMASTER",System.currentTimeMillis(),0.0);
+							P.addToBox(fromWhom,I,V2.to,"POSTMASTER",GameTime.now(),0.0);
 					}
 				}
 				postalDataV=CMLib.database().DBReadPlayerSectionData(postalChain());
@@ -618,7 +618,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 							final MailPiece data=parsePostalItemData(V2.xml());
 							if((data!=null)&&(getStartRoom()!=null))
 							{
-								final long time=System.currentTimeMillis()-CMath.s_long(data.time);
+								final long time=GameTime.now()-CMath.s_long(data.time);
 								final long millisPerMudMonth=TC.getDaysInMonth()*CMProps.getMillisPerMudHour()*TC.getHoursInDay();
 								if(time>0)
 								{
@@ -743,7 +743,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 															{
 																final Coins currency=CMLib.beanCounter().makeBestCurrency(CMLib.beanCounter().getCurrency(me),CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(me))*(CMath.s_double(CODstr)));
 																final double COD=currency.getTotalValue();
-																addToBox(postalChain(),(Item)msg.tool(),fromWhom,toWhom,System.currentTimeMillis(),COD);
+																addToBox(postalChain(),(Item)msg.tool(),fromWhom,toWhom,GameTime.now(),COD);
 																CMLib.commands().postSay(me,mob,L("I'll deliver that for ya right away!"),true,false);
 																((Item)msg.tool()).destroy();
 															}
@@ -759,7 +759,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 												else
 												{
 													CMLib.beanCounter().subtractMoney(mob,CMLib.beanCounter().getCurrency(me),amt);
-													addToBox(postalChain(),(Item)msg.tool(),fromWhom,toWhom,System.currentTimeMillis(),0.0);
+													addToBox(postalChain(),(Item)msg.tool(),fromWhom,toWhom,GameTime.now(),0.0);
 													CMLib.commands().postSay(me,mob,L("I'll deliver that for ya right away!"),true,false);
 													((Item)msg.tool()).destroy();
 												}
@@ -816,7 +816,7 @@ public class StdPostman extends StdShopKeeper implements PostOffice
 							if(returnMoney!=null)
 							{
 								CMLib.commands().postSay(this,mob,L("The COD amount of @x1 has been sent back to @x2.",returnMoney.Name(),data.from),true,false);
-								addToBox(postalChain(),returnMoney,data.to,data.from,System.currentTimeMillis(),0.0);
+								addToBox(postalChain(),returnMoney,data.to,data.from,GameTime.now(),0.0);
 								CMLib.commands().postSay(this,mob,L("The total charge on that was a COD charge of @x1 plus @x2 postage and holding fees.",returnMoney.Name(),CMLib.beanCounter().nameCurrencyShort(this,totalCharge-COD)),true,false);
 							}
 							else

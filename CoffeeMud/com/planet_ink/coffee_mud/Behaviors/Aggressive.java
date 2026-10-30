@@ -109,22 +109,22 @@ public class Aggressive extends StdBehavior
 			if(!paid.containsKey(msg.source().Name()))
 			{
 				paid.put(msg.source().Name(),new Pair<Double,Long>(Double.valueOf(0.0),
-						Long.valueOf(System.currentTimeMillis()+(CMProps.getTickMillis()*bribe.fourth.longValue()))));
+						Long.valueOf(GameTime.now()+(CMProps.getTickMillis()*bribe.fourth.longValue()))));
 			}
 			final Pair<Double,Long> p = paid.get(msg.source().Name());
 			p.first = Double.valueOf(p.first.doubleValue() + paidAmount);
 			final double paidRevolver = p.getKey().doubleValue() / bribe.second.doubleValue();
 			final long timeToAdd = Math.round(CMath.mul(CMProps.getTickMillisD(),CMath.mul(bribe.third.longValue(),paidRevolver)));
-			if(System.currentTimeMillis() < p.second.longValue())
+			if(GameTime.now() < p.second.longValue())
 				p.second = Long.valueOf(p.second.longValue() + timeToAdd);
 			else
-				p.second = Long.valueOf(System.currentTimeMillis() + timeToAdd);
+				p.second = Long.valueOf(GameTime.now() + timeToAdd);
 			if(p.first.doubleValue() >= bribe.second.doubleValue())
 			{
 				String bribeOkMsg = CMParms.getParmStr(getParms(), "BRIBEPAIDMSG", null);
 				if(bribeOkMsg == null)
 					bribeOkMsg = "Ok then, you are safe for @x1.";
-				final long safeTime = p.second.longValue() - System.currentTimeMillis();
+				final long safeTime = p.second.longValue() - GameTime.now();
 				final TimeClock C = CMLib.time().homeClock((MOB)affecting);
 				final String mtm = CMLib.time().date2SmartEllapsedMudTime(C,safeTime, false);
 				final String tm = CMLib.time().date2SmartEllapsedTime(safeTime, false);
@@ -233,7 +233,7 @@ public class Aggressive extends StdBehavior
 					final String key = k.next();
 					final Pair<Double, Long> chk = paid.get(key);
 					if((chk.first.doubleValue() >= bribe.second.doubleValue()) // paid!
-					&&(System.currentTimeMillis() >= chk.second.longValue()))
+					&&(GameTime.now() >= chk.second.longValue()))
 					{
 						paid.remove(key);
 						break;
@@ -249,7 +249,7 @@ public class Aggressive extends StdBehavior
 				final String thePrice=CMLib.beanCounter().getDenominationName(currency,denomination,Math.round(bribe.second.doubleValue()/denomination));
 				final String say = CMStrings.replaceVariables(baseMsg, new String[] { thePrice } );
 				CMLib.commands().postSay(observer,  mob, say);
-				final Pair<Double,Long> demand = new Pair<Double,Long>(Double.valueOf(0.0),Long.valueOf(System.currentTimeMillis() + (bribe.fourth.longValue()*CMProps.getTickMillis())));
+				final Pair<Double,Long> demand = new Pair<Double,Long>(Double.valueOf(0.0),Long.valueOf(GameTime.now() + (bribe.fourth.longValue()*CMProps.getTickMillis())));
 				synchronized(paid)
 				{
 					paid.put(mob.Name(), demand);
@@ -261,7 +261,7 @@ public class Aggressive extends StdBehavior
 				final Pair<Double,Long> rev = paid.get(mob.Name());
 				if(rev == null)
 					return false;
-				if(System.currentTimeMillis() < rev.second.longValue())
+				if(GameTime.now() < rev.second.longValue())
 				{
 					// still have paid (or unpaid) grace
 					return false;

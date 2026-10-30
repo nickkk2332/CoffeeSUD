@@ -397,7 +397,7 @@ public class Skill_Enslave extends StdSkill implements PrivateProperty
 			}
 			final Pair<MOB,Long> pimpInfo = this.pimpedInfo;
 			if((pimpInfo != null)
-			&&(System.currentTimeMillis() > pimpInfo.second.longValue()))
+			&&(GameTime.now() > pimpInfo.second.longValue()))
 			{
 				this.pimpedInfo = null;
 				mob.setFollowing(null);

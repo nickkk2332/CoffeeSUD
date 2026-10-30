@@ -147,7 +147,7 @@ public class After extends StdCommand implements Tickable
 			return false;
 		}
 		final AfterCommand V=new AfterCommand();
-		V.start=System.currentTimeMillis();
+		V.start=GameTime.now();
 		V.duration=time;
 		V.every=every;
 		V.M=mob;
@@ -180,12 +180,12 @@ public class After extends StdCommand implements Tickable
 		while(s<afterCmds.size())
 		{
 			final AfterCommand cmd=afterCmds.get(s);
-			if(System.currentTimeMillis()>(cmd.start+cmd.duration))
+			if(GameTime.now()>(cmd.start+cmd.duration))
 			{
 				final boolean every=cmd.every;
 				if(every)
 				{
-					cmd.start=System.currentTimeMillis();
+					cmd.start=GameTime.now();
 					s++;
 				}
 				else

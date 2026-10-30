@@ -212,7 +212,7 @@ public class Chant_SpeedAging extends Chant
 						A.setMiscText(""+(start+1+(super.getXLEVELLevel(mob)/3)));
 					else
 					{
-						long age=System.currentTimeMillis()-start;
+						long age=GameTime.now()-start;
 						final long millisPerMudday=CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)*CMProps.getTickMillis();
 						if(age<millisPerMudday)
 							age=millisPerMudday;

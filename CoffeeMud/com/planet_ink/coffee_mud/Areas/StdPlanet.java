@@ -54,7 +54,7 @@ public class StdPlanet extends StdTimeZone implements SpaceObject
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(System.currentTimeMillis());
+		final Random random=new Random(GameTime.now());
 		radius=SpaceObject.Distance.PlanetRadius.dm + (random.nextLong() % (SpaceObject.Distance.PlanetRadius.dm / 20));
 	}
 

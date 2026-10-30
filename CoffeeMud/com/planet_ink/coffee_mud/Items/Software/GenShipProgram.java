@@ -53,7 +53,7 @@ public class GenShipProgram extends GenSoftware
 
 	protected static final int DEFAULT_ACT_8_SEC_COUNTDOWN = 100;
 
-	protected volatile long nextPowerCycleTmr = System.currentTimeMillis()+(8*1000);
+	protected volatile long nextPowerCycleTmr = GameTime.now()+(8*1000);
 	protected volatile int	activationCounter = DEFAULT_ACT_8_SEC_COUNTDOWN;
 
 	protected String	readableText	= "";
@@ -158,10 +158,10 @@ public class GenShipProgram extends GenSoftware
 	protected void onPowerCurrent(final int value)
 	{
 		super.onPowerCurrent(value);
-		if (System.currentTimeMillis() > nextPowerCycleTmr)
+		if (GameTime.now() > nextPowerCycleTmr)
 		{
 			onPowerTimer(value);
-			nextPowerCycleTmr = System.currentTimeMillis() + (8 * 1000);
+			nextPowerCycleTmr = GameTime.now() + (8 * 1000);
 			if(--activationCounter <= 0) // so--- every 800 seconds?
 			{
 				activationCounter = DEFAULT_ACT_8_SEC_COUNTDOWN;

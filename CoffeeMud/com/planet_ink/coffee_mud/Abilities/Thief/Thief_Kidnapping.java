@@ -70,7 +70,7 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 	}
 
 	protected boolean			reAssist		= false; // false means assist is ON
-	protected long				roomTimeout		= System.currentTimeMillis() - 1;
+	protected long				roomTimeout		= GameTime.now() - 1;
 	protected volatile int		aloneTicker		= -1;
 	protected Map<MOB, Long>	failures		= new Hashtable<MOB, Long>();
 	protected String			roomID			= "";
@@ -161,9 +161,9 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 	{
 		final Physical P = affected;
 		if((roomR == null)
-		||(System.currentTimeMillis()>roomTimeout))
+		||(GameTime.now()>roomTimeout))
 		{
-			roomTimeout = System.currentTimeMillis() + (TimeManager.MILI_MINUTE*10);
+			roomTimeout = GameTime.now() + (TimeManager.MILI_MINUTE*10);
 			if(this.roomID.length()>0)
 			{
 				final Room R = CMLib.map().getRoom(roomID);
@@ -317,7 +317,7 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 				return Ability.QUALITY_INDIFFERENT;
 			if(!isKidnappable(mob, (MOB)target))
 				return Ability.QUALITY_INDIFFERENT;
-			if(failures.containsKey(target) && (System.currentTimeMillis()<failures.get(target).longValue()))
+			if(failures.containsKey(target) && (GameTime.now()<failures.get(target).longValue()))
 				return Ability.QUALITY_INDIFFERENT;
 		}
 		return super.castingQuality(mob,target);
@@ -335,7 +335,7 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 		if(target==null)
 			return false;
 
-		if(failures.containsKey(target) && (System.currentTimeMillis()<failures.get(target).longValue()))
+		if(failures.containsKey(target) && (GameTime.now()<failures.get(target).longValue()))
 		{
 			mob.tell(L("You can't attempt to kidnap @x1 again so soon.",target.name(mob)));
 			return false;
@@ -383,7 +383,7 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 						wasFollowing = false;
 					if(target.amFollowing() != null)
 					{
-						failures.put(target, Long.valueOf(System.currentTimeMillis()+TimeManager.MILI_HOUR));
+						failures.put(target, Long.valueOf(GameTime.now()+TimeManager.MILI_HOUR));
 						return maliciousFizzle(mob,target,L("<S-NAME> attempt(s) to kidnap <T-NAME> and fail(s)."));
 					}
 					else
@@ -391,7 +391,7 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 						CMLib.commands().postFollow(target, mob, false);
 						if(target.amFollowing() != mob)
 						{
-							failures.put(target, Long.valueOf(System.currentTimeMillis()+TimeManager.MILI_HOUR));
+							failures.put(target, Long.valueOf(GameTime.now()+TimeManager.MILI_HOUR));
 							return maliciousFizzle(mob,target,L("<S-NAME> attempt(s) to kidnap <T-NAME> and fail(s)."));
 						}
 					}
@@ -418,7 +418,7 @@ public class Thief_Kidnapping extends ThiefSkill implements PrivateProperty
 		}
 		else
 		{
-			failures.put(target, Long.valueOf(System.currentTimeMillis()+TimeManager.MILI_HOUR));
+			failures.put(target, Long.valueOf(GameTime.now()+TimeManager.MILI_HOUR));
 			return maliciousFizzle(mob,target,L("<S-NAME> attempt(s) to kidnap <T-NAME> and fail(s)."));
 		}
 

@@ -416,10 +416,10 @@ public class Song extends StdAbility
 				final Song S=(Song)A;
 				if(S.timeOut==0)
 				{
-					S.timeOut = System.currentTimeMillis()
+					S.timeOut = GameTime.now()
 							  + (CMProps.getTickMillis() * (((invokerM!=null)&&(invokerM!=mob))?super.getXTIMELevel(invokerM):0));
 				}
-				if(System.currentTimeMillis() >= S.timeOut)
+				if(GameTime.now() >= S.timeOut)
 				{
 					A.unInvoke();
 					return false;

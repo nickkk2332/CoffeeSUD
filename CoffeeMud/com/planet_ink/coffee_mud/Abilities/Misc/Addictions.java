@@ -59,7 +59,7 @@ public class Addictions extends StdAbility
 	public String displayText()
 	{
 		final StringBuilder str = new StringBuilder("");
-		final long now=System.currentTimeMillis();
+		final long now=GameTime.now();
 		for(final String addictedStr : lastFix.keySet())
 		{
 			final long lf = lastFix.get(addictedStr)[0];
@@ -128,7 +128,7 @@ public class Addictions extends StdAbility
 		if(!super.tick(ticking,tickID))
 			return false;
 
-		final long now=System.currentTimeMillis();
+		final long now=GameTime.now();
 		for(final String addictedStr : lastFix.keySet())
 		{
 			final long lf = lastFix.get(addictedStr)[0];
@@ -268,7 +268,7 @@ public class Addictions extends StdAbility
 						final Ability A = e.nextElement();
 						if(A.Name().equals(ename))
 						{
-							lastFix.get(addictedStr)[0] = System.currentTimeMillis();
+							lastFix.get(addictedStr)[0] = GameTime.now();
 							break;
 						}
 					}
@@ -280,18 +280,18 @@ public class Addictions extends StdAbility
 				if(E instanceof Physical)
 				{
 					if(((Physical)E).fetchEffect(addictedStr.substring(7))!=null)
-						lastFix.get(addictedStr)[0] = System.currentTimeMillis();
+						lastFix.get(addictedStr)[0] = GameTime.now();
 				}
 			}
 			else
 			if(CMLib.english().containsString(name,addictedStr))
-				lastFix.get(addictedStr)[0] = System.currentTimeMillis();
+				lastFix.get(addictedStr)[0] = GameTime.now();
 			else
 			if((E instanceof Item) && addictedStr.equalsIgnoreCase(RawMaterial.CODES.NAME(((Item)E).material())))
-				lastFix.get(addictedStr)[0] = System.currentTimeMillis();
+				lastFix.get(addictedStr)[0] = GameTime.now();
 			else
 			if(this.puffCredit.containsKey(addictedStr))
-				lastFix.get(addictedStr)[0] = System.currentTimeMillis();
+				lastFix.get(addictedStr)[0] = GameTime.now();
 		}
 	}
 

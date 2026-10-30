@@ -80,7 +80,7 @@ public class Healer extends Cleric
 		return 0;
 	}
 
-	protected volatile long auraCheckTime = System.currentTimeMillis();
+	protected volatile long auraCheckTime = GameTime.now();
 
 	protected final long auraCheckPeriod = 2L * 60L * 1000L;
 
@@ -228,11 +228,11 @@ public class Healer extends Cleric
 		final MOB myChar=(MOB)ticking;
 		if(tickID!=Tickable.TICKID_MOB)
 			return super.tick(ticking, tickID);
-		final long auraEllapsed = System.currentTimeMillis() - auraCheckTime;
+		final long auraEllapsed = GameTime.now() - auraCheckTime;
 		if(auraEllapsed > auraCheckPeriod)
 		{
 			if(auraEllapsed > auraCheckPeriod + 30) // try it every tick for 30 secs?! why is this necessary?!
-				auraCheckTime = System.currentTimeMillis();
+				auraCheckTime = GameTime.now();
 			affectHealingAura(myChar);
 		}
 		return super.tick(myChar,tickID);

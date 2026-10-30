@@ -109,7 +109,7 @@ public class Fighter_RearGuard extends FighterSkill
 			unInvoke();
 			return false;
 		}
-		final boolean combatRun = ((System.currentTimeMillis()-lastAttack)<4000);
+		final boolean combatRun = ((GameTime.now()-lastAttack)<4000);
 		if((lastCaravanRoom==null)
 		||(R != lastCaravanRoom)
 		||(combatRun))
@@ -232,7 +232,7 @@ public class Fighter_RearGuard extends FighterSkill
 				final Physical P = affected;
 				if(P == null)
 					return true;
-				lastAttack = System.currentTimeMillis();
+				lastAttack = GameTime.now();
 				final Room R = CMLib.map().roomLocation(P);
 				for(final MOB M : rearGuards.keySet())
 				{
@@ -252,7 +252,7 @@ public class Fighter_RearGuard extends FighterSkill
 			}
 			else
 			if(CMath.bset(msg.targetMinor(), CMMsg.MASK_MALICIOUS))
-				lastAttack = System.currentTimeMillis();
+				lastAttack = GameTime.now();
 		}
 		return true;
 	}

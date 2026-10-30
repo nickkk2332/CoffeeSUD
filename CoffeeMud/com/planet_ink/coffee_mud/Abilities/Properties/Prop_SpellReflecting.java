@@ -104,8 +104,8 @@ public class Prop_SpellReflecting extends Property implements TriggeredAffect
 		if((fade<=0)&&(abilityCode()<remaining))
 		{
 			if(lastFade==0)
-				lastFade=System.currentTimeMillis();
-			final long time=System.currentTimeMillis()-lastFade;
+				lastFade=GameTime.now();
+			final long time=GameTime.now()-lastFade;
 			if(time>5*60000)
 			{
 				final double div=CMath.div(time,(long)5*60000);
@@ -114,7 +114,7 @@ public class Prop_SpellReflecting extends Property implements TriggeredAffect
 					setAbilityCode(abilityCode()+(int)Math.round(div));
 					if(abilityCode()>remaining)
 						setAbilityCode(remaining);
-					lastFade=System.currentTimeMillis();
+					lastFade=GameTime.now();
 				}
 			}
 		}

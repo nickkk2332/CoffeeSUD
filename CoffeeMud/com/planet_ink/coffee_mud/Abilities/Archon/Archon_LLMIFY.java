@@ -110,7 +110,7 @@ public class Archon_LLMIFY extends ArchonSkill
 					close();
 					return;
 				}
-				if((outputBuffer.size()==0)||(!activated)||(expire<0)||(System.currentTimeMillis()<expire)||thinking)
+				if((outputBuffer.size()==0)||(!activated)||(expire<0)||(GameTime.now()<expire)||thinking)
 					return; // Skip empty flushes
 				expire = -1;
 				thinking=true;
@@ -196,7 +196,7 @@ public class Archon_LLMIFY extends ArchonSkill
 					if(activated)
 					{
 						outputBuffer.write(b);
-						expire=System.currentTimeMillis()+1000;
+						expire=GameTime.now()+1000;
 					}
 				}
 
@@ -205,7 +205,7 @@ public class Archon_LLMIFY extends ArchonSkill
 					if(activated)
 					{
 						outputBuffer.write(b);
-						expire=System.currentTimeMillis()+1000;
+						expire=GameTime.now()+1000;
 					}
 				}
 
@@ -214,7 +214,7 @@ public class Archon_LLMIFY extends ArchonSkill
 					if(activated)
 					{
 						outputBuffer.write(b, off, len);
-						expire=System.currentTimeMillis()+1000;
+						expire=GameTime.now()+1000;
 					}
 				}
 

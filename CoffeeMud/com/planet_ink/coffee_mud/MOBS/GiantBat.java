@@ -43,7 +43,7 @@ public class GiantBat extends StdMOB
 	public GiantBat()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a giant bat";
 		setDescription("It is a giant version of your common bat.");

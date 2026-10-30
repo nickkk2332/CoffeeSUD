@@ -409,10 +409,10 @@ public class Play extends StdAbility
 				final Play P=(Play)A;
 				if(P.timeOut==0)
 				{
-					P.timeOut = System.currentTimeMillis()
+					P.timeOut = GameTime.now()
 							  + (CMProps.getTickMillis() * (((invoker()!=null)&&(invoker()!=mob))?super.getXTIMELevel(invoker()):0));
 				}
-				if(System.currentTimeMillis() >= P.timeOut)
+				if(GameTime.now() >= P.timeOut)
 				{
 					A.unInvoke();
 					return false;

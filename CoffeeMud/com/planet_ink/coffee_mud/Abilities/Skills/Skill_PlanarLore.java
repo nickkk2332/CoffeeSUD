@@ -135,7 +135,7 @@ public class Skill_PlanarLore extends StdSkill
 			report=true;
 		}
 
-		if((System.currentTimeMillis() - lastFail) < 10000)
+		if((GameTime.now() - lastFail) < 10000)
 		{
 			mob.tell(L("You still can't recall.  Give yourself some more time to think first."));
 			return false;
@@ -186,7 +186,7 @@ public class Skill_PlanarLore extends StdSkill
 		final boolean success=proficiencyCheck(mob,currPlane.equalsIgnoreCase(planeName)?25:0,auto);
 		if(!success)
 		{
-			lastFail = System.currentTimeMillis();
+			lastFail = GameTime.now();
 			beneficialWordsFizzle(mob,null,L("<S-NAME> attempt(s) to recall something about @x1, but can't.",planeName));
 			return false;
 		}

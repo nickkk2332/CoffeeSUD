@@ -122,7 +122,7 @@ public class Skill_Monologue extends BardSkill
 		&&(msg.sourceMessage().length()>0)
 		&&(affected instanceof MOB)
 		&&(CMLib.flags().canBeHeardSpeakingBy(msg.source(), (MOB)affected)))
-			this.lastTimeHeard=System.currentTimeMillis();
+			this.lastTimeHeard=GameTime.now();
 	}
 
 	@Override
@@ -152,7 +152,7 @@ public class Skill_Monologue extends BardSkill
 				{
 					final Skill_Monologue A=(Skill_Monologue)beneficialAffect(mob,target,asLevel,Ability.TICKS_FOREVER);
 					CMLib.threads().startTickDown(A, Tickable.TICKID_MOB, 1);
-					A.lastTimeHeard=System.currentTimeMillis();
+					A.lastTimeHeard=GameTime.now();
 					CMLib.threads().suspendTicking(target,-1);
 					target.location().show(target, mob, CMMsg.MSG_OK_VISUAL, L("<S-NAME> patiently waits for the <T-YOUPOSS> monologue to be completed."));
 				}
@@ -170,7 +170,7 @@ public class Skill_Monologue extends BardSkill
 			final MOB mob=(MOB)affected;
 			if((!CMLib.flags().canBeHeardSpeakingBy(invoker(), mob))
 			||((invoker()!=null)&&(mob.location()!=invoker().location()))||(!CMLib.flags().isInTheGame(invoker(),true))
-			||((System.currentTimeMillis()-lastTimeHeard)>(4000+(super.getXLEVELLevel(invoker())*1000))))
+			||((GameTime.now()-lastTimeHeard)>(4000+(super.getXLEVELLevel(invoker())*1000))))
 			{
 				unInvoke();
 				return false;

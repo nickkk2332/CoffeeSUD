@@ -542,8 +542,8 @@ public class Druid_ShapeShift extends StdAbility
 			if(targetM.isMonster() || (mob != targetM))
 			{
 				myRaceCode=CMLib.dice().roll(1,racesTaken.length,-1);
-				final long t=System.currentTimeMillis();
-				while((racesTaken[myRaceCode]>0)&&((System.currentTimeMillis()-t)<10000))
+				final long t=GameTime.now();
+				while((racesTaken[myRaceCode]>0)&&((GameTime.now()-t)<10000))
 					myRaceCode=CMLib.dice().roll(1,racesTaken.length,-1);
 			}
 			else

@@ -681,7 +681,7 @@ public class StdSiegableBoardable extends StdBoardable implements SiegableItem
 					sourceM.tell(L("You are already in combat!"));
 					return Boolean.FALSE;
 				}
-				final String uniqueID=Name()+"_"+sourceM.Name()+"_"+System.currentTimeMillis();
+				final String uniqueID=Name()+"_"+sourceM.Name()+"_"+GameTime.now();
 				final ExtendableAbility namerA=(ExtendableAbility)CMClass.getAbility("ExtAbility");
 				{
 					namerA.setAbilityID(uniqueID);

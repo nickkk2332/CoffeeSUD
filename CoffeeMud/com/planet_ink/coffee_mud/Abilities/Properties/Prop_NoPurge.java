@@ -135,7 +135,7 @@ public class Prop_NoPurge extends Property
 					((Item)msg.target()).setExpirationDate(expirationDate);
 			}
 			if((expirationDate > 0)
-			&&(System.currentTimeMillis()> expirationDate))
+			&&(GameTime.now()> expirationDate))
 				affected.delEffect(this);
 		}
 	}

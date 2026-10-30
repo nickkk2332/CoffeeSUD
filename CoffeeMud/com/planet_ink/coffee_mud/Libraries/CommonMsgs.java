@@ -1446,9 +1446,9 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 	{
 		if(item.expirationDate()==0)
 			return "N/A";
-		if(item.expirationDate() < System.currentTimeMillis())
+		if(item.expirationDate() < GameTime.now())
 			return "*IMMINENT*";
-		return ""+CMLib.time().date2EllapsedTime((item.expirationDate()-System.currentTimeMillis()), TimeUnit.MINUTES, false);
+		return ""+CMLib.time().date2EllapsedTime((item.expirationDate()-GameTime.now()), TimeUnit.MINUTES, false);
 	}
 
 	protected String getRiderAddendum(final Rider iR)

@@ -116,7 +116,7 @@ public boolean invoke(final MOB mob, final List<String> commands, final Physical
 				target.curState().setFatigue(0);
 				target.curState().adjMovement(healing,target.maxState());
 				target.tell(L("You feel pretty invigorated!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

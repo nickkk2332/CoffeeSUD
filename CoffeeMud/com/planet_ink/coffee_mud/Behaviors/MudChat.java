@@ -769,7 +769,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	protected PairList<ChattyGroup, Long> getChatGroups(final MOB forMe, final ChattyGroup[] chatGroups)
 	{
 		if((this.chatGroups != null)
-		&&(System.currentTimeMillis()<this.chatEntryExpire)
+		&&(GameTime.now()<this.chatEntryExpire)
 		&&(myOldName.equals(forMe.Name())))
 			return this.chatGroups;
 		long newExpire = Long.MAX_VALUE;
@@ -780,7 +780,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			for(;i.hasNext();)
 			{
 				final Pair<ChattyGroup,Long> p = i.next();
-				if(System.currentTimeMillis()<p.second.longValue())
+				if(GameTime.now()<p.second.longValue())
 				{
 					this.chatGroups.add(p);
 					if(p.second.longValue() < newExpire)
@@ -827,7 +827,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	protected ChatEntryGroup getChatEntries(final MOB forMe, final ChattyGroup[] chatGroups)
 	{
 		if((this.currChatEntries != null)
-		&&(System.currentTimeMillis()<this.chatEntryExpire)
+		&&(GameTime.now()<this.chatEntryExpire)
 		&&(myOldName.equals(forMe.Name())))
 			return this.currChatEntries;
 		final XArrayList<ChattyEntry> newEntries = new XArrayList<ChattyEntry>();
@@ -1048,7 +1048,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	protected synchronized LLMSession getLLMSession(final ChattyGroup grp, final MOB source)
 	{
 		if((this.llmSession == null)
-		||((System.currentTimeMillis()-this.llmLastUse)>360000))
+		||((GameTime.now()-this.llmLastUse)>360000))
 		{
 			String prompt = grp.varOverride.get("LLMPROMPT");
 			if(prompt == null)
@@ -1061,7 +1061,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 				mem=Integer.valueOf(CMath.s_int(memstr));
 			this.llmSession = CMLib.protocol().createLLMSession(prompt,mem);
 		}
-		this.llmLastUse=System.currentTimeMillis();
+		this.llmLastUse=GameTime.now();
 		return this.llmSession;
 	}
 
@@ -1100,7 +1100,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					final PairList<ChattyGroup,Long> list = this.getChatGroups(source, allGroups);
 					if(!list.containsFirst(matchedCG))
 					{
-						final long expire = System.currentTimeMillis() + TALK_SWITCH_EXPIRE;
+						final long expire = GameTime.now() + TALK_SWITCH_EXPIRE;
 						if(!add)
 							list.clear();
 						list.add(new Pair<ChattyGroup, Long>(matchedCG,Long.valueOf(expire)));
@@ -1150,7 +1150,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					CMLib.threads().executeRunnable(new Runnable()
 					{
 						final String promptStr = prompt;
-						final long startTime = System.currentTimeMillis();
+						final long startTime = GameTime.now();
 						final MOB M = source;
 						final ChattyGroup cGroup = grp;
 						final boolean combatFlag = flag;
@@ -1176,7 +1176,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 									if(response.startsWith("'") && response.endsWith("'"))
 										response = response.substring(1,response.length()-1);
 								}
-								final long delayWas = System.currentTimeMillis() - startTime;
+								final long delayWas = GameTime.now() - startTime;
 								final long delayRemaining = (CMProps.getTickMillis()*RESPONSE_DELAY)-delayWas;
 								final int ticksRemain = (int)Math.floor(delayRemaining / CMProps.getTickMillis());
 								final List<String> words=new XVector<String>("say",response);
@@ -1557,7 +1557,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			if(mob == this.lastSpeakerM)
 			{
 				if((this.chatEntryExpire < Long.MAX_VALUE)
-				&&(this.chatEntryExpire < System.currentTimeMillis() + 60000))
+				&&(this.chatEntryExpire < GameTime.now() + 60000))
 					this.chatEntryExpire = this.chatEntryExpire + TALK_SWITCH_EXPIRE;
 			}
 			else

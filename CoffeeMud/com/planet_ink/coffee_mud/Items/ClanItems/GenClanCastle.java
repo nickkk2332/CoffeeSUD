@@ -157,7 +157,7 @@ public class GenClanCastle extends GenCastle implements ClanItem
 					if(holesInWalls>0)
 					{
 						holesInWalls--;
-						this.targetExpire=System.currentTimeMillis()+2000;
+						this.targetExpire=GameTime.now()+2000;
 					}
 					else
 					if(!CMSecurity.isAllowed(msg.source(), msg.source().location(), CMSecurity.SecFlag.CMDROOMS))
@@ -188,7 +188,7 @@ public class GenClanCastle extends GenCastle implements ClanItem
 	@Override
 	protected Room getDestinationRoom(final Room fromRoom)
 	{
-		if(System.currentTimeMillis()>targetExpire)
+		if(GameTime.now()>targetExpire)
 			return super.getDestinationRoom(fromRoom);
 		final Room tr=targetRoom;
 		if(tr == null)

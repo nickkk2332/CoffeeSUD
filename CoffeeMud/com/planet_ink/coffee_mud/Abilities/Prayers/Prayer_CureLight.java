@@ -130,7 +130,7 @@ public class Prayer_CureLight extends Prayer implements MendingSkill
 				CMLib.combat().postHealing(mob,target,this,healing,CMMsg.MASK_ALWAYS|CMMsg.TYP_CAST_SPELL,null);
 				if(target.curState().getHitPoints()>oldHP)
 					target.tell(L("You feel a little better!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

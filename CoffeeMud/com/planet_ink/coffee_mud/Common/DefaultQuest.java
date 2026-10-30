@@ -68,7 +68,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected int		maxWait				= -1;
 	protected int		waitRemaining		= -1;
 	protected int		ticksRemaining		= -1;
-	protected long		lastStartDateTime	= System.currentTimeMillis();
+	protected long		lastStartDateTime	= GameTime.now();
 	protected boolean	stoppingQuest		= false;
 	protected int		spawn				= Quest.Spawn.NO.ordinal();
 	protected QuestState questState			= new QuestState();
@@ -4373,7 +4373,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if(ellapsed==null)
 				ellapsed=Long.valueOf(0);
 			stepEllapsedTimes.remove(script);
-			ellapsed=Long.valueOf(ellapsed.longValue()+(System.currentTimeMillis()-lastStartDateTime));
+			ellapsed=Long.valueOf(ellapsed.longValue()+(GameTime.now()-lastStartDateTime));
 			stepEllapsedTimes.put(script,ellapsed);
 			Q.resetWaitRemaining(ellapsed.longValue());
 			if(Q.startQuestOnTime())
@@ -4448,7 +4448,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 							break;
 						}
 					}
-					lastStartDateTime=System.currentTimeMillis();
+					lastStartDateTime=GameTime.now();
 					enterDormantState();
 					return false; // always return false, since, per se, this quest is NOT started.
 				}
@@ -4522,7 +4522,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			CMLib.threads().startTickDown(this,Tickable.TICKID_QUEST,1);
 		}
 		resetData=null;
-		lastStartDateTime=System.currentTimeMillis();
+		lastStartDateTime=GameTime.now();
 		stepEllapsedTimes.remove(script());
 	}
 
@@ -5233,7 +5233,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		}
 		else
 		{
-			Q.getWinners().put(name,Long.valueOf(System.currentTimeMillis()));
+			Q.getWinners().put(name,Long.valueOf(GameTime.now()));
 			CMLib.database().DBUpdateQuest(Q);
 		}
 	}

@@ -110,7 +110,7 @@ public class Prop_Artifact extends Property
 		if(text.startsWith("BOOT;"))
 		{
 			itemID=text.substring(5);
-			waitToReload=System.currentTimeMillis()+5000;
+			waitToReload=GameTime.now()+5000;
 			return;
 		}
 		int x=text.indexOf(';');
@@ -289,7 +289,7 @@ public class Prop_Artifact extends Property
 			R.moveItemTo((Item)affected);
 			if(autoreset)
 			{
-				waitToReload=System.currentTimeMillis()+60000;
+				waitToReload=GameTime.now()+60000;
 				if(!CMLib.threads().isTicking(this,Tickable.TICKID_ITEM_BOUNCEBACK))
 					CMLib.threads().startTickDown(this, Tickable.TICKID_ITEM_BOUNCEBACK,4);
 				final Physical P = affected;
@@ -336,7 +336,7 @@ public class Prop_Artifact extends Property
 			}
 			else
 			{
-				waitToReload=System.currentTimeMillis()+60000;
+				waitToReload=GameTime.now()+60000;
 				if(!CMLib.threads().isTicking(this,Tickable.TICKID_ITEM_BOUNCEBACK))
 					CMLib.threads().startTickDown(this, Tickable.TICKID_ITEM_BOUNCEBACK,4);
 			}
@@ -438,7 +438,7 @@ public class Prop_Artifact extends Property
 		&&(tickID==Tickable.TICKID_ITEM_BOUNCEBACK)
 		&&(!nodb))
 		{
-			if((System.currentTimeMillis()>waitToReload)
+			if((GameTime.now()>waitToReload)
 			&&(CMProps.isState(CMProps.HostState.RUNNING)))
 			{
 				waitToReload=0;
@@ -577,7 +577,7 @@ public class Prop_Artifact extends Property
 									{
 										destroyArtifact(newItemMinusArtifact);
 										Log.errOut("Prop_Artifact","Unable to find artifact NPC: "+getItemID()+" from "+MOBname+" in "+CMLib.map().getDescriptiveExtendedRoomID(R)+" from "+iRoomID);
-										waitToReload=System.currentTimeMillis()+10*60000;
+										waitToReload=GameTime.now()+10*60000;
 										return true;
 									}
 									destroyArtifact(newItemMinusArtifact);

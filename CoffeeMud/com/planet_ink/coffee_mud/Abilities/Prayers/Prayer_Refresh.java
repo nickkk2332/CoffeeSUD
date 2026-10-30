@@ -123,7 +123,7 @@ public boolean invoke(final MOB mob, final List<String> commands, final Physical
 				target.curState().setHunger(target.maxState().getHunger());
 				target.curState().setThirst(target.maxState().getThirst());
 				target.tell(L("You feel refreshed!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

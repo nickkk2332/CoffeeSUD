@@ -45,7 +45,7 @@ public class GiantScorpion extends StdMOB
 	public GiantScorpion()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a Giant Scorpion";
 		setDescription("The giant scorpion has a green carapace and yellowish green legs and pincers. The segmented tail is black, with a vicious stinger on the end.");

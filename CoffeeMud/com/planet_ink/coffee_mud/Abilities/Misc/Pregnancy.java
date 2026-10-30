@@ -66,7 +66,7 @@ public class Pregnancy extends StdAbility implements HealthCondition
 		{
 			final TimeClock C = CMLib.time().localClock(affected);
 			final long divisor = CMProps.getTickMillis() * CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY);
-			final long days = (System.currentTimeMillis() - start) / divisor; // down
+			final long days = (GameTime.now() - start) / divisor; // down
 																				// to
 																				// days;
 			final long months = days / C.getDaysInMonth();
@@ -405,7 +405,7 @@ public class Pregnancy extends StdAbility implements HealthCondition
 			{
 				final TimeClock C = CMLib.time().localClock(mob.getStartRoom());
 				final long divisor = CMProps.getTickMillis() * CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY);
-				daysRemaining = (end - System.currentTimeMillis()) / divisor; // down to days
+				daysRemaining = (end - GameTime.now()) / divisor; // down to days
 				monthsRemaining = daysRemaining / C.getDaysInMonth(); // down to months
 				if ((CMLib.dice().roll(1, 200, 0) == 1)
 				&&(!CMSecurity.isDisabled(DisFlag.AUTOMOODS))
@@ -623,7 +623,7 @@ public class Pregnancy extends StdAbility implements HealthCondition
 								final Ability AGE = CMClass.getAbility("Age");
 								if (AGE != null)
 								{
-									AGE.setMiscText("" + System.currentTimeMillis());
+									AGE.setMiscText("" + GameTime.now());
 									babe.addNonUninvokableEffect(AGE);
 								}
 							}
@@ -657,7 +657,7 @@ public class Pregnancy extends StdAbility implements HealthCondition
 							final Ability AGE = CMClass.getAbility("Age");
 							if (AGE != null)
 							{
-								AGE.setMiscText("" + System.currentTimeMillis());
+								AGE.setMiscText("" + GameTime.now());
 								I.addNonUninvokableEffect(AGE);
 							}
 							if(CMLib.flags().isEggLayer(mob.charStats().getMyRace()))
@@ -749,7 +749,7 @@ public class Pregnancy extends StdAbility implements HealthCondition
 		if (!super.invoke(mob, commands, givenTarget, auto, asLevel))
 			return false;
 		final boolean success = proficiencyCheck(mob, 0, auto);
-		long start = System.currentTimeMillis();
+		long start = GameTime.now();
 		final Race R = target.charStats().getMyRace();
 		long tickspermudmonth = CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY);
 		final TimeClock C = CMLib.time().localClock(target.getStartRoom());

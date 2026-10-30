@@ -48,7 +48,7 @@ public class ShipTelnetProgram extends GenShipProgram implements ArchonOnly
 	protected Socket				sock				= null;
 	protected BufferedInputStream	reader				= null;
 	protected BufferedWriter		writer				= null;
-	protected volatile long			nextPowerCycleTmr	= System.currentTimeMillis() + (8 * 1000);
+	protected volatile long			nextPowerCycleTmr	= GameTime.now() + (8 * 1000);
 
 	public ShipTelnetProgram()
 	{
@@ -195,7 +195,7 @@ public class ShipTelnetProgram extends GenShipProgram implements ArchonOnly
 	@Override
 	protected boolean checkPowerCurrent(final int value)
 	{
-		nextPowerCycleTmr = System.currentTimeMillis() + (8 * 1000);
+		nextPowerCycleTmr = GameTime.now() + (8 * 1000);
 		return true;
 	}
 
@@ -271,7 +271,7 @@ public class ShipTelnetProgram extends GenShipProgram implements ArchonOnly
 			this.shutdown();
 		}
 		else
-		if (System.currentTimeMillis() > nextPowerCycleTmr)
+		if (GameTime.now() > nextPowerCycleTmr)
 		{
 			this.shutdown();
 		}

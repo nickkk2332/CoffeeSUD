@@ -74,7 +74,7 @@ public class Chant_SummonSchool extends Chant
 		return Ability.ACODE_CHANT | Ability.DOMAIN_ANIMALAFFINITY;
 	}
 
-	private final Random	randomizer		= new Random(System.currentTimeMillis());
+	private final Random	randomizer		= new Random(GameTime.now());
 	protected int			numberOfImages	= 0;
 	protected boolean		notAgain		= false;
 	protected String		schoolMemberName= "";

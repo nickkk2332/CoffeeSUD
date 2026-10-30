@@ -216,10 +216,10 @@ public class Skill_UnearthDemography extends StdAbility
 			if(msg.targetMinor()==CMMsg.TYP_ENTER)
 			{
 				slowDown=true;
-				slowExpire=System.currentTimeMillis()+CMProps.getTickMillis()+1;
+				slowExpire=GameTime.now()+CMProps.getTickMillis()+1;
 				mob.recoverPhyStats();
-				if((System.currentTimeMillis()>nextTidbit)||(nextTidbit==0)||(nextTidbit==Long.MAX_VALUE))
-					nextTidbit=System.currentTimeMillis()+CMProps.getTickMillis();
+				if((GameTime.now()>nextTidbit)||(nextTidbit==0)||(nextTidbit==Long.MAX_VALUE))
+					nextTidbit=GameTime.now()+CMProps.getTickMillis();
 				final Room R=(Room)msg.target();
 				if(R.getArea()!=workingArea.get())
 				{
@@ -265,7 +265,7 @@ public class Skill_UnearthDemography extends StdAbility
 			return false;
 		if(tickID!=Tickable.TICKID_MOB)
 			return true;
-		final long now=System.currentTimeMillis();
+		final long now=GameTime.now();
 		final Physical affected=this.affected;
 		if((slowDown) && (now > slowExpire))
 		{
@@ -348,7 +348,7 @@ public class Skill_UnearthDemography extends StdAbility
 					}
 					else
 					{
-						final long startTime=System.currentTimeMillis();
+						final long startTime=GameTime.now();
 						final String factionID1=CMLib.factions().getAlignmentID();
 						final String factionID2=CMLib.factions().getInclinationID();
 						final Faction F1=CMLib.factions().getFaction(factionID1);
@@ -415,7 +415,7 @@ public class Skill_UnearthDemography extends StdAbility
 								R.destroy();
 							}
 						}
-						final long ellapsed = System.currentTimeMillis() - startTime;
+						final long ellapsed = GameTime.now() - startTime;
 						if(ellapsed > 100)
 						{
 							if(roomCounter > 1) // if it took too long, adjust it

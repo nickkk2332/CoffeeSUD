@@ -151,7 +151,7 @@ public class Prayer_UndeniableFaith extends Prayer
 			if(convertStack.containsFirst(target))
 			{
 				final Long L=convertStack.get(convertStack.indexOfFirst(target)).second;
-				if((System.currentTimeMillis()-L.longValue())>CMProps.getMillisPerMudHour()*5)
+				if((GameTime.now()-L.longValue())>CMProps.getMillisPerMudHour()*5)
 					convertStack.removeElementFirst(target);
 			}
 			if(convertStack.containsFirst(target))
@@ -193,7 +193,7 @@ public class Prayer_UndeniableFaith extends Prayer
 						CMLib.leveler().postExperience(mob,"ABILITY:"+ID(),target,null,25, false);
 					godName=mob.charStats().getWorshipCharID();
 					beneficialAffect(mob,target,asLevel,CMProps.getIntVar(CMProps.Int.TICKSPERMUDMONTH));
-					convertStack.add(target,Long.valueOf(System.currentTimeMillis()));
+					convertStack.add(target,Long.valueOf(GameTime.now()));
 				}
 			}
 		}

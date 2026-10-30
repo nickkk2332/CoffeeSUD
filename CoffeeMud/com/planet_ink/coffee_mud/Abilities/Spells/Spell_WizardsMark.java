@@ -87,7 +87,7 @@ public class Spell_WizardsMark extends Spell
 	@Override
 	public void setMiscText(final String newMiscText)
 	{
-		expirationDate = System.currentTimeMillis() + 16000;
+		expirationDate = GameTime.now() + 16000;
 		super.setMiscText(newMiscText);
 		if((newMiscText!=null)&&(newMiscText.length()>0))
 		{
@@ -145,7 +145,7 @@ public class Spell_WizardsMark extends Spell
 			&&(msg.target()==affected))
 				((Item)msg.target()).setExpirationDate(expirationDate);
 			if((expirationDate > 0)
-			&&(System.currentTimeMillis()> expirationDate))
+			&&(GameTime.now()> expirationDate))
 			{
 				unInvoke();
 				affected.delEffect(this);

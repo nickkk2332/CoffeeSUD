@@ -1268,11 +1268,11 @@ public class DefaultFaction implements Faction, MsgListener
 		final Faction.FData data = mob.fetchFactionData(factionID());
 		if(data != null)
 		{
-			if(System.currentTimeMillis() < data.getNextChangeTimers(event))
+			if(GameTime.now() < data.getNextChangeTimers(event))
 				return false;
 			final long newTime=event.getWaitBetweenMs();
 			if(newTime > 0)
-				data.setNextChangeTimers(event, System.currentTimeMillis()+newTime);
+				data.setNextChangeTimers(event, GameTime.now()+newTime);
 		}
 		return true;
 	}
@@ -1533,7 +1533,7 @@ public class DefaultFaction implements Faction, MsgListener
 							M=P.matcher(sayMsg);
 							if(M.matches())
 							{
-								if((data != null) && (System.currentTimeMillis() < data.getNextChangeTimers(event)))
+								if((data != null) && (GameTime.now() < data.getNextChangeTimers(event)))
 									continue;
 								boolean foundOne=false;
 								for(final MOB target : targets)
@@ -2548,7 +2548,7 @@ public class DefaultFaction implements Faction, MsgListener
 			{
 				if(withinTicks > 0)
 				{
-					final long now=System.currentTimeMillis() - (withinTicks * CMProps.getTickMillis());
+					final long now=GameTime.now() - (withinTicks * CMProps.getTickMillis());
 					Faction.FData data;
 					data = source.fetchFactionData(F.factionID());
 					if(data != null)
@@ -2779,7 +2779,7 @@ public class DefaultFaction implements Faction, MsgListener
 		private boolean			erroredOut;
 		private Faction			myFaction;
 		public boolean			isReset	= false;
-		private long			birthTime = System.currentTimeMillis();
+		private long			birthTime = GameTime.now();
 		private PairList<CompiledZMask,List<Faction.FReactionItem>> currentReactionSets;
 
 		private final CMap<String, Long>				timers	= new SHashtable<String, Long>();
@@ -2801,7 +2801,7 @@ public class DefaultFaction implements Faction, MsgListener
 				noListeners=false;
 				noTickers=false;
 				noStatAffectors=false;
-				lastUpdated=System.currentTimeMillis();
+				lastUpdated=GameTime.now();
 				myEffects=new Ability[0];
 				myBehaviors=new Behavior[0];
 				currentReactionSets = new PairVector<CompiledZMask,List<Faction.FReactionItem>>();
@@ -2826,7 +2826,7 @@ public class DefaultFaction implements Faction, MsgListener
 		@Override
 		public void resetEventTimers(final String eventID)
 		{
-			this.birthTime = System.currentTimeMillis();
+			this.birthTime = GameTime.now();
 			if(eventID == null)
 			{
 				timers.clear();
@@ -2834,7 +2834,7 @@ public class DefaultFaction implements Faction, MsgListener
 			}
 			else
 			{
-				timers.put(eventID, Long.valueOf(System.currentTimeMillis()));
+				timers.put(eventID, Long.valueOf(GameTime.now()));
 				for(final Iterator<Faction.FactionChangeEvent> e = nextChangeTime.keySet().iterator();e.hasNext();)
 				{
 					final Faction.FactionChangeEvent event = e.next();

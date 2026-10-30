@@ -90,7 +90,7 @@ public class Chant_SpeedBirth extends Chant
 			end = CMath.s_long(A.getStat("PREGEND"));
 			if((start>=0)&&(end>=0))
 			{
-				remain=end-System.currentTimeMillis();
+				remain=end-GameTime.now();
 				final long divisor=CMProps.getTickMillis()*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY);
 				days=remain/divisor; // down to days;
 			}
@@ -116,8 +116,8 @@ public class Chant_SpeedBirth extends Chant
 				else
 				if(days<1)
 				{
-					if(end > System.currentTimeMillis())
-						remain=(end-System.currentTimeMillis())+19999;
+					if(end > GameTime.now())
+						remain=(end-GameTime.now())+19999;
 				}
 				else
 					remain=Math.round(CMath.div(remain,(2.0-(0.05*super.getX1Level(mob)))));

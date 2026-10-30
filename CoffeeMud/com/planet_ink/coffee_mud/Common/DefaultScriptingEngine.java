@@ -216,7 +216,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		/** the hash code for this whole thing */
 		private Integer		hashCode	= null;
 		/** when this event was queued */
-		private final long	queuedAt	= System.currentTimeMillis();
+		private final long	queuedAt	= GameTime.now();
 
 		/**
 		 * Create an event response object
@@ -11707,7 +11707,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						{
 							final Ability afA = newTarget.fetchEffect(A.ID());
 							if(afA!=null)
-								afA.setExpirationDate(System.currentTimeMillis()+(CMProps.getTickMillis() * ticks));
+								afA.setExpirationDate(GameTime.now()+(CMProps.getTickMillis() * ticks));
 						}
 					}
 				}
@@ -12081,7 +12081,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				else
 				{
 					noTrigger.remove(Integer.valueOf(triggerCode));
-					noTrigger.put(Integer.valueOf(triggerCode),Long.valueOf(System.currentTimeMillis()+CMath.s_long(time.trim())));
+					noTrigger.put(Integer.valueOf(triggerCode),Long.valueOf(GameTime.now()+CMath.s_long(time.trim())));
 					for(int q=que.size()-1;q>=0;q--)
 					{
 						ScriptableResponse SB=null;
@@ -14327,7 +14327,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
 							if(CMLib.dice().rollPercentage()<prcnt)
 							{
-								noTrigger.put(Integer.valueOf(-52),Long.valueOf(System.currentTimeMillis()+CMProps.getTickMillis()));
+								noTrigger.put(Integer.valueOf(-52),Long.valueOf(GameTime.now()+CMProps.getTickMillis()));
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
 									return;
@@ -15593,7 +15593,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		final Long L=noTrigger.get(Integer.valueOf(triggerCode));
 		if(L==null)
 			return true;
-		if(System.currentTimeMillis()<L.longValue())
+		if(GameTime.now()<L.longValue())
 			return false;
 		noTrigger.remove(Integer.valueOf(triggerCode));
 		return true;

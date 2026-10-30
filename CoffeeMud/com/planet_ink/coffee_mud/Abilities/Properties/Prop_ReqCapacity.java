@@ -374,9 +374,9 @@ public class Prop_ReqCapacity extends Property implements TriggeredAffect
 		final Physical affected=this.affected;
 		if(affected!=null)
 		{
-			if(System.currentTimeMillis() > lastCheck)
+			if(GameTime.now() > lastCheck)
 			{
-				this.lastCheck=System.currentTimeMillis() + (30 * 60 * 1000);
+				this.lastCheck=GameTime.now() + (30 * 60 * 1000);
 				CMLib.threads().executeRunnable(new Runnable()
 				{
 					@Override

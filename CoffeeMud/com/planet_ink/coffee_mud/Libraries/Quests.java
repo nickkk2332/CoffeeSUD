@@ -355,7 +355,7 @@ public class Quests extends StdLibrary implements QuestManager
 			C.setYear(NOW.getYear()+1);
 		else
 			C.setYear(NOW.getYear());
-		return System.currentTimeMillis() + C.deriveMillisAfter(NOW);
+		return GameTime.now() + C.deriveMillisAfter(NOW);
 	}
 
 	@Override

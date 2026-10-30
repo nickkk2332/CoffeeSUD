@@ -45,7 +45,7 @@ public class ShipDiagProgram extends GenShipProgram
 		return "ShipDiagProgram";
 	}
 
-	protected volatile long					nextPowerCycleTmr	= System.currentTimeMillis() + (8 * 1000);
+	protected volatile long					nextPowerCycleTmr	= GameTime.now() + (8 * 1000);
 	protected volatile List<TechComponent>	components			= null;
 	protected volatile boolean				showUpdatedDamage	= false;
 	protected volatile TechComponent		diagTargetT			= null;
@@ -74,7 +74,7 @@ public class ShipDiagProgram extends GenShipProgram
 	{
 		if((diagTargetL!=null)
 		&&(diagCompletionMs>0)
-		&&(System.currentTimeMillis()<diagCompletionMs))
+		&&(GameTime.now()<diagCompletionMs))
 			return true;
 		return false;
 	}
@@ -152,7 +152,7 @@ public class ShipDiagProgram extends GenShipProgram
 		if(A!=null)
 		{
 			A.setSavable(false);
-			A.setExpirationDate(System.currentTimeMillis()+600000L);
+			A.setExpirationDate(GameTime.now()+600000L);
 			this.last.clear();
 			this.rpt.clear();
 			A.setMsgListener(this.listener);
@@ -236,7 +236,7 @@ public class ShipDiagProgram extends GenShipProgram
 	@Override
 	protected boolean checkPowerCurrent(final int value)
 	{
-		nextPowerCycleTmr = System.currentTimeMillis() + (8 * 1000);
+		nextPowerCycleTmr = GameTime.now() + (8 * 1000);
 		return true;
 	}
 
@@ -619,7 +619,7 @@ public class ShipDiagProgram extends GenShipProgram
 				{
 				case 1:
 					diagMasterMs=(itemCt *multiPlier);
-					diagCompletionMs=System.currentTimeMillis()+diagMasterMs;
+					diagCompletionMs=GameTime.now()+diagMasterMs;
 					break;
 				case 2:
 				{
@@ -634,7 +634,7 @@ public class ShipDiagProgram extends GenShipProgram
 						}
 					}
 					diagMasterMs=(itemCt *multiPlier * 3);
-					diagCompletionMs=System.currentTimeMillis()+diagMasterMs;
+					diagCompletionMs=GameTime.now()+diagMasterMs;
 					break;
 				}
 				case 3:
@@ -649,7 +649,7 @@ public class ShipDiagProgram extends GenShipProgram
 						}
 					}
 					diagMasterMs=(itemCt *multiPlier * 9);
-					diagCompletionMs=System.currentTimeMillis()+diagMasterMs;
+					diagCompletionMs=GameTime.now()+diagMasterMs;
 					break;
 				}
 				scr.setLength(0);
@@ -663,13 +663,13 @@ public class ShipDiagProgram extends GenShipProgram
 	protected void onPowerCurrent(final int value)
 	{
 		super.onPowerCurrent(value);
-		if (System.currentTimeMillis() > nextPowerCycleTmr)
+		if (GameTime.now() > nextPowerCycleTmr)
 		{
 			this.shutdown();
 		}
 		if ((diagCompletionMs != 0)
 		&& (diagTargetL != null)
-		&& (System.currentTimeMillis() >= diagCompletionMs))
+		&& (GameTime.now() >= diagCompletionMs))
 		{
 			scr.setLength(0);
 			switch(diagTargetL.intValue())
@@ -691,7 +691,7 @@ public class ShipDiagProgram extends GenShipProgram
 		else
 		if(this.isDiagRunning())
 		{
-			final long diff = diagCompletionMs - System.currentTimeMillis();
+			final long diff = diagCompletionMs - GameTime.now();
 			final long pct=Math.round(CMath.div(diagMasterMs-diff, diagMasterMs)*100.0);
 			scr.setLength(0);
 			scr.append(L("Processing diagnostic level @x1 (@x2%)",""+this.diagTargetL.intValue(),""+pct));

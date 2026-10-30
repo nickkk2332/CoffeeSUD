@@ -43,7 +43,7 @@ public class Falcon extends StdMOB
 	public Falcon()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a falcon";
 		setDescription("a small hunting bird.");

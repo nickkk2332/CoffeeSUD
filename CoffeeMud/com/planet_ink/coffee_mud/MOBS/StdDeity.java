@@ -99,7 +99,7 @@ public class StdDeity extends StdMOB implements Deity
 		public MOB			cleric				= null;
 		public Room			room				= null;
 		public boolean		serviceCompleted	= false;
-		public long			startTime			= System.currentTimeMillis();
+		public long			startTime			= GameTime.now();
 		public List<MOB>	parishaners			= new Vector<MOB>();
 	}
 
@@ -870,7 +870,7 @@ public class StdDeity extends StdMOB implements Deity
 			final WorshipService service = new WorshipService();
 			service.room=room;
 			service.parishaners = parishaners;
-			service.startTime = System.currentTimeMillis();
+			service.startTime = GameTime.now();
 			service.cleric = mob;
 			service.serviceCompleted = false;
 
@@ -940,7 +940,7 @@ public class StdDeity extends StdMOB implements Deity
 			for(int d=services.size()-1;d>=0;d--)
 			{
 				final WorshipService service = services.get(d);
-				if(System.currentTimeMillis()-service.startTime>(1000*60*30))
+				if(GameTime.now()-service.startTime>(1000*60*30))
 				{
 					undoService(service.parishaners);
 					services.remove(d);

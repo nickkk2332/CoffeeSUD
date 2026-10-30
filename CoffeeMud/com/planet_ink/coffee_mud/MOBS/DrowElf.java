@@ -49,7 +49,7 @@ public class DrowElf extends StdMOB
 	{
 		super();
 
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		basePhyStats().setLevel(4 + Math.abs(randomizer.nextInt() % 7));
 

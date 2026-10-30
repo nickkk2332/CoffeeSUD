@@ -48,7 +48,7 @@ public class Halberd extends StdWeapon
 	{
 		super();
 
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 		final int HalberdType = Math.abs(randomizer.nextInt() % 3);
 
 		this.phyStats.setAbility(HalberdType);

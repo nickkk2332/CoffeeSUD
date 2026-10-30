@@ -47,7 +47,7 @@ public class EvilExecutioner  extends StdBehavior
 	}
 
 	protected boolean doPlayers=false;
-	protected long deepBreath=System.currentTimeMillis();
+	protected long deepBreath=GameTime.now();
 	protected boolean noRecurse=true;
 
 	@Override
@@ -90,10 +90,10 @@ public class EvilExecutioner  extends StdBehavior
 		final MOB source=msg.source();
 		if(!canFreelyBehaveNormal(affecting))
 		{
-			deepBreath=System.currentTimeMillis();
+			deepBreath=GameTime.now();
 			return;
 		}
-		if((deepBreath==0)||((System.currentTimeMillis()-deepBreath)>60000)&&(!noRecurse))
+		if((deepBreath==0)||((GameTime.now()-deepBreath)>60000)&&(!noRecurse))
 		{
 			noRecurse=true;
 			deepBreath=0;

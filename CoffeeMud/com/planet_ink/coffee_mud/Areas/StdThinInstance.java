@@ -174,7 +174,7 @@ public class StdThinInstance extends StdThinArea implements SubArea
 			//	e.nextElement().bringToLife(newR,true);
 			newR.startItemRejuv();
 			fillInAreaRoom(newR);
-			newR.setExpirationDate(System.currentTimeMillis()+WorldMap.ROOM_EXPIRATION_MILLIS);
+			newR.setExpirationDate(GameTime.now()+WorldMap.ROOM_EXPIRATION_MILLIS);
 			final MOB mob=CMClass.getFactoryMOB("the wind",1,newR);
 			try
 			{

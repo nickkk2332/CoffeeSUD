@@ -120,7 +120,7 @@ public class StdQuestBoard extends StdItem
 
 	protected List<Quest> getQuestList()
 	{
-		final long now=System.currentTimeMillis();
+		final long now=GameTime.now();
 		if(now > nextCheck)
 		{
 			synchronized(myQuests)

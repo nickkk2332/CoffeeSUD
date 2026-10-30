@@ -73,7 +73,7 @@ public class Sword extends StdWeapon
 			}
 			return new Sword();
 		}
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 		final int swordType = Math.abs(randomizer.nextInt() % 6);
 		switch (swordType)
 		{

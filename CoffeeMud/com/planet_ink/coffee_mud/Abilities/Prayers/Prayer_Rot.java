@@ -84,7 +84,7 @@ public class Prayer_Rot extends Prayer
 		return ((affecting() instanceof Food)&&(!canBeUninvoked()))?Ability.ACODE_PROPERTY:Ability.ACODE_PRAYER|Ability.DOMAIN_CORRUPTION;
 	}
 
-	private long nextTry=System.currentTimeMillis();
+	private long nextTry=GameTime.now();
 
 	@Override
 	public void executeMsg(final Environmental host, final CMMsg msg)
@@ -136,7 +136,7 @@ public class Prayer_Rot extends Prayer
 			case RawMaterial.MATERIAL_FLESH:
 			{
 				newTime=
-				System.currentTimeMillis()+(
+				GameTime.now()+(
 				   CMProps.getTickMillis()
 					*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)
 				);
@@ -145,7 +145,7 @@ public class Prayer_Rot extends Prayer
 			case RawMaterial.MATERIAL_VEGETATION:
 			{
 				newTime=
-				System.currentTimeMillis()+(
+				GameTime.now()+(
 				CMProps.getTickMillis()
 				*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)
 				*5);
@@ -158,13 +158,13 @@ public class Prayer_Rot extends Prayer
 				{
 				case RawMaterial.RESOURCE_BLOOD:
 					newTime=
-						System.currentTimeMillis()+(
+						GameTime.now()+(
 						CMProps.getTickMillis()
 						*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY));
 					break;
 				case RawMaterial.RESOURCE_MILK:
 					newTime=
-						System.currentTimeMillis()+(
+						GameTime.now()+(
 						CMProps.getTickMillis()
 						*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)
 						*5);
@@ -175,13 +175,13 @@ public class Prayer_Rot extends Prayer
 			{
 			case RawMaterial.RESOURCE_BLOOD:
 				newTime=
-					System.currentTimeMillis()+(
+					GameTime.now()+(
 					CMProps.getTickMillis()
 					*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY));
 				break;
 			case RawMaterial.RESOURCE_MILK:
 				newTime=
-					System.currentTimeMillis()+(
+					GameTime.now()+(
 					CMProps.getTickMillis()
 					*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)
 					*5);
@@ -209,7 +209,7 @@ public class Prayer_Rot extends Prayer
 				((Decayable)I).setDecayTime(newTime);
 		}
 		if((((Decayable)I).decayTime()>0)
-		&&(System.currentTimeMillis()>((Decayable)I).decayTime())
+		&&(GameTime.now()>((Decayable)I).decayTime())
 		&&(!CMLib.flags().isABonusItems(I)))
 		{
 			if(I.fetchEffect("Poison_Rotten")==null)
@@ -241,9 +241,9 @@ public class Prayer_Rot extends Prayer
 	@Override
 	public boolean okMessage(final Environmental host, final CMMsg msg)
 	{
-		if((affecting()==null)||(System.currentTimeMillis()>nextTry))
+		if((affecting()==null)||(GameTime.now()>nextTry))
 		{
-			nextTry=System.currentTimeMillis()+60000;
+			nextTry=GameTime.now()+60000;
 			if(host instanceof Item)
 				setRot(((Item)host));
 			else

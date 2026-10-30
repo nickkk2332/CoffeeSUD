@@ -43,7 +43,7 @@ public class Penguin extends StdMOB
 	public Penguin()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a penguin";
 		setDescription("It\\`s a short flightless bird with webbed feet and a short wagging tail.");

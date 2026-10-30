@@ -554,7 +554,7 @@ public class Prop_RoomForSale extends Property implements LandTitle
 					{
 						if(I.expirationDate()==0)
 						{
-							long now=System.currentTimeMillis();
+							long now=GameTime.now();
 							now+=(TimeManager.MILI_MINUTE*CMProps.getIntVar(CMProps.Int.EXPIRE_PLAYER_DROP));
 							I.setExpirationDate(now);
 						}

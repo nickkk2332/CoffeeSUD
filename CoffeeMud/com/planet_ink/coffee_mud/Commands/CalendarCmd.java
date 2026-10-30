@@ -313,8 +313,8 @@ public class CalendarCmd extends StdCommand
 			final TimeClock C = CMLib.time().localClock(mob);
 			final String dateStr = L("^HThe time is now (y/m/d): ^w@x1^H (System: ^w@x2^H)\n\r^N",
 					C.getShortestTimeDescription(),CMLib.time().date2String24(System.currentTimeMillis()));
-			final long fromTm = System.currentTimeMillis() - CMProps.getTickMillis();
-			final long toTm = System.currentTimeMillis() + CMProps.getTickMillis();
+			final long fromTm = GameTime.now() - CMProps.getTickMillis();
+			final long toTm = GameTime.now() + CMProps.getTickMillis();
 			final List<JournalEntry> all = getCalendarByTimeStamps(mob, fromTm, toTm);
 			if(all.size()==0)
 			{
@@ -330,11 +330,11 @@ public class CalendarCmd extends StdCommand
 		}
 		case SOON:
 		{
-			long fromTm = System.currentTimeMillis() - CMProps.getTickMillis();
-			long toTm = System.currentTimeMillis() + CMProps.getTickMillis();
+			long fromTm = GameTime.now() - CMProps.getTickMillis();
+			long toTm = GameTime.now() + CMProps.getTickMillis();
 			final List<JournalEntry> all = getCalendarByTimeStamps(mob, fromTm, toTm);
-			fromTm = System.currentTimeMillis() - CMProps.getTickMillis();
-			toTm = System.currentTimeMillis() + (2*TimeManager.MILI_DAY);
+			fromTm = GameTime.now() - CMProps.getTickMillis();
+			toTm = GameTime.now() + (2*TimeManager.MILI_DAY);
 			final List<JournalEntry> soon = getCalendarByStartRange(mob, fromTm, toTm);
 			for(final JournalEntry E : soon)
 			{
@@ -366,8 +366,8 @@ public class CalendarCmd extends StdCommand
 		}
 		case RECENT:
 		{
-			final long fromTm = System.currentTimeMillis() - (2*TimeManager.MILI_DAY);
-			final long toTm = System.currentTimeMillis() + CMProps.getTickMillis();
+			final long fromTm = GameTime.now() - (2*TimeManager.MILI_DAY);
+			final long toTm = GameTime.now() + CMProps.getTickMillis();
 			final List<JournalEntry> all = getCalendarByTimeStamps(mob, fromTm, toTm);
 			if(all.size()==0)
 			{
@@ -431,13 +431,13 @@ public class CalendarCmd extends StdCommand
 			final long toTm;
 			if(cmd == CalCmd.NEXT)
 			{
-				fromTm = System.currentTimeMillis() - CMProps.getTickMillis();
-				toTm = System.currentTimeMillis() + (num * millis);
+				fromTm = GameTime.now() - CMProps.getTickMillis();
+				toTm = GameTime.now() + (num * millis);
 			}
 			else
 			{
-				fromTm = System.currentTimeMillis() - (num * millis);
-				toTm = System.currentTimeMillis() + CMProps.getTickMillis();
+				fromTm = GameTime.now() - (num * millis);
+				toTm = GameTime.now() + CMProps.getTickMillis();
 			}
 			final List<JournalEntry> all = getCalendarByExpirationRange(mob, fromTm, toTm);
 			final String perName = (rl[0]?L("real life "):"")+per.name().toLowerCase();
@@ -457,8 +457,8 @@ public class CalendarCmd extends StdCommand
 		}
 		case REMOVE:
 		{
-			final long fromTm = System.currentTimeMillis() - TimeManager.MILI_YEAR;
-			final long toTm = System.currentTimeMillis() + TimeManager.MILI_YEAR;
+			final long fromTm = GameTime.now() - TimeManager.MILI_YEAR;
+			final long toTm = GameTime.now() + TimeManager.MILI_YEAR;
 			final List<JournalEntry> all = getCalendarByTimeStamps(mob, fromTm, toTm);
 			final String match = CMParms.combine(commands,0);
 			JournalEntry entry = CMLib.english().fetchReflective(all, match, "subj", true);
@@ -624,7 +624,7 @@ public class CalendarCmd extends StdCommand
 								else
 								{
 									final TimeClock C = CMLib.time().localClock(M);
-									final TimeClock newC = C.deriveClock(System.currentTimeMillis());
+									final TimeClock newC = C.deriveClock(GameTime.now());
 									newC.setYear(CMath.s_int(start[0]));
 									newC.setMonth(CMath.s_int(start[1]));
 									newC.setDayOfMonth(CMath.s_int(start[2]));

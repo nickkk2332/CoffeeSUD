@@ -139,9 +139,9 @@ public class Skill_CombatRecall extends StdSkill
 				||(msg.sourceMinor()==CMMsg.TYP_DEATH)
 				||(msg.targetMinor()==CMMsg.TYP_DAMAGE)
 				||msg.targetMajor(CMMsg.MASK_MALICIOUS))
-					logLast = System.currentTimeMillis();
+					logLast = GameTime.now();
 				if((logging.size()==0)||(logStrt<=0))
-					logStrt = System.currentTimeMillis();
+					logStrt = GameTime.now();
 				if((invoker == null)
 				&&(affected instanceof MOB))
 					invoker=(MOB)affected;
@@ -161,7 +161,7 @@ public class Skill_CombatRecall extends StdSkill
 				||(msg.sourceMinor()==CMMsg.TYP_DEATH)
 				||(msg.targetMinor()==CMMsg.TYP_DAMAGE)
 				||msg.targetMajor(CMMsg.MASK_MALICIOUS))
-					logLast = System.currentTimeMillis();
+					logLast = GameTime.now();
 			}
 		}
 	}
@@ -172,7 +172,7 @@ public class Skill_CombatRecall extends StdSkill
 		if(logging.size()>0)
 		{
 			if((logLast>0)
-			&&((System.currentTimeMillis()-logLast)>=LOG_EXPIRE))
+			&&((GameTime.now()-logLast)>=LOG_EXPIRE))
 			{
 				if((invoker == null)
 				&&(affected instanceof MOB))
@@ -184,7 +184,7 @@ public class Skill_CombatRecall extends StdSkill
 					{
 						logs.add(new Triad<Long,Long,List<String>>(
 								Long.valueOf(logStrt),
-								Long.valueOf(System.currentTimeMillis()),
+								Long.valueOf(GameTime.now()),
 								new XVector<String>(log)));
 						logging.clear();
 						log.clear();
@@ -235,7 +235,7 @@ public class Skill_CombatRecall extends StdSkill
 		{
 			showLogs.add(new Triad<Long,Long,List<String>>(
 				Long.valueOf(logStrt),
-				Long.valueOf(System.currentTimeMillis()),
+				Long.valueOf(GameTime.now()),
 				log
 			));
 		}
@@ -253,9 +253,9 @@ public class Skill_CombatRecall extends StdSkill
 				final long start = showLogs.get(idx).first.longValue();
 				final long end = showLogs.get(idx).second.longValue();
 				final String startTime = C.deriveClock(start).getShortestTimeDescription()
-					+" ("+CMLib.time().date2SmartEllapsedTime(System.currentTimeMillis()-start, true)+" ago)";
+					+" ("+CMLib.time().date2SmartEllapsedTime(GameTime.now()-start, true)+" ago)";
 				final String endTime = C.deriveClock(end).getShortestTimeDescription()
-						+" ("+CMLib.time().date2SmartEllapsedTime(System.currentTimeMillis()-end, true)+" ago)";
+						+" ("+CMLib.time().date2SmartEllapsedTime(GameTime.now()-end, true)+" ago)";
 				lst.append("^w"+CMStrings.padRight(""+(idx+1), 3)).append("^N");
 				lst.append(CMStrings.padRight(startTime, col1)).append(" ");
 				lst.append(CMStrings.limit(endTime, col1)).append("\n\r");
@@ -301,9 +301,9 @@ public class Skill_CombatRecall extends StdSkill
 				final long end = picked.second.longValue();
 				final StringBuilder lst = new StringBuilder(L("^NYou recall that fight:\n\r"));
 				final String startTime = C.deriveClock(start).getShortestTimeDescription()
-						+" ("+CMLib.time().date2SmartEllapsedTime(System.currentTimeMillis()-start, true)+" ago)";
+						+" ("+CMLib.time().date2SmartEllapsedTime(GameTime.now()-start, true)+" ago)";
 				final String endTime = C.deriveClock(end).getShortestTimeDescription()
-						+" ("+CMLib.time().date2SmartEllapsedTime(System.currentTimeMillis()-end, true)+" ago)";
+						+" ("+CMLib.time().date2SmartEllapsedTime(GameTime.now()-end, true)+" ago)";
 				lst.append(L("^HStarted^N: ")).append(startTime).append("\n\r");
 				lst.append(L("^HEnded^N  : ")).append(endTime).append("\n\r");
 				for(int i=0;i<picked.third.size();i++)

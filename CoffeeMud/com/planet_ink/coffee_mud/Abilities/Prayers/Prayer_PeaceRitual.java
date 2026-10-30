@@ -161,12 +161,12 @@ public class Prayer_PeaceRitual extends Prayer
 			{
 				if(C1.getClanRelations(C2.clanID())==Clan.REL_WAR)
 				{
-					C1.setClanRelations(C2.clanID(),Clan.REL_HOSTILE,System.currentTimeMillis());
+					C1.setClanRelations(C2.clanID(),Clan.REL_HOSTILE,GameTime.now());
 					C1.update();
 				}
 				if(C2.getClanRelations(C1.clanID())==Clan.REL_WAR)
 				{
-					C2.setClanRelations(C1.clanID(),Clan.REL_HOSTILE,System.currentTimeMillis());
+					C2.setClanRelations(C1.clanID(),Clan.REL_HOSTILE,GameTime.now());
 					C2.update();
 				}
 				final List<String> channels=CMLib.channels().getFlaggedChannelNames(ChannelsLibrary.ChannelFlag.CLANINFO, null);

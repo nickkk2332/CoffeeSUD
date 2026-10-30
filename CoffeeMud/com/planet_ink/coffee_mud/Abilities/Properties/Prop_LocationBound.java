@@ -197,7 +197,7 @@ public class Prop_LocationBound extends Property
 		}
 		if(failsAt > 0)
 		{
-			if(System.currentTimeMillis() > failsAt)
+			if(GameTime.now() > failsAt)
 			{
 				failsAt = 0;
 				return true;
@@ -206,7 +206,7 @@ public class Prop_LocationBound extends Property
 		else
 		if(timesOutAfterMillis > 0)
 		{
-			failsAt = System.currentTimeMillis() + timesOutAfterMillis;
+			failsAt = GameTime.now() + timesOutAfterMillis;
 			return true;
 		}
 		return false;

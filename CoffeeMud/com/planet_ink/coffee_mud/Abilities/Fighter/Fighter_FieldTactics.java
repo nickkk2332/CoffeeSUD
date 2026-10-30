@@ -113,7 +113,7 @@ public class Fighter_FieldTactics extends FighterSkill
 				if(!hidden)
 				{
 					hidden=true;
-					sitTime=System.currentTimeMillis();
+					sitTime=GameTime.now();
 					affected.recoverPhyStats();
 				}
 			}
@@ -121,7 +121,7 @@ public class Fighter_FieldTactics extends FighterSkill
 			if(hidden)
 			{
 				hidden=false;
-				sitTime=System.currentTimeMillis();
+				sitTime=GameTime.now();
 				affected.recoverPhyStats();
 			}
 		}
@@ -159,7 +159,7 @@ public class Fighter_FieldTactics extends FighterSkill
 		if((hidden)&&(!hiding(affected)))
 		{
 			hidden=false;
-			sitTime=System.currentTimeMillis();
+			sitTime=GameTime.now();
 			affected.recoverPhyStats();
 		}
 		else
@@ -176,7 +176,7 @@ public class Fighter_FieldTactics extends FighterSkill
 		 &&(msg.sourceMajor()>0))
 		{
 			hidden=false;
-			sitTime=System.currentTimeMillis();
+			sitTime=GameTime.now();
 			affected.recoverPhyStats();
 		}
 		return super.okMessage(myHost,msg);
@@ -215,7 +215,7 @@ public class Fighter_FieldTactics extends FighterSkill
 		super.affectPhyStats(affected,affectableStats);
 		if((affected instanceof MOB) && (appliesTo((MOB)affected)))
 		{
-			if((hidden)&&((System.currentTimeMillis()-sitTime)>(60*2*1000)))
+			if((hidden)&&((GameTime.now()-sitTime)>(60*2*1000)))
 				affectableStats.setDisposition(affectableStats.disposition()|PhyStats.IS_HIDDEN);
 			activated=true;
 			final float xlvl=getXLEVELLevel(invoker());

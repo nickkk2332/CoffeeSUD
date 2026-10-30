@@ -690,13 +690,13 @@ public class StdSiegeWeapon extends StdRideable implements AmmunitionWeapon, Sie
 		final Room R=(Room)owner();
 		synchronized(this.otherUsers)
 		{
-			final long expire = System.currentTimeMillis() - 300000;
+			final long expire = GameTime.now() - 300000;
 			for(final Iterator<Pair<MOB, Long>> p = this.otherUsers.iterator();p.hasNext();)
 			{
 				final Pair<MOB, Long> P = p.next();
 				if(P.first == M)
 				{
-					P.second=Long.valueOf(System.currentTimeMillis());
+					P.second=Long.valueOf(GameTime.now());
 					return;
 				}
 				else
@@ -706,7 +706,7 @@ public class StdSiegeWeapon extends StdRideable implements AmmunitionWeapon, Sie
 				if(expire > P.second.longValue())
 					p.remove();
 			}
-			this.otherUsers.add(new Pair<MOB, Long>(M,Long.valueOf(System.currentTimeMillis())));
+			this.otherUsers.add(new Pair<MOB, Long>(M,Long.valueOf(GameTime.now())));
 		}
 	}
 
@@ -718,7 +718,7 @@ public class StdSiegeWeapon extends StdRideable implements AmmunitionWeapon, Sie
 		final Room R=(Room)owner();
 		synchronized(this.otherUsers)
 		{
-			final long expire = System.currentTimeMillis() - 300000;
+			final long expire = GameTime.now() - 300000;
 			for(final Iterator<Pair<MOB, Long>> p = this.otherUsers.iterator();p.hasNext();)
 			{
 				final Pair<MOB, Long> P = p.next();

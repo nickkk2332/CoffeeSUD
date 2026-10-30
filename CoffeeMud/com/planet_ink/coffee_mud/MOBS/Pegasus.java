@@ -44,7 +44,7 @@ public class Pegasus extends StdRideable
 	public Pegasus()
 	{
 		super();
-		randomizer = new Random(System.currentTimeMillis());
+		randomizer = new Random(GameTime.now());
 
 		_name="a Pegasus";
 		setDescription("a beautiful, white stallion with wings.");

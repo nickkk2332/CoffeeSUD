@@ -2580,7 +2580,7 @@ public class CMMap extends StdLibrary implements WorldMap
 		final boolean corpsesOnly=CMSecurity.isSaveFlag(CMSecurity.SaveFlag.ROOMITEMS);
 		final boolean noMobs=CMSecurity.isSaveFlag(CMSecurity.SaveFlag.ROOMMOBS);
 		setThreadStatus(serviceClient,"expiration sweep");
-		final long currentTime=System.currentTimeMillis();
+		final long currentTime=GameTime.now();
 		final boolean debug=CMSecurity.isDebugging(CMSecurity.DbgFlag.VACUUM);
 		final MOB expireM=getFactoryMOB(null);
 		try

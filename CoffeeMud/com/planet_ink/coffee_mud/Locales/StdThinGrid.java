@@ -298,7 +298,7 @@ public class StdThinGrid extends StdRoom implements GridLocale
 	{
 		final Room R=getSortedRoom(x,y);
 		if(R!=null)
-			R.setExpirationDate(System.currentTimeMillis()+WorldMap.ROOM_EXPIRATION_MILLIS);
+			R.setExpirationDate(GameTime.now()+WorldMap.ROOM_EXPIRATION_MILLIS);
 		return R;
 	}
 
@@ -365,7 +365,7 @@ public class StdThinGrid extends StdRoom implements GridLocale
 					for(final Behavior B : behaviors)
 						R.addBehavior((Behavior)B.copyOf());
 				}
-				R.setExpirationDate(System.currentTimeMillis()+WorldMap.ROOM_EXPIRATION_MILLIS);
+				R.setExpirationDate(GameTime.now()+WorldMap.ROOM_EXPIRATION_MILLIS);
 				addSortedRoom(R,x,y);
 				R.setArea(getArea());
 				//R.giveASky(0);

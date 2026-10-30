@@ -43,7 +43,7 @@ public class Cheetah extends StdMOB
 	public Cheetah()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a cheetah";
 		setDescription("A medium-sized, lightly built cat with sand covered fur and black spot.");

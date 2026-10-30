@@ -138,11 +138,11 @@ public class Chant_StarGazing extends Chant
 				unInvoke();
 				return false;
 			}
-			if((System.currentTimeMillis()-lastTime[0])<60000)
+			if((GameTime.now()-lastTime[0])<60000)
 				return true;
 			if(!proficiencyCheck(null,0,false))
 				return true;
-			lastTime[0]=System.currentTimeMillis();
+			lastTime[0]=GameTime.now();
 			final Room room=mob.location();
 			final int myAlignment=mob.fetchFaction(CMLib.factions().getAlignmentID());
 			final int total=CMLib.factions().getTotal(CMLib.factions().getAlignmentID());

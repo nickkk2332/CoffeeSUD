@@ -227,7 +227,7 @@ public class Chant_SensePregnancy extends Chant
 							final long realEndMs = endMs - (7L * CMProps.getTickMillis() * CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY));
 							C=C.deriveClock(realEndMs );
 							info.append(L("The baby should arrive around @x1.  ",C.getShortTimeDescription()));
-							if(System.currentTimeMillis() > realEndMs)
+							if(GameTime.now() > realEndMs)
 								info.append(L("You expect labor any second now."));
 						}
 					}

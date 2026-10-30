@@ -298,7 +298,7 @@ public class Skill_LightPlacebo extends BardSkill
 							target.tell(L("You feel a little better!"));
 					}
 				}
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

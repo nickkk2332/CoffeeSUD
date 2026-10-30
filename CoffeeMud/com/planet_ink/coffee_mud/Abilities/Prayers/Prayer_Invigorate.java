@@ -116,7 +116,7 @@ public class Prayer_Invigorate extends Prayer implements MendingSkill
 				target.curState().setFatigue(0);
 				target.curState().adjMovement(healing,target.maxState());
 				target.tell(L("You feel really invigorated!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

@@ -183,7 +183,7 @@ public class ScriptLater extends StdAbility
 						if(homeClock == null)
 							homeClock = CMLib.time().homeClock(affected);
 						if(((event.first instanceof TimeClock)&&(homeClock.isAfter((TimeClock)event.first)))
-						||((event.first instanceof Long)&&(System.currentTimeMillis()>((Long)event.first).longValue()))
+						||((event.first instanceof Long)&&(GameTime.now()>((Long)event.first).longValue()))
 						||((event.first instanceof int[])&&(--((int[])event.first)[0]<=0)))
 						{
 							final ScriptingEngine predictE = (ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
@@ -221,7 +221,7 @@ public class ScriptLater extends StdAbility
 			if(CMath.isNumber(tm))
 			{
 				final long num = CMath.s_long(tm);
-				if(num > System.currentTimeMillis()-30000L)
+				if(num > GameTime.now()-30000L)
 					C=Long.valueOf(num);
 				else
 					C=new int[] { (int)num };

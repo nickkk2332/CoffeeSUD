@@ -61,7 +61,7 @@ public class GenMirror extends GenItem
 	@Override
 	public String description()
 	{
-		if((System.currentTimeMillis()-timeout)>1000)
+		if((GameTime.now()-timeout)>1000)
 			this.lastLooker=null;
 		final MOB lastLooker = this.lastLooker;
 		if(lastLooker != null)
@@ -89,7 +89,7 @@ public class GenMirror extends GenItem
 		if((msg.target()==this)
 		&&((msg.targetMinor()==CMMsg.TYP_LOOK)||(msg.targetMinor()==CMMsg.TYP_EXAMINE)))
 		{
-			timeout = System.currentTimeMillis();
+			timeout = GameTime.now();
 			lastLooker = msg.source();
 		}
 		if((owner==null)

@@ -43,7 +43,7 @@ public class Dog extends StdMOB
 	public Dog()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a dog";
 		setDescription("It\\`s furry with four legs, just like a dog ought to be.");

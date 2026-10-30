@@ -979,7 +979,7 @@ public class StdRace implements Race
 		bodyI.basePhyStats().setLevel(mob.basePhyStats().level());
 		bodyI.basePhyStats().setWeight(mob.basePhyStats().weight());
 		bodyI.setIsPlayerCorpse(mob.isPlayer());
-		bodyI.setTimeOfDeath(System.currentTimeMillis());
+		bodyI.setTimeOfDeath(GameTime.now());
 		bodyI.setMobPKFlag(mob.isAttributeSet(MOB.Attrib.PLAYERKILL));
 		bodyI.setName(L("the body of @x1",mob.Name().replace('\'','`')));
 		bodyI.setMobName(mob.Name().replace('\'','`'));
@@ -1044,7 +1044,7 @@ public class StdRace implements Race
 							if(thisItem.container()!=null)
 								containerMap.put(thisItem,thisItem.container());
 							newItem.setContainer(null);
-							newItem.setExpirationDate( System.currentTimeMillis() +
+							newItem.setExpirationDate( GameTime.now() +
 													   CMProps.getIntVar( CMProps.Int.EXPIRE_MONSTER_EQ )* TimeManager.MILI_HOUR );
 							newItem.recoverPhyStats();
 							thisItem=newItem;

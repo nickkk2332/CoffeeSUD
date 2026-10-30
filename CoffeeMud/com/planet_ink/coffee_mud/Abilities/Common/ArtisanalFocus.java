@@ -179,9 +179,9 @@ public class ArtisanalFocus extends StdAbility
 		if(disabled)
 			return;
 		if((affectedMOB.isPlayer())
-		&& (System.currentTimeMillis() > nextCheck))
+		&& (GameTime.now() > nextCheck))
 		{
-			nextCheck=System.currentTimeMillis() + ((20+CMLib.dice().roll(1, 10, 0)) * 60 * 1000);
+			nextCheck=GameTime.now() + ((20+CMLib.dice().roll(1, 10, 0)) * 60 * 1000);
 			final boolean isApprentice = affectableStats.getCurrentClass().ID().equals("Apprentice");
 			if(isApprentice || (affectableStats.getCurrentClass().ID().equals("Artisan")))
 			{

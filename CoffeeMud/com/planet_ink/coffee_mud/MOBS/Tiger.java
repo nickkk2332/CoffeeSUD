@@ -43,7 +43,7 @@ public class Tiger extends StdMOB
 	public Tiger()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a tiger";
 		setDescription("Tigers have reddish-orange fur and dark vertical stripes.");

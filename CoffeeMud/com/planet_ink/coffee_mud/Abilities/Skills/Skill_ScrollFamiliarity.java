@@ -115,7 +115,7 @@ public class Skill_ScrollFamiliarity extends StdSkill
 					if(s.owner() == invoker)
 					{
 						final Skill_ScrollFamiliarity famA = (Skill_ScrollFamiliarity)me.copyOf();
-						famA.readyTimeout = me.familiar.contains(s) ? 0 : (System.currentTimeMillis()+(CMProps.getTickMillis() * (100-me.proficiency())));
+						famA.readyTimeout = me.familiar.contains(s) ? 0 : (GameTime.now()+(CMProps.getTickMillis() * (100-me.proficiency())));
 						famA.newName="";
 						famA.invoker=invoker;
 						s.addEffect(famA);
@@ -195,7 +195,7 @@ public class Skill_ScrollFamiliarity extends StdSkill
 			}
 			if(readyTimeout > 0)
 			{
-				if((System.currentTimeMillis()>readyTimeout)&&(invoker() != null))
+				if((GameTime.now()>readyTimeout)&&(invoker() != null))
 				{
 					readyTimeout=0;
 					final Ability A = invoker().fetchEffect(ID());
@@ -239,7 +239,7 @@ public class Skill_ScrollFamiliarity extends StdSkill
 			return false;
 		if(this.readyTimeout>0)
 		{
-			if((System.currentTimeMillis()>this.readyTimeout)
+			if((GameTime.now()>this.readyTimeout)
 			&&(affected != null))
 				affected.recoverPhyStats();
 		}

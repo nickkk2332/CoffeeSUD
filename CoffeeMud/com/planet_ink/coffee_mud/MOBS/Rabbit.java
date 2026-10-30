@@ -43,7 +43,7 @@ public class Rabbit extends StdMOB
 	public Rabbit()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a rabbit";
 		setDescription("It\\`s small, cute, and fluffy with a cute cotton-ball tail.");

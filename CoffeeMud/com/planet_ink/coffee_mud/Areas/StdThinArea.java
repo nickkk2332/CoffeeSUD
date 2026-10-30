@@ -53,7 +53,7 @@ public class StdThinArea extends StdArea
 	public void addProperRoom(final Room R)
 	{
 		if(R!=null)
-			R.setExpirationDate(System.currentTimeMillis() + WorldMap.ROOM_EXPIRATION_MILLIS);
+			R.setExpirationDate(GameTime.now() + WorldMap.ROOM_EXPIRATION_MILLIS);
 		super.addProperRoom(R);
 	}
 
@@ -97,7 +97,7 @@ public class StdThinArea extends StdArea
 						dbe.DBReadRoomExits(roomID,R,false);
 						dbe.DBReadContent(roomID,R,true);
 						fillInAreaRoom(R);
-						R.setExpirationDate(System.currentTimeMillis()+WorldMap.ROOM_EXPIRATION_MILLIS);
+						R.setExpirationDate(GameTime.now()+WorldMap.ROOM_EXPIRATION_MILLIS);
 					}
 				}
 			}

@@ -98,7 +98,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		errLogMsg.append(!CMLib.flags().isAliveAwakeMobile(W.criminal(),true)?("AE3 "):"");
 		errLogMsg.append(!CMLib.flags().isInTheGame(W.criminal(),true)?("AE4 "):"");
 		errLogMsg.append(W.crime().equalsIgnoreCase("pardoned")?("AE5 "):"");
-		errLogMsg.append(!((W.travelAttemptTime()==0)||((System.currentTimeMillis()-W.travelAttemptTime())<(5*60*1000)))?("AE6 "):"");
+		errLogMsg.append(!((W.travelAttemptTime()==0)||((GameTime.now()-W.travelAttemptTime())<(5*60*1000)))?("AE6 "):"");
 		errLogMsg.append(!CMLib.flags().isAliveAwakeMobile(officer,true)?("AE7 "):"");
 		errLogMsg.append(!CMLib.flags().isBound(W.criminal())?("AE8 "):"");
 		if(CMSecurity.isDebugging(DbgFlag.ARREST))
@@ -339,7 +339,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 					return false;
 				if(obj instanceof Long)
 				{
-					if(System.currentTimeMillis()<((Long)obj).longValue())
+					if(GameTime.now()<((Long)obj).longValue())
 						return true;
 				}
 				else
@@ -774,7 +774,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			laws=(Law)CMClass.getCommon("DefaultLawSet");
 			laws.initialize(this,lawprops,modifiableNames,modifiableLaw);
 			Resources.submitResource(resourceKey,laws);
-			this.lastLawChange = System.currentTimeMillis();
+			this.lastLawChange = GameTime.now();
 		}
 		return laws;
 	}
@@ -1003,7 +1003,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			return false;
 		}
 		// crimes expire after three real days
-		if((W.lastOffense()>0)&&((System.currentTimeMillis()-W.lastOffense())>EXPIRATION_MILLIS))
+		if((W.lastOffense()>0)&&((GameTime.now()-W.lastOffense())>EXPIRATION_MILLIS))
 		{
 			if(debugging)
 				Log.debugOut("ARREST","("+lastAreaName+"): "+W.crime()+" Crime has expired: "+W.lastOffense());
@@ -2070,7 +2070,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 				if(str.endsWith("RECENTLY")&&(str.length()<10))
 				{
 					final LegalWarrant W=laws.getOldWarrant(criminalM,crime,false);
-					final long thisTime=System.currentTimeMillis();
+					final long thisTime=GameTime.now();
 					if((W!=null)&&((thisTime-W.lastOffense())<600000))
 					{
 						if(str.startsWith("!"))
@@ -2206,7 +2206,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		W.setCrime(crime);
 		W.setState(Law.STATE_SEEKING);
 		W.setWitness(requiresWitness?witness:null);
-		W.setLastOffense(System.currentTimeMillis());
+		W.setLastOffense(GameTime.now());
 		W.setWarnMsg(warnMsg);
 		sentence=sentence.trim();
 		final Vector<String> sentences=CMParms.parse(sentence);
@@ -2857,7 +2857,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			if(debugging)
 				Log.debugOut("Arrest","("+lastAreaName+"): Tick: Handling "+W.crime()+" for "+W.criminal().Name()+": State "+W.state());
 
-			if(System.currentTimeMillis() < W.getIgnoreUntilTime())
+			if(GameTime.now() < W.getIgnoreUntilTime())
 			{
 				if(debugging)
 					Log.debugOut("Arrest","("+lastAreaName+"): Tick: Ignoring "+W.crime()+" for "+W.criminal().Name()+": State "+W.state());
@@ -3037,7 +3037,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 							W.setState(Law.STATE_SUBDUEING);
 						}
 						else
-						if((System.currentTimeMillis() - W.getLastStateChangeTime())>(CMath.mul(CMProps.getTickMillis(),1.5))) // only leave this state after they've had enough time.
+						if((GameTime.now() - W.getLastStateChangeTime())>(CMath.mul(CMProps.getTickMillis(),1.5))) // only leave this state after they've had enough time.
 						{
 							W.setState(Law.STATE_SUBDUEING);
 							CMLib.commands().postSay(officer,W.criminal(),laws.getMessage(Law.MSG_RESISTWARN),false,false);
@@ -3136,7 +3136,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 							A.unInvoke();
 						makePeace(officer.location());
 						CMLib.commands().postStand(W.criminal(),true, false);
-						W.setTravelAttemptTime(System.currentTimeMillis());
+						W.setTravelAttemptTime(GameTime.now());
 						if(destR==officer.location())
 						{
 							makePeace(officer.location());
@@ -3187,7 +3187,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 				&&(!W.criminal().amDead())
 				&&(CMLib.flags().isInTheGame(W.criminal(),true))
 				&&(!W.crime().equalsIgnoreCase("pardoned"))
-				&&((W.travelAttemptTime()==0)||((System.currentTimeMillis()-W.travelAttemptTime())<(5*60*1000)))
+				&&((W.travelAttemptTime()==0)||((GameTime.now()-W.travelAttemptTime())<(5*60*1000)))
 				&&(CMLib.flags().isAliveAwakeMobile(officer,true)))
 				{
 					if(W.criminal().curState().getMovement()<50)
@@ -3454,7 +3454,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						A=CMClass.getAbility("Skill_Track");
 						if(A!=null)
 						{
-							W.setTravelAttemptTime(System.currentTimeMillis());
+							W.setTravelAttemptTime(GameTime.now());
 							A.setAbilityCode(1);
 							A.invoke(officer,CMParms.parse(CMLib.map().getExtendedRoomID(jail)+trackingModifiers(officer)),jail,true,0);
 						}
@@ -3532,7 +3532,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						A=CMClass.getAbility("Skill_Track");
 						if(A!=null)
 						{
-							W.setTravelAttemptTime(System.currentTimeMillis());
+							W.setTravelAttemptTime(GameTime.now());
 							A.setAbilityCode(1);
 							A.invoke(officer,CMParms.parse(CMLib.map().getExtendedRoomID(jail)+trackingModifiers(officer)),jail,true,0);
 						}
@@ -3662,7 +3662,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 				&&(!W.criminal().amDead())
 				&&(W.criminal().location().isInhabitant(officer))
 				&&(CMLib.flags().isInTheGame(W.criminal(),true))
-				&&((W.travelAttemptTime()==0)||((System.currentTimeMillis()-W.travelAttemptTime())<(5*60*1000)))
+				&&((W.travelAttemptTime()==0)||((GameTime.now()-W.travelAttemptTime())<(5*60*1000)))
 				&&(CMLib.flags().isAliveAwakeMobile(officer,true))
 				&&(W.jail()!=null))
 				{
@@ -3735,7 +3735,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 				&&(!W.criminal().amDead())
 				&&(W.criminal().location().isInhabitant(officer))
 				&&(CMLib.flags().isInTheGame(W.criminal(),true))
-				&&((W.travelAttemptTime()==0)||((System.currentTimeMillis()-W.travelAttemptTime())<(5*60*1000)))
+				&&((W.travelAttemptTime()==0)||((GameTime.now()-W.travelAttemptTime())<(5*60*1000)))
 				&&(CMLib.flags().isAliveAwakeMobile(officer,true))
 				&&(W.jail()!=null))
 				{
@@ -3856,7 +3856,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						A=CMClass.getAbility("Skill_Track");
 						if(A!=null)
 						{
-							W.setTravelAttemptTime(System.currentTimeMillis());
+							W.setTravelAttemptTime(GameTime.now());
 							A.setAbilityCode(1);
 							A.invoke(officer,CMParms.parse(CMLib.map().getExtendedRoomID(banishR)+trackingModifiers(officer)),banishR,true,0);
 						}
@@ -3949,7 +3949,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						final Ability A=CMClass.getAbility("Skill_Track");
 						if(A!=null)
 						{
-							W.setTravelAttemptTime(System.currentTimeMillis());
+							W.setTravelAttemptTime(GameTime.now());
 							A.invoke(officer,CMParms.parse(CMLib.map().getExtendedRoomID(W.releaseRoom())+trackingModifiers(officer)),W.releaseRoom(),true,0);
 						}
 						if(officer.fetchEffect("Skill_Track")==null)
@@ -3989,7 +3989,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 							if((officer!=null)
 							&&(CMLib.flags().isAliveAwakeMobile(officer,true))
 							&&(W.criminal().location().isInhabitant(officer))
-							&&((W.travelAttemptTime()==0)||((System.currentTimeMillis()-W.travelAttemptTime())<(5*60*1000))))
+							&&((W.travelAttemptTime()==0)||((GameTime.now()-W.travelAttemptTime())<(5*60*1000))))
 							{
 								if(officer.isMonster())
 									CMLib.commands().postLook(officer,true);
@@ -4111,7 +4111,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		switch(warrant.state())
 		{
 		case Law.STATE_SEEKING:
-			warrant.setIgnoreUntilTime(System.currentTimeMillis() + delay);
+			warrant.setIgnoreUntilTime(GameTime.now() + delay);
 			warrant.setArrestingOfficer(myArea, null);
 			break;
 		case Law.STATE_RELEASE:
@@ -4138,7 +4138,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 					warrant.criminal().makePeace(true);
 			}
 			warrant.setArrestingOfficer(myArea, null);
-			warrant.setIgnoreUntilTime(System.currentTimeMillis() + delay);
+			warrant.setIgnoreUntilTime(GameTime.now() + delay);
 			break;
 		case Law.STATE_MOVING2:
 			// this is a good thing!

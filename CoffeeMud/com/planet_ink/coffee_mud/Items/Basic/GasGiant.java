@@ -50,7 +50,7 @@ public class GasGiant extends GenSpaceBody
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(System.currentTimeMillis());
+		final Random random=new Random(GameTime.now());
 		radius=SpaceObject.Distance.SaturnRadius.dm + (random.nextLong() % (SpaceObject.Distance.SaturnRadius.dm / 2));
 		this.setMaterial(RawMaterial.RESOURCE_HYDROGEN);
 	}

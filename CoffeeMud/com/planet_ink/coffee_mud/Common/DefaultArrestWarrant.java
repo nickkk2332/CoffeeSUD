@@ -276,7 +276,7 @@ public class DefaultArrestWarrant implements LegalWarrant
 	@Override
 	public void setState(final int newstate)
 	{
-		lastStateChangeTime=System.currentTimeMillis();
+		lastStateChangeTime=GameTime.now();
 		if(newstate != state)
 		{
 			if(criminal() != null)

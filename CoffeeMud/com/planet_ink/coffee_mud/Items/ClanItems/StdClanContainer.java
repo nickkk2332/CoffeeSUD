@@ -101,7 +101,7 @@ public class StdClanContainer extends StdContainer implements ClanItem
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
-		if ((System.currentTimeMillis() - lastClanCheck) > TimeManager.MILI_HOUR)
+		if ((GameTime.now() - lastClanCheck) > TimeManager.MILI_HOUR)
 		{
 			if ((clanID().length() > 0)
 			&& (owner() instanceof MOB)
@@ -121,7 +121,7 @@ public class StdClanContainer extends StdContainer implements ClanItem
 						R.showHappens(CMMsg.MSG_OK_VISUAL, L("@x1 is dropped!", name()));
 				}
 			}
-			lastClanCheck = System.currentTimeMillis();
+			lastClanCheck = GameTime.now();
 			if ((clanID().length() > 0)
 			&& (CMLib.clans().getClanAnyHost(clanID()) == null))
 			{

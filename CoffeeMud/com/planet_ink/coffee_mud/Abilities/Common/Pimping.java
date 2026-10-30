@@ -137,7 +137,7 @@ public class Pimping extends CommonSkill
 					final PrivateProperty P = CMLib.law().getPropertyRecord(slaveM);
 					if(P != null)
 					{
-						final long expires = System.currentTimeMillis()
+						final long expires = GameTime.now()
 								+ ((CMProps.getTicksPerMudHour()-super.getXLEVELLevel(mob)) * CMProps.getTickMillis());
 						P.setStat("PIMP", johnM.Name());
 						P.setStat("PIMPEXPIRE", ""+expires);

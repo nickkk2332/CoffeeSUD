@@ -195,9 +195,9 @@ public class Disease_Obesity extends Disease
 		{
 			final MOB mob=(MOB)affected;
 			if((mob.curState().getMovement()<mob.maxState().getMovement()/10)
-			&&((lastLoss<0)||((System.currentTimeMillis()-lastLoss)>10000)))
+			&&((lastLoss<0)||((GameTime.now()-lastLoss)>10000)))
 			{
-				lastLoss=System.currentTimeMillis();
+				lastLoss=GameTime.now();
 				final int change=CMLib.dice().roll(1,10,0);
 				final int fat=amountOfFat();
 				if(fat>=0)
@@ -209,9 +209,9 @@ public class Disease_Obesity extends Disease
 				}
 			}
 			if((mob.curState().adjTicksHungry(false) >= CMProps.getTicksPerMudHour())
-			&&((lastLoss<0)||((System.currentTimeMillis()-lastLoss)>10000)))
+			&&((lastLoss<0)||((GameTime.now()-lastLoss)>10000)))
 			{
-				lastLoss=System.currentTimeMillis();
+				lastLoss=GameTime.now();
 				final int change=CMLib.dice().roll(1,3,0);
 				final int fat=amountOfFat();
 				if(fat>=0)

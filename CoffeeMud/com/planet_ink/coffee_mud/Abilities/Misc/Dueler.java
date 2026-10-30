@@ -51,7 +51,7 @@ public class Dueler extends StdAbility
 
 	protected Dueler				otherDueler			= null;
 	protected MOB					otherDuelPartner	= null;
-	protected long					lastTimeISawYou		= System.currentTimeMillis();
+	protected long					lastTimeISawYou		= GameTime.now();
 	protected boolean				oldPVPStatus		= false;
 	protected CharState				oldCurState			= null;
 	protected List<Ability>			oldEffects			= new LinkedList<Ability>();
@@ -204,8 +204,8 @@ public class Dueler extends StdAbility
 			{
 				final MOB tMOB=(MOB)tDuel.affecting();
 				if(mob.location()==tMOB.location())
-					lastTimeISawYou=System.currentTimeMillis();
-				if((System.currentTimeMillis()-lastTimeISawYou)>30000)
+					lastTimeISawYou=GameTime.now();
+				if((GameTime.now()-lastTimeISawYou)>30000)
 					unInvoke();
 			}
 		}

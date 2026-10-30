@@ -559,7 +559,7 @@ public class DefaultTimeClock implements TimeClock
 		try
 		{
 			final TimeClock C=(TimeClock)this.clone();
-			final long diff=(millis - System.currentTimeMillis())/CMProps.getMillisPerMudHour();
+			final long diff=(millis - GameTime.now())/CMProps.getMillisPerMudHour();
 			C.tickTock((int)diff);
 			return C;
 		}
@@ -575,12 +575,12 @@ public class DefaultTimeClock implements TimeClock
 		if(now.compareTo(this) < 0)
 		{
 			final long diff = this.deriveMillisAfter(now);
-			return System.currentTimeMillis() + diff;
+			return GameTime.now() + diff;
 		}
 		else
 		{
 			final long diff = now.deriveMillisAfter(this);
-			return System.currentTimeMillis() - diff;
+			return GameTime.now() - diff;
 		}
 	}
 
@@ -789,7 +789,7 @@ public class DefaultTimeClock implements TimeClock
 		final TimeOfDay todCode=getTODCode();
 		if(howManyHours!=0)
 		{
-			lastTicked=System.currentTimeMillis();
+			lastTicked=GameTime.now();
 			setHourOfDay(getHourOfDay()+howManyHours);
 			if(getHourOfDay()>=getHoursInDay())
 			{
@@ -1085,14 +1085,14 @@ public class DefaultTimeClock implements TimeClock
 	{
 		tickStatus=Tickable.STATUS_NOT;
 		if(((loadName==null)||(loaded))
-		&&(((System.currentTimeMillis()-lastTicked)<=CMProps.getMillisPerMudHour())))
+		&&(((GameTime.now()-lastTicked)<=CMProps.getMillisPerMudHour())))
 			return true;
 		boolean process = false;
 		boolean timeToTick=false;
 		synchronized(this)
 		{
-			timeToTick = ((System.currentTimeMillis()-lastTicked)>CMProps.getMillisPerMudHour());
-			lastTicked=System.currentTimeMillis();
+			timeToTick = ((GameTime.now()-lastTicked)>CMProps.getMillisPerMudHour());
+			lastTicked=GameTime.now();
 			if((loadName!=null)&&(!loaded))
 			{
 				process=true;

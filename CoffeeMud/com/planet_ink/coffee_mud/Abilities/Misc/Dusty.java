@@ -82,7 +82,7 @@ public class Dusty extends StdAbility
 	}
 
 	protected int  dustLevel = 1;
-	protected long dustTime = System.currentTimeMillis();
+	protected long dustTime = GameTime.now();
 	protected long lastInterval = CMProps.getMillisPerMudHour() * 6 * 20;
 	protected long nextChange = dustTime + lastInterval;
 
@@ -96,7 +96,7 @@ public class Dusty extends StdAbility
 	public void setMiscText(final String newMiscText)
 	{
 		dustLevel = CMParms.getParmInt(newMiscText, "LEVEL", 0);
-		dustTime = CMParms.getParmLong(newMiscText, "TIME", System.currentTimeMillis());
+		dustTime = CMParms.getParmLong(newMiscText, "TIME", GameTime.now());
 		lastInterval = CMParms.getParmLong(newMiscText, "INTERVAL",  6 * 20);
 		lastInterval *= CMProps.getMillisPerMudHour();
 		nextChange = dustTime + lastInterval;
@@ -114,9 +114,9 @@ public class Dusty extends StdAbility
 				I.delEffect(this);
 				return;
 			}
-			if(System.currentTimeMillis() > nextChange)
+			if(GameTime.now() > nextChange)
 			{
-				dustTime = System.currentTimeMillis();
+				dustTime = GameTime.now();
 				lastInterval *= 2;
 				dustLevel += 1;
 				nextChange = dustTime + lastInterval;

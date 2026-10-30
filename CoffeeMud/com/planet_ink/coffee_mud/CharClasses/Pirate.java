@@ -278,7 +278,7 @@ public class Pirate extends Thief
 											final MOB M=R.fetchInhabitant(newMiscText.substring(1));
 											if(M!=null)
 											{
-												final Long newTime = Long.valueOf(System.currentTimeMillis() + (10L * 60L * 1000L));
+												final Long newTime = Long.valueOf(GameTime.now() + (10L * 60L * 1000L));
 												synchronized(timeOuts)
 												{
 													timeOuts.put(M,newTime);
@@ -288,7 +288,7 @@ public class Pirate extends Thief
 									}
 									else
 										super.setMiscText(newMiscText);
-									final long now=System.currentTimeMillis();
+									final long now=GameTime.now();
 									synchronized(timeOuts)
 									{
 										for(final MOB M : timeOuts.keySet())
@@ -337,7 +337,7 @@ public class Pirate extends Thief
 											}
 											if(timeOut != null)
 											{
-												if(System.currentTimeMillis() < timeOut.longValue())
+												if(GameTime.now() < timeOut.longValue())
 												{
 													if(!CMath.bset(msg.sourceMajor(),CMMsg.MASK_ALWAYS))
 														msg.source().tell(L("@x1 paid you off, so you can't attack @x2 for awhile.",paidOneM.name(pirate),victimM.charStats().himher()));
@@ -375,7 +375,7 @@ public class Pirate extends Thief
 											}
 											if(timeOut != null)
 											{
-												if(System.currentTimeMillis() < timeOut.longValue())
+												if(GameTime.now() < timeOut.longValue())
 												{
 													if(!CMath.bset(msg.sourceMajor(),CMMsg.MASK_ALWAYS))
 														msg.source().tell(paidOneM,null,null,L("<S-NAME> paid off @x1, so you can't attack @x2 for awhile.",pirate.name(attackerM),pirate.charStats().himher()));

@@ -43,7 +43,7 @@ public class Coyote extends StdMOB
 	public Coyote()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a coyote";
 		setDescription("It\\`s short haired with four legs, sharp eyes, and sharper teeth.");

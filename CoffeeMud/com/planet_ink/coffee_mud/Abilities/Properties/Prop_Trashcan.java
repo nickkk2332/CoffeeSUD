@@ -65,7 +65,7 @@ public class Prop_Trashcan extends Property
 		{
 			synchronized(trashables)
 			{
-				if((System.currentTimeMillis()-lastAddition)<((tickDelay-1)*CMProps.getTickMillis()))
+				if((GameTime.now()-lastAddition)<((tickDelay-1)*CMProps.getTickMillis()))
 					return true;
 				for(final Item I : trashables)
 				{
@@ -103,7 +103,7 @@ public class Prop_Trashcan extends Property
 				CMLib.threads().deleteTick(this, Tickable.TICKID_PROPERTY_SPECIAL);
 				CMLib.threads().startTickDown(this, Tickable.TICKID_PROPERTY_SPECIAL, tickDelay);
 			}
-			lastAddition=System.currentTimeMillis()-10;
+			lastAddition=GameTime.now()-10;
 			trashables.add(I);
 		}
 	}

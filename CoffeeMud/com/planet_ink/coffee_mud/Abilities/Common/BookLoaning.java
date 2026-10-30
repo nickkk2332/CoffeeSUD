@@ -615,7 +615,7 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 		final long[] lastChanges = this.lastChanges;
 		synchronized (lastChanges)
 		{
-			lastChanges[0] = System.currentTimeMillis();
+			lastChanges[0] = GameTime.now();
 		}
 	}
 
@@ -639,10 +639,10 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 			boolean doMaintenance = false;
 			synchronized (lastChangeMs)
 			{
-				if (System.currentTimeMillis() > lastChangeMs[1])
+				if (GameTime.now() > lastChangeMs[1])
 				{
 					final TimeClock clock = CMLib.time().localClock(affected);
-					lastChangeMs[1] = System.currentTimeMillis() + (CMProps.getMillisPerMudHour() * (clock==null?1:clock.getHoursInDay()));
+					lastChangeMs[1] = GameTime.now() + (CMProps.getMillisPerMudHour() * (clock==null?1:clock.getHoursInDay()));
 					doMaintenance = true;
 				}
 			}
@@ -697,7 +697,7 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 		if (rec.itemName.length() > 0)
 		{
 			Environmental stockItem = null;
-			if (System.currentTimeMillis() > rec.mudDueDateMs)
+			if (GameTime.now() > rec.mudDueDateMs)
 			{
 				stockItem = shop.getStock("$" + rec.itemName + "$", null);
 				final ShopKeeper.ShopPrice P = CMLib.coffeeShops().pawningPrice(deriveLibrarian(null), null, stockItem, this);
@@ -705,7 +705,7 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 				if(rec.mudReclaimDateMs < rec.mudDueDateMs)
 					rec.mudReclaimDateMs = rec.mudDueDateMs + TimeManager.MILI_DAY;
 				final long dueOverdueMilliDiff = (rec.mudReclaimDateMs - rec.mudDueDateMs);
-				final long actualOverdueMilli = (System.currentTimeMillis() - rec.mudDueDateMs);
+				final long actualOverdueMilli = (GameTime.now() - rec.mudDueDateMs);
 				final long chargeableOverdueMilli = (actualOverdueMilli > dueOverdueMilliDiff) ? dueOverdueMilliDiff : actualOverdueMilli;
 				final double percentOfOverdue = CMath.div(chargeableOverdueMilli, dueOverdueMilliDiff);
 				final double newCharges = CMath.mul(value, percentOfOverdue);
@@ -715,7 +715,7 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 					recordsChanged = true;
 				}
 			}
-			if (System.currentTimeMillis() > rec.mudReclaimDateMs)
+			if (GameTime.now() > rec.mudReclaimDateMs)
 			{
 				if(stockItem == null)
 					stockItem = shop.getStock("$" + rec.itemName+"$", null);
@@ -1376,8 +1376,8 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 							rec.itemName = old.Name();
 							rec.charges = 0.0;
 							rec.playerName = msg.source().Name();
-							rec.mudDueDateMs = System.currentTimeMillis() + (millisPerMudDay * this.getMinOverdueDays());
-							rec.mudReclaimDateMs = System.currentTimeMillis() + (millisPerMudDay * this.getMaxOverdueDays());
+							rec.mudDueDateMs = GameTime.now() + (millisPerMudDay * this.getMinOverdueDays());
+							rec.mudReclaimDateMs = GameTime.now() + (millisPerMudDay * this.getMaxOverdueDays());
 							final CoffeeShop shop = this.getShop();
 							if (shop != this.shop) // never borrow from the main
 													// library
@@ -1435,7 +1435,7 @@ public class BookLoaning extends CommonSkill implements ShopKeeper, Librarian
 								if (rec.itemName.length() > 0)
 								{
 									str.append(L("You have @x1 checked out.", rec.itemName));
-									if (System.currentTimeMillis() > rec.mudDueDateMs)
+									if (GameTime.now() > rec.mudDueDateMs)
 										str.append(L(" It is past due."));
 									else
 									{

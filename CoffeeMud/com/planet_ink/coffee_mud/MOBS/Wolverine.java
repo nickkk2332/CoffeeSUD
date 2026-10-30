@@ -43,7 +43,7 @@ public class Wolverine extends StdMOB
 	public Wolverine()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a wolverine";
 		setDescription("A powerful muscular carnivore with brown fur and mean eyes.");

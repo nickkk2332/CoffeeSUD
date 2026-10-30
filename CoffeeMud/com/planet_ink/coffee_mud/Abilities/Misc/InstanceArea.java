@@ -1817,7 +1817,7 @@ public class InstanceArea extends StdAbility
 						final PlayerStats pStats=leaderM.playerStats();
 						final CharClass stdC=CMClass.getCharClass("StdCharClass");
 						final Map<String,Object> classMap = pStats.getClassVariableMap(stdC);
-						final long now=System.currentTimeMillis();
+						final long now=GameTime.now();
 						for(final Pair<Integer,Long> limit : this.limits)
 						{
 							long catHash = 0;
@@ -2615,7 +2615,7 @@ public class InstanceArea extends StdAbility
 			if(h==null)
 				return false;
 
-			this.lastCasting=System.currentTimeMillis();
+			this.lastCasting=GameTime.now();
 			final InstanceArea A;
 			if((instArea!=oldInstanceArea)
 			&&(instArea.fetchEffect(ID())!=null))

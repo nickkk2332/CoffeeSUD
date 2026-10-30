@@ -313,7 +313,7 @@ public class Fighter extends StdCharClass
 		{
 			synchronized(duelWinners)
 			{
-				final long now=System.currentTimeMillis();
+				final long now=GameTime.now();
 				final long timeout=now - (now - MILLIS_BETWEEN_DUEL_WINS);
 				if(lastDuelWinner < timeout)
 				{

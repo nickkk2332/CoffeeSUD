@@ -82,7 +82,7 @@ public class Conquerable extends Arrest
 	@Override
 	public boolean isFullyControlled()
 	{
-		return ((holdingClan.length()>0)&&((System.currentTimeMillis()-conquestDate)>CONTROLTIME));
+		return ((holdingClan.length()>0)&&((GameTime.now()-conquestDate)>CONTROLTIME));
 	}
 
 	@Override
@@ -136,7 +136,7 @@ public class Conquerable extends Arrest
 				else
 				{
 					str.append(L("Area '@x1' is occupied by @x2 @x3.\n\r",myArea.name(),C.getGovernmentName(),C.name()));
-					final long remain=CONTROLTIME-(System.currentTimeMillis()-conquestDate);
+					final long remain=CONTROLTIME-(GameTime.now()-conquestDate);
 					final String remainStr=myArea.getTimeObj().deriveEllapsedTimeString(remain);
 					str.append(L("Full control will automatically be achieved in @x1.\n\r",remainStr));
 				}
@@ -548,7 +548,7 @@ public class Conquerable extends Arrest
 		// calculate total control points
 		// make sure all intelligent mobs belong to the clan
 		if((totalControlPoints<0)
-		&&((waitToReload<=0)||(System.currentTimeMillis()>waitToReload))
+		&&((waitToReload<=0)||(GameTime.now()>waitToReload))
 		&&(myArea!=null))
 		{
 			final HashSet<Room> doneRooms=new HashSet<Room>();
@@ -1108,7 +1108,7 @@ public class Conquerable extends Arrest
 				CMLib.commands().postChannel(channels.get(i),CMLib.clans().clanRoles(),L("@x1 gains control of @x2.",holdingClan,myArea.name()),false,null);
 			if(journalName.length()>0)
 				CMLib.database().DBWriteJournal(journalName,"Conquest","ALL",holdingClan+" gains control of "+myArea.name()+".","See the subject line.");
-			conquestDate=System.currentTimeMillis();
+			conquestDate=GameTime.now();
 		}
 	}
 
@@ -1156,7 +1156,7 @@ public class Conquerable extends Arrest
 		return flagFound(A,C);
 	}
 
-	protected volatile long	nextFlagScan = System.currentTimeMillis();
+	protected volatile long	nextFlagScan = GameTime.now();
 
 	protected boolean flagFound(final Area A, final Clan C)
 	{
@@ -1187,10 +1187,10 @@ public class Conquerable extends Arrest
 		}
 		if((holdingClan.length()>0)
 		&&(holdingClan.equalsIgnoreCase(C.clanID()))
-		&&(System.currentTimeMillis() > nextFlagScan)
+		&&(GameTime.now() > nextFlagScan)
 		&&(myArea!=null))
 		{
-			nextFlagScan = System.currentTimeMillis() + 360000;
+			nextFlagScan = GameTime.now() + 360000;
 			// make a desperation check if we are talking about the holding clan.
 			Room R=null;
 			Item I=null;
@@ -1561,7 +1561,7 @@ public class Conquerable extends Arrest
 			if(msg.sourceMinor()==CMMsg.TYP_SHUTDOWN)
 				waitToReload=0;
 			else
-				waitToReload=System.currentTimeMillis()+60000;
+				waitToReload=GameTime.now()+60000;
 			if((totalControlPoints>=0)
 			&&((!savedHoldingClan.equals(""))||(!holdingClan.equals(""))))
 			{

@@ -128,7 +128,7 @@ public class DefaultLawSet implements Law
 	private final String[]	jailMessages	= new String[4];
 	private final Integer[]	jailTimes		= new Integer[4];
 
-	private volatile long lastReset 		= System.currentTimeMillis();
+	private volatile long lastReset 		= GameTime.now();
 
 	@Override
 	public void initialize(final LegalBehavior details, final Properties laws, final boolean modifiableNames, final boolean modifiableLaws)
@@ -769,7 +769,7 @@ public class DefaultLawSet implements Law
 
 	private void resetLaw(final Properties laws)
 	{
-		lastReset = System.currentTimeMillis();
+		lastReset = GameTime.now();
 		theLaws=laws;
 		activated=(!getInternalStr("ACTIVATED").equalsIgnoreCase("FALSE"));
 		officerNames=CMParms.parse(getInternalStr("OFFICERS"));

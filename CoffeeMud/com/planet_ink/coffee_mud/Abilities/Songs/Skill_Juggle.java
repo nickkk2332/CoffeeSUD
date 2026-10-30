@@ -265,9 +265,9 @@ public class Skill_Juggle extends BardSkill
 			unInvoke();
 			return;
 		}
-		if(lastJuggle>(System.currentTimeMillis()-500))
+		if(lastJuggle>(GameTime.now()-500))
 			return;
-		lastJuggle=System.currentTimeMillis();
+		lastJuggle=GameTime.now();
 		final SVector<Item> copy=juggles.copyOf();
 		int jug=-1;
 		for(int i=0;i<copy.size();i++)

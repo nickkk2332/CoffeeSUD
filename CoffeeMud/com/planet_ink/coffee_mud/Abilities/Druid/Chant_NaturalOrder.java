@@ -148,11 +148,11 @@ public class Chant_NaturalOrder extends Chant
 			return true;
 		if(!mob.isInCombat())
 		{
-			if((System.currentTimeMillis()-lastTime[0])<60000)
+			if((GameTime.now()-lastTime[0])<60000)
 				return true;
 			if(!proficiencyCheck(null,0,false))
 				return true;
-			lastTime[0]=System.currentTimeMillis();
+			lastTime[0]=GameTime.now();
 			final Room room=mob.location();
 			final int myInclination=mob.fetchFaction(CMLib.factions().getInclinationID());
 			final int inclinationTotal=CMLib.factions().getTotal(CMLib.factions().getInclinationID());

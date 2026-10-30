@@ -47,9 +47,9 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 	protected float				installedFactor		= 1.0F;
 	protected volatile long		powerRemaining		= 0;
 	protected boolean			activated			= false;
-	protected volatile long		nextPowerCycleTmr	= System.currentTimeMillis();
+	protected volatile long		nextPowerCycleTmr	= GameTime.now();
 	protected MOB				lastReader			= null;
-	protected volatile long		nextSoftwareCheck	= System.currentTimeMillis();
+	protected volatile long		nextSoftwareCheck	= GameTime.now();
 	protected List<Software>	software			= null;
 	protected String			currentMenu			= "";
 	protected String			manufacturer		= "RANDOM";
@@ -265,7 +265,7 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 	public List<Software> getSoftware()
 	{
 		if((software==null)
-		||(System.currentTimeMillis()>nextSoftwareCheck))
+		||(GameTime.now()>nextSoftwareCheck))
 		{
 			if(CMProps.isState(CMProps.HostState.RUNNING))
 			{
@@ -279,7 +279,7 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 						softwareList.add((Software)I);
 					}
 				}
-				nextSoftwareCheck=System.currentTimeMillis()+(10*1000);
+				nextSoftwareCheck=GameTime.now()+(10*1000);
 				software=softwareList;
 			}
 		}
@@ -698,10 +698,10 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 			case CMMsg.TYP_POWERCURRENT:
 				{
 					if(!CMProps.isState(CMProps.HostState.RUNNING))
-						nextPowerCycleTmr=System.currentTimeMillis()+(12*1000);
+						nextPowerCycleTmr=GameTime.now()+(12*1000);
 					int amountToTake = 0;
 					if(powerRemaining()>0)
-						nextPowerCycleTmr=System.currentTimeMillis()+(12*1000);
+						nextPowerCycleTmr=GameTime.now()+(12*1000);
 					if(activated())
 					{
 						amountToTake = 1;
@@ -723,7 +723,7 @@ public class StdComputerConsole extends StdRideable implements TechComponent, Co
 						setPowerRemaining(powerRemaining()-amountToTake);
 						forceReadersSeeNew();
 					}
-					if(System.currentTimeMillis()>nextPowerCycleTmr)
+					if(GameTime.now()>nextPowerCycleTmr)
 					{
 						deactivateSystem();
 					}

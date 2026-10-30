@@ -50,7 +50,7 @@ public class Star extends GenSpaceBody
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(System.currentTimeMillis());
+		final Random random=new Random(GameTime.now());
 		radius=SpaceObject.Distance.StarGRadius.dm + (random.nextLong() % Math.round(CMath.mul(SpaceObject.Distance.StarGRadius.dm,0.30)));
 		basePhyStats().setDisposition(PhyStats.IS_LIGHTSOURCE|PhyStats.IS_GLOWING);
 		recoverPhyStats();

@@ -176,7 +176,7 @@ public class Paladin_HealingHands extends StdAbility
 				else
 					CMLib.combat().postDamage(mob,target,this,healing,CMMsg.MASK_ALWAYS|CMMsg.TYP_CAST_SPELL|CMMsg.MASK_MALICIOUS,
 							Weapon.TYPE_BURNING,L("The touch <DAMAGES> <T-NAME>!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

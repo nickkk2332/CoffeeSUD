@@ -46,7 +46,7 @@ public class StdClanArmor extends StdArmor implements ClanItem
 
 	protected String		myClan			= "";
 	protected ClanItemType	ciType			= ClanItemType.TABBARD;
-	private long			lastClanCheck	= System.currentTimeMillis();
+	private long			lastClanCheck	= GameTime.now();
 	private Environmental	riteOwner		= null;
 
 	public StdClanArmor()
@@ -106,7 +106,7 @@ public class StdClanArmor extends StdArmor implements ClanItem
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
 		super.executeMsg(myHost, msg);
-		if ((System.currentTimeMillis() - lastClanCheck) > TimeManager.MILI_HOUR / 2)
+		if ((GameTime.now() - lastClanCheck) > TimeManager.MILI_HOUR / 2)
 		{
 			if ((clanID().length() > 0)
 			&& (owner() instanceof MOB)
@@ -126,7 +126,7 @@ public class StdClanArmor extends StdArmor implements ClanItem
 						R.showHappens(CMMsg.MSG_OK_VISUAL, L("@x1 is dropped!", name()));
 				}
 			}
-			lastClanCheck = System.currentTimeMillis();
+			lastClanCheck = GameTime.now();
 		}
 	}
 

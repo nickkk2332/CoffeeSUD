@@ -80,7 +80,7 @@ public class AutoStack extends StdAbility
 
 	protected int				numberOfItemsToTrigger	= 1000;
 	protected int				intervalTicks			= INTERVAL;
-	protected long				nextTriggeringTime		= System.currentTimeMillis() + (INTERVAL * 4000);
+	protected long				nextTriggeringTime		= GameTime.now() + (INTERVAL * 4000);
 	protected int				numberInGroupToTrigger	= 10;
 
 	@Override
@@ -91,7 +91,7 @@ public class AutoStack extends StdAbility
 		numberInGroupToTrigger = CMParms.getParmInt(newMiscText, "GROUPCOUNT", 10);
 		intervalTicks = CMParms.getParmInt(newMiscText, "CHECKTICKS", INTERVAL);
 		tickDown = intervalTicks;
-		nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+		nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 	}
 
 	protected synchronized void packageAll(final Room R)
@@ -234,7 +234,7 @@ public class AutoStack extends StdAbility
 	{
 		if(affected instanceof Room) // because areas can rely on ticks
 		{
-			if(System.currentTimeMillis() >= nextTriggeringTime)
+			if(GameTime.now() >= nextTriggeringTime)
 			{
 				final Room R=(Room)affected;
 				if((R!=null)&&(!R.amDestroyed()))
@@ -243,10 +243,10 @@ public class AutoStack extends StdAbility
 					&&(!CMProps.isState(CMProps.HostState.SHUTTINGDOWN)))
 					{
 						tickDown = intervalTicks;
-						nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+						nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 						this.packageAll(R);
 						tickDown = intervalTicks;
-						nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+						nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 					}
 				}
 			}
@@ -268,10 +268,10 @@ public class AutoStack extends StdAbility
 				if((--tickDown)<=0)
 				{
 					tickDown = intervalTicks;
-					nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+					nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 					this.packageAll(R);
 					tickDown = intervalTicks;
-					nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+					nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 				}
 			}
 			return true;
@@ -288,13 +288,13 @@ public class AutoStack extends StdAbility
 				if((--tickDown)<=0)
 				{
 					tickDown = intervalTicks;
-					nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+					nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 					for(final Enumeration<Room> r=A.getMetroMap();r.hasMoreElements();)
 					{
 						this.packageAll(r.nextElement());
 					}
 					tickDown = intervalTicks;
-					nextTriggeringTime = System.currentTimeMillis() + (CMProps.getTickMillis() * tickDown);
+					nextTriggeringTime = GameTime.now() + (CMProps.getTickMillis() * tickDown);
 				}
 			}
 		}

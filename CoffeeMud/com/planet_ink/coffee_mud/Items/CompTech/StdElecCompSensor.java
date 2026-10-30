@@ -54,7 +54,7 @@ public class StdElecCompSensor extends StdElecCompItem implements TechComponent
 	protected final static BoundedSphere smallSphere = new BoundedSphere(new long[] {1,1,1},1);
 	protected Map<Software,Room> feedbackObjects = new TreeMap<Software,Room>(XTreeSet.comparator);
 	protected Map<Environmental,Environmental> lastSensedObjects = new TreeMap<Environmental,Environmental>(XTreeSet.comparator);
-	protected volatile long nextFailureCheck = System.currentTimeMillis();
+	protected volatile long nextFailureCheck = GameTime.now();
 	protected volatile Set<Environmental> lastFailures = Collections.synchronizedSet(new HashSet<Environmental>());
 
 	private static final Filterer<Environmental> acceptEverythingFilter = new Filterer<Environmental>()
@@ -584,13 +584,13 @@ public class StdElecCompSensor extends StdElecCompItem implements TechComponent
 			found.remove(O);
 			if(found.size() > 1)
 			{
-				if(System.currentTimeMillis() > this.nextFailureCheck)
+				if(GameTime.now() > this.nextFailureCheck)
 				{
 					lastFailures.clear();
 					if(CMLib.dice().rollPercentage() > (100*this.getFinalManufacturer().getReliabilityPct()))
 					{
 						Collections.sort(found, new DistanceSorter(O));
-						nextFailureCheck = System.currentTimeMillis() + 360000;
+						nextFailureCheck = GameTime.now() + 360000;
 						int num = found.size() / 10; // failing reliability check always loses 10% of distant found things
 						if(num <= 0)
 							num = 1;

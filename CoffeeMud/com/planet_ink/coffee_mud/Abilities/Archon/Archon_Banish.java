@@ -105,9 +105,9 @@ public class Archon_Banish extends ArchonSkill
 	{
 		if(releaseTime<=0)
 			return "indefinitely";
-		if(releaseTime<System.currentTimeMillis())
+		if(releaseTime<GameTime.now())
 			return "until any second now.";
-		return "for another "+CMLib.english().stringifyElapsedTimeOrTicks(releaseTime-System.currentTimeMillis(),0);
+		return "for another "+CMLib.english().stringifyElapsedTimeOrTicks(releaseTime-GameTime.now(),0);
 	}
 
 	public Room prison()
@@ -167,7 +167,7 @@ public class Archon_Banish extends ArchonSkill
 			room.bringMobHere((MOB)ticking,false);
 		if(releaseTime<=0)
 			return true;
-		if(releaseTime>System.currentTimeMillis())
+		if(releaseTime>GameTime.now())
 			return true;
 		unInvoke();
 		return false;
@@ -264,23 +264,23 @@ public class Archon_Banish extends ArchonSkill
 			if((CMath.isInteger(num))&&(CMath.s_int(num)>0))
 			{
 				if("DAYS".startsWith(last))
-					time=System.currentTimeMillis()+(TimeManager.MILI_DAY*CMath.s_int(num));
+					time=GameTime.now()+(TimeManager.MILI_DAY*CMath.s_int(num));
 				else
 				if("MONTHS".startsWith(last))
-					time=System.currentTimeMillis()+(TimeManager.MILI_MONTH*CMath.s_int(num));
+					time=GameTime.now()+(TimeManager.MILI_MONTH*CMath.s_int(num));
 				else
 				if("HOURS".startsWith(last))
-					time=System.currentTimeMillis()+(TimeManager.MILI_HOUR*CMath.s_int(num));
+					time=GameTime.now()+(TimeManager.MILI_HOUR*CMath.s_int(num));
 				else
 				if("MINUTES".startsWith(last))
-					time=System.currentTimeMillis()+(TimeManager.MILI_MINUTE*CMath.s_int(num));
+					time=GameTime.now()+(TimeManager.MILI_MINUTE*CMath.s_int(num));
 				else
 				if("SECONDS".startsWith(last))
-					time=System.currentTimeMillis()+(TimeManager.MILI_SECOND*CMath.s_int(num));
+					time=GameTime.now()+(TimeManager.MILI_SECOND*CMath.s_int(num));
 				else
 				if("TICKS".startsWith(last))
-					time=System.currentTimeMillis()+(CMProps.getTickMillis()*CMath.s_int(num));
-				if(time>System.currentTimeMillis())
+					time=GameTime.now()+(CMProps.getTickMillis()*CMath.s_int(num));
+				if(time>GameTime.now())
 				{
 					commands.remove(commands.size()-1);
 					commands.remove(commands.size()-1);

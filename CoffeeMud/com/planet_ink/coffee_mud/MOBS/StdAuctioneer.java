@@ -204,12 +204,12 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 		synchronized(CMClass.getSync(("AUCTION_HOUSE_"+auctionHouse().toUpperCase().trim())))
 		{
 			final Long lastTime=StdAuctioneer.lastCheckTimes.get(auctionHouse().toUpperCase().trim());
-			if((lastTime==null)||(System.currentTimeMillis()-lastTime.longValue())>(CMProps.getMillisPerMudHour()-5))
+			if((lastTime==null)||(GameTime.now()-lastTime.longValue())>(CMProps.getMillisPerMudHour()-5))
 			{
 				if(!CMLib.flags().isInTheGame(this,true))
 					return true;
 				StdAuctioneer.lastCheckTimes.remove(auctionHouse().toUpperCase().trim());
-				final long thisTime=System.currentTimeMillis();
+				final long thisTime=GameTime.now();
 				StdAuctioneer.lastCheckTimes.put(auctionHouse().toUpperCase().trim(),Long.valueOf(thisTime));
 				for(final Enumeration<AuctionData> a=CMLib.coffeeShops().getAuctions(null,auctionHouse());a.hasMoreElements();)
 				{
@@ -370,7 +370,7 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 					Area area=CMLib.map().getStartArea(this);
 					if(area==null)
 						area=CMLib.map().getStartArea(msg.source());
-					lastMsgData.setAuctionTickDown(System.currentTimeMillis()+(days*area.getTimeObj().getHoursInDay()*CMProps.getMillisPerMudHour())+60000);
+					lastMsgData.setAuctionTickDown(GameTime.now()+(days*area.getTimeObj().getHoursInDay()*CMProps.getMillisPerMudHour())+60000);
 					return super.okMessage(myHost, msg);
 				}
 				return false;
@@ -427,7 +427,7 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 						}
 					}
 					else
-					if(System.currentTimeMillis()>=data.getAuctionTickDown())
+					if(GameTime.now()>=data.getAuctionTickDown())
 					{
 						if(data.getHighBidderMob()==msg.source())
 						{
@@ -511,7 +511,7 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 						}
 					}
 					else
-					if(System.currentTimeMillis()>=data.getAuctionTickDown())
+					if(GameTime.now()>=data.getAuctionTickDown())
 					{
 						if(data.getHighBidderMob()==msg.source())
 						{
@@ -598,7 +598,7 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 						thisData.setBuyOutPrice(CMath.s_double(buyPrice)*lowestDenom);
 						if(thisData.getBuyOutPrice()<=0.0)
 							thisData.setBuyOutPrice(-1.0);
-						thisData.setStartTime(System.currentTimeMillis());
+						thisData.setStartTime(GameTime.now());
 						CMLib.coffeeShops().saveAuction(thisData, auctionHouse(),false);
 						CMLib.commands().postChannel(this,"AUCTION",L("New @x1 day auction: @x2",""+thisData.daysRemaining(thisData.getAuctioningMob(),msg.source()),thisData.getAuctionedItem().name()),true);
 						final AuctionPolicy aRates=(AuctionPolicy)CMClass.getCommon("DefaultAuctionPolicy");
@@ -636,7 +636,7 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 							CMLib.commands().postSay(this,mob,L("Your auction for @x1 has been canceled.",data.getAuctionedItem().name()),true,false);
 						}
 						else
-						if((System.currentTimeMillis()>=data.getAuctionTickDown())&&(data.getHighBidderMob()==mob))
+						if((GameTime.now()>=data.getAuctionTickDown())&&(data.getHighBidderMob()==mob))
 						{
 							final AuctionPolicy aRates=(AuctionPolicy)CMClass.getCommon("DefaultAuctionPolicy");
 							aRates.mergeAuctioneerPolicy(this);
@@ -670,7 +670,7 @@ public class StdAuctioneer extends StdMOB implements Auctioneer
 							CMLib.database().DBDeleteJournal(auctionHouse(),data.getAuctionDBKey());
 						}
 						else
-						if(System.currentTimeMillis()<data.getAuctionTickDown())
+						if(GameTime.now()<data.getAuctionTickDown())
 						{
 							final AuctionPolicy aRates=(AuctionPolicy)CMClass.getCommon("DefaultAuctionPolicy");
 							aRates.mergeAuctioneerPolicy(this);

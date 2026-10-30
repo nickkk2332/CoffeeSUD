@@ -275,16 +275,16 @@ public class Prop_AreaForSale extends Property implements LandTitle
 				||((msg.targetMinor()==CMMsg.TYP_EXPIRE)&&(msg.target() instanceof Room))
 				||(msg.sourceMinor()==CMMsg.TYP_ROOMRESET))
 		&&(affected instanceof Area)
-		&&((System.currentTimeMillis()-lastMobSave)>360000))
+		&&((GameTime.now()-lastMobSave)>360000))
 		{
-			lastMobSave=System.currentTimeMillis();
+			lastMobSave=GameTime.now();
 			//this should only for cached rooms, so thin-safe.
 			for(Room R : getTitledRooms())
 			{
 				synchronized(CMClass.getSync("SYNC"+R.roomID()))
 				{
 					R=CMLib.map().getRoom(R);
-					lastMobSave=System.currentTimeMillis();
+					lastMobSave=GameTime.now();
 					final List<MOB> mobs=new ArrayList<MOB>();
 					for(int m=0;m<R.numInhabitants();m++)
 					{
@@ -299,7 +299,7 @@ public class Prop_AreaForSale extends Property implements LandTitle
 						CMLib.database().DBUpdateTheseMOBs(R,mobs);
 				}
 			}
-			lastMobSave=System.currentTimeMillis();
+			lastMobSave=GameTime.now();
 		}
 	}
 
@@ -383,7 +383,7 @@ public class Prop_AreaForSale extends Property implements LandTitle
 	@Override
 	public void updateLot(final Set<String> optPlayerList)
 	{
-		if(((System.currentTimeMillis()-lastCall)>360000)
+		if(((GameTime.now()-lastCall)>360000)
 		&&(CMProps.isState(CMProps.HostState.RUNNING)))
 		{
 			// in this case, we definitely only care about rooms actually existing
@@ -391,14 +391,14 @@ public class Prop_AreaForSale extends Property implements LandTitle
 			final List<Room> V=getTitledRooms();
 			for(final Room R : V)
 			{
-				lastCall=System.currentTimeMillis();
+				lastCall=GameTime.now();
 				int[] pair=lastItemNums.get(R);
 				if(pair == null)
 					pair=new int[] {-1,0};
 				pair = Prop_RoomForSale.updateLotWithThisData(R,this,false,false,optPlayerList,pair[0],pair[1]);
 				lastItemNums.put(R,pair);
 			}
-			lastCall=System.currentTimeMillis();
+			lastCall=GameTime.now();
 			Area A=null;
 			if(affected instanceof Area)
 				A=(Area)affected;

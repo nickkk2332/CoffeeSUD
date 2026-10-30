@@ -211,7 +211,7 @@ public class Scarring extends StdAbility implements LimbDamage, HealthCondition
 				if((mT != null)&&(mT.getTickDown() > 1))
 					mT.setTickDown(1);
 			}
-			this.nextCheck = System.currentTimeMillis() + 100; // the next check must happen naturally, if it is going to happen
+			this.nextCheck = GameTime.now() + 100; // the next check must happen naturally, if it is going to happen
 		}
 	}
 
@@ -331,9 +331,9 @@ public class Scarring extends StdAbility implements LimbDamage, HealthCondition
 	{
 		if(tickID == Tickable.TICKID_MOB)
 		{
-			if(System.currentTimeMillis() >= nextCheck)
+			if(GameTime.now() >= nextCheck)
 			{
-				nextCheck = System.currentTimeMillis() + (CMProps.getTickMillis() * tempDuration) - CMProps.getTickMillis();
+				nextCheck = GameTime.now() + (CMProps.getTickMillis() * tempDuration) - CMProps.getTickMillis();
 				if(affected instanceof MOB)
 					confirmScarring((MOB)affected);
 			}

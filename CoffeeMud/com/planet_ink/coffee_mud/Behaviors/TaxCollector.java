@@ -166,7 +166,7 @@ public class TaxCollector extends StdBehavior
 				}
 				if(paid.containsFirst(msg.source()))
 					paid.removeElementFirst(msg.source());
-				paid.addElement(msg.source(),Long.valueOf(System.currentTimeMillis()));
+				paid.addElement(msg.source(),Long.valueOf(GameTime.now()));
 
 				double totalOwed = 0.0;
 				if(owed[OWE_FINES]>0)
@@ -314,7 +314,7 @@ public class TaxCollector extends StdBehavior
 		for(int i=paid.size()-1;i>=0;i--)
 		{
 			final Long L=paid.get(i).second;
-			if((System.currentTimeMillis()-L.longValue())>graceTime)
+			if((GameTime.now()-L.longValue())>graceTime)
 				paid.removeElementAt(i);
 		}
 
@@ -368,7 +368,7 @@ public class TaxCollector extends StdBehavior
 			{
 				final int demandDex=demanded.indexOfFirst(M);
 				if((demandDex>=0)
-				&&((System.currentTimeMillis()-demanded.get(demandDex).second.longValue())>waitTime))
+				&&((GameTime.now()-demanded.get(demandDex).second.longValue())>waitTime))
 				{
 					final LegalBehavior B=CMLib.law().getLegalBehavior(R.getArea());
 					if(M.isMonster()
@@ -412,7 +412,7 @@ public class TaxCollector extends StdBehavior
 					if(say.length()>0)
 					{
 						CMLib.commands().postSay(mob,M,L("@x1.  You must GIVE this amount to me immediately or face the consequences.",say.toString()),false,false);
-						demanded.addElement(M,Long.valueOf(System.currentTimeMillis()));
+						demanded.addElement(M,Long.valueOf(GameTime.now()));
 						if(M.isMonster())
 						{
 							final List<String> V=new Vector<String>();

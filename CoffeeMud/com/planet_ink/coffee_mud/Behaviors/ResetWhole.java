@@ -112,10 +112,10 @@ public class ResetWhole extends StdBehavior
 			{
 				if((host instanceof Area)
 				&&(((Area)host).inMyMetroArea(R.getArea())))
-					lastAccess=System.currentTimeMillis();
+					lastAccess=GameTime.now();
 				else
 				if((host instanceof Room) &&(R==host))
-					lastAccess=System.currentTimeMillis();
+					lastAccess=GameTime.now();
 			}
 		}
 	}
@@ -138,16 +138,16 @@ public class ResetWhole extends StdBehavior
 		if(lastAccess<0)
 			return true;
 
-		if((lastAccess+time)<System.currentTimeMillis())
+		if((lastAccess+time)<GameTime.now())
 		{
 			if(this.rlHour>=0)
 			{
-				lastAccess = System.currentTimeMillis() + TimeManager.MILI_HOUR;
+				lastAccess = GameTime.now() + TimeManager.MILI_HOUR;
 				final Calendar C=Calendar.getInstance();
 				if(C.get(Calendar.HOUR_OF_DAY) != rlHour)
 				{
 					resetDone = false;
-					lastAccess = System.currentTimeMillis() + (TimeManager.MILI_HOUR/5);
+					lastAccess = GameTime.now() + (TimeManager.MILI_HOUR/5);
 					return true;
 				}
 				else
@@ -161,7 +161,7 @@ public class ResetWhole extends StdBehavior
 					E=(Physical)ticking;
 				else
 					E=super.getBehaversRoom(ticking);
-				lastAccess = System.currentTimeMillis() + CMProps.getMillisPerMudHour();
+				lastAccess = GameTime.now() + CMProps.getMillisPerMudHour();
 				if(E==null)
 					return true;
 				final TimeClock C=CMLib.time().localClock(E);
@@ -170,7 +170,7 @@ public class ResetWhole extends StdBehavior
 				if(C.getHourOfDay() != mudHour)
 				{
 					resetDone = false;
-					lastAccess = System.currentTimeMillis() + (CMProps.getMillisPerMudHour()/5);
+					lastAccess = GameTime.now() + (CMProps.getMillisPerMudHour()/5);
 					return true;
 				}
 				else
@@ -218,7 +218,7 @@ public class ResetWhole extends StdBehavior
 				}
 			}
 			if(time > 0)
-				lastAccess=System.currentTimeMillis();
+				lastAccess=GameTime.now();
 		}
 		return true;
 	}

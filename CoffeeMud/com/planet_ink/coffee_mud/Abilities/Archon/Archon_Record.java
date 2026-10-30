@@ -205,7 +205,7 @@ public class Archon_Record extends ArchonSkill
 			{
 				mob.location().send(mob,msg);
 				final String filename = (this.filename!=null)?this.filename:
-									"/"+target.Name()+System.currentTimeMillis()+".log";
+									"/"+target.Name()+GameTime.now()+".log";
 				this.filename=null;
 				final CMFile file=new CMFile(filename,mob,CMFile.FLAG_LOGERRORS);
 				if(!file.canWrite())

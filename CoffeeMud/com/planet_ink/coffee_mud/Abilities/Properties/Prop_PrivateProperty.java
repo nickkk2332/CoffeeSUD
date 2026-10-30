@@ -147,7 +147,7 @@ public class Prop_PrivateProperty extends Property implements PrivateProperty
 				final Room R=(Room)owner;
 				if(expires>0)
 				{
-					if(System.currentTimeMillis()>expires)
+					if(GameTime.now()>expires)
 					{
 						affected.delEffect(this);
 						this.affected=null;
@@ -167,7 +167,7 @@ public class Prop_PrivateProperty extends Property implements PrivateProperty
 					else
 					{
 						if(R.numInhabitants()==0)
-							expires=System.currentTimeMillis()+expiresec;
+							expires=GameTime.now()+expiresec;
 						else
 						{
 							boolean expire=true;
@@ -181,7 +181,7 @@ public class Prop_PrivateProperty extends Property implements PrivateProperty
 								}
 							}
 							if(expire)
-								expires=System.currentTimeMillis()+(expiresec * 1000L);
+								expires=GameTime.now()+(expiresec * 1000L);
 						}
 					}
 				}

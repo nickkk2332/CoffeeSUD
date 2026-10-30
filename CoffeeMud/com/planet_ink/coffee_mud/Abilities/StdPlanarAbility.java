@@ -1948,7 +1948,7 @@ public class StdPlanarAbility extends StdAbility implements PlanarAbility
 			return true;
 		}
 		else
-		if(this.lastCasting > (System.currentTimeMillis() - (10 * TimeManager.MILI_MINUTE)))
+		if(this.lastCasting > (GameTime.now() - (10 * TimeManager.MILI_MINUTE)))
 		{
 			final Ability A=CMClass.getAbility("Disease_PlanarInstability");
 			if((A!=null)
@@ -2127,10 +2127,10 @@ public class StdPlanarAbility extends StdAbility implements PlanarAbility
 		final String planeCodeString = planeName + "_" + cloneArea.Name();
 		int hardBumpLevel = 0;
 		if(recentVisits.containsKey(planeCodeString)
-		&&((recentVisits.get(planeCodeString)[0]+hardBumpTimeout)>System.currentTimeMillis()))
+		&&((recentVisits.get(planeCodeString)[0]+hardBumpTimeout)>GameTime.now()))
 		{
 			final long[] data = this.recentVisits.get(planeCodeString);
-			data[0]=System.currentTimeMillis();
+			data[0]=GameTime.now();
 			if(data[1]==0)
 				data[1]++;
 			else
@@ -2138,7 +2138,7 @@ public class StdPlanarAbility extends StdAbility implements PlanarAbility
 			hardBumpLevel=(int)data[1];
 		}
 		else
-			this.recentVisits.put(planeCodeString, new long[] {System.currentTimeMillis(),0});
+			this.recentVisits.put(planeCodeString, new long[] {GameTime.now(),0});
 		final String newPlaneName = planeIDNum.addAndGet(1)+"_"+cloneArea.Name();
 		Area planeArea = CMClass.getAreaType("SubThinInstance");
 		planeArea.setTimeObj((TimeClock)cloneArea.getTimeObj().copyOf());
@@ -2172,7 +2172,7 @@ public class StdPlanarAbility extends StdAbility implements PlanarAbility
 			if(h==null)
 				return false;
 
-			this.lastCasting=System.currentTimeMillis();
+			this.lastCasting=GameTime.now();
 			this.planeArea = planeArea;
 			final PlanarAbility A;
 			if((planeArea!=oldPlaneArea)

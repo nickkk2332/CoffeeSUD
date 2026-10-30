@@ -436,14 +436,14 @@ public class StdBanker extends StdShopKeeper implements Banker
 		boolean proceed=false;
 		Long L=bankTimes.get(bankChain());
 		long timeInterval=1;
-		if(((L==null)||(L.longValue()<System.currentTimeMillis()))
+		if(((L==null)||(L.longValue()<GameTime.now()))
 		&&(location!=null)
 		&&(location.getArea()!=null)
 		&&(location.getArea().getTimeObj()!=null)
 		&&(CMLib.flags().isInTheGame(this,true)))
 		{
 			timeInterval=timeInterval();
-			L=Long.valueOf(System.currentTimeMillis()+timeInterval);
+			L=Long.valueOf(GameTime.now()+timeInterval);
 			proceed=true;
 			bankTimes.remove(bankChain());
 			bankTimes.put(bankChain(),L);
@@ -501,7 +501,7 @@ public class StdBanker extends StdShopKeeper implements Banker
 						final double dueAmount = debtItem.amt();
 						final String reason = debtItem.reason();
 						final double intDue = CMath.mul(intRate, dueAmount);
-						final long timeRemaining = debtDueAt - System.currentTimeMillis();
+						final long timeRemaining = debtDueAt - GameTime.now();
 						if((timeRemaining<0)&&(newBalance<((dueAmount)+intDue)))
 							newBalance=-1.0;
 						else
@@ -806,7 +806,7 @@ public class StdBanker extends StdShopKeeper implements Banker
 						int months=2;
 						while((months<(location().getArea().getTimeObj().getMonthsInYear()*10))
 							&&(CMath.div(amt,months)>250.0)) months++;
-						final long dueAt=System.currentTimeMillis()+(timeInterval()*months);
+						final long dueAt=GameTime.now()+(timeInterval()*months);
 						CMLib.beanCounter().adjustDebt(borrowerName,bankChain(),amt,"Bank Loan",interestRate,dueAt);
 					}
 				}
@@ -995,7 +995,7 @@ public class StdBanker extends StdShopKeeper implements Banker
 							final long debtDueAt=debt.due();
 							final double intRate=debt.interest();
 							final double dueAmount=debt.amt();
-							final long timeRemaining=debtDueAt-System.currentTimeMillis();
+							final long timeRemaining=debtDueAt-GameTime.now();
 							if(timeRemaining>0)
 							{
 								str.append(L("\n\r@x1 owe ^H@x2^? in debt.\n\rMonthly interest is @x3%.  The loan must be paid in full in @x4 months.",

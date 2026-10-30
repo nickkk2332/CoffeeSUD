@@ -117,7 +117,7 @@ public class Age extends StdAbility
 			return "";
 		}
 		final TimeClock C=CMLib.time().localClock(affected);
-		final long days=((System.currentTimeMillis()-start)/CMProps.getTickMillis())/CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY); // down to days;
+		final long days=((GameTime.now()-start)/CMProps.getTickMillis())/CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY); // down to days;
 		final long months=days/C.getDaysInMonth();
 		final long years=months/C.getMonthsInYear();
 		if(days<1)
@@ -138,7 +138,7 @@ public class Age extends StdAbility
 	protected long			lastSoiling			= 0;
 	protected long			lastFollowCheck		= 0;
 	protected long			ageCode				= 0;
-	protected volatile long	nextAgeCheckTimeMs	= System.currentTimeMillis();
+	protected volatile long	nextAgeCheckTimeMs	= GameTime.now();
 	protected volatile int	ageYears			= -1;
 	protected volatile int	ageCat				= -1;
 
@@ -160,7 +160,7 @@ public class Age extends StdAbility
 				return ageYears;
 			}
 			final TimeClock C=CMLib.time().localClock(affected);
-			final long days=((System.currentTimeMillis()-start)/CMProps.getTickMillis())/CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY); // down to days;
+			final long days=((GameTime.now()-start)/CMProps.getTickMillis())/CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY); // down to days;
 			final long months=days/C.getDaysInMonth();
 			ageYears=(int)(months/C.getMonthsInYear());
 			ageCat=-1;
@@ -370,7 +370,7 @@ public class Age extends StdAbility
 		{
 			boolean lastFollowEllapsed=false;
 			if(lastFollowCheck>0)
-				lastFollowEllapsed=(System.currentTimeMillis()-lastFollowCheck)>(60 * 60 * 1000);
+				lastFollowEllapsed=(GameTime.now()-lastFollowCheck)>(60 * 60 * 1000);
 			MOB babeM = null;
 			if((babe instanceof MOB)
 			&&(CMLib.flags().isAnimalIntelligence((MOB)babe) || lastFollowEllapsed)
@@ -393,7 +393,7 @@ public class Age extends StdAbility
 				CMLib.commands().postFollow((MOB)babe, following, true);
 		}
 		if((following==null)&&(lastFollowCheck==0))
-			lastFollowCheck=System.currentTimeMillis();
+			lastFollowCheck=GameTime.now();
 		if((following!=null)&&(babe.description().toUpperCase().indexOf(following.Name().toUpperCase())<0)&&(room!=null))
 		{
 			MOB M=null;
@@ -433,13 +433,13 @@ public class Age extends StdAbility
 		{
 			if(miscText.startsWith("+"))
 			{
-				miscText = ""+(System.currentTimeMillis()
+				miscText = ""+(GameTime.now()
 						- (CMProps.getMillisPerMudHour() * CMath.s_long(miscText.substring(1).trim())));
 			}
 			this.ageCode = CMath.s_long(miscText); // zero means TBD, -1 means "ignore", otherwise timestamp or Years
 			this.ageYears=-1;
 			this.ageCat=-1;
-			this.nextAgeCheckTimeMs = System.currentTimeMillis();
+			this.nextAgeCheckTimeMs = GameTime.now();
 		}
 		super.setMiscText(miscText);
 	}
@@ -538,12 +538,12 @@ public class Age extends StdAbility
 			final TimeClock C=CMLib.time().localClock(affected);
 			divisor = C.getMonthsInYear() *C.getDaysInMonth() * CMProps.getIntVar( CMProps.Int.TICKSPERMUDDAY );
 		}
-		int ageYears=(int)Math.round(Math.floor(CMath.div(CMath.div(System.currentTimeMillis()-agingCode,CMProps.getTickMillis()),divisor)));
+		int ageYears=(int)Math.round(Math.floor(CMath.div(CMath.div(GameTime.now()-agingCode,CMProps.getTickMillis()),divisor)));
 		if((ageYears>=Short.MAX_VALUE)||(ageYears<0))
 		{
-			Log.errOut("Age","Recorded, on "+affected.name()+", age of "+ageYears+", from tick values (("+System.currentTimeMillis()+"-"+text()+")/4000)/"+divisor);
+			Log.errOut("Age","Recorded, on "+affected.name()+", age of "+ageYears+", from tick values (("+GameTime.now()+"-"+text()+")/4000)/"+divisor);
 			ageYears=1;
-			miscText=""+(1L+System.currentTimeMillis()-(CMProps.getTickMillis()*divisor));
+			miscText=""+(1L+GameTime.now()-(CMProps.getTickMillis()*divisor));
 			this.ageYears=-1;
 			this.ageCat=-1;
 		}
@@ -1206,11 +1206,11 @@ public class Age extends StdAbility
 		{
 			lastCheckedAt = this.nextAgeCheckTimeMs;
 		}
-		if(System.currentTimeMillis() < lastCheckedAt)
+		if(GameTime.now() < lastCheckedAt)
 			return;
 		synchronized(this)
 		{
-			this.nextAgeCheckTimeMs = System.currentTimeMillis() + 60000;
+			this.nextAgeCheckTimeMs = GameTime.now() + 60000;
 		}
 		this.doAgeChangeCheck();
 	}
@@ -1232,7 +1232,7 @@ public class Age extends StdAbility
 					final int months = C.getMonthsInYear() * numYears;
 					final int days = months * C.getDaysInMonth();
 					final long hours = days * C.getHoursInDay();
-					setMiscText(""+(System.currentTimeMillis()-(hours * CMProps.getMillisPerMudHour())));
+					setMiscText(""+(GameTime.now()-(hours * CMProps.getMillisPerMudHour())));
 				}
 			}
 			else
@@ -1289,7 +1289,7 @@ public class Age extends StdAbility
 							ageStr = displayText();
 						else
 						{
-							final int ellapsed=(int)Math.round(Math.floor(CMath.div(CMath.div(System.currentTimeMillis()-ageCode,CMProps.getTickMillis()),divisor)));
+							final int ellapsed=(int)Math.round(Math.floor(CMath.div(CMath.div(GameTime.now()-ageCode,CMProps.getTickMillis()),divisor)));
 							if(ellapsed<=myRace.getAgingChart()[3])
 								ageStr=displayText();
 						}
@@ -1348,13 +1348,13 @@ public class Age extends StdAbility
 					}
 				}
 			}
-			if(((System.currentTimeMillis()-lastSoiling)>(TimeManager.MILI_MINUTE*30))&&(CMLib.dice().rollPercentage()<10))
+			if(((GameTime.now()-lastSoiling)>(TimeManager.MILI_MINUTE*30))&&(CMLib.dice().rollPercentage()<10))
 			{
 				if(lastSoiling==0)
-					lastSoiling=System.currentTimeMillis();
+					lastSoiling=GameTime.now();
 				else
 				{
-					lastSoiling=System.currentTimeMillis();
+					lastSoiling=GameTime.now();
 					boolean soil=((affected instanceof CagedAnimal)&&(!(affected instanceof DeadBody)));
 					MOB mob=null;
 					if(affected instanceof MOB)
@@ -1370,7 +1370,7 @@ public class Age extends StdAbility
 						final long l=getAgeCode();
 						if((l>0)&&(l<Long.MAX_VALUE))
 						{
-							final int ellapsed=(int)Math.round(Math.floor(CMath.div(CMath.div(System.currentTimeMillis()-l,CMProps.getTickMillis()),divisor)));
+							final int ellapsed=(int)Math.round(Math.floor(CMath.div(CMath.div(GameTime.now()-l,CMProps.getTickMillis()),divisor)));
 							if(ellapsed<=myRace.getAgingChart()[2])
 								soil=true;
 						}
@@ -1502,7 +1502,7 @@ public class Age extends StdAbility
 				mob.tell(L("@x1 is @x2.",target.Name(),A.displayText()));
 				return false;
 			}
-			final long ellapsed=(int)Math.round(Math.floor(CMath.div(CMath.div(System.currentTimeMillis()-l,CMProps.getTickMillis()),A.divisor)));
+			final long ellapsed=(int)Math.round(Math.floor(CMath.div(CMath.div(GameTime.now()-l,CMProps.getTickMillis()),A.divisor)));
 			int currentAgeIndex=0;
 			final Race R=A.getMyRace();
 			if(l != 0)
@@ -1528,7 +1528,7 @@ public class Age extends StdAbility
 				mob.tell(L("May not continue aging @x1 that way."));
 				return false;
 			}
-			final long newEllapsed = System.currentTimeMillis() - Math.round(R.getAgingChart()[currentAgeIndex] * CMProps.getTickMillis() * A.divisor)+1;
+			final long newEllapsed = GameTime.now() - Math.round(R.getAgingChart()[currentAgeIndex] * CMProps.getTickMillis() * A.divisor)+1;
 			A.setMiscText(""+newEllapsed);
 			mob.tell(L("@x1 is now a different age.",target.name()));
 		}

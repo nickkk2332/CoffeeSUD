@@ -60,7 +60,7 @@ public class StdArea implements Area
 	protected int		tickStatus			= Tickable.STATUS_NOT;
 	protected long		expirationDate		= 0;
 	protected long		passiveLapseMs		= DEFAULT_TIME_PASSIVE_LAPSE;
-	protected long		lastPlayerTime		= System.currentTimeMillis() + (passiveLapseMs - 30000);
+	protected long		lastPlayerTime		= GameTime.now() + (passiveLapseMs - 30000);
 	protected State		flag				= State.ACTIVE;
 	protected String[]	xtraValues			= null;
 	protected String	author				= "";
@@ -122,7 +122,7 @@ public class StdArea implements Area
 		{
 			this.A=A;
 			this.mobs=mobs;
-			this.creationTime = System.currentTimeMillis();
+			this.creationTime = GameTime.now();
 		}
 	}
 
@@ -1113,7 +1113,7 @@ public class StdArea implements Area
 		}
 		if (!msg.source().isMonster())
 		{
-			lastPlayerTime = System.currentTimeMillis();
+			lastPlayerTime = GameTime.now();
 			if ((flag == State.PASSIVE)
 			&& ((msg.sourceMinor() == CMMsg.TYP_ENTER)
 				|| (msg.sourceMinor() == CMMsg.TYP_LEAVE)
@@ -1281,10 +1281,10 @@ public class StdArea implements Area
 		tickStatus = Tickable.STATUS_START;
 		if (tickID == Tickable.TICKID_AREA)
 		{
-			if ((flag == State.ACTIVE) && ((System.currentTimeMillis() - lastPlayerTime) > passiveLapseMs))
+			if ((flag == State.ACTIVE) && ((GameTime.now() - lastPlayerTime) > passiveLapseMs))
 			{
 				if (CMSecurity.isDisabled(CMSecurity.DisFlag.PASSIVEAREAS) && (!CMath.bset(flags(), Area.FLAG_INSTANCE_CHILD)))
-					lastPlayerTime = System.currentTimeMillis();
+					lastPlayerTime = GameTime.now();
 				else
 					flag = State.PASSIVE;
 			}

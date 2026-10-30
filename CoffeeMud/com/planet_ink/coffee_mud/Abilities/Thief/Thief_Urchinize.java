@@ -317,7 +317,7 @@ public class Thief_Urchinize extends ThiefSkill
 		if(target==null)
 			return false;
 
-		if(failures.containsKey(target) && (System.currentTimeMillis()<failures.get(target).longValue()))
+		if(failures.containsKey(target) && (GameTime.now()<failures.get(target).longValue()))
 		{
 			mob.tell(L("You can't attempt to urchinize @x1 again so soon.",target.name(mob)));
 			return false;
@@ -374,7 +374,7 @@ public class Thief_Urchinize extends ThiefSkill
 		}
 		else
 		{
-			failures.put(target, Long.valueOf(System.currentTimeMillis()+TimeManager.MILI_HOUR));
+			failures.put(target, Long.valueOf(GameTime.now()+TimeManager.MILI_HOUR));
 			return beneficialSoundFizzle(mob,target,L("<S-NAME> attempt(s) to urchinize <T-NAME> and fail(s)."));
 		}
 		return success;

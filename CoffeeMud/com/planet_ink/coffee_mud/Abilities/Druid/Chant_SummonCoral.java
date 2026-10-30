@@ -156,7 +156,7 @@ public class Chant_SummonCoral extends Chant_SummonPlants
 		final Room R=CMLib.map().roomLocation(affected);
 		if(isSaltWaterRoom(R) && (R.expirationDate() != 0))
 		{
-			R.setExpirationDate(System.currentTimeMillis() + WorldMap.ROOM_EXPIRATION_MILLIS);
+			R.setExpirationDate(GameTime.now() + WorldMap.ROOM_EXPIRATION_MILLIS);
 		}
 		return true;
 	}

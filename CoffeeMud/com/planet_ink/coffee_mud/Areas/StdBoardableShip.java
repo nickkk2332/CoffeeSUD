@@ -736,7 +736,7 @@ public class StdBoardableShip implements Area, Boardable, PrivateProperty
 				if(areaLoc instanceof StdArea)
 				{
 					final StdArea otherArea=(StdArea)areaLoc;
-					otherArea.lastPlayerTime=System.currentTimeMillis();
+					otherArea.lastPlayerTime=GameTime.now();
 					if((otherArea.flag==State.PASSIVE)
 					&&((msg.sourceMinor()==CMMsg.TYP_ENTER)
 					  ||(msg.sourceMinor()==CMMsg.TYP_LEAVE)

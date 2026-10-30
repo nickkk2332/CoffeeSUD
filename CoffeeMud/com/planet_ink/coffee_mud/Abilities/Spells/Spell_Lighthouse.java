@@ -112,7 +112,7 @@ public class Spell_Lighthouse extends Spell
 			final boolean isInDark=CMLib.flags().isInDark(R);
 			A.setInvoker(invoker());
 			A.setSavable(false);
-			A.setExpirationDate(System.currentTimeMillis()+8000);
+			A.setExpirationDate(GameTime.now()+8000);
 			R.addEffect(A);
 			R.recoverPhyStats();
 			R.recoverRoomStats();

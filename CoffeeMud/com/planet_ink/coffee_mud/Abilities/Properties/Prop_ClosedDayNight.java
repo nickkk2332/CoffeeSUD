@@ -528,13 +528,13 @@ public class Prop_ClosedDayNight extends Property
 			return;
 
 		Boolean amClosed = this.amClosed;
-		if((amClosed == null) || (System.currentTimeMillis() > nextChck))
+		if((amClosed == null) || (GameTime.now() > nextChck))
 		{
 			amClosed = Boolean.valueOf(checkClosed(affected));
 			if(!(affected instanceof MOB))
 			{
 				this.amClosed = amClosed;
-				nextChck = System.currentTimeMillis() + CMProps.getTickMillis() +1;
+				nextChck = GameTime.now() + CMProps.getTickMillis() +1;
 			}
 		}
 		if((affected instanceof MOB)

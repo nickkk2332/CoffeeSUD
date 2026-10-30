@@ -686,7 +686,7 @@ public class StdRoom implements Room
 	public void setResource(final int resourceCode)
 	{
 		myResource=resourceCode;
-		lastResourceTime= (resourceCode>=0) ? lastResourceTime=System.currentTimeMillis() : 0;
+		lastResourceTime= (resourceCode>=0) ? lastResourceTime=GameTime.now() : 0;
 	}
 
 	@Override
@@ -694,7 +694,7 @@ public class StdRoom implements Room
 	{
 		if(lastResourceTime!=0)
 		{
-			if(lastResourceTime<(System.currentTimeMillis()-(30*TimeManager.MILI_MINUTE)))
+			if(lastResourceTime<(GameTime.now()-(30*TimeManager.MILI_MINUTE)))
 				setResource(-1);
 		}
 		if(myResource<0)
@@ -1665,7 +1665,7 @@ public class StdRoom implements Room
 			return null;
 		}
 		if(expirationDate()!=0)
-			setExpirationDate(System.currentTimeMillis()+WorldMap.ROOM_EXPIRATION_MILLIS);
+			setExpirationDate(GameTime.now()+WorldMap.ROOM_EXPIRATION_MILLIS);
 		return this;
 	}
 
@@ -2376,7 +2376,7 @@ public class StdRoom implements Room
 		if(expireMs<=0)
 			item.setExpirationDate(0);
 		else
-			item.setExpirationDate(System.currentTimeMillis()+expireMs);
+			item.setExpirationDate(GameTime.now()+expireMs);
 	}
 
 	protected void insertItemUpTop(final Item item)

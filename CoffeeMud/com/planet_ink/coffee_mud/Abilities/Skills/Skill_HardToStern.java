@@ -159,7 +159,7 @@ public class Skill_HardToStern extends StdSkill
 			return false;
 		}
 
-		if(((System.currentTimeMillis()-lastUse)<(3 * 60 * 1000))
+		if(((GameTime.now()-lastUse)<(3 * 60 * 1000))
 		||(myShipItem.fetchEffect("Skill_HardToPort")!=null)
 		||(myShipItem.fetchEffect("Skill_HardToStarboard")!=null))
 		{
@@ -240,7 +240,7 @@ public class Skill_HardToStern extends StdSkill
 							{
 								thisRoom.send(smob, maneuverMsg);
 								myShipItem.setDirectionFacing(newDirection);
-								this.lastUse=System.currentTimeMillis();
+								this.lastUse=GameTime.now();
 								if(i == 0)
 									super.beneficialAffect(mob, myShipItem, asLevel, 6);
 							}

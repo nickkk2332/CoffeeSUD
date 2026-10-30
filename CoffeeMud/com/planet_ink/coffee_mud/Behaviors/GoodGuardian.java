@@ -40,7 +40,7 @@ public class GoodGuardian extends StdBehavior
 		return "GoodGuardian";
 	}
 
-	protected long deepBreath=System.currentTimeMillis();
+	protected long deepBreath=GameTime.now();
 
 	@Override
 	public String accountForYourself()
@@ -136,10 +136,10 @@ public class GoodGuardian extends StdBehavior
 			return true;
 		if(!canFreelyBehaveNormal(ticking))
 		{
-			deepBreath=System.currentTimeMillis();
+			deepBreath=GameTime.now();
 			return true;
 		}
-		if((deepBreath==0)||(System.currentTimeMillis()-deepBreath)>6000)
+		if((deepBreath==0)||(GameTime.now()-deepBreath)>6000)
 		{
 			deepBreath=0;
 			final MOB mob=(MOB)ticking;

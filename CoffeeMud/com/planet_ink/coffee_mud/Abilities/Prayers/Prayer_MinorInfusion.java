@@ -114,7 +114,7 @@ public class Prayer_MinorInfusion extends Prayer implements MendingSkill
 				final int healing=CMLib.dice().roll(2,adjustedLevel(mob,asLevel),10);
 				target.curState().adjMana(healing,target.maxState());
 				target.tell(L("You feel slightly restored!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

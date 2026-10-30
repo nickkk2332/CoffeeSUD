@@ -191,7 +191,7 @@ public class Thief_Shadow extends ThiefSkill
 			}
 		}
 		if((shadowing!=null)&&(invoker!=null)&&(shadowing.location()==invoker.location()))
-			lastTogether=System.currentTimeMillis();
+			lastTogether=GameTime.now();
 	}
 
 	@Override
@@ -202,8 +202,8 @@ public class Thief_Shadow extends ThiefSkill
 		if(lastTogether==0)
 			return true;
 		if((shadowing!=null)&&(invoker!=null)&&(shadowing.location()==invoker.location()))
-			lastTogether=System.currentTimeMillis();
-		final long secondsago=System.currentTimeMillis()-10000;
+			lastTogether=GameTime.now();
+		final long secondsago=GameTime.now()-10000;
 		if(lastTogether<secondsago)
 		{
 			if((invoker!=null)&&(shadowing!=null))
@@ -241,7 +241,7 @@ public class Thief_Shadow extends ThiefSkill
 			affectableStats.setDisposition(affectableStats.disposition()|PhyStats.IS_SNEAKING);
 		}
 		if((shadowing!=null)&&(invoker!=null)&&(shadowing.location()==invoker.location()))
-			lastTogether=System.currentTimeMillis();
+			lastTogether=GameTime.now();
 	}
 
 	@Override
@@ -336,7 +336,7 @@ public class Thief_Shadow extends ThiefSkill
 						mob.addEffect(A);
 						A.shadowing=target;
 						A.setAffectedOne(target);
-						A.lastTogether=System.currentTimeMillis();
+						A.lastTogether=GameTime.now();
 						mob.recoverPhyStats();
 					}
 					else

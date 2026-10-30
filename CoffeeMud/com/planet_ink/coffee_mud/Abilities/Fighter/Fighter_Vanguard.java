@@ -120,7 +120,7 @@ public class Fighter_Vanguard extends FighterSkill
 		final MOB M = vanGuard.first;
 		final Room vR = M.location();
 		lastCaravanRoom = R;
-		if((System.currentTimeMillis()-lastAttack)<4000)
+		if((GameTime.now()-lastAttack)<4000)
 		{
 			final int max = 0;
 			final List<Room> caravanRadiant = new XVector<Room>(R);
@@ -246,7 +246,7 @@ public class Fighter_Vanguard extends FighterSkill
 				final Physical P = affected;
 				if(P == null)
 					return true;
-				lastAttack = System.currentTimeMillis();
+				lastAttack = GameTime.now();
 				final Room R = CMLib.map().roomLocation(P);
 				if(vanGuard != null)
 				{
@@ -268,7 +268,7 @@ public class Fighter_Vanguard extends FighterSkill
 			}
 			else
 			if(CMath.bset(msg.targetMinor(), CMMsg.MASK_MALICIOUS))
-				lastAttack = System.currentTimeMillis();
+				lastAttack = GameTime.now();
 		}
 		return true;
 	}

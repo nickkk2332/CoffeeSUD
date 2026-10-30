@@ -43,7 +43,7 @@ public class Turtle extends StdMOB
 	public Turtle()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a turtle";
 		setDescription("It\\`s a slow moving turtle with a big green shell.");

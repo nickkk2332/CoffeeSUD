@@ -111,7 +111,7 @@ public class StdMOB implements MOB
 	public CharState			maxState			= (CharState) CMClass.getCommon("DefaultCharState");
 	public CharState			baseState			= (CharState) CMClass.getCommon("DefaultCharState");
 	private long				lastTickedTime		= 0;
-	private long				lastCommandTime		= System.currentTimeMillis();
+	private long				lastCommandTime		= GameTime.now();
 	protected Room				possStartRoom		= null;
 	protected String			liegeID				= "";
 	protected int				wimpHitPoint		= 0;
@@ -174,7 +174,7 @@ public class StdMOB implements MOB
 	{
 		public Object		commandObj		= null;
 		public double		actionCost		= 0.0;
-		public long			nextCheck		= System.currentTimeMillis() - 1;
+		public long			nextCheck		= GameTime.now() - 1;
 		public int			seconds			= -1;
 		public int			metaFlags		= 0;
 		public List<String>	commandVector	= null;
@@ -2135,7 +2135,7 @@ public class StdMOB implements MOB
 				{
 					final long reqEllapse = Math.round(cmd.actionCost / phyStats().speed() * CMProps.getTickMillisD());
 					final long nextTime = lastCommandTime + reqEllapse;
-					if((System.currentTimeMillis() < nextTime) && (session() != null))
+					if((GameTime.now() < nextTime) && (session() != null))
 						return false;
 					cmd = commandQue.removeFirst();
 					setActions(diff);
@@ -2144,7 +2144,7 @@ public class StdMOB implements MOB
 			}
 			if(doCommand != null)
 			{
-				lastCommandTime = System.currentTimeMillis();
+				lastCommandTime = GameTime.now();
 				doCommand(doCommand.commandObj, doCommand.commandVector, doCommand.metaFlags);
 				synchronized(commandQue)
 				{
@@ -2166,7 +2166,7 @@ public class StdMOB implements MOB
 				if(commandQue.isEmpty())
 					return false;
 				cmd = commandQue.getFirst();
-				if((cmd == null) || (System.currentTimeMillis() < cmd.nextCheck))
+				if((cmd == null) || (GameTime.now() < cmd.nextCheck))
 					return false;
 			}
 
@@ -2337,7 +2337,7 @@ public class StdMOB implements MOB
 			synchronized(commandQue)
 			{
 				final QMCommand cmd = new QMCommand();
-				cmd.nextCheck = System.currentTimeMillis() - 1;
+				cmd.nextCheck = GameTime.now() - 1;
 				cmd.seconds = -1;
 				cmd.actionCost = actionCost;
 				cmd.metaFlags = metaFlags;
@@ -2369,7 +2369,7 @@ public class StdMOB implements MOB
 			synchronized(commandQue)
 			{
 				final QMCommand cmd = new QMCommand();
-				cmd.nextCheck = System.currentTimeMillis() - 1;
+				cmd.nextCheck = GameTime.now() - 1;
 				cmd.seconds = -1;
 				cmd.actionCost = actionCost;
 				cmd.metaFlags = metaFlags;
@@ -2413,7 +2413,7 @@ public class StdMOB implements MOB
 			synchronized(commandQue)
 			{
 				final QMCommand cmd = new QMCommand();
-				cmd.nextCheck = System.currentTimeMillis() - 1;
+				cmd.nextCheck = GameTime.now() - 1;
 				cmd.seconds = -1;
 				cmd.actionCost = actionCost;
 				cmd.metaFlags = metaFlags;
@@ -4021,7 +4021,7 @@ public class StdMOB implements MOB
 								{
 									phyStats().setRejuv(0);
 									tickStatus = Tickable.STATUS_NOT;
-									lastTickedTime = System.currentTimeMillis();
+									lastTickedTime = GameTime.now();
 									return isOk;
 								}
 								tickStatus = Tickable.STATUS_REBIRTH;
@@ -4050,7 +4050,7 @@ public class StdMOB implements MOB
 					}
 				}
 				tickStatus = Tickable.STATUS_NOT;
-				lastTickedTime = System.currentTimeMillis();
+				lastTickedTime = GameTime.now();
 				return isOk;
 			}
 			else
@@ -4111,7 +4111,7 @@ public class StdMOB implements MOB
 						if(CMLib.combat().doTurnBasedCombat(this, R, A))
 						{
 							if(lastTickedTime >= 0)
-								lastTickedTime = System.currentTimeMillis();
+								lastTickedTime = GameTime.now();
 							tickStatus = Tickable.STATUS_NOT;
 							return !removeFromGame;
 						}
@@ -4376,7 +4376,7 @@ public class StdMOB implements MOB
 
 			if(lastTickedTime >= 0)
 			{
-				lastTickedTime = System.currentTimeMillis();
+				lastTickedTime = GameTime.now();
 				for(final Tattoo tattoo : tattoos)
 				{
 					if((tattoo != null)

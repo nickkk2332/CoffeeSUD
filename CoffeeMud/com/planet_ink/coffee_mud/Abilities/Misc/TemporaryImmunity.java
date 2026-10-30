@@ -124,7 +124,7 @@ public class TemporaryImmunity extends StdAbility
 				for(int s=set.size()-1;s>=0;s--)
 				{
 					final Long L=set.elementAt(s).second;
-					if((System.currentTimeMillis()-L.longValue())>IMMUNITY_TIME)
+					if((GameTime.now()-L.longValue())>IMMUNITY_TIME)
 						set.removeElementAt(s);
 				}
 
@@ -186,9 +186,9 @@ public class TemporaryImmunity extends StdAbility
 			str=str.substring(1).trim();
 			final int x=set.indexOfFirst(str);
 			if(x>=0)
-				set.setElementAt(new Pair<String,Long>(str,Long.valueOf(System.currentTimeMillis())),x);
+				set.setElementAt(new Pair<String,Long>(str,Long.valueOf(GameTime.now())),x);
 			else
-				set.addElement(str,Long.valueOf(System.currentTimeMillis()));
+				set.addElement(str,Long.valueOf(GameTime.now()));
 		}
 		else
 		{

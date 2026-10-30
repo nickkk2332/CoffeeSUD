@@ -140,7 +140,7 @@ public class AstroEngineering extends TechSkill
 		if((mob==null)||(item==null))
 			return;
 
-		if((System.currentTimeMillis()-lastCastHelp)<300000)
+		if((GameTime.now()-lastCastHelp)<300000)
 			return;
 
 		String experName;
@@ -169,10 +169,10 @@ public class AstroEngineering extends TechSkill
 		if(((int)Math.round(Math.sqrt((mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)))*34.0*Math.random()))>=currentExpertise)
 		{
 			mob.addExpertise(experName+"%"+(currentExpertise+1));
-			lastCastHelp=System.currentTimeMillis();
+			lastCastHelp=GameTime.now();
 			final AstroEngineering A=(AstroEngineering)mob.fetchAbility(ID());
 			if(A!=null)
-				A.lastCastHelp=System.currentTimeMillis();
+				A.lastCastHelp=GameTime.now();
 			mob.tell(mob,null,null,L("You gain some new insights about @x1.",CMLib.english().makePlural(experName.toLowerCase())));
 		}
 	}

@@ -43,7 +43,7 @@ public class GenLightSwitch extends GenElecCompItem implements ElecPanel
 
 	protected String readableText = "";
 	protected final static long LIGHT_TIME=(10 * 60 * 1000);
-	protected volatile long nextPowerNeed = System.currentTimeMillis() + LIGHT_TIME;
+	protected volatile long nextPowerNeed = GameTime.now() + LIGHT_TIME;
 
 	public GenLightSwitch()
 	{
@@ -65,7 +65,7 @@ public class GenLightSwitch extends GenElecCompItem implements ElecPanel
 	@Override
 	public void recoverPhyStats()
 	{
-		if(activated() && (System.currentTimeMillis()<nextPowerNeed))
+		if(activated() && (GameTime.now()<nextPowerNeed))
 			phyStats().setDisposition(phyStats().disposition()|PhyStats.IS_LIGHTSOURCE);
 		else
 			phyStats().setDisposition(phyStats().disposition()|PhyStats.IS_GLOWING);
@@ -75,7 +75,7 @@ public class GenLightSwitch extends GenElecCompItem implements ElecPanel
 	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
 	{
 		super.affectPhyStats(affected, affectableStats);
-		if(!activated() || (System.currentTimeMillis()>nextPowerNeed))
+		if(!activated() || (GameTime.now()>nextPowerNeed))
 		{
 			if(CMLib.flags().isGlowing(affected))
 				affectableStats.setDisposition(affectableStats.disposition()-PhyStats.IS_GLOWING);
@@ -216,7 +216,7 @@ public class GenLightSwitch extends GenElecCompItem implements ElecPanel
 			{
 				if(msg.value()>1)
 				{
-					nextPowerNeed = System.currentTimeMillis()+LIGHT_TIME;
+					nextPowerNeed = GameTime.now()+LIGHT_TIME;
 					this.powerOtherSwitched(host, msg);
 				}
 				break;

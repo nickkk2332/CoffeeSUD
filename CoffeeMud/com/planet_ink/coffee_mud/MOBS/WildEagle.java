@@ -43,7 +43,7 @@ public class WildEagle extends StdMOB
 	public WildEagle()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="an eagle";
 		setDescription("a majestic and very patriotic bird.");

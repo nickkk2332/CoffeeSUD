@@ -43,7 +43,7 @@ public class Vulture extends StdMOB
 	public Vulture()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a vulture";
 		setDescription("It\\`s a large bird that eats meats.");

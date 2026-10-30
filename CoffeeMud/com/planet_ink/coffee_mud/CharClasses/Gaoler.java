@@ -531,7 +531,7 @@ public class Gaoler extends StdCharClass
 						for(final Iterator<String> i=map.keySet().iterator();i.hasNext();)
 						{
 							final Long L=map.get(i.next());
-							if(System.currentTimeMillis() > L.longValue())
+							if(GameTime.now() > L.longValue())
 								i.remove();
 						}
 						if(map.containsKey(""+msg.target()))
@@ -539,7 +539,7 @@ public class Gaoler extends StdCharClass
 						else
 						{
 							final TimeClock C=CMLib.time().localClock(msg.source());
-							map.put(""+msg.target(), Long.valueOf(System.currentTimeMillis() + (CMProps.getMillisPerMudHour() * C.getHoursInDay())));
+							map.put(""+msg.target(), Long.valueOf(GameTime.now() + (CMProps.getMillisPerMudHour() * C.getHoursInDay())));
 						}
 					}
 					if(qualifyingFood)

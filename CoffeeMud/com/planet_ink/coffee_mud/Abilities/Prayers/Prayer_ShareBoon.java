@@ -140,7 +140,7 @@ public class Prayer_ShareBoon extends Prayer
 							final Ability boonE=target.fetchEffect(boonA.ID());
 							if((boonE!=null)
 							&&(boonA.expirationDate()>0))
-								boonE.setExpirationDate(System.currentTimeMillis() + boonA.expirationDate());
+								boonE.setExpirationDate(GameTime.now() + boonA.expirationDate());
 						}
 					}
 				}

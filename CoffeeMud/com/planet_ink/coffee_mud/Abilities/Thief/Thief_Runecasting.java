@@ -752,10 +752,10 @@ public class Thief_Runecasting extends ThiefSkill
 		{
 			final long expirationTime = doneMs.getExpiration(target);
 			final TimeClock C = CMLib.time().homeClock(mob);
-			if(expirationTime >= System.currentTimeMillis())
+			if(expirationTime >= GameTime.now())
 			{
 				mob.tell(L("You would not be able to see @x1's future again for another @x2.",target.name(mob),
-						CMLib.time().date2EllapsedMudTime(C, expirationTime-System.currentTimeMillis(), TimeDelta.SECOND, false)));
+						CMLib.time().date2EllapsedMudTime(C, expirationTime-GameTime.now(), TimeDelta.SECOND, false)));
 				return false;
 			}
 		}

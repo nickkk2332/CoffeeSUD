@@ -249,7 +249,7 @@ public class Thief_FindRunaway extends StdAbility
 			newMOB.setMoneyVariation(0);
 			newMOB.setStartRoom(null);
 			final Ability effA = CMClass.getAbility("ScriptLater");
-			final long mudHrFromNow = System.currentTimeMillis() + CMProps.getMillisPerMudHour();
+			final long mudHrFromNow = GameTime.now() + CMProps.getMillisPerMudHour();
 			final StringBuilder script = new StringBuilder("");
 			script.append("RAND_PROG 10\n\r");
 			script.append("  IF isbehave($i *) OR affected($i *)\n\r");
@@ -286,7 +286,7 @@ public class Thief_FindRunaway extends StdAbility
 			return false;
 		}
 
-		if((this.lastCast > 0)&&(System.currentTimeMillis() < this.lastCast))
+		if((this.lastCast > 0)&&(GameTime.now() < this.lastCast))
 		{
 			mob.tell(L("You need to give some time for kids to become tired of their parents."));
 			return false;
@@ -348,7 +348,7 @@ public class Thief_FindRunaway extends StdAbility
 				if(mob.fetchEffect(newOne.ID())==null)
 					mob.addEffect(newOne);
 				mob.recoverPhyStats();
-				this.lastCast = System.currentTimeMillis() + (CMProps.getMillisPerMudHour() * CMLib.time().homeClock(mob).getHoursInDay());
+				this.lastCast = GameTime.now() + (CMProps.getMillisPerMudHour() * CMLib.time().homeClock(mob).getHoursInDay());
 				newOne.nextDirection=CMLib.tracking().trackNextDirectionFromHere(theTrail,mob.location(),true);
 			}
 		}

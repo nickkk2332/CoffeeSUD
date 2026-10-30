@@ -64,7 +64,7 @@ public class DefaultTattoo implements Tattoo
 		if(down == 0)
 			expires = 0;
 		else
-			expires = System.currentTimeMillis() + (down * CMProps.getTickMillis());
+			expires = GameTime.now() + (down * CMProps.getTickMillis());
 		return this;
 	}
 
@@ -77,7 +77,7 @@ public class DefaultTattoo implements Tattoo
 		if(tickDown == 0)
 			expires = 0;
 		else
-			expires = System.currentTimeMillis() + (tickDown * CMProps.getTickMillis());
+			expires = GameTime.now() + (tickDown * CMProps.getTickMillis());
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class DefaultTattoo implements Tattoo
 	{
 		if(expires == 0)
 			return 0;
-		final long diff = expires - System.currentTimeMillis();
+		final long diff = expires - GameTime.now();
 		if(diff <= 0)
 			return 1;
 		return (int)Math.round(Math.ceil(CMath.div(diff, CMProps.getTickMillis())));

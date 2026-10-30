@@ -354,7 +354,7 @@ public class Scholar extends StdCharClass
 							xpTrap = new long[2];
 							persMap.put("SCHOLAR_MAPXP", xpTrap);
 						}
-						if(System.currentTimeMillis() > xpTrap[1])
+						if(GameTime.now() > xpTrap[1])
 						{
 							xpTrap[0]=0;
 							final Room R=msg.source().getStartRoom();
@@ -362,12 +362,12 @@ public class Scholar extends StdCharClass
 							{
 								final Area A=R.getArea();
 								if((A!=null)&&(A.getTimeObj()!=null))
-									xpTrap[1]=System.currentTimeMillis() + (CMProps.getMillisPerMudHour() * A.getTimeObj().getHoursInDay());
+									xpTrap[1]=GameTime.now() + (CMProps.getMillisPerMudHour() * A.getTimeObj().getHoursInDay());
 								else
-									xpTrap[1]=System.currentTimeMillis() + (TimeManager.MILI_MINUTE * 10);
+									xpTrap[1]=GameTime.now() + (TimeManager.MILI_MINUTE * 10);
 							}
 							else
-								xpTrap[1]=System.currentTimeMillis() + (TimeManager.MILI_MINUTE * 10);
+								xpTrap[1]=GameTime.now() + (TimeManager.MILI_MINUTE * 10);
 						}
 						final long maxLevel = msg.source().getExpNeededLevel() / 10;
 						if(xpTrap[0] < maxLevel)
@@ -400,10 +400,10 @@ public class Scholar extends StdCharClass
 								xpTrap = new long[2];
 								persMap.put("SCHOLAR_WRITEXP", xpTrap);
 							}
-							if(System.currentTimeMillis() > xpTrap[1])
+							if(GameTime.now() > xpTrap[1])
 							{
 								xpTrap[0]=0;
-								xpTrap[1]=System.currentTimeMillis() + (TimeManager.MILI_MINUTE * 10);
+								xpTrap[1]=GameTime.now() + (TimeManager.MILI_MINUTE * 10);
 							}
 							final long maxLevel = msg.source().getExpNeededLevel() / 24;
 							if(xpTrap[0] < maxLevel)

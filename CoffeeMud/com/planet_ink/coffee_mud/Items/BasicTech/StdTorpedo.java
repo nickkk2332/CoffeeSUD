@@ -6,6 +6,7 @@ import com.planet_ink.coffee_mud.Items.interfaces.Technical.TechType;
 import com.planet_ink.coffee_mud.core.CMLib;
 import com.planet_ink.coffee_mud.core.CMProps;
 import com.planet_ink.coffee_mud.core.CMath;
+import com.planet_ink.coffee_mud.core.GameTime;
 import com.planet_ink.coffee_mud.core.Log;
 import com.planet_ink.coffee_mud.core.collections.Pair;
 import com.planet_ink.coffee_mud.core.interfaces.SpaceObject;
@@ -84,8 +85,8 @@ public class StdTorpedo extends StdSpaceTechWeapon implements Ammunition
 			if(!isInSpace())
 				return true;
 			if((timeTicking == null)||(speed()==0))
-				timeTicking = Long.valueOf(System.currentTimeMillis());
-			final long diff = System.currentTimeMillis()-timeTicking.longValue();
+				timeTicking = Long.valueOf(GameTime.now());
+			final long diff = GameTime.now()-timeTicking.longValue();
 			if(diff > maxChaseTimeMs) // 5 minutes of live sounds good
 			{
 				this.destroy();

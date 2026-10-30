@@ -118,9 +118,9 @@ public class StdClanSailorsCap extends StdArmor implements ClanItem
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
-		if ((System.currentTimeMillis() - lastClanCheck) > TimeManager.MILI_HOUR)
+		if ((GameTime.now() - lastClanCheck) > TimeManager.MILI_HOUR)
 		{
-			lastClanCheck = System.currentTimeMillis();
+			lastClanCheck = GameTime.now();
 			if ((clanID().length() > 0) && (CMLib.clans().getClanAnyHost(clanID()) == null))
 			{
 				destroy();

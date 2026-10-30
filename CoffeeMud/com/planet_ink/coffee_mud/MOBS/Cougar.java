@@ -43,7 +43,7 @@ public class Cougar extends StdMOB
 	public Cougar()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a cougar";
 		setDescription("Cougar are sleek powerful cats with long deadly claws.");

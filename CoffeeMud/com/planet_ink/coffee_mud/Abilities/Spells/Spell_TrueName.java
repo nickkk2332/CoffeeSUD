@@ -108,7 +108,7 @@ public class Spell_TrueName extends Spell
 					CMLib.threads().scheduleRunnable(periodicCheckToGoHome, 4000);
 				}
 				else
-				if(System.currentTimeMillis()>tm.longValue())
+				if(GameTime.now()>tm.longValue())
 				{
 					CMLib.tracking().wanderAway(mob, false, false);
 					mob.destroy();
@@ -146,7 +146,7 @@ public class Spell_TrueName extends Spell
 				return monster;
 			trueName=text().substring(0,x);
 			monster=CMLib.coffeeMaker().unpackMobFromXML(text().substring(x+1));
-			monsterAppearanceTime=Long.valueOf(System.currentTimeMillis()+(5*60*1000));
+			monsterAppearanceTime=Long.valueOf(GameTime.now()+(5*60*1000));
 		}
 		return monster;
 	}

@@ -117,7 +117,7 @@ public class Prayer_CureFatigue extends Prayer implements MendingSkill
 					target.curState().adjFatigue(-(target.curState().getFatigue()/2),target.maxState());
 				target.curState().adjMovement(healing,target.maxState());
 				target.tell(L("You feel slightly more invigorated!"));
-				lastCastHelp=System.currentTimeMillis();
+				lastCastHelp=GameTime.now();
 			}
 		}
 		else

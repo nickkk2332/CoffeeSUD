@@ -201,7 +201,7 @@ public class Bomb_Sticky extends StdBomb
 					&&(((CloseableLockable)target).openDelayTicks()>0))
 					{
 						target.addEffect(new ThinAbility() {
-							final long expires = System.currentTimeMillis()
+							final long expires = GameTime.now()
 									+(((CloseableLockable)target).openDelayTicks()*CMProps.getTickMillis());
 							@Override
 							public String ID()
@@ -231,7 +231,7 @@ public class Bomb_Sticky extends StdBomb
 							@Override
 							public boolean okMessage(final Environmental myHost, final CMMsg msg)
 							{
-								if((affected==null)||(System.currentTimeMillis()>expires))
+								if((affected==null)||(GameTime.now()>expires))
 								{
 									unInvoke();
 									return true;

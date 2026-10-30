@@ -194,7 +194,7 @@ public class Skill_Convert extends StdSkill
 			if(convertStack.containsFirst(target))
 			{
 				final Long L=convertStack.getSecond(convertStack.indexOfFirst(target));
-				if((System.currentTimeMillis()-L.longValue())>CMProps.getMillisPerMudHour()*5)
+				if((GameTime.now()-L.longValue())>CMProps.getMillisPerMudHour()*5)
 					convertStack.removeElementFirst(target);
 			}
 			if(convertStack.containsFirst(target))
@@ -363,7 +363,7 @@ public class Skill_Convert extends StdSkill
 				mob.location().send(target,msg2);
 				if(dRoom!=null)
 					dRoom.send(target,msg2);
-				convertStack.addElement(target,Long.valueOf(System.currentTimeMillis()));
+				convertStack.addElement(target,Long.valueOf(GameTime.now()));
 				if(mob!=target)
 				{
 					if(target.isMonster())
@@ -395,7 +395,7 @@ public class Skill_Convert extends StdSkill
 					if((effA!=null)
 					&&(effA.canBeUninvoked())
 					&&(effA.expirationDate()>0))
-						effA.setExpirationDate(System.currentTimeMillis() + DOUBT_TIME);
+						effA.setExpirationDate(GameTime.now() + DOUBT_TIME);
 				}
 			}
 			else

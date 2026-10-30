@@ -57,7 +57,7 @@ public class StdSpaceBody extends StdItem implements SpaceObject
 		super();
 		setName("a thing in space");
 		setDisplayText("a thing is floating in space");
-		final Random random=new Random(System.currentTimeMillis());
+		final Random random=new Random(GameTime.now());
 		radius=SpaceObject.Distance.Kilometer.dm + (random.nextLong() % (SpaceObject.Distance.Kilometer.dm / 2));
 		basePhyStats().setWeight(100);
 		basePhyStats().setLevel(1);

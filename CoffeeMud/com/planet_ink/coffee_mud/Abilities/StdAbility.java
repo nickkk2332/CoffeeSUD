@@ -280,7 +280,7 @@ public class StdAbility implements Ability
 		mul -= (0.05 * getXLEVELLevel(caster));
 		mul -= (0.1 * getXTIMELevel(caster));
 		newTime=Math.round(CMath.mul(newTime,mul));
-		setTimeOfNextCast(System.currentTimeMillis() +newTime);
+		setTimeOfNextCast(GameTime.now() +newTime);
 	}
 
 	@Override
@@ -534,8 +534,8 @@ public class StdAbility implements Ability
 	@Override
 	public void setExpirationDate(final long time)
 	{
-		if(time>System.currentTimeMillis())
-			tickDown=(int)((time-System.currentTimeMillis())/CMProps.getTickMillis());
+		if(time>GameTime.now())
+			tickDown=(int)((time-GameTime.now())/CMProps.getTickMillis());
 		else
 			tickDown=(int)Math.round(CMath.div(time,CMProps.getTickMillis()));
 	}
@@ -1824,7 +1824,7 @@ public class StdAbility implements Ability
 		if(!A.isSavable())
 			return;
 
-		if((System.currentTimeMillis()-((StdAbility)A).lastCastHelp)<300000)
+		if((GameTime.now()-((StdAbility)A).lastCastHelp)<300000)
 			return;
 
 		if(!A.appropriateToMyFactions(mob))
@@ -1854,7 +1854,7 @@ public class StdAbility implements Ability
 						effA.setProficiency(A.proficiency());
 					if(mob.isAttributeSet(MOB.Attrib.AUTOIMPROVE))
 						mob.tell(L("You become better at @x1.",A.name()));
-					((StdAbility)A).lastCastHelp=System.currentTimeMillis();
+					((StdAbility)A).lastCastHelp=GameTime.now();
 				}
 			}
 			if((A.proficiency() >= maxProficiency)
@@ -1977,14 +1977,14 @@ public class StdAbility implements Ability
 			final Room room=mob.location();
 			if((getTicksBetweenCasts()>0)
 			&&(getTimeOfNextCast()>0)
-			&&(System.currentTimeMillis()<getTimeOfNextCast())
+			&&(GameTime.now()<getTimeOfNextCast())
 			&&(room!=null)
 			&&(room.getArea()!=null)
 			&&(!CMSecurity.isAllowed(mob, room, CMSecurity.SecFlag.ALLSKILLS)))
 			{
 				final TimeClock C=room.getArea().getTimeObj();
 				if(C!=null)
-					failureTell(mob,mob,auto,L("You must wait @x1 before you can do that again.",C.deriveEllapsedTimeString(getTimeOfNextCast()-System.currentTimeMillis())), commands);
+					failureTell(mob,mob,auto,L("You must wait @x1 before you can do that again.",C.deriveEllapsedTimeString(getTimeOfNextCast()-GameTime.now())), commands);
 				return false;
 			}
 
@@ -1997,7 +1997,7 @@ public class StdAbility implements Ability
 
 			int[] consumed=usageCost(mob,false);
 			final int[] timeCache;
-			final int nowLSW = (int)(System.currentTimeMillis()&0x7FFFFFFF);
+			final int nowLSW = (int)(GameTime.now()&0x7FFFFFFF);
 			final AbilityMapper.CompoundingRule rule = CMLib.ableMapper().getCompoundingRule(mob, this);
 			if((rule!=null)
 			&&(rule.compoundingTicks() > 0)
@@ -2052,7 +2052,7 @@ public class StdAbility implements Ability
 
 			if((minCastWaitTime()>0)&&(lastCastHelp>0))
 			{
-				if((System.currentTimeMillis()-lastCastHelp)<minCastWaitTime())
+				if((GameTime.now()-lastCastHelp)<minCastWaitTime())
 				{
 					if(minCastWaitTime()<=1000)
 						failureTell(mob,mob,auto,L("You need a second to recover before doing that again."), commands);

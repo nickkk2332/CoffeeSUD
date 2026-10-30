@@ -194,7 +194,7 @@ public class Nanny extends StdBehavior
 		{
 			if(D.mommyMname.equalsIgnoreCase(mob.Name()))
 			{
-				long t=System.currentTimeMillis()-D.dropOffTime;
+				long t=GameTime.now()-D.dropOffTime;
 				t=Math.round(Math.ceil(CMath.div(t,CMProps.getMillisPerMudHour())));
 				if(t>0)
 					amt+=(t*hourlyRate);
@@ -267,7 +267,7 @@ public class Nanny extends StdBehavior
 		{
 			if(D.baby==P)
 			{
-				long t=System.currentTimeMillis()-D.dropOffTime;
+				long t=GameTime.now()-D.dropOffTime;
 				t=Math.round(Math.floor(CMath.div(t,CMProps.getMillisPerMudHour())));
 				if(t>0)
 					return CMLib.beanCounter().abbreviatedPrice(currency, (t+hourlyRate))+" for watching "+P.name();
@@ -291,7 +291,7 @@ public class Nanny extends StdBehavior
 		{
 			if(D.mommyMname.equalsIgnoreCase(mob.Name()))
 			{
-				long t=System.currentTimeMillis()-D.dropOffTime;
+				long t=GameTime.now()-D.dropOffTime;
 				t=Math.round(Math.ceil(CMath.div(t,CMProps.getMillisPerMudHour())));
 				if(t>0)
 					owed.append(CMLib.beanCounter().abbreviatedPrice(currency, (t*hourlyRate))+" for "+D.baby.name()+", ");
@@ -548,7 +548,7 @@ public class Nanny extends StdBehavior
 				{
 					final MOB source=getMommyOf(P);
 					if(source!=null)
-						associations.add(new DropOff(source.Name(),P,System.currentTimeMillis()));
+						associations.add(new DropOff(source.Name(),P,GameTime.now()));
 				}
 				if(P instanceof MOB)
 				{
@@ -560,7 +560,7 @@ public class Nanny extends StdBehavior
 						{
 							final MOB source=getMommyOf(I);
 							if(source!=null)
-								associations.add(new DropOff(source.Name(),I,System.currentTimeMillis()));
+								associations.add(new DropOff(source.Name(),I,GameTime.now()));
 						}
 					}
 				}
@@ -931,7 +931,7 @@ public class Nanny extends StdBehavior
 						{
 							if((D.baby instanceof MOB)&&(((MOB)D.baby).amFollowing()!=null))
 								((MOB)D.baby).setFollowing(null);
-							D.dropOffTime=System.currentTimeMillis();
+							D.dropOffTime=GameTime.now();
 							dropOffs.add(D);
 							associations.remove(D);
 							changedSinceLastSave=true;

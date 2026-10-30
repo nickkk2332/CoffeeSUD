@@ -99,14 +99,14 @@ public class LifeFountain extends StdDrink implements MiscMagic
 				{
 					synchronized(lastDrinks)
 					{
-						if(lastCheck.get() < (System.currentTimeMillis()-16000))
+						if(lastCheck.get() < (GameTime.now()-16000))
 						{
-							lastCheck.set(System.currentTimeMillis());
+							lastCheck.set(GameTime.now());
 							List<MOB> delList = null;
 							for(final MOB M : lastDrinks.keySet())
 							{
 								final Long time = lastDrinks.get(M);
-								if(time.longValue()<(System.currentTimeMillis()-16000))
+								if(time.longValue()<(GameTime.now()-16000))
 								{
 									if(delList == null)
 										delList = new LinkedList<MOB>();
@@ -132,7 +132,7 @@ public class LifeFountain extends StdDrink implements MiscMagic
 						A=CMClass.getAbility("Prayer_CureDisease");
 						if(A!=null)
 							A.invoke(msg.source(),msg.source(),true,phyStats().level());
-						time=Long.valueOf(System.currentTimeMillis());
+						time=Long.valueOf(GameTime.now());
 						lastDrinks.put(msg.source(),time);
 					}
 				}

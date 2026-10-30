@@ -43,7 +43,7 @@ public class Naga extends StdMOB
 	public Naga()
 	{
 		super();
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 
 		_name="a naga";
 		setDisplayText("A naga is here");

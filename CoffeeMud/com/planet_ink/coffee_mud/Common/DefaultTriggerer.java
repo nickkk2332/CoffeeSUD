@@ -149,7 +149,7 @@ public class DefaultTriggerer implements Triggerer
 				if(T != null)
 				{
 					if((T.timeout > 0)
-					&&(System.currentTimeMillis()>T.time + T.timeout))
+					&&(GameTime.now()>T.time + T.timeout))
 						return null;
 					return T;
 				}
@@ -174,7 +174,7 @@ public class DefaultTriggerer implements Triggerer
 		private volatile int			completed	= -1;
 		private final String			holyName;
 		private final Reference<MOB>	charM;
-		private volatile long			time		= System.currentTimeMillis(); // last time a completed occurred
+		private volatile long			time		= GameTime.now(); // last time a completed occurred
 		public volatile long			waitExpire	= -1;
 		public long						timeout		= -1;
 		public final Object				key;
@@ -198,7 +198,7 @@ public class DefaultTriggerer implements Triggerer
 		public synchronized void setCompleted(final Trigger T)
 		{
 			completed++;
-			time=System.currentTimeMillis();
+			time=GameTime.now();
 		}
 
 		public void setIgnore(final boolean truefalse)
@@ -1002,7 +1002,7 @@ public class DefaultTriggerer implements Triggerer
 		case WAIT:
 		{
 			final long waitDuration=CMath.s_long(DT.parm1)*CMProps.getTickMillis();
-			if(System.currentTimeMillis()>(trigState.time+waitDuration))
+			if(GameTime.now()>(trigState.time+waitDuration))
 				return CMClass.getMsg(mob, CMMsg.MSG_OK_ACTION, null); // force the wait to be evaluated
 			return null;
 		}
@@ -1442,7 +1442,7 @@ public class DefaultTriggerer implements Triggerer
 					if(state == null)
 						state = getCreateTrigState(hostM, key);
 					final long waitExpires=state.time + CMath.s_long(DT.parm1)*CMProps.getTickMillis();
-					if(System.currentTimeMillis()>waitExpires)
+					if(GameTime.now()>waitExpires)
 					{
 						yup=true;
 						state.setWait(-1);
@@ -1857,7 +1857,7 @@ public class DefaultTriggerer implements Triggerer
 				if(waitingFor.size()==0)
 					return trackingNoone;
 				List<MOB> waitDoneList=null;
-				final long now=System.currentTimeMillis();
+				final long now=GameTime.now();
 				for (final Iterator<TrigState> s = waitingFor.iterator();s.hasNext();)
 				{
 					final TrigState S = s.next();

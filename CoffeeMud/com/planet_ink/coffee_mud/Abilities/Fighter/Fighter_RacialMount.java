@@ -220,7 +220,7 @@ public class Fighter_RacialMount extends StdAbility
 	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
 	{
 		super.affectPhyStats(affected,affectableStats);
-		if((lastLeave != 0) && ((System.currentTimeMillis() - lastLeave)<250))
+		if((lastLeave != 0) && ((GameTime.now() - lastLeave)<250))
 			affectableStats.setSpeed(affectableStats.speed()*4.0);
 	}
 
@@ -255,7 +255,7 @@ public class Fighter_RacialMount extends StdAbility
 				&&(isMount(mob,msg.source()))
 				&&(proficiencyCheck(mob,0,false)))
 				{
-					lastLeave = System.currentTimeMillis();
+					lastLeave = GameTime.now();
 					mob.recoverPhyStats();
 				}
 				else
@@ -318,7 +318,7 @@ public class Fighter_RacialMount extends StdAbility
 		if(!super.tick(ticking,tickID))
 			return false;
 		if((lastLeave != 0)
-		&&((System.currentTimeMillis() - lastLeave)>=250))
+		&&((GameTime.now() - lastLeave)>=250))
 		{
 			lastLeave=0;
 			final Physical affected = this.affected;

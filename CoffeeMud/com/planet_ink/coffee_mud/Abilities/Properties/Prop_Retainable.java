@@ -139,7 +139,7 @@ public class Prop_Retainable extends Property
 			final MOB mob=(MOB)affected;
 			if(mob.location()!=null)
 			{
-				if((lastMoveIn>0)&&((System.currentTimeMillis()-lastMoveIn)>4))
+				if((lastMoveIn>0)&&((GameTime.now()-lastMoveIn)>4))
 				{
 					lastMoveIn=0;
 					if((mob.location()==lastRoom)
@@ -155,16 +155,16 @@ public class Prop_Retainable extends Property
 				if(payPeriodLengthInMudDays>0)
 				{
 					if(lastPayDayTimestamp==0)
-						lastPayDayTimestamp=System.currentTimeMillis();
+						lastPayDayTimestamp=GameTime.now();
 					if(payPeriodLengthInMS<=0)
 					{
 						payPeriodLengthInMS=((long)payPeriodLengthInMudDays)
 										*((long)CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY))*CMProps.getTickMillis();
 					}
-					if((System.currentTimeMillis()>(lastPayDayTimestamp+payPeriodLengthInMS))
+					if((GameTime.now()>(lastPayDayTimestamp+payPeriodLengthInMS))
 					&&(CMLib.flags().isInTheGame(mob,true)))
 					{
-						lastPayDayTimestamp=System.currentTimeMillis();
+						lastPayDayTimestamp=GameTime.now();
 						final LandTitle t=CMLib.law().getLandTitle(mob.location());
 						if(mob.amFollowing()!=null)
 						{
@@ -262,7 +262,7 @@ public class Prop_Retainable extends Property
 						{
 							mob.basePhyStats().setRejuv(PhyStats.NO_REJUV);
 							mob.setStartRoom(room);
-							lastMoveIn=System.currentTimeMillis();
+							lastMoveIn=GameTime.now();
 						}
 					}
 					/*

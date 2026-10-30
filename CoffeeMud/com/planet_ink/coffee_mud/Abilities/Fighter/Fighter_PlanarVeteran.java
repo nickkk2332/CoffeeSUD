@@ -217,7 +217,7 @@ public class Fighter_PlanarVeteran extends FighterSkill
 		if(!visits.containsKey(uplane))
 		{
 			final MOB M=(affected instanceof MOB)?(MOB)affected:invoker();
-			final long expires = System.currentTimeMillis()
+			final long expires = GameTime.now()
 					+ (60000L * (M.phyStats().level() * (60 + (30 * super.getXTIMELevel(M)) )));
 			visits.put(uplane, Long.valueOf(expires));
 			if(expires < this.nextExpire)
@@ -256,7 +256,7 @@ public class Fighter_PlanarVeteran extends FighterSkill
 		final Map<String,Long> visits = getUpperVisitations();
 		boolean changed = false;
 		long nextMs = Long.MAX_VALUE;
-		final long now=System.currentTimeMillis();
+		final long now=GameTime.now();
 		for(final Iterator<Entry<String,Long>> e=visits.entrySet().iterator();e.hasNext();)
 		{
 			final Entry<String,Long> E=e.next();
@@ -299,7 +299,7 @@ public class Fighter_PlanarVeteran extends FighterSkill
 					addVisitation(curPlane);
 			}
 			getUpperVisitations(); // to ensure bonuses exist always
-			if(System.currentTimeMillis() > nextExpire)
+			if(GameTime.now() > nextExpire)
 				checkExpiredVisits();
 		}
 		return true;

@@ -179,10 +179,10 @@ public class ShipSensorProgram extends GenShipProgram
 	protected void onPowerCurrent(final int value)
 	{
 		super.onPowerCurrent(value);
-		if (System.currentTimeMillis() > nextPowerCycleTmr)
+		if (GameTime.now() > nextPowerCycleTmr)
 		{
 			engines = null; // why only this?!
-			nextPowerCycleTmr = System.currentTimeMillis() + (8 * 1000);
+			nextPowerCycleTmr = GameTime.now() + (8 * 1000);
 			if(--activationCounter <= 0) // so--- every 800 seconds?
 			{
 				activationCounter = DEFAULT_ACT_8_SEC_COUNTDOWN;

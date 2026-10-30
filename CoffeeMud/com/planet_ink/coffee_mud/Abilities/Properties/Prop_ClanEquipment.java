@@ -341,13 +341,13 @@ public class Prop_ClanEquipment extends Property implements TriggeredAffect
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
 		super.executeMsg(myHost,msg);
-		if(((System.currentTimeMillis()-lastChecked)>TimeManager.MILI_HOUR)&&(affected!=null))
+		if(((GameTime.now()-lastChecked)>TimeManager.MILI_HOUR)&&(affected!=null))
 		{
 			if((clanName!=null)
 			&&(clanName.length()>0)
 			&&(CMLib.clans().getClanAnyHost(clanName)==null))
 				affected.delEffect(this);
-			lastChecked=System.currentTimeMillis();
+			lastChecked=GameTime.now();
 		}
 		MOB mob=null;
 		MOB source=null;

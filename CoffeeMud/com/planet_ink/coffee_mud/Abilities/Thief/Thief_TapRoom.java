@@ -409,7 +409,7 @@ public class Thief_TapRoom extends ThiefSkill
 			mob.location().send(mob,msg);
 			beneficialAffect(mob,target,asLevel,0);
 
-			final String code=""+System.currentTimeMillis()+Math.random();
+			final String code=""+GameTime.now()+Math.random();
 			Thief_TapRoom TR=(Thief_TapRoom)copyOf();
 			final int level=1+(adjustedLevel(mob,asLevel)/5)+(getXLEVELLevel(mob)*5);
 			TR.setInvoker(mob);

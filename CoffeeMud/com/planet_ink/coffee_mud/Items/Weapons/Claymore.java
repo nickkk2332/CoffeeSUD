@@ -48,7 +48,7 @@ public class Claymore extends Sword
 	{
 		super();
 
-		final Random randomizer = new Random(System.currentTimeMillis());
+		final Random randomizer = new Random(GameTime.now());
 		final int claymoreType = Math.abs(randomizer.nextInt() % 3);
 
 		this.phyStats.setAbility(claymoreType);

@@ -208,7 +208,7 @@ public class Fighter_SmokeSignals extends FighterSkill
 				badWeathers[Climate.WEATHER_SLEET] = true;
 				badWeathers[Climate.WEATHER_SNOW] = true;
 				badWeathers[Climate.WEATHER_THUNDERSTORM] = true;
-				final long expires = System.currentTimeMillis() + CMProps.getTickMillis();
+				final long expires = GameTime.now() + CMProps.getTickMillis();
 				for(final Iterator<Room> r=checkSet.iterator();r.hasNext();)
 				{
 					R=r.next();
@@ -217,7 +217,7 @@ public class Fighter_SmokeSignals extends FighterSkill
 					&&((R.domainType()&Room.INDOORS)==0)
 					&&(!CMLib.flags().isUnderWateryRoom(R))
 					&&(!badWeathers[weather])
-					&&(System.currentTimeMillis()<expires)
+					&&(GameTime.now()<expires)
 					&&(R.okMessage(mob,msg2)))
 						R.sendOthers(msg.source(),msg2);
 				}

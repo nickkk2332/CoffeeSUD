@@ -117,7 +117,7 @@ public class Thief_HeroicReflexes extends ThiefSkill
 			final Physical affected = this.affected;
 			if((affected instanceof MOB)
 			&&(((MOB)affected).getGroupMembers(new HashSet<MOB>()).contains(msg.target()))
-			&&(System.currentTimeMillis() > nextTrigger))
+			&&(GameTime.now() > nextTrigger))
 			{
 				final MOB mob=(MOB)affected;
 				final Room R=mob.location();
@@ -139,7 +139,7 @@ public class Thief_HeroicReflexes extends ThiefSkill
 					finally
 					{
 						activated=false;
-						nextTrigger=System.currentTimeMillis() + (CMProps.getTickMillis() * (15-super.getXLEVELLevel(mob)));
+						nextTrigger=GameTime.now() + (CMProps.getTickMillis() * (15-super.getXLEVELLevel(mob)));
 					}
 					return false;
 				}

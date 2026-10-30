@@ -231,7 +231,7 @@ public class StdCraftBroker extends StdShopKeeper implements CraftBroker
 		final XMLLibrary xmlLib=CMLib.xml();
 		for(final PlayerData dat : data)
 		{
-			Long time = Long.valueOf(System.currentTimeMillis()-1);
+			Long time = Long.valueOf(GameTime.now()-1);
 			final String xmlStr = dat.xml();
 			if((xmlStr.length()>0)&&(xmlStr.startsWith("<")))
 			{
@@ -282,7 +282,7 @@ public class StdCraftBroker extends StdShopKeeper implements CraftBroker
 		final List<Triad<String,String,Long>> list = new Vector<Triad<String,String,Long>>();
 		for(final PlayerData dat : data)
 		{
-			Long time = Long.valueOf(System.currentTimeMillis()-1);
+			Long time = Long.valueOf(GameTime.now()-1);
 			final String xml = dat.xml();
 			if(!xml.startsWith("<"))
 			{
@@ -335,12 +335,12 @@ public class StdCraftBroker extends StdShopKeeper implements CraftBroker
 		synchronized(CMClass.getSync(("BROKER_CHAIN_"+brokerChain().toUpperCase().trim())))
 		{
 			final Long nextTime=StdCraftBroker.nextCheckTimes.get(brokerChain().toUpperCase().trim());
-			if((nextTime==null)||System.currentTimeMillis()>nextTime.longValue())
+			if((nextTime==null)||GameTime.now()>nextTime.longValue())
 			{
 				if(!CMLib.flags().isInTheGame(this,true))
 					return true;
 				StdCraftBroker.nextCheckTimes.remove(brokerChain().toUpperCase().trim());
-				final long thisTime=System.currentTimeMillis();
+				final long thisTime=GameTime.now();
 				final TimeClock nowC = CMLib.time().homeClock(this);
 				final long millisPerMudDay = (CMProps.getMillisPerMudHour() * nowC.getHoursInDay());
 				StdCraftBroker.nextCheckTimes.put(brokerChain().toUpperCase().trim(), Long.valueOf(thisTime+millisPerMudDay));
@@ -350,14 +350,14 @@ public class StdCraftBroker extends StdShopKeeper implements CraftBroker
 					final String shopKey = "BROKER_SHOP_"+brokerChain().toUpperCase().replace(' ', '_');
 					for(final Triad<String,String,Long> res : scanResults())
 					{
-						if(System.currentTimeMillis()>res.third.longValue())
+						if(GameTime.now()>res.third.longValue())
 							CMLib.database().DBDeletePlayerData(res.first, shopKey, res.second);
 					}
 
 					final String reqKey = "BROKER_REQ_"+brokerChain().toUpperCase().replace(' ', '_');
 					for(final Triad<String,String,Long> req : scanRequests())
 					{
-						if(System.currentTimeMillis()>req.third.longValue())
+						if(GameTime.now()>req.third.longValue())
 							CMLib.database().DBDeletePlayerData(req.first, reqKey, req.second);
 					}
 				}

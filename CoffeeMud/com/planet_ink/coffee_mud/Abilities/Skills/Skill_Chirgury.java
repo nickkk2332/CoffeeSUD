@@ -291,7 +291,7 @@ public class Skill_Chirgury extends StdSkill
 						final DeadBody baby=(DeadBody)CMClass.getItem("GenCorpse");
 						baby.setName(L("@x1's bloody fetus",simpleTargetName));
 						baby.setDisplayText(L("@x1's bloody fetus is lying here.",simpleTargetName));
-						baby.setTimeOfDeath(System.currentTimeMillis());
+						baby.setTimeOfDeath(GameTime.now());
 						baby.setIsDestroyAfterLooting(false);
 						baby.setKillerName(mob.Name());
 						baby.setKillerTool(ww);

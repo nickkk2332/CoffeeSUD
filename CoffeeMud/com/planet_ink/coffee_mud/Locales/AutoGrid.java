@@ -76,7 +76,7 @@ public class AutoGrid extends StdGrid implements GridLocale, AutoGenArea
 	@Override
 	protected Room[][] getBuiltGrid()
 	{
-		if(System.currentTimeMillis() > expires)
+		if(GameTime.now() > expires)
 			clearGrid(null);
 		return super.getBuiltGrid();
 	}
@@ -127,11 +127,11 @@ public class AutoGrid extends StdGrid implements GridLocale, AutoGenArea
 	{
 		if(!canAutoGenerateNow())
 		{
-			expires = System.currentTimeMillis() + (CMProps.getTickMillis() * 2);
+			expires = GameTime.now() + (CMProps.getTickMillis() * 2);
 			super.buildGrid();
 			return;
 		}
-		expires = System.currentTimeMillis() + (CMProps.getTickMillis() * 8);
+		expires = GameTime.now() + (CMProps.getTickMillis() * 8);
 		clearGrid(null);
 		try
 		{

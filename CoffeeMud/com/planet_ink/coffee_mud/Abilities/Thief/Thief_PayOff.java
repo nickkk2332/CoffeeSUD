@@ -95,7 +95,7 @@ public class Thief_PayOff extends ThiefSkill
 			for(final LegalWarrant W : warrants)
 			{
 				if((W.arrestingOfficer()==officer)
-				&&(System.currentTimeMillis()>W.getIgnoreUntilTime()))
+				&&(GameTime.now()>W.getIgnoreUntilTime()))
 				{
 					if(W.state()!=Law.STATE_SEEKING)
 						didSomething=true;

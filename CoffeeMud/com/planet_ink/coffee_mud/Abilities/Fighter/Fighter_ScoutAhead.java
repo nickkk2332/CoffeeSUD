@@ -94,14 +94,14 @@ public class Fighter_ScoutAhead extends FighterSkill
 	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
 	{
 		super.affectPhyStats(affected,affectableStats);
-		if(System.currentTimeMillis()<expire)
+		if(GameTime.now()<expire)
 			affectableStats.setSensesMask(affectableStats.sensesMask()|PhyStats.IS_SNEAKING);
 	}
 
 	@Override
 	public boolean okMessage(final Environmental myHost, final CMMsg msg)
 	{
-		if(System.currentTimeMillis()>expire)
+		if(GameTime.now()>expire)
 		{
 			unInvoke();
 			return true;
@@ -155,7 +155,7 @@ public class Fighter_ScoutAhead extends FighterSkill
 	{
 		if(!super.tick(ticking, tickID))
 			return false;
-		return System.currentTimeMillis()<expire;
+		return GameTime.now()<expire;
 	}
 
 	@Override
@@ -257,7 +257,7 @@ public class Fighter_ScoutAhead extends FighterSkill
 				final Rideable ride = mob.riding();
 				if(ride instanceof MOB)
 				{
-					this.expire = System.currentTimeMillis() + CMProps.getTickMillis();
+					this.expire = GameTime.now() + CMProps.getTickMillis();
 					this.tickDown=2;
 					this.expireR = mob.location();
 					Ability rideA = (Ability)copyOf();

@@ -50,7 +50,7 @@ public class Asteroid extends GenSpaceBody
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random())});
-		final Random random=new Random(System.currentTimeMillis());
+		final Random random=new Random(GameTime.now());
 		radius=(5*SpaceObject.Distance.Kilometer.dm) + (random.nextLong() % (4*SpaceObject.Distance.Kilometer.dm));
 		recoverPhyStats();
 	}

@@ -50,7 +50,7 @@ public class DwarfStar extends GenSpaceBody
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random()),
 				Math.round(Long.MAX_VALUE*Math.random())});
-		Random random=new Random(System.currentTimeMillis());
+		Random random=new Random(GameTime.now());
 		radius=SpaceObject.Distance.StarDRadius.dm + (random.nextLong() % Math.round(CMath.mul(SpaceObject.Distance.StarDRadius.dm,0.30)));
 		basePhyStats().setDisposition(PhyStats.IS_LIGHTSOURCE|PhyStats.IS_GLOWING);
 		this.setMaterial(RawMaterial.RESOURCE_HYDROGEN);

@@ -353,7 +353,7 @@ public class PokerDealer extends StdBehavior
 			if((gameState&STATE_MASK)==STATE_WAITING_FOR_ANTIS)
 			{
 				if(timer<=0)
-					timer=System.currentTimeMillis()+(TIME_SECONDSTOSTART*1000);
+					timer=GameTime.now()+(TIME_SECONDSTOSTART*1000);
 				// if they havn't antied yet
 				if(inPot==null)
 				{
@@ -1478,19 +1478,19 @@ public class PokerDealer extends StdBehavior
 			case STATE_DEALING:
 			case STATE_DONE_DRAWING:
 				communicate(host,null,"Ok, everyone has their cards.  Take a few seconds to look them over, and then we'll start betting.",null);
-				timer=System.currentTimeMillis()+(TIME_SECONDSTOFIRSTBET*1000);
+				timer=GameTime.now()+(TIME_SECONDSTOFIRSTBET*1000);
 				break;
 			case STATE_FIRST_BETTER:
 				if(whoseTurn!=null)
 					communicate(host,whoseTurn,"Ok, "+whoseTurn.name()+", you may bet by dropping money, or you may say 'pass'.",null);
 				communicate(host,whoseTurn,"You have "+TIME_SECONDSTOBET+" seconds.",null);
-				timer=System.currentTimeMillis()+(TIME_SECONDSTOBET*1000);
+				timer=GameTime.now()+(TIME_SECONDSTOBET*1000);
 				break;
 			case STATE_FIRST_DRAW:
 			case STATE_NEXT_DRAW:
 				communicate(host,whoseTurn,"Ok, "+whoseTurn.name()+", you may request a draw by saying which cards you want dropped.  For example, say '1 3 5' to drop your first, third, and fifth card for a re-draw.  Say 'stand' if you do not want to draw.",null);
 				communicate(host,whoseTurn,"You have "+TIME_SECONDSTODRAW+" seconds.",null);
-				timer=System.currentTimeMillis()+(TIME_SECONDSTODRAW*1000);
+				timer=GameTime.now()+(TIME_SECONDSTODRAW*1000);
 				break;
 			case STATE_NEXT_BETTER:
 			{
@@ -1504,7 +1504,7 @@ public class PokerDealer extends StdBehavior
 				else
 					communicate(host,whoseTurn,"Ok, "+whoseTurn.name()+", you may call the bet of "+CMLib.beanCounter().abbreviatedPrice(currency,amountNeededToCall)+" by dropping money, or you may say 'fold'.",null);
 				communicate(host,whoseTurn,"You have "+TIME_SECONDSTOBET+" seconds.",null);
-				timer=System.currentTimeMillis()+(TIME_SECONDSTOBET*1000);
+				timer=GameTime.now()+(TIME_SECONDSTOBET*1000);
 				break;
 			}
 			case STATE_DONE_BETTING:
@@ -1596,7 +1596,7 @@ public class PokerDealer extends StdBehavior
 		// now, if the player was asked to do something, such as draw or bet,
 		// and they fail to do so in the amount of time given, we must perform
 		// a default action FOR them.
-		if((timer>0)&&(System.currentTimeMillis()>timer))
+		if((timer>0)&&(GameTime.now()>timer))
 		{
 			switch((gameState)&STATE_MASK)
 			{
@@ -1739,9 +1739,9 @@ public class PokerDealer extends StdBehavior
 			case STATE_WAITING_FOR_ANTIS:
 			{
 				final long started=timer-(TIME_SECONDSTOSTART*1000);
-				final long time=System.currentTimeMillis();
+				final long time=GameTime.now();
 				final long tenseconds=timer-(1000*10);
-				final long remaining=((timer-System.currentTimeMillis())/1000);
+				final long remaining=((timer-GameTime.now())/1000);
 				if((time>started)&&(time<(started+CMProps.getTickMillis())))
 					communicate(host,null,"We've received our first anti for "+GAME_DESCS[gameRules]+". We will start the game in "+remaining+" seconds.",null);
 				else

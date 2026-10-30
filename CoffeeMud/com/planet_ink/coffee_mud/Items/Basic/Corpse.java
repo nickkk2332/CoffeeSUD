@@ -48,7 +48,7 @@ public class Corpse extends GenContainer implements DeadBody
 	protected String 		lastMessage	= "";
 	protected Environmental killingTool	= null;
 	protected boolean 		playerCorpse= false;
-	protected long 			timeOfDeath	= System.currentTimeMillis();
+	protected long 			timeOfDeath	= GameTime.now();
 	protected boolean 		mobPKFlag	= false;
 	protected MOB 			savedMOB	= null;
 	protected boolean		saveSavedMOB= false;
@@ -293,7 +293,7 @@ public class Corpse extends GenContainer implements DeadBody
 			return;
 		}
 		if(msg.amITarget(this)&&(msg.targetMinor()==CMMsg.TYP_SNIFF)
-		&&((System.currentTimeMillis()-getTimeOfDeath())>(TimeManager.MILI_HOUR/2)))
+		&&((GameTime.now()-getTimeOfDeath())>(TimeManager.MILI_HOUR/2)))
 			msg.source().tell(L("@x1 has definitely started to decay.",name()));
 		super.executeMsg(myHost, msg);
 

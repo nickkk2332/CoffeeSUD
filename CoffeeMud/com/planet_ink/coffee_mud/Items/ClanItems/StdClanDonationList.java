@@ -97,9 +97,9 @@ public class StdClanDonationList extends StdClanItem
 	{
 		if(source != null)
 		{
-			return System.currentTimeMillis()+"/"+source.Name()+"/"+Math.random();
+			return GameTime.now()+"/"+source.Name()+"/"+Math.random();
 		}
-		return System.currentTimeMillis()+"/UNK/"+Math.random();
+		return GameTime.now()+"/UNK/"+Math.random();
 	}
 
 	@Override

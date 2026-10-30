@@ -261,10 +261,10 @@ public class GenGangline extends GenArmor
 		&&(msg.source()==((MOB)owner()).riding())
 		&&(this.amBeingWornProperly()))
 		{
-			this.nextCheck=System.currentTimeMillis()+4000;
+			this.nextCheck=GameTime.now()+4000;
 		}
 		else
-		if(System.currentTimeMillis()>this.nextCheck)
+		if(GameTime.now()>this.nextCheck)
 		{
 			this.nextCheck=Long.MAX_VALUE;
 			final ItemPossessor P=owner();

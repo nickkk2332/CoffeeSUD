@@ -247,7 +247,7 @@ public class Prayer_InfuseImpunity extends Prayer implements Deity.DeityWorshipp
 				{
 					final Ability A=mob.fetchEffect(able.ID());
 					if(A!=null)
-						A.setExpirationDate(System.currentTimeMillis() + A.expirationDate() + Math.round(CMath.mul(A.expirationDate(), 0.5)));
+						A.setExpirationDate(GameTime.now() + A.expirationDate() + Math.round(CMath.mul(A.expirationDate(), 0.5)));
 				}
 			}, 1000);
 		}

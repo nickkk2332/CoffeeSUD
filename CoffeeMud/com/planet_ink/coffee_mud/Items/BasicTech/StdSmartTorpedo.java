@@ -67,7 +67,7 @@ public class StdSmartTorpedo extends StdTorpedo
 			&&(super.timeTicking != null))
 			{
 				final GalacticMap space=CMLib.space();
-				final int maxTicks = (int)((maxChaseTimeMs-(System.currentTimeMillis()-super.timeTicking.longValue()))/CMProps.getTickMillis());
+				final int maxTicks = (int)((maxChaseTimeMs-(GameTime.now()-super.timeTicking.longValue()))/CMProps.getTickMillis());
 				if((targetDir==null)
 				||(speed()==0)
 				||((++rescanCtr>2) && (space.getMinDistanceFrom(this.coordinates,

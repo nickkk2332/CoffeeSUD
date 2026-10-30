@@ -67,7 +67,7 @@ public class Play_Instrument extends Play
 	protected int calculateNewSongDepth(final MOB invoker)
 	{
 		if((invoker!=null)
-		&&(System.currentTimeMillis()-lastPlay<30000))
+		&&(GameTime.now()-lastPlay<30000))
 		{
 			final int maxDepth = getXMAXRANGELevel(invoker()) / 2; // decreased because fireball
 			this.playDepth = this.playDepth + 1;
@@ -76,7 +76,7 @@ public class Play_Instrument extends Play
 		}
 		else
 			this.playDepth = 0;
-		this.lastPlay=System.currentTimeMillis();
+		this.lastPlay=GameTime.now();
 		return this.playDepth;
 	}
 

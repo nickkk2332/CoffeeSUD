@@ -2516,7 +2516,7 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 								if(consumed != null)
 								{
 									final int[] timeCache;
-									final int nowLSW = (int)(System.currentTimeMillis()&0x7FFFFFFF);
+									final int nowLSW = (int)(GameTime.now()&0x7FFFFFFF);
 									final int[][] abilityUsageCache=mob.getAbilityUsageCache(A.ID());
 									if(abilityUsageCache[Ability.CACHEINDEX_LASTTIME] == null)
 										continue;
@@ -2625,7 +2625,7 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 							{
 								long tr=A.expirationDate();
 								if(A.invoker()!=null)
-									tr=tr-(System.currentTimeMillis()-A.invoker().lastTickedDateTime());
+									tr=tr-(GameTime.now()-A.invoker().lastTickedDateTime());
 								if(tr<Ability.TICKS_ALMOST_FOREVER)
 									buf.append(CMLib.time().date2EllapsedTime(tr, TimeUnit.SECONDS, true));
 							}

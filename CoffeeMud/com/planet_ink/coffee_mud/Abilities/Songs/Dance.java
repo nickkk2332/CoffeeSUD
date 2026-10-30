@@ -309,9 +309,9 @@ public class Dance extends StdAbility
 			{
 				final Dance D=(Dance)A;
 				if(D.timeOut==0)
-					D.timeOut = System.currentTimeMillis()
+					D.timeOut = GameTime.now()
 							  + (CMProps.getTickMillis() * (((invoker()!=null)&&(invoker()!=mob))?super.getXTIMELevel(invoker()):0));
-				if(System.currentTimeMillis() >= D.timeOut)
+				if(GameTime.now() >= D.timeOut)
 				{
 					A.unInvoke();
 					return false;

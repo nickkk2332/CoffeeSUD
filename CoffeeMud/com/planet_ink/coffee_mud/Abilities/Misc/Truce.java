@@ -105,7 +105,7 @@ public class Truce extends StdAbility
 
 	public Pair<String,Long> getMyPair(final String name)
 	{
-		final long now=System.currentTimeMillis();
+		final long now=GameTime.now();
 		for(final Iterator<Pair<String,Long>> i=truces.iterator();i.hasNext();)
 		{
 			final Pair<String,Long> p=i.next();
@@ -141,9 +141,9 @@ public class Truce extends StdAbility
 			{
 				final Pair<String,Long> p=getMyPair(msg.source().Name());
 				if(p!=null)
-					p.second=Long.valueOf(System.currentTimeMillis());
+					p.second=Long.valueOf(GameTime.now());
 				else
-					truces.add(new Pair<String,Long>(msg.source().Name(),Long.valueOf(System.currentTimeMillis())));
+					truces.add(new Pair<String,Long>(msg.source().Name(),Long.valueOf(GameTime.now())));
 			}
 		}
 		super.executeMsg(myHost, msg);

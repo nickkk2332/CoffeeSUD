@@ -175,10 +175,10 @@ public class Affect extends StdCommand
 							return 1;
 						long tr1=o1.expirationDate();
 						if(o1.invoker()!=null)
-							tr1=tr1-(System.currentTimeMillis()-o1.invoker().lastTickedDateTime());
+							tr1=tr1-(GameTime.now()-o1.invoker().lastTickedDateTime());
 						long tr2=o2.expirationDate();
 						if(o2.invoker()!=null)
-							tr2=tr2-(System.currentTimeMillis()-o2.invoker().lastTickedDateTime());
+							tr2=tr2-(GameTime.now()-o2.invoker().lastTickedDateTime());
 						return Long.valueOf(tr2).compareTo(Long.valueOf(tr1));
 					}
 					}
@@ -223,7 +223,7 @@ public class Affect extends StdCommand
 				{
 					long tr=A.expirationDate();
 					if(A.invoker()!=null)
-						tr=tr-(System.currentTimeMillis()-A.invoker().lastTickedDateTime());
+						tr=tr-(GameTime.now()-A.invoker().lastTickedDateTime());
 					if(tr<Ability.TICKS_ALMOST_FOREVER)
 						disp+=" ^.^N"+CMLib.time().date2EllapsedTime(tr, TimeUnit.SECONDS, true);
 				}
