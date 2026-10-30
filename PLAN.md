@@ -10,10 +10,10 @@ of the engine; its chapters explain each subsystem.
 ## Running it
 
 ```sh
-cd CoffeeMud
-./build.sh          # compiles in place (about a minute from clean)
-./sud.sh            # play in this terminal
-tools/smoke.sh      # scripted check of the single-player path (from the repo root)
+CoffeeMud/build.sh        # compiles in place (about a minute from clean)
+CoffeeMud/sud.sh          # play in this terminal
+tools/smoke.sh            # one-minute check of the single-player path
+tools/engine-tests.sh     # the engine's TEST ALL suite, about 15 minutes
 ```
 
 `sud.sh` takes `NAME=VALUE` arguments that override `coffeemud.ini`, for
@@ -23,7 +23,8 @@ the database.
 ## Ground rules
 
 - Every step keeps the build green and the smoke test passing, and is
-  committed on its own.
+  committed on its own. Larger steps also run `tools/engine-tests.sh`, which
+  must match the baseline.
 - Removing code beats adding switches. A setting is kept only while a phase
   still needs both paths.
 - The engine's behaviour (combat, abilities, effects, behaviours, scripts) is
@@ -52,6 +53,8 @@ the database.
   session writes later. When input ends, the session logs out and saves.
 - `CMProps.isSinglePlayer()` turns off passwords, e-mail and the login input
   pause in `CharCreation`.
+- The `INFO` channel no longer repeats the player's own achievements, levels
+  and creation.
 - `tools/smoke.sh` (about a minute) creates a character, plays, becomes an
   Archon, quits, then loads the character again. `tools/sudplay.py` types a
   script into the game, waiting for each answer as a person would; piping a
@@ -61,19 +64,27 @@ the database.
 Still to do:
 - A title screen (continue, new character, quit) listing saved characters.
 - Rewrite the multiplayer texts: intro, new-character text, rules, help.
-- Drop channel announcements such as `[INFO] ... completed an achievement`.
 - A debug switch that makes the player an Archon, instead of the manual in the
   start room.
 
-### 2. Remove the network and multiplayer services
+### 2. Remove the network and multiplayer services: mostly done
 
-Delete, keeping the build green after each:
-- the embedded web server (`com/planet_ink/coffee_web`), the browser client
-  (`com/planet_ink/siplet`), `WebMacros/` and the MUDGrinder pages under `web/`;
-- intermud (I3, IMC2, Grapevine, Discord), SMTP, the CM1 server, `MUDProxy`,
-  `I3Router`, `Shutdown`, `AutoPlayTester`;
+Done, each step verified with the smoke test and the engine suite:
+- the embedded web server (`coffee_web`), the browser client (`siplet`), the
+  web macro engine and the MUDGrinder pages under `web/`. `core/TextMacros`
+  expands the few macros game text still uses (`@MudInfo?NAME@`,
+  `@INIValue@`, `@RaceList@`, simple `@if@` blocks).
+- intermud (I3, IMC2, Grapevine, Discord, CM1) and the standalone tools built on
+  it (`I3Router`, `MUDProxy`, `Shutdown`, `AutoPlayTester`, `RebuildRefDocs`).
+- the SMTP server and client. Mail now goes to the in-game mailbox
+  (`JournalsLibrary.postToMailbox`).
+
+Still to do:
 - client protocols (MXP, MSP, GMCP, MSDP, MCCP, MSSP) and telnet handling in
-  `DefaultSession`, leaving a plain text session;
+  `DefaultSession`, leaving a plain text session. The console session already
+  never turns them on, so this is cleanup rather than behaviour.
+- the telnet listener in `MUD.run`, and with it `tools/mudserver.sh` and
+  `tools/mudbot.py`.
 - host groups: `CMLib` and `CMClass` keep one instance per thread group so
   several muds can share a process. One game needs one instance.
 
@@ -125,3 +136,5 @@ hand-built starting area.
 - Phase 0 done: build script, untracked classes, telnet harness.
 - Phase 1 first cut: `sud.sh` creates a character, plays, quits, saves and
   reloads it without a password.
+- Phase 2: web, intermud and mail removed (about 1,650 files). Engine suite
+  unchanged at 47 of 50.
