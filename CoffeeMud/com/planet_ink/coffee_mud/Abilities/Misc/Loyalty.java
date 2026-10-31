@@ -69,7 +69,7 @@ public class Loyalty extends StdAbility
 		return 0;
 	}
 
-	protected final static int		INTERVAL		= (2 * 60) / 4000;
+	protected final static int		INTERVAL		= (int)((TimeManager.MILI_MINUTE * 2) / CMProps.getTickMillis()); // two minutes
 	protected String				loyaltyName		= "";
 	protected boolean				teleport		= false;
 	protected volatile boolean		watchForMaster	= true;

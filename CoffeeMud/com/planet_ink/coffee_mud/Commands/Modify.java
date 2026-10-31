@@ -2961,7 +2961,7 @@ public class Modify extends StdCommand
 			for(final Long L : todoKeys)
 			{
 				O=j.get(L);
-				if(!CMLib.players().playerExists(O.toString()))
+				if(CMSecurity.isPendingJScript(L,O.toString()))
 				{
 					somethingFound=true;
 					mob.tell(L("Unapproved script:\n\r@x1\n\r",O.toString()));

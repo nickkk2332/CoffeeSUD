@@ -588,8 +588,11 @@ public class Prop_PropSetter extends Property implements TriggeredAffect
 				msg.addTrailerRunnable(new RunDeler(properTarget(msg.source())));
 			break;
 		case CMMsg.TYP_PUT:
-			if(CMath.banyset(trigger, TRIGGER_PUT)
-			&&((msg.target()==affected)||(msg.target()==affected)))
+			// putting the thing somewhere, or (DROP_PUTIN) putting something in it
+			if((CMath.banyset(trigger, TRIGGER_PUT)
+				&&((msg.target()==affected)||(msg.tool()==affected)))
+			||(CMath.banyset(trigger, TRIGGER_DROP_PUTIN)
+				&&(msg.target()==affected)))
 				msg.addTrailerRunnable(new RunAdder(properTarget(msg.source()),false));
 			break;
 		case CMMsg.TYP_MOUNT:

@@ -97,6 +97,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected Map<Integer,Integer>	lastTimeProgsDone= Collections.synchronizedMap(new HashMap<Integer,Integer>());
 	protected Map<Integer,Integer>	lastDayProgsDone = Collections.synchronizedMap(new HashMap<Integer,Integer>());
 	protected Set<Integer>			registeredEvents = new HashSet<Integer>();
+	protected volatile Environmental globalsHost	 = null;
 	protected Map<Integer,Long>		noTrigger		 = Collections.synchronizedMap(new HashMap<Integer,Long>());
 	protected MOB					backupMOB		 = null;
 	protected CMMsg					lastMsg			 = null;
@@ -1000,7 +1001,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		{
 			for(int i=0;i<script.size();i++)
 			{
-				if(script.get(i).getTriggerCode()==55)
+				if((script.get(i).getTriggerCode()==58) // the <?xml section
+				&&(script.get(i).size()>0)
+				&&(script.get(i).get(0).third instanceof List))
 				{
 					@SuppressWarnings("unchecked")
 					final List<XMLTag> tags = (List<XMLTag>)script.get(i).get(0).third;
@@ -1035,6 +1038,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		lastTimeProgsDone= Collections.synchronizedMap(new HashMap<Integer,Integer>());
 		lastDayProgsDone = Collections.synchronizedMap(new HashMap<Integer,Integer>());
 		registeredEvents = new HashSet<Integer>();
+		globalsHost = null;
 		noTrigger = Collections.synchronizedMap(new HashMap<Integer,Long>());
 		backupMOB = null;
 		lastMsg = null;
@@ -1269,6 +1273,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			parsedScript.add(xmlS);
 		}
 		return parsedScript;
+	}
+
+	/**
+	 * Returns the rooms of the area the script last knew it was in, or none.
+	 * @return the rooms
+	 */
+	@SuppressWarnings("unchecked")
+	protected Enumeration<Room> areaRooms()
+	{
+		final Room R=lastKnownLocation;
+		if((R==null)||(R.getArea()==null))
+			return EmptyEnumeration.INSTANCE;
+		return R.getArea().getProperMap();
 	}
 
 	protected Room getRoom(final String thisName, final Room imHere)
@@ -4702,7 +4719,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						arg1=arg1.substring(1).trim();
 						MASK=CMLib.masking().maskCompile(arg1);
 					}
-					for(final Enumeration<Room> e=lastKnownLocation.getArea().getProperMap();e.hasMoreElements();)
+					for(final Enumeration<Room> e=areaRooms();e.hasMoreElements();)
 					{
 						final Room R=e.nextElement();
 						if(arg1.equals("*"))
@@ -4732,16 +4749,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					if(tlen==1)
 						tt=parseBits(eval,t,"ccr"); /* tt[t+0] */
-					final String arg1=varify(ctx,tt[t+0]).toUpperCase();
+					String arg1=varify(ctx,tt[t+0]).toUpperCase();
 					final String arg2=tt[t+1];
-					String arg3=varify(ctx,tt[t+2]);
+					final String arg3=varify(ctx,tt[t+2]);
 					int num=0;
 					MaskingLibrary.CompiledZMask MASK=null;
-					if((arg3.toUpperCase().startsWith("MASK")&&(arg3.substring(4).trim().startsWith("="))))
+					if((arg1.toUpperCase().startsWith("MASK")&&(arg1.substring(4).trim().startsWith("="))))
 					{
-						arg3=arg3.substring(4).trim();
-						arg3=arg3.substring(1).trim();
-						MASK=CMLib.masking().maskCompile(arg3);
+						arg1=arg1.substring(4).trim();
+						arg1=arg1.substring(1).trim();
+						MASK=CMLib.masking().maskCompile(arg1);
 					}
 					try
 					{
@@ -4780,7 +4797,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					int num=0;
 					Room R=null;
 					MOB M=null;
-					for(final Enumeration<Room> e=lastKnownLocation.getArea().getProperMap();e.hasMoreElements();)
+					for(final Enumeration<Room> e=areaRooms();e.hasMoreElements();)
 					{
 						R=e.nextElement();
 						for(int m=0;m<R.numInhabitants();m++)
@@ -5483,6 +5500,24 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						returnable=false;
 					break;
 				}
+				case 119: // factionvalue
+				case 120: // factionband
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"cccr"); /* tt[t+0] */
+					final String whom=varify(ctx,tt[t+0]);
+					final String fname=varify(ctx,tt[t+1]);
+					final String cmp=varify(ctx,tt[t+2]);
+					final String arg2=varify(ctx,tt[t+3]);
+					final String value=factionText(ctx,whom,fname,funcCode.intValue()==119);
+					if(value==null)
+						return returnable;
+					if(funcCode.intValue()==119)
+						returnable=simpleEval(ctx.scripted,value,arg2,cmp,"FACTIONVALUE");
+					else
+						returnable=simpleEvalStr(ctx.scripted,value,arg2,cmp,"FACTIONBAND");
+					break;
+				}
 				case 118: // hastag
 				{
 					if(tlen==1)
@@ -5810,7 +5845,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					final Room mobLocR=CMLib.map().roomLocation(E);
 					Room R=null;
 					if(arg2.equalsIgnoreCase("BEACON"))
-						ctx.monster.getStartRoom();
+						R=ctx.monster.getStartRoom();
 					else
 					if(arg2.equalsIgnoreCase("MYPROPERTY"))
 					{
@@ -7048,6 +7083,65 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/**
+	 * A mob's standing with a faction, as FACTIONVALUE and FACTIONBAND give it:
+	 * the number, or the code of the band it is in.
+	 * @param ctx the script context
+	 * @param whom who, as a script names a mob
+	 * @param fname the faction's ID, name or a band code of it
+	 * @param number true for the number, false for the band code
+	 * @return the value, "" if the mob has no standing, null on an error
+	 */
+	protected String factionText(final MPContext ctx, final String whom, final String fname, final boolean number)
+	{
+		final Environmental E=getArgumentMOB(whom,ctx);
+		Faction F=CMLib.factions().getFaction(fname);
+		if(F == null)
+			F=CMLib.factions().getFactionByName(fname);
+		if(F == null)
+			F=CMLib.factions().getFactionByRangeCodeName(fname);
+		if(!(E instanceof MOB))
+		{
+			logError(ctx,number?"FACTIONVALUE":"FACTIONBAND","Unknown Code",whom);
+			return null;
+		}
+		if(F==null)
+		{
+			logError(ctx,number?"FACTIONVALUE":"FACTIONBAND","Unknown Faction",fname);
+			return null;
+		}
+		final MOB M=(MOB)E;
+		if(!M.hasFaction(F.factionID()))
+			return "";
+		final int value=M.fetchFaction(F.factionID());
+		if(number)
+			return Integer.toString(value);
+		final Faction.FRange FR=CMLib.factions().getRange(F.factionID(),value);
+		return (FR==null)?"":FR.codeName();
+	}
+
+	/**
+	 * The text form of a function that is a condition: "true" or "false",
+	 * as the condition FUNC(parms) evaluates.
+	 * @param ctx the script context
+	 * @param func the function name
+	 * @param funcParms what is between its parentheses
+	 * @return "true" or "false", or "" if the condition does not parse
+	 */
+	protected String conditionText(final MPContext ctx, final String func, final String funcParms)
+	{
+		try
+		{
+			final String[] condition=parseEval(func+"("+funcParms+")");
+			return eval(ctx,new String[][] { condition },0) ? "true" : "false";
+		}
+		catch(final ScriptParseException e)
+		{
+			logError(ctx,func,"Syntax",e.getMessage());
+			return "";
+		}
+	}
+
 	@Override
 	public String functify(final MPContext ctx, final String evaluable)
 	{
@@ -7195,7 +7289,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			case 4: // isnpc
 			case 5: // ispc
-				results.append("[unimplemented function]");
+				results.append(conditionText(ctx,preFab,funcParms));
 				break;
 			case 87: // isbirthday
 			{
@@ -7271,7 +7365,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				break;
 			}
 			case 11: // isimmort
-				results.append("[unimplemented function]");
+				results.append(conditionText(ctx,preFab,funcParms));
 				break;
 			case 54: // isalive
 			{
@@ -7696,6 +7790,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				break;
 			}
+			case 119: // factionvalue
+			case 120: // factionband
+			{
+				final String whom=CMParms.getCleanBit(funcParms,0);
+				final String fname=varify(ctx,CMParms.getPastBitClean(funcParms,0));
+				final String value=factionText(ctx,whom,fname,funcCode.intValue()==119);
+				if(value!=null)
+					results.append(value);
+				break;
+			}
 			case 118: // hastag
 			{
 				final String arg1=CMParms.cleanBit(funcParms);
@@ -7739,7 +7843,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					arg1=arg1.substring(1).trim();
 					compiledMask=CMLib.masking().getPreCompiledMask(arg1);
 				}
-				for(final Enumeration<Room> e=lastKnownLocation.getArea().getProperMap();e.hasMoreElements();)
+				for(final Enumeration<Room> e=areaRooms();e.hasMoreElements();)
 				{
 					final Room R=e.nextElement();
 					if(arg1.equals("*"))
@@ -7809,7 +7913,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String arg1=varify(ctx,CMParms.cleanBit(funcParms));
 				Room R=null;
 				MOB M=null;
-				for(final Enumeration<Room> e=lastKnownLocation.getArea().getProperMap();e.hasMoreElements();)
+				for(final Enumeration<Room> e=areaRooms();e.hasMoreElements();)
 				{
 					R=e.nextElement();
 					for(int m=0;m<R.numInhabitants();m++)
@@ -8660,10 +8764,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				break;
 			}
 			case 86: // strcontains
-			{
-				results.append("[unimplemented function]");
+				results.append(conditionText(ctx,preFab,funcParms));
 				break;
-			}
 			case 81: // trains
 			{
 				final String arg1=CMParms.cleanBit(funcParms);
@@ -8971,7 +9073,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				break;
 			}
 			case 41: // eval
-				results.append("[unimplemented function]");
+				results.append(conditionText(ctx,preFab,funcParms));
 				break;
 			case 40: // number
 			{
@@ -9197,7 +9299,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				for(int i=0;i<methods.length;i++)
 				{
 					if(methods[i].startsWith(cmd))
+					{
 						methCode=Integer.valueOf(i+1); // offset by 1, always
+						break; // the first match, as the list is in order
+					}
 				}
 				if(methCode==null)
 					Log.errOut("Scripting",ctx.scripted.name()+"/"+CMLib.map().getDescriptiveExtendedRoomID(lastKnownLocation)+"/MOBPROG Error: '"+cmd+"' is not a valid command.");
@@ -9244,6 +9349,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				if(this.approvedScripts || CMSecurity.isApprovedJScript(jscript))
 				{
+					final int trig=script.getTriggerCode();
+					final String where="'"+ctx.scripted.Name()+"' @ "+CMLib.map().getDescriptiveExtendedRoomID(lastKnownLocation)
+						+((trig>0)&&(trig<=progs.length)?(" "+progs[trig-1]):"")+" <SCRIPT>";
 					final Context cx = Context.enter();
 					try
 					{
@@ -9266,11 +9374,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						};
 						scope.defineFunctionProperties(names, JScriptEvent.class,
 													   ScriptableObject.DONTENUM);
-						cx.evaluateString(scope, jscript.toString(),"<cmd>", 1, null);
+						cx.evaluateString(scope, jscript.toString(),where, 1, null);
 					}
 					catch(final Exception e)
 					{
-						Log.errOut("Scripting",ctx.scripted.name()+"/"+CMLib.map().getDescriptiveExtendedRoomID(lastKnownLocation)+"/JSCRIPT Error: "+e.getMessage());
+						JSRuntime.report(where, e);
 					}
 					finally
 					{
@@ -10868,7 +10976,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							m=(MOB)baseM.copyOf();
 							if((baseM.location() != null)
 							&&(baseM.location().isInhabitant(baseM)))
-								baseM.setStartRoom(null);
+								m.setStartRoom(null); // the copy is not a resident there
 							m.setMiscText(m.text());
 							m.recoverPhyStats();
 							m.recoverCharStats();
@@ -11977,6 +12085,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				break;
 			}
+			case 82: // mprload
+				// listed, but never had an implementation: an error, rather
+				// than running "MPRLOAD" as a game command
+				logError(ctx,"MPRLOAD","Syntax","MPRLOAD is not a command.");
+				break;
 			case 83: // mpacctattoo
 			{
 				if(tt==null)
@@ -12150,13 +12263,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							themob.addFaction(F.factionID(),CMath.s_int(range.trim()));
 						else
 						{
+							// a band of the faction named, by its name or its code
 							Faction.FRange FR=null;
-							final Enumeration<Faction.FRange> e=CMLib.factions().getRanges(CMLib.factions().getAlignmentID());
-							if(e!=null)
-							for(;e.hasMoreElements();)
+							for(final Enumeration<Faction.FRange> e=F.ranges();e.hasMoreElements();)
 							{
 								final Faction.FRange FR2=e.nextElement();
-								if(FR2.name().equalsIgnoreCase(range))
+								if(FR2.name().equalsIgnoreCase(range)
+								||FR2.codeName().equalsIgnoreCase(range))
 								{
 									FR = FR2;
 									break;
@@ -12865,28 +12978,32 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String arg4=varify(ctx,tt[4]).toUpperCase();
 				if((newTarget!=null)&&(arg2.length()>0))
 				{
+					// each option word: ME, KILL (or MEKILL), and a damage type
+					boolean me=false;
+					boolean kill=false;
+					for(final String s4 : arg4.split(" "))
+					{
+						if(s4.equals("MEKILL"))
+						{
+							me=true;
+							kill=true;
+						}
+						else
+						if(s4.equals("ME"))
+							me=true;
+						else
+						if(s4.equals("KILL"))
+							kill=true;
+					}
 					if(newTarget instanceof MOB)
 					{
 						final MOB deadM=(MOB)newTarget;
 						MOB killerM=(MOB)newTarget;
-						boolean me=false;
-						boolean kill=false;
 						int damageType = CMMsg.TYP_CAST_SPELL;
 						for(final String s4 : arg4.split(" "))
 						{
-							if(arg4.length()==0)
+							if((s4.length()==0)||s4.equals("MEKILL")||s4.equals("ME")||s4.equals("KILL"))
 								continue;
-							if(arg4.equals("MEKILL"))
-							{
-								me=true;
-								kill=true;
-							}
-							else
-							if(arg4.equals("ME"))
-								me=true;
-							else
-							if(arg4.equals("KILL"))
-								kill=true;
 							else
 							{
 								for(int i4=0;i4<CharStats.CODES.CMMSGMAP().length;i4++)
@@ -12930,7 +13047,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							boolean destroy=false;
 							if(E.subjectToWearAndTear())
 							{
-								if((dmg>=E.usesRemaining())&&(!arg4.equalsIgnoreCase("kill")))
+								if((dmg>=E.usesRemaining())&&(!kill))
 									dmg=E.usesRemaining()-1;
 								if(dmg>0)
 									E.setUsesRemaining(E.usesRemaining()-dmg);
@@ -12938,7 +13055,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 									destroy=true;
 							}
 							else
-							if(arg4.equalsIgnoreCase("kill"))
+							if(kill)
 								destroy=true;
 							if(destroy)
 							{
@@ -13547,9 +13664,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(tt[2].trim().length()>0)
 				{
 					WA = getArgumentMOB(tt[2], ctx);
-					if(!(PA instanceof MOB))
+					if(!(WA instanceof MOB))
 					{
-						logError(ctx,"MPACCUSE","RunTime",tt[1]+" is not found.");
+						logError(ctx,"MPACCUSE","RunTime",tt[2]+" is not found.");
 						break;
 					}
 				}
@@ -13791,7 +13908,61 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				Log.debugOut("Scripting engine parse "+scripts.size()+" scripts");
 			Resources.submitResource(getScriptResourceKey(),scripts);
 		}
+		if(scriptedE!=globalsHost)
+			registerGlobalTriggers(scriptedE,scripts);
 		return scripts;
+	}
+
+	@Override
+	public void registerHost(final PhysicalAgent host)
+	{
+		if(host!=null)
+			getScripts(host);
+	}
+
+	/**
+	 * Registers the host of scripts that react to world-wide events (logins,
+	 * quits, level changes, channel messages) as a global handler for them,
+	 * the first time the scripts meet their host, so that they hear the
+	 * first such event wherever it happens, and after a restore.
+	 * @param host the scripted host
+	 * @param scripts its parsed scripts
+	 */
+	protected void registerGlobalTriggers(final Environmental host, final List<SubScript> scripts)
+	{
+		if(!(host instanceof PhysicalAgent))
+			return;
+		synchronized(registeredEvents)
+		{
+			if(host==globalsHost)
+				return;
+			if(globalsHost!=null)
+				registeredEvents.clear();
+			globalsHost=host;
+			for(final SubScript script : scripts)
+			{
+				final int category;
+				switch(script.getTriggerCode())
+				{
+				case 29: // login_prog
+					category=CMMsg.TYP_LOGIN;
+					break;
+				case 30: // logoff_prog
+					category=CMMsg.TYP_QUIT;
+					break;
+				case 32: // level_prog
+					category=CMMsg.TYP_LEVEL;
+					break;
+				case 33: // channel_prog
+					category=CMMsg.TYP_CHANNEL;
+					break;
+				default:
+					continue;
+				}
+				if(registeredEvents.add(Integer.valueOf(category)))
+					CMLib.map().addGlobalHandler((PhysicalAgent)host,category);
+			}
+		}
 	}
 
 	protected boolean match(final String str, final String patt)
@@ -14245,7 +14416,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -14265,7 +14436,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], eventMob);
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								if((host instanceof Item)
 								&&(((Item)host).owner() instanceof MOB)
@@ -14304,7 +14475,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -14325,7 +14496,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								noTrigger.put(Integer.valueOf(-52),Long.valueOf(GameTime.now()+CMProps.getTickMillis()));
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
@@ -14811,6 +14982,26 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						}
 					}
 					break;
+				case 60: // removing_prog
+					if((msg.targetMinor()==CMMsg.TYP_REMOVE)
+					&&canTrigger(60)&&canTrigger(24)
+					&&(msg.amISource(monster))
+					&&(msg.target() instanceof Item)
+					&&((!(affecting instanceof MOB)) || isFreeToBeTriggered(monster)))
+					{
+						final Item checkInE=(Item)msg.target();
+						final String check=standardTriggerCheck(script,t,checkInE,affecting,monster,msg.source(),msg.target(),checkInE,defaultItem,t);
+						if(check!=null)
+						{
+							if(lastMsg==msg)
+								break;
+							lastMsg=msg;
+							enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),checkInE,defaultItem,check,script,1, t);
+							if(!multiTriggers)
+								return;
+						}
+					}
+					break;
 				case 56: // riding_prog
 					if((msg.targetMinor()==CMMsg.TYP_MOUNT)
 					&&canTrigger(56)
@@ -14832,9 +15023,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					break;
 				case 55: // ride_prog
-					if((msg.targetMinor()==CMMsg.TYP_MOUNT)
-					&&canTrigger(55)
-					&&(msg.amISource(monster))
+				case 59: // dismount_prog
+					// anyone mounting or dismounting the host, or, for a room,
+					// area or mob, any rideable there
+					if((msg.targetMinor()==((triggerCode==55)?CMMsg.TYP_MOUNT:CMMsg.TYP_DISMOUNT))
+					&&canTrigger(triggerCode)
+					&&((msg.amITarget(affecting))
+						||(affecting instanceof Room)
+						||(affecting instanceof Area)
+						||(affecting instanceof MOB))
+					&&(!msg.amISource(monster))
 					&&(msg.target() instanceof Rideable)
 					&&((!(affecting instanceof MOB)) || isFreeToBeTriggered(monster)))
 					{
@@ -15128,7 +15326,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								final List<ScriptableResponse> V=new XVector<ScriptableResponse>(que);
 								ScriptableResponse SB=null;
@@ -15163,7 +15361,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								final List<ScriptableResponse> V=new XVector<ScriptableResponse>(que);
 								ScriptableResponse SB=null;
@@ -15250,7 +15448,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -15275,11 +15473,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								final MPContext ctx = new MPContext(affecting,monster,msg.source(),monster,defaultItem,null,null, null);
 								for(int i=0;i<t.length && (i<ctx.tmp.length);i++)
-									ctx.tmp[i]=t;
+									ctx.tmp[i]=t[i];
 								execute(ctx.push(script));
 								if(!multiTriggers)
 									return;
@@ -15297,7 +15495,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<prcnt)
+							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -15674,12 +15872,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					if(t==null)
 						t=parseBits(script,0,"CR");
-					if((t!=null)
-					&&((t[1].length()>1)
-						||((lastKnownLocation!=null)&&(lastKnownLocation.getArea().getAreaState()==State.ACTIVE))))
+					// the same for any percentage: the tick has already skipped
+					// areas that are not active, unless the script runs in them
+					if(t!=null)
 					{
 						final int prcnt=CMath.s_int(t[1]);
-						if(CMLib.dice().rollPercentage()<prcnt)
+						if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							execute(new MPContext(affecting,mob,mob,mob,defaultItem,null,null, null).push(script));
 					}
 				}
@@ -15726,7 +15924,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(t!=null)
 					{
 						final int prcnt=this.getTriggerPercent(t[1], mob);
-						if(CMLib.dice().rollPercentage()<prcnt)
+						if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 							execute(new MPContext(affecting,mob,mob.getVictim(),mob,defaultItem,null,null, null).push(script));
 					}
 				}
@@ -15741,7 +15939,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(t!=null)
 					{
 						final int prcnt=this.getTriggerPercent(t[1], (((Item)ticking).owner()));
-						if(CMLib.dice().rollPercentage()<prcnt)
+						if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
 						{
 							final MOB M=(MOB)((Item)ticking).owner();
 							if(!M.amDead())

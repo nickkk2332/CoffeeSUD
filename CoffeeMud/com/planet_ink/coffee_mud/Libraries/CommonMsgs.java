@@ -2354,6 +2354,10 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 				mob.tell(exit.description(mob));
 			else
 				mob.tell(L("You don't see anything special."));
+			if(exit.isReadable()
+			&&(exit.readableText()!=null)
+			&&(exit.readableText().trim().length()>0))
+				mob.tell(L("There is writing on it."));
 			if(mob.isAttributeSet(MOB.Attrib.SYSOPMSGS))
 			{
 				mob.tell(L("Type  : @x1",exit.ID()));

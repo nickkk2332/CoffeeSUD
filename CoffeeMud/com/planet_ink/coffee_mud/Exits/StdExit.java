@@ -1259,6 +1259,7 @@ public class StdExit implements Exit
 			if(scripts.size()==0)
 				CMLib.threads().startTickDown(this,Tickable.TICKID_EXIT_BEHAVIOR,1);
 			scripts.add(S);
+			S.registerHost(this);
 		}
 	}
 

@@ -5673,6 +5673,7 @@ public class StdMOB implements MOB
 					return;
 			}
 			scripts.addElement(S);
+			S.registerHost(this);
 		}
 	}
 

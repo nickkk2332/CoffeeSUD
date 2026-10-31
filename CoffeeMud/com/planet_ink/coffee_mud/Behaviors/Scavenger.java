@@ -194,7 +194,7 @@ public class Scavenger extends ActiveTicker
 					&&(CMLib.flags().isGettable(thisItem))
 					&&(CMLib.flags().canBeSeenBy(thisItem, mob))
 					&&(!(thisItem instanceof DeadBody))
-					&&(mask==null)||(CMLib.masking().maskCheck(mask, thisItem, false)))
+					&&((mask==null)||(CMLib.masking().maskCheck(mask, thisItem, false))))
 						choices.add(thisItem);
 				}
 				if(choices.size()==0)

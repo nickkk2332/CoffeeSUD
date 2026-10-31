@@ -68,6 +68,7 @@
 
             <li><a href="#delay_prog">delay_prog</a></li>
 
+            <li><a href="#dismount_prog">dismount_prog</a></li>
             <li><a href="#drop_prog">drop_prog</a></li>
             <li><a href="#dropping_prog">dropping_prog</a></li>
 
@@ -123,6 +124,9 @@
             <li><a href="#regmask_prog">regmask_prog</a></li>
 
             <li><a href="#remove_prog">remove_prog</a></li>
+            <li><a href="#removing_prog">removing_prog</a></li>
+            <li><a href="#ride_prog">ride_prog</a></li>
+            <li><a href="#riding_prog">riding_prog</a></li>
 
             <li><a href="#social_prog">social_prog</a></li>
 
@@ -376,6 +380,8 @@ Operators</a></li>
             <li><a href="#explored">explored</a></li>
 
             <li><a href="#faction">faction</a></li>
+            <li><a href="#factionband">factionband</a></li>
+            <li><a href="#factionvalue">factionvalue</a></li>
 
             <li><a href="#goldamt">goldamt</a></li>
 
@@ -2466,7 +2472,9 @@ before
 the keyword list, the keywords of the object must exactly match that of
 the ride_prog. If there is not, then any rideable with any of the
 keywords in the list in it will trigger it. If a ride_prog all is used,
-then the ride_prog will trigger from any thing mounted.&nbsp;</p>
+then the ride_prog will trigger from any thing mounted.&nbsp; On a
+rideable, it triggers when anyone mounts it; on a room, area or mob, when
+anyone mounts a rideable there.  $n is the rider.</p>
 
       <p>EXAMPLES:</p>
 
@@ -2477,7 +2485,32 @@ then the ride_prog will trigger from any thing mounted.&nbsp;</p>
       <p>Usage:</p>
 
       <pre>riding_prog [keyword list]<br />riding_prog p [keyword list]<br />riding_prog all</pre>
-As ride_prog, but only triggers when the scripted mob or player does the&nbsp;
+As ride_prog, but only triggers when the scripted mob or player does the
+mounting.
+
+      <h3><a name="dismount_prog">dismount_prog</a></h3>
+
+      <p>Usage:</p>
+
+      <pre>dismount_prog [keyword list]<br />dismount_prog p [keyword list]<br />dismount_prog all</pre>
+
+      <p>As ride_prog, but triggered by getting off a rideable: on a
+rideable, when anyone dismounts it; on a room, area or mob, when anyone
+gets off a rideable there.  $n is the rider.</p>
+
+      <p>EXAMPLES:</p>
+
+      <pre>dismount_prog all<br /></pre>
+
+      <h3><a name="removing_prog">removing_prog</a></h3>
+
+      <p>Usage:</p>
+
+      <pre>removing_prog [keyword list]<br />removing_prog p [keyword list]<br />removing_prog all</pre>
+
+      <p>As remove_prog, but only triggers when the scripted mob or player
+removes something, as getting_prog and wearing_prog do for get_prog and
+wear_prog.  $o is the item removed.</p>
 
       <h3><a name="sell_prog">sell_prog</a></h3>
 
@@ -5545,7 +5578,7 @@ variable for a mob or player and stores the LLMs response in it.
 variable name fields, and how they work.</p><p>Be
 warned that this command may take a very long time to execute.
 &nbsp;Factor that into your considerations when using it. &nbsp;<br />The
-default memory will be 10 messages, and the preserved prompt will be
+default memory will be 5 messages, and the preserved prompt will be
 whatever the&nbsp;[mob name] [variable name] was set to before the very
 first call to MPLLM. &nbsp;You can also override these with the
 MPSETINTERNAL command by defining the LLMMAXMSGS and/or the LLMPROMPT
@@ -7141,6 +7174,27 @@ value given.</p>
       <p>EXAMPLE:</p>
 
       <pre>if faction($n alignment.ini &gt;500 ) or faction($n alignment.ini == 'Pure Goodness')<br /> mpecho The actor is either just north of neutral, or very very good.<br />else<br /> mpecho The actor is some other alignment.<br />endif<br /></pre>
+
+      <h3><a name="factionvalue">factionvalue</a></h3>
+
+      <p>Usage:</p>
+
+      <pre>factionvalue(character factionid &gt; number)<br />$%factionvalue(character factionid)%<br /></pre>
+
+      <p>The player's or mob's standing with the faction, as a number: as a
+condition, compared with the number given; as a value, the number itself.
+Empty if the character has no standing with it.</p>
+
+      <h3><a name="factionband">factionband</a></h3>
+
+      <p>Usage:</p>
+
+      <pre>factionband(character factionid == bandcode)<br />$%factionband(character factionid)%<br /></pre>
+
+      <p>The code of the band (range) the character's standing falls in, such
+as TRUSTED, rather than its display name, which FACTION gives.  MPFACTION
+also takes a band's code or name, for the faction it names, and sets the
+standing to the middle of that band.</p>
 
       <h3><a name="goldamt">goldamt</a></h3>
 

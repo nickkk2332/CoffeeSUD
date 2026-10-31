@@ -1023,14 +1023,59 @@ public class CMSecurity
 		if(approved.containsKey(Long.valueOf(hashCode)))
 			approved.remove(Long.valueOf(hashCode));
 		approved.put(Long.valueOf(hashCode),approver);
+		// the approvals, not the scripts still waiting for one
 		final StringBuffer newApproved=new StringBuffer("");
 		for(final Long L : approved.keySet())
 		{
-			final Object O=approved.get(L);
-			if(CMLib.players().playerExists(O.toString()))
-				newApproved.append(L.toString()+"="+((String)O)+"\n");
+			final String O=approved.get(L);
+			if(!isPendingJScript(L,O))
+				newApproved.append(L.toString()+"="+O+"\n");
+		}
+		// in single-player, approvals made in builder mode go with the world,
+		// so every game, and a fresh checkout, has them
+		final java.io.File worldFile=worldJScriptsFile();
+		if(worldFile!=null)
+		{
+			if(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode())
+			{
+				try
+				{
+					java.nio.file.Files.write(worldFile.toPath(), newApproved.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+				}
+				catch(final java.io.IOException e)
+				{
+					Log.errOut("CMSecurity","Could not write "+worldFile+": "+e.getMessage());
+				}
+			}
+			return;
 		}
 		Resources.saveFileResource("::jscripts.ini",null,newApproved);
+	}
+
+	/**
+	 * Returns the world's file of approved JavaScripts, world/jscripts.ini,
+	 * in single-player, or null.
+	 * @return the file, or null
+	 */
+	protected static java.io.File worldJScriptsFile()
+	{
+		final java.io.File dir=com.planet_ink.coffee_mud.core.save.WorldFiles.worldDir();
+		if((dir==null)||(!CMProps.isSinglePlayer()))
+			return null;
+		return new java.io.File(dir,"jscripts.ini");
+	}
+
+	/**
+	 * Returns whether an entry of the approval table is a script still
+	 * waiting for approval, kept with its text, rather than an approval,
+	 * kept with its approver's name.
+	 * @param hashCode the script's hash value
+	 * @param value the entry's value
+	 * @return true if it is waiting for approval
+	 */
+	public static final boolean isPendingJScript(final Long hashCode, final String value)
+	{
+		return (value!=null) && (value.hashCode()==hashCode.longValue());
 	}
 
 	/**
@@ -1046,7 +1091,25 @@ public class CMSecurity
 		{
 			approved=new Hashtable<Long,String>();
 			Resources.submitResource("APPROVEDJSCRIPTS",approved);
-			final List<String> jscripts=Resources.getFileLineVector(Resources.getFileResource("jscripts.ini",false));
+			final java.io.File worldFile=worldJScriptsFile();
+			List<String> jscripts;
+			if(worldFile!=null)
+			{
+				jscripts=new ArrayList<String>();
+				if(worldFile.isFile())
+				{
+					try
+					{
+						jscripts=java.nio.file.Files.readAllLines(worldFile.toPath(),java.nio.charset.StandardCharsets.UTF_8);
+					}
+					catch(final java.io.IOException e)
+					{
+						Log.errOut("CMSecurity","Could not read "+worldFile+": "+e.getMessage());
+					}
+				}
+			}
+			else
+				jscripts=Resources.getFileLineVector(Resources.getFileResource("jscripts.ini",false));
 			if((jscripts!=null)&&(jscripts.size()>0))
 			{
 				for(int i=0;i<jscripts.size();i++)
@@ -1078,10 +1141,12 @@ public class CMSecurity
 		final String approver=approved.get(hashCode);
 		if(approver==null)
 		{
+			// kept, with its text, for MODIFY JSCRIPT to show; still refused
+			// on later runs until it is approved
 			approved.put(hashCode,script.toString());
 			return false;
 		}
-		return true;
+		return !isPendingJScript(hashCode,approver);
 	}
 
 	/**

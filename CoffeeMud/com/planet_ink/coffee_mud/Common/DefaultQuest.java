@@ -1078,10 +1078,11 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						scope.defineFunctionProperties(JScriptQuest.functions,
 													   JScriptQuest.class,
 													   ScriptableObject.DONTENUM);
-						cx.evaluateString(scope, jscript.toString(),"<cmd>", 1, null);
+						cx.evaluateString(scope, jscript.toString(),"quest '"+name()+"' <SCRIPT>", 1, null);
 					}
 					catch(final Exception e)
 					{
+						JSRuntime.report("quest '"+name()+"' <SCRIPT>", e);
 						errorOccurred(q,false,"Quest '"+name()+"', JScript q.error: "+e.getMessage()+".");
 						Context.exit();
 						break;
@@ -1128,7 +1129,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 							isQuiet=false;
 						if(p.size()<2)
 						{
-							q.beQuiet=optional;
+							q.beQuiet=isQuiet;
 							continue;
 						}
 						p.remove(0);

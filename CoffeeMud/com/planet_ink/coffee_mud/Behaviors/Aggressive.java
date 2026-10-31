@@ -166,7 +166,7 @@ public class Aggressive extends StdBehavior
 			final List<String> bribeParts = CMParms.parseCommas(bribeStr,true);
 			final double amt = CMath.s_double((bribeParts.size()<1)?"1":bribeParts.get(0));
 			final int ticks = CMath.s_int((bribeParts.size()<2)?"100":bribeParts.get(1));
-			final int wait = CMath.s_int((bribeParts.size()<3)?"20000":bribeParts.get(1));
+			final int wait = CMath.s_int((bribeParts.size()<3)?"20000":bribeParts.get(2));
 			bribe = new Quint<String,Double,Integer,Integer,Map<String,Pair<Double,Long>>>(
 					bribeMsg,Double.valueOf(amt),Integer.valueOf(ticks),Integer.valueOf(wait),
 					new Hashtable<String,Pair<Double,Long>>());

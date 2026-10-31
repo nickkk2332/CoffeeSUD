@@ -112,6 +112,32 @@ the rest stands on them.
 
 ST1, ST18, SC14, N18, N19, I1, I18, I19, G2, F5, Q9, PR5, JS21, JS1, JS2
 
+Status: done but for JS21 and one part of SC14. Each fix has a test in
+`tools/fixes.sh` (JavaScript tests run with JRUN, and played sessions where
+a fix needs real play), which runs in a few minutes.
+
+New for builders: `DISMOUNT_PROG` and `REMOVING_PROG`; `FACTIONVALUE` and
+`FACTIONBAND`, and band codes for `MPFACTION`; text forms of `ISNPC`,
+`ISPC`, `ISIMMORT`, `EVAL` and `STRCONTAINS`; `GAMENAME`,
+`world/text/title.txt` and `world/text/prologue.txt` (see the ini); and
+`JSTIMELIMIT` and `JS ERRORS` (see `AHELP JS`). `JSCRIPTS=2` is the default.
+
+- JS21 (the Rhino upgrade) waits: Rhino 1.7.15 is the version to use (Java
+  8 bytecode, so the build stays at release 8), but running a downloaded
+  jar needs the owner's approval, or the owner puts `lib/js.jar` in place.
+  The quote swap and the ES6 setting go with it.
+- SC14's last part, `scriptableTest.script` as an automated check, moves to
+  2c: its harness is gone, and it needs time to pass and fixtures that the
+  playtest runner (DT15) will give it.
+- Found on the way, for 2b: a builder's change made through JRUN without
+  going through the database (as builder commands do) is written to the
+  world files at quit, but the next game loads the database cache, which
+  lacks it.
+- DOCS lists more property defects than I1 named (area `Prop_InstantDeath`,
+  `Prop_LanguageSpeaker` HOMEONLY, `Prop_WeaponImmunity` LEVEL,
+  `Prop_RoomView` ATTACK, and others in `DOCS/conditions/b076` and `b078`);
+  they are left for the owner to decide on.
+
 #### 2b. Saves and world files (24)
 
 What a save still loses (quest state, conquests, warrants, vessels,

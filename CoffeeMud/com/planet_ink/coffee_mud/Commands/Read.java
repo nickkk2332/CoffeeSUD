@@ -92,18 +92,21 @@ public class Read extends StdCommand
 		commands.remove(0);
 		final int dir=CMLib.directions().getGoodDirectionCode(CMParms.combine(commands,0));
 		Environmental thisThang=null;
+		String theRest=null;
 		if(dir>=0)
 			thisThang=mob.location().getExitInDir(dir);
-		thisThang=mob.location().fetchFromMOBRoomFavorsItems(mob,null,commands.get(commands.size()-1), StdCommand.noCoinFilter);
 		if(thisThang==null)
-			thisThang=mob.location().fetchFromMOBRoomFavorsItems(mob,null,commands.get(commands.size()-1),Wearable.FILTER_ANY);
-		String theRest=null;
-		if(thisThang==null)
-			thisThang=mob.location().fetchFromMOBRoomFavorsItems(mob,null,CMParms.combine(commands,0),Wearable.FILTER_ANY);
-		else
 		{
-			commands.remove(commands.size()-1);
-			theRest=CMParms.combine(commands,0);
+			thisThang=mob.location().fetchFromMOBRoomFavorsItems(mob,null,commands.get(commands.size()-1), StdCommand.noCoinFilter);
+			if(thisThang==null)
+				thisThang=mob.location().fetchFromMOBRoomFavorsItems(mob,null,commands.get(commands.size()-1),Wearable.FILTER_ANY);
+			if(thisThang==null)
+				thisThang=mob.location().fetchFromMOBRoomFavorsItems(mob,null,CMParms.combine(commands,0),Wearable.FILTER_ANY);
+			else
+			{
+				commands.remove(commands.size()-1);
+				theRest=CMParms.combine(commands,0);
+			}
 		}
 		read(mob,thisThang, theRest, false);
 		return false;

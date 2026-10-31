@@ -141,7 +141,7 @@ public class Prop_MoveRestrictor extends Property implements TriggeredAffect
 		for(final String s : lst2)
 		{
 			final Room R=CMClass.getLocalePrototype(s);
-			if(s!=null)
+			if(R!=null)
 				onlyLocaleIDs.add(R.ID());
 		}
 		final String cast=CMParms.getParmStr(newText, "CAST", "");
@@ -225,13 +225,13 @@ public class Prop_MoveRestrictor extends Property implements TriggeredAffect
 			||((restrictMobs.length()>0)
 				&&(R.fetchInhabitant(restrictMobs)!=null))
 			||((restrictItems.length()>0)
-					&&(R.fetchInhabitant(restrictItems)!=null))
+					&&(R.findItem(restrictItems)!=null))
 			||noLocaleIDs.contains(R.ID())
 			||((onlyLocaleIDs.size()>0)
 				&&(!onlyLocaleIDs.contains(R.ID())))
 			)
 			{
-				if(CMLib.dice().rollPercentage()<chance)
+				if(CMLib.dice().rollPercentage()<=chance)
 				{
 					if(publicMsg)
 						R.show(msg.source(), null, CMMsg.MSG_OK_ACTION, message);

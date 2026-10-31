@@ -136,17 +136,24 @@ public class Prop_LimitedContents extends Property
 		final Item item;
 		if(msg.targetMinor()==CMMsg.TYP_DROP)
 		{
+			// a drop names the item as its target, and lands in the dropper's room
+			final Room dropR=msg.source().location();
 			if(affected instanceof Room)
 			{
-				if(msg.target()!=affected)
+				if(dropR!=affected)
 					return true;
 			}
 			else
-			if(!(affected instanceof Area))
+			if(affected instanceof Area)
+			{
+				if((dropR==null)||(dropR.getArea()!=affected))
+					return true;
+			}
+			else
 				return true;
-			if(!(msg.tool() instanceof Item))
+			if(!(msg.target() instanceof Item))
 				return true;
-			item=(Item)msg.tool();
+			item=(Item)msg.target();
 		}
 		else
 		if(msg.targetMinor()==CMMsg.TYP_PUT)
@@ -178,13 +185,13 @@ public class Prop_LimitedContents extends Property
 				for(final Enumeration<Item> i=this.getExistingItems(msg.source());i.hasMoreElements();)
 				{
 					final Item I=i.nextElement();
-					if(maskLib.maskCheck(p.second, item, this.actual))
+					if(maskLib.maskCheck(p.second, I, this.actual))
 						existingCount += itemCount(I);
 				}
 				if(existingCount + numAdded > maxLimit)
 				{
 					if(msgStr.length()==0)
-						msg.source().tell(L("You can't can only put @x1 of those in there.",""+maxLimit));
+						msg.source().tell(L("You can only put @x1 of those in there.",""+maxLimit));
 					else
 						msg.source().tell(L(msgStr,""+maxLimit));
 					return false;

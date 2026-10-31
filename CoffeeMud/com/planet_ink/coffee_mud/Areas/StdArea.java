@@ -1647,6 +1647,7 @@ public class StdArea implements Area
 					return;
 			}
 			scripts.addElement(S);
+			S.registerHost(this);
 		}
 	}
 

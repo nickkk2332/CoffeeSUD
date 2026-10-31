@@ -478,6 +478,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"RIDING_PROG", // 56
 		"WEARING_PROG", // 57
 		XMLLibrary.FILE_XML_BOUNDARY.toUpperCase().substring(0,XMLLibrary.FILE_XML_BOUNDARY.indexOf(' ')), // 58
+		"DISMOUNT_PROG", // 59
+		"REMOVING_PROG", // 60
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -600,7 +602,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"EXPERTISE", // 115
 		"ROOMPC", // 116
 		"AREAPC", //117
-		"HASTAG" //118
+		"HASTAG", //118
+		"FACTIONVALUE", //119
+		"FACTIONBAND", //120
 	};
 
 	/** String list of all valid mobprog commands */
@@ -791,5 +795,15 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 				return this;
 			return parent;
 		}
+	}
+
+	/**
+	 * Tells the engine the host its scripts are on, when they are put on it.
+	 * Scripts that react to world-wide events, such as logins and level
+	 * changes, need to know their host before any such event happens.
+	 * @param host the object the scripts are on
+	 */
+	public default void registerHost(final PhysicalAgent host)
+	{
 	}
 }

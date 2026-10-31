@@ -96,7 +96,7 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 		on = (BoundOn)CMath.s_valueOf(BoundOn.class,boundOn.toUpperCase().trim());
 		for(final BoundOn b : BoundOn.values())
 		{
-			if(b.name().startsWith(boundTo.toUpperCase().trim()))
+			if(b.name().startsWith(boundOn.toUpperCase().trim()))
 				on=b;
 		}
 		if(on == null)

@@ -644,6 +644,10 @@ public class MUD extends Thread implements MudHost
 				if(SaveGame.isRestoring())
 					introText=new StringBuffer("Restored '"+SaveGame.currentSlot()+"'.\n\r");
 				else
+				if((WorldFiles.worldDir()!=null)
+				&&(new java.io.File(new java.io.File(WorldFiles.worldDir(),"text"),"title.txt").isFile()))
+					introText=new StringBuffer(""); // the launcher showed the world's title
+				else
 				{
 					introText=Resources.getFileResource("text/intro.txt",true);
 					try
@@ -2061,6 +2065,8 @@ public class MUD extends Thread implements MudHost
 	 */
 	public static void main(final String a[])
 	{
+		// every script runs with a time limit, and its errors say where it is
+		JSRuntime.install();
 		String nameID="";
 		Thread.currentThread().setName("MUD");
 		final Vector<String> iniFiles=new Vector<String>();

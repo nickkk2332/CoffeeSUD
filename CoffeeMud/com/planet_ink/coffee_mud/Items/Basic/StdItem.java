@@ -2178,6 +2178,7 @@ public class StdItem implements Item
 			if(scripts.isEmpty())
 				CMLib.threads().startTickDown(this,Tickable.TICKID_ITEM_BEHAVIOR,1);
 			scripts.addElement(S);
+			S.registerHost(this);
 		}
 	}
 

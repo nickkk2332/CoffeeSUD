@@ -1556,6 +1556,7 @@ public class StdBoardableShip implements Area, Boardable, PrivateProperty
 					return;
 			}
 			scripts.addElement(S);
+			S.registerHost(this);
 		}
 	}
 

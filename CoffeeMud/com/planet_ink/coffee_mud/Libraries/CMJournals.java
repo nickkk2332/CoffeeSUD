@@ -865,11 +865,11 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 						scope.defineFunctionProperties(JScriptWindow.functions,
 													   JScriptWindow.class,
 													   ScriptableObject.DONTENUM);
-						cx.evaluateString(scope, str.toString(),"<cmd>", 1, null);
+						cx.evaluateString(scope, str.toString(),"cron job '"+E.subj()+"'", 1, null);
 					}
 					catch(final Exception e)
 					{
-						Log.errOut("CRON: "+E.subj()+": JavaScript error: @x1",e.getMessage());
+						JSRuntime.report("cron job '"+E.subj()+"'", e);
 					}
 					Context.exit();
 				}

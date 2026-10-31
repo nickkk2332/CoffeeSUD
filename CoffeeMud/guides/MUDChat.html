@@ -243,9 +243,9 @@ that will ONLY be used if CoffeeMud has an LLM integrated and active.
 that will ONLY be used if CoffeeMud does not have any active LLM integration, but is 'stock'.</p><pre>(hi|hello)<br />9hello $t, I am capable of LLM speech!<br /></pre><p>The
 last is to not put a prefix at all, but use the normal matching
 character (, [, etc. &nbsp;These trigger patterns will be evaluated
-regardless of LLM integration.</p><p>The next special LLM feature is around the LLM response, which is prefixed with a single quote character ':</p><p><span style="font-family: monospace;">(here there)<br />9"Hello. &nbsp;This is a normal response.</span><span style="font-family: monospace;"></span><br /><span style="font-family: monospace;">5'Hello LLM, please respond to the prompt '$w'.<br /></span></p><p>The
-single quote character does not work like the double quote. &nbsp;
-Instead of the message after the quote being spoken by the NPC, it is
+regardless of LLM integration.</p><p>The next special LLM feature is around the LLM response, which is prefixed with a backtick character `:</p><p><span style="font-family: monospace;">(here there)<br />9"Hello. &nbsp;This is a normal response.</span><span style="font-family: monospace;"></span><br /><span style="font-family: monospace;">5`Hello LLM, please respond to the prompt '$w'.<br /></span></p><p>The
+backtick does not work like the double quote. &nbsp;
+Instead of the message after the backtick being spoken by the NPC, it is
 instead sent to the LLM, and the NPC will then say whatever the LLM
 responds with.</p>
 <h2><a name="power" id="power">Some

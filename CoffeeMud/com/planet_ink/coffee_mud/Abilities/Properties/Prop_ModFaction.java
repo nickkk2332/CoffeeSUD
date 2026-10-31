@@ -96,6 +96,18 @@ public class Prop_ModFaction extends Property
 		return Integer.toString(CMath.s_int(val));
 	}
 
+	/**
+	 * A factor for * and /: 150% is 1.5.
+	 * @param val a number, or a percentage
+	 * @return the factor, as formula text
+	 */
+	public String translateFactor(final String val)
+	{
+		if(val.endsWith("%"))
+			return "(" + val.substring(0,val.length()-1) + " / 100)";
+		return Integer.toString(CMath.s_int(val));
+	}
+
 	@Override
 	public void setMiscText(final String newText)
 	{
@@ -147,10 +159,10 @@ public class Prop_ModFaction extends Property
 			operation = CMath.compileMathExpression("@x1 - "+translateNumber(s.substring(1)).trim());
 		else
 		if(s.startsWith("*"))
-			operation = CMath.compileMathExpression("@x1 * "+translateNumber(s.substring(1)).trim());
+			operation = CMath.compileMathExpression("@x1 * "+translateFactor(s.substring(1)).trim());
 		else
 		if(s.startsWith("/"))
-			operation = CMath.compileMathExpression("@x1 / "+translateNumber(s.substring(1)).trim());
+			operation = CMath.compileMathExpression("@x1 / "+translateFactor(s.substring(1)).trim());
 		else
 		if(s.startsWith("(")&&(s.endsWith(")")))
 		{

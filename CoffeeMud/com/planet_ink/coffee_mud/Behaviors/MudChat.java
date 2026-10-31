@@ -597,7 +597,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 								final ChattyEntry copyCE = CE.copyOf();
 								copyCE.fromGroup = currentChatGroup;
 								copyCE.orderNum = currentChatGroup.highestEntryNum++;
-								currentChatEntries.add(CE);
+								currentChatEntries.add(copyCE);
 							}
 							for(final ChattyEntry CE : otherChatGroup.tickies)
 							{
@@ -895,7 +895,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			for(int x=1;x<parts.length;x++)
 			{
 				if(CMath.isInteger(parts[x]))
-					maxTraits = Math.max(0,CMath.s_int(var.substring(x+1).trim()));
+					maxTraits = Math.max(1,CMath.s_int(parts[x].trim()));
 				else
 					override=parts[x];
 			}
@@ -941,7 +941,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 						traits.addAll(Arrays.asList(addOnList));
 				}
 				final List<String> chosen = new ArrayList<String>();
-				for(int x=0;x<numTraits;x++)
+				for(int x=0;(x<numTraits)&&(traits.size()>0);x++)
 				{
 					final Object[] trait = traits.get(r.nextInt(traits.size()));
 					if(!chosen.contains(trait[0]))
@@ -1115,7 +1115,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			for(String finalCommand : selection.responses)
 			{
 				if(finalCommand.trim().length()==0)
-					return; // why not continue?
+					continue;
 				switch(finalCommand.charAt(0))
 				{
 				case ':':
@@ -1462,25 +1462,39 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 
 	protected boolean match(final MOB speaker, final ChatExpression expression, final int val)
 	{
+		// connectors as in the speech matcher below
 		boolean rollingTruth=true;
-		final ChatExpConn conn=ChatExpConn.AND;
+		ChatExpConn conn = null;
+		ChatExpConn nconn = null;
 		for(final Pair<Object,ChatExpConn> p : expression.exp)
 		{
 			boolean thisTruth;
 			if(p.first instanceof ChatExpression)
+			{
 				thisTruth=match(speaker,(ChatExpression)p.first,val);
+				nconn=p.second;
+			}
 			else
 			if(p.first instanceof ChatMatch)
 			{
 				final ChatMatch cm=(ChatMatch)p.first;
 				if(cm.flag==ChatMatchFlag.ZAPPER)
 					thisTruth=match(speaker,(ChatMatch)p.first,"",new String[1]);
-				else
-					thisTruth=CMath.s_int(cm.str.trim())<=val;
+				else // <30> is a 30% chance: the roll, 1 to 100, is 30 or less
+					thisTruth=val<=CMath.s_int(cm.str.trim());
+				nconn=p.second;
 			}
 			else
 				continue;
-			switch(conn)
+			if(conn == null)
+			{
+				rollingTruth=thisTruth;
+				conn=nconn;
+				continue;
+			}
+			final ChatExpConn useConn=conn;
+			conn=nconn;
+			switch(useConn)
 			{
 			case AND:
 				rollingTruth = rollingTruth && thisTruth;
@@ -1561,9 +1575,9 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					this.chatEntryExpire = this.chatEntryExpire + TALK_SWITCH_EXPIRE;
 			}
 			else
-			if(this.lastSpeakerM!=null)
 			{
-				if(this.chatEntryExpire < Long.MAX_VALUE)
+				if((this.lastSpeakerM!=null)
+				&&(this.chatEntryExpire < Long.MAX_VALUE))
 				{
 					this.chatGroups.clear();
 					this.currChatEntries = null;
@@ -1720,6 +1734,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 							myResponses=new ArrayList<Pair<ChattyTestResponse,String>>();
 							for(final ChattyTestResponse c : entry.responses)
 								myResponses.add(new Pair<ChattyTestResponse,String>(c,""));
+							break; // the first match, as for speech
 						}
 					}
 					if(myResponses!=null)

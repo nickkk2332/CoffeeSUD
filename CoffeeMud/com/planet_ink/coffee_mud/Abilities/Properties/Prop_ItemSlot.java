@@ -192,11 +192,15 @@ public class Prop_ItemSlot extends Property
 	public String accountForYourself()
 	{
 		final StringBuilder str=new StringBuilder("");
+		final Set<Item> told=new HashSet<Item>();
 		for(int slotNum=0;slotNum<slots.length;slotNum++)
 		{
+			// a filler can take several slots: each item once, with its own filler
 			final Item I=slots[slotNum];
-			final Ability A=slotProps[slotNum];
-			if((I!=null)&&(A instanceof Prop_ItemSlotFiller))
+			if((I==null)||(!told.add(I)))
+				continue;
+			final Ability A=I.fetchEffect("Prop_ItemSlotFiller");
+			if(A instanceof Prop_ItemSlotFiller)
 			{
 				final Prop_ItemSlotFiller P=(Prop_ItemSlotFiller)A;
 				if(P.getAffects() != null)

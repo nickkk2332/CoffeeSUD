@@ -235,6 +235,19 @@ public class Scriptable extends StdBehavior implements ScriptingEngine
 	}
 
 	@Override
+	public void startBehavior(final PhysicalAgent forMe)
+	{
+		super.startBehavior(forMe);
+		registerHost(forMe);
+	}
+
+	@Override
+	public void registerHost(final PhysicalAgent host)
+	{
+		engine().registerHost(host);
+	}
+
+	@Override
 	public void executeMsg(final Environmental affecting, final CMMsg msg)
 	{
 		super.executeMsg(affecting,msg);

@@ -93,7 +93,7 @@ public class EvilExecutioner  extends StdBehavior
 			deepBreath=GameTime.now();
 			return;
 		}
-		if((deepBreath==0)||((GameTime.now()-deepBreath)>60000)&&(!noRecurse))
+		if(((deepBreath==0)||((GameTime.now()-deepBreath)>60000))&&(!noRecurse))
 		{
 			noRecurse=true;
 			deepBreath=0;
@@ -107,7 +107,9 @@ public class EvilExecutioner  extends StdBehavior
 				final MOB oldFollowing=source.amFollowing();
 				source.setFollowing(null);
 				final boolean yep=Aggressive.startFight(observer,source,true,false,source.name().toUpperCase()+" IS "+reason+", AND MUST BE DESTROYED!");
-				if(!yep)
+				if(yep)
+					deepBreath=GameTime.now(); // a pause before the next one
+				else
 				if(oldFollowing!=null)
 					source.setFollowing(oldFollowing);
 			}

@@ -220,7 +220,7 @@ public class Prop_RoomRedirect extends Property
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
-		super.executeMsg(this,msg);
+		super.executeMsg(myHost,msg);
 		if(msg.amITarget(affected)
 		||(((affected instanceof Area)
 			&&(msg.target() instanceof Room)

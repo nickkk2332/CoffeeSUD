@@ -48,18 +48,22 @@ public class Prop_CloseCommand extends Property
 
 	protected final List<String[]>	commandPhrases	= new SLinkedList<String[]>();
 	protected boolean				noclose			= false;
+	protected volatile boolean		acting			= false;
 	protected String				overMsg			= null;
 
 	@Override
 	public void setMiscText(final String newMiscText)
 	{
 		commandPhrases.clear();
+		noclose=false;
+		overMsg=null;
 		for (final String p : newMiscText.split(";"))
 		{
 			if(p.trim().length()>0)
 			{
 				if(p.equalsIgnoreCase("noclose"))
 					noclose=true;
+				else
 				if(p.toLowerCase().startsWith("message")
 				&&(p.substring(7).trim().startsWith("=")))
 					overMsg=p.substring(7).trim().substring(1);
@@ -94,6 +98,7 @@ public class Prop_CloseCommand extends Property
 	{
 		if((msg.target()==affected)
 		&&(noclose)
+		&&(!acting)
 		&&(msg.targetMinor()==CMMsg.TYP_CLOSE))
 		{
 			if(affected instanceof Exit)
@@ -103,7 +108,9 @@ public class Prop_CloseCommand extends Property
 			return false;
 		}
 
-		if((msg.sourceMinor()==CMMsg.TYP_HUH)
+		// unknown input, or a command that failed (PUSH STONE with no stone),
+		// so that a phrase can start with a real command word
+		if(((msg.sourceMinor()==CMMsg.TYP_HUH)||(msg.sourceMinor()==CMMsg.TYP_COMMANDFAIL))
 		&&(msg.targetMessage()!=null))
 		{
 			final MOB mob=msg.source();
@@ -118,6 +125,11 @@ public class Prop_CloseCommand extends Property
 				{
 					for(int i=1;i<cmd.length;i++)
 					{
+						if(i>=cmds.size())
+						{
+							match=false;
+							break;
+						}
 						final String cmdI=cmd[i].toLowerCase();
 						final String cmdsI=cmds.get(i).toLowerCase();
 						if(cmdI.endsWith("**") && cmdsI.startsWith(cmdI.substring(0,cmdI.length()-2)))
@@ -143,45 +155,54 @@ public class Prop_CloseCommand extends Property
 				}
 				if(match)
 				{
-					final Room R=mob.location();
-					if(affected instanceof Exit)
+					// its own open or close is let through, even with NOCLOSE
+					acting=true;
+					try
 					{
-						final Exit E=(Exit)affected;
-						if(!E.isOpen())
+						final Room R=mob.location();
+						if(affected instanceof Exit)
 						{
-							int dirCode=-1;
-							for(int d=Directions.NUM_DIRECTIONS()-1;d>=0;d--)
+							final Exit E=(Exit)affected;
+							if(E.isOpen())
 							{
-								if(R.getExitInDir(d)==E)
+								int dirCode=-1;
+								for(int d=Directions.NUM_DIRECTIONS()-1;d>=0;d--)
 								{
-									dirCode = d;
-									break;
+									if(R.getExitInDir(d)==E)
+									{
+										dirCode = d;
+										break;
+									}
+								}
+								if(dirCode>=0)
+								{
+									final String msgStr = (this.overMsg!=null) ? this.overMsg : "<T-NAME> "+CMLib.english().makePlural(E.closeWord())+".";
+									CMMsg msg2=CMClass.getMsg(mob,E,null,CMMsg.MSG_CLOSE,msgStr);
+									CMLib.utensils().roomAffectFully(msg2,R,dirCode);
+									if(E.hasALock())
+									{
+										msg2=CMClass.getMsg(mob,E,null,CMMsg.MSG_LOCK,null);
+										CMLib.utensils().roomAffectFully(msg2,R,dirCode);
+									}
 								}
 							}
-							if(dirCode>=0)
+						}
+						else
+						if(affected instanceof Container)
+						{
+							final String msgStr = (this.overMsg!=null) ? this.overMsg : L("<T-NAME> closes.");
+							CMMsg msg2=CMClass.getMsg(mob,affected,null,CMMsg.MSG_CLOSE,msgStr);
+							R.send(mob,msg2);
+							if(((Container)affected).hasALock())
 							{
-								final String msgStr = (this.overMsg!=null) ? this.overMsg : "<T-NAME> "+CMLib.english().makePlural(E.closeWord())+".";
-								CMMsg msg2=CMClass.getMsg(mob,E,null,CMMsg.MSG_CLOSE,msgStr);
-								CMLib.utensils().roomAffectFully(msg2,R,dirCode);
-								if(E.hasALock())
-								{
-									msg2=CMClass.getMsg(mob,E,null,CMMsg.MSG_LOCK,null);
-									CMLib.utensils().roomAffectFully(msg2,R,dirCode);
-								}
+								msg2=CMClass.getMsg(mob,affected,null,CMMsg.MSG_LOCK,null);
+								R.send(mob,msg2);
 							}
 						}
 					}
-					else
-					if(affected instanceof Container)
+					finally
 					{
-						final String msgStr = (this.overMsg!=null) ? this.overMsg : L("<T-NAME> closes.");
-						CMMsg msg2=CMClass.getMsg(mob,affected,null,CMMsg.MSG_OPEN,msgStr);
-						R.send(mob,msg2);
-						if(((Container)affected).hasALock())
-						{
-							msg2=CMClass.getMsg(mob,affected,null,CMMsg.MSG_LOCK,null);
-							R.send(mob,msg2);
-						}
+						acting=false;
 					}
 					return false;
 				}

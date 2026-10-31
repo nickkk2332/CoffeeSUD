@@ -1054,8 +1054,9 @@ public class DefaultFaction implements Faction, MsgListener
 			{
 				final Ability A=a.nextElement();
 				final ArrayList<FactionChangeEvent> set=new ArrayList<FactionChangeEvent>(0);
-				if(changes.containsKey(A.ID()))
-					set.addAll(Arrays.asList(changes.get(A.ID())));
+				final String upID=A.ID().toUpperCase().trim();
+				if(changes.containsKey(upID))
+					set.addAll(Arrays.asList(changes.get(upID)));
 				if(abilityClassMap.containsKey(Integer.valueOf(A.classificationCode()&Ability.ALL_ACODES)))
 					set.addAll(abilityClassMap.get(Integer.valueOf(A.classificationCode()&Ability.ALL_ACODES)));
 				if(abilityDomainMap.containsKey(Integer.valueOf(A.classificationCode()&Ability.ALL_DOMAINS)))

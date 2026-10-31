@@ -81,7 +81,7 @@ public class MOBHunter extends ActiveTicker
 
 	protected boolean isHunting(final MOB mob)
 	{
-		final Ability A=mob.fetchEffect("Thief_Assasinate");
+		final Ability A=mob.fetchEffect("Thief_Assassinate");
 		if(A!=null)
 			return true;
 		return false;
@@ -116,11 +116,10 @@ public class MOBHunter extends ActiveTicker
 			for(int i=0;i<R.numInhabitants();i++)
 			{
 				final MOB M=R.fetchInhabitant(i);
-				if(CMLib.masking().maskCheck(mask,M,false))
-				{
-					prey=M;
-					break;
-				}
+				if((M!=null)
+				&&(M!=mob)
+				&&CMLib.masking().maskCheck(mask,M,false))
+					return M;
 			}
 		}
 		return prey;

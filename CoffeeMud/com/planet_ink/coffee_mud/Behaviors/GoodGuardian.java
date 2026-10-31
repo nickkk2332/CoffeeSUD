@@ -145,6 +145,8 @@ public class GoodGuardian extends StdBehavior
 			final MOB mob=(MOB)ticking;
 			final MOB victim=anyPeaceToMake(mob.location(),mob);
 			keepPeace(mob,victim);
+			if(victim!=null)
+				deepBreath=GameTime.now(); // a pause before stepping in again
 		}
 		return true;
 	}

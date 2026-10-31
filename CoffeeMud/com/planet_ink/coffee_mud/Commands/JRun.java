@@ -19,6 +19,7 @@ import com.planet_ink.coffee_mud.Races.interfaces.*;
 import java.util.*;
 
 import org.mozilla.javascript.*;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 
 /*
    Copyright 2005-2025 Bo Zimmerman
@@ -67,7 +68,7 @@ public class JRun extends StdCommand
 			return false;
 		}
 		commands.remove(0);
-		final Context cx = Context.enter();
+		final Context cx = JSRuntime.enter(JSRuntime.jrunLimitSeconds());
 		try
 		{
 			final JScriptWindow scope = new JScriptWindow(mob,commands);
@@ -75,13 +76,18 @@ public class JRun extends StdCommand
 			scope.defineFunctionProperties(JScriptWindow.functions,
 										   JScriptWindow.class,
 										   ScriptableObject.DONTENUM);
-			cx.evaluateString(scope, ft.toString(),"<cmd>", 1, null);
+			cx.evaluateString(scope, ft.toString(),fn, 1, null);
 		}
 		catch(final Exception e)
 		{
-			mob.tell(L("JavaScript error: @x1",e.getMessage()));
+			final String desc=JSRuntime.report("JRUN "+fn, e);
+			if(!SaveGame.isBuilderMode()) // builder mode has shown it already
+				mob.tell(desc);
 		}
-		Context.exit();
+		finally
+		{
+			Context.exit();
+		}
 		return false;
 	}
 

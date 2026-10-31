@@ -165,9 +165,7 @@ public class RandomQuests extends ActiveTicker
 		{
 			try
 			{
-				final int max=(int)Math.round(Math.ceil(Runtime.getRuntime().availableProcessors()/4));
-				if(allprocessing.addAndGet(1)>max)
-					return;
+				allprocessing.addAndGet(1);
 				processing.set(true);
 				for(int i=0;i<maxAttempts;i++)
 				{
@@ -292,8 +290,13 @@ public class RandomQuests extends ActiveTicker
 			{
 				if(inline)
 				{
-					while(myQuests.size() < numQuests)
+					while((myQuests.size() < numQuests)&&(!disable.get()))
+					{
+						final int before=myQuests.size();
 						generator.run();
+						if(myQuests.size()<=before)
+							break; // try again on a later tick
+					}
 				}
 				else
 					CMLib.threads().executeRunnable(generator);

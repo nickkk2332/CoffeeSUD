@@ -3147,6 +3147,7 @@ public class StdRoom implements Room
 			if(scripts.isEmpty())
 				CMLib.threads().startTickDown(this,Tickable.TICKID_ROOM_BEHAVIOR,1);
 			scripts.addElement(S);
+			S.registerHost(this);
 		}
 	}
 

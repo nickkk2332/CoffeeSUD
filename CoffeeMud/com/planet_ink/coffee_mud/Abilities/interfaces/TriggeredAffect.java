@@ -53,9 +53,9 @@ public interface TriggeredAffect extends Ability
 	/** denotes a property whose affects are triggered by mounting the thing*/
 	public final static int TRIGGER_MOUNT=128;
 	/** denotes a property whose affects are triggered by putting something in or dropping the thing*/
-	public final static int TRIGGER_DROP_PUTIN=64;
+	public final static int TRIGGER_DROP_PUTIN=256;
 	/** denotes a property whose affects are triggered by hitting somethign with the thing*/
-	public final static int TRIGGER_HITTING_WITH=128;
+	public final static int TRIGGER_HITTING_WITH=512;
 
 	public final static String[] TRIGGER_DESC = new String[] {
 		"ALWAYS",

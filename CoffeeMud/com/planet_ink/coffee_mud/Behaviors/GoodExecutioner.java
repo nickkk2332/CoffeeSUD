@@ -145,7 +145,9 @@ public class GoodExecutioner  extends StdBehavior
 				final MOB oldFollowing=source.amFollowing();
 				source.setFollowing(null);
 				final boolean yep=Aggressive.startFight(observer,source,true,false,source.name().toUpperCase()+" IS "+reason+", AND MUST BE DESTROYED!");
-				if(!yep)
+				if(yep)
+					deepBreath=GameTime.now(); // a pause before the next one
+				else
 				if(oldFollowing!=null)
 					source.setFollowing(oldFollowing);
 			}

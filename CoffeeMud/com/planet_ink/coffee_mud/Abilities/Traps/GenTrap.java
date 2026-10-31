@@ -148,6 +148,7 @@ public class GenTrap extends StdTrap
 			{
 				A.scriptObj=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
 				A.scriptObj.setScript(scriptObj.getScript());
+				A.scriptObj.preApproveScripts();
 			}
 			else
 				A.scriptObj = null;
@@ -171,6 +172,7 @@ public class GenTrap extends StdTrap
 			{
 				scriptObj=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
 				scriptObj.setScript(A.scriptObj.getScript());
+				scriptObj.preApproveScripts();
 			}
 			else
 				scriptObj=null;
@@ -263,7 +265,10 @@ public class GenTrap extends StdTrap
 			{
 				scriptObj=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
 				if(scriptObj!=null)
+				{
 					scriptObj.setScript(parm);
+					scriptObj.preApproveScripts();
+				}
 				else
 					scriptParmHash=-1;
 			}
