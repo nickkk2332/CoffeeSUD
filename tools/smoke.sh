@@ -109,21 +109,23 @@ echo "Session 4: turn-based time, and a fight one WAIT at a time"
 # it saves the game at the first hour of the day, so that the sessions after
 # it, which play on from this save at the usual pace, have daylight: the hour
 # it would have saved at depends on how long the waits above took
-play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 14\ntime\nmodify time 1\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\ntime\n#sleep 14\ntime\nmodify time 1\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect turns.txt "Time is now turn-based."
 expect turns.txt "New Room"
 expect turns.txt "the world already waits for you"
 expect turns.txt "You stop waiting."
 expect turns.txt "Time now runs in real time."
-# the five TIME answers: before and after 6 idle seconds, after WAIT, after
-# WAIT 3, and after 14 seconds of real time; TIME shows the hour as H/L, where
-# L is the day's last hour, numbered from 0.  The hour turns on an area's
-# tick, so four ticks of waiting turn it three or four times, depending on
-# where in the hour the restored game was.
+# the six TIME answers: before and after 6 idle seconds, after WAIT, after
+# WAIT 3, and on going back to real time and 14 seconds later; TIME shows the
+# hour as H/L, where L is the day's last hour, numbered from 0.  The hour
+# turns on an area's tick, so four ticks of waiting turn it three or four
+# times, depending on where in the hour the restored game was.  The fight's
+# WAIT 50 ends when the fight does, so the hour after it can be anything: the
+# real-time reading is taken from there, not from the WAIT 3 one.
 grep -ao "(Hour: [0-9]*/[0-9]*)" "$W/turns.txt" | tr -d '()' | sed 's/Hour: //' > "$W/hours"
 if awk -F/ '{h[NR]=$1; n=$2+1} END {
 	moved=(h[4]-h[2]+n)%n
-	ok=(NR==5) && (h[1]==h[2]) && (moved==3 || moved==4) && (h[5]!=h[4])
+	ok=(NR==6) && (h[1]==h[2]) && (moved==3 || moved==4) && (h[6]!=h[5])
 	exit !ok }' "$W/hours"; then
 	echo "  ok    turns.txt: the clock waited for the player, moved an hour a tick while WAITing, then ran"
 else
@@ -229,26 +231,26 @@ fi
 echo "Session 8d: the party's turns in turn-based time"
 # both start in Rocky Room.  With LEADER turns, Bran's order goes first, when
 # Hero acts, so he is already south when Hero arrives, rather than following
-play turns.txt 'timemode turns\nas bran south\nlook\nsouth\nlook\npartyturns all\nnorth\nas bran wait\nlook\nwindows on\nsave turns\nquit\nn\n' RESTORE=team WINDOWS=1
-expect turns.txt "There is no display here, so the characters' windows (WINDOWS=1) are off."
-expect turns.txt "There is no display here, so the windows cannot open."
-expect turns.txt "Bran will do that on Hero's turn."
-expect turns.txt "The turn waits for Bran"
-expect turns.txt "You wait for Hero's turn."
-expect turns.txt "Bran arrives from the south."
-expect turns.txt "Game saved as 'turns'."
-if sed -n '/will do that on/,/Obvious exits/p' "$W/turns.txt" | grep -q "^Bran is here"; then
-	echo "  ok    turns.txt: Bran waited for Hero's turn"
+play pturns.txt 'timemode turns\nas bran south\nlook\nsouth\nlook\npartyturns all\nnorth\nas bran wait\nlook\nwindows on\nsave turns\nquit\nn\n' RESTORE=team WINDOWS=1
+expect pturns.txt "There is no display here, so the characters' windows (WINDOWS=1) are off."
+expect pturns.txt "There is no display here, so the windows cannot open."
+expect pturns.txt "Bran will do that on Hero's turn."
+expect pturns.txt "The turn waits for Bran"
+expect pturns.txt "You wait for Hero's turn."
+expect pturns.txt "Bran arrives from the south."
+expect pturns.txt "Game saved as 'turns'."
+if sed -n '/will do that on/,/Obvious exits/p' "$W/pturns.txt" | grep -q "^Bran is here"; then
+	echo "  ok    pturns.txt: Bran waited for Hero's turn"
 else
-	echo "  FAIL  turns.txt: Bran did not wait for Hero's turn"; FAIL=1
+	echo "  FAIL  pturns.txt: Bran did not wait for Hero's turn"; FAIL=1
 fi
-if grep -q "Bran arrives from the north" "$W/turns.txt"; then
-	echo "  FAIL  turns.txt: Bran followed Hero south instead of going first"; FAIL=1
+if grep -q "Bran arrives from the north" "$W/pturns.txt"; then
+	echo "  FAIL  pturns.txt: Bran followed Hero south instead of going first"; FAIL=1
 else
-	echo "  ok    turns.txt: Bran carried out his order before Hero acted"
+	echo "  ok    pturns.txt: Bran carried out his order before Hero acted"
 fi
-play turns2.txt 'partyturns\nquit\nn\n' RESTORE=turns
-expect turns2.txt "the party's turn waits until each of them"
+play pturns2.txt 'partyturns\nquit\nn\n' RESTORE=turns
+expect pturns2.txt "the party's turn waits until each of them"
 
 }
 
