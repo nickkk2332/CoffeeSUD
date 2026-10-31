@@ -30,6 +30,8 @@ mkdir -p "$GAME/resources/quests/_smoke"
 cp "$ROOT/tools/fixtures/smoke/"* "$GAME/resources/quests/_smoke/"
 trap 'rm -rf "$GAME/resources/quests/_smoke"' EXIT
 FAIL=0
+# no windows open, even on a desktop: WINDOWS ON must say it cannot
+export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true $JAVA_TOOL_OPTIONS"
 
 play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
 {
@@ -221,7 +223,9 @@ fi
 echo "Session 8d: the party's turns in turn-based time"
 # both start in Rocky Room.  With LEADER turns, Bran's order goes first, when
 # Hero acts, so he is already south when Hero arrives, rather than following
-play turns.txt 'timemode turns\nas bran south\nlook\nsouth\nlook\npartyturns all\nnorth\nas bran wait\nlook\nsave turns\nquit\nn\n' RESTORE=team
+play turns.txt 'timemode turns\nas bran south\nlook\nsouth\nlook\npartyturns all\nnorth\nas bran wait\nlook\nwindows on\nsave turns\nquit\nn\n' RESTORE=team WINDOWS=1
+expect turns.txt "There is no display here, so the characters' windows (WINDOWS=1) are off."
+expect turns.txt "There is no display here, so the windows cannot open."
 expect turns.txt "Bran will do that on Hero's turn."
 expect turns.txt "The turn waits for Bran"
 expect turns.txt "You wait for Hero's turn."

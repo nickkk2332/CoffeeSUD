@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 
 import com.planet_ink.coffee_mud.core.CMProps;
+import com.planet_ink.coffee_mud.core.Party;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.save.SaveSlots;
 import com.planet_ink.coffee_mud.core.save.WorldFiles;
@@ -45,6 +46,8 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  * <li>BUILDER=1 plays on the database cache itself, as an Archon, to change
  * the world files, with no saves.</li>
  * <li>WORLDDIR=PATH is the folder of world files; the default is "world".</li>
+ * <li>WINDOWS=1 gives each of the player's characters in the world, but for
+ * the one played here, a window of their own.</li>
  * </ul>
  *
  * Any NAME=VALUE argument overrides the ini file, as with {@link MUD}.
@@ -73,6 +76,12 @@ public class SUD
 		final File saveDir = new File(settings.getProperty("SAVEDIR", "saves").trim());
 		SaveGame.configure(saveDir, builderMode);
 		WorldFiles.configure(new File(settings.getProperty("WORLDDIR", "world").trim()));
+		final String windows = settings.getProperty("WINDOWS", "").trim().toUpperCase();
+		if(windows.equals("1") || windows.startsWith("Y") || windows.startsWith("T") || windows.equals("ON"))
+		{
+			if(!Party.setWindows(true))
+				System.out.println("There is no display here, so the characters' windows (WINDOWS=1) are off.");
+		}
 		if(builderMode)
 			System.out.println("Builder mode: changes go straight into the world, and there are no saved games.");
 		else

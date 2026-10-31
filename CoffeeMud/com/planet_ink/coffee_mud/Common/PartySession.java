@@ -43,7 +43,16 @@ public class PartySession extends DefaultSession
 	@Override
 	public boolean initialize(final Socket s, final String groupName)
 	{
-		return super.initialize(new PartySocket(), groupName);
+		return super.initialize(makeSocket(), groupName);
+	}
+
+	/**
+	 * Returns what the session reads from and writes to: here, nothing.
+	 * @return the socket
+	 */
+	protected Socket makeSocket()
+	{
+		return new PartySocket();
 	}
 
 	@Override

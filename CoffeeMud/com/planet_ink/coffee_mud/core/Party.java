@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Libraries.interfaces.SessionsList;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 
@@ -82,6 +83,8 @@ public final class Party
 	private static volatile boolean	meetWhereLeft	= false;
 	/** whether the player's characters may fight each other */
 	private static volatile boolean	fightEachOther	= false;
+	/** whether the characters not played on the terminal have windows */
+	private static volatile boolean	windows			= false;
 
 	private Party()
 	{
@@ -106,6 +109,97 @@ public final class Party
 	public static void setMeetWhereLeft(final boolean where)
 	{
 		meetWhereLeft = where;
+	}
+
+	/**
+	 * Returns whether the player's characters in the world, but for the one
+	 * played on the terminal, each have a window of their own.
+	 * @return true if they do
+	 */
+	public static boolean isWindows()
+	{
+		return windows;
+	}
+
+	/**
+	 * Sets whether the player's characters in the world, but for the one
+	 * played on the terminal, each have a window of their own.  Those in the
+	 * world now get a window, or lose theirs, at once.  Windows need a
+	 * display.
+	 * @param on true for windows
+	 * @return false if they were wanted and cannot open here
+	 */
+	public static boolean setWindows(final boolean on)
+	{
+		if(on && (!CharacterWindow.canOpen()))
+			return false;
+		windows = on;
+		SessionsList sessions = null;
+		try
+		{
+			sessions = CMLib.sessions();
+		}
+		catch(final Exception e)
+		{
+			// the launcher sets it before the engine is up
+		}
+		if(sessions != null)
+		{
+			final List<MOB> moving = new ArrayList<MOB>();
+			for(final Session S : sessions.allIterable())
+			{
+				if(isPartySession(S) && (S.mob() != null) && ("WindowSession".equals(S.ID()) != on))
+					moving.add(S.mob());
+			}
+			for(final MOB M : moving)
+				moveToNewSession(M);
+		}
+		return true;
+	}
+
+	/**
+	 * Moves one of the player's characters in the world, not the one being
+	 * played, to a new session of their own, with a window or without as
+	 * windows are on or off.
+	 * @param M the character
+	 */
+	private static void moveToNewSession(final MOB M)
+	{
+		final Session old = M.session();
+		final Session S = (Session)CMClass.getCommon(windows ? "WindowSession" : "PartySession");
+		if((S == null) || (!S.initialize(null, old.getGroupName())))
+			return;
+		S.setAccount(profileOf(M));
+		old.setMob(null);
+		S.setMob(M);
+		M.setSession(S);
+		S.setStatus(Session.SessionStatus.MAINLOOP);
+		CMLib.sessions().add(S);
+		old.stopSession(true, false, true, false);
+		CMLib.sessions().remove(old);
+		CMLib.commands().postLook(M, true);
+	}
+
+	/**
+	 * Returns whether a session is one of a character in the world who is not
+	 * played on the terminal: one with nothing behind it, or a window.
+	 * @param S the session
+	 * @return true if it is
+	 */
+	public static boolean isPartySession(final Session S)
+	{
+		return (S != null) && ("PartySession".equals(S.ID()) || "WindowSession".equals(S.ID()));
+	}
+
+	/**
+	 * Returns whether a character has a window of their own.
+	 * @param M the character
+	 * @return true if they do
+	 */
+	public static boolean isWindowed(final MOB M)
+	{
+		final Session S = (M == null) ? null : M.session();
+		return (S != null) && "WindowSession".equals(S.ID());
 	}
 
 	/**
@@ -465,7 +559,7 @@ public final class Party
 		final PlayerAccount acct = profileOf(mob);
 		for(final Session S : CMLib.sessions().allIterable())
 		{
-			if((!"PartySession".equals(S.ID())) && (S.mob() != null) && (profileOf(S.mob()) == acct))
+			if((!isPartySession(S)) && (S.mob() != null) && (profileOf(S.mob()) == acct))
 				return S;
 		}
 		return null;
@@ -478,6 +572,11 @@ public final class Party
 	 */
 	private static void tellPlayer(final MOB mob, final String msg)
 	{
+		if(isWindowed(mob))
+		{
+			mob.tell(msg);
+			return;
+		}
 		final Session T = terminalOf(mob);
 		if((T != null) && (T.mob() != null))
 			T.mob().tell(msg);
@@ -486,12 +585,18 @@ public final class Party
 	/**
 	 * Runs something one of the player's characters does with the terminal's
 	 * session, so that the player sees it: the character and the one being
-	 * played swap sessions for it.
+	 * played swap sessions for it.  One with a window of their own does it
+	 * there.
 	 * @param M the character
 	 * @param r what they do
 	 */
 	public static void actWithTerminal(final MOB M, final Runnable r)
 	{
+		if(isWindowed(M))
+		{
+			r.run(); // their own window shows it
+			return;
+		}
 		final Session T = terminalOf(M);
 		final Session mine = M.session();
 		final MOB played = (T == null) ? null : T.mob();
@@ -549,7 +654,7 @@ public final class Party
 	public static boolean isBackground(final MOB M)
 	{
 		final Session S = (M == null) ? null : M.session();
-		return (S != null) && "PartySession".equals(S.ID());
+		return isPartySession(S);
 	}
 
 	/**
@@ -653,7 +758,7 @@ public final class Party
 			return null;
 		if(room != null)
 			M.setLocation(room); // where the login puts them
-		final Session S = (Session)CMClass.getCommon("PartySession");
+		final Session S = (Session)CMClass.getCommon(windows ? "WindowSession" : "PartySession");
 		if((S == null) || (!S.initialize(null, console.getGroupName())))
 			return null;
 		S.setAccount(acct);

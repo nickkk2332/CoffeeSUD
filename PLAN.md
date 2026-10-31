@@ -101,8 +101,8 @@ Still to do:
   `DefaultSession`, leaving a plain text session. The console session already
   never turns them on, so this is cleanup rather than behaviour.
 - the telnet listener in `MUD.run`, and with it `tools/mudserver.sh` and
-  `tools/mudbot.py`, unless several windows (phase 5) need a local-only
-  listener.
+  `tools/mudbot.py`. The windows of phase 5 are in the same process, so
+  nothing needs a listener.
 - host groups: `CMLib` and `CMClass` keep one set of libraries and classes
   per thread group, so that several separate muds, each with its own world and
   ini file, can run in one Java process. One game needs one set.
@@ -287,7 +287,7 @@ Steps:
 - A purpose-built visual editor comes later, once the content format is
   settled.
 
-### 5. Single-player society: in progress
+### 5. Single-player society: done
 
 Accounts, channels, clans, polls, journals, mail, auctions, who lists and
 player killing assume other people. Each is removed or turned into its
@@ -413,7 +413,24 @@ Steps:
     own.
   - Not done: a leader who dies does not hand the lead on by itself; `PARTY
     LEAD` does it.
-- **5e. One window per character**, as designed below.
+- **5e. One window per character: done**, as designed below. With
+  `WINDOWS=1` in the ini, or `WINDOWS ON` during play, each of the
+  player's characters in the world but for the one played in the terminal
+  is on a `Common/WindowSession`, a party session whose socket is a Swing
+  window (`core/CharacterWindow`) in the same process: what the character
+  sees scrolls in it, in colour (the engine's ANSI codes, 16, 256 or true
+  colour, with telnet bytes dropped), and what is typed into its line, with
+  the lines before a key away, is the character's commands. In turn-based
+  time those still wait for the leader's turn, and a member's orders and the
+  messages about them show in their own window. `SWITCH` swaps the terminal
+  with a window, which takes the other character's name as its title.
+  Closing a window sends its character to rest; `WINDOWS OFF` moves the
+  characters back to sessions with nothing behind them. Windows need a
+  display: without one, the game says so and goes on without them. The
+  launchers no longer force Java to run headless, which Java works out for
+  itself. The smoke test runs headless and checks that; the windows
+  themselves were tried on a virtual display (Xvfb), typing into one and
+  closing it.
 
 Several characters at once fits here, as a profile and a party:
 - The profile is the player's stored record of all their characters.
@@ -523,3 +540,10 @@ hand-built starting area.
   game building and caching the world, the next using the cache, and a quest
   made in builder mode written to its own file. A rebuild from the files into
   an empty database, written back out, gives the same files.
+- Phase 5: the features that need other people are gone; the profile
+  holds every character of a game; several of them can be in the world as a
+  party, played by `SWITCH` and given commands with `AS`; in turn-based time
+  only the leader moves the world; and each can have a window of their own.
+  Smoke test covers the profile, the party and its turns, saved and
+  restored. Fixed on the way: a character's first command after coming into
+  the world waited for its first tick.
