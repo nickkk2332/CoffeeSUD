@@ -490,11 +490,13 @@ Several characters at once fits here, as a profile and a party:
     - If the leader dies or leaves the party, the next character in order
       leads; the player can also hand the lead over.
 
-### 6. Content
+### 6. Content: the owner's
 
-The shipped world is two rooms. Options: the example areas in
-`resources/examples`, generated areas from `resources/randareas`, and a
-hand-built starting area.
+The shipped world is two rooms. Writing the world is left to the project's
+owner, with the tools already here: builder mode and its editors, the world
+files edited by hand, and IMPORT of the example areas in
+`resources/examples` or GENERATE from `resources/randareas`. Engine work
+goes on alongside it.
 
 ## Open decisions
 
