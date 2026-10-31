@@ -40,6 +40,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.mozilla.javascript.*;
+import java.util.Hashtable; // not Rhino's
 import org.mozilla.javascript.optimizer.*;
 /*
    Copyright 2013-2025 Bo Zimmerman

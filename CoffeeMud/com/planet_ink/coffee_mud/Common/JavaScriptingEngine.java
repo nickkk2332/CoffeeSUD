@@ -1276,6 +1276,9 @@ public class JavaScriptingEngine extends ScriptableObject implements ScriptingEn
 		protected Context makeContext()
 		{
 			final LimitedContext cx = new LimitedContext(this, secs);
+			cx.setLanguageVersion(Context.VERSION_ES6);
+			// its time limit counts instructions, which needs the interpreter
+			cx.setOptimizationLevel(-1);
 			cx.setInstructionObserverThreshold(100);
 			cx.initStandardObjects(JavaScriptingEngine.this);
 			cx.setClassShutter(new CustomClassShutter());

@@ -36,8 +36,10 @@ import com.planet_ink.coffee_mud.core.save.SaveGame;
  * The limit comes from JSTIMELIMIT in the ini (seconds, default 2); JRUN
  * gives its scripts JSTIMELIMIT_JRUN (default 30).  It is installed once, as
  * Rhino's global context factory, so it covers every Context.enter(): script
- * blocks, JRUN, JCONSOLE, quests, cron jobs and JavaScript classes.  This
- * class is loaded once per process, so it survives the engine's restarts.
+ * blocks, JRUN, JCONSOLE, quests and cron jobs.  JavaScript classes
+ * (//extends) are compiled to Java bytecode, which instruction counting
+ * cannot see, so they have no limit.  Scripts are ES6.  This class is loaded
+ * once per process, so it survives the engine's restarts.
  */
 public final class JSRuntime
 {
@@ -86,6 +88,8 @@ public final class JSRuntime
 		protected Context makeContext()
 		{
 			final TimedContext cx = new TimedContext(this, limitSeconds());
+			// modern JavaScript: arrow functions, template strings, let and const
+			cx.setLanguageVersion(Context.VERSION_ES6);
 			// instruction counting needs the interpreter
 			cx.setOptimizationLevel(-1);
 			cx.setInstructionObserverThreshold(10000);

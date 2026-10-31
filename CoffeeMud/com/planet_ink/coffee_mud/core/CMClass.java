@@ -26,6 +26,7 @@ import java.net.URL;
 import java.net.URLStreamHandler;
 
 import org.mozilla.javascript.*;
+import java.util.Hashtable; // not Rhino's
 import org.mozilla.javascript.optimizer.*;
 
 /*

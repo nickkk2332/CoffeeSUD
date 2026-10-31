@@ -32,6 +32,7 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
 
 import org.mozilla.javascript.*;
+import java.util.Hashtable; // not Rhino's
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -1048,7 +1049,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public void setScript(String newParms)
 	{
-		newParms=CMStrings.replaceAll(newParms,"'","`");
+		newParms=swapOutsideScripts(newParms,'\'','`');
 		if(newParms.startsWith("+"))
 		{
 			final String superParms=getScript();
@@ -1061,6 +1062,39 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		else
 			scriptKey="PARSEDPRG: "+myScript;
 		reset();
+	}
+
+	/**
+	 * Replaces one character with another, except inside &lt;SCRIPT&gt; blocks.
+	 * Scripts are kept with their apostrophes as backticks, and turned back
+	 * when they are parsed; JavaScript keeps both as written, so that its
+	 * template strings, which use backticks, survive.
+	 * @param text the script text
+	 * @param from the character to replace
+	 * @param to what to replace it with
+	 * @return the text
+	 */
+	protected static String swapOutsideScripts(final String text, final char from, final char to)
+	{
+		if(text.indexOf(from)<0)
+			return text;
+		final String upper=text.toUpperCase();
+		final StringBuilder str=new StringBuilder(text.length());
+		boolean inScript=false;
+		for(int i=0;i<text.length();i++)
+		{
+			final char c=text.charAt(i);
+			if(c=='<')
+			{
+				if((!inScript)&&upper.startsWith("<SCRIPT>",i))
+					inScript=true;
+				else
+				if(inScript&&upper.startsWith("</SCRIPT>",i))
+					inScript=false;
+			}
+			str.append(((c==from)&&(!inScript))?to:c);
+		}
+		return str.toString();
 	}
 
 	public boolean isFreeToBeTriggered(final Tickable affecting)
@@ -1174,7 +1208,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		text=parseLoads(E,text,0,null,null);
 		if(staticSet)
 		{
-			text=CMStrings.replaceAll(text,"'","`");
+			text=swapOutsideScripts(text,'\'','`');
 			myScript=text;
 			reset();
 		}
@@ -13902,7 +13936,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			lastDayProgsDone.clear();
 			oncesDone.clear();
 			String scr=getScript();
-			scr=CMStrings.replaceAll(scr,"`","'");
+			scr=swapOutsideScripts(scr,'`','\'');
 			scripts=parseScripts(scriptedE,scr);
 			if(CMSecurity.isDebugging(DbgFlag.SCRIPTTRACE))
 				Log.debugOut("Scripting engine parse "+scripts.size()+" scripts");

@@ -112,7 +112,7 @@ the rest stands on them.
 
 ST1, ST18, SC14, N18, N19, I1, I18, I19, G2, F5, Q9, PR5, JS21, JS1, JS2
 
-Status: done but for JS21 and one part of SC14. Each fix has a test in
+Status: done but for one part of SC14. Each fix has a test in
 `tools/fixes.sh` (JavaScript tests run with JRUN, and played sessions where
 a fix needs real play), which runs in a few minutes.
 
@@ -122,10 +122,13 @@ New for builders: `DISMOUNT_PROG` and `REMOVING_PROG`; `FACTIONVALUE` and
 `world/text/title.txt` and `world/text/prologue.txt` (see the ini); and
 `JSTIMELIMIT` and `JS ERRORS` (see `AHELP JS`). `JSCRIPTS=2` is the default.
 
-- JS21 (the Rhino upgrade) waits: Rhino 1.7.15 is the version to use (Java
-  8 bytecode, so the build stays at release 8), but running a downloaded
-  jar needs the owner's approval, or the owner puts `lib/js.jar` in place.
-  The quote swap and the ES6 setting go with it.
+- JS21: Rhino is 1.7.15.1 (the owner put it in `lib/js.jar`), and scripts
+  are ES6: arrow functions, template strings, `let` and `const`, and the
+  newer built-ins. Script blocks keep their quotes and backticks as
+  written. Two limits: JavaScript classes (`//extends`) are compiled to
+  Java, so `JSTIMELIMIT` does not cover them; and lines typed at JCONSOLE
+  still turn backticks into quotes, so template strings work in JRUN files
+  and script blocks but not there.
 - SC14's last part, `scriptableTest.script` as an automated check, moves to
   2c: its harness is gone, and it needs time to pass and fixtures that the
   playtest runner (DT15) will give it.
