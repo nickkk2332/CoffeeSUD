@@ -1,4 +1,4 @@
-"""Makes tools/audit-review.html, a page to review BUILDER-AUDIT.md item by item.
+"""Makes tools/audit-review.html, a page to review audit/README.md item by item.
 
    python3 tools/audit-review.py ITEMS.json [OUT.html]
 

@@ -80,6 +80,23 @@ of 100% and a cap of 1. Opening a matching chest finds it; opening a second
 does not; a save and a restore do not make a second; destroyed, a once-ever
 item does not come back, and a once-for-a-while one does after its time.
 
+## 2. Builder capabilities audit: for the owner to choose from
+
+What a builder can do without editing the engine's Java, and what is
+missing, was audited across the engine. The result is in
+[`audit/README.md`](audit/README.md): 409 proposed additions in 18 themes
+(script triggers, script language, JavaScript, quests, NPCs and dialogue,
+combat, items and puzzles, world systems, generators, crafting and housing,
+factions, travel, languages, progression, presentation, saves and world
+files, builder tools, testing and debugging tools), each with what exists
+today, what to add and an example, and a list of what turned out to be
+possible already.
+
+None of it is planned yet. The owner marks each item yes or no, in
+`tools/audit-review.html` or in the audit's summary table. Each item said
+yes to is checked against the code again, then comes here as a numbered
+item, in the order the owner chooses.
+
 ## Later
 
 Items to come, as the owner raises them.
