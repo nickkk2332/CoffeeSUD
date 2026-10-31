@@ -13,7 +13,10 @@ earlier analysis of the engine; its chapters explain each subsystem.
 ```sh
 CoffeeMud/build.sh        # compiles in place (about a minute from clean)
 CoffeeMud/sud.sh          # play in this terminal
-tools/smoke.sh            # ten-minute check of the single-player path
+tools/check.sh            # the checks for a commit, about ten minutes
+ENGINE=1 tools/check.sh   # and the engine suite, for the end of a step
+tools/smoke.sh            # the single-player path, on its own
+tools/fixes.sh            # the engine fixes' tests (DEVPLAN.md), on its own
 tools/engine-tests.sh     # the engine's TEST ALL suite, about 15 minutes
 ```
 
@@ -40,9 +43,10 @@ to change the world (see Authoring).
 
 ## Ground rules
 
-- Every step keeps the build green and the smoke test passing, and is
-  committed on its own. Larger steps also run `tools/engine-tests.sh`, which
-  must match the baseline.
+- Every step keeps the build green and `tools/check.sh` passing (the fixes
+  suite and the smoke test, side by side), and is committed on its own. The
+  end of a step, and changes to the engine's core, also run the engine suite
+  (`ENGINE=1 tools/check.sh`), which must match the baseline.
 - Removing code beats adding switches. A setting is kept only while a phase
   still needs both paths.
 - The engine's behaviour (combat, abilities, effects, behaviours, scripts) is

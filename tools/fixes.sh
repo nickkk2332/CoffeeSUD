@@ -4,7 +4,8 @@
 # a builder-mode game on a scratch copy of the world, after prelude.js.  A test
 # reports "FIXTEST ok FILE/NAME" or "FIXTEST FAIL FILE/NAME: why", and ends with
 # "FIXTEST done FILE".  Fails if any check fails, a file does not reach its
-# end, or a script errs.  Played sessions for what needs real play follow.
+# end, or a script errs.  Played sessions for what needs real play run
+# alongside, each group with its own world, database and saves.
 #   tools/fixes.sh            run the tests
 #   KEEP=1 tools/fixes.sh     keep the scratch folder and print its path
 #   tools/fixes.sh NAME ...   run only these test files (without .js)
@@ -32,6 +33,23 @@ for T in $TESTS; do
 done
 SCRIPT="${SCRIPT}quit\nY\n"
 printf "$SCRIPT" > "$W/jrun.script"
+expect()  # expect OUTFILE TEXT
+{
+	if grep -aqF -- "$2" "$W/$1"; then
+		echo "  ok    $1: $2"
+	else
+		echo "  FAIL  $1: missing '$2'"
+		FAIL=1
+	fi
+}
+play()  # play OUTFILE DB WORLD SCRIPT [NAME=VALUE ...]
+{
+	OUT="$1"; DB="$2"; WD="$3"; printf "$4" > "$W/$OUT.script"; shift 4
+	python3 "$ROOT/tools/sudplay.py" "$W/$OUT.script" "DBSERVICE=jdbc:fakedb:$W/$DB" "WORLDDIR=$W/$WD" "SAVEDIR=${SAVES:-$W/saves}" "$@" > "$W/$OUT" 2>&1
+}
+
+group_jrun()
+{
 echo "JavaScript tests: $(echo $TESTS | wc -w) files"
 python3 "$ROOT/tools/sudplay.py" "$W/jrun.script" "DBSERVICE=jdbc:fakedb:$W/db" "WORLDDIR=$W/world" "SAVEDIR=$W/saves" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS > "$W/jrun.txt" 2>&1
 grep -a "FIXTEST ok" "$W/jrun.txt" | sed 's/.*FIXTEST ok /  ok    /'
@@ -48,23 +66,11 @@ done
 if grep -aq "JavaScript error\|JS error in JRUN" "$W/jrun.txt"; then
 	grep -a "JavaScript error\|JS error in JRUN" "$W/jrun.txt" | sed 's/^/  FAIL  /'; FAIL=1
 fi
-
-expect()  # expect OUTFILE TEXT
-{
-	if grep -aqF -- "$2" "$W/$1"; then
-		echo "  ok    $1: $2"
-	else
-		echo "  FAIL  $1: missing '$2'"
-		FAIL=1
-	fi
-}
-play()  # play OUTFILE DB WORLD SCRIPT [NAME=VALUE ...]
-{
-	OUT="$1"; DB="$2"; WD="$3"; printf "$4" > "$W/$OUT.script"; shift 4
-	python3 "$ROOT/tools/sudplay.py" "$W/$OUT.script" "DBSERVICE=jdbc:fakedb:$W/$DB" "WORLDDIR=$W/$WD" "SAVEDIR=$W/saves" "$@" > "$W/$OUT" 2>&1
 }
 
-if [ $# -eq 0 ]; then
+group_st1()
+{
+	SAVES="$W/psaves"
 	echo "Played: ST1, a quiet room hears logins, in a new game and after a restore"
 	mkdir -p "$W/pdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/pdb/"
 	cp -r "$GAME/world" "$W/pworld"
@@ -75,7 +81,11 @@ if [ $# -eq 0 ]; then
 	play st1-restore.txt pdb pworld 'look\nwait\nquit\nn\n' RESTORE=st1 TIMEMODE=TURNS
 	expect st1-restore.txt "Restored 'st1'."
 	expect st1-restore.txt "FIXGREET the quiet room heard Greeter log in."
+}
 
+group_pr5()
+{
+	SAVES="$W/tsaves"
 	echo "Played: PR5, the game's name, the world's title screen and prologue, and the menu"
 	mkdir -p "$W/tdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/tdb/"
 	cp -r "$GAME/world" "$W/tworld"
@@ -100,6 +110,25 @@ if [ $# -eq 0 ]; then
 	expect pr5-menu.txt "N) New game"
 	expect pr5-menu.txt "1) pr5"
 	expect pr5-menu.txt "Restored 'pr5'."
+}
+
+# the groups share nothing (each has its own world, database and saves), so
+# with no tests named they run side by side; each writes its own log, and a
+# FAIL in any fails the run
+if [ $# -eq 0 ]; then
+	group_jrun > "$W/group_jrun.log" 2>&1 &
+	J_PID=$!
+	group_st1 > "$W/group_st1.log" 2>&1 &
+	S_PID=$!
+	group_pr5 > "$W/group_pr5.log" 2>&1 &
+	P_PID=$!
+	wait $J_PID; wait $S_PID; wait $P_PID
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log"; then FAIL=1; fi
+else
+	group_jrun > "$W/group_jrun.log" 2>&1
+	cat "$W/group_jrun.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log"; then FAIL=1; fi
 fi
 
 if [ "$FAIL" = 0 ]; then

@@ -7,7 +7,8 @@
 # profile, the two of them as a party, its turns in turn-based time, and,
 # in a world of their own,
 # a running quest, a follower, a lit torch and a wolf's rolled stats, then
-# the world files: a hand edit picked up, and a builder's edit written.
+# the world files: a hand edit picked up, and a builder's edit written.  The
+# two worlds' sessions run side by side.
 # Each database starts as the bare schema, as in a fresh checkout, so the
 # first game builds the world from the files.  Fails if expected text is
 # missing, or if play wrote to the world files.
@@ -36,7 +37,7 @@ export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true $JAVA_TOOL_OPTIONS"
 play()  # play OUTFILE SCRIPT [NAME=VALUE ...]
 {
 	OUTFILE="$1"; printf "$2" > "$W/$OUTFILE.script"; shift 2
-	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "WORLDDIR=$W/world" "SAVEDIR=$W/saves" "$@" > "$W/$OUTFILE" 2>&1
+	python3 "$ROOT/tools/sudplay.py" "$W/$OUTFILE.script" "DBSERVICE=jdbc:fakedb:$W/db" "WORLDDIR=$W/world" "SAVEDIR=${SAVES:-$W/saves}" "$@" > "$W/$OUTFILE" 2>&1
 	set -- "$OUTFILE"
 	echo "$1: exit $?" >> "$W/exits"
 }
@@ -53,6 +54,11 @@ expect()  # expect OUTFILE TEXT
 
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
+# The two chains of sessions share nothing, so they run side by side: the
+# first world (sessions 1 to 8d) and the quest world (sessions 9 to 13), each
+# with its own saves.  Each writes its own log; a FAIL in either fails the run.
+chain_a()
+{
 echo "Session 1: create a character and play"
 # the seed, with the clock stopped while the character is made, fixes the
 # stat rolls, which can otherwise rule out the Apprentice class
@@ -103,14 +109,14 @@ echo "Session 4: turn-based time, and a fight one WAIT at a time"
 # it saves the game at the first hour of the day, so that the sessions after
 # it, which play on from this save at the usual pace, have daylight: the hour
 # it would have saved at depends on how long the waits above took
-play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 9\ntime\nmodify time 1\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 14\ntime\nmodify time 1\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect turns.txt "Time is now turn-based."
 expect turns.txt "New Room"
 expect turns.txt "the world already waits for you"
 expect turns.txt "You stop waiting."
 expect turns.txt "Time now runs in real time."
 # the five TIME answers: before and after 6 idle seconds, after WAIT, after
-# WAIT 3, and after 9 seconds of real time; TIME shows the hour as H/L, where
+# WAIT 3, and after 14 seconds of real time; TIME shows the hour as H/L, where
 # L is the day's last hour, numbered from 0.  The hour turns on an area's
 # tick, so four ticks of waiting turn it three or four times, depending on
 # where in the hour the restored game was.
@@ -244,6 +250,11 @@ fi
 play turns2.txt 'partyturns\nquit\nn\n' RESTORE=turns
 expect turns2.txt "the party's turn waits until each of them"
 
+}
+
+chain_b()
+{
+SAVES="$W/qsaves"
 echo "Session 9: in builder mode, add a quest to a world of its own"
 play qbuild.txt 'Builder\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\ncreate quest LOAD=quests/_smoke/smoke.quest\nsave quests\nquit\nY\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 expect qbuild.txt "Builder mode makes you an Archon"
@@ -278,13 +289,13 @@ else
 fi
 # saved again after restoring: the torch is still lit, and the quest's
 # rabbit is where it was
-if grep -q "<ID>Spell_Light</ID>" "$W/saves/quests2/world.xml"; then
+if grep -q "<ID>Spell_Light</ID>" "$W/qsaves/quests2/world.xml"; then
 	echo "  ok    quests2: the carried torch's timed light came back"
 else
 	echo "  FAIL  quests2: the carried torch's timed light was lost"; FAIL=1
 fi
-if [ -n "$(grep -o "<QMOB[^/]*</ROOM>" "$W/saves/quests1/world.xml")" ] \
-&& [ "$(grep -o "<QMOB[^/]*</ROOM>" "$W/saves/quests1/world.xml")" = "$(grep -o "<QMOB[^/]*</ROOM>" "$W/saves/quests2/world.xml")" ]; then
+if [ -n "$(grep -o "<QMOB[^/]*</ROOM>" "$W/qsaves/quests1/world.xml")" ] \
+&& [ "$(grep -o "<QMOB[^/]*</ROOM>" "$W/qsaves/quests1/world.xml")" = "$(grep -o "<QMOB[^/]*</ROOM>" "$W/qsaves/quests2/world.xml")" ]; then
 	echo "  ok    quests2: the quest's rabbit came back where it was"
 else
 	echo "  FAIL  quests2: the quest's rabbit is not where it was"; FAIL=1
@@ -321,6 +332,17 @@ if grep -q "rebuilding the world" "$W/builder2.txt"; then
 else
 	echo "  ok    builder2.txt: the next game used the database builder mode left"
 fi
+
+}
+
+chain_a > "$W/chain_a.log" 2>&1 &
+A_PID=$!
+chain_b > "$W/chain_b.log" 2>&1 &
+B_PID=$!
+wait $A_PID
+wait $B_PID
+cat "$W/chain_a.log" "$W/chain_b.log"
+if grep -q "^  FAIL" "$W/chain_a.log" "$W/chain_b.log"; then FAIL=1; fi
 
 if (cd "$W/world" && find . -type f | sort | xargs cksum) | cmp -s - "$W/content.sums"; then
 	echo "  ok    play did not write to the world files"

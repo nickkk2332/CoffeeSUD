@@ -6,9 +6,10 @@ engine lacks or only half has, and the tools to build with them. The world
 itself is the owner's to write (see `PLAN.md`, phase 6).
 
 Each item says what the engine has now, what is missing, the design, and
-where it stands. Ground rules are those of `PLAN.md`: every step keeps the
-build green and the smoke test passing, larger ones also the engine suite,
-and changes to the engine's behaviour need a reason.
+where it stands. Ground rules are those of `PLAN.md`: every commit keeps the
+build green and `tools/check.sh` passing (the fixes suite and the smoke
+test), the end of each step also the engine suite (`ENGINE=1
+tools/check.sh`), and changes to the engine's behaviour need a reason.
 
 ## 1. Unique and rare items: planned
 
