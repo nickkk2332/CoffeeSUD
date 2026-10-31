@@ -98,7 +98,10 @@ fi
 expect pause.txt "Rocky Room"
 
 echo "Session 4: turn-based time, and a fight one WAIT at a time"
-play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 9\ntime\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+# it saves the game at the first hour of the day, so that the sessions after
+# it, which play on from this save at the usual pace, have daylight: the hour
+# it would have saved at depends on how long the waits above took
+play turns.txt 'timemode turns\ntime\n#sleep 6\ntime\nwait\ntime\nwait 3\ntime\nsouth\npause\ncreate mob minotaur\ncreate mob goblin\npossess goblin\nkill minotaur\nwait 50\nquit\ntimemode realtime\n#sleep 9\ntime\nmodify time 1\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect turns.txt "Time is now turn-based."
 expect turns.txt "New Room"
 expect turns.txt "the world already waits for you"
