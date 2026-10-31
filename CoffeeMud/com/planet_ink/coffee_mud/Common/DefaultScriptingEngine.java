@@ -116,6 +116,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected boolean				runWithoutPCs	 = true;
 	protected LLMSession			llmSession		 = null;
 	protected Map<String,String>	miscArgVars		 = new Hashtable<String,String>(1);
+	protected volatile String		pendingState	 = null;
 
 	protected final PrioritizingLimitedMap<String,Room> roomFinder=new PrioritizingLimitedMap<String,Room>(5,30*60000L,60*60000L,20);
 
@@ -13942,9 +13943,88 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				Log.debugOut("Scripting engine parse "+scripts.size()+" scripts");
 			Resources.submitResource(getScriptResourceKey(),scripts);
 		}
+		final String state=pendingState;
+		if(state!=null)
+		{
+			pendingState=null;
+			applyState(scripts,state);
+		}
 		if(scriptedE!=globalsHost)
 			registerGlobalTriggers(scriptedE,scripts);
 		return scripts;
+	}
+
+	/**
+	 * Returns a hash of the parsed script, which saved state is tied to.
+	 * @param scripts the parsed script
+	 * @return the hash
+	 */
+	protected String scriptHash(final List<SubScript> scripts)
+	{
+		final StringBuilder all=new StringBuilder();
+		for(final SubScript script : scripts)
+		{
+			for(final ScriptLn line : script)
+				all.append(line.first).append('\n');
+			all.append("~\n");
+		}
+		return Integer.toHexString(all.toString().hashCode());
+	}
+
+	@Override
+	public String getStateXML()
+	{
+		final String state=pendingState;
+		if(state!=null)
+			return state; // restored, and not yet read: still as it was saved
+		@SuppressWarnings("unchecked")
+		final List<SubScript> scripts=(List<SubScript>)Resources.getResource(getScriptResourceKey());
+		if(scripts==null)
+			return "";
+		final StringBuilder str=new StringBuilder("");
+		final List<Integer> onces=new XVector<Integer>(oncesDone);
+		if(onces.size()>0)
+		{
+			str.append("<ONCE>");
+			for(int i=0;i<onces.size();i++)
+				str.append((i>0)?",":"").append(onces.get(i));
+			str.append("</ONCE>");
+		}
+		if(str.length()==0)
+			return "";
+		return "<HASH>"+scriptHash(scripts)+"</HASH>"+str.toString();
+	}
+
+	@Override
+	public void setStateXML(final String xml)
+	{
+		pendingState=((xml==null)||(xml.trim().length()==0))?null:xml;
+	}
+
+	/**
+	 * Puts back saved state, if it was saved with the same script.
+	 * @param scripts the parsed script
+	 * @param xml the state, as getStateXML wrote it
+	 */
+	protected void applyState(final List<SubScript> scripts, final String xml)
+	{
+		final List<XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		if(!scriptHash(scripts).equals(CMLib.xml().getValFromPieces(tags, "HASH")))
+		{
+			if(CMSecurity.isDebugging(DbgFlag.SCRIPTTRACE))
+				Log.debugOut("Scripting engine: the script changed since its state was saved, so the state was dropped.");
+			return;
+		}
+		final String onces=CMLib.xml().getValFromPieces(tags, "ONCE");
+		if(onces.length()>0)
+		{
+			for(final String num : CMParms.parseCommas(onces,true))
+			{
+				final Integer I=Integer.valueOf(CMath.s_int(num));
+				if((I.intValue()>=0)&&(I.intValue()<scripts.size())&&(!oncesDone.contains(I)))
+					oncesDone.add(I);
+			}
+		}
 	}
 
 	@Override

@@ -806,4 +806,27 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	public default void registerHost(final PhysicalAgent host)
 	{
 	}
+
+	/**
+	 * Returns what this engine has done that its script alone cannot tell,
+	 * for a saved game: which ONCE_PROGs and QUEST_TIME_PROGs have already
+	 * run.  It is tied to the script as it is now, so that a changed script
+	 * does not take back state that no longer fits it.
+	 * @see com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine#setStateXML(String)
+	 * @return the state as XML, or "" if there is none
+	 */
+	public default String getStateXML()
+	{
+		return "";
+	}
+
+	/**
+	 * Puts back the state written by {@link #getStateXML()}, once the script
+	 * is read, unless the script has changed since.
+	 * @see com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine#getStateXML()
+	 * @param xml the state as XML
+	 */
+	public default void setStateXML(final String xml)
+	{
+	}
 }

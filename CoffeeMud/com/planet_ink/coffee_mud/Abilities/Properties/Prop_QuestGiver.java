@@ -178,14 +178,40 @@ public class Prop_QuestGiver extends Property
 		return quest;
 	}
 
+	/**
+	 * Returns the quest variable that says this character was offered the
+	 * quest in its current run.  Kept with the quest, so that a saved game
+	 * remembers it, and a new run of the quest offers it again.
+	 * @param mob the character
+	 * @return the variable's name
+	 */
+	protected String offeredVar(final MOB mob)
+	{
+		return "OFFERED:"+mob.Name().toUpperCase();
+	}
+
+	/**
+	 * Notes that a character was offered the quest, so that it is not
+	 * offered again in this run of the quest.  A quest not running offers
+	 * nothing, so nothing is noted.
+	 * @param mob the character
+	 */
+	protected void markOffered(final MOB mob)
+	{
+		final Quest Q=quest;
+		if((Q!=null)&&(Q.running())&&(mob!=null)&&(!mob.isMonster()))
+			Q.setQuestVar(offeredVar(mob), "1");
+	}
+
 	public void maybeGiveTheQuest(final MOB mob, final CMMsg msg)
 	{
 		if((mob==null)
-		||(mob.isMonster())
-		||(leaveThemAlone.contains(mob.Name())))
+		||(mob.isMonster()))
 			return;
 		final Quest Q=this.getQuest();
-		if((Q == null)||(!Q.canAcceptQuest(mob)))
+		if((Q == null)
+		||(Q.getStat(offeredVar(mob)).length()>0)
+		||(!Q.canAcceptQuest(mob)))
 			return;
 		final StringBuilder announcement = new StringBuilder("");
 		announcement.append(CMParms.getParmStr(text(),"MESSAGE",""));
@@ -304,7 +330,7 @@ public class Prop_QuestGiver extends Property
 										public void run()
 										{
 											maybeGiveTheQuest(mob, null);
-											leaveThemAlone.add(mob.Name());
+											markOffered(mob);
 										}
 									},1000);
 								}
@@ -337,7 +363,7 @@ public class Prop_QuestGiver extends Property
 										public void run()
 										{
 											maybeGiveTheQuest(mob,null);
-											leaveThemAlone.add(mob.Name());
+											markOffered(mob);
 										}
 									},1000);
 								}
@@ -431,7 +457,7 @@ public class Prop_QuestGiver extends Property
 				if(affected instanceof Area)
 				{
 					maybeGiveTheQuest(msg.source(),msg);
-					leaveThemAlone.add(msg.source().Name());
+					markOffered(msg.source());
 				}
 				else
 				if(affected == msg.target())
@@ -447,7 +473,7 @@ public class Prop_QuestGiver extends Property
 				if(affected instanceof Area)
 				{
 					maybeGiveTheQuest(msg.source(),msg);
-					leaveThemAlone.add(msg.source().Name());
+					markOffered(msg.source());
 				}
 				else
 				if(affected instanceof Room)
@@ -475,7 +501,7 @@ public class Prop_QuestGiver extends Property
 				else
 				{
 					maybeGiveTheQuest(msg.source(),msg);
-					leaveThemAlone.add(msg.source().Name());
+					markOffered(msg.source());
 				}
 				break;
 			}
@@ -491,7 +517,7 @@ public class Prop_QuestGiver extends Property
 				else
 				{
 					maybeGiveTheQuest(msg.source(),msg);
-					leaveThemAlone.add(msg.source().Name());
+					markOffered(msg.source());
 				}
 				break;
 			}
@@ -511,7 +537,7 @@ public class Prop_QuestGiver extends Property
 				else
 				{
 					maybeGiveTheQuest(msg.source(),msg);
-					leaveThemAlone.add(msg.source().Name());
+					markOffered(msg.source());
 				}
 				break;
 			}

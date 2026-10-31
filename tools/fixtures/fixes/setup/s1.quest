@@ -1,0 +1,19 @@
+set name s1quest
+set duration 1000
+import mobs _fixes/s1mobs.cmare
+set room any
+load mob any
+give behavior QuestChat +(hello::greet)\;9FIXCHAT the herald greets you, once.
+give script LOAD=s1herald.script
+step break
+
+<?xml version="1.0"?>
+<FILE><NAME>s1herald.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	RETURN TRUE
+~
+FUNCTION_PROG DO_ACCEPT
+	mpechoat $n FIXACCEPT you took the quest.
+~
+</DATA></FILE>

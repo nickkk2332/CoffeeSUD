@@ -1298,7 +1298,9 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 				if(state!=MatchState.POST_PAREN)
 				{
 					match.str = str.toString().toLowerCase().trim();
-					final String words = CMStrings.removePunctuationStrict(match.str);
+					// QuestChat's said-once code (words::code) is not a word to look for
+					final int codeDex = match.str.lastIndexOf("::");
+					final String words = CMStrings.removePunctuationStrict((codeDex>0)?match.str.substring(0,codeDex):match.str);
 					if(words.indexOf(' ')<0)
 						cur.ones.add(words);
 					else

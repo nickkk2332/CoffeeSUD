@@ -394,6 +394,12 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 				scriptstr.append(CMLib.xml().convertXMLtoTag("SSCOP",SE.getVarScope()));
 				if((includeVars)&&(SE.getVarScope().equals("*")))
 					scriptstr.append(CMLib.xml().convertXMLtoTag("SSVAR",SE.getLocalVarXML()));
+				if(includeVars)
+				{
+					final String state=SE.getStateXML();
+					if(state.length()>0)
+						scriptstr.append(CMLib.xml().convertXMLtoTag("SSTATE",state));
+				}
 				scriptstr.append("</SCRPT>");
 			}
 		}
@@ -2964,6 +2970,9 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 				final String svars=sblk.getValFromPieces("SSVAR");
 				if((svars!=null)&&(svars.length()>0))
 					S.setLocalVarXML(svars);
+				final String state=sblk.getValFromPieces("SSTATE");
+				if((state!=null)&&(state.length()>0))
+					S.setStateXML(state);
 			}
 			E.addScript(S);
 		}

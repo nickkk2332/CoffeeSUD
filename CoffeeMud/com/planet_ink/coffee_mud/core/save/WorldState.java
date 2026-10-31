@@ -50,7 +50,8 @@ import java.util.*;
  * follows them, which the character's tables hold only in part;</li>
  * <li>the stats that the engine's built-in mob classes roll when made;</li>
  * <li>each quest's winners, whether it is running, its step and time left,
- * and where its mobs and items are;</li>
+ * where its mobs and items are, the variables its scripts set on it, and how
+ * long a quest that is not running has yet to wait;</li>
  * <li>the variables that scripts share.</li>
  * </ul>
  * Mobs that cannot be saved, such as summoned ones, are left out unless they
@@ -1131,6 +1132,21 @@ public final class WorldState
 			str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(Q.name())));
 			str.append(xml.convertXMLtoTag("WINNERS", xml.parseOutAngleBrackets(Q.getWinnerStr())));
 			str.append(xml.convertXMLtoTag("RUNNING", Q.running()));
+			final Map<String, String> qvars = Q.getQuestVars();
+			if(qvars.size() > 0)
+			{
+				str.append("<VARS>");
+				for(final Map.Entry<String, String> e : qvars.entrySet())
+				{
+					str.append("<VAR>");
+					str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(e.getKey())));
+					str.append(xml.convertXMLtoTag("VALUE", xml.parseOutAngleBrackets(e.getValue())));
+					str.append("</VAR>");
+				}
+				str.append("</VARS>");
+			}
+			if((!Q.running()) && (Q.waitRemaining() >= 0))
+				str.append(xml.convertXMLtoTag("WAIT", Q.waitRemaining()));
 			if(Q.running())
 			{
 				str.append(xml.convertXMLtoTag("STEP", Q.getStat("STEPNUM")));
@@ -1200,6 +1216,10 @@ public final class WorldState
 			{
 				if(Q.running())
 					Q.stopQuest();
+				final XMLTag wait = tag.getPieceFromPieces("WAIT");
+				if(wait != null)
+					Q.setWaitRemaining(CMath.s_int(wait.value()));
+				setQuestVars(Q, tag);
 				continue;
 			}
 			if(!Q.running())
@@ -1214,6 +1234,7 @@ public final class WorldState
 				Q.setQuestStep(step);
 			if(Q.running())
 			{
+				setQuestVars(Q, tag);
 				Q.setStat("REMAINING", Integer.toString(Math.max(1, tag.getIntFromPieces("REMAINING", 1))));
 				for(final XMLTag piece : tag.contents())
 				{
@@ -1260,6 +1281,22 @@ public final class WorldState
 				}
 			}
 		}
+	}
+
+	/**
+	 * Puts back the variables a quest's scripts set on it (MPQSET), saved
+	 * with the quest.
+	 * @param Q the quest
+	 * @param tag its QUEST tag
+	 */
+	private static void setQuestVars(final Quest Q, final XMLTag tag)
+	{
+		final XMLTag vars = tag.getPieceFromPieces("VARS");
+		if(vars == null)
+			return;
+		final XMLLibrary xml = CMLib.xml();
+		for(final XMLTag var : vars.contents())
+			Q.setQuestVar(xml.restoreAngleBrackets(var.getValFromPieces("NAME")), xml.restoreAngleBrackets(var.getValFromPieces("VALUE")));
 	}
 
 	private static Room getRoom(final String id)

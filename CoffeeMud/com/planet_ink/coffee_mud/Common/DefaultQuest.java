@@ -5184,6 +5184,32 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		return waitRemaining;
 	}
 
+	@Override
+	public void setWaitRemaining(final int ticks)
+	{
+		if(!running())
+			waitRemaining = ticks;
+	}
+
+	@Override
+	public Map<String,String> getQuestVars()
+	{
+		final QuestState state = questState;
+		final Map<String,String> vars = new TreeMap<String,String>(state.vars);
+		for(final Iterator<String> k = vars.keySet().iterator(); k.hasNext();)
+		{
+			if(state.isStat(k.next()))
+				k.remove();
+		}
+		return vars;
+	}
+
+	@Override
+	public void setQuestVar(final String name, final String value)
+	{
+		questState.vars.put(name.toUpperCase().trim(), value);
+	}
+
 	public Quest getMainQuestObject()
 	{
 		Quest Q=this;

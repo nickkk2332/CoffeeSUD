@@ -2125,6 +2125,11 @@ makes it useful for doing initialization or other tasks which only need
 to be done once after the mud boots. This type of prog is usually used
 for in-zone quests and special mob behavior, and has a variety of uses.</p>
 
+      <p>In a saved game: a savable script on a player, such as the one a
+quest's DO_ACCEPT gives with MPSCRIPT ... SAVABLE, remembers which of its
+once_progs and quest_time_progs have run, so a restored game does not run
+them again (as long as the script itself has not changed).</p>
+
       <p>EXAMPLES:</p>
 
       <pre>once_prog<br /></pre>

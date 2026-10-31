@@ -67,8 +67,11 @@ public class QuestChat extends MudChat
 			{
 				V=new Vector<String>();
 				alreadySaid.put(speaker.Name().toUpperCase(),V);
+				// what this run of the quest already said, as a saved game keeps it
+				final Quest myQuest=((myQuestName!=null)&&(myQuestName.length()>0))?CMLib.quests().fetchQuest(myQuestName):null;
+				if(myQuest!=null)
+					V.addAll(CMParms.parseSpaces(myQuest.getStat("CHAT:"+speaker.Name().toUpperCase()),true));
 			}
-			else
 			if(V.contains(codeStr))
 				return false;
 			final ChatMatch newMatch=new ChatMatch();

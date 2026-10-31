@@ -753,6 +753,31 @@ public interface Quest extends Tickable, CMCommon, Modifiable
 	public int waitRemaining();
 
 	/**
+	 * Sets the number of ticks before this stopped quest will attempt to
+	 * start, as a restored game does to keep the wait it had when saved.
+	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#waitRemaining()
+	 * @param ticks the number of ticks, or -1 for none
+	 */
+	public void setWaitRemaining(int ticks);
+
+	/**
+	 * Returns the variables that scripts have set on this quest with MPQSET
+	 * (and read with QVAR), by name, for the current run of the quest.  The
+	 * objects the quest script sets, such as its mobs, are not among them.
+	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#setQuestVar(String, String)
+	 * @return a copy of the variables
+	 */
+	public Map<String,String> getQuestVars();
+
+	/**
+	 * Sets a variable of this quest's current run, as MPQSET does.
+	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#getQuestVars()
+	 * @param name the variable's name
+	 * @param value its value
+	 */
+	public void setQuestVar(String name, String value);
+
+	/**
 	 * Sets the number of ticks before this quest will attempt to start.
 	 * A number greater than or equal to 0 means the quest is currently in a stopped state.
 	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#waitRemaining()

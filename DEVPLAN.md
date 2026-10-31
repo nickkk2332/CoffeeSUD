@@ -152,6 +152,20 @@ later feature keeps its state across a save.
 S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S15, S16, S17, S18,
 S19, S20, S21, S22, S23, S24, S25
 
+Status: under way. Played tests of what a save keeps are the `saves` group
+of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
+
+- S1 done. The save keeps each quest's MPQSET variables (`<VARS>`) and the
+  wait of a quest not running (`<WAIT>`). `Prop_QuestGiver` keeps whom it
+  offered the quest to as the quest variable `OFFERED:<name>`, and
+  `QuestChat` reads back its `CHAT:<name>` variable; both last for the run
+  of the quest, so a quest that runs again offers and says them again. A
+  player's savable scripts keep which ONCE_PROGs and QUEST_TIME_PROGs have
+  run (`<SSTATE>`, tied to a hash of the script), the start of S7's script
+  state. Found on the way: QuestChat lines with a said-once code
+  (`(hello::greet)`) never matched, since MudChat looked them up by the
+  word `hellogreet`; fixed.
+
 #### 2c. Developer and builder tools (50)
 
 Inspecting, tracing, checking and testing the world, and faster building.
