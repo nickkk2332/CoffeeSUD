@@ -6,7 +6,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B1. SAVE ROOM HOME: save each mob into its own start room
 
-*Kind:* builder tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `SAVE ROOM` saves every savable mob standing in the room, with no start-room check (`DBUpdateMOBs`), so a mob that wandered in from elsewhere is saved a second time. `clearDebri`, which runs first, destroys this room's own mobs that have wandered out, so a new mob that walked off is lost. `RESET ROOM` sends strays home but drops unsaved work. Mobs can already be kept still with `PAUSE AREA` or `CREATE DISABLEFLAG MOBILITY` (`DISABLE=MOBILITY` in coffeemud.ini), so no FREEZE command is needed.
 
@@ -20,7 +20,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B2. Protect hand edits: per-file checks, WORLD STATUS and WORLD DIFF
 
-*Kind:* builder tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** On `SAVE` and on quit, builder mode rewrites each world file whose generated text differs from the disk (`exportAll`, `writeOrDelete`). It never checks whether the file changed since boot, so a .cmare or .quest file edited by hand during the session is replaced by the older database copy. `writeFolder` deletes, without asking, any such file with no live object, even one just added by hand. `bootSum` covers the whole world, not each file. Only git guards this today.
 
@@ -36,7 +36,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B3. Multi-line editing of scripts and descriptions
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Behaviour parameters (an inline Scriptable script among them), descriptions (`genDescription`) and the GenAbility and GenTrap SCRIPT fields (`promptStatStr`) are one-line prompts, with ';' and '~' separators. The line editor (`CMJournals.makeMessage`, through `promptStatMsg`) serves only GenCommand. It labels its SCRIPT field "Help Text" and wants a literal FUNCTION_PROG EXECUTE line, so a script that is only `LOAD=progs/x.script` is refused. The usual workaround is a file in resources/progs attached with `LOAD=`.
 
@@ -52,7 +52,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B4. Track unsaved changes: LIST UNSAVED, SAVE CHANGED, warning on quit
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `CREATE`, `MODIFY` and `DESTROY` of mobs and items, and `TRANSFER`, change only the live room. World files are written from the database copy (`getRoomXML`), so anything not followed by `SAVE ROOM` is lost on `SAVE` or quit. `GMODIFY` with `CHANGE=` resets each live room first, dropping unsaved work. `SAVE ROOM` reports the count change, `SAVE AREA` saves a whole area and `LIST CONTENTS` shows what the files will get. Nothing lists which rooms differ.
 
@@ -68,7 +68,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B5. WORLD RELOAD of areas, scripts, quests and the catalog, and DEVWATCH
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** World files are read at boot only. `LOAD AREA` reads the database cache, not the file. `IMPORT NOPROMPT /world/areas/castle.cmare` rebuilds an area from its file and relinks other areas' exits, but leaves the builder outside. `UNLOAD FILE progs/x.script` clears a parsed script. `MODIFY QUEST name STOP` then `START` rereads a `LOAD=` target, but not the world/quests/*.quest file. catalog.cmare cannot be imported: WorldFiles writes a layout IMPORT does not read.
 
@@ -84,7 +84,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B6. UNDO, HISTORY and backups of world files
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** There is no undo. A wrong `MODIFY`, `DESTROY`, `COPY` or `GMODIFY CHANGE=` is permanent once saved, and `GMODIFY` only writes to Log.sysOut. `writeOrDelete` and `writeFolder` overwrite or delete world files in place, with no backup, so a destroyed area's file goes on the next `SAVE`. `RESET ROOM` or `RESET AREA` reverts unsaved live changes only. Git covers only committed states.
 
@@ -100,7 +100,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B7. Effects editor: edit in place, filtered list, duplicates
 
-*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** In the effects field of `MODIFY` (`CMGenEditor.genAffects`), typing an existing ID removes it. Changing one parameter means removing the effect and adding it again, starting from the default text, not the current one. '?' lists every ability, highlighting those whose `canAffect` is true, and '?' at the parameters prompt shows the class's help. A second copy of the same Prop is silently ignored (`addNonUninvokableEffect`).
 
@@ -114,7 +114,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B8. GMODIFY and MQL UPDATE for exits and areas
 
-*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `GMODIFY` already changes and saves an area's own fields (`tryModfy`, `DBUpdateArea`), but it checks field names against mob, item and locale stat codes, so area-only fields may be refused. It has no loop over exits: GenDoor names and door messages cannot be found or changed. MQL can select EXITS and AREAS, but `MODIFY UPDATE:` saves only rooms, items and mobs, so exit and area changes are lost at the next start.
 
@@ -130,7 +130,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B9. Dig mode and BUILD PATH for fast room creation
 
-*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `CREATE ROOM <dir> <type>` takes a locale class or a builder template (`getBuilderTemplateObject`), whose title, description, behaviours, effects and contents are copied. `COPY <dir>` clones the current room (`COPY <roomid> <dir>` clones any room), and `COPY 5 <dir>` lays a straight chain of five linked copies in one command; `LINK` sets exits, and `GENERATE` builds from randareas XML. Still, a path that bends or changes room type takes a command per leg and a walk to its end, and one made from a locale class gets the placeholder '\<Locale>-' and no description. An `ALIAS` with '~'-separated commands only approximates a path.
 
@@ -146,7 +146,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B10. MAP of an area, in the terminal and as HTML
 
-*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** The LOOK mini-map shows a few rooms around the player (AWARERANGE, default 3), without room IDs. A GenMap item whose map-areas field (`RoomMap.setMapArea`) names an area can be READ to see the whole area laid out by `StdMap.placeRooms`, but with no IDs and no marks for problems. `LIST LINKAGES` gives the connections as text. The MUDGrinder map went with the web server; its GrinderFlatMap layout survives only in the archive.
 
@@ -162,7 +162,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B11. Macro files (RUNFILE) and a builder helper for JRUN
 
-*Kind:* script command and JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command and JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `ALIAS DEFINE key cmd1~cmd2` gives per-character macros with @x1 arguments. `MPRUN LOAD=macros/shop.script` runs a script's ONCE_PROG lines as the builder's own commands. `JRUN file.js args` offers only mob(), getParm(), getParms(), numParms(), toJavaString() and getCMType(); anything else needs `Packages.com.planet_ink...` boilerplate (see resources/examples/Lemming.js). There is no plain file of commands to replay, and no helpers for common building steps.
 
@@ -178,7 +178,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B12. SANDBOX scratch area and PREVIEW of catalog objects
 
-*Kind:* builder tool · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** `GENERATE NOSAVE` skips the database, but the area stays in the live world, is not marked unsavable, and can reach the world files. A StdAutoGenInstance area rebuilds its instance children from a randareas file on each entry, and `exportAll` skips those children, so one generator can be previewed that way. The editor's disposition list does not offer `PhyStats.IS_UNSAVABLE`, so a scratch area cannot be marked unsavable by hand.
 
@@ -194,7 +194,7 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B13. AHELP BUILDING and a builder summary at login
 
-*Kind:* presentation · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** The only builder-mode help is in the SAVE entry of help.ini, and the login says only "Builder mode makes you an Archon, with the in-game editors." Nothing tells a new builder that mobs and items need `SAVE ROOM`, that hand edits during a session are overwritten, where templates and JS approvals live, or how to check the world. guides/ArchonGuide.html explains saving mobs, but not BUILDER=1 or the world folder.
 
@@ -210,12 +210,6 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 ## B14. CHATDRAFT: LLM drafts of fixed NPC dialogue
 
-*Kind:* builder tool · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* low · *Effort:* small · *Decision:* later
 
-**Today.** In builder mode the `LLM <text>` command (needs LISTADMIN and an installed LLM) answers the Archon, with a session per character. A builder can paste an NPC's description, ask for MudChat entries in chat.dat syntax and copy them into a file by hand. MUDPercolator's LLM="true" values serve random areas only. An LLM at play time would cost money, need the network and change from play to play.
-
-**Add.** `CHATDRAFT <mob> [topics...] [TO world/chat/<file>]` gathers the NPC's name, description, race, area and lore files, prompts the configured LLM, and writes a MudChat group, optionally with a .dlg skeleton. It shows a diff and asks before writing. `CHATDRAFT VARIANTS <file> <entry>` adds alternative replies to an entry. The result is plain data, so the game never needs the LLM at play time.
-
-**Example.** `chatdraft blacksmith weapons armor prices gossip to world/chat/riverford.dat` gives a blacksmith group of four entries, with three to five weighted replies each in his gruff voice, for the owner to trim.
-
-<!-- from: npc-dialogue/dlg-llm-draft -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#b14).

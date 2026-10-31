@@ -6,7 +6,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T2. Dungeons that reset when the party comes back
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `ResetWhole TICKS=<n>` resets an area after n ticks with no player activity. In turn-based time that already means a fresh area after a long absence. `MUDHOUR=<h>` resets at a game hour, and `MPRESET AREA` in a `GREET_PROG` resets on entry. Its last-access time is not saved, so it is -1 after a restore. `InstanceArea` makes a fresh copy per visit, but copies do not save, and its type adjustments (`LEVELADJ`, `ELITE`, `PREFIX` and the rest) apply only to copies.
 
@@ -22,7 +22,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T3. Script commands to sail, anchor, dock, board and hitch
 
-*Kind:* script command · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A script can `MPFORCE` a crew mob aboard to type `RAISE ANCHOR`, `COURSE` and `STEER`. It can `MPBEHAVE` `Patroller` on the vessel with room IDs as steps; Patroller routes between them but loops, and `MPUNBEHAVE` stops it. `MPTRANSFER $n <ship room id>` puts one person aboard. JavaScript can call `NavigableItem` methods. There is no one-shot route and no move-and-dock, and no script can set an item's `riding()`, so nothing hitches a cart.
 
@@ -38,7 +38,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T4. Travel time on rooms, exits and areas
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A step out of combat costs a fifth of a tick, about 4 game seconds, and a game hour is 150 ticks. The cost is set per command for the whole game (`CMProps.getCommandActionCost`). No room, exit or area changes it, and `LongRoad` changes movement points only. A 30-room road or ocean crossing passes in about a minute of game time, so day and night, hunger and weather cannot carry a journey.
 
@@ -54,7 +54,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T5. Timetabled ferry, coach and airship lines
 
-*Kind:* behaviour · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** `Patroller` on a vessel or rideable follows room-ID stops and routes between them, with `MIN`/`MAX` for pace, `.` to pause one step and `RESTART` to loop. `Prop_TicketTaker` takes a fare on boarding, and `TIME_PROG` with `MPBEHAVE` can start departures at set hours. Missing: waiting at a stop for game hours, crew-only steering (`rideok=only` skips boardables, so passengers can steer), a timetable sign, and a saved route position (Patroller's step is a plain field).
 
@@ -70,7 +70,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T6. Journeys: passages that take hours, with events on the way
 
-*Kind:* property, script trigger · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* property, script trigger · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** A journey can be faked: a transit room with `DelayedTransporter min=N max=N chance=100;<dest room>` (it carries followers), `RAND_PROG` or `DELAY_PROG` scripts there for events, and a `GIVE_PROG` or `Prop_TicketTaker` with `MPTRANSFER` to get in. But durations are in ticks only, the countdown does not pause for an event, no trigger marks the stages, and progress is not saved.
 
@@ -86,7 +86,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T7. Script functions for riding and vessels
 
-*Kind:* script function, JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function, JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `INCONTAINER($n)` gives what a mob rides, and `ISCONTENT($i)` lists a rideable's riders. `INROOM($i)` and `INAREA($i)` say where a vessel is. `INAREA($n)` for someone aboard gives the interior's area name, a rough "aboard". `STAT($i ABILITY)` and `STAT($i USES)` give speed and hull. Course, anchor and docking are not stat codes, there is no rider count, and a vessel cannot be found by name anywhere in the world.
 
@@ -100,7 +100,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T8. Crew-only helm for world-owned vessels
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** When a vessel's `OWNER` is empty, anyone may raise the anchor, set a course or steer, so a passenger can take the world's ferry. Setting `OWNER` to a clan or an NPC captain's name locks the helm (anchor or brake, steer, sail, course, raise and lower; not TENDER), though anyone following the owner still passes. A script can also block it: nav commands reach the ship as HUH messages and the interior area's scripts are asked first, so a `CNCLMSG_PROG` there with `if ispc($n)` and `return cancel` stops passengers. That is one script per ship.
 
@@ -118,7 +118,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T9. Builder-set vessel pacing
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** How many ticks a vessel waits between moves and between turns are Java fields, `ticksPerMoves` and `ticksPerTurn`, both 1. Only `GenBalloon` changes them, in its constructor. They have no stat codes. A world-run vessel can be paced with `Patroller`'s `MIN` and `MAX`, but a player-steered one can only change `ABILITY`, which is rooms per tick and soon too fast.
 
@@ -132,7 +132,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T10. DelayedTransporter with messages, fares, conditions and party handling
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `DelayedTransporter` takes `min`, `max`, `chance` and a list of rooms, and sends each mob to a random one when its own count runs out. There is no message, no look on arrival, no fare and no condition. It carries the mob's followers, but whoever's count ends first goes, so a follower may leave alone. Messages and conditions need a `GREET_PROG` or `DELAY_PROG` with `MPECHO`, or `Prop_ReqTattoo` on the exit.
 
@@ -148,7 +148,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T11. Unique interiors when vessels are copied, and a VESSEL command
 
-*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Every copy of a vessel keeps the same interior area name (the `shipbuilding.cmare` templates are all `UNNAMED_n`), and the Archon guide warns that ships sharing room IDs confuse the engine. The rename in `copyOf` is commented out, and catalog spawn and quest `LOAD` do not rename either. Changing a copy's name in `MODIFY ITEM` calls `Boardable.rename`, which fixes it, but on a cataloged item the change goes to the catalog entry instead. `GOTO <ship room id>` reaches the interior.
 
@@ -164,7 +164,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T12. Waypoint network: fast travel between places found
 
-*Kind:* property or behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property or behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `Prop_Transporter` goes to one fixed room, and `TaxiBehavior` offers every destination to everyone. `Concierge` with `PORTAL=true` on a stone item (`Mirewood#1=20;Highpeak#4=20;PORTAL=true`) lets the player pick a priced destination, but lists them all from the start. Travel "between the stones you have found" takes a script per stone: `MPTATTOO` in a `GREET_PROG`, then a `SPEECH_PROG` that builds a list from `HASTATTOO` and uses `MPCHOOSE`, `MPMONEY` and `MPTRANSFER`.
 
@@ -180,7 +180,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T14. Named ports, and COURSE TO a place
 
-*Kind:* property, command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, command · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `COURSE` takes direction words only, so a player crossing an ocean grid works out the path step by step. `SEACHART ADD` and `SEANAVIGATE <n>` (`Skill_SeaCharting`, `Skill_SeaNavigation`) route to a charted point and set the course, but over water only, and to points the player made. `Concierge`, `TaxiBehavior` and `Patroller` route to rooms the builder lists. A builder cannot name a port or landmark the game understands.
 
@@ -196,7 +196,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T16. MovingRoom routes in the world files, with saved position
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `MovingRoom` reads its routes from one global file, `resources/movingroom.xml`, outside world/ and not exported. Its position (`currentStop`, `isReversed`, `currentStatus`) is in plain fields, reset on restore. It adds and removes exits and appends text to real room descriptions, and builder export reads the live rooms, so that text and those exits can likely end up in the world files (to verify). The line and display settings it parses (`LINEPRINTNAME`, `ROOMPRINTNAME`, `DISPLOC`) are never used.
 
@@ -212,7 +212,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T17. Fares for the whole party
 
-*Kind:* property and behaviour · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* property and behaviour · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** `Prop_TicketTaker` takes one parameter, the fare. It charges every player character who boards (mounts, sits, enters or sleeps aboard) and remembers who has paid. Party characters are all players, so each one must carry coin and pay alone. `TaxiBehavior` keeps one rider, who pays, and lets off only those who mounted. Neither has an option for the leader to pay, or for pets or cargo.
 
@@ -228,7 +228,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T18. Builder-marked roads for caravans
 
-*Kind:* property · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** Caravans go only where `isDrivableRoom` (in `Sense`) allows, and it looks only at what the room's locale class fixes: its domain and, for caves and indoor stone, its movement cost (base weight) and size (height). Seaport, spaceport, city and plains always pass. Caves pass only with a base weight over 3, and indoor stone only with a set weight and height. Nothing overrides this, and a locale's domain is fixed. A forest road, mountain pass or desert track must become a plains or city locale such as `Road`, and loses its terrain and resources.
 
@@ -246,7 +246,7 @@ Ships, mounts, ferries and other transport, routes, fares, travel time, fast tra
 
 ## T19. Sister stables for mounts
 
-*Kind:* behaviour · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* low · *Effort:* medium · *Decision:* yes
 
 **Today.** Most of this exists. The `Nanny` behaviour, set for example to `RATE=2.5 NAME="The Stables" WATCHES="mounts,wagons,boats"`, guards the mounts, wagons or boats left in its room once the owner leaves. They are given back only when the hourly fee is paid (the first game hour is free). They do not decay and cannot be attacked. The drop-offs are saved in the behaviour's parameters. But a mount can be collected only where it was left.
 

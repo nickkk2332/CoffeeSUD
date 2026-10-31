@@ -6,7 +6,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR1. Homes owned by the profile, and pre-owned homes
 
-*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Land belongs to a character's name, a spouse, a clan or the follow chain. A party member who does not follow the owner owns nothing (after PARTY REMOVE, after SWITCH, or while the owner rests), and the theft check refuses them, since PLAN 5a set PLAYERKILL to NEVER. A world file cannot ship a home that is already the player's. `isProperlyOwned` and `updateLotWithThisData` wipe any owner who is not an existing player or clan, and clans are not world content.
 
@@ -24,7 +24,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR2. A world materials file with stable codes
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** New resources come only from `ADDMATERIAL_` (and `REPLACEMATERIAL_`) lines in coffeemud.ini, which is engine config, not world/ content. Codes follow the ini's hash order, and items save MTRAL as a bare number. Adding or removing a material can renumber others and silently change what world items, catalog entries and saves are made of. A resource carries one effect, used when eaten raw, and no description.
 
@@ -40,7 +40,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR3. Workstations and tool wear
 
-*Kind:* property and data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The only workstation is a fire. `NEEDFIRE` accepts any burning item, so a hearth with a permanent Burning effect works. components.txt can require a tool (NEARBY, HELD, fate KEPT), but matches only by resource, material or name substring, and a kept tool never wears. Only gathering has a tool bonus (`Prop_ImproveGather`). Only the crafter makes a craft faster, better or higher-level. Their level above the item's and the X-TIME and RUSH expertises shorten it, the QUAL, DURA, LITE and other EnhancedCraftingSkill expertises improve the item, and the ADVN expertise opens higher recipes. No tool, item or room does any of this.
 
@@ -58,7 +58,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR4. Recipes a character knows
 
-*Kind:* property, script command and script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, script command and script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Extra recipes count only while their GenRecipe book is carried, even one made sticky with `Prop_ItemBinder TO=ACCOUNT`. Sold, they are lost, and the rest of the party cannot use them. Base-file rows are open to anyone of the right level, so "learned from the elven smith" cannot be said. `CoffeeUtensils.addExtRecipes` already reads recipes from effects that implement Recipes, but no Ability does.
 
@@ -74,7 +74,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR5. Recipe requirement keys
 
-*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** GenCraftSkill's KEY_VALUE_PARMS column knows one requirement, RACEREQUIREMENT; any other key becomes an item stat. Stock skills have no such column. A recipe can be held back in a GenRecipe book, and `NEEDFIRE` asks for a fire. Anything else needs a room script: `CNCLMSG_PROG` on the craft words with `RETURN CANCEL` to refuse, and `EXECMSG_PROG ITEMGENERATED` to give XP or a tattoo.
 
@@ -90,7 +90,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR6. Script functions and commands for property
 
-*Kind:* script function and script command · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function and script command · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Scripts cannot simply ask who owns a room or give a deed as a reward. `INROOM` has ANYPROPERTY and MYPROPERTY, but MYPROPERTY tests the scripted mob, not $n. `INROOM(BEACON)` never matches: the start room it fetches is thrown away. A deed changes hands by GIVE only from its owner or a shop. A JavaScript `<SCRIPT>` block can call `CMLib.law().getLandTitle(room)` and set the owner, as `resources/progs/changeRoomOwned.js` does, but it needs JSCRIPTS approval.
 
@@ -108,7 +108,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR7. Building without a deed where the world allows
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Building skills need land the builder owns (`doesOwnThisLand`, also the grid parent or the room in the build direction) or the CMDROOMS security flag. Nothing grants build rights without a title: Thief_Squatting only claims existing titles, and the recipe's DAT_BUILDERMASK limits who builds, not where. A camp or a cave home needs a `Prop_LotsForSale` or `Prop_RoomForSale` at price 0 placed first, and a real-estate shopkeeper to sell it.
 
@@ -124,7 +124,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR8. Building skills as data
 
-*Kind:* builder tool and data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool and data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Crafting, gathering and wright skills can be data (GenCraftSkill, GenGatheringSkill, GenWrightSkill), but building skills cannot; CREATE knows only CRAFTSKILL, WRIGHTSKILL and GATHERSKILL. Construction differs from a new trade only in name, trigger, recipe file, main material and sound. A JavaScript class extending Construction could point at another file, but it loads only through LOAD ABILITY or the ini, is not kept in world/custom.cmare, and is untested in the fork.
 
@@ -140,7 +140,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR9. Weighted and masked finds for data gathering skills
 
-*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A data gathering skill picks evenly among its ITEMXML items (repeating an entry weights it), and ROOMMASK and PLAYMASK gate only the whole skill. Time or season variants can be had through ResourceOverride named entries with MOBMASK=, at a fixed chance. `Prop_ImproveGather` (AMT=, SKILLS=, MASK=) multiplies yield and can test level. YIELDFORMULA is parsed without variables, so yield cannot grow with level or proficiency.
 
@@ -156,7 +156,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR10. A mask column for hunting and fishing tables
 
-*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** hunting.txt rows match only the room's resource and a domain, `*`, or a locale class ID; fishing.txt rows match only the resource. Every row applies to the whole world, so area, seasonal or night-only game cannot be set. For fish, ResourceOverride with a named entry and MOBMASK can swap the catch for a variant, but it keeps the base fish's value.
 
@@ -172,7 +172,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR11. Seasonal room resources
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A room's resource is fixed by its locale class or by ResourceOverride, all year. Nothing in gathering reads the calendar. A room script can do it: a DAY_PROG testing `ISSEASON(autumn)` runs `MPUNBEHAVE $d ResourceOverride`, then `MPBEHAVE $d ResourceOverride apples` (or $a for the area). It must unbehave first, since MPBEHAVE does not re-parm, and re-apply after a restore, since behaviours added in play are not saved in world.xml.
 
@@ -186,7 +186,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR12. Crafting and gathering XP for every class
 
-*Kind:* world option and property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option and property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Every craft computes an XP value (`setMsgXPValue`), but only the Artisan class awards it. Two data routes exist. In achievements.ini, EVENT="CRAFTING" with ABILITYID, ITEMMASK, NUM and REWARDS="n XP" (ACH_FIRSTCRAFTOR gives 50) can be chained as milestones, and SKILLUSE covers gathering. A script, `EXECMSG_PROG ITEMGENERATED all` with `MPEXP $n 10`, can sit on a room, a carried item, or the character through `MPSCRIPT $n SAVABLE`.
 
@@ -202,7 +202,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR13. A way home for the party
 
-*Kind:* property, command and world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property, command and world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Recall goes to each character's start room, and only a script changes it: `MPBEACON <room> all` in a bed or room script (`EXECMSG_PROG SLEEP all`), which a crafted bed can carry through the recipe's spell column. A home bought or built has no tie to recall by itself. Skill_Recall takes along only monster followers, so party members are left behind. The existing `+ISHOME` mask means the home area, but `-LOCATION +OWNED` and `-LOCATION +PRIV` already test for property the character owns or has privileges in.
 
@@ -220,7 +220,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR14. Resource depletion and regrowth on game time, saved
 
-*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Each harvest in a room cuts its yield by 20%, and it recovers after a fixed 30 minutes. The record's expiry uses game time, but the map holding it (`ExpireHashMap`) clears by the computer's clock, so in a paused or turn-based game it recovers in real minutes. Depletion is not saved, and the count and regrowth cannot be set. Conditional yield already exists: `Prop_ImproveGather` with `AMT=` (0 removes yield) and a `MASK=` on season, weather or hour.
 
@@ -234,7 +234,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR15. Named resource variants as data
 
-*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A variant such as "moonpetal" herbs is only a name. `RawCMaterial.makeItemResource` sets value and effects from the resource code and leaves the description empty; the subtype changes only the name (`adjustResourceName`). ResourceOverride's `name(RESOURCE subtype)` entries and `Prop_CommonTwister` only rename, and fishing.txt sets a value for fish only. A valuable or magical variant needs a new material code, or a custom GenGatheringSkill whose ITEMXML holds the exact item.
 
@@ -250,7 +250,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR16. Crop rules as data
 
-*Kind:* property and data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A crop grows in a fixed 50 ticks after planting (about 3 real minutes, or WAIT 50 in turn-based time). It needs `canSeeTheSun` and an outdoor plains, hills, woods, jungle or swamp room (or a DIRT resource), and yields 1d7 times a base amount, plus compost. Gardening uses the same rooms, and MasterFarming only shortens planting. No season, per-crop time, cellar farm or watering exists; the only workaround is a room `CNCLMSG_PROG` that refuses planting when `ISSEASON` fails.
 
@@ -264,7 +264,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR17. Rolled quality tiers for crafted items
 
-*Kind:* world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A craft either works or makes a ruined item: one proficiency check, then `dropAWinner` or `dropALoser`. Quality words exist only as stages the crafter learns and picks, such as the EnhancedCraftingSkill expertise stages and MasterLeatherWorking's Designer to Legendary. Nothing rolls a tier. Prop_CommonTwister can rename output on ITEMGENERATED, but it renames every item the same way and leaves stats alone.
 
@@ -280,7 +280,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR18. EXPERIMENT: discover recipes by trying materials
 
-*Kind:* skill subcommand, recipe keys and world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* skill subcommand, recipe keys and world option · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** The only way to learn a recipe in play is LEARN (`doLearnRecipe`). It takes apart an unbranded item no higher than your level into a recipe book with blank pages. It needs `supportsDeconstruction`, which is false for Cooking and for GenCraftSkill data skills. Nothing finds a recipe by trying materials together.
 
@@ -296,7 +296,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR19. Salvage and dismantle yields as data
 
-*Kind:* property, skill subcommand and world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, skill subcommand and world option · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Scrapping gives a fifth of an item's weight in its one material. It refuses flesh, liquid, paper, energy, gas, vegetation and enchanted items. Mobs are covered: a GenRace's NUMRSC, GETRSCID and GETRSCPARM, or ResourceOverride on the mob, set full Butchering yields. ResourceOverride on a room or area, with Scrapping in its parameters, can swap the scrap for a named variant at a chance. None of these gives several outputs, catalog items or rules per item.
 
@@ -310,7 +310,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR20. Furniture that changes its room: Prop_Furnishing
 
-*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Some furniture already works. FasterRecovery on a placed, non-gettable item helps everyone in the room, and on a bed or chair (a Rideable) it helps whoever is on it. Prop_RideAdjuster, Prop_RideSpellCast and Prop_RideEnabler affect whoever sits or sleeps on it. A hearth with a permanent Burning counts as fire for Cooking. A recipe's spell column can put any property or behaviour on what it makes. Three things are missing. An item cannot give room-wide effects, because Prop_HereAdjuster, Prop_HereSpellCast and Prop_RoomLit go only on rooms or areas. There is no comfort total. An item cannot act as a station.
 
@@ -326,7 +326,7 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR21. LEARN for data crafting skills (GenCraftSkill)
 
-*Kind:* data file · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** Data crafting skills (GenCraftSkill) cannot use LEARN. Recognising items already works: `GenCraftSkill.mayICraft` checks the supported resource and `mayBeCrafted`. It then matches the item's name against each recipe's final name, with % as a wildcard. Two things block LEARN. `supportsDeconstruction()` is hard-coded false. `GenCraftSkill.unInvoke` has no LEARNING branch that calls `deconstructRecipeInto`, as Blacksmithing's does.
 
@@ -342,12 +342,6 @@ Crafting and gathering skills, recipes, resources, farming, workstations, player
 
 ## CR22. Linked storage chests for the profile: Prop_SharedStash
 
-*Kind:* property · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* low · *Effort:* medium · *Decision:* later
 
-**Today.** Bankers with the same `bankChain()` reach the same account from anywhere. But StdBanker keeps deposits by depositor name, so each character has their own account (saved as player data). A clan banker shares by clan, but clans are not world content. Prop_ItemTransporter and Prop_ItemTransReceiver move items one way only. A chest at home keeps its contents in the save, but can be reached only there.
-
-**Add.** Prop_SharedStash on containers: `NAME=home`, an optional `MASK` (a zapper mask) and `CAPACITY=n`. Every container with the same NAME shows and holds one shared list of items. The list is kept in the save like player data and belongs to the profile, so every party character reaches it. PUT and GET work from any linked container.
-
-**Example.** A "Wayfarer's coffer" in each inn reaches the same goods as the strongbox in the party's house.
-
-<!-- from: crafting-gathering-housing/cgh-shared-stash -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#cr22).

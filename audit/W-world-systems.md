@@ -6,7 +6,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W1. Warrants and fines in scripts and masks
 
-*Kind:* script function, script command · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script function, script command · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Scripts can accuse with MPACCUSE, and Prop_ReqEntry or Prop_HaveZapper can accuse as their zap event. The only way to pardon is MPCAST Prayer_Forgive $n from a mob in the legal area. It clears every warrant at once and shows prayer messages. A quest can suppress a law with SET AREA and GIVE STAT SUPPRESSLAW while it runs. Nothing can ask whether the player is wanted, for what, or what they owe. Masks have +OFFICER and +JUDGE but no key for wanted.
 
@@ -14,7 +14,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Example.** A corrupt magistrate: BRIBE_PROG 500 runs MPPARDON $n ALL if ISWANTED($n). An honest shop turns away anyone wanted.
 
-*See also:* JS6, W4, W6, W12, W14, W15, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W26, PR1 (W1's +WANTED mask is what W26's bounty hunters need and what PR1's \<WANTED> tag tests); DT21 (Both add pardoning and accusing per crime (MPPARDON and MPFINE vs LAW PARDON and LAW ACCUSE)).
+*See also:* JS6, W4, W6, W12, W14, W15, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W26 (later), PR1 (W1's +WANTED mask is what W26 (later)'s bounty hunters need and what PR1's \<WANTED> tag tests); DT21 (Both add pardoning and accusing per crime (MPPARDON and MPFINE vs LAW PARDON and LAW ACCUSE)).
 
 <!-- from: world-systems/ws-law-script -->
 
@@ -22,7 +22,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W2. Currency file and a world default currency
 
-*Kind:* data file, world option · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* data file, world option · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** An area's CURRENCY can be a full definition or just a code. Child areas inherit it, so a parent area can serve as a world default. A code resolves from what areas define at load, or from the built-in GOLD, COPPER, CREDIT, DOLLAR and VICTORY. An area with no currency anywhere in its parent chain gets the hard-coded gold coins and Archon notes. When a code is defined twice, the first definition is kept without a warning. VALUE() knows only the sets areas made, so VALUE($n GOLD > 5) fails for the built-in ones.
 
@@ -38,7 +38,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W3. Typed hazard zones: Prop_Hazard
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** FieryRoom does fire only. Prop_InstantDeath with DAMAGE= and a MASK (which can test -WEATHER, -WORN, -EFFECTS and +IF) hurts occupants on entry and each tick, but its damage is untyped, so saves and resistances do not count. It has no formula. It stops once nobody matches and does not start again until the next entry. On an area it does nothing. Anything more takes a RAND_PROG with MPDAMAGE in every room.
 
@@ -46,7 +46,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Example.** Frostfang Pass: TYPE=COLD DAMAGE=1d6 SAVE=COLD WHEN="-WEATHER +BLIZZARD +SNOW". Without a fur cloak or Resist Cold, the crossing in winter hurts more each tick.
 
-*See also:* W10 (W10's +ROOMDARK mask is meant as a WHEN condition in W3's Prop_Hazard, next to its DARKONLY); W25 (Both hurt characters by cold and heat from where they are (a typed hazard zone vs a body-temperature model)).
+*See also:* W10 (W10's +ROOMDARK mask is meant as a WHEN condition in W3's Prop_Hazard, next to its DARKONLY); W25 (later) (Both hurt characters by cold and heat from where they are (a typed hazard zone vs a body-temperature model)).
 
 <!-- from: behaviors-world/bw-hazard, properties/pr-hazard -->
 
@@ -54,7 +54,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W4. Letting time pass: long WAIT, WAIT UNTIL, MPPASSTIME
 
-*Kind:* script command, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** WAIT runs real simulated ticks and stops when the player is disturbed. It is capped at 100 ticks, which is less than one mud hour, and it works only while the clock is stopped. TICKTOCK moves the calendar without running the ticks in between, so nothing heals, restocks or respawns, and TIME_PROGs are skipped. No script can make time pass. GameTime.requestAdvance, which WAIT uses, already takes a stop condition.
 
@@ -64,7 +64,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Also merged here, from T1 (WAIT UNTIL arrival, and a script command to end a wait).** `WAIT UNTIL ARRIVAL|STOP|DOCK`, which ends when the vessel or rideable you are on stops or reaches a port, and `WAIT UNTIL DAWN|DUSK|MORNING|HOUR <n>`. These forms get a larger cap, say 3 game days, and keep the usual hurt and attack checks. A script command `MPINTERRUPT <who> [message]` ends any multi-tick wait or journey for that character and the party. JavaScript gets the same call. `GameTime.requestAdvance` already takes an "until" test, so this is cheap.
 
-*See also:* JS6, W1, W6, W12, W14, W15, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); ST8 (ST8's DOCK_PROG and T1 (now in W4)'s WAIT UNTIL DOCK both need an event when a vessel stops or anchors in a port).
+*See also:* JS6, W1, W6, W12, W14, W15, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); ST8 (ST8's DOCK_PROG and T1 (now in W4)'s WAIT UNTIL DOCK both need an event when a vessel stops or anchors in a port).
 
 <!-- from: world-systems/ws-cmd-passtime, sp-dev-tooling/spdev-wait-until, vehicles-travel-instances/vti-wait-until -->
 
@@ -72,7 +72,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W5. Area calendars and the start date as content
 
-*Kind:* world option, data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option, data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The global calendar is already content: coffeemud.ini sets HOURSINDAY, DAYSINMONTH, MONTHSINYEAR, DAYSINWEEK, DAWNHR to NIGHTHR, and YEARDESC. A StdTimeZone area's own calendar is saved only in the TIMECLOCK record in CMPDAT. That is a save table: WorldFiles never writes it and a new game does not copy it. So in every real game that area reverts to the global calendar. Every clock starts at hour -1, day 1, month 1, year 1000. A date set in builder mode with MODIFY YEAR or TICK SET is lost the same way.
 
@@ -88,7 +88,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W6. Holidays: more recurrences and tests by name
 
-*Kind:* quest feature, script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* quest feature, script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** CREATE, MODIFY, LIST and DESTROY HOLIDAY edit resources/quests/holidays/holidays.quest, which is content. A holiday is a quest without a script. It has an area or room mask (which can test -SEASON and -WEATHER), MUDDAY m-d, a real-life DATE or WAIT/INTERVAL, and a DURATION. It sets behaviours, properties and stats such as PRICEMASKS for that time. CALENDAR lists the dated holidays. A holiday cannot recur by weekday, interval, season or moon. Nothing tests a holiday by name: QVAR(\<quest> REMAINING > 0) is the nearest.
 
@@ -96,7 +96,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Example.** Moonfeast falls on every full moon in Riverton. A quest with SET HOLIDAY Moonfeast suppresses the drunkenness law and sets PRICEMASKS to 0.9. Room text mentions the lanterns.
 
-*See also:* JS6, W1, W4, W12, W14, W15, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W23 (Both tie a quest to a holiday (SET HOLIDAY vs SET SCHEDULE HOLIDAY)); PR1 (Both add a VARIES \<HOLIDAY name> tag); F21 (F21's deity holy days are named holidays, tested with W6's tests by name).
+*See also:* JS6, W1, W4, W12, W14, W15, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W23 (Both tie a quest to a holiday (SET HOLIDAY vs SET SCHEDULE HOLIDAY)); PR1 (Both add a VARIES \<HOLIDAY name> tag); F21 (later) (F21 (later)'s deity holy days are named holidays, tested with W6's tests by name).
 
 <!-- from: world-systems/ws-holidays -->
 
@@ -104,7 +104,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W7. RoomStates: named versions of a room
 
-*Kind:* behaviour, script command · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, script command · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** A script can switch a room between states. Each state is a FUNCTION_PROG called with MPCALLFUNC. It runs MPSET DISPLAY/DESCRIPTION/ATMOSPHERE/CLIMATE, MPAFFECT Prop_RoomDark, MPBEHAVE WaterCurrents, MPUNLINK, MPCLOSE and MPSETVAR, and VARIES text follows the state through '+IF VAR(...)'. Prop_ClosedSeason and Prop_ClosedDayNight darken rooms and close exits by time or season. But MPSET CLASS does nothing, rooms cannot switch together, and the states are not declared in one place.
 
@@ -120,7 +120,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W8. Tides for builders
 
-*Kind:* script function, property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function, property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Each area's clock works out the tide, but only Mer, Pirate and the druid tide chants read getTidePhase. Scripts, masks and VARIES cannot. The tide model is thin. It is LOW only in the hour the day starts and HIGH only in the dusk hour, with its strength set by the moon, and NO_TIDE the rest of the time. A builder can match it today with a TIME_PROG at those hours plus ISMOON, and close a causeway door with Prop_ClosedDayNight HOURS=.
 
@@ -136,7 +136,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W9. ResetWhole: DAYS, EXCEPT and MSG
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** ResetWhole's TICKS= already runs on the game clock and counts from the last player activity in the area, so it already means n ticks after the party left. MUDHOUR= uses the area's calendar. RLHOUR reads the real clock, which means nothing with pause and turn-based time. A reset reloads whole rooms, so a slain boss comes back unless his ONCE_PROG purges him when a variable is set. A message after a reset needs an area GREET_PROG.
 
@@ -156,7 +156,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W10. Darkness tests, and dangers in the dark
 
-*Kind:* script function, property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function, property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A room's darkness is its IS_DARK disposition. Night, blizzards, dust storms, Prop_RoomDark and Prop_ClosedSeason set it, and any light in the room clears it. A room script can test it with ISLIKE($d '-DISPOSITION +ISDARK'), and so can a room Emoter or a quest room mask. A mask checked against the player cannot see it, because StdRoom filters IS_DARK out of what reaches occupants. Losing your way in the dark exists only as the Chant_Labyrinth spell.
 
@@ -172,7 +172,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W11. Darkness that torches cannot beat
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_RoomDark sets IS_DARK on the room (with HOURS=), but any carried torch clears it, because inhabitants are applied after room effects. Spell_DarknessGlobe does beat lights. It strips IS_LIGHTSOURCE from every inhabitant and forces the room dark on each tick and each entry. But it is a spell on a mob. The workaround is a hidden room mob with a permanent globe, and lights flicker back between its ticks.
 
@@ -186,7 +186,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W12. MPWEATHER, and WEATHER SET, FORECAST and NEXT
 
-*Kind:* script command, builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** 'MPAFFECT Prop_Weather $a 300 TICKS THUNDERSTORM' pins an area's current and next weather for a time, but silently. Weather chants such as Chant_SummonRain or Prayer_Weather, cast through MPAFFECT, change the next weather with the usual messages. They cannot pick an exact state or a duration. WEATHER WORLD lists each area's current weather. Nothing shows the odds of the next.
 
@@ -194,7 +194,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Example.** A step of the necromancer quest runs MPWEATHER $a THUNDERSTORM FOR 2 HOURS. A builder runs WEATHER FORECAST after changing an area's climate.
 
-*See also:* JS6, W1, W4, W6, W14, W15, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W20, DT20 (W12's MPWEATHER and WEATHER SET and FORECAST are repeated in W20 (MPWEATHER, FORECAST) and DT20 (WEATHER SET); build one set of weather commands).
+*See also:* JS6, W1, W4, W6, W14, W15, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W20, DT20 (W12's MPWEATHER and WEATHER SET and FORECAST are repeated in W20 (MPWEATHER, FORECAST) and DT20 (WEATHER SET); build one set of weather commands).
 
 <!-- from: world-systems/ws-cmd-weather -->
 
@@ -202,7 +202,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W13. Sky and weather lines per area: Prop_SkyText
 
-*Kind:* property, presentation · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property, presentation · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The dawn, day, dusk and night lines and the weather texts come from global lists in resources/lists.ini (TOD_CHANGE_OUTSIDE, TOD_CHANGE_INSIDE, WEATHER_*). A cave city and a desert share them. Lines 669 and 671 have the sun rising in the west and setting in the east. A room's description can follow time and weather with \<VARIES>. For lines per area, DISABLE=TODNOTIFIES or WEATHERNOTIFIES turns off the stock ones, and then every area needs a TIME_PROG or RAND_PROG with MPECHO.
 
@@ -218,7 +218,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W14. MPSHOP: remove, restock and reprice shop stock
 
-*Kind:* script command, script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Scripts can read a shop with SHOPITEM, NUMITEMSSHOP and SHOPHAS (which sets $9 to the price). They can add stock with MPOLOADSHOP (with PRICE=n) and MPMLOADSHOP. MPSET changes a GenShopkeeper's rules: PRICEMASKS, BUDGET, DEVALRATE, INVRESETRATE, IGNOREMASK and WHATISELL. No script or quest can remove stock, set a quantity, reprice a stocked item, reset the inventory or set the budget that is left. Only the RESET command clears a store.
 
@@ -226,7 +226,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Example.** While the mine is collapsed, the blacksmith's script runs MPSHOP $i REMOVE "iron ingot" ALL. A fence offers a stolen ring back at its SHOPPRICE plus half.
 
-*See also:* JS6, W1, W4, W6, W12, W15, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W17 (W14's SHOPPRICE and W17's PRICE both return an item's price at a shop for a customer).
+*See also:* JS6, W1, W4, W6, W12, W15, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); W17 (W14's SHOPPRICE and W17's PRICE both return an item's price at a shop for a customer).
 
 <!-- from: world-systems/ws-shop-script -->
 
@@ -234,7 +234,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W15. Bank accounts and debts in scripts
 
-*Kind:* script function, script command · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function, script command · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The money library keeps bank balances per bank chain, and debts with interest and due dates, in CMPDAT, which a save holds. Scripts see only the coins a character carries (GOLDAMT, MPMONEY). The workarounds are to MPFORCE the player to DEPOSIT in front of a banker, or LIST BANKS, which only shows them. A reward cannot be paid into an account, and a quest cannot create or check a debt.
 
@@ -242,7 +242,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 **Example.** The guild pays bounties straight into Riverton Trust. A moneylender's quest sends thugs once DEBT($n Vargo) is past due.
 
-*See also:* JS6, W1, W4, W6, W12, W14, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them).
+*See also:* JS6, W1, W4, W6, W12, W14, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them).
 
 <!-- from: world-systems/ws-bank-script -->
 
@@ -250,7 +250,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W16. Coin descriptions, materials and weights
 
-*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A coin's material follows from its denomination's name. Note, bill and dollar give PAPER. Otherwise it is the first material word in the name, so a silver shilling is SILVER and a glass moon bead is GLASS. Its description is always "Equal to N \<lowest coin>." There is no weight per denomination, so invented coins all read alike, and a material other than the one in the name cannot be set.
 
@@ -266,7 +266,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W17. Money formatting for scripts
 
-*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Scripts see money only as numbers. `GOLDAMT` and `VALUE` return amounts, `CURRENCY` returns a code, and only `SHOPHAS` fills `$9` with a formatted price. To quote a price in coin names, a script must embed JavaScript that calls `Packages.com.planet_ink.coffee_mud.core.CMLib.beanCounter().nameCurrencyLong`. That needs `JSCRIPTS` approval and some Java.
 
@@ -284,7 +284,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W18. A breath count before drowning
 
-*Kind:* world option, property, script function · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option, property, script function · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Drowning and choking damage start on the first tick a mob cannot breathe the room's atmosphere. Holding breath exists only as skills: `Skill_DeepBreath` and `Skill_LongBreath` (sailors, LizardMan, Otter). A builder can lend them with `Prop_WearEnabler` or `Prop_HaveEnabler`, and `Prop_WearSpellCast` can give `Spell_WaterBreathing`. Anyone else has no breath to hold and gets no warning.
 
@@ -300,7 +300,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W19. Floodable rooms driven by weather, tide or a variable
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Flooding exists in two forms only. `Trap_FloodRoom` is sprung once: it blocks exits, makes occupants swim, then drains. `Chant_Flood` is a spell with a duration. Scripts can already build a flood by hand. `MPSET $i ATMOSPHERE WATER` makes the room's air water, so occupants drown (the resource is named WATER; FRESHWATER is ignored). `MPAFFECT property:Chant_Flood $i` makes it a swimming room until `MPUNAFFECT`. `MPBEHAVE WaterCurrents $i <dir>` sweeps loose items, and players, out through an exit. A variable can hold the level, and `ISWEATHER` tests for rain. What is missing is one behaviour that ties these into levels that rise and drain on their own. WaterCurrents also takes every loose item, not just small ones.
 
@@ -318,7 +318,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W20. Climates and weather texts as data, chosen per area
 
-*Kind:* data file, world option, script command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, world option, script command · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Weather odds are static arrays in `DefaultClimate`, which every area uses. An area saves only five climate bits (wet, cold, windy, hot, dry). `Prop_Weather` pins one weather. `LinkedWeather` copies another area's weather or rolls it in, so a hidden template area can act as a climate. `CLIMATE_VOID` is always CLEAR. The weather texts in `resources/lists.ini` apply to the whole world.
 
@@ -334,7 +334,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W21. Law book edits in builder mode saved to the world files
 
-*Kind:* builder tool, data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool, data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Per-area laws already work as content. `Arrest(laws_riverton.ini;SALESTAX=5 OFFICERS="cityguard")` names a law file in `resources/` and merges the overrides over it. The behaviour is kept in the area's `BEHAVES` in the `.cmare`. The gap is the law named `custom` and the `StdLawBook`/`GenLawBook` editor. They write the law text to CMPDAT under `AREA/ARREST`, which is save state, so laws edited in builder mode do not reach a new game.
 
@@ -350,7 +350,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W22. Custom seasons, seasonal day length and named moons
 
-*Kind:* world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Seasons are the fixed `TimeClock.Season` enum. Each season is floor(months/4) months long, WINTER comes first, and leftover months go to FALL. Day length is one `dawnToDusk` array for the whole year. There is one moon, whose phase comes from the day of the month; `DOMAIN_MOONALTERING` effects only shift it. `ISSEASON`, `+SEASON`, `VARIES` and `Prop_ClosedSeason` know only the four names.
 
@@ -372,7 +372,7 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W23. Game-time schedules for quests
 
-*Kind:* quest feature · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* quest feature · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Quest `SET WAIT`, `INTERVAL` and `DURATION` already take game time (`MUDHOURS`, `MUDDAYS`, `MUDWEEKS`, ...), and `MUDDAY m-d` gives a yearly date. Room masks with `-SEASON` or `-WEATHER` limit where an event happens. A scheduler mob can run `MPSTARTQUEST` from a `TIME_PROG`, or from a `RAND_PROG` that tests `ISSEASON(WINTER)`. CRON runs by the real clock and is stored as state, not content. What is missing is a declared window (weekday, hours, season, moon, weather, holiday) and an end at dusk.
 
@@ -388,81 +388,39 @@ Calendar and clock, weather and climate, environmental hazards, darkness, tides,
 
 ## W24. Gradual and conditional restocking
 
-*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* later
 
-**Today.** A generic shopkeeper's stock resets all at once. Every `INVRESETRATE` ticks, `doInventoryReset` empties the shelves, the player's sales included, and reloads the built stock. Between resets a sold-out item stays gone. `INVRESETRATE` is a number of ticks, set per shop, per area or in the ini. Stock cannot depend on season, weather, a holiday or a variable. `Prop_ClosedSeason` does not work on a stock item, which has no room.
-
-**Add.** `Prop_Restock` on a shopkeeper or an area. `RATE="1 per 6 HOURS"` or `"25% per DAY"` brings each built item back toward its built quantity. `SELLOFF="20% per DAY"` makes goods the player sold go a little at a time. A conditional line such as `STOCK="strawberries;10;WHEN=+SEASON +SUMMER"` keeps an item in stock only while its mask holds. `INVRESETRATE` also takes time words ("3 DAYS").
-
-**Example.** The fruit seller has strawberries only in summer and apples in fall. A day after the player buys the armourer's last helm, it is back.
-
-<!-- from: world-systems/ws-shop-restock -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#w24).
 
 <a id="w25"></a>
 
 ## W25. Exposure: body temperature from climate, shelter and clothing
 
-*Kind:* behaviour, property, script function · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, property, script function · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** There is no temperature model. The area's COLD and HOT bits and the weather only shift WeatherAffects' disease rolls and a few spells. Clothing counts only as cover for the feet, torso and legs. Some pieces can be reused: `Disease_FrostBite`, `Disease_Cold`, `Spell_ResistCold`, `Chant_ColdWard`, and `Prop_HereAdjuster` for penalties.
-
-**Add.** An area behaviour `Exposure(cold=0-3 heat=0-3)`, which `AUTOAREAPROPS` can give to every area, puts an Exposure effect on the character. Each tick the effect adds up:
-- the climate bits, the weather and the time of day;
-- shelter (indoors, `HideoutShelter`, tents);
-- being wet (swimming, rain);
-- a lit fire in the room.
-
-Clothing protects through `Prop_Insulation(WARM=n COOL=n)`, which by default comes from the material (fur, wool, leather). The stages chilled, cold and freezing bring movement and dexterity penalties, then damage and FrostBite; heat has its own stages. The prompt and `SCORE` show the stage, and `EXPOSURE($n)` returns it.
-
-**Example.** In the Northern Wastes at night, away from a campfire, the player goes from chilled to freezing in about 30 ticks without a fur cloak (`WARM=2`). Inns and caves are safe.
-
-*See also:* W3 (Both hurt characters by cold and heat from where they are (a typed hazard zone vs a body-temperature model)).
-
-<!-- from: behaviors-world/bw-exposure -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#w25).
 
 <a id="w26"></a>
 
 ## W26. Bounty hunters and wanted posters
 
-*Kind:* behaviour, property · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, property · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** Every Arrest pursuit check is gated on `inMyMetroArea`, so a player wanted in one town is free one area over. `MOBHunter` stays in its own area (`TrackingFlag.AREAONLY`), and no mask means "wanted". `Skill_TrackCriminal`, `Skill_PrisonerTransfer` and `Skill_CollectBounty` have machinery to reuse. No wanted poster exists.
-
-**Add.** A `BountyHunter` behaviour with these parameters:
-- `AREAS="Riverton;Ashford"`: whose warrants it serves;
-- `MINFINE=200` or `MINCRIMES=1`;
-- `CHANCE`: per game hour;
-- `RANGE`: the areas it travels.
-
-When the player is wanted there but is elsewhere, the hunter tracks them down. The player can pay the fine plus a fee, or surrender and be taken to that jail with the warrant intact, or fight. If the hunter wins, it delivers them anyway. `Prop_WantedPoster` makes readable notices of the player's warrants and bounties. This needs a script query for warrants and a `+WANTED` mask, which are proposed separately.
-
-**Example.** After robbing the Ashford bank the player flees to the hills. Two game days later Grek the bounty hunter walks into their inn.
-
-*See also:* W1, PR1 (W1's +WANTED mask is what W26's bounty hunters need and what PR1's \<WANTED> tag tests).
-
-<!-- from: world-systems/ws-bounty -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#w26).
 
 <a id="w27"></a>
 
 ## W27. Market: supply and demand that remembers and recovers
 
-*Kind:* behaviour, script command, script function · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, script command, script function · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** Supply moves prices only through `DEVALRATE`. It counts the copies in one shop's stock and resets with that stock, so after the player sells 50 pelts to one tanner, the tanner next door still pays full price. `PRICEMASKS` can be changed by `MPSET $a` or a quest's `GIVE STAT`, but area stats set by a script are not saved. Nothing recovers over time or links towns. The StockMarket behaviour that DOCS describes is not in this tree.
-
-**Add.** An area behaviour `Market`, for example `GOODS="pelts: -RESOURCE +FUR +HIDE; grain: -RESOURCE +WHEAT +BARLEY" BASE=1.0 SELLDROP=2% BUYRISE=1% RECOVER=10% per DAY MIN=0.3 MAX=3.0`. It keeps a saved price factor for each good, applies it to every shop in the area, and moves it back toward `BASE` each game day. `TRADE=Ashford:grain` passes part of a price change on to another town. `MPMARKET <area> <good> +/-pct` moves a factor, and `MARKET(<area> <good>)` reads it.
-
-**Example.** The player sells a load of pelts in Riverton, and the price drops 40% and recovers over a week. A quest in which the grain caravan is robbed runs `MPMARKET $a grain +80`.
-
-*See also:* JS6, W1, W4, W6, W12, W14, W15 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them).
-
-<!-- from: world-systems/ws-market -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#w27).
 
 <a id="w28"></a>
 
 ## W28. Prop_TimeMode: zones locked to turn-based or real time
 
-*Kind:* property · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** `TIMEMODE` is the player's own switch between turn-based and real-time play. A zone can switch it by script. A `GREET_PROG` or `ENTRY_PROG` runs `mpforce $n timemode turns`, and an `EXIT_PROG` runs `mpforce $n timemode realtime`. But no script function reads the current mode, so the player's own choice cannot be restored on leaving. The player can also type `TIMEMODE` inside the zone.
 
@@ -478,7 +436,7 @@ When the player is wanted there but is elsewhere, the hunter tracks them down. T
 
 ## W29. Exchange rates that can change
 
-*Kind:* behaviour, script command · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour, script command · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** Coins exchange at the fixed value ratio of their denominations. `MoneyChanger` takes a fee per currency (`CROWN=30`, with `CUT=5` as the default) and refuses unlisted currencies once any rate is set. "Crowns lost value" can therefore be done for one changer as a higher fee. A quest can swap the fee with `MPUNBEHAVE` and `MPBEHAVE`, and the save keeps the change. But the parser skips "-", so there is no premium, and a world-wide change means re-scripting every changer.
 

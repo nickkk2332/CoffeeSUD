@@ -6,7 +6,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT1. VARS: list, set, clear and watch script variables
 
-*Kind:* debug tool and script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool and script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** No command lists script variables. `STAT <mob> SCRIPTS` shows them only for scoped engines on a mob's own scripts, so it is empty for the usual global scope. `LIST RESOURCES` shows the `VARSCOPE-*` keys but not their values. `JCONSOLE setVar` or `MPRUN mpsetvar` (after `mpsetinternal SCOPE GLOBAL`) changes one variable whose host and name you already know. `CREATE DEBUGFLAG SCRIPTVARS` only logs changes to mud.log.
 
@@ -20,7 +20,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT2. QUESTINFO and quest test controls
 
-*Kind:* builder tool and quest feature · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool and quest feature · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `LIST QUESTS` shows only running, waiting or disabled. `Quest.getLastErrors` has no caller, and quest errors go to mud.log. Details can be dug out one at a time: `$%QVAR(bell STEPNUM)%` and `MOB_ROOMID` read the step and the mob's room; `MPRUN` with `mpstepquest`, `mpquestwin` or `mpqset` changes them; `JCONSOLE` can call the quest object. `MODIFY QUEST` STOP and START cannot restart at the current step, and STOP deletes an unscheduled quest.
 
@@ -36,7 +36,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT3. World load report, and no overwrite of partly loaded files
 
-*Kind:* debug tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** When a hand-edited world file names an unknown item class, ability or behaviour, `CoffeeMaker` logs "Unknown ... skipping" and carries on. `WorldFiles.importArea` still counts the file as loaded whole, so the next builder `SAVE` writes it back without the skipped object: a typo becomes lost data. `WorldFiles.report` prints only fatal problems. The rest is in mud.log, seen with `LIST LOG` or `ERRMSGS=BOTH`.
 
@@ -52,7 +52,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT4. CHATTEST, CHATLINT and CHAT RELOAD
 
-*Kind:* debug tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** When an NPC does not answer, the builder cannot see why: the wrong group, a failing mask, a parse error, the 3-tick start delay, or the busy check after another NPC spoke. Chat parse errors go only to `Log.debugOut`, malformed lines to a warning. There is no MUDCHAT debug flag, and `TEST` has no MudChat case. Only reloading exists: `UNLOAD RESOURCE` drops cached chat groups.
 
@@ -66,7 +66,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT5. DEV=1: a normal game with saves and developer powers
 
-*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** There are two modes: `BUILDER=1`, with no saves, and a normal game. A launch override already gives powers in a normal game: `sud.sh SYSOPMASK=-MOBS RESTORE=act2` makes every profile character a sysop, keeping class and saves, and `MODIFY USER` can grant security groups saved in `CMCHAR`. But a sysop holds every security flag: `IMMORT` keeps them from dying, and `ORDER`/`CMDROOMS` make `Aggressive` skip them, so the test is not like play. Nothing marks such a save, and scripts can only test the powers with `ISIMMORT($n)`, not whether this is a dev game.
 
@@ -84,7 +84,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT6. Prop_DevCheats and GOD toggles
 
-*Kind:* property and debug tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* property and debug tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Most cheats exist under other names, but only for sysops and all at once. `IMMORT` keeps you at 1 hp. `Prop_WeaponImmunity` with `+ALL` blocks damage. `WIZINV` sees hidden, dark and invisible things and turns malice away. `Aggressive` skips holders of `ORDER` or `CMDROOMS`. `ALLSKILLS` skips cooldowns, and `GOTO` moves you anywhere. Missing: passing closed or locked doors and `Prop_Req*` entry checks (`StdExit` has no bypass), zero mana and move costs, and turning one power off, such as `IMMORT` for one fight.
 
@@ -100,7 +100,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT7. SCRIPT FIRE, CALL, RESET: run a host's triggers on demand
 
-*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Nothing runs a chosen trigger or `FUNCTION_PROG` on a chosen host as if a given character caused it. `TICKTOCK` makes a `TIME_PROG` fire, but it changes the clock. `MPRUN mpslay` fires a `DEATH_PROG` only by killing the mob. `MPRUN MPSCRIPT <target> INDIVIDUAL EXECUTE` runs new code on a target but cannot call its functions, and `MPCALLFUNC` reaches only its own host. `UNLOAD FILE` resets `ONCE_PROG` only for the first host that re-parses. `MPNOTRIGGER` works only from inside the host's script. Pending alarms cannot be listed.
 
@@ -116,7 +116,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT8. PLAYTEST: meet the world as a mortal from builder mode
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Builder mode makes every character that logs in an Archon (`SaveGame.makeArchon`), party members too. Holders of `ORDER`, `CMDROOMS` or `CMDMOBS` are spared by `Aggressive` and `Follower`, are not scaled to by `Prop_Doppleganger`, get no rolled variable equipment, and see `Prop_Uncampable` mobs respawn. Workarounds: `POSSESS` a GenMob with `SYSMSGS` off (no XP, quests or player prompt), which also lets `Mobile` mobs leave; or quit for a normal game, since `SaveGame.restore` refuses in builder mode.
 
@@ -132,7 +132,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT9. DEVLOG: live errors and debug lines for the builder
 
-*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Single-player forces every log stream to mud.log. Script errors show only to the room the host is in. `<SCRIPT>` JavaScript errors, `MPLOG`, `SCRIPTTRACE`, loader skips and quest failures go only to the file. Launching with `sud.sh ERRMSGS=BOTH WRNMSGS=BOTH` (the ini does not work, SUD overrides it) prints raw lines on the terminal, mixed with game output, never in character windows, and fixed for the session. `LIST LOG LAST n` and `LIST SCRIPTS ERRORS` read the file afterwards.
 
@@ -148,7 +148,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT10. Script errors with file and line, kept from the player
 
-*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `logError` shows "Scripting Error: ..." to everyone in the room, so in a normal game the player reads engine errors. The message lists every LOAD= file of the object, not the one at fault, and gives no line. An unknown MP word is only logged; any other unknown word runs as a game command. An MP prefix such as `MPSE` resolves to the last match, `MPSETCLAN`. `<SCRIPT>` exceptions go only to mud.log. The aids are the `BADSCRIPTS` debug flag and `LIST SCRIPTS ERRORS`, after the fact.
 
@@ -164,7 +164,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT11. SCRIPTCHECK: a static checker for MOBPROG and JavaScript
 
-*Kind:* builder tool and debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool and debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Script mistakes surface only when a line runs. `parseScripts` only splits lines. IF conditions are parsed on first use, FOR without NEXT is found when it runs, and LOAD= files are read only then. An unknown trigger such as `GREETPROG` never fires and nothing reports it at load. A mistyped command runs as a game command. `LIST SCRIPTS ERRORS` reads the log afterwards, so the builder must play every branch.
 
@@ -180,7 +180,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT12. PROPCHECK: check every property string in the world
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Property parameters are free text, and most classes drop bad input silently. Only `Prop_HaveAdjuster` and `TriggeredAffects` collect errors; `Prop_AddDamage` and `Prop_Socials` write to the log. A wrong room ID can quietly freeze a mob under `Prop_LocationBound`, and a misspelled spell ID in a `Prop_SpellAdder` list does nothing. No command validates effects, and an ability does not declare its parameter keys.
 
@@ -196,7 +196,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT13. WORLD CHECK: one lint of the whole world, also headless
 
-*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The checks are separate commands with separate output: `LIST UNLINKEDEXITS`, `ONEWAYDOORS`, `ORPHANS`, `LINKAGES` (split room groups, not reach from START), `DEVIATIONS`, `LIST SCRIPTS ERRORS`, `LIST HELPFILEREQUESTS`, `LIST TAGS TODO`, `TRAILTO`. The boot import names a broken world file but stops at its first problem. Nothing checks keys, default text or data references, and nothing runs before a commit.
 
@@ -212,7 +212,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT14. GENERATE CHECK: lint for generator XML
 
-*Kind:* debug tool and generator · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool and generator · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Template errors in generator XML (unknown INSERT or LIKE ids, undefined variables, a misspelt layout or CLASS, REQUIRES that cannot be met, `<` in attributes) show only at generation time, as "Unable to fully generate", often deep in a run. Detail is in the log: load-time problems, and traces under `DEBUG=MUDPERCOLATOR`. `GENERATE <TYPE> LIST` prints the defined ids. The `random.xsd` the DOCS mention is gone from the fork.
 
@@ -226,7 +226,7 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 ## DT15. Playtest files with assertions, and a runner that fails
 
-*Kind:* builder tool and data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool and data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `tools/sudplay.py` drives the real game from input lines and passes ini overrides (`TIMEMODE=TURNS`, `RANDOMSEED=`, a scratch `DBSERVICE=`, `SAVEDIR`, `WORLDDIR`, `RESTORE=`). But its `#expect` waits up to 30 minutes and never fails, so each test needs its own greps afterwards, as `smoke.sh` does. A builder cannot keep regression playtests of the world as content.
 
@@ -242,7 +242,7 @@ Each run uses a throwaway copy of the world, turn-based time and a fixed RANDOMS
 
 *Re-checked against the code after writing: corrected.*
 
-*See also:* DT25, DT39 (DT25 records .play files for DT15's runner, and exact replay of them needs DT39).
+*See also:* DT25, DT39 (later) (DT25 records .play files for DT15's runner, and exact replay of them needs DT39 (later)).
 
 <!-- from: sp-dev-tooling/spdev-playtest, javascript/js-world-tests, builder-commands/bc-content-tests -->
 
@@ -250,7 +250,7 @@ Each run uses a throwaway copy of the world, turn-based time and a fixed RANDOMS
 
 ## DT16. TESTCHAR and KIT: test characters and loadouts as data
 
-*Kind:* builder tool and data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool and data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A new profile character goes through every creation question, as the long answer script in `smoke.sh` shows. `CHARGEN NEW` makes an averaged levelled mob in the room, not a profile character that can join the party or be saved. A kit can be written as a MOBPROG file run with `MPRUN` or a `CHARCREATIONSCRIPTS` hook, using `MPPLAYERCLASS`, `MPOLOAD`, `MPMONEY`, `MPFACTION`, `MPSETVAR` and `MPTRANSFER`, but there is no simple kit format.
 
@@ -266,7 +266,7 @@ Each run uses a throwaway copy of the world, turn-based time and a fixed RANDOMS
 
 ## DT17. PREVIEW and CHECKTEXT for conditional text
 
-*Kind:* builder tool, presentation · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool, presentation · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A builder sees a `<VARIES>` text only as it reads now, here, to them. To see the winter night version they must change the world: `TICKTOCK`, `Prop_Weather` on the area, or walking in from one side. Unknown or lowercase tags, open tags, `>` inside a `MASK` and open colour codes print silently as text. The engine has one such bug now: the code spells the tag `FROMUNKOWN`, where the ArchonGuide documents `FROMUNKNOWN`.
 
@@ -282,7 +282,7 @@ Each run uses a throwaway copy of the world, turn-based time and a fixed RANDOMS
 
 ## DT18. Script trace for one host, shown to the builder
 
-*Kind:* debug tool, script command, script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool, script command, script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `CREATE DEBUGFLAG SCRIPTTRACE` turns on a global trace that writes every line of every script to mud.log. It does not say why a trigger was skipped: the chance roll, a mask, `MPNOTRIGGER`, a busy host (`isFreeToBeTriggered`), no PC present, a passive area, or no global registration yet. `if isimmort($n)` with `mpechoat` gives builder-only output, but it needs a PC in context.
 
@@ -298,7 +298,7 @@ Each run uses a throwaway copy of the world, turn-based time and a fixed RANDOMS
 
 ## DT19. STAT BEHAVIORS: an NPC's live behaviour state
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `STAT SCRIPTS <mob>` shows a mob's scripts and variables, and `MODIFY MOB` lists its behaviours with their parameter strings. Nothing shows a behaviour's live state. `StdBehavior.getStat` gives only `CLASS` and `TEXT` (`CombatAbilities` exposes more). Misspelt parameter keys are dropped silently, and the `DEBUGFLAG` traces go to the log.
 
@@ -320,7 +320,7 @@ Each behaviour answers `getStat("DEBUG")`; the default gives tickDown and chance
 
 ## DT20. WEATHER SET, TIME SET, LOOK AS and HAZARDS
 
-*Kind:* builder tool, debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool, debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `TICKTOCK` moves the calendar by any step from hours to years, and `TICKTOCK SET Y/M/D/H` sets it, but only plain `TICKTOCK n` runs the time-change events. No command sets the weather. The builder adds `Prop_Weather` with `MODIFY AREA`, or calls `setNextWeatherType` and `forceWeatherTick` from `JCONSOLE`. Nothing lists an area's hazards.
 
@@ -341,7 +341,7 @@ Each behaviour answers `getStat("DEBUG")`; the default gives tickDown and chance
 
 ## DT21. LAW: inspect and test an area's legal system
 
-*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The law finds its people and places by name (`OFFICERS=cityguard`, `JUDGE=justice judge`, `JAIL=The Jail$`). A name that matches nothing fails silently, and the reasons go only to the debug log, under the `ARREST` flag. `STAT CRIMES` gives daily counts, not current warrants. The only way to look inside is `JCONSOLE` with raw calls such as `CMLib.law().getLegalBehavior(...).getWarrantsOf(...)`.
 
@@ -357,7 +357,7 @@ Each behaviour answers `getStat("DEBUG")`; the default gives tickDown and chance
 
 ## DT22. PRICECHECK: how a price was reached
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A price combines several factors:
 
@@ -379,7 +379,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT23. TIMESCALE: run real time faster or slower
 
-*Kind:* world option, builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option, builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** In real-time mode the clock runs at wall-clock speed, so watching a caravan route or a weather change means waiting. `GameTime.now()` has no rate. At launch, `sud.sh TICKTIME=500` makes ticks come about 8 times as often, and `MILLISPERMUDHOUR=60000` speeds up only the calendar. Neither one scales the millisecond durations read from `GameTime` (cooldowns, decay, effect timers), and the tick length is fixed at boot.
 
@@ -393,7 +393,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT24. MPDEBUG and a JavaScript debug() for builder-only output
 
-*Kind:* script command, JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Players in the room see `MPECHO`, and a forgotten one ships with the world. `MPLOG DEBUG <module> <text>` does most of the job already: it expands $-variables and writes only to the debug log, and `sud.sh DBGMSGS=BOTH` shows it on the terminal. In `<SCRIPT>` JavaScript, `Packages.com.planet_ink.coffee_mud.core.Log.debugOut(...)` works but is long. No message says which host, room or line wrote it.
 
@@ -409,7 +409,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT25. RECORD INPUT: a replayable playtest file
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A bug that shows up after an hour of play cannot be replayed. `sud.sh DEBUG=INPUT` logs each typed line to mud.log as `TIN: <character>: '<line>'` with a timestamp, for the terminal and every window. `RECORD` (`Archon_Record`) writes input and output mixed together. Neither is a file a runner can replay, and neither records what game it started from.
 
@@ -419,7 +419,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 *Re-checked against the code after writing: accurate.*
 
-*See also:* DT15, DT39 (DT25 records .play files for DT15's runner, and exact replay of them needs DT39).
+*See also:* DT15, DT39 (later) (DT25 records .play files for DT15's runner, and exact replay of them needs DT39 (later)).
 
 <!-- from: sp-dev-tooling/spdev-record-input -->
 
@@ -427,7 +427,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT26. NOTE: playtest notes that reach builder mode
 
-*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The `BUG`, `TYPO` and `IDEA` journals were removed. `COMMANDJOURNALS=NOTE ADDROOM` in coffeemud.ini would make a `NOTE` journal with the room ID on each entry, and its `SCRIPT=` could copy entries to mud.log with `MPLOG INFO`. But entries are kept in `CMJRNL`, a table in that game's save. A note written in play never reaches builder mode, where the fix is made.
 
@@ -443,7 +443,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT27. world/dev/: areas loaded only for building and testing
 
-*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Every file in world/areas is imported into every game, and the default start room even ships the Archon's manual. `Prop_Hidden` on an area hides it from `GOTO`, area lists and tracking for normal players. But the area is still loaded and part of the world checksum, and its items are real copies, which matters for the planned unique-item caps. `WORLDDIR=` can point at a dev world, but each switch forces a full rebuild.
 
@@ -459,7 +459,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT28. VESSEL STATUS and LIST INSTANCES
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `LIST SHIPS` shows a vessel's name, place and tech registry key, and `STAT` on the vessel item adds owner, price, speed and uses. Nothing shows its course, anchor, facing, pacing, crew, passengers or route step. Instance children appear in `LIST AREAS` under names like `3_Area`, and `INSTANCEDISPLAY` only predicts which type a player would get. Nothing shows an instance's members or time left.
 
@@ -475,7 +475,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT29. VALIDATE RECIPES
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A malformed inline component only logs, and the craft then costs nothing. A missing named component logs nothing, and a bad mob ID in hunting.txt shows only "no signs of life". `LIST RECIPES <skillID>` and `MODIFY RECIPE <skillID>` check the base recipe file column by column, but they stop at the first error. They skip the `.txt.N` extensions, components.txt and the gathering tables, and they do not check whether components resolve.
 
@@ -495,7 +495,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT30. VOCAB: test translation and parser rules
 
-*Kind:* debug tool, builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool, builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Writing translation and parser rules is trial and error. Nothing shows which rule rewrote a line, what the command pre-processor makes of a typed command, or which file supplied a lists.ini value. Reloading works but needs the cache keys: `LIST RESOURCES`, then `UNLOAD RESOURCE PARSED_LISTFILE`, `TRANSLATION_`, `PARSER_` or `PARSED_SOCIALS`, and `UNLOAD HELP`.
 
@@ -515,7 +515,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT31. LANGUAGE PREVIEW and COVERAGE for invented languages
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** To check a `GenLanguage`, a builder has to speak it to a test mob with set proficiencies. The `LANGUAGES` command lists what a character knows, `LIST LANGUAGES` lists the defined ones, and `MODIFY LANGUAGE` only edits. `StdLanguage`'s `translate`, `messChars` and `scrambleAll` are public, but only JavaScript can reach them. Nothing reports how much of a text the dictionary covers.
 
@@ -531,7 +531,7 @@ Shopkeeper, area, parent area and ini settings stack on top. `VALUE` and the sho
 
 ## DT32. QUESTCHECK: check a quest script without starting it
 
-*Kind:* debug tool, quest feature · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool, quest feature · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A quest's errors show only when it starts, and only in mud.log. `CREATE QUEST` and `MODIFY QUEST` check the name and duration, and say only that the script "contained errors". A typo in an embedded MOBPROG shows only when that line runs. The `QUESTSCRIPTS` debug flag and `LIST LOG LAST n` only help read the log.
 
@@ -555,7 +555,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 ## DT33. PUZZLE command: see, test, reset and check puzzle wiring
 
-*Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** STAT on an object dumps its script variables as raw XML. LIST SCRIPTS (AREA) lists scripted objects, LIST SCRIPTS ERRORS pulls runtime script errors from the log, and LIST UNLINKEDEXITS and LIST ONEWAYDOORS check the map. Nothing shows a room's switches, plates, receptacles and controllers with their state and targets. Nothing checks that a room, direction, door or catalog name in a script or property exists. A bad one shows up only in play.
 
@@ -563,7 +563,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 **Example.** After building the Hall of Bells, PUZZLE CHECK reports that lever3 targets 'Vault#2 west', which has no door.
 
-*See also:* I12 (DT33's PUZZLE command shows and works I12's controller and the switch and plate props).
+*See also:* I12 (later) (DT33's PUZZLE command shows and works I12 (later)'s controller and the switch and plate props).
 
 <!-- from: items-puzzles/ip-puzzle-tool -->
 
@@ -571,7 +571,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 ## DT34. SCRIPTPROF: timing per script and trigger, slow-script warnings
 
-*Kind:* debug tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Everything runs on one game thread, so a slow script stalls the world and makes turn-based WAITs crawl. LIST TICKS shows tick times per ticking object (tickermillitotal, tickermilliavg, tickerlastduration), and a mob's RAND_PROG and TIME_PROG count in its tick. DEBUG=SCRIPTTRACE logs each trigger with timestamps, so rough timing can be done by hand. Nothing counts per script file or trigger line. Nothing times triggers run from messages, such as SPEECH_PROG and GREET_PROG. MPWHILE stops after 4 seconds without telling anyone.
 
@@ -585,7 +585,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 ## DT35. COMBATDEBUG: explain each roll while tuning
 
-*Kind:* debug tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Combat numbers stack up: Prop_CombatAdjuster, resistances, Prop_AbsorbDamage, the fudge for level difference, crits. SHOWDAMAGE=YES/SOURCE/TARGET in the ini shows only the final damage. STAT COMBAT \<mob> shows the static attack, armor and damage figures. The debug flags have no combat entry but `SIEGECOMBAT`, for ship fights. When an encounter feels wrong, the builder cannot see why a hit missed or did only 3 damage.
 
@@ -595,7 +595,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 *Re-checked against the code after writing: corrected.*
 
-*See also:* DT40 (DT35's combat log is meant for DT40's SIMFIGHT runs).
+*See also:* DT40 (later) (DT35's combat log is meant for DT40 (later)'s SIMFIGHT runs).
 
 <!-- from: encounters-combat/enc-combat-debug -->
 
@@ -603,7 +603,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 ## DT36. PROGRESSION report: the level curve and the XP the content gives
 
-*Kind:* debug tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** To balance progression, the owner reads EXP_CHART, the class formulas and allqualifylist by hand. WILLQUALIFY \<level> \<class> lists the skills and expertises gained per level and marks autogain. CHARGEN NEW or PLAYER \<class> \<level> makes a sample character whose SCORE shows HP, mana, moves, trains and practices. HELP \<class> prints the practice and train formulas. LIST ACHIEVEMENTS and LIST QUESTS show rewards one at a time. There is no table of the curve, and nothing adds up the XP the world gives.
 
@@ -617,7 +617,7 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 
 ## DT37. ORGCHECK: check faction files, governments and clan references
 
-*Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Mistakes in faction and clan data fail silently, and there is no check command. A faction file is read into a property map, so a later duplicate key replaces an earlier one. resources/examples/reputation.ini sets RANGE6 three times, and only 'world hero' survives. Bands can overlap or leave gaps. PresenceReaction drops unknown IDs. CHANGE triggers on unknown ability IDs never match. A mob whose \<CLAN> names a missing clan loses the tag at load.
 
@@ -639,36 +639,14 @@ It also lists mobs in the world files with an unknown \<CLAN>, and governments w
 
 ## DT39. DETERMINISTIC=1: exact replay for playtests
 
-*Kind:* world option · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** RANDOMSEED and TIMEMODE=TURNS are the only settings that make a run repeatable, and PLAN.md notes that exact replay is not done. Objects in a tick group tick in an order set by identity hash codes. The boot loads on several threads. IDs and database keys use Math.random(). So a recorded playtest or a golden transcript drifts between runs, and a difference after a world edit may mean nothing.
-
-**Add.** A DETERMINISTIC=1 setting, in the ini and on the command line, for tests. With it:
-- tick groups order their objects by registration order and a stable sequence number;
-- the boot loads on one thread;
-- generated IDs and database keys come from a seeded generator;
-- time is forced to TURNS.
-
-tools/smoke.sh and any replay of recorded input turn it on. This is engine work spread across the scheduler, the boot and ID generation.
-
-**Example.** A recorded 300-command run through act 1 gives a byte-identical transcript every time, so any difference after a world edit is meaningful.
-
-*See also:* JS13 (Exact replay needs JS13's Math.random on the shared dice as well as DT39's deterministic scheduler); DT15, DT25 (DT25 records .play files for DT15's runner, and exact replay of them needs DT39).
-
-<!-- from: sp-dev-tooling/spdev-deterministic -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#dt39).
 
 <a id="dt40"></a>
 
 ## DT40. SIMFIGHT: simulate the real party against an encounter
 
-*Kind:* debug tool · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** CHARGEN COMBAT ([classes]...) (MOB=\<name>) (ITERATIONS=x) (EXPORT=file) (FAILCHECK) (SKIPLEVELS) [start] [end] runs stock class characters, each with its class's CombatAbilities AI, one-on-one against a mob, catalog mobs included. It reports wins per class and level. It cannot use the real party with its gear, skills and followers. It cannot face several opponents, a room or an encounter table. It reports nothing per member.
-
-**Add.** SIMFIGHT [PARTY|name...] VS [HERE|mob name|encounter:\<table>|catalog:\<name>*n] ITERATIONS=50 AI=CLASS [DIFFICULTY=x], built as an extension of CharGen. It copies the party and the opponents into a scratch room and runs the fight headless at full speed. Followers are on AUTOASSIST and party members use class AI. It reports the win rate and median rounds; HP and mana left and deaths, per member; the deadliest ability; and how often telegraph or phase triggers fired.
-
-**Example.** After setting up the lich, with phases and a telegraphed blast, SIMFIGHT PARTY VS HERE ITERATIONS=100 gives 'win 34%, cleric dies 61%, median 14 rounds'. The builder weakens the blast and reruns until the win rate is about 70%.
-
-*See also:* C9 (DT40 simulates fights against C9's encounter: tables); DT35 (DT35's combat log is meant for DT40's SIMFIGHT runs).
-
-<!-- from: encounters-combat/enc-simfight -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#dt40).

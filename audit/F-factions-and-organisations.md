@@ -6,7 +6,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F1. Clan rank and member data for a named clan
 
-*Kind:* script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `clan($n IN 'Temple of Arden')` tests membership in any clan, and `islike($n '-CLAN "+Temple of Arden(PRIEST)"')` tests an exact position. But `clanrank()` looks only at the rivalrous or first clan and returns the role index, not seniority. Its function form casts a non-MOB argument to MOB, which throws. Member records (join date, dues owed, gold and XP donated) cannot be read, and nothing lists a character's clans.
 
@@ -22,7 +22,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F2. MPCLANRELATION and clanrelation() for scripted diplomacy
 
-*Kind:* script command, script function, builder tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, script function, builder tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Clan relations are set only by `CLANDECLARE`. An NPC whose role has DECLARE power (the GANG BOSS) can run it from a MOBPROG, but it sets one side only, needs both clans rivalrous, has a one-mud-month cooldown in real time, and announces only on CLANINFO channels. `mpsetclandata <clan> POLITICS <xml>` replaces the whole politics XML. No script function reads a relation, and `MODIFY CLAN` has no relations editor.
 
@@ -30,7 +30,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 **Example.** After the third raid, a DAY_PROG on the Orc Warlord runs `mpclanrelation 'Orc Horde' 'Riverton Militia' WAR MUTUAL`. The ending of the "Broken Oath" quest makes the Knights of the Rose allies of the Temple.
 
-*See also:* ST9, F3, F9, F10, F16, F22 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F7 (F2 keeps starting relations in F7's world/clans.cmare); F12 (F12 reads the live relation that F2's MPCLANRELATION sets).
+*See also:* ST9, F3, F9, F10, F16, F22 (later) (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F7 (F2 keeps starting relations in F7's world/clans.cmare); F12 (F12 reads the live relation that F2's MPCLANRELATION sets).
 
 <!-- from: organizations-factions/org-clan-relations-cmd -->
 
@@ -38,7 +38,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F3. MPCONQUER and area ruler functions
 
-*Kind:* script command, script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** A script cannot give an area to a clan, change control points or free an area. Control changes only through the clan flag item, kills and revolts, or JavaScript calling `CMLib.law().getLegalBehavior(area).setControlPoints(clan, n)`. Reading the ruler is indirect: `clandata('Orc Horde' AREAS)` lists the areas a clan rules, to be tested with `strcontains`. Control points and revolt chance cannot be read.
 
@@ -46,7 +46,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 **Example.** At the climax of the quest "Hold the Bridge", if the defenders die, `mpconquer Millbrook 'Orc Horde' RULE`. Later, burning the orc supply camp runs `mpconquer Millbrook 'Orc Horde' -200`, and a revolt becomes possible.
 
-*See also:* ST9, F2, F9, F10, F16, F22 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); S5 (S5 saves the control points that F3's MPCONQUER changes); F19 (F19's raids change area rule, which F3 sets directly from scripts).
+*See also:* ST9, F2, F9, F10, F16, F22 (later) (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); S5 (S5 saves the control points that F3's MPCONQUER changes); F19 (later) (F19 (later)'s raids change area rule, which F3 sets directly from scripts).
 
 <!-- from: organizations-factions/org-conquest-script -->
 
@@ -54,7 +54,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F4. Mask keys -CLANRANK and -RULER
 
-*Kind:* property, behaviour (mask keys) · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* property, behaviour (mask keys) · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `-CLAN "+Thieves Guild(SHADOW)"` matches one position, and `-CLAN "+Thieves Guild(<power>)"` any position holding a power. "Cutpurse or better" means listing positions or giving senior ones a marker power, which breaks when ranks are added. `-IF "<script condition>"` can call `clanrank()` or test `clandata(clan AREAS)`, but it is clumsy. No mask key knows who rules the area; `-LOCATION +CLANOWNED` is about property titles, not conquest.
 
@@ -70,7 +70,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F5. Fix MPFACTION band names and ability faction rules; add FACTIONVALUE
 
-*Kind:* script command, script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Three bugs. `MPFACTION` with a band name searches the alignment faction's bands, whatever faction is named, and only by display name, so `mpfaction $n thieves.ini TRUSTED` fails. CHANGE rules keyed to an ability ID never fire: keys are stored in upper case and looked up with the mixed-case `A.ID()`. This also breaks the stock `alignment.ini` rules CHANGE2 to CHANGE16 (PRAYER_BURY and others). `$%FACTION()%` gives only the band name. Numbers already work: `faction($n thieves.ini > 500)`, `mpfaction $n thieves.ini +50`.
 
@@ -86,7 +86,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F6. Faction band effects on the player, applied live
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A faction gives NPCs effects and behaviours by range (AFFBEHAV), but only when `mob.isMonster()`, and only when faction data is refreshed, not when a value crosses a band. A player gets nothing for standing beyond ABILITY gates. Auto-awards with a `-FACTION` mask are checked when assigned, on entering the world, so a band crossed mid-session changes nothing. The workaround is an always-on scripted GenAbility with `EXECMSG_PROG FACTIONCHANGE` running `MPAFFECT` and `MPUNAFFECT`.
 
@@ -102,7 +102,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F7. Clans as world content: world/clans.cmare
 
-*Kind:* data file, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Clans are not world content. A new game copies only CONTENT_TABLES, which has no CMCLAN, so a clan made with `CREATE CLAN` in builder mode never reaches a normal game. The clan table is also read after the map, so every `<CLAN>` tag on an area-file mob is dropped at boot and ClanHelper logs "Unknown clan". `ROLE=<n>` on the mob tag is a role index only. An ONCE_PROG `mpsetclan` on each NPC is today's stand-in.
 
@@ -118,7 +118,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F8. Clan timers on game time, NPC members counted
 
-*Kind:* world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** An NPC-only clan can already be kept from fading with minimum members 0: OVERRIDEMINMEMBERS in `clangovernments.xml`, `MODIFY CLAN`, `mpsetclandata 'Orc Horde' MINMEMBERS 0`, or `MINCLANMEMBERS=0` in `coffeemud.ini`. Trophies go off with the NOTROPHY flag. But clan timers use real time (`System.currentTimeMillis`): purge grace, vote expiry, dues, tattoo expiry and the CLANDECLARE cooldown. They ignore pause and turn-based time, and run while the game is closed. Only player member rows count, so NPC members add nothing to size or leadership.
 
@@ -134,7 +134,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F9. Ranks earned by deeds: AUTOPROMOTEBY MERIT
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Auto-promotion ranks members by level, rank, gold, XP or join date, once a real day, filling only seats held by ASSIGN roles. INNERMASK is only a gate, and the daily run tests it on a ThinPlayer, which has no faction or tattoo data. An NPC with ASSIGN power can run `clanassign $n cutpurse`, which checks INNERMASK on the live MOB, but someone must script when.
 
@@ -142,7 +142,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 **Example.** Footpad on joining. Cutpurse needs `-FACTION +THIEVES_TRUSTED +THIEVES_HONOURED`; Shadow `-FACTION +THIEVES_HONOURED -TATTOO +JOB_WAREHOUSE`; Guildmaster, MAX=1, `-TATTOO +SUCCEEDED_MASTER`. Stealing for the guild raises the standing, and the rank follows.
 
-*See also:* ST9, F2, F3, F10, F16, F22 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F10, F18 (F10 and F18 use F9's MERIT promotion); P25 (Alternatives for ranks earned by deeds: a tattoo rank ladder or clan positions with MERIT promotion).
+*See also:* ST9, F2, F3, F10, F16, F22 (later) (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F10, F18 (F10 and F18 use F9's MERIT promotion); P25 (Alternatives for ranks earned by deeds: a tattoo rank ladder or clan positions with MERIT promotion).
 
 <!-- from: organizations-factions/org-merit-ranks -->
 
@@ -150,7 +150,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F10. GuildMaster behaviour for NPC-run guilds
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The pieces exist, but each guild wires them by hand. `CLANAPPLY` joins at once, with ENTRYSCRIPT, when the clan's apply role is the accept position. The acceptance mask takes `-CLASS`, `-QUESTWIN` and `-IF`. An NPC with ACCEPT, ASSIGN and EXILE power (the GANG BOSS) can run `clanaccept`, `clanassign` and `clanexile` from a SPEECH_PROG. Fees and kits take a BRIBE_PROG and an `mpoload` in ENTRYSCRIPT. There is no kit per rank, and nothing handles each party character separately.
 
@@ -160,7 +160,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 *Re-checked against the code after writing: corrected.*
 
-*See also:* ST9, F2, F3, F9, F16, F22 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F9, F18 (F10 and F18 use F9's MERIT promotion).
+*See also:* ST9, F2, F3, F9, F16, F22 (later) (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F9, F18 (F10 and F18 use F9's MERIT promotion).
 
 <!-- from: organizations-factions/org-guildmaster-behavior -->
 
@@ -168,7 +168,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F11. Reputation per town, and law that heeds it
 
-*Kind:* world option, data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option, data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A town's reputation can be built as an ordinary faction: a `riverton.ini` in `FACTIONS=`, CHANGE triggers with `MASK=+AREAS Riverton`, REACTION lines, and shop PREJUDICE on its band codes. The automatic kind is all or nothing: `AUTOREACTION=AREA` makes an `AREA_<NAME>` faction for every area, wilderness and dungeons too, from one template. The law ignores reputation; `laws.ini` has no leniency key.
 
@@ -184,7 +184,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F12. ClanEnemyAggressive behaviour
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** ClanHelper only defends fellow members. Conquerable makes the ruling clan's NPCs attack members of a clan at WAR with it, reading the live relation, but only in conquerable areas and only for the ruler's NPCs. Elsewhere a builder must mirror war state in a global variable, set by the script that declares war, and test it with `-IF "var(...)"` in an Aggressive mask.
 
@@ -200,7 +200,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F13. Clan prices and rank-gated shop stock
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Shop PREJUDICE matches faction band codes, tattoos, class, race, gender and alignment, not clan or rank. A member price works through a tattoo given in ENTRYSCRIPT (`mptattoo $n KNIGHT_OF_ROSE`) and removed in EXITSCRIPT. A CNCLMSG_PROG on the shopkeeper can cancel BUY of one item when `islike()` fails. Nothing hides an item from LIST per buyer, and Prop_HaveZapper on stock does not stop BUY.
 
@@ -214,7 +214,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F14. Hidden factions, band ladder and party standings table
 
-*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Whether a faction shows is one switch for everyone (SHOWINFACTIONSCMD, SCOREDISPLAY), so a secret order's standing is always shown or never. `FACTIONS <name>` and `FACTIONS HERE` filter the list but show only the current line, not the ladder. `AS <character> FACTIONS` shows one party character at a time, and `PARTY` has no faction view. A script can name a hidden standing with `$%FACTION($n cult.ini)%`.
 
@@ -230,7 +230,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F15. Clan news reaches the player
 
-*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Clan announcements go to channels flagged CLANINFO. This fork keeps INFO (flagged CONQUESTS) and QUESTCHAT, so promotions, level-ups, fading warnings, dues and trophy messages reach no one. Adding CLANINFO to the INFO line of `CHANNELS=` in `coffeemud.ini` fixes most of it without Java. Only auto-promotion and accept tell the member directly, and only when the member has a session.
 
@@ -244,7 +244,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F16. Dues on the game calendar, with consequences
 
-*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Clan dues (`MODIFY CLAN` "Clan Dues/yr", `mpsetclandata <clan> DUES n`) are taken once a mud year on real time, need a clan bank account, and come silently from coins, then the bank. `CLANDUES` lists members behind, but arrears have no consequence. A collector can be scripted: a DAY_PROG counts periods with `mpsetvar`, takes coin with `mpmoney`, and an NPC with ASSIGN and EXILE power runs `clanassign` or `clanexile`.
 
@@ -252,7 +252,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 **Example.** The Merchants' Guild charges 20 gold a game month. After two missed months the member discount ends (demotion). After four the member is expelled, and the guild seal crumbles in EXITSCRIPT.
 
-*See also:* ST9, F2, F3, F9, F10, F22 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F1 (F16 reads arrears through F1's CLANMEMBER(DUESOWED)); F8 (Both move clan dues periods to the game calendar).
+*See also:* ST9, F2, F3, F9, F10, F22 (later) (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts); F1 (F16 reads arrears through F1's CLANMEMBER(DUESOWED)); F8 (Both move clan dues periods to the game calendar).
 
 <!-- from: organizations-factions/org-dues-with-consequences -->
 
@@ -260,7 +260,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F17. Clan standing generated from each NPC organization
 
-*Kind:* world option and data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option and data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `AUTOREACTION` builds reaction factions for `AREA`, `NAME`, `RACE`, `PLANAR` and `DEITY` from template files, with per-name override files. It has no clan type, and this fork's `coffeemud.ini` sets `AUTOREACTION=PLANAR` only. A builder can hand-write one faction per guild, with `REACTION` masks `-CLAN "+Thieves Guild"` and `KILL` and `BRIBE` rules masked to members. Each file must then be kept in step with its clan by hand. This complements the per-area town reputation.
 
@@ -276,7 +276,7 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F18. CREATE GUILD generator and single-player governments
 
-*Kind:* generator and data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* generator and data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** An NPC guild needs a government, a clan, a standing faction, a scripted guildmaster, entry rules for the hall, a trainer and a shop, all wired by hand. Each piece is editable data (`CREATE GOVERNMENT`, `MODIFY GOVERNMENT`, `CREATE CLAN`, `CREATE FACTION`). But the stock governments are built for player politics: voting, applicants, trophies. Only `GANG` works without voting.
 
@@ -292,23 +292,15 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F19. ClanWarfare behaviour: NPC clans raid and conquer
 
-*Kind:* behaviour and world option · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour and world option · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** Conquest moves only when members of a conquest-enabled clan kill natives in an area that holds their flag, and only against a ruler they are at `WAR` or `HOSTILE` with. NPC members never travel or fight on their own, so NPC clans never gain or lose ground without the player. A warlord's `DAY_PROG` (`mpmload`, `mpsetclan`, `mpoload`, `mptrackto`) or a JavaScript behaviour can fake a raid, but both are large and brittle.
-
-**Add.** `ClanWarfare`, on a warlord NPC or a staging room. Parameters: `CLAN=`, `STAGING=`, `TARGETS=`, `EVERY=<game days>`, `SIZE=`, `RAIDER="catalog:orc raider"`, `FLAG="catalog:Horde Banner"`, `AUTOWAR=`, `RETREAT=<hp%>`, `RUMOUR=`. It runs when due, if the clan is at war with the target's ruler or the target has no ruler. It builds a band from the catalog and marches it there. The band plants the flag, fights natives and the ruling clan, and garrisons if it wins. `INFO` posts the rumour first and the result after. World option `WARS=ON|OFF`.
-
-**Example.** Every 7 game days the Orc Horde sends 4 raiders from Grimtusk Keep toward Millbrook. Left alone, Millbrook falls within a month. Hunting the raiders on the road holds the line.
-
-*See also:* C24 (Both march a catalog band from a staging room to a target (an invasion vs a clan raid)); F3 (F19's raids change area rule, which F3 sets directly from scripts).
-
-<!-- from: organizations-factions/org-clan-warfare-ai -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#f19).
 
 <a id="f20"></a>
 
 ## F20. Party-founded clans: the profile votes once
 
-*Kind:* world option and command · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* world option and command · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** Each party character is a separate member and voter. Under a voting government such as `FELLOWSHIP`, every `MUST_VOTE_ON` action waits until the player has used `CLANVOTE` with each character, or until the vote's MAXDAYS (100 game days for FELLOWSHIP) run out with the quorum (33%, at least 2 votes) cast. One character founds the clan alone and pays `CLANCOST` once (10000 gold in `coffeemud.ini`, which can be lowered); each of the others must `CLANAPPLY` and be accepted. Voting can be avoided. `GANG`'s `BOSS` holds every power as `CAN_DO`, and the leader can `clanaccept` the others after `AS <character> clanapply`.
 
@@ -324,30 +316,14 @@ Clans and guilds run by NPCs, ranks, dues, diplomacy, conquest, faction effects 
 
 ## F21. Deity holy days, favor gates and portents
 
-*Kind:* property · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* low · *Effort:* medium · *Decision:* later
 
-**Today.** Deities have ritual triggers, blessings, curses and powers. A ritual can already be limited to holy days with `CHECK <zapper mask>` (`+MONTHS`, `+DAY`, `+SEASONS`, `+WEATHER`, `+IF` and others). Favor exists as the `AUTOREACTION=DEITY` faction, which is off by default, and holidays can give mobs behaviours. But favor changes nothing by itself, holy days bring no reward, and a deity shows no signs. `GenDeity`'s only fields are `CLERREQ`, `CLERRIT`, `WORREQ`, `WORRIT` and `SVCRIT`.
-
-**Add.** Three `GenDeity` fields. `HOLYDAYS=<holiday names or m-d>`: services and worship on those days give double favor and a guaranteed blessing. `FAVORGATES="<blessing or power>:<range code>"`: the blessing or power is granted only at that favor. `PORTENTS="<range code>:<message or weather>"`: signs that a favored or disfavored worshipper sees, such as rain that follows them.
-
-**Example.** Ceres, goddess of the harvest: services during the Harvest Fair grant `Prop_ImproveGather`. Her infidels see crops wither as they enter farmland.
-
-*See also:* W6 (F21's deity holy days are named holidays, tested with W6's tests by name).
-
-<!-- from: world-systems/ws-deity-holydays -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#f21).
 
 <a id="f22"></a>
 
 ## F22. Prop_ClanDisguise: pass as a member in uniform
 
-*Kind:* property and script trigger · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and script trigger · *Value:* low · *Effort:* medium · *Decision:* later
 
-**Today.** `ClanHelper`, `Conquerable`, the `-CLAN` mask and faction reactions read real membership. Masks cover part of this. `GateGuard`, `Prop_ReqEntry` and `Aggressive` accept `-WORN "+cult robes"` with `+OR`, `-CHANCE` and `-IF`. So a guard can let through members or wearers of the uniform, with a chance to fail. `WEAR_PROG` with `mpsetclan` grants real membership instead, which is saved and carries the clan's benefits.
-
-**Add.** `Prop_ClanDisguise` for wearable items: `CLAN="Cult of the Black Sun" POSITION=ACOLYTE DETECT="-INT +15" CHANCE=20 ONDETECT=ATTACK|ALARM|SCRIPT`. While it is worn, NPCs' `-CLAN` checks (and `-CLANRANK`, if added) treat the wearer as that member. An NPC that passes `DETECT` rolls `CHANCE` once per encounter to see through it. A success fires `ONDETECT` and a new trigger, `CLAN_PROG DISCOVERED`. The wearer gets no titles or benefits. If this is declined, document the `-WORN` mask pattern instead.
-
-**Example.** Robes taken from a dead acolyte get the party past the cult's door guards. But the sharp-eyed high priest may see through them and raise the alarm.
-
-*See also:* ST9, F2, F3, F9, F10, F16 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts).
-
-<!-- from: organizations-factions/org-clan-disguise -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#f22).

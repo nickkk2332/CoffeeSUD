@@ -80,23 +80,131 @@ of 100% and a cap of 1. Opening a matching chest finds it; opening a second
 does not; a save and a restore do not make a second; destroyed, a once-ever
 item does not come back, and a once-for-a-while one does after its time.
 
-## 2. Builder capabilities audit: for the owner to choose from
+## 2. Builder capabilities: from the audit
 
 What a builder can do without editing the engine's Java, and what is
-missing, was audited across the engine. The result is in
-[`audit/README.md`](audit/README.md): 409 proposed additions in 18 themes
-(script triggers, script language, JavaScript, quests, NPCs and dialogue,
-combat, items and puzzles, world systems, generators, crafting and housing,
-factions, travel, languages, progression, presentation, saves and world
-files, builder tools, testing and debugging tools), each with what exists
-today, what to add and an example, and a list of what turned out to be
-possible already.
+missing, was audited across the engine: [`audit/README.md`](audit/README.md)
+has 409 proposed additions in 18 themes, each with what exists today, what
+to add and an example.
 
-None of it is planned yet. The owner marks each item yes or no, in
-`tools/audit-review.html` or in the audit's summary table. Each item said
-yes to is checked against the code again, then comes here as a numbered
-item, in the order the owner chooses.
+The owner went through them on 2026-10-31: 388 yes, 20 later and 1 undecided
+(`PR21`, a side panel in the character windows). The *later* items are
+wanted but out of the current scope; they were moved to
+[`LATER.md`](LATER.md). The *yes* items are planned here, in the steps
+below, each item as the audit describes it. Before an item is built it is
+checked against the code again, since about one in eight overstates the gap;
+if it turns out smaller, or already possible, the owner is told.
 
-## Later
+### Proposed order
 
-Items to come, as the owner raises them.
+Proposed, for the owner to change: the first four steps lay foundations the
+others use; the rest follow the audit's themes and can be taken in any
+order, by what the world needs first. Within a step, items go by value, then
+effort, as listed. Each item, or a few small ones together, is one commit
+that keeps the build green and the smoke test passing, with a smoke check of
+its own where it can have one.
+
+#### 2a. Fixes and JavaScript defaults (15)
+
+Confirmed bugs in what the engine already has, and JavaScript that runs
+without approval, with a time limit and readable errors. Small, and much of
+the rest stands on them.
+
+ST1, ST18, SC14, N18, N19, I1, I18, I19, G2, F5, Q9, PR5, JS21, JS1, JS2
+
+#### 2b. Saves and world files (24)
+
+What a save still loses (quest state, conquests, warrants, vessels,
+generated places, behaviour state, script engine state), and the rest of the
+world's content moved into `world/`. This finishes what phase 4 began: every
+later feature keeps its state across a save.
+
+S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S15, S16, S17, S18,
+S19, S20, S21, S22, S23, S24, S25
+
+#### 2c. Developer and builder tools (50)
+
+Inspecting, tracing, checking and testing the world, and faster building.
+Everything after this is built and tested with them.
+
+DT1, DT2, DT3, DT4, DT5, DT6, DT7, DT8, DT9, DT10, DT11, DT12, DT13, DT14,
+DT15, DT16, DT17, DT18, DT19, DT20, DT21, DT22, DT23, DT24, DT25, DT26,
+DT27, DT28, DT29, DT30, DT31, DT32, DT33, DT34, DT35, DT36, DT37, B1, B2,
+B3, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13
+
+#### 2d. Scripting (59)
+
+Script triggers, the script language, and JavaScript: the hooks most later
+items use.
+
+ST2, ST3, ST4, ST5, ST6, ST7, ST8, ST9, ST10, ST11, ST12, ST13, ST14, ST15,
+ST16, ST17, ST19, ST20, ST21, ST22, ST24, ST25, ST26, ST27, ST29, SC1, SC2,
+SC3, SC4, SC5, SC6, SC7, SC8, SC9, SC10, SC11, SC12, SC13, SC15, SC16, SC17,
+JS3, JS5, JS6, JS7, JS8, JS9, JS10, JS11, JS12, JS13, JS14, JS15, JS16,
+JS17, JS18, JS19, JS20, JS23
+
+#### 2e. Quests (15)
+
+Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
+
+#### 2f. NPC behaviour and dialogue (21)
+
+N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N15, N16, N17, N20, N21,
+N22, N24, N28, N29
+
+#### 2g. Combat and encounters (24)
+
+C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C14, C15, C16, C17,
+C18, C19, C20, C21, C22, C23, C25
+
+#### 2h. Items, properties and puzzles (23)
+
+I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I13, I14, I15, I16, I17, I20, I21,
+I22, I23, I24, I25, I26, I27
+
+#### 2i. World systems (25)
+
+Time, weather, environment, economy and law.
+
+W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11, W12, W13, W14, W15, W16, W17,
+W18, W19, W20, W21, W22, W23, W28, W29
+
+#### 2j. Generators and random content (16)
+
+G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
+
+#### 2k. Crafting, gathering and housing (21)
+
+CR1, CR2, CR3, CR4, CR5, CR6, CR7, CR8, CR9, CR10, CR11, CR12, CR13, CR14,
+CR15, CR16, CR17, CR18, CR19, CR20, CR21
+
+#### 2l. Factions and organisations (18)
+
+F1, F2, F3, F4, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18,
+F20
+
+#### 2m. Travel, vehicles and instances (16)
+
+T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T14, T16, T17, T18, T19
+
+#### 2n. Languages and vocabulary (14)
+
+L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14
+
+#### 2o. Characters, progression and custom abilities (29)
+
+P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17,
+P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
+
+#### 2p. Presentation (18)
+
+PR1, PR2, PR3, PR6, PR7, PR8, PR9, PR10, PR11, PR12, PR13, PR14, PR15, PR16,
+PR17, PR18, PR19, PR20
+
+Item 1 (unique and rare items) can go with 2h, or before it; `G6` (loot
+tables) builds on it.
+
+## More to come
+
+Items to come, as the owner raises them. Things the owner wants but that
+are out of the current scope are kept in [`LATER.md`](LATER.md).

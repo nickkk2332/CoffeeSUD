@@ -6,7 +6,7 @@ Behaviours for NPC routines and AI outside combat, companions and hirelings, con
 
 ## N1. WHEN= condition on every behaviour
 
-*Kind:* behaviour · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** A builder cannot say "this wolf roams only at night". ActiveTicker reads only min, max, chance and mingrp. Of about 95 behaviours, only GateGuard (allnight), Scavenger (ATNIGHT), BribeGateGuard and ResetWhole read the clock. Zapper masks know +HOUR, +SEASON, +WEATHER and -IF, but behaviours test masks on their targets, never on their host. The workarounds: a TIME_PROG that swaps behaviours with MPBEHAVE and MPUNBEHAVE, which after a restore waits for the next listed hour; Prop_ClosedSeason, which hides the whole mob; or two mobs.
 
@@ -22,15 +22,15 @@ Behaviours for NPC routines and AI outside combat, companions and hirelings, con
 
 ## N2. MPMENU: numbered dialogue choices that do not block
 
-*Kind:* script command · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `MPCHOOSE <who> <var> <choices> <default> <prompt>` takes single letters or a comma list, and the builder writes the menu into the prompt by hand. Hiding an option needs an IF around each `mpechoat` line. MPCHOOSE, MPPROMPT and MPCONFIRM wait on the player's session on the single game thread. When their real-time timeout runs out (60 s or 360 s), the rest of the script is aborted.
 
-**Add.** `MPMENU <pc> <FUNCTION> "<prompt>" <key>:"<label>"[IF <cond>] ... [default]`. It shows the options numbered, hides those whose condition fails, takes a default or escape key, and returns at once. The chosen key goes to that FUNCTION_PROG as $0, with the original $n and $i. The menu is shown on the player's terminal and costs no time in turn-based mode. JavaScript reaches it by name, like any MP command. `MPDIALOG <pc> <file> [node]` opens a node of a dialogue tree (N14). MPCHOOSE stays.
+**Add.** `MPMENU <pc> <FUNCTION> "<prompt>" <key>:"<label>"[IF <cond>] ... [default]`. It shows the options numbered, hides those whose condition fails, takes a default or escape key, and returns at once. The chosen key goes to that FUNCTION_PROG as $0, with the original $n and $i. The menu is shown on the player's terminal and costs no time in turn-based mode. JavaScript reaches it by name, like any MP command. `MPDIALOG <pc> <file> [node]` opens a node of a dialogue tree (N14). This part waits for N14, which is in `LATER.md`. MPCHOOSE stays.
 
 **Example.** The old sage's GREET_PROG runs `MPMENU $n SAGE "The old sage regards you." tower:"Ask about the tower" ring:"Show him the ring"[IF HAS($n ring)] bye:"Leave" bye`. FUNCTION_PROG SAGE then branches with `SWITCH $0`.
 
-*See also:* N14, N9, N29 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14's dialogue trees).
+*See also:* N14 (later), N9, N29 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14 (later)'s dialogue trees).
 
 <!-- from: mobprog-language/mpl-dialog, npc-dialogue/dlg-mpmenu -->
 
@@ -38,7 +38,7 @@ Behaviours for NPC routines and AI outside combat, companions and hirelings, con
 
 ## N3. Schedule behaviour: daily routines over several places
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Prop_ClosedDayNight gives an NPC two states. It is open at its start room and closed at HOME=, which it reaches with Skill_Track. It has SLEEP, SIT, LOCKUP, SHOPMSG= and HOURS=a-b. It checks the hour every tick, so it catches up after a restore or a WAIT. Patroller has no idea of time. A third place takes a TIME_PROG per hour with MPTRACKTO and MPFORCE sit, which must cope with fights and failed paths. TIME_PROG fires only on the hour.
 
@@ -59,7 +59,7 @@ It travels with Skill_Track, suspends Mobile on the way (MobileBehavior.suspendM
 
 ## N4. Sleeper behaviour: sleeping NPCs woken by noise
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A mob can start asleep (the IS_SLEEPING disposition). Prop_ClosedDayNight SLEEP sleeps by the hour, and Vagrant naps at random. Only an attack, or the player's WAKE, wakes one. Noise exists as MSG_NOISE (Trap_Noise, Thief_SetAlarm, Spell_Alarm), but no sleeper hears it. The sleeper's own scripts cannot react either, because isFreeToBeTriggered needs it awake. The workaround is a room Scriptable whose ALL_GREET_PROG or EXECMSG_PROG runs `MPFORCE ogre stand` on a RAND.
 
@@ -81,7 +81,7 @@ LOOK shows "is sleeping soundly" or "stirs".
 
 ## N5. Sentry behaviour: lookouts who spot sneakers and raise the alarm
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** No behaviour spots intruders or rouses a camp. ProtectedCitizen acts only while its own host is fighting. It yells and moves the first matching guard in each room within RADIUS (7) one step closer per call. Arrest notices crimes only in areas with law. Thief_SetAlarm and Spell_Alarm make noise, but no NPC reacts to it. A builder cannot set up a camp where the player silences the lookout first, or where the camp wakes when the player fails.
 
@@ -102,7 +102,7 @@ The alarm sends a room message that EXECMSG_PROG can catch.
 
 ## N6. Memory behaviour: NPCs remember what each character did
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Factions already hold grudges for a group, and they survive saves. CHANGEn= triggers (KILL or MURDER of masked targets, BRIBE, TALK, any message type) and REACTIONn= lines (Aggressive toward a range) can turn a village against a killer. +/-FACTION masks feed shop ignore masks. One NPC remembering one character is hand scripting: ACT_PROG, GIVE_PROG, DAMAGE_PROG and DEATH_PROG with `MPSETVAR $i MEM_$n` on every mob. The INDIVIDUAL ('*') variable scope is not saved. Bribes are kept by name in memory only, and a Truce lasts 30 s.
 
@@ -123,7 +123,7 @@ The alarm sends a room message that EXECMSG_PROG can catch.
 
 ## N7. GenBehavior: named behaviours with parameters, defined as data
 
-*Kind:* data file, behaviour, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, behaviour, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** custom.cmare holds generic races, classes, abilities and commands, but no behaviour. A routine is reused through a Scriptable with `LOAD=progs/tollkeeper.script`, one file for every user. Per-mob values go in an inline prefix, `ONCE_PROG;MPSETVAR $i price 20;~;LOAD=...`, and the script reads them as `$<$i price>`. A GenAbility's SCRIPT also runs as a permanent effect. But the file lives in resources/progs, outside the world, and nothing names it, lists it or declares its parameters.
 
@@ -145,7 +145,7 @@ Each instance has its own engine and variables. It goes wherever a behaviour ID 
 
 ## N8. Catch-up hook when an area wakes
 
-*Kind:* JavaScript hook, world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook, world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** An area that no player has visited for PASSIVEMINS game minutes turns PASSIVE. There, only Mobile and its family, Aggressive, VeryAggressive and MovingRoom stop. Scripts keep running (runInPassiveAreas defaults to true), and so do TIME_PROG, Prop_ClosedDayNight and Patroller, so a baker on those is in place when the player returns. PASSIVEMINS is an area stat, DISABLE=PASSIVEAREAS turns passivity off, and in turn-based time WAIT moves every area. What is left: wanderers and aggressive mobs stay frozen where they were, and no behaviour is told how long its area slept.
 
@@ -167,18 +167,18 @@ A per-area `CATCHUP=ON|OFF`, next to PASSIVEMINS, is secondary.
 
 ## N9. TALK command and TALK_PROG trigger
 
-*Kind:* script trigger and command · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger and command · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** ASK and SAYTO already address one NPC. `ask innkeeper about mine` fires the NPC's SPEECH_PROG on "mine" and MudChat's targeted path, even in a full party room. A GenCommand TALK in world/custom.cmare can run `sayto <npc> hello`. Three things are missing:
 - a trigger that knows a conversation has begun, and on what topic;
 - a remembered partner: a bare `'text` has no target, and MudChat ignores untargeted speech with three or more characters in the room;
 - a way to learn what an NPC offers.
 
-**Add.** A player command `TALK [npc] [ABOUT topic]` that fires `TALK_PROG [topic words|ALL]` on the NPC, with $n the player, $i the NPC and $t the topic. If no TALK_PROG runs, it falls back to the NPC's dialogue tree (N14), then to MudChat as if the player had said "hello". TALK sets the conversation partner, so a bare `'text` goes to that NPC while both are in the room. The player's own party is never picked. With no tree, TALK shows a service menu, each entry running the normal command: shop (LIST, BUY, SELL), banker, trainer or MOBTeacher, Hireling terms, and quests from Prop_QuestGiver or quest mobs.
+**Add.** A player command `TALK [npc] [ABOUT topic]` that fires `TALK_PROG [topic words|ALL]` on the NPC, with $n the player, $i the NPC and $t the topic. If no TALK_PROG runs, it falls back to the NPC's dialogue tree (N14; until that is built, this step is skipped), then to MudChat as if the player had said "hello". TALK sets the conversation partner, so a bare `'text` goes to that NPC while both are in the room. The player's own party is never picked. With no tree, TALK shows a service menu, each entry running the normal command: shop (LIST, BUY, SELL), banker, trainer or MOBTeacher, Hireling terms, and quests from Prop_QuestGiver or quest mobs.
 
 **Example.** `talk innkeeper` fires TALK_PROG ALL; `talk innkeeper about mine` fires TALK_PROG mine. Then `'any rooms free?` reaches the innkeeper with two companions in the room.
 
-*See also:* ST21 (ST21 counts a TALK as a meeting and keeps the last topic, which N9's TALK command supplies); N14, N2, N29 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14's dialogue trees); N24 (N24's topic list is shown by N9's TALK, or ASK, with no topic).
+*See also:* ST21 (ST21 counts a TALK as a meeting and keeps the last topic, which N9's TALK command supplies); N14 (later), N2, N29 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14 (later)'s dialogue trees); N24 (N24's topic list is shown by N9's TALK, or ASK, with no topic).
 
 <!-- from: npc-dialogue/dlg-talk-command -->
 
@@ -186,7 +186,7 @@ A per-area `CATCHUP=ON|OFF`, next to PASSIVEMINS, is secondary.
 
 ## N10. Replies arrive at once in turn-based time
 
-*Kind:* world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** In TIMEMODE TURNS a SAY costs 0.2 ticks. A script reply waits 1 tick and a MudChat reply 2 (RESPONSE_DELAY), plus any LLM time. So the answer comes up to 5 actions later from a script and 6 to 10 from MudChat, and WAIT does not stop when an NPC speaks. Scriptable can already reply at once: `MPSETINTERNAL NODELAY true` in a ONCE_PROG per script, or SCRIPTABLEDELAY in DISABLE= in coffeemud.ini for the whole game. DEFCMDTIME tunes command costs. An exception such as `DEFCMDTIME=Say 1.0, 0.20` does bring a script reply on the same turn (Say 2.0 for MudChat), but only by letting the whole world move a full tick on each SAY. MudChat has no setting.
 
@@ -196,7 +196,7 @@ A per-area `CATCHUP=ON|OFF`, next to PASSIVEMINS, is secondary.
 
 *Re-checked against the code after writing: corrected.*
 
-*See also:* N25 (Both make NPC replies land before the next prompt in turn-based time, N25 for LLM replies).
+*See also:* N25 (later) (Both make NPC replies land before the next prompt in turn-based time, N25 (later) for LLM replies).
 
 <!-- from: npc-dialogue/dlg-instant-turns -->
 
@@ -204,7 +204,7 @@ A per-area `CATCHUP=ON|OFF`, next to PASSIVEMINS, is secondary.
 
 ## N11. MudChat: readable conditions, script effects and per-player saved state
 
-*Kind:* behaviour, data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour, data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A chat entry's condition is a zapper mask between slashes, +IF included, evaluated with the speaker as $n. It works, but `)`, `&` and `|` inside it need a backslash, and the mask is lowercased. Replies cannot run MOBPROG commands, because `!` commands fail the security check. The workaround is a Scriptable SPEAK_PROG on the same NPC that fires on its own line, with $t the player. `$@group` switches belong to the NPC, not the speaker. They expire after six minutes and are not saved.
 
@@ -223,7 +223,7 @@ A per-area `CATCHUP=ON|OFF`, next to PASSIVEMINS, is secondary.
 
 ## N12. Prop_NPCLines: per-NPC wording for stock service lines
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Shopkeepers, bankers, postmen, librarians, trainers, MOBTeacher and Hireling speak fixed English, such as "I'm not interested." or "I don't buy stolen goods.". CoffeeShops alone has 23 literal postSay calls, StdBanker 31, StdPostman 37. The only override is translation_en_TX.properties, which applies to the whole game, by Java class at best. Scriptable can add a line after a stock one but cannot cancel it, because CNCLMSG_PROG matches the message type, not the text. A gruff dwarf smith and a polite elven jeweller sound the same.
 
@@ -246,69 +246,23 @@ The postSay calls in these classes look up the speaker's Prop_NPCLines before tr
 
 ## N13. Companion behaviour: NPC party members who take orders and comment
 
-*Kind:* behaviour · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* large · *Decision:* later
 
-**Today.** The companion behaviours fall short:
-- Hireling is paid and timed on the game clock.
-- Follower follows whoever leaves the room.
-- Loyalty seeks one named character, and searches every tick because its INTERVAL, (2*60)/4000, is 0.
-
-A script can make an NPC follow (`MPFORCE $i follow $n`). ORDER gives `autoguard` (wait here), NOFOLLOW and kill. Every remark can be scripted with ENTRY_PROG, KILL_PROG, HITPRCNT_PROG and VAR guards. But after PARTY LEAD, handOver re-points only the profile's characters, so NPC followers keep the old leader. There are no stances, no loyalty and no ready-made remarks.
-
-**Add.** Behaviour `Companion`:
-- `JOIN=SPEECH "join me"|GIVE <price>|SCRIPT`.
-- `FOLLOWS=PARTY`: follows again after PARTY LEAD, SWITCH or REST.
-- `STANCE=AGGRESSIVE|DEFENSIVE|PASSIVE`.
-- Orders: `wait here`, `follow`, `guard <name>`, `stance <x>`, `camp`, `go home`.
-- `LOYALTY=n`, moved by `LIKES=` and `DISLIKES=` event:amount pairs (KILLINNOCENT, GIFT, HEALED, LEFTBEHIND), and `LEAVEAT=n`.
-- `BARKS=`, inline or in a line file, keyed by events: ENTER_AREA, ENTER_ROOM, AFTER_KILL, LOW_HP, LEADER_LOW_HP, SEE_ITEM, SEE_MOB, REST, IDLE, QUEST_STEP or PLAYER_ACTION. Each has a chance, a cooldown and ONCE.
-- `TALK <companion>` answers "what do you think?" from lines keyed by area or locale.
-
-LOYALTY and STANCE are stats that scripts can read, and the state is saved. Loyalty's interval gets fixed along the way.
-
-**Example.** `Companion JOIN=SPEECH FOLLOWS=PARTY STANCE=DEFENSIVE LOYALTY=60 DISLIKES=KILLINNOCENT:-30 LEAVEAT=10 BARKS="Dark Wood:I hate these trees."`. Told `wait here`, the squire waits outside the dragon's lair.
-
-*See also:* N21 (Two NPC party-member behaviours with loyalty, orders and saved terms; Companion and a configurable Hireling overlap); P9 (Companion NPCs (N13) and recruiting an NPC into the profile (P9) are alternatives for NPC party members); N18 (Both fix Loyalty's zero interval).
-
-<!-- from: behaviors-npc/npc-companion, npc-dialogue/dlg-companion -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#n13).
 
 <a id="n14"></a>
 
 ## N14. Dialogue trees: a Dialogue behaviour and .dlg files
 
-*Kind:* behaviour, data file · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, data file · *Value:* high · *Effort:* large · *Decision:* later
 
-**Today.** The engine has no model of nodes and choices. Branching talk is built by hand:
-- a SPEECH_PROG or GREET_PROG state machine, with per-player MPSETVAR state and one FUNCTION_PROG per node through MPCALLFUNC;
-- menus with MPCHOOSE, MPPROMPT and MPCONFIRM, which block, and which abort the script when their 60 s timeout runs out;
-- MudChat `$@group` switches, which are per NPC and expire.
-
-Conditions (IF, +IF), ONCE (a VAR guard) and checks (STAT, ISABLE, RAND) all exist. What is missing is a format that ties them together.
-
-**Add.** Behaviour `Dialogue FILE=innkeeper.dlg START=root`, reading world/dialogue/*.dlg:
-- `NODE id`;
-- `SAY` lines with $-variables and random alternatives;
-- `CHOICE` lines with a label, a condition (a zapper mask with +IF, or an IF expression), `GOTO node` or `END`, and `ONCE` per player;
-- `EFFECT` lines: MOBPROG commands with $n the player and $i the NPC, or a JavaScript block;
-- `CHECK=CHA 14` or `SKILL=Skill_Haggle 50` on a choice, with SUCCESS and FAIL nodes.
-
-Choices are shown numbered and answered through the non-blocking Session.InputCallback, as Prop_QuestGiver does, at no time cost. Each player's node and ONCE flags are kept in saved script variables. TALK (N9) opens the tree; MPDIALOG (N2) opens any node.
-
-**Example.** The innkeeper's root node offers:
-1. Ask about the mine, shown only if `QUESTSCRIPTED($n mine)` is false.
-2. Rent a room, with EFFECT `mpcallfunc RENT`.
-3. [CHA 14] Flirt for a discount. On SUCCESS it sets VAR DISCOUNT 1.
-4. Leave.
-
-*See also:* N2, N9, N29 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14's dialogue trees).
-
-<!-- from: npc-dialogue/dlg-tree -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#n14).
 
 <a id="n15"></a>
 
 ## N15. Prop_Affinity: one NPC's opinion of each character
 
-*Kind:* property, script function, script command · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* property, script function, script command · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** A faction can already serve one NPC: a file such as resources/factions/smith.ini, listed in FACTIONS= in coffeemud.ini. It has:
 - RANGE bands;
@@ -336,7 +290,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N16. Patroller waypoints that wait, act and change route by time
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A '.' in a patrol pauses one step, so a long wait is a row of dots. Room-id steps re-track from wherever the patroller is, so it finds its route after a fight. Direction steps do not. Acting at a waypoint takes a Scriptable: ENTRY_PROG 100 with `IF INROOM($i == Gate#1)`, then `MPFORCE $i lock door`. A night route is a TIME_PROG that runs MPUNBEHAVE Patroller and then MPBEHAVE Patroller with another route.
 
@@ -358,7 +312,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N17. Warning before aggression
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes (owner: "assuming it is optional")
 
 **Today.** Aggressive attacks on sight after an optional `delay=` and one `MESSAGE=`. Its `BRIBE=` form warns with `BRIBEPAYMSG` and waits, but only for a price, and the wait is miscomputed (N18). Its zapper mask already spares chosen players. A warning that escalates needs a script: GREET_PROG, MPALARM or DELAY_PROG, `IF INROOM($n == $i)`, MPKILL $n. Yet one wrong room can end a single-player run.
 
@@ -374,7 +328,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N18. Fix the NPC behaviour bugs a world will hit
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Seven confirmed bugs that a builder would take for mistakes in their own setup. MOBHunter looks up `Thief_Assasinate` (misspelt), so isHunting is always false, and it can pick itself as prey. MudChat `<30>` tick entries fire on about 71% of ticks (also N19). Aggressive's `BRIBE=` uses the peace ticks as the pay window, as do VeryAggressive and WimpyAggressive; MobileAggressive extends Mobile and needs a separate check. Loyalty's interval, (2*60)/4000, is 0, so it searches every tick. The GoodGuardian and GoodExecutioner pause between attacks never arms. EvilExecutioner skips its noRecurse guard and Scavenger takes items it cannot get or see, both because `&&` binds tighter than `||`.
 
@@ -382,7 +336,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 **Example.** A bounty hunter on MOBHunter follows its hunt through instead of restarting it every cycle, and a drunk's `<10>` hiccup comes up 10% of the time, not 90%.
 
-*See also:* N13 (Both fix Loyalty's zero interval); N17 (N18 fixes the Aggressive BRIBE wait window that N17's warning options build on); N19 (Both fix the MudChat <30> tick entry firing on about 71% of ticks).
+*See also:* N13 (later) (Both fix Loyalty's zero interval); N17 (N18 fixes the Aggressive BRIBE wait window that N17's warning options build on); N19 (Both fix the MudChat <30> tick entry firing on about 71% of ticks).
 
 <!-- from: behaviors-npc/npc-bugfixes -->
 
@@ -390,7 +344,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N19. Fix the MudChat defects
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Chat files behave differently from `MUDChat.html` in eight confirmed ways. A `<30>` tick entry fires on about 71% of ticks (also N18). Tick expressions force every connector to AND, so `|` and `~` are ignored. `${PERSONALITY:3}` parses the wrong substring and crashes in nextInt(0). An empty reply line drops the replies after it. An `@` include adds the original say entry, not the re-parented copy. lastSpeakerM is never set, so expiry is never extended or reset. Tick entries take the last match, speech the first. The guide calls the LLM prefix a quote; the code uses a backtick.
 
@@ -406,7 +360,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N20. Escortee: an NPC that travels with the party to a destination
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** The escort quest templates (normal_, auto_ and competitive_escort1 and 2) MPFORCE the NPC to follow the player and track arrival with a player script; the NPC never knows the way, waits or panics. It speaks only when forced: the quest instructions on accept and $ESCORTED_RESPONSE on arrival, nothing on the way. Left without a leader, it is purged at the second check. Concierge `MOBILE=true` leads, but drops its followers on arrival. TaxiBehavior carries riders with trail options such as NOLOCKS and NOWATER. A leading escort can be scripted with MPTRACKTO, ENTRY_PROG and INROOM(), DEATH_PROG and MPSTEPQUEST, at length.
 
@@ -422,7 +376,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N21. A configurable Hireling
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Hireling takes only `price;minutes;zappermask`. Its keywords (HIRE, HIRELING, WORK, WORKS, TIME, AVAILABLE), lines and refusal are fixed, its contract is not saved, and the HIRE command only says "Are you for hire?". A scripted hireling works and is saved: BRIBE_PROG, `mpforce $i follow $n`, a tattoo or VAR for the contract, DELAY_PROG or QUEST_TIME_PROG to end it, MPMONEY for wages.
 
@@ -430,7 +384,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 **Example.** A mercenary captain with `CONTRACT=QUEST:goblinwar UPKEEP=5 MSG_HIRED="My blade is yours till the goblin king falls."` leaves when the quest ends, or after two unpaid days.
 
-*See also:* N12 (N21's MSG_ parameters for Hireling lines are an alternative to N12's Prop_NPCLines); N13 (Two NPC party-member behaviours with loyalty, orders and saved terms; Companion and a configurable Hireling overlap); S9 (N21's saved Hireling contract is S9's Hireling STATE).
+*See also:* N12 (N21's MSG_ parameters for Hireling lines are an alternative to N12's Prop_NPCLines); N13 (later) (Two NPC party-member behaviours with loyalty, orders and saved terms; Companion and a configurable Hireling overlap); S9 (N21's saved Hireling contract is S9's Hireling STATE).
 
 <!-- from: npc-dialogue/dlg-hireling-config -->
 
@@ -438,7 +392,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N22. Event barks with conditions and cooldowns, in Sounder
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Sounder already gives event-keyed one-liners on MOBs, rooms, items and areas: timed SOUND, PORTAL_ENTER (arrivals), PORTAL_EXIT, WIELD, WEAR, HOLD, GET, DROP, OPEN, DAMAGE and FIGHT, with $n, $p, $e and $s. Time, weather, low hit points, shop and bribe barks need Scriptable progs (TIME_PROG, RAND_PROG with ISWEATHER, HITPRCNT_PROG, BUY_PROG, BRIBE_PROG) written as nested IF RAND chains.
 
@@ -454,23 +408,15 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N23. Rumours: a world list, gossiping NPCs, rumours from events
 
-*Kind:* data file, behaviour and script command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, behaviour and script command · *Value:* medium · *Effort:* medium · *Decision:* later
 
-**Today.** No rumour, news or gossip system exists; every "heard any rumours?" answer is written per NPC and goes stale. The workaround is shared script variables on a global host (MPSETVAR, saved) read back by SPEECH_PROG or MudChat `$%VAR(...)%`, with masks, expiry, weights and tell-once made by hand.
-
-**Add.** A `world/rumors.txt` file: text, AREA or room mask, condition (+IF or quest state), weight, EXPIRES (game days), TELLONCE. A `Rumors` behaviour (`TOPICS=rumor news gossip CHANCE=10`) answers those words with a fitting rumour and sometimes volunteers one. `MPRUMOR ADD|REMOVE "text" AREA=... DAYS=...` for scripts and quests. Optional automatic rumours: area conquered, quest started or won, named NPC killed. Rumours told are kept per player (and in the notes, if approved) and saved.
-
-**Example.** The Riverford barmaid hints "Black Ned's gang camps by the old mill." Ned's DEATH_PROG runs `MPRUMOR ADD "They say a stranger killed Black Ned" AREA=Riverford DAYS=10`, and she passes that on.
-
-*See also:* PR7, N24, N28 (N23's rumours, N24's [[topic]] lines and N28's overheard scenes can write PR7 journal entries).
-
-<!-- from: npc-dialogue/dlg-rumors -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#n23).
 
 <a id="n24"></a>
 
 ## N24. Topic keywords the player can learn and list
 
-*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** The player cannot know which words an NPC reacts to, so quest templates give the phrase outright ("say i accept"). The pieces exist: colour codes such as `^y...^?` highlight a word, `ask <npc> <topic>` or `sayto` fires SPEECH_PROG and MudChat keyword entries, and a VAR or tattoo can remember a topic.
 
@@ -478,7 +424,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 **Example.** The innkeeper says "Folk don't go near the [[old mine]] since the [[collapse]]." In the next village, `ask miner about collapse` gets the miner's entry.
 
-*See also:* N9 (N24's topic list is shown by N9's TALK, or ASK, with no topic); PR7, N23, N28 (N23's rumours, N24's [[topic]] lines and N28's overheard scenes can write PR7 journal entries).
+*See also:* N9 (N24's topic list is shown by N9's TALK, or ASK, with no topic); PR7, N23 (later), N28 (N23 (later)'s rumours, N24's [[topic]] lines and N28's overheard scenes can write PR7 journal entries).
 
 <!-- from: npc-dialogue/dlg-topics -->
 
@@ -486,53 +432,31 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N25. LLM calls off the game thread
 
-*Kind:* behaviour, script command and world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour, script command and world option · *Value:* medium · *Effort:* medium · *Decision:* later
 
-**Today.** In single-player, executeRunnable queues every job on the one game thread. A MudChat backtick reply or MPLLM calls LLMSession.chat there, so the HTTP call can freeze the game, terminal and windows included, for up to 20 seconds. Timeout and temperature are fixed at 20 s and 0.7. This matters only to owners who install the langchain4j jar (LANGCHAIN4J_JAR_PATH is empty by default).
-
-**Add.** Run LLMSession.chat on a dedicated worker thread, the one exception to the single game thread, and post the reply back as a game-thread job into the NPC's say queue. Show "X ponders your words..." at once. Ini settings LLM_TIMEOUT and LLM_TEMPERATURE, and a per-NPC `${LLMTEMP}`. In turn-based time the reply arrives before the next prompt. MPLLM gets a callback form: `MPLLM host var prompt CALLBACK=FUNC`.
-
-**Example.** The LLM-voiced oracle no longer locks the game: the player sees "The oracle closes her eyes..." and her answer follows seconds later, while a turn-based world waits.
-
-*See also:* N10 (Both make NPC replies land before the next prompt in turn-based time, N25 for LLM replies).
-
-<!-- from: npc-dialogue/dlg-llm-async -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#n25).
 
 <a id="n26"></a>
 
 ## N26. LLM NPCs with lore files and saved memory per player
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* later
 
-**Today.** Context per message already works: the text after a backtick reply goes through mcFilter each time, so `$<...>` (speaker), `${...}` (NPC) and `$%...%` (script functions) can tell the LLM who speaks and when; a `${LLMCONTEXT=}` is not needed. Lore fits in the system prompt via `${LLMPROMPT=...}`, `${LLMPROMPT+...}` or an included `%file`. But memory is one session per NPC, reset after a hard-coded 360000 ms idle and lost on save. Document retrieval is Archon-only and commented out.
-
-**Add.** `${LLMLORE=lore/riverford.txt}` per NPC, chat group or area, plus a world lore file, put in the system prompt, or retrieved by embedding when large; `LLMMEMSCOPE=PERPLAYER|NPC`; `LLMIDLE=` game minutes before reset, or never; the transcript saved with the game.
-
-**Example.** The village elder knows from the lore file that the dam broke last spring, greets the player by name, mentions their unfinished "Missing Sheep" quest, and after a save and reload remembers their talk.
-
-*See also:* S9 (N26's saved LLM transcript is S9's LLM session state).
-
-<!-- from: npc-dialogue/dlg-llm-context -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#n26).
 
 <a id="n27"></a>
 
 ## N27. LLM NPCs that act from a declared whitelist
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* later
 
-**Today.** An LLM NPC can only talk: every reply becomes `say`. Crude hooks exist: its SPEAK_PROG fires on its own reply, so `SPEAK_PROG p 'go through'` can run `mpopen gate`, and MPLLM puts a reply in a VAR for IF and STRCONTAINS to check. But the reply has no target ($t is null), tags would be spoken aloud, and nothing limits what may happen or how often per player.
-
-**Add.** `${LLMACTIONS=GIVE(rusty key) ONCE; SETVAR(TRUST 0-10); STARTQUEST(minerats); EMOTE; ATTACK IF AFFINITY<-50}` declares the allowed actions, and the system prompt explains tags such as `[[GIVE rusty key]]`. MudChat strips the tags from the speech, checks each against the list and its per-player limits, and runs it as MOBPROG commands, the NPC as monster and the speaker as $n. Rejected tags are logged. CHATTEST, if approved, tests it.
-
-**Example.** A gatekeeper with OPEN(gate) declared is talked round and answers "Fine, go through." `[[SETVAR TRUST 8]] [[OPEN gate]]`; the gate opens. Undeclared, it would not.
-
-<!-- from: npc-dialogue/dlg-llm-actions -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#n27).
 
 <a id="n28"></a>
 
 ## N28. Scene: NPC exchanges the player overhears
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** MudChat ignores other NPCs' speech and stays quiet 8 ticks after one speaks, so NPCs cannot converse. A scene can be one Scriptable on the room or an actor: GREET_PROG, ENTRY_PROG or TIME_PROG starts it, `if var($n SAW_SCENE) == ''` makes it once per player, `mpforce guard1 say ...` gives each line, chained with `mpalarm <ticks> mpcallfunc NEXTLINE`. It works but is tedious to keep in step.
 
@@ -540,7 +464,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 **Example.** Entering the barracks at night plays, once, two guards arguing about the captain's bribes; it unlocks a "captain" topic and a rumour.
 
-*See also:* SC7 (Two answers to scripted cutscenes: MPWAIT in any script, or a Scene behaviour for NPC exchanges); PR7, N23, N24 (N23's rumours, N24's [[topic]] lines and N28's overheard scenes can write PR7 journal entries).
+*See also:* SC7 (Two answers to scripted cutscenes: MPWAIT in any script, or a Scene behaviour for NPC exchanges); PR7, N23 (later), N24 (N23 (later)'s rumours, N24's [[topic]] lines and N28's overheard scenes can write PR7 journal entries).
 
 <!-- from: npc-dialogue/dlg-scenes -->
 
@@ -548,7 +472,7 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 ## N29. CHECK(): a skill check for dialogue
 
-*Kind:* script function · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** Persuade, intimidate and deceive options need hand-written arithmetic. The parts exist: STAT(\<who> CHA), ISABLE(\<who> \<skill>) for proficiency (e.g. `$%ISABLE($n Skill_Haggle)%`), FACTION(), RAND() and RANDNUM() on the shared seeded dice, and MATH(). So `if rand() <= math(STAT($n CHA)*3 + ISABLE($n Skill_Haggle)/2)` works, but each builder writes it differently and nothing explains the result.
 
@@ -556,6 +480,6 @@ Its values are saved with the character. But it takes one file per NPC, under re
 
 **Example.** `if CHECK($n CHA 15 $%AFFINITY($i $n)%/10)` makes the toll-keeper waive the fee; on failure he raises it.
 
-*See also:* N14, N2, N9 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14's dialogue trees).
+*See also:* N14 (later), N2, N9 (N2's MPDIALOG, N9's TALK fallback and N29's CHECK= on choices all hook into N14 (later)'s dialogue trees).
 
 <!-- from: npc-dialogue/dlg-skillcheck -->

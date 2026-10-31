@@ -6,7 +6,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L1. NPCs who understand only their own language
 
-*Kind:* property · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Speech in a language a mob does not know never reaches its speech_prog. Common has no language tool, though, so Common speech always does, even on an orc meant to know only Orcish. MudChat answers speech in any language, because it reads the speaker's clear text (`msg.sourceMessage()`). Only orders and trade check comprehension. `ISSPEAKING($n Common)` is true even when $n speaks Orcish. `Prop_LanguageSpeaker HOMEONLY` compares with `homeRoom` and `homeArea`, which are final nulls, so it fails for any mob with a start room.
 
@@ -22,7 +22,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L2. A glossary for renaming terms without regex
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The translation file can rename terms. `[final-translation]` runs on every printed line, and `[session-translation]` runs inside every `L()` call. But `REPLACE` swaps the whole line for one regex template, so each rule handles one occurrence. `REPLACEALL` is a plain substring match, so 'mana' also hits 'manage'. Neither keeps capitals: 'Mana' becomes 'aether'. Plurals and scopes need hand-written regex.
 
@@ -36,7 +36,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L3. List overrides per area, room and mob (Prop_LocalLists)
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Time-of-day lines, the health chart, damage and miss words, corpse blurbs, gaits and magic words are global. An underground area still hears the stock line, which has the sun rising in the west. Workarounds cover a few of these: `DISABLE=TODNOTIFIES` plus an area Scriptable with `TIME_PROG` and `MPECHO`, GenRace `HEALTHRACE`, corpse blurbs keyed by the killing ability or weapon, and `Prop_NewDeathMsg` on one mob. Nothing gives an area its own health chart, damage words, hit and miss text, gaits or magic words. Weather lines per area are a separate item.
 
@@ -52,7 +52,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L4. Script trigger and functions for understanding a language
 
-*Kind:* script trigger and script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger and script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `ISSPEAKING($n Elvish)` tests the speaker's language, so `speech_prog p mellon` with `if isspeaking($n Elvish)` can already require a language. `ISABLE($n Elvish)` tests whether someone knows a language, and its string form gives the proficiency. `AFFECTED` tests the live effect. But speech the mob cannot follow produces no message a script sees. No test counts translators (`Prop_LangTranslator`, spells such as `Prayer_Tongues`, items, the room) or `INTERPRETS`. That logic is protected inside `StdLanguage.getAnyTranslator`.
 
@@ -68,7 +68,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L5. GenLanguage: dictionary files, suffixes, kept names, written name
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A GenLanguage dictionary is one `HASHEDWORDS` string of english/word pairs, plus `WORDS` lists by length. Both are saved in `world/custom.cmare`, a text file. A large dictionary can be generated outside the game and pasted in, but thousands of entries are unwieldy. Draconic's 10,190 words are in Java. Unknown words are whole words picked by length and hash. Only player names stay as they are, so NPC, area and place names are scrambled. `writtenName()` always returns the spoken name.
 
@@ -90,7 +90,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L6. Foreign text inside descriptions, exits, echoes and help
 
-*Kind:* presentation · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* presentation · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A readable item can carry a language as an effect, added in the item editor or by writing on it while speaking the language. READ then shows scrambled text, plus the translation for readers who know it. A non-gettable item can stand in for runes over a door. `LOOK_PROG` with `if isable($n Dwarven)` and `MPECHOAT` can show each viewer different room text. But room and exit descriptions, `MPECHO` and help cannot hold text in a language. Exits cannot be read in a language, because `StdLanguage` reading needs an Item. `CoffeeFilter` has no language tag.
 
@@ -104,7 +104,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L7. GenRace HEALTHCHART and CORPSEBLURBS fields
 
-*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A custom race can only borrow another race's health text, through the GenRace field `HEALTHRACE`. It points at one of the 123 Java races that override `healthText`, golems, undead and plants among them. A race cannot write its own. Corpse blurbs are chosen by the killing ability or weapon, not by race. `Prop_NewDeathMsg` changes the death message of a single mob only.
 
@@ -120,7 +120,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L8. Hit and miss messages per weapon
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Hit and miss text comes only from the six fixed slots of `WEAPON_HIT_DESCS` and `WEAPON_MISS_DESCS`, chosen by weapon class and damage type. `StdWeapon` always returns `standardHitString` or `standardMissString`, so a named sword or a whip cannot have its own lines. A Scriptable `DAMAGE_PROG` (amount in `$g`) or `Prop_UseEmoter` can only add a line next to the stock one. `CNCLMSG_PROG` cancels the damage along with the message. `Prop_NewDeathMsg` shows that a property can override a message.
 
@@ -138,7 +138,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L9. Socials as world content, with pruning of stock ones
 
-*Kind:* data file and builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file and builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `Prop_Socials` already adds emotes as content, on areas, rooms, exits, mobs and items. It is written inline with `NAME=`, `TARGET=`, `YOUSEE=`, `OTHSEE=`, `TARGSEE=`, `NOTARGSEE=`, `SRCCODE=`, `OTHCODE=`, `ZAPMASK=`, `MASK=` and `WORNONLY=`, and on a top-level area it is saved in that area's .cmare. `SOCIAL_PROG` lets NPCs react. But stock socials cannot be dropped, including the crude ones DOCS c03 notes: DISABLE knows only `COMMAND_`, `ABILITY_`, `EXPERTISE_`, `FACTION_`, `RACE_` and `CHARCLASS_`, and none of them reaches socials. `CREATE`, `MODIFY` and `DESTROY SOCIAL` write `resources/socials.txt`. `Prop_Socials LOAD=` looks only under `resources/`.
 
@@ -156,7 +156,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L10. MPLEARNLANG and MPSAYIN, and an MPENABLE fix
 
-*Kind:* script command · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script command · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `MPENABLE <who> <lang> <N|++N|--N>` adds or raises a language, but it changes only the stored ability. The live effect, which translation reads, keeps its old proficiency unless the ability is new. MPENABLE also ignores the language cap that `StdLanguage.canBeLearnedBy` enforces. JavaScript can set the effect directly (`source().fetchEffect('Elvish').setProficiency(60)`). Saying one line in a language takes three: `MPSPEAK` to it, the line, then `MPSPEAK $i Common` back.
 
@@ -172,7 +172,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L11. INTERPRETS for hearing and reading, with partial understanding
 
-*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** GenLanguage `INTERPRETS` is read only by `getAnyTranslator`, which only orders and trade call. To hear speech, the listener needs an effect with the speaker's exact language ID; to read, the reader needs the same. `Prop_LangTranslator` takes percentages ('80% Elvish 40% Sylvan'). By default its bearer says the translation aloud as an interpreter, with the percentage as the chance per sentence. In `NOTRANSLATE` mode it covers only orders and trade. Neither lets a player half-understand a related language, so dialects cannot be modelled.
 
@@ -188,7 +188,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L12. JavaScript hook for languages built by rule
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** GenLanguage can only look words up. Languages that transform words by a rule, such as PigLatin, PirateTalk and Drunken, override `translate()` in Java. `StdLanguage` has no script hook, so a builder cannot make a language that spells words backwards or a cipher.
 
@@ -204,7 +204,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L13. Learning a language by immersion
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Proficiency in a language grows only while the character speaks it (`helpProficiency`), and only if they already know it. Hearing only translates, and reading only scrambles or translates, so living among orcs teaches no Orcish. The ways to learn a language are explicit: `TEACH` and `MOBTeacher`, the Studying skill, `MPENABLE`, or a race or class. A rough version can be scripted: a room Scriptable whose speech_prog runs `MPENABLE $n Orcish ++1`. But it hears only speech its host understands, and MPENABLE does not update the live effect.
 
@@ -220,7 +220,7 @@ Invented languages and how they are heard, read and learned, rule files, lists, 
 
 ## L14. World help with fixed priority and hidden stock entries
 
-*Kind:* data file and builder tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file and builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** GenAbility, GenLanguage and GenCommand carry their own `HELP` field, saved in `custom.cmare`. `CREATE COMMAND` on a stock command copies its help for rewriting. But `help/*.ini` files merge in `File.listFiles()` order, which is unspecified, so a world file cannot reliably override a stock key. Stock entries for removed features cannot be hidden, nor the 70 or so places that name CoffeeMud or the MUD. `CREATE HELP` and `CREATE AHELP` write `resources/help/newhelp.ini` and `arc_newhelp.ini`. World files have no place for lore pages.
 

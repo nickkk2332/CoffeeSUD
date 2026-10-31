@@ -6,7 +6,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I1. Fix property bugs that make documented options do nothing
 
-*Kind:* property fixes · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* property fixes · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Several documented options fail silently. In Prop_PropSetter, TRIGGER=DROP_PUTIN and TRIGGER=HITTING_WITH never fire, MOUNT also fires on hitting and PUT on DROP: the constants (64, 128) do not match TRIGGER_DESC (256, 512). Prop_LimitedContents tests the new item instead of each existing one, so it counts every item. Prop_ItemBinder checks ON= against the TO string, so abbreviations fail. AHELP PROP_UNDROPPABLE finds nothing; the key is PROP_DROPPABLE. There is no workaround.
 
@@ -22,7 +22,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I2. MPDOOR: change a door on both sides from anywhere, with a message
 
-*Kind:* script command, script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script command, script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** MPOPEN, MPCLOSE, MPLOCK and MPUNLOCK change one Exit object, silently, and skip its RESETTIME relock timer. They take $xN, not a direction word. Opening a door on both sides with messages takes four lines: MPOPEN $xN, MPAT \<room> MPOPEN $xS, and an MPECHO per room. ISOPEN and ISLOCKED read state, but for another room only inside MPAT.
 
@@ -38,7 +38,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I3. Books with pages kept in the item and the world files
 
-*Kind:* presentation, data file, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* presentation, data file, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** StdBook and GenBook keep pages in the journal table CMJRNL, keyed by the book's name. That is save state: pages written in builder mode never reach world/ or a new game, and same-named books share them. GenJournal boards have the same gap. GenReadable holds one text, or one FILE= under resources/. A CNCLMSG_PROG READ script can fake pages.
 
@@ -54,7 +54,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I4. Prop_When: props and behaviours active only while a condition holds
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Zapper masks cover most conditions: MASK= on nearly every prop, with -IF (ISMOON, ISHOUR, QUESTWINNER), -CHANCE and -TATTOOS, and decaying tattoos as cooldowns. But masks are tested at events such as entering, and Prop_Transporter, Prop_AddDamage and Prop_MultiEffects children take none. Quests test masks only at start. A behaviour that is on only while a condition holds needs TIME_PROG with MPBEHAVE and MPUNBEHAVE. Nothing gives once per profile or world.
 
@@ -70,7 +70,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I5. Prop_Transform: things that change form over time or by condition
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Decay only destroys, Age only turns a GenCaged item into its mob, TemporaryAffects only adds or removes props, Prop_ClosedSeason only hides. A change of form needs a script per object: TIME_PROG, DAY_PROG or DELAY_PROG, checks such as ISSEASON or INLOCALE, then MPOLOAD or MPMLOAD and MPPURGE $i. Farming and Gardening grow plants, but as skills.
 
@@ -86,7 +86,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I6. Item sets with tiers, any bonus, and progress shown
 
-*Kind:* property, script function, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, script function, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** ALLSET=name-N exists only on Prop_HaveAdjuster (pieces carried) and Prop_WearAdjuster (pieces worn): one threshold each, adjustments only (stats, saves, ableprofs and the like; no granted spells). One of each fakes two tiers. Mixed thresholds misbehave, because setCheck writes one piece's result to the whole set. Prop_WearSpellCast, Prop_WearEnabler, Prop_WearResister and Prop_AddDamage ignore ALLSET, so a granted spell needs WEAR_PROG and REMOVE_PROG on every piece. A MASK="-WORN +piece ..." on one piece only half works: it is checked when the spell is added, not when another piece comes off. LOOK and IDENTIFY say nothing of sets.
 
@@ -102,7 +102,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I7. Prop_Cursed: hidden curses that Remove Curse ends cleanly
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** No-remove and no-drop items exist: MODIFY ITEM's misc flags, MPSET $i ISREMOVABLE false, or Prop_PropSetter(TRIGGER=WEAR_WIELD ISREMOVABLE=false) for a curse shown once worn. Prayer_RemoveCurse resets the flags but, ending only DOMAIN_CURSING effects, leaves penalties such as Prop_WearAdjuster(str-3). Prayer_CurseItem added in the builder cannot be ended. There is no false identity, and a curse broken by a deed needs a SPEECH_PROG.
 
@@ -116,7 +116,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I8. Prop_Invokable: item powers on demand, with recharging charges
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** GenWand already gives a spell on a spoken magic word, with charges (USES, MAXUSES), and its wear location can be a finger, so a ring works too. But only characters with a WandUsage class skill can use it; for others it 'glows faintly'. Recharging needs a TIME_PROG running MPSET $i USES 3. Without the skill, a SPEECH_PROG with a counter and MPCAST does it. Prop_UseSpellCast fires on wear, fill or put, never on demand.
 
@@ -130,7 +130,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I9. Prop_Switch: levers, buttons and dials that keep their state
 
-*Kind:* property, script trigger, script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, script trigger, script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A lever must be ungettable, but StdItem then refuses PUSH and PULL ('You can't move X'). So the builder writes CNCLMSG_PROG PULL with RETURN CANCEL, keeps state in MPSETVAR or TAGS, and calls MPOPEN twice, skipping the relock timer. Prop_OpenCommand answers only verbs that reach HUH: PULL and PUSH are commands, TURN is Turn Undead's word. ACTIVATE takes only Electronics.
 
@@ -138,7 +138,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 **Example.** PULL RUSTED LEVER raises the portcullis of Gate#3 east, both sides, for 20 ticks; LOOK LEVER says 'The lever is up.' A second lever moves only while the iron crank is carried.
 
-*See also:* ST7, I19 (All three let an object's own verb (TURN, PULL, PUSH) win over stock commands and skills; one parser hook serves them); SC6, I12, I15, I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); I2 (I9's switch actions are built on I2's MPDOOR); I16 (I16's combination lock shares I9's switch state).
+*See also:* ST7, I19 (All three let an object's own verb (TURN, PULL, PUSH) win over stock commands and skills; one parser hook serves them); SC6, I12 (later), I15, I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); I2 (I9's switch actions are built on I2's MPDOOR); I16 (I16's combination lock shares I9's switch state).
 
 <!-- from: items-puzzles/ip-prop-switch -->
 
@@ -146,7 +146,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I10. USE X ON Y and COMBINE A WITH B, with triggers and a table
 
-*Kind:* player commands, script triggers, data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* player commands, script triggers, data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Commands/ has no USE, APPLY or COMBINE, and there is no USE trigger. CREATE COMMAND USE (a GenCommand in world/custom.cmare) with one FUNCTION_PROG EXECUTE script and a SWITCH over item pairs works, as does CMDFAIL_PROG USE on each target. Either way every pair is hand-written, with no standard answer for the rest.
 
@@ -160,7 +160,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I11. Prop_Discoverable: hidden things anyone can find
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Prop_Hidden is seen only with CAN_SEE_HIDDEN, from Thief_Search or Searching. Searching is open to every class at level 4 in allqualifylist.txt, and a data change can make it AUTOGAIN at level 1. MPHIDE sets IS_NOT_SEEN, which no search finds. Examine-to-reveal works as a LOOK_PROG (or EXECMSG_PROG EXAMINE) running MPUNAFFECT on Prop_Hidden, and the removal is saved. There is no stat roll, no hint, and no way without a script.
 
@@ -176,23 +176,15 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I12. PuzzleController: puzzle state, sequences and solve actions
 
-*Kind:* behaviour, builder tool · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, builder tool · *Value:* high · *Effort:* large · *Decision:* later
 
-**Today.** Ritual triggers with TriggeredAffects already do ordered and timed sequences without a script: '&' (in order), '|', TIMEOUT, SAY, PUTTHING, INROOM, CHECK \<mask> and more, tracked per player, then ADD or REMOVE an ability or behaviour. But PUSH, PULL, OPEN, GET and signals are not steps, state cannot span objects (three levers in positions), and there is no saved solved flag or wrong-move handling. The rest is MPSETVAR counters by hand.
-
-**Add.** A PuzzleController behaviour on a room, area or hidden item, built on the Triggerer with new PULL, PUSH, OPEN and SIGNAL codes: INPUTS="lever1,lever2,lever3", MODE=ALL|ORDER|COUNT=n|EXPR="lever1=up & lever3=down", WINDOW=\<ticks or turns>, WRONG=reset|keep with WRONGMSG=, ONSOLVE= and ONFAIL= action lists, RESET=never|areareset|ticks:300, ONCE=true. Inputs and the solved flag are saved. The PUZZLE builder command shows the state.
-
-**Example.** Hall of Bells: MODE=ORDER INPUTS=bell_low,bell_high,bell_mid WRONG=reset WRONGMSG="The bells clash and the echoes die." The right order opens the hidden stair.
-
-*See also:* SC6, I9, I15, I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); DT33 (DT33's PUZZLE command shows and works I12's controller and the switch and plate props).
-
-<!-- from: items-puzzles/ip-puzzle-controller -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#i12).
 
 <a id="i13"></a>
 
 ## I13. Prop_BlockedExit: blockages the player must clear
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Chant_CaveIn needs a caster and runs out; Prop_WeakBridge breaks and mends itself. A blockage can be faked as a closed, locked door named 'a pile of rubble' with Prop_OpenCommand ('clear rubble;dig rubble;NOOPEN'), and a script can count tool attempts in a VAR before MPUNLOCK and MPOPEN. The door state is saved, but the exit's close timer or a reset can shut it again. Nothing wears a blockage down, burns it or grows it back.
 
@@ -208,7 +200,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I14. Prop_Detector: an item that reacts to what is near
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_Sounder reacts to actions, and Prop_Smell emotes only on mobs. Same-room detection can be scripted: a RAND_PROG or DELAY_PROG on the item with NUMRACES, NUMMOBSROOM, ISHERE or ROOMMOB plus ISLIKE, then MPECHOAT the owner; NUMRACESINAREA covers an area. MPSET $i AFFBEHAV can toggle an ambiance. Detection a set number of rooms away, and a clean ambiance on and off, are out of reach.
 
@@ -222,7 +214,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I15. Receptacles: containers that react to the right objects
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_LimitedContents already filters a container by mask, +TAGS and +NAMES included, with a count and a refusal: '2 +TAGS dragoneye;0;MSG="It does not fit."' (its count bug is in the property-bug fixes). PUT_PROG on the container fires on put, and NUMITEMS or INCONTAINER tell when it is full. Prop_ItemSlot REMOVABLE=FALSE locks items in, but only Prop_ItemSlotFiller items, and nothing fires when slots fill. Plain containers cannot lock in or consume.
 
@@ -230,7 +222,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 **Example.** The dragon statue's two eye sockets accept only items tagged dragoneye. With both in place, its mouth opens and shows the key.
 
-*See also:* SC6, I9, I12, I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); I1 (I15's receptacles rely on I1's Prop_LimitedContents count fix).
+*See also:* SC6, I9, I12 (later), I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); I1 (I15's receptacles rely on I1's Prop_LimitedContents count fix).
 
 <!-- from: items-puzzles/ip-receptacle -->
 
@@ -238,7 +230,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I16. Prop_ComboLock: dials, codes and keypads
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_OpenCommand 'dial 7 3 9;press 739' already opens on an exact phrase, on both sides (Prop_OpenPassword does the same for a spoken code), and GenExit's RESETTIME relocks. Its first word must reach HUH, so ENTER and PUSH, which are commands, cannot start it, nor can TURN for a player who knows Turn Undead. A random code per game can be scripted (ONCE_PROG, MPSETVAR, RANDNUM) and printed by a clue item through $\<var>. Missing: dials set one at a time and shown on LOOK, symbol sets, and a tries limit.
 
@@ -256,7 +248,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I17. Riddler behaviour: riddles with several answers, tries and consequences
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A riddle is a SPEECH_PROG with a keyword list or an exact phrase, plus MPSETVAR counters for tries and a "solved" flag. MudChat matches patterns but counts no tries. Prop_OpenPassword takes one word and can only open. Tries with consequences, a random riddle, typo tolerance and once-only memory all need a script.
 
@@ -270,7 +262,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I18. Fix READ \<direction> so it reads writing on an exit
 
-*Kind:* bug fix (player command) · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* bug fix (player command) · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** READ finds the exit for a direction, then at once overwrites it with an item lookup on the last word (Read.execute, fetchFromMOBRoomFavorsItems). That lookup matches exits by name, door name or closed text, never by direction. So READ NORTH fails, although exits can carry readable text and handleBeingRead supports them. READ DOOR works, but only if the player guesses the name.
 
@@ -284,7 +276,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I19. Fix Prop_CloseCommand and let command phrases start with a real verb
 
-*Kind:* bug fix (property) · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* bug fix (property) · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_CloseCommand cannot work. A missing else makes the word NOCLOSE also a command phrase. The exit branch closes only if(!E.isOpen()), that is, when the exit is already closed. The container branch sends MSG_OPEN, not MSG_CLOSE. setMiscText never resets noclose to false. Also, Prop_OpenCommand and Prop_CloseCommand react only to unknown input (TYP_HUH), so a phrase that starts with a real command or skill word, such as PUSH, PULL or ENTER, never fires.
 
@@ -300,7 +292,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I20. GenTrap: choose what springs it, and run its script with no ability
 
-*Kind:* property (and a bug fix) · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property (and a bug fix) · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** What springs a trap is fixed by its class: entering a room, unlocking or opening an exit or container, or getting, pushing or pulling an item (holding, for bombs). A cursed throne (sit), a trapped book (read), a painting (look) or a chest that bites when closed must be a Scriptable instead: EXECMSG_PROG SIT or LOOK_PROG, MPCAST, and a variable for "disarmed". GenTrap's SCRIPT also runs only inside if(able.trim().length()>0), so a trap with a script and no ABILITY does nothing.
 
@@ -316,7 +308,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I21. Richer keys and locks: master keys, keys used up, unpickable locks
 
-*Kind:* property (and a change to key matching) · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property (and a change to key matching) · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A lock matches one key code exactly (getKey().equals(keyName())). A keyring counts only one container level deep, so not inside a pack. Scripts cover the rest: CNCLMSG_PROG on UNLOCK with HAS() and MPUNLOCK for a master key, UNLOCK_PROG with MPJUNK $o for a key used up, a very high lock level or a CNCLMSG_PROG for a lock no thief can pick. Prop_LocationBound already sends a key back to its room.
 
@@ -330,7 +322,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I22. MPTRANSFORM: turn an item into another in place
 
-*Kind:* script command and JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script command and JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Turning one item into another takes MPJUNK and MPOLOAD, which loses its worn slot, container, state and tags. MPPUT and MPFORCE wear win some of that back, clumsily. MPM2I2M only converts between mobs and items. MPSET can rewrite a generic item in place (NAME, DESCRIPTION, USES, DISPOSITION, TAGS, AFFBEHAV and more), so a dull gem can start to glow. It cannot change the class, say GenItem to GenLightSource, or swap in a catalog item.
 
@@ -346,7 +338,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I23. Prop_Attunement: powers that wake only once the item is attuned
 
-*Kind:* property and command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and command · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Prop_ItemBinder binds an item, but nothing makes its powers wait for a deed. Most of it can be built: masks on the item's props (Prop_WearEnabler(Spell_Haste; MASK=-TATTOOS +ATTUNED_CLOAK)), the tattoo given by Prop_TattooAdder on a shrine or MPTATTOO in a script, and Prop_LimitedEquip 3;id='attuned' to cap equipped items. Missing: attuning by rest, a cap on attuned rather than equipped items, a way to unattune, and "requires attunement" in identify.
 
@@ -360,7 +352,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I24. Prop_ItemGrowth: items that grow with use
 
-*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** No property counts kills, hits or uses on an item. Prop_Doppleganger follows only the owner's level, and Prop_PropSetter has no counter. A script can do it: DAMAGE_PROG on the item ($g is the damage) and EXECMSG_PROG DEATH or KILL_PROG catch hits and kills, MPSETVAR and MPSAVEVAR keep the count, and at each threshold MPSET $i NAME and MPSET $i AFFBEHAV swap in stronger props. There is no way to say it as data.
 
@@ -376,7 +368,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I25. Prop_PressurePlate: triggers on weight and presence
 
-*Kind:* property and script functions · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and script functions · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Room traps fire only on entering. Prop_WeakBridge checks weight only on enter and leave, GenScale compares only when looked at, and Prop_ReqCapacity only refuses entry or drops over a cap. A room script can sum STAT(x WEIGHT) over ROOMITEM and ROOMMOB in a FOR loop, called from ENTRY_PROG, EXIT_PROG, DROP_PROG and GET_PROG. It is heavy and has no release delay. There is no ROOMWEIGHT or CONTENTWEIGHT function.
 
@@ -384,7 +376,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 **Example.** Lifting the gold idol off its plate springs the trap unless a bag of sand of equal weight is dropped on it. Or one character, sent there with AS, holds the gate open while another passes.
 
-*See also:* SC6, I9, I12, I15 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)).
+*See also:* SC6, I9, I12 (later), I15 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)).
 
 <!-- from: items-puzzles/ip-pressure-plate -->
 
@@ -392,7 +384,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I26. Durability options: wear rate, broken instead of destroyed, unbreakable items
 
-*Kind:* world option and property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option and property · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Wear chances are hard-coded: per damage type and material in StdArmor, and a flat 1% per hit in StdWeapon. At 0 uses an item is destroyed (StdArmor.executeMsg, MUDFight.postItemDamage), which can delete a unique item for good. To make one nearly unbreakable, set its uses outside 0..1000 (MPSET $i USES 9999). postItemDamage then destroys it outright on any item damage, such as Freeze Metal. Or use Prop_Artifact, which brings multiplayer side effects. A CNCLMSG_PROG cannot stop StdArmor's direct wear. Mending exists: ItemMender, MEND, the mending crafts.
 
@@ -410,7 +402,7 @@ Item properties, general-purpose property wrappers, containers, locks, keys, tra
 
 ## I27. ItemUpgrader behaviour: upgrade paths at a smith or workbench
 
-*Kind:* behaviour and property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour and property · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** ItemMender, ItemRefitter and ItemIdentifier mend, refit and identify. Prop_ItemSlot adds sockets, and the Enhanced crafting expertise changes an item only as it is crafted. Nothing improves an existing item along a set path, such as +1 to +2 or a sword reforged into its awakened form. A GIVE_PROG or SPEECH_PROG on the smith can check HAS() and GOLDAMT, then MPJUNK and MPOLOAD, but that loses state and tags.
 

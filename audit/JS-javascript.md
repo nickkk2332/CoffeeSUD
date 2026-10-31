@@ -6,7 +6,7 @@ The JavaScript runtime and its limits, helper objects, hooks, scheduling, JS cla
 
 ## JS1. Run world JavaScript without per-script approval
 
-*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** The shipped coffeemud.ini has JSCRIPTS=1. A new or edited `<SCRIPT>` block is refused ("A Javascript was not authorized") until it is approved with MODIFY JSCRIPT. Approvals go to `::jscripts.ini` in the database VFS. Normal games do not copy it, so a script approved in builder mode does nothing in a real game or a fresh checkout. Only GenCommand pre-approves its scripts. GenAbility and GenTrap do not. JSCRIPTS=2 (always run) already exists, in the ini or as `sud.sh JSCRIPTS=2`. JSCRIPTS=1 also has a bug: a refused script is added to the table, so it passes from its second run each boot.
 
@@ -22,7 +22,7 @@ The JavaScript runtime and its limits, helper objects, hooks, scheduling, JS cla
 
 ## JS2. A time limit and readable errors for all JavaScript
 
-*Kind:* debug tool and world option · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool and world option · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `<SCRIPT>`, JRUN, JCONSOLE, quest JS and cron JS all call Context.enter() with no time limit. The world runs on one game thread, so `while(true){}` in a RAND_PROG freezes the game. Every entry point names its source `<cmd>`. JS errors go only to mud.log, which can be read in game with LIST LOG. MOBPROG errors also show in the room. JRUN exits its context outside a finally block. JavaScriptingEngine.LimitedContextFactory exists, but nothing uses it, and it is incomplete: it never sets setOptimizationLevel(-1) or setGenerateObserverCount(true).
 
@@ -38,7 +38,7 @@ The JavaScript runtime and its limits, helper objects, hooks, scheduling, JS cla
 
 ## JS3. Shared JavaScript libraries with require()
 
-*Kind:* JavaScript hook · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** JS has no module system. The Rhino jar contains CommonJS Require, but nothing installs it. Code can be shared in other ways. Many hosts can use LOAD=progs/dialog.script and share one parsed copy, `<SCRIPT>` blocks included. FUNCTION_PROG with MPCALLFUNC gives named subroutines. A JS file can be pulled in with eval(String(...Resources.getFileResource(...))). That last way has no module scope, no exports and no cache invalidation.
 
@@ -54,7 +54,7 @@ The JavaScript runtime and its limits, helper objects, hooks, scheduling, JS cla
 
 ## JS5. JavaScript classes and script files kept in world/
 
-*Kind:* data file and JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file and JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** JS classes load from any folder named in the ini's class-path keys. `BEHAVIORS=%DEFAULT%;world/js/behaviors/` works now, in the ini or on the sud.sh command line, and LOAD BEHAVIOR file.js reloads a class at run time. But nothing in world/ loads by default. LOAD= includes are forced under resources/, so a .script file cannot sit next to its area. world.sum covers only areas, custom.cmare, catalog.cmare and quests.
 
@@ -70,7 +70,7 @@ The JavaScript runtime and its limits, helper objects, hooks, scheduling, JS cla
 
 ## JS6. One `cm` helper object in every JavaScript scope
 
-*Kind:* JavaScript hook and script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook and script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `<SCRIPT>` and JCONSOLE can call every MOBPROG command and function as an upper-case JS function (MPECHO, MPMLOAD, RANDNUM$, STAT$, with $-codes expanded), but only in string form. Other entry points get far less: JRUN 6 helpers, quest JS 4, cron JS 3 and JS classes 2. importPackage does not work because there is no ImporterTopLevel. Object-level work needs long Packages.com.planet_ink... paths and internal calls such as CMLib.law().getLegalBehavior(R).getWarrantsOf(...), which may change.
 
@@ -85,7 +85,7 @@ The JavaScript runtime and its limits, helper objects, hooks, scheduling, JS cla
 
 JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for the lifecycle-trigger item.
 
-*See also:* JS3 (JS22 (now in JS6)'s include() and JS3's require() are two module mechanisms for shared JavaScript; pick one); W1, W4, W6, W12, W14, W15, W27 (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); B11 (B11's JRUN builder object and JS6's cm object both add helpers to the JRUN scope); DT9, DT24 (JS22 (now in JS6)'s and DT24's debug() both write to DT9's developer log; one function).
+*See also:* JS3 (JS22 (now in JS6)'s include() and JS3's require() are two module mechanisms for shared JavaScript; pick one); W1, W4, W6, W12, W14, W15, W27 (later) (JS6's cm world members (law, passTime, holiday, weather, shop, bank, market) are JavaScript forms of these W items and depend on them); B11 (B11's JRUN builder object and JS6's cm object both add helpers to the JRUN scope); DT9, DT24 (JS22 (now in JS6)'s and DT24's debug() both write to DT9's developer log; one function).
 
 <!-- from: javascript/js-helper-api, world-systems/ws-js-worldapi, sp-dev-tooling/spdev-jslib -->
 
@@ -93,7 +93,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS7. Structured JavaScript state kept in saves
 
-*Kind:* JavaScript hook and builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook and builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** JS values are lost between runs. setVar stores only strings and upper-cases names. A workaround exists: setVar('WORLD','STATE',JSON.stringify(obj)), read back with JSON.parse(getVar(...)). This Rhino has JSON, and global vars are written to the save's \<SCRIPTVARS>. But every value must be packed by hand. There is no stable key per host and no starting state for a new game.
 
@@ -109,7 +109,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS8. World-wide JavaScript events with cm.on
 
-*Kind:* JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A script hears only the messages that reach its host. CMMap broadcasts DEATH, LEVEL, LOGIN, QUIT, WINQUEST, ENDQUEST, LEGALWARRANT, LEGALSTATE and CHANNEL world-wide, but Scriptable listens only through LOGIN_PROG, LEVEL_PROG and CHANNEL_PROG. Workarounds: ScriptableEverymob on an area gives every native mob a script, an area hears its rooms' messages, and achievements.ini counts kills and exploration. A JavaAdapter MsgListener can be added with addGlobalHandler, but the handler is held weakly and is gone after a reboot.
 
@@ -125,7 +125,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS9. Effects whose stat changes are written in JavaScript
 
-*Kind:* property and behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** MOBPROG cannot change computed stats: there is no affectPhyStats or affectCharStats trigger. GenAbility has a SCRIPT field (okMessage, executeMsg, tick), and HERESTATS and MOCKABILITY give stat changes that stay fixed while the effect lasts (HERESTATS may use caster and target level variables, worked out once when cast). Prop_*Adjuster gives fixed changes gated by a mask. MPSET changes base stats permanently, so a kill-counting sword can be built today by MPSETting its DAMAGE. A JS class extending Ability can compute stats, but it needs an ini path or LOAD, one class per effect, and parameters parsed by hand.
 
@@ -143,7 +143,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS10. JS RELOAD: update changed JavaScript in the running world
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** LOAD \<TYPE> file.js (sysop) recompiles a JS class and replaces its template, so new instances use the new code. Mobs, items and behaviours already in the world keep the old class. Load unloads the old class first only for .class names. Scripts can mostly be reloaded already: UNLOAD RESOURCE PARSEDPRG, UNLOAD FILE and MPUNLOADSCRIPT drop cached MOBPROG files, so edited LOAD= files and their `<SCRIPT>` blocks are read again on the next trigger.
 
@@ -159,7 +159,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS11. JScriptable: a Scriptable written wholly in JavaScript
 
-*Kind:* behaviour · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** JS can live only inside MOBPROG triggers. Each `<SCRIPT>` block starts with a fresh scope and its result is discarded. CALLFUNC finds only FUNCTION_PROG. A JS class extending StdBehavior can veto in okMessage, but must decode CMMsg codes by hand. The unused JavaScriptingEngine (one scope per script, callFunc) is broken: okMessage always returns true, I2 is taken from msg.tool() instead of msg.target(), and getMakeMOB returns null for hosts that are not mobs. Scriptable.engine() and CoffeeMaker.unpackGenScriptsXML hard-code DefaultScriptingEngine.
 
@@ -175,7 +175,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS12. JCONSOLE as a given mob, item or room
 
-*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** JCONSOLE keeps a scope per builder, which is lost on reboot. It takes multi-line input between '<' and '>' and can call every MOBPROG command and function. Every call runs as the builder: host, monster and source are all the builder, with no target or message. Objects print as raw toString text. To test a mob's script, the builder must act it out: say the phrase or give the item.
 
@@ -191,7 +191,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS13. Seeded randomness and game time in JavaScript
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The fork rolls all the game's dice from one seeded generator and keeps time with GameTime, so RANDOMSEED and turn-based time are repeatable. From `<SCRIPT>`, RANDNUM$, RAND0NUM$ and RAND use that generator. ISHOUR, ISDAY, ISSEASON and DATETIME$ read the game clock. But plain JS Math.random and Date use the JDK, and cron JS counts real milliseconds. Ordinary JS therefore breaks seeded replays and ignores pauses and turns.
 
@@ -199,7 +199,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 **Example.** A card-playing NPC written in JS deals the same hands under RANDOMSEED=42. A "come back in 3 hours" check counts game hours, which do not pass while the game is paused.
 
-*See also:* DT39 (Exact replay needs JS13's Math.random on the shared dice as well as DT39's deterministic scheduler).
+*See also:* DT39 (later) (Exact replay needs JS13's Math.random on the shared dice as well as DT39 (later)'s deterministic scheduler).
 
 <!-- from: javascript/js-seeded-random -->
 
@@ -207,7 +207,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS14. +JS and -JS entries in zapper masks
 
-*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Zapper masks gate catalog spawn rules, Prop_Req* checks, ability components and shop masks. Their scripted test is +IF/-IF (resources/help/zappermasks.txt). It takes one quoted MOBPROG condition, compiled once per mask, with the tested object as host. Global vars are visible, so `+IF "var(WORLD BELLRUNG == 1)"` can already gate on world state set by setVar from JS. +IF lacks structured data and the JS language.
 
@@ -221,7 +221,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS15. JS() in conditions, MPJSFILE, and cancel from \<SCRIPT>
 
-*Kind:* script function and script command · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function and script command · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** To use one JS test in an IF, a builder needs a whole `<SCRIPT>` block that sets a var, then `if var(...)`, because the block's value is discarded. A one-line `<SCRIPT>...</SCRIPT>` already works anywhere in a line, so an MPJS command is not needed. JS cannot veto a message. In CNCLMSG_PROG it can change the message in objs()[0], but a bridged RETURN('cancel') ends only its own sub-execute. Running a JS file needs the eval-of-CMFile workaround.
 
@@ -237,7 +237,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS16. A single-player JavaScript guide and JS HELP
 
-*Kind:* presentation and debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation and debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The JS documentation is scattered and partly out of date. Scriptable.html (around line 4610) covers `<SCRIPT>`, the MOBPROG bridge and getVar/setVar. It still says semicolons must be escaped, which is no longer true inside `<SCRIPT>`. Programming.html covers JS classes next to material for the removed web server. arc_help.ini covers JCONSOLE, JRUN and MPRUN. Nothing lists what each context provides, and CMDFAIL_PROG and +IF masks are barely documented. In JCONSOLE, `for (k in obj)` lists a Java object's members, but only roughly.
 
@@ -251,7 +251,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS17. Message, cancel and lookup helpers for JavaScript in scripts
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** JavaScript in a trigger's `<SCRIPT>` block gets host, source, target, item, item2, the message text, objs and getVar/setVar. Every MOBPROG command and function can be called as an uppercase function (`MPOPEN('$xN')`, `INAREA$()`), and `Packages.com.planet_ink.coffee_mud.core.CMLib` reaches the engine. In `CNCLMSG_PROG` the CMMsg is `objs()[0]`. `EXECMSG_PROG` and the other queued triggers get no message. JS cannot cancel: it sets a variable, then MOBPROG runs `RETURN CANCEL` after the block. Common lookups need long calls, and none of the helpers are documented.
 
@@ -267,7 +267,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS18. JavaScript quest handlers and a quests helper
 
-*Kind:* JavaScript hook, quest feature · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook, quest feature · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A quest's `<SCRIPT>` runs once, at setup, with `quest()` and `setupState()` and no MOBPROG bridge. Steps and wins are scripted through what the quest gives (`GIVE SCRIPT`): `QUEST_TIME_PROG`, `MPSTEPQUEST`, `MPQUESTWIN`, `QVAR`, and the `FUNCTION_PROG` hooks `CAN_ACCEPT`, `DO_ACCEPT` and `DO_DROP`. JS reaches quests only through `Packages...CMLib.quests()`. `WINQUEST` is sent only by `MPQUESTWIN`. JavaScriptingEngine is dormant: nothing creates it, its quest calls do nothing, and its `isFunc` ignores the name it is given.
 
@@ -283,7 +283,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS19. Game-clock scheduling from JavaScript
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** MOBPROG schedules on the game clock with `TIME_PROG`, `DAY_PROG`, `DELAY_PROG`, `RAND_PROG`, `MPALARM <ticks> <command>` and ScriptLater. Quests start on `SET MUDDAY` and take `WAIT`, `INTERVAL` and `DURATION` in mudhours or muddays. They live in `world/quests`, so a market day can be a quest today. CRON runs on real time and is kept in the journal table, which is save state: a job made in builder mode never reaches a new game. JS has no scheduler of its own. A `<SCRIPT>` can call `MPALARM('10 MPCALLFUNC market')` through the MOBPROG bridge. That runs MOBPROG text, not a JS function, and pending alarms are not saved. A CRON job can hold a `<SCRIPT>` block, but it runs on real time.
 
@@ -301,7 +301,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS20. Commands and local verbs from JavaScript
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `CREATE COMMAND` makes a GenCommand with HELP, ACCESS (its words), SCRIPT, ORDEROK, SECMASK, ACTCOST and CBTCOST. Its `FUNCTION_PROG EXECUTE` may be a `<SCRIPT>`, is pre-approved, gets the arguments in `objs()`, and is saved in `world/custom.cmare`. A verb for one room uses `CNCLMSG_PROG HUH p <phrase>` (documented) or `CMDFAIL_PROG <verb> [P phrase|words]` (undocumented), where `return cancel` swallows the failure. There is no short way to do either from JS, and no ready fallback message.
 
@@ -317,7 +317,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS21. Upgrade Rhino and fix the quote swap
 
-*Kind:* JavaScript runtime upgrade · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript runtime upgrade · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** By its manifest, `lib/js.jar` is Mozilla Rhino 1.7R2, built 2011-05-09. It has commonjs and NativeJSON, so it is a late 1.7R3-era build. Scripts get no arrow functions, no template strings, no `let`/`const` by default, and no `Array.find`/`includes` or `Object.assign`. The game runs on Java 21, which current Rhino supports (1.7.14 and later need Java 11). Separately, `setScript` turns every `'` into a backtick and `getScripts` turns it back (DefaultScriptingEngine, also for `STATIC=`). JConsole input and cron do the same. A literal backtick in an inline script comes back as a quote.
 
@@ -331,7 +331,7 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 ## JS23. A world JavaScript file for progression
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** No single world file sees progression events and returns a result, though most hooks exist as scripts. `LEVEL_PROG` is global. `CHARCREATIONSCRIPTS` (RACE, GENDER, STATS, CLASS, FACTIONS, END) may hold `<SCRIPT>` JS. A script on a parent area (`DEFAULTPARENTAREA`) hears every EXPCHANGE, TEACH, PRACTICE and TRAIN message, and can change XP with `objs()[0].setValue()`. XPMOD and Prop_ModExperience scale XP by type. Practice and train counts can only be adjusted after the fact (`MPPRACS`, `MPTRAINS`), and `STARTSTAT` has no script mode.
 

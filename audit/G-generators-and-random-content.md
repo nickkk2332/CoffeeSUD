@@ -6,7 +6,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G1. Seeds for repeatable generation
 
-*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `GENERATE` takes only `NOSAVE`, `FROM` and `VAR=VALUE`, and its result depends on every roll made before it. The only seed is the global `RANDOMSEED`. A builder cannot keep a dungeon they liked or have the engine rebuild it exactly. A `<SCRIPT>` block can reach `CMath.seedRand`, but that is clumsy. Even with one seed, loot varies: the metacraft search stops after one second of real time, and crafted recipe sets are cached (`SYSTEM_ITEMGEN_*`).
 
@@ -24,7 +24,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G2. Fix RandomQuests hanging or never generating
 
-*Kind:* behaviour · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `RandomQuests` caps its workers at `availableProcessors()/4` using integer division. That is 0 on one to three cores, so every attempt returns at once. In INLINE mode, which `Prop_QuestGiver QUEST="GENERATE:..."` always uses, `tick()` loops `while(myQuests.size()<numQuests) generator.run()` and never checks the disable flag. The game thread hangs on such machines. It also hangs on any machine when generation fails for good: file not found, undefined tag, unmet `REQUIRES`, attempts used up. The gate does nothing in the fork, because `ServiceEngine.executeRunnable` already queues work on the one game thread.
 
@@ -40,7 +40,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G3. Depth and position variables for generated rooms
 
-*Kind:* generator · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* generator · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Room templates see a room's node type, run, exits and flags (`ROOMTAG_NODETYPE`, `NODERUN`, `NODEEXITS`, `NODEFLAGS`). They do not see its distance from the entrance or its coordinates, though `LayoutNode.coord()` exists. The area has only `AREA_NUMLEAFS` and `AREA_SIZE`. Leaf groups are built first, in random order, so a boss room gated by a `__boss<1` counter lands in whichever leaf comes first, often next to the entrance.
 
@@ -56,7 +56,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G4. GENERATE PREVIEW and GENLAYOUT: see before you build
 
-*Kind:* builder tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** The only way to see what a template or layout makes is to generate it for real and `DESTROY` the area afterwards. In builder mode `GENERATE NOSAVE` does not protect the world files. It skips only the database writes, and `WorldFiles.exportAll` writes every live area to `world/areas` on `SAVE` and on quit. The ASCII layout drawer, `LayoutTester.draw`, is a developer `main()` that prints to the console.
 
@@ -72,7 +72,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G5. MPGENERATE command and GENSTRING function for MOBPROG
 
-*Kind:* script command and script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command and script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Scripts generate only through `FROMGENFILE` on `MPOLOAD`, `MPOLOADROOM`, `MPMLOAD` and `MPMLOADSHOP`. It takes `INTO <container>` and sets `$b`. Results are cached per file, tag and parameters, so the same call always gives the same roll. A throwaway `nonce=$%RANDNUM(1000000)%` forces a new roll, but each value leaves a cache entry behind. Scripts cannot generate rooms, areas or text, and they pass in no context variables. Quests come only from `MPBEHAVE RandomQuests` or `Prop_QuestGiver` (G2).
 
@@ -88,7 +88,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G6. Loot tables: Prop_LootTable on mobs and containers
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `RandomItems` picks evenly from a static list. `ItemGenerator` weights all craftables by value, and its loop starts at index 2, so it never picks the first two. That is a bug worth fixing anyway. The catalog's `DROP` and `LIVE` rules place one item each. A weighted `loot.xml` can be written today with `select="pick-n"`, `PICKWEIGHT`, `condition`, `class="catalog"` and metacraft. Rolling it on an event is the weak part: a `DEATH_PROG` running `MPOLOAD FROMGENFILE` gets the cached roll every time (G5).
 
@@ -106,7 +106,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G7. Guaranteed placements and reachable keys (ENSURE)
 
-*Kind:* generator · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* generator · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Templates place keys by chance, as `lair.xml` does with `validate="1?10=1 or (1?2=1 and $__storekey<2)"`. So a lair can have a locked storeroom with no key, or a key behind the door it opens. `postProcess` only re-runs values that could not be resolved earlier. Nothing checks the built area. Two parts exist to build on: the area-wide `__` counters and the rooms held on `LAYOUT_NODES`.
 
@@ -120,7 +120,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G8. Hand-drawn MAP layout: drawn shape, generated content
 
-*Kind:* generator · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* generator · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The layouts are `APARTMENT`, `BOXCITY`, `BOXCITYSQUARE`, `BRANCH`, `CROSS`, `GRIDCITY`, `MAZE`, `MESH`, `SPOTTEDMESH` and `TREE`. All are procedural, and none reads a drawn map. A builder who wants a set shape, such as a keep with a courtyard or a cross-shaped temple, must dig every room by hand or take a random shape. A JavaScript layout class could parse a file, but that is programming, not content.
 
@@ -134,7 +134,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G9. GENERATE FILL: theme templates on hand-built rooms
 
-*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `GENERATE ROOM` always makes a new room (`buildRoom`) in an empty direction, and node tags come only from a layout. A builder who digs the map by hand with `DIG`, `LINK` or `CREATE ROOM` cannot have a theme write text, mobs and items into those rooms. The workaround goes room by room: `GENERATE MOB` and `GENERATE ITEM` in each room, and `GENERATE STRING` output pasted in with `MODIFY ROOM`.
 
@@ -150,7 +150,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G10. Data-driven affixes for random enchantment
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `TimsLibrary.enchant` is called by `ItemGenerator ENCHANTED=%` and `Thief_Digsite`. It only bumps the plus or minus, adds a curse, or adds `Prop_FightSpellCast` or `Prop_WearSpellCast` with random spells (ammunition gets a `Prop_WearAdjuster` attack and damage bonus instead). A template can build 'of the Bear' by hand, using `AFFECT` children picked by `PICKWEIGHT` and `condition` plus a prefix `STRING` used in the name. But each template has to repeat this, and nothing ties an affix to the item's level or value: `enchant()` raises the level only for added spells and ammunition, and a template can only set the whole item's `LEVEL`, `VALUE` or `ITEM_POWERBONUS`.
 
@@ -168,7 +168,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G11. JavaScript generator helpers
 
-*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* JavaScript hook · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A `<SCRIPT>` block sees `host`, `source`, `target`, `monster`, `item`, `message`, `getVar`, `setVar` and a few helpers. It can reach the percolator through `Packages.com.planet_ink.coffee_mud.core.CMLib`, but must repeat the whole sequence: parse the XML, `buildDefinedIDSet`, `checkRequirements`, `preDefineReward`, `defineReward`, a `find*` call, `postProcess`. `getLayoutManager('TREE').generate(30,dir)` already returns the node list. With `JSCRIPTS=1`, each script needs `MODIFY JSCRIPT` approval unless the owner sets `JSCRIPTS=2`.
 
@@ -184,7 +184,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G12. Name styles by culture and race
 
-*Kind:* data file and script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file and script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `CharCreation.generateRandomName` has one hard-coded vowel and consonant table. Everything uses it: `SYSTEM_RANDOM_NAME:min-max` in templates, `NEW *`, the account name, character creation and `Spell_TrueName`. So elves and orcs sound alike. Templates can keep pools per culture in data, with `STRING` banks as in `inc_fantasynames.xml` or with syllable picks joined together. JavaScript can call `CMLib.login().generateRandomName(a,b)`. MOBPROG has no random-name function, and nothing picks a style by race.
 
@@ -200,7 +200,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G13. Cleaner baking: unlinked areas, apostrophes, GENSOURCE, REGENERATE
 
-*Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Baking already works: in builder mode, `GENERATE AREA` output goes to `world/areas/<area>.cmare` on `SAVE` or quit. But `getAreaXML` keeps no record of how an area was made, so it cannot be re-rolled without losing hand edits. A detached area needs a scratch room with a free exit, then `UNLINK`, then `LINK` later. Generated apostrophes are stored as backticks. That is the engine-wide convention and players see apostrophes, but it makes the files harder to read.
 
@@ -216,7 +216,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G14. Regenerate behaviour and MPREGENERATE: areas that re-roll
 
-*Kind:* behaviour and script command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour and script command · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** `ResetWhole` and `MPRESET` restore an area's stored state. Only instances and grids re-roll. `StdAutoGenInstance` builds a fresh child per party and drops old ones after `PASSIVEMINS`. `RESET INSTANCE` re-rolls unless `NORESET=true`, and `AutoGrid` rebuilds on expiry. A `<SCRIPT>` block can call `resetInstance(R)` on an instance child. Nothing re-rolls a persistent area on a schedule or on a story event.
 
@@ -232,7 +232,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G15. New theme packs, set-piece library and theme skeleton
 
-*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Twelve themes ship, plus `planet.xml`. The driver's TODO lists ruins, crypt, castle, volcano and sky as missing. Making a new theme means copying and editing, since each theme lists its theme names in every `requires`. The layout variants are already one line each with `like="maze_dungeon"`. No set-piece rooms ship, though their parts exist: `Prop_OpenPassword`, `RandomTraps`, `Prop_Hidden`, `class="catalog"`. `guides/RandomAreas.html` leaves out `BRANCH`, `MESH` and `SPOTTEDMESH`. It also says `repeat-X` selects every choice, but the code draws X with replacement.
 
@@ -248,7 +248,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G16. Multi-level areas and new layouts (CAVE, CLUMP, LINEAR, RING, ISLANDS)
 
-*Kind:* generator · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* generator · *Value:* medium · *Effort:* large · *Decision:* yes
 
 **Today.** Every layout is a flat grid. `AbstractLayout.getDirection` gives only north, south, east and west, and no layout uses `LayoutRuns.ud`. Some of this can be done in data, though it is untested. An `EXIT` with `DIRECTION="DOWN"` builds a nested `ROOM`. A `ROOM` with `layout=` and `size=` becomes a sub-layout, so a `__counter` can give one stair per level. Picking a layout at random already works, with `select="any"` over `like=` variants or with a `$variable`. A JavaScript layout in a `LIBRARY` path's `layouts/` folder may also load.
 
@@ -264,7 +264,7 @@ Random area and room generation, generated content in scripts, loot tables, affi
 
 ## G17. JavaScript in random-area templates
 
-*Kind:* generator, JavaScript hook · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* generator, JavaScript hook · *Value:* low · *Effort:* medium · *Decision:* yes
 
 **Today.** Random-area templates (`resources/randareas`, run by `GENERATE` through `MUDPercolator`) compute values with `${...}` variables, math expressions and `STAT:` lookups, and filter with their own `CONDITION`/`VALIDATE` grammar. The `j` variable flag only escapes a value for use inside JavaScript. No JavaScript runs while generating. A `<SCRIPT>` on a generated mob's Scriptable runs at play time, which is too late. So logic like "a name from my own tables" or "skip this room if a flag is set" has to be written in the template language.
 

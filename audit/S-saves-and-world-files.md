@@ -6,7 +6,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S1. Quest state that survives SAVE and RESTORE
 
-*Kind:* quest feature · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* quest feature · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** The save keeps a quest's name, winners, step, time left and quest mobs and items (`WorldState.questsXML`). It loses `MPQSET` variables (read with `QVAR`), the wait of a quest not yet running (so reloading rerolls it), whom `Prop_QuestGiver` already offered to, `QuestChat`'s said-once lines, and which ONCE_PROGs a SAVABLE personal quest script has already run, so those run again. `MPSETVAR` variables already survive: quest scripts use the quest name as their var scope, and every VARSCOPE table is saved.
 
@@ -22,7 +22,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S2. Save rules: save points, no-save zones, no saving in combat, autosave
 
-*Kind:* world option, property · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* world option, property · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** SAVE works anywhere and at any time, even mid-fight. `Save.execute` calls `SaveGame.save` directly and sends no message, so neither CNCLMSG_PROG nor a property can refuse it. A save made mid-fight keeps the boss's HP but not who is fighting whom, pending MPALARMs or behaviour state, so a reload quietly ends the fight. Autosave can be scripted today: an ENTRY_PROG that runs `mpforce $n save auto`, with a tattoo so it runs once.
 
@@ -38,7 +38,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S3. world/world.ini for the settings that define the game
 
-*Kind:* world option, builder tool · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* world option, builder tool · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Start, death and morgue rooms, the calendar, the starting kit, race and class rules and similar keys sit in `coffeemud.ini` beside the engine's own settings. `SUD.readSettings` reads only that file and the command line. A world can ship a wrapper such as `sud.sh START=Oasis#1 DEATH=Oasis#Shrine`, or a full ini selected with `BOOT=`, which replaces the whole file. No command edits ini keys, and `CREATE DISABLEFLAG` lasts only until restart. A world built for custom races breaks under someone else's ini.
 
@@ -54,7 +54,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S4. Riding kept in saves and world files
 
-*Kind:* save format · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* save format · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Area files write `MRIDE` for a mob riding something, and `CoffeeMaker` links it again through `mobRideTable`, so a placed mounted guard loads mounted. An owned vessel's team is hitched again from the character's tables. But `world.xml` records no riding for PLAYER, FOLLOWER, MOB or ITEM entries. A restore leaves the rower in the lake without the logboat, sets the rider down and unhitches the cart. Area XML has no `IRIDE`, so a builder cannot place a wagon that is already hitched to its oxen.
 
@@ -70,7 +70,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S5. SAVE keeps conquests
 
-*Kind:* save format · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* save format · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `Conquerable` writes the ruler, the previous ruler, the date and the clan items to CMPDAT (`CONQITEMS`), but only on shutdown or room reset. `declareWinner` writes nothing, and control points live only in memory. `SaveGame.save` writes the players, the clocks and `world.xml`, but it never asks legal behaviours to write their state, and QUIT saves before the shutdown write. A conquest made since the last reset is therefore lost.
 
@@ -86,7 +86,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S6. A world/resources overlay for every data file
 
-*Kind:* world option, data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option, data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `Resources.makeFileResourceName` puts `resources/` in front of every path. So all of these sit among the stock files: Scriptable and quest `LOAD=`, `MPSCRIPT LOAD=`, `IMPORT MOBS`, RandomMonsters and RandomItems files, `movingroom.xml`, the generator entry points (`GENERATE FROM`, RandomQuests `PATH`, `GENERATIONFILEPATH`, `FROMGENFILE`), `FILE=` texts, chat files, help (`MUDHelp` lists `resources/help`), factions, recipes, achievements, titles, socials and the `text/` screens. The shipped `world/quests/holidays.quest` is only a `LOAD=` back into `resources/`. `CREATE HELP`, achievements and holidays write into `resources/`. In a normal game the same commands change it for good, and the building warning does not say so. Some routes exist, but each is partial: inline parameters and scripts, a quest's `<FILE>` blocks, `LOAD="/world/..."` inside generator XML, a `LISTFILE` list, `PRIVATERESOURCES` (one file at a time), class-path lines that name `world/classes/`, and extension files `.2` to `.9` (in `resources/` only).
 
@@ -104,7 +104,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S7. Script engine state in the save: ONCE, TIME, DAY, DELAY, alarms, local variables
 
-*Kind:* script trigger, save format, debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, save format, debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A restore builds every script engine from scratch. ONCE_PROG fires again, TIME_PROG and DAY_PROG can fire twice in the same hour, and DELAY_PROG countdowns, pending MPALARMs and MPNOTRIGGER cooldowns are lost, because `oncesDone`, `lastTimeProgsDone`, `lastDayProgsDone`, `delayTargetTimes`, `que` and `noTrigger` are kept in memory only. INDIVIDUAL-scope variables (`MPSETINTERNAL SCOPE *`, `MPSCRIPT INDIVIDUAL`) on NPCs, items and rooms are also lost, though the guide says they are saved. `getLocalVarXML` exists, but `WorldState` never calls it. The idiom that works today is to guard the body with a saved variable: `IF VAR($i DONE == 1)` ... `MPSETVAR $i DONE 1`. It fails for objects that share a name.
 
@@ -120,7 +120,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S8. Generated quests survive save and restore
 
-*Kind:* quest feature, generator · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* quest feature, generator · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `RandomQuests` marks each quest it makes as a copy (`setCopy(true)`), and both `questsXML` and `setQuests` skip copies. On RESTORE the quest is gone, and `getPlayerPersistentQuests` ends and deletes the player's accepted script as an orphan. `Prop_QuestGiver QUEST="GENERATE:..."` keeps its quest only in a field, so it generates a different one. A quest made with GENERATE QUEST in a normal game is lost as well: it is not in the content, so the restore skips it. PLAN 4d lists only spawned copies of spawnable quests as a known gap.
 
@@ -138,7 +138,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S9. A save hook for behaviour state: contracts, bribes, routes, dialogue
 
-*Kind:* behaviour, save format · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour, save format · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The save keeps a mob's `TEXT` (its behaviour parameters), stats, HP, inventory and effects, but not the state its behaviours build up while running. A restore loses all of it. A `Hireling` loses its contract (`workingFor`, `onTheJobUntil`, `partials`); with `onTheJobUntil` at 0 its tick returns at once, so it follows for free forever. Also lost: `Aggressive` bribes, a `BribeGateGuard` tab, a `Patroller` step, `MOBEater`'s stomach, `Emoter`'s expiry, `MudChat` group switches, the lines `QuestChat` has said, the offers `Prop_QuestGiver` has made, and the LLM's memory. `StdBehavior` has only the CLASS and TEXT stats. A Scriptable NPC can keep a contract in a timed tattoo, but the built-in behaviours cannot.
 
@@ -146,7 +146,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 **Example.** Hire a sellsword for 2 game hours, save after one hour and restore. He says 'I've still got an hour on your coin' and leaves when the hour runs out.
 
-*See also:* N11 (N11's per-speaker MudChat groups are saved through S9's behaviour STATE hook); N21 (N21's saved Hireling contract is S9's Hireling STATE); N26 (N26's saved LLM transcript is S9's LLM session state); S17, T16 (T16 saves MovingRoom's position, which S17 assigns to S9's STATE stat); DT19 (S9's getStat(STATE) and DT19's getStat(DEBUG) both expose a behaviour's runtime state; design them together); S1 (S1 moves Prop_QuestGiver offers and QuestChat lines into quest vars, which S9 says then need no STATE hook).
+*See also:* N11 (N11's per-speaker MudChat groups are saved through S9's behaviour STATE hook); N21 (N21's saved Hireling contract is S9's Hireling STATE); N26 (later) (N26 (later)'s saved LLM transcript is S9's LLM session state); S17, T16 (T16 saves MovingRoom's position, which S17 assigns to S9's STATE stat); DT19 (S9's getStat(STATE) and DT19's getStat(DEBUG) both expose a behaviour's runtime state; design them together); S1 (S1 moves Prop_QuestGiver offers and QuestChat lines into quest vars, which S9 says then need no STATE hook).
 
 <!-- from: behaviors-npc/npc-state-save, npc-dialogue/dlg-persist-state -->
 
@@ -154,7 +154,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S10. Templates, NPC clans, cron jobs, board posts and VFS files in world/
 
-*Kind:* world option, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Only the content tables become world files and reach a new game: areas, rooms, exits, room mobs and items, custom races, classes, abilities and commands, and quests. Builder templates are kept in CMPDAT, NPC clans in CMCLAN, `CREATE CRON` jobs and notice-board posts in CMJRNL, and files written with SHELL `::` in CMVFS. A new normal game starts with all of these empty. They live only in the cache, which is not in git, and EXPORT has no option for clans, journals or templates. The only workaround is a script that makes them again at game start.
 
@@ -170,7 +170,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S11. One file per custom object, with scripts beside it
 
-*Kind:* data file, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** All custom races, classes, abilities and commands sit in one file, `world/custom.cmare`. `GenAbility.getAllXML` escapes every field, so a script with `<SCRIPT>` JS blocks or `<` comparisons is stored as `&lt;` text that is hard to edit, diff or review. `LOAD=` in a GenAbility or GenCommand script reads from `resources/`, outside the world. Only quest scripts can use the quest file's embedded `<FILE>` sections.
 
@@ -186,7 +186,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S12. Warrants, fines and criminal records in the save
 
-*Kind:* save format · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* save format · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Warrants and old warrants (which mark repeat offenders) are lists kept in memory in `DefaultLawSet`, and fines are a table keyed by the MOB object. `world.xml` has no section for law, so a save and restore wipes a murder warrant or an unpaid fine. A punishment already under way survives, because Prisoner, Shaming and Banishment are timed effects and are saved with their remaining ticks.
 
@@ -202,7 +202,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S13. World version in saves, a compatibility report and RESTORE ... FRESH=
 
-*Kind:* builder tool, debug tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* builder tool, debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A save does not record which world it was made with. After world edits, a restore silently drops the contents of rooms that no longer exist. A restore empties every room and rebuilds each saved mob and item from its saved TEXT. So mobs and items added since the save never appear in a long playtest save, and restored ones keep their old behaviours, properties and inline scripts. Only `LOAD=` scripts pick up edits. The workaround is a new game.
 
@@ -218,7 +218,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S15. Vessels that save and restore exactly
 
-*Kind:* save format · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* save format · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** These faults come from reading the code; a run has not confirmed them yet. `WorldState.capture` writes a placed vessel's interior twice: once in the ship item's TEXT (`SSAREA`, with crew and cargo) and again as ROOM entries, because the room list includes ship interiors. Restore rebuilds the ship from its TEXT, then the ROOM entries add the same mobs and items again. A vessel the player bought or built is a room item in `world.xml` and also a row in the character's item table, so two ships can share interior room IDs. Course, anchor, facing and the ship followed are plain fields, and `anchorDown` starts true, so a ship under way stops. A builder cannot work around this.
 
@@ -234,7 +234,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S16. Crops and crafts in progress survive a save
 
-*Kind:* save rule · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* save rule · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A planted crop is a Farming effect on the room; a craft in progress is an effect on the crafter. A save keeps only the effect's ID, TEXT, ticks and proficiency (WorldState.putEffects). CommonSkill's stat codes are TICKUP, PCTREMAIN and NAME, with nothing for Farming's crop item, room or good ticks, or CraftingSkill's buildingI. After a restore the crop fails at its sixth tick, and a craft ends with nothing though its materials were spent. SAVE does not check for activities in progress.
 
@@ -248,7 +248,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S17. Rooms and areas changed in play survive saves
 
-*Kind:* save format · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* save format · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** A save keeps room contents, door states, timed effects and area weather. The room tables are content, rebuilt from `world/` at boot. So RESTORE undoes `MPSET` of DISPLAY, DESCRIPTION, ATMOSPHERE or CLIMATE, `MPBEHAVE`, lasting properties from `MPAFFECT`, `MPLINK` exits, `FieryRoom`'s charred text and `Chant_Flood`'s atmosphere. It also undoes building in a normal game: a `Prop_RoomForSale` owner, new titles, walls, doors, lock keys and `Prop_RoomView`. Rooms made by STAIRS, EXCAVATE or lot expansion are unknown at boot, so their contents are skipped, and the lot, now unowned, gives the items on its floor expiry times. `TemporaryAffects` comes back with empty text. The workaround is to keep state in script variables and branch the text with `<MASK -IF "VAR(...)">` in VARIES.
 
@@ -264,7 +264,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S18. Generated dungeons survive a save
 
-*Kind:* generator and save rule · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* generator and save rule · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** In builder mode, GENERATE AREA output is ordinary content and goes to world/areas/*.cmare on SAVE or quit, so a dungeon baked while building persists. In play it does not. Rooms made by GENERATE, StdAutoGenInstance instances and AutoGrid children are written to the save, but WorldState.apply drops every saved room whose ID no longer exists. StdAutoGenInstance's OTHERVARS has PASSIVEMINS=\<n> and NORESET=true, but neither survives a save.
 
@@ -280,7 +280,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S19. Instances and planes survive a save
 
-*Kind:* save rule · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* save rule · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** Saving inside an instance child (StdThinInstance, InstanceArea, StdAutoGenInstance) or on a plane stores the character's start room as the location (MOBloader), so a restore puts them at home. Party members keep the instance room ID in WorldState's PLAYER ROOM. Party.bringIn finds nothing there and leaves each one where they last were, so the party splits. Child rooms are written but dropped on restore: child names come from in-memory counters (instIDNum, instanceCounter, planeIDNum) and nothing re-creates a child. Dead bosses and opened chests are lost. Builders have no workaround.
 
@@ -296,7 +296,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S20. Opt out of stock achievements, titles and socials; wildcard disables
 
-*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A custom world inherits about 1,200 stock achievements, the stock titles.ini and 338 socials. DISABLE has STDRACES, STDCLASSES and AUTOAWARDS (all awards.txt auto-awards, such as the monthly XP bonuses tied to stock classes; NPCAUTOAWARDS for NPCs only). RACE_, CHARCLASS_, ABILITY_, COMMAND_ and FACTION_ disable exact IDs. Only EXPERTISE_ takes a trailing *, so hiding a spell family means listing hundreds of IDs. Holidays are already content: deleting world/quests/holidays.quest turns them off. Classes keep stock spells from players, but scrolls, wands and NPC casters still use them.
 
@@ -312,7 +312,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S21. World cron jobs in files, on the game clock
 
-*Kind:* world option and data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option and data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** CREATE CRON makes an interval script job. It goes in the SYSTEM_CRON journal, which is not a world content table, so it never reaches world/. CMJournals times it with System.currentTimeMillis, so it fires while the game is paused and ignores turn-based time. Game-clock events already work two other ways, both in world/: DAY_PROG and TIME_PROG on an area or room Scriptable, and quests in world/quests/ that repeat with SET WAIT and SET DURATION.
 
@@ -328,7 +328,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S22. Save instance limits and planar visit timers
 
-*Kind:* save rule · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* save rule · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** InstanceArea's LIMIT (for example 1/DAY) keeps its entry counters in the character's class variable map (getClassVariableMap), timed with GameTime.now(). DefaultPlayerStats never writes that map. Any restore, even of the same save, clears the counters, so the player can farm a once-a-day dungeon by reloading. The planar travel recentVisits map lives on the ability and is not saved either. It only raises difficulty for repeat visits within an hour, so it matters less.
 
@@ -344,7 +344,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S23. Save tools: info, delete, copy, diff, checkpoints, autosave
 
-*Kind:* debug tool and world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* debug tool and world option · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** SAVE name, RESTORE name (or RESTORE=name at launch), SAVES and the save offer at QUIT exist, so a checkpoint is SAVE cp1. Each save is a folder saves/NAME/ with header.properties, world.xml and fakedb tables, so the file system can delete or copy one. In game nothing deletes, copies or describes a save (SaveSlots.delete is never called). There is no autosave. Comparing two runs means reading world.xml by hand.
 
@@ -360,7 +360,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S24. Space objects in world files and saves
 
-*Kind:* data file and save rule · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file and save rule · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Ships, stars, moonlets, asteroids and stations placed in space as items, not in a room, are not in world/ (planets and moons built as areas are, with their coordinates). WorldFiles exports areas, custom objects, the catalog and quests only, and PLAN 4f notes that a rebuild loses them. WorldState captures rooms, the interiors of every loaded ship included, docked or not, but not where anything in CMLib.space() is or how it moves. An unowned ship moving through space returns to its content position on restore. Only ships the player or a clan owns survive, with the character's or the clan's tables, through a SPACE.x,y,z room ID. This matters only for a science-fiction world.
 
@@ -376,7 +376,7 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 ## S25. Readable world files and a world diff
 
-*Kind:* data file and builder tool · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* data file and builder tool · *Value:* medium · *Effort:* large · *Decision:* yes
 
 **Today.** In .cmare files a room's, mob's or item's own data (RTEXT, MTEXT, ITEXT: descriptions, behaviours, effects, scripts, Prop_ parameters) is entity-escaped XML on one line, and base stats are a pipe-separated PROP array. WorldFiles.layOut gives one tag per line only to the outer XML. Scripts already have a clean route: Scriptable with LOAD=progs/x.script keeps the script in its own file. Property and behaviour parameters have none, and Shell's COMPAREFILES is a plain text diff.
 

@@ -3,7 +3,9 @@
    python3 tools/audit-review.py ITEMS.json [OUT.html]
 
 ITEMS.json holds {"themes": [{prefix, name, scope}], "items": [{id, theme,
-title, kind, value, effort, body}]}, as the audit returned them.  The page
+title, kind, value, effort, body, and optionally d (yes/no) and note}]}, as
+the audit returned them; recorded decisions show unless the browser has its
+own.  The page
 needs no server: open it in a browser.  Decisions are kept in the browser,
 and EXPORT gives them as text ("S1 yes", one per line) to paste back."""
 import html
@@ -15,7 +17,8 @@ out = sys.argv[2] if len(sys.argv) > 2 else 'tools/audit-review.html'
 data = json.load(open(src, encoding='utf-8'))
 slim = {
     'themes': [{'prefix': t['prefix'], 'name': t['name'], 'scope': t.get('scope', '')} for t in data['themes']],
-    'items': [{k: it[k] for k in ('id', 'theme', 'title', 'kind', 'value', 'effort', 'body')} for it in data['items']],
+    'items': [{k: it[k] for k in ('id', 'theme', 'title', 'kind', 'value', 'effort', 'body', 'd', 'note') if k in it}
+              for it in data['items']],
 }
 payload = json.dumps(slim, ensure_ascii=False).replace('</', '<\\/')
 
@@ -122,6 +125,8 @@ const KEY = 'coffeesud-audit-review';
 let state = {};
 try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+// decisions already recorded in the audit, unless this browser has its own
+for (const it of DATA.items) if (!(it.id in state) && (it.d || it.note)) state[it.id] = { d: it.d || '', note: it.note || '' };
 
 const themeName = {};
 for (const t of DATA.themes) {

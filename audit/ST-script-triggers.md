@@ -6,7 +6,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST1. Register LOGIN, LEVEL, LOGOFF and CHANNEL triggers when the script loads
 
-*Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes (owner: "Absolutely")
 
 **Today.** `LOGIN_PROG`, `LEVEL_PROG` and `CHANNEL_PROG` register their host for world-wide events only inside `executeMsg`, so only after the host has heard some other message. A login is sent only as a global message, so a quiet room or item misses it. `RESTORE` reboots the engine and clears every registration, so each restore starts from nothing. `LOGOFF_PROG` never registers. It fires only in the rooms of the character who quits and of their group. As a result these triggers fire "sometimes". The only workaround is JavaScript calling `CMLib.map().addGlobalHandler`, which needs `JSCRIPTS` approval.
 
@@ -24,7 +24,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST2. SKILL_PROG: skill learned, improved, mastered or failed
 
-*Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes (owner: "Another must have")
 
 **Today.** Teaching, practising and failing a skill are messages (`EXECMSG_PROG TEACH ALL`, `PRACTICE ALL`, `SKILLFAIL ALL`). Learning is not. Abilities granted on levelling (`CoffeeLevels`) only print "You have learned...", `StdMOB.addAbility` sends nothing, and a proficiency gain only prints a line. Mastery is posted to channels flagged PROFICIENT, so a hidden channel plus `CHANNEL_PROG` can catch it, but ST1's registration bug applies. The SKILLPROF and SKILLUSE achievements can award things, and `ISABLE` and `EXPERTISE` can be polled. A mentor NPC cannot react when the player learns a skill.
 
@@ -40,7 +40,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST3. DISCOVER_PROG: first visit to a room or area
 
-*Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** The room knows about a first visit: `StdRoom`'s `addRoomVisit` returns true, and visits are kept in player stats across saves. Scripts only get `GREET_PROG`, which fires on every entry and runs after the visit is recorded. The working trick is `CNCLMSG_PROG ENTER ALL` with `IF EXPLORED($n <roomID> == 0)`. It runs before the visit is recorded, but it also fires on moves that are later cancelled. The ROOMENTER, AREAVISIT and EXPLORE achievements give XP, items or titles on discovery, but they cannot run a script or start a quest.
 
@@ -56,7 +56,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST4. Weather and moon changes as messages and triggers
 
-*Kind:* script trigger, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A change of weather sends no message. `DefaultClimate` only tells each player under the sky (`mob.tell`). `TYP_WEATHER` is weather damage from `WeatherAffects`, not a change of weather. Dawn and dusk in `DefaultTimeClock.handleTimeChange` work the same way. So `EXECMSG_PROG`, faction rules and JavaScript cannot see these changes. Builders poll `ISWEATHER`, `ISTIME` or `ISMOON` from `RAND_PROG` or `DELAY_PROG` and keep the last value in a variable. Fixed hours already work, since `TIME_PROG` fires on any object.
 
@@ -72,7 +72,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST5. QUEST_PROG: quest start, accept, step, win, fail and end, anywhere
 
-*Kind:* script trigger, quest feature · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, quest feature · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `QUEST_TIME_PROG <quest|*> -1` fires on each step and `-2` at the end. It reaches only the objects the quest registered (given scripts and behaviours, quest mobs), plus the player's tracking script on `MPENDQUEST $n` and `QUESTS DROP`. The -1 and -2 codes are not in the help. `MPQUESTWIN` and `MPENDQUEST` send `TYP_WINQUEST` and `TYP_ENDQUEST` globally, but nothing listens for them. A quest starting or timing out sends nothing globally. Only the plain countdown form, `QUEST_TIME_PROG <quest> <minutes left>`, works on any scripted object: it looks the quest up by name, so an NPC can react a few minutes before a timed quest runs out. For start, win and end, any other NPC has to poll `QUESTWINNER()` or `QVAR` from `RAND_PROG`.
 
@@ -90,7 +90,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST6. GAME_PROG and TURN_PROG: new game, save, restore, switch, pause and turns
 
-*Kind:* script trigger, script function, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, script function, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A new game, a restore, `SWITCH` and `PARTY ADD` all send LOGIN, so `LOGIN_PROG` cannot tell an intro from a reload. `CHARCREATIONSCRIPTS` in `coffeemud.ini` runs scripts at three stages: END (after a new character is made), CHARLOGIN, and ALLCHARLOGIN (also on `SWITCH`). They run on a throwaway engine, only `ONCE_PROG` fires, and the character is briefly in a random room. Save, restore, pause and time mode reach no script, and no function reports the game's mode. `DELAY_PROG` already counts turns in turn-based time.
 
@@ -112,7 +112,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST7. VERB_PROG: verbs on objects that win over skills and socials
 
-*Kind:* script trigger, property, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, property, builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `CMDFAIL_PROG` fires only when the word matches nothing else, and it matches any prefix, so typing `T` fires a TURN trigger. The parser tries commands first, then skills, then socials, so TURN WHEEL makes a cleric turn undead. LIGHT, SEARCH and CLIMB are skills, and PRAY and POKE are socials. `CREATE COMMAND TURN` adds a verb that wins over them, but it is global and cannot pass the line to the wheel's own script. `Prop_Socials` on rooms and exits only covers words that reach HUH.
 
@@ -128,7 +128,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST8. Vessel triggers: board, disembark, sail, arrive and dock
 
-*Kind:* script trigger, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Boarding is an ENTER into the deck room, so a `GREET_PROG` on the deck or interior area sees it, but the vessel item does not. A ship moves through a temporary mob named after it. An `ENTRY_PROG` on the ship fires for every ENTER it hears and has to test `NAME($n)==NAME($i)`. That mob is destroyed right after the move, so `$n` is unreliable in queued responses. `ARRIVE_PROG` does not fire for ships, the deck hears nothing of the arrival, and anchoring sends no event. Steering is `MSG_NOISYMOVEMENT`, which `EXECMSG_PROG` can match.
 
@@ -144,7 +144,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST9. CLAN_PROG, and entry and exit scripts on every membership change
 
-*Kind:* script trigger, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** There is no clan trigger, and `DefaultClan.addMember` and `delMember` send nothing. A government's `ENTRYSCRIPT` and `EXITSCRIPT` run only from CLANAPPLY, CLANACCEPT, CLANEXILE and CLANRESIGN, not from `MPSETCLAN` or a GuildMaster. Conquest news ("X gains control of Y") goes to channels flagged CONQUESTS. This fork's INFO channel keeps that flag, so `CHANNEL_PROG` can match the text, though that is fragile. Adding CLANINFO to INFO in `coffeemud.ini` would expose declarations and auto-promotions the same way.
 
@@ -152,7 +152,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 **Example.** When the player is promoted to Shadow, the guildmaster congratulates them and unlocks the vault door. When the Orc Horde takes Millbrook, the innkeeper switches to occupation dialogue and the militia goes into hiding.
 
-*See also:* F2, F3, F9, F10, F16, F22 (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts).
+*See also:* F2, F3, F9, F10, F16, F22 (later) (These fire ST9's CLAN_PROG events (RELATION, CONQUER, PROMOTE, DUESLATE, DISCOVERED), and ST9 and F10 both make addMember run the entry and exit scripts).
 
 <!-- from: organizations-factions/org-clan-prog -->
 
@@ -160,7 +160,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST10. PARTY_PROG and party functions
 
-*Kind:* script trigger, script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger, script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `PARTY ADD` and `REMOVE` change following directly. The only trace is the echo "\<S-NAME> join(s) \<T-YOUPOSS> party.", which an `ACT_PROG` in the same room can match. Handing over the lead, resting and bringing a member in send nothing. Masks already test the party: `+GROUPSIZE 4` works as a trigger's chance (`GREET_PROG +GROUPSIZE 4`) or in `ISLIKE`, and `+FOLLOW`, `ISFOLLOW` and `$f` test the leader. NPC followers send FOLLOW and NOFOLLOW, which `EXECMSG_PROG` catches. No function returns a count.
 
@@ -176,7 +176,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST11. Calendar triggers: named times of day, ranges, season, month, year, weekday
 
-*Kind:* script trigger, script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger, script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `TIME_PROG` takes hour numbers only. Each argument goes through `CMath.s_int`, so `TIME_PROG DAWN` reads as hour 0 and fires at midnight. `DAY_PROG` is the day of the month only, and neither trigger takes ranges. Nothing fires on a new season, month, year or weekday, so builders poll `ISTIME`, `ISSEASON`, `ISMONTH`, `ISYEAR` or `DATETIME` and keep a variable. A quest can already start on a game date (`SET DATE MUDDAY`). The clock has weekday names (`getWeekNames`), but no function tests the weekday.
 
@@ -192,7 +192,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST12. @GLOBAL modifier for EXECMSG_PROG, DEATH_PROG and KILL_PROG
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The engine broadcasts several categories world-wide: DEATH, LEVEL (gain and loss), LOGIN, QUIT, LEGALWARRANT, LEGALSTATE, WINQUEST and ENDQUEST. Scripts hear them only through `LOGIN_PROG`, `LEVEL_PROG` and `CHANNEL_PROG`. Deaths can already be heard everywhere. `DEATH_PROG` and `KILL_PROG` on a room, area or item fire for every death the host hears, and area messages rise to parent areas, so one parent area over all areas hears every death. These triggers take no arguments, so the filtering goes in the body (`IF ISLIKE($n '<mask>')`). Warrants, legal state, quest wins and ends, and level loss reach no script.
 
@@ -208,7 +208,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST13. CRAFT_PROG and RECIPE_PROG
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Crafting sends ITEMGENERATED in the room, ruined results included, and learning a recipe sends RECIPELEARNED. Much already works. `EXECMSG_PROG ITEMGENERATED =O CLASS=Weaponsmithing` on a room, area or carried item fires for that one skill. The product is `$t`, `IF STAT($t CLASS == GenRuinedItem)` spots a ruined one, and `LEVEL($t)` works. The CRAFTING achievement counts items by skill. But the `=O` test names one skill per trigger, no variable gives the skill when matching ALL, the product itself hears nothing, and none of this is documented.
 
@@ -224,7 +224,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST14. FACTION_PROG: faction change and range crossing
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A faction change is a FACTIONCHANGE message, sent only to the source's room. The faction id is in the message text and the amount in its value, and scripts can read neither. Faction files already react to ranges. REACTION entries give an ability, a behaviour (Scriptable included) or a command to mobs in the same room as a character in a named range. AFFBEHAV works on monsters only. Masks take `-FACTION +RANGE`, `FACTION()` reads the range, and ANNOUNCE posts to FACTIONANNOUNCEMENTS channels, which `CHANNEL_PROG` can hear. Nothing fires when a character enters a range, and nothing reports a change made elsewhere.
 
@@ -242,7 +242,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST15. COMBAT_PROG: combat start, end and flight
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `FIGHT_PROG` fires on every combat tick. So a line said once at the start of a fight needs `FIGHT_PROG 100` (or `HITPRCNT_PROG 100`) with a tattoo or variable, which a `RAND_PROG` testing `!ISFIGHT($i)` clears later. (`MPNOTRIGGER FIGHT_PROG <ms>` can mute it instead, but only for a fixed time, and it mutes every `FIGHT_PROG` in that script.) Flight can be caught with `EXECMSG_PROG FLEE ALL`, victory with `KILL_PROG`, defeat with `DEATH_PROG`. A fight that ends with both sides alive (a flee, `MPSTOP`, peace, the foe leaving) sends no combat-ended message. Only whatever caused it can be seen: the FLEE or LEAVE message, or the peace spell. `MPSTOP` sends nothing.
 
@@ -260,7 +260,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST16. Area border triggers and an area entry banner
 
-*Kind:* script trigger, property · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger, property · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** On an area, `GREET_PROG` and `ALL_GREET_PROG` fire on every ENTER into any of its rooms, so every move inside the area counts. `ENTRY_PROG` needs the host to be the target, and `EXIT_PROG` compares against the last known room, so neither fires at the border. No variable holds the previous room. The workaround is `CNCLMSG_PROG ENTER ALL` on the area, with `IF INAREA($n == 'Haunted Marsh')` checked before the move. It also fires on cancelled moves, and catching a departure needs scripts on the neighbouring areas or a parent area. There is no entry banner.
 
@@ -276,7 +276,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST17. LEVEL_PROG for level loss, with the new level in $g
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** LEVEL_PROG fires on gains only. A level loss is sent only globally, so no script hears it, unless the builder adds a hidden LOSTLEVELS channel and uses CHANNEL_PROG. The trigger runs before the level is applied: LEVEL($n) still reads the old level and $g is empty. A host in the same room can get the message twice, once globally and once from the room, because LEVEL_PROG lacks the lastMsg check that GET_PROG has.
 
@@ -292,7 +292,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST18. Fix RIDE_PROG; add DISMOUNT_PROG and REMOVING_PROG
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** RIDE_PROG is a copy of RIDING_PROG: both fire only when the scripted host does the mounting. So a scripted horse, raft or carriage never learns it was mounted, though Scriptable.html says it should. Dismounting has no trigger. REMOVE has no -ING form, unlike GET, DROP, PUT, WEAR and GIVE. The workaround is EXECMSG_PROG MOUNT ALL and DISMOUNT ALL on the rideable, but their keywords match the player's typed command.
 
@@ -306,7 +306,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST19. READ_PROG for books, signs and inscriptions
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Reading sends a READ message, and only EXECMSG_PROG and CNCLMSG_PROG catch it. LOOK_PROG fires on looking, not reading. CNCLMSG_PROG READ ALL on a book works now: it can MPECHOAT $n the right page, keep the page in a variable and RETURN CANCEL the default text. But it does not check that the host is the item being read, and its keywords match the typed command. So a book in a room also answers reads of other items, unless filtered with '=T NAME=a leather diary'.
 
@@ -322,7 +322,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST20. GENERATED_PROG after a generator runs
 
-*Kind:* script trigger, script function and generator · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger, script function and generator · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Nothing fires when a generator finishes. A builder cannot rename the deepest room, put a catalog NPC in a leaf room, or set a quest variable to the dungeon's name. The workaround is a Scriptable behaviour on the template's AREA tag, with LOAD=progs/crypt_post.script and a ONCE_PROG. The script must be in a file, because $ in template parms means a template variable. It runs only once the area starts ticking, possibly after the player arrives. The generator's variables are thrown away after the run.
 
@@ -338,7 +338,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST21. First and repeat meetings: FIRSTGREET_PROG, REGREET_PROG, MEMORY()
 
-*Kind:* script trigger and script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger and script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** GREET_PROG fires on every entry, so a first-meeting speech repeats unless the builder writes guards. The usual pattern is IF VAR($n HERMIT_MET) == '' then MPSETVAR $n HERMIT_MET 1, and MPSETVAR $n HERMIT_COUNT ++ to count meetings. 'Back after a while' takes a timed tattoo (MPTATTOO $n 7200 SEEN_HERMIT), tested with HASTATTOO. Exact days need DATETIME and MATH. Nothing records the last topic.
 
@@ -354,7 +354,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST22. SOCIAL_PROG: exact names and socials aimed at the mob
 
-*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** SOCIAL_PROG matches a social whose name starts with the given text. The target form can already be chosen through the name: 'SOCIAL_PROG BOW \<T-NAME>' fires only for targeted bows, 'SOCIAL_PROG BOW SELF' only for self-bows. But a bare name also catches longer socials. In the stock socials.txt, KNEE matches KNEEL, HI matches HICCUP and MOO matches MOON. To react only to a social aimed at itself, every script needs an IF comparing $t with $i.
 
@@ -368,7 +368,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST24. EVERY_PROG: saved game-time timer that catches up
 
-*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** DELAY_PROG counts the host's ticks in game time, but its countdown is not saved. It also stops when the host does not tick, as for an item carried in a room with nobody in it. DAY_PROG and TIME_PROG follow the area calendar, so 'DAY_PROG 1 8 15 22' gives a rough weekly restock. MPALARM timers are lost on restore. Cron jobs run on the real clock and ignore PAUSE and turn-based time. They are kept as journal entries, not world content. Nothing catches up on missed intervals.
 
@@ -384,7 +384,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST25. VAR_PROG: react when a variable meets a condition
 
-*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** World flags such as 'bridge repaired' or 'king dead' live in MPSETVAR variables. setVar writes the variable map and notifies nothing, and no trigger watches a variable. So every NPC that cares polls IF VAR(...) from RAND_PROG or DELAY_PROG, and keeps its own 'already reacted' variable.
 
@@ -402,7 +402,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST26. AFFECT_PROG: effect added or worn off
 
-*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Adding an effect (addEffect) and ending one (StdAbility.unInvoke, delEffect) send no message. Only casting is visible, to CAST_PROG and CASTING_PROG. A disease, poison, curse or potion applied without a cast is invisible to scripts, and so is every wear-off. Builders poll AFFECTED($n Disease_Lycanthropy) from RAND_PROG with a state variable. The EFFECTSHAD achievement counts effects but cannot run a script.
 
@@ -416,7 +416,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST27. DESTROY_PROG and DECAY_PROG for items
 
-*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** StdItem.destroy() deletes an item's scripts (delAllScripts) without sending an event, and any queued EXECMSG_PROG response is lost with them. Two cases are covered: eating and drinking fire CONSUME_PROG, and expiry fires CNCLMSG_PROG EXPIRE ALL on the item, before the destroy. Breaking, burning out, junking, MPJUNK, MPPURGE and Decay fire nothing. A quest item lost for good, or a vase breaking, starts nothing.
 
@@ -430,7 +430,7 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 ## ST29. ACHIEVE_PROG: achievement earned
 
-*Kind:* script trigger · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* script trigger · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** Achievements count many events (KILLS, EXPLORE, CRAFTING, SKILLPROF, QUESTOR, LEVELUP and more). They can award ITEM, MOB, TITLE, ABILITY, EXPERTISE, TATTOO, XP, QP or CURRENCY, but cannot run a script. An earned achievement adds a tattoo named after its ID, so a script can poll HASTATTOO($n WOLFBANE). A grant posts only to channels flagged ACHIEVEMENTS, and the fork removed that flag from INFO. A hidden channel with the flag, plus CHANNEL_PROG, can catch the text.
 

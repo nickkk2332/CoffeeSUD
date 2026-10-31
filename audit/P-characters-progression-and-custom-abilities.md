@@ -6,7 +6,7 @@ Character creation, starting kits, levelling, training and teachers, achievement
 
 ## P1. GenAbility as a complete custom property
 
-*Kind:* property · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `CREATE ABILITY` makes a GenAbility, and its SCRIPT already runs when the GenAbility is attached as an effect. But HERESTATS and MOCKABILITY are set up only in `invoke()` and `autoInvocation()`, so a GenAbility attached statically gives no stats. The script cannot read the text of its own instance, so each setting needs its own copy. The workaround is to attach `Scriptable(LOAD=...)` plus `Prop_HereAdjuster` or `Prop_WearAdjuster`.
 
@@ -22,7 +22,7 @@ Character creation, starting kits, levelling, training and teachers, achievement
 
 ## P2. Exact level-ups from scripts: MPLEVELUP, MPLEVELDOWN, EXPTONEXT
 
-*Kind:* script command and script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script command and script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `MPEXP $n 100%` posts one level's XP span. That is exactly one level only when the character sits at a level boundary, as with milestone-only XP (kill XP turned off through XPMOD). From mid-level it overshoots or falls short. A negative MPEXP can take a level away. `MPSET LEVEL` changes the number with no gains. A JavaScript block can call `CMLib.leveler().level()` through Packages, but only with JSCRIPTS=2 or approval. STAT() has no code for XP to the next level.
 
@@ -36,7 +36,7 @@ Character creation, starting kits, levelling, training and teachers, achievement
 
 ## P3. Named lifecycle hooks and a cast-failure message for GenAbility scripts
 
-*Kind:* script trigger · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script trigger · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Most of these hooks exist under other names. On a successful cast the script gets a message whose text is the ability ID, with the cast arguments as $0-$9 (`IMASK_PROG p <ID>`). On expiry it gets `UNINVOKE-<ID>`. RAND_PROG and DELAY_PROG fire each tick while the effect is on. CASTMASK can veto a cast before costs, with zapper keys such as +IF, -HOUR and -LOCATION. But it always prints "You do not meet the requirements: \<maskDesc>" (TARGETMASK has TARGETFAILMSG), and the target is not $t during the check. Nothing fires when a mob learns the ability. GenTrap sends a message only when it springs, and nothing on disarm.
 
@@ -52,7 +52,7 @@ Character creation, starting kits, levelling, training and teachers, achievement
 
 ## P4. GenAbility TARGETMODE: area, group and all-enemies abilities
 
-*Kind:* data file (GenAbility field) · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file (GenAbility field) · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** A GenAbility resolves exactly one target by its can-target code. It never calls `StdAbility.properTargets`, which the engine's own area spells use. There are rough substitutes. Can Target and Can Affect set to ROOMS with HERESTATS gives a room aura, through `Prop_HereAdjuster` with `MASK=`. A script on `IMASK_PROG p <ID>` can FOR-loop over the room with MPDAMAGE or MPCAST. None of them gives each target its own saving throw, damage formula, cast message, POSTCASTAFFECT and POSTCASTABILITY.
 
@@ -66,7 +66,7 @@ Character creation, starting kits, levelling, training and teachers, achievement
 
 ## P5. Achievement rewards: SCRIPT, EFFECT, FACTION, VAR and RECIPE
 
-*Kind:* data file (achievement rewards) · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file (achievement rewards) · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Achievement REWARDS have 13 types: QP, XP, CURRENCY, TITLE, ABILITY, EXPERTISE, STAT, NOPURGE, CLANXP, CLANCURRENCY, TATTOO, ITEM and MOB. Story consequences need detours. A recipe is an ITEM reward of a catalog GenRecipe item. A permanent passive is an autogain ABILITY reward: a GenAbility set to AUTOINVOKE with HERESTATS, whose script can also run ONCE_PROG with MPFACTION or MPSETVAR, though the auto-invoked copy is not saved, so that ONCE_PROG runs again at every load unless the script guards it. A TATTOO reward can be tested later with hastattoo() and masks. FACTION, SCRIPT, VAR and a timed EFFECT do not exist as rewards.
 
@@ -91,7 +91,7 @@ The ACHIEVEMENTS command shows what each reward gives. [ACCOUNT] (profile) achie
 
 ## P6. Character origins (backgrounds) as data
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** An origin can be scripted. `CHARCREATIONSCRIPTS=FACTIONS:LOAD=progs/origin.script` runs a ONCE_PROG before the start room is set. The script picks an origin with MPCHOOSE, records it with MPTATTOO, and gives items, skills, standing and money (MPOLOAD, MPENABLE, MPFACTION, MPMONEY). Then `START_MASK=TempleOfAsh#0=-TATTOO +ORIGIN_ORPHAN` sets the start room. Nothing lists or describes origins, and the parts sit in coffeemud.ini and resources/progs, not in the world. STARTINGITEMS splits by race only.
 
@@ -113,7 +113,7 @@ When origins exist, character creation adds an ORIGIN step after class. A CHARCR
 
 ## P7. Starting kits by class, origin or mask, with a choice of kit
 
-*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** STARTINGITEMS splits by race prefix and accepts catalog names. Class outfits are fixed per GenCharClass (OUTFIT, stored as full item XML). There are workarounds:
 - a kit by any mask: a [PLAYER] JUSTBE achievement with PLAYERMASK and an ITEM reward, but JUSTBE is checked periodically, so the kit arrives a little after creation;
@@ -133,7 +133,7 @@ Nothing declares kits as data or puts their items on.
 
 ## P8. Ready-made characters (templates) offered by NEW
 
-*Kind:* data file and world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file and world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Creation always goes through race, gender, stats and class. A fixed hero is possible with workarounds. `DISABLE=CHARCRRACE,CHARCRGENDER,CHARCRCLASS,CHARCRSTAT` picks at random among the allowed choices. With one race available and `CLASSSYSTEM=NO-[ClassID]`, those picks are fixed. A `CHARCREATIONSCRIPTS` END ONCE_PROG then sets stats, skills, items, tattoos and the description, and MPCHOOSE can offer preset bundles. IMPORT reads characters from XML, but NEW does not offer them. The player always types the name.
 
@@ -153,7 +153,7 @@ Nothing declares kits as data or puts their items on.
 
 ## P9. MPRECRUIT: an NPC met in the world joins the profile
 
-*Kind:* script command and property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command and property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Companions met in the world can only be followers or hirelings (Follower, Hireling), and they stay NPCs. The player cannot SWITCH to them, they do not level as players, and the party save does not keep them. The only NPC-to-player conversion is hard-coded in Age.java, for a grown-up baby. MPPLAYERCLASS only changes the class. A JavaScript block could repeat the Age.java steps through CMLib, but that is fragile.
 
@@ -161,7 +161,7 @@ Nothing declares kits as data or puts their items on.
 
 **Example.** You free the ranger Mira from the goblin cave. When you ask her to join, her SPEECH_PROG answers "I'll travel with you" and runs `MPRECRUIT $i $n PARTY`. SWITCH MIRA then plays her.
 
-*See also:* N13 (Companion NPCs (N13) and recruiting an NPC into the profile (P9) are alternatives for NPC party members); P10 (P9's recruit refuses when P10's profile or party size is full).
+*See also:* N13 (later) (Companion NPCs (N13 (later)) and recruiting an NPC into the profile (P9) are alternatives for NPC party members); P10 (P9's recruit refuses when P10's profile or party size is full).
 
 <!-- from: character-progression/cp-recruit-npc -->
 
@@ -169,7 +169,7 @@ Nothing declares kits as data or puts their items on.
 
 ## P10. World rules for the profile and party: size, new characters, roles, cheats
 
-*Kind:* world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.**
 - `COMMONACCOUNTSYSTEM=n` caps the profile, but n must be above 1, so a world with one character only is not possible. The reward "1 ACCOUNT BONUSCHARLIMIT" raises the cap.
@@ -195,7 +195,7 @@ Also fix the lost refusal message.
 
 ## P11. Prop_Discovery: XP and marks for discoveries, once per character, party or profile
 
-*Kind:* property and world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Once-per-character room XP needs two properties. `Prop_EnterAdjuster "experience+150 MASK=+TATTOOS -FOUND_GROTTO"` pays those without the tattoo, and `Prop_TattooAdder "FOUND_GROTTO"` adds the tattoo after entry (ACCOUNT tattoos too). Other triggers need scripts (LOOK_PROG, OPEN_PROG, EXECMSG_PROG READ, GREET_PROG) using HASTATTOO, MPTATTOO and MPEXP. Achievements such as ROOMENTER, EXPLORE and AREAVISIT live in resources/. Missing: a single property for all of this, once per party, a "hidden thing found" trigger, and XP for every room seen for the first time.
 
@@ -217,7 +217,7 @@ The XP is tagged DISCOVERY:, so XPMOD can scale it. A world option `DISCOVERYXP=
 
 ## P12. Creation steps and questions as data
 
-*Kind:* data file · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** Creation is a fixed Java state machine, and the order of its steps cannot change. There are partial routes:
 - A faction works as a question: AUTOCHOICES with zapper masks, a CHOICEINTRO screen, and range names as the answers. `START_<range code>` and -FACTION masks then use the answer.
@@ -240,7 +240,7 @@ P6 and P7 can build on it.
 
 ## P13. Picks at level-up and at creation: perks, traits and flaws
 
-*Kind:* data file · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* data file · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** A level-up gives fixed gains. The only choice is how to spend trains and practices. Perks can be built today:
 - a GenAbility, passive and AUTOINVOKE, with MOCKABILITY or HERESTATS;
@@ -265,7 +265,7 @@ Flaw-like effects exist too (SlowLearner, BadReputation, Allergies). Missing: a 
 
 ## P14. GenAbility action costs and components in the ability's record
 
-*Kind:* data file (GenAbility fields) · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* data file (GenAbility fields) · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** A GenAbility's action cost can be set only in coffeemud.ini, in the DEFABLETIME and DEFCOMABLETIME exception lists ("Spell_Emberbrand 2.0, 0.10"). `StdAbility.castingTime` and `combatCastingTime` read these lists. GenAbility has no cost field, while GenCommand has ACTCOST and CBTCOST. Components are kept only in `resources/skills/components.txt`, edited with CREATE/MODIFY COMPONENT. A reagent can also be checked by CASTMASK with -ITEM or +ITEM, and used up with MPJUNK in the script. Neither the cost nor the components travel with the spell in custom.cmare.
 
@@ -283,7 +283,7 @@ The component library reads an ability's COMPONENTS field before components.txt.
 
 ## P15. Starting level for characters made later in the game
 
-*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Every new character starts at level 1, and no STARTLEVEL setting exists. Two routes give a head start through real level-ups. First, an [ACCOUNT] achievement: its REWARDS ("N XP", TRAINS, PRACTICES, items) go to each new character at creation, and a story script can unlock it with MPACCTATTOO or MPACHIEVE. Second, a `CHARCREATIONSCRIPTS` END ONCE_PROG can run `MPEXP $i n`. Neither can follow the party's level.
 
@@ -299,7 +299,7 @@ The component library reads an ability's COMPONENTS field before components.txt.
 
 ## P16. Teachers gated by mask, rank and price, and a TEACHLIST view
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Every NPC starts with the NOTEACH attribute. Only mobs with MOBTeacher, Prop_Trainer or Prop_StatTrainer, or of the Teacher class, can teach or TRAIN. So a setting allowing only marked trainers is not needed. One bug: TRAIN takes the first mob in the room even when it refuses, so the player must name the trainer. MOBTeacher already limits skills by its ID list, and proficiency by its N% parameter. SKILLCOST sets prices per skill. Gating students needs a CNCLMSG_PROG on each teacher for TEACH, PRACTICE or TRAIN, with IF, MPECHOAT, RETURN CANCEL and MPMONEY.
 
@@ -319,7 +319,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P17. Trains and practices per level as formulas
 
-*Kind:* world option, data file · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option, data file · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Each level gives one train, and floor(WIS/6) practices plus the class's LVLPRAC. GenCharClass has LVLPRAC, FSTPRAC and FSTTRAN, and its HP, mana and move gains are already formulas. GenRace has no train or practice fields, and the ini has no formula for either. A global LEVEL_PROG with MPTRAINS or MPPRACS can add or take back points on chosen levels, and TRAINCOSTS converts one into the other.
 
@@ -335,7 +335,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P18. Creation screens that follow the content, with locked choices shown
 
-*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** After races.txt and classes.txt, the creation prompt already lists the races and classes that qualify, builder-made GenRace and GenCharClass included, and typing one shows its HELP. But the intro texts are static, classes.txt is printed raw (not even through TextMacros.filter), and the only list macro is @RaceList@, names only. Races locked behind a RACE_ profile tattoo are hidden silently.
 
@@ -349,7 +349,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P19. Summons as a GenAbility field
 
-*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Summoning needs Java: stock spells such as Spell_SummonMonster build their mob in code. GenAbility has no summon field, and no Prop_ spawns a mob. A script can do it with MPMLOAD, MPFORCE follow, and MPPURGE in an IMASK_PROG p UNINVOKE-\<ID> and on the summoner's death. That is fragile, and since followers are saved with the player (PLAN 4d), a missed cleanup is saved too.
 
@@ -363,7 +363,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P20. GenDisease: diseases as data
 
-*Kind:* data file, builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** There are 141 Java diseases and no generic one, and CREATE has no DISEASE. A GenAbility with CLASSIFICATION=DISEASE already counts for Prayer_CureDisease and about 31 other checks, and HERESTATS, TICKAFFECTS, TARGETMASK, a script and Prop_HereSpellCast on rooms cover much. It lacks DiseaseAffect: difficultyLevel, which cures compare with the caster's level, spread through Disease.catchIt, a DELAY between effects, and convertAbilityToGeneric for diseases.
 
@@ -377,7 +377,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P21. Scripts on poisons, tweaks and trade skills
 
-*Kind:* data file, script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Only GenAbility, GenTrap and GenCommand take a SCRIPT. Race and class logic already works through effects: a scripted GenAbility listed as a GenRace racial effect (NUMREFF, GETREFF) runs on every mob of the race, players included, and an AUTOINVOKE one given as a level 1 autogain (GETCABLEGAIN) does the same for a class. Crafting sends TYP_ITEMGENERATED, so EXECMSG_PROG ITEMGENERATED sees the made item as $t. GenPoison, GenTweakAbility and the trade skill records have no script, and there is no event for a failed craft.
 
@@ -393,7 +393,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P22. Masks, effects and scripts on TWEAK abilities
 
-*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** GenTweakAbility renames a Java ability and overrides its triggers, cost, range, cooldown and messages (codes 0-17), with no masks, effects or script. A GenAbility wrapper keeps the Java behaviour (CASTMASK "-LOCALE +OUTDOORS", POSTCASTABILITY "Spell_Lightning" through Prop_SpellAdder), but under a new ID, so class qualifications and scrolls must name the wrapper. Prop_RestrictSpells or a CNCLMSG_PROG can forbid a spell in places.
 
@@ -409,7 +409,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P23. Retraining with refunds
 
-*Kind:* property, script command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, script command · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** REMORT, gated by REMORTMASK (say -TATTOOS +RESPEC_TOKEN) with REMORTRETAIN keeping LEVELS, RACE and GENDER, already gives a full respec through real level-ups. Prop_ReRollStats (BONUSPOINTS=, PICKCLASS=TRUE) redoes stats and class once but refunds no trains. A script can MPDISABLE a skill and refund by hand with MPTRAINS or MPPRACS. Nothing records what a purchase cost, so a fair, selective refund cannot be made.
 
@@ -423,7 +423,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P24. SKILLTREE view with prerequisites and hints
 
-*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** QUALIFY lists what can be learned now, with its cost, and hides skills with unmet prerequisites. WILLQUALIFY [level] [class] lists by level, hiding SECRET and unmet MASKED skills. Prerequisites appear only in HELP \<skill>, through formatPreRequisites, or when learning fails. Nothing shows the REQUIRES chain, and no field can hint where a skill is taught.
 
@@ -437,7 +437,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P25. Rank ladders
 
-*Kind:* data file, script command, script function · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, script command, script function · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A rank can already be a tattoo (MPTATTOO), a faction range or a clan position (MPSETCLAN, CLANRANK()), and masks gate skills, Prop_ReqTattoo and shops on it. titles.ini gives titles by mask and achievements give one-time rewards. But AutoAwards effects check their mask only at login, so a promotion's effects wait; faction AFFBEHAV is for mobs only; and no ladder is shown.
 
@@ -455,7 +455,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P26. Effects for added stats
 
-*Kind:* world option · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** ADDCHARSTAT adds a stat that is shown, rolled and trainable but does nothing by itself. FORMULA_ keys get fixed positional parameters (getMaxCarry builds a fixed array), and class and race code read the six stats by constant. Scripts read an added stat with STAT($n LUCK), and the IFSTAT mask tests it, but only for equality. AutoAwards can give step effects with such masks, checked at login.
 
@@ -469,7 +469,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P27. Creation review with BACK, and a QUICK NEW
 
-*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** After the last step, creation goes straight to "Character creation complete!". Each step only confirms itself (Y/n), and the code has no BACK. A mistake two steps back means RETIRE and starting over, or a one-time Prop_ReRollStats (stats and class, PICKCLASS=TRUE) in the start room or on an NPC. The CHARCR* DISABLE flags pick at random for every character, not for one NEW.
 
@@ -485,7 +485,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P28. EXPDEFER and RPAWARDS timers on game time
 
-*Kind:* world option · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** The EXPDEFER "every N mud-hours" timer, on both the timed and the COMMAND paths, and the RPAWARDS interval compare System.currentTimeMillis() with PlayerStats lastXPAward, and the award sets that from the wall clock. Phase 3 moved game logic to core/GameTime but missed these lines. In turn-based or paused play, held XP is released by real time.
 
@@ -499,7 +499,7 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P29. Ageing as data
 
-*Kind:* data file, script trigger, world option · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* data file, script trigger, world option · *Value:* low · *Effort:* medium · *Decision:* yes
 
 **Today.** Age category effects are hard-coded in StdRace.agingAffects, and the ageing diseases in tickAging; GenRace has only the AGING year chart. There are DISABLE=ALL_AGEING, ISBIRTHDAY(), STAT($n AGENAME) and birthday masks such as +BIRTHDAY, so a DAY_PROG with ISBIRTHDAY can mark a birthday. Nothing fires on a change of age category, and starting age comes only from the race chart.
 
@@ -513,12 +513,6 @@ The masks also gate PRACTICE and GAIN. A TEACHLIST command shows what this teach
 
 ## P30. Training that takes game time
 
-*Kind:* world option · *Value:* low · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option · *Value:* low · *Effort:* medium · *Decision:* later
 
-**Today.** TRAIN, LEARN and PRACTICE cost only a command's action time. The expertise file's #TIME cost is documented but commented out in ColumbiaUniv. The Scholar's Studying skill learns over several ticks, but skills learned that way cannot be used. A trainer's CNCLMSG_PROG TRAIN can MPFORCE $n WAIT n so turn-based time passes, but the character is not busy and nothing interrupts it.
-
-**Add.** A TRAINTIME= ini setting, per TRAINCOSTS entry and per stat; a TIME="2 hours per level" parameter on teachers (MOBTeacher); and the expertise #TIME field put into effect. While training, the character is busy as when crafting, the clock moves on as with WAIT, and an attack interrupts it.
-
-**Example.** Learning Fireball at the archmage's tower takes three in-game days, while the world and a timed quest move on.
-
-<!-- from: character-progression/cp-training-time -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#p30).

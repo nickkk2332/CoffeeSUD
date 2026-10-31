@@ -6,7 +6,7 @@ Fights, boss mechanics, monster AI in combat, encounter spawning, difficulty and
 
 ## C1. Healing and support aimed at the ally who needs it
 
-*Kind:* behaviour · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** CombatAbilities casts helpful skills only on itself or on the mob it follows, and only when that leader is in the room. Through CombatAbilities, a shaman heals its chief only if it follows him, and then its Aggressive needs MISBEHAVE. Healer casts one of six fixed prayers on a random inhabitant whose group leader is a player, only while a player is in the room, whether hurt or not. NiceAbilities (`min=1 max=1 ; <zapper mask>`) already casts the mob's own beneficial skills on a random inhabitant matching the mask, NPCs included, in or out of combat, while a player is in the room. A cure goes only to a target that is hurt or diseased, because its castingQuality is BENEFICIAL_OTHERS only then. So Clericness plus NiceAbilities with a mask matching the chieftain heals him without following him, and buffs him before a fight. CombatAbilities also has a PRECAST stat that casts self-buffs out of combat every n ticks, but only Java sets it. Nothing picks the most hurt ally, waits for an HP threshold or cures first.
 
@@ -24,7 +24,7 @@ Fights, boss mechanics, monster AI in combat, encounter spawning, difficulty and
 
 ## C2. Morale: mobs and groups that flee, rally or surrender
 
-*Kind:* behaviour, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Mobs fight to the death or flee on their own. FightFlee rolls a flee chance every tick whatever the HP, Wimpy flees by mask, and the engine's wimpy HP is absolute and out of reach on generic mobs. For a gang to break when its chief dies, the chief needs a DEATH_PROG that loops over the gang with MPFORCE $0 flee. Surrender exists only as the player skill Thief_Surrender.
 
@@ -40,7 +40,7 @@ Fights, boss mechanics, monster AI in combat, encounter spawning, difficulty and
 
 ## C3. BossPhases: boss phases that fire once per fight
 
-*Kind:* behaviour, script trigger, script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour, script trigger, script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Every phase action exists as a MOBPROG command (MPCAST, MPMLOAD, MPBEHAVE, MPAFFECT, MPHEAL, MPTRANSFER, MPECHO). But HITPRCNT_PROG fires every tick while HP is under its threshold. So each phase needs a guard. A per-instance tattoo (MPTATTOO) works best, because MPSETVAR variables are keyed by the mob's name and shared by its copies. Guards must be cleared by hand in DEATH_PROG, or a tattoo saved mid-fight comes back on rejuv. MPNOTRIGGER mutes every HITPRCNT prog at once.
 
@@ -56,7 +56,7 @@ Fights, boss mechanics, monster AI in combat, encounter spawning, difficulty and
 
 ## C4. Spawners with catalog weights, conditions and despawn
 
-*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** The catalog is mounted under resources/catalog, with one all.cmare per category. So `RandomMonsters ... ;catalog/mobs/wolves/all.cmare` and `MPMLOAD fromfile` already draw from it. To weight the picks, a builder has to repeat entries in a hand-made file. RandomMonsters and RandomItems filter only by room kind, and what they spawn stays forever. A quest can spawn on conditions with a room mask, LOAD MOBGROUP and DURATION, but that takes one quest per spawn.
 
@@ -80,7 +80,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C5. Telegraphed attacks: named, cancellable, saved alarms
 
-*Kind:* script command, script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command, script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** MPALARM \<ticks> \<command> delays an action. The function it fires can check things at that moment: a stun (`AFFECTED($i Spell_Stun)`), the caster's death, or a `braced` tattoo set by a BRACE command made with CNCLMSG_PROG HUH. DELAY_PROG can repeat a warning. But alarms have no name. MPNOTRIGGER cannot cancel them, nothing can ask about them, and they are not written to the save. GenAbility has no cast time; CHANNELING only stops auto-attacks.
 
@@ -96,7 +96,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C6. Prop_PartyScaler: scale fights to the party's size
 
-*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Prop_Doppleganger scales a mob's level to its foes. With DIFFGRP=true it counts the group and scales DIFFADD and DIFFPCT per member, and PLAYERSNFOLS, LEVELCODE, MIN and MAX tune it. But it rescales only at full HP and changes only stats that follow from level. It also skips Archon characters, so a builder testing it sees nothing. Extra mobs per party member need a GREET_PROG loop over NUMPCSROOM with MPMLOAD.
 
@@ -112,7 +112,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C7. Checkpoints: per-character respawn points
 
-*Kind:* property, script command, script function, world option · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* property, script command, script function, world option · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `MPBEACON <room> all` sets the start and recall room of every character in the room. With DEATH=START, a dead character wakes there, and ISRECALL() reads the room. So a shrine is a room script: a 'pray' command made with CNCLMSG_PROG HUH runs mpbeacon, mpheal and `mprejuv area`. PLAYERDEATH=RETAIN,RECALL already avoids corpse runs. But MPBEACON also moves the recall room, every shrine is a separate script, and saving from a script is untested. DEATH_MASK entries matched on tattoos fail when a character has several tattoos, because their order is undefined.
 
@@ -128,7 +128,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C8. A downed state and rules for when the whole party falls
 
-*Kind:* world option, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* world option, script trigger · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Each character dies alone by the global PLAYERDEATH list. OUT x knocks a character out safely for x ticks. ASTRAL and ASTRAL_RES leave a spirit that can be resurrected, and clerics have Prayer_Resurrect. But no ally can revive a fallen character during a fight, and there is no bleed-out window. Nothing notices when the whole party is down, because core/Party has no death handling. Prop_SparringRoom moves deaths to a set room, but it drops all followers and so breaks the party.
 
@@ -144,7 +144,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C9. Random encounters on entering a room, from encounter tables
 
-*Kind:* behaviour, data file, script command, quest feature · *Value:* high · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour, data file, script command, quest feature · *Value:* high · *Effort:* large · *Decision:* yes
 
 **Today.** RandomMonsters spawns on a timer, not when the party arrives, and picks evenly from a fixed list. Today an area script does encounters: ALL_GREET_PROG fires on every room entry, tests ISTIME, INLOCALE and a cooldown VAR, then runs MPMLOAD FROMGENFILE on generator XML that has weights and catalog members. That XML is heavy to write, sits under resources/, and caches results per parameter string, so the same picks repeat.
 
@@ -152,7 +152,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 **Example.** Darkwood: `RandomEncounters TABLE=darkwood CHANCE=10% COOLDOWN=6`. By day the party meets deer or a few bandits. At night it meets 2d3 wolves led by a dire wolf, or a wraith if the party is above level 8. Once, it meets a lost traveller whose FUNCTION_PROG starts an escort.
 
-*See also:* SC3, C4 (All three add a catalog source to RandomMonsters and MPMLOAD (catalog:name, CATALOG= weights); settle one syntax); C20 (C20's encounter: waves draw on C9's encounter tables); C23 (C23's ambush and C9's AMBUSH entries both give monsters a surprise first round, from encounter: tables); DT40 (DT40 simulates fights against C9's encounter: tables); C15, C25 (C9's encounter budget and C25's CONSIDER ALL both count C15's mob ranks).
+*See also:* SC3, C4 (All three add a catalog source to RandomMonsters and MPMLOAD (catalog:name, CATALOG= weights); settle one syntax); C20 (C20's encounter: waves draw on C9's encounter tables); C23 (C23's ambush and C9's AMBUSH entries both give monsters a surprise first round, from encounter: tables); DT40 (later) (DT40 (later) simulates fights against C9's encounter: tables); C15, C25 (C9's encounter budget and C25's CONSIDER ALL both count C15's mob ranks).
 
 <!-- from: behaviors-npc/npc-encounter, behaviors-world/bw-encounters, generators/encounter-tables, encounters-combat/enc-tables -->
 
@@ -160,7 +160,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C10. TargetPriority: which party member a monster attacks
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** TargetPlayer switches to the lowest-level player in the enemy group. CombatAbilities switches to whoever has dealt the most damage or healing, once that lead is clear: over 10% of its max HP and 1.5 times the current victim's. Any other choice takes a hand-written FIGHT_PROG for each monster. The script tests HITPRCNT() in a FOR loop and switches with MPKILL \<name>.
 
@@ -180,7 +180,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C11. Pursue: chase a fleeing target, then go home
 
-*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Fleeing one room usually escapes. VeryAggressive has a 15% chance per tick to step into a room next door that holds a target. It has no leash and does not return home. Follower does not follow while in combat, so it gives no pursuit. MOBHunter hunts by mask through Thief_Assassinate, and that is broken. A script can chase. EXIT_PROG does not fire on a flight: fleeing is a FLEE message, not a LEAVE, and walking out of a fight is refused. EXECMSG_PROG FLEE, or ACT_PROG on 'flees', does fire, even in combat. The script then runs MPTRACKTO $n, and later MPWALKTO $%ISRECALL($i)% to walk home.
 
@@ -203,7 +203,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C12. Target masks and life steal on damage properties
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_AddDamage adds its extra damage against every target. Prop_AbsorbDamage cannot tell attackers apart. The masks on Prop_HaveResister and Prop_WearResister test the wearer, not the attacker. A bane weapon therefore needs a workaround. One is Prop_FightSpellCast with a damage spell and `MASK=-RACECAT +Undead`. Another is a DAMAGE_PROG on the weapon that tests RACECAT($t), then runs MPDAMAGE. No life steal exists outside spells.
 
@@ -217,7 +217,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C13. A difficulty setting and a player-side flag in combat formulas
 
-*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** XPMOD in coffeemud.ini scales XP gains and losses for the whole game. AUTOAREAPROPS can put a property on every area, but no area property changes NPC combat stats: Prop_HereAdjuster works on rooms only, and Prop_Adjuster on one mob. The FORMULA_* strings cannot tell the player's side from the mobs' side; their PVP twins apply only between players. Editing a formula therefore changes fights between mobs too. There is no difficulty setting.
 
@@ -233,7 +233,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C14. Ini formulas for NPC armor, attack, damage, speed, rejuv and money
 
-*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* world option · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** NPC hit points are the only NPC stat with an ini formula, FORMULA_NPCHITPOINTS. CoffeeLevels.getLevelAttack, getLevelMOBArmor, getLevelMOBDamage and getLevelMOBSpeed are fixed in Java. fillOutMOB also fixes rejuv time (2 minutes plus level/2 minutes, at most 20) and money (1d\<level>+1d10). RESET MOBCOMBATSTATS and Prop_Doppleganger use the same functions. The only way round it is per mob: Prop_Adjuster with MULTIPLYPH and MULTIPLYCH, or stats set by hand on each GenMob.
 
@@ -249,7 +249,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C15. Prop_MobRank: minion, normal, elite and boss presets
 
-*Kind:* property, script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property, script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The engine has no notion of rank. Each tough mob is tuned by hand: Prop_Adjuster with MULTIPLYPH and MULTIPLYCH for attack, armor, damage and HP, Prop_ModExperience for XP, and Prop_Resistance for resistances. A builder can tag a mob as elite and test the tag with +TAG in masks or HASTAG() in scripts. But the player never sees the tag, and retuning every elite means editing each one.
 
@@ -265,7 +265,7 @@ This complements DEVPLAN item 1, which covers catalog items.
 
 ## C16. Prop_DeathRules: death and defeat rules per area or room
 
-*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** PLAYERDEATH, DEATH, MORGUE and ITEMLOOTPOLICY are global, and MUDFight reads them from the ini only. Prop_SparringRoom, on a room, area or mob, cancels a death and moves the character to a set room. Its behaviour is fixed, and it drops all followers. Custom rules take a room or area script: CNCLMSG_PROG S=DEATH ALL, then MPSTOP, MPHEAL and MPTRANSFER, gear moved with MPJUNK and MPOLOAD, then `return cancel`.
 
@@ -287,7 +287,7 @@ The party's followers stay with it.
 
 ## C17. Essential and yielding mobs
 
-*Kind:* property and script trigger · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* property and script trigger · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Prop_SafePet makes a mob wholly unattackable, with a custom MSG, so a quest NPC is safe from stray blows and from AUTOASSIST. Prop_PracticeDummy never dies, but never fights back. A mob that yields mid-fight is a script: HITPRCNT_PROG 10 guarded by a tattoo, then MPSTOP ALL, MPAFFECT Prop_SafePet for some ticks, an echo, and SPEECH_PROG branches. CNCLMSG_PROG can cancel the mob's own death.
 
@@ -303,7 +303,7 @@ The party's followers stay with it.
 
 ## C18. Threat and target picking in scripts
 
-*Kind:* script function and script command · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function and script command · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The CombatAbilities family keeps a threat table and retargets on it. Damage to the mob counts double, damage to its victim's group counts once, heals count triple, and AGGROFYING abilities add twice their level. So a taunt is a GenAbility flagged AGGROFYING. TargetPlayer switches to the lowest-level enemy. Scripts cannot read or change threat, since CombatAbilities exposes only PRECAST, PHYSDAMTAKEN, SKILLSALWAYS, SKILLSNEVER and COMBATMODE. Finding the lowest HP% needs an MQL loop over HITPRCNT.
 
@@ -319,7 +319,7 @@ The party's followers stay with it.
 
 ## C19. Respawns that follow the story
 
-*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A dead mob comes back when its rejuv count runs out. The only exception is camping. A cleared camp refills even after its quest is won. The workaround is a ONCE_PROG on the mob, which runs again on each respawn. It checks QUESTWINNER or a global saved with MPSAVEVAR, then runs MPPURGE $i, or MPMLOAD of a replacement followed by MPPURGE $i. The mob shows for a moment, and the check runs only at respawn. Mobs loaded by a quest stop with the quest.
 
@@ -335,7 +335,7 @@ The party's followers stay with it.
 
 ## C20. Wave and arena rooms
 
-*Kind:* behaviour and script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour and script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** Waves can be built by hand. Quest STEP sections or MPSTEPQUEST from a DEATH_PROG advance them. A room script counts survivors with NUMMOBSROOM, ISQUESTMOBALIVE or MQL, then uses MPMLOAD for the next group. MPCLOSE, MPLOCK and MPUNLOCK handle the exits, Prop_SparringRoom a defeat that is not death, and ResetWhole the reset. Wave variables are keyed by name. The invasion quest templates spawn once, with no waves.
 
@@ -343,7 +343,7 @@ The party's followers stay with it.
 
 **Example.** A gladiator pit locks its gate when the player enters. The arena master announces three waves. Clearing them opens the exit and gives a laurel. A defeated player wakes in the infirmary, and the pit resets.
 
-*See also:* C9 (C20's encounter: waves draw on C9's encounter tables); C24 (Both spawn waves of catalog mobs with win and lose outcomes; share the wave code).
+*See also:* C9 (C20's encounter: waves draw on C9's encounter tables); C24 (later) (Both spawn waves of catalog mobs with win and lose outcomes; share the wave code).
 
 <!-- from: encounters-combat/enc-waves -->
 
@@ -351,7 +351,7 @@ The party's followers stay with it.
 
 ## C21. Leash and reset for bosses
 
-*Kind:* behaviour and script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour and script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A boss the party flees regains HP only at the slow natural rate, and keeps its phase variables and its summoned adds, so hit, retreat and return wins the fight. StdMOB has an empty "go home" branch, and Mobile's leash= only limits wandering. Parts exist. ResetWhole resets a room after n ticks with no player activity there. MPRESET $i restores HP, mana and moves. MPWALKTO and MPTRACKTO walk a mob home, $%ISRECALL($i)% gives its home room, and INROOM($i == ...) tells whether it is there. A RAND_PROG with !ISFIGHT($i) and an idle counter can leash a mob by hand.
 
@@ -369,7 +369,7 @@ The party's followers stay with it.
 
 ## C22. Ability rotations for CombatAbilities
 
-*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* behaviour · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** CombatAbilities and its subclasses take +SKILL and -SKILL lists, COMBATMODE (RANDOM, DEFENSIVE, OFFENSIVE, MIXED, ONLYALWAYS), BSIZE, PROFICIENT and MIN/MAX/CHANCE timing. Each try picks a random ability that qualifies. A GenAbility gets a cooldown from TICKSBETWEENCASTS, and its CASTMASK may gate on HP through -IF, though that is untested. Stock abilities have no rules of their own, so "breath every 3 rounds, haste once below 30%" needs FIGHT_PROG with MPCAST and tattoo guards.
 
@@ -385,7 +385,7 @@ The party's followers stay with it.
 
 ## C23. Ambushes with a perception check and surprise
 
-*Kind:* property and script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* property and script trigger · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A room ambush is GREET_PROG or ENTRY_PROG with MPMLOAD and MPFORCE kill. A tattoo or ONCE guards it, and masks such as +GROUPSIZE gate it. Hidden mobs (Prop_Hidden, MPHIDE) with Aggressive get a backstab opener, but nothing more. Room traps such as Trap_MonsterCage roll a save against level and can be found by trap-detection skills. GenTrap runs its SCRIPT only inside its ability branch, though, so it is awkward as an ambush. There is no party perception roll and no surprise round.
 
@@ -401,23 +401,15 @@ The party's followers stay with it.
 
 ## C24. Invasions and raids on an area
 
-*Kind:* behaviour and script command · *Value:* medium · *Effort:* large · *Decision:* yes / no
+*Kind:* behaviour and script command · *Value:* medium · *Effort:* large · *Decision:* later
 
-**Today.** The CREATE QUEST wizard has two invasion templates, competitive_invasion1.quest and competitive_invasion2.quest. They bring invaders into a room with Mobile, count kills, and reward the winner through an announcer. The invaders win when time runs out. They work single-player, and running quests are saved. Marching (MPTRACKTO, MPWALKTO, Patroller, MOBHunter) and waves (quest STEPs) must be scripted by hand. Conquerable needs clan flags.
-
-**Add.** An area behaviour `Invasion` with SOURCE=room ids, MOBS=CATALOG:orcs or a cmare file, WAVES=3, SIZE=4-6, EVERY=20 ticks and TARGET=room id. Attackers march to TARGET and fight what they meet on the way. START=mask, or a command `MPINVADE <area> START|STOP`, starts it. WIN when all waves are dead, LOSE when N attackers reach TARGET. Each outcome sets a variable and runs a FUNC, or MPROOMSTATE if room states are added. It also echoes to the area and on INFO, clears away the attackers left, and keeps its state in saves.
-
-**Example.** A quest step starts an orc raid on Millbrook, in three waves from the northern ford to the mill. If the player holds, the reeve rewards them. If not, the mill burns and the bakery closes.
-
-*See also:* C20 (Both spawn waves of catalog mobs with win and lose outcomes; share the wave code); F19 (Both march a catalog band from a staging room to a target (an invasion vs a clan raid)).
-
-<!-- from: behaviors-world/bw-invasion -->
+Wanted, but out of the current scope: moved to [`LATER.md`](../LATER.md#c24).
 
 <a id="c25"></a>
 
 ## C25. CONSIDER ALL for the whole fight
 
-*Kind:* presentation · *Value:* low · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation · *Value:* low · *Effort:* small · *Decision:* yes
 
 **Today.** CONSIDER compares one mob with the one character who types it. GCONSIDER (GCOS, GCO) rates a mob against the group's combined damage, with return attacks only on the leader. GCONSIDER ALL repeats that for each visible mob. Nothing gives one verdict on all the room's enemies against the whole party.
 

@@ -6,7 +6,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC1. Lists in variables: loop, add, remove, shuffle
 
-*Kind:* script function and script command · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script function and script command · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** Space-separated lists half work: `.LENGTH#` counts words, `.n` or `.$0` takes one, `STRIN` tests membership, `$<V>.$%RAND0NUM($<V>)%` picks one at random, and `mpsetvar WORLD V $<WORLD V> cook` appends. But `FOR $0 IN $<WORLD SUSPECTS>` loops once, because `FOR ... IN` splits on commas before it substitutes; the guide's space-separated example has the same fault. Removing a word, de-duplicating, shuffling, sorting or joining need index loops. Tags use commas, words use spaces.
 
@@ -20,7 +20,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC2. Absolute game time, elapsed time and weekdays
 
-*Kind:* script function · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `DATETIME` gives the current hour, day, week, month, season or year; `DATETIME(ALLTIME)` returns 0, and only JavaScript can read `toHoursSinceEpoc`. Timed tattoos (`MPTATTOO $n '450 PLANTED'`, tested with `HASTATTOOTIME`) handle delays, but in ticks the builder converts by hand, and only on mobs. No function gives the weekday (`+WEEK` is the week of the month). The `ISRL*` tests read the computer's clock, which means nothing in a turn-based game.
 
@@ -36,7 +36,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC3. Load mobs and items from the catalog
 
-*Kind:* script command and quest feature · *Value:* high · *Effort:* small · *Decision:* yes / no
+*Kind:* script command and quest feature · *Value:* high · *Effort:* small · *Decision:* yes
 
 **Today.** `MPMLOAD` and `MPOLOAD` copy a template found by name in the world, or load one from a `.cmare` or generator file. None reads `world/catalog.cmare`, nor do quest `LOAD MOB` and `RandomMonsters`. The workarounds are a hidden storage room of prototypes, which bypasses catalog caps, or a generator file with `class="catalog"`, whose picks freeze after the first call. `MPMLOAD` also clears its template's start room, and its `ALL` keyword loads nothing.
 
@@ -52,7 +52,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC4. Saved variables per object, not per name
 
-*Kind:* script command and script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command and script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `MPSETVAR` and `VAR` key a mob's or item's variables by its name (`getVarHost`), so every "a city guard" shares one `BRIBED` and every "a lever" one state. `MPSETINTERNAL SCOPE *` gives each engine its own table, but other scripts cannot read it and a save drops it. `$@i` keys on the Java identity, which changes on every load. Tattoos and `TAGS` are saved per copy, but hold only flags.
 
@@ -68,7 +68,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC5. Read and change the message a script reacts to
 
-*Kind:* script function and script command · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script function and script command · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `CNCLMSG_PROG` and `EXECMSG_PROG` match any message type, and `=S|T|O VAR=VAL` filters on the source, target or tool by exact equality. But a script cannot read the message's value (damage, XP), its texts (a crime name), its tool's ability ID or the type that matched, and can only cancel it. `CNCLMSG_PROG` keeps the `CMMsg` in `$0`, usable from a `<SCRIPT>` block past the approval gate, undocumented. `EXECMSG_PROG` keeps nothing. Only `DAMAGE_PROG` passes a value, in `$g`.
 
@@ -86,7 +86,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC6. Signals and function calls between scripts
 
-*Kind:* script command and script trigger, with a JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command and script trigger, with a JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `MPCALLFUNC` and `CALLFUNC` find functions only in the running script itself, so a lever cannot tell the gatehouse to raise the portcullis with MOBPROG commands. Only an approved inline `<SCRIPT>` JavaScript block can do it, by fetching the target's script engine and calling its Java `callFunc`. Stopgaps: `MPAT <room> <command>`; `MPSCRIPT <target> EXECUTE`, a one-off `ONCE_PROG` on the target that cannot reach its own functions; echoes caught by `ACT_PROG`, which the player sees unless they are `MPECHOAT` aimed at an NPC (only that NPC sees it, yet every `ACT_PROG` in the room matches it) or at a room the player is not in; or variables polled by `RAND_PROG`.
 
@@ -96,7 +96,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 *Re-checked against the code after writing: corrected.*
 
-*See also:* I9, I12, I15, I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); JS17, SC4, I2 (JS17's state(), signal() and door() helpers wrap SC4's per-object state, SC6's signals and I2's MPDOOR).
+*See also:* I9, I12 (later), I15, I25 (The puzzle props send and receive SC6's signals (signal gate1 on, ONFULL=signal, SIGNAL inputs)); JS17, SC4, I2 (JS17's state(), signal() and door() helpers wrap SC4's per-object state, SC6's signals and I2's MPDOOR).
 
 <!-- from: mobprog-triggers/mt-signal, mobprog-language/mpl-signal, items-puzzles/ip-signal -->
 
@@ -104,7 +104,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC7. MPWAIT: pause a script and resume it later
 
-*Kind:* script command · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** `MPALARM` delays one command; the rest of the body runs at once. A cutscene or ritual must be split into `FUNCTION_PROG` steps chained with `MPALARM n MPCALLFUNC step2`. Those alarms keep `$n` and `$t` but are lost on save. `DELAY_PROG` repeats rather than pauses, and `MPWHILE` is capped at four seconds of real time.
 
@@ -120,7 +120,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC8. Party and terminal awareness in scripts
 
-*Kind:* script function · *Value:* high · *Effort:* medium · *Decision:* yes / no
+*Kind:* script function · *Value:* high · *Effort:* medium · *Decision:* yes
 
 **Today.** Scripts treat each party member as a separate player and cannot ask who is being played, who leads, or who is in the party; the engine never refers to `Party`. With party windows off, `MPECHOAT` to a background member goes to its silent `PartySession`, and the prompt commands likely ask it too. `GROUP_GREET_PROG`, `NUMPCSROOM`, `ISFOLLOW` and `$f` give rough group checks. Profile flags already exist as `HASACCTATTOO` and `MPACCTATTOO`, since the account is the profile; the guide should say so.
 
@@ -136,7 +136,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC9. Bring the trigger and message-type help up to date
 
-*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** The in-game `SCRIPTABLE` help omits 12 of the 58 triggers, among them `GROUP_GREET`, `GIVING`, `CAST`, `WEARING` and `CMDFAIL`; `CMDFAIL_PROG`, the custom-verb trigger, is in no guide either. `MESSAGE_TYPES` stops at `LEGALWARRANT`. `MPSETINTERNAL`, `MPLLM`, `MPHIT`, `MPACHIEVE` and `MPACCUSE` are only in the HTML guide, and `MPSTEPQUEST` is nowhere. `LOGIN`, `LOGOFF` and `CHANNEL` read as multiplayer. `LIST MSGTYPES` and `LIST MSGMASKS` already print every type.
 
@@ -152,7 +152,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC10. String functions
 
-*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** MOBPROG has no case change, character length, substring, replace, trim, padding, capitalisation, a/an article or plural. The text forms of `STRCONTAINS` and `EVAL` return "[unimplemented function]". What exists: the `STRCONTAINS` and `STRIN` tests, `STRIN`'s word index, the word modifiers `.n`, `.LENGTH#`, `.DECOMMA#` and `.DESEMICOLON#`, and `$g` (lowercased) beside `$G`. A `<SCRIPT>` JavaScript block can do the rest, past the approval gate.
 
@@ -168,7 +168,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC11. Numbers, dice and weighted picks
 
-*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `MPSETVAR` reads a leading `+`, `-`, `*` or `/` as an operation on 32-bit integers, so `MPSETVAR $i MOD -5` subtracts; storing -5 means setting 0 first. `NUMBER()` rejects signs and decimals. `$%MATH(expr)%` already has decimals, `%`, `^`, `?` (random between, so `1?6+1?6+1?6` is close to 3d6), `<` (min) and `>` (max). Weighted picks exist only in generator XML (`PICKWEIGHT`, through `MPOLOAD FROMGENFILE`). `DiceLibrary`'s `rollNormalDistribution` is not reachable from scripts.
 
@@ -182,7 +182,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC12. Add, remove and count tags from scripts
 
-*Kind:* script command and script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script command and script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Scripts test tags with `HASTAG` and loop over tagged objects with `FOR $0 IN #tag`, and `$%HASTAG(target)%` already returns an object's whole tag list. The only way to set one is `MPSET target TAGS`, which replaces the comma list; rebuilding it from `HASTAG`'s space-separated, quoted output is error-prone. Counting means a `FOR` loop with `mpsetvar $i N ++`. `HASTAG` also logs its errors under the `HASTATTOO` label.
 
@@ -196,7 +196,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC13. Script files with parameters
 
-*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `LOAD=` takes only a file name, so one guard script shared by twenty guards cannot be told each guard's post or greeting. Setting variables in `ONCE_PROG` collides, since variables are keyed by name. A working pattern exists but is undocumented: put `FUNCTION_PROG POST~return castle#12~` before `LOAD=progs/guard.script` in each object's text, and read it in the file with `$%CALLFUNC(POST)%`. It is wordy, has no defaults, and a missing function logs an error.
 
@@ -212,7 +212,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC14. Fix the confirmed MOBPROG bugs
 
-*Kind:* script function and command fixes, with a debug tool · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* script function and command fixes, with a debug tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Confirmed in the code: `LEVEL_PROG` fills `$0`-`$9` with the whole argument array; `NUMMOBS(... MASK=...)` reads the wrong argument and gives 0; named XML for `MPMLOAD` and `MPOLOAD` is sought under trigger 55, not 58; the `MP` prefix fallback takes the last match; `MPDAMAGE ... kill` never kills; `INROOM(... BEACON)` drops the start room; `MPMLOAD` clears its template's start room; `MPACCUSE` checks the wrong object; `MPRLOAD` runs as a game command; one-digit `RAND_PROG` fires only in active areas; an unapproved JavaScript block is refused only once per boot; the text forms of `ISNPC`, `ISPC`, `ISIMMORT`, `EVAL` and `STRCONTAINS` are placeholders. `scriptableTest.script` names a `TEST SCRIPTABLE` command that no longer exists.
 
@@ -228,7 +228,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC15. A CoffeeSUD edition of the Scriptable guide
 
-*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* presentation · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** `guides/Scriptable.html` (8,733 lines) describes multiplayer CoffeeMud. It lacks `CMDFAIL_PROG`, says `INDIVIDUAL` variables are saved with the target (true only for players), and shows a space-separated `FOR IN` list that the code splits on commas. `IPADDRESS`, `ISPKILL`, `CHANNEL_PROG`, `LOGOFF_PROG`, clans and `MPPOSSESS` have no single-player meaning given. It never says account tattoos are the profile, that `ONCE_PROG` fires again on each restore, or what a save keeps.
 
@@ -244,7 +244,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC16. +ANYINGROUP and +ALLINGROUP mask keys
 
-*Kind:* zapper mask key, used by behaviours and scripts · *Value:* medium · *Effort:* small · *Decision:* yes / no
+*Kind:* zapper mask key, used by behaviours and scripts · *Value:* medium · *Effort:* small · *Decision:* yes
 
 **Today.** Zapper masks test one creature at a time. `-FOLLOW` and `-RIDE` apply the rest of a mask to the leader or the mount, and `+/-GROUPSIZE` counts the group, so "the leader carries the pass" can be written with `+OR`. Nothing tests whether any or every member does, and `-IF` checks one subject. Behaviours that scan the whole room already cover part of this: `Aggressive -ITEM "+stolen idol"` attacks whoever in the room holds the idol, `Wimpy very=1 -CLASS +Paladin` runs from any paladin present while out of combat, and `GateGuard` counts every player in the room. What cannot be said is a check on one creature that also looks at its companions. `DoorwayGuardian` checks only the creature moving, `CombatAssister` the creature attacked, MudChat the speaker, and an in-combat `Wimpy` only the creature attacking it. So "let the party through if one of them carries the pass" or "flee when the attacker's party includes a paladin" cannot be written.
 
@@ -260,7 +260,7 @@ MOBPROG syntax, variables, string, list, number and time functions, cross-script
 
 ## SC17. ELSEIF, WHILE blocks, CONTINUE, named locals and parameters
 
-*Kind:* script command · *Value:* medium · *Effort:* medium · *Decision:* yes / no
+*Kind:* script command · *Value:* medium · *Effort:* medium · *Decision:* yes
 
 **Today.** A chain of tests needs one ENDIF per branch, because `ELSE IF` on one line is refused. SWITCH/CASE helps only when every branch tests the same value. MPWHILE runs a single command, often MPCALLFUNC, and stops after 4 seconds of real time, which makes little sense under turn-based time. FOR has BREAK but no CONTINUE. There are only ten locals, $0 to $9, set with MPARGSET, and $9 is also SHOPHAS's price. A FUNCTION_PROG gets one string, $g, which the script splits with $g.0, $g.1 and so on.
 
