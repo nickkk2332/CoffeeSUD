@@ -41,6 +41,11 @@ import java.util.*;
  * to join: beside the player (OFF, the default), or where they are or last
  * were, for the player to go and meet them.  PARTY FIGHT ON or OFF chooses
  * whether the player's characters may fight each other (OFF, the default).
+ * <p>
+ * For turn-based time (see PARTYTURNS), PARTY ORDER NAME NAME... sets the
+ * order the party acts in, PARTY LEAD NAME hands the lead over, and PARTY
+ * DISABLE NAME has a member act on their own, as followers do, rather than
+ * the turn waiting for an order for them; PARTY ENABLE NAME undoes it.
  * See {@link Party}.
  */
 public class PartyCmd extends StdCommand
@@ -87,7 +92,16 @@ public class PartyCmd extends StdCommand
 		if(what.equals("FIGHT"))
 			fight(mob, name);
 		else
-			mob.tell(L("PARTY, PARTY ADD NAME, PARTY REMOVE NAME, PARTY REST NAME, PARTY MEET ON/OFF, or PARTY FIGHT ON/OFF?"));
+		if(what.equals("ORDER"))
+			order(mob, commands.subList(2, commands.size()));
+		else
+		if(what.equals("LEAD"))
+			lead(mob, name);
+		else
+		if(what.equals("DISABLE") || what.equals("ENABLE"))
+			onTheirOwn(mob, name, what.equals("DISABLE"));
+		else
+			mob.tell(L("PARTY, then ADD, REMOVE, REST, LEAD, DISABLE or ENABLE and a name, ORDER and names, or MEET or FIGHT and ON or OFF?"));
 		return false;
 	}
 
@@ -109,30 +123,48 @@ public class PartyCmd extends StdCommand
 		return str.append("\n\r").toString();
 	}
 
+	/**
+	 * Describes a member of the party in a line, with what matters in
+	 * turn-based time: whether they lead, act on their own, or have orders.
+	 * @param mob the player
+	 * @param M the member
+	 * @param leader the party's leader
+	 * @return the line
+	 */
+	protected String memberLine(final MOB mob, final MOB M, final MOB leader)
+	{
+		final StringBuilder str = new StringBuilder(line(mob, M));
+		str.setLength(str.length() - 2);
+		if(M == leader)
+			str.append(L(", leading"));
+		else
+		if(Party.isOnTheirOwn(M))
+			str.append(L(", acting on their own"));
+		if((M != leader) && (M.commandQueSize() > 0) && GameTime.isTurnBased())
+			str.append(L(", with orders"));
+		return str.append("\n\r").toString();
+	}
+
 	protected void list(final MOB mob, final PlayerAccount profile)
 	{
 		final MOB leader = Party.leaderOf(mob);
 		final List<MOB> inWorld = new ArrayList<MOB>(Party.othersInWorld(mob));
 		inWorld.add(0, mob);
-		final StringBuilder party = new StringBuilder("");
 		final StringBuilder elsewhere = new StringBuilder("");
 		for(final MOB M : inWorld)
 		{
-			if(M == leader)
-				continue;
-			if(Party.isInParty(leader, M))
-				party.append(line(mob, M));
-			else
+			if(!Party.isInParty(leader, M))
 				elsewhere.append(line(mob, M));
 		}
 		final StringBuilder str = new StringBuilder("");
-		if((party.length() == 0) && (leader == mob))
+		final List<MOB> party = Party.inOrder(leader);
+		if((party.size() < 2) && (leader == mob))
 			str.append(L("^HYou are on your own.^N\n\r"));
 		else
 		{
 			str.append(L("^HYour party:^N\n\r"));
-			str.append(line(mob, leader).replaceFirst("\n\r$", L(", leading") + "\n\r"));
-			str.append(party);
+			for(final MOB M : party)
+				str.append(memberLine(mob, M, leader));
 		}
 		if(elsewhere.length() > 0)
 			str.append(L("^HElsewhere in the world:^N\n\r")).append(elsewhere);
@@ -198,7 +230,11 @@ public class PartyCmd extends StdCommand
 			}
 		}
 		if(M.location() == mob.location())
+		{
 			join(M, leader);
+			Party.addToOrder(leader);
+			Party.addToOrder(M);
+		}
 		else
 			mob.tell(L("@x1 is in @x2.  Go and meet them there, then PARTY ADD them.", M.Name(), CMStrings.removeColors(M.location().displayText(mob))));
 	}
@@ -256,6 +292,77 @@ public class PartyCmd extends StdCommand
 			mob.tell(L("A character you add to your party stays where they are, or comes back where they last were, and you go to meet them.  PARTY MEET OFF has them come to you."));
 		else
 			mob.tell(L("A character you add to your party comes to you.  PARTY MEET ON has them stay where they are, or come back where they last were, for you to go and meet them."));
+	}
+
+	/**
+	 * Finds a member of the player's party by name: the one being played, or
+	 * another, the whole name or its start.
+	 * @param mob the player
+	 * @param name the name
+	 * @return the member, or null
+	 */
+	protected MOB findMember(final MOB mob, final String name)
+	{
+		final MOB leader = Party.leaderOf(mob);
+		final MOB M = name.equalsIgnoreCase(mob.Name()) ? mob : Party.findInWorld(mob, name);
+		return ((M != null) && Party.isInParty(leader, M)) ? M : null;
+	}
+
+	protected void order(final MOB mob, final List<String> names)
+	{
+		final MOB leader = Party.leaderOf(mob);
+		if(names.size() > 0)
+		{
+			final StringBuilder set = new StringBuilder("");
+			for(final String name : names)
+			{
+				final MOB M = findMember(mob, name);
+				if(M == null)
+				{
+					mob.tell(L("'@x1' is not in your party.", name));
+					return;
+				}
+				set.append((set.length() > 0) ? "," : "").append(M.Name());
+			}
+			Party.setOrder(set.toString());
+		}
+		final StringBuilder str = new StringBuilder("");
+		for(final MOB M : Party.inOrder(leader))
+			str.append((str.length() > 0) ? ", " : "").append(M.Name());
+		mob.tell(L("Your party acts in this order: @x1.", str.toString()));
+	}
+
+	protected void lead(final MOB mob, final String name)
+	{
+		final MOB leader = Party.leaderOf(mob);
+		final MOB M = findMember(mob, name);
+		if(M == null)
+		{
+			mob.tell(L("'@x1' is not in your party.", name));
+			return;
+		}
+		if(M == leader)
+		{
+			mob.tell(L("@x1 leads the party already.", M.Name()));
+			return;
+		}
+		Party.handOver(leader, M);
+		M.location().show(M, null, CMMsg.MSG_OK_ACTION, L("<S-NAME> lead(s) the party now."));
+	}
+
+	protected void onTheirOwn(final MOB mob, final String name, final boolean own)
+	{
+		final MOB M = findMember(mob, name);
+		if((M == null) || (M == Party.leaderOf(mob)))
+		{
+			mob.tell(L("'@x1' is not one of those your party leader leads.", name));
+			return;
+		}
+		Party.setOnTheirOwn(M, own);
+		if(own)
+			mob.tell(L("@x1 acts on their own in turn-based time: the turn does not wait for orders for them, and they do what followers do.", M.Name()));
+		else
+			mob.tell(L("When the turn waits for orders for all of your party (PARTYTURNS ALL), it waits for @x1's too.", M.Name()));
 	}
 
 	protected void fight(final MOB mob, final String onOff)

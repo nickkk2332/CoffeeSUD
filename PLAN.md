@@ -387,7 +387,32 @@ Steps:
     game keeps it, as it keeps `PARTY MEET`. The engine's waits after a
     fight between players, before quitting, switching or logging out, are
     off in single-player, since there is no one to escape.
-- **5d. Party turns** in turn-based time, as designed below.
+- **5d. Party turns: done**, in turn-based time, as designed below, with
+  the details settled as suggested there. Only the party's leader moves the
+  world. What the others are given to do that takes time, with `AS` or
+  while the player plays them, waits in their queue as an order (the hook
+  is in `StdMOB.dequeCommand`, the rules in `core/Party`).
+  - `PARTYTURNS LEADER` (the default, or `PARTYTURNS=` in the ini): when the
+    leader does something that takes time, the others carry out their
+    orders first, each shown on the terminal, then the leader acts and the
+    world moves on by as long as that took.
+  - `PARTYTURNS ALL`: the leader's action waits until each member not left
+    to act on their own (`PARTY DISABLE NAME`; `PARTY ENABLE NAME` undoes
+    it) has an order or has used `WAIT`; then all of them act in the
+    party's order and the world moves on by a round.
+  - `PARTY ORDER NAME NAME...` sets the order: the leader comes first unless
+    placed. `PARTY LEAD NAME` hands the lead over, and resting the leader
+    hands it to the next in order.
+  - The leader's `WAIT` has the others carry out their orders, then lets the
+    time pass; another member's `WAIT` sits out the turn. A member busy with
+    something long, or without the actions, is left for a later turn.
+  - `AS` in turn-based time goes through the member's queue; in real time it
+    still acts at once. It runs once the typed line is done with, since a
+    session gives its character no actions while it takes in a line.
+  - A saved game keeps the way the turns go, the order and who acts on their
+    own.
+  - Not done: a leader who dies does not hand the lead on by itself; `PARTY
+    LEAD` does it.
 - **5e. One window per character**, as designed below.
 
 Several characters at once fits here, as a profile and a party:

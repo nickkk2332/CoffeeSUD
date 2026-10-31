@@ -227,6 +227,9 @@ public final class SaveGame
 		if(gameTime > 0)
 			GameTime.set(gameTime);
 		Party.setMeetWhereLeft("true".equalsIgnoreCase(header.getProperty("partymeet")));
+		Party.setTurns("ALL".equalsIgnoreCase(header.getProperty("partyturns")) ? Party.Turns.ALL : Party.Turns.LEADER);
+		Party.setOrder(header.getProperty("partyorder", ""));
+		Party.setOnTheirOwn(header.getProperty("partyalone", ""));
 	}
 
 	/**
@@ -394,6 +397,9 @@ public final class SaveGame
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
 		header.setProperty("partymeet", Boolean.toString(Party.isMeetWhereLeft()));
 		header.setProperty("partyfight", Boolean.toString(Party.isFightEachOther()));
+		header.setProperty("partyturns", Party.getTurns().name());
+		header.setProperty("partyorder", Party.getOrder());
+		header.setProperty("partyalone", Party.getOnTheirOwn());
 		final Long dice = CMath.getRandState();
 		if(dice != null)
 			header.setProperty("dice", dice.toString());

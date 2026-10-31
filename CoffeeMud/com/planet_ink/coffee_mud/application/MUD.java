@@ -605,6 +605,9 @@ public class MUD extends Thread implements MudHost
 			{
 				Party.setMeetWhereLeft(CMProps.instance().getStr("PARTYMEET","0").trim().equals("1"));
 				Party.setFightEachOther(CMProps.instance().getStr("PARTYFIGHT","0").trim().equals("1"));
+				Party.setTurns(CMProps.instance().getStr("PARTYTURNS","LEADER").trim().equalsIgnoreCase("ALL") ? Party.Turns.ALL : Party.Turns.LEADER);
+				Party.setOrder("");
+				Party.setOnTheirOwn("");
 			}
 			final Long seed=restoring?null:randomSeedSetting();
 			if(seed!=null)

@@ -2125,6 +2125,7 @@ public class StdMOB implements MOB
 		&& ((session() == null) || (!session().isStopped())))
 		{
 			QMCommand doCommand = null;
+			Party.Turn turn = Party.Turn.LEAD;
 			synchronized(commandQue)
 			{
 				if(commandQue.isEmpty())
@@ -2137,11 +2138,19 @@ public class StdMOB implements MOB
 					// takes time, and the clock is stopped
 					if(GameTime.isPaused() || GameTime.isAdvancing())
 						return false; // until the game resumes, or the world catches up
-					final long wait = turnWaitMillis(cmd, diff, lastCommandTime + reqEllapse);
-					if(wait > 0)
+					// in a party, only its leader's turn moves the world
+					if(GameTime.isTurnBased())
+						turn = Party.turnOf(this);
+					if(turn == Party.Turn.WAIT)
+						return false; // an order, carried out on the leader's turn
+					if(turn == Party.Turn.LEAD)
 					{
-						GameTime.requestAdvance(wait);
-						return false;
+						final long wait = turnWaitMillis(cmd, diff, lastCommandTime + reqEllapse);
+						if(wait > 0)
+						{
+							GameTime.requestAdvance(wait);
+							return false;
+						}
 					}
 				}
 				if(diff >= 0.0)
@@ -2156,11 +2165,17 @@ public class StdMOB implements MOB
 			}
 			if(doCommand != null)
 			{
+				final boolean moves = (turn == Party.Turn.LEAD) && (doCommand.actionCost > 0.0) && (session() != null) && GameTime.isTurnBased();
+				if(moves)
+					Party.beforeLeaderActs(this);
 				lastCommandTime = GameTime.now();
 				doCommand(doCommand.commandObj, doCommand.commandVector, doCommand.metaFlags);
 				// in turn-based play, the world then moves on by as long as it took
-				if((doCommand.actionCost > 0.0) && (session() != null) && GameTime.isTurnBased())
-					GameTime.requestAdvance(commandMillis(doCommand.actionCost));
+				if(moves)
+				{
+					Party.afterLeaderActs(this);
+					GameTime.requestAdvance(Party.turnMillis(this, commandMillis(doCommand.actionCost)));
+				}
 				synchronized(commandQue)
 				{
 					if(!commandQue.isEmpty())

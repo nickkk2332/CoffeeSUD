@@ -4,7 +4,8 @@
 # plays a little and saves, the next restores the save, then come pause,
 # turn-based time, the random seed, saving and restoring during play, a
 # changed world coming back as it was saved, a second character in the
-# profile, the two of them as a party, and, in a world of their own,
+# profile, the two of them as a party, its turns in turn-based time, and,
+# in a world of their own,
 # a running quest, a follower, a lit torch and a wolf's rolled stats, then
 # the world files: a hand edit picked up, and a builder's edit written.
 # Each database starts as the bare schema, as in a fresh checkout, so the
@@ -213,6 +214,28 @@ if sed -n '/Your party:/,/<[0-9]*hp/p' "$W/party2.txt" | grep -q "^  Bran, level
 else
 	echo "  FAIL  party2.txt: Bran is not back in the party"; FAIL=1
 fi
+
+echo "Session 8d: the party's turns in turn-based time"
+# both start in Rocky Room.  With LEADER turns, Bran's order goes first, when
+# Hero acts, so he is already south when Hero arrives, rather than following
+play turns.txt 'timemode turns\nas bran south\nlook\nsouth\nlook\npartyturns all\nnorth\nas bran wait\nlook\nsave turns\nquit\nn\n' RESTORE=team
+expect turns.txt "Bran will do that on Hero's turn."
+expect turns.txt "The turn waits for Bran"
+expect turns.txt "You wait for Hero's turn."
+expect turns.txt "Bran arrives from the south."
+expect turns.txt "Game saved as 'turns'."
+if grep -a -A4 "will do that on" "$W/turns.txt" | grep -q "^Bran is here"; then
+	echo "  ok    turns.txt: Bran waited for Hero's turn"
+else
+	echo "  FAIL  turns.txt: Bran did not wait for Hero's turn"; FAIL=1
+fi
+if grep -q "Bran arrives from the north" "$W/turns.txt"; then
+	echo "  FAIL  turns.txt: Bran followed Hero south instead of going first"; FAIL=1
+else
+	echo "  ok    turns.txt: Bran carried out his order before Hero acted"
+fi
+play turns2.txt 'partyturns\nquit\nn\n' RESTORE=turns
+expect turns2.txt "the party's turn waits until each of them"
 
 echo "Session 9: in builder mode, add a quest to a world of its own"
 play qbuild.txt 'Builder\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\ncreate quest LOAD=quests/_smoke/smoke.quest\nsave quests\nquit\nY\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS

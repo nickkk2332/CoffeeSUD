@@ -79,10 +79,17 @@ public class Wait extends StdCommand
 			mob.tell(L("Time is already passing."));
 			return false;
 		}
+		// in a party, only the leader moves the world; the others wait for its turn
+		if(Party.waitForTurn(mob))
+		{
+			mob.tell(L("You wait for @x1's turn.", Party.leaderOf(mob).Name()));
+			return false;
+		}
 		if(ticks == 1)
 			mob.tell(L("You wait."));
 		else
 			mob.tell(L("You wait for @x1 ticks.", "" + ticks));
+		Party.passTurn(mob);
 		GameTime.requestAdvance(ticks * CMProps.getTickMillis(), (ticks > 1) ? disturbed(mob) : null);
 		return false;
 	}

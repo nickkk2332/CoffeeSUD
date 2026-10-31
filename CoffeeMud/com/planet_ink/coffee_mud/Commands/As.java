@@ -305,9 +305,14 @@ public class As extends StdCommand
 
 	/**
 	 * Has one of the player's characters in the world, not the one being
-	 * played, do a command at once, on the player's session, so that the
-	 * player sees what comes of it.  The two swap sessions for it, so that
-	 * the one being played does not also see it on the same session.
+	 * played, do a command, with the terminal's session, so that the player
+	 * sees what comes of it (see {@link Party#actWithTerminal(MOB, Runnable)}).
+	 * In real time it is done at once.  In turn-based time it goes through
+	 * the character's queue like any command: one that takes time waits, in
+	 * a party, for the leader's turn (see {@link Party#turnOf(MOB)}).  It
+	 * runs once the line typed is done with, since while a session takes in
+	 * a line its character has no actions, and the others' turns, which this
+	 * may set off, would find the one being played unable to act.
 	 * @param mob the character being played
 	 * @param member the one to do the command
 	 * @param commands the command
@@ -315,29 +320,25 @@ public class As extends StdCommand
 	 */
 	protected void asPartyMember(final MOB mob, final MOB member, final List<String> commands, final int metaFlags)
 	{
-		final Session mySession=mob.session();
-		final Session hisSession=member.session();
-		synchronized(mySession)
+		final List<String> command=new XVector<String>(CMParms.toStringArray(commands));
+		CMLib.threads().executeRunnable(new Runnable()
 		{
-			member.setSession(mySession);
-			mySession.setMob(member);
-			mob.setSession(hisSession);
-			hisSession.setMob(mob);
-		}
-		try
-		{
-			member.doCommand(new XVector<String>(CMParms.toStringArray(commands)),metaFlags|MUDCmdProcessor.METAFLAG_AS);
-		}
-		finally
-		{
-			synchronized(mySession)
+			@Override
+			public void run()
 			{
-				member.setSession(hisSession);
-				hisSession.setMob(member);
-				mob.setSession(mySession);
-				mySession.setMob(mob);
+				Party.actWithTerminal(member, new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						if(GameTime.isTurnBased())
+							member.enqueCommand(command,metaFlags|MUDCmdProcessor.METAFLAG_AS,0);
+						else
+							member.doCommand(command,metaFlags|MUDCmdProcessor.METAFLAG_AS);
+					}
+				});
 			}
-		}
+		});
 	}
 
 }
