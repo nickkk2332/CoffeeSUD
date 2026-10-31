@@ -3,7 +3,8 @@
 # of the database, with saves in a scratch folder: one creates a character,
 # plays a little and saves, the next restores the save, then come pause,
 # turn-based time, the random seed, saving and restoring during play, a
-# changed world coming back as it was saved, and, in a world of their own,
+# changed world coming back as it was saved, a second character in the
+# profile, and, in a world of their own,
 # a running quest, a follower, a lit torch and a wolf's rolled stats, then
 # the world files: a hand edit picked up, and a builder's edit written.
 # Each database starts as the bare schema, as in a fresh checkout, so the
@@ -175,6 +176,21 @@ if [ -n "$(grep -a "movement\." "$W/world.txt" | tail -1)" ] \
 	echo "  ok    world2.txt: hit points, mana and movement came back as saved"
 else
 	echo "  FAIL  world2.txt: hit points, mana or movement changed across the save"; FAIL=1
+fi
+
+echo "Session 8b: a second character in the profile, then back to the first"
+play profile.txt 'profile\nlogoff\ny\nnew Bran\ny\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nswitch hero\nscore\nsave party\nquit\nn\n' RESTORE=hero
+expect profile.txt "Your characters:"
+expect profile.txt "Create a new character called 'Bran'"
+expect profile.txt "You are Bran the level 1 Apprentice."
+expect profile.txt "You are Hero the Archon."
+expect profile.txt "Game saved as 'party'."
+play profile2.txt 'profile\nquit\nn\n' RESTORE=party
+expect profile2.txt "Restored 'party'."
+if grep -aq "^Bran " "$W/profile2.txt" && grep -aq "^Hero " "$W/profile2.txt"; then
+	echo "  ok    profile2.txt: the saved profile holds both characters"
+else
+	echo "  FAIL  profile2.txt: the saved profile lost a character"; FAIL=1
 fi
 
 echo "Session 9: in builder mode, add a quest to a world of its own"

@@ -26,6 +26,7 @@ REPLY_LIMIT = 30   # most seconds to wait for an answer to one line
 BOOT_LIMIT = 120   # most seconds to wait for the first prompt
 EXPECT_LIMIT = 1800
 TOTAL_LIMIT = int(os.environ.get('SUDPLAY_LIMIT', '300'))
+EXIT_WAIT = 15     # most seconds to wait for the game to end after the script
 
 
 def main():
@@ -92,6 +93,11 @@ def main():
         except BrokenPipeError:
             break
         wait_for_reply(before, REPLY_LIMIT)
+    # a script that quits lets the game finish what it is doing, such as a save
+    # after the last answer, before its input ends
+    end = time.time() + EXIT_WAIT
+    while time.time() < end and proc.poll() is None:
+        time.sleep(0.1)
     try:
         proc.stdin.close()  # end of input logs the player out if the script did not quit
     except BrokenPipeError:

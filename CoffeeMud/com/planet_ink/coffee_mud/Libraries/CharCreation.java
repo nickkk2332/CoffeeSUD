@@ -57,6 +57,8 @@ import java.util.*;
 public class CharCreation extends StdLibrary implements CharCreationLibrary
 {
 	private static final String SINGLE_PLAYER_PASSWORD = "singleplayer";
+	/** the name of the single-player profile, the account holding every character */
+	private static final String PROFILE_NAME = "Profile";
 
 	@Override
 	public String ID()
@@ -533,32 +535,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	@Override
 	public void showTheNews(final MOB mob)
 	{
+		// a single-player game has no news: no message of the day, polls or
+		// shutdowns, and CALENDAR shows what is coming
 		reloadTerminal(mob);
-		if((mob.session()==null)
-		||(mob.isMonster())
-		||(mob.isAttributeSet(MOB.Attrib.DAILYMESSAGE)))
-			return;
-
-		Command C=CMClass.getCommand("CalendarCmd");
-		try
-		{
-			C.execute(mob, CMParms.parse("CALENDAR SOON"), 0);
-		}
-		catch (final Exception e)
-		{
-		}
-
-		C=CMClass.getCommand("Shutdown");
-		try
-		{
-			final Object o = C.executeInternal(mob, 0, new Object[0]);
-			if((o instanceof String)
-			&&(((String)o).length()>0))
-				mob.tell((String)o);
-		}
-		catch(final Exception e)
-		{
-		}
 	}
 
 	@Override
@@ -1107,7 +1086,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		}
 	}
 
-	protected LoginResult loginStart(final LoginSessionImpl loginObj, final Session session)
+	protected LoginResult loginStart(final LoginSessionImpl loginObj, final Session session) throws IOException
 	{
 		loginObj.wizi=false;
 		session.setAccount(null);
@@ -1143,6 +1122,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			}
 		}
 
+		if(CMProps.isSinglePlayer())
+			return singlePlayerStart(loginObj, session);
 		final String cachedName =session.getStat("LOGIN_ACCOUNT");
 		if((cachedName!=null)&&(cachedName.length()>0))
 		{
@@ -1158,6 +1139,90 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		loginObj.state=LoginState.LOGIN_NAME;
 		session.setStatus(Session.SessionStatus.LOGIN);
 		return LoginResult.INPUT_REQUIRED;
+	}
+
+	/**
+	 * Starts a single-player login.  The player has one account, the profile,
+	 * and never logs in to it: a saved game's character is played at once;
+	 * otherwise the profile's menu lists its characters, or, while it has
+	 * none, the player names the first.
+	 * @param loginObj the login
+	 * @param session the session
+	 * @return the result
+	 * @throws IOException if the session fails
+	 */
+	protected LoginResult singlePlayerStart(final LoginSessionImpl loginObj, final Session session) throws IOException
+	{
+		final PlayerAccount acct=getProfile(session);
+		loginObj.acct=acct;
+		session.setAccount(acct);
+		session.setStatus(Session.SessionStatus.LOGIN);
+		final String savedName=session.getStat("LOGIN_ACCOUNT");
+		if((savedName!=null)&&(savedName.length()>0))
+		{
+			session.setStat("LOGIN_ACCOUNT", "");
+			final LoginResult result=acctmenuPlay(loginObj, session, savedName, false);
+			if(result!=null)
+				return result;
+		}
+		if(acct.numPlayers()>0)
+		{
+			loginObj.state=LoginState.ACCTMENU_START;
+			return null;
+		}
+		session.promptPrint(L("\n\rname: "));
+		loginObj.savedInput="NEW";
+		loginObj.state=LoginState.ACCTMENU_ADDTOCOMMAND;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	/**
+	 * Returns the single-player profile: the one account, which holds all the
+	 * player's characters.  It is made when the game first needs it.
+	 * @param session the player's session
+	 * @return the profile
+	 */
+	protected PlayerAccount getProfile(final Session session)
+	{
+		PlayerAccount acct=CMLib.players().getLoadAccount(PROFILE_NAME);
+		if(acct==null)
+		{
+			acct=(PlayerAccount)CMClass.getCommon("DefaultPlayerAccount");
+			acct.setAccountName(PROFILE_NAME);
+			acct.setEmail("");
+			acct.setLastIP(session.getAddress());
+			acct.setLastDateTime(System.currentTimeMillis());
+			acct.setPassword(SINGLE_PLAYER_PASSWORD);
+			// colour waits for the first character's answer
+			acct.setFlag(AccountFlag.ANSI, false);
+			CMLib.database().DBCreateAccount(acct);
+			CMLib.players().addAccount(acct);
+			Log.sysOut("Created the profile");
+		}
+		return acct;
+	}
+
+	/**
+	 * Puts a character made before there was a profile, such as one in an
+	 * older saved game, into the profile.
+	 * @param acct the profile
+	 * @param name the character's name
+	 */
+	protected void adoptIntoProfile(final PlayerAccount acct, final String name)
+	{
+		if(acct.findPlayer(name)!=null)
+			return;
+		final PlayerLibrary.ThinnerPlayer T=CMLib.database().DBUserSearch(name);
+		if((T==null)||((T.accountName()!=null)&&(T.accountName().length()>0)))
+			return;
+		final MOB M=CMLib.players().getLoadPlayer(T.name());
+		if((M!=null)&&(M.playerStats()!=null))
+		{
+			acct.addNewPlayer(M);
+			M.playerStats().setAccount(acct);
+			CMLib.database().DBUpdateAccount(acct);
+			CMLib.database().DBUpdatePlayer(M);
+		}
 	}
 
 	protected LoginResult loginName(final LoginSessionImpl loginObj, final Session session)
@@ -1827,12 +1892,17 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	protected LoginResult acctmenuPrompt(final LoginSessionImpl loginObj, final Session session)
 	{
 		session.setStatus(Session.SessionStatus.ACCOUNT_MENU);
-		try
+		// the pause eats stray characters from network clients; the one local
+		// player's typing ahead is kept
+		if(!CMProps.isSinglePlayer())
 		{
-			session.blockingIn(10,false);
-		}
-		catch (final IOException e)
-		{
+			try
+			{
+				session.blockingIn(10,false);
+			}
+			catch (final IOException e)
+			{
+			}
 		}
 		session.promptPrint(L("\n\r^wCommand or Name ^H(?)^w: ^N "));
 		loginObj.state=LoginState.ACCTMENU_COMMAND;
@@ -1928,7 +1998,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				session.stopSession(true,false,false, false);
 				return LoginResult.NO_LOGIN;
 			}
-			session.promptPrint(L("Quit -- are you sure (y/N)?"));
+			if(SaveGame.isAvailable())
+				session.promptPrint(L("Quit without saving the game -- are you sure (y/N)?"));
+			else
+				session.promptPrint(L("Quit -- are you sure (y/N)?"));
 			loginObj.state=LoginState.ACCTMENU_CONFIRMCOMMAND;
 			return LoginResult.INPUT_REQUIRED;
 		}
@@ -1953,6 +2026,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 					parms[1] = generateRandomName(3, 8);
 				loginObj.savedInput=CMStrings.replaceFirst(loginObj.savedInput, "*", parms[1]);
 			}
+			if(CMProps.isSinglePlayer()
+			&&(CMLib.database().DBUserSearch(CMStrings.capitalizeAndLower(parms[1]))!=null))
+				return acctmenuPlay(loginObj, session, parms[1], false);
 			if(newCharactersAllowed(parms[1],session,acct,parms[1].equalsIgnoreCase(acct.getAccountName())))
 			{
 				final String login=CMStrings.capitalizeAndLower(parms[1]);
@@ -2443,8 +2519,25 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return null;
 		}
 		final boolean wizi=(parms.length>1)&&(parms[parms.length-1]).equalsIgnoreCase("!");
+		return acctmenuPlay(loginObj, session, cmd, wizi);
+	}
+
+	/**
+	 * Plays one of the account's characters, from the account menu.
+	 * @param loginObj the login
+	 * @param session the session
+	 * @param charName the character's name
+	 * @param wizi true to come in invisible
+	 * @return the result
+	 * @throws IOException if the session fails
+	 */
+	protected LoginResult acctmenuPlay(final LoginSessionImpl loginObj, final Session session, final String charName, final boolean wizi) throws IOException
+	{
+		final PlayerAccount acct=loginObj.acct;
 		PlayerLibrary.ThinnerPlayer playMe = null;
-		String name=CMStrings.capitalizeAndLower(cmd);
+		String name=CMStrings.capitalizeAndLower(charName);
+		if(CMProps.isSinglePlayer())
+			adoptIntoProfile(acct, name);
 		synchronized(CMClass.getSync(("LOGIN_"+acct.name())))
 		{
 			final String playerName=acct.findPlayer(name);
@@ -2710,7 +2803,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.playerStats().setAccount(acct);
 
 		executeScript(mob,charCrScripts.get("EMAIL"));
-		if((acct==null)&&(!session.isMTTS()))
+		if(((acct==null)||(CMProps.isSinglePlayer()&&(acct.numPlayers()==0)))
+		&&(!session.isMTTS()))
 		{
 			session.promptPrint(L("\n\rDo you want ANSI colors (Y/n)?"));
 			loginObj.state=LoginState.CHARCR_ANSICONFIRMED;
@@ -2779,6 +2873,13 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			mob.setAttribute(MOB.Attrib.ANSI,true);
 			mob.setAttribute(MOB.Attrib.ANSI16ONLY,false);
 			mob.setAttribute(MOB.Attrib.ANSI256ONLY,false);
+		}
+		if(loginObj.acct!=null)
+		{
+			// the profile's first character chooses for the ones after it
+			loginObj.acct.setFlag(AccountFlag.ANSI, mob.isAttributeSet(MOB.Attrib.ANSI));
+			loginObj.acct.setFlag(AccountFlag.ANSI16ONLY, false);
+			loginObj.acct.setFlag(AccountFlag.ANSI256ONLY, false);
 		}
 		loginObj.state=LoginState.CHARCR_ANSIDONE;
 		return null;

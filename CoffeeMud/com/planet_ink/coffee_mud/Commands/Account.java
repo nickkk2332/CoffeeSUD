@@ -43,7 +43,7 @@ public class Account extends StdCommand
 
 	private final static Class<?>[][] internalParameters=new Class<?>[][]{{Session.class, String.class, PlayerAccount.class}};
 
-	private final String[]	access	= I(new String[] { "ACCOUNT" });
+	private final String[]	access	= I(new String[] { "ACCOUNT", "PROFILE" });
 
 	@Override
 	public String[] getAccessWords()
@@ -247,7 +247,11 @@ public class Account extends StdCommand
 
 		if(account != null)
 		{
-			str.append("^X"+CMStrings.padRight(L("Account"), 15)+"^N: ").append(account.getAccountName()).append("\n\r");
+			// a single-player game's only account is the player's profile
+			if(CMProps.isSinglePlayer())
+				str.append(L("^XYour characters:^N\n\r"));
+			else
+				str.append("^X"+CMStrings.padRight(L("Account"), 15)+"^N: ").append(account.getAccountName()).append("\n\r");
 			if(account.getAccountExpiration() > 0)
 			{
 				str.append("^X"+CMStrings.padRight(L("Expires"), 15)+"^N: ");

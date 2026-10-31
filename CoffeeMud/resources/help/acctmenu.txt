@@ -1,13 +1,8 @@
- ^XAccount Menu^.^N
+ ^XYour characters^.^N
  ^XL^.^w)^Hist characters
- ^XN^.^w)^Hew character ^w(@x3 remaining)^N@if?RequestParameter?CANEXPORT@
- ^XI^.^w)^Hmport character
- ^XE^.^w)^Hxport character@endif@
+ ^XN^.^w)^Hew character ^w(@x3 remaining)^N
  ^XD^.^w)^Helete/Retire character
  ^XH^.^w)^Help
- ^XM^.^w)^Henu OFF
- ^XP^.^w)^Hassword change@if?RequestParameter?EMAILOK@
- ^XE^.^w)^Hmail change@endif@
- ^XQ^.^w)^Huit (logout)
+ ^XQ^.^w)^Huit
 
-^H ^w(^HEnter your character name to login^w)^H
+^H ^w(^HEnter a character's name to play them^w)^H

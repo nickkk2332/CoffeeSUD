@@ -321,11 +321,30 @@ Steps:
     profile.
   - Clans stay for now: NPCs belong to clans, areas can be conquered by
     them, and a party could form one. The clan commands are a later decision.
-- **5b. The profile.** The account (`PlayerAccount`) as the profile, made
-  with the first character, with no account name or password to type:
-  listing the characters, making a new one, and switching between them
-  (`SWITCH` already moves a session to another character of the same
-  account). A save holds the profile.
+- **5b. The profile: done.** The engine's account system is on, and its one
+  account (`PlayerAccount`, named `Profile`) holds every character of the
+  game. Nobody logs in to it: a new game makes it and asks for the first
+  character's name, as before, and a restored game plays its character at
+  once. `PROFILE` (or `ACCOUNT`) lists the characters, `SWITCH NAME` plays
+  another, and `LOGOFF` goes to the list of characters (the account menu,
+  cut down to listing, making, retiring and playing them, and quitting),
+  where `NEW NAME` makes one. The first character's answer about colour is
+  kept for the ones after it. A save holds the profile with the rest of the
+  game's state (it is one of the state tables). Characters made before the
+  profile, in older saves and in builder mode's cache, join it when they are
+  played. Logging in no longer shows news: there is no message of the day,
+  poll or shutdown to announce, and `CALENDAR` shows what is coming.
+  - Fixed on the way: a character that had just come into the world (a new
+    one, a restored one, or one switched to) could not act until its first
+    tick, up to four seconds, so its first command that takes time waited,
+    and what was typed after it, such as the answer to `QUIT`'s question,
+    was taken for the next command. It now starts with a tick's actions and
+    no wait from an earlier command. The list of characters keeps what was
+    typed ahead instead of eating it as stray network input.
+  - Only one character is in the world at a time for now; the party (5c)
+    brings in more.
+  - At the list of characters, the world goes on in real time, and quitting
+    from there does not save.
 - **5c. The party.** Profile characters brought into the world beside the
   one being played, each on a session of its own with no terminal behind
   it; commands to add them to the party, send them back and leave them in

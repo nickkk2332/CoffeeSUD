@@ -278,6 +278,12 @@ public final class SaveGame
 	 */
 	public static void playerLoggedIn(final MOB mob)
 	{
+		// a character coming into the world can act at once, rather than only
+		// after its first tick: otherwise the first command that takes time
+		// waits, and what is typed after it, such as the answer to its
+		// question, is taken for the next command
+		if(mob.actions() < mob.phyStats().speed())
+			mob.setActions(mob.phyStats().speed());
 		WorldState.finishRestore(mob);
 		if(builderMode)
 			makeArchon(mob);

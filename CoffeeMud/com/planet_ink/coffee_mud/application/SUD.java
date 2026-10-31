@@ -53,7 +53,8 @@ public class SUD
 {
 	private static final String[] SINGLE_PLAYER_SETTINGS =
 	{
-		"COMMONACCOUNTSYSTEM=0",
+		// the profile is an account holding all the player's characters
+		"COMMONACCOUNTSYSTEM=50",
 		"EMAILREQ=DISABLED",
 		"IDLETIMERS=0 0",
 		"SYSMSGS=FILE",

@@ -111,7 +111,7 @@ public class StdMOB implements MOB
 	public CharState			maxState			= (CharState) CMClass.getCommon("DefaultCharState");
 	public CharState			baseState			= (CharState) CMClass.getCommon("DefaultCharState");
 	private long				lastTickedTime		= 0;
-	private long				lastCommandTime		= GameTime.now();
+	private long				lastCommandTime		= 0; // no command yet, so the first need not wait
 	protected Room				possStartRoom		= null;
 	protected String			liegeID				= "";
 	protected int				wimpHitPoint		= 0;
