@@ -224,7 +224,7 @@ expect turns.txt "The turn waits for Bran"
 expect turns.txt "You wait for Hero's turn."
 expect turns.txt "Bran arrives from the south."
 expect turns.txt "Game saved as 'turns'."
-if grep -a -A4 "will do that on" "$W/turns.txt" | grep -q "^Bran is here"; then
+if sed -n '/will do that on/,/Obvious exits/p' "$W/turns.txt" | grep -q "^Bran is here"; then
 	echo "  ok    turns.txt: Bran waited for Hero's turn"
 else
 	echo "  FAIL  turns.txt: Bran did not wait for Hero's turn"; FAIL=1
