@@ -4,8 +4,9 @@ CoffeeSUD is a hard fork of CoffeeMud 5.11 that keeps its world simulation and
 removes everything that exists because many people share one server. The aim
 is a game one person plays on their own machine, with real save games.
 
-This file is the plan and the progress log. `DOCS/` holds the earlier analysis
-of the engine; its chapters explain each subsystem.
+This file is the plan and the progress log. `DEVPLAN.md` plans the engine
+capabilities and developer tools that come after it. `DOCS/` holds the
+earlier analysis of the engine; its chapters explain each subsystem.
 
 ## Running it
 
