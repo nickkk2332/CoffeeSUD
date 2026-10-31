@@ -759,6 +759,8 @@ public final class WorldState
 	private static XMLTag								player			= null;
 	/** the saved state of the player's other characters in the world */
 	private static List<XMLTag>							party			= null;
+	/** whether the restored player's state is being put back */
+	private static boolean								finishing		= false;
 
 	/**
 	 * Keeps a restored thing's timed effects to put on it once the player is
@@ -782,13 +784,26 @@ public final class WorldState
 	 */
 	public static void finishRestore(final MOB mob)
 	{
-		// taken at once, since bringing in the party logs each of them in too
+		// bringing in the party logs each of them in, which comes back here
+		if(finishing)
+			return;
+		finishing = true;
+		try
+		{
+			finishRestoring(mob);
+		}
+		finally
+		{
+			finishing = false;
+		}
+	}
+
+	private static void finishRestoring(final MOB mob)
+	{
 		final XMLTag playerTag = player;
 		player = null;
 		final List<XMLTag> partyTags = party;
 		party = null;
-		final List<Pair<Physical, XMLTag>> todo = new ArrayList<Pair<Physical, XMLTag>>(laterEffects);
-		laterEffects.clear();
 		final Map<MOB, String> leaders = new HashMap<MOB, String>();
 		if((playerTag != null)
 		&& (mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")))))
@@ -813,6 +828,9 @@ public final class WorldState
 					e.getKey().setFollowing(leader);
 			}
 		}
+		// last, since what the characters carry adds to them
+		final List<Pair<Physical, XMLTag>> todo = new ArrayList<Pair<Physical, XMLTag>>(laterEffects);
+		laterEffects.clear();
 		for(final Pair<Physical, XMLTag> p : todo)
 		{
 			if(!p.first.amDestroyed())

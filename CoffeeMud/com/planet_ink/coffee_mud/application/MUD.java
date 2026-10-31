@@ -602,7 +602,10 @@ public class MUD extends Thread implements MudHost
 			if(turns)
 				GameTime.setTurnBased(true);
 			if(!restoring)
+			{
 				Party.setMeetWhereLeft(CMProps.instance().getStr("PARTYMEET","0").trim().equals("1"));
+				Party.setFightEachOther(CMProps.instance().getStr("PARTYFIGHT","0").trim().equals("1"));
+			}
 			final Long seed=restoring?null:randomSeedSetting();
 			if(seed!=null)
 			{

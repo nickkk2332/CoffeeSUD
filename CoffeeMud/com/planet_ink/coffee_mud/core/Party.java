@@ -35,6 +35,8 @@ public final class Party
 {
 	/** whether a character added to the party comes back where they last were */
 	private static volatile boolean	meetWhereLeft	= false;
+	/** whether the player's characters may fight each other */
+	private static volatile boolean	fightEachOther	= false;
 
 	private Party()
 	{
@@ -59,6 +61,44 @@ public final class Party
 	public static void setMeetWhereLeft(final boolean where)
 	{
 		meetWhereLeft = where;
+	}
+
+	/**
+	 * Returns whether the player's characters may fight each other.
+	 * @return true if they may
+	 */
+	public static boolean isFightEachOther()
+	{
+		return fightEachOther;
+	}
+
+	/**
+	 * Sets whether the player's characters may fight each other.  Between
+	 * players the engine allows a fight when both have their PLAYERKILL
+	 * option on, which the PLAYERKILL setting gives every character as they
+	 * come into the world; so this sets both, the setting with no limit on
+	 * how far apart in level they may be, since they are all the player's.
+	 * @param fight true to let them fight
+	 */
+	public static void setFightEachOther(final boolean fight)
+	{
+		fightEachOther = fight;
+		CMProps.setVar(CMProps.Str.PKILL, fight ? "ALWAYS-100000" : "NEVER");
+		for(final Session S : CMLib.sessions().allIterable())
+		{
+			final MOB M = S.mob();
+			if((M != null) && (M.playerStats() != null))
+			{
+				M.setAttribute(MOB.Attrib.PLAYERKILL, fight);
+				// and a fight between them stops
+				final MOB V = M.getVictim();
+				if((!fight) && (V != null) && (V.playerStats() != null))
+				{
+					M.makePeace(true);
+					V.makePeace(true);
+				}
+			}
+		}
 	}
 
 	/**

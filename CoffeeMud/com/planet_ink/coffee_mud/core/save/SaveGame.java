@@ -250,6 +250,8 @@ public final class SaveGame
 		if(header == null)
 			return;
 		restoring = null;
+		// after the boot, which reads the PLAYERKILL setting, and before anyone logs in
+		Party.setFightEachOther("true".equalsIgnoreCase(header.getProperty("partyfight")));
 		final String world = SaveSlots.readFile(saveDir, currentSlot, WorldState.FILE);
 		if(world != null)
 		{
@@ -391,6 +393,7 @@ public final class SaveGame
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
 		header.setProperty("partymeet", Boolean.toString(Party.isMeetWhereLeft()));
+		header.setProperty("partyfight", Boolean.toString(Party.isFightEachOther()));
 		final Long dice = CMath.getRandState();
 		if(dice != null)
 			header.setProperty("dice", dice.toString());

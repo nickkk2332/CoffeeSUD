@@ -39,7 +39,9 @@ import java.util.*;
  * of it, leaving them in the world, and PARTY REST NAME sends one back to
  * rest in the profile.  PARTY MEET ON or OFF chooses where a character comes
  * to join: beside the player (OFF, the default), or where they are or last
- * were, for the player to go and meet them.  See {@link Party}.
+ * were, for the player to go and meet them.  PARTY FIGHT ON or OFF chooses
+ * whether the player's characters may fight each other (OFF, the default).
+ * See {@link Party}.
  */
 public class PartyCmd extends StdCommand
 {
@@ -82,7 +84,10 @@ public class PartyCmd extends StdCommand
 		if(what.equals("MEET"))
 			meet(mob, name);
 		else
-			mob.tell(L("PARTY, PARTY ADD NAME, PARTY REMOVE NAME, PARTY REST NAME, or PARTY MEET ON/OFF?"));
+		if(what.equals("FIGHT"))
+			fight(mob, name);
+		else
+			mob.tell(L("PARTY, PARTY ADD NAME, PARTY REMOVE NAME, PARTY REST NAME, PARTY MEET ON/OFF, or PARTY FIGHT ON/OFF?"));
 		return false;
 	}
 
@@ -251,6 +256,25 @@ public class PartyCmd extends StdCommand
 			mob.tell(L("A character you add to your party stays where they are, or comes back where they last were, and you go to meet them.  PARTY MEET OFF has them come to you."));
 		else
 			mob.tell(L("A character you add to your party comes to you.  PARTY MEET ON has them stay where they are, or come back where they last were, for you to go and meet them."));
+	}
+
+	protected void fight(final MOB mob, final String onOff)
+	{
+		if(onOff.equalsIgnoreCase("ON"))
+			Party.setFightEachOther(true);
+		else
+		if(onOff.equalsIgnoreCase("OFF"))
+			Party.setFightEachOther(false);
+		else
+		if(onOff.length() > 0)
+		{
+			mob.tell(L("PARTY FIGHT ON or PARTY FIGHT OFF?"));
+			return;
+		}
+		if(Party.isFightEachOther())
+			mob.tell(L("Your characters may fight each other.  PARTY FIGHT OFF stops that."));
+		else
+			mob.tell(L("Your characters may not fight each other.  PARTY FIGHT ON lets them."));
 	}
 
 	@Override

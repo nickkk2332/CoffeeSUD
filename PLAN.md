@@ -378,6 +378,15 @@ Steps:
     any of them caused. The list of saves names the party.
   - `LOGOFF` leaves the others in the world; playing one of them from the
     list of characters takes them over from their own session.
+  - `PARTY FIGHT ON` (or `PARTYFIGHT=1` in the ini) lets the player's
+    characters fight each other, and `PARTY FIGHT OFF`, the default, stops
+    it and any such fight going on. The engine allows a fight between two
+    players when both have their `PLAYERKILL` option on, which the
+    `PLAYERKILL` setting gives each as they come into the world; the toggle
+    sets both, with no limit on how far apart in level they may be. A saved
+    game keeps it, as it keeps `PARTY MEET`. The engine's waits after a
+    fight between players, before quitting, switching or logging out, are
+    off in single-player, since there is no one to escape.
 - **5d. Party turns** in turn-based time, as designed below.
 - **5e. One window per character**, as designed below.
 

@@ -194,16 +194,20 @@ else
 fi
 
 echo "Session 8c: the two characters as a party, saved and restored"
-play party.txt 'party add bran\nas bran say hello\nnorth\nparty\nswitch bran\nscore\nswitch hero\nsave team\nquit\nn\n' RESTORE=party
+# the minotaur and goblin of session 4 go first, so that nothing attacks Bran
+play party.txt 'purge minotaur\npurge goblin\nparty add bran\nas bran say hello\nnorth\nparty\nkill bran\nswitch bran\nscore\nswitch hero\nparty fight on\nsave team\nquit\nn\n' RESTORE=party
 expect party.txt "Bran joins your party."
 expect party.txt "You say to Hero 'hello'"
 expect party.txt "Bran arrives from the south."
 expect party.txt "  Bran, level 1 Apprentice"
+expect party.txt "You may not attack Bran."
 expect party.txt "You are Bran the level 1 Apprentice."
+expect party.txt "Your characters may fight each other."
 expect party.txt "Game saved as 'team'."
-play party2.txt 'party\nsaves\nquit\nn\n' RESTORE=team
+play party2.txt 'party\nsaves\nparty fight\nquit\nn\n' RESTORE=team
 expect party2.txt "Restored 'team'."
 expect party2.txt "with Bran"
+expect party2.txt "Your characters may fight each other."
 if sed -n '/Your party:/,/<[0-9]*hp/p' "$W/party2.txt" | grep -q "^  Bran, level 1 Apprentice"; then
 	echo "  ok    party2.txt: Bran came back in the party"
 else

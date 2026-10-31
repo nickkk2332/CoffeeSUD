@@ -1019,7 +1019,11 @@ public class DefaultSession implements Session
 	@Override
 	public void setLastPKFight()
 	{
-		lastPKFight = System.currentTimeMillis();
+		// the waits after a fight between players, before quitting, switching
+		// or logging out, keep one from escaping another; in a single-player
+		// game both are the player's own characters
+		if(!CMProps.isSinglePlayer())
+			lastPKFight = System.currentTimeMillis();
 	}
 
 	@Override
