@@ -2559,6 +2559,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				loginObj.state=LoginState.ACCTMENU_SHOWMENU;
 				return null;
 			}
+			// one left in the world on a session of their own is taken over
+			Party.release(realMOB);
 			session.setMob(realMOB);
 			playMe.loadedMOB(realMOB);
 			if(this.completePlayerLogin(session, wizi)!=LoginResult.NORMAL_LOGIN)

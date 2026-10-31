@@ -601,6 +601,8 @@ public class MUD extends Thread implements MudHost
 				:CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN");
 			if(turns)
 				GameTime.setTurnBased(true);
+			if(!restoring)
+				Party.setMeetWhereLeft(CMProps.instance().getStr("PARTYMEET","0").trim().equals("1"));
 			final Long seed=restoring?null:randomSeedSetting();
 			if(seed!=null)
 			{

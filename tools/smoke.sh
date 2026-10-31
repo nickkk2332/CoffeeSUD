@@ -4,7 +4,7 @@
 # plays a little and saves, the next restores the save, then come pause,
 # turn-based time, the random seed, saving and restoring during play, a
 # changed world coming back as it was saved, a second character in the
-# profile, and, in a world of their own,
+# profile, the two of them as a party, and, in a world of their own,
 # a running quest, a follower, a lit torch and a wolf's rolled stats, then
 # the world files: a hand edit picked up, and a builder's edit written.
 # Each database starts as the bare schema, as in a fresh checkout, so the
@@ -191,6 +191,23 @@ if grep -aq "^Bran " "$W/profile2.txt" && grep -aq "^Hero " "$W/profile2.txt"; t
 	echo "  ok    profile2.txt: the saved profile holds both characters"
 else
 	echo "  FAIL  profile2.txt: the saved profile lost a character"; FAIL=1
+fi
+
+echo "Session 8c: the two characters as a party, saved and restored"
+play party.txt 'party add bran\nas bran say hello\nnorth\nparty\nswitch bran\nscore\nswitch hero\nsave team\nquit\nn\n' RESTORE=party
+expect party.txt "Bran joins your party."
+expect party.txt "You say to Hero 'hello'"
+expect party.txt "Bran arrives from the south."
+expect party.txt "  Bran, level 1 Apprentice"
+expect party.txt "You are Bran the level 1 Apprentice."
+expect party.txt "Game saved as 'team'."
+play party2.txt 'party\nsaves\nquit\nn\n' RESTORE=team
+expect party2.txt "Restored 'team'."
+expect party2.txt "with Bran"
+if sed -n '/Your party:/,/<[0-9]*hp/p' "$W/party2.txt" | grep -q "^  Bran, level 1 Apprentice"; then
+	echo "  ok    party2.txt: Bran came back in the party"
+else
+	echo "  FAIL  party2.txt: Bran is not back in the party"; FAIL=1
 fi
 
 echo "Session 9: in builder mode, add a quest to a world of its own"

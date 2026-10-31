@@ -82,31 +82,11 @@ public final class WorldState
 		final StringBuilder str = new StringBuilder("<WORLD VERSION=\"" + VERSION + "\">\n");
 		if(player != null)
 		{
-			str.append("<PLAYER>");
-			str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(player.Name())));
-			str.append(xml.convertXMLtoTag("HP", player.curState().getHitPoints()));
-			str.append(xml.convertXMLtoTag("MANA", player.curState().getMana()));
-			str.append(xml.convertXMLtoTag("MOVE", player.curState().getMovement()));
-			str.append(effectsXML(player));
-			final List<Item> inventory = new ArrayList<Item>();
-			for(int i = 0; i < player.numItems(); i++)
-			{
-				final Item I = player.getItem(i);
-				if((I != null) && (!I.amDestroyed()))
-					inventory.add(I);
-			}
-			str.append("<INVENTORY>").append(itemsXML(inventory)).append("</INVENTORY>");
-			str.append("<FOLLOWERS>");
-			final List<MOB> followers = followersOf(player);
-			for(final MOB F : followers)
-			{
-				str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\">");
-				str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(F.location()))));
-				str.append(mobXML(F, "MOB"));
-				str.append("</FOLLOWER>");
-			}
-			str.append("</FOLLOWERS>");
-			str.append("</PLAYER>\n");
+			str.append(playerXML(player));
+			str.append("<PARTY>\n");
+			for(final MOB M : Party.othersInWorld(player))
+				str.append(playerXML(M));
+			str.append("</PARTY>\n");
 		}
 		str.append("<ROOMS>\n");
 		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
@@ -177,6 +157,48 @@ public final class WorldState
 		str.append(scriptVarsXML());
 		str.append(questsXML(player));
 		str.append("</WORLD>\n");
+		return str.toString();
+	}
+
+	/**
+	 * Writes down a character of the player's in the world: where they are,
+	 * who of the player's characters they follow, their hit points, mana and
+	 * movement, timed effects, what they carry and their followers.
+	 * @param player the character
+	 * @return the PLAYER tag
+	 */
+	private static String playerXML(final MOB player)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder str = new StringBuilder("<PLAYER>");
+		str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(player.Name())));
+		str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(player.location()))));
+		final MOB leader = player.amFollowing();
+		if((leader != null) && leader.isPlayer())
+			str.append(xml.convertXMLtoTag("LEADER", xml.parseOutAngleBrackets(leader.Name())));
+		str.append(xml.convertXMLtoTag("HP", player.curState().getHitPoints()));
+		str.append(xml.convertXMLtoTag("MANA", player.curState().getMana()));
+		str.append(xml.convertXMLtoTag("MOVE", player.curState().getMovement()));
+		str.append(effectsXML(player));
+		final List<Item> inventory = new ArrayList<Item>();
+		for(int i = 0; i < player.numItems(); i++)
+		{
+			final Item I = player.getItem(i);
+			if((I != null) && (!I.amDestroyed()))
+				inventory.add(I);
+		}
+		str.append("<INVENTORY>").append(itemsXML(inventory)).append("</INVENTORY>");
+		str.append("<FOLLOWERS>");
+		final List<MOB> followers = followersOf(player);
+		for(final MOB F : followers)
+		{
+			str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\">");
+			str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(F.location()))));
+			str.append(mobXML(F, "MOB"));
+			str.append("</FOLLOWER>");
+		}
+		str.append("</FOLLOWERS>");
+		str.append("</PLAYER>\n");
 		return str.toString();
 	}
 
@@ -265,6 +287,8 @@ public final class WorldState
 				setScriptVars(vars); // a quest started again may have reset its own
 		}
 		player = world.getPieceFromPieces("PLAYER");
+		final XMLTag partyTag = world.getPieceFromPieces("PARTY");
+		party = (partyTag == null) ? null : new ArrayList<XMLTag>(partyTag.contents());
 		final XMLTag weather = world.getPieceFromPieces("WEATHER");
 		if(weather != null)
 		{
@@ -733,6 +757,8 @@ public final class WorldState
 	private static final List<Pair<Physical, XMLTag>>	laterEffects	= new ArrayList<Pair<Physical, XMLTag>>();
 	/** the saved player's state, put back once they are in */
 	private static XMLTag								player			= null;
+	/** the saved state of the player's other characters in the world */
+	private static List<XMLTag>							party			= null;
 
 	/**
 	 * Keeps a restored thing's timed effects to put on it once the player is
@@ -749,46 +775,81 @@ public final class WorldState
 
 	/**
 	 * Called when the restored player is in the game: puts back their hit
-	 * points, mana, movement and timed effects, then the timed effects on the
-	 * rest of the world.
+	 * points, mana, movement and timed effects, brings the rest of their
+	 * party back into the world where they were, as they were, then puts back
+	 * the timed effects on the rest of the world.
 	 * @param mob the player
 	 */
 	public static void finishRestore(final MOB mob)
 	{
+		// taken at once, since bringing in the party logs each of them in too
 		final XMLTag playerTag = player;
 		player = null;
+		final List<XMLTag> partyTags = party;
+		party = null;
+		final List<Pair<Physical, XMLTag>> todo = new ArrayList<Pair<Physical, XMLTag>>(laterEffects);
+		laterEffects.clear();
+		final Map<MOB, String> leaders = new HashMap<MOB, String>();
 		if((playerTag != null)
 		&& (mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")))))
 		{
-			final XMLTag inventory = playerTag.getPieceFromPieces("INVENTORY");
-			if(inventory != null)
+			putBackPlayer(mob, playerTag);
+			leaders.put(mob, CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("LEADER")));
+			if(partyTags != null)
 			{
-				// the character's tables hold the same items, but not their timed
-				// effects, nor what quests gave that cannot be saved there
-				mob.delAllItems(true);
-				for(final Item I : unpackItems(inventory).items)
-					mob.addItem(I);
+				for(final XMLTag tag : partyTags)
+				{
+					final MOB M = Party.bringIn(mob, CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("NAME")), getRoom(tag.getValFromPieces("ROOM")));
+					if(M == null)
+						continue;
+					putBackPlayer(M, tag);
+					leaders.put(M, CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("LEADER")));
+				}
 			}
-			final XMLTag followers = playerTag.getPieceFromPieces("FOLLOWERS");
-			if(followers != null)
-				bringBackFollowers(mob, followers);
-			mob.recoverCharStats();
-			mob.recoverPhyStats();
-			mob.recoverMaxState();
-			mob.curState().setHitPoints(Math.max(1, Math.min(playerTag.getIntFromPieces("HP"), mob.maxState().getHitPoints())));
-			mob.curState().setMana(Math.min(playerTag.getIntFromPieces("MANA"), mob.maxState().getMana()));
-			mob.curState().setMovement(Math.min(playerTag.getIntFromPieces("MOVE"), mob.maxState().getMovement()));
-			final XMLTag effects = playerTag.getPieceFromPieces("EFFECTS");
-			if(effects != null)
-				putEffects(mob, effects, mob);
+			for(final Map.Entry<MOB, String> e : leaders.entrySet())
+			{
+				final MOB leader = (e.getValue().length() > 0) ? CMLib.players().getPlayer(e.getValue()) : null;
+				if((leader != null) && (leader != e.getKey()) && CMLib.flags().isInTheGame(leader, true))
+					e.getKey().setFollowing(leader);
+			}
 		}
-		final List<Pair<Physical, XMLTag>> todo = new ArrayList<Pair<Physical, XMLTag>>(laterEffects);
-		laterEffects.clear();
 		for(final Pair<Physical, XMLTag> p : todo)
 		{
 			if(!p.first.amDestroyed())
 				putEffects(p.first, p.second, mob);
 		}
+	}
+
+	/**
+	 * Puts back what the database does not keep of one of the player's
+	 * characters: their hit points, mana, movement and timed effects, what
+	 * they carry as it was, and their followers.
+	 * @param mob the character
+	 * @param playerTag their PLAYER tag
+	 */
+	private static void putBackPlayer(final MOB mob, final XMLTag playerTag)
+	{
+		final XMLTag inventory = playerTag.getPieceFromPieces("INVENTORY");
+		if(inventory != null)
+		{
+			// the character's tables hold the same items, but not their timed
+			// effects, nor what quests gave that cannot be saved there
+			mob.delAllItems(true);
+			for(final Item I : unpackItems(inventory).items)
+				mob.addItem(I);
+		}
+		final XMLTag followers = playerTag.getPieceFromPieces("FOLLOWERS");
+		if(followers != null)
+			bringBackFollowers(mob, followers);
+		mob.recoverCharStats();
+		mob.recoverPhyStats();
+		mob.recoverMaxState();
+		mob.curState().setHitPoints(Math.max(1, Math.min(playerTag.getIntFromPieces("HP"), mob.maxState().getHitPoints())));
+		mob.curState().setMana(Math.min(playerTag.getIntFromPieces("MANA"), mob.maxState().getMana()));
+		mob.curState().setMovement(Math.min(playerTag.getIntFromPieces("MOVE"), mob.maxState().getMovement()));
+		final XMLTag effects = playerTag.getPieceFromPieces("EFFECTS");
+		if(effects != null)
+			putEffects(mob, effects, mob);
 	}
 
 	/**
@@ -829,6 +890,9 @@ public final class WorldState
 	{
 		if((name.length() == 0) || name.equalsIgnoreCase(mob.Name()))
 			return mob;
+		final MOB character = CMLib.players().getPlayer(name);
+		if((character != null) && CMLib.flags().isInTheGame(character, true))
+			return character;
 		Room R = null;
 		if(P instanceof MOB)
 			R = ((MOB)P).location();

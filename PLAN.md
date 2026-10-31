@@ -345,11 +345,39 @@ Steps:
     brings in more.
   - At the list of characters, the world goes on in real time, and quitting
     from there does not save.
-- **5c. The party.** Profile characters brought into the world beside the
-  one being played, each on a session of its own with no terminal behind
-  it; commands to add them to the party, send them back and leave them in
-  the world; `CONTROL` and `AS`; saves that hold every character in the
-  world and where each one is.
+- **5c. The party: done.** Several of the profile's characters can be in
+  the world at once. The one being played has the terminal's session; each
+  of the others has one of its own with nothing behind it
+  (`Common/PartySession`: nothing is read from it, and what it would show
+  goes nowhere), so the engine treats them as players like any other.
+  `core/Party` holds the rules. Those who follow one leader are the party.
+  - `PARTY` lists the party, the rest of the profile's characters in the
+    world, and those resting in the profile, out of it.
+  - `PARTY ADD NAME` brings one into the party, following its leader; one
+    who was resting comes back into the world. They come to the player,
+    unless `PARTY MEET ON` (or `PARTYMEET=1` in the ini) has them stay where
+    they are, or come back where they last were, for the player to go and
+    meet them.
+  - `PARTY REMOVE NAME` leaves one in the world on their own, and
+    `PARTY REST NAME` sends one back to rest.
+  - `SWITCH NAME` plays another of those in the world, and the one played
+    until then stays where they are, on the other's session; switching to
+    one who is resting still brings them in in place of the one played. The
+    plan's `CONTROL` is `SWITCH`, since `CONTROL` is the trigger of the
+    necromancer's Control Undead.
+  - `AS NAME COMMAND`, until now an Archon's command, works for anyone on
+    their own characters in the world: the two swap sessions for the
+    command, so the player sees what comes of it. It acts at once, as it
+    always has; 5d makes it wait for the turn in turn-based time.
+  - Followers who are players help their leader fight through the engine's
+    `AUTOASSIST`, as any follower does.
+  - A save holds every character in the world: the one played as before,
+    and for each of the others where they are, whom they follow, their hit
+    points, effects, what they carry and their followers. Restoring brings
+    them back on sessions of their own before putting back the timed effects
+    any of them caused. The list of saves names the party.
+  - `LOGOFF` leaves the others in the world; playing one of them from the
+    list of characters takes them over from their own session.
 - **5d. Party turns** in turn-based time, as designed below.
 - **5e. One window per character**, as designed below.
 

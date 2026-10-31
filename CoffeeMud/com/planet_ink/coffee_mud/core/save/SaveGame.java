@@ -226,6 +226,7 @@ public final class SaveGame
 		final long gameTime = parseLong(header.getProperty("gametime"), 0);
 		if(gameTime > 0)
 			GameTime.set(gameTime);
+		Party.setMeetWhereLeft("true".equalsIgnoreCase(header.getProperty("partymeet")));
 	}
 
 	/**
@@ -363,6 +364,8 @@ public final class SaveGame
 		if(!SaveSlots.isValidName(slot))
 			return CMLib.lang().L("A save's name is letters, digits, dashes and underscores, at most 32 of them.");
 		CMLib.players().savePlayer(mob);
+		for(final MOB M : Party.othersInWorld(mob))
+			CMLib.players().savePlayer(M);
 		saveClocks();
 		ServiceEngine.beforeSleep(); // database work queued on the game thread
 		final Properties header = new Properties();
@@ -371,6 +374,11 @@ public final class SaveGame
 		header.setProperty("level", Integer.toString(mob.phyStats().level()));
 		header.setProperty("class", mob.charStats().getCurrentClass().name(mob.charStats().getCurrentClassLevel()));
 		header.setProperty("race", mob.charStats().getMyRace().name());
+		final StringBuilder party = new StringBuilder("");
+		for(final MOB M : Party.othersInWorld(mob))
+			party.append((party.length() > 0) ? ", " : "").append(M.Name());
+		if(party.length() > 0)
+			header.setProperty("party", party.toString());
 		final Room R = mob.location();
 		if(R != null)
 		{
@@ -382,6 +390,7 @@ public final class SaveGame
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
+		header.setProperty("partymeet", Boolean.toString(Party.isMeetWhereLeft()));
 		final Long dice = CMath.getRandState();
 		if(dice != null)
 			header.setProperty("dice", dice.toString());

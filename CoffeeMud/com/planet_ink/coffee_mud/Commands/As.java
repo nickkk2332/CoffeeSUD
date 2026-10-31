@@ -58,6 +58,12 @@ public class As extends StdCommand
 		}
 		final String cmd=commands.get(0);
 		commands.remove(0);
+		final MOB member=Party.findInWorld(mob, cmd);
+		if((member!=null)&&Party.isBackground(member)&&(mob.session()!=null))
+		{
+			asPartyMember(mob, member, commands, metaFlags);
+			return false;
+		}
 		if((!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.AS))||(mob.isMonster()))
 		{
 			mob.tell(L("You aren't powerful enough to do that."));
@@ -292,7 +298,46 @@ public class As extends StdCommand
 	@Override
 	public boolean securityCheck(final MOB mob)
 	{
-		return CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.AS);
+		// anyone may command their own party (see Party)
+		return CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.AS)
+			|| (CMProps.isSinglePlayer() && CMProps.isUsingAccountSystem());
+	}
+
+	/**
+	 * Has one of the player's characters in the world, not the one being
+	 * played, do a command at once, on the player's session, so that the
+	 * player sees what comes of it.  The two swap sessions for it, so that
+	 * the one being played does not also see it on the same session.
+	 * @param mob the character being played
+	 * @param member the one to do the command
+	 * @param commands the command
+	 * @param metaFlags the command's flags
+	 */
+	protected void asPartyMember(final MOB mob, final MOB member, final List<String> commands, final int metaFlags)
+	{
+		final Session mySession=mob.session();
+		final Session hisSession=member.session();
+		synchronized(mySession)
+		{
+			member.setSession(mySession);
+			mySession.setMob(member);
+			mob.setSession(hisSession);
+			hisSession.setMob(mob);
+		}
+		try
+		{
+			member.doCommand(new XVector<String>(CMParms.toStringArray(commands)),metaFlags|MUDCmdProcessor.METAFLAG_AS);
+		}
+		finally
+		{
+			synchronized(mySession)
+			{
+				member.setSession(hisSession);
+				hisSession.setMob(member);
+				mob.setSession(mySession);
+				mySession.setMob(mob);
+			}
+		}
 	}
 
 }

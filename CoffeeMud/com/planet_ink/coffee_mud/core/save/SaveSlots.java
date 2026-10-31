@@ -187,6 +187,9 @@ public final class SaveSlots
 		final String cls = h.getProperty("class", "");
 		if((level.length() > 0) || (cls.length() > 0))
 			str.append(", level ").append(level).append(' ').append(cls);
+		final String party = h.getProperty("party", "");
+		if(party.length() > 0)
+			str.append(", with ").append(party);
 		final String place = h.getProperty("place", "");
 		if(place.length() > 0)
 			str.append(", in ").append(place);
