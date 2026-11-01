@@ -361,7 +361,7 @@ public class PaperMaking extends CraftingSkill implements ItemCraftor
 					data[0][FOUND_CODE],data[0][FOUND_SUB],data[1][FOUND_CODE],data[1][FOUND_SUB]);
 		}
 		final MaterialLibrary.DeadResourceRecord deadComps = CMLib.ableComponents().destroyAbilityComponents(componentsFoundList);
-		buildingI=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+		buildingI=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 		final Item buildingI=this.buildingI;
 		if(buildingI==null)
 		{

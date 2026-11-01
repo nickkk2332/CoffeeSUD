@@ -994,6 +994,34 @@ public class CommonSkill extends StdAbility
 	}
 
 	/**
+	 * Makes the item a recipe names as its result: an item class, or, as
+	 * CATALOG:name, a copy of the item of that name in the catalog, with its
+	 * behaviours, effects and scripts.  The skill then names and makes it as
+	 * the recipe says, as it does any other.
+	 * @param classType the recipe's class column
+	 * @return the item, or null if there is no such class or catalog item
+	 */
+	protected Item makeRecipeItem(final String classType)
+	{
+		if((classType!=null)&&(classType.regionMatches(true,0,"CATALOG:",0,8)))
+		{
+			Item I=CMLib.catalog().getCatalogItem(classType.substring(8).trim());
+			if(I==null)
+				return null;
+			I=(Item)I.copyOf();
+			try
+			{
+				CMLib.catalog().changeCatalogUsage(I, true);
+			}
+			catch(final Exception e)
+			{
+			}
+			return I;
+		}
+		return CMClass.getItem(classType);
+	}
+
+	/**
 	 * Returns the fields a saved game keeps of this skill while it is under
 	 * way: those of its class and of each class it extends, down to this
 	 * one, that are neither static nor final.

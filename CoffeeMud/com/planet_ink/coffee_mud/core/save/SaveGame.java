@@ -460,10 +460,37 @@ public final class SaveGame
 	{
 		if(CMProps.isSinglePlayer() && (!builderMode) && (workingDb != null))
 		{
-			mob.tell(CMLib.lang().L("^HThis game plays on a copy of the world.^?  Mobs and items you make, change or "
-				+ "destroy stay that way in this game's saves, but changes to rooms, exits, areas and the like last "
-				+ "only until the game ends.  Start CoffeeSUD with BUILDER=1 to change the world itself."));
+			mob.tell(CMLib.lang().L("^HThis game plays on a copy of the world.^?  Mobs, items, rooms, exits and areas "
+				+ "you make, change or destroy stay that way in this game and its saves, but not in the world, which "
+				+ "other games start from.  The editors of the game's data files (help, socials, achievements, titles, "
+				+ "awards, factions, holidays, expertises, components and planes) are refused, as what they write "
+				+ "every game reads.  Start CoffeeSUD with BUILDER=1 to change the world itself."));
 		}
+	}
+
+	/** the editors that write the game's data files, in resources/, which every game reads */
+	private static final Set<String> DATA_FILE_EDITORS = new HashSet<String>(Arrays.asList(
+		"HELP", "AHELP", "ACHIEVEMENT", "TITLE", "AWARD", "FACTION", "SOCIAL", "HOLIDAY", "EXPERTISE", "COMPONENT", "PLANE"));
+
+	/**
+	 * In a normal game, refuses an editor of the game's data files (CREATE,
+	 * MODIFY or DESTROY of HELP, SOCIAL, ACHIEVEMENT and the like), and says
+	 * why: it writes files in resources/ that every game reads, which a save
+	 * does not keep.  Builder mode writes them to the world's own copies.
+	 * @param mob the builder
+	 * @param what what is to be made, changed or destroyed, in upper case
+	 * @return true if refused
+	 */
+	public static boolean refusesDataFileEditor(final MOB mob, final String what)
+	{
+		if(CMProps.isSinglePlayer() && (!builderMode) && (workingDb != null) && DATA_FILE_EDITORS.contains(what))
+		{
+			mob.tell(text("^HThe @x1 editor is refused in a normal game:^? it writes the game's data files, which every "
+				+ "game reads and a save does not keep.  Start CoffeeSUD with BUILDER=1 to change the world's own "
+				+ "copies of them.", what.toLowerCase()));
+			return true;
+		}
+		return false;
 	}
 
 	/**

@@ -1432,7 +1432,11 @@ public class Destroy extends StdCommand
 		if((commands.size()>0)
 		&&commands.get(0).equalsIgnoreCase("DESTROY")
 		&&CMSecurity.isAllowedContainsAny(mob, mob.location(), CMSecurity.SECURITY_CMD_GROUP))
+		{
 			SaveGame.warnAboutBuilding(mob);
+			if((commands.size()>1) && SaveGame.refusesDataFileEditor(mob, commands.get(1).toUpperCase()))
+				return false;
+		}
 		if((!CMSecurity.isAllowedAnywhereContainsAny(mob,CMSecurity.SECURITY_CMD_GROUP))
 		&&(!CMSecurity.isAllowedContainsAny(mob,mob.location(),CMSecurity.SECURITY_KILL_GROUP))
 		&&(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.BAN))

@@ -479,7 +479,7 @@ public class ClanCrafting extends CraftingSkill implements ItemCraftor
 			}
 		}
 
-		buildingI=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+		buildingI=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 		if(buildingI instanceof Boardable)
 		{
 			for(final Item I : getCastles())

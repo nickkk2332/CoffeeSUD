@@ -486,7 +486,7 @@ public class Tailoring extends EnhancedCraftingSkill implements ItemCraftor, Men
 			}
 			final MaterialLibrary.DeadResourceRecord deadComps = CMLib.ableComponents().destroyAbilityComponents(componentsFoundList);
 			final int lostValue=autoGenerate>0?0:(deadMats.getLostValue() + deadComps.getLostValue());
-			buildingI=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+			buildingI=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 			final Item buildingI=this.buildingI;
 			if(buildingI==null)
 			{

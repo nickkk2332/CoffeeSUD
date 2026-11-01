@@ -1887,6 +1887,8 @@ public class Create extends StdCommand
 		String commandType="";
 		if(commands.size()>1)
 			commandType=commands.get(1).toUpperCase();
+		if(SaveGame.refusesDataFileEditor(mob, commandType))
+			return false;
 
 		if(commandType.equals("EXIT"))
 		{

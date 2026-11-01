@@ -1349,7 +1349,7 @@ public class GenWrightSkill extends CraftingSkill implements ItemCraftor, Mendin
 						}
 					}
 				}
-				//buildingI=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+				//buildingI=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 			}
 			if(buildingI==null)
 			{

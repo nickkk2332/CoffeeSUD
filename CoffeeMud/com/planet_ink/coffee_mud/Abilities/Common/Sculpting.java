@@ -408,7 +408,7 @@ public class Sculpting extends EnhancedCraftingSkill implements ItemCraftor, Men
 				return false;
 			fixDataForComponents(data,woodRequiredStr,(autoGenerate>0) && (woodRequired==0),componentsFoundList, 1);
 			woodRequired=data[0][FOUND_AMT];
-			buildingI=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+			buildingI=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 			final Item buildingI=this.buildingI;
 			if(buildingI==null)
 			{

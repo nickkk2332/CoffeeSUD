@@ -449,7 +449,10 @@ public final class WorldFiles
 				final String fileName = fileNameFor(A.Name(), AREA_EXT, areaFiles.keySet());
 				final String text = layOut(CMLib.coffeeMaker().getAreaXML(A, null, new HashSet<CMObject>(), new HashSet<String>(), true));
 				areaFiles.put(fileName, text);
-				if(!text.equals(readText(new File(new File(worldDir, AREAS_DIR), fileName))))
+				// compared as the engine reads them, so that a file written the
+				// old way, escaped, is not taken for a changed area
+				final String was = readText(new File(new File(worldDir, AREAS_DIR), fileName));
+				if((was == null) || (!collapseText(text).equals(collapseText(was))))
 					changedAreas.add(A);
 			}
 			writeFolder(new File(worldDir, AREAS_DIR), AREA_EXT, areaFiles, changed);

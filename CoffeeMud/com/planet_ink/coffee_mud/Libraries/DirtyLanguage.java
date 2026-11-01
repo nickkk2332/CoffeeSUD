@@ -213,20 +213,115 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 		public final PairList<String, String>	wholeFile		= new PairVector<String, String>();
 	}
 
+	/**
+	 * Returns the lines of a translation or parser file: the world's own
+	 * copy (WORLDDIR/resources/...) first, then the stock file, so that the
+	 * world's rules run before the stock ones, less each stock section that
+	 * the world's copy of it turns off with a line #STOCK OFF.  With no
+	 * world copy, the file as CMFile reads it.
+	 * @param filename the file, such as resources/parser_EN_TX.properties
+	 * @return the lines, or null if there is no such file
+	 */
+	protected List<String> worldAndStockLines(final String filename)
+	{
+		final java.io.File worldF=fileIgnoringCase(com.planet_ink.coffee_mud.core.save.WorldFiles.worldDir(),filename);
+		final java.io.File stockF=fileIgnoringCase(null,filename);
+		if((worldF==null)||(stockF==null)||(!worldF.isFile())||(!stockF.isFile()))
+		{
+			final CMFile F=new CMFile(filename,null,CMFile.FLAG_FORCEALLOW);
+			if(!F.exists())
+				return null;
+			return Resources.getFileLineVector(F.text());
+		}
+		final List<String> worldLines;
+		final List<String> stockLines;
+		try
+		{
+			worldLines=Resources.getFileLineVector(new StringBuffer(new String(java.nio.file.Files.readAllBytes(worldF.toPath()),"UTF-8")));
+			stockLines=Resources.getFileLineVector(new StringBuffer(new String(java.nio.file.Files.readAllBytes(stockF.toPath()),"UTF-8")));
+		}
+		catch(final java.io.IOException e)
+		{
+			Log.errOut("DirtyLanguage",filename+": "+e.getMessage());
+			return null;
+		}
+		final Set<String> off=new HashSet<String>();
+		String section="";
+		for(final String line : worldLines)
+		{
+			final String s=line.trim();
+			if(s.startsWith("[")&&(s.lastIndexOf(']')>0))
+				section=s.substring(1,s.lastIndexOf(']')).toUpperCase();
+			else
+			if(s.equalsIgnoreCase("#STOCK OFF"))
+				off.add(section);
+		}
+		final List<String> lines=new ArrayList<String>(worldLines);
+		boolean skipping=off.contains("");
+		for(final String line : stockLines)
+		{
+			final String s=line.trim();
+			if(s.startsWith("[")&&(s.lastIndexOf(']')>0))
+				skipping=off.contains(s.substring(1,s.lastIndexOf(']')).toUpperCase());
+			if(!skipping)
+				lines.add(line);
+		}
+		return lines;
+	}
+
+	/**
+	 * Returns a file, each part of its path matched without regard to case,
+	 * as CMFile finds files: the language files are asked for by upper case
+	 * names (parser_EN_TX) of files that may be named otherwise.
+	 * @param root the folder the path is in, or null for the game's folder
+	 * @param path the path
+	 * @return the file, or null if there is none
+	 */
+	protected static java.io.File fileIgnoringCase(final java.io.File root, final String path)
+	{
+		java.io.File cur=root;
+		for(final String part : path.split("/"))
+		{
+			if(part.length()==0)
+				continue;
+			final java.io.File exact=(cur==null)?new java.io.File(part):new java.io.File(cur,part);
+			if(exact.exists())
+			{
+				cur=exact;
+				continue;
+			}
+			final String[] names=((cur==null)?new java.io.File("."):cur).list();
+			java.io.File found=null;
+			if(names!=null)
+			{
+				for(final String n : names)
+				{
+					if(n.equalsIgnoreCase(part))
+					{
+						found=(cur==null)?new java.io.File(n):new java.io.File(cur,n);
+						break;
+					}
+				}
+			}
+			if(found==null)
+				return null;
+			cur=found;
+		}
+		return cur;
+	}
+
 	protected ParserSections loadFileSections(final String filename)
 	{
 		//Bo: I know you want to get rid of these
 		// DVectors.
 		// It does not end well.
 		final ParserSections parserSections=new ParserSections();
-		final CMFile F=new CMFile(filename,null,CMFile.FLAG_FORCEALLOW);
-		if(!F.exists())
+		final List<String> V=worldAndStockLines(filename);
+		if(V==null)
 		{
 			Log.errOut("Language file "+filename+" not found! This mud is in deep doo-doo!");
 			return null;
 		}
-		final StringBuffer alldata=F.text();
-		final List<String> V=Resources.getFileLineVector(alldata);
 		String s=null;
 		ParserSection currentSection=null;
 		final PairList<String,String> globalDefinitions=new PairArrayList<String,String>();
@@ -255,7 +350,6 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 					if(currentSectionIgnoreStrs.size()>0)
 						currentSection.addElement(Command.IGNOREWHOLE,currentSectionIgnoreStrs);
 				}
-				currentSection=new ParserSection();
 				currentSectionReplaceStrs=new HashMap<String,String>();
 				currentSectionIgnoreStrs=new HashSet<String>();
 				String sectionName = s.substring(1,x);
@@ -264,8 +358,14 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 					sectionName = sectionName.substring(0,subDex).toUpperCase()+':'+sectionName.substring(subDex+1);
 				else
 					sectionName = sectionName.toUpperCase();
-				parserSections.put(sectionName,currentSection);
-				sectionIndexes.put(sectionName,Integer.valueOf(v));
+				// a section the world's file has already begins the stock one's: its rules come first
+				currentSection=parserSections.get(sectionName);
+				if(currentSection==null)
+				{
+					currentSection=new ParserSection();
+					parserSections.put(sectionName,currentSection);
+					sectionIndexes.put(sectionName,Integer.valueOf(v));
+				}
 				localDefinitions.clear();
 				continue;
 			}

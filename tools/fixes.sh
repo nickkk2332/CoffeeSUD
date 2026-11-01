@@ -445,6 +445,29 @@ group_saves3()
 	play s22-restore.txt wdb wworld 'jrun /resources/_fixes/s22-check.js\nquit\nn\n' RESTORE=s22 TIMEMODE=TURNS
 	expect s22-restore.txt "Restored 's22'."
 	jsresults s22-restore.txt
+
+	# S6, the rest: a world's parser rules before the stock ones, and
+	# #STOCK OFF; a recipe whose result is a catalog item; the editors of the
+	# game's data files refused in a normal game; a quest's folder kept
+	mkdir -p "$W/ldb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/ldb/"
+	cp -r "$GAME/world" "$W/lworld"
+	mkdir -p "$W/lworld/resources/skills" "$W/lworld/quests/fixq"
+	cp "$FX/setup/s6l-parser.properties" "$W/lworld/resources/parser_en_TX.properties"
+	cp "$FX/setup/s6l-carpentry.add" "$W/lworld/resources/skills/carpentry.txt.add"
+	echo "notes the quest reads" > "$W/lworld/quests/fixq/notes.txt"
+	play s6l-build.txt ldb lworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s6l-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s6l-build.txt
+	if [ -f "$W/lworld/quests/fixq/notes.txt" ] && grep -q "a fix totem" "$W/lworld/catalog.cmare" 2>/dev/null; then
+		echo "  ok    s6l-build: the catalog has the totem, and the quest's folder is kept"
+	else
+		echo "  FAIL  s6l-build: the totem is not in the catalog, or the quest's folder is gone"; FAIL=1
+	fi
+	play s6l-play.txt ldb lworld "Lexer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s6l-parse.js\njrun /resources/_fixes/s6l-carve.js\ncarpentry fix totem\nwait 20\njrun /resources/_fixes/s6l-made.js\ncreate social FIXSOC\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s6l-play.txt
+	expect s6l-play.txt "The social editor is refused in a normal game"
+	printf '#STOCK OFF\n' >> "$W/lworld/resources/parser_en_TX.properties"
+	play s6l-off.txt ldb lworld "Lexed\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s6l-off.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s6l-off.txt
 }
 
 group_saves4()

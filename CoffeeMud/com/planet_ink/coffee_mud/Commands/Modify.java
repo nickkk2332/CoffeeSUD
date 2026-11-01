@@ -2630,6 +2630,8 @@ public class Modify extends StdCommand
 		String commandType="";
 		if(commands.size()>1)
 			commandType=commands.get(1).toUpperCase();
+		if(SaveGame.refusesDataFileEditor(mob, commandType))
+			return false;
 		if(commands.size()==1)
 		{
 			mob.tell(L("\n\rModify what? Try an @x1.",listOfThings()));

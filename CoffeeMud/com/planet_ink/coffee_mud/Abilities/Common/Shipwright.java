@@ -942,7 +942,7 @@ public class Shipwright extends CraftingSkill implements ItemCraftor, MendingSki
 						}
 					}
 				}
-				//buildingI=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+				//buildingI=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 			}
 			if(buildingI==null)
 			{

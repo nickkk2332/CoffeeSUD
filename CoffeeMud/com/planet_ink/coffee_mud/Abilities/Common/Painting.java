@@ -469,7 +469,7 @@ public class Painting extends CommonSkill implements RecipeDriven
 		{
 			if((paintingKeyWords!=null)&&(paintingDesc!=null)&&(foundRecipe!=null))
 			{
-				building=CMClass.getItem(foundRecipe.get(RCP_CLASSTYPE));
+				building=makeRecipeItem(foundRecipe.get(RCP_CLASSTYPE));
 				final String name = CMLib.english().startWithAorAn(
 					foundRecipe.get(RCP_FINALNAME)
 				) + L(" of ") + paintingKeyWords;
