@@ -49,7 +49,8 @@ public class Prop_Transporter extends Property implements TriggeredAffect
 	@Override
 	protected int canAffectCode()
 	{
-		return Ability.CAN_EXITS|Ability.CAN_ROOMS;
+		// as its help says and its triggers do: mobs and items too (PROPCHECK found it narrower)
+		return Ability.CAN_MOBS|Ability.CAN_ITEMS|Ability.CAN_EXITS|Ability.CAN_ROOMS|Ability.CAN_AREAS;
 	}
 
 	protected int transCode=-1;

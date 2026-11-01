@@ -616,6 +616,20 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   problems SCRIPTCHECK ALL finds. The shipped world has none. Left: the
   headless form (DT13's WORLD CHECK), argument counts, variables read and
   never set, and quest scripts (DT32).
+- DT12 done, with keys from the help. `PROPCHECK [ROOM|AREA [name]|ALL|
+  CATALOG|target]` (`core/PropCheck`) reads again the text of each effect
+  set on things (savable, not uninvoked: what the builder gave, not what is
+  cast) and lists, as `Room#12 / iron chest / Prop_X: ...`, what the
+  class itself logs as it reads the text (DT3's `Log.startCapture` around a
+  fresh instance's `setMiscText`), keys its AHELP entry does not name (the
+  help's `KEY=` words stand for the declared keys DT19 would add), room IDs
+  that do not resolve, unknown abilities in a `Prop_SpellAdder` list, and
+  effects on what `canAffect` refuses. The shipped world has none. Found on
+  the way: `Prop_Transporter` worked on mobs, items and areas, as its help
+  says, but told the editors it affects only exits and rooms. Left: zapper
+  masks that do not compile (the masking library does not say), and
+  Prop_HaveAdjuster's complaints when it is not on anything (it logs them
+  later).
 
 #### 2d. Scripting (59)
 
