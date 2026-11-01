@@ -199,6 +199,12 @@ public final class WorldState
 			str.append("</ROOM>\n");
 		}
 		str.append("</ROOMS>\n");
+		// what is in space and in no room: where it is, its speed and course
+		// are in its text; what characters own comes back with them
+		str.append("<SPACE>\n");
+		for(final Item I : WorldFiles.spaceItems())
+			str.append("<SOBJ>").append(itemsXML(new XVector<Item>(I))).append("</SOBJ>\n");
+		str.append("</SPACE>\n");
 		str.append("<DEAD>\n");
 		for(final MOB M : deadMobs())
 		{
@@ -314,6 +320,9 @@ public final class WorldState
 		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
 		if(shapes != null)
 			putShapes(shapes);
+		final XMLTag space = world.getPieceFromPieces("SPACE");
+		if(space != null)
+			putSpace(space); // before the rooms, so that a ship's are there to fill
 		final XMLTag rooms = world.getPieceFromPieces("ROOMS");
 		if(rooms != null)
 		{
@@ -2069,6 +2078,34 @@ public final class WorldState
 			final Area A = CMLib.map().getArea(xml.getValFromPieces(areaTag.contents(), "ANAME"));
 			if((A != null) && (!isFreshArea(A)))
 				reshapeArea(A, areaTag.contents());
+		}
+	}
+
+	/**
+	 * Puts back what was in space, as the save's SPACE section has it: takes
+	 * out what the boot put there (from the world's files), then puts each
+	 * saved thing where it was, with its speed and course.
+	 * @param space the SPACE tag
+	 */
+	private static void putSpace(final XMLTag space)
+	{
+		for(final Item I : WorldFiles.spaceItems())
+		{
+			CMLib.space().delObjectInSpace((SpaceObject)I);
+			I.destroy();
+		}
+		for(final XMLTag tag : space.contents())
+		{
+			for(final Item I : unpackItems(tag).items)
+			{
+				if(!(I instanceof SpaceObject))
+				{
+					I.destroy();
+					continue;
+				}
+				CMLib.space().addObjectToSpace((SpaceObject)I, ((SpaceObject)I).coordinates());
+				CMLib.map().registerWorldObjectLoaded(null, null, I);
+			}
 		}
 	}
 

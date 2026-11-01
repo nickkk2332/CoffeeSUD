@@ -42,6 +42,9 @@ import java.util.zip.CRC32;
  * custom.cmare       the custom races, classes, abilities and commands
  * catalog.cmare      the builder's catalog of mobs and items
  * quests/NAME.quest  one quest's script, as the quest list holds it
+ * space.cmare        the things in space and in no room (ships, stations,
+ *                    stars), with where they are and their courses; put in
+ *                    space at each boot, as no database table holds them
  * </pre>
  * The files are the content.  The database the engine reads is built from
  * them, and the content database (DBSERVICE) is only a cache of that: it
@@ -451,6 +454,7 @@ public final class WorldFiles
 			writeFolder(new File(worldDir, QUESTS_DIR), QUEST_EXT, questFiles, changed);
 			writeOrDelete(new File(worldDir, TEMPLATES_FILE), templatesText(), changed);
 			writeOrDelete(new File(worldDir, CLANS_FILE), clansText(), changed);
+			writeOrDelete(new File(worldDir, SPACE_FILE), spaceText(), changed);
 			writeFolder(new File(worldDir, JOURNALS_DIR), JOURNAL_EXT, journalFiles(), changed);
 			writeVFS(changed);
 		}
@@ -476,6 +480,93 @@ public final class WorldFiles
 	public static final String		TEMPLATES_FILE		= "templates.cmare";
 	/** the clans with no player members */
 	public static final String		CLANS_FILE			= "clans.cmare";
+	/** the things in space that are not in a room, and that no character or clan owns */
+	public static final String		SPACE_FILE			= "space.cmare";
+
+	/**
+	 * Returns the things in space that the world's files hold: each item in
+	 * space (a ship, a star, an asteroid, a station) that no character or
+	 * clan owns, whose text holds where it is, its speed and its course.
+	 * @return the items
+	 */
+	public static List<Item> spaceItems()
+	{
+		final Set<Item> owned = Collections.newSetFromMap(new IdentityHashMap<Item, Boolean>());
+		for(final Enumeration<MOB> p = CMLib.players().players(); p.hasMoreElements();)
+		{
+			final MOB M = p.nextElement();
+			if((M != null) && (M.playerStats() != null))
+			{
+				for(final Enumeration<Item> i = M.playerStats().getExtItems().items(); i.hasMoreElements();)
+					owned.add(i.nextElement());
+			}
+		}
+		for(final Enumeration<Clan> c = CMLib.clans().clans(); c.hasMoreElements();)
+		{
+			final Clan C = c.nextElement();
+			if(C != null)
+			{
+				for(final Enumeration<Item> i = C.getExtItems().items(); i.hasMoreElements();)
+					owned.add(i.nextElement());
+			}
+		}
+		final List<Item> items = new ArrayList<Item>();
+		for(final Enumeration<SpaceObject> s = CMLib.space().getSpaceObjects(); s.hasMoreElements();)
+		{
+			final SpaceObject O = s.nextElement();
+			if((O instanceof Item) && (!((Item)O).amDestroyed()) && (!owned.contains(O)))
+				items.add((Item)O);
+		}
+		return items;
+	}
+
+	/**
+	 * Returns the text of space.cmare: each of {@link #spaceItems()} as item
+	 * XML, or null if there are none.
+	 * @return the text, or null
+	 */
+	private static String spaceText()
+	{
+		final List<Item> items = spaceItems();
+		if(items.size() == 0)
+			return null;
+		final StringBuilder str = new StringBuilder("<SPACE>\n");
+		for(final Item I : items)
+			str.append(CMLib.coffeeMaker().getItemXML(I));
+		return str.append("</SPACE>\n").toString();
+	}
+
+	/**
+	 * Puts the things of space.cmare in space, at each boot: they are in no
+	 * table of the database, so the files are where they are kept.  A saved
+	 * game then puts them where it had them.
+	 */
+	public static void loadSpace()
+	{
+		final String text = readText(new File(worldDir, SPACE_FILE));
+		if(text == null)
+			return;
+		int n = 0;
+		for(final XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(text))
+		{
+			if(!tag.tag().equalsIgnoreCase("SPACE"))
+				continue;
+			for(final XMLLibrary.XMLTag itemTag : tag.contents())
+			{
+				final Item I = CMLib.coffeeMaker().unpackItemFromXML(itemTag.toString());
+				if(!(I instanceof SpaceObject))
+				{
+					if(I != null)
+						I.destroy();
+					continue;
+				}
+				CMLib.space().addObjectToSpace((SpaceObject)I, ((SpaceObject)I).coordinates());
+				CMLib.map().registerWorldObjectLoaded(null, null, I);
+				n++;
+			}
+		}
+		Log.sysOut("WorldFiles", "Things in space from " + SPACE_FILE + ": " + n);
+	}
 	/** the journals of the world's journal items and SYSTEM_CRON, one file each */
 	public static final String		JOURNALS_DIR		= "journals";
 	private static final String		JOURNAL_EXT			= ".xml";
@@ -1354,6 +1445,8 @@ public final class WorldFiles
 			paths.add(TEMPLATES_FILE);
 		if(new File(worldDir, CLANS_FILE).isFile())
 			paths.add(CLANS_FILE);
+		if(new File(worldDir, SPACE_FILE).isFile())
+			paths.add(SPACE_FILE);
 		for(final File F : listFiles(new File(worldDir, JOURNALS_DIR), JOURNAL_EXT))
 			paths.add(JOURNALS_DIR + "/" + F.getName());
 		final File vfs = new File(worldDir, VFS_DIR);

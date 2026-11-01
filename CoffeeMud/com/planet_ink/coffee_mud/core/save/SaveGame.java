@@ -334,6 +334,7 @@ public final class SaveGame
 			{
 				loadClocks();
 				// what the world's files gave, before a save adds to it
+				WorldFiles.loadSpace();
 				WorldState.noteContentQuests();
 				if(!isBuilderMode())
 					WorldState.noteContentShapes();

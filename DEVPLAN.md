@@ -367,6 +367,16 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   was set at. LIST CRON shows the game time left to the next run. The
   played test runs a two-minute job by `WAIT 60` (four game minutes in
   about a second), which the old code, on the system clock, did not.
+- S24 done. The things in space and in no room (an item that is a space
+  object: a ship, a station, a star, an asteroid) that no character or clan
+  owns go to `world/space.cmare` in builder mode, each as item XML, whose
+  text holds where it is, its speed and its course. As no database table
+  holds them, they are put in space at every boot (`WorldFiles.loadSpace`).
+  A save's `<SPACE>` section has each of them as it is; a restore takes out
+  what the boot put in space and puts the saved ones back, before the rooms,
+  so that a ship's own rooms are there to fill. A vessel a character owns
+  in space comes back with the character, as before. The checksum covers
+  the file.
 
 #### 2c. Developer and builder tools (50)
 

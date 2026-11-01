@@ -312,6 +312,28 @@ group_saves2()
 	expect s12-restore.txt "Restored 's12'."
 	jsresults s12-restore.txt
 
+
+	# S24: things in space and in no room: in the world's files from builder
+	# mode, put in space at each boot, and in a save where they were
+	play s24-build.txt vdb vworld "Builder\njrun /resources/_fixes/s24-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s24-build.txt
+	if grep -q "a derelict station" "$W/vworld/space.cmare" 2>/dev/null && grep -q "a patrol cutter" "$W/vworld/space.cmare"; then
+		echo "  ok    s24-build: space.cmare has the station and the cutter"
+	else
+		echo "  FAIL  s24-build: space.cmare lacks the station or the cutter"; FAIL=1
+	fi
+	play s24-play.txt vdb vworld "Spacer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s24-where.js\nwait 10\njrun /resources/_fixes/s24-where.js\nsave s24\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s24-play.txt
+	play s24-restore.txt vdb vworld 'jrun /resources/_fixes/s24-where.js\nquit\nn\n' RESTORE=s24 TIMEMODE=TURNS
+	expect s24-restore.txt "Restored 's24'."
+	jsresults s24-restore.txt
+	saved="$(grep -ao 'FIXINFO space.*' "$W/s24-play.txt" | tail -1)"
+	back="$(grep -ao 'FIXINFO space.*' "$W/s24-restore.txt" | head -1)"
+	if [ -n "$saved" ] && [ "$saved" = "$back" ]; then
+		echo "  ok    s24: space is as it was saved"
+	else
+		echo "  FAIL  s24: space was '$saved', and is '$back'"; FAIL=1
+	fi
 }
 
 group_saves3()
