@@ -877,6 +877,16 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   clearDebri); a mob standing there whose home is elsewhere is left out
   and named. `SAVE ROOM ALL` saves as before, and `SAVE AREA ROOM` does
   either for each room.
+- B2 done. Builder mode's export no longer writes over or deletes a world
+  file changed outside the game: `WorldFiles` keeps each file's checksum
+  as the game loaded or last wrote it (at boot, and after each export for
+  the files it settled), and a file edited, added or deleted since is left
+  as it is, with what the export would write beside it as NAME.builder,
+  unless SAVE FORCE. While a file is kept, world.sum and dev.sum are
+  deleted, so the next game builds from the files. `WORLD STATUS` lists the
+  files changed outside the game and what SAVE would write, delete and
+  leave (the export run dry, `WorldFiles.plan`); `WORLD DIFF file` shows a
+  file against what SAVE would write, as a line diff.
 
 #### 2d. Scripting (59)
 

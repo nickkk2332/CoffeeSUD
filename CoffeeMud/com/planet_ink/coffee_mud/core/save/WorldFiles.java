@@ -113,6 +113,22 @@ public final class WorldFiles
 	private static final Map<String, List<String>>	problems	= new TreeMap<String, List<String>>();
 	/** the files the last export did not write, as they loaded only in part */
 	private static final List<String>				heldBack	= new ArrayList<String>();
+	/**
+	 * Each world file's checksum as the game last loaded or wrote it (B2), by
+	 * its path in the world folder: a file that no longer matches was changed
+	 * outside the game, and the export neither writes over it nor deletes it
+	 */
+	private static volatile Map<String, String>        knownSums    = new TreeMap<String, String>();
+	/** the files the last export did not write or delete, as they were changed outside the game */
+	private static final List<String>                keptOutside    = new ArrayList<String>();
+	/** what is added to a file's name for the game's copy of it, beside a file changed outside the game */
+	public static final String                        BUILDER_EXT    = ".builder";
+	/** true while an export writes the files changed outside the game too (SAVE FORCE) */
+	private static volatile boolean                    forcing        = false;
+	/** the files an export left as the game has them, written, deleted or the same */
+	private static volatile Set<String>                settled        = null;
+	/** while WORLD STATUS asks what an export would do: that, noted in place of doing it */
+	private static volatile ExportPlan                dryRun        = null;
 	/** the file in the database's folder that keeps what went wrong */
 	public static final String						PROBLEMS_FILE	= "worldproblems.txt";
 	/** true while the files are imported */
@@ -174,6 +190,11 @@ public final class WorldFiles
 		rebuild = build;
 		bootSum = checksum();
 		bootAreaSums = areaSums();
+		knownSums = fileSums();
+		synchronized(keptOutside)
+		{
+			keptOutside.clear();
+		}
 		refreshCache = cacheToRefresh;
 		loadedWhole = false;
 	}
@@ -604,6 +625,226 @@ public final class WorldFiles
 		}
 	}
 
+	/**
+	 * What an export would do (B2), as WORLD STATUS and WORLD DIFF show it.
+	 */
+	public static final class ExportPlan
+	{
+		/** the files it would write, by their paths in the world folder */
+		public final List<String>            writes        = new ArrayList<String>();
+		/** the files it would delete */
+		public final List<String>            deletes        = new ArrayList<String>();
+		/** the files it would leave as they are, as they were changed outside the game */
+		public final List<String>            kept        = new ArrayList<String>();
+		/** the files it would leave as they are, as they loaded only in part */
+		public final List<String>            heldBack    = new ArrayList<String>();
+		/** the text it would write to each file it writes, or would write but keeps */
+		public final Map<String, String>    texts        = new TreeMap<String, String>();
+	}
+
+	/**
+	 * Returns the files the last export did not write or delete, as they were
+	 * changed outside the game (B2), by their paths in the world folder.
+	 * @return the files
+	 */
+	public static List<String> keptOutside()
+	{
+		synchronized(keptOutside)
+		{
+			return new ArrayList<String>(keptOutside);
+		}
+	}
+
+	/**
+	 * Each world file the export writes, with a checksum of its bytes (B2).
+	 * @return the checksums, by path in the world folder
+	 */
+	public static Map<String, String> fileSums()
+	{
+		final Map<String, String> sums = new TreeMap<String, String>();
+		for(final String path : managedPaths())
+		{
+			final String sum = sumOf(new File(worldDir, path));
+			if(sum != null)
+				sums.put(path, sum);
+		}
+		return sums;
+	}
+
+	/**
+	 * The world files changed outside the game since it loaded or last wrote
+	 * them (B2).
+	 * @return each one's path in the world folder, with "edited", "added" or
+	 * "deleted"
+	 */
+	public static Map<String, String> changedOutside()
+	{
+		final Map<String, String> known = knownSums;
+		final Map<String, String> now = fileSums();
+		final Map<String, String> out = new TreeMap<String, String>();
+		for(final Map.Entry<String, String> e : now.entrySet())
+		{
+			final String was = known.get(e.getKey());
+			if(was == null)
+				out.put(e.getKey(), "added");
+			else
+			if(!was.equals(e.getValue()))
+				out.put(e.getKey(), "edited");
+		}
+		for(final String path : known.keySet())
+		{
+			if(!now.containsKey(path))
+				out.put(path, "deleted");
+		}
+		return out;
+	}
+
+	/**
+	 * Whether a world file was changed outside the game (B2): edited, added or
+	 * deleted since the game loaded or last wrote it.
+	 * @param path its path in the world folder
+	 * @return true if it was
+	 */
+	public static boolean changedOutside(final String path)
+	{
+		final String known = knownSums.get(path);
+		final String now = sumOf(new File(worldDir, path));
+		return (known == null) ? (now != null) : (!known.equals(now));
+	}
+
+	/**
+	 * Finds a world file by what a builder calls it (WORLD DIFF): its path in
+	 * the world folder, with or without the extension, its name, or an
+	 * area's name.
+	 * @param what what the builder called it
+	 * @param plan what the export would do, for files it would make, or null
+	 * @return its path in the world folder, or null if there is none
+	 */
+	public static String findPath(final String what, final ExportPlan plan)
+	{
+		final Set<String> all = new TreeSet<String>(managedPaths());
+		if(plan != null)
+		{
+			all.addAll(plan.writes);
+			all.addAll(plan.deletes);
+			all.addAll(plan.kept);
+		}
+		all.addAll(knownSums.keySet());
+		String w = what.trim().replace('\\', '/');
+		if(w.toLowerCase().startsWith("world/"))
+			w = w.substring(6);
+		for(final String path : all)
+		{
+			if(path.equalsIgnoreCase(w))
+				return path;
+		}
+		final String asName = fileNameFor(w, "", new HashSet<String>());
+		for(final String path : all)
+		{
+			final String name = path.substring(path.lastIndexOf('/') + 1);
+			final int dot = name.indexOf('.');
+			final String base = (dot > 0) ? name.substring(0, dot) : name;
+			final int pdot = path.lastIndexOf('.');
+			if(name.equalsIgnoreCase(w) || base.equalsIgnoreCase(w) || base.equals(asName)
+			|| ((pdot > 0) && path.substring(0, pdot).equalsIgnoreCase(w)))
+				return path;
+		}
+		return null;
+	}
+
+	/** a world file's path in the world folder, or null if it is not in it */
+	private static String pathIn(final File F)
+	{
+		final String root = worldDir.getPath() + File.separator;
+		final String p = F.getPath();
+		return p.startsWith(root) ? p.substring(root.length()).replace(File.separatorChar, '/') : null;
+	}
+
+	/** a checksum of a file's bytes, or null if there is no such file */
+	private static String sumOf(final File F)
+	{
+		if(!F.isFile())
+			return null;
+		final CRC32 crc = new CRC32();
+		try
+		{
+			crc.update(Files.readAllBytes(F.toPath()));
+		}
+		catch(final IOException e)
+		{
+			return "?";
+		}
+		return F.length() + "-" + Long.toHexString(crc.getValue());
+	}
+
+	/** the export left a file as the game has it: it is known so, and the game's copy beside it is gone */
+	private static void settle(final File F)
+	{
+		final Set<String> into = settled;
+		if(into == null)
+			return;
+		final String path = pathIn(F);
+		if(path != null)
+			into.add(path);
+		final File copy = new File(F.getPath() + BUILDER_EXT);
+		if(copy.isFile())
+			copy.delete();
+	}
+
+	/**
+	 * Whether the export may write or delete a file (B2): not one changed
+	 * outside the game since the game loaded or last wrote it, unless forced
+	 * (SAVE FORCE).  Such a file is left as it is, and what the export would
+	 * write goes beside it, as NAME.builder.  In a dry run (WORLD STATUS),
+	 * notes what would be done and does nothing.
+	 * @param F the file
+	 * @param data what the export would write, or null to delete it
+	 * @return true to go on and write or delete it
+	 * @throws IOException if the copy cannot be written
+	 */
+	private static boolean mayChange(final File F, final byte[] data) throws IOException
+	{
+		final String path = pathIn(F);
+		final boolean keep = (path != null) && (!forcing) && changedOutside(path);
+		final ExportPlan plan = dryRun;
+		if(plan != null)
+		{
+			if(path != null)
+			{
+				if(keep)
+					plan.kept.add(path);
+				else
+				if(data == null)
+					plan.deletes.add(path);
+				else
+					plan.writes.add(path);
+				if(data != null)
+					plan.texts.put(path, new String(data, StandardCharsets.UTF_8));
+			}
+			return false;
+		}
+		if(!keep)
+		{
+			settle(F);
+			return true;
+		}
+		synchronized(keptOutside)
+		{
+			keptOutside.add(path);
+		}
+		final File copy = new File(F.getPath() + BUILDER_EXT);
+		if(data != null)
+		{
+			if((copy.getParentFile() != null) && (!copy.getParentFile().isDirectory()))
+				copy.getParentFile().mkdirs();
+			Files.write(copy.toPath(), data);
+		}
+		else
+		if(copy.isFile())
+			copy.delete();
+		return false;
+	}
+
 	private static boolean report(final File F, final String problem)
 	{
 		if(problem == null)
@@ -771,7 +1012,51 @@ public final class WorldFiles
 		}
 		finally
 		{
+			forcing = false;
+			settled = null;
 			CMLib.coffeeMaker().setReadableText(false);
+		}
+	}
+
+	/**
+	 * What the next SAVE would do to the world files (B2, WORLD STATUS and
+	 * WORLD DIFF): the export, run with nothing written, deleted or cached.
+	 * @return the plan, or null if SAVE writes nothing (not builder mode, or
+	 * the world did not load whole)
+	 */
+	public static synchronized ExportPlan plan()
+	{
+		if((!SaveGame.isBuilderMode()) || (!loadedWhole))
+			return null;
+		final List<String> held;
+		synchronized(heldBack)
+		{
+			held = new ArrayList<String>(heldBack);
+			heldBack.clear();
+		}
+		final ExportPlan plan = new ExportPlan();
+		dryRun = plan;
+		CMLib.coffeeMaker().setReadableText(true);
+		try
+		{
+			if(exportAllReadable(false) < 0)
+				return null;
+			synchronized(heldBack)
+			{
+				plan.heldBack.addAll(heldBack);
+			}
+			return plan;
+		}
+		finally
+		{
+			dryRun = null;
+			forcing = false;
+			CMLib.coffeeMaker().setReadableText(false);
+			synchronized(heldBack)
+			{
+				heldBack.clear();
+				heldBack.addAll(held);
+			}
 		}
 	}
 
@@ -815,6 +1100,17 @@ public final class WorldFiles
 			}
 		});
 		final int[] changed = { 0 };
+		// B2: a dry run notes what it would do; a real one keeps what was changed outside the game
+		final boolean dry = (dryRun != null);
+		forcing = force;
+		settled = dry ? null : new HashSet<String>();
+		if(!dry)
+		{
+			synchronized(keptOutside)
+			{
+				keptOutside.clear();
+			}
+		}
 		try
 		{
 			final Map<String, String> areaFiles = new LinkedHashMap<String, String>();
@@ -849,15 +1145,18 @@ public final class WorldFiles
 			// the files are written from the live world, and the database is a
 			// cache of the files: an area changed without the builder commands
 			// (by JRUN, say) is put in the cache too, so the next game has it
-			CMLib.coffeeMaker().setReadableText(false); // the database holds texts as the engine reads them
-			try
+			if(!dry)
 			{
-				for(final Area A : changedAreas)
-					cacheArea(A);
-			}
-			finally
-			{
-				CMLib.coffeeMaker().setReadableText(true);
+				CMLib.coffeeMaker().setReadableText(false); // the database holds texts as the engine reads them
+				try
+				{
+					for(final Area A : changedAreas)
+						cacheArea(A);
+				}
+				finally
+				{
+					CMLib.coffeeMaker().setReadableText(true);
+				}
 			}
 			// the custom objects, one file each, in place of the old custom.cmare
 			writeOrDelete(new File(worldDir, CUSTOM_FILE), null, changed);
@@ -893,13 +1192,40 @@ public final class WorldFiles
 			Log.errOut("WorldFiles", e);
 			return -1;
 		}
+		if(dry)
+			return changed[0];
+		// B2: the files left as the game has them are known as they now are;
+		// one changed outside the game stays known as it was, so stays kept
+		final Map<String, String> next = new TreeMap<String, String>(knownSums);
+		for(final String path : settled)
+		{
+			final String sum = sumOf(new File(worldDir, path));
+			if(sum == null)
+				next.remove(path);
+			else
+				next.put(path, sum);
+		}
+		knownSums = next;
+		final List<String> kept = keptOutside();
 		final File dbDir = SaveGame.databaseDir();
 		if(dbDir != null)
 		{
-			writeSum(dbDir, checksum());
-			if(devLoadedWhole)
-				writeText(new File(dbDir, DEV_SUM_FILE), devChecksum() + "\n");
+			if(kept.size() > 0)
+			{
+				// the cache holds the game's copy of those files, not what they
+				// now hold: the next game builds from the files
+				new File(dbDir, SUM_FILE).delete();
+				new File(dbDir, DEV_SUM_FILE).delete();
+			}
+			else
+			{
+				writeSum(dbDir, checksum());
+				if(devLoadedWhole)
+					writeText(new File(dbDir, DEV_SUM_FILE), devChecksum() + "\n");
+			}
 		}
+		if(kept.size() > 0)
+			Log.sysOut("WorldFiles", "Not written, as changed outside the game: " + String.join(", ", kept) + " (the game's copies are beside them, as " + BUILDER_EXT + ").");
 		if(changed[0] > 0)
 			Log.sysOut("WorldFiles", "Wrote the world files: " + changed[0] + " changed.");
 		return changed[0];
@@ -1192,13 +1518,17 @@ public final class WorldFiles
 					continue;
 				final byte[] data = B64Encoder.B64decode(row[dataCol].trim());
 				final File F = new File(dir, path);
-				if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()))
-					F.getParentFile().mkdirs();
 				final byte[] old = F.isFile() ? java.nio.file.Files.readAllBytes(F.toPath()) : null;
-				final boolean same = (old != null) && Arrays.equals(old, (data == null) ? new byte[0] : data);
-				if(!same)
+				final byte[] bytes = (data == null) ? new byte[0] : data;
+				final boolean same = (old != null) && Arrays.equals(old, bytes);
+				if(same)
+					settle(F);
+				else
+				if(mayChange(F, bytes))
 				{
-					java.nio.file.Files.write(F.toPath(), (data == null) ? new byte[0] : data);
+					if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()))
+						F.getParentFile().mkdirs();
+					java.nio.file.Files.write(F.toPath(), bytes);
 					changed[0]++;
 				}
 				kept.add(F.getCanonicalPath());
@@ -1218,7 +1548,7 @@ public final class WorldFiles
 			collectFiles(dir, all);
 			for(final File F : all)
 			{
-				if((!F.getName().equals(VFS_INDEX)) && (!kept.contains(F.getCanonicalPath())) && F.delete())
+				if((!F.getName().equals(VFS_INDEX)) && (!F.getName().endsWith(BUILDER_EXT)) && (!kept.contains(F.getCanonicalPath())) && mayChange(F, null) && F.delete())
 					changed[0]++;
 			}
 		}
@@ -1621,8 +1951,19 @@ public final class WorldFiles
 			writeOrDelete(new File(dir, e.getKey()), e.getValue(), changed);
 		for(final File F : listFiles(dir, ext))
 		{
-			if((!files.containsKey(F.getName())) && F.delete())
-				changed[0]++;
+			if(!files.containsKey(F.getName()))
+				writeOrDelete(F, null, changed);
+		}
+		// B2: a known file gone from both the disk and the game is settled too
+		final String at = pathIn(dir);
+		if(at != null)
+		{
+			for(final String path : new ArrayList<String>(knownSums.keySet()))
+			{
+				if(path.startsWith(at + "/") && path.endsWith(ext) && (path.indexOf('/', at.length() + 1) < 0)
+				&& (!files.containsKey(path.substring(at.length() + 1))) && (!new File(worldDir, path).exists()))
+					settle(new File(worldDir, path));
+			}
 		}
 	}
 
@@ -1637,11 +1978,19 @@ public final class WorldFiles
 	{
 		if(text == null)
 		{
-			if(F.isFile() && F.delete())
+			if(!F.isFile())
+				settle(F);
+			else
+			if(mayChange(F, null) && F.delete())
 				changed[0]++;
 			return;
 		}
 		if(text.equals(readText(F)))
+		{
+			settle(F);
+			return;
+		}
+		if(!mayChange(F, text.getBytes(StandardCharsets.UTF_8)))
 			return;
 		if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()) && (!F.getParentFile().mkdirs()))
 			throw new IOException("Cannot make " + F.getParentFile().getPath());
@@ -1969,11 +2318,11 @@ public final class WorldFiles
 	}
 
 	/**
-	 * Returns a checksum of the content files: their paths in the world folder
-	 * and their contents.
-	 * @return the checksum
+	 * The content files' paths in the world folder, as {@link #checksum()}
+	 * takes them.
+	 * @return the paths
 	 */
-	public static String checksum()
+	private static List<String> contentPaths()
 	{
 		final List<String> paths = new ArrayList<String>();
 		for(final File F : listFiles(new File(worldDir, AREAS_DIR), AREA_EXT))
@@ -2010,10 +2359,35 @@ public final class WorldFiles
 			final String root = vfs.getPath() + File.separator;
 			for(final File F : all)
 			{
-				if(F.getPath().startsWith(root))
+				if(F.getPath().startsWith(root) && (!F.getName().endsWith(BUILDER_EXT)))
 					paths.add(VFS_DIR + "/" + F.getPath().substring(root.length()).replace(File.separatorChar, '/'));
 			}
 		}
+		return paths;
+	}
+
+	/**
+	 * The files the export writes (B2): the content files, less the world's
+	 * settings, and the dev areas'.
+	 * @return their paths in the world folder
+	 */
+	private static List<String> managedPaths()
+	{
+		final List<String> paths = contentPaths();
+		paths.remove(WorldSettings.FILE);
+		for(final File F : listFiles(new File(worldDir, DEV_DIR), AREA_EXT))
+			paths.add(DEV_DIR + "/" + F.getName());
+		return paths;
+	}
+
+	/**
+	 * Returns a checksum of the content files: their paths in the world folder
+	 * and their contents.
+	 * @return the checksum
+	 */
+	public static String checksum()
+	{
+		final List<String> paths = contentPaths();
 		Collections.sort(paths);
 		final CRC32 crc = new CRC32();
 		final byte[] buf = new byte[65536];

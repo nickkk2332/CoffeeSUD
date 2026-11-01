@@ -256,6 +256,10 @@ public class Save extends StdCommand
 		final List<String> held=WorldFiles.heldBack();
 		if(held.size()>0)
 			mob.tell(L("Not written, as they loaded only in part: @x1.  WORLD PROBLEMS says why; SAVE FORCE writes them as the world has them.",String.join(", ",held)));
+		// B2: files changed outside the game are not written over
+		final List<String> outside=WorldFiles.keptOutside();
+		if(outside.size()>0)
+			mob.tell(L("Not written, as they were changed outside the game: @x1.  What SAVE would write is beside each, as @x2, and WORLD DIFF shows the difference.  Start the game again to load the files as they are, or SAVE FORCE writes over them.",String.join(", ",outside),WorldFiles.BUILDER_EXT));
 		// what a check of the world's scripts finds (DT11)
 		final int scriptProblems=ScriptCheck.checkAll().size();
 		if(scriptProblems>0)
