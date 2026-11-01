@@ -1292,11 +1292,160 @@ public class Modify extends StdCommand
 		}
 	}
 
+	/** the verbs that test a quest: MODIFY QUEST name VERB ... */
+	protected static final String[] QUEST_TEST_VERBS={"STEP","WIN","UNWIN","RESETWINNERS","VAR","RELOAD"};
+
+	/**
+	 * MODIFY QUEST name STEP n, WIN char, UNWIN char, RESETWINNERS, VAR name
+	 * value or RELOAD, for testing a quest.
+	 * @return true if the words were one of these, done or refused
+	 */
+	protected boolean questTestVerb(final MOB mob, final List<String> commands)
+	{
+		int at=-1;
+		for(int i=3;i<commands.size();i++)
+		{
+			if(CMParms.contains(QUEST_TEST_VERBS,commands.get(i).toUpperCase()))
+			{
+				at=i;
+				break;
+			}
+		}
+		if(at<0)
+			return false;
+		final String name=CMParms.combine(commands.subList(0,at),2);
+		final Quest Q=QuestInfo.findQuest(name);
+		if(Q==null)
+		{
+			mob.tell(L("Quest '@x1' is unknown.  Try list quests.",name));
+			return true;
+		}
+		final String verb=commands.get(at).toUpperCase();
+		final List<String> args=commands.subList(at+1,commands.size());
+		if(verb.equals("STEP"))
+		{
+			final int step=(args.size()>0)?CMath.s_int(args.get(0)):0;
+			if(!Q.running())
+				mob.tell(L("Quest '@x1' is not running.",Q.name()));
+			else
+			if(step<=0)
+				mob.tell(L("MODIFY QUEST @x1 STEP [NUMBER]",Q.name()));
+			else
+			{
+				final boolean clean=Q.setQuestStep(step);
+				final int now=CMath.s_int(""+Q.getStat("STEPNUM"));
+				if(now!=step)
+					mob.tell(L("Quest '@x1' could not go to step @x2; see QUESTINFO for its errors.",Q.name(),""+step));
+				else
+				if(!clean)
+					mob.tell(L("Quest '@x1' went to step @x2, with errors; see QUESTINFO.",Q.name(),""+step));
+				else
+					mob.tell(L("Quest '@x1' goes to step @x2.",Q.name(),""+step));
+			}
+		}
+		else
+		if(verb.equals("WIN"))
+		{
+			if(args.size()==0)
+			{
+				mob.tell(L("MODIFY QUEST @x1 WIN [NAME]",Q.name()));
+				return true;
+			}
+			Q.declareWinner(args.get(0));
+			mob.tell(L("@x1 has won quest '@x2'.",args.get(0),Q.name()));
+		}
+		else
+		if(verb.equals("UNWIN"))
+		{
+			if(args.size()==0)
+			{
+				mob.tell(L("MODIFY QUEST @x1 UNWIN [NAME]",Q.name()));
+				return true;
+			}
+			final Map<String,Long> winners=Q.getWinners();
+			String found=null;
+			for(final String w : winners.keySet())
+			{
+				if(w.equalsIgnoreCase(args.get(0)))
+					found=w;
+			}
+			if(found==null)
+				mob.tell(L("@x1 has not won quest '@x2'.",args.get(0),Q.name()));
+			else
+			{
+				winners.remove(found);
+				mob.tell(L("@x1 no longer has won quest '@x2'.",found,Q.name()));
+			}
+		}
+		else
+		if(verb.equals("RESETWINNERS"))
+		{
+			Q.setWinners("");
+			mob.tell(L("Quest '@x1' has no winners now.",Q.name()));
+		}
+		else
+		if(verb.equals("VAR"))
+		{
+			if(args.size()<2)
+			{
+				mob.tell(L("MODIFY QUEST @x1 VAR [NAME] [VALUE]",Q.name()));
+				return true;
+			}
+			Q.setQuestVar(args.get(0).toUpperCase(),CMParms.combine(args,1));
+			mob.tell(L("Quest '@x1' has @x2 = '@x3'.",Q.name(),args.get(0).toUpperCase(),CMParms.combine(args,1)));
+		}
+		else
+		if(verb.equals("RELOAD"))
+		{
+			// read the quest's script and the scripts it loads again, and
+			// start it again at the step it was at
+			final boolean wasRunning=Q.running();
+			final int step=CMath.s_int(""+Q.getStat("STEPNUM"));
+			for(final Iterator<String> k=Resources.findResourceKeys("PARSEDPRG: ");k.hasNext();)
+			{
+				final String key=k.next();
+				if(key.startsWith("PARSEDPRG: "))
+					Resources.removeResource(key);
+			}
+			// a quest with no schedule leaves the list when it stops, and its
+			// variables' scope with it: both are kept
+			final String scopeKey="VARSCOPE-"+Q.name().toUpperCase().trim();
+			final Object scopeVars=Resources.getResource(scopeKey);
+			final Map<String,String> questVars=new TreeMap<String,String>(Q.getQuestVars());
+			if(wasRunning)
+				Q.stopQuest();
+			if(CMLib.quests().fetchQuest(Q.name())!=Q)
+				CMLib.quests().addQuest(Q);
+			if((scopeVars!=null)&&(Resources.getResource(scopeKey)==null))
+				Resources.submitResource(scopeKey,scopeVars);
+			if(!Q.setScript(Q.script(),true))
+			{
+				mob.tell(L("Quest '@x1' could not be read again; see QUESTINFO for its errors.",Q.name()));
+				return true;
+			}
+			if(wasRunning)
+			{
+				Q.startQuest();
+				if(step>1)
+					Q.setQuestStep(step);
+				for(final String var : questVars.keySet())
+					Q.setQuestVar(var,questVars.get(var));
+			}
+			mob.tell(wasRunning
+				?L("Quest '@x1' was read again and started at step @x2.",Q.name(),""+Math.max(1,step))
+				:L("Quest '@x1' was read again.",Q.name()));
+		}
+		return true;
+	}
+
 	public void quests(final MOB mob, final List<String> commands)
 		throws IOException
 	{
 		if(commands.size()<3)
 			mob.tell(L("modify which quest?  Use list quests."));
+		else
+		if(questTestVerb(mob,commands))
+			return;
 		else
 		{
 			int cmdDex=-1;

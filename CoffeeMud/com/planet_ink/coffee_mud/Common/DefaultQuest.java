@@ -4996,6 +4996,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					{
 						if(!qs.beQuiet)
 							Log.errOut("Quest",prefix+"One or more errors in '"+name()+"', quest not started");
+						qs.errors.append("Step "+targetStepNum+": one or more errors, quest stopped.\n\r");
 					}
 					else
 					if(!qs.done)
@@ -5006,6 +5007,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					if(duration()<0)
 					{
 						Log.errOut("Quest",prefix+"No duration, quest '"+name()+"' not started.");
+						// kept for QUESTINFO: each step sets its own duration
+						qs.errors.append("Step "+targetStepNum+": no duration (SET DURATION), quest stopped.\n\r");
 						qs.error=true;
 					}
 
@@ -5895,6 +5898,108 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		{
 			setSuspended(true);
 		}
+	}
+
+	/** a thing's name and where it is, for QUESTINFO */
+	protected static String where(final Object o)
+	{
+		if(o == null)
+			return "none";
+		if(o instanceof Room)
+			return ((Room)o).displayText()+" ("+CMLib.map().getExtendedRoomID((Room)o)+")";
+		if(o instanceof Area)
+			return ((Area)o).Name();
+		if(o instanceof Environmental)
+		{
+			final Environmental E=(Environmental)o;
+			final Room R=(E instanceof Physical)?CMLib.map().roomLocation(E):null;
+			final String hp=(E instanceof MOB)?(", "+((MOB)E).curState().getHitPoints()+" hp"):"";
+			return E.Name()+((R==null)?"":(" in "+CMLib.map().getExtendedRoomID(R)))+hp;
+		}
+		return o.toString();
+	}
+
+	/** a list of things and where they are, for QUESTINFO */
+	protected static String whereAll(final List<?> list)
+	{
+		if((list==null)||(list.isEmpty()))
+			return "none";
+		final StringBuilder str=new StringBuilder("");
+		for(final Object o : list)
+		{
+			if(str.length()>0)
+				str.append("; ");
+			str.append(where(o));
+		}
+		return str.toString();
+	}
+
+	@Override
+	public String inspection()
+	{
+		final QuestState qs=questState;
+		final StringBuilder str=new StringBuilder("");
+		final String state=running()?(stopping()?"stopping":"running"):(waiting()?"waiting":"stopped");
+		str.append("Quest '").append(name()).append("'")
+		   .append(displayName().equals(name())||displayName().length()==0?"":(" ("+displayName()+")"))
+		   .append(": ").append(state).append(suspended()?", disabled":"").append("\n\r");
+		if(qs!=null)
+			str.append("Step: ").append(qs.stepNumber).append(qs.error?", stopped on an error":"").append("\n\r");
+		if(running())
+			str.append("Time left: ").append(ticksRemaining()<0?"no limit":(minsRemaining()+" minutes ("+ticksRemaining()+" ticks)")).append("\n\r");
+		else
+		if(waiting())
+			str.append("Starts in: ").append(waitRemaining()).append(" ticks\n\r");
+		final Map<String,String> vars=getQuestVars();
+		str.append("Variables: ").append(vars.isEmpty()?"none":vars.toString()).append("\n\r");
+		if(qs!=null)
+		{
+			str.append("Designated: MOB ").append(where(qs.mob))
+			   .append(", ITEM ").append(where(qs.item))
+			   .append(", ROOM ").append(where(qs.room))
+			   .append(", AREA ").append(where(qs.area)).append("\n\r");
+			if(qs.mobGroup!=null)
+				str.append("MOB group: ").append(whereAll(qs.mobGroup)).append("\n\r");
+			if(qs.itemGroup!=null)
+				str.append("ITEM group: ").append(whereAll(qs.itemGroup)).append("\n\r");
+			if(qs.roomGroup!=null)
+				str.append("ROOM group: ").append(whereAll(qs.roomGroup)).append("\n\r");
+			str.append("Holds: mobs ").append(whereAll(qs.loadedMobs)).append("; items ").append(whereAll(qs.loadedItems)).append("\n\r");
+			final StringBuilder added=new StringBuilder("");
+			for(int a=0;a<qs.addons.size();a++)
+			{
+				final List<Object> V=qs.addons.getFirst(a);
+				if((V==null)||(V.size()<2))
+					continue;
+				final Object on=V.get(0);
+				final Object what=V.get(1);
+				final String whatName=(what instanceof CMObject)?((CMObject)what).ID():String.valueOf(what);
+				if(added.length()>0)
+					added.append("; ");
+				added.append(whatName).append(" on ").append((on instanceof Environmental)?((Environmental)on).Name():String.valueOf(on));
+			}
+			str.append("Added: ").append(added.length()==0?"nothing":added.toString()).append("\n\r");
+		}
+		final Map<String,Long> winners=getWinners();
+		str.append("Winners: ");
+		if(winners.isEmpty())
+			str.append("none");
+		else
+		{
+			boolean first=true;
+			for(final String w : winners.keySet())
+			{
+				str.append(first?"":", ").append(w);
+				final Long when=winners.get(w);
+				if((when!=null)&&(when.longValue()>0))
+					str.append(" (").append(CMLib.time().date2String(when.longValue())).append(")");
+				first=false;
+			}
+		}
+		str.append("\n\r");
+		final String errors=getLastErrors();
+		str.append("Last errors: ").append(errors.trim().length()==0?"none":("\n\r"+errors.trim())).append("\n\r");
+		return str.toString();
 	}
 
 	@Override

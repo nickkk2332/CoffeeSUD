@@ -1,0 +1,13 @@
+set name dt2quest
+set duration 1000
+set room any
+import mobs _fixes/s1mobs.cmare
+load mob any
+give script LOAD=_fixes/dt2herald.script
+step break
+set duration 1000
+set room any
+import mobs _fixes/s1mobs.cmare
+load mob any
+give script LOAD=_fixes/dt2herald.script
+step break

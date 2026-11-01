@@ -811,6 +811,17 @@ public interface Quest extends Tickable, CMCommon, Modifiable
 	public String getLastErrors();
 
 	/**
+	 * Returns what a builder sees of the quest on one screen (QUESTINFO): its
+	 * state, step, time left, variables, the things it designated and holds,
+	 * what it added to the world, its winners and its last errors.
+	 * @return the text, lines ended with \n\r
+	 */
+	public default String inspection()
+	{
+		return name();
+	}
+
+	/**
 	 * If a specific area can be associated with this quest
 	 * script easily, this will return it.  Once a quest runs,
 	 * this becomes fairly reliable, but until then, is at

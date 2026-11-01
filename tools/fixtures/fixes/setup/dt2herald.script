@@ -1,0 +1,3 @@
+RAND_PROG 100
+mpsetvar FIXTEST FIXDT2 first
+~

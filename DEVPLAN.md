@@ -489,6 +489,17 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   on the way: `MPSETINTERNAL SCOPE GLOBAL` (an engine's scope set to the
   global one) put the engine's variables in a separate store named
   `VARSCOPE-`, not the one unscoped scripts share; it uses the shared one.
+- DT2 done. `QUESTINFO name` shows a quest on one screen: state, step, time
+  left or to its start, variables, the designated MOB, ITEM, ROOM and AREA
+  and groups with where each is, the mobs and items it holds, what it added
+  and to what, winners with when, and the last errors. `MODIFY QUEST name`
+  takes `STEP n`, `WIN char`, `UNWIN char`, `RESETWINNERS`, `VAR name value`
+  and `RELOAD` (the quest's script and the scripts it loads read again, from
+  their files, and a running quest started again at its step, with its
+  variables and its variables' scope). A step that fails (no duration, a
+  script error) now says so in the quest's errors, not only in the log.
+  Left: `STEP label` waits for Q6's named steps, and `WIN char OUTCOME w`
+  for the quest outcomes of 2e.
 
 #### 2d. Scripting (59)
 
