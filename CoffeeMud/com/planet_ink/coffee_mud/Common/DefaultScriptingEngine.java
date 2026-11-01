@@ -16701,6 +16701,276 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/** how long SCRIPT DISABLE turns a trigger off: until SCRIPT ENABLE, in practice */
+	protected static final long DISABLED_MILLIS = 100L * 365L * 24L * 60L * 60L * 1000L;
+
+	/**
+	 * The trigger code of a trigger's name, with or without _PROG.
+	 * @param name the name, as SPEECH or SPEECH_PROG
+	 * @return the code, or 0 if it is no trigger
+	 */
+	public static int triggerCodeOf(final String name)
+	{
+		if(name==null)
+			return 0;
+		final String up=name.trim().toUpperCase();
+		for(int i=0;i<progs.length;i++)
+		{
+			if(progs[i].equals(up)||progs[i].equals(up+"_PROG"))
+				return i+1;
+		}
+		return 0;
+	}
+
+	private static String normalLine(final String s)
+	{
+		return s.replace('`','\'').replaceAll("\\s+"," ").trim().toUpperCase();
+	}
+
+	/**
+	 * SCRIPT LIST: the host's triggers, one a line, numbered, with the file and
+	 * line each is written at, and [off] for one disabled, [done] for a
+	 * ONCE_PROG that ran.
+	 * @param host the host
+	 * @return the lines
+	 */
+	public List<String> triggerList(final PhysicalAgent host)
+	{
+		final List<SubScript> scripts=getScripts(host);
+		// where each trigger is written: the inline script, then each loaded file
+		final List<Pair<String,String[]>> texts=new ArrayList<Pair<String,String[]>>();
+		final String inline=getScript();
+		texts.add(new Pair<String,String[]>("inline",(inline==null)?new String[0]:inline.split("\n")));
+		for(final String f : externalFiles())
+			texts.add(new Pair<String,String[]>(f,getResourceFileData(host,f).toString().split("\n")));
+		final int[][] from=new int[texts.size()][2]; // line, column searched to
+		final List<String> out=new ArrayList<String>();
+		for(int v=0;v<scripts.size();v++)
+		{
+			final SubScript script=scripts.get(v);
+			final String trig=script.getTriggerLine();
+			final String want=normalLine(trig);
+			String where="";
+			for(int t=0;(t<texts.size())&&(where.length()==0)&&(want.length()>0);t++)
+			{
+				final String[] lines=texts.get(t).second;
+				for(int l=from[t][0];l<lines.length;l++)
+				{
+					final int x=normalLine(lines[l]).indexOf(want,(l==from[t][0])?from[t][1]:0);
+					if(x>=0)
+					{
+						from[t][0]=l;
+						from[t][1]=x+want.length();
+						where=texts.get(t).first+":"+(l+1);
+						break;
+					}
+				}
+			}
+			final int code=script.getTriggerCode();
+			final StringBuilder line=new StringBuilder("").append(v+1).append(". ").append(trig);
+			if(where.length()>0)
+				line.append("  (").append(where).append(")");
+			final Long off=noTrigger.get(Integer.valueOf(code));
+			if((off!=null)&&(off.longValue()>GameTime.now()))
+				line.append(" [off]");
+			if((code==6)&&(oncesDone.contains(Integer.valueOf(v))))
+				line.append(" [done]");
+			out.add(line.toString());
+		}
+		return out;
+	}
+
+	/**
+	 * Whether a trigger answers to what SCRIPT FIRE was given: one of its
+	 * words, its whole argument, or its P pattern.
+	 */
+	private boolean triggerAnswers(final SubScript script, final String want)
+	{
+		final String[] bits=script.getTriggerBits();
+		if(bits.length<2)
+			return false;
+		if(bits[1].equalsIgnoreCase("P")&&(bits.length>2))
+			return match(want,CMParms.combine(Arrays.asList(bits),2));
+		final String all=" "+normalLine(CMParms.combine(Arrays.asList(bits),1))+" ";
+		if(all.contains(" "+want+" "))
+			return true;
+		for(final String w : CMParms.parse(want))
+		{
+			for(int i=1;i<bits.length;i++)
+			{
+				if(bits[i].equalsIgnoreCase(w))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * SCRIPT FIRE: runs the host's triggers of one kind now, as if the source
+	 * had caused them, whatever their own conditions and odds, and even if
+	 * disabled.  Given words, only the triggers that answer to them run
+	 * (SPEECH hello, TIME_PROG 5), and the words are the message ($g).
+	 * @param host the host
+	 * @param trigger the trigger, as SPEECH or SPEECH_PROG
+	 * @param args the words, or ""
+	 * @param source who causes it ($n), or null for the host
+	 * @param item the item it is about ($o), or null
+	 * @return how many ran, or -1 if there is no such trigger
+	 */
+	public int fireTrigger(final PhysicalAgent host, final String trigger, final String args, final MOB source, final Item item)
+	{
+		final int code=triggerCodeOf(trigger);
+		if(code<=0)
+			return -1;
+		final MOB monster=getMakeMOB(host);
+		final String words=(args==null)?"":args.trim();
+		final String want=normalLine(words);
+		final List<SubScript> scripts=getScripts(host);
+		int n=0;
+		for(int v=0;v<scripts.size();v++)
+		{
+			final SubScript script=scripts.get(v);
+			if(script.getTriggerCode()!=code)
+				continue;
+			if((want.length()>0)&&(!triggerAnswers(script,want)))
+				continue;
+			final MPContext ctx=new MPContext(host,monster,(source!=null)?source:monster,monster,item,null,words,null);
+			execute(ctx.push(script));
+			n++;
+		}
+		return n;
+	}
+
+	/**
+	 * SCRIPT CALL: runs one of the host's FUNCTION_PROGs.
+	 * @param host the host
+	 * @param function its name
+	 * @param args its arguments ($g)
+	 * @param source who calls it ($n), or null for the host
+	 * @return what it returned (RETURN), or null if there is no such function
+	 */
+	public String callFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
+	{
+		if(findFunc(host,function)==null)
+			return null;
+		final MOB monster=getMakeMOB(host);
+		final String words=(args==null)?"":args.trim();
+		final MPContext ctx=new MPContext(host,monster,(source!=null)?source:monster,monster,null,null,words,null);
+		final String r=callFunc(function,words,ctx);
+		return (r==null)?"":r;
+	}
+
+	/**
+	 * SCRIPT RESET: forgets that triggers ran, so that they run again.
+	 * @param what ONCE (ONCE_PROGs), DELAY (DELAY_PROG waits), TIME (TIME_PROGs
+	 *        and DAY_PROGs that ran this hour or day), or ALL
+	 * @return the triggers it was for, or "" if what is none of these
+	 */
+	public String resetTriggers(final String what)
+	{
+		final String w=(what==null)?"ALL":what.trim().toUpperCase();
+		final List<String> done=new ArrayList<String>();
+		if(w.equals("ONCE")||w.equals("ALL"))
+		{
+			oncesDone.clear();
+			done.add("ONCE_PROG");
+		}
+		if(w.equals("DELAY")||w.equals("ALL"))
+		{
+			delayTargetTimes.clear();
+			done.add("DELAY_PROG");
+		}
+		if(w.equals("TIME")||w.equals("ALL"))
+		{
+			lastTimeProgsDone.clear();
+			lastDayProgsDone.clear();
+			done.add("TIME_PROG");
+			done.add("DAY_PROG");
+		}
+		return String.join(", ",done);
+	}
+
+	/**
+	 * SCRIPT DISABLE and ENABLE: turns triggers off (as MPNOTRIGGER does, until
+	 * turned on again) or on.
+	 * @param host the host
+	 * @param trigger the trigger, or null for all the host has
+	 * @param on true to turn on, false to turn off
+	 * @return the triggers changed, or null if there is no such trigger
+	 */
+	public List<String> enableTrigger(final PhysicalAgent host, final String trigger, final boolean on)
+	{
+		final Set<Integer> codes=new TreeSet<Integer>();
+		if((trigger==null)||(trigger.trim().length()==0))
+		{
+			for(final SubScript script : getScripts(host))
+			{
+				if(script.getTriggerCode()>0)
+					codes.add(Integer.valueOf(script.getTriggerCode()));
+			}
+		}
+		else
+		{
+			final int code=triggerCodeOf(trigger);
+			if(code<=0)
+				return null;
+			codes.add(Integer.valueOf(code));
+		}
+		final List<String> names=new ArrayList<String>();
+		for(final Integer code : codes)
+		{
+			if(on)
+				noTrigger.remove(code);
+			else
+			{
+				noTrigger.put(code,Long.valueOf(GameTime.now()+DISABLED_MILLIS));
+				synchronized(que)
+				{
+					for(final Iterator<ScriptableResponse> i=que.iterator();i.hasNext();)
+					{
+						if(i.next().triggerCode==code.intValue())
+							i.remove();
+					}
+				}
+			}
+			names.add(progs[code.intValue()-1]);
+		}
+		return names;
+	}
+
+	/**
+	 * SCRIPT ALARMS LIST: what is queued to run, MPALARMs and triggers waiting
+	 * their tick, one a line.
+	 * @return the lines
+	 */
+	public List<String> pendingResponses()
+	{
+		final List<String> out=new ArrayList<String>();
+		for(final ScriptableResponse SB : new XVector<ScriptableResponse>(que))
+		{
+			final int code=SB.triggerCode;
+			final String name=(code<0)?"MPALARM":((code>0)&&(code<=progs.length))?progs[code-1]:("#"+code);
+			final StringBuilder line=new StringBuilder(name).append(" in ").append(Math.max(0,SB.tickDelay)).append(" ticks");
+			if((SB.ctx!=null)&&(SB.ctx.source!=null))
+				line.append(", for ").append(SB.ctx.source.Name());
+			if((SB.scr!=null)&&(SB.scr.size()>1))
+				line.append(": ").append(SB.scr.get(1).first);
+			out.add(line.toString());
+		}
+		return out;
+	}
+
+	/**
+	 * SCRIPT ALARMS CLEAR: forgets what is queued to run.
+	 * @return how many there were
+	 */
+	public int clearPendingResponses()
+	{
+		final int n=que.size();
+		que.clear();
+		return n;
+	}
+
 	public String L(final String str, final String ... xs)
 	{
 		return CMLib.lang().fullSessionTranslation(getClass(), str, xs);

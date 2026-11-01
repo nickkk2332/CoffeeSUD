@@ -1,0 +1,9 @@
+# the DT7 test: a trigger list across a loaded file
+
+GREET_PROG 100
+mpsetvar FIXTEST FIXGREET $n
+~
+
+BRIBE_PROG 10
+mpsetvar FIXTEST FIXBRIBE yes
+~

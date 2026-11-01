@@ -544,6 +544,21 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   class through `Packages` gets a second copy of it, with its own statics,
   since CMClass is a class loader of its own; tests reach the game's copy
   through an instance from CMClass.
+- DT7 done. `SCRIPT` with a target as for STAT (a mob or item here or
+  carried, ROOM, AREA, name@room), reaching the engines a host has and those
+  in Scriptable behaviours (`ScriptingEngine.baseEngine()`): `SCRIPT LIST`
+  numbers its triggers with the file and line each is written at (inline or
+  a LOADed file), `[off]` and `[done]`; `SCRIPT FIRE trigger [words] [AS who]
+  [WITH item]` runs the triggers of a kind now as if who had caused them,
+  whatever their own conditions and odds, those answering to the words when
+  given (a word of a SPEECH_PROG, the hour of a TIME_PROG, a P pattern), the
+  words being `$g` and the item `$o`; `SCRIPT CALL function [args]` runs a
+  FUNCTION_PROG and says what it returned; `SCRIPT RESET [ONCE|DELAY|TIME|
+  ALL]` lets ONCE_PROGs, DELAY_PROG waits and this hour's TIME_PROGs and
+  DAY_PROGs run again, for this host alone; `SCRIPT DISABLE|ENABLE [trigger]`
+  turns triggers off until turned on (as MPNOTRIGGER, saved with the engine's
+  state); `SCRIPT ALARMS [LIST|CLEAR]` shows or forgets what is queued
+  (MPALARMs, triggers waiting their tick).
 
 #### 2d. Scripting (59)
 

@@ -334,6 +334,17 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	public void preApproveScripts();
 
 	/**
+	 * The engine that runs the scripts: this one, or the one a wrapper (the
+	 * Scriptable behaviour) hands its work to.  SCRIPT reaches the triggers
+	 * through it.
+	 * @return the engine
+	 */
+	public default ScriptingEngine baseEngine()
+	{
+		return this;
+	}
+
+	/**
 	 * Wrapper class for a standard parsed line of script,
 	 * which includes the full line of text, the parsed line,
 	 * and an optional helper object of any sort

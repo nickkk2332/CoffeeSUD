@@ -253,6 +253,12 @@ public class Scriptable extends StdBehavior implements ScriptingEngine
 	}
 
 	@Override
+	public ScriptingEngine baseEngine()
+	{
+		return engine();
+	}
+
+	@Override
 	public boolean isFunc(final String named)
 	{
 		return engine().isFunc(named);
