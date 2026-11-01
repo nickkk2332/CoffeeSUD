@@ -33,5 +33,14 @@ check("hut-there", (hut != null) && (hut.displayText() == "A doomed hut"), "no h
 CMLib.map().obliterateMapRoom(hut);
 A.setDescription("A land of ash.");
 A.setClimateType(Places.CLIMASK_DRY);
+// and, last, the room north becomes a cave (as MODIFY ROOM CLASS does), and
+// the start room holds a temporary effect (TemporaryAffects)
+var R1cave = CMLib.genEd().changeRoomType(R1, CMClass.getLocale("CaveRoom"));
+var T = CMClass.getAbility("TemporaryAffects");
+T.startTickDown(M, R0, 9999);
+T.makeLongLasting();
+T.setMiscText("+Prop_NoTeleport 400 ");
+check("cave", CMClass.classID(R0.getRoomInDir(Directions.NORTH)) == "CaveRoom", "north is " + CMClass.classID(R0.getRoomInDir(Directions.NORTH)));
+R1 = R1cave;
 check("changed", (R1.fetchBehavior("FieryRoom") != null) && (CMLib.map().getRoom(A.Name() + "#40") == null) && (R0.getRoomInDir(Directions.EAST) == null), "the changes did not take");
 done();

@@ -2330,13 +2330,21 @@ public final class WorldState
 	 * @param R the room
 	 * @param shape the AROOM tag's pieces
 	 */
-	private static void reshapeRoom(final Room R, final List<XMLTag> shape)
+	private static void reshapeRoom(Room R, final List<XMLTag> shape)
 	{
 		final XMLLibrary xml = CMLib.xml();
-		if(!CMClass.classID(R).equalsIgnoreCase(xml.getValFromPieces(shape, "RCLAS")))
+		final String roomClass = xml.getValFromPieces(shape, "RCLAS");
+		if(!CMClass.classID(R).equalsIgnoreCase(roomClass))
 		{
-			SaveGame.noteWorldChange(CMLib.lang().L("Room @x1 became another kind of room in play, which the save does not keep.", R.roomID()));
-			return;
+			// the kind play made it, as MODIFY ROOM CLASS does: the rooms
+			// that lead to it are linked to the new one
+			final Room newR = CMClass.getLocale(roomClass);
+			if(newR == null)
+			{
+				SaveGame.noteWorldChange(CMLib.lang().L("Room @x1 became a kind of room this game does not have (@x2).", R.roomID(), roomClass));
+				return;
+			}
+			R = CMLib.genEd().changeRoomType(R, newR);
 		}
 		clearShape(R);
 		R.setDisplayText(xml.getValFromPieces(shape, "RDISP"));

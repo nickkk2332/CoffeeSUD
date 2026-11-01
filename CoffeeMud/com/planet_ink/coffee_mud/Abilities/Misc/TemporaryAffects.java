@@ -391,6 +391,59 @@ public class TemporaryAffects extends StdAbility
 		}
 	}
 
+	/**
+	 * The internal stat ACTIVITY is what this holds, for a saved game, since
+	 * its text is spent on what it adds: a line of the kind setMiscText
+	 * takes for each effect, behaviour, ambiance or attribute, with the
+	 * ticks it has left, and for each binding.
+	 */
+	@Override
+	public String getStat(final String code)
+	{
+		if("ACTIVITY".equalsIgnoreCase(code))
+		{
+			final StringBuilder str=new StringBuilder("");
+			for(final Pair<Object,int[]> p : affects)
+			{
+				final int ticks=p.second[0];
+				final String line;
+				if(p.first instanceof AmbianceAdder)
+					line="+AMBIANCE "+ticks+" "+((AmbianceAdder)p.first).text();
+				else
+				if(p.first instanceof Ability)
+					line="+"+((Ability)p.first).ID()+" "+ticks+" "+((Ability)p.first).text();
+				else
+				if(p.first instanceof Behavior)
+					line="++"+((Behavior)p.first).ID()+" "+ticks+" "+((Behavior)p.first).getParms();
+				else
+				if((p.first instanceof Attrib)&&(p.second.length>1))
+					line="+"+((Attrib)p.first).name()+" "+ticks+" "+(p.second[1]==0);
+				else
+					continue;
+				str.append("<T>").append(CMLib.xml().parseOutAngleBrackets(line.trim())).append("</T>");
+			}
+			for(final String b : bindings)
+				str.append("<T>").append(CMLib.xml().parseOutAngleBrackets("+BINDTO "+b)).append("</T>");
+			return str.toString();
+		}
+		return super.getStat(code);
+	}
+
+	@Override
+	public void setStat(final String code, final String val)
+	{
+		if("ACTIVITY".equalsIgnoreCase(code))
+		{
+			for(final XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(val))
+			{
+				if(tag.tag().equalsIgnoreCase("T"))
+					setMiscText(CMLib.xml().restoreAngleBrackets(tag.value()));
+			}
+			return;
+		}
+		super.setStat(code, val);
+	}
+
 	@Override
 	public void setAffectedOne(final Physical P)
 	{

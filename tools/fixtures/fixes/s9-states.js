@@ -140,4 +140,23 @@ var RQ2 = fresh("RandomQuests", "MINQUESTS=1 MAXQUESTS=1", null);
 RQ2.setStat("STATE", rstate);
 call(RQ2, "takeBackSavedQuests", []);
 check("randomquests", field(RQ2, "numQuests") == 2 && field(RQ2, "myQuests").size() == 1 && field(RQ2, "myQuests").get(0).get() == someQuest, "state " + rstate);
+// MovingRoom (S17): where on its route the room is
+var MR = CMClass.getBehavior("MovingRoom"); // no route: the state alone
+MR.setStat("STATE", "<STOP>2</STOP><NEXT>3</NEXT><STATUS>0</STATUS><REV>true</REV>");
+var mstate = String(MR.getStat("STATE"));
+check("movingroom", mstate == "<STOP>2</STOP><NEXT>3</NEXT><STATUS>0</STATUS><REV>true</REV>", "state " + mstate);
+
+// TemporaryAffects (S17): what it holds, whose text is spent on adding it
+var TR1 = scratchRoom();
+var TA = CMClass.getAbility("TemporaryAffects");
+TA.startTickDown(M, TR1, 500);
+TA.makeLongLasting();
+TA.setMiscText("+Prop_NoTeleport 40 ");
+var tact = String(TA.getStat("ACTIVITY"));
+var TR2 = scratchRoom();
+var TA2 = CMClass.getAbility("TemporaryAffects");
+TA2.startTickDown(M, TR2, 500);
+TA2.makeLongLasting();
+TA2.setStat("ACTIVITY", tact);
+check("temporaryaffects", (tact.indexOf("+Prop_NoTeleport 40") >= 0) && (String(TA2.getStat("ACTIVITY")) == tact), "held " + tact + ", put back as " + TA2.getStat("ACTIVITY"));
 done();

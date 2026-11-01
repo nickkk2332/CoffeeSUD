@@ -353,8 +353,13 @@ tests of what a save keeps are the five `saves` groups of `tools/fixes.sh`
   character. `FieryRoom` keeps its burn ticks in its STATE. Rooms of
   vessels, grid cells and areas made in play are left to S15, S18 and S19;
   a room a thin area loads after the boot has no shape to compare, and is
-  skipped. Not done: a room whose class changed in play (reported on
-  restore), `TemporaryAffects`' text, and `MovingRoom`'s position (T16).
+  skipped. Later: a room whose class changed in play is made that class
+  again on restore, as MODIFY ROOM CLASS does it; `TemporaryAffects` keeps
+  what it holds in its ACTIVITY (a `+ID ticks parms` line for each effect,
+  behaviour, ambiance and attribute, and its bindings), as its text is spent
+  on adding them; and `MovingRoom` keeps its place on its route (stop, next
+  stop, status, direction) in its STATE, its rooms' exits being kept as
+  changed rooms.
 - S19 done, with S18. An area made in play (an instance child, a plane, a
   generated area) is written to the save's `<ROOMSHAPES>` as a `NEWAREA`
   (class, name, the area's XML without rooms, its timed effects), and its

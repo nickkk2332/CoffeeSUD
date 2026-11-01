@@ -26,4 +26,8 @@ check("key", keys == 1, keys + " keys in the cellar");
 check("hut-gone", (CMLib.map().getRoom("New Area#40") == null) && (R0.getRoomInDir(Directions.EAST) == null), "the hut is back");
 check("area", (A.description() == "A land of ash.") && (A.getClimateTypeCode() == Places.CLIMASK_DRY), "area: " + A.description() + ", climate " + A.getClimateTypeCode());
 check("start", (M.getStartRoom() == cellar) && (cellar != null), "start room " + M.getStartRoom());
+check("cave", (R1 != null) && (CMClass.classID(R1) == "CaveRoom"), "north is " + ((R1 == null) ? "gone" : CMClass.classID(R1)));
+var held = R0.fetchEffect("TemporaryAffects");
+var hact = (held == null) ? "" : String(held.getStat("ACTIVITY"));
+check("temporary", hact.indexOf("+Prop_NoTeleport") >= 0, "the start room holds " + hact);
 done();

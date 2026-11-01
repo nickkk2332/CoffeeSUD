@@ -60,6 +60,25 @@ public class MovingRoom extends ActiveTicker
 	private int					currentStatus	= 1;
 	private boolean				isReversed		= false;
 
+	/** for a saved game: where on its route the room is */
+	@Override
+	protected String getRunState()
+	{
+		return "<STOP>"+currentStop+"</STOP><NEXT>"+nextStop+"</NEXT><STATUS>"+currentStatus+"</STATUS><REV>"+isReversed+"</REV>";
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final List<XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		if(CMLib.xml().getPieceFromPieces(tags, "STOP")==null)
+			return;
+		currentStop=CMLib.xml().getIntFromPieces(tags, "STOP");
+		nextStop=CMLib.xml().getIntFromPieces(tags, "NEXT");
+		currentStatus=CMLib.xml().getIntFromPieces(tags, "STATUS");
+		isReversed=CMath.s_bool(CMLib.xml().getValFromPieces(tags, "REV"));
+	}
+
 	//private static final int CODE0_TRAVELDIRECTION=0;
 	//private static final int CODE0_DOORSDIRECTION=1;
 	//private static final int CODE0_INSIDEARRIVEMSG=2;
