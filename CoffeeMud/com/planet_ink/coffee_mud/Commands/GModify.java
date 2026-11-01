@@ -1061,6 +1061,18 @@ public class GModify extends StdCommand
 			mob.tell(L("You must specify either WHEN, a tag, or CHANGES parameters for valid matches to be made."));
 			return false;
 		}
+		// B4: CHANGE= resets each room first, which drops the mobs and items not saved to it
+		if((changes.size()>0)&&(!doPlayersOnly)&&com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()
+		&&(Unsaved.count()>0)&&(mob.session()!=null))
+		{
+			final int n=Unsaved.count();
+			if(!mob.session().confirm(L("Unsaved mobs or items in @x1: @x2.  GMODIFY CHANGE= resets each room first, which drops them.  Go on (y/N)? ",
+				(n==1)?L("1 room"):L("@x1 rooms",""+n),Unsaved.summary(5)),"N"))
+			{
+				mob.tell(L("SAVE CHANGED saves them first."));
+				return false;
+			}
+		}
 
 		/**
 		 * GMODIFY just for players...

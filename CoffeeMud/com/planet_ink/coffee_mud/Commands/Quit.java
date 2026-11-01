@@ -90,6 +90,12 @@ public class Quit extends StdCommand
 					mob.tell(L("Quitting requires: ")+CMLib.masking().maskDesc(CMProps.getVar(CMProps.Str.LOGOUTMASK), false));
 					return false;
 				}
+				// B4: in builder mode, rooms whose mobs or items are not saved
+				if(SaveGame.isBuilderMode() && (Unsaved.count()>0))
+				{
+					promptUnsavedAndQuit(mob, session);
+					return false;
+				}
 				if(SaveGame.isAvailable())
 				{
 					promptSaveAndQuit(mob, session);
@@ -128,6 +134,53 @@ public class Quit extends StdCommand
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * In a single-player game that can be saved, asks whether to save before
+	 * quitting, since a game that is not saved is lost.
+	 * @param mob the player
+	 * @param session their session
+	 */
+	protected void promptUnsavedAndQuit(final MOB mob, final Session session)
+	{
+		final int n=Unsaved.count();
+		final String rooms=(n==1)?L("1 room"):L("@x1 rooms",""+n);
+		final String which=Unsaved.summary(5);
+		session.prompt(new InputCallback(InputCallback.Type.CHOOSE, "Y", "YNC", 0)
+		{
+			@Override
+			public void showPrompt()
+			{
+				session.promptPrint(L("\n\rUnsaved mobs or items in @x1: @x2.\n\rQuit -- save them first (Y/n), or cancel (c)? ",rooms,which));
+			}
+
+			@Override
+			public void timedOut()
+			{
+			}
+
+			@Override
+			public void callBack()
+			{
+				final String answer=this.input.trim().toUpperCase();
+				if(answer.startsWith("C"))
+					return;
+				if(!answer.startsWith("N"))
+					mob.tell(L("Saved the mobs and items of @x1.",rooms));
+				if(!answer.startsWith("N"))
+					Unsaved.saveAll(mob);
+				final CMMsg msg=CMClass.getMsg(mob,null,CMMsg.MSG_QUIT,null);
+				final Room R=mob.location();
+				if((R!=null)&&(R.okMessage(mob,msg)))
+				{
+					CMLib.map().sendGlobalMessage(mob,CMMsg.TYP_QUIT, msg);
+					mob.tell(L("Bye!"));
+					session.stopSession(true,false, false, false);
+					CMLib.commands().monitorGlobalMessage(R, msg);
+				}
+			}
+		});
 	}
 
 	/**

@@ -4798,6 +4798,7 @@ public class ListCmd extends StdCommand
 		SQL("SQL",new SecFlag[]{SecFlag.CMDDATABASE}),
 		SHIPS("SHIPS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDAREAS,SecFlag.CMDPLAYERS}),
 		INSTANCES("INSTANCES",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDAREAS}),
+		UNSAVED("UNSAVED",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDROOMS}),
 		COMMANDS("COMMANDS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDCOMMANDS}),
 		FILEUSE("FILEUSE",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDAREAS}),
 		SOCIALS("SOCIALS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDSOCIALS,SecFlag.AREA_CMDSOCIALS}),
@@ -6553,6 +6554,9 @@ public class ListCmd extends StdCommand
 			break;
 		case INSTANCES: // DT28
 			mob.tell(VesselCmd.instances());
+			break;
+		case UNSAVED: // B4
+			mob.tell(Unsaved.report());
 			break;
 		case ABILITYDOMAINS:
 		{

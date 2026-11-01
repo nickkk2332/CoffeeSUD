@@ -901,6 +901,17 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   in: `ScriptCheck.withLoads`), a Scriptable behaviour added, MODIFY
   QUEST's script and a description of more than one line (or + at its
   prompt) use it, and promptStatMsg now says why a check failed.
+- B4 done. `core/Unsaved` marks, in builder mode, each room whose mobs
+  or items a building command (CREATE, MODIFY, DESTROY, COPY, TRANSFER,
+  RESTRING, EVERY, GENERATE: StdMOB.doCommand) puts in or takes out
+  (StdRoom's add and remove), and the builder's room for MODIFY or
+  RESTRING of a mob or item. `LIST UNSAVED` lists them with the commands
+  and the change in their counts from `DBCountRoomMobsItems`; `SAVE
+  CHANGED` saves exactly those (SAVE ROOM HOME), then the world files;
+  SAVE ROOM and SAVE AREA take theirs off. Plain SAVE names them, QUIT
+  asks "save them first (Y/n), or cancel (c)?", GMODIFY CHANGE= asks
+  before its reset drops them, `BUILDERAUTOSAVE=1` saves after each
+  command, and `%U` in a prompt is their number.
 
 #### 2d. Scripting (59)
 

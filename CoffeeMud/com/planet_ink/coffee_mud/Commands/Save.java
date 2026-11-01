@@ -133,9 +133,32 @@ public class Save extends StdCommand
 			CMLib.threads().rejuv(room, Tickable.TICKID_ROOM_ITEM_REJUV);
 			room.startItemRejuv();
 			CMLib.database().DBUpdateTheseMOBs(room, mine);
+			Unsaved.saved(room); // B4
 			if((mob != null) && (skipped.size() > 0))
 				mob.tell(L("Saved @x1 mobs as this room's; skipped: @x2.", "" + mine.size(), String.join(", ", skipped)));
 			return true;
+		}
+	}
+
+	/**
+	 * SAVE CHANGED (B4): a room's mobs and items saved, as SAVE ROOM does.
+	 * @param mob the builder, or null
+	 * @param room the room
+	 */
+	public void saveChangedRoom(final MOB mob, final Room room)
+	{
+		if(SaveGame.isBuilderMode())
+			saveRoomHome(mob, room);
+		else
+		{
+			try
+			{
+				clearSaveAndRestart(mob, room, LocalType.MOBS_OR_ITEMS, true);
+			}
+			catch(final IOException e)
+			{
+				Log.errOut("Save", e);
+			}
 		}
 	}
 
@@ -144,6 +167,8 @@ public class Save extends StdCommand
 		synchronized(CMClass.getSync("SYNC"+room.roomID()))
 		{
 			room=CMLib.map().getRoom(room);
+			if(taskCode == LocalType.MOBS_OR_ITEMS)
+				Unsaved.saved(room); // B4
 			CMLib.threads().clearDebri(room,LocalType.MOBS_OR_ITEMS);
 			if((!noPrompt)
 			&&(mob!=null)
@@ -202,6 +227,17 @@ public class Save extends StdCommand
 	{
 		if(CMProps.isSinglePlayer())
 		{
+			// B4: SAVE CHANGED saves the rooms building commands changed, then the files
+			if(SaveGame.isBuilderMode() && (commands.size()>1) && commands.get(1).equalsIgnoreCase("CHANGED") && builderAllowed(mob))
+			{
+				final int n=Unsaved.saveAll(mob);
+				if(n==0)
+					mob.tell(L("No room has unsaved mobs or items."));
+				else
+					mob.tell(L("Saved the mobs and items of @x1.",(n==1)?L("1 room"):L("@x1 rooms",""+n)));
+				reportWorldFiles(mob, WorldFiles.exportAll());
+				return false;
+			}
 			if(SaveGame.isBuilderMode() && (!isBuilderSave(commands)) && builderAllowed(mob))
 			{
 				// SAVE FORCE writes the files that loaded only in part too
@@ -260,6 +296,11 @@ public class Save extends StdCommand
 		final List<String> outside=WorldFiles.keptOutside();
 		if(outside.size()>0)
 			mob.tell(L("Not written, as they were changed outside the game: @x1.  What SAVE would write is beside each, as @x2, and WORLD DIFF shows the difference.  Start the game again to load the files as they are, or SAVE FORCE writes over them.",String.join(", ",outside),WorldFiles.BUILDER_EXT));
+		// B4: what the world files do not have, as it is not saved to its rooms
+		final int unsaved=Unsaved.count();
+		if(unsaved>0)
+			mob.tell(L("Unsaved mobs or items in @x1, which the world files do not have: @x2.  SAVE CHANGED saves them (LIST UNSAVED lists them).",
+				(unsaved==1)?L("1 room"):L("@x1 rooms",""+unsaved),Unsaved.summary(5)));
 		// what a check of the world's scripts finds (DT11)
 		final int scriptProblems=ScriptCheck.checkAll().size();
 		if(scriptProblems>0)

@@ -2301,7 +2301,16 @@ public class StdMOB implements MOB
 					CMLib.achievements().possiblyBumpAchievement(this, AchievementLibrary.Event.CMDUSE, 1, (Command) O);
 					CMLib.coffeeTables().bump((Command) O, CoffeeTableRow.STAT_CMDUSE);
 				}
-				((Command) O).execute(this, new XVector<String>(commands), metaFlags);
+				// B4: the rooms a building command changes are marked unsaved
+				Unsaved.begin(this, O, commands);
+				try
+				{
+					((Command) O).execute(this, new XVector<String>(commands), metaFlags);
+				}
+				finally
+				{
+					Unsaved.end(this, O);
+				}
 			}
 			else
 			if(O instanceof Social)

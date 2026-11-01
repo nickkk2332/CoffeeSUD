@@ -2570,6 +2570,12 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 					c++;
 					break;
 				}
+				case 'U': // B4: the rooms with unsaved mobs or items
+				{
+					buf.append(Unsaved.count());
+					c++;
+					break;
+				}
 				case 'v':
 				{
 					if((c<prompt.length()-1)

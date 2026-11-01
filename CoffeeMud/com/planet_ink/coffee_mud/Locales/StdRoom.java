@@ -2143,6 +2143,7 @@ public class StdRoom implements Room
 	@Override
 	public void addInhabitant(final MOB mob)
 	{
+		Unsaved.touched(this, mob); // B4
 		inhabitants.addElement(mob);
 	}
 
@@ -2216,6 +2217,7 @@ public class StdRoom implements Room
 	@Override
 	public void delInhabitant(final MOB mob)
 	{
+		Unsaved.touched(this, mob); // B4
 		inhabitants.removeElement(mob);
 	}
 
@@ -2354,6 +2356,7 @@ public class StdRoom implements Room
 	@Override
 	public void addItem(final Item item, Expire expire)
 	{
+		Unsaved.touched(this, item); // B4
 		if(expire == null)
 			expire=Expire.Never;
 		switch(expire)
@@ -2395,6 +2398,7 @@ public class StdRoom implements Room
 	@Override
 	public void addItem(final Item item)
 	{
+		Unsaved.touched(this, item); // B4
 		if((item!=null)&&(!item.amDestroyed()))
 		{
 			item.setOwner(this);
@@ -2406,6 +2410,7 @@ public class StdRoom implements Room
 	@Override
 	public void delItem(final Item item)
 	{
+		Unsaved.touched(this, item); // B4
 		contents.removeElement(item);
 		item.recoverPhyStats();
 	}
