@@ -952,6 +952,14 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   them with DBUpdateExits. MODIFY UPDATE: (MQL) saves a changed exit with
   each room it leads from and an area with DBUpdateArea; a mob or item it
   cannot save directly marks its room unsaved for SAVE CHANGED (B4).
+- B9 done, as `WORLD DIG` and `WORLD PATH` (`core/DigMode`): BUILD is
+  the Building skill outside a playtest (DT8), so the audit's BUILD DIG
+  and PATH are WORLD's. `WORLD DIG ON [TYPE=] [LINK=ONE-WAY]` makes a
+  room through Create's CREATE ROOM where the builder walks and there is
+  no exit (MUDTracker.move); `WORLD PATH dirs [TYPE=] [NAME=] [DESC=]`
+  lays a chain, following exits already there, the builder staying put.
+  Rooms made are saved and tagged TODO; WORLD CHECK's TEXT part lists
+  them, and EDIT DESC takes the tag off.
 
 #### 2d. Scripting (59)
 

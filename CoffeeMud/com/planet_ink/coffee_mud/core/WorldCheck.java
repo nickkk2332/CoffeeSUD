@@ -281,6 +281,8 @@ public final class WorldCheck
 				out.add(new Finding(Severity.WARNING, "TEXT", R.roomID() + ": " + R.ID() + "'s default description"));
 			if((proto != null) && sameText(R.displayText(), proto.displayText()))
 				out.add(new Finding(Severity.WARNING, "TEXT", R.roomID() + ": " + R.ID() + "'s default title"));
+			if(R.hasTag(DigMode.TODO_TAG))
+				out.add(new Finding(Severity.WARNING, "TEXT", R.roomID() + ": tagged TODO, as WORLD DIG or PATH made it; EDIT DESC gives it its own text"));
 			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
 			{
 				final MOB M = m.nextElement();

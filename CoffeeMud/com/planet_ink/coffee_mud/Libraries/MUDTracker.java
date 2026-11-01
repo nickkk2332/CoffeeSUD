@@ -1659,6 +1659,9 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 
 	protected boolean move(final MOB mob, final int directionCode, final boolean flee, final boolean nolook, final boolean noriders, final boolean always, final boolean running)
 	{
+		// B9: BUILD DIG makes a room where the builder walks and there is none
+		if(!flee)
+			DigMode.beforeMove(mob,directionCode);
 		final Room thisRoom=mob.location();
 		if(thisRoom==null)
 			return false;

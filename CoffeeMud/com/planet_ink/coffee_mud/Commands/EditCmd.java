@@ -286,6 +286,9 @@ public class EditCmd extends StdCommand
 			return;
 		}
 		P.setDescription(edited);
+		// B9: written now
+		if(P.hasTag(DigMode.TODO_TAG))
+			P.delTag(DigMode.TODO_TAG);
 		keep(mob, P);
 	}
 

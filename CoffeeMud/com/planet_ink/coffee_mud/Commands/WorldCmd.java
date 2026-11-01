@@ -219,6 +219,37 @@ public class WorldCmd extends StdCommand
 			: L("@x1 is a shipped area again: SAVE writes it to world/areas.", A.Name()));
 	}
 
+	/**
+	 * WORLD DIG and WORLD PATH (B9, core/DigMode).
+	 * @param mob the builder
+	 * @param sub DIG or PATH
+	 * @param words the words after it
+	 */
+	public static void worldDig(final MOB mob, final String sub, final List<String> words)
+	{
+		final Map<String, String> a = DigMode.args(words);
+		final boolean twoWay = !"ONE-WAY".equalsIgnoreCase(a.get("LINK")) && !"ONEWAY".equalsIgnoreCase(a.get("LINK"));
+		final String rest = a.get("").toUpperCase();
+		if(sub.equals("PATH"))
+		{
+			mob.tell(DigMode.path(mob, a.get(""), a.get("TYPE"), twoWay, a.get("NAME"), a.get("DESC")));
+			return;
+		}
+		if(rest.startsWith("OFF"))
+		{
+			DigMode.off(mob);
+			mob.tell("WORLD DIG is off.");
+		}
+		else
+		if(rest.startsWith("ON"))
+		{
+			DigMode.on(mob, a.get("TYPE"), twoWay);
+			mob.tell(DigMode.describe(mob));
+		}
+		else
+			mob.tell(DigMode.describe(mob) + "  WORLD DIG ON (TYPE=[LOCALE/TEMPLATE]) (LINK=TWO-WAY/ONE-WAY), WORLD DIG OFF");
+	}
+
 	/** the save a normal game's WORLD RELOAD is kept in while the world loads again */
 	public static final String RELOAD_SLOT = "world-reload";
 
@@ -875,6 +906,17 @@ public class WorldCmd extends StdCommand
 			worldCheck(mob, commands.subList(2, commands.size()));
 			return false;
 		}
+		// B9: WORLD DIG and WORLD PATH (BUILD is the Building skill outside a playtest)
+		if(commands.get(1).equalsIgnoreCase("DIG") || commands.get(1).equalsIgnoreCase("PATH"))
+		{
+			if(!SaveGame.isBuilderMode())
+			{
+				mob.tell(L("WORLD DIG and WORLD PATH make rooms, so they are for builder mode."));
+				return false;
+			}
+			worldDig(mob, commands.get(1).toUpperCase(), commands.subList(2, commands.size()));
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("RELOAD"))
 		{
 			mob.tell(worldReload(mob, new ArrayList<String>(commands.subList(2, commands.size()))));
@@ -907,7 +949,7 @@ public class WorldCmd extends StdCommand
 		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD RELOAD loads files again, WORLD BACKUPS and RESTOREFILE the files SAVE wrote over, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD DIG and WORLD PATH make rooms fast, WORLD RELOAD loads files again, WORLD BACKUPS and RESTOREFILE the files SAVE wrote over, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())
