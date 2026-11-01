@@ -1,0 +1,9 @@
+# the DT10 test: errors in a loaded file are told at their line
+RAND_PROG 100
+mpsetvar FIXTEST FIXERRFILE ran
+mpnosuchthing here
+<SCRIPT>
+var fixa = 1;
+fixesUndefinedFunction();
+</SCRIPT>
+~

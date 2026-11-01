@@ -215,15 +215,8 @@ public final class JSRuntime
 			while(errors.size() > MAX_ERRORS)
 				errors.removeFirst();
 		}
-		if(SaveGame.isBuilderMode())
-		{
-			for(final Session S : CMLib.sessions().allIterable())
-			{
-				final MOB M = S.mob();
-				if(M != null)
-					M.tell("^R" + desc + "^?");
-			}
-		}
+		// the one channel for script errors: the builder told, the player not (DT10)
+		ScriptErrors.report(desc, null);
 		return desc;
 	}
 

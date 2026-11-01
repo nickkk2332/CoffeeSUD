@@ -587,6 +587,18 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   it otherwise. Left: `DEVLOG WINDOW` (a separate CharacterWindow), and
   `LIST LOG ERRORS SINCE BOOT` by source (`DEVLOG LAST n ERROR MODULE x`
   does the same from the lines kept).
+- DT10 done. A script error reads `file:line COMMAND Type: what (host @
+  room)`, the file and line found from the parsed triggers following LOAD=
+  (`scriptLocation`; `inline:n` for an object's own script), and a
+  JavaScript error gives the file's line (the block is handed to Rhino from
+  the line after `<SCRIPT>`, with one line ending each: the game's `\n\r`
+  counted twice). Both go to one channel, `core/ScriptErrors`: kept (200)
+  for the `SCRIPTERRORS [n] [text]` command, told to the builder in builder
+  mode and a DEV=1 game, and in a normal game as `SCRIPTERRORS=LOG|NOTICE|
+  SHOW` says (LOG by default), no longer to the room. An MP word that is no
+  command, or the start of several (`MPSE`), is an error and no longer runs
+  as a game command. Found on the way: the shipped quest template
+  `auto_escort1.quest` had `mpechoto` for `mpechoat`.
 
 #### 2d. Scripting (59)
 

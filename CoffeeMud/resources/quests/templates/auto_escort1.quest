@@ -177,7 +177,7 @@ FUNCTION_PROG DO_ACCEPT
 		mpsetvar $n $QUEST_ID_ESCORTEE $b
 		mpechoat $n $b follows you.
 	else
-		mpechoto "$n" You can't help $b.
+		mpechoat "$n" You can't help $b.
 		mppurge $b
 	endif
 ~

@@ -1421,25 +1421,49 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected void logError(final MPContext context, final String cmdName, final String errType, final String errMsg)
 	{
 		final Environmental scripted = context.scripted;
-		logError(scripted,cmdName,errType,errMsg);
+		String where="";
+		if((context.script!=null)&&(scripted instanceof PhysicalAgent))
+			where=scriptLocation((PhysicalAgent)scripted,context.script,context.line);
+		logError(scripted,cmdName,errType,errMsg,where);
 	}
 
 	protected void logError(final Environmental scripted, final String cmdName, final String errType, final String errMsg)
 	{
+		logError(scripted,cmdName,errType,errMsg,"");
+	}
+
+	/**
+	 * Logs a script error, as "file:line COMMAND Type: what (host @ room)", and
+	 * hands it to {@link ScriptErrors}, which keeps it for SCRIPTERRORS and
+	 * shows it to the builder, or as a normal game's SCRIPTERRORS says (not,
+	 * by default, to the player).
+	 * @param scripted the host, or null
+	 * @param cmdName the command or function
+	 * @param errType the kind of error
+	 * @param errMsg what went wrong
+	 * @param where the file and line, or ""
+	 */
+	protected void logError(final Environmental scripted, final String cmdName, final String errType, final String errMsg, final String where)
+	{
+		final String at=((where==null)||(where.length()==0))?"":(where+" ");
 		if(scripted!=null)
 		{
 			final Room R=CMLib.map().roomLocation(scripted);
-			final String scriptFiles = getScriptFiles();
-			Log.errOut("Scripting",scripted.name()+"/"+CMLib.map().getDescriptiveExtendedRoomID(R)+"/"+ cmdName+"/"+errType+"/"+errMsg+"/"+scriptFiles);
-			if(R!=null)
-				R.showHappens(CMMsg.MSG_OK_VISUAL,L("Scripting Error: @x1/@x2/@x3/@x4/@x5/@x6",scripted.name(),CMLib.map().getExtendedRoomID(R),cmdName,errType,errMsg,scriptFiles));
+			final String line=at+cmdName+" "+errType+": "+errMsg+" ("+scripted.name()+" @ "+CMLib.map().getDescriptiveExtendedRoomID(R)
+							+((at.length()>0)?"":(", "+getScriptFiles()))+")";
+			Log.errOut("Scripting",line);
+			ScriptErrors.report(line,R);
 		}
 		else
-		if((cmdName!=null)&&(cmdName.equalsIgnoreCase("LOAD")))
-			Log.errOut("Scripting","*/*/*/"+cmdName+"/"+errType+"/"+errMsg+"/");
-		else
-			Log.errOut("Scripting","*/*/"+CMParms.toListString(externalFiles())+"/"+cmdName+"/"+errType+"/"+errMsg);
-
+		{
+			final String line;
+			if((cmdName!=null)&&(cmdName.equalsIgnoreCase("LOAD")))
+				line=at+cmdName+" "+errType+": "+errMsg;
+			else
+				line=at+cmdName+" "+errType+": "+errMsg+" ("+CMParms.toListString(externalFiles())+")";
+			Log.errOut("Scripting",line);
+			ScriptErrors.report(line,null);
+		}
 	}
 
 	protected boolean simpleEvalStr(final Environmental scripted, final String arg1, final String arg2, final String cmp, final String cmdName)
@@ -9405,16 +9429,27 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			Integer methCode=methH.get(cmd);
 			if((methCode==null)&&(cmd.startsWith("MP")))
 			{
+				// a prefix of one command stands for it; of none or of several, it is an error
+				final List<String> could=new ArrayList<String>(2);
 				for(int i=0;i<methods.length;i++)
 				{
 					if(methods[i].startsWith(cmd))
 					{
-						methCode=Integer.valueOf(i+1); // offset by 1, always
-						break; // the first match, as the list is in order
+						if(methCode==null)
+							methCode=Integer.valueOf(i+1); // offset by 1, always
+						could.add(methods[i]);
 					}
 				}
 				if(methCode==null)
-					Log.errOut("Scripting",ctx.scripted.name()+"/"+CMLib.map().getDescriptiveExtendedRoomID(lastKnownLocation)+"/MOBPROG Error: '"+cmd+"' is not a valid command.");
+				{
+					logError(ctx,cmd,"Syntax","unknown command "+cmd);
+					continue; // an MP word is never run as a game command
+				}
+				if(could.size()>1)
+				{
+					logError(ctx,cmd,"Syntax","ambiguous command "+cmd+": "+CMParms.toListString(could));
+					continue;
+				}
 			}
 			if(methCode==null)
 				methCode=Integer.valueOf(0);
@@ -9459,8 +9494,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(this.approvedScripts || CMSecurity.isApprovedJScript(jscript))
 				{
 					final int trig=script.getTriggerCode();
+					// the file and line of <SCRIPT>, so that a JavaScript error's line is the file's
+					final String fileAt=(ctx.scripted instanceof PhysicalAgent)?scriptLocation((PhysicalAgent)ctx.scripted,script,ctx.line-jsLines(ln)):"";
+					final int colon=fileAt.lastIndexOf(':');
+					final int firstLine=((colon>0)&&CMath.isInteger(fileAt.substring(colon+1)))?(CMath.s_int(fileAt.substring(colon+1))+1):1;
 					final String where="'"+ctx.scripted.Name()+"' @ "+CMLib.map().getDescriptiveExtendedRoomID(lastKnownLocation)
-						+((trig>0)&&(trig<=progs.length)?(" "+progs[trig-1]):"")+" <SCRIPT>";
+						+((trig>0)&&(trig<=progs.length)?(" "+progs[trig-1]):"")+" <SCRIPT>"
+						+((colon>0)?(" in "+fileAt.substring(0,colon)):"");
 					final Context cx = Context.enter();
 					try
 					{
@@ -9483,7 +9523,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						};
 						scope.defineFunctionProperties(names, JScriptEvent.class,
 													   ScriptableObject.DONTENUM);
-						cx.evaluateString(scope, jscript.toString(),where, 1, null);
+						// one line ending each, as the file has, so that Rhino's lines are the file's
+						cx.evaluateString(scope, jscript.toString().replaceAll("\\r\\n|\\n\\r|\\r","\n"),where, firstLine, null);
 					}
 					catch(final Exception e)
 					{
@@ -16728,6 +16769,122 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	}
 
 	/**
+	 * The texts a host's scripts are written in: the inline script, then each
+	 * LOADed file, each as its lines.
+	 * @param host the host
+	 * @return the texts, each with its name ("inline" or the file)
+	 */
+	protected List<Pair<String,String[]>> sourceTexts(final PhysicalAgent host)
+	{
+		final List<Pair<String,String[]>> texts=new ArrayList<Pair<String,String[]>>();
+		final String inline=getScript();
+		texts.add(new Pair<String,String[]>("inline",(inline==null)?new String[0]:inline.split("\n")));
+		for(final String f : externalFiles())
+			texts.add(new Pair<String,String[]>(f,getResourceFileData(host,f).toString().split("\n")));
+		return texts;
+	}
+
+	/** finds text in lines from a line and column: the line and the column after it, or null */
+	private static int[] findFrom(final String[] lines, final int[] pos, final String want)
+	{
+		for(int l=pos[0];l<lines.length;l++)
+		{
+			final int x=normalLine(lines[l]).indexOf(want,(l==pos[0])?pos[1]:0);
+			if(x>=0)
+				return new int[]{l,x+want.length()};
+		}
+		return null;
+	}
+
+	/**
+	 * Where each trigger is written, in the order parsed: for each, the text
+	 * (an index into texts), the line and the column after it, or null.
+	 * @param scripts the triggers
+	 * @param texts the texts, as sourceTexts gives them
+	 * @return the places
+	 */
+	protected int[][] triggerPositions(final List<SubScript> scripts, final List<Pair<String,String[]>> texts)
+	{
+		final int[][] from=new int[texts.size()][2];
+		final int[][] at=new int[scripts.size()][];
+		for(int v=0;v<scripts.size();v++)
+		{
+			final String want=normalLine(scripts.get(v).getTriggerLine());
+			for(int t=0;(t<texts.size())&&(at[v]==null)&&(want.length()>0);t++)
+			{
+				final int[] p=findFrom(texts.get(t).second,from[t],want);
+				if(p!=null)
+				{
+					from[t][0]=p[0];
+					from[t][1]=p[1];
+					at[v]=new int[]{t,p[0],p[1]};
+				}
+			}
+		}
+		return at;
+	}
+
+	/** how many lines a parsed &lt;SCRIPT&gt; block skips, once it ran */
+	private static int jsLines(final ScriptLn ln)
+	{
+		if((ln!=null)&&(ln.third instanceof Object[])&&(((Object[])ln.third).length>1)&&(((Object[])ln.third)[1] instanceof Integer))
+			return ((Integer)((Object[])ln.third)[1]).intValue();
+		return 0;
+	}
+
+	/**
+	 * Where a line of a host's script is written, as file:line ("inline:n"
+	 * for the host's own script), following LOAD=.
+	 * @param host the host
+	 * @param script the trigger the line is in
+	 * @param lineIndex the line's index in it (0 is the trigger)
+	 * @return the place, or "" if it is not found (a script made as it ran)
+	 */
+	public String scriptLocation(final PhysicalAgent host, final SubScript script, final int lineIndex)
+	{
+		try
+		{
+			final List<SubScript> scripts=getScripts(host);
+			int v=-1;
+			for(int i=0;i<scripts.size();i++)
+			{
+				if(scripts.get(i)==script)
+				{
+					v=i;
+					break;
+				}
+			}
+			if(v<0)
+				return "";
+			final List<Pair<String,String[]>> texts=sourceTexts(host);
+			final int[] at=triggerPositions(scripts,texts)[v];
+			if(at==null)
+				return "";
+			final String[] lines=texts.get(at[0]).second;
+			int[] pos=new int[]{at[1],at[2]};
+			int found=at[1];
+			for(int i=1;(i<=lineIndex)&&(i<script.size());i++)
+			{
+				// a line may be several (a <SCRIPT> body): found by its first, passed by all
+				final String[] pieces=script.get(i).first.split("\\r\\n|\\n\\r|\\n|\\r");
+				final String want=normalLine(pieces[0]);
+				if(want.length()==0)
+					continue;
+				final int[] p=findFrom(lines,pos,want);
+				if(p==null)
+					break;
+				found=p[0];
+				pos=(pieces.length>1)?new int[]{Math.min(lines.length-1,p[0]+pieces.length-1)+1,0}:p;
+			}
+			return texts.get(at[0]).first+":"+(found+1);
+		}
+		catch(final RuntimeException e)
+		{
+			return "";
+		}
+	}
+
+	/**
 	 * SCRIPT LIST: the host's triggers, one a line, numbered, with the file and
 	 * line each is written at, and [off] for one disabled, [done] for a
 	 * ONCE_PROG that ran.
@@ -16737,35 +16894,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	public List<String> triggerList(final PhysicalAgent host)
 	{
 		final List<SubScript> scripts=getScripts(host);
-		// where each trigger is written: the inline script, then each loaded file
-		final List<Pair<String,String[]>> texts=new ArrayList<Pair<String,String[]>>();
-		final String inline=getScript();
-		texts.add(new Pair<String,String[]>("inline",(inline==null)?new String[0]:inline.split("\n")));
-		for(final String f : externalFiles())
-			texts.add(new Pair<String,String[]>(f,getResourceFileData(host,f).toString().split("\n")));
-		final int[][] from=new int[texts.size()][2]; // line, column searched to
+		final List<Pair<String,String[]>> texts=sourceTexts(host);
+		final int[][] at=triggerPositions(scripts,texts);
 		final List<String> out=new ArrayList<String>();
 		for(int v=0;v<scripts.size();v++)
 		{
 			final SubScript script=scripts.get(v);
 			final String trig=script.getTriggerLine();
-			final String want=normalLine(trig);
-			String where="";
-			for(int t=0;(t<texts.size())&&(where.length()==0)&&(want.length()>0);t++)
-			{
-				final String[] lines=texts.get(t).second;
-				for(int l=from[t][0];l<lines.length;l++)
-				{
-					final int x=normalLine(lines[l]).indexOf(want,(l==from[t][0])?from[t][1]:0);
-					if(x>=0)
-					{
-						from[t][0]=l;
-						from[t][1]=x+want.length();
-						where=texts.get(t).first+":"+(l+1);
-						break;
-					}
-				}
-			}
+			final String where=(at[v]==null)?"":(texts.get(at[v][0]).first+":"+(at[v][1]+1));
 			final int code=script.getTriggerCode();
 			final StringBuilder line=new StringBuilder("").append(v+1).append(". ").append(trig);
 			if(where.length()>0)

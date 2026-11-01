@@ -35,7 +35,8 @@ check("repeat-count", has(after, "(the last line 2 more times)") && has(after, "
 // a script's error comes too
 var bad = scriptedMob("a fixes broken scripter", "RAND_PROG 100\nmpcallfunc nosuchfixfunc\n~\n");
 tickMob(bad);
-check("script-error", has(out(), "[ERROR Scripting]^N a fixes broken scripter"), "the script's error was not told");
+var told = out();
+check("script-error", has(told, "[ERROR Scripting]^N inline:2 MPCALLFUNC Unknown: Function: nosuchfixfunc (a fixes broken scripter @ "), "the script's error was not told: " + told);
 bad.destroy();
 // LAST replays, by level and module, repeats counted
 var last = devlog("LAST 50 ERROR MODULE Fixmod*");

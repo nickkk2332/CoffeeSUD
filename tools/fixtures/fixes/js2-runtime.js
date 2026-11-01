@@ -24,6 +24,7 @@ var errs = JSR.recentErrors(100);
 var last = errs.size() > 0 ? "" + errs.get(errs.size() - 1) : "";
 check("error-recorded", errs.size() > before, "no error recorded");
 check("error-names-host", last.indexOf("a broken oracle") >= 0 && last.indexOf("RAND_PROG") >= 0, "'" + last + "'");
-check("error-has-line", last.indexOf("line 1") >= 0, "'" + last + "'");
+// the line is the script's own (DT10): the inline script's third
+check("error-has-line", last.indexOf("<SCRIPT> in inline line 3:") >= 0, "'" + last + "'");
 bad.destroy();
 done();
