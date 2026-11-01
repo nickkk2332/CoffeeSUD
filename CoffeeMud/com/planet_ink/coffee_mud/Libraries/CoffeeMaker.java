@@ -1890,7 +1890,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		buf.append(xmlLib.convertXMLtoTag("MLEVL",mob.basePhyStats().level()));
 		buf.append(xmlLib.convertXMLtoTag("MABLE",mob.basePhyStats().ability()));
 		buf.append(xmlLib.convertXMLtoTag("MREJV",mob.basePhyStats().rejuv()));
-		buf.append(xmlLib.convertXMLtoTag("MTEXT",xmlLib.parseOutAngleBrackets(mob.text())));
+		buf.append(textTag("MTEXT",mob.text()));
 		buf.append("</MOB>\n\r");
 		return buf.toString();
 	}
@@ -1901,7 +1901,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		final StringBuilder buf=new StringBuilder("");
 		buf.append("<XEXIT>");
 		buf.append(xmlLib.convertXMLtoTag("EXID",exit.ID()));
-		buf.append(xmlLib.convertXMLtoTag("EXDAT",xmlLib.parseOutAngleBrackets(exit.text())));
+		buf.append(textTag("EXDAT",exit.text()));
 		buf.append("</XEXIT>");
 		return buf.toString();
 	}
@@ -2163,7 +2163,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		buf.append(xmlLib.convertXMLtoTag("ILEVL",item.basePhyStats().level()));
 		buf.append(xmlLib.convertXMLtoTag("IABLE",item.basePhyStats().ability()));
 		buf.append(xmlLib.convertXMLtoTag("IREJV",item.basePhyStats().rejuv()));
-		buf.append(xmlLib.convertXMLtoTag("ITEXT",xmlLib.parseOutAngleBrackets(item.text())));
+		buf.append(textTag("ITEXT",item.text()));
 		buf.append("</ITEM>\n\r");
 		return buf.toString();
 	}
@@ -2444,6 +2444,79 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		return buf.toString();
 	}
 
+	/** whether this thread writes things' own texts readable, for the world's files */
+	private final ThreadLocal<Boolean> readableText = new ThreadLocal<Boolean>();
+
+	@Override
+	public void setReadableText(final boolean readable)
+	{
+		if(readable)
+			readableText.set(Boolean.TRUE);
+		else
+			readableText.remove();
+	}
+
+	@Override
+	public String textTag(final String tag, final String text)
+	{
+		final XMLLibrary xmlLib = CMLib.xml();
+		if(Boolean.TRUE.equals(readableText.get()) && isPlainXML(text))
+			return "<" + tag + " xml=\"1\">" + text + "</" + tag + ">";
+		return xmlLib.convertXMLtoTag(tag, xmlLib.parseOutAngleBrackets(text));
+	}
+
+	/**
+	 * Returns whether a text is plain XML, as a generic thing's own text is:
+	 * elements, each closed, holding text with no angle bracket in it, and
+	 * nothing around them, so that it can stand in a file as elements and be
+	 * escaped back to the very same text.
+	 * @param text the text
+	 * @return true if plain XML
+	 */
+	protected boolean isPlainXML(final String text)
+	{
+		if((text == null) || (text.length() < 3) || (text.charAt(0) != '<') || (text.charAt(text.length() - 1) != '>'))
+			return false;
+		if(text.indexOf(" xml=\"1\"") >= 0)
+			return false;
+		final Deque<String> open = new ArrayDeque<String>();
+		int i = 0;
+		while(i < text.length())
+		{
+			final char c = text.charAt(i);
+			if(c == '>')
+				return false; // outside a tag
+			if(c != '<')
+			{
+				i++;
+				continue;
+			}
+			final int gt = text.indexOf('>', i);
+			if(gt < 0)
+				return false;
+			final String inside = text.substring(i + 1, gt);
+			if((inside.length() == 0) || (inside.indexOf('<') >= 0))
+				return false;
+			if(inside.charAt(0) == '/')
+			{
+				if(open.isEmpty() || (!open.pop().equals(inside.substring(1))))
+					return false;
+			}
+			else
+			{
+				int n = 0;
+				while((n < inside.length()) && (Character.isLetterOrDigit(inside.charAt(n)) || (inside.charAt(n) == '_')))
+					n++;
+				if((n == 0) || (!Character.isLetter(inside.charAt(0))))
+					return false;
+				if(inside.charAt(inside.length() - 1) != '/')
+					open.push(inside.substring(0, n));
+			}
+			i = gt + 1;
+		}
+		return open.isEmpty();
+	}
+
 	@Override
 	public String getRoomShapeXML(final Room room)
 	{
@@ -2495,7 +2568,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		buf.append(xmlLib.convertXMLtoTag("RCLAS",CMClass.classID(room)));
 		buf.append(xmlLib.convertXMLtoTag("RDISP",room.displayText()));
 		buf.append(xmlLib.convertXMLtoTag("RDESC",room.description()));
-		buf.append(xmlLib.convertXMLtoTag("RTEXT",xmlLib.parseOutAngleBrackets(room.text())));
+		buf.append(textTag("RTEXT",room.text()));
 		fillFileSet(room,files);
 		if(skipDoors)
 			buf.append("<ROOMEXITS />");
@@ -2592,7 +2665,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 						buf.append(xmlLib.convertXMLtoTag("MLEVL",mob.basePhyStats().level()));
 						buf.append(xmlLib.convertXMLtoTag("MABLE",mob.basePhyStats().ability()));
 						buf.append(xmlLib.convertXMLtoTag("MREJV",mob.basePhyStats().rejuv()));
-						buf.append(xmlLib.convertXMLtoTag("MTEXT",xmlLib.parseOutAngleBrackets(mob.text())));
+						buf.append(textTag("MTEXT",mob.text()));
 						if(mob.riding()!=null)
 							buf.append(xmlLib.convertXMLtoTag("MRIDE",""+mob.riding()));
 						else
@@ -2633,7 +2706,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 						ibuf.append(xmlLib.convertXMLtoTag("IUSES",item.usesRemaining()));
 						ibuf.append(xmlLib.convertXMLtoTag("ILEVL",item.basePhyStats().level()));
 						ibuf.append(xmlLib.convertXMLtoTag("IABLE",item.basePhyStats().ability()));
-						ibuf.append(xmlLib.convertXMLtoTag("ITEXT",xmlLib.parseOutAngleBrackets(item.text())));
+						ibuf.append(textTag("ITEXT",item.text()));
 						if((item instanceof Boardable)
 						&&(files != null))
 						{

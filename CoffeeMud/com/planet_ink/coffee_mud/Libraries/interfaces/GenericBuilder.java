@@ -522,6 +522,29 @@ public interface GenericBuilder extends CMLibrary
 	public String getItemXML(Item item);
 
 	/**
+	 * Sets whether, on this thread, the XML this library writes gives a
+	 * thing's own text (a room's RTEXT, a mob's MTEXT, an item's ITEXT, an
+	 * exit's EXDAT) as XML elements, marked xml="1", rather than escaped
+	 * onto one line, when the text is plain XML.  The world's files are
+	 * written so, to be read and diffed; their reader escapes the text back
+	 * before anything else reads it.
+	 * @see GenericBuilder#textTag(String, String)
+	 * @param readable true to write readable text, false for the usual
+	 */
+	public void setReadableText(boolean readable);
+
+	/**
+	 * Returns a tag holding a thing's own text: escaped, as usual, or, when
+	 * readable text is on and the text is plain XML, as it is, marked
+	 * xml="1".
+	 * @see GenericBuilder#setReadableText(boolean)
+	 * @param tag the tag's name, such as MTEXT
+	 * @param text the text
+	 * @return the tag
+	 */
+	public String textTag(String tag, String text);
+
+	/**
 	 * Confirms the length of a misc text XML document for a
 	 * generic mob, and if it is stored in the DB, retreives it
 	 * before returning the final misc text xml document.

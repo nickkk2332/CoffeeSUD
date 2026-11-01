@@ -377,6 +377,33 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   so that a ship's own rooms are there to fill. A vessel a character owns
   in space comes back with the character, as before. The checksum covers
   the file.
+- S11 done. The custom races, classes, abilities and commands are one file
+  each, `world/custom/races|classes|abilities|commands/<id>.cmare`, holding
+  the element the old `custom.cmare` had. An ability's or command's SCRIPT
+  of more than one line goes beside it, `<id>.script`, as it is (only the
+  angle brackets the XML escapes come back, which escape again to the very
+  same text), and the element names it (`SCRIPT` of `FILE:<id>.script`).
+  The old `custom.cmare` is still read, and builder mode replaces it with the
+  new files. The checksum covers them. The played test makes an ability with
+  a script comparing with `<`, and a game on an empty database, built from
+  the files, has the same script.
+- S25 done. Builder mode's export writes each room's, mob's, item's and
+  exit's own text (RTEXT, MTEXT, ITEXT, EXDAT) and the catalog's CATADATA as
+  XML, an element to a line, marked `xml="1"`, when the text is plain XML
+  (`GenericBuilder.setReadableText` and `textTag`, new; the text comes from
+  the objects, since an escaped text cannot always be read back to the one
+  it came from). The world files' reader escapes such an element back onto
+  one line, less the layout's line breaks, before anything else reads it
+  (`WorldFiles.collapseText`), so older files read as before. A builder
+  session that changes nothing writes the files again the same, and a game
+  on an empty database built from them has the mobs as they were.
+  `tools/worlddiff.py OLD NEW` (or `--git REV`) compares two worlds by
+  object: a room's kind, title, description, behaviours, effects and exits,
+  and its mobs and items by name with their behaviours and effects
+  ("New Area#1: title 'Rocky Room' -> 'Mossy Ledge'"). Not done: scripts in
+  CDATA (a script inside a thing's text stays escaped, on its line), PROP as
+  named attributes, and the file system's index (`vfs/.index`), which a
+  session can write again with owners the engine set.
 
 #### 2c. Developer and builder tools (50)
 

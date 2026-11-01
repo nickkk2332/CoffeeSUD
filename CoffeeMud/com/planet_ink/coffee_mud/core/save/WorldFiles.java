@@ -178,11 +178,8 @@ public final class WorldFiles
 	{
 		if(!rebuild)
 			return;
-		final String text = readText(new File(worldDir, CUSTOM_FILE));
-		if(text == null)
-			return;
 		int made = 0;
-		for(final String[] element : topElements(innerOf(text, "CUSTOM")))
+		for(final String[] element : customElements())
 		{
 			final String tag = element[0];
 			final String whole = element[1];
@@ -203,7 +200,8 @@ public final class WorldFiles
 				continue;
 			made++;
 		}
-		Log.sysOut("WorldFiles", "Custom objects from " + CUSTOM_FILE + ": " + made);
+		if(made > 0)
+			Log.sysOut("WorldFiles", "Custom objects from the world files: " + made);
 	}
 
 	/**
@@ -291,7 +289,7 @@ public final class WorldFiles
 	 */
 	private static String importArea(final File F)
 	{
-		final String text = readText(F);
+		final String text = readWorldXML(F);
 		if(text == null)
 			return "it cannot be read";
 		final StringBuffer buf = new StringBuffer(text);
@@ -313,7 +311,7 @@ public final class WorldFiles
 	 */
 	private static String importCatalog(final File F)
 	{
-		final String text = readText(F);
+		final String text = readWorldXML(F);
 		if(text == null)
 			return "it cannot be read";
 		final XMLLibrary xml = CMLib.xml();
@@ -407,6 +405,20 @@ public final class WorldFiles
 	{
 		if((!SaveGame.isBuilderMode()) || (!loadedWhole))
 			return -1;
+		// things' own texts as XML, one element to a line, to read and diff
+		CMLib.coffeeMaker().setReadableText(true);
+		try
+		{
+			return exportAllReadable();
+		}
+		finally
+		{
+			CMLib.coffeeMaker().setReadableText(false);
+		}
+	}
+
+	private static int exportAllReadable()
+	{
 		final List<Area> areas = new ArrayList<Area>();
 		for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
 		{
@@ -444,9 +456,25 @@ public final class WorldFiles
 			// the files are written from the live world, and the database is a
 			// cache of the files: an area changed without the builder commands
 			// (by JRUN, say) is put in the cache too, so the next game has it
-			for(final Area A : changedAreas)
-				cacheArea(A);
-			writeOrDelete(new File(worldDir, CUSTOM_FILE), customText(), changed);
+			CMLib.coffeeMaker().setReadableText(false); // the database holds texts as the engine reads them
+			try
+			{
+				for(final Area A : changedAreas)
+					cacheArea(A);
+			}
+			finally
+			{
+				CMLib.coffeeMaker().setReadableText(true);
+			}
+			// the custom objects, one file each, in place of the old custom.cmare
+			writeOrDelete(new File(worldDir, CUSTOM_FILE), null, changed);
+			final Map<String, Map<String, String>> custom = customFiles();
+			for(final String kind : CUSTOM_KINDS)
+			{
+				final File dir = new File(new File(worldDir, CUSTOM_DIR), kind);
+				writeFolder(dir, AREA_EXT, custom.get(kind), changed);
+				writeFolder(dir, SCRIPT_EXT, custom.get(kind), changed);
+			}
 			writeOrDelete(new File(worldDir, CATALOG_FILE), catalogText(), changed);
 			final Map<String, String> questFiles = new LinkedHashMap<String, String>();
 			for(final String[] quest : questRows())
@@ -543,7 +571,7 @@ public final class WorldFiles
 	 */
 	public static void loadSpace()
 	{
-		final String text = readText(new File(worldDir, SPACE_FILE));
+		final String text = readWorldXML(new File(worldDir, SPACE_FILE));
 		if(text == null)
 			return;
 		int n = 0;
@@ -799,7 +827,7 @@ public final class WorldFiles
 	{
 		final XMLLibrary xml = CMLib.xml();
 		// templates, shared, so every builder has them
-		final String templates = readText(new File(worldDir, TEMPLATES_FILE));
+		final String templates = readWorldXML(new File(worldDir, TEMPLATES_FILE));
 		if(templates != null)
 		{
 			int n = 0;
@@ -823,7 +851,7 @@ public final class WorldFiles
 			Log.sysOut("WorldFiles", "Templates from " + TEMPLATES_FILE + ": " + n);
 		}
 		// clans with no player members
-		final String clans = readText(new File(worldDir, CLANS_FILE));
+		final String clans = readWorldXML(new File(worldDir, CLANS_FILE));
 		if(clans != null)
 		{
 			final Set<String> have = new HashSet<String>();
@@ -1001,12 +1029,109 @@ public final class WorldFiles
 		return quests;
 	}
 
+	/** the custom objects' folder, a folder to each kind */
+	public static final String		CUSTOM_DIR		= "custom";
+	/** the kinds of custom object, each a folder of custom/ */
+	private static final String[]	CUSTOM_KINDS	= { "races", "classes", "abilities", "commands" };
+	/** a custom ability's or command's script of more than one line, beside it */
+	private static final String		SCRIPT_EXT		= ".script";
+	/** how a custom object's SCRIPT names the file beside it */
+	private static final String		SCRIPT_REF		= "FILE:";
+
+	/**
+	 * Writes the custom races, classes, abilities and commands, as the
+	 * database holds them, one file each, by kind: the element the old
+	 * custom.cmare had for it, laid out.  An ability's or command's SCRIPT of
+	 * more than one line goes to a file beside it, as it is, which the
+	 * element names (SCRIPT=FILE:name.script).
+	 * @return for each kind, its files' names and texts
+	 */
+	private static Map<String, Map<String, String>> customFiles()
+	{
+		final Map<String, Map<String, String>> kinds = new HashMap<String, Map<String, String>>();
+		for(final String kind : CUSTOM_KINDS)
+			kinds.put(kind, new TreeMap<String, String>());
+		for(final AckRecord rec : sortedRecords(CMLib.database().DBReadRaces()))
+			putCustom(kinds.get("races"), rec.ID(), rec.data().trim().startsWith("<RACE") ? rec.data() : ("<RACE>" + rec.data() + "</RACE>"));
+		for(final AckRecord rec : sortedRecords(CMLib.database().DBReadClasses()))
+			putCustom(kinds.get("classes"), rec.ID(), rec.data().trim().startsWith("<CCLASS") ? rec.data() : ("<CCLASS>" + rec.data() + "</CCLASS>"));
+		for(final AckRecord rec : sortedRecords(CMLib.database().DBReadAbilities()))
+			putCustom(kinds.get("abilities"), rec.ID(), "<ABILITY ID=\"" + rec.ID() + "\" TYPE=\"" + rec.typeClass() + "\">" + rec.data() + "</ABILITY>");
+		for(final AckRecord rec : sortedRecords(CMLib.database().DBReadCommands()))
+			putCustom(kinds.get("commands"), rec.ID(), "<COMMAND ID=\"" + rec.ID() + "\" BASE=\"" + rec.typeClass() + "\">" + rec.data() + "</COMMAND>");
+		return kinds;
+	}
+
+	/**
+	 * Adds a custom object's file, and its script's beside it if its SCRIPT
+	 * has more than one line, to its kind's files.
+	 * @param files the kind's files
+	 * @param id the object's ID
+	 * @param element its element
+	 */
+	private static void putCustom(final Map<String, String> files, final String id, String element)
+	{
+		final String fileName = fileNameFor(id, AREA_EXT, files.keySet());
+		final int s = element.indexOf("<SCRIPT>");
+		final int e = (s < 0) ? -1 : element.indexOf("</SCRIPT>", s);
+		if((s >= 0) && (e > s))
+		{
+			// as it is: only the angle brackets the XML escapes come back, which
+			// escape again to the very same text
+			final String script = element.substring(s + "<SCRIPT>".length(), e).replace("&lt;", "<").replace("&gt;", ">");
+			if(script.trim().indexOf('\n') >= 0)
+			{
+				final String scriptName = fileName.substring(0, fileName.length() - AREA_EXT.length()) + SCRIPT_EXT;
+				files.put(scriptName, script);
+				element = element.substring(0, s) + "<SCRIPT>" + SCRIPT_REF + scriptName + element.substring(e);
+			}
+		}
+		files.put(fileName, layOut(element));
+	}
+
+	/**
+	 * Returns the custom objects' elements, as the old custom.cmare had them:
+	 * from that file if there is one, then from the files of custom/, each
+	 * with its script read back in from the file beside it.
+	 * @return the elements: tag, whole, attributes, inside
+	 */
+	private static List<String[]> customElements()
+	{
+		final List<String[]> elements = new ArrayList<String[]>();
+		final String old = readWorldXML(new File(worldDir, CUSTOM_FILE));
+		if(old != null)
+			elements.addAll(topElements(innerOf(old, "CUSTOM")));
+		for(final String kind : CUSTOM_KINDS)
+		{
+			final File dir = new File(new File(worldDir, CUSTOM_DIR), kind);
+			for(final File F : listFiles(dir, AREA_EXT))
+			{
+				String text = readWorldXML(F);
+				if(text == null)
+					continue;
+				final int s = text.indexOf("<SCRIPT>" + SCRIPT_REF);
+				final int e = (s < 0) ? -1 : text.indexOf("</SCRIPT>", s);
+				if((s >= 0) && (e > s))
+				{
+					final String scriptName = text.substring(s + "<SCRIPT>".length() + SCRIPT_REF.length(), e).trim();
+					final String script = readText(new File(dir, scriptName));
+					if(script != null)
+						text = text.substring(0, s) + "<SCRIPT>" + escapeAngles(script) + text.substring(e);
+				}
+				elements.addAll(topElements(text));
+			}
+		}
+		return elements;
+	}
+
 	/**
 	 * Writes the custom races, classes, abilities and commands, as the
 	 * database holds them, in the CUSTOM section the builder's EXPORT writes,
-	 * with commands, which it does not write, as COMMAND elements.
+	 * with commands, which it does not write, as COMMAND elements.  The
+	 * world's files have them one to a file now (see {@link #customFiles()}).
 	 * @return the text, or null if there are none
 	 */
+	@SuppressWarnings("unused")
 	private static String customText()
 	{
 		final StringBuilder xml = new StringBuilder();
@@ -1061,7 +1186,7 @@ public final class WorldFiles
 			if(data != null)
 			{
 				str.append(xml.convertXMLtoTag("CATEGORY", xml.parseOutAngleBrackets(data.category())));
-				str.append(xml.convertXMLtoTag("CATADATA", xml.parseOutAngleBrackets(data.data(P.Name()))));
+				str.append(CMLib.coffeeMaker().textTag("CATADATA", data.data(P.Name())));
 			}
 			str.append("</").append(kind).append(">");
 		}
@@ -1437,6 +1562,14 @@ public final class WorldFiles
 			paths.add(QUESTS_DIR + "/" + F.getName());
 		if(new File(worldDir, CUSTOM_FILE).isFile())
 			paths.add(CUSTOM_FILE);
+		for(final String kind : CUSTOM_KINDS)
+		{
+			final File dir = new File(new File(worldDir, CUSTOM_DIR), kind);
+			for(final File F : listFiles(dir, AREA_EXT))
+				paths.add(CUSTOM_DIR + "/" + kind + "/" + F.getName());
+			for(final File F : listFiles(dir, SCRIPT_EXT))
+				paths.add(CUSTOM_DIR + "/" + kind + "/" + F.getName());
+		}
 		if(new File(worldDir, CATALOG_FILE).isFile())
 			paths.add(CATALOG_FILE);
 		if(new File(worldDir, WorldSettings.FILE).isFile())
@@ -1510,6 +1643,99 @@ public final class WorldFiles
 			while((n = in.read(buf)) > 0)
 				out.write(buf, 0, n);
 		}
+	}
+
+	/**
+	 * Reads a world file of XML, with each thing's own text that was written
+	 * readable (an element marked xml="1") escaped back onto one line, as
+	 * the rest of the engine reads it.  A file written the old way reads as
+	 * it is.
+	 * @param F the file
+	 * @return its XML, or null if there is no such file
+	 */
+	private static String readWorldXML(final File F)
+	{
+		return collapseText(readText(F));
+	}
+
+	/** what marks a thing's own text written as XML */
+	private static final String	READABLE_MARK	= " xml=\"1\">";
+
+	/**
+	 * Escapes back each thing's own text written readable: an element marked
+	 * xml="1" becomes the element with its contents, less the line breaks
+	 * and indents between its tags that the layout added, escaped onto one
+	 * line.
+	 * @param xml the XML of a world file
+	 * @return the XML as the engine reads it
+	 */
+	static String collapseText(final String xml)
+	{
+		if((xml == null) || (xml.indexOf(READABLE_MARK) < 0))
+			return xml;
+		final StringBuilder out = new StringBuilder(xml.length());
+		int i = 0;
+		while(true)
+		{
+			final int mark = xml.indexOf(READABLE_MARK, i);
+			if(mark < 0)
+			{
+				out.append(xml, i, xml.length());
+				break;
+			}
+			final int lt = xml.lastIndexOf('<', mark);
+			if((lt < i) || (lt < 0))
+				return xml;
+			final String name = xml.substring(lt + 1, mark);
+			final int innerStart = mark + READABLE_MARK.length();
+			int depth = 1;
+			int j = innerStart;
+			int end = -1;
+			while(depth > 0)
+			{
+				final int close = xml.indexOf("</" + name + ">", j);
+				if(close < 0)
+					return xml;
+				int open = xml.indexOf("<" + name, j);
+				while((open >= 0) && (open < close))
+				{
+					final char after = xml.charAt(open + name.length() + 1);
+					if((after == '>') || (after == ' '))
+						break;
+					open = xml.indexOf("<" + name, open + 1);
+				}
+				if((open >= 0) && (open < close))
+				{
+					depth++;
+					j = open + 1;
+				}
+				else
+				{
+					depth--;
+					end = close;
+					j = close + 1;
+				}
+			}
+			final String inner = xml.substring(innerStart, end)
+				.replaceAll(">[ \\t]*\\r?\\n[ \\t\\r\\n]*<", "><")
+				.replaceAll("^[ \\t\\r\\n]+<", "<")
+				.replaceAll(">[ \\t\\r\\n]+$", ">");
+			out.append(xml, i, lt).append('<').append(name).append('>')
+			   .append(escapeAngles(inner)).append("</").append(name).append('>');
+			i = end + name.length() + 3;
+		}
+		return out.toString();
+	}
+
+	/**
+	 * Escapes the angle brackets of a text, as the engine's XML library does
+	 * (parseOutAngleBrackets), for use before that library is up.
+	 * @param s the text
+	 * @return the text with &lt; and &gt;
+	 */
+	private static String escapeAngles(final String s)
+	{
+		return s.replace("<", "&lt;").replace(">", "&gt;");
 	}
 
 	private static String readText(final File F)

@@ -160,6 +160,12 @@ group_saves()
 	expect s-build.txt "Quest 's1quest' added."
 	expect s-build.txt "Quest 's1wait' added."
 	expect s-build.txt "FIXSETUP s1 area offers the quest"
+	# S25: the export gives a room's own text as XML, one element to a line
+	if grep -q '<RTEXT xml="1">' "$W/sworld/areas/"*.cmare && ! grep -q '<RTEXT>&lt;' "$W/sworld/areas/"*.cmare; then
+		echo "  ok    s-build: the area files have readable room texts"
+	else
+		echo "  FAIL  s-build: the area files have escaped room texts"; FAIL=1
+	fi
 
 	# S1: quest variables, a waiting quest's wait, the quest giver's offers,
 	# QuestChat's said-once lines, and a savable script's ONCE_PROG
@@ -211,6 +217,33 @@ group_saves()
 	jsresults s10-gap.txt
 	play s10-next.txt sdb sworld "Gapper\n${NEWCHAR}north\nlook\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	expect s10-next.txt "FIXGAP the walls are new."
+
+	# S11: a custom ability goes to a file of its own, its script of several
+	# lines beside it as it is, and a game built from the files has it so
+	play s11-build.txt sdb sworld "Builder\njrun /resources/_fixes/s11-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s11-build.txt
+	if grep -q "FILE:spell-fixbrand.script" "$W/sworld/custom/abilities/spell-fixbrand.cmare" 2>/dev/null \
+	&& grep -q "if var(\$n FIXHEAT < 5)" "$W/sworld/custom/abilities/spell-fixbrand.script" && [ ! -f "$W/sworld/custom.cmare" ]; then
+		echo "  ok    s11-build: the ability has its own file, its script beside it as it is"
+	else
+		echo "  FAIL  s11-build: the ability's files are not as they should be"; FAIL=1
+	fi
+	mkdir -p "$W/s11db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/s11db/"
+	play s11-new.txt s11db sworld "Brander\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s11-check.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s11-new.txt "rebuilding the world from them"
+	jsresults s11-new.txt
+
+	# S25: a builder session that changes nothing writes the readable files
+	# again as they were, so they read back to the very same world (the
+	# file system's index is left out: the engine writes some of its files)
+	(cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum) > "$W/sworld.sums"
+	play s25-again.txt sdb sworld "Builder\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	if (cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum | cmp -s - "$W/sworld.sums"); then
+		echo "  ok    s25-again: the world files read back and write out the same"
+	else
+		echo "  FAIL  s25-again: the world files changed on a builder session that changed nothing"; FAIL=1
+		(cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum) | diff "$W/sworld.sums" - | head -5
+	fi
 }
 
 group_saves2()
@@ -369,7 +402,12 @@ group_saves3()
 	# areas' rooms as the world has them now
 	play s13-play.txt wdb wworld "Keeper\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s13-play.js\nsave s13\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s13-play.txt
+	cp -r "$W/wworld" "$W/wworld.before"
 	sed -i 's/<RDISP>Rocky Room</<RDISP>Mossy Ledge</' "$W/wworld/areas/new-area.cmare"
+	# S25: tools/worlddiff.py says what changed, by object
+	python3 "$ROOT/tools/worlddiff.py" "$W/wworld.before" "$W/wworld" > "$W/s25-diff.txt" 2>&1
+	expect s25-diff.txt "New Area#1: title 'Rocky Room' -> 'Mossy Ledge'"
+	count s25-diff.txt "New Area" 1
 	play s13-old.txt wdb wworld 'north\nlook\nsaves\nquit\nn\n' RESTORE=s13 TIMEMODE=TURNS
 	expect s13-old.txt "This save was made with another version of the world"
 	expect s13-old.txt "Changed area file: new-area.cmare"
@@ -474,6 +512,17 @@ group_saves5()
 	# player in it; and a generated dungeon (the mines'), the same after
 	play s19-build.txt ydb yworld "Builder\njrun /resources/_fixes/s19-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s19-build.txt
+	# S25: the crypt's file gives the lieutenant's own text as XML, and a
+	# game on an empty database, built from the files, has the lieutenant
+	if grep -q '<MTEXT xml="1">' "$W/yworld/areas/crypt.cmare" && ! grep -q '<MTEXT>&lt;' "$W/yworld/areas/crypt.cmare"; then
+		echo "  ok    s19-build: the crypt's file has a readable mob text"
+	else
+		echo "  FAIL  s19-build: the crypt's file has an escaped mob text"; FAIL=1
+	fi
+	mkdir -p "$W/y2db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/y2db/"
+	play s25-fresh.txt y2db yworld "Fresher\n${NEWCHAR}down\nnorth\nlook\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s25-fresh.txt "rebuilding the world from them"
+	expect s25-fresh.txt "A lich lieutenant stands here."
 	play s19-play.txt ydb yworld "Raider\n${NEWCHAR}get book\nread book\ndown\nnorth\njrun /resources/_fixes/s19-play.js\nsave s19\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s19-play.txt
 	play s19-restore.txt ydb yworld 'jrun /resources/_fixes/s19-check.js\nsouth\nup\ndown\njrun /resources/_fixes/s19-again.js\nquit\nn\n' RESTORE=s19 TIMEMODE=TURNS
