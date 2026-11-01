@@ -853,6 +853,13 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   hit roll (the same dice, with `hitScore` split out), each damage formula
   and what was dealt, and StdMOB notes each effect or item that changed or
   stopped a watched character's damage, all on one line per attack.
+- DT36 done, for the sources there are. `PROGRESSION class [race] [to
+  level]` (builder mode, DEV=1 or CMDCLASSES) builds a sample of each level
+  with `fillOutMOB`: XP, HP, mana, moves, practices, trains and the skills
+  gained (given ones marked). `PROGRESSION XP [area]` adds up achievement
+  XP, literal MPEXP amounts in each area's scripts (LOAD= files read) and
+  Prop_EnterAdjuster experience, with the level reached in order. There is
+  no Prop_Discovery yet; expertises are left out of the curve.
 
 #### 2d. Scripting (59)
 
