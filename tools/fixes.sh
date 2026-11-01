@@ -202,6 +202,13 @@ group_saves()
 	expect s2-iron2.txt "Restored 'iron'."
 	expect s2-iron2.txt "This is an ironman game: it has one save, 'iron', which it keeps for you."
 
+
+	# the cache gap: a builder's change made by JRUN, without the database,
+	# is in the next game as well as in the world files
+	play s10-gap.txt sdb sworld "Builder\njrun /resources/_fixes/s10-gap.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s10-gap.txt
+	play s10-next.txt sdb sworld "Gapper\n${NEWCHAR}north\nlook\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s10-next.txt "FIXGAP the walls are new."
 }
 
 group_saves2()

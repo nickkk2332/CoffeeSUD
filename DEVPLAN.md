@@ -256,6 +256,10 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   QUESTGIVER variable it sets on it. Craft orders (CraftOrders through
   RandomQuests) come with it; SOURCE_FACTION and SOURCE_FACTION_AMT are
   in RandomQuests' help. Not done: the optional order by recipe name.
+- The gap found in 2a is closed: when builder mode writes the world files
+  (at SAVE and at quit), an area whose file changed is also written to the
+  database cache from the live world, as the builder commands would, so a
+  change made by JRUN without the database is in the next game too.
 
 #### 2c. Developer and builder tools (50)
 

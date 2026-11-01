@@ -6,6 +6,7 @@ import com.planet_ink.coffee_mud.core.exceptions.CMException;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
+import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.CatalogLibrary.CataData;
 import com.planet_ink.coffee_mud.Libraries.interfaces.DatabaseEngine.AckRecord;
 import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary;
@@ -417,9 +418,21 @@ public final class WorldFiles
 		try
 		{
 			final Map<String, String> areaFiles = new LinkedHashMap<String, String>();
+			final List<Area> changedAreas = new ArrayList<Area>();
 			for(final Area A : areas)
-				areaFiles.put(fileNameFor(A.Name(), AREA_EXT, areaFiles.keySet()), layOut(CMLib.coffeeMaker().getAreaXML(A, null, new HashSet<CMObject>(), new HashSet<String>(), true)));
+			{
+				final String fileName = fileNameFor(A.Name(), AREA_EXT, areaFiles.keySet());
+				final String text = layOut(CMLib.coffeeMaker().getAreaXML(A, null, new HashSet<CMObject>(), new HashSet<String>(), true));
+				areaFiles.put(fileName, text);
+				if(!text.equals(readText(new File(new File(worldDir, AREAS_DIR), fileName))))
+					changedAreas.add(A);
+			}
 			writeFolder(new File(worldDir, AREAS_DIR), AREA_EXT, areaFiles, changed);
+			// the files are written from the live world, and the database is a
+			// cache of the files: an area changed without the builder commands
+			// (by JRUN, say) is put in the cache too, so the next game has it
+			for(final Area A : changedAreas)
+				cacheArea(A);
 			writeOrDelete(new File(worldDir, CUSTOM_FILE), customText(), changed);
 			writeOrDelete(new File(worldDir, CATALOG_FILE), catalogText(), changed);
 			final Map<String, String> questFiles = new LinkedHashMap<String, String>();
@@ -443,6 +456,27 @@ public final class WorldFiles
 		if(changed[0] > 0)
 			Log.sysOut("WorldFiles", "Wrote the world files: " + changed[0] + " changed.");
 		return changed[0];
+	}
+
+	/**
+	 * Writes an area as it is in the world to the database, the cache of the
+	 * world files: the area, and each of its rooms with its exits, mobs and
+	 * items, as the builder commands do.
+	 * @param A the area
+	 */
+	private static void cacheArea(final Area A)
+	{
+		CMLib.database().DBUpdateArea(A.Name(), A);
+		for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if((R == null) || R.amDestroyed() || (R.roomID().length() == 0))
+				continue;
+			CMLib.database().DBUpdateRoom(R);
+			CMLib.database().DBUpdateExits(R);
+			CMLib.database().DBUpdateMOBs(R);
+			CMLib.database().DBUpdateItems(R);
+		}
 	}
 
 	/**

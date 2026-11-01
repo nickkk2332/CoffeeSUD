@@ -86,7 +86,9 @@ expect load.txt "You are Hero the Archon."
 expect load.txt "Bye!"
 
 echo "Session 3: pause and resume (one mud hour per 4-second tick)"
-play pause.txt 'time\n#sleep 9\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+# 15 seconds of real time, which turns the hour at least once even when the
+# machine is busy with other games running beside this one
+play pause.txt 'time\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect pause.txt "The world holds still."
 expect pause.txt "(paused) "
 expect pause.txt "The world moves again."
