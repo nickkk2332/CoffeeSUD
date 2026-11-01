@@ -860,6 +860,17 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   XP, literal MPEXP amounts in each area's scripts (LOAD= files read) and
   Prop_EnterAdjuster experience, with the level reached in order. There is
   no Prop_Discovery yet; expertises are left out of the curve.
+- DT37 done, but for positions with no powers and INNERMASKs no one can
+  pass. `ORGCHECK [faction file|CLANS|GOVERNMENTS|ALL]` (builder mode,
+  DEV=1 or CMDFACTIONS; `core/OrgCheck`) reads faction files line by
+  line: keys given twice, band overlaps and gaps, CHANGE triggers that
+  match nothing (as DefaultFaction's setEventID takes them), REACTION and
+  AFFBEHAV IDs, REACTION ranges and RELATION factions; the world files'
+  mobs with an unknown CLAN; and SCRIPTCHECK on governments' ENTRYSCRIPTs.
+  In the shipped inclination.ini it found four triggers that never fired:
+  CHANT_EARTHFEED (the chant's ID is Chant_Bury) and MEDIDATE (MEDITATE),
+  both fixed, and CLEAN * and BUTT *, which name no social (BUTT has only
+  a targeted form), left for review.
 
 #### 2d. Scripting (59)
 
