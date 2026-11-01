@@ -477,6 +477,7 @@ public final class SaveGame
 		}
 		if(builderMode || isDevMode())
 			DevLog.startFor(mob); // DEVLOG as it was left, or as the ini's DEVLOG= says
+		InputRecord.startFor(mob); // RECORDINPUT=1 (DT25)
 		if(builderMode)
 		{
 			makeArchon(mob);

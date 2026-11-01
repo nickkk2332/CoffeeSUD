@@ -2248,6 +2248,7 @@ public class DefaultSession implements Session
 			snoopSupportPrint(str+"\n\r",true);
 			if(debugStrInput)
 				Log.debugOut(getAddress()+" TIN: "+(mob==null?"":mob.Name())+": '"+inStr.toString()+"'");
+			InputRecord.record(mob,inStr.toString()); // RECORD INPUT (DT25)
 			final MOB mob=this.mob;
 			if((mob != null)&&(mob.isAttributeSet(Attrib.NOREPROMPT)))
 				needPrompt=true;
@@ -2304,6 +2305,7 @@ public class DefaultSession implements Session
 		snoopSupportPrint(str+"\n\r",true);
 		if(debugStrInput && (inStr.length()>0))
 			Log.debugOut(getAddress()+" TIN: "+(mob==null?"":mob.Name())+": '"+inStr.toString()+"'");
+		InputRecord.record(mob,inStr.toString()); // RECORD INPUT (DT25)
 		final MOB mob=this.mob;
 		if((mob != null)&&(mob.isAttributeSet(Attrib.NOREPROMPT)))
 			needPrompt=true;

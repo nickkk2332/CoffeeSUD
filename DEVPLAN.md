@@ -767,6 +767,16 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   `<SCRIPT>`, `JRUN` and `JCONSOLE`, with the script's line, and objects
   and arrays as JSON. In a normal game both do nothing. JS6's debug() is
   this one.
+- DT25 done. `RECORD INPUT [file|OFF]` (builder mode or DEV=1; the
+  Archon's RECORD skill keeps its other words) and `RECORDINPUT=1`
+  write each line typed, in every window, to a `.play` file in the saves
+  folder's recordings (`core/InputRecord`): a header with the seed
+  (`#seed`, or a note that the dice were not seeded), `#realtime`,
+  `#builder`, `#restore slot` or `#new` and `#char`, the world's
+  checksum and the game time, then a comment of the character and game
+  time before each line. `RECORD MARK text` adds a comment. A line typed
+  with `#` first is written as a comment, since the runner could not send
+  it. Exact replay of a recording made mid-game needs DT39.
 
 #### 2d. Scripting (59)
 

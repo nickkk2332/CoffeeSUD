@@ -591,6 +591,25 @@ group_saves4()
 	expect dt13-check.txt "World check (CHECK=1)"
 	expect dt13-check.txt "WORLD CHECK: 0 errors"
 
+	# DT25: RECORDINPUT=1 writes what is typed to a playtest file, after a
+	# header of the game it started from, and the runner plays it again
+	mkdir -p "$W/rcdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/rcdb/"
+	cp -r "$GAME/world" "$W/rcworld"
+	RCCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	SAVES="$W/rcsaves" play dt25-rec.txt rcdb rcworld "Recorder\n${RCCHAR}look\nsay hello there\nrecord mark seen it\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS DEV=1 RECORDINPUT=1
+	expect dt25-rec.txt "Recording what you type to"
+	REC=$(ls "$W/rcsaves/recordings/"*.play 2>/dev/null | head -1)
+	if [ -n "$REC" ] && grep -q "^look$" "$REC" && grep -q "^say hello there$" "$REC" && grep -q "^#seed 42$" "$REC" \
+		&& grep -q "^#new$" "$REC" && grep -q "^#char Recorder,Human,Apprentice,M,good$" "$REC" && grep -q "^# MARK .*seen it" "$REC"; then
+		echo "  ok    dt25-recorded: what was typed is in the playtest file, after its header"
+		python3 "$ROOT/tools/playtest.py" "$REC" > "$W/dt25-replay.txt" 2>&1
+		echo "exit $?" >> "$W/dt25-replay.txt"
+		expect dt25-replay.txt "PASS  "
+		expect dt25-replay.txt "exit 0"
+	else
+		echo "  FAIL  dt25-recorded: no playtest file, or not what was typed: $REC"; FAIL=1
+	fi
+
 	# DT15: playtest files: the world's own passes, and one made to fail
 	# fails at each check, with the runner exiting 1
 	python3 "$ROOT/tools/playtest.py" "$GAME/world/tests/start.play" > "$W/dt15-pass.txt" 2>&1
