@@ -87,6 +87,39 @@ public final class SaveGame
 
 	private static volatile SaveMode saveMode = SaveMode.ANYWHERE;
 
+	/** FRESH= of the next restore: CHANGED, ALL, or area names */
+	private static volatile String nextFresh = null;
+	/** what changed in the world since the restoring save was made, told at login */
+	private static final List<String> worldReport = new ArrayList<String>();
+
+	/**
+	 * Sets which areas the next restore takes from the world as it is now,
+	 * rather than from the save: CHANGED (those changed since the save), ALL,
+	 * or a list of area names.
+	 * @param fresh the spec, or null for none
+	 */
+	public static void setNextFresh(final String fresh)
+	{
+		nextFresh = ((fresh == null) || (fresh.trim().length() == 0)) ? null : fresh.trim();
+	}
+
+	/**
+	 * Notes something that changed in the world since the save being restored
+	 * was made, for the report the player gets on coming in.
+	 * @param line what changed
+	 */
+	public static void noteWorldChange(final String line)
+	{
+		synchronized(worldReport)
+		{
+			if(worldReport.size() < 60)
+				worldReport.add(line);
+			else
+			if(worldReport.size() == 60)
+				worldReport.add(text("... and more."));
+		}
+	}
+
 	/** true while a restored game boots, until the saved world is put back */
 	private static volatile boolean worldPending = false;
 
@@ -208,6 +241,13 @@ public final class SaveGame
 		restoring = null;
 		final String slot = nextBoot;
 		nextBoot = null;
+		final String fresh = nextFresh;
+		nextFresh = null;
+		synchronized(worldReport)
+		{
+			worldReport.clear();
+		}
+		WorldState.setFresh(null, null);
 		final boolean fakeDb = (contentDbService != null) && contentDbService.startsWith(FAKEDB);
 		if(!fakeDb)
 		{
@@ -256,6 +296,7 @@ public final class SaveGame
 		currentSlot = slot;
 		restoring = header;
 		worldPending = true;
+		compareWorlds(header, fresh);
 		GameTime.setTurnBased("TURNS".equalsIgnoreCase(header.getProperty("timemode")));
 		saveMode = parseSaveMode(header.getProperty("savemode", "ANYWHERE"));
 		if("true".equalsIgnoreCase(header.getProperty("paused")))
@@ -338,6 +379,20 @@ public final class SaveGame
 		if(mob.actions() < mob.phyStats().speed())
 			mob.setActions(mob.phyStats().speed());
 		WorldState.finishRestore(mob);
+		final List<String> report;
+		synchronized(worldReport)
+		{
+			report = new ArrayList<String>(worldReport);
+			worldReport.clear();
+		}
+		if(report.size() > 0)
+		{
+			final StringBuilder str = new StringBuilder(CMLib.lang().L("This save was made with another version of the world:\n\r"));
+			for(final String line : report)
+				str.append("  ").append(line).append("\n\r");
+			str.append(CMLib.lang().L("RESTORE name FRESH=CHANGED takes the changed areas' rooms as they are now.\n\r"));
+			mob.tell(str.toString());
+		}
 		if(builderMode)
 			makeArchon(mob);
 	}
@@ -375,6 +430,83 @@ public final class SaveGame
 			mob.tell(CMLib.lang().L("^HThis game plays on a copy of the world.^?  Mobs and items you make, change or "
 				+ "destroy stay that way in this game's saves, but changes to rooms, exits, areas and the like last "
 				+ "only until the game ends.  Start CoffeeSUD with BUILDER=1 to change the world itself."));
+		}
+	}
+
+	/**
+	 * Returns a message in the player's language, or as written while the
+	 * game boots, before the language library is up.
+	 * @param msg the message, with @x1 and the like
+	 * @param xs what goes in it
+	 * @return the message
+	 */
+	private static String text(final String msg, final String... xs)
+	{
+		if(CMLib.lang() != null)
+			return CMLib.lang().L(msg, xs);
+		String s = msg;
+		for(int i = 0; i < xs.length; i++)
+			s = s.replace("@x" + (i + 1), xs[i]);
+		return s;
+	}
+
+	/**
+	 * Compares the world a save was made with to the world this game boots
+	 * from: notes the area files changed, added and gone for the player's
+	 * report, and sets the areas a FRESH= restore takes as they are now.
+	 * @param header the save's header
+	 * @param fresh the FRESH= spec, or null
+	 */
+	private static void compareWorlds(final Properties header, final String fresh)
+	{
+		final String savedSum = header.getProperty("worldsum", "");
+		final Map<String, String> saved = new TreeMap<String, String>();
+		for(final String pair : header.getProperty("areasums", "").split(";"))
+		{
+			final int x = pair.indexOf('=');
+			if(x > 0)
+				saved.put(pair.substring(0, x), pair.substring(x + 1));
+		}
+		final Map<String, String> now = WorldFiles.bootAreaSums();
+		final Set<String> changed = new TreeSet<String>();
+		if((savedSum.length() > 0) && (!savedSum.equals(WorldFiles.bootChecksum())))
+		{
+			noteWorldChange(text("The world has changed since this game was saved."));
+			for(final Map.Entry<String, String> e : now.entrySet())
+			{
+				final String was = saved.get(e.getKey());
+				if(was == null)
+				{
+					changed.add(e.getKey());
+					noteWorldChange(text("New area file: @x1", e.getKey()));
+				}
+				else
+				if(!was.equals(e.getValue()))
+				{
+					changed.add(e.getKey());
+					noteWorldChange(text("Changed area file: @x1", e.getKey()));
+				}
+			}
+			for(final String file : saved.keySet())
+			{
+				if(!now.containsKey(file))
+					noteWorldChange(text("Area file gone: @x1", file));
+			}
+		}
+		if(fresh != null)
+		{
+			if(fresh.equalsIgnoreCase("ALL"))
+				WorldState.setFresh(null, Boolean.TRUE);
+			else
+			if(fresh.equalsIgnoreCase("CHANGED"))
+				WorldState.setFresh(changed, null);
+			else
+			{
+				final Set<String> names = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+				for(final String name : CMParms.parseCommas(fresh, true))
+					names.add(name);
+				WorldState.setFresh(names, null);
+			}
 		}
 	}
 
@@ -640,6 +772,12 @@ public final class SaveGame
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
 		header.setProperty("savemode", saveMode.name());
+		// the world this game plays on, so a restore can say what changed since
+		header.setProperty("worldsum", WorldFiles.bootChecksum());
+		final StringBuilder areaSums = new StringBuilder();
+		for(final Map.Entry<String, String> e : WorldFiles.bootAreaSums().entrySet())
+			areaSums.append((areaSums.length() > 0) ? ";" : "").append(e.getKey()).append('=').append(e.getValue());
+		header.setProperty("areasums", areaSums.toString());
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
 		header.setProperty("partymeet", Boolean.toString(Party.isMeetWhereLeft()));
 		header.setProperty("partyfight", Boolean.toString(Party.isFightEachOther()));
@@ -713,6 +851,9 @@ public final class SaveGame
 			str.append(String.format("  %2d) %-12s %s", Integer.valueOf(i + 1), slot.name, SaveSlots.describe(slot)));
 			if(slot.name.equals(currentSlot))
 				str.append(CMLib.lang().L(" (this game)"));
+			final String sum = slot.header.getProperty("worldsum", "");
+			if((sum.length() > 0) && (!sum.equals(WorldFiles.bootChecksum())))
+				str.append(CMLib.lang().L(" (older world)"));
 			str.append("\n\r");
 		}
 		return str.toString();

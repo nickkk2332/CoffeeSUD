@@ -268,6 +268,14 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   database's file system, with an index of their flags and authors). A new
   game, and builder mode's rebuild, put them into the database; a restored
   game has them in its save, with what play added. `world.sum` covers them.
+- S13 done. A save's header records the world it was made with: the
+  world's checksum and each area file's. Restoring it into a changed world
+  tells the player, on coming in, what changed: area files changed, new and
+  gone, rooms gone with what was saved in them, mobs and items of classes
+  gone, quests gone. `RESTORE name FRESH=CHANGED|area,area|ALL` (or
+  `RESTORE=name FRESH=...` at launch) takes those areas' rooms as the world
+  has them now, and keeps the player, what they carry, the party, quests
+  and variables as saved. SAVES marks saves of another world "(older world)".
 
 #### 2c. Developer and builder tools (50)
 

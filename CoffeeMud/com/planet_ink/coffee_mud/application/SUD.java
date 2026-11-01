@@ -120,6 +120,7 @@ public class SUD
 					System.exit(1);
 				}
 				SaveGame.setNextBoot(slot.name);
+				SaveGame.setNextFresh(settings.getProperty("FRESH", ""));
 			}
 			else
 			{

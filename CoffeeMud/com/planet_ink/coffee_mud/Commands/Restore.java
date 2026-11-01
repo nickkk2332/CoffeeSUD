@@ -89,7 +89,15 @@ public class Restore extends StdCommand
 			mob.tell(L("This is an ironman game: there is no going back to a save.  QUIT keeps the game."));
 			return false;
 		}
-		final String which = CMParms.combine(commands, 1).trim();
+		String which = CMParms.combine(commands, 1).trim();
+		String fresh = null;
+		final int freshDex = which.toUpperCase().indexOf("FRESH=");
+		if(freshDex >= 0)
+		{
+			fresh = which.substring(freshDex + 6).trim();
+			which = which.substring(0, freshDex).trim();
+		}
+		final String freshSpec = fresh;
 		final SaveSlots.Slot slot = SaveSlots.find(SaveGame.saveDir(), which);
 		if(slot == null)
 		{
@@ -117,9 +125,13 @@ public class Restore extends StdCommand
 			{
 				if(!this.confirmed)
 					return;
+				SaveGame.setNextFresh(freshSpec);
 				final String problem = SaveGame.restore(slot.name);
 				if(problem != null)
+				{
+					SaveGame.setNextFresh(null);
 					mob.tell(problem);
+				}
 				else
 					mob.tell(L("Restoring '@x1'...", slot.name));
 			}

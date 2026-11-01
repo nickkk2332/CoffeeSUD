@@ -339,6 +339,22 @@ group_saves3()
 	fi
 	play s10-new.txt wdb wworld "Elric\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s10-check.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s10-new.txt
+
+	# S13: a save remembers the world it was made with: restoring it after the
+	# world changed says what changed, and FRESH=CHANGED takes the changed
+	# areas' rooms as the world has them now
+	play s13-play.txt wdb wworld "Keeper\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s13-play.js\nsave s13\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s13-play.txt
+	sed -i 's/<RDISP>Rocky Room</<RDISP>Mossy Ledge</' "$W/wworld/areas/new-area.cmare"
+	play s13-old.txt wdb wworld 'north\nlook\nsaves\nquit\nn\n' RESTORE=s13 TIMEMODE=TURNS
+	expect s13-old.txt "This save was made with another version of the world"
+	expect s13-old.txt "Changed area file: new-area.cmare"
+	expect s13-old.txt "Mossy Ledge"
+	expect s13-old.txt "A fix sentinel stands guard here."
+	expect s13-old.txt "(older world)"
+	play s13-fresh.txt wdb wworld 'north\nlook\nquit\nn\n' RESTORE=s13 FRESH=CHANGED TIMEMODE=TURNS
+	expect s13-fresh.txt "Mossy Ledge"
+	count s13-fresh.txt "A fix sentinel stands guard here." 0
 }
 
 # the groups share nothing (each has its own world, database and saves), so

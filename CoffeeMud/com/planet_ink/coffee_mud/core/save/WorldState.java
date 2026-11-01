@@ -308,7 +308,23 @@ public final class WorldState
 			{
 				final Room R = getRoom(roomTag.getValFromPieces("ID"));
 				if(R == null)
+				{
+					int mobs = 0, items = 0;
+					for(final XMLTag piece : roomTag.contents())
+					{
+						if(piece.tag().equalsIgnoreCase("MOB"))
+							mobs++;
+						else
+						if(piece.tag().equalsIgnoreCase("ITEM"))
+							items++;
+					}
+					if((mobs > 0) || (items > 0))
+						SaveGame.noteWorldChange(CMLib.lang().L("Room @x1 is gone, with @x2 mobs and @x3 items saved there.",
+							CMLib.xml().restoreAngleBrackets(roomTag.getValFromPieces("ID")), "" + mobs, "" + items));
 					continue;
+				}
+				if(isFresh(R))
+					continue; // as the world has it now
 				for(final XMLTag piece : roomTag.contents())
 				{
 					if(piece.tag().equalsIgnoreCase("DOOR"))
@@ -339,7 +355,7 @@ public final class WorldState
 			for(final XMLTag deadTag : dead.contents())
 			{
 				final XMLTag mobTag = deadTag.getPieceFromPieces("MOB");
-				if(mobTag != null)
+				if((mobTag != null) && (!isFresh(getRoom(mobTag.getValFromPieces("START")))))
 					bringBackDead(mobTag, CMath.s_int(deadTag.getParmValue("LEFT")));
 			}
 		}
@@ -349,7 +365,7 @@ public final class WorldState
 			for(final XMLTag takenTag : taken.contents())
 			{
 				final Room R = getRoom(takenTag.getValFromPieces("ROOM"));
-				if(R == null)
+				if((R == null) || isFresh(R))
 					continue;
 				for(final Item I : unpackItems(takenTag).items)
 				{
@@ -855,6 +871,7 @@ public final class WorldState
 			if(I == null)
 			{
 				Log.errOut("WorldState", "No item class " + tag.getValFromPieces("CLASS"));
+				SaveGame.noteWorldChange(CMLib.lang().L("No item class @x1: a saved item is lost.", tag.getValFromPieces("CLASS")));
 				items.add(null);
 				continue;
 			}
@@ -923,6 +940,7 @@ public final class WorldState
 		if(M == null)
 		{
 			Log.errOut("WorldState", "No mob class " + tag.getValFromPieces("CLASS"));
+			SaveGame.noteWorldChange(CMLib.lang().L("No mob class @x1: a saved mob is lost.", tag.getValFromPieces("CLASS")));
 			return null;
 		}
 		noteRestored(M, tag);
@@ -1028,11 +1046,14 @@ public final class WorldState
 	private static void clearWorld()
 	{
 		for(final MOB M : deadMobs())
-			M.destroy();
+		{
+			if(!isFresh(M.getStartRoom()))
+				M.destroy();
+		}
 		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 		{
 			final Room R = r.nextElement();
-			if((R == null) || R.amDestroyed())
+			if((R == null) || R.amDestroyed() || isFresh(R))
 				continue;
 			final List<MOB> mobs = new ArrayList<MOB>();
 			for(int m = 0; m < R.numInhabitants(); m++)
@@ -1100,6 +1121,43 @@ public final class WorldState
 
 	/** things restored with timed effects, put on them once the player is in */
 	private static final List<Pair<Physical, XMLTag>>	laterEffects	= new ArrayList<Pair<Physical, XMLTag>>();
+
+	/** areas a FRESH= restore takes as they are now: by file or area name */
+	private static volatile Set<String>	freshAreas	= null;
+	/** true if a FRESH=ALL restore takes every area as it is now */
+	private static volatile boolean		freshAll	= false;
+
+	/**
+	 * Sets the areas the next apply leaves as the world has them now, rather
+	 * than as saved (RESTORE name FRESH=).
+	 * @param areas area file names or area names, or null
+	 * @param all true for every area, or null
+	 */
+	public static void setFresh(final Set<String> areas, final Boolean all)
+	{
+		final Set<String> names = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+		if(areas != null)
+			names.addAll(areas);
+		freshAreas = names;
+		freshAll = (all != null) && all.booleanValue();
+	}
+
+	/**
+	 * Returns whether a room is in an area a FRESH= restore leaves as the
+	 * world has it now.
+	 * @param R the room
+	 * @return true if its contents are not put back from the save
+	 */
+	private static boolean isFresh(final Room R)
+	{
+		if(freshAll)
+			return true;
+		final Set<String> names = freshAreas;
+		if((names == null) || (names.size() == 0) || (R == null) || (R.getArea() == null))
+			return false;
+		final Area A = R.getArea();
+		return names.contains(A.Name()) || names.contains(WorldFiles.areaFileFor(A));
+	}
 
 	/** what was made from the save, by the number it was written with */
 	private static final Map<String, Physical>			restored		= new HashMap<String, Physical>();
@@ -1649,6 +1707,8 @@ public final class WorldState
 			Quest Q = CMLib.quests().fetchQuest(xml.restoreAngleBrackets(tag.getValFromPieces("NAME")));
 			if((Q == null) && "true".equalsIgnoreCase(tag.getParmValue("GENERATED")))
 				Q = makeQuestAgain(tag);
+			if((Q == null) && (!"true".equalsIgnoreCase(tag.getParmValue("GENERATED"))))
+				SaveGame.noteWorldChange(CMLib.lang().L("Quest @x1 is gone from the world.", xml.restoreAngleBrackets(tag.getValFromPieces("NAME"))));
 			if((Q == null) || (Q.isCopy() && (!"true".equalsIgnoreCase(tag.getParmValue("GENERATED")))))
 				continue;
 			Q.setWinners(xml.restoreAngleBrackets(tag.getValFromPieces("WINNERS")));

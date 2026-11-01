@@ -84,6 +84,8 @@ public final class WorldFiles
 	private static volatile boolean	rebuild		= false;
 	/** the checksum of the files this boot plays */
 	private static volatile String	bootSum		= "";
+	/** the checksum of each area file this boot plays, by file name */
+	private static volatile Map<String, String>	bootAreaSums	= new TreeMap<String, String>();
 	/** the cache to copy a database built from the files to, or null */
 	private static volatile File	refreshCache= null;
 	/** whether the content loaded whole, so that writing it out cannot lose any */
@@ -146,6 +148,7 @@ public final class WorldFiles
 	{
 		rebuild = build;
 		bootSum = checksum();
+		bootAreaSums = areaSums();
 		refreshCache = cacheToRefresh;
 		loadedWhole = false;
 	}
@@ -1275,6 +1278,58 @@ public final class WorldFiles
 			}
 		});
 		return files;
+	}
+
+	/**
+	 * Returns the checksum of the world files this game booted from: the
+	 * world version a save records.
+	 * @return the checksum
+	 */
+	public static String bootChecksum()
+	{
+		return bootSum;
+	}
+
+	/**
+	 * Returns the checksum of each area file this game booted from.
+	 * @return the checksums, by file name
+	 */
+	public static Map<String, String> bootAreaSums()
+	{
+		return new TreeMap<String, String>(bootAreaSums);
+	}
+
+	/**
+	 * Returns a checksum of each area file in the world folder.
+	 * @return the checksums, by file name
+	 */
+	public static Map<String, String> areaSums()
+	{
+		final Map<String, String> sums = new TreeMap<String, String>();
+		for(final File F : listFiles(new File(worldDir, AREAS_DIR), AREA_EXT))
+		{
+			final CRC32 crc = new CRC32();
+			try
+			{
+				crc.update(java.nio.file.Files.readAllBytes(F.toPath()));
+			}
+			catch(final IOException e)
+			{
+				crc.update(1);
+			}
+			sums.put(F.getName(), Long.toHexString(crc.getValue()));
+		}
+		return sums;
+	}
+
+	/**
+	 * Returns the name of the file an area is written to.
+	 * @param A the area
+	 * @return the file's name
+	 */
+	public static String areaFileFor(final Area A)
+	{
+		return fileNameFor(A.Name(), AREA_EXT, new HashSet<String>());
 	}
 
 	/**
