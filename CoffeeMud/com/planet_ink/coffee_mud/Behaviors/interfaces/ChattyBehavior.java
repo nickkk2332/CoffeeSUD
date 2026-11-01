@@ -51,4 +51,27 @@ public interface ChattyBehavior extends Behavior
 	 * @return the last MOB object spoken to.
 	 */
 	public MOB getLastRespondedTo();
+
+	/**
+	 * Tells what the NPC would make of a sentence said to it, without anyone
+	 * speaking: its chat groups, the entries the words lead to and how each
+	 * matches, the replies of the first that does with their weights and
+	 * their variables filled in, and anything that would stop a reply (CHATTEST).
+	 * @param npc the NPC with this behaviour
+	 * @param speaker who says it
+	 * @param sentence what is said
+	 * @return the report, lines ended with \n\r
+	 */
+	public default String chatTest(final MOB npc, final MOB speaker, final String sentence)
+	{
+		return "This NPC's talk cannot be tested.";
+	}
+
+	/**
+	 * Forgets the chat groups and entries this behaviour worked out, so that
+	 * they are worked out again from the chat files as they are now.
+	 */
+	public default void resetChat()
+	{
+	}
 }

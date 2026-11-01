@@ -508,6 +508,18 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   listed by `WORLD PROBLEMS`. Builder mode does not write such a file (it
   would be written short) until it is fixed and the world read again from
   it, or `SAVE FORCE` writes it as the world has it.
+- DT4 done. `CHATTEST npc sentence` shows what an NPC with MudChat would make
+  of a sentence without anyone speaking: its base and active groups, what
+  would stop it answering, each entry the words lead to with its pattern and
+  whether it matches, and the first match's replies with their weights and
+  variables filled in. `CHATLINT file` reports, with line numbers, patterns
+  that do not parse, malformed `${}` lines, `@` links to groups not above
+  them, replies with no pattern, patterns with no replies, unreadable
+  includes and skipped lines. `CHAT RELOAD [file]` reads a chat file again
+  for every NPC talking from it (a generation counter makes each drop what
+  it worked out), and builder mode reads an edited chat file again by
+  itself. Left: entries hidden by broader earlier patterns, tick odds, and
+  `.dlg` dialogue trees, which this world does not have yet (N items).
 
 #### 2d. Scripting (59)
 

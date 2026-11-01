@@ -498,7 +498,63 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	{
 		if(this.chatDatFilename.length()==0)
 			return new ChattyGroup[0];
-		return unprotectedChatGroupLoad(this.chatDatFilename);
+		final ChattyGroup[] groups=unprotectedChatGroupLoad(this.chatDatFilename);
+		if(myChatGeneration!=chatGeneration)
+		{
+			// a chat file was read again: what was worked out from it is stale
+			myChatGeneration=chatGeneration;
+			resetChat();
+		}
+		return groups;
+	}
+
+	/** bumped each time a chat file is read again (CHAT RELOAD, or an edit in builder mode) */
+	protected static volatile int chatGeneration=0;
+	/** the generation of the chat files this behaviour worked out its groups from */
+	protected int myChatGeneration=0;
+	/** each loaded chat file's time of change, and when it was last looked at, in builder mode */
+	protected static final Map<String,long[]> chatFileStamps=new Hashtable<String,long[]>();
+
+	/** the newest time of change of a chat file and its parts */
+	protected static long chatFileTime(final String filename)
+	{
+		long newest=0;
+		for(final CMFile F : CMFile.getExistingExtendedFiles(Resources.makeFileResourceName(filename), null, 0))
+			newest=Math.max(newest,F.lastModified());
+		return newest;
+	}
+
+	@Override
+	public synchronized void resetChat()
+	{
+		baseChatGroup=null;
+		myOldName="";
+		currChatEntries=null;
+		chatGroups.clear();
+		chatEntryExpire=Long.MAX_VALUE;
+	}
+
+	/**
+	 * Reads a chat file again (or every one, given null), for every NPC that
+	 * talks from it (CHAT RELOAD).
+	 * @param filename the file, or null for all
+	 * @return how many cached files were dropped
+	 */
+	public static int reloadChat(final String filename)
+	{
+		int n=0;
+		for(final Iterator<String> k=Resources.findResourceKeys("MUDCHAT GROUPS-");k.hasNext();)
+		{
+			final String key=k.next();
+			if(key.startsWith("MUDCHAT GROUPS-")
+			&&((filename==null)||key.equalsIgnoreCase("MUDCHAT GROUPS-"+filename.toLowerCase())))
+			{
+				Resources.removeResource(key);
+				n++;
+			}
+		}
+		chatGeneration++;
+		return n;
 	}
 
 	protected static ChattyGroup[] unprotectedChatGroupLoad(final String filename)
@@ -506,6 +562,22 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		ChattyGroup[] rsc=null;
 		final String key = "MUDCHAT GROUPS-"+filename.toLowerCase();
 		rsc=(ChattyGroup[])Resources.getResource(key);
+		if((rsc!=null)&&(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()))
+		{
+			// in builder mode a chat file edited since it was read is read again
+			final long[] stamp=chatFileStamps.get(key);
+			final long now=System.currentTimeMillis();
+			if((stamp!=null)&&(now-stamp[1]>2000))
+			{
+				stamp[1]=now;
+				if(chatFileTime(filename)!=stamp[0])
+				{
+					Resources.removeResource(key);
+					chatGeneration++;
+					rsc=null;
+				}
+			}
+		}
 		if(rsc!=null)
 			return rsc;
 		synchronized(CMClass.getSync(key))
@@ -517,6 +589,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			if(rsc.length == 0)
 				Log.errOut("NO CHAT GROUPS ("+filename+")! OMG! NOT EVEN DEFAULTS!");
 			Resources.submitResource(key,rsc);
+			chatFileStamps.put(key,new long[] {chatFileTime(filename),System.currentTimeMillis()});
 			return rsc;
 		}
 	}
@@ -1624,6 +1697,261 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			conn=nconn;
 		}
 		return rollingTruth;
+	}
+
+	/** an entry's pattern, written back from what was parsed, for CHATTEST */
+	protected static String describe(final ChatExpression e)
+	{
+		final StringBuilder str=new StringBuilder("");
+		for(final Pair<Object,ChatExpConn> p : e.exp)
+		{
+			if(p.first instanceof ChatMatch)
+			{
+				final ChatMatch m=(ChatMatch)p.first;
+				switch(m.flag)
+				{
+				case EXACT:
+					str.append('=').append(m.str);
+					break;
+				case TOP:
+					str.append('^').append(m.str);
+					break;
+				case ZAPPER:
+					str.append('{').append(m.str).append('}');
+					break;
+				default:
+					str.append(m.str);
+					break;
+				}
+			}
+			else
+			if(p.first instanceof ChatExpression)
+				str.append('(').append(describe((ChatExpression)p.first)).append(')');
+			switch(p.second)
+			{
+			case AND:
+				str.append(" & ");
+				break;
+			case OR:
+				str.append(" | ");
+				break;
+			case ANDNOT:
+				str.append(" & !");
+				break;
+			default:
+				break;
+			}
+		}
+		return str.toString().trim();
+	}
+
+	/** a chat group's names, for CHATTEST */
+	protected static String groupName(final ChattyGroup G)
+	{
+		if((G==null)||(G.groupNames==null)||(G.groupNames.length==0))
+			return "(the default group)";
+		return String.join("/",G.groupNames);
+	}
+
+	@Override
+	public String chatTest(final MOB npc, final MOB speaker, final String sentence)
+	{
+		final StringBuilder out=new StringBuilder("");
+		final String str=CMLib.english().stripEnglishPunctuation(sentence).toLowerCase().trim();
+		out.append("CHATTEST ").append(npc.Name()).append(": '").append(sentence).append("' said by ").append(speaker.Name())
+		   .append(", from ").append(chatDatFilename.length()==0?"no chat file":chatDatFilename).append("\n\r");
+		final ChattyGroup[] all=getChatGroups();
+		// the active groups first, as a reply works them out (they set the base group)
+		final PairList<ChattyGroup,Long> active=getChatGroups(npc,all);
+		out.append("Base group: ").append(groupName(getMyBaseChatGroup(npc,all))).append("\n\r");
+		out.append("Active groups: ");
+		for(int i=0;i<active.size();i++)
+		{
+			out.append(i>0?", ":"").append(groupName(active.getFirst(i)));
+			final long until=active.getSecond(i).longValue();
+			if((until>0)&&(until<Long.MAX_VALUE))
+				out.append(" (switched to, for ").append(Math.max(0,(until-GameTime.now())/1000)).append(" more seconds)");
+		}
+		out.append("\n\r");
+		// what would stop it answering at all
+		final List<String> stops=new ArrayList<String>();
+		if(CMSecurity.isDisabled(CMSecurity.DisFlag.MUDCHAT))
+			stops.add("MudChat is disabled (DISABLE MUDCHAT)");
+		if(!canActAtAll(npc))
+			stops.add("it cannot act now (asleep, bound, not in the world...)");
+		if(speaker.isMonster())
+			stops.add("it answers players only");
+		if(!CMLib.flags().canBeHeardSpeakingBy(speaker,npc))
+			stops.add("it cannot hear "+speaker.Name());
+		if(!CMLib.flags().canBeSeenBy(speaker,npc))
+			stops.add("it cannot see "+speaker.Name());
+		if(!CMLib.flags().canBeSeenBy(npc,speaker))
+			stops.add(speaker.Name()+" cannot see it");
+		if(lastReactedToM==speaker)
+			stops.add("it answered "+speaker.Name()+" last: it answers again after someone else speaks or acts");
+		final List<String> untargeted=new ArrayList<String>();
+		if(talkDown>0)
+			untargeted.add("another NPC spoke: it waits "+talkDown+" more ticks");
+		if((speaker.location()!=null)&&(speaker.location().numPCInhabitants()>=3))
+			untargeted.add("three or more players are here");
+		if(speaker.location()!=npc.location())
+			untargeted.add("it is not in the same room");
+		if(stops.isEmpty())
+			out.append("Nothing stops it answering.");
+		else
+			out.append("It would not answer: ").append(String.join("; ",stops)).append(".");
+		if(!untargeted.isEmpty())
+			out.append("  Said to the room, not to it, it would not answer either: ").append(String.join("; ",untargeted)).append(".");
+		out.append("\n\r");
+		// the entries the words lead to, in order, and how each matches
+		final boolean combat=npc.isInCombat()||speaker.isInCombat();
+		final List<ChattyEntry> entries=getChatEntries(str,npc,all);
+		out.append("Entries the words lead to: ").append(entries.size()).append("\n\r");
+		final String[] rest=new String[1];
+		ChattyEntry matched=null;
+		int n=0;
+		for(final ChattyEntry entry : entries)
+		{
+			final ChatExpression expression=entry.expression;
+			out.append("  ").append(++n).append(". [").append(groupName(entry.fromGroup)).append("] ")
+			   .append(expression.type).append(" ").append(describe(expression)).append(": ");
+			if(expression.type!=ChatMatchType.SAY)
+				out.append("not for speech\n\r");
+			else
+			if(entry.combatEntry!=combat)
+				out.append(entry.combatEntry?"for combat only\n\r":"not in combat\n\r");
+			else
+			if(matched!=null)
+				out.append("not tried (an earlier entry matched)\n\r");
+			else
+			if(match(speaker,expression,str,rest))
+			{
+				matched=entry;
+				out.append("MATCHES\n\r");
+			}
+			else
+				out.append("no match\n\r");
+		}
+		if(matched==null)
+			out.append("No entry matches: it would not answer.\n\r");
+		else
+		{
+			int total=0;
+			for(final ChattyTestResponse c : matched.responses)
+				total+=c.weight;
+			out.append("Replies (one is chosen by weight, of ").append(total).append("):\n\r");
+			for(final ChattyTestResponse c : matched.responses)
+			{
+				final List<String> said=new ArrayList<String>();
+				for(final String r : c.responses)
+				{
+					if(r.trim().length()>0)
+						said.add(mcFilter(r,npc,speaker,(rest[0]==null)?"":rest[0],str,c.fromGroup));
+				}
+				out.append("  weight ").append(c.weight).append(": ").append(String.join(" ~ ",said))
+				   .append(c.switchDB.length()>0?(" (switches to group "+c.switchDB+")"):"").append("\n\r");
+			}
+		}
+		return out.toString();
+	}
+
+	/**
+	 * Checks a chat file's text, as the parser reads it, for what it would
+	 * skip or take otherwise than meant (CHATLINT): patterns that do not parse,
+	 * malformed variable lines, links to groups not defined above them,
+	 * replies with no pattern before them, includes that cannot be read, and
+	 * patterns with no replies.
+	 * @param text the file's text
+	 * @return the problems, each starting with its line number
+	 */
+	public static List<String> lintChat(final String text)
+	{
+		final List<String> problems=new ArrayList<String>();
+		final List<ChattyGroup> groups=new ArrayList<ChattyGroup>();
+		groups.add(newChattyGroup(""));
+		final String[] lines=text.replace("\r","").split("\n",-1);
+		boolean inEntry=false;
+		int entryLine=0;
+		int entryReplies=0;
+		String entryText="";
+		for(int i=0;i<lines.length;i++)
+		{
+			final int lineNum=i+1;
+			String str=lines[i].trim();
+			if(str.length()==0)
+				continue;
+			char c=str.charAt(0);
+			if((c=='*')||(c=='L')||(c=='.'))
+			{
+				while((str.length()>0)&&("*L.".indexOf(str.charAt(0))>=0))
+					str=str.substring(1);
+				if((str.length()==0)||("([{<".indexOf(str.charAt(0))<0))
+					continue;
+				c=str.charAt(0);
+			}
+			switch(c)
+			{
+			case '(':
+			case '[':
+			case '{':
+			case '<':
+				if(inEntry&&(entryReplies==0))
+					problems.add("line "+entryLine+": the pattern "+entryText+" has no replies");
+				try
+				{
+					parseExpression(str);
+					inEntry=true;
+					entryLine=lineNum;
+					entryReplies=0;
+					entryText=str;
+				}
+				catch(final CMException e)
+				{
+					problems.add("line "+lineNum+": the pattern does not parse ("+e.getMessage()+"): "+str);
+					inEntry=false;
+				}
+				break;
+			case '$':
+				if(!((str.length()>4)
+				&&(str.charAt(1)=='{')
+				&&(str.endsWith("}"))
+				&&((str.indexOf('=')>3)||((str.indexOf('+')>3)&&(str.indexOf('=')<0)))))
+					problems.add("line "+lineNum+": a malformed variable line (${NAME=value} or ${NAME+value}): "+str);
+				break;
+			case '>':
+				if(inEntry&&(entryReplies==0))
+					problems.add("line "+entryLine+": the pattern "+entryText+" has no replies");
+				inEntry=false;
+				groups.add(newChattyGroup(str.substring(1).trim()));
+				break;
+			case '@':
+				if(matchChatGroup(null,str.substring(1).trim(),groups.toArray(new ChattyGroup[0]))==null)
+					problems.add("line "+lineNum+": "+str+" names no group defined above it, so it takes the first group's entries");
+				break;
+			case '%':
+				if(Resources.getFileResource(str.substring(1).trim(),false).length()==0)
+					problems.add("line "+lineNum+": the file "+str.substring(1).trim()+" cannot be read");
+				break;
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
+				if(!inEntry)
+					problems.add("line "+lineNum+": a reply with no pattern before it: "+str);
+				else
+					entryReplies++;
+				if(c=='0')
+					problems.add("line "+lineNum+": a reply of weight 0 is never chosen: "+str);
+				break;
+			case '#':
+			case '"':
+				break;
+			default:
+				problems.add("line "+lineNum+": a line the parser skips: "+str);
+				break;
+			}
+		}
+		if(inEntry&&(entryReplies==0))
+			problems.add("line "+entryLine+": the pattern "+entryText+" has no replies");
+		return problems;
 	}
 
 	protected void checkReactionReset(final MOB mob)

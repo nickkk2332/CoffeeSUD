@@ -1,0 +1,12 @@
+>foreman
+(hello|hi)
+9say Hello there, $n!
+(job)
+9say Dig, $n.
+1say Not now.
+(oops))
+>other
+@nowhere
+${MOOD=grumpy}
+${BAD
+(bye)
