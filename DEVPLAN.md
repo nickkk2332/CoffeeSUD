@@ -742,6 +742,16 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   `LAW ACCUSE name crime` handle warrants. Left: `LAW TEST crime` (whether
   an act here is a crime, and why) and `LAW SET KEY=VALUE` (W21's custom
   law as world content).
+- DT22 done. `PRICECHECK item [AT shopkeeper] [FOR character] [SELL]`
+  (builder mode, DEV=1 or CMDMOBS) lists the shop's price settings, each
+  with where it came from (the shopkeeper, its area, a parent area or the
+  ini, and a running quest's GIVE STAT, through the new `Quest.gaveStat`),
+  then each step of the price as `CoffeeShops` works it out: its pricing
+  code notes each step while PRICECHECK asks (`explainPrice`), so the steps
+  are the game's own sums, then both prices, the budget left and the time
+  to the next stock reset (new `ShopKeeper` getters). Fixed on the way: an
+  area with no prejudice of its own fell back to the ini's IGNOREMASK, not
+  PREJUDICE.
 
 #### 2d. Scripting (59)
 

@@ -490,6 +490,26 @@ public class StdShopKeeper extends StdMOB implements ShopKeeper
 	}
 
 	@Override
+	public long budgetLeft()
+	{
+		return budgetRemaining;
+	}
+
+	@Override
+	public int ticksToBudgetReset()
+	{
+		return budgetTickDown;
+	}
+
+	@Override
+	public int ticksToInventoryReset()
+	{
+		if((getFinalInvResetRate() <= 0) || (invResetTickDown >= Ability.TICKS_FOREVER))
+			return -1;
+		return invResetTickDown;
+	}
+
+	@Override
 	public String getFinalPrejudiceFactors()
 	{
 		if (getRawPrejudiceFactors().length() > 0)

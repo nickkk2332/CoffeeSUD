@@ -252,4 +252,32 @@ public interface ShopKeeper extends Environmental, Economics
 	 * @return the item zappermask
 	 */
 	public String getWhatIsSoldZappermask();
+
+	/**
+	 * What is left of the shop's buying budget until it next resets, as
+	 * PRICECHECK shows it.
+	 * @return the amount left in base currency, or -1 if the shop keeps no budget
+	 */
+	public default long budgetLeft()
+	{
+		return -1;
+	}
+
+	/**
+	 * Ticks until the shop's buying budget next resets.
+	 * @return the ticks, or -1 if it keeps no budget
+	 */
+	public default int ticksToBudgetReset()
+	{
+		return -1;
+	}
+
+	/**
+	 * Ticks until the shop's stock is next put back as it was made.
+	 * @return the ticks, or -1 if it never is
+	 */
+	public default int ticksToInventoryReset()
+	{
+		return -1;
+	}
 }

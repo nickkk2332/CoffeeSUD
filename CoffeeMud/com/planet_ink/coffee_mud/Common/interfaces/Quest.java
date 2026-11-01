@@ -717,6 +717,18 @@ public interface Quest extends Tickable, CMCommon, Modifiable
 	}
 
 	/**
+	 * Whether this quest, while it runs, has given an object a stat (GIVE
+	 * STAT), as PRICECHECK says where a shop's settings came from.
+	 * @param E the object
+	 * @param stat the stat's name, such as PRICEMASKS
+	 * @return true if it has
+	 */
+	public default boolean gaveStat(final Environmental E, final String stat)
+	{
+		return false;
+	}
+
+	/**
 	 * Returns whether this quest is in a midway stopping state
 	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#suspended()
 	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#waiting()

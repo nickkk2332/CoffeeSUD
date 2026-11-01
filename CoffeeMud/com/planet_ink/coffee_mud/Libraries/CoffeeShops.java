@@ -38,6 +38,86 @@ import java.util.*;
 */
 public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 {
+	/** the steps of a price being worked out on this thread, while PRICECHECK asks (DT22) */
+	protected static final ThreadLocal<List<String>> priceNotes = new ThreadLocal<List<String>>();
+
+	/**
+	 * Notes a step of a price, if PRICECHECK is asking.
+	 * @param line the step
+	 */
+	protected static void priceNote(final String line)
+	{
+		final List<String> notes = priceNotes.get();
+		if(notes != null)
+			notes.add(line);
+	}
+
+	/**
+	 * A number as a price step shows it: at most three places.
+	 * @param d the number
+	 * @return the text
+	 */
+	protected static String priceNum(final double d)
+	{
+		String s = String.format(java.util.Locale.ROOT, "%.3f", Double.valueOf(d));
+		if(s.indexOf('.') >= 0)
+		{
+			while(s.endsWith("0"))
+				s = s.substring(0, s.length() - 1);
+			if(s.endsWith("."))
+				s = s.substring(0, s.length() - 1);
+		}
+		return s;
+	}
+
+	@Override
+	public List<String> explainPrice(final MOB shopM, final MOB custM, final Environmental product, final ShopKeeper shopKeeper, final boolean pawn)
+	{
+		final List<String> lines = new ArrayList<String>();
+		final List<String> old = priceNotes.get();
+		priceNotes.set(lines);
+		try
+		{
+			final CoffeeShop shop = shopKeeper.getShop(custM);
+			final ShopKeeper.ShopPrice P = pawn ? pawningPrice(shopM, custM, product, shopKeeper, shop)
+												: sellingPrice(shopM, custM, product, shopKeeper, shop, true);
+			lines.add((pawn ? "The shop pays: " : "The shop sells it for: ") + describePrice(shopM, P) + ".");
+		}
+		finally
+		{
+			priceNotes.set(old);
+		}
+		return lines;
+	}
+
+	@Override
+	public String describePrice(final MOB shopM, final ShopKeeper.ShopPrice price)
+	{
+		if(price.experiencePrice > 0)
+			return price.experiencePrice + " experience";
+		if(price.questPointPrice > 0)
+			return price.questPointPrice + " quest points";
+		return CMLib.beanCounter().nameCurrencyShort(shopM, price.absoluteGoldPrice) + " (" + priceNum(price.absoluteGoldPrice) + " in base value)";
+	}
+
+	/**
+	 * Where a product's base price comes from, as PRICECHECK says it.
+	 * @param product the product
+	 * @param shop the shop
+	 * @return the words
+	 */
+	protected String basePriceSource(final Environmental product, final CoffeeShop shop)
+	{
+		if(product instanceof Item)
+			return "the item's value";
+		final int level = CMLib.ableMapper().lowestQualifyingLevel(product.ID());
+		if(product instanceof Ability)
+			return "lowest level " + level + (shop.isSold(ShopKeeper.DEAL_TRAINER) ? " x 100, taught by a trainer" : " x 75");
+		if(product instanceof MOB)
+			return (((MOB)product).fetchEffect("Prop_Retainable") != null) ? "its Prop_Retainable" : "(25 + level) x level";
+		return "lowest level " + level + " x 25";
+	}
+
 	@Override
 	public String ID()
 	{
@@ -567,7 +647,11 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		if((!pawnTo)&&(!sellorby.trim().equalsIgnoreCase("BUY")))
 			return 0.0;
 		if(part.trim().indexOf(' ')<0)
+		{
+			if(CMath.s_double(part.trim())!=0.0)
+				priceNote("Prejudice x"+priceNum(CMath.s_double(part.trim()))+": the rule '"+sellorby.trim()+"="+part.trim()+"', for everyone.");
 			return CMath.s_double(part.trim());
+		}
 		final List<String> prejudiceBits=CMParms.parse(part.trim().toUpperCase());
 		double d=0.0;
 		boolean yes=false;
@@ -590,6 +674,8 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			if(customerFlags.contains(bit))
 			{
 				yes=true;
+				if(d!=0.0)
+					priceNote("Prejudice x"+priceNum(d)+": the rule '"+sellorby.trim()+"="+part.trim()+"' matched "+bit.toLowerCase()+".");
 				break;
 			}
 		}
@@ -605,12 +691,19 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		{
 			factors=CMProps.getVar(CMProps.Str.PREJUDICE).trim();
 			if(factors.length()==0)
+			{
+				priceNote("Prejudice: none set (x1).");
 				return 1.0;
+			}
 		}
 		if(factors.indexOf('=')<0)
 		{
 			if(CMath.s_double(factors)!=0.0)
+			{
+				priceNote("Prejudice x"+priceNum(CMath.s_double(factors))+": one factor for everyone.");
 				return CMath.s_double(factors);
+			}
+			priceNote("Prejudice: '"+factors+"' is no factor (x1).");
 			return 1.0;
 		}
 		int x=factors.indexOf(';');
@@ -626,15 +719,20 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		final double d=prejudiceValueFromPart(customer,pawnTo,factors.trim());
 		if(d!=0.0)
 			return d;
+		priceNote("Prejudice: no "+(pawnTo?"SELL":"BUY")+" rule matched (x1).");
 		return 1.0;
 	}
 
 	protected double itemPriceFactor(final Environmental product, final Room R, final String[] priceFactors, final boolean pawnTo)
 	{
 		if(priceFactors.length==0)
+		{
+			priceNote("Price masks: none set (x1).");
 			return 1.0;
+		}
 		double factor=1.0;
 		int x=0;
+		int unmatched=0;
 		String factorMask=null;
 		ItemPossessor oldOwner=null;
 		if(product instanceof Item)
@@ -650,8 +748,15 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			if(x<0)
 				continue;
 			if(CMLib.masking().maskCheck(factorMask.substring(x+1).trim(),product,false))
+			{
 				factor*=CMath.s_double(factorMask.substring(0,x).trim());
+				priceNote("Price mask x"+priceNum(CMath.s_double(factorMask.substring(0,x).trim()))+": '"+factorMask+"' matched.");
+			}
+			else
+				unmatched++;
 		}
+		if(unmatched>0)
+			priceNote("Price masks that did not match: "+unmatched+".");
 		if(product instanceof Item)
 			((Item)product).setOwner(oldOwner);
 		if(factor!=0.0)
@@ -677,12 +782,14 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 				val.experiencePrice=(stockPrice*-1)-1000;
 			else
 				val.questPointPrice=(stockPrice*-1)-100;
+			priceNote("Price: "+describePrice(sellerShopM,val)+", the shop's own price for it.");
 			return val;
 		}
 		if(stockPrice>=0)
 			val.absoluteGoldPrice=stockPrice;
 		else
 			val.absoluteGoldPrice=rawSpecificGoldPrice(product,shop);
+		priceNote("Base price: "+priceNum(val.absoluteGoldPrice)+((stockPrice>=0)?", the shop's own price for it.":", from "+basePriceSource(product,shop)+"."));
 
 		if(buyerCustM==null)
 		{
@@ -695,6 +802,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		final Room loc=CMLib.map().roomLocation(shopKeeper);
 		prejudiceFactor*=itemPriceFactor(product,loc,shopKeeper.getFinalItemPricingAdjustments(),false);
 		val.absoluteGoldPrice=CMath.mul(prejudiceFactor,val.absoluteGoldPrice);
+		priceNote("After prejudice and price masks (x"+priceNum(prejudiceFactor)+"): "+priceNum(val.absoluteGoldPrice)+".");
 
 		// the price is 200% at 0 charisma, and 100% at 35
 		if(sellerShopM.isMonster() && (!CMLib.flags().isGolem(sellerShopM)))
@@ -705,23 +813,38 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			final double sellerMinWis = (sellerWis < 3) ? 3 : sellerWis;
 			final double denom = (buyerMinCha + sellerMinWis) * 0.8;
 			val.absoluteGoldPrice=(val.absoluteGoldPrice*2)-(val.absoluteGoldPrice*((buyerMinCha-sellerMinWis)/denom));
+			priceNote("Charisma "+priceNum(buyerCha)+" of "+buyerCustM.name()+" against wisdom "+priceNum(sellerWis)+" of "+sellerShopM.name()
+				+" (x"+priceNum(2.0-((buyerMinCha-sellerMinWis)/denom))+"): "+priceNum(val.absoluteGoldPrice)+".");
 		}
+		else
+			priceNote("No charisma against wisdom: "+sellerShopM.name()+" is "+(sellerShopM.isMonster()?"a golem":"a player")+".");
 
 		if(includeSalesTax)
 		{
 			final double salesTax=getSalesTax(sellerShopM.getStartRoom(),sellerShopM);
 			val.absoluteGoldPrice+=((salesTax>0.0)?(CMath.mul(val.absoluteGoldPrice,CMath.div(salesTax,100.0))):0.0);
+			if(salesTax>0.0)
+				priceNote("Sales tax "+priceNum(salesTax)+"%, from the law's SALESTAX: "+priceNum(val.absoluteGoldPrice)+".");
 		}
 		if(val.absoluteGoldPrice<=0.0)
+		{
 			val.absoluteGoldPrice=1.0;
+			priceNote("At least 1.");
+		}
 		else
+		{
 			val.absoluteGoldPrice=CMLib.beanCounter().abbreviatedRePrice(sellerShopM,val.absoluteGoldPrice);
+			priceNote("Rounded to the coins: "+priceNum(val.absoluteGoldPrice)+".");
+		}
 
 		// the magical aura discount for miscmagic (potions, anything else.. MUST be basePhyStats tho!
 		if((CMath.bset(buyerCustM.basePhyStats().disposition(),PhyStats.IS_BONUS))
 		&&(product instanceof MiscMagic)
 		&&(val.absoluteGoldPrice>2.0))
+		{
 			val.absoluteGoldPrice/=2;
+			priceNote("Half price, for "+buyerCustM.name()+"'s magical aura and a magic item: "+priceNum(val.absoluteGoldPrice)+".");
+		}
 
 		return val;
 	}
@@ -970,6 +1093,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			final int stockPrice=shop.stockPrice(product);
 			if(stockPrice<=-100)
 			{
+				priceNote("The shop sells it for quest points or experience, and buys none back.");
 				return val;
 			}
 
@@ -977,6 +1101,8 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 				val.absoluteGoldPrice=stockPrice;
 			else
 				val.absoluteGoldPrice=rawSpecificGoldPrice(product,shop);
+			priceNote("Base price"+((number!=1.0)?" of one of "+priceNum(number):"")+": "+priceNum(val.absoluteGoldPrice)
+				+((stockPrice>=0)?", the shop's own price for it.":", from "+basePriceSource(product,shop)+"."));
 
 			if(sellerCustM==null)
 			{
@@ -988,6 +1114,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			final Room loc=CMLib.map().roomLocation(shopKeeper);
 			prejudiceFactor*=itemPriceFactor(product,loc,shopKeeper.getFinalItemPricingAdjustments(),true);
 			val.absoluteGoldPrice=CMath.mul(prejudiceFactor,val.absoluteGoldPrice);
+			priceNote("After prejudice and price masks (x"+priceNum(prejudiceFactor)+"): "+priceNum(val.absoluteGoldPrice)+".");
 
 			double buyPrice=val.absoluteGoldPrice;
 			if(buyerShopM.isMonster() && (!CMLib.flags().isGolem(buyerShopM)))
@@ -998,19 +1125,43 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 				final double buyerMinWis = (buyerWis < 3) ? 3 : buyerWis;
 				final double denom = (sellerMinCha + buyerMinWis) * 0.8;
 				buyPrice=(buyPrice/2)+((buyPrice/2)*((sellerMinCha-buyerMinWis)/denom));
-
+				priceNote("Charisma "+priceNum(sellerCha)+" of "+sellerCustM.name()+" against wisdom "+priceNum(buyerWis)+" of "+buyerShopM.name()
+					+" (x"+priceNum(0.5+(0.5*((sellerMinCha-buyerMinWis)/denom)))+"): "+priceNum(buyPrice)+".");
 			}
+			else
+				priceNote("No charisma against wisdom: "+buyerShopM.name()+" is "+(buyerShopM.isMonster()?"a golem":"a player")+".");
 			if(!(product instanceof Ability))
-				buyPrice=CMath.mul(buyPrice,1.0-getStockSizeDevaluation(shopKeeper,product,number));
+			{
+				final double devalue=getStockSizeDevaluation(shopKeeper,product,number);
+				buyPrice=CMath.mul(buyPrice,1.0-devalue);
+				if(devalue>0.0)
+					priceNote("Less "+priceNum(devalue*100.0)+"% for the "+shopKeeper.getShop().numberInStock(product)+" in stock (DEVALRATE): "+priceNum(buyPrice)+".");
+			}
 
-			final double sellPrice=sellingPrice(buyerShopM,sellerCustM,product,shopKeeper,shop, false).absoluteGoldPrice;
+			// the cap is worked out quietly: its own steps are the other price's
+			final List<String> notes=priceNotes.get();
+			priceNotes.set(null);
+			final double sellPrice;
+			try
+			{
+				sellPrice=sellingPrice(buyerShopM,sellerCustM,product,shopKeeper,shop, false).absoluteGoldPrice;
+			}
+			finally
+			{
+				priceNotes.set(notes);
+			}
 
 			if(buyPrice>sellPrice)
+			{
 				val.absoluteGoldPrice=sellPrice;
+				priceNote("No more than the shop sells it for, before tax: "+priceNum(sellPrice)+".");
+			}
 			else
 				val.absoluteGoldPrice=buyPrice;
 
 			val.absoluteGoldPrice *= number;
+			if(number!=1.0)
+				priceNote("For all "+priceNum(number)+": "+priceNum(val.absoluteGoldPrice)+".");
 
 			if(val.absoluteGoldPrice<=0.0)
 				val.absoluteGoldPrice=1.0;

@@ -793,7 +793,7 @@ public class StdArea implements Area
 		final String s = finalPrejudiceFactors(this);
 		if (s.length() > 0)
 			return s;
-		return CMProps.getVar(CMProps.Str.IGNOREMASK);
+		return CMProps.getVar(CMProps.Str.PREJUDICE);
 	}
 
 	protected String finalPrejudiceFactors(final Area A)

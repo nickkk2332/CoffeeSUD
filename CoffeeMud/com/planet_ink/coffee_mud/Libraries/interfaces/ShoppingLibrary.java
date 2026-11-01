@@ -218,6 +218,32 @@ public interface ShoppingLibrary extends CMLibrary
 											 ShopKeeper shopKeeper);
 
 	/**
+	 * How a price is reached, step by step, as PRICECHECK shows it (DT22): the
+	 * sums of sellingPrice (with sales tax) or of pawningPrice, each step noted
+	 * as it is made, so the steps are the game's own.
+	 *
+	 * @see ShoppingLibrary#sellingPrice(MOB, MOB, Environmental, ShopKeeper, CoffeeShop, boolean)
+	 * @see ShoppingLibrary#pawningPrice(MOB, MOB, Environmental, ShopKeeper)
+	 *
+	 * @param shopM the shopkeeper mob
+	 * @param custM the customer
+	 * @param product the product
+	 * @param shopKeeper the shop
+	 * @param pawn false for what the shop sells it for, true for what it pays for it
+	 * @return the steps, the last being the price
+	 */
+	public List<String> explainPrice(MOB shopM, MOB custM, Environmental product, ShopKeeper shopKeeper, boolean pawn);
+
+	/**
+	 * A price in words: coins, quest points or experience.
+	 *
+	 * @param shopM the shopkeeper mob, whose currency it is
+	 * @param price the price
+	 * @return the words
+	 */
+	public String describePrice(MOB shopM, ShopKeeper.ShopPrice price);
+
+	/**
 	 * Evaluates a proposed sale of an item to a shopkeeper by a player/mob
 	 * Returns whether the sale can go forth.  This also handles proposed
 	 * VALUE commands.

@@ -5352,6 +5352,24 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	}
 
 	@Override
+	public boolean gaveStat(final Environmental E, final String stat)
+	{
+		final QuestState qs=questState;
+		if((qs==null)||(E==null)||(stat==null))
+			return false;
+		synchronized(qs)
+		{
+			for(final Pair<List<Object>,Integer> p : qs.addons)
+			{
+				final List<Object> V=p.first;
+				if((V.size()>2)&&(V.get(0)==E)&&(V.get(1) instanceof String)&&stat.equalsIgnoreCase((String)V.get(1)))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	public boolean stopping()
 	{
 		return stoppingQuest;
