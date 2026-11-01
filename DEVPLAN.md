@@ -819,6 +819,14 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   writes nothing while VOCAB asks), `VOCAB LIST key` the lists.ini value
   in effect and its file, `VOCAB RELOAD` the unloads in one, and `VOCAB
   ADD section rule` (builder mode) appends to the world's rule file.
+- DT31 done, for the sources the languages have now (the dictionary and
+  the word lists; L5's suffixes and syllables will add theirs). `LANGUAGE
+  PREVIEW id [prof] text` (builder mode, DEV=1 or CMDABILITIES) shows what
+  StdLanguage's own `scrambleAll` and `messChars` do to it for one who does
+  not know the language, a listener, the speaker and a reader, and each
+  word's translation and source. `LANGUAGE COVERAGE id file|room|area|HERE`
+  counts dictionary hits and names the commonest misses. Other LANGUAGE
+  words go to LANGUAGES as before.
 
 #### 2d. Scripting (59)
 
