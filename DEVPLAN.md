@@ -188,6 +188,13 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   flag may end in `*`. The STDACHIEVEMENTS, STDTITLES and STDSOCIALS flags
   wait for S6, which gives the world its own copies of those files. Found on
   the way: reloading the DISABLE flags left disabled abilities from before.
+- S4 done. Each mob, character and item in `world.xml` has a number (SID),
+  and a `<RIDES>` section says who rides what; the rides are put back once
+  both ends are, the characters' after they log in. Area files have `IRIDE`
+  for an item riding something, so a cart can be placed hitched to its
+  team. Found on the way: a mount counts as unsavable while anyone riding it
+  is, and characters are, so a save left out the player's own horse; the
+  save now asks without the player's characters on it.
 
 #### 2c. Developer and builder tools (50)
 

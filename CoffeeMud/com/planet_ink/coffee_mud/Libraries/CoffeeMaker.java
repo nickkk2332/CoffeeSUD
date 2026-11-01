@@ -1129,6 +1129,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 			}
 
 			final Map<Item,String> itemLocTable=new Hashtable<Item,String>();
+			final Map<Item,String> itemRideTable=new Hashtable<Item,String>();
 			final List<XMLTag> iV=xmlLib.getContentsFromPieces(cV,"ROOMITEMS");
 			if(iV!=null)
 			{
@@ -1155,6 +1156,9 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 						final String iloc=iblk.getValFromPieces("ILOCA");
 						if(iloc.length()>0)
 							itemLocTable.put(newItem,iloc);
+						final String iride=iblk.getValFromPieces("IRIDE");
+						if((iride!=null)&&(iride.length()>0))
+							itemRideTable.put(newItem,iride);
 						newItem.basePhyStats().setLevel(iblk.getIntFromPieces("ILEVL"));
 						newItem.basePhyStats().setAbility(iblk.getIntFromPieces("IABLE"));
 						newItem.basePhyStats().setRejuv(iblk.getIntFromPieces("IREJV"));
@@ -1167,6 +1171,13 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 						newItem.recoverPhyStats();
 					}
 				}
+			}
+			// items riding things: a cart hitched to its team
+			for(final Item riderI : itemRideTable.keySet())
+			{
+				final Environmental E=identTable.get(itemRideTable.get(riderI));
+				if(E instanceof Rideable)
+					riderI.setRiding((Rideable)E);
 			}
 			for(final Item childI : itemLocTable.keySet())
 			{
@@ -2610,6 +2621,8 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 							ibuf.append("<ILOCA />");
 						else
 							ibuf.append(xmlLib.convertXMLtoTag("ILOCA",""+item.container()));
+						if(item.riding()!=null) // linked on reading, if what it rides is in the room too
+							ibuf.append(xmlLib.convertXMLtoTag("IRIDE",""+item.riding()));
 						ibuf.append(xmlLib.convertXMLtoTag("IREJV",item.basePhyStats().rejuv()));
 						ibuf.append(xmlLib.convertXMLtoTag("IUSES",item.usesRemaining()));
 						ibuf.append(xmlLib.convertXMLtoTag("ILEVL",item.basePhyStats().level()));

@@ -52,7 +52,9 @@ import java.util.*;
  * <li>each quest's winners, whether it is running, its step and time left,
  * where its mobs and items are, the variables its scripts set on it, and how
  * long a quest that is not running has yet to wait;</li>
- * <li>the variables that scripts share.</li>
+ * <li>the variables that scripts share;</li>
+ * <li>who rides what: mobs on mounts, characters on their horses, and carts
+ * hitched to their teams.</li>
  * </ul>
  * Mobs that cannot be saved, such as summoned ones, are left out unless they
  * follow the player, and things a quest is using are left to the quest.  The
@@ -78,6 +80,66 @@ public final class WorldState
 	 * @return the world, as XML
 	 */
 	public static String capture(final MOB player)
+	{
+		written = new IdentityHashMap<Physical, Integer>();
+		try
+		{
+			return captureWorld(player);
+		}
+		finally
+		{
+			written = null;
+		}
+	}
+
+	/**
+	 * The mobs, players and items written to the save being made, each by
+	 * the number it is written with (SID), so that who rides what can be
+	 * written after them.
+	 */
+	private static Map<Physical, Integer>	written	= null;
+
+	/**
+	 * Returns the number a mob, player or item is written to the save with.
+	 * @param P the mob, player or item
+	 * @return its number
+	 */
+	private static int sid(final Physical P)
+	{
+		final Map<Physical, Integer> w = written;
+		if(w == null)
+			return 0;
+		Integer n = w.get(P);
+		if(n == null)
+		{
+			n = Integer.valueOf(w.size() + 1);
+			w.put(P, n);
+		}
+		return n.intValue();
+	}
+
+	/**
+	 * Writes who rides what: each rider and the thing it rides, by the
+	 * numbers they were written with, for those of both that were written.
+	 * @return the RIDES tag
+	 */
+	private static String ridesXML()
+	{
+		final StringBuilder str = new StringBuilder("<RIDES>\n");
+		final Map<Physical, Integer> w = written;
+		for(final Map.Entry<Physical, Integer> e : new ArrayList<Map.Entry<Physical, Integer>>(w.entrySet()))
+		{
+			if(!(e.getKey() instanceof Rider))
+				continue;
+			final Rideable ridden = ((Rider)e.getKey()).riding();
+			final Integer on = (ridden == null) ? null : w.get(ridden);
+			if(on != null)
+				str.append("<RIDE R=\"").append(e.getValue()).append("\" ON=\"").append(on).append("\" />\n");
+		}
+		return str.append("</RIDES>\n").toString();
+	}
+
+	private static String captureWorld(final MOB player)
 	{
 		final XMLLibrary xml = CMLib.xml();
 		final StringBuilder str = new StringBuilder("<WORLD VERSION=\"" + VERSION + "\">\n");
@@ -157,6 +219,7 @@ public final class WorldState
 		str.append("</WEATHER>\n");
 		str.append(scriptVarsXML());
 		str.append(questsXML(player));
+		str.append(ridesXML());
 		str.append("</WORLD>\n");
 		return str.toString();
 	}
@@ -171,7 +234,7 @@ public final class WorldState
 	private static String playerXML(final MOB player)
 	{
 		final XMLLibrary xml = CMLib.xml();
-		final StringBuilder str = new StringBuilder("<PLAYER>");
+		final StringBuilder str = new StringBuilder("<PLAYER SID=\"" + sid(player) + "\">");
 		str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(player.Name())));
 		str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(player.location()))));
 		final MOB leader = player.amFollowing();
@@ -218,6 +281,8 @@ public final class WorldState
 			return;
 		}
 		final XMLTag world = all.get(0);
+		restored.clear();
+		laterRides.clear();
 		clearWorld();
 		final XMLTag rooms = world.getPieceFromPieces("ROOMS");
 		if(rooms != null)
@@ -287,6 +352,13 @@ public final class WorldState
 			if(vars != null)
 				setScriptVars(vars); // a quest started again may have reset its own
 		}
+		final XMLTag rides = world.getPieceFromPieces("RIDES");
+		if(rides != null)
+		{
+			for(final XMLTag ride : rides.contents())
+				laterRides.add(new Pair<String, String>(ride.getParmValue("R"), ride.getParmValue("ON")));
+			putBackRides(); // those among the world's mobs and items; the players' wait for them
+		}
 		player = world.getPieceFromPieces("PLAYER");
 		final XMLTag partyTag = world.getPieceFromPieces("PARTY");
 		party = (partyTag == null) ? null : new ArrayList<XMLTag>(partyTag.contents());
@@ -306,6 +378,44 @@ public final class WorldState
 	}
 
 	/**
+	 * Returns whether a mob can be saved, leaving aside the player's
+	 * characters riding it: a mount counts as unsavable while anyone on it
+	 * is, and the player's characters are, as room contents, though the save
+	 * keeps them and their ride.
+	 * @param M the mob
+	 * @return true if it can be saved
+	 */
+	private static boolean savableBesidesPlayers(final MOB M)
+	{
+		if(M.isSavable())
+			return true;
+		if(!(M instanceof Rideable))
+			return false;
+		final Rideable mount = (Rideable)M;
+		final List<Rider> players = new ArrayList<Rider>();
+		for(final Enumeration<Rider> r = mount.riders(); r.hasMoreElements();)
+		{
+			final Rider rider = r.nextElement();
+			if((rider instanceof MOB) && (!((MOB)rider).isMonster()))
+				players.add(rider);
+		}
+		if(players.size() == 0)
+			return false;
+		// on the game thread: asked with them off, then put back on
+		for(final Rider rider : players)
+			mount.delRider(rider);
+		try
+		{
+			return M.isSavable();
+		}
+		finally
+		{
+			for(final Rider rider : players)
+				mount.addRider(rider);
+		}
+	}
+
+	/**
 	 * Returns whether a mob in a room is saved with the world: one that can be
 	 * saved, and is neither a player nor following one.
 	 * @param M the mob
@@ -313,7 +423,7 @@ public final class WorldState
 	 */
 	private static boolean isSavedHere(final MOB M)
 	{
-		if((M == null) || (!M.isMonster()) || (!M.isSavable()) || M.amDestroyed() || isQuestObject(M))
+		if((M == null) || (!M.isMonster()) || (!savableBesidesPlayers(M)) || M.amDestroyed() || isQuestObject(M))
 			return false;
 		final MOB leader = M.getGroupLeader();
 		return (leader == null) || leader.isMonster();
@@ -421,7 +531,7 @@ public final class WorldState
 	private static String mobXML(final MOB M, final String tag)
 	{
 		final XMLLibrary xml = CMLib.xml();
-		final StringBuilder str = new StringBuilder("<" + tag + ">");
+		final StringBuilder str = new StringBuilder("<" + tag + " SID=\"" + sid(M) + "\">");
 		str.append(xml.convertXMLtoTag("CLASS", CMClass.classID(M)));
 		str.append(xml.convertXMLtoTag("LEVEL", M.basePhyStats().level()));
 		str.append(xml.convertXMLtoTag("ABILITY", M.basePhyStats().ability()));
@@ -468,7 +578,7 @@ public final class WorldState
 		final StringBuilder str = new StringBuilder();
 		for(final Item I : items)
 		{
-			str.append("<ITEM>");
+			str.append("<ITEM SID=\"").append(sid(I)).append("\">");
 			str.append(xml.convertXMLtoTag("CLASS", CMClass.classID(I)));
 			str.append(xml.convertXMLtoTag("USES", I.usesRemaining()));
 			str.append(xml.convertXMLtoTag("LEVEL", I.basePhyStats().level()));
@@ -529,6 +639,7 @@ public final class WorldState
 			I.setRawWornCode(tag.getLongFromPieces("WORN", 0));
 			I.setExpirationDate(tag.getLongFromPieces("EXPIRES", 0));
 			laterEffects(I, tag);
+			noteRestored(I, tag);
 			items.add(I);
 		}
 		for(int i = 0; i < tags.size(); i++)
@@ -585,6 +696,7 @@ public final class WorldState
 			Log.errOut("WorldState", "No mob class " + tag.getValFromPieces("CLASS"));
 			return null;
 		}
+		noteRestored(M, tag);
 		M.setMiscText(CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("TEXT")));
 		M.basePhyStats().setLevel(tag.getIntFromPieces("LEVEL"));
 		M.basePhyStats().setAbility(tag.getIntFromPieces("ABILITY"));
@@ -756,6 +868,47 @@ public final class WorldState
 
 	/** things restored with timed effects, put on them once the player is in */
 	private static final List<Pair<Physical, XMLTag>>	laterEffects	= new ArrayList<Pair<Physical, XMLTag>>();
+
+	/** what was made from the save, by the number it was written with */
+	private static final Map<String, Physical>			restored		= new HashMap<String, Physical>();
+	/** who rides what, by number, until both are back */
+	private static final List<Pair<String, String>>		laterRides		= new ArrayList<Pair<String, String>>();
+
+	/**
+	 * Notes what was made from a saved tag, by the number it was written
+	 * with, so that who rides what can be put back.
+	 * @param P what was made
+	 * @param tag its tag
+	 */
+	private static void noteRestored(final Physical P, final XMLTag tag)
+	{
+		final String sid = tag.getParmValue("SID");
+		if((P != null) && (sid != null) && (sid.length() > 0))
+			restored.put(sid, P);
+	}
+
+	/**
+	 * Puts riders back on what they rode, for each ride whose rider and
+	 * mount are both back, and in the same place.
+	 */
+	private static void putBackRides()
+	{
+		for(final Iterator<Pair<String, String>> i = laterRides.iterator(); i.hasNext();)
+		{
+			final Pair<String, String> ride = i.next();
+			final Physical rider = restored.get(ride.first);
+			final Physical mount = restored.get(ride.second);
+			if((rider == null) || (mount == null))
+				continue;
+			i.remove();
+			if((!(rider instanceof Rider)) || (!(mount instanceof Rideable)) || rider.amDestroyed() || mount.amDestroyed())
+				continue;
+			final Room riderR = CMLib.map().roomLocation(rider);
+			if((riderR == null) || (riderR != CMLib.map().roomLocation(mount)))
+				continue;
+			((Rider)rider).setRiding((Rideable)mount);
+		}
+	}
 	/** the saved player's state, put back once they are in */
 	private static XMLTag								player			= null;
 	/** the saved state of the player's other characters in the world */
@@ -829,6 +982,10 @@ public final class WorldState
 					e.getKey().setFollowing(leader);
 			}
 		}
+		// the characters and their followers are back, so their rides can be
+		putBackRides();
+		laterRides.clear();
+		restored.clear();
 		// last, since what the characters carry adds to them
 		final List<Pair<Physical, XMLTag>> todo = new ArrayList<Pair<Physical, XMLTag>>(laterEffects);
 		laterEffects.clear();
@@ -848,6 +1005,7 @@ public final class WorldState
 	 */
 	private static void putBackPlayer(final MOB mob, final XMLTag playerTag)
 	{
+		noteRestored(mob, playerTag);
 		final XMLTag inventory = playerTag.getPieceFromPieces("INVENTORY");
 		if(inventory != null)
 		{

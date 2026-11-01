@@ -234,6 +234,21 @@ group_saves()
 	else
 		echo "  FAIL  s3-after.txt: the next game does not have 10 hours a day"; FAIL=1
 	fi
+
+	# S4: who rides what, in the world files and in saves.  Builder mode keeps
+	# its characters in the cache, so the builder plays on as Builder
+	play s4-build.txt sdb sworld "Builder\njrun /resources/_fixes/s4-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s4-build.txt
+	if grep -q "IRIDE" "$W/sworld/areas/"*.cmare; then
+		echo "  ok    s4-build: the area file says what the wagon is hitched to"
+	else
+		echo "  FAIL  s4-build: no IRIDE in the area file"; FAIL=1
+	fi
+	play s4-play.txt sdb sworld "Rider\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s4-play.js\nsave s4\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s4-play.txt
+	play s4-restore.txt sdb sworld 'jrun /resources/_fixes/s4-check.js\nquit\nn\n' RESTORE=s4 TIMEMODE=TURNS
+	expect s4-restore.txt "Restored 's4'."
+	jsresults s4-restore.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so
