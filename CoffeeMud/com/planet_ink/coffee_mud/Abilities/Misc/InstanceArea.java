@@ -2206,6 +2206,17 @@ public class InstanceArea extends StdAbility
 		if("ADOPT".equalsIgnoreCase(code))
 			adoptAfterRestore();
 		else
+		if("ACTIVITY".equalsIgnoreCase(code))
+		{
+			// as getStat wrote it, for a saved game: the group's leader and best faction value
+			final List<XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(val);
+			final String leader=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(tags,"LEADER"));
+			final MOB M=(leader.length()>0)?CMLib.players().getPlayer(leader):null;
+			if(M!=null)
+				leaderMob=new WeakReference<MOB>(M);
+			topPlayerFacVal=CMLib.xml().getIntFromPieces(tags,"FACVAL");
+		}
+		else
 			super.setStat(code, val);
 	}
 
@@ -2567,6 +2578,15 @@ public class InstanceArea extends StdAbility
 	{
 		if(code == null)
 			return "";
+		if("ACTIVITY".equalsIgnoreCase(code))
+		{
+			// what a saved game keeps of an instance's own effect: its leader and best faction value
+			if(!(affected instanceof Area)||(!CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
+				return "";
+			final MOB leader=(leaderMob==null)?null:leaderMob.get();
+			return ((leader==null)?"":("<LEADER>"+CMLib.xml().parseOutAngleBrackets(leader.Name())+"</LEADER>"))
+				+"<FACVAL>"+topPlayerFacVal+"</FACVAL>";
+		}
 		final int x=code.indexOf(' ');
 		if(x<0)
 			return super.getStat(code);

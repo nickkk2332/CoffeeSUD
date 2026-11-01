@@ -12,5 +12,6 @@ var carving = M.fetchEffect("Carpentry");
 var cact = (carving == null) ? "" : String(carving.getStat("ACTIVITY"));
 check("carving", carving != null, "the carving stopped");
 check("bowl-made", cact.indexOf('CraftingSkill.buildingI" T="ITEM"') >= 0, "activity " + cact);
+check("last-made", cact.indexOf('CraftingSkill.last25items" T="LIST"') >= 0, "activity " + cact);
 check("work-room", cact.indexOf('CommonSkill.activityRoom" T="ROOM">New Area#20<') >= 0, "activity " + cact);
 done();

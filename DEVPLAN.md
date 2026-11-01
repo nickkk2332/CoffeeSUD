@@ -332,8 +332,11 @@ tests of what a save keeps are the five `saves` groups of `tools/fixes.sh`
   made) whole, and a mob or item in the world by its number in the save.
   Fields of other kinds are named in `<SKIPPED>` (for crafts,
   `last25items`, the recently made list). A crop now grows and is harvested
-  after a restore, and a craft finishes. Not done: SAVE does not warn of an
-  activity with skipped fields, and refunds nothing.
+  after a restore, and a craft finishes. Later: number arrays, lists and
+  arrays of strings, mobs and items are kept too (so a craft's recently made
+  list is), and SAVE says which of a character's activities it kept only in
+  part ("Kept in part: Carpentry (helpingAbility) under way."): an ability
+  field, the one kind left. Nothing is refunded, as nothing is cancelled.
 - S17 done. Once a normal game has booted, before a save is put back, the
   shape of each room and area the world's files gave is noted (a hash of
   the room's class, texts, behaviours with their parameters, lasting
@@ -370,9 +373,12 @@ tests of what a save keeps are the five `saves` groups of `tools/fixes.sh`
   walking out and back in leads to the same instance. The character is put
   back in their saved room, as the character's tables keep a start room
   for an instance or plane. A generated dungeon so comes back as it was,
-  without being generated again from a seed. Not done: S18's PERSIST=true
-  (one instance per party across visits), and an instance's leader and
-  faction values (`InstanceArea`'s leaderMob, topPlayerFacVal).
+  without being generated again from a seed. Later: S18's `PERSIST=true` in
+  a `StdAutoGenInstance`'s OTHERVARS keeps each group's dungeon however long
+  it is left empty, until it is reset; `PASSIVEMINS` stays among the
+  variables, so writing them out (the area file, a save) no longer drops it
+  (NORESET never was dropped). An instance's own effect keeps its leader and
+  best faction value in its ACTIVITY, timed or not.
 - S21 done. Cron jobs (CREATE CRON, already in `world/journals/` since
   S10) run on the game clock: `CMJournals` compares a job's next run with
   `GameTime.now()`, and CREATE and MODIFY CRON set it from it, so a job

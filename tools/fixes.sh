@@ -490,8 +490,9 @@ group_saves4()
 
 	# S16: a crop growing and a craft under way are saved with what they
 	# work on, and finish after the restore
-	play s16-play.txt xdb xworld "Grower\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s16-play.js\nfarm wheat\nwait 50\njrun /resources/_fixes/s16-planted.js\ncarpentry bowl\nwait 3\nsave s16\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s16-play.txt xdb xworld "Grower\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s16-play.js\nfarm wheat\nwait 50\njrun /resources/_fixes/s16-planted.js\ncarpentry bowl\nwait 3\njrun /resources/_fixes/s16-part.js\nsave s16\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s16-play.txt
+	expect s16-play.txt "Kept in part: Carpentry (helpingAbility) under way."
 	play s16-restore.txt xdb xworld 'jrun /resources/_fixes/s16-check.js\nwait 60\njrun /resources/_fixes/s16-done.js\nquit\nn\n' RESTORE=s16 TIMEMODE=TURNS
 	expect s16-restore.txt "Restored 's16'."
 	expect s16-restore.txt "have grown here"
@@ -556,6 +557,15 @@ group_saves5()
 	play s18-restore.txt ydb yworld 'jrun /resources/_fixes/s18-sig.js\neast\nwest\njrun /resources/_fixes/s18-again.js\nquit\nn\n' RESTORE=s18 TIMEMODE=TURNS
 	expect s18-restore.txt "Restored 's18'."
 	jsresults s18-restore.txt
+	# PERSIST=true: the vault, left empty for long past its PASSIVEMINS,
+	# is kept for its group, and the area's file keeps PASSIVEMINS
+	if grep -q "PASSIVEMINS" "$W/yworld/areas/vault.cmare" 2>/dev/null; then
+		echo "  ok    s19-build: the vault's file keeps PASSIVEMINS"
+	else
+		echo "  FAIL  s19-build: the vault's file lost PASSIVEMINS"; FAIL=1
+	fi
+	play s18-persist.txt ydb yworld "Vaulter\n${NEWCHAR}get book\nread book\nsouth\nnorth\nwait 100\nwait 100\nwait 100\nsouth\njrun /resources/_fixes/s18-kept.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s18-persist.txt
 	before="$(grep -ao 'FIXINFO mines.*' "$W/s18-play.txt" | head -1)"
 	after="$(grep -ao 'FIXINFO mines.*' "$W/s18-restore.txt" | head -1)"
 	if [ -n "$before" ] && [ "$before" = "$after" ]; then

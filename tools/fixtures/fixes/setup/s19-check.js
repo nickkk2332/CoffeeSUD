@@ -11,5 +11,7 @@ check("still-dead", lichs == 0, lichs + " lieutenants");
 var timer = A.fetchEffect("InstanceArea");
 var left = (timer == null) ? 0 : CMath.s_int(timer.getStat("TICKDOWN"));
 check("timer", (left > 0) && (left < 300), "instance ticks left " + left);
+var act = (timer == null) ? "" : String(timer.getStat("ACTIVITY"));
+check("leader", act.indexOf("<LEADER>Raider</LEADER>") >= 0, "the instance's activity is " + act);
 M.tell("FIXINFO crypt room " + id);
 done();

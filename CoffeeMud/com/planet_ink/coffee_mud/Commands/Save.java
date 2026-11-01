@@ -156,6 +156,8 @@ public class Save extends StdCommand
 					if(pointMsg.length()>0)
 						mob.tell(pointMsg);
 					mob.tell(L("Game saved as '@x1'.",SaveGame.currentSlot()));
+					for(final String part : com.planet_ink.coffee_mud.core.save.WorldState.partlyKeptActivities())
+						mob.tell(L("Kept in part: @x1 under way.  A restore starts those parts afresh.",part));
 				}
 				return false;
 			}

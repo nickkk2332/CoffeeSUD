@@ -1109,6 +1109,45 @@ public class CommonSkill extends StdAbility
 					skipped.add(p.first);
 			}
 			else
+			if((val instanceof int[]) || (val instanceof long[]) || (val instanceof double[]))
+			{
+				final StringBuilder nums = new StringBuilder("");
+				final int len = java.lang.reflect.Array.getLength(val);
+				for(int i = 0; i < len; i++)
+					nums.append((i > 0) ? "," : "").append(java.lang.reflect.Array.get(val, i));
+				str.append(head).append(" T=\"NUMS\">").append(nums).append("</F>");
+			}
+			else
+			if((val instanceof Object[]) || (val instanceof List))
+			{
+				// strings as they are; mobs and items by their numbers in the save
+				final List<?> list = (val instanceof List) ? (List<?>)val : Arrays.asList((Object[])val);
+				final StringBuilder each = new StringBuilder("");
+				boolean ok = true;
+				for(final Object o : new XArrayList<Object>(list))
+				{
+					if(o instanceof String)
+						each.append("<S>").append(xml.parseOutAngleBrackets((String)o)).append("</S>");
+					else
+					if((o instanceof MOB) || (o instanceof Item))
+					{
+						final int sid = com.planet_ink.coffee_mud.core.save.WorldState.sidFor((Physical)o);
+						if(sid <= 0)
+							ok = false;
+						each.append("<P>").append(sid).append("</P>");
+					}
+					else
+					if(o == null)
+						each.append("<N/>");
+					else
+						ok = false;
+				}
+				if(ok)
+					str.append(head).append(" T=\"LIST\">").append(each).append("</F>");
+				else
+					skipped.add(p.first);
+			}
+			else
 				skipped.add(p.first);
 		}
 		if(skipped.size() > 0)
@@ -1152,6 +1191,67 @@ public class CommonSkill extends StdAbility
 				else
 				if("SID".equals(kind))
 					val = com.planet_ink.coffee_mud.core.save.WorldState.restoredThing(text);
+				else
+				if("NUMS".equals(kind) && type.isArray())
+				{
+					final List<String> nums = CMParms.parseCommas(text, true);
+					final Class<?> comp = type.getComponentType();
+					val = java.lang.reflect.Array.newInstance(comp, nums.size());
+					for(int i = 0; i < nums.size(); i++)
+					{
+						if(comp == int.class)
+							java.lang.reflect.Array.setInt(val, i, CMath.s_int(nums.get(i)));
+						else
+						if(comp == long.class)
+							java.lang.reflect.Array.setLong(val, i, CMath.s_long(nums.get(i)));
+						else
+						if(comp == double.class)
+							java.lang.reflect.Array.setDouble(val, i, CMath.s_double(nums.get(i)));
+					}
+				}
+				else
+				if("LIST".equals(kind))
+				{
+					final List<Object> each = new ArrayList<Object>();
+					for(final XMLLibrary.XMLTag t : tag.contents())
+					{
+						if(t.tag().equals("S"))
+							each.add(CMLib.xml().restoreAngleBrackets(t.value()));
+						else
+						if(t.tag().equals("P"))
+							each.add(com.planet_ink.coffee_mud.core.save.WorldState.restoredThing(t.value()));
+						else
+							each.add(null);
+					}
+					if(type.isArray())
+					{
+						val = java.lang.reflect.Array.newInstance(type.getComponentType(), each.size());
+						for(int i = 0; i < each.size(); i++)
+						{
+							if((each.get(i) == null) || type.getComponentType().isInstance(each.get(i)))
+								java.lang.reflect.Array.set(val, i, each.get(i));
+						}
+					}
+					else
+					{
+						@SuppressWarnings("unchecked")
+						List<Object> list = (List<Object>)F.get(this);
+						if(list == null)
+						{
+							if(type.isAssignableFrom(LinkedList.class))
+								list = new LinkedList<Object>();
+							else
+							if(type.isAssignableFrom(ArrayList.class))
+								list = new ArrayList<Object>();
+						}
+						if(list != null)
+						{
+							list.clear();
+							list.addAll(each);
+							val = list;
+						}
+					}
+				}
 				else
 				if((type == int.class) || (type == Integer.class))
 					val = Integer.valueOf(CMath.s_int(text));

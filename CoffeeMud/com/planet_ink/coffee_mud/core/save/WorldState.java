@@ -90,6 +90,10 @@ public final class WorldState
 	public static String capture(final MOB player)
 	{
 		written = new IdentityHashMap<Physical, Integer>();
+		synchronized(partlyKept)
+		{
+			partlyKept.clear();
+		}
 		try
 		{
 			return captureWorld(player);
@@ -316,6 +320,7 @@ public final class WorldState
 		laterRooms.clear();
 		laterVessels.clear();
 		remadeAreas.clear();
+		remadeLasting.clear();
 		clearWorld();
 		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
 		if(shapes != null)
@@ -1401,7 +1406,21 @@ public final class WorldState
 			{
 			}
 			if((activity != null) && (activity.length() > 0))
+			{
 				str.append("<ACTIVITY>").append(activity).append("</ACTIVITY>");
+				final int s = activity.indexOf("<SKIPPED>");
+				final int e = activity.indexOf("</SKIPPED>");
+				if((s >= 0) && (e > s) && (P instanceof MOB) && (!((MOB)P).isMonster()))
+				{
+					synchronized(partlyKept)
+					{
+						final List<String> parts = new ArrayList<String>();
+						for(final String f : CMParms.parseCommas(activity.substring(s + "<SKIPPED>".length(), e), true))
+							parts.add(f.substring(f.lastIndexOf('.') + 1));
+						partlyKept.add(A.name() + " (" + CMParms.toListString(parts.iterator()) + ")");
+					}
+				}
+			}
 			str.append("</EFFECT>");
 		}
 		return (str.length() > 0) ? ("<EFFECTS>" + str.toString() + "</EFFECTS>") : "";
@@ -1963,7 +1982,7 @@ public final class WorldState
 				// made in play: an instance, a plane, a generated area
 				str.append("<NEWAREA>").append(xml.convertXMLtoTag("CLASS", A.ID()))
 				   .append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(A.Name())))
-				   .append(areaShape(A)).append(effectsXML(A)).append("</NEWAREA>\n");
+				   .append(areaShape(A)).append(effectsXML(A)).append(lastingActivitiesXML(A)).append("</NEWAREA>\n");
 			}
 			for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 			{
@@ -2109,8 +2128,56 @@ public final class WorldState
 		}
 	}
 
+	/** the activities of the player's characters the save being made could not keep whole */
+	private static final List<String>	partlyKept	= new ArrayList<String>();
+
+	/**
+	 * Returns what the last save made could not keep whole of what the
+	 * player's characters had under way: each skill, with the parts of it a
+	 * restore starts afresh.
+	 * @return the skills, as "Name (part, part)"
+	 */
+	public static List<String> partlyKeptActivities()
+	{
+		synchronized(partlyKept)
+		{
+			return new ArrayList<String>(partlyKept);
+		}
+	}
+
 	/** the areas made in play that a restore made again, to take back once the characters are in */
 	private static final List<Area>	remadeAreas	= new ArrayList<Area>();
+	/** the activities of the lasting effects of each area made again, as saved */
+	private static final Map<Area, XMLTag>	remadeLasting	= new HashMap<Area, XMLTag>();
+
+	/**
+	 * Writes what the lasting effects of an area made in play have under way
+	 * (their ACTIVITY, such as an instance's leader), which the area's text,
+	 * holding the effects themselves, does not.
+	 * @param A the area
+	 * @return the LASTING tag, or ""
+	 */
+	private static String lastingActivitiesXML(final Area A)
+	{
+		final StringBuilder str = new StringBuilder("");
+		for(final Enumeration<Ability> a = A.effects(); a.hasMoreElements();)
+		{
+			final Ability E = a.nextElement();
+			if((E == null) || isTimedEffect(E))
+				continue;
+			String activity = "";
+			try
+			{
+				activity = E.getStat("ACTIVITY");
+			}
+			catch(final Exception e)
+			{
+			}
+			if((activity != null) && (activity.length() > 0))
+				str.append("<L ID=\"").append(E.ID()).append("\">").append(activity).append("</L>");
+		}
+		return (str.length() == 0) ? "" : ("<LASTING>" + str.toString() + "</LASTING>");
+	}
 
 	/**
 	 * Makes again an area made in play (an instance child, a plane, a
@@ -2167,6 +2234,9 @@ public final class WorldState
 			reshapeArea(A, areaTag.contents());
 		laterEffects(A, tag);
 		remadeAreas.add(A);
+		final XMLTag lasting = tag.getPieceFromPieces("LASTING");
+		if(lasting != null)
+			remadeLasting.put(A, lasting);
 	}
 
 	/**
@@ -2180,10 +2250,27 @@ public final class WorldState
 	{
 		final List<Area> areas = new ArrayList<Area>(remadeAreas);
 		remadeAreas.clear();
+		final Map<Area, XMLTag> lasting = new HashMap<Area, XMLTag>(remadeLasting);
+		remadeLasting.clear();
 		for(final Area A : areas)
 		{
 			if(A.amDestroyed())
 				continue;
+			if(lasting.containsKey(A))
+			{
+				for(final XMLTag L : lasting.get(A).contents())
+				{
+					final Ability E = A.fetchEffect(L.getParmValue("ID"));
+					try
+					{
+						if(E != null)
+							E.setStat("ACTIVITY", L.value());
+					}
+					catch(final Exception ex)
+					{
+					}
+				}
+			}
 			for(final Enumeration<Ability> e = A.effects(); e.hasMoreElements();)
 			{
 				final Ability E = e.nextElement();

@@ -166,11 +166,13 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 					}
 				}
 			}
+			// PERSIST=true keeps each group's dungeon, empty or not, until it is reset
+			final boolean persist=CMath.s_bool(getAutoGenVariables().get("PERSIST"));
 			for(final AreaInstanceChild child : workList)
 			{
 				final Area childA=child.A;
 				final boolean anyInside=getAreaPlayerMOBs(child).size()>0;
-				if(!anyInside)
+				if((!anyInside)&&(!persist))
 				{
 					synchronized(children)
 					{
@@ -934,7 +936,7 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 						mins=Integer.MAX_VALUE;
 					passiveLapseMs = mins * 60 * 1000;
 				}
-				varMap.remove(key);
+				// kept among the variables, so that writing them out keeps it too
 			}
 		}
 	}

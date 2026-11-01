@@ -52,5 +52,13 @@ mines.setStat("OTHERVARS", "AREA_ID=maze_dungeon areasize=6");
 var m0 = room(mines, 0, "A mine entrance");
 link(R0, Directions.WEST, m0);
 CMLib.database().DBUpdateArea(mines.Name(), mines);
+// and a vault south, a dungeon kept for its group however long it is left
+// (PERSIST=true), going quiet after a minute with no one in it
+var vault = area("StdAutoGenInstance", "Vault");
+vault.setStat("GENERATIONFILEPATH", "randareas/example.xml");
+vault.setStat("OTHERVARS", "AREA_ID=maze_dungeon areasize=4 PERSIST=true PASSIVEMINS=1");
+var v0 = room(vault, 0, "A vault door");
+link(R0, Directions.SOUTH, v0);
+CMLib.database().DBUpdateArea(vault.Name(), vault);
 check("built", (R0.getRoomInDir(Directions.DOWN) == c0) && (R0.getRoomInDir(Directions.WEST) == m0) && (crypt.fetchEffect("InstanceArea") != null), "the crypt or mines are not linked");
 done();
