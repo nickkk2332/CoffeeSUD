@@ -153,6 +153,76 @@ public final class SaveGame
 		builderMode = builder;
 	}
 
+	/** whether this is a developer's game (DEV=1): a normal game, with saves, and powers to test with */
+	private static volatile boolean devMode = false;
+
+	/**
+	 * Sets whether this is a developer's game (DEV=1): each character has the
+	 * developer security group (DEVGROUP, DEV by default) without a change
+	 * of class, and saves are marked [dev].  Not in builder mode, which has
+	 * every power already.
+	 * @param dev true for a developer's game
+	 */
+	public static void setDevMode(final boolean dev)
+	{
+		devMode = dev;
+	}
+
+	/**
+	 * Returns whether this is a developer's game (DEV=1); scripts ask with ISDEV().
+	 * @return true if it is
+	 */
+	public static boolean isDevMode()
+	{
+		return devMode && (!builderMode);
+	}
+
+	/**
+	 * Returns the name of the developer security group: DEVGROUP, without
+	 * any GROUP_ before it, or DEV.
+	 * @return the group's name
+	 */
+	public static String devGroup()
+	{
+		String group = CMProps.instance().getStr("DEVGROUP", "").trim().toUpperCase();
+		if(group.startsWith("GROUP_"))
+			group = group.substring(6);
+		return (group.length() == 0) ? "DEV" : group;
+	}
+
+	/**
+	 * Gives a character the developer security group in a developer's game,
+	 * and takes it away in any other, so that a save made in one does not
+	 * keep the powers in a normal game.
+	 * @param mob the character
+	 */
+	private static void applyDevGroup(final MOB mob)
+	{
+		if(mob.playerStats() == null)
+			return;
+		final String group = devGroup();
+		final List<String> flags = CMParms.parseSemicolons(mob.playerStats().getSetSecurityFlags(null), true);
+		boolean has = false;
+		for(final Iterator<String> i = flags.iterator(); i.hasNext();)
+		{
+			if(i.next().trim().equalsIgnoreCase(group))
+			{
+				has = true;
+				if(!isDevMode())
+					i.remove();
+			}
+		}
+		if(isDevMode() && (!has))
+		{
+			flags.add(group);
+			mob.playerStats().getSetSecurityFlags(CMParms.combineWith(flags, ';'));
+			mob.tell(CMLib.lang().L("Developer's game (DEV=1): you have the @x1 security group, to test with, and saves are marked [dev].", group));
+		}
+		else
+		if((!isDevMode()) && has)
+			mob.playerStats().getSetSecurityFlags(CMParms.combineWith(flags, ';'));
+	}
+
 	/**
 	 * Returns whether the game runs in builder mode, on the content database.
 	 * @return true in builder mode
@@ -383,6 +453,7 @@ public final class SaveGame
 	 */
 	public static void playerLoggedIn(final MOB mob)
 	{
+		applyDevGroup(mob);
 		// a character coming into the world can act at once, rather than only
 		// after its first tick: otherwise the first command that takes time
 		// waits, and what is typed after it, such as the answer to its
@@ -817,6 +888,8 @@ public final class SaveGame
 		ServiceEngine.beforeSleep(); // database work queued on the game thread
 		final Properties header = new Properties();
 		header.setProperty("version", Integer.toString(VERSION));
+		if(isDevMode())
+			header.setProperty("dev", "true");
 		header.setProperty("character", mob.Name());
 		header.setProperty("level", Integer.toString(mob.phyStats().level()));
 		header.setProperty("class", mob.charStats().getCurrentClass().name(mob.charStats().getCurrentClassLevel()));

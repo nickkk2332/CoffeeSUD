@@ -315,9 +315,8 @@ tests of what a save keeps are the five `saves` groups of `tools/fixes.sh`
   `ROLLBACK` restores the newest. `AUTOSAVE=n` (game minutes) or
   `ON-AREA-CHANGE`, with `AUTOSAVEKEEP=3`, in coffeemud.ini or world.ini.
   `tools/saveinspect.py` prints a save outside the game and can set a
-  variable, the hit points or the room. Left to DT5: the "dev flag" in
-  SAVES INFO, since it is the mark of a save made with `DEV=1`, which DT5
-  adds.
+  variable, the hit points or the room. The "dev flag" in SAVES INFO came
+  with DT5's `DEV=1`.
 - S22 done. A character's entry limits (InstanceArea's `LIMIT`, such as one
   run a day, kept in the character's class variables, which the character's
   tables do not hold) go in its PLAYER tag (`<LIMITS>`), each with its count
@@ -520,6 +519,15 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   it worked out), and builder mode reads an edited chat file again by
   itself. Left: entries hidden by broader earlier patterns, tick odds, and
   `.dlg` dialogue trees, which this world does not have yet (N items).
+- DT5 done. `DEV=1` (coffeemud.ini or the command line) starts a developer's
+  game: a normal game, with saves, in which each character has the security
+  group `DEVGROUP` names (`DEV` by default, defined in coffeemud.ini: GOTO,
+  AT, TRANSFER, STAT, WHERE, LISTADMIN, CMDQUESTS, CMDMOBS, JSCRIPTS, AHELP
+  and the resources folder, so VARS, QUESTINFO, CHATTEST and JRUN, but not
+  IMMORT or ORDER) without a change of class; a game without `DEV=1` takes
+  it away again. Saves made in it have `dev=true` in their header and show
+  `[dev]` in SAVES and the startup list, and SAVES INFO says so (S23's dev
+  flag). Scripts ask `ISDEV()`. Not in builder mode, which has every power.
 
 #### 2d. Scripting (59)
 

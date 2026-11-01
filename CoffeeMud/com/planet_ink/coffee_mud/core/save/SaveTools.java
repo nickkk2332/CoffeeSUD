@@ -202,6 +202,8 @@ public final class SaveTools
 		str.append(L("  Quests    : @x1\n\r", (running.size() == 0) ? L("none running") : CMParms.toListString(running.iterator())));
 		final XMLTag vars = xml.getPieceFromPieces(world, "SCRIPTVARS");
 		str.append(L("  Variables : @x1\n\r", "" + ((vars == null) ? 0 : vars.contents().size())));
+		if("true".equalsIgnoreCase(h.getProperty("dev", "")))
+			str.append(L("  Dev       : made in a developer's game (DEV=1)\n\r"));
 		final String sum = h.getProperty("worldsum", "");
 		str.append(L("  World     : @x1@x2\n\r", (sum.length() == 0) ? "?" : sum,
 			((sum.length() > 0) && (!sum.equals(WorldFiles.bootChecksum()))) ? L(" (older world)") : L(" (this world)")));

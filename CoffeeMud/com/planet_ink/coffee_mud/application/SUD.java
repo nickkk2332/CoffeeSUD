@@ -52,6 +52,9 @@ import com.planet_ink.coffee_mud.core.save.WorldSettings;
  * <li>WORLDDIR=PATH is the folder of world files; the default is "world".</li>
  * <li>WINDOWS=1 gives each of the player's characters in the world, but for
  * the one played here, a window of their own.</li>
+ * <li>DEV=1 makes a developer's game: a normal game, with saves, in which
+ * each character has the developer security group (DEVGROUP, DEV by
+ * default); saves made in it are marked [dev].</li>
  * </ul>
  *
  * Any NAME=VALUE argument overrides the ini file, as with {@link MUD}.
@@ -93,6 +96,17 @@ public class SUD
 			gameName = "CoffeeSUD";
 		SaveGame.configure(saveDir, builderMode);
 		WorldFiles.configure(new File(settings.getProperty("WORLDDIR", "world").trim()));
+		final String dev = settings.getProperty("DEV", "").trim().toUpperCase();
+		if(dev.equals("1") || dev.startsWith("Y") || dev.startsWith("T") || dev.equals("ON"))
+		{
+			if(builderMode)
+				System.out.println("DEV=1 is for a normal game: builder mode has every power already.");
+			else
+			{
+				SaveGame.setDevMode(true);
+				System.out.println("A developer's game (DEV=1): each character has the developer security group, and saves are marked [dev].");
+			}
+		}
 		final String windows = settings.getProperty("WINDOWS", "").trim().toUpperCase();
 		if(windows.equals("1") || windows.startsWith("Y") || windows.startsWith("T") || windows.equals("ON"))
 		{

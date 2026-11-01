@@ -563,6 +563,25 @@ group_saves4()
 	else
 		echo "  ok    dt3-force: SAVE FORCE wrote the file as the world has it"
 	fi
+
+	# DT5: DEV=1, a normal game in which each character has the developer
+	# group; saves are marked [dev], and a game without DEV=1 takes it away
+	# (the book here, read, would make an Archon, so it is left alone)
+	play dt5-dev.txt xdb xworld "Devver\n${NEWCHAR}vars set FIXDEV FIXD 7\njrun /resources/_fixes/dt5-check.js\nsave dt5\nsaves\nsaves info dt5\nquit\nn\n" DEV=1 RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect dt5-dev.txt "A developer's game (DEV=1)"
+	expect dt5-dev.txt "you have the DEV security group"
+	expect dt5-dev.txt "GLOBAL FIXDEV FIXD is '7'."
+	jsresults dt5-dev.txt
+	expect dt5-dev.txt "[dev]"
+	expect dt5-dev.txt "made in a developer's game (DEV=1)"
+	if grep -q "^dev=true" "$W/xsaves/dt5/header.properties" 2>/dev/null; then
+		echo "  ok    dt5-dev: the save's header is marked dev"
+	else
+		echo "  FAIL  dt5-dev: the save's header is not marked dev"; FAIL=1
+	fi
+	play dt5-plain.txt xdb xworld 'vars set FIXDEV FIXD 8\nquit\nn\n' RESTORE=dt5 TIMEMODE=TURNS
+	expect dt5-plain.txt "Restored 'dt5'."
+	count dt5-plain.txt "FIXDEV FIXD is" 0
 }
 
 group_saves5()

@@ -5585,6 +5585,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						returnable=false;
 					break;
 				}
+				case 122: // isdev
+					returnable=com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode();
+					break;
 				case 121: // varnames
 				{
 					if(tlen==1)
@@ -7896,6 +7899,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					results.append(value);
 				break;
 			}
+			case 122: // isdev
+				results.append(com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode()?"true":"false");
+				break;
 			case 121: // varnames
 			{
 				final String host=varify(ctx,CMParms.getCleanBit(funcParms,0));
