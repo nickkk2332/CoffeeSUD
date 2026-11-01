@@ -58,6 +58,13 @@ import com.planet_ink.coffee_mud.core.save.WorldSettings;
  */
 public class SUD
 {
+	/** the class path settings a world can add its own classes to, in WORLDDIR/classes/[key in lower case] */
+	private static final String[] CLASS_KEYS =
+	{
+		"COMMON", "ITEMS", "WEAPONS", "ARMOR", "MISCMAGIC", "CLANITEMS", "MOBS", "BEHAVIORS", "ABILITIES",
+		"CHARCLASSES", "RACES", "COMMANDS", "LOCALES", "AREAS", "EXITS", "TECH", "COMPTECH", "SOFTWARE"
+	};
+
 	/** the world's own settings, from WORLDDIR/world.ini */
 	private static Map<String, String> worldSettings = new LinkedHashMap<String, String>();
 
@@ -128,6 +135,12 @@ public class SUD
 		// the world's settings over coffeemud.ini, and the command line over them
 		for(final Map.Entry<String, String> e : worldSettings.entrySet())
 			fullArgs.add(e.getKey() + "=" + e.getValue());
+		// the world's own classes, in WORLDDIR/classes/<kind>/, after the stock ones
+		for(final String key : CLASS_KEYS)
+		{
+			if(new File(WorldFiles.worldDir(), "classes/" + key.toLowerCase()).isDirectory())
+				fullArgs.add(key + "=" + settings.getProperty(key, "%DEFAULT%").trim() + ";world/classes/" + key.toLowerCase());
+		}
 		fullArgs.addAll(Arrays.asList(args));
 		System.out.println("Loading the world...");
 		MUD.main(fullArgs.toArray(new String[fullArgs.size()]));

@@ -3123,6 +3123,9 @@ public class CMSecurity
 		CHARCRCLASS("class picking in char creation"),
 		CHARCRGENDER("gender picking in char creation"),
 		FULLSTATS("full stat selection in STAT command"),
+		STDACHIEVEMENTS("the stock achievements, leaving the world's own"),
+		STDTITLES("the stock titles, leaving the world's own"),
+		STDSOCIALS("the stock socials, leaving the world's own"),
 		GRAPEVINE("grapevine intermud service")
 		;
 		private final String desc;

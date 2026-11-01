@@ -150,6 +150,10 @@ group_saves()
 	echo "Played: step 2b, what a save keeps"
 	mkdir -p "$W/sdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/sdb/"
 	cp -r "$GAME/world" "$W/sworld"
+	# S6: a help file and a command class of the world's own
+	mkdir -p "$W/sworld/resources/help" "$W/sworld/classes/commands"
+	printf 'FIXHELP=FIXHELP the world has its own help.\n' > "$W/sworld/resources/help/fixhelp.ini"
+	cp "$FX/classes/FixWorld.js" "$W/sworld/classes/commands/"
 	play s-build.txt sdb sworld "Builder\n${NEWCHAR}create quest LOAD=_fixes/s1.quest\ncreate quest LOAD=_fixes/s1wait.quest\nsave quests\njrun /resources/_fixes/s1-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 	expect s-build.txt "Quest 's1quest' added."
 	expect s-build.txt "Quest 's1wait' added."
@@ -187,7 +191,9 @@ group_saves()
 		echo "  FAIL  s2-points: no save mode in the header, or no autosave"; FAIL=1
 	fi
 	# an ironman game: one save, kept at QUIT; no going back
-	play s2-iron.txt sdb sworld "Iron\n${NEWCHAR}save other\nsave\nrestore iron\nquit\nY\n" SAVEMODE=IRONMAN RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s2-iron.txt sdb sworld "Iron\n${NEWCHAR}save other\nsave\nrestore iron\nhelp fixhelp\nfixworld\nquit\nY\n" SAVEMODE=IRONMAN RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s2-iron.txt "FIXHELP the world has its own help."
+	expect s2-iron.txt "FIXWORLDCMD ran from the world's own classes."
 	expect s2-iron.txt "This is an ironman game: it has one save, 'iron', which it keeps for you."
 	expect s2-iron.txt "Game saved as 'iron'."
 	expect s2-iron.txt "This is an ironman game: there is no going back to a save."

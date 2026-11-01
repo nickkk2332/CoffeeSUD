@@ -101,7 +101,24 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	// following strings are the proposed responses.
 	//----------------------------------------------
 
-	protected String		 chatDatFilename = "chat.dat";
+	protected String		 chatDatFilename = defaultChatFile();
+
+	/**
+	 * Returns the chat file mobs use when their parameters name none:
+	 * CHATDEFAULT (in coffeemud.ini or world.ini), chat.dat if it is not set,
+	 * or "" for none, so that mobs chat only with what their parameters give.
+	 * @return the file, or ""
+	 */
+	public static String defaultChatFile()
+	{
+		final CMProps props=CMProps.instance();
+		final String s=(props==null)?"":props.getStr("CHATDEFAULT","").trim();
+		if(s.length()==0)
+			return "chat.dat";
+		if(s.equalsIgnoreCase("NONE"))
+			return "";
+		return s;
+	}
 	protected String		 chatGroup		= "";
 
 	protected final PairList <ChattyGroup, Long> chatGroups = new PairSVector<ChattyGroup, Long>();
@@ -372,7 +389,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			bonusChatData = newParms.substring(1);
 		else
 		{
-			chatDatFilename = "chat.dat";
+			chatDatFilename = defaultChatFile();
 			chatGroup = "";
 			bonusChatData = "";
 			final int fnDex = newParms.indexOf('=');
@@ -380,7 +397,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			{
 				chatDatFilename = newParms.substring(0,fnDex).trim();
 				if(chatDatFilename.trim().length()==0)
-					chatDatFilename = "chat.dat";
+					chatDatFilename = defaultChatFile();
 				final String rest = newParms.substring(fnDex+1).trim();
 				final int plusDex = rest.indexOf('+');
 				if(plusDex >=0)
@@ -751,7 +768,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	{
 		myName=myName.toUpperCase();
 		if(myName.equals("DEFAULT"))
-			return chatGroups[0];
+			return (chatGroups.length>0)?chatGroups[0]:null;
 		for(final ChattyGroup CG : chatGroups)
 		{
 			if(CG.entries!=null)
@@ -799,7 +816,8 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		}
 		if(chatGroups.length==0)
 		{
-			Log.errOut("No Chat Group identified for "+forMe.Name()+"@"+
+			if(this.chatDatFilename.length()>0) // CHATDEFAULT=NONE has none, as meant
+				Log.errOut("No Chat Group identified for "+forMe.Name()+"@"+
 					CMLib.map().getExtendedRoomID(CMLib.map().roomLocation(forMe)));
 			baseChatGroup = new ChattyGroup(new String[0], new MaskingLibrary.CompiledZMask[0]);
 		}

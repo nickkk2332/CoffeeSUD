@@ -232,6 +232,20 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   reloading them from the database, where the shutdown write would have
   made a second set.
 - The saves tests are two groups that run side by side.
+- S6 in part. `WORLDDIR/resources/` is laid out like `resources/` and read
+  first, through CMFile: a file there is read instead of the stock one,
+  `NAME.add` is read after the stock NAME, and a folder lists the world's
+  files with the stock ones (so world help files load with the stock help).
+  In builder mode, writes to `resources/` go to the world's copy, so the
+  in-game editors write the world's files. `WORLDDIR/classes/<kind>/` join
+  the class paths. A path starting `world/` is the world folder, wherever
+  WORLDDIR is. `CHATDEFAULT=<file|NONE>` (in `world.ini` too). With the
+  overlay, S20's DISABLE flags STDACHIEVEMENTS, STDTITLES and STDSOCIALS
+  are done: the stock file reads as missing unless the world has a copy.
+  Left of S6: world translation and parser rules before the stock ones
+  (`#STOCK OFF`); `CATALOG:name` as a recipe's result; in a normal game,
+  refusing those editors or keeping their changes in the save, with the
+  warning saying which; and quest export keeping a quest's folder.
 
 #### 2c. Developer and builder tools (50)
 

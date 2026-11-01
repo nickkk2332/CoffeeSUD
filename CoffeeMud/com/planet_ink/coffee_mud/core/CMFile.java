@@ -75,6 +75,7 @@ public class CMFile extends File
 
 	private boolean	logErrors		= false;
 	private int		vfsBits			= 0;
+	private String	ioOverride		= null;
 	private String	localPath		= null;
 	private String	path			= null;
 	private String	name			= null;
@@ -141,9 +142,11 @@ public class CMFile extends File
 		{
 			info=getVFSInfo(absolutePath);
 		}
+		if((!demandVFS)&&(info==null))
+			ioOverride=worldPathFor(absolutePath);
 		String ioPath=getIOReadableLocalPathAndName();
 		localFile=new File(ioPath);
-		if(!localFile.exists())
+		if((!localFile.exists())&&(ioOverride==null))
 		{
 			File localDir=new File(".");
 			int endZ=-1;
@@ -248,6 +251,102 @@ public class CMFile extends File
 		if((!demandVFS)
 		&&(demandLocal||((!allowedToReadVFS) && (allowedToWriteLocal))))
 			vfsBits=vfsBits|CMFile.VFS_MASK_ISLOCAL;
+	}
+
+	/**
+	 * Returns where on disk a local path in the world folder or in
+	 * resources/ is, when it is not where the path says: a path starting
+	 * world/ is in the world folder (WORLDDIR, wherever it is), and a file in
+	 * resources/ that the world has its own copy of, in WORLDDIR/resources/,
+	 * is that copy.
+	 * @param vfsPath the path, as parsePathParts made it
+	 * @return the local path to use, or null for the usual one
+	 */
+	private static String worldPathFor(final String vfsPath)
+	{
+		final String lower=vfsPath.toLowerCase();
+		final File worldDir=com.planet_ink.coffee_mud.core.save.WorldFiles.worldDir();
+		if(lower.equals("world")||lower.startsWith("world/"))
+		{
+			if(worldDir.getPath().equals("world"))
+				return null;
+			return (lower.length()<=6)?worldDir.getPath():new File(worldDir,vfsPath.substring(6)).getPath();
+		}
+		if(lower.startsWith("resources/"))
+		{
+			// a file is the world's copy; a folder is listed with the stock
+			// one, unless there is no stock one
+			final File F=new File(worldDir,vfsPath);
+			if(F.isFile()||(F.isDirectory()&&(!new File(vfsPath).exists())))
+				return F.getPath();
+			// a stock file a world turned off (DISABLE=STDACHIEVEMENTS and the
+			// like) reads as missing, leaving only what the world has
+			if(isStockTurnedOff(lower))
+				return F.getPath();
+		}
+		return null;
+	}
+
+	/**
+	 * Returns whether a world has turned off a stock file with a DISABLE flag:
+	 * STDACHIEVEMENTS, STDTITLES or STDSOCIALS.
+	 * @param lowerPath the file's path, in lower case
+	 * @return true if the stock file is not to be read
+	 */
+	private static boolean isStockTurnedOff(final String lowerPath)
+	{
+		if(lowerPath.equals("resources/achievements.ini"))
+			return CMSecurity.isDisabled(CMSecurity.DisFlag.STDACHIEVEMENTS);
+		if(lowerPath.equals("resources/titles.ini"))
+			return CMSecurity.isDisabled(CMSecurity.DisFlag.STDTITLES);
+		if(lowerPath.equals("resources/socials.txt"))
+			return CMSecurity.isDisabled(CMSecurity.DisFlag.STDSOCIALS);
+		return false;
+	}
+
+	/**
+	 * Returns the world's own copy of a file in resources/, which builder mode
+	 * writes to, rather than to the stock file.
+	 * @param vfsPath the path
+	 * @return the world's copy, or null if the path is not in resources/
+	 */
+	private static File worldCopyOf(final String vfsPath)
+	{
+		if(!vfsPath.toLowerCase().startsWith("resources/"))
+			return null;
+		return new File(com.planet_ink.coffee_mud.core.save.WorldFiles.worldDir(),vfsPath);
+	}
+
+	/**
+	 * In builder mode, has a write to a file in resources/ go to the world's
+	 * own copy of it, so that the world carries what its builder changes.
+	 */
+	private void writeToWorldCopy()
+	{
+		if((ioOverride!=null)||(isVFSFile())||(!com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()))
+			return;
+		final File copy=worldCopyOf(getVFSPathAndName());
+		if(copy==null)
+			return;
+		if(copy.getParentFile()!=null)
+			copy.getParentFile().mkdirs();
+		ioOverride=copy.getPath();
+		localFile=copy;
+	}
+
+	/**
+	 * Returns the world's addition to a file in resources/: WORLDDIR/
+	 * resources/[path].add, which is read after the file, so that a world can
+	 * add a few lines to a stock file (recipes, list entries) without copying
+	 * it.
+	 * @return the addition, or null if there is none
+	 */
+	private File worldAddition()
+	{
+		if(isVFSFile())
+			return null;
+		final File copy=worldCopyOf(getVFSPathAndName()+".add");
+		return ((copy!=null)&&(copy.isFile()))?copy:null;
 	}
 
 	/**
@@ -860,6 +959,8 @@ public class CMFile extends File
 	 */
 	public final String getIOReadableLocalPathAndName()
 	{
+		if(ioOverride!=null)
+			return ioOverride;
 		final String s=getLocalPathAndName();
 		if(s.trim().length()==0)
 			return ".";
@@ -1081,6 +1182,15 @@ public class CMFile extends File
 					buf.append("\n\r");
 				}
 			}
+			final File addition=worldAddition();
+			if(addition!=null)
+			{
+				try(BufferedReader add=new BufferedReader(new InputStreamReader(new FileInputStream(addition),charSet)))
+				{
+					while((line=add.readLine())!=null)
+						buf.append(line).append("\n\r");
+				}
+			}
 		}
 		catch(final Exception e)
 		{
@@ -1268,6 +1378,18 @@ public class CMFile extends File
 			buf = new byte [ fileIn.available() ];
 			fileIn.readFully(buf);
 			fileIn.close();
+			final File addition=worldAddition();
+			if(addition!=null)
+			{
+				final byte[] more=java.nio.file.Files.readAllBytes(addition.toPath());
+				final boolean newLine=(buf.length>0)&&(buf[buf.length-1]!='\n');
+				final byte[] both=new byte[buf.length+(newLine?1:0)+more.length];
+				System.arraycopy(buf,0,both,0,buf.length);
+				if(newLine)
+					both[buf.length]='\n';
+				System.arraycopy(more,0,both,buf.length+(newLine?1:0),more.length);
+				buf=both;
+			}
 		}
 		catch(final Exception e)
 		{
@@ -1376,6 +1498,7 @@ public class CMFile extends File
 		FileOutputStream FW = null;
 		try
 		{
+			writeToWorldCopy();
 			final File F=new File(getIOReadableLocalPathAndName());
 			if(O instanceof StringBuffer)
 				O=CMStrings.strToBytes(((StringBuffer)O).toString());
@@ -1497,6 +1620,7 @@ public class CMFile extends File
 			String charSet=CMProps.getVar(CMProps.Str.CHARSETOUTPUT);
 			if((charSet==null)||(charSet.length()==0))
 				charSet=outCharSet;
+			writeToWorldCopy();
 			final File F=new File(getIOReadableLocalPathAndName());
 			FW=new OutputStreamWriter(new FileOutputStream(F,append),charSet);
 			CMStrings.normalizeLineEndings(O);
@@ -1731,8 +1855,10 @@ public class CMFile extends File
 
 		if(!demandVFS)
 		{
+			final String vfsDir=thisDir;
 			thisDir=getIOReadableLocalPathAndName();
 			final File F=new File(thisDir);
+			final Set<String> listed=new HashSet<String>();
 			if(F.isDirectory())
 			{
 				final File[] list=F.listFiles();
@@ -1742,6 +1868,9 @@ public class CMFile extends File
 					F2=element;
 					final String fileName = F2.getName();
 					final String vfsPath;
+					if(ioOverride!=null) // in the world folder: named by its path, not where it is
+						vfsPath=vfsDir+"/"+fileName;
+					else
 					if(thisDir.equals("."))
 						vfsPath = fileName;
 					else
@@ -1749,7 +1878,29 @@ public class CMFile extends File
 					final CMFile CF=new CMFile(prefix+vfsPath,accessor);
 					if((CF.canRead())
 					&&(!fcheck.contains(fileName.toUpperCase())))
+					{
 						dir.addElement(CF);
+						listed.add(fileName.toUpperCase());
+					}
+				}
+			}
+			// the world's own files in this resources folder, after the stock ones
+			final File copyDir=worldCopyOf(vfsDir);
+			if((copyDir!=null)&&(copyDir.isDirectory())&&(!copyDir.getPath().equals(thisDir)))
+			{
+				for(final File element : copyDir.listFiles())
+				{
+					final String fileName=element.getName();
+					if(listed.contains(fileName.toUpperCase())
+					||fcheck.contains(fileName.toUpperCase())
+					||fileName.toLowerCase().endsWith(".add"))
+						continue;
+					final CMFile CF=new CMFile(prefix+vfsDir+"/"+fileName,accessor);
+					if(CF.canRead())
+					{
+						dir.addElement(CF);
+						listed.add(fileName.toUpperCase());
+					}
 				}
 			}
 		}

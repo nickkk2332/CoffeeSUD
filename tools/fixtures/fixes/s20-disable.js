@@ -15,4 +15,11 @@ CMSecurity.removeAnyDisableVar("ABILITY_Spell_Magic*");
 CMSecurity.removeAnyDisableVar("COMMAND_Gr*");
 CMSecurity.removeAnyDisableVar("RACE_Half*");
 check("removed", !CMSecurity.isAbilityDisabled("Spell_MagicMissile") && !CMSecurity.isCommandDisabled("Group"), "the flags stayed");
+// STDTITLES turns off the stock titles file, unless the world has its own
+var CMFile = CM.core.CMFile;
+check("stock-titles", new CMFile("resources/titles.ini", null, 0).exists(), "no stock titles.ini");
+CMSecurity.setAnyDisableVar("STDTITLES");
+check("stdtitles-off", !new CMFile("resources/titles.ini", null, 0).exists(), "the stock titles are still read");
+CMSecurity.removeAnyDisableVar("STDTITLES");
+check("stdtitles-back", new CMFile("resources/titles.ini", null, 0).exists(), "the stock titles did not come back");
 done();
