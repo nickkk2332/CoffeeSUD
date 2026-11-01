@@ -591,6 +591,19 @@ public final class WorldState
 	}
 
 	/**
+	 * Returns the number a mob, character or item is written to the save
+	 * being made with, giving it one if it has none yet, for a skill's
+	 * ACTIVITY that names a thing written elsewhere in the save.  Things the
+	 * save does not write then have a number nothing is written with.
+	 * @param P the mob, character or item
+	 * @return its number, or 0 if no save is being made
+	 */
+	public static int sidFor(final Physical P)
+	{
+		return (P == null) ? 0 : sid(P);
+	}
+
+	/**
 	 * Returns the number a mob, character or item has in the save being
 	 * written, for a behaviour's STATE that names things written elsewhere
 	 * in the save, such as a conquest's clan items.
@@ -1363,6 +1376,16 @@ public final class WorldState
 			str.append(xml.convertXMLtoTag("PROF", A.proficiency()));
 			if(A.invoker() != null)
 				str.append(xml.convertXMLtoTag("BY", xml.parseOutAngleBrackets(A.invoker().Name())));
+			String activity = "";
+			try
+			{
+				activity = A.getStat("ACTIVITY"); // a common skill under way: a crop, a craft
+			}
+			catch(final Exception e)
+			{
+			}
+			if((activity != null) && (activity.length() > 0))
+				str.append("<ACTIVITY>").append(activity).append("</ACTIVITY>");
 			str.append("</EFFECT>");
 		}
 		return (str.length() > 0) ? ("<EFFECTS>" + str.toString() + "</EFFECTS>") : "";
@@ -1532,7 +1555,6 @@ public final class WorldState
 		// the characters and their followers are back, so their rides can be
 		putBackRides();
 		laterRides.clear();
-		restored.clear();
 		// last, since what the characters carry adds to them
 		final List<Pair<Physical, XMLTag>> todo = new ArrayList<Pair<Physical, XMLTag>>(laterEffects);
 		laterEffects.clear();
@@ -1541,6 +1563,7 @@ public final class WorldState
 			if(!p.first.amDestroyed())
 				putEffects(p.first, p.second, mob);
 		}
+		restored.clear(); // after the effects, whose activities may name what was restored
 	}
 
 	/**
@@ -1599,6 +1622,9 @@ public final class WorldState
 			A.setProficiency(tag.getIntFromPieces("PROF"));
 			A.startTickDown(causeOf(CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("BY")), P, mob), P, ticks);
 			A.setStat("TICKDOWN", Integer.toString(ticks));
+			final XMLTag activity = tag.getPieceFromPieces("ACTIVITY");
+			if(activity != null)
+				A.setStat("ACTIVITY", activity.value());
 		}
 		if(P instanceof MOB)
 		{

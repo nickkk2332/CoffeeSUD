@@ -949,6 +949,8 @@ public class CommonSkill extends StdAbility
 	@Override
 	public String getStat(final String code)
 	{
+		if("ACTIVITY".equalsIgnoreCase(code))
+			return activityXML();
 		switch(getMyCodeNum(code))
 		{
 		case 0:
@@ -971,6 +973,11 @@ public class CommonSkill extends StdAbility
 	@Override
 	public void setStat(final String code, final String val)
 	{
+		if("ACTIVITY".equalsIgnoreCase(code))
+		{
+			putActivityXML(val);
+			return;
+		}
 		switch(getMyCodeNum(code))
 		{
 		case 0:
@@ -983,6 +990,183 @@ public class CommonSkill extends StdAbility
 		default:
 			super.setStat(code,  val);
 			break;
+		}
+	}
+
+	/**
+	 * Returns the fields a saved game keeps of this skill while it is under
+	 * way: those of its class and of each class it extends, down to this
+	 * one, that are neither static nor final.
+	 * @return the fields, each with the name it is saved by
+	 */
+	private List<Pair<String, java.lang.reflect.Field>> activityFields()
+	{
+		final List<Pair<String, java.lang.reflect.Field>> fields = new ArrayList<Pair<String, java.lang.reflect.Field>>();
+		for(Class<?> C = getClass(); (C != null) && CommonSkill.class.isAssignableFrom(C); C = C.getSuperclass())
+		{
+			for(final java.lang.reflect.Field F : C.getDeclaredFields())
+			{
+				final int mods = F.getModifiers();
+				if(java.lang.reflect.Modifier.isStatic(mods) || java.lang.reflect.Modifier.isFinal(mods) || F.isSynthetic())
+					continue;
+				try
+				{
+					F.setAccessible(true);
+				}
+				catch(final Exception e)
+				{
+					continue;
+				}
+				fields.add(new Pair<String, java.lang.reflect.Field>(C.getSimpleName() + "." + F.getName(), F));
+			}
+		}
+		return fields;
+	}
+
+	/**
+	 * Returns what this skill has under way, for a saved game (the internal
+	 * stat ACTIVITY): its fields (see {@link #activityFields()}), such as the
+	 * room it works in, the ticks so far, and the crop or piece being made.
+	 * Numbers, words and choices go as they are; rooms by their ID; an item
+	 * not yet anywhere in the world (a crop, a piece being made) whole; a mob
+	 * or an item in the world by its number in the save being written.  The
+	 * fields that cannot be kept are named in SKIPPED.
+	 * @return the ACTIVITY XML, or "" when the skill is not on anything
+	 */
+	protected String activityXML()
+	{
+		if(affected == null)
+			return "";
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder str = new StringBuilder("");
+		final List<String> skipped = new ArrayList<String>();
+		for(final Pair<String, java.lang.reflect.Field> p : activityFields())
+		{
+			final Object val;
+			try
+			{
+				val = p.second.get(this);
+			}
+			catch(final Exception e)
+			{
+				continue;
+			}
+			if(val == null)
+				continue;
+			final String head = "<F N=\"" + p.first + "\"";
+			if((val instanceof String) || (val instanceof Number) || (val instanceof Boolean) || (val instanceof Character))
+				str.append(head).append(">").append(xml.parseOutAngleBrackets(val.toString())).append("</F>");
+			else
+			if(val instanceof Enum)
+				str.append(head).append(">").append(((Enum<?>)val).name()).append("</F>");
+			else
+			if(val instanceof Room)
+			{
+				final String roomID = CMLib.map().getExtendedRoomID((Room)val);
+				if(roomID.length() > 0)
+					str.append(head).append(" T=\"ROOM\">").append(xml.parseOutAngleBrackets(roomID)).append("</F>");
+				else
+					skipped.add(p.first);
+			}
+			else
+			if((val instanceof Item) && (((Item)val).owner() == null) && (!((Item)val).amDestroyed()))
+				str.append(head).append(" T=\"ITEM\">").append(CMLib.coffeeMaker().getItemXML((Item)val)).append("</F>");
+			else
+			if((val instanceof MOB) || (val instanceof Item))
+			{
+				final int sid = com.planet_ink.coffee_mud.core.save.WorldState.sidFor((Physical)val);
+				if(sid > 0)
+					str.append(head).append(" T=\"SID\">").append(sid).append("</F>");
+				else
+					skipped.add(p.first);
+			}
+			else
+				skipped.add(p.first);
+		}
+		if(skipped.size() > 0)
+			str.append("<SKIPPED>").append(CMParms.toListString(skipped.iterator())).append("</SKIPPED>");
+		return str.toString();
+	}
+
+	/**
+	 * Puts back what {@link #activityXML()} wrote, once the skill is on what
+	 * it was on again.
+	 * @param xml the ACTIVITY XML
+	 */
+	protected void putActivityXML(final String xml)
+	{
+		final List<XMLLibrary.XMLTag> tags = CMLib.xml().parseAllXML(xml);
+		if(tags == null)
+			return;
+		final Map<String, XMLLibrary.XMLTag> saved = new HashMap<String, XMLLibrary.XMLTag>();
+		for(final XMLLibrary.XMLTag tag : tags)
+		{
+			if(tag.tag().equalsIgnoreCase("F") && (tag.getParmValue("N") != null))
+				saved.put(tag.getParmValue("N"), tag);
+		}
+		for(final Pair<String, java.lang.reflect.Field> p : activityFields())
+		{
+			final XMLLibrary.XMLTag tag = saved.get(p.first);
+			if(tag == null)
+				continue;
+			final java.lang.reflect.Field F = p.second;
+			final Class<?> type = F.getType();
+			final String kind = tag.getParmValue("T");
+			final String text = CMLib.xml().restoreAngleBrackets(tag.value());
+			Object val = null;
+			try
+			{
+				if("ROOM".equals(kind))
+					val = CMLib.map().getRoom(text);
+				else
+				if("ITEM".equals(kind))
+					val = CMLib.coffeeMaker().unpackItemFromXML(tag.value());
+				else
+				if("SID".equals(kind))
+					val = com.planet_ink.coffee_mud.core.save.WorldState.restoredThing(text);
+				else
+				if((type == int.class) || (type == Integer.class))
+					val = Integer.valueOf(CMath.s_int(text));
+				else
+				if((type == long.class) || (type == Long.class))
+					val = Long.valueOf(CMath.s_long(text));
+				else
+				if((type == short.class) || (type == Short.class))
+					val = Short.valueOf((short)CMath.s_int(text));
+				else
+				if((type == byte.class) || (type == Byte.class))
+					val = Byte.valueOf((byte)CMath.s_int(text));
+				else
+				if((type == double.class) || (type == Double.class))
+					val = Double.valueOf(CMath.s_double(text));
+				else
+				if((type == float.class) || (type == Float.class))
+					val = Float.valueOf((float)CMath.s_double(text));
+				else
+				if((type == boolean.class) || (type == Boolean.class))
+					val = Boolean.valueOf(CMath.s_bool(text));
+				else
+				if(((type == char.class) || (type == Character.class)) && (text.length() > 0))
+					val = Character.valueOf(text.charAt(0));
+				else
+				if(type == String.class)
+					val = text;
+				else
+				if(type.isEnum())
+				{
+					for(final Object o : type.getEnumConstants())
+					{
+						if(((Enum<?>)o).name().equals(text))
+							val = o;
+					}
+				}
+				if((val != null) && (type.isPrimitive() || type.isInstance(val)))
+					F.set(this, val);
+			}
+			catch(final Exception e)
+			{
+				Log.errOut(ID(), "Could not put back " + p.first + ": " + e.getMessage());
+			}
 		}
 	}
 

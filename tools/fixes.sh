@@ -404,6 +404,15 @@ group_saves4()
 	expect s15-restore.txt "Restored 's15'."
 	count s15-restore.txt "is gone" 0
 	jsresults s15-restore.txt
+
+	# S16: a crop growing and a craft under way are saved with what they
+	# work on, and finish after the restore
+	play s16-play.txt xdb xworld "Grower\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s16-play.js\nfarm wheat\nwait 50\njrun /resources/_fixes/s16-planted.js\ncarpentry bowl\nwait 3\nsave s16\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s16-play.txt
+	play s16-restore.txt xdb xworld 'jrun /resources/_fixes/s16-check.js\nwait 60\njrun /resources/_fixes/s16-done.js\nquit\nn\n' RESTORE=s16 TIMEMODE=TURNS
+	expect s16-restore.txt "Restored 's16'."
+	expect s16-restore.txt "have grown here"
+	jsresults s16-restore.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so

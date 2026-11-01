@@ -307,6 +307,18 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   anchor, course, facing, time since it moved and turned, and the vessel it
   follows, by area name (`NavigableItem.getTravelStateXML`), put back once
   every vessel is.
+- S16 done. A common skill under way (a crop on its room, a craft on its
+  crafter) keeps what it works on through an internal `ACTIVITY` stat on
+  `CommonSkill`, written in the effect's `<ACTIVITY>` and put back once the
+  effect is. It holds every field of the skill's class and the classes it
+  extends down to `CommonSkill` that is neither static nor final, so all the
+  crafting and gathering skills have it: numbers, words and choices as they
+  are, rooms by ID, an item not yet in the world (the crop, the piece being
+  made) whole, and a mob or item in the world by its number in the save.
+  Fields of other kinds are named in `<SKIPPED>` (for crafts,
+  `last25items`, the recently made list). A crop now grows and is harvested
+  after a restore, and a craft finishes. Not done: SAVE does not warn of an
+  activity with skipped fields, and refunds nothing.
 
 #### 2c. Developer and builder tools (50)
 
