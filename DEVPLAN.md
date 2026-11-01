@@ -599,6 +599,23 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   command, or the start of several (`MPSE`), is an error and no longer runs
   as a game command. Found on the way: the shipped quest template
   `auto_escort1.quest` had `mpechoto` for `mpechoat`.
+- DT11 done but for its headless form, argument counts and unset
+  variables. `SCRIPTCHECK file|target|AREA|ALL` (`core/ScriptCheck`) reads
+  scripts without running them, with LOAD= followed and split as the
+  engine's parser splits them (`;`, `~`, `#`), and lists by file:line
+  unknown triggers, commands (no prefix matching: `MPSE` is told to be
+  written in full; a game command, social or skill word is a command) and
+  functions in conditions and `$%FUNC()%`; IF/ELSE/ENDIF, SWITCH/CASE/
+  DEFAULT/ENDSWITCH and FOR/NEXT out of balance; IF and MPWHILE
+  parentheses; `<SCRIPT>` without `</SCRIPT>`, JavaScript that does not
+  compile (Rhino, at the file's line) and, where JSCRIPTS asks for it,
+  blocks not approved; missing LOAD= files; MPCALLFUNC to no FUNCTION_PROG;
+  written-out room IDs in MPGOTO, MPTRANSFER and MPOLOADROOM that do not
+  exist. AREA and ALL cover areas, rooms, exits, mobs, their items and
+  room items, a shared file told of once. Builder SAVE says how many
+  problems SCRIPTCHECK ALL finds. The shipped world has none. Left: the
+  headless form (DT13's WORLD CHECK), argument counts, variables read and
+  never set, and quest scripts (DT32).
 
 #### 2d. Scripting (59)
 

@@ -193,6 +193,10 @@ public class Save extends StdCommand
 		final List<String> held=WorldFiles.heldBack();
 		if(held.size()>0)
 			mob.tell(L("Not written, as they loaded only in part: @x1.  WORLD PROBLEMS says why; SAVE FORCE writes them as the world has them.",String.join(", ",held)));
+		// what a check of the world's scripts finds (DT11)
+		final int scriptProblems=ScriptCheck.checkAll().size();
+		if(scriptProblems>0)
+			mob.tell(L("SCRIPTCHECK ALL finds @x1 problems in the world's scripts.",""+scriptProblems));
 	}
 
 	/**

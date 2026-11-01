@@ -1,0 +1,26 @@
+# the DT11 test: a script with every kind of mistake SCRIPTCHECK finds
+GREETPROG 100
+say hello
+~
+SPEECH_PROG hello
+if isnpc($n)
+  mpechot $n hi
+  mpse FIXTEST X 1
+else
+  say $%nosuchvalue($n)%
+  if nosuchcond($n)
+    smile
+  endif
+next
+mpcallfunc NoSuchFunction
+mpcallfunc RealFunction
+mpgoto NoSuchArea#99
+flurble the gnome
+<SCRIPT>
+var x = ;
+</SCRIPT>
+~
+FUNCTION_PROG RealFunction
+for $1 = 1 to 3
+say $1
+~
