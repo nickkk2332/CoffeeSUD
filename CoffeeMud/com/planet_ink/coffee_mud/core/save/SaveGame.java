@@ -480,6 +480,12 @@ public final class SaveGame
 		InputRecord.startFor(mob); // RECORDINPUT=1 (DT25)
 		if(builderMode)
 		{
+			// the world's quests read through at the start (DT32)
+			final int questProblems = QuestCheck.checkWorld().size();
+			mob.tell(CMLib.lang().L("QUESTCHECK: @x1 problems in world/quests@x2.", "" + questProblems, (questProblems > 0) ? " (QUESTCHECK ALL lists them)" : ""));
+		}
+		if(builderMode)
+		{
 			makeArchon(mob);
 			final String problems = WorldFiles.problemSummary(10);
 			if(problems.length() > 0)

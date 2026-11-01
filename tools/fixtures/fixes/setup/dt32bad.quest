@@ -1,0 +1,13 @@
+set name dt32fixq
+set duraton 100
+frobnicate the world
+give script LOAD=_fixes/nosuchfix.script
+give script LOAD=dt32own.script
+import items _fixes/nosuch_items.xml
+set wait 10
+give flurb something
+<?xml version="1.0"?>
+<FILE><NAME>dt32own.script</NAME><DATA>RAND_PROG 100
+mpnosuchfixcmd hello
+~
+</DATA></FILE>

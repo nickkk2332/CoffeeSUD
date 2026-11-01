@@ -827,6 +827,15 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   word's translation and source. `LANGUAGE COVERAGE id file|room|area|HERE`
   counts dictionary hits and names the commonest misses. Other LANGUAGE
   words go to LANGUAGES as before.
+- DT32 done. `QUESTCHECK quest|file|ALL` (builder mode, DEV=1 or
+  CMDQUESTS; `core/QuestCheck`) reads a quest's script without making
+  anything: unknown commands, SET variables (the quest's own stat codes
+  and the object kinds) and GIVE, TAKE, LOAD and IMPORT kinds; no SET NAME
+  or DURATION; WAIT with no INTERVAL; LOAD= and IMPORT files neither in its
+  FILE sections nor the resources; and SCRIPTCHECK on each script it gives
+  (inline or its own file). A quest that is LOAD=file is read through to
+  the file. Builder mode prints the count for world/quests at the start.
+  The quest engine has no step labels, so nothing checks them.
 
 #### 2d. Scripting (59)
 
