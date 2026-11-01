@@ -236,6 +236,10 @@ public class MUD extends Thread implements MudHost
 				:CMProps.instance().getStr("TIMEMODE","REALTIME").trim().toUpperCase().startsWith("TURN");
 			if(turns)
 				GameTime.setTurnBased(true);
+			// TIMESCALE= runs the clock faster or slower than real time (DT23)
+			final String scale=CMProps.instance().getStr("TIMESCALE","").trim();
+			if(CMath.isNumber(scale)&&(CMath.s_double(scale)>0.0))
+				GameTime.setRate(CMath.s_double(scale));
 			if(!restoring)
 			{
 				SaveGame.setSaveMode(SaveGame.parseSaveMode(CMProps.instance().getStr("SAVEMODE","ANYWHERE")));

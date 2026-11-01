@@ -1905,6 +1905,8 @@ public class ServiceEngine implements ThreadEngine
 		{
 			gameEngine=this;
 			gameThread=Thread.currentThread();
+			// a new TIMESCALE: the sleep was worked out at the old one
+			GameTime.setRateListener(this::wakeScheduler);
 		}
 		while(!props._isState(HostState.SHUTTINGDOWN))
 		{
@@ -1934,8 +1936,9 @@ public class ServiceEngine implements ThreadEngine
 						Thread.sleep(2000);
 				}
 				// Real-time groups run by the system clock.  Everything else runs by
-				// the game clock.  While the game clock runs, both clocks move at the
-				// same rate, so a wait on either can be slept on the system clock.
+				// the game clock.  While the game clock runs, it moves at the TIMESCALE
+				// rate against the system clock, so a wait on it is slept as
+				// GameTime.realMs of it.
 				// While it is stopped, game work comes due only when the clock is
 				// asked to move, and it moves here one step at a time: up to the next
 				// thing due, which then runs, and so on until the time asked for is
@@ -1963,8 +1966,8 @@ public class ServiceEngine implements ThreadEngine
 									r.remove();
 								}
 								else
-								if((!stopped) && (now + (R.getStartTime() - gameNow) < nextWake))
-									nextWake = now + (R.getStartTime() - gameNow);
+								if((!stopped) && (now + GameTime.realMs(R.getStartTime() - gameNow) < nextWake))
+									nextWake = now + GameTime.realMs(R.getStartTime() - gameNow);
 							}
 						}
 					}
@@ -1984,26 +1987,28 @@ public class ServiceEngine implements ThreadEngine
 						final long groupNow = T.isRealTime() ? now : gameNow;
 						// a stopped game clock does not come due by waiting
 						final boolean wakeFor = T.isRealTime() || (!stopped);
+						final long interval = T.isRealTime() ? T.getTickInterval() : GameTime.realMs(T.getTickInterval());
 						if(!T.isAwake() && (oneThread || !getPoolExecutor(T.getThreadGroupName()).isActiveOrQueued(T)))
 						{
 							if (T.getNextTickTime() <= groupNow)
 							{
-								if(wakeFor && (now + T.getTickInterval() < nextWake))
-									nextWake = now + T.getTickInterval();
+								if(wakeFor && (now + interval < nextWake))
+									nextWake = now + interval;
 								if(oneThread)
 									dueGroups.add(T);
 								else
 									getPoolExecutor(T.getThreadGroupName()).execute(T);
 							}
 							else
-							if (wakeFor && (nextWake > now + (T.getNextTickTime() - groupNow)))
 							{
-								nextWake = now + (T.getNextTickTime() - groupNow);
+								final long until = T.isRealTime() ? (T.getNextTickTime() - groupNow) : GameTime.realMs(T.getNextTickTime() - groupNow);
+								if (wakeFor && (nextWake > now + until))
+									nextWake = now + until;
 							}
 						}
 						else
-						if(wakeFor && (now + T.getTickInterval() < nextWake))
-							nextWake = now + T.getTickInterval();
+						if(wakeFor && (now + interval < nextWake))
+							nextWake = now + interval;
 					}
 				}
 				// on one thread, the due groups run here, outside the lock, so that

@@ -752,6 +752,14 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   to the next stock reset (new `ShopKeeper` getters). Fixed on the way: an
   area with no prejudice of its own fell back to the ini's IGNOREMASK, not
   PREJUDICE.
+- DT23 done. `GameTime` has a rate: `TIMESCALE x` (builder mode or
+  DEV=1, 0.1 to 20) or `TIMESCALE=` in the ini sets how many game
+  milliseconds pass in each real one, from now, so everything that reads
+  the clock follows (ticks, cooldowns, decay, effects, the calendar). The
+  scheduler sleeps `GameTime.realMs` of a wait on the game clock and is
+  woken when the rate changes. Pause and turn-based time work as before,
+  and the prompt shows `(x8)` while the rate is not 1. Not saved: a
+  session setting, or the ini's.
 
 #### 2d. Scripting (59)
 

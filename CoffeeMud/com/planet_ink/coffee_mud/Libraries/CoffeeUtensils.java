@@ -1943,8 +1943,8 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 	@Override
 	public String buildPrompt(final MOB mob, final String prompt)
 	{
-		// PLAYTEST says so before the prompt
-		final StringBuffer buf=new StringBuffer(CMSecurity.isPlaytesting(mob)?"\n\r(playtest) ":"\n\r");
+		// PLAYTEST says so before the prompt, and a TIMESCALE not 1 (DT23)
+		final StringBuffer buf=new StringBuffer("\n\r"+(CMSecurity.isPlaytesting(mob)?"(playtest) ":"")+((GameTime.rate()!=1.0)?"("+GameTime.rateText()+") ":""));
 		String promptUp=null;
 		int c=0;
 		while(c<prompt.length())

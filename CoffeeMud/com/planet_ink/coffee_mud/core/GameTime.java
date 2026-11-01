@@ -30,6 +30,10 @@ import java.util.function.BooleanSupplier;
  * time (see {@link #takeAdvance(long)}), so that everything due on the way
  * happens, in order.
  *
+ * While it runs, it can run faster or slower than real time: TIMESCALE (see
+ * {@link #setRate(double)}) sets how many game milliseconds pass in each
+ * real one, from 0.1 to 20, and everything that reads the clock follows.
+ *
  * Things that are about the real world stay on the system clock: logs,
  * network and input timeouts, idle detection, thread health checks, caches,
  * and dates shown to the player as real dates, such as the last login.
@@ -39,19 +43,45 @@ public final class GameTime
 	/** the clock's state; replaced whole, so that a reader never sees half a change */
 	private static final class State
 	{
-		/** how far the game clock is behind the system clock */
-		final long	behind;
-		/** the system time at which the clock stopped, or 0 while it runs */
-		final long	stoppedAt;
+		/** the game time at {@link #realAt}, or where it stands while stopped */
+		final long		gameAt;
+		/** the system time at which the game time was {@link #gameAt}, or 0 while it is stopped */
+		final long		realAt;
+		/** how many game milliseconds pass in each real one while it runs */
+		final double	rate;
 
-		State(final long behind, final long stoppedAt)
+		State(final long gameAt, final long realAt, final double rate)
 		{
-			this.behind = behind;
-			this.stoppedAt = stoppedAt;
+			this.gameAt = gameAt;
+			this.realAt = realAt;
+			this.rate = rate;
+		}
+
+		long now(final long sysNow)
+		{
+			if(realAt == 0)
+				return gameAt;
+			if(rate == 1.0)
+				return gameAt + (sysNow - realAt);
+			return gameAt + (long)((sysNow - realAt) * rate);
 		}
 	}
 
-	private static volatile State	state		= new State(0, 0);
+	/** the clock at first: the system time, running at real time */
+	private static State started()
+	{
+		final long sys = System.currentTimeMillis();
+		return new State(sys, sys, 1.0);
+	}
+
+	/** the slowest TIMESCALE */
+	public static final double MIN_RATE = 0.1;
+	/** the fastest TIMESCALE */
+	public static final double MAX_RATE = 20.0;
+
+	private static volatile State	state		= started();
+	/** told when the rate changes: the scheduler, whose sleeps were worked out at the old one */
+	private static volatile Runnable rateListener = null;
 	/** true while the player has paused the game */
 	private static volatile boolean	paused		= false;
 	/** true while time moves only when the player acts */
@@ -72,8 +102,76 @@ public final class GameTime
 	 */
 	public static long now()
 	{
-		final State s = state;
-		return ((s.stoppedAt != 0) ? s.stoppedAt : System.currentTimeMillis()) - s.behind;
+		return state.now(System.currentTimeMillis());
+	}
+
+	/**
+	 * How fast the game clock runs against real time while it runs: 1 is real
+	 * time, 8 is eight game seconds in each real one (TIMESCALE).
+	 * @return the rate
+	 */
+	public static double rate()
+	{
+		return state.rate;
+	}
+
+	/**
+	 * The rate as the prompt and TIMESCALE show it, such as x8 or x0.5.
+	 * @return the words
+	 */
+	public static String rateText()
+	{
+		final double r = state.rate;
+		if(r == Math.rint(r))
+			return "x" + (long)r;
+		return "x" + (Math.round(r * 100.0) / 100.0);
+	}
+
+	/**
+	 * Sets how fast the game clock runs while it runs, from now on: the time
+	 * already passed stays as it was.  Pause and turn-based time work as
+	 * before, the rate waiting until the clock runs again.
+	 * @param rate the rate, held to 0.1 to 20
+	 * @return the rate set
+	 */
+	public static double setRate(final double rate)
+	{
+		final double r = Math.max(MIN_RATE, Math.min(MAX_RATE, rate));
+		synchronized(GameTime.class)
+		{
+			final State s = state;
+			final long sys = System.currentTimeMillis();
+			state = new State(s.now(sys), (s.realAt == 0) ? 0 : sys, r);
+		}
+		final Runnable R = rateListener;
+		if(R != null)
+			R.run();
+		return r;
+	}
+
+	/**
+	 * Sets what is told when the rate changes.
+	 * @param R what to run, or null
+	 */
+	public static void setRateListener(final Runnable R)
+	{
+		rateListener = R;
+	}
+
+	/**
+	 * The real milliseconds in which so many game ones pass while the clock
+	 * runs, for the scheduler's sleeps.
+	 * @param gameMs the game milliseconds
+	 * @return the real ones, at least 0
+	 */
+	public static long realMs(final long gameMs)
+	{
+		if(gameMs <= 0)
+			return 0;
+		final double r = state.rate;
+		if(r == 1.0)
+			return gameMs;
+		return (long)Math.ceil(gameMs / r);
 	}
 
 	/**
@@ -102,7 +200,7 @@ public final class GameTime
 	 */
 	public static boolean isStopped()
 	{
-		return state.stoppedAt != 0;
+		return state.realAt == 0;
 	}
 
 	/**
@@ -145,15 +243,15 @@ public final class GameTime
 	private static void stop()
 	{
 		final State s = state;
-		if(s.stoppedAt == 0)
-			state = new State(s.behind, System.currentTimeMillis());
+		if(s.realAt != 0)
+			state = new State(s.now(System.currentTimeMillis()), 0, s.rate);
 	}
 
 	private static void start()
 	{
 		final State s = state;
-		if(s.stoppedAt != 0)
-			state = new State(s.behind + (System.currentTimeMillis() - s.stoppedAt), 0);
+		if(s.realAt == 0)
+			state = new State(s.gameAt, System.currentTimeMillis(), s.rate);
 		pending = 0;
 		stopWhen = null;
 	}
@@ -169,10 +267,13 @@ public final class GameTime
 		if(ms <= 0)
 			return;
 		final State s = state;
-		if(s.stoppedAt != 0)
-			state = new State(s.behind, s.stoppedAt + ms);
+		if(s.realAt == 0)
+			state = new State(s.gameAt + ms, 0, s.rate);
 		else
-			state = new State(s.behind - ms, 0);
+		{
+			final long sys = System.currentTimeMillis();
+			state = new State(s.now(sys) + ms, sys, s.rate);
+		}
 	}
 
 	/**
@@ -195,7 +296,7 @@ public final class GameTime
 	 */
 	public static synchronized void requestAdvance(final long ms, final BooleanSupplier until)
 	{
-		if((ms <= 0) || (state.stoppedAt == 0))
+		if((ms <= 0) || (state.realAt != 0))
 			return;
 		pending += ms;
 		if(until != null)
@@ -255,9 +356,6 @@ public final class GameTime
 	public static synchronized void set(final long gameMs)
 	{
 		final State s = state;
-		if(s.stoppedAt != 0)
-			state = new State(s.stoppedAt - gameMs, s.stoppedAt);
-		else
-			state = new State(System.currentTimeMillis() - gameMs, 0);
+		state = new State(gameMs, (s.realAt == 0) ? 0 : System.currentTimeMillis(), s.rate);
 	}
 }
