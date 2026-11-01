@@ -303,7 +303,7 @@ public class Sailor extends StdCharClass
 		)
 		{
 			final int pctBefore=mob.playerStats().percentVisited(mob,R.getArea());
-			if(mob.playerStats().addRoomVisit(R))
+			if(ScriptEvents.visit(mob,R))
 			{
 				final Area A=R.getArea();
 				CMLib.players().bumpPrideStat(mob,PrideStats.PrideStat.ROOMS_EXPLORED,1);

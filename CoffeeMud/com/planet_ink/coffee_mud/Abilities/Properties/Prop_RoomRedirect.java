@@ -184,7 +184,7 @@ public class Prop_RoomRedirect extends Property
 						if(msg.source().isPlayer())
 						{
 							msg.source().playerStats().addRoomVisit((Room)msg.target());
-							msg.source().playerStats().addRoomVisit(realRoom);
+							ScriptEvents.visit(msg.source(),realRoom);
 						}
 						msg.setTarget(realRoom);
 						return realRoom.okMessage(myHost, msg);

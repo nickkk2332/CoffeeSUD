@@ -1270,6 +1270,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 				{
 					final String type=Ability.ACODE.DESCS.get((A.classificationCode()&Ability.ALL_ACODES)).toLowerCase();
 					mob.tell(L("^NYou have learned the @x1 ^H@x2^?.^N",type,A.name()));
+					ScriptEvents.levelGrant(mob,A);
 				}
 			}
 		}

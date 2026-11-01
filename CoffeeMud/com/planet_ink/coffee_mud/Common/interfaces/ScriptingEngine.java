@@ -491,6 +491,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		XMLLibrary.FILE_XML_BOUNDARY.toUpperCase().substring(0,XMLLibrary.FILE_XML_BOUNDARY.indexOf(' ')), // 58
 		"DISMOUNT_PROG", // 59
 		"REMOVING_PROG", // 60
+		"SKILL_PROG", // 61
+		"DISCOVER_PROG", // 62
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -819,6 +821,25 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	 * @param host the object the scripts are on
 	 */
 	public default void registerHost(final PhysicalAgent host)
+	{
+	}
+
+	/**
+	 * An event that is not a message, such as a skill learned or a room first
+	 * visited (core.ScriptEvents), for this engine's scripts with its trigger:
+	 * each one's trigger line, split by bits as the engine splits trigger
+	 * lines, that the test accepts is queued to run, as a message's trigger
+	 * is.
+	 * @param host the object the scripts are on
+	 * @param triggerCode the trigger, its place in progs plus one
+	 * @param source who it happened to: $n
+	 * @param target $t, or null for the host
+	 * @param item $o, or null for the host if it is an item
+	 * @param msg $g
+	 * @param bits how the trigger line is split: c a word, C upper case, r the rest
+	 * @param test which trigger lines the event fits
+	 */
+	public default void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final String bits, final java.util.function.Predicate<String[]> test)
 	{
 	}
 

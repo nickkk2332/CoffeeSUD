@@ -943,7 +943,7 @@ public class StdRoom implements Room
 				if((msg.source().playerStats()!=null)
 				&&(msg.source().soulMate()==null))
 				{
-					if(msg.source().playerStats().addRoomVisit(this))
+					if(ScriptEvents.visit(msg.source(),this))
 						CMLib.players().bumpPrideStat(msg.source(),PrideStats.PrideStat.ROOMS_EXPLORED, 1);
 				}
 				break;

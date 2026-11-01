@@ -315,7 +315,7 @@ public class Bard extends StdCharClass
 				}
 				if((!mob.playerStats().hasVisited(A))&&(mob.soulMate()==null))
 				{
-					if(mob.playerStats().addRoomVisit(R))
+					if(ScriptEvents.visit(mob,R))
 					{
 						CMLib.players().bumpPrideStat(mob,PrideStats.PrideStat.ROOMS_EXPLORED,1);
 						int xp=(int)Math.round(100.0*CMath.div(A.getIStat(Area.Stats.AVG_LEVEL),hostP.phyStats().level()));
@@ -329,7 +329,7 @@ public class Bard extends StdCharClass
 				else
 				{
 					final int pctBefore=mob.playerStats().percentVisited((MOB)host,A);
-					if(mob.playerStats().addRoomVisit(R))
+					if(ScriptEvents.visit(mob,R))
 					{
 						CMLib.players().bumpPrideStat(mob,PrideStats.PrideStat.ROOMS_EXPLORED,1);
 						final int pctAfter=mob.playerStats().percentVisited((MOB)host,A);

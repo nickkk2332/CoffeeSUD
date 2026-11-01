@@ -14542,6 +14542,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			globalsHost=host;
 			for(final SubScript script : scripts)
 			{
+				ScriptEvents.uses(script.getTriggerCode());
 				final int category;
 				switch(script.getTriggerCode())
 				{
@@ -16389,6 +16390,45 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 		}
 		return mob;
+	}
+
+	@Override
+	public void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final String bits, final java.util.function.Predicate<String[]> test)
+	{
+		if((host==null)||(source==null)||(recurseCounter.get() > 2)||(!canTrigger(triggerCode)))
+			return;
+		try
+		{
+			recurseCounter.addAndGet(1);
+			if(ScriptTrace.isOn())
+				ScriptTrace.handling(host);
+			final MOB monster=getMakeMOB(host);
+			if(lastKnownLocation==null)
+				confirmLastKnownLocation(monster, source);
+			if((monster==null)||(monster.amDead())||(lastKnownLocation==null))
+				return;
+			if((host instanceof MOB)&&(!isFreeToBeTriggered(monster)))
+				return;
+			final Item defaultItem=(host instanceof Item)?(Item)host:null;
+			for(final SubScript script : getScripts(host))
+			{
+				if((script.size()<1)||(script.getTriggerCode()!=triggerCode))
+					continue;
+				String[] t=script.getTriggerArgs();
+				if(t==null)
+					t=parseBits(script,0,bits);
+				if((t!=null)&&test.test(t))
+				{
+					enqueResponse(triggerCode,host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,script,1,t);
+					if(!multiTriggers)
+						return;
+				}
+			}
+		}
+		finally
+		{
+			recurseCounter.addAndGet(-1);
+		}
 	}
 
 	protected boolean canTrigger(final int triggerCode)

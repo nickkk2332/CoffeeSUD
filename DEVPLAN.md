@@ -1000,6 +1000,18 @@ SC3, SC4, SC5, SC6, SC7, SC8, SC9, SC10, SC11, SC12, SC13, SC15, SC16, SC17,
 JS3, JS5, JS6, JS7, JS8, JS9, JS10, JS11, JS12, JS13, JS14, JS15, JS16,
 JS17, JS18, JS19, JS20, JS23
 
+- ST2 and ST3 done, with `core/ScriptEvents`: an event that is not a message
+  goes to the scripts a message in the room would reach (the room, its items,
+  its mobs and what they carry, the area and its parents) through a new
+  `ScriptingEngine.eventTrigger`, and only if some parsed script has the
+  trigger. `SKILL_PROG LEARN|IMPROVE|MASTER|FAIL|ANY skill|* [mask]`, for
+  characters: LEARN from `addAbility` once in the world, and the race's or
+  clan's skills a level brings; IMPROVE from a gain by use or practice;
+  MASTER on reaching the most; FAIL from a failed proficiency roll. $t is the
+  skill, $g the proficiency. `DISCOVER_PROG ROOM|AREA [PARTY] [mask]` fires
+  when a room visit is first marked (StdRoom, and the Bard's, Sailor's and
+  Prop_RoomRedirect's own marks); $g is the room's ID. @GLOBAL waits for ST12.
+
 #### 2e. Quests (15)
 
 Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16

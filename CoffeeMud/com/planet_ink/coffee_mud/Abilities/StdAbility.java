@@ -1440,8 +1440,15 @@ public class StdAbility implements Ability
 			pctChance+=adjustment;
 		else
 		if(CMLib.dice().rollPercentage()>(100+adjustment))
+		{
+			ScriptEvents.skill(mob,this,"FAIL");
 			return false;
-		return (CMLib.dice().rollPercentage()<pctChance);
+		}
+		if(CMLib.dice().rollPercentage()<pctChance)
+			return true;
+		// ST2: SKILL_PROG FAIL
+		ScriptEvents.skill(mob,this,"FAIL");
+		return false;
 	}
 
 	@Override
@@ -1813,6 +1820,7 @@ public class StdAbility implements Ability
 					if(mob.isAttributeSet(MOB.Attrib.AUTOIMPROVE))
 						mob.tell(L("You become better at @x1.",A.name()));
 					((StdAbility)A).lastCastHelp=GameTime.now();
+					ScriptEvents.skill(mob,A,"IMPROVE");
 				}
 			}
 			if((A.proficiency() >= maxProficiency)
@@ -1823,6 +1831,8 @@ public class StdAbility implements Ability
 					CMLib.commands().postChannel(channels.get(i), mob.clans(), L("@x1 is now proficient at @x2.", mob.name(), A.Name()), true,mob);
 				CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.SKILLPROF, 1, A);
 			}
+			if(A.proficiency() >= maxProficiency)
+				ScriptEvents.skill(mob,A,"MASTER");
 		}
 		else
 			A.setProficiency(maxProficiency);
@@ -2772,7 +2782,10 @@ public class StdAbility implements Ability
 					newProf=prof75;
 				if((teachAbility!=null)&&(newProf > teachAbility.proficiency()))
 					newProf = teachAbility.proficiency();
+				final boolean better = newProf > yourAbility.proficiency();
 				yourAbility.setProficiency(newProf);
+				if(better)
+					ScriptEvents.skill(student,yourAbility,"IMPROVE");
 				final Ability yourEffect=student.fetchEffect(ID());
 				if((yourEffect!=null)&&(yourEffect.invoker()==student))
 					yourEffect.setProficiency(yourAbility.proficiency());

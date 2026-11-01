@@ -5039,6 +5039,9 @@ public class StdMOB implements MOB
 		to.setInvoker(this);
 		abilitys.addElement(to);
 		triggerer.setObsolete();
+		// ST2: SKILL_PROG LEARN, for a character's own skill, once in the world
+		if((location()!=null)&&(playerStats()!=null)&&to.isSavable()&&(!com.planet_ink.coffee_mud.core.save.SaveGame.isWorldPending()))
+			ScriptEvents.skill(this,to,"LEARN");
 	}
 
 	@Override
