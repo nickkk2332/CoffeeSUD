@@ -103,6 +103,15 @@ public class Generate extends StdCommand
 				mob.tell(L("GENERATE CHECK @x1: @x2 problems:",path,""+problems.size())+"\n\r"+String.join("\n\r",problems));
 			return false;
 		}
+		// B12: GENERATE ... SANDBOX: in the sandbox, NOSAVE, an area it makes unsavable
+		if((commands.size()>3)&&commands.get(commands.size()-1).equalsIgnoreCase("SANDBOX"))
+		{
+			final List<String> words=new ArrayList<String>(commands.subList(0,commands.size()-1));
+			if(!words.get(1).equalsIgnoreCase("NOSAVE"))
+				words.add(1,"NOSAVE");
+			mob.tell(Sandbox.generate(mob,this,words,metaFlags));
+			return false;
+		}
 		SaveGame.warnAboutBuilding(mob);
 		boolean save=true;
 		final List<String> origCommands = new XVector<String>(commands);

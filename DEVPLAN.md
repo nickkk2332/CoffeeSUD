@@ -972,6 +972,13 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   STOPONERROR), and sums up what ran and what failed (no command to take
   it, or an exception). JRUN's scope has `builder` (`core/JSBuilder`):
   here, room, dig, link, create, saveRoom, forEachRoom and cmd.
+- B12 done, with PREVIEW as `SANDBOX PREVIEW` (PREVIEW is DT17's):
+  `core/Sandbox` makes the Sandbox area, four bare rooms in a row, area
+  and rooms IS_UNSAVABLE (exportAll skips it, nothing is in the
+  database); SANDBOX ENTER, LEAVE and CLEAR; PREVIEW copies a catalog
+  mob or item or a template there and shows it, its gear and its wares,
+  gone on LEAVE; `GENERATE ... SANDBOX` runs GENERATE NOSAVE there and
+  marks an area it makes unsavable, for CLEAR to take away.
 
 #### 2d. Scripting (59)
 
