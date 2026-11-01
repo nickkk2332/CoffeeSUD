@@ -161,4 +161,28 @@ public interface LanguageLibrary extends CMLibrary
 	 * @return the new input
 	 */
 	public String rawInputParser(String words);
+
+	/**
+	 * VOCAB TEST (DT30): a text through the session, final and filter
+	 * translations, with each rule that matched.  Nothing is written to the
+	 * rule files on the way, as unmatched text can be with AUTOIGNORE.
+	 * @param text the text
+	 * @return the lines
+	 */
+	public default List<String> explainTranslation(final String text)
+	{
+		return new ArrayList<String>(0);
+	}
+
+	/**
+	 * VOCAB INPUT (DT30): a typed line through the raw input parser and the
+	 * command pre-processor, with the commands that come of it, and each
+	 * rule that matched.
+	 * @param line the line
+	 * @return the lines
+	 */
+	public default List<String> explainInput(final String line)
+	{
+		return new ArrayList<String>(0);
+	}
 }

@@ -176,6 +176,91 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 		return buf.toString();
 	}
 
+	/** the rules that matched on this thread, while VOCAB asks (DT30) */
+	protected static final ThreadLocal<List<String>> ruleNotes = new ThreadLocal<List<String>>();
+
+	/**
+	 * Notes a rule that matched, if VOCAB is asking.
+	 * @param section the rule's section
+	 * @param what the rule
+	 */
+	protected static void ruleNote(final String section, final String what)
+	{
+		final List<String> notes = ruleNotes.get();
+		if(notes != null)
+			notes.add("[" + section + "] " + what);
+	}
+
+	@Override
+	public List<String> explainTranslation(final String text)
+	{
+		final List<String> out = new ArrayList<String>();
+		final List<String> old = ruleNotes.get();
+		final List<String> notes = new ArrayList<String>();
+		ruleNotes.set(notes);
+		try
+		{
+			final String session = sessionTranslation(null, text);
+			out.add("Session translation: " + ((session == null) ? "none matched, as written" : session));
+			for(final String n : notes)
+				out.add("  " + n);
+			notes.clear();
+			final String fin = finalTranslation((session == null) ? text : session);
+			out.add("Final translation: " + ((fin == null) ? "none matched, as written" : fin));
+			for(final String n : notes)
+				out.add("  " + n);
+			notes.clear();
+			final String filter = filterTranslation((fin == null) ? ((session == null) ? text : session) : fin);
+			if(filter != null)
+			{
+				out.add("Filter translation: " + filter);
+				for(final String n : notes)
+					out.add("  " + n);
+			}
+		}
+		finally
+		{
+			ruleNotes.set(old);
+		}
+		return out;
+	}
+
+	@Override
+	public List<String> explainInput(final String line)
+	{
+		final List<String> out = new ArrayList<String>();
+		final List<String> old = ruleNotes.get();
+		final List<String> notes = new ArrayList<String>();
+		ruleNotes.set(notes);
+		try
+		{
+			final String raw = rawInputParser(line);
+			if(!raw.equals(line))
+				out.add("Raw input: " + raw);
+			final List<List<String>> cmds = preCommandParser(CMParms.parse(raw));
+			if(cmds.isEmpty())
+				out.add("Ignored: no command comes of it.");
+			else
+			if(cmds.size() == 1)
+				out.add("Command: " + CMParms.combineQuoted(cmds.get(0), 0));
+			else
+			{
+				out.add(cmds.size() + " commands:");
+				for(int i = 0; i < cmds.size(); i++)
+					out.add("  " + (i + 1) + ". " + CMParms.combineQuoted(cmds.get(i), 0));
+			}
+			if(notes.isEmpty())
+				out.add("No rule matched.");
+			for(final String n : notes)
+				out.add("  " + n);
+		}
+		finally
+		{
+			ruleNotes.set(old);
+		}
+		return out;
+	}
+
 	protected class ParseCmd
 	{
 		Command cmd;
@@ -784,6 +869,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 								str=CMStrings.replaceAll(str,"\\"+i,matcher.group(i));
 							if(!workCmdList.get(m).equals(str))
 							{
+								ruleNote("COMMAND-PRE-PROCESSOR","REPLACE \""+pattern.pattern()+"\" with \""+P.p.second+"\"");
 								nothingDone=insertExpansion(workCmdList,str,m,strLen,nothingDone);
 							}
 						 }
@@ -796,6 +882,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 				rep=((Map<String,String>)P.p.first).get(combinedWithTabs.toLowerCase());
 				if(rep!=null)
 				{
+					ruleNote("COMMAND-PRE-PROCESSOR","REPLACEWHOLE \""+combinedWithTabs+"\" with \""+rep+"\"");
 					insertExpansion(workCmdList,rep,0,combinedWithTabs.length(),true);
 					p=parser.size();
 				}
@@ -806,6 +893,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 				rep=((Map<String,String>)P.p.first).get(combinedWithTabs);
 				if(rep!=null)
 				{
+					ruleNote("COMMAND-PRE-PROCESSOR","REPLACEEXACT \""+combinedWithTabs+"\" with \""+rep+"\"");
 					insertExpansion(workCmdList,rep,0,combinedWithTabs.length(),true);
 					p=parser.size();
 				}
@@ -823,6 +911,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 					int x=str.toLowerCase().indexOf(rep);
 					if(x>=0)
 					{
+						ruleNote("COMMAND-PRE-PROCESSOR","REPLACEALL \""+rep+"\" with \""+P.p.second+"\"");
 						while(x>=0)
 						{
 							wit=(String)P.p.second;
@@ -839,20 +928,29 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 				pattern=(Pattern)P.p.first;
 				matcher=pattern.matcher(combinedWithTabs);
 				if(matcher.find())
+				{
+					ruleNote("COMMAND-PRE-PROCESSOR","IGNORE \""+pattern.pattern()+"\"");
 					return new XVector<List<String>>();
+				}
 				break;
 			}
 			case IGNOREALL:
 			{
 				if(combinedWithTabs.toLowerCase().indexOf((String)P.p.first)>=0)
+				{
+					ruleNote("COMMAND-PRE-PROCESSOR","IGNOREALL \""+P.p.first+"\"");
 					return new XVector<List<String>>();
+				}
 				break;
 			}
 			case IGNOREWHOLE:
 			{
 				ignoreSet=(Set<String>)P.p.first;
 				if(ignoreSet.contains(combinedWithTabs.toLowerCase()))
+				{
+					ruleNote("COMMAND-PRE-PROCESSOR","IGNOREWHOLE \""+combinedWithTabs+"\"");
 					return new XVector<List<String>>();
+				}
 				break;
 			}
 			case AUTOIGNORE:
@@ -866,6 +964,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 		&&(workCmdList.get(0).equals(combinedWithTabs)))
 		{
 			if((autoIgnoreLen>0)
+			&&(ruleNotes.get()==null) // not while VOCAB asks: it would write the rule file
 			&&(str!=null)
 			&&(str.length()<=autoIgnoreLen))
 			{
@@ -917,6 +1016,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 				matcher=pattern.matcher(str);
 				if(matcher.find())
 				{
+					ruleNote(section,"REPLACE \""+pattern.pattern()+"\" with \""+P.p.second+"\"");
 					str = (String)P.p.second;
 					for(int i=0;i<=matcher.groupCount();i++)
 						str=CMStrings.replaceAll(str,"\\"+i,matcher.group(i));
@@ -927,14 +1027,20 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 			{
 				rep=((Map<String,String>)P.p.first).get(str.toLowerCase());
 				if(rep!=null)
+				{
+					ruleNote(section,"REPLACEWHOLE \""+str+"\" with \""+rep+"\"");
 					return rep;
+				}
 				break;
 			}
 			case REPLACEEXACT:
 			{
 				rep=((Map<String,String>)P.p.first).get(str);
 				if(rep!=null)
+				{
+					ruleNote(section,"REPLACEEXACT \""+str+"\" with \""+rep+"\"");
 					return rep;
+				}
 				break;
 			}
 			case IGNOREALL:
@@ -944,7 +1050,10 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 					break;
 				final int x=str.toLowerCase().indexOf(rep);
 				if(x>=0)
+				{
+					ruleNote(section,"IGNOREALL \""+rep+"\"");
 					return null;
+				}
 				break;
 			}
 			case REPLACEALL:
@@ -953,6 +1062,8 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 				if(rep.length()==0)
 					break;
 				int x=str.toLowerCase().indexOf(rep);
+				if(x>=0)
+					ruleNote(section,"REPLACEALL \""+rep+"\" with \""+P.p.second+"\"");
 				while(x>=0)
 				{
 					wit=(String)P.p.second;
@@ -966,14 +1077,20 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 				pattern=(Pattern)P.p.first;
 				matcher=pattern.matcher(str);
 				if(matcher.find())
+				{
+					ruleNote(section,"IGNORE \""+pattern.pattern()+"\"");
 					return null;
+				}
 				break;
 			}
 			case IGNOREWHOLE:
 			{
 				ignoreSet=(Set<String>)P.p.first;
 				if(ignoreSet.contains(str.toLowerCase()))
+				{
+					ruleNote(section,"IGNOREWHOLE \""+str+"\"");
 					return null;
+				}
 				break;
 			}
 			case AUTOIGNORE:
@@ -985,7 +1102,7 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 		}
 		if(str.equals(oldStr))
 		{
-			if((autoIgnoreLen>0)&&(str.length()<=autoIgnoreLen))
+			if((autoIgnoreLen>0)&&(str.length()<=autoIgnoreLen)&&(ruleNotes.get()==null))
 			{
 				if(ignoreSet==null)
 				{

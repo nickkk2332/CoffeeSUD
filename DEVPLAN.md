@@ -813,6 +813,12 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   bear fur could ever be hunted) and fishing.txt's "Catfish 25" a space
   for a tab, both fixed; left for review, clancraft.txt rows 4 and 45 have
   no CLAN_ITEM_CODENUMBER.
+- DT30 done. `VOCAB TEST text` and `VOCAB INPUT line` (builder mode,
+  DEV=1 or CMDAREAS) run the language library's own sums with each
+  matching rule noted (`explainTranslation`, `explainInput`; AUTOIGNORE
+  writes nothing while VOCAB asks), `VOCAB LIST key` the lists.ini value
+  in effect and its file, `VOCAB RELOAD` the unloads in one, and `VOCAB
+  ADD section rule` (builder mode) appends to the world's rule file.
 
 #### 2d. Scripting (59)
 
