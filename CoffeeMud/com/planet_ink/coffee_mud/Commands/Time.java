@@ -52,6 +52,14 @@ public class Time extends StdCommand
 		final Room room=mob.location();
 		if(room==null)
 			return false;
+		// TIME SET and TIME SEASON, for builders (DT20)
+		if((commands.size()>2)&&EnvToolsCmd.mayChange(mob)
+		&&(commands.get(1).equalsIgnoreCase("SET")||commands.get(1).equalsIgnoreCase("SEASON")))
+		{
+			final String what=CMParms.combine(commands,2);
+			mob.tell(commands.get(1).equalsIgnoreCase("SET")?EnvToolsCmd.timeSet(mob,what):EnvToolsCmd.timeSeason(mob,what));
+			return false;
+		}
 		if((commands.size()>1)&&(commands.get(1).equalsIgnoreCase("global")))
 			mob.tell(CMLib.time().globalClock().timeDescription(mob,room));
 		else

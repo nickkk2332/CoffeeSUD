@@ -55,6 +55,13 @@ public class Look extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		// LOOK AS conditions: the room as PREVIEW reads it, for builders (DT20)
+		if((commands.size()>2)&&(commands.get(1).equalsIgnoreCase("AS"))&&(mob.location()!=null)
+		&&(EnvToolsCmd.mayChange(mob)||CMSecurity.isAllowedAnywhere(mob,CMSecurity.SecFlag.CMDROOMS)))
+		{
+			mob.tell(TextToolsCmd.preview(mob,mob.location(),new ArrayList<String>(commands.subList(2,commands.size()))));
+			return false;
+		}
 		final Vector<String> origCmds=new XVector<String>(commands);
 		final Room R=mob.location();
 		boolean quiet=false;

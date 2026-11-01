@@ -720,6 +720,17 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   lost the roll. Left: each behaviour's own state in words (route step,
   schedule entry, target, morale), which each class adds to its
   `debugState()` as needed.
+- DT20 done. For builders (builder mode, DEV=1, or CMDAREAS): `WEATHER SET
+  weather [AREA name] [NEXT]` sets the next weather and forces the change,
+  so its messages and WEATHER_PROGs come, or with NEXT only sets what comes
+  next; `TIME SET hour|DAWN|DAY|DUSK|NIGHT` runs the area's clock forward
+  hour by hour as TICKTOCK does, its events running; `TIME SEASON season`
+  runs it a month at a time to the season; `LOOK AS conditions` is DT17's
+  PREVIEW; `HAZARDS [area]` lists the area's own behaviours and effects
+  (spawners, weather) and its rooms', exits' and items' behaviours, traps
+  and Prop_InstantDeath, Prop_NarrowLedge and Prop_Weather, with their state
+  (DT19's DEBUG) or parameters. W12 and W20's weather commands can build on
+  WEATHER SET.
 
 #### 2d. Scripting (59)
 

@@ -52,6 +52,12 @@ public class Weather extends StdCommand
 		final Room room=mob.location();
 		if(room==null)
 			return false;
+		// WEATHER SET, for builders (DT20)
+		if((commands.size()>1)&&(commands.get(1).equalsIgnoreCase("SET"))&&EnvToolsCmd.mayChange(mob))
+		{
+			mob.tell(EnvToolsCmd.weatherSet(mob,new ArrayList<String>(commands.subList(2,commands.size()))));
+			return false;
+		}
 		if((commands.size()>1)&&((room.domainType()&Room.INDOORS)==0)&&(commands.get(1).equalsIgnoreCase("WORLD")))
 		{
 			final StringBuffer tellMe=new StringBuffer("");
