@@ -93,7 +93,6 @@ public class MUD extends Thread implements MudHost
 	}
 
 	private volatile MudState state		 = MudState.STOPPED;
-	private ServerSocket	  servsock	 = null;
 	private boolean			  acceptConns= false;
 	private int				  port		 = 5555;
 	private int				  publicPort = 5555;
@@ -112,7 +111,6 @@ public class MUD extends Thread implements MudHost
 	/** true while globalShutdown runs; a restart's next boot waits for it */
 	private static volatile boolean		 shutdownRunning	= false;
 
-	protected static LinkedList<Quad<Socket,Closeable,Long,Session>> closeables	= new LinkedList<Quad<Socket,Closeable,Long,Session>>();
 
 	private static final long 			SHUTDOWN_TIMEOUT 	= 5 * 60 * 1000;
 
@@ -140,16 +138,6 @@ public class MUD extends Thread implements MudHost
 	}
 
 	@Override
-	public Session[] acceptConnection(final Socket sock) throws SocketException, IOException
-	{
-		sock.setKeepAlive(true);
-		setState(MudState.ACCEPTING);
-		final ConnectionAcceptor acceptor = new ConnectionAcceptor(sock, Thread.currentThread().getName());
-		serviceEngine.executeRunnable(threadGroup.getName(),acceptor);
-		return acceptor.sess;
-	}
-
-	@Override
 	public ThreadGroup threadGroup()
 	{
 		return threadGroup;
@@ -172,279 +160,6 @@ public class MUD extends Thread implements MudHost
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Closes the given socket and closeable (usually a printwriter) after a
-	 * short delay, in order to allow any buffered data to be sent.
-	 * This is done in a separate thread so that the main mud thread is not
-	 * held up.
-	 *
-	 * @param sess the session to close
-	 * @param S the socket to close
-	 * @param c the closeable to close
-	 */
-	private static void closeLater(final Session sess, final Socket S, final Closeable c)
-	{
-		synchronized(closeables)
-		{
-			final boolean hasAny = closeables.size() > 0;
-			closeables.add(new Quad<Socket, Closeable, Long, Session>(S,c,new Long(System.currentTimeMillis()+1000),sess));
-			if(!hasAny)
-			{
-				new Thread(new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						while(true)
-						{
-							final Quad<Socket,Closeable,Long,Session> next;
-							synchronized(closeables)
-							{
-								if(closeables.size()==0)
-									return;
-								next = closeables.remove();
-							}
-							final long diff = next.third.longValue()-System.currentTimeMillis();
-							if(diff > 0)
-							{
-								try
-								{
-									Thread.sleep(diff);
-								}
-								catch(final Exception e) {}
-							}
-							try
-							{
-								if(next.fourth != null)
-									next.fourth.doPing(SessionPing.DISCONNECT, null);
-								next.second.close();
-							}
-							catch(final Exception e)
-							{}
-							try
-							{
-								next.first.close();
-							}
-							catch(final Exception e)
-							{}
-						}
-					}
-				}).run();
-			}
-		}
-	}
-
-	/**
-	 * A private class which handles accepting a single connection.
-	 */
-	private class ConnectionAcceptor implements CMRunnable
-	{
-		Socket		sock;
-		long		startTime	= 0;
-		String		name		= null;
-		Session[]	sess		= new Session[] { null };
-
-		/**
-		 * Constructor
-		 *
-		 * @param sock the socket to handle
-		 * @param name the name of this acceptor thread
-		 * @throws SocketException if the socket cannot be modified
-		 * @throws IOException if an IO error occurs
-		 */
-		public ConnectionAcceptor(final Socket sock, final String name) throws SocketException, IOException
-		{
-			this.sock=sock;
-			this.name = name;
-			sock.setSoLinger(true,3);
-		}
-
-		@Override
-		public long getStartTime()
-		{
-			return startTime;
-		}
-
-		/**
-		 * Returns the name of this acceptor thread
-		 * @return the name of this acceptor thread
-		 */
-		protected String name()
-		{
-			if(this.name == null)
-				return Thread.currentThread().getName();
-			return this.name;
-		}
-
-		@Override
-		public int getGroupID()
-		{
-			return Thread.currentThread().getThreadGroup().getName().charAt(0);
-		}
-
-		@Override
-		public void run()
-		{
-			startTime=System.currentTimeMillis();
-			try
-			{
-				sess[0]=(Session)CMClass.getCommon("DefaultSession");
-				if(sess[0] == null) // during startup, this can happen!
-				{
-					if(sock != null)
-					{
-						try
-						{
-							sock.close();
-						}
-						catch(final Exception e)
-						{}
-					}
-					return;
-				}
-				final boolean initialized = sess[0].initialize(sock, threadGroup().getName());
-				if (acceptConns)
-				{
-					final String address = sess[0].getAddress();
-					final int[] numAtAddress = new int[] {0};
-					final ConnectState proceed;
-					if(sess[0].isReconnectSession())
-						proceed = ConnectState.NORMAL;
-					else
-						proceed = CMSecurity.getConnectState(address, numAtAddress);
-					if(proceed != ConnectState.NORMAL)
-					{
-						final int abusiveCount=numAtAddress[0]-(int)CMSecurity.CONN_MAX_PER_ADDR+1;
-						final long rounder=Math.round(Math.sqrt(abusiveCount));
-						if(abusiveCount == (rounder*rounder))
-							Log.sysOut(name(),"Blocking a connection from "+address +" ("+numAtAddress[0]+")");
-						try
-						{
-							final PrintWriter out = new PrintWriter(sock.getOutputStream());
-							StringBuffer introText;
-							if(proceed==ConnectState.BLOCKED)
-							{
-								introText=new StringBuffer(Resources.getFileResource(Resources.makeFileResourceName("text/connblocked.txt"),true));
-								introText=CMStrings.replaceAll(introText, "@mins@", ""+(CMSecurity.CONN_LAST_DELAY_MS/60000L));
-							}
-							else
-							{
-								introText=Resources.getFileResource(Resources.makeFileResourceName("text/blocked.txt"),true);
-							}
-							try
-							{
-								introText = TextMacros.filter(introText);
-							}
-							catch (final Exception ex)
-							{
-							}
-							out.print(introText.toString());
-							out.flush();
-							closeLater(sess[0],sock, out);
-						}
-						catch(final IOException e)
-						{
-							// dont say anything, just eat it.
-						}
-						sess[0]=null;
-						sock = null;
-					}
-					else
-					{
-						// also the intro page
-						final CMFile introDir=new CMFile(Resources.makeFileResourceName("text"),null,CMFile.FLAG_FORCEALLOW);
-						String introFilename="text/intro.txt";
-						if(introDir.isDirectory())
-						{
-							final CMFile[] files=introDir.listFiles();
-							final List<String> choices=new ArrayList<String>();
-							for (final CMFile file : files)
-							{
-								if(file.getName().toLowerCase().startsWith("intro")
-								&&file.getName().toLowerCase().endsWith(".txt"))
-									choices.add("text/"+file.getName());
-							}
-							if(choices.size()>0)
-								introFilename=choices.get(CMLib.dice().roll(1,choices.size(),-1));
-						}
-						StringBuffer introText=Resources.getFileResource(introFilename,true);
-						try
-						{
-							introText = TextMacros.filter(introText);
-						}
-						catch (final Exception ex)
-						{
-						}
-						if (initialized)
-							sess[0].handshake(introText.toString());
-						CMLib.sessions().add(sess[0]);
-						sock = null;
-						try
-						{
-							sess[0].run();
-						}
-						catch(final Throwable t)
-						{
-							Log.errOut(t);
-						}
-						Log.sysOut(name(),"Connection from "+sess[0].getAddress());
-					}
-				}
-				else
-				if((CMLib.database()!=null)
-				&&(CMLib.database().isConnected())
-				&&(CMLib.encoder()!=null))
-				{
-					StringBuffer rejectText;
-					try
-					{
-						rejectText = Resources.getFileResource("text/offline.txt",true);
-					}
-					catch(final java.lang.NullPointerException npe)
-					{
-						rejectText=new StringBuffer("");
-					}
-					try
-					{
-						final PrintWriter out = new PrintWriter(sock.getOutputStream());
-						out.println("\n\rOFFLINE: " + CMProps.getVar(CMProps.Str.MUDSTATUS)+"\n\r");
-						out.println(rejectText);
-						out.flush();
-						closeLater(sess[0],sock, out);
-					}
-					catch(final IOException e)
-					{
-						// dont say anything, just eat it.
-					}
-					sess[0]=null;
-					sock = null;
-				}
-				else
-				{
-					try
-					{
-						sock.close();
-					}
-					catch (final Exception e)
-					{
-					}
-					sess[0]=null;
-					sock = null;
-				}
-			}
-			finally
-			{
-				startTime=0;
-			}
-		}
-
-		@Override
-		public long activeTimeMillis()
-		{
-			return (startTime > 0) ? System.currentTimeMillis() - startTime : 0;
-		}
 	}
 
 	@Override
@@ -473,94 +188,15 @@ public class MUD extends Thread implements MudHost
 	}
 
 	/**
-	 * The main loop for this mud host. It waits for incoming socket
-	 * connections, and passes them off to individual sessions.
-	 * If an error occurs, it shuts down the entire host.
+	 * The main loop for this mud host: once the host has booted, the one
+	 * session on this process's console plays, and when it ends the game
+	 * shuts down.  (There is no listener: the game is single-player, and a
+	 * character's window is in the same process.)
 	 */
 	@Override
 	public void run()
 	{
-		if(consoleMode)
-		{
-			runConsole();
-			return;
-		}
-		setState(MudState.STARTING);
-		int q_len = 6;
-		Socket sock=null;
-
-		InetAddress bindAddr = null;
-
-		if (CMProps.getIntVar(CMProps.Int.MUDBACKLOG) > 0)
-			q_len = CMProps.getIntVar(CMProps.Int.MUDBACKLOG);
-
-		if (CMProps.getVar(CMProps.Str.MUDBINDADDRESS).length() > 0)
-		{
-			try
-			{
-				bindAddr = InetAddress.getByName(CMProps.getVar(CMProps.Str.MUDBINDADDRESS));
-			}
-			catch (final UnknownHostException e)
-			{
-				Log.errOut(Thread.currentThread().getName(),
-						CMProps.getVar(CMProps.Str.MUD_NAME)+" Server could not bind to address " + CMProps.getVar(CMProps.Str.MUDBINDADDRESS));
-			}
-		}
-
-		try
-		{
-			servsock=new ServerSocket(port, q_len, bindAddr);
-
-			if(port != publicPort)
-				Log.sysOut(Thread.currentThread().getName(),
-						CMProps.getVar(CMProps.Str.MUD_NAME)+" Server started on port: "+port +" ("+publicPort+")");
-			else
-				Log.sysOut(Thread.currentThread().getName(),
-						CMProps.getVar(CMProps.Str.MUD_NAME)+" Server started on port: "+port);
-			if (bindAddr != null)
-				Log.sysOut(Thread.currentThread().getName(),
-						CMProps.getVar(CMProps.Str.MUD_NAME)+" Server bound to: "+bindAddr.toString());
-			CMLib.hosts().add(this);
-			String oldPorts = CMProps.getVar(CMProps.Str.LOCALMUDPORTS);
-			if(oldPorts == null)
-				oldPorts = "";
-			CMProps.setVar(CMProps.Str.LOCALMUDPORTS,(oldPorts+" "+this.getPublicPort()).trim());
-			while(servsock!=null)
-			{
-				setState(MudState.WAITING);
-				sock=servsock.accept();
-				acceptConnection(sock);
-			}
-		}
-		catch(final Exception t)
-		{
-			if((!(t instanceof java.net.SocketException))
-			||(t.getMessage()==null)
-			||(t.getMessage().toLowerCase().indexOf("socket closed")<0))
-			{
-				Log.errOut(Thread.currentThread().getName(),t);
-			}
-		}
-
-		Log.sysOut(Thread.currentThread().getName(),"Server cleaning up.");
-
-		try
-		{
-			if(servsock!=null)
-				servsock.close();
-			if(sock!=null)
-				sock.close();
-		}
-		catch(final IOException e)
-		{
-		}
-
-		if(port != publicPort)
-			Log.sysOut(Thread.currentThread().getName(),"MUD on port "+port+" ("+publicPort+") stopped!");
-		else
-			Log.sysOut(Thread.currentThread().getName(),"MUD on port "+port+" stopped!");
-		setState(MudState.STOPPED);
-		CMLib.hosts().remove(this);
+		runConsole();
 	}
 
 	/**
@@ -1158,17 +794,6 @@ public class MUD extends Thread implements MudHost
 	@Override
 	public void interrupt()
 	{
-		if(servsock!=null)
-		{
-			try
-			{
-				servsock.close();
-				servsock = null;
-			}
-			catch(final IOException e)
-			{
-			}
-		}
 		super.interrupt();
 	}
 

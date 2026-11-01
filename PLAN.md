@@ -59,9 +59,9 @@ to change the world (see Authoring).
 - Compiled classes and logs are no longer tracked; `build.sh` compiles in place
   (`CMClass` finds classes by scanning package folders, so output sits next to
   the sources).
-- `tools/mudserver.sh` and `tools/mudbot.py` boot the stock multiplayer server
-  on a scratch database and drive it over telnet. They exist to compare
-  against the original behaviour and go away with the network code.
+- `tools/mudserver.sh` and `tools/mudbot.py` booted the stock multiplayer
+  server on a scratch database and drove it over telnet, to compare against
+  the original behaviour. They went with the network code in phase 2.
 - `tools/baseline/test-all.txt` is the engine's own `TEST all` suite on the
   unmodified server: 47 of 50 pass. `Spaceangles`, `Spaceinterception` and
   `Spaceinterception2` already fail there, so they are not regressions.
@@ -100,14 +100,15 @@ Done, each step verified with the smoke test and the engine suite:
   it (`I3Router`, `MUDProxy`, `Shutdown`, `AutoPlayTester`, `RebuildRefDocs`).
 - the SMTP server and client. Mail now goes to the in-game mailbox
   (`JournalsLibrary.postToMailbox`).
+- the telnet listener in `MUD.run` (a host's loop is the console session now),
+  the off-line server (`application/OffLine`), the multiplayer launch scripts
+  (`mud.sh`, `mud.bat`, `config.sh`) and with them `tools/mudserver.sh` and
+  `tools/mudbot.py`. The windows of phase 5 are in the same process.
 
 Still to do:
 - client protocols (MXP, MSP, GMCP, MSDP, MCCP, MSSP) and telnet handling in
   `DefaultSession`, leaving a plain text session. The console session already
   never turns them on, so this is cleanup rather than behaviour.
-- the telnet listener in `MUD.run`, and with it `tools/mudserver.sh` and
-  `tools/mudbot.py`. The windows of phase 5 are in the same process, so
-  nothing needs a listener.
 - host groups: `CMLib` and `CMClass` keep one set of libraries and classes
   per thread group, so that several separate muds, each with its own world and
   ini file, can run in one Java process. One game needs one set.
