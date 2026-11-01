@@ -2857,6 +2857,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 
 	protected String parseVariesCodes(final MOB mob, final Area A, final Room room, final String text)
 	{
+		final TextPreview preview=TextPreview.current(); // PREVIEW's conditions, if any (DT17)
 		final StringBuilder buf=new StringBuilder("");
 		int aligatorDex=text.indexOf('<');
 		int curDex=0;
@@ -2919,21 +2920,27 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						addMe = true;
 						break;
 					case 'W':
-						addMe = A.getClimateObj().weatherType(null) == code.num;
+						addMe = ((preview != null) && (preview.weather != TextPreview.UNSET) ? preview.weather : A.getClimateObj().weatherType(null)) == code.num;
 						break;
 					case 'C':
-						addMe = A.getTimeObj().getTODCode().ordinal() == code.num;
+						addMe = ((preview != null) && (preview.timeOfDay != TextPreview.UNSET) ? preview.timeOfDay : A.getTimeObj().getTODCode().ordinal()) == code.num;
 						break;
 					case 'S':
-						addMe = A.getTimeObj().getSeasonCode().ordinal() == code.num;
+						addMe = ((preview != null) && (preview.season != TextPreview.UNSET) ? preview.season : A.getTimeObj().getSeasonCode().ordinal()) == code.num;
 						break;
 					case 'M':
 						addMe = ((mob != null) && (CMath.bset(mob.phyStats().disposition(), code.num)));
 						break;
 					case 'V':
+						if((preview != null) && (preview.visited != TextPreview.UNSET))
+							addMe = preview.visited == 1;
+						else
 						addMe = ((mob != null) && (mob.playerStats() != null) && (mob.playerStats().hasVisited(room)));
 						break;
 					case 'F':
+						if((preview != null) && (preview.from != TextPreview.UNSET))
+							addMe = (code.num < 0) ? (preview.from < 0) : (preview.from == code.num);
+						else
 						if((mob != null)&&(mob.lastLocation()!=null))
 						{
 							if(code.num < 0)

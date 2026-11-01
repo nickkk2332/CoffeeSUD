@@ -687,6 +687,19 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   k (target)` gives a kit to a character, follower or mob here. Left: one
   format with P7's starting kits and P8's ready-made characters, when they
   come.
+- DT17 done but for dead FILE= links and Prop_Details keywords. `PREVIEW
+  (ROOM) [DAY|NIGHT|DAWN|DUSK] [season] [weather] [FROM dir|FROM UNKNOWN]
+  [VISITED|FIRSTVISIT] [AS character] [VAR name=value]` shows this room's
+  title and description under those conditions and changes nothing: the
+  VARIES parser asks `core/TextPreview` (one thread's conditions) before the
+  world's clock, climate and the reader's visits and last room; a VAR is set
+  for the reading and put back. Only rooms' texts vary in this engine, so
+  PREVIEW ITEM and MOB say so. `CHECKTEXT [ROOM|AREA|WORLD]`
+  (`core/TextCheck`) lists variation tags in a text without `<VARIES>`
+  first, tags that are none, tags in small letters (the parser finds their
+  end only in capitals), tags not closed or closed and not opened, a MASK
+  whose mask holds `>`, and a colour code left open. `<FROMUNKNOWN>` is now
+  the same as the code's `<FROMUNKOWN>`.
 
 #### 2d. Scripting (59)
 

@@ -291,7 +291,8 @@ public interface Room extends PhysicalAgent, ItemPossessor, Places, MOBPossessor
 		VISITED('V',-1),
 		ELSE('\n',-1),
 		VARIES('\r',-1),
-		FROMUNKOWN('F',-1),
+		FROMUNKOWN('F',-1), // as the code has long spelled it
+		FROMUNKNOWN('F',-1), // as the guide spells it (DT17)
 		FROMNORTH('F',Directions.NORTH),
 		FROMSOUTH('F',Directions.SOUTH),
 		FROMEAST('F',Directions.EAST),
