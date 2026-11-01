@@ -58,6 +58,37 @@ public class BribeGateGuard extends StdBehavior
 	}
 
 	@Override
+	protected String getRunState()
+	{
+		// the balances kept in the journal survive anyway; the rest are here
+		final Map<String,Double> H=surviveReboot?null:notTheJournal.get(gates());
+		if((H==null)||(H.size()==0))
+			return "";
+		final StringBuilder str=new StringBuilder("");
+		for(final Map.Entry<String,Double> e : new XVector<Map.Entry<String,Double>>(H.entrySet()))
+			str.append("<BAL N=\"").append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("\">").append(e.getValue()).append("</BAL>");
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		if(surviveReboot)
+			return;
+		Map<String,Double> H=notTheJournal.get(gates());
+		if(H==null)
+		{
+			H=new Hashtable<String,Double>();
+			notTheJournal.put(gates(),H);
+		}
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(xml))
+		{
+			if(tag.tag().equalsIgnoreCase("BAL"))
+				H.put(CMLib.xml().restoreAngleBrackets(tag.getParmValue("N")),Double.valueOf(CMath.s_double(tag.value())));
+		}
+	}
+
+	@Override
 	public CMObject copyOf()
 	{
 		final BribeGateGuard obj=(BribeGateGuard)super.copyOf();

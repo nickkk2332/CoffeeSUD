@@ -42,6 +42,36 @@ public class Aggressive extends StdBehavior
 	}
 
 	@Override
+	protected String getRunState()
+	{
+		if((bribe==null)||(bribe.fifth.size()==0))
+			return "";
+		final StringBuilder str=new StringBuilder("");
+		for(final Map.Entry<String,Pair<Double,Long>> e : new XVector<Map.Entry<String,Pair<Double,Long>>>(bribe.fifth.entrySet()))
+		{
+			str.append("<PAID N=\"").append(CMLib.xml().parseOutAngleBrackets(e.getKey()))
+			   .append("\" LEFT=\"").append(e.getValue().second.longValue()-GameTime.now()).append("\">")
+			   .append(e.getValue().first).append("</PAID>");
+		}
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		if(bribe==null)
+			return;
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(xml))
+		{
+			if(tag.tag().equalsIgnoreCase("PAID"))
+			{
+				bribe.fifth.put(CMLib.xml().restoreAngleBrackets(tag.getParmValue("N")),
+					new Pair<Double,Long>(Double.valueOf(CMath.s_double(tag.value())),Long.valueOf(GameTime.now()+CMath.s_long(tag.getParmValue("LEFT")))));
+			}
+		}
+	}
+
+	@Override
 	public long flags()
 	{
 		return Behavior.FLAG_POTENTIALLYAGGRESSIVE | Behavior.FLAG_TROUBLEMAKING;

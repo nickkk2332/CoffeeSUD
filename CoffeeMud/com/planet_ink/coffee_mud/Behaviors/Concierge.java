@@ -42,6 +42,91 @@ public class Concierge extends StdBehavior
 		return "Concierge";
 	}
 
+	/** quoted trips from a saved game, by the name of who asked, until they are back */
+	protected List<String[]> savedDestinations = null;
+
+	@Override
+	protected String getRunState()
+	{
+		final StringBuilder str=new StringBuilder("");
+		for(int i=0;i<destinations.size();i++)
+		{
+			final MOB M=destinations.getFirst(i);
+			final Room R=destinations.getSecond(i);
+			if((M==null)||(R==null))
+				continue;
+			final StringBuilder flags=new StringBuilder("");
+			if(destinations.getFourth(i)!=null)
+			{
+				for(final TrackingFlag F : destinations.getFourth(i))
+					flags.append((flags.length()>0)?",":"").append(F.name());
+			}
+			str.append("<TRIP N=\"").append(CMLib.xml().parseOutAngleBrackets(M.Name()))
+			   .append("\" R=\"").append(CMLib.xml().parseOutAngleBrackets(CMLib.map().getExtendedRoomID(R)))
+			   .append("\" F=\"").append(flags).append("\">").append(destinations.getThird(i)).append("</TRIP>");
+		}
+		if(goHomeFlag&&(startRoom!=null))
+			str.append(CMLib.xml().convertXMLtoTag("HOME",CMLib.xml().parseOutAngleBrackets(CMLib.map().getExtendedRoomID(startRoom))));
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		savedDestinations=new ArrayList<String[]>();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : tags)
+		{
+			if(tag.tag().equalsIgnoreCase("TRIP"))
+			{
+				savedDestinations.add(new String[]{CMLib.xml().restoreAngleBrackets(tag.getParmValue("N")),
+					CMLib.xml().restoreAngleBrackets(tag.getParmValue("R")),tag.value(),tag.getParmValue("F")});
+			}
+		}
+		final String home=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(tags,"HOME"));
+		if(home.length()>0)
+		{
+			final Room R=CMLib.map().getRoom(home);
+			if(R!=null)
+			{
+				startRoom=R;
+				goHomeFlag=true;
+			}
+		}
+	}
+
+	/**
+	 * Puts back the trips quoted to someone before a save, once they are
+	 * back in the game and come to the concierge.
+	 * @param source who it is
+	 */
+	protected void resumeSavedTrips(final MOB source)
+	{
+		final List<String[]> saved=savedDestinations;
+		if((saved==null)||(source==null))
+			return;
+		for(final Iterator<String[]> i=saved.iterator();i.hasNext();)
+		{
+			final String[] trip=i.next();
+			if(!trip[0].equals(source.Name()))
+				continue;
+			i.remove();
+			final Room R=CMLib.map().getRoom(trip[1]);
+			if((R==null)||(destinations.indexOfFirst(source)>=0))
+				continue;
+			final TrackingFlags flags=CMLib.tracking().newFlags();
+			for(final String F : CMParms.parseCommas(trip[3],true))
+			{
+				final TrackingFlag flag=(TrackingFlag)CMath.s_valueOf(TrackingFlag.values(),F);
+				if(flag!=null)
+					flags.add(flag);
+			}
+			destinations.add(source,R,Double.valueOf(CMath.s_double(trip[2])),flags);
+		}
+		if(saved.size()==0)
+			savedDestinations=null;
+	}
+
 	@Override
 	protected int canImproveCode()
 	{
@@ -550,6 +635,8 @@ public class Concierge extends StdBehavior
 	@Override
 	public boolean okMessage(final Environmental host, final CMMsg msg)
 	{
+		if(savedDestinations!=null)
+			resumeSavedTrips(msg.source());
 		if(!super.okMessage(host,msg))
 			return false;
 		final MOB source=msg.source();

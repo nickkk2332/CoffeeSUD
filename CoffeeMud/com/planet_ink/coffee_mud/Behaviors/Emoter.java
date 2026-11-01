@@ -42,6 +42,20 @@ public class Emoter extends ActiveTicker
 		return "Emoter";
 	}
 
+	@Override
+	protected String getRunState()
+	{
+		return (expires<=0)?"":("<EXPIRES>"+expires+"</EXPIRES>");
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final int left=CMath.s_int(CMLib.xml().getValFromPieces(CMLib.xml().parseAllXML(xml),"EXPIRES"));
+		if(left>0)
+			expires=left;
+	}
+
 	protected int				expires		= 0;
 	protected List<EmoteObj>	emotes		= null;
 	protected List<EmoteObj>	smells		= null;

@@ -44,6 +44,18 @@ public class Patroller extends ActiveTicker
 	}
 
 	@Override
+	protected String getRunState()
+	{
+		return (step==0)?"":("<STEP>"+step+"</STEP>");
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		step=CMath.s_int(CMLib.xml().getValFromPieces(CMLib.xml().parseAllXML(xml),"STEP"));
+	}
+
+	@Override
 	protected int canImproveCode()
 	{
 		return Behavior.CAN_MOBS | Behavior.CAN_ITEMS;

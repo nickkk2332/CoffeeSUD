@@ -43,6 +43,41 @@ public class MOBEater extends ActiveTicker implements MOBPossessor, ItemCollecti
 	}
 
 	@Override
+	protected String getRunState()
+	{
+		final Room R=myStomachR;
+		if(R==null)
+			return "";
+		final List<MOB> mobs=new ArrayList<MOB>();
+		for(int i=0;i<R.numInhabitants();i++)
+		{
+			final MOB M=R.fetchInhabitant(i);
+			if((M!=null)&&(M.isMonster())&&(!M.amDestroyed()))
+				mobs.add(M);
+		}
+		final List<Item> items=new ArrayList<Item>();
+		for(int i=0;i<R.numItems();i++)
+		{
+			final Item I=R.getItem(i);
+			if((I!=null)&&(!I.amDestroyed()))
+				items.add(I);
+		}
+		if((mobs.size()==0)&&(items.size()==0))
+			return "";
+		return "<DIGEST>"+digestDown+"</DIGEST>"+com.planet_ink.coffee_mud.core.save.WorldState.thingsXML(mobs,items);
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		final String digest=CMLib.xml().getValFromPieces(tags,"DIGEST");
+		if(digest.length()>0)
+			digestDown=CMath.s_int(digest);
+		com.planet_ink.coffee_mud.core.save.WorldState.putThings(tags,getStomach());
+	}
+
+	@Override
 	protected int canImproveCode()
 	{
 		return Behavior.CAN_MOBS;

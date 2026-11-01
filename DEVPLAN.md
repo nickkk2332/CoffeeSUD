@@ -208,6 +208,17 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   game boots, scripts wait until the saved world is back, since bringing a
   mob to life ticks it at once and would run its ONCE_PROG again. `SAVES
   CHECK` lists what a save would not keep (unsavable mobs, things in space).
+- S9 done. STATE for Hireling (whom it works for, time left, extra paid),
+  Aggressive (bribes paid, and for how long), BribeGateGuard (balances not
+  kept in its journal), Patroller (its step), Decay (whether it is running;
+  its ticks left were already in its parameters), Emoter (ticks to expiry),
+  Concierge (trips quoted and not paid, put back when the asker comes, and
+  going home), Nanny (its charges and payments, found again in its room),
+  MOBEater (what is in its stomach) and MudChat (groups a conversation
+  switched to, for a while). QuestChat and Prop_QuestGiver keep theirs as
+  quest variables (S1). Not done: there is no Taxi behaviour in the engine,
+  and the LLM session's memory goes with N26, in `LATER.md`. New behaviours
+  keep their state the same way.
 
 #### 2c. Developer and builder tools (50)
 

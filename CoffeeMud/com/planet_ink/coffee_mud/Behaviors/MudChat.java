@@ -48,6 +48,48 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		return "MudChat";
 	}
 
+	@Override
+	protected String getRunState()
+	{
+		// the groups a conversation switched to, for a while
+		final StringBuilder str=new StringBuilder("");
+		synchronized(this)
+		{
+			for(final Pair<ChattyGroup,Long> p : new XVector<Pair<ChattyGroup,Long>>(chatGroups))
+			{
+				if((p.second.longValue()==Long.MAX_VALUE)||(p.first.groupNames==null)||(p.first.groupNames.length==0))
+					continue;
+				str.append("<GROUP LEFT=\"").append(Math.max(1,p.second.longValue()-GameTime.now())).append("\">")
+				   .append(CMLib.xml().parseOutAngleBrackets(p.first.groupNames[0])).append("</GROUP>");
+			}
+		}
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final ChattyGroup[] all=getChatGroups();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(xml))
+		{
+			if(!tag.tag().equalsIgnoreCase("GROUP"))
+				continue;
+			final String name=CMLib.xml().restoreAngleBrackets(tag.value());
+			for(final ChattyGroup G : all)
+			{
+				if((G.groupNames!=null)&&CMParms.contains(G.groupNames,name)&&(!chatGroups.containsFirst(G)))
+				{
+					final long expire=GameTime.now()+CMath.s_long(tag.getParmValue("LEFT"));
+					chatGroups.add(new Pair<ChattyGroup,Long>(G,Long.valueOf(expire)));
+					if(expire<chatEntryExpire)
+						chatEntryExpire=expire;
+					currChatEntries=null;
+					break;
+				}
+			}
+		}
+	}
+
 	//----------------------------------------------
 	// format: first group is general mob (no other
 	// fit found).  All groups are chat groups.

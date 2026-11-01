@@ -499,6 +499,47 @@ public final class WorldState
 	}
 
 	/**
+	 * Writes mobs and items as a save does, for a behaviour that keeps them
+	 * apart from the world, such as MOBEater's stomach, in its STATE.
+	 * @param mobs the mobs
+	 * @param items the items
+	 * @return the XML
+	 */
+	public static String thingsXML(final List<MOB> mobs, final List<Item> items)
+	{
+		final StringBuilder str = new StringBuilder("<THINGS>");
+		for(final MOB M : mobs)
+			str.append(mobXML(M, "MOB"));
+		str.append(itemsXML(items));
+		return str.append("</THINGS>").toString();
+	}
+
+	/**
+	 * Makes the mobs and items {@link #thingsXML(List, List)} wrote, in a room.
+	 * @param tags the parsed XML holding the THINGS tag
+	 * @param R the room
+	 */
+	public static void putThings(final List<XMLTag> tags, final Room R)
+	{
+		XMLTag things = null;
+		for(final XMLTag tag : tags)
+		{
+			if(tag.tag().equalsIgnoreCase("THINGS"))
+				things = tag;
+		}
+		if((things == null) || (R == null))
+			return;
+		for(final XMLTag piece : things.contents())
+		{
+			if(piece.tag().equalsIgnoreCase("MOB"))
+				bringBack(piece, R);
+		}
+		for(final Item I : unpackItems(things).items)
+			R.addItem(I);
+		R.recoverRoomStats();
+	}
+
+	/**
 	 * Returns what a save would not keep of the world as it is: mobs that
 	 * cannot be saved (such as summoned ones without a leader), with or
 	 * without scripts, and things in space.

@@ -42,6 +42,77 @@ public class Nanny extends StdBehavior
 		return "Nanny";
 	}
 
+	/** the charges and payments from a saved game, until the charges are found in the room */
+	protected List<String[]> savedDropOffs = null;
+
+	@Override
+	protected String getRunState()
+	{
+		final StringBuilder str=new StringBuilder("");
+		if(dropOffs!=null)
+		{
+			for(final DropOff D : dropOffs)
+			{
+				if(D.baby==null)
+					continue;
+				str.append("<CHARGE N=\"").append(CMLib.xml().parseOutAngleBrackets(D.baby.Name()))
+				   .append("\" M=\"").append(CMLib.xml().parseOutAngleBrackets(D.mommyMname))
+				   .append("\" AGO=\"").append(Math.max(0,GameTime.now()-D.dropOffTime)).append("\" />");
+			}
+		}
+		for(final Payment P : payments)
+			str.append("<PAID M=\"").append(CMLib.xml().parseOutAngleBrackets(P.mommyMname)).append("\">").append(P.paid).append("</PAID>");
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		savedDropOffs=new ArrayList<String[]>();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(xml))
+		{
+			if(tag.tag().equalsIgnoreCase("CHARGE"))
+			{
+				savedDropOffs.add(new String[]{CMLib.xml().restoreAngleBrackets(tag.getParmValue("N")),
+					CMLib.xml().restoreAngleBrackets(tag.getParmValue("M")),tag.getParmValue("AGO")});
+			}
+			else
+			if(tag.tag().equalsIgnoreCase("PAID"))
+				payments.add(new Payment(CMLib.xml().restoreAngleBrackets(tag.getParmValue("M")),CMath.s_double(tag.value())));
+		}
+	}
+
+	/**
+	 * Finds the charges from a saved game among the mobs and items in the
+	 * room, once they are back there.
+	 * @param R the nanny's room
+	 */
+	protected void resumeSavedDropOffs(final Room R)
+	{
+		final List<String[]> saved=savedDropOffs;
+		savedDropOffs=null;
+		if((saved==null)||(R==null))
+			return;
+		if(dropOffs==null)
+			dropOffs=new SVector<DropOff>();
+		for(final String[] D : saved)
+		{
+			PhysicalAgent baby=null;
+			for(int i=0;(i<R.numInhabitants())&&(baby==null);i++)
+			{
+				if(R.fetchInhabitant(i).Name().equals(D[0]))
+					baby=R.fetchInhabitant(i);
+			}
+			for(int i=0;(i<R.numItems())&&(baby==null);i++)
+			{
+				if(R.getItem(i).Name().equals(D[0]))
+					baby=R.getItem(i);
+			}
+			if((baby!=null)&&(!isDroppedOff(baby)))
+				dropOffs.add(new DropOff(D[1],baby,GameTime.now()-CMath.s_long(D[2])));
+		}
+	}
+
 	@Override
 	protected int canImproveCode()
 	{
@@ -855,6 +926,8 @@ public class Nanny extends StdBehavior
 		if((!CMProps.isState(CMProps.HostState.RUNNING))
 		||((!(ticking instanceof Environmental))))
 			return true;
+		if(savedDropOffs!=null)
+			resumeSavedDropOffs(CMLib.map().roomLocation((Environmental)ticking));
 		if(dropOffs==null)
 		{
 			final int x=super.parms.indexOf("|~|");

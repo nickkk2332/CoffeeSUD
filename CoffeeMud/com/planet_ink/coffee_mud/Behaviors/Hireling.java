@@ -42,6 +42,38 @@ public class Hireling extends StdBehavior
 		return "Hireling";
 	}
 
+	@Override
+	protected String getRunState()
+	{
+		if((onTheJobUntil==0)&&(partials.size()==0))
+			return "";
+		final StringBuilder str=new StringBuilder("");
+		str.append(CMLib.xml().convertXMLtoTag("FOR",CMLib.xml().parseOutAngleBrackets(workingFor)));
+		if(onTheJobUntil!=0)
+			str.append(CMLib.xml().convertXMLtoTag("LEFT",Math.max(1,onTheJobUntil-GameTime.now())));
+		str.append(CMLib.xml().convertXMLtoTag("WARN",(nextWarn==Long.MAX_VALUE)?-1:Math.max(0,nextWarn-GameTime.now())));
+		for(final Map.Entry<String,Double> e : new XVector<Map.Entry<String,Double>>(partials.entrySet()))
+			str.append("<PAID N=\"").append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("\">").append(e.getValue()).append("</PAID>");
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		workingFor=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(tags,"FOR"));
+		final long left=CMath.s_long(CMLib.xml().getValFromPieces(tags,"LEFT"));
+		onTheJobUntil=(left>0)?(GameTime.now()+left):0;
+		final long warn=CMath.s_long(CMLib.xml().getValFromPieces(tags,"WARN"));
+		nextWarn=(warn<0)?Long.MAX_VALUE:(GameTime.now()+warn);
+		partials.clear();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : tags)
+		{
+			if(tag.tag().equalsIgnoreCase("PAID"))
+				partials.put(CMLib.xml().restoreAngleBrackets(tag.getParmValue("N")),Double.valueOf(CMath.s_double(tag.value())));
+		}
+	}
+
 	protected Map<String, Double>	partials		= new Hashtable<String, Double>();
 	protected String				workingFor		= "";
 	protected long					nextWarn		= 0;

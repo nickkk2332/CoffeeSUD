@@ -270,6 +270,13 @@ group_saves()
 	count s7-restore.txt "FIXS7ROOM" 0
 	count s7-restore.txt "FIXS7ALARM" 1
 	count s7-restore.txt "FIXS7DELAY" 1
+
+	# S9: a behaviour's own state: a hired sellsword's contract
+	play s9-play.txt sdb sworld "Hirer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s9-play.js\nsave s9\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s9-play.txt
+	play s9-restore.txt sdb sworld 'jrun /resources/_fixes/s9-check.js\nquit\nn\n' RESTORE=s9 TIMEMODE=TURNS
+	expect s9-restore.txt "Restored 's9'."
+	jsresults s9-restore.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so

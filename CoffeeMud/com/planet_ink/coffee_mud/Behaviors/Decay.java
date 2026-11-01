@@ -41,6 +41,20 @@ public class Decay extends ActiveTicker
 	}
 
 	@Override
+	protected String getRunState()
+	{
+		// the ticks left are in the parameters (REMAIN=), which are saved
+		return activated?"<ON />":"";
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		if(xml.indexOf("<ON")>=0)
+			activated=true;
+	}
+
+	@Override
 	protected int canImproveCode()
 	{
 		return Behavior.CAN_ITEMS | Behavior.CAN_MOBS;
