@@ -261,10 +261,11 @@ group_saves()
 	# S25: a builder session that changes nothing writes the readable files
 	# again as they were, so they read back to the very same world (the
 	# file system's files are left out: the engine writes some of them again,
-	# in another order, such as the tech manufacturers)
-	(cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum) > "$W/sworld.sums"
+	# in another order, such as the tech manufacturers; and the backups and
+	# undo log builder mode keeps beside them, B6)
+	(cd "$W/sworld" && find . -type f -not -path './vfs/*' -not -path './.backup/*' -not -path './.history/*' | sort | xargs cksum) > "$W/sworld.sums"
 	play s25-again.txt sdb sworld "Builder\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
-	if (cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum | cmp -s - "$W/sworld.sums"); then
+	if (cd "$W/sworld" && find . -type f -not -path './vfs/*' -not -path './.backup/*' -not -path './.history/*' | sort | xargs cksum | cmp -s - "$W/sworld.sums"); then
 		echo "  ok    s25-again: the world files read back and write out the same"
 	else
 		echo "  FAIL  s25-again: the world files changed on a builder session that changed nothing"; FAIL=1
