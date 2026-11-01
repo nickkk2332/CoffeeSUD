@@ -940,6 +940,13 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   world/.backup/PATH.TIME, the last `BACKUPS=` (5) of each kept; `WORLD
   BACKUPS [file]` lists them and `WORLD RESTOREFILE file [time]` puts one
   back, changed outside the game (B2), for WORLD RELOAD (B5).
+- B7 done. MODIFY's Effects field (`genAffects`) numbers the effects;
+  `=ID` or a number edits one's parameters in place (`effectParms`, the
+  current ones kept on an empty line), `-ID` removes, a plain ID adds,
+  and one the host has already is offered `Prop_MultiEffects` with both
+  copies (`doubleEffect`; one that has a Prop_MultiEffects is told to
+  add to it). `?P` lists the properties, and Abilities/Misc effects,
+  whose canAffect takes the host, each with a line of its help.
 
 #### 2d. Scripting (59)
 

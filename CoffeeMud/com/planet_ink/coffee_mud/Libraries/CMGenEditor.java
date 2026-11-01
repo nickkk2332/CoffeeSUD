@@ -4877,12 +4877,14 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 		while((mob.session()!=null)&&(!mob.session().isStopped())&&(behave.length()>0))
 		{
 			String affectstr="";
+			int num=0;
 			for(int b=0;b<P.numEffects();b++)
 			{
 				final Ability A=P.fetchEffect(b);
 				if((A!=null)&&(A.isSavable()))
 				{
-					affectstr+=A.ID();
+					// B7: numbered, for =N to edit
+					affectstr+=(++num)+"."+A.ID();
 					if(A.text().trim().length()>0)
 						affectstr+="("+A.text().trim()+"), ";
 					else
@@ -4899,7 +4901,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			}
 			if((showFlag!=showNumber)&&(showFlag>-999))
 				return;
-			behave=mob.session().prompt(L("Enter an effect to add/remove (?)\n\r:"),"");
+			behave=mob.session().prompt(L("Enter an effect to add, -ID to remove, =ID or its number to edit, ?P for the properties that fit (?)\n\r:"),"");
 			if(behave.length()>0)
 			{
 				if(behave.equalsIgnoreCase("?"))
@@ -4918,21 +4920,62 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 					mob.tell(CMLib.lister().build3ColTable(mob,CMClass.abilities(),null,stringer).toString());
 				}
 				else
+				if(behave.equalsIgnoreCase("?P"))
+					mob.tell(fittingProperties(mob,P));
+				else
 				{
-					Ability chosenOne=null;
+					// B7: -ID removes, =ID or a number edits in place, an ID here already may be doubled
+					final List<Ability> mine=new ArrayList<Ability>();
 					for(int a=0;a<P.numEffects();a++)
 					{
 						final Ability A=P.fetchEffect(a);
-						if((A!=null)&&(A.ID().equalsIgnoreCase(behave)))
-							chosenOne=A;
+						if((A!=null)&&(A.isSavable()))
+							mine.add(A);
 					}
-					if(chosenOne!=null)
+					String id=behave.trim();
+					char op=' ';
+					if(id.startsWith("-")||id.startsWith("="))
 					{
-						mob.tell(L("@x1 removed.",chosenOne.ID()));
-						P.delEffect(chosenOne);
+						op=id.charAt(0);
+						id=id.substring(1).trim();
+					}
+					Ability chosenOne=null;
+					if(CMath.isInteger(id))
+					{
+						final int n=CMath.s_int(id);
+						if((n>=1)&&(n<=mine.size()))
+							chosenOne=mine.get(n-1);
+						if(op==' ')
+							op='=';
 					}
 					else
+					for(final Ability A : mine)
 					{
+						if((chosenOne==null)&&(A.ID().equalsIgnoreCase(id)))
+							chosenOne=A;
+					}
+					if((op=='-')||(op=='='))
+					{
+						if(chosenOne==null)
+							mob.tell(L("There is no effect '@x1' here.",id));
+						else
+						if(op=='-')
+						{
+							mob.tell(L("@x1 removed.",chosenOne.ID()));
+							P.delEffect(chosenOne);
+						}
+						else
+						{
+							chosenOne.setMiscText(effectParms(mob,chosenOne,chosenOne.text()).trim());
+							mob.tell(L("@x1 changed.",chosenOne.ID()));
+						}
+					}
+					else
+					if(chosenOne!=null)
+						doubleEffect(mob,P,chosenOne);
+					else
+					{
+						behave=id;
 						chosenOne=CMClass.getAbility(behave);
 						if((chosenOne!=null)
 						&&((chosenOne.classificationCode()&Ability.ALL_DOMAINS)==Ability.DOMAIN_ARCHON)
@@ -4975,6 +5018,113 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			else
 				mob.tell(L("(no change)"));
 		}
+	}
+
+	/**
+	 * B7: an effect's parameters asked for, the current ones shown, kept if
+	 * none are given ("null" clears them, "?" shows the help).
+	 * @param mob the builder
+	 * @param A the effect
+	 * @param current its parameters now
+	 * @return the parameters
+	 * @throws IOException if the session fails
+	 */
+	protected String effectParms(final MOB mob, final Ability A, final String current) throws IOException
+	{
+		String parms=current;
+		String s="?";
+		while(s.equals("?")&&(mob.session()!=null))
+		{
+			s=mob.session().prompt(L("Enter any effect parameters (?)\n\r:@x1",parms));
+			if(s.equals("?"))
+			{
+				final String s2=CMLib.help().getHelpText(A.ID(),mob,true);
+				mob.tell((s2!=null)?s2:L("no help!"));
+			}
+			else
+			if(s.equalsIgnoreCase("null"))
+				parms="";
+			else
+			if(s.length()>0)
+				parms=s;
+		}
+		return parms;
+	}
+
+	/**
+	 * B7: an effect the host has already, added again: a second copy is
+	 * ignored, so both are offered Prop_MultiEffects.
+	 * @param mob the builder
+	 * @param P the host
+	 * @param had the copy it has
+	 * @throws IOException if the session fails
+	 */
+	protected void doubleEffect(final MOB mob, final Physical P, final Ability had) throws IOException
+	{
+		if(P.fetchEffect("Prop_MultiEffects")!=null)
+		{
+			mob.tell(L("@x1 is here already, and so is a Prop_MultiEffects: add the second copy to it (=Prop_MultiEffects), or -@x1 removes it, =@x1 edits it.",had.ID()));
+			return;
+		}
+		if((mob.session()==null)
+		||(!mob.session().confirm(L("@x1 is here already, and a second copy would be ignored.  Wrap both in Prop_MultiEffects (y/N)? ",had.ID()),"N")))
+		{
+			mob.tell(L("(no change: -@x1 removes it, =@x1 edits it)",had.ID()));
+			return;
+		}
+		final Ability second=CMClass.getAbility(had.ID());
+		final String parms=effectParms(mob,second,second.text()).trim();
+		final Ability multi=CMClass.getAbility("Prop_MultiEffects");
+		if((second==null)||(multi==null))
+			return;
+		multi.setMiscText(had.ID()+"("+had.text().trim()+"),"+second.ID()+"("+parms+")");
+		P.delEffect(had);
+		P.addNonUninvokableEffect(multi);
+		mob.tell(L("@x1 and the second copy are in Prop_MultiEffects now.",had.ID()));
+	}
+
+	/**
+	 * B7: ?P, the properties and miscellaneous effects that can affect a
+	 * host, each with a line of its help.
+	 * @param mob the builder
+	 * @param P the host
+	 * @return the list
+	 */
+	protected String fittingProperties(final MOB mob, final Physical P)
+	{
+		final StringBuilder str=new StringBuilder(L("Properties and effects that can affect @x1:",P.name()));
+		final List<Ability> fit=new ArrayList<Ability>();
+		for(final Enumeration<Ability> a=CMClass.abilities();a.hasMoreElements();)
+		{
+			final Ability A=a.nextElement();
+			if(A==null)
+				continue;
+			final boolean prop=((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_PROPERTY);
+			final boolean misc=A.getClass().getName().indexOf(".Abilities.Misc.")>=0;
+			if((prop||misc)&&A.canAffect(P))
+				fit.add(A);
+		}
+		Collections.sort(fit,new Comparator<Ability>()
+		{
+			@Override
+			public int compare(final Ability o1, final Ability o2)
+			{
+				return o1.ID().compareToIgnoreCase(o2.ID());
+			}
+		});
+		for(final Ability A : fit)
+		{
+			String h=CMLib.help().getHelpText(A.ID(),mob,true);
+			h=(h==null)?"":h;
+			final int d=h.indexOf("Description");
+			if((d>=0)&&(h.indexOf(':',d)>0))
+				h=h.substring(h.indexOf(':',d)+1);
+			h=CMStrings.removeColors(h).replace("\n\r"," ").replace('\n',' ').replace('\r',' ').replaceAll("\\s+"," ").trim();
+			if(h.length()>60)
+				h=h.substring(0,57)+"...";
+			str.append("\n\r  ").append(CMStrings.padRight(A.ID(),26)).append(h);
+		}
+		return str.toString();
 	}
 
 	protected void genRideableType(final MOB mob, final Rideable R, final int showNumber, final int showFlag)
