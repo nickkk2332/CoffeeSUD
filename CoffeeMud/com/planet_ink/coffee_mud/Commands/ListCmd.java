@@ -4797,6 +4797,7 @@ public class ListCmd extends StdCommand
 		EXPIRED("EXPIRED",new SecFlag[]{SecFlag.CMDPLAYERS}),
 		SQL("SQL",new SecFlag[]{SecFlag.CMDDATABASE}),
 		SHIPS("SHIPS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDAREAS,SecFlag.CMDPLAYERS}),
+		INSTANCES("INSTANCES",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDAREAS}),
 		COMMANDS("COMMANDS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDCOMMANDS}),
 		FILEUSE("FILEUSE",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDAREAS}),
 		SOCIALS("SOCIALS",new SecFlag[]{SecFlag.LISTADMIN,SecFlag.CMDSOCIALS,SecFlag.AREA_CMDSOCIALS}),
@@ -5285,8 +5286,11 @@ public class ListCmd extends StdCommand
 		str.append(CMStrings.padRight(L("Name"), CMLib.lister().fixColWidth(30.0,viewerS))).append(" ");
 		str.append(CMStrings.padRight(L("Location"), CMLib.lister().fixColWidth(30.0,viewerS))).append(" ");
 		str.append(CMStrings.padRight(L("Reg."), CMLib.lister().fixColWidth(15.0,viewerS))).append(" ");
+		str.append(CMStrings.padRight(L("Anchor"), CMLib.lister().fixColWidth(6.0,viewerS))).append(" ");
+		str.append(CMStrings.padRight(L("Course"), CMLib.lister().fixColWidth(15.0,viewerS))).append(" ");
+		str.append(L("Owner"));
 		str.append("\n\r");
-		str.append(CMStrings.repeat('-', CMLib.lister().fixColWidth(75.0,viewerS))).append("\n\r");
+		str.append(CMStrings.repeat('-', CMLib.lister().fixColWidth(110.0,viewerS))).append("\n\r");
 		for(final Enumeration<Boardable> s=CMLib.map().ships(); s.hasMoreElements();)
 		{
 			final Boardable S=s.nextElement();
@@ -5296,10 +5300,14 @@ public class ListCmd extends StdCommand
 			else
 				str.append(CMStrings.padRight(CMLib.map().getExtendedRoomID(CMLib.map().roomLocation(S)), CMLib.lister().fixColWidth(30.0,viewerS))).append(" ");
 			if(S instanceof SpaceObject)
-				str.append(CMLib.tech().getElectronicsKey(S));
+				str.append(CMStrings.padRight(CMLib.tech().getElectronicsKey(S), CMLib.lister().fixColWidth(15.0,viewerS))).append(" ");
 			else
-				str.append("N/A");
-
+				str.append(CMStrings.padRight("N/A", CMLib.lister().fixColWidth(15.0,viewerS))).append(" ");
+			// DT28: anchor, course and owner
+			final String[] more=VesselCmd.shipColumns(S);
+			str.append(CMStrings.padRight(more[0], CMLib.lister().fixColWidth(6.0,viewerS))).append(" ");
+			str.append(CMStrings.padRight(more[1], CMLib.lister().fixColWidth(15.0,viewerS))).append(" ");
+			str.append(more[2]);
 			str.append("\n\r");
 		}
 		if(str.length()==0)
@@ -6542,6 +6550,9 @@ public class ListCmd extends StdCommand
 			break;
 		case SHIPS:
 			listShips(mob, commands);
+			break;
+		case INSTANCES: // DT28
+			mob.tell(VesselCmd.instances());
 			break;
 		case ABILITYDOMAINS:
 		{

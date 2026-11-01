@@ -930,4 +930,14 @@ public interface Area extends Economics, PhysicalAgent, Places
 		}
 	}
 
+	/**
+	 * For an instance parent: the characters an instance area made from it
+	 * was made for, still about, as LIST INSTANCES shows them (DT28).
+	 * @param child the instance area
+	 * @return the characters, or none
+	 */
+	public default List<MOB> instanceMembers(final Area child)
+	{
+		return new ArrayList<MOB>(0);
+	}
 }

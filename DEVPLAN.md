@@ -795,6 +795,14 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   dev/ (only if they loaded whole), `WORLD DEV [area] ON|OFF` tags one,
   `DEVSTART=` is the start room in builder mode and DEV=1, and WORLD
   CHECK warns of exits from shipped areas into dev areas.
+- DT28 done. `VESSEL STATUS name` (builder mode, DEV=1 or CMDAREAS) shows
+  where a vessel is and is docked, facing, anchor, course, top speed and
+  pace, hull, owner, home port, the behaviours on it, its decks and those
+  aboard with DT19's DEBUG state (a route's step is a behaviour's state),
+  and its crew and passengers. `LIST SHIPS` gains Anchor, Course and Owner
+  columns. `LIST INSTANCES` lists each instance child with its parent,
+  class, members (the new `Area.instanceMembers`), ticks to its time-out,
+  rooms and a GOTO room. T11 adds the other VESSEL words.
 
 #### 2d. Scripting (59)
 

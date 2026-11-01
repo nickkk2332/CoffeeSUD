@@ -81,6 +81,27 @@ public class StdThinInstance extends StdThinArea implements SubArea
 	}
 
 	@Override
+	public List<MOB> instanceMembers(final Area child)
+	{
+		final List<MOB> members = new ArrayList<MOB>();
+		synchronized(instanceChildren)
+		{
+			for(final AreaInstanceChild C : instanceChildren)
+			{
+				if((C == null) || (C.A != child))
+					continue;
+				for(final java.lang.ref.WeakReference<MOB> ref : C.mobs)
+				{
+					final MOB M = (ref == null) ? null : ref.get();
+					if((M != null) && (!M.amDestroyed()))
+						members.add(M);
+				}
+			}
+		}
+		return members;
+	}
+
+	@Override
 	public Area getSuperArea()
 	{
 		if((parentArea!=null)&&(parentArea.get()!=null))
