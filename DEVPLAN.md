@@ -979,6 +979,13 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   mob or item or a template there and shows it, its gear and its wares,
   gone on LEAVE; `GENERATE ... SANDBOX` runs GENERATE NOSAVE there and
   marks an area it makes unsavable, for CLEAR to take away.
+- B13 done. `AHELP BUILDING` (arc_help.ini) tells the workflow: the world
+  folder and the cache, SAVE ROOM first of all (and B4's LIST UNSAVED and
+  SAVE CHANGED), UNDO and the backups, files edited outside the game
+  (B2, B5), the tools that make and those that look, and what is not in
+  the world folder. Builder mode's login ends with
+  `SaveGame.builderSummary`: whether the world files loaded whole, files
+  changed outside the game or rooms unsaved, and AHELP BUILDING.
 
 #### 2d. Scripting (59)
 

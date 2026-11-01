@@ -503,9 +503,32 @@ public final class SaveGame
 			final String problems = WorldFiles.problemSummary(10);
 			if(problems.length() > 0)
 				mob.tell(problems.replace("\n", "\n\r"));
+			for(final String line : builderSummary())
+				mob.tell(line);
 		}
 		else
 			startAutoSaver(mob);
+	}
+
+	/**
+	 * B13: the lines builder mode's login ends with: whether the world files
+	 * loaded whole, what was changed outside the game or is unsaved, and
+	 * where the way of building here is told.
+	 * @return the lines
+	 */
+	public static List<String> builderSummary()
+	{
+		final List<String> lines = new ArrayList<String>();
+		if(WorldFiles.problems().isEmpty())
+			lines.add(CMLib.lang().L("The world files loaded whole."));
+		final int outside = WorldFiles.changedOutside().size();
+		if(outside > 0)
+			lines.add(CMLib.lang().L("@x1 world files were changed outside the game since it loaded them: WORLD STATUS lists them.", "" + outside));
+		final int unsaved = Unsaved.count();
+		if(unsaved > 0)
+			lines.add(CMLib.lang().L("@x1 rooms have unsaved mobs or items: LIST UNSAVED lists them.", "" + unsaved));
+		lines.add(CMLib.lang().L("AHELP BUILDING tells how building works here: what SAVE ROOM keeps, the world folder, and the checks."));
+		return lines;
 	}
 
 	/**
