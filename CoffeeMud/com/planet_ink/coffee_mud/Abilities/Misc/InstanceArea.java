@@ -2200,6 +2200,95 @@ public class InstanceArea extends StdAbility
 		return null;
 	}
 
+	@Override
+	public void setStat(final String code, final String val)
+	{
+		if("ADOPT".equalsIgnoreCase(code))
+			adoptAfterRestore();
+		else
+			super.setStat(code, val);
+	}
+
+	/**
+	 * Takes back this effect's instance child, made again from a saved game
+	 * (the internal stat ADOPT): into its parent's list of instances, kept
+	 * for the characters and their followers in it now, with the rooms it
+	 * already had counted as done, and numbered past by new instances.
+	 */
+	protected void adoptAfterRestore()
+	{
+		if((!(affected instanceof SubArea))
+		||(!CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
+			return;
+		final Area instA=(Area)affected;
+		final Area parentA=((SubArea)instA).getSuperArea();
+		if(parentA==null)
+			return;
+		final int x=instA.Name().indexOf('_');
+		if((x>0)&&(CMath.isInteger(instA.Name().substring(0,x))))
+		{
+			final int n=CMath.s_int(instA.Name().substring(0,x));
+			synchronized(instIDNum)
+			{
+				if(instIDNum.get()<n)
+					instIDNum.set(n);
+			}
+		}
+		final List<WeakReference<MOB>> members=new ArrayList<WeakReference<MOB>>();
+		for(final Enumeration<Room> r=instA.getFilledProperMap();r.hasMoreElements();)
+		{
+			final Room R=r.nextElement();
+			if(R==null)
+				continue;
+			doneRoom(R);
+			for(final Enumeration<MOB> m=R.inhabitants();m.hasMoreElements();)
+			{
+				final MOB M=m.nextElement();
+				final MOB leader=(M==null)?null:M.getGroupLeader();
+				if((M!=null)&&((!M.isMonster())||((leader!=null)&&(!leader.isMonster()))))
+					members.add(new WeakReference<MOB>(M));
+			}
+		}
+		final AreaInstanceChild aChild;
+		synchronized(instanceChildren)
+		{
+			List<AreaInstanceChild> childList=instanceChildren.get(parentA);
+			if(childList==null)
+			{
+				childList=new ArrayList<AreaInstanceChild>();
+				instanceChildren.put(parentA, childList);
+			}
+			for(final AreaInstanceChild C : childList)
+			{
+				if(C.A==instA)
+					return;
+			}
+			aChild=new AreaInstanceChild(instA, members);
+			childList.add(aChild);
+		}
+		if(parentA.fetchEffect(ID())==null)
+		{
+			// the instance comes from a room's effect, which a manager on the area serves
+			InstanceArea roomA=null;
+			for(final Enumeration<Room> r=parentA.getProperMap();r.hasMoreElements() && (roomA==null);)
+			{
+				final Room R=r.nextElement();
+				if((R!=null)&&(R.fetchEffect(ID()) instanceof InstanceArea))
+					roomA=(InstanceArea)R.fetchEffect(ID());
+			}
+			if(roomA!=null)
+			{
+				InstanceAreaManager mgr=(InstanceAreaManager)parentA.fetchEffect(InstanceAreaManager.getID());
+				if(mgr==null)
+				{
+					mgr=new InstanceAreaManager();
+					parentA.addEffect(mgr);
+				}
+				mgr.manage(roomA, aChild);
+			}
+		}
+	}
+
 	protected void destroyInstance(final Area instA)
 	{
 		if((instA != null)

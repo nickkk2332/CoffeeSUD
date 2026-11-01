@@ -309,6 +309,7 @@ public final class WorldState
 		laterRides.clear();
 		laterRooms.clear();
 		laterVessels.clear();
+		remadeAreas.clear();
 		clearWorld();
 		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
 		if(shapes != null)
@@ -893,7 +894,9 @@ public final class WorldState
 	 */
 	private static void fillRoom(final Room R, final XMLTag roomTag)
 	{
-		if(R.getArea() instanceof Boardable)
+		// a vessel's room has what the vessel was made with; an instance's,
+		// what it copied from its parent when it was asked for
+		if((R.getArea() instanceof Boardable) || remadeAreas.contains(R.getArea()))
 			clearVesselRoom(R);
 		for(final XMLTag piece : roomTag.contents())
 		{
@@ -1532,6 +1535,10 @@ public final class WorldState
 		if((playerTag != null)
 		&& (mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")))))
 		{
+			// the character's tables keep a start room for an instance or plane
+			final Room savedR = getRoom(playerTag.getValFromPieces("ROOM"));
+			if((savedR != null) && (savedR != mob.location()))
+				savedR.bringMobHere(mob, true);
 			putBackPlayer(mob, playerTag);
 			leaders.put(mob, CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("LEADER")));
 			if(partyTags != null)
@@ -1568,6 +1575,7 @@ public final class WorldState
 				putEffects(p.first, p.second, mob);
 		}
 		restored.clear(); // after the effects, whose activities may name what was restored
+		takeBackRemadeAreas();
 	}
 
 	/**
@@ -1938,11 +1946,26 @@ public final class WorldState
 		synchronized(contentRooms)
 		{
 			final Set<String> areaNames = contentAreas.keySet();
+			for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+			{
+				final Area A = a.nextElement();
+				if((A == null) || (A instanceof Boardable) || areaNames.contains(A.Name()))
+					continue;
+				// made in play: an instance, a plane, a generated area
+				str.append("<NEWAREA>").append(xml.convertXMLtoTag("CLASS", A.ID()))
+				   .append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(A.Name())))
+				   .append(areaShape(A)).append(effectsXML(A)).append("</NEWAREA>\n");
+			}
 			for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 			{
 				final Room R = r.nextElement();
-				if((!isShapeKept(R)) || (!areaNames.contains(R.getArea().Name())))
-					continue; // a vessel's, a grid's, or an area made in play
+				if(!isShapeKept(R))
+					continue; // a vessel's or a grid's
+				if(!areaNames.contains(R.getArea().Name()))
+				{
+					str.append("<NEWROOM>").append(roomShape(R)).append("</NEWROOM>\n"); // of an area made in play
+					continue;
+				}
 				final String roomID = CMLib.map().getExtendedRoomID(R);
 				final Integer was = contentRooms.get(roomID);
 				if(was == null)
@@ -1987,6 +2010,11 @@ public final class WorldState
 	private static void putShapes(final XMLTag shapes)
 	{
 		final XMLLibrary xml = CMLib.xml();
+		for(final XMLTag tag : shapes.contents())
+		{
+			if(tag.tag().equalsIgnoreCase("NEWAREA"))
+				remakeArea(tag);
+		}
 		for(final XMLTag tag : shapes.contents())
 		{
 			if(tag.tag().equalsIgnoreCase("GONEROOM"))
@@ -2041,6 +2069,113 @@ public final class WorldState
 			final Area A = CMLib.map().getArea(xml.getValFromPieces(areaTag.contents(), "ANAME"));
 			if((A != null) && (!isFreshArea(A)))
 				reshapeArea(A, areaTag.contents());
+		}
+	}
+
+	/** the areas made in play that a restore made again, to take back once the characters are in */
+	private static final List<Area>	remadeAreas	= new ArrayList<Area>();
+
+	/**
+	 * Makes again an area made in play (an instance child, a plane, a
+	 * generated area), as a save's NEWAREA tag has it, with no rooms yet:
+	 * by its instance parent if it has one (see
+	 * {@link Area#makeInstanceChildAgain(String)}), else from its class,
+	 * with the room numbers of the area it copies.  Its timed effects (an
+	 * instance's timer, a plane's own) wait for the player.
+	 * @param tag the NEWAREA tag
+	 */
+	private static void remakeArea(final XMLTag tag)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		final String name = xml.restoreAngleBrackets(tag.getValFromPieces("NAME"));
+		if((name.length() == 0) || (CMLib.map().getArea(name) != null))
+			return;
+		Area A = null;
+		final int x = name.indexOf('_');
+		if((x > 0) && CMath.isInteger(name.substring(0, x)))
+		{
+			final Area parentA = CMLib.map().getArea(name.substring(x + 1));
+			if(parentA != null)
+				A = parentA.makeInstanceChildAgain(name);
+		}
+		if(A == null)
+		{
+			A = CMClass.getAreaType(tag.getValFromPieces("CLASS"));
+			if(A == null)
+			{
+				SaveGame.noteWorldChange(CMLib.lang().L("The area @x1, made in play, is of a kind this game does not have.", name));
+				return;
+			}
+			A.setName(name);
+			if((A instanceof SubArea) && CMath.bset(A.flags(), Area.FLAG_INSTANCE_CHILD))
+			{
+				final Area parentA = ((SubArea)A).getSuperArea();
+				if(parentA != null)
+				{
+					A.setTimeObj((TimeClock)parentA.getTimeObj().copyOf());
+					for(final Enumeration<String> ids = parentA.getProperRoomnumbers().getRoomIDs(); ids.hasMoreElements();)
+					{
+						final String id = ids.nextElement();
+						final int y = id.indexOf('#');
+						if(y >= 0)
+							A.addProperRoomnumber(name + id.substring(y));
+					}
+				}
+			}
+			CMLib.map().addArea(A);
+			A.setAreaState(Area.State.ACTIVE);
+		}
+		final XMLTag areaTag = tag.getPieceFromPieces("AREA");
+		if(areaTag != null)
+			reshapeArea(A, areaTag.contents());
+		laterEffects(A, tag);
+		remadeAreas.add(A);
+	}
+
+	/**
+	 * Takes back each area made again from the save, once the characters are
+	 * in and the areas' effects are back: each effect is told (the internal
+	 * stat ADOPT, so that an instance rejoins its parent's list and new
+	 * instances and planes are numbered past it), and an instance parent
+	 * keeps the child for the characters and followers in it.
+	 */
+	private static void takeBackRemadeAreas()
+	{
+		final List<Area> areas = new ArrayList<Area>(remadeAreas);
+		remadeAreas.clear();
+		for(final Area A : areas)
+		{
+			if(A.amDestroyed())
+				continue;
+			for(final Enumeration<Ability> e = A.effects(); e.hasMoreElements();)
+			{
+				final Ability E = e.nextElement();
+				try
+				{
+					if(E != null)
+						E.setStat("ADOPT", "");
+				}
+				catch(final Exception ex)
+				{
+				}
+			}
+			final int x = A.Name().indexOf('_');
+			final Area parentA = ((x > 0) && CMath.isInteger(A.Name().substring(0, x))) ? CMLib.map().getArea(A.Name().substring(x + 1)) : null;
+			if(parentA == null)
+				continue;
+			for(final Enumeration<Room> r = A.getFilledProperMap(); r.hasMoreElements();)
+			{
+				final Room R = r.nextElement();
+				if(R == null)
+					continue;
+				for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+				{
+					final MOB M = m.nextElement();
+					final MOB leader = (M == null) ? null : M.getGroupLeader();
+					if((M != null) && ((!M.isMonster()) || ((leader != null) && (!leader.isMonster()))))
+						parentA.addInstanceChildMember(A, M);
+				}
+			}
 		}
 	}
 

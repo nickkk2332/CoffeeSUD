@@ -627,6 +627,33 @@ public interface Area extends Economics, PhysicalAgent, Places
 	public boolean canChild(Area area);
 
 	/**
+	 * For an instance parent (an area that makes a copy of itself for each
+	 * group that enters it): makes again the instance child of the given
+	 * name, as a saved game had it, with no rooms (the save puts back the
+	 * rooms it kept), and takes it back into its list of children, kept for
+	 * no one yet.  New children are then numbered past it.
+	 * @see Area#addInstanceChildMember(Area, MOB)
+	 * @param name the child's name, such as 1_Crypt
+	 * @return the child, in the map, or null if this area makes no children
+	 */
+	public default Area makeInstanceChildAgain(final String name)
+	{
+		return null;
+	}
+
+	/**
+	 * For an instance parent: adds a mob to those an instance child of this
+	 * area is kept for, as when the mob first entered it, so that the mob
+	 * comes back to the same child.  Used after a saved game is put back.
+	 * @see Area#makeInstanceChildAgain(String)
+	 * @param child the instance child
+	 * @param mob the mob
+	 */
+	public default void addInstanceChildMember(final Area child, final MOB mob)
+	{
+	}
+
+	/**
 	 * An enumerator list of Area objects representing the Parent Areas of this
 	 * Area.
 	 * A Parent Area passes down certain behaviors and property effects to its children

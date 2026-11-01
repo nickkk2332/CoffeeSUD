@@ -409,6 +409,68 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 		}
 	}
 
+	/**
+	 * Makes a copy of this area to be an instance child, with no rooms yet.
+	 * @param name the child's name
+	 * @return the child, not yet in the map
+	 */
+	protected StdAutoGenInstance newInstanceChild(final String name)
+	{
+		final StdAutoGenInstance newA=(StdAutoGenInstance)this.copyOf();
+		newA.derivedAtmo=getAtmosphere();
+		newA.derivedClimate=getClimateType();
+		newA.derivedTheme=getTheme();
+		newA.properRooms=new STreeMap<String, Room>(new Area.RoomIDComparator());
+		newA.properRoomIDSet = null;
+		newA.metroRoomIDSet = null;
+		newA.blurbFlags=new STreeMap<String,String>();
+		newA.setName(name);
+		newA.flags |= Area.FLAG_INSTANCE_CHILD;
+		newA.flags = newA.flags & ~Area.FLAG_INSTANCE_PARENT;
+		return newA;
+	}
+
+	@Override
+	public Area makeInstanceChildAgain(final String name)
+	{
+		if((!CMath.bset(flags(),Area.FLAG_INSTANCE_PARENT))||(CMath.bset(flags(),Area.FLAG_INSTANCE_CHILD)))
+			return null;
+		final int x=name.indexOf('_');
+		if((x>0)&&(CMath.isInteger(name.substring(0,x)))&&(CMath.s_int(name.substring(0,x))>instanceCounter))
+			instanceCounter=CMath.s_int(name.substring(0,x));
+		final StdAutoGenInstance newA=newInstanceChild(name);
+		CMLib.map().addArea(newA);
+		newA.parentArea = new WeakReference<Area>(this);
+		newA.setAreaState(Area.State.ACTIVE); // starts ticking
+		synchronized(instanceChildren)
+		{
+			instanceChildren.add(new AreaInstanceChild(newA,new SVector<WeakReference<MOB>>(5)));
+		}
+		return newA;
+	}
+
+	@Override
+	public void addInstanceChildMember(final Area child, final MOB mob)
+	{
+		synchronized(instanceChildren)
+		{
+			for(final Enumeration<AreaInstanceChild> c=instanceChildren.elements();c.hasMoreElements();)
+			{
+				final AreaInstanceChild C=c.nextElement();
+				if(C.A==child)
+				{
+					for(final WeakReference<MOB> wM : C.mobs)
+					{
+						if(wM.get()==mob)
+							return;
+					}
+					C.mobs.add(new WeakReference<MOB>(mob));
+					return;
+				}
+			}
+		}
+	}
+
 	@Override
 	public boolean okMessage(final Environmental myHost, final CMMsg msg)
 	{
@@ -496,17 +558,7 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 				direction = CMLib.map().getExitDir(msg.source().location(), (Exit)msg.tool());
 			if(myDex<0)
 			{
-				final StdAutoGenInstance newA=(StdAutoGenInstance)this.copyOf();
-				newA.derivedAtmo=getAtmosphere();
-				newA.derivedClimate=getClimateType();
-				newA.derivedTheme=getTheme();
-				newA.properRooms=new STreeMap<String, Room>(new Area.RoomIDComparator());
-				newA.properRoomIDSet = null;
-				newA.metroRoomIDSet = null;
-				newA.blurbFlags=new STreeMap<String,String>();
-				newA.setName((++instanceCounter)+"_"+Name());
-				newA.flags |= Area.FLAG_INSTANCE_CHILD;
-				newA.flags = newA.flags & ~Area.FLAG_INSTANCE_PARENT;
+				final StdAutoGenInstance newA=newInstanceChild((++instanceCounter)+"_"+Name());
 				final Set<MOB> myGroup=msg.source().getGroupMembers(new HashSet<MOB>());
 				final StringBuffer xml = Resources.getFileResource(getGeneratorXmlPath(), true);
 				if((xml==null)||(xml.length()==0))

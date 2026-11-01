@@ -1858,6 +1858,25 @@ public class StdPlanarAbility extends StdAbility implements PlanarAbility
 	@Override
 	public void setStat(final String code, final String val)
 	{
+		if("ADOPT".equalsIgnoreCase(code))
+		{
+			// a plane made again from a saved game: new planes are numbered past it
+			if(affected instanceof Area)
+			{
+				final String name=((Area)affected).Name();
+				final int x=name.indexOf('_');
+				if((x>0)&&(CMath.isInteger(name.substring(0,x))))
+				{
+					final int n=CMath.s_int(name.substring(0,x));
+					synchronized(planeIDNum)
+					{
+						if(planeIDNum.get()<n)
+							planeIDNum.set(n);
+					}
+				}
+			}
+			return;
+		}
 		if("VISITS".equalsIgnoreCase(code))
 		{
 			final long now = GameTime.now();

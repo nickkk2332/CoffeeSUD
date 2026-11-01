@@ -337,6 +337,27 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   a room a thin area loads after the boot has no shape to compare, and is
   skipped. Not done: a room whose class changed in play (reported on
   restore), `TemporaryAffects`' text, and `MovingRoom`'s position (T16).
+- S19 done, with S18. An area made in play (an instance child, a plane, a
+  generated area) is written to the save's `<ROOMSHAPES>` as a `NEWAREA`
+  (class, name, the area's XML without rooms, its timed effects), and its
+  loaded rooms as `NEWROOM`s. A restore makes the area again before its
+  rooms: an instance parent (`StdThinInstance`, `StdAutoGenInstance`) makes
+  its child again by name and takes it back into its list
+  (`Area.makeInstanceChildAgain`, new), and any other area is made from its
+  class, a `SubThinInstance` with the room numbers of the area it copies.
+  Rooms a thin child copied from its parent when asked for are emptied
+  before their saved contents go in. Once the characters are in, the
+  area's timed effects are back (an instance's timer runs on), each effect
+  is told (internal stat `ADOPT`: `InstanceArea` rejoins its parent's list
+  with its rooms counted as done, and it and the planar abilities number new
+  instances and planes past it), and the parent keeps the child for the
+  characters and followers in it (`Area.addInstanceChildMember`), so
+  walking out and back in leads to the same instance. The character is put
+  back in their saved room, as the character's tables keep a start room
+  for an instance or plane. A generated dungeon so comes back as it was,
+  without being generated again from a seed. Not done: S18's PERSIST=true
+  (one instance per party across visits), and an instance's leader and
+  faction values (`InstanceArea`'s leaderMob, topPlayerFacVal).
 
 #### 2c. Developer and builder tools (50)
 

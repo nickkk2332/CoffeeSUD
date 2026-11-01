@@ -727,6 +727,46 @@ public class StdThinInstance extends StdThinArea implements SubArea
 
 	protected Area createRedirectArea(final List<MOB> mobs)
 	{
+		return createRedirectArea(mobs, null);
+	}
+
+	@Override
+	public Area makeInstanceChildAgain(final String name)
+	{
+		if(!CMath.bset(flags(),Area.FLAG_INSTANCE_PARENT))
+			return null;
+		final int x=name.indexOf('_');
+		if((x>0)&&(CMath.isInteger(name.substring(0,x)))&&(CMath.s_int(name.substring(0,x))>instanceCounter))
+			instanceCounter=CMath.s_int(name.substring(0,x));
+		return createRedirectArea(new ArrayList<MOB>(0), name);
+	}
+
+	@Override
+	public void addInstanceChildMember(final Area child, final MOB mob)
+	{
+		for(final AreaInstanceChild C : instanceChildren)
+		{
+			if(C.A==child)
+			{
+				for(final WeakReference<MOB> wM : C.mobs)
+				{
+					if(wM.get()==mob)
+						return;
+				}
+				C.mobs.add(new WeakReference<MOB>(mob));
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Makes an instance child of this area for the given group.
+	 * @param mobs the group
+	 * @param name the child's name, or null for the next number
+	 * @return the child
+	 */
+	protected Area createRedirectArea(final List<MOB> mobs, final String name)
+	{
 		final StdThinInstance newA=(StdThinInstance)this.copyOf();
 		newA.setTimeObj((TimeClock)getTimeObj().copyOf());
 		newA.properRooms=new STreeMap<String, Room>(new Area.RoomIDComparator());
@@ -737,7 +777,7 @@ public class StdThinInstance extends StdThinArea implements SubArea
 		newA.properRoomIDSet = null;
 		newA.metroRoomIDSet = null;
 		newA.blurbFlags=new STreeMap<String,String>();
-		newA.setName((++instanceCounter)+"_"+Name());
+		newA.setName((name!=null)?name:((++instanceCounter)+"_"+Name()));
 		newA.flags |= Area.FLAG_INSTANCE_CHILD;
 		for(final Enumeration<String> e=getProperRoomnumbers().getRoomIDs();e.hasMoreElements();)
 			newA.addProperRoomnumber(newA.convertToMyArea(e.nextElement()));

@@ -432,6 +432,29 @@ group_saves5()
 	play s17-restore.txt ydb yworld 'jrun /resources/_fixes/s17-check.js\nquit\nn\n' RESTORE=s17 TIMEMODE=TURNS
 	expect s17-restore.txt "Restored 's17'."
 	jsresults s17-restore.txt
+
+	# S19 and S18: areas made in play survive a save: an instance (the
+	# crypt's), with its rooms, its dead, its timer and its group, and the
+	# player in it; and a generated dungeon (the mines'), the same after
+	play s19-build.txt ydb yworld "Builder\njrun /resources/_fixes/s19-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s19-build.txt
+	play s19-play.txt ydb yworld "Raider\n${NEWCHAR}get book\nread book\ndown\nnorth\njrun /resources/_fixes/s19-play.js\nsave s19\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s19-play.txt
+	play s19-restore.txt ydb yworld 'jrun /resources/_fixes/s19-check.js\nsouth\nup\ndown\njrun /resources/_fixes/s19-again.js\nquit\nn\n' RESTORE=s19 TIMEMODE=TURNS
+	expect s19-restore.txt "Restored 's19'."
+	jsresults s19-restore.txt
+	play s18-play.txt ydb yworld "Miner\n${NEWCHAR}get book\nread book\nwest\njrun /resources/_fixes/s18-kill.js\njrun /resources/_fixes/s18-sig.js\nsave s18\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s18-play.txt
+	play s18-restore.txt ydb yworld 'jrun /resources/_fixes/s18-sig.js\neast\nwest\njrun /resources/_fixes/s18-again.js\nquit\nn\n' RESTORE=s18 TIMEMODE=TURNS
+	expect s18-restore.txt "Restored 's18'."
+	jsresults s18-restore.txt
+	before="$(grep -ao 'FIXINFO mines.*' "$W/s18-play.txt" | head -1)"
+	after="$(grep -ao 'FIXINFO mines.*' "$W/s18-restore.txt" | head -1)"
+	if [ -n "$before" ] && [ "$before" = "$after" ]; then
+		echo "  ok    s18: the mines are the same after the restore"
+	else
+		echo "  FAIL  s18: the mines were '$before', and are '$after'"; FAIL=1
+	fi
 }
 
 # the groups share nothing (each has its own world, database and saves), so
