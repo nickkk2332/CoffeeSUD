@@ -943,6 +943,59 @@ public class Log extends java.util.logging.Logger
 		l().standardOut(Type.error,module,message,Integer.MIN_VALUE);
 	}
 
+	/**
+	 * Something that hears each line logged, whatever the log's settings send
+	 * to the file: DEVLOG ({@link DevLog}) is one.
+	 */
+	public static interface Listener
+	{
+		/**
+		 * A line was logged.
+		 * @param type its channel
+		 * @param module the module that logged it
+		 * @param message what it said
+		 */
+		public void logged(Type type, String module, String message);
+	}
+
+	private static final List<Listener> listeners = new java.util.concurrent.CopyOnWriteArrayList<Listener>();
+
+	/**
+	 * Starts telling a listener each line logged.
+	 * @param L the listener
+	 */
+	public static void addListener(final Listener L)
+	{
+		if(!listeners.contains(L))
+			listeners.add(L);
+	}
+
+	/**
+	 * Stops telling a listener.
+	 * @param L the listener
+	 */
+	public static void removeListener(final Listener L)
+	{
+		listeners.remove(L);
+	}
+
+	private static void heard(final Type type, final String module, final String message)
+	{
+		if(listeners.isEmpty())
+			return;
+		for(final Listener L : listeners)
+		{
+			try
+			{
+				L.logged(type, module, message);
+			}
+			catch(final RuntimeException e)
+			{
+				// a listener that fails misses the line
+			}
+		}
+	}
+
 	/** the errors and warnings this thread is collecting, if it is */
 	private static final ThreadLocal<List<String>> captured = new ThreadLocal<List<String>>();
 
@@ -1421,6 +1474,7 @@ public class Log extends java.util.logging.Logger
 	*/
 	public final void standardExOut(final Type type, final String module, final int priority, final String prePend, final Throwable e)
 	{
+		heard(type,module,((prePend!=null)?(prePend+": "):"")+((e!=null)?(e.getClass().getSimpleName()+": "+e.getMessage()):"Null/Unknown error occurred."));
 		final Conf conf=getConfig(type);
 		PrintWriter outWriter=getWriter(type,conf,priority);
 		if(outWriter!=null)
@@ -1515,6 +1569,7 @@ public class Log extends java.util.logging.Logger
 	*/
 	private final void standardOut(final Type type, final String module, final String msg, final int priority)
 	{
+		heard(type,module,msg);
 		final Conf conf=getConfig(type);
 		final PrintWriter outWriter=getWriter(type,conf,priority);
 		if(outWriter!=null)

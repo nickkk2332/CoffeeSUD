@@ -475,6 +475,8 @@ public final class SaveGame
 			str.append(CMLib.lang().L("RESTORE name FRESH=CHANGED takes the changed areas' rooms as they are now.\n\r"));
 			mob.tell(str.toString());
 		}
+		if(builderMode || isDevMode())
+			DevLog.startFor(mob); // DEVLOG as it was left, or as the ini's DEVLOG= says
 		if(builderMode)
 		{
 			makeArchon(mob);

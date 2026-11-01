@@ -575,6 +575,18 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   restart in process as a normal game, and plain `BUILD` back); `PARTY
   MORTAL|ARCHON name` for makeArchon; an editor that asks for input after
   its command returns runs without the powers.
+- DT9 done but for the window. `core/Log` takes listeners
+  (`Log.addListener`), which hear every line, whatever the log's settings
+  send to mud.log, exceptions with their class. `DEVLOG ON [ERROR|WARN|INFO|
+  DEBUG] [MODULE mask]` in builder mode or a `DEV=1` game tells the builder
+  each line as one coloured line, `[ERROR Scripting] ...`, a repeat told once
+  and its count when something else comes (`core/DevLog`); `DEVLOG LAST [n]
+  [level] [MODULE mask]` replays the last 500 kept, repeats counted, and
+  `DEVLOG CLEAR` forgets them. Builder mode keeps the setting beside the
+  database (`devlog.txt`); the ini's `DEVLOG=WARN Scripting,Quest*` gives
+  it otherwise. Left: `DEVLOG WINDOW` (a separate CharacterWindow), and
+  `LIST LOG ERRORS SINCE BOOT` by source (`DEVLOG LAST n ERROR MODULE x`
+  does the same from the lines kept).
 
 #### 2d. Scripting (59)
 
