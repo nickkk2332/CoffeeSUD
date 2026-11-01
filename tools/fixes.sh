@@ -413,6 +413,20 @@ group_saves4()
 	expect s16-restore.txt "Restored 's16'."
 	expect s16-restore.txt "have grown here"
 	jsresults s16-restore.txt
+
+	# S21: cron jobs run on the game clock: as game time passes (WAIT 60,
+	# four game minutes in about a second of real time, runs a two-minute
+	# job), and on after a restore
+	play s21-play.txt xdb xworld "Croner\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s21-play.js\njrun /resources/_fixes/s21-mark.js\nwait 60\nsave s21\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s21-play.txt
+	if awk '/FIXMARK/{m=NR} /FIXCRON ran/{if(!c)c=NR} END{exit !(m && c && c>m)}' "$W/s21-play.txt"; then
+		echo "  ok    s21-play: the job ran as game time passed"
+	else
+		echo "  FAIL  s21-play: the job did not run as game time passed"; FAIL=1
+	fi
+	play s21-restore.txt xdb xworld 'wait 60\nquit\nn\n' RESTORE=s21 TIMEMODE=TURNS
+	expect s21-restore.txt "Restored 's21'."
+	expect s21-restore.txt "FIXCRON ran"
 }
 
 group_saves5()

@@ -747,6 +747,38 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 		}
 	}
 
+	/**
+	 * Returns how often a cron job runs, in game milliseconds: its INTERVAL,
+	 * either milliseconds or a time such as "6 hours" or "1 day" on the
+	 * job's clock (else the runner's home clock, else the world's).
+	 * @param E the job
+	 * @param mob the job's runner, or null
+	 * @return the interval
+	 */
+	protected long cronInterval(final JournalEntry E, final MOB mob)
+	{
+		long interval = CMProps.getMillisPerMudHour();
+		try
+		{
+			final String intStr = CMParms.getParmStr(E.data(), "INTERVAL", ""+CMProps.getMillisPerMudHour());
+			if(CMath.isLong(intStr))
+				interval = CMath.s_long(intStr);
+			else
+			{
+				TimeClock C = E.getKnownClock();
+				if (C == null)
+					C = (mob != null) ? CMLib.time().homeClock(mob) : CMLib.time().globalClock();
+				final int ticks = CMLib.time().parseTickExpression(C, intStr);
+				interval = ticks * CMProps.getTickMillis();
+			}
+		}
+		catch(final CMException e)
+		{
+			Log.errOut("cron",e.getMessage());
+		}
+		return interval;
+	}
+
 	protected long runCronJob(final String jobKey, final boolean debug)
 	{
 		Session fakeS=null;
@@ -758,7 +790,7 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 			final JournalEntry E = CMLib.database().DBReadJournalEntry("SYSTEM_CRON", jobKey);
 			if(E==null)
 				return -1;
-			if(System.currentTimeMillis()<E.update())
+			if(GameTime.now()<E.update())
 				return E.update();
 			if(debug)
 				Log.debugOut("Running cron job "+E.subj());
@@ -768,27 +800,9 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 				Log.errOut("Cron job "+E.subj()+" has unkknown runner "+E.from());
 				return touch;
 			}
-			long interval = CMProps.getMillisPerMudHour();
-			try
-			{
-				final String intStr = CMParms.getParmStr(E.data(), "INTERVAL", ""+CMProps.getMillisPerMudHour());
-				if(CMath.isLong(intStr))
-					interval = CMath.s_long(intStr);
-				else
-				{
-					TimeClock C = E.getKnownClock();
-					if (C == null)
-						C = CMLib.time().homeClock(mob);
-					final int ticks = CMLib.time().parseTickExpression(C, intStr);
-					interval = ticks * CMProps.getTickMillis();
-				}
-			}
-			catch(final CMException e)
-			{
-				Log.errOut("cron",e.getMessage());
-			}
-			touch = System.currentTimeMillis()+interval;
-			E.update(System.currentTimeMillis()+interval);
+			final long interval = cronInterval(E, mob);
+			touch = GameTime.now()+interval;
+			E.update(GameTime.now()+interval);
 			CMLib.database().DBTouchJournalMessage(jobKey, E.update());
 			if(mob.session()==null)
 			{
@@ -1107,8 +1121,19 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 		final List<JournalEntry> jobs = CMLib.database().DBReadJournalMsgsByCreateDate("SYSTEM_CRON", true);
 		if(jobs != null)
 		{
+			// the jobs run on the game clock, which a saved game sets, so no
+			// job waits longer than its interval for its next run
+			final long now=GameTime.now();
 			for(final JournalEntry E : jobs)
+			{
+				final long interval=cronInterval(E, null);
+				if(E.update() > now+interval)
+				{
+					E.update(now+interval);
+					CMLib.database().DBTouchJournalMessage(E.key(), E.update());
+				}
 				cronJobs.add(new Pair<Long,String>(Long.valueOf(E.update()),E.key()));
+			}
 		}
 		initializeCalendarEvents();
 		return true;
@@ -1415,7 +1440,7 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 				for(int i=0;i<cronJobs.size();i++)
 				{
 					final Long L=cronJobs.getFirst(i);
-					if(System.currentTimeMillis()>L.longValue())
+					if(GameTime.now()>L.longValue())
 						jobsToRun.add(cronJobs.get(i));
 				}
 				for(final Pair<Long,String> job : jobsToRun)

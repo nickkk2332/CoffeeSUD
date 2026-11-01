@@ -358,6 +358,15 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   without being generated again from a seed. Not done: S18's PERSIST=true
   (one instance per party across visits), and an instance's leader and
   faction values (`InstanceArea`'s leaderMob, topPlayerFacVal).
+- S21 done. Cron jobs (CREATE CRON, already in `world/journals/` since
+  S10) run on the game clock: `CMJournals` compares a job's next run with
+  `GameTime.now()`, and CREATE and MODIFY CRON set it from it, so a job
+  waits while the game is paused and runs as turn-based time passes. The
+  next run is kept in the save's database. On load, no job waits longer
+  than its interval, since a restored clock can be behind the time a job
+  was set at. LIST CRON shows the game time left to the next run. The
+  played test runs a two-minute job by `WAIT 60` (four game minutes in
+  about a second), which the old code, on the system clock, did not.
 
 #### 2c. Developer and builder tools (50)
 

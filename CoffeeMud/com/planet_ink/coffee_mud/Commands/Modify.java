@@ -1266,7 +1266,7 @@ public class Modify extends StdCommand
 			}
 			tm = tm * CMProps.getTickMillis();
 			modJob.data("INTERVAL=\""+value+"\"");
-			modJob.update(System.currentTimeMillis()+tm);
+			modJob.update(GameTime.now()+tm); // cron jobs run on the game clock
 			CMLib.database().DBUpdateJournal("SYSTEM_CRON", modJob);
 			Log.sysOut(mob.Name()+" modified cron job "+modJob.subj()+".");
 			CMLib.journals().activate();

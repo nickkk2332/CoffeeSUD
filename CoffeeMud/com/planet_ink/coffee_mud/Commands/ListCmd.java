@@ -3922,7 +3922,8 @@ public class ListCmd extends StdCommand
 			}
 			else
 				str.append(L("^HINTERVAL  ^N: @x1\n\r",intervalStr));
-			str.append(L("^HNEXT ACT  ^N: @x1\n\r",CMLib.time().date2String(E.update())));
+			// on the game clock, so as the game time left
+			str.append(L("^HNEXT ACT  ^N: in @x1\n\r",CMLib.time().date2EllapsedTime(Math.max(0, E.update()-GameTime.now()), TimeUnit.SECONDS, false)));
 			str.append(L("^HSCRIPT    ^N: \n\r"));
 			str.append(E.msg());
 			str.append("^N\n\r");

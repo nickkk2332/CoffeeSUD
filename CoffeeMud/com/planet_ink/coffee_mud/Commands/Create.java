@@ -1811,7 +1811,7 @@ public class Create extends StdCommand
 		msg.subj(name);
 		msg.msg("");
 		msg.dateStr(""+System.currentTimeMillis());
-		msg.update(System.currentTimeMillis()+tm);
+		msg.update(GameTime.now()+tm); // cron jobs run on the game clock
 		msg.parent("");
 		msg.msgIcon("");
 		msg.attributes(msg.attributes()|JournalEntry.JournalAttrib.PROTECTED.bit);
