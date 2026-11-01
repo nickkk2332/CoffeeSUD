@@ -872,7 +872,7 @@ note below says it leaves (B14, CHATDRAFT, is for later).
   In the shipped inclination.ini it found four triggers that never fired:
   CHANT_EARTHFEED (the chant's ID is Chant_Bury) and MEDIDATE (MEDITATE),
   both fixed, and CLEAN * and BUTT *, which name no social (BUTT has only
-  a targeted form), left for review.
+  a targeted form), taken out.
 - B1 done. `SAVE ROOM` in builder mode is `SAVE ROOM HOME`: the room's
   items as before, and as its mobs only those whose start room it is,
   wherever in the area they stand (a wanderer is saved, not destroyed by
