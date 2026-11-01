@@ -1105,10 +1105,34 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 	public boolean isFreeToBeTriggered(final Tickable affecting)
 	{
+		final boolean free;
 		if(alwaysTriggers)
-			return CMLib.flags().canActAtAll(affecting);
+			free=CMLib.flags().canActAtAll(affecting);
 		else
-			return CMLib.flags().canFreelyBehaveNormal(affecting);
+			free=CMLib.flags().canFreelyBehaveNormal(affecting);
+		if((!free)&&ScriptTrace.isOn())
+		{
+			final Object host=ScriptTrace.handled();
+			if((host!=null)&&ScriptTrace.traces(host,0))
+				ScriptTrace.tell(host,"busy (asleep, fighting, bound or the like), so its triggers wait"+(alwaysTriggers?"":" (MPSETINTERNAL ACTIVETRIGGER TRUE lets them run anyway)"));
+		}
+		return free;
+	}
+
+	/**
+	 * Rolls a trigger's chance, as a percentage, and tells SCRIPTTRACE (DT18).
+	 * @param host the host
+	 * @param script the trigger
+	 * @param prcnt its chance
+	 * @return true if it runs
+	 */
+	protected boolean chance(final PhysicalAgent host, final SubScript script, final int prcnt)
+	{
+		final int roll=CMLib.dice().rollPercentage();
+		final boolean yes=roll<=prcnt; // 100 is always
+		if(ScriptTrace.isOn()&&ScriptTrace.traces(host,script.getTriggerCode()))
+			ScriptTrace.tell(host,script.getTriggerLine()+": rolled "+roll+" of "+prcnt+", "+(yes?"runs":"skipped"));
+		return yes;
 	}
 
 	protected String parseLoads(final Environmental E, final String text, final int depth,
@@ -3158,6 +3182,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			if(H.size()==0)
 				resources._removeResource("SCRIPTVAR-"+name);
 			ScriptVarWatch.changed(scope, name, key, val.trim(), varChangeSource());
+			if(ScriptTrace.isOn())
+				ScriptTrace.varChanged(name, key, val.trim());
 		}
 	}
 
@@ -5609,6 +5635,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						returnable=false;
 					break;
 				}
+				case 123: // isbuilder
+					returnable=com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode();
+					break;
 				case 122: // isdev
 					returnable=com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode();
 					break;
@@ -7923,6 +7952,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					results.append(value);
 				break;
 			}
+			case 123: // isbuilder
+				results.append(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()?"true":"false");
+				break;
 			case 122: // isdev
 				results.append(com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode()?"true":"false");
 				break;
@@ -9405,6 +9437,24 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public String execute(final MPContext ctx)
 	{
+		if(!ScriptTrace.isOn())
+			return executeBody(ctx);
+		// SCRIPTTRACE (DT18): the lines a traced host runs, and the variables they change
+		final Object was=ScriptTrace.beginRun(ctx.scripted);
+		try
+		{
+			if((ctx.script!=null)&&(ctx.line<=1)&&ScriptTrace.traces(ctx.scripted,ctx.script.getTriggerCode()))
+				ScriptTrace.tell(ctx.scripted,"runs "+ctx.script.getTriggerLine());
+			return executeBody(ctx);
+		}
+		finally
+		{
+			ScriptTrace.endRun(was);
+		}
+	}
+
+	protected String executeBody(final MPContext ctx)
+	{
 		final SubScript script = ctx.script;
 		tickStatus=Tickable.STATUS_START;
 		String s=null;
@@ -9425,6 +9475,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				continue;
 			if(traceDebugging)
 				Log.debugOut(CMStrings.padRight(ctx.scripted.Name(), 15)+": "+ctx.line+": "+s);
+			if(ScriptTrace.isOn()&&ScriptTrace.traces(ctx.scripted,script.getTriggerCode()))
+				ScriptTrace.tell(ctx.scripted,"  "+ctx.line+": "+s);
 
 			Integer methCode=methH.get(cmd);
 			if((methCode==null)&&(cmd.startsWith("MP")))
@@ -10300,6 +10352,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				else
 				if(arg2.equals("NEEDPC"))
 					this.runWithoutPCs = !CMath.s_bool(arg3);
+				else
+				if(arg2.equals("TRACE"))
+				{
+					// the builder sees this host's script traced (SCRIPTTRACE, DT18)
+					if(CMath.s_bool(arg3))
+						ScriptTrace.startFromScript(ctx.scripted);
+					else
+					if(ScriptTrace.traces(ctx.scripted,0))
+						ScriptTrace.stop();
+				}
 				else
 				if(arg2.startsWith("LLM"))
 					miscArgVars.put(arg2, arg3);
@@ -14503,6 +14565,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			recurseCounter.addAndGet(1);
 
 			final PhysicalAgent affecting = (PhysicalAgent)host;
+			if(ScriptTrace.isOn())
+				ScriptTrace.handling(affecting);
 
 			final List<SubScript> scripts=getScripts(host);
 			SubScript script=null;
@@ -14865,6 +14929,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			recurseCounter.addAndGet(1);
 
 			final PhysicalAgent affecting = (PhysicalAgent)host;
+			if(ScriptTrace.isOn())
+				ScriptTrace.handling(affecting);
 
 			final MOB monster=getMakeMOB(affecting);
 
@@ -14911,7 +14977,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -14931,7 +14997,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], eventMob);
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								if((host instanceof Item)
 								&&(((Item)host).owner() instanceof MOB)
@@ -14970,7 +15036,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -14991,7 +15057,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								noTrigger.put(Integer.valueOf(-52),Long.valueOf(GameTime.now()+CMProps.getTickMillis()));
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
@@ -15821,7 +15887,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								final List<ScriptableResponse> V=new XVector<ScriptableResponse>(que);
 								ScriptableResponse SB=null;
@@ -15856,7 +15922,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								final List<ScriptableResponse> V=new XVector<ScriptableResponse>(que);
 								ScriptableResponse SB=null;
@@ -15943,7 +16009,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -15968,7 +16034,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								final MPContext ctx = new MPContext(affecting,monster,msg.source(),monster,defaultItem,null,null, null);
 								for(int i=0;i<t.length && (i<ctx.tmp.length);i++)
@@ -15990,7 +16056,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(t!=null)
 						{
 							final int prcnt=this.getTriggerPercent(t[1], msg.source());
-							if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
 								if(!multiTriggers)
@@ -16287,7 +16353,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(L==null)
 			return true;
 		if(GameTime.now()<L.longValue())
+		{
+			final Object host=ScriptTrace.handled();
+			if((host!=null)&&ScriptTrace.traces(host,triggerCode)&&(triggerCode>0)&&(triggerCode<=progs.length))
+				ScriptTrace.tell(host,progs[triggerCode-1]+": off (MPNOTRIGGER or SCRIPT DISABLE), skipped");
 			return false;
+		}
 		noTrigger.remove(Integer.valueOf(triggerCode));
 		return true;
 	}
@@ -16310,6 +16381,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			return true;
 		}
 		final PhysicalAgent affecting=(ticking instanceof PhysicalAgent)?((PhysicalAgent)ticking):null;
+		if(ScriptTrace.isOn())
+			ScriptTrace.handling(affecting);
 		final Item defaultItem=(ticking instanceof Item)?(Item)ticking:null;
 		final List<SubScript> scripts=getScripts(affecting);
 
@@ -16376,7 +16449,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(t!=null)
 					{
 						final int prcnt=CMath.s_int(t[1]);
-						if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+						if(chance(affecting,script,prcnt)) // 100 is always
 							execute(new MPContext(affecting,mob,mob,mob,defaultItem,null,null, null).push(script));
 					}
 				}
@@ -16423,7 +16496,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(t!=null)
 					{
 						final int prcnt=this.getTriggerPercent(t[1], mob);
-						if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+						if(chance(affecting,script,prcnt)) // 100 is always
 							execute(new MPContext(affecting,mob,mob.getVictim(),mob,defaultItem,null,null, null).push(script));
 					}
 				}
@@ -16438,7 +16511,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(t!=null)
 					{
 						final int prcnt=this.getTriggerPercent(t[1], (((Item)ticking).owner()));
-						if(CMLib.dice().rollPercentage()<=prcnt) // 100 is always
+						if(chance(affecting,script,prcnt)) // 100 is always
 						{
 							final MOB M=(MOB)((Item)ticking).owner();
 							if(!M.amDead())

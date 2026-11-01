@@ -700,6 +700,15 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   end only in capitals), tags not closed or closed and not opened, a MASK
   whose mask holds `>`, and a colour code left open. `<FROMUNKNOWN>` is now
   the same as the code's `<FROMUNKOWN>`.
+- DT18 done but for masks, absent PCs, passive areas and registration as
+  reasons. `SCRIPTTRACE target|ROOM|AREA|OFF [trigger]` (`core/ScriptTrace`)
+  traces to the builder's own session, not saved: each trigger's chance as
+  rolled (`GREET_PROG 50: rolled 73 of 50, skipped`, one helper now rolling
+  for all twelve chance triggers, the dice drawn as before), a trigger off
+  (MPNOTRIGGER, SCRIPT DISABLE), a host too busy to be triggered, each line
+  run and each variable changed. `MPSETINTERNAL TRACE TRUE` starts it from a
+  script (builder mode or DEV=1), and `ISBUILDER()` (condition and value) is
+  added, so ST6 need not add it again.
 
 #### 2d. Scripting (59)
 

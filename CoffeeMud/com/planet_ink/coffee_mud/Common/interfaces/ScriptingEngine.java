@@ -618,6 +618,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"FACTIONBAND", //120
 		"VARNAMES", //121
 		"ISDEV", //122
+		"ISBUILDER", //123
 	};
 
 	/** String list of all valid mobprog commands */
