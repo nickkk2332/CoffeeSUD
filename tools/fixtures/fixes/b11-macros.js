@@ -47,6 +47,10 @@ check("builder", N != null && item != null && N.hasTag("TODO") && CMath.s_int(gv
 var counts = (N == null) ? [0, 0] : CMLib.database().DBCountRoomMobsItems("" + CMLib.map().getExtendedRoomID(N));
 check("saved", counts[1] == 1, "the room has " + counts[1] + " items saved");
 if (N != null) CMLib.map().obliterateMapRoom(N);
+R0.rawDoors()[free] = null;
+R0.setRawExit(free, null);
+CMLib.database().DBUpdateExits(R0);
+check("clean", R0.getRawExit(free) == null, "the exit made from here is still there");
 new java.io.File(new java.io.File(new java.io.File(WF.worldDir(), "resources"), "fixb11"), "build.js")["delete"]();
 new java.io.File("resources/fixb11/build.js")["delete"]();
 CM.core.Unsaved.clear();

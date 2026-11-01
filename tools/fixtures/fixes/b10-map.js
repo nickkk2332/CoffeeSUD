@@ -48,6 +48,10 @@ F["delete"]();
 F.getParentFile()["delete"]();
 
 for (var i = made.length - 1; i >= 0; i--) CMLib.map().obliterateMapRoom(made[i]);
+R0.rawDoors()[d] = null;
+R0.setRawExit(d, null);
+CMLib.database().DBUpdateExits(R0);
+check("clean", R0.getRawExit(d) == null, "the exit made from here is still there");
 CM.core.Unsaved.clear();
 CM.core.UndoLog.clear();
 done();

@@ -74,7 +74,11 @@ R0.bringMobHere(M, false);
 Bld.setSession(null);
 Bld.destroy();
 for (var i = made.length - 1; i >= 0; i--) CMLib.map().obliterateMapRoom(made[i]);
-check("clean", R0.rawDoors()[d1] == null, "the first room is still linked");
+// the exit made from here goes too
+R0.rawDoors()[d1] = null;
+R0.setRawExit(d1, null);
+CMLib.database().DBUpdateExits(R0);
+check("clean", R0.rawDoors()[d1] == null && R0.getRawExit(d1) == null, "the first room is still linked");
 CM.core.Unsaved.clear();
 CM.core.UndoLog.clear();
 done();
