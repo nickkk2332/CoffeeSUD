@@ -223,6 +223,9 @@ public final class SaveGame
 			mob.playerStats().getSetSecurityFlags(CMParms.combineWith(flags, ';'));
 	}
 
+	/** whether PUZZLE CHECK has run in this game (DT33) */
+	private static volatile boolean puzzleChecked = false;
+
 	/**
 	 * Returns whether the game runs in builder mode, on the content database.
 	 * @return true in builder mode
@@ -483,6 +486,16 @@ public final class SaveGame
 			// the world's quests read through at the start (DT32)
 			final int questProblems = QuestCheck.checkWorld().size();
 			mob.tell(CMLib.lang().L("QUESTCHECK: @x1 problems in world/quests@x2.", "" + questProblems, (questProblems > 0) ? " (QUESTCHECK ALL lists them)" : ""));
+		}
+		// the world's scripts' rooms, doors and things, once the world is whole (DT33): to mud.log
+		if(!puzzleChecked)
+		{
+			puzzleChecked = true;
+			final List<String> puzzles = PuzzleCheck.checkAll();
+			for(final String p : puzzles)
+				Log.warnOut("PuzzleCheck", p);
+			if(builderMode && (puzzles.size() > 0))
+				mob.tell(CMLib.lang().L("PUZZLE CHECK: @x1 problems in the world's scripts (PUZZLE CHECK lists them).", "" + puzzles.size()));
 		}
 		if(builderMode)
 		{

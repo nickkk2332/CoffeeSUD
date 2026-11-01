@@ -836,6 +836,12 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   (inline or its own file). A quest that is LOAD=file is read through to
   the file. Builder mode prints the count for world/quests at the start.
   The quest engine has no step labels, so nothing checks them.
+- DT33's CHECK done (`core/PuzzleCheck`, `PUZZLE CHECK [AREA name]`):
+  room IDs of MPGOTO, MPAT and MPTRANSFER, the exits, doors and locks of
+  MPOPEN, MPCLOSE, MPLOCK and MPUNLOCK in the host's room, and MPOLOAD and
+  MPMLOAD names, over every script in the world with its LOAD= files; it
+  runs once at the first login and logs to mud.log. Left: the listing and
+  console, which need I12's switch, plate and controller properties.
 
 #### 2d. Scripting (59)
 
