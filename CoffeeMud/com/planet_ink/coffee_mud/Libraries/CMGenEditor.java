@@ -210,8 +210,62 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 				return;
 			}
 			else
+			{
+				if((filterErr != null) && (filterErr.length() > 0))
+					mob.tell(filterErr);
 				res = CMLib.journals().makeMessage(mob, fieldDisplayStr, vbuf, false);
+			}
 		}
+	}
+
+	/**
+	 * A script field in the editor (B3): a statement to a line, checked by
+	 * SCRIPTCHECK on save, and by the filter given, if any.
+	 * @param mob the builder
+	 * @param E the thing
+	 * @param showNumber the field's number
+	 * @param showFlag the field chosen
+	 * @param fieldDisplayStr the field's name
+	 * @param field the stat
+	 * @param filter a check the script must pass, or null
+	 * @param filterErr what to say when it does not
+	 * @throws IOException if the session fails
+	 */
+	protected void promptStatScript(final MOB mob, final Modifiable E, final int showNumber, final int showFlag,
+									final String fieldDisplayStr, final String field,
+									final Filterer<String> filter, final String filterErr) throws IOException
+	{
+		final String old = E.getStat(field);
+		String now = TextEditor.field(mob, old, showNumber, showFlag, fieldDisplayStr, TextEditor.Form.SCRIPT);
+		while((filter != null) && (!now.equals(old)) && (!filter.passesFilter(now))
+		&& (mob.session() != null) && (!mob.session().isStopped()))
+		{
+			if((filterErr != null) && (filterErr.length() > 0))
+				mob.tell(filterErr);
+			final String again = TextEditor.edit(mob, fieldDisplayStr, now, TextEditor.Form.SCRIPT);
+			if(again == null)
+			{
+				mob.tell(L("(no change)"));
+				now = old;
+				break;
+			}
+			now = again;
+		}
+		if(!now.equals(old))
+			E.setStat(field, now);
+	}
+
+	/**
+	 * A Scriptable behaviour's script in the editor (B3).
+	 * @param mob the builder
+	 * @param B the behaviour
+	 * @return its script, edited, or as it was
+	 * @throws IOException if the session fails
+	 */
+	protected String scriptParms(final MOB mob, final Behavior B) throws IOException
+	{
+		final String edited = TextEditor.edit(mob, L("@x1 script", B.ID()), B.getParms(), TextEditor.Form.SCRIPT);
+		return (edited == null) ? B.getParms() : edited;
 	}
 
 	public void promptRawStatStr(final MOB mob, final Modifiable E, final String help, final int showNumber, final int showFlag, final String fieldDisplayStr, final String field, final boolean emptyOK) throws IOException
@@ -1655,7 +1709,21 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 	@Override
 	public void genDescription(final MOB mob, final Environmental E, final int showNumber, final int showFlag) throws IOException
 	{
-		E.setDescription(prompt(mob, E.description(), showNumber, showFlag, L("Description"), true, true, null));
+		// B3: a description of more than one line is edited in the editor, and + opens it for any
+		if(E.description().indexOf('\n') >= 0)
+		{
+			E.setDescription(TextEditor.field(mob, E.description(), showNumber, showFlag, L("Description"), TextEditor.Form.TEXT));
+			return;
+		}
+		final String desc = prompt(mob, E.description(), showNumber, showFlag, L("Description"), true, true, null);
+		if(desc.equals("+") && (mob.session() != null))
+		{
+			final String edited = TextEditor.edit(mob, L("Description"), E.description(), TextEditor.Form.TEXT);
+			if(edited != null)
+				E.setDescription(edited);
+		}
+		else
+			E.setDescription(desc);
 	}
 
 	protected void genNotes(final MOB mob, final MOB M, final int showNumber, final int showFlag) throws IOException
@@ -4666,7 +4734,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 							while(parms.equals("?"))
 							{
 								parms=chosenOne.getParms();
-								parms=mob.session().prompt(L("Enter any behavior parameters (?)\n\r:@x1",parms));
+								parms=(chosenOne instanceof ScriptingEngine)?scriptParms(mob,chosenOne):mob.session().prompt(L("Enter any behavior parameters (?)\n\r:@x1",parms));
 								if(parms.equals("?"))
 								{
 									final String s2=CMLib.help().getHelpText(chosenOne.ID(),mob,true);
@@ -5698,7 +5766,10 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 									if(chosenOne instanceof Behavior)
 									{
 										oldParm=((Behavior)chosenOne).getParms();
-										parms=mob.session().prompt(L("Enter any behavior parameters (?)\n\r:@x1",oldParm));
+										if(chosenOne instanceof ScriptingEngine)
+											parms=scriptParms(mob,(Behavior)chosenOne);
+										else
+											parms=mob.session().prompt(L("Enter any behavior parameters (?)\n\r:@x1",oldParm));
 									}
 									else
 										oldParm="";
@@ -9361,7 +9432,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,CMParms.toListString(Ability.QUALITY_DESCS),++showNumber,showFlag,L("Quality Code"),"QUALITY",true);
 			promptStatStr(mob,me,L("The parameters for this field are LIKE the parameters for this property:\n\r\n\r@x1\n\r@x2",CMLib.help().getHelpText("Prop_HereAdjuster",mob,true).toString(),varHelp),++showNumber,showFlag,L("Affect Adjustments"),"HERESTATS",true);
 			promptStatStr(mob,me,CMLib.masking().maskHelp("\n","disallow"),++showNumber,showFlag,L("Caster Mask"),"CASTMASK",true);
-			promptStatStr(mob,me,CMLib.help().getHelpText("Scriptable",mob,true).toString(),++showNumber,showFlag,L("Scriptable Parm"),"SCRIPT",true);
+			promptStatScript(mob,me,++showNumber,showFlag,L("Scriptable Parm"),"SCRIPT",null,null);
 			promptStatStr(mob,me,CMLib.masking().maskHelp("\n","disallow"),++showNumber,showFlag,L("Target Mask"),"TARGETMASK",true);
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Fizzle Message"),"FIZZLEMSG",true);
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Auto-Cast Message"),"AUTOCASTMSG",true);
@@ -9696,11 +9767,12 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatDouble(mob, me, ++showNumber, showFlag, L("Action Cost"), "ACTCOST");
 			promptStatDouble(mob, me, ++showNumber, showFlag, L("Combat Cost"), "CBTCOST");
 			promptStatMsg(mob,me,++showNumber,showFlag,L("Help Text"),"HELP",null,"");
-			promptStatMsg(mob,me,++showNumber,showFlag,L("Help Text"),"SCRIPT",new Filterer<String>() {
+			promptStatScript(mob,me,++showNumber,showFlag,L("Script"),"SCRIPT",new Filterer<String>() {
 				@Override
 				public boolean passesFilter(final String obj)
 				{
-					final List<String> lines = CMParms.parseAny(obj.toUpperCase(), '\n', true);
+					// as the engine reads it: LOAD= files in their places, a statement to a line
+					final List<String> lines = CMParms.parseAny(ScriptCheck.withLoads(obj).toUpperCase(), '\n', true);
 					for(final String l : lines)
 					{
 						final String s = l.trim();
@@ -9763,7 +9835,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			me.setStat("ABILITY",genAbilityID(mob, me.getStat("ABILITY"), ++showNumber, showFlag, "Ability ID", true));
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Ability Parms"),"ABILTXT",true);
 			promptStatInt(mob,me,null,++showNumber,showFlag,L("A.Tick Override"),"ABILTIK");
-			promptStatStr(mob,me,CMLib.help().getHelpText("Scriptable",mob,true).toString(),++showNumber,showFlag,L("Scriptable Parm"),"SCRIPT",true);
+			promptStatScript(mob,me,++showNumber,showFlag,L("Scriptable Parm"),"SCRIPT",null,null);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 			if (showFlag < -900)
 			{

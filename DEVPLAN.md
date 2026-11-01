@@ -887,6 +887,20 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   files changed outside the game and what SAVE would write, delete and
   leave (the export run dry, `WorldFiles.plan`); `WORLD DIFF file` shows a
   file against what SAVE would write, as a line diff.
+- B3 done. `core/TextEditor` edits a text in the line editor (the
+  journals' message maker), a window (`EDITOR=WINDOW`) or the program
+  `EDITORCOMMAND=` names (`EDITOR=EXTERNAL`, or $VISUAL or $EDITOR); a
+  script on one line is a statement to a line (split at its unescaped
+  ';', not inside `<SCRIPT>`) and is joined so again, and on save it is
+  checked by SCRIPTCHECK (a quest's by QUESTCHECK): edit again, keep, or
+  cancel. `EDIT SCRIPT target [N]` (a LOAD=-only script opens its file,
+  and is read again), `EDIT DESC target` and `EXTRACT SCRIPT target [N]
+  [file]` (to resources/progs/NAME.script, LOAD= in its place) are
+  `EditCmd`. GenAbility and GenTrap's Scriptable Parm, GenCommand's
+  field (now "Script", its FUNCTION_PROG EXECUTE check reading LOAD=
+  in: `ScriptCheck.withLoads`), a Scriptable behaviour added, MODIFY
+  QUEST's script and a description of more than one line (or + at its
+  prompt) use it, and promptStatMsg now says why a check failed.
 
 #### 2d. Scripting (59)
 

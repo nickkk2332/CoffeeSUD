@@ -504,6 +504,23 @@ public final class ScriptCheck
 	}
 
 	/**
+	 * A script with its LOAD= files read in, as the engine reads it (B3:
+	 * GenCommand's check for its FUNCTION_PROG EXECUTE).
+	 * @param text the script
+	 * @return its lines, each LOAD= file's in its place
+	 */
+	public static String withLoads(final String text)
+	{
+		final Run run = new Run(new HashMap<String, String>());
+		final List<Src> lines = new ArrayList<Src>();
+		expand(run, "inline", (text == null) ? "" : text, 0, lines);
+		final StringBuilder str = new StringBuilder();
+		for(final Src s : lines)
+			str.append(s.text).append("\n");
+		return str.toString();
+	}
+
+	/**
 	 * Checks a script, as an object holds it (inline, or LOAD=).
 	 * @param name what to call the script's own text ("inline", or a file)
 	 * @param text the script
