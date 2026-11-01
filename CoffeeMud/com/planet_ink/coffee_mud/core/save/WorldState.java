@@ -7,6 +7,7 @@ import com.planet_ink.coffee_mud.core.collections.XVector;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
+import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -261,6 +262,7 @@ public final class WorldState
 		str.append(xml.convertXMLtoTag("MANA", player.curState().getMana()));
 		str.append(xml.convertXMLtoTag("MOVE", player.curState().getMovement()));
 		str.append(effectsXML(player));
+		str.append(limitsXML(player));
 		final List<Item> inventory = new ArrayList<Item>();
 		for(int i = 0; i < player.numItems(); i++)
 		{
@@ -414,6 +416,77 @@ public final class WorldState
 					A.getClimateObj().setNextWeatherType(CMath.s_int(areaTag.getParmValue("NEXT")));
 				}
 			}
+		}
+	}
+
+	/**
+	 * Writes a character's entry limits (InstanceArea's LIMIT, such as one run
+	 * a day): how many times each was entered and the game time left before
+	 * the count starts again.  They are kept in the character's class
+	 * variables, which the character's tables do not hold.  The recent
+	 * visits of each planar travel ability (which make a quick return
+	 * harder) go with them.
+	 * @param player the character
+	 * @return the LIMITS tag, or ""
+	 */
+	@SuppressWarnings("unchecked")
+	private static String limitsXML(final MOB player)
+	{
+		final PlayerStats pStats = player.playerStats();
+		final CharClass stdC = CMClass.getCharClass("StdCharClass");
+		if((pStats == null) || (stdC == null))
+			return "";
+		final StringBuilder str = new StringBuilder();
+		for(final Map.Entry<String, Object> e : new ArrayList<Map.Entry<String, Object>>(pStats.getClassVariableMap(stdC).entrySet()))
+		{
+			if((e.getValue() instanceof Pair)
+			&& (((Pair<Object, Object>)e.getValue()).first instanceof int[])
+			&& (((Pair<Object, Object>)e.getValue()).second instanceof long[]))
+			{
+				final Pair<int[], long[]> limit = (Pair<int[], long[]>)e.getValue();
+				final long left = limit.second[0] - GameTime.now();
+				if(left > 0)
+					str.append("<LIMIT N=\"").append(limit.first[0]).append("\" LEFT=\"").append(left).append("\">")
+					   .append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("</LIMIT>");
+			}
+		}
+		for(final Enumeration<Ability> a = player.abilities(); a.hasMoreElements();)
+		{
+			final Ability A = a.nextElement();
+			if(A instanceof PlanarAbility)
+			{
+				final String visits = A.getStat("VISITS");
+				if(visits.length() > 0)
+					str.append("<VISITS ID=\"").append(A.ID()).append("\">").append(visits).append("</VISITS>");
+			}
+		}
+		return (str.length() == 0) ? "" : ("<LIMITS>" + str.toString() + "</LIMITS>");
+	}
+
+	/**
+	 * Puts back a character's entry limits and planar visits, as
+	 * {@link #limitsXML(MOB)} wrote them.
+	 * @param mob the character
+	 * @param limits the LIMITS tag, or null
+	 */
+	private static void putBackLimits(final MOB mob, final XMLTag limits)
+	{
+		final PlayerStats pStats = mob.playerStats();
+		final CharClass stdC = CMClass.getCharClass("StdCharClass");
+		if((limits == null) || (pStats == null) || (stdC == null))
+			return;
+		final Map<String, Object> map = pStats.getClassVariableMap(stdC);
+		for(final XMLTag tag : limits.contents())
+		{
+			if(tag.tag().equalsIgnoreCase("VISITS"))
+			{
+				final Ability A = mob.fetchAbility(tag.getParmValue("ID"));
+				if(A instanceof PlanarAbility)
+					A.setStat("VISITS", tag.value());
+				continue;
+			}
+			map.put(CMLib.xml().restoreAngleBrackets(tag.value()),
+				new Pair<int[], long[]>(new int[] { CMath.s_int(tag.getParmValue("N")) }, new long[] { GameTime.now() + CMath.s_long(tag.getParmValue("LEFT")) }));
 		}
 	}
 
@@ -1296,6 +1369,7 @@ public final class WorldState
 	private static void putBackPlayer(final MOB mob, final XMLTag playerTag)
 	{
 		noteRestored(mob, playerTag);
+		putBackLimits(mob, playerTag.getPieceFromPieces("LIMITS"));
 		final XMLTag inventory = playerTag.getPieceFromPieces("INVENTORY");
 		if(inventory != null)
 		{

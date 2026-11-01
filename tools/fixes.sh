@@ -10,6 +10,7 @@
 #   KEEP=1 tools/fixes.sh     keep the scratch folder and print its path
 #   tools/fixes.sh NAME ...   run only these test files (without .js)
 #   tools/fixes.sh saves      run only the played save tests (step 2b)
+#   tools/fixes.sh saves3     run one group of them (saves1, saves2, saves3)
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="$ROOT/CoffeeMud"
 FX="$ROOT/tools/fixtures/fixes"
@@ -30,7 +31,8 @@ FAIL=0
 
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
-if [ "$1" = "saves" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
+case "$1" in saves|saves1|saves2|saves3) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
 SCRIPT='Fixer\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
@@ -375,6 +377,14 @@ group_saves3()
 	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" >> "$W/s23-inspect.txt" 2>&1
 	expect s23-inspect.txt "Character: Saver in New Area#0"
 	expect s23-inspect.txt "hit points 7,"
+
+	# S22: a character's entry limits (InstanceArea's LIMIT) and planar
+	# visits are saved, with the time they have left
+	play s22-play.txt wdb wworld "Roamer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s22-play.js\nsave s22\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s22-play.txt
+	play s22-restore.txt wdb wworld 'jrun /resources/_fixes/s22-check.js\nquit\nn\n' RESTORE=s22 TIMEMODE=TURNS
+	expect s22-restore.txt "Restored 's22'."
+	jsresults s22-restore.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so
@@ -406,6 +416,11 @@ elif [ "$1" = "saves" ]; then
 	wait $V_PID; wait $V2_PID; wait $V3_PID
 	cat "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"
 	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"; then FAIL=1; fi
+elif [ -n "$ONLYSAVES" ]; then
+	G="group_$1"; [ "$1" = "saves1" ] && G=group_saves
+	$G > "$W/$G.log" 2>&1
+	cat "$W/$G.log"
+	if grep -q "^  FAIL" "$W/$G.log"; then FAIL=1; fi
 else
 	group_jrun > "$W/group_jrun.log" 2>&1
 	cat "$W/group_jrun.log"

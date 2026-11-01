@@ -287,6 +287,12 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   `tools/saveinspect.py` prints a save outside the game and can set a
   variable, the hit points or the room. Not done: the "dev flag" in SAVES
   INFO, which nothing in a save holds yet.
+- S22 done. A character's entry limits (InstanceArea's `LIMIT`, such as one
+  run a day, kept in the character's class variables, which the character's
+  tables do not hold) go in its PLAYER tag (`<LIMITS>`), each with its count
+  and the game time left, and finished ones are dropped. The recent visits of
+  each planar travel ability (which make a quick return harder for an hour)
+  go with them, through the ability's internal `VISITS` stat.
 
 #### 2c. Developer and builder tools (50)
 

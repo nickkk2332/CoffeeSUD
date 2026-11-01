@@ -1826,6 +1826,55 @@ public class StdPlanarAbility extends StdAbility implements PlanarAbility
 		}
 	}
 
+	/**
+	 * The internal stat VISITS is the recent visits to each plane (which make
+	 * a quick return harder), as XML, for a saved game: each visit's plane,
+	 * how long ago it was and how far it raised the difficulty.  Visits more
+	 * than an hour old are left out, as they no longer count.
+	 */
+	@Override
+	public String getStat(final String code)
+	{
+		if("VISITS".equalsIgnoreCase(code))
+		{
+			final StringBuilder str = new StringBuilder("");
+			final long now = GameTime.now();
+			synchronized(recentVisits)
+			{
+				for(final Map.Entry<String, long[]> e : recentVisits.entrySet())
+				{
+					if((e.getValue()[0] + hardBumpTimeout) > now)
+					{
+						str.append("<V AGO=\"").append(now - e.getValue()[0]).append("\" N=\"").append(e.getValue()[1]).append("\">")
+						   .append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("</V>");
+					}
+				}
+			}
+			return str.toString();
+		}
+		return super.getStat(code);
+	}
+
+	@Override
+	public void setStat(final String code, final String val)
+	{
+		if("VISITS".equalsIgnoreCase(code))
+		{
+			final long now = GameTime.now();
+			synchronized(recentVisits)
+			{
+				recentVisits.clear();
+				for(final XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(val))
+				{
+					if(tag.tag().equalsIgnoreCase("V"))
+						recentVisits.put(CMLib.xml().restoreAngleBrackets(tag.value()), new long[] { now - CMath.s_long(tag.getParmValue("AGO")), CMath.s_long(tag.getParmValue("N")) });
+				}
+			}
+			return;
+		}
+		super.setStat(code, val);
+	}
+
 	protected PlanarAbility getPlanarAbility(final Physical P)
 	{
 		for(final Enumeration<Ability> a=P.effects();a.hasMoreElements();)
