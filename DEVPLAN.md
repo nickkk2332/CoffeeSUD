@@ -559,6 +559,22 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   turns triggers off until turned on (as MPNOTRIGGER, saved with the engine's
   state); `SCRIPT ALARMS [LIST|CLEAR]` shows or forgets what is queued
   (MPALARMs, triggers waiting their tick).
+- DT8 done, the core of it. `PLAYTEST ON|OFF` in builder mode: while on
+  (`Prop_Playtest`, not saved), every check in CMSecurity says no to the
+  builder (`CMSecurity.setPlaytest`: sysop, staff, each flag), so the one
+  shared exemption test is the security check itself and Aggressive,
+  VeryAggressive, Follower, Prop_Doppleganger, the variable equipment and
+  Prop_Uncampable all treat them as a mortal, and DT6's cheats fall back to
+  mortal defaults. The prompt starts `(playtest)`. A death brings them back,
+  whole, to the room the playtest began in. `BUILD command` runs one command
+  with the powers back (`CMSecurity.runAsBuilder`); it is a command only in a
+  playtest, since BUILD is also the Building skill's word (BUILDING in a
+  playtest). OFF gives the powers back, makes them whole and makes peace.
+  Left: setting party and difficulty as a new game at ON; restore points
+  beyond the room (inventory, experience); `PLAYTEST GAME` (export and
+  restart in process as a normal game, and plain `BUILD` back); `PARTY
+  MORTAL|ARCHON name` for makeArchon; an editor that asks for input after
+  its command returns runs without the powers.
 
 #### 2d. Scripting (59)
 

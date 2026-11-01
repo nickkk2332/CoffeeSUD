@@ -1943,7 +1943,8 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 	@Override
 	public String buildPrompt(final MOB mob, final String prompt)
 	{
-		final StringBuffer buf=new StringBuffer("\n\r");
+		// PLAYTEST says so before the prompt
+		final StringBuffer buf=new StringBuffer(CMSecurity.isPlaytesting(mob)?"\n\r(playtest) ":"\n\r");
 		String promptUp=null;
 		int c=0;
 		while(c<prompt.length())

@@ -451,6 +451,8 @@ public class CMSecurity
 	 */
 	public static final boolean isASysOp(final MOB mob, final char threadId)
 	{
+		if(playtestBlocks(mob))
+			return false;
 		final MaskingLibrary.CompiledZMask mask=instance(threadId).compiledSysop;
 		final MaskingLibrary maskLib = CMLib.get(threadId)._masking();
 		if(mask == null)
@@ -499,6 +501,8 @@ public class CMSecurity
 	 */
 	public static final boolean isASysOp(final MOB mob)
 	{
+		if(playtestBlocks(mob))
+			return false;
 		final MaskingLibrary.CompiledZMask mask=i().compiledSysop;
 		if(mask == null)
 		{
@@ -590,6 +594,8 @@ public class CMSecurity
 	 */
 	public static final boolean isStaff(final MOB mob)
 	{
+		if(playtestBlocks(mob))
+			return false;
 		if(isASysOp(mob))
 			return true;
 		if(mob==null)
@@ -885,6 +891,78 @@ public class CMSecurity
 		}
 	}
 
+	/** the characters in PLAYTEST, every sysop power suspended */
+	private static final Set<MOB>		playtesters	= Collections.newSetFromMap(new WeakHashMap<MOB, Boolean>());
+	/** whether anyone is in PLAYTEST, so that a check costs nothing when no one is */
+	private static volatile boolean		anyPlaytest	= false;
+	/** the character whose command BUILD runs on this thread, powers and all */
+	private static final ThreadLocal<MOB>	building	= new ThreadLocal<MOB>();
+
+	/**
+	 * Puts a character in PLAYTEST or takes them out: while in it, every
+	 * check here says no to them (sysop, staff, each flag), so that the game
+	 * treats them as a mortal, except in what {@link #runAsBuilder(MOB, Runnable)}
+	 * runs.
+	 * @param mob the character
+	 * @param on true to put them in, false to take them out
+	 */
+	public static void setPlaytest(final MOB mob, final boolean on)
+	{
+		if(mob == null)
+			return;
+		synchronized(playtesters)
+		{
+			if(on)
+				playtesters.add(mob);
+			else
+				playtesters.remove(mob);
+			anyPlaytest = !playtesters.isEmpty();
+		}
+	}
+
+	/**
+	 * Whether a character is in PLAYTEST.
+	 * @param mob the character
+	 * @return true if they are
+	 */
+	public static boolean isPlaytesting(final MOB mob)
+	{
+		if((!anyPlaytest) || (mob == null))
+			return false;
+		synchronized(playtesters)
+		{
+			return playtesters.contains(mob);
+		}
+	}
+
+	/**
+	 * Runs something with a character's powers back, though in PLAYTEST: BUILD
+	 * runs a building command so.
+	 * @param mob the character
+	 * @param r what to run
+	 */
+	public static void runAsBuilder(final MOB mob, final Runnable r)
+	{
+		final MOB was = building.get();
+		building.set(mob);
+		try
+		{
+			r.run();
+		}
+		finally
+		{
+			if(was == null)
+				building.remove();
+			else
+				building.set(was);
+		}
+	}
+
+	private static boolean playtestBlocks(final MOB mob)
+	{
+		return anyPlaytest && (building.get() != mob) && isPlaytesting(mob);
+	}
+
 	private static boolean isSuspended(final MOB mob, final SecFlag flag)
 	{
 		final Set<SecFlag> s;
@@ -913,6 +991,8 @@ public class CMSecurity
 	public static final boolean isAllowedContainsAny(final MOB mob, final Room room, final SecGroup secGroup)
 	{
 		if(mob==null)
+			return false;
+		if(playtestBlocks(mob))
 			return false;
 		if(isASysOp(mob))
 			return true;
@@ -943,6 +1023,8 @@ public class CMSecurity
 			return false;
 		if(anySuspended && isSuspended(mob, flag))
 			return false;
+		if(playtestBlocks(mob))
+			return false;
 		if(isASysOp(mob))
 			return true;
 		if((mob.playerStats()==null)
@@ -967,6 +1049,8 @@ public class CMSecurity
 	public static final boolean isAllowedAnywhereContainsAny(final MOB mob, final SecGroup secGroup)
 	{
 		if(mob==null)
+			return false;
+		if(playtestBlocks(mob))
 			return false;
 		if(isASysOp(mob))
 			return true;
@@ -1006,6 +1090,8 @@ public class CMSecurity
 			return false;
 		if(anySuspended && isSuspended(mob, flag))
 			return false;
+		if(playtestBlocks(mob))
+			return false;
 		if(isASysOp(mob))
 			return true;
 		if((mob.playerStats()==null)
@@ -1032,6 +1118,8 @@ public class CMSecurity
 		if(mob==null)
 			return false;
 		if(anySuspended && isSuspended(mob, flag))
+			return false;
+		if(playtestBlocks(mob))
 			return false;
 		if(isASysOp(mob))
 			return true;
