@@ -1,0 +1,2 @@
+% cup	1	20	1	1	GenEmptyDrink	LIQUID	5	
+% fixes widget	1	20	1	1	GenNoSuchFixClass	LIQUID	5	

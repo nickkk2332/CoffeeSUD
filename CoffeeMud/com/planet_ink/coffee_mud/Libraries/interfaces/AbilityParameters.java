@@ -276,6 +276,18 @@ public interface AbilityParameters extends CMLibrary
 	public AbilityRecipeData parseRecipe(String recipeFilename, String recipeFormat);
 
 	/**
+	 * VALIDATE RECIPES (DT29): every row of a skill's recipe file and of its
+	 * extension files (.txt.1 and on), each value checked as MODIFY RECIPE
+	 * would take it, and the rows whose column count is not the format's;
+	 * every problem, not only the first.
+	 *
+	 * @param recipeFilename the base file
+	 * @param recipeFormat the skill's format
+	 * @return the problems, each "file row n: what"
+	 */
+	public List<String> validateRecipes(String recipeFilename, String recipeFormat);
+
+	/**
 	 * Map of all the Ability Parameter editor objects, keyed by their parameter
 	 * column ID.
 	 * @return map of all the Ability Parameter editor objects

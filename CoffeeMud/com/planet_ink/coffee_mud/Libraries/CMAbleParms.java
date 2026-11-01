@@ -787,6 +787,101 @@ public class CMAbleParms extends StdLibrary implements AbilityParameters
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public List<String> validateRecipes(final String recipeFilename, final String recipeFormat)
+	{
+		final List<String> problems = new ArrayList<String>();
+		final Vector<? extends Object> columnsV = parseRecipeFormatColumns(recipeFormat);
+		int numberOfDataColumns = 0;
+		boolean open = false;
+		for(int c = 0; c < columnsV.size(); c++)
+		{
+			if(columnsV.elementAt(c) instanceof List)
+				numberOfDataColumns++;
+			else
+			if("...".equals(columnsV.elementAt(c)))
+				open = true;
+		}
+		final Map<String,AbilityParmEditor> editors = getEditors();
+		final String path = ((recipeFilename.indexOf('/')>=0)||(recipeFilename.indexOf('\\')>=0))
+							? recipeFilename : (Resources.buildResourcePath("skills") + recipeFilename);
+		final CMFile[] files = CMFile.getExistingExtendedFiles(path, null, CMFile.FLAG_LOGERRORS);
+		if(files.length == 0)
+			problems.add(recipeFilename + ": not found");
+		for(final CMFile F : files)
+		{
+			final String fname = F.getName();
+			final StringBuffer text = F.text();
+			// the rows as the file has them, to count their columns
+			if((!open) && (text.indexOf("<ITEMS>") < 0))
+			{
+				int row = 0;
+				for(final String line : cleanDataRowEOLs(new StringBuffer(text.toString())).toString().split("\n"))
+				{
+					if((line.trim().length() == 0) || line.startsWith("#"))
+						continue;
+					row++;
+					final String[] fields = line.split("\t", -1);
+					int cols = fields.length;
+					// a trailing tab or two past the last column is no column
+					while((cols > numberOfDataColumns) && (fields[cols - 1].trim().length() == 0))
+						cols--;
+					if(cols > numberOfDataColumns)
+						problems.add(fname + " row " + row + ": " + cols + " columns, and the format has " + numberOfDataColumns);
+				}
+			}
+			final Vector<AbilityRecipeRow> rowsV;
+			try
+			{
+				rowsV = parseDataRows(text, columnsV, numberOfDataColumns);
+			}
+			catch(final CMException e)
+			{
+				problems.add(fname + ": " + e.getMessage());
+				continue;
+			}
+			for(int r = 0; r < rowsV.size(); r++)
+			{
+				final AbilityRecipeRow row = rowsV.elementAt(r);
+				try
+				{
+					if(!fixDataColumn(row, r))
+					{
+						problems.add(fname + " row " + (r + 1) + ": no column type fits it");
+						continue;
+					}
+				}
+				catch(final CMException e)
+				{
+					// the parser counts its rows from 0: its own row number is dropped
+					problems.add(fname + " row " + (r + 1) + ": " + String.valueOf(e.getMessage()).replaceAll(" at row \\d+$", ""));
+					continue;
+				}
+				for(int a = 0; a < row.size(); a++)
+				{
+					final AbilityParmEditor A = editors.get(row.get(a).first);
+					final String val = row.get(a).second;
+					if(A == null)
+						continue;
+					boolean ok;
+					try
+					{
+						ok = A.confirmValue(val);
+					}
+					catch(final RuntimeException e)
+					{
+						ok = false;
+					}
+					if(!ok)
+						problems.add(fname + " row " + (r + 1) + ": " + A.colHeader().trim().toLowerCase() + " '" + val + "' is not valid ("
+									 + row.get(a).first + ")");
+				}
+			}
+		}
+		return problems;
+	}
+
+	@Override
 	public void testRecipeParsing(final StringBuffer recipesString, final String recipeFormat) throws CMException
 	{
 		testRecipeParsing(recipesString,recipeFormat,null);

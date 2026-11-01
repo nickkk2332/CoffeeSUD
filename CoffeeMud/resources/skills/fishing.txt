@@ -24,7 +24,7 @@ Trout	4	Bull Trout	1
 Trout	2	Golden Trout	2
 Trout	8	Gar	0
 Trout	4	Wiper	1
-Catfish 25	Catfish	1
+Catfish	25	Catfish	1
 Catfish	4	Blue Catfish	2
 Catfish	2	Spotted Bass	2
 Catfish	2	Striped Bass	2

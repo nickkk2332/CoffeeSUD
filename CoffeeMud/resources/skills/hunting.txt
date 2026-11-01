@@ -12,10 +12,10 @@ HIDE	*	2	Ape
 HIDE	*	2	Fox
 HIDE	*	2	Monkey
 PORK	*	1	Pig
-FUR		*	4	Wolf
-FUR		*	3	Buffalo
-FUR		*	2	BrownBear
-FUR		*	1	BlackBear
+FUR	*	4	Wolf
+FUR	*	3	Buffalo
+FUR	*	2	BrownBear
+FUR	*	1	BlackBear
 MEAT	*	4	Wolf
 MEAT	*	3	Buffalo
 MEAT	*	2	BrownBear

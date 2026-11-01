@@ -803,6 +803,16 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   columns. `LIST INSTANCES` lists each instance child with its parent,
   class, members (the new `Area.instanceMembers`), ticks to its time-out,
   rooms and a GOTO room. T11 adds the other VESSEL words.
+- DT29 done. `VALIDATE RECIPES [skill|ALL]` (builder mode, DEV=1 or
+  CMDRECIPES) checks each row of a skill's recipe file and its `.txt.N`
+  extensions (`AbilityParameters.validateRecipes`: each cell with its
+  column editor's `confirmValue`, as MODIFY RECIPE takes it, and the
+  column counts), then hunting.txt, fishing.txt and components.txt, and
+  reports every problem with file and row. It found, in the shipped
+  files: hunting.txt's four FUR rows had a tab doubled (so no wolf or
+  bear fur could ever be hunted) and fishing.txt's "Catfish 25" a space
+  for a tab, both fixed; left for review, clancraft.txt rows 4 and 45 have
+  no CLAN_ITEM_CODENUMBER.
 
 #### 2d. Scripting (59)
 
