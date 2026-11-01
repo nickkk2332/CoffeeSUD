@@ -4815,6 +4815,7 @@ public class ListCmd extends StdCommand
 		HELP("HELP", new SecFlag[] {SecFlag.LISTADMIN}),
 		LIST("LIST", new SecFlag[] {SecFlag.LISTADMIN}),
 		TAGS("TAGS", new SecFlag[] {SecFlag.LISTADMIN}),
+		WORLDINI("WORLDINI", new SecFlag[] {SecFlag.LISTADMIN}),
 		;
 		public String[]			   cmd;
 		public CMSecurity.SecGroup flags;
@@ -6111,6 +6112,9 @@ public class ListCmd extends StdCommand
 		switch(code)
 		{
 		case HELP: case LIST:
+			break;
+		case WORLDINI:
+			s.println(WorldCmd.listing());
 			break;
 		case COMMANDS:
 			listCommands(mob,commands);

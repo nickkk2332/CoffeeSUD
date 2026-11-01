@@ -1577,13 +1577,43 @@ public class CMSecurity
 	}
 
 	/**
+	 * Returns whether an ID is in a set of disabled IDs, by name or by a
+	 * name ending in *, which disables every ID starting with what is before
+	 * it: ABILITY_Spell_* disables every spell.
+	 * @param set the disabled IDs, in upper case
+	 * @param ID the ID
+	 * @return true if it is disabled
+	 */
+	private static boolean inDisabledSet(final Set<String> set, final String ID)
+	{
+		if((ID==null)||(set.size()==0))
+			return false;
+		final String id=ID.toUpperCase();
+		if(set.contains(id))
+			return true;
+		try
+		{
+			for(final String s : set)
+			{
+				if(s.endsWith("*") && id.startsWith(s.substring(0,s.length()-1)))
+					return true;
+			}
+		}
+		catch(final java.util.ConcurrentModificationException e)
+		{
+			// the flags changed as they were read: the next check reads them anew
+		}
+		return false;
+	}
+
+	/**
 	 * Check to see if the given Command is disabled.
 	 * @param ID the official Command ID
 	 * @return true if it is disabled, false otherwise
 	 */
 	public static final boolean isCommandDisabled(final String ID)
 	{
-		return (ID==null) ? false : instance().cmdDisVars.contains(ID.toUpperCase());
+		return inDisabledSet(instance().cmdDisVars, ID);
 	}
 
 	/**
@@ -1593,7 +1623,7 @@ public class CMSecurity
 	 */
 	public static final boolean isRaceDisabled(final String ID)
 	{
-		return (ID==null) ? false : instance().racDisVars.contains(ID.toUpperCase());
+		return inDisabledSet(instance().racDisVars, ID);
 	}
 
 	/**
@@ -1603,7 +1633,7 @@ public class CMSecurity
 	 */
 	public static final boolean isCharClassDisabled(final String ID)
 	{
-		return (ID==null) ? false : instance().clsDisVars.contains(ID.toUpperCase());
+		return inDisabledSet(instance().clsDisVars, ID);
 	}
 
 	/**
@@ -1613,7 +1643,7 @@ public class CMSecurity
 	 */
 	public static final boolean isAbilityDisabled(final String ID)
 	{
-		return (ID==null) ? false : instance().ablDisVars.contains(ID.toUpperCase());
+		return inDisabledSet(instance().ablDisVars, ID);
 	}
 
 	/**
@@ -1623,7 +1653,7 @@ public class CMSecurity
 	 */
 	public static final boolean isFactionDisabled(final String ID)
 	{
-		return (ID==null) ? false : instance().facDisVars.contains(ID.toUpperCase());
+		return inDisabledSet(instance().facDisVars, ID);
 	}
 
 	/**
@@ -1683,6 +1713,7 @@ public class CMSecurity
 		inst.racDisVars.clear();
 		inst.clsDisVars.clear();
 		inst.facDisVars.clear();
+		inst.ablDisVars.clear();
 		for(final String var : V)
 		{
 			if(!setAnyDisableVar(var))

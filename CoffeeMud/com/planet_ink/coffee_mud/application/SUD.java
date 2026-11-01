@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import com.planet_ink.coffee_mud.core.CMProps;
@@ -15,6 +18,7 @@ import com.planet_ink.coffee_mud.core.Party;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.save.SaveSlots;
 import com.planet_ink.coffee_mud.core.save.WorldFiles;
+import com.planet_ink.coffee_mud.core.save.WorldSettings;
 
 /*
    Copyright 2026 CoffeeSUD contributors
@@ -54,6 +58,9 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  */
 public class SUD
 {
+	/** the world's own settings, from WORLDDIR/world.ini */
+	private static Map<String, String> worldSettings = new LinkedHashMap<String, String>();
+
 	private static final String[] SINGLE_PLAYER_SETTINGS =
 	{
 		// the profile is an account holding all the player's characters
@@ -118,6 +125,9 @@ public class SUD
 		final List<String> fullArgs = new ArrayList<String>();
 		fullArgs.add(gameName);
 		fullArgs.addAll(Arrays.asList(SINGLE_PLAYER_SETTINGS));
+		// the world's settings over coffeemud.ini, and the command line over them
+		for(final Map.Entry<String, String> e : worldSettings.entrySet())
+			fullArgs.add(e.getKey() + "=" + e.getValue());
 		fullArgs.addAll(Arrays.asList(args));
 		System.out.println("Loading the world...");
 		MUD.main(fullArgs.toArray(new String[fullArgs.size()]));
@@ -135,6 +145,7 @@ public class SUD
 	protected static Properties readSettings(final String[] args)
 	{
 		final Properties settings = new Properties();
+		final Map<String, String> from = new HashMap<String, String>();
 		// read as plain NAME=VALUE lines, not as a Java properties file, which
 		// would take the backslashes in a Windows path for escapes
 		try(BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("coffeemud.ini"), "UTF-8")))
@@ -145,18 +156,45 @@ public class SUD
 				line = line.trim();
 				final int x = line.indexOf('=');
 				if((x > 0) && (!line.startsWith("#")) && (!line.startsWith("!")))
-					settings.setProperty(line.substring(0, x).trim().toUpperCase(), line.substring(x + 1).trim());
+				{
+					final String key = line.substring(0, x).trim().toUpperCase();
+					final String value = line.substring(x + 1).trim();
+					settings.setProperty(key, value);
+					if(value.length() > 0)
+						from.put(key, WorldSettings.FROM_INI);
+				}
 			}
 		}
 		catch(final IOException e)
 		{
 		}
+		final Map<String, String> commandLine = new LinkedHashMap<String, String>();
 		for(final String arg : args)
 		{
 			final int x = arg.indexOf('=');
 			if(x > 0)
-				settings.setProperty(arg.substring(0, x).trim().toUpperCase(), arg.substring(x + 1));
+				commandLine.put(arg.substring(0, x).trim().toUpperCase(), arg.substring(x + 1));
 		}
+		// the world's own settings, between the two
+		String worldDir = commandLine.get("WORLDDIR");
+		if(worldDir == null)
+			worldDir = settings.getProperty("WORLDDIR", "world");
+		final List<String> ignored = new ArrayList<String>();
+		worldSettings = WorldSettings.read(new File(worldDir.trim()), ignored);
+		if(ignored.size() > 0)
+			System.out.println(WorldSettings.FILE + ": " + String.join(", ", ignored) + (ignored.size() == 1 ? " is" : " are")
+				+ " not a world setting, so ignored (the engine's own settings go in coffeemud.ini).");
+		for(final Map.Entry<String, String> e : worldSettings.entrySet())
+		{
+			settings.setProperty(e.getKey(), e.getValue());
+			from.put(e.getKey(), WorldSettings.FROM_WORLD);
+		}
+		for(final Map.Entry<String, String> e : commandLine.entrySet())
+		{
+			settings.setProperty(e.getKey(), e.getValue());
+			from.put(e.getKey(), WorldSettings.FROM_COMMAND);
+		}
+		WorldSettings.noteStarted(worldSettings, from);
 		return settings;
 	}
 

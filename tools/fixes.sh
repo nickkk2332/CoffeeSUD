@@ -195,6 +195,45 @@ group_saves()
 	play s2-iron2.txt sdb sworld 'save other\nquit\nY\n' RESTORE=iron TIMEMODE=TURNS
 	expect s2-iron2.txt "Restored 'iron'."
 	expect s2-iron2.txt "This is an ironman game: it has one save, 'iron', which it keeps for you."
+
+	# S3: the world's own settings in world.ini, between coffeemud.ini and
+	# the command line, and WORLD SET in builder mode
+	mkdir -p "$W/s3db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/s3db/"
+	cp -r "$GAME/world" "$W/s3world"
+	printf '# the test world\nGAMENAME=Ashen Reach\nSTART=New Area#1\nHOURSINDAY=12\nTIMEMODE=REALTIME\nPORT=9999\n' > "$W/s3world/world.ini"
+	play s3-new.txt s3db s3world "Ash\n${NEWCHAR}look\ntime\nworld\nworld set HOURSINDAY=6\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s3-new.txt "world.ini: PORT is not a world setting, so ignored"
+	expect s3-new.txt "Welcome to Ashen Reach"
+	expect s3-new.txt "(Hour: "
+	if grep -aq "(Hour: [0-9]*/11)" "$W/s3-new.txt"; then
+		echo "  ok    s3-new.txt: the day has the world's 12 hours"
+	else
+		echo "  FAIL  s3-new.txt: the day does not have the world's 12 hours"; FAIL=1
+	fi
+	if sed -n '/Press Enter to begin/,$p' "$W/s3-new.txt" | grep -aq "^Rocky Room"; then
+		echo "  ok    s3-new.txt: the character started where the world says"
+	else
+		echo "  FAIL  s3-new.txt: the character did not start in the world's START room"; FAIL=1
+	fi
+	expect s3-new.txt "HOURSINDAY           = 12  (world.ini)"
+	expect s3-new.txt "TIMEMODE             = TURNS  (the command line)"
+	expect s3-new.txt "WORLD SET changes the world's own files, so it is for builder mode"
+	play s3-build.txt s3db s3world "Builder\n${NEWCHAR}world set HOURSINDAY=10\nworld set PORT=1\nlist worldini\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	expect s3-build.txt "HOURSINDAY=10 is set in world.ini."
+	expect s3-build.txt "PORT is not a world setting"
+	expect s3-build.txt "GAMENAME             = Ashen Reach  (world.ini)"
+	if grep -q "^HOURSINDAY=10$" "$W/s3world/world.ini" && grep -q "^# the test world$" "$W/s3world/world.ini" && [ "$(grep -c HOURSINDAY "$W/s3world/world.ini")" = 1 ]; then
+		echo "  ok    s3-build: WORLD SET changed its line and kept the rest"
+	else
+		echo "  FAIL  s3-build: world.ini is not as WORLD SET should leave it"; FAIL=1
+	fi
+	# the next game starts with the changed world.ini
+	play s3-after.txt s3db s3world "Cinder\n${NEWCHAR}time\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	if grep -aq "(Hour: [0-9]*/9)" "$W/s3-after.txt"; then
+		echo "  ok    s3-after.txt: the next game has the 10 hours WORLD SET gave"
+	else
+		echo "  FAIL  s3-after.txt: the next game does not have 10 hours a day"; FAIL=1
+	fi
 }
 
 # the groups share nothing (each has its own world, database and saves), so

@@ -873,6 +873,8 @@ public final class WorldFiles
 			paths.add(CUSTOM_FILE);
 		if(new File(worldDir, CATALOG_FILE).isFile())
 			paths.add(CATALOG_FILE);
+		if(new File(worldDir, WorldSettings.FILE).isFile())
+			paths.add(WorldSettings.FILE);
 		Collections.sort(paths);
 		final CRC32 crc = new CRC32();
 		final byte[] buf = new byte[65536];

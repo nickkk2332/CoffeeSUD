@@ -174,6 +174,20 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   refuses, and an ironman game has one save, written at every QUIT, with
   RESTORE refused in play. An autosave skips fights but not places, since a
   builder put it there.
+- S3 done. `WORLDDIR/world.ini` is read after `coffeemud.ini` and before the
+  command line, for the keys in `WorldSettings` (the audit's list, the
+  calendar, SAVEMODE and the party settings, and a few more game rules such
+  as COMBATSYSTEM, HUNGER and DIRECTIONS; START_, DEATH_, MORGUE_, FORMULA_,
+  ADDCHARSTAT_ and REPLACECHARSTAT_ keys); others are reported at launch and
+  ignored. There is no currency key in the ini (a currency is an area's),
+  and no race or class allow list, which DISABLE and CHARCREATIONSCRIPTS
+  cover. `WORLD` and `LIST WORLDINI` show each key's value and where it came
+  from; `WORLD SET KEY=VALUE` (builder mode) rewrites its line. `world.sum`
+  covers the file.
+- S20 in part: an ABILITY_, COMMAND_, RACE_, CHARCLASS_ or FACTION_ disable
+  flag may end in `*`. The STDACHIEVEMENTS, STDTITLES and STDSOCIALS flags
+  wait for S6, which gives the world its own copies of those files. Found on
+  the way: reloading the DISABLE flags left disabled abilities from before.
 
 #### 2c. Developer and builder tools (50)
 
