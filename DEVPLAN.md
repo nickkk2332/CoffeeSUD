@@ -842,6 +842,12 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   MPMLOAD names, over every script in the world with its LOAD= files; it
   runs once at the first login and logs to mud.log. Left: the listing and
   console, which need I12's switch, plate and controller properties.
+- DT34 done. `SCRIPTPROF ON|OFF|RESET|REPORT [n] [AREA]` (builder mode,
+  DEV=1 or CMDROOMS; `core/ScriptProf`) times each trigger's whole run in
+  `DefaultScriptingEngine.execute` (nested runs count in their trigger's),
+  by file:line and trigger, with runs, total, longest and its host.
+  `SCRIPTSLOW=ms` warns in mud.log of each slower run, and an MPWHILE cut
+  off at its 4-second cap is now a script error with its file and line.
 
 #### 2d. Scripting (59)
 

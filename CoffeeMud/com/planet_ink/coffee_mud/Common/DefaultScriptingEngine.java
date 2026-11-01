@@ -9437,6 +9437,32 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public String execute(final MPContext ctx)
 	{
+		// SCRIPTPROF and SCRIPTSLOW= (DT34): a trigger's whole run, timed
+		if(!ScriptProf.wanted())
+			return executeTraced(ctx);
+		final boolean outer = ScriptProf.enter();
+		final long t0 = System.nanoTime();
+		try
+		{
+			return executeTraced(ctx);
+		}
+		finally
+		{
+			ScriptProf.leave();
+			if(outer && (ctx.script != null) && (ctx.scripted != null))
+			{
+				final long ns = System.nanoTime() - t0;
+				final String where = (ctx.scripted instanceof PhysicalAgent) ? scriptLocation((PhysicalAgent)ctx.scripted, ctx.script, 0) : "";
+				final Room R = CMLib.map().roomLocation(ctx.scripted);
+				ScriptProf.record(((where.length() > 0) ? (where + " ") : "") + ctx.script.getTriggerLine(),
+					ctx.scripted.name() + " @ " + ((R == null) ? "?" : CMLib.map().getExtendedRoomID(R)),
+					((R == null) || (R.getArea() == null)) ? "" : R.getArea().Name(), ns);
+			}
+		}
+	}
+
+	protected String executeTraced(final MPContext ctx)
+	{
 		if(!ScriptTrace.isOn())
 			return executeBody(ctx);
 		// SCRIPTTRACE (DT18): the lines a traced host runs, and the variables they change
@@ -13787,6 +13813,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				&&((System.currentTimeMillis()-time)<4000)
 				&&(!ctx.scripted.amDestroyed()))
 					execute(ctx.push(vscript));
+				// cut off at its cap: said so (DT34), as it went unseen before
+				if((System.currentTimeMillis()-time)>=4000)
+					logError(ctx,"MPWHILE","RunTime","cut off after 4 seconds, its condition still true");
 				if(vscript.get(1).second!=DOT)
 				{
 					final int oldDotLen=(DOT==null)?1:DOT.length;
