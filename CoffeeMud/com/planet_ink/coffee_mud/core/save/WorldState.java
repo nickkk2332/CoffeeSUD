@@ -6,6 +6,7 @@ import com.planet_ink.coffee_mud.core.collections.Pair;
 import com.planet_ink.coffee_mud.core.collections.XVector;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
+import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -54,7 +55,11 @@ import java.util.*;
  * long a quest that is not running has yet to wait;</li>
  * <li>the variables that scripts share;</li>
  * <li>who rides what: mobs on mounts, characters on their horses, and carts
- * hitched to their teams.</li>
+ * hitched to their teams;</li>
+ * <li>what the behaviours and scripts of mobs, items, rooms and areas have
+ * built up while running (their STATE): which ONCE_PROGs have run, DELAY
+ * countdowns, queued MPALARMs, their own variables, and each behaviour's
+ * own.</li>
  * </ul>
  * Mobs that cannot be saved, such as summoned ones, are left out unless they
  * follow the player, and things a quest is using are left to the quest.  The
@@ -162,6 +167,7 @@ public final class WorldState
 				continue;
 			str.append("<ROOM>").append(xml.convertXMLtoTag("ID", xml.parseOutAngleBrackets(roomID)));
 			str.append(effectsXML(R));
+			str.append(statesXML(R));
 			for(int d = 0; d < Directions.NUM_DIRECTIONS(); d++)
 			{
 				final Exit E = R.getRawExit(d);
@@ -217,6 +223,15 @@ public final class WorldState
 			}
 		}
 		str.append("</WEATHER>\n");
+		str.append("<AREAS>\n");
+		for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+		{
+			final Area A = a.nextElement();
+			final String states = (A == null) ? "" : statesXML(A);
+			if(states.length() > 0)
+				str.append("<AREA>").append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(A.Name()))).append(states).append("</AREA>\n");
+		}
+		str.append("</AREAS>\n");
 		str.append(scriptVarsXML());
 		str.append(questsXML(player));
 		str.append(ridesXML());
@@ -301,6 +316,7 @@ public final class WorldState
 						bringBack(piece, R);
 				}
 				laterEffects(R, roomTag);
+				putStates(R, roomTag);
 				final Unpacked items = unpackItems(roomTag);
 				for(final Item I : items.items)
 				{
@@ -362,6 +378,12 @@ public final class WorldState
 		player = world.getPieceFromPieces("PLAYER");
 		final XMLTag partyTag = world.getPieceFromPieces("PARTY");
 		party = (partyTag == null) ? null : new ArrayList<XMLTag>(partyTag.contents());
+		final XMLTag areas = world.getPieceFromPieces("AREAS");
+		if(areas != null)
+		{
+			for(final XMLTag areaTag : areas.contents())
+				putStates(CMLib.map().getArea(CMLib.xml().restoreAngleBrackets(areaTag.getValFromPieces("NAME"))), areaTag);
+		}
 		final XMLTag weather = world.getPieceFromPieces("WEATHER");
 		if(weather != null)
 		{
@@ -375,6 +397,141 @@ public final class WorldState
 				}
 			}
 		}
+	}
+
+	/**
+	 * Writes what a thing's behaviours and scripts have built up while
+	 * running (their STATE): a BSTATE for each behaviour, by its ID and its
+	 * place among those of that ID, and an SSTATE for each script, by its
+	 * text.
+	 * @param P the mob, item, room or area
+	 * @return the STATES tag, or "" if there is nothing to keep
+	 */
+	private static String statesXML(final PhysicalAgent P)
+	{
+		final StringBuilder str = new StringBuilder();
+		final Map<String, Integer> seen = new HashMap<String, Integer>();
+		for(final Enumeration<Behavior> b = P.behaviors(); b.hasMoreElements();)
+		{
+			final Behavior B = b.nextElement();
+			if(B == null)
+				continue;
+			final Integer n = seen.containsKey(B.ID()) ? Integer.valueOf(seen.get(B.ID()).intValue() + 1) : Integer.valueOf(0);
+			seen.put(B.ID(), n);
+			String state;
+			try
+			{
+				state = B.getStat("STATE");
+			}
+			catch(final Exception e)
+			{
+				state = "";
+			}
+			if((state != null) && (state.length() > 0))
+				str.append("<BSTATE ID=\"").append(B.ID()).append("\" N=\"").append(n).append("\">").append(state).append("</BSTATE>");
+		}
+		for(final Enumeration<ScriptingEngine> e = P.scripts(); e.hasMoreElements();)
+		{
+			final ScriptingEngine S = e.nextElement();
+			if(S == null)
+				continue;
+			final String state = S.getStateXML();
+			if(state.length() > 0)
+				str.append("<SSTATE KEY=\"").append(scriptKey(S)).append("\">").append(state).append("</SSTATE>");
+		}
+		return (str.length() == 0) ? "" : ("<STATES>" + str.toString() + "</STATES>");
+	}
+
+	private static String scriptKey(final ScriptingEngine S)
+	{
+		return Integer.toHexString(S.getScript().hashCode());
+	}
+
+	/**
+	 * Puts back what {@link #statesXML(PhysicalAgent)} wrote, on the
+	 * behaviours and scripts the thing has again after the restore.
+	 * @param P the mob, item, room or area
+	 * @param holder the tag holding its STATES
+	 */
+	private static void putStates(final PhysicalAgent P, final XMLTag holder)
+	{
+		final XMLTag states = (holder == null) ? null : holder.getPieceFromPieces("STATES");
+		if((states == null) || (P == null))
+			return;
+		for(final XMLTag tag : states.contents())
+		{
+			if(tag.tag().equalsIgnoreCase("BSTATE"))
+			{
+				final String ID = tag.getParmValue("ID");
+				int n = CMath.s_int(tag.getParmValue("N"));
+				for(final Enumeration<Behavior> b = P.behaviors(); b.hasMoreElements();)
+				{
+					final Behavior B = b.nextElement();
+					if((B != null) && B.ID().equals(ID) && ((n--) == 0))
+					{
+						try
+						{
+							B.setStat("STATE", tag.value());
+						}
+						catch(final Exception e)
+						{
+							Log.errOut("WorldState", "The state of " + ID + " on " + P.Name() + " could not be put back: " + e.getMessage());
+						}
+						break;
+					}
+				}
+			}
+			else
+			if(tag.tag().equalsIgnoreCase("SSTATE"))
+			{
+				final String key = tag.getParmValue("KEY");
+				for(final Enumeration<ScriptingEngine> e = P.scripts(); e.hasMoreElements();)
+				{
+					final ScriptingEngine S = e.nextElement();
+					if((S != null) && scriptKey(S).equals(key))
+					{
+						S.setStateXML(tag.value());
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns what a save would not keep of the world as it is: mobs that
+	 * cannot be saved (such as summoned ones without a leader), with or
+	 * without scripts, and things in space.
+	 * @param player the player
+	 * @return one line for each
+	 */
+	public static List<String> notKept(final MOB player)
+	{
+		final List<String> lines = new ArrayList<String>();
+		final Set<MOB> followers = new HashSet<MOB>((player == null) ? new ArrayList<MOB>() : followersOf(player));
+		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if((R == null) || R.amDestroyed())
+				continue;
+			final String where = CMStrings.removeColors(R.displayText(player)) + " (" + CMLib.map().getExtendedRoomID(R) + ")";
+			for(int m = 0; m < R.numInhabitants(); m++)
+			{
+				final MOB M = R.fetchInhabitant(m);
+				if((M == null) || (!M.isMonster()) || followers.contains(M) || isQuestObject(M) || isSavedHere(M))
+					continue;
+				final MOB leader = M.getGroupLeader();
+				if((leader != null) && (leader != M) && (!leader.isMonster()))
+					continue; // follows a character, so saved with them
+				final boolean scripted = M.scripts().hasMoreElements() || (M.fetchBehavior("Scriptable") != null);
+				lines.add(CMLib.lang().L("@x1 in @x2 cannot be saved@x3, so a restore will not have it.",
+					M.Name(), where, scripted ? CMLib.lang().L(", nor its scripts' state") : ""));
+			}
+		}
+		final int inSpace = CMLib.space().numSpaceObjects();
+		if(inSpace > 0)
+			lines.add(CMLib.lang().L("@x1 things in space (ships, stations, planets) are not saved where they are.", "" + inSpace));
+		return lines;
 	}
 
 	/**
@@ -562,6 +719,7 @@ public final class WorldState
 		str.append("<INVENTORY>").append(itemsXML(inventory)).append("</INVENTORY>");
 		if(!M.amDead())
 			str.append(effectsXML(M));
+		str.append(statesXML(M));
 		str.append("</" + tag + ">");
 		return str.toString();
 	}
@@ -592,6 +750,7 @@ public final class WorldState
 			if(I.fetchEffect("ItemRejuv") != null)
 				str.append(xml.convertXMLtoTag("RESPAWNS", "true"));
 			str.append(effectsXML(I));
+			str.append(statesXML(I));
 			str.append("</ITEM>");
 		}
 		return str.toString();
@@ -640,6 +799,7 @@ public final class WorldState
 			I.setExpirationDate(tag.getLongFromPieces("EXPIRES", 0));
 			laterEffects(I, tag);
 			noteRestored(I, tag);
+			putStates(I, tag);
 			items.add(I);
 		}
 		for(int i = 0; i < tags.size(); i++)
@@ -745,6 +905,9 @@ public final class WorldState
 		M.curState().setMana(Math.min(tag.getIntFromPieces("MANA"), M.maxState().getMana()));
 		M.curState().setMovement(Math.min(tag.getIntFromPieces("MOVE"), M.maxState().getMovement()));
 		laterEffects(M, tag);
+		// after it comes to life, which makes its behaviours again from its
+		// text; the tick that does is held while a restored world is put back
+		putStates(M, tag);
 		return M;
 	}
 

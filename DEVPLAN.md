@@ -195,6 +195,19 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   team. Found on the way: a mount counts as unsavable while anyone riding it
   is, and characters are, so a save left out the player's own horse; the
   save now asks without the player's characters on it.
+- S7 done, with S9's hook. Behaviours have a STATE stat (`getStat` and
+  `setStat`, `StdBehavior.getRunState`/`setRunState`, empty by default);
+  `world.xml` keeps each saved mob's, item's, room's and area's in a
+  `<STATES>` tag: a BSTATE per behaviour (by ID and place) and an SSTATE per
+  script (by its text). Scriptable's STATE, and a script's, is its engine's:
+  which ONCE_PROGs and QUEST_TIME_PROGs have run (but `ONCE_PROG BOOT`, once
+  a load), when each TIME_PROG and DAY_PROG last ran, DELAY_PROG ticks left,
+  MPNOTRIGGER game time left, queued MPALARMs and delayed responses (their
+  lines, and who they were about by name), its own scope and, for INDIVIDUAL
+  scope, its variables; all tied to a hash of the script. While a restored
+  game boots, scripts wait until the saved world is back, since bringing a
+  mob to life ticks it at once and would run its ONCE_PROG again. `SAVES
+  CHECK` lists what a save would not keep (unsavable mobs, things in space).
 
 #### 2c. Developer and builder tools (50)
 

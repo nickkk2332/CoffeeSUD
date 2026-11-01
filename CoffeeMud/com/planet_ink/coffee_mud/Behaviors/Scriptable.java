@@ -150,6 +150,30 @@ public class Scriptable extends StdBehavior implements ScriptingEngine
 	}
 
 	@Override
+	public String getStateXML()
+	{
+		return engine().getStateXML();
+	}
+
+	@Override
+	public void setStateXML(final String xml)
+	{
+		engine().setStateXML(xml);
+	}
+
+	@Override
+	protected String getRunState()
+	{
+		return engine().getStateXML();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		engine().setStateXML(xml);
+	}
+
+	@Override
 	public String getVar(final String context, final String variable)
 	{
 		return engine().getVar(context, variable);

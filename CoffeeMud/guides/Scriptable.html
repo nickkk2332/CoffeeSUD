@@ -2125,10 +2125,12 @@ makes it useful for doing initialization or other tasks which only need
 to be done once after the mud boots. This type of prog is usually used
 for in-zone quests and special mob behavior, and has a variety of uses.</p>
 
-      <p>In a saved game: a savable script on a player, such as the one a
-quest's DO_ACCEPT gives with MPSCRIPT ... SAVABLE, remembers which of its
-once_progs and quest_time_progs have run, so a restored game does not run
-them again (as long as the script itself has not changed).</p>
+      <p>In a saved game, a once_prog runs once a game: a save keeps which
+once_progs have run, on players, mobs, items, rooms and areas, so a
+restored game does not run them again (as long as the script itself has not
+changed since; an edited script starts afresh).  <code>once_prog boot</code>
+runs once each time the game loads, a restore included, for setting up what
+a save does not keep.</p>
 
       <p>EXAMPLES:</p>
 
@@ -2139,6 +2141,15 @@ right away</p>
 
       <p>MULTIPLE PROGS: You can
 have only one once_prog on a mob.</p>
+
+      <p>WHAT A SAVED GAME KEEPS of a script, besides the variables scripts
+share (MPSETVAR) and quests' variables (MPQSET): which once_progs and
+quest_time_progs have run, the hour each time_prog and the day each day_prog
+last ran, the ticks left on each delay_prog, queued MPALARMs (with who they
+were about, by name), MPNOTRIGGER cooldowns, and the variables of a script with
+its own scope (INDIVIDUAL, or MPSETINTERNAL SCOPE).  Times are kept as game
+time left.  Mobs that cannot be saved, such as summoned ones that follow no
+one, are lost with their scripts: SAVES CHECK lists them.</p>
 
       <h3><a name="open_prog">open_prog</a></h3>
 

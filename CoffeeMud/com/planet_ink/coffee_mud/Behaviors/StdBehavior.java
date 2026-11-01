@@ -316,7 +316,28 @@ public class StdBehavior implements Behavior
 	}
 
 	protected static final String[]	CODES	= { "CLASS", "TEXT" };
-	private static final String[]	INTERNAL_CODES	= { "NAME" };
+	private static final String[]	INTERNAL_CODES	= { "NAME", "STATE" };
+
+	/**
+	 * Returns what this behaviour has built up while running that its
+	 * parameters do not hold, for a saved game: STATE, read with getStat and
+	 * put back with setStat.  Times in it are game time left, so that they
+	 * mean the same after a restore.  None by default.
+	 * @return the state as XML, or ""
+	 */
+	protected String getRunState()
+	{
+		return "";
+	}
+
+	/**
+	 * Puts back the state written by {@link #getRunState()}, once the
+	 * behaviour is on its host after a restore.
+	 * @param xml the state as XML
+	 */
+	protected void setRunState(final String xml)
+	{
+	}
 
 	@Override
 	public String[] getStatCodes()
@@ -358,6 +379,8 @@ public class StdBehavior implements Behavior
 			{
 			case 0:
 				return name();
+			case 1:
+				return getRunState();
 			}
 			break;
 		}
@@ -378,6 +401,9 @@ public class StdBehavior implements Behavior
 			switch(getInternalCodeNum(code))
 			{
 			case 0:
+				break;
+			case 1:
+				setRunState(val);
 				break;
 			}
 			break;

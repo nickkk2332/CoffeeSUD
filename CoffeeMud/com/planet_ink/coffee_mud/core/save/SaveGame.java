@@ -87,6 +87,20 @@ public final class SaveGame
 
 	private static volatile SaveMode saveMode = SaveMode.ANYWHERE;
 
+	/** true while a restored game boots, until the saved world is put back */
+	private static volatile boolean worldPending = false;
+
+	/**
+	 * Returns whether a restored game is still booting: the world is not yet
+	 * as it was saved, so scripts wait, rather than run what they already
+	 * ran.
+	 * @return true until the saved world is back
+	 */
+	public static boolean isWorldPending()
+	{
+		return worldPending;
+	}
+
 	private SaveGame()
 	{
 	}
@@ -188,6 +202,7 @@ public final class SaveGame
 	{
 		bootOverrides.clear();
 		saveMode = SaveMode.ANYWHERE;
+		worldPending = false;
 		workingDb = null;
 		databaseDir = null;
 		restoring = null;
@@ -240,6 +255,7 @@ public final class SaveGame
 			return;
 		currentSlot = slot;
 		restoring = header;
+		worldPending = true;
 		GameTime.setTurnBased("TURNS".equalsIgnoreCase(header.getProperty("timemode")));
 		saveMode = parseSaveMode(header.getProperty("savemode", "ANYWHERE"));
 		if("true".equalsIgnoreCase(header.getProperty("paused")))
@@ -284,10 +300,18 @@ public final class SaveGame
 				@Override
 				public void run()
 				{
-					WorldState.apply(world);
+					try
+					{
+						WorldState.apply(world);
+					}
+					finally
+					{
+						worldPending = false;
+					}
 				}
 			});
 		}
+		worldPending = false;
 		// last, so that play rolls on exactly where the saved game left off
 		final String dice = header.getProperty("dice");
 		if(dice != null)

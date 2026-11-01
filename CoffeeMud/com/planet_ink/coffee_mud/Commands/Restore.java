@@ -3,6 +3,7 @@ import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
+import com.planet_ink.coffee_mud.core.save.WorldState;
 import com.planet_ink.coffee_mud.core.save.SaveSlots;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
@@ -61,6 +62,20 @@ public class Restore extends StdCommand
 		if(SaveGame.isBuilderMode())
 		{
 			mob.tell(L("There are no saved games in builder mode."));
+			return false;
+		}
+		if((commands.size() >= 2) && commands.get(0).toUpperCase().startsWith("SAVE") && commands.get(1).equalsIgnoreCase("CHECK"))
+		{
+			final List<String> lines = WorldState.notKept(mob);
+			if(lines.size() == 0)
+				mob.tell(L("A save now would keep everything in the world."));
+			else
+			{
+				final StringBuilder str = new StringBuilder(L("A save now would not keep:\n\r"));
+				for(final String line : lines)
+					str.append("  ").append(line).append("\n\r");
+				mob.tell(str.toString());
+			}
 			return false;
 		}
 		if((commands.size() < 2) || commands.get(0).toUpperCase().startsWith("SAVE"))

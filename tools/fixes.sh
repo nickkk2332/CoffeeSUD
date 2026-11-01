@@ -249,6 +249,27 @@ group_saves()
 	play s4-restore.txt sdb sworld 'jrun /resources/_fixes/s4-check.js\nquit\nn\n' RESTORE=s4 TIMEMODE=TURNS
 	expect s4-restore.txt "Restored 's4'."
 	jsresults s4-restore.txt
+
+	# S7: what scripts have done: a ONCE_PROG that ran, a queued MPALARM, a
+	# DELAY_PROG under way and a script's own variable, through a save
+	play s7-build.txt sdb sworld "Builder\njrun /resources/_fixes/s7-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s7-build.txt
+	play s7-play.txt sdb sworld "Ringer\n${NEWCHAR}get book\nread book\nwait\njrun /resources/_fixes/s7-play.js\nsaves check\nwait 10\nsave s7\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s7-play.txt
+	count s7-play.txt "FIXS7ONCE" 1
+	count s7-play.txt "FIXS7ROOM" 1
+	count s7-play.txt "FIXS7ALARM" 0
+	count s7-play.txt "FIXS7DELAY" 0
+	expect s7-play.txt "a summoned wisp in New Room"
+	# 20 ticks were left on the alarm and 30 on the delay; a new game would
+	# not have the alarm, and would toll only after 40
+	play s7-restore.txt sdb sworld 'wait 35\njrun /resources/_fixes/s7-check.js\nquit\nn\n' RESTORE=s7 TIMEMODE=TURNS
+	expect s7-restore.txt "Restored 's7'."
+	jsresults s7-restore.txt
+	count s7-restore.txt "FIXS7ONCE" 0
+	count s7-restore.txt "FIXS7ROOM" 0
+	count s7-restore.txt "FIXS7ALARM" 1
+	count s7-restore.txt "FIXS7DELAY" 1
 }
 
 # the groups share nothing (each has its own world, database and saves), so

@@ -5,6 +5,7 @@ import com.planet_ink.coffee_mud.core.exceptions.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMClass.CMObjectType;
 import com.planet_ink.coffee_mud.core.CMSecurity.DbgFlag;
+import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.CMSecurity.SecFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
@@ -117,6 +118,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected LLMSession			llmSession		 = null;
 	protected Map<String,String>	miscArgVars		 = new Hashtable<String,String>(1);
 	protected volatile String		pendingState	 = null;
+	private final Object			stateLock		 = new Object();
 
 	protected final PrioritizingLimitedMap<String,Room> roomFinder=new PrioritizingLimitedMap<String,Room>(5,30*60000L,60*60000L,20);
 
@@ -628,6 +630,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final DefaultScriptingEngine S=(DefaultScriptingEngine)this.clone();
 			//CMClass.bumpCounter(S,CMClass.CMObjectType.COMMON);//removed for mem & perf
 			S.reset();
+			S.pendingState=null; // a copy starts fresh, as its run state does
 			return S;
 		}
 		catch(final CloneNotSupportedException e)
@@ -13943,11 +13946,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				Log.debugOut("Scripting engine parse "+scripts.size()+" scripts");
 			Resources.submitResource(getScriptResourceKey(),scripts);
 		}
-		final String state=pendingState;
-		if(state!=null)
+		if(pendingState!=null)
 		{
-			pendingState=null;
-			applyState(scripts,state);
+			// taken once, though two threads may read the script at once
+			final String state;
+			synchronized(stateLock)
+			{
+				state=pendingState;
+				pendingState=null;
+			}
+			if(state!=null)
+				applyState(scriptedE,scripts,state);
 		}
 		if(scriptedE!=globalsHost)
 			registerGlobalTriggers(scriptedE,scripts);
@@ -13971,6 +13980,41 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return Integer.toHexString(all.toString().hashCode());
 	}
 
+	/**
+	 * Returns whether a script runs once each time the game loads rather than
+	 * once a game: ONCE_PROG BOOT.
+	 * @param script the script
+	 * @return true if it runs once a load
+	 */
+	protected boolean isOncePerLoad(final SubScript script)
+	{
+		if(script.getTriggerCode()!=6) // once_prog
+			return false;
+		final List<String> words=CMParms.parse(script.getTriggerLine());
+		return (words.size()>1)&&(words.get(1).equalsIgnoreCase("BOOT"));
+	}
+
+	private static void appendNumbers(final StringBuilder str, final String tag, final Map<Integer,?> map)
+	{
+		final StringBuilder part=new StringBuilder("");
+		synchronized(map)
+		{
+			for(final Map.Entry<Integer,?> e : map.entrySet())
+			{
+				final Object v=e.getValue();
+				final long n=(v instanceof int[])?((int[])v)[0]:((Number)v).longValue();
+				part.append((part.length()>0)?",":"").append(e.getKey()).append(':').append(n);
+			}
+		}
+		if(part.length()>0)
+			str.append('<').append(tag).append('>').append(part).append("</").append(tag).append('>');
+	}
+
+	private static String nameOf(final Environmental E)
+	{
+		return (E==null)?"":CMLib.xml().parseOutAngleBrackets(E.Name());
+	}
+
 	@Override
 	public String getStateXML()
 	{
@@ -13981,14 +14025,94 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		final List<SubScript> scripts=(List<SubScript>)Resources.getResource(getScriptResourceKey());
 		if(scripts==null)
 			return "";
+		final XMLLibrary xml=CMLib.xml();
 		final StringBuilder str=new StringBuilder("");
-		final List<Integer> onces=new XVector<Integer>(oncesDone);
-		if(onces.size()>0)
+		// which ONCE_PROGs and QUEST_TIME_PROGs have run, but ONCE_PROG BOOT
+		final StringBuilder once=new StringBuilder("");
+		for(final Integer I : new XVector<Integer>(oncesDone))
 		{
-			str.append("<ONCE>");
-			for(int i=0;i<onces.size();i++)
-				str.append((i>0)?",":"").append(onces.get(i));
-			str.append("</ONCE>");
+			final int i=I.intValue();
+			if((i>=0)&&(i<scripts.size())&&isOncePerLoad(scripts.get(i)))
+				continue;
+			once.append((once.length()>0)?",":"").append(i);
+		}
+		if(once.length()>0)
+			str.append("<ONCE>").append(once).append("</ONCE>");
+		// the hour each TIME_PROG and the day each DAY_PROG last ran, and the
+		// ticks left on each DELAY_PROG
+		appendNumbers(str,"TIME",lastTimeProgsDone);
+		appendNumbers(str,"DAY",lastDayProgsDone);
+		appendNumbers(str,"DELAY",delayTargetTimes);
+		// MPNOTRIGGER: game time left on each
+		final StringBuilder notrig=new StringBuilder("");
+		synchronized(noTrigger)
+		{
+			for(final Map.Entry<Integer,Long> e : noTrigger.entrySet())
+			{
+				final long left=e.getValue().longValue()-GameTime.now();
+				if(left>0)
+					notrig.append((notrig.length()>0)?",":"").append(e.getKey()).append(':').append(left);
+			}
+		}
+		if(notrig.length()>0)
+			str.append("<NOTRIG>").append(notrig).append("</NOTRIG>");
+		// what is queued to run: MPALARMs and delayed responses
+		final StringBuilder q=new StringBuilder("");
+		for(final ScriptableResponse SB : new XVector<ScriptableResponse>(que))
+		{
+			if((SB==null)||(SB.scr==null)||(SB.ctx==null))
+				continue;
+			int index=-1;
+			for(int i=0;i<scripts.size();i++)
+			{
+				if(scripts.get(i)==SB.scr)
+					index=i;
+			}
+			q.append("<Q T=\"").append(SB.triggerCode).append("\" D=\"").append(Math.max(0,SB.tickDelay))
+			 .append("\" I=\"").append(index).append("\">");
+			if(index<0)
+			{
+				q.append("<LINES>");
+				for(final ScriptLn line : SB.scr)
+					q.append("<L>").append(xml.parseOutAngleBrackets(line.first)).append("</L>");
+				q.append("</LINES>");
+			}
+			q.append(xml.convertXMLtoTag("SRC",nameOf(SB.ctx.source)));
+			q.append(xml.convertXMLtoTag("MON",nameOf(SB.ctx.monster)));
+			q.append(xml.convertXMLtoTag("TGT",nameOf(SB.ctx.target)));
+			q.append(xml.convertXMLtoTag("PI",nameOf(SB.ctx.primaryItem)));
+			q.append(xml.convertXMLtoTag("SI",nameOf(SB.ctx.secondaryItem)));
+			q.append(xml.convertXMLtoTag("MSG",xml.parseOutAngleBrackets((SB.ctx.msg==null)?"":SB.ctx.msg)));
+			q.append("</Q>");
+		}
+		if(q.length()>0)
+			str.append("<QUE>").append(q).append("</QUE>");
+		// the variable scope a script set for itself (MPSETINTERNAL SCOPE)
+		if(scope.length()>0)
+			str.append(xml.convertXMLtoTag("SCOPE",xml.parseOutAngleBrackets(scope)));
+		// the script's own variables, when it has its own scope (INDIVIDUAL)
+		if((resources!=null)&&(scope.equals("*")||scope.equals("INDIVIDUAL")))
+		{
+			final StringBuilder vars=new StringBuilder("");
+			for(final Iterator<String> k=resources._findResourceKeys("SCRIPTVAR-");k.hasNext();)
+			{
+				final String key=k.next();
+				if(!key.startsWith("SCRIPTVAR-"))
+					continue;
+				@SuppressWarnings("unchecked")
+				final Map<String,String> H=(Map<String,String>)resources._getResource(key);
+				if(H==null)
+					continue;
+				for(final Map.Entry<String,String> e : new XVector<Map.Entry<String,String>>(H.entrySet()))
+				{
+					vars.append("<V>").append(xml.convertXMLtoTag("H",xml.parseOutAngleBrackets(key.substring(10))))
+						.append(xml.convertXMLtoTag("N",xml.parseOutAngleBrackets(e.getKey())))
+						.append(xml.convertXMLtoTag("X",xml.parseOutAngleBrackets(e.getValue())))
+						.append("</V>");
+				}
+			}
+			if(vars.length()>0)
+				str.append("<VARS>").append(vars).append("</VARS>");
 		}
 		if(str.length()==0)
 			return "";
@@ -13998,24 +14122,29 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public void setStateXML(final String xml)
 	{
-		pendingState=((xml==null)||(xml.trim().length()==0))?null:xml;
+		synchronized(stateLock)
+		{
+			pendingState=((xml==null)||(xml.trim().length()==0))?null:xml;
+		}
 	}
 
 	/**
 	 * Puts back saved state, if it was saved with the same script.
+	 * @param host the scripted host
 	 * @param scripts the parsed script
 	 * @param xml the state, as getStateXML wrote it
 	 */
-	protected void applyState(final List<SubScript> scripts, final String xml)
+	protected void applyState(final Environmental host, final List<SubScript> scripts, final String xml)
 	{
-		final List<XMLTag> tags=CMLib.xml().parseAllXML(xml);
-		if(!scriptHash(scripts).equals(CMLib.xml().getValFromPieces(tags, "HASH")))
+		final XMLLibrary xmlLib=CMLib.xml();
+		final List<XMLTag> tags=xmlLib.parseAllXML(xml);
+		if(!scriptHash(scripts).equals(xmlLib.getValFromPieces(tags, "HASH")))
 		{
 			if(CMSecurity.isDebugging(DbgFlag.SCRIPTTRACE))
 				Log.debugOut("Scripting engine: the script changed since its state was saved, so the state was dropped.");
 			return;
 		}
-		final String onces=CMLib.xml().getValFromPieces(tags, "ONCE");
+		final String onces=xmlLib.getValFromPieces(tags, "ONCE");
 		if(onces.length()>0)
 		{
 			for(final String num : CMParms.parseCommas(onces,true))
@@ -14025,6 +14154,146 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					oncesDone.add(I);
 			}
 		}
+		for(final String pair : CMParms.parseCommas(xmlLib.getValFromPieces(tags, "TIME"),true))
+		{
+			final int x=pair.indexOf(':');
+			if(x>0)
+				lastTimeProgsDone.put(Integer.valueOf(CMath.s_int(pair.substring(0,x))),Integer.valueOf(CMath.s_int(pair.substring(x+1))));
+		}
+		for(final String pair : CMParms.parseCommas(xmlLib.getValFromPieces(tags, "DAY"),true))
+		{
+			final int x=pair.indexOf(':');
+			if(x>0)
+				lastDayProgsDone.put(Integer.valueOf(CMath.s_int(pair.substring(0,x))),Integer.valueOf(CMath.s_int(pair.substring(x+1))));
+		}
+		for(final String pair : CMParms.parseCommas(xmlLib.getValFromPieces(tags, "DELAY"),true))
+		{
+			final int x=pair.indexOf(':');
+			if(x>0)
+				delayTargetTimes.put(Integer.valueOf(CMath.s_int(pair.substring(0,x))),new int[]{CMath.s_int(pair.substring(x+1))});
+		}
+		for(final String pair : CMParms.parseCommas(xmlLib.getValFromPieces(tags, "NOTRIG"),true))
+		{
+			final int x=pair.indexOf(':');
+			if(x>0)
+				noTrigger.put(Integer.valueOf(CMath.s_int(pair.substring(0,x))),Long.valueOf(GameTime.now()+CMath.s_long(pair.substring(x+1))));
+		}
+		final XMLTag queued=xmlLib.getPieceFromPieces(tags, "QUE");
+		if((queued!=null)&&(host instanceof PhysicalAgent))
+		{
+			for(final XMLTag q : queued.contents())
+			{
+				final int index=CMath.s_int(q.getParmValue("I"));
+				SubScript scr=null;
+				if((index>=0)&&(index<scripts.size()))
+					scr=scripts.get(index);
+				else
+				{
+					final XMLTag lines=q.getPieceFromPieces("LINES");
+					if(lines!=null)
+					{
+						scr=new SubScriptImpl(null);
+						for(final XMLTag line : lines.contents())
+							scr.add(new ScriptLn(xmlLib.restoreAngleBrackets(line.value()),null,null));
+					}
+				}
+				if((scr==null)||(scr.size()==0))
+					continue;
+				final MOB monster=getMakeMOB(host);
+				final MPContext ctx=new MPContext((PhysicalAgent)host,
+					(monster==null)?findSavedMOB(host,q.getValFromPieces("MON")):monster,
+					findSavedMOB(host,q.getValFromPieces("SRC")),
+					findSavedThing(host,q.getValFromPieces("TGT")),
+					findSavedItem(host,q.getValFromPieces("PI")),
+					findSavedItem(host,q.getValFromPieces("SI")),
+					xmlLib.restoreAngleBrackets(q.getValFromPieces("MSG")), null);
+				que.add(new ScriptableResponse(CMath.s_int(q.getParmValue("T")),ctx,scr,Math.max(1,CMath.s_int(q.getParmValue("D")))));
+			}
+		}
+		final String savedScope=xmlLib.restoreAngleBrackets(xmlLib.getValFromPieces(tags, "SCOPE"));
+		if((savedScope.length()>0)&&(!savedScope.equals(scope)))
+			setVarScope(savedScope);
+		final XMLTag vars=xmlLib.getPieceFromPieces(tags, "VARS");
+		if((vars!=null)&&(resources!=null)&&(scope.equals("*")||scope.equals("INDIVIDUAL")))
+		{
+			for(final XMLTag v : vars.contents())
+			{
+				final String key="SCRIPTVAR-"+xmlLib.restoreAngleBrackets(v.getValFromPieces("H"));
+				@SuppressWarnings("unchecked")
+				Map<String,String> H=(Map<String,String>)resources._getResource(key);
+				if(H==null)
+				{
+					H=Collections.synchronizedMap(new HashMap<String,String>());
+					resources._submitResource(key,H);
+				}
+				H.put(xmlLib.restoreAngleBrackets(v.getValFromPieces("N")),xmlLib.restoreAngleBrackets(v.getValFromPieces("X")));
+			}
+		}
+	}
+
+	/**
+	 * Finds a mob a queued response named when it was saved: in the host's
+	 * room, else a player of that name.
+	 * @param host the scripted host
+	 * @param name the name, as saved
+	 * @return the mob, or null
+	 */
+	protected MOB findSavedMOB(final Environmental host, final String name)
+	{
+		final String n=CMLib.xml().restoreAngleBrackets(name);
+		if(n.length()==0)
+			return null;
+		final Room R=CMLib.map().roomLocation(host);
+		if(R!=null)
+		{
+			for(int i=0;i<R.numInhabitants();i++)
+			{
+				final MOB M=R.fetchInhabitant(i);
+				if((M!=null)&&(M.Name().equals(n)))
+					return M;
+			}
+		}
+		return CMLib.players().getPlayer(n);
+	}
+
+	/**
+	 * Finds an item a queued response named when it was saved: carried by
+	 * the host, else in its room.
+	 * @param host the scripted host
+	 * @param name the name, as saved
+	 * @return the item, or null
+	 */
+	protected Item findSavedItem(final Environmental host, final String name)
+	{
+		final String n=CMLib.xml().restoreAngleBrackets(name);
+		if(n.length()==0)
+			return null;
+		if(host instanceof MOB)
+		{
+			final Item I=((MOB)host).findItem(null,n);
+			if(I!=null)
+				return I;
+		}
+		final Room R=CMLib.map().roomLocation(host);
+		return (R==null)?null:R.findItem(null,n);
+	}
+
+	/**
+	 * Finds what a queued response targeted when it was saved: a mob, else an
+	 * item, else the host if it has that name.
+	 * @param host the scripted host
+	 * @param name the name, as saved
+	 * @return the target, or null
+	 */
+	protected Environmental findSavedThing(final Environmental host, final String name)
+	{
+		final MOB M=findSavedMOB(host,name);
+		if(M!=null)
+			return M;
+		final Item I=findSavedItem(host,name);
+		if(I!=null)
+			return I;
+		return ((host!=null)&&(host.Name().equals(CMLib.xml().restoreAngleBrackets(name))))?host:null;
 	}
 
 	@Override
@@ -15914,6 +16183,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
+		// a restored game's scripts wait until the world is as it was saved,
+		// so that a ONCE_PROG that already ran does not run again first
+		if(SaveGame.isWorldPending())
+			return true;
 		final MOB mob;
 		synchronized(this) // supposedly this will cause a sync between cpus of the object
 		{
