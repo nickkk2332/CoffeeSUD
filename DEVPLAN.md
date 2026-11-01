@@ -731,6 +731,17 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   and Prop_InstantDeath, Prop_NarrowLedge and Prop_Weather, with their state
   (DT19's DEBUG) or parameters. W12 and W20's weather commands can build on
   WEATHER SET.
+- DT21 done but for LAW TEST and LAW SET. `LAW` (builder mode, DEV=1 or
+  ABOVELAW) shows the area's legal behaviour and law file, the officers and
+  judges it found among the area's mobs, and each mob named as one but not
+  one, and why (the law takes as officers only mobs that wander, with
+  Mobile, and as judges only mobs that stay put: a stationary "cityguard"
+  is silently no officer), the jail and release rooms each name found or
+  FOUND NOWHERE, the taxes, and the counts of crimes and warrants. `LAW
+  CRIMES [text]`, `LAW WARRANTS [name]`, `LAW PARDON name [crime|ALL]` and
+  `LAW ACCUSE name crime` handle warrants. Left: `LAW TEST crime` (whether
+  an act here is a crime, and why) and `LAW SET KEY=VALUE` (W21's custom
+  law as world content).
 
 #### 2d. Scripting (59)
 
