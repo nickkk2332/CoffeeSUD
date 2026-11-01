@@ -1,0 +1,12 @@
+# The start of the game: the first room, its book, and the way north.
+# Run with tools/playtest.sh (all of world/tests) or tools/playtest.sh world/tests/start.play.
+#char Wanderer,Human,Apprentice
+look
+#expect Obvious exits
+#assert HERE New Area#0
+get book
+#assert HAS book
+north
+#reject You can't go that way
+south
+#assert HERE New Area#0

@@ -1,0 +1,6 @@
+# DT15's test: a playtest that must fail, at each kind of check
+look
+#expect This text is nowhere in the game
+#reject Obvious exits
+#assert HERE Nowhere#99
+#assert HAS a fixes unicorn

@@ -662,6 +662,19 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   attribute; `select` is meant) on `randomatmo` and `randomtheme`. Left:
   `$variables` never defined, REQUIRES that cannot be met, unused ids,
   unknown attributes (`pick=` would show), and the smoke test calling it.
+- DT15 done but for the in-game runner and DT38's WORLD TEST. Playtest
+  files `world/tests/*.play`: one command a line, `#expect TEXT`, `#reject
+  TEXT`, `#assert HERE|HAS|VAR|QUEST ...`, `#wait n`, `#save slot`, `#seed
+  n`, `#realtime`, `#builder`, `#char Name,Race,Class[,Gender[,Alignment]]`
+  and `#restore slot`. `tools/playtest.sh [files]` (`playtest.py`, over
+  sudplay.py) plays each in a fresh game on a scratch copy of the world, in
+  turns with seed 42 and as a DEV=1 game, marks each step (`ASSERT MARK n`
+  prints `PLAYSTEP n`) so that each check reads only its step's output,
+  prints PASS or FAIL with each failing line, and exits 1 on a failure. The
+  dev-only `ASSERT` answers `ASSERT ok: ...` or `ASSERT FAIL: ...` and why;
+  quests tell their step (`Quest.stepNumber()`). The world ships
+  `tests/start.play`. Left: `PLAYTEST RUN file` in the game, and DT38's
+  `.test` files and JavaScript test files.
 
 #### 2d. Scripting (59)
 

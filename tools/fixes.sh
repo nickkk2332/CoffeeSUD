@@ -590,6 +590,20 @@ group_saves4()
 	SAVES="$W/cksaves" play dt13-check.txt ckdb ckworld '' CHECK=1
 	expect dt13-check.txt "World check (CHECK=1)"
 	expect dt13-check.txt "WORLD CHECK: 0 errors"
+
+	# DT15: playtest files: the world's own passes, and one made to fail
+	# fails at each check, with the runner exiting 1
+	python3 "$ROOT/tools/playtest.py" "$GAME/world/tests/start.play" > "$W/dt15-pass.txt" 2>&1
+	echo "exit $?" >> "$W/dt15-pass.txt"
+	expect dt15-pass.txt "PASS  "
+	expect dt15-pass.txt "exit 0"
+	python3 "$ROOT/tools/playtest.py" "$FX/setup/dt15-fail.play" > "$W/dt15-fail.txt" 2>&1
+	echo "exit $?" >> "$W/dt15-fail.txt"
+	expect dt15-fail.txt "line 3: expected 'This text is nowhere in the game'"
+	expect dt15-fail.txt "line 4: 'Obvious exits' should not show"
+	expect dt15-fail.txt "line 5: ASSERT FAIL: HERE Nowhere#99: the character is in "
+	expect dt15-fail.txt "line 6: ASSERT FAIL: HAS a fixes unicorn: the character has no such thing"
+	expect dt15-fail.txt "exit 1"
 }
 
 group_saves5()

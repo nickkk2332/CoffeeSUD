@@ -5345,6 +5345,13 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	}
 
 	@Override
+	public int stepNumber()
+	{
+		final QuestState qs=questState;
+		return (qs==null)?0:qs.stepNumber;
+	}
+
+	@Override
 	public boolean stopping()
 	{
 		return stoppingQuest;

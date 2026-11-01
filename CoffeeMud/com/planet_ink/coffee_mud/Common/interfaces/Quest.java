@@ -707,6 +707,16 @@ public interface Quest extends Tickable, CMCommon, Modifiable
 	public boolean running();
 
 	/**
+	 * The step a quest's script is at (STEP), from 1, as QUESTINFO shows it
+	 * and ASSERT QUEST tests it.
+	 * @return the step, or 0 if it has none
+	 */
+	public default int stepNumber()
+	{
+		return 0;
+	}
+
+	/**
 	 * Returns whether this quest is in a midway stopping state
 	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#suspended()
 	 * @see com.planet_ink.coffee_mud.Common.interfaces.Quest#waiting()
