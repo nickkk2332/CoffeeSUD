@@ -1396,6 +1396,14 @@ public class Stat  extends Skills
 		throws java.io.IOException
 	{
 		commands.remove(0);
+		// STAT BEHAVIORS mob|item|here: each behaviour's state (DT19)
+		if((commands.size()>0)
+		&&(commands.get(0).equalsIgnoreCase("BEHAVIORS")||commands.get(0).equalsIgnoreCase("BEHAVIOURS"))
+		&&(CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.STAT)))
+		{
+			mob.tell(TraceBCmd.describeBehaviors(mob,CMParms.combine(commands,1)));
+			return false;
+		}
 		final Set<String> allowedCharStats = new HashSet<String>();
 		if((!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.STAT))
 		&&(CMSecurity.isDisabled(DisFlag.FULLSTATS))

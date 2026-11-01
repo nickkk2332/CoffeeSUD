@@ -709,6 +709,17 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   run and each variable changed. `MPSETINTERNAL TRACE TRUE` starts it from a
   script (builder mode or DEV=1), and `ISBUILDER()` (condition and value) is
   added, so ST6 need not add it again.
+- DT19 done, the general part. Each behaviour answers `getStat("DEBUG")`:
+  by default its parameters and its saved state (S9's STATE), and a timed
+  one (`ActiveTicker`, 34 of them) adds in how many ticks it acts, how
+  often, its chance and when it last acted. `STAT BEHAVIORS mob|item|HERE`
+  lists them, with keys of the parameters that the behaviour's help (AHELP
+  BEHAVIOR_ID, the same `PropCheck.keysOf` as DT12) does not name.
+  `TRACEB target [ticks]` tells the builder each decision of the host's
+  timed behaviours for a while: acts (with the roll), could not act, or
+  lost the roll. Left: each behaviour's own state in words (route step,
+  schedule entry, target, morale), which each class adds to its
+  `debugState()` as needed.
 
 #### 2d. Scripting (59)
 

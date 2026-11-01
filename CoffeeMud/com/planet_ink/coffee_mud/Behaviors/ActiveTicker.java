@@ -125,9 +125,22 @@ public class ActiveTicker extends StdBehavior
 		return parms;
 	}
 
+	/** when it last acted, and its last chance roll, for STAT BEHAVIORS and TRACEB (DT19) */
+	protected long	lastActed	= 0;
+	protected int	lastRoll	= -1;
+
+	@Override
+	protected String debugState()
+	{
+		final long tick=Math.max(1,CMProps.getTickMillis());
+		return super.debugState()+"; acts in "+tickDown+" ticks (every "+minTicks+" to "+maxTicks+", "+chance+"% chance)"
+			+((lastActed>0)?("; last acted "+((GameTime.now()-lastActed)/tick)+" ticks ago"):"; has not acted yet");
+	}
+
 	protected boolean canChance()
 	{
 		final int a=CMLib.dice().rollPercentage();
+		lastRoll=a;
 		if(a>chance)
 			return false;
 		return true;
@@ -150,11 +163,22 @@ public class ActiveTicker extends StdBehavior
 			if((--tickDown)<1)
 			{
 				tickReset();
+				final boolean traced=BehaviorTrace.traces(ticking); // TRACEB (DT19)
 				if((ticking instanceof MOB)&&(!canActAtAll(ticking)))
+				{
+					if(traced)
+						BehaviorTrace.tell(ticking,ID(),"its time came, but the host cannot act (asleep, bound...); next in "+tickDown+" ticks");
 					return false;
+				}
 				if(CMProps.isState(CMProps.HostState.SHUTTINGDOWN))
 					return false;
-				return canChance();
+				final boolean acts=canChance();
+				if(acts)
+					lastActed=GameTime.now();
+				if(traced)
+					BehaviorTrace.tell(ticking,ID(),acts?("acts (rolled "+lastRoll+" of "+chance+"); next in "+tickDown+" ticks")
+						:("its time came, but it rolled "+lastRoll+" of "+chance+"; next in "+tickDown+" ticks"));
+				return acts;
 			}
 			break;
 		}

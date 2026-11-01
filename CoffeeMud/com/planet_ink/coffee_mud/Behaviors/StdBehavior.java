@@ -316,7 +316,7 @@ public class StdBehavior implements Behavior
 	}
 
 	protected static final String[]	CODES	= { "CLASS", "TEXT" };
-	private static final String[]	INTERNAL_CODES	= { "NAME", "STATE" };
+	private static final String[]	INTERNAL_CODES	= { "NAME", "STATE", "DEBUG" };
 
 	/**
 	 * Returns what this behaviour has built up while running that its
@@ -328,6 +328,21 @@ public class StdBehavior implements Behavior
 	protected String getRunState()
 	{
 		return "";
+	}
+
+	/**
+	 * What STAT BEHAVIORS shows of this behaviour (getStat DEBUG, DT19): its
+	 * parameters and what it has built up while running; a behaviour that
+	 * acts on a timer adds when it acts next.
+	 * @return the state, in words
+	 */
+	protected String debugState()
+	{
+		final StringBuilder str=new StringBuilder("parameters: ").append((getParms().trim().length()==0)?"(none)":getParms());
+		final String state=getRunState();
+		if((state!=null)&&(state.length()>0))
+			str.append("; state: ").append(state);
+		return str.toString();
 	}
 
 	/**
@@ -381,6 +396,8 @@ public class StdBehavior implements Behavior
 				return name();
 			case 1:
 				return getRunState();
+			case 2:
+				return debugState();
 			}
 			break;
 		}

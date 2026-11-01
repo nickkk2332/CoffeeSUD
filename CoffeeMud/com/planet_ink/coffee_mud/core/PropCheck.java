@@ -58,9 +58,20 @@ public final class PropCheck
 	private static final Map<String, Set<String>> helpKeys = new HashMap<String, Set<String>>();
 
 	/** the keys an effect's help names, as KEY= in its entry */
-	private static synchronized Set<String> keysOf(final Ability A)
+	private static Set<String> keysOf(final Ability A)
 	{
-		final String id = A.ID().toUpperCase();
+		return keysOf(A.ID());
+	}
+
+	/**
+	 * The keys a property's or behaviour's help names, as KEY= in its AHELP
+	 * entry: what DT19's STAT BEHAVIORS also checks parameters against.
+	 * @param ID the class's ID
+	 * @return the keys, none if the help names none
+	 */
+	public static synchronized Set<String> keysOf(final String ID)
+	{
+		final String id = ID.toUpperCase();
 		Set<String> keys = helpKeys.get(id);
 		if(keys == null)
 		{
@@ -83,6 +94,28 @@ public final class PropCheck
 			helpKeys.put(id, keys);
 		}
 		return keys;
+	}
+
+	/**
+	 * The KEY= words of a text that a class's help does not name.
+	 * @param ID the class's ID
+	 * @param text the text
+	 * @return the keys, upper case, none if the help names no keys
+	 */
+	public static List<String> unknownKeys(final String ID, final String text)
+	{
+		final List<String> out = new ArrayList<String>();
+		final Set<String> known = keysOf(ID);
+		if(known.isEmpty() || (text == null))
+			return out;
+		final Matcher m = KEY.matcher(unquoted(text));
+		while(m.find())
+		{
+			final String k = m.group(1).toUpperCase();
+			if((!known.contains(k)) && (!out.contains(k)))
+				out.add(k);
+		}
+		return out;
 	}
 
 	/** the text with what is quoted taken out, so that its words are not keys */
@@ -137,18 +170,8 @@ public final class PropCheck
 			}
 		}
 		// keys its help does not name
-		final Set<String> known = keysOf(A);
-		if(!known.isEmpty())
-		{
-			final Set<String> said = new TreeSet<String>();
-			final Matcher m = KEY.matcher(unquoted(text));
-			while(m.find())
-			{
-				final String k = m.group(1).toUpperCase();
-				if((!known.contains(k)) && said.add(k))
-					out.add("unknown key " + k + " (AHELP " + A.ID().toUpperCase() + ")");
-			}
-		}
+		for(final String k : unknownKeys(A.ID(), text))
+			out.add("unknown key " + k + " (AHELP " + A.ID().toUpperCase() + ")");
 		// room IDs
 		final Matcher r = ROOM_ID.matcher(text);
 		while(r.find())
