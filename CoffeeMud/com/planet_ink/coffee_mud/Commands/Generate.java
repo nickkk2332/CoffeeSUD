@@ -92,6 +92,17 @@ public class Generate extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		// GENERATE CHECK file: the file's mistakes, generating nothing (DT14)
+		if((commands.size()>2)&&(commands.get(1).equalsIgnoreCase("CHECK")))
+		{
+			final String path=CMParms.combine(commands,2);
+			final List<String> problems=com.planet_ink.coffee_mud.core.GenerateCheck.check(path);
+			if(problems.isEmpty())
+				mob.tell(L("GENERATE CHECK @x1: no problems found.",path));
+			else
+				mob.tell(L("GENERATE CHECK @x1: @x2 problems:",path,""+problems.size())+"\n\r"+String.join("\n\r",problems));
+			return false;
+		}
 		SaveGame.warnAboutBuilding(mob);
 		boolean save=true;
 		final List<String> origCommands = new XVector<String>(commands);
@@ -105,7 +116,7 @@ public class Generate extends StdCommand
 		}
 		if(commands.size()<3)
 		{
-			mob.tell(L("Generate what? Try GENERATE [TYPE] [ID] (FROM [DATA_FILE_PATH]) ([VAR=VALUE]..) [DIRECTION]"));
+			mob.tell(L("Generate what? Try GENERATE [TYPE] [ID] (FROM [DATA_FILE_PATH]) ([VAR=VALUE]..) [DIRECTION], or GENERATE CHECK [DATA_FILE_PATH]"));
 			return false;
 		}
 		final String finalLog = mob.Name()+" called generate command with parms: " + CMParms.combine(commands, 1);

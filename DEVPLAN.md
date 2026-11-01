@@ -646,6 +646,22 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   recipes, help for custom objects, quests that fail to start, unreferenced
   catalog items, areas without clock or climate, Mobile mobs free to leave,
   and DEVIATIONS.
+- DT14 done but for variables, REQUIRES and unused ids. `GENERATE CHECK
+  file` (`core/GenerateCheck`) loads a generator file as GENERATE does,
+  with LOAD and FROM includes (the percolator's own `buildDefinedIDSet`,
+  its complaints captured), generates nothing, and lists by line and tag id
+  INSERT ids not defined, LIKE ids not defined or of another tag, CLASS
+  values (attribute or child tag) that are no class of their kind (catalog:
+  and metacraft excepted), unknown layouts and SELECT modes (a number or an
+  expression is one). Found in the shipped files, and left as they are for
+  their authors: `rats.xml` inserts `prison_junk`, which only `prison.xml`
+  defines, so its spirits' junk fails one time in ten; `planet.xml` defines
+  `randomtheme`, `hallway_rooms`, `interior_rooms` and `leaf_rooms` without
+  MERGE after loading files that define them with it, so its own are
+  ignored (logged on every generate), and writes `pick="any-1"` (no such
+  attribute; `select` is meant) on `randomatmo` and `randomtheme`. Left:
+  `$variables` never defined, REQUIRES that cannot be met, unused ids,
+  unknown attributes (`pick=` would show), and the smoke test calling it.
 
 #### 2d. Scripting (59)
 

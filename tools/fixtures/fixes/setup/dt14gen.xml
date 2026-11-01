@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- the DT14 test: a generator file with a mistake of each kind GENERATE CHECK finds -->
+<AREADATA>
+<AREA id="fixes_area" layout="NOSUCHLAYOUT">
+	<NAME>Fixes Area</NAME>
+	<CLASS>NoSuchAreaClass</CLASS>
+	<ROOM insert="fixes_rooms,fixes_missing_rooms" />
+</AREA>
+<ROOM id="fixes_rooms" class="NoSuchRoomClass" select="SOME-2">
+	<MOB insert="fixes_mob" />
+	<ITEM like="fixes_mob" />
+	<BEHAVIOR class="Mobile" />
+	<BEHAVIOR class="NoSuchBehaviour" />
+</ROOM>
+<MOB id="fixes_mob" class="GenMob" select="pick-1">
+	<NAME>a fixes mob</NAME>
+</MOB>
+</AREADATA>
