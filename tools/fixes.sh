@@ -355,6 +355,26 @@ group_saves3()
 	play s13-fresh.txt wdb wworld 'north\nlook\nquit\nn\n' RESTORE=s13 FRESH=CHANGED TIMEMODE=TURNS
 	expect s13-fresh.txt "Mossy Ledge"
 	count s13-fresh.txt "A fix sentinel stands guard here." 0
+
+	# S23: the save tools: INFO, COPY, DIFF, DELETE, CHECKPOINT and ROLLBACK,
+	# AUTOSAVE, and tools/saveinspect.py outside the game
+	play s23-play.txt wdb wworld "Saver\n${NEWCHAR}save s23a\nnorth\nsave s23b\nsaves info s23b\nsaves copy s23b s23c\nsaves diff s23a s23b\ncheckpoint\nsaves delete s23c\ny\nwait 5\nquit\nn\n" AUTOSAVE=1 RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s23-play.txt "Saved game 's23b':"
+	expect s23-play.txt "Character : Saver, level"
+	expect s23-play.txt "Saved game 's23b' copied to 's23c'."
+	expect s23-play.txt "From 's23a' to 's23b':"
+	expect s23-play.txt "player room: New Area#0 -> New Area#1"
+	expect s23-play.txt "Checkpoint saved as 'checkpoint1'."
+	expect s23-play.txt "Saved game 's23c' deleted."
+	expect s23-play.txt "[Autosaved as 'autosave1']"
+	play s23-roll.txt wdb wworld 'rollback\ny\nlook\nquit\nn\n' RESTORE=s23b TIMEMODE=TURNS
+	expect s23-roll.txt "Restoring 'checkpoint1'..."
+	expect s23-roll.txt "Restored 'checkpoint1'."
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" > "$W/s23-inspect.txt" 2>&1
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" --hp 7 >> "$W/s23-inspect.txt" 2>&1
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" >> "$W/s23-inspect.txt" 2>&1
+	expect s23-inspect.txt "Character: Saver in New Area#0"
+	expect s23-inspect.txt "hit points 7,"
 }
 
 # the groups share nothing (each has its own world, database and saves), so

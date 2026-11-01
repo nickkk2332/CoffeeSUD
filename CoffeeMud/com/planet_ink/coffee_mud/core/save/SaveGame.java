@@ -120,6 +120,9 @@ public final class SaveGame
 		}
 	}
 
+	/** the AUTOSAVE ticker of this game, if any */
+	private static volatile SaveTools.AutoSaver autoSaver = null;
+
 	/** true while a restored game boots, until the saved world is put back */
 	private static volatile boolean worldPending = false;
 
@@ -235,6 +238,11 @@ public final class SaveGame
 	{
 		bootOverrides.clear();
 		saveMode = SaveMode.ANYWHERE;
+		if(autoSaver != null)
+		{
+			autoSaver.stop();
+			autoSaver = null;
+		}
 		worldPending = false;
 		workingDb = null;
 		databaseDir = null;
@@ -395,6 +403,28 @@ public final class SaveGame
 		}
 		if(builderMode)
 			makeArchon(mob);
+		else
+			startAutoSaver(mob);
+	}
+
+	/**
+	 * Starts this game's AUTOSAVE, once, for the player: every so many game
+	 * minutes (AUTOSAVE=30), or on going into another area
+	 * (AUTOSAVE=ON-AREA-CHANGE), in AUTOSAVEKEEP saves that take turns.
+	 * @param mob the player
+	 */
+	private static void startAutoSaver(final MOB mob)
+	{
+		final String setting = CMProps.instance().getStr("AUTOSAVE", "").trim();
+		if((setting.length() == 0) || setting.equals("0") || (workingDb == null) || (Party.isBackground(mob)))
+			return;
+		synchronized(SaveGame.class)
+		{
+			if(autoSaver != null)
+				autoSaver.stop();
+			autoSaver = new SaveTools.AutoSaver(mob, setting, CMath.s_int(CMProps.instance().getStr("AUTOSAVEKEEP", "3")));
+			CMLib.threads().startTickDown(autoSaver, Tickable.TICKID_MISCELLANEOUS, 1);
+		}
 	}
 
 	/**
@@ -772,6 +802,8 @@ public final class SaveGame
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
 		header.setProperty("savemode", saveMode.name());
+		if(CMLib.time().globalClock() != null)
+			header.setProperty("gamedate", CMLib.time().globalClock().getShortTimeDescription());
 		// the world this game plays on, so a restore can say what changed since
 		header.setProperty("worldsum", WorldFiles.bootChecksum());
 		final StringBuilder areaSums = new StringBuilder();

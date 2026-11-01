@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.save.WorldState;
+import com.planet_ink.coffee_mud.core.save.SaveTools;
 import com.planet_ink.coffee_mud.core.save.SaveSlots;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
@@ -78,10 +79,91 @@ public class Restore extends StdCommand
 			}
 			return false;
 		}
+		if((commands.size() >= 3) && commands.get(0).toUpperCase().startsWith("SAVE"))
+		{
+			final String sub = commands.get(1).toUpperCase();
+			if(sub.equals("INFO"))
+			{
+				final SaveSlots.Slot slot = SaveSlots.find(SaveGame.saveDir(), CMParms.combine(commands, 2).trim());
+				final String info = (slot == null) ? null : SaveTools.info(slot.name);
+				mob.tell((info == null) ? L("There is no saved game called '@x1'.  SAVES lists them.", CMParms.combine(commands, 2)) : info);
+				return false;
+			}
+			if(sub.equals("DELETE"))
+			{
+				final SaveSlots.Slot slot = SaveSlots.find(SaveGame.saveDir(), CMParms.combine(commands, 2).trim());
+				if(slot == null)
+				{
+					mob.tell(L("There is no saved game called '@x1'.  SAVES lists them.", CMParms.combine(commands, 2)));
+					return false;
+				}
+				final Session session = mob.session();
+				if(session == null)
+					return false;
+				session.prompt(new InputCallback(InputCallback.Type.CONFIRM, "N", 0)
+				{
+					@Override
+					public void showPrompt()
+					{
+						session.promptPrint(L("Delete the saved game '@x1' for good (y/N)? ", slot.name));
+					}
+
+					@Override
+					public void timedOut()
+					{
+					}
+
+					@Override
+					public void callBack()
+					{
+						if(!this.confirmed)
+							return;
+						if(SaveSlots.delete(SaveGame.saveDir(), slot.name))
+							mob.tell(L("Saved game '@x1' deleted.", slot.name));
+						else
+							mob.tell(L("Saved game '@x1' could not be deleted.", slot.name));
+					}
+				});
+				return false;
+			}
+			if((sub.equals("COPY") || sub.equals("DIFF")) && (commands.size() >= 4))
+			{
+				final SaveSlots.Slot a = SaveSlots.find(SaveGame.saveDir(), commands.get(2));
+				if(a == null)
+				{
+					mob.tell(L("There is no saved game called '@x1'.  SAVES lists them.", commands.get(2)));
+					return false;
+				}
+				if(sub.equals("COPY"))
+				{
+					final String problem = SaveTools.copy(a.name, commands.get(3));
+					mob.tell((problem == null) ? L("Saved game '@x1' copied to '@x2'.", a.name, commands.get(3)) : problem);
+					return false;
+				}
+				final SaveSlots.Slot b = SaveSlots.find(SaveGame.saveDir(), commands.get(3));
+				if(b == null)
+				{
+					mob.tell(L("There is no saved game called '@x1'.  SAVES lists them.", commands.get(3)));
+					return false;
+				}
+				final List<String> lines = SaveTools.diff(a.name, b.name);
+				if((lines == null) || (lines.size() == 0))
+					mob.tell(L("'@x1' and '@x2' hold the same.", a.name, b.name));
+				else
+				{
+					final StringBuilder str = new StringBuilder(L("From '@x1' to '@x2':\n\r", a.name, b.name));
+					for(final String line : lines)
+						str.append("  ").append(line).append("\n\r");
+					mob.tell(str.toString());
+				}
+				return false;
+			}
+		}
 		if((commands.size() < 2) || commands.get(0).toUpperCase().startsWith("SAVE"))
 		{
 			mob.tell(SaveGame.describeSlots());
-			mob.tell(L("SAVE (NAME) saves this game, and RESTORE NAME or RESTORE NUMBER restores one."));
+			mob.tell(L("SAVE (NAME) saves this game, and RESTORE NAME or RESTORE NUMBER restores one.  "
+				+ "SAVES INFO, DELETE, COPY and DIFF look after them, and SAVES CHECK says what a save would not keep."));
 			return false;
 		}
 		if(SaveGame.saveMode() == SaveGame.SaveMode.IRONMAN)

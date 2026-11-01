@@ -276,6 +276,17 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   `RESTORE=name FRESH=...` at launch) takes those areas' rooms as the world
   has them now, and keeps the player, what they carry, the party, quests
   and variables as saved. SAVES marks saves of another world "(older world)".
+- S23 done. `SAVES INFO name` (who, where, when, game date, time and save
+  mode, party, quests running, variables, world version), `SAVES DELETE`
+  (asks first), `SAVES COPY a b`, `SAVES DIFF a b` (header, the character's
+  room, hit points and what they carry, variables, quests, each room's mobs
+  and items). `CHECKPOINT` saves in checkpoint1 to checkpoint3 in turn
+  (named so, since a save's name starts with a letter or digit) and
+  `ROLLBACK` restores the newest. `AUTOSAVE=n` (game minutes) or
+  `ON-AREA-CHANGE`, with `AUTOSAVEKEEP=3`, in coffeemud.ini or world.ini.
+  `tools/saveinspect.py` prints a save outside the game and can set a
+  variable, the hit points or the room. Not done: the "dev flag" in SAVES
+  INFO, which nothing in a save holds yet.
 
 #### 2c. Developer and builder tools (50)
 
