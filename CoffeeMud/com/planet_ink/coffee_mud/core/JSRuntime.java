@@ -7,6 +7,12 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.EcmaError;
+import org.mozilla.javascript.NativeJSON;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Wrapper;
 
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 import com.planet_ink.coffee_mud.Common.interfaces.Session;
@@ -175,6 +181,75 @@ public final class JSRuntime
 	 * @param e what went wrong
 	 * @return the description
 	 */
+	/**
+	 * debug(x) in a script's &lt;SCRIPT&gt;, JRUN and JCONSOLE (DT24): the value
+	 * as text, with the script's file and line, to the developer log as
+	 * MPDEBUG writes.  Nothing in a normal game.
+	 * @param who the host, or what ran it
+	 * @param O the value
+	 */
+	public static void debug(final String who, final Object O)
+	{
+		if(!DevLog.debugEnabled())
+			return;
+		String where = "";
+		try
+		{
+			final EcmaError e = ScriptRuntime.constructError("Debug", "");
+			String name = e.sourceName();
+			if((name != null) && (e.lineNumber() > 0))
+			{
+				// a <SCRIPT>'s source names its host and trigger, which the line has
+				// already, and then the file: only the file, and the line in it
+				if(name.indexOf("<SCRIPT>") >= 0)
+				{
+					final int in = name.lastIndexOf(" in ");
+					name = (in >= 0) ? name.substring(in + 4) : "";
+				}
+				if(name.equals("<cmd>"))
+					name = "";
+				where = (name.length() == 0) ? (" line " + e.lineNumber()) : (" " + name + ":" + e.lineNumber());
+			}
+		}
+		catch(final RuntimeException e)
+		{
+			// no script running: no line to name
+		}
+		DevLog.debug(who + where, debugText(O));
+	}
+
+	/**
+	 * A value as debug() writes it: a Java object as its own text, a script's
+	 * object or array as JSON, anything else as the script would print it.
+	 * @param O the value
+	 * @return the text
+	 */
+	public static String debugText(final Object O)
+	{
+		if(O == null)
+			return "null";
+		if(O instanceof Wrapper)
+			return String.valueOf(((Wrapper)O).unwrap());
+		if((O instanceof Scriptable) && (!(O instanceof org.mozilla.javascript.BaseFunction)))
+		{
+			final Context cx = Context.getCurrentContext();
+			if(cx != null)
+			{
+				try
+				{
+					final Object json = NativeJSON.stringify(cx, ScriptableObject.getTopLevelScope((Scriptable)O), O, null, null);
+					if(json instanceof CharSequence)
+						return json.toString();
+				}
+				catch(final RuntimeException e)
+				{
+					// a cycle or the like: as the script prints it
+				}
+			}
+		}
+		return Context.toString(O);
+	}
+
 	public static String describe(final String where, final Throwable e)
 	{
 		final StringBuilder str = new StringBuilder("JS error in ").append(where);

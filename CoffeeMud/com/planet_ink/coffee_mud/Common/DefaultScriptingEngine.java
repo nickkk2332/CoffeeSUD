@@ -9571,7 +9571,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							"getVar",
 							"setVar",
 							"toJavaString",
-							"getCMType"
+							"getCMType",
+							"debug"
 						};
 						scope.defineFunctionProperties(names, JScriptEvent.class,
 													   ScriptableObject.DONTENUM);
@@ -13063,6 +13064,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					else
 						setVar(which,arg2,arg3);
 				}
+				break;
+			}
+			case 102: // MPDEBUG
+			{
+				// builder mode and DEV=1 only: in a normal game a line left in does nothing
+				if(!DevLog.debugEnabled())
+					break;
+				if(tt==null)
+					tt=parseBits(ctx,"Cr");
+				final String val=varify(ctx,tt[1]);
+				String where="";
+				if((ctx.script!=null)&&(ctx.scripted instanceof PhysicalAgent))
+					where=scriptLocation((PhysicalAgent)ctx.scripted,ctx.script,ctx.line);
+				DevLog.debug(debugHost(ctx.scripted)+((where.length()>0)?(" "+where):""),val);
 				break;
 			}
 			case 36: // mpsavevar
@@ -16906,6 +16921,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	}
 
 	/**
+	 * A host as MPDEBUG's and debug()'s lines name it: name@room.
+	 * @param host the host
+	 * @return the words
+	 */
+	public static String debugHost(final Environmental host)
+	{
+		final Room R=(host==null)?null:CMLib.map().roomLocation(host);
+		return ((host==null)?"?":host.name())+"@"+((R==null)?"?":CMLib.map().getExtendedRoomID(R));
+	}
+
+	/**
 	 * Where a line of a host's script is written, as file:line ("inline:n"
 	 * for the host's own script), following LOAD=.
 	 * @param host the host
@@ -17257,6 +17283,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		public String toJavaString(final Object O)
 		{
 			return Context.toString(O);
+		}
+
+		/**
+		 * debug(x): x to the developer log with its host, room and line
+		 * (DT24), in builder mode and DEV=1 games only.
+		 * @param O what to write
+		 */
+		public void debug(final Object O)
+		{
+			JSRuntime.debug(debugHost(ctx.scripted), O);
 		}
 
 		public String getCMType(final Object O)

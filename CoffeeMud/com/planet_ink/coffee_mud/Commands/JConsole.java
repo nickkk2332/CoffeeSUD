@@ -80,7 +80,7 @@ public class JConsole extends StdCommand
 				{
 					scope = new JScriptEvent(mob);
 					cx.initStandardObjects(scope);
-					final String[] names = { "mob" ,"getVar", "setVar", "toJavaString", "getCMType"};
+					final String[] names = { "mob" ,"getVar", "setVar", "toJavaString", "getCMType", "debug"};
 					scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
 					Resources.submitResource("JCONSOLE_"+mob.Name(), scope);
 				}
@@ -216,6 +216,16 @@ public class JConsole extends StdCommand
 		public String toJavaString(final Object O)
 		{
 			return Context.toString(O);
+		}
+
+		/**
+		 * debug(x): x to the developer log (DT24), in builder mode and DEV=1
+		 * games only.
+		 * @param O what to write
+		 */
+		public void debug(final Object O)
+		{
+			JSRuntime.debug("JCONSOLE " + ((mob == null) ? "?" : mob.Name()), O);
 		}
 
 		public String getCMType(final Object O)

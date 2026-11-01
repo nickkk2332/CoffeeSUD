@@ -724,7 +724,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPHIT", //98
 		"MPACHIEVE", //99
 		"MPACCUSE", //100
-		"MPLLM" // 101
+		"MPLLM", // 101
+		"MPDEBUG" // 102
 	};
 
 	/**

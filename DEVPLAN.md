@@ -760,6 +760,13 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   woken when the rate changes. Pause and turn-based time work as before,
   and the prompt shows `(x8)` while the rate is not 1. Not saved: a
   session setting, or the ini's.
+- DT24 done. `MPDEBUG text` (index 102) writes `[debug host@room
+  file:line] text`, its $-codes filled in, to the debug log through DT9's
+  developer log, which tells the watcher it whatever level and modules it
+  watches and keeps it for `DEVLOG LAST`. `debug(x)` does the same in
+  `<SCRIPT>`, `JRUN` and `JCONSOLE`, with the script's line, and objects
+  and arrays as JSON. In a normal game both do nothing. JS6's debug() is
+  this one.
 
 #### 2d. Scripting (59)
 

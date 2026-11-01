@@ -81,6 +81,8 @@ public final class DevLog implements Log.Listener
 
 	/** the file beside the database that keeps the setting in builder mode */
 	public static final String		SETTING_FILE	= "devlog.txt";
+	/** the module of MPDEBUG's and debug()'s lines (DT24), which the watcher is told whatever it watches */
+	public static final String		DEBUG_MODULE	= "MPDEBUG";
 	/** how many lines LAST can replay */
 	public static final int			KEEP			= 500;
 
@@ -175,7 +177,7 @@ public final class DevLog implements Log.Listener
 					recent.removeFirst();
 			}
 			M = (watcher == null) ? null : watcher.get();
-			if((M == null) || (l.ordinal() > level.ordinal()) || (!matches(modules, mod)))
+			if((M == null) || ((!DEBUG_MODULE.equals(mod)) && ((l.ordinal() > level.ordinal()) || (!matches(modules, mod)))))
 				return;
 			if((lastTold != null) && lastTold.same(l, mod, msg))
 			{
@@ -239,6 +241,30 @@ public final class DevLog implements Log.Listener
 	 * Who is told, if anyone.
 	 * @return the builder, or null
 	 */
+	/**
+	 * Whether MPDEBUG and debug() write: in builder mode and DEV=1 games, so
+	 * that a line left in a normal game's script does nothing.
+	 * @return true if they write
+	 */
+	public static boolean debugEnabled()
+	{
+		return SaveGame.isBuilderMode() || SaveGame.isDevMode();
+	}
+
+	/**
+	 * A line from MPDEBUG or debug() (DT24): "[debug where] text" to the debug
+	 * log, which DEVLOG LAST keeps and the watcher is told whatever level and
+	 * modules it watches.  Nothing in a normal game.
+	 * @param where the host, room, file and line
+	 * @param text what to write
+	 */
+	public static void debug(final String where, final String text)
+	{
+		if(!debugEnabled())
+			return;
+		Log.debugOut(DEBUG_MODULE, "[debug " + where + "] " + text);
+	}
+
 	public static synchronized MOB watcher()
 	{
 		return (watcher == null) ? null : watcher.get();

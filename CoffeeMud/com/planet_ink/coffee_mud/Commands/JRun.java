@@ -76,7 +76,8 @@ public class JRun extends StdCommand
 			scope.defineFunctionProperties(JScriptWindow.functions,
 										   JScriptWindow.class,
 										   ScriptableObject.DONTENUM);
-			cx.evaluateString(scope, ft.toString(),fn, 1, null);
+			// one line ending each, as the file has, so that an error's or debug()'s line is the file's
+			cx.evaluateString(scope, ft.toString().replaceAll("\\r\\n|\\n\\r|\\r","\n"),fn, 1, null);
 		}
 		catch(final Exception | LinkageError | StackOverflowError e)
 		{
@@ -123,7 +124,7 @@ public class JRun extends StdCommand
 			return v.get(i);
 		}
 
-		public static String[] functions = { "mob", "numParms", "getParm", "getParms", "toJavaString", "getCMType" };
+		public static String[] functions = { "mob", "numParms", "getParm", "getParms", "toJavaString", "getCMType", "debug" };
 
 		public String getParms()
 		{
@@ -139,6 +140,16 @@ public class JRun extends StdCommand
 		public String toJavaString(final Object O)
 		{
 			return Context.toString(O);
+		}
+
+		/**
+		 * debug(x): x to the developer log (DT24), in builder mode and DEV=1
+		 * games only.
+		 * @param O what to write
+		 */
+		public void debug(final Object O)
+		{
+			JSRuntime.debug("JRUN " + ((s == null) ? "?" : s.Name()), O);
 		}
 
 		public String getCMType(final Object O)
