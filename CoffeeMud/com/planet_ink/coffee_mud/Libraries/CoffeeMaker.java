@@ -2445,6 +2445,12 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 	}
 
 	@Override
+	public String getRoomShapeXML(final Room room)
+	{
+		return getRoomXML(room, new HashSet<CMObject>(), new HashSet<String>(), false, false, false);
+	}
+
+	@Override
 	public String getRoomXML(final Room room, final Set<CMObject> custom, final Set<String> files, final boolean andContent)
 	{
 		return getRoomXML(room, custom, files, andContent, true, false);

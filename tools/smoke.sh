@@ -86,15 +86,19 @@ expect load.txt "You are Hero the Archon."
 expect load.txt "Bye!"
 
 echo "Session 3: pause and resume (one mud hour per 4-second tick)"
-# 15 seconds of real time, which turns the hour at least once even when the
-# machine is busy with other games running beside this one
-play pause.txt 'time\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+# up to 30 seconds of real time, which turns the hour at least once even when
+# the machine is busy with the other games of tools/check.sh running beside
+# this one (15 seconds was once not enough)
+play pause.txt 'time\n#sleep 15\ntime\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect pause.txt "The world holds still."
 expect pause.txt "(paused) "
 expect pause.txt "The world moves again."
-# the four TIME answers: running, running, paused, paused
+# the five TIME answers: running, running, running, paused, paused.  The
+# clock ran if either 15-second gap turned the hour (a day is six hours, 24
+# seconds, so a gap cannot come back to the same hour)
 grep -ao "(Hour: [0-9]*/[0-9]*)" "$W/pause.txt" > "$W/hours"
-if [ "$(sed -n 1p "$W/hours")" != "$(sed -n 2p "$W/hours")" ] && [ "$(sed -n 3p "$W/hours")" = "$(sed -n 4p "$W/hours")" ]; then
+h1="$(sed -n 1p "$W/hours")"; h2="$(sed -n 2p "$W/hours")"; h3="$(sed -n 3p "$W/hours")"
+if { [ "$h1" != "$h2" ] || [ "$h2" != "$h3" ]; } && [ "$(sed -n 4p "$W/hours")" = "$(sed -n 5p "$W/hours")" ]; then
 	echo "  ok    pause.txt: the clock ran, then stood still while paused"
 else
 	echo "  FAIL  pause.txt: clock readings were $(tr '\n' ' ' < "$W/hours")"; FAIL=1

@@ -683,6 +683,18 @@ public interface GenericBuilder extends CMLibrary
 	public String getRoomXML(Room room,  Set<CMObject> custom, Set<String> files, boolean andContent);
 
 	/**
+	 * Generates the xml document for a room as it is now, without its mobs
+	 * and items, and without reading anything from the database: its class,
+	 * texts, behaviors, effects, scripts and exits.  A saved game keeps a
+	 * room changed in play by this.
+	 *
+	 * @see GenericBuilder#getRoomXML(Room, Set, Set, boolean)
+	 * @param room the room
+	 * @return the AROOM document
+	 */
+	public String getRoomShapeXML(Room room);
+
+	/**
 	 * Unpack an XML document containing an AREA tag into an actual area object,
 	 * including any rooms, mobs, items, etc.  Saves nothing to the db, or to
 	 * the world map.  Just returns the populated object.

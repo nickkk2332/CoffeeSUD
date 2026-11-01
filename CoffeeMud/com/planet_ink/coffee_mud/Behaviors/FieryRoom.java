@@ -62,6 +62,21 @@ public class FieryRoom extends ActiveTicker
 		return "on fire";
 	}
 
+	/** for a saved game: the ticks left before the room burns out */
+	@Override
+	protected String getRunState()
+	{
+		return "<BURN>" + burnTicks + "</BURN>";
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final String left = CMLib.xml().getValFromPieces(CMLib.xml().parseAllXML(xml), "BURN");
+		if(CMath.isInteger(left))
+			burnTicks = CMath.s_int(left);
+	}
+
 	@Override
 	public void setParms(final String newParms)
 	{

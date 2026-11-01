@@ -335,6 +335,8 @@ public final class SaveGame
 				loadClocks();
 				// what the world's files gave, before a save adds to it
 				WorldState.noteContentQuests();
+				if(!isBuilderMode())
+					WorldState.noteContentShapes();
 			}
 		});
 		final Properties header = restoring;

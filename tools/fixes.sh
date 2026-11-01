@@ -10,7 +10,7 @@
 #   KEEP=1 tools/fixes.sh     keep the scratch folder and print its path
 #   tools/fixes.sh NAME ...   run only these test files (without .js)
 #   tools/fixes.sh saves      run only the played save tests (step 2b)
-#   tools/fixes.sh saves3     run one group of them (saves1 to saves4)
+#   tools/fixes.sh saves3     run one group of them (saves1 to saves5)
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="$ROOT/CoffeeMud"
 FX="$ROOT/tools/fixtures/fixes"
@@ -31,7 +31,7 @@ FAIL=0
 
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
-case "$1" in saves|saves1|saves2|saves3|saves4) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -415,6 +415,25 @@ group_saves4()
 	jsresults s16-restore.txt
 }
 
+group_saves5()
+{
+	SAVES="$W/ysaves"
+	NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	echo "Played: step 2b, what a save keeps (fifth group)"
+	mkdir -p "$W/ydb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/ydb/"
+	cp -r "$GAME/world" "$W/yworld"
+	# S17: rooms and areas changed in play: a room's texts, behaviour and
+	# lasting effect, a room made in play and its contents, a room destroyed,
+	# an area's description and climate, and a start room made in play
+	play s17-build.txt ydb yworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s17-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s17-build.txt
+	play s17-play.txt ydb yworld "Shaper\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s17-play.js\nwait 3\nsave s17\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s17-play.txt
+	play s17-restore.txt ydb yworld 'jrun /resources/_fixes/s17-check.js\nquit\nn\n' RESTORE=s17 TIMEMODE=TURNS
+	expect s17-restore.txt "Restored 's17'."
+	jsresults s17-restore.txt
+}
+
 # the groups share nothing (each has its own world, database and saves), so
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
@@ -433,9 +452,11 @@ if [ $# -eq 0 ]; then
 	V3_PID=$!
 	group_saves4 > "$W/group_saves4.log" 2>&1 &
 	V4_PID=$!
-	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"; then FAIL=1; fi
+	group_saves5 > "$W/group_saves5.log" 2>&1 &
+	V5_PID=$!
+	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID; wait $V5_PID
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!
@@ -445,9 +466,11 @@ elif [ "$1" = "saves" ]; then
 	V3_PID=$!
 	group_saves4 > "$W/group_saves4.log" 2>&1 &
 	V4_PID=$!
-	wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID
-	cat "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"
-	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"; then FAIL=1; fi
+	group_saves5 > "$W/group_saves5.log" 2>&1 &
+	V5_PID=$!
+	wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID; wait $V5_PID
+	cat "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"
+	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"; then FAIL=1; fi
 elif [ -n "$ONLYSAVES" ]; then
 	G="group_$1"; [ "$1" = "saves1" ] && G=group_saves
 	$G > "$W/$G.log" 2>&1

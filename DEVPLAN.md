@@ -319,6 +319,24 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   `last25items`, the recently made list). A crop now grows and is harvested
   after a restore, and a craft finishes. Not done: SAVE does not warn of an
   activity with skipped fields, and refunds nothing.
+- S17 done. Once a normal game has booted, before a save is put back, the
+  shape of each room and area the world's files gave is noted (a hash of
+  the room's class, texts, behaviours with their parameters, lasting
+  effects, scripts and exits, from the new
+  `GenericBuilder.getRoomShapeXML`, which reads nothing from the database;
+  and of the area's XML without its rooms). A save's `<ROOMSHAPES>` holds
+  the shape of each room made in play (`NEWROOM`) or changed (`CHANGEDROOM`),
+  the ID of each room destroyed (`GONEROOM`), and each area changed
+  (`CHANGEDAREA`). A restore destroys, makes and reshapes them before their
+  contents go back: a changed room's behaviours, lasting effects and
+  scripts are replaced, not added to, then its exits are linked as saved,
+  so MPSET texts, MPBEHAVE, MPLINK exits, a burnt room and a cellar dug in
+  play all come back, and a start room made in play is there for the
+  character. `FieryRoom` keeps its burn ticks in its STATE. Rooms of
+  vessels, grid cells and areas made in play are left to S15, S18 and S19;
+  a room a thin area loads after the boot has no shape to compare, and is
+  skipped. Not done: a room whose class changed in play (reported on
+  restore), `TemporaryAffects`' text, and `MovingRoom`'s position (T16).
 
 #### 2c. Developer and builder tools (50)
 

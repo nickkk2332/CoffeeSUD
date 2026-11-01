@@ -160,6 +160,7 @@ public final class WorldState
 			str.append("</PARTY>\n");
 		}
 		final Set<Item> owned = ownedByCharacters();
+		str.append(shapesXML());
 		str.append("<ROOMS>\n");
 		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 		{
@@ -309,6 +310,9 @@ public final class WorldState
 		laterRooms.clear();
 		laterVessels.clear();
 		clearWorld();
+		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
+		if(shapes != null)
+			putShapes(shapes);
 		final XMLTag rooms = world.getPieceFromPieces("ROOMS");
 		if(rooms != null)
 		{
@@ -1847,6 +1851,306 @@ public final class WorldState
 	/** the quests the world's own files gave this game, by name in upper case */
 	private static final Set<String>	contentQuests	= new HashSet<String>();
 	private static volatile boolean		contentNoted	= false;
+
+	/** each room the world's files gave, by extended ID: a hash of its shape at boot */
+	private static final Map<String, Integer>	contentRooms	= new HashMap<String, Integer>();
+	/** every room the world's areas name, loaded at boot or not (a thin area's) */
+	private static final Set<String>			contentRoomIDs	= new HashSet<String>();
+	/** each area the world's files gave, by name: a hash of its shape at boot */
+	private static final Map<String, Integer>	contentAreas	= new HashMap<String, Integer>();
+	/** whether the shapes have been noted since the boot */
+	private static volatile boolean				shapesNoted		= false;
+
+	/**
+	 * Notes the shape of each room and area the world's files gave this game,
+	 * once it has booted and before a save is put back: a room's class,
+	 * texts, behaviours, lasting effects, scripts and exits; an area's
+	 * texts, climate and the like.  A save then keeps the rooms and areas
+	 * whose shape play has changed, the rooms made in play, and the rooms
+	 * play has destroyed.
+	 */
+	public static void noteContentShapes()
+	{
+		synchronized(contentRooms)
+		{
+			contentRooms.clear();
+			contentRoomIDs.clear();
+			contentAreas.clear();
+			for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+			{
+				final Area A = a.nextElement();
+				if((A == null) || (A instanceof Boardable))
+					continue;
+				contentAreas.put(A.Name(), Integer.valueOf(areaShape(A).hashCode()));
+				for(final Enumeration<String> ids = A.getProperRoomnumbers().getRoomIDs(); ids.hasMoreElements();)
+					contentRoomIDs.add(ids.nextElement());
+				for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements();)
+				{
+					final Room R = r.nextElement();
+					if(isShapeKept(R))
+						contentRooms.put(CMLib.map().getExtendedRoomID(R), Integer.valueOf(roomShape(R).hashCode()));
+				}
+			}
+			shapesNoted = true;
+		}
+	}
+
+	/**
+	 * Returns whether a room's shape is one a save compares with the world's
+	 * files: a room of an area the files gave, not a vessel's, a grid's
+	 * cell, or a room with no ID.
+	 * @param R the room
+	 * @return true if its shape is kept
+	 */
+	private static boolean isShapeKept(final Room R)
+	{
+		return (R != null)
+			&& (!R.amDestroyed())
+			&& (R.getArea() != null)
+			&& (!(R.getArea() instanceof Boardable))
+			&& (R.getGridParent() == null)
+			&& (R.roomID().length() > 0);
+	}
+
+	private static String roomShape(final Room R)
+	{
+		return CMLib.coffeeMaker().getRoomShapeXML(R);
+	}
+
+	private static String areaShape(final Area A)
+	{
+		return CMLib.coffeeMaker().getAreaObjectXML(A, null, new HashSet<CMObject>(), new HashSet<String>(), false);
+	}
+
+	/**
+	 * Writes the rooms and areas play has changed since the boot (see
+	 * {@link #noteContentShapes()}): the shape of each room made in play
+	 * (NEWROOM) or changed (CHANGEDROOM), the ID of each room destroyed
+	 * (GONEROOM), and the shape of each area changed (CHANGEDAREA).
+	 * @return the ROOMSHAPES tag, or "" if the shapes were not noted
+	 */
+	private static String shapesXML()
+	{
+		if(!shapesNoted)
+			return "";
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder str = new StringBuilder("<ROOMSHAPES>\n");
+		synchronized(contentRooms)
+		{
+			final Set<String> areaNames = contentAreas.keySet();
+			for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+			{
+				final Room R = r.nextElement();
+				if((!isShapeKept(R)) || (!areaNames.contains(R.getArea().Name())))
+					continue; // a vessel's, a grid's, or an area made in play
+				final String roomID = CMLib.map().getExtendedRoomID(R);
+				final Integer was = contentRooms.get(roomID);
+				if(was == null)
+				{
+					if(!contentRoomIDs.contains(R.roomID())) // else a thin area's, loaded since
+						str.append("<NEWROOM>").append(roomShape(R)).append("</NEWROOM>\n");
+				}
+				else
+				{
+					final String shape = roomShape(R);
+					if(shape.hashCode() != was.intValue())
+						str.append("<CHANGEDROOM>").append(shape).append("</CHANGEDROOM>\n");
+				}
+			}
+			for(final String roomID : contentRooms.keySet())
+			{
+				final Room R = CMLib.map().getRoom(roomID);
+				if((R == null) || R.amDestroyed())
+					str.append("<GONEROOM>").append(xml.parseOutAngleBrackets(roomID)).append("</GONEROOM>\n");
+			}
+			for(final Map.Entry<String, Integer> e : contentAreas.entrySet())
+			{
+				final Area A = CMLib.map().getArea(e.getKey());
+				if(A == null)
+					continue;
+				final String shape = areaShape(A);
+				if(shape.hashCode() != e.getValue().intValue())
+					str.append("<CHANGEDAREA>").append(shape).append("</CHANGEDAREA>\n");
+			}
+		}
+		return str.append("</ROOMSHAPES>\n").toString();
+	}
+
+	/**
+	 * Puts back the rooms and areas play had changed, as
+	 * {@link #shapesXML()} wrote them: destroys the rooms that were
+	 * destroyed, makes the rooms that were made, then gives each made or
+	 * changed room its saved shape and exits, and each changed area its
+	 * saved shape.  Runs before the rooms' contents go back.
+	 * @param shapes the ROOMSHAPES tag
+	 */
+	private static void putShapes(final XMLTag shapes)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		for(final XMLTag tag : shapes.contents())
+		{
+			if(tag.tag().equalsIgnoreCase("GONEROOM"))
+			{
+				final Room R = getRoom(tag.value());
+				if((R != null) && (!isFresh(R)))
+					CMLib.map().obliterateMapRoom(R);
+			}
+		}
+		final List<List<XMLTag>> reshaped = new ArrayList<List<XMLTag>>();
+		for(final XMLTag tag : shapes.contents())
+		{
+			final XMLTag aroom = tag.getPieceFromPieces("AROOM");
+			if(aroom == null)
+				continue;
+			final List<XMLTag> shape = aroom.contents();
+			final Area A = CMLib.map().getArea(xml.getValFromPieces(shape, "RAREA"));
+			if((A == null) || isFreshArea(A))
+				continue;
+			if(tag.tag().equalsIgnoreCase("NEWROOM"))
+			{
+				final Room R = CMLib.map().getRoom(xml.getValFromPieces(shape, "ROOMID"));
+				if(R == null)
+				{
+					final String err = CMLib.coffeeMaker().unpackRoomFromXML(null, shape, false, false);
+					if((err != null) && (err.length() > 0))
+					{
+						SaveGame.noteWorldChange(CMLib.lang().L("A room made in play could not be made again: @x1", err));
+						continue;
+					}
+				}
+				reshaped.add(shape);
+			}
+			else
+			if(tag.tag().equalsIgnoreCase("CHANGEDROOM"))
+				reshaped.add(shape);
+		}
+		// each made or changed room as saved, now that every room is there to link to
+		for(final List<XMLTag> shape : reshaped)
+		{
+			final Room R = CMLib.map().getRoom(xml.getValFromPieces(shape, "ROOMID"));
+			if(R != null)
+				reshapeRoom(R, shape);
+		}
+		for(final XMLTag tag : shapes.contents())
+		{
+			if(!tag.tag().equalsIgnoreCase("CHANGEDAREA"))
+				continue;
+			final XMLTag areaTag = tag.getPieceFromPieces("AREA");
+			if(areaTag == null)
+				continue;
+			final Area A = CMLib.map().getArea(xml.getValFromPieces(areaTag.contents(), "ANAME"));
+			if((A != null) && (!isFreshArea(A)))
+				reshapeArea(A, areaTag.contents());
+		}
+	}
+
+	/**
+	 * Takes away what a room or area's shape holds (behaviours, lasting
+	 * effects and scripts), before the saved shape gives them again.
+	 * @param P the room or area
+	 */
+	private static void clearShape(final PhysicalAgent P)
+	{
+		P.delAllBehaviors();
+		P.delAllScripts();
+		final List<Ability> lasting = new ArrayList<Ability>();
+		for(final Enumeration<Ability> a = P.effects(); a.hasMoreElements();)
+		{
+			final Ability A = a.nextElement();
+			if((A != null) && A.isSavable() && (!isTimedEffect(A)))
+				lasting.add(A);
+		}
+		for(final Ability A : lasting)
+			P.delEffect(A);
+	}
+
+	/**
+	 * Gives a room its saved shape: texts, behaviours, lasting effects,
+	 * scripts and exits.  A room whose class play changed is left as it is,
+	 * and said so.
+	 * @param R the room
+	 * @param shape the AROOM tag's pieces
+	 */
+	private static void reshapeRoom(final Room R, final List<XMLTag> shape)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		if(!CMClass.classID(R).equalsIgnoreCase(xml.getValFromPieces(shape, "RCLAS")))
+		{
+			SaveGame.noteWorldChange(CMLib.lang().L("Room @x1 became another kind of room in play, which the save does not keep.", R.roomID()));
+			return;
+		}
+		clearShape(R);
+		R.setDisplayText(xml.getValFromPieces(shape, "RDISP"));
+		R.setDescription(xml.getValFromPieces(shape, "RDESC"));
+		R.setMiscText(xml.restoreAngleBrackets(xml.getValFromPieces(shape, "RTEXT")));
+		final List<XMLTag> exits = xml.getContentsFromPieces(shape, "ROOMEXITS");
+		if(exits != null)
+		{
+			final boolean[] linked = new boolean[Directions.NUM_DIRECTIONS()];
+			for(final XMLTag x : exits)
+			{
+				if(!x.tag().equalsIgnoreCase("REXIT"))
+					continue;
+				final int dir = x.getIntFromPieces("XDIRE");
+				if((dir < 0) || (dir >= Directions.NUM_DIRECTIONS()))
+					continue; // a grid's cross exit, which the room's text holds
+				final String doorID = x.getValFromPieces("XDOOR");
+				final List<XMLTag> exitPieces = x.getContentsFromPieces("XEXIT");
+				Exit E = null;
+				if((exitPieces != null) && (exitPieces.size() > 0))
+				{
+					E = CMClass.getExit(xml.getValFromPieces(exitPieces, "EXID"));
+					if(E != null)
+					{
+						E.setMiscText(xml.restoreAngleBrackets(xml.getValFromPieces(exitPieces, "EXDAT")));
+						E.recoverPhyStats();
+					}
+				}
+				R.rawDoors()[dir] = (doorID.length() > 0) ? CMLib.map().getRoom(doorID) : null;
+				R.setRawExit(dir, E);
+				linked[dir] = true;
+			}
+			for(int d = 0; d < linked.length; d++)
+			{
+				if(!linked[d])
+				{
+					R.rawDoors()[d] = null;
+					R.setRawExit(d, null);
+				}
+			}
+		}
+		R.recoverPhyStats();
+		R.recoverRoomStats();
+	}
+
+	/**
+	 * Gives an area its saved shape: description, climate, theme, and what
+	 * its text holds (behaviours, lasting effects, atmosphere and the like).
+	 * @param A the area
+	 * @param shape the AREA tag's pieces
+	 */
+	private static void reshapeArea(final Area A, final List<XMLTag> shape)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		clearShape(A);
+		A.setDescription(xml.getValFromPieces(shape, "ADESC"));
+		A.setClimateType(xml.getIntFromPieces(shape, "ACLIM"));
+		A.setTheme(xml.getIntFromPieces(shape, "ATECH"));
+		A.setMiscText(xml.getValFromPieces(shape, "ADATA"));
+		A.recoverPhyStats();
+	}
+
+	/**
+	 * Returns whether a restore with FRESH= takes an area as the world has it
+	 * now.
+	 * @param A the area
+	 * @return true if so
+	 */
+	private static boolean isFreshArea(final Area A)
+	{
+		final Room R = A.getProperMap().hasMoreElements() ? A.getProperMap().nextElement() : null;
+		return (R != null) && isFresh(R);
+	}
 
 	/**
 	 * Notes the quests the world's files gave this game, once it has booted
