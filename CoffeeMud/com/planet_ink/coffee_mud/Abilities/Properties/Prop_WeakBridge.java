@@ -55,7 +55,7 @@ public class Prop_WeakBridge extends Property implements TriggeredAffect
 	protected boolean bridgeIsUp=true;
 	protected int max=400;
 	protected int chance=75;
-	protected int ticksDown=100;
+	protected int ticksDown=300;
 	protected List<MOB> mobsToKill=new Vector<MOB>();
 
 	@Override

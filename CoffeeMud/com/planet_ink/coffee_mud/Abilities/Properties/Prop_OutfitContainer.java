@@ -92,7 +92,7 @@ public class Prop_OutfitContainer extends Property
 						for(final XMLTag tag : tags)
 							itemNames.add(tag.value());
 						Collections.sort(itemNames);
-						final String lastName="";
+						String lastName="";
 						int ctr=1;
 						for(String name : itemNames)
 						{
@@ -102,7 +102,11 @@ public class Prop_OutfitContainer extends Property
 								name = "$"+name+"$."+ctr;
 							}
 							else
+							{
+								lastName=name;
+								ctr=1;
 								name = "$"+name+"$";
+							}
 							final Item I=possessor.findItem(name);
 							if(I!=null)
 							{
@@ -209,10 +213,11 @@ public class Prop_OutfitContainer extends Property
 								continue;
 							final long oldWornCode = chkI.rawWornCode();
 							chkI.setRawWornCode(Item.IN_INVENTORY);
-							if(I.canWear(msg.source(), 0))
+							final boolean wouldFit=I.canWear(msg.source(), 0);
+							chkI.setRawWornCode(oldWornCode);
+							if(wouldFit)
 							{
-								chkI.setRawWornCode(oldWornCode);
-								thingsToRemove.add(I);
+								thingsToRemove.add(chkI);
 								done=true;
 								break;
 							}

@@ -78,8 +78,10 @@ public class JRun extends StdCommand
 										   ScriptableObject.DONTENUM);
 			cx.evaluateString(scope, ft.toString(),fn, 1, null);
 		}
-		catch(final Exception e)
+		catch(final Exception | LinkageError | StackOverflowError e)
 		{
+			// a class that will not load, or a script recursing without end,
+			// is reported as any error is, and does not end the command unseen
 			final String desc=JSRuntime.report("JRUN "+fn, e);
 			if(!SaveGame.isBuilderMode()) // builder mode has shown it already
 				mob.tell(desc);

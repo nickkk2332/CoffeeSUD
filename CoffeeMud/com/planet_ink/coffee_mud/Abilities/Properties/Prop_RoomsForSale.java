@@ -90,7 +90,7 @@ public class Prop_RoomsForSale extends Prop_RoomForSale
 		final boolean rental=rentalProperty();
 		final boolean gridLayout = gridLayout();
 		final int back=backTaxes();
-		String uniqueID="ROOMS_PROPERTY_"+this;
+		String uniqueID="ROOMS_PROPERTY_"+landPropertyID();
 		if(V.size()>0)
 			uniqueID="ROOMS_PROPERTY_"+CMLib.map().getExtendedRoomID(V.get(0));
 		for(int v=0;v<V.size();v++)

@@ -83,7 +83,7 @@ public class Prop_ReqLevels extends Property implements TriggeredAffect
 		for(final Enumeration<String> p=parms.elements();p.hasMoreElements();)
 		{
 			s=p.nextElement();
-			if("NOFOLLOW".startsWith(s))
+			if(s.startsWith("NOFOLLOW"))
 				noFollow=true;
 			else
 			if(s.startsWith("NOSNEAK"))
@@ -104,17 +104,20 @@ public class Prop_ReqLevels extends Property implements TriggeredAffect
 			final List<Integer> vals=new LinkedList<Integer>();
 			while(x>=0)
 			{
-				x=text.indexOf('>',lastPlace);
-				if(x<0)
-					x=text.indexOf('<',lastPlace);
-				if(x<0)
-					x=text.indexOf('=',lastPlace);
+				// the next term, whichever its sign
+				x=-1;
+				for(final char op : new char[] {'>','<','='})
+				{
+					final int y=text.indexOf(op,lastPlace);
+					if((y>=0)&&((x<0)||(y<x)))
+						x=y;
+				}
 				if(x>=0)
 				{
 					final char primaryChar=text.charAt(x);
 					x++;
 					boolean andEqual=false;
-					if(text.charAt(x)=='=')
+					if((x<text.length())&&(text.charAt(x)=='='))
 					{
 						andEqual=true;
 						x++;
@@ -158,10 +161,12 @@ public class Prop_ReqLevels extends Property implements TriggeredAffect
 		if(mob==null)
 			return false;
 
+		// a mount is checked in the room it is in
+		final Room checkR=(R instanceof Room)?(Room)R:CMLib.map().roomLocation(R);
 		if((allFlag)
 		||(text().length()==0)
-		||(!(R instanceof Room))
-		||(CMSecurity.isAllowed(mob,(Room)R,CMSecurity.SecFlag.GOTO)))
+		||(checkR==null)
+		||(CMSecurity.isAllowed(mob,checkR,CMSecurity.SecFlag.GOTO)))
 			return true;
 
 		if(sysopFlag)

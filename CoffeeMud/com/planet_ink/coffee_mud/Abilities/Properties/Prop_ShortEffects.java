@@ -136,7 +136,7 @@ public class Prop_ShortEffects extends Property
 		{
 			final Room R = msg.source().location();
 			if(msg.sourceMinor()==CMMsg.TYP_CAST_SPELL)
-				R.show(msg.source(), msg.target(), CMMsg.MSG_OK_VISUAL, L("<S-YOUPOSS> magic energy is disspated into the air."));
+				R.show(msg.source(), msg.target(), CMMsg.MSG_OK_VISUAL, L("<S-YOUPOSS> magic energy is dissipated into the air."));
 			else
 				msg.source().tell(L("You can't seem to do that to @x1.",msg.target().name()));
 			return false;

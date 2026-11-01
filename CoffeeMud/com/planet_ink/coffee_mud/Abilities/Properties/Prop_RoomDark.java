@@ -65,6 +65,13 @@ public class Prop_RoomDark extends Property
 	}
 
 	protected boolean setup = false;
+
+	@Override
+	public void setMiscText(final String newMiscText)
+	{
+		super.setMiscText(newMiscText);
+		setup=false;
+	}
 	protected int[] hoursOfOperation = null;
 
 	protected boolean isItDark()

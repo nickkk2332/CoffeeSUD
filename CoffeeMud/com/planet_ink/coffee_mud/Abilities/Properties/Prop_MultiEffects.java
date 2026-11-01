@@ -138,6 +138,7 @@ public class Prop_MultiEffects extends Property
 							A.setAffectedOne(affecting());
 							state=MPState.START;
 							newProps.add(A);
+							A=null;
 							break;
 						}
 						default:
@@ -273,6 +274,19 @@ public class Prop_MultiEffects extends Property
 						break;
 					}
 				}
+				if(state==MPState.IN_ID)
+				{
+					// a last entry without parameters
+					final String ID=newMiscText.substring(lastStart).trim();
+					final Ability lastA=CMClass.getAbility(ID);
+					if(lastA==null)
+						Log.errOut(ID(),"Unknown Ability ID "+ID+": "+newMiscText);
+					else
+					{
+						lastA.setAffectedOne(affecting());
+						newProps.add(lastA);
+					}
+				}
 			}
 			props=newProps.toArray(new Ability[0]);
 			if(props.length>0)
@@ -379,7 +393,12 @@ public class Prop_MultiEffects extends Property
 		if(affected==null)
 			return;
 		for(final Ability A : props)
+		{
+			// on the carrier, only the children that bubble
+			if((affected!=this.affected)&&(!A.bubbleAffect()))
+				continue;
 			A.affectPhyStats(affected, affectableStats);
+		}
 	}
 
 	@Override
@@ -389,7 +408,12 @@ public class Prop_MultiEffects extends Property
 		if(affected==null)
 			return;
 		for(final Ability A : props)
+		{
+			// on the carrier, only the children that bubble
+			if((affected!=this.affected)&&(!A.bubbleAffect()))
+				continue;
 			A.affectCharStats(affected, affectableStats);
+		}
 	}
 
 	@Override
@@ -399,7 +423,12 @@ public class Prop_MultiEffects extends Property
 		if(affected==null)
 			return;
 		for(final Ability A : props)
+		{
+			// on the carrier, only the children that bubble
+			if((affected!=this.affected)&&(!A.bubbleAffect()))
+				continue;
 			A.affectCharState(affected, affectableStats);
+		}
 	}
 
 	@Override

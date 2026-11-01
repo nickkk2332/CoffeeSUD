@@ -434,6 +434,7 @@ public class Prop_UseEmoter extends Property
 							smells=new Vector<EmoteObj>();
 						smells.add(new EmoteObj(emoteType,thisEmote,broadcast));
 					}
+					else
 					if(emoteType==EMOTE_TYPE.EMOTE_PUFF)
 					{
 						if(puffs==null)

@@ -97,7 +97,7 @@ public class Prop_Undroppable extends Property
 				if((owner == null)&&(I.owner() instanceof MOB))
 					owner = new WeakReference<MOB>((MOB)I.owner());
 				else
-				if(I.owner() != owner.get())
+				if((owner != null)&&(I.owner() != owner.get()))
 					I.delEffect(this);
 			}
 			break;

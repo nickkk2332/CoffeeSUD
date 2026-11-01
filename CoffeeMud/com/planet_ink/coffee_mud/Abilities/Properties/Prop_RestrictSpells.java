@@ -103,7 +103,7 @@ public class Prop_RestrictSpells extends Property
 			final List<String> argSet = spellIDs.get(msg.tool().ID().toUpperCase());
 			if(argSet != empty)
 			{
-				final String targetName = (msg.target() != null) ? msg.target().Name() : null;
+				final String targetName = (msg.target() != null) ? msg.target().Name().toUpperCase() : null;
 				if((targetName != null)&&(targetName.length()>0)&&(argSet.contains(targetName)))
 				{
 					// kill condition
@@ -114,7 +114,7 @@ public class Prop_RestrictSpells extends Property
 					String planeName = CMLib.flags().getPlaneOfExistence((Places)msg.target());
 					if(planeName==null)
 						planeName=L("Prime Material");
-					if((planeName != null)&&(planeName.length()>0)&&(argSet.contains(planeName)))
+					if((planeName != null)&&(planeName.length()>0)&&(argSet.contains(planeName.toUpperCase())))
 					{
 						// kill condition
 					}

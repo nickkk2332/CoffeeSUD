@@ -330,7 +330,9 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 		|| parameters[0].startsWith("-"))
 			errors.add("Likely bad arguments: "+parameters[0]);
 
-		this.removeOnDeath="TRUE".startsWith(getParmStr(ps, parameters[0], "RONDEATH", "").toUpperCase());
+		// absent, false, as the help says: the property goes on death only when RONDEATH is true
+		final String rOnDeath=getParmStr(ps, parameters[0], "RONDEATH", "").trim().toUpperCase();
+		this.removeOnDeath=(rOnDeath.length()>0)&&"TRUE".startsWith(rOnDeath);
 		final String allSet=getParmStr(ps, parameters[0], "ALLSET", null);
 		this.allSet=null;
 		if((allSet!=null) && (allSet.length()>0))
@@ -908,7 +910,7 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 		if(allSet != null)
 			parameters = CMParms.delParmStr(parameters, "ALLSET");
 		int x=parameters.toUpperCase().indexOf("ARM");
-		for(final StringBuffer ID=new StringBuffer(parameters);((x>0)&&(x<parameters.length()));x++)
+		for(final StringBuffer ID=new StringBuffer(parameters);((x>=0)&&(x<parameters.length()));x++)
 		{
 			if(parameters.charAt(x)=='-')
 			{
@@ -1174,7 +1176,7 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 						case PhyStats.STAT_HEIGHT:
 							break;
 						case PhyStats.NUM_STATS:
-							level+= (((Double) changes[c + 1]).intValue() * 100);
+							level+= (int)Math.round(((Double) changes[c + 1]).doubleValue() * 100);
 							break;
 						}
 					}
@@ -1395,7 +1397,7 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 			{
 				final double pct=CMath.s_pct(val);
 				final boolean doesDamn =CMParms.getParmPlus(text(),"DAM")>0;
-				final boolean doesAtt =CMParms.getParmPlus(text(),"DAM")>0;
+				final boolean doesAtt =CMParms.getParmPlus(text(),"ATT")>0;
 				if((!doesDamn) && (!doesAtt))
 				{
 					if(CMLib.dice().rollPercentage()>50)

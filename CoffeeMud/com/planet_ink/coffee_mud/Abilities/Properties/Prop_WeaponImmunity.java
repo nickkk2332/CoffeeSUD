@@ -113,10 +113,11 @@ public class Prop_WeaponImmunity extends Property implements TriggeredAffect
 				s=s.substring(1);
 			else
 				c=Character.valueOf('+');
-			if((s!=null)&&(s.startsWith("LEVEL")))
+			if((s!=null)&&(s.startsWith("LEVEL"))&&(CMath.isInteger(s.substring(5).trim())))
 			{
-				c=((Character)c).charValue()+" "+s.substring(5).trim();
-				s=s.substring(5).trim();
+				// kept as "+ 15" under LEVEL, as okMessage reads it
+				flags.put("LEVEL",((Character)c).charValue()+" "+s.substring(5).trim());
+				continue;
 			}
 			if(!validFlags.contains(s))
 			{
@@ -230,7 +231,7 @@ public class Prop_WeaponImmunity extends Property implements TriggeredAffect
 				else
 				{
 					final Object O=flags.get("LEVEL");
-					if((O!=null)&&(O instanceof String)&&(((String)O).length()>3))
+					if((O!=null)&&(O instanceof String)&&(((String)O).length()>2))
 					{
 						String lvl=(String)O;
 						foundPlusMinus=Character.valueOf(lvl.charAt(0));

@@ -321,8 +321,8 @@ public class Prop_FightSpellCast extends Prop_SpellAdder
 				setMiscText(s);
 				*/
 			}
+			else
+				super.setStat(code, val);
 		}
-		else
-			super.setStat(code, val);
 	}
 }

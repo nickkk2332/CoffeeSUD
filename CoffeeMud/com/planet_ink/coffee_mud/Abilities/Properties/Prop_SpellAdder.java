@@ -266,13 +266,14 @@ public class Prop_SpellAdder extends Property implements AbilityContainer, Trigg
 		{
 			Room R=CMLib.map().roomLocation(target);
 			if(R==null)
-				R=CMLib.map().roomLocation(target);
+				R=CMLib.map().roomLocation(affected);
 			if(R==null)
 				R=CMLib.map().getRandomRoom();
 			mob=CMLib.map().getFactoryMOB(R);
 			mob.setName(L("invoker"));
-			mob.basePhyStats().setLevel(affected.phyStats().level());
-			mob.phyStats().setLevel(affected.phyStats().level());
+			final int level=(affected!=null)?affected.phyStats().level():1;
+			mob.basePhyStats().setLevel(level);
+			mob.phyStats().setLevel(level);
 		}
 		invokerMOB=mob;
 		return invokerMOB;
@@ -466,7 +467,7 @@ public class Prop_SpellAdder extends Property implements AbilityContainer, Trigg
 				processing=true;
 				if((lastMOB!=null)
 				&&(host!=lastMOB))
-					removeMyAffectsFrom(lastMOB);
+					removeMyAffectsFromLastMOB();
 
 				if((lastMOB==null)&&(host instanceof PhysicalAgent))
 					addMeIfNeccessary((PhysicalAgent)host,host,true,0,maxTicks);

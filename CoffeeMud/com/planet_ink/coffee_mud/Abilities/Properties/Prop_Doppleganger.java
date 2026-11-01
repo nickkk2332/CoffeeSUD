@@ -62,6 +62,7 @@ public class Prop_Doppleganger extends Property
 	protected boolean	diffGrp						= false;
 	protected int		diffAdd						= 0;
 	protected double	savePct						= 0;
+	protected int		lastSaveAmt					= 0;
 	protected double	diffPct						= 1.0;
 	protected int		saveAdd						= 0;
 	protected boolean	groupMultiplier				= false;
@@ -278,11 +279,12 @@ public class Prop_Doppleganger extends Property
 					doppleM.baseState().setHitPoints(CMLib.leveler().getPlayerHitPoints(doppleM));
 					doppleM.baseState().setMana(CMLib.leveler().getLevelMana(doppleM));
 					doppleM.baseState().setMovement(CMLib.leveler().getLevelMove(doppleM));
-					if(savePct > 0.0)
+					if((savePct > 0.0)||(lastSaveAmt != 0))
 					{
-						final int saveSaveAmt = (int)Math.round(CMath.mul(diffLevel,savePct));
+						final int saveSaveAmt = (savePct > 0.0) ? (int)Math.round(CMath.mul(diffLevel,savePct)) : 0;
 						for(final int cd : CharStats.CODES.SAVING_THROWS())
-							doppleM.baseCharStats().setStat(cd, doppleM.baseCharStats().getStat(cd) + saveSaveAmt);
+							doppleM.baseCharStats().setStat(cd, doppleM.baseCharStats().getStat(cd) - lastSaveAmt + saveSaveAmt);
+						lastSaveAmt = saveSaveAmt;
 					}
 					doppleM.basePhyStats().setLevel(level);
 					doppleM.phyStats().setLevel(level);

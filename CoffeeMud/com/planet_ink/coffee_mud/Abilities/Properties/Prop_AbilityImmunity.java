@@ -94,12 +94,12 @@ public class Prop_AbilityImmunity extends Property implements TriggeredAffect
 	{
 		immStr = null;
 		messages=new Vector<String>();
-		diseases=CMParms.parseSemicolons(newText,true);
+		diseases=new Vector<String>();
 		owner = false;
 		wearer = false;
-		for(int d=0;d<diseases.size();d++)
+		// the flags take no place in the list, so each name keeps its message
+		for(final String s : CMParms.parseSemicolons(newText,true))
 		{
-			final String s=diseases.get(d);
 			if(s.equalsIgnoreCase("owner"))
 				owner=true;
 			else
@@ -107,6 +107,8 @@ public class Prop_AbilityImmunity extends Property implements TriggeredAffect
 				wearer=true;
 			else
 			{
+				diseases.add(s);
+				final int d=diseases.size()-1;
 				final int x=s.indexOf('=');
 				if(x<0)
 					messages.add("");
@@ -129,7 +131,7 @@ public class Prop_AbilityImmunity extends Property implements TriggeredAffect
 		&& ((msg.amITarget(affected))
 			||(affected instanceof Area)
 			||(owner && (affected instanceof Item) && (msg.target()==((Item)affected).owner()))
-			||(owner && (affected instanceof Item) && (msg.target()==((Item)affected).owner()) && (!((Item)affected).amWearingAt(Wearable.IN_INVENTORY)))))
+			||(wearer && (affected instanceof Item) && (msg.target()==((Item)affected).owner()) && (!((Item)affected).amWearingAt(Wearable.IN_INVENTORY)))))
 		{
 			final Ability A = (Ability)msg.tool();
 			for(int i = 0; i < diseases.size(); i++)

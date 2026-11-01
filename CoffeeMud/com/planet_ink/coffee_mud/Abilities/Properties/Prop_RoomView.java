@@ -76,14 +76,16 @@ public class Prop_RoomView extends Property
 					longlook=true;
 				else
 				if(str.equalsIgnoreCase("ATTACK"))
-					longlook=true;
+					attack=true;
 			uviewedRoomID=text.substring(x+1).trim().toUpperCase();
 		}
 		else
 			uviewedRoomID=text.trim();
 		if (uviewedRoomID.endsWith("NOUT"))
 		{
-			uviewedRoomDir = CMLib.directions().getGoodDirectionCode(uviewedRoomID.substring(0,uviewedRoomID.length()-4));
+			// DOWNINOUT is DOWN, IN, OUT: the direction before INOUT
+			final int cut=uviewedRoomID.endsWith("INOUT")?5:4;
+			uviewedRoomDir = CMLib.directions().getGoodDirectionCode(uviewedRoomID.substring(0,uviewedRoomID.length()-cut));
 			if(uviewedRoomDir < 0)
 				Log.errOut("Unknown direction in room code: "+uviewedRoomID);
 			else
@@ -261,7 +263,10 @@ public class Prop_RoomView extends Property
 							||((((Weapon)I).weaponClassification()!=Weapon.CLASS_RANGED)
 								&&(((Weapon)I).weaponClassification()!=Weapon.CLASS_THROWN)))
 							{
-								sourceM.tell(L("You can't attack @x1 with @x2 from here.",M.name(sourceM),I.name(sourceM)));
+								if(I==null)
+									sourceM.tell(L("You can't attack @x1 from here.",M.name(sourceM)));
+								else
+									sourceM.tell(L("You can't attack @x1 with @x2 from here.",M.name(sourceM),I.name(sourceM)));
 								return false;
 							}
 							final Command C=CMClass.getCommand("Kill");

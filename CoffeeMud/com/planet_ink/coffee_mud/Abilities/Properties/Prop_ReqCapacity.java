@@ -86,7 +86,7 @@ public class Prop_ReqCapacity extends Property implements TriggeredAffect
 		  +((playerCap==Integer.MAX_VALUE)?"":L("\n\rPlayer limit: @x1",(""+playerCap)))
 		  +((mobCap==Integer.MAX_VALUE)?"":L("\n\rMOB limit   : @x1",(""+mobCap)))
 		  +((itemCap==Integer.MAX_VALUE)?"":L("\n\rItem limit  : @x1",(""+itemCap)))
-		  +((siegeCap==Integer.MAX_VALUE)?"":L("\n\rsiege Wep. limit  : @x1",(""+itemCap)))
+		  +((siegeCap==Integer.MAX_VALUE)?"":L("\n\rsiege Wep. limit  : @x1",(""+siegeCap)))
 		  +((roomLimit==Integer.MAX_VALUE)?"":L("\n\rRoom limit  : @x1",(""+roomLimit)))
 		  +((maxWeight==Integer.MAX_VALUE)?"":L("\n\rWeight limit: @x1",(""+maxWeight)));
 	}
@@ -304,11 +304,14 @@ public class Prop_ReqCapacity extends Property implements TriggeredAffect
 									}
 									if(targetRoom != null)
 									{
-										for(int ri=R.numItems()-1;ri>=0 && totOver>0;ri--,totOver--)
+										for(int ri=R.numItems()-1;ri>=0 && totOver>0;ri--)
 										{
 											final Item I=R.getItem(ri);
 											if(CMLib.combat().isASiegeWeapon(I))
+											{
 												overflowFix(I,targetRoom);
+												totOver--;
+											}
 										}
 										R.recoverRoomStats();
 										targetRoom.recoverRoomStats();
@@ -343,13 +346,13 @@ public class Prop_ReqCapacity extends Property implements TriggeredAffect
 									}
 									if(targetRoom != null)
 									{
-										for(int ri=R.numItems()-1;ri>=0 && totOver>0;ri--,totOver--)
+										for(int ri=R.numItems()-1;ri>=0 && totOver>0;ri--)
 										{
 											final Item I=R.getItem(ri);
 											if((I!=null)&&(I.container()==null))
 											{
 												overflowFix(I,targetRoom);
-												totOver -= I.phyStats().weight();
+												totOver -= Math.max(1,I.phyStats().weight());
 											}
 										}
 										R.recoverRoomStats();

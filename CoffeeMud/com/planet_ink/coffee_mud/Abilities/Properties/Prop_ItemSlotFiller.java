@@ -208,6 +208,7 @@ public class Prop_ItemSlotFiller extends Property implements AbilityContainer
 		int addState=0;
 		final String addStr=CMParms.getParmStr(text, "ADDS", "");
 		int lastDex=0;
+		int depth=0;
 		Pair<String,String> p=new Pair<String,String>("","");
 		for(int i=0;i<addStr.length();i++)
 		{
@@ -220,6 +221,7 @@ public class Prop_ItemSlotFiller extends Property implements AbilityContainer
 					p.first=addStr.substring(lastDex,i).trim();
 					lastDex=i+1;
 					addState=1;
+					depth=0;
 				}
 				else
 				if((c==',')&&(lastDex!=i))
@@ -234,7 +236,10 @@ public class Prop_ItemSlotFiller extends Property implements AbilityContainer
 				}
 				break;
 			case 1:
-				if(c==')')
+				if(c=='(')
+					depth++;
+				else
+				if((c==')')&&(--depth<0))
 				{
 					if(lastDex!=i)
 						p.second=addStr.substring(lastDex,i);

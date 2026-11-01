@@ -71,6 +71,13 @@ public class Prop_RoomLit extends Property
 	}
 
 	protected boolean setup = false;
+
+	@Override
+	public void setMiscText(final String newMiscText)
+	{
+		super.setMiscText(newMiscText);
+		setup=false;
+	}
 	protected int[] hoursOfOperation = null;
 
 	protected boolean isItLit()

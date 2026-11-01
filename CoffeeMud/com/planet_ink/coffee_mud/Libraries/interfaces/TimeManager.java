@@ -12,7 +12,6 @@ import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock.TimePeriod;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
-import com.planet_ink.coffee_mud.Libraries.CoffeeTime.TimeDelta;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
@@ -47,6 +46,139 @@ import java.text.*;
  */
 public interface TimeManager extends CMLibrary
 {
+	/**
+	 * A unit of time, real or game, by its names (MINUTES, MINS, MUDDAYS ...).
+	 * Here rather than in the library class, so that the interface names no
+	 * engine class (a script reflecting on the library would otherwise meet
+	 * two copies of it, one from each class loader).
+	 */
+	public static enum TimeDelta
+	{
+		MINUTE("MINUTES","MINS","MIN","M"),
+		SECOND("SECONDS","SECS","SEC","S"),
+		HOUR("HOURS","HRS","HR","H"),
+		DAY("DAYS","D"),
+		WEEK("WEEKS","W","WKS","WK"),
+		MONTH("MONTHS"),
+		YEAR("YEARS"),
+		TICK("TICKS","T"),
+		MUDHOUR("MUDHOURS","MHRS","MHR","MH"),
+		MUDDAY("MUDDAYS","MD"),
+		MUDWEEK("MUDWEEKS","MW","MWK","MWKS"),
+		MUDMONTH("MUDMONTHS","MM"),
+		MUDYEAR("MUDYEARS","MY","MYRS","MYR"),
+		MINUTELY(),
+		SECONDLY(),
+		HOURLY(),
+		DAYLY(),
+		WEEKLY(),
+		MONTHLY(),
+		YEARLY()
+		;
+		private final static Map<String,TimeDelta> all = new Hashtable<String,TimeDelta>();
+		private final String[] alts;
+		private TimeDelta(final String... alts)
+		{
+			this.alts = alts;
+		}
+		public static TimeDelta get(final String str)
+		{
+			if(str == null)
+				return null;
+			if(all.size()==0)
+			{
+				for(final TimeDelta td : values())
+				{
+					all.put(td.name().toUpperCase().trim(), td);
+					for(final String alt : td.alts)
+						all.put(alt.toUpperCase().trim(), td);
+				}
+			}
+			return all.get(str.toUpperCase().trim());
+		}
+
+		public long delta(TimeClock clock)
+		{
+			if(clock == null)
+				clock = CMLib.time().globalClock();
+			final Calendar C = Calendar.getInstance();
+			switch(this)
+			{
+			case DAY:
+				return TimeManager.MILI_DAY;
+			case DAYLY:
+				C.add(Calendar.DATE, 1);
+				C.set(Calendar.HOUR_OF_DAY, 0);
+				C.set(Calendar.MINUTE,0);
+				C.set(Calendar.SECOND,0);
+				C.set(Calendar.MILLISECOND,0);
+				break;
+			case HOUR:
+				return TimeManager.MILI_HOUR;
+			case HOURLY:
+				C.add(Calendar.HOUR, 1);
+				C.set(Calendar.MINUTE,0);
+				C.set(Calendar.SECOND,0);
+				C.set(Calendar.MILLISECOND,0);
+				break;
+			case MINUTE:
+				return TimeManager.MILI_MINUTE;
+			case MINUTELY:
+				C.add(Calendar.MINUTE, 1);
+				C.set(Calendar.SECOND,0);
+				C.set(Calendar.MILLISECOND,0);
+				break;
+			case MONTH:
+				return TimeManager.MILI_DAY * 30;
+			case MONTHLY:
+				C.add(Calendar.MONTH, 1);
+				C.set(Calendar.DAY_OF_MONTH, 1);
+				C.set(Calendar.HOUR_OF_DAY, 0);
+				C.set(Calendar.MINUTE,0);
+				C.set(Calendar.SECOND,0);
+				C.set(Calendar.MILLISECOND,0);
+				Log.sysOut(CMLib.time().date2String(C.getTimeInMillis()));
+				break;
+			case MUDDAY:
+				return CMProps.getMillisPerMudHour()*clock.getHoursInDay();
+			case MUDHOUR:
+				return CMProps.getMillisPerMudHour();
+			case MUDMONTH:
+				return CMProps.getMillisPerMudHour()*clock.getHoursInDay()*clock.getDaysInMonth();
+			case MUDWEEK:
+				return CMProps.getMillisPerMudHour()*clock.getHoursInDay()*clock.getDaysInWeek();
+			case MUDYEAR:
+				return CMProps.getMillisPerMudHour()*clock.getHoursInDay()
+						*clock.getDaysInMonth()*clock.getMonthsInYear();
+			case SECOND:
+				return TimeManager.MILI_SECOND;
+			case SECONDLY:
+				C.add(Calendar.SECOND, 1);
+				C.set(Calendar.MILLISECOND,0);
+				break;
+			case TICK:
+				return CMProps.getTickMillis();
+			case WEEK:
+				return TimeManager.MILI_DAY * 7;
+			case WEEKLY:
+				C.add(Calendar.WEEK_OF_YEAR, 1);
+				break;
+			case YEAR:
+				return TimeManager.MILI_DAY * 365;
+			case YEARLY:
+				C.add(Calendar.YEAR, 1);
+				C.set(Calendar.MONTH, 0);
+				C.set(Calendar.DAY_OF_MONTH, 1);
+				C.set(Calendar.HOUR_OF_DAY, 0);
+				C.set(Calendar.MINUTE,0);
+				C.set(Calendar.SECOND,0);
+				C.set(Calendar.MILLISECOND,0);
+				break;
+			}
+			return C.getTimeInMillis() - System.currentTimeMillis();
+		}
+	}
+
 	/**
 	 * Returns the numeric representation of the month
 	 *

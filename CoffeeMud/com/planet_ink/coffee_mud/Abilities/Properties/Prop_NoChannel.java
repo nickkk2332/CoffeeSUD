@@ -86,8 +86,14 @@ public class Prop_NoChannel extends Property
 		if(msg.othersMajor(CMMsg.MASK_CHANNEL))
 		{
 			final int channelInt=msg.othersMinor()-CMMsg.TYP_CHANNEL;
-			if((msg.source()==affected)||(!(affected instanceof MOB))
-			&&((channels==null)||(channels.size()==0)||(channels.contains(CMLib.channels().getChannel(channelInt).name()))))
+			final boolean listed=(channels==null)||(channels.size()==0)||(channels.contains(CMLib.channels().getChannel(channelInt).name()));
+			if((!receive)
+			&&(listed)
+			&&(affected instanceof MOB)
+			&&(msg.source()!=affected))
+				return false;
+			if(((msg.source()==affected)||(!(affected instanceof MOB)))
+			&&(listed))
 			{
 				if(!sendOK)
 				{

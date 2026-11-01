@@ -62,7 +62,7 @@ public class Prop_HaveResister extends Property implements TriggeredAffect
 	protected String			maskString			= "";
 	protected boolean			ignoreCharStats		= true;
 	protected long				lastProtection		= 0;
-	protected int				remainingProtection	= 0;
+	protected Map<String,Integer> remainingProtection = new Hashtable<String,Integer>();
 	protected boolean			alwaysWeapProt		= false;
 	protected volatile short	lastEffectCount		= 0;
 	protected boolean			hasEffectDuration	= false;
@@ -181,15 +181,18 @@ public class Prop_HaveResister extends Property implements TriggeredAffect
 			final int protection = getProtection(kind);
 			return (int)Math.round(CMath.mul(damage,1.0-CMath.div(protection,100.0)));
 		}
-		int protection=remainingProtection;
+		// each kind of protection carries over within a round on its own,
+		// so that two kinds both apply to one hit
 		if((GameTime.now()-lastProtection)>=CMProps.getTickMillis())
 		{
-			protection = (getProtection(kind) + (myLevel - hisLevel));
+			remainingProtection.clear();
 			lastProtection = GameTime.now();
 		}
+		final Integer left=remainingProtection.get(kind);
+		final int protection = (left != null) ? left.intValue() : (getProtection(kind) + (myLevel - hisLevel));
 		if(protection<=0)
 			return damage;
-		remainingProtection=protection-100;
+		remainingProtection.put(kind, Integer.valueOf(protection-100));
 		if (protection >= 100)
 		{
 			return 0;
@@ -368,7 +371,7 @@ public class Prop_HaveResister extends Property implements TriggeredAffect
 						&&((maskString.length()==0)||(CMLib.masking().maskCheck(maskString,mob,false)))
 						&&(CMLib.dice().rollPercentage() <= getProtection(A.ID().toUpperCase())))
 						{
-							mob.location().show(msg.source(),mob,CMMsg.MSG_OK_VISUAL,L("<T-NAME> repell(s) @x1 from <S-NAME>.",abilityDomain.toLowerCase().replace('_',' ')));
+							mob.location().show(msg.source(),mob,CMMsg.MSG_OK_VISUAL,L("<T-NAME> repell(s) @x1 from <S-NAME>.",A.name()));
 							return false;
 						}
 					}

@@ -265,7 +265,11 @@ public class Prop_Smell extends Property
 				if(newText.length()==0)
 					affected.delEffect(this);
 				else
-					setMiscText(newText.toString());
+				{
+					// set whole: a smell starting with + or - is not an edit
+					super.setMiscText(newText.toString());
+					smells=null;
+				}
 			}
 		}
 		return super.tick(ticking,tickID);

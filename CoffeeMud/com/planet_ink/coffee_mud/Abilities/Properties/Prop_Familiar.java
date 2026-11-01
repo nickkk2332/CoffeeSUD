@@ -274,11 +274,11 @@ public class Prop_Familiar extends Property
 				if(((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_LANGUAGE)
 				&&(A instanceof Language))
 				{
-					final Ability effectA=M.fetchEffect(A.ID());
+					Ability effectA=M.fetchEffect(A.ID());
 					if(effectA==null)
 					{
 						A.autoInvocation(M, false);
-						A=M.fetchEffect(A.ID());
+						effectA=M.fetchEffect(A.ID());
 					}
 					if((effectA!=null)&&(((Language)effectA).beingSpoken(effectA.ID())))
 						return (Language)effectA;
@@ -406,7 +406,11 @@ public class Prop_Familiar extends Property
 	{
 		super.setMiscText(newText);
 		if(CMath.isInteger(newText))
-			familiarType=Familiar.values()[CMath.s_int(newText)];
+		{
+			final int num=CMath.s_int(newText);
+			if((num>=0)&&(num<Familiar.values().length))
+				familiarType=Familiar.values()[num];
+		}
 		else
 		{
 			if(newText.trim().length()>2)

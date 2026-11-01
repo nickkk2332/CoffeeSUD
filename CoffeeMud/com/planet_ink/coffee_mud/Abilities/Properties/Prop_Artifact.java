@@ -231,8 +231,8 @@ public class Prop_Artifact extends Property
 						msg.source().tell(L("Removed: @x1",key));
 					}
 				}
+				this.destroyArtifact((Item)this.affected);
 			}
-			this.destroyArtifact((Item)this.affected);
 			return true;
 		}
 		else

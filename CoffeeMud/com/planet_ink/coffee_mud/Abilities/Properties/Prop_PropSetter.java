@@ -447,8 +447,8 @@ public class Prop_PropSetter extends Property implements TriggeredAffect
 									{
 										final String var = finalVal.substring(xs+2,xe);
 										final String valValue = CMLib.coffeeMaker().getAnyGenStat(M,var);
-										finalVal = finalVal.substring(0,xs)+valValue+value.substring(xe+1);
-										xs = finalVal.indexOf("${",xs);
+										finalVal = finalVal.substring(0,xs)+valValue+finalVal.substring(xe+1);
+										xs = finalVal.indexOf("${",xs+valValue.length());
 									}
 									else
 										xs = finalVal.indexOf("${",xs+2);

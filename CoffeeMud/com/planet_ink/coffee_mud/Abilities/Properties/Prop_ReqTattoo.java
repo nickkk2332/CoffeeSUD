@@ -102,7 +102,7 @@ public class Prop_ReqTattoo extends Property implements TriggeredAffect
 	{
 		final Vector<String> V=CMParms.parse(miscText.toUpperCase());
 		String s=null;
-		for(int v=V.size()-1;v>=1;v--)
+		for(int v=V.size()-1;v>=0;v--)
 		{
 			s=V.elementAt(v);
 			if(s.startsWith("NOFOL"))
@@ -117,7 +117,7 @@ public class Prop_ReqTattoo extends Property implements TriggeredAffect
 				V.removeElementAt(v);
 			}
 			else
-			if("+-".indexOf(s.charAt(0))<0)
+			if((v>0)&&("+-".indexOf(s.charAt(0))<0))
 			{
 				V.removeElementAt(v);
 				V.setElementAt((V.elementAt(v-1))+" "+s,v-1);
@@ -132,7 +132,7 @@ public class Prop_ReqTattoo extends Property implements TriggeredAffect
 			return false;
 		if(CMLib.flags().isATrackingMonster(mob))
 			return true;
-		if(CMLib.flags().isSneaking(mob)&&(flags[1]))
+		if(CMLib.flags().isSneaking(mob)&&(!flags[1]))
 			return true;
 		int allFlag=0;
 		String s=null;
@@ -175,11 +175,11 @@ public class Prop_ReqTattoo extends Property implements TriggeredAffect
 					if(!found)
 						return false;
 					break;
-				case 1: // +ALL -- LACKS ANY
-					if(c!='+') // ----------------
+				case 1: // +ALL -- allowed unless they have one of the -tattoos
+					if(c=='-')
 					{
-						if(!found)
-							return true;
+						if(found)
+							return false;
 					}
 					else
 					if(found)

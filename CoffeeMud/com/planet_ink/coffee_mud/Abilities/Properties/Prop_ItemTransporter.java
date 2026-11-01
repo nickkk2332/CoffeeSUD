@@ -64,25 +64,33 @@ public class Prop_ItemTransporter extends Property
 		return "Item Transporter";
 	}
 
-	public Item ultimateParent(final Item item)
+	public Item ultimateParent(Item item)
 	{
 		if(item==null)
 			return null;
-		if(item.container()==null)
-			return item;
-		if(item.container().container()==item)
-			item.container().setContainer(null);
-		if(item.container()==item)
-			item.setContainer(null);
-		return ultimateParent(item.container());
+		// a container loop of any length is broken where it closes
+		final Set<Item> seen=new HashSet<Item>();
+		while(item.container()!=null)
+		{
+			seen.add(item);
+			if(seen.contains(item.container()))
+			{
+				item.setContainer(null);
+				break;
+			}
+			item=item.container();
+		}
+		return item;
 	}
 
 	private synchronized boolean setDestination()
 	{
 		List<PhysicalAgent> possibilities=possiblePossibilities.get(text());
 		Integer lastLook=lastLooks.get(text());
+		boolean lookAgain=false;
 		if((possibilities==null)||(lastLook==null)||(lastLook.intValue()<0))
 		{
+			lookAgain=true;
 			possibilities=new Vector<PhysicalAgent>(); // obviously vector is required here, for thread safety
 			possiblePossibilities.put(text(),possibilities);
 			lastLook=Integer.valueOf(10);
@@ -90,11 +98,11 @@ public class Prop_ItemTransporter extends Property
 		}
 		else
 			lastLooks.put(text(),Integer.valueOf(lastLook.intValue()-1));
-		if(possibilities.size()==0)
+		roomDestination=null;
+		mobDestination=null;
+		nextDestination=null;
+		if((possibilities.size()==0)&&(lookAgain))
 		{
-			roomDestination=null;
-			mobDestination=null;
-			nextDestination=null;
 			try
 			{
 				for(final Enumeration<Room> r=CMLib.map().rooms();r.hasMoreElements();)

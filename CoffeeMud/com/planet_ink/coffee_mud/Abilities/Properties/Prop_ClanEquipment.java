@@ -129,7 +129,7 @@ public class Prop_ClanEquipment extends Property implements TriggeredAffect
 			return;
 		}
 		type=V.elementAt(0);
-		powerLevel=Integer.valueOf(V.elementAt(1)).intValue();
+		powerLevel=Integer.valueOf(CMath.s_int(V.elementAt(1))).intValue();
 		clanName=V.elementAt(2);
 		clanType=V.elementAt(3);
 		secretWord=getWandWord(text); // try to randomize the spell word a

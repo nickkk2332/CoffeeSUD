@@ -129,8 +129,8 @@ public class Prop_RoomPlusForSale extends Prop_RoomForSale implements LandTitle
 				R=r.next();
 				if(R!=null)
 					A=R.fetchEffect(ID());
-				if(A instanceof Prop_LotsForSale)
-					((Prop_LotsForSale)A).uniqueLotID=uniqueID;
+				if(A instanceof Prop_RoomPlusForSale)
+					((Prop_RoomPlusForSale)A).uniqueLotID=uniqueID;
 			}
 			this.uniqueLotID=uniqueID;
 		}

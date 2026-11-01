@@ -74,7 +74,7 @@ public class Prop_Socials extends Property
 			final String wornonly=CMParms.getParmStr(social, "WORNONLY", "");
 			if(load.length()>0)
 			{
-				final List<String> flines=Resources.getFileLineVector(Resources.getFileResource(social.substring(4).trim().substring(1).trim(),true));
+				final List<String> flines=Resources.getFileLineVector(Resources.getFileResource(load.trim(),true));
 				if((flines!=null)&&(flines.size()>0))
 					lines.addAll(flines);
 				forgive=true;

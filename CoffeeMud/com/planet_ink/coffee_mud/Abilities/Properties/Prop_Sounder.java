@@ -66,6 +66,7 @@ public class Prop_Sounder extends Property
 	protected static int	ROOM_MASK		= 32768;
 	protected CMMsg			lastMsg			= null;
 	protected boolean		oncePerRound1	= false;
+	protected long			lastRoundSound	= 0;
 
 	public Prop_Sounder()
 	{
@@ -405,6 +406,8 @@ public class Prop_Sounder extends Property
 		// this will work because, for items, behaviors
 		// get the first tick.
 		int lookFor=-1;
+		if(oncePerRound1 && ((GameTime.now()-lastRoundSound)>=CMProps.getTickMillis()))
+			oncePerRound1=false;
 		if((msg!=lastMsg)
 		&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.EMOTERS)))
 		{
@@ -453,7 +456,11 @@ public class Prop_Sounder extends Property
 				&&(msg.target()!=host)
 				&&((msg.source()==host)||(msg.tool()==host)||(host instanceof Room)||(host instanceof Exit))
 				&&(!oncePerRound1))
+				{
 					lookFor=CMMsg.TYP_WEAPONATTACK;
+					oncePerRound1=true;
+					lastRoundSound=GameTime.now();
+				}
 				break;
 			case CMMsg.TYP_DAMAGE:
 				if((msg.target()!=null)

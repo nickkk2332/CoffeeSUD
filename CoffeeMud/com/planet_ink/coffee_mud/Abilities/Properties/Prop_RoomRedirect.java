@@ -90,16 +90,13 @@ public class Prop_RoomRedirect extends Property
 				final String maskStr = pair.second;
 				final String maskUpp = maskStr.toUpperCase();
 				final String roomIdStr = pair.first;
-				if(maskStr.length()==0)
+				if(foundMasks.contains(maskUpp))
 				{
-					if(foundMasks.contains(maskUpp))
-					{
-						Log.errOut("Prop_RoomRedirect '"+roomID+"' has multiple mask '"+maskStr+"'.");
-						rawRedirects.remove(p);
-					}
-					else
-						foundMasks.add(maskUpp);
+					Log.errOut("Prop_RoomRedirect '"+roomID+"' has multiple mask '"+maskStr+"'.");
+					rawRedirects.remove(p);
+					continue;
 				}
+				foundMasks.add(maskUpp);
 				final CompiledZMask mask = CMLib.masking().getPreCompiledMask(maskStr);
 				final Room R=CMLib.map().getRoom(roomIdStr);
 				if((R==null)

@@ -77,7 +77,7 @@ public class Prop_ReqClasses extends Property implements TriggeredAffect
 		for(final Enumeration<String> p=parms.elements();p.hasMoreElements();)
 		{
 			s=p.nextElement();
-			if("NOFOLLOW".startsWith(s))
+			if(s.startsWith("NOFOLLOW"))
 				noFollow=true;
 			else
 			if(s.startsWith("NOSNEAK"))

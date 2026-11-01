@@ -139,8 +139,19 @@ New for builders: `DISMOUNT_PROG` and `REMOVING_PROG`; `FACTIONVALUE` and
   lacks it.
 - DOCS lists more property defects than I1 named (area `Prop_InstantDeath`,
   `Prop_LanguageSpeaker` HOMEONLY, `Prop_WeaponImmunity` LEVEL,
-  `Prop_RoomView` ATTACK, and others in `DOCS/conditions/b076` and `b078`);
-  they are left for the owner to decide on.
+  `Prop_RoomView` ATTACK, and others in `DOCS/conditions/b075` to `b078`).
+  Taken in 2b, at the owner's word: `audit/property-defects.md` says what
+  became of each item of the four chapters' lists. 38 behaviours are fixed,
+  each with a check in `tools/fixtures/fixes/p-properties.js` that fails on
+  the code before it; about twenty smaller ones (messages, help texts,
+  typos, guards) are fixed without one; the rest are not defects (the
+  chapter misread the code: a room's sleeping flag, ReqCapacity's ROOMS) or
+  are left with the reason (the item balancer's tone-up and tone-down
+  formulas, which want one rule for every adjuster, and features of
+  several players). Found on the way: a script could not use the time
+  library (the core interface named the library's own `TimeDelta`, which
+  then loaded twice), and JRUN said nothing of a script's errors as against
+  its exceptions; both fixed.
 
 #### 2b. Saves and world files (24)
 

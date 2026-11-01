@@ -226,7 +226,7 @@ public class Prop_AreaForSale extends Property implements LandTitle
 	public String landPropertyID()
 	{
 		if((affected instanceof Area))
-			((Area)affected).Name();
+			return ((Area)affected).Name();
 		else
 		if(affected instanceof Room)
 			return CMLib.map().getExtendedRoomID((Room)affected);

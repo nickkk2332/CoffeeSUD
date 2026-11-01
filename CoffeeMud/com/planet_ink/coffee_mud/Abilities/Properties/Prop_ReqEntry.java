@@ -90,7 +90,7 @@ public class Prop_ReqEntry extends Property implements TriggeredAffect, Deity.De
 		for(int i=0;i<parms.size();i++)
 		{
 			s=parms.get(i);
-			if("NOFOLLOW".startsWith(s))
+			if(s.startsWith("NOFOLLOW"))
 			{
 				noFollow=true;
 				lastWasMask=false;

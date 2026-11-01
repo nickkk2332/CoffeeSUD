@@ -573,6 +573,7 @@ public class Prop_AbsorbDamage extends Property implements TriggeredAffect
 						level += (5*m.size());
 					}
 					else
+					if(o != null)
 						level += 10;
 				}
 				return ""+level;

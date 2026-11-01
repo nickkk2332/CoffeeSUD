@@ -306,7 +306,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 				final double pct=CMath.s_pct(val);
 				if(bonusDamage != 0)
 					bonusDamage -= (int)Math.round(CMath.mul(bonusDamage, pct));
-				if(bonusDamage != 0)
+				if(pctDamage != 0)
 					pctDamage -= CMath.mul(pctDamage, pct);
 				setMiscText(makeMiscText());
 			}
@@ -316,7 +316,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 				final double pct=CMath.s_pct(val);
 				if(bonusDamage != 0)
 					bonusDamage -= (int)Math.round(CMath.mul(bonusDamage, pct));
-				if(bonusDamage != 0)
+				if(pctDamage != 0)
 					pctDamage -= CMath.mul(pctDamage, pct);
 				setMiscText(makeMiscText());
 			}
@@ -337,7 +337,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 				final double pct=CMath.s_pct(val);
 				if(bonusDamage != 0)
 					bonusDamage += (int)Math.round(CMath.mul(bonusDamage, pct));
-				if(bonusDamage != 0)
+				if(pctDamage != 0)
 					pctDamage += CMath.mul(pctDamage, pct);
 				setMiscText(makeMiscText());
 			}
@@ -347,7 +347,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 				final double pct=CMath.s_pct(val);
 				if(bonusDamage != 0)
 					bonusDamage += (int)Math.round(CMath.mul(bonusDamage, pct));
-				if(bonusDamage != 0)
+				if(pctDamage != 0)
 					pctDamage += CMath.mul(pctDamage, pct);
 				setMiscText(makeMiscText());
 			}

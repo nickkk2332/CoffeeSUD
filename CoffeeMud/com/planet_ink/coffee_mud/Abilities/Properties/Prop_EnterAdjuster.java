@@ -119,28 +119,15 @@ public class Prop_EnterAdjuster extends Property implements TriggeredAffect
 			mask=CMLib.masking().createEmptyMask();
 		else
 			mask=CMLib.masking().getPreCompiledMask(parameters[1]);
-		int del=parameters[0].indexOf(';');
-		while(del>=0)
+		// each part is a spell or stat terms, in any order (the help gives the stats first)
+		final StringBuilder statTerms=new StringBuilder("");
+		for(final String part : CMParms.parseSemicolons(parameters[0],true))
 		{
-			final String thisOne=parameters[0].substring(0,del);
-			if((thisOne.length()>0)&&(!thisOne.equals(";")))
-			{
-				Ability A=CMClass.getAbility(thisOne);
-				if((A!=null)&&(!(A instanceof ArchonOnly)))
-				{
-					A=(Ability)A.copyOf();
-					if(theSpells == null)
-						theSpells=new Vector<Ability>();
-					theSpells.add(A);
-				}
-			}
-			parameters[0]=parameters[0].substring(del+1);
-			del=parameters[0].indexOf(';');
-		}
-		if((parameters[0].length()>0)&&(!parameters[0].equals(";")))
-		{
-			Ability A=CMClass.getAbility(parameters[0]);
-			if(A!=null)
+			Ability A=CMClass.getAbility(part);
+			if(A==null)
+				statTerms.append(" ").append(part);
+			else
+			if(!(A instanceof ArchonOnly))
 			{
 				A=(Ability)A.copyOf();
 				if(theSpells == null)
@@ -148,6 +135,7 @@ public class Prop_EnterAdjuster extends Property implements TriggeredAffect
 				theSpells.add(A);
 			}
 		}
+		parameters[0]=statTerms.toString().trim();
 		miscStatChanges.clear();
 
 		addPlusChange(EAMisc.PHYSSTATS,PhyStats.STAT_ABILITY,"abi");
@@ -204,7 +192,7 @@ public class Prop_EnterAdjuster extends Property implements TriggeredAffect
 		String parameters = "Affects those who enter: "+this.parameters[0];
 		final String mask = this.parameters[1];
 		int x=parameters.toUpperCase().indexOf("ARM");
-		for(final StringBuffer ID=new StringBuffer(parameters);((x>0)&&(x<parameters.length()));x++)
+		for(final StringBuffer ID=new StringBuffer(parameters);((x>=0)&&(x<parameters.length()));x++)
 		{
 			if(parameters.charAt(x)=='-')
 			{
@@ -263,7 +251,23 @@ public class Prop_EnterAdjuster extends Property implements TriggeredAffect
 		   ||((msg.targetMinor()==CMMsg.TYP_SIT)&&(affected==msg.target())&&(affected instanceof Rideable)))
 		&&((mask==null)||(CMLib.masking().maskCheck(mask,msg.source(),true))))
 		{
+			// made once the entry happens, so that one another refuses changes nothing
 			final MOB mob=msg.source();
+			msg.addTrailerRunnable(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					adjustOnEntry(mob);
+				}
+			});
+		}
+		return super.okMessage(myHost,msg);
+	}
+
+	protected void adjustOnEntry(final MOB mob)
+	{
+		{
 			if(theSpells != null)
 			{
 				for(int i=0;i<theSpells.size();i++)
@@ -336,6 +340,5 @@ public class Prop_EnterAdjuster extends Property implements TriggeredAffect
 			mob.recoverMaxState();
 			CMLib.utensils().confirmWearability(mob);
 		}
-		return super.okMessage(myHost,msg);
 	}
 }

@@ -184,10 +184,7 @@ public class Prop_AstralSpirit extends Property
 	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
 	{
 		super.affectPhyStats(affected,affectableStats);
-		// when this spell is on a MOBs Affected list,
-		// it should consistantly put the mob into
-		// a sleeping state, so that nothing they do
-		// can get them out of it.
+		// a spirit weighs nothing, flies unseen, and neither sits nor sleeps
 		affectableStats.setWeight(0);
 		affectableStats.setHeight(-1);
 		affectableStats.setName(L("The spirit of @x1",affected.name()));

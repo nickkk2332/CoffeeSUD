@@ -137,10 +137,10 @@ public class Prop_CommonTwister extends Property
 			if(newdisp.equals("*"))
 			{
 				final Item I=CMLib.materials().makeItemResource(randomResource);
-				itemParms.put("DISPLAY",I.displayText());
+				itemParms.put("DISPLAYTEXT",I.displayText());
 			}
 			else
-				itemParms.put("DISPLAY",newdisp);
+				itemParms.put("DISPLAYTEXT",newdisp);
 		}
 		if(newsub != null)
 			itemParms.put("SUBTYPE",newsub);

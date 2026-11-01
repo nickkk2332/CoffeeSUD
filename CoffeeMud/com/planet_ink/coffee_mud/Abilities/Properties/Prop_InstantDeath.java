@@ -194,6 +194,7 @@ public class Prop_InstantDeath extends Property
 				final Room R=r.nextElement();
 				allMobs.addAll(getEveryoneHere(null,R));
 			}
+			return allMobs;
 		}
 		return new HashSet<MOB>();
 	}

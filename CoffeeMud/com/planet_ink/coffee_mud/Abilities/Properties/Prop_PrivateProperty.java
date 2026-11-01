@@ -167,7 +167,7 @@ public class Prop_PrivateProperty extends Property implements PrivateProperty
 					else
 					{
 						if(R.numInhabitants()==0)
-							expires=GameTime.now()+expiresec;
+							expires=GameTime.now()+(expiresec * 1000L);
 						else
 						{
 							boolean expire=true;

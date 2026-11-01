@@ -103,6 +103,8 @@ public class Prop_LocationBound extends Property
 							boundTo=CMLib.map().getArea(roomID);
 							if(boundTo instanceof Area)
 								type=BoundToType.SPECIFIC_AREA;
+							else
+								Log.errOut(ID(),"No room or area '"+roomID+"' for "+((affected==null)?"null":affected.Name())+"; it stays in its room.");
 						}
 					}
 				}

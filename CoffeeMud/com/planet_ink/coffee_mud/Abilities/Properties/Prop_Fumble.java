@@ -145,7 +145,7 @@ public class Prop_Fumble extends Property
 
 		final String domStr = CMParms.getParmStr(newMiscText, "ADOMAIN", "").toUpperCase();
 		this.domains = new int[0];
-		if(typStr.length()>0)
+		if(domStr.length()>0)
 		{
 			for(final String s : CMParms.parseCommas(domStr, true))
 			{
@@ -165,7 +165,7 @@ public class Prop_Fumble extends Property
 
 		final String flagStr = CMParms.getParmStr(newMiscText, "AFLAG", "").toUpperCase();
 		this.flags = 0;
-		if(typStr.length()>0)
+		if(flagStr.length()>0)
 		{
 			for(final String s : CMParms.parseCommas(flagStr, true))
 			{
@@ -302,7 +302,7 @@ public class Prop_Fumble extends Property
 			&&(!CMParms.contains(ableTypes, A.classificationCode()&Ability.ALL_ACODES)))
 				return super.okMessage(myHost,msg);
 
-			if(((domains.length>0)&&CMParms.contains(ableTypes, A.classificationCode()&Ability.ALL_DOMAINS))
+			if(((domains.length>0)&&CMParms.contains(domains, A.classificationCode()&Ability.ALL_DOMAINS))
 			||(ids.contains(A.ID().toUpperCase()))
 			||(ids.contains(A.name().toUpperCase()))
 			||((flags!=0)&&((flags&A.flags())>0)))
