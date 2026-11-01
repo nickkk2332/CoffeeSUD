@@ -76,6 +76,8 @@ public class JRun extends StdCommand
 			scope.defineFunctionProperties(JScriptWindow.functions,
 										   JScriptWindow.class,
 										   ScriptableObject.DONTENUM);
+			// B11: here(), room(id), dig, link, create, saveRoom, forEachRoom and cmd, as the builder
+			ScriptableObject.putProperty(scope, "builder", Context.javaToJS(new JSBuilder(mob, scope), scope));
 			// one line ending each, as the file has, so that an error's or debug()'s line is the file's
 			cx.evaluateString(scope, ft.toString().replaceAll("\\r\\n|\\n\\r|\\r","\n"),fn, 1, null);
 		}

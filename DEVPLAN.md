@@ -967,6 +967,11 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   `FLAGS` marks one-way exits, locks, exits to other areas, rooms with
   scripts, and the rooms nothing reaches; `HTML=file` writes a page to
   world/maps/. The Swing window is left for later.
+- B11 done. `RUNFILE name [args]` (RunFileCmd) runs world/macros/NAME.cmd,
+  a command a line through doCommand ($1..$9, $room, $area; # comments;
+  STOPONERROR), and sums up what ran and what failed (no command to take
+  it, or an exception). JRUN's scope has `builder` (`core/JSBuilder`):
+  here, room, dig, link, create, saveRoom, forEachRoom and cmd.
 
 #### 2d. Scripting (59)
 
