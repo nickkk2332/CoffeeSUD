@@ -404,11 +404,6 @@ public class Config extends StdCommand
 				case DAILYMESSAGE:
 					break;
 				case MXP:
-					if(mob.session() != null)
-					{
-						mob.session().changeTelnetMode(Session.TELNET_MXP,newSet);
-						mob.session().setClientTelnetMode(Session.TELNET_MXP,newSet);
-					}
 					break;
 				case NOBATTLESPAM:
 					break;
@@ -425,11 +420,6 @@ public class Config extends StdCommand
 				case QUIET:
 					break;
 				case SOUND:
-					if(mob.session() != null)
-					{
-						mob.session().changeTelnetMode(Session.TELNET_MSP,newSet);
-						mob.session().setClientTelnetMode(Session.TELNET_MSP,newSet);
-					}
 					break;
 				case SYSOPMSGS:
 					break;

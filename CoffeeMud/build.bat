@@ -16,7 +16,7 @@ REM parentheses in the folder's path safe.
 	set "P=%%F"
 	echo "!P:\=\\!"
 )) > .sources.list
-"%JAVAC%" -nowarn -Xlint:none -g -encoding UTF-8 -J-Xmx1g -classpath ".;lib\js.jar;lib\jzlib.jar" -d . @.sources.list
+"%JAVAC%" -nowarn -Xlint:none -g -encoding UTF-8 -J-Xmx1g -classpath ".;lib\js.jar" -d . @.sources.list
 set STATUS=!ERRORLEVEL!
 del .sources.list
 if !STATUS! neq 0 (echo Build FAILED.) else (echo Build OK.)

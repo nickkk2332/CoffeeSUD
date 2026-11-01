@@ -10,4 +10,4 @@ if not exist com\planet_ink\coffee_mud\application\SUD.class (
 	call build.bat
 	if errorlevel 1 exit /b 1
 )
-"%JAVA%" -classpath ".;lib\js.jar;lib\jzlib.jar" -Xmx1g com.planet_ink.coffee_mud.application.SUD %*
+"%JAVA%" -classpath ".;lib\js.jar" -Xmx1g com.planet_ink.coffee_mud.application.SUD %*

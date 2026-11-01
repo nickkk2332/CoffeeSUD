@@ -89,7 +89,7 @@ Still to do:
 - Builder mode as a launch setting that makes the player an Archon was done
   in phase 4 (step 4f), and the multiplayer texts in phase 5 (step 5a).
 
-### 2. Remove the network and multiplayer services: mostly done
+### 2. Remove the network and multiplayer services: done but for host groups
 
 Done, each step verified with the smoke test and the engine suite:
 - the embedded web server (`coffee_web`), the browser client (`siplet`), the
@@ -104,14 +104,27 @@ Done, each step verified with the smoke test and the engine suite:
   the off-line server (`application/OffLine`), the multiplayer launch scripts
   (`mud.sh`, `mud.bat`, `config.sh`) and with them `tools/mudserver.sh` and
   `tools/mudbot.py`. The windows of phase 5 are in the same process.
+- the client protocols: GMCP, MSDP, MSSP, MCP and MPCP (the session's
+  handling, pings and state, the protocol library's engines, the MCP
+  packages, and the messages the game sent through them), MCCP compression
+  (and `lib/jzlib.jar`), and the MXP and NOMXP commands. The session allows
+  no inline protocol, so MXP and MSP markup in the engine's texts (room and
+  item tags, sound tags in about 130 abilities) is dropped by the output
+  filter, as it always was for the console; it stays in the texts rather than
+  touch them all for nothing. The telnet option flags stay: the session's
+  colour and its handshake states are built on them, and nothing in a
+  single-player game negotiates them.
 
-Still to do:
-- client protocols (MXP, MSP, GMCP, MSDP, MCCP, MSSP) and telnet handling in
-  `DefaultSession`, leaving a plain text session. The console session already
-  never turns them on, so this is cleanup rather than behaviour.
-- host groups: `CMLib` and `CMClass` keep one set of libraries and classes
-  per thread group, so that several separate muds, each with its own world and
-  ini file, can run in one Java process. One game needs one set.
+Left, for now:
+- host groups: `CMLib`, `CMClass`, `CMProps`, `Log`, `Resources` and the
+  rest keep one set per thread group, so that several separate muds could
+  run in one Java process. One game needs one set, but collapsing them is
+  not a substitution: each keeps the first instance registered for a group,
+  and the boot loads the ini page and the logs on the main thread before the
+  host's group loads its own, so with one set the host's settings (and the
+  command line's) would go to an object nothing reads. It wants the boot
+  reworked so that only the host's group makes them, with tests of the
+  settings a game reads; it changes nothing in play, so it waits.
 
 ### 3. One thread and a game clock: done
 

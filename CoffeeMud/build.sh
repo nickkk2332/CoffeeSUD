@@ -21,7 +21,7 @@ elif [ -z "$(find com -name '*.java' -newer "$STAMP" -print -quit)" ]; then
 	exit 0
 fi
 javac -nowarn -Xlint:none -g -encoding UTF-8 --release 8 -Xmaxerrs 1000 \
-	-J-Xmx2g -classpath ".:./lib/js.jar:./lib/jzlib.jar" -d . @"$LIST" > .build.log 2>&1
+	-J-Xmx2g -classpath ".:./lib/js.jar" -d . @"$LIST" > .build.log 2>&1
 STATUS=$?
 rm -f "$LIST"
 grep -v '^Picked up JAVA_TOOL_OPTIONS\|^warning: \[options\]\|^Note: \|^[0-9]* warnings\?$' .build.log

@@ -27,7 +27,6 @@ import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB.Attrib;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
-import com.jcraft.jzlib.*;
 
 import java.awt.Color;
 import java.io.*;
@@ -301,13 +300,6 @@ public class DefaultSession implements Session
 					||((System.currentTimeMillis()-lastIACIn)>5000)
 					||((System.currentTimeMillis()-lastStateChangeMs)>10000))
 					{
-						if(getClientTelnetMode(TELNET_COMPRESS2))
-						{
-							negotiateTelnetMode(rawout,TELNET_COMPRESS2);
-							//rawout.flush(); rawBytesOut already flushes
-							if(getClientTelnetMode(TELNET_COMPRESS2))
-								startMCCP2();
-						}
 						setStatus(SessionStatus.HANDSHAKE_MXP);
 					}
 					break;
@@ -397,26 +389,6 @@ public class DefaultSession implements Session
 		}
 	}
 
-	private void startMCCP2() throws IOException
-	{
-		if(getClientTelnetMode(TELNET_COMPRESS2))
-		{
-			final ZOutputStream zOut=new ZOutputStream(rawout, JZlib.Z_DEFAULT_COMPRESSION);
-			rawout=zOut;
-			zOut.setFlushMode(JZlib.Z_SYNC_FLUSH);
-			try
-			{
-				out = new PrintWriter(new OutputStreamWriter(zOut,CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
-			}
-			catch (final UnsupportedEncodingException e)
-			{
-				Log.errOut(e);
-			}
-			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.TELNET))
-				Log.debugOut("MCCP compression started");
-		}
-	}
-
 	@Override
 	public void handshake(final String introText)
 	{
@@ -500,19 +472,6 @@ public class DefaultSession implements Session
 			return true;
 		}
 		return false;
-	}
-
-	protected void compress2Off() throws IOException
-	{
-		out.flush();
-		changeTelnetMode(rawout,TELNET_COMPRESS2,false);
-		//rawout.flush(); rawBytesOut already flushes
-		rawout=new BufferedOutputStream(sock.getOutputStream());
-		out = new PrintWriter(new OutputStreamWriter(rawout,CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
-		CMLib.s_sleep(50);
-		changeTelnetMode(rawout,TELNET_COMPRESS2,false);
-		if(CMSecurity.isDebugging(CMSecurity.DbgFlag.TELNET))
-			Log.debugOut("MCCP compression stopped");
 	}
 
 	@Override
@@ -718,23 +677,6 @@ public class DefaultSession implements Session
 			Log.debugOut("Negotiate-Sent: "+Session.TELNET_DESCS[telnetCode]);
 	}
 
-	private void mushClientTurnOffMXPFix()
-	{
-		try
-		{
-			// i don't know why this works, but it does
-			clearInputBuffer(500);
-			Command C=CMClass.getCommand("MXP");
-			C.execute(mob, new XVector<String>("MXP","QUIET"), 0);
-			clearInputBuffer(500);
-			C=CMClass.getCommand("NOMXP");
-			C.execute(mob, new XVector<String>("NOMXP","QUIET"), 0);
-		}
-		catch(final Exception e)
-		{
-		}
-	}
-
 	@Override
 	public void initTelnetMode(final long attributesBitmap)
 	{
@@ -744,23 +686,6 @@ public class DefaultSession implements Session
 		setClientTelnetMode(TELNET_ANSI16,CMath.bset(attributesBitmap,MOB.Attrib.ANSI16ONLY.getBitCode()));
 		setServerTelnetMode(TELNET_ANSI256,CMath.bset(attributesBitmap,MOB.Attrib.ANSI256ONLY.getBitCode()));
 		setClientTelnetMode(TELNET_ANSI256,CMath.bset(attributesBitmap,MOB.Attrib.ANSI256ONLY.getBitCode()));
-		boolean changedSomething=false;
-		final boolean mxpSet=(!CMSecurity.isDisabled(CMSecurity.DisFlag.MXP))&&CMath.bset(attributesBitmap,MOB.Attrib.MXP.getBitCode());
-		if(mxpSet!=getClientTelnetMode(TELNET_MXP))
-		{
-			changeTelnetMode(TELNET_MXP,!getClientTelnetMode(TELNET_MXP));
-			changedSomething=true;
-			if((!mxpSet)&&(getTerminalType()!=null)&&(getTerminalType().equals("mushclient")))
-				mushClientTurnOffMXPFix();
-		}
-		final boolean mspSet=(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSP))&&CMath.bset(attributesBitmap,MOB.Attrib.SOUND.getBitCode());
-		if(mspSet!=getClientTelnetMode(TELNET_MSP))
-		{
-			changeTelnetMode(TELNET_MSP,!getClientTelnetMode(TELNET_MSP));
-			changedSomething=true;
-		}
-		if(changedSomething)
-			clearInputBuffer(500);
 	}
 
 	@Override
@@ -1985,64 +1910,6 @@ public class DefaultSession implements Session
 				Log.debugOut("Got DO "+Session.TELNET_DESCS[last]);
 			if(last==TELNET_TERMTYPE)
 				negotiateTelnetMode(rawout,TELNET_TERMTYPE);
-			if((last==TELNET_COMPRESS2)&&(getServerTelnetMode(last)))
-			{
-				setClientTelnetMode(last,true);
-				if(connectionComplete)
-				{
-					prompt(new TickingCallback(250)
-					{
-						@Override
-						public boolean tick(final int counter)
-						{
-							try
-							{
-								if((out==null)||(killFlag))
-									return false;
-								out.flush();
-								rawout.flush();
-								switch(counter)
-								{
-								case 3:
-								{
-									if(getClientTelnetMode(TELNET_COMPRESS2))
-									{
-										negotiateTelnetMode(rawout,TELNET_COMPRESS2);
-										//rawout.flush(); rawBytesOut already flushes
-										startMCCP2();
-									}
-									break;
-								}
-								case 10:
-									return false;
-								default:
-									break;
-								}
-								return true;
-							}
-							catch(final IOException e)
-							{
-								if(e.getMessage()==null)
-									Log.errOut(e);
-								else
-									Log.errOut(e.getMessage());
-							}
-							return false;
-						}
-					});
-				}
-			}
-			else
-			if(!mightSupportTelnetMode(last))
-				changeTelnetMode(last,false);
-			else
-			{
-				if(!getServerTelnetMode(last))
-					changeTelnetMode(last,true);
-				if(this.reverseEcho || (last != TELNET_ECHO))
-					setClientTelnetMode(last,true);
-
-			}
 			if(serverTelnetCodes[TELNET_LOGOUT])
 				setKillFlag(true);
 			break;
@@ -2053,12 +1920,6 @@ public class DefaultSession implements Session
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.TELNET))
 				Log.debugOut("Got DONT "+Session.TELNET_DESCS[last]);
 			setClientTelnetMode(last,false);
-			if((last==TELNET_COMPRESS2)&&(getServerTelnetMode(last)))
-			{
-				setClientTelnetMode(last,false);
-				rawout=new BufferedOutputStream(sock.getOutputStream());
-				out = new PrintWriter(new OutputStreamWriter(rawout,CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
-			}
 			if((mightSupportTelnetMode(last))&&(getServerTelnetMode(last)))
 				changeTelnetMode(last,false);
 			break;
