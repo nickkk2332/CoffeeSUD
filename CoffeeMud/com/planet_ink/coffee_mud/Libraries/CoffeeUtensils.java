@@ -1910,6 +1910,36 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 		return items;
 	}
 
+	/** reads script variables for the prompt's %{VAR name} */
+	private ScriptingEngine promptVars = null;
+
+	/**
+	 * A script variable for the prompt.  Given a name alone, the character's
+	 * own (MPSETVAR $n NAME), else one of that name on any host (as a script's
+	 * * reads it); given a host and a name, that host's (MPSETVAR HOST NAME).
+	 * @param mob the character
+	 * @param what the name, or the host and the name
+	 * @return its value, or ""
+	 */
+	protected String promptVar(final MOB mob, final String what)
+	{
+		if(promptVars==null)
+			promptVars=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
+		if(promptVars==null)
+			return "";
+		final int sp=what.lastIndexOf(' ');
+		String val;
+		if(sp>0)
+			val=promptVars.getVar(what.substring(0,sp).trim(), what.substring(sp+1).trim().toUpperCase());
+		else
+		{
+			val=promptVars.getVar(mob.Name(), what.toUpperCase());
+			if((val==null)||(val.length()==0))
+				val=promptVars.getVar("*", what.toUpperCase());
+		}
+		return (val==null)?"":val;
+	}
+
 	@Override
 	public String buildPrompt(final MOB mob, final String prompt)
 	{
@@ -2723,6 +2753,24 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 					if (mob.location() != null)
 						buf.append(mob.location().getArea().getClimateObj().weatherDescription(mob.location()));
 					c++;
+					break;
+				}
+				case '{':
+				{
+					// %{VAR name}: the character's script variable, else one of that name on any host;
+					// %{VAR host name}: that host's
+					final int close=prompt.indexOf('}',c);
+					final String inner=(close<0)?"":prompt.substring(c+1,close).trim();
+					if(inner.toUpperCase().startsWith("VAR ")&&(inner.substring(4).trim().length()>0))
+					{
+						buf.append(promptVar(mob, inner.substring(4).trim()));
+						c=close+1;
+					}
+					else
+					{
+						buf.append("%{");
+						c++;
+					}
 					break;
 				}
 				default:

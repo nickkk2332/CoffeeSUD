@@ -31,7 +31,8 @@ FAIL=0
 
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
-case "$1" in saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+# a played group by name (st1, pr5, saves1 to saves5) runs alone, without the JavaScript tests
+case "$1" in st1|pr5|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -143,6 +144,19 @@ group_pr5()
 	expect pr5-menu.txt "N) New game"
 	expect pr5-menu.txt "1) pr5"
 	expect pr5-menu.txt "Restored 'pr5'."
+	# PR21: a window's side panel, on a virtual display, in builder mode
+	echo "Played: PR21, the panel beside a character window's text"
+	if command -v xvfb-run > /dev/null 2>&1; then
+		mkdir -p "$W/wdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/wdb/"
+		cp -r "$GAME/world" "$W/wworld"
+		mkdir -p "$W/wworld/text"
+		printf 'FIXPANEL %%r\nChapter %%{VAR FIXCHAPTER}\nHP %%h/%%H\n' > "$W/wworld/text/panel.txt"
+		printf 'Paneler\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\njrun /resources/_fixes/pr21-panel.js\nquit\nY\n' > "$W/pr21.script"
+		JAVA_TOOL_OPTIONS="$(echo "$JAVA_TOOL_OPTIONS" | sed 's/-Djava.awt.headless=true//')" xvfb-run -a python3 "$ROOT/tools/sudplay.py" "$W/pr21.script" "DBSERVICE=jdbc:fakedb:$W/wdb" "WORLDDIR=$W/wworld" "SAVEDIR=$W/wsaves" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS > "$W/pr21.txt" 2>&1
+		jsresults pr21.txt
+	else
+		echo "  FAIL  pr21: no virtual display here (xvfb-run) to open a window on"; FAIL=1
+	fi
 }
 
 group_saves()

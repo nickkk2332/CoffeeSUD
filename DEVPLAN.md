@@ -89,7 +89,8 @@ has 409 proposed additions in 18 themes, each with what exists today, what
 to add and an example.
 
 The owner went through them on 2026-10-31: 388 yes, 20 later and 1 undecided
-(`PR21`, a side panel in the character windows). The *later* items are
+(`PR21`, a side panel in the character windows, since taken: see 2b's
+notes). The *later* items are
 wanted but out of the current scope; they were moved to
 [`LATER.md`](LATER.md). The *yes* items are planned here, in the steps
 below, each item as the audit describes it. Before an item is built it is
@@ -452,6 +453,19 @@ tests of what a save keeps are the five `saves` groups of `tools/fixes.sh`
   writes some of those files again in another order (such as the tech
   manufacturers). A script read back has its lines ended `\r\n`, with or
   without CDATA, as the engine's storage of a room gives them.
+
+- PR21 done, at the owner's word (it was undecided). `WINDOWPANEL=STATUS,MAP,PARTY`
+  (coffeemud.ini, world.ini or the command line) or `WINDOWS PANEL ON` (or
+  the sections, in their order) gives each character's window a panel beside
+  its text, drawn again at each prompt: STATUS is `world/text/panel.txt`
+  with the prompt's codes and colours (or the character's points, room and
+  area), MAP the rooms about the character as REGIONAL AWARENESS draws them,
+  PARTY each of the party with a bar of their hit points. The prompt has
+  `%{VAR name}` (the character's script variable, else one of that name on
+  any host) and `%{VAR host name}`, ahead of PR14's other tokens. The played
+  test runs on a virtual display (`xvfb-run`): it opens a window, shows and
+  hides a panel, and has a window session draw its character's panel at the
+  prompt. `tools/fixes.sh st1` and `pr5` now run those groups alone.
 
 #### 2c. Developer and builder tools (50)
 

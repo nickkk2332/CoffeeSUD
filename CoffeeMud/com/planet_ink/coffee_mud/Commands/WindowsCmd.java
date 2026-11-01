@@ -38,6 +38,9 @@ import java.util.*;
  * and WINDOWS OFF change it, for those in the world now and those who come
  * in later.  A window shows what its character sees, and what is typed into
  * it is the character's commands.  See {@link Party#setWindows(boolean)}.
+ * WINDOWS PANEL ON, OFF or a list of sections (STATUS, MAP, PARTY) gives
+ * the windows a panel beside their text, or takes it away; see
+ * {@link WindowPanel}.
  */
 public class WindowsCmd extends StdCommand
 {
@@ -57,6 +60,8 @@ public class WindowsCmd extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if((commands.size() > 1) && commands.get(1).equalsIgnoreCase("PANEL"))
+			return panel(mob, commands);
 		if(commands.size() > 1)
 		{
 			final String onOff = commands.get(1).toUpperCase();
@@ -81,6 +86,30 @@ public class WindowsCmd extends StdCommand
 			mob.tell(L("Each of your characters in the world, but for the one you play here, has a window of their own: it shows what they see, and what you type into it is their command.  Closing one sends that character to rest.  WINDOWS OFF closes them."));
 		else
 			mob.tell(L("Your other characters in the world have no windows: AS NAME COMMAND shows you what comes of what they do.  WINDOWS ON gives each a window of their own."));
+		return false;
+	}
+
+	/**
+	 * WINDOWS PANEL, and what follows it: ON, OFF, or the sections to show.
+	 */
+	protected boolean panel(final MOB mob, final List<String> commands)
+	{
+		if(commands.size() > 2)
+		{
+			final String which = CMParms.combine(commands, 2);
+			if(WindowPanel.setSections(which) == null)
+			{
+				mob.tell(L("WINDOWS PANEL ON, OFF, or the sections to show, of @x1?", String.join(", ", WindowPanel.SECTIONS)));
+				return false;
+			}
+		}
+		final String now = WindowPanel.sections();
+		if(now.length() == 0)
+			mob.tell(L("The windows have no panel.  WINDOWS PANEL ON gives each one beside its text, showing @x1.", String.join(", ", WindowPanel.SECTIONS)));
+		else
+			mob.tell(L("Each window has a panel beside its text, showing @x1, drawn again at each prompt.  WINDOWS PANEL OFF takes it away.", now.replace(",", ", ")));
+		if(!Party.isWindows())
+			mob.tell(L("(The panel is in the characters' windows, and they are off: WINDOWS ON opens them.)"));
 		return false;
 	}
 

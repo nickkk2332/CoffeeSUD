@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.core;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.KeyAdapter;
@@ -52,7 +53,9 @@ import javax.swing.text.StyledDocument;
  * the lines typed before a key away.  A session reads what is typed from
  * {@link #input()} and writes to {@link #output()}, as it would a socket;
  * the output may hold the colour codes of an ANSI terminal, and telnet
- * negotiation, which is dropped.  See Common/WindowSession.
+ * negotiation, which is dropped.  A panel beside the text can show what
+ * {@link #setPanel(String)} gives it, such as the character's state, a map
+ * and the party (see {@link WindowPanel}).  See Common/WindowSession.
  */
 public final class CharacterWindow
 {
@@ -63,6 +66,8 @@ public final class CharacterWindow
 	private static final Color		BACKGROUND		= new Color(16, 16, 16);
 	/** the colour of what the player types, shown with what it answers */
 	private static final Color		TYPED			= new Color(120, 160, 120);
+	/** the colour of the panel */
+	private static final Color		PANEL_BACKGROUND	= new Color(28, 28, 34);
 	/** the eight colours of an ANSI terminal, and their bright forms */
 	private static final Color[]	NORMAL			=
 	{
@@ -77,9 +82,14 @@ public final class CharacterWindow
 	/** how many have opened, so that each opens a little apart from the last */
 	private static int				opened			= 0;
 
+	/** how many characters wide the panel is */
+	private static final int		PANEL_COLUMNS	= 34;
+
 	private JFrame					frame;
 	private JTextPane				text;
 	private JTextField				line;
+	private JTextPane				panel;
+	private JScrollPane				panelScroll;
 	private final Queue<Integer>	typed			= new ConcurrentLinkedQueue<Integer>();
 	private final List<String>		history			= new ArrayList<String>();
 	private int						historyAt		= 0;
@@ -88,14 +98,9 @@ public final class CharacterWindow
 	private final CharsetDecoder	decoder;
 	private final Runnable			onClose;
 
-	// the state of what is being written: telnet, escape codes, colour
+	// the state of what is being written: telnet, then escape codes and colour
 	private int						telnet			= 0;
-	private int						escape			= 0;
-	private final StringBuilder		codes			= new StringBuilder();
-	private int						fgIndex			= -1;
-	private Color					fgColor			= null;
-	private Color					bgColor			= null;
-	private boolean					bold			= false;
+	private final Painter			painter			= new Painter();
 	private ByteBuffer				leftover		= ByteBuffer.allocate(0);
 
 	private CharacterWindow(final String inCharset, final String outCharset, final Runnable onClose)
@@ -190,8 +195,20 @@ public final class CharacterWindow
 					line.setText((++historyAt < history.size()) ? history.get(historyAt) : "");
 			}
 		});
+		panel = new JTextPane();
+		panel.setEditable(false);
+		panel.setFocusable(false);
+		panel.setFont(font);
+		panel.setBackground(PANEL_BACKGROUND);
+		panel.setForeground(TEXT);
+		panel.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+		panelScroll = new JScrollPane(panel);
+		final int columnWidth = panel.getFontMetrics(font).charWidth('m');
+		panelScroll.setPreferredSize(new Dimension((columnWidth * PANEL_COLUMNS) + 16, 0));
+		panelScroll.setVisible(false);
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.getContentPane().add(new JScrollPane(text), BorderLayout.CENTER);
+		frame.getContentPane().add(panelScroll, BorderLayout.EAST);
 		frame.getContentPane().add(line, BorderLayout.SOUTH);
 		frame.addWindowListener(new WindowAdapter()
 		{
@@ -255,6 +272,78 @@ public final class CharacterWindow
 					frame.setTitle(title);
 			}
 		});
+	}
+
+	/**
+	 * Shows text in the panel beside the window's text, in place of what it
+	 * showed, or hides the panel.  The text may hold the colour codes of an
+	 * ANSI terminal, as what is written to the window may.
+	 * @param ansi the text, or null to hide the panel
+	 */
+	public void setPanel(final String ansi)
+	{
+		final List<Object[]> runs = new ArrayList<Object[]>();
+		if(ansi != null)
+		{
+			final Painter P = new Painter();
+			P.paint(CharBuffer.wrap(ansi), runs);
+		}
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				if((frame == null) || (panel == null))
+					return;
+				final boolean wasVisible = panelScroll.isVisible();
+				if(ansi == null)
+					panelScroll.setVisible(false);
+				else
+				{
+					final StyledDocument doc = panel.getStyledDocument();
+					try
+					{
+						doc.remove(0, doc.getLength());
+						for(final Object[] r : runs)
+							doc.insertString(doc.getLength(), (String)r[0], (SimpleAttributeSet)r[1]);
+					}
+					catch(final BadLocationException e)
+					{
+					}
+					panel.setCaretPosition(0);
+					panelScroll.setVisible(true);
+				}
+				if(wasVisible != panelScroll.isVisible())
+					frame.getContentPane().revalidate();
+			}
+		});
+	}
+
+	/**
+	 * Returns the text the panel shows, without its colours, once what was
+	 * given it before has been shown; or null if the panel is hidden.
+	 * @return the text, or null
+	 */
+	public String panelShown()
+	{
+		final String[] shown = new String[1];
+		try
+		{
+			SwingUtilities.invokeAndWait(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if((panelScroll != null) && panelScroll.isVisible())
+						shown[0] = panel.getText();
+				}
+			});
+		}
+		catch(final Exception e)
+		{
+			return null;
+		}
+		return shown[0];
 	}
 
 	/**
@@ -397,39 +486,7 @@ public final class CharacterWindow
 		leftover.flip();
 		chars.flip();
 		final List<Object[]> runs = new ArrayList<Object[]>();
-		final StringBuilder run = new StringBuilder();
-		while(chars.hasRemaining())
-		{
-			final char c = chars.get();
-			switch(escape)
-			{
-			case 0:
-				if(c == 27)
-				{
-					flush(run, runs);
-					escape = 1;
-				}
-				else
-				if((c == '\n') || (c == '\t') || (c >= ' '))
-					run.append(c);
-				break;
-			case 1: // after ESC
-				escape = (c == '[') ? 2 : 0;
-				codes.setLength(0);
-				break;
-			default: // in a CSI sequence, until its final character
-				if((c >= 0x40) && (c <= 0x7e))
-				{
-					if(c == 'm')
-						setGraphics(codes.toString());
-					escape = 0;
-				}
-				else
-					codes.append(c);
-				break;
-			}
-		}
-		flush(run, runs);
+		painter.paint(chars, runs);
 		if(runs.size() > 0)
 		{
 			SwingUtilities.invokeLater(new Runnable()
@@ -445,97 +502,153 @@ public final class CharacterWindow
 	}
 
 	/**
-	 * Keeps the text so far, in the colour so far, to be shown.
+	 * Turns text with the escape codes of an ANSI terminal into runs of text,
+	 * each with its colour.  The colour carries over from one call to the
+	 * next, as in a terminal.
 	 */
-	private void flush(final StringBuilder run, final List<Object[]> runs)
+	private static final class Painter
 	{
-		if(run.length() == 0)
-			return;
-		final SimpleAttributeSet attrs = new SimpleAttributeSet();
-		Color fg = fgColor;
-		if((fg == null) && (fgIndex >= 0))
-			fg = bold ? BRIGHT[fgIndex] : NORMAL[fgIndex];
-		StyleConstants.setForeground(attrs, (fg == null) ? (bold ? Color.WHITE : TEXT) : fg);
-		if(bgColor != null)
-			StyleConstants.setBackground(attrs, bgColor);
-		StyleConstants.setBold(attrs, bold);
-		runs.add(new Object[] { run.toString(), attrs });
-		run.setLength(0);
-	}
+		private int						escape			= 0;
+		private final StringBuilder		codes			= new StringBuilder();
+		private int						fgIndex			= -1;
+		private Color					fgColor			= null;
+		private Color					bgColor			= null;
+		private boolean					bold			= false;
 
-	/**
-	 * Applies an ANSI select-graphic-rendition code: colours, in 8, 16, 256
-	 * or true colour, and bold.
-	 * @param params the code's numbers, separated by semicolons
-	 */
-	private void setGraphics(final String params)
-	{
-		final String[] p = (params.length() == 0) ? new String[] { "0" } : params.split(";", -1);
-		for(int i = 0; i < p.length; i++)
+		/**
+		 * Adds the runs of the given text to a list, each an array of its text
+		 * and its attributes.
+		 */
+		void paint(final CharBuffer chars, final List<Object[]> runs)
 		{
-			final int n = CMath.s_int(p[i]);
-			if(n == 0)
+			final StringBuilder run = new StringBuilder();
+			while(chars.hasRemaining())
 			{
-				fgIndex = -1;
-				fgColor = null;
-				bgColor = null;
-				bold = false;
-			}
-			else
-			if(n == 1)
-				bold = true;
-			else
-			if(n == 22)
-				bold = false;
-			else
-			if((n >= 30) && (n <= 37))
-			{
-				fgIndex = n - 30;
-				fgColor = null;
-			}
-			else
-			if((n >= 90) && (n <= 97))
-			{
-				fgIndex = -1;
-				fgColor = BRIGHT[n - 90];
-			}
-			else
-			if(n == 39)
-			{
-				fgIndex = -1;
-				fgColor = null;
-			}
-			else
-			if((n >= 40) && (n <= 47))
-				bgColor = NORMAL[n - 40];
-			else
-			if((n >= 100) && (n <= 107))
-				bgColor = BRIGHT[n - 100];
-			else
-			if(n == 49)
-				bgColor = null;
-			else
-			if(((n == 38) || (n == 48)) && (i + 1 < p.length))
-			{
-				Color C = null;
-				if(CMath.s_int(p[i + 1]) == 5 && (i + 2 < p.length))
+				final char c = chars.get();
+				switch(escape)
 				{
-					C = xterm(CMath.s_int(p[i + 2]));
-					i += 2;
+				case 0:
+					if(c == 27)
+					{
+						flush(run, runs);
+						escape = 1;
+					}
+					else
+					if((c == '\n') || (c == '\t') || (c >= ' '))
+						run.append(c);
+					break;
+				case 1: // after ESC
+					escape = (c == '[') ? 2 : 0;
+					codes.setLength(0);
+					break;
+				default: // in a CSI sequence, until its final character
+					if((c >= 0x40) && (c <= 0x7e))
+					{
+						if(c == 'm')
+							setGraphics(codes.toString());
+						escape = 0;
+					}
+					else
+						codes.append(c);
+					break;
 				}
-				else
-				if(CMath.s_int(p[i + 1]) == 2 && (i + 4 < p.length))
-				{
-					C = new Color(clamp(p[i + 2]), clamp(p[i + 3]), clamp(p[i + 4]));
-					i += 4;
-				}
-				if(n == 38)
+			}
+			flush(run, runs);
+		}
+
+		/**
+		 * Keeps the text so far, in the colour so far, to be shown.
+		 */
+		private void flush(final StringBuilder run, final List<Object[]> runs)
+		{
+			if(run.length() == 0)
+				return;
+			final SimpleAttributeSet attrs = new SimpleAttributeSet();
+			Color fg = fgColor;
+			if((fg == null) && (fgIndex >= 0))
+				fg = bold ? BRIGHT[fgIndex] : NORMAL[fgIndex];
+			StyleConstants.setForeground(attrs, (fg == null) ? (bold ? Color.WHITE : TEXT) : fg);
+			if(bgColor != null)
+				StyleConstants.setBackground(attrs, bgColor);
+			StyleConstants.setBold(attrs, bold);
+			runs.add(new Object[] { run.toString(), attrs });
+			run.setLength(0);
+		}
+
+		/**
+		 * Applies an ANSI select-graphic-rendition code: colours, in 8, 16, 256
+		 * or true colour, and bold.
+		 * @param params the code's numbers, separated by semicolons
+		 */
+		private void setGraphics(final String params)
+		{
+			final String[] p = (params.length() == 0) ? new String[] { "0" } : params.split(";", -1);
+			for(int i = 0; i < p.length; i++)
+			{
+				final int n = CMath.s_int(p[i]);
+				if(n == 0)
 				{
 					fgIndex = -1;
-					fgColor = C;
+					fgColor = null;
+					bgColor = null;
+					bold = false;
 				}
 				else
-					bgColor = C;
+				if(n == 1)
+					bold = true;
+				else
+				if(n == 22)
+					bold = false;
+				else
+				if((n >= 30) && (n <= 37))
+				{
+					fgIndex = n - 30;
+					fgColor = null;
+				}
+				else
+				if((n >= 90) && (n <= 97))
+				{
+					fgIndex = -1;
+					fgColor = BRIGHT[n - 90];
+				}
+				else
+				if(n == 39)
+				{
+					fgIndex = -1;
+					fgColor = null;
+				}
+				else
+				if((n >= 40) && (n <= 47))
+					bgColor = NORMAL[n - 40];
+				else
+				if((n >= 100) && (n <= 107))
+					bgColor = BRIGHT[n - 100];
+				else
+				if(n == 49)
+					bgColor = null;
+				else
+				if(((n == 38) || (n == 48)) && (i + 1 < p.length))
+				{
+					Color C = null;
+					if(CMath.s_int(p[i + 1]) == 5 && (i + 2 < p.length))
+					{
+						C = xterm(CMath.s_int(p[i + 2]));
+						i += 2;
+					}
+					else
+					if(CMath.s_int(p[i + 1]) == 2 && (i + 4 < p.length))
+					{
+						C = new Color(clamp(p[i + 2]), clamp(p[i + 3]), clamp(p[i + 4]));
+						i += 4;
+					}
+					if(n == 38)
+					{
+						fgIndex = -1;
+						fgColor = C;
+					}
+					else
+						bgColor = C;
+				}
 			}
 		}
 	}

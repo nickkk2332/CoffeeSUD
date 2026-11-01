@@ -36,6 +36,15 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 public class WindowSession extends PartySession
 {
 	private CharacterWindow	window	= null;
+	/** draws the window's panel again, when the panel's sections change */
+	private final Runnable	panelRefresh	= new Runnable()
+	{
+		@Override
+		public void run()
+		{
+			refreshPanel();
+		}
+	};
 
 	@Override
 	public String ID()
@@ -71,6 +80,7 @@ public class WindowSession extends PartySession
 			});
 		if(window == null)
 			return super.makeSocket();
+		WindowPanel.addWindow(panelRefresh);
 		return new WindowSocket(window);
 	}
 
@@ -88,6 +98,50 @@ public class WindowSession extends PartySession
 		super.setMob(newmob);
 		if(window != null)
 			window.setTitle((newmob == null) ? "CoffeeSUD" : newmob.Name());
+	}
+
+	@Override
+	public void showPrompt()
+	{
+		super.showPrompt();
+		refreshPanel();
+	}
+
+	@Override
+	public void stopSession(final boolean disconnect, final boolean removeMOB, final boolean dropSession, final boolean killThread)
+	{
+		WindowPanel.removeWindow(panelRefresh);
+		super.stopSession(disconnect, removeMOB, dropSession, killThread);
+	}
+
+	/**
+	 * Draws the window's panel again with what its sections show of the
+	 * character now, in the window's colours, or hides it when the windows
+	 * have no panel.
+	 */
+	protected void refreshPanel()
+	{
+		final CharacterWindow W = window;
+		if((W == null) || W.isClosed())
+			return;
+		final String which = WindowPanel.sections();
+		final MOB M = mob();
+		if((which.length() == 0) || (M == null))
+		{
+			W.setPanel(null);
+			return;
+		}
+		final String text = WindowPanel.text(M, which);
+		W.setPanel(CMLib.coffeeFilter().fullOutFilter(this, M, M, M, null, text, false));
+	}
+
+	/**
+	 * Returns the window of this session's character, or null if it has none.
+	 * @return the window
+	 */
+	public CharacterWindow window()
+	{
+		return window;
 	}
 
 	/**
