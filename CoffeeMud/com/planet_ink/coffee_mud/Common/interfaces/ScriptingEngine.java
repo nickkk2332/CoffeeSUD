@@ -493,6 +493,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"REMOVING_PROG", // 60
 		"SKILL_PROG", // 61
 		"DISCOVER_PROG", // 62
+		"WEATHER_PROG", // 63
+		"MOON_PROG", // 64
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -836,10 +838,11 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	 * @param target $t, or null for the host
 	 * @param item $o, or null for the host if it is an item
 	 * @param msg $g
+	 * @param args $0 to $8, or null
 	 * @param bits how the trigger line is split: c a word, C upper case, r the rest
 	 * @param test which trigger lines the event fits
 	 */
-	public default void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final String bits, final java.util.function.Predicate<String[]> test)
+	public default void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
 	}
 

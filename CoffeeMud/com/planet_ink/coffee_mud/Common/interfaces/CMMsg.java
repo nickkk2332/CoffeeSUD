@@ -1270,6 +1270,12 @@ public interface CMMsg extends CMCommon
 	public static final int TYP_SKILLFAIL=149;
 	/** MINOR_MASK minor action code type, denoting a polymorph attack */
 	public static final int TYP_POLYMORPH=150;
+	/** MINOR_MASK minor action code type, denoting an area's weather changing (ST4) */
+	public static final int TYP_WEATHERCHANGE=151;
+	/** MINOR_MASK minor action code type, denoting the time of day changing: dawn, day, dusk or night (ST4) */
+	public static final int TYP_TODCHANGE=152;
+	/** MINOR_MASK minor action code type, denoting a new day on the clock (ST4) */
+	public static final int TYP_DATECHANGE=153;
 
 	/** MINOR_MASK minor action code type, denoting a channel action -- 2000-2047 are channels*/
 	public static final int TYP_CHANNEL=2000; //(2000-2047 are channels)
@@ -1301,7 +1307,8 @@ public interface CMMsg extends CMCommon
 		"WROTE", "REWRITE", "WASREAD", "PREMOVE", "THINK", "STARTUP", "RPXPCHANGE",
 		"COMMANDREJECT","RECIPELEARNED", "GRAVITY", "LEGALSTATE", "NEWROOM","CAUSESINK",
 		"ENDQUEST","WINQUEST","HOLYEVENT","EMISSION", "BODYDROP", "GLANCE", "RITUAL",
-		"PUFF", "TRAIN", "BROKERADD", "NEEDRELOAD", "SKILLFAIL","POLYMORPH"
+		"PUFF", "TRAIN", "BROKERADD", "NEEDRELOAD", "SKILLFAIL","POLYMORPH",
+		"WEATHERCHANGE", "TODCHANGE", "DATECHANGE"
 	};
 
 	/** Index string descriptions of all the MAJOR_MASK code MAKS_s */
@@ -1659,6 +1666,12 @@ public interface CMMsg extends CMCommon
 	public static final int MSG_NEEDRELOAD=TYP_NEEDRELOAD;
 	/** combined MAJOR and MINOR codes for useful event message type for a fail to target in a skill */
 	public static final int MSG_SKILLFAIL=MASK_ALWAYS|TYP_SKILLFAIL;
+	/** combined MAJOR and MINOR codes for an area's weather changing, to its scripts (ST4) */
+	public static final int MSG_WEATHERCHANGE=MASK_ALWAYS|TYP_WEATHERCHANGE;
+	/** combined MAJOR and MINOR codes for the time of day changing, to an area's scripts (ST4) */
+	public static final int MSG_TODCHANGE=MASK_ALWAYS|TYP_TODCHANGE;
+	/** combined MAJOR and MINOR codes for a new day, to an area's scripts (ST4) */
+	public static final int MSG_DATECHANGE=MASK_ALWAYS|TYP_DATECHANGE;
 
 	/**
 	 * An enum to use for an external message check from inside

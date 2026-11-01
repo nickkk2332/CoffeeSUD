@@ -449,6 +449,8 @@ public class DefaultClimate implements Climate
 			}
 			if(oldWeather!=currentWeather)
 			{
+				// ST4: WEATHERCHANGE and WEATHER_PROG
+				ScriptEvents.weatherChanged(A,oldWeather,currentWeather,nextWeather);
 				// 0=say nothing;
 				// 1=say weatherdescription only
 				// 2=say stop word only

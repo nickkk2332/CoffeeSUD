@@ -1011,6 +1011,15 @@ JS17, JS18, JS19, JS20, JS23
   skill, $g the proficiency. `DISCOVER_PROG ROOM|AREA [PARTY] [mask]` fires
   when a room visit is first marked (StdRoom, and the Bard's, Sailor's and
   Prop_RoomRedirect's own marks); $g is the room's ID. @GLOBAL waits for ST12.
+- ST4 done. New message types WEATHERCHANGE ("new old forecast"), TODCHANGE
+  (DAWN, DAY, DUSK or NIGHT) and DATECHANGE ("day month season year") go
+  to the scripts of every room of the area, what is in them, and the area
+  (`ScriptEvents.deliver`, not through the rooms, so the area hears each
+  once), from `DefaultClimate.weatherTick` (so WEATHER SET too) and the
+  clock's `tickTock` (TIME SET too). `WEATHER_PROG new|ANY [old]`: $g the new
+  weather, $0 the old, $1 the forecast (the event's own values go in $0 and
+  on: `eventTrigger` takes them). `MOON_PROG phase|ANY` on the day the
+  clock's moon changes. A restore's `setCurrentWeatherType` fires nothing.
 
 #### 2e. Quests (15)
 

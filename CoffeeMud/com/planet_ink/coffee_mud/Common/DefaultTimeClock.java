@@ -782,11 +782,17 @@ public class DefaultTimeClock implements TimeClock
 		catch (final java.util.NoSuchElementException x)
 		{
 		}
+		// ST4: TODCHANGE
+		ScriptEvents.timeOfDayChanged(this);
 	}
 
 	protected void tickTock(final int howManyHours, final boolean moveTheSky)
 	{
 		final TimeOfDay todCode=getTODCode();
+		final int oldDay=getDayOfMonth();
+		final int oldMonth=getMonth();
+		final int oldYear=getYear();
+		final MoonPhase oldMoon=getMoonPhase(null);
 		if(howManyHours!=0)
 		{
 			lastTicked=GameTime.now();
@@ -812,6 +818,9 @@ public class DefaultTimeClock implements TimeClock
 		}
 		if((moveTheSky)&&(getTODCode()!=todCode))
 			handleTimeChange();
+		// ST4: DATECHANGE and MOON_PROG
+		if((moveTheSky)&&((getDayOfMonth()!=oldDay)||(getMonth()!=oldMonth)||(getYear()!=oldYear)))
+			ScriptEvents.dateChanged(this,oldMoon);
 	}
 
 	@Override

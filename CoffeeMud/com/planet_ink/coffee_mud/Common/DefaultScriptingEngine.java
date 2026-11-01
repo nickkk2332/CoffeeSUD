@@ -16393,7 +16393,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	}
 
 	@Override
-	public void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final String bits, final java.util.function.Predicate<String[]> test)
+	public void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
 		if((host==null)||(source==null)||(recurseCounter.get() > 2)||(!canTrigger(triggerCode)))
 			return;
@@ -16419,7 +16419,22 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					t=parseBits(script,0,bits);
 				if((t!=null)&&test.test(t))
 				{
-					enqueResponse(triggerCode,host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,script,1,t);
+					if(args==null)
+						enqueResponse(triggerCode,host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,script,1,t);
+					else
+					if(CMProps.isState(CMProps.HostState.RUNNING))
+					{
+						// $0 and on: the event's own values
+						final MPContext ctx=new MPContext(host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,args);
+						if(noDelay)
+							execute(ctx.push(script));
+						else
+						{
+							final ScriptableResponse resp=new ScriptableResponse(triggerCode,ctx,script,1);
+							dupCheckClear(resp,t);
+							que.add(resp);
+						}
+					}
 					if(!multiTriggers)
 						return;
 				}

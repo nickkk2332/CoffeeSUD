@@ -7,7 +7,10 @@ import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.Abilities.interfaces.Ability;
 import com.planet_ink.coffee_mud.Areas.interfaces.Area;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior;
+import com.planet_ink.coffee_mud.Common.interfaces.CMMsg;
+import com.planet_ink.coffee_mud.Common.interfaces.Climate;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerStats;
+import com.planet_ink.coffee_mud.Common.interfaces.TimeClock;
 import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine;
 import com.planet_ink.coffee_mud.Items.interfaces.Item;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
@@ -31,7 +34,7 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 /**
  * Script triggers for things that happen without a message: a skill learned,
  * improved, mastered or failed (ST2, SKILL_PROG), a room or area first visited
- * (ST3, DISCOVER_PROG).  An event at a room reaches the scripts a message in
+ * (ST3, DISCOVER_PROG), the weather and the moon (ST4).  An event at a room reaches the scripts a message in
  * that room would: the room, its items, its mobs and what they carry, and its
  * area and the area's parents.  Each script engine there is handed the event
  * through {@link ScriptingEngine#eventTrigger}, which queues the scripts of
@@ -109,6 +112,35 @@ public final class ScriptEvents
 		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
 		if(R == null)
 			return hosts;
+		roomHosts(R, hosts);
+		areaHosts(R.getArea(), hosts);
+		return hosts;
+	}
+
+	/**
+	 * The hosts an event in a whole area reaches (ST4): each of its rooms,
+	 * their items, their mobs and what those carry, and the area and its
+	 * parents.
+	 * @param A the area
+	 * @return the hosts
+	 */
+	public static List<PhysicalAgent> hosts(final Area A)
+	{
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		if(A == null)
+			return hosts;
+		for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if(R != null)
+				roomHosts(R, hosts);
+		}
+		areaHosts(A, hosts);
+		return hosts;
+	}
+
+	private static void roomHosts(final Room R, final List<PhysicalAgent> hosts)
+	{
 		hosts.add(R);
 		for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
 		{
@@ -129,17 +161,186 @@ public final class ScriptEvents
 					hosts.add(I);
 			}
 		}
-		final Area A = R.getArea();
-		if(A != null)
+	}
+
+	private static void areaHosts(final Area A, final List<PhysicalAgent> hosts)
+	{
+		if(A == null)
+			return;
+		hosts.add(A);
+		for(final Area P : A.getParentsRecurse())
 		{
-			hosts.add(A);
-			for(final Area P : A.getParentsRecurse())
+			if((P != null) && (!hosts.contains(P)))
+				hosts.add(P);
+		}
+	}
+
+	/**
+	 * Hands a message to the script engines of each host, as a message in
+	 * their room would reach them (EXECMSG_PROG), for an event with no one
+	 * room (ST4).
+	 * @param hosts the hosts
+	 * @param msg the message
+	 */
+	public static void deliver(final Collection<PhysicalAgent> hosts, final CMMsg msg)
+	{
+		for(final PhysicalAgent host : hosts)
+		{
+			if((host == null) || host.amDestroyed())
+				continue;
+			for(final Enumeration<ScriptingEngine> s = host.scripts(); s.hasMoreElements();)
 			{
-				if((P != null) && (!hosts.contains(P)))
-					hosts.add(P);
+				final ScriptingEngine S = s.nextElement();
+				if(S != null)
+					S.executeMsg(host, msg);
+			}
+			for(final Enumeration<Behavior> b = host.behaviors(); b.hasMoreElements();)
+			{
+				final Behavior B = b.nextElement();
+				if(B instanceof ScriptingEngine)
+					B.executeMsg(host, msg);
 			}
 		}
-		return hosts;
+	}
+
+	private static final Map<String, MOB>	sources	= new HashMap<String, MOB>();
+
+	/**
+	 * The stand-in that an area-wide event comes from, $n to a script: "the
+	 * weather" or "the sky", put in one of the area's rooms.
+	 * @param name its name
+	 * @param A the area
+	 * @return the stand-in, or null if the area has no rooms
+	 */
+	public static MOB source(final String name, final Area A)
+	{
+		Room R = null;
+		for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements() && (R == null);)
+			R = r.nextElement();
+		if(R == null)
+			return null;
+		synchronized(sources)
+		{
+			MOB M = sources.get(name);
+			if((M == null) || M.amDestroyed())
+			{
+				M = CMClass.getMOB("StdMOB");
+				M.setName(name);
+				M.setDisplayText("");
+				sources.put(name, M);
+			}
+			M.setLocation(R);
+			return M;
+		}
+	}
+
+	/** WEATHER_PROG's code */
+	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
+	/** MOON_PROG's code */
+	public static final int	MOON_PROG		= code("MOON_PROG");
+	/** EXECMSG_PROG's code */
+	public static final int	EXECMSG_PROG	= code("EXECMSG_PROG");
+
+	private static String weatherName(final int code)
+	{
+		return ((code >= 0) && (code < Climate.WEATHER_DESCS.length)) ? Climate.WEATHER_DESCS[code] : "";
+	}
+
+	/**
+	 * ST4: an area's weather changed: WEATHERCHANGE to its scripts, the words
+	 * "new old forecast", and WEATHER_PROG new|ANY [old], with $g the new
+	 * weather, $0 the old and $1 the forecast.
+	 * @param A the area
+	 * @param oldWeather the weather it was
+	 * @param newWeather the weather now
+	 * @param nextWeather the weather to come
+	 */
+	public static void weatherChanged(final Area A, final int oldWeather, final int newWeather, final int nextWeather)
+	{
+		if((A == null) || (oldWeather == newWeather) || ((!isUsed(WEATHER_PROG)) && (!isUsed(EXECMSG_PROG))))
+			return;
+		final MOB src = source("the weather", A);
+		if(src == null)
+			return;
+		final String o = weatherName(oldWeather);
+		final String n = weatherName(newWeather);
+		final String f = weatherName(nextWeather);
+		final List<PhysicalAgent> hosts = hosts(A);
+		if(isUsed(EXECMSG_PROG))
+			deliver(hosts, CMClass.getMsg(src, null, null, CMMsg.MSG_WEATHERCHANGE, n + " " + o + " " + f));
+		fire(hosts, WEATHER_PROG, src, null, n, new Object[] { o, f }, "CCC", t -> weatherMatches(t, n, o));
+	}
+
+	/**
+	 * Whether a WEATHER_PROG trigger line fits a change of weather.
+	 * @param t the trigger line: WEATHER_PROG, the new weather or ANY, the old
+	 * @param n the new weather
+	 * @param o the old
+	 * @return true if it fits
+	 */
+	public static boolean weatherMatches(final String[] t, final String n, final String o)
+	{
+		if(t.length < 2)
+			return false;
+		if((!t[1].equals("ANY")) && (!t[1].equals(n)))
+			return false;
+		return (t.length < 3) || (t[2].length() == 0) || t[2].equals("ANY") || t[2].equals(o);
+	}
+
+	private static List<Area> areasOn(final TimeClock C)
+	{
+		final List<Area> areas = new ArrayList<Area>();
+		for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+		{
+			final Area A = a.nextElement();
+			if((A != null) && (A.getTimeObj() == C))
+				areas.add(A);
+		}
+		return areas;
+	}
+
+	/**
+	 * ST4: a clock's time of day changed: TODCHANGE to the scripts of every
+	 * area on it, the word DAWN, DAY, DUSK or NIGHT.
+	 * @param C the clock
+	 */
+	public static void timeOfDayChanged(final TimeClock C)
+	{
+		if((C == null) || (!isUsed(EXECMSG_PROG)))
+			return;
+		final String tod = C.getTODCode().name();
+		for(final Area A : areasOn(C))
+		{
+			final MOB src = source("the sky", A);
+			if(src != null)
+				deliver(hosts(A), CMClass.getMsg(src, null, null, CMMsg.MSG_TODCHANGE, tod));
+		}
+	}
+
+	/**
+	 * ST4: a clock's day changed: DATECHANGE to the scripts of every area on
+	 * it, the words "day month season year", and if the moon's phase changed,
+	 * MOON_PROG phase|ANY, with $g the phase and $0 the one before.
+	 * @param C the clock
+	 * @param oldMoon the moon's phase before
+	 */
+	public static void dateChanged(final TimeClock C, final TimeClock.MoonPhase oldMoon)
+	{
+		if((C == null) || ((!isUsed(EXECMSG_PROG)) && (!isUsed(MOON_PROG))))
+			return;
+		final String date = C.getDayOfMonth() + " " + C.getMonth() + " " + C.getSeasonCode().name() + " " + C.getYear();
+		final TimeClock.MoonPhase moon = C.getMoonPhase(null);
+		for(final Area A : areasOn(C))
+		{
+			final MOB src = source("the sky", A);
+			if(src == null)
+				continue;
+			final List<PhysicalAgent> hosts = hosts(A);
+			if(isUsed(EXECMSG_PROG))
+				deliver(hosts, CMClass.getMsg(src, null, null, CMMsg.MSG_DATECHANGE, date));
+			if(moon != oldMoon)
+				fire(hosts, MOON_PROG, src, null, moon.name(), new Object[] { (oldMoon == null) ? "" : oldMoon.name() }, "CC", t -> (t.length > 1) && (t[1].equals("ANY") || t[1].equals(moon.name())));
+		}
 	}
 
 	/**
@@ -150,10 +351,11 @@ public final class ScriptEvents
 	 * @param source who it happened to: $n
 	 * @param target $t, or null for the host
 	 * @param msg $g
+	 * @param args $0 to $8, or null
 	 * @param bits how the trigger line is split, as parseBits does
 	 * @param test which trigger lines the event matches
 	 */
-	public static void fire(final Collection<PhysicalAgent> hosts, final int triggerCode, final MOB source, final Environmental target, final String msg, final String bits, final Predicate<String[]> test)
+	public static void fire(final Collection<PhysicalAgent> hosts, final int triggerCode, final MOB source, final Environmental target, final String msg, final Object[] args, final String bits, final Predicate<String[]> test)
 	{
 		if((triggerCode <= 0) || (!isUsed(triggerCode)) || (source == null))
 			return;
@@ -165,13 +367,13 @@ public final class ScriptEvents
 			{
 				final ScriptingEngine S = s.nextElement();
 				if(S != null)
-					S.eventTrigger(host, triggerCode, source, target, null, msg, bits, test);
+					S.eventTrigger(host, triggerCode, source, target, null, msg, args, bits, test);
 			}
 			for(final Enumeration<Behavior> b = host.behaviors(); b.hasMoreElements();)
 			{
 				final Behavior B = b.nextElement();
 				if(B instanceof ScriptingEngine)
-					((ScriptingEngine)B).eventTrigger(host, triggerCode, source, target, null, msg, bits, test);
+					((ScriptingEngine)B).eventTrigger(host, triggerCode, source, target, null, msg, args, bits, test);
 			}
 		}
 	}
@@ -195,7 +397,7 @@ public final class ScriptEvents
 			return;
 		final Ability mine = mob.fetchAbility(A.ID());
 		final int prof = (mine != null) ? mine.proficiency() : A.proficiency();
-		fire(hosts(mob.location()), SKILL_PROG, mob, A, "" + prof, "CCcr", t -> skillMatches(t, mob, A, kind));
+		fire(hosts(mob.location()), SKILL_PROG, mob, A, "" + prof, null, "CCcr", t -> skillMatches(t, mob, A, kind));
 	}
 
 	/**
@@ -275,7 +477,7 @@ public final class ScriptEvents
 	{
 		if((mob == null) || (R == null) || (!isUsed(DISCOVER_PROG)))
 			return;
-		fire(hosts(R), DISCOVER_PROG, mob, R, CMLib.map().getExtendedRoomID(R), "CCr", t -> discoverMatches(t, mob, R, newArea));
+		fire(hosts(R), DISCOVER_PROG, mob, R, CMLib.map().getExtendedRoomID(R), null, "CCr", t -> discoverMatches(t, mob, R, newArea));
 	}
 
 	/**
