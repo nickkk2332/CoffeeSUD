@@ -476,7 +476,9 @@ DT15, DT16, DT17, DT18, DT19, DT20, DT21, DT22, DT23, DT24, DT25, DT26,
 DT27, DT28, DT29, DT30, DT31, DT32, DT33, DT34, DT35, DT36, DT37, B1, B2,
 B3, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13
 
-Status: in progress. Each item has its checks in `tools/fixes.sh`.
+Status: built, each item with its checks in `tools/fixes.sh`. Left: DT33's
+listing and console, which wait for I12's properties, and what an item's
+note below says it leaves (B14, CHATDRAFT, is for later).
 
 - DT1 done. `VARS LIST [scope] [host] [mask]` (scope * for all, GLOBAL,
   QUEST name, a scope's name, or INDIVIDUAL for the engines that keep their
