@@ -477,6 +477,19 @@ DT15, DT16, DT17, DT18, DT19, DT20, DT21, DT22, DT23, DT24, DT25, DT26,
 DT27, DT28, DT29, DT30, DT31, DT32, DT33, DT34, DT35, DT36, DT37, B1, B2,
 B3, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13
 
+Status: in progress. Each item has its checks in `tools/fixes.sh`.
+
+- DT1 done. `VARS LIST [scope] [host] [mask]` (scope * for all, GLOBAL,
+  QUEST name, a scope's name, or INDIVIDUAL for the engines that keep their
+  own, listed with their host), `VARS SCOPES`, `VARS SET host name value
+  [SCOPE s]` (as MPSETVAR, so ++ and +5 add), `VARS CLEAR host [name|*]`,
+  `VARS WATCH host name` (each change told with the scope, the script's files
+  and the room it ran in; `VARS UNWATCH`), `VARS DUMP file`; and the script
+  function `$%VARNAMES(host prefix)%`, also a condition. In AHELP VARS. Found
+  on the way: `MPSETINTERNAL SCOPE GLOBAL` (an engine's scope set to the
+  global one) put the engine's variables in a separate store named
+  `VARSCOPE-`, not the one unscoped scripts share; it uses the shared one.
+
 #### 2d. Scripting (59)
 
 Script triggers, the script language, and JavaScript: the hooks most later

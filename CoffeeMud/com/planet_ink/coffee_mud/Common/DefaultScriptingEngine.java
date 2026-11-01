@@ -438,8 +438,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	{
 		if((newScope==null)||(newScope.trim().length()==0)||newScope.equalsIgnoreCase("GLOBAL"))
 		{
+			// the global scope is the store every unscoped script uses
+			// (it once fell through to a separate store named VARSCOPE-)
 			scope="";
 			resources = globalResources();
+			return;
 		}
 		else
 			scope=newScope.toUpperCase().trim();
@@ -3130,7 +3133,52 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				H.put(key,val);
 			if(H.size()==0)
 				resources._removeResource("SCRIPTVAR-"+name);
+			ScriptVarWatch.changed(scope, name, key, val.trim(), varChangeSource());
 		}
+	}
+
+	/**
+	 * Where this engine's scripts came from, for VARS WATCH: their files, if
+	 * loaded from any, and the room the engine last ran in.
+	 * @return a short description
+	 */
+	protected String varChangeSource()
+	{
+		final StringBuilder str=new StringBuilder("");
+		try
+		{
+			final List<String> files=externalFiles();
+			str.append(files.isEmpty()?"an inline script":String.join(", ",files));
+		}
+		catch(final Exception e)
+		{
+			str.append("a script");
+		}
+		final Room R=lastKnownLocation;
+		if(R!=null)
+			str.append(" in ").append(CMLib.map().getExtendedRoomID(R));
+		return str.toString();
+	}
+
+	/**
+	 * The names of the variables a host has in this engine's scope, those
+	 * starting with the given prefix, for VARNAMES.
+	 * @param host the host, or * for all
+	 * @param prefix the start of the names, or "" for all
+	 * @return the names, sorted, separated by spaces
+	 */
+	protected String varNames(final String host, final String prefix)
+	{
+		final TreeSet<String> names=new TreeSet<String>();
+		final String up=prefix.toUpperCase();
+		final PairList<String,String> set=getScriptVarSet(host,"*");
+		for(int i=0;i<set.size();i++)
+		{
+			final String n=set.elementAtSecond(i).toUpperCase();
+			if(n.startsWith(up))
+				names.add(n);
+		}
+		return String.join(" ",names);
 	}
 
 	@Override
@@ -5537,6 +5585,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						returnable=false;
 					break;
 				}
+				case 121: // varnames
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"cccr"); /* tt[t+0] */
+					final String host=varify(ctx,tt[t+0]);
+					final String prefix=varify(ctx,tt[t+1]);
+					final String cmp=varify(ctx,tt[t+2]);
+					final String arg2=varify(ctx,tt[t+3]);
+					returnable=simpleEvalStr(ctx.scripted,varNames(host,prefix),arg2,cmp,"VARNAMES");
+					break;
+				}
 				case 119: // factionvalue
 				case 120: // factionband
 				{
@@ -7835,6 +7894,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String value=factionText(ctx,whom,fname,funcCode.intValue()==119);
 				if(value!=null)
 					results.append(value);
+				break;
+			}
+			case 121: // varnames
+			{
+				final String host=varify(ctx,CMParms.getCleanBit(funcParms,0));
+				final String prefix=varify(ctx,CMParms.getPastBitClean(funcParms,0)).trim();
+				results.append(varNames(host.length()==0?"*":host,prefix));
 				break;
 			}
 			case 118: // hastag
