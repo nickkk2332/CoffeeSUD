@@ -46,6 +46,75 @@ public class Conquerable extends Arrest
 		return "Conquerable";
 	}
 
+	/** the clan items a saved game had, put back on the first area tick */
+	protected List<ClanItem>	restoredClanItems	= null;
+
+	@Override
+	protected String getRunState()
+	{
+		final StringBuilder str=new StringBuilder(super.getRunState());
+		if((holdingClan.length()==0)&&(prevHoldingClan.length()==0)&&(clanControlPoints.size()==0)&&(clanItems.size()==0))
+			return str.toString();
+		final XMLLibrary xml=CMLib.xml();
+		str.append("<CONQUEST>");
+		str.append(xml.convertXMLtoTag("CLAN",xml.parseOutAngleBrackets(holdingClan)));
+		str.append(xml.convertXMLtoTag("PREV",xml.parseOutAngleBrackets(prevHoldingClan)));
+		str.append(xml.convertXMLtoTag("DATE",conquestDate));
+		str.append(xml.convertXMLtoTag("REVOLTS",revoltFails));
+		str.append(xml.convertXMLtoTag("REVOLTDOWN",revoltDown));
+		synchronized(clanControlPoints)
+		{
+			for(final String clanID : clanControlPoints.keySet())
+				str.append("<POINTS C=\"").append(xml.parseOutAngleBrackets(clanID)).append("\">").append(clanControlPoints.get(clanID)[0]).append("</POINTS>");
+		}
+		synchronized(clanItems)
+		{
+			for(int i=0;i<clanItems.size();i++)
+			{
+				final int sid=com.planet_ink.coffee_mud.core.save.WorldState.sidOf(clanItems.getFirst(i));
+				if(sid>0)
+					str.append("<ITEM>").append(sid).append("</ITEM>");
+			}
+		}
+		str.append("</CONQUEST>");
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		super.setRunState(xml);
+		final XMLLibrary xmlLib=CMLib.xml();
+		final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag conquest=xmlLib.getPieceFromPieces(xmlLib.parseAllXML(xml),"CONQUEST");
+		if(conquest==null)
+			return;
+		holdingClan=xmlLib.restoreAngleBrackets(conquest.getValFromPieces("CLAN"));
+		savedHoldingClan=holdingClan;
+		prevHoldingClan=xmlLib.restoreAngleBrackets(conquest.getValFromPieces("PREV"));
+		conquestDate=CMath.s_long(conquest.getValFromPieces("DATE"));
+		revoltFails=CMath.s_int(conquest.getValFromPieces("REVOLTS"));
+		revoltDown=Math.max(1,CMath.s_int(conquest.getValFromPieces("REVOLTDOWN")));
+		final STreeMap<String,int[]> points=new STreeMap<String,int[]>();
+		restoredClanItems=new ArrayList<ClanItem>();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : conquest.contents())
+		{
+			if(tag.tag().equalsIgnoreCase("POINTS"))
+				points.put(xmlLib.restoreAngleBrackets(tag.getParmValue("C")),new int[]{CMath.s_int(tag.value())});
+			else
+			if(tag.tag().equalsIgnoreCase("ITEM"))
+			{
+				final Physical P=com.planet_ink.coffee_mud.core.save.WorldState.restoredThing(tag.value());
+				if(P instanceof ClanItem)
+					restoredClanItems.add((ClanItem)P);
+			}
+		}
+		clanControlPoints=points;
+		// reckoned again from the restored world on the next area tick, even
+		// if the area ticked before the save was put back
+		totalControlPoints=-1;
+		waitToReload=0;
+	}
+
 	@Override
 	protected boolean defaultModifiableNames()
 	{
@@ -547,6 +616,22 @@ public class Conquerable extends Arrest
 
 		// calculate total control points
 		// make sure all intelligent mobs belong to the clan
+		if((totalControlPoints<0)
+		&&((waitToReload<=0)||(GameTime.now()>waitToReload))
+		&&(myArea!=null)
+		&&(restoredClanItems!=null))
+		{
+			// a restored game: the clan items are in the world as saved
+			clanItems.clear();
+			for(final ClanItem I : restoredClanItems)
+			{
+				if(!I.amDestroyed())
+					registerClanItem(I);
+			}
+			restoredClanItems=null;
+			recalculateControlPoints(A);
+		}
+		else
 		if((totalControlPoints<0)
 		&&((waitToReload<=0)||(GameTime.now()>waitToReload))
 		&&(myArea!=null))

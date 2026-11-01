@@ -196,6 +196,15 @@ group_saves()
 	expect s2-iron2.txt "Restored 'iron'."
 	expect s2-iron2.txt "This is an ironman game: it has one save, 'iron', which it keeps for you."
 
+}
+
+group_saves2()
+{
+	SAVES="$W/vsaves"
+	NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	echo "Played: step 2b, what a save keeps (second group)"
+	mkdir -p "$W/vdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/vdb/"
+	cp -r "$GAME/world" "$W/vworld"
 	# S3: the world's own settings in world.ini, between coffeemud.ini and
 	# the command line, and WORLD SET in builder mode
 	mkdir -p "$W/s3db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/s3db/"
@@ -236,25 +245,25 @@ group_saves()
 	fi
 
 	# S4: who rides what, in the world files and in saves.  Builder mode keeps
-	# its characters in the cache, so the builder plays on as Builder
-	play s4-build.txt sdb sworld "Builder\njrun /resources/_fixes/s4-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	# its characters in the cache, so later builder sessions play on as Builder
+	play s4-build.txt vdb vworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s4-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s4-build.txt
-	if grep -q "IRIDE" "$W/sworld/areas/"*.cmare; then
+	if grep -q "IRIDE" "$W/vworld/areas/"*.cmare; then
 		echo "  ok    s4-build: the area file says what the wagon is hitched to"
 	else
 		echo "  FAIL  s4-build: no IRIDE in the area file"; FAIL=1
 	fi
-	play s4-play.txt sdb sworld "Rider\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s4-play.js\nsave s4\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s4-play.txt vdb vworld "Rider\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s4-play.js\nsave s4\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s4-play.txt
-	play s4-restore.txt sdb sworld 'jrun /resources/_fixes/s4-check.js\nquit\nn\n' RESTORE=s4 TIMEMODE=TURNS
+	play s4-restore.txt vdb vworld 'jrun /resources/_fixes/s4-check.js\nquit\nn\n' RESTORE=s4 TIMEMODE=TURNS
 	expect s4-restore.txt "Restored 's4'."
 	jsresults s4-restore.txt
 
 	# S7: what scripts have done: a ONCE_PROG that ran, a queued MPALARM, a
 	# DELAY_PROG under way and a script's own variable, through a save
-	play s7-build.txt sdb sworld "Builder\njrun /resources/_fixes/s7-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	play s7-build.txt vdb vworld "Builder\njrun /resources/_fixes/s7-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s7-build.txt
-	play s7-play.txt sdb sworld "Ringer\n${NEWCHAR}get book\nread book\nwait\njrun /resources/_fixes/s7-play.js\nsaves check\nwait 10\nsave s7\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s7-play.txt vdb vworld "Ringer\n${NEWCHAR}get book\nread book\nwait\njrun /resources/_fixes/s7-play.js\nsaves check\nwait 10\nsave s7\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s7-play.txt
 	count s7-play.txt "FIXS7ONCE" 1
 	count s7-play.txt "FIXS7ROOM" 1
@@ -263,7 +272,7 @@ group_saves()
 	expect s7-play.txt "a summoned wisp in New Room"
 	# 20 ticks were left on the alarm and 30 on the delay; a new game would
 	# not have the alarm, and would toll only after 40
-	play s7-restore.txt sdb sworld 'wait 35\njrun /resources/_fixes/s7-check.js\nquit\nn\n' RESTORE=s7 TIMEMODE=TURNS
+	play s7-restore.txt vdb vworld 'wait 35\njrun /resources/_fixes/s7-check.js\nquit\nn\n' RESTORE=s7 TIMEMODE=TURNS
 	expect s7-restore.txt "Restored 's7'."
 	jsresults s7-restore.txt
 	count s7-restore.txt "FIXS7ONCE" 0
@@ -272,11 +281,21 @@ group_saves()
 	count s7-restore.txt "FIXS7DELAY" 1
 
 	# S9: a behaviour's own state: a hired sellsword's contract
-	play s9-play.txt sdb sworld "Hirer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s9-play.js\nsave s9\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s9-play.txt vdb vworld "Hirer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s9-play.js\nsave s9\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s9-play.txt
-	play s9-restore.txt sdb sworld 'jrun /resources/_fixes/s9-check.js\nquit\nn\n' RESTORE=s9 TIMEMODE=TURNS
+	play s9-restore.txt vdb vworld 'jrun /resources/_fixes/s9-check.js\nquit\nn\n' RESTORE=s9 TIMEMODE=TURNS
 	expect s9-restore.txt "Restored 's9'."
 	jsresults s9-restore.txt
+
+	# S12: an area's law: a warrant and a fine, put back once the player is
+	# back, through the area's STATE
+	play s12-build.txt vdb vworld "Builder\njrun /resources/_fixes/s12-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s12-build.txt
+	play s12-play.txt vdb vworld "Felon\n${NEWCHAR}get book\nread book\nwait\njrun /resources/_fixes/s12-play.js\nsave s12\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s12-play.txt
+	play s12-restore.txt vdb vworld 'wait 3\njrun /resources/_fixes/s12-check.js\nquit\nn\n' RESTORE=s12 TIMEMODE=TURNS
+	expect s12-restore.txt "Restored 's12'."
+	jsresults s12-restore.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so
@@ -291,13 +310,19 @@ if [ $# -eq 0 ]; then
 	P_PID=$!
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!
-	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log"; then FAIL=1; fi
+	group_saves2 > "$W/group_saves2.log" 2>&1 &
+	V2_PID=$!
+	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
-	group_saves > "$W/group_saves.log" 2>&1
-	cat "$W/group_saves.log"
-	if grep -q "^  FAIL" "$W/group_saves.log"; then FAIL=1; fi
+	group_saves > "$W/group_saves.log" 2>&1 &
+	V_PID=$!
+	group_saves2 > "$W/group_saves2.log" 2>&1 &
+	V2_PID=$!
+	wait $V_PID; wait $V2_PID
+	cat "$W/group_saves.log" "$W/group_saves2.log"
+	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log"; then FAIL=1; fi
 else
 	group_jrun > "$W/group_jrun.log" 2>&1
 	cat "$W/group_jrun.log"

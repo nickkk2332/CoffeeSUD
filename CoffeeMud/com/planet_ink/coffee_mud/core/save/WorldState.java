@@ -499,6 +499,32 @@ public final class WorldState
 	}
 
 	/**
+	 * Returns the number a mob, character or item has in the save being
+	 * written, for a behaviour's STATE that names things written elsewhere
+	 * in the save, such as a conquest's clan items.
+	 * @param P the mob, character or item
+	 * @return its number, or 0 if it is not in the save
+	 */
+	public static int sidOf(final Physical P)
+	{
+		final Map<Physical, Integer> w = written;
+		final Integer n = ((w == null) || (P == null)) ? null : w.get(P);
+		return (n == null) ? 0 : n.intValue();
+	}
+
+	/**
+	 * Returns what was made from the save being put back, by its number, for
+	 * a behaviour's STATE.  Areas' states are put back after the rooms, so
+	 * the rooms' mobs and items are there.
+	 * @param sid the number
+	 * @return the mob, character or item, or null
+	 */
+	public static Physical restoredThing(final String sid)
+	{
+		return (sid == null) ? null : restored.get(sid);
+	}
+
+	/**
 	 * Writes mobs and items as a save does, for a behaviour that keeps them
 	 * apart from the world, such as MOBEater's stomach, in its STATE.
 	 * @param mobs the mobs

@@ -46,6 +46,177 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		return "Arrest";
 	}
 
+	/** warrants and fines from a saved game, until those they name are back */
+	protected List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> savedLaw = null;
+	protected int savedLawTries = 0;
+
+	private static String nameOf(final Environmental E)
+	{
+		return (E==null)?"":CMLib.xml().parseOutAngleBrackets(E.Name());
+	}
+
+	private static String roomOf(final Room R)
+	{
+		return (R==null)?"":CMLib.xml().parseOutAngleBrackets(CMLib.map().getExtendedRoomID(R));
+	}
+
+	protected String warrantXML(final String tag, final LegalWarrant W)
+	{
+		final XMLLibrary xml=CMLib.xml();
+		final StringBuilder str=new StringBuilder("<"+tag+">");
+		str.append(xml.convertXMLtoTag("CRIMINAL",nameOf(W.criminal())));
+		str.append(xml.convertXMLtoTag("VICTIM",nameOf(W.victim())));
+		str.append(xml.convertXMLtoTag("WITNESS",nameOf(W.witness())));
+		str.append(xml.convertXMLtoTag("CRIME",xml.parseOutAngleBrackets((W.crime()==null)?"":W.crime())));
+		str.append(xml.convertXMLtoTag("PUNISH",W.punishmentCode()));
+		str.append(xml.convertXMLtoTag("JAILTIME",W.jailTime()));
+		str.append(xml.convertXMLtoTag("STATE",W.state()));
+		str.append(xml.convertXMLtoTag("OFFENSES",W.offenses()));
+		str.append(xml.convertXMLtoTag("LAST",W.lastOffense()));
+		str.append(xml.convertXMLtoTag("TRAVEL",W.travelAttemptTime()));
+		str.append(xml.convertXMLtoTag("WARN",xml.parseOutAngleBrackets((W.warnMsg()==null)?"":W.warnMsg())));
+		str.append(xml.convertXMLtoTag("JAIL",roomOf(W.jail())));
+		str.append(xml.convertXMLtoTag("RELEASE",roomOf(W.releaseRoom())));
+		return str.append("</"+tag+">").toString();
+	}
+
+	@Override
+	protected String getRunState()
+	{
+		final Area A=(lastAreaName==null)?null:CMLib.map().getArea(lastAreaName);
+		final Law laws=(A==null)?null:getLaws(A,true);
+		final StringBuilder str=new StringBuilder("");
+		if(laws!=null)
+		{
+			for(final LegalWarrant W : new XVector<LegalWarrant>(laws.warrants()))
+			{
+				if((W!=null)&&(W.criminal()!=null))
+					str.append(warrantXML("WARRANT",W));
+			}
+			for(final LegalWarrant W : new XVector<LegalWarrant>(laws.oldWarrants()))
+			{
+				if((W!=null)&&(W.criminal()!=null))
+					str.append(warrantXML("OLDWARRANT",W));
+			}
+		}
+		for(final Map.Entry<MOB,Double> e : new XVector<Map.Entry<MOB,Double>>(finesAssessed.entrySet()))
+		{
+			if((e.getKey()!=null)&&(e.getValue().doubleValue()>0.0))
+				str.append("<FINE N=\"").append(nameOf(e.getKey())).append("\">").append(e.getValue()).append("</FINE>");
+		}
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		savedLaw=new ArrayList<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag>();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : tags)
+		{
+			if(tag.tag().equalsIgnoreCase("WARRANT")||tag.tag().equalsIgnoreCase("OLDWARRANT")||tag.tag().equalsIgnoreCase("FINE"))
+				savedLaw.add(tag);
+		}
+		savedLawTries=0;
+		if(savedLaw.size()==0)
+			savedLaw=null;
+	}
+
+	/**
+	 * Finds someone a saved warrant or fine names: a character of the
+	 * player's, else a mob of that name in the area.
+	 * @param A the area
+	 * @param name the name, as saved
+	 * @return the mob, or null
+	 */
+	protected MOB findSavedMOB(final Area A, final String name)
+	{
+		final String n=CMLib.xml().restoreAngleBrackets(name);
+		if(n.length()==0)
+			return null;
+		final MOB P=CMLib.players().getPlayer(n);
+		if(P!=null)
+			return P;
+		for(final Enumeration<Room> r=A.getMetroMap();r.hasMoreElements();)
+		{
+			final Room R=r.nextElement();
+			for(int i=0;i<R.numInhabitants();i++)
+			{
+				final MOB M=R.fetchInhabitant(i);
+				if((M!=null)&&(M.Name().equals(n)))
+					return M;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Puts back the warrants and fines a saved game had, each once the one
+	 * it is against is back in the game (the player logs in after the world
+	 * is back), giving up on those not back after a while.  A warrant under
+	 * way when saved goes back to its start: the guards seek the criminal
+	 * again.
+	 * @param A the area
+	 * @param laws its laws
+	 */
+	protected void resumeSavedLaw(final Area A, final Law laws)
+	{
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> saved=savedLaw;
+		if(saved==null)
+			return;
+		final XMLLibrary xml=CMLib.xml();
+		for(final Iterator<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> i=saved.iterator();i.hasNext();)
+		{
+			final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag=i.next();
+			if(tag.tag().equalsIgnoreCase("FINE"))
+			{
+				final MOB M=findSavedMOB(A,tag.getParmValue("N"));
+				if(M!=null)
+				{
+					finesAssessed.put(M,Double.valueOf(CMath.s_double(tag.value())));
+					i.remove();
+				}
+				continue;
+			}
+			final MOB criminal=findSavedMOB(A,tag.getValFromPieces("CRIMINAL"));
+			if(criminal==null)
+				continue;
+			i.remove();
+			final String crime=xml.restoreAngleBrackets(tag.getValFromPieces("CRIME"));
+			final long last=CMath.s_long(tag.getValFromPieces("LAST"));
+			final List<LegalWarrant> list=tag.tag().equalsIgnoreCase("OLDWARRANT")?laws.oldWarrants():laws.warrants();
+			boolean have=false;
+			for(final LegalWarrant W : list)
+			{
+				if((W.criminal()==criminal)&&(crime.equals(W.crime()))&&(W.lastOffense()==last))
+					have=true; // another area under the same laws put it back
+			}
+			if(have)
+				continue;
+			final LegalWarrant W=(LegalWarrant)CMClass.getCommon("DefaultArrestWarrant");
+			W.setCriminal(criminal);
+			W.setVictim(findSavedMOB(A,tag.getValFromPieces("VICTIM")));
+			W.setWitness(findSavedMOB(A,tag.getValFromPieces("WITNESS")));
+			W.setCrime(crime);
+			W.setPunishment(CMath.s_int(tag.getValFromPieces("PUNISH")));
+			W.setJailTime(CMath.s_int(tag.getValFromPieces("JAILTIME")));
+			W.setOffenses(CMath.s_int(tag.getValFromPieces("OFFENSES")));
+			W.setLastOffense(last);
+			W.setTravelAttemptTime(CMath.s_long(tag.getValFromPieces("TRAVEL")));
+			W.setWarnMsg(xml.restoreAngleBrackets(tag.getValFromPieces("WARN")));
+			final Room jail=CMLib.map().getRoom(xml.restoreAngleBrackets(tag.getValFromPieces("JAIL")));
+			if(jail!=null)
+				W.setJail(jail);
+			final Room release=CMLib.map().getRoom(xml.restoreAngleBrackets(tag.getValFromPieces("RELEASE")));
+			if(release!=null)
+				W.setReleaseRoom(release);
+			W.setState(Law.STATE_SEEKING);
+			list.add(W);
+		}
+		if((saved.size()==0)||((++savedLawTries)>100))
+			savedLaw=null;
+	}
+
 	@Override
 	public long flags()
 	{
@@ -2776,6 +2947,10 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			laws.oldWarrants().clear();
 			return true;
 		}
+		if(lastAreaName==null)
+			lastAreaName=myArea.Name();
+		if(savedLaw!=null)
+			resumeSavedLaw(myArea,laws);
 		final boolean debugging=CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST);
 		if(this.tickMobsSet.size()>0)
 		{

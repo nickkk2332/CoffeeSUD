@@ -219,6 +219,19 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   quest variables (S1). Not done: there is no Taxi behaviour in the engine,
   and the LLM session's memory goes with N26, in `LATER.md`. New behaviours
   keep their state the same way.
+- S5 and S12 done, as STATE of the law behaviours (Conquerable extends
+  Arrest). Arrest keeps its area's warrants and old warrants (criminal,
+  victim and witness by name, crime, punishment, jail, offences, last
+  offence) and fines owed; they go back once the one each names is back in
+  the game (the player logs in after the world is back), a warrant under
+  way going back to SEEKING, so the guards hunt again. Areas under the same
+  laws share the lists, so a warrant goes back once. Conquerable adds the
+  ruling clan, the previous one, the conquest date, control points per clan,
+  the revolt counters, and its clan items by their numbers in the save; a
+  restored game takes the items as they are in the world rather than
+  reloading them from the database, where the shutdown write would have
+  made a second set.
+- The saves tests are two groups that run side by side.
 
 #### 2c. Developer and builder tools (50)
 
