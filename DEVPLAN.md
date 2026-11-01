@@ -848,6 +848,11 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   by file:line and trigger, with runs, total, longest and its host.
   `SCRIPTSLOW=ms` warns in mud.log of each slower run, and an MPWHILE cut
   off at its 4-second cap is now a script error with its file and line.
+- DT35 done. `COMBATDEBUG ON|OFF [target]` and `COMBATDEBUG LOG file|OFF`
+  (builder mode, DEV=1 or CMDMOBS; `core/CombatDebug`): MUDFight notes the
+  hit roll (the same dice, with `hitScore` split out), each damage formula
+  and what was dealt, and StdMOB notes each effect or item that changed or
+  stopped a watched character's damage, all on one line per attack.
 
 #### 2d. Scripting (59)
 

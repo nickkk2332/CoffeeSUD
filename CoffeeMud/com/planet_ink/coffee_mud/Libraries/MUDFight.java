@@ -402,7 +402,40 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		};
 		final boolean isPVP=(attacker.isPlayer()&&defender.isPlayer());
 		final int attackerFudgeBonusAmt = (int)Math.round(CMath.parseMathExpression(isPVP?pvpAttackerFudgeBonusFormula:attackerFudgeBonusFormula, vars, 0.0));
-		return rollToHit(adjustedAttackBonus(attacker,defender),adjustedArmor(defender),attackerFudgeBonusAmt);
+		if(!CombatDebug.involves(attacker, defender))
+			return rollToHit(adjustedAttackBonus(attacker,defender),adjustedArmor(defender),attackerFudgeBonusAmt);
+		// COMBATDEBUG (DT35): the same roll, with its numbers told
+		final int attack=adjustedAttackBonus(attacker,defender);
+		final int armor=adjustedArmor(defender);
+		final int chance=CMLib.dice().normalizeBy5(hitScore(attack,armor,attackerFudgeBonusAmt));
+		final int roll=CMLib.dice().rollPercentage();
+		CombatDebug.note(attacker, defender, "atk "+attack+" vs ac "+armor+((attackerFudgeBonusAmt!=0)?(", fudge "+attackerFudgeBonusAmt):"")
+			+", hit "+chance+"% roll "+roll+((roll<chance)?" HIT":" MISS"));
+		return roll<chance;
+	}
+
+	/**
+	 * The score a hit is rolled under, before it is held to 5 to 95.
+	 * @param attack the attack
+	 * @param defence the armor
+	 * @param adjustment the fudge
+	 * @return the score
+	 */
+	protected int hitScore(final int attack, final int defence, final int adjustment)
+	{
+		double myArmor= -((double)defence);
+		if(myArmor==0)
+			myArmor=1.0;
+		else
+		if(myArmor<0.0)
+			myArmor=-CMath.div(1.0,myArmor);
+		double hisAttack=attack;
+		if(hisAttack==0.0)
+			hisAttack=1.0;
+		else
+		if(hisAttack<0.0)
+			hisAttack=-CMath.div(1.0,myArmor);
+		return (int)Math.round(50.0*(hisAttack/myArmor)) + adjustment;
 	}
 
 	@Override
@@ -589,15 +622,23 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		}
 		final CMMsg msg=CMClass.getMsg(attacker,target,weapon,CMMsg.MSG_WEAPONATTACK,null);
 		final Room R=target.location();
-		if(R!=null)
+		CombatDebug.begin(attacker, target);
+		try
 		{
-			if(R.okMessage(attacker,msg))
+			if(R!=null)
 			{
-				R.send(attacker,msg);
-				return msg.value()>0;
+				if(R.okMessage(attacker,msg))
+				{
+					R.send(attacker,msg);
+					return msg.value()>0;
+				}
 			}
+			return false;
 		}
-		return false;
+		finally
+		{
+			CombatDebug.end(attacker, target);
+		}
 	}
 
 	protected static boolean ownerSecurityCheck(final String ownerName, final MOB mob)
@@ -853,8 +894,18 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		final Room R=target.location();
 		if(R!=null)
 		{
-			if(R.okMessage(target,msg))
+			final boolean dbg=CombatDebug.involves(attacker, target);
+			if(dbg)
+				CombatDebug.note(attacker, target, "damage "+damage+((weapon!=null)?(" by "+weapon.name()):""));
+			if(!R.okMessage(target,msg))
 			{
+				if(dbg)
+					CombatDebug.note(attacker, target, "stopped");
+			}
+			else
+			{
+				if(dbg)
+					CombatDebug.note(attacker, target, "deals "+msg.value());
 				if(damageType>=0)
 				{
 					msg.modify(msg.source(),
@@ -953,6 +1004,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				damageAmount = CMath.parseMathExpression(formula, CMath.NotRandomHigh, vars, 0.0);
 			else
 				damageAmount = CMath.parseMathExpression(formula, vars, 0.0);
+			if(CombatDebug.involves(mob, target))
+				CombatDebug.note(mob, target, "dmg "+Math.round(damageAmount)+" (TARGETED, from "+(useDmg.phyStats().damage()+bonusDamage)+")");
 		}
 		else
 		{
@@ -1017,6 +1070,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				damageAmount += weaponCritDmgAmt;
 				if(mob.charStats().getStat(CharStats.STAT_CRIT_DAMAGE_PCT_WEAPON)>0)
 					damageAmount += (int)Math.round(CMath.mul(weaponCritDmgAmt,CMath.div(mob.charStats().getStat(CharStats.STAT_CRIT_DAMAGE_PCT_WEAPON),100.0)));
+				if(CombatDebug.involves(mob, target))
+					CombatDebug.note(mob, target, "CRIT ("+weaponCritChancePct+"%) "+Math.round(damageAmount));
 			}
 		}
 		if(target != null)
@@ -1031,6 +1086,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				damageAmount = CMath.parseMathExpression(formula, CMath.NotRandomHigh, vars, 0.0);
 			else
 				damageAmount = CMath.parseMathExpression(formula, vars, 0.0);
+			if(CombatDebug.involves(mob, target))
+				CombatDebug.note(mob, target, "FUDGE("+(mob.phyStats().level()-target.phyStats().level())+" lvls) "+Math.round(damageAmount));
 		}
 		return (int)Math.round(damageAmount);
 	}
@@ -1156,6 +1213,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			if(msg.targetMinor()==CMMsg.TYP_DAMAGE)
 			{
 				damageInt=msg.value();
+				if(CombatDebug.involves(source, target))
+					CombatDebug.note(source, target, "deals "+damageInt);
 				msg.modify(msg.source(),
 						   msg.target(),
 						   msg.tool(),

@@ -2517,19 +2517,37 @@ public class StdMOB implements MOB
 				return false;
 		}
 
+		// COMBATDEBUG (DT35): which of the effects and gear change the damage
+		final boolean dbg = CombatDebug.isOn() && (msg.targetMinor() == CMMsg.TYP_DAMAGE)
+						&& CombatDebug.involves((msg.source() instanceof MOB) ? msg.source() : null, (msg.target() instanceof MOB) ? (MOB)msg.target() : null);
 		// the order here is significant (between eff and item -- see focus)
 		for(final Enumeration<Ability> a = effects(); a.hasMoreElements();)
 		{
 			final Ability A = a.nextElement();
+			final int was = msg.value();
 			if(!A.okMessage(this, msg))
+			{
+				if(dbg)
+					CombatDebug.note(msg.source(), (msg.target() instanceof MOB) ? (MOB)msg.target() : null, A.ID() + " on " + name() + " stopped it");
 				return false;
+			}
+			if(dbg && (msg.value() != was))
+				CombatDebug.note(msg.source(), (msg.target() instanceof MOB) ? (MOB)msg.target() : null,
+					A.ID() + ((A.text().length() > 0) ? ("(" + A.text() + ")") : "") + " on " + name() + " -> " + msg.value());
 		}
 
 		for(final Enumeration<Item> i = items(); i.hasMoreElements();)
 		{
 			final Item I = i.nextElement();
+			final int was = msg.value();
 			if(!I.okMessage(this, msg))
+			{
+				if(dbg)
+					CombatDebug.note(msg.source(), (msg.target() instanceof MOB) ? (MOB)msg.target() : null, I.name() + " of " + name() + " stopped it");
 				return false;
+			}
+			if(dbg && (msg.value() != was))
+				CombatDebug.note(msg.source(), (msg.target() instanceof MOB) ? (MOB)msg.target() : null, I.name() + " of " + name() + " -> " + msg.value());
 		}
 
 		for(final Enumeration<Behavior> b = behaviors(); b.hasMoreElements();)
