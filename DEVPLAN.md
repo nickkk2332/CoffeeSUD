@@ -675,6 +675,18 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   quests tell their step (`Quest.stepNumber()`). The world ships
   `tests/start.play`. Left: `PLAYTEST RUN file` in the game, and DT38's
   `.test` files and JavaScript test files.
+- DT16 done. Kits `world/kits/NAME.kit`, one setting a line: race, class,
+  gender, alignment, level, gold, room, item (a class or `catalog:NAME`,
+  worn if it can be), ability ID PROFICIENCY, faction ID VALUE, var NAME
+  VALUE (a global script variable of the character); an unknown setting is
+  told with its line. `TESTCHAR name (KIT=k) (PARTY)`, in builder mode or a
+  DEV=1 game, makes a character of the profile with no questions (an
+  average human apprentice of level 1 unless the kit says otherwise),
+  levelled by the experience each level needs as CHARGEN levels, saved,
+  resting in the profile or, with PARTY, brought in as PARTY ADD does. `KIT
+  k (target)` gives a kit to a character, follower or mob here. Left: one
+  format with P7's starting kits and P8's ready-made characters, when they
+  come.
 
 #### 2d. Scripting (59)
 
