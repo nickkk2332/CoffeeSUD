@@ -9,7 +9,6 @@ import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
 import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
@@ -538,26 +537,9 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			&&((ignore)||((target.location()!=null)&&(target.location().okMessage(target,msg)))))
 			{
 				final String player=CMStrings.removeAllButLettersAndDigits(CMStrings.removeColors(mob.name(target)));
-				if((mob.session()!=null)&&(mob.session().getClientTelnetMode(Session.TELNET_GMCP)))
-				{
-					mob.session().sendInlineCommand(InProto.GMCP,
-							"comm.channel", "{\"chan\":\"tell\",\"msg\":\""+
-							MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, mob, mob, target, null,
-									CMStrings.removeColors(msg.sourceMessage()).trim(), false)))
-							+"\",\"player\":\""+player+"\"}");
-				}
 				mob.executeMsg(mob,msg);
 				if((mob!=target)&&(!ignore))
 				{
-					if((target.session()!=null)
-					&&(target.session().getClientTelnetMode(Session.TELNET_GMCP)))
-					{
-						target.session().sendInlineCommand(InProto.GMCP,
-								"comm.channel", "{\"chan\":\"tell\",\"msg\":\""+
-								MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, target, mob, target, null,
-										CMStrings.removeColors(msg.targetMessage()), false)).trim())
-								+"\",\"player\":\""+player+"\"}");
-					}
 					target.executeMsg(target,msg);
 
 					if((CMProps.isUsingAccountSystem())
@@ -647,7 +629,6 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						CMMsg.MSG_SPEAK,L("^T^<SAY \"@x1\"^><S-NAME> say(s) '@x2' to <T-NAMESELF>.^</SAY^>^?",CMStrings.removeColors(target.name(mob)),text),
 						CMMsg.MSG_SPEAK,L("^T^<SAY \"@x1\"^><S-NAME> say(s) '@x2' to <T-NAMESELF>.^</SAY^>^?",CMStrings.removeColors(mob.name(target)),text),
 						CMMsg.NO_EFFECT,null);
-				gmcpSaySend("say",mob, target, msg);
 				if(location.okMessage(mob,msg))
 					location.send(mob,msg);
 			}
@@ -663,36 +644,8 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			final CMMsg msg=CMClass.getMsg(mob,target,null,
 					CMMsg.MSG_SPEAK,"^T^<SAY \""+CMStrings.removeColors((target==null)?mob.name(target):target.name(mob))+"\"^>"+str,"^T^<SAY \""
 					+CMStrings.removeColors(mob.name(target))+"\"^>"+str,"^T^<SAY \""+CMStrings.removeColors(mob.name(target))+"\"^>"+str);
-			gmcpSaySend("say",mob, target, msg);
 			if(location.okMessage(mob,msg))
 				location.send(mob,msg);
-		}
-	}
-
-	protected void gmcpSaySend(final String sayName, final MOB mob, final MOB target, final CMMsg msg)
-	{
-		final String player=CMStrings.removeAllButLettersAndDigits(CMStrings.removeColors(mob.name(target)));
-		if((mob.session()!=null)&&(mob.session().getClientTelnetMode(Session.TELNET_GMCP)))
-		{
-			mob.session().sendInlineCommand(InProto.GMCP,
-					"comm.channel", "{\"chan\":\""+sayName+"\",\"msg\":\""+
-					MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, mob, mob, target, null,
-							CMStrings.removeColors(msg.sourceMessage()), false)).trim())
-					+"\",\"player\":\""+player+"\"}");
-		}
-		final Room R=mob.location();
-		if(R!=null)
-		for(int i=0;i<R.numInhabitants();i++)
-		{
-			final MOB M=R.fetchInhabitant(i);
-			if((M!=null)&&(M!=msg.source())&&(M.session()!=null)&&(M.session().getClientTelnetMode(Session.TELNET_GMCP)))
-			{
-				M.session().sendInlineCommand(InProto.GMCP,
-						"comm.channel", "{\"chan\":\""+sayName+"\",\"msg\":\""+
-						MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, M, mob, target, null,
-								CMStrings.removeColors(msg.othersMessage()), false))).trim()
-						+"\",\"player\":\""+player+"\"}");
-			}
 		}
 	}
 
@@ -2070,7 +2023,6 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 		if(msg.targetMinor()!=CMMsg.TYP_EXAMINE)
 			lookCode=((msg.sourceMessage()==null)||mob.isAttributeSet(MOB.Attrib.COMPRESS))?LookView.LOOK_BRIEFOK:LookView.LOOK_NORMAL;
 
-		sess.doPing(SessionPing.ROOMLOOK, null);
 
 		final String finalLookStr=getFullRoomView(mob, room, lookCode, sess.getClientTelnetMode(Session.TELNET_MXP));
 

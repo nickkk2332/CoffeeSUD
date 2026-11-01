@@ -9,7 +9,6 @@ import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
 import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.Basic.StdItem;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -642,46 +641,6 @@ public class StdAbility implements Ability
 		return (int)Math.round(CMath.mul(baseTickTime,CMath.mul(getXTIMELevel(invokerMOB),0.20)));
 	}
 
-	protected void gmcpAddNotify(final MOB mob)
-	{
-		if(mob != null)
-		{
-			final Session session = mob.session();
-			if(session != null)
-			{
-				if(session.getClientTelnetMode(Session.TELNET_GMCP))
-				{
-					final int code = this.classificationCode();
-					final String domain = (Ability.ACODE.DESCS.get(code&Ability.ALL_ACODES)).toLowerCase()+
-							"-"+(Ability.DOMAIN.DESCS.get((code&Ability.ALL_DOMAINS)>>5)).toLowerCase();
-					final String json = "{\"name\":\""+name()+"\",\"group\":\""+domain+"\"}";
-					session.doPing(SessionPing.GMCP_PING_EFFECTS, Long.valueOf(mob.numEffects()+1));
-					session.sendInlineCommand(InProto.GMCP,"char.effects.add", json);
-				}
-			}
-		}
-	}
-
-	protected void gmcpRemoveNotify(final MOB mob)
-	{
-		if(mob != null)
-		{
-			final Session session = mob.session();
-			if(session != null)
-			{
-				if(session.getClientTelnetMode(Session.TELNET_GMCP))
-				{
-					final int code = this.classificationCode();
-					final String domain = (Ability.ACODE.DESCS.get(code&Ability.ALL_ACODES)).toLowerCase()+
-							"-"+(Ability.DOMAIN.DESCS.get((code&Ability.ALL_DOMAINS)>>5)).toLowerCase();
-					final String json = "{\"name\":\""+name()+"\",\"group\":\""+domain+"\"}";
-					session.doPing(SessionPing.GMCP_PING_EFFECTS, Long.valueOf(mob.numEffects()-1));
-					session.sendInlineCommand(InProto.GMCP,"char.effects.remove", json);
-				}
-			}
-		}
-	}
-
 	protected void addEffect(final MOB invokerMOB, final Physical affected)
 	{
 		affected.addEffect(this);
@@ -720,7 +679,6 @@ public class StdAbility implements Ability
 				return;
 			if(!alreadyAffected(affected))
 			{
-				gmcpAddNotify(mob);
 				addEffect(invokerMOB, affected);
 				final int ecap=CMProps.getIntVar(CMProps.Int.EFFECTCAP);
 				if(ecap>0)
@@ -1518,7 +1476,6 @@ public class StdAbility implements Ability
 			{
 				final MOB M=(MOB)being;
 				if(M.fetchEffect(ID())==this)
-					this.gmcpRemoveNotify(M);
 				being.delEffect(this);
 				final Room R=M.location();
 				if((R!=null)&&(R.isInhabitant(M)))

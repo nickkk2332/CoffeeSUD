@@ -18,7 +18,6 @@ import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.PrideStats.PrideStat;
 import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine.SubScript;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.InputCallback;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock.TimePeriod;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;

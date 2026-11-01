@@ -733,15 +733,6 @@ public class CMChannels extends StdLibrary implements ChannelsLibrary
 		&&(R!=null)
 		&&((sender.location()==R)||(R.okMessage(ses.mob(),msg))))
 		{
-			if(ses.getClientTelnetMode(Session.TELNET_GMCP)&&(channel!=null))
-			{
-				final String player=CMStrings.removeAllButLettersAndDigits(CMStrings.removeColors(msg.source().name()));
-				final String chanMsgStr = CMStrings.removeColors((M==msg.source())?msg.sourceMessage():msg.othersMessage()).trim();
-				final String filteredMsgStr = CMLib.coffeeFilter().fullOutFilter(null, M, msg.source(), msg.target(), msg.tool(), chanMsgStr, false).trim();
-				final String jsonMsgStr = MiniJSON.toJSONString(CMStrings.unWWrap(filteredMsgStr));
-				ses.sendInlineCommand(InProto.GMCP,
-						"comm.channel", "{\"chan\":\""+channel.name()+"\",\"msg\":\""+jsonMsgStr+"\",\"player\":\""+player+"\"}");
-			}
 			M.executeMsg(M,msg);
 			didIt=true;
 			if(msg.trailerMsgs()!=null)
@@ -952,8 +943,6 @@ public class CMChannels extends StdLibrary implements ChannelsLibrary
 		if((R!=null)
 		&&((!R.isInhabitant(mob))||(R.okMessage(mob,msg))))
 		{
-			if(chan.flags().contains(ChannelsLibrary.ChannelFlag.TWITTER))
-				CMLib.protocol().tweet(rawMessage);
 			final boolean areareq=flags.contains(ChannelsLibrary.ChannelFlag.SAMEAREA);
 			try
 			{

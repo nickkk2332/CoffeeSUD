@@ -23,7 +23,6 @@ import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerAccount.AccountFlag;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.InputCallback;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionStatus;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -940,26 +939,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		}
 	}
 
-	private String getMSSPPacket()
-	{
-		final StringBuffer rpt = new StringBuffer("\r\nMSSP-REPLY-START");
-		final Map<String,Object> pkg = CMLib.protocol().getMSSPPackage();
-		for(final String key : pkg.keySet())
-		{
-			final Object o = pkg.get(key);
-			if(o instanceof String[])
-			{
-				final String[] os = (String[])o;
-				for(int i=0;i<os.length;i++)
-					rpt.append("\r\n").append(key.toUpperCase().trim()).append("\t").append(os[i]);
-			}
-			else
-				rpt.append("\r\n").append(key.toUpperCase().trim()).append("\t").append(o.toString());
-		}
-		rpt.append("\r\nMSSP-REPLY-END\r\n");
-		return rpt.toString();
-	}
-
 	protected LoginResult loginSubsystem(final LoginSessionImpl loginObj, final Session session) throws IOException
 	{
 		switch(loginObj.state)
@@ -1106,15 +1085,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			try
 			{
 				final String s = session.readlineContinue(500);
-				if((s!=null) && s.equalsIgnoreCase("MSSP-REQUEST")
-				&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSSP)))
-				{
-					session.rawOut(getMSSPPacket());
-					session.stopSession(true,false,false, false);
-					loginObj.reset=true;
-					loginObj.state=LoginState.LOGIN_START;
-					return LoginResult.NO_LOGIN;
-				}
 			}
 			catch(final Exception x)
 			{
@@ -1255,14 +1225,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			if((Math.random()>0.5)&&(loginObj.attempt>0))
 				loginObj.attempt--;
 			return null;
-		}
-		if(ogLogin.equalsIgnoreCase("MSSP-REQUEST")&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSSP)))
-		{
-			session.rawOut(getMSSPPacket());
-			session.stopSession(true,false,false, false);
-			loginObj.reset=true;
-			loginObj.state=LoginState.LOGIN_START;
-			return LoginResult.NO_LOGIN;
 		}
 		if(loginObj.login.indexOf('*')>=0)
 		{
@@ -2570,7 +2532,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				loginObj.state=LoginState.ACCTMENU_SHOWMENU;
 				return null;
 			}
-			session.doPing(SessionPing.PLAYERSAVE, null);
 		}
 		return LoginResult.NORMAL_LOGIN;
 	}
@@ -4612,7 +4573,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				if((C!=null)&&(C.securityCheck(mob)||C.securityCheck(mob)))
 					C.execute(mob,new XVector<String>("WIZINV"),0);
 			}
-			session.doPing(SessionPing.PLAYERSAVE, null);
 			showTheNews(mob);
 			resetStats = false;
 		}
@@ -5192,7 +5152,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 					session.mob().setSession(null);
 				session.setMob(prevMOB);
 				prevMOB.setSession(session);
-				session.doPing(SessionPing.PLAYERSAVE, null);
 			}
 			session.setStatus(status);
 		}

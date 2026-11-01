@@ -19,7 +19,6 @@ import com.planet_ink.coffee_mud.Commands.Stat;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.PrideStats.PrideStat;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerAccount.AccountFlag;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerStats.PlayerFlag;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock.TimePeriod;
@@ -1674,8 +1673,6 @@ public class CMPlayers extends StdLibrary implements PlayerLibrary
 					lib._database().DBUpdateAccount(account);
 					account.setLastUpdated(System.currentTimeMillis());
 				}
-				if(sess != null)
-					sess.doPing(SessionPing.PLAYERSAVE, null);
 			}
 			else
 			if(pStats.isSavable())

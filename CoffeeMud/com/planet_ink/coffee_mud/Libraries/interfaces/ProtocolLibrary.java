@@ -72,19 +72,6 @@ public interface ProtocolLibrary extends CMLibrary
 	public String msp(final String soundName, final int priority);
 
 	/**
-	 * Handles an MCP command from the user, modifying the line
-	 * of text that contains it.
-	 *
-	 * @param session the session of the user
-	 * @param str the string containing the command
-	 * @param mcpKey the MCP key
-	 * @param clientSupported map of supported features and their versions
-	 * @param keyValuePairs protocol-specific key value pairs
-	 * @return true if all went well, false otherwise
-	 */
-	public boolean mcp(final Session session, final StringBuilder str, final String[] mcpKey, Map<String,float[]> clientSupported, final Map<String,String> keyValuePairs);
-
-	/**
 	 * Returns the path and filename to an MXP image, given the
 	 * image filename, presumably full path.
 	 *
@@ -147,82 +134,6 @@ public interface ProtocolLibrary extends CMLibrary
 	public String getDefaultMXPImage(final CMObject O);
 
 	/**
-	 * Main entry point to handle MSDP commands from the user
-	 *
-	 * @see ProtocolLibrary#pingMsdp(Session, Map)
-	 *
-	 * @param session the session of the mob to report to
-	 * @param data the users MSDP sending
-	 * @param dataSize the size of the sending?
-	 * @param reportables the 'subscriptions' of the given session
-	 * @return null, or bytes to send to the user
-	 */
-	public byte[] processMsdp(final Session session, final byte[] data, final int dataSize, final Map<Object,Object> reportables);
-
-	/**
-	 * Called every second from each player session to deal with periodic MSDP
-	 * reports.
-	 *
-	 * @see ProtocolLibrary#processMsdp(Session, byte[], int, Map)
-	 *
-	 * @param session the session of the mob to report to
-	 * @param reportables the 'subscriptions' of the given session
-	 * @return null, or bytes to send to the user
-	 */
-	public byte[] pingMsdp(final Session session, final Map<Object,Object> reportables);
-
-	/**
-	 * Main entry point to handle GMCP commands from the user
-	 *
-	 * @see ProtocolLibrary#pingGmcp(Session, Map, Map, Map)
-	 * @see ProtocolLibrary#invokeRoomChangeGmcp(Session, Map, Map, Map)
-	 *
-	 * @param session the session of the mob to report to
-	 * @param data the command sent by the user
-	 * @param supportables map of supported GMCP features
-	 * @param reportables the msdp 'subscriptions' of the given session
-	 * @return null, or bytes to send to the user
-	 */
-	public byte[] processGmcp(final Session session, final String data, final Map<String,Double> supportables, final Map<Object,Object> reportables);
-
-	/**
-	 * Called every second from each player session to deal with periodic GMCP
-	 * reports.
-	 *
-	 * @see ProtocolLibrary#processGmcp(Session, String, Map, Map)
-	 * @see ProtocolLibrary#invokeRoomChangeGmcp(Session, Map, Map, Map)
-	 *
-	 * @param session the session of the mob to report to
-	 * @param reporteds the 'subscriptions' of the given session
-	 * @param supportables map of supported GMCP features
-	 * @param reportables the msdp 'subscriptions' of the given session
-	 * @return null, or bytes to send to the user
-	 */
-	public byte[] pingGmcp(final Session session, final Map<String,Long> reporteds, final Map<String,Double> supportables, final Map<Object,Object> reportables);
-
-	/**
-	 * GMCP appears to support getting a report from the protocol when entering
-	 * a new room.  This method is called to handle those reports.
-	 *
-	 * @see ProtocolLibrary#processGmcp(Session, String, Map, Map)
-	 * @see ProtocolLibrary#pingGmcp(Session, Map, Map, Map)
-	 *
-	 * @param session the session of the mob to report to
-	 * @param reporteds the 'subscriptions' of the given session
-	 * @param supportables map of supported GMCP features
-	 * @param reportables the msdp 'subscriptions' of the given session
-	 * @return null, or bytes to send to the user
-	 */
-	public byte[] invokeRoomChangeGmcp(final Session session, final Map<String,Long> reporteds, final Map<String,Double> supportables, final Map<Object,Object> reportables);
-
-	/**
-	 * Returns all the MSSP variables for crawlers.
-	 * Values can be Strings, or String Arrays
-	 * @return all the MSSP variables for crawlers.
-	 */
-	public Map<String,Object> getMSSPPackage();
-
-	/**
 	 * Strips telnet codes from the given buffer.
 	 * @param buf the buffer to strip
 	 * @return the original buffer, or a stripped one
@@ -249,13 +160,6 @@ public interface ProtocolLibrary extends CMLibrary
 	 * @return the original buffer, or a stripped one
 	 */
 	public byte[] stripNonASCII(final byte[] buf);
-
-	/**
-	 * Sends a message to twitter.  See the integration guide for
-	 * information on how this works.
-	 * @param str the message to post to twitter
-	 */
-	public void tweet(final String str);
 
 	/**
 	 * Creates a new LLM session with a new memory
@@ -306,38 +210,4 @@ public interface ProtocolLibrary extends CMLibrary
 		public String chat(final String msg);
 	}
 
-	/**
-	 * Interface allowing java or javascript plugins to the MCP protocol
-	 * @author Bo Zimmerman
-	 *
-	 */
-	public interface MCPPackage
-	{
-		/**
-		 * Return the name of the overall package
-		 * @return the name of the overall package
-		 */
-		public String packageName();
-
-		/**
-		 * Returns the minimum version supported here.
-		 * @return the minimum version supported here.
-		 */
-		public float minVersion();
-
-		/**
-		 * Returns the maximum version supported here.
-		 * @return the maximum version supported here.
-		 */
-		public float maxVersion();
-
-		/**
-		 * Execute the package
-		 * @param session the session for which the package is being executed
-		 * @param command the actual command being executed by this package
-		 * @param clientSupported map of client packages supported followed by min-max versions
-		 * @param variables key/value pairs for this package
-		 */
-		public void executePackage(Session session, String command, Map<String,float[]> clientSupported, Map<String,String> variables);
-	}
 }

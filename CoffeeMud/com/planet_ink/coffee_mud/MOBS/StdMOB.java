@@ -17,7 +17,6 @@ import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.Faction.FData;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerStats.PlayerCombatStat;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.Basic.StdItem;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -3878,20 +3877,6 @@ public class StdMOB implements MOB
 				&& (flagLib.canSenseEnteringLeaving(srcM, this)))
 				{
 					tell(srcM, msg.target(), msg.tool(), msg.othersMessage());
-					if((mySession != null)
-					&& (mySession.getClientTelnetMode(Session.TELNET_GMCP)))
-					{
-						if (msg.othersMinor() == CMMsg.TYP_ENTER)
-						{
-							mySession.sendInlineCommand(InProto.GMCP,
-									"room.enter", "\"" + MiniJSON.toJSONString(srcM.Name()) + "\"");
-						}
-						else
-						{
-							mySession.sendInlineCommand(InProto.GMCP,
-									"room.leave", "\"" + MiniJSON.toJSONString(srcM.Name()) + "\"");
-						}
-					}
 				}
 				if((!isMonster())
 				&& (riding != null)
@@ -4042,8 +4027,6 @@ public class StdMOB implements MOB
 			if(isPlayer())
 				playerStats().bumpLevelCombatStat(PlayerCombatStat.COMBATS_TOTAL, basePhyStats().level(), 1);
 			this.peaceTime = 0;
-			if(mySession!=null)
-				mySession.doPing(SessionPing.GMCP_PING_MED, null);
 		}
 	}
 

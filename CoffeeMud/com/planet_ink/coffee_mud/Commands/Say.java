@@ -68,53 +68,6 @@ public class Say extends StdCommand
 		"BEEN"
 	};
 
-	protected void gmcpSaySend(final String sayName, final MOB mob, final Environmental target, final CMMsg msg)
-	{
-		final String player=CMStrings.removeAllButLettersAndDigits(CMStrings.removeColors(mob.name()));
-		if((mob.session()!=null)
-		&&(mob.session().getClientTelnetMode(Session.TELNET_GMCP)))
-		{
-			mob.session().sendInlineCommand(InProto.GMCP,
-					"comm.channel", "{\"chan\":\""+sayName+"\",\"msg\":\""+
-					MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, mob, mob, target, null,
-							CMStrings.removeColors(msg.sourceMessage()), false)).trim())
-					+"\",\"player\":\""+player+"\"}");
-		}
-		final Room R=mob.location();
-		if((R!=null)
-		&&(msg.othersMessage()!=null))
-		{
-			for(int i=0;i<R.numInhabitants();i++)
-			{
-				final MOB M=R.fetchInhabitant(i);
-				if((M!=null)
-				&&(M!=msg.source())
-				&&(M.session()!=null)
-				&&(M.session().getClientTelnetMode(Session.TELNET_GMCP)))
-				{
-					if((M == target)
-					&&(msg.targetMessage()!=null))
-					{
-						M.session().sendInlineCommand(InProto.GMCP,
-								"comm.channel", "{\"chan\":\""+sayName+"\",\"msg\":\""+
-								MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, M, mob, target, null,
-										CMStrings.removeColors(msg.targetMessage()), false)).trim())
-								+"\",\"player\":\""+player+"\"}");
-					}
-					else
-					if(msg.othersMessage()!=null)
-					{
-						M.session().sendInlineCommand(InProto.GMCP,
-								"comm.channel", "{\"chan\":\""+sayName+"\",\"msg\":\""+
-								MiniJSON.toJSONString(CMStrings.unWWrap(CMLib.coffeeFilter().fullOutFilter(null, M, mob, target, null,
-										CMStrings.removeColors(msg.othersMessage()), false)).trim())
-								+"\",\"player\":\""+player+"\"}");
-					}
-				}
-			}
-		}
-	}
-
 	@Override
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
@@ -377,7 +330,6 @@ public class Say extends StdCommand
 			msg=CMClass.getMsg(mob,target,null,CMMsg.MSG_SPEAK,fromSelf,toTarget,fromSelf);
 		}
 
-		gmcpSaySend("say", mob, target, msg);
 
 		if(langSwap!=null)
 		{

@@ -1006,29 +1006,6 @@ public interface Session extends CMCommon, Modifiable, CMRunnable
 	 */
 	public void setFakeInput(String input);
 
-	/**
-	 * Performs some special ping operation.
-	 * @see Session.SessionPing#ROOMLOOK
-	 * @param ping the ping to send
-	 * @param obj null, or whatever the ping might use
-	 */
-	public void doPing(SessionPing ping, Object obj);
-
-	/**
-	 * A type of special operation ping
-	 * for sessions.
-	 * @author Bo Zimmerman
-	 */
-	public static enum SessionPing
-	{
-		ROOMLOOK,
-		GMCP_PING_MED,
-		GMCP_PING_ALL,
-		GMCP_PING_EFFECTS,
-		PLAYERSAVE,
-		DISCONNECT
-	}
-
 	/** TELNET CODE: transmit binary */
 	public static final int TELNET_BINARY=0;
 	/** TELNET CODE: echo */

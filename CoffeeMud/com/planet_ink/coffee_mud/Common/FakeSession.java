@@ -16,7 +16,6 @@ import com.planet_ink.coffee_mud.Common.interfaces.PlayerAccount;
 import com.planet_ink.coffee_mud.Common.interfaces.Session;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.InputCallback;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionFilter;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionStatus;
 import com.planet_ink.coffee_mud.Libraries.interfaces.ColorLibrary;
 import com.planet_ink.coffee_mud.Libraries.interfaces.ColorLibrary.ColorState;
@@ -219,12 +218,6 @@ public class FakeSession implements Session
 	public void setFakeInput(final String input)
 	{
 		inputV.getLast().add(input);
-	}
-
-	@Override
-	public void doPing(final SessionPing ping, final Object obj)
-	{
-
 	}
 
 	@Override

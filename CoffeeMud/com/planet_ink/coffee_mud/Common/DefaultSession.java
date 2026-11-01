@@ -14,7 +14,6 @@ import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionFilter;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionStatus;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -67,22 +66,14 @@ public class DefaultSession implements Session
 	protected static final int		PINGTIMEOUT  	= 30000;
 	protected static final int		HSIDLETIMEOUT	= 3 * 60000;
 	protected static final int		HNDSHAKETIMEOUT	= 8 * 60000;
-	protected static final int		MSDPPINGINTERVAL= 1000;
 	protected static final char[]	PINGCHARS		= {0};
 	protected static final String	TIMEOUT_MSG		= "Timed Out.";
 
 	protected final Set<Integer>		telnetSupportSet= new HashSet<Integer>();
 	protected final Set<String>			mxpSupportSet	= new HashSet<String>();
 	protected final Map<String,String>	mxpVersionInfo  = new Hashtable<String,String>();
-	protected final Map<Object, Object> msdpReportables = new TreeMap<Object,Object>();
-	protected final Map<String, Double> gmcpSupports	= new TreeMap<String,Double>();
-	protected final Map<String, Long> 	gmcpPings		= new TreeMap<String,Long>();
 
 	protected final Map<String,String>	strCache		= new TreeMap<String,String>();
-	protected final String[]			mcpKey			= new String[1];
-	protected final Map<String,String>	mcpKeyPairs		= new TreeMap<String,String>();
-	protected final boolean		 		mcpDisabled		= CMSecurity.isDisabled(DisFlag.MCP);
-	protected final Map<String,float[]>	mcpSupported	= new TreeMap<String,float[]>();
 	protected final AtomicBoolean 		sockObj 		= new AtomicBoolean(false);
 	protected final LinkedList<List<String>>history		= new LinkedList<List<String>>();
 
@@ -141,7 +132,6 @@ public class DefaultSession implements Session
 	protected long			 lastStart			 = System.currentTimeMillis();
 	protected long			 lastStop			 = System.currentTimeMillis();
 	protected long			 lastLoopTop		 = System.currentTimeMillis();
-	protected long			 nextMsdpPing		 = System.currentTimeMillis();
 	protected long			 userLoginTime		 = System.currentTimeMillis();
 	protected long			 onlineTime			 = System.currentTimeMillis();
 	protected long			 activeMillis		 = 0;
@@ -262,158 +252,13 @@ public class DefaultSession implements Session
 	@Override
 	public boolean isInlineAllowed(final InProto protocol, final String packageName, final float version)
 	{
-		switch(protocol)
-		{
-		case MSDP:
-		{
-			if ((!getClientTelnetMode(TELNET_MSDP)) || (msdpReportables.size() == 0))
-				return false;
-			final String lowerPackageName = packageName.toLowerCase().trim();
-			if (!msdpReportables.containsKey(lowerPackageName))
-				return false;
-			return true;
-		}
-		case MPCP:
-		{
-			if (!getClientTelnetMode(TELNET_MPCP))
-				return false;
-			return true;
-		}
-		case MCP:
-		{
-			final float[] chk = mcpSupported.get(packageName);
-			if((chk == null)||(version < chk[0])||(version>chk[1])||(mcpKey[0] == null))
-			{
-				return false;
-			}
-			return true;
-		}
-		case MXP:
-		{
-			if(!getClientTelnetMode(TELNET_MXP))
-				return false;
-			if(packageName.startsWith("^<"))
-			{
-				if((!getClientTelnetMode(TELNET_MXP))||(mxpSupportSet.size()==0))
-					return false;
-				int x=packageName.indexOf(' ');
-				if(x<0)
-					x=packageName.indexOf('>');
-				if((x>0)&&(this.mxpSupportSet.contains("-"+packageName.substring(2,x))))
-					return false;
-			}
-			else
-			if(packageName.startsWith("&"))
-			{
-				if(terminalType.equalsIgnoreCase("mushclient"))
-					return true;
-			}
-			return true;
-		}
-		case GMCP:
-		{
-			if((!getClientTelnetMode(TELNET_GMCP))||(gmcpSupports.size()==0))
-				return false;
-			final String lowerEventName=packageName.toLowerCase().trim();
-			final int x=lowerEventName.lastIndexOf('.');
-			if((x<0)&&(!gmcpSupports.containsKey(lowerEventName)))
-				return false;
-			if((!gmcpSupports.containsKey(lowerEventName))
-			&& (!gmcpSupports.containsKey(lowerEventName.substring(0, x))))
-				return false;
-			return true;
-		}
-		}
+		// a single-player session speaks no client protocol
 		return false;
 	}
 
 	@Override
-	public boolean sendInlineCommand(final InProto protocol, final String packageCommand, String parms)
+	public boolean sendInlineCommand(final InProto protocol, final String packageCommand, final String parms)
 	{
-		switch(protocol)
-		{
-		case MCP:
-		{
-			if(mcpKey[0] != null)
-			{
-				rawPrintln("#$#"+packageCommand+" "+mcpKey[0]+" "+parms);
-				return true;
-			}
-			break;
-		}
-		case GMCP:
-		{
-			if (!isInlineAllowed(protocol, packageCommand, 0))
-				return false;
-			try
-			{
-				final String lowerEventName=packageCommand.toLowerCase().trim();
-				if(CMSecurity.isDebugging(DbgFlag.GMCP))
-					Log.debugOut("GMCP Sent: "+(lowerEventName+" "+parms));
-				final ByteArrayOutputStream bout=new ByteArrayOutputStream();
-				bout.write(TELNETBYTES_GMCP_HEAD);
-				bout.write((lowerEventName+" "+parms).getBytes());
-				bout.write(TELNETBYTES_END_SB);
-				// rawBytesOut already handles async grouping issues
-				rawBytesOut(rawout,bout.toByteArray());
-				return true;
-			}
-			catch(final IOException e)
-			{
-				killFlag=true;
-			}
-			catch(final Exception e)
-			{
-				Log.errOut(e);
-			}
-			return false;
-		}
-		case MPCP:
-		{
-			if(!getClientTelnetMode(TELNET_MPCP))
-				return false;
-			try
-			{
-				final MiniJSON.JSONObject doc = new MiniJSON().parseObject(parms);
-				doc.put("timestamp", Long.valueOf(System.currentTimeMillis()));
-				parms = doc.toString();
-				final String mpcpKey = CMProps.getVar(CMProps.Str.MPCPKEY);
-				final byte[] keyBytes = mpcpKey.getBytes(StandardCharsets.UTF_8);
-				final byte[] payloadBytes = (packageCommand+" "+parms).getBytes(StandardCharsets.UTF_8);
-				final SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
-				final Mac mac = Mac.getInstance("HmacSHA1");
-				mac.init(keySpec);
-				final ByteArrayOutputStream packetOut = new ByteArrayOutputStream();
-				packetOut.write(new byte[] { (byte)Session.TELNET_IAC, (byte)Session.TELNET_SB, (byte)Session.TELNET_MPCP});
-				for(final byte b : mac.doFinal(payloadBytes))
-				{
-					if (b == (byte)0xFF)
-						packetOut.write(new byte[] {(byte)0xFF,(byte)0xFF});
-					else
-						packetOut.write(b);
-				}
-				packetOut.write(payloadBytes);
-				packetOut.write(new byte[] { (byte)Session.TELNET_IAC, (byte)Session.TELNET_SE});
-				rawBytesOut(rawout, packetOut.toByteArray());
-				return true;
-			}
-			catch(final Exception e)
-			{
-				Log.errOut(e);
-			}
-			return false;
-		}
-		case MSDP:
-			if(!getClientTelnetMode(TELNET_MSDP))
-				return false;
-			return false;
-		case MXP:
-			if(!getClientTelnetMode(TELNET_MXP))
-				return false;
-			return false;
-		default:
-			break;
-		}
 		return false;
 	}
 
@@ -633,8 +478,6 @@ public class DefaultSession implements Session
 		this.readlineContinue(10000); // must handle big mpcp and similar requests
 		if(status == SessionStatus.HANDSHAKE_OPEN)
 		{
-			if(!mcpDisabled)
-				rawBytesOut(rawout,("\n\r#$#mcp version: 2.1 to: 2.1\n\r").getBytes(CMProps.getVar(CMProps.Str.CHARSETOUTPUT)));
 			rawBytesOut(rawout,("\n\rConnecting to "+CMProps.getVar(CMProps.Str.MUD_NAME)+"...\n\r").getBytes("US-ASCII"));
 			setServerTelnetMode(TELNET_ANSI,true);
 			setClientTelnetMode(TELNET_ANSI,true);
@@ -646,16 +489,6 @@ public class DefaultSession implements Session
 			changeTelnetModeBackwards(rawout,TELNET_NEWENVIRON,true);
 			changeTelnetMode(rawout,TELNET_TERMTYPE,true);
 			negotiateTelnetMode(rawout,TELNET_TERMTYPE);
-			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MCCP))
-				changeTelnetMode(rawout,TELNET_COMPRESS2,true);
-			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MXP))
-				changeTelnetMode(rawout,TELNET_MXP,true);
-			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.GMCP))
-				changeTelnetMode(rawout,TELNET_GMCP,true);
-			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSP))
-				changeTelnetMode(rawout,TELNET_MSP,true);
-			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MSDP))
-				changeTelnetMode(rawout,TELNET_MSDP,true);
 			//changeTelnetMode(rawout,TELNET_SUPRESS_GO_AHEAD,true);
 			changeTelnetMode(rawout,TELNET_NAWS,true);
 			changeTelnetMode(rawout,TELNET_ECHO,false);
@@ -664,9 +497,6 @@ public class DefaultSession implements Session
 			//changeTelnetMode(rawout,TELNET_BINARY,true);
 			if(mightSupportTelnetMode(TELNET_GA))
 				rawBytesOut(rawout,TELNETGABYTES);
-			if((!CMSecurity.isDisabled(CMSecurity.DisFlag.MSSP))
-			&&(mightSupportTelnetMode(TELNET_MSSP)))
-				changeTelnetMode(rawout,TELNET_MSSP,true);
 			return true;
 		}
 		return false;
@@ -1954,99 +1784,6 @@ public class DefaultSession implements Session
 					Log.debugOut("For suboption "+Session.TELNET_DESCS[optionCode]+", got: "+terminalWidth+"x"+terminalHeight);
 			}
 			break;
-		case TELNET_MSDP:
-			{
-				final byte[] resp=CMLib.protocol().processMsdp(this, suboptionData, dataSize, this.msdpReportables);
-				if(CMSecurity.isDebugging(CMSecurity.DbgFlag.TELNET))
-					Log.debugOut("For suboption "+Session.TELNET_DESCS[optionCode]+", got "+dataSize+" bytes, sent "+((resp==null)?0:resp.length));
-				if(resp!=null)
-					rawBytesOut(rawout, resp);
-			}
-			break;
-		case TELNET_GMCP:
-			{
-				final byte[] resp=CMLib.protocol().processGmcp(this, new String(suboptionData), gmcpSupports, msdpReportables);
-				if(CMSecurity.isDebugging(CMSecurity.DbgFlag.TELNET))
-				{
-					Log.debugOut("For suboption "+Session.TELNET_DESCS[optionCode]+", got "+dataSize+" bytes, sent "+((resp==null)?0:resp.length));
-					Log.debugOut("suboption data: "+new String(suboptionData));
-				}
-				if(resp!=null)
-					rawBytesOut(rawout, resp);
-			}
-			break;
-		case TELNET_MPCP:
-			{
-				if((suboptionData.length>21)
-				&&CMProps.isState(CMProps.HostState.RUNNING)) // because proxy clients were too early
-				{
-					final byte[] digest = new byte[20];
-					final ByteBuffer rdr = ByteBuffer.wrap(suboptionData);
-					rdr.get(digest);
-					final byte[] strBuf = new byte[rdr.remaining()];
-					rdr.get(strBuf);
-					final byte[] keyBytes = CMProps.getVar(CMProps.Str.MPCPKEY).getBytes(StandardCharsets.UTF_8);
-					final SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
-					try
-					{
-						final Mac mac = Mac.getInstance("HmacSHA1");
-						mac.init(keySpec);
-						final byte[] digestCheck = mac.doFinal(strBuf);
-						if(!Arrays.equals(digest, digestCheck))
-							break;
-						final String str = new String(strBuf,"UTF-8");
-						final int x = str.indexOf(' ');
-						if(x>0)
-						{
-							final String command = str.substring(0,x).trim();
-							final String jsonStr = str.substring(x+1).trim();
-							if(CMSecurity.isDebugging(DbgFlag.TELNET))
-								Log.debugOut("MPCP Received: "+command+" "+jsonStr);
-							final MiniJSON.JSONObject obj = new MiniJSON().parseObject(jsonStr);
-							final Long timestamp = obj.getCheckedLong("timestamp");
-							if(Math.abs(System.currentTimeMillis()-timestamp.longValue())>1000)
-								break;
-							if(command.equalsIgnoreCase("clientinfo"))
-							{
-								this.ipAddress = obj.getCheckedString("client_address");
-								if(obj.containsKey("reconnect"))
-									this.isReconnect = obj.getCheckedBoolean("reconnect").booleanValue();
-							}
-							else
-							if(command.equalsIgnoreCase("sessioninfo"))
-							{
-								obj.remove("timestamp");
-								final int wasMccpCode = this.getClientTelnetMode(Session.TELNET_COMPRESS2) ? Session.TELNET_COMPRESS2
-										: this.getClientTelnetMode(Session.TELNET_COMPRESS) ? Session.TELNET_COMPRESS
-										: -1;
-								for(final String key : getStatCodes())
-								{
-									if(obj.containsKey(key.toLowerCase()))
-										setStat(key,obj.get(key.toLowerCase()).toString());
-								}
-								this.inputCallback=null;
-								final int isMccpCode = this.getClientTelnetMode(Session.TELNET_COMPRESS2) ? Session.TELNET_COMPRESS2
-										: this.getClientTelnetMode(Session.TELNET_COMPRESS) ? Session.TELNET_COMPRESS
-										: -1;
-								if((isMccpCode>0) && (wasMccpCode<0)) // if the restored connection wants mccp, kill it with fire.
-								{
-									this.setClientTelnetMode(isMccpCode, false);
-									//if(!CMSecurity.isDisabled(CMSecurity.DisFlag.MCCP))
-									//	changeTelnetMode(rawout,isMccpCode,true);
-								}
-								this.lastKeystroke = System.currentTimeMillis();
-								this.afkTime = 0;
-								this.needPrompt=true;
-							}
-						}
-					}
-					catch(final Exception e)
-					{
-						Log.errOut("MPCP",e);
-					}
-				}
-			}
-			break;
 		default:
 			// Ignore it.
 			break;
@@ -2305,40 +2042,6 @@ public class DefaultSession implements Session
 				if(this.reverseEcho || (last != TELNET_ECHO))
 					setClientTelnetMode(last,true);
 
-				if(last == TELNET_MSSP)
-				{
-					final ByteArrayOutputStream buf=new ByteArrayOutputStream();
-					buf.write(Session.TELNET_IAC);buf.write(Session.TELNET_SB);buf.write(Session.TELNET_MSSP);
-					final Map<String,Object> pkg = CMLib.protocol().getMSSPPackage();
-					for(final String key : pkg.keySet())
-					{
-						final Object o = pkg.get(key);
-						buf.write(1);
-						buf.write(key.getBytes("UTF-8"));
-						if(o instanceof String[])
-						{
-							final String[] os = (String[])o;
-							for(final String s : os)
-							{
-								buf.write(2);
-								buf.write(s.getBytes("UTF-8"));
-							}
-						}
-						else
-						{
-							buf.write(2);
-							buf.write(o.toString().getBytes("UTF-8"));
-						}
-					}
-					buf.write((char)Session.TELNET_IAC);buf.write((char)Session.TELNET_SE);
-					try
-					{
-						rawBytesOut(rawout, buf.toByteArray());
-					}
-					catch (final IOException e)
-					{
-					}
-				}
 			}
 			if(serverTelnetCodes[TELNET_LOGOUT])
 				setKillFlag(true);
@@ -2649,8 +2352,7 @@ public class DefaultSession implements Session
 				{
 					inStr=new StringBuilder(input);
 					this.input.setLength(0);
-					if(sessionMCPCheck(inStr))
-						break;
+					break;
 				}
 				else
 				if(lastC == -1)
@@ -2701,26 +2403,6 @@ public class DefaultSession implements Session
 		return blockingIn(-1, true);
 	}
 
-	protected boolean sessionMCPCheck(final StringBuilder inStr)
-	{
-		if((inStr.length()>3)
-		&&(inStr.charAt(0)=='#')
-		&&(inStr.charAt(1)=='$'))
-		{
-			if(inStr.substring(0, 3).equals("#$#"))
-			{
-				if(debugStrInput)
-					Log.debugOut(getAddress()+" TIN: "+(mob==null?"":mob.Name())+": '"+inStr.toString()+"'");
-				if(CMLib.protocol().mcp(this,inStr,mcpKey,mcpSupported,mcpKeyPairs))
-					return false;
-			}
-			else
-			if(inStr.substring(0, 3).equals("#$\""))
-				inStr.delete(0, 3);
-		}
-		return true;
-	}
-
 	@Override
 	public String readlineContinue(final long timeout) throws IOException, SocketException
 	{
@@ -2753,8 +2435,6 @@ public class DefaultSession implements Session
 
 		final StringBuilder inStr=new StringBuilder(input);
 		input.setLength(0);
-		if(!sessionMCPCheck(inStr))
-			return null;
 		final boolean doMxp = CMSecurity.isAllowed(mob,(mob!=null)?mob.location():null,CMSecurity.SecFlag.MXPTAGS);
 		final boolean isArchon = CMSecurity.isASysOp(mob);
 		final String str=CMLib.coffeeFilter().simpleInFilter(inStr,doMxp, isArchon);
@@ -2847,10 +2527,6 @@ public class DefaultSession implements Session
 	@Override
 	public void stopSession(final boolean disconnect, final boolean removeMOB, final boolean dropSession, final boolean killThread)
 	{
-		if(disconnect)
-		{
-			doPing(SessionPing.DISCONNECT, null);
-		}
 		setKillFlag(true);
 		setStatus(SessionStatus.LOGOUT5);
 		if(dropSession)
@@ -3121,40 +2797,6 @@ public class DefaultSession implements Session
 		return otherLoginName.equalsIgnoreCase(myLogin);
 	}
 
-	protected void doProtocolPings()
-	{
-		if(getClientTelnetMode(TELNET_MSDP))
-		{
-			final byte[] msdpPingBuf=CMLib.protocol().pingMsdp(this, msdpReportables);
-			if(msdpPingBuf!=null)
-			{
-				try
-				{
-					rawBytesOut(rawout, msdpPingBuf);
-				}
-				catch (final IOException e)
-				{
-				}
-				if(CMSecurity.isDebugging(CMSecurity.DbgFlag.TELNET))
-					Log.debugOut("MSDP Reported: "+msdpPingBuf.length+" bytes");
-			}
-		}
-		if(getClientTelnetMode(TELNET_GMCP))
-		{
-			final byte[] gmcpPingBuf=CMLib.protocol().pingGmcp(this, gmcpPings, gmcpSupports, msdpReportables);
-			if(gmcpPingBuf!=null)
-			{
-				try
-				{
-					rawBytesOut(rawout, gmcpPingBuf);
-				}
-				catch (final IOException e)
-				{
-				}
-			}
-		}
-	}
-
 	@Override
 	public void run()
 	{
@@ -3169,11 +2811,6 @@ public class DefaultSession implements Session
 		}
 
 		activeMillis=System.currentTimeMillis();
-		if((activeMillis>=nextMsdpPing)&&(connectionComplete))
-		{
-			nextMsdpPing=activeMillis+MSDPPINGINTERVAL;
-			doProtocolPings();
-		}
 
 		try
 		{
@@ -3309,8 +2946,6 @@ public class DefaultSession implements Session
 			setMob(mob);
 			if(CMLib.login().completePlayerLogin(this,false) == CharCreationLibrary.LoginResult.NORMAL_LOGIN)
 			{
-				if(mob.session()!=null)
-					mob.session().doPing(SessionPing.PLAYERSAVE, null);
 				this.nonBlockingIn(false);
 			}
 			else
@@ -3408,7 +3043,6 @@ public class DefaultSession implements Session
 			}
 			if(loginSession == null)
 			{
-				doPing(SessionPing.DISCONNECT, null);
 				killFlag = true;
 			}
 			else
@@ -3438,7 +3072,6 @@ public class DefaultSession implements Session
 			{
 				loginSession=null;
 			}
-			doPing(SessionPing.DISCONNECT, null);
 			setStatus(SessionStatus.LOGOUT);
 		}
 		catch(final SocketException e)
@@ -4050,80 +3683,12 @@ public class DefaultSession implements Session
 		lastWriteTime=System.currentTimeMillis();
 	}
 
-	@Override
-	public void doPing(final SessionPing ping, final Object obj)
-	{
-		switch(ping)
-		{
-		case DISCONNECT:
-			if(getClientTelnetMode(TELNET_MPCP))
-				sendInlineCommand(InProto.MPCP,"Disconnect", "{}");
-			break;
-		case GMCP_PING_ALL:
-			if(getClientTelnetMode(TELNET_GMCP))
-			{
-				this.gmcpPings.clear();
-				this.doProtocolPings();
-			}
-			break;
-		case GMCP_PING_MED:
-			{
-				if(getClientTelnetMode(TELNET_GMCP))
-				{
-					this.gmcpPings.remove("system.nextMedReport");
-					this.doProtocolPings();
-				}
-				break;
-			}
-		case GMCP_PING_EFFECTS:
-		{
-			if(getClientTelnetMode(TELNET_GMCP)
-			&&(this.gmcpSupports.containsKey("char.effects")||this.gmcpSupports.containsKey("char.effects.get")))
-			{
-				this.gmcpPings.remove("system.nextEffReport");
-				this.doProtocolPings();
-				if(obj instanceof Long)
-					this.gmcpPings.put("system.lastEffectHash", (Long)obj);
-			}
-			break;
-		}
-		case ROOMLOOK:
-			if(getClientTelnetMode(TELNET_GMCP))
-			{
-				final byte[] gmcpPingBuf=CMLib.protocol().invokeRoomChangeGmcp(this, gmcpPings, gmcpSupports, msdpReportables);
-				if(gmcpPingBuf!=null)
-				{
-					try
-					{
-						rawBytesOut(rawout, gmcpPingBuf);
-					}
-					catch (final IOException e)
-					{
-					}
-				}
-			}
-			break;
-		case PLAYERSAVE:
-			if(getClientTelnetMode(TELNET_MPCP))
-			{
-				final MiniJSON.JSONObject doc = new MiniJSON.JSONObject();
-				for(final String stat : this.getStatCodes())
-					doc.put(stat.toLowerCase(), getStat(stat));
-				doc.remove("lastmsg");
-				sendInlineCommand(InProto.MPCP,"SessionInfo", doc.toString());
-			}
-			break;
-		}
-	}
-
 	private static enum SESS_STAT_CODES {GROUPNAME,GROUPCHAR,TELNETSCODES,TELNETCCODES,
 										 TERMTYPE,ACCTOUNTNAME,MOBNAME,
 										 PREVCMD,ISAFK,AFKMESSAGE,ADDRESS,IDLETIME,
 										 LASTMSG,LASTNPCFIGHT,LASTPKFIGHT,
 										 TOTALMILLIS,TOTALTICKS,WRAP,LASTLOOPTIME,
-										 TWRAP,MXPSUPPORTS, MXPVERINFO, MSDPREPORTS,
-										 GMCPSUPPORTS, STRCACHE, MCPKEY, MCPKEYPAIRS,
-										 MCPSUPPORTS,
+										 TWRAP,MXPSUPPORTS, MXPVERINFO, STRCACHE,
 										 MTTSBITS,TERMHEIGHT,PSUFFIX,
 										 LOGINTIME,ONLINETIME,ACTIVETIME}
 
@@ -4198,47 +3763,10 @@ public class DefaultSession implements Session
 			obj.putAll(mxpVersionInfo);
 			return obj.toString();
 		}
-		case MSDPREPORTS:
-		{
-			try
-			{
-				final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-				final ObjectOutputStream oout = new ObjectOutputStream(bout);
-				oout.writeObject(msdpReportables);
-				oout.flush();
-				return Base64.getEncoder().encodeToString(bout.toByteArray());
-			}
-			catch (final IOException e)
-			{
-				Log.errOut(e);
-			}
-			break;
-		}
-		case GMCPSUPPORTS:
-		{
-			final MiniJSON.JSONObject obj = new MiniJSON.JSONObject();
-			obj.putAll(gmcpSupports);
-			return obj.toString();
-		}
 		case STRCACHE:
 		{
 			final MiniJSON.JSONObject obj = new MiniJSON.JSONObject();
 			obj.putAll(strCache);
-			return obj.toString();
-		}
-		case MCPKEY:
-			return mcpKey[0]==null?"":mcpKey[0];
-		case MCPKEYPAIRS:
-		{
-			final MiniJSON.JSONObject obj = new MiniJSON.JSONObject();
-			obj.putAll(mcpKeyPairs);
-			return obj.toString();
-		}
-		case MCPSUPPORTS:
-		{
-			final MiniJSON.JSONObject obj = new MiniJSON.JSONObject();
-			for(final String key : mcpSupported.keySet())
-				obj.put(key, Double.valueOf(mcpSupported.get(key)[0]));
 			return obj.toString();
 		}
 		case GROUPNAME:
@@ -4358,53 +3886,6 @@ public class DefaultSession implements Session
 			}
 			break;
 		}
-		case MSDPREPORTS:
-		{
-			msdpReportables.clear();
-			if(val.trim().length()>0)
-			{
-				try
-				{
-					final byte[] bs = Base64.getDecoder().decode(val);
-					final ByteArrayInputStream bout = new ByteArrayInputStream(bs);
-					final ObjectInputStream ooin = new ObjectInputStream(bout);
-					@SuppressWarnings({ "rawtypes", "unchecked" })
-					final Map<Object,Object> m = (Map)ooin.readObject();
-					ooin.close();
-					msdpReportables.putAll(m);
-				}
-				catch (final Exception e)
-				{
-					Log.errOut(e);
-				}
-			}
-			break;
-		}
-		case GMCPSUPPORTS:
-		{
-			gmcpSupports.clear();
-			if((val.length()>0)&&(val.trim().startsWith("{")))
-			{
-				try
-				{
-					final MiniJSON.JSONObject obj = new MiniJSON().parseObject(val);
-					for(final String key : obj.keySet())
-					{
-						try
-						{
-							gmcpSupports.put(key, obj.getCheckedDouble(key));
-						}
-						catch(final MiniJSON.MJSONException e)
-						{}
-					}
-				}
-				catch(final MiniJSON.MJSONException e)
-				{
-					Log.errOut(e);
-				}
-			}
-			break;
-		}
 		case STRCACHE:
 		{
 			strCache.clear();
@@ -4418,62 +3899,6 @@ public class DefaultSession implements Session
 						try
 						{
 							strCache.put(key, obj.getCheckedString(key));
-						}
-						catch(final MiniJSON.MJSONException e)
-						{}
-					}
-				}
-				catch(final MiniJSON.MJSONException e)
-				{
-					Log.errOut(e);
-				}
-			}
-			break;
-		}
-		case MCPKEY:
-			if(val.trim().length()==0)
-				mcpKey[0]=null;
-			else
-				mcpKey[0]=val;
-			break;
-		case MCPKEYPAIRS:
-		{
-			mcpKeyPairs.clear();
-			if((val.length()>0)&&(val.trim().startsWith("{")))
-			{
-				try
-				{
-					final MiniJSON.JSONObject obj = new MiniJSON().parseObject(val);
-					for(final String key : obj.keySet())
-					{
-						try
-						{
-							mcpKeyPairs.put(key, obj.getCheckedString(key));
-						}
-						catch(final MiniJSON.MJSONException e)
-						{}
-					}
-				}
-				catch(final MiniJSON.MJSONException e)
-				{
-					Log.errOut(e);
-				}
-			}
-			break;
-		}
-		case MCPSUPPORTS:
-		{
-			mcpSupported.clear();
-			if((val.length()>0)&&(val.trim().startsWith("{")))
-			{
-				try
-				{
-					final MiniJSON.JSONObject obj = new MiniJSON().parseObject(val);
-					for(final String key : obj.keySet())
-					{
-						try
-						{
-							mcpSupported.put(key, new float[] {(float)obj.getCheckedDouble(key).doubleValue()});
 						}
 						catch(final MiniJSON.MJSONException e)
 						{}

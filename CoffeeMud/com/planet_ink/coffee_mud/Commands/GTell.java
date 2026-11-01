@@ -125,14 +125,6 @@ public class GTell extends StdCommand
 			rawTextMsgStr=L("@x1 tells the group '@x2'",mob.name(),text);
 		}
 
-		if((mob.session()!=null)
-		&&(mob.session().getClientTelnetMode(Session.TELNET_GMCP)))
-		{
-			mob.session().sendInlineCommand(InProto.GMCP,
-					"comm.channel", "{\"chan\":\"GTELL\","
-					+ "\"msg\":\""+MiniJSON.toJSONString(rawTextMsgStr)+"\""
-					+ ",\"player\":\""+mob.name()+"\"}");
-		}
 
 		final Set<MOB> group;
 		if(cmd.startsWith("F"))
@@ -163,15 +155,6 @@ public class GTell extends StdCommand
 			if((mob.location().okMessage(mob,msg))
 			&&(target.okMessage(target,msg)))
 			{
-				if((target.session()!=null)
-				&&(target!=mob)
-				&&(target.session().getClientTelnetMode(Session.TELNET_GMCP)))
-				{
-					target.session().sendInlineCommand(InProto.GMCP,
-							"comm.channel", "{\"chan\":\"GTELL\","
-							+ "\"msg\":\""+MiniJSON.toJSONString(rawTextMsgStr)+"\""
-							+ ",\"player\":\""+mob.name()+"\"}");
-				}
 				if(target.playerStats()!=null)
 				{
 					final String tellStr=(target==mob)?msg.sourceMessage():(

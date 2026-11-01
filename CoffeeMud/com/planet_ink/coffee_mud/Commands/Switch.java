@@ -8,7 +8,6 @@ import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
 import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
-import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionPing;
 import com.planet_ink.coffee_mud.Common.interfaces.Session.SessionStatus;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
@@ -198,7 +197,6 @@ public class Switch extends StdCommand
 					sess.stopSession(true, true, true, true);
 				else
 				{
-					sess.doPing(SessionPing.GMCP_PING_ALL, null);
 					CMLib.login().showTheNews(target);
 					Log.sysOut(mob.Name()+" switched login to: "+target.Name());
 				}
