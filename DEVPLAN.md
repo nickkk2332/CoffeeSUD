@@ -528,6 +528,22 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   it away again. Saves made in it have `dev=true` in their header and show
   `[dev]` in SAVES and the startup list, and SAVES INFO says so (S23's dev
   flag). Scripts ask `ISDEV()`. Not in builder mode, which has every power.
+- DT6 done. `GOD [cheat|power|ALL ...] [ON|OFF]`, in a `DEV=1` game or
+  builder mode, keeps a character's cheats in `Prop_DevCheats` (saved like
+  any effect): `NOCLIP` (closed and locked doors and the `Prop_Req*` entry
+  checks do not stop a walk, which costs no movement), `NOCOST` (no mana,
+  movement or hit point cost and no wait), `NODAMAGE`, `NODEATH` (hit points
+  stop at 1), `SEEALL` (dark, hidden, invisible, sneaking, never blind) and
+  `NOAGGRO`. Where a sysop power already gave part of one (GOTO walked
+  through doors, which DT5's dev group has; ALLSKILLS skipped the wait;
+  IMMORT; ORDER or CMDROOMS kept `Aggressive` and `VeryAggressive` off),
+  turning the cheat OFF takes that away too, and a power's own name with OFF
+  suspends it for the character (`CMSecurity.setSuspended`, even for an
+  Archon): `GOD ALL OFF` plays as a mortal. `GOD` alone lists them, `GOD
+  RESET` forgets them. Found on the way: a JRUN script that names an engine
+  class through `Packages` gets a second copy of it, with its own statics,
+  since CMClass is a class loader of its own; tests reach the game's copy
+  through an instance from CMClass.
 
 #### 2d. Scripting (59)
 

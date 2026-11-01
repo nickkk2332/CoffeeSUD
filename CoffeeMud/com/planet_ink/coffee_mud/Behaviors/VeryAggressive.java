@@ -116,8 +116,7 @@ public class VeryAggressive extends Aggressive
 		{
 			final MOB inhab=R.fetchInhabitant(m);
 			if((inhab!=null)
-			&&(CMSecurity.isAllowed(inhab,R,CMSecurity.SecFlag.ORDER))
-			&&(CMSecurity.isAllowed(inhab,R,CMSecurity.SecFlag.CMDROOMS)))
+			&&(com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.noAggro(inhab,R,true))) // ORDER and CMDROOMS, or GOD NOAGGRO
 				return;
 		}
 

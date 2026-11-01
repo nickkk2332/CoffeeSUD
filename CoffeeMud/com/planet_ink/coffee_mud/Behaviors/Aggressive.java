@@ -225,8 +225,7 @@ public class Aggressive extends StdBehavior
 			&&(R.getArea().getAreaState()==Area.State.ACTIVE)
 			&&((misBehave&&(!monster.isInCombat()))||canFreelyBehaveNormal(monster))
 			&&(CMLib.flags().canBeSeenBy(mob,monster))
-			&&(!CMSecurity.isAllowed(mob,R,CMSecurity.SecFlag.ORDER))
-			&&(!CMSecurity.isAllowed(mob,R,CMSecurity.SecFlag.CMDROOMS))
+			&&(!com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.noAggro(mob,R,false)) // ORDER, CMDROOMS or GOD NOAGGRO
 			&&(!CMLib.flags().isATrackingMonster(mob))
 			&&(!CMLib.flags().isATrackingMonster(monster))
 			&&(!monster.getGroupMembers(new HashSet<MOB>()).contains(mob)))

@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.CMSecurity.DisFlag;
 import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
+import com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.*;
 import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
@@ -1937,7 +1938,7 @@ public class StdAbility implements Ability
 			&&(GameTime.now()<getTimeOfNextCast())
 			&&(room!=null)
 			&&(room.getArea()!=null)
-			&&(!CMSecurity.isAllowed(mob, room, CMSecurity.SecFlag.ALLSKILLS)))
+			&&(!Prop_DevCheats.noWait(mob, room)))
 			{
 				final TimeClock C=room.getArea().getTimeObj();
 				if(C!=null)
@@ -1952,7 +1953,8 @@ public class StdAbility implements Ability
 				return false;
 			}
 
-			int[] consumed=usageCost(mob,false);
+			final boolean noCost=Prop_DevCheats.on(mob, Prop_DevCheats.Cheat.NOCOST);
+			int[] consumed=noCost?STATIC_USAGE_NADA:usageCost(mob,false);
 			final int[] timeCache;
 			final int nowLSW = (int)(GameTime.now()&0x7FFFFFFF);
 			final AbilityMapper.CompoundingRule rule = CMLib.ableMapper().getCompoundingRule(mob, this);
@@ -2007,7 +2009,7 @@ public class StdAbility implements Ability
 			if(!testUsageCost(mob,false,consumed,auto,commands))
 				return false;
 
-			if((minCastWaitTime()>0)&&(lastCastHelp>0))
+			if((minCastWaitTime()>0)&&(lastCastHelp>0)&&(!noCost))
 			{
 				if((GameTime.now()-lastCastHelp)<minCastWaitTime())
 				{

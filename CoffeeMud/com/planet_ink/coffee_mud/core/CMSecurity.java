@@ -845,6 +845,63 @@ public class CMSecurity
 		return false;
 	}
 
+	/** the sysop powers suspended for a character (GOD, Prop_DevCheats) */
+	private static final Map<MOB, Set<SecFlag>>	suspendedPowers	= new WeakHashMap<MOB, Set<SecFlag>>();
+	/** whether any power is suspended, so that a check costs nothing when none is */
+	private static volatile boolean				anySuspended	= false;
+
+	/**
+	 * Suspends sysop powers for a character, as GOD does (Prop_DevCheats keeps
+	 * them): while suspended, the checks below say no to the character for
+	 * those flags, even an Archon.
+	 * @param mob the character
+	 * @param flags the powers, or null or none to suspend nothing
+	 */
+	public static void setSuspended(final MOB mob, final Collection<SecFlag> flags)
+	{
+		if(mob == null)
+			return;
+		synchronized(suspendedPowers)
+		{
+			if((flags == null) || flags.isEmpty())
+				suspendedPowers.remove(mob);
+			else
+				suspendedPowers.put(mob, EnumSet.copyOf(flags));
+			anySuspended = !suspendedPowers.isEmpty();
+		}
+	}
+
+	/**
+	 * Returns the sysop powers suspended for a character.
+	 * @param mob the character
+	 * @return the powers, perhaps none
+	 */
+	public static Set<SecFlag> getSuspended(final MOB mob)
+	{
+		synchronized(suspendedPowers)
+		{
+			final Set<SecFlag> s = suspendedPowers.get(mob);
+			return (s == null) ? EnumSet.noneOf(SecFlag.class) : EnumSet.copyOf(s);
+		}
+	}
+
+	private static boolean isSuspended(final MOB mob, final SecFlag flag)
+	{
+		final Set<SecFlag> s;
+		synchronized(suspendedPowers)
+		{
+			s = suspendedPowers.get(mob);
+		}
+		if((s == null) || (flag == null) || (!(s.contains(flag) || s.contains(flag.getRegularAlias()))))
+			return false;
+		if(mob.fetchEffect("Prop_DevCheats") == null) // the cheats are gone
+		{
+			setSuspended(mob, null);
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Checks whether the given mob, currently in the given room, has any of the security flags
 	 * denoted by the given security group.
@@ -883,6 +940,8 @@ public class CMSecurity
 	public static final boolean isAllowed(final MOB mob, final Room room, final SecFlag flag)
 	{
 		if(mob==null)
+			return false;
+		if(anySuspended && isSuspended(mob, flag))
 			return false;
 		if(isASysOp(mob))
 			return true;
@@ -945,6 +1004,8 @@ public class CMSecurity
 	{
 		if(mob==null)
 			return false;
+		if(anySuspended && isSuspended(mob, flag))
+			return false;
 		if(isASysOp(mob))
 			return true;
 		if((mob.playerStats()==null)
@@ -969,6 +1030,8 @@ public class CMSecurity
 	public static final boolean isAllowedAnywhere(final MOB mob, final SecFlag flag)
 	{
 		if(mob==null)
+			return false;
+		if(anySuspended && isSuspended(mob, flag))
 			return false;
 		if(isASysOp(mob))
 			return true;

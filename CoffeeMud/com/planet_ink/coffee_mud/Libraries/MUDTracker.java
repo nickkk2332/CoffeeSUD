@@ -1729,7 +1729,8 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 		}
 		leaveMsg.setValue(directionCode+1);
 		enterMsg.setValue(opDir+1);
-		final boolean gotoAllowed=(!mob.isMonster()) && CMSecurity.isAllowed(mob,destRoom,CMSecurity.SecFlag.GOTO);
+		// GOTO, or GOD NOCLIP (Prop_DevCheats), walks past doors, locks and entry checks
+		final boolean gotoAllowed=com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.noclip(mob,destRoom);
 		if((exit==null)&&(!gotoAllowed))
 		{
 			mob.tell(L("You can't go that way."));
@@ -1764,7 +1765,9 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 		}
 		else
 		{
-			if(!mob.isMonster())
+			if((!mob.isMonster())
+			&&(!com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.on(mob,com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.Cheat.NOCLIP))
+			&&(!com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.on(mob,com.planet_ink.coffee_mud.Abilities.Properties.Prop_DevCheats.Cheat.NOCOST)))
 			{
 				final int expense = running
 									? CMProps.getIntVar(CMProps.Int.RUNCOST)
