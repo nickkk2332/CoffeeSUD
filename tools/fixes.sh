@@ -10,7 +10,7 @@
 #   KEEP=1 tools/fixes.sh     keep the scratch folder and print its path
 #   tools/fixes.sh NAME ...   run only these test files (without .js)
 #   tools/fixes.sh saves      run only the played save tests (step 2b)
-#   tools/fixes.sh saves3     run one group of them (saves1, saves2, saves3)
+#   tools/fixes.sh saves3     run one group of them (saves1 to saves4)
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="$ROOT/CoffeeMud"
 FX="$ROOT/tools/fixtures/fixes"
@@ -31,7 +31,7 @@ FAIL=0
 
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
-case "$1" in saves|saves1|saves2|saves3) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in saves|saves1|saves2|saves3|saves4) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -387,6 +387,25 @@ group_saves3()
 	jsresults s22-restore.txt
 }
 
+group_saves4()
+{
+	SAVES="$W/xsaves"
+	NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	echo "Played: step 2b, what a save keeps (fourth group)"
+	mkdir -p "$W/xdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/xdb/"
+	cp -r "$GAME/world" "$W/xworld"
+	# S15: vessels save once, with their crew and cargo, a vessel the
+	# character owns is not saved twice, and one under way flies on
+	play s15-build.txt xdb xworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s15-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s15-build.txt
+	play s15-play.txt xdb xworld "Mariner\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s15-play.js\nsave s15\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s15-play.txt
+	play s15-restore.txt xdb xworld 'jrun /resources/_fixes/s15-check.js\nwait 20\njrun /resources/_fixes/s15-moved.js\nquit\nn\n' RESTORE=s15 TIMEMODE=TURNS
+	expect s15-restore.txt "Restored 's15'."
+	count s15-restore.txt "is gone" 0
+	jsresults s15-restore.txt
+}
+
 # the groups share nothing (each has its own world, database and saves), so
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
@@ -403,9 +422,11 @@ if [ $# -eq 0 ]; then
 	V2_PID=$!
 	group_saves3 > "$W/group_saves3.log" 2>&1 &
 	V3_PID=$!
-	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"; then FAIL=1; fi
+	group_saves4 > "$W/group_saves4.log" 2>&1 &
+	V4_PID=$!
+	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!
@@ -413,9 +434,11 @@ elif [ "$1" = "saves" ]; then
 	V2_PID=$!
 	group_saves3 > "$W/group_saves3.log" 2>&1 &
 	V3_PID=$!
-	wait $V_PID; wait $V2_PID; wait $V3_PID
-	cat "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"
-	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"; then FAIL=1; fi
+	group_saves4 > "$W/group_saves4.log" 2>&1 &
+	V4_PID=$!
+	wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID
+	cat "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"
+	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log"; then FAIL=1; fi
 elif [ -n "$ONLYSAVES" ]; then
 	G="group_$1"; [ "$1" = "saves1" ] && G=group_saves
 	$G > "$W/$G.log" 2>&1

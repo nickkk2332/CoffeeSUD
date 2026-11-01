@@ -122,4 +122,26 @@ public interface NavigableItem extends Boardable, Item, Rideable, SiegableItem
 	 * @return true if it worked, false otherwise
 	 */
 	public boolean navigate(final int direction);
+
+	/**
+	 * Returns what a saved game keeps of this vessel's travel, as a TRAVEL
+	 * tag: whether its anchor is down, its course, which way it faces, how
+	 * long since it last moved and turned, and the vessel it follows.
+	 * @see NavigableItem#setTravelStateXML(String)
+	 * @return the TRAVEL tag, or "" if there is nothing to keep
+	 */
+	public default String getTravelStateXML()
+	{
+		return "";
+	}
+
+	/**
+	 * Puts back what {@link NavigableItem#getTravelStateXML()} wrote.  Called
+	 * once every vessel of the saved game is back, so that the one followed
+	 * can be found.
+	 * @param xml the TRAVEL tag
+	 */
+	public default void setTravelStateXML(final String xml)
+	{
+	}
 }

@@ -293,6 +293,20 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   and the game time left, and finished ones are dropped. The recent visits of
   each planar travel ability (which make a quick return harder for an hour)
   go with them, through the ability's internal `VISITS` stat.
+- S15 done. A run confirmed most of the audit's reading. A vessel's area
+  makes all aboard unsavable (its own text holds them), so the save skipped
+  the crew, but wrote the cargo again in the rooms: a restore brought it back
+  twice. A vessel a character owns, kept by the character's tables, was
+  written as a room item as well, so it came back twice; the save now leaves
+  out every item a character's or clan's tables keep. A vessel's rooms are
+  marked (`<ROOM SHIP="1">`) and hold its crew (by their own savable flag)
+  and cargo; on restore the vessel is made from its text, then each of its
+  rooms is emptied and filled from the save, so the crew comes back as it
+  was (hit points, effects, states). The rooms of a character's own vessel
+  wait until the character is in. `<VESSELS>` keeps each navigable vessel's
+  anchor, course, facing, time since it moved and turned, and the vessel it
+  follows, by area name (`NavigableItem.getTravelStateXML`), put back once
+  every vessel is.
 
 #### 2c. Developer and builder tools (50)
 

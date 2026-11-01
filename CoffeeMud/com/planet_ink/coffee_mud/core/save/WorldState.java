@@ -159,6 +159,7 @@ public final class WorldState
 				str.append(playerXML(M));
 			str.append("</PARTY>\n");
 		}
+		final Set<Item> owned = ownedByCharacters();
 		str.append("<ROOMS>\n");
 		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 		{
@@ -168,7 +169,9 @@ public final class WorldState
 			final String roomID = CMLib.map().getExtendedRoomID(R);
 			if(roomID.length() == 0)
 				continue;
-			str.append("<ROOM>").append(xml.convertXMLtoTag("ID", xml.parseOutAngleBrackets(roomID)));
+			// a vessel's rooms are made with it, and filled from here
+			str.append((R.getArea() instanceof Boardable) ? "<ROOM SHIP=\"1\">" : "<ROOM>");
+			str.append(xml.convertXMLtoTag("ID", xml.parseOutAngleBrackets(roomID)));
 			str.append(effectsXML(R));
 			str.append(statesXML(R));
 			for(int d = 0; d < Directions.NUM_DIRECTIONS(); d++)
@@ -191,7 +194,7 @@ public final class WorldState
 				if(isSavedHere(M))
 					str.append(mobXML(M, "MOB"));
 			}
-			str.append(itemsXML(roomItems(R)));
+			str.append(itemsXML(roomItems(R, owned)));
 			str.append("</ROOM>\n");
 		}
 		str.append("</ROOMS>\n");
@@ -235,6 +238,7 @@ public final class WorldState
 				str.append("<AREA>").append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(A.Name()))).append(states).append("</AREA>\n");
 		}
 		str.append("</AREAS>\n");
+		str.append(vesselsXML());
 		str.append(scriptVarsXML());
 		str.append(questsXML(player));
 		str.append(ridesXML());
@@ -302,6 +306,8 @@ public final class WorldState
 		final XMLTag world = all.get(0);
 		restored.clear();
 		laterRides.clear();
+		laterRooms.clear();
+		laterVessels.clear();
 		clearWorld();
 		final XMLTag rooms = world.getPieceFromPieces("ROOMS");
 		if(rooms != null)
@@ -309,6 +315,11 @@ public final class WorldState
 			for(final XMLTag roomTag : rooms.contents())
 			{
 				final Room R = getRoom(roomTag.getValFromPieces("ID"));
+				if((R == null) && "1".equals(roomTag.getParmValue("SHIP")))
+				{
+					laterRooms.add(roomTag); // its vessel is not back yet
+					continue;
+				}
 				if(R == null)
 				{
 					int mobs = 0, items = 0;
@@ -327,28 +338,18 @@ public final class WorldState
 				}
 				if(isFresh(R))
 					continue; // as the world has it now
-				for(final XMLTag piece : roomTag.contents())
-				{
-					if(piece.tag().equalsIgnoreCase("DOOR"))
-						setDoor(R, piece);
-					else
-					if(piece.tag().equalsIgnoreCase("MOB"))
-						bringBack(piece, R);
-				}
-				laterEffects(R, roomTag);
-				putStates(R, roomTag);
-				final Unpacked items = unpackItems(roomTag);
-				for(final Item I : items.items)
-				{
-					R.addItem(I);
-					CMLib.map().registerWorldObjectLoaded(R.getArea(), R, I);
-				}
-				for(final Item I : items.items)
-				{
-					if((I.container() == null) && items.respawning.contains(I))
-						armRejuv(I, R);
-				}
-				R.recoverRoomStats();
+				fillRoom(R, roomTag);
+			}
+			putBackLaterRooms(false); // a vessel carried in another
+		}
+		final XMLTag vessels = world.getPieceFromPieces("VESSELS");
+		if(vessels != null)
+		{
+			for(final XMLTag v : vessels.contents())
+			{
+				final XMLTag travel = v.getPieceFromPieces("TRAVEL");
+				if(travel != null)
+					laterVessels.add(new Pair<String, String>(CMLib.xml().restoreAngleBrackets(v.getValFromPieces("AREA")), travel.toString()));
 			}
 		}
 		final XMLTag dead = world.getPieceFromPieces("DEAD");
@@ -738,7 +739,12 @@ public final class WorldState
 	 */
 	private static boolean isSavedHere(final MOB M)
 	{
-		if((M == null) || (!M.isMonster()) || (!savableBesidesPlayers(M)) || M.amDestroyed() || isQuestObject(M))
+		if((M == null) || (!M.isMonster()) || M.amDestroyed() || isQuestObject(M))
+			return false;
+		// a vessel makes all aboard unsavable, since its own text holds them;
+		// the save keeps them in its rooms instead, as they are now
+		final boolean aboard = (M.location() != null) && (M.location().getArea() instanceof Boardable);
+		if(aboard ? CMath.bset(M.basePhyStats().disposition(), PhyStats.IS_UNSAVABLE) : (!savableBesidesPlayers(M)))
 			return false;
 		final MOB leader = M.getGroupLeader();
 		return (leader == null) || leader.isMonster();
@@ -750,7 +756,7 @@ public final class WorldState
 	 * @param R the room
 	 * @return the items
 	 */
-	private static List<Item> roomItems(final Room R)
+	private static List<Item> roomItems(final Room R, final Set<Item> owned)
 	{
 		final List<Item> items = new ArrayList<Item>();
 		for(int i = 0; i < R.numItems(); i++)
@@ -758,6 +764,8 @@ public final class WorldState
 			final Item I = R.getItem(i);
 			if((I == null) || I.amDestroyed())
 				continue;
+			if(owned.contains(I) || owned.contains(I.ultimateContainer(null)))
+				continue; // the character's or clan's own tables keep it, as with a vessel bought
 			if((I instanceof DeadBody) && ((DeadBody)I).isPlayerCorpse())
 				continue;
 			items.add(I);
@@ -773,6 +781,174 @@ public final class WorldState
 				i.remove();
 		}
 		return items;
+	}
+
+	/**
+	 * Returns the items out in the world that a character's or a clan's own
+	 * tables keep (their vessels, titles' properties and the like), which
+	 * come back with them and so are not saved with the rooms.
+	 * @return the items
+	 */
+	private static Set<Item> ownedByCharacters()
+	{
+		final Set<Item> owned = Collections.newSetFromMap(new IdentityHashMap<Item, Boolean>());
+		for(final Enumeration<MOB> p = CMLib.players().players(); p.hasMoreElements();)
+		{
+			final MOB M = p.nextElement();
+			if((M != null) && (M.playerStats() != null))
+			{
+				for(final Enumeration<Item> i = M.playerStats().getExtItems().items(); i.hasMoreElements();)
+					owned.add(i.nextElement());
+			}
+		}
+		for(final Enumeration<Clan> c = CMLib.clans().clans(); c.hasMoreElements();)
+		{
+			final Clan C = c.nextElement();
+			if(C != null)
+			{
+				for(final Enumeration<Item> i = C.getExtItems().items(); i.hasMoreElements();)
+					owned.add(i.nextElement());
+			}
+		}
+		return owned;
+	}
+
+	/**
+	 * Writes each vessel's travel (anchor, course, facing, the vessel it
+	 * follows), by the name of its area, which a vessel keeps.
+	 * @return the VESSELS tag
+	 */
+	private static String vesselsXML()
+	{
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder str = new StringBuilder("<VESSELS>\n");
+		for(final Enumeration<Boardable> b = CMLib.map().ships(); b.hasMoreElements();)
+		{
+			final Boardable ship = b.nextElement();
+			if((!(ship instanceof NavigableItem)) || ((Item)ship).amDestroyed() || (ship.getArea() == null))
+				continue;
+			final String travel = ((NavigableItem)ship).getTravelStateXML();
+			if(travel.length() > 0)
+				str.append("<VESSEL>").append(xml.convertXMLtoTag("AREA", xml.parseOutAngleBrackets(ship.getArea().Name()))).append(travel).append("</VESSEL>\n");
+		}
+		return str.append("</VESSELS>\n").toString();
+	}
+
+	/**
+	 * Empties a vessel's room of the mobs and items its vessel was made with,
+	 * before the saved ones go in: but not the characters, those following
+	 * them, or what the characters' tables keep.
+	 * @param R the room
+	 */
+	private static void clearVesselRoom(final Room R)
+	{
+		final Set<Item> owned = ownedByCharacters();
+		final List<MOB> mobs = new ArrayList<MOB>();
+		for(int m = 0; m < R.numInhabitants(); m++)
+		{
+			final MOB M = R.fetchInhabitant(m);
+			if((M == null) || (!M.isMonster()) || isQuestObject(M))
+				continue;
+			final MOB leader = M.getGroupLeader();
+			if((leader == null) || leader.isMonster())
+				mobs.add(M);
+		}
+		for(final MOB M : mobs)
+			M.destroy();
+		final List<Item> items = new ArrayList<Item>();
+		for(int i = 0; i < R.numItems(); i++)
+		{
+			final Item I = R.getItem(i);
+			if((I != null) && (!owned.contains(I)) && (!owned.contains(I.ultimateContainer(null)))
+			&& (!isQuestObject(I)) && (!isQuestObject(I.ultimateContainer(null))))
+				items.add(I);
+		}
+		for(final Item I : items)
+			I.destroy();
+	}
+
+	/**
+	 * Fills a room from its saved ROOM tag: doors, mobs, effects, states and
+	 * items.  A vessel's room is emptied first of what its vessel was made
+	 * with.
+	 * @param R the room
+	 * @param roomTag its tag
+	 */
+	private static void fillRoom(final Room R, final XMLTag roomTag)
+	{
+		if(R.getArea() instanceof Boardable)
+			clearVesselRoom(R);
+		for(final XMLTag piece : roomTag.contents())
+		{
+			if(piece.tag().equalsIgnoreCase("DOOR"))
+				setDoor(R, piece);
+			else
+			if(piece.tag().equalsIgnoreCase("MOB"))
+				bringBack(piece, R);
+		}
+		laterEffects(R, roomTag);
+		putStates(R, roomTag);
+		final Unpacked items = unpackItems(roomTag);
+		for(final Item I : items.items)
+		{
+			R.addItem(I);
+			CMLib.map().registerWorldObjectLoaded(R.getArea(), R, I);
+		}
+		for(final Item I : items.items)
+		{
+			if((I.container() == null) && items.respawning.contains(I))
+				armRejuv(I, R);
+		}
+		R.recoverRoomStats();
+	}
+
+	/**
+	 * Fills the rooms of vessels that were not back when the rest were: one
+	 * carried in another, or one a character owns, which comes back with
+	 * them.
+	 * @param last true when nothing more will come back, to report the rest
+	 */
+	private static void putBackLaterRooms(final boolean last)
+	{
+		for(final Iterator<XMLTag> i = laterRooms.iterator(); i.hasNext();)
+		{
+			final XMLTag roomTag = i.next();
+			final Room R = getRoom(roomTag.getValFromPieces("ID"));
+			if(R != null)
+			{
+				i.remove();
+				fillRoom(R, roomTag);
+			}
+		}
+		if(last)
+		{
+			for(final XMLTag roomTag : laterRooms)
+			{
+				SaveGame.noteWorldChange(CMLib.lang().L("The vessel room @x1 is gone, with what was saved there.",
+					CMLib.xml().restoreAngleBrackets(roomTag.getValFromPieces("ID"))));
+			}
+			laterRooms.clear();
+		}
+	}
+
+	/**
+	 * Puts back each vessel's travel, once every vessel is back.
+	 */
+	private static void putBackVessels()
+	{
+		for(final Pair<String, String> v : laterVessels)
+		{
+			for(final Enumeration<Boardable> b = CMLib.map().ships(); b.hasMoreElements();)
+			{
+				final Boardable ship = b.nextElement();
+				if((ship instanceof NavigableItem) && (ship.getArea() != null) && ship.getArea().Name().equals(v.first))
+				{
+					((NavigableItem)ship).setTravelStateXML(v.second);
+					break;
+				}
+			}
+		}
+		laterVessels.clear();
 	}
 
 	/**
@@ -1236,6 +1412,10 @@ public final class WorldState
 	private static final Map<String, Physical>			restored		= new HashMap<String, Physical>();
 	/** who rides what, by number, until both are back */
 	private static final List<Pair<String, String>>		laterRides		= new ArrayList<Pair<String, String>>();
+	/** the rooms of vessels not back yet, such as the characters' own */
+	private static final List<XMLTag>					laterRooms		= new ArrayList<XMLTag>();
+	/** each vessel's travel, by its area's name, until every vessel is back */
+	private static final List<Pair<String, String>>		laterVessels	= new ArrayList<Pair<String, String>>();
 
 	/**
 	 * Notes what was made from a saved tag, by the number it was written
@@ -1345,6 +1525,10 @@ public final class WorldState
 					e.getKey().setFollowing(leader);
 			}
 		}
+		// the characters' own vessels are back with them, so their rooms can be
+		// filled, and every vessel's travel put back
+		putBackLaterRooms(true);
+		putBackVessels();
 		// the characters and their followers are back, so their rides can be
 		putBackRides();
 		laterRides.clear();

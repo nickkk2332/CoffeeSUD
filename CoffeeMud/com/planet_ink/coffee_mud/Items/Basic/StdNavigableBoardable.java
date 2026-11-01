@@ -1918,6 +1918,60 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 	}
 
 	@Override
+	public String getTravelStateXML()
+	{
+		final StringBuilder str = new StringBuilder("<TRAVEL ANCHOR=\"").append(anchorDown)
+			.append("\" DIR=\"").append(courseDirection)
+			.append("\" FACING=\"").append(directionFacing)
+			.append("\" MOVED=\"").append(ticksSinceMove)
+			.append("\" TURNED=\"").append(ticksSinceLastTurn)
+			.append("\" COURSE=\"");
+		final List<Integer> course = new XArrayList<Integer>(courseDirections);
+		for(int i = 0; i < course.size(); i++)
+			str.append((i > 0) ? "," : "").append(course.get(i));
+		str.append("\">");
+		final Item followI = following;
+		if((followI instanceof Boardable) && (((Boardable)followI).getArea() != null))
+			str.append("<FOLLOW>").append(CMLib.xml().parseOutAngleBrackets(((Boardable)followI).getArea().Name())).append("</FOLLOW>");
+		return str.append("</TRAVEL>").toString();
+	}
+
+	@Override
+	public void setTravelStateXML(final String xml)
+	{
+		final List<XMLLibrary.XMLTag> tags = CMLib.xml().parseAllXML(xml);
+		if((tags == null) || (tags.size() == 0) || (!tags.get(0).tag().equalsIgnoreCase("TRAVEL")))
+			return;
+		final XMLLibrary.XMLTag tag = tags.get(0);
+		anchorDown = CMath.s_bool(tag.getParmValue("ANCHOR"));
+		courseDirection = CMath.s_int(tag.getParmValue("DIR"));
+		directionFacing = CMath.s_int(tag.getParmValue("FACING"));
+		ticksSinceMove = CMath.s_int(tag.getParmValue("MOVED"));
+		ticksSinceLastTurn = CMath.s_int(tag.getParmValue("TURNED"));
+		courseDirections.clear();
+		final String course = tag.getParmValue("COURSE");
+		if(course != null)
+		{
+			for(final String dir : CMParms.parseCommas(course, true))
+				courseDirections.add(Integer.valueOf(CMath.s_int(dir)));
+		}
+		following = null;
+		final String followName = CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("FOLLOW"));
+		if((followName != null) && (followName.length() > 0))
+		{
+			for(final Enumeration<Boardable> b = CMLib.map().ships(); b.hasMoreElements();)
+			{
+				final Boardable ship = b.nextElement();
+				if((ship instanceof Item) && (ship != this) && (ship.getArea() != null) && ship.getArea().Name().equals(followName))
+				{
+					following = (Item)ship;
+					break;
+				}
+			}
+		}
+	}
+
+	@Override
 	public List<Integer> getCurrentCourse()
 	{
 		if(getTopCourse()>=0)
