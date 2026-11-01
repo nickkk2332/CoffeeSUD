@@ -129,4 +129,15 @@ if (groups.length > 1) {
 } else
 	fail("mudchat", "chat.dat has no groups");
 Talker.destroy();
+
+// RandomQuests (S8): how many quests it keeps, and which, taken back by name
+var RQ = fresh("RandomQuests", "MINQUESTS=1 MAXQUESTS=1", null);
+setField(RQ, "numQuests", java.lang.Integer.valueOf(2));
+var someQuest = CMLib.quests().enumQuests().nextElement();
+field(RQ, "myQuests").add(new java.lang.ref.WeakReference(someQuest));
+var rstate = RQ.getStat("STATE");
+var RQ2 = fresh("RandomQuests", "MINQUESTS=1 MAXQUESTS=1", null);
+RQ2.setStat("STATE", rstate);
+call(RQ2, "takeBackSavedQuests", []);
+check("randomquests", field(RQ2, "numQuests") == 2 && field(RQ2, "myQuests").size() == 1 && field(RQ2, "myQuests").get(0).get() == someQuest, "state " + rstate);
 done();

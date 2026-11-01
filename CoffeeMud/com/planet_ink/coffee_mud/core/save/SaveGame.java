@@ -284,6 +284,8 @@ public final class SaveGame
 			public void run()
 			{
 				loadClocks();
+				// what the world's files gave, before a save adds to it
+				WorldState.noteContentQuests();
 			}
 		});
 		final Properties header = restoring;

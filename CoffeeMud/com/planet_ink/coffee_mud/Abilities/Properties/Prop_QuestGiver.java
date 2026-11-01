@@ -140,6 +140,39 @@ public class Prop_QuestGiver extends Property
 		return trigger;
 	}
 
+	/**
+	 * Returns what names this quest giver among quests' variables: what it
+	 * is on, and where.
+	 * @return the key
+	 */
+	protected String giverKey()
+	{
+		final Physical P=affected;
+		if(P==null)
+			return "";
+		final Room R=CMLib.map().roomLocation(P);
+		return P.Name()+"@"+((P instanceof Area)?P.Name():((R==null)?"":CMLib.map().getExtendedRoomID(R)));
+	}
+
+	/**
+	 * Returns the running quest this giver generated, by the QUESTGIVER
+	 * variable it set on it, so that a saved game does not generate another.
+	 * @return the quest, or null
+	 */
+	protected Quest generatedQuest()
+	{
+		final String key=giverKey();
+		if(key.length()==0)
+			return null;
+		for(final Enumeration<Quest> q=CMLib.quests().enumQuests();q.hasMoreElements();)
+		{
+			final Quest Q=q.nextElement();
+			if((Q!=null)&&(Q.running())&&key.equals(Q.getQuestVars().get("QUESTGIVER")))
+				return Q;
+		}
+		return null;
+	}
+
 	protected Quest getQuest()
 	{
 		if((quest == null)
@@ -150,6 +183,13 @@ public class Prop_QuestGiver extends Property
 			String questName="";
 			if(text.toUpperCase().startsWith("GENERATE:"))
 			{
+				// the one it generated before, as a saved game made it again
+				final Quest mine=generatedQuest();
+				if(mine!=null)
+				{
+					quest=mine;
+					return quest;
+				}
 				final String genParms = text.substring(9);
 				final Behavior B=CMClass.getBehavior("RandomQuests");
 				if(affected instanceof PhysicalAgent)
@@ -166,6 +206,8 @@ public class Prop_QuestGiver extends Property
 			else
 				questName = text;
 			quest=(questName.length()>0)?CMLib.quests().findQuest(questName):null;
+			if((quest!=null)&&(text.toUpperCase().startsWith("GENERATE:")))
+				quest.setQuestVar("QUESTGIVER",giverKey());
 			if(quest == null)
 			{
 				if(!leaveThemAlone.contains("TheLog"))

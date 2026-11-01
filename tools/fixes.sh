@@ -302,6 +302,14 @@ group_saves2()
 	play s12-restore.txt vdb vworld 'wait 3\njrun /resources/_fixes/s12-check.js\nquit\nn\n' RESTORE=s12 TIMEMODE=TURNS
 	expect s12-restore.txt "Restored 's12'."
 	jsresults s12-restore.txt
+
+	# S8: a quest made in play (as RandomQuests makes one) is saved whole and
+	# made again
+	play s8-play.txt vdb vworld "Questmaker\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s8-play.js\nsave s8\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s8-play.txt
+	play s8-restore.txt vdb vworld 'jrun /resources/_fixes/s8-check.js\nquit\nn\n' RESTORE=s8 TIMEMODE=TURNS
+	expect s8-restore.txt "Restored 's8'."
+	jsresults s8-restore.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so

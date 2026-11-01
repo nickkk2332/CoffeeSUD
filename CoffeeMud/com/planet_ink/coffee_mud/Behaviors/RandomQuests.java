@@ -48,6 +48,57 @@ public class RandomQuests extends ActiveTicker
 		return "RandomQuests";
 	}
 
+	/** the names of its quests in a saved game, taken back on its next tick */
+	protected List<String> savedQuestNames = null;
+
+	@Override
+	protected String getRunState()
+	{
+		final StringBuilder str=new StringBuilder("");
+		if(numQuests>=0)
+			str.append("<NUM>").append(numQuests).append("</NUM>");
+		for(final Reference<Quest> r : myQuests)
+		{
+			final Quest Q=r.get();
+			if(Q!=null)
+				str.append(CMLib.xml().convertXMLtoTag("QUEST",CMLib.xml().parseOutAngleBrackets(Q.name())));
+		}
+		return str.toString();
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		final String num=CMLib.xml().getValFromPieces(tags,"NUM");
+		if(num.length()>0)
+			numQuests=CMath.s_int(num);
+		savedQuestNames=new ArrayList<String>();
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : tags)
+		{
+			if(tag.tag().equalsIgnoreCase("QUEST"))
+				savedQuestNames.add(CMLib.xml().restoreAngleBrackets(tag.value()));
+		}
+	}
+
+	/**
+	 * Takes back the quests it had in a saved game, made again by the
+	 * restore, rather than generating new ones.
+	 */
+	protected void takeBackSavedQuests()
+	{
+		final List<String> names=savedQuestNames;
+		savedQuestNames=null;
+		if(names==null)
+			return;
+		for(final String name : names)
+		{
+			final Quest Q=CMLib.quests().fetchQuest(name);
+			if(Q!=null)
+				myQuests.add(new WeakReference<Quest>(Q));
+		}
+	}
+
 	@Override
 	protected int canImproveCode()
 	{
@@ -274,6 +325,8 @@ public class RandomQuests extends ActiveTicker
 				return false;
 			if(disable.get())
 				return false;
+			if(savedQuestNames!=null)
+				takeBackSavedQuests();
 			if(numQuests < 0)
 				numQuests=minQuests + ((maxQuests > minQuests)?CMLib.dice().roll(1, maxQuests-minQuests+1, -1):0);
 			synchronized(myQuests)
