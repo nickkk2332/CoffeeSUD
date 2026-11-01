@@ -578,6 +578,91 @@ public class WorldCmd extends StdCommand
 		return str.toString();
 	}
 
+	/** a file, as WORLD BACKUPS and RESTOREFILE take it: one the world has, or one that has backups */
+	private static String backupPath(final String what)
+	{
+		final String path = WorldFiles.findPath(what, null);
+		if((path != null) && (!WorldFiles.backupsOf(path).isEmpty()))
+			return path;
+		String w = what.trim().replace('\\', '/').toLowerCase();
+		for(final String p : WorldFiles.backedUp())
+		{
+			final String name = p.substring(p.lastIndexOf('/') + 1).toLowerCase();
+			final int dot = name.indexOf('.');
+			if(p.equalsIgnoreCase(w) || name.equals(w) || ((dot > 0) && name.substring(0, dot).equals(w)))
+				return p;
+		}
+		return path;
+	}
+
+	/**
+	 * WORLD BACKUPS (B6): the files the export wrote over or deleted, with
+	 * their backups, or one file's.
+	 * @param what a file, or empty for all
+	 * @return the list
+	 */
+	public static String worldBackups(final String what)
+	{
+		if(!SaveGame.isBuilderMode())
+			return "WORLD BACKUPS is for builder mode, where SAVE writes the world files.";
+		if(what.length() == 0)
+		{
+			final List<String> paths = WorldFiles.backedUp();
+			if(paths.isEmpty())
+				return "No world file has been written over or deleted by SAVE, so there are no backups.";
+			final StringBuilder str = new StringBuilder("World files with backups in world/" + WorldFiles.BACKUP_DIR + " (WORLD BACKUPS FILE lists them):");
+			for(final String p : paths)
+			{
+				final List<String> stamps = WorldFiles.backupsOf(p);
+				str.append("\n\r  ").append(p).append(": ").append(stamps.size()).append(", the newest ").append(stamps.get(stamps.size() - 1));
+			}
+			return str.toString();
+		}
+		final String path = backupPath(what);
+		if(path == null)
+			return "There is no world file '" + what + "'.";
+		final List<String> stamps = WorldFiles.backupsOf(path);
+		if(stamps.isEmpty())
+			return path + " has no backups.";
+		final StringBuilder str = new StringBuilder("Backups of " + path + ", oldest first (WORLD RESTOREFILE " + what + " TIME puts one back):");
+		for(final String s : stamps)
+			str.append("\n\r  ").append(s);
+		return str.toString();
+	}
+
+	/**
+	 * WORLD RESTOREFILE (B6): a file put back as a backup has it, the newest
+	 * or the one of the time given.
+	 * @param words the file, then the time if any
+	 * @return what was done
+	 */
+	public static String worldRestoreFile(final List<String> words)
+	{
+		if(!SaveGame.isBuilderMode())
+			return "WORLD RESTOREFILE is for builder mode, where SAVE writes the world files.";
+		if(words.isEmpty())
+			return "WORLD RESTOREFILE [FILE] ([TIME]): a file put back as its backup has it.  WORLD BACKUPS lists them.";
+		String stamp = null;
+		if((words.size() > 1) && words.get(words.size() - 1).matches("\\d{8}(-\\d{0,6}(-\\d{0,3})?)?"))
+			stamp = words.remove(words.size() - 1);
+		final String what = CMParms.combine(words, 0).trim();
+		final String path = backupPath(what);
+		if(path == null)
+			return "There is no world file '" + what + "'.";
+		final String problem = WorldFiles.restoreBackup(path, stamp);
+		if(problem != null)
+			return problem + ".";
+		final List<String> stamps = WorldFiles.backupsOf(path);
+		String which = (stamp == null) ? stamps.get(stamps.size() - 1) : stamp;
+		for(final String s : stamps)
+		{
+			if((stamp != null) && s.startsWith(stamp))
+				which = s;
+		}
+		return path + " is put back as it was at " + which + ".  It is changed outside the game now: WORLD RELOAD loads it into the game, "
+			+ "and SAVE leaves it as it is (SAVE FORCE writes over it).";
+	}
+
 	/**
 	 * WORLD STATUS (B2): the world files changed outside the game, and what
 	 * the next SAVE would write, delete and leave.
@@ -795,6 +880,16 @@ public class WorldCmd extends StdCommand
 			mob.tell(worldReload(mob, new ArrayList<String>(commands.subList(2, commands.size()))));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("BACKUPS"))
+		{
+			mob.tell(worldBackups(CMParms.combine(commands, 2).trim()));
+			return false;
+		}
+		if(commands.get(1).equalsIgnoreCase("RESTOREFILE"))
+		{
+			mob.tell(worldRestoreFile(new ArrayList<String>(commands.subList(2, commands.size()))));
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("STATUS"))
 		{
 			mob.tell(worldStatus());
@@ -812,7 +907,7 @@ public class WorldCmd extends StdCommand
 		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD RELOAD loads files again, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD RELOAD loads files again, WORLD BACKUPS and RESTOREFILE the files SAVE wrote over, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())

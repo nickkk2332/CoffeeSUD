@@ -927,6 +927,19 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   the world files (B2's sums) and resources' scripts (their times) on a
   thread of its own and queues the matching WORLD RELOAD for the builder,
   each noted in DEVLOG.
+- B6 done. `core/UndoLog` logs, in builder mode, the last 50 building
+  commands (B4's and GMODIFY, from StdMOB.doCommand), each with the XML
+  (getRoomXML with content) of the rooms it changed as they were: the
+  builder's room at its start, and each room before its mobs or items
+  first change (StdRoom's hooks); an entry whose rooms are unchanged is
+  dropped. They are kept in world/.history/ too. `UNDO [n]` makes each
+  room again from its XML (obliterated, unpacked and saved, as IMPORT
+  does, players waiting outside and exits into it linked again), newest
+  first; `UNDO LIST` lists them, as HISTORY was the typed commands'.
+  The export copies each file it writes over or deletes to
+  world/.backup/PATH.TIME, the last `BACKUPS=` (5) of each kept; `WORLD
+  BACKUPS [file]` lists them and `WORLD RESTOREFILE file [time]` puts one
+  back, changed outside the game (B2), for WORLD RELOAD (B5).
 
 #### 2d. Scripting (59)
 

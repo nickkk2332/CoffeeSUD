@@ -872,6 +872,134 @@ public final class WorldFiles
 		return problem;
 	}
 
+	/** the folder in the world folder the export's backups are kept in (B6) */
+	public static final String    BACKUP_DIR    = ".backup";
+
+	/** a backup's name: the file's path, its folders joined with ~, and the time */
+	private static String backupBase(final String path)
+	{
+		return path.replace('/', '~') + ".";
+	}
+
+	/**
+	 * B6: a file as it was, copied to world/.backup/ before the export
+	 * writes over it or deletes it; the last BACKUPS= (in the ini, 5 if not
+	 * set, 0 for none) of each file are kept.
+	 * @param F the file
+	 * @return true, to go on
+	 */
+	private static boolean backup(final File F)
+	{
+		final String path = pathIn(F);
+		if((path == null) || (!F.isFile()))
+			return true;
+		final int keep = CMath.s_int(CMProps.instance().getStr("BACKUPS", "5").trim());
+		if(keep <= 0)
+			return true;
+		final File D = new File(worldDir, BACKUP_DIR);
+		try
+		{
+			if(!D.isDirectory())
+			{
+				D.mkdirs();
+				// not part of the world: git leaves it out
+				Files.write(new File(D, ".gitignore").toPath(), "*\n".getBytes(StandardCharsets.UTF_8));
+			}
+			final String stamp = new java.text.SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
+			Files.copy(F.toPath(), new File(D, backupBase(path) + stamp).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			final List<String> stamps = backupsOf(path);
+			for(int i = 0; i < stamps.size() - keep; i++)
+				new File(D, backupBase(path) + stamps.get(i)).delete();
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("WorldFiles", "backup of " + path + ": " + e.getMessage());
+		}
+		return true;
+	}
+
+	/**
+	 * The times of a file's backups (B6, WORLD BACKUPS), oldest first.
+	 * @param path the file's path in the world folder
+	 * @return the times, as the backups are named
+	 */
+	public static List<String> backupsOf(final String path)
+	{
+		final List<String> stamps = new ArrayList<String>();
+		final File[] fs = new File(worldDir, BACKUP_DIR).listFiles();
+		if(fs == null)
+			return stamps;
+		final String base = backupBase(path);
+		for(final File F : fs)
+		{
+			if(F.getName().startsWith(base) && (F.getName().indexOf('.', base.length()) < 0))
+				stamps.add(F.getName().substring(base.length()));
+		}
+		Collections.sort(stamps);
+		return stamps;
+	}
+
+	/**
+	 * The files that have backups (B6, WORLD BACKUPS).
+	 * @return their paths in the world folder
+	 */
+	public static List<String> backedUp()
+	{
+		final Set<String> paths = new TreeSet<String>();
+		final File[] fs = new File(worldDir, BACKUP_DIR).listFiles();
+		if(fs != null)
+		{
+			for(final File F : fs)
+			{
+				final String n = F.getName();
+				final int x = n.lastIndexOf('.');
+				if((x > 0) && (!n.startsWith(".")) && n.substring(x + 1).matches("\\d{8}-\\d{6}-\\d{3}"))
+					paths.add(n.substring(0, x).replace('~', '/'));
+			}
+		}
+		return new ArrayList<String>(paths);
+	}
+
+	/**
+	 * Puts a file back as a backup has it (B6, WORLD RESTOREFILE).  It is
+	 * then changed outside the game, as B2 sees it: WORLD RELOAD loads it,
+	 * and SAVE leaves it unless forced.
+	 * @param path the file's path in the world folder
+	 * @param stamp the backup's time, or null for the newest
+	 * @return null if put back, or what went wrong
+	 */
+	public static String restoreBackup(final String path, final String stamp)
+	{
+		final List<String> stamps = backupsOf(path);
+		if(stamps.isEmpty())
+			return path + " has no backups";
+		String which = null;
+		if(stamp == null)
+			which = stamps.get(stamps.size() - 1);
+		else
+		{
+			for(final String s : stamps)
+			{
+				if(s.startsWith(stamp) && ((which == null) || (!which.equals(stamp))))
+					which = s;
+			}
+		}
+		if(which == null)
+			return path + " has no backup of " + stamp;
+		final File to = new File(worldDir, path);
+		try
+		{
+			if((to.getParentFile() != null) && (!to.getParentFile().isDirectory()))
+				to.getParentFile().mkdirs();
+			Files.copy(new File(new File(worldDir, BACKUP_DIR), backupBase(path) + which).toPath(), to.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+		}
+		catch(final IOException e)
+		{
+			return e.getMessage();
+		}
+		return null;
+	}
+
 	/** a world file's path in the world folder, or null if it is not in it */
 	private static String pathIn(final File F)
 	{
@@ -1674,6 +1802,7 @@ public final class WorldFiles
 				else
 				if(mayChange(F, bytes))
 				{
+					backup(F);
 					if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()))
 						F.getParentFile().mkdirs();
 					java.nio.file.Files.write(F.toPath(), bytes);
@@ -1696,7 +1825,7 @@ public final class WorldFiles
 			collectFiles(dir, all);
 			for(final File F : all)
 			{
-				if((!F.getName().equals(VFS_INDEX)) && (!F.getName().endsWith(BUILDER_EXT)) && (!kept.contains(F.getCanonicalPath())) && mayChange(F, null) && F.delete())
+				if((!F.getName().equals(VFS_INDEX)) && (!F.getName().endsWith(BUILDER_EXT)) && (!kept.contains(F.getCanonicalPath())) && mayChange(F, null) && backup(F) && F.delete())
 					changed[0]++;
 			}
 		}
@@ -2129,7 +2258,7 @@ public final class WorldFiles
 			if(!F.isFile())
 				settle(F);
 			else
-			if(mayChange(F, null) && F.delete())
+			if(mayChange(F, null) && backup(F) && F.delete())
 				changed[0]++;
 			return;
 		}
@@ -2140,6 +2269,7 @@ public final class WorldFiles
 		}
 		if(!mayChange(F, text.getBytes(StandardCharsets.UTF_8)))
 			return;
+		backup(F);
 		if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()) && (!F.getParentFile().mkdirs()))
 			throw new IOException("Cannot make " + F.getParentFile().getPath());
 		try(Writer out = new OutputStreamWriter(new FileOutputStream(F), "UTF-8"))

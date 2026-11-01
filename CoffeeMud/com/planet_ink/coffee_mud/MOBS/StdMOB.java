@@ -2302,6 +2302,7 @@ public class StdMOB implements MOB
 					CMLib.coffeeTables().bump((Command) O, CoffeeTableRow.STAT_CMDUSE);
 				}
 				// B4: the rooms a building command changes are marked unsaved
+				UndoLog.begin(this, O, commands); // B6: the rooms it changes, as they were
 				Unsaved.begin(this, O, commands);
 				try
 				{
@@ -2310,6 +2311,7 @@ public class StdMOB implements MOB
 				finally
 				{
 					Unsaved.end(this, O);
+					UndoLog.end(O);
 				}
 			}
 			else
