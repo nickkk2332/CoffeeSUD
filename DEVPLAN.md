@@ -500,6 +500,14 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   script error) now says so in the quest's errors, not only in the log.
   Left: `STEP label` waits for Q6's named steps, and `WIN char OUTCOME w`
   for the quest outcomes of 2e.
+- DT3 done. While the world files are read, what the engine logs as going
+  wrong in each (an object of an unknown class skipped, say: "Unknown affect
+  Prop_Smelll on New Room, skipping") is kept by file (`Log.startCapture`),
+  in `worldproblems.txt` beside the database so that a game on the cache
+  still knows. It is printed at startup, told to the builder at login, and
+  listed by `WORLD PROBLEMS`. Builder mode does not write such a file (it
+  would be written short) until it is fixed and the world read again from
+  it, or `SAVE FORCE` writes it as the world has it.
 
 #### 2d. Scripting (59)
 

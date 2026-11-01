@@ -141,7 +141,9 @@ public class Save extends StdCommand
 		{
 			if(SaveGame.isBuilderMode() && (!isBuilderSave(commands)) && builderAllowed(mob))
 			{
-				reportWorldFiles(mob, WorldFiles.exportAll());
+				// SAVE FORCE writes the files that loaded only in part too
+				final boolean force=(commands.size()>1)&&commands.get(1).equalsIgnoreCase("FORCE");
+				reportWorldFiles(mob, WorldFiles.exportAll(force));
 				return false;
 			}
 			if(!isBuilderSave(commands))
@@ -188,6 +190,9 @@ public class Save extends StdCommand
 			mob.tell(L("The world files are up to date."));
 		else
 			mob.tell(L("The world files are written: @x1 changed.",""+changed));
+		final List<String> held=WorldFiles.heldBack();
+		if(held.size()>0)
+			mob.tell(L("Not written, as they loaded only in part: @x1.  WORLD PROBLEMS says why; SAVE FORCE writes them as the world has them.",String.join(", ",held)));
 	}
 
 	/**

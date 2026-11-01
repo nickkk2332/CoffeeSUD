@@ -537,6 +537,32 @@ group_saves4()
 	play s21-restore.txt xdb xworld 'wait 60\nquit\nn\n' RESTORE=s21 TIMEMODE=TURNS
 	expect s21-restore.txt "Restored 's21'."
 	expect s21-restore.txt "FIXCRON ran"
+
+	# DT3: a world file that loads only in part (an effect of an unknown
+	# class, skipped) is reported, and builder mode does not write it short
+	# until SAVE FORCE
+	mkdir -p "$W/pbdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/pbdb/"
+	cp -r "$GAME/world" "$W/pbworld"
+	sed -i 's/Prop_Smell/Prop_Smelll/' "$W/pbworld/areas/new-area.cmare"
+	play dt3-build.txt pbdb pbworld "Builder\n${NEWCHAR}world problems\nsave\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	expect dt3-build.txt "World file problems: 1 in 1 file, which builder mode"
+	expect dt3-build.txt "areas/new-area.cmare: CoffeeMaker: Unknown affect Prop_Smelll"
+	expect dt3-build.txt "These world files loaded only in part"
+	expect dt3-build.txt "Not written, as they loaded only in part: areas/new-area.cmare."
+	if grep -q "Prop_Smelll" "$W/pbworld/areas/new-area.cmare"; then
+		echo "  ok    dt3-build: the file that loaded in part was not written short"
+	else
+		echo "  FAIL  dt3-build: the file that loaded in part was written without what it lost"; FAIL=1
+	fi
+	# the next game loads the cache, and still knows; SAVE FORCE writes the file
+	play dt3-force.txt pbdb pbworld "Builder\nsave force\nworld problems\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	expect dt3-force.txt "World file problems: 1 in 1 file, which builder mode"
+	expect dt3-force.txt "The world files loaded whole."
+	if grep -q "Prop_Smelll" "$W/pbworld/areas/new-area.cmare"; then
+		echo "  FAIL  dt3-force: SAVE FORCE did not write the file"; FAIL=1
+	else
+		echo "  ok    dt3-force: SAVE FORCE wrote the file as the world has it"
+	fi
 }
 
 group_saves5()

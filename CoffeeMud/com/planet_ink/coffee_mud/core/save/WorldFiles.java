@@ -15,6 +15,8 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.CRC32;
 
@@ -93,6 +95,16 @@ public final class WorldFiles
 	private static volatile File	refreshCache= null;
 	/** whether the content loaded whole, so that writing it out cannot lose any */
 	private static volatile boolean	loadedWhole	= false;
+	/**
+	 * What went wrong in loading each world file that loaded only in part
+	 * (an object of an unknown class skipped, say), by its path in the world
+	 * folder; kept in the database's folder, as the cache was built from them
+	 */
+	private static final Map<String, List<String>>	problems	= new TreeMap<String, List<String>>();
+	/** the files the last export did not write, as they loaded only in part */
+	private static final List<String>				heldBack	= new ArrayList<String>();
+	/** the file in the database's folder that keeps what went wrong */
+	public static final String						PROBLEMS_FILE	= "worldproblems.txt";
 	/** true while the files are imported */
 	private static volatile boolean	importing	= false;
 
@@ -216,6 +228,8 @@ public final class WorldFiles
 		{
 			CMLib.database().DBReadAllRooms(null);
 			loadedWhole = true;
+			// what went wrong when the cache was built from the files
+			loadProblems();
 			// a new game starts with the world's templates, clans, journals and
 			// files; a restored one has them in its save, as it left them
 			if((!SaveGame.isBuilderMode()) && (!SaveGame.isRestoring()))
@@ -228,12 +242,16 @@ public final class WorldFiles
 		importing = true;
 		try
 		{
+			synchronized(problems)
+			{
+				problems.clear();
+			}
 			for(final File F : listFiles(new File(worldDir, AREAS_DIR), AREA_EXT))
-				whole = report(F, importArea(F)) && whole;
+				whole = report(F, imported(AREAS_DIR + "/" + F.getName(), () -> importArea(F))) && whole;
 			final File catalog = new File(worldDir, CATALOG_FILE);
 			if(catalog.isFile())
-				whole = report(catalog, importCatalog(catalog)) && whole;
-			whole = report(new File(worldDir, QUESTS_DIR), importQuests()) && whole;
+				whole = report(catalog, imported(CATALOG_FILE, () -> importCatalog(catalog))) && whole;
+			whole = report(new File(worldDir, QUESTS_DIR), imported(QUESTS_DIR, () -> importQuests())) && whole;
 			if(!SaveGame.isRestoring())
 				importExtras(SaveGame.isBuilderMode());
 		}
@@ -242,6 +260,10 @@ public final class WorldFiles
 			importing = false;
 		}
 		loadedWhole = whole;
+		saveProblems();
+		final String summary = problemSummary(10);
+		if(summary.length() > 0)
+			System.out.println(summary);
 		if(!whole)
 		{
 			System.out.println("Fix the world files named above.  Until then, builder mode will not write the world files.");
@@ -270,6 +292,156 @@ public final class WorldFiles
 					Log.errOut("WorldFiles", e);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Imports a world file, keeping what the engine logs as going wrong on
+	 * the way (an object of an unknown class skipped, say) as the file's
+	 * problems.
+	 * @param key the file's path in the world folder
+	 * @param importer the import
+	 * @return as the import returns: null if it imported
+	 */
+	private static String imported(final String key, final java.util.function.Supplier<String> importer)
+	{
+		Log.startCapture();
+		try
+		{
+			return importer.get();
+		}
+		finally
+		{
+			final List<String> got = Log.stopCapture();
+			if(!got.isEmpty())
+			{
+				synchronized(problems)
+				{
+					problems.put(key, got);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns what went wrong in loading the world files that loaded only in
+	 * part, by each file's path in the world folder.
+	 * @return the problems
+	 */
+	public static Map<String, List<String>> problems()
+	{
+		synchronized(problems)
+		{
+			final Map<String, List<String>> copy = new TreeMap<String, List<String>>();
+			for(final String key : problems.keySet())
+				copy.put(key, new ArrayList<String>(problems.get(key)));
+			return copy;
+		}
+	}
+
+	/**
+	 * Returns a summary of the world files that loaded only in part, for the
+	 * builder, or "" if none did.
+	 * @param maxLines how many problems to name at most
+	 * @return the summary
+	 */
+	public static String problemSummary(final int maxLines)
+	{
+		final Map<String, List<String>> all = problems();
+		if(all.isEmpty())
+			return "";
+		int n = 0;
+		for(final List<String> L : all.values())
+			n += L.size();
+		final StringBuilder str = new StringBuilder("World file problems: " + n + " in " + all.size()
+			+ ((all.size() == 1) ? " file, which builder mode will not write until it is fixed" : " files, which builder mode will not write until they are fixed")
+			+ " (or SAVE FORCE).  WORLD PROBLEMS lists them.");
+		int shown = 0;
+		for(final String key : all.keySet())
+		{
+			for(final String line : all.get(key))
+			{
+				if(shown++ >= maxLines)
+					break;
+				str.append("\n  ").append(key).append(": ").append(line);
+			}
+		}
+		if(n > maxLines)
+			str.append("\n  ...");
+		return str.toString();
+	}
+
+	/** keeps the problems in the database's folder */
+	private static void saveProblems()
+	{
+		final File dbDir = SaveGame.databaseDir();
+		if(dbDir == null)
+			return;
+		final File F = new File(dbDir, PROBLEMS_FILE);
+		final StringBuilder str = new StringBuilder();
+		for(final Map.Entry<String, List<String>> e : problems().entrySet())
+		{
+			for(final String line : e.getValue())
+				str.append(e.getKey()).append('\t').append(line.replace('\n', ' ').replace('\r', ' ')).append('\n');
+		}
+		try
+		{
+			if(str.length() == 0)
+			{
+				if(F.exists())
+					F.delete();
+			}
+			else
+				Files.write(F.toPath(), str.toString().getBytes(StandardCharsets.UTF_8));
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("WorldFiles", e);
+		}
+	}
+
+	/** reads the problems kept in the database's folder */
+	private static void loadProblems()
+	{
+		synchronized(problems)
+		{
+			problems.clear();
+			final File dbDir = SaveGame.databaseDir();
+			if(dbDir == null)
+				return;
+			final File F = new File(dbDir, PROBLEMS_FILE);
+			if(!F.isFile())
+				return;
+			try
+			{
+				for(final String line : Files.readAllLines(F.toPath(), StandardCharsets.UTF_8))
+				{
+					final int x = line.indexOf('\t');
+					if(x > 0)
+					{
+						if(!problems.containsKey(line.substring(0, x)))
+							problems.put(line.substring(0, x), new ArrayList<String>());
+						problems.get(line.substring(0, x)).add(line.substring(x + 1));
+					}
+				}
+			}
+			catch(final IOException e)
+			{
+				Log.errOut("WorldFiles", e);
+			}
+		}
+	}
+
+	/**
+	 * Returns the files the last export did not write, as they loaded only in
+	 * part, by their paths in the world folder.
+	 * @return the files
+	 */
+	public static List<String> heldBack()
+	{
+		synchronized(heldBack)
+		{
+			return new ArrayList<String>(heldBack);
 		}
 	}
 
@@ -403,13 +575,40 @@ public final class WorldFiles
 	 */
 	public static synchronized int exportAll()
 	{
+		return exportAll(false);
+	}
+
+	/**
+	 * Writes the content to the files, in builder mode, as {@link #exportAll()};
+	 * a file that loaded only in part (see {@link #problems()}) is written only
+	 * when forced, as the builder's SAVE FORCE does, and is then taken as
+	 * loaded whole.
+	 * @param force true to write the files that loaded only in part too
+	 * @return as for {@link #exportAll()}
+	 */
+	public static synchronized int exportAll(final boolean force)
+	{
+		synchronized(heldBack)
+		{
+			heldBack.clear();
+		}
 		if((!SaveGame.isBuilderMode()) || (!loadedWhole))
 			return -1;
 		// things' own texts as XML, one element to a line, to read and diff
 		CMLib.coffeeMaker().setReadableText(true);
 		try
 		{
-			return exportAllReadable();
+			final int changed = exportAllReadable(force);
+			if(force && (changed >= 0))
+			{
+				// written as the world has them: they hold what loaded, no more
+				synchronized(problems)
+				{
+					problems.clear();
+				}
+				saveProblems();
+			}
+			return changed;
 		}
 		finally
 		{
@@ -417,7 +616,24 @@ public final class WorldFiles
 		}
 	}
 
-	private static int exportAllReadable()
+	/** whether a file that loaded only in part is kept as it is, not written */
+	private static boolean holdBack(final String key, final boolean force)
+	{
+		if(force)
+			return false;
+		synchronized(problems)
+		{
+			if(!problems.containsKey(key))
+				return false;
+		}
+		synchronized(heldBack)
+		{
+			heldBack.add(key);
+		}
+		return true;
+	}
+
+	private static int exportAllReadable(final boolean force)
 	{
 		final List<Area> areas = new ArrayList<Area>();
 		for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
@@ -447,11 +663,17 @@ public final class WorldFiles
 			for(final Area A : areas)
 			{
 				final String fileName = fileNameFor(A.Name(), AREA_EXT, areaFiles.keySet());
+				final String was = readText(new File(new File(worldDir, AREAS_DIR), fileName));
+				if((was != null) && holdBack(AREAS_DIR + "/" + fileName, force))
+				{
+					// loaded only in part: kept as it is, not written short
+					areaFiles.put(fileName, was);
+					continue;
+				}
 				final String text = layOut(CMLib.coffeeMaker().getAreaXML(A, null, new HashSet<CMObject>(), new HashSet<String>(), true));
 				areaFiles.put(fileName, text);
 				// compared as the engine reads them, so that a file written the
 				// old way, escaped, is not taken for a changed area
-				final String was = readText(new File(new File(worldDir, AREAS_DIR), fileName));
 				if((was == null) || (!collapseText(text).equals(collapseText(was))))
 					changedAreas.add(A);
 			}
@@ -478,11 +700,15 @@ public final class WorldFiles
 				writeFolder(dir, AREA_EXT, custom.get(kind), changed);
 				writeFolder(dir, SCRIPT_EXT, custom.get(kind), changed);
 			}
-			writeOrDelete(new File(worldDir, CATALOG_FILE), catalogText(), changed);
-			final Map<String, String> questFiles = new LinkedHashMap<String, String>();
-			for(final String[] quest : questRows())
-				questFiles.put(fileNameFor(quest[0], QUEST_EXT, questFiles.keySet()), quest[1] + "\n");
-			writeFolder(new File(worldDir, QUESTS_DIR), QUEST_EXT, questFiles, changed);
+			if(!holdBack(CATALOG_FILE, force))
+				writeOrDelete(new File(worldDir, CATALOG_FILE), catalogText(), changed);
+			if(!holdBack(QUESTS_DIR, force))
+			{
+				final Map<String, String> questFiles = new LinkedHashMap<String, String>();
+				for(final String[] quest : questRows())
+					questFiles.put(fileNameFor(quest[0], QUEST_EXT, questFiles.keySet()), quest[1] + "\n");
+				writeFolder(new File(worldDir, QUESTS_DIR), QUEST_EXT, questFiles, changed);
+			}
 			writeOrDelete(new File(worldDir, TEMPLATES_FILE), templatesText(), changed);
 			writeOrDelete(new File(worldDir, CLANS_FILE), clansText(), changed);
 			writeOrDelete(new File(worldDir, SPACE_FILE), spaceText(), changed);

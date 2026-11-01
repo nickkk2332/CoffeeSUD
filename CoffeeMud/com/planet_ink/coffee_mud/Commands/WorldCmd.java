@@ -121,9 +121,27 @@ public class WorldCmd extends StdCommand
 			mob.tell(listing());
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("PROBLEMS"))
+		{
+			final Map<String,List<String>> problems=com.planet_ink.coffee_mud.core.save.WorldFiles.problems();
+			if(problems.isEmpty())
+			{
+				mob.tell(L("The world files loaded whole."));
+				return false;
+			}
+			final StringBuilder str=new StringBuilder(L("These world files loaded only in part, so builder mode does not write them until they are fixed (and the world is loaded again), or SAVE FORCE writes them as the world has them:\n\r"));
+			for(final String file : problems.keySet())
+			{
+				str.append(file).append(":\n\r");
+				for(final String line : problems.get(file))
+					str.append("  ").append(line).append("\n\r");
+			}
+			mob.tell(str.toString());
+			return false;
+		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, and WORLD SET KEY=VALUE changes one in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())

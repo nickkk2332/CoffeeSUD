@@ -405,7 +405,12 @@ public final class SaveGame
 			mob.tell(str.toString());
 		}
 		if(builderMode)
+		{
 			makeArchon(mob);
+			final String problems = WorldFiles.problemSummary(10);
+			if(problems.length() > 0)
+				mob.tell(problems.replace("\n", "\n\r"));
+		}
 		else
 			startAutoSaver(mob);
 	}

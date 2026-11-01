@@ -939,7 +939,39 @@ public class Log extends java.util.logging.Logger
 	*/
 	public static final void errOut(final String module, final String message)
 	{
+		capture(module,message);
 		l().standardOut(Type.error,module,message,Integer.MIN_VALUE);
+	}
+
+	/** the errors and warnings this thread is collecting, if it is */
+	private static final ThreadLocal<List<String>> captured = new ThreadLocal<List<String>>();
+
+	private static void capture(final String module, final String message)
+	{
+		final List<String> into=captured.get();
+		if(into!=null)
+			into.add(module+": "+message);
+	}
+
+	/**
+	 * Starts collecting the errors and warnings this thread logs, as well as
+	 * logging them, until {@link #stopCapture()}: the world files' loader
+	 * keeps what went wrong in each file this way.
+	 */
+	public static void startCapture()
+	{
+		captured.set(new ArrayList<String>());
+	}
+
+	/**
+	 * Stops collecting this thread's errors and warnings.
+	 * @return those logged since {@link #startCapture()}, "module: message"
+	 */
+	public static List<String> stopCapture()
+	{
+		final List<String> got=captured.get();
+		captured.remove();
+		return (got==null)?new ArrayList<String>():got;
 	}
 
 	/**
@@ -951,6 +983,7 @@ public class Log extends java.util.logging.Logger
 	*/
 	public static final void warnOut(final String module, final String message)
 	{
+		capture(module,message);
 		l().standardOut(Type.warning,module,message,Integer.MIN_VALUE);
 	}
 
