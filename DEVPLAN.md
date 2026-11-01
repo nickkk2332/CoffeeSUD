@@ -871,6 +871,12 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   CHANT_EARTHFEED (the chant's ID is Chant_Bury) and MEDIDATE (MEDITATE),
   both fixed, and CLEAN * and BUTT *, which name no social (BUTT has only
   a targeted form), left for review.
+- B1 done. `SAVE ROOM` in builder mode is `SAVE ROOM HOME`: the room's
+  items as before, and as its mobs only those whose start room it is,
+  wherever in the area they stand (a wanderer is saved, not destroyed by
+  clearDebri); a mob standing there whose home is elsewhere is left out
+  and named. `SAVE ROOM ALL` saves as before, and `SAVE AREA ROOM` does
+  either for each room.
 
 #### 2d. Scripting (59)
 

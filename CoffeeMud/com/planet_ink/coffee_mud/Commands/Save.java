@@ -76,6 +76,69 @@ public class Save extends StdCommand
 		return ct;
 	}
 
+	/**
+	 * The mobs SAVE ROOM HOME (B1) saves into a room: those whose start room it
+	 * is, wherever they stand, and none from elsewhere.
+	 * @param room the room
+	 * @param skipped filled with the mobs standing here whose home is elsewhere
+	 * @return the mobs
+	 */
+	public static List<MOB> homeMobs(final Room room, final List<String> skipped)
+	{
+		final List<MOB> mine = new ArrayList<MOB>();
+		for(final Enumeration<MOB> m = room.inhabitants(); m.hasMoreElements();)
+		{
+			final MOB M = m.nextElement();
+			if((M == null) || (!M.isSavable()))
+				continue;
+			final Room home = M.getStartRoom();
+			if((home == null) || (home == room))
+				mine.add(M);
+			else
+				skipped.add(M.name() + " (home " + CMLib.map().getExtendedRoomID(home) + ")");
+		}
+		// this room's own that have wandered: saved here, not lost
+		for(final Enumeration<Room> r = room.getArea().getProperMap(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if((R == null) || (R == room))
+				continue;
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M != null) && M.isSavable() && (M.getStartRoom() == room) && (!mine.contains(M)))
+					mine.add(M);
+			}
+		}
+		return mine;
+	}
+
+	/**
+	 * SAVE ROOM HOME (B1): the room's items as SAVE ROOM saves them, and each
+	 * mob into its own start room: this room's own wherever they stand,
+	 * those whose home is elsewhere left out and told of.
+	 * @param mob the builder
+	 * @param room the room
+	 * @return true if saved
+	 */
+	public boolean saveRoomHome(final MOB mob, Room room)
+	{
+		synchronized(CMClass.getSync("SYNC"+room.roomID()))
+		{
+			room=CMLib.map().getRoom(room);
+			CMLib.threads().clearDebri(room,LocalType.ITEMS_ONLY);
+			final List<String> skipped = new ArrayList<String>();
+			final List<MOB> mine = homeMobs(room, skipped);
+			CMLib.database().DBUpdateItems(room);
+			CMLib.threads().rejuv(room, Tickable.TICKID_ROOM_ITEM_REJUV);
+			room.startItemRejuv();
+			CMLib.database().DBUpdateTheseMOBs(room, mine);
+			if((mob != null) && (skipped.size() > 0))
+				mob.tell(L("Saved @x1 mobs as this room's; skipped: @x2.", "" + mine.size(), String.join(", ", skipped)));
+			return true;
+		}
+	}
+
 	public boolean clearSaveAndRestart(final MOB mob, Room room, final LocalType taskCode, final boolean noPrompt) throws IOException
 	{
 		synchronized(CMClass.getSync("SYNC"+room.roomID()))
@@ -224,6 +287,15 @@ public class Save extends StdCommand
 		mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 		String firstCommand="";
 		String lastCommand = "";
+		// SAVE ROOM HOME (B1), the default in builder mode, and SAVE ROOM ALL, as before
+		boolean home = SaveGame.isBuilderMode();
+		if((commands.size()>2)
+		&&(commands.get(commands.size()-1).equalsIgnoreCase("HOME")||commands.get(commands.size()-1).equalsIgnoreCase("ALL"))
+		&&(commands.get(commands.size()-2).equalsIgnoreCase("ROOM")))
+		{
+			home = commands.get(commands.size()-1).equalsIgnoreCase("HOME");
+			commands.remove(commands.size()-1);
+		}
 		if(commands.size()>1)
 		{
 			firstCommand=commands.get(1).toUpperCase();
@@ -357,7 +429,10 @@ public class Save extends StdCommand
 					final Area A=mob.location().getArea();
 					boolean saved = false;
 					for(final Enumeration<Room> e=A.getProperMap();e.hasMoreElements();)
-						saved = clearSaveAndRestart(mob,e.nextElement(),LocalType.MOBS_OR_ITEMS, true) || saved;
+					{
+						final Room R=e.nextElement();
+						saved = (home ? saveRoomHome(mob,R) : clearSaveAndRestart(mob,R,LocalType.MOBS_OR_ITEMS, true)) || saved;
+					}
 					if(saved)
 						mob.location().showHappens(CMMsg.MSG_OK_ACTION,L("A feeling of permanency envelopes the area.\n\r"));
 				}
@@ -367,7 +442,7 @@ public class Save extends StdCommand
 			else
 			{
 				CMLib.database().DBUpdateExits(mob.location());
-				if(clearSaveAndRestart(mob,mob.location(),LocalType.MOBS_OR_ITEMS, false))
+				if(home ? saveRoomHome(mob,mob.location()) : clearSaveAndRestart(mob,mob.location(),LocalType.MOBS_OR_ITEMS, false))
 					mob.location().show(mob,null,CMMsg.MSG_OK_ACTION,L("A feeling of permanency envelopes the room.\n\r"));
 			}
 			Resources.removeResource("HELP_"+mob.location().getArea().Name().toUpperCase());
