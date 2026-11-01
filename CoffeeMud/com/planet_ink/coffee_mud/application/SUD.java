@@ -15,6 +15,7 @@ import java.util.Properties;
 
 import com.planet_ink.coffee_mud.core.CMProps;
 import com.planet_ink.coffee_mud.core.Party;
+import com.planet_ink.coffee_mud.core.WorldCheck;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
 import com.planet_ink.coffee_mud.core.save.SaveSlots;
 import com.planet_ink.coffee_mud.core.save.WorldFiles;
@@ -55,6 +56,8 @@ import com.planet_ink.coffee_mud.core.save.WorldSettings;
  * <li>DEV=1 makes a developer's game: a normal game, with saves, in which
  * each character has the developer security group (DEVGROUP, DEV by
  * default); saves made in it are marked [dev].</li>
+ * <li>CHECK=1 loads the world as a new game would, on a scratch copy, runs
+ * WORLD CHECK with no player, prints it, and exits 1 if it found errors.</li>
  * </ul>
  *
  * Any NAME=VALUE argument overrides the ini file, as with {@link MUD}.
@@ -113,7 +116,22 @@ public class SUD
 			if(!Party.setWindows(true))
 				System.out.println("There is no display here, so the characters' windows (WINDOWS=1) are off.");
 		}
-		showTitle(gameName);
+		final String check = settings.getProperty("CHECK", "").trim().toUpperCase();
+		final boolean checkOnly = check.equals("1") || check.startsWith("Y") || check.startsWith("T") || check.equals("ON");
+		if(checkOnly)
+		{
+			// a new game's world, on a scratch copy, checked with no one in it
+			WorldCheck.setHeadless(true);
+			System.out.println("World check (CHECK=1): the world is loaded, checked, and the game ends.");
+			SaveGame.setNextBoot(null);
+		}
+		else
+			showTitle(gameName);
+		if(checkOnly)
+		{
+			// nothing to choose
+		}
+		else
 		if(builderMode)
 			System.out.println("Builder mode: changes go straight into the world, and there are no saved games.");
 		else
@@ -161,7 +179,7 @@ public class SUD
 		MUD.main(fullArgs.toArray(new String[fullArgs.size()]));
 		if(!builderMode)
 			SaveSlots.deleteWorkingDatabases(saveDir);
-		System.exit(0);
+		System.exit(checkOnly ? WorldCheck.exitCode() : 0);
 	}
 
 	/**

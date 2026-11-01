@@ -112,6 +112,62 @@ public class WorldCmd extends StdCommand
 		return prefixes;
 	}
 
+	/**
+	 * WORLD CHECK (AREA name) (LOG) (ONLY=part,part): the world's lint, by
+	 * severity ({@link WorldCheck}).
+	 * @param mob the one asking
+	 * @param words the words after CHECK
+	 */
+	protected void worldCheck(final MOB mob, final List<String> words)
+	{
+		Area only=null;
+		boolean log=false;
+		final Set<String> parts=new TreeSet<String>();
+		for(int i=0;i<words.size();i++)
+		{
+			final String w=words.get(i);
+			if(w.equalsIgnoreCase("LOG"))
+				log=true;
+			else
+			if(w.toUpperCase().startsWith("ONLY="))
+			{
+				for(final String p : w.substring(5).split(","))
+				{
+					final String part=p.trim().toUpperCase();
+					if(!Arrays.asList(WorldCheck.PARTS).contains(part))
+					{
+						mob.tell(L("'@x1' is not a part of WORLD CHECK: @x2.",p,String.join(", ",WorldCheck.PARTS).toLowerCase()));
+						return;
+					}
+					parts.add(part);
+				}
+			}
+			else
+			if(w.equalsIgnoreCase("AREA"))
+			{
+				final String name=(i<words.size()-1)?words.get(++i):"";
+				only=(name.length()>0)?CMLib.map().getArea(name):((mob.location()==null)?null:mob.location().getArea());
+				if(only==null)
+				{
+					mob.tell(L("There is no area '@x1'.",name));
+					return;
+				}
+			}
+			else
+			{
+				mob.tell(L("WORLD CHECK (AREA [NAME]) (LOG) (ONLY=@x1)",String.join(",",WorldCheck.PARTS).toLowerCase()));
+				return;
+			}
+		}
+		final List<String> lines=WorldCheck.report(WorldCheck.run(only,parts));
+		if(log)
+		{
+			for(final String line : lines)
+				Log.sysOut("WorldCheck",line);
+		}
+		mob.tell(String.join("\n\r",lines));
+	}
+
 	@Override
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
@@ -139,9 +195,19 @@ public class WorldCmd extends StdCommand
 			mob.tell(str.toString());
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("CHECK"))
+		{
+			if((!SaveGame.isBuilderMode()) && (!SaveGame.isDevMode()) && (!CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS)))
+			{
+				mob.tell(L("WORLD CHECK is for builder mode or a DEV=1 game."));
+				return false;
+			}
+			worldCheck(mob, commands.subList(2, commands.size()));
+			return false;
+		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, and WORLD SET KEY=VALUE changes a setting in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())

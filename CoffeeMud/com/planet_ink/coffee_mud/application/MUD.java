@@ -273,7 +273,10 @@ public class MUD extends Thread implements MudHost
 				else
 					CMath.seedRand(seed.longValue());
 			}
-			final Session S=(Session)CMClass.getCommon("ConsoleSession");
+			final Session S=WorldCheck.isHeadless()?null:(Session)CMClass.getCommon("ConsoleSession");
+			if(WorldCheck.isHeadless())
+				WorldCheck.runHeadless(System.out); // CHECK=1: the world's check, no player, then the end
+			else
 			if((S!=null) && S.initialize(null, threadGroup().getName()))
 			{
 				StringBuffer introText;

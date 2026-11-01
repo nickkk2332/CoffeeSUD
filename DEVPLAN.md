@@ -630,6 +630,22 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   masks that do not compile (the masking library does not say), and
   Prop_HaveAdjuster's complaints when it is not on anything (it logs them
   later).
+- DT13 done, the core of it. `WORLD CHECK (AREA [name]) (LOG) (ONLY=...)`
+  (`core/WorldCheck`), in builder mode or a DEV=1 game, lists errors then
+  warnings, each with its part and room: EXITS (exits to nowhere; doors with
+  no way back), REACH (start rooms, START and START_*, that do not exist;
+  rooms nothing leads to from them, by area), KEYS (locked doors and
+  containers whose key is in no room, mob, shop or catalog entry), TEXT (the
+  new room's description, a room, generic mob or item with its class's
+  text), SHOPS (shopkeepers with nothing to sell), DATA (DT3's WORLD
+  PROBLEMS), SCRIPTS (DT11) and PROPS (DT12). `sud.sh CHECK=1` loads the
+  world as a new game, on a scratch copy, checks it with no player, prints
+  the report and exits 1 on errors. The shipped world has no errors and two
+  warnings, both its first room's (its description). Left: unknown IDs in
+  masks and custom objects beyond what the loader reports, achievements,
+  recipes, help for custom objects, quests that fail to start, unreferenced
+  catalog items, areas without clock or climate, Mobile mobs free to leave,
+  and DEVIATIONS.
 
 #### 2d. Scripting (59)
 

@@ -582,6 +582,14 @@ group_saves4()
 	play dt5-plain.txt xdb xworld 'vars set FIXDEV FIXD 8\nquit\nn\n' RESTORE=dt5 TIMEMODE=TURNS
 	expect dt5-plain.txt "Restored 'dt5'."
 	count dt5-plain.txt "FIXDEV FIXD is" 0
+
+	# DT13: CHECK=1 loads the shipped world as a new game would, checks it
+	# with no player, and ends (exit 1 on errors; the shipped world has none)
+	mkdir -p "$W/ckdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/ckdb/"
+	cp -r "$GAME/world" "$W/ckworld"
+	SAVES="$W/cksaves" play dt13-check.txt ckdb ckworld '' CHECK=1
+	expect dt13-check.txt "World check (CHECK=1)"
+	expect dt13-check.txt "WORLD CHECK: 0 errors"
 }
 
 group_saves5()
