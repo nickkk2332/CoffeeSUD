@@ -165,6 +165,15 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   state. Found on the way: QuestChat lines with a said-once code
   (`(hello::greet)`) never matched, since MudChat looked them up by the
   word `hellogreet`; fixed.
+- S2 done. `SAVEMODE=ANYWHERE|NOTINCOMBAT|SAVEPOINTS|IRONMAN` (ini or
+  command line) is taken by a new game and kept in its saves' headers.
+  `Prop_SavePoint` (MSG= on saving), `Prop_NoSave` (MSG= on refusing) and
+  `Prop_AutoSave` (ONCE=CHAR, SLOT=, ROTATE=, MSG=) go on rooms and areas.
+  SAVE, QUIT's offer and autosaves all ask `SaveGame.whyNotSave`, the one
+  check ST6's refusable SAVE will hook into. Under SAVEPOINTS a fight also
+  refuses, and an ironman game has one save, written at every QUIT, with
+  RESTORE refused in play. An autosave skips fights but not places, since a
+  builder put it there.
 
 #### 2c. Developer and builder tools (50)
 

@@ -69,6 +69,11 @@ public class Restore extends StdCommand
 			mob.tell(L("SAVE (NAME) saves this game, and RESTORE NAME or RESTORE NUMBER restores one."));
 			return false;
 		}
+		if(SaveGame.saveMode() == SaveGame.SaveMode.IRONMAN)
+		{
+			mob.tell(L("This is an ironman game: there is no going back to a save.  QUIT keeps the game."));
+			return false;
+		}
 		final String which = CMParms.combine(commands, 1).trim();
 		final SaveSlots.Slot slot = SaveSlots.find(SaveGame.saveDir(), which);
 		if(slot == null)

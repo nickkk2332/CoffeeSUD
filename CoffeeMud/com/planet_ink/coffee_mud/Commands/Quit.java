@@ -140,12 +140,20 @@ public class Quit extends StdCommand
 	protected void promptSaveAndQuit(final MOB mob, final Session session)
 	{
 		final String slot=SaveGame.defaultSlot(mob);
-		session.prompt(new InputCallback(InputCallback.Type.CHOOSE, "Y", "YNC", 0)
+		final boolean ironman=(SaveGame.saveMode()==SaveGame.SaveMode.IRONMAN);
+		final String why=ironman?null:SaveGame.whyNotSave(mob, slot, true);
+		session.prompt(new InputCallback(InputCallback.Type.CHOOSE, (why!=null)?"C":"Y", ironman?"YC":"YNC", 0)
 		{
 			@Override
 			public void showPrompt()
 			{
-				session.promptPrint(L("\n\rQuit -- save the game as '@x1' first (Y/n), or cancel (c)? ",slot));
+				if(ironman)
+					session.promptPrint(L("\n\rQuit -- the game is saved as '@x1' (Y), or cancel (c)? ",slot));
+				else
+				if(why!=null)
+					session.promptPrint(L("\n\r@x1\n\rQuit without saving (n), or cancel (C)? ",why));
+				else
+					session.promptPrint(L("\n\rQuit -- save the game as '@x1' first (Y/n), or cancel (c)? ",slot));
 			}
 
 			@Override
@@ -159,9 +167,15 @@ public class Quit extends StdCommand
 				final String answer=this.input.trim().toUpperCase();
 				if(answer.startsWith("C"))
 					return;
+				if(answer.startsWith("Y")&&(why!=null))
+				{
+					mob.tell(why);
+					mob.tell(L("You have not quit."));
+					return;
+				}
 				if(!answer.startsWith("N"))
 				{
-					final String problem=SaveGame.save(mob, slot);
+					final String problem=SaveGame.save(mob, slot, true);
 					if(problem!=null)
 					{
 						mob.tell(problem);

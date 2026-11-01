@@ -151,7 +151,12 @@ public class Save extends StdCommand
 				if(problem!=null)
 					mob.tell(problem);
 				else
+				{
+					final String pointMsg=SaveGame.savePointMessage(mob);
+					if(pointMsg.length()>0)
+						mob.tell(pointMsg);
 					mob.tell(L("Game saved as '@x1'.",SaveGame.currentSlot()));
+				}
 				return false;
 			}
 			if(!builderAllowed(mob))

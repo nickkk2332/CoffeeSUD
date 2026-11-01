@@ -3,6 +3,7 @@ package com.planet_ink.coffee_mud.core.save;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.threads.ServiceEngine;
+import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
@@ -67,6 +68,24 @@ public final class SaveGame
 	/** the header of the save this boot restored, until play starts */
 	private static volatile Properties	restoring	= null;
 	private static final Map<String, String> bootOverrides = new Hashtable<String, String>();
+
+	/**
+	 * The game's save rules, set when a new game starts (SAVEMODE) and kept
+	 * in its saves.
+	 */
+	public static enum SaveMode
+	{
+		/** saving anywhere, at any time */
+		ANYWHERE,
+		/** not while the party is fighting */
+		NOTINCOMBAT,
+		/** only at save points (Prop_SavePoint), and not while fighting */
+		SAVEPOINTS,
+		/** one save, which the game keeps when the player quits */
+		IRONMAN
+	}
+
+	private static volatile SaveMode saveMode = SaveMode.ANYWHERE;
 
 	private SaveGame()
 	{
@@ -168,6 +187,7 @@ public final class SaveGame
 	public static void beforeBoot(final String contentDbService)
 	{
 		bootOverrides.clear();
+		saveMode = SaveMode.ANYWHERE;
 		workingDb = null;
 		databaseDir = null;
 		restoring = null;
@@ -221,6 +241,7 @@ public final class SaveGame
 		currentSlot = slot;
 		restoring = header;
 		GameTime.setTurnBased("TURNS".equalsIgnoreCase(header.getProperty("timemode")));
+		saveMode = parseSaveMode(header.getProperty("savemode", "ANYWHERE"));
 		if("true".equalsIgnoreCase(header.getProperty("paused")))
 			GameTime.pause();
 		final long gameTime = parseLong(header.getProperty("gametime"), 0);
@@ -332,6 +353,174 @@ public final class SaveGame
 	}
 
 	/**
+	 * Returns the game's save rules.
+	 * @return the save mode
+	 */
+	public static SaveMode saveMode()
+	{
+		return saveMode;
+	}
+
+	/**
+	 * Sets the game's save rules, as a new game does from its SAVEMODE
+	 * setting.
+	 * @param mode the save mode
+	 */
+	public static void setSaveMode(final SaveMode mode)
+	{
+		saveMode = (mode == null) ? SaveMode.ANYWHERE : mode;
+	}
+
+	/**
+	 * Reads a SAVEMODE setting.
+	 * @param s the setting
+	 * @return its save mode, ANYWHERE if blank or not known
+	 */
+	public static SaveMode parseSaveMode(final String s)
+	{
+		final String name = (s == null) ? "" : s.trim().toUpperCase();
+		for(final SaveMode mode : SaveMode.values())
+		{
+			if(mode.name().equals(name))
+				return mode;
+		}
+		if(name.length() > 0)
+			Log.errOut("SaveGame", "SAVEMODE is '" + s + "', which is not ANYWHERE, NOTINCOMBAT, SAVEPOINTS or IRONMAN, so it is ANYWHERE.");
+		return SaveMode.ANYWHERE;
+	}
+
+	/**
+	 * Returns an effect with the given ID on a room or on its area or the
+	 * areas above that: how save points and no-save places are found.
+	 * @param R the room
+	 * @param ID the effect's ID
+	 * @return the effect, or null
+	 */
+	private static Ability placeEffect(final Room R, final String ID)
+	{
+		if(R == null)
+			return null;
+		Ability A = R.fetchEffect(ID);
+		if(A != null)
+			return A;
+		final Area area = R.getArea();
+		if(area == null)
+			return null;
+		A = area.fetchEffect(ID);
+		if(A != null)
+			return A;
+		for(final Area parent : area.getParentsRecurse())
+		{
+			A = parent.fetchEffect(ID);
+			if(A != null)
+				return A;
+		}
+		return null;
+	}
+
+	/**
+	 * Returns whether the player, any of their characters in the world, or
+	 * anyone in their group is fighting.
+	 * @param mob the player
+	 * @return true if the party is in a fight
+	 */
+	private static boolean partyFighting(final MOB mob)
+	{
+		if(mob.isInCombat())
+			return true;
+		for(final MOB M : Party.othersInWorld(mob))
+		{
+			if(M.isInCombat())
+				return true;
+		}
+		for(final MOB M : mob.getGroupMembers(new HashSet<MOB>()))
+		{
+			if(M.isInCombat())
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns the one save of an ironman game.
+	 * @param mob the player
+	 * @return its name
+	 */
+	public static String ironmanSlot(final MOB mob)
+	{
+		return defaultSlot(mob);
+	}
+
+	/**
+	 * Returns why the game's save rules do not let the player save here and
+	 * now, or null if they do.  SAVE, QUIT's offer to save, and autosaves all
+	 * ask this.
+	 * @param mob the player
+	 * @param slot the save asked for, or null for the usual one
+	 * @param quitting true if the game is saving as the player quits
+	 * @return null if the game can be saved, or why not
+	 */
+	public static String whyNotSave(final MOB mob, final String slot, final boolean quitting)
+	{
+		final SaveMode mode = saveMode;
+		if(mode == SaveMode.IRONMAN)
+		{
+			if((slot != null) && (!slot.equalsIgnoreCase(ironmanSlot(mob))))
+				return CMLib.lang().L("This is an ironman game: it has one save, '@x1', which it keeps for you.", ironmanSlot(mob));
+			if(quitting)
+				return null; // the game is kept when the player stops, wherever they are
+		}
+		final Ability noSave = placeEffect(mob.location(), "Prop_NoSave");
+		if(noSave != null)
+		{
+			final String msg = CMParms.getParmStr(noSave.text(), "MSG", "");
+			return (msg.length() > 0) ? msg : CMLib.lang().L("You cannot save the game here.");
+		}
+		if((mode != SaveMode.ANYWHERE) && partyFighting(mob))
+			return CMLib.lang().L("You cannot save the game during a fight.");
+		if((mode == SaveMode.SAVEPOINTS) && (placeEffect(mob.location(), "Prop_SavePoint") == null))
+			return CMLib.lang().L("You can only save the game at a save point.");
+		return null;
+	}
+
+	/**
+	 * Returns what a save point here says when the game is saved at it.
+	 * @param mob the player
+	 * @return the message, or ""
+	 */
+	public static String savePointMessage(final MOB mob)
+	{
+		final Ability point = placeEffect(mob.location(), "Prop_SavePoint");
+		return (point == null) ? "" : CMParms.getParmStr(point.text(), "MSG", "");
+	}
+
+	/**
+	 * Returns when a save was written, for autosaves that take turns.
+	 * @param slot the save's name
+	 * @return when, in milliseconds, or 0 if there is no such save
+	 */
+	public static long savedAt(final String slot)
+	{
+		final Properties header = SaveSlots.isValidName(slot) ? SaveSlots.readHeader(saveDir, slot) : null;
+		return (header == null) ? 0 : parseLong(header.getProperty("saved"), 0);
+	}
+
+	/**
+	 * Saves the game for an autosave (Prop_AutoSave): skipped while the
+	 * party fights, but wherever the builder put it.  An ironman game saves
+	 * its one save.
+	 * @param mob the player
+	 * @param slot the save's name
+	 * @return null if saved, or why not
+	 */
+	public static String autoSave(final MOB mob, final String slot)
+	{
+		if((saveMode != SaveMode.ANYWHERE) && partyFighting(mob))
+			return CMLib.lang().L("You cannot save the game during a fight.");
+		return write(mob, (saveMode == SaveMode.IRONMAN) ? ironmanSlot(mob) : slot);
+	}
+
+	/**
 	 * Returns the save a player's game goes to when they do not name one:
 	 * the one it came from or was last saved to, else their name.
 	 * @param mob the player
@@ -358,7 +547,37 @@ public final class SaveGame
 	 * @param slot the save's name, or null for {@link #defaultSlot(MOB)}
 	 * @return null if saved, or why not
 	 */
-	public static String save(final MOB mob, String slot)
+	public static String save(final MOB mob, final String slot)
+	{
+		return save(mob, slot, false);
+	}
+
+	/**
+	 * Saves the game, if its save rules allow it here and now.  Runs on the
+	 * game thread, so the world stands still while it saves.
+	 * @param mob the player
+	 * @param slot the save's name, or null for {@link #defaultSlot(MOB)}
+	 * @param quitting true if saving as the player quits
+	 * @return null if saved, or why not
+	 */
+	public static String save(final MOB mob, final String slot, final boolean quitting)
+	{
+		if((!builderMode) && (workingDb != null))
+		{
+			final String why = whyNotSave(mob, slot, quitting);
+			if(why != null)
+				return why;
+		}
+		return write(mob, slot);
+	}
+
+	/**
+	 * Writes the game to a save.
+	 * @param mob the player
+	 * @param slot the save's name, or null for {@link #defaultSlot(MOB)}
+	 * @return null if saved, or why not
+	 */
+	private static String write(final MOB mob, String slot)
 	{
 		if(builderMode)
 			return CMLib.lang().L("There are no saved games in builder mode: changes go straight into the world.");
@@ -394,6 +613,7 @@ public final class SaveGame
 		header.setProperty("saved", Long.toString(System.currentTimeMillis()));
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
+		header.setProperty("savemode", saveMode.name());
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
 		header.setProperty("partymeet", Boolean.toString(Party.isMeetWhereLeft()));
 		header.setProperty("partyfight", Boolean.toString(Party.isFightEachOther()));
@@ -428,6 +648,8 @@ public final class SaveGame
 	{
 		if(builderMode)
 			return CMLib.lang().L("There are no saved games in builder mode.");
+		if(saveMode == SaveMode.IRONMAN)
+			return CMLib.lang().L("This is an ironman game: there is no going back to a save.  QUIT keeps the game.");
 		final SaveSlots.Slot found = SaveSlots.find(saveDir, slot);
 		if(found == null)
 			return CMLib.lang().L("There is no saved game called '@x1'.", slot);

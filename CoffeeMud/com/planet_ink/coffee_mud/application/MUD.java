@@ -603,6 +603,7 @@ public class MUD extends Thread implements MudHost
 				GameTime.setTurnBased(true);
 			if(!restoring)
 			{
+				SaveGame.setSaveMode(SaveGame.parseSaveMode(CMProps.instance().getStr("SAVEMODE","ANYWHERE")));
 				Party.setMeetWhereLeft(CMProps.instance().getStr("PARTYMEET","0").trim().equals("1"));
 				Party.setFightEachOther(CMProps.instance().getStr("PARTYFIGHT","0").trim().equals("1"));
 				Party.setTurns(CMProps.instance().getStr("PARTYTURNS","LEADER").trim().equalsIgnoreCase("ALL") ? Party.Turns.ALL : Party.Turns.LEADER);

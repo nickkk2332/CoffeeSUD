@@ -169,6 +169,32 @@ group_saves()
 	count s1-restore.txt "FIXOFFER" 0
 	count s1-restore.txt "FIXCHAT" 0
 	count s1-restore.txt "FIXONCE" 0
+
+	# S2: save rules.  Save points, a place that refuses saves, an autosave
+	# the first time a character comes in, and no saving in a fight
+	play s2-points.txt sdb sworld "Pointer\n${NEWCHAR}get book\nread book\nsave s2a\njrun /resources/_fixes/s2-points.js\nsave s2a\nnorth\nsave s2b\nsouth\nnorth\nsouth\njrun /resources/_fixes/s2-fight.js\nsave s2a\nquit\nn\n" SAVEMODE=SAVEPOINTS RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s2-points.txt
+	expect s2-points.txt "You can only save the game at a save point."
+	expect s2-points.txt "FIXPOINT you rest at the shrine."
+	expect s2-points.txt "Game saved as 's2a'."
+	expect s2-points.txt "FIXNOSAVE the walls whisper too loudly."
+	count s2-points.txt "FIXAUTO the game saved itself." 1
+	expect s2-points.txt "You cannot save the game during a fight."
+	expect s2-points.txt "Quit without saving (n), or cancel (C)?"
+	if grep -q "^savemode=SAVEPOINTS" "$SAVES/s2a/header.properties" && [ -f "$SAVES/auto/header.properties" ]; then
+		echo "  ok    s2-points: the save keeps its save mode, and the autosave was written"
+	else
+		echo "  FAIL  s2-points: no save mode in the header, or no autosave"; FAIL=1
+	fi
+	# an ironman game: one save, kept at QUIT; no going back
+	play s2-iron.txt sdb sworld "Iron\n${NEWCHAR}save other\nsave\nrestore iron\nquit\nY\n" SAVEMODE=IRONMAN RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect s2-iron.txt "This is an ironman game: it has one save, 'iron', which it keeps for you."
+	expect s2-iron.txt "Game saved as 'iron'."
+	expect s2-iron.txt "This is an ironman game: there is no going back to a save."
+	expect s2-iron.txt "Quit -- the game is saved as 'iron' (Y), or cancel (c)?"
+	play s2-iron2.txt sdb sworld 'save other\nquit\nY\n' RESTORE=iron TIMEMODE=TURNS
+	expect s2-iron2.txt "Restored 'iron'."
+	expect s2-iron2.txt "This is an ironman game: it has one save, 'iron', which it keeps for you."
 }
 
 # the groups share nothing (each has its own world, database and saves), so
