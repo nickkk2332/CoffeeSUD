@@ -260,6 +260,14 @@ of `tools/fixes.sh` (`tools/fixes.sh saves` runs them alone).
   (at SAVE and at quit), an area whose file changed is also written to the
   database cache from the live world, as the builder commands would, so a
   change made by JRUN without the database is in the next game too.
+- S10 done. Builder mode's export also writes `world/templates.cmare` (every
+  builder template, imported shared), `world/clans.cmare` (clans with no
+  player members), `world/journals/NAME.xml` (each journal a journal item
+  in the world reads, such as a notice board, and SYSTEM_CRON, which holds
+  CREATE CRON's jobs) and `world/vfs/...` (one file per file in the
+  database's file system, with an index of their flags and authors). A new
+  game, and builder mode's rebuild, put them into the database; a restored
+  game has them in its save, with what play added. `world.sum` covers them.
 
 #### 2c. Developer and builder tools (50)
 

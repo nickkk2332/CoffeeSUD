@@ -310,13 +310,35 @@ group_saves2()
 	expect s12-restore.txt "Restored 's12'."
 	jsresults s12-restore.txt
 
+}
+
+group_saves3()
+{
+	SAVES="$W/wsaves"
+	NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	echo "Played: step 2b, what a save keeps (third group)"
+	mkdir -p "$W/wdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/wdb/"
+	cp -r "$GAME/world" "$W/wworld"
 	# S8: a quest made in play (as RandomQuests makes one) is saved whole and
 	# made again
-	play s8-play.txt vdb vworld "Questmaker\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s8-play.js\nsave s8\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s8-play.txt wdb wworld "Questmaker\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s8-play.js\nsave s8\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s8-play.txt
-	play s8-restore.txt vdb vworld 'jrun /resources/_fixes/s8-check.js\nquit\nn\n' RESTORE=s8 TIMEMODE=TURNS
+	play s8-restore.txt wdb wworld 'jrun /resources/_fixes/s8-check.js\nquit\nn\n' RESTORE=s8 TIMEMODE=TURNS
 	expect s8-restore.txt "Restored 's8'."
 	jsresults s8-restore.txt
+
+	# S10: templates, a clan with no players, a notice board's posts and the
+	# database's files go to the world files, and a new game has them
+	play s10-build.txt wdb wworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s10-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s10-build.txt
+	if [ -f "$W/wworld/templates.cmare" ] && grep -q "FIXCLAN" "$W/wworld/clans.cmare" \
+	&& grep -q "FIXPOST" "$W/wworld/journals/"*.xml && grep -q "FIXVFS" "$W/wworld/vfs/fixdir/fixvfs.txt"; then
+		echo "  ok    s10-build: the world files have the template, clan, post and file"
+	else
+		echo "  FAIL  s10-build: the world files lack the template, clan, post or file"; FAIL=1
+	fi
+	play s10-new.txt wdb wworld "Elric\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s10-check.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s10-new.txt
 }
 
 # the groups share nothing (each has its own world, database and saves), so
@@ -333,17 +355,21 @@ if [ $# -eq 0 ]; then
 	V_PID=$!
 	group_saves2 > "$W/group_saves2.log" 2>&1 &
 	V2_PID=$!
-	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log"; then FAIL=1; fi
+	group_saves3 > "$W/group_saves3.log" 2>&1 &
+	V3_PID=$!
+	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!
 	group_saves2 > "$W/group_saves2.log" 2>&1 &
 	V2_PID=$!
-	wait $V_PID; wait $V2_PID
-	cat "$W/group_saves.log" "$W/group_saves2.log"
-	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log"; then FAIL=1; fi
+	group_saves3 > "$W/group_saves3.log" 2>&1 &
+	V3_PID=$!
+	wait $V_PID; wait $V2_PID; wait $V3_PID
+	cat "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"
+	if grep -q "^  FAIL" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log"; then FAIL=1; fi
 else
 	group_jrun > "$W/group_jrun.log" 2>&1
 	cat "$W/group_jrun.log"

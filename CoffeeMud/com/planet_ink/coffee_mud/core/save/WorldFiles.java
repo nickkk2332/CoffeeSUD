@@ -8,6 +8,7 @@ import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.CatalogLibrary.CataData;
+import com.planet_ink.coffee_mud.Libraries.interfaces.DatabaseEngine;
 import com.planet_ink.coffee_mud.Libraries.interfaces.DatabaseEngine.AckRecord;
 import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary;
 import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag;
@@ -211,6 +212,10 @@ public final class WorldFiles
 		{
 			CMLib.database().DBReadAllRooms(null);
 			loadedWhole = true;
+			// a new game starts with the world's templates, clans, journals and
+			// files; a restored one has them in its save, as it left them
+			if((!SaveGame.isBuilderMode()) && (!SaveGame.isRestoring()))
+				importExtras(false);
 			return;
 		}
 		Log.sysOut("WorldFiles", "Building the world from the files in " + worldDir.getPath());
@@ -225,6 +230,8 @@ public final class WorldFiles
 			if(catalog.isFile())
 				whole = report(catalog, importCatalog(catalog)) && whole;
 			whole = report(new File(worldDir, QUESTS_DIR), importQuests()) && whole;
+			if(!SaveGame.isRestoring())
+				importExtras(SaveGame.isBuilderMode());
 		}
 		finally
 		{
@@ -439,6 +446,10 @@ public final class WorldFiles
 			for(final String[] quest : questRows())
 				questFiles.put(fileNameFor(quest[0], QUEST_EXT, questFiles.keySet()), quest[1] + "\n");
 			writeFolder(new File(worldDir, QUESTS_DIR), QUEST_EXT, questFiles, changed);
+			writeOrDelete(new File(worldDir, TEMPLATES_FILE), templatesText(), changed);
+			writeOrDelete(new File(worldDir, CLANS_FILE), clansText(), changed);
+			writeFolder(new File(worldDir, JOURNALS_DIR), JOURNAL_EXT, journalFiles(), changed);
+			writeVFS(changed);
 		}
 		catch(final IOException e)
 		{
@@ -456,6 +467,381 @@ public final class WorldFiles
 		if(changed[0] > 0)
 			Log.sysOut("WorldFiles", "Wrote the world files: " + changed[0] + " changed.");
 		return changed[0];
+	}
+
+	/** the builder templates, all shared */
+	public static final String		TEMPLATES_FILE		= "templates.cmare";
+	/** the clans with no player members */
+	public static final String		CLANS_FILE			= "clans.cmare";
+	/** the journals of the world's journal items and SYSTEM_CRON, one file each */
+	public static final String		JOURNALS_DIR		= "journals";
+	private static final String		JOURNAL_EXT			= ".xml";
+	/** the files in the database's file system, one file each, with an index */
+	public static final String		VFS_DIR				= "vfs";
+	private static final String		VFS_INDEX			= ".index";
+	private static final String		TEMPLATE_PERSONAL	= "SYSTEM_BTEMPLATE_PERSONAL";
+	private static final String		TEMPLATE_SHARED		= "SYSTEM_BTEMPLATE_SHARED";
+
+	private static String esc(final String s)
+	{
+		return CMLib.xml().parseOutAngleBrackets((s == null) ? "" : s);
+	}
+
+	private static String unesc(final String s)
+	{
+		return CMLib.xml().restoreAngleBrackets((s == null) ? "" : s);
+	}
+
+	/**
+	 * Writes the builder templates: every builder's, personal and shared.
+	 * @return the text, or null if there are none
+	 */
+	private static String templatesText()
+	{
+		final List<DatabaseEngine.PlayerData> rows = new ArrayList<DatabaseEngine.PlayerData>();
+		rows.addAll(CMLib.database().DBReadPlayerSectionData(TEMPLATE_PERSONAL));
+		rows.addAll(CMLib.database().DBReadPlayerSectionData(TEMPLATE_SHARED));
+		if(rows.size() == 0)
+			return null;
+		final TreeMap<String, String> sorted = new TreeMap<String, String>();
+		for(final DatabaseEngine.PlayerData PD : rows)
+			sorted.put(PD.key().toUpperCase(), "<TEMPLATE WHO=\"" + esc(PD.who()) + "\" KEY=\"" + esc(PD.key()) + "\">" + esc(PD.xml()) + "</TEMPLATE>\n");
+		final StringBuilder str = new StringBuilder("<TEMPLATES>\n");
+		for(final String t : sorted.values())
+			str.append(t);
+		return str.append("</TEMPLATES>\n").toString();
+	}
+
+	/**
+	 * Writes the clans that have no player members: the world's own, such as
+	 * an orc horde that conquers.
+	 * @return the text, or null if there are none
+	 */
+	private static String clansText()
+	{
+		final TreeMap<String, String> sorted = new TreeMap<String, String>();
+		for(final Enumeration<Clan> c = CMLib.clans().clans(); c.hasMoreElements();)
+		{
+			final Clan C = c.nextElement();
+			if((C == null) || (C.getMemberList().size() > 0))
+				continue;
+			final XMLLibrary xml = CMLib.xml();
+			final StringBuilder str = new StringBuilder("<CLAN>");
+			str.append(xml.convertXMLtoTag("ID", esc(C.clanID())));
+			str.append(xml.convertXMLtoTag("PREMISE", esc(C.getPremise())));
+			str.append(xml.convertXMLtoTag("ACCEPT", esc(C.getAcceptanceSettings())));
+			str.append(xml.convertXMLtoTag("STATUS", C.getStatus()));
+			str.append(xml.convertXMLtoTag("DATA", esc(C.getDataXML())));
+			str.append(xml.convertXMLtoTag("RECALL", esc(C.getRecall())));
+			str.append(xml.convertXMLtoTag("DONATION", esc(C.getDonation())));
+			str.append(xml.convertXMLtoTag("MORGUE", esc(C.getMorgue())));
+			str.append(xml.convertXMLtoTag("TROPHIES", C.getTrophies()));
+			sorted.put(C.clanID().toUpperCase(), str.append("</CLAN>\n").toString());
+		}
+		if(sorted.size() == 0)
+			return null;
+		final StringBuilder str = new StringBuilder("<CLANS>\n");
+		for(final String t : sorted.values())
+			str.append(t);
+		return str.append("</CLANS>\n").toString();
+	}
+
+	/**
+	 * Returns the journals the world has: those its journal items read
+	 * (notice boards, books), and the cron jobs' (SYSTEM_CRON).
+	 * @return the journals' names
+	 */
+	private static Set<String> worldJournals()
+	{
+		final Set<String> names = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+		names.add("SYSTEM_CRON");
+		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if(R == null)
+				continue;
+			for(int i = 0; i < R.numItems(); i++)
+			{
+				final Item I = R.getItem(i);
+				if((I != null) && CMClass.classID(I).toUpperCase().contains("JOURNAL"))
+					names.add(I.Name());
+			}
+		}
+		return names;
+	}
+
+	/**
+	 * Writes each of the world's journals that has entries, one file each.
+	 * @return the files, by name
+	 */
+	private static Map<String, String> journalFiles()
+	{
+		final Map<String, String> files = new LinkedHashMap<String, String>();
+		final XMLLibrary xml = CMLib.xml();
+		for(final String name : worldJournals())
+		{
+			final List<JournalEntry> entries = CMLib.database().DBReadJournalMsgsByUpdateDate(name, true);
+			if((entries == null) || (entries.size() == 0))
+				continue;
+			final StringBuilder str = new StringBuilder("<JOURNAL NAME=\"" + esc(name) + "\">\n");
+			for(final JournalEntry E : entries)
+			{
+				str.append("<ENTRY>");
+				str.append(xml.convertXMLtoTag("KEY", esc(E.key())));
+				str.append(xml.convertXMLtoTag("FROM", esc(E.from())));
+				str.append(xml.convertXMLtoTag("TO", esc(E.to())));
+				str.append(xml.convertXMLtoTag("DATE", esc(E.dateStr())));
+				str.append(xml.convertXMLtoTag("UPDATE", E.update()));
+				str.append(xml.convertXMLtoTag("EXPIRES", E.expiration()));
+				str.append(xml.convertXMLtoTag("PARENT", esc(E.parent())));
+				str.append(xml.convertXMLtoTag("ATTRS", E.attributes()));
+				str.append(xml.convertXMLtoTag("DATA", esc(E.data())));
+				str.append(xml.convertXMLtoTag("ICON", esc(E.msgIcon())));
+				str.append(xml.convertXMLtoTag("SUBJ", esc(E.subj())));
+				str.append(xml.convertXMLtoTag("MSG", esc(E.msg())));
+				str.append("</ENTRY>\n");
+			}
+			files.put(fileNameFor(name, JOURNAL_EXT, files.keySet()), str.append("</JOURNAL>\n").toString());
+		}
+		return files;
+	}
+
+	/**
+	 * Writes the database's file system (files written with SHELL ::), one
+	 * file each under world/vfs/, with an index of who wrote each and its
+	 * flags.
+	 * @param changed counts the files written or deleted
+	 * @throws IOException if they cannot be written
+	 */
+	private static void writeVFS(final int[] changed) throws IOException
+	{
+		final File dir = new File(worldDir, VFS_DIR);
+		List<String[]> rows;
+		try
+		{
+			rows = CMLib.database().DBRawQuery("SELECT * FROM CMVFS");
+		}
+		catch(final CMException e)
+		{
+			rows = new ArrayList<String[]>();
+		}
+		final Set<String> kept = new HashSet<String>();
+		final StringBuilder index = new StringBuilder();
+		if(rows.size() > 1)
+		{
+			final String[] header = rows.get(0);
+			int nameCol = -1, typeCol = -1, whoCol = -1, dataCol = -1;
+			for(int c = 0; c < header.length; c++)
+			{
+				final String h = header[c].trim().toUpperCase();
+				if(h.equals("CMFNAM"))
+					nameCol = c;
+				else
+				if(h.equals("CMDTYP"))
+					typeCol = c;
+				else
+				if(h.equals("CMWHOM"))
+					whoCol = c;
+				else
+				if(h.equals("CMDATA"))
+					dataCol = c;
+			}
+			for(final String[] row : rows.subList(1, rows.size()))
+			{
+				if((nameCol < 0) || (dataCol < 0) || (row.length <= Math.max(nameCol, dataCol)))
+					continue;
+				final String path = row[nameCol].trim();
+				if((path.length() == 0) || path.contains("..") || path.startsWith("/") || path.equals(VFS_INDEX))
+					continue;
+				final byte[] data = B64Encoder.B64decode(row[dataCol].trim());
+				final File F = new File(dir, path);
+				if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()))
+					F.getParentFile().mkdirs();
+				final byte[] old = F.isFile() ? java.nio.file.Files.readAllBytes(F.toPath()) : null;
+				if((old == null) || (!Arrays.equals(old, data)))
+				{
+					java.nio.file.Files.write(F.toPath(), (data == null) ? new byte[0] : data);
+					changed[0]++;
+				}
+				kept.add(F.getCanonicalPath());
+				index.append(path).append('\t').append((typeCol >= 0) ? row[typeCol].trim() : "0").append('\t')
+					 .append((whoCol >= 0) ? row[whoCol].trim() : "").append('\n');
+			}
+		}
+		writeOrDelete(new File(dir, VFS_INDEX), (index.length() == 0) ? null : index.toString(), changed);
+		// files of the file system that are gone
+		if(dir.isDirectory())
+		{
+			final List<File> all = new ArrayList<File>();
+			collectFiles(dir, all);
+			for(final File F : all)
+			{
+				if((!F.getName().equals(VFS_INDEX)) && (!kept.contains(F.getCanonicalPath())) && F.delete())
+					changed[0]++;
+			}
+		}
+	}
+
+	private static void collectFiles(final File dir, final List<File> into)
+	{
+		final File[] list = dir.listFiles();
+		if(list == null)
+			return;
+		for(final File F : list)
+		{
+			if(F.isDirectory())
+				collectFiles(F, into);
+			else
+				into.add(F);
+		}
+	}
+
+	/**
+	 * Puts the world's templates, clans, journals and files into the
+	 * database: for a new game, and when builder mode rebuilds from the files.
+	 * @param replace true to take the database's out first, as a rebuild does
+	 */
+	private static void importExtras(final boolean replace)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		// templates, shared, so every builder has them
+		final String templates = readText(new File(worldDir, TEMPLATES_FILE));
+		if(templates != null)
+		{
+			int n = 0;
+			for(final XMLTag tag : xml.parseAllXML(templates))
+			{
+				if(!tag.tag().equalsIgnoreCase("TEMPLATES"))
+					continue;
+				for(final XMLTag t : tag.contents())
+				{
+					final String who = unesc(t.getParmValue("WHO"));
+					final String key = unesc(t.getParmValue("KEY"));
+					if(replace)
+					{
+						CMLib.database().DBDeletePlayerData(who, TEMPLATE_PERSONAL, key);
+						CMLib.database().DBDeletePlayerData(who, TEMPLATE_SHARED, key);
+					}
+					CMLib.database().DBCreatePlayerData(who, TEMPLATE_SHARED, key, unesc(t.value()));
+					n++;
+				}
+			}
+			Log.sysOut("WorldFiles", "Templates from " + TEMPLATES_FILE + ": " + n);
+		}
+		// clans with no player members
+		final String clans = readText(new File(worldDir, CLANS_FILE));
+		if(clans != null)
+		{
+			final Set<String> have = new HashSet<String>();
+			try
+			{
+				final List<String[]> rows = CMLib.database().DBRawQuery("SELECT CMCLID FROM CMCLAN");
+				for(final String[] row : rows.subList(Math.min(1, rows.size()), rows.size()))
+				{
+					if(row.length > 0)
+						have.add(row[0].trim().toUpperCase());
+				}
+			}
+			catch(final CMException e)
+			{
+			}
+			for(final XMLTag tag : xml.parseAllXML(clans))
+			{
+				if(!tag.tag().equalsIgnoreCase("CLANS"))
+					continue;
+				for(final XMLTag c : tag.contents())
+				{
+					final Clan C = (Clan)CMClass.getCommon("DefaultClan");
+					C.setName(unesc(c.getValFromPieces("ID")));
+					C.setPremise(unesc(c.getValFromPieces("PREMISE")));
+					C.setAcceptanceSettings(unesc(c.getValFromPieces("ACCEPT")));
+					C.setStatus(c.getIntFromPieces("STATUS"));
+					C.setDataXML(unesc(c.getValFromPieces("DATA")));
+					C.setRecall(unesc(c.getValFromPieces("RECALL")));
+					C.setDonation(unesc(c.getValFromPieces("DONATION")));
+					C.setMorgue(unesc(c.getValFromPieces("MORGUE")));
+					C.setTrophies(c.getIntFromPieces("TROPHIES"));
+					if(have.contains(C.clanID().toUpperCase()))
+					{
+						if(replace)
+							CMLib.database().DBUpdateClan(C);
+					}
+					else
+						CMLib.database().DBCreateClan(C);
+				}
+			}
+		}
+		// journals
+		for(final File F : listFiles(new File(worldDir, JOURNALS_DIR), JOURNAL_EXT))
+		{
+			final String text = readText(F);
+			if(text == null)
+				continue;
+			for(final XMLTag tag : xml.parseAllXML(text))
+			{
+				if(!tag.tag().equalsIgnoreCase("JOURNAL"))
+					continue;
+				final String name = unesc(tag.getParmValue("NAME"));
+				if(name.length() == 0)
+					continue;
+				if(replace)
+					CMLib.database().DBDeleteJournal(name, null);
+				for(final XMLTag e : tag.contents())
+				{
+					final JournalEntry E = (JournalEntry)CMClass.getCommon("DefaultJournalEntry");
+					E.key(unesc(e.getValFromPieces("KEY")));
+					E.from(unesc(e.getValFromPieces("FROM")));
+					E.to(unesc(e.getValFromPieces("TO")));
+					E.dateStr(unesc(e.getValFromPieces("DATE")));
+					E.update(e.getLongFromPieces("UPDATE", 0));
+					E.expiration(e.getLongFromPieces("EXPIRES", 0));
+					E.parent(unesc(e.getValFromPieces("PARENT")));
+					E.attributes(e.getLongFromPieces("ATTRS", 0));
+					E.data(unesc(e.getValFromPieces("DATA")));
+					E.msgIcon(unesc(e.getValFromPieces("ICON")));
+					E.subj(unesc(e.getValFromPieces("SUBJ")));
+					E.msg(unesc(e.getValFromPieces("MSG")));
+					CMLib.database().DBWriteJournal(name, E);
+				}
+			}
+		}
+		// the file system's files
+		final File vfs = new File(worldDir, VFS_DIR);
+		if(vfs.isDirectory())
+		{
+			final Map<String, String[]> index = new HashMap<String, String[]>();
+			final String idx = readText(new File(vfs, VFS_INDEX));
+			if(idx != null)
+			{
+				for(final String line : idx.split("\n"))
+				{
+					final String[] parts = line.split("\t", -1);
+					if(parts.length >= 3)
+						index.put(parts[0], parts);
+				}
+			}
+			final List<File> all = new ArrayList<File>();
+			collectFiles(vfs, all);
+			final String root = vfs.getPath() + File.separator;
+			for(final File F : all)
+			{
+				if(F.getName().equals(VFS_INDEX))
+					continue;
+				final String path = F.getPath().startsWith(root) ? F.getPath().substring(root.length()).replace(File.separatorChar, '/') : F.getName();
+				final String[] meta = index.get(path);
+				try
+				{
+					CMLib.database().DBUpSertVFSFile(path, (meta == null) ? 0 : CMath.s_int(meta[1]),
+						(meta == null) ? "World" : meta[2], F.lastModified(), java.nio.file.Files.readAllBytes(F.toPath()));
+				}
+				catch(final IOException e)
+				{
+					Log.errOut("WorldFiles", F.getPath() + ": " + e.getMessage());
+				}
+			}
+			// the file system was read from the database already: read it again
+			CMFile.unloadVFS();
+		}
 	}
 
 	/**
@@ -909,6 +1295,24 @@ public final class WorldFiles
 			paths.add(CATALOG_FILE);
 		if(new File(worldDir, WorldSettings.FILE).isFile())
 			paths.add(WorldSettings.FILE);
+		if(new File(worldDir, TEMPLATES_FILE).isFile())
+			paths.add(TEMPLATES_FILE);
+		if(new File(worldDir, CLANS_FILE).isFile())
+			paths.add(CLANS_FILE);
+		for(final File F : listFiles(new File(worldDir, JOURNALS_DIR), JOURNAL_EXT))
+			paths.add(JOURNALS_DIR + "/" + F.getName());
+		final File vfs = new File(worldDir, VFS_DIR);
+		if(vfs.isDirectory())
+		{
+			final List<File> all = new ArrayList<File>();
+			collectFiles(vfs, all);
+			final String root = vfs.getPath() + File.separator;
+			for(final File F : all)
+			{
+				if(F.getPath().startsWith(root))
+					paths.add(VFS_DIR + "/" + F.getPath().substring(root.length()).replace(File.separatorChar, '/'));
+			}
+		}
 		Collections.sort(paths);
 		final CRC32 crc = new CRC32();
 		final byte[] buf = new byte[65536];
