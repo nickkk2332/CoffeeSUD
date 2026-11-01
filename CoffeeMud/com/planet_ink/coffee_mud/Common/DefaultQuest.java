@@ -70,6 +70,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected int		ticksRemaining		= -1;
 	protected long		lastStartDateTime	= GameTime.now();
 	protected boolean	stoppingQuest		= false;
+	/** ST5: who won this run, if anyone, and why it is ending, for QUEST_PROG */
+	protected volatile String	runWinner	= null;
+	protected volatile String	endReason	= null;
+	protected volatile boolean	runEnding	= false;
 	protected int		spawn				= Quest.Spawn.NO.ordinal();
 	protected QuestState questState			= new QuestState();
 	protected boolean	copy				= false;
@@ -248,6 +252,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			final MOB M=(B instanceof MOB)?(MOB)B:mob;
 			final MPContext ctx = new MPContext(P, M, mob, (Environmental) B, null, null, mob.Name(), objs);
 			acceptEng.callFunc("DO_ACCEPT", mob.Name(), ctx);
+			ScriptEvents.quest(this,"ACCEPT",mob,"");
 		}
 	}
 
@@ -4496,6 +4501,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				if((!questState.error)&&(questState.done))
 				{
 					enterRunningState();
+					runWinner=null;
+					endReason=null;
+					ScriptEvents.quest(this,"START",null,"");
 					return true;
 				}
 				stopQuestInternal();
@@ -4838,6 +4846,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if(prefix.length()>0)
 				Log.debugOut(prefix+" Quest Stepping");
 			cleanQuestStep(0);
+			// ST5: stepping past the last step ends a quest that ran
+			runEnding=running();
 			ticksRemaining=-1;
 			setDuration(-1);
 			questState.errors.setLength(0);
@@ -4876,6 +4886,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if((!questState.error)&&(questState.done)&&(duration()>=0))
 			{
 				enterRunningState();
+				runEnding=false;
+				ScriptEvents.quest(this,"STEP",null,""+questState.stepNumber);
 				return true;
 			}
 			stopQuestInternal();
@@ -5062,6 +5074,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	{
 		if(stoppingQuest)
 			return;
+		final boolean wasRunning=running()||runEnding;
+		runEnding=false;
 		// first set everything to complete!
 		synchronized(questState)
 		{
@@ -5077,6 +5091,21 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			setScript(script(),true); // causes wait times/name to reload
 		enterDormantState();
 		stoppingQuest=false;
+		if(wasRunning)
+		{
+			// ST5: QUEST_PROG END, and FAIL if no one won
+			final String winner=runWinner;
+			final String reason=(endReason!=null)?endReason:"STOPPED";
+			runWinner=null;
+			endReason=null;
+			if(winner!=null)
+				ScriptEvents.quest(this,"END",CMLib.players().getPlayerAllHosts(winner),"WON");
+			else
+			{
+				ScriptEvents.quest(this,"FAIL",null,reason);
+				ScriptEvents.quest(this,"END",null,reason);
+			}
+		}
 	}
 
 	@Override
@@ -5265,6 +5294,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		{
 			Q.getWinners().put(name,Long.valueOf(GameTime.now()));
 			CMLib.database().DBUpdateQuest(Q);
+			runWinner=name;
+			if(Q instanceof DefaultQuest)
+				((DefaultQuest)Q).runWinner=name;
+			ScriptEvents.quest(this,"WIN",CMLib.players().getPlayerAllHosts(name),"");
 		}
 	}
 
@@ -5430,6 +5463,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				else
 				{
 					CMLib.coffeeTables().bump(this,CoffeeTableRow.STAT_QUESTTIMESTOP);
+					endReason="EXPIRED";
+					runEnding=true; // it ran until this tick
 					stopQuest();
 				}
 			}

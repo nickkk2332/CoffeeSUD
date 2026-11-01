@@ -10,6 +10,7 @@ import com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior;
 import com.planet_ink.coffee_mud.Common.interfaces.CMMsg;
 import com.planet_ink.coffee_mud.Common.interfaces.Climate;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerStats;
+import com.planet_ink.coffee_mud.Common.interfaces.Quest;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock;
 import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine;
 import com.planet_ink.coffee_mud.Items.interfaces.Item;
@@ -34,7 +35,8 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 /**
  * Script triggers for things that happen without a message: a skill learned,
  * improved, mastered or failed (ST2, SKILL_PROG), a room or area first visited
- * (ST3, DISCOVER_PROG), the weather and the moon (ST4).  An event at a room reaches the scripts a message in
+ * (ST3, DISCOVER_PROG), the weather and the moon (ST4), a quest's course
+ * (ST5, QUEST_PROG, heard by every host with the trigger).  An event at a room reaches the scripts a message in
  * that room would: the room, its items, its mobs and what they carry, and its
  * area and the area's parents.  Each script engine there is handed the event
  * through {@link ScriptingEngine#eventTrigger}, which queues the scripts of
@@ -63,6 +65,54 @@ public final class ScriptEvents
 				used.set(triggerCode);
 			}
 		}
+	}
+
+	private static final Map<Integer, Set<PhysicalAgent>>	registry	= new HashMap<Integer, Set<PhysicalAgent>>();
+
+	/**
+	 * Notes a host whose script has a trigger, for the events that fire
+	 * anywhere in the world (ST5 and on), heard by every host that has their
+	 * trigger.  The host is held weakly: a host gone from the game drops out.
+	 * @param host the host
+	 * @param triggerCode the trigger
+	 */
+	public static void register(final PhysicalAgent host, final int triggerCode)
+	{
+		if((host == null) || (triggerCode <= 0))
+			return;
+		synchronized(registry)
+		{
+			Set<PhysicalAgent> hosts = registry.get(Integer.valueOf(triggerCode));
+			if(hosts == null)
+			{
+				hosts = Collections.newSetFromMap(new WeakHashMap<PhysicalAgent, Boolean>());
+				registry.put(Integer.valueOf(triggerCode), hosts);
+			}
+			hosts.add(host);
+		}
+	}
+
+	/**
+	 * The hosts in the game whose scripts have a trigger.
+	 * @param triggerCode the trigger
+	 * @return the hosts
+	 */
+	public static List<PhysicalAgent> registered(final int triggerCode)
+	{
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		synchronized(registry)
+		{
+			final Set<PhysicalAgent> set = registry.get(Integer.valueOf(triggerCode));
+			if(set != null)
+			{
+				for(final PhysicalAgent P : set)
+				{
+					if((P != null) && (!P.amDestroyed()))
+						hosts.add(P);
+				}
+			}
+		}
+		return hosts;
 	}
 
 	/**
@@ -232,6 +282,76 @@ public final class ScriptEvents
 			M.setLocation(R);
 			return M;
 		}
+	}
+
+	/**
+	 * A stand-in that an event with no one behind it comes from, $n to a
+	 * script, in no room: "the quest".
+	 * @param name its name
+	 * @return the stand-in
+	 */
+	public static MOB standIn(final String name)
+	{
+		synchronized(sources)
+		{
+			MOB M = sources.get(name);
+			if((M == null) || M.amDestroyed())
+			{
+				M = CMClass.getMOB("StdMOB");
+				M.setName(name);
+				M.setDisplayText("");
+				sources.put(name, M);
+			}
+			return M;
+		}
+	}
+
+	/** QUEST_PROG's code */
+	public static final int	QUEST_PROG	= code("QUEST_PROG");
+
+	/**
+	 * ST5: something happened to a quest: QUEST_PROG
+	 * START|ACCEPT|STEP|WIN|FAIL|END|ANY quest|* [detail] fires for every host
+	 * with that trigger, wherever it is.  $n is the player (the accepter, the
+	 * winner, the one who dropped it) or "the quest", $g the quest's name, $0
+	 * the detail: the step's number for STEP; for FAIL and END the outcome:
+	 * WON, EXPIRED, STOPPED or DROPPED.
+	 * @param Q the quest
+	 * @param kind START, ACCEPT, STEP, WIN, FAIL or END
+	 * @param who the player, or null
+	 * @param detail the step or outcome, or ""
+	 */
+	public static void quest(final Quest Q, final String kind, final MOB who, final String detail)
+	{
+		if((Q == null) || (!isUsed(QUEST_PROG)))
+			return;
+		final List<PhysicalAgent> hosts = registered(QUEST_PROG);
+		if(hosts.isEmpty())
+			return;
+		final String name = Q.name();
+		final String d = (detail == null) ? "" : detail;
+		fire(hosts, QUEST_PROG, (who != null) ? who : standIn("the quest"), null, name, new Object[] { d }, "CCcr", t -> questMatches(t, kind, name, d));
+	}
+
+	/**
+	 * Whether a QUEST_PROG trigger line fits a quest event.
+	 * @param t the trigger line: QUEST_PROG, the kind, the quest, the detail
+	 * @param kind what happened
+	 * @param name the quest's name
+	 * @param detail the step or outcome
+	 * @return true if it fits
+	 */
+	public static boolean questMatches(final String[] t, final String kind, final String name, final String detail)
+	{
+		if(t.length < 3)
+			return false;
+		if((!t[1].equals("ANY")) && (!t[1].equals(kind)))
+			return false;
+		final String q = t[2].trim();
+		if(!(q.equals("*") || q.equalsIgnoreCase("ALL") || q.equalsIgnoreCase(name)))
+			return false;
+		final String d = (t.length > 3) ? t[3].trim() : "";
+		return (d.length() == 0) || d.equalsIgnoreCase(detail);
 	}
 
 	/** WEATHER_PROG's code */

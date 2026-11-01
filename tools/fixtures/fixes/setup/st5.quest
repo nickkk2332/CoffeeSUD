@@ -1,0 +1,7 @@
+set name st5quest
+set duration 1000
+set room any
+step
+set duration 1000
+set room any
+step break

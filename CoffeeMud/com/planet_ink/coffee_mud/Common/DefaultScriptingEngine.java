@@ -14543,6 +14543,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			for(final SubScript script : scripts)
 			{
 				ScriptEvents.uses(script.getTriggerCode());
+				ScriptEvents.register((PhysicalAgent)host,script.getTriggerCode());
 				final int category;
 				switch(script.getTriggerCode())
 				{
@@ -16405,6 +16406,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final MOB monster=getMakeMOB(host);
 			if(lastKnownLocation==null)
 				confirmLastKnownLocation(monster, source);
+			if((lastKnownLocation==null)&&(host instanceof Area))
+			{
+				// an area hearing an event from no room: one of its own rooms
+				for(final Enumeration<Room> r=((Area)host).getProperMap();r.hasMoreElements()&&(lastKnownLocation==null);)
+					lastKnownLocation=r.nextElement();
+			}
 			if((monster==null)||(monster.amDead())||(lastKnownLocation==null))
 				return;
 			if((host instanceof MOB)&&(!isFreeToBeTriggered(monster)))

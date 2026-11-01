@@ -274,6 +274,7 @@ public class Questwins extends StdCommand
 				foundS.stepQuest(mob, mob, foundS.defaultQuestName());
 				foundS.endQuest(mob, mob, foundS.defaultQuestName());
 				mob.delScript(foundS);
+				ScriptEvents.quest(Q,"END",mob,"DROPPED");
 				mob.tell(L("Quest dropped."));
 				return false;
 			}

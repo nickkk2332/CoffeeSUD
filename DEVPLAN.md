@@ -1020,6 +1020,15 @@ JS17, JS18, JS19, JS20, JS23
   weather, $0 the old, $1 the forecast (the event's own values go in $0 and
   on: `eventTrigger` takes them). `MOON_PROG phase|ANY` on the day the
   clock's moon changes. A restore's `setCurrentWeatherType` fires nothing.
+- ST5 done. Hosts are noted per trigger as their scripts are parsed
+  (`ScriptEvents.register`, held weakly), for the events heard anywhere.
+  `QUEST_PROG START|ACCEPT|STEP|WIN|FAIL|END|ANY quest|* [detail]` from
+  `DefaultQuest`: START when a run begins, ACCEPT after DO_ACCEPT, STEP
+  (detail the step's number), WIN from `declareWinner`; when a run ends
+  (stopped, run out, or stepped past its last step) END WON if anyone won
+  in it, otherwise FAIL and END with EXPIRED or STOPPED; QUESTS DROP gives
+  END DROPPED. $n the player or "the quest", $g the quest, $0 the detail.
+  QUEST_TIME_PROG's -1 and -2 are in its help line.
 
 #### 2e. Quests (15)
 
