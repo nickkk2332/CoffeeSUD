@@ -947,6 +947,11 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   copies (`doubleEffect`; one that has a Prop_MultiEffects is told to
   add to it). `?P` lists the properties, and Abilities/Misc effects,
   whose canAffect takes the host, each with a line of its help.
+- B8 done. GMODIFY's fields take exits' and area types' stat codes, and
+  it changes each room's exits as it does its items (tryModfy), saving
+  them with DBUpdateExits. MODIFY UPDATE: (MQL) saves a changed exit with
+  each room it leads from and an area with DBUpdateArea; a mob or item it
+  cannot save directly marks its room unsaved for SAVE CHANGED (B4).
 
 #### 2d. Scripting (59)
 

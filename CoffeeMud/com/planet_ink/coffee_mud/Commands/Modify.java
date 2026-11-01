@@ -833,6 +833,32 @@ public class Modify extends StdCommand
 							for(final UpdateSet o : todo)
 							{
 								o.first.setStat(o.second, o.third);
+								// B8: an exit is saved with each room it leads from, an area as itself
+								if(o.first instanceof Exit)
+								{
+									for(final Enumeration<Room> r=CMLib.map().rooms();r.hasMoreElements();)
+									{
+										final Room R2=r.nextElement();
+										if((R2==null)||(!R2.isSavable())||(R2.roomID().length()==0))
+											continue;
+										for(int d=0;d<Directions.NUM_DIRECTIONS();d++)
+										{
+											if(R2.getRawExit(d)==o.first)
+											{
+												CMLib.database().DBUpdateExits(R2);
+												Log.infoOut(mob.name()+" modified the exit "+o.first.name()+" at "+R2.roomID());
+												break;
+											}
+										}
+									}
+									continue;
+								}
+								if(o.first instanceof Area)
+								{
+									CMLib.database().DBUpdateArea(((Area)o.first).Name(), (Area)o.first);
+									Log.infoOut(mob.name()+" modified the area "+((Area)o.first).Name());
+									continue;
+								}
 								if(o.first instanceof Environmental)
 								{
 									Environmental E=(Environmental)o.first;
@@ -857,11 +883,16 @@ public class Modify extends StdCommand
 											&&(((MOB)I.owner()).getStartRoom()!=null)
 											&&(((MOB)I.owner()).getStartRoom().roomID().length()>0))
 												CMLib.database().DBUpdateMOB(((MOB)I.owner()).getStartRoom().roomID(), (MOB)I.owner());
+											else
+												Unsaved.mark(R, "MQL"); // B8: not saved: SAVE CHANGED saves it
 										}
 										else
 										if((E instanceof MOB)
 										&&(((MOB)E).databaseID().length()>0))
 											CMLib.database().DBUpdateMOB(R.roomID(), (MOB)E);
+										else
+										if(E instanceof MOB)
+											Unsaved.mark(R, "MQL"); // B8: not saved: SAVE CHANGED saves it
 									}
 								}
 							}

@@ -715,6 +715,9 @@ public class GModify extends StdCommand
 			addEnumeratedStatCodes(CMClass.miscMagic(),allKnownFields,allFieldsMsg);
 			addEnumeratedStatCodes(CMClass.tech(),allKnownFields,allFieldsMsg);
 			addEnumeratedStatCodes(CMClass.locales(),allKnownFields,allFieldsMsg);
+			// B8: exits' and areas' own fields too
+			addEnumeratedStatCodes(CMClass.exits(),allKnownFields,allFieldsMsg);
+			addEnumeratedStatCodes(CMClass.areaTypes(),allKnownFields,allFieldsMsg);
 			for(final Enumeration<Faction> f=CMLib.factions().factions();f.hasMoreElements();)
 			{
 				final Faction F=f.nextElement();
@@ -1299,6 +1302,23 @@ public class GModify extends StdCommand
 						}
 					}
 				}
+				// B8: the room's exits, saved with it
+				boolean saveexits=false;
+				for(int d=0;d<Directions.NUM_DIRECTIONS();d++)
+				{
+					final Exit X=R.getRawExit(d);
+					if(X==null)
+						continue;
+					final Exit newX=(Exit)tryModfy(mob,sess,R,X,changes,onfields,noisy, tag);
+					if(newX!=null)
+					{
+						saveexits=true;
+						if(newX!=X)
+							R.setRawExit(d,newX);
+					}
+				}
+				if(saveexits && (changes.size()>0))
+					CMLib.database().DBUpdateExits(R);
 				if(saveroom)
 					CMLib.database().DBUpdateRoom(R);
 				if(saveitems)
