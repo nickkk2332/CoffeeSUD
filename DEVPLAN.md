@@ -960,6 +960,13 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   lays a chain, following exits already there, the builder staying put.
   Rooms made are saved and tagged TODO; WORLD CHECK's TEXT part lists
   them, and EDIT DESC takes the tag off.
+- B10 done, as `WORLD MAP` (MAP is Skill_Map's word): `core/AreaMap`
+  lays the rooms out on a grid by walking their compass exits from the
+  builder's room within the area (rooms without an ID, such as skies,
+  left out), `RADIUS n` (5) or `AREA`; `IDS` numbers and lists them,
+  `FLAGS` marks one-way exits, locks, exits to other areas, rooms with
+  scripts, and the rooms nothing reaches; `HTML=file` writes a page to
+  world/maps/. The Swing window is left for later.
 
 #### 2d. Scripting (59)
 

@@ -220,6 +220,74 @@ public class WorldCmd extends StdCommand
 	}
 
 	/**
+	 * WORLD MAP (B10, core/AreaMap): the rooms around the builder (RADIUS n,
+	 * 5 if not given) or the whole area (AREA), numbered and listed with
+	 * IDS, marked with FLAGS; HTML=file writes the area's map as a page to
+	 * world/maps/.
+	 * @param mob the builder
+	 * @param words the words after MAP
+	 * @return the map, or what was written
+	 */
+	public static String worldMap(final MOB mob, final List<String> words)
+	{
+		if((!SaveGame.isBuilderMode()) && (!SaveGame.isDevMode()) && (!CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS)))
+			return "WORLD MAP is for builder mode or a DEV=1 game.";
+		final Room here = mob.location();
+		if((here == null) || (here.getArea() == null))
+			return "You are nowhere to map.";
+		boolean whole = false;
+		boolean ids = false;
+		boolean flags = false;
+		int radius = 5;
+		String html = null;
+		for(int i = 0; i < words.size(); i++)
+		{
+			final String w = words.get(i).toUpperCase();
+			if(w.equals("AREA"))
+				whole = true;
+			else
+			if(w.equals("IDS"))
+				ids = true;
+			else
+			if(w.equals("FLAGS"))
+				flags = true;
+			else
+			if(w.equals("RADIUS") && (i + 1 < words.size()) && CMath.isInteger(words.get(i + 1)))
+				radius = CMath.s_int(words.get(++i));
+			else
+			if(CMath.isInteger(w))
+				radius = CMath.s_int(w);
+			else
+			if(w.startsWith("HTML="))
+				html = words.get(i).substring(5).trim();
+			else
+				return "WORLD MAP (RADIUS [N]) (AREA) (IDS) (FLAGS) (HTML=[FILE]): '" + words.get(i) + "' is none of those.";
+		}
+		final Area A = here.getArea();
+		if(html != null)
+		{
+			String name = new java.io.File(html).getName();
+			if(name.length() == 0)
+				name = A.Name();
+			if(!name.toLowerCase().endsWith(".html"))
+				name = name + ".html";
+			final java.io.File dir = new java.io.File(WorldFiles.worldDir(), "maps");
+			final java.io.File F = new java.io.File(dir, name);
+			try
+			{
+				dir.mkdirs();
+				java.nio.file.Files.write(F.toPath(), AreaMap.html(AreaMap.layout(here, A, -1), A).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			}
+			catch(final java.io.IOException e)
+			{
+				return F.getPath() + ": " + e.getMessage();
+			}
+			return "The map of " + A.Name() + " is written to " + F.getPath() + ".";
+		}
+		return AreaMap.ascii(here, AreaMap.layout(here, A, whole ? -1 : Math.max(0, radius)), A, ids, flags);
+	}
+
+	/**
 	 * WORLD DIG and WORLD PATH (B9, core/DigMode).
 	 * @param mob the builder
 	 * @param sub DIG or PATH
@@ -917,6 +985,12 @@ public class WorldCmd extends StdCommand
 			worldDig(mob, commands.get(1).toUpperCase(), commands.subList(2, commands.size()));
 			return false;
 		}
+		// B10: WORLD MAP (MAP is Skill_Map's word)
+		if(commands.get(1).equalsIgnoreCase("MAP"))
+		{
+			mob.tell(worldMap(mob, commands.subList(2, commands.size())));
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("RELOAD"))
 		{
 			mob.tell(worldReload(mob, new ArrayList<String>(commands.subList(2, commands.size()))));
@@ -949,7 +1023,7 @@ public class WorldCmd extends StdCommand
 		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD DIG and WORLD PATH make rooms fast, WORLD RELOAD loads files again, WORLD BACKUPS and RESTOREFILE the files SAVE wrote over, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD DIG and WORLD PATH make rooms fast, WORLD MAP draws them, WORLD RELOAD loads files again, WORLD BACKUPS and RESTOREFILE the files SAVE wrote over, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())
