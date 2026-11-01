@@ -785,6 +785,16 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   numbered, `NOTES DONE|UNDONE n` marks one, and `NOTES GOTO n` (builder
   or DEV=1) goes to its room. PR7 wanted NOTES as JOURNAL's alias: NOTES
   is DT26's now, so PR7's journal keeps the name JOURNAL.
+- DT27 done. Area files in `world/dev/` are loaded only in builder mode
+  and DEV=1 games (`WorldFiles.loadDevAreas`, after the map), tagged DEV,
+  with a checksum of their own (`devChecksum`), so they do not make a
+  normal game rebuild. Builder mode plays on the cache and so keeps them
+  there: a normal game takes them out of its working copy, and builder
+  mode keeps the cache's while `dev.sum` matches the files (edits not yet
+  saved are kept), else loads them again. SAVE writes DEV-tagged areas to
+  dev/ (only if they loaded whole), `WORLD DEV [area] ON|OFF` tags one,
+  `DEVSTART=` is the start room in builder mode and DEV=1, and WORLD
+  CHECK warns of exits from shipped areas into dev areas.
 
 #### 2d. Scripting (59)
 

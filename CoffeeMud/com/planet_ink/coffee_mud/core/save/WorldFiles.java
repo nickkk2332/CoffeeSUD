@@ -44,6 +44,8 @@ import java.util.zip.CRC32;
  * custom.cmare       the custom races, classes, abilities and commands
  * catalog.cmare      the builder's catalog of mobs and items
  * quests/NAME.quest  one quest's script, as the quest list holds it
+ * dev/NAME.cmare     an area for building and testing only: loaded in builder
+ *                    mode and DEV=1 games, never in a normal one (DT27)
  * space.cmare        the things in space and in no room (ships, stations,
  *                    stars), with where they are and their courses; put in
  *                    space at each boot, as no database table holds them
@@ -77,6 +79,14 @@ public final class WorldFiles
 	};
 
 	private static final String	AREAS_DIR		= "areas";
+	/** the folder of the areas for building and testing only (DT27) */
+	public static final String	DEV_DIR			= "dev";
+	/** the tag that makes an area a dev area: written to dev/, loaded only in builder mode and DEV=1 */
+	public static final String	DEV_TAG			= "DEV";
+	/** the file, in builder mode's database folder, with the checksum of the dev files its dev areas match */
+	public static final String	DEV_SUM_FILE	= "dev.sum";
+	/** whether the dev areas loaded whole, so that writing them out cannot lose any */
+	private static volatile boolean	devLoadedWhole	= false;
 	private static final String	QUESTS_DIR		= "quests";
 	private static final String	CUSTOM_FILE		= "custom.cmare";
 	private static final String	CATALOG_FILE	= "catalog.cmare";
@@ -178,6 +188,7 @@ public final class WorldFiles
 		for(final String table : CONTENT_TABLES)
 			new File(dbDir, TABLE_PREFIX + table).delete();
 		new File(dbDir, SUM_FILE).delete();
+		new File(dbDir, DEV_SUM_FILE).delete();
 	}
 
 	/**
@@ -222,6 +233,154 @@ public final class WorldFiles
 	 * then records the files' checksum and copies what was built to the cache.
 	 */
 	public static void loadWorld()
+	{
+		loadWorldFiles();
+		loadDevAreas();
+	}
+
+	/**
+	 * Whether an area is a dev area (DT27): tagged DEV, as those from dev/ are.
+	 * @param A the area
+	 * @return true if it is
+	 */
+	public static boolean isDevArea(final Area A)
+	{
+		return (A != null) && A.hasTag(DEV_TAG);
+	}
+
+	/**
+	 * Whether this game loads the dev areas: builder mode and DEV=1 games.
+	 * @return true if it does
+	 */
+	public static boolean devAreasWanted()
+	{
+		return SaveGame.isBuilderMode() || SaveGame.isDevMode();
+	}
+
+	/**
+	 * A checksum of the dev area files, kept apart from {@link #checksum()} so
+	 * that they do not make a normal game rebuild its world.
+	 * @return the checksum
+	 */
+	public static String devChecksum()
+	{
+		final CRC32 crc = new CRC32();
+		int n = 0;
+		for(final File F : listFiles(new File(worldDir, DEV_DIR), AREA_EXT))
+		{
+			n++;
+			crc.update(F.getName().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			try
+			{
+				crc.update(java.nio.file.Files.readAllBytes(F.toPath()));
+			}
+			catch(final IOException e)
+			{
+				crc.update(1);
+			}
+		}
+		return "dev-" + n + "-" + Long.toHexString(crc.getValue());
+	}
+
+	/**
+	 * After the map has loaded (DT27).  A normal game leaves out any dev area
+	 * the cache holds (builder mode plays on the cache and keeps them there).
+	 * Builder mode and DEV=1 load the dev/ files, but builder mode keeps the
+	 * dev areas its cache holds when they match the files, so that what was
+	 * built and not yet saved is kept, as the shipped areas' are.
+	 */
+	public static void loadDevAreas()
+	{
+		devLoadedWhole = false;
+		final List<Area> have = new ArrayList<Area>();
+		for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+		{
+			final Area A = a.nextElement();
+			if(isDevArea(A))
+				have.add(A);
+		}
+		if(!devAreasWanted())
+		{
+			// only this game's working copy of the database loses them
+			for(final Area A : have)
+				CMLib.map().obliterateMapArea(A);
+			if(have.size() > 0)
+				Log.sysOut("WorldFiles", "Dev areas left out of a normal game: " + have.size());
+			return;
+		}
+		final File dbDir = SaveGame.databaseDir();
+		final String sum = devChecksum();
+		if(SaveGame.isBuilderMode() && (dbDir != null) && sum.equals(trimmed(readText(new File(dbDir, DEV_SUM_FILE)))))
+		{
+			devLoadedWhole = true;
+			return;
+		}
+		for(final Area A : have)
+			CMLib.map().obliterateMapArea(A);
+		boolean whole = true;
+		int loaded = 0;
+		importing = true;
+		try
+		{
+			for(final File F : listFiles(new File(worldDir, DEV_DIR), AREA_EXT))
+			{
+				final String name = areaNameIn(F);
+				final boolean ok = report(F, imported(DEV_DIR + "/" + F.getName(), () -> importArea(F)));
+				whole = ok && whole;
+				final Area A = (name == null) ? null : CMLib.map().getArea(name);
+				if(A != null)
+				{
+					loaded++;
+					if(!A.hasTag(DEV_TAG))
+					{
+						A.addTag(DEV_TAG);
+						CMLib.database().DBUpdateArea(A.Name(), A);
+					}
+				}
+			}
+		}
+		finally
+		{
+			importing = false;
+		}
+		devLoadedWhole = whole;
+		if(loaded > 0)
+			Log.sysOut("WorldFiles", "Dev areas loaded from " + DEV_DIR + "/: " + loaded);
+		if(SaveGame.isBuilderMode() && (dbDir != null) && whole)
+			writeText(new File(dbDir, DEV_SUM_FILE), sum + "\n");
+	}
+
+	private static String trimmed(final String s)
+	{
+		return (s == null) ? "" : s.trim();
+	}
+
+	/** the name an area file gives its area, or null */
+	private static String areaNameIn(final File F)
+	{
+		final String text = readText(F);
+		if(text == null)
+			return null;
+		final int x = text.indexOf("<ANAME>");
+		final int y = (x < 0) ? -1 : text.indexOf("</ANAME>", x);
+		if((x < 0) || (y < 0))
+			return null;
+		return CMLib.xml().restoreAngleBrackets(text.substring(x + 7, y)).trim();
+	}
+
+	private static void writeText(final File F, final String text)
+	{
+		try(Writer out = new OutputStreamWriter(new FileOutputStream(F), "UTF-8"))
+		{
+			out.write(text);
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("WorldFiles", e);
+		}
+	}
+
+	private static void loadWorldFiles()
 	{
 		loadedWhole = false;
 		if(!rebuild)
@@ -659,25 +818,34 @@ public final class WorldFiles
 		try
 		{
 			final Map<String, String> areaFiles = new LinkedHashMap<String, String>();
+			// the dev areas (DT27), tagged DEV, go to dev/ instead
+			final Map<String, String> devFiles = new LinkedHashMap<String, String>();
 			final List<Area> changedAreas = new ArrayList<Area>();
 			for(final Area A : areas)
 			{
-				final String fileName = fileNameFor(A.Name(), AREA_EXT, areaFiles.keySet());
-				final String was = readText(new File(new File(worldDir, AREAS_DIR), fileName));
-				if((was != null) && holdBack(AREAS_DIR + "/" + fileName, force))
+				final boolean dev = isDevArea(A);
+				final Map<String, String> into = dev ? devFiles : areaFiles;
+				final String dirName = dev ? DEV_DIR : AREAS_DIR;
+				final String fileName = fileNameFor(A.Name(), AREA_EXT, into.keySet());
+				final String was = readText(new File(new File(worldDir, dirName), fileName));
+				if((was != null) && holdBack(dirName + "/" + fileName, force))
 				{
 					// loaded only in part: kept as it is, not written short
-					areaFiles.put(fileName, was);
+					into.put(fileName, was);
 					continue;
 				}
 				final String text = layOut(CMLib.coffeeMaker().getAreaXML(A, null, new HashSet<CMObject>(), new HashSet<String>(), true));
-				areaFiles.put(fileName, text);
+				into.put(fileName, text);
 				// compared as the engine reads them, so that a file written the
 				// old way, escaped, is not taken for a changed area
 				if((was == null) || (!collapseText(text).equals(collapseText(was))))
 					changedAreas.add(A);
 			}
 			writeFolder(new File(worldDir, AREAS_DIR), AREA_EXT, areaFiles, changed);
+			// dev/ is written only if its areas loaded whole, so that a file that
+			// failed to load is not taken for an area deleted
+			if(devLoadedWhole && ((devFiles.size() > 0) || new File(worldDir, DEV_DIR).isDirectory()))
+				writeFolder(new File(worldDir, DEV_DIR), AREA_EXT, devFiles, changed);
 			// the files are written from the live world, and the database is a
 			// cache of the files: an area changed without the builder commands
 			// (by JRUN, say) is put in the cache too, so the next game has it
@@ -727,7 +895,11 @@ public final class WorldFiles
 		}
 		final File dbDir = SaveGame.databaseDir();
 		if(dbDir != null)
+		{
 			writeSum(dbDir, checksum());
+			if(devLoadedWhole)
+				writeText(new File(dbDir, DEV_SUM_FILE), devChecksum() + "\n");
+		}
 		if(changed[0] > 0)
 			Log.sysOut("WorldFiles", "Wrote the world files: " + changed[0] + " changed.");
 		return changed[0];

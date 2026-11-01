@@ -610,6 +610,20 @@ group_saves4()
 		echo "  FAIL  dt25-recorded: no playtest file, or not what was typed: $REC"; FAIL=1
 	fi
 
+	# DT27: world/dev areas: a DEV=1 game has them and starts at DEVSTART;
+	# a normal game, on the same cache, does not
+	mkdir -p "$W/dvdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/dvdb/"
+	cp -r "$GAME/world" "$W/dvworld"
+	mkdir -p "$W/dvworld/dev"
+	sed 's/New Area/Fixes Dev Hub/g' "$W/dvworld/areas/new-area.cmare" > "$W/dvworld/dev/fixes-dev-hub.cmare"
+	DVCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	SAVES="$W/dvsaves" play dt27-dev.txt dvdb dvworld "Devver\n${DVCHAR}assert here Fixes Dev Hub#0\nareas\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS DEV=1 "DEVSTART=Fixes Dev Hub#0"
+	expect dt27-dev.txt "ASSERT ok: HERE Fixes Dev Hub#0"
+	expect dt27-dev.txt "Fixes Dev Hub"
+	SAVES="$W/dvsaves" play dt27-normal.txt dvdb dvworld "Plainer\n${DVCHAR}areas\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS "DEVSTART=Fixes Dev Hub#0"
+	expect dt27-normal.txt "New Area"
+	count dt27-normal.txt "Fixes Dev Hub" 0
+
 	# DT15: playtest files: the world's own passes, and one made to fail
 	# fails at each check, with the runner exiting 1
 	python3 "$ROOT/tools/playtest.py" "$GAME/world/tests/start.play" > "$W/dt15-pass.txt" 2>&1

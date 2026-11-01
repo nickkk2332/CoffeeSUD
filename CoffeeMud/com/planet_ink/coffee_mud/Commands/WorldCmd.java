@@ -168,6 +168,57 @@ public class WorldCmd extends StdCommand
 		mob.tell(String.join("\n\r",lines));
 	}
 
+	/**
+	 * WORLD DEV (DT27): the dev areas, or, in builder mode, WORLD DEV area
+	 * ON|OFF makes an area one (tagged DEV, written to world/dev on SAVE,
+	 * loaded only in builder mode and DEV=1 games) or a shipped one again.
+	 * @param mob the builder
+	 * @param words the words after DEV
+	 */
+	protected void worldDev(final MOB mob, final List<String> words)
+	{
+		final String last = words.isEmpty() ? "" : words.get(words.size() - 1).toUpperCase();
+		if(words.isEmpty() || ((!last.equals("ON")) && (!last.equals("OFF"))))
+		{
+			final StringBuilder str = new StringBuilder(L("Dev areas (world/dev, loaded only in builder mode and DEV=1):"));
+			int n = 0;
+			for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+			{
+				final Area A = a.nextElement();
+				if(com.planet_ink.coffee_mud.core.save.WorldFiles.isDevArea(A))
+				{
+					str.append("\n\r  ").append(A.Name()).append(" (").append(A.numberOfProperIDedRooms()).append(" rooms)");
+					n++;
+				}
+			}
+			if(n == 0)
+				str.append(L(" none."));
+			str.append("\n\r").append(L("WORLD DEV [AREA] ON/OFF makes an area one, or a shipped one again, in builder mode."));
+			mob.tell(str.toString());
+			return;
+		}
+		if(!SaveGame.isBuilderMode())
+		{
+			mob.tell(L("WORLD DEV ON and OFF move an area's file, so they are for builder mode."));
+			return;
+		}
+		final String name = CMParms.combine(words.subList(0, words.size() - 1), 0);
+		final Area A = (name.length() == 0) ? mob.location().getArea() : CMLib.map().getArea(name);
+		if(A == null)
+		{
+			mob.tell(L("There is no area '@x1'.", name));
+			return;
+		}
+		if(last.equals("ON"))
+			A.addTag(com.planet_ink.coffee_mud.core.save.WorldFiles.DEV_TAG);
+		else
+			A.delTag(com.planet_ink.coffee_mud.core.save.WorldFiles.DEV_TAG);
+		CMLib.database().DBUpdateArea(A.Name(), A);
+		mob.tell(last.equals("ON")
+			? L("@x1 is a dev area: SAVE writes it to world/dev, and normal games leave it out.", A.Name())
+			: L("@x1 is a shipped area again: SAVE writes it to world/areas.", A.Name()));
+	}
+
 	@Override
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
@@ -205,9 +256,14 @@ public class WorldCmd extends StdCommand
 			worldCheck(mob, commands.subList(2, commands.size()));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("DEV"))
+		{
+			worldDev(mob, commands.subList(2, commands.size()));
+			return false;
+		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, and WORLD SET KEY=VALUE changes a setting in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())

@@ -4635,6 +4635,14 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	@Override
 	public Room getDefaultStartRoom(final MOB mob)
 	{
+		// DEVSTART= (DT27): where a character starts in builder mode and DEV=1 games
+		if(SaveGame.isBuilderMode() || SaveGame.isDevMode())
+		{
+			final String devStart = CMProps.instance().getStr("DEVSTART", "").trim();
+			final Room R = (devStart.length() > 0) ? CMLib.map().getRoom(devStart) : null;
+			if(R != null)
+				return R;
+		}
 		String race=mob.baseCharStats().getMyRace().racialCategory().toUpperCase();
 		race=race.replace(' ','_');
 		String charClass=mob.baseCharStats().getCurrentClass().ID().toUpperCase();

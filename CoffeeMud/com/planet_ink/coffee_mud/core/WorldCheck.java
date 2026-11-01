@@ -118,6 +118,10 @@ public final class WorldCheck
 				if((E != null) && (R2 == null))
 					out.add(new Finding(Severity.ERROR, "EXITS", R.roomID() + " " + dir(d) + ": an exit to nowhere"));
 				else
+				if((R2 != null) && WorldFiles.isDevArea(R2.getArea()) && (!WorldFiles.isDevArea(R.getArea())))
+					out.add(new Finding(Severity.WARNING, "EXITS", R.roomID() + " " + dir(d) + ": an exit into " + R2.roomID()
+						+ ", in the dev area " + R2.getArea().Name() + ", which a normal game does not load"));
+				else
 				if((R2 != null) && (E != null) && E.hasADoor())
 				{
 					final int op = Directions.getOpDirectionCode(d);
