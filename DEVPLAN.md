@@ -912,6 +912,21 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   asks "save them first (Y/n), or cancel (c)?", GMODIFY CHANGE= asks
   before its reset drops them, `BUILDERAUTOSAVE=1` saves after each
   command, and `%U` in a prompt is their number.
+- B5 done. `WORLD RELOAD` loads world files again into the running game
+  (WorldCmd, with `WorldFiles.loadAreaFile`, `reloadCatalog`,
+  `questScriptIn` and `markLoaded`): `[AREA] name` (by its name or its
+  file's; players and their followers wait outside and come back, exits
+  from other areas are linked again by room ID, refused while B4 has
+  unsaved rooms in it unless FORCE), `SCRIPT file|ALL [RESET]` (the
+  parsed scripts forgotten and those naming the file set again, DT7's
+  resetTriggers with RESET), `QUEST name` and `QUESTS` (stopped, read
+  from world/quests, started at their step, as DT2's RELOAD, and saved),
+  `CATALOG` (entries put in place of those of their names, or added) and
+  `CHANGED` (each file WORLD STATUS lists). In a normal game it saves to
+  the world-reload slot and restores it. `DEVWATCH ON [seconds]` polls
+  the world files (B2's sums) and resources' scripts (their times) on a
+  thread of its own and queues the matching WORLD RELOAD for the builder,
+  each noted in DEVLOG.
 
 #### 2d. Scripting (59)
 

@@ -219,6 +219,365 @@ public class WorldCmd extends StdCommand
 			: L("@x1 is a shipped area again: SAVE writes it to world/areas.", A.Name()));
 	}
 
+	/** the save a normal game's WORLD RELOAD is kept in while the world loads again */
+	public static final String RELOAD_SLOT = "world-reload";
+
+	private static final String RELOAD_USAGE = "WORLD RELOAD [AREA] [NAME] (FORCE), WORLD RELOAD SCRIPT [FILE]/ALL (RESET), "
+		+ "WORLD RELOAD QUEST [NAME], WORLD RELOAD QUESTS, WORLD RELOAD CATALOG, WORLD RELOAD CHANGED";
+
+	/**
+	 * WORLD RELOAD (B5): world files loaded again into the running world.  In
+	 * a normal game, it is saved and restored, which builds the world from
+	 * the files again.
+	 * @param mob the builder
+	 * @param words the words after RELOAD
+	 * @return what was done
+	 */
+	public static String worldReload(final MOB mob, final List<String> words)
+	{
+		if(!SaveGame.isBuilderMode())
+		{
+			if((!SaveGame.isDevMode()) && (!CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS)))
+				return "WORLD RELOAD is for builder mode or a DEV=1 game.";
+			if(!SaveGame.isAvailable())
+				return "This game cannot be saved, so WORLD RELOAD cannot keep it while the world loads again.";
+			final String problem = SaveGame.save(mob, RELOAD_SLOT);
+			if(problem != null)
+				return problem;
+			final String again = SaveGame.restore(RELOAD_SLOT);
+			return (again != null) ? again : ("The game is saved as '" + RELOAD_SLOT + "' and restored, with the world as its files have it now.");
+		}
+		if(words.isEmpty())
+			return RELOAD_USAGE;
+		final boolean force = words.get(words.size() - 1).equalsIgnoreCase("FORCE");
+		if(force)
+			words.remove(words.size() - 1);
+		if(words.isEmpty())
+			return RELOAD_USAGE;
+		final String what = words.get(0).toUpperCase();
+		final String rest = CMParms.combine(words, 1).trim();
+		if(what.equals("SCRIPT") || what.equals("SCRIPTS"))
+		{
+			final boolean reset = (words.size() > 1) && words.get(words.size() - 1).equalsIgnoreCase("RESET");
+			String file = reset ? CMParms.combine(words.subList(0, words.size() - 1), 1).trim() : rest;
+			if(file.equalsIgnoreCase("ALL") || (file.length() == 0))
+				file = null;
+			return reloadScripts(file, reset);
+		}
+		if(what.equals("QUESTS"))
+		{
+			final StringBuilder str = new StringBuilder();
+			for(int q = 0; q < CMLib.quests().numQuests(); q++)
+			{
+				final Quest Q = CMLib.quests().fetchQuest(q);
+				if((Q != null) && (WorldFiles.questScriptIn(WorldFiles.questPathFor(Q.name())) != null))
+					str.append((str.length() > 0) ? "\n\r" : "").append(reloadQuest(Q));
+			}
+			return (str.length() == 0) ? "No quest has a file in world/quests." : str.toString();
+		}
+		if(what.equals("QUEST"))
+		{
+			final Quest Q = CMLib.quests().fetchQuest(rest);
+			return (Q == null) ? ("There is no quest '" + rest + "'.") : reloadQuest(Q);
+		}
+		if(what.equals("CATALOG"))
+		{
+			final String problem = WorldFiles.reloadCatalog();
+			return (problem == null) ? "The catalog is loaded again from its file." : ("The catalog: " + problem);
+		}
+		if(what.equals("CHANGED"))
+			return reloadChanged(mob, force);
+		final String name = what.equals("AREA") ? rest : CMParms.combine(words, 0).trim();
+		Area A = (name.length() == 0) ? mob.location().getArea() : CMLib.map().getArea(name);
+		if(A == null)
+			A = CMLib.map().findArea(name);
+		if(A == null)
+		{
+			// an area by its file's name, as WORLD DIFF takes it
+			final String path = WorldFiles.findPath(name, null);
+			final String areaName = (path == null) ? null : WorldFiles.areaNameOf(path);
+			A = (areaName == null) ? null : CMLib.map().getArea(areaName);
+		}
+		if(A == null)
+			return "There is no area '" + name + "'.";
+		return reloadArea(mob, A, force);
+	}
+
+	/** a room outside an area, for those in it to wait in while it loads again */
+	private static Room waitingRoom(final MOB mob, final Area A)
+	{
+		final Room start = (mob == null) ? null : mob.getStartRoom();
+		if((start != null) && (start.getArea() != A))
+			return start;
+		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if((R != null) && (R.getArea() != A) && (!CMath.bset(R.getArea().flags(), Area.FLAG_INSTANCE_CHILD)))
+				return R;
+		}
+		return null;
+	}
+
+	/**
+	 * WORLD RELOAD AREA (B5): an area loaded again from its file.  Those
+	 * playing in it, and their followers, wait outside it and come back;
+	 * exits into it from other areas are linked again.  Rooms of it with
+	 * unsaved mobs or items (B4) are refused unless forced.
+	 * @param mob the builder
+	 * @param A the area
+	 * @param force true to drop unsaved changes
+	 * @return what was done
+	 */
+	public static String reloadArea(final MOB mob, final Area A, final boolean force)
+	{
+		final String path = WorldFiles.areaPathFor(A);
+		if(!new java.io.File(WorldFiles.worldDir(), path).isFile())
+			return "There is no " + path + " to load " + A.Name() + " from.";
+		if(!force)
+		{
+			int unsaved = 0;
+			for(final Room R : Unsaved.rooms())
+			{
+				if(R.getArea() == A)
+					unsaved++;
+			}
+			if(unsaved > 0)
+				return unsaved + " rooms of " + A.Name() + " have unsaved mobs or items, which WORLD RELOAD drops: SAVE CHANGED first, or add FORCE.";
+		}
+		final Room wait = waitingRoom(mob, A);
+		if(wait == null)
+			return "There is no room outside " + A.Name() + " to wait in while it loads.";
+		// the exits into it from elsewhere, by room ID
+		final List<String[]> links = new ArrayList<String[]>();
+		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if((R == null) || (R.getArea() == A))
+				continue;
+			for(int d = 0; d < Directions.NUM_DIRECTIONS(); d++)
+			{
+				final Room to = R.rawDoors()[d];
+				if((to != null) && (to.getArea() == A))
+					links.add(new String[] { CMLib.map().getExtendedRoomID(R), "" + d, CMLib.map().getExtendedRoomID(to) });
+			}
+		}
+		// the characters in it, and their followers, wait outside
+		final List<MOB> moved = new ArrayList<MOB>();
+		final List<String> where = new ArrayList<String>();
+		for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if(R == null)
+				continue;
+			for(final MOB M : new ArrayList<MOB>(new XVector<MOB>(R.inhabitants())))
+			{
+				final MOB lead = (M == null) ? null : M.getGroupLeader();
+				if((M != null) && ((M.playerStats() != null) || ((lead != null) && (lead.playerStats() != null))))
+				{
+					moved.add(M);
+					where.add(CMLib.map().getExtendedRoomID(R));
+				}
+			}
+		}
+		for(final MOB M : moved)
+			wait.bringMobHere(M, false);
+		final String name = A.Name();
+		CMLib.map().obliterateMapArea(A);
+		Unsaved.clear();
+		final String problem = WorldFiles.loadAreaFile(path);
+		int lost = 0;
+		for(final String[] link : links)
+		{
+			final Room R = CMLib.map().getRoom(link[0]);
+			final Room to = CMLib.map().getRoom(link[2]);
+			if(R == null)
+				continue;
+			R.rawDoors()[CMath.s_int(link[1])] = to;
+			if(to == null)
+				lost++;
+		}
+		final Area A2 = CMLib.map().getArea(name);
+		final Room first = ((A2 == null) || (!A2.getProperMap().hasMoreElements())) ? null : A2.getProperMap().nextElement();
+		for(int i = 0; i < moved.size(); i++)
+		{
+			Room back = CMLib.map().getRoom(where.get(i));
+			if(back == null)
+				back = first;
+			if(back != null)
+				back.bringMobHere(moved.get(i), false);
+		}
+		final StringBuilder str = new StringBuilder();
+		if(A2 == null)
+			str.append(path).append(" holds no area ").append(name).append(" now");
+		else
+			str.append(name).append(" is loaded again from ").append(path);
+		if(problem != null)
+			str.append(": ").append(problem);
+		if(lost > 0)
+			str.append("; ").append(lost).append(" exits from other areas lead to rooms it no longer has");
+		return str.append(".").toString();
+	}
+
+	/**
+	 * WORLD RELOAD SCRIPT (B5): the parsed scripts forgotten, and those that
+	 * name the file (or all) read again, their triggers let run again with
+	 * RESET.
+	 * @param file the file, as LOAD= names it, or null for all
+	 * @param reset true to let triggers that ran run again
+	 * @return what was done
+	 */
+	public static String reloadScripts(final String file, final boolean reset)
+	{
+		for(final Iterator<String> k = Resources.findResourceKeys("PARSEDPRG: "); k.hasNext();)
+		{
+			final String key = k.next();
+			if(key.startsWith("PARSEDPRG: "))
+				Resources.removeResource(key);
+		}
+		final String want = (file == null) ? null : file.toUpperCase();
+		int n = 0;
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		for(final Enumeration<Area> a = CMLib.map().areas(); a.hasMoreElements();)
+			hosts.add(a.nextElement());
+		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if(R == null)
+				continue;
+			hosts.add(R);
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if(M == null)
+					continue;
+				hosts.add(M);
+				for(final Enumeration<Item> i = M.items(); i.hasMoreElements();)
+					hosts.add(i.nextElement());
+			}
+			for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
+				hosts.add(i.nextElement());
+		}
+		for(final PhysicalAgent P : hosts)
+		{
+			if(P == null)
+				continue;
+			for(final com.planet_ink.coffee_mud.Common.DefaultScriptingEngine S : ScriptCmd.engines(P))
+			{
+				final String script = S.getScript();
+				if((want != null) && ((script == null) || (!script.toUpperCase().contains(want))))
+					continue;
+				S.setScript(script);
+				if(reset)
+					S.resetTriggers("ALL");
+				n++;
+			}
+		}
+		return n + " scripts" + ((file == null) ? "" : (" that name " + file)) + " are read again" + (reset ? ", their triggers reset." : ".");
+	}
+
+	/**
+	 * WORLD RELOAD QUEST (B5): a quest stopped, its script read again from its
+	 * world file and the files it loads, and started again at the step it was
+	 * at, its variables kept.
+	 * @param Q the quest
+	 * @return what was done
+	 */
+	public static String reloadQuest(final Quest Q)
+	{
+		final String path = WorldFiles.questPathFor(Q.name());
+		final String script = WorldFiles.questScriptIn(path);
+		if(script == null)
+			return "There is no " + path + " for the quest " + Q.name() + ".";
+		final boolean wasRunning = Q.running();
+		final int step = CMath.s_int("" + Q.getStat("STEPNUM"));
+		for(final Iterator<String> k = Resources.findResourceKeys("PARSEDPRG: "); k.hasNext();)
+		{
+			final String key = k.next();
+			if(key.startsWith("PARSEDPRG: "))
+				Resources.removeResource(key);
+		}
+		final String scopeKey = "VARSCOPE-" + Q.name().toUpperCase().trim();
+		final Object scopeVars = Resources.getResource(scopeKey);
+		final Map<String, String> questVars = new TreeMap<String, String>(Q.getQuestVars());
+		if(wasRunning)
+			Q.stopQuest();
+		if(CMLib.quests().fetchQuest(Q.name()) != Q)
+			CMLib.quests().addQuest(Q);
+		if((scopeVars != null) && (Resources.getResource(scopeKey) == null))
+			Resources.submitResource(scopeKey, scopeVars);
+		if(!Q.setScript(script, true))
+			return "The quest " + Q.name() + " could not be read from " + path + "; see QUESTINFO for its errors.";
+		CMLib.quests().save();
+		WorldFiles.markLoaded(path);
+		if(wasRunning)
+		{
+			Q.startQuest();
+			if(step > 1)
+				Q.setQuestStep(step);
+			for(final String var : questVars.keySet())
+				Q.setQuestVar(var, questVars.get(var));
+			return "The quest " + Q.name() + " is read again from " + path + " and started at step " + Math.max(1, step) + ".";
+		}
+		return "The quest " + Q.name() + " is read again from " + path + ".";
+	}
+
+	/**
+	 * WORLD RELOAD CHANGED (B5): every file WORLD STATUS lists as changed
+	 * outside the game, loaded again as its kind is.
+	 * @param mob the builder
+	 * @param force true to drop unsaved changes in the areas
+	 * @return what was done
+	 */
+	public static String reloadChanged(final MOB mob, final boolean force)
+	{
+		final Map<String, String> changed = WorldFiles.changedOutside();
+		if(changed.isEmpty())
+			return "No world file was changed outside the game.";
+		final StringBuilder str = new StringBuilder();
+		for(final Map.Entry<String, String> e : changed.entrySet())
+		{
+			final String path = e.getKey();
+			String did;
+			if(e.getValue().equals("deleted"))
+				did = path + " was deleted: start the game again to leave it out, or SAVE FORCE to write it back.";
+			else
+			if((path.startsWith("areas/") || path.startsWith("dev/")) && path.endsWith(".cmare"))
+			{
+				final String name = WorldFiles.areaNameOf(path);
+				final Area A = (name == null) ? null : CMLib.map().getArea(name);
+				if(A != null)
+					did = reloadArea(mob, A, force);
+				else
+				{
+					final String problem = WorldFiles.loadAreaFile(path);
+					did = (problem == null) ? (name + " is loaded from " + path + ".") : (path + ": " + problem + ".");
+				}
+			}
+			else
+			if(path.startsWith("quests/"))
+			{
+				Quest found = null;
+				for(int q = 0; q < CMLib.quests().numQuests(); q++)
+				{
+					final Quest Q = CMLib.quests().fetchQuest(q);
+					if((Q != null) && WorldFiles.questPathFor(Q.name()).equals(path))
+						found = Q;
+				}
+				did = (found != null) ? reloadQuest(found) : (path + " is a quest the game does not have: CREATE QUEST LOAD=, or start the game again.");
+			}
+			else
+			if(path.equals("catalog.cmare"))
+			{
+				final String problem = WorldFiles.reloadCatalog();
+				did = (problem == null) ? "The catalog is loaded again from its file." : ("The catalog: " + problem);
+			}
+			else
+				did = path + " is not loaded again while the game runs: start the game again for it.";
+			str.append((str.length() > 0) ? "\n\r" : "").append(did);
+		}
+		return str.toString();
+	}
+
 	/**
 	 * WORLD STATUS (B2): the world files changed outside the game, and what
 	 * the next SAVE would write, delete and leave.
@@ -431,6 +790,11 @@ public class WorldCmd extends StdCommand
 			worldCheck(mob, commands.subList(2, commands.size()));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("RELOAD"))
+		{
+			mob.tell(worldReload(mob, new ArrayList<String>(commands.subList(2, commands.size()))));
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("STATUS"))
 		{
 			mob.tell(worldStatus());
@@ -448,7 +812,7 @@ public class WorldCmd extends StdCommand
 		}
 		if(!commands.get(1).equalsIgnoreCase("SET"))
 		{
-			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
+			mob.tell(L("WORLD shows the world settings, WORLD PROBLEMS what did not load from the world files, WORLD CHECK what is wrong in the world, WORLD STATUS what SAVE would write and what was changed outside the game, WORLD RELOAD loads files again, WORLD DIFF a file against what SAVE would write, WORLD DEV the areas for building and testing only, and WORLD SET KEY=VALUE changes a setting in builder mode."));
 			return false;
 		}
 		if(!SaveGame.isBuilderMode())

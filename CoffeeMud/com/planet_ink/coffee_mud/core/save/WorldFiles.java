@@ -752,6 +752,126 @@ public final class WorldFiles
 		return null;
 	}
 
+	/**
+	 * The world file an area is written to (B5): areas/NAME.cmare, or in
+	 * dev/ for a dev area.
+	 * @param A the area
+	 * @return its path in the world folder
+	 */
+	public static String areaPathFor(final Area A)
+	{
+		return (isDevArea(A) ? DEV_DIR : AREAS_DIR) + "/" + areaFileFor(A);
+	}
+
+	/**
+	 * The name of the area a world file holds (B5).
+	 * @param path its path in the world folder
+	 * @return the name, or null if it holds none
+	 */
+	public static String areaNameOf(final String path)
+	{
+		return areaNameIn(new File(worldDir, path));
+	}
+
+	/**
+	 * The world file a quest is written to (B5).
+	 * @param name the quest's name
+	 * @return its path in the world folder
+	 */
+	public static String questPathFor(final String name)
+	{
+		return QUESTS_DIR + "/" + fileNameFor(name, QUEST_EXT, new HashSet<String>());
+	}
+
+	/**
+	 * A quest's script as its world file has it (B5), as the boot reads it.
+	 * @param path the file's path in the world folder
+	 * @return the script, or null if there is no such file
+	 */
+	public static String questScriptIn(final String path)
+	{
+		final String text = readText(new File(worldDir, path));
+		return (text == null) ? null : stripFinalNewline(text);
+	}
+
+	/**
+	 * Marks a world file as the game has it (B2, B5): loaded again, so no
+	 * longer changed outside the game.
+	 * @param path its path in the world folder
+	 */
+	public static void markLoaded(final String path)
+	{
+		final Map<String, String> next = new TreeMap<String, String>(knownSums);
+		final String sum = sumOf(new File(worldDir, path));
+		if(sum == null)
+			next.remove(path);
+		else
+			next.put(path, sum);
+		knownSums = next;
+	}
+
+	/**
+	 * Loads an area from its file into the running world (B5, WORLD
+	 * RELOAD), as the boot does; the caller takes the area as the game has
+	 * it out first.  A dev area is tagged so again, and the file is known as
+	 * loaded.
+	 * @param path the file's path in the world folder
+	 * @return null if it loaded whole, or what went wrong
+	 */
+	public static String loadAreaFile(final String path)
+	{
+		final File F = new File(worldDir, path);
+		if(!F.isFile())
+			return path + " is not there";
+		final String name = areaNameIn(F);
+		synchronized(problems)
+		{
+			problems.remove(path);
+		}
+		String problem;
+		importing = true;
+		try
+		{
+			problem = imported(path, () -> importArea(F));
+		}
+		finally
+		{
+			importing = false;
+		}
+		final Area A = (name == null) ? null : CMLib.map().getArea(name);
+		if((A != null) && path.startsWith(DEV_DIR + "/") && (!A.hasTag(DEV_TAG)))
+		{
+			A.addTag(DEV_TAG);
+			CMLib.database().DBUpdateArea(A.Name(), A);
+		}
+		markLoaded(path);
+		boolean part;
+		synchronized(problems)
+		{
+			part = problems.containsKey(path);
+		}
+		saveProblems();
+		if((problem == null) && part)
+			problem = "it loaded only in part (WORLD PROBLEMS)";
+		return problem;
+	}
+
+	/**
+	 * Loads the catalog file again into the running catalog (B5, WORLD
+	 * RELOAD CATALOG): each entry it has is put in place of the one of that
+	 * name, or added; entries it does not have are kept.
+	 * @return null if loaded, or what went wrong
+	 */
+	public static String reloadCatalog()
+	{
+		final File F = new File(worldDir, CATALOG_FILE);
+		if(!F.isFile())
+			return CATALOG_FILE + " is not there";
+		final String problem = importCatalog(F, true);
+		markLoaded(CATALOG_FILE);
+		return problem;
+	}
+
 	/** a world file's path in the world folder, or null if it is not in it */
 	private static String pathIn(final File F)
 	{
@@ -883,6 +1003,19 @@ public final class WorldFiles
 	 */
 	private static String importCatalog(final File F)
 	{
+		return importCatalog(F, false);
+	}
+
+	/**
+	 * Imports the catalog file, as {@link #importCatalog(File)}; with
+	 * replace (B5, WORLD RELOAD CATALOG), an entry of a name the catalog has
+	 * is put in place of that one, and others are added.
+	 * @param F the file
+	 * @param replace true to put entries in place of those of their names
+	 * @return null if imported, or what went wrong
+	 */
+	private static String importCatalog(final File F, final boolean replace)
+	{
 		final String text = readWorldXML(F);
 		if(text == null)
 			return "it cannot be read";
@@ -926,7 +1059,22 @@ public final class WorldFiles
 			else
 				continue;
 			final String category = xml.restoreAngleBrackets(entry.getValFromPieces("CATEGORY"));
-			CMLib.catalog().addCatalog((category.length() > 0) ? category : null, P);
+			final Physical had = (!replace) ? null
+				: (P instanceof MOB) ? CMLib.catalog().getCatalogMob(P.Name()) : CMLib.catalog().getCatalogItem(P.Name());
+			if(had != null)
+			{
+				// the catalog's own entry takes the file's, and is saved so
+				had.setMiscText(P.text());
+				had.basePhyStats().setLevel(P.basePhyStats().level());
+				had.basePhyStats().setAbility(P.basePhyStats().ability());
+				had.basePhyStats().setRejuv(P.basePhyStats().rejuv());
+				if((had instanceof Item) && (P instanceof Item))
+					((Item)had).setUsesRemaining(((Item)P).usesRemaining());
+				had.recoverPhyStats();
+				CMLib.catalog().updateCatalog(had);
+			}
+			else
+				CMLib.catalog().addCatalog((category.length() > 0) ? category : null, P);
 			final CataData data = CMLib.catalog().getCatalogData(P);
 			final String dataXML = xml.restoreAngleBrackets(entry.getValFromPieces("CATADATA"));
 			if((data != null) && (dataXML.length() > 0))
