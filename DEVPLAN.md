@@ -777,6 +777,14 @@ Status: in progress. Each item has its checks in `tools/fixes.sh`.
   time before each line. `RECORD MARK text` adds a comment. A line typed
   with `#` first is written as a comment, since the runner could not send
   it. Exact replay of a recording made mid-game needs DT39.
+- DT26 done. `NOTE [HERE] text`, in any game, appends to
+  `notes/playtest.txt` (`NOTESFILE=`), outside world/ and the saves: the
+  date, the save (or builder mode), the character, the room's ID and
+  name, the area's game time and the text, with HERE the room's exits,
+  mobs, items, effects and behaviours. `NOTES [ALL]` lists them
+  numbered, `NOTES DONE|UNDONE n` marks one, and `NOTES GOTO n` (builder
+  or DEV=1) goes to its room. PR7 wanted NOTES as JOURNAL's alias: NOTES
+  is DT26's now, so PR7's journal keeps the name JOURNAL.
 
 #### 2d. Scripting (59)
 
