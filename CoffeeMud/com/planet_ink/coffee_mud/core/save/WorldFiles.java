@@ -752,6 +752,20 @@ public final class WorldFiles
 		}
 		final Set<String> kept = new HashSet<String>();
 		final StringBuilder index = new StringBuilder();
+		// a line of the index stays as it was while its file's data is the
+		// same: the engine writes some of the files again with other owners
+		final Map<String, String> oldLines = new HashMap<String, String>();
+		final String oldIndex = readText(new File(dir, VFS_INDEX));
+		if(oldIndex != null)
+		{
+			for(final String line : oldIndex.split("\n"))
+			{
+				final int tab = line.indexOf('\t');
+				if(tab > 0)
+					oldLines.put(line.substring(0, tab), line);
+			}
+		}
+		final TreeMap<String, String> lines = new TreeMap<String, String>();
 		if(rows.size() > 1)
 		{
 			final String[] header = rows.get(0);
@@ -783,16 +797,21 @@ public final class WorldFiles
 				if((F.getParentFile() != null) && (!F.getParentFile().isDirectory()))
 					F.getParentFile().mkdirs();
 				final byte[] old = F.isFile() ? java.nio.file.Files.readAllBytes(F.toPath()) : null;
-				if((old == null) || (!Arrays.equals(old, data)))
+				final boolean same = (old != null) && Arrays.equals(old, (data == null) ? new byte[0] : data);
+				if(!same)
 				{
 					java.nio.file.Files.write(F.toPath(), (data == null) ? new byte[0] : data);
 					changed[0]++;
 				}
 				kept.add(F.getCanonicalPath());
-				index.append(path).append('\t').append((typeCol >= 0) ? row[typeCol].trim() : "0").append('\t')
-					 .append((whoCol >= 0) ? row[whoCol].trim() : "").append('\n');
+				if(same && oldLines.containsKey(path))
+					lines.put(path, oldLines.get(path));
+				else
+					lines.put(path, path + "\t" + ((typeCol >= 0) ? row[typeCol].trim() : "0") + "\t" + ((whoCol >= 0) ? row[whoCol].trim() : ""));
 			}
 		}
+		for(final String line : lines.values())
+			index.append(line).append('\n');
 		writeOrDelete(new File(dir, VFS_INDEX), (index.length() == 0) ? null : index.toString(), changed);
 		// files of the file system that are gone
 		if(dir.isDirectory())
@@ -1287,7 +1306,7 @@ public final class WorldFiles
 			}
 			if(lt > i)
 				parts.add(xml.substring(i, lt));
-			final int gt = xml.indexOf('>', lt);
+			final int gt = xml.startsWith("<![CDATA[", lt) ? (xml.indexOf("]]>", lt) + 2) : xml.indexOf('>', lt);
 			if(gt < 0)
 			{
 				parts.add(xml.substring(lt));
@@ -1719,14 +1738,67 @@ public final class WorldFiles
 					j = close + 1;
 				}
 			}
-			final String inner = xml.substring(innerStart, end)
+			// a script kept as CDATA is left as it is while the layout goes
+			final List<String> cdata = new ArrayList<String>();
+			final StringBuilder held = new StringBuilder();
+			final String within = xml.substring(innerStart, end);
+			int c = 0;
+			while(true)
+			{
+				final int cs = within.indexOf("<![CDATA[", c);
+				final int ce = (cs < 0) ? -1 : within.indexOf("]]>", cs);
+				if(ce < 0)
+				{
+					held.append(within, c, within.length());
+					break;
+				}
+				held.append(within, c, cs).append("\u0000").append(cdata.size()).append("\u0000");
+				cdata.add(within.substring(cs + "<![CDATA[".length(), ce));
+				c = ce + 3;
+			}
+			String inner = held.toString()
 				.replaceAll(">[ \\t]*\\r?\\n[ \\t\\r\\n]*<", "><")
+				.replaceAll(">[ \\t]*\\r?\\n[ \\t\\r\\n]*\u0000", ">\u0000")
+				.replaceAll("\u0000([0-9]+)\u0000[ \\t]*\\r?\\n[ \\t\\r\\n]*<", "\u0000$1\u0000<")
 				.replaceAll("^[ \\t\\r\\n]+<", "<")
 				.replaceAll(">[ \\t\\r\\n]+$", ">");
+			inner = propBack(inner);
+			for(int k = 0; k < cdata.size(); k++)
+				inner = inner.replace("\u0000" + k + "\u0000", escapeAngles(cdata.get(k)));
 			out.append(xml, i, lt).append('<').append(name).append('>')
 			   .append(escapeAngles(inner)).append("</").append(name).append('>');
 			i = end + name.length() + 3;
 		}
+		return out.toString();
+	}
+
+	/** the names of the base stats a PROP holds, in its order, as CoffeeMaker writes them readable */
+	private static final String[] PROP_NAMES = { "ABILITY", "ARMOR", "ATTACK", "DAMAGE", "DISPOSITION", "LEVEL", "REJUV", "SPEED", "WEIGHT", "HEIGHT", "SENSES" };
+
+	/**
+	 * Turns each PROP written readable, with named base stats, back into the
+	 * values the engine reads, each followed by a bar.
+	 * @param xml a thing's own text
+	 * @return the text with PROP as the engine has it
+	 */
+	private static String propBack(final String xml)
+	{
+		if(xml.indexOf("<PROP ") < 0)
+			return xml;
+		final java.util.regex.Matcher m = java.util.regex.Pattern.compile("<PROP((?: [A-Z]+=\"[^\"]*\")+) ?/>").matcher(xml);
+		final StringBuffer out = new StringBuffer();
+		while(m.find())
+		{
+			final Map<String, String> vals = new HashMap<String, String>();
+			final java.util.regex.Matcher a = java.util.regex.Pattern.compile("([A-Z]+)=\"([^\"]*)\"").matcher(m.group(1));
+			while(a.find())
+				vals.put(a.group(1), a.group(2));
+			final StringBuilder prop = new StringBuilder("<PROP>");
+			for(final String name : PROP_NAMES)
+				prop.append(vals.containsKey(name) ? vals.get(name) : "0").append('|');
+			m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(prop.append("</PROP>").toString()));
+		}
+		m.appendTail(out);
 		return out.toString();
 	}
 

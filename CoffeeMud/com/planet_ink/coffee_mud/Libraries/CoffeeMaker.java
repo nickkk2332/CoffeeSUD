@@ -2461,8 +2461,61 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 	{
 		final XMLLibrary xmlLib = CMLib.xml();
 		if(Boolean.TRUE.equals(readableText.get()) && isPlainXML(text))
-			return "<" + tag + " xml=\"1\">" + text + "</" + tag + ">";
+			return "<" + tag + " xml=\"1\">" + readableValues(text) + "</" + tag + ">";
 		return xmlLib.convertXMLtoTag(tag, xmlLib.parseOutAngleBrackets(text));
+	}
+
+	/** the names of the base stats a PROP holds, in its order */
+	private static final String[] PROP_NAMES = { "ABILITY", "ARMOR", "ATTACK", "DAMAGE", "DISPOSITION", "LEVEL", "REJUV", "SPEED", "WEIGHT", "HEIGHT", "SENSES" };
+
+	/** a leaf element: its tag, and text with no tag in it */
+	private static final java.util.regex.Pattern LEAF = java.util.regex.Pattern.compile("<([A-Za-z_][A-Za-z0-9_]*)>([^<]*)</\\1>");
+
+	/**
+	 * Makes the values of a thing's own text, laid out as XML, readable too:
+	 * the base stats of PROP as named attributes, and a value of several
+	 * lines with angle brackets in it (a script comparing with &lt;) as
+	 * CDATA, as it is.  The world files' reader turns both back.
+	 * @param text the text, plain XML
+	 * @return the text, readable
+	 */
+	protected String readableValues(final String text)
+	{
+		final java.util.regex.Matcher m = LEAF.matcher(text);
+		final StringBuffer out = new StringBuffer();
+		while(m.find())
+		{
+			final String tag = m.group(1);
+			final String value = m.group(2);
+			String with = null;
+			if(tag.equals("PROP"))
+			{
+				final String[] vals = value.split("\\|", -1);
+				if((vals.length == PROP_NAMES.length + 1) && (vals[PROP_NAMES.length].length() == 0))
+				{
+					boolean plain = true;
+					final StringBuilder attrs = new StringBuilder("<PROP");
+					for(int i = 0; i < PROP_NAMES.length; i++)
+					{
+						if((vals[i].length() == 0) || (vals[i].indexOf('"') >= 0) || (vals[i].indexOf('&') >= 0))
+							plain = false;
+						attrs.append(' ').append(PROP_NAMES[i]).append("=\"").append(vals[i]).append('"');
+					}
+					if(plain)
+						with = attrs.append(" />").toString();
+				}
+			}
+			else
+			if((value.indexOf('\n') >= 0) && ((value.indexOf("&lt;") >= 0) || (value.indexOf("&gt;") >= 0)))
+			{
+				final String raw = value.replace("&lt;", "<").replace("&gt;", ">");
+				if(raw.indexOf("]]>") < 0)
+					with = "<" + tag + "><![CDATA[" + raw + "]]></" + tag + ">";
+			}
+			m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement((with == null) ? m.group(0) : with));
+		}
+		m.appendTail(out);
+		return out.toString();
 	}
 
 	/**

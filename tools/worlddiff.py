@@ -57,6 +57,8 @@ TOKEN = re.compile(r'<(/?)([A-Za-z_][\w.-]*)([^<>]*?)(/?)>')
 
 def parse(xml):
     """A forgiving parser for the engine's XML: elements and their text."""
+    # a script kept as CDATA, as it is, reads as the escaped text it stands for
+    xml = re.sub(r'<!\[CDATA\[(.*?)\]\]>', lambda m: m.group(1).replace('<', '&lt;').replace('>', '&gt;'), xml, flags=re.S)
     root = Node('#root', {})
     stack = [root]
     pos = 0

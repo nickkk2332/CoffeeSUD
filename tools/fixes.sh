@@ -218,6 +218,16 @@ group_saves()
 	play s10-next.txt sdb sworld "Gapper\n${NEWCHAR}north\nlook\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	expect s10-next.txt "FIXGAP the walls are new."
 
+	# S25: a room's script that compares with < is kept in the area's file as
+	# CDATA, as it is (read back below, in a game built from the files)
+	play s25-script.txt sdb sworld "Builder\njrun /resources/_fixes/s25-script.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s25-script.txt
+	if grep -q 'if var($n FIXCDATA < 5)' "$W/sworld/areas/"*.cmare && grep -q '<!\[CDATA\[GREET_PROG' "$W/sworld/areas/"*.cmare; then
+		echo "  ok    s25-script: the area's file has the script as CDATA, as it is"
+	else
+		echo "  FAIL  s25-script: the area's file has not the script as CDATA"; FAIL=1
+	fi
+
 	# S11: a custom ability goes to a file of its own, its script of several
 	# lines beside it as it is, and a game built from the files has it so
 	play s11-build.txt sdb sworld "Builder\njrun /resources/_fixes/s11-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
@@ -229,13 +239,14 @@ group_saves()
 		echo "  FAIL  s11-build: the ability's files are not as they should be"; FAIL=1
 	fi
 	mkdir -p "$W/s11db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/s11db/"
-	play s11-new.txt s11db sworld "Brander\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s11-check.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s11-new.txt s11db sworld "Brander\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s11-check.js\njrun /resources/_fixes/s25-cdata.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	expect s11-new.txt "rebuilding the world from them"
 	jsresults s11-new.txt
 
 	# S25: a builder session that changes nothing writes the readable files
 	# again as they were, so they read back to the very same world (the
-	# file system's index is left out: the engine writes some of its files)
+	# file system's files are left out: the engine writes some of them again,
+	# in another order, such as the tech manufacturers)
 	(cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum) > "$W/sworld.sums"
 	play s25-again.txt sdb sworld "Builder\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
 	if (cd "$W/sworld" && find . -type f -not -path './vfs/*' | sort | xargs cksum | cmp -s - "$W/sworld.sums"); then
@@ -538,15 +549,17 @@ group_saves5()
 	jsresults s19-build.txt
 	# S25: the crypt's file gives the lieutenant's own text as XML, and a
 	# game on an empty database, built from the files, has the lieutenant
-	if grep -q '<MTEXT xml="1">' "$W/yworld/areas/crypt.cmare" && ! grep -q '<MTEXT>&lt;' "$W/yworld/areas/crypt.cmare"; then
-		echo "  ok    s19-build: the crypt's file has a readable mob text"
+	if grep -q '<MTEXT xml="1">' "$W/yworld/areas/crypt.cmare" && ! grep -q '<MTEXT>&lt;' "$W/yworld/areas/crypt.cmare" \
+	&& grep -q '<PROP ABILITY="' "$W/yworld/areas/crypt.cmare"; then
+		echo "  ok    s19-build: the crypt's file has a readable mob text, its base stats named"
 	else
 		echo "  FAIL  s19-build: the crypt's file has an escaped mob text"; FAIL=1
 	fi
 	mkdir -p "$W/y2db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/y2db/"
-	play s25-fresh.txt y2db yworld "Fresher\n${NEWCHAR}down\nnorth\nlook\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	play s25-fresh.txt y2db yworld "Fresher\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s25-lich.js\ndown\nnorth\nlook\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	expect s25-fresh.txt "rebuilding the world from them"
 	expect s25-fresh.txt "A lich lieutenant stands here."
+	jsresults s25-fresh.txt
 	play s19-play.txt ydb yworld "Raider\n${NEWCHAR}get book\nread book\ndown\nnorth\njrun /resources/_fixes/s19-play.js\nsave s19\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s19-play.txt
 	play s19-restore.txt ydb yworld 'jrun /resources/_fixes/s19-check.js\nsouth\nup\ndown\njrun /resources/_fixes/s19-again.js\nquit\nn\n' RESTORE=s19 TIMEMODE=TURNS
