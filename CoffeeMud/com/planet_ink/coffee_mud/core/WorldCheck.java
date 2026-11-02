@@ -60,7 +60,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS" };
 
 	/** one thing found */
 	public static final class Finding
@@ -354,6 +354,12 @@ public final class WorldCheck
 		{
 			for(final String p : (only == null) ? ScriptCheck.checkAll() : ScriptCheck.checkArea(only, null))
 				out.add(new Finding(Severity.ERROR, "SCRIPTS", p));
+		}
+		if((all || parts.contains("JS")) && (only == null))
+		{
+			// JS5: the world's JavaScript classes: their //extends lines, and whether they compile
+			for(final String p : JSScope.checkWorldClasses())
+				out.add(new Finding(Severity.ERROR, "JS", p));
 		}
 		if(all || parts.contains("PROPS"))
 		{

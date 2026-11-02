@@ -1262,6 +1262,17 @@ JS17, JS18, JS19, JS20, JS23
   once (`SoftCachingModuleScriptProvider`) and read again when their file
   changes; `JSScope.reload()` drops them. `<SCRIPT SRC=...>` is left to
   JS15's MPJSFILE.
+- JS5 done. `world/js/<kind>/` folders (behaviors, abilities, properties,
+  items, mobs, races, charclasses, commands, common, locales, exits, areas)
+  join the class paths at boot (`SUD.worldClassPaths`, with S6's
+  `world/classes/`). `LOAD=world:path` reads a world file (`world/scripts/`).
+  `world/js` and `world/scripts` are in the world's checksum and in LIST
+  SCRIPTS CUSTOM; WORLD CHECK has a JS part (`JSScope.checkWorldClasses`: an
+  //extends naming no class, a file that does not compile). Templates in
+  `resources/js/templates/`; `Behaviors/JSWorldBehavior` (rooms and areas)
+  calls onEnter, onLeave, onWeather and onDaypart, with echo, roll, spawn,
+  room, area and parm. Problems show at boot in the log and in WORLD CHECK,
+  not at the builder's login.
 
 #### 2e. Quests (15)
 

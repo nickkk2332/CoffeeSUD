@@ -71,6 +71,41 @@ public class SUD
 		"CHARCLASSES", "RACES", "COMMANDS", "LOCALES", "AREAS", "EXITS", "TECH", "COMPTECH", "SOFTWARE"
 	};
 
+	/** JS5: the folders of JavaScript classes in WORLDDIR/js/, and the class path settings they join */
+	private static final String[][] JS_KINDS =
+	{
+		{ "behaviors", "BEHAVIORS" }, { "abilities", "ABILITIES" }, { "properties", "ABILITIES" }, { "items", "ITEMS" },
+		{ "mobs", "MOBS" }, { "races", "RACES" }, { "charclasses", "CHARCLASSES" }, { "commands", "COMMANDS" },
+		{ "common", "COMMON" }, { "locales", "LOCALES" }, { "exits", "EXITS" }, { "areas", "AREAS" }
+	};
+
+	/**
+	 * The class path settings a world adds its own classes to: its
+	 * classes/[kind]/ folders, and (JS5) its js/[kind]/ folders of JavaScript
+	 * classes, after the stock ones.
+	 * @param settings the ini's settings
+	 * @return the settings to give the engine, by name
+	 */
+	public static Map<String, String> worldClassPaths(final Properties settings)
+	{
+		final Map<String, String> paths = new LinkedHashMap<String, String>();
+		final File world = WorldFiles.worldDir();
+		for(final String key : CLASS_KEYS)
+		{
+			if(new File(world, "classes/" + key.toLowerCase()).isDirectory())
+				paths.put(key, settings.getProperty(key, "%DEFAULT%").trim() + ";world/classes/" + key.toLowerCase());
+		}
+		for(final String[] k : JS_KINDS)
+		{
+			if(new File(world, "js/" + k[0]).isDirectory())
+			{
+				final String was = paths.containsKey(k[1]) ? paths.get(k[1]) : settings.getProperty(k[1], "%DEFAULT%").trim();
+				paths.put(k[1], was + ";world/js/" + k[0]);
+			}
+		}
+		return paths;
+	}
+
 	/** the world's own settings, from WORLDDIR/world.ini */
 	private static Map<String, String> worldSettings = new LinkedHashMap<String, String>();
 
@@ -168,12 +203,9 @@ public class SUD
 		// the world's settings over coffeemud.ini, and the command line over them
 		for(final Map.Entry<String, String> e : worldSettings.entrySet())
 			fullArgs.add(e.getKey() + "=" + e.getValue());
-		// the world's own classes, in WORLDDIR/classes/<kind>/, after the stock ones
-		for(final String key : CLASS_KEYS)
-		{
-			if(new File(WorldFiles.worldDir(), "classes/" + key.toLowerCase()).isDirectory())
-				fullArgs.add(key + "=" + settings.getProperty(key, "%DEFAULT%").trim() + ";world/classes/" + key.toLowerCase());
-		}
+		// the world's own classes, in WORLDDIR/classes/<kind>/ and (JS5) WORLDDIR/js/<kind>/, after the stock ones
+		for(final Map.Entry<String, String> e : worldClassPaths(settings).entrySet())
+			fullArgs.add(e.getKey() + "=" + e.getValue());
 		fullArgs.addAll(Arrays.asList(args));
 		System.out.println("Loading the world...");
 		MUD.main(fullArgs.toArray(new String[fullArgs.size()]));

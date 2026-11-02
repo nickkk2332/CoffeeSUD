@@ -1021,6 +1021,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 	private StringBuffer getResourceFileData(final Environmental scripted, final String named)
 	{
+		// JS5: world:path is a file of the world folder, as LOAD=world:scripts/guard.script
+		if(named.toLowerCase().startsWith("world:"))
+		{
+			final String path=named.substring(6).trim().replace('\\','/');
+			final CMFile WF=new CMFile("/world/"+path,null,CMFile.FLAG_LOGERRORS);
+			if((path.indexOf("..")<0)&&WF.exists()&&WF.canRead())
+				return WF.text();
+			this.logError(scripted, "LOAD", "NOREAD", named);
+			return new StringBuffer();
+		}
 		final Quest Q=getQuest("*");
 		if(Q!=null)
 			return Q.getResourceFileData(named, true);

@@ -91,6 +91,119 @@ public final class JSScope
 	}
 
 	/**
+	 * JS5: the world's script and JavaScript files, under world/scripts/ and
+	 * world/js/, as paths in the world folder.
+	 * @return the paths
+	 */
+	public static List<String> worldFiles()
+	{
+		final List<String> out = new ArrayList<String>();
+		final File world = WorldFiles.worldDir();
+		for(final String sub : new String[] { "js", "scripts" })
+			listUnder(new File(world, sub), sub, out);
+		Collections.sort(out);
+		return out;
+	}
+
+	private static void listUnder(final File dir, final String path, final List<String> out)
+	{
+		final File[] fs = dir.listFiles();
+		if(fs == null)
+			return;
+		for(final File F : fs)
+		{
+			if(F.isDirectory())
+				listUnder(F, path + "/" + F.getName(), out);
+			else
+			if(F.isFile())
+				out.add(path + "/" + F.getName());
+		}
+	}
+
+	/**
+	 * JS5: what is wrong with the world's JavaScript classes, in
+	 * world/js/[kind]/ (not lib/): an //extends line missing or naming no
+	 * class, and a file that does not compile.
+	 * @return the problems, each with its file
+	 */
+	public static List<String> checkWorldClasses()
+	{
+		final List<String> problems = new ArrayList<String>();
+		final File js = new File(WorldFiles.worldDir(), "js");
+		final File[] kinds = js.listFiles();
+		if(kinds == null)
+			return problems;
+		Arrays.sort(kinds);
+		for(final File kind : kinds)
+		{
+			if((!kind.isDirectory()) || kind.getName().equals("lib"))
+				continue;
+			final File[] files = kind.listFiles();
+			if(files == null)
+				continue;
+			Arrays.sort(files);
+			for(final File F : files)
+			{
+				if(!F.getName().toLowerCase().endsWith(".js"))
+					continue;
+				final String where = "world/js/" + kind.getName() + "/" + F.getName();
+				String text;
+				try
+				{
+					text = new String(java.nio.file.Files.readAllBytes(F.toPath()), "UTF-8");
+				}
+				catch(final java.io.IOException e)
+				{
+					problems.add(where + ": cannot be read");
+					continue;
+				}
+				String ext = null;
+				for(final String line : text.split("\n"))
+				{
+					if(line.trim().toUpperCase().startsWith("//EXTENDS "))
+					{
+						ext = line.trim().substring(10).trim();
+						break;
+					}
+				}
+				if(ext == null)
+					problems.add(where + ": no //extends line, so it is no class");
+				else
+				if(!classExists(ext))
+					problems.add(where + ": //extends " + ext + ", which is no class");
+				final Context cx = Context.enter();
+				try
+				{
+					cx.compileString(text, where, 1, null);
+				}
+				catch(final RhinoException e)
+				{
+					problems.add(where + ":" + e.lineNumber() + ": " + e.details());
+				}
+				finally
+				{
+					Context.exit();
+				}
+			}
+		}
+		return problems;
+	}
+
+	private static boolean classExists(final String name)
+	{
+		try
+		{
+			Class.forName(name, false, JSScope.class.getClassLoader());
+			return true;
+		}
+		catch(final ClassNotFoundException e)
+		{
+			final int x = name.lastIndexOf('.');
+			return CMClass.getObjectOrPrototype((x < 0) ? name : name.substring(x + 1)) != null;
+		}
+	}
+
+	/**
 	 * Drops the compiled libraries, so that the next require() reads them
 	 * again (JS RELOAD), and finds the folders again (a new world folder).
 	 */

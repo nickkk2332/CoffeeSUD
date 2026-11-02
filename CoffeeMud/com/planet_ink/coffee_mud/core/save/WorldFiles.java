@@ -2617,6 +2617,21 @@ public final class WorldFiles
 			for(final File F : listFiles(dir, SCRIPT_EXT))
 				paths.add(CUSTOM_DIR + "/" + kind + "/" + F.getName());
 		}
+		// JS5: the world's JavaScript and script files
+		for(final String sub : new String[] { "js", "scripts" })
+		{
+			final File dir = new File(worldDir, sub);
+			if(!dir.isDirectory())
+				continue;
+			final List<File> all = new ArrayList<File>();
+			collectFiles(dir, all);
+			final String root = dir.getPath() + File.separator;
+			for(final File F : all)
+			{
+				if(F.getPath().startsWith(root) && (!F.getName().endsWith(BUILDER_EXT)))
+					paths.add(sub + "/" + F.getPath().substring(root.length()).replace(File.separatorChar, '/'));
+			}
+		}
 		if(new File(worldDir, CATALOG_FILE).isFile())
 			paths.add(CATALOG_FILE);
 		if(new File(worldDir, WorldSettings.FILE).isFile())

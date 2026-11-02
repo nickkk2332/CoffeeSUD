@@ -1488,6 +1488,14 @@ public class ListCmd extends StdCommand
 					}
 				}
 			}
+			// JS5: the world's own script and JavaScript files
+			final List<String> files=JSScope.worldFiles();
+			if(files.size()>0)
+			{
+				lines.append("^xThe world's script and JavaScript files^.^N\n\r");
+				for(final String f : files)
+					lines.append("  world/").append(f).append("^.^N\n\r");
+			}
 		}
 		else
 			return new StringBuilder("Invalid parameter for LIST SCRIPTS.  Enter LIST SCRIPTS alone for help.");
