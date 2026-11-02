@@ -44,6 +44,8 @@ public class MoneyChanger extends StdBehavior
 	protected double				spaceMaxCut					= 0.0;
 	protected long					spaceMaxDistance			= SpaceObject.Distance.GalaxyRadius.dm;
 	protected double				cut							= 0.05;
+	/** W29: RATE.CODE=+/-pct: a premium or discount on what coins of a currency fetch, as a fraction */
+	protected Map<String, Double>	premiums					= new Hashtable<String, Double>();
 	private boolean					complainedAboutSpaceError	= false;
 
 	@Override
@@ -127,6 +129,28 @@ public class MoneyChanger extends StdBehavior
 		return rates;
 	}
 
+	/**
+	 * W29: what coins of a currency worth a value fetch here: the value,
+	 * times this changer's RATE for the currency and the world's rate for
+	 * it (MPEXCHANGE), less the changer's cut.
+	 * @param host the money changer
+	 * @param currency the coins' currency
+	 * @param value what they are worth, in base value
+	 * @return what is given back, in base value
+	 */
+	public double exchangeValue(final Environmental host, final String currency, double value)
+	{
+		final String code=(currency==null)?"":currency.toUpperCase();
+		final Double premium=premiums.get(code);
+		value=value*(1.0+((premium==null)?0.0:premium.doubleValue()))*(Exchange.percent(code)/100.0);
+		final MOB observer=(MOB)host;
+		final double takeCut=getMyCut(host,code);
+		double amountToTake=CMLib.beanCounter().abbreviatedRePrice(observer,value*takeCut);
+		if((amountToTake>0.0)&&(amountToTake<CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(observer))))
+			amountToTake=CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(observer));
+		return value-amountToTake;
+	}
+
 	protected boolean doIExchangeThisCurrency(final Environmental affecting, final String currency)
 	{
 		final MoneyLibrary.MoneyDefinition def=CMLib.beanCounter().getCurrencySet(currency);
@@ -153,6 +177,15 @@ public class MoneyChanger extends StdBehavior
 		spaceMaxCut=0.0;
 		spaceMaxDistance=SpaceObject.Distance.GalaxyRadius.dm;
 		newParm=newParm.toUpperCase();
+		// W29: RATE.CODE=+10 or -30, read first and taken out (the rest skips signs)
+		premiums.clear();
+		final java.util.regex.Matcher rm=java.util.regex.Pattern.compile("RATE\\.([A-Z0-9_]*)\\s*=\\s*([+-]?[0-9.]+)%?").matcher(newParm);
+		while(rm.find())
+		{
+			final String code=rm.group(1).equals("DEFAULT")?"":rm.group(1);
+			premiums.put(code,Double.valueOf(CMath.s_double(rm.group(2).replace("+",""))/100.0));
+		}
+		newParm=rm.replaceAll(" ");
 		int x=newParm.indexOf('=');
 		while(x>0)
 		{
@@ -235,13 +268,8 @@ public class MoneyChanger extends StdBehavior
 				CMLib.commands().postSay(observer,source,L("I'm sorry, I can't convert into @x1.",CMStrings.capitalizeAndLower(targetCurrencyDef.ID())),true,false);
 				return false;
 			}
-			double value=((Coins)msg.tool()).getTotalValue();
 			final String currency=((Coins)msg.tool()).getCurrency().toUpperCase();
-			final double takeCut=getMyCut(host,currency);
-			double amountToTake=CMLib.beanCounter().abbreviatedRePrice(observer,value*takeCut);
-			if((amountToTake>0.0)&&(amountToTake<CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(observer))))
-				amountToTake=CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(observer));
-			value-=amountToTake;
+			final double value=exchangeValue(host,currency,((Coins)msg.tool()).getTotalValue()); // W29: with the rates
 			observer.recoverPhyStats();
 			final Coins C=CMLib.beanCounter().makeBestCurrency(observer,value);
 			if((value<=0)||(C==null))
@@ -270,13 +298,8 @@ public class MoneyChanger extends StdBehavior
 			if((CMLib.flags().canBeSeenBy(source,observer))
 			&&(CMLib.flags().canBeSeenBy(observer,source)))
 			{
-				double value=((Coins)msg.tool()).getTotalValue();
 				final String currency=((Coins)msg.tool()).getCurrency().toUpperCase();
-				final double takeCut=getMyCut(affecting,currency);
-				double amountToTake=CMLib.beanCounter().abbreviatedRePrice(observer,value*takeCut);
-				if((amountToTake>0.0)&&(amountToTake<CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(observer))))
-					amountToTake=CMLib.beanCounter().getLowestDenomination(CMLib.beanCounter().getCurrency(observer));
-				value-=amountToTake;
+				final double value=exchangeValue(affecting,currency,((Coins)msg.tool()).getTotalValue()); // W29: with the rates
 				observer.recoverPhyStats();
 				final Coins C=CMLib.beanCounter().makeBestCurrency(observer,value);
 				if((value>0.0)&&(C!=null))

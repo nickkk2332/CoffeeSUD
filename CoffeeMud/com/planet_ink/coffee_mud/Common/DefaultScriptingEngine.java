@@ -15967,6 +15967,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "EXCHANGE": // W29: EXCHANGE(CODE): what its coins fetch at money changers, in percent of their value (MPEXCHANGE)
+			return Shops.num(Exchange.percent(v));
 		case "BANKBALANCE": // W15: BANKBALANCE(who chain [currency]): their coins at the bank chain, in base value
 		{
 			final String who=personName(ctx,CMParms.getCleanBit(parms,0));
@@ -16508,6 +16510,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
+			return null;
+		}
+		case "MPEXCHANGE": // W29: MPEXCHANGE CODE|DEFAULT pct: what its coins fetch at every money changer, in percent (100 as they are)
+		{
+			final String code=varify(ctx,CMParms.getCleanBit(line,1)).trim();
+			final String pct=varify(ctx,CMParms.getCleanBit(line,2)).trim().replace("%","");
+			if((code.length()==0)||(!CMath.isNumber(pct)))
+			{
+				logError(ctx,"MPEXCHANGE","Syntax","MPEXCHANGE CODE|DEFAULT percent: "+line);
+				return null;
+			}
+			Exchange.set(code,CMath.s_double(pct));
 			return null;
 		}
 		case "MPBANK": // W15: MPBANK who chain +n|-n [reason]: pays into or takes from their account, with a ledger line

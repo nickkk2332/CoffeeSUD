@@ -775,6 +775,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"SHOPBUDGET", //203
 		"BANKBALANCE", //204
 		"DEBT", //205
+		"EXCHANGE", //206
 	};
 
 	/** String list of all valid mobprog commands */
@@ -915,6 +916,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPSHOP", // 133
 		"MPBANK", // 134
 		"MPDEBT", // 135
+		"MPEXCHANGE", // 136
 	};
 
 	/**

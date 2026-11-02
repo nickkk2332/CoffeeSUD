@@ -2350,6 +2350,14 @@ W18, W19, W20, W21, W22, W23, W28, W29
   cm.bank(): pay, debt, lend and forgive. Fixed on the way: a debt changed
   but not paid off was written under the money library's name, not the
   debtor's, so a banker's loan payments never lowered what was owed.
+- W29 done. MoneyChanger's `RATE.<CODE>=+n|-n` (percent; `RATE.DEFAULT`)
+  is a premium or discount on what coins of that currency fetch, on top of
+  CUT, read before the rest (whose parser skips signs) and no fee, so the
+  changer still takes every currency. `MPEXCHANGE <CODE>|DEFAULT <pct>`
+  (136) sets what coins of a currency fetch at every money changer, in
+  percent of their value (100 ends it), kept in the save's header;
+  `EXCHANGE(CODE)` (206) reads it. `MoneyChanger.exchangeValue` works out
+  what is given back, for both the check and the change.
 
 #### 2j. Generators and random content (16)
 
