@@ -1139,6 +1139,9 @@ JS17, JS18, JS19, JS20, JS23
 - ST26 done. `AFFECT_PROG ADD|REMOVE|ANY ability|*` from `addEffect` and
   `delEffect` on mobs, items and rooms (not the permanent properties), for
   the thing, its room and an item's owner, only when some script has it.
+- ST27 done. `DESTROY_PROG reason|words|ALL` and `DECAY_PROG` at the start of
+  `StdItem.destroy`, run at once (`eventCheck`) on the item, its room and
+  owner; $g is DECAY (an item past its expiry) or JUNKED (MPJUNK), else empty.
 
 #### 2e. Quests (15)
 

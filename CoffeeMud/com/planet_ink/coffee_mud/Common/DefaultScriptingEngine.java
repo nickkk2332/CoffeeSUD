@@ -10430,7 +10430,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(I!=null)
 					{
 						final ItemPossessor p = I.owner();
+						ScriptEvents.destroyReason("JUNKED"); // ST27
 						I.destroy();
+						ScriptEvents.destroyReason(null);
 						if(p != null)
 							p.recoverPhyStats();
 					}

@@ -1842,6 +1842,64 @@ public final class ScriptEvents
 		});
 	}
 
+	/** DESTROY_PROG's code */
+	public static final int	DESTROY_PROG	= code("DESTROY_PROG");
+	/** DECAY_PROG's code */
+	public static final int	DECAY_PROG		= code("DECAY_PROG");
+
+	private static final ThreadLocal<String>	destroyReason	= new ThreadLocal<String>();
+
+	/**
+	 * ST27: why the items destroyed on this thread go, until set again:
+	 * JUNKED, BROKEN, CONSUMED, or null.
+	 * @param why the reason
+	 */
+	public static void destroyReason(final String why)
+	{
+		if(why == null)
+			destroyReason.remove();
+		else
+			destroyReason.set(why);
+	}
+
+	/**
+	 * ST27: an item is being destroyed: DESTROY_PROG reason|ALL and, for rot
+	 * and expiry, DECAY_PROG, run at once on the item, its room and its owner
+	 * (the item's scripts are gone after).  $g is DECAY, BROKEN, CONSUMED,
+	 * JUNKED or "".
+	 * @param I the item
+	 */
+	public static void destroyed(final Item I)
+	{
+		if((I == null) || ((!isUsed(DESTROY_PROG)) && (!isUsed(DECAY_PROG))))
+			return;
+		final Room R = CMLib.map().roomLocation(I);
+		if(R == null)
+			return;
+		String why = destroyReason.get();
+		if((why == null) && (I.expirationDate() != 0) && (GameTime.now() > I.expirationDate()))
+			why = "DECAY";
+		final String reason = (why == null) ? "" : why;
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		hosts.add(I);
+		hosts.add(R);
+		if((I.owner() instanceof MOB) && (!hosts.contains(I.owner())))
+			hosts.add((MOB)I.owner());
+		final MOB src = standIn("the world");
+		for(final PhysicalAgent host : hosts)
+		{
+			for(final ScriptingEngine S : engines(host))
+			{
+				S.eventCheck(host, DESTROY_PROG, src, I, I, reason, null, "Cr", t -> {
+					final String w = (t.length > 1) ? t[1].trim() : "";
+					return (w.length() == 0) || w.equalsIgnoreCase("ALL") || w.equalsIgnoreCase(reason) || CMLib.english().containsString(I.name(), w);
+				});
+				if(reason.equals("DECAY"))
+					S.eventCheck(host, DECAY_PROG, src, I, I, reason, null, "C", t -> true);
+			}
+		}
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

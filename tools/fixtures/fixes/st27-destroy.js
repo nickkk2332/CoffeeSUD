@@ -1,0 +1,28 @@
+// ST27: DESTROY_PROG and DECAY_PROG, run at once as the item goes.
+FIXFILE = "st27-destroy";
+var R = M.location();
+["FIXST27D", "FIXST27Y", "FIXST27J"].forEach(clearVar);
+var V = CMClass.getItem("GenItem");
+V.setName("a fixst27 vase");
+R.addItem(V);
+scriptOn(V, "DESTROY_PROG ALL\nmpsetvar FIXTEST FIXST27D $G:$i\n~\n");
+V.destroy();
+check("destroy", gvar("FIXST27D") == ":a fixst27 vase", "FIXST27D='" + gvar("FIXST27D") + "'");
+var SR = scriptOn(R, "DECAY_PROG\nmpsetvar FIXTEST FIXST27Y yes\n~\n");
+var F = CMClass.getItem("GenItem");
+F.setName("a fixst27 apple");
+R.addItem(F);
+F.setExpirationDate(CM.core.GameTime.now() - 1000);
+F.destroy();
+check("decay", gvar("FIXST27Y") == "yes", "FIXST27Y='" + gvar("FIXST27Y") + "'");
+R.delScript(SR);
+var J = scriptedMob("a fixst27 junker", "RAND_PROG 100\nmpjunk fixst27 cup\n~\n");
+var C = CMClass.getItem("GenItem");
+C.setName("a fixst27 cup");
+J.addItem(C);
+scriptOn(C, "DESTROY_PROG JUNKED\nmpsetvar FIXTEST FIXST27J $G\n~\n");
+tickMob(J);
+runQueued(J.scripts().nextElement());
+check("junked", gvar("FIXST27J") == "JUNKED" && C.amDestroyed(), "FIXST27J='" + gvar("FIXST27J") + "', gone " + C.amDestroyed());
+J.destroy();
+done();

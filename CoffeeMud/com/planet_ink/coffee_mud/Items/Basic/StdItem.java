@@ -1772,6 +1772,9 @@ public class StdItem implements Item
 	{
 		if((phyStats().sensesMask()&PhyStats.SENSE_UNDESTROYABLE)>0)
 			return;
+		// ST27: DESTROY_PROG and DECAY_PROG, at once, while the item and its scripts are still here
+		if(!destroyed)
+			ScriptEvents.destroyed(this);
 		myContainer=null;
 		CMLib.map().registerWorldObjectDestroyed(null,null,this);
 		try
