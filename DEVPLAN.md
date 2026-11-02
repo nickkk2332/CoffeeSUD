@@ -2206,6 +2206,15 @@ I22, I23, I24, I25, I26, I27
   VerbTaker. core/JournalSeeds fills an empty GenBook or board from
   world/journals/NAME.txt (=== subject ===, AUTHOR:) the first time it is
   read in a run.
+- I4 done. Prop_When (rooms, areas, exits, items, mobs) ticks on its
+  own (TICKID_PROPERTY_SPECIAL from setAffectedOne). PROPS (semicolons
+  outside brackets and quotes; each an ability or a behaviour, CMClass
+  tried in that order) or ID/PARMS; WHEN on CHECK's subjects; EVERY;
+  CHANCE; COOLDOWN (ticks, or nH from the game hour's length; COOLLEFT=
+  kept in the text); ONCE=CHAR (a tattoo), PROFILE (an account tattoo),
+  WORLD (SPENT=true in the text); ONSTART/ONEND actions; ELSEMSG on an
+  ENTER while off. What it adds is not savable (it adds them again after
+  a load). N1's WHEN= on behaviours stays as it was.
 
 #### 2i. World systems (25)
 

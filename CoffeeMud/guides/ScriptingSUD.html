@@ -597,6 +597,9 @@ Ost"&gt;...&lt;/PAGE&gt;</code>, or <code>FILE=world/texts/ost.txt</code> with a
 each. READ BOOK lists them, READ 7 BOOK and READ NEXT BOOK turn the pages, <code>READ_PROG PAGE 7</code> fires
 for page 7, and TEAR PAGE 7 FROM BOOK makes a page to hide in the tower. An empty GenBook or board is filled
 from <code>world/journals/[name].txt</code>.</p>
+<p>Only when: <code>Prop_When WHEN="-IF ISMOON(FULL)" PROPS="RandomMonsters(catalog:werewolf;3;5);Emoter(min=5
+max=10 howls)"</code> on Darkwood brings the werewolves and the howling with the full moon, and takes them away
+after. A fairy ring: <code>CHECK=ROOMPLAYERS COOLDOWN=24H PROPS="Prop_Transporter(Feywild#1)"</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
