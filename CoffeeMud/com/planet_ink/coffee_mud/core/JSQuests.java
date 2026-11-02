@@ -354,6 +354,8 @@ public final class JSQuests
 				return "none";
 			if(Q.running())
 				return Q.stopping() ? "stopping" : "running";
+			if("true".equals(Q.getStat("FINISHED"))) // Q1
+				return "finished";
 			return Q.waiting() ? "waiting" : "stopped";
 		}
 

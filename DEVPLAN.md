@@ -1446,6 +1446,19 @@ JS17, JS18, JS19, JS20, JS23
 
 Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
 
+- Q1 done. A quest with no WAIT, INTERVAL or DATE is no longer deleted
+  when it stops (`DefaultQuest.enterDormantState`): it stays listed,
+  FINISHED once it has run, with its winners and variables, and the save
+  keeps it so (`<FINISHED>` in world.xml's quests); only DESTROY QUEST
+  takes it away. Copies (generated and spell quests) still go. `SET
+  RESTART ALWAYS` (as before: it may be started again), `NEVER` (it does
+  not start again) or a game time (it starts again by itself that long
+  after, and not before); `SET ENDONWIN TRUE` (a win stops it, with its
+  cleanup); `SET AUTOSTART BOOT` (once, a tick after the game begins, then
+  finished). `MODIFY QUEST x REOPEN` makes a finished quest one that has
+  not run. LIST QUESTS, QUESTINFO and the JavaScript quests helper say
+  finished.
+
 #### 2f. NPC behaviour and dialogue (21)
 
 N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N15, N16, N17, N20, N21,

@@ -2749,6 +2749,9 @@ public class ListCmd extends StdCommand
 					if(Q.suspended())
 						buf.append(L("disabled"));
 					else
+					if("true".equals(Q.getStat("FINISHED"))) // Q1
+						buf.append(Q.waiting()?L("finished (starts again in @x1 ticks)",""+Q.waitRemaining()):L("finished"));
+					else
 					if(Q.waiting())
 					{
 						long min=Q.waitRemaining();

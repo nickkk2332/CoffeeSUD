@@ -2485,6 +2485,8 @@ public final class WorldState
 			str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(Q.name())));
 			str.append(xml.convertXMLtoTag("WINNERS", xml.parseOutAngleBrackets(Q.getWinnerStr())));
 			str.append(xml.convertXMLtoTag("RUNNING", Q.running()));
+			if("true".equals(Q.getStat("FINISHED"))) // Q1
+				str.append(xml.convertXMLtoTag("FINISHED", true));
 			final Map<String, String> qvars = Q.getQuestVars();
 			if(qvars.size() > 0)
 			{
@@ -2573,12 +2575,18 @@ public final class WorldState
 			{
 				if(Q.running())
 					Q.stopQuest();
+				// Q1: finished as it was saved, or no longer
+				final boolean finished = tag.getBoolFromPieces("FINISHED", false);
+				if(finished || "true".equals(Q.getStat("FINISHED")))
+					Q.setStat("FINISHED", Boolean.toString(finished));
 				final XMLTag wait = tag.getPieceFromPieces("WAIT");
 				if(wait != null)
 					Q.setWaitRemaining(CMath.s_int(wait.value()));
 				setQuestVars(Q, tag);
 				continue;
 			}
+			if("true".equals(Q.getStat("FINISHED"))) // Q1: it was running then
+				Q.setStat("FINISHED", "false");
 			if(!Q.running())
 				Q.startQuest();
 			if(!Q.running())

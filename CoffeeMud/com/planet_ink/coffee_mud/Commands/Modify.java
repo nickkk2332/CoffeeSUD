@@ -1324,10 +1324,10 @@ public class Modify extends StdCommand
 	}
 
 	/** the verbs that test a quest: MODIFY QUEST name VERB ... */
-	protected static final String[] QUEST_TEST_VERBS={"STEP","WIN","UNWIN","RESETWINNERS","VAR","RELOAD"};
+	protected static final String[] QUEST_TEST_VERBS={"STEP","WIN","UNWIN","RESETWINNERS","VAR","RELOAD","REOPEN"};
 
 	/**
-	 * MODIFY QUEST name STEP n, WIN char, UNWIN char, RESETWINNERS, VAR name
+	 * MODIFY QUEST name STEP n, WIN char, UNWIN char, RESETWINNERS, REOPEN, VAR name
 	 * value or RELOAD, for testing a quest.
 	 * @return true if the words were one of these, done or refused
 	 */
@@ -1406,6 +1406,18 @@ public class Modify extends StdCommand
 			{
 				winners.remove(found);
 				mob.tell(L("@x1 no longer has won quest '@x2'.",found,Q.name()));
+			}
+		}
+		else
+		if(verb.equals("REOPEN"))
+		{
+			// Q1: a finished quest, as one that has not run
+			if(!"true".equals(Q.getStat("FINISHED")))
+				mob.tell(L("Quest '@x1' is not finished.",Q.name()));
+			else
+			{
+				Q.setStat("FINISHED","false");
+				mob.tell(L("Quest '@x1' is no longer finished: it may start again.",Q.name()));
 			}
 		}
 		else

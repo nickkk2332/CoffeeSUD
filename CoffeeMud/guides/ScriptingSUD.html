@@ -25,6 +25,7 @@ In the game, <code>HELP SCRIPTABLE</code> has the whole list, and
 <li><a href="#reference">Quick reference</a></li>
 <li><a href="#cookbook">Cookbook</a></li>
 <li><a href="#cmdfail">cmdfail_prog</a></li>
+<li><a href="#quests">Quests</a></li>
 <li><a href="#found">Less known</a></li>
 <li><a href="JavaScriptSUD.html">JavaScript</a></li>
 </ul>
@@ -194,6 +195,33 @@ return cancel
 <p>On the altar's room, <code>pray at altar</code> now does something. For a
 verb that always works, whatever follows it, VERB_PROG (with LIST VERBS) is
 the other way.</p>
+
+<h2><a name="quests">Quests</a></h2>
+<p>A quest with no <code>SET WAIT</code>, <code>INTERVAL</code> or
+<code>DATE</code>, such as a story quest that a script starts with
+MPSTARTQUEST, is kept when it stops: it is FINISHED, with its winners, so
+QUESTWINNER, +QUESTWIN and QUESTS WON still know it, and so does the save.
+Only DESTROY QUEST takes it away.</p>
+<ul>
+<li><code>SET RESTART ALWAYS</code> (the default) lets it be started again;
+<code>SET RESTART NEVER</code> keeps it finished; <code>SET RESTART 1
+MUDDAY</code> starts it again by itself a game day after it finished, and not
+before.</li>
+<li><code>SET ENDONWIN TRUE</code>: MPQUESTWIN ends the quest, which takes
+away the mobs and items it loaded.</li>
+<li><code>SET AUTOSTART BOOT</code>: it starts once, as the game begins.</li>
+<li><code>MODIFY QUEST bell REOPEN</code>, for testing, makes a finished quest
+one that has not run.</li>
+</ul>
+<pre>
+set name bell
+set display The Drowned Bell
+set duration 0
+set autostart boot
+set restart never
+set endonwin true
+...
+</pre>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

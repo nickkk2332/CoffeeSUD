@@ -81,6 +81,20 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected QuestState questState			= new QuestState();
 	protected boolean	copy				= false;
 	protected int[]		resetData			= null;
+	/** Q1: it ran and stopped, and is not waiting to start on its schedule */
+	protected boolean finished = false;
+	/** Q1: it has run, since the game began or the save it came from was made */
+	protected boolean ranOnce = false;
+	/** Q1: AUTOSTART BOOT has started it in this game */
+	protected boolean bootStarted = false;
+	/** Q1: SET RESTART: "" (as ALWAYS), ALWAYS, NEVER, or a game time */
+	protected String restart = "";
+	/** Q1: SET RESTART's game time, in ticks, or -1 */
+	protected int restartTicks = -1;
+	/** Q1: SET ENDONWIN TRUE: a win stops the quest */
+	protected boolean endOnWin = false;
+	/** Q1: SET AUTOSTART BOOT: it starts once, as the game begins */
+	protected boolean autoStartBoot = false;
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -499,6 +513,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		rawScriptParameter=parm;
 		jsFile=""; // JS18
 		jsQuest="";
+		restart=""; // Q1
+		restartTicks=-1;
+		endOnWin=false;
+		autoStartBoot=false;
 		name="";
 		author="";
 		displayName="";
@@ -572,6 +590,85 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			CMLib.threads().startTickDown(this,Tickable.TICKID_QUEST,1);
 	}
 
+	/**
+	 * Q1: SET RESTART NEVER, ALWAYS, or a game time after which a finished
+	 * quest starts again by itself.
+	 * @param val the setting
+	 */
+	protected void setRestart(final String val)
+	{
+		restartTicks=-1;
+		final String v=val.toUpperCase().trim();
+		if(v.equals("NEVER")||v.equals("ALWAYS")||(v.length()==0))
+			restart=v;
+		else
+		{
+			try
+			{
+				restartTicks=CMLib.time().parseTickExpression(getQuestClock(), val);
+			}
+			catch(final CMException e)
+			{
+				Log.errOut(name(),"SET RESTART: "+e.getMessage());
+				restartTicks=-1;
+			}
+			restart=(restartTicks>0)?val.trim():"";
+			if(restartTicks<=0)
+				restartTicks=-1;
+		}
+	}
+
+	/**
+	 * Q1: marks the quest finished, as a save has it, or not (MODIFY QUEST
+	 * REOPEN): then it is as one that has not run, and AUTOSTART BOOT or its
+	 * schedule start it again.
+	 * @param truefalse true for finished
+	 */
+	protected void setFinished(final boolean truefalse)
+	{
+		if(isCopy()||running())
+			return;
+		if(truefalse)
+		{
+			finished=true;
+			ranOnce=true;
+			bootStarted=true;
+			if(restart.equalsIgnoreCase("NEVER"))
+			{
+				waitRemaining=-1;
+				CMLib.threads().deleteTick(this,Tickable.TICKID_QUEST);
+			}
+			else
+			if(restartTicks>0)
+			{
+				waitRemaining=restartTicks;
+				if(!CMLib.threads().isTicking(this,Tickable.TICKID_QUEST))
+					CMLib.threads().startTickDown(this,Tickable.TICKID_QUEST,1);
+			}
+			else
+			if(resetWaitRemaining(0))
+			{
+				// it has a schedule now: it waits on it, not finished
+				finished=false;
+				if(!CMLib.threads().isTicking(this,Tickable.TICKID_QUEST))
+					CMLib.threads().startTickDown(this,Tickable.TICKID_QUEST,1);
+			}
+			else
+			{
+				waitRemaining=-1;
+				CMLib.threads().deleteTick(this,Tickable.TICKID_QUEST);
+			}
+		}
+		else
+		{
+			finished=false;
+			ranOnce=false;
+			bootStarted=false;
+			waitRemaining=-1;
+			autostartup();
+		}
+	}
+
 	@Override
 	public void setVars(final List<?> script, final int startAtLine)
 	{
@@ -587,6 +684,15 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				var=parsedLine.get(1).toUpperCase();
 				if(var.equals("JSFILE")) // JS18: the quest's JavaScript handlers
 					jsFile=CMParms.combine(parsedLine,2).trim();
+				else
+				if(var.equals("RESTART")) // Q1: whether, and when, it starts again
+					setRestart(CMParms.combine(parsedLine,2).trim());
+				else
+				if(var.equals("ENDONWIN"))
+					endOnWin=CMath.s_bool(CMParms.combine(parsedLine,2).trim());
+				else
+				if(var.equals("AUTOSTART"))
+					autoStartBoot=CMParms.combine(parsedLine,2).trim().equalsIgnoreCase("BOOT");
 				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
@@ -3396,7 +3502,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						}
 					}
 					else
-					if(cmd.equals("JSFILE")) // JS18: read when the script was set
+					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")) // JS18, Q1: read when the script was set
 					{
 					}
 					else
@@ -4511,6 +4617,13 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				final String prefix = CMSecurity.isDebugging(DbgFlag.QUESTSCRIPTS)?("QuestScript#"+parseId+" "):"";
 				if(prefix.length()>0)
 					Log.debugOut("Quest",prefix+name()+" Start Internal called ("+running()+": resetting state and starting from scratch.");
+				// Q1: a finished quest starts again only as SET RESTART lets it
+				if(finished&&(!isCopy()))
+				{
+					if(restart.equalsIgnoreCase("NEVER")||((restartTicks>0)&&(waitRemaining>=0)))
+						return false;
+					finished=false;
+				}
 
 				if(running())
 				{
@@ -4630,6 +4743,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		resetData=null;
 		lastStartDateTime=GameTime.now();
 		stepEllapsedTimes.remove(script());
+		ranOnce=true; // Q1
+		finished=false;
+		if(autoStartBoot)
+			bootStarted=true;
 	}
 
 	protected void cleanQuestStep(final int preserveSkip)
@@ -5209,10 +5326,35 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	public boolean enterDormantState()
 	{
 		ticksRemaining=-1;
-		if((isCopy())||(!resetWaitRemaining(0)))
+		if(isCopy())
 		{
 			Resources.removeResource("VARSCOPE-"+name.toUpperCase().trim());
 			CMLib.quests().delQuest(this);
+			CMLib.threads().deleteTick(this,Tickable.TICKID_QUEST);
+			return false;
+		}
+		// Q1: SET RESTART NEVER, or a game time, once it has run
+		if(ranOnce&&(restart.equalsIgnoreCase("NEVER")||(restartTicks>0)))
+		{
+			finished=true;
+			if(restartTicks>0)
+			{
+				waitRemaining=restartTicks;
+				if(!CMLib.threads().isTicking(this,Tickable.TICKID_QUEST))
+					CMLib.threads().startTickDown(this,Tickable.TICKID_QUEST,1);
+				return true;
+			}
+			waitRemaining=-1;
+			CMLib.threads().deleteTick(this,Tickable.TICKID_QUEST);
+			return false;
+		}
+		if(!resetWaitRemaining(0))
+		{
+			// Q1: no schedule: kept, with its winners and variables, FINISHED
+			// once it has run; only DESTROY QUEST takes it away
+			if(ranOnce)
+				finished=true;
+			waitRemaining=-1;
 			CMLib.threads().deleteTick(this,Tickable.TICKID_QUEST);
 			return false;
 		}
@@ -5226,6 +5368,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		{
 			waitRemaining=resetData[0];
 			resetData[0]*=2;
+			return true;
+		}
+		// Q1: SET AUTOSTART BOOT: once, as the game begins
+		if(autoStartBoot&&(!bootStarted)&&(!finished)&&(!running())&&(!isCopy()))
+		{
+			waitRemaining=1;
 			return true;
 		}
 
@@ -5395,6 +5543,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if(Q instanceof DefaultQuest)
 				((DefaultQuest)Q).runWinner=name;
 			ScriptEvents.quest(this,"WIN",CMLib.players().getPlayerAllHosts(name),"");
+			// Q1: SET ENDONWIN TRUE: the win ends the quest, which cleans up
+			if(endOnWin&&running()&&(!stopping()))
+				stopQuest();
 		}
 	}
 
@@ -6096,10 +6247,19 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	{
 		final QuestState qs=questState;
 		final StringBuilder str=new StringBuilder("");
-		final String state=running()?(stopping()?"stopping":"running"):(waiting()?"waiting":"stopped");
+		final String state=running()?(stopping()?"stopping":"running"):finished?(waiting()?"finished, starts again":"finished"):(waiting()?"waiting":"stopped"); // Q1
 		str.append("Quest '").append(name()).append("'")
 		   .append(displayName().equals(name())||displayName().length()==0?"":(" ("+displayName()+")"))
 		   .append(": ").append(state).append(suspended()?", disabled":"").append("\n\r");
+		final List<String> how=new ArrayList<String>(); // Q1
+		if(restart.length()>0)
+			how.add("RESTART "+restart);
+		if(endOnWin)
+			how.add("ENDONWIN TRUE");
+		if(autoStartBoot)
+			how.add("AUTOSTART BOOT");
+		if(how.size()>0)
+			str.append("Settings: ").append(String.join(", ",how)).append("\n\r");
 		if(qs!=null)
 			str.append("Step: ").append(qs.stepNumber).append(qs.error?", stopped on an error":"").append("\n\r");
 		if(running())
@@ -6750,6 +6910,11 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			this.category = val;
 			break;
 		default:
+			if(code.toUpperCase().trim().equals("FINISHED")) // Q1: from a save, or MODIFY QUEST REOPEN
+			{
+				setFinished(CMath.s_bool(val));
+				break;
+			}
 			try
 			{
 				if((code.toUpperCase().trim().equalsIgnoreCase("REMAINING"))&&(running()))
@@ -6818,6 +6983,14 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		default:
 		{
 			code=code.toUpperCase().trim();
+			if(code.equals("FINISHED")) // Q1
+				return Boolean.toString(finished);
+			if(code.equals("RESTART"))
+				return restart;
+			if(code.equals("ENDONWIN"))
+				return Boolean.toString(endOnWin);
+			if(code.equals("AUTOSTART"))
+				return autoStartBoot?"BOOT":"";
 			if((code.equalsIgnoreCase("REMAINING"))&&(running()))
 				return ""+ticksRemaining;
 			if(questState.vars.containsKey(code) && (!questState.isStat(code)))
