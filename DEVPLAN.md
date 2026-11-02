@@ -1947,6 +1947,22 @@ C18, C19, C20, C21, C22, C23, C25
   PHASE_PROG (105, ScriptEvents.phase); PHASE() (188). RESET=FULLHEAL,
   LEAVECOMBAT, LEASH (C21's setStat ENCOUNTERRESET), NEVER; death rearms;
   run state PHASE, ROUND, FIRED.
+- C5 done. MPALARM NAME=name ticks command: its body's first line is
+  FUNCTION_PROG ALARM_NAMED_<NAME> (Telegraph.NAMED_ALARM), so S7's saved
+  queue keeps the name; one of a name replaces it; dequeResponses drops a
+  named alarm of a mob that cannot act (Telegraph.canAct: dead, asleep,
+  held, bound). MPALARMCANCEL name (all the host's engines, through
+  ScriptEvents.engines, now public), ALARM(who name) (189) the ticks left;
+  ScriptingEngine.alarmTicksLeft/cancelAlarm. SCRIPT ALARMS LIST names
+  them. MPTELEGRAPH [NAME=] ticks "warning" command [INTERRUPT= AVOID=
+  INTERRUPTMSG=]: Prop_Telegraph on the mob (a Telegraph.Effect: warning
+  each tick, LOOK trailer, interrupts on can't-act, DAMAGE>n% taken, MOVE;
+  AVOID=HIDE, COMMAND:word through the HUH message) and a named alarm
+  whose body is MPTELEGRAPH FIRE name command: it runs the command once a
+  foe not avoiding (Telegraph.foesHere), $n each. GenAbility WINDUP (37)
+  and WINDUPMSG (38), at the end of MODIFY's list: a monster's invoke puts
+  on Prop_Telegraph ABILITY= TARGET=, which uses it (Telegraph.release, so
+  it does not wind up again) when the ticks run out.
 
 #### 2h. Items, properties and puzzles (23)
 

@@ -479,6 +479,12 @@ AFFECT Prop_AbilityImmunity "WEAPONS" 3, MOVETO Crypt#9, HEAL 20%; ONDEATH: ROOM
 cracks."</code>. Each fires once a fight; no guard variables. <code>PHASE_PROG 3</code> and
 <code>PHASE($i == 3)</code> let a script join in, and <code>RESET=LEASH</code> rearms it with
 EncounterReset.</p>
+<p>Telegraphed attacks: the dragon's <code>FIGHT_PROG 25</code> runs <code>MPTELEGRAPH 2 "&lt;S-NAME&gt; rears back,
+flames gathering in &lt;S-HIS-HER&gt; throat!" MPDAMAGE $n 30 60 INTERRUPT=STUN,DAMAGE&gt;20% AVOID=COMMAND:brace</code>.
+The warning shows each tick; a party that stuns it, or hits it hard enough, stops the breath, and one who types
+BRACE behind a pillar is spared. <code>MPALARM NAME=</code> gives any alarm a name that <code>MPALARMCANCEL</code> and
+<code>ALARM($i name)</code> use; a generic ability's <code>WINDUP</code> and <code>WINDUPMSG</code> give a monster's
+custom ability a cast time.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

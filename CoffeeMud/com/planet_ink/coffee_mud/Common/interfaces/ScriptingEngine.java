@@ -749,6 +749,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"WEAKEST", //186
 		"OPPONENT", //187
 		"PHASE", //188
+		"ALARM", //189
 	};
 
 	/** String list of all valid mobprog commands */
@@ -876,6 +877,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPMENU", // 120
 		"MPAFFINITY", // 121
 		"MPTHREAT", // 122
+		"MPALARMCANCEL", // 123
+		"MPTELEGRAPH", // 124
 	};
 
 	/**
@@ -1028,6 +1031,26 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	 * @param source $n
 	 * @return what it returned, "" if nothing, or null if there is no such function
 	 */
+	/**
+	 * C5: the ticks before a named alarm (MPALARM NAME=) of this script goes off.
+	 * @param name the alarm's name
+	 * @return the ticks, or -1 if there is none
+	 */
+	public default int alarmTicksLeft(final String name)
+	{
+		return -1;
+	}
+
+	/**
+	 * C5: cancels a named alarm (MPALARM NAME=) of this script.
+	 * @param name the alarm's name
+	 * @return whether there was one
+	 */
+	public default boolean cancelAlarm(final String name)
+	{
+		return false;
+	}
+
 	public default String callFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
 	{
 		return null;

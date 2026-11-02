@@ -9595,6 +9595,11 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,L("The parameters for this field are LIKE the parameters for this property:\n\r\n\r@x1",CMLib.help().getHelpText("Prop_HereSpellCast",mob,true).toString()),++showNumber,showFlag,L("Extra castings"),"POSTCASTABILITY",true);
 			promptStatStr(mob,me,L("Enter a damage or healing formula. Use +-*/()?. @x1 Formula evaluates >0 for damage, <0 for healing. Requires Can Target!",varHelp),++showNumber,showFlag,L("Damage/Healing Formula"),"POSTCASTDAMAGE",true);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
+			if(Arrays.asList(me.getStatCodes()).contains("WINDUP"))
+			{
+				promptStatInt(mob,me,++showNumber,showFlag,L("Windup ticks, for monsters (0=NO)"),"WINDUP"); // C5
+				promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Windup warning"),"WINDUPMSG",true);
+			}
 
 			if (showFlag < -900)
 			{

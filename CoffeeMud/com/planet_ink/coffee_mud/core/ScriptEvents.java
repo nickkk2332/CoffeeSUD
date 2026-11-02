@@ -799,7 +799,11 @@ public final class ScriptEvents
 		return ((n % every) == 0) && ((mask.length() == 0) || CMLib.masking().maskCheck(mask, leader, true));
 	}
 
-	private static List<ScriptingEngine> engines(final PhysicalAgent host)
+	/**
+	 * @param host a scripted thing
+	 * @return its scripts: those it has and its behaviours that are scripts
+	 */
+	public static List<ScriptingEngine> engines(final PhysicalAgent host)
 	{
 		final List<ScriptingEngine> list = new ArrayList<ScriptingEngine>();
 		if((host == null) || host.amDestroyed())

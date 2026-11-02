@@ -14593,8 +14593,21 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			{
 				if(tt==null)
 					tt=parseBits(ctx,"Ccp");
-				final String time=varify(ctx,tt[1]);
-				final String parms=tt[2].trim();
+				String time=varify(ctx,tt[1]);
+				String parms=tt[2].trim();
+				String alarmName=null;
+				if(time.toUpperCase().startsWith("NAME=")) // C5: MPALARM NAME=name ticks command
+				{
+					alarmName=time.substring(5).trim().toUpperCase();
+					final int sp=parms.indexOf(' ');
+					time=varify(ctx,(sp<0)?parms:parms.substring(0,sp));
+					parms=(sp<0)?"":parms.substring(sp+1).trim();
+					if(alarmName.length()==0)
+					{
+						logError(ctx,"MPALARM","Syntax","No name after NAME=");
+						break;
+					}
+				}
 				if(CMath.s_int(time.trim())<=0)
 				{
 					logError(ctx,"MPALARM","Syntax","Bad time "+time);
@@ -14606,7 +14619,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					break;
 				}
 				final SubScript vscript=new SubScriptImpl(script);
-				vscript.add(new ScriptLn("FUNCTION_PROG ALARM_"+time+Math.random(),null,null));
+				if(alarmName!=null)
+				{
+					cancelAlarm(alarmName); // one of a name: a new one replaces it
+					vscript.add(new ScriptLn(Telegraph.NAMED_ALARM+alarmName,null,null));
+				}
+				else
+					vscript.add(new ScriptLn("FUNCTION_PROG ALARM_"+time+Math.random(),null,null));
 				vscript.add(new ScriptLn(parms,null,null));
 				prequeResponse(-1,ctx,vscript,CMath.s_int(time.trim()));
 				break;
@@ -15897,6 +15916,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "ALARM": // C5: ALARM(who name): the ticks before its named alarm goes off, 0 for none
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final String an=varify(ctx,CMParms.getCleanBit(parms,1)).trim();
+			if(!(W instanceof PhysicalAgent)||(an.length()==0))
+				return "0";
+			return ""+Math.max(0,Telegraph.ticksLeft((PhysicalAgent)W,an));
+		}
 		case "THREAT": // C18: THREAT(npc who): their threat to it
 		{
 			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16294,6 +16321,96 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPALARMCANCEL": // C5: MPALARMCANCEL name: a named alarm (MPALARM NAME=) goes, from all the host's scripts
+		{
+			final String name=varify(ctx,CMParms.getCleanBit(line,1)).trim();
+			if(name.length()==0)
+			{
+				logError(ctx,"MPALARMCANCEL","Syntax","MPALARMCANCEL name: "+line);
+				return null;
+			}
+			cancelAlarm(name);
+			Telegraph.cancel(ctx.scripted,name);
+			if(ctx.scripted instanceof MOB)
+			{
+				final Telegraph.Effect T=Telegraph.find((MOB)ctx.scripted,name);
+				if(T!=null)
+					T.telegraphDone();
+			}
+			return null;
+		}
+		case "MPTELEGRAPH": // C5: MPTELEGRAPH [NAME=name] ticks "warning" command [INTERRUPT=..] [AVOID=..] [INTERRUPTMSG=".."]
+		{
+			String rest=line.trim();
+			rest=(rest.indexOf(' ')<0)?"":rest.substring(rest.indexOf(' ')+1).trim();
+			if(rest.toUpperCase().startsWith("FIRE "))
+			{
+				// its alarm going off: MPTELEGRAPH FIRE name command
+				rest=rest.substring(5).trim();
+				final int sp=rest.indexOf(' ');
+				if(sp>0)
+					telegraphHit(ctx,rest.substring(0,sp).trim(),rest.substring(sp+1).trim());
+				return null;
+			}
+			final MOB mob=(ctx.scripted instanceof MOB)?(MOB)ctx.scripted:null;
+			if((mob==null)||(mob.location()==null))
+			{
+				logError(ctx,"MPTELEGRAPH","RunTime","only a mob in a room can wind up an attack: "+line);
+				return null;
+			}
+			final StringBuilder opts=new StringBuilder("");
+			final java.util.regex.Pattern opt=java.util.regex.Pattern.compile("(?i)\\s(INTERRUPT|AVOID|INTERRUPTMSG)=(\"[^\"]*\"|\\S+)\\s*$");
+			for(java.util.regex.Matcher m=opt.matcher(rest);m.find();m=opt.matcher(rest))
+			{
+				opts.append(' ').append(m.group(1).toUpperCase()).append('=').append(m.group(2));
+				rest=rest.substring(0,m.start()).trim();
+			}
+			String name="TELEGRAPH";
+			if(rest.toUpperCase().startsWith("NAME="))
+			{
+				final int sp=rest.indexOf(' ');
+				name=((sp<0)?rest.substring(5):rest.substring(5,sp)).trim().toUpperCase();
+				rest=(sp<0)?"":rest.substring(sp+1).trim();
+			}
+			final int sp=rest.indexOf(' ');
+			final int ticks=CMath.s_int(varify(ctx,(sp<0)?rest:rest.substring(0,sp)).trim());
+			rest=(sp<0)?"":rest.substring(sp+1).trim();
+			String warning;
+			if(rest.startsWith("\""))
+			{
+				final int q=rest.indexOf('"',1);
+				warning=(q<0)?rest.substring(1):rest.substring(1,q);
+				rest=(q<0)?"":rest.substring(q+1).trim();
+			}
+			else
+			{
+				final int sp2=rest.indexOf(' ');
+				warning=(sp2<0)?rest:rest.substring(0,sp2);
+				rest=(sp2<0)?"":rest.substring(sp2+1).trim();
+			}
+			if((ticks<=0)||(rest.length()==0)||(name.length()==0))
+			{
+				logError(ctx,"MPTELEGRAPH","Syntax","MPTELEGRAPH [NAME=name] ticks \"warning\" command [INTERRUPT=..] [AVOID=..]: "+line);
+				return null;
+			}
+			warning=varify(ctx,warning);
+			final Telegraph.Effect old=Telegraph.find(mob,name);
+			if(old!=null)
+				old.telegraphDone();
+			final Ability A=CMClass.getAbility("Prop_Telegraph");
+			if(A==null)
+				return null;
+			A.setMiscText("NAME="+name+" TICKS="+ticks+" WARNING=\""+warning.replace("\"","\\\"")+"\""+opts);
+			mob.addEffect(A);
+			if(A instanceof Telegraph.Effect)
+				((Telegraph.Effect)A).telegraphWarn();
+			Telegraph.cancel(mob,name);
+			final SubScript vscript=new SubScriptImpl(ctx.script);
+			vscript.add(new ScriptLn(Telegraph.NAMED_ALARM+name,null,null));
+			vscript.add(new ScriptLn("MPTELEGRAPH FIRE "+name+" "+rest,null,null));
+			prequeResponse(-1,ctx,vscript,ticks);
 			return null;
 		}
 		case "MPTHREAT": // C18: MPTHREAT npc who +n|-n|=n|*x: their threat to it
@@ -19356,6 +19473,80 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/**
+	 * C5: the name of a named alarm (MPALARM NAME=), or null.
+	 * @param SB something queued
+	 * @return its name, or null
+	 */
+	protected static String alarmNameOf(final ScriptableResponse SB)
+	{
+		if((SB==null)||(SB.triggerCode>=0)||(SB.scr==null)||(SB.scr.size()==0)||(SB.scr.get(0)==null))
+			return null;
+		final String first=SB.scr.get(0).first;
+		if((first==null)||(!first.startsWith(Telegraph.NAMED_ALARM)))
+			return null;
+		return first.substring(Telegraph.NAMED_ALARM.length()).trim();
+	}
+
+	@Override
+	public int alarmTicksLeft(final String name)
+	{
+		for(final ScriptableResponse SB : new XVector<ScriptableResponse>(que))
+		{
+			final String n=alarmNameOf(SB);
+			if((n!=null)&&n.equalsIgnoreCase(name.trim()))
+				return Math.max(0,SB.tickDelay);
+		}
+		return -1;
+	}
+
+	@Override
+	public boolean cancelAlarm(final String name)
+	{
+		boolean any=false;
+		for(final ScriptableResponse SB : new XVector<ScriptableResponse>(que))
+		{
+			final String n=alarmNameOf(SB);
+			if((n!=null)&&n.equalsIgnoreCase(name.trim()))
+			{
+				que.remove(SB);
+				any=true;
+			}
+		}
+		return any;
+	}
+
+	/**
+	 * C5: a telegraph's end: its command, once for each of those it hits, $n
+	 * each of them.
+	 * @param ctx the alarm's context
+	 * @param name the telegraph's name
+	 * @param cmd the command
+	 */
+	protected void telegraphHit(final MPContext ctx, final String name, final String cmd)
+	{
+		if(!(ctx.scripted instanceof MOB))
+			return;
+		final MOB mob=(MOB)ctx.scripted;
+		final Telegraph.Effect T=Telegraph.find(mob,name);
+		if(T==null)
+			return; // interrupted
+		final List<MOB> targets=T.telegraphTargets();
+		T.telegraphDone();
+		for(final MOB M : targets)
+		{
+			final MPContext hit=new MPContext(ctx);
+			hit.source=M;
+			hit.target=M;
+			final SubScript s=new SubScriptImpl(ctx.script);
+			s.add(new ScriptLn("FUNCTION_PROG TELEGRAPH_"+name,null,null));
+			s.add(new ScriptLn(cmd,null,null));
+			hit.script=s;
+			hit.line=1;
+			execute(hit);
+		}
+	}
+
 	public void prequeResponse(final int triggerCode, final MPContext ctx, final SubScript script, final int ticks)
 	{
 		if(!CMProps.isState(CMProps.HostState.RUNNING))
@@ -19382,6 +19573,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				try
 				{
 					SB=que.get(q);
+					if((SB != null)&&(alarmNameOf(SB)!=null)
+					&&(SB.ctx!=null)&&(SB.ctx.scripted instanceof MOB)
+					&&(!Telegraph.canAct((MOB)SB.ctx.scripted)))
+					{
+						que.remove(SB); // C5: a named alarm of one dead, stunned or knocked out
+						continue;
+					}
 					if((SB != null)
 					&& (SB.checkTimeToExecute()))
 					{
@@ -19802,7 +20000,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		for(final ScriptableResponse SB : new XVector<ScriptableResponse>(que))
 		{
 			final int code=SB.triggerCode;
-			final String name=(code<0)?"MPALARM":((code>0)&&(code<=progs.length))?progs[code-1]:("#"+code);
+			final String an=alarmNameOf(SB); // C5
+			final String name=(code<0)?((an!=null)?("MPALARM "+an):"MPALARM"):((code>0)&&(code<=progs.length))?progs[code-1]:("#"+code);
 			final StringBuilder line=new StringBuilder(name).append(" in ").append(Math.max(0,SB.tickDelay)).append(" ticks");
 			if((SB.ctx!=null)&&(SB.ctx.source!=null))
 				line.append(", for ").append(SB.ctx.source.Name());

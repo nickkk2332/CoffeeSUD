@@ -83,8 +83,10 @@ public class GenAbility extends StdAbility
 	private static final int V_MOKT=32;//S
 	private static final int V_TMSF=33;//S
 	private static final int V_NARG=34;//I
+	private static final int V_WIND=35;//I C5: windup ticks
+	private static final int V_WMSG=36;//S C5: windup warning
 
-	private static final int NUM_VS=35;//S
+	private static final int NUM_VS=37;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -124,6 +126,8 @@ public class GenAbility extends StdAbility
 		O[V_MOKT]="";
 		O[V_TMSF]="";
 		O[V_NARG]=Integer.valueOf(0);
+		O[V_WIND]=Integer.valueOf(0);
+		O[V_WMSG]="";
 		return O;
 	}
 
@@ -504,6 +508,27 @@ public class GenAbility extends StdAbility
 			else
 				mob.tell(L("The target is invalid: @x1",CMLib.masking().maskDesc((String)V(ID,V_TMSK))));
 			return false;
+		}
+
+		// C5: a monster winds it up first: a warning each tick, then the ability itself (Prop_Telegraph)
+		final int windup=((Integer)V(ID,V_WIND)).intValue();
+		if((windup>0)&&(!auto)&&mob.isMonster()&&(!Telegraph.releasing())&&(mob.location()!=null))
+		{
+			if(Telegraph.find(mob,"WINDUP")!=null)
+				return false; // already winding one up
+			final Ability W=CMClass.getAbility("Prop_Telegraph");
+			if(W instanceof Telegraph.Effect)
+			{
+				String warn=(String)V(ID,V_WMSG);
+				if(warn.trim().length()==0)
+					warn=L("<S-NAME> begin(s) to gather power!");
+				W.setMiscText("NAME=WINDUP TICKS="+windup+" ABILITY="+ID()
+					+((target instanceof MOB)?(" TARGET=\""+target.Name().replace("\"","")+"\""):"")
+					+" WARNING=\""+warn.replace("\"","\\\"")+"\"");
+				mob.addEffect(W);
+				((Telegraph.Effect)W).telegraphWarn();
+				return true;
+			}
 		}
 
 		int armorCheck=0;
@@ -1102,7 +1127,9 @@ public class GenAbility extends StdAbility
 										 "MOCKABILITY", //33A
 										 "MOCKABLETEXT", //34S
 										 "TARGETFAILMSG", //35S
-										 "NUMARGS"//36I
+										 "NUMARGS",//36I
+										 "WINDUP",//37I C5
+										 "WINDUPMSG"//38S C5
 										};
 
 	@Override
@@ -1201,6 +1228,10 @@ public class GenAbility extends StdAbility
 			return (String) V(ID, V_TMSF);
 		case 36:
 			return ((Integer) V(ID, V_NARG)).toString();
+		case 37:
+			return ((Integer) V(ID, V_WIND)).toString();
+		case 38:
+			return (String) V(ID, V_WMSG);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenAbility";
@@ -1350,6 +1381,12 @@ public class GenAbility extends StdAbility
 			break;
 		case 36:
 			SV(ID, V_NARG, Integer.valueOf(CMath.s_int(val)));
+			break;
+		case 37:
+			SV(ID, V_WIND, Integer.valueOf(Math.max(0, CMath.s_int(val))));
+			break;
+		case 38:
+			SV(ID, V_WMSG, val);
 			break;
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenAbility"))
