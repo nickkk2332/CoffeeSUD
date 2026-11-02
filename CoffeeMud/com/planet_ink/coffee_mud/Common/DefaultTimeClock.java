@@ -373,8 +373,15 @@ public class DefaultTimeClock implements TimeClock
 				timeDesc.append(L("\n\rThe dust obscures the moon."));
 				break;
 			default:
-				timeDesc.append("\n\r"+getMoonPhase(room).getDesc()); // whats to localize?
+			{
+				final String moon=SkyText.line(room,null,"MOON"); // W13: Prop_SkyText's MOON=
+				if(moon==null)
+					timeDesc.append("\n\r"+getMoonPhase(room).getDesc()); // whats to localize?
+				else
+				if(moon.length()>0)
+					timeDesc.append("\n\r"+moon);
 				break;
+			}
 			}
 		}
 		return timeDesc.toString();
@@ -759,13 +766,15 @@ public class DefaultTimeClock implements TimeClock
 									&&(!CMLib.flags().isSleeping(mob))
 									&&(CMLib.flags().canSee(mob)))
 									{
-										final String message = CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_OUTSIDE, getTODCode().ordinal());
+										final String own = SkyText.tod(R, true, getTODCode()); // W13: Prop_SkyText's own
+										final String message = (own != null) ? own : CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_OUTSIDE, getTODCode().ordinal());
 										if(message.trim().length()>0)
 											mob.tell(message);
 									}
 									else
 									{
-										final String message = CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_INSIDE, getTODCode().ordinal());
+										final String own = SkyText.tod(R, false, getTODCode()); // W13
+										final String message = (own != null) ? own : CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_INSIDE, getTODCode().ordinal());
 										if(message.trim().length()>0)
 											mob.tell(message);
 									}

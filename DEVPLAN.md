@@ -2381,6 +2381,15 @@ W18, W19, W20, W21, W22, W23, W28, W29
   (so in the .cmare), and child areas inherit it (`core/ClimateProfiles`,
   in `DefaultClimate.weatherChances`, the tick and the texts). A missing
   file or a bad line is logged; WEATHER FORECAST names the climate.
+- W13 done. `Prop_SkyText` on an area or a room (core/SkyText): `DAWN=`,
+  `DAY=`, `DUSK=` and `NIGHT=` under the sky, `INDAWN=` to `INNIGHT=`
+  indoors, `WEATHER_<STATE>=` (the weather's description as it starts and
+  as LOOK and WEATHER tell it), `STOP_<STATE>=` (its ending line) and
+  `MOON=` (TIME's moon line); | between alternatives, NONE for silence.
+  A room's own come first (a change of weather is told in its own words
+  there), then its area's, then the parents'; what is unset comes from the
+  climate file (W20), then lists.ini. lists.ini's sun now rises in the east
+  and sets in the west.
 
 #### 2j. Generators and random content (16)
 

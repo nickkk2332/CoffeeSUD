@@ -288,6 +288,9 @@ public class DefaultClimate implements Climate
 	{
 		if(!CMLib.map().hasASky(room))
 			return CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.WEATHER_NONE, 0);
+		final String own=SkyText.roomOnly(room,"WEATHER_"+SkyText.weatherKey(currentWeather)); // W13: the room's own
+		if(own!=null)
+			return own;
 		return getWeatherDescription(room.getArea());
 	}
 
@@ -396,6 +399,9 @@ public class DefaultClimate implements Climate
 	 */
 	protected String weatherStop(final Area A, final int weatherCode)
 	{
+		final String sky=SkyText.line(null,A,"STOP_"+SkyText.weatherKey(weatherCode)); // W13: Prop_SkyText first
+		if(sky!=null)
+			return sky;
 		final ClimateProfiles.Profile P=ClimateProfiles.of(A);
 		final String own=((P!=null)&&(weatherCode>=0)&&(weatherCode<Climate.NUM_WEATHER))?ClimateProfiles.pick(P.stops[weatherCode]):null;
 		return (own!=null)?own:getWeatherStop(weatherCode);
@@ -411,6 +417,37 @@ public class DefaultClimate implements Climate
 		return returnable;
 	}
 
+	/** W13: how the last change of weather was told: 1 its description, 2 its ending, 3 both */
+	protected int lastSayMode = 0;
+
+	/**
+	 * W13: a change of weather as a room with its own Prop_SkyText lines tells it.
+	 * @param R the room
+	 * @param oldWeather the weather that ended
+	 * @param say what the area is told
+	 * @return what this room is told
+	 */
+	protected String roomSay(final Room R, final int oldWeather, final String say)
+	{
+		final String stop=SkyText.roomOnly(R,"STOP_"+SkyText.weatherKey(oldWeather));
+		final String desc=SkyText.roomOnly(R,"WEATHER_"+SkyText.weatherKey(currentWeather));
+		if((stop==null)&&(desc==null))
+			return say;
+		final String s=(stop!=null)?stop:weatherStop(R.getArea(),oldWeather);
+		final String d=(desc!=null)?desc:getWeatherDescription(R.getArea());
+		switch(lastSayMode)
+		{
+		case 1:
+			return d;
+		case 2:
+			return s;
+		case 3:
+			return (s+" "+d).trim();
+		default:
+			return say;
+		}
+	}
+
 	protected void sayToEveryoneInArea(final Area A, final int oldWeather, final String say)
 	{
 		for(final Enumeration<Room> r=A.getProperMap();r.hasMoreElements();)
@@ -418,13 +455,16 @@ public class DefaultClimate implements Climate
 			final Room R=r.nextElement();
 			if(CMLib.map().hasASky(R))
 			{
+				final String roomSay=roomSay(R,oldWeather,say);
+				if((roomSay==null)||(roomSay.trim().length()==0))
+					continue;
 				for(int i=0;i<R.numInhabitants();i++)
 				{
 					final MOB mob=R.fetchInhabitant(i);
 					if((mob!=null)
 					&&(!mob.isMonster())
 					&&(CMLib.flags().canSee(mob)||(currentWeather!=oldWeather)))
-						mob.tell(say);
+						mob.tell(roomSay);
 				}
 			}
 		}
@@ -565,6 +605,7 @@ public class DefaultClimate implements Climate
 					say = stopWord + " " + getWeatherDescription(A);
 					break;
 				}
+				lastSayMode=sayMap[(oldWeather*Climate.NUM_WEATHER)+currentWeather]; // W13: for a room's own lines
 			}
 
 			if((say!=null)&&!CMSecurity.isDisabled(CMSecurity.DisFlag.WEATHERNOTIFIES))
@@ -595,6 +636,10 @@ public class DefaultClimate implements Climate
 		final int derivedClimate=A.getClimateType();
 		if((derivedClimate&Places.CLIMASK_VOID)>0)
 			return "";
+		// W13: the area's Prop_SkyText first
+		final String sky=SkyText.line(null,A,"WEATHER_"+SkyText.weatherKey(weather));
+		if(sky!=null)
+			return sky;
 		// W20: the area's climate's TEXT_ line, in place of lists.ini's
 		final ClimateProfiles.Profile P=ClimateProfiles.of(A);
 		final String own=(P!=null)?ClimateProfiles.pick(P.texts[weather]):null;
