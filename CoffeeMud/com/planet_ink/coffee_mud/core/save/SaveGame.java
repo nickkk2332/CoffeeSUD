@@ -519,6 +519,7 @@ public final class SaveGame
 			startAutoSaver(mob);
 		// ST6: the world's scripts, then the game's start, once
 		WorldHost.start(mob);
+		ScriptEvents.moved(mob, null, mob.location()); // ST16: into the area, from nowhere
 		final String ev = bootEvent;
 		bootEvent = null;
 		if(ev != null)

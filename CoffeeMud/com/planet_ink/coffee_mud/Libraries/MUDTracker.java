@@ -1843,6 +1843,9 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 		if(opExit!=null)
 			opExit.executeMsg(mob,leaveMsg);
 
+		// ST16: across an area's border: AREA_LEAVE_PROG, AREA_ENTER_PROG, Prop_AreaEntry
+		ScriptEvents.moved(mob,(Room)leaveMsg.target(),(Room)enterMsg.target());
+
 		if(!nolook)
 		{
 			CMLib.commands().postLook(mob,true);

@@ -1094,6 +1094,13 @@ JS17, JS18, JS19, JS20, JS23
   and END from the fight as it was at the host's last tick (a mob's own, an
   item's owner's, any in a room; END with both alive), FLEE from the FLEE
   message. As ticks go, a fight with no player in the room is not seen.
+- ST16 done, with PR4. `ScriptEvents.moved` from `MUDTracker.move` and the
+  login: when the areas differ, `AREA_LEAVE_PROG` and `AREA_ENTER_PROG`
+  ([ALL] [pct|mask]) for hosts with them in the area left or entered (ALL
+  counts a move between an area and one inside it); $g the other area, $0
+  the other room. `Prop_AreaEntry` (ENTER, FIRST, LEAVE, TITLE or SHOWNAME,
+  TEXT, DESC, ONCE, MASK, COLOR) and `Prop_AreaBanner` (the area's name and
+  description by default) tell a player. Prop_Sounder is left as it is.
 
 #### 2e. Quests (15)
 

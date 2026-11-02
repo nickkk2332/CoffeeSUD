@@ -1171,6 +1171,148 @@ public final class ScriptEvents
 		return fits && ((mask.length() == 0) || CMLib.masking().maskCheck(mask, mob, true));
 	}
 
+	/** AREA_ENTER_PROG's code */
+	public static final int	AREA_ENTER_PROG	= code("AREA_ENTER_PROG");
+	/** AREA_LEAVE_PROG's code */
+	public static final int	AREA_LEAVE_PROG	= code("AREA_LEAVE_PROG");
+
+	private static final Map<MOB, Area>	firstEntered	= new WeakHashMap<MOB, Area>();
+
+	private static boolean within(final Area A, final Area H)
+	{
+		return (A != null) && (H != null) && ((A == H) || A.getParentsRecurse().contains(H));
+	}
+
+	/**
+	 * ST16: a character went from one room to another (or came into the
+	 * world, from no room): if the areas differ, AREA_LEAVE_PROG for the hosts
+	 * of the area left and AREA_ENTER_PROG for those of the area entered
+	 * ([ALL] [pct|mask]; without ALL, a move between an area and one inside
+	 * it does not count for the outer one), and the areas' Prop_AreaEntry or
+	 * Prop_AreaBanner.  $n is the mover, $g the other area's name, $0 the
+	 * other room's ID.
+	 * @param mob the mover
+	 * @param from the room left, or null
+	 * @param to the room entered
+	 */
+	public static void moved(final MOB mob, final Room from, final Room to)
+	{
+		if((mob == null) || (to == null))
+			return;
+		final Area fromA = (from == null) ? null : from.getArea();
+		final Area toA = to.getArea();
+		if((toA == null) || (fromA == toA))
+			return;
+		final boolean firstTime;
+		synchronized(firstEntered)
+		{
+			firstTime = (firstEntered.remove(mob) == toA);
+		}
+		if(mob.playerStats() != null)
+		{
+			if(fromA != null)
+				areaText(mob, fromA, false, false);
+			areaText(mob, toA, true, firstTime);
+		}
+		if(fromA != null)
+			areaHop(AREA_LEAVE_PROG, mob, fromA, toA, to);
+		areaHop(AREA_ENTER_PROG, mob, toA, fromA, from);
+	}
+
+	private static void areaHop(final int code, final MOB mob, final Area mine, final Area other, final Room otherRoom)
+	{
+		if(!isUsed(code))
+			return;
+		final String otherName = (other == null) ? "" : other.Name();
+		final String otherID = (otherRoom == null) ? "" : CMLib.map().getExtendedRoomID(otherRoom);
+		for(final PhysicalAgent P : registered(code))
+		{
+			final Area H = (P instanceof Area) ? (Area)P : ((CMLib.map().roomLocation(P) == null) ? null : CMLib.map().roomLocation(P).getArea());
+			if(!within(mine, H))
+				continue;
+			final boolean inside = within(other, H);
+			fire(Collections.singletonList(P), code, mob, null, otherName, new Object[] { otherID }, "Cr", t -> areaMatches(t, mob, inside));
+		}
+	}
+
+	/**
+	 * Whether an AREA_ENTER_PROG or AREA_LEAVE_PROG trigger line fits.
+	 * @param t the trigger line: the trigger, then ALL, a chance or a mask
+	 * @param mob the mover
+	 * @param inside true if the other room is inside the host's area too
+	 * @return true if it fits
+	 */
+	public static boolean areaMatches(final String[] t, final MOB mob, final boolean inside)
+	{
+		String rest = (t.length > 1) ? t[1].trim() : "";
+		final boolean all = firstWord(rest, "ALL");
+		if(all)
+			rest = rest.substring(3).trim();
+		if(inside && (!all))
+			return false;
+		if(rest.length() == 0)
+			return true;
+		if(CMath.isInteger(rest))
+			return CMLib.dice().rollPercentage() <= CMath.s_int(rest);
+		return CMLib.masking().maskCheck(rest, mob, true);
+	}
+
+	/**
+	 * Prop_AreaEntry and Prop_AreaBanner (ST16, with PR4): text on coming
+	 * into an area or leaving it.  ENTER="..." FIRST="..." (the first time)
+	 * LEAVE="..." TITLE="..." (or SHOWNAME for the area's name) TEXT="..."
+	 * DESC (the area's description) ONCE (the title and text only the first
+	 * time) MASK="..." COLOR="^H".
+	 * @param mob the character
+	 * @param A the area
+	 * @param entering true coming in, false leaving
+	 * @param firstTime true if it is their first room there
+	 */
+	public static void areaText(final MOB mob, final Area A, final boolean entering, final boolean firstTime)
+	{
+		Ability P = A.fetchEffect("Prop_AreaEntry");
+		if(P == null)
+			P = A.fetchEffect("Prop_AreaBanner");
+		if(P == null)
+			return;
+		final String parms = P.text();
+		final String mask = CMParms.getParmStr(parms, "MASK", "");
+		if((mask.length() > 0) && (!CMLib.masking().maskCheck(mask, mob, true)))
+			return;
+		if(!entering)
+		{
+			final String leave = CMParms.getParmStr(parms, "LEAVE", "");
+			if(leave.length() > 0)
+				mob.tell(leave);
+			return;
+		}
+		final boolean banner = P.ID().equals("Prop_AreaBanner");
+		final boolean once = CMParms.getParmBool(parms, "ONCE", false);
+		final String color = CMParms.getParmStr(parms, "COLOR", "^H");
+		final StringBuilder str = new StringBuilder();
+		if((!once) || firstTime)
+		{
+			String title = CMParms.getParmStr(parms, "TITLE", "");
+			if((title.length() == 0) && (banner || CMParms.getParmBool(parms, "SHOWNAME", false)))
+				title = A.name().toUpperCase();
+			if(title.length() > 0)
+				str.append(color).append(title).append("^N\n\r");
+			final String text = CMParms.getParmStr(parms, "TEXT", "");
+			if(text.length() > 0)
+				str.append(text).append("\n\r");
+			if((banner || CMParms.getParmBool(parms, "DESC", false)) && (A.description().length() > 0))
+				str.append(A.description()).append("\n\r");
+		}
+		final String enter = CMParms.getParmStr(parms, "ENTER", "");
+		if(enter.length() > 0)
+			str.append(enter).append("\n\r");
+		final String first = CMParms.getParmStr(parms, "FIRST", "");
+		if(firstTime && (first.length() > 0))
+			str.append(first).append("\n\r");
+		if(str.length() > 0)
+			mob.tell(str.toString());
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */
@@ -1400,7 +1542,16 @@ public final class ScriptEvents
 	 */
 	public static void discovered(final MOB mob, final Room R, final boolean newArea)
 	{
-		if((mob == null) || (R == null) || (!isUsed(DISCOVER_PROG)))
+		if((mob == null) || (R == null))
+			return;
+		if(newArea && (R.getArea() != null))
+		{
+			synchronized(firstEntered)
+			{
+				firstEntered.put(mob, R.getArea()); // ST16: Prop_AreaEntry's FIRST and ONCE
+			}
+		}
+		if(!isUsed(DISCOVER_PROG))
 			return;
 		fire(hosts(R), DISCOVER_PROG, mob, R, CMLib.map().getExtendedRoomID(R), null, "CCr", t -> discoverMatches(t, mob, R, newArea));
 	}
