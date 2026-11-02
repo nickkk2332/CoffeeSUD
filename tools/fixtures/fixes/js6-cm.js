@@ -90,6 +90,7 @@ check("weather-set", w.set(to) && s(w.get()) == to && !w.set("snowballs"), "weat
 JE.tick();
 check("on-weather", gvar("FIXJS6W") == from + ">" + to, "FIXJS6W='" + gvar("FIXJS6W") + "'");
 check("forecast", w.setNext("clear") && s(w.next()) == "clear" && s(w.forecast()).length > 0 && s(w.describe()).length > 0, "next " + w.next());
+w.set(from); // the weather as it was, for the tests after (rain weakens fire)
 
 // the game's course: listeners, keys, refusing a save
 clearVar("FIXJS6P");
