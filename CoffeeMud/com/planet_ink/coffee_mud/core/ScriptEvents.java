@@ -1063,6 +1063,50 @@ public final class ScriptEvents
 			fire(others, triggerCode, source, target, msg, args, "@" + bits, test);
 	}
 
+	/**
+	 * Whether a CRAFT_PROG trigger line fits a thing made (ST13).
+	 * @param t the trigger line: CRAFT_PROG, the skill, the item words, RUINED or SUCCESS
+	 * @param A the skill
+	 * @param I the thing made
+	 * @return true if it fits
+	 */
+	public static boolean craftMatches(final String[] t, final Ability A, final Item I)
+	{
+		if((t.length < 3) || (!skillNamed(t[1], A)) || (!wordsName(t[2], I)))
+			return false;
+		final String how = (t.length > 3) ? t[3].trim().toUpperCase() : "";
+		final boolean ruined = I.ID().toUpperCase().indexOf("RUINED") >= 0;
+		if(how.equals("RUINED"))
+			return ruined;
+		if(how.equals("SUCCESS"))
+			return !ruined;
+		return true;
+	}
+
+	/**
+	 * Whether a RECIPE_PROG trigger line fits a recipe learned (ST13).
+	 * @param t the trigger line: RECIPE_PROG, the skill, the recipe words
+	 * @param A the skill
+	 * @param I the thing the recipe makes
+	 * @return true if it fits
+	 */
+	public static boolean recipeMatches(final String[] t, final Ability A, final Item I)
+	{
+		return (t.length > 2) && skillNamed(t[1], A) && wordsName(t[2], I);
+	}
+
+	private static boolean skillNamed(final String which, final Ability A)
+	{
+		final String w = which.trim();
+		return w.equals("*") || w.equalsIgnoreCase("ALL") || w.equalsIgnoreCase(A.ID()) || w.equalsIgnoreCase(A.Name());
+	}
+
+	private static boolean wordsName(final String words, final Item I)
+	{
+		final String w = words.trim();
+		return (w.length() == 0) || w.equals("*") || w.equalsIgnoreCase("ALL") || CMLib.english().containsString(I.name(), w);
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

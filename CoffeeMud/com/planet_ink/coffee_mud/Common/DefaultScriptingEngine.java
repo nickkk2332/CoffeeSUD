@@ -15222,6 +15222,34 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						}
 					}
 					break;
+				case 75: // craft_prog (ST13)
+					if((msg.targetMinor()==CMMsg.TYP_ITEMGENERATED)&&canTrigger(75)
+					&&(msg.target() instanceof Item)&&(msg.tool() instanceof Ability))
+					{
+						if(t==null)
+							t=parseBits(script,0,"CCcr");
+						if((t!=null)&&ScriptEvents.craftMatches(t,(Ability)msg.tool(),(Item)msg.target()))
+						{
+							enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),(Item)msg.target(),defaultItem,((Ability)msg.tool()).ID(),script,1,t);
+							if(!multiTriggers)
+								return;
+						}
+					}
+					break;
+				case 76: // recipe_prog (ST13)
+					if((msg.targetMinor()==CMMsg.TYP_RECIPELEARNED)&&canTrigger(76)
+					&&(msg.target() instanceof Item)&&(msg.tool() instanceof Ability))
+					{
+						if(t==null)
+							t=parseBits(script,0,"CCr");
+						if((t!=null)&&ScriptEvents.recipeMatches(t,(Ability)msg.tool(),(Item)msg.target()))
+						{
+							enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),(Item)msg.target(),defaultItem,((Ability)msg.tool()).ID(),script,1,t);
+							if(!multiTriggers)
+								return;
+						}
+					}
+					break;
 				case 45: // arrive_prog
 					if(((msg.targetMinor()==CMMsg.TYP_ENTER)||(msg.sourceMinor()==CMMsg.TYP_LIFE))
 					&&(msg.amISource(eventMob))

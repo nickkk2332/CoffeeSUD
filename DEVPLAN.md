@@ -1083,6 +1083,9 @@ JS17, JS18, JS19, JS20, JS23
   around the event, and @GLOBAL lines anywhere. A host with an @GLOBAL
   line on a category hears that category's messages with its other lines
   too.
+- ST13 done. `CRAFT_PROG skill|* words|ALL [RUINED|SUCCESS]` on the
+  ITEMGENERATED message (ruined is a GenRuinedItem), `RECIPE_PROG skill|*
+  words|ALL` on RECIPELEARNED; $o the thing, $g the skill's ID.
 
 #### 2e. Quests (15)
 
