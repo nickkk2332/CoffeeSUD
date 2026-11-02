@@ -1900,6 +1900,33 @@ public final class ScriptEvents
 		}
 	}
 
+	/** ACHIEVE_PROG's code */
+	public static final int	ACHIEVE_PROG	= code("ACHIEVE_PROG");
+
+	/**
+	 * ST29: an achievement was earned: ACHIEVE_PROG ID|* [mask] for every
+	 * host with the trigger.  $n is the earner, $g the achievement's ID.
+	 * @param mob the earner
+	 * @param id the achievement's ID
+	 */
+	public static void achieved(final MOB mob, final String id)
+	{
+		if((mob == null) || (id == null) || (!isUsed(ACHIEVE_PROG)))
+			return;
+		final List<PhysicalAgent> hosts = registered(ACHIEVE_PROG);
+		if(hosts.isEmpty())
+			return;
+		fire(hosts, ACHIEVE_PROG, mob, null, id, null, "Ccr", t -> {
+			if(t.length < 2)
+				return false;
+			final String w = t[1].trim();
+			if(!(w.equals("*") || w.equalsIgnoreCase("ALL") || w.equalsIgnoreCase(id)))
+				return false;
+			final String mask = (t.length > 2) ? t[2].trim() : "";
+			return (mask.length() == 0) || CMLib.masking().maskCheck(mask, mob, true);
+		});
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

@@ -9092,6 +9092,7 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 			}
 			else
 				holder.addTattoo(A.getTattoo());
+			ScriptEvents.achieved(mob, A.getTattoo()); // ST29: ACHIEVE_PROG
 			if((!CMLib.flags().isCloaked(mob))
 			&&(A.canBeSeenBy(mob)))
 			{

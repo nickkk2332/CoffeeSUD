@@ -1142,6 +1142,8 @@ JS17, JS18, JS19, JS20, JS23
 - ST27 done. `DESTROY_PROG reason|words|ALL` and `DECAY_PROG` at the start of
   `StdItem.destroy`, run at once (`eventCheck`) on the item, its room and
   owner; $g is DECAY (an item past its expiry) or JUNKED (MPJUNK), else empty.
+- ST29 done. `ACHIEVE_PROG id|* [mask]` from `giveAwards`, for every host
+  with it; $g the achievement's ID.
 
 #### 2e. Quests (15)
 
