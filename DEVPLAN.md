@@ -2014,6 +2014,14 @@ C18, C19, C20, C21, C22, C23, C25
   before it copies an item back (a factory mob in the room): WAIT resets
   the rejuv count, NEVER destroys the mob or drops the item's entry,
   REPLACE brings Encounters.make(name) there for good (a mob as resident).
+- C6 done. Prop_PartyScaler (mobs; rooms and areas hand a copy, HANDED=true,
+  to an NPC in a malicious exchange with the player's side): on its first
+  tick in combat it counts the party (its foes and their groups in the
+  room), then affectCharState scales max HP and affectPhyStats damage,
+  attack and LEVEL=AVG|MAX+n (MIN=, MAX=) by members-BASE; ADDS= name/
+  MEMBER-ABOVE-n through Encounters.spawnSpec, tagged SUMMONED, following.
+  Two ticks out of combat undo it (a handed copy goes). core/PartyScale
+  for CONSIDER: "<mob> scales to your party" (Prop_Doppleganger too).
 
 #### 2h. Items, properties and puzzles (23)
 

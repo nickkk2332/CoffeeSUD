@@ -514,6 +514,10 @@ caught by surprise and loses its first round; a party with one spots the bandits
 <p>Respawns that follow the story: <code>Prop_RejuvWhen WHEN="-IF !VAR(* OLDMILL == CLEARED)"
 ELSE="REPLACE:a settler"</code> on the mill's bandits, and <code>MPSETVAR * OLDMILL CLEARED</code> when the player
 wins "Clear the Old Mill": the bandits never return, and settlers come in their place. <code>ELSE=WAIT</code> checks again at the next rejuv; it works on items too.</p>
+<p>Fights scaled to the party: <code>Prop_PartyScaler BASE=3 HP=+25%/MEMBER DAMAGE=+10%/MEMBER
+ADDS="catalog:a skeleton guard/MEMBER-ABOVE-3"</code> on the Bone King: alone, the player meets him with half his
+hit points and no guards; a party of five finds half again his hit points and two skeleton guards. On a room or
+area every NPC that fights there scales.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

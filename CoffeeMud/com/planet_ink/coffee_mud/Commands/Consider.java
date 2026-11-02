@@ -182,6 +182,8 @@ public class Consider extends StdCommand
 			final String rankTag=MobRanks.tagOf(targetMOB); // C15: its rank
 			if(rankTag.length()>0)
 				mob.tell("^H"+targetMOB.name(mob)+" "+rankTag+"^?");
+			if(PartyScale.scales(targetMOB)) // C6
+				mob.tell(L("@x1 scales to your party.",CMStrings.capitalizeFirstLetter(targetMOB.name(mob))));
 		}
 		final StringBuffer withWhat=new StringBuffer("");
 		final Vector<Ability> mendors=new Vector<Ability>();
