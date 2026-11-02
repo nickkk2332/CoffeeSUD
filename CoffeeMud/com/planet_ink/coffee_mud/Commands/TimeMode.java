@@ -91,11 +91,13 @@ public class TimeMode extends StdCommand
 		{
 			GameTime.setTurnBased(true);
 			mob.tell(L("Time is now turn-based.  The world moves only when you do something that takes time, by as long as it takes, or when you WAIT."));
+			ScriptEvents.game("TIMEMODE",mob,"TURNS");
 		}
 		else
 		{
 			GameTime.setTurnBased(false);
 			mob.tell(L("Time now runs in real time.  PAUSE stops it."));
+			ScriptEvents.game("TIMEMODE",mob,"REALTIME");
 		}
 		return false;
 	}

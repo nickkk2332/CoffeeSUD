@@ -1029,6 +1029,22 @@ JS17, JS18, JS19, JS20, JS23
   in it, otherwise FAIL and END with EXPIRED or STOPPED; QUESTS DROP gives
   END DROPPED. $n the player or "the quest", $g the quest, $0 the detail.
   QUEST_TIME_PROG's -1 and -2 are in its help line.
+- ST6 done, with ST23, ST28 and JS4 in it. `GAME_PROG NEWGAME|RESTORE|SAVE|
+  NEWCHAR|SWITCHTO|SWITCHFROM|PAUSE|RESUME|TIMEMODE|ANY [mask]`, heard
+  anywhere: NEWGAME or RESTORE at the first login after the game starts,
+  NEWCHAR after character creation, SWITCHFROM and SWITCHTO from SWITCH,
+  PAUSE, RESUME and TIMEMODE from their commands, SAVE from `SaveGame.write`
+  before the snapshot, run at once (`eventCheck`), RETURN CANCEL refusing it.
+  `TURN_PROG [every N] [mask]` at each party turn's end in turn-based time
+  (WAIT alone too) and after a player's command that takes time in real
+  time, for hosts with it in the leader's area; the count is in the save.
+  ISTURNBASED(), ISPAUSED(), SAVESLOT(), GAMETIME() and TURNS() (ISDEV and
+  ISBUILDER were there). `core/WorldHost`: world/scripts/*.script on a hidden
+  item WORLD held by the player's room, ticked every tick. `core/WorldJS`:
+  world/js/init.js's onBoot, onNewGame, onRestore, onBeforeSave (false
+  refuses), onPlayerEnter, onSwitch and onBuilderStart; onPartyChange waits
+  for ST10, `cm` for JS6. CHARCREATIONSCRIPTS is left as it was; GAME_PROG
+  NEWCHAR does what it was for, with the character in the world.
 
 #### 2e. Quests (15)
 

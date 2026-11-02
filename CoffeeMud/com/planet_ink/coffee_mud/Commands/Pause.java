@@ -81,6 +81,7 @@ public class Pause extends StdCommand
 			{
 				GameTime.resume();
 				mob.tell(L("The world moves again."));
+				ScriptEvents.game("RESUME",mob,"");
 			}
 			else
 			if(resumeWord||cmd.equalsIgnoreCase("RESUME"))
@@ -89,6 +90,7 @@ public class Pause extends StdCommand
 			{
 				GameTime.pause();
 				mob.tell(L("The world holds still.  Commands that take time will wait until you RESUME."));
+				ScriptEvents.game("PAUSE",mob,"");
 			}
 		}
 		else

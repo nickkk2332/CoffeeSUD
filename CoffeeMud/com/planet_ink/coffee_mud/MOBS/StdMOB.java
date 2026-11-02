@@ -2175,6 +2175,10 @@ public class StdMOB implements MOB
 					Party.afterLeaderActs(this);
 					GameTime.requestAdvance(Party.turnMillis(this, commandMillis(doCommand.actionCost)));
 				}
+				else
+				// ST6: in real time, a player's command that took time is a turn
+				if((!GameTime.isTurnBased())&&(doCommand.actionCost > 0.0)&&(session() != null)&&(playerStats() != null)&&(!Party.isBackground(this)))
+					ScriptEvents.turn(this);
 				synchronized(commandQue)
 				{
 					if(!commandQue.isEmpty())

@@ -36,7 +36,8 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
  * Script triggers for things that happen without a message: a skill learned,
  * improved, mastered or failed (ST2, SKILL_PROG), a room or area first visited
  * (ST3, DISCOVER_PROG), the weather and the moon (ST4), a quest's course
- * (ST5, QUEST_PROG, heard by every host with the trigger).  An event at a room reaches the scripts a message in
+ * (ST5, QUEST_PROG, heard by every host with the trigger), the game's course
+ * and its turns (ST6, GAME_PROG and TURN_PROG).  An event at a room reaches the scripts a message in
  * that room would: the room, its items, its mobs and what they carry, and its
  * area and the area's parents.  Each script engine there is handed the event
  * through {@link ScriptingEngine#eventTrigger}, which queues the scripts of
@@ -354,6 +355,188 @@ public final class ScriptEvents
 		return (d.length() == 0) || d.equalsIgnoreCase(detail);
 	}
 
+	/** GAME_PROG's code */
+	public static final int	GAME_PROG	= code("GAME_PROG");
+	/** TURN_PROG's code */
+	public static final int	TURN_PROG	= code("TURN_PROG");
+
+	/** what GAME_PROG tells apart */
+	public static final String[]	GAME_EVENTS	= { "NEWGAME", "RESTORE", "SAVE", "NEWCHAR", "SWITCHTO", "SWITCHFROM", "PAUSE", "RESUME", "TIMEMODE", "ANY" };
+
+	private static volatile long	turns	= 0;
+
+	/**
+	 * The turns since the game began, TURN_PROG's $g, kept in the save.
+	 * @return the count
+	 */
+	public static long turns()
+	{
+		return turns;
+	}
+
+	/**
+	 * Sets the turn count, from a save, or 0 for a new game.
+	 * @param n the count
+	 */
+	public static void setTurns(final long n)
+	{
+		turns = Math.max(0, n);
+	}
+
+	/**
+	 * ST6: the game's course: GAME_PROG NEWGAME|RESTORE|SAVE|NEWCHAR|SWITCHTO|
+	 * SWITCHFROM|PAUSE|RESUME|TIMEMODE|ANY [mask] fires for every host with
+	 * the trigger, and the world JavaScript's hook (world/js/init.js).  $n is
+	 * the character, $g the save's slot for SAVE and RESTORE and otherwise the
+	 * event, $0 the event, $1 the detail.
+	 * @param kind the event
+	 * @param mob the character, or null
+	 * @param detail the slot, the time mode, or ""
+	 */
+	public static void game(final String kind, final MOB mob, final String detail)
+	{
+		final String d = (detail == null) ? "" : detail;
+		switch(kind)
+		{
+		case "NEWGAME":
+			WorldJS.call("onNewGame", mob);
+			break;
+		case "RESTORE":
+			WorldJS.call("onRestore", mob, d);
+			break;
+		default:
+			break;
+		}
+		if(!isUsed(GAME_PROG))
+			return;
+		final List<PhysicalAgent> hosts = registered(GAME_PROG);
+		if(hosts.isEmpty())
+			return;
+		final MOB src = (mob != null) ? mob : standIn("the game");
+		final String g = (kind.equals("SAVE") || kind.equals("RESTORE")) ? d : kind;
+		fire(hosts, GAME_PROG, src, null, g, new Object[] { kind, d }, "CCr", t -> gameMatches(t, kind, mob));
+	}
+
+	/**
+	 * ST6: the game is about to save: onBeforeSave(slot) in the world
+	 * JavaScript, then GAME_PROG SAVE, run at once, so that what they set is
+	 * saved; either may refuse the save, the JavaScript by returning false and
+	 * a script by RETURN CANCEL (saying why itself).
+	 * @param mob the player
+	 * @param slot the save's slot
+	 * @return true to save, false if refused
+	 */
+	public static boolean gameCheck(final MOB mob, final String slot)
+	{
+		if(Boolean.FALSE.equals(WorldJS.call("onBeforeSave", slot)))
+			return false;
+		if(!isUsed(GAME_PROG))
+			return true;
+		final MOB src = (mob != null) ? mob : standIn("the game");
+		for(final PhysicalAgent host : registered(GAME_PROG))
+		{
+			for(final ScriptingEngine S : engines(host))
+			{
+				if(!S.eventCheck(host, GAME_PROG, src, null, null, slot, new Object[] { "SAVE", slot }, "CCr", t -> gameMatches(t, "SAVE", mob)))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Whether a GAME_PROG trigger line fits an event of the game.
+	 * @param t the trigger line: GAME_PROG, the event, the mask
+	 * @param kind the event
+	 * @param mob the character, or null
+	 * @return true if it fits
+	 */
+	public static boolean gameMatches(final String[] t, final String kind, final MOB mob)
+	{
+		if(t.length < 2)
+			return false;
+		if((!t[1].equals("ANY")) && (!t[1].equals(kind)))
+			return false;
+		final String mask = (t.length > 2) ? t[2].trim() : "";
+		return (mask.length() == 0) || ((mob != null) && CMLib.masking().maskCheck(mask, mob, true));
+	}
+
+	/**
+	 * ST6: a turn is over: a party's turn in turn-based time, or a command
+	 * that took time in real time.  The turn count goes up, and TURN_PROG
+	 * [every N] [mask] fires for the hosts with the trigger in the leader's
+	 * area, the area and its parents, and the world host.  $n is the leader,
+	 * $g the turn count.
+	 * @param leader who took the turn
+	 */
+	public static void turn(final MOB leader)
+	{
+		final long n = ++turns;
+		if((leader == null) || (!isUsed(TURN_PROG)))
+			return;
+		final Room R = leader.location();
+		final Area A = (R == null) ? null : R.getArea();
+		final List<PhysicalAgent> areaChain = new ArrayList<PhysicalAgent>();
+		areaHosts(A, areaChain);
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		for(final PhysicalAgent P : registered(TURN_PROG))
+		{
+			if((P == WorldHost.host()) || areaChain.contains(P))
+				hosts.add(P);
+			else
+			if(!(P instanceof Area))
+			{
+				final Room PR = CMLib.map().roomLocation(P);
+				if((PR != null) && (PR.getArea() == A))
+					hosts.add(P);
+			}
+		}
+		fire(hosts, TURN_PROG, leader, null, "" + n, null, "Ccr", t -> turnMatches(t, leader, n));
+	}
+
+	/**
+	 * Whether a TURN_PROG trigger line fits a turn.
+	 * @param t the trigger line: TURN_PROG, every how many turns, the mask
+	 * @param leader who took the turn
+	 * @param n the turn count
+	 * @return true if it fits
+	 */
+	public static boolean turnMatches(final String[] t, final MOB leader, final long n)
+	{
+		final String first = (t.length > 1) ? t[1].trim() : "";
+		final String rest = (t.length > 2) ? t[2].trim() : "";
+		long every = 1;
+		String mask;
+		if(CMath.isLong(first))
+		{
+			every = Math.max(1, CMath.s_long(first));
+			mask = rest;
+		}
+		else
+			mask = (first + " " + rest).trim();
+		return ((n % every) == 0) && ((mask.length() == 0) || CMLib.masking().maskCheck(mask, leader, true));
+	}
+
+	private static List<ScriptingEngine> engines(final PhysicalAgent host)
+	{
+		final List<ScriptingEngine> list = new ArrayList<ScriptingEngine>();
+		if((host == null) || host.amDestroyed())
+			return list;
+		for(final Enumeration<ScriptingEngine> s = host.scripts(); s.hasMoreElements();)
+		{
+			final ScriptingEngine S = s.nextElement();
+			if(S != null)
+				list.add(S);
+		}
+		for(final Enumeration<Behavior> b = host.behaviors(); b.hasMoreElements();)
+		{
+			final Behavior B = b.nextElement();
+			if(B instanceof ScriptingEngine)
+				list.add((ScriptingEngine)B);
+		}
+		return list;
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */
@@ -481,20 +664,8 @@ public final class ScriptEvents
 			return;
 		for(final PhysicalAgent host : hosts)
 		{
-			if((host == null) || host.amDestroyed())
-				continue;
-			for(final Enumeration<ScriptingEngine> s = host.scripts(); s.hasMoreElements();)
-			{
-				final ScriptingEngine S = s.nextElement();
-				if(S != null)
-					S.eventTrigger(host, triggerCode, source, target, null, msg, args, bits, test);
-			}
-			for(final Enumeration<Behavior> b = host.behaviors(); b.hasMoreElements();)
-			{
-				final Behavior B = b.nextElement();
-				if(B instanceof ScriptingEngine)
-					((ScriptingEngine)B).eventTrigger(host, triggerCode, source, target, null, msg, args, bits, test);
-			}
+			for(final ScriptingEngine S : engines(host))
+				S.eventTrigger(host, triggerCode, source, target, null, msg, args, bits, test);
 		}
 	}
 

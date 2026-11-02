@@ -1,0 +1,15 @@
+GAME_PROG NEWGAME
+mpechoat $n FIXGAME new game for $n
+~
+GAME_PROG RESTORE
+mpechoat $n FIXGAME restored $g at turn $%TURNS()%
+~
+GAME_PROG NEWCHAR
+mpechoat $n FIXGAME new character $n
+~
+GAME_PROG SAVE
+mpechoat $n FIXGAME saving $g
+~
+TURN_PROG 2
+mpechoat $n FIXTURN $g
+~

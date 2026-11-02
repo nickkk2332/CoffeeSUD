@@ -180,6 +180,7 @@ public class Switch extends StdCommand
 				mob.setSession(s2);
 				CMLib.commands().postLook(target,true);
 				CMLib.commands().postLook(mob,true);
+				switched(mob,target);
 			}
 		}
 		else
@@ -199,10 +200,24 @@ public class Switch extends StdCommand
 				{
 					CMLib.login().showTheNews(target);
 					Log.sysOut(mob.Name()+" switched login to: "+target.Name());
+					switched(mob,target);
 				}
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * ST6: the player switched characters: GAME_PROG SWITCHFROM for the one
+	 * left, SWITCHTO for the one taken, and onSwitch in the world JavaScript.
+	 * @param from the character left
+	 * @param to the character taken
+	 */
+	protected void switched(final MOB from, final MOB to)
+	{
+		WorldJS.call("onSwitch", from, to);
+		ScriptEvents.game("SWITCHFROM", from, to.Name());
+		ScriptEvents.game("SWITCHTO", to, from.Name());
 	}
 
 	@Override

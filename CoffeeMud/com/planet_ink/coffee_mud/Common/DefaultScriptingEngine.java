@@ -5638,6 +5638,29 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				case 123: // isbuilder
 					returnable=com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode();
 					break;
+				case 124: // isturnbased
+					returnable=GameTime.isTurnBased();
+					break;
+				case 125: // ispaused
+					returnable=GameTime.isPaused();
+					break;
+				case 126: // saveslot
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"cr"); /* tt[t+0] */
+					final String slot=com.planet_ink.coffee_mud.core.save.SaveGame.currentSlot();
+					returnable=simpleEvalStr(ctx.scripted,(slot==null)?"":slot,varify(ctx,tt[t+1]),varify(ctx,tt[t+0]),"SAVESLOT");
+					break;
+				}
+				case 127: // gametime
+				case 128: // turns
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"cr"); /* tt[t+0] */
+					final long val=(funcCode.intValue()==127)?GameTime.now():ScriptEvents.turns();
+					returnable=simpleEval(ctx.scripted,""+val,varify(ctx,tt[t+1]),varify(ctx,tt[t+0]),(funcCode.intValue()==127)?"GAMETIME":"TURNS");
+					break;
+				}
 				case 122: // isdev
 					returnable=com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode();
 					break;
@@ -7954,6 +7977,24 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			case 123: // isbuilder
 				results.append(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()?"true":"false");
+				break;
+			case 124: // isturnbased
+				results.append(GameTime.isTurnBased()?"true":"false");
+				break;
+			case 125: // ispaused
+				results.append(GameTime.isPaused()?"true":"false");
+				break;
+			case 126: // saveslot
+			{
+				final String slot=com.planet_ink.coffee_mud.core.save.SaveGame.currentSlot();
+				results.append((slot==null)?"":slot);
+				break;
+			}
+			case 127: // gametime
+				results.append(GameTime.now());
+				break;
+			case 128: // turns
+				results.append(ScriptEvents.turns());
 				break;
 			case 122: // isdev
 				results.append(com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode()?"true":"false");
@@ -16391,6 +16432,48 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 		}
 		return mob;
+	}
+
+	@Override
+	public boolean eventCheck(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
+	{
+		if((host==null)||(source==null)||(recurseCounter.get() > 2)||(!canTrigger(triggerCode)))
+			return true;
+		try
+		{
+			recurseCounter.addAndGet(1);
+			final MOB monster=getMakeMOB(host);
+			if(lastKnownLocation==null)
+				confirmLastKnownLocation(monster, source);
+			if((lastKnownLocation==null)&&(host instanceof Area))
+			{
+				for(final Enumeration<Room> r=((Area)host).getProperMap();r.hasMoreElements()&&(lastKnownLocation==null);)
+					lastKnownLocation=r.nextElement();
+			}
+			if((monster==null)||(monster.amDead())||(lastKnownLocation==null))
+				return true;
+			final Item defaultItem=(host instanceof Item)?(Item)host:null;
+			for(final SubScript script : getScripts(host))
+			{
+				if((script.size()<1)||(script.getTriggerCode()!=triggerCode))
+					continue;
+				String[] t=script.getTriggerArgs();
+				if(t==null)
+					t=parseBits(script,0,bits);
+				if((t!=null)&&test.test(t))
+				{
+					final MPContext ctx=new MPContext(host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,args);
+					final String resp=execute(ctx.push(script));
+					if((resp!=null)&&(resp.equalsIgnoreCase("CANCEL")))
+						return false;
+				}
+			}
+			return true;
+		}
+		finally
+		{
+			recurseCounter.addAndGet(-1);
+		}
 	}
 
 	@Override

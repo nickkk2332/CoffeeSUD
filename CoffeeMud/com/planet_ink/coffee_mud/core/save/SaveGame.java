@@ -67,6 +67,8 @@ public final class SaveGame
 	private static volatile File			databaseDir	= null;
 	/** the header of the save this boot restored, until play starts */
 	private static volatile Properties	restoring	= null;
+	/** ST6: NEWGAME or RESTORE, for the first login after the game starts */
+	private static volatile String	bootEvent	= null;
 	private static final Map<String, String> bootOverrides = new Hashtable<String, String>();
 
 	/**
@@ -411,9 +413,16 @@ public final class SaveGame
 				WorldState.noteContentQuests();
 				if(!isBuilderMode())
 					WorldState.noteContentShapes();
+				// ST6: world/js/init.js read afresh, and its onBoot()
+				WorldJS.reset();
+				WorldJS.call("onBoot");
 			}
 		});
 		final Properties header = restoring;
+		// ST6: the world host of the game before is gone; GAME_PROG NEWGAME or RESTORE at the first login; the turns
+		WorldHost.forget();
+		bootEvent = (header == null) ? "NEWGAME" : "RESTORE";
+		ScriptEvents.setTurns((header == null) ? 0 : parseLong(header.getProperty("turns"), 0));
 		if(header == null)
 			return;
 		restoring = null;
@@ -508,6 +517,27 @@ public final class SaveGame
 		}
 		else
 			startAutoSaver(mob);
+		// ST6: the world's scripts, then the game's start, once
+		WorldHost.start(mob);
+		final String ev = bootEvent;
+		bootEvent = null;
+		if(ev != null)
+		{
+			if(builderMode)
+				WorldJS.call("onBuilderStart", mob);
+			ScriptEvents.game(ev, mob, ev.equals("RESTORE") ? currentSlot : "");
+		}
+		WorldJS.call("onPlayerEnter", mob);
+	}
+
+	/**
+	 * ST6: a character was made, after it entered the world: GAME_PROG
+	 * NEWCHAR.
+	 * @param mob the character
+	 */
+	public static void characterCreated(final MOB mob)
+	{
+		ScriptEvents.game("NEWCHAR", mob, "");
 	}
 
 	/**
@@ -926,6 +956,9 @@ public final class SaveGame
 			slot = defaultSlot(mob);
 		if(!SaveSlots.isValidName(slot))
 			return CMLib.lang().L("A save's name is letters, digits, dashes and underscores, at most 32 of them.");
+		// ST6: onBeforeSave and GAME_PROG SAVE, before the snapshot, either of which may refuse it
+		if(!ScriptEvents.gameCheck(mob, slot))
+			return CMLib.lang().L("The game was not saved.");
 		CMLib.players().savePlayer(mob);
 		for(final MOB M : Party.othersInWorld(mob))
 			CMLib.players().savePlayer(M);
@@ -954,6 +987,7 @@ public final class SaveGame
 		header.setProperty("saved", Long.toString(System.currentTimeMillis()));
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
+		header.setProperty("turns", Long.toString(ScriptEvents.turns()));
 		header.setProperty("savemode", saveMode.name());
 		if(CMLib.time().globalClock() != null)
 			header.setProperty("gamedate", CMLib.time().globalClock().getShortTimeDescription());

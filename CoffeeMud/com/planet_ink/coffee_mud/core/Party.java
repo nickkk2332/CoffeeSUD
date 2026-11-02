@@ -460,6 +460,7 @@ public final class Party
 				carryOut(all.get(i));
 		}
 		endTurn();
+		ScriptEvents.turn(leader); // ST6
 	}
 
 	/**
@@ -470,13 +471,20 @@ public final class Party
 	public static void passTurn(final MOB leader)
 	{
 		if(!leadsParty(leader))
+		{
+			// ST6: one on their own passes a turn too, in turn-based time
+			if(GameTime.isTurnBased())
+				ScriptEvents.turn(leader);
 			return;
+		}
 		for(final MOB M : inOrder(leader))
 		{
 			if(M != leader)
 				carryOut(M);
 		}
 		endTurn();
+		if(GameTime.isTurnBased())
+			ScriptEvents.turn(leader); // ST6
 	}
 
 	/**

@@ -496,6 +496,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"WEATHER_PROG", // 63
 		"MOON_PROG", // 64
 		"QUEST_PROG", // 65
+		"GAME_PROG", // 66
+		"TURN_PROG", // 67
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -624,6 +626,11 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"VARNAMES", //121
 		"ISDEV", //122
 		"ISBUILDER", //123
+		"ISTURNBASED", //124
+		"ISPAUSED", //125
+		"SAVESLOT", //126
+		"GAMETIME", //127
+		"TURNS", //128
 	};
 
 	/** String list of all valid mobprog commands */
@@ -845,6 +852,26 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	 */
 	public default void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
+	}
+
+	/**
+	 * As {@link #eventTrigger}, but the scripts that fit run at once, not
+	 * queued, and one that returns CANCEL (RETURN CANCEL) refuses the event,
+	 * as CNCLMSG_PROG refuses a message: GAME_PROG SAVE (ST6).
+	 * @param host the object the scripts are on
+	 * @param triggerCode the trigger
+	 * @param source $n
+	 * @param target $t, or null for the host
+	 * @param item $o, or null
+	 * @param msg $g
+	 * @param args $0 to $8, or null
+	 * @param bits how the trigger line is split
+	 * @param test which trigger lines the event fits
+	 * @return false if a script refused it
+	 */
+	public default boolean eventCheck(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
+	{
+		return true;
 	}
 
 	/**

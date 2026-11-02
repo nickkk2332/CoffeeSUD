@@ -1,0 +1,6 @@
+GAME_PROG SAVE
+if eval('$g' == 'refuse')
+  mpechoat $n FIXGAME the world will not let you save here
+  return cancel
+endif
+~

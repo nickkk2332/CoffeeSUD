@@ -31,8 +31,8 @@ FAIL=0
 
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
-# a played group by name (st1, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|pr5|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+# a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
+case "$1" in st1|st6|pr5|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -115,6 +115,32 @@ group_st1()
 	play st1-restore.txt pdb pworld 'look\nwait\nquit\nn\n' RESTORE=st1 TIMEMODE=TURNS
 	expect st1-restore.txt "Restored 'st1'."
 	expect st1-restore.txt "FIXGREET the quiet room heard Greeter log in."
+}
+
+group_st6()
+{
+	SAVES="$W/gsaves"
+	echo "Played: ST6, the world's scripts and world/js/init.js hear a new game, a new character, saves, turns and a restore"
+	mkdir -p "$W/gdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/gdb/"
+	cp -r "$GAME/world" "$W/gworld"
+	mkdir -p "$W/gworld/scripts" "$W/gworld/js"
+	cp "$FX/setup/st6-world.script" "$FX/setup/st6-refuse.script" "$W/gworld/scripts/"
+	cp "$FX/setup/st6-init.js" "$W/gworld/js/init.js"
+	play st6-new.txt gdb gworld 'Gamer\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nlook\nwait\nwait\nsave refuse\nsave jsrefuse\nsave st6\nquit\nn\n' RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	expect st6-new.txt "FIXGAME new game for Gamer"
+	expect st6-new.txt "FIXGAME new character Gamer"
+	expect st6-new.txt "FIXJS new game, booted yes"
+	expect st6-new.txt "FIXJS enter Gamer"
+	expect st6-new.txt "FIXTURN 2"
+	expect st6-new.txt "FIXGAME the world will not let you save here"
+	count st6-new.txt "The game was not saved." 2
+	expect st6-new.txt "FIXGAME saving st6"
+	play st6-restore.txt gdb gworld 'look\nwait\nwait\nquit\nn\n' RESTORE=st6 TIMEMODE=TURNS
+	expect st6-restore.txt "Restored 'st6'."
+	expect st6-restore.txt "FIXGAME restored st6 at turn"
+	expect st6-restore.txt "FIXJS restored st6"
+	expect st6-restore.txt "FIXTURN 4"
+	count st6-restore.txt "FIXGAME new game" 0
 }
 
 group_pr5()
@@ -712,6 +738,8 @@ if [ $# -eq 0 ]; then
 	J_PID=$!
 	group_st1 > "$W/group_st1.log" 2>&1 &
 	S_PID=$!
+	group_st6 > "$W/group_st6.log" 2>&1 &
+	S6_PID=$!
 	group_pr5 > "$W/group_pr5.log" 2>&1 &
 	P_PID=$!
 	group_saves > "$W/group_saves.log" 2>&1 &
@@ -724,9 +752,9 @@ if [ $# -eq 0 ]; then
 	V4_PID=$!
 	group_saves5 > "$W/group_saves5.log" 2>&1 &
 	V5_PID=$!
-	wait $J_PID; wait $S_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID; wait $V5_PID
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"; then FAIL=1; fi
+	wait $J_PID; wait $S_PID; wait $S6_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID; wait $V5_PID
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!
