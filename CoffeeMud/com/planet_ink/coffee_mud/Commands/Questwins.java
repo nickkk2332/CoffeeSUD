@@ -86,7 +86,12 @@ public class Questwins extends StdCommand
 			final String name=Q.displayName().trim().length()>0?Q.displayName():Q.name();
 			final String time = CMLib.time().date2String(Q.whenLastWon(mobName).longValue());
 			final QuestRecords.Record R=QuestRecords.get(Q.name(),mobName); // Q4: the outcome
-			final String outcome=((R!=null)&&R.status.equals(QuestRecords.WON)&&(R.outcome.length()>0))?(" ("+R.outcome+")"):"";
+			final List<String> how=new ArrayList<String>(); // Q4, Q5: the outcome, and the wins
+			if((R!=null)&&R.status.equals(QuestRecords.WON)&&(R.outcome.length()>0))
+				how.add(R.outcome);
+			if((R!=null)&&(R.wins>1))
+				how.add(L("@x1 wins",""+R.wins));
+			final String outcome=how.isEmpty()?"":(" ("+String.join(", ",how)+")");
 			msg.append(CMStrings.padRight(time,20)+name+outcome+"^N\n\r");
 		}
 		return msg.toString();

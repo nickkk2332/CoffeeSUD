@@ -95,6 +95,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected boolean endOnWin = false;
 	/** Q1: SET AUTOSTART BOOT: it starts once, as the game begins */
 	protected boolean autoStartBoot = false;
+	/** Q5: SET REPEATABLE: "" (as the script says), NO, YES, or a game time between wins */
+	protected String repeatable = "";
+	/** Q5: SET REPEATABLE's game time, in ticks, or -1 */
+	protected int repeatTicks = -1;
+	/** Q5: SET MAXWINS: the most times one character may win it, or 0 */
+	protected int maxWins = 0;
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -229,6 +235,18 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				final ScriptingEngine E = e.nextElement();
 				if((E.defaultQuestName()!=null)
 				&&(name().equalsIgnoreCase(E.defaultQuestName())))
+					return false;
+			}
+			// Q5: SET REPEATABLE and SET MAXWINS, by the character's wins, before CAN_ACCEPT
+			final int wins=QuestRecords.wins(name(),mob.Name());
+			if(wins>0)
+			{
+				if((maxWins>0)&&(wins>=maxWins))
+					return false;
+				if(repeatable.equals("NO"))
+					return false;
+				final long last=QuestRecords.lastWin(name(),mob.Name());
+				if((repeatTicks>0)&&(last>=0)&&((GameTime.now()-last)<((long)repeatTicks*CMProps.getTickMillis())))
 					return false;
 			}
 		}
@@ -521,6 +539,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		restartTicks=-1;
 		endOnWin=false;
 		autoStartBoot=false;
+		repeatable=""; // Q5
+		repeatTicks=-1;
+		maxWins=0;
 		name="";
 		author="";
 		displayName="";
@@ -623,6 +644,34 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	}
 
 	/**
+	 * Q5: SET REPEATABLE NO, YES, or a game time a character must wait
+	 * after a win before taking the quest again.
+	 * @param val the setting
+	 */
+	protected void setRepeatable(final String val)
+	{
+		repeatTicks=-1;
+		final String v=val.toUpperCase().trim();
+		if(v.equals("NO")||v.equals("YES")||(v.length()==0))
+			repeatable=v;
+		else
+		{
+			try
+			{
+				repeatTicks=CMLib.time().parseTickExpression(getQuestClock(), val);
+			}
+			catch(final CMException e)
+			{
+				Log.errOut(name(),"SET REPEATABLE: "+e.getMessage());
+				repeatTicks=-1;
+			}
+			repeatable=(repeatTicks>0)?val.trim():"";
+			if(repeatTicks<=0)
+				repeatTicks=-1;
+		}
+	}
+
+	/**
 	 * Q1: marks the quest finished, as a save has it, or not (MODIFY QUEST
 	 * REOPEN): then it is as one that has not run, and AUTOSTART BOOT or its
 	 * schedule start it again.
@@ -697,6 +746,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				else
 				if(var.equals("AUTOSTART"))
 					autoStartBoot=CMParms.combine(parsedLine,2).trim().equalsIgnoreCase("BOOT");
+				else
+				if(var.equals("REPEATABLE")) // Q5
+					setRepeatable(CMParms.combine(parsedLine,2).trim());
+				else
+				if(var.equals("MAXWINS"))
+					maxWins=Math.max(0,CMath.s_int(CMParms.combine(parsedLine,2).trim()));
 				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
@@ -3535,7 +3590,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 							QuestJournal.applyStep(M,name(),new ArrayList<String[]>(),oneJ);
 					}
 					else
-					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")) // JS18, Q1: read when the script was set
+					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")
+					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")) // JS18, Q1, Q5: read when the script was set
 					{
 					}
 					else
@@ -6293,6 +6349,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			how.add("ENDONWIN TRUE");
 		if(autoStartBoot)
 			how.add("AUTOSTART BOOT");
+		if(repeatable.length()>0) // Q5
+			how.add("REPEATABLE "+repeatable);
+		if(maxWins>0)
+			how.add("MAXWINS "+maxWins);
 		if(how.size()>0)
 			str.append("Settings: ").append(String.join(", ",how)).append("\n\r");
 		if(qs!=null)
@@ -7026,6 +7086,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				return Boolean.toString(endOnWin);
 			if(code.equals("AUTOSTART"))
 				return autoStartBoot?"BOOT":"";
+			if(code.equals("REPEATABLE")) // Q5
+				return repeatable;
+			if(code.equals("MAXWINS"))
+				return ""+maxWins;
 			if((code.equalsIgnoreCase("REMAINING"))&&(running()))
 				return ""+ticksRemaining;
 			if(questState.vars.containsKey(code) && (!questState.isStat(code)))

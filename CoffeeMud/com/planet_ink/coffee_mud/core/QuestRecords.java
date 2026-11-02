@@ -205,6 +205,51 @@ public final class QuestRecords
 	}
 
 	/**
+	 * Q5: QUESTWINS(who quest).
+	 * @param quest the quest's name
+	 * @param who the character's name
+	 * @return how many times they won it (1 for a winner from before the count was kept)
+	 */
+	public static int wins(final String quest, final String who)
+	{
+		final Quest Q = CMLib.quests().fetchQuest(quest);
+		final Record R = get((Q != null) ? Q.name() : quest, who);
+		if((R != null) && (R.wins > 0))
+			return R.wins;
+		return ((Q != null) && Q.wasWinner(who)) ? 1 : 0;
+	}
+
+	/**
+	 * Q5: when a character last won a quest, on the game clock.
+	 * @param quest the quest's name
+	 * @param who the character's name
+	 * @return the game time, or -1 if they never did
+	 */
+	public static long lastWin(final String quest, final String who)
+	{
+		final Quest Q = CMLib.quests().fetchQuest(quest);
+		final Record R = get((Q != null) ? Q.name() : quest, who);
+		if((R != null) && (R.wins > 0))
+			return R.lastWin;
+		final Long L = (Q != null) ? Q.whenLastWon(who) : null;
+		return (L == null) ? -1 : L.longValue();
+	}
+
+	/**
+	 * Q5: QUESTWINAGE(who quest).
+	 * @param quest the quest's name
+	 * @param who the character's name
+	 * @return game hours since they last won it, or -1 if they never did
+	 */
+	public static long winAgeHours(final String quest, final String who)
+	{
+		final long last = lastWin(quest, who);
+		if(last < 0)
+			return -1;
+		return Math.max(0, GameTime.now() - last) / Math.max(1, CMProps.getMillisPerMudHour());
+	}
+
+	/**
 	 * A character's records, for QUESTS WON and QUESTS FAILED.
 	 * @param who the character's name
 	 * @return quest name to record

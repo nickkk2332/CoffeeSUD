@@ -244,6 +244,13 @@ on the escort fails it for everyone on it if he dies. In masks,
 <code>-QUESTFAIL +oskar</code> lets through only those who failed, and
 <code>-QUESTOUTCOME +bandits:spared</code> only those who spared the
 chief.</p>
+<p>A quest can be done again: <code>SET REPEATABLE 1 MUDDAY</code> lets a
+character take it again a game day after their last win, <code>SET
+REPEATABLE NO</code> never, and <code>SET MAXWINS 10</code> at most ten times;
+the quest asks these before its giver's CAN_ACCEPT. <code>QUESTWINS($n
+wolf_bounty)</code> counts the wins, <code>QUESTWINAGE($n wolf_bounty)</code> is
+the game hours since the last, and a quest that opens after ten bounties has
+<code>SET PLAYERMASK -QUESTWINS +wolf_bounty:&gt;=10</code>.</p>
 <pre>
 set name bell
 set display The Drowned Bell

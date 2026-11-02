@@ -15779,6 +15779,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String a=loadArgs(ctx.scripted).get(v);
 			return (a==null)?"":a;
 		}
+		case "QUESTWINS": // Q5: QUESTWINS(who quest): how many times they won it
+		case "QUESTWINAGE": // QUESTWINAGE(who quest): game hours since they last won it, or -1
+		{
+			final List<String> w=CMParms.parse(parms.trim());
+			if(w.size()<2)
+				return "0";
+			final Environmental W=getArgumentMOB(w.get(0),ctx);
+			final String who=(W instanceof MOB)?W.Name():varify(ctx,w.get(0));
+			final String quest=questNameFor(varify(ctx,CMParms.combine(w,1)));
+			if(name.equalsIgnoreCase("QUESTWINS"))
+				return ""+QuestRecords.wins(quest,who);
+			return ""+QuestRecords.winAgeHours(quest,who);
+		}
 		case "QUESTSTATUS": // Q4: QUESTSTATUS(who quest): ACTIVE, WON, FAILED, ABANDONED, EXPIRED or ""
 		case "QUESTOUTCOME": // QUESTOUTCOME(who quest): the outcome word, or why it failed
 		{

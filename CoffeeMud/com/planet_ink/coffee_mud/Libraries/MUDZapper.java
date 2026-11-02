@@ -1001,6 +1001,34 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 	{
 		if((key==ZapperKey._QUESTFAIL)||(key==ZapperKey.QUESTFAIL))
 			return QuestRecords.FAILED.equals(QuestRecords.status(parm,mob,name));
+		if((key==ZapperKey._QUESTWINS)||(key==ZapperKey.QUESTWINS)) // Q5: quest:>=10
+		{
+			final int at=parm.lastIndexOf(':');
+			if(at<=0)
+				return false;
+			String cond=parm.substring(at+1).trim();
+			String op="==";
+			for(final String o : new String[] {">=","<=","!=","==",">","<","="})
+			{
+				if(cond.startsWith(o))
+				{
+					op=o;
+					cond=cond.substring(o.length()).trim();
+					break;
+				}
+			}
+			final int n=CMath.s_int(cond);
+			final int w=QuestRecords.wins(parm.substring(0,at),name);
+			switch(op)
+			{
+			case ">=": return w>=n;
+			case "<=": return w<=n;
+			case ">": return w>n;
+			case "<": return w<n;
+			case "!=": return w!=n;
+			default: return w==n;
+			}
+		}
 		final int x=parm.lastIndexOf(':');
 		if(x<=0)
 			return false;
@@ -2746,11 +2774,16 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case QUESTFAIL: // +Questfail
 				case _QUESTOUTCOME: // -Questoutcome
 				case QUESTOUTCOME: // +Questoutcome
+				case _QUESTWINS: // Q5: -Questwins
+				case QUESTWINS: // +Questwins
 					{
-						final boolean req=(key==ZapperKey._QUESTFAIL)||(key==ZapperKey._QUESTOUTCOME);
+						final boolean req=(key==ZapperKey._QUESTFAIL)||(key==ZapperKey._QUESTOUTCOME)||(key==ZapperKey._QUESTWINS);
 						final boolean fail=(key==ZapperKey._QUESTFAIL)||(key==ZapperKey.QUESTFAIL);
 						if(fail)
 							buf.append(req?L("Requires having failed: "):L("Disallows those who failed: "));
+						else
+						if((key==ZapperKey._QUESTWINS)||(key==ZapperKey.QUESTWINS))
+							buf.append(req?L("Requires quest wins: "):L("Disallows those with quest wins: "));
 						else
 							buf.append(req?L("Requires the quest outcome: "):L("Disallows those with the quest outcome: "));
 						final String sign=req?"+":"-";
@@ -4643,6 +4676,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _QUESTWIN: // -Questwin
 				case _QUESTFAIL: // Q4
 				case _QUESTOUTCOME:
+				case _QUESTWINS: // Q5
 				case _HOME: // -Home
 				case _PLANE: // -Plane
 				case _JAVACLASS: // -JavaClass
@@ -4878,6 +4912,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case QUESTWIN: // +Questwin
 				case QUESTFAIL: // Q4
 				case QUESTOUTCOME:
+				case QUESTWINS: // Q5
 				case HOME: // +Home
 				case PLANE: // +Plane
 				case JAVACLASS: // +JavaClass
@@ -6643,11 +6678,13 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case QUESTFAIL: // +questfail: not those who failed any
 				case _QUESTOUTCOME: // -questoutcome quest:word
 				case QUESTOUTCOME: // +questoutcome quest:word
+				case _QUESTWINS: // Q5: -questwins quest:>=n
+				case QUESTWINS: // +questwins quest:>=n
 					{
 						boolean found=false;
 						for(final Object o : entry.parms())
 							found=found||questRecordMatches(entry.maskType(),(String)o,mob,mob.Name());
-						if(found!=((entry.maskType()==ZapperKey._QUESTFAIL)||(entry.maskType()==ZapperKey._QUESTOUTCOME)))
+						if(found!=((entry.maskType()==ZapperKey._QUESTFAIL)||(entry.maskType()==ZapperKey._QUESTOUTCOME)||(entry.maskType()==ZapperKey._QUESTWINS)))
 							return false;
 					}
 					break;
@@ -9465,11 +9502,13 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case QUESTFAIL:
 				case _QUESTOUTCOME:
 				case QUESTOUTCOME:
+				case _QUESTWINS: // Q5
+				case QUESTWINS:
 					{
 						boolean found=false;
 						for(final Object o : entry.parms())
 							found=found||questRecordMatches(entry.maskType(),(String)o,null,E.name());
-						if(found!=((entry.maskType()==ZapperKey._QUESTFAIL)||(entry.maskType()==ZapperKey._QUESTOUTCOME)))
+						if(found!=((entry.maskType()==ZapperKey._QUESTFAIL)||(entry.maskType()==ZapperKey._QUESTOUTCOME)||(entry.maskType()==ZapperKey._QUESTWINS)))
 							return false;
 					}
 					break;

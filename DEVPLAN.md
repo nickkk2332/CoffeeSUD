@@ -1499,6 +1499,14 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   KEYPLAYER FAIL` (QuestBound): the mob's death fails the quest for each
   character on it, reason KEYPLAYER, and the quest goes on; TRUE still
   resets it. QUESTS WON shows the outcomes, QUESTS FAILED the rest.
+- Q5 done. `SET REPEATABLE NO|YES|<game time>` (a character who
+  won it may take it again never, at once, or that long after their last
+  win) and `SET MAXWINS n`, asked by `canAcceptQuest` before CAN_ACCEPT,
+  by Q4's records: each win counts and is timed on the game clock (a
+  winner from before the count is one win). `QUESTWINS(who quest)` and
+  `QUESTWINAGE(who quest)` (game hours since the last win, -1 if none);
+  masks `-QUESTWINS +quest:>=10` and `+QUESTWINS -quest:>=10` (>=, <=, >,
+  <, = or !=). QUESTS WON shows the wins. QUESTINFO shows the settings.
 
 #### 2f. NPC behaviour and dialogue (21)
 

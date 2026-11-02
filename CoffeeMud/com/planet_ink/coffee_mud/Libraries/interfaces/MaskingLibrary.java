@@ -541,6 +541,8 @@ public interface MaskingLibrary extends CMLibrary
 		QUESTFAIL, // +QUESTFAIL -quest: not those who failed it
 		_QUESTOUTCOME, // -QUESTOUTCOME +quest:word: only those whose outcome it was
 		QUESTOUTCOME, // +QUESTOUTCOME -quest:word: not those
+		_QUESTWINS, // Q5: -QUESTWINS +quest:>=10: only those whose wins compare so
+		QUESTWINS, // +QUESTWINS -quest:>=10: not those
 		;
 		private final String[] keys;
 		private ZapperKey(final String... exts)

@@ -711,6 +711,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"QOBJECTIVE", //175
 		"QUESTSTATUS", //176
 		"QUESTOUTCOME", //177
+		"QUESTWINS", //178
+		"QUESTWINAGE", //179
 	};
 
 	/** String list of all valid mobprog commands */
