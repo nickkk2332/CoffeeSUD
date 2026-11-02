@@ -78,6 +78,19 @@ public class Patroller extends ActiveTicker
 
 	protected WeakReference<Room> startRoom=new WeakReference<Room>(null);
 
+	/** N16: WAIT=n: the ticks still to wait, or -1 */
+	protected int           waitTicks   = -1;
+	/** N16: RESUME=true: back to the route after a fight */
+	protected boolean       resume      = false;
+	protected boolean       wasFighting = false;
+	protected boolean       returning   = false;
+	/** N16: the last room it was in on its route */
+	protected WeakReference<Room> lastWaypoint=new WeakReference<Room>(null);
+	/** N16: what it patrols, for the time of day of its named routes */
+	protected Physical      lastHost    = null;
+	/** N16: the route its steps are of, "" if it has no named ones */
+	protected String        cachedRoute = null;
+
 	@Override
 	public String accountForYourself()
 	{
@@ -101,13 +114,56 @@ public class Patroller extends ActiveTicker
 		rideOnly=rideokString.equalsIgnoreCase("only");
 		rideOk=rideOnly||rideokString.equalsIgnoreCase("true");
 		diameter=CMParms.getParmInt(newParms,"diameter",20);
+		resume=CMParms.getParmStr(newParms,"RESUME","false").equalsIgnoreCase("true"); // N16
 		cachedSteps = null;
+		cachedRoute = null;
+		waitTicks = -1;
+	}
+
+	/**
+	 * N16: the named route for now: ROUTE=DAWN|DAY|DUSK|NIGHT:..., by the
+	 * time of day of its host's clock; else ROUTE=DEFAULT (or ALL); else the
+	 * first; "" if it has none.
+	 * @return the route's name
+	 */
+	protected String routeNow()
+	{
+		final String p=getParms().toUpperCase();
+		if(p.indexOf("ROUTE=")<0)
+			return "";
+		final List<String> names=new ArrayList<String>();
+		int x=p.indexOf("ROUTE=");
+		while(x>=0)
+		{
+			final int c=p.indexOf(':',x);
+			if(c>x)
+				names.add(p.substring(x+6,c).trim());
+			x=p.indexOf("ROUTE=",x+6);
+		}
+		if(names.isEmpty())
+			return "";
+		final TimeClock C=(lastHost!=null)?CMLib.time().localClock(lastHost):CMLib.time().globalClock();
+		final String tod=(C==null)?"":C.getTODCode().name();
+		if(names.contains(tod))
+			return tod;
+		if(names.contains("DEFAULT"))
+			return "DEFAULT";
+		if(names.contains("ALL"))
+			return "ALL";
+		return names.get(0);
 	}
 
 	protected List<String> getSteps()
 	{
-		if(cachedSteps != null)
+		final String route=routeNow(); // N16
+		if((cachedSteps != null)&&(route.equals(cachedRoute)))
 			return cachedSteps;
+		if((cachedRoute != null)&&(!route.equals(cachedRoute)))
+		{
+			step=0; // a new route: from its start
+			waitTicks=-1;
+		}
+		cachedRoute=route;
 
 		final Vector<String> V=new Vector<String>();
 		String path=getParms().trim();
@@ -117,16 +173,32 @@ public class Patroller extends ActiveTicker
 		path=path.substring(x+1).trim();
 		x=path.indexOf(';');
 		String s=null;
+		final List<String> all=new ArrayList<String>();
 		while(x>=0)
 		{
 			s=path.substring(0,x).trim();
 			if(s.length()>0)
-				V.addElement(s);
+				all.add(s);
 			path=path.substring(x+1).trim();
 			x=path.indexOf(';');
 		}
 		if(path.length()>0)
-			V.addElement(path);
+			all.add(path);
+		// N16: only the steps of the route for now
+		boolean in=(route.length()==0);
+		for(final String a : all)
+		{
+			if(a.toUpperCase().startsWith("ROUTE="))
+			{
+				final int c=a.indexOf(':');
+				in=(c>0)&&a.substring(6,c).trim().equalsIgnoreCase(route);
+				if(in&&(c<a.length()-1))
+					V.addElement(a.substring(c+1).trim());
+				continue;
+			}
+			if(in)
+				V.addElement(a);
+		}
 		if(V.size()>1)
 		{
 			for(int i=V.size()-1;i>=0;i--)
@@ -134,6 +206,8 @@ public class Patroller extends ActiveTicker
 				s=V.elementAt(i);
 				if(s.equalsIgnoreCase("RESTART")||s.equalsIgnoreCase("REPEAT"))
 					break;
+				if(s.indexOf('=')>=0)
+					continue; // N16: WAIT=, DO=, EMOTE= and IF= are not walked back
 				final int dir=CMLib.directions().getGoodDirectionCode(s);
 				if(dir>=0)
 					V.addElement(CMLib.directions().getDirectionName(Directions.getOpDirectionCode(dir)));
@@ -220,7 +294,7 @@ public class Patroller extends ActiveTicker
 				step=0;
 				nxt=steps.get(step);
 			}
-			if(nxt.equals("."))
+			if(nxt.equals(".")||(nxt.indexOf('=')>=0)) // N16: WAIT=, DO=, EMOTE=, IF= take no step
 			{
 				step++;
 				continue;
@@ -269,6 +343,51 @@ public class Patroller extends ActiveTicker
 			startRoom=new WeakReference<Room>(CMLib.map().roomLocation((Physical)ticking));
 		if((ticking instanceof MOB)&&(((MOB)ticking).fetchEffect("Alerted")!=null)) // N5: an alarm comes first
 			return true;
+		if(ticking instanceof Physical)
+			lastHost=(Physical)ticking;
+		// N16: WAIT=n
+		if(waitTicks>0)
+		{
+			waitTicks--;
+			return true;
+		}
+		if(waitTicks==0)
+		{
+			waitTicks=-1;
+			step++;
+		}
+		// N16: RESUME=true: after a fight, back to where it left its route
+		if(resume&&(ticking instanceof MOB))
+		{
+			final MOB mob=(MOB)ticking;
+			if(mob.isInCombat())
+			{
+				wasFighting=true;
+				return true;
+			}
+			if(wasFighting)
+			{
+				wasFighting=false;
+				returning=true;
+			}
+			final Room back=lastWaypoint.get();
+			if(returning)
+			{
+				final Room here=mob.location();
+				if((back==null)||(here==null)||(here==back))
+					returning=false;
+				else
+				{
+					final List<Room> trail=CMLib.tracking().findTrailToRoom(here,back,CMLib.tracking().newFlags(),diameter);
+					final int dir=((trail==null)||trail.isEmpty())?-1:CMLib.tracking().trackNextDirectionFromHere(trail,here,true);
+					if((dir<0)||(!CMLib.tracking().walk(mob,dir,false,false)))
+						returning=false;
+					return true;
+				}
+			}
+			if(mob.location()!=null)
+				lastWaypoint=new WeakReference<Room>(mob.location());
+		}
 		if(canAct(ticking,tickID))
 		{
 			tickStatus=Tickable.STATUS_MISC+0;
@@ -362,6 +481,51 @@ public class Patroller extends ActiveTicker
 			{
 				step=0;
 				nxt=steps.get(step);
+			}
+
+			// N16: WAIT=n, DO=command, EMOTE=text, IF=mask
+			final String upNxt=nxt.toUpperCase();
+			if(upNxt.startsWith("WAIT="))
+			{
+				waitTicks=Math.max(0,CMath.s_int(nxt.substring(5).trim()));
+				if(waitTicks==0)
+				{
+					waitTicks=-1;
+					step++;
+				}
+				tickStatus=Tickable.STATUS_NOT;
+				return true;
+			}
+			if(upNxt.startsWith("DO="))
+			{
+				step++;
+				if(ticking instanceof MOB)
+					((MOB)ticking).doCommand(CMParms.parse(nxt.substring(3).trim()),MUDCmdProcessor.METAFLAG_FORCED);
+				tickStatus=Tickable.STATUS_NOT;
+				return true;
+			}
+			if(upNxt.startsWith("EMOTE="))
+			{
+				step++;
+				if(ticking instanceof MOB)
+					thisRoom.show((MOB)ticking,null,CMMsg.MSG_OK_ACTION,"<S-NAME> "+nxt.substring(6).trim());
+				tickStatus=Tickable.STATUS_NOT;
+				return true;
+			}
+			if(upNxt.startsWith("IF="))
+			{
+				if((ticking instanceof Environmental)&&CMLib.masking().maskCheck(nxt.substring(3).trim(),(Environmental)ticking,true))
+					step++;
+				else
+				{
+					// to the next RESTART, or the start
+					int s=step+1;
+					while((s<steps.size())&&(!steps.get(s).equalsIgnoreCase("RESTART"))&&(!steps.get(s).equalsIgnoreCase("REPEAT")))
+						s++;
+					step=(s<steps.size())?s:0;
+				}
+				tickStatus=Tickable.STATUS_NOT;
+				return true;
 			}
 
 			if(nxt.equalsIgnoreCase("."))

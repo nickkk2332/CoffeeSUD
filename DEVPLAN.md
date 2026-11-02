@@ -1755,6 +1755,13 @@ N22, N24, N28, N29
   [BAND])`, `MPAFFINITY npc who +n|-n|=n`, Prop_NPCLines' `[AFFINITY >=25]`
   mask, TALK's topic. The zapper mask +AFFINITY is not added: a mask has
   no NPC to ask.
+- N16 done. Patroller steps `WAIT=n` (ticks, counted on each tick
+  before it acts), `DO=command` (forced), `EMOTE=text`, `IF=mask` on the
+  host (else to the next RESTART or the start); none of them walked back.
+  `ROUTE=NAME:first;...` named routes: the time of day's (DAWN/DAY/DUSK/
+  NIGHT of the host's clock), else DEFAULT/ALL, else the first, restarted
+  when it changes. `RESUME=true`: after a fight it tracks back to the room
+  it was in before, one step a tick. N8's catch-up skips the new steps.
 
 #### 2g. Combat and encounters (24)
 
