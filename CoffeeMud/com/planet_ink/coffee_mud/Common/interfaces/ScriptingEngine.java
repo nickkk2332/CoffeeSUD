@@ -667,6 +667,12 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ISWEEKDAY", //133
 		"GENVAR", //134
 		"MEMORY", //135
+		"LISTJOIN", //136
+		"LISTHAS", //137
+		"LISTCOUNT", //138
+		"LISTGET", //139
+		"LISTFIND", //140
+		"LISTPICK", //141
 	};
 
 	/** String list of all valid mobprog commands */
@@ -773,7 +779,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPACHIEVE", //99
 		"MPACCUSE", //100
 		"MPLLM", // 101
-		"MPDEBUG" // 102
+		"MPDEBUG", // 102
+		"MPLIST", // 103
 	};
 
 	/**

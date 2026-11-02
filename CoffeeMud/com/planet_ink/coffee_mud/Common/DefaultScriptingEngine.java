@@ -3876,6 +3876,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				tickStatus=Tickable.STATUS_MISC+funcCode.intValue();
 				boolean returnable=false;
+				// SC1 and on: the newer functions as tests: true, or a value compared
+				if(funcCode.intValue()>=EXTRA_FUNCS_FROM)
+				{
+					final StringBuilder inner=new StringBuilder();
+					for(int i=0;i<tlen;i++)
+						inner.append((i>0)?" ":"").append(tt[t+i]);
+					returnable=extraTest(ctx,s,inner.toString());
+				}
+				else
 				switch(funcCode.intValue())
 				{
 				case 1: // rand
@@ -7404,6 +7413,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		{
 			tickStatus=Tickable.STATUS_MISC2+funcCode.intValue();
 			final String funcParms=evaluable.substring(y+1,z).trim();
+			// SC1 and on: the newer functions, in one place
+			if(funcCode.intValue()>=EXTRA_FUNCS_FROM)
+				return extraValue(ctx,preFab,funcParms);
 			switch(funcCode.intValue())
 			{
 			case 1: // rand
@@ -9679,6 +9691,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			if(methCode==null)
 				methCode=Integer.valueOf(0);
 			tickStatus=Tickable.STATUS_MISC3+methCode.intValue();
+			// SC1 and on: the newer commands, in one place; one that returns something ends the body (MPWAIT)
+			if(methCode.intValue()>=EXTRA_METHODS_FROM)
+			{
+				final String resp=extraCommand(ctx,cmd,s);
+				if(resp!=null)
+				{
+					tickStatus=Tickable.STATUS_END;
+					return resp;
+				}
+				continue;
+			}
 			switch(methCode.intValue())
 			{
 			case 57: // <SCRIPT>
@@ -10196,6 +10219,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							return null;
 						}
 					}
+					else
+					if(tt[3].toUpperCase().startsWith("LIST ")||tt[3].equalsIgnoreCase("LIST"))
+						inList = new ArrayList<Object>(ScriptLib.listOf(varify(ctx,tt[3].substring(4).trim()))); // SC1: put in first, then split
 					else
 					if(tt[3].startsWith("#"))
 						inList = new XArrayList<Object>(CMLib.map().getTaggedObjects(tt[3].substring(1)));
@@ -14912,6 +14938,168 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		default:
 			return "";
 		}
+	}
+
+	/** SC1 and on: the functions from this code on go through extraValue and extraTest */
+	protected static final int EXTRA_FUNCS_FROM = 136;
+	/** SC1 and on: the commands from this code on go through extraCommand */
+	protected static final int EXTRA_METHODS_FROM = 103;
+
+	/**
+	 * Splits a varified text at its last word (quotes keep words together).
+	 * @param text the text
+	 * @return the text before it, and the word
+	 */
+	protected static String[] lastWord(final String text)
+	{
+		final String t=text.trim();
+		if(t.length()==0)
+			return new String[]{"",""};
+		int end=t.length();
+		int start;
+		if((t.charAt(end-1)=='\'')||(t.charAt(end-1)=='`')||(t.charAt(end-1)=='"'))
+		{
+			final char q=t.charAt(end-1);
+			start=t.lastIndexOf(q,end-2);
+			if(start<0)
+				start=0;
+			return new String[]{t.substring(0,start).trim(),t.substring(start+1,end-1)};
+		}
+		start=t.lastIndexOf(' ');
+		return new String[]{(start<0)?"":t.substring(0,start).trim(),t.substring(start+1)};
+	}
+
+	/**
+	 * The newer functions' values (SC1 and on): $%NAME(parms)%.
+	 * @param ctx the script's context
+	 * @param name the function
+	 * @param parms what is in its parentheses, not yet varified
+	 * @return its value
+	 */
+	protected String extraValue(final MPContext ctx, final String name, final String parms)
+	{
+		final String v=varify(ctx,parms).trim();
+		final TimeClock clock;
+		{
+			final Area A=CMLib.map().areaLocation(ctx.scripted);
+			clock=(A!=null)?A.getTimeObj():CMLib.time().globalClock();
+		}
+		switch(name.toUpperCase())
+		{
+		case "LISTJOIN":
+		{
+			final String[] p=lastWord(v);
+			return String.join(p[1],ScriptLib.listOf(p[0]));
+		}
+		case "LISTHAS":
+		case "LISTFIND":
+		{
+			final String[] p=lastWord(v);
+			final List<String> L=ScriptLib.listOf(p[0]);
+			for(int i=0;i<L.size();i++)
+			{
+				if(L.get(i).equalsIgnoreCase(p[1]))
+					return name.equalsIgnoreCase("LISTHAS")?"true":(""+i);
+			}
+			return name.equalsIgnoreCase("LISTHAS")?"false":"-1";
+		}
+		case "LISTCOUNT":
+			return ""+ScriptLib.listOf(v).size();
+		case "LISTGET":
+		{
+			final String[] p=lastWord(v);
+			final List<String> L=ScriptLib.listOf(p[0]);
+			final int i=CMath.s_int(p[1]);
+			return ((i>=0)&&(i<L.size()))?L.get(i):"";
+		}
+		case "LISTPICK":
+		{
+			final List<String> L=ScriptLib.listOf(v);
+			return L.isEmpty()?"":L.get(CMLib.dice().roll(1,L.size(),-1));
+		}
+		default: // the newer functions end here
+			logError(ctx,name,"Syntax","unknown function "+name);
+			return "";
+		}
+	}
+
+	/**
+	 * The newer functions as tests (SC1 and on): a value compared, as
+	 * LISTCOUNT(list > 2), or true or false, as LISTHAS(list word).
+	 * @param ctx the script's context
+	 * @param name the function
+	 * @param inner what is in its parentheses
+	 * @return the test's result
+	 */
+	protected boolean extraTest(final MPContext ctx, final String name, final String inner)
+	{
+		final List<String> words=CMParms.parse(inner);
+		final String[] c=ScriptLib.splitCompare(words);
+		if(c==null)
+			return "true".equalsIgnoreCase(extraValue(ctx,name,inner).trim());
+		final int at=inner.indexOf(" "+c[1]+" ");
+		final String left=(at>=0)?inner.substring(0,at):c[0];
+		final String right=(at>=0)?inner.substring(at+c[1].length()+2):c[2];
+		return ScriptLib.compare(extraValue(ctx,name,left),c[1],varify(ctx,right));
+	}
+
+	/**
+	 * The host a command's first word names, as MPSETVAR finds it.
+	 * @param ctx the script's context
+	 * @param which the word
+	 * @return the host's name for variables
+	 */
+	protected String varHostFor(final MPContext ctx, String which)
+	{
+		if(which.equals("*"))
+			return which;
+		final Environmental E=getArgumentItem(which,ctx);
+		if(E==null)
+			return varify(ctx,which);
+		if(E instanceof Room)
+			return CMLib.map().getExtendedRoomID((Room)E);
+		return E.Name();
+	}
+
+	/**
+	 * The newer commands (SC1 and on).
+	 * @param ctx the script's context
+	 * @param cmd the command's word
+	 * @param line the line
+	 * @return null to go on to the next line, or what ends the body
+	 */
+	protected String extraCommand(final MPContext ctx, final String cmd, final String line)
+	{
+		switch(cmd)
+		{
+		case "MPLIST": // SC1: MPLIST host var ADD|ADDUNIQUE|DEL|CLEAR|SHUFFLE|SORT words
+		{
+			final String which=varHostFor(ctx,CMParms.getCleanBit(line,1));
+			final String var=varify(ctx,CMParms.getCleanBit(line,2));
+			final String op=CMParms.getCleanBit(line,3);
+			final String words=varify(ctx,CMParms.getPastBitClean(line,3));
+			final String now=ScriptLib.listChange(getVar(which,var),op,words);
+			if(now==null)
+				logError(ctx,"MPLIST","Syntax","unknown change "+op+": "+line);
+			else
+				setVar(which,var,listValue(now));
+			return null;
+		}
+		default: // the newer commands end here
+			logError(ctx,cmd,"Syntax","unknown command "+cmd);
+			return null;
+		}
+	}
+
+	/**
+	 * A list's text as a value for setVar, which would otherwise read a
+	 * leading +, -, * or / as arithmetic.
+	 * @param list the list
+	 * @return the value
+	 */
+	protected String listValue(final String list)
+	{
+		return list;
 	}
 
 	protected boolean match(final String str, final String patt)

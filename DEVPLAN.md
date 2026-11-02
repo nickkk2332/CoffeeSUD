@@ -1144,6 +1144,13 @@ JS17, JS18, JS19, JS20, JS23
   owner; $g is DECAY (an item past its expiry) or JUNKED (MPJUNK), else empty.
 - ST29 done. `ACHIEVE_PROG id|* [mask]` from `giveAwards`, for every host
   with it; $g the achievement's ID.
+- SC1 done. Lists are words (quotes keeping words together), or the items
+  between commas if there are any (`ScriptLib.listOf`). `FOR $0 IN LIST
+  text` puts the text in first, then splits it. `MPLIST host var
+  ADD|ADDUNIQUE|DEL|CLEAR|SHUFFLE|SORT words`; `LISTJOIN`, `LISTHAS`,
+  `LISTCOUNT`, `LISTGET`, `LISTFIND`, `LISTPICK`. The newer functions and
+  commands are in one place (`extraValue`, `extraTest`, `extraCommand`);
+  any function that returns a value may be compared in an IF.
 
 #### 2e. Quests (15)
 
