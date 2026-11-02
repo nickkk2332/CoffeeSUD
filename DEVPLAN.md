@@ -2143,6 +2143,15 @@ I22, I23, I24, I25, I26, I27
   VERB=, CONSUME=A,B|BOTH, MASK=, SKILL=, FAILMSG=, MSG=, ACTIONS=; else
   "Nothing happens." No new message type: the scripts and rows show what
   they will.
+- I11 done. Prop_Discoverable (items, exits, mobs): IS_NOT_SEEN until
+  found, and a hidden exit refuses those who go through it. FOUNDBY
+  examine:x, look:x (seen in executeMsg, as rooms pass messages to their
+  items and exits), search: a VerbTaker for SEARCH, the room's first
+  hidden thing searching for all; a character with Searching or
+  Thief_Search who finds nothing is handed to the skill. CHECK "STAT n"
+  or STAT/DC: d20 + Prop_Ambush.bonus (the stat, Searching, Thief_Search)
+  against the number. MSG, HINT (a trailer to a LOOK at a FOUNDBY thing),
+  STAYS and RESET. FOUND=true is kept in the text.
 
 #### 2i. World systems (25)
 
