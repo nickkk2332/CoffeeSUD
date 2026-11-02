@@ -577,6 +577,9 @@ public class StdArmor extends StdContainer implements Armor
 				}
 			}
 
+			// I26: ITEMWEAR and Prop_Durability scale the wear
+			if(usesRemaining()<oldUses)
+				setUsesRemaining(oldUses-Durability.scale(this,oldUses-usesRemaining()));
 			if(oldUses!=usesRemaining())
 				recoverPhyStats();
 
@@ -592,6 +595,11 @@ public class StdArmor extends StdContainer implements Armor
 			&&(owner() instanceof MOB))
 			{
 				final MOB owner=(MOB)owner();
+				if(Durability.breaks(this)) // I26: ITEMBREAK=BREAK: broken, not gone
+				{
+					Durability.breakItem(this,owner);
+					return;
+				}
 				setUsesRemaining(100);
 				msg.addTrailerMsg(CMClass.getMsg(((MOB)owner()),null,null,CMMsg.MSG_OK_VISUAL,L("^I@x1 is destroyed!!^?",name()),CMMsg.NO_EFFECT,null,CMMsg.MSG_OK_VISUAL,L("^I@x1 being worn by <S-NAME> is destroyed!^?",name())));
 				if(this instanceof Container)

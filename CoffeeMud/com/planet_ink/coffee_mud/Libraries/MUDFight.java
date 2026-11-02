@@ -311,8 +311,11 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			{
 				if(I.subjectToWearAndTear())
 				{
-					I.setUsesRemaining(I.usesRemaining()-damageAmount);
+					I.setUsesRemaining(I.usesRemaining()-Durability.scale(I,damageAmount)); // I26
 					I.recoverPhyStats(); // important relation to setuses -- for brittle
+					if((I.usesRemaining()<=0)&&Durability.breaks(I)) // I26: broken, not gone
+						Durability.breakItem(I,(I.owner() instanceof MOB)?(MOB)I.owner():null);
+					else
 					if(I.usesRemaining()<=0)
 					{
 						I.setUsesRemaining(100);

@@ -618,6 +618,9 @@ times a day when its wearer says 'Ignis', for any character. Without WORD, INVOK
 <p>Items that grow: <code>Prop_ItemGrowth GAIN=KILL XP="@x1" KILLMASK="-RACECAT +Undead" STAGES="100:NAME='a humming
 blade' PROPS=Prop_WearAdjuster(dam+2);400:NAME='Dawnbringer' PROPS=Prop_WearAdjuster(dam+5)" BIND=CHARACTER</code>: the
 rusty sword from the first cellar becomes the hero's blade after enough undead fall to it.</p>
+<p>Wear and tear: <code>ITEMWEAR=50</code> and <code>ITEMBREAK=BREAK</code> in coffeemud.ini halve the wear and
+keep worn-out things as broken (unusable until a smith mends them) instead of gone. <code>Prop_Durability
+UNBREAKABLE</code> on an heirloom, <code>MULT=200 BROKENNAME="a shattered %s"</code> on brittle glass.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

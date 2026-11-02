@@ -2261,6 +2261,15 @@ I22, I23, I24, I25, I26, I27
   are set on the item (so saved as its own), PROPS added unsaved and again
   from STAGE= after a load. GROWN=, STAGE=, OWNER= in the text; BIND;
   accountForYourself shows the way to the next stage.
+- I26 done. core/Durability: ITEMWEAR (a percent) scales the wear of
+  StdArmor (the drop in uses from its table, scaled after) and of
+  MUDFight.postItemDamage (StdWeapon's 1% wear goes through it), with a
+  random rounding; ITEMBREAK=BREAK (or Prop_Durability BREAK/BROKENNAME)
+  breaks rather than destroys: uses 0, unworn, Prop_Broken (no armour or
+  damage, refuses WEAR/WIELD/HOLD, ambiance "(broken)", ORIGINAL= name;
+  gone when the uses are above 0 again, by any mending). Prop_Durability:
+  MULT, UNBREAKABLE, NOREPAIR (a MEND or REPAIR ability, or a GIVE to an
+  ItemMender, refused), "(worn)" below half.
 
 #### 2i. World systems (25)
 
