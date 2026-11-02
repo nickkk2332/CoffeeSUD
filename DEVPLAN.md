@@ -2038,6 +2038,14 @@ C18, C19, C20, C21, C22, C23, C25
   not fit through) and Prop_HaveResister (so Prop_WearResister too: its
   resistances only against attackers it fits; MASK= is still whom it
   protects).
+- C25 done. CONSIDER, or CONSIDER ALL (CONSIDER ALL.name as before):
+  core/FightOdds.report: the party (the asker's group here) against the
+  foes here (those fighting the party, or with an Aggressive behaviour;
+  else every NPC not on the player's side), by CoffeeLevels'
+  getPowerLevel, the foes' times their rank's POWER (C15): trivial, an
+  easy, fair, hard or very hard fight, or deadly; names counted
+  ("four guards"), rank tags kept, and "They scale to your party." when
+  core/PartyScale says so.
 
 #### 2h. Items, properties and puzzles (23)
 

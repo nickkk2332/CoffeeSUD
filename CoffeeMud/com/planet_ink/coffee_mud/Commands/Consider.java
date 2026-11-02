@@ -218,9 +218,12 @@ public class Consider extends StdCommand
 		throws java.io.IOException
 	{
 		final Vector<String> origCmds=new XVector<String>(commands);
-		if(commands.size()<2)
+		if((commands.size()<2)
+		||((commands.size()==2)&&commands.get(1).equalsIgnoreCase("ALL")))
 		{
-			CMLib.commands().postCommandFail(mob,origCmds,L("Consider whom or what?"));
+			// C25: CONSIDER, or CONSIDER ALL: the foes here against the party, in one word
+			if(mob.location()!=null)
+				mob.tell(FightOdds.report(mob));
 			return false;
 		}
 		commands.remove(0);
