@@ -600,6 +600,10 @@ from <code>world/journals/[name].txt</code>.</p>
 <p>Only when: <code>Prop_When WHEN="-IF ISMOON(FULL)" PROPS="RandomMonsters(catalog:werewolf;3;5);Emoter(min=5
 max=10 howls)"</code> on Darkwood brings the werewolves and the howling with the full moon, and takes them away
 after. A fairy ring: <code>CHECK=ROOMPLAYERS COOLDOWN=24H PROPS="Prop_Transporter(Feywild#1)"</code>.</p>
+<p>Things that change: <code>Prop_Transform DAYS=3 START=GET ONLYIN=CARRIED MOB="a wyrmling" KEEP=FOLLOW
+MSG="$p cracks open!"</code> on a dragon egg hatches it after three days in someone's pack, the wyrmling following
+its finder; <code>WHEN=NIGHT REVERT=true MOB="a stone gargoyle"</code> on a statue wakes it at night and turns it
+back to stone at dawn.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

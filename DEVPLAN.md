@@ -2215,6 +2215,17 @@ I22, I23, I24, I25, I26, I27
   WORLD (SPENT=true in the text); ONSTART/ONEND actions; ELSEMSG on an
   ENTER while off. What it adds is not savable (it adds them again after
   a load). N1's WHEN= on behaviours stays as it was.
+- I5 done. Prop_Transform (items, mobs) ticks on its own: AFTER or DAYS
+  (game hour in ticks x hours a day; LEFT= in the text), START (GET,
+  DROP, WEAR, ALWAYS; STARTED= kept), RESET, ONLYIN; or WHEN (DAWN, DAY,
+  DUSK, NIGHT, FULLMOON, a season, else a mask on a stand-in in its room).
+  INTO through core/Transform (KEEP as MPTRANSFORM's, DAMAGE as USES),
+  MOB (Encounters.make, bringToLife, KEEP=FOLLOW the last holder), SET in
+  place (NAME, DISPLAY, DESC, PROPS). REVERT with WHEN: SET puts the old
+  words back (WAS); INTO or MOB put the old thing away in memory and give
+  the new one a Prop_Transform BACK=true that brings it back when WHEN
+  ends. What is put away is not in a save: a game saved at night keeps
+  the gargoyle, which then stays a mob.
 
 #### 2i. World systems (25)
 
