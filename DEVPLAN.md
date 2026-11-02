@@ -1897,6 +1897,14 @@ C18, C19, C20, C21, C22, C23, C25
   random loop picks the +list by WEIGHT, skips scheduled skills and those
   cooling down. The round of each use (on success) and a log of tries
   (ONCE counts tries); both cleared when the fight ends.
+- C11 done. Behaviors/Pursue: a FLEE message from its victim (or one who
+  fights it) starts a chase at CHANCE= (MASK=); each tick after DELAY= it
+  walks into the next room if the quarry is there (an open exit), attacks
+  them there (postAttack), and gives up past MAXROOMS= (counted over the
+  whole chase, until the fight ends) or LEASH= rooms from its start room
+  or when the trail is lost (GIVEUPMSG=, then
+  WanderHomeLater ONCE unless STAY). REMEMBER=n: the one who fled, coming
+  back into its room within n ticks, is attacked the next tick.
 
 #### 2h. Items, properties and puzzles (23)
 
