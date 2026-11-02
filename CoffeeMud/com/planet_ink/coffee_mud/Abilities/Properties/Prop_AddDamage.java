@@ -57,6 +57,10 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 	protected double pctDamage=0.0;
 	protected int bonusDamage=0;
 	protected volatile boolean norecurse=false;
+	/** C12: TARGETMASK=, whom the extra damage is for, or null for all */
+	protected com.planet_ink.coffee_mud.Libraries.interfaces.MaskingLibrary.CompiledZMask targetMask=null;
+	/** C12: LEECH=, the share of the damage dealt that heals the wielder */
+	protected double leech=0.0;
 
 	@Override
 	public int triggerMask()
@@ -93,7 +97,14 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 		weaponDamageType=Weapon.TYPE_NATURAL;
 		typeOfEffect=CMMsg.TYP_WEAPONATTACK;
 		super.setMiscText(newMiscText);
-		final List<String> parms=CMParms.parse(newMiscText.toUpperCase());
+		// C12: TARGETMASK="mask" and LEECH=n%, read by exact key and taken out of the words
+		final Map<String,String> q=CMParms.parseExactParms(newMiscText);
+		final String tm=CMParms.getParmStr(q,"TARGETMASK","").trim();
+		targetMask=(tm.length()==0)?null:CMLib.masking().getPreCompiledMask(tm);
+		final String lc=CMParms.getParmStr(q,"LEECH","").trim();
+		leech=(lc.length()==0)?0.0:(CMath.s_double(lc.replace("%",""))/100.0);
+		final String rest=newMiscText.replaceAll("(?i)(TARGETMASK|LEECH)=(\"[^\"]*\"|\\S+)","");
+		final List<String> parms=CMParms.parse(rest.toUpperCase());
 		for(String s : parms)
 		{
 			if(s.startsWith("+"))
@@ -165,6 +176,23 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 		}
 	}
 
+	/** C12: whether TARGETMASK= lets it hurt this one */
+	protected boolean targetOk(final MOB M)
+	{
+		return (targetMask==null)||((M!=null)&&CMLib.masking().maskCheck(targetMask,M,true));
+	}
+
+	/** C12: LEECH=: the wielder heals that share of what was dealt */
+	protected void leechFor(final MOB wielder, final int dealt)
+	{
+		if((leech>0)&&(wielder!=null)&&(dealt>0)&&(!wielder.amDead()))
+		{
+			final int heal=(int)Math.round(dealt*leech);
+			if(heal>0)
+				wielder.curState().adjHitPoints(heal,wielder.maxState());
+		}
+	}
+
 	protected final int getDamage(final CMMsg msg)
 	{
 		final int dmg = (int)CMath.round(CMath.mul(msg.value(), pctDamage)) + bonusDamage;
@@ -202,6 +230,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 			if(((affected instanceof Armor)||(affected instanceof Shield))
 			&&(msg.amITarget(mob))
 			&&(!msg.amISource(mob))
+			&&(targetOk(msg.source())) // C12
 			&&(CMLib.dice().rollPercentage()>32+msg.source().charStats().getStat(CharStats.STAT_DEXTERITY))
 			&&(msg.source().rangeToTarget()==0)
 			&&((msg.targetMajor(CMMsg.MASK_HANDS))||(msg.targetMajor(CMMsg.MASK_MOVE))))
@@ -222,7 +251,8 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 			if((msg.tool()==affected)
 			&&(!msg.amITarget(mob))
 			&&(msg.amISource(mob))
-			&&(!(msg.tool() instanceof Wand)))
+			&&(!(msg.tool() instanceof Wand))
+			&&(targetOk((MOB)msg.target()))) // C12
 			{
 				final int damage=getDamage(msg);
 				final String str=L("^F^<FIGHT^><S-YOUPOSS> <O-NAME> <DAMAGE> <T-NAME>!^</FIGHT^>^?");
@@ -235,6 +265,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 						{
 							CMLib.combat().postDamage(msg.source(),(MOB)msg.target(),affected,Math.round(damage),
 							CMMsg.MASK_MALICIOUS|CMMsg.MASK_ALWAYS|typeOfEffect,weaponDamageType,str);
+							leechFor(mob,msg.value()+damage); // C12: once, not again for the extra's own message
 						}
 						finally
 						{
@@ -248,9 +279,11 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 			&&(!msg.amITarget(mob))
 			&&(msg.amISource(mob))
 			&&(msg.tool() instanceof Weapon)
-			&&(!(msg.tool() instanceof Wand)))
+			&&(!(msg.tool() instanceof Wand))
+			&&(targetOk((MOB)msg.target()))) // C12
 			{
 				final int damage=getDamage(msg);
+				leechFor(mob,msg.value()+damage); // C12
 				final String str=L("^F^<FIGHT^><S-NAME> <DAMAGE> <T-NAME>!^</FIGHT^>^?");
 				CMLib.combat().postDamage(mob,(MOB)msg.target(),this,Math.round(damage),
 					  CMMsg.MASK_MALICIOUS|CMMsg.MASK_ALWAYS|typeOfEffect,weaponDamageType,str);

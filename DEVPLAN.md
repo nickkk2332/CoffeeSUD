@@ -2030,6 +2030,14 @@ C18, C19, C20, C21, C22, C23, C25
   stops the fight, moves the gear to GEAR=CONTAINER:room/container, and
   bringMobHere(..., true) takes the character and its followers to TO,
   with HEAL=% of their hit points; MSG= shows.
+- C12 done. Prop_AddDamage: TARGETMASK= (the extra damage, and its
+  reflected kind, only on victims it fits) and LEECH=n% (the wielder heals
+  that share of the hit plus the extra), read by exact key and taken out
+  of the words before the old parse, so the text keeps them.
+  SOURCEMASK= on Prop_AbsorbDamage (its okMessage lets an attacker it does
+  not fit through) and Prop_HaveResister (so Prop_WearResister too: its
+  resistances only against attackers it fits; MASK= is still whom it
+  protects).
 
 #### 2h. Items, properties and puzzles (23)
 

@@ -522,6 +522,10 @@ area every NPC that fights there scales.</p>
 HEAL=25%</code> on the bandit hideout: defeat there drops the character in the cage with a quarter of their hit points,
 their weapons in the chief's strongbox, their party with them. A tutorial area's <code>PLAYERDEATH="OUT 3"</code>
 only knocks one out; a sparring hall's <code>MOBDEATH="OUT 3"</code> spares the sparring partners.</p>
+<p>Banes and leeches: <code>Prop_AddDamage 50% BURNING FIRE TARGETMASK="-RACECAT +Undead"</code> on the Sunblade
+burns only the undead, and <code>LEECH=25%</code> heals its wielder a quarter of what it deals. The Wyrmguard shield's
+<code>Prop_AbsorbDamage 40% +BURNING SOURCEMASK="-RACECAT +Dragon"</code> takes the fire out of dragons' blows only;
+Prop_HaveResister and Prop_WearResister take SOURCEMASK too.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

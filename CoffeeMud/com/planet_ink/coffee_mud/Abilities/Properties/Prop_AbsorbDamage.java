@@ -66,6 +66,8 @@ public class Prop_AbsorbDamage extends Property implements TriggeredAffect
 	}
 
 	protected boolean				enhFlag		= false;
+	/** C12: SOURCEMASK=, the attackers it works against, or null for all */
+	protected MaskingLibrary.CompiledZMask	sourceMask	= null;
 	protected Object				allAbsorb	= null;
 	protected Map<Integer, Object>	msgTypes	= null;
 	protected Map<Integer, Object>	weapTypes	= null;
@@ -82,6 +84,10 @@ public class Prop_AbsorbDamage extends Property implements TriggeredAffect
 	public void setMiscText(String newMiscText)
 	{
 		super.setMiscText(newMiscText);
+		// C12: SOURCEMASK="mask", read by exact key and taken out of the words
+		final String sm=CMParms.getParmStr(CMParms.parseExactParms(newMiscText),"SOURCEMASK","").trim();
+		sourceMask=(sm.length()==0)?null:CMLib.masking().getPreCompiledMask(sm);
+		newMiscText=newMiscText.replaceAll("(?i)SOURCEMASK=(\"[^\"]*\"|\\S+)","");
 		final List<String> parms=CMParms.parse(newMiscText.toUpperCase());
 		enhFlag=false;
 		allAbsorb=null;
@@ -257,6 +263,8 @@ public class Prop_AbsorbDamage extends Property implements TriggeredAffect
 				||(msg.target()!=((Item)affected).owner()))
 					return true;
 			}
+			if((sourceMask!=null)&&((msg.source()==null)||(!CMLib.masking().maskCheck(sourceMask,msg.source(),true))))
+				return true; // C12: not against this attacker
 
 			if(msg.source().phyStats().isAmbiance("-"+this)
 			||(((msg.target() instanceof MOB)&&(((MOB)msg.target()).phyStats().isAmbiance("-"+this)))))

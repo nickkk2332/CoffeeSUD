@@ -60,6 +60,8 @@ public class Prop_HaveResister extends Property implements TriggeredAffect
 
 	protected CharStats			adjCharStats		= null;
 	protected String			maskString			= "";
+	/** C12: SOURCEMASK=, the attackers it works against, or null for all */
+	protected MaskingLibrary.CompiledZMask	sourceMask	= null;
 	protected boolean			ignoreCharStats		= true;
 	protected long				lastProtection		= 0;
 	protected Map<String,Integer> remainingProtection = new Hashtable<String,Integer>();
@@ -87,7 +89,10 @@ public class Prop_HaveResister extends Property implements TriggeredAffect
 		super.setMiscText(newText);
 		adjCharStats=(CharStats)CMClass.getCommon("DefaultCharStats");
 		ignoreCharStats=true;
-		final String[] sepParms = CMLib.masking().separateMaskStrs(newText);
+		// C12: SOURCEMASK="mask", read by exact key and taken out of the words
+		final String sm=CMParms.getParmStr(CMParms.parseExactParms(newText),"SOURCEMASK","").trim();
+		sourceMask=(sm.length()==0)?null:CMLib.masking().getPreCompiledMask(sm);
+		final String[] sepParms = CMLib.masking().separateMaskStrs(newText.replaceAll("(?i)SOURCEMASK=(\"[^\"]*\"|\\S+)",""));
 		final String parmString=sepParms[0].toUpperCase();
 		maskString=sepParms[1];
 		final List<String> parmParts = CMParms.parseSpaces(parmString.toUpperCase(), true);
@@ -407,7 +412,8 @@ public class Prop_HaveResister extends Property implements TriggeredAffect
 	{
 		if((canResist(msg.target()))
 		&&(msg.target() instanceof MOB)
-		&&(((MOB)msg.target()).location()!=null))
+		&&(((MOB)msg.target()).location()!=null)
+		&&((sourceMask==null)||((msg.source()!=null)&&CMLib.masking().maskCheck(sourceMask,msg.source(),true)))) // C12
 		{
 			if((msg.value()<=0)&&(!isOk(msg,this,(MOB)msg.target(),maskString)))
 				return false;
