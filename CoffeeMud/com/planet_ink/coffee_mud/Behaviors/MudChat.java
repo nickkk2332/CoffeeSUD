@@ -1838,6 +1838,77 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	}
 
 	@Override
+	public boolean answersTopic(final MOB npc, final MOB speaker, final String topic)
+	{
+		final String str=CMLib.english().stripEnglishPunctuation((topic==null)?"":topic).toLowerCase().trim();
+		if(str.length()==0)
+			return false;
+		final ChatEntryGroup group=getChatEntries(npc,getChatGroups());
+		final String[] rest=new String[1];
+		// by the topic's own words, so that an entry for anything at all does not count
+		for(final String word : CMParms.parseSpaces(CMStrings.removePunctuationStrict(str),true))
+		{
+			final ChattyEntry[] es=group.mapped.get(word);
+			if((es==null)||(word.length()==0))
+				continue;
+			for(final ChattyEntry e : es)
+			{
+				if((e.expression.type==ChatMatchType.SAY)&&(!e.combatEntry)&&match(speaker,e.expression,str,rest))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public List<String> chatTopics(final MOB npc)
+	{
+		final List<String> list=new ArrayList<String>();
+		final List<ChattyEntry> entries=new ArrayList<ChattyEntry>(Arrays.asList(addedChatEntries));
+		if((chatDatFilename.length()>0)&&(!chatDatFilename.equalsIgnoreCase(defaultChatFile())))
+		{
+			final PairList<ChattyGroup,Long> groups=getChatGroups(npc,getChatGroups());
+			for(final Iterator<ChattyGroup> i=groups.firstIterator();i.hasNext();)
+				entries.addAll(Arrays.asList(i.next().entries));
+		}
+		for(final ChattyEntry e : entries)
+		{
+			if((e.expression==null)||(e.expression.type!=ChatMatchType.SAY)||e.combatEntry)
+				continue;
+			final String w=firstWord(e.expression);
+			if((w!=null)&&(!list.contains(w)))
+				list.add(w);
+		}
+		return list;
+	}
+
+	/**
+	 * N24: an expression's first word or phrase, not a mask, for a topic hint.
+	 * @param e the expression
+	 * @return the word, in lower case, or null
+	 */
+	protected static String firstWord(final ChatExpression e)
+	{
+		for(final Pair<Object,ChatExpConn> p : e.exp)
+		{
+			if(p.first instanceof ChatMatch)
+			{
+				final ChatMatch m=(ChatMatch)p.first;
+				if((m.flag!=ChatMatchFlag.ZAPPER)&&(m.str!=null)&&(m.str.trim().length()>0))
+					return m.str.trim().toLowerCase();
+			}
+			else
+			if(p.first instanceof ChatExpression)
+			{
+				final String s=firstWord((ChatExpression)p.first);
+				if(s!=null)
+					return s;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public String chatTest(final MOB npc, final MOB speaker, final String sentence)
 	{
 		final StringBuilder out=new StringBuilder("");

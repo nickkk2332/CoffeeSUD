@@ -18701,6 +18701,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	}
 
 	@Override
+	public List<String[]> triggerLines(final PhysicalAgent host, final int triggerCode, final String bits)
+	{
+		final List<String[]> lines=new ArrayList<String[]>();
+		if(host==null)
+			return lines;
+		for(final SubScript script : getScripts(host))
+		{
+			if((script.size()<1)||(script.getTriggerCode()!=triggerCode))
+				continue;
+			String[] t=script.getTriggerArgs();
+			if(t==null)
+				t=parseBits(script,0,bits);
+			if(t!=null)
+				lines.add(t);
+		}
+		return lines;
+	}
+
+	@Override
 	public String eventRun(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
 		if((host==null)||(source==null)||(recurseCounter.get() > 2)||(!canTrigger(triggerCode)))

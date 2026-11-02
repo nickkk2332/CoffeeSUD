@@ -104,6 +104,26 @@ public class Say extends StdCommand
 			}
 		}
 
+		// N24: ASK [npc] ABOUT, with no topic: what you could ask it about
+		if(theCommand.equals("ASK")
+		&&(commands.size()>=2)
+		&&(commands.size()<=3)
+		&&commands.get(commands.size()-1).equalsIgnoreCase("ABOUT")
+		&&(mob.location()!=null))
+		{
+			final MOB npc=(commands.size()==3)?mob.location().fetchInhabitant(commands.get(1)):Conversations.partnerHere(mob);
+			if((npc==null)||(npc==mob)||(!CMLib.flags().canBeSeenBy(npc,mob)))
+			{
+				if(commands.size()==3)
+					mob.tell(L("You don't see '@x1' here.",commands.get(1)));
+				else
+					mob.tell(L("Ask whom?  ASK <name> ABOUT lists what you could ask them about."));
+				return false;
+			}
+			NpcTopics.list(mob,npc);
+			return false;
+		}
+
 		final Room R=mob.location();
 		if((commands.size()==1)||(R==null))
 		{
@@ -329,6 +349,9 @@ public class Say extends StdCommand
 		|| CMath.bset(metaFlags, MUDCmdProcessor.METAFLAG_FORCED)
 		|| CMath.bset(metaFlags, MUDCmdProcessor.METAFLAG_ORDER))
 			combinedCommands=CMLib.coffeeFilter().secondaryUserInputFilter(combinedCommands);
+		final List<String> taught=new ArrayList<String>(); // N24: an NPC's [[topic]] words
+		if(mob.playerStats()==null)
+			combinedCommands=NpcTopics.render(combinedCommands,taught);
 		CMMsg msg=null;
 		final String finalVerb = (target!=null)?tverb:averb;
 		if(target==null)
@@ -352,6 +375,7 @@ public class Say extends StdCommand
 		if(R.okMessage(mob,msg))
 		{
 			R.send(mob,msg);
+			NpcTopics.teach(mob,R,taught); // N24: who heard it learns its topics
 			if(theCommand.equals("YELL"))
 			{
 				int dirCode=-1;

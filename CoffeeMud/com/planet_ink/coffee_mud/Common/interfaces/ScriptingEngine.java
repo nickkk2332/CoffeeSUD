@@ -1062,6 +1062,19 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	}
 
 	/**
+	 * N24: the trigger lines of this engine's scripts for one trigger, split
+	 * as the trigger splits them, without running any: what an NPC answers to.
+	 * @param host the object the scripts are on
+	 * @param triggerCode the trigger
+	 * @param bits how the trigger line is split
+	 * @return the lines, each split
+	 */
+	public default List<String[]> triggerLines(final PhysicalAgent host, final int triggerCode, final String bits)
+	{
+		return new ArrayList<String[]>();
+	}
+
+	/**
 	 * Returns what this engine has done that its script alone cannot tell,
 	 * for a saved game: which ONCE_PROGs and QUEST_TIME_PROGs have already
 	 * run.  It is tied to the script as it is now, so that a changed script

@@ -74,4 +74,29 @@ public interface ChattyBehavior extends Behavior
 	public default void resetChat()
 	{
 	}
+
+	/**
+	 * N24: whether one of this NPC's chat entries answers a topic said to it:
+	 * an entry for speech, out of combat, found by the topic's own words (an
+	 * entry that answers anything does not count).
+	 * @param npc the NPC with this behaviour
+	 * @param speaker who asks
+	 * @param topic the topic
+	 * @return true if an entry answers it
+	 */
+	public default boolean answersTopic(final MOB npc, final MOB speaker, final String topic)
+	{
+		return false;
+	}
+
+	/**
+	 * N24: what this NPC's own chat entries for speech talk about, a word or
+	 * phrase from each, to hint at; none from the default chat file.
+	 * @param npc the NPC with this behaviour
+	 * @return the topics
+	 */
+	public default List<String> chatTopics(final MOB npc)
+	{
+		return new ArrayList<String>();
+	}
 }

@@ -1796,6 +1796,18 @@ N22, N24, N28, N29
   other item events) and from the tick (time of day and weather as they
   change, HURT<n once until healed, IDLE). Lines drawn with the seeded dice.
   Whom it greeted and its once-per-character barks are kept in the run state.
+- N24 done. core/NpcTopics: [[topic]] and [[shown|topic]] in an NPC's SAY
+  (Say, for a speaker with no playerStats) and postSay become ^H...^? and
+  teach the topic to the player characters who hear it, kept in their
+  global variable KNOWN_TOPICS (written with "="). ASK npc ABOUT and TALK
+  npc ABOUT with no topic list the known topics the NPC answers to: its
+  SPEECH_PROG and TALK_PROG words (ScriptingEngine.triggerLines, not ALL)
+  and MudChat entries found by the topic's own words (ChattyBehavior.
+  answersTopic, so a catch-all entry does not count); a plain TALK lists
+  them when there are any. HINTTOPICS (ini or world.ini) or the NPC tag
+  HINTTOPICS: the first TALK with it tells and teaches its topics (scripts'
+  words, MudChat's own file's entries), once (TOPICS_HINTED). Journal
+  entries wait for PR7.
 - N29 done. CHECK(who STAT|skill difficulty [modifier]) (DSE function
   182): a d20 on the shared dice, plus (stat-10)/2 (a base stat by name,
   short name or first letters) or proficiency/10, plus the modifier (a

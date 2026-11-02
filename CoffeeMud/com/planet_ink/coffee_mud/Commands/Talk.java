@@ -113,6 +113,12 @@ public class Talk extends StdCommand
 			}
 		}
 		Conversations.begin(mob,npc);
+		NpcTopics.hint(mob,npc); // N24: the first talk with one that hints: its topics
+		if((about>=0)&&(topic.length()==0))
+		{
+			NpcTopics.list(mob,npc); // N24: TALK npc ABOUT: what you could ask it about
+			return false;
+		}
 		ScriptEvents.talked(npc,mob,topic); // ST21: a meeting, and its topic
 		if(ScriptEvents.talk(npc,mob,topic))
 		{
@@ -125,7 +131,11 @@ public class Talk extends StdCommand
 		if(C!=null)
 			C.execute(mob,new XVector<String>("SAYTO",npc.Name(),words),metaFlags);
 		if(topic.length()==0)
+		{
 			Conversations.offerServices(mob,npc);
+			if(!NpcTopics.askable(mob,npc).isEmpty())
+				NpcTopics.list(mob,npc); // N24: and what you could ask it about
+		}
 		return false;
 	}
 

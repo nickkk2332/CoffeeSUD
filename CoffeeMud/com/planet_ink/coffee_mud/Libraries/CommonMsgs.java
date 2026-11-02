@@ -616,6 +616,9 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 		text=NpcLines.reword(mob,target,text); // N12: its own words for a stock line
 		if(text==null)
 			return;
+		final List<String> taught=new ArrayList<String>(); // N24: an NPC's [[topic]] words
+		if(mob.playerStats()==null)
+			text=NpcTopics.render(text,taught);
 		Room location=mob.location();
 		text=CMProps.applyINIFilter(text,CMProps.Str.SAYFILTER);
 		if(target!=null)
@@ -625,7 +628,14 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 		if((isPrivate)&&(target!=null))
 		{
 			if(tellFlag)
+			{
 				postTell(mob, target, text);
+				if(target.playerStats()!=null)
+				{
+					for(final String t : taught)
+						NpcTopics.learn(target,t,false); // N24: told it, they learn its topics
+				}
+			}
 			else
 			{
 				final CMMsg msg=CMClass.getMsg(mob,target,null,
@@ -633,7 +643,10 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						CMMsg.MSG_SPEAK,L("^T^<SAY \"@x1\"^><S-NAME> say(s) '@x2' to <T-NAMESELF>.^</SAY^>^?",CMStrings.removeColors(mob.name(target)),text),
 						CMMsg.NO_EFFECT,null);
 				if(location.okMessage(mob,msg))
+				{
 					location.send(mob,msg);
+					NpcTopics.teach(mob,location,taught); // N24: who heard it learns its topics
+				}
 			}
 		}
 		else
@@ -648,7 +661,10 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 					CMMsg.MSG_SPEAK,"^T^<SAY \""+CMStrings.removeColors((target==null)?mob.name(target):target.name(mob))+"\"^>"+str,"^T^<SAY \""
 					+CMStrings.removeColors(mob.name(target))+"\"^>"+str,"^T^<SAY \""+CMStrings.removeColors(mob.name(target))+"\"^>"+str);
 			if(location.okMessage(mob,msg))
+			{
 				location.send(mob,msg);
+				NpcTopics.teach(mob,location,taught); // N24: who heard it learns its topics
+			}
 		}
 	}
 

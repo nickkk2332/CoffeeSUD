@@ -393,6 +393,11 @@ from a script. On an area it is a village's.</p>
 waives the fee, and <code>$&lt;$n CHECKMARGIN&gt;</code> says by how much it went. The player sees
 <code>[Charisma check: success]</code>; <code>CHECKROLLS=FULL</code> shows the roll and the bonuses too,
 <code>OFF</code> nothing.</p>
+<p>Topics the player learns: the innkeeper's <code>SAY Folk don't go near [[the old mine|mine]] since
+the [[collapse]].</code> highlights the words and teaches <i>mine</i> and <i>collapse</i>. In the next village
+<code>ask miner about</code> lists those the miner's <code>SPEECH_PROG collapse</code> or MudChat answers,
+and <code>ask miner about collapse</code> gets the answer. The tag <code>HINTTOPICS</code> on an NPC
+has it say what it talks about when first spoken to (AHELP NPCTOPICS).</p>
 <p>A guard's round without a script: <code>Patroller min=3 max=3;Gate#1;WAIT=5;DO=lock door;
 Wall#4;EMOTE=peers over the battlements.;RESTART</code>; <code>ROUTE=DAY:</code> and <code>ROUTE=NIGHT:</code>
 routes by the time of day; <code>IF=</code> a mask on the guard; <code>RESUME=true</code> back to the round
