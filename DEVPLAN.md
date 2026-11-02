@@ -2358,6 +2358,17 @@ W18, W19, W20, W21, W22, W23, W28, W29
   percent of their value (100 ends it), kept in the save's header;
   `EXCHANGE(CODE)` (206) reads it. `MoneyChanger.exchangeValue` works out
   what is given back, for both the check and the change.
+- W12 done, with W20's MPWEATHER and FORECAST, as one set over DT20's
+  WEATHER SET (`core/WeatherControl`). `MPWEATHER area|HERE weather [NEXT]
+  [FOR n HOURS|DAYS] [QUIET]` (137): now, with the usual end and start
+  messages and WEATHER_PROGs (QUIET: no messages, the scripts still hear
+  it), or with NEXT only what comes next; FOR holds it, each change of
+  weather coming back to it until then, and a save keeps the hold with the
+  area's weather. For builders, `WEATHER SET weather [FOR n HOURS]`,
+  `WEATHER FORECAST` (now, next, a hold, and the weighted odds of the step
+  after, from the climate's own chart, `Climate.weatherChances`) and
+  `WEATHER NEXT` (one step now). JavaScript's cm.weather(): hold and
+  chances.
 
 #### 2j. Generators and random content (16)
 

@@ -234,7 +234,9 @@ public final class WorldState
 			if(C != null)
 			{
 				str.append("<AREA NOW=\"").append(C.weatherType(null))
-				   .append("\" NEXT=\"").append(C.nextWeatherType(null)).append("\">")
+				   .append("\" NEXT=\"").append(C.nextWeatherType(null))
+				   .append("\" HOLD=\"").append(C.heldWeather()) // W12: and how long it is still held
+				   .append("\" LEFT=\"").append(Math.max(0, C.heldUntil() - GameTime.now())).append("\">")
 				   .append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(A.Name())))
 				   .append("</AREA>\n");
 			}
@@ -437,6 +439,9 @@ public final class WorldState
 				{
 					A.getClimateObj().setCurrentWeatherType(CMath.s_int(areaTag.getParmValue("NOW")));
 					A.getClimateObj().setNextWeatherType(CMath.s_int(areaTag.getParmValue("NEXT")));
+					final int hold = CMath.s_int(areaTag.getParmValue("HOLD"), -1); // W12
+					final long left = CMath.s_long(areaTag.getParmValue("LEFT"));
+					A.getClimateObj().holdWeather(((hold >= 0) && (left > 0)) ? hold : -1, GameTime.now() + left);
 				}
 			}
 		}

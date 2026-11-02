@@ -1105,6 +1105,27 @@ public class JSCm
 			return true;
 		}
 
+		/**
+		 * W12: the weather changes now, and is held there a while (MPWEATHER ... FOR).
+		 * @param word the weather
+		 * @param hours game hours to hold it
+		 * @return false if it is no weather
+		 */
+		public boolean hold(final String word, final int hours)
+		{
+			final int code = WeatherControl.code(word);
+			if(code < 0)
+				return false;
+			WeatherControl.change(area, code, false, hours * CMProps.getMillisPerMudHour(), false);
+			return true;
+		}
+
+		/** @return W12: the odds of each weather the step after next, in percent */
+		public Map<String, Integer> chances()
+		{
+			return WeatherControl.chances(area);
+		}
+
 		@Override
 		public String toString()
 		{

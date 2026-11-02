@@ -139,6 +139,47 @@ public interface Climate extends Tickable, CMCommon
 	 * @param A the area to calculate next weather for.
 	 */
 	public void forceWeatherTick(Area A);
+
+	/**
+	 * W12: holds the weather at one state until a game time (MPWEATHER ...
+	 * FOR): while it holds, each change of weather comes back to it.
+	 * @param weatherCode the weather, or -1 to let it go
+	 * @param untilMillis the game time the hold ends
+	 */
+	public default void holdWeather(final int weatherCode, final long untilMillis)
+	{
+	}
+
+	/**
+	 * W12: the weather a hold keeps.
+	 * @return the weather code, or -1 when nothing holds it
+	 */
+	public default int heldWeather()
+	{
+		return -1;
+	}
+
+	/**
+	 * W12: when a hold ends.
+	 * @return the game time, in milliseconds
+	 */
+	public default long heldUntil()
+	{
+		return 0;
+	}
+
+	/**
+	 * W12: the weighted chances of each weather the step after the given one
+	 * (for WEATHER FORECAST): the area's season and climate added to the
+	 * change from that weather.
+	 * @param A the area
+	 * @param from the weather the step comes from
+	 * @return a weight for each weather code (0 or less for none), or null
+	 */
+	public default int[] weatherChances(final Area A, final int from)
+	{
+		return null;
+	}
 	/**
 	 * If applicable, thies method will return the base water
 	 * thirstiness of the given mob, modified up or down based

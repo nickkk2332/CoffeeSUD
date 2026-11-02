@@ -57,6 +57,64 @@ public class DefaultClimate implements Climate
 	protected int	currentWeather	= WEATHER_CLEAR;
 	protected int	nextWeather		= WEATHER_CLEAR;
 	protected int	weatherTicker	= WEATHER_TICK_DOWN;
+	/** W12: the weather a hold keeps, or -1, and the game time it ends */
+	protected int	holdCode		= -1;
+	protected long	holdUntil		= 0;
+
+	@Override
+	public void holdWeather(final int weatherCode, final long untilMillis)
+	{
+		holdCode = ((weatherCode >= 0) && (weatherCode < Climate.NUM_WEATHER)) ? weatherCode : -1;
+		holdUntil = (holdCode < 0) ? 0 : untilMillis;
+	}
+
+	@Override
+	public int heldWeather()
+	{
+		return holdCode;
+	}
+
+	@Override
+	public long heldUntil()
+	{
+		return holdUntil;
+	}
+
+	@Override
+	public int[] weatherChances(final Area A, final int from)
+	{
+		// create a seasonal CHANCE graph
+		int[] seasonal=new int[seasonalWeather.length];
+		seasonal=addMaskAndReturn(seasonalWeather,seasonal);
+		final int derivedClimate=A.getClimateType();
+		if((derivedClimate&Places.CLIMASK_COLD)>0)
+			seasonal=addMaskAndReturn(seasonal,cold);
+
+		if((derivedClimate&Places.CLIMASK_HOT)>0)
+			seasonal=addMaskAndReturn(seasonal,hot);
+
+		if((derivedClimate&Places.CLIMASK_DRY)>0)
+			seasonal=addMaskAndReturn(seasonal,dry);
+
+		if((derivedClimate&Places.CLIMASK_WET)>0)
+			seasonal=addMaskAndReturn(seasonal,wet);
+
+		if((derivedClimate&Places.CLIMASK_WINDY)>0)
+			seasonal=addMaskAndReturn(seasonal,windy);
+		final int f=Math.abs(from) % Climate.NUM_WEATHER;
+		final int[] weatherChanceChart = new int[Climate.NUM_WEATHER];
+		for(int g=0;g<Climate.NUM_WEATHER;g++)
+		{
+			// take the base chance for a seasonal weather occurrence (rain in winter, etc)
+			final int seasonalNum=seasonal[(A.getTimeObj().getSeasonCode().ordinal()*Climate.NUM_WEATHER)+g];
+			// find the chance of changing from what it will be, to some new condition.
+			final int changeNum=changeMap[(f*Climate.NUM_WEATHER)+g];
+			// add them together to find the chance of a particular change in a particular season
+			// to a particular condition.
+			weatherChanceChart[g] = seasonalNum+changeNum;
+		}
+		return weatherChanceChart;
+	}
 
 	@Override
 	public CMObject newInstance()
@@ -365,24 +423,12 @@ public class DefaultClimate implements Climate
 			if((currentWeather < 0)
 			||(currentWeather >= Climate.NUM_WEATHER))
 				currentWeather = Climate.WEATHER_CLEAR;
-			// create a seasonal CHANCE graph
-			int[] seasonal=new int[seasonalWeather.length];
-			seasonal=addMaskAndReturn(seasonalWeather,seasonal);
-			final int derivedClimate=A.getClimateType();
-			if((derivedClimate&Places.CLIMASK_COLD)>0)
-				seasonal=addMaskAndReturn(seasonal,cold);
-
-			if((derivedClimate&Places.CLIMASK_HOT)>0)
-				seasonal=addMaskAndReturn(seasonal,hot);
-
-			if((derivedClimate&Places.CLIMASK_DRY)>0)
-				seasonal=addMaskAndReturn(seasonal,dry);
-
-			if((derivedClimate&Places.CLIMASK_WET)>0)
-				seasonal=addMaskAndReturn(seasonal,wet);
-
-			if((derivedClimate&Places.CLIMASK_WINDY)>0)
-				seasonal=addMaskAndReturn(seasonal,windy);
+			// W12: a hold (MPWEATHER ... FOR) brings each change back to what it holds
+			final boolean held=(holdCode>=0)&&(GameTime.now()<holdUntil);
+			if(!held)
+				holdCode=-1;
+			else
+				nextWeather=holdCode;
 
 			// reset the weather ticker!
 			weatherTicker=WEATHER_TICK_DOWN;
@@ -391,19 +437,7 @@ public class DefaultClimate implements Climate
 			int goodWeatherTotal=0;
 			nextWeather = Math.abs(nextWeather) % Climate.WEATHER_DESCS.length;
 			int possibleNextWeather=nextWeather;
-			final int[] weatherChanceChart = new int[Climate.NUM_WEATHER];
-			for(int g=0;g<Climate.NUM_WEATHER;g++)
-			{
-				// take the base chance for a seasonal weather occurrence (rain in winter, etc)
-				final int seasonalNum=seasonal[(A.getTimeObj().getSeasonCode().ordinal()*Climate.NUM_WEATHER)+g];
-				// find the chance of changing from what it will be, to some new condition.
-				final int changeNum=changeMap[(nextWeather*Climate.NUM_WEATHER)+g];
-				// add them together to find the chance of a particular change in a particular season
-				// to a particular condition.
-				final int chance=seasonalNum+changeNum;
-				weatherChanceChart[g] = chance;
-
-			}
+			final int[] weatherChanceChart = weatherChances(A,nextWeather); // W12: the seasonal chart, for WEATHER FORECAST too
 			for(final int chance : weatherChanceChart)
 			{
 				// total all the change chances, negative means NO chance of this change
@@ -446,6 +480,8 @@ public class DefaultClimate implements Climate
 			{
 				currentWeather=nextWeather;
 				nextWeather=possibleNextWeather;
+				if(held) // W12
+					nextWeather=holdCode;
 			}
 			if(oldWeather!=currentWeather)
 			{

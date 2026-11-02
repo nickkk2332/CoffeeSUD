@@ -86,7 +86,7 @@ public class EnvToolsCmd extends StdCommand
 	 * @param words the words after SET
 	 * @return what was done
 	 */
-	public static String weatherSet(final MOB mob, final List<String> words)
+	public static String weatherSet(final MOB mob, List<String> words)
 	{
 		if(words.isEmpty())
 			return "WEATHER SET [" + String.join("/", Climate.WEATHER_DESCS) + "] (AREA [NAME]) (NEXT)";
@@ -95,6 +95,22 @@ public class EnvToolsCmd extends StdCommand
 			return "'" + words.get(0) + "' is no weather: " + String.join(", ", Climate.WEATHER_DESCS).toLowerCase() + ".";
 		Area A = (mob.location() == null) ? null : mob.location().getArea();
 		boolean next = false;
+		// W12: FOR n HOURS|DAYS holds it there
+		long holdMs = 0;
+		for(int i = 1; i < words.size() - 2; i++)
+		{
+			if(words.get(i).equalsIgnoreCase("FOR") && CMath.isInteger(words.get(i + 1)))
+			{
+				holdMs = Laws.duration(words.get(i + 1) + " " + words.get(i + 2), (A == null) ? null : A.getTimeObj());
+				if(holdMs < 0)
+					return "FOR [N] HOURS/DAYS/WEEKS/MONTHS (or TICKS)";
+				words = new ArrayList<String>(words);
+				words.remove(i);
+				words.remove(i);
+				words.remove(i);
+				break;
+			}
+		}
 		for(int i = 1; i < words.size(); i++)
 		{
 			if(words.get(i).equalsIgnoreCase("NEXT"))
@@ -114,11 +130,11 @@ public class EnvToolsCmd extends StdCommand
 		if(A == null)
 			return "There is no area here.";
 		final Climate C = A.getClimateObj();
-		C.setNextWeatherType(code);
+		WeatherControl.change(A, code, next, holdMs, false); // W12
+		final String held = (holdMs > 0) ? (", held for " + (holdMs / Math.max(1, CMProps.getMillisPerMudHour())) + " game hours") : "";
 		if(next)
-			return "The weather in " + A.Name() + " turns " + Climate.WEATHER_DESCS[code].toLowerCase() + " when it next changes.";
-		C.forceWeatherTick(A);
-		return "The weather in " + A.Name() + " is now " + Climate.WEATHER_DESCS[C.weatherType(null)].toLowerCase() + ".";
+			return "The weather in " + A.Name() + " turns " + Climate.WEATHER_DESCS[code].toLowerCase() + " when it next changes" + held + ".";
+		return "The weather in " + A.Name() + " is now " + Climate.WEATHER_DESCS[C.weatherType(null)].toLowerCase() + held + ".";
 	}
 
 	/**

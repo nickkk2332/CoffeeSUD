@@ -16512,6 +16512,43 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
 			return null;
 		}
+		case "MPWEATHER": // W12: MPWEATHER area|HERE weather [NEXT] [FOR n HOURS|DAYS] [QUIET]
+		{
+			final String areaWord=varify(ctx,CMParms.getCleanBit(line,1)).trim();
+			Area A=(areaWord.equalsIgnoreCase("HERE")||(areaWord.length()==0))?CMLib.map().areaLocation(ctx.scripted):CMLib.map().getArea(areaWord);
+			if(A==null)
+			{
+				final Environmental E=getArgumentItem(CMParms.getCleanBit(line,1),ctx);
+				A=(E instanceof Area)?(Area)E:((E!=null)?CMLib.map().areaLocation(E):null);
+			}
+			final List<String> w=CMParms.parse(varify(ctx,CMParms.getPastBit(line,1)).trim());
+			final int code=w.isEmpty()?-1:WeatherControl.code(w.get(0));
+			if((A==null)||(code<0))
+			{
+				logError(ctx,"MPWEATHER","Syntax","MPWEATHER area|HERE weather [NEXT] [FOR n HOURS|DAYS] [QUIET]: "+line);
+				return null;
+			}
+			boolean next=false;
+			boolean quiet=false;
+			long hold=0;
+			for(int i=1;i<w.size();i++)
+			{
+				final String k=w.get(i).toUpperCase();
+				if(k.equals("NEXT"))
+					next=true;
+				else
+				if(k.equals("QUIET"))
+					quiet=true;
+				else
+				if(k.equals("FOR")&&(i+2<w.size()))
+				{
+					hold=Laws.duration(w.get(i+1)+" "+w.get(i+2),A.getTimeObj());
+					i+=2;
+				}
+			}
+			WeatherControl.change(A,code,next,Math.max(0,hold),quiet);
+			return null;
+		}
 		case "MPEXCHANGE": // W29: MPEXCHANGE CODE|DEFAULT pct: what its coins fetch at every money changer, in percent (100 as they are)
 		{
 			final String code=varify(ctx,CMParms.getCleanBit(line,1)).trim();

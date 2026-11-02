@@ -58,6 +58,19 @@ public class Weather extends StdCommand
 			mob.tell(EnvToolsCmd.weatherSet(mob,new ArrayList<String>(commands.subList(2,commands.size()))));
 			return false;
 		}
+		// W12: WEATHER FORECAST and WEATHER NEXT, for builders
+		if((commands.size()>1)&&(commands.get(1).equalsIgnoreCase("FORECAST"))&&EnvToolsCmd.mayChange(mob))
+		{
+			mob.tell(WeatherControl.forecast(room.getArea()));
+			return false;
+		}
+		if((commands.size()>1)&&(commands.get(1).equalsIgnoreCase("NEXT"))&&EnvToolsCmd.mayChange(mob))
+		{
+			WeatherControl.step(room.getArea());
+			mob.tell(L("The weather in @x1 is now @x2; next, @x3.",room.getArea().Name(),
+				WeatherControl.name(room.getArea().getClimateObj().weatherType(null)),WeatherControl.name(room.getArea().getClimateObj().nextWeatherType(null))));
+			return false;
+		}
 		if((commands.size()>1)&&((room.domainType()&Room.INDOORS)==0)&&(commands.get(1).equalsIgnoreCase("WORLD")))
 		{
 			final StringBuffer tellMe=new StringBuffer("");

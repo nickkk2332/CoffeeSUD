@@ -659,6 +659,9 @@ wolf bounty</code>, and <code>BANKBALANCE($n 'Riverton Trust')</code> reads it. 
 <p>Money that rises and falls: when the quest "Fall of the Capital" completes, <code>MPEXCHANGE CROWN 70</code> makes every
 money changer give 30% less for crowns, until <code>MPEXCHANGE CROWN 100</code>. One changer's own <code>RATE.LEAF=+10</code>
 pays a premium for elven leaves.</p>
+<p>Weather on cue: a step of the necromancer quest runs <code>MPWEATHER $a THUNDERSTORM FOR 2 HOURS</code>; the
+storm breaks with the usual messages and holds for two game hours. <code>MPWEATHER HERE RAIN NEXT</code> only sets what
+comes next. A builder checks a climate with <code>WEATHER FORECAST</code> and steps it with <code>WEATHER NEXT</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

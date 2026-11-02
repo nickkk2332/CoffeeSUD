@@ -917,6 +917,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPBANK", // 134
 		"MPDEBT", // 135
 		"MPEXCHANGE", // 136
+		"MPWEATHER", // 137
 	};
 
 	/**
