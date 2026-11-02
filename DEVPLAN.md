@@ -2253,6 +2253,14 @@ I22, I23, I24, I25, I26, I27
   RECHARGE=DAWN (the area clock turning to dawn), DAILY, TICKS=n; COOLDOWN
   in its own ticks; REQUIRE; MASK; MSG; EMPTYMSG. accountForYourself (what
   identifying shows) tells the spells, charges, recharge and word.
+- I24 done. Prop_ItemGrowth (items): KILL (a death message whose tool is
+  the holder, the item worn or wielded, KILLMASK on the slain), HIT (a
+  damage message from the holder with it as the tool), USE (any message
+  from the holder with it as the tool), WORNTICK (its own ticks, worn);
+  XP a formula with @x1. STAGES split before each "n:"; NAME and DISPLAY
+  are set on the item (so saved as its own), PROPS added unsaved and again
+  from STAGE= after a load. GROWN=, STAGE=, OWNER= in the text; BIND;
+  accountForYourself shows the way to the next stage.
 
 #### 2i. World systems (25)
 

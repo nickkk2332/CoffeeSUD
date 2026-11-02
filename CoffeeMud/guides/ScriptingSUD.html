@@ -615,6 +615,9 @@ or a priest of level 15 lifts it.</p>
 <p>Powers on demand: <code>Prop_Invokable WORD=Ignis SPELLS="Spell_Fireball;LEVEL=12" TARGET=ENEMY CHARGES=3
 RECHARGE=DAWN REQUIRE=WORN EMPTYMSG="The ring is cold."</code>: the Ring of the Ember Lord casts Fireball three
 times a day when its wearer says 'Ignis', for any character. Without WORD, INVOKE RING does it.</p>
+<p>Items that grow: <code>Prop_ItemGrowth GAIN=KILL XP="@x1" KILLMASK="-RACECAT +Undead" STAGES="100:NAME='a humming
+blade' PROPS=Prop_WearAdjuster(dam+2);400:NAME='Dawnbringer' PROPS=Prop_WearAdjuster(dam+5)" BIND=CHARACTER</code>: the
+rusty sword from the first cellar becomes the hero's blade after enough undead fall to it.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
