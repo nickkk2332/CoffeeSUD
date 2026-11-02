@@ -487,6 +487,39 @@ public final class ScriptEvents
 	/** N9: TALK_PROG's code */
 	public static final int	TALK_PROG	= code("TALK_PROG");
 
+	/** C17: YIELD_PROG's code */
+	public static final int	YIELD_PROG	= code("YIELD_PROG");
+	/** C17: DEFEAT_PROG's code */
+	public static final int	DEFEAT_PROG	= code("DEFEAT_PROG");
+
+	/**
+	 * C17: an NPC yielded (Prop_Essential MODE=YIELD): YIELD_PROG runs on
+	 * its scripts, $n who beat it.
+	 * @param npc the NPC
+	 * @param by who beat it, or null
+	 */
+	public static void yielded(final MOB npc, final MOB by)
+	{
+		if((npc == null) || (!isUsed(YIELD_PROG)))
+			return;
+		for(final ScriptingEngine S : engines(npc))
+			S.eventCheck(npc, YIELD_PROG, (by == null) ? npc : by, npc, null, "", null, "C", t -> true);
+	}
+
+	/**
+	 * C17: an NPC was knocked out rather than killed (Prop_Essential
+	 * MODE=KNOCKOUT): DEFEAT_PROG runs on its scripts, $n who beat it.
+	 * @param npc the NPC
+	 * @param by who beat it, or null
+	 */
+	public static void defeated(final MOB npc, final MOB by)
+	{
+		if((npc == null) || (!isUsed(DEFEAT_PROG)))
+			return;
+		for(final ScriptingEngine S : engines(npc))
+			S.eventCheck(npc, DEFEAT_PROG, (by == null) ? npc : by, npc, null, "", null, "C", t -> true);
+	}
+
 	/** C2: SURRENDER_PROG's code */
 	public static final int	SURRENDER_PROG	= code("SURRENDER_PROG");
 

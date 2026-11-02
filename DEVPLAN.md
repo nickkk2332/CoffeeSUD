@@ -1930,6 +1930,14 @@ C18, C19, C20, C21, C22, C23, C25
   is back in the fight's room), SURRENDER or BERSERK (a Prop_Adjuster, damage +30%
   of base, attack -10%, removed when the fight ends). SURRENDERAT=: drops
   the weapon, peace both ways, SURRENDERMSG=, SURRENDER_PROG (102).
+- C17 done. Prop_Essential: MODE=YIELD (under AT=%, after the damage)
+  or KNOCKOUT (okMessage cuts a killing blow to leave 1 hit point; asleep
+  until TICKS run out); then peace both ways, MSG=, the kill's experience
+  through dispenseExperience unless NOXP (the plan's NOXPPENALTY made
+  plain: whether beating it pays), malicious messages at it refused with
+  REFUSEMSG= for TICKS=, and YIELD_PROG (103) or DEFEAT_PROG (104).
+  Options by exact key (CMParms.parseExactParms), so AT= is not found in
+  a message.
 
 #### 2h. Items, properties and puzzles (23)
 
