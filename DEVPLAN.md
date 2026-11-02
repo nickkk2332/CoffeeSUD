@@ -1735,6 +1735,14 @@ N22, N24, N28, N29
   MUDCHAT_GROUP_<SPEAKER>, read back by a new copy of the NPC; `$@-` back
   to the base group. lintChat knows `?`. An emptied group list is filled
   with the base group again.
+- N12 done. `Prop_NPCLines` (mobs, areas): `KEY="text"|"text"[mask]` or
+  `"stock line"="text"`; postSay (CommonMsgs) asks `core/NpcLines.reword`
+  first, so every stock line said through it (CoffeeShops, bankers,
+  postmen, Hireling...) can be reworded without touching those classes.
+  The stock line, @x values and all, is matched whole (after L(), so in
+  English); @x1... and $n go into the new words; masked entries (on the
+  one spoken to) first; an empty text says nothing; the NPC's own, then
+  its area's. 26 short keys (NOTBUYING, STOLEN, OFFER, HIRED, TIMEUP...).
 
 #### 2g. Combat and encounters (24)
 

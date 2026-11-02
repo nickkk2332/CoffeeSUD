@@ -613,6 +613,9 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 	@Override
 	public void postSay(final MOB mob, final MOB target, String text, final boolean isPrivate, final boolean tellFlag)
 	{
+		text=NpcLines.reword(mob,target,text); // N12: its own words for a stock line
+		if(text==null)
+			return;
 		Room location=mob.location();
 		text=CMProps.applyINIFilter(text,CMProps.Str.SAYFILTER);
 		if(target!=null)
