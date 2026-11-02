@@ -2181,6 +2181,17 @@ I22, I23, I24, I25, I26, I27
   class's own. Its script now runs outside the ability's branch, so a
   trap with only a script works. RESET was there already (PERMRESET).
   AHELP GENTRAP is new.
+- I21 done. core/Keys: StdExit's and StdContainer's key checks (and the
+  container's relock check) go through Keys.fits (a key code split at
+  semicolons, a code ending in * a prefix, matched without case, and the
+  lock's Prop_LockRules KEYS), Keys.reachable (carried, or in a
+  CONTAIN_KEYS container, however deep that is) and Keys.usable (its
+  Prop_KeyRules MASK). Prop_KeyRules (items): CONSUME, BREAK, RETURN
+  (moved to the room) on the UNLOCK or LOCK whose tool it is; MASK with
+  MSG refuses such a message before the lock picks its key, when no other
+  key carried fits and may be used. Prop_LockRules (exits, containers):
+  PICK=NEVER|LEVEL:n against a thief skill (or an ability with PICK in its
+  ID) aimed at it, KEYS, RELOCK (core/Doors), MSG.
 
 #### 2i. World systems (25)
 

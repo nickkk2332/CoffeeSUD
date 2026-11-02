@@ -346,10 +346,9 @@ public class StdContainer extends StdItem implements Container
 							final Item item=mob.getItem(i);
 							if((item!=null)
 							&&(item instanceof DoorKey)
-							&&((DoorKey)item).getKey().equals(keyName())
-							&&((item.container()==null)
-							   ||((item.container().container()==null)
-								  &&((item.container().containTypes()&Container.CONTAIN_KEYS)>0)))
+							&&Keys.fits(((DoorKey)item).getKey(),keyName(),this) // I21: lists, master keys
+							&&Keys.reachable(item) // I21: a keyring at any depth
+						&&Keys.usable(item,mob) // I21: Prop_KeyRules MASK
 							&&(CMLib.flags().canBeSeenBy(item,mob)))
 							{
 								if(msg.tool()==null)
@@ -379,7 +378,7 @@ public class StdContainer extends StdItem implements Container
 				for(final Item keyI : getContents())
 				{
 					if((keyI instanceof DoorKey)
-					&&(((DoorKey)keyI).getKey().equalsIgnoreCase(this.keyName())))
+					&&Keys.fits(((DoorKey)keyI).getKey(),this.keyName(),this)) // I21
 						return true;
 				}
 			}

@@ -588,6 +588,10 @@ class: <code>SIT</code> for the usurper's throne, <code>READ</code>, <code>LOOK<
 <code>WEAR</code>, <code>PUT</code>, <code>DROP</code>, or <code>LEAVE:north</code> on a room.
 <code>DISARM=verb:cut red wire</code> disarms it by that phrase, <code>ONCE</code> makes it spring only once, and a
 trap with a script and no ability now runs its script (ACT_PROG with the trap's ID).</p>
+<p>Keys and locks: a key's code may be a list (<code>crypt;vault</code>) or a master key (<code>jail.*</code> opens
+jail.1 to jail.6), and keyrings work deep in a pack. <code>Prop_KeyRules CONSUME=true</code> makes the cursed bone key
+crumble once it has opened the ossuary; <code>Prop_LockRules PICK=NEVER RELOCK=20</code> makes a lock no thief picks,
+that locks itself again.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
