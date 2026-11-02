@@ -2030,6 +2030,17 @@ C18, C19, C20, C21, C22, C23, C25
   stops the fight, moves the gear to GEAR=CONTAINER:room/container, and
   bringMobHere(..., true) takes the character and its followers to TO,
   with HEAL=% of their hit points; MSG= shows.
+- C7 done. core/Checkpoints: a character's respawn point is a tattoo,
+  CHECKPOINT:room id (saved with them, kept through death, apart from the
+  recall room). Prop_Checkpoint (rooms): ON=ENTER (executeMsg), REST (SIT
+  or SLEEP there) or COMMAND:word (the HUH message, consumed) sets it for
+  the player's side in the room, HEAL=% (hit points, mana, moves),
+  RESPAWNAREA= (threads().rejuv of the area's rooms, mobs), SAVE=AUTO or a
+  slot (SaveGame.autoSave). DEATH=CHECKPOINT (getDefaultDeathRoom): the
+  checkpoint, else the start room. MPSETRESPAWN (126) who room|HERE|CLEAR
+  and RESPAWNROOM(who) (190). Fixed on the way: CMUniqNameSortSVec did not
+  override compareToLowerStarts, so findStartsWith (findTattooStartsWith)
+  compared class ids and never found a tattoo by the start of its name.
 - C12 done. Prop_AddDamage: TARGETMASK= (the extra damage, and its
   reflected kind, only on victims it fits) and LEECH=n% (the wielder heals
   that share of the hit plus the extra), read by exact key and taken out

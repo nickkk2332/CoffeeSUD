@@ -15932,6 +15932,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "RESPAWNROOM": // C7: RESPAWNROOM(who): their respawn point's room id, or nothing
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			return (W instanceof MOB)?Checkpoints.idOf((MOB)W):"";
+		}
 		case "ALARM": // C5: ALARM(who name): the ticks before its named alarm goes off, 0 for none
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16337,6 +16342,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPSETRESPAWN": // C7: MPSETRESPAWN who room|HERE|CLEAR: their respawn point (Prop_Checkpoint, DEATH=CHECKPOINT)
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String where=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			if((!(W instanceof MOB))||(where.length()==0))
+			{
+				logError(ctx,"MPSETRESPAWN","Syntax","MPSETRESPAWN who room|HERE|CLEAR: "+line);
+				return null;
+			}
+			if(where.equalsIgnoreCase("CLEAR"))
+				Checkpoints.clear((MOB)W);
+			else
+			{
+				final Room R=where.equalsIgnoreCase("HERE")?lastKnownLocation:CMLib.map().getRoom(where);
+				if((R==null)||(!Checkpoints.set((MOB)W,R)))
+					logError(ctx,"MPSETRESPAWN","RunTime","no room with an id: "+where);
+			}
 			return null;
 		}
 		case "MPWAVE": // C20: MPWAVE START|NEXT|STOP|RESET: the WaveSpawner of the room

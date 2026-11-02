@@ -4784,6 +4784,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			room=mob.location();
 		if((roomID!=null)&&(roomID.equalsIgnoreCase("START")))
 			room=mob.getStartRoom();
+		if((roomID!=null)&&(roomID.equalsIgnoreCase("CHECKPOINT"))) // C7: the last checkpoint, else START
+			room=(Checkpoints.roomOf(mob)!=null)?Checkpoints.roomOf(mob):mob.getStartRoom();
 		if((room==null)&&(roomID!=null)&&(roomID.length()>0))
 			room=CMLib.map().getRoom(roomID);
 		if(room==null)

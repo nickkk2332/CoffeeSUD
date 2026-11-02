@@ -81,6 +81,18 @@ public class CMUniqNameSortSVec<T extends CMObject> extends CMUniqSortSVec<T>
 		return arg0.name().compareToIgnoreCase(arg1);
 	}
 
+	/**
+	 * C7: findStartsWith compares names here too, not the class ids, so that
+	 * findTattooStartsWith finds a tattoo by the start of its name.
+	 */
+	@Override
+	protected int compareToLowerStarts(final CMObject arg0, final String arg1)
+	{
+		if(arg0.name().toLowerCase().startsWith(arg1))
+			return 0;
+		return arg0.name().compareToIgnoreCase(arg1);
+	}
+
 	@Override
 	public synchronized SVector<T> copyOf()
 	{
