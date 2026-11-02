@@ -2270,6 +2270,13 @@ I22, I23, I24, I25, I26, I27
   gone when the uses are above 0 again, by any mending). Prop_Durability:
   MULT, UNBREAKABLE, NOREPAIR (a MEND or REPAIR ability, or a GIVE to an
   ItemMender, refused), "(worn)" below half.
+- I27 done. Behaviors/ItemUpgrader (mobs, items), a VerbTaker for
+  UPGRADE item [CONFIRM]: rows UPGRADE1-9 and the file UPGRADES (a line
+  each), FROM matched as I10's combinations (name, tag:, catalog:), TO
+  through core/Transform (KEEP; SOCKETS has no meaning here) or ADJ (dam,
+  att, arm, lvl on the item's base stats), COST (beanCounter), MATERIALS
+  (carried, by name or tag, xN, destroyed), LEVEL, MSG. Prop_UpgradePath
+  on an item is its own row, and goes once an ADJ is done.
 
 #### 2i. World systems (25)
 
