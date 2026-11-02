@@ -535,6 +535,8 @@ public interface MaskingLibrary extends CMLibrary
 		ANYINGROUP, // for anyone of it
 		_ALLINGROUP, // not for everyone of it
 		ALLINGROUP, // for everyone of it
+		_JS, // JS14: -JS "expr": only what the JavaScript is true for
+		JS, // +JS "expr": what it is true for, whatever else the mask says
 		;
 		private final String[] keys;
 		private ZapperKey(final String... exts)

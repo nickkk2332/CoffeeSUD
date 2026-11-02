@@ -27,6 +27,7 @@ went wrong.</p>
 <li><a href="#sud">sud</a></li>
 <li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#jscriptable">JScriptable</a></li>
+<li><a href="#masks">In masks</a></li>
 <li><a href="#shared">Shared code</a></li>
 <li><a href="#reload">Reloading</a></li>
 <li><a href="#examples">Examples</a></li>
@@ -292,6 +293,18 @@ function onTick() {
     state.crossing = null;
   }
 }
+</pre>
+
+<h2><a name="masks">In masks</a></h2>
+<p>A zapper mask (as Prop_ReqEntry's, a shop's, a spawn rule's) may have
+<code>-JS "expr"</code>, which lets through only what the expression is true
+for, and <code>+JS "expr"</code>, which lets through what it is true for
+whatever else the mask says. The expression sees <code>mob</code> (the mob
+checked, or an item's owner), <code>item</code>, <code>room</code>,
+<code>target</code> (whatever is checked) and <code>cm</code>; it is compiled
+once with the mask, and an error counts as false.</p>
+<pre>
+Prop_ReqEntry: -JS "cm.store('world').bellRung &amp;&amp; cm.clock().hour() &lt; 4"
 </pre>
 
 <h2><a name="shared">Shared code</a></h2>

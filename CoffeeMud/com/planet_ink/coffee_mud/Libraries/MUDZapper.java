@@ -1592,6 +1592,18 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _ALLINGROUP:
 					buf.append(L("Disallows everyone of the group here: "));
 					break;
+				case _JS: // JS14: the expression as written, not upper-cased
+				{
+					final List<String> oV=CMParms.parse(text);
+					buf.append(L("Requires that the JavaScript \"@x1\" be true.  ",((++v)<oV.size())?oV.get(v):""));
+					break;
+				}
+				case JS:
+				{
+					final List<String> oV=CMParms.parse(text);
+					buf.append(L("Allows those for whom the JavaScript \"@x1\" is true.  ",((++v)<oV.size())?oV.get(v):""));
+					break;
+				}
 				case EXPERTISE: // +expertises
 					{
 						if(multipleQuals(V,v,"-"))
@@ -5410,6 +5422,17 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						buf.add(new CompiledZapperMaskEntryImpl(entryType,parms.toArray(new Object[0])));
 						break;
 					}
+				case _JS: // JS14: -js "expr"
+				case JS: // +js "expr"
+					{
+						if(lV==null)
+							lV=CMParms.parse(text);
+						final Object[] js=JSMask.compile(((v+1)<lV.size())?lV.get(v+1):""); // as written, not upper-cased
+						v++;
+						if(js!=null)
+							buf.add(new CompiledZapperMaskEntryImpl(entryType,js));
+						break;
+					}
 				case _IF: // -if
 				case IF: // +if
 					{
@@ -8748,6 +8771,14 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 							return false;
 					}
 					break;
+				case _JS: // JS14: -js: only what the JavaScript is true for
+					if(!JSMask.test(entry.parms(),E,mob,item,room))
+						return false;
+					break;
+				case JS: // +js: what it is true for, whatever else
+					if(JSMask.test(entry.parms(),E,mob,item,room))
+						return true;
+					break;
 				case _IF: // -if
 					{
 						boolean oneIsOK = false;
@@ -9729,6 +9760,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 					break;
 				case _IF: // -if
 				case IF: // +if
+				case _JS: // JS14: a record is not in the world for the JavaScript to see
+				case JS:
 					return false;
 				case LVLGR: // +lvlgr
 					if((entry.parms().length>0)&&((E.level())>((Integer)entry.parms()[0]).intValue()))
@@ -9840,6 +9873,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 			{
 			case IF:
 			case _IF:
+			case JS: // JS14: its expression
+			case _JS:
 				end++;
 				break;
 			case _VALUE:

@@ -71,6 +71,8 @@
 +RESOURCES "-OAK" etc.. (Do not <WORD> items of -resources)
 -IF <CONDITION> (<WORD>, unless they meet Scriptable conditions)
 +IF <CONDITION> (never <WORD> anyone who meets Scriptable cond)
+-JS "expr" (<WORD>, unless a JavaScript expression is true: it sees mob, item, room, target and cm)
++JS "expr" (never <WORD> anything a JavaScript expression is true for)
 -IFSTAT +STAT=VALUE +STAT=VALUE (<WORD>, unless a stat value is true)
 +IFSTAT -STAT=VALUE -STAT=VALUE (<WORD> those with a stat value)
 +OR/-OR to separate conditions.  -OR negates the following condition(s)

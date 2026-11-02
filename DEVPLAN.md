@@ -1364,6 +1364,14 @@ JS17, JS18, JS19, JS20, JS23
   `cm.calendar()` were JS6's. `Date` is left on the real clock: making
   `Date.now()` and `new Date()` read GameTime could break code that wants
   real dates, and cm.now() already gives game time.
+- JS14 done. Mask entries `-JS "expr"` (requires it true, as -IF)
+  and `+JS "expr"` (passes what it is true for, as +IF) in
+  `MUDZapper` (description, compile, check, records, separating), over
+  `core/JSMask`: compiled once with the mask, run in one scope kept for
+  masks under the time limit, seeing mob (or the item's owner), item, room,
+  target (what is checked) and cm. An error counts as no match and is
+  reported once for each expression; a player record (not in the world)
+  never matches. zappermasks.txt lists them.
 
 #### 2e. Quests (15)
 
