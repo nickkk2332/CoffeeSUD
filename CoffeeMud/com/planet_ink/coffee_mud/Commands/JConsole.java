@@ -66,11 +66,29 @@ public class JConsole extends StdCommand
 		String rest="";
 		if(commands.size()>1)
 			rest=CMParms.combine(commands,1);
+		// JS12: a one-line JCONSOLE needs no terminal, only the console itself does
 		final Session session=mob.session();
-		if(session==null)
+		if((session==null)&&(rest.trim().length()==0))
 			return false;
 
-		JScriptEvent scope=(JScriptEvent)Resources.getResource("JCONSOLE_"+mob.Name());
+		// JS12: JCONSOLE @target binds the console to a mob, item, room (here) or area
+		PhysicalAgent target=null;
+		if(rest.startsWith("@"))
+		{
+			final String word=CMParms.getCleanBit(rest,0).substring(1);
+			target=JSConsole.target(mob,word);
+			if(target==null)
+			{
+				mob.tell(L("There is no '@x1' to bind the console to: a mob's or item's name, HERE, AREA or ME.",word));
+				return false;
+			}
+			rest=CMParms.getPastBitClean(rest,0).trim();
+			if((session==null)&&(rest.length()==0))
+				return false;
+		}
+		final PhysicalAgent bound=target;
+		final String key="JCONSOLE_"+mob.Name()+((target==null)?"":("@"+JSConsole.key(target)));
+		JScriptEvent scope=(JScriptEvent)Resources.getResource(key);
 		final Context cx=Context.enter();
 		try
 		{
@@ -78,12 +96,7 @@ public class JConsole extends StdCommand
 			{
 				try
 				{
-					scope = new JScriptEvent(mob);
-					scope.initStandardObjects(cx, false);
-					JSScope.prepare(cx, scope, mob); // JS3, JS6: require(), cm, include()
-					final String[] names = { "mob" ,"getVar", "setVar", "toJavaString", "getCMType", "debug"};
-					scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
-					Resources.submitResource("JCONSOLE_"+mob.Name(), scope);
+					scope=makeScope(cx,mob,bound,key);
 				}
 				catch(final Exception e)
 				{
@@ -95,8 +108,15 @@ public class JConsole extends StdCommand
 			{
 				try
 				{
-					JSScope.where(scope, mob); // JS6: here, area, target
-					mob.tell(cx.evaluateString(scope, rest.toString(),"<cmd>", 1, null).toString());
+					JSConsole.bind(scope, mob, bound); // JS6, JS12: here, area, target, me
+					final String out=JSConsole.run(cx, scope, mob, bound, rest);
+					if(out==JSConsole.RESET)
+					{
+						Resources.removeResource(key);
+						mob.tell(L("The console is cleared."));
+					}
+					else
+						mob.tell(out);
 					return true;
 				}
 				catch(final Exception e)
@@ -105,6 +125,7 @@ public class JConsole extends StdCommand
 					return false;
 				}
 			}
+			final JScriptEvent[] cur=new JScriptEvent[] { scope };
 			final JScriptEvent myScope=scope;
 			final InputCallback IC[]=new InputCallback[1];
 			final boolean[] addMode=new boolean[1];
@@ -164,8 +185,16 @@ public class JConsole extends StdCommand
 						try
 						{
 							final Context cx=Context.enter();
-							JSScope.where(myScope, mob); // JS6
-							session.safeRawPrintln(cx.evaluateString(myScope, this.input.replace('`','\''),"<cmd>", 1, null).toString());
+							JSConsole.bind(cur[0], mob, bound); // JS6, JS12
+							final String out=JSConsole.run(cx, cur[0], mob, bound, this.input);
+							if(out==JSConsole.RESET)
+							{
+								Resources.removeResource(key);
+								cur[0]=makeScope(cx,mob,bound,key);
+								session.safeRawPrintln(L("The console is cleared."));
+							}
+							else
+								session.safeRawPrintln(out);
 						}
 						catch(final Exception e)
 						{
@@ -179,7 +208,7 @@ public class JConsole extends StdCommand
 					session.prompt(IC[0].reset());
 				}
 			};
-			mob.tell(L("JConsole! Enter \"exit\" to exit."));
+			mob.tell(L("JConsole@x1! Enter \"exit\" to exit, \".help\" for the dot commands.",(bound==null)?"":(" @ "+bound.Name())));
 			session.prompt(IC[0]);
 		}
 		finally
@@ -187,6 +216,25 @@ public class JConsole extends StdCommand
 			Context.exit();
 		}
 		return false;
+	}
+
+	/**
+	 * JS12: a console's scope, as its user or bound to a target, kept by its key.
+	 * @param cx the context
+	 * @param mob the user
+	 * @param target the target, or null
+	 * @param key where it is kept
+	 * @return the scope
+	 */
+	protected static JScriptEvent makeScope(final Context cx, final MOB mob, final PhysicalAgent target, final String key)
+	{
+		final JScriptEvent scope = new JScriptEvent(mob, target);
+		scope.initStandardObjects(cx, false);
+		JSScope.prepare(cx, scope, (target != null) ? target : mob); // JS3, JS6: require(), cm, include()
+		final String[] names = { "mob" ,"getVar", "setVar", "toJavaString", "getCMType", "debug"};
+		scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
+		Resources.submitResource(key, scope);
+		return scope;
 	}
 
 	protected static class JScriptEvent extends org.mozilla.javascript.ImporterTopLevel // JS6: importPackage
@@ -198,6 +246,9 @@ public class JConsole extends StdCommand
 		}
 		static final long serialVersionUID=4223;
 		final MOB mob;
+		/** JS12: what MOBPROG calls run as: the target of JCONSOLE @target, or the user */
+		final PhysicalAgent host;
+		final MOB monster;
 		final public ScriptingEngine c;
 		final Object[] objs=new Object[ScriptingEngine.SPECIAL_NUM_OBJECTS];
 
@@ -306,7 +357,7 @@ public class JConsole extends StdCommand
 							};
 							DV.add(new ScriptLn("JS_PROG",null,null));
 							DV.add(new ScriptLn(strb.toString(),null,null));
-							final MPContext ctx = new MPContext(mob,mob,mob,null,null,null,"", objs);
+							final MPContext ctx = new MPContext(host,monster,mob,null,null,null,"", objs);
 							return c.execute(ctx.push(DV));
 						}
 						if(name.endsWith("$"))
@@ -321,7 +372,7 @@ public class JConsole extends StdCommand
 								else
 									strb.append(" ").append("'"+String.valueOf(args[i])+"'");
 							strb.append(" ) ");
-							final MPContext ctx = new MPContext(mob,mob,mob,null,null,null,"",objs);
+							final MPContext ctx = new MPContext(host,monster,mob,null,null,null,"",objs);
 							return c.functify(ctx,strb.toString());
 						}
 						final String[] sargs=new String[args.length+3];
@@ -331,7 +382,7 @@ public class JConsole extends StdCommand
 							sargs[i+2]=String.valueOf(args[i]);
 						sargs[sargs.length-1]=")";
 						final String[][] eval={sargs};
-						final MPContext ctx = new MPContext(mob,mob,mob,null,null,null,"",objs);
+						final MPContext ctx = new MPContext(host,monster,mob,null,null,null,"",objs);
 						return Boolean.valueOf(c.eval(ctx,eval,0));
 					}
 
@@ -437,10 +488,17 @@ public class JConsole extends StdCommand
 
 		public JScriptEvent(final MOB mob)
 		{
+			this(mob, null);
+		}
+
+		public JScriptEvent(final MOB mob, final PhysicalAgent target)
+		{
 			c=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
 			c.setScript("");
 			this.mob=mob;
-			c.tick(mob, Tickable.TICKID_MOB); // this sets lastknownlocation
+			this.host=(target!=null)?target:mob;
+			this.monster=(target instanceof MOB)?(MOB)target:mob;
+			c.tick(this.monster, Tickable.TICKID_MOB); // this sets lastknownlocation
 		}
 	}
 

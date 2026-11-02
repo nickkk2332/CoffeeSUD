@@ -1348,6 +1348,15 @@ JS17, JS18, JS19, JS20, JS23
   SCOPE=GLOBAL or a name shares one scope among hosts, me and cm set for
   each call; JS RELOAD makes a shared scope again once. Saved as a
   behaviour, so the engine choice in `<SCRPT>` is not needed.
+- JS12 done. `JCONSOLE @mob|item|here|area|me` (core/JSConsole)
+  binds a console, kept by builder and target, to the target: its MOBPROG
+  calls run as the target ($i), the builder as source, and me, here and cm
+  are the target's. Dot commands: `.trigger GREET|SPEECH text|GIVE
+  item|LOOK|TICK` delivers the event to the target (its JScriptable and its
+  scripts, whose queued responses run at once), `.load file`, `.reset`,
+  `.inspect expr` (name, class, room, stat codes; a JS object as JSON),
+  `.time on|off`, `.history [n]` and `!n`. In builder mode the history is
+  kept in world/.history/jconsole-NAME.txt (the last 200 lines).
 
 #### 2e. Quests (15)
 

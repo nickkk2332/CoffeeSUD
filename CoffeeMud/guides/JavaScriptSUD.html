@@ -50,6 +50,22 @@ package.</li>
 <p><code>JCONSOLE</code> also has <code>here</code> (its user's room),
 <code>area</code> and <code>target</code> (who its user fights), set again
 for each line.</p>
+<p><code>JCONSOLE @blacksmith</code> (or <code>@here</code>, <code>@area</code>,
+<code>@me</code>, or an item's name) binds a console to that thing: its
+MOBPROG calls (<code>MPECHO('...')</code>) run as it, with the builder as
+source, and <code>me</code>, <code>here</code> and <code>cm</code> are its.
+Lines that start with a dot are the console's own:</p>
+<ul>
+<li><code>.trigger SPEECH repair my sword</code> (or <code>GREET</code>,
+<code>GIVE item</code>, <code>LOOK</code>, <code>TICK</code>): the event, as
+if it happened, for the target's JScriptable and scripts.</li>
+<li><code>.inspect expr</code>: a thing's name, class, room and stats; a
+JavaScript object as JSON (<code>.inspect cm.store(me)</code>).</li>
+<li><code>.load file</code>, <code>.reset</code> (a new scope),
+<code>.time on|off</code>, <code>.history</code>, and <code>!n</code> to run
+line n again. In builder mode the history is kept from one game to the
+next.</li>
+</ul>
 
 <h2><a name="cm">cm</a></h2>
 <p>The members return the game's own Java objects, so their methods can be
