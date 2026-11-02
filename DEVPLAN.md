@@ -1918,6 +1918,18 @@ C18, C19, C20, C21, C22, C23, C25
   (DESPAWNADDS=), Threat forgotten, each other behaviour told
   (setStat ENCOUNTERRESET, for C3), and RESET_PROG (101) through
   ScriptEvents.encounterReset.
+- C2 done. Behaviors/Morale: breaking() from FLEEAT=, OUTNUMBERED= (Threat
+  enemies against its side: group, leader's group, same-race NPCs here
+  who fight),
+  BREAK=LEADERDEAD (a death message from its leader: LEADER= mask or whom
+  it follows, remembered each tick, since a dying leader's followers are
+  let go before they hear of it), n%DEAD and HP<n% (against the side at the fight's start);
+  BRAVE= mask holds. At CHANCE= a tick: MSG=, then ACTION=FLEE (the FLEE
+  command; RALLY= room ID or HOME: autoTrack there, REGROUP= ticks, the
+  free NPCs there follow it back, and it attacks one it fled from when it
+  is back in the fight's room), SURRENDER or BERSERK (a Prop_Adjuster, damage +30%
+  of base, attack -10%, removed when the fight ends). SURRENDERAT=: drops
+  the weapon, peace both ways, SURRENDERMSG=, SURRENDER_PROG (102).
 
 #### 2h. Items, properties and puzzles (23)
 

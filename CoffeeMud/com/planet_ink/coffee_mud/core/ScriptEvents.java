@@ -487,6 +487,23 @@ public final class ScriptEvents
 	/** N9: TALK_PROG's code */
 	public static final int	TALK_PROG	= code("TALK_PROG");
 
+	/** C2: SURRENDER_PROG's code */
+	public static final int	SURRENDER_PROG	= code("SURRENDER_PROG");
+
+	/**
+	 * C2: an NPC surrendered (Morale SURRENDERAT=): SURRENDER_PROG runs on
+	 * its scripts, $n one it fought.
+	 * @param npc the NPC
+	 * @param to one it fought
+	 */
+	public static void surrender(final MOB npc, final MOB to)
+	{
+		if((npc == null) || (!isUsed(SURRENDER_PROG)))
+			return;
+		for(final ScriptingEngine S : engines(npc))
+			S.eventCheck(npc, SURRENDER_PROG, (to == null) ? npc : to, npc, null, "", null, "C", t -> true);
+	}
+
 	/** C21: RESET_PROG's code */
 	public static final int	RESET_PROG	= code("RESET_PROG");
 
