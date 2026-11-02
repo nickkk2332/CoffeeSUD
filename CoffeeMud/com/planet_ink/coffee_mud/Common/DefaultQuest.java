@@ -1092,8 +1092,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					try
 					{
 						final JScriptQuest scope = new JScriptQuest(this,q);
-						cx.initStandardObjects(scope);
-						JSScope.prepare(cx, scope); // JS3: require()
+						scope.initStandardObjects(cx, false);
+						JSScope.prepare(cx, scope, null); // JS3, JS6: require(), cm, include()
 						scope.defineFunctionProperties(JScriptQuest.functions,
 													   JScriptQuest.class,
 													   ScriptableObject.DONTENUM);
@@ -7167,7 +7167,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		}
 	}
 
-	protected static class JScriptQuest extends ScriptableObject
+	protected static class JScriptQuest extends org.mozilla.javascript.ImporterTopLevel // JS6: importPackage
 	{
 		@Override
 		public String getClassName()

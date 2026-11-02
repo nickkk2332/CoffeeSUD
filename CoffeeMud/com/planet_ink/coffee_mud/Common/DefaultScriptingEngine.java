@@ -10152,8 +10152,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					try
 					{
 						final JScriptEvent scope = new JScriptEvent(this,ctx);
-						cx.initStandardObjects(scope);
-						JSScope.prepare(cx, scope); // JS3: require()
+						scope.initStandardObjects(cx, false);
+						JSScope.prepare(cx, scope, ctx.scripted); // JS3, JS6: require(), cm, include()
 						final String[] names = {
 							"host",
 							"source",
@@ -19190,7 +19190,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return CMLib.lang().fullSessionTranslation(getClass(), str, xs);
 	}
 
-	protected static class JScriptEvent extends ScriptableObject
+	protected static class JScriptEvent extends org.mozilla.javascript.ImporterTopLevel // JS6: importPackage
 	{
 		@Override
 		public String getClassName()

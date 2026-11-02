@@ -399,6 +399,7 @@ public final class ScriptEvents
 	public static void game(final String kind, final MOB mob, final String detail)
 	{
 		final String d = (detail == null) ? "" : detail;
+		JSEvents.fire(kind.toLowerCase(), mob, d); // JS6: cm.on
 		switch(kind)
 		{
 		case "NEWGAME":
@@ -432,6 +433,8 @@ public final class ScriptEvents
 	public static boolean gameCheck(final MOB mob, final String slot)
 	{
 		if(Boolean.FALSE.equals(WorldJS.call("onBeforeSave", slot)))
+			return false;
+		if(!JSEvents.fire("save", mob, slot)) // JS6: cm.on('save', fn) returning false refuses
 			return false;
 		if(!isUsed(GAME_PROG))
 			return true;

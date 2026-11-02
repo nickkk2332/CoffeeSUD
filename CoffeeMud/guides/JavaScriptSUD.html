@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8" />
+<title>JavaScript in CoffeeSUD</title>
+<link rel="StyleSheet" href="style.css" type="text/css" media="screen" />
+</head>
+<body>
+<center>
+<table border="1" cellpadding="10" cellspacing="0" width="90%"><tbody>
+<tr><td colspan="2" align="left" bgcolor="#dfdfdf" width="100%">
+<h1>JavaScript in CoffeeSUD</h1>
+<p>JavaScript runs in a script's <code>&lt;SCRIPT&gt;</code> block, in
+<code>JRUN</code> files and <code>JCONSOLE</code>, in quests and cron jobs, in
+<code>world/js/init.js</code>, and in JavaScript classes. Every one of these
+scopes gets the same things, listed here. For MOBPROG scripts, see
+<a href="ScriptingSUD.html">Scripting in CoffeeSUD</a>; in the game,
+<code>HELP JS</code> has the short form, and <code>JS ERRORS</code> lists what
+went wrong.</p>
+</td></tr>
+<tr><td align="left" valign="top" width="20%">
+<ul>
+<li><a href="#scope">In every scope</a></li>
+<li><a href="#cm">cm</a></li>
+<li><a href="#world">cm's world members</a></li>
+<li><a href="#events">cm.on</a></li>
+<li><a href="#sud">sud</a></li>
+<li><a href="#shared">Shared code</a></li>
+<li><a href="#examples">Examples</a></li>
+</ul>
+</td><td align="left" valign="top">
+
+<h2><a name="scope">In every scope</a></h2>
+<ul>
+<li><code>cm</code>: the game's objects. See below.</li>
+<li><code>sud</code>: short names over <code>cm</code> for time, the party,
+the save, finding things and variables.</li>
+<li><code>require('name')</code>: a library from <code>world/js/lib/</code>,
+or else <code>resources/js/lib/</code>.</li>
+<li><code>include('path')</code>: runs a file in this scope.</li>
+<li><code>debug(x)</code>: writes x to the developer log (DEVLOG) in builder
+and developer games. In a normal game it does nothing.</li>
+<li><code>importPackage(Packages.com.planet_ink.coffee_mud.core)</code> and
+<code>importClass</code> work, so that a class can be named without its
+package.</li>
+</ul>
+<p><code>JCONSOLE</code> also has <code>here</code> (its user's room),
+<code>area</code> and <code>target</code> (who its user fights), set again
+for each line.</p>
+
+<h2><a name="cm">cm</a></h2>
+<p>The members return the game's own Java objects, so their methods can be
+called too. The <i>host</i> is what the script runs for: a script's host, or
+the user of JRUN or JCONSOLE. A room, area or mob given as
+<code>null</code> means the host's.</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Member</th><th>Gives or does</th></tr>
+<tr><td><code>cm.lib</code></td><td>CMLib, the game's libraries: <code>cm.lib.map()</code>, <code>cm.lib.law()</code>...</td></tr>
+<tr><td><code>cm.host()</code></td><td>the host</td></tr>
+<tr><td><code>cm.here()</code></td><td>the host's room, or else the player's</td></tr>
+<tr><td><code>cm.room('Town#12')</code></td><td>a room by its ID</td></tr>
+<tr><td><code>cm.area([name])</code></td><td>an area by name, or the host's</td></tr>
+<tr><td><code>cm.findMob(name [, where])</code>, <code>cm.findItem(name [, where])</code></td><td>the first of that name in the host's room, its area, then the world; or in <i>where</i> (a room, an area, or a mob for items)</td></tr>
+<tr><td><code>cm.loadMob(catalogName [, room])</code>, <code>cm.loadItem(catalogName [, roomOrMob])</code></td><td>a copy from the catalog, brought into the world (the catalog's caps hold)</td></tr>
+<tr><td><code>cm.echo([room,] text)</code>, <code>cm.tell(mob, text)</code></td><td>text to a room, or to one mob</td></tr>
+<tr><td><code>cm.say(mob, text)</code>, <code>cm.emote(mob, text)</code>, <code>cm.cmd(mob, command)</code></td><td>a mob says, emotes, or does a command</td></tr>
+<tr><td><code>cm.mp('MPECHO hello')</code></td><td>runs MOBPROG lines for the host ($-codes work, lines split by newlines or ;); returns what RETURN gave</td></tr>
+<tr><td><code>cm.dice('3d6+2')</code>, <code>cm.dice(3, 6, 2)</code>, <code>cm.chance(pct)</code></td><td>rolls</td></tr>
+<tr><td><code>cm.now()</code></td><td>the game's time in game milliseconds</td></tr>
+<tr><td><code>cm.player()</code>, <code>cm.party()</code></td><td>the character at the terminal; its party, the leader first</td></tr>
+<tr><td><code>cm.var(holder, name [, value])</code>, <code>cm.getVar</code>, <code>cm.setVar</code>, <code>cm.vars(holder)</code></td><td>script variables, as $&lt;host var&gt; and MPSETVAR. <i>holder</i> is a host's name, <code>*</code>, or an object (its own variables, as <code>@</code>). <code>cm.vars</code> lists the names.</td></tr>
+<tr><td><code>cm.stat(thing, 'LEVEL')</code></td><td>a stat, as STAT() reads it</td></tr>
+<tr><td><code>cm.log(text)</code></td><td>to the game's log</td></tr>
+<tr><td><code>cm.isTurnBased()</code>, <code>cm.isBuilder()</code>, <code>cm.isDev()</code>, <code>cm.saveSlot()</code></td><td>the game's mode and save</td></tr>
+</table>
+
+<h2><a name="world">cm's world members</a></h2>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Member</th><th>Gives or does</th></tr>
+<tr><td><code>cm.clock([area])</code></td><td><code>hour()</code>, <code>day()</code>, <code>month()</code>, <code>year()</code>, <code>daypart()</code> (dawn, day, dusk, night), <code>season()</code>, <code>moon()</code>, <code>absHours()</code>, <code>hoursInDay()</code>, <code>daysInMonth()</code>, <code>monthsInYear()</code>, <code>text()</code>, <code>pass(hours)</code>; <code>raw</code> is the engine's clock. <code>cm.calendar()</code> is the raw clock.</td></tr>
+<tr><td><code>cm.passTime(hours [, area])</code></td><td>the clock goes forward hour by hour, its events running, as TIME SET</td></tr>
+<tr><td><code>cm.advance(ticks)</code></td><td>in turn-based time, the game goes on that many ticks, as WAIT; false in real time</td></tr>
+<tr><td><code>cm.weather([area])</code></td><td><code>get()</code> and <code>next()</code> (clear, rain, heat...), <code>describe()</code>, <code>forecast()</code>, <code>set(word)</code> (now, as WEATHER SET), <code>setNext(word)</code></td></tr>
+<tr><td><code>cm.law([areaOrRoom])</code></td><td>null where there is no law; else <code>warrants([mob])</code>, <code>crimes()</code>, <code>accuse(mob, crime)</code>, <code>pardon(mob [, crime])</code>, <code>fine(mob, amount)</code> (from its money); as LAW does for builders</td></tr>
+<tr><td><code>cm.shop(keeper)</code></td><td>null if it keeps no shop; else <code>stock()</code>, <code>find(name)</code>, <code>price(thing [, buyer])</code>, <code>pays(thing [, seller])</code>, as PRICECHECK</td></tr>
+<tr><td><code>cm.bank(banker)</code></td><td>null if it is no banker; else <code>balance(who)</code>, <code>items(who)</code>, <code>worth(who)</code> (who: a mob, a name, or null for the player)</td></tr>
+</table>
+<p>Holidays and markets come with the world systems that add them.</p>
+
+<h2><a name="events">cm.on</a></h2>
+<p><code>cm.on(event, function [, key])</code> runs the function when the
+event comes, and returns its key; <code>cm.off(key)</code> takes it away, and
+<code>cm.listening([event])</code> lists what listens. A listener with the key
+of an earlier one replaces it. Without a key, the function's own text is its
+key, so a <code>&lt;SCRIPT&gt;</code> that registers the same function each
+time it runs keeps one listener. Listeners are not saved: register them in
+<code>world/js/init.js</code>'s <code>onBoot</code>.</p>
+<ul>
+<li><code>hour</code>, <code>daypart</code>, <code>day</code>,
+<code>month</code>, <code>season</code>, <code>year</code>,
+<code>weather</code>: in the player's area, as the clock and the weather
+change. The function gets (area, was, now).</li>
+<li><code>newgame</code>, <code>restore</code>, <code>save</code>,
+<code>newchar</code>, <code>switchto</code>, <code>switchfrom</code>,
+<code>pause</code>, <code>resume</code>, <code>timemode</code>: as GAME_PROG.
+The function gets (character, detail). A <code>save</code> listener that
+returns false refuses the save.</li>
+<li><code>tick</code>: every tick.</li>
+</ul>
+
+<h2><a name="sud">sud</a></h2>
+<ul>
+<li><code>sud.time</code>: <code>now()</code>, <code>isTurnBased()</code>,
+<code>advance(ticks)</code>, <code>passTime(hours [, area])</code>,
+<code>waitUntil(test [, then])</code> (test runs each tick until it returns
+true; then, if given, runs once after).</li>
+<li><code>sud.party</code>: <code>leader()</code>, <code>members()</code>,
+<code>isMember(mob)</code>.</li>
+<li><code>sud.save</code>: <code>slot()</code>, <code>isBuilder()</code>,
+<code>isDev()</code>.</li>
+<li><code>sud.find</code>: <code>room(id)</code>, <code>mob(name [, area])</code>,
+<code>item(name [, room])</code>.</li>
+<li><code>sud.vars</code>: <code>get(holder, name)</code>,
+<code>set(holder, name, value)</code>, <code>list(holder)</code>.</li>
+<li><code>sud.on(event, fn [, key])</code> and <code>sud.off(key)</code>, as
+<code>cm.on</code>.</li>
+</ul>
+
+<h2><a name="shared">Shared code</a></h2>
+<p><code>require('name')</code> loads a CommonJS module: it sees only
+<code>exports</code> and what it requires, and gives back
+<code>exports</code>. <code>include('path')</code> runs a file in the scope
+that calls it, so what it defines stays there: <code>path</code> is under
+<code>resources/</code>, or <code>world:path</code> is under the world folder;
+<code>..</code> is refused. Both compile a file once and read it again when it
+changes.</p>
+
+<h2><a name="examples">Examples</a></h2>
+<pre>
+var g = cm.loadMob('Town Guard', cm.room('Town#1'));
+cm.say(g, 'Halt, ' + cm.player().name() + '!');
+</pre>
+<pre>
+// world/js/init.js
+function onBoot() {
+  cm.on('daypart', function(area, was, now) {
+    if (now == 'night') cm.echo(cm.room('Town#1'), 'The lamplighter makes his rounds.');
+  }, 'lamplighter');
+  cm.on('save', function(who, slot) {
+    return cm.var('*', 'INBOSSFIGHT') != 'yes';   // no saving in the boss fight
+  }, 'noBossSave');
+}
+</pre>
+<pre>
+// a guard's &lt;SCRIPT&gt;: a warrant for anyone carrying the idol out of town
+var law = cm.law();
+if (law != null &amp;&amp; cm.findItem('golden idol', source) != null)
+  law.accuse(source, 'theft');
+</pre>
+</td></tr>
+</tbody></table>
+</center>
+</body>
+</html>

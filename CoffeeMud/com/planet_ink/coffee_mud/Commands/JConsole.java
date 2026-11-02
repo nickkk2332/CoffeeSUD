@@ -79,8 +79,8 @@ public class JConsole extends StdCommand
 				try
 				{
 					scope = new JScriptEvent(mob);
-					cx.initStandardObjects(scope);
-					JSScope.prepare(cx, scope); // JS3: require()
+					scope.initStandardObjects(cx, false);
+					JSScope.prepare(cx, scope, mob); // JS3, JS6: require(), cm, include()
 					final String[] names = { "mob" ,"getVar", "setVar", "toJavaString", "getCMType", "debug"};
 					scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
 					Resources.submitResource("JCONSOLE_"+mob.Name(), scope);
@@ -95,6 +95,7 @@ public class JConsole extends StdCommand
 			{
 				try
 				{
+					JSScope.where(scope, mob); // JS6: here, area, target
 					mob.tell(cx.evaluateString(scope, rest.toString(),"<cmd>", 1, null).toString());
 					return true;
 				}
@@ -163,6 +164,7 @@ public class JConsole extends StdCommand
 						try
 						{
 							final Context cx=Context.enter();
+							JSScope.where(myScope, mob); // JS6
 							session.safeRawPrintln(cx.evaluateString(myScope, this.input.replace('`','\''),"<cmd>", 1, null).toString());
 						}
 						catch(final Exception e)
@@ -187,7 +189,7 @@ public class JConsole extends StdCommand
 		return false;
 	}
 
-	protected static class JScriptEvent extends ScriptableObject
+	protected static class JScriptEvent extends org.mozilla.javascript.ImporterTopLevel // JS6: importPackage
 	{
 		@Override
 		public String getClassName()

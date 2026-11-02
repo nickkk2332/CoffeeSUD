@@ -3020,8 +3020,8 @@ public class CMClass extends ClassLoader
 			}
 			final Context X=Context.enter();
 			final JScriptLib jlib=new JScriptLib();
-			X.initStandardObjects(jlib);
-			JSScope.prepare(X, jlib); // JS3: require()
+			jlib.initStandardObjects(X, false);
+			JSScope.prepare(X, jlib, null); // JS3, JS6: require(), cm, include()
 			jlib.defineFunctionProperties(JScriptLib.functions, JScriptLib.class, ScriptableObject.DONTENUM);
 			final CompilerEnvirons ce = new CompilerEnvirons();
 			ce.initFromContext(X);
@@ -3525,7 +3525,7 @@ public class CMClass extends ClassLoader
 	 * @author Bo Zimmerman
 	 *
 	 */
-	protected static final class JScriptLib extends ScriptableObject
+	protected static final class JScriptLib extends ImporterTopLevel // JS6: importPackage
 	{
 		@Override
 		public String getClassName()

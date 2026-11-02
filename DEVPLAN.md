@@ -1273,6 +1273,20 @@ JS17, JS18, JS19, JS20, JS23
   calls onEnter, onLeave, onWeather and onDaypart, with echo, roll, spawn,
   room, area and parm. Problems show at boot in the log and in WORLD CHECK,
   not at the builder's login.
+- JS6 done. Every scope is an ImporterTopLevel (importPackage,
+  importClass) and `JSScope.prepare(cx, scope, host)` gives it `cm`
+  (`core/JSCm`: finding, loading from the catalog, saying and doing,
+  `cm.mp`, dice, variables and stats, the player and party, and world
+  members clock, passTime, advance, weather, law, shop and bank over what
+  DT20, DT21 and DT22 use), `sud` (JS22's time, party, save, find, vars and
+  on), `include(path)` (resources/ or world:, no `..`, compiled once while
+  unchanged) and `debug(x)` where the scope has none. `core/JSEvents`:
+  `cm.on(event, fn [, key])` for hour, daypart, day, month, season, year and
+  weather of the player's area (looked at each tick) and GAME_PROG's events
+  (a save listener returning false refuses), keyed by the function's text
+  when no key is given; `sud.time.waitUntil`. JCONSOLE sets here, area and
+  target for each line. `guides/JavaScriptSUD.html`. cm.holiday and
+  cm.market wait for W6 and W27 (later).
 
 #### 2e. Quests (15)
 

@@ -75,8 +75,8 @@ public final class WorldJS
 		final Context cx = JSRuntime.enter(JSRuntime.limitSeconds());
 		try
 		{
-			final ScriptableObject S = cx.initStandardObjects();
-			JSScope.prepare(cx, S); // JS3: require()
+			final ScriptableObject S = new org.mozilla.javascript.ImporterTopLevel(cx); // JS6: importPackage
+			JSScope.prepare(cx, S, null); // JS3, JS6: require(), cm, include()
 			cx.evaluateString(S, new String(Files.readAllBytes(F.toPath()), StandardCharsets.UTF_8), "world/js/init.js", 1, null);
 			scope = S;
 		}

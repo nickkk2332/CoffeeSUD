@@ -46,15 +46,126 @@ public final class JSScope
 	 */
 	public static void prepare(final Context cx, final Scriptable scope)
 	{
+		prepare(cx, scope, null);
+	}
+
+	/**
+	 * Gives a scope what every scope has: require() (JS3), and (JS6) cm,
+	 * include(path), debug(x) and sud.
+	 * @param cx the context it runs in
+	 * @param scope the scope, its standard objects already in it
+	 * @param host the thing the script runs for (cm.host()), or null
+	 */
+	public static void prepare(final Context cx, final Scriptable scope, final Object host)
+	{
 		if((cx == null) || (scope == null))
 			return;
 		try
 		{
 			new RequireBuilder().setModuleScriptProvider(modules()).setSandboxed(true).createRequire(cx, scope).install(scope);
+			final JSCm cm = JSCm.forScope(scope, (host instanceof com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent)
+				? (com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent)host : null);
+			ScriptableObject.putProperty(scope, "cm", Context.javaToJS(cm, scope));
+			ScriptableObject.putProperty(scope, "include", new Include(scope));
+			if(!ScriptableObject.hasProperty(scope, "debug"))
+				ScriptableObject.putProperty(scope, "debug", new Debug((host instanceof com.planet_ink.coffee_mud.core.interfaces.Environmental)
+					? ((com.planet_ink.coffee_mud.core.interfaces.Environmental)host).Name() : "javascript"));
+			cx.evaluateString(scope, SUD_JS, "sud", 1, null);
 		}
 		catch(final RuntimeException e)
 		{
 			Log.errOut("JSScope", e);
+		}
+	}
+
+	/**
+	 * JCONSOLE (JS6): where its user is, each time a line runs: here, area and
+	 * target (who it fights, or null).
+	 * @param scope the console's scope
+	 * @param mob its user
+	 */
+	public static void where(final Scriptable scope, final com.planet_ink.coffee_mud.MOBS.interfaces.MOB mob)
+	{
+		if((scope == null) || (mob == null))
+			return;
+		final com.planet_ink.coffee_mud.Locales.interfaces.Room R = mob.location();
+		ScriptableObject.putProperty(scope, "here", Context.javaToJS(R, scope));
+		ScriptableObject.putProperty(scope, "area", Context.javaToJS((R == null) ? null : R.getArea(), scope));
+		ScriptableObject.putProperty(scope, "target", Context.javaToJS(mob.getVictim(), scope));
+	}
+
+	/** JS6: sud, the short names, over cm */
+	private static final String SUD_JS =
+		"var sud = (function(cm) { function n(x) { return (x === undefined) ? null : x; } return {"
+		+ " time: { now: function() { return cm.now(); }, isTurnBased: function() { return cm.isTurnBased(); },"
+		+ "   advance: function(t) { return cm.advance(t); }, passTime: function(h, a) { cm.passTime(h, n(a)); },"
+		+ "   waitUntil: function(f, then) { return cm.waitUntil(f, n(then)); } },"
+		+ " party: { leader: function() { var p = cm.party(); return p.isEmpty() ? null : p.get(0); },"
+		+ "   members: function() { return cm.party(); }, isMember: function(m) { return cm.party().contains(m); } },"
+		+ " save: { slot: function() { return cm.saveSlot(); }, isBuilder: function() { return cm.isBuilder(); },"
+		+ "   isDev: function() { return cm.isDev(); } },"
+		+ " find: { room: function(id) { return cm.room(id); }, mob: function(m, w) { return cm.findMob(m, n(w)); },"
+		+ "   item: function(i, w) { return cm.findItem(i, n(w)); } },"
+		+ " vars: { get: function(h, v) { return String(cm.getVar(n(h), v)); }, set: function(h, v, x) { cm.setVar(n(h), v, n(x)); },"
+		+ "   list: function(h) { return cm.vars(n(h)); } },"
+		+ " on: function(e, f, k) { return (k == null) ? cm.on(e, f) : cm.on(e, f, String(k)); },"
+		+ " off: function(k) { return cm.off(String(k)); }"
+		+ "}; })(cm);";
+
+	/** JS6: include(path): runs a file of resources/ (or world:path) in this scope, compiled once while it is unchanged */
+	private static final class Include extends BaseFunction
+	{
+		private static final long serialVersionUID = 1L;
+		private static final Map<String, Object[]> compiled = new HashMap<String, Object[]>();
+		private final Scriptable home;
+
+		Include(final Scriptable home)
+		{
+			this.home = home;
+		}
+
+		@Override
+		public Object call(final Context cx, final Scriptable scope, final Scriptable thisObj, final Object[] args)
+		{
+			final String path = (args.length > 0) ? Context.toString(args[0]).trim() : "";
+			if((path.length() == 0) || (path.indexOf("..") >= 0))
+				throw ScriptRuntime.constructError("Error", "include: no such file: " + path);
+			final String vfs = path.toLowerCase().startsWith("world:") ? ("/world/" + path.substring(6)) : ("/" + Resources.makeFileResourceName(path));
+			final CMFile F = new CMFile(vfs, null);
+			if((!F.exists()) || (!F.canRead()))
+				throw ScriptRuntime.constructError("Error", "include: no such file: " + path);
+			Script S;
+			synchronized(compiled)
+			{
+				final Object[] had = compiled.get(vfs);
+				if((had != null) && (((Long)had[0]).longValue() == F.lastModified()))
+					S = (Script)had[1];
+				else
+				{
+					S = cx.compileString(F.text().toString().replaceAll("\\r\\n|\\n\\r|\\r", "\n"), path, 1, null);
+					compiled.put(vfs, new Object[] { Long.valueOf(F.lastModified()), S });
+				}
+			}
+			return S.exec(cx, home);
+		}
+	}
+
+	/** JS6: debug(x), to the developer log, where the scope has none of its own */
+	private static final class Debug extends BaseFunction
+	{
+		private static final long serialVersionUID = 1L;
+		private final String who;
+
+		Debug(final String who)
+		{
+			this.who = who;
+		}
+
+		@Override
+		public Object call(final Context cx, final Scriptable scope, final Scriptable thisObj, final Object[] args)
+		{
+			JSRuntime.debug(who, (args.length > 0) ? args[0] : null);
+			return Context.getUndefinedValue();
 		}
 	}
 

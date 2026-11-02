@@ -709,7 +709,7 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 		return commandJournals.get(named.toUpperCase().trim());
 	}
 
-	protected static class JScriptWindow extends ScriptableObject
+	protected static class JScriptWindow extends org.mozilla.javascript.ImporterTopLevel // JS6: importPackage
 	{
 		@Override
 		public String getClassName()
@@ -875,8 +875,8 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 						if(debug)
 							Log.debugOut("CRON: "+E.subj()+": "+str.toString());
 						final JScriptWindow scope = new JScriptWindow(mob);
-						cx.initStandardObjects(scope);
-						JSScope.prepare(cx, scope); // JS3: require()
+						scope.initStandardObjects(cx, false);
+						JSScope.prepare(cx, scope, null); // JS3, JS6: require(), cm, include()
 						scope.defineFunctionProperties(JScriptWindow.functions,
 													   JScriptWindow.class,
 													   ScriptableObject.DONTENUM);

@@ -72,8 +72,8 @@ public class JRun extends StdCommand
 		try
 		{
 			final JScriptWindow scope = new JScriptWindow(mob,commands);
-			cx.initStandardObjects(scope);
-			JSScope.prepare(cx, scope); // JS3: require()
+			scope.initStandardObjects(cx, false);
+			JSScope.prepare(cx, scope, mob); // JS3, JS6: require(), cm, include()
 			scope.defineFunctionProperties(JScriptWindow.functions,
 										   JScriptWindow.class,
 										   ScriptableObject.DONTENUM);
@@ -97,7 +97,7 @@ public class JRun extends StdCommand
 		return false;
 	}
 
-	protected static class JScriptWindow extends ScriptableObject
+	protected static class JScriptWindow extends ImporterTopLevel // JS6: importPackage
 	{
 		@Override
 		public String getClassName()
