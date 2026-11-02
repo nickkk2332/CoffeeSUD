@@ -3358,6 +3358,12 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case ISHOME: // +isHome
 					buf.append(L("Disallows those who are not in their home area.  "));
 					break;
+				case ROOMDARK: // W10
+					buf.append(L("Disallows those not in a room that is dark to them.  "));
+					break;
+				case _ROOMDARK:
+					buf.append(L("Disallows those in a room that is dark to them.  "));
+					break;
 				case _ISHOME: // -isHome
 					buf.append(L("Disallows those who are in their home area.  "));
 					break;
@@ -5396,6 +5402,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				//$FALL-THROUGH$
 				case ISHOME: // +ishome
 				case _ISHOME: // -ishome
+				case ROOMDARK: // W10: +roomdark
+				case _ROOMDARK: // -roomdark
 				case SYSOP: // +sysop
 				case _SYSOP: // -sysop
 				{
@@ -8691,6 +8699,16 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						return false;
 					break;
 				}
+				case ROOMDARK: // W10: +roomdark: only those the room is dark to
+				case _ROOMDARK: // -roomdark: not those
+				{
+					final Room inR=CMLib.map().roomLocation(E);
+					final boolean dark=(inR!=null)&&CMLib.flags().isInDark(inR)
+						&&(!((E instanceof MOB)&&CMLib.flags().canSeeInDark((MOB)E)));
+					if(dark!=(entry.maskType()==ZapperKey.ROOMDARK))
+						return false;
+					break;
+				}
 				case _PLANE: // -plane
 				{
 					boolean found=false;
@@ -9952,6 +9970,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case PLANE: // +plane
 				case _ISHOME: // -ishome
 				case ISHOME: // +ishome
+				case _ROOMDARK: // W10: a record is in no room
+				case ROOMDARK:
 				case _ITEM: // -item
 				case _WORN: // -worn
 				case ITEM: // +item

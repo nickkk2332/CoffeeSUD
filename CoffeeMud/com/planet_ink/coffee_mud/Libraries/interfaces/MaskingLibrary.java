@@ -481,6 +481,8 @@ public interface MaskingLibrary extends CMLibrary
 		ACCCHIEVE("+ACCCHIEVES"),
 		_ISHOME("-ISHOME"),
 		ISHOME("+ISHOME"),
+		_ROOMDARK("-ROOMDARK"), // W10: not those the room they are in is dark to
+		ROOMDARK("+ROOMDARK"), // only those it is dark to (dark, and they cannot see in the dark)
 		_IFSTAT("-IFSTAT"),
 		IFSTAT("+IFSTAT"),
 		_SUBNAME("-SUBNAMES"),

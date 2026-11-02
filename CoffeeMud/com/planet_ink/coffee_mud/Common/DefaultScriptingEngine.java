@@ -15967,6 +15967,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "ISDARK": // W10: ISDARK(room|HERE|thing): the room is dark (night, a dark place, no light in it)
+		case "ISLIT": // W10: ISLIT(room|HERE|thing): it is not
+		{
+			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));
+			final boolean dark=(R!=null)&&CMLib.flags().isInDark(R);
+			return (dark==name.equalsIgnoreCase("ISDARK"))?"true":"false";
+		}
 		case "EXCHANGE": // W29: EXCHANGE(CODE): what its coins fetch at money changers, in percent of their value (MPEXCHANGE)
 			return Shops.num(Exchange.percent(v));
 		case "BANKBALANCE": // W15: BANKBALANCE(who chain [currency]): their coins at the bank chain, in base value

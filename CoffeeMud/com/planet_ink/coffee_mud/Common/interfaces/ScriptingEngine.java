@@ -776,6 +776,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"BANKBALANCE", //204
 		"DEBT", //205
 		"EXCHANGE", //206
+		"ISDARK", //207
+		"ISLIT", //208
 	};
 
 	/** String list of all valid mobprog commands */

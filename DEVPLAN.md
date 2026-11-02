@@ -2390,6 +2390,16 @@ W18, W19, W20, W21, W22, W23, W28, W29
   there), then its area's, then the parents'; what is unset comes from the
   climate file (W20), then lists.ini. lists.ini's sun now rises in the east
   and sets in the west.
+- W10 done. `ISDARK(room)` and `ISLIT(room)` (207, 208; HERE, a room ID
+  or a thing's room). Mask keys `+ROOMDARK` and `-ROOMDARK`, seen from the
+  character's side: the room they are in is dark and they cannot see in
+  the dark (StdRoom keeps IS_DARK from what reaches its occupants, so
+  -DISPOSITION could not tell). `Prop_DarkDanger` (rooms, areas), for a
+  player the room is dark to: `LOST=n%` a move goes a random open way
+  (MSG=), `STUMBLE=n%` a move fails and costs movement (STUMBLEMSG=),
+  `LURKER=name LURK=n%` a catalog mob (or a mob class) comes out of the
+  dark as they enter (LURKMSG=); a light, or seeing in the dark, ends it.
+  It acts for the characters played (they have player stats).
 
 #### 2j. Generators and random content (16)
 
