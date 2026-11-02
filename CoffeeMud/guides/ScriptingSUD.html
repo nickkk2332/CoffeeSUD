@@ -547,6 +547,11 @@ the crypt door swings open."</code>; both sides open, both rooms see it, and the
 torch</code> (a catalog item, or an item class); the burning torch is in the same hand, and <code>$p</code> for the
 rest of the script. <code>KEEP=ALL</code> also keeps its tags, its script variables and states, and its uses. In
 JavaScript: <code>transform(item, 'a burning torch')</code>.</p>
+<p>Levers and dials: <code>Prop_Switch STATES="down,up" DESC_up="The lever is up." ACTION_up="door open
+Gate#3 east" ACTION_down="door close Gate#3 east" RESET=20</code> on an ungettable lever: PULL LEVER raises the
+portcullis on both sides for 20 ticks, and LOOK LEVER tells where it stands. Actions are script commands, MP
+left off if you like; <code>REQUIRES=</code> a mask, <code>STATES=1-8</code> a dial (TURN DIAL TO 3),
+<code>SWITCH_PROG up</code> and <code>SWITCHSTATE(lever)</code> for scripts.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

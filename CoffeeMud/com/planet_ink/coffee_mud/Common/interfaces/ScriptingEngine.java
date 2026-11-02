@@ -561,6 +561,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ARENALOSE_PROG", // 108
 		"AMBUSH_PROG", // 109
 		"PARTYDEFEAT_PROG", // 110
+		"SWITCH_PROG", // 111
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -757,6 +758,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ALARM", //189
 		"RESPAWNROOM", //190
 		"DOORSTATE", //191
+		"SWITCHSTATE", //192
 	};
 
 	/** String list of all valid mobprog commands */

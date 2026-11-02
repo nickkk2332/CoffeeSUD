@@ -560,6 +560,47 @@ public final class ScriptEvents
 		arena(R, ARENALOSE_PROG, who, "");
 	}
 
+	/** I9: SWITCH_PROG's code */
+	public static final int	SWITCH_PROG	= code("SWITCH_PROG");
+
+	/**
+	 * I9: a switch moved (Prop_Switch): SWITCH_PROG [state|ALL] runs on the
+	 * scripts of the thing and of its room, $n who moved it, $0 the state.
+	 * @param host the switch, an item or an exit
+	 * @param R its room
+	 * @param state the state it moved to
+	 * @param who who moved it, or null
+	 */
+	public static void switched(final PhysicalAgent host, final Room R, final String state, final MOB who)
+	{
+		if(!isUsed(SWITCH_PROG))
+			return;
+		final MOB src = (who != null) ? who : CMLib.map().getFactoryMOB(R);
+		try
+		{
+			final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+			if(host != null)
+				hosts.add(host);
+			if((R != null) && (R != host))
+				hosts.add(R);
+			for(final PhysicalAgent H : hosts)
+			{
+				for(final ScriptingEngine S : engines(H))
+				{
+					S.eventCheck(H, SWITCH_PROG, src, host, (host instanceof Item) ? (Item)host : null, state, new Object[] { state }, "Cr", t -> {
+						final String w = (t.length < 2) ? "" : t[1].trim();
+						return (w.length() == 0) || w.equalsIgnoreCase("ALL") || w.equalsIgnoreCase(state);
+					});
+				}
+			}
+		}
+		finally
+		{
+			if(who == null)
+				src.destroy();
+		}
+	}
+
 	/** C8: PARTYDEFEAT_PROG's code */
 	public static final int	PARTYDEFEAT_PROG	= code("PARTYDEFEAT_PROG");
 
@@ -1039,6 +1080,13 @@ public final class ScriptEvents
 			}
 			if(propVerb(mob, host, verb, rest))
 				return true;
+			// I9: a puzzle property on it (Prop_Switch and its kin)
+			for(final Enumeration<Ability> a = host.effects(); a.hasMoreElements();)
+			{
+				final Ability A = a.nextElement();
+				if((A instanceof VerbTaker) && ((VerbTaker)A).takeVerb(mob, host, verb, rest))
+					return true;
+			}
 		}
 		return false;
 	}

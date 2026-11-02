@@ -2097,6 +2097,16 @@ I22, I23, I24, I25, I26, I27
   copied; `$p` is the new item for the rest of the script. JavaScript's
   `transform(item, name, keep)` (an item, or how a script names one).
   I5's Prop_Transform and I27's ItemUpgrader use it.
+- I9 done. Prop_Switch (items, exits) implements core.interfaces.
+  VerbTaker, which ScriptEvents.verb now asks of each effect on what is
+  within reach, after VERB_PROG and Prop_Verbs and before the game's
+  commands (so PULL, PUSH and TURN are its own). VERBS, STATES (words or
+  n-m), START, DESC_x (a trailer to LOOK), MSG_x, ACTION_x, RESET, REQUIRES
+  or MASK with REQMSG, ONCE; "verb thing to x", ACTIVATE and DEACTIVATE.
+  The state is in its text (STATE=, MOVED=). core/Actions runs actions as
+  a FUNCTION_PROG on the thing (an exit's on the room), MP put back where
+  it was left off. SWITCH_PROG (111) on the thing's and its room's
+  scripts; SWITCHSTATE(thing|room:dir|dir) (192).
 
 #### 2i. World systems (25)
 

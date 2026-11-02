@@ -15932,6 +15932,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "SWITCHSTATE": // I9: SWITCHSTATE(thing|room:dir): its Prop_Switch's state, or nothing
+		{
+			final Physical P=puzzleHost(ctx,varify(ctx,CMParms.getCleanBit(parms,0)).trim(),CMParms.getCleanBit(parms,0));
+			final Ability A=(P==null)?null:P.fetchEffect("Prop_Switch");
+			return (A==null)?"":A.getStat("STATE");
+		}
 		case "DOORSTATE": // I2: DOORSTATE(room dir|container): open, closed or locked, or nothing
 		{
 			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));
@@ -18987,6 +18993,32 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 		}
 		return mob;
+	}
+
+	/**
+	 * I9: the thing a puzzle function asks about: an exit (room:dir, HERE:dir,
+	 * or a direction here), or a thing as the script names it.
+	 * @param ctx the script's context
+	 * @param w the word, varified
+	 * @param raw the word as written
+	 * @return the thing, or null
+	 */
+	protected Physical puzzleHost(final MPContext ctx, final String w, final String raw)
+	{
+		final int x=w.lastIndexOf(':');
+		if(x>0)
+		{
+			final String rid=w.substring(0,x).trim();
+			final Room R=rid.equalsIgnoreCase("HERE")?lastKnownLocation:CMLib.map().getRoom(rid);
+			final int d=CMLib.directions().getGoodDirectionCode(w.substring(x+1).trim());
+			if((R!=null)&&(d>=0))
+				return R.getExitInDir(d);
+		}
+		final int d=CMLib.directions().getGoodDirectionCode(w);
+		if((d>=0)&&(lastKnownLocation!=null)&&(lastKnownLocation.getExitInDir(d)!=null))
+			return lastKnownLocation.getExitInDir(d);
+		final Environmental E=getArgumentItem(raw,ctx);
+		return (E instanceof Physical)?(Physical)E:null;
 	}
 
 	/**
