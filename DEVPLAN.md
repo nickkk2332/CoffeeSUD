@@ -2160,6 +2160,12 @@ I22, I23, I24, I25, I26, I27
   ONCLEAR actions, RESPAWN. LEFT= in the text; a Prop_BlockedExit on the
   paired exit is set the same. Attacking it with the combat system was
   not done: ATTACK is one of its words instead.
+- I14 done. Prop_Detector (items) ticks on its own (TICKID_PROPERTY_
+  SPECIAL, from setAffectedOne) every EVERY ticks, looks through the
+  rooms out to RANGE (0-3) for a mob fitting DETECT or an item fitting
+  DETECTITEM, when WHERE (WORN, HELD, ANY) holds; while it finds one it
+  adds AMBIANCE, and on the change it tells the holder (or the room) MSG
+  or STOPMSG, $p the item.
 
 #### 2i. World systems (25)
 
