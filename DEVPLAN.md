@@ -1319,6 +1319,19 @@ JS17, JS18, JS19, JS20, JS23
   hook changes in parms is written back to the text, so it is saved with
   the host (the stat hooks' changes are not). A hook that throws is
   reported (JS ERRORS) and not called again until the text is set again.
+- JS10 done. `core/JSReload`: `JS RELOAD [file|ALL]` in builder mode takes
+  the world/js files changed since the game started or their last reload (or
+  the one named, or all). Each is compiled first; one that does not compile
+  is reported as file:line and left. init.js is read again
+  (`WorldJS.reload`, onReload(old) with the old scope; onBoot is not run
+  again); lib/ drops the require cache (a scope keeps what it required); a
+  JS5 class folder recompiles the class (`CMClass.loadClass`) and replaces
+  its behaviours, effects and mobs' abilities in the world, text and
+  parameters copied (other kinds: those made later use it); other files are
+  read again by each `Prop_JScript` and `JSBehavior` running them
+  (`JSReload.Holder`, `JSHooks.reload`, onReload(old)). `JS WATCH ON
+  [seconds]|OFF` looks on a thread, as DEVWATCH does, and has the builder JS
+  RELOAD. JScriptable (JS11) will join the holders.
 
 #### 2e. Quests (15)
 

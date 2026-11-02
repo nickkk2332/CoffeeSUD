@@ -30,7 +30,7 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
  * in parms is written back to this property's text, and so saved with the
  * host.
  */
-public class Prop_JScript extends Property
+public class Prop_JScript extends Property implements JSReload.Holder
 {
 	@Override
 	public String ID()
@@ -72,6 +72,19 @@ public class Prop_JScript extends Property
 	{
 		super.setMiscText(newMiscText);
 		hooks = null;
+	}
+
+	@Override
+	public String scriptPath()
+	{
+		return hooks().path();
+	}
+
+	@Override
+	public void reloadScript()
+	{
+		hooks().reload(text(), (affected instanceof PhysicalAgent) ? (PhysicalAgent)affected : null);
+		keepParms();
 	}
 
 	/** writes parms back to the text, as a hook left them */

@@ -43,10 +43,13 @@ public class JSCmd extends StdCommand
 	{
 		if((commands.size()>1)&&commands.get(1).equalsIgnoreCase("STATE"))
 			return state(mob,commands);
+		if((commands.size()>1)&&(commands.get(1).equalsIgnoreCase("RELOAD")||commands.get(1).equalsIgnoreCase("WATCH")))
+			return reload(mob,commands);
 		if((commands.size()<2)||(!commands.get(1).equalsIgnoreCase("ERRORS")))
 		{
 			mob.tell(L("JS ERRORS [number]: the most recent JavaScript errors.\n\r"
-				+"JS STATE ([key] (= {value}/DELETE)): the JavaScript stores (cm.store), in builder mode."));
+				+"JS STATE ([key] (= {value}/DELETE)): the JavaScript stores (cm.store), in builder mode.\n\r"
+				+"JS RELOAD ([file]/ALL): changed world/js files into the running world; JS WATCH ON ([seconds])/OFF: by itself."));
 			return false;
 		}
 		int max=10;
@@ -62,6 +65,52 @@ public class JSCmd extends StdCommand
 		for(final String e : errors)
 			str.append(e).append("\n\r");
 		mob.tell(str.toString());
+		return false;
+	}
+
+	/**
+	 * JS10: JS RELOAD ([file]/ALL) puts changed world/js files into the
+	 * running world (see JSReload); JS WATCH ON ([seconds]) has it done
+	 * every few seconds, JS WATCH OFF stops it.  Builder and developer games
+	 * only.
+	 * @param mob the builder
+	 * @param commands the words
+	 * @return false
+	 */
+	protected boolean reload(final MOB mob, final List<String> commands)
+	{
+		final String verb=commands.get(1).toUpperCase();
+		if(!(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()||com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode()))
+		{
+			mob.tell(L("JS @x1 is for builder mode.",verb));
+			return false;
+		}
+		if(verb.equals("WATCH"))
+		{
+			final String w=(commands.size()>2)?commands.get(2).toUpperCase():"";
+			if(w.equals("ON"))
+			{
+				final int secs=(commands.size()>3)?CMath.s_int(commands.get(3)):3;
+				JSReload.watch(mob,(secs<=0)?3:secs);
+				mob.tell(L("JS WATCH is on: every @x1 seconds, the world/js files that changed are reloaded.",""+JSReload.watchSeconds()));
+			}
+			else
+			if(w.equals("OFF"))
+			{
+				JSReload.unwatch();
+				mob.tell(L("JS WATCH is off."));
+			}
+			else
+			if(JSReload.isWatching())
+				mob.tell(L("JS WATCH is on, every @x1 seconds.  JS WATCH OFF stops it.",""+JSReload.watchSeconds()));
+			else
+				mob.tell(L("JS WATCH is off.  JS WATCH ON ([SECONDS]) starts it."));
+			return false;
+		}
+		final StringBuilder str=new StringBuilder("");
+		for(final String line : JSReload.reload((commands.size()>2)?CMParms.combine(commands,2):null))
+			str.append(line).append("\n\r");
+		mob.tell(str.toString().trim());
 		return false;
 	}
 

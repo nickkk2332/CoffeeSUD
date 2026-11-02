@@ -27,7 +27,7 @@ import com.planet_ink.coffee_mud.Common.interfaces.*;
  * onRemoved(host); Prop_JScript has the stat hooks.  What a hook changes in
  * parms is written back to the behaviour's parameters.
  */
-public class JSBehavior extends StdBehavior
+public class JSBehavior extends StdBehavior implements JSReload.Holder
 {
 	@Override
 	public String ID()
@@ -64,6 +64,19 @@ public class JSBehavior extends StdBehavior
 	{
 		super.setParms(parameters);
 		hooks = null;
+	}
+
+	@Override
+	public String scriptPath()
+	{
+		return hooks().path();
+	}
+
+	@Override
+	public void reloadScript()
+	{
+		hooks().reload(getParms(), host);
+		keepParms();
 	}
 
 	/** writes parms back to the parameters, as a hook left them */

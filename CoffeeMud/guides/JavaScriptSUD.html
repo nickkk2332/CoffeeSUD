@@ -27,6 +27,7 @@ went wrong.</p>
 <li><a href="#sud">sud</a></li>
 <li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#shared">Shared code</a></li>
+<li><a href="#reload">Reloading</a></li>
 <li><a href="#examples">Examples</a></li>
 </ul>
 </td><td align="left" valign="top">
@@ -223,6 +224,34 @@ that calls it, so what it defines stays there: <code>path</code> is under
 <code>resources/</code>, or <code>world:path</code> is under the world folder;
 <code>..</code> is refused. Both compile a file once and read it again when it
 changes.</p>
+
+<h2><a name="reload">Reloading</a></h2>
+<p>In builder mode, <code>JS RELOAD</code> puts the files of
+<code>world/js</code> changed since the game started (or since they were last
+reloaded) into the running world: <code>JS RELOAD props/ferry.js</code> reloads
+one, <code>JS RELOAD ALL</code> every one. A file that does not compile is
+shown with its line, and left as it was. Then:</p>
+<ul>
+<li><code>init.js</code> is read again, and its <code>onReload(old)</code>
+called with the old file's scope (its <code>onBoot</code> is not run
+again);</li>
+<li>a library in <code>lib/</code> is read again where it is required from then
+on (a scope keeps what it has already required);</li>
+<li>a class (in <code>behaviors/</code>, <code>properties/</code> and the
+other class folders) is compiled again; its behaviours and effects in the world
+are replaced with new ones, their text kept, and the mobs, items and rooms made
+from then on use it;</li>
+<li>any other file (<code>Prop_JScript</code>'s and
+<code>JSBehavior</code>'s) is read again by each one running it, which calls
+its <code>onReload(old)</code> with the old scope.</li>
+</ul>
+<p><code>JS WATCH ON</code> (with a number of seconds, 3 if none) does it by
+itself as files change; <code>JS WATCH OFF</code> stops it.</p>
+<pre>
+// world/js/props/ferry.js: a crossing half done carries over a reload
+var crossing = null;
+function onReload(old) { crossing = old.crossing; }
+</pre>
 
 <h2><a name="examples">Examples</a></h2>
 <pre>

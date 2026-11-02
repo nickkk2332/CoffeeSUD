@@ -36,7 +36,7 @@ import com.planet_ink.coffee_mud.core.interfaces.*;
 public class JSHooks
 {
 	/** the hooks a file may define */
-	public static final String[]	HOOKS	= { "affectPhyStats", "affectCharStats", "affectCharState", "okMessage", "executeMsg", "tick", "onAdded", "onRemoved" };
+	public static final String[]	HOOKS	= { "affectPhyStats", "affectCharStats", "affectCharState", "okMessage", "executeMsg", "tick", "onAdded", "onRemoved", "onReload" };
 
 	private final String		kind;
 	private String				path		= "";
@@ -141,6 +141,25 @@ public class JSHooks
 		{
 			Context.exit();
 		}
+	}
+
+	/**
+	 * JS10: reads the file again, in a new scope, and calls its
+	 * onReload(old) with the old scope, if it defines one, so that it can
+	 * take what it kept there.
+	 * @param text SCRIPT=path and the parameters
+	 * @param host the thing it is on, or null
+	 * @return true if onReload was called
+	 */
+	public boolean reload(final String text, final PhysicalAgent host)
+	{
+		final Scriptable old = scope;
+		loadedText = null;
+		load(text, host);
+		if((old == null) || (!has("onReload")))
+			return false;
+		call("onReload", old);
+		return true;
 	}
 
 	/**

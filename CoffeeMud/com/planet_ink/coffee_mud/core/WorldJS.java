@@ -64,6 +64,26 @@ public final class WorldJS
 		read = false;
 	}
 
+	/**
+	 * JS10: reads the file again, and calls its onReload(old) with the old
+	 * file's scope, if the new one defines it (onBoot is not run again).
+	 * @return true if onReload was called
+	 */
+	public static boolean reload()
+	{
+		final Scriptable old;
+		synchronized(WorldJS.class)
+		{
+			old = scope;
+			scope = null;
+			read = false;
+		}
+		if((scope() == null) || (old == null) || (!has("onReload")))
+			return false;
+		call("onReload", old);
+		return true;
+	}
+
 	private static synchronized Scriptable scope()
 	{
 		if(read)
