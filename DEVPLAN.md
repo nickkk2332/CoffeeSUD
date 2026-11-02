@@ -1086,6 +1086,10 @@ JS17, JS18, JS19, JS20, JS23
 - ST13 done. `CRAFT_PROG skill|* words|ALL [RUINED|SUCCESS]` on the
   ITEMGENERATED message (ruined is a GenRuinedItem), `RECIPE_PROG skill|*
   words|ALL` on RECIPELEARNED; $o the thing, $g the skill's ID.
+- ST14 done. `FACTION_PROG faction range|ANY|UP|DOWN [mask]` from
+  `StdMOB.adjustFaction` (a standing that was there before, in the world):
+  a range name fires only on coming into it; $g the new range, $0 the
+  change, $1 the range before.
 
 #### 2e. Quests (15)
 

@@ -5869,6 +5869,7 @@ public class StdMOB implements MOB
 		if(F == null)
 			return;
 		which = F.factionID().toUpperCase();
+		final int before = factions.containsKey(which) ? fetchFaction(which) : Integer.MAX_VALUE;
 		if(!factions.containsKey(which))
 		{
 			if(which.endsWith(".INI")
@@ -5881,6 +5882,9 @@ public class StdMOB implements MOB
 		}
 		else
 			addFaction(which, fetchFaction(which) + amount);
+		// ST14: FACTION_PROG, for a standing changed in play
+		if((before != Integer.MAX_VALUE) && (location() != null))
+			ScriptEvents.faction(this, F, before, fetchFaction(which));
 	}
 
 	@Override

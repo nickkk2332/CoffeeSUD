@@ -1107,6 +1107,70 @@ public final class ScriptEvents
 		return (w.length() == 0) || w.equals("*") || w.equalsIgnoreCase("ALL") || CMLib.english().containsString(I.name(), w);
 	}
 
+	/** FACTION_PROG's code */
+	public static final int	FACTION_PROG	= code("FACTION_PROG");
+
+	/**
+	 * ST14: a character's standing in a faction changed: FACTION_PROG
+	 * faction range|ANY|UP|DOWN [mask] fires for the room and area, and
+	 * anywhere with @GLOBAL; a range name fires only on entering it.  $g is
+	 * the new range, $0 the change, $1 the range before, $2 the faction.
+	 * @param mob the character
+	 * @param F the faction
+	 * @param before the value before
+	 * @param after the value now
+	 */
+	public static void faction(final MOB mob, final com.planet_ink.coffee_mud.Common.interfaces.Faction F, final int before, final int after)
+	{
+		if((mob == null) || (F == null) || (before == after) || (!isUsed(FACTION_PROG)) || (mob.location() == null))
+			return;
+		final com.planet_ink.coffee_mud.Common.interfaces.Faction.FRange oldR = F.fetchRange(before);
+		final com.planet_ink.coffee_mud.Common.interfaces.Faction.FRange newR = F.fetchRange(after);
+		final String newName = (newR == null) ? "" : newR.name();
+		final String oldName = (oldR == null) ? "" : oldR.name();
+		final int amount = after - before;
+		fireAround(hosts(mob.location()), FACTION_PROG, mob, null, newName, new Object[] { "" + amount, oldName, F.factionID() }, "Ccr",
+			t -> factionMatches(t, F, oldR, newR, amount, mob));
+	}
+
+	/**
+	 * Whether a FACTION_PROG trigger line fits a change of standing.
+	 * @param t the trigger line: FACTION_PROG, the faction, then the range, ANY, UP or DOWN, and a mask
+	 * @param F the faction
+	 * @param oldR the range before
+	 * @param newR the range now
+	 * @param amount the change
+	 * @param mob the character
+	 * @return true if it fits
+	 */
+	public static boolean factionMatches(final String[] t, final com.planet_ink.coffee_mud.Common.interfaces.Faction F,
+		final com.planet_ink.coffee_mud.Common.interfaces.Faction.FRange oldR, final com.planet_ink.coffee_mud.Common.interfaces.Faction.FRange newR,
+		final int amount, final MOB mob)
+	{
+		if(t.length < 2)
+			return false;
+		final String f = t[1].trim();
+		final String id = F.factionID();
+		final String bare = id.toLowerCase().endsWith(".ini") ? id.substring(0, id.length() - 4) : id;
+		if(!(f.equalsIgnoreCase(id) || f.equalsIgnoreCase(bare) || f.equalsIgnoreCase(F.name())))
+			return false;
+		final String rest = (t.length > 2) ? t[2].trim() : "";
+		final String kind = CMParms.getCleanBit(rest, 0).trim();
+		final String mask = CMParms.getPastBitClean(rest, 0).trim();
+		final boolean fits;
+		if((kind.length() == 0) || kind.equalsIgnoreCase("ANY"))
+			fits = true;
+		else
+		if(kind.equalsIgnoreCase("UP"))
+			fits = amount > 0;
+		else
+		if(kind.equalsIgnoreCase("DOWN"))
+			fits = amount < 0;
+		else
+			fits = (newR != null) && (newR != oldR) && (kind.equalsIgnoreCase(newR.name()) || kind.equalsIgnoreCase(newR.codeName()));
+		return fits && ((mask.length() == 0) || CMLib.masking().maskCheck(mask, mob, true));
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */
