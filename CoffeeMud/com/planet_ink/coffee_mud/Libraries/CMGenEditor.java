@@ -9979,6 +9979,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,"0,"+CMParms.toListString(Ability.CAN_DESCS),++showNumber,showFlag,L("Can Affect"),"CANAFFECTMASK",true);
 			promptStatStr(mob,me,"0,"+CMParms.toListString(Ability.CAN_DESCS),++showNumber,showFlag,L("Can Target"),"CANTARGETMASK",true);
 			promptStatInt(mob,me,null,++showNumber,showFlag,L("Reset Ticks"),"PERMRESET");
+			promptStatStr(mob,me,"SIT,READ,LOOK,CLOSE,WEAR,DROP,PUT,LEAVE:NORTH...",++showNumber,showFlag,L("Triggers"),"TRIGGERS",true); // I20
+			promptStatStr(mob,me,"verb:cut red wire",++showNumber,showFlag,L("Disarm"),"DISARM",true);
+			promptStatBool(mob,me,++showNumber,showFlag,L("Once"),"ONCE");
 			me.setStat("ACOMP",modifyComponents(mob, me.getStat("ACOMP"), ++showNumber, showFlag, "Components"));
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Avoid Msg"),"AVOIDMSG",false);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Spring Msg"),"TRIGMSG",false);

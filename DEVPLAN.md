@@ -2173,6 +2173,14 @@ I22, I23, I24, I25, I26, I27
   RIGHTMSG/WRONGMSG; ONCE=CHARACTER (a tattoo RIDDLED:name), SAVE
   (SOLVED=true in its parameters) or NONE. ScriptEvents.verb now asks the
   behaviours of what is within reach too, when they are VerbTakers.
+- I20 done. GenTrap: TRIGGERS (22; message type names, LEAVE:dir and
+  the like on a room, any of them by anyone in the room), DISARM (23;
+  verb:phrase, GenTrap is a VerbTaker) and ONCE (24; the effect is taken
+  off after it springs), in its per-ID values and stats, and prompted by
+  MODIFY ABILITY. StdTrap.defaultTriggers() lets TRIGGERS replace the
+  class's own. Its script now runs outside the ability's branch, so a
+  trap with only a script works. RESET was there already (PERMRESET).
+  AHELP GENTRAP is new.
 
 #### 2i. World systems (25)
 

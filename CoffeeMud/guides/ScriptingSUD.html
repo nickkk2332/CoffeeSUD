@@ -583,6 +583,11 @@ makes a dowsing rod for buried treasure.</p>
 <p>Riddles: the <code>Riddler</code> behaviour on the sphinx, <code>RIDDLE="What has roots nobody sees, and is
 taller than trees?" ANSWERS="mountain|mountains" FUZZY=1 TRIES=3 ONRIGHT="door open here north"
 ONOUT="force $i kill $n"</code>, asks whoever comes in; they SAY the answer, or type ANSWER MOUNTAIN.</p>
+<p>Traps on anything: a GenTrap's <code>TRIGGERS</code> (AHELP GENTRAP) say what springs it instead of its
+class: <code>SIT</code> for the usurper's throne, <code>READ</code>, <code>LOOK</code>, <code>CLOSE</code>,
+<code>WEAR</code>, <code>PUT</code>, <code>DROP</code>, or <code>LEAVE:north</code> on a room.
+<code>DISARM=verb:cut red wire</code> disarms it by that phrase, <code>ONCE</code> makes it spring only once, and a
+trap with a script and no ability now runs its script (ACT_PROG with the trap's ID).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

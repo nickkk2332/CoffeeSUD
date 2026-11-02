@@ -426,10 +426,21 @@ public class StdTrap extends StdAbility implements Trap
 		}
 	}
 
+	/**
+	 * I20: whether the class's own triggers spring it (entering a room,
+	 * opening or unlocking an exit or container, getting an item); a
+	 * GenTrap with TRIGGERS has its own instead.
+	 * @return true if they do
+	 */
+	protected boolean defaultTriggers()
+	{
+		return true;
+	}
+
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
-		if(sprung)
+		if(sprung||(!defaultTriggers()))
 		{
 			super.executeMsg(myHost,msg);
 			return;

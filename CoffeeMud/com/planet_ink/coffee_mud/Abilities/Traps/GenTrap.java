@@ -36,7 +36,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class GenTrap extends StdTrap
+public class GenTrap extends StdTrap implements VerbTaker
 {
 	// data should be stored in a common instance object .. something common to all genability of same id,
 	// but diff to others.n  I'm thinking like a DVector, and just have
@@ -72,8 +72,11 @@ public class GenTrap extends StdTrap
 	private static final int V_SCRP=15;//S
 	private static final int V_HELP=16;//S
 	private static final int V_LEVL=17;//I
+	private static final int V_TRIG=18;//S I20
+	private static final int V_DISA=19;//S I20
+	private static final int V_ONCE=20;//B I20
 
-	private static final int NUM_VS=18;//S
+	private static final int NUM_VS=21;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -97,6 +100,9 @@ public class GenTrap extends StdTrap
 		O[V_ABLT]=Integer.valueOf(0);
 		O[V_SCRP]="";
 		O[V_HELP]="<ABILITY>This trap is not yet documented.";
+		O[V_TRIG]="";
+		O[V_DISA]="";
+		O[V_ONCE]=Boolean.FALSE;
 		return O;
 	}
 
@@ -351,21 +357,112 @@ public class GenTrap extends StdTrap
 									EA.setStat("TICKDOWN", Integer.toString(k.intValue()));
 							}
 						}
-						final ScriptingEngine S=getScripter();
-						if(S!=null)
-						{
-							final CMMsg msg3=CMClass.getMsg(invoker(),target,this,CMMsg.MSG_OK_VISUAL,null,null,ID);
-							S.executeMsg(target, msg3);
-							S.dequeResponses(null);
-							target.location().recoverRoomStats();
-						}
+					}
+					// I20: the script runs with or without an ability
+					final ScriptingEngine S=getScripter();
+					if((S!=null)&&(target.location()!=null))
+					{
+						final CMMsg msg3=CMClass.getMsg(invoker(),target,this,CMMsg.MSG_OK_VISUAL,null,null,ID);
+						S.executeMsg(target, msg3);
+						S.dequeResponses(null);
+						target.location().recoverRoomStats();
 					}
 					if((canBeUninvoked())
 					&&(affected instanceof Item))
 						disable();
+					// I20: ONCE: gone for good
+					if(((Boolean)V(ID,V_ONCE)).booleanValue()&&(affected!=null))
+					{
+						final Physical P=affected;
+						P.delEffect(this);
+						setAffectedOne(null);
+					}
 				}
 			}
 		}
+	}
+
+	/** I20: TRIGGERS' words, as message types, and their arguments */
+	protected List<Pair<Integer,String>> triggerList()
+	{
+		final List<Pair<Integer,String>> list=new ArrayList<Pair<Integer,String>>();
+		for(final String w : CMParms.parseCommas((String)V(ID,V_TRIG),true))
+		{
+			final int x=w.indexOf(':');
+			final String word=((x<0)?w:w.substring(0,x)).trim().toUpperCase();
+			final int type=CMParms.indexOf(CMMsg.TYPE_DESCS, word);
+			if(type>=0)
+				list.add(new Pair<Integer,String>(Integer.valueOf(type),(x<0)?"":w.substring(x+1).trim()));
+		}
+		return list;
+	}
+
+	@Override
+	protected boolean defaultTriggers()
+	{
+		return ((String)V(ID,V_TRIG)).trim().length()==0;
+	}
+
+	/** I20: whether a message is one of its TRIGGERS */
+	protected boolean triggeredBy(final CMMsg msg)
+	{
+		for(final Pair<Integer,String> p : triggerList())
+		{
+			if(msg.targetMinor()!=p.first.intValue())
+				continue;
+			if(affected instanceof Room)
+			{
+				final Room R=(Room)affected;
+				if(msg.source().location()!=R)
+				{
+					if(!((msg.targetMinor()==CMMsg.TYP_ENTER)&&(msg.target()==R)))
+						continue;
+				}
+				if(p.second.length()>0)
+				{
+					final int d=CMLib.directions().getGoodDirectionCode(p.second);
+					if((d<0)||(!(msg.tool() instanceof Exit))||(CMLib.map().getExitDir(R,(Exit)msg.tool())!=d))
+						continue;
+				}
+				return true;
+			}
+			if(msg.target()==affected)
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void executeMsg(final Environmental myHost, final CMMsg msg)
+	{
+		// I20: its own TRIGGERS
+		if((!sprung)
+		&&(!defaultTriggers())
+		&&(affected!=null)
+		&&(msg.source()!=null)
+		&&(msg.source()!=invoker())
+		&&(!disabled())
+		&&triggeredBy(msg))
+			spring(msg.source());
+		super.executeMsg(myHost,msg);
+	}
+
+	@Override
+	public boolean takeVerb(final MOB mob, final PhysicalAgent host, final String verb, final String rest)
+	{
+		// I20: DISARM=verb:cut red wire
+		final String d=(String)V(ID,V_DISA);
+		if((host!=affected)||(!d.toUpperCase().startsWith("VERB:"))||sprung||disabled())
+			return false;
+		final String phrase=d.substring(5).trim().replaceAll("\\s+"," ");
+		final String said=(verb+" "+rest).trim().replaceAll("\\s+"," ");
+		if(!said.equalsIgnoreCase(phrase))
+			return false;
+		final Room R=mob.location();
+		if(R!=null)
+			R.show(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> disarm(s) a trap."));
+		disable();
+		return true;
 	}
 
 	// lots of work to be done here
@@ -421,6 +518,9 @@ public class GenTrap extends StdTrap
 										 "HELP",//19S
 										 "BASELEVEL",//22I
 										 "PERMRESET",//NA
+										 "TRIGGERS",//22S I20
+										 "DISARM",//23S I20
+										 "ONCE",//24B I20
 										};
 
 	@Override
@@ -489,6 +589,12 @@ public class GenTrap extends StdTrap
 			return ((Integer)V(ID, V_LEVL)).toString();
 		case 21:
 			return super.reset+"";
+		case 22:
+			return (String)V(ID, V_TRIG);
+		case 23:
+			return (String)V(ID, V_DISA);
+		case 24:
+			return ((Boolean)V(ID, V_ONCE)).toString();
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenTrap";
@@ -622,6 +728,17 @@ public class GenTrap extends StdTrap
 			break;
 		case 21:
 			setReset(CMath.s_int(val));
+			break;
+		case 22:
+			SV(ID, V_TRIG, val.trim().toUpperCase());
+			break;
+		case 23:
+			SV(ID, V_DISA, val.trim());
+			if(val.trim().toUpperCase().startsWith("VERB:"))
+				ScriptEvents.propVerbsSeen();
+			break;
+		case 24:
+			SV(ID, V_ONCE, Boolean.valueOf(CMath.s_bool(val)));
 			break;
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenTrap"))
