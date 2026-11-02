@@ -1963,6 +1963,16 @@ C18, C19, C20, C21, C22, C23, C25
   and WINDUPMSG (38), at the end of MODIFY's list: a monster's invoke puts
   on Prop_Telegraph ABILITY= TARGET=, which uses it (Telegraph.release, so
   it does not wind up again) when the ticks run out.
+- C4 done. core/SpawnRules: RandomMonsters and RandomItems read CATALOG=
+  "name=weight,..." (entries picked by weight; catalogCopy counts and caps),
+  WHEN= (a zapper mask on the room: RandomMonsters on a room spawns nothing
+  while it fails; on an area, pickRoom finds a room it passes), DESPAWN=
+  WHENFALSE/DAWN/TICKS=n (checked every tick, before canAct; the spawn goes
+  only unseen: no PC in its room, not fighting), NEAR=PARTY:n (rooms
+  within n open exits of the player's side in the area), MAXAREA=n
+  (spawns tagged SPAWNED in the area) and, for mobs, LEVEL=PARTY[+n|-n|+-n]
+  (the side's highest level, fillOutMOB, after bringToLife, which makes a
+  catalog copy over from the catalog). CATALOG= alone needs no file.
 
 #### 2h. Items, properties and puzzles (23)
 

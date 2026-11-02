@@ -55,6 +55,9 @@ public class RandomMonsters extends ActiveTicker
 	protected List<Integer>	restrictedLocales	= null;
 	protected boolean		alreadyTriedLoad	= false;
 
+	/** C4: CATALOG=, WHEN=, DESPAWN=, NEAR=, MAXAREA=, LEVEL= */
+	protected SpawnRules	rules				= null;
+
 	@Override
 	public String accountForYourself()
 	{
@@ -64,6 +67,8 @@ public class RandomMonsters extends ActiveTicker
 	@Override
 	public List<String> externalFiles()
 	{
+		if((rules!=null)&&rules.hasCatalog()&&(getParms().indexOf(';')<0))
+			return null; // C4: CATALOG= alone names no file
 		final Vector<String> xmlfiles=new Vector<String>();
 		final String theseparms=getParms();
 		final int x=theseparms.indexOf(';');
@@ -159,6 +164,7 @@ public class RandomMonsters extends ActiveTicker
 			}
 		}
 		super.setParms(oldParms);
+		rules=SpawnRules.parse(oldParms); // C4
 		minMonsters=CMParms.getParmInt(oldParms,"minmonsters",1);
 		maxMonsters=CMParms.getParmInt(oldParms,"maxmonsters",1);
 		if(maxMonsters<minMonsters)
@@ -202,6 +208,24 @@ public class RandomMonsters extends ActiveTicker
 		if(thang!=null)
 			thangName=thang.name();
 		final String thangID=CMClass.classID(thang);
+		if((rules!=null)&&rules.hasCatalog())
+		{
+			// C4: CATALOG="name=weight,...": the catalog's mobs, in that order; one not there is null
+			final List<MOB> cat=new Vector<MOB>();
+			boolean any=false;
+			for(final String name : rules.catalogNames())
+			{
+				final Physical P=ScriptLib.catalogEntry(name,true);
+				cat.add((P instanceof MOB)?(MOB)P:null);
+				if(P instanceof MOB)
+					any=true;
+				else
+				if(!alreadyTriedLoad)
+					Log.errOut("RandomMonsters: no catalog mob '"+name+"' for '"+thangName+"' ("+thangID+").");
+			}
+			alreadyTriedLoad=true;
+			return any?cat:null;
+		}
 		String filename=(x>=0)?theseparms.substring(x+1):theseparms;
 		if(filename.trim().length()==0)
 		{
@@ -333,6 +357,21 @@ public class RandomMonsters extends ActiveTicker
 			tickStatus=Tickable.STATUS_NOT;
 			return true;
 		}
+		if(rules!=null)
+		{
+			rules.tick(); // C4: its own count, for DESPAWN=TICKS
+			if(rules.despawns())
+			{
+				for(final MOB M : new XVector<MOB>(maintained))
+				{
+					if((M!=null)&&(!M.amDestroyed())&&rules.shouldGo(M)&&SpawnRules.unseen(M))
+					{
+						maintained.remove(M);
+						M.destroy(); // it leaves, unseen
+					}
+				}
+			}
+		}
 		if(!canAct(ticking,tickID))
 		{
 			tickStatus=Tickable.STATUS_NOT;
@@ -368,9 +407,26 @@ public class RandomMonsters extends ActiveTicker
 		int attempts=10000;
 		if((ticking instanceof Environmental)&&(((Environmental)ticking).amDestroyed()))
 			return false;
+		final Area spawnArea=(ticking instanceof Area)?(Area)ticking:(ticking instanceof Room)?((Room)ticking).getArea():null;
 		while((maintained.size()<avgMonsters)&&(((--attempts)>0)))
 		{
-			MOB M=monsters.get(CMLib.dice().roll(1,monsters.size(),-1));
+			if((rules!=null)
+			&&(rules.areaFull(spawnArea)
+				||((ticking instanceof Room)&&(!(ticking instanceof GridLocale))&&(!rules.roomOk((Room)ticking)))))
+				break; // C4: MAXAREA=, WHEN=
+			MOB M;
+			if((rules!=null)&&rules.hasCatalog())
+			{
+				final boolean[] have=new boolean[monsters.size()];
+				for(int h=0;h<have.length;h++)
+					have[h]=(monsters.get(h)!=null);
+				final int p=rules.pick(have); // C4: by weight
+				M=(p<0)?null:monsters.get(p);
+				if(M==null)
+					break;
+			}
+			else
+				M=monsters.get(CMLib.dice().roll(1,monsters.size(),-1));
 			if(M!=null)
 			{
 				tickStatus=Tickable.STATUS_MISC+3;
@@ -390,6 +446,8 @@ public class RandomMonsters extends ActiveTicker
 				M.setStartRoom(null);
 				M.basePhyStats().setRejuv(PhyStats.NO_REJUV);
 				M.recoverPhyStats();
+				if(rules!=null)
+					rules.spawned(M); // C4
 				tickStatus=Tickable.STATUS_MISC+5;
 				M.text();
 				maintained.add(M);
@@ -406,6 +464,8 @@ public class RandomMonsters extends ActiveTicker
 					}
 					else
 						M.bringToLife(((Room)ticking),true);
+					if(rules!=null)
+						rules.level(M,spawnArea); // C4: LEVEL=PARTY, once it is alive (a catalog copy is made over then)
 					tickStatus=Tickable.STATUS_MISC+10;
 					Resources.removeResource("HELP_"+((Room)ticking).getArea().name().toUpperCase());
 				}
@@ -416,6 +476,12 @@ public class RandomMonsters extends ActiveTicker
 					Resources.removeResource("HELP_"+ticking.name().toUpperCase());
 					Room room=null;
 					tickStatus=Tickable.STATUS_MISC+12;
+					if((rules!=null)&&rules.picksRooms())
+					{
+						final MOB fM=M;
+						room=rules.pickRoom((Area)ticking,R2->canFlyHere(fM,R2)&&okRoomForMe(fM,R2)); // C4: NEAR=, WHEN=
+					}
+					else
 					if(restrictedLocales==null)
 					{
 						tickStatus=Tickable.STATUS_MISC+13;
@@ -437,9 +503,20 @@ public class RandomMonsters extends ActiveTicker
 					if((room!=null)&&(room instanceof GridLocale))
 						room=((GridLocale)room).getRandomGridChild();
 					if(room!=null)
+					{
 						M.bringToLife(room,true);
+						if(rules!=null)
+							rules.level(M,spawnArea); // C4: LEVEL=PARTY
+					}
 					else
+					{
 						maintained.remove(M);
+						if(rules!=null)
+						{
+							M.destroy(); // C4: nowhere it may be now
+							break;
+						}
+					}
 					tickStatus=Tickable.STATUS_MISC+17;
 				}
 			}

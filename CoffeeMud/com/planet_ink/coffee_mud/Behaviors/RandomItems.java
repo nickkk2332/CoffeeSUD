@@ -55,6 +55,9 @@ public class RandomItems extends ActiveTicker
 	protected List<Integer>	restrictedLocales	= null;
 	protected boolean		alreadyTriedLoad	= false;
 
+	/** C4: CATALOG=, WHEN=, DESPAWN=, NEAR=, MAXAREA= */
+	protected SpawnRules	rules				= null;
+
 	@Override
 	public String accountForYourself()
 	{
@@ -64,6 +67,8 @@ public class RandomItems extends ActiveTicker
 	@Override
 	public List<String> externalFiles()
 	{
+		if((rules!=null)&&rules.hasCatalog()&&(getParms().indexOf(';')<0))
+			return null; // C4: CATALOG= alone names no file
 		final Vector<String> xmlfiles=new Vector<String>();
 		final String theseparms=getParms();
 		final int x=theseparms.indexOf(';');
@@ -163,6 +168,7 @@ public class RandomItems extends ActiveTicker
 			}
 		}
 		super.setParms(oldParms);
+		rules=SpawnRules.parse(oldParms); // C4
 		minItems=CMParms.getParmInt(oldParms,"minitems",1);
 		maxItems=CMParms.getParmInt(oldParms,"maxitems",1);
 		if(minItems>maxItems)
@@ -232,6 +238,24 @@ public class RandomItems extends ActiveTicker
 		if(thang!=null)
 			thangName=thang.name();
 		final String thangID=CMClass.classID(thang);
+		if((rules!=null)&&rules.hasCatalog())
+		{
+			// C4: CATALOG="name=weight,...": the catalog's items, in that order; one not there is null
+			final List<Item> cat=new Vector<Item>();
+			boolean any=false;
+			for(final String name : rules.catalogNames())
+			{
+				final Physical P=ScriptLib.catalogEntry(name,false);
+				cat.add((P instanceof Item)?(Item)P:null);
+				if(P instanceof Item)
+					any=true;
+				else
+				if(!alreadyTriedLoad)
+					Log.errOut("RandomItems: no catalog item '"+name+"' for '"+thangName+"' ("+thangID+").");
+			}
+			alreadyTriedLoad=true;
+			return any?cat:null;
+		}
 		String filename=(x>=0)?theseparms.substring(x+1):theseparms;
 		if(filename.trim().length()==0)
 		{
@@ -323,6 +347,21 @@ public class RandomItems extends ActiveTicker
 		||(!(ticking instanceof Environmental))
 		||(CMSecurity.isDisabled(CMSecurity.DisFlag.RANDOMITEMS)))
 			return true;
+		if(rules!=null)
+		{
+			rules.tick(); // C4: its own count, for DESPAWN=TICKS
+			if(rules.despawns())
+			{
+				for(final Item DI : new XVector<Item>(maintained))
+				{
+					if((DI!=null)&&(!DI.amDestroyed())&&(DI.owner() instanceof Room)&&rules.shouldGo(DI)&&SpawnRules.unseen(DI))
+					{
+						maintained.remove(DI);
+						DI.destroy(); // it goes, unseen
+					}
+				}
+			}
+		}
 		if(!canAct(ticking,tickID))
 		{
 			return true;
@@ -355,10 +394,31 @@ public class RandomItems extends ActiveTicker
 			return false;
 		while((maintained.size()<avgItems)&&(((--attempts)>0)))
 		{
-			I=items.get(CMLib.dice().roll(1,items.size(),-1));
+			if((rules!=null)&&rules.hasCatalog())
+			{
+				final boolean[] have=new boolean[items.size()];
+				for(int h=0;h<have.length;h++)
+					have[h]=(items.get(h)!=null);
+				final int p=rules.pick(have); // C4: by weight
+				I=(p<0)?null:items.get(p);
+				if(I==null)
+					break;
+			}
+			else
+				I=items.get(CMLib.dice().roll(1,items.size(),-1));
 			if(I!=null)
 			{
-				I=(Item)I.copyOf();
+				if(CMLib.catalog().getCatalogObj(I)==I)
+				{
+					I=(Item)ScriptLib.catalogCopy(I,false); // C4: a catalog item's copy is counted, none past its cap
+					if(I==null)
+					{
+						attempts-=1000;
+						continue;
+					}
+				}
+				else
+					I=(Item)I.copyOf();
 				I.basePhyStats().setRejuv(PhyStats.NO_REJUV);
 				I.recoverPhyStats();
 				I.text();
@@ -426,6 +486,18 @@ public class RandomItems extends ActiveTicker
 					else
 						break;
 
+					if(rules!=null)
+					{
+						// C4: NEAR=, WHEN= and MAXAREA= for what lies in a room
+						if((ticking instanceof Area)&&rules.picksRooms())
+							room=rules.pickRoom((Area)ticking,R2->okRoomForMe(R2));
+						final Area SA=(room!=null)?room.getArea():(ticking instanceof Area)?(Area)ticking:null;
+						if((room==null)||(!rules.roomOk(room))||rules.areaFull(SA))
+						{
+							I.destroy();
+							break;
+						}
+					}
 					if(room instanceof GridLocale)
 						room=((GridLocale)room).getRandomGridChild();
 					if(room!=null)
@@ -448,6 +520,8 @@ public class RandomItems extends ActiveTicker
 						{
 							maintained.add(I);
 							room.addItem(I);
+							if(rules!=null)
+								rules.spawned(I); // C4
 						}
 					}
 				}
