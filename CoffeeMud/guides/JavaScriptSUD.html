@@ -46,6 +46,9 @@ and developer games. In a normal game it does nothing.</li>
 <li><code>importPackage(Packages.com.planet_ink.coffee_mud.core)</code> and
 <code>importClass</code> work, so that a class can be named without its
 package.</li>
+<li><code>Math.random()</code> is the game's dice: a game started with
+<code>RANDOMSEED=</code> rolls the same each time, and a save keeps where the
+dice were.</li>
 </ul>
 <p><code>JCONSOLE</code> also has <code>here</code> (its user's room),
 <code>area</code> and <code>target</code> (who its user fights), set again
@@ -85,7 +88,8 @@ the user of JRUN or JCONSOLE. A room, area or mob given as
 <tr><td><code>cm.say(mob, text)</code>, <code>cm.emote(mob, text)</code>, <code>cm.cmd(mob, command)</code></td><td>a mob says, emotes, or does a command</td></tr>
 <tr><td><code>cm.mp('MPECHO hello')</code></td><td>runs MOBPROG lines for the host ($-codes work, lines split by newlines or ;); returns what RETURN gave</td></tr>
 <tr><td><code>cm.dice('3d6+2')</code>, <code>cm.dice(3, 6, 2)</code>, <code>cm.chance(pct)</code></td><td>rolls</td></tr>
-<tr><td><code>cm.now()</code></td><td>the game's time in game milliseconds</td></tr>
+<tr><td><code>cm.now()</code>, <code>cm.ticks()</code></td><td>the game's time, in game milliseconds or in ticks; it stands still while the game is paused</td></tr>
+<tr><td><code>cm.realNow()</code></td><td>the real time, in milliseconds (<code>Date</code> is real time too)</td></tr>
 <tr><td><code>cm.player()</code>, <code>cm.party()</code></td><td>the character at the terminal; its party, the leader first</td></tr>
 <tr><td><code>cm.var(holder, name [, value])</code>, <code>cm.getVar</code>, <code>cm.setVar</code>, <code>cm.vars(holder)</code></td><td>script variables, as $&lt;host var&gt; and MPSETVAR. <i>holder</i> is a host's name, <code>*</code>, or an object (its own variables, as <code>@</code>). <code>cm.vars</code> lists the names.</td></tr>
 <tr><td><code>cm.stat(thing, 'LEVEL')</code></td><td>a stat, as STAT() reads it</td></tr>
@@ -180,7 +184,7 @@ orders.list.push({who: source.Name(), item: 'longsword', readyDay: cm.clock().da
 
 <h2><a name="sud">sud</a></h2>
 <ul>
-<li><code>sud.time</code>: <code>now()</code>, <code>isTurnBased()</code>,
+<li><code>sud.time</code>: <code>now()</code>, <code>ticks()</code>, <code>isTurnBased()</code>,
 <code>advance(ticks)</code>, <code>passTime(hours [, area])</code>,
 <code>waitUntil(test [, then])</code> (test runs each tick until it returns
 true; then, if given, runs once after).</li>

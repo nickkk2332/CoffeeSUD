@@ -1357,6 +1357,13 @@ JS17, JS18, JS19, JS20, JS23
   `.inspect expr` (name, class, room, stat codes; a JS object as JSON),
   `.time on|off`, `.history [n]` and `!n`. In builder mode the history is
   kept in world/.history/jconsole-NAME.txt (the last 200 lines).
+- JS13 done. `JSScope.prepare` puts a `Math.random` over
+  `CMLib.dice().getRandomizer()` in every scope, so RANDOMSEED= and the
+  save's dice state cover JavaScript too. `cm.ticks()` (game time over the
+  tick length, also `sud.time.ticks()`) and `cm.realNow()`; `cm.now()` and
+  `cm.calendar()` were JS6's. `Date` is left on the real clock: making
+  `Date.now()` and `new Date()` read GameTime could break code that wants
+  real dates, and cm.now() already gives game time.
 
 #### 2e. Quests (15)
 

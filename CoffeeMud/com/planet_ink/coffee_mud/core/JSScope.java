@@ -63,6 +63,10 @@ public final class JSScope
 		try
 		{
 			new RequireBuilder().setModuleScriptProvider(modules()).setSandboxed(true).createRequire(cx, scope).install(scope);
+			// JS13: Math.random is the game's dice, so a seed (RANDOMSEED=) and a save cover it
+			final Object math = ScriptableObject.getProperty(scope, "Math");
+			if(math instanceof Scriptable)
+				ScriptableObject.putProperty((Scriptable)math, "random", new DiceRandom());
 			final JSCm cm = JSCm.forScope(scope, (host instanceof com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent)
 				? (com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent)host : null);
 			ScriptableObject.putProperty(scope, "cm", Context.javaToJS(cm, scope));
@@ -108,7 +112,7 @@ public final class JSScope
 	/** JS6: sud, the short names, over cm */
 	private static final String SUD_JS =
 		"var sud = (function(cm) { function n(x) { return (x === undefined) ? null : x; } return {"
-		+ " time: { now: function() { return cm.now(); }, isTurnBased: function() { return cm.isTurnBased(); },"
+		+ " time: { now: function() { return cm.now(); }, ticks: function() { return cm.ticks(); }, isTurnBased: function() { return cm.isTurnBased(); },"
 		+ "   advance: function(t) { return cm.advance(t); }, passTime: function(h, a) { cm.passTime(h, n(a)); },"
 		+ "   waitUntil: function(f, then) { return cm.waitUntil(f, n(then)); } },"
 		+ " party: { leader: function() { var p = cm.party(); return p.isEmpty() ? null : p.get(0); },"
@@ -172,6 +176,24 @@ public final class JSScope
 			if(S == null)
 				throw ScriptRuntime.constructError("Error", "include: no such file: " + path);
 			return S.exec(cx, home);
+		}
+	}
+
+	/** JS13: Math.random(), from the game's dice */
+	private static final class DiceRandom extends BaseFunction
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public Object call(final Context cx, final Scriptable scope, final Scriptable thisObj, final Object[] args)
+		{
+			return Double.valueOf(CMLib.dice().getRandomizer().nextDouble());
+		}
+
+		@Override
+		public String getFunctionName()
+		{
+			return "random";
 		}
 	}
 

@@ -392,10 +392,22 @@ public class JSCm
 
 	// ---------------------------------------------------------------- time and weather
 
-	/** @return the game's time, in game milliseconds */
+	/** @return the game's time, in game milliseconds; it stands still while the game is paused */
 	public long now()
 	{
 		return GameTime.now();
+	}
+
+	/** @return the game's time in ticks (JS13): now() over a tick's length */
+	public long ticks()
+	{
+		return GameTime.now() / Math.max(1, CMProps.getTickMillis());
+	}
+
+	/** @return the real time, in milliseconds, for what must not follow the game's clock (JS13) */
+	public long realNow()
+	{
+		return System.currentTimeMillis();
 	}
 
 	/**
