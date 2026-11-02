@@ -1,0 +1,33 @@
+// ST20: GENERATED to an area a generator made and what is in it,
+// GENERATED_PROG with the generator's ID, GENVAR(), and onGenerate run once.
+FIXFILE = "st20-generated";
+var SEv = CM.core.ScriptEvents;
+var PS = CM.Common.interfaces.PhyStats;
+var A = CMClass.getAreaType("StdArea");
+A.setName("FixST20 Crypt");
+A.basePhyStats().setDisposition(A.basePhyStats().disposition() | PS.IS_UNSAVABLE);
+A.recoverPhyStats();
+CMLib.map().addArea(A);
+var X = CMClass.getLocale("StdRoom");
+X.setRoomID("FixST20 Crypt#0");
+X.setArea(A);
+var I = CMClass.getItem("StdItem");
+I.setName("a fixst20 urn");
+X.addItem(I);
+["FIXST20A", "FIXST20R", "FIXST20E", "FIXST20V", "FIXST20O"].forEach(clearVar);
+var SA = scriptOn(A, "GENERATED_PROG\nmpsetvar FIXTEST FIXST20A $G\n~\n");
+var SR = scriptOn(X, "GENERATED_PROG 100\nmpsetvar FIXTEST FIXST20R $G:$%GENVAR('FixST20 Crypt' AREA_SIZE)%\n~\n");
+var SI = scriptOn(I, "EXECMSG_PROG GENERATED ALL\nmpsetvar FIXTEST FIXST20E yes\n~\n");
+var defined = new java.util.HashMap();
+defined.put("AREA_SIZE", "12");
+defined.put("__boss", "a fixst20 lich");
+defined.put("AREA_ONGENERATE", "mpsetvar FIXTEST FIXST20O ran");
+SEv.generated(A, null, "fixst20gen", defined);
+runQueued(SA); runQueued(SR); runQueued(SI);
+check("area", gvar("FIXST20A") == "fixst20gen", "FIXST20A='" + gvar("FIXST20A") + "'");
+check("room-genvar", gvar("FIXST20R") == "fixst20gen:12", "FIXST20R='" + gvar("FIXST20R") + "'");
+check("message", gvar("FIXST20E") == "yes", "FIXST20E='" + gvar("FIXST20E") + "'");
+check("genvar", ("" + SEv.genVar("FixST20 Crypt", "__BOSS")) == "a fixst20 lich", "GENVAR __boss " + SEv.genVar("FixST20 Crypt", "__BOSS"));
+check("ongenerate", gvar("FIXST20O") == "ran", "FIXST20O='" + gvar("FIXST20O") + "'");
+CMLib.map().obliterateMapArea(A);
+done();

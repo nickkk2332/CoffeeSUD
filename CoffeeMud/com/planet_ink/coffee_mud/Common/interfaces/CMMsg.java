@@ -1276,6 +1276,8 @@ public interface CMMsg extends CMCommon
 	public static final int TYP_TODCHANGE=152;
 	/** MINOR_MASK minor action code type, denoting a new day on the clock (ST4) */
 	public static final int TYP_DATECHANGE=153;
+	/** MINOR_MASK minor action code type, denoting a generator having made an area or room (ST20) */
+	public static final int TYP_GENERATED=154;
 
 	/** MINOR_MASK minor action code type, denoting a channel action -- 2000-2047 are channels*/
 	public static final int TYP_CHANNEL=2000; //(2000-2047 are channels)
@@ -1308,7 +1310,7 @@ public interface CMMsg extends CMCommon
 		"COMMANDREJECT","RECIPELEARNED", "GRAVITY", "LEGALSTATE", "NEWROOM","CAUSESINK",
 		"ENDQUEST","WINQUEST","HOLYEVENT","EMISSION", "BODYDROP", "GLANCE", "RITUAL",
 		"PUFF", "TRAIN", "BROKERADD", "NEEDRELOAD", "SKILLFAIL","POLYMORPH",
-		"WEATHERCHANGE", "TODCHANGE", "DATECHANGE"
+		"WEATHERCHANGE", "TODCHANGE", "DATECHANGE", "GENERATED"
 	};
 
 	/** Index string descriptions of all the MAJOR_MASK code MAKS_s */
@@ -1672,6 +1674,8 @@ public interface CMMsg extends CMCommon
 	public static final int MSG_TODCHANGE=MASK_ALWAYS|TYP_TODCHANGE;
 	/** combined MAJOR and MINOR codes for a new day, to an area's scripts (ST4) */
 	public static final int MSG_DATECHANGE=MASK_ALWAYS|TYP_DATECHANGE;
+	/** combined MAJOR and MINOR codes for a generator having made an area or room (ST20) */
+	public static final int MSG_GENERATED=MASK_ALWAYS|TYP_GENERATED;
 
 	/**
 	 * An enum to use for an external message check from inside

@@ -1116,6 +1116,11 @@ JS17, JS18, JS19, JS20, JS23
 - ST19 done. `READ_PROG words|P phrase|ALL` in the engine's okMessage on
   READ: on an item only its own reading; it runs before the reading, so
   RETURN CANCEL keeps the item's text back. $o the item, $n the reader.
+- ST20 done. After GENERATE makes an area or room, `ScriptEvents.generated`:
+  a GENERATED message to its scripts and what is in it, `GENERATED_PROG [pct]`
+  ($g the generator's ID), the generator's string variables kept for
+  `GENVAR(area var)` (not saved), and an AREA tag's `onGenerate="..."` run
+  once. Other generators (MPGENERATE, quests) do not send it yet.
 
 #### 2e. Quests (15)
 

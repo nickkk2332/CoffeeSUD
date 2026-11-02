@@ -1310,6 +1310,12 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		if((!CMath.isInteger(size))||(CMath.s_int(size)<=0))
 			throw new CMException("Unable to build area of size "+size);
 		defined.put("AREA_SIZE",size);
+		// ST20: onGenerate="script" runs once when the area is made
+		String onGen=piece.getParmValue("onGenerate");
+		if(onGen==null)
+			onGen=piece.getParmValue("ONGENERATE");
+		if((onGen!=null)&&(onGen.trim().length()>0))
+			defined.put("AREA_ONGENERATE",CMLib.xml().restoreAngleBrackets(onGen));
 		final List<String> ignoreStats=new XArrayList<String>(new String[]{"CLASS","NAME","DESCRIPTION","LAYOUT","SIZE"});
 		fillOutStatCodes(A, ignoreStats,"AREA_",piece,defined);
 

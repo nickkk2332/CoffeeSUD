@@ -1499,6 +1499,84 @@ public final class ScriptEvents
 		return CMLib.english().containsString(I.name(), r) || CMLib.english().containsString(I.Name(), r);
 	}
 
+	/** GENERATED_PROG's code */
+	public static final int	GENERATED_PROG	= code("GENERATED_PROG");
+
+	private static final Map<String, Map<String, String>>	genVars	= new HashMap<String, Map<String, String>>();
+
+	/**
+	 * GENVAR(area name): a generator's variable for an area it made (ST20).
+	 * @param area the area's name
+	 * @param name the variable, such as AREA_SIZE or __boss
+	 * @return the value, or ""
+	 */
+	public static String genVar(final String area, final String name)
+	{
+		synchronized(genVars)
+		{
+			final Map<String, String> vars = genVars.get(area.toUpperCase().trim());
+			if(vars == null)
+				return "";
+			final String v = vars.get(name.toUpperCase().trim());
+			return (v == null) ? "" : v;
+		}
+	}
+
+	/**
+	 * ST20: a generator made an area, or a room: GENERATED to the scripts of
+	 * the area, its rooms and what is in them (or the room and what is in it),
+	 * and GENERATED_PROG [pct], $g the generator's ID; the generator's
+	 * variables kept for GENVAR(); and an area's onGenerate script run once.
+	 * @param A the area made, or null
+	 * @param R the room made, if not an area
+	 * @param id the generator's ID
+	 * @param defined the generator's variables
+	 */
+	public static void generated(final Area A, final Room R, final String id, final Map<String, Object> defined)
+	{
+		final Area keyArea = (A != null) ? A : ((R == null) ? null : R.getArea());
+		if((defined != null) && (keyArea != null))
+		{
+			final Map<String, String> vars = new HashMap<String, String>();
+			for(final Map.Entry<String, Object> e : defined.entrySet())
+			{
+				final Object v = e.getValue();
+				if((v instanceof String) || (v instanceof Number) || (v instanceof Boolean))
+					vars.put(e.getKey().toUpperCase(), v.toString());
+			}
+			synchronized(genVars)
+			{
+				genVars.put(keyArea.Name().toUpperCase(), vars);
+			}
+		}
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		if(A != null)
+			hosts.addAll(hosts(A));
+		else
+		if(R != null)
+			roomHosts(R, hosts);
+		if(hosts.isEmpty())
+			return;
+		final MOB src = standIn("the generator");
+		src.setLocation((R != null) ? R : null);
+		if(isUsed(EXECMSG_PROG))
+			deliver(hosts, CMClass.getMsg(src, null, null, CMMsg.MSG_GENERATED, id));
+		fire(hosts, GENERATED_PROG, src, null, id, null, "Cr", t -> {
+			final String w = (t.length > 1) ? t[1].trim() : "";
+			return (w.length() == 0) || (!CMath.isInteger(w)) || (CMLib.dice().rollPercentage() <= CMath.s_int(w));
+		});
+		final Object onGen = (defined == null) ? null : defined.get("AREA_ONGENERATE");
+		if((A != null) && (onGen instanceof String) && (((String)onGen).trim().length() > 0))
+		{
+			String text = ((String)onGen).trim();
+			if(!text.toUpperCase().startsWith("LOAD="))
+				text = "GENERATED_PROG\n" + text.replace(';', '\n') + "\n~\n";
+			final ScriptingEngine S = (ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
+			S.setScript(text);
+			S.eventRun(A, GENERATED_PROG, src, null, null, id, null, "Cr", t -> true);
+		}
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

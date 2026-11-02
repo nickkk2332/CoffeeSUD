@@ -5676,6 +5676,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					break;
 				}
+				case 134: // genvar (ST20)
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"cccr"); /* tt[t+0] */
+					returnable=simpleEvalStr(ctx.scripted,ScriptEvents.genVar(varify(ctx,tt[t+0]),varify(ctx,tt[t+1])),varify(ctx,tt[t+3]),varify(ctx,tt[t+2]),"GENVAR");
+					break;
+				}
 				case 133: // isweekday
 				{
 					final String arg1=varify(ctx,CMParms.cleanBit(tt[t+0])).trim();
@@ -8057,6 +8064,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				break;
 			}
+			case 134: // genvar (ST20)
+				results.append(ScriptEvents.genVar(varify(ctx,CMParms.getCleanBit(funcParms,0)),varify(ctx,CMParms.getPastBitClean(funcParms,0))));
+				break;
 			case 133: // isweekday
 			{
 				final Room wR=(ctx.monster==null)?null:ctx.monster.location();

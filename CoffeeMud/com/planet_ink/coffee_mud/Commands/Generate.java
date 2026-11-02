@@ -412,6 +412,7 @@ public class Generate extends StdCommand
 						CMLib.database().DBUpdateMOBs(R);
 					}
 					Log.sysOut("Generate",mob.Name()+" generated room "+R.roomID());
+					ScriptEvents.generated(null,R,idName,definedIDs); // ST20
 				}
 				else
 				if(V.get(v) instanceof Area)
@@ -440,6 +441,7 @@ public class Generate extends StdCommand
 						mob.tell(L("Done saving remaining rooms for area '@x1'",A.name()));
 					}
 					Log.sysOut("Generate",mob.Name()+" generated area "+A.name());
+					ScriptEvents.generated(A,null,idName,definedIDs); // ST20
 				}
 			}
 		}
