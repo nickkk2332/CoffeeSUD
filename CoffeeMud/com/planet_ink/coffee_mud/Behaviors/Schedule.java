@@ -519,7 +519,7 @@ public class Schedule extends StdBehavior
 			return true;
 		final MOB mob = (MOB)ticking;
 		final Room here = mob.location();
-		if(mob.amDead() || (here == null) || mob.isInCombat())
+		if(mob.amDead() || (here == null) || mob.isInCombat() || (mob.fetchEffect("Alerted") != null)) // N5: an alarm comes first
 			return true;
 		final Entry E = current(mob);
 		if(E != inForce)

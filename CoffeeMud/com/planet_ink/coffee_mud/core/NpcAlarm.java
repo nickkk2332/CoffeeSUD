@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.core;
 
 import java.util.*;
 
+import com.planet_ink.coffee_mud.Abilities.interfaces.Ability;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior;
 import com.planet_ink.coffee_mud.Common.interfaces.CMMsg;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
@@ -26,8 +27,10 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
  * N4, N5: an alarm raised by an NPC: Sleeper's ALARM, and Sentry's.  The
  * spec is "RADIUS=6 MASK=... MSG=...": a shout in the alarm room (a NOISE
  * message, which EXECMSG_PROG can catch), and every NPC within RADIUS rooms
- * that fits MASK is woken (a Sleeper stays up a while).  With no spec, the
- * raiser's own Sentry ALARM= is used, or the defaults.
+ * that fits MASK is woken (a Sleeper stays up a while) and Alerted for the
+ * raiser's Sentry ALERTTICKS= (40): it heads for the alarm, or the
+ * intruder, and attacks them and their party.  With no spec, the raiser's
+ * own Sentry ALARM= is used, or the defaults.
  */
 public final class NpcAlarm
 {
@@ -35,6 +38,8 @@ public final class NpcAlarm
 	public static final int		DEFAULT_RADIUS	= 6;
 	/** what is shouted, by default */
 	public static final String	DEFAULT_MSG		= "Intruders!";
+	/** how long the roused stay alert, by default */
+	public static final int		DEFAULT_ALERT	= 40;
 
 	private NpcAlarm()
 	{
@@ -93,6 +98,21 @@ public final class NpcAlarm
 	}
 
 	/**
+	 * @param raiser the NPC
+	 * @return its Sentry's ALERTTICKS=, or the default
+	 */
+	public static int alertTicksOf(final MOB raiser)
+	{
+		for(final Enumeration<Behavior> b = raiser.behaviors(); b.hasMoreElements();)
+		{
+			final Behavior B = b.nextElement();
+			if((B != null) && B.ID().equals("Sentry"))
+				return CMParms.getParmInt(B.getParms(), "ALERTTICKS", DEFAULT_ALERT);
+		}
+		return DEFAULT_ALERT;
+	}
+
+	/**
 	 * Raises an alarm.
 	 * @param raiser who raises it
 	 * @param intruder who it is for, or null
@@ -120,10 +140,33 @@ public final class NpcAlarm
 				if((S.mask.length() > 0) && (!CMLib.masking().maskCheck(S.mask, M, true)))
 					continue;
 				rouse(M);
+				alert(M, here, intruder, alertTicksOf(raiser));
 				reached.add(M);
 			}
 		}
 		return reached;
+	}
+
+	/**
+	 * Alerts an NPC: for a while it heads for the alarm, or the intruder, and
+	 * attacks them.
+	 * @param M the NPC
+	 * @param where the alarm room
+	 * @param intruder who it is for, or null
+	 * @param ticks how long
+	 */
+	public static void alert(final MOB M, final Room where, final MOB intruder, final int ticks)
+	{
+		if((ticks <= 0) || (where == null))
+			return;
+		final Ability old = M.fetchEffect("Alerted");
+		if(old != null)
+			old.unInvoke();
+		final Ability A = CMClass.getAbility("Alerted");
+		if(A == null)
+			return;
+		A.setMiscText("ROOM=\"" + CMLib.map().getExtendedRoomID(where) + "\" INTRUDER=\"" + ((intruder == null) ? "" : intruder.Name()) + "\"");
+		A.startTickDown(M, M, ticks);
 	}
 
 	/**

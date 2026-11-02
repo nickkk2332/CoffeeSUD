@@ -182,6 +182,8 @@ public class Patroller extends ActiveTicker
 
 		if((startRoom.get()==null)&&(ticking instanceof Physical))
 			startRoom=new WeakReference<Room>(CMLib.map().roomLocation((Physical)ticking));
+		if((ticking instanceof MOB)&&(((MOB)ticking).fetchEffect("Alerted")!=null)) // N5: an alarm comes first
+			return true;
 		if(canAct(ticking,tickID))
 		{
 			tickStatus=Tickable.STATUS_MISC+0;

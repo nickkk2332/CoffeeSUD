@@ -1660,6 +1660,16 @@ N22, N24, N28, N29
   message, for EXECMSG_PROG) that wakes the NPCs within the radius, by its
   Sentry's ALARM= if it has one (N5) or six rooms. LOOK says it sleeps
   soundly, or stirs after a near miss. Woken NPCs stay up a while.
+- N5 done. Behaviour `Sentry`: it sees an intruder here or next door (a
+  player's character or their follower, or `INTRUDERS=` a mask); a hidden
+  or sneaking one at `SPOT=n`% a tick less their Hide or Sneak, half next
+  door. Then, or when attacked, the alarm (`core/NpcAlarm`): `ALARM="RADIUS=
+  MASK= MSG="`, a shout EXECMSG_PROG can catch; the NPCs within the radius
+  that fit the mask wake and get the `Alerted` effect for `ALERTTICKS=n`:
+  they head for the alarm room or the intruder and attack them or their
+  party, with Schedule, Patroller and Mobile held off. `ALARMITEM=` is a
+  room item anyone may PUSH or PULL to raise it. Once per ALERTTICKS.
+  Sleeper's ALARM uses the same alarm.
 
 #### 2g. Combat and encounters (24)
 
