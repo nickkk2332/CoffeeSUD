@@ -2088,6 +2088,15 @@ I22, I23, I24, I25, I26, I27
   whose room it is) and `DOORSTATE(room dir|container)` (191: open,
   closed, locked or nothing). JavaScript's door() (JS17) goes through it,
   quietly. MPOPEN and its kin are left one-sided, and their help says so.
+- I22 done. core/Transform puts a new item in an old one's place: the
+  same owner (a mob, or a room), and by KEEP (CONTAINER,WORN by default;
+  ALL, NONE) the same container and worn place, its ObjectVars (STATE),
+  tags and uses; what was in it moves into the new one, or falls out
+  where it was. `MPTRANSFORM item name [KEEP=...]` (128): the catalog's
+  item, an item class, or an item the script can find by that name,
+  copied; `$p` is the new item for the rest of the script. JavaScript's
+  `transform(item, name, keep)` (an item, or how a script names one).
+  I5's Prop_Transform and I27's ItemUpgrader use it.
 
 #### 2i. World systems (25)
 

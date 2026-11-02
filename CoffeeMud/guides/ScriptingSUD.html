@@ -543,6 +543,10 @@ PLAYERDEATH="DOWNED 3 5"</code>): a character at 0 hit points falls for three ro
 <p>Doors from anywhere: a lever in the cellar runs <code>MPDOOR OPEN Crypt#12 north "With a grinding of stone
 the crypt door swings open."</code>; both sides open, both rooms see it, and the door's own relock timer starts.
 <code>DOORSTATE(Crypt#12 north)</code> says open, closed or locked. MPOPEN and its kin change one side only, silently.</p>
+<p>One thing into another: dipping the unlit torch in the brazier runs <code>MPTRANSFORM $o a burning
+torch</code> (a catalog item, or an item class); the burning torch is in the same hand, and <code>$p</code> for the
+rest of the script. <code>KEEP=ALL</code> also keeps its tags, its script variables and states, and its uses. In
+JavaScript: <code>transform(item, 'a burning torch')</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

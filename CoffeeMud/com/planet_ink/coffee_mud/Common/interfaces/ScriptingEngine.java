@@ -889,6 +889,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPWAVE", // 125
 		"MPSETRESPAWN", // 126
 		"MPDOOR", // 127
+		"MPTRANSFORM", // 128
 	};
 
 	/**

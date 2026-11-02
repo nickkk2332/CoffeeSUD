@@ -16173,6 +16173,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			"room",
 			"findItem",
 			"door",
+			"transform",
 			"signal",
 			"state",
 			"parm" // N7
@@ -16348,6 +16349,53 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPTRANSFORM": // I22: MPTRANSFORM item name [KEEP=state,tags,uses,container,worn|ALL|NONE]: in its place; $p the new one
+		{
+			final PhysicalAgent P=getArgumentItem(CMParms.getCleanBit(line,1),ctx);
+			String rest=CMParms.getPastBitClean(line,1).trim();
+			String keep=null;
+			final java.util.regex.Matcher km=java.util.regex.Pattern.compile("(?i)\\s*\\bKEEP=(\\S+)\\s*$").matcher(rest);
+			if(km.find())
+			{
+				keep=km.group(1);
+				rest=rest.substring(0,km.start()).trim();
+			}
+			final String name=varify(ctx,rest).trim();
+			if((!(P instanceof Item))||(name.length()==0))
+			{
+				logError(ctx,"MPTRANSFORM","Syntax","MPTRANSFORM item name [KEEP=...]: "+line);
+				return null;
+			}
+			Item neu=Transform.make(name);
+			if(neu==null)
+			{
+				final List<Environmental> found=new ArrayList<Environmental>();
+				findSomethingCalledThis(name,ctx,ctx.monster,lastKnownLocation,found,false);
+				for(final Environmental E : found)
+				{
+					if((E instanceof Item)&&(E!=P)&&(!(E instanceof ArchonOnly)))
+					{
+						neu=(Item)E.copyOf();
+						break;
+					}
+				}
+			}
+			if(neu==null)
+			{
+				logError(ctx,"MPTRANSFORM","RunTime","no item called "+name+": "+line);
+				return null;
+			}
+			final Item done=Transform.replace((Item)P,neu,Transform.keeps(keep));
+			if(done==null)
+			{
+				neu.destroy();
+				logError(ctx,"MPTRANSFORM","RunTime","the item is nowhere: "+line);
+				return null;
+			}
+			ctx.secondaryItem=done;
+			lastLoaded=done;
 			return null;
 		}
 		case "MPDOOR": // I2: MPDOOR OPEN|CLOSE|LOCK|UNLOCK|TOGGLE room dir|container [QUIET|"message"]: both sides, with a message
@@ -20218,6 +20266,23 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 			}
 			return null;
+		}
+
+		/**
+		 * I22: an item turned into another in its place (MPTRANSFORM).
+		 * @param item the item, or how a script names it
+		 * @param name the catalog's item, or an item class
+		 * @param keep KEEP's list (STATE, TAGS, USES, CONTAINER, WORN, ALL or NONE), or nothing
+		 * @return the new item, or null
+		 */
+		public Item transform(final Object item, final String name, final Object keep)
+		{
+			final String k = ((keep == null) || (keep instanceof org.mozilla.javascript.Undefined)) ? null : Context.toString(keep);
+			final Object w = (item instanceof org.mozilla.javascript.Wrapper) ? ((org.mozilla.javascript.Wrapper)item).unwrap() : item;
+			final Object I = (w instanceof CharSequence) ? c.getArgumentItem(w.toString(), ctx) : w;
+			if(!(I instanceof Item))
+				return null;
+			return Transform.into((Item)I, name, k);
 		}
 
 		/**
