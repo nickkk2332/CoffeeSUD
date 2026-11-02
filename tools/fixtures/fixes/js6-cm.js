@@ -127,9 +127,13 @@ if (L != null) {
 	suspect.setSession(SS);
 	SS.setMob(suspect);
 	check("crimes", L.crimes().contains("ASSAULT"), "crimes " + L.crimes());
+	// assault wants a witness: a bystander is one by a roll of the dice, an officer always
+	var guard = newMob("GenMob", R);
+	guard.setName("a fixjs6 cityguard");
+	guard.addBehavior(CMClass.getBehavior("Mobile"));
 	check("accuse", L.accuse(suspect, "assault") && L.warrants(suspect).size() == 1 && !L.accuse(suspect, "fixjs6 jaywalking"), "warrants " + L.warrants(suspect));
 	check("pardon", L.pardon(suspect, "ALL") == 1 && L.warrants(suspect).size() == 0, "pardon");
-	suspect.destroy();
+	suspect.destroy(); guard.destroy();
 	CMLib.beanCounter().setMoney(baker, 50);
 	check("fine", L.fine(baker, 20) && !L.fine(baker, 1000) && Math.round(CMLib.beanCounter().getTotalAbsoluteNativeValue(baker)) == 30,
 		"money " + CMLib.beanCounter().getTotalAbsoluteNativeValue(baker));
