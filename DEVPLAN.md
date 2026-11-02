@@ -1173,6 +1173,13 @@ JS17, JS18, JS19, JS20, JS23
   (kept in the engine's saved state) makes a bare `$i` mean `@$i`. A mob
   that comes back to life loses them, unless its variable PERSIST is set.
   JavaScript's `state()` waits for JS17.
+- SC5 done. The script's context keeps the message (`MPContext.cmsg`):
+  CNCLMSG_PROG's live one, EXECMSG_PROG's a copy, as messages are reused.
+  `MSG(TYPE|VALUE|SOURCE|TARGET|TOOL|TOOLID|STEXT|TTEXT|OTEXT|SMINOR|TMINOR|
+  OMINOR)`, as a value and a test; `MPMSG VALUE n|+n|-n|*x|/x`, `MPMSG TEXT
+  S|T|O text|NULL`, `MPMSG TARGET thing`. The `=S|T|O STAT=VALUE` filters
+  take `*` wildcards, and `=S|T|O MASK=...` a zapper mask. `$q` was
+  already the scripted thing's name, so the tool's is `MSG(TOOL)`.
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser

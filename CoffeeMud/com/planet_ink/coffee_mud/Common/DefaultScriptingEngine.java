@@ -15063,6 +15063,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 * @param text the text
 	 * @return the text before it, and the word
 	 */
+	/**
+	 * SC5: a message type's name, as CNCLMSG_PROG and EXECMSG_PROG take them.
+	 * @param code the type
+	 * @return its name
+	 */
+	protected static String msgTypeName(final int code)
+	{
+		return ((code>=0)&&(code<CMMsg.TYPE_DESCS.length))?CMMsg.TYPE_DESCS[code]:(""+code);
+	}
+
 	protected static String[] lastWord(final String text)
 	{
 		final String t=text.trim();
@@ -15276,6 +15286,42 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "";
 			return ObjectVars.get(ObjectVars.hostOf((Physical)O),var);
 		}
+		case "MSG": // SC5: MSG(TYPE|VALUE|SOURCE|TARGET|TOOL|TOOLID|STEXT|TTEXT|OTEXT|SMINOR|TMINOR|OMINOR)
+		{
+			final CMMsg m=ctx.cmsg;
+			if(m==null)
+				return "";
+			switch(v.toUpperCase())
+			{
+			case "TYPE":
+				return msgTypeName((m.targetMinor()!=0)?m.targetMinor():(m.sourceMinor()!=0)?m.sourceMinor():m.othersMinor());
+			case "VALUE":
+				return ""+m.value();
+			case "SOURCE":
+				return (m.source()==null)?"":m.source().Name();
+			case "TARGET":
+				return (m.target()==null)?"":m.target().Name();
+			case "TOOL":
+				return (m.tool()==null)?"":m.tool().Name();
+			case "TOOLID":
+				return (m.tool()==null)?"":m.tool().ID();
+			case "STEXT":
+				return (m.sourceMessage()==null)?"":m.sourceMessage();
+			case "TTEXT":
+				return (m.targetMessage()==null)?"":m.targetMessage();
+			case "OTEXT":
+				return (m.othersMessage()==null)?"":m.othersMessage();
+			case "SMINOR":
+				return msgTypeName(m.sourceMinor());
+			case "TMINOR":
+				return msgTypeName(m.targetMinor());
+			case "OMINOR":
+				return msgTypeName(m.othersMinor());
+			default:
+				logError(ctx,"MSG","Syntax","unknown part "+v);
+				return "";
+			}
+		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";
@@ -15377,6 +15423,68 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			setVar(ObjectVars.hostOf((Physical)O),var,val);
 			return null;
 		}
+		case "MPMSG": // SC5: MPMSG VALUE n|+n|-n|*x|/x, MPMSG TEXT S|T|O text|NULL, MPMSG TARGET thing
+		{
+			final CMMsg m=ctx.cmsg;
+			final String what=CMParms.getCleanBit(line,1).toUpperCase();
+			if(m==null)
+			{
+				logError(ctx,"MPMSG","RunTime","there is no message here: MPMSG works in CNCLMSG_PROG");
+				return null;
+			}
+			switch(what)
+			{
+			case "VALUE":
+			{
+				final String x=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+				final double by=(x.length()>1)?CMath.s_double(x.substring(1).trim()):0.0;
+				if(x.startsWith("*"))
+					m.setValue((int)Math.round(m.value()*by));
+				else
+				if(x.startsWith("/"))
+					m.setValue((by==0.0)?m.value():(int)Math.round(m.value()/by));
+				else
+				if(x.startsWith("+"))
+					m.setValue(m.value()+(int)Math.round(by));
+				else
+				if(x.startsWith("-"))
+					m.setValue(m.value()-(int)Math.round(by));
+				else
+					m.setValue(CMath.s_int(x.startsWith("=")?x.substring(1).trim():x));
+				break;
+			}
+			case "TEXT":
+			{
+				final String which=CMParms.getCleanBit(line,2).toUpperCase();
+				final String text=varify(ctx,CMParms.getPastBitClean(line,2));
+				final String to=text.trim().equalsIgnoreCase("NULL")?null:text;
+				if(which.startsWith("S"))
+					m.setSourceMessage(to);
+				else
+				if(which.startsWith("T"))
+					m.setTargetMessage(to);
+				else
+				if(which.startsWith("O"))
+					m.setOthersMessage(to);
+				else
+					logError(ctx,"MPMSG","Syntax","TEXT takes S, T or O: "+line);
+				break;
+			}
+			case "TARGET":
+			{
+				final Environmental E=getArgumentItem(CMParms.getPastBitClean(line,1).trim(),ctx);
+				if(E==null)
+					logError(ctx,"MPMSG","RunTime","no such target: "+line);
+				else
+					m.setTarget(E);
+				break;
+			}
+			default:
+				logError(ctx,"MPMSG","Syntax","MPMSG takes VALUE, TEXT or TARGET: "+line);
+				break;
+			}
+			return null;
+		}
 		default: // the newer commands end here
 			logError(ctx,cmd,"Syntax","unknown command "+cmd);
 			return null;
@@ -15392,6 +15500,37 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected String listValue(final String list)
 	{
 		return "="+list; // SC11's literal form
+	}
+
+	/**
+	 * SC5: a message trigger's =S|T|O STAT=VALUE filter: the value may have *
+	 * wildcards, and =S|T|O MASK=... is a zapper mask on the source, target or
+	 * tool.
+	 * @param msg the message
+	 * @param t the trigger's words
+	 * @param q where the = is in t[3]
+	 * @param val the stat's value
+	 * @return true if the filter fits
+	 */
+	protected boolean msgFilterMatch(final CMMsg msg, final String[] t, final int q, final String val)
+	{
+		final String stat=t[3].substring(0,q);
+		if(stat.equalsIgnoreCase("MASK"))
+		{
+			final StringBuilder mask=new StringBuilder(t[3].substring(q+1));
+			for(int i=4;i<t.length;i++)
+				mask.append(' ').append(t[i]);
+			final char c=Character.toUpperCase(t[2].charAt(1));
+			final Environmental E=(c=='S')?msg.source():(c=='T')?msg.target():(c=='O')?msg.tool():null;
+			return (E!=null)&&CMLib.masking().maskCheck(mask.toString(),E,true);
+		}
+		final String patt=t[3].substring(q+1);
+		if(patt.indexOf('*')<0)
+			return match(val.trim(),patt);
+		final StringBuilder re=new StringBuilder("(?i)");
+		for(final String part : patt.split("\\*",-1))
+			re.append((re.length()>4)?".*":"").append(java.util.regex.Pattern.quote(part));
+		return val.trim().matches(re.toString());
 	}
 
 	protected boolean match(final String str, final String patt)
@@ -15664,7 +15803,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 										val="";
 										break;
 									}
-									if(match(val.trim(),t[3].substring(q+1)))
+									if(msgFilterMatch(msg,t,q,val))
 										tryIt=true;
 								}
 								else
@@ -15696,25 +15835,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(Tool==null)
 						Tool=defaultItem;
 					String resp=null;
-					if(msg.target() instanceof MOB)
-					{
-						final MPContext ctx = new MPContext(affecting,monster,msg.source(),msg.target(),Tool,defaultItem,str, null);
-						ctx.tmp[0] = msg;
-						resp=execute(ctx.push(script));
-					}
-					else
-					if(msg.target() instanceof Item)
-					{
-						final MPContext ctx = new MPContext(affecting,monster,msg.source(),msg.target(),Tool,(Item)msg.target(),str, null);
-						ctx.tmp[0] = msg;
-						resp=execute(ctx.push(script));
-					}
-					else
-					{
-						final MPContext ctx = new MPContext(affecting,monster,msg.source(),msg.target(),Tool,defaultItem,str, null);
-						ctx.tmp[0] = msg;
-						resp=execute(ctx.push(script));
-					}
+					final Item secondItem=(msg.target() instanceof Item)?(Item)msg.target():defaultItem;
+					final MPContext ctx = new MPContext(affecting,monster,msg.source(),msg.target(),Tool,secondItem,str, null);
+					ctx.tmp[0] = msg;
+					ctx.cmsg = msg; // SC5: MSG() reads it, MPMSG changes it
+					resp=execute(ctx.push(script));
 					if((resp!=null)&&(resp.equalsIgnoreCase("CANCEL")))
 						return false;
 				}
@@ -16405,7 +16530,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 										val="";
 										break;
 									}
-									if(match(val.trim(),t[3].substring(q+1)))
+									if(msgFilterMatch(msg,t,q,val))
 										doIt=true;
 								}
 								else
@@ -16425,6 +16550,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 										Tool=(Item)msg.tool();
 									if(Tool==null)
 										Tool=defaultItem;
+									queuedMsg=(CMMsg)msg.copyOf(); // SC5: MSG() reads a copy, as messages are reused
 									if(msg.target() instanceof MOB)
 										enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),Tool,defaultItem,str,script,1, t);
 									else
@@ -16432,6 +16558,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 										enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),Tool,(Item)msg.target(),str,script,1, t);
 									else
 										enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),Tool,defaultItem,str,script,1, t);
+									queuedMsg=null;
 									if(!multiTriggers)
 										return;
 								}
@@ -17924,6 +18051,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/** SC5: the copy of its message EXECMSG_PROG hands to enqueResponse */
+	protected CMMsg queuedMsg = null;
+
 	public void enqueResponse(final int triggerCode,
 							  final PhysicalAgent scripted,
 							  final MOB monster,
@@ -17939,6 +18069,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(!CMProps.isState(CMProps.HostState.RUNNING))
 			return;
 		final MPContext ctx = new MPContext(scripted,monster,source,target,primaryItem,secondaryItem,msg, null);
+		ctx.cmsg = queuedMsg; // SC5: EXECMSG_PROG's copy of its message
 		if(!CMProps.isState(CMProps.HostState.RUNNING))
 			return;
 		if(noDelay)

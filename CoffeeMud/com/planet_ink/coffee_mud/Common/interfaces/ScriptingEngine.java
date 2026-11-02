@@ -701,6 +701,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"CATALOG", //167
 		"CATALOGCOUNT", //168
 		"STATE", //169
+		"MSG", //170
 	};
 
 	/** String list of all valid mobprog commands */
@@ -811,6 +812,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPLIST", // 103
 		"MPTAG", // 104
 		"MPSTATE", // 105
+		"MPMSG", // 106
 	};
 
 	/**
@@ -833,6 +835,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		public SubScript script = null;
 		public int line = 1;
 		public MPContext parent = null;
+		/** SC5: the message a CNCLMSG_PROG or EXECMSG_PROG reacts to (for EXECMSG_PROG, a copy) */
+		public CMMsg cmsg = null;
 
 		/**
 		 * MPContext constructor
@@ -873,6 +877,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		public MPContext(final MPContext old)
 		{
 			this(old.scripted, old.monster, old.source, old.target, old.primaryItem, old.secondaryItem, old.msg, old.tmp);
+			this.cmsg = old.cmsg;
 		}
 
 		public MPContext push(final SubScript script)
