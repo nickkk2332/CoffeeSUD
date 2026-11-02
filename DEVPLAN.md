@@ -2430,6 +2430,21 @@ W18, W19, W20, W21, W22, W23, W28, W29
   half, at a quarter and when it is gone; air it can breathe fills it
   again, so an air pocket needs nothing new. `BREATH(who)` (209) and masks
   `+BREATH <3` and `-BREATH <3` (the ticks left, compared).
+- W7 done, but for CLASS (a room's class means a new room object; ADD of
+  a swimming effect, Chant_Flood, does that part). The `RoomStates`
+  behaviour (rooms, areas): clauses with a semicolon between, `STATE=name`
+  with `TITLE=`, `DESC=`, `ATMOSPHERE=` (a resource, WATER, AIR), `CLIMATE=`,
+  `ADD="Prop_RoomDark();WaterCurrents(east)"` (effects and behaviours it has
+  in the state, taken away after), `BLOCK=north,down` (ways out refused),
+  `OPEN=up` (doors opened, quietly) and `ENTERMSG=`; `TO=name` with `FROM=`,
+  `WHEN="mask"` (on someone standing there: the weather, the time) and
+  `AFTER=` ticks in a row, `TICKS=` in the state, `ONVAR="[host] name==value"`;
+  `START=`. What a state leaves unset is the room's own again. On an area,
+  its rooms change together (`ROOMS=` IDs for some). `MPROOMSTATE room|area
+  state` (138) and `ROOMSTATE(room|area)` (210); the behaviour's saved state
+  keeps the state and puts it back. Its WHEN= is its own: N1's
+  BehaviorWhen leaves it on (`BehaviorWhen.OWNWHEN`), where it read the
+  first WHEN= as the behaviour's on and off.
 
 #### 2j. Generators and random content (16)
 

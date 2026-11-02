@@ -779,6 +779,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ISDARK", //207
 		"ISLIT", //208
 		"BREATH", //209
+		"ROOMSTATE", //210
 	};
 
 	/** String list of all valid mobprog commands */
@@ -921,6 +922,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPDEBT", // 135
 		"MPEXCHANGE", // 136
 		"MPWEATHER", // 137
+		"MPROOMSTATE", // 138
 	};
 
 	/**

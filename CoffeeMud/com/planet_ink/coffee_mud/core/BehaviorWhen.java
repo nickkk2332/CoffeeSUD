@@ -162,9 +162,14 @@ public final class BehaviorWhen
 	 * @param host its host
 	 * @return true to let it
 	 */
+	/** W7: behaviours whose WHEN= is their own (RoomStates' transitions), not their on and off */
+	public static final Set<String>	OWNWHEN	= Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("RoomStates")));
+
 	public static boolean active(final Behavior B, final Object host)
 	{
 		if((B == null) || ((B instanceof ScriptingEngine) && (!GenBehaviors.isGeneric(B)))) // N7: a generic one's are parameters
+			return true;
+		if(OWNWHEN.contains(B.ID()))
 			return true;
 		return holds(B.getParms(), host);
 	}
@@ -177,7 +182,7 @@ public final class BehaviorWhen
 	 */
 	public static String state(final Behavior B, final Object host)
 	{
-		if((B == null) || ((B instanceof ScriptingEngine) && (!GenBehaviors.isGeneric(B))) || (!gateOf(B.getParms()).any()))
+		if((B == null) || ((B instanceof ScriptingEngine) && (!GenBehaviors.isGeneric(B))) || OWNWHEN.contains(B.ID()) || (!gateOf(B.getParms()).any()))
 			return "";
 		return "; its condition (WHEN, TOD or HOURS) is " + (holds(B.getParms(), host) ? "met: it is on now" : "not met: it is off now");
 	}

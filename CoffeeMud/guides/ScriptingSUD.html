@@ -681,6 +681,10 @@ tick, and only in the snow. On an area, <code>ROOMS="-DOMAIN +MOUNTAINS"</code> 
 <p>Holding one's breath: in the Sunken Temple a player has their <code>BREATHTICKS</code> (a third of their
 constitution, by default) to reach the air pocket; a merfolk sells air bladders, <code>Prop_AirSupply TICKS=6</code>.
 A script reads <code>BREATH($n)</code>; <code>+BREATH &lt;2</code> in a mask finds those about to drown.</p>
+<p>Rooms that change: the Deepdelve shaft's <code>RoomStates</code> has <code>STATE=collapsed TITLE="A collapsed shaft"
+ADD="Prop_RoomDark()" BLOCK=down</code> and <code>STATE=cleared TITLE="A shored-up shaft"</code>; a trap's script sets
+the variable its <code>TO=collapsed ONVAR="mine collapse==1"</code> waits for, and the digging script runs
+<code>MPROOMSTATE HERE cleared</code>. <code>TO=flooded WHEN="-WEATHER +RAIN" AFTER=20</code> floods it after a long rain.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

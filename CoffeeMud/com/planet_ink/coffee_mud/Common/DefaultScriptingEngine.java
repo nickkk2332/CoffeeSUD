@@ -15967,6 +15967,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "ROOMSTATE": // W7: ROOMSTATE(room|HERE|area): the state of its RoomStates (the room's, else its area's), or nothing
+		{
+			final Behavior B=roomStates(ctx,CMParms.getCleanBit(parms,0));
+			return (B==null)?"":B.getStat("ROOMSTATE");
+		}
 		case "BREATH": // W18: BREATH(who): the ticks of breath they have left (all of it where they can breathe)
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16522,6 +16527,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
+			return null;
+		}
+		case "MPROOMSTATE": // W7: MPROOMSTATE room|HERE|area state: its RoomStates changes to the state now
+		{
+			final Behavior B=roomStates(ctx,CMParms.getCleanBit(line,1));
+			final String state=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			if(B==null)
+			{
+				logError(ctx,"MPROOMSTATE","RunTime","no RoomStates there: "+line);
+				return null;
+			}
+			B.setStat("ROOMSTATE",state);
+			if(!B.getStat("ROOMSTATE").equalsIgnoreCase(state))
+				logError(ctx,"MPROOMSTATE","RunTime","no state '"+state+"': "+line);
 			return null;
 		}
 		case "MPWEATHER": // W12: MPWEATHER area|HERE weather [NEXT] [FOR n HOURS|DAYS] [QUIET]
@@ -19389,6 +19408,28 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			return lastKnownLocation.getExitInDir(d);
 		final Environmental E=getArgumentItem(raw,ctx);
 		return (E instanceof Physical)?(Physical)E:null;
+	}
+
+	/**
+	 * W7: the RoomStates a script means: an area's by its name, else a
+	 * room's (HERE, a room ID, or a thing's room), else that room's area's.
+	 * @param ctx the script's context
+	 * @param word the word
+	 * @return the behaviour, or null
+	 */
+	protected Behavior roomStates(final MPContext ctx, final String word)
+	{
+		final String w=varify(ctx,word).trim();
+		final Area A=(w.length()>0)?CMLib.map().getArea(w):null;
+		if((A!=null)&&(A.fetchBehavior("RoomStates")!=null))
+			return A.fetchBehavior("RoomStates");
+		final Room R=doorRoom(ctx,word);
+		if(R==null)
+			return null;
+		final Behavior B=R.fetchBehavior("RoomStates");
+		if(B!=null)
+			return B;
+		return (R.getArea()==null)?null:R.getArea().fetchBehavior("RoomStates");
 	}
 
 	/**
