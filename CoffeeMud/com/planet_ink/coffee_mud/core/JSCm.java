@@ -751,6 +751,17 @@ public class JSCm
 	}
 
 	/**
+	 * Takes away what on(event, fn) added without a key (JS8).
+	 * @param event the event
+	 * @param fn the same function
+	 * @return how many were taken away
+	 */
+	public int off(final String event, final Function fn)
+	{
+		return JSEvents.off(event, fn);
+	}
+
+	/**
 	 * @param event an event, or null for all
 	 * @return what listens, as "event key"
 	 */

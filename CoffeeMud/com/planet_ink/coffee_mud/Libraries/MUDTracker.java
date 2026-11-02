@@ -1760,6 +1760,9 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 		else
 		if(!mob.okMessage(mob,enterMsg)&&(!gotoAllowed))
 			return false;
+		// JS8: cm.on('beforeEnterRoom', fn) returning false keeps the mover out
+		if((!gotoAllowed)&&(!JSEvents.fire("beforeenterroom",mob,enterMsg.target(),leaveMsg.target())))
+			return false;
 
 		if(ride!=null)
 		{

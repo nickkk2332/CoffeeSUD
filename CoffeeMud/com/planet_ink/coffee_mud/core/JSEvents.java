@@ -46,6 +46,20 @@ public final class JSEvents
 	public static final String[]	TIME_EVENTS	= { "hour", "daypart", "day", "month", "season", "year", "weather" };
 	/** the events of the game's course, GAME_PROG's in lower case */
 	public static final String[]	GAME_EVENTS	= { "newgame", "restore", "save", "newchar", "switchto", "switchfrom", "pause", "resume", "timemode" };
+	/**
+	 * JS8: what happens in the world, wherever it happens: death(victim,
+	 * killer), beforeDeath (false keeps the victim alive, at 1 hit point),
+	 * levelUp(mob, level), questWin(mob, quest), questEnd(quest, mob, why),
+	 * enterRoom(mob, room, from), beforeEnterRoom (false keeps the mover
+	 * out), enterArea(mob, area, from), itemGained(mob, item), itemLost(mob,
+	 * item), factionChange(mob, faction, change) and turn(leader, count), each
+	 * step of turn-based time.  Names are in any case.
+	 */
+	public static final String[]	WORLD_EVENTS	= { "death", "beforedeath", "levelup", "questwin", "questend", "enterroom", "beforeenterroom",
+		"enterarea", "itemgained", "itemlost", "factionchange", "turn" };
+
+	/** JS8: whether anything listens for itemGained or itemLost, looked at as a mob's items change */
+	public static volatile boolean	itemEvents	= false;
 
 	private static final class Listener
 	{
@@ -83,7 +97,8 @@ public final class JSEvents
 	public static boolean isEvent(final String event)
 	{
 		final String e = (event == null) ? "" : event.toLowerCase().trim();
-		return e.equals("tick") || Arrays.asList(TIME_EVENTS).contains(e) || Arrays.asList(GAME_EVENTS).contains(e);
+		return e.equals("tick") || Arrays.asList(TIME_EVENTS).contains(e) || Arrays.asList(GAME_EVENTS).contains(e)
+			|| Arrays.asList(WORLD_EVENTS).contains(e);
 	}
 
 	/**
@@ -117,7 +132,7 @@ public final class JSEvents
 		final String e = (event == null) ? "" : event.toLowerCase().trim();
 		if(!isEvent(e))
 			throw ScriptRuntime.constructError("Error", "cm.on: no event '" + event + "': tick, " + String.join(", ", TIME_EVENTS)
-				+ ", " + String.join(", ", GAME_EVENTS));
+				+ ", " + String.join(", ", GAME_EVENTS) + ", " + String.join(", ", WORLD_EVENTS));
 		if(fn == null)
 			throw ScriptRuntime.constructError("Error", "cm.on: no function");
 		String k = ((key == null) || (key.trim().length() == 0)) ? defaultKey(fn) : key.trim();
@@ -125,6 +140,7 @@ public final class JSEvents
 			k = "waitUntil:" + k;
 		off(e, k);
 		listeners.add(new Listener(e, k, fn, scope, then));
+		noteItemEvents();
 		if(e.equals("tick") || Arrays.asList(TIME_EVENTS).contains(e))
 			startTicking();
 		return k;
@@ -161,7 +177,27 @@ public final class JSEvents
 				n++;
 			}
 		}
+		noteItemEvents();
 		return n;
+	}
+
+	/**
+	 * cm.off(event, fn): takes away a listener added without a key.
+	 * @param event the event
+	 * @param fn the function, as it was given
+	 * @return how many were taken away
+	 */
+	public static int off(final String event, final Function fn)
+	{
+		return (fn == null) ? 0 : off(event, defaultKey(fn));
+	}
+
+	private static void noteItemEvents()
+	{
+		boolean any = false;
+		for(final Listener L : listeners)
+			any = any || L.event.equals("itemgained") || L.event.equals("itemlost");
+		itemEvents = any;
 	}
 
 	/**
@@ -183,6 +219,7 @@ public final class JSEvents
 	public static void clear()
 	{
 		listeners.clear();
+		itemEvents = false;
 		lastArea = null;
 		lastTime = null;
 		lastWeather = -1;

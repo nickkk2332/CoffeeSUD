@@ -107,6 +107,35 @@ The function gets (character, detail). A <code>save</code> listener that
 returns false refuses the save.</li>
 <li><code>tick</code>: every tick.</li>
 </ul>
+<p>And what happens in the world, wherever it happens:</p>
+<ul>
+<li><code>death</code> (victim, killer); <code>beforeDeath</code> (victim,
+killer), where false keeps the victim alive, at 1 hit point.</li>
+<li><code>levelUp</code> (mob, level), once the level is gained.</li>
+<li><code>questWin</code> (mob, quest); <code>questEnd</code> (quest, mob,
+why).</li>
+<li><code>enterRoom</code> (mob, room, from); <code>beforeEnterRoom</code>
+(mob, room, from), where false keeps the mover out; <code>enterArea</code>
+(mob, area, from).</li>
+<li><code>itemGained</code> (mob, item) and <code>itemLost</code> (mob,
+item), as a mob in a room gets or loses a thing.</li>
+<li><code>factionChange</code> (mob, faction, change).</li>
+<li><code>turn</code> (leader, count): each step of turn-based time.</li>
+</ul>
+<p>Event names are in any case: <code>enterRoom</code> and
+<code>enterroom</code> are the same. <code>cm.off(event, fn)</code> takes away
+a listener added without a key.</p>
+<pre>
+// world/js/init.js: at 50 orcs killed, the warlord comes
+function onBoot() {
+  cm.on('death', function(victim, killer) {
+    if (killer == null || !sud.party.isMember(killer) || victim.Name().indexOf('orc') &lt; 0) return;
+    var w = cm.store('world');
+    w.orcKills = (w.orcKills || 0) + 1;
+    if (w.orcKills == 50) cm.loadMob('Orc Warlord', cm.room('Fort#1'));
+  }, 'orcCount');
+}
+</pre>
 
 <h2><a name="store">cm.store</a></h2>
 <p><code>cm.store(key)</code> is a plain JavaScript object kept with the game:

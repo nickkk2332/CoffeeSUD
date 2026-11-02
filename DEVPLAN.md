@@ -1297,6 +1297,17 @@ JS17, JS18, JS19, JS20, JS23
   a JavaScript object, as the command line drops JSON's quotes). SAVE INFO
   counts the stores. The smoke test sets one before a save and reads it
   after the restore.
+- JS8 done. `cm.on` hears world events wherever they happen:
+  death and beforeDeath (`MUDFight.postDeath`; false leaves the victim at 1
+  hit point), levelUp (`CoffeeLevels.level`, after the level is applied),
+  questWin and questEnd (`ScriptEvents.quest`), enterRoom and enterArea
+  (`ScriptEvents.moved`), beforeEnterRoom (`MUDTracker`, after the
+  room's okMessage; GOTO is not stopped), itemGained and itemLost
+  (`StdMOB.addItem`/`delItem` for a mob in a room, looked at only while
+  something listens), factionChange (`ScriptEvents.faction`) and turn
+  (`ScriptEvents.turn`). Names are in any case; `cm.off(event, fn)` takes
+  away a listener added without a key. hour, day, weather, save and
+  restore were JS6's.
 
 #### 2e. Quests (15)
 

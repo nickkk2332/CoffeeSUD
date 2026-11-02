@@ -4558,9 +4558,12 @@ public class StdMOB implements MOB
 	{
 		if((item != null) && (!item.amDestroyed()))
 		{
+			final boolean gained = JSEvents.itemEvents && (location() != null) && (!inventory.contains(item)); // JS8
 			item.setOwner(this);
 			inventory.addElement(item);
 			item.recoverPhyStats();
+			if(gained)
+				JSEvents.fire("itemgained", this, item);
 		}
 	}
 
@@ -4573,8 +4576,10 @@ public class StdMOB implements MOB
 	@Override
 	public void delItem(final Item item)
 	{
-		inventory.removeElement(item);
+		final boolean lost = inventory.removeElement(item) && JSEvents.itemEvents && (location() != null); // JS8
 		item.recoverPhyStats();
+		if(lost)
+			JSEvents.fire("itemlost", this, item);
 	}
 
 	@Override

@@ -540,6 +540,13 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		// make sure he's not already dead, or with a pending death.
 		if(deadM.amDead())
 			return;
+		// JS8: cm.on('beforeDeath', fn) returning false keeps the victim alive
+		if(!JSEvents.fire("beforedeath",deadM,killerM))
+		{
+			if(deadM.curState().getHitPoints()<1)
+				deadM.curState().setHitPoints(1);
+			return;
+		}
 		if((addHere!=null)&&(addHere.trailerMsgs()!=null))
 		{
 			for(final CMMsg msg : addHere.trailerMsgs())
@@ -591,6 +598,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		}
 
 		CMLib.map().sendGlobalMessage(deadM,CMMsg.TYP_DEATH, CMClass.getMsg(deadM,null,killerM, CMMsg.TYP_DEATH,null, CMMsg.TYP_DEATH,null, CMMsg.TYP_DEATH,null));
+		JSEvents.fire("death",deadM,killerM); // JS8
 		final CMMsg msg2=CMClass.getMsg(deadM,null,killerM, CMMsg.MSG_DEATH,null, CMMsg.MSG_DEATH,targetMsg, CMMsg.MSG_DEATH,null);
 		if(addHere!=null)
 		{

@@ -327,6 +327,11 @@ public final class ScriptEvents
 	 */
 	public static void quest(final Quest Q, final String kind, final MOB who, final String detail)
 	{
+		if((Q != null) && kind.equals("WIN"))
+			JSEvents.fire("questwin", who, Q); // JS8
+		else
+		if((Q != null) && kind.equals("END"))
+			JSEvents.fire("questend", Q, who, (detail == null) ? "" : detail); // JS8
 		if((Q == null) || (!isUsed(QUEST_PROG)))
 			return;
 		final List<PhysicalAgent> hosts = registered(QUEST_PROG);
@@ -480,6 +485,7 @@ public final class ScriptEvents
 	public static void turn(final MOB leader)
 	{
 		final long n = ++turns;
+		JSEvents.fire("turn", leader, Long.valueOf(n)); // JS8
 		if((leader == null) || (!isUsed(TURN_PROG)))
 			return;
 		final Room R = leader.location();
@@ -1129,6 +1135,8 @@ public final class ScriptEvents
 	 */
 	public static void faction(final MOB mob, final com.planet_ink.coffee_mud.Common.interfaces.Faction F, final int before, final int after)
 	{
+		if((mob != null) && (F != null) && (before != after) && (mob.location() != null))
+			JSEvents.fire("factionchange", mob, F, Integer.valueOf(after - before)); // JS8
 		if((mob == null) || (F == null) || (before == after) || (!isUsed(FACTION_PROG)) || (mob.location() == null))
 			return;
 		final com.planet_ink.coffee_mud.Common.interfaces.Faction.FRange oldR = F.fetchRange(before);
@@ -1206,10 +1214,12 @@ public final class ScriptEvents
 	{
 		if((mob == null) || (to == null))
 			return;
+		JSEvents.fire("enterroom", mob, to, from); // JS8
 		final Area fromA = (from == null) ? null : from.getArea();
 		final Area toA = to.getArea();
 		if((toA == null) || (fromA == toA))
 			return;
+		JSEvents.fire("enterarea", mob, toA, fromA); // JS8
 		final boolean firstTime;
 		synchronized(firstEntered)
 		{
