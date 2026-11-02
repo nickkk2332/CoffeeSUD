@@ -1771,6 +1771,14 @@ N22, N24, N28, N29
   nothing at the wield place) holds it; ending it warns afresh; leaving
   forgets them. NEAR: "From the east: ..." next door. WimpyAggressive,
   which attacks only sleepers, has none.
+- N20 done. Behaviour `Escortee`: DEST=, MODE=FOLLOW|LEAD (LEAD: stops
+  following its leader and tracks to DEST a step a tick), WAITFOR=LEADER
+  with WAITCALL=n and WAITMSG=, PANIC=FLEE|HIDE|COWER (after the attack
+  lands, by a trailing message of its own), AVOID=room ids (its own ENTER
+  refused), TALK=/TALK1-9= room:line, ONARRIVE=/ONDEATH=/ONTIMEOUT= with
+  TIMEOUT=n: MOBPROG lines with the leader as $n. The leader is whom it
+  follows when the escort begins; leader, arrival, ticks and remarks in
+  its run state. AVOID takes room IDs, not a mask.
 
 #### 2g. Combat and encounters (24)
 
