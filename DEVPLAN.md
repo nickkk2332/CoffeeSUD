@@ -1234,6 +1234,15 @@ JS17, JS18, JS19, JS20, JS23
   and a test; each engine reads its own (`loadArgs`), and since the object's
   text holds them, the parse cache key differs too. The FUNCTION_PROG
   pattern goes in the guide (SC15).
+- SC15 done. `guides/ScriptingSUD.html`, linked at the top of
+  `Scriptable.html`: what is different alone (logins and GAME_PROG, the
+  profile's tattoos, the party, channels, time), what a save keeps, a
+  quick reference by purpose with what 2d added, a cookbook (once ever, a
+  cutscene, a brazier puzzle, a timed return, catalog spawns, one script
+  for many guards, five guards with their own bribes), CMDFAIL_PROG, and
+  the less known ($@x, timed tattoos, MPAT, MPSCRIPT EXECUTE, MATH's
+  operators, HASTAG, MUDDAY, CHARCREATIONSCRIPTS). Scriptable.html itself
+  is not rewritten entry by entry.
 - SC16 done. `+ANYINGROUP mask` and `+ALLINGROUP mask` (and `-` forms, the
   answer turned around) apply the rest of a mask to the subject's group in
   the room (`ScriptEvents.group`), as FOLLOW applies it to the leader; a

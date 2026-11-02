@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8" />
+<title>Scripting in CoffeeSUD</title>
+<link rel="StyleSheet" href="style.css" type="text/css" media="screen" />
+</head>
+<body>
+<center>
+<table border="1" cellpadding="10" cellspacing="0" width="90%"><tbody>
+<tr><td colspan="2" align="left" bgcolor="#dfdfdf" width="100%">
+<h1>Scripting in CoffeeSUD</h1>
+<p>CoffeeSUD is CoffeeMud played alone. Its scripts are CoffeeMud's (see
+<a href="Scriptable.html">Scripting in CoffeeMud</a> for every trigger,
+function and command); this guide says what is different in a single-player
+game, what a save keeps, what CoffeeSUD adds, and how to do common things.
+In the game, <code>HELP SCRIPTABLE</code> has the whole list, and
+<code>SCRIPTCHECK</code>, <code>SCRIPTTRACE</code>, <code>VARS</code> and
+<code>SCRIPT</code> help find what a script does.</p>
+</td></tr>
+<tr><td align="left" valign="top" width="20%">
+<ul>
+<li><a href="#single">One player</a></li>
+<li><a href="#saves">What a save keeps</a></li>
+<li><a href="#reference">Quick reference</a></li>
+<li><a href="#cookbook">Cookbook</a></li>
+<li><a href="#cmdfail">cmdfail_prog</a></li>
+<li><a href="#found">Less known</a></li>
+</ul>
+</td><td align="left" valign="top">
+
+<h2><a name="single">One player</a></h2>
+<ul>
+<li><b>Logins.</b> LOGIN_PROG fires when a character comes into the world:
+at a new game, and when a game is restored. For the game's own events use
+GAME_PROG: <code>NEWGAME</code>, <code>RESTORE</code>, <code>SAVE</code> (RETURN
+CANCEL refuses the save), <code>NEWCHAR</code>, <code>SWITCHTO</code>,
+<code>SWITCHFROM</code>, <code>PAUSE</code>, <code>RESUME</code>,
+<code>TIMEMODE</code>. LOGOFF_PROG fires when the player quits.</li>
+<li><b>The profile.</b> CoffeeMud's account is the player's profile: all of
+their characters share it. <code>HASACCTATTOO</code> and <code>MPACCTATTOO</code>
+are flags of the profile, <code>HASTATTOO</code> and <code>MPTATTOO</code> of one
+character.</li>
+<li><b>The party.</b> A player may have several characters in the world.
+<code>$u</code> is the one at the terminal; <code>ISPLAYED($n)</code> says
+whether a character is the one played (or has a window of its own);
+<code>INPARTY($n)</code> whether it is in that one's party; PARTYSIZE,
+PARTYLEADER and PARTY describe a group. With party windows off, MPECHOAT,
+MPPROMPT, MPCONFIRM and MPCHOOSE aimed at a member in the background go to the
+terminal, named.</li>
+<li><b>Channels.</b> Only INFO and QUESTCHAT remain, so CHANNEL_PROG hears
+little.</li>
+<li><b>Of no use alone:</b> IPADDRESS, ISPKILL and MPPOSSESS's player side;
+anything about other players being online.</li>
+<li><b>Time.</b> In turn-based time a tick passes when the party acts.
+TURN_PROG runs each turn. MPWHILE still stops after four seconds of real
+time; a WHILE block stops after a number of passes instead. The ISRL
+functions read the computer's clock, not the game's: use DATETIME, GAMETIME,
+ELAPSED and the area's calendar for game time.</li>
+</ul>
+
+<h2><a name="saves">What a save keeps</a></h2>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Kept</th><th>Not kept</th></tr>
+<tr><td>Script variables (MPSETVAR), of every host and scope; a script's own
+(MPSETINTERNAL SCOPE INDIVIDUAL or *) with its engine.</td>
+<td>MPLOCAL locals and a function's named parameters: they last while the body runs.</td></tr>
+<tr><td>Variables kept on one object (<code>MPSETVAR @$i</code>, MPSTATE), in
+the object's ExtraData: they go with that copy.</td>
+<td>$0-$9 of a body, but for the words of a paused one (MPWAIT).</td></tr>
+<tr><td>Which ONCE_PROGs ran (ONCE_PROG BOOT runs again at each load), when
+each TIME_PROG, DAY_PROG and EVERY_PROG last ran, DELAY_PROG waits,
+MPNOTRIGGER.</td>
+<td>A trigger running at the moment of the save.</td></tr>
+<tr><td>What is queued: MPALARM, delayed responses, MPWAIT's paused bodies,
+signals sent with DELAY.</td><td></td></tr>
+<tr><td>Tattoos and their times, quests and their state, the meetings
+FIRSTGREET_PROG and REGREET_PROG count, the turn count.</td><td></td></tr>
+</table>
+
+<h2><a name="reference">Quick reference</a></h2>
+<dl>
+<dt>Waiting</dt>
+<dd><code>MPWAIT 3</code>, <code>MPWAIT 2 HOURS</code>, <code>MPWAIT UNTIL (ISHERE($n)) 20</code>;
+MPALARM; DELAY_PROG; EVERY_PROG; <code>MPSETVAR $n X NOW</code> then
+<code>ELAPSED($&lt;$n X&gt; DAYS)</code>; <code>TICKS(3 DAYS)</code> for timed tattoos.</dd>
+<dt>Keeping things</dt>
+<dd>MPSETVAR (by name), <code>MPSETVAR @$i</code> and MPSTATE / STATE() (on one
+object), MPLIST and the LIST functions, MPTAG / HASTAG / TAGGED / TAGS.</dd>
+<dt>Between scripts</dt>
+<dd><code>MPCALLFUNC Gatehouse raise</code>, <code>$%CALLFUNC(Gatehouse height)%</code>,
+<code>MPSIGNAL TAG:sunaltar lit</code> heard by SIGNAL_PROG, to a thing, a room,
+an exit (<code>here:north</code>), ROOM, AREA or WORLD.</dd>
+<dt>Messages</dt>
+<dd>CNCLMSG_PROG and EXECMSG_PROG read their message with
+<code>MSG(VALUE)</code>, <code>MSG(TOOLID)</code> and the like; in
+CNCLMSG_PROG, <code>MPMSG VALUE *0.5</code>, <code>MPMSG TEXT O ...</code>,
+<code>MPMSG TARGET ...</code>.</dd>
+<dt>Loading</dt>
+<dd><code>MPMLOAD CATALOG goblin guard 2</code>, <code>MPOLOAD CATALOG the Sunblade</code>
+(none past the catalog's cap unless FORCE), quest <code>LOAD MOB CATALOG ...</code>,
+RandomMonsters <code>;catalog:goblin,goblin shaman</code>,
+<code>MPMLOAD FROMFILE file ALL</code>.</dd>
+<dt>Grammar</dt>
+<dd>IF / ELSEIF / ELSE / ENDIF, SWITCH / CASE, FOR ... NEXT (and
+<code>FOR $0 IN LIST $&lt;WORLD SUSPECTS&gt;</code>), WHILE (cond) ... ENDWHILE,
+BREAK, CONTINUE, <code>MPLOCAL name value</code> read as <code>$(name)</code>,
+<code>FUNCTION_PROG heal WHO AMOUNT</code>.</dd>
+<dt>Files</dt>
+<dd><code>LOAD=progs/guard.script POST=castle#12</code>, read as <code>$%ARG(POST)%</code>,
+with <code>ARGDEFAULT POST=gate</code> lines in the file.</dd>
+<dt>Words and numbers</dt>
+<dd>UPPER, LOWER, CAP, LEN, TRIM, SUBSTR, REPLACE, PADRIGHT, ANAME, PLURAL,
+STRPOS, STRSTARTS, STRENDS; DICE, PICK, WPICK, ROLLNORMAL, CLAMP, ABS, MATH.</dd>
+</dl>
+
+<h2><a name="cookbook">Cookbook</a></h2>
+<h3>Once ever</h3>
+<pre>ONCE_PROG
+mpecho The old bell tolls once, as it has not in a hundred years.
+~</pre>
+<p>A save keeps that it ran. For once per character, test and set a tattoo:
+<code>if !hastattoo($n BELLHEARD)</code> ... <code>mptattoo $n BELLHEARD</code>; for
+once per profile, the account forms.</p>
+<h3>A cutscene</h3>
+<pre>GREET_PROG 100
+if !ispc($n)
+  return
+endif
+mpecho The candles gutter.
+mpwait 2
+mpecho A voice whispers your name, $n.
+mpwait 3
+if !isaffected($n Prayer_Bless)
+  mpcast Prayer_Bless $n
+endif
+~</pre>
+<h3>A puzzle of three braziers</h3>
+<p>Each brazier is tagged <code>sunaltar</code> and, when lit, runs
+<code>mpsignal TAG:sunaltar lit</code>. The altar counts on itself:</p>
+<pre>SIGNAL_PROG lit
+mpsetvar @$i LIT ++
+if var(@$i LIT &gt;= 3)
+  mpecho The sanctum door grinds open.
+  mpunlock north
+endif
+~</pre>
+<h3>A timed return</h3>
+<pre>SPEECH_PROG sword
+mpsetvar $n SWORD_ORDERED NOW
+say Come back in three days.
+~
+GREET_PROG 100
+if elapsed($&lt;$n SWORD_ORDERED&gt; DAYS &gt;= 3)
+  mpoload a fine longsword
+  give longsword $n
+  mpsetvar $n SWORD_ORDERED
+endif
+~</pre>
+<h3>Catalog spawns</h3>
+<pre>HITPRCNT_PROG 50
+mpmload catalog goblin guard 2
+mpforce $b kill $n
+~</pre>
+<p>A unique reward, <code>mpoload catalog the Sunblade</code>, does nothing
+while the one Sunblade the catalog allows is in the world.</p>
+<h3>One script, many guards</h3>
+<p>Give each guard <code>LOAD=progs/guard.script POST=castle#12</code>; in the
+file, <code>ARGDEFAULT POST=gate</code> and <code>$%ARG(POST)%</code>. Before
+LOAD= took arguments the same was done with a function in the object's own
+text, <code>FUNCTION_PROG POST~return castle#12~</code>, read in the file
+as <code>$%CALLFUNC(POST)%</code>; it still works.</p>
+<h3>Five guards, five bribes</h3>
+<p><code>MPSETVAR @$i BRIBED 1</code> keeps the value on that guard, where
+<code>MPSETVAR $i BRIBED 1</code> would share it with every guard of the same
+name. <code>MPSETINTERNAL VARHOST INSTANCE</code> makes <code>$i</code> mean
+<code>@$i</code> in the whole script; <code>MPSETINTERNAL SCOPE *</code> gives
+the script variables of its own, which other scripts cannot read.</p>
+
+<h2><a name="cmdfail">cmdfail_prog</a></h2>
+<p>CMDFAIL_PROG is the custom verb: it runs when a command fails, or is not
+known (the player would see Huh?), and the word typed starts the command
+given. ALL or no more words for any words after it, P for exactly these, or
+words to look for. It runs before the failure is shown, so RETURN CANCEL keeps
+the Huh? back. $n typed it, $G is the rest of the line.</p>
+<pre>CMDFAIL_PROG PRAY ALTAR
+mpecho $n kneels before the altar and prays.
+if !isaffected($n Prayer_Bless)
+  mpcast Prayer_Bless $n
+endif
+return cancel
+~</pre>
+<p>On the altar's room, <code>pray at altar</code> now does something. For a
+verb that always works, whatever follows it, VERB_PROG (with LIST VERBS) is
+the other way.</p>
+
+<h2><a name="found">Less known</a></h2>
+<ul>
+<li><code>$@i</code> (and <code>$@n</code>, ...) is the thing's identity in the
+running game, not its name: it tells two of one name apart, but changes at
+every load.</li>
+<li>A timed tattoo is a delay: <code>mptattoo $n '450 PLANTED'</code> wears off in
+450 ticks, and <code>HASTATTOOTIME($n PLANTED)</code> says how many are left;
+<code>$%TICKS(3 DAYS)%</code> works out the ticks.</li>
+<li><code>MPAT room command</code> runs a command in another room;
+<code>MPSCRIPT target EXECUTE text</code> gives a thing a one-off script.</li>
+<li>MATH knows <code>?</code> (a random number between the two), <code>&lt;</code>
+and <code>&gt;</code> (the smaller and the larger), <code>^</code> (the power)
+and <code>%</code> (the remainder), with + - * /.</li>
+<li><code>$%HASTAG(x)%</code> gives a thing's tags.</li>
+<li>A quest's <code>SET DATE MUDDAY</code> dates it by the game's calendar.</li>
+<li>CHARCREATIONSCRIPTS in coffeemud.ini runs scripts during character
+creation (<code>CODE:file</code>, the code a step such as RACE, CLASS or END)
+and at logins (CHARLOGIN, ALLCHARLOGIN).</li>
+</ul>
+</td></tr>
+</tbody></table>
+</center>
+</body></html>
