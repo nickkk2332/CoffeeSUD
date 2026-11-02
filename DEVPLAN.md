@@ -2117,6 +2117,15 @@ I22, I23, I24, I25, I26, I27
   (a new game: the world file has none), kept in its text, and VAR= puts
   it in the global script variable COMBO name. It keeps its own dials;
   I9's switch state was not needed for it.
+- I15 done. Prop_LimitedContents was extended rather than a new
+  property added: LOCKIN (and LOCKMSG) refuses getting from it, CONSUME
+  destroys what is put in after counting it (TALLY=, kept in the text),
+  ONPUT, ONFULL (each limit over 0 met, counting the tally; fired on the
+  change to full) and ONEMPTY (the last thing taken out) run actions as
+  Prop_Switch's do. The text splits at semicolons outside quotes, so
+  actions with semicolons fit. Prop_ItemSlot was left as it is. Fixed on
+  the way: a -TAGS or +TAGS mask on an item looked at a stand-in mob's
+  tags, never the item's, so it never matched an item (MUDZapper).
 
 #### 2i. World systems (25)
 

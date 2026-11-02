@@ -556,6 +556,10 @@ left off if you like; <code>REQUIRES=</code> a mask, <code>STATES=1-8</code> a d
 ONWRONG="cast Spell_ShockingGrasp $n"</code> on the alchemist's chest: TURN DIAL 2 TO STAR, or SET DIALS SUN STAR
 MOON. A door's keypad is <code>CODE=739</code> (ENTER 739). <code>CODE=RANDOM VAR=VAULTCODE</code> rolls a code
 for each new game, which a torn page can print with <code>$&lt;COMBO VAULTCODE&gt;</code>.</p>
+<p>Receptacles: <code>Prop_LimitedContents 2 -TAGS +DRAGONEYE;0;MSG="It does not fit.";LOCKIN=true;
+ONFULL="door open here north; echo The dragon's mouth grinds open."</code> on the statue takes only the
+two dragon eyes, keeps them, and opens the way when both are in. <code>CONSUME=true</code> makes an offering
+bowl; <code>ONPUT</code> and <code>ONEMPTY</code> run on each offering and when it is emptied.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

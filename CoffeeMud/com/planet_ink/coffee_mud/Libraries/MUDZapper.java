@@ -6427,7 +6427,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						boolean found=false;
 						for(final Object o : entry.parms())
 						{
-							if(mob.hasTag((String)o))
+							if(((P instanceof Taggable)?(Taggable)P:mob).hasTag((String)o)) // I15: an item's own tags
 							{
 								found = true;
 								break;
@@ -6441,7 +6441,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 					{
 						for(final Object o : entry.parms())
 						{
-							if(mob.hasTag((String)o))
+							if(((P instanceof Taggable)?(Taggable)P:mob).hasTag((String)o)) // I15: an item's own tags
 								return false;
 						}
 					}

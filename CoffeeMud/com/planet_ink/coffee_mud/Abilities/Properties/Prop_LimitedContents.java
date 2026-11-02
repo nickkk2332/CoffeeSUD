@@ -57,6 +57,16 @@ public class Prop_LimitedContents extends Property
 	protected final PairVector<Integer, CompiledZMask> limits = new PairVector<Integer, CompiledZMask>();
 	protected String msgStr = "";
 	protected boolean actual=true;
+	// I15: a receptacle
+	protected boolean lockIn=false;
+	protected boolean consume=false;
+	protected String onPut="";
+	protected String onFull="";
+	protected String onEmpty="";
+	protected String lockMsg="";
+	protected int[] tally=new int[0];
+	protected boolean wasFull=false;
+	protected String baseText="";
 
 	@Override
 	public String accountForYourself()
@@ -72,6 +82,47 @@ public class Prop_LimitedContents extends Property
 		return L("Only @x1 may be equipped.",numStr);
 	}
 
+	/**
+	 * I15: the text's parts: a semicolon between, but not inside quotes.
+	 * @param text the text
+	 * @return the parts
+	 */
+	public static List<String> parts(final String text)
+	{
+		final List<String> list=new ArrayList<String>();
+		final StringBuilder b=new StringBuilder();
+		boolean q=false;
+		for(final char c : text.toCharArray())
+		{
+			if(c=='"')
+				q=!q;
+			if((c==';')&&(!q))
+			{
+				list.add(b.toString());
+				b.setLength(0);
+			}
+			else
+				b.append(c);
+		}
+		list.add(b.toString());
+		return list;
+	}
+
+	@Override
+	public String text()
+	{
+		// I15: what it has consumed goes with it into saves
+		boolean any=false;
+		for(final int t : tally)
+			any=any||(t>0);
+		if(!any)
+			return baseText;
+		final StringBuilder b=new StringBuilder(baseText).append(";TALLY=");
+		for(int i=0;i<tally.length;i++)
+			b.append((i>0)?",":"").append(tally[i]);
+		return b.toString();
+	}
+
 	@Override
 	public void setMiscText(final String newMiscText)
 	{
@@ -79,10 +130,26 @@ public class Prop_LimitedContents extends Property
 		limits.clear();
 		this.msgStr="";
 		this.actual=true;
+		lockIn=false;
+		consume=false;
+		onPut="";
+		onFull="";
+		onEmpty="";
+		lockMsg="";
+		String tallyStr="";
+		final StringBuilder kept=new StringBuilder();
 		if(newMiscText.length()>0)
 		{
-			for(String part : newMiscText.split(";"))
+			for(String part : parts(newMiscText))
 			{
+				if(part.trim().toUpperCase().startsWith("TALLY="))
+				{
+					tallyStr=part.trim().substring(6);
+					continue;
+				}
+				if(kept.length()>0)
+					kept.append(";");
+				kept.append(part);
 				part=part.trim();
 				final int x=part.indexOf(' ');
 				final String amtStr;
@@ -98,10 +165,125 @@ public class Prop_LimitedContents extends Property
 					limits.add(Integer.valueOf(CMath.s_int(amtStr)), CMLib.masking().getPreCompiledMask(mask));
 				else
 				{
-					this.msgStr=CMParms.getParmStr(part,"MSG",this.msgStr);
-					this.actual=CMParms.getParmBool(part,"ACTUAL",this.actual);
+					final Map<String,String> q=CMParms.parseExactParms(part);
+					this.msgStr=CMParms.getParmStr(q,"MSG",this.msgStr);
+					this.actual=CMParms.getParmBool(q,"ACTUAL",this.actual);
+					lockIn=CMParms.getParmBool(q,"LOCKIN",lockIn);
+					consume=CMParms.getParmBool(q,"CONSUME",consume);
+					onPut=CMParms.getParmStr(q,"ONPUT",onPut);
+					onFull=CMParms.getParmStr(q,"ONFULL",onFull);
+					onEmpty=CMParms.getParmStr(q,"ONEMPTY",onEmpty);
+					lockMsg=CMParms.getParmStr(q,"LOCKMSG",lockMsg);
 				}
 			}
+		}
+		baseText=kept.toString();
+		tally=new int[limits.size()];
+		final String[] ts=tallyStr.split(",");
+		for(int i=0;(i<ts.length)&&(i<tally.length);i++)
+			tally[i]=CMath.s_int(ts[i].trim());
+		wasFull=(affected instanceof Container)&&full(null);
+	}
+
+	/**
+	 * I15: how many of a limit's kind it holds, and has consumed.
+	 * @param i the limit
+	 * @param plus an item going in, not yet counted, or null
+	 * @param minus an item going out, or null
+	 * @return the count
+	 */
+	protected int held(final int i, final Item plus, final Item minus)
+	{
+		final CompiledZMask mask=limits.get(i).second;
+		int n=(i<tally.length)?tally[i]:0;
+		if(affected instanceof Container)
+		{
+			for(final Item I : ((Container)affected).getContents())
+			{
+				if((I!=minus)&&(I!=plus)&&(firstLimit(I)==i))
+					n+=itemCount(I);
+			}
+		}
+		if((plus!=null)&&(firstLimit(plus)==i))
+			n+=itemCount(plus);
+		return n;
+	}
+
+	/** I15: the first limit an item fits, or -1 */
+	protected int firstLimit(final Item I)
+	{
+		for(int i=0;i<limits.size();i++)
+		{
+			if(CMLib.masking().maskCheck(limits.get(i).second, I, this.actual))
+				return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * I15: whether each limit over 0 is met.
+	 * @param plus an item going in, or null
+	 * @return true if it is full
+	 */
+	protected boolean full(final Item plus)
+	{
+		boolean any=false;
+		for(int i=0;i<limits.size();i++)
+		{
+			final int max=limits.get(i).first.intValue();
+			if(max<=0)
+				continue;
+			any=true;
+			if(held(i,plus,null)<max)
+				return false;
+		}
+		return any;
+	}
+
+	/** I15: whether it holds nothing */
+	protected boolean empty(final Item minus)
+	{
+		if(!(affected instanceof Container))
+			return false;
+		for(final Item I : ((Container)affected).getContents())
+		{
+			if(I!=minus)
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public void executeMsg(final Environmental myHost, final CMMsg msg)
+	{
+		super.executeMsg(myHost, msg);
+		if(!(affected instanceof Container))
+			return;
+		final Container C=(Container)affected;
+		if((msg.targetMinor()==CMMsg.TYP_PUT)&&(msg.target()==C)&&(msg.tool() instanceof Item))
+		{
+			final Item I=(Item)msg.tool();
+			final MOB mob=msg.source();
+			Actions.run(C,mob,onPut);
+			final boolean nowFull=full(I);
+			if(consume)
+			{
+				final int i=firstLimit(I);
+				if((i>=0)&&(i<tally.length))
+					tally[i]+=itemCount(I);
+				I.destroy();
+			}
+			if(nowFull&&(!wasFull))
+				Actions.run(C,mob,onFull);
+			wasFull=nowFull;
+		}
+		else
+		if((msg.targetMinor()==CMMsg.TYP_GET)&&(msg.target()==C)&&(msg.tool() instanceof Item)&&(((Item)msg.tool()).container()==C))
+		{
+			final Item I=(Item)msg.tool();
+			wasFull=full(null)&&(firstLimit(I)<0);
+			if(empty(I))
+				Actions.run(C,msg.source(),onEmpty);
 		}
 	}
 
@@ -133,6 +315,16 @@ public class Prop_LimitedContents extends Property
 		if(!super.okMessage(myHost, msg))
 			return false;
 
+		// I15: LOCKIN: what is in it stays in it
+		if(lockIn
+		&&(affected instanceof Container)
+		&&(msg.targetMinor()==CMMsg.TYP_GET)
+		&&(((msg.target()==affected)&&(msg.tool() instanceof Item)&&(((Item)msg.tool()).container()==affected))
+			||((msg.target() instanceof Item)&&(((Item)msg.target()).container()==affected))))
+		{
+			msg.source().tell(msg.source(),affected,null,(lockMsg.length()>0)?lockMsg:L("It is held fast in <T-NAME>."));
+			return false;
+		}
 		final Item item;
 		if(msg.targetMinor()==CMMsg.TYP_DROP)
 		{
