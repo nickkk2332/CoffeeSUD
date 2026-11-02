@@ -405,6 +405,10 @@ attacked and pays out on arrival.</p>
 LOYAL=50 REFUSE=STEAL MSG_HIRED="My blade is yours till the goblin king falls."</code>. HIRE shows
 the terms as a menu; it takes 5 a day, leaves after two unpaid days or when the war ends,
 quits a losing fight unless it likes you, and will not steal.</p>
+<p>A guard who talks without a script: <code>Sounder GREET: COOLDOWN=20 2 SAY Move along. | 1 SAY
+Keep your blade sheathed.;WIELD(+WEAPONCLASS SWORD): SAY Put that away in the city!;NIGHT: SAY
+Curfew's at the bell.;HURT&lt;30: SAY To me! Guards!</code>. A longer table goes in a file,
+one entry to a line, with <code>FILE=barks/guard.txt</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -1788,6 +1788,14 @@ N22, N24, N28, N29
   REFUSE= order verbs (its ORDER message refused). Wages kept in the run
   state (PAIDAGO, UNPAID). HIRE <mob> opens its terms as an N2 menu whose
   choice runs HIRE <mob> PAY (the price taken and given as coins).
+- N22 done. Sounder's bark table (core/Barks reads it; Sounder hears the
+  events): EVENT[(arg)]: [CHANCE=] [COOLDOWN=] [ONCEPERPLAYER] lines with
+  weights, {mask}s and SAY/EMOTE/SOUND, inline among the old codes or one to a
+  line in FILE=. Events from messages (GREET, GREET_FIRST, SEE_MOB, SEE_ITEM,
+  KILL, ALLY_DIES, FLEE, FIGHT, SHOP_LIST, SHOP_BUY, BRIBED, WIELD and the
+  other item events) and from the tick (time of day and weather as they
+  change, HURT<n once until healed, IDLE). Lines drawn with the seeded dice.
+  Whom it greeted and its once-per-character barks are kept in the run state.
 
 #### 2g. Combat and encounters (24)
 

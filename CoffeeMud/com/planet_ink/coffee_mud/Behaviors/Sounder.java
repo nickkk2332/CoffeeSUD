@@ -77,10 +77,280 @@ public class Sounder extends StdBehavior
 		tickDown=(int)Math.round(CMath.random()*(maxTicks-minTicks))+minTicks;
 	}
 
-	@Override
-	public void setParms(final String newParms)
+	/** N22: the bark table, and what it has done */
+	protected final List<Barks.Entry>    barks        = new ArrayList<Barks.Entry>();
+	protected final Map<String,Long>    barkedAt    = new HashMap<String,Long>();
+	protected final Set<String>        barkedFor    = new HashSet<String>();
+	protected final Set<String>        greeted        = new HashSet<String>();
+	protected final Set<Barks.Entry>    hurtDone    = new HashSet<Barks.Entry>();
+	protected long                    barkTicks    = 0;
+	protected String                lastTod        = null;
+	protected String                lastWeather    = null;
+
+	/**
+	 * N22: takes the bark table entries (and FILE=) out of the parameters.
+	 * @param all the parameters
+	 * @return the old entries, as before
+	 */
+	protected String readBarks(final String all)
 	{
-		super.setParms(newParms);
+		barks.clear();
+		final StringBuilder rest=new StringBuilder("");
+		for(final String e : CMParms.parseSemicolons((all==null)?"":all,true))
+		{
+			final String t=e.trim();
+			if(t.toUpperCase().startsWith("FILE="))
+			{
+				final StringBuffer text=Resources.getFileResource(t.substring(5).trim(),true);
+				if(text!=null)
+				{
+					for(final String line : text.toString().split("\\r?\\n"))
+					{
+						final String l=line.trim();
+						if((l.length()>0)&&(!l.startsWith("#"))&&Barks.isEntry(l))
+						{
+							final Barks.Entry B=Barks.parse(l);
+							if(B!=null)
+								barks.add(B);
+						}
+					}
+				}
+				continue;
+			}
+			if(Barks.isEntry(t))
+			{
+				final Barks.Entry B=Barks.parse(t);
+				if(B!=null)
+					barks.add(B);
+				continue;
+			}
+			if(rest.length()>0)
+				rest.append(";");
+			rest.append(e);
+		}
+		return rest.toString();
+	}
+
+	/**
+	 * N22: barks for an event, if the table has a line for it now.
+	 * @param host what has it
+	 * @param event the event
+	 * @param about the one it is about, or null
+	 * @param thing what the entry's mask is tested on, or null for about
+	 * @return true if it barked
+	 */
+	protected boolean bark(final Tickable host, final String event, final MOB about, final Environmental thing)
+	{
+		if(barks.isEmpty()||CMSecurity.isDisabled(CMSecurity.DisFlag.EMOTERS))
+			return false;
+		for(final Barks.Entry E : barks)
+		{
+			if(!E.event.equals(event))
+				continue;
+			if(!Barks.argFits(E,(thing!=null)?thing:about))
+				continue;
+			final String once=event+"/"+((about==null)?"":about.Name());
+			if(E.oncePer&&(about!=null)&&barkedFor.contains(once))
+				continue;
+			final Long at=barkedAt.get(event);
+			if((E.cooldown>0)&&(at!=null)&&((barkTicks-at.longValue())<E.cooldown))
+				continue;
+			if((E.chance<100)&&(CMLib.dice().rollPercentage()>E.chance))
+				continue;
+			final Barks.Line L=Barks.pick(E,about);
+			if(L==null)
+				continue;
+			barkedAt.put(event,Long.valueOf(barkTicks));
+			if(E.oncePer&&(about!=null))
+				barkedFor.add(once);
+			final String text=Barks.fill(L.text,about);
+			if(host instanceof MOB)
+			{
+				final MOB mob=(MOB)host;
+				final Room R=mob.location();
+				if(R==null)
+					return false;
+				if(L.kind.equals("SAY"))
+					CMLib.commands().postSay(mob,null,text,false,false);
+				else
+				if(L.kind.equals("SOUND"))
+					R.showHappens(CMMsg.MSG_NOISE,"^E"+text+"^?");
+				else
+					R.show(mob,null,CMMsg.MSG_EMOTE,"<S-NAME> "+text);
+			}
+			else
+			if(L.kind.equals("SOUND"))
+				doEmote(host,"^E"+text+"^?");
+			else
+				doEmote(host,"<S-NAME> "+text);
+			return true;
+		}
+		return false;
+	}
+
+	/** N22: the events the table hears in a message */
+	protected void barkMsg(final Environmental host, final CMMsg msg)
+	{
+		if(barks.isEmpty()||(!(host instanceof Tickable)))
+			return;
+		final Tickable T=(Tickable)host;
+		final MOB src=msg.source();
+		final Room here=(host instanceof Room)?(Room)host:CMLib.map().roomLocation(host);
+		if((src==null)||(here==null))
+			return;
+		final boolean death=(msg.sourceMinor()==CMMsg.TYP_DEATH)||(msg.othersMinor()==CMMsg.TYP_DEATH);
+		if(death)
+		{
+			final MOB killer=(msg.tool() instanceof MOB)?(MOB)msg.tool():null;
+			if((killer!=null)&&(killer==host))
+				bark(T,"KILL",src,src);
+			else
+			if((host instanceof MOB)&&(src!=host)&&(src.playerStats()==null)
+			&&((((MOB)host).getGroupMembers(new HashSet<MOB>()).contains(src))
+				||src.charStats().raceName().equals(((MOB)host).charStats().raceName())))
+				bark(T,"ALLY_DIES",(killer!=null)?killer:src,src);
+			return;
+		}
+		if(src==host)
+		{
+			if(msg.sourceMinor()==CMMsg.TYP_FLEE)
+				bark(T,"FLEE",(host instanceof MOB)?((MOB)host).getVictim():null,null);
+			return;
+		}
+		if((msg.targetMinor()==CMMsg.TYP_ENTER)&&(msg.target()==here))
+		{
+			if(src.playerStats()!=null)
+			{
+				if(greeted.add(src.Name().toUpperCase()))
+				{
+					if(!bark(T,"GREET_FIRST",src,null))
+						bark(T,"GREET",src,null);
+				}
+				else
+					bark(T,"GREET",src,null);
+				for(final Enumeration<Item> i=src.items();i.hasMoreElements();)
+				{
+					final Item I=i.nextElement();
+					if((I!=null)&&(I.container()==null)&&bark(T,"SEE_ITEM",src,I))
+						break;
+				}
+			}
+			bark(T,"SEE_MOB",src,src);
+			return;
+		}
+		if(msg.target()==host)
+		{
+			if(msg.targetMinor()==CMMsg.TYP_LIST)
+				bark(T,"SHOP_LIST",src,null);
+			else
+			if(msg.targetMinor()==CMMsg.TYP_BUY)
+				bark(T,"SHOP_BUY",src,null);
+			else
+			if((msg.targetMinor()==CMMsg.TYP_GIVE)&&(msg.tool() instanceof Coins))
+				bark(T,"BRIBED",src,null);
+			else
+			if(CMath.bset(msg.targetMajor(),CMMsg.MASK_MALICIOUS))
+				bark(T,"FIGHT",src,null);
+			return;
+		}
+		if((src.location()==here)&&(msg.target() instanceof Item))
+		{
+			switch(msg.targetMinor())
+			{
+			case CMMsg.TYP_WIELD:
+				bark(T,"WIELD",src,(Item)msg.target());
+				break;
+			case CMMsg.TYP_WEAR:
+				bark(T,"WEAR",src,(Item)msg.target());
+				break;
+			case CMMsg.TYP_HOLD:
+				bark(T,"HOLD",src,(Item)msg.target());
+				break;
+			case CMMsg.TYP_GET:
+				bark(T,"GET",src,(Item)msg.target());
+				break;
+			case CMMsg.TYP_DROP:
+				bark(T,"DROP",src,(Item)msg.target());
+				break;
+			}
+		}
+	}
+
+	/** N22: the events the table hears on its ticks: the hour, the weather, being hurt, idling */
+	protected void barkTick(final Tickable host)
+	{
+		if(barks.isEmpty())
+			return;
+		barkTicks++;
+		final Physical P=(host instanceof Physical)?(Physical)host:null;
+		final TimeClock C=(P!=null)?CMLib.time().localClock(P):CMLib.time().globalClock();
+		if(C!=null)
+		{
+			final String tod=C.getTODCode().name();
+			if((lastTod!=null)&&(!tod.equals(lastTod)))
+				bark(host,tod,null,null);
+			lastTod=tod;
+		}
+		final Room R=(host instanceof Room)?(Room)host:((P!=null)?CMLib.map().roomLocation(P):null);
+		if((R!=null)&&(R.getArea()!=null))
+		{
+			final int w=R.getArea().getClimateObj().weatherType(R);
+			final String wn=((w==Climate.WEATHER_RAIN)||(w==Climate.WEATHER_THUNDERSTORM))?"RAIN":
+					((w==Climate.WEATHER_SNOW)||(w==Climate.WEATHER_BLIZZARD))?"SNOW":
+					(w==Climate.WEATHER_CLEAR)?"CLEAR":"OTHER";
+			if((lastWeather!=null)&&(!wn.equals(lastWeather)))
+				bark(host,wn,null,null);
+			lastWeather=wn;
+		}
+		if(host instanceof MOB)
+		{
+			final MOB mob=(MOB)host;
+			final double pct=CMath.div(mob.curState().getHitPoints(),Math.max(1,mob.maxState().getHitPoints()))*100.0;
+			for(final Barks.Entry E : barks)
+			{
+				if(!E.event.equals("HURT"))
+					continue;
+				final int under=CMath.s_int(E.arg);
+				if(pct<under)
+				{
+					if(hurtDone.add(E))
+						bark(host,"HURT",mob.getVictim(),null);
+				}
+				else
+					hurtDone.remove(E);
+			}
+		}
+		bark(host,"IDLE",null,null);
+	}
+
+	@Override
+	protected String getRunState()
+	{
+		if(greeted.isEmpty()&&barkedFor.isEmpty())
+			return "";
+		return "<BARKS GREETED=\""+CMLib.xml().parseOutAngleBrackets(CMParms.toListString(greeted))
+			+"\" ONCE=\""+CMLib.xml().parseOutAngleBrackets(CMParms.toListString(barkedFor))+"\" />";
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		greeted.clear();
+		barkedFor.clear();
+		final List<XMLLibrary.XMLTag> V=CMLib.xml().parseAllXML(xml);
+		if((V==null)||V.isEmpty())
+			return;
+		for(final String s : CMParms.parseCommas(CMLib.xml().restoreAngleBrackets(V.get(0).getParmValue("GREETED")),true))
+			greeted.add(s);
+		for(final String s : CMParms.parseCommas(CMLib.xml().restoreAngleBrackets(V.get(0).getParmValue("ONCE")),true))
+			barkedFor.add(s);
+	}
+
+	@Override
+	public void setParms(final String allParms)
+	{
+		super.setParms(allParms);
+		final String newParms=readBarks(allParms); // N22: the bark table out, the rest as before
 		final List<String> emote=CMParms.parseSemicolons(newParms,true);
 		triggers=new int[emote.size()];
 		strings=new String[emote.size()];
@@ -415,6 +685,8 @@ public class Sounder extends StdBehavior
 	{
 		if(!super.tick(ticking,tickID))
 			return false;
+		if((tickID==Tickable.TICKID_MOB)||(!(ticking instanceof MOB)))
+			barkTick(ticking); // N22
 		if(((--tickDown)<=0)
 		&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.EMOTERS))
 		&&((!(ticking instanceof MOB))||(canFreelyBehaveNormal(ticking))))
@@ -435,6 +707,7 @@ public class Sounder extends StdBehavior
 	@Override
 	public void executeMsg(final Environmental host, final CMMsg msg)
 	{
+		barkMsg(host,msg); // N22
 		// this will work because, for items, behaviors
 		// get the first tick.
 		int lookFor=-1;
