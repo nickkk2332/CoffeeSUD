@@ -672,6 +672,9 @@ night falls on the surface far above."</code>. A room's own lines come before it
 <p>The dark as a danger: the catacombs' <code>Prop_DarkDanger LOST=10% LURKER=ghoul LURK=3%</code> sends those without
 a lit torch a random way now and then, and a ghoul out of the dark; <code>if isdark(HERE)</code> in a script, and the
 mask <code>+ROOMDARK</code> (dark to them), tell the same.</p>
+<p>Darkness torches cannot beat: the Shadowfell crypt's <code>Prop_RoomDark ABSOLUTE=TRUE LIGHTMASK="-TAGS
++DAWNLANTERN" SNUFF=50</code> puts torches out on the way in; only the Lantern of Dawn from the temple quest (tagged
+DAWNLANTERN) lights the way, and <code>SEEMASK="-RACE +Dwarf"</code> lets dwarves see.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

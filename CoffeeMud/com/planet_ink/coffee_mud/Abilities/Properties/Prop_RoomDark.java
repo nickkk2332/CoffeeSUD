@@ -66,11 +66,59 @@ public class Prop_RoomDark extends Property
 
 	protected boolean setup = false;
 
+	/** W11: darkness lights cannot beat, the lights that still work, who still sees, and torches put out */
+	protected boolean	absolute	= false;
+	protected String	lightMask	= null;
+	protected String	seeMask		= null;
+	protected int		snuff		= 0;
+	protected String	snuffMsg	= "Your @x1 gutters out in the dark.";
+	protected boolean	norecurse	= false;
+
 	@Override
 	public void setMiscText(final String newMiscText)
 	{
 		super.setMiscText(newMiscText);
 		setup=false;
+		final Map<String,String> P=CMParms.parseEQParms(newMiscText);
+		absolute=CMath.s_bool(P.containsKey("ABSOLUTE")?P.get("ABSOLUTE"):"false");
+		lightMask=(P.containsKey("LIGHTMASK")&&(P.get("LIGHTMASK").trim().length()>0))?P.get("LIGHTMASK"):null;
+		seeMask=(P.containsKey("SEEMASK")&&(P.get("SEEMASK").trim().length()>0))?P.get("SEEMASK"):null;
+		snuff=P.containsKey("SNUFF")?CMath.s_int(P.get("SNUFF").replace("%","").trim()):0;
+		if(P.containsKey("SNUFFMSG"))
+			snuffMsg=P.get("SNUFFMSG");
+	}
+
+	@Override
+	public boolean bubbleAffect()
+	{
+		return seeMask!=null; // W11: so the room asks it of each mob there, for SEEMASK
+	}
+
+	/**
+	 * W11: whether a thing's light still works here: LIGHTMASK names the lights that do.
+	 * @param I the light
+	 * @return true if it still lights the room
+	 */
+	protected boolean lightWorks(final Physical I)
+	{
+		return (lightMask!=null)&&CMLib.flags().isLightSource(I)&&CMLib.masking().maskCheck(lightMask,I,true);
+	}
+
+	/**
+	 * @param M a mob
+	 * @return true if it carries a light that still works here
+	 */
+	protected boolean hasWorkingLight(final MOB M)
+	{
+		if(lightMask==null)
+			return false;
+		for(final Enumeration<Item> i=M.items();i.hasMoreElements();)
+		{
+			final Item I=i.nextElement();
+			if((I!=null)&&(!I.amWearingAt(Wearable.IN_INVENTORY))&&lightWorks(I))
+				return true;
+		}
+		return false;
 	}
 	protected int[] hoursOfOperation = null;
 
@@ -117,7 +165,108 @@ public class Prop_RoomDark extends Property
 	@Override
 	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
 	{
+		if(affected instanceof MOB) // W11: SEEMASK: who still sees here
+		{
+			if((seeMask!=null)&&isItDark()&&CMLib.masking().maskCheck(seeMask,affected,true))
+				affectableStats.setSensesMask(affectableStats.sensesMask()|PhyStats.CAN_SEE_DARK);
+			return;
+		}
+		if((!(affected instanceof Room))&&(!(affected instanceof Area)))
+			return;
 		if(isItDark())
+		{
 			affectableStats.setDisposition(affectableStats.disposition()|PhyStats.IS_DARK);
+			// W11: ABSOLUTE: as Darkness Globe, the lights in the room go dark before they light it (but LIGHTMASK's)
+			if(absolute&&(affected instanceof Room)&&(!norecurse))
+			{
+				final Room R=(Room)affected;
+				norecurse=true;
+				try
+				{
+					affectableStats.setDisposition(affectableStats.disposition()&~PhyStats.IS_LIGHTSOURCE);
+					for(final Enumeration<MOB> m=R.inhabitants();m.hasMoreElements();)
+					{
+						final MOB M=m.nextElement();
+						if((M!=null)&&(!hasWorkingLight(M)))
+							M.phyStats().setDisposition((M.phyStats().disposition()&~PhyStats.IS_LIGHTSOURCE)|PhyStats.IS_DARK);
+					}
+					for(final Enumeration<Item> i=R.items();i.hasMoreElements();)
+					{
+						final Item I=i.nextElement();
+						if((I!=null)&&CMLib.flags().isLightSource(I)&&(!lightWorks(I)))
+							I.phyStats().setDisposition(I.phyStats().disposition()&~PhyStats.IS_LIGHTSOURCE);
+					}
+				}
+				finally
+				{
+					norecurse=false;
+				}
+			}
+		}
+	}
+
+	protected boolean mine(final Room R)
+	{
+		if(R==null)
+			return false;
+		if(affected instanceof Room)
+			return R==affected;
+		return (affected instanceof Area)&&((Area)affected).inMyMetroArea(R.getArea());
+	}
+
+	@Override
+	public void executeMsg(final Environmental myHost, final CMMsg msg)
+	{
+		super.executeMsg(myHost,msg);
+		final Room R=msg.source().location();
+		// W11: SNUFF: lit lights may go out on the way in
+		if((snuff>0)
+		&&(msg.targetMinor()==CMMsg.TYP_ENTER)
+		&&(msg.target() instanceof Room)
+		&&mine((Room)msg.target())
+		&&isItDark())
+		{
+			final MOB M=msg.source();
+			for(final Enumeration<Item> i=M.items();i.hasMoreElements();)
+			{
+				final Item I=i.nextElement();
+				if((I instanceof Light)&&((Light)I).isLit()&&(!lightWorks(I))&&(CMLib.dice().rollPercentage()<=snuff))
+				{
+					((Light)I).light(false);
+					I.recoverPhyStats();
+					M.tell(CMStrings.replaceAll(snuffMsg,"@x1",I.name()));
+				}
+			}
+			M.recoverPhyStats();
+		}
+		// W11: ABSOLUTE: the room again after anything that may light it
+		if(absolute&&(R!=null)&&mine(R))
+		{
+			switch(msg.targetMinor())
+			{
+			case CMMsg.TYP_ENTER:
+			case CMMsg.TYP_HOLD:
+			case CMMsg.TYP_WEAR:
+			case CMMsg.TYP_WIELD:
+			case CMMsg.TYP_REMOVE:
+			case CMMsg.TYP_DROP:
+			case CMMsg.TYP_GET:
+			case CMMsg.TYP_PUT:
+			case CMMsg.TYP_FILL:
+				msg.addTrailerRunnable(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						final Room R2=msg.source().location();
+						if((R2!=null)&&mine(R2))
+							R2.recoverPhyStats();
+					}
+				});
+				break;
+			default:
+				break;
+			}
+		}
 	}
 }

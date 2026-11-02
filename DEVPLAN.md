@@ -2400,6 +2400,14 @@ W18, W19, W20, W21, W22, W23, W28, W29
   `LURKER=name LURK=n%` a catalog mob (or a mob class) comes out of the
   dark as they enter (LURKMSG=); a light, or seeing in the dark, ends it.
   It acts for the characters played (they have player stats).
+- W11 done. Prop_RoomDark (rooms, areas) takes `ABSOLUTE=TRUE`: as
+  Spell_DarknessGlobe, the room's recovery turns off the lights of its
+  inhabitants and items before they light it, and anything that may light
+  it again (entering, holding, wearing, dropping) recovers it after;
+  `LIGHTMASK=` is the lights that still work (a mask on the item, so
+  `-TAGS +DAWNLANTERN`), `SEEMASK=` who still sees in it (it adds seeing
+  in the dark to them), `SNUFF=n` the chance a lit light goes out as one
+  comes in (SNUFFMSG=, @x1 the light).
 
 #### 2j. Generators and random content (16)
 
