@@ -398,6 +398,13 @@ the [[collapse]].</code> highlights the words and teaches <i>mine</i> and <i>col
 <code>ask miner about</code> lists those the miner's <code>SPEECH_PROG collapse</code> or MudChat answers,
 and <code>ask miner about collapse</code> gets the answer. The tag <code>HINTTOPICS</code> on an NPC
 has it say what it talks about when first spoken to (AHELP NPCTOPICS).</p>
+<p>A scene to overhear, without MPFORCE and MPALARM chains: <code>Scene NAME=bribes;ACTOR
+guard1=tall guard;ACTOR guard2=short guard;guard1: say Heard the bandits hit the mill
+again.;guard2: emote spits.;PAUSE 1;guard1: say The [[captain]] takes their coin, they
+say.;DO mpsetvar $n HEARD_BRIBES yes;TOD=NIGHT</code> on the barracks plays once to each
+player who comes in at night, a line a tick, teaches the <i>captain</i> topic, and leaves a
+variable for the quest. <code>INTERRUPTIBLE</code> lets the player cut in; a long scene goes in a file
+with <code>FILE=scenes/barracks.txt</code>.</p>
 <p>A guard's round without a script: <code>Patroller min=3 max=3;Gate#1;WAIT=5;DO=lock door;
 Wall#4;EMOTE=peers over the battlements.;RESTART</code>; <code>ROUTE=DAY:</code> and <code>ROUTE=NIGHT:</code>
 routes by the time of day; <code>IF=</code> a mask on the guard; <code>RESUME=true</code> back to the round

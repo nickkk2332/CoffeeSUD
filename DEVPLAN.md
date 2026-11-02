@@ -1808,6 +1808,17 @@ N22, N24, N28, N29
   HINTTOPICS: the first TALK with it tells and teaches its topics (scripts'
   words, MudChat's own file's entries), once (TOPICS_HINTED). Journal
   entries wait for PR7.
+- N28 done. Behaviors/Scene on a room or NPC: statements (; or FILE=
+  lines): ACTOR name=mask|name-words (SELF on an NPC), "name: command" (SAY
+  and EMOTE take the rest whole), ECHO, PAUSE n, DO MOBPROG ($n the
+  character), IF= script condition, WHEN=/TOD=/HOURS= (N1), ONCE (default)
+  or REPEAT=n game days, DELAY=, INTERRUPTIBLE, NAME=. Starts on a tick when
+  a player character it is due to is there and its cast is ready; a step a
+  tick. Heard to the end: SCENE_<NAME> = game day on each player there.
+  Stops (not heard) when the character or an actor goes or fights; spoken
+  to (INTERRUPTIBLE), actors turn to the speaker, held for them until they
+  leave. Position kept in the run state; DEBUG shows it and the parameter
+  problems. Rumours wait for N23 (later), journal notes for PR7.
 - N29 done. CHECK(who STAT|skill difficulty [modifier]) (DSE function
   182): a d20 on the shared dice, plus (stat-10)/2 (a base stat by name,
   short name or first letters) or proficiency/10, plus the modifier (a
