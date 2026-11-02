@@ -552,6 +552,10 @@ Gate#3 east" ACTION_down="door close Gate#3 east" RESET=20</code> on an ungettab
 portcullis on both sides for 20 ticks, and LOOK LEVER tells where it stands. Actions are script commands, MP
 left off if you like; <code>REQUIRES=</code> a mask, <code>STATES=1-8</code> a dial (TURN DIAL TO 3),
 <code>SWITCH_PROG up</code> and <code>SWITCHSTATE(lever)</code> for scripts.</p>
+<p>Combination locks: <code>Prop_ComboLock CODE=sun-star-moon SYMBOLS="sun,moon,star" SHOW=true TRIES=3
+ONWRONG="cast Spell_ShockingGrasp $n"</code> on the alchemist's chest: TURN DIAL 2 TO STAR, or SET DIALS SUN STAR
+MOON. A door's keypad is <code>CODE=739</code> (ENTER 739). <code>CODE=RANDOM VAR=VAULTCODE</code> rolls a code
+for each new game, which a torn page can print with <code>$&lt;COMBO VAULTCODE&gt;</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

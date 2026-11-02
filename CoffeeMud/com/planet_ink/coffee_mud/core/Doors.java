@@ -97,6 +97,21 @@ public final class Doors
 		final Environmental E = find(R, what);
 		if(E == null)
 			return "no door or container called " + what;
+		return change(R, E, verb, message);
+	}
+
+	/**
+	 * Changes a door of a room, or a container there.
+	 * @param R the room
+	 * @param E the exit, or the container
+	 * @param verb OPEN, CLOSE, LOCK, UNLOCK or TOGGLE
+	 * @param message what the rooms see, null for the default, or "" for none
+	 * @return null if done, or why not
+	 */
+	public static String change(final Room R, final Environmental E, final String verb, final String message)
+	{
+		if((R == null) || (!((E instanceof Exit) || (E instanceof Container))))
+			return "no door or container";
 		final String v = (verb == null) ? "" : verb.trim().toUpperCase();
 		if(!CMParms.contains(VERBS, v))
 			return "OPEN, CLOSE, LOCK, UNLOCK or TOGGLE, not " + verb;

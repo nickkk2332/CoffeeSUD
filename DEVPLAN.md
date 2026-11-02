@@ -2107,6 +2107,16 @@ I22, I23, I24, I25, I26, I27
   a FUNCTION_PROG on the thing (an exit's on the room), MP put back where
   it was left off. SWITCH_PROG (111) on the thing's and its room's
   scripts; SWITCHSTATE(thing|room:dir|dir) (192).
+- I16 done. Prop_ComboLock (exits, containers), a VerbTaker: TURN DIAL n
+  TO x (VERB=), SET DIALS a b c, ENTER code (left to the game when it is
+  not a code); ON thing. CODE (dashes, spaces or one character a symbol),
+  SYMBOLS (words or n-m), DIALS, SHOW (LOOK), TRIES and ONWRONG, ONOPEN,
+  RELOCK, MSG. It opens with core/Doors (Doors.change now takes the thing
+  as well as its name), on both sides of a door. The dials are kept in
+  its text (READ=); CODE=RANDOM rolls DIALS symbols when there is no GOT=
+  (a new game: the world file has none), kept in its text, and VAR= puts
+  it in the global script variable COMBO name. It keeps its own dials;
+  I9's switch state was not needed for it.
 
 #### 2i. World systems (25)
 
