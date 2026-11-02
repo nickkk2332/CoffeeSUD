@@ -1529,6 +1529,14 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   entry read is shown too. `QUESTS OFFERED` lists those offered or shown
   and still open to the character (`canAcceptQuest`); `QUESTS ACCEPT
   n|name` takes one on (`acceptQuest`).
+- Q8 done. `Prop_QuestItem QUEST=name (NODROP NOSELL NOGIVE)
+  (KEEPONDEATH) (REMOVEON=...)` on an item: drop, sell and give are refused
+  with a message; KEEPONDEATH keeps it at death (Prop_ItemBinder's way, the
+  item-death-keeper sense); it goes when the holder's quest leaves ACTIVE
+  as REMOVEON says (`core/QuestItems`, from Q4's records: WON, FAILED,
+  ABANDONED, EXPIRED; ENDED when the quest stops, but not while a save is
+  being put back), ALL by default, NONE never. `QUESTS name` lists what
+  the character carries for it.
 
 #### 2f. NPC behaviour and dialogue (21)
 

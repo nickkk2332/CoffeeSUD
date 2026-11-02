@@ -96,7 +96,13 @@ public final class QuestRecords
 	 * @param quest the quest's name
 	 * @param who the winner's name
 	 */
-	public static synchronized void won(final String quest, final String who)
+	public static void won(final String quest, final String who)
+	{
+		recordWon(quest, who);
+		QuestItems.left(quest, who, WON); // Q8: what was bound to it, as REMOVEON says
+	}
+
+	private static synchronized void recordWon(final String quest, final String who)
 	{
 		if((quest == null) || (who == null) || (who.trim().length() == 0))
 			return;
@@ -146,7 +152,13 @@ public final class QuestRecords
 	 * @param status FAILED, ABANDONED or EXPIRED
 	 * @param reason why, or ""
 	 */
-	public static synchronized void ended(final String quest, final String who, final String status, final String reason)
+	public static void ended(final String quest, final String who, final String status, final String reason)
+	{
+		recordEnded(quest, who, status, reason);
+		QuestItems.left(quest, who, status); // Q8
+	}
+
+	private static synchronized void recordEnded(final String quest, final String who, final String status, final String reason)
 	{
 		if((quest == null) || (who == null) || (who.trim().length() == 0))
 			return;

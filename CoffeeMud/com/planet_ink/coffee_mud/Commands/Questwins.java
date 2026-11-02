@@ -552,6 +552,11 @@ public class Questwins extends StdCommand
 			final List<String> history=QuestJournal.entries(mob,Q.name(),50);
 			if(history.size()>0)
 				mob.tell(L("\n\r^yHistory:^N\n\r")+"  "+String.join("^N\n\r  ",history)+"^N");
+			final List<String> carried=new ArrayList<String>(); // Q8: what is bound to it
+			for(final Item I : QuestItems.of(mob,Q.name()))
+				carried.add(I.name(mob));
+			if(carried.size()>0)
+				mob.tell(L("\n\r^yQuest items: ^w@x1^N",String.join(", ",carried)));
 		}
 		return false;
 	}

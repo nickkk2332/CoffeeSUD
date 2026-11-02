@@ -5481,6 +5481,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		stoppingQuest=false;
 		if(wasRunning)
 		{
+			QuestItems.ended(name()); // Q8: what was bound to it, as REMOVEON says
 			// ST5: QUEST_PROG END, and FAIL if no one won
 			final String winner=runWinner;
 			final String reason=(endReason!=null)?endReason:"STOPPED";

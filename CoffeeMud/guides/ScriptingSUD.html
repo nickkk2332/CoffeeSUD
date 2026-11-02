@@ -272,6 +272,11 @@ step is running, and QUESTCHECK reports a GOTO to no step.</p>
 <code>ONCE</code> (in a run of the quest) or a game time such as
 <code>REOFFER="1 MUDDAY"</code>. A player who said no can type QUESTS
 OFFERED, then QUESTS ACCEPT 1.</p>
+<p>An item can be bound to a quest: <code>Prop_QuestItem QUEST=bell NODROP
+NOSELL REMOVEON=WON</code> on the sunken bell keeps it from being pawned or
+dropped, and it leaves the pack when the quest is won (the priest's
+<code>MPQUESTWIN</code>). Without REMOVEON it goes however the quest ends for
+its holder; KEEPONDEATH keeps it through a death.</p>
 <pre>
 set name bell
 set display The Drowned Bell
