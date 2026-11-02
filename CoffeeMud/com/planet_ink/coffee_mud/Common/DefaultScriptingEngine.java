@@ -14675,6 +14675,22 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				case 33: // channel_prog
 					category=CMMsg.TYP_CHANNEL;
 					break;
+				case 10: // death_prog @GLOBAL (ST12)
+				case 44: // kill_prog @GLOBAL
+					if(!isGlobalLine(script.get(0).first))
+						continue;
+					category=CMMsg.TYP_DEATH;
+					break;
+				case 41: // execmsg_prog @GLOBAL (ST12)
+				{
+					if(!isGlobalLine(script.get(0).first))
+						continue;
+					final Integer I=CMMsg.Desc.getMSGTYPE_DESCS().get(CMParms.getCleanBit(script.get(0).first,2).toUpperCase());
+					if(I==null)
+						continue;
+					category=I.intValue();
+					break;
+				}
 				default:
 					continue;
 				}
@@ -14682,6 +14698,64 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					CMLib.map().addGlobalHandler((PhysicalAgent)host,category);
 			}
 		}
+	}
+
+	/** ST12: the last message heard by @GLOBAL lines, and which of them heard it */
+	protected CMMsg lastGlobalMsg = null;
+	protected final Set<SubScript> globalHeard = Collections.newSetFromMap(new IdentityHashMap<SubScript,Boolean>());
+
+	/**
+	 * ST12: whether a trigger line starts with @GLOBAL.
+	 * @param line the trigger line
+	 * @return true if so
+	 */
+	protected static boolean isGlobalLine(final String line)
+	{
+		return (line!=null)&&CMParms.getCleanBit(line,1).equalsIgnoreCase("@GLOBAL");
+	}
+
+	/**
+	 * ST12: a trigger line without its @GLOBAL.
+	 * @param line the trigger line
+	 * @return the line
+	 */
+	protected static String stripGlobal(final String line)
+	{
+		final int x=line.toUpperCase().indexOf("@GLOBAL");
+		return (x<0)?line:(line.substring(0,x)+line.substring(x+7));
+	}
+
+	/**
+	 * ST12: whether an @GLOBAL line hears a message for the first time: a
+	 * host in the room it happens in hears it twice, from the room and the
+	 * world.
+	 * @param msg the message
+	 * @param script the trigger line's script
+	 * @return true the first time
+	 */
+	protected boolean firstGlobalHearing(final CMMsg msg, final SubScript script)
+	{
+		synchronized(globalHeard)
+		{
+			if(msg!=lastGlobalMsg)
+			{
+				lastGlobalMsg=msg;
+				globalHeard.clear();
+			}
+			return globalHeard.add(script);
+		}
+	}
+
+	/**
+	 * ST12: whether an @GLOBAL DEATH_PROG or KILL_PROG line's mask fits.
+	 * @param line the trigger line
+	 * @param M the one the mask is on
+	 * @return true if it fits, or there is no mask
+	 */
+	protected boolean globalMaskOk(final String line, final MOB M)
+	{
+		final String mask=CMParms.getPastBitClean(line,1).trim();
+		return (mask.length()==0)||((M!=null)&&CMLib.masking().maskCheck(mask,M,true));
 	}
 
 	protected boolean match(final String str, final String patt)
@@ -15466,6 +15540,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							t=parseBits(script,0,"CCT");
 						if(t!=null)
 						{
+							// ST12: EXECMSG_PROG @GLOBAL type ..., heard once wherever it happens
+							if((t.length>1)&&t[1].equals("@GLOBAL"))
+							{
+								if(!firstGlobalHearing(msg,script))
+									break;
+								t=parseBits(stripGlobal(script.get(0).first),"CCT");
+							}
 							final String command=t[1];
 							boolean chk=false;
 							final int x=command.indexOf('=');
@@ -16110,10 +16191,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					break;
 				case 10: // death_prog
 					if((msg.sourceMinor()==CMMsg.TYP_DEATH)&&canTrigger(10)
-					&&(msg.amISource(eventMob)||(!(affecting instanceof MOB))))
+					&&(msg.amISource(eventMob)||(!(affecting instanceof MOB))||isGlobalLine(script.get(0).first)))
 					{
 						if(t==null)
 							t=parseBits(script,0,"C");
+						// ST12: DEATH_PROG @GLOBAL [mask on the dead]: any death, heard once
+						if(isGlobalLine(script.get(0).first)
+						&&((!firstGlobalHearing(msg,script))||(!globalMaskOk(script.get(0).first,msg.source()))))
+							break;
 						final MOB ded=msg.source();
 						MOB src=lastToHurtMe;
 						if(msg.tool() instanceof MOB)
@@ -16127,10 +16212,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					break;
 				case 44: // kill_prog
 					if((msg.sourceMinor()==CMMsg.TYP_DEATH)&&canTrigger(44)
-					&&((msg.tool()==affecting)||(!(affecting instanceof MOB))))
+					&&((msg.tool()==affecting)||(!(affecting instanceof MOB))||isGlobalLine(script.get(0).first)))
 					{
 						if(t==null)
 							t=parseBits(script,0,"C");
+						// ST12: KILL_PROG @GLOBAL [mask on the killer]: any kill, heard once
+						if(isGlobalLine(script.get(0).first)
+						&&((!firstGlobalHearing(msg,script))||(!(msg.tool() instanceof MOB))||(!globalMaskOk(script.get(0).first,(MOB)msg.tool()))))
+							break;
 						final MOB ded=msg.source();
 						MOB src=lastToHurtMe;
 						if(msg.tool() instanceof MOB)
@@ -16618,13 +16707,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			if((host instanceof MOB)&&(!isFreeToBeTriggered(monster)))
 				return;
 			final Item defaultItem=(host instanceof Item)?(Item)host:null;
+			// ST12: bits starting with @ are for hosts away from the event: only @GLOBAL lines
+			final boolean globalPass=bits.startsWith("@");
+			final String split=globalPass?bits.substring(1):bits;
 			for(final SubScript script : getScripts(host))
 			{
 				if((script.size()<1)||(script.getTriggerCode()!=triggerCode))
 					continue;
-				String[] t=script.getTriggerArgs();
+				final boolean globalLine=isGlobalLine(script.get(0).first);
+				if(globalPass&&(!globalLine))
+					continue;
+				String[] t=globalLine?parseBits(stripGlobal(script.get(0).first),split):script.getTriggerArgs();
 				if(t==null)
-					t=parseBits(script,0,bits);
+					t=parseBits(script,0,split);
 				if((t!=null)&&test.test(t))
 				{
 					if(args==null)

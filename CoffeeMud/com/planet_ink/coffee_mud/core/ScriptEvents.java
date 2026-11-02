@@ -1036,6 +1036,33 @@ public final class ScriptEvents
 			|| ((C != null) && which.equalsIgnoreCase(C.getName()));
 	}
 
+	/**
+	 * ST12: an event for the hosts around it, and for every other host whose
+	 * trigger line starts with @GLOBAL, wherever it is.
+	 * @param local the hosts around the event
+	 * @param triggerCode the trigger
+	 * @param source $n
+	 * @param target $t, or null for the host
+	 * @param msg $g
+	 * @param args $0 and on, or null
+	 * @param bits how the trigger line is split, @GLOBAL left out
+	 * @param test which trigger lines the event fits
+	 */
+	public static void fireAround(final List<PhysicalAgent> local, final int triggerCode, final MOB source, final Environmental target, final String msg, final Object[] args, final String bits, final Predicate<String[]> test)
+	{
+		if((triggerCode <= 0) || (!isUsed(triggerCode)))
+			return;
+		fire(local, triggerCode, source, target, msg, args, bits, test);
+		final List<PhysicalAgent> others = new ArrayList<PhysicalAgent>();
+		for(final PhysicalAgent P : registered(triggerCode))
+		{
+			if(!local.contains(P))
+				others.add(P);
+		}
+		if(others.size() > 0)
+			fire(others, triggerCode, source, target, msg, args, "@" + bits, test);
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */
@@ -1187,7 +1214,7 @@ public final class ScriptEvents
 			return;
 		final Ability mine = mob.fetchAbility(A.ID());
 		final int prof = (mine != null) ? mine.proficiency() : A.proficiency();
-		fire(hosts(mob.location()), SKILL_PROG, mob, A, "" + prof, null, "CCcr", t -> skillMatches(t, mob, A, kind));
+		fireAround(hosts(mob.location()), SKILL_PROG, mob, A, "" + prof, null, "CCcr", t -> skillMatches(t, mob, A, kind));
 	}
 
 	/**

@@ -1074,6 +1074,15 @@ JS17, JS18, JS19, JS20, JS23
   LOSEAREA|LEVEL|ALL [clan]` from those, CLANEXILE, `setClanRelations`,
   the clan's level changes and Conquerable's win and loss, for hosts in
   the member's room, the clan's recall room and the area.
+- ST12 done. `@GLOBAL` first on EXECMSG_PROG (the message type's category),
+  DEATH_PROG and KILL_PROG (DEATH, with a mask on the dead or the killer)
+  registers the host for that world-wide category when the script is
+  parsed; such a line hears each message once (`firstGlobalHearing`),
+  though a host in the room hears it twice. Event triggers take it too
+  (`ScriptEvents.fireAround`): SKILL_PROG and FACTION_PROG hear the hosts
+  around the event, and @GLOBAL lines anywhere. A host with an @GLOBAL
+  line on a category hears that category's messages with its other lines
+  too.
 
 #### 2e. Quests (15)
 
