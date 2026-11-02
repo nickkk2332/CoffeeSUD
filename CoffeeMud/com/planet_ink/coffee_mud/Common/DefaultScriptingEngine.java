@@ -15820,7 +15820,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			"toJavaString",
 			"getCMType",
 			"debug",
-			"cancel"
+			"cancel",
+			"msg", // JS17
+			"room",
+			"findItem",
+			"door",
+			"signal",
+			"state"
 		};
 		scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
 		return scope;
@@ -19369,6 +19375,117 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		public void cancel()
 		{
 			cancelled = true;
+		}
+
+		/** @return JS17: the message of a message trigger (CNCLMSG_PROG, EXECMSG_PROG and the like), or null */
+		public CMMsg msg()
+		{
+			return ctx.cmsg;
+		}
+
+		/** JS17: runs one MOBPROG line for the script's host */
+		protected String line(final String text)
+		{
+			final SubScript DV=new SubScriptImpl(null);
+			DV.add(new ScriptLn("JS_PROG",null,null));
+			DV.add(new ScriptLn(text,null,null));
+			return c.execute(ctx.push(DV));
+		}
+
+		/**
+		 * JS17
+		 * @param id a room's ID
+		 * @return the room, or null
+		 */
+		public Room room(final String id)
+		{
+			return (id == null) ? null : CMLib.map().getRoom(id);
+		}
+
+		/**
+		 * JS17
+		 * @param where a room or its ID, a mob, or a container
+		 * @param name an item's name
+		 * @return the first item of that name there, or null
+		 */
+		public Item findItem(final Object where, final String name)
+		{
+			Object w = (where instanceof org.mozilla.javascript.Wrapper) ? ((org.mozilla.javascript.Wrapper)where).unwrap() : where;
+			if(w instanceof CharSequence)
+				w = CMLib.map().getRoom(w.toString());
+			if(name == null)
+				return null;
+			if(w instanceof Room)
+				return ((Room)w).findItem(null, name);
+			if(w instanceof MOB)
+				return ((MOB)w).findItem(null, name);
+			if(w instanceof Container)
+			{
+				for(final Item I : ((Container)w).getContents())
+				{
+					if(CMLib.english().containsString(I.name(), name))
+						return I;
+				}
+			}
+			return null;
+		}
+
+		/**
+		 * JS17: a door, both sides, from anywhere, without a message (I2's
+		 * MPDOOR will add messages).
+		 * @param roomId the room's ID
+		 * @param dir the exit's direction
+		 * @param op OPEN, CLOSE, LOCK or UNLOCK
+		 * @return false if there is no such door, or no lock to lock
+		 */
+		public boolean door(final String roomId, final String dir, final String op)
+		{
+			final Room R = (roomId == null) ? null : CMLib.map().getRoom(roomId);
+			final int d = (dir == null) ? -1 : CMLib.directions().getGoodDirectionCode(dir);
+			if((R == null) || (d < 0))
+				return false;
+			final Exit E = R.getRawExit(d);
+			if((E == null) || (!E.hasADoor()))
+				return false;
+			final String o = (op == null) ? "" : op.trim().toUpperCase();
+			final boolean open = o.equals("OPEN") || (o.equals("UNLOCK") && E.isOpen());
+			final boolean locked = o.equals("LOCK");
+			if((locked || o.equals("UNLOCK")) && (!E.hasALock()))
+				return false;
+			if(!(o.equals("OPEN") || o.equals("CLOSE") || locked || o.equals("UNLOCK")))
+				return false;
+			final Room R2 = R.getRoomInDir(d);
+			final Exit E2 = (R2 == null) ? null : R2.getRawExit(Directions.getOpDirectionCode(d));
+			for(final Exit X : new Exit[] { E, E2 })
+			{
+				if((X != null) && X.hasADoor())
+					X.setDoorsNLocks(true, open && !locked, X.defaultsClosed(), X.hasALock(), locked && X.hasALock(), X.defaultsLocked());
+			}
+			return true;
+		}
+
+		/**
+		 * JS17: MPSIGNAL with these words (SC6).
+		 * @param words the signal's name and the rest, as MPSIGNAL takes them
+		 */
+		public void signal(final String words)
+		{
+			line("MPSIGNAL " + ((words == null) ? "" : words));
+		}
+
+		/**
+		 * JS17: SC4's state of one object: read with two arguments, set with three.
+		 * @param thing the object, as a script names it ($i, $n, a name)
+		 * @param name the state's name
+		 * @param value the value to set, or nothing to read
+		 * @return the value
+		 */
+		public String state(final String thing, final String name, final Object value)
+		{
+			if((value == null) || (value instanceof org.mozilla.javascript.Undefined))
+				return c.functify(ctx, "STATE(" + thing + " " + name + ")");
+			line("MPSTATE " + thing + " " + name + " " + Context.toString(value));
+			return Context.toString(value);
 		}
 
 		public Environmental host()

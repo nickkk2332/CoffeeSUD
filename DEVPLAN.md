@@ -1387,6 +1387,14 @@ JS17, JS18, JS19, JS20, JS23
   runs and what each place has, errors and time limits, the old tricks, and
   worked examples (a shopkeeper, a cursed sword, a ferryman; JS18 adds a
   quest).
+- JS17 done. A <SCRIPT> (and MPJSFILE's file, and JS()) also has
+  `msg()` (SC5's message of a message trigger, or null), `room(id)`,
+  `findItem(where, name)` (a room or its ID, a mob, a container),
+  `door(roomId, dir, op)` (OPEN, CLOSE, LOCK or UNLOCK on both sides, no
+  message: I2's MPDOOR is not built yet), `signal('target name args')`
+  (MPSIGNAL) and `state(thing, name[, value])` (STATE and MPSTATE);
+  cancel() was JS15's. Written up in guides/Scriptable.html's <SCRIPT>
+  section and JavaScriptSUD.html.
 
 #### 2e. Quests (15)
 

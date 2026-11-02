@@ -4725,6 +4725,14 @@ the Scriptable behavior will strip them out as part of its command
 parsing process. For this reason, if you absolutely must keep a
 semicolon ANYWHERE in your javascript, whether as part of a displayable
 string, or a line delimeter, it must be escaped: \;</p>
+      <p><b>CoffeeSUD:</b> a &lt;SCRIPT&gt; also has msg() (the message of a
+message trigger, as CNCLMSG_PROG's, or null), cancel() (the prog returns CANCEL,
+so a CNCLMSG_PROG refuses its message), room(id), findItem(where, name) (a
+room or its ID, a mob, or a container), door(roomId, dir, op) (OPEN, CLOSE,
+LOCK or UNLOCK, both sides of the exit), signal('target name args') (as
+MPSIGNAL) and state(thing, name) or state(thing, name, value) (as STATE and
+MPSTATE), and what every JavaScript has: cm, sud, require(), include() and
+debug(). See <a href="JavaScriptSUD.html">JavaScript in CoffeeSUD</a>.</p>
 
       <p>Here is an example:</p>
 

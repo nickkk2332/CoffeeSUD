@@ -41,7 +41,7 @@ went wrong.</p>
 <h2><a name="where">Where it runs</a></h2>
 <table border="1" cellpadding="4" cellspacing="0">
 <tr><th>Where</th><th>What it is for</th><th>What it has, besides every scope's</th></tr>
-<tr><td><code>&lt;SCRIPT&gt;</code> in a MOBPROG</td><td>a few lines in a trigger</td><td><code>host()</code>, <code>source()</code>, <code>target()</code>, <code>monster()</code>, <code>item()</code>, <code>message()</code>, <code>getVar</code>, <code>setVar</code>, <code>cancel()</code>, and every MOBPROG command and function in capitals (<code>MPECHO('hi')</code>)</td></tr>
+<tr><td><code>&lt;SCRIPT&gt;</code> in a MOBPROG</td><td>a few lines in a trigger</td><td><code>host()</code>, <code>source()</code>, <code>target()</code>, <code>monster()</code>, <code>item()</code>, <code>message()</code>, <code>msg()</code>, <code>getVar</code>, <code>setVar</code>, <code>cancel()</code>, <code>room(id)</code>, <code>findItem(where, name)</code>, <code>door(roomId, dir, op)</code>, <code>signal('target name')</code>, <code>state(thing, name[, value])</code>, and every MOBPROG command and function in capitals (<code>MPECHO('hi')</code>)</td></tr>
 <tr><td><code>MPJSFILE</code>, <code>JS()</code></td><td>a file, or an expression, from MOBPROG</td><td>as <code>&lt;SCRIPT&gt;</code>; a file also has <code>args</code></td></tr>
 <tr><td><code>JScriptable</code></td><td>a mob, item, room, exit or area scripted wholly in JavaScript</td><td><code>me</code>, <code>state</code>, <code>CMMsg</code>, handlers</td></tr>
 <tr><td><code>Prop_JScript</code>, <code>JSBehavior</code></td><td>effects with stat changes; behaviours</td><td><code>parms</code>, <code>CMMsg</code>, hooks</td></tr>
