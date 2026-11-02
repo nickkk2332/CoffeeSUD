@@ -305,6 +305,10 @@ together.</p>
 TEMPLATE=normal LEVELRANGE=3</code> on the Mercenaries' Guild board keeps three
 generated quests near the reader's level; LOOK at it lists them, <code>ACCEPT 2</code>
 takes one, and each morning the jobs done go and new ones come.</p>
+<p>The main story should not be dropped by a slip: <code>SET DROPPABLE FALSE</code>.
+A side delivery can let go cleanly: its <code>FUNCTION_PROG DO_DROP</code> runs when
+the player confirms QUESTS DROP, and takes the parcel back; a <code>FUNCTION_PROG
+CAN_DROP</code> that returns words refuses the drop with them.</p>
 <pre>
 set name bell
 set display The Drowned Bell

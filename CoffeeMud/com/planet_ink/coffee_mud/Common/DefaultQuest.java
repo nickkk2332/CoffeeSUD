@@ -105,6 +105,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected String rewards = "";
 	/** Q12: SET SHARED: "" (NONE), PARTY or PROFILE */
 	protected String shared = "";
+	/** Q15: SET DROPPABLE FALSE: QUESTS DROP refuses */
+	protected boolean droppable = true;
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -304,6 +306,69 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						acceptQuest(member);
 				});
 		}
+	}
+
+	/** Q15: the character's script for this quest, or null */
+	protected ScriptingEngine trackingScript(final MOB mob)
+	{
+		for(final Enumeration<ScriptingEngine> e=mob.scripts();e.hasMoreElements();)
+		{
+			final ScriptingEngine S=e.nextElement();
+			if((S!=null)&&(S.defaultQuestName()!=null)&&S.defaultQuestName().equalsIgnoreCase(name()))
+				return S;
+		}
+		return null;
+	}
+
+	/**
+	 * Q15: a FUNCTION_PROG of the character's script for the quest, then of
+	 * its accept script, as CAN_ACCEPT is run.
+	 * @param mob the character
+	 * @param func CAN_DROP or DO_DROP
+	 * @param all true to run both, false to stop at the first that returns something
+	 * @return what it returned, or ""
+	 */
+	protected String dropFunction(final MOB mob, final String func, final boolean all)
+	{
+		String said="";
+		final ScriptingEngine own=trackingScript(mob);
+		if((own!=null)&&own.isFunc(func))
+		{
+			final String s=own.callFunc(func,mob.Name(),new MPContext(mob,mob,mob,null,null,null,mob.Name(),null));
+			if(s!=null)
+				said=s.trim();
+			if((!all)&&(said.length()>0))
+				return said;
+		}
+		final ScriptingEngine acceptEng=ensureEngine();
+		final Behavable B=checkAcceptHost;
+		if((acceptEng!=null)&&(B instanceof Environmental)&&acceptEng.isFunc(func))
+		{
+			final PhysicalAgent P=(B instanceof PhysicalAgent)?(PhysicalAgent)B:mob;
+			final MOB M=(B instanceof MOB)?(MOB)B:mob;
+			final String s=acceptEng.callFunc(func,mob.Name(),new MPContext(P,M,mob,(Environmental)B,null,null,mob.Name(),objs));
+			if((s!=null)&&(said.length()==0))
+				said=s.trim();
+		}
+		return said;
+	}
+
+	@Override
+	public String canDropQuest(final MOB mob)
+	{
+		if(mob==null)
+			return "";
+		final String name=(displayName().trim().length()>0)?displayName():name();
+		if(!droppable)
+			return CMLib.lang().L("'@x1' is not a quest you can drop.",name);
+		return dropFunction(mob,"CAN_DROP",false);
+	}
+
+	@Override
+	public void dropQuest(final MOB mob)
+	{
+		if(mob!=null)
+			dropFunction(mob,"DO_DROP",true);
 	}
 
 	@Override
@@ -555,6 +620,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		maxWins=0;
 		rewards=""; // Q10
 		shared=""; // Q12
+		droppable=true; // Q15
 		name="";
 		author="";
 		displayName="";
@@ -768,6 +834,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				else
 				if(var.equals("REWARDS")) // Q10
 					rewards=CMParms.combine(parsedLine,2).trim();
+				else
+				if(var.equals("DROPPABLE")) // Q15
+					droppable=!CMParms.combine(parsedLine,2).trim().equalsIgnoreCase("FALSE");
 				else
 				if(var.equals("SHARED")) // Q12
 				{
@@ -3628,7 +3697,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					}
 					else
 					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")
-					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")||cmd.equals("SHARED")) // JS18, Q1, Q5, Q10, Q12: read when the script was set
+					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")||cmd.equals("SHARED")
+					||cmd.equals("DROPPABLE")) // JS18, Q1, Q5, Q10, Q12, Q15: read when the script was set
 					{
 					}
 					else
@@ -6474,6 +6544,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			how.add("MAXWINS "+maxWins);
 		if(shared.length()>0) // Q12
 			how.add("SHARED "+shared);
+		if(!droppable) // Q15
+			how.add("DROPPABLE FALSE");
 		if(how.size()>0)
 			str.append("Settings: ").append(String.join(", ",how)).append("\n\r");
 		if(qs!=null)
@@ -7220,6 +7292,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				return rewards;
 			if(code.equals("SHARED")) // Q12
 				return (shared.length()>0)?shared:QuestSharing.NONE;
+			if(code.equals("DROPPABLE")) // Q15
+				return droppable?"TRUE":"FALSE";
 			if((code.equalsIgnoreCase("REMAINING"))&&(running()))
 				return ""+ticksRemaining;
 			if(questState.vars.containsKey(code) && (!questState.isStat(code)))

@@ -155,6 +155,28 @@ public interface Quest extends Tickable, CMCommon, Modifiable
 	public void acceptQuest(final MOB mob);
 
 	/**
+	 * Q15: whether a character may drop the quest (QUESTS DROP): SET
+	 * DROPPABLE FALSE refuses, and so does a FUNCTION_PROG CAN_DROP, on
+	 * their script for the quest or on its accept script, that returns
+	 * something, which is shown to them.
+	 * @param mob the character
+	 * @return why not, or "" if they may
+	 */
+	public default String canDropQuest(final MOB mob)
+	{
+		return "";
+	}
+
+	/**
+	 * Q15: the character confirmed dropping the quest: FUNCTION_PROG
+	 * DO_DROP, on their script for the quest and on its accept script.
+	 * @param mob the character
+	 */
+	public default void dropQuest(final MOB mob)
+	{
+	}
+
+	/**
 	 * Returns the unique start date of the quest.  The format
 	 * is either MONTH-DAY for real life dates, or
 	 * MUDDAY MONTH-DAY for mudday based dates.

@@ -446,8 +446,15 @@ public class Questwins extends StdCommand
 				mob.tell(L("You have not accepted a quest called '@x1'.  Enter QUESTS for a list.",rest));
 				return false;
 			}
+			final String refused=Q.canDropQuest(mob); // Q15: SET DROPPABLE FALSE, CAN_DROP
+			if(refused.length()>0)
+			{
+				mob.tell(refused);
+				return false;
+			}
 			if((!mob.isMonster()&&(mob.session().confirm(L("Drop the quest '@x1', are you sure (y/N)?",Q.name()),"N"))))
 			{
+				Q.dropQuest(mob); // Q15: DO_DROP, before the quest's scripts go
 				CMLib.coffeeTables().bump(Q,CoffeeTableRow.STAT_QUESTDROPPED);
 				QuestRecords.ended(Q.name(),mob.Name(),QuestRecords.ABANDONED,"DROPPED"); // Q4
 				foundS.stepQuest(mob, mob, foundS.defaultQuestName());

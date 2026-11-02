@@ -1594,6 +1594,13 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   around it. Jobs wait with no expiry unless EXPIRE= is given, and carry
   QUESTBOARD and POSTED quest variables, so a saved game (S8) keeps them
   with their board.
+- Q15 done. `SET DROPPABLE FALSE`: QUESTS DROP refuses the quest
+  (`Quest.canDropQuest`). A `FUNCTION_PROG CAN_DROP`, on the character's
+  script for the quest or its accept script, that returns something
+  refuses too, with its words. `FUNCTION_PROG DO_DROP` now runs on the
+  confirmed drop (`Quest.dropQuest`), on both scripts, before the quest's
+  scripts go; the quest is ABANDONED for them (Q4). QUESTINFO and
+  QUESTCHECK know SET DROPPABLE.
 
 #### 2f. NPC behaviour and dialogue (21)
 
