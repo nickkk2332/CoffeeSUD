@@ -2008,6 +2008,12 @@ C18, C19, C20, C21, C22, C23, C25
   to the party, a WAIT= standoff: a fight ends it, the party leaving
   despawns them (AVOIDED), else they strike. ONCE or RESET=n. AMBUSH_PROG
   (109) with the outcome, on the room's and its NPCs' scripts.
+- C19 done. Prop_RejuvWhen (mobs, items): WHEN= mask, ELSE=WAIT/NEVER/
+  REPLACE:name. core/RejuvRules.verdict, asked by StdMOB's dead tick before
+  the rebirth (the mob checked as if in its start room) and by ItemRejuv
+  before it copies an item back (a factory mob in the room): WAIT resets
+  the rejuv count, NEVER destroys the mob or drops the item's entry,
+  REPLACE brings Encounters.make(name) there for good (a mob as resident).
 
 #### 2h. Items, properties and puzzles (23)
 

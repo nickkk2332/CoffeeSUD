@@ -511,6 +511,9 @@ gives a laurel (<code>ARENAWIN_PROG</code>), and a defeated player wakes in the 
 undergrowth!" SPOTMSG="You spot glints of steel in the bushes."</code> on a forest road: a party with no ranger is
 caught by surprise and loses its first round; a party with one spots the bandits and may strike first or walk on.
 <code>AMBUSH_PROG SPOTTED</code> lets the bandit chief call out instead.</p>
+<p>Respawns that follow the story: <code>Prop_RejuvWhen WHEN="-IF !VAR(* OLDMILL == CLEARED)"
+ELSE="REPLACE:a settler"</code> on the mill's bandits, and <code>MPSETVAR * OLDMILL CLEARED</code> when the player
+wins "Clear the Old Mill": the bandits never return, and settlers come in their place. <code>ELSE=WAIT</code> checks again at the next rejuv; it works on items too.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

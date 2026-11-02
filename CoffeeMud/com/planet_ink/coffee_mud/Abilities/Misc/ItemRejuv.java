@@ -174,6 +174,17 @@ public class ItemRejuv extends StdAbility implements ItemTicker
 				if((!R.isContent(thisItem))
 				&&((!CMLib.flags().isMobile(thisItem)) || (!CMLib.flags().isInTheGame(thisItem,true))))
 				{
+					// C19: Prop_RejuvWhen: back only when its mask says
+					final String rejuvVerdict=RejuvRules.verdict(ccontents.elementAt(i),R);
+					if(rejuvVerdict!=null)
+					{
+						if(!rejuvVerdict.equals("WAIT"))
+						{
+							RejuvRules.replace(rejuvVerdict,R,false); // REPLACE:name, or NEVER
+							contents.setElementAt(null,i); // gone for good
+						}
+						continue;
+					}
 					final Item newThisItem=(Item)ccontents.elementAt(i).copyOf();
 					contents.setElementAt(newThisItem,i);
 					for(int c=0;c<ccontents.size();c++)
@@ -237,6 +248,8 @@ public class ItemRejuv extends StdAbility implements ItemTicker
 
 			if(!verifyFixContents())
 				return false;
+			if(contents.elementAt(0)==null)
+				return false; // C19: gone for good (Prop_RejuvWhen)
 
 			if((!R.isContent(item))
 			&&((!CMLib.flags().isMobile(item)) || (!CMLib.flags().isInTheGame(item,true))))

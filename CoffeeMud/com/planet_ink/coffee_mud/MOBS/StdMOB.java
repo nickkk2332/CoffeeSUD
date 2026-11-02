@@ -4124,6 +4124,23 @@ public class StdMOB implements MOB
 									lastTickedTime = GameTime.now();
 									return isOk;
 								}
+								// C19: Prop_RejuvWhen: back only when its mask says
+								final String rejuvVerdict = RejuvRules.verdict(this, startRoom);
+								if(rejuvVerdict != null)
+								{
+									if(rejuvVerdict.equals("WAIT"))
+									{
+										phyStats().setRejuv(basePhyStats().rejuv()); // it tries again later
+										tickStatus = Tickable.STATUS_NOT;
+										lastTickedTime = GameTime.now();
+										return isOk;
+									}
+									RejuvRules.replace(rejuvVerdict, startRoom, true); // REPLACE:name, or NEVER
+									tickStatus = Tickable.STATUS_END;
+									if(soulMate() == null)
+										destroy();
+									return false;
+								}
 								tickStatus = Tickable.STATUS_REBIRTH;
 								final Map<String,String> keptVars = ObjectVars.persisting(this); // SC4
 								cloneFix(CMClass.getMOBPrototype(ID()));
