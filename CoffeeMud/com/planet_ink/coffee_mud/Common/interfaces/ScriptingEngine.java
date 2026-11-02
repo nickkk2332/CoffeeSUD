@@ -523,6 +523,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"REGREET_PROG", // 90
 		"EVERY_PROG", // 91
 		"VAR_PROG", // 92
+		"AFFECT_PROG", // 93
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */

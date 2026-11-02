@@ -1136,6 +1136,9 @@ JS17, JS18, JS19, JS20, JS23
 - ST25 done. `VAR_PROG host|*|quest var cmp value` from `setVar`, for every
   host with it, when the change makes the condition true; $g the new value,
   $0 the old.
+- ST26 done. `AFFECT_PROG ADD|REMOVE|ANY ability|*` from `addEffect` and
+  `delEffect` on mobs, items and rooms (not the permanent properties), for
+  the thing, its room and an item's owner, only when some script has it.
 
 #### 2e. Quests (15)
 

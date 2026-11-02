@@ -2917,6 +2917,7 @@ public class StdRoom implements Room
 			return;
 		affects.addElement(to);
 		to.setAffectedOne(this);
+		ScriptEvents.affected(this, to, true); // ST26
 	}
 
 	@Override
@@ -2944,6 +2945,7 @@ public class StdRoom implements Room
 			to.setAffectedOne(null);
 			if(affects.isEmpty())
 				affects=new SVector<Ability>(1);
+			ScriptEvents.affected(this, to, false); // ST26
 		}
 	}
 

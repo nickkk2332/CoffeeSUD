@@ -1805,6 +1805,43 @@ public final class ScriptEvents
 		});
 	}
 
+	/** AFFECT_PROG's code */
+	public static final int	AFFECT_PROG	= code("AFFECT_PROG");
+
+	/**
+	 * ST26: an effect was put on something or came off it: AFFECT_PROG
+	 * ADD|REMOVE|ANY ability|* for the thing, its room, and an item's owner.
+	 * $t is the thing, $g the effect's ID, $n its invoker.
+	 * @param host the thing affected
+	 * @param A the effect
+	 * @param added true if put on, false if off
+	 */
+	public static void affected(final Physical host, final Ability A, final boolean added)
+	{
+		if((host == null) || (A == null) || (!isUsed(AFFECT_PROG)) || com.planet_ink.coffee_mud.core.save.SaveGame.isWorldPending())
+			return;
+		final Room R = CMLib.map().roomLocation(host);
+		if(R == null)
+			return;
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		if(host instanceof PhysicalAgent)
+			hosts.add((PhysicalAgent)host);
+		if(!hosts.contains(R))
+			hosts.add(R);
+		if((host instanceof Item) && (((Item)host).owner() instanceof MOB) && (!hosts.contains(((Item)host).owner())))
+			hosts.add((MOB)((Item)host).owner());
+		final String kind = added ? "ADD" : "REMOVE";
+		final MOB inv = (A.invoker() != null) ? A.invoker() : standIn("the world");
+		fire(hosts, AFFECT_PROG, inv, host, A.ID(), new Object[] { kind }, "CCr", t -> {
+			if(t.length < 2)
+				return false;
+			if((!t[1].equals("ANY")) && (!t[1].equals(kind)))
+				return false;
+			final String w = (t.length > 2) ? t[2].trim() : "";
+			return (w.length() == 0) || w.equals("*") || w.equalsIgnoreCase(A.ID()) || CMLib.english().containsString(A.Name(), w);
+		});
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

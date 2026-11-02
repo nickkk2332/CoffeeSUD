@@ -1941,6 +1941,7 @@ public class StdItem implements Item
 			affects=new SVector<Ability>(1);
 		affects.addElement(to);
 		to.setAffectedOne(this);
+		ScriptEvents.affected(this, to, true); // ST26
 	}
 
 	@Override
@@ -1949,7 +1950,10 @@ public class StdItem implements Item
 		if(affects==null)
 			return;
 		if(affects.remove(to))
+		{
 			to.setAffectedOne(null);
+			ScriptEvents.affected(this, to, false); // ST26
+		}
 	}
 
 	@Override

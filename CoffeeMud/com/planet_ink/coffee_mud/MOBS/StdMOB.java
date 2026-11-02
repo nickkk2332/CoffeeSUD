@@ -5336,13 +5336,17 @@ public class StdMOB implements MOB
 			return;
 		affects.addElement(to);
 		to.setAffectedOne(this);
+		ScriptEvents.affected(this, to, true); // ST26
 	}
 
 	@Override
 	public void delEffect(final Ability to)
 	{
 		if(affects.removeElement(to))
+		{
 			to.setAffectedOne(null);
+			ScriptEvents.affected(this, to, false); // ST26
+		}
 	}
 
 	@Override
