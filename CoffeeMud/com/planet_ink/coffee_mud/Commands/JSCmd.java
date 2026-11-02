@@ -41,9 +41,12 @@ public class JSCmd extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if((commands.size()>1)&&commands.get(1).equalsIgnoreCase("STATE"))
+			return state(mob,commands);
 		if((commands.size()<2)||(!commands.get(1).equalsIgnoreCase("ERRORS")))
 		{
-			mob.tell(L("JS ERRORS [number]: the most recent JavaScript errors."));
+			mob.tell(L("JS ERRORS [number]: the most recent JavaScript errors.\n\r"
+				+"JS STATE ([key] (= {value}/DELETE)): the JavaScript stores (cm.store), in builder mode."));
 			return false;
 		}
 		int max=10;
@@ -59,6 +62,58 @@ public class JSCmd extends StdCommand
 		for(final String e : errors)
 			str.append(e).append("\n\r");
 		mob.tell(str.toString());
+		return false;
+	}
+
+	/**
+	 * JS7: JS STATE lists the stores; JS STATE key shows one; JS STATE key =
+	 * {value} replaces it (JSON, or a JavaScript object as {gold: 5}); JS
+	 * STATE key DELETE takes it away.  Builder and developer games only.
+	 * @param mob the builder
+	 * @param commands the words
+	 * @return false
+	 */
+	protected boolean state(final MOB mob, final List<String> commands)
+	{
+		if(!(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()||com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode()))
+		{
+			mob.tell(L("JS STATE is for builder mode."));
+			return false;
+		}
+		if(commands.size()<3)
+		{
+			final List<String> keys=JSStore.keys();
+			if(keys.size()==0)
+			{
+				mob.tell(L("There are no JavaScript stores."));
+				return false;
+			}
+			final StringBuilder str=new StringBuilder(L("JavaScript stores:"));
+			for(final String k : keys)
+			{
+				final String j=JSStore.json(k,0);
+				str.append("\n\r  ").append(k).append(": ").append((j==null)?"":CMStrings.ellipse(j,70));
+			}
+			mob.tell(str.toString());
+			return false;
+		}
+		final String rest=CMParms.combine(commands,2);
+		final int eq=rest.indexOf('=');
+		String key=((eq<0)?rest:rest.substring(0,eq)).trim();
+		if(eq>=0)
+		{
+			final String why=JSStore.set(key,rest.substring(eq+1).trim());
+			mob.tell((why==null)?L("Store '@x1' set.",key):L("Store '@x1' not set: @x2",key,why));
+			return false;
+		}
+		if(key.toUpperCase().endsWith(" DELETE"))
+		{
+			key=key.substring(0,key.length()-7).trim();
+			mob.tell(JSStore.remove(key)?L("Store '@x1' taken away.",key):L("There is no store '@x1'.",key));
+			return false;
+		}
+		final String j=JSStore.json(key,2);
+		mob.tell((j==null)?L("There is no store '@x1'. JS STATE lists them.",key):(key+" = "+j));
 		return false;
 	}
 

@@ -1287,6 +1287,16 @@ JS17, JS18, JS19, JS20, JS23
   when no key is given; `sud.time.waitUntil`. JCONSOLE sets here, area and
   target for each line. `guides/JavaScriptSUD.html`. cm.holiday and
   cm.market wait for W6 and W27 (later).
+- JS7 done. `core/JSStore`: `cm.store(key)` (and `cm.storeKey`,
+  `cm.stores`), one live object per key until a restore; keys are strings or
+  `room:ID`, `mob:startRoom/name`, `item:where/name`, `area:name`,
+  `quest:name`. Saved as JSON in world.xml's `<JSSTATE>` (after
+  SCRIPTVARS), put back at the end of `WorldState.apply`, before onRestore;
+  a new game reads `world/js/state.json`. Only what JSON writes is kept.
+  `JS STATE [key] [= {value} | DELETE]` in builder mode (a value is JSON or
+  a JavaScript object, as the command line drops JSON's quotes). SAVE INFO
+  counts the stores. The smoke test sets one before a save and reads it
+  after the restore.
 
 #### 2e. Quests (15)
 

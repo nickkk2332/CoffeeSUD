@@ -251,6 +251,7 @@ public final class WorldState
 		str.append("</AREAS>\n");
 		str.append(vesselsXML());
 		str.append(scriptVarsXML());
+		str.append(JSStore.toXML()); // JS7: cm.store
 		str.append(questsXML(player));
 		str.append(ridesXML());
 		str.append("</WORLD>\n");
@@ -437,6 +438,7 @@ public final class WorldState
 				}
 			}
 		}
+		JSStore.fromXML(world.getPieceFromPieces("JSSTATE")); // JS7: before onRestore
 	}
 
 	/**

@@ -202,6 +202,9 @@ public final class SaveTools
 		str.append(L("  Quests    : @x1\n\r", (running.size() == 0) ? L("none running") : CMParms.toListString(running.iterator())));
 		final XMLTag vars = xml.getPieceFromPieces(world, "SCRIPTVARS");
 		str.append(L("  Variables : @x1\n\r", "" + ((vars == null) ? 0 : vars.contents().size())));
+		final XMLTag stores = xml.getPieceFromPieces(world, "JSSTATE");
+		if(stores != null)
+			str.append(L("  JS stores : @x1\n\r", "" + stores.contents().size()));
 		if("true".equalsIgnoreCase(h.getProperty("dev", "")))
 			str.append(L("  Dev       : made in a developer's game (DEV=1)\n\r"));
 		final String sum = h.getProperty("worldsum", "");

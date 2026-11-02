@@ -399,6 +399,8 @@ public final class ScriptEvents
 	public static void game(final String kind, final MOB mob, final String detail)
 	{
 		final String d = (detail == null) ? "" : detail;
+		if(kind.equals("NEWGAME"))
+			JSStore.newGame(); // JS7: world/js/state.json
 		JSEvents.fire(kind.toLowerCase(), mob, d); // JS6: cm.on
 		switch(kind)
 		{

@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.core;
 
 import java.util.*;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -46,6 +47,9 @@ public class JSCm
 
 	/** cm.lib: CMLib, the game's libraries (cm.lib.map(), cm.lib.law()...); set by JSScope */
 	public Object lib = null;
+
+	/** the scope this cm is in, where JS7's stores are made */
+	protected Scriptable scope = null;
 
 	/**
 	 * A cm for a script.
@@ -676,6 +680,40 @@ public class JSCm
 		return (s == null) ? "" : s;
 	}
 
+	// ---------------------------------------------------------------- stores (JS7)
+
+	/**
+	 * A plain JavaScript object kept with the game: its fields are saved as
+	 * JSON and come back on restore.
+	 * @param holder a key ('world', 'quest:name', any string) or a room, mob, item, area or quest
+	 * @return the store, the same object each time until the game is restored
+	 */
+	public Scriptable store(final Object holder)
+	{
+		return JSStore.store(Context.getCurrentContext(), scope, JSStore.keyOf(holder));
+	}
+
+	/** @return the world's store, cm.store('world') */
+	public Scriptable store()
+	{
+		return store(null);
+	}
+
+	/**
+	 * @param holder a key, or a room, mob, item, area or quest
+	 * @return the key its store has
+	 */
+	public String storeKey(final Object holder)
+	{
+		return JSStore.keyOf(holder);
+	}
+
+	/** @return the keys of the stores there are */
+	public List<String> stores()
+	{
+		return JSStore.keys();
+	}
+
 	// ---------------------------------------------------------------- events
 
 	/**
@@ -1155,6 +1193,7 @@ public class JSCm
 	{
 		final JSCm cm = new JSCm(host);
 		cm.lib = new org.mozilla.javascript.NativeJavaClass(scope, CMLib.class);
+		cm.scope = scope;
 		return cm;
 	}
 }

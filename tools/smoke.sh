@@ -276,14 +276,15 @@ fi
 
 echo "Session 10: start the quest, gain a follower, light the torch, and save"
 # builder mode's characters stay in builder mode, so a game starts with its own
-play quest.txt 'Questor\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\nmodify quest smoketest start\ncreate mob dog\ncreate mob wolf\nstat wolf\njrun /resources/quests/_smoke/followfx.js\ngroup\nsave quests1\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+play quest.txt 'Questor\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nget book\nread book\nmodify quest smoketest start\ncreate mob dog\ncreate mob wolf\nstat wolf\njrun /resources/quests/_smoke/followfx.js\njrun /resources/quests/_smoke/jsstore1.js\ngroup\nsave quests1\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 expect quest.txt "This game plays on a copy of the world."
 expect quest.txt "Quest 'smoketest' started."
 expect quest.txt "] a dog"
 
 echo "Session 11: restore the quest, the follower, the torch and the wolf"
-play quest2.txt 'list quests\ngroup\nstat wolf\nsave quests2\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=quests1
+play quest2.txt 'list quests\ngroup\nstat wolf\njrun /resources/quests/_smoke/jsstore2.js\nsave quests2\nquit\nn\n' "DBSERVICE=jdbc:fakedb:$W/qdb" "WORLDDIR=$W/qworld" RESTORE=quests1
 expect quest2.txt "Restored 'quests1'."
+expect quest2.txt "JSSTORE got 7 12 Ann"
 expect quest2.txt "] a dog"
 if grep -aq "smoketest *running" "$W/quest2.txt"; then
 	echo "  ok    quest2.txt: the quest is still running"

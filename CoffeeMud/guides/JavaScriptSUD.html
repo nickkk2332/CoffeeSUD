@@ -23,6 +23,7 @@ went wrong.</p>
 <li><a href="#cm">cm</a></li>
 <li><a href="#world">cm's world members</a></li>
 <li><a href="#events">cm.on</a></li>
+<li><a href="#store">cm.store</a></li>
 <li><a href="#sud">sud</a></li>
 <li><a href="#shared">Shared code</a></li>
 <li><a href="#examples">Examples</a></li>
@@ -106,6 +107,28 @@ The function gets (character, detail). A <code>save</code> listener that
 returns false refuses the save.</li>
 <li><code>tick</code>: every tick.</li>
 </ul>
+
+<h2><a name="store">cm.store</a></h2>
+<p><code>cm.store(key)</code> is a plain JavaScript object kept with the game:
+what a script puts in it is saved with the game as JSON, and is there again
+after a restore. <i>key</i> is <code>'world'</code> (also
+<code>cm.store()</code>), <code>'quest:name'</code>, any string, or a room
+(keyed by its ID), a mob (by its start room and name), an item (by where it is
+and its name) or an area. <code>cm.storeKey(x)</code> gives the key,
+<code>cm.stores()</code> lists them. A new game starts from
+<code>world/js/state.json</code> if the world has one:
+<code>{"world": {"gold": 0}, "quest:smith": {"orders": []}}</code>.</p>
+<p>A store keeps data: numbers, strings, true and false, arrays and objects of
+them. A function or a game object (a mob, a room) is not saved; keep its name
+or room ID instead. In builder mode, <code>JS STATE</code> lists the stores,
+<code>JS STATE key</code> shows one, <code>JS STATE key = {gold: 5}</code>
+replaces it, and <code>JS STATE key DELETE</code> takes it away.</p>
+<pre>
+// a smith's &lt;SCRIPT&gt;: an order, due on day 12, still due after SAVE and RESTORE
+var orders = cm.store(cm.host());
+orders.list = orders.list || [];
+orders.list.push({who: source.Name(), item: 'longsword', readyDay: cm.clock().day() + 3});
+</pre>
 
 <h2><a name="sud">sud</a></h2>
 <ul>
