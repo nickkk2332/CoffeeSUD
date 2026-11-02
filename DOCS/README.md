@@ -1,5 +1,7 @@
 # CoffeeMud: overview
 
+> **Note.** This analysis was written before CoffeeSUD existed, when the plan was a separate single-player game in Python that would borrow from CoffeeMud. The project instead forked CoffeeMud itself, in Java. The chapters still describe the engine CoffeeSUD is built on, but their "takeaways for a Python SUD" are from that earlier plan. For CoffeeSUD as it is now, see the [top-level README](../README.md) and [`PLAN.md`](../PLAN.md).
+
 This folder is the analysis of **CoffeeMud** for the SUD design project. It covers how CoffeeMud's engine is built, which of its generic systems a single-player Python text game could borrow, and what content it ships. Start here, then use the chapter index. The code is in the parent folder (`ref/mudlibraries/CoffeeMUD/`). Paths in the chapters are relative to that folder.
 
 **Scope.** This analysis is about the **engine and its generic systems**: the object model and message bus, ticks, stats and effects, the ability framework, combat, movement, rooms and areas, items, mobs, commands, behaviours, scripting, quests, factions, shops, law and crafting. Large content families were read only far enough to explain how they work. For example, the spell chapters cover the `Spell` base class and the first two-thirds of the spell files, and the remaining spells, most thief skills, and the race and class catalogues were left out. See [Not analysed](#not-analysed).
