@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Protect #1
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player must protect a mob or mobs that you will create at the behest of
 #an existing Announcer mob on the map from mob or mobs that you create which will
 #attack the protected mob. When all the attackers are defeated, and the protected 

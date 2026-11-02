@@ -294,6 +294,13 @@ bell's saviour too (QUESTWINNER, QUESTSTATUS, the masks, REPEATABLE), and Tobin
 reads the quest's journal. <code>SET SHARED PARTY</code> gives a wolf bounty to the
 party members present when one accepts, and the turn-in's <code>MPQUESTWIN $n
 wolves REWARD</code> pays them all.</p>
+<p>For a first quest, <code>CREATE QUEST</code> and a story template
+writes the whole script: Story Talk #1, Story Chain #1 (three stages), Story
+Choice #1 (spare or kill the bandit chief, each with its reward and outcome
+word), Story Use-Item #1, Story Explore #1 and Story Bounty #1 (with a
+cooldown). They use Prop_QuestGiver, quest markers, objectives, the journal,
+SET REWARDS and REPEATABLE, so the quest they write shows how those go
+together.</p>
 <pre>
 set name bell
 set display The Drowned Bell

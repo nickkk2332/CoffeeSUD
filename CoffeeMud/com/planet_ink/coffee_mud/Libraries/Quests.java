@@ -1573,6 +1573,18 @@ public class Quests extends StdLibrary implements QuestManager
 								templatesDV.addElement(name,"",file.getName(),new Vector<Object>(),script);
 							}
 							else
+							if(s.startsWith("QUESTMAKER_MODE")&&(foundStart))
+							{
+								// Q13: #!QUESTMAKER_MODE MULTIPLAYER (the competitive templates) is left out of
+								// the list in a single-player game; named, it still loads
+								if(s.substring(15).trim().toUpperCase().startsWith("MULTI")&&(!parsePages))
+								{
+									templatesDV.removeElementsAt(templatesDV.size()-1);
+									foundStart=false;
+									break;
+								}
+							}
+							else
 							if(s.startsWith("QUESTMAKER_END_SCRIPT")&&(foundStart))
 							{
 								foundStart=false;

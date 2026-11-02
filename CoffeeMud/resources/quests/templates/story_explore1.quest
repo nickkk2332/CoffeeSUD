@@ -1,0 +1,143 @@
+#!QUESTMAKER_START_SCRIPT Story Explore #1
+#!QUESTMAKER_MODE SINGLE
+#A story quest for one player: an existing mob asks the player to find a
+#certain place, a room in your world.  Done when they set foot in it.
+#
+#!QUESTMAKER_PAGE Quest Name/Criteria
+#Enter the unique name and player criteria for your new quest.
+#
+#Quest ID:
+#Enter a unique name/id for your quest:
+#$QUEST_ID=$UNIQUE_QUEST_NAME=story_explore_1
+#
+#Quest Name:
+#Enter a friendly displayable name for your quest:
+#$QUEST_NAME=$STRING=The Lost Spring
+#
+#Quest-Player Criterium:
+#You may leave this entry blank, or enter a Zapper Mask to describe what
+#kinds of players may take this quest (race, level, and the rest).
+#$QUEST_CRITERIA=$ZAPPERMASK
+#
+#Category:
+#The kind of quest, which QUESTS groups by: main for the main story, or
+#side, or any word.
+#$CATEGORY=($STRING)=side
+#
+#!QUESTMAKER_PAGE Specify the Giver
+#The Giver is the existing mob who offers the quest, with a yes/no
+#question when the player meets them.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Giver Area:
+#$GIVER_AREA=($AREA)
+#Giver Room ID:
+#$GIVER_ROOM=($ROOMID)
+#
+#Giver mob name:
+#Use double-quotes around multi-word names.
+#$GIVER_NAME=$NAME
+#
+#Offer:
+#What the Giver says when offering the quest.
+#$QUEST_NOTIFYSTRING=$LONG_STRING=They say there is a spring in the hills no one has found in years.
+#
+#Instructions:
+#What the player is told to do, shown by QUESTS.
+#$QUEST_INSTRUCTIONSSTRING=$LONG_STRING=Find the lost spring in the hills.
+#
+#!QUESTMAKER_PAGE The Place to Find
+#The room the player must reach, and its area.
+#$PLACE_AREA=($AREA)
+#$PLACE_ROOM=$ROOMID
+#
+#The objective shown by QUESTS:
+#$PLACE_OBJECTIVE=$STRING=Find the lost spring
+#
+#What the player sees when they arrive:
+#$PLACE_TEXT=$LONG_STRING=Clear water wells up between the stones.  You have found it.
+#
+#!QUESTMAKER_PAGE Quest Completion
+#The reward, in the words of SET REWARDS: 100 CURRENCY, 50 XP, 10% XP (of
+#a level), 2 QP, FACTION:[ID]:+[N], ITEM:[CATALOG NAME], and the
+#achievements' award words.  Leave it blank for none.
+#$REWARDS=($STRING)=10% XP
+#
+#Journal entry when the quest is taken on:
+#$JOURNAL_START=($LONG_STRING)=I set out to find a place no one has seen in years.
+#
+#Journal entry when it is done:
+#$JOURNAL_DONE=($LONG_STRING)=I found it.
+#
+#!QUESTMAKER_END_SCRIPT Story Explore #1
+
+set name $QUEST_ID
+set display $QUEST_NAME
+set author $#AUTHOR
+set questtype story_explore1
+set category $CATEGORY
+set instructions $QUEST_INSTRUCTIONSSTRING
+set rewards "$REWARDS"
+set repeatable no
+
+set area $GIVER_AREA
+set room $GIVER_ROOM
+set mobgroup
+set mob reselect $GIVER_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_giver.script
+give affect Prop_QuestGiver QUEST="$QUEST_ID" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=$QUEST_ID
+
+set area $PLACE_AREA
+set room $PLACE_ROOM
+give script LOAD=$QUEST_ID_place.script
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>$QUEST_ID_giver.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISLIKE($n '$QUEST_CRITERIA') and ISPC($n) and !QUESTSCRIPTED($n *) and !QUESTWINNER($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=$QUEST_ID_playertrack.script
+	mpqobjective $n * ADD find 1 $PLACE_OBJECTIVE
+	mpqjournal $n * $JOURNAL_START
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" $QUEST_INSTRUCTIONSSTRING
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_place.script</NAME>
+<DATA>
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *) and !QOBJECTIVE($n * find == DONE)
+		mpechoat $n $PLACE_TEXT
+		mpqobjective $n * DONE find
+		mpqjournal $n * $JOURNAL_DONE
+		mpquestwin $n * REWARD
+		mpendquest $n
+		mpqset * STATISTICS SUCCESS
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_playertrack.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS $QUEST_INSTRUCTIONSSTRING
+~
+</DATA></FILE>

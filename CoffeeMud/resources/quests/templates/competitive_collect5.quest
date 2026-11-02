@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Collect #5
+#!QUESTMAKER_MODE MULTIPLAYER
 #An existing mob in your world needs some amount of local currency brought to him/her. 
 #A reward is given upon completion of the task and bringing the money to the announcer.
 #

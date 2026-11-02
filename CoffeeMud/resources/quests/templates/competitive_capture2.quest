@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Capture #2
+#!QUESTMAKER_MODE MULTIPLAYER
 #An existing mob in your world needs one or more mobs which you will create captured 
 #and brought to him.  Finding and defeating the mob or mobs in combat will 
 #cause the captured mob to follow the player peacefully.    There is also

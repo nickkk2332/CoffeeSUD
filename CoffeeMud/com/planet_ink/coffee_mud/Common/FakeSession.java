@@ -457,7 +457,7 @@ public class FakeSession implements Session
 	@Override
 	public boolean confirm(final String Message, final String Default, final long maxTime)
 	{
-		return confirm(Message, Default, 0);
+		return confirm(Message, Default);
 	}
 
 	@Override

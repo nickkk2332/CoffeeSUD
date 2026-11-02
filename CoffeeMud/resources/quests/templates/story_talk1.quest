@@ -1,0 +1,200 @@
+#!QUESTMAKER_START_SCRIPT Story Talk #1
+#!QUESTMAKER_MODE SINGLE
+#A story quest for one player: an existing mob in your world asks the
+#player to go and speak with another existing mob, optionally carrying an
+#item to hand over.  Offered with a yes/no question when the player meets
+#the giver, kept in the player's quest journal, and rewarded in one
+#message when the talk (or the hand-over) is done.
+#
+#!QUESTMAKER_PAGE Quest Name/Criteria
+#Enter the unique name and player criteria for your new quest.
+#
+#Quest ID:
+#Enter a unique name/id for your quest:
+#$QUEST_ID=$UNIQUE_QUEST_NAME=story_talk_1
+#
+#Quest Name:
+#Enter a friendly displayable name for your quest:
+#$QUEST_NAME=$STRING=A Word for Old Ned
+#
+#Quest-Player Criterium:
+#You may leave this entry blank, or enter a Zapper Mask to describe what
+#kinds of players may take this quest (race, level, and the rest).
+#$QUEST_CRITERIA=$ZAPPERMASK
+#
+#Category:
+#The kind of quest, which QUESTS groups by: main for the main story, or
+#side, or any word.
+#$CATEGORY=($STRING)=side
+#
+#!QUESTMAKER_PAGE Specify the Giver
+#The Giver is the existing mob who offers the quest.
+#
+#Giver Area/Room:
+#The area and/or room the Giver is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Giver Area:
+#$GIVER_AREA=($AREA)
+#Giver Room ID:
+#$GIVER_ROOM=($ROOMID)
+#
+#Giver mob name:
+#The name of the mob who offers the quest.  Use double-quotes around
+#multi-word names.
+#$GIVER_NAME=$NAME
+#
+#Offer:
+#What the Giver says when offering the quest.  ${2 *} is the mob to find.
+#$QUEST_NOTIFYSTRING=$LONG_STRING=Would you take a word to ${2 *} for me?
+#
+#Instructions:
+#What the player is told to do, shown by QUESTS.  ${2 *} is the mob to find.
+#$QUEST_INSTRUCTIONSSTRING=$LONG_STRING=Find ${2 *} and give them the message.
+#
+#!QUESTMAKER_PAGE Specify the Mob to Speak With
+#The mob the player must find and speak with.
+#
+#Area:
+#$TARGET_AREA=($AREA)
+#Room ID:
+#$TARGET_ROOM=($ROOMID)
+#
+#Mob name:
+#$TARGET_NAME=$NAME
+#
+#Response:
+#What the mob says when the player arrives (and hands the item over).
+#$TARGET_RESPONSE=($LONG_STRING)=So the old man remembers me.  Thank you.
+#
+#!QUESTMAKER_PAGE Something to Carry
+#Optionally, an item the Giver hands the player, which they must give to
+#the mob they speak with.  Leave it empty for a talk alone.
+#
+#Item to carry:
+#$CARRY_ITEMS=$ITEMXML_ZEROORMORE
+#
+#!QUESTMAKER_PAGE Quest Completion
+#The reward, in the words of SET REWARDS: 100 CURRENCY, 50 XP, 10% XP (of
+#a level), 2 QP, FACTION:[ID]:+[N], ITEM:[CATALOG NAME], and the
+#achievements' award words.  Leave it blank for none.
+#$REWARDS=($STRING)=10% XP
+#
+#Journal entry when the quest is taken on:
+#$JOURNAL_START=($LONG_STRING)=I promised to carry a word to ${2 *}.
+#
+#Journal entry when it is done:
+#$JOURNAL_DONE=($LONG_STRING)=I found ${2 *}, and the word was given.
+#
+#!QUESTMAKER_END_SCRIPT Story Talk #1
+
+set name $QUEST_ID
+set display $QUEST_NAME
+set author $#AUTHOR
+set questtype story_talk1
+set category $CATEGORY
+set instructions $QUEST_INSTRUCTIONSSTRING
+set rewards "$REWARDS"
+set repeatable no
+
+set area $GIVER_AREA
+set room $GIVER_ROOM
+set mobgroup
+set mob reselect $GIVER_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_giver.script
+give affect Prop_QuestGiver QUEST="$QUEST_ID" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=$QUEST_ID
+
+set area $TARGET_AREA
+set room $TARGET_ROOM
+set mobgroup
+set mob reselect $TARGET_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_target.script
+give affect Prop_QuestMarker QUEST=$QUEST_ID READYFUNC=CAN_COMPLETE AVAILABLE=
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>$QUEST_ID_carry.xml</NAME><DATA><ITEMS>$CARRY_ITEMS</ITEMS></DATA></FILE>
+<FILE><NAME>$QUEST_ID_giver.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISLIKE($n '$QUEST_CRITERIA') and ISPC($n) and !QUESTSCRIPTED($n *) and !QUESTWINNER($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=$QUEST_ID_playertrack.script
+	mpqobjective $n * ADD talk 1 Speak with ${2 *}
+	mpqjournal $n * $JOURNAL_START
+	mpoload fromfile $QUEST_ID_carry.xml any
+	if EVAL('$b' != '')
+		give "$b" "$n"
+		mpsetvar $n CARRY $b
+		mpqobjective $n * ADD carry 1 Give $b to ${2 *}
+	endif
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" $QUEST_INSTRUCTIONSSTRING
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_target.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+~
+
+FUNCTION_PROG FINISH
+	mpqobjective $n * DONE talk
+	mpqjournal $n * $JOURNAL_DONE
+	sayto "$n" $TARGET_RESPONSE
+	mpquestwin $n * REWARD
+	mpendquest $n
+	mpqset * STATISTICS SUCCESS
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		if EVAL('$<$n CARRY>' == '')
+			MPCALLFUNC FINISH
+		else
+			sayto "$n" Have you brought me $<$n CARRY>?
+		endif
+	endif
+~
+
+GIVE_PROG all
+	if ISPC($n) and QUESTSCRIPTED($n *) and EVAL('$<$n CARRY>' != '')
+		if NAME($o == '$<$n CARRY>')
+			mpjunk $o
+			mpqobjective $n * DONE carry
+			mpsetvar $n CARRY
+			MPCALLFUNC FINISH
+		endif
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_playertrack.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS $QUEST_INSTRUCTIONSSTRING
+~
+
+RAND_PROG 25
+	IF !isquestmobalive(2 '$QUEST_ID')
+		mpqjournal $i * There is no one left to speak with.
+		mpquestfail $i * the one I sought is gone
+	ENDIF
+~
+</DATA></FILE>

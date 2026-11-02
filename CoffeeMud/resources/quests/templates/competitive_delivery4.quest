@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Delivery #4
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player delivers money to one or more existing mobs in your world
 #at the behest of one other.  A reward is given upon delivery.
 #

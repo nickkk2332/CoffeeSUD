@@ -99,7 +99,7 @@ public final class QuestMarkers
 			if(accepted(seer, Q))
 			{
 				if((readyFunc.length() > 0) && ready(host, seer, readyFunc))
-					return " " + parm(parms, "READY", DEF_READY);
+					return mark(parm(parms, "READY", DEF_READY));
 				active = true;
 			}
 			else
@@ -107,10 +107,16 @@ public final class QuestMarkers
 				available = true;
 		}
 		if(available)
-			return " " + parm(parms, "AVAILABLE", DEF_AVAILABLE);
+			return mark(parm(parms, "AVAILABLE", DEF_AVAILABLE));
 		if(active)
-			return " " + parm(parms, "ACTIVE", DEF_ACTIVE);
+			return mark(parm(parms, "ACTIVE", DEF_ACTIVE));
 		return "";
+	}
+
+	/** Q13: a mark set empty (AVAILABLE= on a quest's turn-in mob) shows nothing */
+	private static String mark(final String m)
+	{
+		return (m.trim().length() == 0) ? "" : (" " + m);
 	}
 
 	private static String parm(final Map<String, String> parms, final String key, final String dflt)

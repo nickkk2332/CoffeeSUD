@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Dispel #1
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player must dispel or otherwise remove a spell, disease, poison, or
 #other affect from 1 or more affected mobs on your map.
 #

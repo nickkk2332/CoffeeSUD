@@ -1,0 +1,213 @@
+#!QUESTMAKER_START_SCRIPT Story Choice #1
+#!QUESTMAKER_MODE SINGLE
+#A story quest for one player that ends in the player's choice: an existing
+#mob offers it, and at a second existing mob (a bandit chief, say) the
+#player chooses between two outcomes, each with its own words, reward
+#(factions too) and outcome word, which QUESTOUTCOME() and QUESTS WON
+#show.  The chief may die by the second choice.
+#
+#!QUESTMAKER_PAGE Quest Name/Criteria
+#Enter the unique name and player criteria for your new quest.
+#
+#Quest ID:
+#Enter a unique name/id for your quest:
+#$QUEST_ID=$UNIQUE_QUEST_NAME=story_choice_1
+#
+#Quest Name:
+#Enter a friendly displayable name for your quest:
+#$QUEST_NAME=$STRING=The Bandit Chief
+#
+#Quest-Player Criterium:
+#You may leave this entry blank, or enter a Zapper Mask to describe what
+#kinds of players may take this quest (race, level, and the rest).
+#$QUEST_CRITERIA=$ZAPPERMASK
+#
+#Category:
+#The kind of quest, which QUESTS groups by: main for the main story, or
+#side, or any word.
+#$CATEGORY=($STRING)=side
+#
+#!QUESTMAKER_PAGE Specify the Giver
+#The Giver is the existing mob who offers the quest, with a yes/no
+#question when the player meets them.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Giver Area:
+#$GIVER_AREA=($AREA)
+#Giver Room ID:
+#$GIVER_ROOM=($ROOMID)
+#
+#Giver mob name:
+#Use double-quotes around multi-word names.
+#$GIVER_NAME=$NAME
+#
+#Offer:
+#What the Giver says when offering the quest.
+#$QUEST_NOTIFYSTRING=$LONG_STRING=The bandit chief holds the pass.  Deal with him, as you see fit.
+#
+#Instructions:
+#What the player is told to do, shown by QUESTS.
+#$QUEST_INSTRUCTIONSSTRING=$LONG_STRING=Find ${2 *}, and decide his fate.
+#
+#!QUESTMAKER_PAGE Specify the Mob Whose Fate Is Chosen
+#The existing mob at whom the player makes the choice.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Decider Area:
+#$DECIDER_AREA=($AREA)
+#Decider Room ID:
+#$DECIDER_ROOM=($ROOMID)
+#
+#Decider mob name:
+#Use double-quotes around multi-word names.
+#$DECIDER_NAME=$NAME
+#
+#What they say when the player arrives:
+#$DECIDER_SPEECH=($LONG_STRING)=So you have come for me.  What will it be?
+#
+#The question the player answers with A or B:
+#$CHOICE_PROMPT=$STRING=Spare him (A) or kill him (B)?
+#
+#!QUESTMAKER_PAGE The First Outcome (A)
+#Its word, kept as the quest's outcome (QUESTOUTCOME):
+#$WORD_A=$STRING=spared
+#What the mob says:
+#$OUTCOME_A_TEXT=($LONG_STRING)=You will not regret this.  I will leave the pass.
+#Journal entry:
+#$OUTCOME_A_JOURNAL=($LONG_STRING)=I spared the bandit chief.
+#Reward:
+#The reward, in the words of SET REWARDS: 100 CURRENCY, 50 XP, 10% XP (of
+#a level), 2 QP, FACTION:[ID]:+[N], ITEM:[CATALOG NAME], and the
+#achievements' award words.  Leave it blank for none.
+#$REWARDS_A=($STRING)=5% XP
+#
+#!QUESTMAKER_PAGE The Second Outcome (B)
+#Its word, kept as the quest's outcome (QUESTOUTCOME):
+#$WORD_B=$STRING=killed
+#What the mob says:
+#$OUTCOME_B_TEXT=($LONG_STRING)=Then come and take me!
+#Journal entry:
+#$OUTCOME_B_JOURNAL=($LONG_STRING)=The bandit chief is dead.
+#Reward:
+#The reward, in the words of SET REWARDS: 100 CURRENCY, 50 XP, 10% XP (of
+#a level), 2 QP, FACTION:[ID]:+[N], ITEM:[CATALOG NAME], and the
+#achievements' award words.  Leave it blank for none.
+#$REWARDS_B=($STRING)=10% XP
+#Does the mob die by this choice?
+#$OUTCOME_B_SLAIN=$CHOOSE=YES,NO
+#
+#Journal entry when the quest is taken on:
+#$JOURNAL_START=($LONG_STRING)=I am to deal with the bandit chief.
+#
+#!QUESTMAKER_END_SCRIPT Story Choice #1
+
+set name $QUEST_ID
+set display $QUEST_NAME
+set author $#AUTHOR
+set questtype story_choice1
+set category $CATEGORY
+set instructions $QUEST_INSTRUCTIONSSTRING
+set repeatable no
+
+set area $GIVER_AREA
+set room $GIVER_ROOM
+set mobgroup
+set mob reselect $GIVER_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_giver.script
+give affect Prop_QuestGiver QUEST="$QUEST_ID" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=$QUEST_ID
+
+set area $DECIDER_AREA
+set room $DECIDER_ROOM
+set mobgroup
+set mob reselect $DECIDER_NAME
+give script LOAD=$QUEST_ID_decider.script
+give affect Prop_QuestMarker QUEST=$QUEST_ID READYFUNC=CAN_COMPLETE AVAILABLE= ACTIVE=
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>$QUEST_ID_giver.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISLIKE($n '$QUEST_CRITERIA') and ISPC($n) and !QUESTSCRIPTED($n *) and !QUESTWINNER($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=$QUEST_ID_playertrack.script
+	mpqobjective $n * ADD decide 1 Decide the fate of ${2 *}
+	mpqjournal $n * $JOURNAL_START
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" $QUEST_INSTRUCTIONSSTRING
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_decider.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		sayto "$n" $DECIDER_SPEECH
+		mpchoose $n CHOICE AB A $CHOICE_PROMPT
+		MPCALLFUNC DECIDE
+	endif
+~
+
+FUNCTION_PROG DECIDE
+	if !QUESTSCRIPTED($n *)
+		RETURN
+	endif
+	mpqobjective $n * DONE decide
+	if VAR($n CHOICE == B)
+		sayto "$n" $OUTCOME_B_TEXT
+		mpqjournal $n * $OUTCOME_B_JOURNAL
+		mpreward $n "$REWARDS_B"
+		mpquestwin $n * OUTCOME $WORD_B
+		mpendquest $n
+		mpqset * STATISTICS SUCCESS
+		if EVAL('$OUTCOME_B_SLAIN' == 'YES')
+			mpslay $i
+		endif
+	else
+		sayto "$n" $OUTCOME_A_TEXT
+		mpqjournal $n * $OUTCOME_A_JOURNAL
+		mpreward $n "$REWARDS_A"
+		mpquestwin $n * OUTCOME $WORD_A
+		mpendquest $n
+		mpqset * STATISTICS SUCCESS
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_playertrack.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS $QUEST_INSTRUCTIONSSTRING
+~
+
+RAND_PROG 25
+	IF !isquestmobalive(2 '$QUEST_ID')
+		mpqjournal $i * There is no one left to judge.
+		mpquestfail $i * the one I sought is gone
+	ENDIF
+~
+</DATA></FILE>

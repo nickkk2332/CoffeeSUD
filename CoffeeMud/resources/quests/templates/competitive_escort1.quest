@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Escort #1
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player must escort a mob or mobs that you will create from the location of
 #an existing Announcer mob on the map to a room of your
 #choosing.  You may also optionally create a mob or mobs to attack the player

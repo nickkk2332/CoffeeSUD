@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Travel #1
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player must travel to some location on your map at the behest
 #of an existing announcer mob.
 #

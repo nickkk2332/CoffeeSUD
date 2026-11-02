@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Mystery #2
+#!QUESTMAKER_MODE MULTIPLAYER
 #A 2-Level mystery where players must question existing mobs from your world to
 #discover WHO did something and what their MOTIVE was.
 #The victim and quest-announcer/manager are also existing mobs, and the victim

@@ -1,0 +1,272 @@
+#!QUESTMAKER_START_SCRIPT Story Chain #1
+#!QUESTMAKER_MODE SINGLE
+#A story quest for one player in three stages: an existing mob offers it,
+#and the player must speak with three existing mobs in turn, each sending
+#them on to the next.  QUESTS shows the stage reached as objectives, the
+#journal keeps each stage's entry, and the third stage completes it with
+#the reward.
+#
+#!QUESTMAKER_PAGE Quest Name/Criteria
+#Enter the unique name and player criteria for your new quest.
+#
+#Quest ID:
+#Enter a unique name/id for your quest:
+#$QUEST_ID=$UNIQUE_QUEST_NAME=story_chain_1
+#
+#Quest Name:
+#Enter a friendly displayable name for your quest:
+#$QUEST_NAME=$STRING=The Missing Courier
+#
+#Quest-Player Criterium:
+#You may leave this entry blank, or enter a Zapper Mask to describe what
+#kinds of players may take this quest (race, level, and the rest).
+#$QUEST_CRITERIA=$ZAPPERMASK
+#
+#Category:
+#The kind of quest, which QUESTS groups by: main for the main story, or
+#side, or any word.
+#$CATEGORY=($STRING)=side
+#
+#!QUESTMAKER_PAGE Specify the Giver
+#The Giver is the existing mob who offers the quest, with a yes/no
+#question when the player meets them.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Giver Area:
+#$GIVER_AREA=($AREA)
+#Giver Room ID:
+#$GIVER_ROOM=($ROOMID)
+#
+#Giver mob name:
+#Use double-quotes around multi-word names.
+#$GIVER_NAME=$NAME
+#
+#Offer:
+#What the Giver says when offering the quest.
+#$QUEST_NOTIFYSTRING=$LONG_STRING=A courier never arrived.  Will you follow his trail?
+#
+#Instructions:
+#What the player is told to do, shown by QUESTS.
+#$QUEST_INSTRUCTIONSSTRING=$LONG_STRING=Follow the courier's trail, stage by stage.
+#
+#!QUESTMAKER_PAGE Stage 1
+#The mob the player must find and speak with at stage 1.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Stage 1 Area:
+#$STAGE1_AREA=($AREA)
+#Stage 1 Room ID:
+#$STAGE1_ROOM=($ROOMID)
+#
+#Stage 1 mob name:
+#Use double-quotes around multi-word names.
+#$STAGE1_NAME=$NAME
+#
+#What they say:
+#$STAGE1_SPEECH=$LONG_STRING=The trail goes on north, to the mill.
+#
+#The objective shown by QUESTS for this stage:
+#$STAGE1_OBJECTIVE=$STRING=Ask at the inn
+#
+#Journal entry when the stage is done:
+#$STAGE1_JOURNAL=($LONG_STRING)=The innkeeper sent me to the mill.
+#
+#!QUESTMAKER_PAGE Stage 2
+#The mob the player must find and speak with at stage 2.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Stage 2 Area:
+#$STAGE2_AREA=($AREA)
+#Stage 2 Room ID:
+#$STAGE2_ROOM=($ROOMID)
+#
+#Stage 2 mob name:
+#Use double-quotes around multi-word names.
+#$STAGE2_NAME=$NAME
+#
+#What they say:
+#$STAGE2_SPEECH=$LONG_STRING=The miller saw them pass toward the ford.
+#
+#The objective shown by QUESTS for this stage:
+#$STAGE2_OBJECTIVE=$STRING=Find the miller
+#
+#Journal entry when the stage is done:
+#$STAGE2_JOURNAL=($LONG_STRING)=The miller pointed me to the ford.
+#
+#!QUESTMAKER_PAGE Stage 3
+#The mob the player must find and speak with at stage 3. This is the last stage: speaking with them
+#completes the quest.
+#
+#Area and room:
+#The area and/or room the mob is in.  You may leave both blank to have
+#the quest find the mob anywhere in the world.
+#Use double-quotes around multi-word areas and room ids/names.
+#Stage 3 Area:
+#$STAGE3_AREA=($AREA)
+#Stage 3 Room ID:
+#$STAGE3_ROOM=($ROOMID)
+#
+#Stage 3 mob name:
+#Use double-quotes around multi-word names.
+#$STAGE3_NAME=$NAME
+#
+#What they say:
+#$STAGE3_SPEECH=$LONG_STRING=You found us at last.  Here, take this for your trouble.
+#
+#The objective shown by QUESTS for this stage:
+#$STAGE3_OBJECTIVE=$STRING=Reach the ford
+#
+#Journal entry when the stage is done:
+#$STAGE3_JOURNAL=($LONG_STRING)=At the ford the trail ended.
+#
+#!QUESTMAKER_PAGE Quest Completion
+#The reward, in the words of SET REWARDS: 100 CURRENCY, 50 XP, 10% XP (of
+#a level), 2 QP, FACTION:[ID]:+[N], ITEM:[CATALOG NAME], and the
+#achievements' award words.  Leave it blank for none.
+#$REWARDS=($STRING)=10% XP
+#
+#Journal entry when the quest is taken on:
+#$JOURNAL_START=($LONG_STRING)=I set out on the courier's trail.
+#
+#!QUESTMAKER_END_SCRIPT Story Chain #1
+
+set name $QUEST_ID
+set display $QUEST_NAME
+set author $#AUTHOR
+set questtype story_chain1
+set category $CATEGORY
+set instructions $QUEST_INSTRUCTIONSSTRING
+set rewards "$REWARDS"
+set repeatable no
+
+set area $GIVER_AREA
+set room $GIVER_ROOM
+set mobgroup
+set mob reselect $GIVER_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_giver.script
+give affect Prop_QuestGiver QUEST="$QUEST_ID" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=$QUEST_ID
+
+set area $STAGE1_AREA
+set room $STAGE1_ROOM
+set mobgroup
+set mob reselect $STAGE1_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_stage1.script
+give affect Prop_QuestMarker QUEST=$QUEST_ID READYFUNC=CAN_COMPLETE AVAILABLE= ACTIVE=
+
+set area $STAGE2_AREA
+set room $STAGE2_ROOM
+set mobgroup
+set mob reselect $STAGE2_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_stage2.script
+give affect Prop_QuestMarker QUEST=$QUEST_ID READYFUNC=CAN_COMPLETE AVAILABLE= ACTIVE=
+
+set area $STAGE3_AREA
+set room $STAGE3_ROOM
+set mobgroup
+set mob reselect $STAGE3_NAME
+give stat keyplayer true
+give script LOAD=$QUEST_ID_stage3.script
+give affect Prop_QuestMarker QUEST=$QUEST_ID READYFUNC=CAN_COMPLETE AVAILABLE= ACTIVE=
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>$QUEST_ID_giver.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISLIKE($n '$QUEST_CRITERIA') and ISPC($n) and !QUESTSCRIPTED($n *) and !QUESTWINNER($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=$QUEST_ID_playertrack.script
+	mpqobjective $n * ADD stage1 1 $STAGE1_OBJECTIVE
+	mpqobjective $n * ADD stage2 1 $STAGE2_OBJECTIVE
+	mpqobjective $n * HIDE stage2
+	mpqobjective $n * ADD stage3 1 $STAGE3_OBJECTIVE
+	mpqobjective $n * HIDE stage3
+	mpqjournal $n * $JOURNAL_START
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" $QUEST_INSTRUCTIONSSTRING
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_stage1.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *) and !QOBJECTIVE($n * stage1 == DONE)
+		RETURN TRUE
+	endif
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *) and !QOBJECTIVE($n * stage1 == DONE)
+		sayto "$n" $STAGE1_SPEECH
+		mpqobjective $n * DONE stage1
+		mpqjournal $n * $STAGE1_JOURNAL
+		mpqobjective $n * SHOW stage2
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_stage2.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *) and QOBJECTIVE($n * stage1 == DONE) and !QOBJECTIVE($n * stage2 == DONE)
+		RETURN TRUE
+	endif
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *) and QOBJECTIVE($n * stage1 == DONE) and !QOBJECTIVE($n * stage2 == DONE)
+		sayto "$n" $STAGE2_SPEECH
+		mpqobjective $n * DONE stage2
+		mpqjournal $n * $STAGE2_JOURNAL
+		mpqobjective $n * SHOW stage3
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_stage3.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *) and QOBJECTIVE($n * stage2 == DONE)
+		RETURN TRUE
+	endif
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *) and QOBJECTIVE($n * stage2 == DONE)
+		sayto "$n" $STAGE3_SPEECH
+		mpqobjective $n * DONE stage3
+		mpqjournal $n * $STAGE3_JOURNAL
+		mpquestwin $n * REWARD
+		mpendquest $n
+		mpqset * STATISTICS SUCCESS
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>$QUEST_ID_playertrack.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS $QUEST_INSTRUCTIONSSTRING
+~
+</DATA></FILE>

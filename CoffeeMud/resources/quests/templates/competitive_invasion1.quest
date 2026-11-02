@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Invasion #1
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player must repel an invasion by a set of mobs, which you will create, 
 #who will enter an existing area and behave aggressively towards the inhabitants.
 #An Announcer mob will offer an optional prize to the first player who 

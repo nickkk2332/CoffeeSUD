@@ -1565,6 +1565,22 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   journal's entries (now timed on the game clock) are read by all of them,
   and `QUESTS name` shows the quest to one who does not carry it. QUESTINFO
   and QUESTCHECK know SET SHARED.
+- Q13 done. Six story templates for CREATE QUEST's Quest Maker
+  (resources/quests/templates/story_*.quest): story_talk1 (speak with a
+  mob, optionally handing over an item the giver gives), story_chain1
+  (three stages, each a mob, an objective and a journal entry; the Quest
+  Maker has no repeat, so it is three, and a longer chain copies a stage),
+  story_choice1 (MPCHOOSE between two outcomes, each with its words,
+  MPREWARD reward and MPQUESTWIN OUTCOME word; the mob may die by the
+  second), story_useitem1 (drop or put the given item in a room),
+  story_explore1 (reach a room) and story_bounty1 (kills of a mask
+  counted as an objective, paid at the giver, SET REPEATABLE cooldown).
+  Each offers with Prop_QuestGiver, marks the giver and turn-ins with
+  Prop_QuestMarker (an empty mark, AVAILABLE=, now shows nothing), keeps
+  objectives and the journal, and fails with MPQUESTFAIL if its other mob
+  is gone. `#!QUESTMAKER_MODE MULTIPLAYER` on the competitive_* templates
+  leaves them out of the list (named, they still load). FakeSession's
+  timed yes/no no longer calls itself for ever.
 
 #### 2f. NPC behaviour and dialogue (21)
 

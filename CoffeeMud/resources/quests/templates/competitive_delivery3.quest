@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Delivery #3
+#!QUESTMAKER_MODE MULTIPLAYER
 #The player delivers a custom-Item from one existing mob in your world
 #to one or more others that you create.  A reward is given upon delivery.
 #

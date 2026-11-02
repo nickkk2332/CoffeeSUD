@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Killer #1
+#!QUESTMAKER_MODE MULTIPLAYER
 #An existing mob in your world needs one or more other existing mobs killed. 
 #A reward is given upon completion of the task and returning to the announcer.
 #

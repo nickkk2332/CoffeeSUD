@@ -1,4 +1,5 @@
 #!QUESTMAKER_START_SCRIPT Competitive Collect #4
+#!QUESTMAKER_MODE MULTIPLAYER
 #An existing mob in your world needs one or more items which you will DESCRIBE as a Zapper-Mask brought to him/her. 
 #The items will have to be obtained from your existing world, or generated with common skills.
 #A reward is given upon completion of the task and bringing the items to the announcer.
