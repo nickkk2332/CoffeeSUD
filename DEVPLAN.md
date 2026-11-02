@@ -1372,6 +1372,14 @@ JS17, JS18, JS19, JS20, JS23
   target (what is checked) and cm. An error counts as no match and is
   reported once for each expression; a player record (not in the world)
   never matches. zappermasks.txt lists them.
+- JS15 done. `JS(expr)` (173) and `JS$(expr)` (174): in IF, true when
+  the expression is truthy; in `$%JS(...)%`, its value as text. They run in a
+  scope kept by the engine, with a <SCRIPT>'s functions set for each call
+  (host(), source(), target(), cm), approved as a <SCRIPT> is.
+  `MPJSFILE file args` (114) runs a file of resources/ or world: as a
+  <SCRIPT>, with `args`. In a <SCRIPT> or such a file `cancel()`, or a last
+  value of "cancel", ends the prog with CANCEL, so CNCLMSG_PROG refuses its
+  message. The <SCRIPT> scope is made in one place (`jsEventScope`).
 
 #### 2e. Quests (15)
 

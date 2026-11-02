@@ -157,6 +157,20 @@ public final class JSScope
 		}
 	}
 
+	/**
+	 * JS15: the text of a file of resources/ (or world:path).
+	 * @param path the file
+	 * @return its text, or null if there is no such file (or the path has ..)
+	 */
+	public static String fileText(final String path)
+	{
+		if((path == null) || (path.trim().length() == 0) || (path.indexOf("..") >= 0))
+			return null;
+		final String p = path.trim();
+		final CMFile F = new CMFile(p.toLowerCase().startsWith("world:") ? ("/world/" + p.substring(6)) : ("/" + Resources.makeFileResourceName(p)), null);
+		return ((!F.exists()) || (!F.canRead())) ? null : F.text().toString();
+	}
+
 	/** JS6: include(path): runs a file of resources/ (or world:path) in this scope, compiled once while it is unchanged */
 	private static final class Include extends BaseFunction
 	{

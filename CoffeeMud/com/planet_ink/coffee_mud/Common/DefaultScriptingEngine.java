@@ -10161,29 +10161,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					final Context cx = Context.enter();
 					try
 					{
-						final JScriptEvent scope = new JScriptEvent(this,ctx);
-						scope.initStandardObjects(cx, false);
-						JSScope.prepare(cx, scope, ctx.scripted); // JS3, JS6: require(), cm, include()
-						final String[] names = {
-							"host",
-							"source",
-							"target",
-							"monster",
-							"item",
-							"item1",
-							"item2",
-							"message",
-							"objs",
-							"getVar",
-							"setVar",
-							"toJavaString",
-							"getCMType",
-							"debug"
-						};
-						scope.defineFunctionProperties(names, JScriptEvent.class,
-													   ScriptableObject.DONTENUM);
+						final JScriptEvent scope = jsEventScope(cx, ctx);
 						// one line ending each, as the file has, so that Rhino's lines are the file's
-						cx.evaluateString(scope, jscript.toString().replaceAll("\\r\\n|\\n\\r|\\r","\n"),where, firstLine, null);
+						final Object jsr=cx.evaluateString(scope, jscript.toString().replaceAll("\\r\\n|\\n\\r|\\r","\n"),where, firstLine, null);
+						if(jsCancelled(scope,jsr)) // JS15: cancel(), or a last value of "cancel", as RETURN CANCEL
+						{
+							tickStatus=Tickable.STATUS_END;
+							return "CANCEL";
+						}
 					}
 					catch(final Exception e)
 					{
@@ -15766,6 +15751,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String a=loadArgs(ctx.scripted).get(v);
 			return (a==null)?"":a;
 		}
+		case "JS": // JS15: JS(expr), JS$(expr): a JavaScript expression's value, as text
+		case "JS$":
+			return jsText(jsExpr(ctx,v));
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";
@@ -15782,6 +15770,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 */
 	protected boolean extraTest(final MPContext ctx, final String name, final String inner)
 	{
+		if(name.equalsIgnoreCase("JS")||name.equalsIgnoreCase("JS$")) // JS15: IF JS(expr): true when it is truthy
+		{
+			final Object r=jsExpr(ctx,varify(ctx,inner).trim());
+			return (r!=null)&&Context.toBoolean(r);
+		}
 		final List<String> words=CMParms.parse(inner);
 		final String[] c=ScriptLib.splitCompare(words);
 		if(c==null)
@@ -15795,6 +15788,151 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		final String left=(at>=0)?inner.substring(0,at):c[0];
 		final String right=(at>=0)?inner.substring(at+c[1].length()+2):c[2];
 		return ScriptLib.compare(extraValue(ctx,name,left),c[1],varify(ctx,right));
+	}
+
+	/** JS15: the scope kept for this engine's JS() and JS$() */
+	protected JScriptEvent jsExprScope = null;
+
+	/**
+	 * JS15: a <SCRIPT>'s scope: the MOBPROG bridge, host(), source() and the
+	 * rest, cancel(), and what every JavaScript scope has.
+	 * @param cx the context
+	 * @param ctx the script's context
+	 * @return the scope
+	 */
+	protected JScriptEvent jsEventScope(final Context cx, final MPContext ctx)
+	{
+		final JScriptEvent scope = new JScriptEvent(this,ctx);
+		scope.initStandardObjects(cx, false);
+		JSScope.prepare(cx, scope, ctx.scripted); // JS3, JS6: require(), cm, include()
+		final String[] names = {
+			"host",
+			"source",
+			"target",
+			"monster",
+			"item",
+			"item1",
+			"item2",
+			"message",
+			"objs",
+			"getVar",
+			"setVar",
+			"toJavaString",
+			"getCMType",
+			"debug",
+			"cancel"
+		};
+		scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
+		return scope;
+	}
+
+	/**
+	 * @param scope a <SCRIPT>'s scope
+	 * @param result what its last statement gave
+	 * @return true if it called cancel(), or ended with the value "cancel"
+	 */
+	protected static boolean jsCancelled(final JScriptEvent scope, final Object result)
+	{
+		return scope.cancelled || ((result instanceof CharSequence) && result.toString().trim().equalsIgnoreCase("cancel"));
+	}
+
+	/**
+	 * JS15: JS(expr) and JS$(expr): a JavaScript expression, in a scope kept
+	 * by this engine, with the <SCRIPT> functions for this call's host,
+	 * source and target.  Approved as a <SCRIPT> is.
+	 * @param ctx the script's context
+	 * @param expr the expression
+	 * @return its value, a JavaScript one, or null if it failed
+	 */
+	protected Object jsExpr(final MPContext ctx, final String expr)
+	{
+		if((expr==null)||(expr.length()==0))
+			return null;
+		if(!(this.approvedScripts || CMSecurity.isApprovedJScript(new StringBuffer(expr))))
+		{
+			logError(ctx,"JS","Security","not approved: "+expr);
+			return null;
+		}
+		final Context cx = JSRuntime.enter(JSRuntime.limitSeconds());
+		try
+		{
+			if(jsExprScope == null)
+				jsExprScope = jsEventScope(cx, ctx);
+			else
+				jsExprScope.ctx = ctx;
+			jsExprScope.cancelled = false;
+			return cx.evaluateString(jsExprScope, expr, "JS()", 1, null);
+		}
+		catch(final Exception e)
+		{
+			JSRuntime.report("JS(" + expr + ") on '" + ((ctx.scripted==null)?"?":ctx.scripted.Name()) + "'", e);
+			return null;
+		}
+		finally
+		{
+			Context.exit();
+		}
+	}
+
+	/**
+	 * @param r a JavaScript value, or null
+	 * @return it as text: whole numbers without a point, nothing for null or undefined
+	 */
+	protected static String jsText(final Object r)
+	{
+		if((r == null) || (r instanceof org.mozilla.javascript.Undefined))
+			return "";
+		if(r instanceof Number)
+		{
+			final double d = ((Number)r).doubleValue();
+			if((d == Math.rint(d)) && (!Double.isInfinite(d)) && (Math.abs(d) < 1e15))
+				return Long.toString((long)d);
+		}
+		if(r instanceof org.mozilla.javascript.Wrapper)
+			return String.valueOf(((org.mozilla.javascript.Wrapper)r).unwrap());
+		return Context.toString(r);
+	}
+
+	/**
+	 * JS15: MPJSFILE: a JavaScript file run as a <SCRIPT> is, with args the
+	 * rest of the line; cancel() in it, or a last value of "cancel", ends the
+	 * prog with CANCEL.
+	 * @param ctx the script's context
+	 * @param file the file, under resources/ or world:path
+	 * @param args the rest of the line
+	 * @return CANCEL, or null to go on
+	 */
+	protected String runJSFile(final MPContext ctx, final String file, final String args)
+	{
+		final String text=JSScope.fileText(file);
+		if(text==null)
+		{
+			logError(ctx,"MPJSFILE","Syntax","no such file: "+file);
+			return null;
+		}
+		if(!(this.approvedScripts || CMSecurity.isApprovedJScript(new StringBuffer(text))))
+		{
+			logError(ctx,"MPJSFILE","Security","not approved: "+file);
+			return null;
+		}
+		final Context cx = JSRuntime.enter(JSRuntime.limitSeconds());
+		try
+		{
+			final Script S = JSScope.compileFile(cx, file);
+			final JScriptEvent scope = jsEventScope(cx, ctx);
+			ScriptableObject.putProperty(scope, "args", args);
+			final Object r = (S == null) ? null : S.exec(cx, scope);
+			return jsCancelled(scope, r) ? "CANCEL" : null;
+		}
+		catch(final Exception e)
+		{
+			JSRuntime.report("MPJSFILE " + file + " on '" + ((ctx.scripted==null)?"?":ctx.scripted.Name()) + "'", e);
+			return null;
+		}
+		finally
+		{
+			Context.exit();
+		}
 	}
 
 	/**
@@ -15831,6 +15969,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			else
 				setVar(which,var,listValue(now));
 			return null;
+		}
+		case "MPJSFILE": // JS15: MPJSFILE file args: a JavaScript file run as a <SCRIPT> is, with args
+		{
+			final String file=varify(ctx,CMParms.getCleanBit(line,1));
+			return runJSFile(ctx,file,varify(ctx,CMParms.getPastBitClean(line,1)));
 		}
 		case "MPTAG": // SC12: MPTAG target ADD|DEL|TOGGLE tag
 		{
@@ -19215,9 +19358,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 		static final long				serialVersionUID	= 43;
 
-		final MPContext					ctx;
+		MPContext						ctx; // JS15: set again for each JS() of the engine's kept scope
 		List<String>					scr;
 		final DefaultScriptingEngine	c;
+
+		/** JS15: cancel() was called */
+		boolean                            cancelled    = false;
+
+		/** JS15: cancel(): the prog returns CANCEL, as RETURN CANCEL, so that CNCLMSG_PROG refuses its message */
+		public void cancel()
+		{
+			cancelled = true;
+		}
 
 		public Environmental host()
 		{

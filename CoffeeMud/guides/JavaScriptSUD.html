@@ -20,6 +20,7 @@ went wrong.</p>
 <tr><td align="left" valign="top" width="20%">
 <ul>
 <li><a href="#scope">In every scope</a></li>
+<li><a href="#mobprog">From MOBPROG</a></li>
 <li><a href="#cm">cm</a></li>
 <li><a href="#world">cm's world members</a></li>
 <li><a href="#events">cm.on</a></li>
@@ -70,6 +71,30 @@ JavaScript object as JSON (<code>.inspect cm.store(me)</code>).</li>
 line n again. In builder mode the history is kept from one game to the
 next.</li>
 </ul>
+
+<h2><a name="mobprog">From MOBPROG</a></h2>
+<ul>
+<li><code>IF JS(cm.store('world').trapDisarmed)</code>: true when the
+expression is truthy. <code>$%JS$(6 * 7)%</code> (or <code>JS</code>) puts
+its value in text. The expression has what a <code>&lt;SCRIPT&gt;</code>
+has: <code>host()</code>, <code>source()</code>, <code>target()</code>,
+<code>cm</code>.</li>
+<li><code>MPJSFILE world:js/trap.js north</code> runs a file as a
+<code>&lt;SCRIPT&gt;</code>, with <code>args</code> the rest of the line.</li>
+<li>In a <code>&lt;SCRIPT&gt;</code> or such a file, <code>cancel()</code>, or
+a last value of <code>'cancel'</code>, ends the prog as <code>RETURN
+CANCEL</code> does, so a <code>CNCLMSG_PROG</code> refuses its message.</li>
+</ul>
+<pre>
+CNCLMSG_PROG GET ALL
+&lt;SCRIPT&gt;
+if (target().Name() == 'a golden idol' &amp;&amp; !cm.store('world').trapDisarmed) {
+  MPECHO('A dart flies!');
+  cancel();
+}
+&lt;/SCRIPT&gt;
+~
+</pre>
 
 <h2><a name="cm">cm</a></h2>
 <p>The members return the game's own Java objects, so their methods can be
