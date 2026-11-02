@@ -2369,6 +2369,18 @@ W18, W19, W20, W21, W22, W23, W28, W29
   after, from the climate's own chart, `Climate.weatherChances`) and
   `WEATHER NEXT` (one step now). JavaScript's cm.weather(): hold and
   chances.
+- W20 done (its MPWEATHER and FORECAST are W12's). Named climates in
+  `world/climates/<name>.ini` (else resources/climates/): a weight for each
+  weather in each season (SPRING= to WINTER=, ALL= for the rest), the
+  area's climate bits still added; `TRANSITION=RAIN->FOG=30` in place of the
+  built-in change; `HOLD=` the fewest game hours a weather lasts before it
+  changes on its own (a forced change does not wait); `ALLOW=` the only
+  weathers it has; `TEXT_<WEATHER>=` and `STOP_<WEATHER>=` lines (| between
+  alternatives, NONE for silence) in place of lists.ini's. An area picks one
+  with `MODIFY AREA WEATHERPROFILE name|NONE`, kept as an area blurb flag
+  (so in the .cmare), and child areas inherit it (`core/ClimateProfiles`,
+  in `DefaultClimate.weatherChances`, the tick and the texts). A missing
+  file or a bad line is logged; WEATHER FORECAST names the climate.
 
 #### 2j. Generators and random content (16)
 

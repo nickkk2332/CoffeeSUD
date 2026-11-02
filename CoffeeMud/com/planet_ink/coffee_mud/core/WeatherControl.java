@@ -146,6 +146,9 @@ public final class WeatherControl
 		final Climate C = A.getClimateObj();
 		final StringBuilder str = new StringBuilder("Weather in " + A.Name() + ": " + name(C.weatherType(null))
 			+ ", then " + name(C.nextWeatherType(null)) + ".");
+		final String profile = ClimateProfiles.nameFor(A); // W20
+		if(profile != null)
+			str.append("\n\rClimate: ").append(profile).append((ClimateProfiles.get(profile) == null) ? " (no file: the built-in climate)" : (" (climates/" + profile.toLowerCase() + ".ini)"));
 		if((C.heldWeather() >= 0) && (C.heldUntil() > GameTime.now()))
 		{
 			final long hours = (C.heldUntil() - GameTime.now()) / Math.max(1, CMProps.getMillisPerMudHour());

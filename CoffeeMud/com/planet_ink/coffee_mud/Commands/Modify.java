@@ -982,7 +982,7 @@ public class Modify extends StdCommand
 
 			String command=commands.get(2).toUpperCase();
 			final STreeSet<String> helpSet=new STreeSet<String>();
-			helpSet.addAll(CMParms.parseCommas("NAME,DESCRIPTION,CLIMATE,FILE,AFFECTS,BEHAVIORS,ADDSUB,DELSUB,XGRID,YGRID,PASSIVE,ACTIVE,FROZEN,STOPPED",true));
+			helpSet.addAll(CMParms.parseCommas("NAME,DESCRIPTION,CLIMATE,FILE,AFFECTS,BEHAVIORS,ADDSUB,DELSUB,XGRID,YGRID,PASSIVE,ACTIVE,FROZEN,STOPPED,WEATHERPROFILE",true));
 			helpSet.addAll(CMLib.coffeeMaker().getAllGenStats(myArea));
 			if((commands.size()>3)&&(!helpSet.contains(command)))
 			{
@@ -1008,6 +1008,17 @@ public class Modify extends StdCommand
 				}
 				myArea.setName(restStr);
 				CMLib.map().renamedArea(myArea);
+			}
+			else
+			if(command.equalsIgnoreCase(ClimateProfiles.KEY)) // W20: MODIFY AREA WEATHERPROFILE name|NONE
+			{
+				myArea.delBlurbFlag(ClimateProfiles.KEY);
+				if((restStr.trim().length()>0)&&(!restStr.trim().equalsIgnoreCase("NONE")))
+				{
+					myArea.addBlurbFlag(ClimateProfiles.KEY+" "+restStr.trim().toLowerCase());
+					if(ClimateProfiles.get(restStr.trim())==null)
+						mob.tell(L("There is no world/climates/@x1.ini yet: the area keeps the built-in climate until there is.",restStr.trim().toLowerCase()));
+				}
 			}
 			else
 			if(command.equalsIgnoreCase("PASSIVE"))

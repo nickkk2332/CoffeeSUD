@@ -60,6 +60,9 @@ public class DefaultClimate implements Climate
 	/** W12: the weather a hold keeps, or -1, and the game time it ends */
 	protected int	holdCode		= -1;
 	protected long	holdUntil		= 0;
+	/** W20: the game time the weather last changed (a climate's HOLD), and whether a change is forced */
+	protected long		lastChange	= 0;
+	protected boolean	forcing		= false;
 
 	@Override
 	public void holdWeather(final int weatherCode, final long untilMillis)
@@ -102,16 +105,22 @@ public class DefaultClimate implements Climate
 		if((derivedClimate&Places.CLIMASK_WINDY)>0)
 			seasonal=addMaskAndReturn(seasonal,windy);
 		final int f=Math.abs(from) % Climate.NUM_WEATHER;
+		// W20: a named climate's weights, transitions and allowed weathers in place of the built-in ones
+		final ClimateProfiles.Profile P=ClimateProfiles.of(A);
+		final int sIdx=A.getTimeObj().getSeasonCode().ordinal();
+		final int[] own=((P!=null)&&(sIdx<P.seasons.length))?P.seasons[sIdx]:null;
 		final int[] weatherChanceChart = new int[Climate.NUM_WEATHER];
 		for(int g=0;g<Climate.NUM_WEATHER;g++)
 		{
-			// take the base chance for a seasonal weather occurrence (rain in winter, etc)
-			final int seasonalNum=seasonal[(A.getTimeObj().getSeasonCode().ordinal()*Climate.NUM_WEATHER)+g];
+			final int at=(sIdx*Climate.NUM_WEATHER)+g;
+			// take the base chance for a seasonal weather occurrence (rain in winter, etc); a climate's own, with the area's climate bits added
+			final int seasonalNum=(own!=null)?(own[g]+(seasonal[at]-seasonalWeather[at])):seasonal[at];
 			// find the chance of changing from what it will be, to some new condition.
-			final int changeNum=changeMap[(f*Climate.NUM_WEATHER)+g];
+			final Integer over=(P!=null)?P.transitions[f][g]:null;
+			final int changeNum=(over!=null)?over.intValue():changeMap[(f*Climate.NUM_WEATHER)+g];
 			// add them together to find the chance of a particular change in a particular season
 			// to a particular condition.
-			weatherChanceChart[g] = seasonalNum+changeNum;
+			weatherChanceChart[g] = ((P!=null)&&(!P.allows(g)))?0:(seasonalNum+changeNum);
 		}
 		return weatherChanceChart;
 	}
@@ -368,7 +377,28 @@ public class DefaultClimate implements Climate
 	public void forceWeatherTick(final Area A)
 	{
 		weatherTicker=1;
-		weatherTick(A);
+		forcing=true; // W20: a forced change does not wait for a climate's HOLD
+		try
+		{
+			weatherTick(A);
+		}
+		finally
+		{
+			forcing=false;
+		}
+	}
+
+	/**
+	 * W20: a weather's ending line: the area's climate's STOP_ line, else lists.ini's.
+	 * @param A the area
+	 * @param weatherCode the weather that ends
+	 * @return the line
+	 */
+	protected String weatherStop(final Area A, final int weatherCode)
+	{
+		final ClimateProfiles.Profile P=ClimateProfiles.of(A);
+		final String own=((P!=null)&&(weatherCode>=0)&&(weatherCode<Climate.NUM_WEATHER))?ClimateProfiles.pick(P.stops[weatherCode]):null;
+		return (own!=null)?own:getWeatherStop(weatherCode);
 	}
 
 	public int[] addMaskAndReturn(final int[] one, final int[] two)
@@ -429,6 +459,14 @@ public class DefaultClimate implements Climate
 				holdCode=-1;
 			else
 				nextWeather=holdCode;
+			// W20: a named climate's HOLD: a weather lasts that many game hours before it changes on its own
+			final ClimateProfiles.Profile profile=ClimateProfiles.of(A);
+			if((profile!=null)&&(profile.holdHours>0)&&(!forcing)&&(!held)&&(lastChange>0)
+			&&((GameTime.now()-lastChange)<(profile.holdHours*CMProps.getMillisPerMudHour())))
+			{
+				weatherTicker=WEATHER_TICK_DOWN;
+				return;
+			}
 
 			// reset the weather ticker!
 			weatherTicker=WEATHER_TICK_DOWN;
@@ -478,11 +516,15 @@ public class DefaultClimate implements Climate
 			final int oldWeather=currentWeather;
 			if(!CMSecurity.isDisabled(CMSecurity.DisFlag.WEATHERCHANGES))
 			{
+				if((profile!=null)&&(!profile.allows(nextWeather))&&(!held)) // W20: a weather the climate has not
+					nextWeather=possibleNextWeather;
 				currentWeather=nextWeather;
 				nextWeather=possibleNextWeather;
 				if(held) // W12
 					nextWeather=holdCode;
 			}
+			if(oldWeather!=currentWeather)
+				lastChange=GameTime.now(); // W20
 			if(oldWeather!=currentWeather)
 			{
 				// ST4: WEATHERCHANGE and WEATHER_PROG
@@ -508,7 +550,7 @@ public class DefaultClimate implements Climate
 				/*WINTER*/			 2,  3,  3,  3,  3,  1,  1,  3,  1,  1,  1,  1,  0,  1,
 				/*FOGGY*/			 2,  0,  3,  1,  1,  1,  1,  3,  1,  1,  3,  3,  3,  0,
 									};
-				final String stopWord=getWeatherStop(oldWeather);
+				final String stopWord=weatherStop(A,oldWeather); // W20: the climate's own
 				switch(sayMap[(oldWeather*Climate.NUM_WEATHER)+currentWeather])
 				{
 				case 0:
@@ -553,6 +595,11 @@ public class DefaultClimate implements Climate
 		final int derivedClimate=A.getClimateType();
 		if((derivedClimate&Places.CLIMASK_VOID)>0)
 			return "";
+		// W20: the area's climate's TEXT_ line, in place of lists.ini's
+		final ClimateProfiles.Profile P=ClimateProfiles.of(A);
+		final String own=(P!=null)?ClimateProfiles.pick(P.texts[weather]):null;
+		if(own!=null)
+			return own;
 		final int listFileOrd = CMProps.ListFile.WEATHER_CLEAR.ordinal() + weather;
 		final CMProps.ListFile listFileEnum = CMProps.ListFile.values()[listFileOrd];
 		final String prefix;
