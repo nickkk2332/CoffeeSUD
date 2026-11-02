@@ -65,12 +65,14 @@ public final class WorldSettings
 		"CATCHUP", "DIALOGUETIME", "CHECKROLLS", "HINTTOPICS",
 		// combat
 		"DIFFICULTY",
+		// money
+		"DEFAULTCURRENCY",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */
 	private static final String[]	PREFIXES	=
 	{
-		"START_", "DEATH_", "MORGUE_", "FORMULA_", "ADDCHARSTAT_", "REPLACECHARSTAT_", "DIFFICULTY_", "MOBRANK_"
+		"START_", "DEATH_", "MORGUE_", "FORMULA_", "ADDCHARSTAT_", "REPLACECHARSTAT_", "DIFFICULTY_", "MOBRANK_", "CURRENCY_"
 	};
 
 	/** the world settings this game started with, in file order */

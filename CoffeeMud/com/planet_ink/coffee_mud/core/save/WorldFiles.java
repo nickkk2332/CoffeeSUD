@@ -258,6 +258,9 @@ public final class WorldFiles
 	 */
 	public static void loadWorld()
 	{
+		// W2: the world's currency file, now that the world's folder is known
+		if(CMLib.beanCounter() instanceof com.planet_ink.coffee_mud.Libraries.BeanCounter)
+			((com.planet_ink.coffee_mud.Libraries.BeanCounter)CMLib.beanCounter()).reloadCurrencies();
 		loadWorldFiles();
 		loadDevAreas();
 	}

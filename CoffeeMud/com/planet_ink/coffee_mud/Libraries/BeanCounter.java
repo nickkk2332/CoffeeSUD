@@ -122,6 +122,99 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		}
 	}
 
+	/** W2: the codes the currency file and world.ini define, kept whatever areas do */
+	protected final Set<String>			registered		= new HashSet<String>();
+	/** W2: each code's definition as first made, to tell a second, different one */
+	protected final Map<String,String>	definedAs		= new Hashtable<String,String>();
+	/** W2: the world's default currency's code ("" for the built-in gold coins), null until the file is read */
+	protected volatile String			defaultCode		= null;
+
+	/**
+	 * W2: reads the currency file once: resources/currencies.ini (a world's
+	 * copy first), then CURRENCY_[CODE]= and DEFAULTCURRENCY= of coffeemud.ini
+	 * or world.ini.  Each CODE=definition line makes a currency, as an
+	 * area's would; DEFAULT=CODE is the currency of areas with none of their
+	 * own, in place of the gold coins and Archon notes.
+	 */
+	protected void loadRegistry()
+	{
+		if(defaultCode!=null)
+			return;
+		synchronized(registered)
+		{
+			if(defaultCode!=null)
+				return;
+			defaultCode="";
+			String dflt="";
+			final Map<String,String> defs=new LinkedHashMap<String,String>();
+			final CMFile F=new CMFile(Resources.makeFileResourceName("currencies.ini"),null);
+			if(F.exists()&&F.canRead())
+			{
+				for(String line : F.text().toString().split("\r?\n"))
+				{
+					line=line.trim();
+					final int x=line.indexOf('=');
+					if(line.startsWith("#")||(x<=0))
+						continue;
+					final String key=line.substring(0,x).trim().toUpperCase();
+					if(key.equals("DEFAULT"))
+						dflt=line.substring(x+1).trim().toUpperCase();
+					else
+						defs.put(key,line.substring(x+1).trim());
+				}
+			}
+			final CMProps P=CMProps.instance();
+			for(final String key : new TreeSet<String>(P.stringPropertyNames()))
+			{
+				if(key.toUpperCase().startsWith("CURRENCY_")&&(key.length()>9)&&(P.getProperty(key).trim().length()>0))
+					defs.put(key.substring(9).trim().toUpperCase(),P.getProperty(key).trim());
+			}
+			final String iniDefault=P.getProperty("DEFAULTCURRENCY");
+			if((iniDefault!=null)&&(iniDefault.trim().length()>0))
+				dflt=iniDefault.trim().toUpperCase();
+			for(final Map.Entry<String,String> e : defs.entrySet())
+			{
+				if(createCurrencySet(currencies,e.getKey()+"="+e.getValue())!=null)
+					registered.add(e.getKey());
+			}
+			if(dflt.length()>0)
+			{
+				if(getCurrencySet(dflt)==null)
+					Log.errOut("BeanCounter","The default currency "+dflt+" (currencies.ini or DEFAULTCURRENCY) is defined nowhere.");
+				else
+					defaultCode=dflt;
+			}
+		}
+	}
+
+	/**
+	 * W2: reads the currency file again (at the world's load, and for
+	 * tests): the codes it made are dropped, then made again from the file.
+	 */
+	public void reloadCurrencies()
+	{
+		synchronized(registered)
+		{
+			for(final String code : new ArrayList<String>(registered))
+			{
+				registered.remove(code);
+				unloadCurrencySet(code);
+			}
+			defaultCode=null;
+		}
+		loadRegistry();
+	}
+
+	/**
+	 * W2: the world's default currency.
+	 * @return its code, or "" for the built-in gold coins
+	 */
+	public String defaultCurrencyCode()
+	{
+		loadRegistry();
+		return defaultCode;
+	}
+
 	@Override
 	public void unloadCurrencySet(final String currency)
 	{
@@ -129,17 +222,21 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		final int x=code.indexOf('=');
 		if(x>=0)
 			code=code.substring(0,x).trim();
+		if(registered.contains(code)) // W2: the currency file's stay, whatever an area does
+			return;
 		if(currencies.containsKey(code))
 		{
 			allCurrencyNames.remove(code);
 			currencies.remove(code);
 			allCurrencyDenominationNames.remove(code);
+			definedAs.remove(code);
 		}
 	}
 
 	@Override
 	public MoneyDefinition createCurrencySet(final String currency)
 	{
+		loadRegistry();
 		return createCurrencySet(currencies,currency);
 	}
 
@@ -149,8 +246,20 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		if(x<0)
 			return null;
 		final String code=currency.substring(0,x).trim().toUpperCase();
+		final String as=currency.substring(x+1).trim().replaceAll("\\s+"," ").toLowerCase();
 		if(currencies.containsKey(code))
+		{
+			// W2: a code defined again, differently: the first is kept, and it is said
+			final String was=(currencies==this.currencies)?definedAs.get(code):null;
+			if((was!=null)&&(!was.equals(as))&&(as.length()>0))
+			{
+				definedAs.put(code,as);
+				Log.errOut("BeanCounter","Currency "+code+" is defined again, differently ("+currency.substring(x+1).trim()+"); the first definition is kept.");
+			}
 			return currencies.get(code);
+		}
+		if(currencies==this.currencies)
+			definedAs.put(code,as);
 		currency=currency.substring(x+1).trim();
 		final List<String> CV=CMParms.parseSemicolons(currency,true);
 		final List<MoneyDenomination> DV=new ArrayList<MoneyDenomination>();
@@ -239,12 +348,15 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 	{
 		if(currency==null)
 			return null;
+		loadRegistry();
 		String code=currency.toUpperCase().trim();
 		final int x=code.indexOf('=');
 		if(x<0)
 		{
 			if(currencies.containsKey(code))
 				return currencies.get(code);
+			if((code.length()==0)&&(defaultCode!=null)&&(defaultCode.length()>0)) // W2: the world's default
+				return getCurrencySet(defaultCode);
 			if(defaultCurrencies.size()==0)
 			{
 				createCurrencySet(defaultCurrencies,defaultCurrency);
@@ -267,6 +379,7 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 	@Override
 	public List<String> getAllCurrencies()
 	{
+		loadRegistry();
 		return allCurrencyNames;
 	}
 
@@ -1487,6 +1600,8 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		{
 			final String s=((Area)E).getFinalCurrency();
 			final int x=s.indexOf('=');
+			if((x<0)&&(s.trim().length()==0)) // W2: an area with no currency of its own has the world's
+				return defaultCurrencyCode();
 			if(x<0)
 				return s.toUpperCase().trim();
 			return s.substring(0,x).toUpperCase().trim();

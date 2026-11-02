@@ -2305,6 +2305,17 @@ W18, W19, W20, W21, W22, W23, W28, W29
   [crime ...]`, by the law where the character is (a record is wanted
   nowhere), so IGNOREMASK, VARIES and guards can use them. JavaScript's
   cm.law(): wanted, finesOwed, addFine, release and suppress.
+- W2 done. `resources/currencies.ini` (a world's own copy in
+  world/resources/ read instead; read at the world's load): `CODE=`
+  definition lines make currencies as an area's CURRENCY does, kept
+  whatever areas later do, and `DEFAULT=CODE` is the currency of every
+  area with none of its own, in place of the gold coins and Archon notes
+  (a built-in code such as GOLD can be named). coffeemud.ini or world.ini
+  can set `CURRENCY_<CODE>=` and `DEFAULTCURRENCY=` too, after the file. A
+  code defined again, differently, keeps the first definition, and the log
+  says so. VALUE() takes every code that resolves (GOLD, COPPER and the
+  other built-in ones failed before). The stock file is comments only, so
+  nothing changes until a world sets it.
 
 #### 2j. Generators and random content (16)
 

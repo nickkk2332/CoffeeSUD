@@ -639,6 +639,10 @@ attune"</code> attunes a druid's staff only in its grove.</p>
 runs <code>MPRELEASE $n</code>. <code>WARRANTS($n)</code> and <code>FINESOWED($n)</code> count, <code>MPFINE $n +50</code>
 adds to the fines. An honest shop's <code>IGNOREMASK="-WANTED"</code> turns criminals away, a gate guard's
 <code>-WANTED MURDER</code> lets all but murderers through.</p>
+<p>Money of the world's own: <code>world/resources/currencies.ini</code> holds <code>DEFAULT=CROWN</code> and
+<code>CROWN=1 copper penny(s) (cp);12 silver shilling(s) (ss);240 gold crown(s) (gc)</code>, so every area without
+a currency pays in crowns, and an elven area's CURRENCY LEAF names another line of the file.
+<code>VALUE($n CROWN &gt; 100)</code> and <code>VALUE($n GOLD &gt; 5)</code> both work (AHELP CURRENCY_FILE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

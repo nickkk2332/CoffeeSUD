@@ -7388,7 +7388,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						logError(ctx,"VALUE","Syntax",CMParms.combine(tt,t));
 						break;
 					}
-					if(!CMLib.beanCounter().getAllCurrencies().contains(arg2.toUpperCase()))
+					if(CMLib.beanCounter().getCurrencySet(arg2.toUpperCase().trim())==null) // W2: the built-in and registered ones too
 					{
 						logError(ctx,"VALUE","Syntax",arg2+" is not a valid designated currency.");
 						break;
@@ -9735,7 +9735,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			{
 				final String arg1=CMParms.getCleanBit(funcParms,0);
 				final String arg2=CMParms.getPastBitClean(funcParms,0);
-				if(!CMLib.beanCounter().getAllCurrencies().contains(arg2.toUpperCase()))
+				if(CMLib.beanCounter().getCurrencySet(arg2.toUpperCase().trim())==null) // W2
 				{
 					logError(ctx,"VALUE","Syntax",arg2+" is not a valid designated currency.");
 					return results.toString();
