@@ -95,6 +95,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected Tickable				altStatusTickable= null;
 	protected List<Integer>			oncesDone		 = Collections.synchronizedList(new ArrayList<Integer>());
 	protected Map<Integer,int[]>	delayTargetTimes = Collections.synchronizedMap(new HashMap<Integer,int[]>());
+	/** ST24: each EVERY_PROG's next time, in its area clock's hours, kept in the save */
+	protected Map<Integer,Long>	everyNext = Collections.synchronizedMap(new HashMap<Integer,Long>());
 	protected Map<Integer,Integer>	lastTimeProgsDone= Collections.synchronizedMap(new HashMap<Integer,Integer>());
 	protected Map<Integer,Integer>	lastDayProgsDone = Collections.synchronizedMap(new HashMap<Integer,Integer>());
 	protected Set<Integer>			registeredEvents = new HashSet<Integer>();
@@ -1042,6 +1044,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		altStatusTickable= null;
 		oncesDone = Collections.synchronizedList(new ArrayList<Integer>());
 		delayTargetTimes = Collections.synchronizedMap(new HashMap<Integer,int[]>());
+		everyNext = Collections.synchronizedMap(new HashMap<Integer,Long>());
 		lastTimeProgsDone= Collections.synchronizedMap(new HashMap<Integer,Integer>());
 		lastDayProgsDone = Collections.synchronizedMap(new HashMap<Integer,Integer>());
 		registeredEvents = new HashSet<Integer>();
@@ -14296,6 +14299,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(scripts==null)
 		{
 			delayTargetTimes.clear();
+			everyNext.clear();
 			lastTimeProgsDone.clear();
 			lastDayProgsDone.clear();
 			oncesDone.clear();
@@ -14403,6 +14407,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		appendNumbers(str,"TIME",lastTimeProgsDone);
 		appendNumbers(str,"DAY",lastDayProgsDone);
 		appendNumbers(str,"DELAY",delayTargetTimes);
+		// ST24: each EVERY_PROG's next time
+		final StringBuilder every=new StringBuilder("");
+		synchronized(everyNext)
+		{
+			for(final Map.Entry<Integer,Long> e : everyNext.entrySet())
+				every.append((every.length()>0)?",":"").append(e.getKey()).append(':').append(e.getValue());
+		}
+		if(every.length()>0)
+			str.append("<EVERY>").append(every).append("</EVERY>");
 		// MPNOTRIGGER: game time left on each
 		final StringBuilder notrig=new StringBuilder("");
 		synchronized(noTrigger)
@@ -14531,6 +14544,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final int x=pair.indexOf(':');
 			if(x>0)
 				delayTargetTimes.put(Integer.valueOf(CMath.s_int(pair.substring(0,x))),new int[]{CMath.s_int(pair.substring(x+1))});
+		}
+		for(final String pair : CMParms.parseCommas(xmlLib.getValFromPieces(tags, "EVERY"),true))
+		{
+			final int x=pair.indexOf(':');
+			if(x>0)
+				everyNext.put(Integer.valueOf(CMath.s_int(pair.substring(0,x))),Long.valueOf(CMath.s_long(pair.substring(x+1))));
 		}
 		for(final String pair : CMParms.parseCommas(xmlLib.getValFromPieces(tags, "NOTRIG"),true))
 		{
@@ -17100,6 +17119,34 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					scripts.remove(thisScriptIndex);
 					thisScriptIndex--;
+				}
+				break;
+			case 91: // every_prog (ST24): every N HOURS|DAYS|WEEKS|MONTHS of the area's clock, [CATCHUP]
+				if((!mob.amDead())&&canTrigger(91)&&(mob.location()!=null))
+				{
+					if(t==null)
+						t=parseBits(script,0,"CCr");
+					if(t==null)
+						break;
+					final TimeClock eC=mob.location().getArea().getTimeObj();
+					final String rest=(t.length>2)?t[2]:"";
+					String unit=CMParms.getCleanBit(rest,0);
+					if(unit.equalsIgnoreCase("CATCHUP"))
+						unit="HOURS";
+					final boolean catchup=rest.toUpperCase().indexOf("CATCHUP")>=0;
+					final long every=ScriptEvents.everyHours(Math.max(1,CMath.s_long(t[1])),unit,eC);
+					final long now=ScriptEvents.clockHours(eC);
+					final Integer key=Integer.valueOf(thisScriptIndex);
+					final Long next=everyNext.get(key);
+					if(next==null)
+						everyNext.put(key,Long.valueOf(now+every));
+					else
+					if(now>=next.longValue())
+					{
+						final long missed=1+((now-next.longValue())/every);
+						everyNext.put(key,Long.valueOf(next.longValue()+(missed*every)));
+						execute(new MPContext(affecting,mob,mob,mob,defaultItem,null,""+(catchup?missed:1),null).push(script));
+					}
 				}
 				break;
 			case 78: // combat_prog START and END (ST15)

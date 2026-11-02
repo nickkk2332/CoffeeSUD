@@ -1129,6 +1129,10 @@ JS17, JS18, JS19, JS20, JS23
 - ST22 done. `SOCIAL_PROG [EXACT] [ME] name`: EXACT matches the whole name
   (or its first word for a bare name), ME only a social aimed at the
   scripted mob; $g is the social's full name.
+- ST24 done. `EVERY_PROG N [HOURS|DAYS|WEEKS|MONTHS] [CATCHUP]` on the area
+  clock's hours, the next time in the engine's saved state (<EVERY>); with
+  CATCHUP $g is how many intervals passed. Cron is left on its own clock
+  (S21's).
 
 #### 2e. Quests (15)
 

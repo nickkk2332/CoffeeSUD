@@ -1716,6 +1716,41 @@ public final class ScriptEvents
 		return s.equals(name);
 	}
 
+	/**
+	 * ST24: a clock's time in hours since its year 0, for EVERY_PROG.
+	 * @param C the clock
+	 * @return the hours
+	 */
+	public static long clockHours(final TimeClock C)
+	{
+		if(C == null)
+			return GameTime.now() / Math.max(1, CMProps.getMillisPerMudHour());
+		return ((((long)C.getYear() * C.getMonthsInYear()) + C.getMonth()) * C.getDaysInMonth() + C.getDayOfMonth()) * C.getHoursInDay() + C.getHourOfDay();
+	}
+
+	/**
+	 * ST24: EVERY_PROG's interval in a clock's hours.
+	 * @param n how many
+	 * @param unit HOURS, DAYS, WEEKS or MONTHS (HOURS if not one of them)
+	 * @param C the clock
+	 * @return the hours, at least 1
+	 */
+	public static long everyHours(final long n, final String unit, final TimeClock C)
+	{
+		final int hoursInDay = ((C == null) || (C.getHoursInDay() <= 0)) ? 24 : C.getHoursInDay();
+		final String u = unit.toUpperCase();
+		long h = n;
+		if(u.startsWith("DAY"))
+			h = n * hoursInDay;
+		else
+		if(u.startsWith("WEEK"))
+			h = n * hoursInDay * (((C == null) || (C.getDaysInWeek() <= 0)) ? 7 : C.getDaysInWeek());
+		else
+		if(u.startsWith("MONTH"))
+			h = n * hoursInDay * (((C == null) || (C.getDaysInMonth() <= 0)) ? 30 : C.getDaysInMonth());
+		return Math.max(1, h);
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */
