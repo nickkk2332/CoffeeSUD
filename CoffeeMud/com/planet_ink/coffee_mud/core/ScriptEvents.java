@@ -560,6 +560,37 @@ public final class ScriptEvents
 		arena(R, ARENALOSE_PROG, who, "");
 	}
 
+	/** I6: SET_PROG's code */
+	public static final int	SET_PROG	= code("SET_PROG");
+
+	/**
+	 * I6: a tier of an item set came on or went off: SET_PROG [set|ALL] runs
+	 * on the piece's scripts and the wearer's, $n the wearer, $0 the tier, $1
+	 * ON or OFF.
+	 * @param piece the piece the tier's properties are on
+	 * @param M the wearer
+	 * @param setId the set
+	 * @param tier the tier
+	 * @param onOff ON or OFF
+	 */
+	public static void itemSet(final Item piece, final MOB M, final String setId, final int tier, final String onOff)
+	{
+		if((M == null) || (!isUsed(SET_PROG)))
+			return;
+		for(final PhysicalAgent H : new PhysicalAgent[] { piece, M })
+		{
+			if(H == null)
+				continue;
+			for(final ScriptingEngine S : engines(H))
+			{
+				S.eventCheck(H, SET_PROG, M, M, piece, tier + " " + onOff, new Object[] { "" + tier, onOff }, "Cr", t -> {
+					final String w = (t.length < 2) ? "" : t[1].trim();
+					return (w.length() == 0) || w.equalsIgnoreCase("ALL") || w.equalsIgnoreCase(setId);
+				});
+			}
+		}
+	}
+
 	/** I10: USE_PROG's code */
 	public static final int	USE_PROG		= code("USE_PROG");
 	/** I10: COMBINE_PROG's code */

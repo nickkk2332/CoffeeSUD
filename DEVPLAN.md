@@ -2226,6 +2226,17 @@ I22, I23, I24, I25, I26, I27
   the new one a Prop_Transform BACK=true that brings it back when WHEN
   ends. What is put away is not in a save: a game saved at night keeps
   the gargoyle, which then stays a mob.
+- I6 done. The threshold fix first: Prop_HaveAdjuster.setCheck gives
+  each piece's set state from its own ALLSET number. Prop_ItemSet (items)
+  ticks on its own: core/ItemSets counts the owner's pieces of the SET
+  (worn, or carried with COUNT=HELD); the definition is the piece's own,
+  another piece's with TIERn, or a line of world/itemsets.txt; the first
+  counted piece carries the met tiers' properties (unsaved), the others
+  none. ONMSG/OFFMSG, MASK, PIECES; LOOK (a trailer) shows the count and
+  tiers. SET_PROG (114) on the piece and the wearer; SETCOUNT (195).
+  Not done: ALLSET on Prop_WearSpellCast, Prop_WearEnabler,
+  Prop_WearResister and Prop_AddDamage (the tiers give those now), and
+  IDENTIFY's text.
 
 #### 2i. World systems (25)
 

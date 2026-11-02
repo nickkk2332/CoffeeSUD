@@ -564,6 +564,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"SWITCH_PROG", // 111
 		"USE_PROG", // 112
 		"COMBINE_PROG", // 113
+		"SET_PROG", // 114
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -763,6 +764,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"SWITCHSTATE", //192
 		"ROOMWEIGHT", //193
 		"CONTENTWEIGHT", //194
+		"SETCOUNT", //195
 	};
 
 	/** String list of all valid mobprog commands */

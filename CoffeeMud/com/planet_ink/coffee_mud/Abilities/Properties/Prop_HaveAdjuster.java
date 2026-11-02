@@ -672,7 +672,7 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 		for(final ItemSetDef def : allDefs)
 		{
 			def.setChecked=true;
-			def.setActivated=setActivated;
+			def.setActivated=ct >= def.allSetReqNum; // I6: each piece its own threshold
 		}
 		return setActivated;
 	}

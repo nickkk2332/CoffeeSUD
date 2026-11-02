@@ -604,6 +604,10 @@ after. A fairy ring: <code>CHECK=ROOMPLAYERS COOLDOWN=24H PROPS="Prop_Transporte
 MSG="$p cracks open!"</code> on a dragon egg hatches it after three days in someone's pack, the wyrmling following
 its finder; <code>WHEN=NIGHT REVERT=true MOB="a stone gargoyle"</code> on a statue wakes it at night and turns it
 back to stone at dawn.</p>
+<p>Item sets: <code>Prop_ItemSet SET=dragonbone</code> on each of four pieces, and on one of them also <code>TIER2="Prop_WearResister(fire 25%)"
+TIER4="Prop_WearEnabler(Dragonbreath)" PIECES=4</code>: two pieces worn give fire resistance, all four the breath,
+and LOOK at a piece shows how far along the set is. <code>SETCOUNT($n dragonbone)</code> and <code>SET_PROG</code>
+for scripts.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

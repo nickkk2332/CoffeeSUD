@@ -15932,6 +15932,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "SETCOUNT": // I6: SETCOUNT(who set): how many pieces of that item set count for them
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final String set=varify(ctx,CMParms.getPastBitClean(parms,0)).trim();
+			return (W instanceof MOB)?(""+ItemSets.count((MOB)W,set)):"0";
+		}
 		case "ROOMWEIGHT": // I25: ROOMWEIGHT(room): what its mobs (with what they carry) and items weigh
 		{
 			return ""+Weights.room(doorRoom(ctx,CMParms.getCleanBit(parms,0)),null);
