@@ -15967,6 +15967,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "BREATH": // W18: BREATH(who): the ticks of breath they have left (all of it where they can breathe)
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			return (W instanceof MOB)?(""+Breath.remaining((MOB)W)):"0";
+		}
 		case "ISDARK": // W10: ISDARK(room|HERE|thing): the room is dark (night, a dark place, no light in it)
 		case "ISLIT": // W10: ISLIT(room|HERE|thing): it is not
 		{

@@ -2422,6 +2422,14 @@ W18, W19, W20, W21, W22, W23, W28, W29
   only), `NAME=` what hurts and `MSG=`. Fixed on the way: Prop_InstantDeath
   on an area did nothing, as it woke only on messages aimed at the area;
   it wakes when a room of the area is entered.
+- W18 done. `core/Breath`: where a mob cannot breathe (no air, or the
+  room's water or gas), each tick spends a tick of breath before it chokes
+  or drowns: `BREATHTICKS=` (coffeemud.ini, world.ini; a formula, @x1
+  constitution, @x2 level; `@x1/3` by default, 0 for none) plus the
+  `TICKS=` of each `Prop_AirSupply` carried (an air bladder). It warns at
+  half, at a quarter and when it is gone; air it can breathe fills it
+  again, so an air pocket needs nothing new. `BREATH(who)` (209) and masks
+  `+BREATH <3` and `-BREATH <3` (the ticks left, compared).
 
 #### 2j. Generators and random content (16)
 

@@ -3361,6 +3361,14 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case ROOMDARK: // W10
 					buf.append(L("Disallows those not in a room that is dark to them.  "));
 					break;
+				case BREATH: // W18
+				case _BREATH:
+					if((v+1)<V.size())
+					{
+						v++;
+						buf.append((key==ZapperKey.BREATH)?L("Requires breath left @x1.  ",V.get(v)):L("Disallows those with breath left @x1.  ",V.get(v)));
+					}
+					break;
 				case _ROOMDARK:
 					buf.append(L("Disallows those in a room that is dark to them.  "));
 					break;
@@ -5374,6 +5382,16 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						}
 					}
 					break;
+				case BREATH: // W18: +breath <3, -breath >=5: the ticks of breath left, compared
+				case _BREATH:
+					{
+						if((v+1)<V.size())
+						{
+							v++;
+							buf.add(new CompiledZapperMaskEntryImpl(entryType,new Object[]{V.get(v)}));
+						}
+					}
+					break;
 				case WANTED: // W1: +wanted [crime ...]
 				case _WANTED: // -wanted [crime ...]
 					{
@@ -6656,6 +6674,22 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						if((B!=null)
 						&&(!B.isJudge(CMLib.law().getLegalObject(mob.getStartRoom()), mob)))
 							return false;
+					}
+					break;
+				case BREATH: // W18: +breath <3: only those whose breath left compares so
+				case _BREATH: // -breath <3: not those
+					{
+						final String cmp=(entry.parms().length>0)?((String)entry.parms()[0]):"";
+						final java.util.regex.Matcher bm=java.util.regex.Pattern.compile("^(<=|>=|<|>|=|!=)?\\s*(-?\\d+)$").matcher(cmp.trim());
+						if(bm.find())
+						{
+							final int have=Breath.remaining(mob);
+							final int n=CMath.s_int(bm.group(2));
+							final String op=(bm.group(1)==null)?"=":bm.group(1);
+							final boolean is=op.equals("<")?(have<n):op.equals("<=")?(have<=n):op.equals(">")?(have>n):op.equals(">=")?(have>=n):op.equals("!=")?(have!=n):(have==n);
+							if(is!=(entry.maskType()==ZapperKey.BREATH))
+								return false;
+						}
 					}
 					break;
 				case WANTED: // W1: +wanted [crime ...]: only those wanted where they are (for one of them)
@@ -9855,6 +9889,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case JUDGE: // +judge
 				case _WANTED: // W1: a record is wanted nowhere
 				case WANTED:
+				case _BREATH: // W18: nor short of breath
+				case BREATH:
 				case NPC: // +npc
 				case _ACCCHIEVE: // -accchieves
 				case ACCCHIEVE: // +accchieves

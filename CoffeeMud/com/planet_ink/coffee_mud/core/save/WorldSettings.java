@@ -67,6 +67,8 @@ public final class WorldSettings
 		"DIFFICULTY",
 		// money
 		"DEFAULTCURRENCY",
+		// the body
+		"BREATHTICKS",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */

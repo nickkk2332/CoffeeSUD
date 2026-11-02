@@ -678,6 +678,9 @@ DAWNLANTERN) lights the way, and <code>SEEMASK="-RACE +Dwarf"</code> lets dwarve
 <p>Hazards by type: Frostfang Pass holds <code>Prop_Hazard TYPE=COLD DAMAGE=1d6 SAVE=COLD WHEN="-WEATHER +BLIZZARD +SNOW"
 PROTECT="-EFFECTS +Spell_ResistCold" ESCALATE=20</code>: without a ward against cold the crossing hurts more each
 tick, and only in the snow. On an area, <code>ROOMS="-DOMAIN +MOUNTAINS"</code> keeps it to the peaks.</p>
+<p>Holding one's breath: in the Sunken Temple a player has their <code>BREATHTICKS</code> (a third of their
+constitution, by default) to reach the air pocket; a merfolk sells air bladders, <code>Prop_AirSupply TICKS=6</code>.
+A script reads <code>BREATH($n)</code>; <code>+BREATH &lt;2</code> in a mask finds those about to drown.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -4244,6 +4244,15 @@ public class StdMOB implements MOB
 
 					if(!flag.isGolem(this))
 					{
+						// W18: a breath held first, before one chokes or drowns; air fills it again
+						final boolean airless=(!flag.canBreathe(this))||(!flag.canBreatheHere(this, R));
+						if(!airless)
+							Breath.refill(this);
+						if(airless&&Breath.hold(this))
+						{
+							// holding a breath
+						}
+						else
 						if(!flag.canBreathe(this))
 						{
 							final MOB killerM = CMLib.combat().getBreatheKiller(this);

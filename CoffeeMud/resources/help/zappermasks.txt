@@ -112,6 +112,8 @@
 +WANTED (<WORD> all but those wanted by the law), +WANTED THEFT ASSAULT (for those)
 -ROOMDARK (<WORD> those the room they are in is dark to: dark, and they cannot see in the dark)
 +ROOMDARK (<WORD> all but those the room is dark to)
+-BREATH <3 (<WORD> those with fewer than 3 ticks of breath left; also <=, >, >=, =)
++BREATH <3 (<WORD> all but those)
 -EFFECTS +Sleep "+Wood Chopping" (<WORD> all except those with effects)
 +EFFECTS -Sleep "-Wood Chopping" (<WORD> only those with listed effect)
 -SKILLS +Spell_Sleep(75) (<WORD> all except those with skill proficiency)
