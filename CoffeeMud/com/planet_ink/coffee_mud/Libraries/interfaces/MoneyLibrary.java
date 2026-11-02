@@ -1359,6 +1359,34 @@ public interface MoneyLibrary extends CMLibrary
 		 * @return short display abbreviation of the denomination
 		 */
 		public String abbr();
+
+		/**
+		 * W16: what the coin is made of, from {MATERIAL=} after the
+		 * denomination in its currency's definition.
+		 * @return a RawMaterial resource code, or -1 to go by its name
+		 */
+		public default int material()
+		{
+			return -1;
+		}
+
+		/**
+		 * W16: what one coin weighs, from {WEIGHT=}.
+		 * @return the weight of one, or -1 for the usual hundred to a pound
+		 */
+		public default double weight()
+		{
+			return -1;
+		}
+
+		/**
+		 * W16: the coin's look, from {DESC=}, before its "Equal to" line.
+		 * @return the description, or ""
+		 */
+		public default String description()
+		{
+			return "";
+		}
 	}
 
 	/**

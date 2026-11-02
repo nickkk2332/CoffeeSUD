@@ -2316,6 +2316,13 @@ W18, W19, W20, W21, W22, W23, W28, W29
   says so. VALUE() takes every code that resolves (GOLD, COPPER and the
   other built-in ones failed before). The stock file is comments only, so
   nothing changes until a world sets it.
+- W16 done. A denomination in a currency's definition (the currency
+  file's, world.ini's or an area's) may end in braces: `12 silver
+  shilling(s) (ss) {MATERIAL=SILVER WEIGHT=0.01 DESC="..."}`, semicolons
+  inside them kept. StdCoins takes the material (else, as before, the
+  first material word of the name), the weight of one coin (else a
+  hundred to the pound, paper and cloth nothing) and the description, its
+  "Equal to" line after it.
 
 #### 2j. Generators and random content (16)
 

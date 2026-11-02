@@ -63,6 +63,27 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		private final double value;
 		private final String name;
 		private final String abbr;
+		private int		material	= -1;	// W16: {MATERIAL=}
+		private double	weight		= -1;	// W16: {WEIGHT=}
+		private String	description	= "";	// W16: {DESC=}
+
+		@Override
+		public int material()
+		{
+			return material;
+		}
+
+		@Override
+		public double weight()
+		{
+			return weight;
+		}
+
+		@Override
+		public String description()
+		{
+			return description;
+		}
 
 		@Override
 		public double value()
@@ -261,6 +282,21 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		if(currencies==this.currencies)
 			definedAs.put(code,as);
 		currency=currency.substring(x+1).trim();
+		// W16: a denomination's {...} may hold semicolons (in its DESC); they are kept from the split
+		final StringBuilder guarded=new StringBuilder(currency);
+		for(int i=0,depth=0;i<guarded.length();i++)
+		{
+			final char c=guarded.charAt(i);
+			if(c=='{')
+				depth++;
+			else
+			if((c=='}')&&(depth>0))
+				depth--;
+			else
+			if((c==';')&&(depth>0))
+				guarded.setCharAt(i,'\u0001');
+		}
+		currency=guarded.toString();
 		final List<String> CV=CMParms.parseSemicolons(currency,true);
 		final List<MoneyDenomination> DV=new ArrayList<MoneyDenomination>();
 		String s=null;
@@ -270,7 +306,15 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 		final List<String> currencyNames=new Vector<String>(); // for a permanent names list
 		for(int v=0;v<CV.size();v++)
 		{
-			s=CV.get(v);
+			s=CV.get(v).replace('\u0001',';');
+			// W16: {MATERIAL=SILVER WEIGHT=0.01 DESC="..."} after the name and short form
+			Map<String,String> braces=null;
+			final int open=s.indexOf('{');
+			if((open>0)&&(s.lastIndexOf('}')>open))
+			{
+				braces=CMParms.parseEQParms(s.substring(open+1,s.lastIndexOf('}')));
+				s=s.substring(0,open).trim();
+			}
 			x=s.indexOf(' ');
 			if(x<0)
 			{
@@ -308,10 +352,24 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 						break;
 					}
 				}
+				final MoneyDenominationImpl D=new MoneyDenominationImpl(d,s,shortName);
+				if(braces!=null) // W16
+				{
+					if(braces.containsKey("MATERIAL"))
+					{
+						D.material=RawMaterial.CODES.FIND_IgnoreCase(braces.get("MATERIAL").trim().toUpperCase());
+						if(D.material<0)
+							Log.errOut("BeanCounter","Currency "+code+": no material "+braces.get("MATERIAL")+" for "+s+".");
+					}
+					if(braces.containsKey("WEIGHT")&&CMath.isNumber(braces.get("WEIGHT").trim()))
+						D.weight=Math.max(0.0,CMath.s_double(braces.get("WEIGHT").trim()));
+					if(braces.containsKey("DESC"))
+						D.description=braces.get("DESC").trim();
+				}
 				if((insertAt<0)||(insertAt>=DV.size()))
-					DV.add(new MoneyDenominationImpl(d,s,shortName));
+					DV.add(D);
 				else
-					DV.add(insertAt,new MoneyDenominationImpl(d,s,shortName));
+					DV.add(insertAt,D);
 				currencyNames.add(s);
 				if(shortName.length()>0)
 					currencyNames.add(shortName);

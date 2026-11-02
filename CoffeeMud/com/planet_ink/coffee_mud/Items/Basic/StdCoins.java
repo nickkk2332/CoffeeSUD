@@ -104,8 +104,30 @@ public class StdCoins extends StdItem implements Coins
 				}
 			}
 		}
-		setDescription(CMLib.beanCounter().getConvertableDescription(getCurrency(),getDenomination()));
+		// W16: the denomination's own material, weight and look, from its currency's {...}
+		coinWeight=-1;
+		String desc="";
+		final MoneyLibrary.MoneyDefinition def=CMLib.beanCounter().getCurrencySet(getCurrency());
+		if(def!=null)
+		{
+			for(final MoneyLibrary.MoneyDenomination D : def.denominations())
+			{
+				if(D.value()==getDenomination())
+				{
+					if(D.material()>=0)
+						setMaterial(D.material());
+					coinWeight=D.weight();
+					desc=D.description();
+					break;
+				}
+			}
+		}
+		final String equal=CMLib.beanCounter().getConvertableDescription(getCurrency(),getDenomination());
+		setDescription(((desc.length()>0)&&(equal.length()>0))?(desc+" "+equal):(desc+equal));
 	}
+
+	/** W16: what one coin weighs, by its currency's {WEIGHT=}, or -1 */
+	protected double coinWeight=-1;
 
 	@Override
 	public long getNumberOfCoins()
@@ -215,6 +237,9 @@ public class StdCoins extends StdItem implements Coins
 	@Override
 	public void recoverPhyStats()
 	{
+		if(coinWeight>=0) // W16: {WEIGHT=}
+			basePhyStats.setWeight((int)Math.round(basePhyStats().ability()*coinWeight));
+		else
 		if(((material&RawMaterial.MATERIAL_MASK)!=RawMaterial.MATERIAL_CLOTH)
 		&&((material&RawMaterial.MATERIAL_MASK)!=RawMaterial.MATERIAL_PAPER))
 			basePhyStats.setWeight((int)Math.round((basePhyStats().ability()/100.0)));
