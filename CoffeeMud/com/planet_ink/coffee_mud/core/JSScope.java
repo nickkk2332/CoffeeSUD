@@ -79,6 +79,17 @@ public final class JSScope
 	}
 
 	/**
+	 * JS11: a cm for a scope, its host given (a shared scope's, for each call).
+	 * @param scope the scope
+	 * @param host the host
+	 * @return the cm
+	 */
+	public static Object cmFor(final Scriptable scope, final com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent host)
+	{
+		return JSCm.forScope(scope, host);
+	}
+
+	/**
 	 * JCONSOLE (JS6): where its user is, each time a line runs: here, area and
 	 * target (who it fights, or null).
 	 * @param scope the console's scope

@@ -4695,8 +4695,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					else
 					{
-						logError(ctx,"CALLFUNC","Unknown","Function: "+arg1);
-						returnable = false;
+						// JS11: the host's own JScriptable
+						found=(ctx.scripted instanceof PhysicalAgent)?ScriptEvents.jsFunction((PhysicalAgent)ctx.scripted,arg1,varify(ctx,arg2),(ctx.source!=null)?ctx.source:ctx.monster):null;
+						if(found==null)
+						{
+							logError(ctx,"CALLFUNC","Unknown","Function: "+arg1);
+							returnable = false;
+						}
+						else
+						{
+							final String resp=found.trim().toLowerCase();
+							returnable=(!resp.equals("cancel"))&&(resp.length()!=0);
+						}
 					}
 					break;
 				}
@@ -19056,7 +19066,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	{
 		final Environmental E=getArgumentItem(thing,ctx);
 		if(!(E instanceof PhysicalAgent))
+		{
+			// JS11: no such thing: a function of the host's own JScriptable
+			if(ctx.scripted instanceof PhysicalAgent)
+				return ScriptEvents.jsFunction((PhysicalAgent)ctx.scripted,thing,varify(ctx,rest),(ctx.source!=null)?ctx.source:ctx.monster);
 			return null;
+		}
 		final String func=CMParms.getCleanBit(rest,0);
 		final String args=varify(ctx,CMParms.getPastBitClean(rest,0));
 		return ScriptEvents.callFunction((PhysicalAgent)E,func,args,(ctx.source!=null)?ctx.source:ctx.monster);

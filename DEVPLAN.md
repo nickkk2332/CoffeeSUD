@@ -1332,6 +1332,22 @@ JS17, JS18, JS19, JS20, JS23
   (`JSReload.Holder`, `JSHooks.reload`, onReload(old)). `JS WATCH ON
   [seconds]|OFF` looks on a thread, as DEVWATCH does, and has the builder JS
   RELOAD. JScriptable (JS11) will join the holders.
+- JS11 done, as the behaviour `JScriptable` (mobs, items, exits, rooms,
+  areas) over `JSScope` and JS7's stores rather than by finishing the
+  unused `Common/JavaScriptingEngine`, which is left as it was (JS18 need
+  not choose again). Parameters `LOAD=world:js/npc/x.js [SCOPE=name]` or the
+  script itself; the scope has me, cm, CMMsg and `state` (cm.store of the
+  host, or of `scope:name` when shared). Only the handlers it defines are
+  called: onLoad, onGreet, onArrive, onLeave, onSpeech, onGive, onGet,
+  onDrop, onWear, onRemove, onOpen, onClose, onLock, onUnlock, onDeath,
+  onKill, onDamage, onCast, onLook, onTick, onHour, onDay, canMessage (false
+  refuses), afterMessage, onReload; onCommand(who, verb, rest) through
+  `ScriptEvents.verb` (before the command's own; true handles it). Its
+  other functions answer MPCALLFUNC and CALLFUNC, of its own host (when no
+  thing of that name is found) or another (`ScriptEvents.jsFunction`).
+  SCOPE=GLOBAL or a name shares one scope among hosts, me and cm set for
+  each call; JS RELOAD makes a shared scope again once. Saved as a
+  behaviour, so the engine choice in `<SCRPT>` is not needed.
 
 #### 2e. Quests (15)
 

@@ -26,6 +26,7 @@ went wrong.</p>
 <li><a href="#store">cm.store</a></li>
 <li><a href="#sud">sud</a></li>
 <li><a href="#effects">Effects in JavaScript</a></li>
+<li><a href="#jscriptable">JScriptable</a></li>
 <li><a href="#shared">Shared code</a></li>
 <li><a href="#reload">Reloading</a></li>
 <li><a href="#examples">Examples</a></li>
@@ -212,6 +213,63 @@ function executeMsg(host, msg) {
   if (msg.sourceMinor() == CMMsg.TYP_DEATH &amp;&amp; host.owner() != null &amp;&amp; msg.tool() == host.owner()) {
     parms.KILLS++;
     host.recoverPhyStats();
+  }
+}
+</pre>
+
+<h2><a name="jscriptable">JScriptable</a></h2>
+<p>The behaviour <code>JScriptable</code> scripts a mob, item, room, exit or
+area wholly in JavaScript. Its parameters are
+<code>LOAD=world:js/npc/ferryman.js</code> (with <code>SCOPE=</code> if
+wanted), or the script itself. The script defines the handlers it wants; only
+those are called.</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Handler</th><th>When</th></tr>
+<tr><td><code>onLoad()</code></td><td>the behaviour is added (and the game loads its host)</td></tr>
+<tr><td><code>onGreet(who)</code>, <code>onLeave(who)</code></td><td>someone comes into or leaves the host's room (any room of an area)</td></tr>
+<tr><td><code>onArrive(room)</code></td><td>the host itself comes into a room</td></tr>
+<tr><td><code>onSpeech(who, text)</code></td><td>someone says something</td></tr>
+<tr><td><code>onGive(who, item)</code></td><td>someone gives the host a thing</td></tr>
+<tr><td><code>onGet</code>, <code>onDrop</code>, <code>onWear</code>, <code>onRemove</code> (who, item)</td><td>someone gets, drops, wears or removes a thing</td></tr>
+<tr><td><code>onOpen</code>, <code>onClose</code>, <code>onLock</code>, <code>onUnlock</code> (who, thing)</td><td>someone opens, closes, locks or unlocks a thing</td></tr>
+<tr><td><code>onDeath(killer)</code>, <code>onKill(victim)</code></td><td>the host dies, or kills</td></tr>
+<tr><td><code>onDamage(who, amount)</code></td><td>the host is hurt</td></tr>
+<tr><td><code>onCast(who, ability, target)</code></td><td>someone casts</td></tr>
+<tr><td><code>onLook(who)</code></td><td>someone looks at the host</td></tr>
+<tr><td><code>onTick()</code>, <code>onHour(hour)</code>, <code>onDay(day)</code></td><td>each tick, and as the host's area's clock changes</td></tr>
+<tr><td><code>onCommand(who, verb, rest)</code></td><td>someone near the host types a command, before the game's own: true handles it</td></tr>
+<tr><td><code>canMessage(msg)</code>, <code>afterMessage(msg)</code></td><td>before any message (false refuses it), and after</td></tr>
+<tr><td><code>onReload(old)</code></td><td>after <code>JS RELOAD</code>, with the old scope</td></tr>
+</table>
+<p>Its other functions can be called from MOBPROG: <code>MPCALLFUNC fare
+5</code> and <code>CALLFUNC(fare 5)</code> on the host's own script, or
+<code>MPCALLFUNC $i fare 5</code> for another host's. A function gets the
+arguments as one string and the caller, and what it returns is CALLFUNC's
+value.</p>
+<p>The scope has <code>me</code> (the host), <code>cm</code> (with
+<code>cm.host()</code> the host), <code>state</code> (the host's
+<code>cm.store</code>, saved with the game), <code>CMMsg</code>, and all that
+every scope has. <code>SCOPE=INDIVIDUAL</code>, the default, gives each host a
+scope of its own; <code>SCOPE=GLOBAL</code> or a name shares one scope among
+the hosts that give it, with <code>me</code> and <code>cm</code> set for each
+call and <code>state</code> the store <code>scope:name</code>.</p>
+<pre>
+// world/js/npc/ferryman.js
+function onSpeech(who, text) {
+  if (('' + text).toLowerCase().indexOf('ferry') &lt; 0) return;
+  cm.say(me, 'Five coins, ' + who.name() + ', and we cross.');
+  state.waiting = '' + who.Name();
+}
+function onGive(who, item) {
+  if (state.waiting == '' + who.Name() &amp;&amp; item.Name().indexOf('coin') &gt;= 0) {
+    state.crossing = {who: state.waiting, ticks: 3};
+    cm.say(me, 'Hold on.');
+  }
+}
+function onTick() {
+  if (state.crossing &amp;&amp; --state.crossing.ticks == 0) {
+    cm.cmd(cm.findMob(state.crossing.who), 'east');
+    state.crossing = null;
   }
 }
 </pre>

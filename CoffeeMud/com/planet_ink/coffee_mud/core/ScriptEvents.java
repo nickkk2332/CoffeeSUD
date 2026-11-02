@@ -49,6 +49,59 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.WorldMap;
  */
 public final class ScriptEvents
 {
+	/**
+	 * JS11: what a JavaScript-scripted behaviour (JScriptable) offers the
+	 * script engine: its functions, for MPCALLFUNC and CALLFUNC, and the
+	 * commands typed near its host.
+	 */
+	public interface JSFunctions
+	{
+		/**
+		 * @param on the host
+		 * @param fn the function
+		 * @param args its arguments, as one string
+		 * @param source who calls
+		 * @return what it returned, "" if nothing, or null if there is no such function
+		 */
+		public String callFunction(PhysicalAgent on, String fn, String args, MOB source);
+
+		/**
+		 * @param who who typed it
+		 * @param verb its first word
+		 * @param rest the rest
+		 * @return true if it was handled
+		 */
+		public boolean command(MOB who, String verb, String rest);
+	}
+
+	/** JS11: whether some JScriptable has an onCommand, so that commands are shown to them */
+	public static volatile boolean jsCommands = false;
+
+	/**
+	 * JS11: calls a function of a host's JavaScript-scripted behaviours.
+	 * @param host the host
+	 * @param function the function
+	 * @param args its arguments, as one string
+	 * @param source who calls
+	 * @return what it returned, or null if none has it
+	 */
+	public static String jsFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
+	{
+		if(host == null)
+			return null;
+		for(final java.util.Enumeration<com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior> b = host.behaviors(); b.hasMoreElements();)
+		{
+			final Object B = b.nextElement();
+			if(B instanceof JSFunctions)
+			{
+				final String r = ((JSFunctions)B).callFunction(host, function, args, source);
+				if(r != null)
+					return r;
+			}
+		}
+		return null;
+	}
+
 	private ScriptEvents()
 	{
 	}
@@ -612,6 +665,19 @@ public final class ScriptEvents
 		final String verb = commands.get(0).trim();
 		if((verb.length() == 0) || (!Character.isLetter(verb.charAt(0))))
 			return false;
+		if(jsCommands) // JS11: a JScriptable's onCommand near the one who typed it
+		{
+			final String line = CMParms.combine(commands, 1).trim();
+			for(final PhysicalAgent host : reach(mob))
+			{
+				for(final java.util.Enumeration<com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior> b = host.behaviors(); b.hasMoreElements();)
+				{
+					final Object B = b.nextElement();
+					if((B instanceof JSFunctions) && ((JSFunctions)B).command(mob, verb, line))
+						return true;
+				}
+			}
+		}
 		final boolean scripts = isUsed(VERB_PROG);
 		if((!scripts) && (!propVerbsSeen))
 			return false;
@@ -2040,7 +2106,7 @@ public final class ScriptEvents
 			if(r != null)
 				return r;
 		}
-		return null;
+		return jsFunction(host, function, args, source); // JS11: a JScriptable's function
 	}
 
 	/** ACHIEVE_PROG's code */
