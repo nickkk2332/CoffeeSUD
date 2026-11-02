@@ -1395,6 +1395,18 @@ JS17, JS18, JS19, JS20, JS23
   (MPSIGNAL) and `state(thing, name[, value])` (STATE and MPSTATE);
   cancel() was JS15's. Written up in guides/Scriptable.html's <SCRIPT>
   section and JavaScriptSUD.html.
+- JS18 done. `core/JSQuests`, from `ScriptEvents.quest`: a quest's
+  JavaScript is its `<JSQUEST>` block (kept by `DefaultQuest.setScript`, skipped
+  when the quest runs) or the file `SET JSFILE` names; its scope (made again
+  when the text changes) has quest, quests and state, `cm.store('quest:name')`,
+  saved with the game. Handlers onStart(state), onStep(n, state),
+  onTimeUp(state) (FAIL EXPIRED), onWin(player), onAccept(player), onStop().
+  The JScriptables of the quest's mobs and items get onQuestAccept,
+  onQuestStep, onQuestWin, onQuestFail and onQuestEnd
+  (`JSFunctions.callHandler`). The `quests` helper: get, start, step, win,
+  fail, stop, running, stepNumber, status, objective (INSTRUCTIONS),
+  journal, getVar and setVar (the quest's own variables). JavaScriptingEngine
+  stays unused, as JS11 decided; quest <SCRIPT> keeps its old helpers.
 
 #### 2e. Quests (15)
 

@@ -72,6 +72,17 @@ public final class ScriptEvents
 		 * @return true if it was handled
 		 */
 		public boolean command(MOB who, String verb, String rest);
+
+		/**
+		 * JS18: calls a handler, if the script defines it.
+		 * @param fn the handler
+		 * @param args its arguments
+		 * @return what it returned, or null
+		 */
+		public default Object callHandler(final String fn, final Object... args)
+		{
+			return null;
+		}
 	}
 
 	/** JS11: whether some JScriptable has an onCommand, so that commands are shown to them */
@@ -380,6 +391,7 @@ public final class ScriptEvents
 	 */
 	public static void quest(final Quest Q, final String kind, final MOB who, final String detail)
 	{
+		JSQuests.event(Q, kind, who, detail); // JS18: the quest's JavaScript, and its objects'
 		if((Q != null) && kind.equals("WIN"))
 			JSEvents.fire("questwin", who, Q); // JS8
 		else

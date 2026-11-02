@@ -60,6 +60,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected int		duration			= 450;// about		// 30	// minutes
 	protected boolean	expires				= false;
 	protected String	rawScriptParameter	= "";
+	/** JS18: the quest's JavaScript handlers: SET JSFILE's file, or its <JSQUEST> block */
+	public String		jsFile				= "";
+	public String		jsQuest				= "";
 	protected boolean	durable				= false;
 	protected int		minWait				= -1;
 	protected int		minPlayers			= -1;
@@ -494,6 +497,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		if(CMSecurity.isDebugging(DbgFlag.QUESTSCRIPTS))
 			Log.debugOut("QuestScript#"+parseId+" Setting script "+parm.length());
 		rawScriptParameter=parm;
+		jsFile=""; // JS18
+		jsQuest="";
 		name="";
 		author="";
 		displayName="";
@@ -511,9 +516,44 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		if(questScripts.size()==0)
 			return false;
 		setVars(questScripts,0);
+		jsQuest=jsQuestBlock(questScripts); // JS18
+		JSQuests.setSource(name(),jsFile,jsQuest);
 		if(isCopy())
 			spawn=Quest.Spawn.NO.ordinal();
 		return true;
+	}
+
+	/**
+	 * JS18: a quest's <JSQUEST> ... </JSQUEST> block, its JavaScript handlers.
+	 * @param lines the quest's lines, as parsed
+	 * @return the block's text, or ""
+	 */
+	protected static String jsQuestBlock(final List<?> lines)
+	{
+		final StringBuilder str=new StringBuilder("");
+		boolean in=false;
+		for(final Object o : lines)
+		{
+			if(o instanceof List)
+			{
+				final String inner=jsQuestBlock((List<?>)o);
+				if(inner.length()>0)
+					return inner;
+				continue;
+			}
+			if(!(o instanceof String))
+				continue;
+			final String s=((String)o).trim();
+			if(s.toUpperCase().startsWith("<JSQUEST>"))
+				in=true;
+			else
+			if(s.toUpperCase().startsWith("</JSQUEST>"))
+				return str.toString();
+			else
+			if(in)
+				str.append((String)o).append("\n");
+		}
+		return in?str.toString():"";
 	}
 
 	@Override
@@ -545,6 +585,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if(parsedLine.size()>1)
 			{
 				var=parsedLine.get(1).toUpperCase();
+				if(var.equals("JSFILE")) // JS18: the quest's JavaScript handlers
+					jsFile=CMParms.combine(parsedLine,2).trim();
+				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
 				else // set the area guess
@@ -1071,6 +1114,14 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				{
 					final String flags=(isQuiet?"Q":"")+(optional?"P":"");
 					Log.debugOut("QuestScript#"+parseId+": Doing command '"+cmd+"' ("+flags+") from line "+v+": "+s);
+				}
+				if(cmd.equals("<JSQUEST>")) // JS18: the handlers, read by JSQuests, not run here
+				{
+					while(((++v)<script.size())
+					&&(!(String.valueOf(script.get(v))).trim().toUpperCase().startsWith("</JSQUEST>")))
+					{
+					}
+					continue;
 				}
 				if(cmd.equals("<SCRIPT>"))
 				{
@@ -3343,6 +3394,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 							q.item=(Item)q.envObject;
 							questifyScriptableBehavs(q.item);
 						}
+					}
+					else
+					if(cmd.equals("JSFILE")) // JS18: read when the script was set
+					{
 					}
 					else
 					if(!isStat(cmd))

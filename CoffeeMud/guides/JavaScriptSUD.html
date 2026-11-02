@@ -29,6 +29,7 @@ went wrong.</p>
 <li><a href="#sud">sud</a></li>
 <li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#jscriptable">JScriptable</a></li>
+<li><a href="#quests">Quests</a></li>
 <li><a href="#masks">In masks</a></li>
 <li><a href="#shared">Shared code</a></li>
 <li><a href="#reload">Reloading</a></li>
@@ -334,6 +335,41 @@ function onTick() {
     cm.cmd(cm.findMob(state.crossing.who), 'east');
     state.crossing = null;
   }
+}
+</pre>
+
+<h2><a name="quests">Quests</a></h2>
+<p>A quest may have JavaScript handlers: <code>SET JSFILE
+world:js/quests/cat.js</code> names a file, or a <code>&lt;JSQUEST&gt;</code>
+... <code>&lt;/JSQUEST&gt;</code> block in the quest holds them. Those it
+defines are called: <code>onStart(state)</code>, <code>onStep(n,
+state)</code>, <code>onTimeUp(state)</code>, <code>onWin(player)</code>,
+<code>onAccept(player)</code> and <code>onStop()</code>. <code>state</code>
+is <code>cm.store('quest:name')</code>, saved with the game; the scope also has
+<code>quest</code> (the quest itself) and <code>quests</code>:
+<code>start</code>, <code>step</code>, <code>win(name, who)</code>,
+<code>fail</code>, <code>stop</code>, <code>running</code>,
+<code>stepNumber</code>, <code>status</code>, <code>objective</code>,
+<code>journal</code>, <code>getVar(name, var)</code> and <code>setVar(name,
+var, value)</code>, each by the quest's name. In a <code>&lt;JSQUEST&gt;</code>
+block, end lines without semicolons: a quest's lines may be split at
+them.</p>
+<p>The JScriptables of the quest's mobs and items may define
+<code>onQuestAccept(quest, mob)</code>, <code>onQuestStep(quest, step,
+label)</code>, <code>onQuestWin(quest, mob, outcome)</code>,
+<code>onQuestFail(quest, mob, reason)</code> and <code>onQuestEnd(quest,
+reason)</code>.</p>
+<pre>
+// world/js/quests/cat.js: "Missing Cat"
+function onStart(state) {
+  var alleys = ['Town#14', 'Town#15', 'Town#22'];
+  state.alley = alleys[Math.floor(Math.random() * alleys.length)];
+  state.startHour = cm.clock().absHours();
+  cm.loadItem('a frightened cat', cm.room(state.alley));
+}
+function onWin(player) {
+  var hours = cm.clock().absHours() - state.startHour;
+  cm.lib.beanCounter().addMoney(player, Math.max(10, 50 - 5 * hours));
 }
 </pre>
 

@@ -298,6 +298,12 @@ public class JScriptable extends StdBehavior implements JSReload.Holder, ScriptE
 	}
 
 	@Override
+	public Object callHandler(final String fn, final Object... args)
+	{
+		return call(fn, args);
+	}
+
+	@Override
 	public boolean command(final MOB who, final String verb, final String rest)
 	{
 		if((!ready()) || (!has("onCommand")))
