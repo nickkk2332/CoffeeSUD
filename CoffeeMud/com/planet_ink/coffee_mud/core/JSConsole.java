@@ -256,6 +256,85 @@ public final class JSConsole
 	}
 
 	/**
+	 * JS16: JS HELP: what a value offers: a Java object's methods (each name
+	 * with the numbers of arguments it takes) and, for a thing with stats,
+	 * its stat codes and values; a class's static methods; a JavaScript
+	 * object's properties.
+	 * @param r the value
+	 * @return the description
+	 */
+	public static String describe(final Object r)
+	{
+		if(r instanceof NativeJavaClass)
+		{
+			final Class<?> C = ((NativeJavaClass)r).getClassObject();
+			return C.getSimpleName() + " (a class): " + methods(C, true);
+		}
+		final Object o = (r instanceof Wrapper) ? ((Wrapper)r).unwrap() : r;
+		if((o == null) || (o instanceof Undefined))
+			return "null: nothing to describe.";
+		if((o instanceof Scriptable) && !(o instanceof Wrapper))
+		{
+			final Scriptable S = (Scriptable)o;
+			final List<String> names = new ArrayList<String>();
+			for(final Object id : S.getIds())
+			{
+				final Object v = ScriptableObject.getProperty(S, id.toString());
+				names.add(id + ((v instanceof Function) ? "()" : ""));
+			}
+			Collections.sort(names);
+			return "a JavaScript object: " + (names.isEmpty() ? "no properties." : String.join(", ", names));
+		}
+		if((o instanceof String) || (o instanceof Number) || (o instanceof Boolean))
+			return o.getClass().getSimpleName() + ": " + o;
+		final StringBuilder str = new StringBuilder(o.getClass().getSimpleName());
+		if(o instanceof Environmental)
+			str.append(" '").append(((Environmental)o).Name()).append("'");
+		str.append(": ").append(methods(o.getClass(), false));
+		if(o instanceof Modifiable)
+		{
+			str.append("\n\rStats:");
+			final Modifiable M = (Modifiable)o;
+			for(final String code : M.getStatCodes())
+			{
+				String v = M.getStat(code);
+				v = (v == null) ? "" : v.replace('\n', ' ').replace('\r', ' ');
+				str.append("\n\r  ").append(code).append(": ").append(CMStrings.ellipse(v, 60));
+			}
+		}
+		return str.toString();
+	}
+
+	private static String methods(final Class<?> C, final boolean statics)
+	{
+		final TreeMap<String, TreeSet<Integer>> found = new TreeMap<String, TreeSet<Integer>>();
+		for(final java.lang.reflect.Method m : C.getMethods())
+		{
+			if(java.lang.reflect.Modifier.isStatic(m.getModifiers()) != statics)
+				continue;
+			if(m.getDeclaringClass() == Object.class)
+				continue;
+			TreeSet<Integer> counts = found.get(m.getName());
+			if(counts == null)
+			{
+				counts = new TreeSet<Integer>();
+				found.put(m.getName(), counts);
+			}
+			counts.add(Integer.valueOf(m.getParameterCount()));
+		}
+		final List<String> out = new ArrayList<String>();
+		for(final Map.Entry<String, TreeSet<Integer>> e : found.entrySet())
+		{
+			final StringBuilder s = new StringBuilder(e.getKey()).append("(");
+			int i = 0;
+			for(final Integer n : e.getValue())
+				s.append((i++ > 0) ? "|" : "").append((n.intValue() == 0) ? "" : n.toString());
+			out.add(s.append(")").toString());
+		}
+		return out.isEmpty() ? "no methods." : String.join(", ", out);
+	}
+
+	/**
 	 * .trigger: an event, as if it happened, on the target.
 	 * @param builder the builder, who does it
 	 * @param target what hears it

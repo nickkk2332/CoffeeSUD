@@ -1380,6 +1380,13 @@ JS17, JS18, JS19, JS20, JS23
   <SCRIPT>, with `args`. In a <SCRIPT> or such a file `cancel()`, or a last
   value of "cancel", ends the prog with CANCEL, so CNCLMSG_PROG refuses its
   message. The <SCRIPT> scope is made in one place (`jsEventScope`).
+- JS16 done. `JS HELP expr` (`JSConsole.describe`): a Java object's
+  methods, each with the numbers of arguments it takes, and a thing's stat
+  codes and values; a class's static methods; a JavaScript object's
+  properties. guides/JavaScriptSUD.html gains a table of where JavaScript
+  runs and what each place has, errors and time limits, the old tricks, and
+  worked examples (a shopkeeper, a cursed sword, a ferryman; JS18 adds a
+  quest).
 
 #### 2e. Quests (15)
 

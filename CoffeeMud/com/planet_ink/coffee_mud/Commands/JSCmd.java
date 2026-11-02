@@ -45,11 +45,14 @@ public class JSCmd extends StdCommand
 			return state(mob,commands);
 		if((commands.size()>1)&&(commands.get(1).equalsIgnoreCase("RELOAD")||commands.get(1).equalsIgnoreCase("WATCH")))
 			return reload(mob,commands);
+		if((commands.size()>1)&&commands.get(1).equalsIgnoreCase("HELP"))
+			return help(mob,commands);
 		if((commands.size()<2)||(!commands.get(1).equalsIgnoreCase("ERRORS")))
 		{
 			mob.tell(L("JS ERRORS [number]: the most recent JavaScript errors.\n\r"
 				+"JS STATE ([key] (= {value}/DELETE)): the JavaScript stores (cm.store), in builder mode.\n\r"
-				+"JS RELOAD ([file]/ALL): changed world/js files into the running world; JS WATCH ON ([seconds])/OFF: by itself."));
+				+"JS RELOAD ([file]/ALL): changed world/js files into the running world; JS WATCH ON ([seconds])/OFF: by itself.\n\r"
+				+"JS HELP [expression]: the methods and stats of what it gives, as JS HELP cm.room('Town#1')."));
 			return false;
 		}
 		int max=10;
@@ -65,6 +68,41 @@ public class JSCmd extends StdCommand
 		for(final String e : errors)
 			str.append(e).append("\n\r");
 		mob.tell(str.toString());
+		return false;
+	}
+
+	/**
+	 * JS16: JS HELP expr: evaluates it in a scope of the user's own (cm,
+	 * me, here) and shows what the value offers (JSConsole.describe).
+	 * @param mob the user
+	 * @param commands the words
+	 * @return false
+	 */
+	protected boolean help(final MOB mob, final List<String> commands)
+	{
+		final String expr=CMParms.combine(commands,2).trim();
+		if(expr.length()==0)
+		{
+			mob.tell(L("JS HELP [EXPRESSION]: the methods of what it gives, and its stats, as JS HELP cm.room('Town#1') or JS HELP cm."));
+			return false;
+		}
+		final org.mozilla.javascript.Context cx=JSRuntime.enter(JSRuntime.limitSeconds());
+		try
+		{
+			final org.mozilla.javascript.ImporterTopLevel top=new org.mozilla.javascript.ImporterTopLevel(cx);
+			JSScope.prepare(cx,top,mob);
+			org.mozilla.javascript.ScriptableObject.putProperty(top,"me",org.mozilla.javascript.Context.javaToJS(mob,top));
+			org.mozilla.javascript.ScriptableObject.putProperty(top,"here",org.mozilla.javascript.Context.javaToJS(mob.location(),top));
+			mob.tell(JSConsole.describe(cx.evaluateString(top,expr.replace('`','\''),"JS HELP",1,null)));
+		}
+		catch(final Exception e)
+		{
+			mob.tell(L("Error: @x1",e.getMessage()));
+		}
+		finally
+		{
+			org.mozilla.javascript.Context.exit();
+		}
 		return false;
 	}
 
