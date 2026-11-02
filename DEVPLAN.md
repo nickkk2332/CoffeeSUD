@@ -2134,6 +2134,15 @@ I22, I23, I24, I25, I26, I27
   stand), and a drop or get on a room's floor on its next tick. ROOMWEIGHT
   (193) and CONTENTWEIGHT (194). Riding is counted on a fixture that is
   Rideable.
+- I10 done. Commands/Use (USE x [ON|WITH|IN y]) and Commands/Combine
+  (COMBINE a WITH|AND b; a second thing of the same name is found).
+  USE_PROG and COMBINE_PROG (112, 113) on either thing first (eventRun:
+  the first script that fits takes it); then core/Combinations, the rows
+  of world/combinations.txt (A | B | RESULT | keys; read again when the
+  file changes): A and B a name, tag:X or catalog:X, either order;
+  VERB=, CONSUME=A,B|BOTH, MASK=, SKILL=, FAILMSG=, MSG=, ACTIONS=; else
+  "Nothing happens." No new message type: the scripts and rows show what
+  they will.
 
 #### 2i. World systems (25)
 

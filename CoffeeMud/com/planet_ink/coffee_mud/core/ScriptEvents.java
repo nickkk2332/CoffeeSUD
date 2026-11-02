@@ -560,6 +560,52 @@ public final class ScriptEvents
 		arena(R, ARENALOSE_PROG, who, "");
 	}
 
+	/** I10: USE_PROG's code */
+	public static final int	USE_PROG		= code("USE_PROG");
+	/** I10: COMBINE_PROG's code */
+	public static final int	COMBINE_PROG	= code("COMBINE_PROG");
+
+	/**
+	 * I10: USE X (ON Y) or COMBINE X WITH Y: USE_PROG or COMBINE_PROG
+	 * [keywords|ALL] on either thing, the keywords on the other's name; $n
+	 * who, $o the first, $t the second (or the first, alone).
+	 * @param verb USE or COMBINE
+	 * @param mob who
+	 * @param a the first thing
+	 * @param b the second, or null
+	 * @return true if a script took it
+	 */
+	public static boolean use(final String verb, final MOB mob, final Environmental a, final Environmental b)
+	{
+		final int code = verb.equalsIgnoreCase("COMBINE") ? COMBINE_PROG : USE_PROG;
+		if(!isUsed(code))
+			return false;
+		for(final Environmental H : new Environmental[] { a, b })
+		{
+			if(!(H instanceof PhysicalAgent))
+				continue;
+			final Environmental other = (H == a) ? b : a;
+			final String on = (other == null) ? "" : other.Name();
+			for(final ScriptingEngine S : engines((PhysicalAgent)H))
+			{
+				final String resp = S.eventRun((PhysicalAgent)H, code, mob, (b != null) ? b : a, (a instanceof Item) ? (Item)a : null, on, new Object[] { on }, "Cp", t -> {
+					final String w = (t.length < 2) ? "" : t[1].trim();
+					if((w.length() == 0) || w.equalsIgnoreCase("ALL"))
+						return true;
+					for(final String k : CMParms.parse(w))
+					{
+						if((on.length() > 0) && (on.equalsIgnoreCase(k) || CMLib.english().containsString(on, k)))
+							return true;
+					}
+					return false;
+				});
+				if(resp != null)
+					return true;
+			}
+		}
+		return false;
+	}
+
 	/** I9: SWITCH_PROG's code */
 	public static final int	SWITCH_PROG	= code("SWITCH_PROG");
 

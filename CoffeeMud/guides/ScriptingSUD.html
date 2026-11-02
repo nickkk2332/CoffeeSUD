@@ -564,6 +564,12 @@ bowl; <code>ONPUT</code> and <code>ONEMPTY</code> run on each offering and when 
 MSGOFF="The pedestal rises with a click!"</code> on the idol's pedestal springs when the idol is lifted, unless
 a bag of sand as heavy is put there first. On a room, <code>COUNT=">=2" ON="door open here north"
 OFF="door close here north" DELAY=2</code> needs two to hold the gate.</p>
+<p>Using things on things: <code>USE OIL FLASK ON HINGE</code> and <code>COMBINE TORN MAP WITH TORN MAP</code>
+look for a <code>USE_PROG</code> or <code>COMBINE_PROG</code> on either thing first, then for a row of
+<code>world/combinations.txt</code>, one to a line: <code>a torn map | a torn map | the old smuggler's map |
+VERB=COMBINE CONSUME=BOTH MSG="&lt;S-NAME&gt; fit(s) the halves together."</code>. A and B are a name, tag:X or
+catalog:X; the result is a catalog item; MASK=, SKILL= and ACTIONS= are there too. Anything else: "Nothing
+happens."</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
