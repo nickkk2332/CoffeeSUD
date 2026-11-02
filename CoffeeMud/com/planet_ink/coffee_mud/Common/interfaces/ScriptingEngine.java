@@ -673,6 +673,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"LISTGET", //139
 		"LISTFIND", //140
 		"LISTPICK", //141
+		"ELAPSED", //142
+		"WEEKDAY", //143
+		"TICKS", //144
 	};
 
 	/** String list of all valid mobprog commands */

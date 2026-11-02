@@ -8069,8 +8069,21 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				break;
 			}
 			case 127: // gametime
-				results.append(GameTime.now());
+			{
+				// SC2: GAMETIME(HOURS|DAYS|MONTHS|YEARS) counts from the area clock's year 0; GAMETIME() is game milliseconds
+				final String unit=varify(ctx,funcParms).trim();
+				if(unit.length()==0)
+					results.append(GameTime.now());
+				else
+				{
+					final Area gA=CMLib.map().areaLocation(ctx.scripted);
+					final TimeClock gC=(gA!=null)?gA.getTimeObj():CMLib.time().globalClock();
+					final String u=unit.toUpperCase();
+					final long per=u.startsWith("YEAR")?ScriptEvents.everyHours(gC.getMonthsInYear(),"MONTHS",gC):ScriptEvents.everyHours(1,u,gC);
+					results.append(ScriptEvents.clockHours(gC)/per);
+				}
 				break;
+			}
 			case 128: // turns
 				results.append(ScriptEvents.turns());
 				break;
@@ -8981,6 +8994,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			case 91: // datetime
 			{
 				final String arg1=CMParms.getCleanBit(funcParms,0);
+				// SC2: STAMP (the clock's hours since its year 0), DAYOFYEAR, WEEKDAY
+				if(arg1.equalsIgnoreCase("STAMP")||arg1.equalsIgnoreCase("DAYOFYEAR")||arg1.equalsIgnoreCase("WEEKDAY"))
+				{
+					final Area dA=CMLib.map().areaLocation(ctx.scripted);
+					final TimeClock dC=(dA!=null)?dA.getTimeObj():CMLib.time().globalClock();
+					if(arg1.equalsIgnoreCase("STAMP"))
+						results.append(ScriptEvents.clockHours(dC));
+					else
+					if(arg1.equalsIgnoreCase("WEEKDAY"))
+						results.append(ScriptEvents.weekday(dC));
+					else
+						results.append((dC.getMonth()*dC.getDaysInMonth())+dC.getDayOfMonth());
+					break;
+				}
 				final TimePeriod period = TimePeriod.get(arg1.toUpperCase().trim());
 				if(period == null)
 					logError(ctx,"DATETIME","Syntax","Unknown arg: "+arg1+" for "+ctx.scripted.name());
@@ -13205,7 +13232,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				String which=tt[1];
 				final Environmental E=getArgumentItem(which,ctx);
 				final String arg2=varify(ctx,tt[2]);
-				final String arg3=varify(ctx,tt[3]);
+				String arg3=varify(ctx,tt[3]);
+				// SC2: NOW is the area clock's stamp, for ELAPSED()
+				if(arg3.trim().equalsIgnoreCase("NOW"))
+				{
+					final Area nA=CMLib.map().areaLocation(ctx.scripted);
+					arg3=""+ScriptEvents.clockHours((nA!=null)?nA.getTimeObj():CMLib.time().globalClock());
+				}
 				if(!which.equals("*"))
 				{
 					if(E==null)
@@ -15016,6 +15049,24 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		{
 			final List<String> L=ScriptLib.listOf(v);
 			return L.isEmpty()?"":L.get(CMLib.dice().roll(1,L.size(),-1));
+		}
+		case "ELAPSED": // SC2: ELAPSED(stamp HOURS|DAYS|WEEKS|MONTHS): the time since a stamp
+		{
+			final String[] p=lastWord(v);
+			final boolean unitGiven=!CMath.isNumber(p[1]);
+			final long stamp=CMath.s_long(unitGiven?p[0]:p[1]);
+			final long per=ScriptEvents.everyHours(1,unitGiven?p[1]:"HOURS",clock);
+			return ""+((ScriptEvents.clockHours(clock)-stamp)/per);
+		}
+		case "WEEKDAY": // SC2
+			return ScriptEvents.weekday(clock);
+		case "TICKS": // SC2: TICKS(3 DAYS): ticks in so much game time, for timed tattoos
+		{
+			final String[] p=lastWord(v);
+			final boolean unitGiven=!CMath.isNumber(p[1]);
+			final long n=CMath.s_long(unitGiven?p[0]:p[1]);
+			final long hours=n*ScriptEvents.everyHours(1,unitGiven?p[1]:"HOURS",clock);
+			return ""+((hours*CMProps.getMillisPerMudHour())/Math.max(1,CMProps.getTickMillis()));
 		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);

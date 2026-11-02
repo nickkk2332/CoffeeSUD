@@ -1151,6 +1151,11 @@ JS17, JS18, JS19, JS20, JS23
   `LISTCOUNT`, `LISTGET`, `LISTFIND`, `LISTPICK`. The newer functions and
   commands are in one place (`extraValue`, `extraTest`, `extraCommand`);
   any function that returns a value may be compared in an IF.
+- SC2 done. `DATETIME(STAMP|DAYOFYEAR|WEEKDAY)`, `GAMETIME(HOURS|DAYS|
+  MONTHS|YEARS)`, `ELAPSED(stamp unit)` (and as a test), `WEEKDAY()`,
+  `TICKS(n unit)` and `MPSETVAR host var NOW`, on the area clock's hours
+  since its year 0. ISWEEKDAY came with ST11. The ISRL tests still read the
+  computer's clock.
 
 #### 2e. Quests (15)
 
