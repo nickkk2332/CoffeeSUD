@@ -2022,6 +2022,14 @@ C18, C19, C20, C21, C22, C23, C25
   MEMBER-ABOVE-n through Encounters.spawnSpec, tagged SUMMONED, following.
   Two ticks out of combat undo it (a handed copy goes). core/PartyScale
   for CONSIDER: "<mob> scales to your party" (Prop_Doppleganger too).
+- C16 done. Prop_DeathRules (rooms, areas): core/DeathRules.playerDeath,
+  mobDeath and itemLootPolicy read each key from the room's, else its
+  area's (each if its MASK= fits the one who dies), else coffeemud.ini's; MUDFight's death and
+  knock-out code and CoffeeUtensils' loot policy ask them. TO=room: its
+  okMessage refuses a player's side TYP_DEATH (as Prop_SparringRoom does),
+  stops the fight, moves the gear to GEAR=CONTAINER:room/container, and
+  bringMobHere(..., true) takes the character and its followers to TO,
+  with HEAL=% of their hit points; MSG= shows.
 
 #### 2h. Items, properties and puzzles (23)
 

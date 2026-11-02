@@ -1683,9 +1683,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			expLost[0]=100;
 		String[] cmds=null;
 		if((deadM.isMonster())||(deadM.soulMate()!=null))
-			cmds=CMParms.toStringArray(CMParms.parseCommas(CMProps.getVar(CMProps.Str.MOBDEATH),true));
+			cmds=CMParms.toStringArray(CMParms.parseCommas(DeathRules.mobDeath(deadM),true)); // C16: the area's or room's first
 		else
-			cmds=CMParms.toStringArray(CMParms.parseCommas(CMProps.get(deadM.session()).getStr(CMProps.Str.PLAYERDEATH),true));
+			cmds=CMParms.toStringArray(CMParms.parseCommas(DeathRules.playerDeath(deadM),true));
 
 		DeadBody body=null; //must be done before consequences because consequences could be purging
 		if((!CMParms.containsIgnoreCase(cmds,"RECALL"))
@@ -3506,9 +3506,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 	{
 		String whatToDo=null;
 		if(((deadM.isMonster())||(deadM.soulMate()!=null)))
-			whatToDo=CMProps.getVar(CMProps.Str.MOBDEATH).toUpperCase();
+			whatToDo=DeathRules.mobDeath(deadM).toUpperCase(); // C16
 		else
-			whatToDo=CMProps.get(deadM.session()).getStr(CMProps.Str.PLAYERDEATH).toUpperCase();
+			whatToDo=DeathRules.playerDeath(deadM).toUpperCase();
 		final List<String> whatsToDo=CMParms.parseCommas(whatToDo,true);
 		final double[] fakeVarVals={1.0,1.0,1.0};
 		for(int w=0;w<whatsToDo.size();w++)

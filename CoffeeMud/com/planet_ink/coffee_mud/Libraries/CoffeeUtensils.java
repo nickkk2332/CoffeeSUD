@@ -1193,10 +1193,10 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 	{
 		if((mob==null)||(!mob.isMonster()))
 			return noLootPolicy;
-		final String lootPolicyStr=CMProps.getVar(CMProps.Str.ITEMLOOTPOLICY);
+		final String lootPolicyStr=DeathRules.itemLootPolicy(mob); // C16: the area's or room's first
 		if((lootPolicy==null)||(lastLootPolicyHash!=lootPolicyStr.hashCode()))
 		{
-			final List<String> lootPolicies=(!mob.isMonster())?new Vector<String>():CMParms.parseCommas(CMProps.getVar(CMProps.Str.ITEMLOOTPOLICY),true);
+			final List<String> lootPolicies=(!mob.isMonster())?new Vector<String>():CMParms.parseCommas(lootPolicyStr,true);
 			final TriadVector<Integer,Integer,MaskingLibrary.CompiledZMask> policies=new TriadVector<Integer,Integer,MaskingLibrary.CompiledZMask>();
 			for(int p=0;p<lootPolicies.size();p++)
 			{

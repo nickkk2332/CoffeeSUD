@@ -518,6 +518,10 @@ wins "Clear the Old Mill": the bandits never return, and settlers come in their 
 ADDS="catalog:a skeleton guard/MEMBER-ABOVE-3"</code> on the Bone King: alone, the player meets him with half his
 hit points and no guards; a party of five finds half again his hit points and two skeleton guards. On a room or
 area every NPC that fights there scales.</p>
+<p>Death rules per place: <code>Prop_DeathRules TO=Hideout#4 GEAR="CONTAINER:Hideout#9/the chief's strongbox"
+HEAL=25%</code> on the bandit hideout: defeat there drops the character in the cage with a quarter of their hit points,
+their weapons in the chief's strongbox, their party with them. A tutorial area's <code>PLAYERDEATH="OUT 3"</code>
+only knocks one out; a sparring hall's <code>MOBDEATH="OUT 3"</code> spares the sparring partners.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
