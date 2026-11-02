@@ -49,6 +49,8 @@ public class NiceAbilities extends ActiveTicker
 	}
 
 	protected CompiledZMask	mask			= null;
+	/** C1: heal only those under this percent of their hit points, the most hurt first; 0 for as before */
+	protected int			healAt			= 0;
 	protected List<Ability>	mySkills		= null;
 	protected int			numAllSkills	= -1;
 
@@ -78,9 +80,65 @@ public class NiceAbilities extends ActiveTicker
 		}
 		super.setParms(parms);
 		super.parms = newParms;
+		healAt = CMParms.getParmInt(parms, "HEALAT", 0); // C1
 		this.mask = null;
 		if(mask.trim().length()>0)
 			this.mask = CMLib.masking().getPreCompiledMask(mask.trim());
+	}
+
+	/**
+	 * C1: HEALAT=n: a heal for the most hurt of those it helps (its mask's,
+	 * or those a player leads) under n% of their hit points.
+	 * @param mob the healer
+	 * @param R where it is
+	 */
+	protected void healNeediest(final MOB mob, final Room R)
+	{
+		final List<MOB> who=new ArrayList<MOB>();
+		for(final Enumeration<MOB> m=R.inhabitants();m.hasMoreElements();)
+		{
+			final MOB M=m.nextElement();
+			if((M==null)||(M==mob)||M.amDead())
+				continue;
+			if(mask!=null)
+			{
+				if(!CMLib.masking().maskCheck(mask, M, false))
+					continue;
+			}
+			else
+			{
+				final MOB followMOB=M.getGroupLeader();
+				if((followMOB.getVictim()==mob)||(followMOB.isMonster()))
+					continue;
+			}
+			who.add(M);
+		}
+		Collections.sort(who,new Comparator<MOB>()
+		{
+			@Override
+			public int compare(final MOB a, final MOB b)
+			{
+				return Double.compare(SupportPicker.hpPct(a),SupportPicker.hpPct(b));
+			}
+		});
+		final List<Ability> skills=new ArrayList<Ability>();
+		for(final Enumeration<Ability> e=mob.allAbilities(); e.hasMoreElements();)
+		{
+			final Ability A=e.nextElement();
+			if((A!=null)
+			&&(A.abstractQuality()==Ability.QUALITY_BENEFICIAL_OTHERS)
+			&&(((A.classificationCode()&Ability.ALL_ACODES)!=Ability.ACODE_PRAYER)||A.appropriateToMyFactions(mob)))
+				skills.add(A);
+		}
+		final Object[] pick=SupportPicker.pick(mob,skills,who,healAt,null,false);
+		if(pick==null)
+			return;
+		final Ability A=(Ability)pick[0];
+		final MOB target=(MOB)pick[1];
+		A.setProficiency(CMLib.ableMapper().getMaxProficiency(mob,true,A.ID()));
+		final Vector<String> V=new XVector<String>("$"+target.Name()+"$");
+		V.addElement(target.name());
+		A.invoke(mob,V,target,false,0);
 	}
 
 	@Override
@@ -98,6 +156,11 @@ public class NiceAbilities extends ActiveTicker
 			if((CMath.random()>aChance)||(mob.curState().getMana()<50))
 				return true;
 
+			if((healAt>0)&&(thisRoom.numPCInhabitants()>0))
+			{
+				healNeediest(mob,thisRoom); // C1
+				return true;
+			}
 			if(thisRoom.numPCInhabitants()>0)
 			{
 				MOB target=null;

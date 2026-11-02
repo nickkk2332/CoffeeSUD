@@ -48,6 +48,100 @@ public class Healer extends ActiveTicker
 	}
 
 	protected static final List<String> healingVector=new Vector<String>();
+	/** C1: heal only those under this percent of their hit points, the most hurt first; 0 for as before */
+	protected int healAt=0;
+	/** C1: its spells (SPELLS=id,id), or null for the six it always had */
+	protected List<String> spells=null;
+	/** C1: whom it heals (TARGET=GROUP|MASK:zapper), or null for as before */
+	protected SupportPicker.Support healTarget=null;
+
+	@Override
+	public void setParms(final String newParms)
+	{
+		super.setParms(newParms);
+		healAt=CMParms.getParmInt(newParms,"HEALAT",0);
+		final String sp=CMParms.getParmStr(newParms,"SPELLS","").trim();
+		spells=(sp.length()==0)?null:CMParms.parseCommas(sp,true);
+		healTarget=(newParms.toUpperCase().indexOf("TARGET=")>=0)?SupportPicker.parse(newParms,"TARGET","GROUP"):null;
+	}
+
+	/** C1: a spell of its own, or one given it for the purpose */
+	protected Ability spell(final MOB mob, final String id)
+	{
+		Ability A=mob.fetchAbility(id);
+		if(A==null)
+		{
+			A=CMClass.getAbility(id);
+			if(A==null)
+				return null;
+			A.setSavable(false);
+			mob.addAbility(A);
+		}
+		A.setProficiency(100);
+		return A;
+	}
+
+	/**
+	 * C1: cures first, then a heal for the most hurt (under HEALAT=n), of
+	 * those TARGET= names (or, as before, those a player leads).
+	 * @param mob the healer
+	 * @param R where it is
+	 */
+	protected void healNeediest(final MOB mob, final Room R)
+	{
+		final List<MOB> who;
+		if(healTarget!=null)
+			who=SupportPicker.allies(mob,healTarget);
+		else
+		{
+			if(R.numPCInhabitants()==0)
+				return;
+			who=new ArrayList<MOB>();
+			for(final Enumeration<MOB> m=R.inhabitants();m.hasMoreElements();)
+			{
+				final MOB M=m.nextElement();
+				if((M==null)||(M==mob)||M.amDead())
+					continue;
+				final MOB followMOB=M.getGroupLeader();
+				if((followMOB.getVictim()==mob)||(followMOB.isMonster()))
+					continue;
+				who.add(M);
+			}
+			Collections.sort(who,new Comparator<MOB>()
+			{
+				@Override
+				public int compare(final MOB a, final MOB b)
+				{
+					return Double.compare(SupportPicker.hpPct(a),SupportPicker.hpPct(b));
+				}
+			});
+		}
+		final List<Ability> skills=new ArrayList<Ability>();
+		final List<String> cures=new ArrayList<String>();
+		for(final String id : (spells!=null)?spells:healingVector)
+		{
+			final Ability A=spell(mob,id);
+			if(A==null)
+				continue;
+			skills.add(A);
+			for(final String kind : new String[]{"POISON","DISEASE"})
+			{
+				if(SupportPicker.treats(A,kind)&&(!cures.contains(kind)))
+					cures.add(kind);
+			}
+		}
+		Object[] pick=SupportPicker.pick(mob,skills,who,(healAt>0)?healAt:101,cures.isEmpty()?null:cures,false);
+		if((pick==null)&&(healAt<=0))
+			pick=SupportPicker.pick(mob,skills,who,0,null,true); // a blessing for one who lacks it
+		if(pick==null)
+			return;
+		final Ability A=(Ability)pick[0];
+		final MOB target=(MOB)pick[1];
+		final Vector<String> V=new Vector<String>();
+		if(!target.isMonster())
+			V.addElement(target.name());
+		A.invoke(mob,V,target,false,0);
+	}
 
 	public Healer()
 	{
@@ -86,6 +180,11 @@ public class Healer extends ActiveTicker
 			if((CMath.random()>aChance)||(mob.curState().getMana()<50))
 				return true;
 
+			if((healAt>0)||(spells!=null)||(healTarget!=null))
+			{
+				healNeediest(mob,thisRoom); // C1
+				return true;
+			}
 			if(thisRoom.numPCInhabitants()>0)
 			{
 				final MOB target=thisRoom.fetchRandomInhabitant();

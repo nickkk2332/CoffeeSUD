@@ -50,6 +50,14 @@ public class CombatAbilities extends ActiveTicker
 	protected boolean			proficient			= false;
 	protected int				preCastSet			= Integer.MAX_VALUE;
 	protected int				preCastDown			= Integer.MAX_VALUE;
+	/** C1: whom it helps (SUPPORT=SELF|LEADER|GROUP|MASK:zapper) */
+	protected SupportPicker.Support	support			= new SupportPicker.Support();
+	/** C1: heal only those under this percent of their hit points, the most hurt first; 0 for as before */
+	protected int				healAt				= 0;
+	/** C1: what it cures first (CUREFIRST=Poison,Disease), or null */
+	protected List<String>		cureFirst			= null;
+	/** C1: whether it buffs its allies before a fight */
+	protected boolean			buffOut				= false;
 	protected String			lastSpell			= null;
 	protected boolean			noStat				= false;
 	protected boolean			noCombatStat		= false;
@@ -501,6 +509,23 @@ public class CombatAbilities extends ActiveTicker
 				skillsAlways.add(A.ID());
 			}
 		}
+		// C1: whom it helps, and how
+		final String p=getParms();
+		support=SupportPicker.parse(p,"SUPPORT","LEADER");
+		healAt=CMParms.getParmInt(p,"HEALAT",0);
+		final String cf=CMParms.getParmStr(p,"CUREFIRST","").trim();
+		cureFirst=(cf.length()==0)?null:CMParms.parseCommas(cf.toUpperCase(),true);
+		buffOut=false;
+		for(final String w : V)
+		{
+			if(w.toUpperCase().startsWith("BUFFOUTOFCOMBAT"))
+				buffOut=true;
+		}
+		if((buffOut||(healAt>0)||(cureFirst!=null))&&(preCastSet==Integer.MAX_VALUE))
+		{
+			preCastSet=3; // out of a fight too, every 3 ticks
+			preCastDown=3;
+		}
 		if(skillsNever instanceof Vector)
 			((Vector<?>)skillsNever).trimToSize();
 		if(skillsAlways instanceof Vector)
@@ -523,6 +548,54 @@ public class CombatAbilities extends ActiveTicker
 		return true;
 	}
 
+	/**
+	 * C1: whom an ability that helps others would go to: the leader (as
+	 * before), no one but itself (SUPPORT=SELF), or under SUPPORT=GROUP or
+	 * MASK the most hurt ally it would help.
+	 * @param mob the caster
+	 * @param A the ability
+	 * @param leader whom it follows, or null
+	 * @return the one, or null
+	 */
+	protected MOB helpedBy(final MOB mob, final Ability A, final MOB leader)
+	{
+		if(support.mode.equals("LEADER"))
+			return leader;
+		if(support.mode.equals("SELF"))
+			return null;
+		for(final MOB M : SupportPicker.allies(mob,support))
+		{
+			if((M!=mob)&&(A.castingQuality(mob,M)==Ability.QUALITY_BENEFICIAL_OTHERS))
+				return M;
+		}
+		return null;
+	}
+
+	/**
+	 * C1: a cure, a heal for the most hurt under HEALAT, or (out of a fight)
+	 * a buff, and on whom.
+	 * @param mob the caster
+	 * @param victim whom it fights, or null
+	 * @return the ability and its target, or null
+	 */
+	protected Object[] pickSupport(final MOB mob, final MOB victim)
+	{
+		final List<Ability> skills=new ArrayList<Ability>();
+		for(final Enumeration<Ability> a=mob.allAbilities();a.hasMoreElements();)
+		{
+			final Ability A=a.nextElement();
+			if((A==null)
+			||(A.isAutoInvoked())
+			||(A.triggerStrings()==null)
+			||(A.triggerStrings().length==0)
+			||((skillsAlways!=null)&&(!skillsAlways.contains(A.ID())))
+			||((skillsNever!=null)&&(skillsNever.contains(A.ID()))))
+				continue;
+			skills.add(A);
+		}
+		return SupportPicker.pick(mob,skills,SupportPicker.allies(mob,support),healAt,cureFirst,buffOut&&(victim==null));
+	}
+
 	protected Ability useSkill(final MOB mob, final MOB victim, final MOB leader) throws CMException
 	{
 		int tries=0;
@@ -534,6 +607,16 @@ public class CombatAbilities extends ActiveTicker
 		int victimQuality=Ability.QUALITY_INDIFFERENT;
 		int selfQuality=Ability.QUALITY_INDIFFERENT;
 		int leaderQuality=Ability.QUALITY_INDIFFERENT;
+		// C1: cures, heals for the most hurt under HEALAT, and buffs before a fight, first
+		if((healAt>0)||(cureFirst!=null)||(buffOut&&(victim==null)))
+		{
+			final Object[] pick=pickSupport(mob,victim);
+			if(pick!=null)
+			{
+				tryA=(Ability)pick[0];
+				target=(MOB)pick[1];
+			}
+		}
 		while((tryA==null)
 		&&((++tries)<100)
 		&&(mob.numAllAbilities()>0))
@@ -558,7 +641,8 @@ public class CombatAbilities extends ActiveTicker
 
 			victimQuality=(victim!=null)?A.castingQuality(mob,victim):Ability.QUALITY_INDIFFERENT;
 			selfQuality=A.castingQuality(mob,mob);
-			leaderQuality=((mob==leader)||(leader==null))?Ability.QUALITY_INDIFFERENT:A.castingQuality(mob,leader);
+			final MOB helped=helpedBy(mob,A,leader); // C1: the leader, or whom SUPPORT= names
+			leaderQuality=((mob==helped)||(helped==null))?Ability.QUALITY_INDIFFERENT:A.castingQuality(mob,helped);
 
 			if(victimQuality==Ability.QUALITY_MALICIOUS)
 			{
@@ -617,7 +701,9 @@ public class CombatAbilities extends ActiveTicker
 				target=mob;
 			else
 			if(leaderQuality==Ability.QUALITY_BENEFICIAL_OTHERS)
-				target=((leader==null)||(mob.location()!=leader.location()))?mob:leader;
+				target=((helped==null)||(mob.location()!=helped.location()))?mob:helped;
+			if((tryA!=null)&&(healAt>0)&&(target!=null)&&SupportPicker.isHeal(tryA)&&(SupportPicker.hpPct(target)>=healAt))
+				tryA=null; // C1: not hurt enough yet
 			if((target != null) && (tryA != null))
 			{
 				final Ability eA=target.fetchEffect(tryA.ID());

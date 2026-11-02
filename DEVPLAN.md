@@ -1865,6 +1865,17 @@ C18, C19, C20, C21, C22, C23, C25
   line too. DSE RANK (183) as a function and, through extraTest, a
   comparison; masks -RANK/+RANK (MUDZapper description, compile, check,
   records), zappermasks.txt. POWER (MobRanks.powerOf) is for C9 and C25.
+- C1 done. core/SupportPicker: SUPPORT=SELF|LEADER|GROUP|MASK:zapper (and
+  Healer's TARGET=), allies most hurt first, isHeal (FLAG_HEALINGMAGIC),
+  CUREFIRST by effect kind (POISON, DISEASE, or a word of the ID) and the
+  ability's ID or name, pick(): cures, heals under HEALAT, buffs lacked.
+  CombatAbilities (and its presets): options read in startBehavior; useSkill
+  picks support first, the random loop's beneficial target is helpedBy()
+  (the leader as before, nobody for SELF, the neediest ally for GROUP and
+  MASK), and a heal waits until its target is under HEALAT; HEALAT,
+  CUREFIRST and BUFFOUTOFCOMBAT turn on the out-of-fight precast every 3
+  ticks. Healer: SPELLS=, HEALAT=, TARGET=, the old random way without
+  them. NiceAbilities: HEALAT= before the ;.
 
 #### 2h. Items, properties and puzzles (23)
 

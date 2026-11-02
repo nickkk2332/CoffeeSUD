@@ -443,6 +443,10 @@ damage and shows <code>[elite]</code> in LOOK and CONSIDER; MINION and BOSS go t
 are <code>MOBRANK_ELITE=HP+100% DAMAGE+25% ATTACK+10 ARMOR-10 XP*2.5 TAG=[elite]</code> in coffeemud.ini or
 world.ini, so when bosses feel too spongy one edit fixes all of them. <code>RANK($i)</code> in scripts,
 <code>-RANK +BOSS</code> in masks.</p>
+<p>A healer that thinks: <code>Clericness MIXEDDEFENSIVE SUPPORT=MASK:"-RACE +Goblin" HEALAT=60
+CUREFIRST=Poison</code> on a goblin shaman cures a poisoned goblin first, then heals the most hurt one
+under 60%, so the party learns to kill the shaman first. <code>BUFFOUTOFCOMBAT</code> blesses them before
+the fight. A temple acolyte: <code>Healer HEALAT=70 SPELLS=Prayer_CureSerious TARGET=MASK:"-NPC"</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
