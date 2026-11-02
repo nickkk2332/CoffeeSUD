@@ -360,6 +360,25 @@ public final class QuestRecords
 		}
 	}
 
+	/**
+	 * Q14: how many quests a character has won, a quest board's QUESTS_DONE.
+	 * @param who the character's name
+	 * @return the count of quests, each once
+	 */
+	public static synchronized int questsWon(final String who)
+	{
+		int n = 0;
+		if(who == null)
+			return n;
+		for(final Map<String, Record> m : records.values())
+		{
+			final Record R = m.get(who);
+			if((R != null) && ((R.wins > 0) || R.status.equals(WON)))
+				n++;
+		}
+		return n;
+	}
+
 	// ------------------------------------------------------------ offers (Q7)
 
 	private static String key(final String kind, final MOB mob)

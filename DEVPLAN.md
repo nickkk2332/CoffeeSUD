@@ -1581,6 +1581,19 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   is gone. `#!QUESTMAKER_MODE MULTIPLAYER` on the competitive_* templates
   leaves them out of the list (named, they still load). FakeSession's
   timed yes/no no longer calls itself for ever.
+- Q14 done. `Prop_QuestBoard` on an item or a room (`core/QuestBoards`):
+  COUNT jobs (3) generated through RandomQuests (TEMPLATE, FILE as its
+  PATH, TAGID and its other parameters passed on, VARS opened into more
+  variables), listed on LOOK (READ for a readable item), noted as shown for
+  QUESTS OFFERED, and taken with the new `ACCEPT n` command (the board read
+  last, else QUESTS ACCEPT). At each REFRESH on the game clock (1 mudday,
+  or MUDDAY:1) the jobs done or given up go and new ones come up to COUNT;
+  with none taken the oldest is replaced. The generator gets the reader's
+  PLAYER_LEVEL, PARTY_SIZE, PLAYER_FACTION_[ID] and QUESTS_DONE
+  (`QuestRecords.questsWon`), and with LEVELRANGE=n the target area levels
+  around it. Jobs wait with no expiry unless EXPIRE= is given, and carry
+  QUESTBOARD and POSTED quest variables, so a saved game (S8) keeps them
+  with their board.
 
 #### 2f. NPC behaviour and dialogue (21)
 

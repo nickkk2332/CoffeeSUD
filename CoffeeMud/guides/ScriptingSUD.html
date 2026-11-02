@@ -301,6 +301,10 @@ word), Story Use-Item #1, Story Explore #1 and Story Bounty #1 (with a
 cooldown). They use Prop_QuestGiver, quest markers, objectives, the journal,
 SET REWARDS and REPEATABLE, so the quest they write shows how those go
 together.</p>
+<p>Jobs that come and go: <code>Prop_QuestBoard COUNT=3 REFRESH="1 mudday"
+TEMPLATE=normal LEVELRANGE=3</code> on the Mercenaries' Guild board keeps three
+generated quests near the reader's level; LOOK at it lists them, <code>ACCEPT 2</code>
+takes one, and each morning the jobs done go and new ones come.</p>
 <pre>
 set name bell
 set display The Drowned Bell

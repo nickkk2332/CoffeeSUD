@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!-- Q14's test: a job for the board, from the story_talk1 template, with the reader's level and wins -->
+<QUEST ID="fixq14jobs" QUEST_TEMPLATE_ID="story_talk1">
+	<QUEST_ID DEFINE="quest_id">fixq14job_R$[100000?999999]</QUEST_ID>
+	<QUEST_NAME>A level $player_level job, $quests_done done, party of $party_size</QUEST_NAME>
+	<QUEST_CRITERIA></QUEST_CRITERIA>
+	<CATEGORY>job</CATEGORY>
+	<GIVER_AREA>"$area_name"</GIVER_AREA>
+	<GIVER_ROOM></GIVER_ROOM>
+	<GIVER_NAME>"$giver"</GIVER_NAME>
+	<QUEST_NOTIFYSTRING>There is work to be had.</QUEST_NOTIFYSTRING>
+	<QUEST_INSTRUCTIONSSTRING>Fixq14 $jobword a word to the carter.</QUEST_INSTRUCTIONSSTRING>
+	<TARGET_AREA>"$area_name"</TARGET_AREA>
+	<TARGET_ROOM></TARGET_ROOM>
+	<TARGET_NAME>"fixq14 carter"</TARGET_NAME>
+	<TARGET_RESPONSE>Fixq14 thank you.</TARGET_RESPONSE>
+	<CARRY_ITEMS></CARRY_ITEMS>
+	<REWARDS>2 QP</REWARDS>
+	<JOURNAL_START>I took a job off the board.</JOURNAL_START>
+	<JOURNAL_DONE>The job is done.</JOURNAL_DONE>
+</QUEST>
