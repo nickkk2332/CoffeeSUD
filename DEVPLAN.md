@@ -1537,6 +1537,13 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   ABANDONED, EXPIRED; ENDED when the quest stops, but not while a save is
   being put back), ALL by default, NONE never. `QUESTS name` lists what
   the character carries for it.
+- Q10 done. `SET REWARDS "awards"` (`core/QuestRewards`): the
+  achievements' award words (`AchievementLibrary.parseAwardsList`, public
+  now, and `giveAwards`), and N% XP (of a level), FACTION:id:+n and
+  ITEM:catalog_name. `MPQUESTWIN who quest REWARD` gives them with one
+  message ("Your reward: ..."); `MPREWARD who "awards"` gives ad-hoc
+  ones. Prop_QuestGiver's details, quest boards and `QUESTS name` show
+  Reward:. QUESTCHECK knows SET REWARDS.
 
 #### 2f. NPC behaviour and dialogue (21)
 

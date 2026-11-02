@@ -544,6 +544,8 @@ public class Questwins extends StdCommand
 				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",timeRemaining));
 			if((progress!=null)&&(progress.length()>0))
 				mob.tell(L("\n\r^yProgress: ^w@x1^N",progress));
+			if(Q.getStat("REWARDS").length()>0) // Q10
+				mob.tell(L("\n\r^yReward: ^w@x1^N",QuestRewards.describe(Q.getStat("REWARDS"))));
 			if(((timeRemaining==null)||(timeRemaining.length()==0))&&(timeLeftOf(Q).length()>0)) // Q3
 				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",QuestJournal.timeLeft(Q.ticksRemaining())));
 			final List<String> objectives=objectiveLines(mob,Q);

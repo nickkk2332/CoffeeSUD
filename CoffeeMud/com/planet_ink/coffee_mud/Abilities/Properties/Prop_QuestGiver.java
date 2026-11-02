@@ -309,6 +309,8 @@ public class Prop_QuestGiver extends Property
 			}
 			if(Q.instructions().length()>0)
 				announcement.append(CMStrings.padRight(L("Descrip."), 10)).append(": ").append(Q.instructions()).append("\n\r");
+			if(Q.getStat("REWARDS").length()>0) // Q10
+				announcement.append(CMStrings.padRight(L("Reward"), 10)).append(": ").append(QuestRewards.describe(Q.getStat("REWARDS"))).append("\n\r");
 		}
 
 		final Runnable asker = new Runnable()

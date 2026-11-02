@@ -277,6 +277,8 @@ public class StdQuestBoard extends StdItem
 							}
 							if(Q.instructions().length()>0)
 								entry.append(CMStrings.padRight(L("Descrip."), 10)).append(": ").append(Q.instructions()).append("\n\r");
+							if(Q.getStat("REWARDS").length()>0) // Q10
+								entry.append(CMStrings.padRight(L("Reward"), 10)).append(": ").append(QuestRewards.describe(Q.getStat("REWARDS"))).append("\n\r");
 						}
 					}
 					if(entry.length()>0)

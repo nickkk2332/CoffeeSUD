@@ -835,6 +835,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPQOBJECTIVE", // 115
 		"MPQJOURNAL", // 116
 		"MPQUESTFAIL", // 117
+		"MPREWARD", // 118
 	};
 
 	/**

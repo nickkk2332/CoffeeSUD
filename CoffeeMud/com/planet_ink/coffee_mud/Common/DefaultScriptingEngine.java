@@ -14307,6 +14307,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					outcome=varify(ctx,om.group(1));
 					questPart=(padded.substring(0,om.start())+" "+padded.substring(om.end())).trim();
 				}
+				// Q10: MPQUESTWIN who quest REWARD: the quest's SET REWARDS too
+				boolean reward=false;
+				final java.util.regex.Matcher rm=java.util.regex.Pattern.compile("(?i)\\s+REWARD\\s*$").matcher(" "+questPart);
+				if(rm.find())
+				{
+					reward=true;
+					questPart=(" "+questPart).substring(0,rm.start()).trim();
+				}
 				MOB M=null;
 				if(lastKnownLocation!=null)
 					M=lastKnownLocation.fetchInhabitant(whoName);
@@ -14328,6 +14336,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						Q.declareWinner(whoName);
 						if(outcome!=null) // Q4
 							QuestRecords.setOutcome(Q.name(),whoName,outcome);
+						if(reward&&(M!=null)) // Q10
+							QuestRewards.give(M,"QUEST:"+Q.name(),Q.getStat("REWARDS"));
 						CMLib.players().bumpPrideStat(M,PrideStats.PrideStat.QUESTS_COMPLETED, 1);
 					}
 					else
@@ -16078,6 +16088,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPREWARD": // Q10: MPREWARD who "awards": a reward with one message
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			if(!(W instanceof MOB))
+			{
+				logError(ctx,"MPREWARD","RunTime","no such character: "+line);
+				return null;
+			}
+			QuestRewards.give((MOB)W,"SCRIPT:"+((defaultQuestName!=null)?defaultQuestName:""),varify(ctx,CMParms.getPastBit(line,1)).trim());
 			return null;
 		}
 		case "MPQUESTFAIL": // Q4: MPQUESTFAIL who quest (reason): fails it for them, as MPENDQUEST who ends it

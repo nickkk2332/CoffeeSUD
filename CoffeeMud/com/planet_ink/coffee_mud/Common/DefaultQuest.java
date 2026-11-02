@@ -101,6 +101,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected int repeatTicks = -1;
 	/** Q5: SET MAXWINS: the most times one character may win it, or 0 */
 	protected int maxWins = 0;
+	/** Q10: SET REWARDS: what a win gives (MPQUESTWIN ... REWARD), shown with offers */
+	protected String rewards = "";
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -542,6 +544,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		repeatable=""; // Q5
 		repeatTicks=-1;
 		maxWins=0;
+		rewards=""; // Q10
 		name="";
 		author="";
 		displayName="";
@@ -752,6 +755,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				else
 				if(var.equals("MAXWINS"))
 					maxWins=Math.max(0,CMath.s_int(CMParms.combine(parsedLine,2).trim()));
+				else
+				if(var.equals("REWARDS")) // Q10
+					rewards=CMParms.combine(parsedLine,2).trim();
 				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
@@ -3606,7 +3612,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					}
 					else
 					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")
-					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")) // JS18, Q1, Q5: read when the script was set
+					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")) // JS18, Q1, Q5, Q10: read when the script was set
 					{
 					}
 					else
@@ -7181,6 +7187,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				return ""+stepNumberFor(code.substring(7));
 			if(code.equals("MAXWINS"))
 				return ""+maxWins;
+			if(code.equals("REWARDS")) // Q10
+				return rewards;
 			if((code.equalsIgnoreCase("REMAINING"))&&(running()))
 				return ""+ticksRemaining;
 			if(questState.vars.containsKey(code) && (!questState.isStat(code)))

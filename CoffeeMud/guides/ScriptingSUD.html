@@ -277,6 +277,10 @@ NOSELL REMOVEON=WON</code> on the sunken bell keeps it from being pawned or
 dropped, and it leaves the pack when the quest is won (the priest's
 <code>MPQUESTWIN</code>). Without REMOVEON it goes however the quest ends for
 its holder; KEEPONDEATH keeps it through a death.</p>
+<p>Rewards can be written down once: <code>SET REWARDS "100 CURRENCY 15% XP
+ITEM:silver_bell_charm FACTION:Brenn:+200"</code>, and Ned's turn-in becomes
+<code>MPQUESTWIN $n bell REWARD</code>; offers, quest boards and QUESTS show
+them. <code>MPREWARD $n "5 QP"</code> gives one by the way.</p>
 <pre>
 set name bell
 set display The Drowned Bell

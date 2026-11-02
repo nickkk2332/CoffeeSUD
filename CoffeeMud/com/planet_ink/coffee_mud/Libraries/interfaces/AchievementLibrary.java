@@ -788,6 +788,15 @@ public interface AchievementLibrary extends CMLibrary
 	public String giveAwards(final MOB mob, final String rewardStr);
 
 	/**
+	 * Q10: parses an achievements.ini 'rewards' definition, for others
+	 * (quest rewards) to describe and give.
+	 *
+	 * @param rewardStr the rewards definition
+	 * @return the awards, none if it does not parse
+	 */
+	public List<Award> parseAwardsList(final String rewardStr);
+
+	/**
 	 * Given the comments/help entried from the achievement definition file, and an event,
 	 * and the name of the parameter inside the event, this returns the help entry for
 	 * that parameter

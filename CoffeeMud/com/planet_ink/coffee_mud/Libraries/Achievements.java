@@ -9294,6 +9294,20 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 	}
 
 	@Override
+	public List<Award> parseAwardsList(final String rewardStr)
+	{
+		try
+		{
+			return parseAwards("AWARD", rewardStr);
+		}
+		catch(final CMException e)
+		{
+			Log.errOut("Achievements", "Rewards '"+rewardStr+"': "+e.getMessage());
+			return new ArrayList<Award>();
+		}
+	}
+
+	@Override
 	public String getAwardString(final Award[] awards)
 	{
 		final StringBuilder awardStr=new StringBuilder();
