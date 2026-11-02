@@ -1577,6 +1577,109 @@ public final class ScriptEvents
 		}
 	}
 
+	/** FIRSTGREET_PROG's code */
+	public static final int	FIRSTGREET_PROG	= code("FIRSTGREET_PROG");
+	/** REGREET_PROG's code */
+	public static final int	REGREET_PROG	= code("REGREET_PROG");
+
+	private static final Map<MOB, Object>	lastMeeting	= new WeakHashMap<MOB, Object>();
+	private static final Map<MOB, long[]>	lastBefore	= new WeakHashMap<MOB, long[]>();
+
+	private static ScriptingEngine varStore()
+	{
+		return (ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
+	}
+
+	private static String memHost(final MOB npc)
+	{
+		return "MEMORY:" + npc.Name();
+	}
+
+	/**
+	 * ST21: an NPC's record of a character: [times met, first meeting, last
+	 * meeting] in game time, kept in the game's script variables (so saved).
+	 * @param npc the NPC
+	 * @param who the character's name
+	 * @return the record
+	 */
+	public static long[] memory(final MOB npc, final String who)
+	{
+		final ScriptingEngine S = varStore();
+		final String h = memHost(npc);
+		final String k = who.toUpperCase().replace(' ', '_');
+		return new long[] {
+			CMath.s_long(S.getVar(h, k + "_COUNT")),
+			CMath.s_long(S.getVar(h, k + "_FIRST")),
+			CMath.s_long(S.getVar(h, k + "_LAST")) };
+	}
+
+	/**
+	 * ST21: the last topic an NPC and a character talked of.
+	 * @param npc the NPC
+	 * @param who the character's name
+	 * @return the topic, or ""
+	 */
+	public static String lastTopic(final MOB npc, final String who)
+	{
+		return varStore().getVar(memHost(npc), who.toUpperCase().replace(' ', '_') + "_TOPIC");
+	}
+
+	/**
+	 * ST21: notes the topic an NPC and a character talk of (for N9's TALK).
+	 * @param npc the NPC
+	 * @param who the character
+	 * @param topic the topic
+	 */
+	public static void talked(final MOB npc, final MOB who, final String topic)
+	{
+		met(npc, who, topic);
+		varStore().setVar(memHost(npc), who.Name().toUpperCase().replace(' ', '_') + "_TOPIC", (topic == null) ? "" : topic);
+	}
+
+	/**
+	 * ST21: an NPC saw a character arrive (or talked with them): the record
+	 * is brought up to date, once for each arrival however many scripts the
+	 * NPC has.
+	 * @param npc the NPC
+	 * @param who the character
+	 * @param event the arrival's message, or anything that marks this meeting
+	 * @return the record as it was before: times met, first, last
+	 */
+	public static long[] met(final MOB npc, final MOB who, final Object event)
+	{
+		synchronized(lastMeeting)
+		{
+			if((lastMeeting.get(npc) == event) && lastBefore.containsKey(npc))
+				return lastBefore.get(npc);
+		}
+		final long[] before = memory(npc, who.Name());
+		final long now = GameTime.now();
+		final ScriptingEngine S = varStore();
+		final String h = memHost(npc);
+		final String k = who.Name().toUpperCase().replace(' ', '_');
+		S.setVar(h, k + "_COUNT", "" + (before[0] + 1));
+		if(before[0] == 0)
+			S.setVar(h, k + "_FIRST", "" + now);
+		S.setVar(h, k + "_LAST", "" + now);
+		synchronized(lastMeeting)
+		{
+			lastMeeting.put(npc, event);
+			lastBefore.put(npc, before);
+		}
+		return before;
+	}
+
+	/**
+	 * Game milliseconds in a game day on the world's clock.
+	 * @return the milliseconds
+	 */
+	public static long gameDayMillis()
+	{
+		final TimeClock C = CMLib.time().globalClock();
+		final int hours = ((C == null) || (C.getHoursInDay() <= 0)) ? 24 : C.getHoursInDay();
+		return CMProps.getMillisPerMudHour() * hours;
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

@@ -519,6 +519,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"DOCK_PROG", // 86
 		"READ_PROG", // 87
 		"GENERATED_PROG", // 88
+		"FIRSTGREET_PROG", // 89
+		"REGREET_PROG", // 90
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -658,6 +660,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"PARTY", //132
 		"ISWEEKDAY", //133
 		"GENVAR", //134
+		"MEMORY", //135
 	};
 
 	/** String list of all valid mobprog commands */

@@ -5676,6 +5676,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					break;
 				}
+				case 135: // memory (ST21): MEMORY(npc who field cmp value)
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"ccccr"); /* tt[t+0] */
+					final String value=memoryText(ctx,tt[t+0],tt[t+1],tt[t+2]);
+					final String cmp=varify(ctx,tt[t+3]);
+					final String arg2=varify(ctx,tt[t+4]);
+					if(CMath.isNumber(value)&&CMath.isNumber(arg2))
+						returnable=simpleEval(ctx.scripted,value,arg2,cmp,"MEMORY");
+					else
+						returnable=simpleEvalStr(ctx.scripted,value,arg2,cmp,"MEMORY");
+					break;
+				}
 				case 134: // genvar (ST20)
 				{
 					if(tlen==1)
@@ -8064,6 +8077,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				break;
 			}
+			case 135: // memory (ST21)
+				results.append(memoryText(ctx,CMParms.getCleanBit(funcParms,0),CMParms.getCleanBit(funcParms,1),CMParms.getCleanBit(funcParms,2)));
+				break;
 			case 134: // genvar (ST20)
 				results.append(ScriptEvents.genVar(varify(ctx,CMParms.getCleanBit(funcParms,0)),varify(ctx,CMParms.getPastBitClean(funcParms,0))));
 				break;
@@ -14841,6 +14857,40 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return (mask.length()==0)||((foe!=null)&&CMLib.masking().maskCheck(mask,foe,true));
 	}
 
+	/**
+	 * ST21: MEMORY(npc who MET|COUNT|LASTSEEN|DAYSSINCE|LASTTOPIC).
+	 * @param ctx the script's context
+	 * @param npcArg the NPC
+	 * @param whoArg the character
+	 * @param fieldArg which
+	 * @return the value
+	 */
+	protected String memoryText(final MPContext ctx, final String npcArg, final String whoArg, final String fieldArg)
+	{
+		final Environmental npc=getArgumentMOB(npcArg,ctx);
+		final Environmental who=getArgumentMOB(whoArg,ctx);
+		if(!(npc instanceof MOB))
+			return "";
+		final String name=(who!=null)?who.Name():varify(ctx,whoArg);
+		final long[] rec=ScriptEvents.memory((MOB)npc,name);
+		final String field=varify(ctx,fieldArg).toUpperCase().trim();
+		switch(field)
+		{
+		case "MET":
+			return (rec[0]>0)?"true":"false";
+		case "COUNT":
+			return ""+rec[0];
+		case "LASTSEEN":
+			return ""+rec[2];
+		case "DAYSSINCE":
+			return (rec[0]==0)?"-1":(""+((GameTime.now()-rec[2])/Math.max(1,ScriptEvents.gameDayMillis())));
+		case "LASTTOPIC":
+			return ScriptEvents.lastTopic((MOB)npc,name);
+		default:
+			return "";
+		}
+	}
+
 	protected boolean match(final String str, final String patt)
 	{
 		if(patt.trim().equalsIgnoreCase("ALL"))
@@ -15286,6 +15336,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 			final List<SubScript> scripts=getScripts(host);
 
+			// ST21: a character's arrival, as GREET_PROG sees it, is a meeting the NPC remembers
+			long[] metBefore=null;
+			if((affecting instanceof MOB)&&(msg.targetMinor()==CMMsg.TYP_ENTER)&&msg.amITarget(lastKnownLocation)
+			&&(!msg.amISource(monster))&&(msg.source().playerStats()!=null)
+			&&CMLib.flags().canSenseEnteringLeaving(msg.source(),(MOB)affecting))
+				metBefore=ScriptEvents.met((MOB)affecting,msg.source(),msg);
+
 			if(msg.amITarget(eventMob)
 			&&(!msg.amISource(monster))
 			&&(msg.targetMinor()==CMMsg.TYP_DAMAGE)
@@ -15368,6 +15425,35 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if((t!=null)&&ScriptEvents.recipeMatches(t,(Ability)msg.tool(),(Item)msg.target()))
 						{
 							enqueResponse(triggerCode,affecting,monster,msg.source(),msg.target(),(Item)msg.target(),defaultItem,((Ability)msg.tool()).ID(),script,1,t);
+							if(!multiTriggers)
+								return;
+						}
+					}
+					break;
+				case 89: // firstgreet_prog (ST21)
+				case 90: // regreet_prog
+					if((metBefore!=null)&&canTrigger(triggerCode)&&isFreeToBeTriggered(monster))
+					{
+						if(t==null)
+							t=parseBits(script,0,(triggerCode==89)?"CR":"CCR");
+						if(t==null)
+							break;
+						final boolean fits;
+						final String pct;
+						if(triggerCode==89)
+						{
+							fits=(metBefore[0]==0);
+							pct=t[1];
+						}
+						else
+						{
+							final long days=CMath.s_long(t[1]);
+							fits=(metBefore[0]>0)&&((GameTime.now()-metBefore[2])>=(days*ScriptEvents.gameDayMillis()));
+							pct=(t.length>2)?t[2]:"";
+						}
+						if(fits&&chance(affecting,script,(pct.trim().length()==0)?100:getTriggerPercent(pct,msg.source())))
+						{
+							enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1,t);
 							if(!multiTriggers)
 								return;
 						}

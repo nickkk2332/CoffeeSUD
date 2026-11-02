@@ -1121,6 +1121,11 @@ JS17, JS18, JS19, JS20, JS23
   ($g the generator's ID), the generator's string variables kept for
   `GENVAR(area var)` (not saved), and an AREA tag's `onGenerate="..."` run
   once. Other generators (MPGENERATE, quests) do not send it yet.
+- ST21 done but TALK (N9's). An NPC with scripts records each character it
+  sees arrive, as GREET_PROG does, in the game's script variables (so saved):
+  times met, first and last meeting. `FIRSTGREET_PROG [pct]`, `REGREET_PROG
+  days [pct]`, `MEMORY(npc who MET|COUNT|LASTSEEN|DAYSSINCE|LASTTOPIC)`;
+  `ScriptEvents.talked` is there for N9 to record a topic.
 
 #### 2e. Quests (15)
 
