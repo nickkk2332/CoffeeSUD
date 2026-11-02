@@ -2169,6 +2169,8 @@ public class StdMOB implements MOB
 					Party.beforeLeaderActs(this);
 				lastCommandTime = GameTime.now();
 				doCommand(doCommand.commandObj, doCommand.commandVector, doCommand.metaFlags);
+				if((playerStats() != null) && (session() != null))
+					DialogueTime.flush(this); // N10: the replies it drew, before the next prompt
 				// in turn-based play, the world then moves on by as long as it took
 				if(moves)
 				{
@@ -2489,7 +2491,11 @@ public class StdMOB implements MOB
 		if(actionCost < 0.0)
 			return;
 		if((actionCost == 0.0) && (!CMath.bset(metaFlags, MUDCmdProcessor.METAFLAG_INORDER)))
+		{
 			doCommand(commands, metaFlags);
+			if((playerStats != null) && (session() != null))
+				DialogueTime.flush(this); // N10: a free command's replies too
+		}
 		else
 		{
 			checkCommandCancel();
@@ -3491,6 +3497,7 @@ public class StdMOB implements MOB
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
+		DialogueTime.heard(this, msg); // N10: an NPC spoke to it
 		final Deity deity = charStats().getMyDeity();
 		if((deity != null) && (deity != this))
 			deity.executeMsg(this, msg);

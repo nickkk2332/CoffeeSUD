@@ -1716,6 +1716,17 @@ N22, N24, N28, N29
   the room. A bare TALK means the partner, or the only NPC here outside the
   party; TALK BYE ends it. ST21's record and LASTTOPIC are kept. The
   dialogue-tree step (N14) is left out, as N14 is.
+- N10 done. `DIALOGUETIME=INSTANT|TICKS` (coffeemud.ini, world.ini;
+  `TIMEMODE DIALOGUE INSTANT|TICKS|DEFAULT`), INSTANT by default in
+  turn-based time (`core/DialogueTime`). Then after each command of a
+  player's character (queued or free, StdMOB) the replies it drew in its
+  room run before the next prompt, without moving the clock: what scripts
+  queued for SPEECH_PROG, GIVE_PROG, BRIBE_PROG, SOCIAL_PROG, TALK_PROG
+  (`ScriptingEngine.runRepliesNow`) and MudChat's queue
+  (`Behavior.repliesNow`), up to three rounds of replies to replies.
+  MudChat takes `DELAY=n` ticks (2). A WAIT of several ticks stops when an
+  NPC speaks to the one waiting (`DialogueTime.heard`, from StdMOB). The
+  LLM part waits for N25.
 
 #### 2g. Combat and encounters (24)
 

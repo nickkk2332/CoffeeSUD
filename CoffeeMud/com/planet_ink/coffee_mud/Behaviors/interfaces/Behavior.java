@@ -204,4 +204,15 @@ public interface Behavior extends Tickable, MsgListener, Contingent, Modifiable
 	public default void catchUp(final PhysicalAgent host, final long ticks)
 	{
 	}
+
+	/**
+	 * N10: the replies it has waiting (MudChat's), run at once, when replies
+	 * come at once (DIALOGUETIME, core/DialogueTime).  None by default.
+	 * @param host what has it
+	 * @return how many ran
+	 */
+	public default int repliesNow(final PhysicalAgent host)
+	{
+		return 0;
+	}
 }

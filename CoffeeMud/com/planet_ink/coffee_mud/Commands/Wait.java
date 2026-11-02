@@ -105,11 +105,17 @@ public class Wait extends StdCommand
 		final Room startRoom = mob.location();
 		final int startHP = mob.curState().getHitPoints();
 		final boolean startFight = mob.isInCombat();
+		final long spokenAt = DialogueTime.spokenTo(mob); // N10
 		return new BooleanSupplier()
 		{
 			@Override
 			public boolean getAsBoolean()
 			{
+				if(DialogueTime.spokenTo(mob) != spokenAt)
+				{
+					mob.tell(L("You stop waiting: you are spoken to."));
+					return true;
+				}
 				if(mob.amDead()
 				|| (mob.location() != startRoom)
 				|| (mob.curState().getHitPoints() < startHP)

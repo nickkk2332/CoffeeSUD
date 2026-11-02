@@ -332,6 +332,12 @@ public class Scriptable extends StdBehavior implements ScriptingEngine
 	}
 
 	@Override
+	public int runRepliesNow()
+	{
+		return engine().runRepliesNow();
+	}
+
+	@Override
 	public void dequeResponses(final Object[] objects)
 	{
 		engine().dequeResponses(null);

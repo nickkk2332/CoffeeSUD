@@ -354,6 +354,17 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	}
 
 	/**
+	 * N10: runs at once the responses its scripts queued that reply to a
+	 * player (SPEECH_PROG, GIVE_PROG, BRIBE_PROG, SOCIAL_PROG, TALK_PROG),
+	 * without waiting for their ticks.
+	 * @return how many ran
+	 */
+	public default int runRepliesNow()
+	{
+		return 0;
+	}
+
+	/**
 	 * Wrapper class for a standard parsed line of script,
 	 * which includes the full line of text, the parsed line,
 	 * and an optional helper object of any sort

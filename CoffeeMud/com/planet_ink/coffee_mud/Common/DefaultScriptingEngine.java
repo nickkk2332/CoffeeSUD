@@ -1200,6 +1200,45 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		parmValues=values;
 	}
 
+	/** N10: the triggers whose queued responses reply to a player */
+	protected static final Set<Integer> REPLY_TRIGGERS=new HashSet<Integer>();
+	static
+	{
+		for(final String name : new String[]{"SPEECH_PROG","GIVE_PROG","BRIBE_PROG","SOCIAL_PROG","TALK_PROG"})
+		{
+			final int x=CMParms.indexOf(progs,name);
+			if(x>=0)
+				REPLY_TRIGGERS.add(Integer.valueOf(x+1));
+		}
+	}
+
+	@Override
+	public int runRepliesNow()
+	{
+		int n=0;
+		for(int q=0;q<que.size();q++) // the oldest first
+		{
+			final ScriptableResponse SB;
+			try
+			{
+				SB=que.get(q);
+			}
+			catch(final IndexOutOfBoundsException x)
+			{
+				break;
+			}
+			if((SB==null)||(!REPLY_TRIGGERS.contains(Integer.valueOf(SB.triggerCode))))
+				continue;
+			que.remove(q);
+			q--;
+			SB.ctx.script=SB.scr;
+			SB.ctx.line=1;
+			execute(SB.ctx);
+			n++;
+		}
+		return n;
+	}
+
 	/**
 	 * N7: a parameter: the generic behaviour's, else LOAD='s (SC13).
 	 * @param E the scripted thing

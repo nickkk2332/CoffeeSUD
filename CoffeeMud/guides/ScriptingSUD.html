@@ -372,6 +372,11 @@ about the old mine</code>, <code>TALK_PROG ALL</code> any TALK, with <code>$g</c
 plain <code>'any rooms free?</code> goes to the innkeeper even with the party in the room. An NPC
 with no TALK_PROG is greeted instead (its SPEECH_PROG hello and MudChat answer) and, with no
 topic, shows a menu of what it does: trade, banking, lessons, hire, quests.</p>
+<p>In turn-based time replies come at once: what a <code>SPEECH_PROG</code>, <code>GIVE_PROG</code>,
+<code>BRIBE_PROG</code>, <code>SOCIAL_PROG</code> or MudChat answers is run before the player's next
+prompt, and the clock does not move for it (DIALOGUETIME=INSTANT, or TIMEMODE DIALOGUE INSTANT;
+TICKS leaves them to the NPC's ticks). A WAIT of several ticks stops when an NPC speaks to
+the one waiting.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

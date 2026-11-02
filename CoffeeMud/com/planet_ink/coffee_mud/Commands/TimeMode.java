@@ -83,6 +83,24 @@ public class TimeMode extends StdCommand
 			mob.tell(L("TIMEMODE REALTIME or TIMEMODE TURNS changes it."));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("DIALOGUE"))
+		{
+			// N10: replies at once, or on the NPCs' ticks
+			final String w = (commands.size() > 2) ? commands.get(2).toUpperCase() : "";
+			if(w.equals("INSTANT") || w.equals("TICKS") || w.equals("DEFAULT"))
+				DialogueTime.set(w.equals("DEFAULT") ? "" : w);
+			else
+			if(w.length() > 0)
+			{
+				mob.tell(L("TIMEMODE DIALOGUE INSTANT, TICKS or DEFAULT?"));
+				return false;
+			}
+			if(DialogueTime.instant())
+				mob.tell(L("Replies come at once, before your next prompt, and take no time@x1.", (DialogueTime.setting().length() == 0) ? L(" (the default in turn-based time)") : ""));
+			else
+				mob.tell(L("Replies come on the NPCs' own ticks@x1.", (DialogueTime.setting().length() == 0) ? L(" (the default in real time)") : ""));
+			return false;
+		}
 		final Boolean turns = parseTurnBased(CMParms.combine(commands, 1));
 		if(turns == null)
 			mob.tell(L("TIMEMODE REALTIME or TIMEMODE TURNS?"));

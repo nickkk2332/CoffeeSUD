@@ -146,6 +146,30 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	protected Map<String,String> 			addedChatVars 	= new Hashtable<String,String>();
 
 	protected final static int	RESPONSE_DELAY		= 2;
+	/** N10: DELAY=n, the ticks before a reply, RESPONSE_DELAY by default */
+	protected int				responseDelay		= RESPONSE_DELAY;
+
+	/** N10: its replies waiting, at once, oldest first */
+	@Override
+	public int repliesNow(final PhysicalAgent host)
+	{
+		if((!(host instanceof MOB))||responseQue.isEmpty()||CMSecurity.isDisabled(CMSecurity.DisFlag.MUDCHAT))
+			return 0;
+		final MOB mob=(MOB)host;
+		final List<ChattyResponse> waiting=new ArrayList<ChattyResponse>(responseQue);
+		responseQue.clear();
+		int n=0;
+		for(final ChattyResponse R : waiting)
+		{
+			if(R.combatFlag == mob.isInCombat())
+			{
+				mob.doCommand(R.parsedCommand,MUDCmdProcessor.METAFLAG_FORCED);
+				n++;
+			}
+		}
+		lastReactedToM=null;
+		return n;
+	}
 	protected final static int	TALK_WAIT_DELAY		= 8;
 	protected final static int	TALK_SWITCH_EXPIRE	= 360000;
 
@@ -382,8 +406,20 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	}
 
 	@Override
-	public void setParms(final String newParms)
+	public void setParms(String newParms)
 	{
+		// N10: DELAY=n, anywhere in it
+		final String whole=newParms;
+		final java.util.regex.Matcher dm=java.util.regex.Pattern.compile("(?i)(^|\\s)DELAY=(\\d+)(?=\\s|$)").matcher(newParms);
+		final boolean hadDelay=dm.find();
+		if(hadDelay)
+		{
+			responseDelay=Math.max(0,CMath.s_int(dm.group(2)));
+			newParms=(newParms.substring(0,dm.start())+" "+newParms.substring(dm.end())).trim();
+		}
+		else
+		if(!newParms.startsWith("+"))
+			responseDelay=RESPONSE_DELAY;
 		String bonusChatData;
 		if(newParms.startsWith("+"))
 			bonusChatData = newParms.substring(1);
@@ -437,6 +473,8 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		currChatEntries=null;
 		chatGroups.clear();
 		this.tickDown=3;
+		if(hadDelay && (!whole.startsWith("+")))
+			super.setParms(whole); // kept with its DELAY=, for the save
 	}
 
 	@Override
@@ -1310,7 +1348,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 										response = response.substring(1,response.length()-1);
 								}
 								final long delayWas = GameTime.now() - startTime;
-								final long delayRemaining = (CMProps.getTickMillis()*RESPONSE_DELAY)-delayWas;
+								final long delayRemaining = (CMProps.getTickMillis()*responseDelay)-delayWas;
 								final int ticksRemain = (int)Math.floor(delayRemaining / CMProps.getTickMillis());
 								final List<String> words=new XVector<String>("say",response);
 								responseQue.add(new ChattyResponse(words,ticksRemain,combatFlag));
@@ -1338,7 +1376,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 						}
 					}
 					if(words!=null)
-						responseQue.add(new ChattyResponse(words,RESPONSE_DELAY,selection.combatFlag));
+						responseQue.add(new ChattyResponse(words,responseDelay,selection.combatFlag));
 				}
 			}
 		}
