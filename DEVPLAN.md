@@ -1650,6 +1650,16 @@ N22, N24, N28, N29
   catch-up for Schedule). With no entry in force it stays put. STAT($i
   SCHEDULE) is the entry in force: STAT() now also reads a stat of the
   host's behaviours.
+- N4 done. Behaviour `Sleeper`: ALWAYS (the default) or `SLEEPS=` a time
+  of day or hours (not TOD= or HOURS=, N1's switch for the whole
+  behaviour), `BED=`, `WAKEON=ATTACK,NOISE,ENTER,LIGHT,TOUCH` and
+  `WAKECHANCE=n` per event: a fight here raises it, one next door less;
+  an entrant sneaking or hidden takes off their Sneak or Hide; a light
+  adds. `DEEP`: only an attack. On waking `GRUMBLE=`, `AWAKEFOR=n` ticks
+  before it sleeps again, and `ALARM` (`core/NpcAlarm`): a shout (a NOISE
+  message, for EXECMSG_PROG) that wakes the NPCs within the radius, by its
+  Sentry's ALARM= if it has one (N5) or six rooms. LOOK says it sleeps
+  soundly, or stirs after a near miss. Woken NPCs stay up a while.
 
 #### 2g. Combat and encounters (24)
 

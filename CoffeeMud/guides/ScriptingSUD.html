@@ -340,6 +340,10 @@ flour from his hands"; DAY: Market#5 SHOP; DUSK: Inn#1 SIT "stool" SAY Long day.
 NIGHT: Mill#9 SLEEP "straw bed" LOCK</code>. The miller walks from place to place,
 trades only at the market, and a player who needs flour at night has to wake
 him at the mill. <code>STAT($i SCHEDULE)</code> says where he means to be.</p>
+<p>Sleeping guards: <code>Sleeper ALWAYS WAKEON=NOISE,ENTER WAKECHANCE=40 GRUMBLE="Who
+disturbs Grok?" ALARM</code> on a cave ogre. A thief sneaking past has the
+better chance; a fight in the next cave may wake him, and woken he rouses the
+others. LOOK at him says whether he sleeps soundly or stirs.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
