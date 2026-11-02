@@ -2399,6 +2399,8 @@ public class StdMOB implements MOB
 	{
 		if(commands == null)
 			return;
+		if((playerStats != null) && ScriptEvents.verb(this, commands))
+			return; // ST7: a verb of something within reach took it
 		final CMObject O = CMLib.english().findCommand(this, commands);
 		if(O == null)
 		{
@@ -2472,6 +2474,8 @@ public class StdMOB implements MOB
 	{
 		if(commands == null)
 			return;
+		if((playerStats != null) && ScriptEvents.verb(this, commands))
+			return; // ST7: a verb of something within reach took it
 		final CMObject O = CMLib.english().findCommand(this, commands);
 		if((O == null)
 		|| ((O instanceof Ability)

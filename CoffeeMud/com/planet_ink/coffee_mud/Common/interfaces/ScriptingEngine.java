@@ -498,6 +498,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"QUEST_PROG", // 65
 		"GAME_PROG", // 66
 		"TURN_PROG", // 67
+		"VERB_PROG", // 68
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -872,6 +873,26 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	public default boolean eventCheck(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
 		return true;
+	}
+
+	/**
+	 * As {@link #eventTrigger}, but the first script that fits runs at once,
+	 * and what it returns is returned: VERB_PROG (ST7), where CONTINUE hands
+	 * the command back.
+	 * @param host the object the scripts are on
+	 * @param triggerCode the trigger
+	 * @param source $n
+	 * @param target $t, or null for the host
+	 * @param item $o, or null
+	 * @param msg $g
+	 * @param args $0 to $8, or null
+	 * @param bits how the trigger line is split
+	 * @param test which trigger lines the event fits
+	 * @return null if no script fit, or what the one that ran returned ("" for nothing)
+	 */
+	public default String eventRun(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
+	{
+		return null;
 	}
 
 	/**

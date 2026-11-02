@@ -12,6 +12,7 @@ import com.planet_ink.coffee_mud.Common.interfaces.Climate;
 import com.planet_ink.coffee_mud.Common.interfaces.PlayerStats;
 import com.planet_ink.coffee_mud.Common.interfaces.Quest;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock;
+import com.planet_ink.coffee_mud.Exits.interfaces.Exit;
 import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine;
 import com.planet_ink.coffee_mud.Items.interfaces.Item;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
@@ -535,6 +536,226 @@ public final class ScriptEvents
 				list.add((ScriptingEngine)B);
 		}
 		return list;
+	}
+
+	/** VERB_PROG's code */
+	public static final int	VERB_PROG	= code("VERB_PROG");
+
+	/**
+	 * What is within a character's reach for a verb (ST7): what they carry,
+	 * the room's items and other mobs, its exits, the room, and its area.
+	 * @param mob the character
+	 * @return the objects, nearest first
+	 */
+	public static List<PhysicalAgent> reach(final MOB mob)
+	{
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		final Room R = mob.location();
+		if(R == null)
+			return hosts;
+		for(final Enumeration<Item> i = mob.items(); i.hasMoreElements();)
+		{
+			final Item I = i.nextElement();
+			if(I != null)
+				hosts.add(I);
+		}
+		for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
+		{
+			final Item I = i.nextElement();
+			if(I != null)
+				hosts.add(I);
+		}
+		for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+		{
+			final MOB M = m.nextElement();
+			if((M != null) && (M != mob))
+				hosts.add(M);
+		}
+		for(int d = 0; d < Directions.NUM_DIRECTIONS(); d++)
+		{
+			final Exit E = R.getExitInDir(d);
+			if((E != null) && (!hosts.contains(E)))
+				hosts.add(E);
+		}
+		hosts.add(R);
+		if(R.getArea() != null)
+			hosts.add(R.getArea());
+		return hosts;
+	}
+
+	/**
+	 * ST7: a character's command, before the game looks for a command, skill
+	 * or social with its first word: VERB_PROG verb[,alias...] [P phrase |
+	 * keywords] on something within reach, or Prop_Verbs on it, takes the
+	 * line.  A script that returns CONTINUE hands it back.
+	 * @param mob the character
+	 * @param commands the command's words
+	 * @return true if a verb took the line
+	 */
+	public static boolean verb(final MOB mob, final List<String> commands)
+	{
+		if((mob == null) || (commands == null) || (commands.size() == 0) || (mob.location() == null))
+			return false;
+		final String verb = commands.get(0).trim();
+		if((verb.length() == 0) || (!Character.isLetter(verb.charAt(0))))
+			return false;
+		final boolean scripts = isUsed(VERB_PROG);
+		if((!scripts) && (!propVerbsSeen))
+			return false;
+		final String rest = CMParms.combine(commands, 1).trim();
+		for(final PhysicalAgent host : reach(mob))
+		{
+			if(scripts)
+			{
+				for(final ScriptingEngine S : engines(host))
+				{
+					final String resp = S.eventRun(host, VERB_PROG, mob, host, null, rest, null, "CCr", t -> verbMatches(t, verb, rest, host));
+					if((resp != null) && (!resp.trim().equalsIgnoreCase("CONTINUE")))
+						return true;
+				}
+			}
+			if(propVerb(mob, host, verb, rest))
+				return true;
+		}
+		return false;
+	}
+
+	private static volatile boolean	propVerbsSeen	= false;
+
+	/**
+	 * Notes that a Prop_Verbs is in the game, so commands are looked at for
+	 * its verbs from now on.
+	 */
+	public static void propVerbsSeen()
+	{
+		propVerbsSeen = true;
+	}
+
+	private static boolean hasVerb(final String verbs, final String verb)
+	{
+		for(final String v : verbs.split(","))
+		{
+			if(v.trim().equalsIgnoreCase(verb))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the rest of a line names an object.
+	 * @param host the object
+	 * @param rest the words after the verb
+	 * @return true if they name it, or it is a room or an area, which need no naming
+	 */
+	public static boolean names(final PhysicalAgent host, final String rest)
+	{
+		if((host instanceof Room) || (host instanceof Area))
+			return true;
+		if(rest.length() == 0)
+			return false;
+		return CMLib.english().containsString(host.name(), rest)
+			|| CMLib.english().containsString(host.Name(), rest)
+			|| ((host instanceof Exit) && CMLib.english().containsString(((Exit)host).doorName(), rest));
+	}
+
+	/**
+	 * Whether a VERB_PROG trigger line fits a command.
+	 * @param t the trigger line: VERB_PROG, the verbs, then P and a phrase, or keywords
+	 * @param verb the command's first word
+	 * @param rest the rest of the line
+	 * @param host the object the script is on
+	 * @return true if it fits
+	 */
+	public static boolean verbMatches(final String[] t, final String verb, final String rest, final PhysicalAgent host)
+	{
+		if((t.length < 2) || (!hasVerb(t[1], verb)))
+			return false;
+		final String kw = (t.length > 2) ? t[2].trim() : "";
+		if(kw.length() == 0)
+			return names(host, rest);
+		if(firstWord(kw, "P"))
+		{
+			String phrase = kw.substring(1).trim();
+			if((phrase.length() > 1) && phrase.startsWith("'") && phrase.endsWith("'"))
+				phrase = phrase.substring(1, phrase.length() - 1);
+			return (phrase.length() == 0) ? names(host, rest) : CMLib.english().containsString(rest, phrase);
+		}
+		for(final String k : CMParms.parse(kw))
+		{
+			if(CMLib.english().containsString(rest, k))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Prop_Verbs on an object (ST7): VERBS="turn,rotate" MSG="what the one
+	 * who does it sees" OTHERS="what the others see", for a verb with no
+	 * script; the rest of the line must name the object, unless it is a room.
+	 * @param mob the character
+	 * @param host the object
+	 * @param verb the command's first word
+	 * @param rest the rest of the line
+	 * @return true if it took the line
+	 */
+	public static boolean propVerb(final MOB mob, final PhysicalAgent host, final String verb, final String rest)
+	{
+		final Ability A = host.fetchEffect("Prop_Verbs");
+		if(A == null)
+			return false;
+		final String parms = A.text();
+		if((!hasVerb(CMParms.getParmStr(parms, "VERBS", ""), verb)) || (!names(host, rest)))
+			return false;
+		final String you = CMParms.getParmStr(parms, "MSG", "");
+		final String others = CMParms.getParmStr(parms, "OTHERS", "");
+		final Room R = mob.location();
+		final CMMsg msg = CMClass.getMsg(mob, host, null,
+			CMMsg.MSG_OK_VISUAL, (you.length() > 0) ? you : null,
+			CMMsg.MSG_OK_VISUAL, null,
+			CMMsg.MSG_OK_VISUAL, (others.length() > 0) ? others : null);
+		if(R.okMessage(mob, msg))
+			R.send(mob, msg);
+		return true;
+	}
+
+	/**
+	 * LIST VERBS (ST7): the verbs of what is in a room, its mobs and their
+	 * things, and its exits, from VERB_PROG and Prop_Verbs.
+	 * @param R the room
+	 * @return the list
+	 */
+	public static String listVerbs(final Room R)
+	{
+		final StringBuilder str = new StringBuilder();
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		roomHosts(R, hosts);
+		for(int d = 0; d < Directions.NUM_DIRECTIONS(); d++)
+		{
+			final Exit E = R.getExitInDir(d);
+			if((E != null) && (!hosts.contains(E)))
+				hosts.add(E);
+		}
+		if(R.getArea() != null)
+			hosts.add(R.getArea());
+		for(final PhysicalAgent host : hosts)
+		{
+			final List<String> verbs = new ArrayList<String>();
+			for(final ScriptingEngine S : engines(host))
+			{
+				for(final String line : CMParms.parseAny(S.getScript(), '\n', true))
+				{
+					final String l = line.trim();
+					if(l.toUpperCase().startsWith("VERB_PROG "))
+						verbs.add(l.substring(10).trim());
+				}
+			}
+			final Ability A = host.fetchEffect("Prop_Verbs");
+			if(A != null)
+				verbs.add(CMParms.getParmStr(A.text(), "VERBS", "") + " (Prop_Verbs)");
+			if(verbs.size() > 0)
+				str.append(host.name()).append(": ").append(String.join("; ", verbs)).append("\n\r");
+		}
+		return (str.length() == 0) ? "No verbs here." : ("Verbs here:\n\r" + str.toString());
 	}
 
 	/** WEATHER_PROG's code */

@@ -1045,6 +1045,15 @@ JS17, JS18, JS19, JS20, JS23
   refuses), onPlayerEnter, onSwitch and onBuilderStart; onPartyChange waits
   for ST10, `cm` for JS6. CHARCREATIONSCRIPTS is left as it was; GAME_PROG
   NEWCHAR does what it was for, with the character in the world.
+- ST7 done. `VERB_PROG verb[,alias] [P phrase | keywords]` is looked at in
+  `enqueCommand` and `prequeCommand`, before the command lookup, for a
+  character's line, on what is within reach (carried, in the room, its
+  mobs, exits, the room, the area); verbs match whole; it fires when the
+  rest names the object (a room or area needs none) or has the phrase or a
+  keyword; the first script that fits runs at once (`eventRun`), and
+  RETURN CONTINUE hands the line back. `Prop_Verbs` (VERBS, MSG, OTHERS)
+  does it without a script; `LIST VERBS` lists a room's. CMDFAIL_PROG is
+  left as it is.
 
 #### 2e. Quests (15)
 
