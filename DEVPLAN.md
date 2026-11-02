@@ -1634,6 +1634,22 @@ N22, N24, N28, N29
   asks again. Then that FUNCTION_PROG of the same script runs with the key
   as $0 and $g, the character as $n. One menu at a time per character.
   MPDIALOG waits for N14 (in `LATER.md`).
+- N3 done. Behaviour `Schedule`: ';'-separated entries `WHEN: PLACE
+  [ACTIVITY...] [SAY/EMOTE text]`, the first whose WHEN holds in force.
+  WHEN: DAWN, DAY, DUSK, NIGHT or hours, with DAYS=, SEASON=, WEATHER= or
+  MASK= after it (HOLIDAY= is a MASK). PLACE: a room ID (to the first
+  activity word, so IDs with spaces work), HOME or START, or
+  ANY:"room mask". Activities: SLEEP or SIT (on an item), WANDER n (now
+  and then a step, within n rooms of the place), SHOP (trading only there,
+  SHOPMSG= elsewhere),
+  WORK "emote|emote", LOCK (the place's doors, unlocked when the entry
+  ends, kept in the save), HIDE. It walks by the tracking library, holds
+  Mobile off on the way, goes back after a fight, and goes back to sleep
+  when woken; with no player in either area it is put there at once, so a
+  restore, a time jump or an empty area finds it in place (that is N8's
+  catch-up for Schedule). With no entry in force it stays put. STAT($i
+  SCHEDULE) is the entry in force: STAT() now also reads a stat of the
+  host's behaviours.
 
 #### 2g. Combat and encounters (24)
 

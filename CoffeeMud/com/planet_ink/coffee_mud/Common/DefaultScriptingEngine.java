@@ -3054,6 +3054,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			found=true;
 			val=CMLib.coffeeMaker().getAnyGenStat(E, uarg2);
 		}
+		if((!found)&&(E instanceof PhysicalAgent)) // N3: one of its behaviours' stats, as STAT($i SCHEDULE)
+		{
+			for(final Enumeration<Behavior> b=((PhysicalAgent)E).behaviors();b.hasMoreElements()&&(!found);)
+			{
+				final Behavior B=b.nextElement();
+				if((B!=null)&&(CMParms.indexOf(B.getStatCodes(),uarg2)>=0))
+				{
+					val=B.getStat(uarg2);
+					found=true;
+				}
+			}
+		}
 		if(!found)
 			return null;
 		return val;

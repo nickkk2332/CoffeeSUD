@@ -335,6 +335,11 @@ regards you." tower:"Ask about the tower" ring:"Show him the ring"[IF HAS($n rin
 bye:"Leave" bye</code> shows the choices numbered (the ring only to one who
 carries it), and the player's next line picks one; <code>FUNCTION_PROG SAGE</code>
 then runs with the key as <code>$0</code>.</p>
+<p>A day in the life: <code>Schedule DAWN: Mill#2 WORK "pours grain into the hopper|wipes
+flour from his hands"; DAY: Market#5 SHOP; DUSK: Inn#1 SIT "stool" SAY Long day.;
+NIGHT: Mill#9 SLEEP "straw bed" LOCK</code>. The miller walks from place to place,
+trades only at the market, and a player who needs flour at night has to wake
+him at the mill. <code>STAT($i SCHEDULE)</code> says where he means to be.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
