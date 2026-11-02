@@ -15932,6 +15932,22 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "ISWANTED": // W1: ISWANTED(who [crime]): a warrant is out against them (for that crime), under the law here
+		case "WARRANTS": // W1: WARRANTS(who): how many warrants are out against them
+		case "FINESOWED": // W1: FINESOWED(who): the fines they owe, in base value
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final String u=name.toUpperCase();
+			if(!(W instanceof MOB))
+				return u.equals("ISWANTED")?"false":"0";
+			final Laws.Here H=Laws.of(ctx.scripted,(MOB)W);
+			if(u.equals("ISWANTED"))
+				return Laws.wanted(H,(MOB)W,varify(ctx,CMParms.getPastBitClean(parms,0)).trim())?"true":"false";
+			if(u.equals("WARRANTS"))
+				return ""+Laws.warrants(H,(MOB)W,null).size();
+			final double owed=Laws.fines(H,(MOB)W);
+			return (owed==Math.rint(owed))?(""+(long)owed):(""+owed);
+		}
 		case "SETCOUNT": // I6: SETCOUNT(who set): how many pieces of that item set count for them
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16370,6 +16386,63 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPPARDON": // W1: MPPARDON who [crime|ALL]: takes their warrants away, quietly
+		case "MPFINE": // W1: MPFINE who +n|-n|n: adds to, takes from or sets the fines they owe
+		case "MPRELEASE": // W1: MPRELEASE who: out of jail as if their time were served, and out of the guards' hands
+		{
+			final String u=cmd.toUpperCase();
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String rest=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			if(!(W instanceof MOB))
+			{
+				logError(ctx,u,"RunTime","no one by that name: "+line);
+				return null;
+			}
+			final Laws.Here H=Laws.of(ctx.scripted,(MOB)W);
+			if(u.equals("MPRELEASE"))
+			{
+				Laws.release(H,(MOB)W);
+				return null;
+			}
+			if(H==null)
+			{
+				logError(ctx,u,"RunTime","there is no law here or where "+W.Name()+" is: "+line);
+				return null;
+			}
+			if(u.equals("MPPARDON"))
+			{
+				Laws.pardon(H,(MOB)W,rest);
+				return null;
+			}
+			final String amt=rest.replace(" ","");
+			if((amt.length()==0)||(!CMath.isNumber(amt.startsWith("+")?amt.substring(1):amt)))
+			{
+				logError(ctx,u,"Syntax","MPFINE who +amount|-amount|amount: "+line);
+				return null;
+			}
+			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
+			return null;
+		}
+		case "MPSUPPRESSLAW": // W1: MPSUPPRESSLAW crime|ALL n [TICKS|HOURS|DAYS|WEEKS|MONTHS]|OFF: no warrants for it a while
+		{
+			final String crime=varify(ctx,CMParms.getCleanBit(line,1)).trim();
+			final String rest=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			final Laws.Here H=Laws.of(ctx.scripted,null);
+			final Area A=CMLib.map().areaLocation(ctx.scripted);
+			final long ms=rest.equalsIgnoreCase("OFF")?0:Laws.duration(rest,(A==null)?null:A.getTimeObj());
+			if((crime.length()==0)||(ms<0))
+			{
+				logError(ctx,"MPSUPPRESSLAW","Syntax","MPSUPPRESSLAW crime|ALL n [TICKS|HOURS|DAYS|WEEKS|MONTHS]|OFF: "+line);
+				return null;
+			}
+			if(H==null)
+			{
+				logError(ctx,"MPSUPPRESSLAW","RunTime","there is no law here: "+line);
+				return null;
+			}
+			Laws.suppress(H,crime,ms);
 			return null;
 		}
 		case "MPTRANSFORM": // I22: MPTRANSFORM item name [KEEP=state,tags,uses,container,worn|ALL|NONE]: in its place; $p the new one

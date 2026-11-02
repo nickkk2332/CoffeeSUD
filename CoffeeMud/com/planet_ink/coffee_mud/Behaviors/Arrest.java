@@ -104,6 +104,15 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			if((e.getKey()!=null)&&(e.getValue().doubleValue()>0.0))
 				str.append("<FINE N=\"").append(nameOf(e.getKey())).append("\">").append(e.getValue()).append("</FINE>");
 		}
+		synchronized(suppressedCrimes) // W1: MPSUPPRESSLAW's, with the game time left
+		{
+			for(final Map.Entry<String,Object> e : suppressedCrimes.entrySet())
+			{
+				if((e.getValue() instanceof Long)&&(((Long)e.getValue()).longValue()>GameTime.now()))
+					str.append("<SUPPRESS C=\"").append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("\">")
+						.append(((Long)e.getValue()).longValue()-GameTime.now()).append("</SUPPRESS>");
+			}
+		}
 		return str.toString();
 	}
 
@@ -116,6 +125,9 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		{
 			if(tag.tag().equalsIgnoreCase("WARRANT")||tag.tag().equalsIgnoreCase("OLDWARRANT")||tag.tag().equalsIgnoreCase("FINE"))
 				savedLaw.add(tag);
+			else
+			if(tag.tag().equalsIgnoreCase("SUPPRESS")) // W1
+				suppressedCrimes.put(CMLib.xml().restoreAngleBrackets(tag.getParmValue("C")),Long.valueOf(GameTime.now()+CMath.s_long(tag.value())));
 		}
 		savedLawTries=0;
 		if(savedLaw.size()==0)

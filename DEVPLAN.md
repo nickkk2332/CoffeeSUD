@@ -2292,6 +2292,20 @@ Time, weather, environment, economy and law.
 W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11, W12, W13, W14, W15, W16, W17,
 W18, W19, W20, W21, W22, W23, W28, W29
 
+- W1 done. core/Laws reads and changes the law of the host's room (else
+  the character's room's, else their start room's): `ISWANTED(who
+  [crime])` (196; a crime by its name, or a word of it), `WARRANTS(who)`
+  (197) and `FINESOWED(who)` (198). `MPPARDON who [crime|ALL]` (129) takes
+  warrants away quietly; `MPFINE who +n|-n|n` (130) changes the fines owed
+  (what TaxCollector collects); `MPRELEASE who` (131) ends a prisoner's
+  time, so the guards walk them to the release room, and lets go of one
+  being taken in; `MPSUPPRESSLAW crime|ALL n [TICKS|HOURS|DAYS|WEEKS|
+  MONTHS]|OFF` (132) makes no warrants for it a while, on the game clock,
+  kept in the save with the law's state. Masks `+WANTED` and `-WANTED
+  [crime ...]`, by the law where the character is (a record is wanted
+  nowhere), so IGNOREMASK, VARIES and guards can use them. JavaScript's
+  cm.law(): wanted, finesOwed, addFine, release and suppress.
+
 #### 2j. Generators and random content (16)
 
 G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17

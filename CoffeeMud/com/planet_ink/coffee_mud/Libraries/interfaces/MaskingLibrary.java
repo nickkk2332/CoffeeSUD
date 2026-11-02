@@ -503,6 +503,8 @@ public interface MaskingLibrary extends CMLibrary
 		OFFICER,
 		_JUDGE,
 		JUDGE,
+		_WANTED, // W1: -WANTED [crime ...]: not those wanted by the law (for one of the crimes)
+		WANTED, // +WANTED [crime ...]: only those wanted
 		_PORT,
 		PORT,
 		_PLANE,

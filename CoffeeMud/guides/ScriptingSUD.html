@@ -27,6 +27,9 @@ In the game, <code>HELP SCRIPTABLE</code> has the whole list, and
 <li><a href="#cmdfail">cmdfail_prog</a></li>
 <li><a href="#quests">Quests</a></li>
 <li><a href="#npcs">NPCs</a></li>
+<li><a href="#combat">Combat</a></li>
+<li><a href="#items">Items and puzzles</a></li>
+<li><a href="#world">World systems</a></li>
 <li><a href="#found">Less known</a></li>
 <li><a href="JavaScriptSUD.html">JavaScript</a></li>
 </ul>
@@ -629,6 +632,13 @@ price, UPGRADE BLADE CONFIRM pays it, and the notched blade comes back as Starfa
 LIMIT=3</code>: the item's powers sleep until its wearer rests ten ticks with it, and no character may be attuned to
 more than three, so choosing is part of building them (UNATTUNE frees one). <code>RITUAL="INROOM Grove#1 &amp; SAY
 attune"</code> attunes a druid's staff only in its grove.</p>
+
+<h2><a name="world">World systems</a></h2>
+<p>The law in scripts: a corrupt magistrate's <code>BRIBE_PROG 500</code> runs <code>if iswanted($n)</code>,
+<code>MPPARDON $n ALL</code>; a quest's festival runs <code>MPSUPPRESSLAW DRUNKENNESS 2 DAYS</code>; a jailbreak
+runs <code>MPRELEASE $n</code>. <code>WARRANTS($n)</code> and <code>FINESOWED($n)</code> count, <code>MPFINE $n +50</code>
+adds to the fines. An honest shop's <code>IGNOREMASK="-WANTED"</code> turns criminals away, a gate guard's
+<code>-WANTED MURDER</code> lets all but murderers through.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

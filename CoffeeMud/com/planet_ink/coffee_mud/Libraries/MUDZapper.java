@@ -3667,6 +3667,28 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _JUDGE:
 					buf.append(skipFirstWord?L("Not a lega judge "):L("Disallows being a lega judge "));
 					break;
+				case WANTED: // W1
+				case _WANTED:
+					{
+						final List<String> crimes=new ArrayList<String>();
+						int v2=v+1;
+						for(;v2<V.size();v2++)
+						{
+							final String str2=V.get(v2);
+							if(zapCodes.containsKey(str2))
+								break;
+							crimes.add((str2.startsWith("+")||str2.startsWith("-"))?str2.substring(1):str2);
+						}
+						v=v2-1;
+						if(key==ZapperKey.WANTED)
+							buf.append(skipFirstWord?L("Wanted by the law"):L("Requires being wanted by the law"));
+						else
+							buf.append(skipFirstWord?L("Not wanted by the law"):L("Disallows those wanted by the law"));
+						if(crimes.size()>0)
+							buf.append(L(" for @x1",CMParms.toListString(crimes)));
+						buf.append(".  ");
+					}
+					break;
 				case SUBOP:
 					// this line intentionally left blank
 					break;
@@ -5346,6 +5368,22 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						}
 					}
 					break;
+				case WANTED: // W1: +wanted [crime ...]
+				case _WANTED: // -wanted [crime ...]
+					{
+						final ArrayList<Object> parms=new ArrayList<Object>();
+						int v2=v+1;
+						for(;v2<V.size();v2++)
+						{
+							final String str2=V.get(v2);
+							if(zapCodes.containsKey(str2))
+								break;
+							parms.add((str2.startsWith("+")||str2.startsWith("-"))?str2.substring(1):str2);
+						}
+						v=v2-1;
+						buf.add(new CompiledZapperMaskEntryImpl(entryType,parms.toArray(new Object[0])));
+					}
+					break;
 				case OFFICER: // +officer
 				case _OFFICER: // -officer
 				case JUDGE: // +judge
@@ -6609,6 +6647,19 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						final LegalBehavior B=CMLib.law().getLegalBehavior(mob.getStartRoom());
 						if((B!=null)
 						&&(!B.isJudge(CMLib.law().getLegalObject(mob.getStartRoom()), mob)))
+							return false;
+					}
+					break;
+				case WANTED: // W1: +wanted [crime ...]: only those wanted where they are (for one of them)
+				case _WANTED: // -wanted [crime ...]: not those
+					{
+						final Laws.Here H=Laws.of(null,mob);
+						boolean wanted=false;
+						if(entry.parms().length==0)
+							wanted=Laws.wanted(H,mob,null);
+						for(final Object o : entry.parms())
+							wanted=wanted||Laws.wanted(H,mob,(String)o);
+						if(wanted!=(entry.maskType()==ZapperKey.WANTED))
 							return false;
 					}
 					break;
@@ -9784,6 +9835,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case OFFICER: // +officer
 				case _JUDGE: // -judge
 				case JUDGE: // +judge
+				case _WANTED: // W1: a record is wanted nowhere
+				case WANTED:
 				case NPC: // +npc
 				case _ACCCHIEVE: // -accchieves
 				case ACCCHIEVE: // +accchieves

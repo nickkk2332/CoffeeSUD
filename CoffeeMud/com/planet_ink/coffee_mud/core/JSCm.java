@@ -1190,6 +1190,72 @@ public class JSCm
 		}
 
 		/**
+		 * W1: whether a warrant is out against a mob here.
+		 * @param who the mob
+		 * @param crime a crime (or a word of its name), or null for any
+		 * @return true if there is one
+		 */
+		public boolean wanted(final MOB who, final String crime)
+		{
+			return Laws.wanted(new Laws.Here(behavior, area), who, crime);
+		}
+
+		/**
+		 * @param who the mob
+		 * @return true if any warrant is out against it
+		 */
+		public boolean wanted(final MOB who)
+		{
+			return wanted(who, null);
+		}
+
+		/**
+		 * W1: the fines a mob owes (what TaxCollector takes).
+		 * @param who the mob
+		 * @return the amount, in base value
+		 */
+		public double finesOwed(final MOB who)
+		{
+			return Laws.fines(new Laws.Here(behavior, area), who);
+		}
+
+		/**
+		 * W1: adds to the fines a mob owes (MPFINE +n; a minus takes away).
+		 * @param who the mob
+		 * @param amount the amount
+		 * @return what it owes now
+		 */
+		public double addFine(final MOB who, final double amount)
+		{
+			return Laws.fine(new Laws.Here(behavior, area), who, amount, true);
+		}
+
+		/**
+		 * W1: lets a mob out of jail as if its time were served (MPRELEASE).
+		 * @param who the mob
+		 * @return true if anything was done
+		 */
+		public boolean release(final MOB who)
+		{
+			return Laws.release(new Laws.Here(behavior, area), who);
+		}
+
+		/**
+		 * W1: no warrants for a crime (or ALL) for a while (MPSUPPRESSLAW).
+		 * @param crime the crime, or ALL
+		 * @param time "n TICKS|HOURS|DAYS|WEEKS|MONTHS" (a bare n is ticks), or OFF
+		 * @return false if the time is not one
+		 */
+		public boolean suppress(final String crime, final String time)
+		{
+			final long ms = "OFF".equalsIgnoreCase(time) ? 0 : Laws.duration(time, area.getTimeObj());
+			if(ms < 0)
+				return false;
+			Laws.suppress(new Laws.Here(behavior, area), crime, ms);
+			return true;
+		}
+
+		/**
 		 * Makes a warrant, as a witness would (LAW ACCUSE).
 		 * @param who the mob
 		 * @param crime the crime

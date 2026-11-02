@@ -765,6 +765,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ROOMWEIGHT", //193
 		"CONTENTWEIGHT", //194
 		"SETCOUNT", //195
+		"ISWANTED", //196
+		"WARRANTS", //197
+		"FINESOWED", //198
 	};
 
 	/** String list of all valid mobprog commands */
@@ -898,6 +901,10 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPSETRESPAWN", // 126
 		"MPDOOR", // 127
 		"MPTRANSFORM", // 128
+		"MPPARDON", // 129
+		"MPFINE", // 130
+		"MPRELEASE", // 131
+		"MPSUPPRESSLAW", // 132
 	};
 
 	/**

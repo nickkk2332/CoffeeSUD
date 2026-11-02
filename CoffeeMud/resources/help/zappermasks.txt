@@ -108,6 +108,8 @@
 +QUESTOUTCOME "-MY QUEST:spared" (<WORD> those whose outcome of MY QUEST was spared)
 -QUESTWINS "+MY QUEST:>=10" (<WORD> those who have not won MY QUEST 10 times or more)
 +QUESTWINS "-MY QUEST:>=10" (<WORD> those who have won MY QUEST 10 times or more)
+-WANTED (<WORD> those wanted by the law where they are), -WANTED MURDER (for that)
++WANTED (<WORD> all but those wanted by the law), +WANTED THEFT ASSAULT (for those)
 -EFFECTS +Sleep "+Wood Chopping" (<WORD> all except those with effects)
 +EFFECTS -Sleep "-Wood Chopping" (<WORD> only those with listed effect)
 -SKILLS +Spell_Sleep(75) (<WORD> all except those with skill proficiency)
