@@ -1480,6 +1480,25 @@ public final class ScriptEvents
 		fire(hosts, DOCK_PROG, (mob != null) ? mob : standIn(vessel.Name()), vessel, CMLib.map().getExtendedRoomID(R), null, "Cr", t -> true);
 	}
 
+	/**
+	 * Whether a READ_PROG trigger line fits a thing read (ST19): ALL or
+	 * nothing for any, P and a phrase, or words naming it.
+	 * @param rest the trigger line after READ_PROG
+	 * @param I the thing read
+	 * @return true if it fits
+	 */
+	public static boolean readMatches(final String rest, final Item I)
+	{
+		String r = rest.trim();
+		if((r.length() == 0) || r.equalsIgnoreCase("ALL"))
+			return true;
+		if(firstWord(r, "P"))
+			r = r.substring(1).trim();
+		if((r.length() > 1) && r.startsWith("'") && r.endsWith("'"))
+			r = r.substring(1, r.length() - 1);
+		return CMLib.english().containsString(I.name(), r) || CMLib.english().containsString(I.Name(), r);
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

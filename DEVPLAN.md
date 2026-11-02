@@ -1113,6 +1113,9 @@ JS17, JS18, JS19, JS20, JS23
   `VESSEL_ARRIVE_PROG room|area|ALL` for the vessel and crew, and
   `VESSEL_GREET_PROG words|ALL` for the room, after each step of `navMove`.
   $t is the vessel; JavaScript waits for JS8.
+- ST19 done. `READ_PROG words|P phrase|ALL` in the engine's okMessage on
+  READ: on an item only its own reading; it runs before the reading, so
+  RETURN CANCEL keeps the item's text back. $o the item, $n the reader.
 
 #### 2e. Quests (15)
 

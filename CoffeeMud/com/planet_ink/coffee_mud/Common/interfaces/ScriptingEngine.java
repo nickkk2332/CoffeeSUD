@@ -517,6 +517,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"VESSEL_ARRIVE_PROG", // 84
 		"VESSEL_GREET_PROG", // 85
 		"DOCK_PROG", // 86
+		"READ_PROG", // 87
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */

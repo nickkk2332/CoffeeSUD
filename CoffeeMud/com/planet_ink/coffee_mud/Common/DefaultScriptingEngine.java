@@ -14894,6 +14894,27 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				triggerCode=script.getTriggerCode();
 				switch(triggerCode)
 				{
+				case 87: // read_prog (ST19): before the reading, so RETURN CANCEL keeps the usual text back
+					if((msg.targetMinor()==CMMsg.TYP_READ)&&canTrigger(87)&&(msg.target() instanceof Item)
+					&&((!(affecting instanceof Item))||(msg.target()==affecting)))
+					{
+						if(t==null)
+							t=parseBits(script,0,"Cr");
+						if((t!=null)&&ScriptEvents.readMatches((t.length>1)?t[1]:"",(Item)msg.target()))
+						{
+							final MOB rmonster=getMakeMOB(affecting);
+							if(lastKnownLocation==null)
+								confirmLastKnownLocation(rmonster,msg.source());
+							if((rmonster==null)||(rmonster.amDead())||(lastKnownLocation==null))
+								break;
+							final Item rI=(Item)msg.target();
+							final Item rDefault=(affecting instanceof Item)?(Item)affecting:null;
+							final String resp=execute(new MPContext(affecting,rmonster,msg.source(),rI,rI,rDefault,rI.Name(),null).push(script));
+							if((resp!=null)&&(resp.equalsIgnoreCase("CANCEL")))
+								return false;
+						}
+					}
+					break;
 				case 51: // cmdfail_prog
 					if(canTrigger(51)
 					&&(msg.targetMessage()!=null))
