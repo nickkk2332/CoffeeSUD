@@ -2253,6 +2253,13 @@ I22, I23, I24, I25, I26, I27
   RECHARGE=DAWN (the area clock turning to dawn), DAILY, TICKS=n; COOLDOWN
   in its own ticks; REQUIRE; MASK; MSG; EMPTYMSG. accountForYourself (what
   identifying shows) tells the spells, charges, recharge and word.
+- I23 done. Prop_Attunement (items) ticks on its own: HOW=REST:n
+  (sitting or sleeping holder), RITUAL (INROOM and SAY, on a speech
+  message), ON=EQUIP (WEAR, HOLD or WIELD); LIMIT counts the attuned
+  items the character carries; BIND sleeps the powers in another's
+  hands; MSG; MASK. PROPS are added unsaved when attuned (again after a
+  load, from ATTUNED= in its text). Commands/Unattune (UNATTUNE item).
+  accountForYourself says "Requires attunement" or to whom.
 - I24 done. Prop_ItemGrowth (items): KILL (a death message whose tool is
   the holder, the item worn or wielded, KILLMASK on the slain), HIT (a
   damage message from the holder with it as the tool), USE (any message
