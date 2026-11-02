@@ -1416,6 +1416,16 @@ JS17, JS18, JS19, JS20, JS23
   `js:timers` (JS7's JSSTATE) as its due game time, its function's text
   and its data; in the same game the function itself runs, after a restore
   (`JSStore.fromXML`) it is made again from its text in a scope of its own.
+- JS20 done. `cm.command(name, opts, fn)` (`core/JSCommand`, a
+  StdCommand put in CMClass's commands, so its cost and combatCost are taken
+  as a command's are; `name ?` shows its help; a later one of the name
+  replaces it; `cm.uncommand`). `cm.verb(thing, phrase, fn)`
+  (`core/JSVerbs`, in `ScriptEvents.verb` before the game's commands): the
+  first word the command's, the phrase's other words all among what
+  follows, near what is within reach; elsewhere "You can't do that here."
+  when the word is no command or social; `cm.unverb`. Both are code: register
+  them in init.js's onBoot. CMDFAIL_PROG is now written up in
+  guides/Scriptable.html too.
 
 #### 2e. Quests (15)
 

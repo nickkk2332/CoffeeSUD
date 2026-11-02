@@ -726,6 +726,60 @@ public class JSCm
 		return JSStore.keys();
 	}
 
+	// ---------------------------------------------------------------- commands and verbs (JS20)
+
+	/**
+	 * A command of the world's, in JavaScript (not saved: register in init.js's onBoot).
+	 * @param name its word
+	 * @param opts help, cost, combatCost and words (more words for it), or null
+	 * @param fn function(mob, args); false if it did nothing
+	 * @return its ID
+	 */
+	public String command(final String name, final Object opts, final Function fn)
+	{
+		return JSCommand.make(name, (opts instanceof Scriptable) ? (Scriptable)opts : null, fn, (fn == null) ? null : ScriptableObject.getTopLevelScope(fn));
+	}
+
+	/**
+	 * @param name its word
+	 * @param fn function(mob, args)
+	 * @return its ID
+	 */
+	public String command(final String name, final Function fn)
+	{
+		return command(name, null, fn);
+	}
+
+	/**
+	 * @param name a command's word, as command() made it
+	 * @return true if there was one
+	 */
+	public boolean uncommand(final String name)
+	{
+		return JSCommand.unmake(name);
+	}
+
+	/**
+	 * A phrase that works near one thing only (not saved: register in init.js's onBoot).
+	 * @param thing the room, item or mob
+	 * @param phrase as 'pull lever': the first word the command's, the rest needed among what follows
+	 * @param fn function(mob, rest); false to let the game go on
+	 */
+	public void verb(final PhysicalAgent thing, final String phrase, final Function fn)
+	{
+		JSVerbs.add(thing, phrase, fn, (fn == null) ? null : ScriptableObject.getTopLevelScope(fn));
+	}
+
+	/**
+	 * @param thing the room, item or mob
+	 * @param phrase the phrase, as verb() had it
+	 * @return how many were taken away
+	 */
+	public int unverb(final PhysicalAgent thing, final String phrase)
+	{
+		return JSVerbs.remove(thing, phrase);
+	}
+
 	// ---------------------------------------------------------------- timers (JS19)
 
 	/**

@@ -57,6 +57,8 @@
 
             <li><a href="#close_prog">close_prog</a></li>
 
+            <li><a href="#cmdfail_prog">cmdfail_prog</a></li>
+
             <li><a href="#cnclmsg_prog">cnclmsg_prog</a></li>
 
             <li><a href="#consume_prog">consume_prog</a></li>
@@ -1100,6 +1102,18 @@ item, mob, or room. Generally it is best not to have close_progs with
 the same keywords in them, unless they are a close_progs p with
 different keyword lists but some of the same keywords - for example a
 close_progs p door gate and a close_prog p door to the gate.</p>
+
+      <h3><a name="cmdfail_prog">cmdfail_prog</a></h3>
+
+      <p>Usage: CMDFAIL_PROG [COMMAND] (ALL|P [WORDS]|[WORDS])</p>
+
+      <p>CoffeeSUD: runs when a command the player types fails, or is not known
+(the player would see Huh?), and the word typed starts the command given:
+the custom verb. RETURN CANCEL keeps the failure's message back. $n typed it,
+$G is the rest of the line. See <a href="ScriptingSUD.html#cmdfail">Scripting
+in CoffeeSUD</a> for an example, and VERB_PROG for a verb that always works;
+in JavaScript, cm.verb (<a href="JavaScriptSUD.html#verbs">JavaScript in
+CoffeeSUD</a>).</p>
 
       <h3><a name="cnclmsg_prog">cnclmsg_prog</a></h3>
 

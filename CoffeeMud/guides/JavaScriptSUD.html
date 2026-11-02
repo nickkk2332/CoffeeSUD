@@ -27,6 +27,7 @@ went wrong.</p>
 <li><a href="#events">cm.on</a></li>
 <li><a href="#store">cm.store</a></li>
 <li><a href="#timers">Timers</a></li>
+<li><a href="#verbs">Commands and verbs</a></li>
 <li><a href="#sud">sud</a></li>
 <li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#jscriptable">JScriptable</a></li>
@@ -252,6 +253,33 @@ function onBoot() {
   cm.at('day 7 hour 8', function() {
     cm.echo(cm.room('Town#Square'), 'Traders set up their stalls.');
   }, 'marketDay');
+}
+</pre>
+
+<h2><a name="verbs">Commands and verbs</a></h2>
+<ul>
+<li><code>cm.command('dig', {help: 'DIG [direction]: dig here.', cost: 1,
+combatCost: 2, words: ['excavate']}, function(mob, args) {...})</code> makes a
+command of the world's: its cost is taken as any command's is (in turn-based
+time too), and <code>dig ?</code> shows its help. A later one of the same name
+replaces it; <code>cm.uncommand('dig')</code> takes it away.</li>
+<li><code>cm.verb(thing, 'pull lever', function(mob, rest) {...})</code>
+makes a phrase that works near that room, item or mob only, before the game's
+own commands: the first word must be the command's, and the phrase's other
+words must be among what follows (<code>pull the lever</code> is
+<code>pull lever</code>). Elsewhere, if the word is none of the game's, the
+player is told "You can't do that here." The function returns false to let
+the game go on. <code>cm.unverb(thing, phrase)</code> takes it away.</li>
+</ul>
+<p>Both are code, not saved: register them in <code>world/js/init.js</code>'s
+<code>onBoot</code>. For a MOBPROG way, see CMDFAIL_PROG and VERB_PROG in
+<a href="ScriptingSUD.html#cmdfail">Scripting in CoffeeSUD</a>.</p>
+<pre>
+function onBoot() {
+  cm.verb(cm.room('Mine#7'), 'pull lever', function(mob, rest) {
+    cm.echo(mob.location(), 'The cart rattles away down the slope.');
+    cm.store('world').cartAtBottom = true;
+  });
 }
 </pre>
 

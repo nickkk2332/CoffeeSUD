@@ -690,6 +690,9 @@ public final class ScriptEvents
 				}
 			}
 		}
+		// JS20: cm.verb's phrases near what is within reach
+		if(JSVerbs.any() && JSVerbs.handle(mob, verb, CMParms.combine(commands, 1).trim(), reach(mob)))
+			return true;
 		final boolean scripts = isUsed(VERB_PROG);
 		if((!scripts) && (!propVerbsSeen))
 			return false;
