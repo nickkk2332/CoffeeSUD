@@ -84,15 +84,16 @@ public class Pursue extends StdBehavior
 	{
 		super.setParms(newParms);
 		final String p = (newParms == null) ? "" : newParms;
-		chance = CMParms.getParmInt(p, "CHANCE", 60);
-		maxRooms = CMParms.getParmInt(p, "MAXROOMS", 3);
-		delay = Math.max(0, CMParms.getParmInt(p, "DELAY", 1));
-		final String m = CMParms.getParmStr(p, "MASK", "").trim();
+		final Map<String, String> q = CMParms.parseExactParms(p); // exact keys: none found inside GIVEUPMSG
+		chance = CMParms.getParmInt(q, "CHANCE", 60);
+		maxRooms = CMParms.getParmInt(q, "MAXROOMS", 3);
+		delay = Math.max(0, CMParms.getParmInt(q, "DELAY", 1));
+		final String m = CMParms.getParmStr(q, "MASK", "").trim();
 		mask = (m.length() == 0) ? null : CMLib.masking().getPreCompiledMask(m);
-		leash = CMParms.getParmInt(p, "LEASH", 0);
+		leash = CMParms.getParmInt(q, "LEASH", 0);
 		stay = CMParms.parse(p.toUpperCase()).contains("STAY");
-		giveUpMsg = CMParms.getParmStr(p, "GIVEUPMSG", "<S-NAME> give(s) up the chase.");
-		remember = CMParms.getParmInt(p, "REMEMBER", 0);
+		giveUpMsg = CMParms.getParmStr(q, "GIVEUPMSG", "<S-NAME> give(s) up the chase.");
+		remember = CMParms.getParmInt(q, "REMEMBER", 0);
 		quarry = null;
 		lastQuarry = null;
 		followed = 0;

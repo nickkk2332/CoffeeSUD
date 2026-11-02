@@ -1904,7 +1904,12 @@ C18, C19, C20, C21, C22, C23, C25
   whole chase, until the fight ends) or LEASH= rooms from its start room
   or when the trail is lost (GIVEUPMSG=, then
   WanderHomeLater ONCE unless STAY). REMEMBER=n: the one who fled, coming
-  back into its room within n ticks, is attacked the next tick.
+  back into its room within n ticks, is attacked the next tick. Its
+  options are read with CMParms.parseExactParms (one word or one quoted
+  string a value, bare words flags): getParmStr's forgiving search finds a
+  key inside another word or a quoted message (LEADER in BREAK=LEADERDEAD),
+  and parseEQParms takes a flag after a value into it (LEASH=1 STAY).
+  getParmStr/Int/Bool(Map, key, default) read the map.
 - C21 done. Behaviors/EncounterReset (mobs, rooms): engaged while it (or,
   ROOM=true or on a room, an NPC of the room) fights, its foes kept; then
   when none is within RADIUS= rooms (a walk through exits) for IDLE=

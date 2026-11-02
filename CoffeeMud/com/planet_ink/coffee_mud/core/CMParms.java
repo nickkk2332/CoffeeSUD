@@ -3053,6 +3053,106 @@ public class CMParms
 	}
 
 	/**
+	 * CoffeeSUD: strict KEY=VALUE parameters.  A value is one word, or a quoted
+	 * string (with \" for a quote in it); a word with no = is a flag, its
+	 * value empty; keys are upper case.  Unlike the forgiving searches on the
+	 * text, a key is never found inside another (LEADER in BREAK=LEADERDEAD)
+	 * or inside a quoted message, and unlike {@link #parseEQParms(String)} a
+	 * flag after a value (LEASH=1 STAY) is not taken into it.
+	 * @param text the parameters
+	 * @return the keys and their values
+	 */
+	public final static Map<String,String> parseExactParms(final String text)
+	{
+		final Map<String,String> h = new HashMap<String,String>();
+		if(text == null)
+			return h;
+		final int len = text.length();
+		int x = 0;
+		while(x < len)
+		{
+			while((x < len) && Character.isWhitespace(text.charAt(x)))
+				x++;
+			if(x >= len)
+				break;
+			int s = x;
+			while((x < len) && (!Character.isWhitespace(text.charAt(x))) && (text.charAt(x) != '=') && (text.charAt(x) != '"'))
+				x++;
+			final String key = text.substring(s, x).toUpperCase();
+			String val = "";
+			final boolean hasValue = (x < len) && (text.charAt(x) == '=');
+			if(hasValue)
+				x++;
+			if((x < len) && (text.charAt(x) == '"'))
+			{
+				final StringBuilder q = new StringBuilder();
+				x++;
+				while((x < len) && (text.charAt(x) != '"'))
+				{
+					if((text.charAt(x) == '\\') && (x + 1 < len) && (text.charAt(x + 1) == '"'))
+						x++;
+					q.append(text.charAt(x++));
+				}
+				x++;
+				val = q.toString();
+			}
+			else
+			if(hasValue)
+			{
+				s = x;
+				while((x < len) && (!Character.isWhitespace(text.charAt(x))))
+					x++;
+				val = text.substring(s, x);
+			}
+			if((key.length() > 0) && (hasValue || (!h.containsKey(key))))
+				h.put(key, val);
+		}
+		return h;
+	}
+
+	/**
+	 * CoffeeSUD: a KEY=VALUE parameter by its exact key, from the map
+	 * {@link #parseExactParms(String)} makes.
+	 * @param parms the parsed parameters, keys in upper case
+	 * @param key the key, any case
+	 * @param defaultVal the value when it is not there
+	 * @return the value, or the default
+	 */
+	public final static String getParmStr(final Map<String,String> parms, final String key, final String defaultVal)
+	{
+		final String v = parms.get(key.toUpperCase());
+		return (v == null) ? defaultVal : v;
+	}
+
+	/**
+	 * CoffeeSUD: a whole number KEY=VALUE parameter by its exact key.
+	 * @see #parseExactParms(String)
+	 * @param parms the parsed parameters, keys in upper case
+	 * @param key the key, any case
+	 * @param defaultVal the value when it is not there or not a number
+	 * @return the value, or the default
+	 */
+	public final static int getParmInt(final Map<String,String> parms, final String key, final int defaultVal)
+	{
+		final String v = parms.get(key.toUpperCase());
+		return ((v == null) || (!CMath.isInteger(v.trim()))) ? defaultVal : CMath.s_int(v.trim());
+	}
+
+	/**
+	 * CoffeeSUD: a true/false KEY=VALUE parameter by its exact key.
+	 * @see #parseExactParms(String)
+	 * @param parms the parsed parameters, keys in upper case
+	 * @param key the key, any case
+	 * @param defaultVal the value when it is not there
+	 * @return the value, or the default
+	 */
+	public final static boolean getParmBool(final Map<String,String> parms, final String key, final boolean defaultVal)
+	{
+		final String v = parms.get(key.toUpperCase());
+		return ((v == null) || (v.trim().length() == 0)) ? defaultVal : CMath.s_bool(v.trim());
+	}
+
+	/**
 	 * This method is a sloppy, forgiving method doing KEY=VALUE value searches in a string.
 	 * Returns the boolean value of the given key when the parameter is formatted in the given text
 	 * in the format [KEY]=[VALUE].  If the key is not found, it will return the given

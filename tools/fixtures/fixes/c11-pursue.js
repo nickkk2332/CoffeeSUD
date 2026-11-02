@@ -21,7 +21,10 @@ cat.setName("Fixc11cat");
 cat.setStartRoom(A);
 cat.baseState().setHitPoints(500); cat.recoverMaxState(); cat.resetToMaxState();
 var P = CMClass.getBehavior("Pursue");
-P.setParms("CHANCE=100 MAXROOMS=2 DELAY=0 GIVEUPMSG=\"<S-NAME> hiss(es) and give(s) up.\" REMEMBER=10");
+P.setParms("GIVEUPMSG=\"<S-NAME> hiss(es): no chance, no delay, and give(s) up.\" CHANCE=100 MAXROOMS=2 DELAY=0 REMEMBER=10");
+check("exact-keys", field(P, "chance") == 100 && field(P, "delay") == 0 && field(P, "maxRooms") == 2, "chance " + field(P, "chance") + " delay " + field(P, "delay"));
+var XP = CM.core.CMParms.parseExactParms("A=1 FLAG B=\"two \\\"words\\\"\" C=x=y \"stray\" D=");
+check("exact-parse", s(XP.get("A")) == "1" && s(XP.get("FLAG")) == "" && s(XP.get("B")) == 'two "words"' && s(XP.get("C")) == "x=y" && s(XP.get("D")) == "" && XP.size() == 5, "" + XP);
 cat.addBehavior(P);
 function flee(to) {
 	cat.setVictim(V); V.setVictim(cat);
