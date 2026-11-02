@@ -555,6 +555,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"SURRENDER_PROG", // 102
 		"YIELD_PROG", // 103
 		"DEFEAT_PROG", // 104
+		"PHASE_PROG", // 105
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -747,6 +748,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"TOPTHREAT", //185
 		"WEAKEST", //186
 		"OPPONENT", //187
+		"PHASE", //188
 	};
 
 	/** String list of all valid mobprog commands */

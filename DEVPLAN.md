@@ -1938,6 +1938,15 @@ C18, C19, C20, C21, C22, C23, C25
   REFUSEMSG= for TICKS=, and YIELD_PROG (103) or DEFEAT_PROG (104).
   Options by exact key (CMParms.parseExactParms), so AT= is not found in
   a message.
+- C3 done. Behaviors/BossPhases: statements (; and , outside quotes) of
+  ONENGAGE, AT=n%, AT=ROUND n, AT=ADDSDEAD, ONDEATH with SAY/EMOTE/YELL,
+  CAST, SUMMON (ScriptLib.catalogCopies, or a mob class; tagged SUMMONED,
+  following, attacking), BEHAVE/UNBEHAVE, AFFECT/REMOVE, IMMUNE (damage to
+  0 in okMessage), HEAL, MOVETO, ROOM EMOTE/AFFECT, CALL (FUNCTION_PROG of
+  its scripts). Each fires once; AT= ones advance the phase and run
+  PHASE_PROG (105, ScriptEvents.phase); PHASE() (188). RESET=FULLHEAL,
+  LEAVECOMBAT, LEASH (C21's setStat ENCOUNTERRESET), NEVER; death rearms;
+  run state PHASE, ROUND, FIRED.
 
 #### 2h. Items, properties and puzzles (23)
 

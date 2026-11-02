@@ -487,6 +487,30 @@ public final class ScriptEvents
 	/** N9: TALK_PROG's code */
 	public static final int	TALK_PROG	= code("TALK_PROG");
 
+	/** C3: PHASE_PROG's code */
+	public static final int	PHASE_PROG	= code("PHASE_PROG");
+
+	/**
+	 * C3: a boss entered a phase (BossPhases): PHASE_PROG [n] runs on its
+	 * scripts, $g and $0 the phase.
+	 * @param npc the boss
+	 * @param phase the phase it entered
+	 */
+	public static void phase(final MOB npc, final int phase)
+	{
+		if((npc == null) || (!isUsed(PHASE_PROG)))
+			return;
+		final String n = "" + phase;
+		final MOB foe = (npc.getVictim() != null) ? npc.getVictim() : npc;
+		for(final ScriptingEngine S : engines(npc))
+		{
+			S.eventCheck(npc, PHASE_PROG, foe, npc, null, n, new Object[] { n }, "Cr", t -> {
+				final String w = (t.length < 2) ? "" : t[1].trim();
+				return (w.length() == 0) || w.equalsIgnoreCase("ALL") || w.equals(n);
+			});
+		}
+	}
+
 	/** C17: YIELD_PROG's code */
 	public static final int	YIELD_PROG	= code("YIELD_PROG");
 	/** C17: DEFEAT_PROG's code */

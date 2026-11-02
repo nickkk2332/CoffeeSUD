@@ -15883,6 +15883,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "false";
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
+		case "PHASE": // C3: PHASE(who): its BossPhases' phase, from 1, or 0 for none
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			if(W instanceof MOB)
+			{
+				for(final Enumeration<Behavior> b=((MOB)W).behaviors();b.hasMoreElements();)
+				{
+					final Behavior B=b.nextElement();
+					if((B!=null)&&B.ID().equals("BossPhases"))
+						return B.getStat("PHASE");
+				}
+			}
+			return "0";
+		}
 		case "THREAT": // C18: THREAT(npc who): their threat to it
 		{
 			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);

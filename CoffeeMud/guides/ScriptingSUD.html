@@ -474,6 +474,11 @@ where the loot is.</p>
 and its <code>YIELD_PROG</code> asks the player to spare him (faction, and he comes back later as an ally) or
 finish him. <code>MODE=KNOCKOUT</code> keeps a quest NPC alive: a killing blow leaves it out cold, and
 <code>DEFEAT_PROG</code> runs.</p>
+<p>A lich in phases: <code>BossPhases ONENGAGE: SAY "Fools!"; AT=60%: SUMMON skeleton warrior x2; AT=25%:
+AFFECT Prop_AbilityImmunity "WEAPONS" 3, MOVETO Crypt#9, HEAL 20%; ONDEATH: ROOM EMOTE "The phylactery
+cracks."</code>. Each fires once a fight; no guard variables. <code>PHASE_PROG 3</code> and
+<code>PHASE($i == 3)</code> let a script join in, and <code>RESET=LEASH</code> rearms it with
+EncounterReset.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
