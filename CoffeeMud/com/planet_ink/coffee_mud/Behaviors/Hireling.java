@@ -52,6 +52,10 @@ public class Hireling extends StdBehavior
 		if(onTheJobUntil!=0)
 			str.append(CMLib.xml().convertXMLtoTag("LEFT",Math.max(1,onTheJobUntil-GameTime.now())));
 		str.append(CMLib.xml().convertXMLtoTag("WARN",(nextWarn==Long.MAX_VALUE)?-1:Math.max(0,nextWarn-GameTime.now())));
+		if(lastUpkeep>0) // N21
+			str.append(CMLib.xml().convertXMLtoTag("PAIDAGO",Math.max(0,GameTime.now()-lastUpkeep)));
+		if(unpaidDays>0)
+			str.append(CMLib.xml().convertXMLtoTag("UNPAID",unpaidDays));
 		for(final Map.Entry<String,Double> e : new XVector<Map.Entry<String,Double>>(partials.entrySet()))
 			str.append("<PAID N=\"").append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("\">").append(e.getValue()).append("</PAID>");
 		return str.toString();
@@ -66,6 +70,9 @@ public class Hireling extends StdBehavior
 		onTheJobUntil=(left>0)?(GameTime.now()+left):0;
 		final long warn=CMath.s_long(CMLib.xml().getValFromPieces(tags,"WARN"));
 		nextWarn=(warn<0)?Long.MAX_VALUE:(GameTime.now()+warn);
+		final String paidAgo=CMLib.xml().getValFromPieces(tags,"PAIDAGO"); // N21
+		lastUpkeep=(paidAgo.length()>0)?(GameTime.now()-CMath.s_long(paidAgo)):0;
+		unpaidDays=CMath.s_int(CMLib.xml().getValFromPieces(tags,"UNPAID"));
 		partials.clear();
 		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : tags)
 		{
@@ -81,6 +88,228 @@ public class Hireling extends StdBehavior
 	protected double				price			= 100.0;
 	protected int					minutes			= 30;
 	protected MaskingLibrary.CompiledZMask zapperMask = null;
+
+	// N21: the terms, KEY=value anywhere in the parameters
+	protected List<String>    keywords        = new XVector<String>("HIRE","HIRELING","WORK","WORKS","TIME","AVAILABLE");
+	protected String        msgOffer        = null;
+	protected String        msgHired        = null;
+	protected String        msgRefuse        = null;
+	protected String        msgExpire        = null;
+	protected String        msgNoOrder        = null;
+	protected String        contract        = "MINUTES";
+	protected String        contractQuest    = "";
+	protected double        upkeep            = 0;
+	protected int            fleeHp            = 0;
+	protected int            loyal            = 25;
+	protected List<String>    refuseOrders    = new ArrayList<String>();
+	protected long            lastUpkeep        = 0;
+	protected int            unpaidDays        = 0;
+
+	protected static final java.util.regex.Pattern TERM=java.util.regex.Pattern.compile(
+		"(?i)(^|[\\s;])(KEYWORDS|MSG_OFFER|MSG_HIRED|MSG_REFUSE|MSG_EXPIRE|MSG_NOORDER|CONTRACT|UPKEEP|FLEEHP|LOYAL|REFUSE)=(\"([^\"]*)\"|[^\\s;]+)");
+
+	/**
+	 * N21: reads the KEY=value terms out of the parameters.
+	 * @param p the parameters
+	 * @return the rest: price;minutes;mask
+	 */
+	protected String readTerms(final String p)
+	{
+		keywords=new XVector<String>("HIRE","HIRELING","WORK","WORKS","TIME","AVAILABLE");
+		msgOffer=msgHired=msgRefuse=msgExpire=msgNoOrder=null;
+		contract="MINUTES";
+		contractQuest="";
+		upkeep=0;
+		fleeHp=0;
+		loyal=25;
+		refuseOrders=new ArrayList<String>();
+		if(p==null)
+			return "";
+		final java.util.regex.Matcher m=TERM.matcher(p);
+		final StringBuffer rest=new StringBuffer("");
+		while(m.find())
+		{
+			final String key=m.group(2).toUpperCase();
+			final String val=(m.group(4)!=null)?m.group(4):m.group(3);
+			if(key.equals("KEYWORDS"))
+			{
+				keywords=new XVector<String>();
+				for(final String k : CMParms.parseCommas(val.toUpperCase(),true))
+					keywords.add(k);
+			}
+			else
+			if(key.equals("MSG_OFFER"))
+				msgOffer=val;
+			else
+			if(key.equals("MSG_HIRED"))
+				msgHired=val;
+			else
+			if(key.equals("MSG_REFUSE"))
+				msgRefuse=val;
+			else
+			if(key.equals("MSG_EXPIRE"))
+				msgExpire=val;
+			else
+			if(key.equals("MSG_NOORDER"))
+				msgNoOrder=val;
+			else
+			if(key.equals("CONTRACT"))
+			{
+				final String c=val.trim().toUpperCase();
+				if(c.startsWith("QUEST:"))
+				{
+					contract="QUEST";
+					contractQuest=val.trim().substring(6).trim();
+				}
+				else
+				if(c.equals("DAYS")||c.equals("UNTILFIRED")||c.equals("MINUTES"))
+					contract=c;
+			}
+			else
+			if(key.equals("UPKEEP"))
+				upkeep=CMath.s_double(val);
+			else
+			if(key.equals("FLEEHP"))
+				fleeHp=CMath.s_int(val);
+			else
+			if(key.equals("LOYAL"))
+				loyal=CMath.s_int(val);
+			else
+			if(key.equals("REFUSE"))
+			{
+				for(final String r : CMParms.parseCommas(val.toUpperCase(),true))
+					refuseOrders.add(r);
+			}
+			m.appendReplacement(rest,java.util.regex.Matcher.quoteReplacement(m.group(1))); // the ; or space before it stays
+		}
+		m.appendTail(rest);
+		return rest.toString().trim();
+	}
+
+	protected static long dayMillis()
+	{
+		return Math.max(1,CMProps.getMillisPerMudHour()*CMLib.time().globalClock().getHoursInDay());
+	}
+
+	/** N21: how long a contract runs, in game milliseconds */
+	protected long contractMillis()
+	{
+		if(contract.equals("DAYS"))
+			return minutes()*dayMillis();
+		if(contract.equals("QUEST")||contract.equals("UNTILFIRED"))
+			return Long.MAX_VALUE/4;
+		return minutes()*TimeManager.MILI_MINUTE;
+	}
+
+	/** N21: the contract's length, in words */
+	protected String termsText()
+	{
+		if(contract.equals("DAYS"))
+			return L("for @x1 days",""+minutes());
+		if(contract.equals("QUEST"))
+			return L("until the @x1 is done",contractQuest);
+		if(contract.equals("UNTILFIRED"))
+			return L("until you let me go");
+		return L("for @x1 \"hours\"",""+gamehours());
+	}
+
+	protected String offerLine(final MOB observer)
+	{
+		final String p=CMLib.beanCounter().nameCurrencyShort(observer,price());
+		if(msgOffer!=null)
+			return CMStrings.replaceAll(CMStrings.replaceAll(msgOffer,"@x1",p),"@x2",termsText());
+		if(contract.equals("MINUTES"))
+			return L("I'm for hire.  Just give me @x1 and I'll work for you for @x2 \"hours\".",p,""+gamehours());
+		return L("I'm for hire.  Just give me @x1 and I'll work for you @x2.",p,termsText());
+	}
+
+	protected String hiredLine(final String skills)
+	{
+		if(msgHired!=null)
+			return CMStrings.replaceAll(CMStrings.replaceAll(msgHired,"@x1",termsText()),"@x2",skills);
+		if(contract.equals("MINUTES"))
+			return L("Ok.  You've got me for at least @x1 \"hours\".  My skills include: @x2.  I'll follow you.  Just ORDER me to do what you want.",""+gamehours(),skills);
+		return L("Ok.  You've got me @x1.  My skills include: @x2.  I'll follow you.  Just ORDER me to do what you want.",termsText(),skills);
+	}
+
+	protected boolean keywordHit(final String upperSrcMsg)
+	{
+		for(final String k : keywords)
+		{
+			if(CMStrings.containsWord(upperSrcMsg,k))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * N21: each tick on the job: wages (UPKEEP a game day), the end of a
+	 * QUEST contract, and nerve (FLEEHP, unless its opinion of the employer
+	 * reaches LOYAL).
+	 * @param observer the hireling
+	 * @return true if the contract ended
+	 */
+	protected boolean contractEnds(final MOB observer)
+	{
+		final Room R=observer.location();
+		final MOB boss=(R==null)?null:R.fetchInhabitantExact(workingFor);
+		if((upkeep>0)&&(lastUpkeep>0)&&((GameTime.now()-lastUpkeep)>=dayMillis()))
+		{
+			lastUpkeep+=dayMillis();
+			final String currency=CMLib.beanCounter().getCurrency(observer);
+			if((boss!=null)&&(CMLib.beanCounter().getTotalAbsoluteValue(boss,currency)>=upkeep))
+			{
+				CMLib.beanCounter().subtractMoney(boss,currency,upkeep);
+				unpaidDays=0;
+				if(boss!=null)
+					boss.tell(L("You pay @x1 its wages of @x2.",observer.name(boss),CMLib.beanCounter().nameCurrencyShort(observer,upkeep)));
+			}
+			else
+			{
+				unpaidDays++;
+				if(unpaidDays>=2)
+				{
+					CMLib.commands().postSay(observer,boss,L("No wages, no work.  Goodbye."),false,false);
+					allDone(observer);
+					return true;
+				}
+				CMLib.commands().postSay(observer,boss,L("I've not been paid my @x1.",CMLib.beanCounter().nameCurrencyShort(observer,upkeep)),false,false);
+			}
+		}
+		if(contract.equals("QUEST")&&(contractQuest.length()>0))
+		{
+			final String st=QuestRecords.status(contractQuest,boss,workingFor);
+			if(st.equals("WON")||st.equals("FAILED")||st.equals("ABANDONED")||st.equals("EXPIRED"))
+			{
+				CMLib.commands().postSay(observer,boss,(msgExpire!=null)?msgExpire:L("The job is done.  Goodbye!"),false,false);
+				allDone(observer);
+				return true;
+			}
+		}
+		if((fleeHp>0)&&observer.isInCombat()
+		&&(CMath.div(observer.curState().getHitPoints(),Math.max(1,observer.maxState().getHitPoints()))*100.0<fleeHp)
+		&&((boss==null)||(NpcAffinity.get(observer,workingFor)<loyal)))
+		{
+			CMLib.commands().postSay(observer,null,L("This isn't worth it!"),false,false);
+			observer.makePeace(true);
+			allDone(observer);
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public String getStat(final String code)
+	{
+		// N21: for HIRE's menu
+		if(code.equalsIgnoreCase("PRICE"))
+			return ""+price();
+		if(code.equalsIgnoreCase("TERMS"))
+			return termsText()+((upkeep>0)?L(", and @x1 a day",""+upkeep):"");
+		if(code.equalsIgnoreCase("WORKING"))
+			return (onTheJobUntil!=0)?workingFor:"";
+		return super.getStat(code);
+	}
 
 	@Override
 	public String accountForYourself()
@@ -113,9 +342,10 @@ public class Hireling extends StdBehavior
 	}
 
 	@Override
-	public void setParms(final String newParms)
+	public void setParms(final String allParms)
 	{
-		super.setParms(newParms);
+		super.setParms(allParms);
+		final String newParms=readTerms(allParms); // N21: the terms out, the rest as before
 		final int dex=newParms.indexOf(';');
 		zapperMask=null;
 		if(dex>=0)
@@ -125,7 +355,7 @@ public class Hireling extends StdBehavior
 			{
 				setPrice(newParms.substring(0,dex));
 				setMinutes(newParms.substring(dex+1,dex2));
-				final String s=getParms().substring(dex2+1);
+				final String s=newParms.substring(dex2+1);
 				if(s.trim().length()>0)
 					zapperMask=CMLib.masking().maskCompile(s.trim());
 			}
@@ -198,6 +428,8 @@ public class Hireling extends StdBehavior
 		if(onTheJobUntil==0)
 			return true;
 		final MOB observer=(MOB)ticking;
+		if((workingFor.length()>0)&&contractEnds(observer)) // N21
+			return true;
 		if(GameTime.now()>onTheJobUntil)
 		{
 			final Double D=partials.get(workingFor);
@@ -225,7 +457,7 @@ public class Hireling extends StdBehavior
 			if(additional<=0)
 			{
 				if(talkTo!=null)
-					CMLib.commands().postSay(observer,talkTo,L("Your time is up.  Goodbye!"),true,false);
+					CMLib.commands().postSay(observer,talkTo,(msgExpire!=null)?msgExpire:L("Your time is up.  Goodbye!"),true,false);
 				allDone(observer);
 			}
 			else
@@ -271,6 +503,27 @@ public class Hireling extends StdBehavior
 		{
 			final MOB observer=(MOB)host;
 
+			// N21: REFUSE=: orders it will not take
+			if((msg.targetMinor()==CMMsg.TYP_ORDER)
+			&&(msg.amITarget(observer))
+			&&(!refuseOrders.isEmpty())
+			&&(msg.targetMessage()!=null))
+			{
+				final String t=msg.targetMessage();
+				final int a=t.indexOf(" to '");
+				final int b=(a<0)?-1:t.indexOf('\'',a+5);
+				final String order=((a>=0)&&(b>a))?t.substring(a+5,b).trim().toUpperCase():"";
+				final String verb=(order.indexOf(' ')>0)?order.substring(0,order.indexOf(' ')):order;
+				for(final String r : refuseOrders)
+				{
+					if((verb.length()>0)&&(r.startsWith(verb)||verb.startsWith(r)))
+					{
+						CMLib.commands().postSay(observer,source,(msgNoOrder!=null)?msgNoOrder:L("I won't do that."),false,false);
+						return false;
+					}
+				}
+			}
+
 			if(msg.amITarget(observer)
 			&&(!msg.amISource(observer))
 			&&(msg.targetMinor() == CMMsg.TYP_GIVE)
@@ -278,7 +531,7 @@ public class Hireling extends StdBehavior
 			{
 				if(!CMLib.masking().maskCheck(zapper(),source,false))
 				{
-					CMLib.commands().postSay(observer,null,L("I wouldn't work for the likes of you."),false,false);
+					CMLib.commands().postSay(observer,null,(msgRefuse!=null)?msgRefuse:L("I wouldn't work for the likes of you."),false,false);
 					return false;
 				}
 				if(!CMLib.beanCounter().isCurrencyMatch(((Coins)msg.tool()).getCurrency(),CMLib.beanCounter().getCurrency(observer)))
@@ -328,18 +581,10 @@ public class Hireling extends StdBehavior
 				// nothing done
 			}
 			else
-			if(CMStrings.containsWord(upperSrcMsg, "HIRE")
-			||CMStrings.containsWord(upperSrcMsg, "HIRELING")
-			||CMStrings.containsWord(upperSrcMsg, "WORK")
-			||CMStrings.containsWord(upperSrcMsg, "WORKS")
-			||CMStrings.containsWord(upperSrcMsg, "TIME")
-			||CMStrings.containsWord(upperSrcMsg, "AVAILABLE"))
+			if(keywordHit(upperSrcMsg)) // N21: KEYWORDS=
 			{
 				if(onTheJobUntil==0)
-				{
-					CMLib.commands().postSay(observer,null,L("I'm for hire.  Just give me @x1 and I'll work for you for @x2 \"hours\".",
-							CMLib.beanCounter().nameCurrencyShort(observer,price()),""+gamehours()),false,false);
-				}
+					CMLib.commands().postSay(observer,null,offerLine(observer),false,false);
 				else
 				{
 					final long l = onTheJobUntil - GameTime.now();
@@ -427,12 +672,14 @@ public class Hireling extends StdBehavior
 						}
 					}
 					workingFor=source.Name();
-					final long duration = (minutes()*TimeManager.MILI_MINUTE);
+					lastUpkeep=GameTime.now(); // N21
+					unpaidDays=0;
+					final long duration = contractMillis();
 					onTheJobUntil=GameTime.now() + duration;
 					nextWarn = GameTime.now() + (duration/2);
 					CMLib.commands().postFollow(observer,source,false);
 					observer.setFollowing(source);
-					CMLib.commands().postSay(observer,source,L("Ok.  You've got me for at least @x1 \"hours\".  My skills include: @x2.  I'll follow you.  Just ORDER me to do what you want.",""+gamehours(),skills.substring(2)),true,false);
+					CMLib.commands().postSay(observer,source,hiredLine((skills.length()>2)?skills.substring(2):""),true,false);
 				}
 			}
 		}

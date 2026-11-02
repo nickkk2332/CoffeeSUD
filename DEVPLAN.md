@@ -1779,6 +1779,15 @@ N22, N24, N28, N29
   TIMEOUT=n: MOBPROG lines with the leader as $n. The leader is whom it
   follows when the escort begins; leader, arrival, ticks and remarks in
   its run state. AVOID takes room IDs, not a mask.
+- N21 done. Hireling terms as KEY=value after price;minutes (read out
+  before the old parse; a ; or space before each): KEYWORDS=, MSG_OFFER/
+  MSG_HIRED/MSG_REFUSE/MSG_EXPIRE/MSG_NOORDER, CONTRACT=MINUTES|DAYS|
+  "QUEST:name"|UNTILFIRED (QUEST ends on the employer's WON, FAILED,
+  ABANDONED or EXPIRED, QuestRecords.status), UPKEEP= a game day (two
+  unpaid days and it leaves), FLEEHP= unless NpcAffinity >= LOYAL= (25),
+  REFUSE= order verbs (its ORDER message refused). Wages kept in the run
+  state (PAIDAGO, UNPAID). HIRE <mob> opens its terms as an N2 menu whose
+  choice runs HIRE <mob> PAY (the price taken and given as coins).
 
 #### 2g. Combat and encounters (24)
 
