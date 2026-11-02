@@ -1089,6 +1089,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			newParms=superParms+";"+newParms.substring(1);
 		}
 		myScript=newParms;
+		loadArgs=null; // SC13: read again from the new text
 		if(myScript.length()>100)
 			scriptKey="PARSEDPRG: "+myScript.substring(0,100)+myScript.length()+myScript.hashCode();
 		else
@@ -1161,6 +1162,91 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return yes;
 	}
 
+	/** SC13: the LOAD= arguments of this engine's script, with its files' ARGDEFAULT values */
+	protected volatile Map<String,String> loadArgs = null;
+
+	/**
+	 * SC13: a LOAD= line's file and its arguments: LOAD=file KEY=value...
+	 * @param words what follows LOAD=
+	 * @return the file, then the arguments' words
+	 */
+	protected static String[] loadFileAndArgs(final String words)
+	{
+		final String w=words.trim();
+		int x=0;
+		while((x<w.length())&&(!Character.isWhitespace(w.charAt(x))))
+			x++;
+		return new String[]{w.substring(0,x),w.substring(x).trim()};
+	}
+
+	/**
+	 * SC13: a script file's text without its ARGDEFAULT lines.
+	 * @param text the file's text
+	 * @return the text to parse
+	 */
+	protected static String withoutArgDefaults(final String text)
+	{
+		if(text.toUpperCase().indexOf("ARGDEFAULT")<0)
+			return text;
+		final StringBuilder str=new StringBuilder("");
+		for(final String line : text.split("\n",-1))
+		{
+			if(!line.trim().toUpperCase().startsWith("ARGDEFAULT "))
+				str.append(line).append('\n');
+		}
+		return str.toString();
+	}
+
+	/**
+	 * SC13: the arguments LOAD= gave this engine's script (LOAD=file
+	 * KEY=value...), then the defaults the files' ARGDEFAULT KEY=value lines
+	 * give for the rest.
+	 * @param E the scripted thing
+	 * @return the arguments, by name
+	 */
+	protected Map<String,String> loadArgs(final Environmental E)
+	{
+		Map<String,String> args=loadArgs;
+		if(args==null)
+		{
+			args=new TreeMap<String,String>(String.CASE_INSENSITIVE_ORDER);
+			collectLoadArgs(E,getScript(),args,0);
+			loadArgs=args;
+		}
+		return args;
+	}
+
+	private void collectLoadArgs(final Environmental E, final String text, final Map<String,String> args, final int depth)
+	{
+		if((depth>10)||(text==null))
+			return;
+		String parse=text;
+		int y;
+		while((y=parse.toUpperCase().indexOf("LOAD="))>=0)
+		{
+			int z=parse.indexOf('~',y);
+			while((z>0)&&(parse.charAt(z-1)=='\\'))
+				z=parse.indexOf('~',z+1);
+			final String[] fa=loadFileAndArgs((z>0)?parse.substring(y+5,z):parse.substring(y+5));
+			parse=(z>0)?parse.substring(z+1):"";
+			for(final Map.Entry<String,String> e : CMParms.parseEQParms(fa[1]).entrySet())
+				args.putIfAbsent(e.getKey(),e.getValue());
+			if(fa[0].length()==0)
+				continue;
+			final String file=getResourceFileData(E,fa[0]).toString();
+			for(final String line : file.split("\n"))
+			{
+				final String l=line.trim();
+				if(l.toUpperCase().startsWith("ARGDEFAULT "))
+				{
+					for(final Map.Entry<String,String> e : CMParms.parseEQParms(l.substring(11)).entrySet())
+						args.putIfAbsent(e.getKey(),e.getValue());
+				}
+			}
+			collectLoadArgs(E,file,args,depth+1);
+		}
+	}
+
 	protected String parseLoads(final Environmental E, final String text, final int depth,
 								final List<String> filenames, final StringBuffer nonFilenameScript)
 	{
@@ -1192,18 +1278,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					z=parse.indexOf('~',z+1);
 				if(z>0)
 				{
-					final String filename=parse.substring(y+5,z).trim();
+					final String filename=loadFileAndArgs(parse.substring(y+5,z).trim())[0]; // SC13: LOAD=file KEY=value...
 					parse=parse.substring(z+1);
 					if((filenames!=null)&&(!filenames.contains(filename)))
 						filenames.add(filename);
-					results.append(parseLoads(E,getResourceFileData(E,filename).toString(),depth+1,filenames,null));
+					results.append(parseLoads(E,withoutArgDefaults(getResourceFileData(E,filename).toString()),depth+1,filenames,null));
 				}
 				else
 				{
-					final String filename=parse.substring(y+5).trim();
+					final String filename=loadFileAndArgs(parse.substring(y+5).trim())[0]; // SC13
 					if((filenames!=null)&&(!filenames.contains(filename)))
 						filenames.add(filename);
-					results.append(parseLoads(E,getResourceFileData(E,filename).toString(),depth+1,filenames,null));
+					results.append(parseLoads(E,withoutArgDefaults(getResourceFileData(E,filename).toString()),depth+1,filenames,null));
 					break;
 				}
 			}
@@ -15526,6 +15612,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "false";
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
+		case "ARG": // SC13: ARG(name): what LOAD=file NAME=value gave the script, or the file's ARGDEFAULT
+		{
+			final String a=loadArgs(ctx.scripted).get(v);
+			return (a==null)?"":a;
+		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";
@@ -15547,7 +15638,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(c==null)
 		{
 			final String r=extraValue(ctx,name,inner).trim();
-			if(name.equalsIgnoreCase("STATE")) // SC4: set, and not 0 or false
+			if(name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")) // SC4, SC13: set, and not 0 or false
 				return (r.length()>0)&&(!r.equals("0"))&&(!r.equalsIgnoreCase("false"));
 			return "true".equalsIgnoreCase(r);
 		}

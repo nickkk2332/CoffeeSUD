@@ -1216,6 +1216,12 @@ JS17, JS18, JS19, JS20, JS23
   it is, so `=-5` is not a subtraction.
 - SC12 done. `NUMTAGGED(tag)`, `TAGGED(tag)`, `TAGS(thing)` and `MPTAG thing
   ADD|DEL|TOGGLE tag`; HASTAG's error names it.
+- SC13 done. `LOAD=file KEY=value...`: the file is the first word, the rest
+  `CMParms.parseEQParms` pairs; `ARGDEFAULT KEY=value` lines in the file
+  give defaults (and are taken out before parsing). `ARG(name)` as a value
+  and a test; each engine reads its own (`loadArgs`), and since the object's
+  text holds them, the parse cache key differs too. The FUNCTION_PROG
+  pattern goes in the guide (SC15).
 
 #### 2e. Quests (15)
 

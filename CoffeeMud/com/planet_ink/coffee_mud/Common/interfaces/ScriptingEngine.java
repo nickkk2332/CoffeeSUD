@@ -704,6 +704,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"STATE", //169
 		"MSG", //170
 		"ISPLAYED", //171
+		"ARG", //172
 	};
 
 	/** String list of all valid mobprog commands */
