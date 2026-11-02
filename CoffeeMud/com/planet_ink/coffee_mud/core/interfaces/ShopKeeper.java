@@ -273,6 +273,25 @@ public interface ShopKeeper extends Environmental, Economics
 	}
 
 	/**
+	 * W14: sets what is left of the shop's buying budget until it next
+	 * resets (MPSHOP BUDGET).
+	 * @param amount the amount, in base currency
+	 */
+	public default void setBudgetLeft(final long amount)
+	{
+	}
+
+	/**
+	 * W14: puts the shop's stock back as it was made, now (MPSHOP RESET),
+	 * as its INVRESETRATE does.
+	 * @return false if it cannot (only generic shopkeepers can)
+	 */
+	public default boolean resetStock()
+	{
+		return false;
+	}
+
+	/**
 	 * Ticks until the shop's stock is next put back as it was made.
 	 * @return the ticks, or -1 if it never is
 	 */

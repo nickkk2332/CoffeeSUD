@@ -1362,6 +1362,72 @@ public class JSCm
 				return -1;
 			return CMLib.coffeeShops().pawningPrice((MOB)keeper, C, product, raw).absoluteGoldPrice;
 		}
+
+		/**
+		 * W14: takes some of a product out of stock (MPSHOP REMOVE).
+		 * @param name the product's name
+		 * @param n how many, or -1 for all
+		 * @return how many were taken
+		 */
+		public int remove(final String name, final int n)
+		{
+			return Shops.remove(raw, name, n);
+		}
+
+		/**
+		 * W14: sets how many of a product it has (MPSHOP STOCK); a thing not
+		 * stocked yet is copied onto a shelf of its own.
+		 * @param product the product's name, or a thing
+		 * @param n how many
+		 * @return false if there is nothing to stock
+		 */
+		public boolean stock(final Object product, final int n)
+		{
+			final Environmental E = (product instanceof Environmental) ? (Environmental)product : null;
+			return Shops.stock(raw, (E != null) ? E.Name() : String.valueOf(product), n, E);
+		}
+
+		/**
+		 * W14: a product's fixed price (MPSHOP PRICE).
+		 * @param name the product's name
+		 * @param price in base value, or -1 for the usual
+		 * @return false if it is not stocked
+		 */
+		public boolean setPrice(final String name, final int price)
+		{
+			return Shops.setPrice(raw, name, price);
+		}
+
+		/** W14: empties every shelf (MPSHOP CLEAR) */
+		public void clear()
+		{
+			raw.getShop().emptyAllShelves();
+		}
+
+		/**
+		 * W14: puts the stock back as it was made (MPSHOP RESET).
+		 * @return false if it cannot
+		 */
+		public boolean reset()
+		{
+			return raw.resetStock();
+		}
+
+		/** @return W14: what is left of its buying budget, -1 for no limit */
+		public long budget()
+		{
+			final long left = raw.budgetLeft();
+			return ((left < 0) || (left >= (Long.MAX_VALUE / 4))) ? -1 : left;
+		}
+
+		/**
+		 * W14: sets what is left of its buying budget (MPSHOP BUDGET).
+		 * @param amount in base value
+		 */
+		public void setBudget(final long amount)
+		{
+			raw.setBudgetLeft(amount);
+		}
 	}
 
 	/** cm.bank(banker): what is kept at a bank */

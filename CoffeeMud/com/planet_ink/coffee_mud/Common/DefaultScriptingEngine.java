@@ -15967,6 +15967,26 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "SHOPPRICE": // W14: SHOPPRICE(shopkeeper item [customer]): what the shop asks them for it, in base value
+		{
+			final MOB shopM=shopkeeperFor(ctx,CMParms.getCleanBit(parms,0));
+			if(shopM==null)
+				return "0";
+			final String itemWord=CMParms.getCleanBit(parms,1);
+			final String custWord=CMParms.getCleanBit(parms,2).trim();
+			final Environmental C=(custWord.length()>0)?getArgumentMOB(custWord,ctx):null;
+			final MOB cust=(C instanceof MOB)?(MOB)C:((ctx.source!=null)?ctx.source:terminalMob(ctx));
+			final Environmental P=Shops.product(Shops.shopOf(shopM),getArgumentItem(itemWord,ctx),varify(ctx,itemWord),cust);
+			final ShopKeeper.ShopPrice p=Shops.price(shopM,cust,P);
+			return (p==null)?"0":Shops.num(p.absoluteGoldPrice);
+		}
+		case "SHOPBUDGET": // W14: SHOPBUDGET(shopkeeper): what is left of its buying budget, -1 for no limit
+		{
+			final MOB shopM=shopkeeperFor(ctx,CMParms.getCleanBit(parms,0));
+			final ShopKeeper SK=Shops.shopOf(shopM);
+			final long left=(SK==null)?-1:SK.budgetLeft();
+			return ((left<0)||(left>=(Long.MAX_VALUE/4)))?"-1":(""+left);
+		}
 		case "PRICE": // W17: PRICE(item [shopkeeper]): what the shop asks $n for it, in coin names
 		{
 			final String itemWord=CMParms.getCleanBit(parms,0);
@@ -16469,6 +16489,76 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
+			return null;
+		}
+		case "MPSHOP": // W14: MPSHOP shopkeeper REMOVE item [n|ALL] | STOCK item n | PRICE item amount|-1 | CLEAR | RESET | BUDGET amount
+		{
+			final MOB shopM=shopkeeperFor(ctx,CMParms.getCleanBit(line,1));
+			final ShopKeeper SK=Shops.shopOf(shopM);
+			final String verb=varify(ctx,CMParms.getCleanBit(line,2)).trim().toUpperCase();
+			final String rest=varify(ctx,CMParms.getPastBit(line,2)).trim();
+			if(SK==null)
+			{
+				logError(ctx,"MPSHOP","RunTime","no shopkeeper: "+line);
+				return null;
+			}
+			if(verb.equals("CLEAR"))
+			{
+				SK.getShop().emptyAllShelves();
+				return null;
+			}
+			if(verb.equals("RESET"))
+			{
+				if(!SK.resetStock())
+					logError(ctx,"MPSHOP","RunTime","only a generic shopkeeper's stock can be put back: "+line);
+				return null;
+			}
+			if(verb.equals("BUDGET"))
+			{
+				if(!CMath.isNumber(rest))
+					logError(ctx,"MPSHOP","Syntax","MPSHOP shopkeeper BUDGET amount: "+line);
+				else
+					SK.setBudgetLeft(Math.round(CMath.s_double(rest)));
+				return null;
+			}
+			// the item, by a (quoted) name, and a count or price after it
+			final String[] lw=lastWord(rest);
+			final boolean counted=(lw[0].length()>0)&&(CMath.isNumber(lw[1])||lw[1].equalsIgnoreCase("ALL"));
+			String name=counted?lw[0]:rest;
+			while((name.length()>1)&&("'`\"".indexOf(name.charAt(0))>=0)&&(name.charAt(name.length()-1)==name.charAt(0)))
+				name=name.substring(1,name.length()-1).trim();
+			final String count=counted?lw[1].toUpperCase():"";
+			if(name.length()==0)
+			{
+				logError(ctx,"MPSHOP","Syntax","MPSHOP shopkeeper REMOVE|STOCK|PRICE item ...: "+line);
+				return null;
+			}
+			if(verb.equals("REMOVE"))
+			{
+				Shops.remove(SK,name,count.equals("ALL")?-1:(count.length()==0)?1:CMath.s_int(count));
+				return null;
+			}
+			if(verb.equals("STOCK")||verb.equals("PRICE"))
+			{
+				if(!counted)
+				{
+					logError(ctx,"MPSHOP","Syntax","MPSHOP shopkeeper "+verb+" item number: "+line);
+					return null;
+				}
+				if(verb.equals("PRICE"))
+				{
+					if(!Shops.setPrice(SK,name,CMath.s_int(count)))
+						logError(ctx,"MPSHOP","RunTime","not in stock: "+name);
+					return null;
+				}
+				Environmental source=getArgumentItem(name,ctx);
+				if(source==null)
+					source=CMLib.catalog().getCatalogItem(name);
+				if(!Shops.stock(SK,name,CMath.s_int(count),source))
+					logError(ctx,"MPSHOP","RunTime","not in stock, nor an item the script can find or the catalog has: "+name);
+				return null;
+			}
+			logError(ctx,"MPSHOP","Syntax","MPSHOP shopkeeper REMOVE|STOCK|PRICE|CLEAR|RESET|BUDGET ...: "+line);
 			return null;
 		}
 		case "MPSUPPRESSLAW": // W1: MPSUPPRESSLAW crime|ALL n [TICKS|HOURS|DAYS|WEEKS|MONTHS]|OFF: no warrants for it a while

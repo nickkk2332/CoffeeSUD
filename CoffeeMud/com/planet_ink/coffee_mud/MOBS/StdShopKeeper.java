@@ -203,6 +203,14 @@ public class StdShopKeeper extends StdMOB implements ShopKeeper
 		if (invResetTickDown <= 0)
 			invResetTickDown = Ability.TICKS_FOREVER;
 		else
+			resetStock();
+	}
+
+	@Override
+	public boolean resetStock()
+	{
+		if(!isGeneric())
+			return false;
 		{
 			final CoffeeShop shop=(this instanceof Librarian)?((Librarian)this).getBaseLibrary():this.getShop();
 			shop.emptyAllShelves();
@@ -222,6 +230,7 @@ public class StdShopKeeper extends StdMOB implements ShopKeeper
 				}
 			}
 		}
+		return true;
 	}
 
 	protected void doBudgetReset()
@@ -499,6 +508,13 @@ public class StdShopKeeper extends StdMOB implements ShopKeeper
 	public int ticksToBudgetReset()
 	{
 		return budgetTickDown;
+	}
+
+	@Override
+	public void setBudgetLeft(final long amount)
+	{
+		budgetRemaining = Math.max(0, amount); // W14
+		budgetMax = Math.max(budgetMax, budgetRemaining);
 	}
 
 	@Override

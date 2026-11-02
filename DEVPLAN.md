@@ -2329,6 +2329,16 @@ W18, W19, W20, W21, W22, W23, W28, W29
   the host, else the first shopkeeper in its room) and `DENOMNAME(CODE value
   [count])` (201). JavaScript calls them as `MONEYSTR$(...)` and the rest,
   as it calls every function. `core/Shops` holds the shop lookups W14 uses.
+- W14 done. `MPSHOP shopkeeper REMOVE item [n|ALL]` (one when no count),
+  `STOCK item n` (a shelf's count; an item not stocked, one the script can
+  find or the catalog's, is copied onto a shelf), `PRICE item amount|-1`,
+  `CLEAR`, `RESET` (the stock put back as built, as INVRESETRATE does;
+  generic shopkeepers) and `BUDGET amount` (what is left of the buying
+  budget) (133; the host, or the first shopkeeper in its room, when the
+  word names none). `SHOPPRICE(shopkeeper item [customer])` (202; $n
+  when no customer is named) and `SHOPBUDGET(shopkeeper)` (203; -1 for no
+  limit). ShopKeeper's new `setBudgetLeft` and `resetStock`. JavaScript's
+  cm.shop(): remove, stock, setPrice, clear, reset, budget and setBudget.
 
 #### 2j. Generators and random content (16)
 

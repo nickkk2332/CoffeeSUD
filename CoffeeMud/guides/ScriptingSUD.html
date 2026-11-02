@@ -649,6 +649,10 @@ glass though their name does not say so.</p>
 <p>Prices in words: a ferryman says <code>The crossing is $%MONEYSTR(36 CROWN LONG)%, friend.</code> (3 silver
 shillings); a fence quotes <code>$%PRICE('silver ring' $i)%</code>; <code>$%DENOMNAME(CROWN 240)%</code> is a gold crown.
 In JavaScript, <code>MONEYSTR$(36, 'CROWN', 'LONG')</code>.</p>
+<p>Shops that answer the story: while the mine is collapsed the smith's script runs <code>MPSHOP $i REMOVE "iron
+ingot" ALL</code>, and <code>MPSHOP $i RESET</code> when it is cleared. A fence offers a stolen ring back for
+<code>$%SHOPPRICE($i 'silver ring' $n)%</code> and a half more (<code>MPSHOP $i PRICE 'silver ring' 300</code>);
+<code>MPSHOP $i BUDGET 0</code> leaves a ruined merchant buying nothing.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
