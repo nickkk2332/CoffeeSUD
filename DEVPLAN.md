@@ -1895,8 +1895,9 @@ C18, C19, C20, C21, C22, C23, C25
   skips the brackets). useSkill counts rounds; the opener on round 1, then
   the first scheduled rule due (rotationPick), before C1's support; the
   random loop picks the +list by WEIGHT, skips scheduled skills and those
-  cooling down. The round of each use (on success) and a log of tries
-  (ONCE counts tries); both cleared when the fight ends.
+  cooling down. The round of each try (a cooldown starts with it, as a
+  fizzle spends it too) and a log of tries (ONCE counts tries); both
+  cleared when the fight ends.
 - C11 done. Behaviors/Pursue: a FLEE message from its victim (or one who
   fights it) starts a chase at CHANCE= (MASK=); each tick after DELAY= it
   walks into the next room if the quarry is there (an open exit), attacks

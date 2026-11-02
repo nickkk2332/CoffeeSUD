@@ -64,7 +64,7 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 	protected String			opener				= null;
 	/** C22: the rounds of this fight it has acted in */
 	protected int				round				= 0;
-	/** C22: the round each skill was last used in, this fight */
+	/** C22: the round each skill was last tried in, this fight */
 	protected final Map<String,Integer>	lastUsedRound	= new HashMap<String,Integer>();
 	/** C22: what it tried this fight, ID@round, for STAT BEHAVIORS and tests */
 	protected final List<String>	rotationLog		= new ArrayList<String>();
@@ -1026,7 +1026,10 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 			if(target==null)
 				return null;
 			if(rotation!=null)
+			{
 				rotationLog.add(tryA.ID()+"@"+round); // C22
+				lastUsedRound.put(tryA.ID(),Integer.valueOf(round)); // a cooldown starts with the try, as a fizzle spends it too
+			}
 			boolean skillUsed=tryA.invoke(mob,new XVector<String>(target.name()),null,false,0);
 			if((combatMode==COMBAT_ONLYALWAYS)&&(!skillUsed))
 			{
@@ -1036,8 +1039,6 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 			}
 			if(skillUsed)
 			{
-				if(rotation!=null)
-					lastUsedRound.put(tryA.ID(),Integer.valueOf(round)); // C22
 				if(mob.actions()>=CMProps.getSkillCombatActionCost(tryA.ID()))
 					mob.setActions(mob.actions()-CMProps.getSkillCombatActionCost(tryA.ID()));
 				skillUsed=true;
