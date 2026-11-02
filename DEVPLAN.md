@@ -1065,6 +1065,15 @@ JS17, JS18, JS19, JS20, JS23
   `YEAR_PROG` and `WEEKDAY_PROG` fire from the clock's day change (with
   ST4's DATECHANGE) for hosts with them in areas on that clock and the
   world's scripts; $g the new one, $0 the one before. ISWEEKDAY().
+- ST9 done but DUESLATE (no dues fall due in the engine) and the
+  government's EVENTSCRIPT (left for the F items). `DefaultClan.addMember`
+  runs the government's entry script when one becomes a member (not an
+  applicant), however it comes about (CLANACCEPT, CLANAPPLY, MPSETCLAN, a
+  GuildMaster), and `delMember` the exit script; the commands' own copies
+  are gone. `CLAN_PROG JOIN|LEAVE|PROMOTE|DEMOTE|EXILE|RELATION|CONQUER|
+  LOSEAREA|LEVEL|ALL [clan]` from those, CLANEXILE, `setClanRelations`,
+  the clan's level changes and Conquerable's win and loss, for hosts in
+  the member's room, the clan's recall room and the area.
 
 #### 2e. Quests (15)
 

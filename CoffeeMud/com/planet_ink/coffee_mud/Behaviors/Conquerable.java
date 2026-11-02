@@ -365,6 +365,8 @@ public class Conquerable extends Arrest
 		final Clan C=CMLib.clans().getClanAnyHost(holdingClan);
 		final String worship=getManadatoryWorshipID();
 		prevHoldingClan=holdingClan;
+		if(myArea!=null)
+			ScriptEvents.clan("LOSEAREA",holdingClan,null,myArea,myArea.Name(),myArea.Name()); // ST9
 		for(int v=0;v<clanItems.size();v++)
 		{
 			final Item I=clanItems.getFirst(v);
@@ -1134,6 +1136,8 @@ public class Conquerable extends Arrest
 
 		revoltDown=REVOLTFREQ;
 		holdingClan=clanID;
+		if(myArea!=null)
+			ScriptEvents.clan("CONQUER",clanID,null,myArea,myArea.Name(),myArea.Name()); // ST9
 		synchronized(clanControlPoints)
 		{
 			clanControlPoints.clear();

@@ -608,6 +608,7 @@ public class DefaultClan implements Clan
 				while(exp > nextLevelXP)
 				{
 					setClanLevel(getClanLevel()+1);
+					ScriptEvents.clan("LEVEL",clanID(),null,null,""+getClanLevel(),""); // ST9
 					bumpTrophyData(Trophy.MonthlyClanLevels, 1);
 					clanAnnounce(""+getGovernmentName()+" "+name()+" has attained clan level "+getClanLevel()+"!");
 					CMLib.achievements().possiblyBumpAchievement(getLoadResponsibleMember(), AchievementLibrary.Event.CLANLEVELSGAINED, 1, this);
@@ -622,6 +623,7 @@ public class DefaultClan implements Clan
 				while(exp < prevLevelXP)
 				{
 					setClanLevel(getClanLevel()-1);
+					ScriptEvents.clan("LEVEL",clanID(),null,null,""+getClanLevel(),""); // ST9
 					CMLib.achievements().possiblyBumpAchievement(getLoadResponsibleMember(), AchievementLibrary.Event.CLANLEVELSGAINED, -1, this);
 					clanAnnounce(""+getGovernmentName()+" "+name()+" has reverted to clan level "+getClanLevel()+"!");
 					update();
@@ -721,6 +723,9 @@ public class DefaultClan implements Clan
 	@Override
 	public void setClanRelations(final String id, final int rel, final long time)
 	{
+		final int was=getClanRelations(id);
+		if((was!=rel)&&CMProps.isState(CMProps.HostState.RUNNING)&&(rel>=0)&&(rel<Clan.REL_DESCS.length))
+			ScriptEvents.clan("RELATION",clanID(),null,null,Clan.REL_DESCS[rel],id); // ST9
 		relations.remove(id.toUpperCase());
 		final long[] i=new long[2];
 		i[0]=rel;
@@ -819,20 +824,91 @@ public class DefaultClan implements Clan
 	@Override
 	public void addMember(final MOB M, final int role)
 	{
+		final Pair<Clan,Integer> before=M.getClanRole(clanID());
+		final int oldRole=(before==null)?-1:before.second.intValue();
 		transientSize=-1;
 		M.setClan(clanID(),role);
 		CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), role);
 		updateClanPrivileges(M);
 		bumpTrophyData(Trophy.MonthlyNewMembers, 1);
+		// ST9: joining runs the government's entry script, however it comes about; CLAN_PROG
+		final boolean wasIn=(oldRole>=0)&&(!isApplicantRole(oldRole));
+		final boolean isIn=!isApplicantRole(role);
+		if(isIn&&(!wasIn))
+		{
+			runGovernmentScript(M,getGovernment().getEntryScript(),"CLANENTRY");
+			ScriptEvents.clan("JOIN",clanID(),M,null,getRoleName(role,true,false),"");
+		}
+		else
+		if(isIn&&(oldRole!=role))
+			ScriptEvents.clan((rankOf(role)<rankOf(oldRole))?"PROMOTE":"DEMOTE",clanID(),M,null,getRoleName(role,true,false),getRoleName(oldRole,true,false));
+	}
+
+	/**
+	 * Whether a role is an applicant's, not yet a member's (ST9).
+	 * @param role the role
+	 * @return true if so
+	 */
+	protected boolean isApplicantRole(final int role)
+	{
+		final ClanGovernment G=getGovernment();
+		return (G!=null)&&(role==G.getAutoRole())&&(G.getAutoRole()!=G.getAcceptPos());
+	}
+
+	/**
+	 * A role's rank: the lower, the higher (ST9).
+	 * @param role the role
+	 * @return its rank
+	 */
+	protected int rankOf(final int role)
+	{
+		final ClanGovernment G=getGovernment();
+		if(G!=null)
+		{
+			for(final ClanPosition P : G.getPositions())
+			{
+				if(P.getRoleID()==role)
+					return P.getRank();
+			}
+		}
+		return role;
+	}
+
+	/**
+	 * Runs a government's entry or exit script for a member, as CLANACCEPT
+	 * and CLANRESIGN did (ST9: now for every way in and out).
+	 * @param M the member
+	 * @param script the script
+	 * @param word CLANENTRY or CLANEXIT, the message it hears
+	 */
+	protected void runGovernmentScript(final MOB M, final String script, final String word)
+	{
+		if((script==null)||(script.trim().length()==0)||(M==null))
+			return;
+		final ScriptingEngine S=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
+		S.setSavable(false);
+		S.setVarScope("*");
+		S.setScript(script);
+		final CMMsg msg2=CMClass.getMsg(M,M,null,CMMsg.MSG_OK_VISUAL,null,null,word);
+		S.executeMsg(M, msg2);
+		S.dequeResponses(null);
+		S.tick(M,Tickable.TICKID_MOB);
 	}
 
 	@Override
 	public void delMember(final MOB M)
 	{
+		// ST9: leaving runs the government's exit script, however it comes about; CLAN_PROG
+		final Pair<Clan,Integer> before=M.getClanRole(clanID());
+		final boolean wasIn=(before!=null)&&(!isApplicantRole(before.second.intValue()));
+		if(wasIn)
+			runGovernmentScript(M,getGovernment().getExitScript(),"CLANEXIT");
 		transientSize=-1;
 		CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), -1);
 		M.setClan(clanID(),-1);
 		updateClanPrivileges(M);
+		if(wasIn)
+			ScriptEvents.clan("LEAVE",clanID(),M,null,"","");
 	}
 
 	@Override

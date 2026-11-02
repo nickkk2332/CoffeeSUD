@@ -112,17 +112,7 @@ public class ClanApply extends StdCommand
 							}
 							else
 							{
-								if(C.getGovernment().getEntryScript().trim().length()>0)
-								{
-									final ScriptingEngine S=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
-									S.setSavable(false);
-									S.setVarScope("*");
-									S.setScript(C.getGovernment().getEntryScript());
-									final CMMsg msg2=CMClass.getMsg(mob,mob,null,CMMsg.MSG_OK_VISUAL,null,null,L("CLANENTRY"));
-									S.executeMsg(mob, msg2);
-									S.dequeResponses(null);
-									S.tick(mob,Tickable.TICKID_MOB);
-								}
+								// ST9: addMember runs the entry script
 								CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CLANMEMBERS, 1, C);
 								CMLib.clans().clanAnnounce(mob,L("The @x1 @x2 has a new member: @x3",C.getGovernmentName(),C.clanID(),mob.Name()));
 								mob.tell(L("You have successfully joined @x1.  Use CLANDETAILS for information.",C.clanID()));

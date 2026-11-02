@@ -975,6 +975,67 @@ public final class ScriptEvents
 			calendar(WEEKDAY_PROG, C, day, (oldWeekday == null) ? "" : oldWeekday, new String[] { day });
 	}
 
+	/** CLAN_PROG's code */
+	public static final int	CLAN_PROG	= code("CLAN_PROG");
+
+	/**
+	 * ST9: something happened to a clan: CLAN_PROG JOIN|LEAVE|PROMOTE|DEMOTE|
+	 * EXILE|RELATION|CONQUER|LOSEAREA|LEVEL|ALL [clan|ALL] fires for hosts
+	 * with the trigger in the member's room, the clan's recall room, or the
+	 * area won or lost, and the world's scripts.  $n is the member (or a
+	 * stand-in named for the clan), $t the area for CONQUER and LOSEAREA, $g
+	 * the new rank, relation or level, $0 the event, $1 the clan, $2 the
+	 * detail, $3 the other clan or the area.
+	 * @param kind the event
+	 * @param clanID the clan
+	 * @param member the member, or null
+	 * @param area the area won or lost, or null
+	 * @param detail the new rank, relation or level
+	 * @param other the other clan's or the area's name, or ""
+	 */
+	public static void clan(final String kind, final String clanID, final MOB member, final Area area, final String detail, final String other)
+	{
+		if((clanID == null) || (!isUsed(CLAN_PROG)))
+			return;
+		final com.planet_ink.coffee_mud.Common.interfaces.Clan C = CMLib.clans().getClanAnyHost(clanID);
+		final Room recall = (C == null) ? null : CMLib.map().getRoom(C.getRecall());
+		final Room memberRoom = (member == null) ? null : member.location();
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		for(final PhysicalAgent P : registered(CLAN_PROG))
+		{
+			final Room PR = (P instanceof Area) ? null : CMLib.map().roomLocation(P);
+			if((P == WorldHost.host())
+			|| ((PR != null) && ((PR == memberRoom) || (PR == recall)))
+			|| ((area != null) && ((P == area) || ((PR != null) && (PR.getArea() == area)))))
+				hosts.add(P);
+		}
+		if(hosts.isEmpty())
+			return;
+		final String name = (C == null) ? clanID : C.clanID();
+		final String d = (detail == null) ? "" : detail;
+		final MOB src = (member != null) ? member : standIn(name);
+		fire(hosts, CLAN_PROG, src, area, d, new Object[] { kind, name, d, (other == null) ? "" : other }, "CCr", t -> clanMatches(t, kind, C, name));
+	}
+
+	/**
+	 * Whether a CLAN_PROG trigger line fits a clan event.
+	 * @param t the trigger line: CLAN_PROG, the event, the clan
+	 * @param kind the event
+	 * @param C the clan, or null
+	 * @param name its ID
+	 * @return true if it fits
+	 */
+	public static boolean clanMatches(final String[] t, final String kind, final com.planet_ink.coffee_mud.Common.interfaces.Clan C, final String name)
+	{
+		if(t.length < 2)
+			return false;
+		if((!t[1].equals("ALL")) && (!t[1].equals("ANY")) && (!t[1].equals(kind)))
+			return false;
+		final String which = (t.length > 2) ? t[2].trim() : "";
+		return (which.length() == 0) || which.equalsIgnoreCase("ALL") || which.equalsIgnoreCase(name)
+			|| ((C != null) && which.equalsIgnoreCase(C.getName()));
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

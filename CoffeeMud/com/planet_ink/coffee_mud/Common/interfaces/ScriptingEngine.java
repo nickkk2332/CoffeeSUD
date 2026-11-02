@@ -504,6 +504,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MONTH_PROG", // 71
 		"YEAR_PROG", // 72
 		"WEEKDAY_PROG", // 73
+		"CLAN_PROG", // 74
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */

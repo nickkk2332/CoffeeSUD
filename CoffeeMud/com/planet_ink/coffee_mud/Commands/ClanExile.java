@@ -111,20 +111,8 @@ public class ClanExile extends StdCommand
 					}
 					if(skipChecks||CMLib.clans().goForward(mob,C,commands,Clan.Function.EXILE,true))
 					{
-						if(C.getGovernment().getExitScript().trim().length()>0)
-						{
-							final Pair<Clan,Integer> curClanRole=M.getClanRole(C.clanID());
-							if(curClanRole!=null)
-								M.setClan(C.clanID(), curClanRole.second.intValue());
-							final ScriptingEngine S=(ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
-							S.setSavable(false);
-							S.setVarScope("*");
-							S.setScript(C.getGovernment().getExitScript());
-							final CMMsg msg2=CMClass.getMsg(M,M,null,CMMsg.MSG_OK_VISUAL,null,null,L("CLANEXIT"));
-							S.executeMsg(M, msg2);
-							S.dequeResponses(null);
-							S.tick(M,Tickable.TICKID_MOB);
-						}
+						// ST9: delMember runs the exit script
+						ScriptEvents.clan("EXILE",C.clanID(),M,null,"",mob.Name());
 						CMLib.achievements().possiblyBumpAchievement(M, AchievementLibrary.Event.CLANMEMBERS, -1, C);
 						CMLib.clans().clanAnnounce(mob,L("Member exiled from @x1 @x2: @x3",C.getGovernmentName(),C.name(),M.Name()));
 						mob.tell(L("@x1 has been exiled from @x2 '@x3'.",M.Name(),C.getGovernmentName(),C.clanID()));
