@@ -3,6 +3,10 @@
 // * wildcards and MASK=.
 FIXFILE = "sc5-msg";
 var R = M.location();
+// clear weather: rain or snow would weaken the fireball below
+var CL = R.getArea().getClimateObj();
+CL.setNextWeatherType(CM.Common.interfaces.Climate.WEATHER_CLEAR);
+CL.forceWeatherTick(R.getArea());
 ["FIXSC5A", "FIXSC5B", "FIXSC5C", "FIXSC5D", "FIXSC5E", "FIXSC5F"].forEach(clearVar);
 var V = newMob("GenMob", R); V.setName("Fixsc5victim");
 var O = newMob("GenMob", R); O.setName("Fixsc5other");
