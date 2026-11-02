@@ -1989,6 +1989,16 @@ C18, C19, C20, C21, C22, C23, C25
   ENCOUNTER LIST/SHOW/ADD/DEL/ROLL/CHECK/RESET (Commands/EncounterCmd).
   MPMLOAD ENCOUNTER table ($b the leader), quest LOAD ENCOUNTER table
   (its mobs the quest's), and catalog:name wherever CATALOG name goes.
+- C20 done. Behaviors/WaveSpawner (rooms): WAVEn= "name*dice+..." (catalog:
+  optional; Encounters.make) or encounter:table (Encounters.roll); NEXT=
+  CLEAR or TICKS=n; START=ENTER (the next tick after a party ENTER) or CALL
+  (MPWAVE START, 125: setStat WAVECOMMAND START/NEXT/STOP/RESET); LOCKEXITS
+  refuses the party's LEAVE and FLEE while it runs; win: REWARD= to the
+  winner, ONWIN= FUNCTION_PROG of the room, ARENAWIN_PROG (107), back to
+  IDLE after RESETAFTER=; no party left in the room: the wave leaves,
+  ARENALOSE_PROG (108); ONLOSE=SPARRING(:room) adds Prop_SparringRoom while
+  it runs. WAVE_PROG n (106) on the room's and its NPCs' scripts. Run
+  state STATE/WAVE/T/R; restored, the wave is the room's mobs tagged WAVE.
 
 #### 2h. Items, properties and puzzles (23)
 

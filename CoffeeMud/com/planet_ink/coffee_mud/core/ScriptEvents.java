@@ -487,6 +487,79 @@ public final class ScriptEvents
 	/** N9: TALK_PROG's code */
 	public static final int	TALK_PROG	= code("TALK_PROG");
 
+	/** C20: WAVE_PROG's code */
+	public static final int	WAVE_PROG		= code("WAVE_PROG");
+	/** C20: ARENAWIN_PROG's code */
+	public static final int	ARENAWIN_PROG	= code("ARENAWIN_PROG");
+	/** C20: ARENALOSE_PROG's code */
+	public static final int	ARENALOSE_PROG	= code("ARENALOSE_PROG");
+
+	/** C20: an arena event on the room's scripts and its NPCs' */
+	private static void arena(final Room R, final int code, final MOB who, final String n)
+	{
+		if((R == null) || (!isUsed(code)))
+			return;
+		final MOB src = (who != null) ? who : CMLib.map().getFactoryMOB(R);
+		try
+		{
+			final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+			hosts.add(R);
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M != null) && (!GameDifficulty.playerSide(M)))
+					hosts.add(M);
+			}
+			for(final PhysicalAgent H : hosts)
+			{
+				for(final ScriptingEngine S : engines(H))
+				{
+					S.eventCheck(H, code, src, H, null, n, new Object[] { n }, "Cr", t -> {
+						final String w = (t.length < 2) ? "" : t[1].trim();
+						return (w.length() == 0) || w.equalsIgnoreCase("ALL") || w.equals(n);
+					});
+				}
+			}
+		}
+		finally
+		{
+			if(who == null)
+				src.destroy();
+		}
+	}
+
+	/**
+	 * C20: a wave of an arena (WaveSpawner) came: WAVE_PROG [n] runs on the
+	 * room's scripts and its NPCs', $n one of the party, $0 the wave.
+	 * @param R the arena
+	 * @param wave the wave, from 1
+	 * @param who one of the party, or null
+	 */
+	public static void wave(final Room R, final int wave, final MOB who)
+	{
+		arena(R, WAVE_PROG, who, "" + wave);
+	}
+
+	/**
+	 * C20: the party beat an arena's last wave: ARENAWIN_PROG runs.
+	 * @param R the arena
+	 * @param who the winner, or null
+	 */
+	public static void arenaWin(final Room R, final MOB who)
+	{
+		arena(R, ARENAWIN_PROG, who, "");
+	}
+
+	/**
+	 * C20: the party left or fell in an arena: ARENALOSE_PROG runs.
+	 * @param R the arena
+	 * @param who who started it, or null
+	 */
+	public static void arenaLose(final Room R, final MOB who)
+	{
+		arena(R, ARENALOSE_PROG, who, "");
+	}
+
 	/** C3: PHASE_PROG's code */
 	public static final int	PHASE_PROG	= code("PHASE_PROG");
 

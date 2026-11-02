@@ -503,6 +503,10 @@ EMOTE "An owl hoots somewhere above."
 is above level 8; once, a lost traveller whose FUNCTION_PROG starts an escort. <code>ENCOUNTER ADD</code>,
 <code>SHOW</code> and <code>ROLL</code> build and try a table; <code>MPMLOAD ENCOUNTER darkwood</code> and a quest's
 <code>LOAD ENCOUNTER darkwood</code> roll it too.</p>
+<p>Arenas: <code>WaveSpawner WAVE1="catalog:goblin*3" WAVE2="goblin*2+goblin archer*2" WAVE3="encounter:goblin_boss"
+LOCKEXITS=true REWARD="a laurel" ONLOSE=SPARRING:Arena#2 RESETAFTER=100</code> on a gladiator pit: the gate shuts when
+the party walks in, the arena master's <code>WAVE_PROG</code> announces each wave, clearing them opens the gate and
+gives a laurel (<code>ARENAWIN_PROG</code>), and a defeated player wakes in the infirmary while the pit resets.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

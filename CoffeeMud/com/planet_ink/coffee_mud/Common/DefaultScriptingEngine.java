@@ -16339,6 +16339,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
 			return null;
 		}
+		case "MPWAVE": // C20: MPWAVE START|NEXT|STOP|RESET: the WaveSpawner of the room
+		{
+			final String w=varify(ctx,CMParms.getCleanBit(line,1)).trim().toUpperCase();
+			final Room R=(ctx.scripted instanceof Room)?(Room)ctx.scripted:lastKnownLocation;
+			final Behavior B=(R==null)?null:R.fetchBehavior("WaveSpawner");
+			if((B==null)||(w.length()==0))
+			{
+				logError(ctx,"MPWAVE","RunTime","MPWAVE START|NEXT|STOP|RESET, in a room with WaveSpawner: "+line);
+				return null;
+			}
+			B.setStat("WAVECOMMAND",w);
+			return null;
+		}
 		case "MPALARMCANCEL": // C5: MPALARMCANCEL name: a named alarm (MPALARM NAME=) goes, from all the host's scripts
 		{
 			final String name=varify(ctx,CMParms.getCleanBit(line,1)).trim();

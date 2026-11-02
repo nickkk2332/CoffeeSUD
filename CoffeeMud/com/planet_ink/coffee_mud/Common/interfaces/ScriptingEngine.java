@@ -556,6 +556,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"YIELD_PROG", // 103
 		"DEFEAT_PROG", // 104
 		"PHASE_PROG", // 105
+		"WAVE_PROG", // 106
+		"ARENAWIN_PROG", // 107
+		"ARENALOSE_PROG", // 108
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -879,6 +882,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPTHREAT", // 122
 		"MPALARMCANCEL", // 123
 		"MPTELEGRAPH", // 124
+		"MPWAVE", // 125
 	};
 
 	/**

@@ -293,8 +293,11 @@ public final class Encounters
 		return E;
 	}
 
-	/** the name of NAME*DICE */
-	protected static String nameOf(final String part)
+	/**
+	 * @param part NAME*DICE
+	 * @return the name
+	 */
+	public static String nameOf(final String part)
 	{
 		final int x = part.lastIndexOf('*');
 		return ((x < 0) ? part : part.substring(0, x)).trim();
@@ -343,8 +346,13 @@ public final class Encounters
 		return I;
 	}
 
-	/** a copy: a catalog one counted (null past its cap), or a new one of the class */
-	protected static Physical make(final String name, final boolean mob)
+	/**
+	 * A copy: a catalog one counted (null past its cap), or a new one of the class.
+	 * @param name the catalog name or class
+	 * @param mob true for a mob, false for an item
+	 * @return the copy, or null
+	 */
+	public static Physical make(final String name, final boolean mob)
 	{
 		final Physical P = ScriptLib.catalogEntry(name, mob);
 		if(P != null)
@@ -352,6 +360,62 @@ public final class Encounters
 		if(mob)
 			return CMClass.getMOB(name);
 		return CMClass.getItem(name);
+	}
+
+	/**
+	 * C20: mobs from a spec, in a room: name*dice joined with + (from the
+	 * catalog, catalog: being optional, or a mob class), or encounter:table,
+	 * a roll of that table.
+	 * @param spec the spec
+	 * @param R the room
+	 * @param foe one of the party, for an encounter's masks, or null
+	 * @return the mobs
+	 */
+	public static List<MOB> spawnSpec(final String spec, final Room R, final MOB foe)
+	{
+		final List<MOB> made = new ArrayList<MOB>();
+		for(final String raw : spec.split("\\+"))
+		{
+			String part = raw.trim();
+			if(part.length() == 0)
+				continue;
+			if(part.toLowerCase().startsWith("encounter:"))
+			{
+				final Table T = table(part.substring(10).trim());
+				if(T == null)
+				{
+					Log.errOut("Encounters", "no encounter table " + part.substring(10).trim());
+					continue;
+				}
+				for(final PhysicalAgent P : roll(T, R, foe, R, 0).spawned)
+				{
+					if(P instanceof MOB)
+						made.add((MOB)P);
+				}
+				continue;
+			}
+			if(part.toLowerCase().startsWith("catalog:"))
+				part = part.substring(8).trim();
+			final int n = countOf(part);
+			final String name = nameOf(part);
+			for(int i = 0; i < n; i++)
+			{
+				final Physical P = make(name, true);
+				if(!(P instanceof MOB))
+				{
+					Log.errOut("Encounters", "no mob " + name + " in the catalog or the classes");
+					break;
+				}
+				final MOB M = (MOB)P;
+				M.setStartRoom(null);
+				M.basePhyStats().setRejuv(PhyStats.NO_REJUV);
+				M.recoverPhyStats();
+				M.text();
+				M.bringToLife(R, true);
+				made.add(M);
+			}
+		}
+		return made;
 	}
 
 	/** the ONCE and COOLDOWN state of the tables, in the game's variables */
