@@ -288,6 +288,12 @@ OFF</code> takes it away. When it comes, a <code>QUESTTIMEOUT_PROG</code> in the
 script the quest gave them runs (the bell sinks back into the mud, say, and
 <code>MPQUESTFAIL $n bell too late</code>); without one the quest fails for them,
 EXPIRED.</p>
+<p>Whose a quest is: <code>SET SHARED PROFILE</code> makes the bell every character's
+of the profile, so once Mira has won it the chapel treats her alt Tobin as the
+bell's saviour too (QUESTWINNER, QUESTSTATUS, the masks, REPEATABLE), and Tobin
+reads the quest's journal. <code>SET SHARED PARTY</code> gives a wolf bounty to the
+party members present when one accepts, and the turn-in's <code>MPQUESTWIN $n
+wolves REWARD</code> pays them all.</p>
 <pre>
 set name bell
 set display The Drowned Bell

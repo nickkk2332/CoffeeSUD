@@ -197,7 +197,7 @@ public final class QuestRecords
 	public static String status(final String quest, final MOB mob, final String who)
 	{
 		final Quest Q = CMLib.quests().fetchQuest(quest);
-		final Record R = get((Q != null) ? Q.name() : quest, who);
+		final Record R = answering((Q != null) ? Q.name() : quest, who); // Q12
 		if((R != null) && (R.status.length() > 0))
 			return R.status;
 		if((Q != null) && (mob != null) && QuestMarkers.accepted(mob, Q))
@@ -214,8 +214,40 @@ public final class QuestRecords
 	public static String outcome(final String quest, final String who)
 	{
 		final Quest Q = CMLib.quests().fetchQuest(quest);
-		final Record R = get((Q != null) ? Q.name() : quest, who);
+		final Record R = answering((Q != null) ? Q.name() : quest, who); // Q12
 		return (R == null) ? "" : R.outcome;
+	}
+
+	/**
+	 * Q12: the record that answers for a character: theirs; for a SHARED
+	 * PROFILE quest, a win of any of the profile's characters, else theirs,
+	 * else the profile's latest.
+	 * @param quest the quest's name
+	 * @param who the character's name
+	 * @return the record, or null
+	 */
+	private static Record answering(final String quest, final String who)
+	{
+		final Record own = get(quest, who);
+		if(((own != null) && own.status.equals(WON)) || (!QuestSharing.isProfile(quest)))
+			return own;
+		Record won = null;
+		Record latest = null;
+		for(final String n : QuestSharing.profileNames(who))
+		{
+			final Record R = get(quest, n);
+			if((R == null) || (R.status.length() == 0))
+				continue;
+			if(R.status.equals(WON) && ((won == null) || (R.when > won.when)))
+				won = R;
+			if((latest == null) || (R.when > latest.when))
+				latest = R;
+		}
+		if(won != null)
+			return won;
+		if((own != null) && (own.status.length() > 0))
+			return own;
+		return (latest != null) ? latest : own;
 	}
 
 	/**
@@ -227,10 +259,17 @@ public final class QuestRecords
 	public static int wins(final String quest, final String who)
 	{
 		final Quest Q = CMLib.quests().fetchQuest(quest);
-		final Record R = get((Q != null) ? Q.name() : quest, who);
-		if((R != null) && (R.wins > 0))
-			return R.wins;
-		return ((Q != null) && Q.wasWinner(who)) ? 1 : 0;
+		int wins = 0;
+		for(final String n : QuestSharing.creditNames(quest, who)) // Q12: the profile's, for SHARED PROFILE
+		{
+			final Record R = get((Q != null) ? Q.name() : quest, n);
+			if((R != null) && (R.wins > 0))
+				wins += R.wins;
+			else
+			if((Q != null) && (Q.getWinners().get(n) != null))
+				wins++;
+		}
+		return wins;
 	}
 
 	/**
@@ -242,11 +281,15 @@ public final class QuestRecords
 	public static long lastWin(final String quest, final String who)
 	{
 		final Quest Q = CMLib.quests().fetchQuest(quest);
-		final Record R = get((Q != null) ? Q.name() : quest, who);
-		if((R != null) && (R.wins > 0))
-			return R.lastWin;
-		final Long L = (Q != null) ? Q.whenLastWon(who) : null;
-		return (L == null) ? -1 : L.longValue();
+		long last = -1;
+		for(final String n : QuestSharing.creditNames(quest, who)) // Q12: the profile's, for SHARED PROFILE
+		{
+			final Record R = get((Q != null) ? Q.name() : quest, n);
+			final Long L = (Q != null) ? Q.getWinners().get(n) : null;
+			final long t = ((R != null) && (R.wins > 0)) ? R.lastWin : (L == null) ? -1 : L.longValue();
+			last = Math.max(last, t);
+		}
+		return last;
 	}
 
 	/**
@@ -293,6 +336,7 @@ public final class QuestRecords
 	{
 		if((Q == null) || (mob == null))
 			return;
+		final List<MOB> party = QuestSharing.partyOn(Q, mob); // Q12: SET SHARED PARTY: theirs too
 		final String why = ((reason == null) || (reason.trim().length() == 0)) ? status : reason.trim();
 		ended(Q.name(), mob.Name(), status, why);
 		ScriptEvents.questFail(Q, mob, why);
@@ -306,6 +350,13 @@ public final class QuestRecords
 				mob.delScript(S);
 				S.endQuest(mob, mob, Q.name());
 			}
+		}
+		if(!party.isEmpty())
+		{
+			QuestSharing.spread(() -> {
+				for(final MOB P : party)
+					fail(Q, P, status, reason);
+			});
 		}
 	}
 

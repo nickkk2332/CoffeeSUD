@@ -514,6 +514,24 @@ public class Questwins extends StdCommand
 				&&(SE.defaultQuestName().equalsIgnoreCase(Q.name())))
 					foundS=SE;
 			}
+			MOB carrier=mob; // Q12: a SET SHARED PROFILE quest another of the profile's characters carries
+			if((foundS==null)&&QuestSharing.isProfile(Q.name()))
+			{
+				for(final MOB P : QuestSharing.profileMates(mob))
+				{
+					for(final Enumeration<ScriptingEngine> e=P.scripts();e.hasMoreElements()&&(foundS==null);)
+					{
+						final ScriptingEngine SE=e.nextElement();
+						if((SE!=null)&&(SE.defaultQuestName().length()>0)&&SE.defaultQuestName().equalsIgnoreCase(Q.name()))
+						{
+							foundS=SE;
+							carrier=P;
+						}
+					}
+					if(foundS!=null)
+						break;
+				}
+			}
 			if(foundS==null)
 			{
 				if(admin)
@@ -538,6 +556,8 @@ public class Questwins extends StdCommand
 			String name=Q.displayName().trim().length()>0?Q.displayName():Q.name();
 			if(!Q.name().equals(name))
 				name+=" ("+Q.name()+")";
+			if(carrier!=mob) // Q12
+				name+=" ("+L("carried by @x1",carrier.Name())+")";
 			mob.tell(L("^HQuest Information: ^w@x1^N",name));
 			String instructions = Q.instructions();
 			if((instructions==null)||(instructions.length()==0))
@@ -569,7 +589,7 @@ public class Questwins extends StdCommand
 				mob.tell(L("\n\r^yReward: ^w@x1^N",QuestRewards.describe(Q.getStat("REWARDS"))));
 			if(((timeRemaining==null)||(timeRemaining.length()==0))&&(ticksLeftOf(mob,Q)>=0)) // Q3
 				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",QuestJournal.timeLeft(ticksLeftOf(mob,Q))));
-			final List<String> objectives=objectiveLines(mob,Q);
+			final List<String> objectives=objectiveLines(carrier,Q);
 			if(objectives.size()>0)
 				mob.tell(L("\n\r^yObjectives:^N\n\r")+"  "+String.join("^N\n\r  ",objectives)+"^N");
 			final List<String> history=QuestJournal.entries(mob,Q.name(),50);

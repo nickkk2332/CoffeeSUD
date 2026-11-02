@@ -14333,12 +14333,23 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							final CMMsg winMsg=CMClass.getMsg(M,null,null,CMMsg.NO_EFFECT,null,CMMsg.TYP_WINQUEST,Q.name(),CMMsg.NO_EFFECT,null);
 							CMLib.map().sendGlobalMessage(M, CMMsg.TYP_WINQUEST, winMsg);
 						}
+						final List<MOB> party=(M!=null)?QuestSharing.partyOn(Q,M):new ArrayList<MOB>(); // Q12: SET SHARED PARTY
 						Q.declareWinner(whoName);
 						if(outcome!=null) // Q4
 							QuestRecords.setOutcome(Q.name(),whoName,outcome);
 						if(reward&&(M!=null)) // Q10
 							QuestRewards.give(M,"QUEST:"+Q.name(),Q.getStat("REWARDS"));
 						CMLib.players().bumpPrideStat(M,PrideStats.PrideStat.QUESTS_COMPLETED, 1);
+						for(final MOB P : party) // Q12: the party members on it win with them
+						{
+							CMLib.achievements().possiblyBumpAchievement(P, AchievementLibrary.Event.QUESTOR, 1, Q);
+							Q.declareWinner(P.Name());
+							if(outcome!=null)
+								QuestRecords.setOutcome(Q.name(),P.Name(),outcome);
+							if(reward)
+								QuestRewards.give(P,"QUEST:"+Q.name(),Q.getStat("REWARDS"));
+							CMLib.players().bumpPrideStat(P,PrideStats.PrideStat.QUESTS_COMPLETED, 1);
+						}
 					}
 					else
 						logError(ctx,"MPQUESTWIN","Unknown","Quest: "+s);

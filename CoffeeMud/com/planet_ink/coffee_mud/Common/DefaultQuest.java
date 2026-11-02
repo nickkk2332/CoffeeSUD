@@ -103,6 +103,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected int maxWins = 0;
 	/** Q10: SET REWARDS: what a win gives (MPQUESTWIN ... REWARD), shown with offers */
 	protected String rewards = "";
+	/** Q12: SET SHARED: "" (NONE), PARTY or PROFILE */
+	protected String shared = "";
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -294,6 +296,13 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if(qs!=null)
 				QuestJournal.applyStep(mob,name(),qs.stepObjectives,qs.stepJournal);
 			ScriptEvents.quest(this,"ACCEPT",mob,"");
+			// Q12: SET SHARED PARTY: the party members here take it on with them
+			final List<MOB> party=QuestSharing.partyHere(this,mob);
+			if(party.size()>0)
+				QuestSharing.spread(()->{
+					for(final MOB member : party)
+						acceptQuest(member);
+				});
 		}
 	}
 
@@ -545,6 +554,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		repeatTicks=-1;
 		maxWins=0;
 		rewards=""; // Q10
+		shared=""; // Q12
 		name="";
 		author="";
 		displayName="";
@@ -758,6 +768,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				else
 				if(var.equals("REWARDS")) // Q10
 					rewards=CMParms.combine(parsedLine,2).trim();
+				else
+				if(var.equals("SHARED")) // Q12
+				{
+					final String how=CMParms.combine(parsedLine,2).trim().toUpperCase();
+					shared=(how.equals(QuestSharing.PARTY)||how.equals(QuestSharing.PROFILE))?how:"";
+				}
 				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
@@ -3612,7 +3628,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					}
 					else
 					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")
-					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")) // JS18, Q1, Q5, Q10: read when the script was set
+					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")||cmd.equals("SHARED")) // JS18, Q1, Q5, Q10, Q12: read when the script was set
 					{
 					}
 					else
@@ -5798,6 +5814,17 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			return null;
 		final Quest Q=getMainQuestObject();
 		final Map<String,Long> V=Q.getWinners();
+		if(QuestSharing.PROFILE.equals(shared)) // Q12: SET SHARED PROFILE: a win of any character of the profile
+		{
+			Long last=null;
+			for(final String n : QuestSharing.profileNames(name))
+			{
+				final Long L=V.get(n);
+				if((L!=null)&&((last==null)||(L.longValue()>last.longValue())))
+					last=L;
+			}
+			return last;
+		}
 		return V.get(name);
 	}
 
@@ -6445,6 +6472,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			how.add("REPEATABLE "+repeatable);
 		if(maxWins>0)
 			how.add("MAXWINS "+maxWins);
+		if(shared.length()>0) // Q12
+			how.add("SHARED "+shared);
 		if(how.size()>0)
 			str.append("Settings: ").append(String.join(", ",how)).append("\n\r");
 		if(qs!=null)
@@ -7189,6 +7218,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				return ""+maxWins;
 			if(code.equals("REWARDS")) // Q10
 				return rewards;
+			if(code.equals("SHARED")) // Q12
+				return (shared.length()>0)?shared:QuestSharing.NONE;
 			if((code.equalsIgnoreCase("REMAINING"))&&(running()))
 				return ""+ticksRemaining;
 			if(questState.vars.containsKey(code) && (!questState.isStat(code)))

@@ -70,6 +70,8 @@ public final class QuestJournal
 		public String	quest	= "";
 		public String	date	= "";
 		public String	text	= "";
+		/** Q12: when, on the game clock */
+		public long		when	= 0;
 	}
 
 	/** a character's journal */
@@ -205,6 +207,7 @@ public final class QuestJournal
 					E.quest = str(j, "q");
 					E.date = str(j, "d");
 					E.text = str(j, "x");
+					E.when = num(j, "w");
 					log.entries.add(E);
 				}
 			}
@@ -268,6 +271,7 @@ public final class QuestJournal
 			j.put("q", E.quest);
 			j.put("d", E.date);
 			j.put("x", E.text);
+			j.put("w", Long.valueOf(E.when));
 			es[i] = j;
 		}
 		root.put("e", es);
@@ -409,6 +413,7 @@ public final class QuestJournal
 		final TimeClock C = CMLib.time().localClock(mob);
 		E.date = (C == null) ? "" : C.getShortTimeDescription();
 		E.text = text.trim();
+		E.when = GameTime.now();
 		log.entries.add(E);
 		write(mob, log);
 		if(E.quest.length() > 0)
@@ -547,13 +552,31 @@ public final class QuestJournal
 	public static List<String> entries(final MOB mob, final String quest, final int most)
 	{
 		final List<String> lines = new ArrayList<String>();
-		final List<Entry> L = read(mob).entries;
+		final List<Entry> L = new ArrayList<Entry>(read(mob).entries);
+		final Map<Entry, String> whose = new IdentityHashMap<Entry, String>();
+		if((quest != null) && QuestSharing.isProfile(quest)) // Q12: SET SHARED PROFILE: the profile's other characters' too
+		{
+			for(final MOB P : QuestSharing.profileMates(mob))
+			{
+				for(final Entry E : read(P).entries)
+				{
+					if(E.quest.equalsIgnoreCase(quest))
+					{
+						L.add(E);
+						whose.put(E, P.Name());
+					}
+				}
+			}
+			if(!whose.isEmpty())
+				Collections.sort(L, (a, b) -> Long.compare(a.when, b.when));
+		}
 		for(final Entry E : L)
 		{
 			if((quest != null) && (!E.quest.equalsIgnoreCase(quest)))
 				continue;
 			lines.add(((E.date.length() > 0) ? (E.date + ": ") : "")
-				+ (((quest == null) && (E.quest.length() > 0)) ? ("[" + shown(E.quest) + "] ") : "") + E.text);
+				+ (((quest == null) && (E.quest.length() > 0)) ? ("[" + shown(E.quest) + "] ") : "")
+				+ (whose.containsKey(E) ? ("(" + whose.get(E) + ") ") : "") + E.text);
 		}
 		while(lines.size() > most)
 			lines.remove(0);

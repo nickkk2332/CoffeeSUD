@@ -1554,6 +1554,17 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   `ScriptEvents.questTimeout`), busy or not; with none, the quest fails for
   them, EXPIRED (`QuestRecords.fail`). QUESTS and `QUESTS name` show the
   time left, theirs or the quest's duration, the sooner.
+- Q12 done. `SET SHARED NONE|PARTY|PROFILE` (`core/QuestSharing`).
+  PARTY: `acceptQuest` hands the quest on to the party members in the room
+  (the players' characters of the group), each through DO_ACCEPT and the
+  step's journal; MPQUESTWIN (with OUTCOME and REWARD) and MPQUESTFAIL
+  (`QuestRecords.fail`) go to every party member on it. PROFILE:
+  `whenLastWon`, and so QUESTWINNER and the QUESTWIN masks, and Q4's and
+  Q5's records (QUESTSTATUS, QUESTOUTCOME, QUESTWINS, QUESTWINAGE, the
+  masks, REPEATABLE, MAXWINS) answer for any character of the profile; the
+  journal's entries (now timed on the game clock) are read by all of them,
+  and `QUESTS name` shows the quest to one who does not carry it. QUESTINFO
+  and QUESTCHECK know SET SHARED.
 
 #### 2f. NPC behaviour and dialogue (21)
 
