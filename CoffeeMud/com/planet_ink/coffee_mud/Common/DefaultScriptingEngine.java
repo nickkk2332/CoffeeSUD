@@ -2179,6 +2179,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				case 'N':
 				case 'n':
 					return ((ctx.source == backupMOB) && (backupMOB != null) && (ctx.monster != ctx.scripted)) ? ctx.scripted : ctx.source;
+				case 'U': // SC8: the character at the terminal
+				case 'u':
+					return terminalMob(ctx);
 				case 'I':
 				case 'i':
 				case 'Q':
@@ -2506,6 +2509,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if (ctx.source != null)
 						middle = ctx.source.name();
 					break;
+				case 'u': // SC8: the character at the terminal
+				case 'U':
+				{
+					final MOB U = terminalMob(ctx);
+					if (U != null)
+						middle = U.name();
+					break;
+				}
 				case 'o':
 				case 'O':
 					if (ctx.primaryItem != null)
@@ -5795,8 +5806,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					if(tlen==1)
 						tt=parseBits(eval,t,"cr"); /* tt[t+0] */
-					final Environmental E1=getArgumentMOB(tt[t+0],ctx);
-					final Environmental E2=getArgumentMOB(tt[t+1],ctx);
+					final boolean oneArg=(tt[t+1]==null)||(tt[t+1].trim().length()==0); // SC8: INPARTY(who), the player's party
+					final Environmental E1=oneArg?terminalMob(ctx):getArgumentMOB(tt[t+0],ctx);
+					final Environmental E2=getArgumentMOB(tt[t+(oneArg?0:1)],ctx);
 					returnable=(E1 instanceof MOB)&&(E2 instanceof MOB)&&ScriptEvents.group((MOB)E1).contains(E2);
 					break;
 				}
@@ -8202,8 +8214,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			case 130: // inparty
 			{
-				final Environmental E1=getArgumentMOB(CMParms.getCleanBit(funcParms,0),ctx);
-				final Environmental E2=getArgumentMOB(CMParms.getPastBitClean(funcParms,0),ctx);
+				final boolean oneArg=CMParms.getPastBitClean(funcParms,0).trim().length()==0; // SC8: INPARTY(who)
+				final Environmental E1=oneArg?terminalMob(ctx):getArgumentMOB(CMParms.getCleanBit(funcParms,0),ctx);
+				final Environmental E2=getArgumentMOB(oneArg?CMParms.getCleanBit(funcParms,0):CMParms.getPastBitClean(funcParms,0),ctx);
 				results.append(((E1 instanceof MOB)&&(E2 instanceof MOB)&&ScriptEvents.group((MOB)E1).contains(E2))?"true":"false");
 				break;
 			}
@@ -10759,11 +10772,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final Environmental newTarget=getArgumentItem(tt[1],ctx);
 				final String var=varify(ctx,tt[2]);
 				final String promptStr=varify(ctx,tt[3]);
-				if((newTarget!=null)&&(newTarget instanceof MOB)&&((((MOB)newTarget).session()!=null)))
+				if((newTarget!=null)&&(newTarget instanceof MOB)&&(promptSession((MOB)newTarget)!=null))
 				{
 					try
 					{
-						final String value=((MOB)newTarget).session().prompt(promptStr,360000);
+						final String value=promptSession((MOB)newTarget).prompt(promptFor((MOB)newTarget,promptStr),360000);
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.SCRIPTVARS))
 							Log.debugOut(CMStrings.padRight(ctx.scripted.Name(), 15)+": SETVAR: "+newTarget.Name()+"("+var+")="+value+"<");
 						setVar(newTarget.Name(),var,value);
@@ -10784,11 +10797,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String var=varify(ctx,tt[2]);
 				final String defaultVal=varify(ctx,tt[3]);
 				final String promptStr=varify(ctx,tt[4]);
-				if((newTarget!=null)&&(newTarget instanceof MOB)&&((((MOB)newTarget).session()!=null)))
+				if((newTarget!=null)&&(newTarget instanceof MOB)&&(promptSession((MOB)newTarget)!=null))
 				{
 					try
 					{
-						final String value=((MOB)newTarget).session().confirm(promptStr,defaultVal,60000)?"Y":"N";
+						final String value=promptSession((MOB)newTarget).confirm(promptFor((MOB)newTarget,promptStr),defaultVal,60000)?"Y":"N";
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.SCRIPTVARS))
 							Log.debugOut(CMStrings.padRight(ctx.scripted.Name(), 15)+": SETVAR: "+newTarget.Name()+"("+var+")="+value+"<");
 						setVar(newTarget.Name(),var,value);
@@ -10810,11 +10823,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String choices=varify(ctx,tt[3]);
 				final String defaultVal=varify(ctx,tt[4]);
 				final String promptStr=varify(ctx,tt[5]);
-				if((newTarget!=null)&&(newTarget instanceof MOB)&&((((MOB)newTarget).session()!=null)))
+				if((newTarget!=null)&&(newTarget instanceof MOB)&&(promptSession((MOB)newTarget)!=null))
 				{
 					try
 					{
-						final String value=((MOB)newTarget).session().choose(promptStr,choices,defaultVal,60000);
+						final String value=promptSession((MOB)newTarget).choose(promptFor((MOB)newTarget,promptStr),choices,defaultVal,60000);
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.SCRIPTVARS))
 							Log.debugOut(CMStrings.padRight(ctx.scripted.Name(), 15)+": SETVAR: "+newTarget.Name()+"("+var+")="+value+"<");
 						setVar(newTarget.Name(),var,value);
@@ -12245,7 +12258,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(newTarget==ctx.monster)
 							lastR.showSource(ctx.monster,null,null,msgType,str);
 						else
+						{
 							lastR.show(ctx.monster,newTarget,null,msgType,null,msgType,str,CMMsg.NO_EFFECT,null);
+							tellTerminal(ctx,(MOB)newTarget,str); // SC8: a background member's goes to the terminal
+						}
 					}
 					else
 					{
@@ -15174,6 +15190,86 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return ((code>=0)&&(code<CMMsg.TYPE_DESCS.length))?CMMsg.TYPE_DESCS[code]:(""+code);
 	}
 
+	/**
+	 * SC8: the character at the terminal, the one the player is playing now:
+	 * the terminal of the source's player, or the game's only one.
+	 * @param ctx the script's context
+	 * @return the character, or null
+	 */
+	protected MOB terminalMob(final MPContext ctx)
+	{
+		Session T=null;
+		if((ctx.source!=null)&&(ctx.source.playerStats()!=null))
+			T=Party.terminalOf(ctx.source);
+		if(T==null)
+		{
+			for(final Session S : CMLib.sessions().allIterable())
+			{
+				if((S!=null)&&(!Party.isPartySession(S))&&(S.mob()!=null))
+				{
+					T=S;
+					break;
+				}
+			}
+		}
+		return (T==null)?null:T.mob();
+	}
+
+	/**
+	 * SC8: whether a character's own session is the silent one of a party
+	 * member in the background, with no window of its own.
+	 * @param M the character
+	 * @return true if what is said to it must go to the terminal
+	 */
+	protected static boolean inBackground(final MOB M)
+	{
+		return (M!=null)&&Party.isBackground(M)&&(!Party.isWindowed(M));
+	}
+
+	/**
+	 * SC8: where a prompt to a character goes: its session, or the terminal's
+	 * for a party member in the background.
+	 * @param M the character
+	 * @return the session, or null
+	 */
+	protected static Session promptSession(final MOB M)
+	{
+		if(inBackground(M))
+		{
+			final Session T=Party.terminalOf(M);
+			if(T!=null)
+				return T;
+		}
+		return (M==null)?null:M.session();
+	}
+
+	/**
+	 * SC8: a prompt's text, named for the member when it goes to the terminal.
+	 * @param M the character it is for
+	 * @param prompt the text
+	 * @return the text to show
+	 */
+	protected static String promptFor(final MOB M, final String prompt)
+	{
+		return inBackground(M)?("["+M.Name()+"] "+prompt):prompt;
+	}
+
+	/**
+	 * SC8: MPECHOAT to a party member in the background: the terminal sees
+	 * it too, named for the member.
+	 * @param ctx the script's context
+	 * @param M the member
+	 * @param str what was said
+	 */
+	protected void tellTerminal(final MPContext ctx, final MOB M, final String str)
+	{
+		if(!inBackground(M))
+			return;
+		final Session T=Party.terminalOf(M);
+		if((T!=null)&&(T.mob()!=null)&&(T.mob()!=M))
+			T.mob().tell(ctx.monster,M,null,"["+M.Name()+"] "+str);
+	}
+
 	protected static String[] lastWord(final String text)
 	{
 		final String t=text.trim();
@@ -15422,6 +15518,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MSG","Syntax","unknown part "+v);
 				return "";
 			}
+		}
+		case "ISPLAYED": // SC8: ISPLAYED(who): the character at the terminal, or one with a window of its own
+		{
+			final Environmental W=getArgumentMOB(parms.trim(),ctx);
+			if(!(W instanceof MOB))
+				return "false";
+			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);

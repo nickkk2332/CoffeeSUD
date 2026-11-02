@@ -1198,6 +1198,14 @@ JS17, JS18, JS19, JS20, JS23
   engine's state (`<Q W="1">`, its words in $0-$9 kept). A FOR or
   MPWHILE body, or a function another line called, cannot pause: it says
   so and goes on. `MPSETINTERNAL CANCELWAITS` drops the pending waits.
+- SC8 done. `$u`/`$U` is the character at the terminal (`Party.terminalOf`
+  of the source's player, or the game's one terminal); `ISPLAYED(who)`;
+  `INPARTY(who)` with one argument is the terminal character's party;
+  ST10 gave PARTYSIZE, PARTYLEADER and PARTY. With windows off, MPECHOAT to
+  a party member in the background also goes to the terminal, as
+  `[Name] text`, and MPPROMPT, MPCONFIRM and MPCHOOSE ask there, named. Not
+  MPECHOAROUND, whose others in the room include the one played. The guide
+  (SC15) says that the account tattoos are the profile's.
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser
