@@ -689,6 +689,12 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"STRSTARTS", //155
 		"STRENDS", //156
 		"STRPOS", //157
+		"DICE", //158
+		"PICK", //159
+		"WPICK", //160
+		"ROLLNORMAL", //161
+		"CLAMP", //162
+		"ABS", //163
 	};
 
 	/** String list of all valid mobprog commands */

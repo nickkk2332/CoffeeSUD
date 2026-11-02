@@ -3087,13 +3087,31 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			{
 				switch(val.charAt(0))
 				{
+				case '=': // SC11: =value is the value as it is, -5 or *x
+					val=val.substring(1);
+					break;
+				case '%': // SC11: %N, the remainder
+				case '^': // ^N, the power
+				{
+					final String num=H.get(key);
+					if(CMath.isNumber(val.substring(1).trim()))
+					{
+						final long have=CMath.s_long((num==null)?"0":num.trim());
+						final long by=CMath.s_long(val.substring(1).trim());
+						if(val.charAt(0)=='%')
+							val=(by==0)?Long.toString(have):Long.toString(have%by);
+						else
+							val=Long.toString((long)Math.pow(have,by));
+					}
+					break;
+				}
 				case '+':
 					if(val.equals("++"))
 					{
 						String num=H.get(key);
 						if(num==null)
 							num="0";
-						val=Integer.toString(CMath.s_int(num.trim())+1);
+						val=Long.toString(CMath.s_long(num.trim())+1);
 					}
 					else
 					{
@@ -3104,8 +3122,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							if(num==null)
 								num="0";
 							val=val.substring(1);
-							final int amount=CMath.s_int(val.trim());
-							val=Integer.toString(CMath.s_int(num.trim())+amount);
+							final long amount=CMath.s_long(val.trim());
+							val=Long.toString(CMath.s_long(num.trim())+amount);
 						}
 						else
 						if((num!=null)&&(CMath.isNumber(num)))
@@ -3118,7 +3136,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						String num=H.get(key);
 						if(num==null)
 							num="0";
-						val=Integer.toString(CMath.s_int(num.trim())-1);
+						val=Long.toString(CMath.s_long(num.trim())-1);
 					}
 					else
 					{
@@ -3127,10 +3145,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(CMath.isNumber(val.substring(1).trim()))
 						{
 							val=val.substring(1);
-							final int amount=CMath.s_int(val.trim());
+							final long amount=CMath.s_long(val.trim());
 							if(num==null)
 								num="0";
-							val=Integer.toString(CMath.s_int(num.trim())-amount);
+							val=Long.toString(CMath.s_long(num.trim())-amount);
 						}
 						else
 						if((num!=null)&&(CMath.isNumber(num)))
@@ -3144,10 +3162,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(CMath.isNumber(val.substring(1).trim()))
 					{
 						val=val.substring(1);
-						final int amount=CMath.s_int(val.trim());
+						final long amount=CMath.s_long(val.trim());
 						if(num==null)
 							num="0";
-						val=Integer.toString(CMath.s_int(num.trim())*amount);
+						val=Long.toString(CMath.s_long(num.trim())*amount);
 					}
 					else
 					if((num!=null)&&(CMath.isNumber(num)))
@@ -3161,13 +3179,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if(CMath.isNumber(val.substring(1).trim()))
 					{
 						val=val.substring(1);
-						final int amount=CMath.s_int(val.trim());
+						final long amount=CMath.s_long(val.trim());
 						if(num==null)
 							num="0";
 						if(amount==0)
 							Log.errOut("Scripting","Scripting SetVar error: Division by 0: "+name+"/"+key+"="+val);
 						else
-							val=Integer.toString(CMath.s_int(num.trim())/amount);
+							val=Long.toString(CMath.s_long(num.trim())/amount);
 					}
 					else
 					if((num!=null)&&(CMath.isNumber(num)))
@@ -7150,7 +7168,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					final String val=varify(ctx,CMParms.cleanBit(tt[t+0])).trim();
 					boolean isnumber=(val.length()>0);
-					for(int i=0;i<val.length();i++)
+					for(int i=0;i<val.length()&&(!CMath.isNumber(val));i++) // SC11: signs and decimals are numbers
 					{
 						if(!Character.isDigit(val.charAt(i)))
 						{
@@ -9430,7 +9448,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			{
 				final String val=varify(ctx,CMParms.cleanBit(funcParms)).trim();
 				boolean isnumber=(val.length()>0);
-				for(int i=0;i<val.length();i++)
+				for(int i=0;i<val.length()&&(!CMath.isNumber(val));i++) // SC11: signs and decimals are numbers
 				{
 					if(!Character.isDigit(val.charAt(i)))
 					{
@@ -15128,6 +15146,35 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return ""+s.indexOf(x);
 			return (name.equalsIgnoreCase("STRSTARTS")?s.startsWith(x):s.endsWith(x))?"true":"false";
 		}
+		case "DICE": // SC11: DICE(3d6+2)
+			return ""+ScriptLib.dice(v);
+		case "PICK":
+		{
+			final List<String> L=CMParms.parse(v);
+			return L.isEmpty()?"":L.get(CMLib.dice().roll(1,L.size(),-1));
+		}
+		case "WPICK":
+			return ScriptLib.weightedPick(v);
+		case "ROLLNORMAL": // ROLLNORMAL(number die modifier)
+		{
+			final List<String> L=CMParms.parse(v);
+			if(L.size()<2)
+				return "0";
+			return ""+CMLib.dice().rollNormalDistribution(CMath.s_int(L.get(0)),CMath.s_int(L.get(1)),(L.size()>2)?CMath.s_int(L.get(2)):0);
+		}
+		case "CLAMP": // CLAMP(v lo hi)
+		{
+			final List<String> L=CMParms.parse(v);
+			if(L.size()<3)
+				return v;
+			final double x=Math.max(CMath.s_double(L.get(1)),Math.min(CMath.s_double(L.get(2)),CMath.s_double(L.get(0))));
+			return (x==Math.rint(x))?(""+(long)x):(""+x);
+		}
+		case "ABS":
+		{
+			final double x=Math.abs(CMath.s_double(v));
+			return (x==Math.rint(x))?(""+(long)x):(""+x);
+		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";
@@ -15210,7 +15257,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 */
 	protected String listValue(final String list)
 	{
-		return list;
+		return "="+list; // SC11's literal form
 	}
 
 	protected boolean match(final String str, final String patt)

@@ -1160,6 +1160,10 @@ JS17, JS18, JS19, JS20, JS23
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser
   keeps them; the functions read both.
+- SC11 done. `DICE`, `PICK`, `WPICK`, `ROLLNORMAL`, `CLAMP`, `ABS`;
+  `NUMBER()` takes signs and decimals. MPSETVAR's arithmetic is on longs,
+  with `%N` (the remainder) and `^N` (the power); `=value` sets the value as
+  it is, so `=-5` is not a subtraction.
 
 #### 2e. Quests (15)
 
