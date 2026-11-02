@@ -62,7 +62,7 @@ public final class WorldSettings
 		// quests
 		"QUESTMARKERS", "QUESTNOTICES", "QUESTTRACK",
 		// NPCs
-		"CATCHUP", "DIALOGUETIME",
+		"CATCHUP", "DIALOGUETIME", "CHECKROLLS",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */

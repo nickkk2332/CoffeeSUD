@@ -1796,6 +1796,13 @@ N22, N24, N28, N29
   other item events) and from the tick (time of day and weather as they
   change, HURT<n once until healed, IDLE). Lines drawn with the seeded dice.
   Whom it greeted and its once-per-character barks are kept in the run state.
+- N29 done. CHECK(who STAT|skill difficulty [modifier]) (DSE function
+  182): a d20 on the shared dice, plus (stat-10)/2 (a base stat by name,
+  short name or first letters) or proficiency/10, plus the modifier (a
+  number or sum), against the difficulty. CHECKMARGIN set on the character
+  with "=". CHECKROLLS (coffeemud.ini or world.ini): OFF, BRIEF ("[Charisma
+  check: success]", the default) or FULL (the roll and bonuses). CHECK= on
+  dialogue choices waits for N14 (later).
 
 #### 2g. Combat and encounters (24)
 

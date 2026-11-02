@@ -15883,6 +15883,67 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "false";
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
+		case "CHECK": // N29: CHECK(who STAT|skill difficulty [modifier]): d20 plus the stat's or skill's bonus, against the difficulty
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			if(!(W instanceof MOB))
+				return "false";
+			final MOB who=(MOB)W;
+			final String what=varify(ctx,CMParms.getCleanBit(parms,1)).trim();
+			final int difficulty=CMath.s_int(varify(ctx,CMParms.getCleanBit(parms,2)).trim());
+			final String modText=varify(ctx,CMParms.getPastBitClean(parms,2)).trim();
+			int modifier=0;
+			if(modText.length()>0)
+			{
+				try
+				{
+					modifier=(int)Math.round(CMath.parseMathExpression(modText.replace("+"," +").trim()));
+				}
+				catch(final Exception e)
+				{
+					logError(ctx,"CHECK","Syntax","the modifier is not a number: "+modText);
+				}
+			}
+			int bonus=0;
+			String label=what;
+			int stat=-1;
+			for(final int c : CharStats.CODES.BASECODES())
+			{
+				final String nm=CharStats.CODES.NAME(c);
+				if(nm.equalsIgnoreCase(what)||CharStats.CODES.SHORTNAME(c).equalsIgnoreCase(what)
+				||((what.length()>=3)&&nm.toUpperCase().startsWith(what.toUpperCase())))
+				{
+					stat=c; // CHA, CH or CHARISMA
+					break;
+				}
+			}
+			if(stat>=0)
+			{
+				bonus=(who.charStats().getStat(stat)-10)/2;
+				label=CMStrings.capitalizeAndLower(CharStats.CODES.NAME(stat));
+			}
+			else
+			{
+				final Ability A=who.fetchAbility(what);
+				if(A!=null)
+				{
+					bonus=A.proficiency()/10;
+					label=A.name();
+				}
+			}
+			final int roll=CMLib.dice().roll(1,20,0);
+			final int total=roll+bonus+modifier;
+			final boolean ok=total>=difficulty;
+			setVar(who.Name(),"CHECKMARGIN","="+(total-difficulty));
+			final String show=CMProps.instance().getStr("CHECKROLLS").trim().toUpperCase();
+			if(show.equals("FULL"))
+				who.tell(L("[@x1 check: @x2 (d20 @x3, @x4, @x5, against @x6)]",label,ok?L("success"):L("failure"),""+roll,
+					((bonus>=0)?"+":"")+bonus,((modifier>=0)?"+":"")+modifier,""+difficulty));
+			else
+			if(!show.equals("OFF"))
+				who.tell(L("[@x1 check: @x2]",label,ok?L("success"):L("failure")));
+			return ok?"true":"false";
+		}
 		case "AFFINITY": // N15: AFFINITY(npc who [BAND]): the NPC's opinion of them, a number or its band
 		{
 			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);

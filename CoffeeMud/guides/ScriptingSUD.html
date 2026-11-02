@@ -389,6 +389,10 @@ Blade)=+30 ATTACKED=-40 SHOPFACTOR=FRIENDLY:0.9 REFUSE=HOSTILE</code>. Ore and h
 him FRIENDLY and his prices drop a tenth; <code>IF AFFINITY($i $n BAND == FRIENDLY)</code> opens
 the talk of a blade; punch him and he will not trade. <code>MPAFFINITY $i $n +5</code> moves it
 from a script. On an area it is a village's.</p>
+<p>A toll-keeper who can be talked round: <code>IF CHECK($n CHA 15 $%AFFINITY($i $n)%/10)</code>
+waives the fee, and <code>$&lt;$n CHECKMARGIN&gt;</code> says by how much it went. The player sees
+<code>[Charisma check: success]</code>; <code>CHECKROLLS=FULL</code> shows the roll and the bonuses too,
+<code>OFF</code> nothing.</p>
 <p>A guard's round without a script: <code>Patroller min=3 max=3;Gate#1;WAIT=5;DO=lock door;
 Wall#4;EMOTE=peers over the battlements.;RESTART</code>; <code>ROUTE=DAY:</code> and <code>ROUTE=NIGHT:</code>
 routes by the time of day; <code>IF=</code> a mask on the guard; <code>RESUME=true</code> back to the round
