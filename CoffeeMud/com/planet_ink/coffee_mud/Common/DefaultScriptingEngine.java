@@ -15068,6 +15068,66 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long hours=n*ScriptEvents.everyHours(1,unitGiven?p[1]:"HOURS",clock);
 			return ""+((hours*CMProps.getMillisPerMudHour())/Math.max(1,CMProps.getTickMillis()));
 		}
+		case "UPPER": // SC10
+			return v.toUpperCase();
+		case "LOWER":
+			return v.toLowerCase();
+		case "CAP":
+			return CMStrings.capitalizeFirstLetter(v);
+		case "LEN":
+			return ""+v.length();
+		case "TRIM":
+			return v.trim();
+		case "SUBSTR": // SUBSTR(s start [len]), from 0
+		{
+			String[] p=lastWord(v);
+			String s=p[0];
+			int start;
+			int len=-1;
+			final String[] q=lastWord(p[0]);
+			if(CMath.isInteger(q[1])&&CMath.isInteger(p[1]))
+			{
+				s=q[0];
+				start=CMath.s_int(q[1]);
+				len=CMath.s_int(p[1]);
+			}
+			else
+				start=CMath.s_int(p[1]);
+			start=Math.max(0,Math.min(start,s.length()));
+			final int end=(len<0)?s.length():Math.min(s.length(),start+len);
+			return s.substring(start,end);
+		}
+		case "REPLACE": // REPLACE(s 'old' 'new')
+		{
+			final String[] p=lastWord(v);
+			final String[] q=lastWord(p[0]);
+			return (q[1].length()==0)?q[0]:q[0].replace(q[1],p[1]);
+		}
+		case "PADRIGHT": // PADRIGHT(s n)
+		{
+			final String[] p=lastWord(v);
+			return CMStrings.padRight(p[0],CMath.s_int(p[1]));
+		}
+		case "ANAME":
+			return CMLib.english().startWithAorAn(v);
+		case "PLURAL": // PLURAL(s [n])
+		{
+			final String[] p=lastWord(v);
+			if(CMath.isInteger(p[1]))
+				return (CMath.s_int(p[1])==1)?p[0]:CMLib.english().makePlural(p[0]);
+			return CMLib.english().makePlural(v);
+		}
+		case "STRSTARTS":
+		case "STRENDS":
+		case "STRPOS":
+		{
+			final String[] p=lastWord(v);
+			final String s=p[0].toLowerCase();
+			final String x=p[1].toLowerCase();
+			if(name.equalsIgnoreCase("STRPOS"))
+				return ""+s.indexOf(x);
+			return (name.equalsIgnoreCase("STRSTARTS")?s.startsWith(x):s.endsWith(x))?"true":"false";
+		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";

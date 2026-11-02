@@ -1156,6 +1156,10 @@ JS17, JS18, JS19, JS20, JS23
   `TICKS(n unit)` and `MPSETVAR host var NOW`, on the area clock's hours
   since its year 0. ISWEEKDAY came with ST11. The ISRL tests still read the
   computer's clock.
+- SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
+  `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
+  script's quotes reach the functions as backticks, as the script parser
+  keeps them; the functions read both.
 
 #### 2e. Quests (15)
 

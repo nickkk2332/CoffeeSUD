@@ -676,6 +676,19 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ELAPSED", //142
 		"WEEKDAY", //143
 		"TICKS", //144
+		"UPPER", //145
+		"LOWER", //146
+		"CAP", //147
+		"LEN", //148
+		"SUBSTR", //149
+		"REPLACE", //150
+		"TRIM", //151
+		"PADRIGHT", //152
+		"ANAME", //153
+		"PLURAL", //154
+		"STRSTARTS", //155
+		"STRENDS", //156
+		"STRPOS", //157
 	};
 
 	/** String list of all valid mobprog commands */
