@@ -63,12 +63,14 @@ public final class WorldSettings
 		"QUESTMARKERS", "QUESTNOTICES", "QUESTTRACK",
 		// NPCs
 		"CATCHUP", "DIALOGUETIME", "CHECKROLLS", "HINTTOPICS",
+		// combat
+		"DIFFICULTY",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */
 	private static final String[]	PREFIXES	=
 	{
-		"START_", "DEATH_", "MORGUE_", "FORMULA_", "ADDCHARSTAT_", "REPLACECHARSTAT_"
+		"START_", "DEATH_", "MORGUE_", "FORMULA_", "ADDCHARSTAT_", "REPLACECHARSTAT_", "DIFFICULTY_"
 	};
 
 	/** the world settings this game started with, in file order */

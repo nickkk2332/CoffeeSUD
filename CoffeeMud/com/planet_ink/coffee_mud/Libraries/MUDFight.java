@@ -212,6 +212,50 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		return h;
 	}
 
+	/**
+	 * C13: a combat formula worked out with @xP the side of the one it is
+	 * for: 1 if a character, or one who follows one.
+	 * @param who the one it is for, or null
+	 * @param F the formula
+	 * @param vars its variables
+	 * @param previous @xx to start with
+	 * @return its value
+	 */
+	protected static double sideMath(final MOB who, final CMath.CompiledFormula F, final double[] vars, final double previous)
+	{
+		CMath.setFormulaSide(GameDifficulty.playerSide(who) ? 1.0 : 0.0);
+		try
+		{
+			return CMath.parseMathExpression(F, vars, previous);
+		}
+		finally
+		{
+			CMath.setFormulaSide(0.0);
+		}
+	}
+
+	/**
+	 * C13: as {@link #sideMath(MOB, CMath.CompiledFormula, double[], double)}, with its own dice.
+	 * @param who the one it is for, or null
+	 * @param F the formula
+	 * @param r the dice
+	 * @param vars its variables
+	 * @param previous @xx to start with
+	 * @return its value
+	 */
+	protected static double sideMath(final MOB who, final CMath.CompiledFormula F, final Random r, final double[] vars, final double previous)
+	{
+		CMath.setFormulaSide(GameDifficulty.playerSide(who) ? 1.0 : 0.0);
+		try
+		{
+			return CMath.parseMathExpression(F, r, vars, previous);
+		}
+		finally
+		{
+			CMath.setFormulaSide(0.0);
+		}
+	}
+
 	@Override
 	public int adjustedAttackBonus(final MOB mob, final MOB target)
 	{
@@ -234,7 +278,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 						 (mob.curState().getThirst()<1)?1.0:0.0,
 						 (mob.curState().getFatigue()>CharState.FATIGUED_MILLIS)?1.0:0.0
 						};
-		return (int)Math.round(CMath.parseMathExpression(attackAdjustmentFormula, vars, 0.0));
+		return (int)Math.round(sideMath(mob, attackAdjustmentFormula, vars, 0.0));
 	}
 
 	@Override
@@ -248,7 +292,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 						 0.0,//thirst
 						 0.0//fatigue
 						};
-		return (int)Math.round(CMath.parseMathExpression(attackAdjustmentFormula, vars, 0.0));
+		return (int)Math.round(sideMath(null, attackAdjustmentFormula, vars, 0.0));
 	}
 
 	@Override
@@ -370,7 +414,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				CMLib.flags().isSitting(mob)?0.0:1.0,
 				CMLib.flags().isSleeping(mob)?0.0:1.0
 				};
-		return (int)Math.round(CMath.parseMathExpression(armorAdjustmentFormula, vars, 0.0));
+		return (int)Math.round(sideMath(mob, armorAdjustmentFormula, vars, 0.0));
 	}
 
 	@Override
@@ -387,7 +431,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				1.0,//sitting
 				1.0 //sleeping
 				};
-		return (int)Math.round(CMath.parseMathExpression(armorAdjustmentFormula, vars, 0.0));
+		return (int)Math.round(sideMath(null, armorAdjustmentFormula, vars, 0.0));
 	}
 
 	@Override
@@ -401,7 +445,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			attacker.phyStats().level() > defender.phyStats().level() ? 1 : -1
 		};
 		final boolean isPVP=(attacker.isPlayer()&&defender.isPlayer());
-		final int attackerFudgeBonusAmt = (int)Math.round(CMath.parseMathExpression(isPVP?pvpAttackerFudgeBonusFormula:attackerFudgeBonusFormula, vars, 0.0));
+		final int attackerFudgeBonusAmt = (int)Math.round(sideMath(attacker, isPVP?pvpAttackerFudgeBonusFormula:attackerFudgeBonusFormula, vars, 0.0));
 		if(!CombatDebug.involves(attacker, defender))
 			return rollToHit(adjustedAttackBonus(attacker,defender),adjustedArmor(defender),attackerFudgeBonusAmt);
 		// COMBATDEBUG (DT35): the same roll, with its numbers told
@@ -956,13 +1000,13 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				target.phyStats().level()
 				};
 		final boolean isPVP=(attacker.isPlayer()&&target.isPlayer());
-		baseDamage = (int)Math.round(CMath.parseMathExpression(isPVP?pvpSpellFudgeDamageFormula:spellFudgeDamageFormula, vars, 0.0));
+		baseDamage = (int)Math.round(sideMath(attacker, isPVP?pvpSpellFudgeDamageFormula:spellFudgeDamageFormula, vars, 0.0));
 		vars[0]=baseDamage;
-		final int spellCritChancePct = (int)Math.round(CMath.parseMathExpression(isPVP?pvpSpellCritChanceFormula:spellCritChanceFormula, vars, 0.0))
+		final int spellCritChancePct = (int)Math.round(sideMath(attacker, isPVP?pvpSpellCritChanceFormula:spellCritChanceFormula, vars, 0.0))
 									+ attacker.charStats().getStat(CharStats.STAT_CRIT_CHANCE_PCT_MAGIC);
 		if(CMLib.dice().rollPercentage()<spellCritChancePct)
 		{
-			final int spellCritDamageAmt = (int)Math.round(CMath.parseMathExpression(isPVP?pvpSpellCritDmgFormula:spellCritDmgFormula, vars, 0.0));
+			final int spellCritDamageAmt = (int)Math.round(sideMath(attacker, isPVP?pvpSpellCritDmgFormula:spellCritDmgFormula, vars, 0.0));
 			baseDamage+=spellCritDamageAmt;
 			if(attacker.charStats().getStat(CharStats.STAT_CRIT_DAMAGE_PCT_MAGIC)>0)
 				baseDamage += (int)Math.round(CMath.mul(spellCritDamageAmt,CMath.div(attacker.charStats().getStat(CharStats.STAT_CRIT_DAMAGE_PCT_MAGIC),100.0)));
@@ -1009,9 +1053,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			else
 				formula = isPVP?pvpTargetedMeleeDamageFormula:targetedMeleeDamageFormula;
 			if(biasHigh)
-				damageAmount = CMath.parseMathExpression(formula, CMath.NotRandomHigh, vars, 0.0);
+				damageAmount = sideMath(mob, formula, CMath.NotRandomHigh, vars, 0.0);
 			else
-				damageAmount = CMath.parseMathExpression(formula, vars, 0.0);
+				damageAmount = sideMath(mob, formula, vars, 0.0);
 			if(CombatDebug.involves(mob, target))
 				CombatDebug.note(mob, target, "dmg "+Math.round(damageAmount)+" (TARGETED, from "+(useDmg.phyStats().damage()+bonusDamage)+")");
 		}
@@ -1035,9 +1079,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			else
 				formula = staticMeleeDamageFormula;
 			if(biasHigh)
-				damageAmount = CMath.parseMathExpression(formula, CMath.NotRandomHigh, vars, 0.0);
+				damageAmount = sideMath(mob, formula, CMath.NotRandomHigh, vars, 0.0);
 			else
-				damageAmount = CMath.parseMathExpression(formula, vars, 0.0);
+				damageAmount = sideMath(mob, formula, vars, 0.0);
 		}
 
 		final int maxDex = mob.charStats().getMaxStat(CharStats.STAT_DEXTERITY);
@@ -1065,16 +1109,16 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		};
 		if(allowCrits)
 		{
-			final int weaponCritChancePct = (int)Math.round(CMath.parseMathExpression(isPVP?pvpWeaponCritChanceFormula:weaponCritChanceFormula, vars, 0.0))
+			final int weaponCritChancePct = (int)Math.round(sideMath(mob, isPVP?pvpWeaponCritChanceFormula:weaponCritChanceFormula, vars, 0.0))
 											+ mob.charStats().getStat(CharStats.STAT_CRIT_CHANCE_PCT_WEAPON);
 			if((CMLib.dice().rollPercentage()<weaponCritChancePct)||(biasHigh))
 			{
 				final CMath.CompiledFormula formula = isPVP?pvpWeaponCritDmgFormula:weaponCritDmgFormula;
 				final int weaponCritDmgAmt;
 				if(biasHigh)
-					weaponCritDmgAmt = (int)Math.round(CMath.parseMathExpression(formula, CMath.NotRandomHigh, vars, 0.0));
+					weaponCritDmgAmt = (int)Math.round(sideMath(mob, formula, CMath.NotRandomHigh, vars, 0.0));
 				else
-					weaponCritDmgAmt = (int)Math.round(CMath.parseMathExpression(formula, vars, 0.0));
+					weaponCritDmgAmt = (int)Math.round(sideMath(mob, formula, vars, 0.0));
 				damageAmount += weaponCritDmgAmt;
 				if(mob.charStats().getStat(CharStats.STAT_CRIT_DAMAGE_PCT_WEAPON)>0)
 					damageAmount += (int)Math.round(CMath.mul(weaponCritDmgAmt,CMath.div(mob.charStats().getStat(CharStats.STAT_CRIT_DAMAGE_PCT_WEAPON),100.0)));
@@ -1091,9 +1135,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			else
 				formula = isPVP?pvpMeleeFudgeDamageFormula:meleeFudgeDamageFormula;
 			if(biasHigh)
-				damageAmount = CMath.parseMathExpression(formula, CMath.NotRandomHigh, vars, 0.0);
+				damageAmount = sideMath(mob, formula, CMath.NotRandomHigh, vars, 0.0);
 			else
-				damageAmount = CMath.parseMathExpression(formula, vars, 0.0);
+				damageAmount = sideMath(mob, formula, vars, 0.0);
 			if(CombatDebug.involves(mob, target))
 				CombatDebug.note(mob, target, "FUDGE("+(mob.phyStats().level()-target.phyStats().level())+" lvls) "+Math.round(damageAmount));
 		}
@@ -1117,9 +1161,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				0
 		};
 		if(biasHigh)
-			damageAmount = CMath.parseMathExpression(staticMeleeDamageFormula, CMath.NotRandomHigh, vars, 0.0);
+			damageAmount = sideMath(null, staticMeleeDamageFormula, CMath.NotRandomHigh, vars, 0.0);
 		else
-			damageAmount = CMath.parseMathExpression(staticMeleeDamageFormula, vars, 0.0);
+			damageAmount = sideMath(null, staticMeleeDamageFormula, vars, 0.0);
 		return (int)Math.round(damageAmount);
 	}
 

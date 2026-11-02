@@ -50,6 +50,14 @@ public class CMath
 	private static final int[]			INTEGER_BITMASKS= new int[31];
 	private static final long[]			LONG_BITMASKS	= new long[63];
 	private static Random 				rand			= new GameRandom(System.currentTimeMillis());
+	/** C13: @xP, 1 when the one a combat formula is worked out for is on the player's side, for each thread */
+	private static final ThreadLocal<double[]>	formulaSide	= ThreadLocal.withInitial(() -> new double[] { 0.0 });
+	/** C13: @xD, the game's difficulty factor */
+	private static volatile double		formulaDifficulty	= 1.0;
+	/** C13: the variable index of @xP in a compiled formula */
+	public static final int				VAR_SIDE		= -1;
+	/** C13: the variable index of @xD in a compiled formula */
+	public static final int				VAR_DIFFICULTY	= -2;
 	private final static boolean[]		IS_HEX_DIGITS	= new boolean[128];
 
 	@SuppressWarnings("rawtypes")
@@ -1369,6 +1377,58 @@ public class CMath
 	 * @return the final value
 	 * @throws ArithmeticException  a parse error, typically arithmetic
 	 */
+	/**
+	 * C13: sets @xP for the formulas this thread works out next: 1 when the
+	 * one it is for is on the player's side, else 0.
+	 * @param side 1 or 0
+	 */
+	public final static void setFormulaSide(final double side)
+	{
+		formulaSide.get()[0] = side;
+	}
+
+	/**
+	 * C13: @xP as this thread has it.
+	 * @return 1 or 0
+	 */
+	public final static double formulaSide()
+	{
+		return formulaSide.get()[0];
+	}
+
+	/**
+	 * C13: sets @xD, the game's difficulty factor, for every formula.
+	 * @param d the factor (1 for NORMAL)
+	 */
+	public final static void setFormulaDifficulty(final double d)
+	{
+		formulaDifficulty = d;
+	}
+
+	/**
+	 * C13: @xP or @xD.
+	 * @param index VAR_SIDE or VAR_DIFFICULTY
+	 * @return its value
+	 */
+	private final static double namedVariable(final int index)
+	{
+		return (index == VAR_SIDE) ? formulaSide.get()[0] : formulaDifficulty;
+	}
+
+	/**
+	 * C13: whether a word after @x names @xP or @xD.
+	 * @param word the word
+	 * @return VAR_SIDE, VAR_DIFFICULTY, or 0 for neither
+	 */
+	private final static int namedVariable(final String word)
+	{
+		if("P".equalsIgnoreCase(word))
+			return VAR_SIDE;
+		if("D".equalsIgnoreCase(word))
+			return VAR_DIFFICULTY;
+		return 0;
+	}
+
 	private final static double parseMathExpression(final StreamTokenizer st, final Random rand, final boolean inParen, final double[] vars, final double previous)
 		throws ArithmeticException
 	{
@@ -1406,6 +1466,9 @@ public class CMath
 					c=st.nextToken();
 					if((c=='x')||(c=='X'))
 						curValue=previous;
+					else
+					if((c==StreamTokenizer.TT_WORD)&&(namedVariable(st.sval)!=0))
+						curValue=namedVariable(namedVariable(st.sval)); // C13: @xP, @xD
 					else
 					{
 						if(c!=StreamTokenizer.TT_NUMBER)
@@ -1672,6 +1735,9 @@ public class CMath
 					if((c=='x')||(c=='X'))
 						list.add(new CompiledOperation());
 					else
+					if((c==StreamTokenizer.TT_WORD)&&(namedVariable(st.sval)!=0))
+						list.add(new CompiledOperation(namedVariable(st.sval))); // C13: @xP, @xD
+					else
 					{
 						if(c!=StreamTokenizer.TT_NUMBER)
 							throw new ArithmeticException("'"+c+"' is an unexpected token after @x.");
@@ -1767,7 +1833,7 @@ public class CMath
 				curValue = o.value;
 				break;
 			case CompiledOperation.OPERATION_VARIABLE:
-				curValue = vars[o.variableIndex];
+				curValue = (o.variableIndex >= 0) ? vars[o.variableIndex] : namedVariable(o.variableIndex);
 				break;
 			case CompiledOperation.OPERATION_LIST:
 				curValue = parseMathExpression(o.list, rand, vars, finalValue);

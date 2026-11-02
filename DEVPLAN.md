@@ -1843,6 +1843,18 @@ C18, C19, C20, C21, C22, C23, C25
   compile is logged once and gives 0. The defaults give the old numbers
   (the test compares levels 1-200), so RESET MOBCOMBATSTATS, Prop_Doppleganger
   and the summons follow an edit.
+- C13 done. core/GameDifficulty: DIFFICULTY=NORMAL (ini, world.ini) for a
+  new game; presets STORY, EASY, NORMAL, HARD, or DIFFICULTY_<NAME>=
+  "NPCDAMAGE=n NPCHP=n PLAYERDAMAGE=n PLAYERXP=n D=x" (world prefix
+  DIFFICULTY_). The DIFFICULTY command (not in a fight) changes it, kept in
+  the save's header and restored with the turns. Damage between the
+  player's side (characters and their followers) and NPCs is scaled in the
+  target's okMessage after checkDamageSaves, so the damage words follow;
+  NPC maximum hit points in recoverMaxState (all NPCs worked out again,
+  as hurt as they were, on a change); XP gains in postExperience after
+  JS23's xpGain. CMath: @xP (thread-local, set by MUDFight.sideMath for
+  the 19 attack, armor, damage and crit formulas, else 0) and @xD (D).
+  The smoke test saves on Hard and finds it restored.
 
 #### 2h. Items, properties and puzzles (23)
 

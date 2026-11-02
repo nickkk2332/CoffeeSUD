@@ -1059,6 +1059,12 @@ public class StdMOB implements MOB
 			e.nextElement().affectCharState(this, maxState);
 		if(location() != null)
 			location().affectCharState(this, maxState);
+		if(isMonster())
+		{
+			final double f = GameDifficulty.npcHpFactor(this); // C13: the difficulty's NPCHP
+			if(f != 1.0)
+				maxState.setHitPoints((int)Math.max(1, Math.round(maxState.getHitPoints() * f)));
+		}
 	}
 
 	@Override
@@ -3325,6 +3331,7 @@ public class StdMOB implements MOB
 			case CMMsg.TYP_DAMAGE:
 				if(!CMLib.combat().checkDamageSaves(this, msg))
 					return false;
+				GameDifficulty.scaleDamage(msg, this); // C13
 				break;
 			case CMMsg.TYP_PULL:
 				if((!CMLib.flags().isBoundOrHeld(this)) && (!CMLib.flags().isSleeping(this)))

@@ -168,13 +168,15 @@ else
 fi
 
 echo "Session 7: change the world, put timed effects on things, and save"
-play world.txt 'timemode turns\nsouth\ndrop waterskin\nnorth\ncreate mob wolf\ncreate mob rabbit\nkill rabbit\nwait 3\nlook\nfreeze wolf\nhush hero\nscore\nsave world\nquit\nn\n' RESTORE=hero
+play world.txt 'timemode turns\nsouth\ndrop waterskin\nnorth\ncreate mob wolf\ncreate mob rabbit\nkill rabbit\nwait 3\nlook\nfreeze wolf\nhush hero\ndifficulty hard\nscore\nsave world\nquit\nn\n' RESTORE=hero
 expect world.txt "A wolf"
+expect world.txt "The game is now on Hard"
 expect world.txt "Game saved as 'world'."
 
 echo "Session 8: restore the changed world"
-play world2.txt 'score\nlook\nsouth\nlook\nnorth\nwait 100\nlook\nquit\nn\n' RESTORE=world
+play world2.txt 'score\nlook\nsouth\nlook\nnorth\nwait 100\nlook\ndifficulty\nquit\nn\n' RESTORE=world
 expect world2.txt "Restored 'world'."
+expect world2.txt "The game is on Hard"
 # the wolf is back, the rabbit stays dead until its time to come back, and
 # the waterskin lies where it was dropped
 sed -n "/Restored 'world'/,/You wait/p" "$W/world2.txt" > "$W/before"

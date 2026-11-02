@@ -425,6 +425,7 @@ public final class SaveGame
 		WorldHost.forget();
 		bootEvent = (header == null) ? "NEWGAME" : "RESTORE";
 		ScriptEvents.setTurns((header == null) ? 0 : parseLong(header.getProperty("turns"), 0));
+		GameDifficulty.restore((header == null) ? null : header.getProperty("difficulty")); // C13
 		if(header == null)
 			return;
 		restoring = null;
@@ -992,6 +993,7 @@ public final class SaveGame
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
 		header.setProperty("turns", Long.toString(ScriptEvents.turns()));
+		header.setProperty("difficulty", GameDifficulty.current()); // C13
 		header.setProperty("savemode", saveMode.name());
 		if(CMLib.time().globalClock() != null)
 			header.setProperty("gamedate", CMLib.time().globalClock().getShortTimeDescription());
