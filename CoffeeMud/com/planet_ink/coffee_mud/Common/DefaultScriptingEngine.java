@@ -14172,7 +14172,22 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					setNum=CMath.s_int(qName.substring(y+2).trim());
 					qName=qName.substring(0,y).trim();
 				}
+				String setLabel=null; // Q6: MPSTEPQUEST quest =label
+				if((setNum<0)&&(y>0)&&(qName.substring(y+2).trim().length()>0)&&(qName.substring(y+2).trim().indexOf(' ')<0))
+				{
+					setLabel=qName.substring(y+2).trim();
+					qName=qName.substring(0,y).trim();
+				}
 				Q=getQuest(qName);
+				if((Q!=null)&&(setLabel!=null))
+				{
+					setNum=CMath.s_int(Q.getStat("STEPOF:"+setLabel));
+					if(setNum<=0)
+					{
+						logError(ctx,"MPSTEPQUEST","Unknown","Step: "+setLabel+" of quest "+Q.name());
+						break;
+					}
+				}
 				if(Q!=null)
 				{
 					if(setNum>0)

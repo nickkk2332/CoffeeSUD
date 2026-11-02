@@ -1507,6 +1507,19 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   `QUESTWINAGE(who quest)` (game hours since the last win, -1 if none);
   masks `-QUESTWINS +quest:>=10` and `+QUESTWINS -quest:>=10` (>=, <=, >,
   <, = or !=). QUESTS WON shows the wins. QUESTINFO shows the settings.
+- Q6 done. `STEP name` and `STEP AUTO name` name the step that
+  follows (`DefaultQuest.stepLabels`); `STEP GOTO name`, anywhere in a
+  step, makes that step the next when this one steps on, without ending
+  the step, and is no step's end where steps are counted (the quest
+  library's too). `MPSTEPQUEST quest =name`, `MODIFY QUEST x STEP name`,
+  `QVAR(quest STEPNAME)` and `getStat("STEPOF:name")`; QUESTINFO shows the
+  step's name. A save keeps the name with the number (`<STEPNAME>`), and
+  the name wins on restoring, so an edited file restores to the right
+  step. QUESTCHECK reports a STEP GOTO to no step, and knows the newer SET
+  names (JSFILE, RESTART, ENDONWIN, AUTOSTART, OBJECTIVE, JOURNAL,
+  REPEATABLE, MAXWINS); its WAIT-without-INTERVAL note now says the quest
+  is kept FINISHED (Q1), not deleted. The STEP line has a help entry at
+  last, in the quest script's.
 
 #### 2f. NPC behaviour and dialogue (21)
 

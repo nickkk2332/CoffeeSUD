@@ -2507,6 +2507,8 @@ public final class WorldState
 			if(Q.running())
 			{
 				str.append(xml.convertXMLtoTag("STEP", Q.getStat("STEPNUM")));
+				if(Q.getStat("STEPNAME").length() > 0) // Q6: an edited file still restores to the step by its name
+					str.append(xml.convertXMLtoTag("STEPNAME", xml.parseOutAngleBrackets(Q.getStat("STEPNAME"))));
 				str.append(xml.convertXMLtoTag("REMAINING", Q.ticksRemaining()));
 				for(int i = 1; i < 10000; i++)
 				{
@@ -2596,7 +2598,10 @@ public final class WorldState
 				Log.errOut("WorldState", "Quest '" + Q.name() + "' was running when saved, but did not start again.");
 				continue;
 			}
-			final int step = tag.getIntFromPieces("STEP", 1);
+			int step = tag.getIntFromPieces("STEP", 1);
+			final String stepName = xml.restoreAngleBrackets(tag.getValFromPieces("STEPNAME")); // Q6
+			if((stepName != null) && (stepName.trim().length() > 0) && (CMath.s_int(Q.getStat("STEPOF:" + stepName)) > 0))
+				step = CMath.s_int(Q.getStat("STEPOF:" + stepName));
 			if((step > 1) && (CMath.s_int(Q.getStat("STEPNUM")) != step))
 				Q.setQuestStep(step);
 			if(Q.running())

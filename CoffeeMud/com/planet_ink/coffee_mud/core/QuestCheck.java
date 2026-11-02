@@ -41,7 +41,9 @@ public final class QuestCheck
 	public static final Set<String> SET_VARS = set("ABILITY", "ABILITYGROUP", "ACTION", "ACTIONGROUP", "AGENT", "AGENTGROUP", "AREA", "AREAGROUP",
 		"FACTION", "FACTIONGROUP", "ITEM", "ITEMGROUP", "ITEMTYPE", "LOCALE", "LOCALEGROUP", "LOCALEGROUPAROUND", "MOB", "MOBGROUP", "MOBTYPE",
 		"MOTIVE", "MOTIVEGROUP", "PCMOB", "PCMOBGROUP", "PRESERVE", "ROOM", "ROOMGROUP", "ROOMGROUPAROUND", "TARGET", "TARGETGROUP", "TOOL",
-		"TOOLGROUP", "WHENAT", "WHENATGROUP", "WHENHAPPENED", "WHENHAPPENEDGROUP", "WHEREAT", "WHEREATGROUP", "WHEREHAPPENED", "WHEREHAPPENEDGROUP");
+		"TOOLGROUP", "WHENAT", "WHENATGROUP", "WHENHAPPENED", "WHENHAPPENEDGROUP", "WHEREAT", "WHEREATGROUP", "WHEREHAPPENED", "WHEREHAPPENEDGROUP",
+		// CoffeeSUD's: JS18, Q1, Q3, Q5
+		"JSFILE", "RESTART", "ENDONWIN", "AUTOSTART", "OBJECTIVE", "JOURNAL", "REPEATABLE", "MAXWINS");
 	/** what LOAD, GIVE, TAKE and IMPORT take */
 	public static final Set<String> LOAD_KINDS = set("MOB", "MOBGROUP", "ITEM", "ITEMGROUP", "ABILITY", "ABILITYGROUP");
 	public static final Set<String> GIVE_KINDS = set("FOLLOWER", "ITEM", "ITEMS", "ABILITY", "BEHAVIOR", "AFFECT", "STAT", "SCRIPT");
@@ -148,6 +150,8 @@ public final class QuestCheck
 		boolean hasWait = false;
 		boolean hasInterval = false;
 		boolean inScript = false;
+		final Set<String> labels = new HashSet<String>(); // Q6
+		final Map<String, String> gotos = new LinkedHashMap<String, String>();
 		for(int i = 0; i < lines.length; i++)
 		{
 			final String line = lines[i].trim();
@@ -191,6 +195,23 @@ public final class QuestCheck
 				continue;
 			}
 			final String kind = (p.size() > 1) ? p.get(1).toUpperCase() : "";
+			if(cmd.equals("STEP")) // Q6: the steps' names, and where STEP GOTO goes
+			{
+				if(kind.equals("GOTO"))
+				{
+					if(p.size() < 3)
+						out.add(at + "STEP GOTO with no step named");
+					else
+						gotos.put(p.get(2).toUpperCase(), at);
+				}
+				else
+				if(kind.equals("AUTO") && (p.size() > 2))
+					labels.add(p.get(2).toUpperCase());
+				else
+				if((kind.length() > 0) && (!kind.equals("BREAK")) && (!kind.equals("BACK")) && (!kind.equals("AUTO")))
+					labels.add(kind);
+			}
+			else
 			if(cmd.equals("SET"))
 			{
 				if(kind.length() == 0)
@@ -258,7 +279,12 @@ public final class QuestCheck
 		if(!hasDuration)
 			out.add(name + ": no SET DURATION");
 		if(hasWait && (!hasInterval))
-			out.add(name + ": SET WAIT with no SET INTERVAL, so the quest is deleted after its first stop");
+			out.add(name + ": SET WAIT with no SET INTERVAL, so the quest does not start again by itself (it is FINISHED after its first stop)");
+		for(final Map.Entry<String, String> g : gotos.entrySet()) // Q6
+		{
+			if(!labels.contains(g.getKey()))
+				out.add(g.getValue() + "STEP GOTO " + g.getKey().toLowerCase() + ": no step of that name");
+		}
 		return out;
 	}
 

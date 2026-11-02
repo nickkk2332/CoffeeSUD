@@ -1467,7 +1467,7 @@ public class Quests extends StdLibrary implements QuestManager
 			}
 			if(!inScript)
 			{
-				if(cmd.equals("STEP"))
+				if(cmd.equals("STEP")&&(!((line.size()>1)&&line.get(1).equalsIgnoreCase("GOTO")))) // Q6
 					return lines;
 				if((cmdOnly==null)||(cmdOnly.equalsIgnoreCase(cmd)))
 					lines.add(line);
@@ -1515,7 +1515,7 @@ public class Quests extends StdLibrary implements QuestManager
 				inScript=true;
 				continue;
 			}
-			if(cmd.equals("STEP")&&(!inScript))
+			if(cmd.equals("STEP")&&(!inScript)&&(!((line.size()>1)&&line.get(1).equalsIgnoreCase("GOTO")))) // Q6
 			{
 				parsed.addElement(scr.toString());
 				scr=new StringBuffer("");

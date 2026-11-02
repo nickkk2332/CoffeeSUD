@@ -251,6 +251,23 @@ the quest asks these before its giver's CAN_ACCEPT. <code>QUESTWINS($n
 wolf_bounty)</code> counts the wins, <code>QUESTWINAGE($n wolf_bounty)</code> is
 the game hours since the last, and a quest that opens after ten bounties has
 <code>SET PLAYERMASK -QUESTWINS +wolf_bounty:&gt;=10</code>.</p>
+<p>Steps can have names, so a quest can branch and join again without
+counting its steps:</p>
+<pre>
+step confront
+...MPCHOOSE spare or kill: MPSTEPQUEST bandits =spared, or =slain
+step spared
+...the chief is spared...
+step goto epilogue
+step slain
+...the chief is slain...
+step goto epilogue
+step epilogue
+...
+</pre>
+<p><code>STEP GOTO</code> does not end the step; it says which step comes
+next when it does. <code>QVAR(bandits STEPNAME == spared)</code> asks which
+step is running, and QUESTCHECK reports a GOTO to no step.</p>
 <pre>
 set name bell
 set display The Drowned Bell

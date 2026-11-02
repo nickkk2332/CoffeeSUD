@@ -1263,6 +1263,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		q.done=false;
 		q.stepObjectives.clear(); // Q3: this step's
 		q.stepJournal.clear();
+		q.nextStepNumber=0; // Q6
 		if(vStart>=script.size())
 			return;
 		q.startLine=vStart;
@@ -1372,6 +1373,20 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						p.remove(0);
 						cmd=p.get(0).toUpperCase();
 					}
+				}
+				if(cmd.equals("STEP")&&(p.size()>1)&&p.get(1).equalsIgnoreCase("GOTO"))
+				{
+					// Q6: STEP GOTO label: when this step steps on, the label's step comes next
+					final int n=(p.size()>2)?stepNumberFor(p.get(2)):-1;
+					if(n<=0)
+					{
+						if(optional)
+							continue;
+						errorOccurred(q,isQuiet,"Quest '"+name()+"', STEP GOTO: no step named '"+((p.size()>2)?p.get(2):"")+"'.");
+						break;
+					}
+					q.nextStepNumber=n;
+					continue;
 				}
 				if(cmd.equals("STEP"))
 				{
@@ -5158,7 +5173,16 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			final List<Object> script=parseLoadScripts(script(),new ArrayList<Object>(),args,true);
 			try
 			{
-				questState.stepNumber++;
+				final int gotoStep=questState.nextStepNumber; // Q6: STEP GOTO's step, or the next
+				final int gotoLine=(gotoStep>0)?getLineNumberForStep(gotoStep):-1;
+				questState.nextStepNumber=0;
+				if(gotoLine>=0)
+				{
+					questState.stepNumber=gotoStep;
+					questState.lastLine=gotoLine;
+				}
+				else
+					questState.stepNumber++;
 				if(prefix.length()>0)
 					Log.debugOut(prefix+" Starting step "+questState.stepNumber+" @line "+questState.lastLine);
 				setVars(script,questState.lastLine);
@@ -5202,6 +5226,67 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		return false;
 	}
 
+	/**
+	 * Q6: the steps' names: STEP label, and STEP AUTO label, name the step
+	 * that follows them.
+	 * @return the name, in upper case, to the step's number
+	 */
+	protected Map<String,Integer> stepLabels()
+	{
+		final Map<String,Integer> labels=new HashMap<String,Integer>();
+		final List<Object> args=new ArrayList<Object>();
+		final List<Object> oscript=parseLoadScripts(script(),new ArrayList<Object>(),args,true);
+		final List<String> script=parseFinalQuestScript(oscript);
+		int step=1;
+		for(int v=0;v<script.size();v++)
+		{
+			final List<String> p=CMParms.parse(modifyStringFromArgs(script.get(v),args));
+			if((p.size()==0)||(!p.get(0).equalsIgnoreCase("STEP")))
+				continue;
+			if((p.size()>1)&&p.get(1).equalsIgnoreCase("GOTO"))
+				continue;
+			step++;
+			String label=(p.size()>1)?p.get(1).toUpperCase():"";
+			if(label.equals("AUTO"))
+				label=(p.size()>2)?p.get(2).toUpperCase():"";
+			if(label.equals("BREAK")||label.equals("BACK"))
+				label="";
+			if((label.length()>0)&&(!labels.containsKey(label)))
+				labels.put(label,Integer.valueOf(step));
+		}
+		return labels;
+	}
+
+	/**
+	 * Q6: a step by its number or its name.
+	 * @param which a number, or a name STEP gave
+	 * @return the step's number, or -1
+	 */
+	public int stepNumberFor(final String which)
+	{
+		if((which==null)||(which.trim().length()==0))
+			return -1;
+		if(CMath.isInteger(which.trim()))
+			return CMath.s_int(which.trim());
+		final Integer n=stepLabels().get(which.trim().toUpperCase());
+		return (n==null)?-1:n.intValue();
+	}
+
+	/**
+	 * Q6: a step's name.
+	 * @param stepNum its number
+	 * @return the name STEP gave it, in lower case, or ""
+	 */
+	public String stepNameOf(final int stepNum)
+	{
+		for(final Map.Entry<String,Integer> e : stepLabels().entrySet())
+		{
+			if(e.getValue().intValue()==stepNum)
+				return e.getKey().toLowerCase();
+		}
+		return "";
+	}
+
 	protected int getLineNumberForStep(final int stepNum)
 	{
 		if(stepNum <= 1)
@@ -5217,7 +5302,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			if(p.size()>0)
 			{
 				final String cmd=p.get(0).toUpperCase();
-				if(cmd.equals("STEP"))
+				if(cmd.equals("STEP")&&(!((p.size()>1)&&p.get(1).equalsIgnoreCase("GOTO")))) // Q6: GOTO is no step's end
 				{
 					if((++currentStepNumber)==stepNum)
 						return v+1;
@@ -6356,7 +6441,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		if(how.size()>0)
 			str.append("Settings: ").append(String.join(", ",how)).append("\n\r");
 		if(qs!=null)
-			str.append("Step: ").append(qs.stepNumber).append(qs.error?", stopped on an error":"").append("\n\r");
+			str.append("Step: ").append(qs.stepNumber).append((stepNameOf(qs.stepNumber).length()>0)?(" ("+stepNameOf(qs.stepNumber)+")"):"") // Q6
+			   .append(qs.error?", stopped on an error":"").append("\n\r");
 		if(running())
 			str.append("Time left: ").append(ticksRemaining()<0?"no limit":(minsRemaining()+" minutes ("+ticksRemaining()+" ticks)")).append("\n\r");
 		else
@@ -7088,6 +7174,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				return autoStartBoot?"BOOT":"";
 			if(code.equals("REPEATABLE")) // Q5
 				return repeatable;
+			if(code.equals("STEPNAME")) // Q6: the step's name
+				return (questState==null)?"":stepNameOf(questState.stepNumber);
+			if(code.startsWith("STEPOF:")) // Q6: a step's number, by its name
+				return ""+stepNumberFor(code.substring(7));
 			if(code.equals("MAXWINS"))
 				return ""+maxWins;
 			if((code.equalsIgnoreCase("REMAINING"))&&(running()))
@@ -7254,6 +7344,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		/** Q3: the step's SET OBJECTIVE (id, target, text) and SET JOURNAL lines */
 		public List<String[]>	stepObjectives		= new ArrayList<String[]>();
 		public List<String>	stepJournal			= new ArrayList<String>();
+		/** Q6: STEP GOTO's step, to go to when this one steps on, or 0 */
+		public int			nextStepNumber		= 0;
 		public boolean		isOptional				= false;
 		public boolean		autoStepAfterDuration	= false;
 		public int			preserveState			= 0;

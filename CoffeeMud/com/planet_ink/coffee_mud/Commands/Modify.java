@@ -1355,7 +1355,7 @@ public class Modify extends StdCommand
 		final List<String> args=commands.subList(at+1,commands.size());
 		if(verb.equals("STEP"))
 		{
-			final int step=(args.size()>0)?CMath.s_int(args.get(0)):0;
+			final int step=(args.size()==0)?0:CMath.isInteger(args.get(0))?CMath.s_int(args.get(0)):CMath.s_int(Q.getStat("STEPOF:"+args.get(0))); // Q6: or its name
 			if(!Q.running())
 				mob.tell(L("Quest '@x1' is not running.",Q.name()));
 			else
