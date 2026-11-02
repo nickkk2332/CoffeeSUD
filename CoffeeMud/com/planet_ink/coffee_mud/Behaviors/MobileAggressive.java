@@ -138,6 +138,8 @@ public class MobileAggressive extends Mobile
 			tickStatus=Tickable.STATUS_NOT;
 			return true;
 		}
+		if(ticking instanceof MOB)
+			veryA.warnTick((MOB)ticking); // N17
 		if((--aggressiveTickDown)<0)
 		{
 			aggressiveTickDown=tickWait;

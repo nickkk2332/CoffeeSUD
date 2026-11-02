@@ -1762,6 +1762,15 @@ N22, N24, N28, N29
   NIGHT of the host's clock), else DEFAULT/ALL, else the first, restarted
   when it changes. `RESUME=true`: after a fight it tracks back to the room
   it was in before, one step a tick. N8's catch-up skips the new steps.
+- N17 done. Aggressive (and so VeryAggressive and MobileAggressive's
+  inner one) takes `WARN="line|line"`, `WARNTICKS=n` (the number of lines),
+  `BACKOFF=true`, `NEAR=1` (`core/AggroWarning`): the first time it would
+  attack someone it warns instead, then a line each tick (counted every
+  tick, as Aggressive only looks again when the room's count changes),
+  then the attack if they are still there. Backing off (sitting, asleep,
+  nothing at the wield place) holds it; ending it warns afresh; leaving
+  forgets them. NEAR: "From the east: ..." next door. WimpyAggressive,
+  which attacks only sleepers, has none.
 
 #### 2g. Combat and encounters (24)
 

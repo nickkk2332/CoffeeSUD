@@ -88,6 +88,8 @@ public class Aggressive extends StdBehavior
 	protected Room		lastRoom			= null;
 	protected int		lastRoomInhabCount	= 0;
 	protected String	maskStr				= "";
+	/** N17: WARN=, a warning before the attack, or null */
+	protected AggroWarning.Spec warn = null;
 	protected CompiledZMask mask 			= null;
 
 	protected Quint<String,Double,Integer,Integer,
@@ -188,6 +190,7 @@ public class Aggressive extends StdBehavior
 		super.setParms(newParms);
 		tickWait=CMParms.getParmInt(newParms,"delay",0);
 		attackMessage=CMParms.getParmStr(newParms,"MESSAGE",null);
+		warn=AggroWarning.parse(newParms); // N17
 		final String bribeStr = CMParms.getParmStr(newParms,"BRIBE",null);
 		bribe = null;
 		if(bribeStr != null)
@@ -250,8 +253,22 @@ public class Aggressive extends StdBehavior
 		return false;
 	}
 
+	/**
+	 * N17: each tick, those it warned: warned again, or attacked.
+	 * @param observer the aggressive NPC
+	 */
+	public void warnTick(final MOB observer)
+	{
+		if(warn==null)
+			return;
+		for(final MOB M : AggroWarning.tick(observer,warn))
+			startFight(observer,M,mobkill,misbehave,attackMessage);
+	}
+
 	protected boolean preFightCheck(final MOB observer, final MOB mob)
 	{
+		if((warn!=null)&&(!AggroWarning.mayAttack(observer,mob,warn))) // N17: a warning first
+			return false;
 		if((bribe != null) && (!mob.isMonster()))
 		{
 			final Map<String,Pair<Double,Long>> paid = bribe.fifth;
@@ -365,6 +382,8 @@ public class Aggressive extends StdBehavior
 		super.tick(ticking,tickID);
 		if(tickID!=Tickable.TICKID_MOB)
 			return true;
+		if(ticking instanceof MOB)
+			warnTick((MOB)ticking); // N17
 		if((--tickDown)<0)
 		{
 			tickDown=tickWait;
