@@ -3426,12 +3426,17 @@ public class CMClass extends ClassLoader
 				{
 					for(final DatabaseEngine.AckRecord rec : genCommands)
 					{
+						if(GenBehaviors.isBehaviorRecord(rec)) // N7: kept with them, made below
+							continue;
 						final Command C=(Command)(CMClass.getCommand("GenCommand").copyOf());
 						if(C instanceof Modifiable)
 							((Modifiable)C).setStat("ALLXML",rec.data());
 					}
 				}
 				Log.sysOut(Thread.currentThread().getName(),"Commands loaded   : "+c.commands.size());
+				final int genBehaviors=GenBehaviors.loadAll(genCommands); // N7
+				if(genBehaviors>0)
+					Log.sysOut(Thread.currentThread().getName(),"Generic behaviors : "+genBehaviors);
 			}
 			if(c.commands.size()==0)
 				return false;

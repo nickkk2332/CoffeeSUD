@@ -241,6 +241,9 @@ public final class WorldFiles
 			if(tag.equals("COMMAND"))
 				CMLib.database().DBCreateCommand(attribute(attrs, "ID"), attribute(attrs, "BASE"), inner.trim());
 			else
+			if(tag.equals("BEHAVIOR")) // N7
+				CMLib.database().DBCreateCommand(attribute(attrs, "ID"), GenBehaviors.BASE, inner.trim());
+			else
 				continue;
 			made++;
 		}
@@ -2059,7 +2062,7 @@ public final class WorldFiles
 	/** the custom objects' folder, a folder to each kind */
 	public static final String		CUSTOM_DIR		= "custom";
 	/** the kinds of custom object, each a folder of custom/ */
-	private static final String[]	CUSTOM_KINDS	= { "races", "classes", "abilities", "commands" };
+	private static final String[]	CUSTOM_KINDS	= { "races", "classes", "abilities", "commands", "behaviors" };
 	/** a custom ability's or command's script of more than one line, beside it */
 	private static final String		SCRIPT_EXT		= ".script";
 	/** how a custom object's SCRIPT names the file beside it */
@@ -2085,7 +2088,12 @@ public final class WorldFiles
 		for(final AckRecord rec : sortedRecords(CMLib.database().DBReadAbilities()))
 			putCustom(kinds.get("abilities"), rec.ID(), "<ABILITY ID=\"" + rec.ID() + "\" TYPE=\"" + rec.typeClass() + "\">" + rec.data() + "</ABILITY>");
 		for(final AckRecord rec : sortedRecords(CMLib.database().DBReadCommands()))
-			putCustom(kinds.get("commands"), rec.ID(), "<COMMAND ID=\"" + rec.ID() + "\" BASE=\"" + rec.typeClass() + "\">" + rec.data() + "</COMMAND>");
+		{
+			if(GenBehaviors.isBehaviorRecord(rec)) // N7: the generic behaviours, kept with the commands
+				putCustom(kinds.get("behaviors"), rec.ID(), "<BEHAVIOR ID=\"" + rec.ID() + "\">" + rec.data() + "</BEHAVIOR>");
+			else
+				putCustom(kinds.get("commands"), rec.ID(), "<COMMAND ID=\"" + rec.ID() + "\" BASE=\"" + rec.typeClass() + "\">" + rec.data() + "</COMMAND>");
+		}
 		return kinds;
 	}
 

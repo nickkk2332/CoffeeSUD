@@ -345,6 +345,15 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	}
 
 	/**
+	 * N7: what a generic behaviour's parameters give its script: PARM(name),
+	 * and parm('name') in its JavaScript.
+	 * @param values the values, by name, read as they are when asked for
+	 */
+	public default void setParmValues(final java.util.Map<String,String> values)
+	{
+	}
+
+	/**
 	 * Wrapper class for a standard parsed line of script,
 	 * which includes the full line of text, the parsed line,
 	 * and an optional helper object of any sort
@@ -714,6 +723,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"QUESTOUTCOME", //177
 		"QUESTWINS", //178
 		"QUESTWINAGE", //179
+		"PARM", //180
 	};
 
 	/** String list of all valid mobprog commands */

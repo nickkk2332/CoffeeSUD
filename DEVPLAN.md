@@ -1680,6 +1680,17 @@ N22, N24, N28, N29
   `GREETIF=`+`GREET=`, `REFUSEIF=`+`REFUSE=` (no LIST/BUY/SELL/VALUE/
   teach); conditions FACT>N etc joined by & or |. `SHARE=AREA` or a mask:
   the area's other Memory NPCs learn it too.
+- N7 done. `GenBehavior`: CREATE BEHAVIOR <ID> in builder mode makes a
+  behaviour defined as data and opens its editor (`core/GenBehaviors`):
+  NAME, HELP (AHELP <ID>), CANIMPROVE, PARMS with defaults, SCRIPT (MOBPROG,
+  <SCRIPT> JavaScript, LOAD=), ACCOUNT, VARSCOPE. The script reads
+  `PARM(name)` (also `$%PARM()%`, IF PARM(), `parm('name')` in JS); ARG()
+  reads them too. `TollKeeper price=5` goes wherever a behaviour ID goes;
+  each copy has its own engine and values, all share the definition, so
+  MODIFY BEHAVIOR (or `MODIFY BEHAVIOR <ID> <FIELD> <value>`) changes every
+  one. WHEN=/TOD=/HOURS= gate it (N1). DESTROY BEHAVIOR. The database keeps
+  them with the generic commands (base class GenBehavior); the world files
+  in custom/behaviors/, the script beside each.
 
 #### 2g. Combat and encounters (24)
 

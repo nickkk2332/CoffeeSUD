@@ -164,7 +164,7 @@ public final class BehaviorWhen
 	 */
 	public static boolean active(final Behavior B, final Object host)
 	{
-		if((B == null) || (B instanceof ScriptingEngine))
+		if((B == null) || ((B instanceof ScriptingEngine) && (!GenBehaviors.isGeneric(B)))) // N7: a generic one's are parameters
 			return true;
 		return holds(B.getParms(), host);
 	}
@@ -177,7 +177,7 @@ public final class BehaviorWhen
 	 */
 	public static String state(final Behavior B, final Object host)
 	{
-		if((B == null) || (B instanceof ScriptingEngine) || (!gateOf(B.getParms()).any()))
+		if((B == null) || ((B instanceof ScriptingEngine) && (!GenBehaviors.isGeneric(B))) || (!gateOf(B.getParms()).any()))
 			return "";
 		return "; its condition (WHEN, TOD or HOURS) is " + (holds(B.getParms(), host) ? "met: it is on now" : "not met: it is off now");
 	}

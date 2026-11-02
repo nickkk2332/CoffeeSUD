@@ -1191,6 +1191,28 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	/** SC13: the LOAD= arguments of this engine's script, with its files' ARGDEFAULT values */
 	protected volatile Map<String,String> loadArgs = null;
 
+	/** N7: a generic behaviour's parameters, PARM(name), or null */
+	protected volatile Map<String,String> parmValues = null;
+
+	@Override
+	public void setParmValues(final Map<String,String> values)
+	{
+		parmValues=values;
+	}
+
+	/**
+	 * N7: a parameter: the generic behaviour's, else LOAD='s (SC13).
+	 * @param E the scripted thing
+	 * @param name its name
+	 * @return its value, or null
+	 */
+	protected String parmValue(final Environmental E, final String name)
+	{
+		final Map<String,String> p=parmValues;
+		final String v=(p!=null)?p.get(name):null;
+		return (v!=null)?v:loadArgs(E).get(name);
+	}
+
 	/**
 	 * SC13: a LOAD= line's file and its arguments: LOAD=file KEY=value...
 	 * @param words what follows LOAD=
@@ -15823,8 +15845,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
 		case "ARG": // SC13: ARG(name): what LOAD=file NAME=value gave the script, or the file's ARGDEFAULT
+		case "PARM": // N7: PARM(name): a generic behaviour's parameter, or its default
 		{
-			final String a=loadArgs(ctx.scripted).get(v);
+			final String a=parmValue(ctx.scripted,v);
 			return (a==null)?"":a;
 		}
 		case "QUESTWINS": // Q5: QUESTWINS(who quest): how many times they won it
@@ -15892,7 +15915,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(c==null)
 		{
 			final String r=extraValue(ctx,name,inner).trim();
-			if(name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")) // SC4, SC13: set, and not 0 or false
+			if(name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")||name.equalsIgnoreCase("PARM")) // SC4, SC13, N7: set, and not 0 or false
 				return (r.length()>0)&&(!r.equals("0"))&&(!r.equalsIgnoreCase("false"));
 			return "true".equalsIgnoreCase(r);
 		}
@@ -15938,7 +15961,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			"findItem",
 			"door",
 			"signal",
-			"state"
+			"state",
+			"parm" // N7
 		};
 		scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
 		return scope;
@@ -19720,6 +19744,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return c.functify(ctx, "STATE(" + thing + " " + name + ")");
 			line("MPSTATE " + thing + " " + name + " " + Context.toString(value));
 			return Context.toString(value);
+		}
+
+		/**
+		 * N7: parm('price'): a generic behaviour's parameter, as PARM(price)
+		 * @param name its name
+		 * @return its value, or ""
+		 */
+		public String parm(final String name)
+		{
+			final String v=c.parmValue(ctx.scripted,name);
+			return (v==null)?"":v;
 		}
 
 		public Environmental host()

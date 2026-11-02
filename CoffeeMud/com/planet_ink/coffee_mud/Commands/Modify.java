@@ -2940,6 +2940,13 @@ public class Modify extends StdCommand
 			tweaks(mob,commands);
 		}
 		else
+		if(commandType.equals("BEHAVIOR")) // N7: a generic behaviour
+		{
+			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDCOMMANDS))
+				return errorOut(mob);
+			GenBehaviors.modify(mob,commands.subList(2,commands.size()));
+		}
+		else
 		if(commandType.equals("COMMAND"))
 		{
 			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDCOMMANDS))

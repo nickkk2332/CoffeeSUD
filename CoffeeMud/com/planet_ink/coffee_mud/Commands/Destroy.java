@@ -1739,6 +1739,13 @@ public class Destroy extends StdCommand
 			races(mob,commands);
 		}
 		else
+		if(commandType.equals("BEHAVIOR")) // N7: a generic behaviour
+		{
+			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDCOMMANDS))
+				return errorOut(mob);
+			GenBehaviors.destroy(mob,CMParms.combine(commands,2).trim());
+		}
+		else
 		if(commandType.equals("COMMAND"))
 		{
 			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDCOMMANDS))

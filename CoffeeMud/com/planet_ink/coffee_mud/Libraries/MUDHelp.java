@@ -1329,6 +1329,14 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 		&& (CMParms.contains(ScriptingEngine.methods,helpKey)))
 			helpText=normalizeHelpText(getScriptableHelp(helpKey),skip);
 
+		if((helpText == null)
+		&& (rHelpFile == this.getArcHelpFile()))
+		{
+			final String genHelp=GenBehaviors.helpFor(helpKey); // N7: a generic behaviour's own
+			if(genHelp!=null)
+				helpText=normalizeHelpText(genHelp,skip);
+		}
+
 
 		if((helpText==null)
 		&&(rHelpFile == getHelpFile())) // its complicated, but ahelp is not allowed to help us here

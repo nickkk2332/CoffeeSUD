@@ -1405,6 +1405,11 @@ public class Create extends StdCommand
 			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
 			return;
 		}
+		if(GenBehaviors.find(classD)!=null) // N7: they share the database's table
+		{
+			mob.tell(L("A generic behaviour has the ID '@x1'; choose another.",classD));
+			return;
+		}
 		if(classD.indexOf(' ')>=0)
 		{
 			mob.tell(L("'@x1' is an invalid  id, because it contains a space.",classD));
@@ -1976,6 +1981,13 @@ public class Create extends StdCommand
 				return errorOut(mob);
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 			wrightSkills(mob,commands);
+		}
+		else
+		if(commandType.equals("BEHAVIOR")) // N7: a generic behaviour
+		{
+			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDCOMMANDS))
+				return errorOut(mob);
+			GenBehaviors.create(mob,CMParms.combine(commands,2).trim());
 		}
 		else
 		if(commandType.equals("COMMAND"))

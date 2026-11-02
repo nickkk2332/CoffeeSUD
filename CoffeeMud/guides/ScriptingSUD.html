@@ -355,6 +355,12 @@ GREET="Welcome back, $n." FORGET=30d</code> on each villager. Pick the baker's p
 and no shop in the village will trade with you for a month; kill a villager and the
 rest fight you on sight; heal one and they greet you by name. A script reads the
 same facts, <code>VAR($i MEM_GAVE_$n &gt; 100)</code>, and they are kept in a saved game.</p>
+<p>One routine for many NPCs, each with its own values: <code>CREATE BEHAVIOR TollKeeper</code>
+in builder mode, with PARMS <code>price=20 exit=north</code> and a script that reads
+<code>PARM(price)</code> (or <code>$%PARM(price)%</code> in text, <code>parm('price')</code> in a
+<code>&lt;SCRIPT&gt;</code>). Five bridge guards get <code>TollKeeper price=5 exit=west</code>
+and the like; one <code>MODIFY BEHAVIOR TollKeeper</code> fixes them all, and <code>AHELP
+TOLLKEEPER</code> shows its HELP. SAVE writes it to <code>world/custom/behaviors/</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
