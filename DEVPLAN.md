@@ -1727,6 +1727,14 @@ N22, N24, N28, N29
   MudChat takes `DELAY=n` ticks (2). A WAIT of several ticks stops when an
   NPC speaks to the one waiting (`DialogueTime.heard`, from StdMOB). The
   LLM part waits for N25.
+- N11 done. MudChat: `?<condition>` before an entry (a script IF
+  condition, $t and $n the speaker, $i the NPC, parsed once); a reply
+  `&<MOBPROG line>` run in its turn with the NPC as host and the speaker as
+  $n; `$@group` switches per speaker (kept while others speak),
+  `$@!group` until changed, in the NPC's saved variable
+  MUDCHAT_GROUP_<SPEAKER>, read back by a new copy of the NPC; `$@-` back
+  to the base group. lintChat knows `?`. An emptied group list is filled
+  with the base group again.
 
 #### 2g. Combat and encounters (24)
 

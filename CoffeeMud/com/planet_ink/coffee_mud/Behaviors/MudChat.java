@@ -163,7 +163,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		{
 			if(R.combatFlag == mob.isInCombat())
 			{
-				mob.doCommand(R.parsedCommand,MUDCmdProcessor.METAFLAG_FORCED);
+				respond(mob,R);
 				n++;
 			}
 		}
@@ -280,6 +280,10 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		public int				delay;
 		public boolean			combatFlag;
 		public List<String>		parsedCommand;
+		/** N11: a MOBPROG line (&) to run in place of the command, or null */
+		public String            script        = null;
+		/** N11: whom it answers, the line's $n */
+		public MOB                speaker        = null;
 
 		public ChattyResponse(final List<String> cmd, final int responseDelay, final boolean combatFlag)
 		{
@@ -334,6 +338,10 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		public boolean				antillm		= false;
 		public int					orderNum	= 0;
 		public ChattyGroup			fromGroup;
+		/** N11: a ?guard line before it: a script condition, $t the speaker, or null */
+		public String                guard        = null;
+		/** N11: the guard, parsed, once */
+		public String[]                guardEval    = null;
 
 		public ChattyEntry(final ChatExpression expression, final boolean combat,
 						   final boolean llm, final boolean antillm, final ChattyGroup group)
@@ -348,6 +356,8 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		{
 			final ChattyEntry new1 = new ChattyEntry(expression,combatEntry,llm,antillm,fromGroup);
 			new1.responses = responses;
+			new1.guard = guard;
+			new1.guardEval = guardEval;
 			return new1;
 		}
 	}
@@ -658,6 +668,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 
 		ChattyGroup otherChatGroup;
 		chatGroups.add(currentChatGroup);
+		String pendingGuard=null; // N11
 		String str=nextLine(rsc);
 		while(str!=null)
 		{
@@ -671,6 +682,11 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 				{
 				case '"':
 					Log.sysOut("MudChat",str.substring(1));
+					break;
+				case '?': // N11: a guard for the next entry
+					pendingGuard=str.substring(1).trim();
+					if(pendingGuard.length()==0)
+						pendingGuard=null;
 					break;
 				case '#':
 					// nothing happened, move along
@@ -700,6 +716,8 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 						final ChatExpression expression = parseExpression(str);
 						currentChatEntry=new ChattyEntry(expression,combat,llm,antillm,currentChatGroup);
 						currentChatEntry.orderNum=currentChatGroup.highestEntryNum++;
+						currentChatEntry.guard=pendingGuard;
+						pendingGuard=null;
 						if(expression.type==ChatMatchType.RANDOM)
 							tickyChatEntries.add(currentChatEntry);
 						else
@@ -940,6 +958,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 	protected PairList<ChattyGroup, Long> getChatGroups(final MOB forMe, final ChattyGroup[] chatGroups)
 	{
 		if((this.chatGroups != null)
+		&&(this.chatGroups.size()>0) // N11
 		&&(GameTime.now()<this.chatEntryExpire)
 		&&(myOldName.equals(forMe.Name())))
 			return this.chatGroups;
@@ -1260,18 +1279,32 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 
 		if(selection!=null)
 		{
+			if(selection.switchDB.trim().equals("-")) // N11: $@-, back to the base group for this speaker
+			{
+				this.chatGroups.clear();
+				this.currChatEntries = null;
+				this.chatEntryExpire = Long.MAX_VALUE;
+				keptGroup(source, target, null);
+			}
+			else
 			if(selection.switchDB.length()>0)
 			{
 				final ChattyGroup[] allGroups = getChatGroups();
-				final boolean add = selection.switchDB.startsWith("+");
-				final String dbname = add?selection.switchDB.substring(1).trim():selection.switchDB;
+				final boolean kept = selection.switchDB.startsWith("!"); // N11: $@!group, until changed, and saved
+				final String switchTo = kept ? selection.switchDB.substring(1).trim() : selection.switchDB;
+				final boolean add = switchTo.startsWith("+");
+				final String dbname = add?switchTo.substring(1).trim():switchTo;
 				final ChattyGroup matchedCG=matchChatGroup(source, dbname, allGroups);
 				if(matchedCG != null)
 				{
+					if(kept)
+						keptGroup(source, target, dbname);
 					final PairList<ChattyGroup,Long> list = this.getChatGroups(source, allGroups);
+					if(kept && list.containsFirst(matchedCG) && (!add))
+						list.clear();
 					if(!list.containsFirst(matchedCG))
 					{
-						final long expire = GameTime.now() + TALK_SWITCH_EXPIRE;
+						final long expire = kept ? Long.MAX_VALUE : (GameTime.now() + TALK_SWITCH_EXPIRE);
 						if(!add)
 							list.clear();
 						list.add(new Pair<ChattyGroup, Long>(matchedCG,Long.valueOf(expire)));
@@ -1355,6 +1388,19 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 							}
 						}
 					});
+					finalCommand = null;
+					break;
+				}
+				case '&': // N11: a MOBPROG line, the NPC its host and the speaker $n
+				{
+					final String line=finalCommand.substring(1).trim();
+					if(line.length()>0)
+					{
+						final ChattyResponse R=new ChattyResponse(new XVector<String>("MUDCHAT",line),responseDelay,selection.combatFlag);
+						R.script=line;
+						R.speaker=target;
+						responseQue.add(R);
+					}
 					finalCommand = null;
 					break;
 				}
@@ -1979,6 +2025,10 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 				if(c=='0')
 					problems.add("line "+lineNum+": a reply of weight 0 is never chosen: "+str);
 				break;
+			case '?':
+				if(str.substring(1).trim().length()==0)
+					problems.add("line "+lineNum+": a guard (?) with no condition");
+				break;
 			case '#':
 			case '"':
 				break;
@@ -1990,6 +2040,96 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		if(inEntry&&(entryReplies==0))
 			problems.add("line "+entryLine+": the pattern "+entryText+" has no replies");
 		return problems;
+	}
+
+	/** N11: the NPC, as its last message found it */
+	protected MOB chatHost = null;
+	/** N11: each speaker's group switches, by name, while another speaks */
+	protected final Map<String,PairList<ChattyGroup,Long>> speakerGroups = new Hashtable<String,PairList<ChattyGroup,Long>>();
+	/** N11: for guards, & lines and the kept switches: the game's own variables */
+	protected ScriptingEngine actEngine = null;
+
+	protected ScriptingEngine actEngine()
+	{
+		if(actEngine == null)
+		{
+			final ScriptingEngine S = (ScriptingEngine)CMClass.getCommon("DefaultScriptingEngine");
+			S.setSavable(false);
+			S.setVarScope("");
+			actEngine = S;
+		}
+		return actEngine;
+	}
+
+	/** N11: the variable a kept switch ($@!) is saved in, on the NPC */
+	protected static String keptKey(final MOB speaker)
+	{
+		return "MUDCHAT_GROUP_"+speaker.Name().toUpperCase().replace(' ','_');
+	}
+
+	/**
+	 * N11: keeps (or, with null, forgets) the group a speaker was switched to with $@!.
+	 * @param npc the NPC
+	 * @param speaker the speaker
+	 * @param group the group, or null
+	 */
+	protected void keptGroup(final MOB npc, final MOB speaker, final String group)
+	{
+		if((npc == null) || (speaker == null))
+			return;
+		actEngine().setVar(npc.Name(), keptKey(speaker), (group == null) ? "" : group);
+		if(group == null)
+			speakerGroups.remove(speaker.Name().toUpperCase());
+	}
+
+	/**
+	 * N11: whether an entry's ?guard holds: a script condition, $t (and $n) the speaker, $i the NPC.
+	 * @param entry the entry
+	 * @param npc the NPC
+	 * @param speaker the speaker
+	 * @return true if it has none, or it holds
+	 */
+	protected boolean guardOk(final ChattyEntry entry, final MOB npc, final MOB speaker)
+	{
+		if((entry.guard == null) || (entry.guard.length() == 0))
+			return true;
+		final ScriptingEngine S = actEngine();
+		try
+		{
+			String[] ev = entry.guardEval;
+			if(ev == null)
+			{
+				ev = S.parseEval(entry.guard);
+				entry.guardEval = ev;
+			}
+			return S.eval(new MPContext(npc, npc, speaker, speaker, null, null, "", null), new String[][] { ev }, 0);
+		}
+		catch(final ScriptParseException e)
+		{
+			Log.errOut("MudChat", "the guard ?" + entry.guard + " does not parse: " + e.getMessage());
+			return false;
+		}
+	}
+
+	/**
+	 * N11: runs a reply: its command, or (&) its MOBPROG line, the NPC as the
+	 * host and the speaker as $n.
+	 * @param mob the NPC
+	 * @param R the reply
+	 */
+	protected void respond(final MOB mob, final ChattyResponse R)
+	{
+		if(R.script == null)
+		{
+			mob.doCommand(R.parsedCommand,MUDCmdProcessor.METAFLAG_FORCED);
+			return;
+		}
+		final ScriptingEngine S = actEngine();
+		synchronized(S)
+		{
+			S.setScript("FUNCTION_PROG MUDCHAT_REPLY\n" + R.script + "\n~\n");
+			S.callFunction(mob, "MUDCHAT_REPLY", "", ((R.speaker != null) && (!R.speaker.amDestroyed())) ? R.speaker : mob);
+		}
 	}
 
 	protected void checkReactionReset(final MOB mob)
@@ -2004,12 +2144,41 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			}
 			else
 			{
-				if((this.lastSpeakerM!=null)
-				&&(this.chatEntryExpire < Long.MAX_VALUE))
+				// N11: each speaker has their own switches: the last one's are kept, this one's put back
+				if(chatHost!=null)
+					getMyBaseChatGroup(chatHost,getChatGroups()); // its own name and base group first
+				if(this.lastSpeakerM!=null)
 				{
-					this.chatGroups.clear();
-					this.currChatEntries = null;
-					this.chatEntryExpire = Long.MAX_VALUE;
+					final PairList<ChattyGroup,Long> was=new PairSVector<ChattyGroup,Long>();
+					for(final Pair<ChattyGroup,Long> p : this.chatGroups)
+						was.add(p);
+					speakerGroups.put(this.lastSpeakerM.Name().toUpperCase(),was);
+				}
+				this.chatGroups.clear();
+				this.currChatEntries = null;
+				this.chatEntryExpire = Long.MAX_VALUE;
+				final PairList<ChattyGroup,Long> mine=(mob==null)?null:speakerGroups.get(mob.Name().toUpperCase());
+				if(mine!=null)
+				{
+					for(final Pair<ChattyGroup,Long> p : mine)
+					{
+						if(GameTime.now()<p.second.longValue())
+						{
+							this.chatGroups.add(p);
+							if(p.second.longValue()<this.chatEntryExpire)
+								this.chatEntryExpire=p.second.longValue();
+						}
+					}
+				}
+				else
+				if(mob!=null)
+				{
+					// a switch kept ($@!) in a saved variable
+					final MOB npc=chatHost;
+					final String kept=(npc==null)?"":actEngine().getVar(npc.Name(),keptKey(mob));
+					final ChattyGroup grp=(kept.length()>0)?matchChatGroup(npc,kept,getChatGroups()):null;
+					if(grp!=null)
+						this.chatGroups.add(grp,Long.valueOf(Long.MAX_VALUE));
 				}
 				this.lastSpeakerM = mob;
 			}
@@ -2026,6 +2195,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			return;
 		final MOB srcMob=msg.source();
 		final MOB meMob=(MOB)affecting;
+		chatHost=meMob; // N11
 		if((msg.source()==meMob)
 		&&(msg.sourceMinor()==CMMsg.TYP_SPEAK)
 		&&(msg.othersMessage()!=null))
@@ -2060,7 +2230,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					if((expression.type==ChatMatchType.SAY)
 					&&(entry.combatEntry==combat))
 					{
-						if(match(srcMob,expression,str,rest))
+						if(match(srcMob,expression,str,rest)&&guardOk(entry,meMob,srcMob))
 						{
 							myResponses=new ArrayList<Pair<ChattyTestResponse,String>>();
 							for(final ChattyTestResponse c : entry.responses)
@@ -2103,7 +2273,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 						if((expression.type==matchType)
 						&&(entry.combatEntry==combat))
 						{
-							if(match(srcMob,expression,str,rest))
+							if(match(srcMob,expression,str,rest)&&guardOk(entry,meMob,srcMob))
 							{
 								myResponses=new ArrayList<Pair<ChattyTestResponse,String>>();
 								for(final ChattyTestResponse c : entry.responses)
@@ -2157,7 +2327,8 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 						if((entry.combatEntry==combat)
 						&&((!entry.llm)||(this.isLLMSupported()))
 						&&((!entry.antillm)||(!this.isLLMSupported()))
-						&&(this.match((MOB)ticking, entry.expression, CMLib.dice().rollPercentage())))
+						&&(this.match((MOB)ticking, entry.expression, CMLib.dice().rollPercentage()))
+						&&guardOk(entry,(MOB)ticking,(MOB)ticking))
 						{
 							myResponses=new ArrayList<Pair<ChattyTestResponse,String>>();
 							for(final ChattyTestResponse c : entry.responses)
@@ -2182,7 +2353,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 						responseQue.remove(R);
 						if(R.combatFlag == ((MOB)ticking).isInCombat())
 						{
-							((MOB)ticking).doCommand(R.parsedCommand,MUDCmdProcessor.METAFLAG_FORCED);
+							respond((MOB)ticking,R);
 							lastReactedToM=null;
 							// you've done one, so get out before doing another!
 							break;

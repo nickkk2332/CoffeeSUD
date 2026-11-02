@@ -377,6 +377,10 @@ topic, shows a menu of what it does: trade, banking, lessons, hire, quests.</p>
 prompt, and the clock does not move for it (DIALOGUETIME=INSTANT, or TIMEMODE DIALOGUE INSTANT;
 TICKS leaves them to the NPC's ticks). A WAIT of several ticks stops when an NPC speaks to
 the one waiting.</p>
+<p>A MudChat file can branch on the game: <code>?VAR($t MINEQUEST == done)</code> before an
+entry makes it the hero's alone; a reply <code>&amp;mpstartquest minerats</code> runs a MOBPROG line
+with the speaker as <code>$n</code>; <code>$@!foreman_quest</code> moves that speaker (and only them)
+to another group of entries until <code>$@-</code>, kept in a saved game.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
