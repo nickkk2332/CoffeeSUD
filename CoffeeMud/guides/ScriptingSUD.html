@@ -26,6 +26,7 @@ In the game, <code>HELP SCRIPTABLE</code> has the whole list, and
 <li><a href="#cookbook">Cookbook</a></li>
 <li><a href="#cmdfail">cmdfail_prog</a></li>
 <li><a href="#quests">Quests</a></li>
+<li><a href="#npcs">NPCs</a></li>
 <li><a href="#found">Less known</a></li>
 <li><a href="JavaScriptSUD.html">JavaScript</a></li>
 </ul>
@@ -322,6 +323,13 @@ set restart never
 set endonwin true
 ...
 </pre>
+
+<h2><a name="npcs">NPCs</a></h2>
+<p>Any behaviour can be limited to a time or a condition: <code>TOD=NIGHT</code>,
+<code>HOURS=22-4</code>, or <code>WHEN="+WEATHER -THUNDERSTORM"</code>, a mask tested on
+its host. A werewolf has <code>MobileAggressive TOD=NIGHT -NPC</code> and
+<code>Mobile TOD=DAY min=20 max=40</code>; while its condition fails a behaviour
+does nothing. STAT BEHAVIORS says which are on.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

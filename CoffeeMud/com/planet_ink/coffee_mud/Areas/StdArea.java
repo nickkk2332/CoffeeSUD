@@ -1096,7 +1096,7 @@ public class StdArea implements Area
 		for (int b = 0; b < numBehaviors(); b++)
 		{
 			N = fetchBehavior(b);
-			if ((N != null) && (!N.okMessage(this, msg)))
+			if ((N != null) && BehaviorWhen.active((Behavior)N, this) && (!N.okMessage(this, msg))) // N1
 				return false;
 		}
 		for (int s = 0; s < numScripts(); s++)
@@ -1237,7 +1237,8 @@ public class StdArea implements Area
 			@Override
 			public final void apply(final Behavior B)
 			{
-				B.executeMsg(me, msg);
+				if(BehaviorWhen.active(B, me)) // N1
+					B.executeMsg(me, msg);
 			}
 		});
 		eachScript(new EachApplicable<ScriptingEngine>()
@@ -1298,7 +1299,8 @@ public class StdArea implements Area
 				@Override
 				public final void apply(final Behavior B)
 				{
-					B.tick(ticking, tickID);
+					if(BehaviorWhen.active(B, ticking)) // N1
+						B.tick(ticking, tickID);
 				}
 			});
 			tickStatus = Tickable.STATUS_SCRIPT;

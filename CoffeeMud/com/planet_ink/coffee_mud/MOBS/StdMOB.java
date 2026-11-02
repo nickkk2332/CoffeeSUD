@@ -2572,7 +2572,7 @@ public class StdMOB implements MOB
 		for(final Enumeration<Behavior> b = behaviors(); b.hasMoreElements();)
 		{
 			final Behavior B = b.nextElement();
-			if(!B.okMessage(this, msg))
+			if(BehaviorWhen.active(B, this) && (!B.okMessage(this, msg))) // N1
 				return false;
 		}
 
@@ -3510,7 +3510,8 @@ public class StdMOB implements MOB
 				@Override
 				public final void apply(final Behavior B)
 				{
-					B.executeMsg(me, msg);
+					if(BehaviorWhen.active(B, me)) // N1
+						B.executeMsg(me, msg);
 				}
 			});
 		}
@@ -4408,7 +4409,8 @@ public class StdMOB implements MOB
 					@Override
 					public final void apply(final Behavior B)
 					{
-						B.tick(ticking, tickID);
+						if(BehaviorWhen.active(B, ticking)) // N1
+							B.tick(ticking, tickID);
 					}
 				});
 			}

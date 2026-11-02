@@ -59,10 +59,11 @@ public class TraceBCmd extends StdCommand
 		{
 			final Behavior B = e.nextElement();
 			n++;
-			str.append("\n\r").append(n).append(". ").append(B.ID()).append(": ").append(B.getStat("DEBUG"));
+			str.append("\n\r").append(n).append(". ").append(B.ID()).append(": ").append(B.getStat("DEBUG")).append(BehaviorWhen.state(B, host)); // N1
 			// a behaviour's help is BEHAVIOR_ID, or else its ID
 			final String helpID = PropCheck.keysOf("BEHAVIOR_" + B.ID()).isEmpty() ? B.ID() : ("BEHAVIOR_" + B.ID());
 			for(final String k : PropCheck.unknownKeys(helpID, B.getParms()))
+				if(!BehaviorWhen.KEYS.contains(k)) // N1: WHEN, TOD and HOURS go with any behaviour
 				str.append("\n\r   ").append(CMLib.lang().L("unknown key @x1 (AHELP @x2)", k, helpID.toUpperCase()));
 		}
 		if(n == 0)

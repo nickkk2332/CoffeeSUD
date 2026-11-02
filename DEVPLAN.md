@@ -1615,6 +1615,17 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
 N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N15, N16, N17, N20, N21,
 N22, N24, N28, N29
 
+- N1 done. Any behaviour may have `WHEN="<zapper mask>"`, tested on its
+  host (mob, item, room, area or exit), `TOD=DAWN|DAY|DUSK|NIGHT` (several
+  with commas) and `HOURS=a-b` (on the host's clock, round midnight when a
+  is past b). While the condition fails, the behaviour neither ticks nor
+  hears messages (`core/BehaviorWhen`, asked by StdMOB, StdItem, StdRoom,
+  StdArea and StdExit before they tick a behaviour or pass it okMessage or
+  executeMsg), so all of them have it without a change of their own;
+  scripts are not gated. STAT BEHAVIORS says whether it is on now, and its
+  unknown-key check knows the three keys. For the opposite case, a second
+  copy with the opposite condition.
+
 #### 2g. Combat and encounters (24)
 
 C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C14, C15, C16, C17,

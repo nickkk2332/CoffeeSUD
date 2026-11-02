@@ -772,7 +772,8 @@ public class StdItem implements Item
 					@Override
 					public final void apply(final Behavior B)
 					{
-						B.tick(ticking,tickID);
+						if(BehaviorWhen.active(B,ticking)) // N1
+							B.tick(ticking,tickID);
 					}
 				});
 			}
@@ -1076,7 +1077,7 @@ public class StdItem implements Item
 		for(int b=0;b<num;b++)
 		{
 			N=fetchBehavior(b);
-			if((N!=null)&&(!N.okMessage(this,msg)))
+			if((N!=null)&&BehaviorWhen.active((Behavior)N,this)&&(!N.okMessage(this,msg))) // N1
 				return false;
 		}
 		num=numScripts();
@@ -1636,7 +1637,8 @@ public class StdItem implements Item
 				@Override
 				public final void apply(final Behavior B)
 				{
-					B.executeMsg(me,msg);
+					if(BehaviorWhen.active(B,me)) // N1
+						B.executeMsg(me,msg);
 				}
 			});
 		}
