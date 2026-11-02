@@ -610,6 +610,7 @@ public class StdBook extends StdItem implements Book
 
 	protected List<JournalEntry> readChaptersByCreateDate()
 	{
+		JournalSeeds.seed(getJournalName()); // I3: world/journals/NAME.txt fills an empty book
 		return CMLib.database().DBReadJournalMsgsByCreateDate(getJournalName(), true);
 	}
 

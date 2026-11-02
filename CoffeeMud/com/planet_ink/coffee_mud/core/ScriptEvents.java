@@ -1126,6 +1126,9 @@ public final class ScriptEvents
 			}
 			if(propVerb(mob, host, verb, rest))
 				return true;
+			// I3: the thing itself (GenTome)
+			if((host instanceof VerbTaker) && ((VerbTaker)host).takeVerb(mob, host, verb, rest))
+				return true;
 			// I9: a puzzle property on it (Prop_Switch and its kin)
 			for(final Enumeration<Ability> a = host.effects(); a.hasMoreElements();)
 			{
@@ -2024,6 +2027,31 @@ public final class ScriptEvents
 		if((r.length() > 1) && r.startsWith("'") && r.endsWith("'"))
 			r = r.substring(1, r.length() - 1);
 		return CMLib.english().containsString(I.name(), r) || CMLib.english().containsString(I.Name(), r);
+	}
+
+	/**
+	 * I3: as readMatches, and READ_PROG PAGE n (or PAGE title) for the page
+	 * of a paged book (GenTome) the reading shows.
+	 * @param rest the trigger line after READ_PROG
+	 * @param I the thing read
+	 * @param reader who reads
+	 * @param request what they asked of it
+	 * @return true if it fits
+	 */
+	public static boolean readMatches(final String rest, final Item I, final MOB reader, final String request)
+	{
+		final String r = rest.trim();
+		if(r.toUpperCase().startsWith("PAGE ") && (I instanceof Paged))
+		{
+			final String want = r.substring(5).trim();
+			final int page = ((Paged)I).pageFor(reader, request);
+			if(page <= 0)
+				return false;
+			if(CMath.isInteger(want))
+				return CMath.s_int(want) == page;
+			return CMLib.english().containsString(((Paged)I).pageTitle(page), want);
+		}
+		return readMatches(rest, I);
 	}
 
 	/** GENERATED_PROG's code */

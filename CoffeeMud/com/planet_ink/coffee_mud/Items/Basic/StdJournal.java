@@ -803,6 +803,7 @@ public class StdJournal extends StdItem implements Book
 
 	public JournalEntry DBRead(final MOB reader, final String journal, final int which, final long lastTimeDate, final boolean newOnly, final boolean all)
 	{
+		JournalSeeds.seed(journal); // I3: world/journals/NAME.txt fills an empty board
 		final List<JournalEntry> journalEntries;
 		final boolean useCreateDate=getSortBy().toUpperCase().startsWith("CREAT");
 		String[] tos=new String[0];

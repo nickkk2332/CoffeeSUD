@@ -17127,7 +17127,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					{
 						if(t==null)
 							t=parseBits(script,0,"Cr");
-						if((t!=null)&&ScriptEvents.readMatches((t.length>1)?t[1]:"",(Item)msg.target()))
+						if((t!=null)&&ScriptEvents.readMatches((t.length>1)?t[1]:"",(Item)msg.target(),msg.source(),msg.targetMessage())) // I3: PAGE n
 						{
 							final MOB rmonster=getMakeMOB(affecting);
 							if(lastKnownLocation==null)

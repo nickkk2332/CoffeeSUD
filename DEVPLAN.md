@@ -2192,6 +2192,20 @@ I22, I23, I24, I25, I26, I27
   key carried fits and may be used. Prop_LockRules (exits, containers):
   PICK=NEVER|LEVEL:n against a thief skill (or an ability with PICK in its
   ID) aimed at it, KEYS, RELOCK (core/Doors), MSG.
+- I3 done. Items/Basic/GenTome (a GenReadable, Paged and a VerbTaker):
+  pages from its readable text, PAGE blocks (TITLE, LANG, LORE), or
+  FILE=world/texts/x.txt (or a resources file) with "=== title [| keys]
+  ===" sections. READ shows contents, READ n|NEXT|PREV|title a page (the
+  place kept for each reader while the game runs), handled in its
+  executeMsg (the message then carries CANCEL so the stock reading stays
+  quiet); LANG needs the language ability; <VARIES> pages go through
+  parseVaries; LORE gives the tattoo LORE:key (PR6's codex will read it).
+  READ_PROG PAGE n|title (ScriptEvents.readMatches with the reader and
+  request). TEAR PAGE n FROM book: a GenReadable page (tag PAGE:n), the
+  book tagged TORN:n. ScriptEvents.verb asks the thing itself when it is a
+  VerbTaker. core/JournalSeeds fills an empty GenBook or board from
+  world/journals/NAME.txt (=== subject ===, AUTHOR:) the first time it is
+  read in a run.
 
 #### 2i. World systems (25)
 

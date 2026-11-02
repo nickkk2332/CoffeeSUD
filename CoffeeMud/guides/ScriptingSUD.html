@@ -592,6 +592,11 @@ trap with a script and no ability now runs its script (ACT_PROG with the trap's 
 jail.1 to jail.6), and keyrings work deep in a pack. <code>Prop_KeyRules CONSUME=true</code> makes the cursed bone key
 crumble once it has opened the ossuary; <code>Prop_LockRules PICK=NEVER RELOCK=20</code> makes a lock no thief picks,
 that locks itself again.</p>
+<p>Books with pages: a <code>GenTome</code>'s readable text holds its pages, <code>&lt;PAGE TITLE="The Fall of
+Ost"&gt;...&lt;/PAGE&gt;</code>, or <code>FILE=world/texts/ost.txt</code> with a <code>=== title ===</code> line before
+each. READ BOOK lists them, READ 7 BOOK and READ NEXT BOOK turn the pages, <code>READ_PROG PAGE 7</code> fires
+for page 7, and TEAR PAGE 7 FROM BOOK makes a page to hide in the tower. An empty GenBook or board is filled
+from <code>world/journals/[name].txt</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
