@@ -2152,6 +2152,14 @@ I22, I23, I24, I25, I26, I27
   or STAT/DC: d20 + Prop_Ambush.bonus (the stat, Searching, Thief_Search)
   against the number. MSG, HINT (a trailer to a LOOK at a FOUNDBY thing),
   STAYS and RESET. FOUND=true is kept in the text.
+- I13 done. Prop_BlockedExit (exits), a VerbTaker for CLEAR, DIG,
+  SMASH, HIT, ATTACK and BURN with the direction or its NAME: it refuses
+  ENTER and LEAVE through the exit while it stands, adds a line to LOOK
+  at the exit, takes 1d6 + Prop_Ambush.bonus(SKILL) a try (TOOL held or
+  wielded), FIRE and a lit Light for BURN; MSG, CLEARMSG (both rooms),
+  ONCLEAR actions, RESPAWN. LEFT= in the text; a Prop_BlockedExit on the
+  paired exit is set the same. Attacking it with the combat system was
+  not done: ATTACK is one of its words instead.
 
 #### 2i. World systems (25)
 
