@@ -2339,6 +2339,17 @@ W18, W19, W20, W21, W22, W23, W28, W29
   when no customer is named) and `SHOPBUDGET(shopkeeper)` (203; -1 for no
   limit). ShopKeeper's new `setBudgetLeft` and `resetStock`. JavaScript's
   cm.shop(): remove, stock, setPrice, clear, reset, budget and setBudget.
+- W15 done. `BANKBALANCE(who chain [currency])` (204) and `DEBT(who
+  owedTo [DUE])` (205; with DUE the game hours until it falls due, below
+  0 once past due). `MPBANK who chain +n|-n [reason]` (134) pays in
+  (opening the account, as a deposit would) or takes out, with a dated
+  ledger line; `MPDEBT who owedTo +n|-n [INTEREST pct] [DUE n DAYS] [FOR
+  reason]` (135; a minus pays off, the first due first) and `MPDEBT who
+  owedTo CLEAR`. A name not in the world is taken as it is (core/Banks;
+  the money library's own records, which a save keeps). JavaScript's
+  cm.bank(): pay, debt, lend and forgive. Fixed on the way: a debt changed
+  but not paid off was written under the money library's name, not the
+  debtor's, so a banker's loan payments never lowered what was owed.
 
 #### 2j. Generators and random content (16)
 

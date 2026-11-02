@@ -999,7 +999,7 @@ public class BeanCounter extends StdLibrary implements MoneyLibrary
 				if(debts.size()==0)
 					CMLib.database().DBDeletePlayerData(name.toUpperCase(),"DEBT",key);
 				else
-					CMLib.database().DBUpdatePlayerData(name().toUpperCase(), "DEBT", key,xml);
+					CMLib.database().DBUpdatePlayerData(name.toUpperCase(), "DEBT", key,xml); // W15: the debtor's (it was the library's name)
 			}
 			else
 				CMLib.database().DBCreatePlayerData(name.toUpperCase(),"DEBT",key,xml);

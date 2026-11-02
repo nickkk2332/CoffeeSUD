@@ -15967,6 +15967,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "BANKBALANCE": // W15: BANKBALANCE(who chain [currency]): their coins at the bank chain, in base value
+		{
+			final String who=personName(ctx,CMParms.getCleanBit(parms,0));
+			final String chain=varify(ctx,CMParms.getCleanBit(parms,1)).trim();
+			final String cur=varify(ctx,CMParms.getCleanBit(parms,2)).trim().toUpperCase();
+			return Shops.num(Banks.balance(who,chain,cur));
+		}
+		case "DEBT": // W15: DEBT(who owedTo [DUE]): what they owe; with DUE, the game hours until it falls due (below 0 when past due)
+		{
+			final String who=personName(ctx,CMParms.getCleanBit(parms,0));
+			final String owedTo=varify(ctx,CMParms.getCleanBit(parms,1)).trim();
+			if(varify(ctx,CMParms.getCleanBit(parms,2)).trim().equalsIgnoreCase("DUE"))
+			{
+				final Area A=CMLib.map().areaLocation(ctx.scripted);
+				final Long h=Banks.hoursToDue(who,owedTo,(A==null)?null:A.getTimeObj());
+				return (h==null)?"":(""+h);
+			}
+			return Shops.num(Banks.debt(who,owedTo));
+		}
 		case "SHOPPRICE": // W14: SHOPPRICE(shopkeeper item [customer]): what the shop asks them for it, in base value
 		{
 			final MOB shopM=shopkeeperFor(ctx,CMParms.getCleanBit(parms,0));
@@ -16489,6 +16508,70 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
+			return null;
+		}
+		case "MPBANK": // W15: MPBANK who chain +n|-n [reason]: pays into or takes from their account, with a ledger line
+		{
+			final String who=personName(ctx,CMParms.getCleanBit(line,1));
+			final String chain=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final String amt=varify(ctx,CMParms.getCleanBit(line,3)).trim();
+			final String reason=varify(ctx,CMParms.getPastBitClean(line,3)).trim();
+			final String num=amt.startsWith("+")?amt.substring(1):amt;
+			if((who.length()==0)||(chain.length()==0)||(!CMath.isNumber(num)))
+			{
+				logError(ctx,"MPBANK","Syntax","MPBANK who chain +amount|-amount [reason]: "+line);
+				return null;
+			}
+			if(!Banks.change(who,chain,CMath.s_double(num),reason,ctx.scripted))
+				logError(ctx,"MPBANK","RunTime",who+" has not that much at "+chain+": "+line);
+			return null;
+		}
+		case "MPDEBT": // W15: MPDEBT who owedTo +n|-n [INTEREST pct] [DUE n DAYS] [FOR reason] | CLEAR
+		{
+			final String who=personName(ctx,CMParms.getCleanBit(line,1));
+			final String owedTo=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final List<String> w=unquotedWords(varify(ctx,CMParms.getPastBit(line,2)));
+			if((who.length()==0)||(owedTo.length()==0)||w.isEmpty())
+			{
+				logError(ctx,"MPDEBT","Syntax","MPDEBT who owedTo +amount|-amount [INTEREST pct] [DUE n DAYS] [FOR reason] | CLEAR: "+line);
+				return null;
+			}
+			if(w.get(0).equalsIgnoreCase("CLEAR"))
+			{
+				Banks.clear(who,owedTo);
+				return null;
+			}
+			final String num=w.get(0).startsWith("+")?w.get(0).substring(1):w.get(0);
+			if(!CMath.isNumber(num))
+			{
+				logError(ctx,"MPDEBT","Syntax","the amount is no number: "+line);
+				return null;
+			}
+			double interest=0.0;
+			long due=0;
+			String reason="";
+			for(int i=1;i<w.size();i++)
+			{
+				final String k=w.get(i).toUpperCase();
+				if(k.equals("INTEREST")&&(i+1<w.size()))
+					interest=CMath.s_double(w.get(++i).replace("%",""))/100.0;
+				else
+				if(k.equals("DUE")&&(i+2<w.size()))
+				{
+					final Area A=CMLib.map().areaLocation(ctx.scripted);
+					final long ms=Laws.duration(w.get(i+1)+" "+w.get(i+2),(A==null)?null:A.getTimeObj());
+					i+=2;
+					if(ms>0)
+						due=GameTime.now()+ms;
+				}
+				else
+				if(k.equals("FOR"))
+				{
+					reason=CMParms.combine(w,i+1);
+					break;
+				}
+			}
+			Banks.adjust(who,owedTo,CMath.s_double(num),interest,due,reason);
 			return null;
 		}
 		case "MPSHOP": // W14: MPSHOP shopkeeper REMOVE item [n|ALL] | STOCK item n | PRICE item amount|-1 | CLEAR | RESET | BUDGET amount
@@ -19243,6 +19326,24 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			return lastKnownLocation.getExitInDir(d);
 		final Environmental E=getArgumentItem(raw,ctx);
 		return (E instanceof Physical)?(Physical)E:null;
+	}
+
+	/**
+	 * W15: whose account or debt a script means: a mob's name, or the word
+	 * itself (a name, for someone not in the world).
+	 * @param ctx the script's context
+	 * @param word the word
+	 * @return the name
+	 */
+	protected String personName(final MPContext ctx, final String word)
+	{
+		final Environmental E=getArgumentMOB(word,ctx);
+		if(E instanceof MOB)
+			return E.Name();
+		String w=varify(ctx,word).trim();
+		while((w.length()>1)&&("'`\"".indexOf(w.charAt(0))>=0)&&(w.charAt(w.length()-1)==w.charAt(0)))
+			w=w.substring(1,w.length()-1).trim();
+		return w;
 	}
 
 	/**

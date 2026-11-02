@@ -1475,6 +1475,50 @@ public class JSCm
 		{
 			return raw.totalItemsWorth(who(depositor));
 		}
+
+		/**
+		 * W15: pays into or takes from an account (MPBANK), with a ledger line.
+		 * @param depositor a mob or its name, or null for the player
+		 * @param delta the amount in base value; a minus takes it out
+		 * @param reason why, for the ledger
+		 * @return false if there is not that much to take
+		 */
+		public boolean pay(final Object depositor, final double delta, final String reason)
+		{
+			return Banks.change(who(depositor), raw.bankChain(), delta, reason, raw);
+		}
+
+		/**
+		 * W15: what one owes this bank (DEBT).
+		 * @param debtor a mob or its name, or null for the player
+		 * @return the amount, in base value
+		 */
+		public double debt(final Object debtor)
+		{
+			return Banks.debt(who(debtor), raw.bankChain());
+		}
+
+		/**
+		 * W15: a debt to this bank (MPDEBT +n).
+		 * @param debtor a mob or its name, or null for the player
+		 * @param amount in base value; a minus pays some off
+		 * @param interestPct the interest each month, in percent
+		 * @param dueHours game hours until it falls due, or 0 for none
+		 */
+		public void lend(final Object debtor, final double amount, final double interestPct, final long dueHours)
+		{
+			Banks.adjust(who(debtor), raw.bankChain(), amount, interestPct / 100.0,
+				(dueHours > 0) ? (GameTime.now() + (dueHours * CMProps.getMillisPerMudHour())) : 0, "");
+		}
+
+		/**
+		 * W15: clears what one owes this bank (MPDEBT CLEAR).
+		 * @param debtor a mob or its name, or null for the player
+		 */
+		public void forgive(final Object debtor)
+		{
+			Banks.clear(who(debtor), raw.bankChain());
+		}
 	}
 
 	/**

@@ -653,6 +653,9 @@ In JavaScript, <code>MONEYSTR$(36, 'CROWN', 'LONG')</code>.</p>
 ingot" ALL</code>, and <code>MPSHOP $i RESET</code> when it is cleared. A fence offers a stolen ring back for
 <code>$%SHOPPRICE($i 'silver ring' $n)%</code> and a half more (<code>MPSHOP $i PRICE 'silver ring' 300</code>);
 <code>MPSHOP $i BUDGET 0</code> leaves a ruined merchant buying nothing.</p>
+<p>Money in the bank: the guild pays bounties straight into an account, <code>MPBANK $n 'Riverton Trust' +500 the
+wolf bounty</code>, and <code>BANKBALANCE($n 'Riverton Trust')</code> reads it. A moneylender lends with <code>MPDEBT $n Vargo
++200 INTEREST 5 DUE 7 DAYS FOR the gambling debt</code>; his thugs come once <code>DEBT($n Vargo DUE &lt; 0)</code>.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
