@@ -560,6 +560,39 @@ public final class ScriptEvents
 		arena(R, ARENALOSE_PROG, who, "");
 	}
 
+	/** C8: PARTYDEFEAT_PROG's code */
+	public static final int	PARTYDEFEAT_PROG	= code("PARTYDEFEAT_PROG");
+
+	/**
+	 * C8: the whole party is down or dead: PARTYDEFEAT_PROG runs on the scripts
+	 * of the room and its area that have one, $n the last to fall.
+	 * @param R the room
+	 * @param who the last to fall
+	 * @return true if a script there has one
+	 */
+	public static boolean partyDefeat(final Room R, final MOB who)
+	{
+		if((R == null) || (who == null))
+			return false;
+		boolean any = false;
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		hosts.add(R);
+		if(R.getArea() != null)
+			hosts.add(R.getArea());
+		for(final PhysicalAgent H : hosts)
+		{
+			for(final ScriptingEngine S : engines(H))
+			{
+				if(!S.triggerLines(H, PARTYDEFEAT_PROG, "C").isEmpty())
+				{
+					any = true;
+					S.eventCheck(H, PARTYDEFEAT_PROG, who, H, null, "", null, "C", t -> true);
+				}
+			}
+		}
+		return any;
+	}
+
 	/** C23: AMBUSH_PROG's code */
 	public static final int	AMBUSH_PROG		= code("AMBUSH_PROG");
 

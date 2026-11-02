@@ -602,6 +602,9 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			}
 		}
 
+		// C8: PLAYERDEATH's DOWNED: one of the player's side falls instead
+		if(Downed.down(deadM,killerM))
+			return;
 		if((killerM!=null)&&(killerM.getVictim()==deadM))
 			handleDamageSpamSummary(killerM);
 
@@ -2746,6 +2749,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 	public void handleDeath(final CMMsg msg)
 	{
 		final MOB deadmob=msg.source();
+		final Room fellIn=deadmob.location(); // C8
+		final boolean partySide=GameDifficulty.playerSide(deadmob);
 		if(!deadmob.amDead())
 		{
 			if((!deadmob.isMonster())&&(deadmob.soulMate()==null))
@@ -2797,6 +2802,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 				deadmob.riding().delRider(deadmob);
 			if(CMLib.flags().isCataloged(deadmob))
 				CMLib.catalog().bumpDeathPickup(deadmob);
+			if(partySide)
+				Downed.afterDeath(deadmob,fellIn); // C8: the last of the party fell
 		}
 	}
 

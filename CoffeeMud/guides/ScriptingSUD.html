@@ -533,6 +533,11 @@ the party's, and notes when they scale to the party.</p>
 on a shrine, and <code>DEATH=CHECKPOINT</code> in coffeemud.ini: a character killed in the crypt wakes at the last
 shrine they prayed at, and praying there brings the crypt's skeletons back. <code>MPSETRESPAWN $n here</code> and
 <code>RESPAWNROOM($n)</code> do the same from scripts.</p>
+<p>Downed, not dead: <code>PLAYERDEATH=DOWNED 3 5,EXPERIENCE</code> (or a room's <code>Prop_DeathRules
+PLAYERDEATH="DOWNED 3 5"</code>): a character at 0 hit points falls for three rounds; an ally types
+<code>REVIVE</code>, or heals them 5 or more, and they are back up. If the whole party goes down, a
+<code>PARTYDEFEAT_PROG</code> on the room or area decides (a captor drags them off, say); without one,
+<code>PARTYDEFEAT=CHECKPOINT</code> wakes them together at the last shrine, a tenth of their gold gone.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

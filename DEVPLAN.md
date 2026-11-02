@@ -2041,6 +2041,20 @@ C18, C19, C20, C21, C22, C23, C25
   and RESPAWNROOM(who) (190). Fixed on the way: CMUniqNameSortSVec did not
   override compareToLowerStarts, so findStartsWith (findTattooStartsWith)
   compared class ids and never found a tattoo by the start of its name.
+- C8 done. PLAYERDEATH's DOWNED x y (global, or a room's or area's
+  Prop_DeathRules): postDeath asks core/Downed first, and one of the
+  player's side falls instead of dying: Prop_Downed TICKS=x HEAL=y (sitting,
+  acts not, is not attacked; the foes that downed them stop). REVIVE
+  (Commands/Revive) by an ally, or a heal of y or more, brings them back;
+  when the foes that downed them are gone or dead and no one of the party
+  there fights, they get up at 1; when x runs out, Downed.die posts the
+  death again, past DOWNED, and the rest of the list applies. When all of
+  the party in the room is down or dead (one at least down; checked on a
+  downing and in handleDeath): "Your party has fallen", PARTYDEFEAT_PROG
+  (110) on the room's and area's scripts that have one, else coffeemud.ini
+  PARTYDEFEAT, the first that applies: RESTORE (the last save, offered),
+  CHECKPOINT (the leader's, all together, PARTYDEFEATGOLD % of the gold),
+  WAIT, DEATH (the default and the last word).
 - C12 done. Prop_AddDamage: TARGETMASK= (the extra damage, and its
   reflected kind, only on victims it fits) and LEECH=n% (the wielder heals
   that share of the hit plus the extra), read by exact key and taken out

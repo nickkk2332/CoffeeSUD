@@ -560,6 +560,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ARENAWIN_PROG", // 107
 		"ARENALOSE_PROG", // 108
 		"AMBUSH_PROG", // 109
+		"PARTYDEFEAT_PROG", // 110
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
