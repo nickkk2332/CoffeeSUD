@@ -799,6 +799,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		}
 
 		double prejudiceFactor=prejudiceFactor(buyerCustM,shopKeeper.getFinalPrejudiceFactors(),false);
+		prejudiceFactor*=NpcAffinity.shopFactor(sellerShopM,buyerCustM); // N15: SHOPFACTOR by its opinion
 		final Room loc=CMLib.map().roomLocation(shopKeeper);
 		prejudiceFactor*=itemPriceFactor(product,loc,shopKeeper.getFinalItemPricingAdjustments(),false);
 		val.absoluteGoldPrice=CMath.mul(prejudiceFactor,val.absoluteGoldPrice);
@@ -1111,6 +1112,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			}
 
 			double prejudiceFactor=prejudiceFactor(sellerCustM,shopKeeper.getFinalPrejudiceFactors(),true);
+			prejudiceFactor/=NpcAffinity.shopFactor(buyerShopM,sellerCustM); // N15: a friend pays more
 			final Room loc=CMLib.map().roomLocation(shopKeeper);
 			prejudiceFactor*=itemPriceFactor(product,loc,shopKeeper.getFinalItemPricingAdjustments(),true);
 			val.absoluteGoldPrice=CMath.mul(prejudiceFactor,val.absoluteGoldPrice);

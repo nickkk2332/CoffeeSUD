@@ -736,6 +736,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"QUESTWINS", //178
 		"QUESTWINAGE", //179
 		"PARM", //180
+		"AFFINITY", //181
 	};
 
 	/** String list of all valid mobprog commands */
@@ -861,6 +862,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPREWARD", // 118
 		"MPQTIMER", // 119
 		"MPMENU", // 120
+		"MPAFFINITY", // 121
 	};
 
 	/**

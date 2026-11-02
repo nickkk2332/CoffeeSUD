@@ -384,6 +384,11 @@ to another group of entries until <code>$@-</code>, kept in a saved game.</p>
 <p>A gruff smith and a polite jeweller: <code>Prop_NPCLines NOTBUYING="Bah! I've no use for that
 junk."|"Take that rubbish elsewhere." STOLEN="I know where that came from, $n."</code> rewords their
 stock lines; on an area, a whole town's (AHELP PROP_NPCLINES for the keys).</p>
+<p>The smith's opinion of you: <code>Prop_Affinity GIFT(rare ore)=+10 QUESTWIN(The Smith's
+Blade)=+30 ATTACKED=-40 SHOPFACTOR=FRIENDLY:0.9 REFUSE=HOSTILE</code>. Ore and his quest make
+him FRIENDLY and his prices drop a tenth; <code>IF AFFINITY($i $n BAND == FRIENDLY)</code> opens
+the talk of a blade; punch him and he will not trade. <code>MPAFFINITY $i $n +5</code> moves it
+from a script. On an area it is a village's.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

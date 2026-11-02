@@ -15883,6 +15883,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "false";
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
+		case "AFFINITY": // N15: AFFINITY(npc who [BAND]): the NPC's opinion of them, a number or its band
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			if(!(N instanceof MOB))
+				return "0";
+			final String w=CMParms.getCleanBit(parms,1);
+			final Environmental W=getArgumentMOB(w,ctx);
+			final long val=NpcAffinity.get((MOB)N,(W instanceof MOB)?W.Name():varify(ctx,w));
+			return CMParms.getCleanBit(parms,2).equalsIgnoreCase("BAND")?NpcAffinity.band(val):(""+val);
+		}
 		case "ARG": // SC13: ARG(name): what LOAD=file NAME=value gave the script, or the file's ARGDEFAULT
 		case "PARM": // N7: PARM(name): a generic behaviour's parameter, or its default
 		{
@@ -16174,6 +16184,24 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPAFFINITY": // N15: MPAFFINITY npc who +n|-n|=n: the NPC's opinion of them
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String w=CMParms.getCleanBit(line,2);
+			final Environmental W=getArgumentMOB(w,ctx);
+			final String amt=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(N instanceof MOB))||(amt.length()==0))
+			{
+				logError(ctx,"MPAFFINITY","Syntax","MPAFFINITY npc who +n|-n|=n: "+line);
+				return null;
+			}
+			final String who=(W instanceof MOB)?W.Name():varify(ctx,w);
+			if(amt.startsWith("="))
+				NpcAffinity.set((MOB)N,who,CMath.s_long(amt.substring(1).trim()));
+			else
+				NpcAffinity.change((MOB)N,who,CMath.s_long(amt.replace("+","")));
 			return null;
 		}
 		case "MPMENU": // N2: MPMENU who FUNCTION "prompt" key:"label"[IF cond] ... [default]: numbered choices, not blocking

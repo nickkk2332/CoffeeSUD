@@ -115,7 +115,10 @@ public class Talk extends StdCommand
 		Conversations.begin(mob,npc);
 		ScriptEvents.talked(npc,mob,topic); // ST21: a meeting, and its topic
 		if(ScriptEvents.talk(npc,mob,topic))
+		{
+			NpcAffinity.heard(npc,mob,topic); // N15: TALK(word) rules
 			return false;
+		}
 		// no TALK_PROG: as though they said it to it, for MudChat and SPEECH_PROG
 		final String words=(topic.length()>0)?topic:L("Hello"); // no stop: SPEECH_PROG matches whole words
 		final Command C=CMClass.getCommand("Say");

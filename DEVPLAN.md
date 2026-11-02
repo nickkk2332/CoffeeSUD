@@ -1743,6 +1743,18 @@ N22, N24, N28, N29
   English); @x1... and $n go into the new words; masked entries (on the
   one spoken to) first; an empty text says nothing; the NPC's own, then
   its area's. 26 short keys (NOTBUYING, STOLEN, OFFER, HIRED, TIMEUP...).
+- N15 done. `Prop_Affinity` (mobs, areas; `core/NpcAffinity`): START,
+  DECAY a game day toward 0, GIFT(item)/TALK(word, once a day)/QUESTWIN
+  (quest, counted lazily from QuestRecords.wins)/ATTACKED (once an hour)/
+  STOLE/KILLED(mob) rules, BRIBE points a gold; bands HOSTILE <-50, COLD
+  <0, NEUTRAL, FRIENDLY >=25, DEVOTED >=75; SHOPFACTOR=band:x (CoffeeShops'
+  prices, divided when the shop buys) and REFUSE=band with REFUSEMSG (no
+  trade, said through postSay). Kept in the global script variables
+  AFFINITY_<CHAR> of the NPC or the area (written with SC11's "=" so a
+  negative value is not taken as a subtraction). `AFFINITY(npc who
+  [BAND])`, `MPAFFINITY npc who +n|-n|=n`, Prop_NPCLines' `[AFFINITY >=25]`
+  mask, TALK's topic. The zapper mask +AFFINITY is not added: a mask has
+  no NPC to ask.
 
 #### 2g. Combat and encounters (24)
 

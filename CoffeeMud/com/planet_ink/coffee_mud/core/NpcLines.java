@@ -228,7 +228,7 @@ public final class NpcLines
 		{
 			if(P == null)
 				continue;
-			final String r = reword(parse(P.text()), target, text);
+			final String r = reword(parse(P.text()), mob, target, text);
 			if(r != NONE)
 				return r;
 		}
@@ -238,7 +238,42 @@ public final class NpcLines
 	/** no entry of a list rewords the line */
 	private static final String	NONE	= new String("");
 
-	private static String reword(final List<Entry> entries, final MOB target, final String text)
+	private static final Pattern	AFFINITY	= Pattern.compile("^\\s*\\+?AFFINITY\\s*(>=|<=|!=|==|=|>|<)?\\s*(\\S+)\\s*$", Pattern.CASE_INSENSITIVE);
+
+	/**
+	 * A mask: a zapper mask on the one spoken to, or (N15) AFFINITY >25,
+	 * AFFINITY FRIENDLY and the like, the NPC's opinion of them.
+	 */
+	private static boolean fits(final String mask, final MOB npc, final MOB target)
+	{
+		final Matcher m = AFFINITY.matcher(mask);
+		if(!m.matches())
+			return CMLib.masking().maskCheck(mask, target, true);
+		final String op = (m.group(1) == null) ? ">=" : m.group(1);
+		final String what = m.group(2);
+		final long v = NpcAffinity.get(npc, target.Name());
+		final int band = NpcAffinity.bandIndex(what);
+		final long have = (band >= 0) ? NpcAffinity.bandIndex(NpcAffinity.band(v)) : v;
+		final long want = (band >= 0) ? band : CMath.s_long(what);
+		switch(op)
+		{
+		case ">":
+			return have > want;
+		case "<":
+			return have < want;
+		case "<=":
+			return have <= want;
+		case "!=":
+			return have != want;
+		case "=":
+		case "==":
+			return have == want;
+		default:
+			return have >= want;
+		}
+	}
+
+	private static String reword(final List<Entry> entries, final MOB npc, final MOB target, final String text)
 	{
 		// the masked entries first, those the one spoken to fits; then the rest
 		for(int pass = 0; pass < 2; pass++)
@@ -247,7 +282,7 @@ public final class NpcLines
 			{
 				if((pass == 0) != (E.mask != null))
 					continue;
-				if((pass == 0) && ((target == null) || (!CMLib.masking().maskCheck(E.mask, target, true))))
+				if((pass == 0) && ((target == null) || (!fits(E.mask, npc, target))))
 					continue;
 				final Matcher m = E.line.matcher(text);
 				if(!m.matches())
