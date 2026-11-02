@@ -112,11 +112,40 @@ public final class JSScope
 		+ " off: function(k) { return cm.off(String(k)); }"
 		+ "}; })(cm);";
 
+	/** the files compiled, by their path: when the file was changed, and the script */
+	private static final Map<String, Object[]> compiled = new HashMap<String, Object[]>();
+
+	/**
+	 * A file of resources/ (or world:path), compiled once while it is
+	 * unchanged (include(), JS9's Prop_JScript and JSBehavior).
+	 * @param cx the context
+	 * @param path the file, as resources/ names it, or world:path
+	 * @return the script, or null if there is no such file (or the path has ..)
+	 */
+	public static Script compileFile(final Context cx, final String path)
+	{
+		if((path == null) || (path.trim().length() == 0) || (path.indexOf("..") >= 0))
+			return null;
+		final String p = path.trim();
+		final String vfs = p.toLowerCase().startsWith("world:") ? ("/world/" + p.substring(6)) : ("/" + Resources.makeFileResourceName(p));
+		final CMFile F = new CMFile(vfs, null);
+		if((!F.exists()) || (!F.canRead()))
+			return null;
+		synchronized(compiled)
+		{
+			final Object[] had = compiled.get(vfs);
+			if((had != null) && (((Long)had[0]).longValue() == F.lastModified()))
+				return (Script)had[1];
+			final Script S = cx.compileString(F.text().toString().replaceAll("\\r\\n|\\n\\r|\\r", "\n"), p, 1, null);
+			compiled.put(vfs, new Object[] { Long.valueOf(F.lastModified()), S });
+			return S;
+		}
+	}
+
 	/** JS6: include(path): runs a file of resources/ (or world:path) in this scope, compiled once while it is unchanged */
 	private static final class Include extends BaseFunction
 	{
 		private static final long serialVersionUID = 1L;
-		private static final Map<String, Object[]> compiled = new HashMap<String, Object[]>();
 		private final Scriptable home;
 
 		Include(final Scriptable home)
@@ -128,24 +157,9 @@ public final class JSScope
 		public Object call(final Context cx, final Scriptable scope, final Scriptable thisObj, final Object[] args)
 		{
 			final String path = (args.length > 0) ? Context.toString(args[0]).trim() : "";
-			if((path.length() == 0) || (path.indexOf("..") >= 0))
+			final Script S = compileFile(cx, path);
+			if(S == null)
 				throw ScriptRuntime.constructError("Error", "include: no such file: " + path);
-			final String vfs = path.toLowerCase().startsWith("world:") ? ("/world/" + path.substring(6)) : ("/" + Resources.makeFileResourceName(path));
-			final CMFile F = new CMFile(vfs, null);
-			if((!F.exists()) || (!F.canRead()))
-				throw ScriptRuntime.constructError("Error", "include: no such file: " + path);
-			Script S;
-			synchronized(compiled)
-			{
-				final Object[] had = compiled.get(vfs);
-				if((had != null) && (((Long)had[0]).longValue() == F.lastModified()))
-					S = (Script)had[1];
-				else
-				{
-					S = cx.compileString(F.text().toString().replaceAll("\\r\\n|\\n\\r|\\r", "\n"), path, 1, null);
-					compiled.put(vfs, new Object[] { Long.valueOf(F.lastModified()), S });
-				}
-			}
 			return S.exec(cx, home);
 		}
 	}
@@ -231,9 +245,13 @@ public final class JSScope
 		}
 	}
 
+	/** the folders of world/js that hold JavaScript classes (JS5), as SUD loads them */
+	public static final Set<String> CLASS_FOLDERS = new HashSet<String>(Arrays.asList("behaviors", "abilities", "properties", "items",
+		"mobs", "races", "charclasses", "commands", "common", "locales", "exits", "areas"));
+
 	/**
 	 * JS5: what is wrong with the world's JavaScript classes, in
-	 * world/js/[kind]/ (not lib/): an //extends line missing or naming no
+	 * world/js/[kind]/ (not lib/, nor JS9's props/): an //extends line missing or naming no
 	 * class, and a file that does not compile.
 	 * @return the problems, each with its file
 	 */
@@ -247,7 +265,7 @@ public final class JSScope
 		Arrays.sort(kinds);
 		for(final File kind : kinds)
 		{
-			if((!kind.isDirectory()) || kind.getName().equals("lib"))
+			if((!kind.isDirectory()) || (!CLASS_FOLDERS.contains(kind.getName()))) // not lib, nor JS9's props
 				continue;
 			final File[] files = kind.listFiles();
 			if(files == null)

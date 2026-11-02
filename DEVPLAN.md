@@ -1308,6 +1308,17 @@ JS17, JS18, JS19, JS20, JS23
   (`ScriptEvents.turn`). Names are in any case; `cm.off(event, fn)` takes
   away a listener added without a key. hour, day, weather, save and
   restore were JS6's.
+- JS9 done. `core/JSHooks` runs a file named by SCRIPT= (resources/
+  or world:, compiled once while unchanged, `JSScope.compileFile`, which
+  include() now uses) in a scope of its own per property or behaviour, with
+  the other parameters as `parms` (numbers as numbers) and CMMsg. The
+  property `Prop_JScript` (mobs, items, exits, rooms, areas) calls
+  affectPhyStats, affectCharStats, affectCharState, okMessage (false
+  refuses), executeMsg, tick, onAdded and onRemoved; the behaviour
+  `JSBehavior` the message and tick hooks, onAdded and onRemoved. What a
+  hook changes in parms is written back to the text, so it is saved with
+  the host (the stat hooks' changes are not). A hook that throws is
+  reported (JS ERRORS) and not called again until the text is set again.
 
 #### 2e. Quests (15)
 

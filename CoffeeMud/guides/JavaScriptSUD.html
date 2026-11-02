@@ -25,6 +25,7 @@ went wrong.</p>
 <li><a href="#events">cm.on</a></li>
 <li><a href="#store">cm.store</a></li>
 <li><a href="#sud">sud</a></li>
+<li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#shared">Shared code</a></li>
 <li><a href="#examples">Examples</a></li>
 </ul>
@@ -176,6 +177,43 @@ true; then, if given, runs once after).</li>
 <li><code>sud.on(event, fn [, key])</code> and <code>sud.off(key)</code>, as
 <code>cm.on</code>.</li>
 </ul>
+
+<h2><a name="effects">Effects in JavaScript</a></h2>
+<p>The property <code>Prop_JScript</code> (for mobs, items, exits, rooms and
+areas) and the behaviour <code>JSBehavior</code> run a file:
+<code>SCRIPT=world:js/props/bloodblade.js KILLS=0</code>. The file is compiled
+once while it is unchanged, and run in a scope of its own for each property or
+behaviour. The other parameters are the file's <code>parms</code>, numbers as
+numbers; what a hook changes in <code>parms</code> is written back to the
+property's text, so that it is saved with its host. The scope has
+<code>CMMsg</code>, and all that every scope has.</p>
+<table border="1" cellpadding="4" cellspacing="0">
+<tr><th>Hook</th><th>Prop_JScript</th><th>JSBehavior</th></tr>
+<tr><td><code>affectPhyStats(host, affected, stats)</code></td><td>yes</td><td></td></tr>
+<tr><td><code>affectCharStats(host, mob, stats)</code></td><td>yes</td><td></td></tr>
+<tr><td><code>affectCharState(host, mob, state)</code></td><td>yes</td><td></td></tr>
+<tr><td><code>okMessage(host, msg)</code>: false refuses it</td><td>yes</td><td>yes</td></tr>
+<tr><td><code>executeMsg(host, msg)</code></td><td>yes</td><td>yes</td></tr>
+<tr><td><code>tick(host, tickID)</code></td><td>yes</td><td>yes</td></tr>
+<tr><td><code>onAdded(host)</code>, <code>onRemoved(host)</code></td><td>yes</td><td>yes</td></tr>
+</table>
+<p>The stat hooks run each time the host's stats are worked out: keep them
+quick, and change <code>parms</code> in the others. A hook that fails is listed
+by <code>JS ERRORS</code>, and not called again until the text is set
+again.</p>
+<pre>
+// world/js/props/bloodblade.js: 1 damage for each 10 kills
+function affectPhyStats(host, affected, stats) {
+  if (affected == host) stats.setDamage(stats.damage() + Math.floor(parms.KILLS / 10));
+}
+function executeMsg(host, msg) {
+  // a death message's tool is the killer
+  if (msg.sourceMinor() == CMMsg.TYP_DEATH &amp;&amp; host.owner() != null &amp;&amp; msg.tool() == host.owner()) {
+    parms.KILLS++;
+    host.recoverPhyStats();
+  }
+}
+</pre>
 
 <h2><a name="shared">Shared code</a></h2>
 <p><code>require('name')</code> loads a CommonJS module: it sees only
