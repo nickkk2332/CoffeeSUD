@@ -234,6 +234,12 @@ public class CMProps extends Properties
 		FORMULA_CHANCEWEAPONCRIT,
 		FORMULA_DAMAGEWEAPONCRIT,
 		FORMULA_NPCHITPOINTS,
+		FORMULA_NPCARMOR,
+		FORMULA_NPCATTACK,
+		FORMULA_NPCDAMAGE,
+		FORMULA_NPCSPEED,
+		FORMULA_NPCREJUV,
+		FORMULA_NPCMONEY,
 		FORMULA_DAMAGESPELLFUDGE,
 		FORMULA_DAMAGEMELEEFUDGE,
 		FORMULA_DAMAGERANGEDFUDGE,
@@ -3147,6 +3153,13 @@ public class CMProps extends Properties
 		setUpLowVar(Str.FORMULA_DAMAGEWEAPONCRIT, getStr("FORMULA_DAMAGEWEAPONCRIT","(@x1 * (((@x2-10+((@x8-@x9)<10))/2.5)>0 * ((@x3-10+((@x8-@x9)<10))/2.5)>0 * ((@x3-10+((@x8-@x9)<10))/2.5))/50.0)+(@x4/2)"));
 		setUpLowVar(Str.FORMULA_PVPDAMAGEWEAPONCRIT, getStr("FORMULA_PVPDAMAGEWEAPONCRIT",getVar(Str.FORMULA_DAMAGEWEAPONCRIT)));
 		setUpLowVar(Str.FORMULA_NPCHITPOINTS, getStr("FORMULA_NPCHITPOINTS","3 + @x1 + (@x1 * @x2)"));
+		// C14: the other NPC stats; the defaults are what the code did before
+		setUpLowVar(Str.FORMULA_NPCARMOR, getStr("FORMULA_NPCARMOR","102-((@x1+(@x2*0.44))*(@x1/((@x2*0.44)/2.0)))"));
+		setUpLowVar(Str.FORMULA_NPCATTACK, getStr("FORMULA_NPCATTACK","((@x1-1)*@x4)+@x1"));
+		setUpLowVar(Str.FORMULA_NPCDAMAGE, getStr("FORMULA_NPCDAMAGE","@x1"));
+		setUpLowVar(Str.FORMULA_NPCSPEED, getStr("FORMULA_NPCSPEED","1+((@x1/30)-((@x1/30)%1))"));
+		setUpLowVar(Str.FORMULA_NPCREJUV, getStr("FORMULA_NPCREJUV","(2+(@x1/2))<20"));
+		setUpLowVar(Str.FORMULA_NPCMONEY, getStr("FORMULA_NPCMONEY","@x5+@x6"));
 		setUpLowVar(Str.FORMULA_HITPOINTRECOVER, getStr("FORMULA_HITPOINTRECOVER","5+(((@x1 - (@xx*@x3/2.0) - (@xx*@x4/2.0))*@x2/9.0) + (@xx*@x6*.5) + (@xx/4.0*@x7) - (@xx/2.0*@x9))"));
 		setUpLowVar(Str.FORMULA_MANARECOVER, getStr("FORMULA_MANARECOVER","25+(((@x1 - (@xx*@x3/2.0) - (@xx*@x4/2.0) - (@xx*@x5/2.0))*@x2/50.0) + (@xx*@x6*.5) + (@xx/4.0*@x7) - (@xx/2.0*@x9))"));
 		setUpLowVar(Str.FORMULA_MOVESRECOVER, getStr("FORMULA_MOVESRECOVER","25+(((@x1 - (@xx*@x3/2.0) - (@xx*@x4/2.0) - (@xx*@x5/2.0))*@x2/10.0) + (@xx*@x6*.5) + (@xx/4.0*@x7) + (@xx/4.0*@x8) - (@xx/2.0*@x9))"));

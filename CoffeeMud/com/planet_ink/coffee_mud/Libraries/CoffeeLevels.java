@@ -109,32 +109,92 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 	@Override
 	public int getLevelAttack(final MOB mob)
 	{
-		//also update timsLevelCalculator(final MOB M)
-		return ((mob.basePhyStats().level()-1)*getAttackBonusNextLevel(mob)) + mob.basePhyStats().level();
+		// C14: FORMULA_NPCATTACK, by default ((level-1)*attack bonus)+level
+		return (int)Math.round(npcFormula(CMProps.Str.FORMULA_NPCATTACK,npcVars(mob,mob.basePhyStats().level(),true)));
 	}
 
 	@Override
 	public int getLevelMOBArmor(final MOB mob)
 	{
-		//also update timsLevelCalculator(final MOB M)
-		final double levelMid = CMath.mul(CMProps.getIntVar(CMProps.Int.LASTPLAYERLEVEL),0.44);
-		final double levelLow = levelMid / 2.0;
-		final double lvl = mob.basePhyStats().level();
-		return 102-(int)Math.round((lvl+levelMid)*(lvl/levelLow));
+		// C14: FORMULA_NPCARMOR; a half rounds down, as 102-round(x) did
+		return (int)-Math.round(-npcFormula(CMProps.Str.FORMULA_NPCARMOR,npcVars(mob,mob.basePhyStats().level(),false)));
 	}
 
 	@Override
 	public int getLevelMOBDamage(final MOB mob)
 	{
-		//also update timsLevelCalculator(final MOB M)
-		return (mob.basePhyStats().level());
+		// C14: FORMULA_NPCDAMAGE, by default the level
+		return (int)Math.round(npcFormula(CMProps.Str.FORMULA_NPCDAMAGE,npcVars(mob,mob.basePhyStats().level(),false)));
 	}
 
 	@Override
 	public double getLevelMOBSpeed(final MOB mob)
 	{
-		//also update timsLevelCalculator(final MOB M)
-		return 1.0+Math.floor(CMath.div(mob.basePhyStats().level(),30.0));
+		// C14: FORMULA_NPCSPEED, by default one more attack each 30 levels
+		return npcFormula(CMProps.Str.FORMULA_NPCSPEED,npcVars(mob,mob.basePhyStats().level(),false));
+	}
+
+	/** C14: the NPC formulas, each compiled once while its text stays the same */
+	private final Map<CMProps.Str,Object[]>    npcFormulas    = new HashMap<CMProps.Str,Object[]>();
+	/** C14: the formulas that did not compile, reported once */
+	private final Set<String>                badNpcFormulas    = new HashSet<String>();
+
+	/**
+	 * C14: the variables of the NPC formulas: @x1 the level, @x2
+	 * LASTPLAYERLEVEL, @x3 the mob's ABILITY (its hit point modifier), @x4 the
+	 * attack bonus a level from its attack attribute (only where asked for).
+	 * @param mob the mob
+	 * @param level its level
+	 * @param attackBonus true to work out @x4
+	 * @return the variables
+	 */
+	protected double[] npcVars(final MOB mob, final int level, final boolean attackBonus)
+	{
+		return new double[] { level, CMProps.getIntVar(CMProps.Int.LASTPLAYERLEVEL), mob.basePhyStats().ability(),
+			attackBonus?getAttackBonusNextLevel(mob):0, 0, 0, 0, 0, 0, 0, 0 };
+	}
+
+	/**
+	 * C14: one of the NPC formulas in coffeemud.ini (or world.ini), worked
+	 * out; one that does not compile is reported once, and gives 0.
+	 * @param key the formula
+	 * @param vars its variables
+	 * @return its value
+	 */
+	protected double npcFormula(final CMProps.Str key, final double[] vars)
+	{
+		final String text=CMProps.getVar(key);
+		CMath.CompiledFormula F=null;
+		synchronized(npcFormulas)
+		{
+			final Object[] was=npcFormulas.get(key);
+			if((was!=null)&&(was[0].equals(text)))
+				F=(CMath.CompiledFormula)was[1];
+			else
+			{
+				try
+				{
+					F=CMath.compileMathExpression(text);
+				}
+				catch(final Exception e)
+				{
+					if(badNpcFormulas.add(key.name()+"="+text))
+						Log.errOut("CoffeeLevels",key.name()+" does not compile: "+e.getMessage());
+					return 0;
+				}
+				npcFormulas.put(key,new Object[]{text,F});
+			}
+		}
+		try
+		{
+			return CMath.parseMathExpression(F,vars,0.0);
+		}
+		catch(final Exception e)
+		{
+			if(badNpcFormulas.add(key.name()+"="+text))
+				Log.errOut("CoffeeLevels",key.name()+" does not work out: "+e.getMessage());
+			return 0;
+		}
 	}
 
 	@Override
@@ -270,9 +330,8 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		if(!mob.isMonster())
 			return mob;
 
-		long rejuv=CMProps.getTicksPerMinute()+CMProps.getTicksPerMinute()+(level*CMProps.getTicksPerMinute()/2);
-		if(rejuv>(CMProps.getTicksPerMinute()*20))
-			rejuv=(CMProps.getTicksPerMinute()*20);
+		// C14: FORMULA_NPCREJUV in game minutes, by default 2 and a half a level, at most 20
+		final long rejuv=(long)Math.floor(npcFormula(CMProps.Str.FORMULA_NPCREJUV,npcVars(mob,level,false))*CMProps.getTicksPerMinute());
 		mob.basePhyStats().setLevel(level);
 		mob.basePhyStats().setRejuv((int)rejuv);
 		mob.basePhyStats().setSpeed(getLevelMOBSpeed(mob));
@@ -280,7 +339,11 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		mob.basePhyStats().setDamage(getLevelMOBDamage(mob));
 		//mob.basePhyStats().setDamage((int)Math.round(CMath.div(getLevelMOBDamage(mob),mob.basePhyStats().speed())));
 		mob.basePhyStats().setAttackAdjustment(getLevelAttack(mob));
-		mob.setMoney(CMLib.dice().roll(1,level,0)+CMLib.dice().roll(1,10,0));
+		// C14: FORMULA_NPCMONEY, @x5 a roll of 1d(level) and @x6 of 1d10 (by default their sum)
+		final double[] moneyVars=npcVars(mob,level,false);
+		moneyVars[4]=CMLib.dice().roll(1,level,0);
+		moneyVars[5]=CMLib.dice().roll(1,10,0);
+		mob.setMoney(Math.max(0,(int)Math.round(npcFormula(CMProps.Str.FORMULA_NPCMONEY,moneyVars))));
 		mob.baseState().setHitPoints(getLevelHitPoints(mob));
 		mob.baseState().setMana(getLevelMana(mob));
 		mob.baseState().setMovement(getLevelMove(mob));

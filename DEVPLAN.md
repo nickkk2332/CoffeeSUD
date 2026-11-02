@@ -1832,6 +1832,18 @@ N22, N24, N28, N29
 C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C14, C15, C16, C17,
 C18, C19, C20, C21, C22, C23, C25
 
+- C14 done. FORMULA_NPCARMOR, FORMULA_NPCATTACK, FORMULA_NPCDAMAGE,
+  FORMULA_NPCSPEED, FORMULA_NPCREJUV (game minutes) and FORMULA_NPCMONEY in
+  coffeemud.ini (FORMULA_ keys are world settings too): @x1 level, @x2
+  LASTPLAYERLEVEL, @x3 ABILITY, @x4 the attack bonus a level (NPCATTACK),
+  @x5 and @x6 the 1d(level) and 1d10 rolls (NPCMONEY). CoffeeLevels'
+  getLevelAttack, getLevelMOBArmor (a half rounds down, as 102-round(x)
+  did), getLevelMOBDamage, getLevelMOBSpeed and fillOutMOB work them out,
+  compiled once while the text is unchanged; a formula that does not
+  compile is logged once and gives 0. The defaults give the old numbers
+  (the test compares levels 1-200), so RESET MOBCOMBATSTATS, Prop_Doppleganger
+  and the summons follow an edit.
+
 #### 2h. Items, properties and puzzles (23)
 
 I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I13, I14, I15, I16, I17, I20, I21,

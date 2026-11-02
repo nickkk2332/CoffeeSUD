@@ -426,6 +426,13 @@ Keep your blade sheathed.;WIELD(+WEAPONCLASS SWORD): SAY Put that away in the ci
 Curfew's at the bell.;HURT&lt;30: SAY To me! Guards!</code>. A longer table goes in a file,
 one entry to a line, with <code>FILE=barks/guard.txt</code>.</p>
 
+<h2><a name="combat">Combat</a></h2>
+<p>A world's own combat balance: the numbers a mob gets from its level are formulas in
+coffeemud.ini or world.ini (AHELP NPCFORMULAS). <code>FORMULA_NPCDAMAGE=@x1*1.3</code> and
+<code>FORMULA_NPCARMOR=110-(@x1*1.8)</code> make mobs hit harder and easier to hit; <code>RESET
+MOBCOMBATSTATS WORLD</code> brings the ones already made into line. The defaults are the old
+numbers.</p>
+
 <h2><a name="found">Less known</a></h2>
 <ul>
 <li><code>$@i</code> (and <code>$@n</code>, ...) is the thing's identity in the
