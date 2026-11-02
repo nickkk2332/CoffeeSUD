@@ -2166,6 +2166,13 @@ I22, I23, I24, I25, I26, I27
   DETECTITEM, when WHERE (WORN, HELD, ANY) holds; while it finds one it
   adds AMBIANCE, and on the change it tells the holder (or the room) MSG
   or STOPMSG, $p the item.
+- I17 done. Behaviors/Riddler (mobs, items): RIDDLE/ANSWERS and RIDDLE1-9
+  with ANSWERS1-9, RANDOM, FUZZY (an edit distance), ASK=GREET (an enter
+  of its room), LOOK, COMMAND (RIDDLE); the answer said (TYP_SPEAK, the
+  quoted text) or ANSWER text. TRIES, ONRIGHT/ONWRONG/ONOUT actions,
+  RIGHTMSG/WRONGMSG; ONCE=CHARACTER (a tattoo RIDDLED:name), SAVE
+  (SOLVED=true in its parameters) or NONE. ScriptEvents.verb now asks the
+  behaviours of what is within reach too, when they are VerbTakers.
 
 #### 2i. World systems (25)
 

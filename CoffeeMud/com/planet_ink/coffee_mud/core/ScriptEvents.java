@@ -1133,6 +1133,13 @@ public final class ScriptEvents
 				if((A instanceof VerbTaker) && ((VerbTaker)A).takeVerb(mob, host, verb, rest))
 					return true;
 			}
+			// I17: or a behaviour (Riddler)
+			for(final Enumeration<Behavior> b = host.behaviors(); b.hasMoreElements();)
+			{
+				final Behavior B = b.nextElement();
+				if((B instanceof VerbTaker) && ((VerbTaker)B).takeVerb(mob, host, verb, rest))
+					return true;
+			}
 		}
 		return false;
 	}
