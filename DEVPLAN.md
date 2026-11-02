@@ -1890,6 +1890,13 @@ C18, C19, C20, C21, C22, C23, C25
   whom it fights), OPPONENT (187, a mask), each a name for MPKILL; THREAT
   compares through extraTest. MPTHREAT (122) +n, -n, =n, *x, through the
   holder so a CombatAbilities mob retargets on a clear lead.
+- C22 done. CombatAbilities reads +SKILL(EVERY= FIRST= ONCE BELOW=% COOLDOWN=
+  WEIGHT= SELF TARGET=CASTER) and OPENER= (readRotation; the old word loop
+  skips the brackets). useSkill counts rounds; the opener on round 1, then
+  the first scheduled rule due (rotationPick), before C1's support; the
+  random loop picks the +list by WEIGHT, skips scheduled skills and those
+  cooling down. The round of each use (on success) and a log of tries
+  (ONCE counts tries); both cleared when the fight ends.
 
 #### 2h. Items, properties and puzzles (23)
 

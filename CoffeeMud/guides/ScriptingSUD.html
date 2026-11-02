@@ -456,6 +456,10 @@ times the healing of its foe.</p>
 goes for the mage; <code>PREFER=LASTHITME STICKY=4</code> on an ogre turns on whoever hit it last; pack
 wolves with <code>PREFER=LOWESTHP</code> gang up on the wounded. <code>TAUNTABLE</code> lets a taunt
 (<code>MPTHREAT $t $n *3</code>) pull it off the list.</p>
+<p>A boss without a script: <code>CombatAbilities OPENER=Skill_Dive +Dragonbreath(EVERY=3 FIRST=2)
++Spell_Haste(ONCE BELOW=30%) +Prayer_Heal(SELF BELOW=40% COOLDOWN=5) +Skill_Trip(WEIGHT=3
+TARGET=CASTER)</code>: it dives in, breathes on rounds 2, 5 and 8, hastes itself once when badly hurt,
+heals itself now and then, and trips the mage most often.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

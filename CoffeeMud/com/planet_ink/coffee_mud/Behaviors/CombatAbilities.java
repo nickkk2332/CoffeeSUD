@@ -58,6 +58,36 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 	protected List<String>		cureFirst			= null;
 	/** C1: whether it buffs its allies before a fight */
 	protected boolean			buffOut				= false;
+	/** C22: the rules on +SKILL(...) entries, in their order, or null for none */
+	protected List<RotationRule>	rotation		= null;
+	/** C22: OPENER=, the skill of a fight's first round, or null */
+	protected String			opener				= null;
+	/** C22: the rounds of this fight it has acted in */
+	protected int				round				= 0;
+	/** C22: the round each skill was last used in, this fight */
+	protected final Map<String,Integer>	lastUsedRound	= new HashMap<String,Integer>();
+	/** C22: what it tried this fight, ID@round, for STAT BEHAVIORS and tests */
+	protected final List<String>	rotationLog		= new ArrayList<String>();
+
+	/** C22: one +SKILL(...) entry's rules */
+	protected static class RotationRule
+	{
+		String	id			= "";
+		int		every		= 0;
+		int		first		= 0;
+		boolean	once		= false;
+		int		below		= 0;
+		int		cooldown	= 0;
+		int		weight		= 1;
+		boolean	self		= false;
+		boolean	atCaster	= false;
+
+		/** used only when due, not in the random choice */
+		boolean scheduled()
+		{
+			return (every>0)||(first>0)||once||(below>0);
+		}
+	}
 	protected String			lastSpell			= null;
 	protected boolean			noStat				= false;
 	protected boolean			noCombatStat		= false;
@@ -486,7 +516,9 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 		wandUseCheck[0]=false;
 		proficient=false;
 		useTurnBasedRule=(CMProps.getIntVar(CMProps.Int.COMBATSYSTEM) == CombatLibrary.CombatSystem.TURNBASED.ordinal());
-		final Vector<String> V=CMParms.parse(getParms());
+		// C22: +SKILL(EVERY=n ...) rules, read before the words, which skip the brackets
+		readRotation(getParms());
+		final Vector<String> V=CMParms.parse(getParms().replaceAll("\\([^)]*\\)",""));
 		String s=null;
 		Ability A=null;
 		for(int v=0;v<V.size();v++)
@@ -608,6 +640,207 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 		return SupportPicker.pick(mob,skills,SupportPicker.allies(mob,support),healAt,cureFirst,buffOut&&(victim==null));
 	}
 
+	/**
+	 * C22: reads the rules of +SKILL(...) entries and OPENER=.
+	 * @param parms the parameters
+	 */
+	protected void readRotation(final String parms)
+	{
+		rotation=null;
+		final String o=CMParms.getParmStr(parms,"OPENER","").trim();
+		opener=null;
+		if(o.length()>0)
+		{
+			final Ability A=CMClass.getAbility(o);
+			opener=(A!=null)?A.ID():o;
+		}
+		final java.util.regex.Matcher m=java.util.regex.Pattern.compile("\\+([A-Za-z0-9_]+)\\(([^)]*)\\)").matcher(parms);
+		while(m.find())
+		{
+			final Ability A=CMClass.getAbility(m.group(1));
+			final RotationRule r=new RotationRule();
+			r.id=(A!=null)?A.ID():m.group(1);
+			for(final String w : CMParms.parse(m.group(2).toUpperCase()))
+			{
+				final int x=w.indexOf('=');
+				final String k=(x<0)?w:w.substring(0,x);
+				final String v=(x<0)?"":w.substring(x+1).replace("%","");
+				if(k.equals("EVERY"))
+					r.every=CMath.s_int(v);
+				else
+				if(k.equals("FIRST"))
+					r.first=CMath.s_int(v);
+				else
+				if(k.equals("ONCE"))
+					r.once=true;
+				else
+				if(k.equals("BELOW"))
+					r.below=CMath.s_int(v);
+				else
+				if(k.equals("COOLDOWN"))
+					r.cooldown=CMath.s_int(v);
+				else
+				if(k.equals("WEIGHT"))
+					r.weight=Math.max(1,CMath.s_int(v));
+				else
+				if(k.equals("SELF"))
+					r.self=true;
+				else
+				if(k.equals("TARGET")&&v.equals("CASTER"))
+					r.atCaster=true;
+			}
+			if(rotation==null)
+				rotation=new ArrayList<RotationRule>();
+			rotation.add(r);
+		}
+		if((rotation==null)&&(opener!=null))
+			rotation=new ArrayList<RotationRule>();
+	}
+
+	protected RotationRule ruleOf(final String id)
+	{
+		if(rotation!=null)
+		{
+			for(final RotationRule r : rotation)
+			{
+				if(r.id.equalsIgnoreCase(id))
+					return r;
+			}
+		}
+		return null;
+	}
+
+	/** C22: whether it was tried this fight */
+	protected boolean tried(final String id)
+	{
+		for(final String s : rotationLog)
+		{
+			if(s.startsWith(id+"@"))
+				return true;
+		}
+		return false;
+	}
+
+	/** C22: whether its cooldown is over */
+	protected boolean cooledDown(final RotationRule r)
+	{
+		final Integer was=lastUsedRound.get(r.id);
+		return (r.cooldown<=0)||(was==null)||((round-was.intValue())>r.cooldown);
+	}
+
+	/** C22: whether the random choice may use it now: not a scheduled one, and cooled down */
+	protected boolean rotationAllows(final MOB mob, final Ability A)
+	{
+		final RotationRule r=ruleOf(A.ID());
+		if(r==null)
+			return true;
+		return (!r.scheduled())&&cooledDown(r);
+	}
+
+	/** C22: a +SKILL by WEIGHT= */
+	protected Ability weightedAlways(final MOB mob)
+	{
+		int total=0;
+		final List<Ability> choices=new ArrayList<Ability>();
+		final List<Integer> weights=new ArrayList<Integer>();
+		for(final String id : skillsAlways)
+		{
+			final Ability A=mob.fetchAbility(id);
+			if(A==null)
+				continue;
+			final RotationRule r=ruleOf(id);
+			final int w=(r==null)?1:r.weight;
+			choices.add(A);
+			weights.add(Integer.valueOf(w));
+			total+=w;
+		}
+		if(total<=0)
+			return mob.fetchRandomAbility();
+		int roll=CMLib.dice().roll(1,total,0);
+		for(int i=0;i<choices.size();i++)
+		{
+			roll-=weights.get(i).intValue();
+			if(roll<=0)
+				return choices.get(i);
+		}
+		return choices.get(choices.size()-1);
+	}
+
+	/** C22: whom a rule's skill goes to */
+	protected MOB rotationTarget(final MOB mob, final MOB victim, final Ability A, final RotationRule r)
+	{
+		if((r!=null)&&r.self)
+			return mob;
+		if((r!=null)&&r.atCaster)
+		{
+			MOB best=null;
+			int most=0;
+			for(final MOB M : Threat.enemies(mob))
+			{
+				int n=0;
+				for(final Enumeration<Ability> a=M.allAbilities();a.hasMoreElements();)
+				{
+					final Ability B=a.nextElement();
+					final int code=(B==null)?-1:(B.classificationCode()&Ability.ALL_ACODES);
+					if((code==Ability.ACODE_SPELL)||(code==Ability.ACODE_PRAYER)||(code==Ability.ACODE_CHANT)||(code==Ability.ACODE_SONG))
+						n++;
+				}
+				if(n>most)
+				{
+					most=n;
+					best=M;
+				}
+			}
+			if(best!=null)
+				return best;
+		}
+		if(A.castingQuality(mob,mob)==Ability.QUALITY_BENEFICIAL_SELF)
+			return mob;
+		return victim;
+	}
+
+	/**
+	 * C22: the opener on a fight's first round, or the first scheduled skill
+	 * whose turn it is (EVERY, FIRST, ONCE, BELOW).
+	 * @param mob the mob
+	 * @param victim whom it fights
+	 * @return the skill and its target, or null
+	 */
+	protected Object[] rotationPick(final MOB mob, final MOB victim)
+	{
+		if((round==1)&&(opener!=null))
+		{
+			final Ability A=mob.fetchAbility(opener);
+			if(A!=null)
+				return new Object[]{A,rotationTarget(mob,victim,A,ruleOf(opener))};
+		}
+		for(final RotationRule r : rotation)
+		{
+			if(!r.scheduled())
+				continue;
+			final Ability A=mob.fetchAbility(r.id);
+			if(A==null)
+				continue;
+			if(r.once&&tried(r.id))
+				continue; // ONCE: once tried this fight, whether it worked or not
+			if((r.below>0)&&(SupportPicker.hpPct(mob)>=r.below))
+				continue;
+			if(!cooledDown(r))
+				continue;
+			if(r.every>0)
+			{
+				final int first=(r.first>0)?r.first:r.every;
+				if((round<first)||(((round-first)%r.every)!=0))
+					continue;
+			}
+			else
+			if((r.first>0)&&(round<r.first))
+				continue;
+			return new Object[]{A,rotationTarget(mob,victim,A,r)};
+		}
+		return null;
+	}
+
 	protected Ability useSkill(final MOB mob, final MOB victim, final MOB leader) throws CMException
 	{
 		int tries=0;
@@ -619,8 +852,19 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 		int victimQuality=Ability.QUALITY_INDIFFERENT;
 		int selfQuality=Ability.QUALITY_INDIFFERENT;
 		int leaderQuality=Ability.QUALITY_INDIFFERENT;
+		// C22: the opener, and skills whose turn it is, first
+		if((rotation!=null)&&(victim!=null))
+		{
+			round++;
+			final Object[] pick=rotationPick(mob,victim);
+			if(pick!=null)
+			{
+				tryA=(Ability)pick[0];
+				target=(MOB)pick[1];
+			}
+		}
 		// C1: cures, heals for the most hurt under HEALAT, and buffs before a fight, first
-		if((healAt>0)||(cureFirst!=null)||(buffOut&&(victim==null)))
+		if((tryA==null)&&((healAt>0)||(cureFirst!=null)||(buffOut&&(victim==null))))
 		{
 			final Object[] pick=pickSupport(mob,victim);
 			if(pick!=null)
@@ -641,8 +885,13 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 			if((combatMode==COMBAT_ONLYALWAYS)&&(this.skillsAlways!=null)&&(this.skillsAlways.size()>0))
 				A=mob.fetchAbility(skillsAlways.get(CMLib.dice().roll(1,skillsAlways.size(),-1)));
 			else
+			if((rotation!=null)&&(skillsAlways!=null)&&(skillsAlways.size()>0))
+				A=weightedAlways(mob); // C22: WEIGHT=
+			else
 				A=mob.fetchRandomAbility();
 
+			if((A!=null)&&(rotation!=null)&&(!rotationAllows(mob,A)))
+				continue; // C22: a scheduled skill waits its turn; COOLDOWN
 			if((A==null)
 			||(A.isAutoInvoked())
 			||(A.triggerStrings()==null)
@@ -776,6 +1025,8 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 			}
 			if(target==null)
 				return null;
+			if(rotation!=null)
+				rotationLog.add(tryA.ID()+"@"+round); // C22
 			boolean skillUsed=tryA.invoke(mob,new XVector<String>(target.name()),null,false,0);
 			if((combatMode==COMBAT_ONLYALWAYS)&&(!skillUsed))
 			{
@@ -785,6 +1036,8 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 			}
 			if(skillUsed)
 			{
+				if(rotation!=null)
+					lastUsedRound.put(tryA.ID(),Integer.valueOf(round)); // C22
 				if(mob.actions()>=CMProps.getSkillCombatActionCost(tryA.ID()))
 					mob.setActions(mob.actions()-CMProps.getSkillCombatActionCost(tryA.ID()));
 				skillUsed=true;
@@ -822,6 +1075,12 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 
 		if(!mob.isInCombat())
 		{
+			if(round>0)
+			{
+				round=0; // C22: a new fight starts the rotation again
+				lastUsedRound.clear();
+				rotationLog.clear();
+			}
 			if(aggro!=null)
 			{
 				synchronized(aggro)
