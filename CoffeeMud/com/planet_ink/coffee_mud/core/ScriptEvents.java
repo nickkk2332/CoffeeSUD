@@ -484,6 +484,60 @@ public final class ScriptEvents
 		return heard[0];
 	}
 
+	/** N9: TALK_PROG's code */
+	public static final int	TALK_PROG	= code("TALK_PROG");
+
+	/**
+	 * N9: TALK npc [ABOUT topic]: TALK_PROG [topic words|ALL] runs at once on
+	 * the NPC's scripts, $n the speaker, $g and $0 the topic.
+	 * @param npc the NPC
+	 * @param who the speaker
+	 * @param topic the topic, or ""
+	 * @return true if a script heard it
+	 */
+	public static boolean talk(final MOB npc, final MOB who, final String topic)
+	{
+		if((npc == null) || (who == null) || (!isUsed(TALK_PROG)))
+			return false;
+		final String t = (topic == null) ? "" : topic.trim();
+		final boolean[] heard = { false };
+		for(final ScriptingEngine S : engines(npc))
+		{
+			S.eventCheck(npc, TALK_PROG, who, npc, null, t, new Object[] { t }, "Cr", line -> {
+				final boolean fits = talkFits((line.length < 2) ? "" : line[1], t);
+				if(fits)
+					heard[0] = true;
+				return fits;
+			});
+		}
+		return heard[0];
+	}
+
+	/**
+	 * N9: whether a TALK_PROG line fits a topic: none, ALL or * any talk;
+	 * P phrase the phrase in the topic; else any of its words.
+	 * @param words the trigger line after TALK_PROG
+	 * @param topic the topic, or ""
+	 * @return true if it fits
+	 */
+	public static boolean talkFits(final String words, final String topic)
+	{
+		final String w = (words == null) ? "" : words.trim().toUpperCase();
+		if((w.length() == 0) || w.equals("ALL") || w.equals("*"))
+			return true;
+		if((topic == null) || (topic.trim().length() == 0))
+			return false;
+		final String t = " " + topic.toUpperCase().replaceAll("[^A-Z0-9]+", " ").trim() + " ";
+		if(w.startsWith("P "))
+			return t.indexOf(" " + w.substring(2).replaceAll("[^A-Z0-9]+", " ").trim() + " ") >= 0;
+		for(final String word : w.split("[\\s,]+"))
+		{
+			if((word.length() > 0) && (t.indexOf(" " + word + " ") >= 0))
+				return true;
+		}
+		return false;
+	}
+
 	/** GAME_PROG's code */
 	public static final int	GAME_PROG	= code("GAME_PROG");
 	/** TURN_PROG's code */

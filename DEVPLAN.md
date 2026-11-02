@@ -1704,6 +1704,18 @@ N22, N24, N28, N29
   with HOME=: home when closed, start room when open. ResetWhole and
   respawns keep time when passive, so need none. Tag NOCATCHUP, world
   option CATCHUP=OFF. AHELP CATCHUP.
+- N9 done. `TALK [npc] [ABOUT topic]` (Commands/Talk): `TALK_PROG
+  [words|P phrase|ALL]` runs at once on the NPC (`ScriptEvents.talk`), $n
+  the speaker, $g and $0 the topic (not $t: that is a thing). With none
+  that fits, the speaker says the topic or "Hello" to it (SAYTO, for MudChat
+  and SPEECH_PROG; no stop, as SPEECH_PROG matches whole words), and with
+  no topic its services are a menu (N2's, a choice running a command):
+  trade or banking (LIST), lessons (QUALIFY), hire, quests (QUESTS
+  OFFERED), goodbye. The NPC is the speaker's partner (`core/Conversations`):
+  a bare SAY or ASK from a player's character goes to it while both are in
+  the room. A bare TALK means the partner, or the only NPC here outside the
+  party; TALK BYE ends it. ST21's record and LASTTOPIC are kept. The
+  dialogue-tree step (N14) is left out, as N14 is.
 
 #### 2g. Combat and encounters (24)
 

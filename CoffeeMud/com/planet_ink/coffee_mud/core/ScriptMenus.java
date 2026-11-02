@@ -48,6 +48,8 @@ public final class ScriptMenus
 		public String	label	= "";
 		/** an IF condition, unevaluated, or "" */
 		public String	cond	= "";
+		/** N9: in a menu of commands (no script), what the choice runs for the character */
+		public String	command	= "";
 	}
 
 	/** an open menu */
@@ -277,6 +279,18 @@ public final class ScriptMenus
 			return true;
 		}
 		open.remove(key(mob));
+		if(M.engine == null) // N9: a menu of commands, TALK's services
+		{
+			for(final Option O : M.options)
+			{
+				if(O.key.equalsIgnoreCase(k) && (O.command.length() > 0))
+				{
+					mob.doCommand(CMParms.parse(O.command), 0);
+					break;
+				}
+			}
+			return true;
+		}
 		final MPContext c = new MPContext(M.ctx.scripted, M.ctx.monster, mob, M.ctx.scripted, null, null, k, new Object[] { k });
 		M.engine.callFunc(M.func, k, c);
 		return true;

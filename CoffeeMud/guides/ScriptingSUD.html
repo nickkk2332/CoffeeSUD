@@ -367,6 +367,11 @@ it was passive), the miller's <code>Schedule</code> puts him at the market at on
 script's <code>FUNCTION_PROG CATCHUP</code> runs with <code>$g</code> the ticks it slept, to do what
 it likes: restock a shop, finish a job. Tag an area <code>NOCATCHUP</code> to keep it as it was
 (AHELP CATCHUP).</p>
+<p>A conversation: <code>TALK_PROG mine ore</code> on the innkeeper answers <code>talk innkeeper
+about the old mine</code>, <code>TALK_PROG ALL</code> any TALK, with <code>$g</code> the topic. After TALK a
+plain <code>'any rooms free?</code> goes to the innkeeper even with the party in the room. An NPC
+with no TALK_PROG is greeted instead (its SPEECH_PROG hello and MudChat answer) and, with no
+topic, shows a menu of what it does: trade, banking, lessons, hire, quests.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

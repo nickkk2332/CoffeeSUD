@@ -252,6 +252,16 @@ public class Say extends StdCommand
 				}
 			}
 		}
+		// N9: a bare SAY goes to the one the speaker is talking with (TALK), while both are here
+		if((target==null)&&(!toFlag)&&(!theCommand.startsWith("YELL"))&&(mob.playerStats()!=null))
+		{
+			final MOB partner=Conversations.partnerHere(mob);
+			if(partner!=null)
+			{
+				target=partner;
+				langTarget=partner;
+			}
+		}
 
 		Language[] langSwap=null;
 		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.AUTOLANGUAGE))
