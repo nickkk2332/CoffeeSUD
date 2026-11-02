@@ -1227,6 +1227,13 @@ JS17, JS18, JS19, JS20, JS23
   the room (`ScriptEvents.group`), as FOLLOW applies it to the leader; a
   player's record, with no group, is checked alone. Every mask user gets
   them.
+- SC17 done. `ELSEIF c` and `ELSE IF c` read as ELSE and an IF with one
+  more ENDIF (`expandElseIf`, when the script is parsed). `WHILE (c) [max]`
+  ... `ENDWHILE`, a body cached on the line, at most 1000 passes by
+  default; `CONTINUE` in WHILE and FOR. `MPLOCAL name value` and `$(name)`
+  (`MPContext.locals`, shared by the blocks of one run, kept by MPWAIT);
+  `FUNCTION_PROG name A B` binds `$(A)` and `$(B)` from the call's words, in
+  its own locals. Plain comparisons in IF are not done.
 
 #### 2e. Quests (15)
 

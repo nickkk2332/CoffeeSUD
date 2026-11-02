@@ -1334,6 +1334,63 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			ss.add(new ScriptLn(s,null,null));
 	}
 
+	/**
+	 * SC17: ELSEIF c (or ELSE IF c) reads as ELSE, then IF c, with an ENDIF
+	 * more at the chain's own ENDIF.
+	 * @param script the lines of one trigger
+	 */
+	protected static void expandElseIf(final SubScript script)
+	{
+		boolean has=false;
+		for(final ScriptLn ln : script)
+		{
+			final String w=CMParms.getCleanBit(ln.first,0).toUpperCase();
+			if(w.equals("ELSEIF")||(w.equals("ELSE")&&CMParms.getCleanBit(ln.first,1).equalsIgnoreCase("IF")))
+				has=true;
+		}
+		if(!has)
+			return;
+		final List<ScriptLn> out=new ArrayList<ScriptLn>(script.size()+4);
+		final Deque<int[]> open=new ArrayDeque<int[]>();
+		boolean inJs=false;
+		for(int i=0;i<script.size();i++)
+		{
+			final ScriptLn ln=script.get(i);
+			final String w=(i==0)?"":CMParms.getCleanBit(ln.first,0).toUpperCase();
+			if(w.equals("<SCRIPT>"))
+				inJs=true;
+			else
+			if(w.equals("</SCRIPT>"))
+				inJs=false;
+			if((!inJs)&&(i>0))
+			{
+				if(w.equals("IF"))
+					open.push(new int[]{0});
+				else
+				if((w.equals("ELSEIF")||(w.equals("ELSE")&&CMParms.getCleanBit(ln.first,1).equalsIgnoreCase("IF")))&&(!open.isEmpty()))
+				{
+					final String cond=w.equals("ELSEIF")?CMParms.getPastBit(ln.first,0):CMParms.getPastBit(ln.first,1);
+					out.add(new ScriptLn("ELSE",null,null));
+					out.add(new ScriptLn("IF "+cond.trim(),null,null));
+					open.peek()[0]++;
+					continue;
+				}
+				else
+				if(w.equals("ENDIF")&&(!open.isEmpty()))
+				{
+					out.add(ln);
+					final int owed=open.pop()[0];
+					for(int e=0;e<owed;e++)
+						out.add(new ScriptLn("ENDIF",null,null));
+					continue;
+				}
+			}
+			out.add(ln);
+		}
+		script.clear();
+		script.addAll(out);
+	}
+
 	protected List<SubScript> parseScripts(final Environmental E, String text)
 	{
 		buildHashes();
@@ -1441,6 +1498,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		addSubScriptLine(currentScript, text.substring(lastLine,text.length()));
 		if(currentScript.size()==0)
 			parsedScript.remove(parsedScript.size()-1);
+		for(final SubScript S : parsedScript)
+			expandElseIf(S); // SC17
 		if(xml.length()>0)
 		{
 			final SubScript xmlS = new SubScriptImpl(null);
@@ -2685,6 +2744,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					if ((ctx.target != null) && (ctx.target instanceof MOB))
 						middle = ((MOB)ctx.target).charStats().sirmadam();
 					break;
+				case '(': // SC17: $(name), a named local
+				{
+					middle = "";
+					final int x = vchrs.indexOf(")",t+2);
+					if (x > t)
+					{
+						final String val = ctx.locals.get(vchrs.substring(t+2, x).trim());
+						middle = (val == null) ? "" : val;
+						replLen = x - t + 1;
+					}
+					break;
+				}
 				case '<':
 				{
 					final int x = vchrs.indexOf(">",t+2);
@@ -7563,6 +7634,33 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/**
+	 * SC17: where the ( at open is closed, so that a call may hold $(name)
+	 * or (a+b); the first ) after it if none matches.
+	 * @param s the text
+	 * @param open where the ( is, or -1
+	 * @return where its ) is, or -1
+	 */
+	protected static int closingParen(final String s, final int open)
+	{
+		if(open<0)
+			return -1;
+		for(int i=open+1,d=0;i<s.length();i++)
+		{
+			final char c=s.charAt(i);
+			if(c=='(')
+				d++;
+			else
+			if(c==')')
+			{
+				if(d==0)
+					return i;
+				d--;
+			}
+		}
+		return s.indexOf(')',open);
+	}
+
 	@Override
 	public String functify(final MPContext ctx, final String evaluable)
 	{
@@ -7570,7 +7668,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			return "";
 		final StringBuffer results = new StringBuffer("");
 		final int y=evaluable.indexOf('(');
-		final int z=evaluable.indexOf(')',y);
+		final int z=closingParen(evaluable,y); // SC17
 		final String preFab=(y>=0)?evaluable.substring(0,y).toUpperCase().trim():"";
 		Integer funcCode=funcH.get(preFab);
 		if(funcCode==null)
@@ -9847,11 +9945,30 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	/** SC7: the bodies running in this engine on this thread, outermost first, for MPWAIT */
 	protected final ThreadLocal<ArrayList<MPContext>> frames = ThreadLocal.withInitial(ArrayList::new);
 
+	/** SC17: what CONTINUE returns, to end a loop's pass */
+	protected static final String LOOP_CONTINUE = "\u0000CONTINUE";
+
 	/** SC7: what MPWAIT returns, to end the bodies it paused */
 	protected static final String WAITED = "\u0000MPWAIT";
 
 	protected String executeBody(final MPContext ctx)
 	{
+		// SC17: FUNCTION_PROG name A B: $(A) and $(B) are the words of the call, the last the rest
+		if((ctx.line<=1)&&(ctx.script!=null)&&(ctx.script.getTriggerCode()==17))
+		{
+			final String[] tb=ctx.script.getTriggerBits();
+			if(tb.length>2)
+			{
+				ctx.locals=new TreeMap<String,String>(String.CASE_INSENSITIVE_ORDER);
+				final List<String> words=CMParms.parse((ctx.msg==null)?"":ctx.msg);
+				for(int i=2;i<tb.length;i++)
+				{
+					final int w=i-2;
+					final String val=(w>=words.size())?"":((i==tb.length-1)?String.join(" ",words.subList(w,words.size())):words.get(w));
+					ctx.locals.put(tb[i],val);
+				}
+			}
+		}
 		final ArrayList<MPContext> fs=frames.get();
 		fs.add(ctx);
 		try
@@ -10642,6 +10759,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							final MPContext newContext = ctx.push(subScript);
 							newContext.repeats=true; // SC7
 							response=execute(newContext);
+							if(LOOP_CONTINUE.equals(response)) // SC17
+								response=null;
 							if(response!=null)
 								break;
 							if((System.currentTimeMillis()>tm) || (ctx.scripted.amDestroyed()))
@@ -10659,6 +10778,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							final MPContext newContext = ctx.push(subScript);
 							newContext.repeats=true; // SC7
 							response=execute(newContext);
+							if(LOOP_CONTINUE.equals(response)) // SC17
+								response=null;
 						}
 						else
 						if(response.equalsIgnoreCase("break"))
@@ -15872,8 +15993,113 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null; // it cannot pause here: said why, and goes on
 			final MPContext later=new MPContext(ctx.scripted,ctx.monster,ctx.source,ctx.target,ctx.primaryItem,ctx.secondaryItem,ctx.msg,ctx.tmp.clone());
 			later.cmsg=ctx.cmsg;
+			later.locals.putAll(ctx.locals); // SC17
 			que.add(new ScriptableResponse(cont.getTriggerCode(),later,cont,ticks));
 			return WAITED;
+		}
+		case "WHILE": // SC17: WHILE (condition) [max passes] ... ENDWHILE
+		{
+			final SubScript script=ctx.script;
+			final ScriptLn ln=script.get(ctx.line);
+			Object[] parsed=((ln.third instanceof Object[])&&(((Object[])ln.third).length==3)&&"WHILE".equals(((Object[])ln.third)[0]))?(Object[])ln.third:null;
+			if(parsed==null)
+			{
+				int depth=0;
+				int end=-1;
+				for(int l=ctx.line+1;(l<script.size())&&(end<0);l++)
+				{
+					final String w=CMParms.getCleanBit(script.get(l).first,0).toUpperCase();
+					if(w.equals("WHILE"))
+						depth++;
+					else
+					if(w.equals("ENDWHILE"))
+					{
+						if(depth==0)
+							end=l;
+						else
+							depth--;
+					}
+				}
+				if(end<0)
+				{
+					logError(ctx,"WHILE","Syntax","WHILE without ENDWHILE: "+line);
+					ctx.line=script.size();
+					return null;
+				}
+				final SubScriptImpl body=new SubScriptImpl(script);
+				body.add(new ScriptLn("",null,null));
+				for(int l=ctx.line+1;l<end;l++)
+					body.add(script.get(l));
+				parsed=new Object[]{"WHILE",body,Integer.valueOf(end)};
+				ln.third=parsed;
+			}
+			String cond=CMParms.getPastBit(line,0).trim();
+			int max=1000;
+			if(cond.startsWith("("))
+			{
+				int close=-1;
+				for(int i=0,d=0;(i<cond.length())&&(close<0);i++)
+				{
+					if(cond.charAt(i)=='(')
+						d++;
+					else
+					if((cond.charAt(i)==')')&&((--d)==0))
+						close=i;
+				}
+				if(close>0)
+				{
+					final String after=varify(ctx,cond.substring(close+1)).trim();
+					if(CMath.isInteger(after))
+						max=CMath.s_int(after);
+					cond=cond.substring(1,close).trim();
+				}
+			}
+			String resp=null;
+			int passes=0;
+			try
+			{
+				final String[][] EVAL={parseEval(cond)};
+				while(eval(ctx,EVAL,0)&&(!ctx.scripted.amDestroyed()))
+				{
+					if((++passes)>max)
+					{
+						logError(ctx,"WHILE","RunTime","stopped after "+max+" passes: "+line);
+						break;
+					}
+					final MPContext wctx=ctx.push((SubScript)parsed[1]);
+					wctx.repeats=true;
+					resp=execute(wctx);
+					if(LOOP_CONTINUE.equals(resp))
+						resp=null;
+					if(resp!=null)
+						break;
+				}
+			}
+			catch(final Exception e)
+			{
+				logError(ctx,"WHILE","Syntax",e.getMessage());
+			}
+			if((resp!=null)&&resp.equalsIgnoreCase("BREAK"))
+				resp=null;
+			ctx.line=((Integer)parsed[2]).intValue(); // at its ENDWHILE
+			return resp;
+		}
+		case "ENDWHILE":
+			logError(ctx,"ENDWHILE","Syntax","ENDWHILE without WHILE");
+			return null;
+		case "ELSEIF":
+			logError(ctx,"ELSEIF","Syntax","ELSEIF without IF");
+			return null;
+		case "CONTINUE": // SC17: the next pass of the loop
+			return LOOP_CONTINUE;
+		case "MPLOCAL": // SC17: MPLOCAL name value: $(name) while the body runs
+		{
+			final String name=varify(ctx,CMParms.getCleanBit(line,1)).trim();
+			if(name.length()==0)
+				logError(ctx,"MPLOCAL","Syntax","MPLOCAL name value: "+line);
+			else
+				ctx.locals.put(name,varify(ctx,CMParms.getPastBitClean(line,1)));
+			return null;
 		}
 		default: // the newer commands end here
 			logError(ctx,cmd,"Syntax","unknown command "+cmd);

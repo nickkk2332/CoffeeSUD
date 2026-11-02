@@ -818,6 +818,11 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPMSG", // 106
 		"MPSIGNAL", // 107
 		"MPWAIT", // 108
+		"WHILE", // 109
+		"ENDWHILE", // 110
+		"CONTINUE", // 111
+		"MPLOCAL", // 112
+		"ELSEIF", // 113
 	};
 
 	/**
@@ -844,6 +849,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		public CMMsg cmsg = null;
 		/** SC7: a body FOR or MPWHILE runs again and again, which MPWAIT cannot pause */
 		public boolean repeats = false;
+		/** SC17: the named locals (MPLOCAL, a function's parameters), $(name), shared by the blocks of one run */
+		public java.util.Map<String,String> locals = new java.util.TreeMap<String,String>(String.CASE_INSENSITIVE_ORDER);
 
 		/**
 		 * MPContext constructor
@@ -885,6 +892,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		{
 			this(old.scripted, old.monster, old.source, old.target, old.primaryItem, old.secondaryItem, old.msg, old.tmp);
 			this.cmsg = old.cmsg;
+			this.locals.putAll(old.locals);
 		}
 
 		public MPContext push(final SubScript script)
