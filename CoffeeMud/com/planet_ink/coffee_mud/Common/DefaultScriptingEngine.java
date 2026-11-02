@@ -2156,7 +2156,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	{
 		if(thisName.length()==0)
 			return null;
-		if(thisName.toUpperCase().trim().startsWith("CATALOG "))
+		if(thisName.toUpperCase().trim().startsWith("CATALOG ")||thisName.toUpperCase().trim().startsWith("CATALOG:")) // C9: catalog:name too
 		{
 			// SC3: the catalog's entry, once for each copy asked; loaderCopy counts and caps them
 			final ScriptLib.CatalogLoad L=ScriptLib.catalogLoad(thisName,mob);
@@ -11876,6 +11876,22 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(tt==null)
 					tt=parseBits(ctx,"Cr");
 				final String name=varify(ctx,tt[1]);
+				if(name.toUpperCase().startsWith("ENCOUNTER ")&&(lastKnownLocation!=null))
+				{
+					// C9: MPMLOAD ENCOUNTER table: a roll of the table here, for $n; $b its leader
+					final String tname=name.substring(10).trim();
+					final Encounters.Table T=Encounters.table(tname);
+					if(T==null)
+						logError(ctx,"MPMLOAD","RunTime","no encounter table "+tname);
+					else
+					{
+						final MOB who=((ctx.source!=null)&&GameDifficulty.playerSide(ctx.source))?ctx.source:null;
+						final Encounters.Result res=Encounters.roll(T,lastKnownLocation,who,ctx.scripted,0);
+						if(res.leader!=null)
+							lastLoaded=res.leader;
+					}
+					break;
+				}
 				final ArrayList<Environmental> Ms=new ArrayList<Environmental>();
 				MOB m=CMClass.getMOB(name);
 				if(m!=null)

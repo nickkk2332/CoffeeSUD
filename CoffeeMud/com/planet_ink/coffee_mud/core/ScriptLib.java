@@ -274,6 +274,8 @@ public final class ScriptLib
 	public static CatalogLoad catalogLoad(final String text, final boolean mob)
 	{
 		String rest = (text == null) ? "" : text.trim();
+		if(rest.toUpperCase().startsWith("CATALOG:"))
+			rest = "CATALOG " + rest.substring(8).trim(); // C9: catalog:name, as RandomMonsters takes it
 		if(!rest.toUpperCase().startsWith("CATALOG "))
 			return null;
 		rest = rest.substring(8).trim();

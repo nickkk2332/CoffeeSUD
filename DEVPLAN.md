@@ -1973,6 +1973,21 @@ C18, C19, C20, C21, C22, C23, C25
   (spawns tagged SPAWNED in the area) and, for mobs, LEVEL=PARTY[+n|-n|+-n]
   (the side's highest level, fillOutMOB, after bringToLife, which makes a
   catalog copy over from the catalog). CATALOG= alone needs no file.
+- C9 done. core/Encounters: tables in world/encounters/NAME.enc, one
+  entry a line: MOBS/ITEM/EMOTE/TRAP/MERCHANT/FUNC, what (name*dice lists
+  for mobs and items, from the catalog or a class), WEIGHT=, LEADER=,
+  MASK= (on the one who came in), LEVEL=lo-hi (the party's highest),
+  ONCE and COOLDOWN=n (kept in the game's variables, host ENCOUNTERS),
+  FROM=HERE/HIDDEN/ADJACENT (walk in from a neighbour), AMBUSH (each
+  postAttacks first). Tagged ENCOUNTER. BUDGET: more MOBS entries until
+  MobRanks.powerOf of what came reaches pct of the party's. Behaviors/
+  RandomEncounters (areas, rooms): TABLE=, CHANCE=, COOLDOWN=n rooms or
+  nDAYS, LOCALES=, TRIGGER=, MAXACTIVE=, DESPAWN= ticks with no party
+  near (not fighting), BUDGET=; an ENTER by the party's leader queues a
+  roll for its next tick (trailer runnables run off the game thread).
+  ENCOUNTER LIST/SHOW/ADD/DEL/ROLL/CHECK/RESET (Commands/EncounterCmd).
+  MPMLOAD ENCOUNTER table ($b the leader), quest LOAD ENCOUNTER table
+  (its mobs the quest's), and catalog:name wherever CATALOG name goes.
 
 #### 2h. Items, properties and puzzles (23)
 

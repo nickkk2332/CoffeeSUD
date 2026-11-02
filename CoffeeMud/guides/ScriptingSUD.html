@@ -489,6 +489,20 @@ custom ability a cast time.</p>
 DESPAWN=DAWN NEAR=PARTY:3</code> on the Pine Forest: wolves roam near the party on winter nights, one in five a
 dire wolf, and are gone by morning, unseen. <code>LEVEL=PARTY+-2</code> makes them the party's level, give or take;
 <code>MAXAREA=</code> caps the area's spawns. RandomItems takes CATALOG=, WHEN= and DESPAWN= too.</p>
+<p>Random encounters: <code>RandomEncounters TABLE=darkwood CHANCE=10% COOLDOWN=6</code> on the Darkwood, and
+<code>world/encounters/darkwood.enc</code>:</p>
+<pre>
+MOBS "deer*1d2" WEIGHT=4 MASK="-HOUR +6 +7 +8 +9 +10 +11 +12 +13 +14 +15 +16 +17"
+MOBS "bandit*2d2" LEADER="bandit chief" WEIGHT=2 LEVEL=3-
+MOBS "grey wolf*2d3" LEADER="dire wolf" WEIGHT=3 MASK="+HOUR -6 -7 -8 -9 -10 -11 -12 -13 -14 -15 -16 -17" AMBUSH
+MOBS "wraith" LEVEL=8- FROM=HIDDEN
+MOBS "lost traveller" ONCE
+EMOTE "An owl hoots somewhere above."
+</pre>
+<p>By day the party meets deer or a few bandits; at night a pack led by a dire wolf jumps it, or a wraith if it
+is above level 8; once, a lost traveller whose FUNCTION_PROG starts an escort. <code>ENCOUNTER ADD</code>,
+<code>SHOW</code> and <code>ROLL</code> build and try a table; <code>MPMLOAD ENCOUNTER darkwood</code> and a quest's
+<code>LOAD ENCOUNTER darkwood</code> roll it too.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

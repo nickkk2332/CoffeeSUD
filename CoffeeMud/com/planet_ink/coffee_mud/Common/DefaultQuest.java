@@ -1110,9 +1110,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	 */
 	protected static boolean catalogLoad(final List<String> p)
 	{
-		if((p.size()>2)&&(p.get(2).equalsIgnoreCase("CATALOG")))
+		if((p.size()>2)&&(p.get(2).equalsIgnoreCase("CATALOG")||p.get(2).toUpperCase().startsWith("CATALOG:")))
 			return true;
-		return (p.size()>3)&&CMath.isMathExpression(p.get(2))&&(p.get(3).equalsIgnoreCase("CATALOG"));
+		return (p.size()>3)&&CMath.isMathExpression(p.get(2))&&(p.get(3).equalsIgnoreCase("CATALOG")||p.get(3).toUpperCase().startsWith("CATALOG:"));
 	}
 
 	protected String breakOutMaskString(final String s, final List<String> p)
@@ -3888,6 +3888,60 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						break;
 					}
 					cmd=p.get(1).toUpperCase();
+					if(cmd.equals("ENCOUNTER"))
+					{
+						// C9: LOAD ENCOUNTER table: a roll of the table in the quest's room; its mobs are the quest's
+						final String tname=(p.size()>2)?CMParms.combine(p,2).trim():"";
+						final Encounters.Table T=Encounters.table(tname);
+						if(T==null)
+						{
+							if(optional)
+								continue;
+							errorOccurred(q,isQuiet,"Quest '"+name()+"', no encounter table '"+tname+"' (world/encounters).");
+							break;
+						}
+						Room R=q.room;
+						if(R==null)
+						{
+							if(q.roomGroup!=null)
+								R=q.roomGroup.get(CMLib.dice().roll(1,q.roomGroup.size(),-1));
+							else
+							if(q.area!=null)
+								R=q.area.getRandomMetroRoom();
+						}
+						if(R==null)
+						{
+							if(optional)
+								continue;
+							errorOccurred(q,isQuiet,"Quest '"+name()+"', no room for the encounter '"+tname+"'.");
+							break;
+						}
+						final Encounters.Result res=Encounters.roll(T,R,null,null,0);
+						final List<MOB> mobs=Collections.synchronizedList(new ArrayList<MOB>());
+						for(final PhysicalAgent P : res.spawned)
+						{
+							if(P instanceof MOB)
+							{
+								final MOB M=(MOB)P;
+								M.basePhyStats().setDisposition(M.basePhyStats().disposition()|PhyStats.IS_UNSAVABLE);
+								M.recoverPhyStats();
+								questifyScriptableBehavs(M);
+								M.setStartRoom(null);
+								mobs.add(M);
+							}
+							runtimeRegisterObject(P);
+						}
+						q.room=R;
+						q.area=R.getArea();
+						if(mobs.size()>0)
+						{
+							q.mob=mobs.get(0);
+							q.mobGroup=mobs;
+							q.envObject=mobs;
+						}
+						R.recoverRoomStats();
+					}
+					else
 					if(cmd.equals("MOB")||cmd.equals("MOBGROUP"))
 					{
 						if((q.loadedMobs.size()==0)&&(!catalogLoad(p))) // SC3: the catalog form needs no IMPORT
