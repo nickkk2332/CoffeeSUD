@@ -2237,6 +2237,15 @@ I22, I23, I24, I25, I26, I27
   Not done: ALLSET on Prop_WearSpellCast, Prop_WearEnabler,
   Prop_WearResister and Prop_AddDamage (the tiers give those now), and
   IDENTIFY's text.
+- I7 done. Prop_Cursed (items), DOMAIN_CURSING in its classification,
+  so Prayer_Bless.isCursed and endLowerCurses see it; its unInvoke lifts
+  it only when a Remove Curse aimed at it (or its wearer) came from one
+  of LEVEL or more (seen in executeMsg). HIDDEN until the first WEAR,
+  HOLD or WIELD (SHOWN= kept), REVEAL a trailer then; NOREMOVE and NODROP
+  as sense flags in affectPhyStats; PENALTY properties added unsaved;
+  BREAK steps SAY: and ENTER: (STEP= kept) or BREAKMASK checked each tick;
+  ONBREAK KEEP, CRUMBLE or BECOME: (core/Transform). Its penalties come
+  off with it. IDENTIFY's "seems normal below LEVEL" was not done.
 
 #### 2i. World systems (25)
 

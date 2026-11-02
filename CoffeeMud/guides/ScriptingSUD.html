@@ -608,6 +608,10 @@ back to stone at dawn.</p>
 TIER4="Prop_WearEnabler(Dragonbreath)" PIECES=4</code>: two pieces worn give fire resistance, all four the breath,
 and LOOK at a piece shows how far along the set is. <code>SETCOUNT($n dragonbone)</code> and <code>SET_PROG</code>
 for scripts.</p>
+<p>Curses: <code>Prop_Cursed LEVEL=15 HIDDEN NOREMOVE PENALTY="Prop_WearAdjuster(wis-3)" REVEAL="The ring
+tightens on your finger!" BREAK="SAY:i confess;ENTER:Chapel#3" ONBREAK=CRUMBLE</code> on a dead knight's ring that
+seems to give strength: worn, it will not come off and drains wisdom, until its wearer confesses at the chapel
+or a priest of level 15 lifts it.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
