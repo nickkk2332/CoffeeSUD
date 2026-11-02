@@ -1405,6 +1405,7 @@ public class Modify extends StdCommand
 			else
 			{
 				winners.remove(found);
+				QuestRecords.unwon(Q.name(),found); // Q4
 				mob.tell(L("@x1 no longer has won quest '@x2'.",found,Q.name()));
 			}
 		}

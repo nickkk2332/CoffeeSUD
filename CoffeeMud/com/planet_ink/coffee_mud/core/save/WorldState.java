@@ -253,6 +253,7 @@ public final class WorldState
 		str.append(scriptVarsXML());
 		str.append(JSStore.toXML()); // JS7: cm.store
 		str.append(questsXML(player));
+		str.append(QuestRecords.toXML()); // Q4: each character's quest records
 		str.append(ridesXML());
 		str.append("</WORLD>\n");
 		return str.toString();
@@ -402,6 +403,7 @@ public final class WorldState
 		final XMLTag vars = world.getPieceFromPieces("SCRIPTVARS");
 		if(vars != null)
 			setScriptVars(vars);
+		QuestRecords.fromXML(world.getPieceFromPieces("QUESTRECORDS")); // Q4
 		final XMLTag quests = world.getPieceFromPieces("QUESTS");
 		if(quests != null)
 		{

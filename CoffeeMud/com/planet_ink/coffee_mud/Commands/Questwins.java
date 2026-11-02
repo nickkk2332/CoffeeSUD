@@ -85,7 +85,31 @@ public class Questwins extends StdCommand
 		{
 			final String name=Q.displayName().trim().length()>0?Q.displayName():Q.name();
 			final String time = CMLib.time().date2String(Q.whenLastWon(mobName).longValue());
-			msg.append(CMStrings.padRight(time,20)+name+"^N\n\r");
+			final QuestRecords.Record R=QuestRecords.get(Q.name(),mobName); // Q4: the outcome
+			final String outcome=((R!=null)&&R.status.equals(QuestRecords.WON)&&(R.outcome.length()>0))?(" ("+R.outcome+")"):"";
+			msg.append(CMStrings.padRight(time,20)+name+outcome+"^N\n\r");
+		}
+		return msg.toString();
+	}
+
+	/**
+	 * Q4: the quests a character failed, dropped or let run out.
+	 * @param mobName the character's name
+	 * @param pronoun "you are", or "Name is"
+	 * @return the list
+	 */
+	protected String getQuestsFailedList(final String mobName, final String pronoun)
+	{
+		final StringBuffer msg=new StringBuffer(L("^HQuests @x1 listed as having failed:^?^N\n\r",pronoun));
+		for(final Map.Entry<String,QuestRecords.Record> e : QuestRecords.of(mobName).entrySet())
+		{
+			final QuestRecords.Record R=e.getValue();
+			if(!(R.status.equals(QuestRecords.FAILED)||R.status.equals(QuestRecords.ABANDONED)||R.status.equals(QuestRecords.EXPIRED)))
+				continue;
+			final Quest Q=CMLib.quests().fetchQuest(e.getKey());
+			final String name=((Q!=null)&&(Q.displayName().trim().length()>0))?Q.displayName():e.getKey();
+			final String why=(R.outcome.length()>0)?R.outcome:R.status;
+			msg.append(CMStrings.padRight(CMLib.time().date2String(R.when),20)+name+" ("+why.toLowerCase()+")^N\n\r");
 		}
 		return msg.toString();
 	}
@@ -309,6 +333,12 @@ public class Questwins extends StdCommand
 				mob.tell(msg);
 		}
 		else
+		if((commands.size()==2)&&(commands.get(1).equalsIgnoreCase("FAILED"))) // Q4
+		{
+			if(!mob.isMonster())
+				mob.tell(getQuestsFailedList(mob.Name(), L("you are")));
+		}
+		else
 		if((commands.size()>2)&&(commands.get(1).equalsIgnoreCase("DROP")))
 		{
 			ScriptingEngine foundS=null;
@@ -361,6 +391,7 @@ public class Questwins extends StdCommand
 			if((!mob.isMonster()&&(mob.session().confirm(L("Drop the quest '@x1', are you sure (y/N)?",Q.name()),"N"))))
 			{
 				CMLib.coffeeTables().bump(Q,CoffeeTableRow.STAT_QUESTDROPPED);
+				QuestRecords.ended(Q.name(),mob.Name(),QuestRecords.ABANDONED,"DROPPED"); // Q4
 				foundS.stepQuest(mob, mob, foundS.defaultQuestName());
 				foundS.endQuest(mob, mob, foundS.defaultQuestName());
 				mob.delScript(foundS);

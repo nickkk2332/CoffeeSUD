@@ -14282,6 +14282,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(tt==null)
 					tt=parseBits(ctx,"Ccr");
 				String whoName=varify(ctx,tt[1]);
+				// Q4: MPQUESTWIN who quest OUTCOME word
+				String questPart=tt[2];
+				String outcome=null;
+				final String padded=" "+questPart;
+				final java.util.regex.Matcher om=java.util.regex.Pattern.compile("(?i)\\s+OUTCOME\\s+(\\S+)").matcher(padded);
+				if(om.find())
+				{
+					outcome=varify(ctx,om.group(1));
+					questPart=(padded.substring(0,om.start())+" "+padded.substring(om.end())).trim();
+				}
 				MOB M=null;
 				if(lastKnownLocation!=null)
 					M=lastKnownLocation.fetchInhabitant(whoName);
@@ -14291,7 +14301,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					whoName=M.Name();
 				if(whoName.length()>0)
 				{
-					final Quest Q=getQuest(tt[2]);
+					final Quest Q=getQuest(questPart);
 					if(Q!=null)
 					{
 						if(M!=null)
@@ -14301,6 +14311,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							CMLib.map().sendGlobalMessage(M, CMMsg.TYP_WINQUEST, winMsg);
 						}
 						Q.declareWinner(whoName);
+						if(outcome!=null) // Q4
+							QuestRecords.setOutcome(Q.name(),whoName,outcome);
 						CMLib.players().bumpPrideStat(M,PrideStats.PrideStat.QUESTS_COMPLETED, 1);
 					}
 					else
@@ -15767,6 +15779,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String a=loadArgs(ctx.scripted).get(v);
 			return (a==null)?"":a;
 		}
+		case "QUESTSTATUS": // Q4: QUESTSTATUS(who quest): ACTIVE, WON, FAILED, ABANDONED, EXPIRED or ""
+		case "QUESTOUTCOME": // QUESTOUTCOME(who quest): the outcome word, or why it failed
+		{
+			final List<String> w=CMParms.parse(parms.trim());
+			if(w.size()<2)
+				return "";
+			final Environmental W=getArgumentMOB(w.get(0),ctx);
+			final String who=(W instanceof MOB)?W.Name():varify(ctx,w.get(0));
+			final String quest=questNameFor(varify(ctx,CMParms.combine(w,1)));
+			if(name.equalsIgnoreCase("QUESTSTATUS"))
+				return QuestRecords.status(quest,(W instanceof MOB)?(MOB)W:null,who);
+			return QuestRecords.outcome(quest,who);
+		}
 		case "QOBJECTIVE": // Q3: QOBJECTIVE(who quest id): the count, DONE or FAILED, or ""
 		{
 			final List<String> w=CMParms.parse(parms.trim());
@@ -16025,6 +16050,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPQUESTFAIL": // Q4: MPQUESTFAIL who quest (reason): fails it for them, as MPENDQUEST who ends it
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final Quest Q=CMLib.quests().fetchQuest(questNameFor(varify(ctx,CMParms.getCleanBit(line,2))));
+			if((!(W instanceof MOB))||(Q==null))
+			{
+				logError(ctx,"MPQUESTFAIL","RunTime","no such character or quest: "+line);
+				return null;
+			}
+			QuestRecords.fail(Q,(MOB)W,QuestRecords.FAILED,varify(ctx,CMParms.getPastBitClean(line,2)));
 			return null;
 		}
 		case "MPJSFILE": // JS15: MPJSFILE file args: a JavaScript file run as a <SCRIPT> is, with args

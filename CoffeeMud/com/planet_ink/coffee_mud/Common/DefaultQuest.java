@@ -269,6 +269,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			final MOB M=(B instanceof MOB)?(MOB)B:mob;
 			final MPContext ctx = new MPContext(P, M, mob, (Environmental) B, null, null, mob.Name(), objs);
 			acceptEng.callFunc("DO_ACCEPT", mob.Name(), ctx);
+			QuestRecords.accepted(name(),mob.Name()); // Q4: ACTIVE
 			final QuestState qs=questState; // Q3: the step's objectives and entry
 			if(qs!=null)
 				QuestJournal.applyStep(mob,name(),qs.stepObjectives,qs.stepJournal);
@@ -5564,12 +5565,14 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		{
 			if(wasWinner)
 			{
+				QuestRecords.unwon(Q.name(),name); // Q4
 				CMLib.database().DBUpdateQuest(Q);
 			}
 		}
 		else
 		{
 			Q.getWinners().put(name,Long.valueOf(GameTime.now()));
+			QuestRecords.won(Q.name(),name); // Q4, Q5: the character's record and their wins
 			CMLib.database().DBUpdateQuest(Q);
 			runWinner=name;
 			if(Q instanceof DefaultQuest)

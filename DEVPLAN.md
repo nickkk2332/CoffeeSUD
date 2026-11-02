@@ -1485,6 +1485,20 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   `QUESTS name` adds the objectives and the history; `QUESTS LOG` the
   latest entries. A "Quest updated:" line tells each change, unless
   QUESTNOTICES=OFF (coffeemud.ini or world.ini).
+- Q4 done. `core/QuestRecords`: how each quest stands for each
+  character, saved with the world (world.xml's QUESTRECORDS): ACTIVE once
+  accepted (`acceptQuest`, or carrying the quest's script with no record),
+  WON, FAILED, ABANDONED (QUESTS DROP) or EXPIRED, an outcome word and when
+  on the game clock, and the wins (Q5). `MPQUESTWIN who quest OUTCOME
+  word`; `MPQUESTFAIL who quest (reason)` records it, fires the new
+  QUESTFAIL_PROG quest|* and QUEST_PROG FAIL, and ends and takes away the
+  character's quest scripts as MPENDQUEST who does. `QUESTSTATUS(who quest)`
+  and `QUESTOUTCOME(who quest)`, as tests and values. Masks `-QUESTFAIL
+  +quest` and `+QUESTFAIL -quest`, `-QUESTOUTCOME +quest:word` and
+  `+QUESTOUTCOME -quest:word` (as -QUESTWIN and +QUESTWIN go). `GIVE STAT
+  KEYPLAYER FAIL` (QuestBound): the mob's death fails the quest for each
+  character on it, reason KEYPLAYER, and the quest goes on; TRUE still
+  resets it. QUESTS WON shows the outcomes, QUESTS FAILED the rest.
 
 #### 2f. NPC behaviour and dialogue (21)
 

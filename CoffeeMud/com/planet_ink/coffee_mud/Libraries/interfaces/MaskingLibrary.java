@@ -537,6 +537,10 @@ public interface MaskingLibrary extends CMLibrary
 		ALLINGROUP, // for everyone of it
 		_JS, // JS14: -JS "expr": only what the JavaScript is true for
 		JS, // +JS "expr": what it is true for, whatever else the mask says
+		_QUESTFAIL, // Q4: -QUESTFAIL +quest: only those who failed it
+		QUESTFAIL, // +QUESTFAIL -quest: not those who failed it
+		_QUESTOUTCOME, // -QUESTOUTCOME +quest:word: only those whose outcome it was
+		QUESTOUTCOME, // +QUESTOUTCOME -quest:word: not those
 		;
 		private final String[] keys;
 		private ZapperKey(final String... exts)

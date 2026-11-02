@@ -71,6 +71,8 @@ public class QuestBound implements Ability
 
 	protected Physical	affected	= null;
 	protected boolean	keyPlayer	= false;
+	/** Q4: KEYPLAYER FAIL: its death fails the quest for those on it, not resets it */
+	protected boolean	keyFail		= false;
 
 	@Override
 	public boolean canTarget(final int can_code)
@@ -492,7 +494,7 @@ public class QuestBound implements Ability
 		case 1:
 			return text();
 		case 2:
-			return "" + keyPlayer;
+			return keyFail ? "FAIL" : ("" + keyPlayer);
 		}
 		return "";
 	}
@@ -508,7 +510,8 @@ public class QuestBound implements Ability
 			setMiscText(val);
 			break;
 		case 2:
-			keyPlayer = CMath.s_bool(val);
+			keyFail = val.trim().equalsIgnoreCase("FAIL"); // Q4
+			keyPlayer = keyFail || CMath.s_bool(val);
 			break;
 		}
 	}
@@ -632,6 +635,11 @@ public class QuestBound implements Ability
 	{
 		if((amDestroyed())||(affected==null))
 			return true;
+		if(keyFail&&(msg.source()==affected)&&(msg.sourceMinor()==CMMsg.TYP_DEATH))
+		{
+			failQuest();
+			return true;
+		}
 		if((msg.targetMinor()==CMMsg.TYP_SHUTDOWN)
 		||((msg.targetMinor()==CMMsg.TYP_EXPIRE)
 			&&(msg.target()!=null)
@@ -651,6 +659,11 @@ public class QuestBound implements Ability
 	{
 		if((amDestroyed())||(affected==null))
 			return;
+		if(keyFail&&(msg.source()==affected)&&(msg.sourceMinor()==CMMsg.TYP_DEATH))
+		{
+			failQuest();
+			return;
+		}
 		if((msg.targetMinor()==CMMsg.TYP_SHUTDOWN)
 		||((msg.targetMinor()==CMMsg.TYP_EXPIRE)
 			&&(msg.target()!=null)
@@ -662,6 +675,29 @@ public class QuestBound implements Ability
 			&&(msg.source()==affected)
 			&&(msg.sourceMinor()==CMMsg.TYP_DEATH)))
 			resetQuest(msg.targetMinor());
+	}
+
+	/**
+	 * Q4: KEYPLAYER FAIL: the key player died, so the quest fails for those
+	 * on it (MPQUESTFAIL's way); the quest goes on.
+	 */
+	private void failQuest()
+	{
+		final boolean star=questIDs.contains("*");
+		for(int q=CMLib.quests().numQuests()-1;q>=0;q--)
+		{
+			final Quest Q=CMLib.quests().fetchQuest(q);
+			if((Q!=null)&&(questIDs.contains(""+Q)))
+			{
+				for(final MOB M : QuestJournal.onQuest(Q))
+					QuestRecords.fail(Q,M,QuestRecords.FAILED,"KEYPLAYER");
+			}
+		}
+		questIDs.clear();
+		if(star)
+			questIDs.add("*");
+		if((questIDs.size()==0)&&(affected!=null))
+			affected.delEffect(this);
 	}
 
 	private void resetQuest(final int reason)
@@ -695,7 +731,10 @@ public class QuestBound implements Ability
 		&&(ticking instanceof MOB)
 		&&(((MOB)ticking).amDead() || ((MOB)ticking).amDestroyed()))
 		{
-			resetQuest(CMMsg.TYP_DEATH);
+			if(keyFail) // Q4
+				failQuest();
+			else
+				resetQuest(CMMsg.TYP_DEATH);
 			return false;
 		}
 		return true;

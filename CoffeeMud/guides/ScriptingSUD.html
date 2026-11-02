@@ -234,6 +234,16 @@ if QOBJECTIVE($n bell drowned == DONE)
 drowned men to rest</code> and <code>SET JOURNAL The bell rang under the
 water.</code> go to whoever is on the quest when the step starts, or accepts
 it during the step.</p>
+<p>How a quest stands for each character is kept, and saved:
+<code>QUESTSTATUS($n oskar)</code> is ACTIVE, WON, FAILED, ABANDONED (dropped)
+or EXPIRED, and <code>QUESTOUTCOME($n bandits)</code> the word
+<code>MPQUESTWIN $n bandits OUTCOME spared</code> gave, or why it failed.
+<code>MPQUESTFAIL $n oskar the escort died</code> fails it for one
+character (QUESTFAIL_PROG hears it); <code>GIVE STAT KEYPLAYER FAIL</code>
+on the escort fails it for everyone on it if he dies. In masks,
+<code>-QUESTFAIL +oskar</code> lets through only those who failed, and
+<code>-QUESTOUTCOME +bandits:spared</code> only those who spared the
+chief.</p>
 <pre>
 set name bell
 set display The Drowned Bell

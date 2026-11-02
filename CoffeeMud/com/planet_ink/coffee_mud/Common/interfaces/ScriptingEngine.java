@@ -528,6 +528,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"DECAY_PROG", // 95
 		"ACHIEVE_PROG", // 96
 		"SIGNAL_PROG", // 97
+		"QUESTFAIL_PROG", // 98
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -708,6 +709,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"JS", //173
 		"JS$", //174
 		"QOBJECTIVE", //175
+		"QUESTSTATUS", //176
+		"QUESTOUTCOME", //177
 	};
 
 	/** String list of all valid mobprog commands */
@@ -829,6 +832,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPJSFILE", // 114
 		"MPQOBJECTIVE", // 115
 		"MPQJOURNAL", // 116
+		"MPQUESTFAIL", // 117
 	};
 
 	/**

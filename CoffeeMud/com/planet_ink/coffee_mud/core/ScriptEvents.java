@@ -428,6 +428,30 @@ public final class ScriptEvents
 		return (d.length() == 0) || d.equalsIgnoreCase(detail);
 	}
 
+	/** Q4: QUESTFAIL_PROG's code */
+	public static final int	QUESTFAIL_PROG	= code("QUESTFAIL_PROG");
+
+	/**
+	 * Q4: a quest failed for a character (MPQUESTFAIL, a KEYPLAYER FAIL
+	 * death): QUESTFAIL_PROG quest|* fires for every host with the trigger,
+	 * the character's own quest scripts too.  $n is the character, $g the
+	 * quest's name, $0 why.
+	 * @param Q the quest
+	 * @param who the character
+	 * @param reason why
+	 */
+	public static void questFail(final Quest Q, final MOB who, final String reason)
+	{
+		if((Q == null) || (!isUsed(QUESTFAIL_PROG)))
+			return;
+		final List<PhysicalAgent> hosts = registered(QUESTFAIL_PROG);
+		if(hosts.isEmpty())
+			return;
+		final String name = Q.name();
+		fire(hosts, QUESTFAIL_PROG, (who != null) ? who : standIn("the quest"), null, name, new Object[] { (reason == null) ? "" : reason }, "CCcr",
+			t -> (t.length < 2) || t[1].trim().equals("*") || t[1].trim().equalsIgnoreCase("ALL") || t[1].trim().equalsIgnoreCase(name));
+	}
+
 	/** GAME_PROG's code */
 	public static final int	GAME_PROG	= code("GAME_PROG");
 	/** TURN_PROG's code */
@@ -470,7 +494,10 @@ public final class ScriptEvents
 	{
 		final String d = (detail == null) ? "" : detail;
 		if(kind.equals("NEWGAME"))
+		{
 			JSStore.newGame(); // JS7: world/js/state.json
+			QuestRecords.newGame(); // Q4
+		}
 		JSEvents.fire(kind.toLowerCase(), mob, d); // JS6: cm.on
 		switch(kind)
 		{

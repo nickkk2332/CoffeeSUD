@@ -988,6 +988,25 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 		return ct;
 	}
 
+	/**
+	 * Q4: a QUESTFAIL parameter (a quest's name) or a QUESTOUTCOME one
+	 * (quest:word), for a character.
+	 * @param key which entry
+	 * @param parm the parameter
+	 * @param mob the character, or null for a record
+	 * @param name their name
+	 * @return true if they failed the quest, or its outcome for them is the word
+	 */
+	protected static boolean questRecordMatches(final ZapperKey key, final String parm, final MOB mob, final String name)
+	{
+		if((key==ZapperKey._QUESTFAIL)||(key==ZapperKey.QUESTFAIL))
+			return QuestRecords.FAILED.equals(QuestRecords.status(parm,mob,name));
+		final int x=parm.lastIndexOf(':');
+		if(x<=0)
+			return false;
+		return QuestRecords.outcome(parm.substring(0,x),name).equalsIgnoreCase(parm.substring(x+1).trim());
+	}
+
 	protected boolean multipleQuals(final List<String> V, final int v, final String startsWith)
 	{
 		return countQuals(V,v,startsWith)>1;
@@ -2716,6 +2735,34 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 									buf.append(Q.displayName()+", ");
 								else
 									buf.append(Q.name()+", ");
+							}
+						}
+						if(buf.toString().endsWith(", "))
+							buf.delete(buf.length()-2, buf.length());
+						buf.append(".  ");
+					}
+					break;
+				case _QUESTFAIL: // Q4: -Questfail
+				case QUESTFAIL: // +Questfail
+				case _QUESTOUTCOME: // -Questoutcome
+				case QUESTOUTCOME: // +Questoutcome
+					{
+						final boolean req=(key==ZapperKey._QUESTFAIL)||(key==ZapperKey._QUESTOUTCOME);
+						final boolean fail=(key==ZapperKey._QUESTFAIL)||(key==ZapperKey.QUESTFAIL);
+						if(fail)
+							buf.append(req?L("Requires having failed: "):L("Disallows those who failed: "));
+						else
+							buf.append(req?L("Requires the quest outcome: "):L("Disallows those with the quest outcome: "));
+						final String sign=req?"+":"-";
+						for(int v2=v+1;v2<V.size();v2++)
+						{
+							final String str2=V.get(v2);
+							if(zapCodes.containsKey(str2))
+								break;
+							if(str2.startsWith(sign))
+							{
+								v=v2;
+								buf.append(str2.substring(1)).append(", ");
 							}
 						}
 						if(buf.toString().endsWith(", "))
@@ -4594,6 +4641,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _NAME: // -Names
 				case _ACCOUNT: // -Accounts
 				case _QUESTWIN: // -Questwin
+				case _QUESTFAIL: // Q4
+				case _QUESTOUTCOME:
 				case _HOME: // -Home
 				case _PLANE: // -Plane
 				case _JAVACLASS: // -JavaClass
@@ -4827,6 +4876,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case NAME: // +Names
 				case ACCOUNT: // +Account
 				case QUESTWIN: // +Questwin
+				case QUESTFAIL: // Q4
+				case QUESTOUTCOME:
 				case HOME: // +Home
 				case PLANE: // +Plane
 				case JAVACLASS: // +JavaClass
@@ -6586,6 +6637,18 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 							if((Q!=null)&&(Q.wasWinner(mob.Name())))
 								return false;
 						}
+					}
+					break;
+				case _QUESTFAIL: // Q4: -questfail: only those who failed one of these
+				case QUESTFAIL: // +questfail: not those who failed any
+				case _QUESTOUTCOME: // -questoutcome quest:word
+				case QUESTOUTCOME: // +questoutcome quest:word
+					{
+						boolean found=false;
+						for(final Object o : entry.parms())
+							found=found||questRecordMatches(entry.maskType(),(String)o,mob,mob.Name());
+						if(found!=((entry.maskType()==ZapperKey._QUESTFAIL)||(entry.maskType()==ZapperKey._QUESTOUTCOME)))
+							return false;
 					}
 					break;
 				case _SKILL: // -skill
@@ -9396,6 +9459,18 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 							if((Q!=null)&&(Q.wasWinner(E.name())))
 								return false;
 						}
+					}
+					break;
+				case _QUESTFAIL: // Q4: as for a mob, by the record's name
+				case QUESTFAIL:
+				case _QUESTOUTCOME:
+				case QUESTOUTCOME:
+					{
+						boolean found=false;
+						for(final Object o : entry.parms())
+							found=found||questRecordMatches(entry.maskType(),(String)o,null,E.name());
+						if(found!=((entry.maskType()==ZapperKey._QUESTFAIL)||(entry.maskType()==ZapperKey._QUESTOUTCOME)))
+							return false;
 					}
 					break;
 				case _NAME: // -names
