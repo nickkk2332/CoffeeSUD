@@ -1426,6 +1426,21 @@ JS17, JS18, JS19, JS20, JS23
   when the word is no command or social; `cm.unverb`. Both are code: register
   them in init.js's onBoot. CMDFAIL_PROG is now written up in
   guides/Scriptable.html too.
+- JS23 done. `core/JSProgression`: world/scripts/progression.js,
+  read again when it changes, in the usual scope, each function called if
+  defined. xpGain(mob, source, amount) in `CoffeeLevels.postExperience`, for
+  gains only (a loss is not passed), its number (not under 0) the gain;
+  practicesForLevel(mob) and trainsForLevel(mob) in `level`, their numbers
+  in place of the usual; onLevel(mob, level) after them;
+  onLearn(mob, abilityId) with ST2's LEARN
+  (`ScriptEvents.skill` and `levelGrant`); onTrain(mob, what, amount) after
+  TRAIN (MANA, MOVES, GAIN, PRACTICES, HITPOINTS, a stat's name or a class's
+  ID); onCreated(mob) before GAME_PROG NEWCHAR; onCreationStep(mob, step,
+  answer) after the race, gender, stats, class, factions and deity steps,
+  next to the charcr scripts; statRoll(mob, bonus) for `STARTSTAT=SCRIPT`,
+  which sets the stats or returns them by name, abbreviation or a name's
+  start, or as a list in the base stats' order (the others at BASEMINSTAT).
+  P17's formulas, when built, are the other way to the per-level numbers.
 
 #### 2e. Quests (15)
 

@@ -32,6 +32,7 @@ went wrong.</p>
 <li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#jscriptable">JScriptable</a></li>
 <li><a href="#quests">Quests</a></li>
+<li><a href="#progression">Progression</a></li>
 <li><a href="#masks">In masks</a></li>
 <li><a href="#shared">Shared code</a></li>
 <li><a href="#reload">Reloading</a></li>
@@ -53,6 +54,7 @@ went wrong.</p>
 <tr><td>masks (<code>+JS</code>, <code>-JS</code>)</td><td>who or what may pass</td><td><code>mob</code>, <code>item</code>, <code>room</code>, <code>target</code></td></tr>
 <tr><td><code>JRUN</code>, <code>JCONSOLE</code></td><td>trying things, building</td><td><code>mob()</code>, <code>here</code>, <code>area</code>, <code>target</code>, <code>me</code></td></tr>
 <tr><td>quests and cron</td><td>a quest's or a timed job's script</td><td>the quest's or job's own</td></tr>
+<tr><td><code>world/scripts/progression.js</code></td><td>how characters are made and grow</td><td>onCreated, onCreationStep, xpGain, onLevel, practicesForLevel, trainsForLevel, onLearn, onTrain, statRoll</td></tr>
 </table>
 
 <h2><a name="scope">In every scope</a></h2>
@@ -427,6 +429,55 @@ function onStart(state) {
 function onWin(player) {
   var hours = cm.clock().absHours() - state.startHour;
   cm.lib.beanCounter().addMoney(player, Math.max(10, 50 - 5 * hours));
+}
+</pre>
+
+<h2><a name="progression">Progression</a></h2>
+<p><code>world/scripts/progression.js</code>, if there is one, decides how
+characters are made and how they grow. Each of its functions is called if it
+is defined; the file is read again when it changes.</p>
+<ul>
+<li><code>xpGain(mob, source, amount)</code>: for each gain of experience
+(not a loss), returns what the gain gives instead. <code>source</code> says
+where it comes from, as <code>COMBAT:5</code> (a kill, with the victim's
+level), <code>ABILITY:Skill_Track</code>, <code>COMMAND:Teach</code>,
+<code>MISC:</code> or <code>SCRIPT:</code>. Return nothing for the usual.</li>
+<li><code>practicesForLevel(mob)</code> and <code>trainsForLevel(mob)</code>:
+the practices and trains a level gives, in place of the usual (wisdom over 6,
+and 1).</li>
+<li><code>onLevel(mob, level)</code>: after a level and its gains.</li>
+<li><code>onLearn(mob, abilityId)</code>: when a character gets a skill, from a
+teacher, a level, a script.</li>
+<li><code>onTrain(mob, what, amount)</code>: after TRAIN; <code>what</code> is
+MANA, MOVES, GAIN (trains), PRACTICES, HITPOINTS, a stat's name (STRENGTH) or a
+class's ID.</li>
+<li><code>onCreationStep(mob, step, answer)</code>: after each step of making a
+character: race, gender, stats, class, factions and deity, with what was
+chosen.</li>
+<li><code>onCreated(mob)</code>: when the new character enters the world,
+before GAME_PROG NEWCHAR.</li>
+<li><code>statRoll(mob, bonus)</code>: with <code>STARTSTAT=SCRIPT</code> in
+coffeemud.ini, the new character's stats: set them, or return them as
+<code>{ strength: 14, dex: 12 }</code> (names, abbreviations or their starts)
+or as a list in the order of the base stats. Those left out are at
+BASEMINSTAT. <code>bonus</code> is the bonus points the theme gives.</li>
+</ul>
+<pre>
+// world/scripts/progression.js
+function xpGain(mob, source, amount) {
+  if (source.indexOf('COMBAT:') == 0 &amp;&amp; mob.findTattoo('PACIFIST') != null)
+    return 0;                       // the pacifist monk's vow
+  if (source.indexOf('SCRIPT:') == 0)
+    return amount * 1.5;            // MPEXP's, from the world's scripts
+}
+function trainsForLevel(mob) {
+  return (mob.basePhyStats().level() % 5 == 0) ? 2 : 1;
+}
+function statRoll(mob, bonus) {
+  function d6() { return 1 + Math.floor(Math.random() * 6); }
+  function roll() { var r = [d6(), d6(), d6(), d6()].sort(); return r[1] + r[2] + r[3]; }
+  return { strength: roll(), intelligence: roll(), dexterity: roll(),
+           constitution: roll(), charisma: roll(), wisdom: roll() };
 }
 </pre>
 

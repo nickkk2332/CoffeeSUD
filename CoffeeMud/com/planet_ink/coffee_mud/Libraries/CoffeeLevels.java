@@ -1035,13 +1035,14 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 	}
 
 	@Override
-	public int postExperience(final MOB mob,final String sourceID,final MOB victim,final String homage,final int amount, final boolean quiet)
+	public int postExperience(final MOB mob,final String sourceID,final MOB victim,final String homage,final int givenAmount, final boolean quiet)
 	{
 		if((mob==null)
 		||(CMSecurity.isDisabled(CMSecurity.DisFlag.EXPERIENCE))
 		||mob.charStats().getCurrentClass().expless()
 		||mob.charStats().getMyRace().expless())
 			return 0;
+		final int amount=JSProgression.xpGain(mob,sourceID,givenAmount); // JS23: progression.js's xpGain
 		final Room R=mob.location();
 		if(R!=null)
 		{
@@ -1185,6 +1186,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		int practiceGain=(int)Math.floor(CMath.div(prac2Stat,6.0))+curClass.getBonusPracLevel();
 		if(practiceGain<=0)
 			practiceGain=1;
+		practiceGain=JSProgression.perLevel("practicesForLevel",mob,practiceGain); // JS23
 		mob.setPractices(mob.getPractices()+practiceGain);
 		costGains[CostDef.CostType.PRACTICE.ordinal()] = practiceGain;
 		theNews.append(" ^H" + practiceGain+"^N practice " +
@@ -1193,9 +1195,11 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		int trainGain=1;
 		if(trainGain<=0)
 			trainGain=1;
+		trainGain=JSProgression.perLevel("trainsForLevel",mob,trainGain); // JS23
 		mob.setTrains(mob.getTrains()+trainGain);
 		costGains[CostDef.CostType.TRAIN.ordinal()] = trainGain;
 		theNews.append("and ^H"+trainGain+"^N training "+ (trainGain != 1? "sessions" : "session" )+".\n\r^N");
+		JSProgression.call("onLevel",mob,Integer.valueOf(mob.basePhyStats().level())); // JS23
 
 		if(mob.playerStats()!=null)
 		{

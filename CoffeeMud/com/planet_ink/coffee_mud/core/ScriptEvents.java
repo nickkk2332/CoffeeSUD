@@ -2298,7 +2298,11 @@ public final class ScriptEvents
 	 */
 	public static void skill(final MOB mob, final Ability A, final String kind)
 	{
-		if((mob == null) || (A == null) || (!isUsed(SKILL_PROG)) || (mob.playerStats() == null) || (mob.location() == null))
+		if((mob == null) || (A == null) || (mob.playerStats() == null))
+			return;
+		if(kind.equals("LEARN"))
+			JSProgression.call("onLearn", mob, A.ID()); // JS23
+		if((!isUsed(SKILL_PROG)) || (mob.location() == null))
 			return;
 		final Ability mine = mob.fetchAbility(A.ID());
 		final int prof = (mine != null) ? mine.proficiency() : A.proficiency();
@@ -2314,7 +2318,7 @@ public final class ScriptEvents
 	 */
 	public static void levelGrant(final MOB mob, final Ability A)
 	{
-		if((mob == null) || (A == null) || (!isUsed(SKILL_PROG)))
+		if((mob == null) || (A == null) || ((!isUsed(SKILL_PROG)) && (!JSProgression.has("onLearn"))))
 			return;
 		for(final Enumeration<Ability> a = mob.abilities(); a.hasMoreElements();)
 		{

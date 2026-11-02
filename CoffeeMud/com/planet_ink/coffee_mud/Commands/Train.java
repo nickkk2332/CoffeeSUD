@@ -642,6 +642,16 @@ public class Train extends StdCommand
 					}
 					break;
 				}
+				// JS23: progression.js's onTrain(mob, what, amount)
+				final String what;
+				if(trainType==Trainable.CCLASS)
+					what=(theClass==null)?"":theClass.ID();
+				else
+				if((trainType==Trainable.ATTRIBUTE)&&(abilityCode>=0))
+					what=CharStats.CODES.NAME(abilityCode);
+				else
+					what=trainType.name();
+				JSProgression.call("onTrain",mob,what,Integer.valueOf(gainAmount));
 			}
 		};
 		final Session session = mob.session();

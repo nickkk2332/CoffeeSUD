@@ -3124,6 +3124,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.baseState().setMana(CMProps.getIntVar(CMProps.Int.STARTMANA));
 
 		executeScript(mob,charCrScripts.get("RACE"));
+		JSProgression.creationStep(mob,"race"); // JS23
 		loginObj.state=LoginState.CHARCR_GENDERSTART;
 		return null;
 	}
@@ -3201,6 +3202,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.baseCharStats().getMyRace().startRacing(mob,false);
 
 		executeScript(mob,charCrScripts.get("GENDER"));
+		JSProgression.creationStep(mob,"gender"); // JS23
 
 		if((CMProps.getBoolVar(CMProps.Bool.ACCOUNTEXPIRATION))&&(mob.playerStats()!=null)&&(acct==null))
 			mob.playerStats().setAccountExpiration(System.currentTimeMillis()+(1000l*60l*60l*24l*(CMProps.getIntVar(CMProps.Int.TRIALDAYS))));
@@ -3213,6 +3215,13 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		int startStat=CMProps.getIntVar(CMProps.Int.STARTSTAT);
 		if((CMSecurity.isDisabled(CMSecurity.DisFlag.ATTRIBS)&&(startStat<=0)))
 			startStat=10;
+		if((startStat<=0)&&JSProgression.scriptedStats())
+		{
+			// JS23: STARTSTAT=SCRIPT, and progression.js's statRoll
+			JSProgression.statRoll(mob,bonusPoints);
+			loginObj.state=LoginState.CHARCR_STATDONE;
+		}
+		else
 		if(startStat>0)
 		{
 			mob.baseCharStats().setAllBaseValues(CMProps.getIntVar(CMProps.Int.STARTSTAT));
@@ -3575,6 +3584,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		final MOB mob=loginObj.mob;
 		executeScript(mob,charCrScripts.get("STATS"));
+		JSProgression.creationStep(mob,"stats"); // JS23
 		return charcrClassInit(loginObj, session);
 	}
 
@@ -3783,6 +3793,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.resetToMaxState();
 
 		executeScript(mob,charCrScripts.get("CLASS"));
+		JSProgression.creationStep(mob,"class"); // JS23
 
 		loginObj.index=-1;
 		loginObj.state=LoginState.CHARCR_FACTIONNEXT;
@@ -3892,6 +3903,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		final MOB mob=loginObj.mob;
 		executeScript(mob,charCrScripts.get("FACTIONS"));
+		JSProgression.creationStep(mob,"factions"); // JS23
 
 		mob.baseCharStats().getCurrentClass().startCharacter(mob,false,false);
 		CMLib.utensils().outfit(mob,mob.baseCharStats().getCurrentClass().outfit(mob));
@@ -4073,6 +4085,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.recoverPhyStats();
 		mob.recoverMaxState();
 		mob.resetToMaxState();
+		JSProgression.creationStep(mob,"deity"); // JS23
 
 		return charcrStartFinish(loginObj, session);
 	}

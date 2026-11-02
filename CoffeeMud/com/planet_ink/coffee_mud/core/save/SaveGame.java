@@ -415,6 +415,7 @@ public final class SaveGame
 					WorldState.noteContentShapes();
 				// ST6: world/js/init.js read afresh, and its onBoot()
 				WorldJS.reset();
+				JSProgression.reset(); // JS23
 				WorldJS.call("onBoot");
 			}
 		});
@@ -538,6 +539,7 @@ public final class SaveGame
 	 */
 	public static void characterCreated(final MOB mob)
 	{
+		JSProgression.call("onCreated", mob); // JS23
 		ScriptEvents.game("NEWCHAR", mob, "");
 	}
 
