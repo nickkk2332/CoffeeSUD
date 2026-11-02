@@ -1458,6 +1458,17 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   finished). `MODIFY QUEST x REOPEN` makes a finished quest one that has
   not run. LIST QUESTS, QUESTINFO and the JavaScript quests helper say
   finished.
+- Q2 done. `Prop_QuestMarker` on a mob or item (QUEST=name or *,
+  AVAILABLE=, ACTIVE=, READY=, READYFUNC=) puts a mark after it in room
+  listings, for each viewer (`core/QuestMarkers`, from
+  `Sense.getDispositionBlurbs`): AVAILABLE ((!)) while they may accept the
+  quest (its CAN_ACCEPT, as Prop_QuestGiver asks), ACTIVE ((?)) once they
+  carry its script, READY (a bright (?)) when READYFUNC, a FUNCTION_PROG of
+  the host's run with them as $n, returns something. With *, the running
+  quests it has a script from, is first quest mob or item of, or gives by
+  Prop_QuestGiver. Only a player's characters see marks. `QUESTMARKERS=AUTO`
+  (coffeemud.ini or world.ini) marks every running quest's first quest mob
+  and every Prop_QuestGiver host without the property.
 
 #### 2f. NPC behaviour and dialogue (21)
 

@@ -2698,6 +2698,7 @@ public class Sense extends StdLibrary implements CMFlagLibrary
 					break;
 				}
 			}
+			say.append(QuestMarkers.marker(seen,seer)); // Q2: a quest giver's mark, for this viewer
 			if(say.length()>1)
 			{
 				say.append(" ");

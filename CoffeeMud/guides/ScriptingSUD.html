@@ -213,6 +213,12 @@ away the mobs and items it loaded.</li>
 <li><code>MODIFY QUEST bell REOPEN</code>, for testing, makes a finished quest
 one that has not run.</li>
 </ul>
+<p>Givers and turn-ins can be marked in room listings: <code>Prop_QuestMarker
+QUEST=bell READYFUNC=CAN_COMPLETE</code> on Old Ned shows <code>(!)</code> to a
+character who may take the quest, a grey <code>(?)</code> once they have, and a
+bright <code>(?)</code> when his <code>FUNCTION_PROG CAN_COMPLETE</code>, run with
+them as <code>$n</code>, returns something. <code>QUESTMARKERS=AUTO</code> in
+world.ini marks every quest's first quest mob without the property.</p>
 <pre>
 set name bell
 set display The Drowned Bell

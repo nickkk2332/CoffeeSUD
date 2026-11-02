@@ -59,6 +59,8 @@ public final class WorldSettings
 		"NEWACODES", "NEWDOMAINS", "DEFAULTABILITYARGS", "EXPRATE", "XPMOD",
 		"LASTPLAYERLEVEL", "INJURYSYSTEM", "COMBATSYSTEM", "PLAYERDEATH",
 		"MOBDEATH", "HUNGER", "THIRST", "MANACOST", "DIRECTIONS", "CHATDEFAULT",
+		// quests
+		"QUESTMARKERS",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */
