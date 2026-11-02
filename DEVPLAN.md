@@ -1670,6 +1670,16 @@ N22, N24, N28, N29
   party, with Schedule, Patroller and Mobile held off. `ALARMITEM=` is a
   room item anyone may PUSH or PULL to raise it. Once per ALERTTICKS.
   Sleeper's ALARM uses the same alarm.
+- N6 done. Behaviour `Memory`: per character MET (FIRSTMET, LASTMET),
+  ATTACKED (once a fight), HURT, HEALED, GAVE (value), STOLE (a thief's
+  act on it), KILLEDKIN (`KIN=` a mask), TALKED, and `TRACK=NAME:regex`
+  (TRACK1-9) on what it sees them do. Each is a script variable
+  `MEM_<FACT>_<Name>` of the NPC (set again from the save on its first
+  tick after a restore), kept in its run state. `FORGET=30d|12h` fades a
+  fact that long after it last grew (game time). `HOSTILEIF=`,
+  `GREETIF=`+`GREET=`, `REFUSEIF=`+`REFUSE=` (no LIST/BUY/SELL/VALUE/
+  teach); conditions FACT>N etc joined by & or |. `SHARE=AREA` or a mask:
+  the area's other Memory NPCs learn it too.
 
 #### 2g. Combat and encounters (24)
 

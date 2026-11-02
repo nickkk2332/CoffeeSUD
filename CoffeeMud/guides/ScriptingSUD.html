@@ -349,6 +349,12 @@ arms!" ALERTTICKS=40 ALARMITEM="a brass gong"</code> on the watchtower bandit. I
 he sees the party, or spots a sneak, the bandits within six rooms wake, come and
 attack; anyone can strike the gong. Silence him first and the camp can be taken
 tent by tent.</p>
+<p>A village that remembers: <code>Memory KIN="-NAMES +villager" SHARE=AREA
+HOSTILEIF=KILLEDKIN&gt;0 REFUSEIF=STOLE&gt;0 REFUSE="Thief! Out!" GREETIF=HEALED&gt;0
+GREET="Welcome back, $n." FORGET=30d</code> on each villager. Pick the baker's pocket
+and no shop in the village will trade with you for a month; kill a villager and the
+rest fight you on sight; heal one and they greet you by name. A script reads the
+same facts, <code>VAR($i MEM_GAVE_$n &gt; 100)</code>, and they are kept in a saved game.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
