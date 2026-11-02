@@ -793,6 +793,8 @@ public class DefaultTimeClock implements TimeClock
 		final int oldMonth=getMonth();
 		final int oldYear=getYear();
 		final MoonPhase oldMoon=getMoonPhase(null);
+		final Season oldSeason=getSeasonCode();
+		final String oldWeekday=ScriptEvents.weekday(this);
 		if(howManyHours!=0)
 		{
 			lastTicked=GameTime.now();
@@ -820,7 +822,10 @@ public class DefaultTimeClock implements TimeClock
 			handleTimeChange();
 		// ST4: DATECHANGE and MOON_PROG
 		if((moveTheSky)&&((getDayOfMonth()!=oldDay)||(getMonth()!=oldMonth)||(getYear()!=oldYear)))
+		{
 			ScriptEvents.dateChanged(this,oldMoon);
+			ScriptEvents.calendarChanged(this,oldMonth,oldYear,oldSeason,oldWeekday); // ST11
+		}
 	}
 
 	@Override

@@ -822,6 +822,159 @@ public final class ScriptEvents
 		return list;
 	}
 
+	/** SEASON_PROG's code */
+	public static final int	SEASON_PROG		= code("SEASON_PROG");
+	/** MONTH_PROG's code */
+	public static final int	MONTH_PROG		= code("MONTH_PROG");
+	/** YEAR_PROG's code */
+	public static final int	YEAR_PROG		= code("YEAR_PROG");
+	/** WEEKDAY_PROG's code */
+	public static final int	WEEKDAY_PROG	= code("WEEKDAY_PROG");
+
+	/**
+	 * A clock's weekday's name, as TIME tells it.
+	 * @param C the clock
+	 * @return the name, or "" if the clock has no weeks
+	 */
+	public static String weekday(final TimeClock C)
+	{
+		if((C == null) || (C.getDaysInWeek() <= 0))
+			return "";
+		long x = ((long)C.getYear()) * ((long)C.getMonthsInYear()) * C.getDaysInMonth();
+		x = x + ((long)C.getMonth()) * ((long)C.getDaysInMonth());
+		x = x + C.getDayOfMonth();
+		final int i = (int)(x % C.getDaysInWeek());
+		final String[] names = C.getWeekNames();
+		return ((i >= 0) && (i < names.length)) ? names[i] : "";
+	}
+
+	/**
+	 * Whether a number is in a range as TIME_PROG and DAY_PROG take it (ST11):
+	 * a number, a range "6-18", or a range with a step "6-18/3".
+	 * @param spec the range
+	 * @param n the number
+	 * @return true if it is in it
+	 */
+	public static boolean rangeMatches(final String spec, final int n)
+	{
+		String s = spec.trim();
+		int step = 1;
+		final int slash = s.indexOf('/');
+		if(slash > 0)
+		{
+			step = Math.max(1, CMath.s_int(s.substring(slash + 1).trim()));
+			s = s.substring(0, slash).trim();
+		}
+		final int dash = s.indexOf('-', 1);
+		if(dash > 0)
+		{
+			final int a = CMath.s_int(s.substring(0, dash).trim());
+			final int b = CMath.s_int(s.substring(dash + 1).trim());
+			return (n >= a) && (n <= b) && (((n - a) % step) == 0);
+		}
+		return CMath.isInteger(s) && (CMath.s_int(s) == n);
+	}
+
+	/**
+	 * Whether an hour fits a TIME_PROG argument (ST11): a range as
+	 * {@link #rangeMatches} takes it, or DAWN, DAY, DUSK or NIGHT, the hour
+	 * the clock's time of day begins.
+	 * @param spec the argument
+	 * @param hour the hour
+	 * @param C the area's clock
+	 * @return true if it fits
+	 */
+	public static boolean hourMatches(final String spec, final int hour, final TimeClock C)
+	{
+		final String s = spec.trim().toUpperCase();
+		for(final TimeClock.TimeOfDay tod : TimeClock.TimeOfDay.values())
+		{
+			if(tod.name().equals(s))
+				return (C != null) && (C.getDawnToDusk()[tod.ordinal()] == hour);
+		}
+		return rangeMatches(s, hour);
+	}
+
+	/**
+	 * The hosts with a trigger in areas on a clock, and the world host.
+	 * @param triggerCode the trigger
+	 * @param C the clock
+	 * @return the hosts
+	 */
+	public static List<PhysicalAgent> onClock(final int triggerCode, final TimeClock C)
+	{
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		for(final PhysicalAgent P : registered(triggerCode))
+		{
+			if(P == WorldHost.host())
+				hosts.add(P);
+			else
+			{
+				final Area A = (P instanceof Area) ? (Area)P : ((CMLib.map().roomLocation(P) == null) ? null : CMLib.map().roomLocation(P).getArea());
+				if((A != null) && (A.getTimeObj() == C))
+					hosts.add(P);
+			}
+		}
+		return hosts;
+	}
+
+	private static boolean anyOf(final String list, final String[] values)
+	{
+		for(final String w : CMParms.parseAny(list.replace(',', ' '), ' ', true))
+		{
+			if(w.equalsIgnoreCase("ANY"))
+				return true;
+			for(final String v : values)
+			{
+				if((v != null) && (v.length() > 0) && w.equalsIgnoreCase(v))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	private static void calendar(final int code, final TimeClock C, final String now, final String before, final String[] values)
+	{
+		if(!isUsed(code))
+			return;
+		final List<PhysicalAgent> hosts = onClock(code, C);
+		if(hosts.isEmpty())
+			return;
+		fire(hosts, code, standIn("the sky"), null, now, new Object[] { before }, "Cr", t -> (t.length > 1) && anyOf(t[1], values));
+	}
+
+	/**
+	 * ST11: a clock's new day, as far as the calendar goes: SEASON_PROG
+	 * season|ANY, MONTH_PROG numbers or names|ANY, YEAR_PROG year|ANY, each on
+	 * its change, and WEEKDAY_PROG names|ANY each day, for hosts in areas on
+	 * the clock and the world's scripts.  $g is the new one, $0 the one before.
+	 * @param C the clock
+	 * @param oldMonth the month before
+	 * @param oldYear the year before
+	 * @param oldSeason the season before
+	 * @param oldWeekday the weekday before
+	 */
+	public static void calendarChanged(final TimeClock C, final int oldMonth, final int oldYear, final TimeClock.Season oldSeason, final String oldWeekday)
+	{
+		if(C == null)
+			return;
+		final TimeClock.Season season = C.getSeasonCode();
+		if(season != oldSeason)
+			calendar(SEASON_PROG, C, season.name(), (oldSeason == null) ? "" : oldSeason.name(), new String[] { season.name() });
+		if(C.getMonth() != oldMonth)
+		{
+			final String[] names = C.getMonthNames();
+			final int m = C.getMonth();
+			final String name = ((m >= 0) && (m < names.length)) ? names[m] : "";
+			calendar(MONTH_PROG, C, "" + m, "" + oldMonth, new String[] { "" + m, name });
+		}
+		if(C.getYear() != oldYear)
+			calendar(YEAR_PROG, C, "" + C.getYear(), "" + oldYear, new String[] { "" + C.getYear() });
+		final String day = weekday(C);
+		if(day.length() > 0)
+			calendar(WEEKDAY_PROG, C, day, (oldWeekday == null) ? "" : oldWeekday, new String[] { day });
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

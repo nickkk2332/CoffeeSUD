@@ -5676,6 +5676,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					break;
 				}
+				case 133: // isweekday
+				{
+					final String arg1=varify(ctx,CMParms.cleanBit(tt[t+0])).trim();
+					final Room wR=(ctx.monster==null)?null:ctx.monster.location();
+					final String day=(wR==null)?"":ScriptEvents.weekday(wR.getArea().getTimeObj());
+					returnable=(day.length()>0)&&day.equalsIgnoreCase(arg1);
+					break;
+				}
 				case 130: // inparty
 				{
 					if(tlen==1)
@@ -8047,6 +8055,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						names.append((names.length()>0)?" ":"").append(G.Name());
 					results.append(names);
 				}
+				break;
+			}
+			case 133: // isweekday
+			{
+				final Room wR=(ctx.monster==null)?null:ctx.monster.location();
+				final String day=(wR==null)?"":ScriptEvents.weekday(wR.getArea().getTimeObj());
+				results.append(((day.length()>0)&&day.equalsIgnoreCase(varify(ctx,funcParms).trim()))?"true":"false");
 				break;
 			}
 			case 130: // inparty
@@ -16871,7 +16886,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						boolean done=false;
 						for(int i=1;i<t.length;i++)
 						{
-							if(time==CMath.s_int(t[i]))
+							// ST11: DAWN, DAY, DUSK, NIGHT, and ranges with steps
+							if(ScriptEvents.hourMatches(t[i],time,mob.location().getArea().getTimeObj()))
 							{
 								done=true;
 								execute(new MPContext(affecting,mob,mob,mob,defaultItem,null,""+time, null).push(script));
@@ -16900,7 +16916,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						boolean done=false;
 						for(int i=1;i<t.length;i++)
 						{
-							if(day==CMath.s_int(t[i]))
+							if(ScriptEvents.rangeMatches(t[i],day)) // ST11: ranges too
 							{
 								done=true;
 								execute(new MPContext(affecting,mob,mob,mob,defaultItem,null,null, null).push(script));

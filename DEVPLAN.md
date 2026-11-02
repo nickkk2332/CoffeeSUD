@@ -1060,6 +1060,11 @@ JS17, JS18, JS19, JS20, JS23
   leader; and onPartyChange(leader) in world/js/init.js. PARTYSIZE(),
   INPARTY(), PARTYLEADER() and $%PARTY()%: the group, the leader first
   (`ScriptEvents.group`).
+- ST11 done. TIME_PROG takes DAWN, DAY, DUSK and NIGHT (the clock's own
+  hours) and ranges with steps, DAY_PROG ranges. `SEASON_PROG`, `MONTH_PROG`,
+  `YEAR_PROG` and `WEEKDAY_PROG` fire from the clock's day change (with
+  ST4's DATECHANGE) for hosts with them in areas on that clock and the
+  world's scripts; $g the new one, $0 the one before. ISWEEKDAY().
 
 #### 2e. Quests (15)
 

@@ -500,6 +500,10 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"TURN_PROG", // 67
 		"VERB_PROG", // 68
 		"PARTY_PROG", // 69
+		"SEASON_PROG", // 70
+		"MONTH_PROG", // 71
+		"YEAR_PROG", // 72
+		"WEEKDAY_PROG", // 73
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -637,6 +641,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"INPARTY", //130
 		"PARTYLEADER", //131
 		"PARTY", //132
+		"ISWEEKDAY", //133
 	};
 
 	/** String list of all valid mobprog commands */
