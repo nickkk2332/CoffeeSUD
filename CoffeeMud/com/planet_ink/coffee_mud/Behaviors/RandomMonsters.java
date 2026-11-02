@@ -211,6 +211,25 @@ public class RandomMonsters extends ActiveTicker
 			Log.errOut("Blank XML/filename: '"+filename+"' on Behavior RandomMonsters on object "+thangName+" ("+thangID+").");
 			return null;
 		}
+		if(filename.trim().toLowerCase().startsWith("catalog:"))
+		{
+			// SC3: catalog:goblin,goblin shaman draws on the catalog's mobs; their copies are counted and capped
+			String names=filename.trim().substring(8);
+			if(names.indexOf(';')>=0)
+				names=names.substring(0,names.indexOf(';'));
+			final List<MOB> cat=new Vector<MOB>();
+			for(final String name : CMParms.parseCommas(names,true))
+			{
+				final Physical P=ScriptLib.catalogEntry(name,true);
+				if(P instanceof MOB)
+					cat.add((MOB)P);
+				else
+				if(!alreadyTriedLoad)
+					Log.errOut("RandomMonsters: no catalog mob '"+name.trim()+"' for '"+thangName+"' ("+thangID+").");
+			}
+			alreadyTriedLoad=true;
+			return (cat.size()>0)?cat:null;
+		}
 		final int start=filename.indexOf("<MOBS>");
 		if((start>=0)&&(start<=20))
 		{
@@ -355,7 +374,18 @@ public class RandomMonsters extends ActiveTicker
 			if(M!=null)
 			{
 				tickStatus=Tickable.STATUS_MISC+3;
-				M=(MOB)M.copyOf();
+				if(CMLib.catalog().getCatalogObj(M)==M)
+				{
+					// SC3: a catalog mob's copy is counted, and none is made past its cap
+					M=(MOB)ScriptLib.catalogCopy(M,false);
+					if(M==null)
+					{
+						attempts-=1000;
+						continue;
+					}
+				}
+				else
+					M=(MOB)M.copyOf();
 				tickStatus=Tickable.STATUS_MISC+4;
 				M.setStartRoom(null);
 				M.basePhyStats().setRejuv(PhyStats.NO_REJUV);

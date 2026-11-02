@@ -698,6 +698,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"NUMTAGGED", //164
 		"TAGGED", //165
 		"TAGS", //166
+		"CATALOG", //167
+		"CATALOGCOUNT", //168
 	};
 
 	/** String list of all valid mobprog commands */

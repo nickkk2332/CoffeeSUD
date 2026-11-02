@@ -1877,10 +1877,40 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	}
 
 	@SuppressWarnings("unchecked")
+	/** SC3: true when the last CATALOG source read was CATALOG FORCE */
+	protected boolean catalogForce=false;
+
+	/**
+	 * SC3: a loader's copy of what it found: a catalog entry's copy is counted
+	 * by the catalog, and none is made past the entry's cap unless the
+	 * CATALOG FORCE form asked.
+	 * @param E what the loader found
+	 * @return the copy, or null
+	 */
+	protected Physical loaderCopy(final Environmental E)
+	{
+		if(!(E instanceof Physical))
+			return null;
+		final Physical P=(Physical)E;
+		if(CMLib.catalog().getCatalogObj(P)==P)
+			return ScriptLib.catalogCopy(P,catalogForce);
+		return (Physical)P.copyOf();
+	}
+
 	protected Environmental findSomethingCalledThis(final String thisName, final MPContext ctx, final MOB meMOB, final Room imHere, List<Environmental> OBJS, final boolean mob)
 	{
 		if(thisName.length()==0)
 			return null;
+		if(thisName.toUpperCase().trim().startsWith("CATALOG "))
+		{
+			// SC3: the catalog's entry, once for each copy asked; loaderCopy counts and caps them
+			final ScriptLib.CatalogLoad L=ScriptLib.catalogLoad(thisName,mob);
+			final Physical P=ScriptLib.catalogEntry(L.name,mob);
+			catalogForce=L.force;
+			for(int c=0;(P!=null)&&(c<L.count);c++)
+				OBJS.add(P);
+			return (OBJS.size()>0)?OBJS.get(0):null;
+		}
 		Environmental thing=null;
 		Environmental areaThing=null;
 		if(thisName.toUpperCase().trim().startsWith("FROMFILE "))
@@ -1896,7 +1926,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					final String name=CMParms.getPastBitClean(thisName,1);
 					if(name.equalsIgnoreCase("ALL"))
-						OBJS=(List<Environmental>)V;
+						OBJS.addAll(V); // SC3: was a new list the caller never saw
 					else
 					if(name.equalsIgnoreCase("ANY"))
 					{
@@ -1932,7 +1962,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(V!=null)
 				{
 					if(name.equalsIgnoreCase("ALL"))
-						OBJS=(List<Environmental>)V;
+						OBJS.addAll(V); // SC3: was a new list the caller never saw
 					else
 					if(name.equalsIgnoreCase("ANY"))
 					{
@@ -11432,7 +11462,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(Ms.get(i) instanceof MOB)
 						{
 							final MOB baseM = (MOB)Ms.get(i);
-							m=(MOB)baseM.copyOf();
+							m=(MOB)loaderCopy(baseM); // SC3: a catalog copy is counted and capped
+							if(m==null)
+								continue;
 							if((baseM.location() != null)
 							&&(baseM.location().isInhabitant(baseM)))
 								m.setStartRoom(null); // the copy is not a resident there
@@ -11527,7 +11559,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 								if((m!=null)
 								&&(!(m instanceof ArchonOnly)))
 								{
-									m=(Item)m.copyOf();
+									m=(Item)loaderCopy(m); // SC3
+									if(m==null)
+										continue;
 									m.recoverPhyStats();
 									m.setContainer(container);
 									if(container instanceof MOB)
@@ -11637,7 +11671,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							if((I!=null)
 							&&(!(I instanceof ArchonOnly)))
 							{
-								I=(Item)I.copyOf();
+								I=(Item)loaderCopy(I); // SC3
+								if(I==null)
+									continue;
 								I.recoverPhyStats();
 								synchronized(putRoom)
 								{
@@ -11700,7 +11736,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 								if((I!=null)
 								&&(!(I instanceof ArchonOnly)))
 								{
-									I=(Item)I.copyOf();
+									I=(Item)loaderCopy(I); // SC3: the cap holds for stock too
+									if(I==null)
+										continue;
 									I.recoverPhyStats();
 									final CoffeeShop shop = addHere.getShop();
 									if(shop != null)
@@ -11753,7 +11791,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						{
 							if(Ms.get(i) instanceof MOB)
 							{
-								m=(MOB)Ms.get(i).copyOf();
+								m=(MOB)loaderCopy(Ms.get(i)); // SC3
+								if(m==null)
+									continue;
 								m.text();
 								m.recoverPhyStats();
 								m.recoverCharStats();
@@ -15195,6 +15235,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			for(final Enumeration<String> e=((Taggable)E).tags();e.hasMoreElements();)
 				tags.add(e.nextElement());
 			return ScriptLib.listText(tags);
+		}
+		case "CATALOG": // SC3: CATALOG(name): a catalog mob or item so called, and a copy may be made
+		case "CATALOGCOUNT": // CATALOGCOUNT(name): its copies in the world
+		{
+			Physical P=ScriptLib.catalogEntry(v,true);
+			if(P==null)
+				P=ScriptLib.catalogEntry(v,false);
+			if(name.equalsIgnoreCase("CATALOG"))
+				return ((P!=null)&&(!ScriptLib.catalogFull(P)))?"true":"false";
+			return ""+ScriptLib.catalogCount(P);
 		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);

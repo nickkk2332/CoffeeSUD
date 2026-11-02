@@ -2,6 +2,9 @@ package com.planet_ink.coffee_mud.core;
 
 import java.util.*;
 
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.Libraries.interfaces.CatalogLibrary;
+
 /*
    Copyright 2026 CoffeeSUD contributors
 
@@ -19,7 +22,8 @@ import java.util.*;
 */
 /**
  * The plain helpers behind the script language's newer functions (SC1 lists,
- * SC10 strings, SC11 numbers and dice): nothing here knows a script.
+ * SC10 strings, SC11 numbers and dice, SC3 catalog copies): nothing here
+ * knows a script.
  */
 public final class ScriptLib
 {
@@ -244,5 +248,119 @@ public final class ScriptLib
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * SC3: a loader's catalog form, CATALOG [FORCE] name [count].
+	 */
+	public static final class CatalogLoad
+	{
+		/** the catalog entry's name */
+		public String name = "";
+		/** how many copies */
+		public int count = 1;
+		/** true to make copies past the entry's cap */
+		public boolean force = false;
+	}
+
+	/**
+	 * SC3: reads a loader's catalog form: CATALOG, then FORCE if the cap is
+	 * to be passed, the entry's name, and how many copies (1 to 100) when the
+	 * name with that number is no entry.
+	 * @param text the loader's words
+	 * @param mob true for a mob entry, false for an item
+	 * @return the form, or null if the words are not one
+	 */
+	public static CatalogLoad catalogLoad(final String text, final boolean mob)
+	{
+		String rest = (text == null) ? "" : text.trim();
+		if(!rest.toUpperCase().startsWith("CATALOG "))
+			return null;
+		rest = rest.substring(8).trim();
+		final CatalogLoad L = new CatalogLoad();
+		if(rest.toUpperCase().startsWith("FORCE "))
+		{
+			L.force = true;
+			rest = rest.substring(6).trim();
+		}
+		final int x = rest.lastIndexOf(' ');
+		if((x > 0) && CMath.isInteger(rest.substring(x + 1)) && (catalogEntry(rest, mob) == null))
+		{
+			L.count = Math.max(1, Math.min(100, CMath.s_int(rest.substring(x + 1))));
+			rest = rest.substring(0, x).trim();
+		}
+		L.name = rest;
+		return L;
+	}
+
+	/**
+	 * SC3: the catalog's mob or item so called.
+	 * @param name its name
+	 * @param mob true for a mob, false for an item
+	 * @return the catalog's own copy, or null
+	 */
+	public static Physical catalogEntry(final String name, final boolean mob)
+	{
+		if((name == null) || (name.trim().length() == 0))
+			return null;
+		return mob ? CMLib.catalog().getCatalogMob(name.trim()) : CMLib.catalog().getCatalogItem(name.trim());
+	}
+
+	/**
+	 * SC3: whether a catalog entry has as many copies in the world as its cap
+	 * allows (a cap of 0 is none).
+	 * @param entry the catalog's own copy
+	 * @return true if no more may be made
+	 */
+	public static boolean catalogFull(final Physical entry)
+	{
+		final CatalogLibrary.CataData data = (entry == null) ? null : CMLib.catalog().getCatalogData(entry);
+		return (data != null) && (data.getCap() > 0) && (data.numReferences() >= data.getCap());
+	}
+
+	/**
+	 * SC3: the copies of a catalog entry in the world.
+	 * @param entry the catalog's own copy
+	 * @return how many
+	 */
+	public static int catalogCount(final Physical entry)
+	{
+		final CatalogLibrary.CataData data = (entry == null) ? null : CMLib.catalog().getCatalogData(entry);
+		return (data == null) ? 0 : data.numReferences();
+	}
+
+	/**
+	 * SC3: a copy of a catalog entry, counted by the catalog.
+	 * @param entry the catalog's own copy
+	 * @param force true to make it past the entry's cap
+	 * @return the copy, or null at the cap
+	 */
+	public static Physical catalogCopy(final Physical entry, final boolean force)
+	{
+		if((entry == null) || ((!force) && catalogFull(entry)))
+			return null;
+		final Physical P = (Physical)entry.copyOf();
+		CMLib.catalog().changeCatalogUsage(P, true);
+		return P;
+	}
+
+	/**
+	 * SC3: the copies a catalog form asks for, as many as the cap allows.
+	 * @param L the form
+	 * @param mob true for a mob entry, false for an item
+	 * @return the copies, perhaps none
+	 */
+	public static List<Physical> catalogCopies(final CatalogLoad L, final boolean mob)
+	{
+		final List<Physical> copies = new ArrayList<Physical>();
+		final Physical entry = (L == null) ? null : catalogEntry(L.name, mob);
+		for(int i = 0; (entry != null) && (i < L.count); i++)
+		{
+			final Physical P = catalogCopy(entry, L.force);
+			if(P == null)
+				break;
+			copies.add(P);
+		}
+		return copies;
 	}
 }

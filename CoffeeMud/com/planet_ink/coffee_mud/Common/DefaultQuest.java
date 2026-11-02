@@ -803,6 +803,19 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			V.remove(CMLib.dice().roll(1,V.size(),-1));
 	}
 
+	/**
+	 * SC3: whether a LOAD MOB or LOAD ITEM line is the catalog form,
+	 * LOAD MOB [n] CATALOG name.
+	 * @param p the line's words
+	 * @return true if it is
+	 */
+	protected static boolean catalogLoad(final List<String> p)
+	{
+		if((p.size()>2)&&(p.get(2).equalsIgnoreCase("CATALOG")))
+			return true;
+		return (p.size()>3)&&CMath.isMathExpression(p.get(2))&&(p.get(3).equalsIgnoreCase("CATALOG"));
+	}
+
 	protected String breakOutMaskString(final String s, final List<String> p)
 	{
 		String mask="";
@@ -3519,7 +3532,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					cmd=p.get(1).toUpperCase();
 					if(cmd.equals("MOB")||cmd.equals("MOBGROUP"))
 					{
-						if(q.loadedMobs.size()==0)
+						if((q.loadedMobs.size()==0)&&(!catalogLoad(p))) // SC3: the catalog form needs no IMPORT
 						{
 							if(optional)
 								continue;
@@ -3549,6 +3562,17 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						final boolean addAll=mobName.equalsIgnoreCase("ALL")
 										||mobName.equalsIgnoreCase("ANY");
 						final List<MOB> choices=new ArrayList<MOB>(); // ok because is wholly temporary
+						// SC3: LOAD MOB [n] CATALOG [FORCE] name: n copies of the catalog's mob, counted and capped
+						final ScriptLib.CatalogLoad cata=ScriptLib.catalogLoad(CMParms.combine(p,2),true);
+						if(cata!=null)
+						{
+							if(maxToLoad!=Integer.MAX_VALUE)
+								cata.count=Math.max(1,Math.min(100,maxToLoad));
+							for(final Physical P : ScriptLib.catalogCopies(cata,true))
+								choices.add((MOB)P);
+							maxToLoad=Integer.MAX_VALUE;
+						}
+						else
 						for(int i=0;i<q.loadedMobs.size();i++)
 						{
 							final MOB M2=q.loadedMobs.get(i);
@@ -3563,10 +3587,13 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						{
 							if(optional)
 								continue;
-							errorOccurred(q,isQuiet,"Quest '"+name()+"', no mob found to load '"+mobName+"'!");
+							errorOccurred(q,isQuiet,(cata!=null)?("Quest '"+name()+"', no catalog mob '"+cata.name+"' to load, or it is at its cap."):("Quest '"+name()+"', no mob found to load '"+mobName+"'!"));
 							break;
 						}
 						final List<MOB> mobsToDo=Collections.synchronizedList(new ArrayList<MOB>()); // must remain vector for thread safety
+						if(cmd.equalsIgnoreCase("MOB")&&(cata!=null))
+							mobsToDo.addAll(choices);
+						else
 						if(cmd.equalsIgnoreCase("MOB"))
 							mobsToDo.add(choices.get(CMLib.dice().roll(1,choices.size(),-1)));
 						else
@@ -3619,7 +3646,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					else
 					if(cmd.equals("ITEM")||cmd.equals("ITEMGROUP"))
 					{
-						if(q.loadedItems.size()==0)
+						if((q.loadedItems.size()==0)&&(!catalogLoad(p))) // SC3
 						{
 							if(optional)
 								continue;
@@ -3641,6 +3668,17 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						}
 						final String itemName=CMParms.combine(p,2);
 						final List<Item> choices=new ArrayList<Item>(); // only ever picked from locally
+						// SC3: LOAD ITEM [n] CATALOG [FORCE] name
+						final ScriptLib.CatalogLoad cata=ScriptLib.catalogLoad(itemName,false);
+						if(cata!=null)
+						{
+							if(maxToLoad!=Integer.MAX_VALUE)
+								cata.count=Math.max(1,Math.min(100,maxToLoad));
+							for(final Physical P : ScriptLib.catalogCopies(cata,false))
+								choices.add((Item)P);
+							maxToLoad=Integer.MAX_VALUE;
+						}
+						else
 						for(int i=0;i<q.loadedItems.size();i++)
 						{
 							final Item I2=q.loadedItems.get(i);
@@ -3658,10 +3696,13 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 						{
 							if(optional)
 								continue;
-							errorOccurred(q,isQuiet,"Quest '"+name()+"', no item found to load '"+itemName+"'!");
+							errorOccurred(q,isQuiet,(cata!=null)?("Quest '"+name()+"', no catalog item '"+cata.name+"' to load, or it is at its cap."):("Quest '"+name()+"', no item found to load '"+itemName+"'!"));
 							break;
 						}
 						final List<Item> itemsToDo=new ArrayList<Item>(); // for thread safety, as this is global
+						if(cmd.equalsIgnoreCase("ITEM")&&(cata!=null))
+							itemsToDo.addAll(choices);
+						else
 						if(cmd.equalsIgnoreCase("ITEM"))
 							itemsToDo.add(choices.get(CMLib.dice().roll(1,choices.size(),-1)));
 						else

@@ -1156,6 +1156,15 @@ JS17, JS18, JS19, JS20, JS23
   `TICKS(n unit)` and `MPSETVAR host var NOW`, on the area clock's hours
   since its year 0. ISWEEKDAY came with ST11. The ISRL tests still read the
   computer's clock.
+- SC3 done. A CATALOG source for MPMLOAD (`CATALOG [FORCE] name [count]`),
+  MPOLOAD (`INTO` as before), MPOLOADROOM and the shop forms, quest `LOAD
+  MOB|MOBGROUP|ITEM|ITEMGROUP [n] CATALOG [FORCE] name` (no IMPORT needed)
+  and RandomMonsters `;catalog:name,name`. Copies go through
+  `changeCatalogUsage`, and none is made past an entry's cap (0 is none)
+  unless FORCE; `$b` is the last copy. `CATALOG(name)` and
+  `CATALOGCOUNT(name)`. FROMFILE and FROMGENFILE's `ALL` now load all. Shop
+  stock is checked against the cap but not counted, as before. The
+  uniqueness rules of item 1 are not there yet.
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser
