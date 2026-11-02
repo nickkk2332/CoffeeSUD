@@ -1126,6 +1126,9 @@ JS17, JS18, JS19, JS20, JS23
   times met, first and last meeting. `FIRSTGREET_PROG [pct]`, `REGREET_PROG
   days [pct]`, `MEMORY(npc who MET|COUNT|LASTSEEN|DAYSSINCE|LASTTOPIC)`;
   `ScriptEvents.talked` is there for N9 to record a topic.
+- ST22 done. `SOCIAL_PROG [EXACT] [ME] name`: EXACT matches the whole name
+  (or its first word for a bare name), ME only a social aimed at the
+  scripted mob; $g is the social's full name.
 
 #### 2e. Quests (15)
 

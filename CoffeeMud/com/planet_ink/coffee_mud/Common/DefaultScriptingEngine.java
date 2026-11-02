@@ -16641,8 +16641,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					{
 						if(t==null)
 							t=parseBits(script,0,"CR");
+						// ST22: [EXACT] [ME] name
 						if((t!=null)
-						&&msg.tool().Name().toUpperCase().startsWith(t[1]))
+						&&ScriptEvents.socialMatches(t[1],msg.tool().Name(),msg.target()==monster))
 						{
 							final Item Tool=defaultItem;
 							if(msg.target() instanceof MOB)

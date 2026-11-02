@@ -1680,6 +1680,42 @@ public final class ScriptEvents
 		return CMProps.getMillisPerMudHour() * hours;
 	}
 
+	/**
+	 * Whether a SOCIAL_PROG trigger line fits a social (ST22): [EXACT] [ME]
+	 * and the name; EXACT matches the whole name, not its start, and ME only
+	 * a social aimed at the scripted mob.
+	 * @param rest the trigger line after SOCIAL_PROG, in upper case
+	 * @param social the social's name
+	 * @param atMe true if the social is aimed at the scripted mob
+	 * @return true if it fits
+	 */
+	public static boolean socialMatches(final String rest, final String social, final boolean atMe)
+	{
+		final List<String> words = CMParms.parse(rest.toUpperCase());
+		boolean exact = false;
+		boolean me = false;
+		while(words.size() > 0)
+		{
+			if(words.get(0).equals("EXACT"))
+				exact = true;
+			else
+			if(words.get(0).equals("ME"))
+				me = true;
+			else
+				break;
+			words.remove(0);
+		}
+		if(me && (!atMe))
+			return false;
+		final String name = String.join(" ", words);
+		final String s = social.toUpperCase();
+		if(!exact)
+			return s.startsWith(name);
+		if(words.size() <= 1)
+			return CMParms.getCleanBit(s, 0).equals(name);
+		return s.equals(name);
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */
