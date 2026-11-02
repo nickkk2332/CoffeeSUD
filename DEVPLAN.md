@@ -1520,6 +1520,15 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   REPEATABLE, MAXWINS); its WAIT-without-INTERVAL note now says the quest
   is kept FINISHED (Q1), not deleted. The STEP line has a help entry at
   last, in the quest script's.
+- Q7 done. Prop_QuestGiver `REOFFER=ALWAYS|ONCE|<game time>` on any
+  target (`mayOffer`): whenever the trigger comes, once in a run of the
+  quest, or that long after the last offer; without it, as before (an area
+  once, the rest each time). Offers are noted with their game time in the
+  quest's variables (OFFERED:NAME, and SHOWN:NAME for one only listed), so
+  the save keeps them (`QuestRecords.offered`, `shown`). A quest board's
+  entry read is shown too. `QUESTS OFFERED` lists those offered or shown
+  and still open to the character (`canAcceptQuest`); `QUESTS ACCEPT
+  n|name` takes one on (`acceptQuest`).
 
 #### 2f. NPC behaviour and dialogue (21)
 

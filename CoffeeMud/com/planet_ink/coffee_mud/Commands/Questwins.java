@@ -338,6 +338,40 @@ public class Questwins extends StdCommand
 				mob.tell(msg);
 		}
 		else
+		if((commands.size()==2)&&(commands.get(1).equalsIgnoreCase("OFFERED"))) // Q7
+		{
+			final List<Quest> offered=QuestRecords.offeredTo(mob);
+			if(offered.size()==0)
+				mob.tell(L("No quest offered to you is open to you now."));
+			else
+			{
+				final StringBuilder msg=new StringBuilder(L("^HQuests offered to you, and open to you still:^?^N\n\r"));
+				for(int i=0;i<offered.size();i++)
+				{
+					final Quest Q=offered.get(i);
+					msg.append((i+1)+") "+((Q.displayName().trim().length()>0)?Q.displayName():Q.name())+"^N\n\r");
+				}
+				msg.append(L("^HEnter QUESTS ACCEPT [NUMBER] to take one on.^N"));
+				mob.tell(msg.toString());
+			}
+		}
+		else
+		if((commands.size()>2)&&(commands.get(1).equalsIgnoreCase("ACCEPT"))) // Q7
+		{
+			final String rest=CMParms.combine(commands,2);
+			final Quest Q=findQuest(QuestRecords.offeredTo(mob),rest);
+			if((Q==null)||(!QuestRecords.offeredTo(mob).contains(Q)))
+			{
+				mob.tell(L("No quest offered to you and open to you is called '@x1'.  Enter QUESTS OFFERED for a list.",rest));
+				return false;
+			}
+			Q.acceptQuest(mob);
+			if(QuestMarkers.accepted(mob,Q))
+				mob.tell(L("You are now on the quest '@x1'.",(Q.displayName().trim().length()>0)?Q.displayName():Q.name()));
+			else
+				mob.tell(L("You could not take on the quest '@x1'.",(Q.displayName().trim().length()>0)?Q.displayName():Q.name()));
+		}
+		else
 		if((commands.size()==2)&&(commands.get(1).equalsIgnoreCase("FAILED"))) // Q4
 		{
 			if(!mob.isMonster())

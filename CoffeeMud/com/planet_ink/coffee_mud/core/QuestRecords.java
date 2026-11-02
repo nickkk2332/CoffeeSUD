@@ -295,6 +295,74 @@ public final class QuestRecords
 		}
 	}
 
+	// ------------------------------------------------------------ offers (Q7)
+
+	private static String key(final String kind, final MOB mob)
+	{
+		return kind + ":" + mob.Name().toUpperCase();
+	}
+
+	/**
+	 * Q7: a quest offered to a character, as Prop_QuestGiver offers it:
+	 * OFFERED:NAME, with when on the game clock (REOFFER reads it), kept
+	 * with the quest's variables and so in the save.
+	 * @param Q the quest
+	 * @param mob the character
+	 */
+	public static void offered(final Quest Q, final MOB mob)
+	{
+		if((Q == null) || (mob == null) || (!Q.running()))
+			return;
+		Q.setQuestVar(key("OFFERED", mob), "" + GameTime.now());
+		shown(Q, mob);
+	}
+
+	/**
+	 * Q7: a quest shown to a character (an offer, a quest board's entry),
+	 * for QUESTS OFFERED only: SHOWN:NAME.
+	 * @param Q the quest
+	 * @param mob the character
+	 */
+	public static void shown(final Quest Q, final MOB mob)
+	{
+		if((Q == null) || (mob == null) || (!Q.running()))
+			return;
+		Q.setQuestVar(key("SHOWN", mob), "" + GameTime.now());
+	}
+
+	/**
+	 * Q7: QUESTS OFFERED: the running quests offered or shown to a
+	 * character that they may still accept.
+	 * @param mob the character
+	 * @return the quests, by name
+	 */
+	public static List<Quest> offeredTo(final MOB mob)
+	{
+		final List<Quest> found = new ArrayList<Quest>();
+		if(mob == null)
+			return found;
+		for(final Enumeration<Quest> q = CMLib.quests().enumQuests(); q.hasMoreElements();)
+		{
+			final Quest Q = q.nextElement();
+			if((Q == null) || (!Q.running()))
+				continue;
+			if((Q.getStat(key("OFFERED", mob)).length() > 0) || (Q.getStat(key("SHOWN", mob)).length() > 0))
+			{
+				if(Q.canAcceptQuest(mob) && (!found.contains(Q)))
+					found.add(Q);
+			}
+		}
+		Collections.sort(found, new Comparator<Quest>()
+		{
+			@Override
+			public int compare(final Quest a, final Quest b)
+			{
+				return a.name().compareToIgnoreCase(b.name());
+			}
+		});
+		return found;
+	}
+
 	// ------------------------------------------------------------ the save
 
 	/** a new game: no records */

@@ -242,7 +242,37 @@ public class Prop_QuestGiver extends Property
 	{
 		final Quest Q=quest;
 		if((Q!=null)&&(Q.running())&&(mob!=null)&&(!mob.isMonster()))
-			Q.setQuestVar(offeredVar(mob), "1");
+			QuestRecords.offered(Q, mob); // Q7: when, on the game clock
+	}
+
+	/**
+	 * Q7: whether to offer the quest to a character again, by REOFFER=:
+	 * ALWAYS, ONCE (in a run of the quest), or a game time since the last
+	 * offer.  Without it, as before: an area offers once, the rest whenever
+	 * their trigger comes.
+	 * @param Q the quest
+	 * @param mob the character
+	 * @return true to offer it
+	 */
+	protected boolean mayOffer(final Quest Q, final MOB mob)
+	{
+		final String was=Q.getStat(offeredVar(mob));
+		final String re=CMParms.getParmStr(text(),"REOFFER","").toUpperCase().trim();
+		if(re.equals("ALWAYS"))
+			return true;
+		if((re.length()==0)||re.equals("ONCE"))
+			return was.length()==0;
+		if(was.length()==0)
+			return true;
+		try
+		{
+			final int ticks=CMLib.time().parseTickExpression(CMLib.time().globalClock(), re);
+			return (GameTime.now()-CMath.s_long(was))>=((long)ticks*CMProps.getTickMillis());
+		}
+		catch(final com.planet_ink.coffee_mud.core.exceptions.CMException e)
+		{
+			return false;
+		}
 	}
 
 	public void maybeGiveTheQuest(final MOB mob, final CMMsg msg)
@@ -252,9 +282,13 @@ public class Prop_QuestGiver extends Property
 			return;
 		final Quest Q=this.getQuest();
 		if((Q == null)
-		||(Q.getStat(offeredVar(mob)).length()>0)
+		||(!mayOffer(Q,mob)) // Q7
 		||(!Q.canAcceptQuest(mob)))
 			return;
+		if(CMParms.getParmStr(text(),"REOFFER","").trim().length()>0) // Q7: noted, for REOFFER and QUESTS OFFERED
+			QuestRecords.offered(Q, mob);
+		else
+			QuestRecords.shown(Q, mob); // listed only: the default giver still offers as before
 		final StringBuilder announcement = new StringBuilder("");
 		announcement.append(CMParms.getParmStr(text(),"MESSAGE",""));
 		if(announcement.length()>0)

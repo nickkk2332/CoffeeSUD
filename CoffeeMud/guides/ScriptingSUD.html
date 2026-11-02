@@ -268,6 +268,10 @@ step epilogue
 <p><code>STEP GOTO</code> does not end the step; it says which step comes
 next when it does. <code>QVAR(bandits STEPNAME == spared)</code> asks which
 step is running, and QUESTCHECK reports a GOTO to no step.</p>
+<p>A <code>Prop_QuestGiver</code> may offer again: <code>REOFFER=ALWAYS</code>,
+<code>ONCE</code> (in a run of the quest) or a game time such as
+<code>REOFFER="1 MUDDAY"</code>. A player who said no can type QUESTS
+OFFERED, then QUESTS ACCEPT 1.</p>
 <pre>
 set name bell
 set display The Drowned Bell

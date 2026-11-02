@@ -288,6 +288,8 @@ public class StdQuestBoard extends StdItem
 						//mob.tell(entry.toString()+"\n\r");
 						readMsg.setSourceMessage(readMsg.sourceMessage()+description());
 						msg.addTrailerMsg(readMsg);
+						if(Q != null) // Q7: QUESTS OFFERED lists it now
+							QuestRecords.shown(Q, mob);
 						if((Q != null)
 						&&(mob.session() != null))
 						{
