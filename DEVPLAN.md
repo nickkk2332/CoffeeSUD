@@ -1105,6 +1105,14 @@ JS17, JS18, JS19, JS20, JS23
   $g the new level; a message heard from the room and the world fires
   once. The class is CLASS($n): $G cannot differ from $g, and $0 to $9
   stay the trigger's words, as SC14 made them.
+- ST8 done. `BOARD_PROG` and `DISEMBARK_PROG [mask]` from ST16's area border
+  hook when one side is a vessel's own area (the vessel, its rooms and crew,
+  and the room outside hear it); `SAIL_PROG COURSE|ANCHOR|STEER|ALL` when one
+  allowed to gives a navigable vessel an order (before it is carried out);
+  `DOCK_PROG` when its anchor drops (no seaport test: any room);
+  `VESSEL_ARRIVE_PROG room|area|ALL` for the vessel and crew, and
+  `VESSEL_GREET_PROG words|ALL` for the room, after each step of `navMove`.
+  $t is the vessel; JavaScript waits for JS8.
 
 #### 2e. Quests (15)
 

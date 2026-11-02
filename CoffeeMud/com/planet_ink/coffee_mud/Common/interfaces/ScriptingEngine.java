@@ -511,6 +511,12 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"COMBAT_PROG", // 78
 		"AREA_ENTER_PROG", // 79
 		"AREA_LEAVE_PROG", // 80
+		"BOARD_PROG", // 81
+		"DISEMBARK_PROG", // 82
+		"SAIL_PROG", // 83
+		"VESSEL_ARRIVE_PROG", // 84
+		"VESSEL_GREET_PROG", // 85
+		"DOCK_PROG", // 86
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */

@@ -264,6 +264,9 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 			final int restNum = (cmd==null)?0:cmd.second.intValue();
 			if(cmd == null)
 				return super.okMessage(myHost, msg);
+			// ST8: SAIL_PROG, for an order from one allowed to give it
+			if(securityCheck(msg.source()))
+				ScriptEvents.sail(this, msg.source(), cmd.first.name(), msg.targetMessage());
 			switch(cmd.first)
 			{
 			case FOLLOW:
@@ -553,6 +556,7 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 						R.send(msg.source(), msg2);
 						this.sendAreaMessage(msg2, true);
 						anchorDown=true;
+						ScriptEvents.vesselDocked(this, msg.source(), R); // ST8: DOCK_PROG
 					}
 				}
 				return false;
@@ -1717,6 +1721,7 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 							opExit.executeMsg(mob,leaveMsg);
 						((Room)enterMsg.target()).send(mob, enterMsg);
 						haveEveryoneLookOutside();
+						ScriptEvents.vesselArrived(this, (Room)enterMsg.target()); // ST8
 						return NavResult.CONTINUE;
 					}
 					else

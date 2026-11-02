@@ -14,6 +14,7 @@ import com.planet_ink.coffee_mud.Common.interfaces.Quest;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock;
 import com.planet_ink.coffee_mud.Exits.interfaces.Exit;
 import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine;
+import com.planet_ink.coffee_mud.Items.interfaces.Boardable;
 import com.planet_ink.coffee_mud.Items.interfaces.Item;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
@@ -1217,6 +1218,11 @@ public final class ScriptEvents
 		if(fromA != null)
 			areaHop(AREA_LEAVE_PROG, mob, fromA, toA, to);
 		areaHop(AREA_ENTER_PROG, mob, toA, fromA, from);
+		// ST8: on and off vessels
+		if(fromA instanceof Boardable)
+			boarded(mob, fromA, to, false);
+		if(toA instanceof Boardable)
+			boarded(mob, toA, from, true);
 	}
 
 	private static void areaHop(final int code, final MOB mob, final Area mine, final Area other, final Room otherRoom)
@@ -1311,6 +1317,167 @@ public final class ScriptEvents
 			str.append(first).append("\n\r");
 		if(str.length() > 0)
 			mob.tell(str.toString());
+	}
+
+	/** BOARD_PROG's code */
+	public static final int	BOARD_PROG			= code("BOARD_PROG");
+	/** DISEMBARK_PROG's code */
+	public static final int	DISEMBARK_PROG		= code("DISEMBARK_PROG");
+	/** SAIL_PROG's code */
+	public static final int	SAIL_PROG			= code("SAIL_PROG");
+	/** VESSEL_ARRIVE_PROG's code */
+	public static final int	VESSEL_ARRIVE_PROG	= code("VESSEL_ARRIVE_PROG");
+	/** VESSEL_GREET_PROG's code */
+	public static final int	VESSEL_GREET_PROG	= code("VESSEL_GREET_PROG");
+	/** DOCK_PROG's code */
+	public static final int	DOCK_PROG			= code("DOCK_PROG");
+
+	/**
+	 * The vessel whose own area an area is (ST8).
+	 * @param A the area
+	 * @return the vessel's item, or null
+	 */
+	public static Item vesselOf(final Area A)
+	{
+		return (A instanceof Boardable) ? ((Boardable)A).getBoardableItem() : null;
+	}
+
+	/**
+	 * A vessel and what is aboard (ST8): the vessel's item, and its own
+	 * area's rooms, things and crew.
+	 * @param vessel the vessel's item
+	 * @return the hosts
+	 */
+	public static List<PhysicalAgent> aboard(final Item vessel)
+	{
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		if(vessel == null)
+			return hosts;
+		hosts.add(vessel);
+		if((vessel instanceof Boardable) && (((Boardable)vessel).getArea() != null))
+		{
+			for(final PhysicalAgent P : hosts(((Boardable)vessel).getArea()))
+			{
+				if(!hosts.contains(P))
+					hosts.add(P);
+			}
+		}
+		return hosts;
+	}
+
+	private static boolean restFits(final String[] t, final int i, final MOB mob)
+	{
+		final String rest = (t.length > i) ? t[i].trim() : "";
+		return (rest.length() == 0) || rest.equalsIgnoreCase("ALL") || ((mob != null) && CMLib.masking().maskCheck(rest, mob, true));
+	}
+
+	/**
+	 * ST8: someone boarded a vessel or left it: BOARD_PROG or DISEMBARK_PROG
+	 * [mask] for the vessel, what is aboard, and the room outside.  $n is the
+	 * one, $t the vessel, $g its name.
+	 * @param mob the one
+	 * @param shipArea the vessel's own area
+	 * @param outside the room outside, or null
+	 * @param on true boarding, false leaving
+	 */
+	public static void boarded(final MOB mob, final Area shipArea, final Room outside, final boolean on)
+	{
+		final int code = on ? BOARD_PROG : DISEMBARK_PROG;
+		final Item vessel = vesselOf(shipArea);
+		if((vessel == null) || (!isUsed(code)))
+			return;
+		final List<PhysicalAgent> hosts = aboard(vessel);
+		if(outside != null)
+		{
+			final List<PhysicalAgent> out = new ArrayList<PhysicalAgent>();
+			roomHosts(outside, out);
+			for(final PhysicalAgent P : out)
+			{
+				if(!hosts.contains(P))
+					hosts.add(P);
+			}
+		}
+		fire(hosts, code, mob, vessel, vessel.Name(), null, "Cr", t -> restFits(t, 1, mob));
+	}
+
+	/**
+	 * ST8: an order to a vessel from one allowed to give it: SAIL_PROG
+	 * COURSE|ANCHOR|STEER|ALL (or the order's own word) for the vessel and
+	 * what is aboard.  $n is the helmsman, $t the vessel, $g the order, $0 its
+	 * kind.
+	 * @param vessel the vessel
+	 * @param helm the helmsman
+	 * @param command the order's command (RAISE_ANCHOR, STEER, COURSE...)
+	 * @param order the order's words
+	 */
+	public static void sail(final Item vessel, final MOB helm, final String command, final String order)
+	{
+		if((vessel == null) || (!isUsed(SAIL_PROG)))
+			return;
+		final String kind;
+		if(command.endsWith("ANCHOR"))
+			kind = "ANCHOR";
+		else
+		if(command.equals("STEER") || command.equals("NAVIGATE"))
+			kind = "STEER";
+		else
+		if(command.endsWith("COURSE"))
+			kind = "COURSE";
+		else
+			kind = command;
+		fire(aboard(vessel), SAIL_PROG, helm, vessel, order, new Object[] { kind }, "CCr",
+			t -> (t.length > 1) && (t[1].equals("ALL") || t[1].equals("ANY") || t[1].equals(kind) || t[1].equals(command)));
+	}
+
+	/**
+	 * ST8: a vessel came into a room: VESSEL_ARRIVE_PROG [room ID|area|ALL]
+	 * for the vessel and what is aboard, and VESSEL_GREET_PROG [vessel
+	 * words|ALL] for the room and what is in it.  $n is a stand-in named for
+	 * the vessel, $t the vessel, $g the room's ID, $0 its area.
+	 * @param vessel the vessel
+	 * @param to the room
+	 */
+	public static void vesselArrived(final Item vessel, final Room to)
+	{
+		if((vessel == null) || (to == null) || ((!isUsed(VESSEL_ARRIVE_PROG)) && (!isUsed(VESSEL_GREET_PROG))))
+			return;
+		final String id = CMLib.map().getExtendedRoomID(to);
+		final String area = (to.getArea() == null) ? "" : to.getArea().Name();
+		final MOB src = standIn(vessel.Name());
+		fire(aboard(vessel), VESSEL_ARRIVE_PROG, src, vessel, id, new Object[] { area }, "Cr", t -> {
+			final String w = (t.length > 1) ? t[1].trim() : "";
+			return (w.length() == 0) || w.equalsIgnoreCase("ALL") || w.equalsIgnoreCase(id) || w.equalsIgnoreCase(area);
+		});
+		final List<PhysicalAgent> here = new ArrayList<PhysicalAgent>();
+		roomHosts(to, here);
+		here.remove(vessel);
+		fire(here, VESSEL_GREET_PROG, src, vessel, id, new Object[] { area }, "Cr", t -> {
+			final String w = (t.length > 1) ? t[1].trim() : "";
+			return (w.length() == 0) || w.equalsIgnoreCase("ALL") || CMLib.english().containsString(vessel.name(), w);
+		});
+	}
+
+	/**
+	 * ST8: a vessel's anchor dropped: DOCK_PROG for the vessel, what is
+	 * aboard, and the room it is in.  $n is who dropped it, $t the vessel,
+	 * $g the room's ID.
+	 * @param vessel the vessel
+	 * @param mob who dropped it
+	 * @param R the room
+	 */
+	public static void vesselDocked(final Item vessel, final MOB mob, final Room R)
+	{
+		if((vessel == null) || (R == null) || (!isUsed(DOCK_PROG)))
+			return;
+		final List<PhysicalAgent> hosts = aboard(vessel);
+		final List<PhysicalAgent> here = new ArrayList<PhysicalAgent>();
+		roomHosts(R, here);
+		for(final PhysicalAgent P : here)
+		{
+			if(!hosts.contains(P))
+				hosts.add(P);
+		}
+		fire(hosts, DOCK_PROG, (mob != null) ? mob : standIn(vessel.Name()), vessel, CMLib.map().getExtendedRoomID(R), null, "Cr", t -> true);
 	}
 
 	/** WEATHER_PROG's code */
