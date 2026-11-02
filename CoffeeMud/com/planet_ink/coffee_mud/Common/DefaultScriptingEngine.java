@@ -5652,6 +5652,39 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					returnable=simpleEvalStr(ctx.scripted,(slot==null)?"":slot,varify(ctx,tt[t+1]),varify(ctx,tt[t+0]),"SAVESLOT");
 					break;
 				}
+				case 129: // partysize
+				case 131: // partyleader
+				case 132: // party
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"ccr"); /* tt[t+0] */
+					final Environmental E=getArgumentMOB(tt[t+0],ctx);
+					final List<MOB> group=ScriptEvents.group((E instanceof MOB)?(MOB)E:null);
+					final String cmp=varify(ctx,tt[t+1]);
+					final String arg2=varify(ctx,tt[t+2]);
+					if(funcCode.intValue()==129)
+						returnable=simpleEval(ctx.scripted,""+group.size(),arg2,cmp,"PARTYSIZE");
+					else
+					if(funcCode.intValue()==131)
+						returnable=simpleEvalStr(ctx.scripted,group.isEmpty()?"":group.get(0).Name(),arg2,cmp,"PARTYLEADER");
+					else
+					{
+						final StringBuilder names=new StringBuilder();
+						for(final MOB G : group)
+							names.append((names.length()>0)?" ":"").append(G.Name());
+						returnable=simpleEvalStr(ctx.scripted,names.toString(),arg2,cmp,"PARTY");
+					}
+					break;
+				}
+				case 130: // inparty
+				{
+					if(tlen==1)
+						tt=parseBits(eval,t,"cr"); /* tt[t+0] */
+					final Environmental E1=getArgumentMOB(tt[t+0],ctx);
+					final Environmental E2=getArgumentMOB(tt[t+1],ctx);
+					returnable=(E1 instanceof MOB)&&(E2 instanceof MOB)&&ScriptEvents.group((MOB)E1).contains(E2);
+					break;
+				}
 				case 127: // gametime
 				case 128: // turns
 				{
@@ -7996,6 +8029,33 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			case 128: // turns
 				results.append(ScriptEvents.turns());
 				break;
+			case 129: // partysize
+			case 131: // partyleader
+			case 132: // party
+			{
+				final Environmental E=getArgumentMOB(CMParms.getCleanBit(funcParms,0),ctx);
+				final List<MOB> group=ScriptEvents.group((E instanceof MOB)?(MOB)E:null);
+				if(funcCode.intValue()==129)
+					results.append(group.size());
+				else
+				if(funcCode.intValue()==131)
+					results.append(group.isEmpty()?"":group.get(0).Name());
+				else
+				{
+					final StringBuilder names=new StringBuilder();
+					for(final MOB G : group)
+						names.append((names.length()>0)?" ":"").append(G.Name());
+					results.append(names);
+				}
+				break;
+			}
+			case 130: // inparty
+			{
+				final Environmental E1=getArgumentMOB(CMParms.getCleanBit(funcParms,0),ctx);
+				final Environmental E2=getArgumentMOB(CMParms.getPastBitClean(funcParms,0),ctx);
+				results.append(((E1 instanceof MOB)&&(E2 instanceof MOB)&&ScriptEvents.group((MOB)E1).contains(E2))?"true":"false");
+				break;
+			}
 			case 122: // isdev
 				results.append(com.planet_ink.coffee_mud.core.save.SaveGame.isDevMode()?"true":"false");
 				break;

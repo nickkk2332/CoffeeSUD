@@ -651,6 +651,7 @@ public final class Party
 			if(M != to)
 				M.setFollowing(to);
 		}
+		ScriptEvents.party("LEAD", to, to); // ST10
 	}
 
 	/**
@@ -795,6 +796,7 @@ public final class Party
 			all.remove(M);
 			handOver(M, all.get(0));
 		}
+		ScriptEvents.party("REST", M, leaderOf(M)); // ST10
 		M.setFollowing(null);
 		CMLib.players().savePlayer(M);
 		S.logout(true);

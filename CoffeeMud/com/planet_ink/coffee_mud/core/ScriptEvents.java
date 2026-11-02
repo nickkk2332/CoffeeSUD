@@ -758,6 +758,70 @@ public final class ScriptEvents
 		return (str.length() == 0) ? "No verbs here." : ("Verbs here:\n\r" + str.toString());
 	}
 
+	/** PARTY_PROG's code */
+	public static final int	PARTY_PROG	= code("PARTY_PROG");
+
+	/**
+	 * ST10: the party changed: PARTY_PROG JOIN|LEAVE|REST|LEAD|SWITCH|ANY
+	 * [mask on the member] fires for every host with the trigger, and
+	 * onPartyChange(leader) in the world JavaScript.  $n is the member, $t
+	 * the leader, $g the event.
+	 * @param kind JOIN, LEAVE, REST, LEAD or SWITCH
+	 * @param member the member
+	 * @param leader the party's leader
+	 */
+	public static void party(final String kind, final MOB member, final MOB leader)
+	{
+		if(member == null)
+			return;
+		WorldJS.call("onPartyChange", (leader != null) ? leader : member);
+		if(!isUsed(PARTY_PROG))
+			return;
+		final List<PhysicalAgent> hosts = registered(PARTY_PROG);
+		if(hosts.isEmpty())
+			return;
+		fire(hosts, PARTY_PROG, member, (leader != null) ? leader : member, kind, new Object[] { kind }, "CCr", t -> partyMatches(t, kind, member));
+	}
+
+	/**
+	 * Whether a PARTY_PROG trigger line fits a change of the party.
+	 * @param t the trigger line: PARTY_PROG, the event, the mask
+	 * @param kind the event
+	 * @param member the member
+	 * @return true if it fits
+	 */
+	public static boolean partyMatches(final String[] t, final String kind, final MOB member)
+	{
+		if(t.length < 2)
+			return false;
+		if((!t[1].equals("ANY")) && (!t[1].equals(kind)))
+			return false;
+		final String mask = (t.length > 2) ? t[2].trim() : "";
+		return (mask.length() == 0) || CMLib.masking().maskCheck(mask, member, true);
+	}
+
+	/**
+	 * The group a character is in (ST10's functions): the party's
+	 * characters, and the followers.
+	 * @param M the character
+	 * @return the group, the leader first
+	 */
+	public static List<MOB> group(final MOB M)
+	{
+		final List<MOB> list = new ArrayList<MOB>();
+		if(M == null)
+			return list;
+		final MOB leader = M.getGroupLeader();
+		if(leader != null)
+			list.add(leader);
+		for(final MOB G : M.getGroupMembers(new LinkedHashSet<MOB>()))
+		{
+			if((G != null) && (!list.contains(G)))
+				list.add(G);
+		}
+		return list;
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

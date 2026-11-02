@@ -499,6 +499,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"GAME_PROG", // 66
 		"TURN_PROG", // 67
 		"VERB_PROG", // 68
+		"PARTY_PROG", // 69
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -632,6 +633,10 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"SAVESLOT", //126
 		"GAMETIME", //127
 		"TURNS", //128
+		"PARTYSIZE", //129
+		"INPARTY", //130
+		"PARTYLEADER", //131
+		"PARTY", //132
 	};
 
 	/** String list of all valid mobprog commands */

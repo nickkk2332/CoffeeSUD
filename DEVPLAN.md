@@ -1054,6 +1054,12 @@ JS17, JS18, JS19, JS20, JS23
   RETURN CONTINUE hands the line back. `Prop_Verbs` (VERBS, MSG, OTHERS)
   does it without a script; `LIST VERBS` lists a room's. CMDFAIL_PROG is
   left as it is.
+- ST10 done (with SC8's functions). `PARTY_PROG JOIN|LEAVE|REST|LEAD|SWITCH|
+  ANY [mask]`, heard anywhere, from PARTY ADD's join, PARTY REMOVE,
+  `Party.rest`, `handOver` and SWITCH to a member; $n the member, $t the
+  leader; and onPartyChange(leader) in world/js/init.js. PARTYSIZE(),
+  INPARTY(), PARTYLEADER() and $%PARTY()%: the group, the leader first
+  (`ScriptEvents.group`).
 
 #### 2e. Quests (15)
 

@@ -192,6 +192,7 @@ public class PartyCmd extends StdCommand
 	{
 		M.setFollowing(leader);
 		M.location().show(M, leader, CMMsg.MSG_OK_ACTION, L("<S-NAME> join(s) <T-YOUPOSS> party."));
+		ScriptEvents.party("JOIN", M, leader); // ST10
 	}
 
 	protected void add(final MOB mob, final PlayerAccount profile, final String name)
@@ -255,6 +256,7 @@ public class PartyCmd extends StdCommand
 		}
 		M.setFollowing(null);
 		M.location().show(M, leader, CMMsg.MSG_OK_ACTION, L("<S-NAME> leave(s) <T-YOUPOSS> party."));
+		ScriptEvents.party("LEAVE", M, leader); // ST10
 	}
 
 	protected void rest(final MOB mob, final String name)

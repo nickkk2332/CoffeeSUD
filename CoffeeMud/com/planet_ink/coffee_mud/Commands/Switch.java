@@ -218,6 +218,8 @@ public class Switch extends StdCommand
 		WorldJS.call("onSwitch", from, to);
 		ScriptEvents.game("SWITCHFROM", from, to.Name());
 		ScriptEvents.game("SWITCHTO", to, from.Name());
+		if(Party.isInParty(Party.leaderOf(to), from))
+			ScriptEvents.party("SWITCH", to, Party.leaderOf(to)); // ST10
 	}
 
 	@Override
