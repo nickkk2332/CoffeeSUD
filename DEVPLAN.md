@@ -1544,6 +1544,16 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   message ("Your reward: ..."); `MPREWARD who "awards"` gives ad-hoc
   ones. Prop_QuestGiver's details, quest boards and `QUESTS name` show
   Reward:. QUESTCHECK knows SET REWARDS.
+- Q11 done. `MPQTIMER who quest <game time>|OFF`
+  (`core/QuestTimers`): a character's own deadline for a quest, due on the
+  game clock (so pause and turn-based time hold it), kept in their quest
+  journal (Q3) and so in the save, gone when the quest ends for them (won,
+  failed, dropped). A ticker from the game's start checks the deadlines;
+  when one comes, the new `QUESTTIMEOUT_PROG (quest|*)` runs at once on
+  the character's scripts (a bare one on those the quest gave them,
+  `ScriptEvents.questTimeout`), busy or not; with none, the quest fails for
+  them, EXPIRED (`QuestRecords.fail`). QUESTS and `QUESTS name` show the
+  time left, theirs or the quest's duration, the sooner.
 
 #### 2f. NPC behaviour and dialogue (21)
 

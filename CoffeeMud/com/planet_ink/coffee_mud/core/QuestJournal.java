@@ -78,6 +78,8 @@ public final class QuestJournal
 		public final Map<String, List<Objective>>	objectives	= new LinkedHashMap<String, List<Objective>>();
 		public final List<Entry>					entries		= new ArrayList<Entry>();
 		public long									seq			= 0;
+		/** Q11: each quest's deadline, on the game clock (MPQTIMER) */
+		public final Map<String, Long>				timers		= new LinkedHashMap<String, Long>();
 
 		/**
 		 * @param quest a quest's name
@@ -184,6 +186,12 @@ public final class QuestJournal
 					}
 				}
 			}
+			final Object ts = root.get("t"); // Q11
+			if(ts instanceof MiniJSON.JSONObject)
+			{
+				for(final Map.Entry<String, Object> e : ((MiniJSON.JSONObject)ts).entrySet())
+					log.timers.put(e.getKey(), Long.valueOf((e.getValue() instanceof Number) ? ((Number)e.getValue()).longValue() : CMath.s_long("" + e.getValue())));
+			}
 			final Object es = root.get("e");
 			if(es instanceof Object[])
 			{
@@ -242,6 +250,13 @@ public final class QuestJournal
 			os.put(e.getKey(), arr);
 		}
 		root.put("o", os);
+		if(!log.timers.isEmpty()) // Q11
+		{
+			final MiniJSON.JSONObject ts = new MiniJSON.JSONObject();
+			for(final Map.Entry<String, Long> e : log.timers.entrySet())
+				ts.put(e.getKey(), e.getValue());
+			root.put("t", ts);
+		}
 		while(log.entries.size() > MAX_ENTRIES)
 			log.entries.remove(0);
 		final Object[] es = new Object[log.entries.size()];
@@ -413,6 +428,39 @@ public final class QuestJournal
 			return "";
 		final Objective O = read(mob).find(quest, id);
 		return (O == null) ? "" : O.value();
+	}
+
+	// ------------------------------------------------------------ deadlines (Q11)
+
+	/**
+	 * @param mob a character
+	 * @param quest a quest's name
+	 * @param due when, on the game clock, or -1 for none
+	 */
+	public static void setTimer(final MOB mob, final String quest, final long due)
+	{
+		final Journal log = read(mob);
+		if(due < 0)
+		{
+			if(log.timers.remove(quest.toLowerCase()) == null)
+				return;
+		}
+		else
+			log.timers.put(quest.toLowerCase(), Long.valueOf(due));
+		write(mob, log);
+	}
+
+	/**
+	 * @param mob a character
+	 * @param quest a quest's name
+	 * @return their deadline for it, on the game clock, or -1
+	 */
+	public static long timer(final MOB mob, final String quest)
+	{
+		if((mob == null) || (quest == null))
+			return -1;
+		final Long due = read(mob).timers.get(quest.toLowerCase());
+		return (due == null) ? -1 : due.longValue();
 	}
 
 	// ------------------------------------------------------------ a quest's steps

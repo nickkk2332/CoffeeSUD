@@ -100,6 +100,7 @@ public final class QuestRecords
 	{
 		recordWon(quest, who);
 		QuestItems.left(quest, who, WON); // Q8: what was bound to it, as REMOVEON says
+		QuestTimers.left(quest, who); // Q11: and their deadline
 	}
 
 	private static synchronized void recordWon(final String quest, final String who)
@@ -156,6 +157,7 @@ public final class QuestRecords
 	{
 		recordEnded(quest, who, status, reason);
 		QuestItems.left(quest, who, status); // Q8
+		QuestTimers.left(quest, who); // Q11
 	}
 
 	private static synchronized void recordEnded(final String quest, final String who, final String status, final String reason)

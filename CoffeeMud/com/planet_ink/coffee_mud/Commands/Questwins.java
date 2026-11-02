@@ -139,7 +139,7 @@ public class Questwins extends StdCommand
 				lastCat=cat;
 			}
 			final String name=Q.displayName().trim().length()>0?Q.displayName():Q.name();
-			msg.append((i+1)+") "+(name)+timeLeftOf(Q)+"^N\n\r");
+			msg.append((i+1)+") "+(name)+timeLeftOf(mob,Q)+"^N\n\r");
 			if(mob!=null)
 			{
 				for(final String line : objectiveLines(mob,Q))
@@ -183,15 +183,34 @@ public class Questwins extends StdCommand
 	};
 
 	/**
-	 * Q3: the time a running quest has left, on the game clock.
+	 * Q3: the time a running quest has left, on the game clock; Q11: or the
+	 * character's own deadline for it (MPQTIMER), if that is sooner.
+	 * @param mob the character, or null
 	 * @param Q the quest
 	 * @return " (time left: ...)", or ""
 	 */
-	protected String timeLeftOf(final Quest Q)
+	protected String timeLeftOf(final MOB mob, final Quest Q)
 	{
-		if((!Q.running())||(Q.duration()<=0)||(Q.ticksRemaining()<=0))
+		final long ticks=ticksLeftOf(mob,Q);
+		if(ticks<0)
 			return "";
-		return " ("+L("time left: @x1",QuestJournal.timeLeft(Q.ticksRemaining()))+")";
+		return " ("+L("time left: @x1",QuestJournal.timeLeft(ticks))+")";
+	}
+
+	/**
+	 * Q3, Q11: the ticks a quest has left for a character: its duration's,
+	 * or their own deadline's (MPQTIMER), the sooner.
+	 * @param mob the character, or null
+	 * @param Q the quest
+	 * @return the ticks, or -1 for no limit
+	 */
+	protected long ticksLeftOf(final MOB mob, final Quest Q)
+	{
+		long ticks=((!Q.running())||(Q.duration()<=0)||(Q.ticksRemaining()<=0))?-1:Q.ticksRemaining();
+		final long own=(mob==null)?-1:QuestTimers.ticksLeft(mob,Q.name());
+		if((own>=0)&&((ticks<0)||(own<ticks)))
+			ticks=own;
+		return ticks;
 	}
 
 	/**
@@ -538,6 +557,8 @@ public class Questwins extends StdCommand
 				if(timeRemainingType.length()>0)
 					timeRemaining+=" "+timeRemainingType;
 			}
+			if(QuestTimers.ticksLeft(mob,Q.name())>=0) // Q11: their own deadline, over a hand-set one
+				timeRemaining=QuestJournal.timeLeft(ticksLeftOf(mob,Q));
 			final String progress=foundS.getVar("*","PROGRESS");
 			mob.tell("^w"+instructions+"^N");
 			if((timeRemaining!=null)&&(timeRemaining.length()>0))
@@ -546,8 +567,8 @@ public class Questwins extends StdCommand
 				mob.tell(L("\n\r^yProgress: ^w@x1^N",progress));
 			if(Q.getStat("REWARDS").length()>0) // Q10
 				mob.tell(L("\n\r^yReward: ^w@x1^N",QuestRewards.describe(Q.getStat("REWARDS"))));
-			if(((timeRemaining==null)||(timeRemaining.length()==0))&&(timeLeftOf(Q).length()>0)) // Q3
-				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",QuestJournal.timeLeft(Q.ticksRemaining())));
+			if(((timeRemaining==null)||(timeRemaining.length()==0))&&(ticksLeftOf(mob,Q)>=0)) // Q3
+				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",QuestJournal.timeLeft(ticksLeftOf(mob,Q))));
 			final List<String> objectives=objectiveLines(mob,Q);
 			if(objectives.size()>0)
 				mob.tell(L("\n\r^yObjectives:^N\n\r")+"  "+String.join("^N\n\r  ",objectives)+"^N");

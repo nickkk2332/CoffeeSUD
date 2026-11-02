@@ -16090,6 +16090,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
 			return null;
 		}
+		case "MPQTIMER": // Q11: MPQTIMER who quest <game time>|OFF: their own deadline for it
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String quest=questNameFor(varify(ctx,CMParms.getCleanBit(line,2)));
+			if(!(W instanceof MOB))
+			{
+				logError(ctx,"MPQTIMER","RunTime","no such character: "+line);
+				return null;
+			}
+			final String wrong=QuestTimers.set((MOB)W,quest,varify(ctx,CMParms.getPastBitClean(line,2)));
+			if(wrong!=null)
+				logError(ctx,"MPQTIMER","Syntax",wrong+": "+line);
+			return null;
+		}
 		case "MPREWARD": // Q10: MPREWARD who "awards": a reward with one message
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);

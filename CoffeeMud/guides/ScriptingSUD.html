@@ -281,6 +281,13 @@ its holder; KEEPONDEATH keeps it through a death.</p>
 ITEM:silver_bell_charm FACTION:Brenn:+200"</code>, and Ned's turn-in becomes
 <code>MPQUESTWIN $n bell REWARD</code>; offers, quest boards and QUESTS show
 them. <code>MPREWARD $n "5 QP"</code> gives one by the way.</p>
+<p>A deadline of a character's own, counted from when they took the job:
+<code>MPQTIMER $n bell 2 muddays</code> in the DO_ACCEPT. QUESTS shows the time left,
+it is saved with them and stops with the game clock, and <code>MPQTIMER $n bell
+OFF</code> takes it away. When it comes, a <code>QUESTTIMEOUT_PROG</code> in the
+script the quest gave them runs (the bell sinks back into the mud, say, and
+<code>MPQUESTFAIL $n bell too late</code>); without one the quest fails for them,
+EXPIRED.</p>
 <pre>
 set name bell
 set display The Drowned Bell

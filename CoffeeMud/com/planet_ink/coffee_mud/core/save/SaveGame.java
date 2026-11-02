@@ -416,6 +416,7 @@ public final class SaveGame
 				// ST6: world/js/init.js read afresh, and its onBoot()
 				WorldJS.reset();
 				JSProgression.reset(); // JS23
+				QuestTimers.startTicking(); // Q11: deadlines
 				WorldJS.call("onBoot");
 			}
 		});

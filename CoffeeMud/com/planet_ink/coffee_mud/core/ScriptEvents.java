@@ -452,6 +452,38 @@ public final class ScriptEvents
 			t -> (t.length < 2) || t[1].trim().equals("*") || t[1].trim().equalsIgnoreCase("ALL") || t[1].trim().equalsIgnoreCase(name));
 	}
 
+	/** Q11: QUESTTIMEOUT_PROG's code */
+	public static final int	QUESTTIMEOUT_PROG	= code("QUESTTIMEOUT_PROG");
+
+	/**
+	 * Q11: a character's deadline for a quest (MPQTIMER) came:
+	 * QUESTTIMEOUT_PROG quest|* runs at once on the character's own scripts
+	 * (a bare QUESTTIMEOUT_PROG on those the quest gave them), busy or not.
+	 * $n is the character, $g and $0 the quest's name.
+	 * @param mob the character
+	 * @param name the quest's name
+	 * @return true if a script heard it; if none did, the quest fails, EXPIRED
+	 */
+	public static boolean questTimeout(final MOB mob, final String name)
+	{
+		if((mob == null) || (name == null) || (!isUsed(QUESTTIMEOUT_PROG)))
+			return false;
+		final boolean[] heard = { false };
+		for(final ScriptingEngine S : engines(mob))
+		{
+			final String own = S.defaultQuestName();
+			S.eventCheck(mob, QUESTTIMEOUT_PROG, mob, null, null, name, new Object[] { name }, "Cr", t -> {
+				final String q = (t.length < 2) ? "" : t[1].trim();
+				final boolean fits = (q.length() == 0) ? ((own != null) && own.equalsIgnoreCase(name))
+					: (q.equals("*") || q.equalsIgnoreCase("ALL") || q.equalsIgnoreCase(name));
+				if(fits)
+					heard[0] = true;
+				return fits;
+			});
+		}
+		return heard[0];
+	}
+
 	/** GAME_PROG's code */
 	public static final int	GAME_PROG	= code("GAME_PROG");
 	/** TURN_PROG's code */
