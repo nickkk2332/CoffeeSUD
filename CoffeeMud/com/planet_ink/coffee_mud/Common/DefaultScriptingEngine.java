@@ -14758,6 +14758,79 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return (mask.length()==0)||((M!=null)&&CMLib.masking().maskCheck(mask,M,true));
 	}
 
+	/** ST15: whether the host's fight was on at the last tick, and with whom */
+	protected boolean combatWas = false;
+	protected MOB combatWith = null;
+
+	/**
+	 * ST15: how a host's fight changed since its last tick: START, END (both
+	 * sides alive), or null.  A mob's own fight, an item's owner's, or any
+	 * fight in a room.
+	 * @param host the host
+	 * @return START, END or null
+	 */
+	protected String combatChange(final PhysicalAgent host)
+	{
+		boolean now=false;
+		MOB foe=null;
+		MOB me=null;
+		if(host instanceof MOB)
+			me=(MOB)host;
+		else
+		if((host instanceof Item)&&(((Item)host).owner() instanceof MOB))
+			me=(MOB)((Item)host).owner();
+		if(me!=null)
+		{
+			now=me.isInCombat();
+			foe=me.getVictim();
+		}
+		else
+		if(host instanceof Room)
+		{
+			for(final Enumeration<MOB> m=((Room)host).inhabitants();m.hasMoreElements();)
+			{
+				final MOB M=m.nextElement();
+				if((M!=null)&&M.isInCombat())
+				{
+					now=true;
+					foe=M;
+					break;
+				}
+			}
+		}
+		else
+			return null;
+		String event=null;
+		if(now&&(!combatWas))
+			event="START";
+		else
+		if((!now)&&combatWas
+		&&(combatWith!=null)&&(!combatWith.amDead())&&(!combatWith.amDestroyed())
+		&&((me==null)||(!me.amDead())))
+			event="END";
+		combatWas=now;
+		if(foe!=null)
+			combatWith=foe;
+		return event;
+	}
+
+	/**
+	 * ST15: whether a COMBAT_PROG trigger line fits.
+	 * @param t the trigger line: COMBAT_PROG, START, END, FLEE or ANY, a mask on the opponent
+	 * @param kind what happened
+	 * @param foe the opponent
+	 * @return true if it fits
+	 */
+	protected boolean combatMatches(final String[] t, final String kind, final MOB foe)
+	{
+		if(t.length<2)
+			return false;
+		if((!t[1].equals("ANY"))&&(!t[1].equals(kind)))
+			return false;
+		final String mask=(t.length>2)?t[2].trim():"";
+		return (mask.length()==0)||((foe!=null)&&CMLib.masking().maskCheck(mask,foe,true));
+	}
+
 	protected boolean match(final String str, final String patt)
 	{
 		if(patt.trim().equalsIgnoreCase("ALL"))
@@ -15216,6 +15289,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							if(chance(affecting,script,prcnt)) // 100 is always
 							{
 								enqueResponse(triggerCode,affecting,monster,msg.source(),monster,defaultItem,null,null,script,1, t);
+								if(!multiTriggers)
+									return;
+							}
+						}
+					}
+					break;
+				case 78: // combat_prog FLEE (ST15)
+					if((msg.sourceMinor()==CMMsg.TYP_FLEE)&&canTrigger(78))
+					{
+						final MOB foe=msg.source();
+						final boolean mine=(!(affecting instanceof MOB)&&!(defaultItem!=null))
+							||(foe.getVictim()==eventMob)||(eventMob.getVictim()==foe);
+						if(mine)
+						{
+							if(t==null)
+								t=parseBits(script,0,"CCr");
+							if((t!=null)&&combatMatches(t,"FLEE",foe))
+							{
+								enqueResponse(triggerCode,affecting,monster,foe,foe,defaultItem,null,"FLEE",script,1,t);
 								if(!multiTriggers)
 									return;
 							}
@@ -16851,6 +16943,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 		int triggerCode=-1;
 		String[] t=null;
+		// ST15: COMBAT_PROG's START and END, from the fight as it was at the last tick
+		String combatEvent=null;
+		for(final SubScript s : scripts)
+		{
+			if(s.getTriggerCode()==78)
+			{
+				combatEvent=combatChange(affecting);
+				break;
+			}
+		}
 		for(int thisScriptIndex=0;thisScriptIndex<scripts.size();thisScriptIndex++)
 		{
 			final SubScript script=scripts.get(thisScriptIndex);
@@ -16867,6 +16969,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				{
 					scripts.remove(thisScriptIndex);
 					thisScriptIndex--;
+				}
+				break;
+			case 78: // combat_prog START and END (ST15)
+				if((combatEvent!=null)&&canTrigger(78))
+				{
+					if(t==null)
+						t=parseBits(script,0,"CCr");
+					if((t!=null)&&combatMatches(t,combatEvent,combatWith))
+						execute(new MPContext(affecting,mob,(combatWith!=null)?combatWith:mob,(combatWith!=null)?combatWith:mob,defaultItem,null,combatEvent,null).push(script));
 				}
 				break;
 			case 5: // rand_Prog

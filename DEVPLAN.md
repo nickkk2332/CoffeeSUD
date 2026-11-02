@@ -1090,6 +1090,10 @@ JS17, JS18, JS19, JS20, JS23
   `StdMOB.adjustFaction` (a standing that was there before, in the world):
   a range name fires only on coming into it; $g the new range, $0 the
   change, $1 the range before.
+- ST15 done. `COMBAT_PROG START|END|FLEE|ANY [mask on the opponent]`: START
+  and END from the fight as it was at the host's last tick (a mob's own, an
+  item's owner's, any in a room; END with both alive), FLEE from the FLEE
+  message. As ticks go, a fight with no player in the room is not seen.
 
 #### 2e. Quests (15)
 

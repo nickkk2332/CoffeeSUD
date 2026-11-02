@@ -1,0 +1,30 @@
+// ST15: COMBAT_PROG START and END from the fight's state between ticks, and
+// FLEE when an opponent flees.
+FIXFILE = "st15-combat";
+var R = M.location();
+["FIXST15S", "FIXST15E", "FIXST15F"].forEach(clearVar);
+var B = newMob("GenMob", R);
+B.setName("a fixst15 vampire");
+var S = scriptOn(B, "COMBAT_PROG START\nmpsetvar FIXTEST FIXST15S $n\n~\nCOMBAT_PROG END\nmpsetvar FIXTEST FIXST15E $n\n~\nCOMBAT_PROG FLEE\nmpsetvar FIXTEST FIXST15F $n\n~\n");
+var W = newMob("GenMob", R);
+W.setName("Fixstfoe");
+tickMob(B);
+B.setVictim(W);
+W.setVictim(B);
+tickMob(B);
+runQueued(S);
+check("start", gvar("FIXST15S") == "Fixstfoe" && gvar("FIXST15E") == "", "FIXST15S='" + gvar("FIXST15S") + "', FIXST15E='" + gvar("FIXST15E") + "'");
+tickMob(B);
+clearVar("FIXST15S");
+tickMob(B);
+check("once", gvar("FIXST15S") == "", "START again");
+R.send(W, CMClass.getMsg(W, null, null, CMMsg.MSG_FLEE, null));
+runQueued(S);
+check("flee", gvar("FIXST15F") == "Fixstfoe", "FIXST15F='" + gvar("FIXST15F") + "'");
+B.makePeace(true);
+W.makePeace(true);
+tickMob(B);
+runQueued(S);
+check("end", gvar("FIXST15E") == "Fixstfoe", "FIXST15E='" + gvar("FIXST15E") + "'");
+B.destroy(); W.destroy();
+done();
