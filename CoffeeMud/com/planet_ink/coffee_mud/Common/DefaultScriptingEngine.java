@@ -16101,6 +16101,66 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
 			return null;
 		}
+		case "MPMENU": // N2: MPMENU who FUNCTION "prompt" key:"label"[IF cond] ... [default]: numbered choices, not blocking
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String func=varify(ctx,CMParms.getCleanBit(line,2)).toUpperCase().trim();
+			if((!(W instanceof MOB))||(func.length()==0))
+			{
+				logError(ctx,"MPMENU","RunTime","no such character, or no function: "+line);
+				return null;
+			}
+			if(findFunc(ctx.scripted,func)==null)
+			{
+				logError(ctx,"MPMENU","Syntax","no FUNCTION_PROG "+func+": "+line);
+				return null;
+			}
+			final ScriptMenus.Menu menu;
+			try
+			{
+				menu=ScriptMenus.parse(CMParms.getPastBit(line,2));
+			}
+			catch(final IllegalArgumentException e)
+			{
+				logError(ctx,"MPMENU","Syntax",e.getMessage()+": "+line);
+				return null;
+			}
+			menu.prompt=varify(ctx,menu.prompt);
+			menu.dflt=varify(ctx,menu.dflt);
+			for(final Iterator<ScriptMenus.Option> o=menu.options.iterator();o.hasNext();)
+			{
+				final ScriptMenus.Option O=o.next();
+				if(O.cond.length()>0)
+				{
+					boolean shown;
+					try
+					{
+						shown=eval(ctx,new String[][]{parseEval(O.cond)},0);
+					}
+					catch(final ScriptParseException e)
+					{
+						logError(ctx,"MPMENU","Syntax","IF "+O.cond+": "+e.getMessage());
+						shown=false;
+					}
+					if(!shown)
+					{
+						o.remove();
+						continue;
+					}
+				}
+				O.key=varify(ctx,O.key);
+				O.label=varify(ctx,O.label);
+			}
+			menu.who=(MOB)W;
+			menu.engine=this;
+			menu.func=func;
+			menu.ctx=new MPContext(ctx);
+			final Session S=promptSession((MOB)W);
+			if(inBackground((MOB)W))
+				menu.prompt=promptFor((MOB)W,menu.prompt);
+			ScriptMenus.open(menu,S);
+			return null;
+		}
 		case "MPQTIMER": // Q11: MPQTIMER who quest <game time>|OFF: their own deadline for it
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);

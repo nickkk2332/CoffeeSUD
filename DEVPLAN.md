@@ -1625,6 +1625,15 @@ N22, N24, N28, N29
   scripts are not gated. STAT BEHAVIORS says whether it is on now, and its
   unknown-key check knows the three keys. For the opposite case, a second
   copy with the opposite condition.
+- N2 done. `MPMENU who FUNCTION "prompt" key:"label"[IF cond] ... [default]`
+  (`core/ScriptMenus`): the choices numbered, those whose condition fails
+  left out; the script goes on at once. The character's next line answers
+  it (through the session's own non-blocking prompt, so it is no command
+  and takes no time in turn-based play), by number or key; Enter, or an
+  answer that is none of them, takes the default, and with no default it
+  asks again. Then that FUNCTION_PROG of the same script runs with the key
+  as $0 and $g, the character as $n. One menu at a time per character.
+  MPDIALOG waits for N14 (in `LATER.md`).
 
 #### 2g. Combat and encounters (24)
 
