@@ -2126,6 +2126,14 @@ I22, I23, I24, I25, I26, I27
   actions with semicolons fit. Prop_ItemSlot was left as it is. Fixed on
   the way: a -TAGS or +TAGS mask on an item looked at a stand-in mob's
   tags, never the item's, so it never matched an item (MUDZapper).
+- I25 done. Prop_PressurePlate on a room (its mobs with what they
+  carry, and its items) or a fixture (contents and riders), core/Weights.
+  WEIGHT= and COUNT= tests (>=, >, <=, <, =, or at least), MASK=, ON/OFF
+  actions, MSGON/MSGOFF, DELAY before it comes up. It weighs the change a
+  message makes as it is made (enter, leave, put, get from it, sit,
+  stand), and a drop or get on a room's floor on its next tick. ROOMWEIGHT
+  (193) and CONTENTWEIGHT (194). Riding is counted on a fixture that is
+  Rideable.
 
 #### 2i. World systems (25)
 

@@ -759,6 +759,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"RESPAWNROOM", //190
 		"DOORSTATE", //191
 		"SWITCHSTATE", //192
+		"ROOMWEIGHT", //193
+		"CONTENTWEIGHT", //194
 	};
 
 	/** String list of all valid mobprog commands */

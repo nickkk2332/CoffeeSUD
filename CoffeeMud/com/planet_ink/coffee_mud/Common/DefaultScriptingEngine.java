@@ -15932,6 +15932,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "ROOMWEIGHT": // I25: ROOMWEIGHT(room): what its mobs (with what they carry) and items weigh
+		{
+			return ""+Weights.room(doorRoom(ctx,CMParms.getCleanBit(parms,0)),null);
+		}
+		case "CONTENTWEIGHT": // I25: CONTENTWEIGHT(thing): what is in or on it weighs
+		{
+			final Environmental W=getArgumentItem(CMParms.getCleanBit(parms,0),ctx);
+			return (W instanceof Item)?(""+Weights.contents((Item)W,null)):"0";
+		}
 		case "SWITCHSTATE": // I9: SWITCHSTATE(thing|room:dir): its Prop_Switch's state, or nothing
 		{
 			final Physical P=puzzleHost(ctx,varify(ctx,CMParms.getCleanBit(parms,0)).trim(),CMParms.getCleanBit(parms,0));

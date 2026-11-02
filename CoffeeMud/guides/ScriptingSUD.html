@@ -560,6 +560,10 @@ for each new game, which a torn page can print with <code>$&lt;COMBO VAULTCODE&g
 ONFULL="door open here north; echo The dragon's mouth grinds open."</code> on the statue takes only the
 two dragon eyes, keeps them, and opens the way when both are in. <code>CONSUME=true</code> makes an offering
 bowl; <code>ONPUT</code> and <code>ONEMPTY</code> run on each offering and when it is emptied.</p>
+<p>Pressure plates: <code>Prop_PressurePlate WEIGHT=">=50" OFF="cast Spell_Lightning $n"
+MSGOFF="The pedestal rises with a click!"</code> on the idol's pedestal springs when the idol is lifted, unless
+a bag of sand as heavy is put there first. On a room, <code>COUNT=">=2" ON="door open here north"
+OFF="door close here north" DELAY=2</code> needs two to hold the gate.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
