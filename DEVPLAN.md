@@ -1255,6 +1255,13 @@ JS17, JS18, JS19, JS20, JS23
   (`MPContext.locals`, shared by the blocks of one run, kept by MPWAIT);
   `FUNCTION_PROG name A B` binds `$(A)` and `$(B)` from the call's words, in
   its own locals. Plain comparisons in IF are not done.
+- JS3 done. `core/JSScope.prepare`, called by every JavaScript scope (a
+  script's <SCRIPT>, JRUN, JCONSOLE, quests, cron, world/js/init.js, JS
+  classes, the JavaScript engine), installs Rhino's CommonJS `require`,
+  sandboxed, from world/js/lib then resources/js/lib; modules are compiled
+  once (`SoftCachingModuleScriptProvider`) and read again when their file
+  changes; `JSScope.reload()` drops them. `<SCRIPT SRC=...>` is left to
+  JS15's MPJSFILE.
 
 #### 2e. Quests (15)
 

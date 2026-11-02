@@ -80,6 +80,7 @@ public class JConsole extends StdCommand
 				{
 					scope = new JScriptEvent(mob);
 					cx.initStandardObjects(scope);
+					JSScope.prepare(cx, scope); // JS3: require()
 					final String[] names = { "mob" ,"getVar", "setVar", "toJavaString", "getCMType", "debug"};
 					scope.defineFunctionProperties(names, JScriptEvent.class, ScriptableObject.DONTENUM);
 					Resources.submitResource("JCONSOLE_"+mob.Name(), scope);

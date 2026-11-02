@@ -1281,6 +1281,7 @@ public class JavaScriptingEngine extends ScriptableObject implements ScriptingEn
 			cx.setOptimizationLevel(-1);
 			cx.setInstructionObserverThreshold(100);
 			cx.initStandardObjects(JavaScriptingEngine.this);
+			com.planet_ink.coffee_mud.core.JSScope.prepare(cx, JavaScriptingEngine.this); // JS3: require()
 			cx.setClassShutter(new CustomClassShutter());
 			cx.setWrapFactory(new SandboxWrapFactory());
 			return cx;

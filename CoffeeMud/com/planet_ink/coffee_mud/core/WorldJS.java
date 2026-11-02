@@ -76,6 +76,7 @@ public final class WorldJS
 		try
 		{
 			final ScriptableObject S = cx.initStandardObjects();
+			JSScope.prepare(cx, S); // JS3: require()
 			cx.evaluateString(S, new String(Files.readAllBytes(F.toPath()), StandardCharsets.UTF_8), "world/js/init.js", 1, null);
 			scope = S;
 		}

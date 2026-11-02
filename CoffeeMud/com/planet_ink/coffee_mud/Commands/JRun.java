@@ -73,6 +73,7 @@ public class JRun extends StdCommand
 		{
 			final JScriptWindow scope = new JScriptWindow(mob,commands);
 			cx.initStandardObjects(scope);
+			JSScope.prepare(cx, scope); // JS3: require()
 			scope.defineFunctionProperties(JScriptWindow.functions,
 										   JScriptWindow.class,
 										   ScriptableObject.DONTENUM);

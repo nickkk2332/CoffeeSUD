@@ -876,6 +876,7 @@ public class CMJournals extends StdLibrary implements JournalsLibrary
 							Log.debugOut("CRON: "+E.subj()+": "+str.toString());
 						final JScriptWindow scope = new JScriptWindow(mob);
 						cx.initStandardObjects(scope);
+						JSScope.prepare(cx, scope); // JS3: require()
 						scope.defineFunctionProperties(JScriptWindow.functions,
 													   JScriptWindow.class,
 													   ScriptableObject.DONTENUM);

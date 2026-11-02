@@ -1093,6 +1093,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					{
 						final JScriptQuest scope = new JScriptQuest(this,q);
 						cx.initStandardObjects(scope);
+						JSScope.prepare(cx, scope); // JS3: require()
 						scope.defineFunctionProperties(JScriptQuest.functions,
 													   JScriptQuest.class,
 													   ScriptableObject.DONTENUM);

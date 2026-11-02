@@ -10143,6 +10143,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					{
 						final JScriptEvent scope = new JScriptEvent(this,ctx);
 						cx.initStandardObjects(scope);
+						JSScope.prepare(cx, scope); // JS3: require()
 						final String[] names = {
 							"host",
 							"source",

@@ -3021,6 +3021,7 @@ public class CMClass extends ClassLoader
 			final Context X=Context.enter();
 			final JScriptLib jlib=new JScriptLib();
 			X.initStandardObjects(jlib);
+			JSScope.prepare(X, jlib); // JS3: require()
 			jlib.defineFunctionProperties(JScriptLib.functions, JScriptLib.class, ScriptableObject.DONTENUM);
 			final CompilerEnvirons ce = new CompilerEnvirons();
 			ce.initFromContext(X);
