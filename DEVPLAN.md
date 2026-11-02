@@ -1876,6 +1876,11 @@ C18, C19, C20, C21, C22, C23, C25
   CUREFIRST and BUFFOUTOFCOMBAT turn on the out-of-fight precast every 3
   ticks. Healer: SPELLS=, HEALAT=, TARGET=, the old random way without
   them. NiceAbilities: HEALAT= before the ;.
+- C10 done. Behaviors/TargetPriority: PREFER= (HEALER and CASTER by
+  counting abilities, LOWESTHP by percent, LOWESTARMOR, LEADER of a group,
+  LASTHITME from its damage messages, STRONGEST by getPowerLevel, MASK:
+  last), SWITCH= percent a tick, STICKY= ticks, TAUNTABLE first takes
+  Threat.clearLead (C18). Foes: Threat.enemies it can see.
 - C18 done. core/Threat: Threat.Holder (CombatAbilities implements it: its
   aggro map, adjustAggro) or a light table per NPC (WeakHashMap), fed by
   MUDFight.handleBeingDamaged (twice the damage) and handleBeingHealed

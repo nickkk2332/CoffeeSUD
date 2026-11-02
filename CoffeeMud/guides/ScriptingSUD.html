@@ -452,6 +452,10 @@ and <code>MPECHO The chieftain lunges at the weakest foe!</code>; a custom taunt
 <code>THREAT($i $n &gt; 100)</code>, <code>TOPTHREAT($i)</code> and <code>OPPONENT($i 'MASK=-CLASS +Cleric')</code> pick
 whom to turn on. A mob without CombatAbilities keeps a light table: twice the damage dealt it, three
 times the healing of its foe.</p>
+<p>Whom a monster goes for: <code>TargetPriority PREFER=CASTER,LOWESTHP SWITCH=50</code> on an assassin
+goes for the mage; <code>PREFER=LASTHITME STICKY=4</code> on an ogre turns on whoever hit it last; pack
+wolves with <code>PREFER=LOWESTHP</code> gang up on the wounded. <code>TAUNTABLE</code> lets a taunt
+(<code>MPTHREAT $t $n *3</code>) pull it off the list.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
