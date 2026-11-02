@@ -16397,17 +16397,30 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					if((msg.sourceMinor()==CMMsg.TYP_LEVEL)&&canTrigger(32)
 					&&((!(affecting instanceof MOB)) || isFreeToBeTriggered(monster))
-					&&(msg.value() > msg.source().basePhyStats().level())
+					&&(msg.value() != msg.source().basePhyStats().level())
 					&&(!CMLib.flags().isCloaked(msg.source())))
 					{
 						if(t==null)
 							t=parseBits(script,0,"CR");
 						if(t!=null)
 						{
-							final int prcnt=this.getTriggerPercent(t[1], msg.source());
+							// ST17: [GAIN|LOSS|ANY] [pct|mask], GAIN when not said; heard once, from the room or the world
+							final boolean gain=msg.value()>msg.source().basePhyStats().level();
+							String kind="GAIN";
+							String rest=t[1];
+							final String first=CMParms.getCleanBit(t[1],0).toUpperCase();
+							if(first.equals("GAIN")||first.equals("LOSS")||first.equals("ANY"))
+							{
+								kind=first;
+								rest=CMParms.getPastBitClean(t[1],0);
+							}
+							if((kind.equals("GAIN")&&(!gain))||(kind.equals("LOSS")&&gain)||(!firstGlobalHearing(msg,script)))
+								break;
+							final int prcnt=(rest.trim().length()==0)?100:this.getTriggerPercent(rest, msg.source());
 							if(chance(affecting,script,prcnt)) // 100 is always
 							{
-								final MPContext ctx = new MPContext(affecting,monster,msg.source(),monster,defaultItem,null,null, null);
+								// $g the new level; $0 to $9 the trigger's words, as SC14 has them
+								final MPContext ctx = new MPContext(affecting,monster,msg.source(),monster,defaultItem,null,""+msg.value(), null);
 								for(int i=0;i<t.length && (i<ctx.tmp.length);i++)
 									ctx.tmp[i]=t[i];
 								execute(ctx.push(script));

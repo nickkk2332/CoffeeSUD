@@ -1101,6 +1101,10 @@ JS17, JS18, JS19, JS20, JS23
   the other room. `Prop_AreaEntry` (ENTER, FIRST, LEAVE, TITLE or SHOWNAME,
   TEXT, DESC, ONCE, MASK, COLOR) and `Prop_AreaBanner` (the area's name and
   description by default) tell a player. Prop_Sounder is left as it is.
+- ST17 done. `LEVEL_PROG [GAIN|LOSS|ANY] [pct|mask]`, GAIN when not said;
+  $g the new level; a message heard from the room and the world fires
+  once. The class is CLASS($n): $G cannot differ from $g, and $0 to $9
+  stay the trigger's words, as SC14 made them.
 
 #### 2e. Quests (15)
 
