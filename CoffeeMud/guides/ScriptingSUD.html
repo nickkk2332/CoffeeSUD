@@ -539,6 +539,11 @@ PLAYERDEATH="DOWNED 3 5"</code>): a character at 0 hit points falls for three ro
 <code>PARTYDEFEAT_PROG</code> on the room or area decides (a captor drags them off, say); without one,
 <code>PARTYDEFEAT=CHECKPOINT</code> wakes them together at the last shrine, a tenth of their gold gone.</p>
 
+<h2><a name="items">Items and puzzles</a></h2>
+<p>Doors from anywhere: a lever in the cellar runs <code>MPDOOR OPEN Crypt#12 north "With a grinding of stone
+the crypt door swings open."</code>; both sides open, both rooms see it, and the door's own relock timer starts.
+<code>DOORSTATE(Crypt#12 north)</code> says open, closed or locked. MPOPEN and its kin change one side only, silently.</p>
+
 <h2><a name="found">Less known</a></h2>
 <ul>
 <li><code>$@i</code> (and <code>$@n</code>, ...) is the thing's identity in the

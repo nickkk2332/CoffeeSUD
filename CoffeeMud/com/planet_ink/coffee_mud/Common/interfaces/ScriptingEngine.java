@@ -756,6 +756,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"PHASE", //188
 		"ALARM", //189
 		"RESPAWNROOM", //190
+		"DOORSTATE", //191
 	};
 
 	/** String list of all valid mobprog commands */
@@ -887,6 +888,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPTELEGRAPH", // 124
 		"MPWAVE", // 125
 		"MPSETRESPAWN", // 126
+		"MPDOOR", // 127
 	};
 
 	/**

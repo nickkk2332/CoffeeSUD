@@ -15932,6 +15932,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "DOORSTATE": // I2: DOORSTATE(room dir|container): open, closed or locked, or nothing
+		{
+			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));
+			final String what=varify(ctx,CMParms.getPastBitClean(parms,0)).trim();
+			return Doors.state(Doors.find(R,what));
+		}
 		case "RESPAWNROOM": // C7: RESPAWNROOM(who): their respawn point's room id, or nothing
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16342,6 +16348,43 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPDOOR": // I2: MPDOOR OPEN|CLOSE|LOCK|UNLOCK|TOGGLE room dir|container [QUIET|"message"]: both sides, with a message
+		{
+			final String verb=varify(ctx,CMParms.getCleanBit(line,1)).trim();
+			final Room R=doorRoom(ctx,CMParms.getCleanBit(line,2));
+			// the door or container: a word, or a quoted name; the message, the rest
+			String rest=CMParms.getPastBitClean(line,2).trim();
+			String what;
+			if((rest.length()>1)&&(rest.charAt(0)=='"')&&(rest.indexOf('"',1)>0))
+			{
+				what=rest.substring(1,rest.indexOf('"',1));
+				rest=rest.substring(rest.indexOf('"',1)+1).trim();
+			}
+			else
+			{
+				final int sp=rest.indexOf(' ');
+				what=(sp<0)?rest:rest.substring(0,sp);
+				rest=(sp<0)?"":rest.substring(sp+1).trim();
+			}
+			what=varify(ctx,what).trim();
+			String message=varify(ctx,rest).trim();
+			if((message.length()>1)&&(message.startsWith("\"")&&message.endsWith("\"")))
+				message=message.substring(1,message.length()-1);
+			if(message.equalsIgnoreCase("QUIET"))
+				message="";
+			else
+			if(message.length()==0)
+				message=null;
+			if((verb.length()==0)||(what.length()==0))
+			{
+				logError(ctx,"MPDOOR","Syntax","MPDOOR OPEN|CLOSE|LOCK|UNLOCK|TOGGLE room dir|container [QUIET|message]: "+line);
+				return null;
+			}
+			final String why=Doors.change(R,what,verb,message);
+			if(why!=null)
+				logError(ctx,"MPDOOR","RunTime",why+": "+line);
 			return null;
 		}
 		case "MPSETRESPAWN": // C7: MPSETRESPAWN who room|HERE|CLEAR: their respawn point (Prop_Checkpoint, DEATH=CHECKPOINT)
@@ -18898,6 +18941,26 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return mob;
 	}
 
+	/**
+	 * I2: the room of MPDOOR or DOORSTATE: HERE, a room's ID, or a thing whose room it is.
+	 * @param ctx the script's context
+	 * @param word the word
+	 * @return the room, or null
+	 */
+	protected Room doorRoom(final MPContext ctx, final String word)
+	{
+		final String w=varify(ctx,word).trim();
+		if(w.equalsIgnoreCase("HERE")||(w.length()==0))
+			return lastKnownLocation;
+		final Room R=CMLib.map().getRoom(w);
+		if(R!=null)
+			return R;
+		final Environmental E=getArgumentItem(word,ctx);
+		if(E instanceof Room)
+			return (Room)E;
+		return (E instanceof Physical)?CMLib.map().roomLocation(E):null;
+	}
+
 	@Override
 	public boolean eventCheck(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
@@ -20158,37 +20221,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 
 		/**
-		 * JS17: a door, both sides, from anywhere, without a message (I2's
-		 * MPDOOR will add messages).
+		 * JS17: a door, both sides, from anywhere, or a container there,
+		 * without a message (I2's MPDOOR, QUIET).
 		 * @param roomId the room's ID
-		 * @param dir the exit's direction
-		 * @param op OPEN, CLOSE, LOCK or UNLOCK
+		 * @param dir the exit's direction, or a container's name
+		 * @param op OPEN, CLOSE, LOCK, UNLOCK or TOGGLE
 		 * @return false if there is no such door, or no lock to lock
 		 */
 		public boolean door(final String roomId, final String dir, final String op)
 		{
 			final Room R = (roomId == null) ? null : CMLib.map().getRoom(roomId);
-			final int d = (dir == null) ? -1 : CMLib.directions().getGoodDirectionCode(dir);
-			if((R == null) || (d < 0))
-				return false;
-			final Exit E = R.getRawExit(d);
-			if((E == null) || (!E.hasADoor()))
-				return false;
-			final String o = (op == null) ? "" : op.trim().toUpperCase();
-			final boolean open = o.equals("OPEN") || (o.equals("UNLOCK") && E.isOpen());
-			final boolean locked = o.equals("LOCK");
-			if((locked || o.equals("UNLOCK")) && (!E.hasALock()))
-				return false;
-			if(!(o.equals("OPEN") || o.equals("CLOSE") || locked || o.equals("UNLOCK")))
-				return false;
-			final Room R2 = R.getRoomInDir(d);
-			final Exit E2 = (R2 == null) ? null : R2.getRawExit(Directions.getOpDirectionCode(d));
-			for(final Exit X : new Exit[] { E, E2 })
-			{
-				if((X != null) && X.hasADoor())
-					X.setDoorsNLocks(true, open && !locked, X.defaultsClosed(), X.hasALock(), locked && X.hasALock(), X.defaultsLocked());
-			}
-			return true;
+			return Doors.change(R, dir, op, "") == null;
 		}
 
 		/**

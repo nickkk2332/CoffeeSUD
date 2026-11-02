@@ -2077,6 +2077,18 @@ C18, C19, C20, C21, C22, C23, C25
 I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I13, I14, I15, I16, I17, I20, I21,
 I22, I23, I24, I25, I26, I27
 
+- I2 done. core/Doors changes a door as a character would: the
+  messages go through roomAffectFully (both sides; the far side's room
+  sees the message too), so the exit's relock timer starts; a locked door
+  is unlocked first, an open one closed before it is locked; a container
+  in the room by its name works too. The door's name is put in the
+  message before it is sent (<T-NAME> on an exit came out as "you" to a
+  character in the room). `MPDOOR OPEN|CLOSE|LOCK|UNLOCK|TOGGLE
+  room dir|container [QUIET|"message"]` (127; HERE, a room ID, or a thing
+  whose room it is) and `DOORSTATE(room dir|container)` (191: open,
+  closed, locked or nothing). JavaScript's door() (JS17) goes through it,
+  quietly. MPOPEN and its kin are left one-sided, and their help says so.
+
 #### 2i. World systems (25)
 
 Time, weather, environment, economy and law.
