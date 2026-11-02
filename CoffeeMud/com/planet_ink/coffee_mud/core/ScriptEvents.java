@@ -18,6 +18,7 @@ import com.planet_ink.coffee_mud.Items.interfaces.Boardable;
 import com.planet_ink.coffee_mud.Items.interfaces.Item;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
+import com.planet_ink.coffee_mud.Libraries.interfaces.WorldMap;
 
 /*
    Copyright 2026 CoffeeSUD contributors
@@ -1898,6 +1899,133 @@ public final class ScriptEvents
 					S.eventCheck(host, DECAY_PROG, src, I, I, reason, null, "C", t -> true);
 			}
 		}
+	}
+
+	/** SIGNAL_PROG's code */
+	public static final int	SIGNAL_PROG	= code("SIGNAL_PROG");
+
+	/**
+	 * SC6: who a signal is for: ROOM (what is in the sender's room), AREA
+	 * (all of its area), WORLD (every scripted thing), TAG:tag (the things so
+	 * tagged in the sender's area; TAG:tag@WORLD anywhere), a room's ID, a
+	 * room's exit (room:north, here:north), or the one thing a script named.
+	 * @param spec the target's words
+	 * @param from the sender
+	 * @param thing the one thing, if the words named one, else null
+	 * @return the hosts
+	 */
+	public static List<PhysicalAgent> signalHosts(final String spec, final Environmental from, final Environmental thing)
+	{
+		final List<PhysicalAgent> hosts = new ArrayList<PhysicalAgent>();
+		final String s = (spec == null) ? "" : spec.trim();
+		final String up = s.toUpperCase();
+		final Room here = CMLib.map().roomLocation(from);
+		if(up.equals("ROOM"))
+			roomHosts(here, hosts);
+		else
+		if(up.equals("AREA"))
+			hosts.addAll(hosts((here != null) ? here.getArea() : null));
+		else
+		if(up.equals("WORLD"))
+		{
+			for(final Enumeration<WorldMap.LocatedPair> e = CMLib.map().scriptHosts(null); e.hasMoreElements();)
+			{
+				final WorldMap.LocatedPair p = e.nextElement();
+				if((p != null) && (p.obj() != null) && (!hosts.contains(p.obj())))
+					hosts.add(p.obj());
+			}
+		}
+		else
+		if(up.startsWith("TAG:"))
+		{
+			String tag = s.substring(4).trim();
+			final boolean world = tag.toUpperCase().endsWith("@WORLD");
+			if(world)
+				tag = tag.substring(0, tag.length() - 6).trim();
+			final Area A = (here != null) ? here.getArea() : null;
+			for(final Enumeration<Taggable> e = CMLib.map().getTaggedObjects(tag); e.hasMoreElements();)
+			{
+				final Taggable T = e.nextElement();
+				if(!(T instanceof PhysicalAgent))
+					continue;
+				final Room R = CMLib.map().roomLocation((PhysicalAgent)T);
+				if(world || (A == null) || ((R != null) && (R.getArea() == A)) || (T == A))
+					hosts.add((PhysicalAgent)T);
+			}
+		}
+		else
+		if(thing instanceof PhysicalAgent)
+			hosts.add((PhysicalAgent)thing);
+		else
+		if(s.indexOf(':') > 0)
+		{
+			final int x = s.lastIndexOf(':');
+			final String roomID = s.substring(0, x).trim();
+			final Room R = (roomID.equalsIgnoreCase("HERE") || (roomID.length() == 0)) ? here : CMLib.map().getRoom(roomID);
+			final int dir = CMLib.directions().getGoodDirectionCode(s.substring(x + 1).trim());
+			if((R != null) && (dir >= 0) && (R.getRawExit(dir) != null))
+				hosts.add(R.getRawExit(dir));
+		}
+		else
+		{
+			final Room R = CMLib.map().getRoom(s);
+			if(R != null)
+				hosts.add(R);
+		}
+		return hosts;
+	}
+
+	/**
+	 * SC6: sends a signal: SIGNAL_PROG name|ALL on each host's scripts, queued
+	 * to run after so many ticks; $g is the arguments, $n the actor, $t the
+	 * sender (and $o, if it is an item).
+	 * @param hosts who it is for
+	 * @param name the signal
+	 * @param args its arguments
+	 * @param actor who caused it
+	 * @param sender the scripted thing that sent it
+	 * @param ticks how many ticks until it is heard
+	 */
+	public static void signal(final List<PhysicalAgent> hosts, final String name, final String args, final MOB actor, final Environmental sender, final int ticks)
+	{
+		if((actor == null) || (name == null))
+			return;
+		for(final PhysicalAgent host : hosts)
+		{
+			for(final ScriptingEngine S : engines(host))
+			{
+				S.eventTrigger(host, SIGNAL_PROG, actor, sender, (sender instanceof Item) ? (Item)sender : null, (args == null) ? "" : args, null, "Cr", t -> {
+					if((t.length < 2) || (t[1].trim().length() == 0))
+						return true;
+					final List<String> names = CMParms.parse(t[1] + ((t.length > 2) ? (" " + t[2]) : ""));
+					for(final String w : names)
+					{
+						if(w.equalsIgnoreCase(name) || w.equalsIgnoreCase("ALL"))
+							return true;
+					}
+					return false;
+				}, ticks);
+			}
+		}
+	}
+
+	/**
+	 * SC6: calls a function of a host's scripts (MPCALLFUNC target func).
+	 * @param host the thing with the scripts
+	 * @param function the function's name
+	 * @param args its arguments, $g
+	 * @param source $n
+	 * @return what it returned, or null if it has no such function
+	 */
+	public static String callFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
+	{
+		for(final ScriptingEngine S : engines(host))
+		{
+			final String r = S.callFunction(host, function, args, source);
+			if(r != null)
+				return r;
+		}
+		return null;
 	}
 
 	/** ACHIEVE_PROG's code */

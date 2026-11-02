@@ -1180,6 +1180,15 @@ JS17, JS18, JS19, JS20, JS23
   S|T|O text|NULL`, `MPMSG TARGET thing`. The `=S|T|O STAT=VALUE` filters
   take `*` wildcards, and `=S|T|O MASK=...` a zapper mask. `$q` was
   already the scripted thing's name, so the tool's is `MSG(TOOL)`.
+- SC6 done. `MPCALLFUNC target func args` and `CALLFUNC(target func args)`
+  call a function of another thing's scripts (when the first word is not a
+  function of the script's own; `ScriptEvents.callFunction`, through the
+  engines' `callFunction`). `MPSIGNAL target name [args] [DELAY ticks]`
+  fires `SIGNAL_PROG name|ALL` ($g the args, $n the actor, $t the sender,
+  $o too if an item), queued in each target engine (so saved), the target
+  a thing, a room's ID, an exit (`room:north`, `here:north`),
+  `TAG:tag[@WORLD]`, ROOM, AREA or WORLD (`CMMap.scriptHosts`). JavaScript's
+  `signal()` waits for JS17.
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser

@@ -284,6 +284,18 @@ public class Scriptable extends StdBehavior implements ScriptingEngine
 	}
 
 	@Override
+	public void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test, final int ticks)
+	{
+		engine().eventTrigger(host, triggerCode, source, target, item, msg, args, bits, test, ticks);
+	}
+
+	@Override
+	public String callFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
+	{
+		return engine().callFunction(host, function, args, source);
+	}
+
+	@Override
 	public boolean eventCheck(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
 		return engine().eventCheck(host, triggerCode, source, target, item, msg, args, bits, test);

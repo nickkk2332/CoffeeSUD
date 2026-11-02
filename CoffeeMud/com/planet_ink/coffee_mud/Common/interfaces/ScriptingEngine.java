@@ -527,6 +527,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"DESTROY_PROG", // 94
 		"DECAY_PROG", // 95
 		"ACHIEVE_PROG", // 96
+		"SIGNAL_PROG", // 97
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -813,6 +814,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPTAG", // 104
 		"MPSTATE", // 105
 		"MPMSG", // 106
+		"MPSIGNAL", // 107
 	};
 
 	/**
@@ -930,6 +932,39 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 	 */
 	public default void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
+	}
+
+	/**
+	 * As {@link #eventTrigger}, the scripts that fit queued to run after so
+	 * many ticks (SC6's delayed signals).
+	 * @param host the object the scripts are on
+	 * @param triggerCode the trigger
+	 * @param source $n
+	 * @param target $t, or null for the host
+	 * @param item $o, or null
+	 * @param msg $g
+	 * @param args $0 to $8, or null
+	 * @param bits how the trigger line is split
+	 * @param test which trigger lines the event fits
+	 * @param ticks how many ticks until they run, 1 or more
+	 */
+	public default void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test, final int ticks)
+	{
+		eventTrigger(host, triggerCode, source, target, item, msg, args, bits, test);
+	}
+
+	/**
+	 * SC6: calls a FUNCTION_PROG of this engine's scripts on a host, as
+	 * MPCALLFUNC does, for another host's script (MPCALLFUNC target func).
+	 * @param host the object the scripts are on
+	 * @param function the function's name
+	 * @param args its arguments, $g
+	 * @param source $n
+	 * @return what it returned, "" if nothing, or null if there is no such function
+	 */
+	public default String callFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
+	{
+		return null;
 	}
 
 	/**

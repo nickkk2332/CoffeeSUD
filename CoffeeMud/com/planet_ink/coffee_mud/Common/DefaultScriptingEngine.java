@@ -7789,7 +7789,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					results.append(found);
 				}
 				else
-					logError(ctx,"CALLFUNC","Unknown","Function: "+arg1);
+				{
+					// SC6: CALLFUNC(target func args)
+					final String found=callOn(ctx,CMParms.getCleanBit(funcParms,0),CMParms.getPastBitClean(funcParms,0));
+					if(found==null)
+						logError(ctx,"CALLFUNC","Unknown","Function: "+arg1);
+					else
+						results.append(found);
+				}
 				break;
 			}
 			case 61: // strin
@@ -14002,6 +14009,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						execute(ctx2);
 					}
 					else
+					if(callOn(ctx,named,parms)==null) // SC6: MPCALLFUNC target func args
 						logError(ctx,"MPCALLFUNC","Unknown","Function: "+named);
 				}
 				break;
@@ -15483,6 +15491,32 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPMSG","Syntax","MPMSG takes VALUE, TEXT or TARGET: "+line);
 				break;
 			}
+			return null;
+		}
+		case "MPSIGNAL": // SC6: MPSIGNAL target name [args] [DELAY ticks]
+		{
+			final String raw=CMParms.getCleanBit(line,1);
+			final String name=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			String args=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			int ticks=1;
+			final List<String> w=CMParms.parse(args);
+			if((w.size()>=2)&&w.get(w.size()-2).equalsIgnoreCase("DELAY")&&CMath.isInteger(w.get(w.size()-1)))
+			{
+				ticks=Math.max(1,CMath.s_int(w.get(w.size()-1)));
+				args=String.join(" ",w.subList(0,w.size()-2));
+			}
+			final String up=raw.toUpperCase();
+			Environmental thing=null;
+			if((!up.equals("ROOM"))&&(!up.equals("AREA"))&&(!up.equals("WORLD"))&&(!up.startsWith("TAG:"))&&(raw.indexOf(':')<0)&&(raw.indexOf('#')<0))
+				thing=getArgumentItem(raw,ctx);
+			final List<PhysicalAgent> hosts=ScriptEvents.signalHosts(varify(ctx,raw),ctx.scripted,thing);
+			if(name.length()==0)
+				logError(ctx,"MPSIGNAL","Syntax","no signal name: "+line);
+			else
+			if(hosts.isEmpty())
+				logError(ctx,"MPSIGNAL","RunTime","no one to hear it: "+line);
+			else
+				ScriptEvents.signal(hosts,name,args,(ctx.source!=null)?ctx.source:ctx.monster,ctx.scripted,ticks);
 			return null;
 		}
 		default: // the newer commands end here
@@ -17567,6 +17601,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test)
 	{
+		eventTrigger(host,triggerCode,source,target,item,msg,args,bits,test,1);
+	}
+
+	@Override
+	public void eventTrigger(final PhysicalAgent host, final int triggerCode, final MOB source, final Environmental target, final Item item, final String msg, final Object[] args, final String bits, final java.util.function.Predicate<String[]> test, final int ticks)
+	{
 		if((host==null)||(source==null)||(recurseCounter.get() > 2)||(!canTrigger(triggerCode)))
 			return;
 		try
@@ -17604,7 +17644,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if((t!=null)&&test.test(t))
 				{
 					if(args==null)
-						enqueResponse(triggerCode,host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,script,1,t);
+						enqueResponse(triggerCode,host,monster,source,(target!=null)?target:monster,(item!=null)?item:defaultItem,defaultItem,msg,script,Math.max(1,ticks),t);
 					else
 					if(CMProps.isState(CMProps.HostState.RUNNING))
 					{
@@ -17614,7 +17654,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							execute(ctx.push(script));
 						else
 						{
-							final ScriptableResponse resp=new ScriptableResponse(triggerCode,ctx,script,1);
+							final ScriptableResponse resp=new ScriptableResponse(triggerCode,ctx,script,Math.max(1,ticks));
 							dupCheckClear(resp,t);
 							que.add(resp);
 						}
@@ -18404,6 +18444,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 * @param source who calls it ($n), or null for the host
 	 * @return what it returned (RETURN), or null if there is no such function
 	 */
+	/**
+	 * SC6: MPCALLFUNC and CALLFUNC's other form: the first word is a thing
+	 * with scripts, the second the function there, the rest its arguments.
+	 * @param ctx the script's context
+	 * @param thing the thing's code or name
+	 * @param rest the function's name and its arguments
+	 * @return what the function returned, or null if there is none
+	 */
+	protected String callOn(final MPContext ctx, final String thing, final String rest)
+	{
+		final Environmental E=getArgumentItem(thing,ctx);
+		if(!(E instanceof PhysicalAgent))
+			return null;
+		final String func=CMParms.getCleanBit(rest,0);
+		final String args=varify(ctx,CMParms.getPastBitClean(rest,0));
+		return ScriptEvents.callFunction((PhysicalAgent)E,func,args,(ctx.source!=null)?ctx.source:ctx.monster);
+	}
+
+	@Override
 	public String callFunction(final PhysicalAgent host, final String function, final String args, final MOB source)
 	{
 		if(findFunc(host,function)==null)
