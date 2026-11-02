@@ -1189,6 +1189,15 @@ JS17, JS18, JS19, JS20, JS23
   a thing, a room's ID, an exit (`room:north`, `here:north`),
   `TAG:tag[@WORLD]`, ROOM, AREA or WORLD (`CMMap.scriptHosts`). JavaScript's
   `signal()` waits for JS17.
+- SC7 done. `MPWAIT ticks`, `MPWAIT n HOURS|DAYS|WEEKS|MONTHS` (area
+  clock) and `MPWAIT UNTIL (condition) [max ticks]` (each tick, up to 1000
+  by default). The engine keeps the bodies running on each thread
+  (`frames`); a wait queues what is left of the body and of each IF and
+  SWITCH block it is in as one continuation, run on the game thread like
+  any queued response, with $n, $t, $o, $g and $0-$9. Saved with the
+  engine's state (`<Q W="1">`, its words in $0-$9 kept). A FOR or
+  MPWHILE body, or a function another line called, cannot pause: it says
+  so and goes on. `MPSETINTERNAL CANCELWAITS` drops the pending waits.
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser

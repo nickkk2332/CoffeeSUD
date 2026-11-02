@@ -9745,7 +9745,66 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/** SC7: the bodies running in this engine on this thread, outermost first, for MPWAIT */
+	protected final ThreadLocal<ArrayList<MPContext>> frames = ThreadLocal.withInitial(ArrayList::new);
+
+	/** SC7: what MPWAIT returns, to end the bodies it paused */
+	protected static final String WAITED = "\u0000MPWAIT";
+
 	protected String executeBody(final MPContext ctx)
+	{
+		final ArrayList<MPContext> fs=frames.get();
+		fs.add(ctx);
+		try
+		{
+			return executeLines(ctx);
+		}
+		finally
+		{
+			fs.remove(fs.size()-1);
+		}
+	}
+
+	/**
+	 * SC7: what is left of a body MPWAIT paused: its lines after the wait,
+	 * then those after each block it is in, back to the trigger's body.
+	 * @param ctx the waiting body's context
+	 * @param first a line to run first (MPWAIT UNTIL's, again), or null
+	 * @return the lines to run later, or null if it cannot pause here
+	 */
+	protected SubScript waitContinuation(final MPContext ctx, final String first)
+	{
+		final List<MPContext> fs=frames.get();
+		if(fs.isEmpty()||(fs.get(fs.size()-1)!=ctx)||(ctx.script==null))
+			return null;
+		int top=fs.size()-1;
+		while((top>0)&&(fs.get(top-1).tmp==ctx.tmp))
+			top--;
+		for(int i=top;i<fs.size();i++)
+		{
+			final MPContext f=fs.get(i);
+			if(f.repeats||(f.script==null)||(!Objects.equals(f.msg,ctx.msg))||((i>top)&&(f.script.getTriggerCode()!=0)))
+			{
+				logError(ctx,"MPWAIT","RunTime","MPWAIT cannot pause a loop (FOR, MPWHILE) or a function another line called, so it does not wait");
+				return null;
+			}
+		}
+		final SubScript body=fs.get(top).script;
+		final SubScriptImpl cont=new SubScriptImpl(null);
+		cont.add(new ScriptLn((body.size()>0)?body.get(0).first:"",null,null));
+		if(first!=null)
+			cont.add(new ScriptLn(first,null,null));
+		for(int i=fs.size()-1;i>=top;i--)
+		{
+			final MPContext f=fs.get(i);
+			for(int l=f.line+1;l<f.script.size();l++)
+				cont.add(new ScriptLn(f.script.get(l).first,null,null));
+		}
+		cont.setFlag("MPWAIT");
+		return cont;
+	}
+
+	protected String executeLines(final MPContext ctx)
 	{
 		final SubScript script = ctx.script;
 		tickStatus=Tickable.STATUS_START;
@@ -10482,6 +10541,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							else
 								ctx.tmp[whichVar]=""+forLoop;
 							final MPContext newContext = ctx.push(subScript);
+							newContext.repeats=true; // SC7
 							response=execute(newContext);
 							if(response!=null)
 								break;
@@ -10498,6 +10558,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						if(response == null)
 						{
 							final MPContext newContext = ctx.push(subScript);
+							newContext.repeats=true; // SC7
 							response=execute(newContext);
 						}
 						else
@@ -10640,6 +10701,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String arg3=varify(ctx,tt[2]);
 				if(arg2.equals("SCOPE"))
 					setVarScope(arg3);
+				else
+				if(arg2.equals("CANCELWAITS")) // SC7: drops the bodies MPWAIT paused
+				{
+					for(final ScriptableResponse SB : new XVector<ScriptableResponse>(que))
+					{
+						if((SB!=null)&&(SB.scr!=null)&&SB.scr.isFlagSet("MPWAIT")&&(SB.ctx!=ctx))
+							que.remove(SB);
+					}
+				}
 				else
 				if(arg2.equals("VARHOST")) // SC4: INSTANCE or NAME
 					varHostInstance=arg3.trim().equalsIgnoreCase("INSTANCE");
@@ -14105,7 +14175,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				while((eval(ctx,EVALO,0))
 				&&((System.currentTimeMillis()-time)<4000)
 				&&(!ctx.scripted.amDestroyed()))
-					execute(ctx.push(vscript));
+				{
+					final MPContext wctx=ctx.push(vscript);
+					wctx.repeats=true; // SC7
+					execute(wctx);
+				}
 				// cut off at its cap: said so (DT34), as it went unseen before
 				if((System.currentTimeMillis()-time)>=4000)
 					logError(ctx,"MPWHILE","RunTime","cut off after 4 seconds, its condition still true");
@@ -14590,6 +14664,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					index=i;
 			}
 			q.append("<Q T=\"").append(SB.triggerCode).append("\" D=\"").append(Math.max(0,SB.tickDelay))
+			 .append(SB.scr.isFlagSet("MPWAIT")?"\" W=\"1":"") // SC7: a paused body
 			 .append("\" I=\"").append(index).append("\">");
 			if(index<0)
 			{
@@ -14604,6 +14679,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			q.append(xml.convertXMLtoTag("PI",nameOf(SB.ctx.primaryItem)));
 			q.append(xml.convertXMLtoTag("SI",nameOf(SB.ctx.secondaryItem)));
 			q.append(xml.convertXMLtoTag("MSG",xml.parseOutAngleBrackets((SB.ctx.msg==null)?"":SB.ctx.msg)));
+			if(SB.scr.isFlagSet("MPWAIT")) // SC7: its $0-$9 that are words
+			{
+				for(int i=0;i<10;i++)
+				{
+					if(SB.ctx.tmp[i] instanceof String)
+						q.append("<T").append(i).append('>').append(xml.parseOutAngleBrackets((String)SB.ctx.tmp[i])).append("</T").append(i).append('>');
+				}
+			}
 			q.append("</Q>");
 		}
 		if(q.length()>0)
@@ -14736,6 +14819,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					findSavedItem(host,q.getValFromPieces("PI")),
 					findSavedItem(host,q.getValFromPieces("SI")),
 					xmlLib.restoreAngleBrackets(q.getValFromPieces("MSG")), null);
+				if("1".equals(q.getParmValue("W"))) // SC7: a paused body, and its $0-$9
+				{
+					scr.setFlag("MPWAIT");
+					for(int i=0;i<10;i++)
+					{
+						final XMLTag tv=q.getPieceFromPieces("T"+i);
+						if(tv!=null)
+							ctx.tmp[i]=xmlLib.restoreAngleBrackets(tv.value());
+					}
+				}
 				que.add(new ScriptableResponse(CMath.s_int(q.getParmValue("T")),ctx,scr,Math.max(1,CMath.s_int(q.getParmValue("D")))));
 			}
 		}
@@ -15518,6 +15611,75 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			else
 				ScriptEvents.signal(hosts,name,args,(ctx.source!=null)?ctx.source:ctx.monster,ctx.scripted,ticks);
 			return null;
+		}
+		case "MPWAIT": // SC7: MPWAIT ticks | MPWAIT n HOURS|DAYS|WEEKS|MONTHS | MPWAIT UNTIL (condition) [max ticks]
+		{
+			if(ctx.repeats)
+			{
+				logError(ctx,"MPWAIT","RunTime","MPWAIT cannot pause a loop (FOR, MPWHILE), so it does not wait");
+				return null;
+			}
+			final String rest=CMParms.getPastBit(line,0).trim();
+			String again=null;
+			int ticks;
+			if(rest.toUpperCase().startsWith("UNTIL"))
+			{
+				final String c=rest.substring(5).trim();
+				int close=-1;
+				for(int i=0,depth=0;(i<c.length())&&(close<0);i++)
+				{
+					if(c.charAt(i)=='(')
+						depth++;
+					else
+					if((c.charAt(i)==')')&&((--depth)==0))
+						close=i;
+				}
+				if((!c.startsWith("("))||(close<0))
+				{
+					logError(ctx,"MPWAIT","Syntax","MPWAIT UNTIL (condition) [max ticks]: "+line);
+					return null;
+				}
+				final String cond=c.substring(1,close).trim();
+				final String after=varify(ctx,c.substring(close+1)).trim();
+				final int max=CMath.isInteger(after)?CMath.s_int(after):1000;
+				boolean met;
+				try
+				{
+					final String[][] EVAL={parseEval(cond)};
+					met=eval(ctx,EVAL,0);
+				}
+				catch(final Exception e)
+				{
+					logError(ctx,"MPWAIT","Syntax",e.getMessage());
+					return null;
+				}
+				if(met||(max<=0))
+					return null; // goes on now
+				again="MPWAIT UNTIL ("+cond+") "+(max-1);
+				ticks=1;
+			}
+			else
+			{
+				final List<String> w=CMParms.parse(varify(ctx,rest));
+				final long n=w.isEmpty()?1:CMath.s_long(w.get(0));
+				if(w.size()>1)
+				{
+					final Area A=CMLib.map().areaLocation(ctx.scripted);
+					final TimeClock clock=(A!=null)?A.getTimeObj():CMLib.time().globalClock();
+					final long hours=n*ScriptEvents.everyHours(1,w.get(1),clock);
+					ticks=(int)Math.min(Integer.MAX_VALUE,(hours*CMProps.getMillisPerMudHour())/Math.max(1,CMProps.getTickMillis()));
+				}
+				else
+					ticks=(int)Math.min(Integer.MAX_VALUE,n);
+				ticks=Math.max(1,ticks);
+			}
+			final SubScript cont=waitContinuation(ctx,again);
+			if(cont==null)
+				return null; // it cannot pause here: said why, and goes on
+			final MPContext later=new MPContext(ctx.scripted,ctx.monster,ctx.source,ctx.target,ctx.primaryItem,ctx.secondaryItem,ctx.msg,ctx.tmp.clone());
+			later.cmsg=ctx.cmsg;
+			que.add(new ScriptableResponse(cont.getTriggerCode(),later,cont,ticks));
+			return WAITED;
 		}
 		default: // the newer commands end here
 			logError(ctx,cmd,"Syntax","unknown command "+cmd);

@@ -815,6 +815,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPSTATE", // 105
 		"MPMSG", // 106
 		"MPSIGNAL", // 107
+		"MPWAIT", // 108
 	};
 
 	/**
@@ -839,6 +840,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		public MPContext parent = null;
 		/** SC5: the message a CNCLMSG_PROG or EXECMSG_PROG reacts to (for EXECMSG_PROG, a copy) */
 		public CMMsg cmsg = null;
+		/** SC7: a body FOR or MPWHILE runs again and again, which MPWAIT cannot pause */
+		public boolean repeats = false;
 
 		/**
 		 * MPContext constructor
