@@ -1164,6 +1164,8 @@ JS17, JS18, JS19, JS20, JS23
   `NUMBER()` takes signs and decimals. MPSETVAR's arithmetic is on longs,
   with `%N` (the remainder) and `^N` (the power); `=value` sets the value as
   it is, so `=-5` is not a subtraction.
+- SC12 done. `NUMTAGGED(tag)`, `TAGGED(tag)`, `TAGS(thing)` and `MPTAG thing
+  ADD|DEL|TOGGLE tag`; HASTAG's error names it.
 
 #### 2e. Quests (15)
 

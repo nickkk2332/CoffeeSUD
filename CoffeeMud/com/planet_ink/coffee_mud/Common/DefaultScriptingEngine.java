@@ -5795,7 +5795,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					final Environmental E=getArgumentMOB(arg1,ctx);
 					if(arg2.length()==0)
 					{
-						logError(ctx,"HASTATTOO","Syntax",CMParms.combine(tt,t));
+						logError(ctx,"HASTAG","Syntax",CMParms.combine(tt,t));
 						break;
 					}
 					else
@@ -15175,6 +15175,27 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final double x=Math.abs(CMath.s_double(v));
 			return (x==Math.rint(x))?(""+(long)x):(""+x);
 		}
+		case "NUMTAGGED": // SC12
+		case "TAGGED":
+		{
+			int n=0;
+			for(final Enumeration<Taggable> e=CMLib.map().getTaggedObjects(v);e.hasMoreElements();)
+			{
+				if(e.nextElement()!=null)
+					n++;
+			}
+			return name.equalsIgnoreCase("TAGGED")?((n>0)?"true":"false"):(""+n);
+		}
+		case "TAGS": // TAGS(target), as HASTAG(target) gives them
+		{
+			final Environmental E=getArgumentItem(parms.trim(),ctx);
+			if(!(E instanceof Taggable))
+				return "";
+			final List<String> tags=new ArrayList<String>();
+			for(final Enumeration<String> e=((Taggable)E).tags();e.hasMoreElements();)
+				tags.add(e.nextElement());
+			return ScriptLib.listText(tags);
+		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";
@@ -15241,6 +15262,26 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPLIST","Syntax","unknown change "+op+": "+line);
 			else
 				setVar(which,var,listValue(now));
+			return null;
+		}
+		case "MPTAG": // SC12: MPTAG target ADD|DEL|TOGGLE tag
+		{
+			final Environmental E=getArgumentItem(CMParms.getCleanBit(line,1),ctx);
+			final String op=CMParms.getCleanBit(line,2).toUpperCase();
+			final String tag=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if(!(E instanceof Taggable)||(tag.length()==0))
+			{
+				logError(ctx,"MPTAG","Syntax","no target or tag: "+line);
+				return null;
+			}
+			final Taggable T=(Taggable)E;
+			if(op.equals("ADD")||(op.equals("TOGGLE")&&(!T.hasTag(tag))))
+				T.addTag(tag);
+			else
+			if(op.equals("DEL")||op.equals("TOGGLE"))
+				T.delTag(tag);
+			else
+				logError(ctx,"MPTAG","Syntax","ADD, DEL or TOGGLE? "+line);
 			return null;
 		}
 		default: // the newer commands end here

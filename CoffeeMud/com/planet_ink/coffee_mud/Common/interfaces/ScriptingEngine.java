@@ -695,6 +695,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ROLLNORMAL", //161
 		"CLAMP", //162
 		"ABS", //163
+		"NUMTAGGED", //164
+		"TAGGED", //165
+		"TAGS", //166
 	};
 
 	/** String list of all valid mobprog commands */
@@ -803,6 +806,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPLLM", // 101
 		"MPDEBUG", // 102
 		"MPLIST", // 103
+		"MPTAG", // 104
 	};
 
 	/**
