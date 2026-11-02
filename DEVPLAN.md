@@ -1222,6 +1222,11 @@ JS17, JS18, JS19, JS20, JS23
   and a test; each engine reads its own (`loadArgs`), and since the object's
   text holds them, the parse cache key differs too. The FUNCTION_PROG
   pattern goes in the guide (SC15).
+- SC16 done. `+ANYINGROUP mask` and `+ALLINGROUP mask` (and `-` forms, the
+  answer turned around) apply the rest of a mask to the subject's group in
+  the room (`ScriptEvents.group`), as FOLLOW applies it to the leader; a
+  player's record, with no group, is checked alone. Every mask user gets
+  them.
 
 #### 2e. Quests (15)
 

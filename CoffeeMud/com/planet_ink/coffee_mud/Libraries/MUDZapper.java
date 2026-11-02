@@ -531,6 +531,9 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 			entry.parms()[0] = sset;
 		}
 		else
+		if((entry.parms().length>0)&&(entry.parms()[0] instanceof CompiledZMaskEntry[]))
+			sset = (CompiledZMaskEntry[])entry.parms()[0]; // SC16: already made into an array
+		else
 			sset = (CompiledZMaskEntry[])entry.parms();
 		return sset;
 	}
@@ -1576,6 +1579,18 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 					break;
 				case FOLLOW: // +follow
 					buf.append(L("Disallows followed leaders: "));
+					break;
+				case ANYINGROUP: // SC16
+					buf.append(L("Requires anyone of the group here: "));
+					break;
+				case _ANYINGROUP:
+					buf.append(L("Disallows anyone of the group here: "));
+					break;
+				case ALLINGROUP:
+					buf.append(L("Requires everyone of the group here: "));
+					break;
+				case _ALLINGROUP:
+					buf.append(L("Disallows everyone of the group here: "));
 					break;
 				case EXPERTISE: // +expertises
 					{
@@ -5235,6 +5250,10 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _RIDE: // -ride
 				case FOLLOW: // +follow
 				case _FOLLOW: // -follow
+				case ANYINGROUP: // SC16
+				case _ANYINGROUP:
+				case ALLINGROUP:
+				case _ALLINGROUP:
 				{
 					final Object[] subSet = new Object[] { new ArrayList<CompiledZMaskEntry>() };
 					buf.add(new CompiledZapperMaskEntryImpl(entryType,subSet));
@@ -7814,6 +7833,29 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						final CompiledZMaskEntry[] sset = fixEntrySet(entry);
 						return !maskCheck(sset, mob.amFollowing(), actual);
 					}
+				case ANYINGROUP: // SC16: +anyingroup: the rest of the mask, for anyone of the group here
+				case _ANYINGROUP: // -anyingroup: for no one of it
+				case ALLINGROUP: // +allingroup: for everyone of it
+				case _ALLINGROUP: // -allingroup: not for everyone of it
+				{
+					if((mob==null)||(entry.parms().length==0))
+						return false;
+					final CompiledZMaskEntry[] sset = fixEntrySet(entry);
+					final boolean all=(entry.maskType()==ZapperKey.ALLINGROUP)||(entry.maskType()==ZapperKey._ALLINGROUP);
+					final Room here=mob.location();
+					boolean any=maskCheck(sset, mob, actual);
+					boolean every=any;
+					for(final MOB G : ScriptEvents.group(mob))
+					{
+						if((G==null)||(G==mob)||(G.location()!=here))
+							continue;
+						final boolean ok=maskCheck(sset, G, actual);
+						any=any||ok;
+						every=every&&ok;
+					}
+					final boolean r=all?every:any;
+					return ((entry.maskType()==ZapperKey._ANYINGROUP)||(entry.maskType()==ZapperKey._ALLINGROUP))?(!r):r;
+				}
 				case _DEITY: // -deity
 					{
 						final String worshipCharID=(actual?mob.charStats():mob.baseCharStats()).getWorshipCharID();
@@ -9521,6 +9563,12 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case RIDE: // +ride
 				case FOLLOW: //+follow
 					return true; // always the end of the line
+				case ANYINGROUP: // SC16: a record has no group here, so the rest is for it alone
+				case ALLINGROUP:
+					return maskCheckSubEntries(fixEntrySet(entry),E);
+				case _ANYINGROUP:
+				case _ALLINGROUP:
+					return !maskCheckSubEntries(fixEntrySet(entry),E);
 				case ACCOUNT:// +accounts
 				case _ACCOUNT:// -accounts
 				case _ALIGNMENT: // -alignment

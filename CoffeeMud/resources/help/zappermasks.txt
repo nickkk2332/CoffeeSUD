@@ -110,3 +110,5 @@
 +ACCCHIEVES, -ACCCHIEVES +achieveid etc..  (<WORD> achievements as above)
 -RIDE +RIDE zappermask (Apply remainder of criteria to ridden)
 -FOLLOW +FOLLOW zappermask (Apply remainder of criteria to followed)
++ANYINGROUP +ALLINGROUP zappermask (Apply remainder of criteria to the group in the room: true if anyone, or everyone, of it matches)
+-ANYINGROUP -ALLINGROUP zappermask (As + but turned around: true if no one, or not everyone, matches)

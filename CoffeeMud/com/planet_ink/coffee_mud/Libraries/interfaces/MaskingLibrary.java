@@ -531,6 +531,10 @@ public interface MaskingLibrary extends CMLibrary
 		DOMAIN,
 		_TAG("-TAGS"),
 		TAG("+TAGS"),
+		_ANYINGROUP, // SC16: the rest of the mask, for no one of the group here
+		ANYINGROUP, // for anyone of it
+		_ALLINGROUP, // not for everyone of it
+		ALLINGROUP, // for everyone of it
 		;
 		private final String[] keys;
 		private ZapperKey(final String... exts)
