@@ -1691,6 +1691,19 @@ N22, N24, N28, N29
   one. WHEN=/TOD=/HOURS= gate it (N1). DESTROY BEHAVIOR. The database keeps
   them with the generic commands (base class GenBehavior); the world files
   in custom/behaviors/, the script beside each.
+- N8 done. When an area wakes (PASSIVE to ACTIVE: StdArea.okMessage on a
+  player's move, or setAreaState; StdArea keeps when it went passive),
+  `core/AreaCatchUp` tells the area, its rooms, mobs and loose items:
+  `Behavior.catchUp(host, ticks)` and `Ability.catchUp` (default methods,
+  nothing), the wanderers (MobileBehavior) first; a ScriptingEngine
+  behaviour's or a script's `FUNCTION_PROG CATCHUP` ($g the ticks); the JS
+  hook `catchUp(host, ticks)` (JSBehavior, Prop_JScript). Mobile: up to 10
+  steps by ways it may take, quietly; Patroller: the route steps it missed
+  while it did not tick (it ticks when passive, so mostly none); Schedule:
+  in place at once; Sleeper: asleep or up by the hour; Prop_ClosedDayNight
+  with HOME=: home when closed, start room when open. ResetWhole and
+  respawns keep time when passive, so need none. Tag NOCATCHUP, world
+  option CATCHUP=OFF. AHELP CATCHUP.
 
 #### 2g. Combat and encounters (24)
 

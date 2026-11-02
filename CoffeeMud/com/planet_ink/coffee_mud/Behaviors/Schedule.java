@@ -491,6 +491,37 @@ public class Schedule extends StdBehavior
 		idleTicks = 0;
 	}
 
+	/**
+	 * N8: its area woke: in the place of the entry in force now, at once, as
+	 * when nobody is near.
+	 */
+	@Override
+	public void catchUp(final PhysicalAgent host, final long ticks)
+	{
+		if((!(host instanceof MOB)) || entries.isEmpty())
+			return;
+		final MOB mob = (MOB)host;
+		if(mob.amDead() || (mob.location() == null) || mob.isInCombat())
+			return;
+		final Entry E = current(mob);
+		if(E != inForce)
+		{
+			leave(mob);
+			inForce = E;
+		}
+		if(E == null)
+			return;
+		if(dest == null)
+			dest = placeOf(E, mob);
+		if(dest == null)
+			return;
+		if((mob.location() == dest) && arrived)
+			return;
+		if(mob.location() != dest)
+			dest.bringMobHere(mob, true);
+		arrive(mob, E);
+	}
+
 	protected void arrive(final MOB mob, final Entry E)
 	{
 		arrived = true;

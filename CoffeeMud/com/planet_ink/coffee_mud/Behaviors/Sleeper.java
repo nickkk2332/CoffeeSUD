@@ -163,6 +163,31 @@ public class Sleeper extends StdBehavior
 			NpcAlarm.raise(mob, by, null);
 	}
 
+	/**
+	 * N8: its area woke: asleep or up as the hour says now.
+	 */
+	@Override
+	public void catchUp(final PhysicalAgent host, final long ticks)
+	{
+		if(!(host instanceof MOB))
+			return;
+		final MOB mob = (MOB)host;
+		if(mob.amDead() || (mob.location() == null) || mob.isInCombat())
+			return;
+		awakeTicks = (int)Math.max(0, awakeTicks - ticks);
+		if(awakeTicks > 0)
+			return;
+		final boolean time = sleepTime(mob);
+		if(time && (!CMLib.flags().isSleeping(mob)))
+			goToSleep(mob);
+		else
+		if((!time) && sleptByMe && CMLib.flags().isSleeping(mob))
+		{
+			CMLib.commands().postStand(mob, true, false);
+			sleptByMe = false;
+		}
+	}
+
 	/** a chance roll for something that may wake it; a miss makes it stir */
 	protected void maybeWake(final MOB mob, final MOB by, final int chance)
 	{

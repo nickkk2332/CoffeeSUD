@@ -92,6 +92,50 @@ public class Mobile extends ActiveTicker implements MobileBehavior
 		tickReset();
 	}
 
+	/** N8: the most steps it takes at once when its area wakes */
+	protected static final int    MAX_CATCHUP_STEPS    = 10;
+
+	/**
+	 * N8: its area woke: the steps it would have wandered meanwhile (it does not
+	 * move in a passive area), at most MAX_CATCHUP_STEPS, with nobody to see:
+	 * each by an open way (or a closed one it may open), to a room it may go
+	 * to, in its area unless it wanders.
+	 */
+	@Override
+	public void catchUp(final PhysicalAgent host, final long ticks)
+	{
+		if((!(host instanceof MOB)) || CMSecurity.isDisabled(CMSecurity.DisFlag.MOBILITY))
+			return;
+		final MOB mob=(MOB)host;
+		if(mob.isInCombat() || mob.amDead() || (mob.amFollowing()!=null) || (mob.location()==null) || (!CMLib.flags().canMove(mob)))
+			return;
+		final int every=Math.max(1,(minTicks+maxTicks)/2);
+		final long n=Math.min(MAX_CATCHUP_STEPS, ((ticks/every)*Math.max(0,Math.min(100,chance)))/100);
+		for(long i=0;i<n;i++)
+		{
+			final Room room=mob.location();
+			if(room==null)
+				return;
+			final List<Room> ways=new ArrayList<Room>();
+			for(int d=Directions.NUM_DIRECTIONS()-1;d>=0;d--)
+			{
+				final Room R=room.getRoomInDir(d);
+				final Exit X=room.getExitInDir(d);
+				if((R==null)||(X==null)||(R==room))
+					continue;
+				if((!X.isOpen())&&((!dooropen)||X.isLocked()))
+					continue;
+				if((!wander)&&(R.getArea()!=room.getArea()))
+					continue;
+				if(okRoomForMe(mob,room,R,false))
+					ways.add(R);
+			}
+			if(ways.isEmpty())
+				return;
+			ways.get(CMLib.dice().roll(1,ways.size(),-1)).bringMobHere(mob,true);
+		}
+	}
+
 	public boolean okRoomForMe(final MOB mob, final Room currentRoom, final Room newRoom, final boolean ignoreAtmosphere)
 	{
 		if(newRoom==null)

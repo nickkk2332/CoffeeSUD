@@ -94,6 +94,18 @@ public class Prop_JScript extends Property implements JSReload.Holder
 			miscText = hooks.textNow(miscText);
 	}
 
+	/** N8: its area woke: the file's catchUp(host, ticks), if it has one */
+	@Override
+	public void catchUp(final Physical host, final long ticks)
+	{
+		final JSHooks H = hooks();
+		if(H.has("catchUp"))
+		{
+			H.call("catchUp", host, Long.valueOf(ticks));
+			keepParms();
+		}
+	}
+
 	@Override
 	public void setAffectedOne(final Physical P)
 	{

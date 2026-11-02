@@ -1104,4 +1104,15 @@ public interface Ability extends Environmental
 	public static final int CAN_ROOMS=8;
 	/** constant mask for the canTargetCode() and canAffectCode() methods.  Means it can target/affect exits see {@link com.planet_ink.coffee_mud.Abilities.interfaces.Ability#canAffect(int)} */
 	public static final int CAN_EXITS=16;
+
+	/**
+	 * N8: the area of what it affects woke (PASSIVE to ACTIVE): what it
+	 * would have done meanwhile, done at once (core/AreaCatchUp).  Nothing by
+	 * default.
+	 * @param host what it is on
+	 * @param ticks how many ticks the area was passive
+	 */
+	public default void catchUp(final Physical host, final long ticks)
+	{
+	}
 }

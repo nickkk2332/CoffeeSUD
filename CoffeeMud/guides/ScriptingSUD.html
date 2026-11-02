@@ -361,6 +361,12 @@ in builder mode, with PARMS <code>price=20 exit=north</code> and a script that r
 <code>&lt;SCRIPT&gt;</code>). Five bridge guards get <code>TollKeeper price=5 exit=west</code>
 and the like; one <code>MODIFY BEHAVIOR TollKeeper</code> fixes them all, and <code>AHELP
 TOLLKEEPER</code> shows its HELP. SAVE writes it to <code>world/custom/behaviors/</code>.</p>
+<p>Leave the village at dusk and come back at noon: when the area wakes (a player comes in after
+it was passive), the miller's <code>Schedule</code> puts him at the market at once, the night watch's
+<code>Sleeper</code> puts him to bed, the dogs (<code>Mobile</code>) have wandered a little, and a
+script's <code>FUNCTION_PROG CATCHUP</code> runs with <code>$g</code> the ticks it slept, to do what
+it likes: restock a shop, finish a job. Tag an area <code>NOCATCHUP</code> to keep it as it was
+(AHELP CATCHUP).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

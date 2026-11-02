@@ -61,6 +61,8 @@ public final class WorldSettings
 		"MOBDEATH", "HUNGER", "THIRST", "MANACOST", "DIRECTIONS", "CHATDEFAULT",
 		// quests
 		"QUESTMARKERS", "QUESTNOTICES", "QUESTTRACK",
+		// NPCs
+		"CATCHUP",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */

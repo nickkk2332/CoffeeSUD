@@ -36,7 +36,7 @@ import com.planet_ink.coffee_mud.core.interfaces.*;
 public class JSHooks
 {
 	/** the hooks a file may define */
-	public static final String[]	HOOKS	= { "affectPhyStats", "affectCharStats", "affectCharState", "okMessage", "executeMsg", "tick", "onAdded", "onRemoved", "onReload" };
+	public static final String[]	HOOKS	= { "affectPhyStats", "affectCharStats", "affectCharState", "okMessage", "executeMsg", "tick", "onAdded", "onRemoved", "onReload", "catchUp" };
 
 	private final String		kind;
 	private String				path		= "";

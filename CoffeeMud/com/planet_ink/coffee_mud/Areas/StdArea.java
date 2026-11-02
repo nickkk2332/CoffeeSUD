@@ -62,6 +62,8 @@ public class StdArea implements Area
 	protected long		passiveLapseMs		= DEFAULT_TIME_PASSIVE_LAPSE;
 	protected long		lastPlayerTime		= GameTime.now() + (passiveLapseMs - 30000);
 	protected State		flag				= State.ACTIVE;
+	/** N8: when it last turned PASSIVE, on the game clock, or 0 */
+	protected long		passiveSince		= 0;
 	protected String[]	xtraValues			= null;
 	protected String	author				= "";
 	protected String	currency			= "";
@@ -562,6 +564,11 @@ public class StdArea implements Area
 			if (!CMLib.threads().isTicking(this, Tickable.TICKID_AREA))
 				Log.errOut("StdArea", "Area " + name() + " failed to start ticking.");
 		}
+		if ((flag == State.PASSIVE) && (newState == State.ACTIVE))
+			wake(); // N8
+		else
+		if ((flag != State.PASSIVE) && (newState == State.PASSIVE))
+			passiveSince = GameTime.now();
 		flag = newState;
 		derivedClimate = CLIMASK_INHERIT;
 		derivedAtmo = ATMOSPHERE_INHERIT;
@@ -572,6 +579,19 @@ public class StdArea implements Area
 	public State getAreaState()
 	{
 		return flag;
+	}
+
+	/**
+	 * N8: PASSIVE to ACTIVE: what its NPCs would have done while it slept,
+	 * done at once (core/AreaCatchUp).
+	 */
+	protected void wake()
+	{
+		final long since = passiveSince;
+		flag = State.ACTIVE;
+		passiveSince = 0;
+		if (since > 0)
+			AreaCatchUp.wake(this, (GameTime.now() - since) / Math.max(1, CMProps.getTickMillis()));
 	}
 
 	@Override
@@ -1118,7 +1138,7 @@ public class StdArea implements Area
 			&& ((msg.sourceMinor() == CMMsg.TYP_ENTER)
 				|| (msg.sourceMinor() == CMMsg.TYP_LEAVE)
 				|| (msg.sourceMinor() == CMMsg.TYP_FLEE)))
-					flag = State.ACTIVE;
+					wake(); // N8
 		}
 
 		if ((flag == State.FROZEN)
@@ -1287,7 +1307,10 @@ public class StdArea implements Area
 				if (CMSecurity.isDisabled(CMSecurity.DisFlag.PASSIVEAREAS) && (!CMath.bset(flags(), Area.FLAG_INSTANCE_CHILD)))
 					lastPlayerTime = GameTime.now();
 				else
+				{
 					flag = State.PASSIVE;
+					passiveSince = GameTime.now(); // N8
+				}
 			}
 			tickStatus = Tickable.STATUS_ALIVE;
 			getClimateObj().tick(this, tickID);

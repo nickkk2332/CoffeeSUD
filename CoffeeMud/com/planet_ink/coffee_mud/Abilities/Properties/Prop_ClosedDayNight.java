@@ -270,6 +270,26 @@ public class Prop_ClosedDayNight extends Property
 		return true;
 	}
 
+	/**
+	 * N8: its area woke: a keeper with a HOME= is at home when closed and back
+	 * where it starts when open, at once; its next tick does the rest.
+	 */
+	@Override
+	public void catchUp(final Physical host, final long ticks)
+	{
+		if((!(host instanceof MOB)) || (homeStr == null))
+			return;
+		final MOB mob = (MOB)host;
+		if(mob.amDead() || mob.isInCombat() || (mob.location() == null))
+			return;
+		final Room R = checkClosed(mob) ? getHomeRoom() : mob.getStartRoom();
+		if((R != null) && (R != mob.location()))
+		{
+			R.bringMobHere(mob, true);
+			amClosed = null;
+		}
+	}
+
 	protected Room getHomeRoom()
 	{
 		if(homeStr==null)

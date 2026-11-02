@@ -107,6 +107,18 @@ public class JSBehavior extends StdBehavior implements JSReload.Holder
 		super.endBehavior(forMe);
 	}
 
+	/** N8: its area woke: the file's catchUp(host, ticks), if it has one */
+	@Override
+	public void catchUp(final PhysicalAgent host, final long ticks)
+	{
+		final JSHooks H = hooks();
+		if(H.has("catchUp"))
+		{
+			H.call("catchUp", host, Long.valueOf(ticks));
+			keepParms();
+		}
+	}
+
 	@Override
 	public boolean okMessage(final Environmental myHost, final CMMsg msg)
 	{

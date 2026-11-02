@@ -174,11 +174,96 @@ public class Patroller extends ActiveTicker
 		return tickStatus;
 	}
 
+	/** N8: when it last ticked, on the game clock */
+	protected long lastTickAt = 0;
+
+	/**
+	 * N8: its area woke: the steps it would have reached in the time it did
+	 * not tick (it ticks in a passive area, so that is mostly none), taken at
+	 * once, at most one round of its route.
+	 */
+	@Override
+	public void catchUp(final PhysicalAgent host, final long ticks)
+	{
+		long missed=ticks;
+		if(lastTickAt>0)
+			missed=Math.min(ticks,(GameTime.now()-lastTickAt)/Math.max(1,CMProps.getTickMillis()));
+		final int every=Math.max(1,(minTicks+maxTicks)/2);
+		final List<String> steps=getSteps();
+		if((missed<every)||steps.isEmpty()||(host instanceof Boardable))
+			return;
+		if((!rideOk)&&(host instanceof MOB)&&(((MOB)host).amFollowing()!=null))
+			return;
+		final Room here;
+		if(host instanceof MOB)
+		{
+			if(((MOB)host).isInCombat()||((MOB)host).amDead())
+				return;
+			here=((MOB)host).location();
+		}
+		else
+		if((host instanceof Item)&&(((Item)host).owner() instanceof Room))
+			here=(Room)((Item)host).owner();
+		else
+			return;
+		if((here==null)||(here instanceof GridLocale))
+			return;
+		Room at=here;
+		final long n=Math.min(missed/every,steps.size());
+		for(long i=0;i<n;i++)
+		{
+			if((step<0)||(step>=steps.size()))
+				step=0;
+			String nxt=steps.get(step);
+			if((nxt.equalsIgnoreCase("RESTART")||nxt.equalsIgnoreCase("REPEAT"))&&(step>0))
+			{
+				step=0;
+				nxt=steps.get(step);
+			}
+			if(nxt.equals("."))
+			{
+				step++;
+				continue;
+			}
+			Room next=null;
+			final int dir=CMLib.directions().getGoodDirectionCode(nxt);
+			if(dir>=0)
+				next=at.getRoomInDir(dir);
+			else
+			if(CMLib.map().getExtendedRoomID(at).toUpperCase().endsWith(nxt.toUpperCase()))
+			{
+				step++;
+				continue;
+			}
+			else
+			{
+				for(int d=Directions.NUM_DIRECTIONS()-1;d>=0;d--)
+				{
+					final Room R=at.getRoomInDir(d);
+					if((R!=null)&&(CMLib.map().getExtendedRoomID(R).toUpperCase().endsWith(nxt.toUpperCase())))
+						next=R;
+				}
+			}
+			if(next==null)
+				break;
+			at=next;
+			step++;
+		}
+		if(at!=here)
+		{
+			if(host instanceof MOB)
+				at.bringMobHere((MOB)host,true);
+			else
+				at.moveItemTo((Item)host);
+		}
+	}
+
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
 		if(!super.tick(ticking,tickID))
 			return false;
+		lastTickAt=GameTime.now(); // N8
 
 		if((startRoom.get()==null)&&(ticking instanceof Physical))
 			startRoom=new WeakReference<Room>(CMLib.map().roomLocation((Physical)ticking));

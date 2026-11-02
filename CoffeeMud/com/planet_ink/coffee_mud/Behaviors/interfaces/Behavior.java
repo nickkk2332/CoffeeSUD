@@ -193,4 +193,15 @@ public interface Behavior extends Tickable, MsgListener, Contingent, Modifiable
 	public static final long FLAG_LEGALBEHAVIOR=8;
 	/** constant mask for the flags() method designating that this behavior makes the host capable of killing you instantly */
 	public static final long FLAG_POTENTIALLYAUTODEATHING=16;
+
+	/**
+	 * N8: its area woke (PASSIVE, no player in it for a while, to ACTIVE):
+	 * what it would have done meanwhile, done at once (core/AreaCatchUp).
+	 * Nothing by default.
+	 * @param host what has it
+	 * @param ticks how many ticks the area was passive
+	 */
+	public default void catchUp(final PhysicalAgent host, final long ticks)
+	{
+	}
 }
