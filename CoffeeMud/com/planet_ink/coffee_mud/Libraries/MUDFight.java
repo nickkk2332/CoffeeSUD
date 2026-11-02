@@ -2647,6 +2647,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		final int amt=msg.value();
 		if(amt>0)
 			target.curState().adjHitPoints(amt,target.maxState());
+		Threat.healed(msg.source(),target,amt); // C18
 	}
 
 	protected boolean bleedableWeapon(final Environmental E)
@@ -2683,6 +2684,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		if(target.amDead()) // already dead, don't take more damage.
 			return;
 		final int dmg=msg.value();
+		Threat.damaged(attacker,target,dmg); // C18: the light threat table of a mob without CombatAbilities
 		if(Log.combatChannelOn())
 		{
 			final Item DI=target.fetchWieldedItem();

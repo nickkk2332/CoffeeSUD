@@ -739,6 +739,10 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"AFFINITY", //181
 		"CHECK", //182
 		"RANK", //183
+		"THREAT", //184
+		"TOPTHREAT", //185
+		"WEAKEST", //186
+		"OPPONENT", //187
 	};
 
 	/** String list of all valid mobprog commands */
@@ -865,6 +869,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPQTIMER", // 119
 		"MPMENU", // 120
 		"MPAFFINITY", // 121
+		"MPTHREAT", // 122
 	};
 
 	/**

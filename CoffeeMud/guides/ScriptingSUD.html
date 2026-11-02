@@ -447,6 +447,11 @@ world.ini, so when bosses feel too spongy one edit fixes all of them. <code>RANK
 CUREFIRST=Poison</code> on a goblin shaman cures a poisoned goblin first, then heals the most hurt one
 under 60%, so the party learns to kill the shaman first. <code>BUFFOUTOFCOMBAT</code> blesses them before
 the fight. A temple acolyte: <code>Healer HEALAT=70 SPELLS=Prayer_CureSerious TARGET=MASK:"-NPC"</code>.</p>
+<p>Threat in scripts: the ogre chieftain's <code>FIGHT_PROG 20</code> with <code>MPKILL $%WEAKEST($i)%</code>
+and <code>MPECHO The chieftain lunges at the weakest foe!</code>; a custom taunt runs <code>MPTHREAT $t $n *3</code>.
+<code>THREAT($i $n &gt; 100)</code>, <code>TOPTHREAT($i)</code> and <code>OPPONENT($i 'MASK=-CLASS +Cleric')</code> pick
+whom to turn on. A mob without CombatAbilities keeps a light table: twice the damage dealt it, three
+times the healing of its foe.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

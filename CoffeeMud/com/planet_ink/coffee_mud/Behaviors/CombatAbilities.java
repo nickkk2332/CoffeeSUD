@@ -33,7 +33,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class CombatAbilities extends ActiveTicker
+public class CombatAbilities extends ActiveTicker implements Threat.Holder // C18: its aggro is its threat table
 {
 	@Override
 	public String ID()
@@ -339,6 +339,18 @@ public class CombatAbilities extends ActiveTicker
 				}
 			}
 		}
+	}
+
+	@Override
+	public Map<MOB,int[]> threatTable()
+	{
+		return aggro; // C18
+	}
+
+	@Override
+	public void adjustThreat(final MOB host, final MOB who, final int delta)
+	{
+		adjustAggro(host,who,delta); // C18: MPTHREAT, as its own reckoning would
 	}
 
 	public void adjustAggro(final MOB hostM, final MOB attackerM, final int amt)

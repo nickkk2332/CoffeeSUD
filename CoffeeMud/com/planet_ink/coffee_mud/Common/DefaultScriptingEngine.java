@@ -15883,6 +15883,36 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "false";
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
+		case "THREAT": // C18: THREAT(npc who): their threat to it
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,1),ctx);
+			if((!(N instanceof MOB))||(!(W instanceof MOB)))
+				return "0";
+			return ""+Threat.get((MOB)N,(MOB)W);
+		}
+		case "TOPTHREAT": // C18: TOPTHREAT(npc): the one here with the most threat to it, or nothing
+		case "WEAKEST": // C18: WEAKEST(npc): the enemy here with the least hit points left, in percent
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			if(!(N instanceof MOB))
+				return "";
+			final MOB M=name.equalsIgnoreCase("TOPTHREAT")?Threat.top((MOB)N):Threat.weakest((MOB)N);
+			return (M==null)?"":M.Name();
+		}
+		case "OPPONENT": // C18: OPPONENT(npc 'MASK=zapper'): the first enemy here the mask fits
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			String mask=varify(ctx,CMParms.getPastBit(parms,0)).trim();
+			while((mask.length()>1)&&("'`\"".indexOf(mask.charAt(0))>=0)&&("'`\"".indexOf(mask.charAt(mask.length()-1))>=0))
+				mask=mask.substring(1,mask.length()-1).trim(); // quoted ('...', which scripts may hand over as `...`)
+			if(mask.toUpperCase().startsWith("MASK="))
+				mask=mask.substring(5).trim();
+			if(!(N instanceof MOB))
+				return "";
+			final MOB M=Threat.opponent((MOB)N,mask);
+			return (M==null)?"":M.Name();
+		}
 		case "RANK": // C15: RANK(who): its Prop_MobRank's rank, else NORMAL
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16250,6 +16280,27 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
+			return null;
+		}
+		case "MPTHREAT": // C18: MPTHREAT npc who +n|-n|=n|*x: their threat to it
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,2),ctx);
+			final String amt=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(N instanceof MOB))||(!(W instanceof MOB))||(amt.length()==0))
+			{
+				logError(ctx,"MPTHREAT","Syntax","MPTHREAT npc who +n|-n|=n|*x: "+line);
+				return null;
+			}
+			final MOB npc=(MOB)N;
+			final MOB who=(MOB)W;
+			if(amt.startsWith("="))
+				Threat.set(npc,who,CMath.s_int(amt.substring(1).trim()));
+			else
+			if(amt.startsWith("*"))
+				Threat.set(npc,who,(int)Math.round(Threat.get(npc,who)*CMath.s_double(amt.substring(1).trim())));
+			else
+				Threat.add(npc,who,CMath.s_int(amt.replace("+","")));
 			return null;
 		}
 		case "MPAFFINITY": // N15: MPAFFINITY npc who +n|-n|=n: the NPC's opinion of them

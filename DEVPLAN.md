@@ -1876,6 +1876,15 @@ C18, C19, C20, C21, C22, C23, C25
   CUREFIRST and BUFFOUTOFCOMBAT turn on the out-of-fight precast every 3
   ticks. Healer: SPELLS=, HEALAT=, TARGET=, the old random way without
   them. NiceAbilities: HEALAT= before the ;.
+- C18 done. core/Threat: Threat.Holder (CombatAbilities implements it: its
+  aggro map, adjustAggro) or a light table per NPC (WeakHashMap), fed by
+  MUDFight.handleBeingDamaged (twice the damage) and handleBeingHealed
+  (three times a heal of the one an NPC here fights or their group), the
+  entries of those gone dropped when it grows. DSE THREAT (184), TOPTHREAT
+  (185), WEAKEST (186, lowest HP% among those fighting it or its group, or
+  whom it fights), OPPONENT (187, a mask), each a name for MPKILL; THREAT
+  compares through extraTest. MPTHREAT (122) +n, -n, =n, *x, through the
+  holder so a CombatAbilities mob retargets on a clear lead.
 
 #### 2h. Items, properties and puzzles (23)
 
