@@ -507,6 +507,10 @@ is above level 8; once, a lost traveller whose FUNCTION_PROG starts an escort. <
 LOCKEXITS=true REWARD="a laurel" ONLOSE=SPARRING:Arena#2 RESETAFTER=100</code> on a gladiator pit: the gate shuts when
 the party walks in, the arena master's <code>WAVE_PROG</code> announces each wave, clearing them opens the gate and
 gives a laurel (<code>ARENAWIN_PROG</code>), and a defeated player wakes in the infirmary while the pit resets.</p>
+<p>Ambushes: <code>Prop_Ambush MOBS="encounter:bandits" DETECT=WIS+Thief_DetectTraps:15 MSG="Figures burst from the
+undergrowth!" SPOTMSG="You spot glints of steel in the bushes."</code> on a forest road: a party with no ranger is
+caught by surprise and loses its first round; a party with one spots the bandits and may strike first or walk on.
+<code>AMBUSH_PROG SPOTTED</code> lets the bandit chief call out instead.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

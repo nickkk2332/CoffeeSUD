@@ -1999,6 +1999,15 @@ C18, C19, C20, C21, C22, C23, C25
   ARENALOSE_PROG (108); ONLOSE=SPARRING(:room) adds Prop_SparringRoom while
   it runs. WAVE_PROG n (106) on the room's and its NPCs' scripts. Run
   state STATE/WAVE/T/R; restored, the wave is the room's mobs tagged WAVE.
+- C23 done. Prop_Ambush (rooms): a party leader's ENTER (CHANCE=, MASK=)
+  queues it; it ticks itself (TICKID_PROPERTY_SPECIAL) while it has work.
+  MOBS= through Encounters.spawnSpec, tagged AMBUSH. DETECT=parts:dc: the
+  party's best d20 + stat (n-10)/2 + skill proficiency/10. Not spotted:
+  MSG=, each ambusher postAttacks, Prop_Surprised TICKS=SURPRISE on the
+  party (no move, flee, strike, malicious act or cast). Spotted: SPOTMSG=
+  to the party, a WAIT= standoff: a fight ends it, the party leaving
+  despawns them (AVOIDED), else they strike. ONCE or RESET=n. AMBUSH_PROG
+  (109) with the outcome, on the room's and its NPCs' scripts.
 
 #### 2h. Items, properties and puzzles (23)
 

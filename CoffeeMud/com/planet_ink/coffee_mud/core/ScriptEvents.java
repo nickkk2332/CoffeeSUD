@@ -560,6 +560,22 @@ public final class ScriptEvents
 		arena(R, ARENALOSE_PROG, who, "");
 	}
 
+	/** C23: AMBUSH_PROG's code */
+	public static final int	AMBUSH_PROG		= code("AMBUSH_PROG");
+
+	/**
+	 * C23: an ambush (Prop_Ambush) sprang: AMBUSH_PROG [outcome] runs on the
+	 * room's scripts and its NPCs' (the ambushers'), $0 SURPRISED, SPOTTED or
+	 * AVOIDED, $n the one who came in.
+	 * @param R the room
+	 * @param outcome SURPRISED, SPOTTED or AVOIDED
+	 * @param who the one who came in, or null
+	 */
+	public static void ambush(final Room R, final String outcome, final MOB who)
+	{
+		arena(R, AMBUSH_PROG, who, outcome);
+	}
+
 	/** C3: PHASE_PROG's code */
 	public static final int	PHASE_PROG	= code("PHASE_PROG");
 
