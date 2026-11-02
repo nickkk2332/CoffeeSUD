@@ -3,7 +3,8 @@ FIXFILE = "s1-check";
 var Q = CMLib.quests().fetchQuest("s1quest");
 check("quest-running", Q.running(), "s1quest is not running");
 check("walls-kept", Q.getStat("WALLS") == "2", "WALLS is '" + Q.getStat("WALLS") + "'");
-check("offer-kept", Q.getStat("OFFERED:" + M.Name().toUpperCase()) == "1", "no OFFERED var");
+var offered = "" + Q.getStat("OFFERED:" + M.Name().toUpperCase()); // Q7: when, on the game clock
+check("offer-kept", offered.length > 0 && CMath.isLong(offered), "OFFERED var is '" + offered + "'");
 check("chat-kept", ("" + Q.getStat("CHAT:" + M.Name().toUpperCase())).indexOf("greet") >= 0, "no CHAT var");
 var W = CMLib.quests().fetchQuest("s1wait");
 var saved = CMath.s_int(gvar("S1WAIT"));
