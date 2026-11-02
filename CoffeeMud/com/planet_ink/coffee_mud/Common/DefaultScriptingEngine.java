@@ -15932,6 +15932,52 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return "0";
 		}
+		case "MONEYSTR": // W17: MONEYSTR(amount [CODE] [LONG|SHORT]): an amount in base value, in coin names
+		{
+			final List<String> w=unquotedWords(v);
+			if(w.isEmpty()||(!CMath.isNumber(w.get(0))))
+			{
+				logError(ctx,"MONEYSTR","Syntax","MONEYSTR(amount [CODE] [LONG|SHORT]): "+v);
+				return "";
+			}
+			final double amount=CMath.s_double(w.get(0));
+			String code=null;
+			boolean shortForm=false;
+			for(int i=1;i<w.size();i++)
+			{
+				final String x=w.get(i).toUpperCase().trim();
+				if(x.equals("SHORT"))
+					shortForm=true;
+				else
+				if(!x.equals("LONG"))
+					code=x;
+			}
+			if(code==null)
+				code=CMLib.beanCounter().getCurrency((ctx.scripted instanceof MOB)?ctx.scripted:CMLib.map().roomLocation(ctx.scripted));
+			return shortForm?CMLib.beanCounter().nameCurrencyShort(code,amount):CMLib.beanCounter().nameCurrencyLong(code,amount);
+		}
+		case "DENOMNAME": // W17: DENOMNAME(CODE value [count]): a denomination's name, with the count
+		{
+			final List<String> w=unquotedWords(v);
+			if((w.size()<2)||(!CMath.isNumber(w.get(1))))
+			{
+				logError(ctx,"DENOMNAME","Syntax","DENOMNAME(CODE value [count]): "+v);
+				return "";
+			}
+			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
+			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
+		}
+		case "PRICE": // W17: PRICE(item [shopkeeper]): what the shop asks $n for it, in coin names
+		{
+			final String itemWord=CMParms.getCleanBit(parms,0);
+			final String keeperWord=CMParms.getPastBitClean(parms,0).trim();
+			final MOB shopM=shopkeeperFor(ctx,keeperWord);
+			if(shopM==null)
+				return "";
+			final MOB cust=(ctx.source!=null)?ctx.source:terminalMob(ctx);
+			final Environmental P=Shops.product(Shops.shopOf(shopM),getArgumentItem(itemWord,ctx),varify(ctx,itemWord),cust);
+			return Shops.words(shopM,Shops.price(shopM,cust,P));
+		}
 		case "ISWANTED": // W1: ISWANTED(who [crime]): a warrant is out against them (for that crime), under the law here
 		case "WARRANTS": // W1: WARRANTS(who): how many warrants are out against them
 		case "FINESOWED": // W1: FINESOWED(who): the fines they owe, in base value
@@ -19107,6 +19153,44 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			return lastKnownLocation.getExitInDir(d);
 		final Environmental E=getArgumentItem(raw,ctx);
 		return (E instanceof Physical)?(Physical)E:null;
+	}
+
+	/**
+	 * W17: the words of a function's parameters, each out of its quotes
+	 * ('x' as JavaScript's NAME$() hands them over, `x` or "x").
+	 * @param text the varified parameters
+	 * @return the words
+	 */
+	protected static List<String> unquotedWords(final String text)
+	{
+		final List<String> out=new ArrayList<String>();
+		for(String w : CMParms.parse(text))
+		{
+			while((w.length()>1)&&("'`\"".indexOf(w.charAt(0))>=0)&&(w.charAt(w.length()-1)==w.charAt(0)))
+				w=w.substring(1,w.length()-1).trim();
+			out.add(w);
+		}
+		return out;
+	}
+
+	/**
+	 * W17 and W14: the shopkeeper a script means: by its word (a code or a
+	 * name here), else the host if it keeps a shop, else the first
+	 * shopkeeper in the host's room.
+	 * @param ctx the script's context
+	 * @param word the word, or ""
+	 * @return the shopkeeper, or null
+	 */
+	protected MOB shopkeeperFor(final MPContext ctx, final String word)
+	{
+		if((word!=null)&&(word.trim().length()>0))
+		{
+			final Environmental E=getArgumentMOB(word.trim(),ctx);
+			return ((E instanceof MOB)&&(Shops.shopOf(E)!=null))?(MOB)E:null;
+		}
+		if((ctx.scripted instanceof MOB)&&(Shops.shopOf(ctx.scripted)!=null))
+			return (MOB)ctx.scripted;
+		return Shops.keeperIn(CMLib.map().roomLocation(ctx.scripted),null);
 	}
 
 	/**

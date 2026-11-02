@@ -2323,6 +2323,12 @@ W18, W19, W20, W21, W22, W23, W28, W29
   first material word of the name), the weight of one coin (else a
   hundred to the pound, paper and cloth nothing) and the description, its
   "Equal to" line after it.
+- W17 done. `MONEYSTR(amount [CODE] [LONG|SHORT])` (199; the host's
+  currency when no code is given), `PRICE(item [shopkeeper])` (200; what
+  the shop asks $n, by the item or a name in its stock, in its coin names;
+  the host, else the first shopkeeper in its room) and `DENOMNAME(CODE value
+  [count])` (201). JavaScript calls them as `MONEYSTR$(...)` and the rest,
+  as it calls every function. `core/Shops` holds the shop lookups W14 uses.
 
 #### 2j. Generators and random content (16)
 

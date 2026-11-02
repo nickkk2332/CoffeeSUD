@@ -768,6 +768,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ISWANTED", //196
 		"WARRANTS", //197
 		"FINESOWED", //198
+		"MONEYSTR", //199
+		"PRICE", //200
+		"DENOMNAME", //201
 	};
 
 	/** String list of all valid mobprog commands */
