@@ -280,6 +280,7 @@ public final class JSStore
 	public static synchronized void fromXML(final XMLTag tag)
 	{
 		clear();
+		JSTimers.forget(); // JS19: a restored after() is made again from its text
 		if(tag == null)
 			return;
 		final XMLLibrary xml = CMLib.xml();
@@ -311,6 +312,7 @@ public final class JSStore
 	public static synchronized String newGame()
 	{
 		clear();
+		JSTimers.forget(); // JS19
 		final File F = stateFile();
 		if(F == null)
 			return null;

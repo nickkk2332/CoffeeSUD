@@ -1407,6 +1407,15 @@ JS17, JS18, JS19, JS20, JS23
   fail, stop, running, stepNumber, status, objective (INSTRUCTIONS),
   journal, getVar and setVar (the quest's own variables). JavaScriptingEngine
   stays unused, as JS11 decided; quest <SCRIPT> keeps its old helpers.
+- JS19 done. `core/JSTimers`, looked at each tick by JSEvents' ticker:
+  `cm.every(spec, fn [, key])` (ticks, or N ticks|hours|days on the clock),
+  `cm.at(spec, fn [, key])` (hour, day of the month, month, season, in any
+  mix; it fires as the clock comes to it), `cm.after(ticks, fn [, data])`,
+  `cm.stopTimer(key)` and `cm.timers()`. every and at are code, not state:
+  register them in init.js's onBoot. An after() is kept in the store
+  `js:timers` (JS7's JSSTATE) as its due game time, its function's text
+  and its data; in the same game the function itself runs, after a restore
+  (`JSStore.fromXML`) it is made again from its text in a scope of its own.
 
 #### 2e. Quests (15)
 

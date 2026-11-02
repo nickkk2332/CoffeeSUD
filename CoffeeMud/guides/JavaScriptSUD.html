@@ -26,6 +26,7 @@ went wrong.</p>
 <li><a href="#world">cm's world members</a></li>
 <li><a href="#events">cm.on</a></li>
 <li><a href="#store">cm.store</a></li>
+<li><a href="#timers">Timers</a></li>
 <li><a href="#sud">sud</a></li>
 <li><a href="#effects">Effects in JavaScript</a></li>
 <li><a href="#jscriptable">JScriptable</a></li>
@@ -224,6 +225,34 @@ replaces it, and <code>JS STATE key DELETE</code> takes it away.</p>
 var orders = cm.store(cm.host());
 orders.list = orders.list || [];
 orders.list.push({who: source.Name(), item: 'longsword', readyDay: cm.clock().day() + 3});
+</pre>
+
+<h2><a name="timers">Timers</a></h2>
+<p>Timers run on the game's clock: they wait while the game is paused, and
+step with its turns.</p>
+<ul>
+<li><code>cm.every(10, fn)</code>, <code>cm.every('6 hours', fn)</code>,
+<code>cm.every('1 day', fn)</code>: again and again, in ticks, or in the
+game's hours and days.</li>
+<li><code>cm.at('hour 6', fn)</code>, <code>cm.at('day 7 hour 8', fn)</code>,
+<code>cm.at('season winter', fn)</code>: as the clock comes to it (day is the
+day of the month; month and season work too).</li>
+<li><code>cm.after(30, fn, data)</code>: once, 30 ticks on, as
+<code>fn(data)</code>. It is kept in the save; after a restore,
+<code>fn</code> is made again from its text, so it should use only
+<code>data</code> and <code>cm</code>, not the variables around it.</li>
+<li><code>cm.stopTimer(key)</code> takes one away (every and at return a key,
+which is the third argument if given; after returns an id);
+<code>cm.timers()</code> lists them.</li>
+</ul>
+<p><code>every</code> and <code>at</code> are not saved: they are code, so
+register them in <code>world/js/init.js</code>'s <code>onBoot</code>.</p>
+<pre>
+function onBoot() {
+  cm.at('day 7 hour 8', function() {
+    cm.echo(cm.room('Town#Square'), 'Traders set up their stalls.');
+  }, 'marketDay');
+}
 </pre>
 
 <h2><a name="sud">sud</a></h2>

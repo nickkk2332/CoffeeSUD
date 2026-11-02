@@ -270,6 +270,7 @@ public final class JSEvents
 	/** each tick (and a test): the tick listeners, then the clock and the weather of the player's area */
 	public static void tick()
 	{
+		JSTimers.tick(); // JS19
 		for(final Listener L : listeners)
 		{
 			if(!L.event.equals("tick"))
@@ -324,7 +325,7 @@ public final class JSEvents
 		return (r != null) && (!(r instanceof Undefined)) && (r.toString().length() > 0);
 	}
 
-	private static synchronized void startTicking()
+	static synchronized void startTicking()
 	{
 		if(ticker == null)
 		{

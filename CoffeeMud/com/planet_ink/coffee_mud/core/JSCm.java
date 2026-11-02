@@ -726,6 +726,91 @@ public class JSCm
 		return JSStore.keys();
 	}
 
+	// ---------------------------------------------------------------- timers (JS19)
+
+	/**
+	 * Again and again on the game's clock (not saved: register in init.js's onBoot).
+	 * @param spec ticks, or '6 ticks', '6 hours', '1 day'
+	 * @param fn the function
+	 * @param key a name, or null for its text
+	 * @return its key
+	 */
+	public String every(final Object spec, final Function fn, final String key)
+	{
+		return JSTimers.every(spec, fn, (fn == null) ? null : ScriptableObject.getTopLevelScope(fn), key);
+	}
+
+	/**
+	 * @param spec ticks, or '6 hours', '1 day'
+	 * @param fn the function
+	 * @return its key
+	 */
+	public String every(final Object spec, final Function fn)
+	{
+		return every(spec, fn, null);
+	}
+
+	/**
+	 * When the game's clock comes to it (not saved: register in init.js's onBoot).
+	 * @param spec 'hour 6', 'day 1', 'month 3', 'season winter', or several
+	 * @param fn the function
+	 * @param key a name, or null for its text
+	 * @return its key
+	 */
+	public String at(final String spec, final Function fn, final String key)
+	{
+		return JSTimers.at(spec, fn, (fn == null) ? null : ScriptableObject.getTopLevelScope(fn), key);
+	}
+
+	/**
+	 * @param spec 'hour 6', 'day 1 hour 8'...
+	 * @param fn the function
+	 * @return its key
+	 */
+	public String at(final String spec, final Function fn)
+	{
+		return at(spec, fn, null);
+	}
+
+	/**
+	 * Once, that many ticks on, fn(data); kept with the save.
+	 * @param ticks how many ticks on
+	 * @param fn the function, which after a restore is made again from its text
+	 * @param data what it gets: data only, as JSON keeps it
+	 * @return its id
+	 */
+	public String after(final Object ticks, final Function fn, final Object data)
+	{
+		final long t = (ticks instanceof Number) ? ((Number)ticks).longValue() : CMath.s_long(String.valueOf(ticks));
+		return JSTimers.after(Context.getCurrentContext(), scope, t, fn, data);
+	}
+
+	/**
+	 * @param ticks how many ticks on
+	 * @param fn the function
+	 * @return its id
+	 */
+	public String after(final Object ticks, final Function fn)
+	{
+		return after(ticks, fn, null);
+	}
+
+	/**
+	 * Takes away an every, an at or an after.
+	 * @param key its key or id
+	 * @return true if there was one
+	 */
+	public boolean stopTimer(final String key)
+	{
+		return JSTimers.stop(key);
+	}
+
+	/** @return the timers there are */
+	public List<String> timers()
+	{
+		return JSTimers.listing();
+	}
+
 	// ---------------------------------------------------------------- events
 
 	/**
