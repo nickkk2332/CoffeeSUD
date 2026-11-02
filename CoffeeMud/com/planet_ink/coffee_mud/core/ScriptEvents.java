@@ -1751,6 +1751,60 @@ public final class ScriptEvents
 		return Math.max(1, h);
 	}
 
+	/** VAR_PROG's code */
+	public static final int	VAR_PROG	= code("VAR_PROG");
+
+	private static boolean varTest(final String value, final String cmp, final String against)
+	{
+		final String v = (value == null) ? "" : value.trim();
+		final String a = against.trim();
+		final boolean nums = CMath.isNumber(v) && CMath.isNumber(a);
+		final int c = nums ? Double.compare(CMath.s_double(v), CMath.s_double(a)) : v.compareToIgnoreCase(a);
+		switch(cmp)
+		{
+		case "==": case "=": return c == 0;
+		case "!=": case "<>": return c != 0;
+		case ">": return c > 0;
+		case "<": return c < 0;
+		case ">=": case "=>": return c >= 0;
+		case "<=": case "=<": return c <= 0;
+		default: return false;
+		}
+	}
+
+	/**
+	 * ST25: a script variable changed: VAR_PROG host|*|quest var cmp value
+	 * fires, for every host with the trigger, when the condition comes true.
+	 * $g is the new value, $0 the old.
+	 * @param scope the variable's scope (a quest's name, or "")
+	 * @param host the variable's host
+	 * @param var the variable
+	 * @param before the value before
+	 * @param now the value now
+	 */
+	public static void varChanged(final String scope, final String host, final String var, final String before, final String now)
+	{
+		if(!isUsed(VAR_PROG))
+			return;
+		final String b = (before == null) ? "" : before;
+		final String n = (now == null) ? "" : now;
+		if(b.equals(n))
+			return;
+		final List<PhysicalAgent> hosts = registered(VAR_PROG);
+		if(hosts.isEmpty())
+			return;
+		fire(hosts, VAR_PROG, standIn("the world"), null, n, new Object[] { b, host, var }, "Ccccr", t -> {
+			if(t.length < 5)
+				return false;
+			final String h = t[1].trim();
+			if(!(h.equals("*") || h.equalsIgnoreCase(host) || ((scope != null) && (scope.length() > 0) && h.equalsIgnoreCase(scope))))
+				return false;
+			if(!t[2].trim().equalsIgnoreCase(var))
+				return false;
+			return varTest(n, t[3].trim(), t[4]) && (!varTest(b, t[3].trim(), t[4]));
+		});
+	}
+
 	/** WEATHER_PROG's code */
 	public static final int	WEATHER_PROG	= code("WEATHER_PROG");
 	/** MOON_PROG's code */

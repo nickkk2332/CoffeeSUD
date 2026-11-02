@@ -1133,6 +1133,9 @@ JS17, JS18, JS19, JS20, JS23
   clock's hours, the next time in the engine's saved state (<EVERY>); with
   CATCHUP $g is how many intervals passed. Cron is left on its own clock
   (S21's).
+- ST25 done. `VAR_PROG host|*|quest var cmp value` from `setVar`, for every
+  host with it, when the change makes the condition true; $g the new value,
+  $0 the old.
 
 #### 2e. Quests (15)
 

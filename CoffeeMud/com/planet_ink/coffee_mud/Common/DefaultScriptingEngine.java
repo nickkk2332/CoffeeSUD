@@ -3178,6 +3178,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					break;
 				}
 			}
+			final String oldVal=H.get(key);
 			if(H.containsKey(key))
 				H.remove(key);
 			if(val.trim().length()>0)
@@ -3185,6 +3186,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			if(H.size()==0)
 				resources._removeResource("SCRIPTVAR-"+name);
 			ScriptVarWatch.changed(scope, name, key, val.trim(), varChangeSource());
+			ScriptEvents.varChanged(scope, name, key, oldVal, val.trim()); // ST25: VAR_PROG
 			if(ScriptTrace.isOn())
 				ScriptTrace.varChanged(name, key, val.trim());
 		}
