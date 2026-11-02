@@ -2246,6 +2246,13 @@ I22, I23, I24, I25, I26, I27
   BREAK steps SAY: and ENTER: (STEP= kept) or BREAKMASK checked each tick;
   ONBREAK KEEP, CRUMBLE or BECOME: (core/Transform). Its penalties come
   off with it. IDENTIFY's "seems normal below LEVEL" was not done.
+- I8 done. Prop_Invokable (items): WORD said by the holder (a speech
+  message, the word whole), or VERB (a VerbTaker; INVOKE when there is no
+  WORD); SPELLS (comma between, ;LEVEL=), invoked auto on SELF, the
+  ENEMY (the user's victim) or nothing (ROOM); CHARGES with LEFT= kept;
+  RECHARGE=DAWN (the area clock turning to dawn), DAILY, TICKS=n; COOLDOWN
+  in its own ticks; REQUIRE; MASK; MSG; EMPTYMSG. accountForYourself (what
+  identifying shows) tells the spells, charges, recharge and word.
 
 #### 2i. World systems (25)
 
