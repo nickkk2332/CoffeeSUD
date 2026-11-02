@@ -71,7 +71,8 @@ var was = C.getHourOfDay();
 var night = -1, day = -1;
 for (var h = 0; h < C.getHoursInDay(); h++) { C.setHourOfDay(h); var t = s(C.getTODCode()); if (t == "NIGHT" && night < 0) night = h; if (t == "DAY" && day < 0) day = h; }
 C.setHourOfDay(day);
-var owl = sleeper("Fixn4watchman", "SLEEPS=NIGHT WAKECHANCE=0");
+// WAKEON=TOUCH: no noise roll (a fight left nearby by another test would make it a dice throw)
+var owl = sleeper("Fixn4watchman", "SLEEPS=NIGHT WAKECHANCE=0 WAKEON=TOUCH");
 check("night-only-day", !asleep(owl), "asleep by day");
 C.setHourOfDay(night);
 tickMob(owl);
