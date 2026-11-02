@@ -675,6 +675,9 @@ mask <code>+ROOMDARK</code> (dark to them), tell the same.</p>
 <p>Darkness torches cannot beat: the Shadowfell crypt's <code>Prop_RoomDark ABSOLUTE=TRUE LIGHTMASK="-TAGS
 +DAWNLANTERN" SNUFF=50</code> puts torches out on the way in; only the Lantern of Dawn from the temple quest (tagged
 DAWNLANTERN) lights the way, and <code>SEEMASK="-RACE +Dwarf"</code> lets dwarves see.</p>
+<p>Hazards by type: Frostfang Pass holds <code>Prop_Hazard TYPE=COLD DAMAGE=1d6 SAVE=COLD WHEN="-WEATHER +BLIZZARD +SNOW"
+PROTECT="-EFFECTS +Spell_ResistCold" ESCALATE=20</code>: without a ward against cold the crossing hurts more each
+tick, and only in the snow. On an area, <code>ROOMS="-DOMAIN +MOUNTAINS"</code> keeps it to the peaks.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

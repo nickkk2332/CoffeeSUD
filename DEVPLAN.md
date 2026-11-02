@@ -2408,6 +2408,20 @@ W18, W19, W20, W21, W22, W23, W28, W29
   `-TAGS +DAWNLANTERN`), `SEEMASK=` who still sees in it (it adds seeing
   in the dark to them), `SNUFF=n` the chance a lit light goes out as one
   comes in (SNUFFMSG=, @x1 the light).
+- W3 done. `Prop_Hazard` (rooms, areas), on its own tick: `TYPE=` COLD,
+  HEAT, ACID, GAS, POISON, ELECTRIC, HOLY, UNHOLY, DISEASE or THINAIR,
+  `DAMAGE=` dice (1d6+2) or a formula (@x1 the victim's level) dealt as
+  that type's damage message, so resistances count; `SAVE=` a type (or a
+  save stat) whose roll halves it (the type's own by default); `DRAIN=MOVE|
+  MANA` takes it from that pool instead (THINAIR's default); `AFFECT="id
+  pct%"` may give an effect; `ROOMS=` and `WHEN=` masks on the victim each
+  tick (where they are, the weather: an area's hazard on its mountains
+  alone, a pass only in a blizzard), `PROTECT=` the mask of those spared;
+  `EVERY=`, `ONSET=` ticks first, `ESCALATE=` percent more each time in a
+  row, `WARN=` once as it starts, `DARKONLY`, `LITONLY`, `NONPC` (players
+  only), `NAME=` what hurts and `MSG=`. Fixed on the way: Prop_InstantDeath
+  on an area did nothing, as it woke only on messages aimed at the area;
+  it wakes when a room of the area is entered.
 
 #### 2j. Generators and random content (16)
 

@@ -267,6 +267,19 @@ public class Prop_InstantDeath extends Property
 	public void executeMsg(final Environmental affecting, final CMMsg msg)
 	{
 		super.executeMsg(affecting,msg);
+		// W3: on an area, a room of it entered (the message is the room's, so it never woke before)
+		if((affecting instanceof Area)
+		&&(msg.targetMinor()==CMMsg.TYP_ENTER)
+		&&(msg.target() instanceof Room)
+		&&((Area)affecting).inMyMetroArea(((Room)msg.target()).getArea()))
+		{
+			synchronized(killTrigger)
+			{
+				killTrigger[0]=true;
+				if(!CMLib.threads().isTicking(this, Tickable.TICKID_MISCELLANEOUS))
+					CMLib.threads().startTickDown(this, Tickable.TICKID_MISCELLANEOUS, 500,1);
+			}
+		}
 		if(msg.amITarget(affecting))
 		{
 			boolean activated=false;
