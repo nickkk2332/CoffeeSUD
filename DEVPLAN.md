@@ -1855,6 +1855,16 @@ C18, C19, C20, C21, C22, C23, C25
   JS23's xpGain. CMath: @xP (thread-local, set by MUDFight.sideMath for
   the 19 attack, armor, damage and crit formulas, else 0) and @xD (D).
   The smoke test saves on Hard and finds it restored.
+- C15 done. core/MobRanks reads MOBRANK_<NAME> (world prefix MOBRANK_):
+  HP+n% DAMAGE+n% ATTACK+n ARMOR-n SPEED+n XP*x POWER=x TAG= RESIST="..."
+  (saving throws); defaults MINION, NORMAL, ELITE, BOSS. Prop_MobRank
+  RANK=name (or the bare name) applies them in affectPhyStats, CharStats
+  and CharState each recover, so an edit retunes every mob of the rank;
+  the kill's XP through MobRanks.xpFor in postExperience (before JS23 and
+  the difficulty); LOOK/EXAMINE a trailer line with the tag, CONSIDER a
+  line too. DSE RANK (183) as a function and, through extraTest, a
+  comparison; masks -RANK/+RANK (MUDZapper description, compile, check,
+  records), zappermasks.txt. POWER (MobRanks.powerOf) is for C9 and C25.
 
 #### 2h. Items, properties and puzzles (23)
 

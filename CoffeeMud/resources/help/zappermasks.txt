@@ -115,6 +115,7 @@
 -SKILLFLAG +ENCHANTMENT etc.. (<WORD> all except those with skillflag)
 +SKILLFLAG -ENCHANTMENT etc.. (<WORD> only those with listed skillflag)
 +TAG, -TAG +tagid etc..  (<WORD> or dont <WORD> tags as above)
++RANK, -RANK +ELITE etc..  (<WORD> or dont <WORD> mobs of the Prop_MobRank ranks; NORMAL without one)
 +ACCCHIEVES, -ACCCHIEVES +achieveid etc..  (<WORD> achievements as above)
 -RIDE +RIDE zappermask (Apply remainder of criteria to ridden)
 -FOLLOW +FOLLOW zappermask (Apply remainder of criteria to followed)

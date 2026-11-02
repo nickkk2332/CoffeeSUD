@@ -438,6 +438,11 @@ NPCs deal to the player's side, their hit points, the damage the player's side d
 experience gained; <code>DIFFICULTY_BRUTAL=NPCDAMAGE=160 NPCHP=150 PLAYERDAMAGE=90 PLAYERXP=130 D=1.5</code>
 adds one. In the combat formulas <code>@xP</code> is 1 for the player's side and <code>@xD</code> the
 preset's D, for a curve of your own.</p>
+<p>Mob ranks: <code>Prop_MobRank RANK=ELITE</code> doubles a mob's hit points, adds a quarter to its
+damage and shows <code>[elite]</code> in LOOK and CONSIDER; MINION and BOSS go the other ways. The numbers
+are <code>MOBRANK_ELITE=HP+100% DAMAGE+25% ATTACK+10 ARMOR-10 XP*2.5 TAG=[elite]</code> in coffeemud.ini or
+world.ini, so when bosses feel too spongy one edit fixes all of them. <code>RANK($i)</code> in scripts,
+<code>-RANK +BOSS</code> in masks.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

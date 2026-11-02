@@ -1471,6 +1471,24 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						v=appendCommaList(buf,V,v,"-");
 					}
 					break;
+				case _RANK: // C15: -Rank
+					{
+						if(multipleQuals(V,v,"+"))
+							buf.append(skipFirstWord?L("The the following ranks: "):L("Requires the following ranks: "));
+						else
+							buf.append(skipFirstWord?L("The the following rank: "):L("Requires the following rank: "));
+						v=appendCommaList(buf,V,v,"+");
+					}
+					break;
+				case RANK: // C15: +Rank
+					{
+						if(multipleQuals(V,v,"-"))
+							buf.append(L("Disallows the following ranks: "));
+						else
+							buf.append(L("Disallows the following rank: "));
+						v=appendCommaList(buf,V,v,"-");
+					}
+					break;
 				case _WEAPONAMMO: // -WeaponAmmo
 					{
 						buf.append(skipFirstWord?L("The weapons that use: "):L("Requires weapons that use: "));
@@ -4667,6 +4685,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				//$FALL-THROUGH$
 				case _TATTOO: // -Tattoos
 				case _TAG: // -Tag
+				case _RANK: // C15: -Rank
 				case _MOOD: // -Mood
 				case _ACCCHIEVE: // -Accchieves
 				case _EXPERTISE: // -expertise
@@ -4903,6 +4922,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				//$FALL-THROUGH$
 				case TATTOO: // +Tattoos
 				case TAG: // +Tag
+				case RANK: // C15: +Rank
 				case MOOD: // +Mood
 				case ACCCHIEVE: // +Accchieves
 				case EXPERTISE: // +expertise
@@ -6422,6 +6442,32 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						for(final Object o : entry.parms())
 						{
 							if(mob.hasTag((String)o))
+								return false;
+						}
+					}
+					break;
+				case _RANK: // C15: -rank +elite: only mobs of these ranks
+					{
+						final String rank=MobRanks.rankOf(mob);
+						boolean found=false;
+						for(final Object o : entry.parms())
+						{
+							if(rank.equalsIgnoreCase((String)o))
+							{
+								found=true;
+								break;
+							}
+						}
+						if(!found)
+							return false;
+					}
+					break;
+				case RANK: // C15: +rank -boss: not mobs of these ranks
+					{
+						final String rank=MobRanks.rankOf(mob);
+						for(final Object o : entry.parms())
+						{
+							if(rank.equalsIgnoreCase((String)o))
 								return false;
 						}
 					}
@@ -9730,6 +9776,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case TATTOO: // +tattoo
 				case _TAG: // -tag
 				case TAG: // +tag
+				case _RANK: // C15: a record has no rank
+				case RANK:
 				case _MOOD: // -mood
 				case MOOD: // +mood
 				case _OFFICER: // -officer

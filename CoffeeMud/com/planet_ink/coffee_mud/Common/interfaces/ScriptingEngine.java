@@ -738,6 +738,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"PARM", //180
 		"AFFINITY", //181
 		"CHECK", //182
+		"RANK", //183
 	};
 
 	/** String list of all valid mobprog commands */

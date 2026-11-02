@@ -1105,7 +1105,8 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		||mob.charStats().getCurrentClass().expless()
 		||mob.charStats().getMyRace().expless())
 			return 0;
-		final int amount=GameDifficulty.xp(mob,JSProgression.xpGain(mob,sourceID,givenAmount)); // JS23: progression.js's xpGain; C13: PLAYERXP
+		// C15: the victim's rank's XP; JS23: progression.js's xpGain; C13: the difficulty's PLAYERXP
+		final int amount=GameDifficulty.xp(mob,JSProgression.xpGain(mob,sourceID,MobRanks.xpFor(victim,givenAmount)));
 		final Room R=mob.location();
 		if(R!=null)
 		{

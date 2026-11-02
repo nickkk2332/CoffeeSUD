@@ -179,6 +179,9 @@ public class Consider extends StdCommand
 					levelMsg.append(L("WILL KILL YOU DEAD!"));
 			}
 			mob.tell(levelMsg.toString());
+			final String rankTag=MobRanks.tagOf(targetMOB); // C15: its rank
+			if(rankTag.length()>0)
+				mob.tell("^H"+targetMOB.name(mob)+" "+rankTag+"^?");
 		}
 		final StringBuffer withWhat=new StringBuffer("");
 		final Vector<Ability> mendors=new Vector<Ability>();

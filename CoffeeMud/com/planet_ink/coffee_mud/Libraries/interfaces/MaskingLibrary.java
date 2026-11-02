@@ -531,6 +531,8 @@ public interface MaskingLibrary extends CMLibrary
 		DOMAIN,
 		_TAG("-TAGS"),
 		TAG("+TAGS"),
+		_RANK("-RANKS"), // C15: -RANK +ELITE: only mobs of these ranks (Prop_MobRank)
+		RANK("+RANKS"), // +RANK -BOSS: not mobs of these ranks
 		_ANYINGROUP, // SC16: the rest of the mask, for no one of the group here
 		ANYINGROUP, // for anyone of it
 		_ALLINGROUP, // not for everyone of it

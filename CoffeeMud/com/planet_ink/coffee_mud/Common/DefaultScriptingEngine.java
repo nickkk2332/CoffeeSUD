@@ -15883,6 +15883,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "false";
 			return ((W==terminalMob(ctx))||Party.isWindowed((MOB)W))?"true":"false";
 		}
+		case "RANK": // C15: RANK(who): its Prop_MobRank's rank, else NORMAL
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			return (W instanceof MOB)?MobRanks.rankOf((MOB)W):"NORMAL";
+		}
 		case "CHECK": // N29: CHECK(who STAT|skill difficulty [modifier]): d20 plus the stat's or skill's bonus, against the difficulty
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
