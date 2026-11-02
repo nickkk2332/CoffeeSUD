@@ -88,6 +88,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected boolean				alwaysTriggers	 = false;
 	protected boolean				approvedScripts	 = false;
 	protected boolean				multiTriggers	 = false;
+	/** SC4: MPSETINTERNAL VARHOST INSTANCE: a bare $ code's variables are kept on the object */
+	protected boolean				varHostInstance	 = false;
 
 	protected MOB					lastToHurtMe	 = null;
 	protected volatile Room			lastKnownLocation= null;
@@ -863,6 +865,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 	protected String getVarHost(final Environmental E, String rawHost, final MPContext ctx)
 	{
+		// SC4: @code is the object itself, its variables kept on it
+		if((rawHost.length()>1)&&(rawHost.charAt(0)=='@'))
+		{
+			final Environmental O=getArgumentItem(rawHost.substring(1),ctx);
+			if(O instanceof Room)
+				return CMLib.map().getExtendedRoomID((Room)O);
+			if(O instanceof Area)
+				return O.Name();
+			if(O instanceof Physical)
+				return ObjectVars.hostOf((Physical)O);
+		}
+		// MPSETINTERNAL VARHOST INSTANCE: a bare $ code's are kept on the object too
+		if(varHostInstance&&rawHost.startsWith("$")&&((E instanceof MOB)||(E instanceof Item)))
+			return ObjectVars.hostOf((Physical)E);
 		if(!rawHost.equals("*"))
 		{
 			if(E==null)
@@ -880,6 +896,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public boolean isVar(final String host, String var)
 	{
+		if(ObjectVars.isHost(host)) // SC4
+		{
+			final Map<String,String> O=ObjectVars.vars(host);
+			return (O!=null)&&O.containsKey(var.toUpperCase());
+		}
 		if(host.equalsIgnoreCase("*"))
 		{
 			String val=null;
@@ -921,6 +942,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	@Override
 	public String getVar(final String host, final String var)
 	{
+		if(ObjectVars.isHost(host)) // SC4: kept on the object
+			return ObjectVars.get(host,var);
 		String varVal = getVar(resources,host,var,null);
 		if(varVal != null)
 			return varVal;
@@ -2723,7 +2746,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		else
 		{
 			@SuppressWarnings("unchecked")
-			final Map<String,?> H=(Map<String,?>)resources._getResource("SCRIPTVAR-"+mobname);
+			final Map<String,?> H=ObjectVars.isHost(mobname)?ObjectVars.vars(mobname):(Map<String,?>)resources._getResource("SCRIPTVAR-"+mobname); // SC4
 			if(varname.equals("*"))
 			{
 				if(H!=null)
@@ -3081,7 +3104,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String name=vars.elementAtFirst(v);
 			key=vars.elementAtSecond(v).toUpperCase();
 			@SuppressWarnings("unchecked")
-			Map<String,String> H=(Map<String,String>)resources._getResource("SCRIPTVAR-"+name);
+			Map<String,String> H=ObjectVars.isHost(name)?ObjectVars.vars(name):(Map<String,String>)resources._getResource("SCRIPTVAR-"+name); // SC4: an object's own
+			if((H==null)&&ObjectVars.isHost(name))
+				continue; // the object is gone
 			if((H==null)
 			&&(defaultQuestName!=null)
 			&&(defaultQuestName.length()>0))
@@ -3233,10 +3258,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				H.put(key,val);
 			if(H.size()==0)
 				resources._removeResource("SCRIPTVAR-"+name);
-			ScriptVarWatch.changed(scope, name, key, val.trim(), varChangeSource());
+			ScriptVarWatch.changed(scope, ObjectVars.describe(name), key, val.trim(), varChangeSource());
 			ScriptEvents.varChanged(scope, name, key, oldVal, val.trim()); // ST25: VAR_PROG
 			if(ScriptTrace.isOn())
-				ScriptTrace.varChanged(name, key, val.trim());
+				ScriptTrace.varChanged(ObjectVars.describe(name), key, val.trim());
 		}
 	}
 
@@ -10609,6 +10634,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(arg2.equals("SCOPE"))
 					setVarScope(arg3);
 				else
+				if(arg2.equals("VARHOST")) // SC4: INSTANCE or NAME
+					varHostInstance=arg3.trim().equalsIgnoreCase("INSTANCE");
+				else
 				if(arg2.equals("NODELAY"))
 					noDelay=CMath.s_bool(arg3);
 				else
@@ -13297,16 +13325,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					final Area nA=CMLib.map().areaLocation(ctx.scripted);
 					arg3=""+ScriptEvents.clockHours((nA!=null)?nA.getTimeObj():CMLib.time().globalClock());
 				}
-				if(!which.equals("*"))
-				{
-					if(E==null)
-						which=varify(ctx,which);
-					else
-					if(E instanceof Room)
-						which=CMLib.map().getExtendedRoomID((Room)E);
-					else
-						which=E.Name();
-				}
+				which=getVarHost(E,which,ctx); // SC4: through getVarHost, for @ hosts
 				if((which.length()>0)&&(arg2.length()>0))
 				{
 					if(CMSecurity.isDebugging(CMSecurity.DbgFlag.SCRIPTVARS))
@@ -14584,6 +14603,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		// the variable scope a script set for itself (MPSETINTERNAL SCOPE)
 		if(scope.length()>0)
 			str.append(xml.convertXMLtoTag("SCOPE",xml.parseOutAngleBrackets(scope)));
+		if(varHostInstance) // SC4
+			str.append("<VARHOST>INSTANCE</VARHOST>");
 		// the script's own variables, when it has its own scope (INDIVIDUAL)
 		if((resources!=null)&&(scope.equals("*")||scope.equals("INDIVIDUAL")))
 		{
@@ -14713,6 +14734,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		final String savedScope=xmlLib.restoreAngleBrackets(xmlLib.getValFromPieces(tags, "SCOPE"));
 		if((savedScope.length()>0)&&(!savedScope.equals(scope)))
 			setVarScope(savedScope);
+		varHostInstance="INSTANCE".equalsIgnoreCase(xmlLib.getValFromPieces(tags,"VARHOST")); // SC4
 		final XMLTag vars=xmlLib.getPieceFromPieces(tags, "VARS");
 		if((vars!=null)&&(resources!=null)&&(scope.equals("*")||scope.equals("INDIVIDUAL")))
 		{
@@ -15246,6 +15268,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return ((P!=null)&&(!ScriptLib.catalogFull(P)))?"true":"false";
 			return ""+ScriptLib.catalogCount(P);
 		}
+		case "STATE": // SC4: STATE(thing name): the value kept on that one object
+		{
+			final Environmental O=getArgumentItem(CMParms.getCleanBit(parms,0),ctx);
+			final String var=varify(ctx,CMParms.getPastBitClean(parms,0)).trim();
+			if(!(O instanceof Physical)||(var.length()==0))
+				return "";
+			return ObjectVars.get(ObjectVars.hostOf((Physical)O),var);
+		}
 		default: // the newer functions end here
 			logError(ctx,name,"Syntax","unknown function "+name);
 			return "";
@@ -15265,7 +15295,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		final List<String> words=CMParms.parse(inner);
 		final String[] c=ScriptLib.splitCompare(words);
 		if(c==null)
-			return "true".equalsIgnoreCase(extraValue(ctx,name,inner).trim());
+		{
+			final String r=extraValue(ctx,name,inner).trim();
+			if(name.equalsIgnoreCase("STATE")) // SC4: set, and not 0 or false
+				return (r.length()>0)&&(!r.equals("0"))&&(!r.equalsIgnoreCase("false"));
+			return "true".equalsIgnoreCase(r);
+		}
 		final int at=inner.indexOf(" "+c[1]+" ");
 		final String left=(at>=0)?inner.substring(0,at):c[0];
 		final String right=(at>=0)?inner.substring(at+c[1].length()+2):c[2];
@@ -15278,16 +15313,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 * @param which the word
 	 * @return the host's name for variables
 	 */
-	protected String varHostFor(final MPContext ctx, String which)
+	protected String varHostFor(final MPContext ctx, final String which)
 	{
-		if(which.equals("*"))
-			return which;
-		final Environmental E=getArgumentItem(which,ctx);
-		if(E==null)
-			return varify(ctx,which);
-		if(E instanceof Room)
-			return CMLib.map().getExtendedRoomID((Room)E);
-		return E.Name();
+		return getVarHost(getArgumentItem(which,ctx),which,ctx);
 	}
 
 	/**
@@ -15332,6 +15360,21 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				T.delTag(tag);
 			else
 				logError(ctx,"MPTAG","Syntax","ADD, DEL or TOGGLE? "+line);
+			return null;
+		}
+		case "MPSTATE": // SC4: MPSTATE thing name value|CLEAR: a value kept on that one object
+		{
+			final Environmental O=getArgumentItem(CMParms.getCleanBit(line,1),ctx);
+			final String var=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			String val=varify(ctx,CMParms.getPastBitClean(line,2));
+			if(!(O instanceof Physical)||(O instanceof Room)||(var.length()==0))
+			{
+				logError(ctx,"MPSTATE","Syntax","no such thing, or no name: "+line);
+				return null;
+			}
+			if(val.trim().equalsIgnoreCase("CLEAR"))
+				val="";
+			setVar(ObjectVars.hostOf((Physical)O),var,val);
 			return null;
 		}
 		default: // the newer commands end here

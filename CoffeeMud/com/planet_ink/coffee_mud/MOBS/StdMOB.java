@@ -4110,8 +4110,10 @@ public class StdMOB implements MOB
 									return isOk;
 								}
 								tickStatus = Tickable.STATUS_REBIRTH;
+								final Map<String,String> keptVars = ObjectVars.persisting(this); // SC4
 								cloneFix(CMClass.getMOBPrototype(ID()));
 								bringToLife(startRoom, true);
+								ObjectVars.reborn(this, keptVars);
 								final Room room = location();
 								if(room != null)
 								{

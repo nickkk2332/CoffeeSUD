@@ -1165,6 +1165,14 @@ JS17, JS18, JS19, JS20, JS23
   `CATALOGCOUNT(name)`. FROMFILE and FROMGENFILE's `ALL` now load all. Shop
   stock is checked against the cap but not counted, as before. The
   uniqueness rules of item 1 are not there yet.
+- SC4 done. The host `@code` (`MPSETVAR @$i BRIBED 1`, `$<@$i BRIBED>`,
+  `VAR(@$i BRIBED == 1)`) is the object itself: its variables are kept on
+  it, in its ExtraData effect (`core/ObjectVars`), so each copy has its own
+  and a save writes them with it. `MPSTATE thing name value|CLEAR` and
+  `STATE(thing name)` use the same store; `MPSETINTERNAL VARHOST INSTANCE`
+  (kept in the engine's saved state) makes a bare `$i` mean `@$i`. A mob
+  that comes back to life loses them, unless its variable PERSIST is set.
+  JavaScript's `state()` waits for JS17.
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser

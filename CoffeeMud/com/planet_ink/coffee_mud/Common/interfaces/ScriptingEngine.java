@@ -700,6 +700,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"TAGS", //166
 		"CATALOG", //167
 		"CATALOGCOUNT", //168
+		"STATE", //169
 	};
 
 	/** String list of all valid mobprog commands */
@@ -809,6 +810,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPDEBUG", // 102
 		"MPLIST", // 103
 		"MPTAG", // 104
+		"MPSTATE", // 105
 	};
 
 	/**
