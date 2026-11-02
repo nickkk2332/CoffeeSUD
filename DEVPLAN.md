@@ -1469,6 +1469,22 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   Prop_QuestGiver. Only a player's characters see marks. `QUESTMARKERS=AUTO`
   (coffeemud.ini or world.ini) marks every running quest's first quest mob
   and every Prop_QuestGiver host without the property.
+- Q3 done. `core/QuestJournal`: each character's quest journal, kept
+  as JSON in a hidden Prop_QuestLog, so it is saved with them: for each
+  quest, objectives (an ID, a count to reach, the count, DONE or FAILED,
+  hidden or not, the text) and entries dated on the game calendar.
+  `MPQOBJECTIVE who quest ADD id target text`, `SET`/`BUMP id (n)` (the
+  count reached is DONE), `DONE`/`FAIL`/`HIDE`/`SHOW id`, `CLEAR (id)`;
+  `MPQJOURNAL who quest text`; `QOBJECTIVE(who quest id)`, the count, DONE
+  or FAILED, as a test or a value. A quest step's `SET OBJECTIVE id target
+  text` and `SET JOURNAL text` go to those on the quest when the step
+  starts, and to whoever accepts it (`acceptQuest`) during the step. QUESTS
+  groups by SET CATEGORY, main first, and shows each quest's objectives
+  ([x], [ ], [-]) and time left in game hours or days; OBJECTIVEn and
+  OBJECTIVEnDONE variables of the quest's script are shown the same way.
+  `QUESTS name` adds the objectives and the history; `QUESTS LOG` the
+  latest entries. A "Quest updated:" line tells each change, unless
+  QUESTNOTICES=OFF (coffeemud.ini or world.ini).
 
 #### 2f. NPC behaviour and dialogue (21)
 

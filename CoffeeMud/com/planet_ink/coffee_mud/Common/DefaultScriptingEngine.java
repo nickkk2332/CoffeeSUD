@@ -529,6 +529,22 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 	}
 
+	/**
+	 * Q3: a quest's name as a script gives it: * for the script's own.
+	 * @param word the word
+	 * @return the quest's name
+	 */
+	private String questNameFor(final String word)
+	{
+		final Quest Q=getQuest(word);
+		if(Q!=null)
+			return Q.name();
+		if(word.equals("*")&&(defaultQuestName.length()>0))
+			return defaultQuestName;
+		final Quest Q2=CMLib.quests().fetchQuest(word);
+		return (Q2!=null)?Q2.name():word;
+	}
+
 	private Quest getQuest(final String named)
 	{
 		if((defaultQuestName.length()>0)
@@ -15751,6 +15767,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String a=loadArgs(ctx.scripted).get(v);
 			return (a==null)?"":a;
 		}
+		case "QOBJECTIVE": // Q3: QOBJECTIVE(who quest id): the count, DONE or FAILED, or ""
+		{
+			final List<String> w=CMParms.parse(parms.trim());
+			if(w.size()<3)
+				return "";
+			final Environmental W=getArgumentMOB(w.get(0),ctx);
+			if(!(W instanceof MOB))
+				return "";
+			return QuestJournal.value((MOB)W,questNameFor(varify(ctx,w.get(1))),varify(ctx,w.get(2)));
+		}
 		case "JS": // JS15: JS(expr), JS$(expr): a JavaScript expression's value, as text
 		case "JS$":
 			return jsText(jsExpr(ctx,v));
@@ -15974,6 +16000,31 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPLIST","Syntax","unknown change "+op+": "+line);
 			else
 				setVar(which,var,listValue(now));
+			return null;
+		}
+		case "MPQOBJECTIVE": // Q3: MPQOBJECTIVE who quest ADD id target text | SET|BUMP id (n) | DONE|FAIL|HIDE|SHOW id | CLEAR (id)
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			if(!(W instanceof MOB))
+			{
+				logError(ctx,"MPQOBJECTIVE","RunTime","no such character: "+line);
+				return null;
+			}
+			final String quest=questNameFor(varify(ctx,CMParms.getCleanBit(line,2)));
+			final String err=QuestJournal.objective((MOB)W,quest,varify(ctx,CMParms.getCleanBit(line,3)),varify(ctx,CMParms.getPastBitClean(line,3)));
+			if(err!=null)
+				logError(ctx,"MPQOBJECTIVE","Syntax",err+": "+line);
+			return null;
+		}
+		case "MPQJOURNAL": // Q3: MPQJOURNAL who quest text: an entry, dated on the game calendar
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			if(!(W instanceof MOB))
+			{
+				logError(ctx,"MPQJOURNAL","RunTime","no such character: "+line);
+				return null;
+			}
+			QuestJournal.journal((MOB)W,questNameFor(varify(ctx,CMParms.getCleanBit(line,2))),varify(ctx,CMParms.getPastBitClean(line,2)));
 			return null;
 		}
 		case "MPJSFILE": // JS15: MPJSFILE file args: a JavaScript file run as a <SCRIPT> is, with args

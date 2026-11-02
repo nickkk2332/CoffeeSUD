@@ -93,14 +93,104 @@ public class Questwins extends StdCommand
 	public String getQuestsDoingList(final String mobName, final String pronoun)
 	{
 		final List<Quest> qVec=getQuestsDoingList(mobName);
+		final MOB mob=CMLib.players().getPlayerAllHosts(mobName);
 		final StringBuffer msg=new StringBuffer(L("^HQuests @x1 listed as having accepted:^?^N\n\r",pronoun));
+		// Q3: grouped by CATEGORY, main first, each with its objectives and time left
+		boolean grouped=false;
+		for(final Quest Q : qVec)
+			grouped=grouped||(categoryOf(Q).length()>0);
+		String lastCat=null;
 		for(int i=0;i<qVec.size();i++)
 		{
 			final Quest Q=qVec.get(i);
+			final String cat=categoryOf(Q);
+			if(grouped&&(!cat.equals(lastCat)))
+			{
+				msg.append("^H").append((cat.length()>0)?CMStrings.capitalizeAndLower(cat):L("Other")).append("^N\n\r");
+				lastCat=cat;
+			}
 			final String name=Q.displayName().trim().length()>0?Q.displayName():Q.name();
-			msg.append((i+1)+") "+(name)+"^N\n\r");
+			msg.append((i+1)+") "+(name)+timeLeftOf(Q)+"^N\n\r");
+			if(mob!=null)
+			{
+				for(final String line : objectiveLines(mob,Q))
+					msg.append("     ").append(line).append("^N\n\r");
+			}
 		}
 		return msg.toString();
+	}
+
+	/**
+	 * Q3: a quest's category, as SET CATEGORY gave it.
+	 * @param Q the quest
+	 * @return the category, lower case, or ""
+	 */
+	protected static String categoryOf(final Quest Q)
+	{
+		final String c=Q.getStat("CATEGORY");
+		return (c==null)?"":c.trim().toLowerCase();
+	}
+
+	/** Q3: main first, then the other categories, then none, each by name */
+	private final Comparator<Quest> questCategorySorter = new Comparator<Quest>()
+	{
+		private int rank(final Quest Q)
+		{
+			final String c=categoryOf(Q);
+			return c.equals("main")?0:(c.length()>0)?1:2;
+		}
+
+		@Override
+		public int compare(final Quest o1, final Quest o2)
+		{
+			if((o1==null)||(o2==null))
+				return questNameSorter.compare(o1,o2);
+			final int r=rank(o1)-rank(o2);
+			if(r!=0)
+				return r;
+			final int c=categoryOf(o1).compareTo(categoryOf(o2));
+			return (c!=0)?c:questNameSorter.compare(o1,o2);
+		}
+	};
+
+	/**
+	 * Q3: the time a running quest has left, on the game clock.
+	 * @param Q the quest
+	 * @return " (time left: ...)", or ""
+	 */
+	protected String timeLeftOf(final Quest Q)
+	{
+		if((!Q.running())||(Q.duration()<=0)||(Q.ticksRemaining()<=0))
+			return "";
+		return " ("+L("time left: @x1",QuestJournal.timeLeft(Q.ticksRemaining()))+")";
+	}
+
+	/**
+	 * Q3: a character's objectives for a quest: the journal's, and those
+	 * the quest's script sets as OBJECTIVEn and OBJECTIVEnDONE.
+	 * @param mob the character
+	 * @param Q the quest
+	 * @return the lines, [x] or [ ] and the text
+	 */
+	protected List<String> objectiveLines(final MOB mob, final Quest Q)
+	{
+		final List<String> lines=QuestJournal.objectiveLines(mob,Q.name());
+		for(final Enumeration<ScriptingEngine> e=mob.scripts();e.hasMoreElements();)
+		{
+			final ScriptingEngine SE=e.nextElement();
+			if((SE==null)||(!SE.defaultQuestName().equalsIgnoreCase(Q.name())))
+				continue;
+			for(int n=1;n<=20;n++)
+			{
+				final String text=SE.getVar("*","OBJECTIVE"+n);
+				if((text==null)||(text.trim().length()==0))
+					continue;
+				final String done=SE.getVar("*","OBJECTIVE"+n+"DONE");
+				final boolean isDone=(done!=null)&&(done.trim().length()>0)&&(!done.trim().equals("0"))&&(!done.trim().equalsIgnoreCase("false"));
+				lines.add((isDone?"[x] ":"[ ] ")+text.trim());
+			}
+		}
+		return lines;
 	}
 
 	public List<Quest> getQuestsDoingList(final String mobName)
@@ -120,7 +210,7 @@ public class Questwins extends StdCommand
 					qVec.add(Q);
 				}
 			}
-			Collections.sort(qVec, questNameSorter);
+			Collections.sort(qVec, questCategorySorter); // Q3: by category, main first
 		}
 		return qVec;
 	}
@@ -280,6 +370,15 @@ public class Questwins extends StdCommand
 			}
 		}
 		else
+		if((commands.size()==2)&&(commands.get(1).equalsIgnoreCase("LOG"))) // Q3: the journal's latest entries
+		{
+			final List<String> entries=QuestJournal.entries(mob,null,20);
+			if(entries.size()==0)
+				mob.tell(L("Your quest journal has nothing in it yet."));
+			else
+				mob.tell(L("^HYour quest journal, the latest last:^N\n\r")+String.join("^N\n\r",entries)+"^N");
+		}
+		else
 		if(commands.size()==1)
 		{
 			final String msg=getQuestsDoingList(mob.Name(), L("you are"));
@@ -364,14 +463,7 @@ public class Questwins extends StdCommand
 				final String timeRemainingType=foundS.getVar("*","TIME_REMAINING_TYPE");
 				if(((timeRemainingType.equalsIgnoreCase("TICKS")||(timeRemainingType.length()==0))
 				&&(CMath.isInteger(timeRemaining))))
-				{
-					long ticks=CMath.s_int(timeRemaining);
-					ticks*=CMProps.getTickMillis();
-					if(ticks>60000)
-						timeRemaining=(ticks/60000)+" minutes";
-					else
-						timeRemaining=(ticks/1000)+" seconds";
-				}
+					timeRemaining=QuestJournal.timeLeft(CMath.s_int(timeRemaining)); // Q3: on the game clock
 				else
 				if(timeRemainingType.length()>0)
 					timeRemaining+=" "+timeRemainingType;
@@ -382,6 +474,14 @@ public class Questwins extends StdCommand
 				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",timeRemaining));
 			if((progress!=null)&&(progress.length()>0))
 				mob.tell(L("\n\r^yProgress: ^w@x1^N",progress));
+			if(((timeRemaining==null)||(timeRemaining.length()==0))&&(timeLeftOf(Q).length()>0)) // Q3
+				mob.tell(L("\n\r^yTime Remaining: ^w@x1^N",QuestJournal.timeLeft(Q.ticksRemaining())));
+			final List<String> objectives=objectiveLines(mob,Q);
+			if(objectives.size()>0)
+				mob.tell(L("\n\r^yObjectives:^N\n\r")+"  "+String.join("^N\n\r  ",objectives)+"^N");
+			final List<String> history=QuestJournal.entries(mob,Q.name(),50);
+			if(history.size()>0)
+				mob.tell(L("\n\r^yHistory:^N\n\r")+"  "+String.join("^N\n\r  ",history)+"^N");
 		}
 		return false;
 	}

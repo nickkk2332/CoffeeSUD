@@ -60,7 +60,7 @@ public final class WorldSettings
 		"LASTPLAYERLEVEL", "INJURYSYSTEM", "COMBATSYSTEM", "PLAYERDEATH",
 		"MOBDEATH", "HUNGER", "THIRST", "MANACOST", "DIRECTIONS", "CHATDEFAULT",
 		// quests
-		"QUESTMARKERS",
+		"QUESTMARKERS", "QUESTNOTICES",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */

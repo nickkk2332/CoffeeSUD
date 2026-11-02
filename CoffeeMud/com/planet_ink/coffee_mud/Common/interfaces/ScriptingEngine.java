@@ -707,6 +707,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ARG", //172
 		"JS", //173
 		"JS$", //174
+		"QOBJECTIVE", //175
 	};
 
 	/** String list of all valid mobprog commands */
@@ -826,6 +827,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPLOCAL", // 112
 		"ELSEIF", // 113
 		"MPJSFILE", // 114
+		"MPQOBJECTIVE", // 115
+		"MPQJOURNAL", // 116
 	};
 
 	/**

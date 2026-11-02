@@ -269,6 +269,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			final MOB M=(B instanceof MOB)?(MOB)B:mob;
 			final MPContext ctx = new MPContext(P, M, mob, (Environmental) B, null, null, mob.Name(), objs);
 			acceptEng.callFunc("DO_ACCEPT", mob.Name(), ctx);
+			final QuestState qs=questState; // Q3: the step's objectives and entry
+			if(qs!=null)
+				QuestJournal.applyStep(mob,name(),qs.stepObjectives,qs.stepJournal);
 			ScriptEvents.quest(this,"ACCEPT",mob,"");
 		}
 	}
@@ -1202,6 +1205,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		if(vStart<0)
 			vStart=0;
 		q.done=false;
+		q.stepObjectives.clear(); // Q3: this step's
+		q.stepJournal.clear();
 		if(vStart>=script.size())
 			return;
 		q.startLine=vStart;
@@ -3500,6 +3505,33 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 							q.item=(Item)q.envObject;
 							questifyScriptableBehavs(q.item);
 						}
+					}
+					else
+					if(cmd.equals("OBJECTIVE")) // Q3: SET OBJECTIVE id target text: the step's, for those on the quest
+					{
+						if(p.size()<4)
+						{
+							if(optional)
+								continue;
+							errorOccurred(q,isQuiet,"Quest '"+name()+"', SET OBJECTIVE wants an ID and a count.");
+							break;
+						}
+						final String[] o={p.get(2),p.get(3),(p.size()>4)?CMParms.combine(p,4):p.get(2)};
+						q.stepObjectives.add(o);
+						final List<String[]> oneO=new ArrayList<String[]>();
+						oneO.add(o);
+						for(final MOB M : QuestJournal.onQuest(this))
+							QuestJournal.applyStep(M,name(),oneO,new ArrayList<String>());
+					}
+					else
+					if(cmd.equals("JOURNAL")) // Q3: SET JOURNAL text: the step's entry, for those on the quest
+					{
+						final String text=CMParms.combine(p,2);
+						q.stepJournal.add(text);
+						final List<String> oneJ=new ArrayList<String>();
+						oneJ.add(text);
+						for(final MOB M : QuestJournal.onQuest(this))
+							QuestJournal.applyStep(M,name(),new ArrayList<String[]>(),oneJ);
 					}
 					else
 					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")) // JS18, Q1: read when the script was set
@@ -7152,6 +7184,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		public boolean		error					= false;
 		public boolean		done					= false;
 		public boolean		beQuiet					= false;
+		/** Q3: the step's SET OBJECTIVE (id, target, text) and SET JOURNAL lines */
+		public List<String[]>	stepObjectives		= new ArrayList<String[]>();
+		public List<String>	stepJournal			= new ArrayList<String>();
 		public boolean		isOptional				= false;
 		public boolean		autoStepAfterDuration	= false;
 		public int			preserveState			= 0;

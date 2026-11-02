@@ -219,6 +219,21 @@ character who may take the quest, a grey <code>(?)</code> once they have, and a
 bright <code>(?)</code> when his <code>FUNCTION_PROG CAN_COMPLETE</code>, run with
 them as <code>$n</code>, returns something. <code>QUESTMARKERS=AUTO</code> in
 world.ini marks every quest's first quest mob without the property.</p>
+<p>Each character has a quest journal, which QUESTS shows, grouped by
+<code>SET CATEGORY</code> (main first), with what is to be done and the time left
+on the game clock; <code>QUESTS bell</code> adds the history, <code>QUESTS LOG</code>
+the latest entries.</p>
+<pre>
+MPQOBJECTIVE $n bell ADD drowned 5 Lay 5 drowned men to rest
+MPQOBJECTIVE $n bell BUMP drowned      (in each drowned man's DEATH_PROG)
+MPQJOURNAL $n bell The bell rang under the water.
+if QOBJECTIVE($n bell drowned == DONE)
+  ...
+</pre>
+<p>A quest step can give them itself: <code>SET OBJECTIVE drowned 5 Lay 5
+drowned men to rest</code> and <code>SET JOURNAL The bell rang under the
+water.</code> go to whoever is on the quest when the step starts, or accepts
+it during the step.</p>
 <pre>
 set name bell
 set display The Drowned Bell
