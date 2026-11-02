@@ -1905,6 +1905,14 @@ C18, C19, C20, C21, C22, C23, C25
   or when the trail is lost (GIVEUPMSG=, then
   WanderHomeLater ONCE unless STAY). REMEMBER=n: the one who fled, coming
   back into its room within n ticks, is attacked the next tick.
+- C21 done. Behaviors/EncounterReset (mobs, rooms): engaged while it (or,
+  ROOM=true or on a room, an NPC of the room) fights, its foes kept; then
+  when none is within RADIUS= rooms (a walk through exits) for IDLE=
+  ticks: home (bringMobHere), HEAL=%, malicious uninvokable effects
+  undone, followers with no start room or the tag SUMMONED destroyed
+  (DESPAWNADDS=), Threat forgotten, each other behaviour told
+  (setStat ENCOUNTERRESET, for C3), and RESET_PROG (101) through
+  ScriptEvents.encounterReset.
 
 #### 2h. Items, properties and puzzles (23)
 

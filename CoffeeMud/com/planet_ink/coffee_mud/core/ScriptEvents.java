@@ -487,6 +487,22 @@ public final class ScriptEvents
 	/** N9: TALK_PROG's code */
 	public static final int	TALK_PROG	= code("TALK_PROG");
 
+	/** C21: RESET_PROG's code */
+	public static final int	RESET_PROG	= code("RESET_PROG");
+
+	/**
+	 * C21: an NPC was reset after its foes left (EncounterReset): RESET_PROG
+	 * runs on its scripts, $n and $i itself.
+	 * @param npc the NPC
+	 */
+	public static void encounterReset(final MOB npc)
+	{
+		if((npc == null) || (!isUsed(RESET_PROG)))
+			return;
+		for(final ScriptingEngine S : engines(npc))
+			S.eventCheck(npc, RESET_PROG, npc, npc, null, "", null, "C", t -> true);
+	}
+
 	/**
 	 * N9: TALK npc [ABOUT topic]: TALK_PROG [topic words|ALL] runs at once on
 	 * the NPC's scripts, $n the speaker, $g and $0 the topic.
