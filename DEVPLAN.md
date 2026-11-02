@@ -1206,6 +1206,18 @@ JS17, JS18, JS19, JS20, JS23
   `[Name] text`, and MPPROMPT, MPCONFIRM and MPCHOOSE ask there, named. Not
   MPECHOAROUND, whose others in the room include the one played. The guide
   (SC15) says that the account tattoos are the profile's.
+- SC9 done. The lines HELP SCRIPTABLE lacked, from the engine's `progs`,
+  `funcs` and `methods`: the -ING and other triggers (CMDFAIL_PROG among
+  them), 28 functions, 19 commands and MPSETINTERNAL's settings.
+  MESSAGE_TYPES is written from `CMMsg.TYPE_DESCS` and points at LIST
+  MSGTYPES. The review fixed what the lines would otherwise have had to
+  call broken: ISSPEAKING(who COMMON), ISRLMONTH() from 1, CANSEE() and
+  CANHEAR() values, HASACCTATTOO's $ codes, CLANQUALIFIES (never true;
+  now as CLANAPPLY checks), and CMDFAIL_PROG with a command alone or the
+  first and last words after it. Left as they are, and said so in their
+  lines: ITEMCOUNT counting things in containers twice, MPRLOAD doing
+  nothing, DROPPING_PROG stopped by MPNOTRIGGER DROP_PROG. The
+  single-player notes and CMDFAIL_PROG's example are in the guide (SC15).
 - SC10 done. `UPPER`, `LOWER`, `CAP`, `LEN`, `TRIM`, `SUBSTR`, `REPLACE`,
   `PADRIGHT`, `ANAME`, `PLURAL`, `STRPOS`, `STRSTARTS`, `STRENDS`. A
   script's quotes reach the functions as backticks, as the script parser

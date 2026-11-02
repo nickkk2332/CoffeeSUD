@@ -4574,7 +4574,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							returnable=true;
 						else
 						if(arg2.equalsIgnoreCase("common")||arg2.equalsIgnoreCase("none"))
-							returnable=true;
+							returnable=(L==null)||L.ID().equalsIgnoreCase("Common"); // SC9: only when it speaks no other
 						else
 							returnable=false;
 					}
@@ -6070,7 +6070,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					else
 					if((E!=null)&&(E instanceof MOB)&&(((MOB)E).playerStats()!=null)&&(((MOB)E).playerStats().getAccount()!=null))
-						returnable=((MOB)E).playerStats().getAccount().findTattoo(arg2)!=null;
+						returnable=((MOB)E).playerStats().getAccount().findTattoo(varify(ctx,arg2).trim())!=null; // SC9: $ codes too
 					else
 						returnable=false;
 					break;
@@ -6974,17 +6974,17 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					final Clan C=CMLib.clans().findClan(arg2);
 					if((C!=null)&&(E instanceof MOB))
 					{
+						// SC9: may apply, as CLANAPPLY checks (it was never true)
 						final MOB mob=(MOB)E;
-						if(C.isOnlyFamilyApplicants()
+						returnable=(mob.getClanRole(C.clanID())==null);
+						if(returnable
+						&&C.isOnlyFamilyApplicants()
 						&&(!CMLib.clans().isFamilyOfMembership(mob,C.getMemberList())))
 							returnable=false;
-						else
-						if(CMLib.clans().getClansByCategory(mob, C.getCategory()).size()>CMProps.getMaxClansThisCategory(C.getCategory()))
+						if(returnable
+						&&(CMLib.clans().getClansByCategory(mob, C.getCategory()).size()>=CMProps.getMaxClansThisCategory(C.getCategory())))
 							returnable=false;
 						if(returnable && (!CMLib.masking().maskCheck(C.getBasicRequirementMask(), mob, true)))
-							returnable=false;
-						else
-						if(returnable && (CMLib.masking().maskCheck(C.getAcceptanceSettings(),mob,true)))
 							returnable=false;
 					}
 					else
@@ -8566,11 +8566,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				break;
 			}
 			case 112: // cansee
-			{
-				break;
-			}
 			case 113: // canhear
 			{
+				// SC9: true or false, as the tests
+				final PhysicalAgent MP=getArgumentMOB(CMParms.getCleanBit(funcParms,0),ctx);
+				final Physical P=getArgumentItem(CMParms.getPastBitClean(funcParms,0),ctx);
+				if((MP instanceof MOB)&&(P!=null))
+				{
+					final boolean can=(funcCode.intValue()==112)?CMLib.flags().canBeSeenBy(P,(MOB)MP):CMLib.flags().canBeHeardMovingBy(P,(MOB)MP);
+					results.append(can?"true":"false");
+				}
+				else
+					results.append("false");
 				break;
 			}
 			case 111: // itemcount
@@ -8689,7 +8696,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			case 107: // isrlmonth
 			{
 				if(lastKnownLocation!=null)
-					results.append(Calendar.getInstance().get(Calendar.MONTH));
+					results.append(Calendar.getInstance().get(Calendar.MONTH)+1); // SC9: from 1, as the test
 				break;
 			}
 			case 108: // isrlyear
@@ -16243,8 +16250,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						{
 							final String command=t[1];
 							final int x=msg.targetMessage().indexOf(' ');
-							final String userCmd=(x<0)?msg.targetMessage():msg.targetMessage().substring(0,x).trim().toUpperCase();
-							if(command.toUpperCase().startsWith(userCmd))
+							final String userCmd=((x<0)?msg.targetMessage():msg.targetMessage().substring(0,x)).trim().toUpperCase(); // SC9: alone too
+							if((userCmd.length()>0)&&command.toUpperCase().startsWith(userCmd))
 							{
 								str=(x<0)?"":msg.targetMessage().substring(x).trim().toUpperCase();
 								if(str == null)
@@ -16260,7 +16267,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 								else
 								for(int i=2;i<t.length;i++)
 								{
-									if(str.indexOf(" "+t[i]+" ")>=0)
+									if((" "+str+" ").indexOf(" "+t[i]+" ")>=0) // SC9: the first and last words too
 									{
 										str=(t[i].trim()+" "+str.trim()).trim();
 										tryIt=true;
