@@ -309,6 +309,10 @@ takes one, and each morning the jobs done go and new ones come.</p>
 A side delivery can let go cleanly: its <code>FUNCTION_PROG DO_DROP</code> runs when
 the player confirms QUESTS DROP, and takes the parcel back; a <code>FUNCTION_PROG
 CAN_DROP</code> that returns words refuses the drop with them.</p>
+<p>Objectives can say where: <code>MPQOBJECTIVE $n bell ADD chapel 1 Return the bell to
+the chapel AT=Brenn#14</code> shows as "Return the bell to the chapel (Brenn, Chapel of
+Tides)", and <code>QUESTS WHERE 1</code> answers "The Chapel of Tides lies to the
+north." <code>AT=QUESTOBJ:2</code> follows the quest's second mob wherever it is.</p>
 <pre>
 set name bell
 set display The Drowned Bell

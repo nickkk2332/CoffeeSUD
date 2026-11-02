@@ -5,6 +5,9 @@ import java.util.*;
 import com.planet_ink.coffee_mud.Abilities.interfaces.Ability;
 import com.planet_ink.coffee_mud.Common.interfaces.Quest;
 import com.planet_ink.coffee_mud.Common.interfaces.TimeClock;
+import com.planet_ink.coffee_mud.Areas.interfaces.Area;
+import com.planet_ink.coffee_mud.Items.interfaces.Item;
+import com.planet_ink.coffee_mud.Locales.interfaces.Room;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 
 /*
@@ -342,8 +345,17 @@ public final class QuestJournal
 			return "no objective ID";
 		if(what.equals("ADD"))
 		{
-			final String target = (words.size() > 1) ? words.get(1) : "1";
-			final String text = (words.size() > 2) ? CMParms.combine(words, 2) : id;
+			String at = null; // Q16: AT=where (or AT="where"), anywhere after the ID
+			String body = rest;
+			final java.util.regex.Matcher am = java.util.regex.Pattern.compile("(?i)(?:^|\\s)AT=(\"[^\"]*\"|'[^']*'|\\S+)").matcher(rest);
+			if(am.find())
+			{
+				at = unquote(am.group(1));
+				body = rest.substring(0, am.start()) + " " + rest.substring(am.end());
+			}
+			final List<String> aw = CMParms.parse(body);
+			final String target = (aw.size() > 1) ? aw.get(1) : "1";
+			final String text = (aw.size() > 2) ? CMParms.combine(aw, 2) : id;
 			Objective O = log.find(quest, id);
 			final boolean isNew = (O == null);
 			if(isNew)
@@ -354,6 +366,8 @@ public final class QuestJournal
 			}
 			O.target = Math.max(1, CMath.s_int(target));
 			O.text = text;
+			if(at != null)
+				O.at = at;
 			write(mob, log);
 			if(isNew)
 				notice(mob, quest, counted(O));
@@ -362,6 +376,12 @@ public final class QuestJournal
 		final Objective O = log.find(quest, id);
 		if(O == null)
 			return "no objective " + id + " for quest " + quest;
+		if(what.equals("AT")) // Q16: AT id where, or AT id to forget it
+		{
+			O.at = unquote((words.size() > 1) ? CMParms.combine(words, 1) : "");
+			write(mob, log);
+			return null;
+		}
 		final int n = (words.size() > 1) ? CMath.s_int(words.get(1)) : 1;
 		final String before = O.value();
 		if(what.equals("SET"))
@@ -538,7 +558,8 @@ public final class QuestJournal
 			if(O.hidden)
 				continue;
 			final String box = O.state.equals("DONE") ? "[x]" : O.state.equals("FAILED") ? "[-]" : "[ ]";
-			lines.add(box + " " + counted(O));
+			final String place = (O.state.length() == 0) ? placeOf(quest, O.at) : "";
+			lines.add(box + " " + counted(O) + ((place.length() > 0) ? (" (" + place + ")") : ""));
 		}
 		return lines;
 	}
@@ -581,6 +602,142 @@ public final class QuestJournal
 		while(lines.size() > most)
 			lines.remove(0);
 		return lines;
+	}
+
+	// ------------------------------------------------------------ where (Q16)
+
+	private static String unquote(final String s)
+	{
+		final String t = (s == null) ? "" : s.trim();
+		if((t.length() > 1) && (t.startsWith("\"") || t.startsWith("'")) && (t.charAt(t.length() - 1) == t.charAt(0)))
+			return t.substring(1, t.length() - 1).trim();
+		return t;
+	}
+
+	/**
+	 * @return QUESTTRACK, a world option: OFF, AREA, or PATH (the default)
+	 */
+	public static String tracking()
+	{
+		final String t = CMProps.instance().getStr("QUESTTRACK").trim().toUpperCase();
+		return (t.equals("OFF") || t.equals("AREA")) ? t : "PATH";
+	}
+
+	/**
+	 * Q16: an objective's AT=: the room it names, or the room of the quest's
+	 * mob or item (QUESTOBJ:n or QUESTOBJ:name, QUESTMOB:, QUESTITEM:).
+	 * @param quest the quest's name
+	 * @param at the AT= value
+	 * @return the room, or null (an area, or nowhere)
+	 */
+	public static Room roomAt(final String quest, final String at)
+	{
+		if((at == null) || (at.trim().length() == 0))
+			return null;
+		final String A = at.trim();
+		final int x = A.indexOf(':');
+		final String kind = (x > 0) ? A.substring(0, x).toUpperCase() : "";
+		if(kind.equals("QUESTOBJ") || kind.equals("QUESTMOB") || kind.equals("QUESTITEM"))
+		{
+			final Quest Q = CMLib.quests().fetchQuest(quest);
+			final String w = A.substring(x + 1).trim();
+			if(Q == null)
+				return null;
+			if(!kind.equals("QUESTITEM"))
+			{
+				final MOB M = Q.getQuestMob(CMath.isInteger(w) ? CMath.s_int(w) : Q.getQuestMobIndex(w));
+				if((M != null) && (M.location() != null))
+					return M.location();
+			}
+			if(!kind.equals("QUESTMOB"))
+			{
+				final Item I = Q.getQuestItem(CMath.isInteger(w) ? CMath.s_int(w) : Q.getQuestItemIndex(w));
+				if(I != null)
+					return CMLib.map().roomLocation(I);
+			}
+			return null;
+		}
+		return CMLib.map().getRoom(A);
+	}
+
+	/**
+	 * @param quest the quest's name
+	 * @param at an objective's AT=
+	 * @return the area it is in (or names), or null
+	 */
+	public static Area areaAt(final String quest, final String at)
+	{
+		final Room R = roomAt(quest, at);
+		if(R != null)
+			return R.getArea();
+		if((at == null) || (at.trim().length() == 0) || (at.indexOf(':') > 0))
+			return null;
+		final Area A = CMLib.map().getArea(at.trim());
+		return (A != null) ? A : CMLib.map().findArea(at.trim());
+	}
+
+	/**
+	 * @param quest the quest's name
+	 * @param at an objective's AT=
+	 * @return as QUESTS shows it: "Brenn, Chapel of Tides", or "Brenn", or ""
+	 */
+	public static String placeOf(final String quest, final String at)
+	{
+		if((at == null) || (at.length() == 0) || tracking().equals("OFF"))
+			return "";
+		final Room R = roomAt(quest, at);
+		final Area A = areaAt(quest, at);
+		if(A == null)
+			return "";
+		if((R != null) && (R.displayText(null).trim().length() > 0))
+			return A.name() + ", " + CMStrings.removeColors(R.displayText(null)).trim();
+		return A.name();
+	}
+
+	/**
+	 * QUESTS WHERE: which way to the first open objective with a place.
+	 * @param mob the character
+	 * @param quest the quest's name
+	 * @return the answer
+	 */
+	public static String where(final MOB mob, final String quest)
+	{
+		if(tracking().equals("OFF"))
+			return CMLib.lang().L("Your quests do not say where things are.");
+		final List<Objective> L = read(mob).objectives.get(quest.toLowerCase());
+		Objective O = null;
+		if(L != null)
+		{
+			for(final Objective o : L)
+			{
+				if((!o.hidden) && (o.state.length() == 0) && (areaAt(quest, o.at) != null))
+				{
+					O = o;
+					break;
+				}
+			}
+		}
+		if(O == null)
+			return CMLib.lang().L("Nothing open in '@x1' says where it is.", shown(quest));
+		final Room R = roomAt(quest, O.at);
+		final Area A = areaAt(quest, O.at);
+		final Room here = mob.location();
+		final String what = (R != null) ? CMStrings.removeColors(R.displayText(null)).trim() : A.name();
+		if(tracking().equals("AREA") || (here == null))
+			return CMLib.lang().L("@x1: in @x2.", O.text, A.name());
+		if(((R != null) && (here == R)) || ((R == null) && (here.getArea() == A)))
+			return CMLib.lang().L("@x1: you are there.", O.text);
+		Room dest = R;
+		if(dest == null)
+		{
+			for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements() && (dest == null);)
+				dest = r.nextElement();
+		}
+		final List<Room> trail = (dest == null) ? null : CMLib.tracking().findTrailToRoom(here, dest, CMLib.tracking().newFlags(), 100);
+		final int dir = ((trail == null) || trail.isEmpty()) ? -1 : CMLib.tracking().trackNextDirectionFromHere(trail, here, false);
+		if(dir < 0)
+			return CMLib.lang().L("@x1: in @x2; you do not know the way from here.", O.text, A.name());
+		return CMLib.lang().L("@x1: @x2 lies to the @x3.", O.text, what, CMLib.directions().getDirectionName(dir).toLowerCase());
 	}
 
 	/**

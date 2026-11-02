@@ -1601,6 +1601,14 @@ Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q10, Q11, Q12, Q13, Q14, Q15, Q16
   confirmed drop (`Quest.dropQuest`), on both scripts, before the quest's
   scripts go; the quest is ABANDONED for them (Q4). QUESTINFO and
   QUESTCHECK know SET DROPPABLE.
+- Q16 done. A journal objective's place: `AT=<room ID|area|QUESTOBJ:n>`
+  after MPQOBJECTIVE ADD's ID (and so in a step's SET OBJECTIVE), or
+  `MPQOBJECTIVE who quest AT id <where>` later; QUESTOBJ:, QUESTMOB: and
+  QUESTITEM: (a number or a name) follow the quest's mob or item. QUESTS
+  shows an open objective's place as (area, room); `QUESTS WHERE n` gives
+  the first step toward it through the tracking library, or says it is
+  here, or that the way is not known (`QuestJournal.where`). The world
+  option QUESTTRACK=OFF|AREA|PATH (PATH by default) says how much.
 
 #### 2f. NPC behaviour and dialogue (21)
 

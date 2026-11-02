@@ -466,6 +466,25 @@ public class Questwins extends StdCommand
 			}
 		}
 		else
+		if((commands.size()>=2)&&(commands.get(1).equalsIgnoreCase("WHERE"))) // Q16: which way to it
+		{
+			final List<Quest> doing=getQuestsDoingList(mob.Name());
+			final String which=(commands.size()>2)?CMParms.combine(commands,2):"1";
+			Quest Q=null;
+			if(CMath.isInteger(which))
+			{
+				final int n=CMath.s_int(which);
+				if((n>=1)&&(n<=doing.size()))
+					Q=doing.get(n-1);
+			}
+			else
+				Q=findQuest(doing,which);
+			if(Q==null)
+				mob.tell(L("You are on no quest '@x1'.  Enter QUESTS for a list.",which));
+			else
+				mob.tell(QuestJournal.where(mob,Q.name()));
+		}
+		else
 		if((commands.size()==2)&&(commands.get(1).equalsIgnoreCase("LOG"))) // Q3: the journal's latest entries
 		{
 			final List<String> entries=QuestJournal.entries(mob,null,20);
