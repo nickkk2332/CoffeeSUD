@@ -1074,7 +1074,9 @@ public class ColumbiaUniv extends StdLibrary implements ExpertiseLibrary
 		if(learnThis instanceof ExpertiseDefinition)
 		{
 			final ExpertiseDefinition theExpertise=(ExpertiseDefinition)learnThis;
+			final int[] p23=Purchases.snapshot(student);
 			theExpertise.spendCostRequirements(student);
+			Purchases.spent(student,"EXPERTISE",theExpertise.ID(),p23,""); // P23
 			student.addExpertise(theExpertise.ID());
 			if((!teacher.isMonster()) && (!student.isMonster()))
 				CMLib.leveler().postExperience(teacher, "COMMAND:Teach", null, null, 100, false);

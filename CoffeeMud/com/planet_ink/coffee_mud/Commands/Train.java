@@ -565,6 +565,8 @@ public class Train extends StdCommand
 					if(cost != null)
 						finalCost=CMLib.utensils().createCostManager(cost);
 				}
+				final int[] p23=Purchases.snapshot(mob); // P23: what training cost, for a respec
+				final String p23was=mob.baseCharStats().getCurrentClass().ID();
 				finalCost.doSpend(mob);
 				TeacherRules.charge(msg.source(),mob); // P16: the teacher's PRICE
 				switch(trainType)
@@ -655,6 +657,14 @@ public class Train extends StdCommand
 					}
 					break;
 				}
+				if(trainType==Trainable.CCLASS)
+					Purchases.spent(mob,"CLASS",(theClass==null)?"":theClass.ID(),p23,p23was); // P23
+				else
+				if(trainType==Trainable.ATTRIBUTE)
+					Purchases.spent(mob,"STAT",CharStats.CODES.NAME(abilityCode),p23,""+gainAmount);
+				else
+				if((trainType==Trainable.HITPOINTS)||(trainType==Trainable.MANA)||(trainType==Trainable.MOVES))
+					Purchases.spent(mob,"STAT",trainType.name(),p23,""+gainAmount);
 				// JS23: progression.js's onTrain(mob, what, amount)
 				final String what;
 				if(trainType==Trainable.CCLASS)

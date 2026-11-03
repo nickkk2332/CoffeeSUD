@@ -3274,6 +3274,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   beside C13's), leaves a hidden Prop_TweakWatch for ONEXPIRE, puts
   POSTCASTAFFECT on and casts POSTCASTABILITY (Prop_SpellAdder), then
   ONCAST. In the tweak editor; AHELP GENTWEAK is new.
+- P23 done. `core/Purchases` records, in a hidden saved Prop_Purchases
+  on the character, what each purchase cost in trains and practices (by
+  what they had before and after): StdAbility.teach and practice (SKILL),
+  ColumbiaUniv's expertise teaching (EXPERTISE), TRAIN (STAT with its gain
+  for stats, hit points, mana and moves; CLASS with the class before).
+  `refundable` groups them by thing, leaving out autogain skills, things
+  no longer had, and a class with levels in it; `undo` removes the thing
+  (unlearn, delExpertise, the stat back, the class taken out of the class
+  list) and gives the trains and practices back. Prop_Respec (WHAT, COST,
+  ONCE by tattoo, MASK) with RESPEC/RETRAIN (RespecCmd), and MPRESPEC
+  (cmd //151).
 
 #### 2p. Presentation (18)
 

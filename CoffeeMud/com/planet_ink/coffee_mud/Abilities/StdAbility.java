@@ -2724,7 +2724,9 @@ public class StdAbility implements Ability
 			final CostManager cost=getTrainingCost(student);
 			if(!cost.doesMeetCostRequirements(student))
 				return;
+			final int[] p23=Purchases.snapshot(student);
 			cost.doSpend(student);
+			Purchases.spent(student,"SKILL",ID(),p23,""); // P23: for a respec
 			final Ability newAbility=(Ability)newInstance();
 			final double max75 =CMath.div(CMProps.getIntVar(CMProps.Int.PRACMAXPCT), 100.0);
 			final int prof75=(int)Math.round(CMath.mul(CMLib.ableMapper().getMaxProficiency(student,true,newAbility.ID()), max75));
@@ -2774,7 +2776,9 @@ public class StdAbility implements Ability
 			final int prof75=(int)Math.round(CMath.mul(CMLib.ableMapper().getMaxProficiency(student,true,yourAbility.ID()), max75));
 			if(yourAbility.proficiency()<prof75)
 			{
+				final int[] p23=Purchases.snapshot(student);
 				student.setPractices(student.getPractices()-practicesToPractice(student));
+				Purchases.spent(student,"SKILL",ID(),p23,""); // P23
 				final int wisint = teacher.charStats().getStat(CharStats.STAT_WISDOM)
 								 + student.charStats().getStat(CharStats.STAT_INTELLIGENCE);
 				int newProf = yourAbility.proficiency()+(int)Math.round(25.0*(CMath.div(wisint,36.0)));

@@ -16983,6 +16983,21 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
 			return null;
 		}
+		case "MPRESPEC": // P23: MPRESPEC $n [SKILLS|EXPERTISES|STATS|CLASS|ALL] [name|ALL]: undo purchases, refund them
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String what=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final String which=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if(!(W instanceof MOB))
+			{
+				logError(ctx,cmd,"Syntax",cmd+" $n [SKILLS|EXPERTISES|STATS|CLASS|ALL] [name|ALL]: "+line);
+				return null;
+			}
+			final java.util.List<String> done=Purchases.respec((MOB)W,(what.length()==0)?"ALL":what,(which.length()==0)?"ALL":which);
+			for(final String d : done)
+				((MOB)W).tell(L("You unlearn @x1.",d));
+			return null;
+		}
 		case "MPLEVELUP": // P2: MPLEVELUP $n [n]: exactly n levels (1 if not given)
 		case "MPLEVELDOWN": // P2: MPLEVELDOWN $n [n]: n levels lower, the experience set back
 		{
