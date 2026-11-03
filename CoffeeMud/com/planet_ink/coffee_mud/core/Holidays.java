@@ -108,7 +108,11 @@ public final class Holidays
 		C.setDayOfMonth(d);
 	}
 
-	private static String weekday(final TimeClock C)
+	/**
+	 * @param C a clock
+	 * @return the day of the week's name, or ""
+	 */
+	public static String weekday(final TimeClock C)
 	{
 		final String[] w = C.getWeekNames();
 		if((w == null) || (w.length == 0))
@@ -118,7 +122,13 @@ public final class Holidays
 		return w[(int)Math.floorMod(x, (long)w.length)];
 	}
 
-	private static boolean moonIs(final String rest, final TimeClock C)
+	/**
+	 * Whether a moon is in a phase now: MOON's text, [MOON] PHASE.
+	 * @param rest the text
+	 * @param C the clock
+	 * @return true if it is
+	 */
+	public static boolean moonIs(final String rest, final TimeClock C)
 	{
 		String phase = rest.trim().toUpperCase();
 		TimeClock.MoonPhase P = null;

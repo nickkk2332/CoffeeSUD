@@ -2529,6 +2529,14 @@ W18, W19, W20, W21, W22, W23, W28, W29
   `cm.holidays()`; CALENDAR HOLIDAYS shows each game-dated one, on now or
   in how many game days. A clock's copy keeps its area's CALENDAR, so a
   quest's timing and an instance's seasons and moons follow it.
+- W23 done. `core/Schedules`: a quest's `SET SCHEDULE "rules"`, all of
+  which must hold: `HOUR a-b`, `WEEKDAY name`, `EVERY n DAYS [AT DAWN|AT
+  HOUR h]`, `SEASON name`, `MONTH name|n`, `MOON [moon] phase`, `HOLIDAY
+  name`, `WEATHER state` (in the quest's area). Each tick the quest looks at
+  its window: it starts as the window opens (once in each), and `SET
+  DURATION UNTIL DUSK`, `UNTIL HOUR h` or `UNTIL END` ends it at dusk, at
+  that hour, or as the window closes; a DURATION of its own counts down as
+  ever.
 
 #### 2j. Generators and random content (16)
 

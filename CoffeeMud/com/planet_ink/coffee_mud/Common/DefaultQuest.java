@@ -109,6 +109,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected boolean droppable = true;
 	/** W6: SET HOLIDAY name: it runs exactly while that holiday (a quest) does */
 	protected String holidayName = "";
+	/** W23: SET SCHEDULE "rules": the game-time window it starts in */
+	protected String schedule = "";
+	/** W23: SET DURATION UNTIL DUSK|HOUR h|END, or "" */
+	protected String until = "";
+	/** W23: whether its window was open at the last tick */
+	protected boolean windowWasOpen = false;
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -624,6 +630,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		shared=""; // Q12
 		droppable=true; // Q15
 		holidayName=""; // W6
+		schedule=""; // W23
+		until="";
+		windowWasOpen=false;
 		name="";
 		author="";
 		displayName="";
@@ -852,6 +861,9 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 				else
 				if(var.equals("HOLIDAY")) // W6: it runs while the holiday does
 					holidayName=CMParms.combine(parsedLine,2).trim();
+				else
+				if(var.equals("SCHEDULE")) // W23: the game-time window it starts in
+					schedule=CMParms.combine(parsedLine,2).replace('"',' ').trim();
 				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
@@ -3708,7 +3720,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")
 					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")||cmd.equals("SHARED")
 					||cmd.equals("DROPPABLE")||cmd.equals("WEEKDAY")||cmd.equals("EVERY")||cmd.equals("SEASONSTART")
-					||cmd.equals("MOON")||cmd.equals("HOLIDAY")) // JS18, Q1, Q5, Q10, Q12, Q15, W6: read when the script was set
+					||cmd.equals("MOON")||cmd.equals("HOLIDAY")||cmd.equals("SCHEDULE")) // JS18, Q1, Q5, Q10, Q12, Q15, W6, W23: read when the script was set
 					{
 					}
 					else
@@ -5708,7 +5720,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			return true;
 		}
 
-		if(holidayName.length()>0) // W6: SET HOLIDAY: it follows the holiday, looked at each tick
+		if((holidayName.length()>0)||(schedule.length()>0)) // W6: SET HOLIDAY, W23: SET SCHEDULE: looked at each tick
 		{
 			waitRemaining=Integer.MAX_VALUE;
 			return true;
@@ -6056,6 +6068,32 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			}
 			tickStatus=Tickable.STATUS_NOT;
 			return true;
+		}
+		if(schedule.length()>0) // W23: SET SCHEDULE: it starts as its window opens; UNTIL ends it
+		{
+			final Area qA=getQuestArea();
+			final TimeClock C=((qA==null)||(qA.getTimeObj()==null))?CMLib.time().globalClock():qA.getTimeObj();
+			final boolean open=Schedules.open(schedule,C,qA);
+			if(open&&(!windowWasOpen)&&(!running()))
+			{
+				if(duration()<0)
+					setDuration(0);
+				startQuestInternal();
+			}
+			else
+			if(running()&&(until.length()>0)&&Schedules.over(until,C,open))
+			{
+				endReason="SCHEDULE";
+				runEnding=true;
+				stopQuest();
+			}
+			windowWasOpen=open;
+			if((!running())||(until.length()>0))
+			{
+				tickStatus=Tickable.STATUS_NOT;
+				return true;
+			}
+			// running with a DURATION of its own: it counts down as ever
 		}
 		if(running())
 		{
@@ -7190,6 +7228,13 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			setName(val);
 			break;
 		case 2:
+			if(val.trim().toUpperCase().startsWith("UNTIL ")) // W23: UNTIL DUSK, UNTIL HOUR h, UNTIL END
+			{
+				until=val.trim().substring(6).trim().toUpperCase();
+				setDuration(0);
+				break;
+			}
+			until="";
 			try
 			{
 				setDuration(CMLib.time().parseTickExpression(getQuestClock(), Holidays.gameUnits(val))); // W6: DAYS and HOURS are the game's
