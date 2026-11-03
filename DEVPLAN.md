@@ -2851,6 +2851,16 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   `Workstations.Station` of those names, and a fire for crafts that need
   one (`getRequiredFire` takes `Workstations.itemFor(room, "fire")`).
   Masks do not read comfort; a script can.
+- CR4 done. `Prop_KnownRecipes` on a character (implements Recipes and
+  `KnownRecipes.Known`), its text SKILL|name or SKILL|whole line a line,
+  saved with them: `addExtRecipes` adds its whole lines (and, under
+  `PROFILERECIPES=true`, those of the profile's other characters in the
+  world) to the skill's recipes, through the new `addExtRecipeLines`.
+  Recipe key `HIDDEN=1` (CR5's RecipeKeys, which now take the skill): a
+  row only for those who know it by name. `LEARN FROM [BOOK]` (the Learn
+  command; STUDY is the Studying skill's word) copies a recipe book's
+  lines in; script command `MPLEARNRECIPE $n skill name|line` (\t in a
+  line) and function `KNOWSRECIPE($n skill name)`.
 
 #### 2l. Factions and organisations (18)
 

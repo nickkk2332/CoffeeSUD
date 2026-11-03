@@ -790,6 +790,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ISOWNER", //218
 		"LANDTITLE", //219
 		"COMFORT", //220
+		"KNOWSRECIPE", //221
 	};
 
 	/** String list of all valid mobprog commands */
@@ -940,6 +941,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPGRANT", // 143
 		"MPDEED", // 144
 		"MPUNDEED", // 145
+		"MPLEARNRECIPE", // 146
 	};
 
 	/**

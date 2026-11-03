@@ -825,6 +825,11 @@ components.txt loses one condition per craft and breaks at none (AHELP PROP_WORK
 lights the cellar while it stands there and serves Cooking as a fire; a trophy rack with <code>COMFORT=3</code>
 counts on the floor of the owned house, and an inn script can test <code>if comfort(HERE) &gt;= 5</code> to give
 a better rest (AHELP PROP_FURNISHING).</p>
+<p>Recipes a character knows: after the quest "Silver for the Lady" the elven smith runs
+<code>mplearnrecipe $n Weaponsmithing moonblade</code>, a row of weaponsmith.txt marked <code>HIDDEN=1</code>,
+which no one else sees; <code>if knowsrecipe($n Weaponsmithing moonblade)</code> tests it. <code>LEARN FROM</code> a
+recipe book learns its recipes by heart, and <code>PROFILERECIPES=true</code> shares them with the whole party
+(AHELP PROP_KNOWNRECIPES).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

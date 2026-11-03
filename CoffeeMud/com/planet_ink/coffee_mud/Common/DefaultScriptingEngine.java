@@ -16114,6 +16114,16 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final LandTitle LT=titleOf(propertyPlace(ctx,parms.trim()));
 			return (LT==null)?"":(LT.landPropertyID()+" "+LT.getPrice());
 		}
+		case "KNOWSRECIPE": // CR4: KNOWSRECIPE($n skill name): $n knows that recipe (Prop_KnownRecipes; under PROFILERECIPES, the profile does)
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final String skillWord=varify(ctx,CMParms.getCleanBit(parms,1)).trim();
+			final String recipeName=varify(ctx,CMParms.getPastBitClean(parms,1)).trim();
+			if(!(W instanceof MOB))
+				return "false";
+			final Ability skillA=CMClass.getAbility(skillWord);
+			return KnownRecipes.knows((MOB)W,(skillA==null)?skillWord:skillA.ID(),recipeName)?"true":"false";
+		}
 		case "COMFORT": // CR20: COMFORT(room|HERE|$n): the comfort of the furnishings in it (Prop_Furnishing)
 		{
 			final Physical P=propertyPlace(ctx,parms.trim());
@@ -16937,6 +16947,23 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
 			if(said!=null)
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
+		case "MPLEARNRECIPE": // CR4: MPLEARNRECIPE $n skill recipe name|line: $n knows that recipe for good
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String skillWord=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final String what=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(W instanceof MOB))||(skillWord.length()==0)||(what.length()==0))
+			{
+				logError(ctx,"MPLEARNRECIPE","Syntax","MPLEARNRECIPE $n skill recipe: "+line);
+				return null;
+			}
+			final String said=KnownRecipes.learn((MOB)W,skillWord,what.replace("\\t","\t"));
+			if(said!=null)
+				logError(ctx,"MPLEARNRECIPE","RunTime",said+": "+line);
+			else
+				((MOB)W).tell(L("You know how to make @x1 now.",what.indexOf('\t')>0?what.substring(0,what.indexOf('\t')).replace("%","").trim():what));
 			return null;
 		}
 		case "MPDEED": // CR6: MPDEED room|area|lotID $n|@PROFILE [price]: the land is theirs, its title and room updated

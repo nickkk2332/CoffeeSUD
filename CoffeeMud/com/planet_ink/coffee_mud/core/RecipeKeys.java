@@ -32,7 +32,8 @@ import com.planet_ink.coffee_mud.Common.interfaces.Clan;
  * TOOL= (an item held, carried or in the room, by name), FAILMSG= (what a
  * crafter is told when ROOMMASK or TOOL fails), XP= (experience on each
  * success), TATTOO= (a tattoo given on the first success) and STATION= (CR3:
- * a workstation of that tag in the room).  None of them becomes an item stat.
+ * a workstation of that tag in the room) and HIDDEN=1 (CR4: only for those who
+ * know it, KnownRecipes).  None of them becomes an item stat.
  */
 public final class RecipeKeys
 {
@@ -41,7 +42,7 @@ public final class RecipeKeys
 	}
 
 	/** the keys, none of which is an item stat */
-	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION" };
+	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION", "HIDDEN" };
 
 	private static final Pattern	KV		= Pattern.compile("^\\s*[A-Za-z_]+\\s*=");
 
@@ -101,8 +102,26 @@ public final class RecipeKeys
 	 */
 	public static boolean hidden(final MOB mob, final List<String> row)
 	{
-		final String mask = of(row).get("MASK");
-		return (mob != null) && (mask != null) && (mask.trim().length() > 0) && (!CMLib.masking().maskCheck(mask, mob, true));
+		return hidden(mob, null, row);
+	}
+
+	/**
+	 * @param mob a crafter
+	 * @param skillID their skill, for HIDDEN=1, or null
+	 * @param row a recipe
+	 * @return whether its MASK keeps it from them, or (CR4) it is HIDDEN=1 and they do not know it
+	 */
+	public static boolean hidden(final MOB mob, final String skillID, final List<String> row)
+	{
+		if(mob == null)
+			return false;
+		final Map<String, String> k = of(row);
+		final String mask = k.get("MASK");
+		if((mask != null) && (mask.trim().length() > 0) && (!CMLib.masking().maskCheck(mask, mob, true)))
+			return true;
+		final String h = k.containsKey("HIDDEN") ? k.get("HIDDEN").trim() : "";
+		return (skillID != null) && (h.equals("1") || h.equalsIgnoreCase("true") || h.equalsIgnoreCase("yes"))
+			&& (row.size() > 0) && (!KnownRecipes.knows(mob, skillID, row.get(0)));
 	}
 
 	/**
@@ -112,12 +131,23 @@ public final class RecipeKeys
 	 */
 	public static List<List<String>> visible(final MOB mob, final List<List<String>> recipes)
 	{
+		return visible(mob, null, recipes);
+	}
+
+	/**
+	 * @param mob a crafter
+	 * @param skillID their skill, for HIDDEN=1, or null
+	 * @param recipes the recipes
+	 * @return those the crafter may see and use
+	 */
+	public static List<List<String>> visible(final MOB mob, final String skillID, final List<List<String>> recipes)
+	{
 		if((mob == null) || (recipes == null))
 			return recipes;
 		List<List<String>> kept = null;
 		for(int r = 0; r < recipes.size(); r++)
 		{
-			if(hidden(mob, recipes.get(r)))
+			if(hidden(mob, skillID, recipes.get(r)))
 			{
 				if(kept == null)
 				{
@@ -140,6 +170,17 @@ public final class RecipeKeys
 	 */
 	public static String refusal(final MOB mob, final List<String> row)
 	{
+		return refusal(mob, null, row);
+	}
+
+	/**
+	 * @param mob a crafter
+	 * @param skillID their skill, for HIDDEN=1, or null
+	 * @param row a recipe they ask for
+	 * @return null if they may make it here and now, else what they are told
+	 */
+	public static String refusal(final MOB mob, final String skillID, final List<String> row)
+	{
 		if(mob == null)
 			return null;
 		final Map<String, String> k = of(row);
@@ -152,7 +193,7 @@ public final class RecipeKeys
 		final String tool = k.get("TOOL");
 		if((tool != null) && (tool.trim().length() > 0) && (!hasTool(mob, tool.trim())))
 			return ((fail != null) && (fail.length() > 0)) ? fail : CMLib.lang().L("You need @x1 to make that.", CMLib.english().startWithAorAn(tool.trim()));
-		if(hidden(mob, row))
+		if(hidden(mob, skillID, row))
 			return ((fail != null) && (fail.length() > 0)) ? fail : CMLib.lang().L("You don't know how to make that.");
 		final String station = k.get("STATION"); // CR3: a workstation in the room
 		if((station != null) && (station.trim().length() > 0) && (Workstations.refusal(mob, station) != null))

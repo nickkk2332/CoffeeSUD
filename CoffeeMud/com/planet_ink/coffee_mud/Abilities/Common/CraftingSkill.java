@@ -286,7 +286,7 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 			return CMLib.utensils().addExtRecipes(mob, ID(), recipes);
 		}
 		keysCrafter=mob;
-		return RecipeKeys.visible(mob, CMLib.utensils().addExtRecipes(mob, ID(), recipes)); // CR5: MASK= keeps a recipe from those who fail it
+		return RecipeKeys.visible(mob, ID(), CMLib.utensils().addExtRecipes(mob, ID(), recipes)); // CR5: MASK= keeps a recipe from those who fail it; CR4: HIDDEN=1 from those who do not know it
 	}
 
 	/**
@@ -302,7 +302,7 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		final List<List<String>> kept=new Vector<List<String>>(matches.size());
 		for(final List<String> V : matches)
 		{
-			String why=RecipeKeys.refusal(keysCrafter,V);
+			String why=RecipeKeys.refusal(keysCrafter,ID(),V);
 			if(why==null)
 				why=Workstations.refusal(keysCrafter,skillStation()); // CR3: the skill's own STATION
 			if(why==null)

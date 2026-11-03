@@ -52,6 +52,28 @@ public class Learn extends StdCommand
 		throws java.io.IOException
 	{
 		final Vector<String> origCmds=new XVector<String>(commands);
+		if((commands.size()>2)&&commands.get(1).equalsIgnoreCase("FROM")) // CR4: LEARN FROM [RECIPE BOOK]
+		{
+			final Item bookI=mob.findItem(null,CMParms.combine(commands,2));
+			if((bookI instanceof Recipes)&&(((Recipes)bookI).getCommonSkillID().length()>0))
+			{
+				final Recipes book=(Recipes)bookI;
+				final Ability skillA=mob.fetchAbility(book.getCommonSkillID());
+				if(skillA==null)
+				{
+					final Ability bookSkill=CMClass.getAbility(book.getCommonSkillID());
+					CMLib.commands().postCommandFail(mob,origCmds,L("You would need to know @x1 to learn from @x2.",
+						(bookSkill==null)?book.getCommonSkillID():bookSkill.name(),bookI.name(mob)));
+					return false;
+				}
+				final int n=KnownRecipes.study(mob,book);
+				if(n==0)
+					mob.tell(L("There is nothing in @x1 you do not know already.",bookI.name(mob)));
+				else
+					mob.location().show(mob,bookI,CMMsg.MSG_OK_ACTION,L("<S-NAME> stud(ies) <T-NAME> and learn(s) @x1 recipe(s) of @x2 by heart.",""+n,skillA.name()));
+				return false;
+			}
+		}
 		if(mob.location().numInhabitants()==1)
 		{
 			CMLib.commands().postCommandFail(mob,origCmds,L("You will need to find someone to teach you first."));

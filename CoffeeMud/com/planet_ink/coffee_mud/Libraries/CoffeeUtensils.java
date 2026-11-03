@@ -161,11 +161,21 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 
 	protected void addExtRecipe(final MOB mob, final Recipes R, final List<List<String>> recipes)
 	{
+		addExtRecipeLines(R.getRecipeCodeLines(), recipes);
+	}
+
+	/**
+	 * CR4: recipe lines added to a skill's recipes, as a recipe book's are.
+	 * @param lines the lines
+	 * @param recipes the skill's recipes, added to
+	 */
+	protected void addExtRecipeLines(final String[] lines, final List<List<String>> recipes)
+	{
 		final StringBuffer allRecipeLines=new StringBuffer("");
 		List<String> lastRecipeV;
-		if(R.getRecipeCodeLines().length>0)
+		if(lines.length>0)
 		{
-			for(final String recipeLine : R.getRecipeCodeLines())
+			for(final String recipeLine : lines)
 			{
 				allRecipeLines.append(recipeLine);
 				allRecipeLines.append( "\n" );
@@ -231,6 +241,20 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 				}
 				addExtRecipe(mob, (Recipes)E, recipes);
 			}
+		}
+		final List<String> known=new ArrayList<String>(); // CR4: the recipes the character knows, and (PROFILERECIPES) the profile
+		final KnownRecipes.Known K=KnownRecipes.of(mob,false);
+		if(K!=null)
+			known.addAll(Arrays.asList(K.linesFor(ID)));
+		known.addAll(KnownRecipes.sharedLines(mob,ID));
+		if(known.size()>0)
+		{
+			if(!clonedYet)
+			{
+				recipes=new XVector<List<String>>(recipes);
+				clonedYet=true;
+			}
+			addExtRecipeLines(known.toArray(new String[0]), recipes);
 		}
 		if(recipes instanceof Vector)
 			((Vector<?>)recipes).trimToSize();
