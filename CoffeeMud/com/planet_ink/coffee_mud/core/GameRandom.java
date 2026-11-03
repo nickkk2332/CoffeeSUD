@@ -32,6 +32,9 @@ public class GameRandom extends Random
 	/** the generator's state; set by setSeed, which Random's constructor calls */
 	private long				state;
 
+	/** G1: a seeded run's own state, on the thread doing it, so that other threads' rolls cannot shift it */
+	private final transient ThreadLocal<long[]>	own	= new ThreadLocal<long[]>();
+
 	/**
 	 * Makes a generator from the given seed.
 	 * @param seed the seed
@@ -49,10 +52,71 @@ public class GameRandom extends Random
 	}
 
 	@Override
-	protected synchronized int next(final int bits)
+	protected int next(final int bits)
 	{
-		state = (state * MULTIPLIER + ADDEND) & MASK;
-		return (int)(state >>> (48 - bits));
+		final long[] o = (own == null) ? null : own.get();
+		if(o != null)
+		{
+			o[0] = (o[0] * MULTIPLIER + ADDEND) & MASK;
+			return (int)(o[0] >>> (48 - bits));
+		}
+		synchronized(this)
+		{
+			state = (state * MULTIPLIER + ADDEND) & MASK;
+			return (int)(state >>> (48 - bits));
+		}
+	}
+
+	/**
+	 * G1: starts a seeded run on this thread.  Its rolls come from their own
+	 * state, started from the seed, and leave the shared state alone, so
+	 * that the game's other threads, rolling meanwhile, cannot change what
+	 * the run makes.
+	 * @param seed the seed
+	 * @return the run this one is inside, or null, for {@link #endOwn(long[])}
+	 */
+	public long[] beginOwn(final long seed)
+	{
+		final long[] prev = own.get();
+		own.set(new long[] { (seed ^ MULTIPLIER) & MASK });
+		return prev;
+	}
+
+	/**
+	 * G1: steps out of this thread's seeded run, for {@link #endOwn(long[])}
+	 * to step back in.
+	 * @return the run stepped out of, or null
+	 */
+	public long[] pauseOwn()
+	{
+		final long[] cur = own.get();
+		own.remove();
+		return cur;
+	}
+
+	/**
+	 * G1: starts this thread's seeded run's rolls again from the given seed;
+	 * nothing outside one.
+	 * @param seed the seed
+	 */
+	public void restartOwn(final long seed)
+	{
+		final long[] o = own.get();
+		if(o != null)
+			o[0] = (seed ^ MULTIPLIER) & MASK;
+	}
+
+	/**
+	 * G1: ends a seeded run on this thread, going back to the run it was in,
+	 * or to the shared state.
+	 * @param prev what {@link #beginOwn(long)} gave
+	 */
+	public void endOwn(final long[] prev)
+	{
+		if(prev == null)
+			own.remove();
+		else
+			own.set(prev);
 	}
 
 	/**

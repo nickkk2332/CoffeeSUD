@@ -505,10 +505,14 @@ public class CommonSkill extends StdAbility
 		{
 			if(fakeFire != null)
 				return fakeFire;
-			fakeFire =CMClass.getBasicItem( "StdItem" );
-			fakeFire.basePhyStats().setDisposition( fakeFire.basePhyStats().disposition() | PhyStats.IS_GLOWING | PhyStats.IS_LIGHTSOURCE );
-			fakeFire.addNonUninvokableEffect( CMClass.getAbility( "Burning" ) );
-			fakeFire.recoverPhyStats();
+			fakeFire = GenSeed.unseeded(() -> // G1: made once, with the game's shared rolls, not a seeded build's
+			{
+				final Item F=CMClass.getBasicItem( "StdItem" );
+				F.basePhyStats().setDisposition( F.basePhyStats().disposition() | PhyStats.IS_GLOWING | PhyStats.IS_LIGHTSOURCE );
+				F.addNonUninvokableEffect( CMClass.getAbility( "Burning" ) );
+				F.recoverPhyStats();
+				return F;
+			});
 			return fakeFire;
 		}
 		Item fire=null;

@@ -763,6 +763,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		final List<PostProcessAttempt> posties=(List<PostProcessAttempt>)defined.get(MUDPercolator.POST_PROCESSING_STAT_SETS);
 		if(posties == null)
 			return;
+		GenSeed.restart(); // G1: in a seeded run, the same rolls whatever ran since the build
 		try
 		{
 			for(final PostProcessAttempt stat : posties)

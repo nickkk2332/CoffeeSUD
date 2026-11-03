@@ -1,5 +1,5 @@
 // G1: GENERATE SEED=n builds the same area each time, another seed another, no seed a new one it tells;
-// seed="..." on a template tag; the save's own seed (GAME); the game's own rolls go on as before.
+// seed="..." on a template tag; the save's own seed (GAME); the game's own rolls go on as before, and other threads' rolls and one-time setups do not shift a build.
 FIXFILE = "g1-seeds";
 var GS = CM.core.GenSeed;
 function s(x) { return "" + x; }
@@ -41,6 +41,27 @@ try {
 	check("same", a.area != null && a.snap.length > 0 && a.snap == b.snap && a.flag == "13", "area " + a.area + " seed " + a.flag + "\n" + a.snap.substring(0, 300) + "\n---\n" + b.snap.substring(0, 300));
 	check("other", c.area != null && c.snap != a.snap, "seed 14 built the same as 13");
 	check("rolls", a.same && b.same, "the game's rolls changed: " + a.same + "/" + b.same);
+	// the crafting skills' one-time setups (their worker in a random room, their fake fire) do not use the first build's rolls
+	var wf = java.lang.Class.forName("com.planet_ink.coffee_mud.Abilities.Common.CraftingSkill").getDeclaredField("factoryWorkerM");
+	var ff = java.lang.Class.forName("com.planet_ink.coffee_mud.Abilities.Common.CommonSkill").getDeclaredField("fakeFire");
+	wf.setAccessible(true);
+	ff.setAccessible(true);
+	wf.set(null, null);
+	ff.set(null, null);
+	var c1 = generate(370170), c2 = generate(370170);
+	var k1 = c1.snap.split("\n"), k2 = c2.snap.split("\n"), kat = 0;
+	while (kat < k1.length && kat < k2.length && k1[kat] == k2[kat]) kat++;
+	check("cold", c1.area != null && c1.snap == c2.snap, "room " + kat + " differs:\n" + k1[kat] + "\n---\n" + k2[kat]);
+	// another thread rolling the dice meanwhile does not change what a seed makes: the run rolls on its own
+	var stop = new java.util.concurrent.atomic.AtomicBoolean(false), rolls = new java.util.concurrent.atomic.AtomicLong(0);
+	var roller = new java.lang.Thread(new java.lang.Runnable({ run: function () { while (!stop.get()) { CMLib.dice().roll(1, 100, 0); rolls.incrementAndGet(); } } }));
+	roller.setDaemon(true);
+	roller.start();
+	var t1 = null, t2 = null;
+	try { t1 = generate(370170); t2 = generate(370170); } finally { stop.set(true); roller.join(5000); }
+	var l1 = t1.snap.split("\n"), l2 = t2.snap.split("\n"), at = 0;
+	while (at < l1.length && at < l2.length && l1[at] == l2[at]) at++;
+	check("threads", t1.area != null && t1.snap == t2.snap && rolls.get() > 0, "rolls " + rolls.get() + ", room " + at + " differs:\n" + l1[at] + "\n---\n" + l2[at]);
 	// no seed: a new one, told and kept, which builds the same again
 	var n = generate(null), told = GS.last(), again = generate(told);
 	check("told", n.area != null && n.flag == s(told) && n.snap == again.snap, "seed " + told + " flag " + n.flag);

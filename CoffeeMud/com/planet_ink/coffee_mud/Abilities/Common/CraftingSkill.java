@@ -967,12 +967,17 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 	{
 		if(factoryWorkerM==null)
 		{
-			factoryWorkerM=CMClass.getMOB("StdMOB");
-			factoryWorkerM.setName(L("somebody"));
-			factoryWorkerM.setLocation(CMLib.map().getRandomRoom());
-			factoryWorkerM.basePhyStats().setLevel(Integer.MAX_VALUE/2);
-			factoryWorkerM.basePhyStats().setSensesMask(factoryWorkerM.basePhyStats().sensesMask()|PhyStats.CAN_SEE_DARK);
-			factoryWorkerM.recoverPhyStats();
+			// G1: made once, with the game's shared rolls, so that the first seeded build to craft does not differ from the next
+			factoryWorkerM=GenSeed.unseeded(() ->
+			{
+				final MOB M=CMClass.getMOB("StdMOB");
+				M.setName(L("somebody"));
+				M.setLocation(CMLib.map().getRandomRoom());
+				M.basePhyStats().setLevel(Integer.MAX_VALUE/2);
+				M.basePhyStats().setSensesMask(M.basePhyStats().sensesMask()|PhyStats.CAN_SEE_DARK);
+				M.recoverPhyStats();
+				return M;
+			});
 		}
 		if(noSafety)
 			factoryWorkerM.setAttribute(Attrib.SYSOPMSGS, true);

@@ -2559,7 +2559,13 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   `GAME` (the save's own seed, kept in its header, with the area's name),
   `ENTRY` (a new one each time, kept on the copy). A seeded run skips the
   item cache, metacraft tries 20 times rather than for a second of real
-  time, and the BRANCH layout shuffles with the shared generator.
+  time, and the BRANCH layout shuffles with the shared generator. A
+  seeded run rolls on its own stream on the thread building, so the
+  game's other threads rolling meanwhile cannot change what it makes
+  (they did, now and then, for a large build). Post-processing (the
+  parts that wait for the rooms to be linked) starts again from the seed,
+  whatever ran since the build, and the crafting skills' one-time worker
+  and fake fire no longer take rolls from the first build to craft.
 - G3 done. A breadth-first walk from the entrance over the layout's nodes
   gives each room template `ROOMTAG_DEPTH`, `ROOMTAG_DEPTHPCT` (0 to 100),
   `ROOMTAG_ISDEEPEST`, `ROOMTAG_INDEX`, `ROOMTAG_X` and `ROOMTAG_Y`, and the

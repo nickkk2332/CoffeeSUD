@@ -39,6 +39,8 @@ public final class GenSeed
 	private static volatile int		seededRuns	= 0;
 	/** the seed of the last seeded run */
 	private static volatile long	last		= 0;
+	/** this thread's seeded runs, inside each other: what each was inside, its seed, its restarts */
+	private static final ThreadLocal<Deque<Object[]>>	ownRuns	= ThreadLocal.withInitial(() -> new ArrayDeque<Object[]>());
 
 	/**
 	 * @return a new seed, short enough to read and type
@@ -108,8 +110,55 @@ public final class GenSeed
 		final Long before = CMath.getRandState();
 		seededRuns++;
 		last = seed;
-		CMath.seedRand(seed);
+		final Random r = CMath.getRand();
+		if(r instanceof GameRandom) // its own rolls on this thread, which other threads cannot shift
+			ownRuns.get().push(new Object[] { ((GameRandom)r).beginOwn(seed), Long.valueOf(seed), new long[] { 0 } });
+		else
+			CMath.seedRand(seed);
 		return before;
+	}
+
+	/**
+	 * G1: inside a seeded run on this thread, starts its rolls again from a
+	 * value its seed gives (and how many times this was done), so that a step
+	 * run after other work, such as the generator's post-processing after
+	 * the new place is linked and shown, rolls the same whatever that work
+	 * rolled.  Nothing outside a seeded run.
+	 */
+	public static void restart()
+	{
+		final Deque<Object[]> runs = ownRuns.get();
+		final Random r = CMath.getRand();
+		if(runs.isEmpty() || !(r instanceof GameRandom))
+			return;
+		final Object[] run = runs.peek();
+		final long n = ++((long[])run[2])[0];
+		((GameRandom)r).restartOwn((((Long)run[1]).longValue() * 0x9E3779B97F4A7C15L) + n);
+	}
+
+	/**
+	 * G1: runs something with the game's shared rolls, outside this thread's
+	 * seeded run, so that a one-time setup it does (a crafting skill's worker
+	 * put in a random room) does not use up the run's rolls the first time
+	 * only, which made the first build of a seed differ from the next.
+	 * @param <T> what it gives
+	 * @param what the thing to run
+	 * @return what it gave
+	 */
+	public static <T> T unseeded(final java.util.function.Supplier<T> what)
+	{
+		final Random r = CMath.getRand();
+		if(!(r instanceof GameRandom))
+			return what.get();
+		final long[] cur = ((GameRandom)r).pauseOwn();
+		try
+		{
+			return what.get();
+		}
+		finally
+		{
+			((GameRandom)r).endOwn(cur);
+		}
 	}
 
 	/**
@@ -119,6 +168,10 @@ public final class GenSeed
 	public static synchronized void end(final Long before)
 	{
 		seededRuns = Math.max(0, seededRuns - 1);
+		final Random r = CMath.getRand();
+		final Deque<Object[]> runs = ownRuns.get();
+		if((r instanceof GameRandom) && (runs.size() > 0))
+			((GameRandom)r).endOwn((long[])runs.pop()[0]);
 		if(before != null)
 			CMath.setRandState(before.longValue());
 	}
