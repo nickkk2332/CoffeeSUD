@@ -40,7 +40,15 @@ try {
 	// AGEDISEASES
 	check("no ageing diseases", !AG.diseases(m), "set");
 	P.setProperty("AGEDISEASES", "MIDDLEAGED:Disease_Cold:100");
-	check("agediseases", AG.diseases(m) && m.fetchEffect("Disease_Cold") != null, s(m.fetchEffect("Disease_Cold")));
+	// at 100% it is given, but a save always keeps 5% (MUDFight.checkSavingThrows), and one made gives immunity:
+	// taken away, and tried again, so the dice cannot end it
+	var caught = false;
+	for (var t = 0; t < 10 && !caught; t++) {
+		var TI = m.fetchEffect("TemporaryImmunity");
+		if (TI != null) m.delEffect(TI);
+		caught = AG.diseases(m) && m.fetchEffect("Disease_Cold") != null;
+	}
+	check("agediseases", caught, s(m.fetchEffect("Disease_Cold")));
 	P.remove("AGEDISEASES");
 	// a birthday into a new age: AGE_PROG and AGECATEGORY
 	CMLib.achievements().evaluateAchievement(Agent.PLAYER, 'ACH_FIXP29OLD=EVENT="AGECATEGORY" DISPLAY="Grow old" TITLE="" REWARDS="" PLAYERMASK="" CATEGORY=OLD', true);

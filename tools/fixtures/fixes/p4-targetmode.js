@@ -15,7 +15,7 @@ VS.initialize(null, "MEMORY"); V.setSession(VS); V.setPlayerStats(CMClass.getCom
 var seen = 0;
 function said() { var all = s(field(VS, "bout")); var o = all.substring(seen); seen = all.length; return o.replace(/\s+/g, " "); }
 function reached(t) { return count(t, "FIXP4HIT") + count(t, "and fails"); } // a cast that fizzles still reached its target
-function targeted(t) { return count(t, "uses an ability against"); } // each target's own cast, even one it resists (a save always keeps 5%)
+function targeted(t) { return count(t, "uses an ability against") + count(t, "and fails"); } // each target's own cast, even one it resists (a save always keeps 5%) or that fizzles
 var made = [], mobs = [];
 function npc(name) { var m = newMob("GenMob", R); m.setName(name); m.basePhyStats().setLevel(1); m.recoverPhyStats(); mobs.push(m); return m; }
 var F = npc("Fixp4ally"); F.setFollowing(V);
