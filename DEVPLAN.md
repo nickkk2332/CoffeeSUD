@@ -2889,6 +2889,16 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   has its tiers in comments, so nothing changes until a world gives
   some; a data skill's QUALITY (on by default) or a recipe's
   NOQUALITY=1 turns it off.
+- CR12 done. Crafting and gathering XP for every class (`core/CraftXP`,
+  heard in `StdMOB.executeMsg`): a player character's ITEMGENERATED
+  from a crafting, cooking or building skill earns `CRAFTXP` percent
+  of its XP value, and an ITEMSGENERATED from a gathering skill earns
+  `GATHERXP` a unit; both are 0 when blank. `Prop_CraftXP(PCT= GATHER=
+  SKILLS= MASK=)` adds more, on the character, an item they carry, the
+  room or an item in it, or the area or a parent. It goes through
+  `postExperience`. An Artisan earns it on top of its own award, so a
+  world that wants artisans ahead keeps CRAFTXP under 100. A building
+  skill's XP value is half the pounds of material it used.
 
 #### 2l. Factions and organisations (18)
 
