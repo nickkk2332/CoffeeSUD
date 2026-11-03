@@ -145,7 +145,12 @@ public class Herbology extends CommonSkill implements RecipeDriven
 					commonTelL(mob,"You lose your concentration on @x1.",found.name());
 				else
 				{
-					final List<List<String>> herbList=this.fetchRecipes();
+					final List<List<String>> herbList=new ArrayList<List<String>>(); // CR10: a MASK in the second column
+					for(final List<String> h : this.fetchRecipes())
+					{
+						if((h.size()>0)&&(GatherMasks.passes(h,1,mob)))
+							herbList.add(h);
+					}
 					Item origFound=found;
 					while(found != null)
 					{

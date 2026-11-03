@@ -73,6 +73,7 @@ public class Fishing extends GatheringSkill
 	protected static final int	RCP_FREQ		= 1;
 	protected static final int	RCP_FINALNAME	= 2;
 	protected static final int	RCP_VALUE		= 3;
+	protected static final int	RCP_MASK		= 4; // CR10
 
 	protected Item		found			= null;
 	protected String	foundShortName	= "";
@@ -223,7 +224,8 @@ public class Fishing extends GatheringSkill
 					{
 						if(subl.size()<4)
 							continue;
-						if(subl.get(RCP_RESOURCE).toLowerCase().equals(foundShortName))
+						if(subl.get(RCP_RESOURCE).toLowerCase().equals(foundShortName)
+						&&(GatherMasks.passes(subl,RCP_MASK,mob))) // CR10: a row's MASK
 						{
 							subset.add(subl);
 							totalWeights += CMath.s_int(subl.get(RCP_FREQ));

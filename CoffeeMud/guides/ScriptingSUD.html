@@ -859,8 +859,12 @@ description, smell, effects and nourishment, as <code>moonpetal&#9;HERBS&#9;silv
 <code>ResourceOverride(moonpetal(HERBS moonpetal))</code> makes it grow in a glade, and a recipe asks for
 <code>herbs(moonpetal)</code> (AHELP RESOURCEVARIANTS).</p>
 <p>Weighted finds: in a data gathering skill's ITEMXML, an item's <code>&lt;FREQ&gt;60&lt;/FREQ&gt;</code>,
-<code>&lt;MASK&gt;+WEATHER STORMY&lt;/MASK&gt;</code> and <code>&lt;YIELD&gt;1+(@x2/40)&lt;/YIELD&gt;</code> weight it,
+<code>&lt;MASK&gt;-WEATHER +THUNDERSTORM&lt;/MASK&gt;</code> and <code>&lt;YIELD&gt;1+(@x2/40)&lt;/YIELD&gt;</code> weight it,
 limit it and set how many; NOTHINGFREQ weights finding nothing (AHELP GENGATHERSKILL).</p>
+<p>Masked tables: a last column in hunting.txt and fishing.txt (and a second in herbology.txt and
+floristry.txt, a fifth in mycology.txt) is a zapper mask the gatherer or their room must pass, so
+Frostmere's winter hunts find snow hares and the Bog of Lights' night fishing finds lantern eels
+(AHELP GATHERTABLES).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

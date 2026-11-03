@@ -73,6 +73,7 @@ public class Hunting extends GatheringSkill
 	protected static final int	RCP_DOMAIN	= 1;
 	protected static final int	RCP_FREQ	= 2;
 	protected static final int	RCP_MOB		= 3;
+	protected static final int	RCP_MASK	= 4; // CR10
 
 	protected MOB		found			= null;
 	protected String	foundShortName	= "";
@@ -275,7 +276,8 @@ public class Hunting extends GatheringSkill
 					if(subl.get(RCP_RESOURCE).toUpperCase().equals(resourceName)
 					&&((subl.get(RCP_DOMAIN).equals("*"))
 						||(subl.get(RCP_DOMAIN).equals(domainName))
-						||(subl.get(RCP_DOMAIN).equals(R.ID()))))
+						||(subl.get(RCP_DOMAIN).equals(R.ID())))
+					&&(GatherMasks.passes(subl,RCP_MASK,mob))) // CR10: a row's MASK
 					{
 						subset.add(subl);
 						totalWeights += CMath.s_int(subl.get(RCP_FREQ));

@@ -1,4 +1,4 @@
-#Resource	#Domain	Override Frequency	MOB
+#Resource	#Domain	Override Frequency	MOB	(MASK: a zapper mask the hunter or their room must pass)
 MUTTON	*	1	Sheep
 WOOL	*	1	Sheep
 LEATHER	*	3	Cow

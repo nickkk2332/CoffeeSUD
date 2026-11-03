@@ -113,8 +113,9 @@ public class Floristry extends CommonSkill
 						if(found.phyStats().weight()>1)
 							found=CMLib.materials().unbundle(found, 1, null);
 						String flower=null;
-						while((flowerList.size()>2)&&((flower==null)||(flower.trim().length()==0)))
-							flower=flowerList.get(CMLib.dice().roll(1,flowerList.size(),-1)).trim().toLowerCase();
+						final List<String> flowerOk=GatherMasks.names(flowerList,mob); // CR10: a line may end in a tab and a MASK
+						if((flowerList.size()>2)&&(flowerOk.size()>0))
+							flower=flowerOk.get(CMLib.dice().roll(1,flowerOk.size(),-1)).toLowerCase();
 
 						if(found.rawSecretIdentity().length()>0)
 						{

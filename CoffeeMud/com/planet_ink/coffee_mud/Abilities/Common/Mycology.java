@@ -47,6 +47,7 @@ public class Mycology extends CommonSkill implements RecipeDriven
 	public static final int	RCP_FREQ		= 1;
 	public static final int	RCP_VALUE		= 2;
 	public static final int RCP_SPELL		= 3;
+	public static final int RCP_MASK		= 4; // CR10
 
 	@Override
 	public String name()
@@ -172,8 +173,10 @@ public class Mycology extends CommonSkill implements RecipeDriven
 					{
 						if(found.phyStats().weight()>1)
 							found=CMLib.materials().unbundle(found, 1, null);
-						List<String> mushroomFound=null;
-						while((mushroomList.size()>2)
+						final boolean masked=GatherMasks.anyMask(mushroomList,RCP_MASK); // CR10: a MASK in the fifth column
+						List<String> mushroomFound=masked?GatherMasks.pick(mushroomList,RCP_FREQ,RCP_MASK,mob):null;
+						while((!masked)
+						&&(mushroomList.size()>2)
 						&&((mushroomFound==null)||(mushroomFound.get(0).trim().length()==0)))
 						{
 							final int rand = CMLib.dice().roll(1, map.getMax(), 0);

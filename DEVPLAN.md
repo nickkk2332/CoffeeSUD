@@ -2946,6 +2946,14 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   own proficiency, since the running effect's copy has none. The math
   parser works left to right, so the help writes 1+(@x2/40). With no
   options the choice is even, as before.
+- CR10 done. A MASK column (`core/GatherMasks`) in hunting.txt and
+  fishing.txt (fifth), herbology.txt and floristry.txt (second) and
+  mycology.txt (fifth): a row is a choice only when the gatherer or
+  their room passes it, so mob keys test the character and room keys
+  the room. Rows without one behave as before; Mycology keeps its
+  cached weighting unless a row has a mask. Fishing rows already carry
+  a value, which a masked row keeps. The stock hunting and fishing
+  headers name the column.
 
 #### 2l. Factions and organisations (18)
 

@@ -1,4 +1,4 @@
-#Resource	Override Frequency	Override Name	Override Value
+#Resource	Override Frequency	Override Name	Override Value	(MASK: a zapper mask the fisher or their room must pass)
 Shrimp	10	Shrimp	1
 Shrimp	2	Lobster	5
 Shrimp	2	Crab	4
