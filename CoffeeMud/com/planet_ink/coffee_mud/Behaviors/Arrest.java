@@ -426,6 +426,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			&&(myArea!=null))
 			{
 				CMLib.database().DBReCreatePlayerData(myArea.Name(),"ARREST",myArea.Name()+"/ARREST",laws.rawLawString());
+				if(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()) // W21: a builder's law edits are world content
+					com.planet_ink.coffee_mud.core.save.WorldFiles.writeLaw(myArea.Name(),laws.rawLawString());
 				return true;
 			}
 		}
@@ -915,7 +917,11 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			{
 				if((lawName.equals("custom"))&&(what!=null))
 				{
-					final List<PlayerData> data=CMLib.database().DBReadPlayerData(what.Name(),"ARREST",what.Name()+"/ARREST");
+					// W21: the law as world content, world/laws/[area].ini: in builder mode it wins, in a game the saved law does
+					final java.io.File lawF=com.planet_ink.coffee_mud.core.save.WorldFiles.lawFile(what.Name());
+					final boolean content=(lawF!=null)&&lawF.isFile();
+					final List<PlayerData> data=(content&&com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode())?null
+						:CMLib.database().DBReadPlayerData(what.Name(),"ARREST",what.Name()+"/ARREST");
 					if((data!=null)&&(data.size()>0))
 					{
 						final DatabaseEngine.PlayerData pdata=data.get(0);
@@ -923,6 +929,9 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						s=CMStrings.replaceAll(s,"`","'");
 						lawprops.load(new ByteArrayInputStream(CMStrings.strToBytes(s)));
 					}
+					else
+					if(content)
+						lawprops.load(new ByteArrayInputStream(java.nio.file.Files.readAllBytes(lawF.toPath())));
 					else
 					{
 						String s=Law.defaultLaw;

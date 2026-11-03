@@ -2537,6 +2537,13 @@ W18, W19, W20, W21, W22, W23, W28, W29
   DURATION UNTIL DUSK`, `UNTIL HOUR h` or `UNTIL END` ends it at dusk, at
   that hour, or as the window closes; a DURATION of its own counts down as
   ever.
+- W21 done. An area's own law (Arrest `custom`) as world content:
+  `world/laws/[area].ini` (named as the area's file is). In builder mode
+  the law book's edits (updateLaw) are written there as well as to the
+  working database, and the file is the law; in a game the saved law
+  (CMPDAT AREA/ARREST, save state as before, such as after a conquest)
+  wins, and a new game, having none, starts from the file. The help gives
+  the `file;KEY=VALUE` route too.
 
 #### 2j. Generators and random content (16)
 

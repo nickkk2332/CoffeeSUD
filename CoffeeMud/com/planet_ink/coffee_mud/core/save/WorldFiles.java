@@ -2608,6 +2608,55 @@ public final class WorldFiles
 	}
 
 	/**
+	 * W21: the file an area's own law (Arrest custom) is kept in as content,
+	 * world/laws/[area].ini, named as the area's own file is.
+	 * @param areaName the area's name
+	 * @return the file, or null when the world's folder is not known
+	 */
+	public static File lawFile(final String areaName)
+	{
+		if(worldDir == null)
+			return null;
+		return new File(new File(worldDir, "laws"), fileNameFor(areaName, ".ini", new HashSet<String>()));
+	}
+
+	/**
+	 * W21: writes an area's own law to its world file, from the law's text as
+	 * the law book keeps it (lines joined by ~, ' as `).
+	 * @param areaName the area's name
+	 * @param raw the law's text
+	 * @return true if it was written
+	 */
+	public static boolean writeLaw(final String areaName, final String raw)
+	{
+		final File F = lawFile(areaName);
+		if(F == null)
+			return false;
+		final StringBuilder text = new StringBuilder("# The law of ").append(areaName)
+			.append(" (its Arrest behaviour's custom law), as its law book left it in builder mode.\n");
+		final List<String> lines = new ArrayList<String>();
+		for(final String line : raw.replace('`', '\'').split("~"))
+		{
+			if((line.trim().length() > 0) && (!line.trim().startsWith("#")))
+				lines.add(line.trim());
+		}
+		Collections.sort(lines); // the same law, the same file
+		for(final String line : lines)
+			text.append(line).append("\n");
+		try
+		{
+			F.getParentFile().mkdirs();
+			java.nio.file.Files.write(F.toPath(), text.toString().getBytes("UTF-8"));
+			return true;
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("WorldFiles", "Unable to write " + F + ": " + e.getMessage());
+			return false;
+		}
+	}
+
+	/**
 	 * The content files' paths in the world folder, as {@link #checksum()}
 	 * takes them.
 	 * @return the paths
