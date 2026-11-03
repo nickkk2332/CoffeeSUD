@@ -2929,6 +2929,10 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			Item I = CMLib.catalog().getCatalogItem(name);
 			if(I==null)
 				throw new CMException("Unable to find cataloged item called '"+name+"', Data: "+CMParms.toKeyValueSlashListString(piece.parms())+":"+CMStrings.limit(piece.value(),100));
+			// G6: a catalog item keeps its cap: past it, the entry gives nothing
+			final CatalogLibrary.CataData capData=CMLib.catalog().getCatalogItemData(name);
+			if((capData!=null)&&(capData.getCap()>0)&&(capData.numReferences()>=capData.getCap()))
+				return contents;
 			I=(Item)I.copyOf();
 			CMLib.catalog().changeCatalogUsage(I,true);
 			contents.add(I);

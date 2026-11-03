@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!--
+Loot tables, CoffeeSUD (G6): each is an ITEM tag, picked by weight
+(select="pick-1" and pickweight on the choices), for Prop_LootTable
+(FILE=randareas/loot.xml ID=goblin ROLLS=0?2 ON=DEATH), MPGENERATE ITEM
+and JavaScript's gen.item.  Each roll is fresh, with $mob_level,
+$area_level, $theme and $player_level set (MPGENERATE and gen.item: the
+player's and area's).  A world's own copy goes in world/resources/randareas/.
+
+A rare catalog item keeps its catalog cap: once the cap's number are in
+the world, the entry gives nothing.  For example:
+	<ITEM pickweight="1" class="catalog" name="Fang of Grishnak" />
+
+See guides/RandomAreas.html for the template language.
+-->
+<AREADATA>
+
+<!-- a goblin's pockets: mostly copper and crude blades, a war-horn now and then -->
+<ITEM id="goblin" select="pick-1">
+	<ITEM pickweight="55" class="GenItem" level="$mob_level" name="a handful of copper bits" display="A handful of copper bits lies here." material="COPPER" value="2" weight="1" />
+	<ITEM pickweight="25" class="GenWeapon" level="$mob_level" name="a crude dagger" display="A crude dagger lies here." material="IRON" weapontype="PIERCING" weaponclass="DAGGER" value="5" weight="2" />
+	<ITEM pickweight="12" class="GenItem" level="$mob_level" name="a tattered goblin banner" display="A tattered goblin banner lies here." material="WOOL" value="8" weight="2" />
+	<ITEM pickweight="5" class="GenItem" level="$mob_level" name="a bone fetish" display="A bone fetish lies here." material="BONE" value="20" weight="1" />
+	<ITEM pickweight="3" class="GenItem" level="$mob_level" name="a goblin war-horn" display="A goblin war-horn lies here." material="BONE" value="75" weight="3" />
+</ITEM>
+
+<!-- a chest's contents, in three tiers -->
+<ITEM id="chest" select="pick-1">
+	<ITEM pickweight="70" select="pick-1">
+		<ITEM class="GenItem" level="$area_level" name="a coil of rope" display="A coil of rope lies here." material="HEMP" value="4" weight="5" />
+		<ITEM class="GenItem" level="$area_level" name="a stub of candle" display="A stub of candle lies here." material="TALLOW" value="1" weight="1" />
+		<ITEM class="GenItem" level="$area_level" name="a moth-eaten cloak" display="A moth-eaten cloak lies here." material="WOOL" value="6" weight="3" />
+	</ITEM>
+	<ITEM pickweight="25" select="pick-1">
+		<ITEM class="GenItem" level="$area_level" name="a silver ring" display="A silver ring lies here." material="SILVER" value="60" weight="1" />
+		<ITEM class="GenItem" level="$area_level" name="a jade figurine" display="A jade figurine lies here." material="JADE" value="90" weight="1" />
+	</ITEM>
+	<ITEM pickweight="5" select="pick-1">
+		<ITEM class="GenItem" level="$area_level" name="a ruby the size of an egg" display="A ruby the size of an egg lies here." material="RUBY" value="400" weight="1" />
+	</ITEM>
+</ITEM>
+
+</AREADATA>

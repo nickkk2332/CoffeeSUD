@@ -2582,6 +2582,18 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   `gen.area(file, id, dir, seed, vars)` (linked off the host's room),
   `gen.layout(name, size, seed)` (the nodes: index, x, y, type, exits, as
   GENERATE would lay them out with that seed). vars is an object.
+- G6 done. `Prop_LootTable` (mobs, items): `FILE= ID= ROLLS=` (math,
+  `0?2`) `ON=DEATH|OPEN|SPAWN|RESET CHANCE= GOLD=`, each roll fresh (G5's
+  GenCalls) with $mob_level, $area_level, $theme and $player_level set. A
+  mob's DEATH roll goes into its corpse; a container's OPEN roll is made the
+  first time it is opened, and it stays rolled (`ROLLED=TRUE` in the
+  property's text, `getStat ROLLED`, so a save keeps it) until its contents
+  reset, which brings it back new; SPAWN (or RESET) rolls as the host comes
+  into the world. DEVPLAN item 1's planned container rule is to share that
+  state. A `class="catalog"` entry keeps the catalog's cap (past it, it
+  gives nothing). ItemGenerator now picks from the first item (it began at
+  the third). `resources/randareas/loot.xml`: `goblin` and `chest` tables,
+  with tiers by pickweight.
 
 #### 2k. Crafting, gathering and housing (21)
 

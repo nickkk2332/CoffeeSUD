@@ -386,7 +386,7 @@ public class ItemGenerator extends ActiveTicker
 			final int maxValue=items.maxValue;
 			double pickedTotal=CMath.random()*totalValue;
 			double value=-1;
-			for(int i=2;i<items.size();i++)
+			for(int i=0;i<items.size();i++) // G6: from the first; it began at the third, so never picked the first two
 			{
 				I=items.elementAt(i);
 				value=CMath.div(maxValue,I.value()+1.0);

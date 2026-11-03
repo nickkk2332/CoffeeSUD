@@ -737,6 +737,10 @@ the first roll.</p>
 <p>Generation from JavaScript: a cartographer's <code>JS_PROG</code> calls <code>gen.layout('TREE', 30, seed)</code>
 to draw a treasure map that matches the dungeon later generated with that seed; <code>gen.item(file, id, {level_range:
 5})</code> gives live items for the script to place.</p>
+<p>Loot tables: goblins in the Warrens carry <code>Prop_LootTable FILE=randareas/loot.xml ID=goblin ROLLS=0?2
+ON=DEATH</code>, mostly copper and crude daggers, a war-horn now and then; an iron chest's <code>ON=OPEN</code> rolls the
+first time it is opened, until the room resets; a rare <code>class="catalog"</code> entry keeps its catalog cap
+(AHELP PROP_LOOTTABLE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
