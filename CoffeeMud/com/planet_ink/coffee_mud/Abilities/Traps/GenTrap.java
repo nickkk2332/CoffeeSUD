@@ -365,11 +365,22 @@ public class GenTrap extends StdTrap implements VerbTaker
 						final CMMsg msg3=CMClass.getMsg(invoker(),target,this,CMMsg.MSG_OK_VISUAL,null,null,ID);
 						S.executeMsg(target, msg3);
 						S.dequeResponses(null);
+						ScriptHooks.call(S, target, "ONTRIGGER", target, affected, ""); // P3
 						target.location().recoverRoomStats();
 					}
 					if((canBeUninvoked())
 					&&(affected instanceof Item))
-						disable();
+					{
+						springing=true; // P3: spent, not disarmed
+						try
+						{
+							disable();
+						}
+						finally
+						{
+							springing=false;
+						}
+					}
 					// I20: ONCE: gone for good
 					if(((Boolean)V(ID,V_ONCE)).booleanValue()&&(affected!=null))
 					{
@@ -461,8 +472,31 @@ public class GenTrap extends StdTrap implements VerbTaker
 		final Room R=mob.location();
 		if(R!=null)
 			R.show(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> disarm(s) a trap."));
-		disable();
+		disarmer=mob;
+		try
+		{
+			disable();
+		}
+		finally
+		{
+			disarmer=null;
+		}
 		return true;
+	}
+
+	private boolean    springing    = false; // P3: disable() from a spring is not a disarm
+	private MOB        disarmer    = null;
+
+	/**
+	 * P3: ONDISARM, when the trap is disarmed (its DISARM verb, or a thief's skill).
+	 */
+	@Override
+	public void disable()
+	{
+		final boolean was=disabled();
+		super.disable();
+		if((!springing)&&(!was)&&(affected instanceof PhysicalAgent))
+			ScriptHooks.call(getScripter(), (PhysicalAgent)affected, "ONDISARM", disarmer, affected, "");
 	}
 
 	// lots of work to be done here

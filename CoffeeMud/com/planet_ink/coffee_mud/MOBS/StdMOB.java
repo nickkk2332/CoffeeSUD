@@ -5100,6 +5100,9 @@ public class StdMOB implements MOB
 		// ST2: SKILL_PROG LEARN, for a character's own skill, once in the world
 		if((location()!=null)&&(playerStats()!=null)&&to.isSavable()&&(!com.planet_ink.coffee_mud.core.save.SaveGame.isWorldPending()))
 			ScriptEvents.skill(this,to,"LEARN");
+		// P3: a generic ability's ONLEARN, when a mob in the world gains it
+		if((to instanceof ScriptHooks.Learner)&&(location()!=null)&&to.isSavable()&&(!com.planet_ink.coffee_mud.core.save.SaveGame.isWorldPending()))
+			((ScriptHooks.Learner)to).learnedBy(this);
 	}
 
 	@Override

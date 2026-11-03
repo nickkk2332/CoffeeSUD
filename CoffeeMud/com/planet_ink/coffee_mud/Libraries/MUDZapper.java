@@ -9143,7 +9143,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 								final Object[] tmp = (Object[])entry.parms()[v+2];
 								final MOB M = SE.getMakeMOB(E);
 								final Item defaultItem=(E instanceof Item)?(Item)E:null;
-								if(SE.eval(new MPContext((PhysicalAgent)E, M, M,null, defaultItem, null, "", tmp), eval, 0))
+								if(SE.eval(new MPContext((PhysicalAgent)E, M, M,ScriptHooks.maskTarget(), defaultItem, null, "", tmp), eval, 0)) // P3: a cast mask's target as $t
 								{
 									oneIsOK = true;
 									break;
@@ -9167,7 +9167,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 								final Item defaultItem=(E instanceof Item)?(Item)E:null;
 								if(E instanceof PhysicalAgent)
 								{
-									if(SE.eval(new MPContext((PhysicalAgent)E, M, M,null, defaultItem, null, "", tmp), eval, 0))
+									if(SE.eval(new MPContext((PhysicalAgent)E, M, M,ScriptHooks.maskTarget(), defaultItem, null, "", tmp), eval, 0)) // P3
 										return true;
 								}
 							}

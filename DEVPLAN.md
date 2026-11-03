@@ -3019,6 +3019,15 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   worked example. Of the four ways to pass per-instance parameters
   (SC13's ARG, N7's PARM, P1's EFFECTPARM, JS9's parms), PARM and
   EFFECTPARM share one store in the engine.
+- P3 done. Named hooks (`core/ScriptHooks`), called as GenCommand calls
+  EXECUTE: a GenAbility's CANCAST (before costs; RETURN false, 0 or
+  CANCEL refuses), ONCAST (after the old ID message), ONTICK, ONEXPIRE
+  (after UNINVOKE-ID) and ONLEARN (StdMOB.addAbility, for a mob in the
+  world, through the core `ScriptHooks.Learner` interface); a GenTrap's
+  ONTRIGGER and ONDISARM (its disable(), but not the one after a
+  spring). The old messages stay. CASTFAILMSG (stat 39, in the editor),
+  and the CASTMASK check moved after the target is found, with the
+  target as $t in its +IF and -IF (a thread-local the zapper reads).
 
 #### 2p. Presentation (18)
 

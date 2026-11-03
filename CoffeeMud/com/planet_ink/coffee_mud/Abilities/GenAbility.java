@@ -35,7 +35,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class GenAbility extends StdAbility
+public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3: ONLEARN
 {
 	// data should be stored in a common instance object .. something common to all genability of same id,
 	// but diff to others.n  I'm thinking like a DVector, and just have
@@ -85,8 +85,9 @@ public class GenAbility extends StdAbility
 	private static final int V_NARG=34;//I
 	private static final int V_WIND=35;//I C5: windup ticks
 	private static final int V_WMSG=36;//S C5: windup warning
+	private static final int V_CFMS=37;//S P3: cast failure message
 
-	private static final int NUM_VS=37;//S
+	private static final int NUM_VS=38;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -128,6 +129,7 @@ public class GenAbility extends StdAbility
 		O[V_NARG]=Integer.valueOf(0);
 		O[V_WIND]=Integer.valueOf(0);
 		O[V_WMSG]="";
+		O[V_CFMS]="";
 		return O;
 	}
 
@@ -223,6 +225,16 @@ public class GenAbility extends StdAbility
 				staticAffects=true;
 			}
 		}
+	}
+
+	/**
+	 * P3: ONLEARN, when a mob gains this ability.
+	 * @param mob the mob
+	 */
+	@Override
+	public void learnedBy(final MOB mob)
+	{
+		ScriptHooks.call(getScripter(), mob, "ONLEARN", mob, mob, "");
 	}
 
 	@Override
@@ -493,13 +505,6 @@ public class GenAbility extends StdAbility
 	{
 		oneTimeChecked = false;
 		postEffects.clear();
-		if((!auto)
-		&&(((String)V(ID,V_CMSK)).length()>0)
-		&&(!CMLib.masking().maskCheck((String)V(ID,V_CMSK), mob,true)))
-		{
-			mob.tell(L("You do not meet the requirements: @x1",CMLib.masking().maskDesc((String)V(ID,V_CMSK))));
-			return false;
-		}
 		// dont forget to allow super. calls to Spell.invoke, Chant.invoke, etc.. based on classification?
 		final int nargs = ((Integer)V(ID,V_NARG)).intValue();
 		Physical target=givenTarget;
@@ -572,6 +577,20 @@ public class GenAbility extends StdAbility
 				break;
 			}
 		}
+		if((!auto)
+		&&(((String)V(ID,V_CMSK)).length()>0)
+		&&(!ScriptHooks.maskCheck((String)V(ID,V_CMSK), mob, target))) // P3: its +IF sees the target as $t
+		{
+			final String failMsg=(String)V(ID,V_CFMS);
+			if(failMsg.trim().length()>0)
+				mob.tell(mob,target,null,failMsg);
+			else
+				mob.tell(L("You do not meet the requirements: @x1",CMLib.masking().maskDesc((String)V(ID,V_CMSK))));
+			return false;
+		}
+		if((!auto)
+		&&ScriptHooks.refused(ScriptHooks.call(getScripter(), mob, "CANCAST", mob, target, CMParms.combine(commands,0)))) // P3: before any cost
+			return false;
 		if((!auto)
 		&&(target!=null)
 		&&(((String)V(ID,V_TMSK)).length()>0)
@@ -901,6 +920,7 @@ public class GenAbility extends StdAbility
 									final Object[] args = commands.toArray(new Object[12]);
 									S.executeMsg(mob, msg3);
 									S.dequeResponses(args);
+									ScriptHooks.call(S, mob, "ONCAST", mob, finalTarget, CMParms.combine(commands,0)); // P3
 								}
 								mob.location().recoverRoomStats();
 							}
@@ -1072,6 +1092,8 @@ public class GenAbility extends StdAbility
 					final CMMsg msg3=CMClass.getMsg(invoker(),aff,this,CMMsg.MSG_OK_VISUAL,null,null,"UNINVOKE-"+ID);
 					S.executeMsg(aff, msg3);
 					S.dequeResponses(null);
+					if(aff instanceof PhysicalAgent)
+						ScriptHooks.call(S, (PhysicalAgent)aff, "ONEXPIRE", invoker(), aff, ""); // P3
 				}
 			}
 			final String uninMsg = (String)V(ID,V_UNIN);
@@ -1113,6 +1135,8 @@ public class GenAbility extends StdAbility
 		{
 			if(!S.tick(ticking,tickID))
 				return false;
+			if((affected instanceof PhysicalAgent)&&ScriptHooks.has(S,"ONTICK")) // P3
+				ScriptHooks.call(S, (PhysicalAgent)affected, "ONTICK", invoker(), affected, "");
 		}
 		final Ability qA=getQuietAffect();
 		if(qA!=null)
@@ -1203,7 +1227,8 @@ public class GenAbility extends StdAbility
 										 "TARGETFAILMSG", //35S
 										 "NUMARGS",//36I
 										 "WINDUP",//37I C5
-										 "WINDUPMSG"//38S C5
+										 "WINDUPMSG",//38S C5
+										 "CASTFAILMSG"//39S P3
 										};
 
 	@Override
@@ -1306,6 +1331,8 @@ public class GenAbility extends StdAbility
 			return ((Integer) V(ID, V_WIND)).toString();
 		case 38:
 			return (String) V(ID, V_WMSG);
+		case 39:
+			return (String) V(ID, V_CFMS);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenAbility";
@@ -1461,6 +1488,9 @@ public class GenAbility extends StdAbility
 			break;
 		case 38:
 			SV(ID, V_WMSG, val);
+			break;
+		case 39:
+			SV(ID, V_CFMS, val);
 			break;
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenAbility"))

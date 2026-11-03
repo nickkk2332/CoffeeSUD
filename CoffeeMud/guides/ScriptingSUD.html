@@ -884,6 +884,10 @@ file in Construction's format, with its own verb, main resource and sound (AHELP
 HERESTATS and MOCKABILITY at once and its SCRIPT running there; <code>EFFECTPARM(FREQ)</code> reads the
 text it was added with, so <code>Prop_Haunted FREQ=5</code> and <code>Prop_Haunted FREQ=40</code> share one
 ability (AHELP GENABILITY).</p>
+<p>Ability hooks: a generic ability's script may have <code>FUNCTION_PROG CANCAST</code> (RETURN false
+refuses the cast before any cost), ONCAST, ONTICK, ONEXPIRE and ONLEARN; CASTFAILMSG replaces the
+cast mask's refusal, and the mask's +IF sees the target as $t. A trap has ONTRIGGER and ONDISARM
+(AHELP GENABILITY, AHELP GENTRAP).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
