@@ -295,18 +295,36 @@ public class AutoGrid extends StdGrid implements GridLocale, AutoGenArea
 					}
 				}
 				// finally, fill out the new random map!
+				// G1: SEED=n, GAME or ENTRY, as an autogen instance's
+				final Object seedSpec=definedIDs.remove("SEED");
+				Long seedBefore=null;
+				if(seedSpec!=null)
+				{
+					final long seed=GenSeed.pick(seedSpec.toString(),roomID());
+					definedIDs.put("GEN_SEED",""+seed);
+					GenSeed.context(definedIDs);
+					seedBefore=GenSeed.begin(seed);
+				}
 				final Area fakeArea = CMClass.getAreaType("StdThinInstance");
 				fakeArea.setName("TEMPAREA"+new Random(System.nanoTime()).nextDouble());
-				if(!CMLib.percolator().fillInArea(piece, definedIDs, fakeArea, magicDir))
-				{
-					Log.errOut(L("Failed to enter the new area for @x1.  Try again later.",roomID()));
-					super.buildGrid();
-					return;
-				}
 				final Set<Room> unnodifiedRooms = new HashSet<Room>();
-				for(final Enumeration<Room> r=fakeArea.getProperMap();r.hasMoreElements();)
-					unnodifiedRooms.add(r.nextElement());
-				CMLib.percolator().postProcess(definedIDs);
+				try
+				{
+					if(!CMLib.percolator().fillInArea(piece, definedIDs, fakeArea, magicDir))
+					{
+						Log.errOut(L("Failed to enter the new area for @x1.  Try again later.",roomID()));
+						super.buildGrid();
+						return;
+					}
+					for(final Enumeration<Room> r=fakeArea.getProperMap();r.hasMoreElements();)
+						unnodifiedRooms.add(r.nextElement());
+					CMLib.percolator().postProcess(definedIDs);
+				}
+				finally
+				{
+					if(seedSpec!=null)
+						GenSeed.end(seedBefore);
+				}
 				@SuppressWarnings("unchecked")
 				final List<LayoutNode> nodes = (List<LayoutNode>)definedIDs.get("LAYOUT_NODES");
 				if((nodes==null)||(nodes.size()<1))

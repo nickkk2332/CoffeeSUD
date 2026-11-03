@@ -260,6 +260,12 @@ public class Generate extends StdCommand
 			mob.tell(L("Required ids for @x1 were missing: @x2",idName,cme.getMessage()));
 			return false;
 		}
+		// G1: SEED=n builds the same thing each time; with none, a new seed, told after
+		final Object seedGiven=definedIDs.remove("SEED");
+		final long seed=GenSeed.pick((seedGiven==null)?null:seedGiven.toString(),null);
+		definedIDs.put("GEN_SEED",""+seed);
+		GenSeed.context(definedIDs);
+		final Long seedBefore=GenSeed.begin(seed);
 		final Vector<Object> V = new Vector<Object>();
 		try
 		{
@@ -418,6 +424,7 @@ public class Generate extends StdCommand
 				if(V.get(v) instanceof Area)
 				{
 					final Area A=(Area)V.get(v);
+					A.addBlurbFlag("GENSEED "+seed); // G1: the seed it was built with
 					CMLib.map().addArea(A);
 					CMLib.map().registerWorldObjectLoaded(A, null, A);
 					if(save)
@@ -452,6 +459,12 @@ public class Generate extends StdCommand
 				Log.debugOut("Generate",cex);
 			return false;
 		}
+		finally
+		{
+			GenSeed.end(seedBefore); // G1: the game's own rolls go on as before
+		}
+		if(seedGiven==null)
+			mob.tell(L("Seed: @x1 (SEED=@x1 builds the same again).",""+seed));
 		Log.sysOut("Generate",finalLog);
 		return true;
 	}

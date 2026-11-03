@@ -747,12 +747,33 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 						}
 					}
 					// finally, fill out the new random map!
-					if(!CMLib.percolator().fillInArea(piece, definedIDs, newA, direction))
+					// G1: SEED=n (the same dungeon each time), GAME (the save's own, the same each visit), ENTRY (a new one)
+					final Object seedSpec=definedIDs.remove("SEED");
+					final Long seedBefore;
+					if(seedSpec!=null)
 					{
-						msg.source().tell(L("Failed to enter the new area.  Try again later."));
-						return false;
+						final long seed=GenSeed.pick(seedSpec.toString(),Name());
+						definedIDs.put("GEN_SEED",""+seed);
+						GenSeed.context(definedIDs);
+						newA.addBlurbFlag("GENSEED "+seed);
+						seedBefore=GenSeed.begin(seed);
 					}
-					CMLib.percolator().postProcess(definedIDs);
+					else
+						seedBefore=null;
+					try
+					{
+						if(!CMLib.percolator().fillInArea(piece, definedIDs, newA, direction))
+						{
+							msg.source().tell(L("Failed to enter the new area.  Try again later."));
+							return false;
+						}
+						CMLib.percolator().postProcess(definedIDs);
+					}
+					finally
+					{
+						if(seedSpec!=null)
+							GenSeed.end(seedBefore);
+					}
 				}
 				catch(final CMException cme)
 				{

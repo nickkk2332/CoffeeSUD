@@ -160,7 +160,7 @@ public class BranchLayout extends AbstractLayout
             final List<Integer> availableNodes = new ArrayList<Integer>();
             for (int i = 1; i < diameter - 1; i++)
                 availableNodes.add(Integer.valueOf(i));
-            Collections.shuffle(availableNodes);
+            Collections.shuffle(availableNodes, CMath.getRand()); // G1
             for (int i = 0; i < branchesPerCorridor && i < availableNodes.size(); i++)
             {
                 final int nodeIdx = availableNodes.get(i).intValue();
@@ -175,7 +175,7 @@ public class BranchLayout extends AbstractLayout
             final List<Integer> availableNodes = new ArrayList<Integer>();
             for (int i = 1; i < diameter - 1; i++)
                 availableNodes.add(Integer.valueOf(i));
-            Collections.shuffle(availableNodes);
+            Collections.shuffle(availableNodes, CMath.getRand()); // G1
             for (int i = 0; i < branchesPerCorridor && i < availableNodes.size(); i++)
             {
                 final int nodeIdx = availableNodes.get(i).intValue();
@@ -189,7 +189,7 @@ public class BranchLayout extends AbstractLayout
         {
             @SuppressWarnings("unchecked")
             final Vector<LayoutNode> allNodes = (Vector<LayoutNode>) set.clone();
-            Collections.shuffle(allNodes);
+            Collections.shuffle(allNodes, CMath.getRand()); // G1
             boolean added = false;
             for (final LayoutNode n2 : allNodes)
             {

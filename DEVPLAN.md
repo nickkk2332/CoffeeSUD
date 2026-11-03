@@ -2549,6 +2549,18 @@ W18, W19, W20, W21, W22, W23, W28, W29
 
 G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
 
+- G1 done. `core/GenSeed`: a seeded run keeps the shared generator's
+  state, seeds it, builds, and puts the state back, so the game's own rolls
+  go on as before. `GENERATE ... SEED=n` builds the same thing each time;
+  with no SEED it picks one, says it, and keeps it (an area's `GENSEED`
+  flag, `$GEN_SEED` in the template). `seed="..."` on an AREA, ROOM, MOB
+  or ITEM tag (math with the variables; `$GAME_DAY` is set, for a dungeon of
+  the day). StdAutoGenInstance's and AutoGrid's `SEED` variable: a number,
+  `GAME` (the save's own seed, kept in its header, with the area's name),
+  `ENTRY` (a new one each time, kept on the copy). A seeded run skips the
+  item cache, metacraft tries 20 times rather than for a second of real
+  time, and the BRANCH layout shuffles with the shared generator.
+
 #### 2k. Crafting, gathering and housing (21)
 
 CR1, CR2, CR3, CR4, CR5, CR6, CR7, CR8, CR9, CR10, CR11, CR12, CR13, CR14,

@@ -596,9 +596,54 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		});
 	}
 
+	/** G1: a build that a seed="..." attribute may seed */
+	private interface SeededBuild<T>
+	{
+		T run() throws CMException, PostProcessException;
+	}
+
+	/**
+	 * G1: runs a build, seeded if its tag has seed="..." (math, with the
+	 * generator's variables, as $[$GAME_DAY]): the same seed, the same
+	 * thing; the shared generator's state is put back after.
+	 * @param piece the tag
+	 * @param defined the generator's variables
+	 * @param build the build
+	 * @return what it built
+	 */
+	protected <T> T seeded(final XMLTag piece, final Map<String,Object> defined, final SeededBuild<T> build) throws CMException, PostProcessException
+	{
+		final String s=(piece==null)?null:piece.getParmValue("SEED");
+		if((s==null)||(s.trim().length()==0))
+			return build.run();
+		final long seed=GenSeed.pick(strFilterNow(null,null,null,CMLib.xml().restoreAngleBrackets(s),piece,defined),null);
+		defined.put("GEN_SEED",""+seed);
+		final Long before=GenSeed.begin(seed);
+		try
+		{
+			return build.run();
+		}
+		finally
+		{
+			GenSeed.end(before);
+		}
+	}
+
 	// vars created: ROOM_CLASS, ROOM_TITLE, ROOM_DESCRIPTION, ROOM_CLASSES, ROOM_TITLES, ROOM_DESCRIPTIONS
 	@Override
 	public Room buildRoom(final Area A, final XMLTag piece, final Map<String,Object> defined, final Exit[] exits, final int direction) throws CMException
+	{
+		try
+		{
+			return seeded(piece, defined, () -> buildRoomUnseeded(A, piece, defined, exits, direction)); // G1
+		}
+		catch(final PostProcessException pe)
+		{
+			throw new CMException(pe.getMessage(), pe);
+		}
+	}
+
+	protected Room buildRoomUnseeded(final Area A, final XMLTag piece, final Map<String,Object> defined, final Exit[] exits, final int direction) throws CMException
 	{
 		addDefinition("DIRECTION",CMLib.directions().getDirectionName(direction).toLowerCase(),defined);
 
@@ -806,6 +851,18 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	}
 
 	protected Area buildArea(final XMLTag piece, final Map<String,Object> defined, final int direction) throws CMException
+	{
+		try
+		{
+			return seeded(piece, defined, () -> buildAreaUnseeded(piece, defined, direction)); // G1
+		}
+		catch(final PostProcessException pe)
+		{
+			throw new CMException(pe.getMessage(), pe);
+		}
+	}
+
+	protected Area buildAreaUnseeded(final XMLTag piece, final Map<String,Object> defined, final int direction) throws CMException
 	{
 		defined.put("DIRECTION",CMLib.directions().getDirectionName(direction).toLowerCase());
 
@@ -1869,6 +1926,18 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 
 	protected MOB buildMob(final XMLTag piece, final Map<String,Object> defined) throws CMException
 	{
+		try
+		{
+			return seeded(piece, defined, () -> buildMobUnseeded(piece, defined)); // G1
+		}
+		catch(final PostProcessException pe)
+		{
+			throw new CMException(pe.getMessage(), pe);
+		}
+	}
+
+	protected MOB buildMobUnseeded(final XMLTag piece, final Map<String,Object> defined) throws CMException
+	{
 		final String classID = findStringNow("class",piece,defined);
 		MOB M = null;
 		final List<String> ignoreStats=new XArrayList<String>();
@@ -2417,7 +2486,8 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	protected List<ItemCraftor.CraftedItem> craftAllOfThisRecipe(final ItemCraftor skill, final int material, final Map<String,Object> defined)
 	{
 		List<ItemCraftor.CraftedItem> skillContents;
-		if(CMSecurity.isDisabled(CMSecurity.DisFlag.ITEMGENCACHE))
+		final boolean noCache=CMSecurity.isDisabled(CMSecurity.DisFlag.ITEMGENCACHE)||GenSeed.seeded(); // G1
+		if(noCache)
 			skillContents=(List<ItemCraftor.CraftedItem>)defined.get("____COFFEEMUD_"+skill.ID()+"_"+material+"_true");
 		else
 			skillContents=(List<ItemCraftor.CraftedItem>)Resources.getResource("SYSTEM_ITEMGEN_"+skill.ID()+"_"+material+"_true");
@@ -2429,7 +2499,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 				skillContents=skill.craftAllItemSets(true);
 			if(skillContents==null)
 				return null;
-			if(CMSecurity.isDisabled(CMSecurity.DisFlag.ITEMGENCACHE))
+			if(noCache)
 				defined.put("____COFFEEMUD_"+skill.ID()+"_"+material+"_true",skillContents);
 			else
 				Resources.submitResource("SYSTEM_ITEMGEN_"+skill.ID()+"_"+material+"_true", skillContents);
@@ -2457,6 +2527,11 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	}
 
 	protected List<Item> buildItem(final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException
+	{
+		return seeded(piece, defined, () -> buildItemUnseeded(piece, defined)); // G1
+	}
+
+	protected List<Item> buildItemUnseeded(final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException
 	{
 		final SHashtable<String,Object> preContentDefined = new SHashtable<String,Object>(defined);
 		final String classID = findStringNow("class",piece,defined);
@@ -2512,8 +2587,8 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 						if(ID.indexOf("wright")>=0)
 							craftors.remove(i);
 					}
-					final long startTime=System.currentTimeMillis();
-					while((contents.size()==0)&&((System.currentTimeMillis()-startTime)<1000))
+					int metaTries=0; // G1: a set number of tries, not a second of real time, so a seed builds the same
+					while((contents.size()==0)&&(metaTries++<20))
 					{
 						final ItemCraftor skill=craftors.get(CMLib.dice().roll(1,craftors.size(),-1));
 						if(skill.fetchRecipes().size()>0)
