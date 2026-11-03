@@ -16810,6 +16810,55 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return null;
 		}
+		case "MPREGENERATE": // G14: MPREGENERATE area|HERE [SEED=n|SAME]: the area re-rolled (its Regenerate behaviour, else its GENSOURCE), once the party has left
+		{
+			String seed=null;
+			final List<String> nameWords=new ArrayList<String>();
+			for(final String x : genWords(varify(ctx,CMParms.getPastBit(line,0)).trim()))
+			{
+				final String u=unquoted(x);
+				if(u.toUpperCase().startsWith("SEED="))
+					seed=u.substring(5).trim();
+				else
+				if(u.length()>0)
+					nameWords.add(u);
+			}
+			final String name=CMParms.combine(nameWords,0).trim();
+			if(name.length()==0)
+			{
+				logError(ctx,"MPREGENERATE","Syntax","MPREGENERATE area|HERE [SEED=n|SAME]: "+line);
+				return null;
+			}
+			Area A=null;
+			if(name.equalsIgnoreCase("HERE"))
+			{
+				final Room R=(lastKnownLocation!=null)?lastKnownLocation:CMLib.map().roomLocation(ctx.scripted);
+				A=(R==null)?null:R.getArea();
+			}
+			else
+			{
+				A=CMLib.map().getArea(name);
+				if(A==null)
+					A=CMLib.map().findArea(name);
+			}
+			if(A==null)
+			{
+				logError(ctx,"MPREGENERATE","RunTime","No area called '"+name+"': "+line);
+				return null;
+			}
+			final Behavior B=A.fetchBehavior("Regenerate");
+			final String said;
+			if(B instanceof com.planet_ink.coffee_mud.Behaviors.Regenerate)
+				said=((com.planet_ink.coffee_mud.Behaviors.Regenerate)B).trigger(A,seed);
+			else
+			if(GenSource.occupied(A))
+				said="'"+A.Name()+"' has a player inside, and no Regenerate behaviour to wait for them to leave.";
+			else
+				said=GenSource.regenerate(null,A,GenSource.get(A),seed,null,false,null);
+			if((!said.startsWith("Regenerated"))&&(!said.endsWith("once the party has left.")))
+				logError(ctx,"MPREGENERATE","RunTime",said+": "+line);
+			return null;
+		}
 		case "MPINTERRUPT": // W4: MPINTERRUPT who [message]: ends the wait (or journey) of that character or their party
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);

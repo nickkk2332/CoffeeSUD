@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.core.collections.*;
 import com.planet_ink.coffee_mud.core.exceptions.CMException;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag;
@@ -273,6 +274,56 @@ public final class GenSource
 	}
 
 	/**
+	 * G14: whether a running quest uses a room, or someone or something in it.
+	 * @param R the room
+	 * @return true if one does
+	 */
+	public static boolean questUses(final Room R)
+	{
+		for(final Enumeration<Quest> q = CMLib.quests().enumQuests(); q.hasMoreElements();)
+		{
+			final Quest Q = q.nextElement();
+			if((Q == null) || (!Q.running()))
+				continue;
+			if(Q.isObjectInUse(R))
+				return true;
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M != null) && Q.isObjectInUse(M))
+					return true;
+			}
+			for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
+			{
+				final Item I = i.nextElement();
+				if((I != null) && Q.isObjectInUse(I))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * G14: whether a player, or one following a player, is in the area.
+	 * @param A the area
+	 * @return true if one is
+	 */
+	public static boolean occupied(final Area A)
+	{
+		for(final Enumeration<Room> r = A.getProperMap(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M != null) && ((!M.isMonster()) || M.isPlayer() || followsAPlayer(M)))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Builds an area again from its GENSOURCE, keeping its GENLOCK rooms.
 	 * @param mob the builder
 	 * @param A the area
@@ -283,7 +334,24 @@ public final class GenSource
 	 */
 	public static String regenerate(final MOB mob, final Area A, final String seedWord, final Map<String, String> extra, final boolean save)
 	{
-		final Source S = get(A);
+		return regenerate(mob, A, get(A), seedWord, extra, save, null);
+	}
+
+	/**
+	 * Builds an area again from a source, keeping its GENLOCK rooms, the
+	 * rooms named, and the rooms a running quest uses (G14), and runs the
+	 * area's GENERATED_PROG after.
+	 * @param mob the builder, or null for the world (the Regenerate behaviour)
+	 * @param A the area
+	 * @param S the source: its GENSOURCE, or the behaviour's FILE and ID
+	 * @param seedWord SAME, a number, or null for a new seed
+	 * @param extra variables to change, or null
+	 * @param save true to write the rooms through the database as GENERATE does
+	 * @param keepIds room IDs kept besides the GENLOCK ones, or null
+	 * @return what was done
+	 */
+	public static String regenerate(final MOB mob, final Area A, final Source S, final String seedWord, final Map<String, String> extra, final boolean save, final Set<String> keepIds)
+	{
 		if(S == null)
 			return "'" + A.Name() + "' has no " + FLAG + ": GENERATE AREA did not make it.";
 		final CMFile F = new CMFile(Resources.buildResourcePath(S.file), mob);
@@ -327,7 +395,7 @@ public final class GenSource
 		final Map<String, Room> locked = new HashMap<String, Room>();
 		for(final Room R : oldRooms)
 		{
-			if(isLocked(R))
+			if(isLocked(R) || ((keepIds != null) && keepIds.contains(R.roomID().toUpperCase())) || questUses(R))
 				locked.put(R.roomID(), R);
 		}
 		Room entrance = A.getRoom(A.Name() + "#0");
@@ -348,7 +416,9 @@ public final class GenSource
 			}
 		}
 		defined.put("ROOMTAG_NODEGATEEXIT", CMLib.directions().getDirectionName(Directions.getOpDirectionCode(direction)));
-		defined.put("ROOMTAG_GATEEXITROOM", (gate != null) ? gate : mob.location());
+		final Room gateFor = (gate != null) ? gate : (((mob != null) && (mob.location() != null)) ? mob.location() : entrance);
+		if(gateFor != null)
+			defined.put("ROOMTAG_GATEEXITROOM", gateFor);
 
 		final Map<String, Room> kept = new HashMap<String, Room>(locked);
 		final List<Room> fresh = new ArrayList<Room>();
@@ -559,7 +629,8 @@ public final class GenSource
 				CMLib.database().DBUpdateExits(R);
 			CMLib.database().DBUpdateArea(A.Name(), A);
 		}
-		Log.sysOut("Regenerate", mob.Name() + " regenerated area " + A.Name() + " with seed " + seed);
+		Log.sysOut("Regenerate", ((mob == null) ? "The world" : mob.Name()) + " regenerated area " + A.Name() + " with seed " + seed);
+		ScriptEvents.generated(A, null, S.id, defined); // G14: GENERATED_PROG (ST20) after a re-roll too
 		return "Regenerated '" + A.Name() + "' with seed " + seed + ": " + fresh.size() + " rooms made, " + locked.size() + " kept (GENLOCK)"
 			+ ((lostExits > 0) ? (", " + lostExits + " exits removed, to rooms the new build does not have") : "")
 			+ ((oneWay > 0) ? (", " + oneWay + " exits at kept rooms one-way, where the new rooms lead elsewhere") : "") + "."

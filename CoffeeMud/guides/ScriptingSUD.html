@@ -754,6 +754,11 @@ own NAMESTYLE picks another (AHELP NAMESTYLES).</p>
 LINKs it where it belongs, writes the story rooms by hand and marks each with <code>REGENERATE LOCK</code>.
 After improving the template's descriptions, <code>REGENERATE AREA SEED=SAME</code> builds the rest again from
 the area's GENSOURCE, and the hand-written rooms stay, still joined to the new ones (AHELP REGENERATE).</p>
+<p>Areas that re-roll: 'The Shifting Labyrinth' has the <code>Regenerate</code> behaviour with
+<code>WHEN=MOON:FULL SEED=RANDOM</code>, so each full moon, once the party is out, it builds itself again from
+its GENSOURCE; its entrance hall and the minotaur's throne room are GENLOCK and stay. A story event can
+<code>MPREGENERATE 'The Shifting Labyrinth'</code>, and the area's GENERATED_PROG restocks the throne room after
+(AHELP BEHAVIOR_REGENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

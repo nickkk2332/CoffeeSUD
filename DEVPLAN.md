@@ -2654,6 +2654,18 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   and their followers moved to the new room, and the post-processing run
   in the seeded run after. `REGENERATE` alone says the source and the
   kept rooms. A building command for LIST UNSAVED.
+- G14 done. `Behaviors/Regenerate` on an area: `FILE= ID= VARS="..."` (or
+  the GENSOURCE when left out), `SEED=RANDOM|DAILY|WEEKLY|SAME|n`,
+  `WHEN=MUDDAY:n,MOON:phase,ONEMPTY,SCRIPT` (SCRIPT alone by default),
+  `KEEP=` room IDs. It builds as REGENERATE AREA does (G13), keeping GENLOCK
+  rooms, the KEEP rooms and the rooms a running quest uses (the room, or
+  someone or something in it), waits while a player or follower is inside,
+  and the area's GENERATED_PROG (ST20) runs after, as it now does after
+  REGENERATE too. Its STATE (the day counted from, the moon last seen, the
+  party inside, a re-roll waiting and its seed) goes in a save; the rooms
+  are rooms changed in play (S17). `MPREGENERATE area|HERE [SEED=n|SAME]`
+  (142) asks the behaviour, or with none re-rolls from the GENSOURCE at
+  once when no player is inside.
 
 #### 2k. Crafting, gathering and housing (21)
 
