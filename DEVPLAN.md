@@ -2785,6 +2785,15 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   fills a `[NAME]` marker as a shipyard's stock has, docked near the
   script's room by `StdBoardable.dockNearest` if it is not in a room) or
   a private item; NOBODY takes it back.
+- CR6 done. Script functions `OWNER(room|area|HERE|$n|$i)` (the owner,
+  `@PROFILE`, or nothing; a mob's room, an item's own record),
+  `ISOWNER($n [place])` (CR1's profile rule; the room $n is in by
+  default) and `LANDTITLE(place)` (the lot and price). Commands
+  `MPDEED place $n|@PROFILE [price]` (owner set, back taxes cleared, the
+  title and lot updated as a sale does) and `MPUNDEED place` (for sale
+  again, its room reset as a lost lot is). INROOM's BEACON was already
+  fixed in SC14; now `INROOM($n == MYPROPERTY)` and `BEACON` ask of the
+  mob on the left, where they asked of the scripted mob.
 
 #### 2l. Factions and organisations (18)
 

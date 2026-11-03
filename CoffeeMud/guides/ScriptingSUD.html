@@ -798,6 +798,11 @@ template's variables) and <code>obj</code> (what is being built) (AHELP GENERATE
 there and use the chest, and nothing is theft between them. After the quest the harbourmaster runs
 <code>mpgrant skiff $n NAME=Gull</code> and the skiff is theirs, kept with them in the save; with
 <code>PROFILEPROPERTY=true</code> what the player buys belongs to the whole profile (AHELP PROP_ROOMFORSALE).</p>
+<p>Property in scripts: when the ghost of the haunted farmhouse is laid to rest, the reeve runs
+<code>mpdeed 'Hollow#3' $n</code> and says the deed is theirs; a gardener's GREET_PROG checks
+<code>if isowner($n)</code> before offering to tend the plot, <code>$%OWNER(HERE)%</code> names who owns a
+room (<code>@PROFILE</code> for the whole party) and <code>$%LANDTITLE(HERE)%</code> gives its lot and price
+(AHELP BEHAVIOR_SCRIPTABLE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -6485,13 +6485,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					else
 						arg2=varify(ctx,tt[t+0]);
 					final Room mobLocR=CMLib.map().roomLocation(E);
+					final MOB whoM=(E instanceof MOB)?(MOB)E:ctx.monster; // CR6: INROOM($n == MYPROPERTY) asks of $n
 					Room R=null;
 					if(arg2.equalsIgnoreCase("BEACON"))
-						R=ctx.monster.getStartRoom();
+						R=whoM.getStartRoom();
 					else
 					if(arg2.equalsIgnoreCase("MYPROPERTY"))
 					{
-						if(CMLib.law().doesOwnThisLand(ctx.monster, mobLocR))
+						if(CMLib.law().doesOwnThisLand(whoM, mobLocR))
 							R=mobLocR;
 					}
 					else
@@ -16072,6 +16073,47 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final int hi=(nums.size()>1)?nums.get(1).intValue():lo;
 			return NameStyles.make(NameStyles.get(s),lo,hi,gender,full);
 		}
+		case "OWNER": // CR6: OWNER(room|area|HERE|$n|$i): who owns it (a mob: the room it is in), @PROFILE for the profile, or nothing
+		{
+			final Physical P=propertyPlace(ctx,parms.trim());
+			if(P instanceof Room)
+				return CMLib.law().getPropertyOwnerName((Room)P);
+			if(P instanceof Area)
+			{
+				final PrivateProperty PP=CMLib.law().getPropertyRecord((Area)P);
+				return (PP==null)?"":PP.getOwnerName();
+			}
+			if(P instanceof Item)
+			{
+				final PrivateProperty PP=(P instanceof PrivateProperty)?(PrivateProperty)P:CMLib.law().getPropertyRecord((Item)P);
+				return (PP==null)?"":PP.getOwnerName();
+			}
+			return "";
+		}
+		case "ISOWNER": // CR6: ISOWNER($n [room|area|$i]): $n owns it, or a character of the same profile does, or @PROFILE does; the room $n is in if none is given
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			if(!(W instanceof MOB))
+				return "false";
+			final MOB M=(MOB)W;
+			final String rest=CMParms.getPastBitClean(parms,0).trim();
+			final Physical P=(rest.length()==0)?M.location():propertyPlace(ctx,rest);
+			PrivateProperty PP=null;
+			if(P instanceof Room)
+				PP=CMLib.law().getPropertyRecord((Room)P);
+			else
+			if(P instanceof Area)
+				PP=CMLib.law().getPropertyRecord((Area)P);
+			else
+			if(P instanceof Item)
+				PP=(P instanceof PrivateProperty)?(PrivateProperty)P:CMLib.law().getPropertyRecord((Item)P);
+			return ((PP!=null)&&CMLib.law().doesOwnThisProperty(M,PP))?"true":"false";
+		}
+		case "LANDTITLE": // CR6: LANDTITLE(room|area|HERE): its lot (the room or area the title is for) and price, as Farmhouse#3 5000, or nothing
+		{
+			final LandTitle LT=titleOf(propertyPlace(ctx,parms.trim()));
+			return (LT==null)?"":(LT.landPropertyID()+" "+LT.getPrice());
+		}
 		case "ISHOLIDAY": // W6: ISHOLIDAY(name): that holiday (a quest by that name) is on
 			return Holidays.on(CMParms.combine(unquotedWords(varify(ctx,parms)),0))?"true":"false";
 		case "HOLIDAY": // W6: HOLIDAY(): the holidays on now, by name
@@ -16889,6 +16931,44 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
 			if(said!=null)
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
+		case "MPDEED": // CR6: MPDEED room|area|lotID $n|@PROFILE [price]: the land is theirs, its title and room updated
+		case "MPUNDEED": // CR6: MPUNDEED room|area|lotID: the land is for sale again
+		{
+			final boolean deed=cmd.equals("MPDEED");
+			final String placeWord=CMParms.getCleanBit(line,1);
+			final LandTitle LT=titleOf(propertyPlace(ctx,placeWord));
+			if(LT==null)
+			{
+				logError(ctx,cmd,"RunTime","'"+varify(ctx,placeWord)+"' has no title (Prop_RoomForSale, Prop_LotsForSale or Prop_AreaForSale): "+line);
+				return null;
+			}
+			String owner="";
+			if(deed)
+			{
+				final String whoWord=CMParms.getCleanBit(line,2);
+				final String whoV=varify(ctx,whoWord).trim();
+				if(ProfileOwner.isToken(whoV)||whoV.equalsIgnoreCase("PROFILE"))
+					owner=ProfileOwner.TOKEN;
+				else
+				{
+					final Environmental W=(whoWord.length()==0)?null:getArgumentMOB(whoWord,ctx);
+					if(!(W instanceof MOB))
+					{
+						logError(ctx,cmd,"Syntax","MPDEED room|area|lotID $n|@PROFILE [price]: "+line);
+						return null;
+					}
+					owner=W.Name();
+				}
+				final String priceWord=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+				if(CMath.isInteger(priceWord))
+					LT.setPrice(CMath.s_int(priceWord));
+			}
+			LT.setOwnerName(owner);
+			LT.setBackTaxes(0);
+			LT.updateTitle();
+			LT.updateLot(null);
 			return null;
 		}
 		case "MPINTERRUPT": // W4: MPINTERRUPT who [message]: ends the wait (or journey) of that character or their party
@@ -19862,6 +19942,55 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 * @param word the word, or ""
 	 * @return the shopkeeper, or null
 	 */
+	/**
+	 * CR6: the place OWNER, ISOWNER, LANDTITLE and MPDEED mean: HERE (or
+	 * nothing), a $ reference (a room, an area, an item, or the room a mob
+	 * is in), a room ID (a lot ID is one), a room name, or an area.
+	 * @param ctx the script's context
+	 * @param word the word
+	 * @return the room, area or item, or null
+	 */
+	protected Physical propertyPlace(final MPContext ctx, final String word)
+	{
+		final String raw=CMParms.cleanBit(word.trim());
+		if(raw.startsWith("$"))
+		{
+			final Environmental E=getArgumentItem(raw,ctx);
+			if((E instanceof Room)||(E instanceof Area)||(E instanceof Item))
+				return (Physical)E;
+			if(E!=null)
+				return CMLib.map().roomLocation(E);
+		}
+		final String w=varify(ctx,raw).trim();
+		if((w.length()==0)||w.equalsIgnoreCase("HERE"))
+			return (lastKnownLocation!=null)?lastKnownLocation:CMLib.map().roomLocation(ctx.scripted);
+		Room R=CMLib.map().getRoom(w);
+		if(R==null)
+		{
+			final Area A=CMLib.map().getArea(w);
+			if(A!=null)
+				return A;
+			R=getRoom(w,lastKnownLocation);
+		}
+		return R;
+	}
+
+	/**
+	 * CR6: the title of a room or area, or the lot a deed is for.
+	 * @param P a room, area or deed
+	 * @return the title, or null
+	 */
+	protected LandTitle titleOf(final Physical P)
+	{
+		if(P instanceof Room)
+			return CMLib.law().getLandTitle((Room)P);
+		if(P instanceof Area)
+			return CMLib.law().getLandTitle((Area)P);
+		if(P instanceof LandTitle)
+			return (LandTitle)P;
+		return null;
+	}
+
 	/**
 	 * G5: the player a generation is for, as its PLAYER_LEVEL and PARTY_SIZE: the
 	 * one who set the script off, if they are a player.

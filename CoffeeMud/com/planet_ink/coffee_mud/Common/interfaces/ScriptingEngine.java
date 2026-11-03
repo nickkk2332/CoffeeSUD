@@ -786,6 +786,9 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"HOLIDAY", //214
 		"GENSTRING", //215
 		"RANDNAME", //216
+		"OWNER", //217
+		"ISOWNER", //218
+		"LANDTITLE", //219
 	};
 
 	/** String list of all valid mobprog commands */
@@ -934,6 +937,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPGENERATE", // 141
 		"MPREGENERATE", // 142
 		"MPGRANT", // 143
+		"MPDEED", // 144
+		"MPUNDEED", // 145
 	};
 
 	/**
