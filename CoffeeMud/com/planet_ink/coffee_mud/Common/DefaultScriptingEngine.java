@@ -16122,6 +16122,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final LandTitle LT=titleOf(propertyPlace(ctx,parms.trim()));
 			return (LT==null)?"":(LT.landPropertyID()+" "+LT.getPrice());
 		}
+		case "HASPERK": // P13: HASPERK($n PERK_ID): $n has taken that perk (by ID or name)
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final String id=varify(ctx,CMParms.getPastBitClean(parms,0)).trim();
+			if((!(W instanceof MOB))||(id.length()==0))
+				return "false";
+			final Perks.Perk K=Perks.perk(id);
+			return ((K!=null)?Perks.has((MOB)W,K):(((MOB)W).findTattoo(id.toUpperCase())!=null))?"true":"false";
+		}
 		case "KNOWSRECIPE": // CR4: KNOWSRECIPE($n skill name): $n knows that recipe (Prop_KnownRecipes; under PROFILERECIPES, the profile does)
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16961,6 +16970,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
 			if(said!=null)
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
+		case "MPPERK": // P13: MPPERK $n PERK_ID gives the perk and its rewards; MPPERK $n -PERK_ID takes it off
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			String id=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			final boolean minus=id.startsWith("-");
+			if(minus)
+				id=id.substring(1).trim();
+			final Perks.Perk K=Perks.perk(id);
+			if((!(W instanceof MOB))||(K==null))
+			{
+				logError(ctx,"MPPERK","Syntax","MPPERK $n [-]perk (a perk of world/perks.ini): "+line);
+				return null;
+			}
+			if(minus)
+				Perks.remove((MOB)W,K);
+			else
+				Perks.give((MOB)W,K,true);
 			return null;
 		}
 		case "MPLEARNRECIPE": // CR4: MPLEARNRECIPE $n skill recipe name|line: $n knows that recipe for good

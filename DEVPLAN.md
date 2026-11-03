@@ -3148,6 +3148,19 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   SHOWLOCKED=YES (ini) lists a race or class with a hint that the
   character cannot take, "(locked: hint)", in the macros and the race
   and class prompts, and typing a locked race's ID says the hint.
+- P13 done. `core/Perks` reads world/perks.ini (again when it
+  changes): perk lines (ID, NAME, POOL, MASK, REQUIRES, COST, REWARDS,
+  HELP), PICKS= (POOL every N levels, POOL:Class at 1,5,10) and
+  TRAITS=. No pick is stored: the picks a pool has are the schedule's
+  for the character's levels (a class's own for POOL:Class) less the
+  costs of the perks of it taken, a perk taken being a tattoo of its ID.
+  The new PerkCmd: PERKS (picks left, yours, can take, not yet with the
+  reason) and PERK [name] (the tattoo and the rewards, `giveAwards`).
+  A level-up's news says when a pick is left. TRAITS is a new movable
+  creation step (after KIT by default; CHARCR_TRAITSSTART and
+  CHARCR_TRAITSPICKED toggle a trait or flaw, DONE refused while the
+  points are overspent); trait rewards come at the end of creation.
+  HASPERK($n perk) and MPPERK $n [-]perk in scripts.
 
 #### 2p. Presentation (18)
 

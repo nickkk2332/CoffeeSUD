@@ -35,7 +35,7 @@ function step(name) {
 function states() { return s(lget("state")); }
 try {
 	if (CF.isFile()) CF["delete"]();
-	check("default", s(CSt.after("CLASS")) == "[ORIGIN, KIT]" && s(CSt.mode("RACE")) == "ASK" && s(CSt.mode("DEITY")) == "ASK", s(CSt.after("CLASS")));
+	check("default", s(CSt.after("CLASS")) == "[ORIGIN, KIT, TRAITS]" && s(CSt.mode("RACE")) == "ASK" && s(CSt.mode("DEITY")) == "ASK", s(CSt.after("CLASS")));
 	write(CF, ["# fixp12",
 		"STEPS=RACE,GENDER,FIXUPBRINGING,STATS,CLASS,KIT,FACTIONS,REVIEW,FIXLAST",
 		"GENDER=RANDOM",

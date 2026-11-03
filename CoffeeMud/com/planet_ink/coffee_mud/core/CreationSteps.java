@@ -50,9 +50,9 @@ public class CreationSteps
 	/** the engine's steps, in its order */
 	public static final String[]	FIXED		= { "RACE", "GENDER", "STATS", "CLASS", "FACTIONS", "DEITY" };
 	/** the standard steps that go where STEPS puts them */
-	public static final String[]	MOVABLE		= { "ORIGIN", "KIT" };
+	public static final String[]	MOVABLE		= { "ORIGIN", "KIT", "TRAITS" };
 	/** the default order */
-	public static final String[]	DEFAULT		= { "RACE", "GENDER", "STATS", "CLASS", "ORIGIN", "KIT", "FACTIONS", "DEITY" };
+	public static final String[]	DEFAULT		= { "RACE", "GENDER", "STATS", "CLASS", "ORIGIN", "KIT", "TRAITS", "FACTIONS", "DEITY" };
 
 	/** one answer to a question */
 	public static class Choice

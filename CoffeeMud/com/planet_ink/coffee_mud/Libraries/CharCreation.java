@@ -155,6 +155,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_CLASSINIT,
 		CHARCR_STARTFINISH,
 		CHARCR_REVIEWPICKED,
+		CHARCR_TRAITSSTART,
+		CHARCR_TRAITSPICKED,
 		CHARCR_FACTIONNEXT,
 		CHARCR_FACTIONPICK,
 		CHARCR_FACTIONDONE,
@@ -1086,6 +1088,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrStartFinish(loginObj, session);
 		case CHARCR_REVIEWPICKED:
 			return charcrReviewPicked(loginObj, session);
+		case CHARCR_TRAITSSTART:
+			return charcrTraitsStart(loginObj, session);
+		case CHARCR_TRAITSPICKED:
+			return charcrTraitsPicked(loginObj, session);
 		case CHARCR_TEMPLATESTART:
 			return charcrTemplateStart(loginObj, session);
 		case CHARCR_TEMPLATEPICKED:
@@ -3022,6 +3028,53 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	}
 
 	/**
+	 * P13: the TRAITS step: traits and flaws from world/perks.ini, bought
+	 * with TRAITS= points, a flaw giving points back.
+	 */
+	protected LoginResult charcrTraitsStart(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		if((Perks.traits(mob).size()==0)||CreationSteps.auto("TRAITS"))
+			return nextQueued(loginObj);
+		session.println(null,null,null,Perks.traitMenu(mob));
+		session.promptPrint(L("^NA trait or flaw to take or drop, or DONE: "));
+		loginObj.state=LoginState.CHARCR_TRAITSPICKED;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	protected LoginResult charcrTraitsPicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
+		loginObj.state=LoginState.CHARCR_TRAITSSTART;
+		if((input.length()==0)||input.equalsIgnoreCase("DONE")||input.equalsIgnoreCase("D"))
+		{
+			if(Perks.left(mob, Perks.TRAIT)<0)
+			{
+				session.println(L("You have spent more points than you have: drop a trait, or take a flaw."));
+				return null;
+			}
+			JSProgression.creationStep(mob,"traits"); // JS23's onCreationStep
+			return nextQueued(loginObj);
+		}
+		final Perks.Perk K=Perks.find(Perks.traits(mob), input);
+		if(K==null)
+			session.println(L("'@x1' is not one of the traits or flaws.",input));
+		else
+		if(Perks.has(mob,K))
+			Perks.remove(mob,K);
+		else
+		{
+			final String why=Perks.why(mob,K,true);
+			if(why!=null)
+				session.println(L("You cannot take @x1: @x2.",K.name,why));
+			else
+				Perks.give(mob,K,false);
+		}
+		return null;
+	}
+
+	/**
 	 * P27: the step a state begins, for REVIEW's BACK.
 	 * @param loginObj the login
 	 * @return the step, or null
@@ -3040,6 +3093,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return "CLASS";
 		case CHARCR_ORIGINSTART:
 			return "ORIGIN";
+		case CHARCR_TRAITSSTART:
+			return "TRAITS";
 		case CHARCR_KITSTART:
 			return (loginObj.kitGroup==0)?"KIT":null;
 		case CHARCR_QUESTIONSTART:
@@ -3184,6 +3239,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			loginObj.kitGroup=0;
 			loginObj.state=LoginState.CHARCR_KITSTART;
 		}
+		else
+		if(s.equals("TRAITS"))
+			loginObj.state=LoginState.CHARCR_TRAITSSTART;
 		else
 		{
 			loginObj.question=s;
@@ -4629,6 +4687,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			executeScript(mob,charCrScripts.get("ORIGIN"));
 			StartingKits.apply(mob, loginObj.kits); // every kit that fits, and those chosen
 			CreationSteps.applyAnswers(mob); // the answers to creation.ini's questions
+			Perks.traitRewards(mob); // P13: what the traits and flaws give
 		}
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"newchardone.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
