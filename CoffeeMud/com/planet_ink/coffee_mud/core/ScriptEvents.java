@@ -2028,6 +2028,7 @@ public final class ScriptEvents
 	 */
 	public static void vesselDocked(final Item vessel, final MOB mob, final Room R)
 	{
+		Waits.docked(vessel); // W4: WAIT UNTIL DOCK
 		if((vessel == null) || (R == null) || (!isUsed(DOCK_PROG)))
 			return;
 		final List<PhysicalAgent> hosts = aboard(vessel);

@@ -2466,6 +2466,22 @@ W18, W19, W20, W21, W22, W23, W28, W29
   level each `DRAIN=` ticks; rising water puts out lights. `TITLE1=` to
   `TITLE3=`, `DESC1=` to `DESC3=` and `MSG1=` to `MSG3=` per level.
   `FLOODLEVEL(room)` (212).
+- W4 done, with T1's WAIT UNTIL ARRIVAL and MPINTERRUPT (`core/Waits`).
+  `WAIT n TICKS|HOURS|DAYS|WEEKS` and `WAIT UNTIL DAWN|DAY|MORNING|DUSK|
+  NIGHT|HOUR h|DAY d|ARRIVAL|STOP|DOCK` (the next one; ARRIVAL and STOP
+  when the vessel or mount one is on stops after moving or docks, DOCK
+  when it docks, from ST8's dock), and for builders `WAIT UNTIL VAR host
+  name op value` and `WAIT UNTIL QUEST name STEP n|DONE`: at most three
+  game days, the game's own ticks running (so one heals and things
+  respawn), a line each game hour, ended as WAIT always was (hurt,
+  attacked, moved, spoken to). In real time the clock pauses for the wait
+  and starts again after (`GameTime.requestAdvance(ms, until, after)`, the
+  hook run when the time is taken or dropped). `LONGWAIT=ALL|BUILDERS`
+  (coffeemud.ini, world.ini) says who may wait more than 100 ticks.
+  `MPPASSTIME n HOURS|DAYS | UNTIL ... [INTERRUPTIBLE] [QUIET]` (139) and
+  `MPINTERRUPT who [message]` (140; the waiter or their party); JavaScript's
+  `cm.passHours(n)` and `cm.interrupt(who, msg)`. `Prop_InnRoom` (HOURS=,
+  MSG=): a wait there of that long ends in a full rest.
 
 #### 2j. Generators and random content (16)
 

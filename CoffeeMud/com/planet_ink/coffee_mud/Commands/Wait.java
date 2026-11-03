@@ -59,15 +59,26 @@ public class Wait extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		// W4: WAIT n HOURS|DAYS|WEEKS and WAIT UNTIL ...: the game's own ticks, the clock paused for it if it runs
+		if((commands.size() > 1)
+		&& (commands.get(1).equalsIgnoreCase("UNTIL")
+			|| ((commands.size() > 2) && CMath.isInteger(commands.get(1)) && (!commands.get(2).toUpperCase().startsWith("TICK")))))
+			return longWait(mob, new ArrayList<String>(commands.subList(1, commands.size())));
 		int ticks = 1;
 		if(commands.size() > 1)
 		{
 			if(!CMath.isInteger(commands.get(1)) || (CMath.s_int(commands.get(1)) < 1))
 			{
-				mob.tell(L("Wait how many ticks?"));
+				mob.tell(L("Wait how many ticks?  Or WAIT [N] HOURS, DAYS or WEEKS, or WAIT UNTIL DAWN, DUSK, HOUR [N]..."));
 				return false;
 			}
-			ticks = Math.min(MAX_TICKS, CMath.s_int(commands.get(1)));
+			ticks = CMath.s_int(commands.get(1));
+			if(ticks > MAX_TICKS)
+			{
+				if(Waits.mayWaitLong(mob))
+					return longWait(mob, new ArrayList<String>(Arrays.asList(commands.get(1), "TICKS")));
+				ticks = MAX_TICKS;
+			}
 		}
 		if(!GameTime.isStopped())
 		{
@@ -102,32 +113,68 @@ public class Wait extends StdCommand
 	 */
 	protected BooleanSupplier disturbed(final MOB mob)
 	{
-		final Room startRoom = mob.location();
-		final int startHP = mob.curState().getHitPoints();
-		final boolean startFight = mob.isInCombat();
-		final long spokenAt = DialogueTime.spokenTo(mob); // N10
-		return new BooleanSupplier()
+		return Waits.disturbed(mob);
+	}
+
+	/**
+	 * W4: WAIT n TICKS|HOURS|DAYS|WEEKS, or WAIT UNTIL a time, a day or an
+	 * arrival: at most three game days, through core/Waits.
+	 * @param mob the one waiting
+	 * @param words the words after WAIT
+	 * @return false, a command that takes no time of its own
+	 */
+	protected boolean longWait(final MOB mob, final List<String> words)
+	{
+		if(!Waits.mayWaitLong(mob))
 		{
-			@Override
-			public boolean getAsBoolean()
+			mob.tell(L("Only builders may wait so long in this game (LONGWAIT=BUILDERS)."));
+			return false;
+		}
+		if(GameTime.isAdvancing())
+		{
+			mob.tell(L("Time is already passing."));
+			return false;
+		}
+		if(Party.waitForTurn(mob))
+		{
+			mob.tell(L("You wait for @x1's turn.", Party.leaderOf(mob).Name()));
+			return false;
+		}
+		final TimeClock C = Waits.clock(mob);
+		final long max = Waits.MAX_HOURS * CMProps.getMillisPerMudHour();
+		long ms = max;
+		BooleanSupplier until = null;
+		String what;
+		if(words.get(0).equalsIgnoreCase("UNTIL"))
+		{
+			final String[] why = { "" };
+			until = Waits.until(mob, words.subList(1, words.size()), why);
+			if(until == null)
 			{
-				if(DialogueTime.spokenTo(mob) != spokenAt)
-				{
-					mob.tell(L("You stop waiting: you are spoken to."));
-					return true;
-				}
-				if(mob.amDead()
-				|| (mob.location() != startRoom)
-				|| (mob.curState().getHitPoints() < startHP)
-				|| (mob.isInCombat() && !startFight))
-				{
-					if(!mob.amDead())
-						mob.tell(L("You stop waiting."));
-					return true;
-				}
+				mob.tell(why[0]);
 				return false;
 			}
-		};
+			what = L("You wait until @x1.", CMParms.combine(words, 1).toLowerCase());
+		}
+		else
+		{
+			ms = Laws.duration(words.get(0) + " " + words.get(1), C);
+			if(ms <= 0)
+			{
+				mob.tell(L("Wait how long?  [N] TICKS, HOURS, DAYS or WEEKS."));
+				return false;
+			}
+			if(ms > max)
+			{
+				mob.tell(L("You can wait three days at most."));
+				ms = max;
+			}
+			what = L("You wait @x1 @x2.", words.get(0), words.get(1).toLowerCase());
+		}
+		mob.tell(what);
+		Party.passTurn(mob);
+		Waits.start(mob, ms, until, true, false);
+		return false;
 	}
 
 	@Override

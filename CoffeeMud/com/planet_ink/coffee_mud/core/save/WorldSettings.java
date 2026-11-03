@@ -69,6 +69,8 @@ public final class WorldSettings
 		"DEFAULTCURRENCY",
 		// the body
 		"BREATHTICKS",
+		// time
+		"LONGWAIT",
 	};
 
 	/** the starts of key names a world may set, such as START_DWARF */

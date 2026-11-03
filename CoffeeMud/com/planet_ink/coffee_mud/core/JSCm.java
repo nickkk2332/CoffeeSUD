@@ -452,6 +452,28 @@ public class JSCm
 	}
 
 	/**
+	 * W4: ends a wait (WAIT, MPPASSTIME) or journey under way (MPINTERRUPT).
+	 * @param who whose (one waiting, or of their party), or null for any
+	 * @param message what they are told, or null
+	 * @return true if one ended
+	 */
+	public boolean interrupt(final MOB who, final String message)
+	{
+		return Waits.interrupt(who, message);
+	}
+
+	/**
+	 * W4: the game's own ticks pass for some game hours, as MPPASSTIME
+	 * (the clock paused for it if it runs).
+	 * @param hours how many
+	 * @return false if time is already passing
+	 */
+	public boolean passHours(final int hours)
+	{
+		return Waits.start(thePlayer(), hours * CMProps.getMillisPerMudHour(), null, false, true);
+	}
+
+	/**
 	 * In turn-based time, the game goes on as many ticks as asked, what comes
 	 * due on the way running, as WAIT does.
 	 * @param ticks how many ticks

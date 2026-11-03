@@ -16542,6 +16542,65 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			Laws.fine(H,(MOB)W,CMath.s_double(amt.startsWith("+")?amt.substring(1):amt),amt.startsWith("+")||amt.startsWith("-"));
 			return null;
 		}
+		case "MPPASSTIME": // W4: MPPASSTIME n HOURS|DAYS|WEEKS | UNTIL DAWN|DUSK|HOUR n... [INTERRUPTIBLE] [QUIET]: the game's own ticks pass
+		{
+			final List<String> w=CMParms.parse(varify(ctx,CMParms.getPastBit(line,0)).trim());
+			boolean interruptible=false;
+			boolean quiet=false;
+			for(final Iterator<String> i=w.iterator();i.hasNext();)
+			{
+				final String k=i.next().toUpperCase();
+				if(k.equals("INTERRUPTIBLE"))
+				{
+					interruptible=true;
+					i.remove();
+				}
+				else
+				if(k.equals("QUIET"))
+				{
+					quiet=true;
+					i.remove();
+				}
+			}
+			final MOB who=(ctx.source!=null)&&(!ctx.source.isMonster()||ctx.source.isPlayer())?ctx.source:terminalMob(ctx);
+			final long max=Waits.MAX_HOURS*CMProps.getMillisPerMudHour();
+			long ms=max;
+			java.util.function.BooleanSupplier until=null;
+			if(w.isEmpty())
+			{
+				logError(ctx,"MPPASSTIME","Syntax","MPPASSTIME n HOURS|DAYS | UNTIL DAWN|HOUR n... [INTERRUPTIBLE] [QUIET]: "+line);
+				return null;
+			}
+			if(w.get(0).equalsIgnoreCase("UNTIL"))
+			{
+				final String[] why={""};
+				until=Waits.until(who,w.subList(1,w.size()),why);
+				if(until==null)
+				{
+					logError(ctx,"MPPASSTIME","Syntax",why[0]+": "+line);
+					return null;
+				}
+			}
+			else
+			{
+				final Area A=CMLib.map().areaLocation(ctx.scripted);
+				ms=Math.min(max,Laws.duration(CMParms.combine(w,0),(A==null)?null:A.getTimeObj()));
+				if(ms<=0)
+				{
+					logError(ctx,"MPPASSTIME","Syntax","MPPASSTIME n HOURS|DAYS | UNTIL ...: "+line);
+					return null;
+				}
+			}
+			if(!Waits.start(who,ms,until,interruptible,quiet))
+				logError(ctx,"MPPASSTIME","RunTime","time is already passing: "+line);
+			return null;
+		}
+		case "MPINTERRUPT": // W4: MPINTERRUPT who [message]: ends the wait (or journey) of that character or their party
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			Waits.interrupt((W instanceof MOB)?(MOB)W:null,varify(ctx,CMParms.getPastBitClean(line,1)).trim());
+			return null;
+		}
 		case "MPROOMSTATE": // W7: MPROOMSTATE room|HERE|area state: its RoomStates changes to the state now
 		{
 			final Behavior B=roomStates(ctx,CMParms.getCleanBit(line,1));

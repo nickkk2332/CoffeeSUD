@@ -691,6 +691,10 @@ can be cut off on the island; the shore's <code>TidalRoom DESC="The sea fills th
 <p>Rising water: the old city's storm drain has <code>Floodable RISE="-WEATHER +RAIN +THUNDERSTORM" RATE=15 FLOWTO=east</code>,
 a level each 15 ticks of rain; the pump room's wheel sets the variable of <code>ONVAR="pump sluice==open"</code>.
 <code>FLOODLEVEL(HERE)</code> in VARIES (<code>+IF</code>) and scripts tells how deep it is.</p>
+<p>Time that passes: a ferryman's <code>BUY_PROG</code> moves the player across with MPTRANSFER, then runs
+<code>MPPASSTIME 4 HOURS</code>; the world goes on as it would. A player types <code>WAIT UNTIL DAWN</code> or <code>WAIT 8
+HOURS</code> (in an inn's <code>Prop_InnRoom</code>, a full rest), a builder <code>WAIT UNTIL HOUR 20</code> to watch the night
+market open, and a storm's script ends a wait with <code>MPINTERRUPT $n Thunder wakes you.</code></p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

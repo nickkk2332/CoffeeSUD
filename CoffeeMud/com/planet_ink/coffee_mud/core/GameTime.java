@@ -303,6 +303,36 @@ public final class GameTime
 			stopWhen = until;
 	}
 
+	/** W4: what to do once the time asked for is all taken, or dropped */
+	private static Runnable afterAdvance = null;
+
+	/**
+	 * W4: as requestAdvance, and runs a hook once the time is all taken or
+	 * dropped (a wait that paused the running clock starts it again).
+	 * @param ms how many milliseconds to move it
+	 * @param until the test, or null to take all of the time
+	 * @param after the hook, or null
+	 */
+	public static synchronized void requestAdvance(final long ms, final BooleanSupplier until, final Runnable after)
+	{
+		if((ms <= 0) || (state.realAt != 0))
+		{
+			if(after != null)
+				after.run();
+			return;
+		}
+		requestAdvance(ms, until);
+		afterAdvance = after;
+	}
+
+	private static void runAfter()
+	{
+		final Runnable R = afterAdvance;
+		afterAdvance = null;
+		if(R != null)
+			R.run();
+	}
+
 	/**
 	 * Returns whether time asked for has not all been taken yet.
 	 * @return true while the clock is still being moved
@@ -319,6 +349,7 @@ public final class GameTime
 	{
 		pending = 0;
 		stopWhen = null;
+		runAfter(); // W4
 	}
 
 	/**
@@ -334,7 +365,10 @@ public final class GameTime
 		pending -= step;
 		advance(step);
 		if(pending == 0)
+		{
 			stopWhen = null;
+			runAfter(); // W4
+		}
 		return step;
 	}
 
