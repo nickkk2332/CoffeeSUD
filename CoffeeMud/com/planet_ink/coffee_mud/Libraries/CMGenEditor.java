@@ -9311,6 +9311,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,CMLib.help().getHelpText("MATHFORMULA",mob,true).toString(),++showNumber,showFlag,L("HP/Level Formula"),"HITPOINTSFORMULA",false);
 			promptStatStr(mob,me,CMLib.help().getHelpText("MATHFORMULA",mob,true).toString(),++showNumber,showFlag,L("Mana/Level Formula"),"MANAFORMULA",false);
 			promptStatInt(mob,me,++showNumber,showFlag,L("Prac/Level"),"LVLPRAC");
+			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Trains/Level"),"LVLTRAIN"); // P17
 			promptStatInt(mob,me,++showNumber,showFlag,L("Attack/Level"),"LVLATT");
 			genAttackAttribute(mob,me,++showNumber,showFlag,"Attack Attribute","ATTATT");
 			promptStatInt(mob,me,++showNumber,showFlag,L("Practices/1stLvl"),"FSTPRAC");
@@ -10903,6 +10904,10 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			genDynamicImmunitiess(mob,me,"Racial",++showNumber,showFlag);
 			promptStatStr(mob,me,++showNumber,showFlag,L("Name style"),"NAMESTYLE"); // G12
 			promptStatStr(mob,me,++showNumber,showFlag,L("Unlock hint (shown under SHOWLOCKED=YES)"),"UNLOCKHINT"); // P18
+			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Trains/1stLvl"),"FSTTRAN"); // P17
+			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Practices/1stLvl"),"FSTPRAC"); // P17
+			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Prac/Level"),"LVLPRAC"); // P17
+			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Trains/Level"),"LVLTRAIN"); // P17
 
 			if (showFlag < -900)
 			{

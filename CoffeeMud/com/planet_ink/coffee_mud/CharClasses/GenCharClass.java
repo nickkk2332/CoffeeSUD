@@ -81,6 +81,7 @@ public class GenCharClass extends StdCharClass
 	protected int 			disableFlags			= 0;
 	protected String 		startingMoney			= "";
 	protected String		unlockHint				= ""; // P18: UNLOCKHINT
+	protected int			bonusTrainLevel			= 0; // P17: LVLTRAIN
 	@SuppressWarnings("unchecked")
 	protected List<String>[]securityGroups			= new List[0];
 	protected Integer[] 	securityGroupLevels		= {};
@@ -543,6 +544,8 @@ public class GenCharClass extends StdCharClass
 		}
 		str.append(CMLib.xml().convertXMLtoTag("BASE",baseClass()));
 		str.append(CMLib.xml().convertXMLtoTag("LVLPRAC",""+bonusPracLevel));
+		if(bonusTrainLevel!=0)
+			str.append(CMLib.xml().convertXMLtoTag("LVLTRAIN",""+bonusTrainLevel)); // P17
 		str.append(CMLib.xml().convertXMLtoTag("MANAFRM",""+manaFormula));
 		str.append(CMLib.xml().convertXMLtoTag("MVMTFRM",""+movementFormula));
 		str.append(CMLib.xml().convertXMLtoTag("HPFRM",""+hitPointsFormula));
@@ -760,6 +763,7 @@ public class GenCharClass extends StdCharClass
 			hitPointsFormula="((@x6<@x7)/"+hpDivisor+")+("+hpDice+"*(1?"+hpDie+"))";
 		}
 		bonusPracLevel=CMLib.xml().getIntFromPieces(classData,"LVLPRAC");
+		bonusTrainLevel=CMLib.xml().getIntFromPieces(classData,"LVLTRAIN"); // P17
 		manaFormula=CMLib.xml().getValFromPieces(classData,"MANAFRM");
 		if((manaFormula==null)||(manaFormula.length()==0))
 		{
@@ -1001,7 +1005,7 @@ public class GenCharClass extends StdCharClass
 									 "SSETLEVEL","NUMWMAT","GETWMAT","ARMORMINOR","STATCLASS",
 									 "EVENTCLASS","GETCABLEPREQ","GETCABLEMASK","HELP","LEVELCAP",
 									 "GETCABLEMAXP","MAXNCS","MAXCRS","MAXCMS","MAXLGS","GETSTATMIN",
-									 "MONEY","UNLOCKHINT"
+									 "MONEY","UNLOCKHINT","LVLTRAIN"
 									 };
 
 	@Override
@@ -1152,6 +1156,8 @@ public class GenCharClass extends StdCharClass
 			return startingMoney;
 		case 62:
 			return unlockHint; // P18
+		case 63:
+			return "" + bonusTrainLevel; // P17
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1534,6 +1540,9 @@ public class GenCharClass extends StdCharClass
 			break;
 		case 62: // P18: UNLOCKHINT
 			unlockHint = (val==null)?"":val.trim();
+			break;
+		case 63: // P17: LVLTRAIN
+			bonusTrainLevel = CMath.s_parseIntExpression(val);
 			break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);

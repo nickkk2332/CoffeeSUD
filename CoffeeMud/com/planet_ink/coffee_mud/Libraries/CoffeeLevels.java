@@ -495,6 +495,10 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 			costGains = Arrays.copyOf(mob.playerStats().leveledCostGains(level), costGains.length);
 		final CharClass prevClass=mob.baseCharStats().getCurrentClass();
 		final int prevClassLevel = mob.baseCharStats().getClassLevel(prevClass);
+		// P17: levels gained within a second of each other are not recorded
+		final boolean recorded=(mob.playerStats()!=null)&&(mob.playerStats().leveledDateTime(level)!=mob.playerStats().leveledDateTime(level-1));
+		final int practiceGain=recorded?costGains[CostDef.CostType.PRACTICE.ordinal()]:LevelGains.practices(mob,prevClass);
+		final int trainGain=recorded?costGains[CostDef.CostType.TRAIN.ordinal()]:LevelGains.trains(mob,prevClass);
 		doBaseLevelAdjustment(mob,costGains,false);
 		final CharClass curClass=mob.baseCharStats().getCurrentClass();
 		final int oldClassLevel = (curClass == prevClass) ? prevClassLevel : (mob.baseCharStats().getCurrentClassLevel() + 1);
@@ -503,17 +507,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 								+ mob.charStats().getStat(CharStats.CODES.toMAXBASE(CharStats.STAT_WISDOM)));
 		if(prac2Stat>maxPrac2Stat)
 			prac2Stat=maxPrac2Stat;
-		int practiceGain=(int)Math.floor(CMath.div(prac2Stat,6.0))+curClass.getBonusPracLevel();
-		if(costGains[CostDef.CostType.PRACTICE.ordinal()]!=0)
-			practiceGain = costGains[CostDef.CostType.PRACTICE.ordinal()];
-		if(practiceGain<=0)
-			practiceGain=1;
 		mob.setPractices(mob.getPractices()-practiceGain);
-		int trainGain=0;
-		if(costGains[CostDef.CostType.TRAIN.ordinal()]!=0)
-			trainGain = costGains[CostDef.CostType.TRAIN.ordinal()];
-		if(trainGain<=0)
-			trainGain=1;
 		mob.setTrains(mob.getTrains()-trainGain);
 
 		mob.recoverPhyStats();
@@ -1247,18 +1241,14 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 					 +mob.charStats().getStat(CharStats.CODES.toMAXBASE(CharStats.STAT_WISDOM)));
 		if(prac2Stat>maxPrac2Stat)
 			prac2Stat=maxPrac2Stat;
-		int practiceGain=(int)Math.floor(CMath.div(prac2Stat,6.0))+curClass.getBonusPracLevel();
-		if(practiceGain<=0)
-			practiceGain=1;
+		int practiceGain=LevelGains.practices(mob,curClass); // P17: FORMULA_PRACTICESPERLEVEL, the race's LVLPRAC
 		practiceGain=JSProgression.perLevel("practicesForLevel",mob,practiceGain); // JS23
 		mob.setPractices(mob.getPractices()+practiceGain);
 		costGains[CostDef.CostType.PRACTICE.ordinal()] = practiceGain;
 		theNews.append(" ^H" + practiceGain+"^N practice " +
 			( practiceGain != 1? "points" : "point" ) + ", ");
 
-		int trainGain=1;
-		if(trainGain<=0)
-			trainGain=1;
+		int trainGain=LevelGains.trains(mob,curClass); // P17: FORMULA_TRAINSPERLEVEL, LVLTRAIN, TRAINSATLEVELS
 		trainGain=JSProgression.perLevel("trainsForLevel",mob,trainGain); // JS23
 		mob.setTrains(mob.getTrains()+trainGain);
 		costGains[CostDef.CostType.TRAIN.ordinal()] = trainGain;

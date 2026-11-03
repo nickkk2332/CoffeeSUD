@@ -66,6 +66,7 @@ public class GenRace extends StdRace
 	protected String			helpEntry			= "";
 	protected String			nameStyle			= ""; // G12: NAMESTYLE
 	protected String			unlockHint			= ""; // P18: UNLOCKHINT
+	protected int[]				levelGains			= new int[4]; // P17: FSTTRAN, FSTPRAC, LVLPRAC, LVLTRAIN
 	protected String[]			racialEffectNames	= null;
 	protected int[]				racialEffectLevels	= null;
 	protected String[]			racialEffectParms	= null;
@@ -496,6 +497,11 @@ public class GenRace extends StdRace
 			str.append(CMLib.xml().convertXMLtoTag("NAMESTYLE",nameStyle)); // G12
 		if(unlockHint.length()>0)
 			str.append(CMLib.xml().convertXMLtoTag("UNLOCKHINT",CMLib.xml().parseOutAngleBrackets(unlockHint))); // P18
+		for(int g=0;g<LEVELGAINS.length;g++)
+		{
+			if(levelGains[g]!=0)
+				str.append(CMLib.xml().convertXMLtoTag(LEVELGAINS[g],""+levelGains[g])); // P17
+		}
 		str.append(CMLib.xml().convertXMLtoTag("AGING",CMParms.toListString(getAgingChart())));
 		if(adjPStats==null)
 			str.append("<ESTATS/>");
@@ -681,6 +687,9 @@ public class GenRace extends StdRace
 		helpEntry=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(raceData,"HELP"));
 		nameStyle=CMLib.xml().getValFromPieces(raceData,"NAMESTYLE").trim(); // G12
 		unlockHint=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(raceData,"UNLOCKHINT")).trim(); // P18
+		levelGains=new int[LEVELGAINS.length];
+		for(int g=0;g<LEVELGAINS.length;g++)
+			levelGains[g]=CMLib.xml().getIntFromPieces(raceData,LEVELGAINS[g]); // P17
 		final String playerval=CMLib.xml().getValFromPieces(raceData,"PLAYER").trim().toUpperCase();
 		if(playerval.length()>0)
 		{
@@ -952,8 +961,11 @@ public class GenRace extends StdRace
 									 "BREATHES","CANRIDE",
 									 "NUMIABLE","GETIABLE",
 									 "XPADJ", "CLASS",
-									 "GETCABLEPARM", "NAMESTYLE", "UNLOCKHINT"
+									 "GETCABLEPARM", "NAMESTYLE", "UNLOCKHINT",
+									 "FSTTRAN", "FSTPRAC", "LVLPRAC", "LVLTRAIN"
 									 };
+
+	private static final String[] LEVELGAINS = { "FSTTRAN", "FSTPRAC", "LVLPRAC", "LVLTRAIN" }; // P17, stats 57 to 60
 
 	@Override
 	public String getStat(String code)
@@ -1096,6 +1108,11 @@ public class GenRace extends StdRace
 			return nameStyle;
 		case 56:
 			return unlockHint; // P18
+		case 57:
+		case 58:
+		case 59:
+		case 60:
+			return "" + levelGains[getCodeNum(code) - 57]; // P17
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1658,6 +1675,12 @@ public class GenRace extends StdRace
 			break;
 		case 56: // P18: UNLOCKHINT
 			unlockHint=(val==null)?"":val.trim();
+			break;
+		case 57: // P17: FSTTRAN, FSTPRAC, LVLPRAC, LVLTRAIN
+		case 58:
+		case 59:
+		case 60:
+			levelGains[getCodeNum(code) - 57] = CMath.s_parseIntExpression(val);
 			break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);

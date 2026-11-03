@@ -3229,6 +3229,19 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   the first one who is not NOTEACH and does not refuse (else the first,
   who then says why). TEACHLIST (TeachListCmd) lists what a teacher here
   offers the student, with its price, and what it will not teach them.
+- P17 done. `core/LevelGains`: practices and trains for the level just
+  reached, by FORMULA_PRACTICESPERLEVEL and FORMULA_TRAINSPERLEVEL (@x1
+  level, @x2 WIS capped as before, @x3 INT, @x4 class bonus, @x5 race
+  bonus) or as before plus the race's LVLPRAC and both LVLTRAINs, and
+  TRAINSATLEVELS bursts; CoffeeLevels.level uses it before JS23's hooks.
+  unLevel takes back the recorded gains when that level was recorded
+  (levels within a second of each other are not), else works them out
+  before the level goes; a level that gave none takes none back.
+  GenCharClass has LVLTRAIN (stat 63); GenRace has FSTTRAN, FSTPRAC,
+  LVLPRAC and LVLTRAIN (stats 57 to 60; the audit's TRAINS1 and PRACS1
+  renamed, as GenRace strips a code's trailing digits), the first two
+  given by `firstLevel` in charcrStartFinish before NEWCHARLEVEL's
+  level-ups; all in the editors.
 
 #### 2p. Presentation (18)
 
