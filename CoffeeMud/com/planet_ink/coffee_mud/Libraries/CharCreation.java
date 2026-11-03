@@ -144,6 +144,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_CLASSCONFIRM,
 		CHARCR_ORIGINSTART,
 		CHARCR_ORIGINPICKED,
+		CHARCR_KITSTART,
+		CHARCR_KITPICKED,
 		CHARCR_FACTIONNEXT,
 		CHARCR_FACTIONPICK,
 		CHARCR_FACTIONDONE,
@@ -177,6 +179,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		public CharStats	 baseStats = null;
 		public int			 index	   = 0;
 		public ThinnerPlayer player = null;
+		public List<String> kits = new ArrayList<String>(); // P7: starting kits chosen
+		public int			 kitGroup  = 0;
 
 		@Override
 		public String login()
@@ -1047,6 +1051,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrOriginStart(loginObj, session);
 		case CHARCR_ORIGINPICKED:
 			return charcrOriginPicked(loginObj, session);
+		case CHARCR_KITSTART:
+			return charcrKitStart(loginObj, session);
+		case CHARCR_KITPICKED:
+			return charcrKitPicked(loginObj, session);
 		case CHARCR_FACTIONNEXT:
 			return charcrFactionNext(loginObj, session);
 		case CHARCR_FACTIONPICK:
@@ -3799,7 +3807,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		JSProgression.creationStep(mob,"class"); // JS23
 
 		loginObj.index=-1;
-		loginObj.state=LoginState.CHARCR_ORIGINSTART; // P6: then the factions
+		loginObj.kits.clear();
+		loginObj.kitGroup=0;
+		loginObj.state=LoginState.CHARCR_ORIGINSTART; // P6, P7: then the kits, then the factions
 		return null;
 	}
 
@@ -3813,7 +3823,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final List<Origins.Origin> choices=Origins.choices(mob);
 		if(choices.size()==0)
 		{
-			loginObj.state=LoginState.CHARCR_FACTIONNEXT;
+			loginObj.state=LoginState.CHARCR_KITSTART;
 			return null;
 		}
 		session.println(null,null,null,Origins.menu(choices));
@@ -3837,8 +3847,56 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		Origins.choose(mob, O);
 		session.println(L("^NYour origin: ^H@x1^N.",O.name()));
 		JSProgression.creationStep(mob,"origin"); // JS23's onCreationStep
+		loginObj.state=LoginState.CHARCR_KITSTART;
+		return null;
+	}
+
+	/**
+	 * P7: the KIT step, a menu for each group of starting kits the character
+	 * may take more than one of (one kit is simply taken).
+	 */
+	protected LoginResult charcrKitStart(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final List<String> groups=StartingKits.groups(mob);
+		while(loginObj.kitGroup<groups.size())
+		{
+			final List<StartingKits.StartKit> kits=StartingKits.inGroup(mob, groups.get(loginObj.kitGroup));
+			if(kits.size()>1)
+			{
+				session.println(null,null,null,StartingKits.menu(kits));
+				session.promptPrint(L("^NYour kit: "));
+				loginObj.state=LoginState.CHARCR_KITPICKED;
+				return LoginResult.INPUT_REQUIRED;
+			}
+			if(kits.size()==1)
+				loginObj.kits.add(kits.get(0).name);
+			loginObj.kitGroup++;
+		}
 		loginObj.index=-1;
 		loginObj.state=LoginState.CHARCR_FACTIONNEXT;
+		return null;
+	}
+
+	protected LoginResult charcrKitPicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final List<String> groups=StartingKits.groups(mob);
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
+		loginObj.state=LoginState.CHARCR_KITSTART;
+		if(loginObj.kitGroup>=groups.size())
+			return null;
+		final StartingKits.StartKit K=StartingKits.find(StartingKits.inGroup(mob, groups.get(loginObj.kitGroup)), input);
+		if(K==null)
+		{
+			if((input.length()>0)&&(!input.equals("?")))
+				session.println(L("'@x1' is not one of the kits.",input));
+			return null;
+		}
+		loginObj.kits.add(K.name);
+		loginObj.kitGroup++;
+		session.println(L("^NYour kit: ^H@x1^N.",K.title));
+		JSProgression.creationStep(mob,"kit"); // JS23's onCreationStep
 		return null;
 	}
 
@@ -3952,6 +4010,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.setStartRoom(getDefaultStartRoom(mob));
 		Origins.apply(mob); // P6: its start room, items, abilities, standing, tattoos, money and script
 		executeScript(mob,charCrScripts.get("ORIGIN"));
+		StartingKits.apply(mob, loginObj.kits); // P7: every kit that fits, and those chosen
 		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.ALL_AGEING))
 		{
 			final Race R=mob.baseCharStats().getMyRace();

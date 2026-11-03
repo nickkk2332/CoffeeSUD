@@ -3077,6 +3077,18 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   just after the default start room is set (so START replaces it, and
   the age uses its clock), then the new CHARCREATIONSCRIPTS code ORIGIN
   runs. JS23's onCreationStep gets "origin".
+- P7 done. Starting kits are DT16's kit files with a `starting` line
+  (all, or a zapper mask; `core/StartingKits`), `choose GROUP` for a
+  menu, `title` for its name there and `wear no`. CharCreation's new
+  CHARCR_KITSTART and CHARCR_KITPICKED come after the origin: one menu a
+  group with more than one kit the character may take (one is taken
+  with no question), the choices kept on the login. In
+  charcrFactionDone, after the origin, every kit that fits and is in no
+  group is given, and the chosen ones: items (worn unless `wear no`),
+  gold (added, where KIT sets it), abilities, factions and vars. KIT's
+  ITEM now takes a count and a plain catalog name, and its reader knows
+  the new words. STARTINGKIT_n ini keys and LOAD= items are left out:
+  the kit files cover them.
 
 #### 2p. Presentation (18)
 

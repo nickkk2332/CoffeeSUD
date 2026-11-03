@@ -86,7 +86,8 @@ public class KitCmd extends StdCommand
 	}
 
 	private static final Set<String> WORDS = new HashSet<String>(Arrays.asList(new String[] {
-		"RACE", "CLASS", "GENDER", "ALIGNMENT", "LEVEL", "GOLD", "ROOM", "ITEM", "ABILITY", "FACTION", "VAR" }));
+		"RACE", "CLASS", "GENDER", "ALIGNMENT", "LEVEL", "GOLD", "ROOM", "ITEM", "ABILITY", "FACTION", "VAR",
+		"STARTING", "CHOOSE", "TITLE", "WEAR" })); // P7: a starting kit's
 
 	/**
 	 * The file a kit is kept in.
@@ -139,15 +140,6 @@ public class KitCmd extends StdCommand
 		return K;
 	}
 
-	private static Item itemOf(final String spec)
-	{
-		if(spec.toLowerCase().startsWith("catalog:"))
-		{
-			final Item I = CMLib.catalog().getCatalogItem(spec.substring(8).trim());
-			return (I == null) ? null : (Item)I.copyOf();
-		}
-		return CMClass.getItem(spec);
-	}
 
 	/**
 	 * Gives a character its kit's race, class, gender and alignment, as a new
@@ -253,13 +245,27 @@ public class KitCmd extends StdCommand
 			final String v = l[1];
 			if(word.equals("ITEM"))
 			{
-				final Item I = itemOf(v);
-				if(I == null)
-					said.add("no item '" + v + "'");
-				else
+				// P7: a count may come first; a plain catalog name is found too; WEAR NO keeps them off
+				int count = 1;
+				String spec = v;
+				final int sp = v.indexOf(' ');
+				if((sp > 0) && CMath.isInteger(v.substring(0, sp)))
 				{
+					count = Math.max(1, Math.min(100, CMath.s_int(v.substring(0, sp))));
+					spec = v.substring(sp + 1).trim();
+				}
+				final String wear = K.get("WEAR");
+				for(int c = 0; c < count; c++)
+				{
+					final Item I = StartingKits.item(spec);
+					if(I == null)
+					{
+						said.add("no item '" + spec + "'");
+						break;
+					}
 					M.addItem(I);
-					I.wearIfPossible(M);
+					if((wear == null) || (!wear.toUpperCase().startsWith("N")))
+						I.wearIfPossible(M);
 				}
 			}
 			else
