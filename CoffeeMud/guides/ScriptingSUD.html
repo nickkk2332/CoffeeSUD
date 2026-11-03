@@ -750,6 +750,10 @@ family names, so the hold's guards are made with <code>$SYSTEM_RANDOM_NAME:2-3:d
 Borgrum), a script's <code>RANDNAME(Dwarf M FULL)</code> gives names like "Thrain Ironhand", and <code>NEW * dwarf</code>
 offers a dwarvish name. Goblins, orcs and kobolds share <code>goblin.ini</code>'s harsh syllables; a GenRace's
 own NAMESTYLE picks another (AHELP NAMESTYLES).</p>
+<p>Baking and re-rolling: the owner builds 'Old Tunnels' with <code>GENERATE AREA ... SEED=40 UNLINKED</code>,
+LINKs it where it belongs, writes the story rooms by hand and marks each with <code>REGENERATE LOCK</code>.
+After improving the template's descriptions, <code>REGENERATE AREA SEED=SAME</code> builds the rest again from
+the area's GENSOURCE, and the hand-written rooms stay, still joined to the new ones (AHELP REGENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -130,8 +130,10 @@ public class Generate extends StdCommand
 		}
 		final String finalLog = mob.Name()+" called generate command with parms: " + CMParms.combine(commands, 1);
 		CMFile file = null;
+		String fromPath = "randareas/example.xml"; // G13: for GENSOURCE
 		if((commands.size()>3)&&commands.get(3).equalsIgnoreCase("FROM"))
 		{
+			fromPath = commands.get(4);
 			file = new CMFile(Resources.buildResourcePath(commands.get(4)),mob);
 			commands.remove(3);
 			commands.remove(3);
@@ -169,6 +171,14 @@ public class Generate extends StdCommand
 			}
 		}
 		int direction=-1;
+		boolean unlinked=false; // G13: GENERATE AREA ... [DIR] UNLINKED: built with no gate, for LINK later
+		if((codeI==PercObjectType.AREA)&&(commands.size()>3)&&commands.get(commands.size()-1).equalsIgnoreCase("UNLINKED"))
+		{
+			unlinked=true;
+			commands.remove(commands.size()-1);
+			if(CMLib.directions().getGoodDirectionCode(commands.get(commands.size()-1))<0)
+				commands.add("north");
+		}
 		if((codeI==PercObjectType.AREA)||(codeI==PercObjectType.ROOM))
 		{
 			final String possDir=commands.remove(commands.size()-1);
@@ -178,7 +188,7 @@ public class Generate extends StdCommand
 				mob.tell(L("When creating an area or room, the LAST parameter to this command must be a direction to link to this room by."));
 				return false;
 			}
-			if(mob.location().getRoomInDir(direction)!=null)
+			if((!unlinked)&&(mob.location().getRoomInDir(direction)!=null))
 			{
 				final String dirName=CMLib.directions().getDirectionName(direction, CMLib.flags().getInDirType(mob));
 				mob.tell(L("A room already exists in direction @x1. Action aborted.",dirName));
@@ -262,6 +272,7 @@ public class Generate extends StdCommand
 		}
 		// G1: SEED=n builds the same thing each time; with none, a new seed, told after
 		final Object seedGiven=definedIDs.remove("SEED");
+		final Map<String,String> givenVars=CMParms.parseEQParms(commands,3,commands.size()); // G13: for GENSOURCE
 		final long seed=GenSeed.pick((seedGiven==null)?null:seedGiven.toString(),null);
 		definedIDs.put("GEN_SEED",""+seed);
 		GenSeed.context(definedIDs);
@@ -342,6 +353,8 @@ public class Generate extends StdCommand
 					((MOB)V.get(v)).bringToLife(mob.location(),true);
 					mob.location().showHappens(CMMsg.MSG_OK_VISUAL,L("@x1 appears.",((MOB)V.get(v)).name()));
 					CMLib.percolator().postProcess(definedIDs);
+					if(!GenSource.backticks()) // G13: GEN_BACKTICKS=false, real apostrophes
+						GenSource.untick(V.get(v));
 					Log.sysOut("Generate",mob.Name()+" generated mob "+((MOB)V.get(v)).name());
 				}
 				else
@@ -350,6 +363,8 @@ public class Generate extends StdCommand
 					mob.location().addItem((Item)V.get(v));
 					mob.location().showHappens(CMMsg.MSG_OK_VISUAL,L("@x1 appears.",((Item)V.get(v)).name()));
 					CMLib.percolator().postProcess(definedIDs);
+					if(!GenSource.backticks()) // G13
+						GenSource.untick(V.get(v));
 					Log.sysOut("Generate",mob.Name()+" generated item "+((Item)V.get(v)).name());
 				}
 				else
@@ -410,6 +425,8 @@ public class Generate extends StdCommand
 					final Room R=(Room)V.get(v);
 					createNewPlace(mob,mob.location(),R,direction,save);
 					CMLib.percolator().postProcess(definedIDs);
+					if(!GenSource.backticks()) // G13
+						GenSource.untick(R);
 					if(save)
 					{
 						CMLib.database().DBCreateRoom(R);
@@ -425,6 +442,7 @@ public class Generate extends StdCommand
 				{
 					final Area A=(Area)V.get(v);
 					A.addBlurbFlag("GENSEED "+seed); // G1: the seed it was built with
+					GenSource.record(A,fromPath,idName,seed,givenVars); // G13: how it was made, for REGENERATE
 					CMLib.map().addArea(A);
 					CMLib.map().registerWorldObjectLoaded(A, null, A);
 					if(save)
@@ -432,8 +450,13 @@ public class Generate extends StdCommand
 					Room R=A.getRoom(A.Name()+"#0");
 					if(R==null)
 						R=A.getFilledProperMap().nextElement();
-					createNewPlace(mob,mob.location(),R,direction,save);
+					if(unlinked)
+						mob.tell(L("'@x1' is built unlinked: LINK @x2 [DIRECTION] from the room it should join.",A.Name(),R.roomID()));
+					else
+						createNewPlace(mob,mob.location(),R,direction,save);
 					CMLib.percolator().postProcess(definedIDs);
+					if(!GenSource.backticks()) // G13
+						GenSource.untick(A);
 					if(save)
 					{
 						mob.tell(L("Saving remaining rooms for area '@x1'...",A.name()));

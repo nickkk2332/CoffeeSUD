@@ -291,6 +291,7 @@ public final class GenCalls
 			if(A == null)
 				throw new CMException("Nothing generated");
 			A.addBlurbFlag("GENSEED " + s);
+			GenSource.record(A, file, id, s, vars); // G13: for REGENERATE
 			CMLib.map().addArea(A);
 			CMLib.map().registerWorldObjectLoaded(A, null, A);
 			Room R = A.getRoom(A.Name() + "#0");

@@ -2636,6 +2636,24 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   (only as a tag name, and the colon ended the variable), so it threw
   "Unknown variable"; it works now, braced or not. And the language
   editor's Translation Verb prompt set nothing (TRANVERB).
+- G13 done. `GENERATE AREA ... [DIR] UNLINKED` builds with no gate and
+  says the entrance, for LINK later. `GEN_BACKTICKS=false` (ini or
+  world.ini) puts real apostrophes back in what GENERATE makes (names,
+  display texts, descriptions, exits), after it is built: the templates'
+  conditions still need the backticks inside. An area made by GENERATE
+  AREA (or MPGENERATE AREA, gen.area) keeps a `GENSOURCE` flag, a blurb
+  saved in its .cmare: the file, the AREA id, the seed and the variables
+  given (`core/GenSource`). `REGENERATE [NOSAVE] AREA [SEED=n|SAME]
+  [VAR=VALUE ...]` builds the builder's area again from it with the area
+  out of the map, so the new rooms take the same IDs; rooms marked GENLOCK
+  (`Prop_GenLock`, `REGENERATE LOCK`/`UNLOCK`) are kept with their exits,
+  the rest replaced, every exit from inside or outside (the gate) pointed
+  at the room of its ID (one to a room the build lacks removed, a kept
+  room's exits given their way back where the slot is free, the rest
+  counted as one-way in the report), players
+  and their followers moved to the new room, and the post-processing run
+  in the seeded run after. `REGENERATE` alone says the source and the
+  kept rooms. A building command for LIST UNSAVED.
 
 #### 2k. Crafting, gathering and housing (21)
 

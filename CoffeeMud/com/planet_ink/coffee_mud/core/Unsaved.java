@@ -43,7 +43,7 @@ public final class Unsaved
 
 	/** the building commands, by their classes' IDs */
 	private static final Set<String>					BUILDING	= new HashSet<String>(Arrays.asList(
-		"CREATE", "MODIFY", "DESTROY", "COPY", "TRANSFER", "RESTRING", "EVERY", "GENERATE"));
+		"CREATE", "MODIFY", "DESTROY", "COPY", "TRANSFER", "RESTRING", "EVERY", "GENERATE", "REGENERATE"));
 	/** the rooms, by room ID, each with the commands that changed them */
 	private static final Map<String, Set<String>>		rooms		= new TreeMap<String, Set<String>>();
 	/** the building command running on this thread, and how deep */
