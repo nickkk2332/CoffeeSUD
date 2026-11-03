@@ -1690,6 +1690,58 @@ public class Create extends StdCommand
 		mob.location().showHappens(CMMsg.MSG_OK_ACTION,L("The skill of the world just increased!"));
 	}
 
+	/**
+	 * P20: CREATE DISEASE [ID], a disease as data (over a Java one of that ID, which it starts from).
+	 * @param mob the builder
+	 * @param commands the command
+	 * @throws IOException a session error
+	 */
+	public void genDisease(final MOB mob, final List<String> commands)
+	throws IOException
+	{
+		if(commands.size()<3)
+		{
+			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is CREATE DISEASE [SKILL ID]\n\r"));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return;
+		}
+		final String classD=CMParms.combine(commands,2);
+		final Ability A=CMClass.getAbility(classD);
+		if((A!=null)&&(A.isGeneric()))
+		{
+			mob.tell(L("A generic ability with the ID '@x1' already exists!",A.ID()));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return;
+		}
+		if(classD.indexOf(' ')>=0)
+		{
+			mob.tell(L("'@x1' is an invalid  id, because it contains a space.",classD));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return;
+		}
+		final Ability CR;
+		if((A != null)&&((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_DISEASE))
+		{
+			mob.location().showHappens(CMMsg.MSG_OK_ACTION,L("The disease @x1 already exists, and will be over-ridden.",classD));
+			CR=CMLib.ableParms().convertAbilityToGeneric(A);
+		}
+		else
+		if(A != null)
+		{
+			mob.tell(L("'@x1' is already a skill that is not a disease.",A.ID()));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return;
+		}
+		else
+		{
+			CR=(Ability)CMClass.getAbility("GenDisease").copyOf();
+			CR.setStat("CLASS",classD);
+		}
+		CMLib.genEd().modifyGenDisease(mob,CR,-1);
+		CMLib.database().DBCreateAbility(CR.ID(),"GenDisease",CR.getStat("ALLXML"));
+		mob.location().showHappens(CMMsg.MSG_OK_ACTION,L("The diseases of the world just increased!"));
+	}
+
 	public void genTweak(final MOB mob, final List<String> commands)
 	throws IOException
 	{
@@ -1776,7 +1828,7 @@ public class Create extends StdCommand
 			 + "CLAN, MOB, RACE, MIXEDRACE, ABILITY, LANGUAGE, CRAFTSKILL, HELP/AHELP, "
 			 + "ACHIEVEMENT, MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, "
 			 + "WEBSERVER, DISABLEFLAG, ENABLEFLAG, NEWS, USER, TRAP, WRIGHTSKILL, COMMAND, "
-			 + "GATHERSKILL, BUILDSKILL, POISON, TWEAK, CRON, TITLE, AWARD, or ROOM");
+			 + "GATHERSKILL, BUILDSKILL, POISON, DISEASE, TWEAK, CRON, TITLE, AWARD, or ROOM");
 	}
 
 	public void classes(final MOB mob, final List<String> commands)
@@ -2073,6 +2125,14 @@ public class Create extends StdCommand
 				return errorOut(mob);
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
 			genPoison(mob,commands);
+		}
+		else
+		if(commandType.equals("DISEASE")) // P20
+		{
+			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDABILITIES))
+				return errorOut(mob);
+			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("^S<S-NAME> wave(s) <S-HIS-HER> arms...^?"));
+			genDisease(mob,commands);
 		}
 		else
 		if(commandType.equals("ALLQUALIFY"))

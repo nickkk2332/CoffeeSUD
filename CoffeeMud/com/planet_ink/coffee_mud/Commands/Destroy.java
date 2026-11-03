@@ -71,7 +71,7 @@ public class Destroy extends StdCommand
 			+ "SESSION, TICKS, THREAD, HOLIDAY, JOURNAL, SOCIAL, ACHIEVEMENT, CLASS, ABILITY, MANUFACTURER, "
 			+ "LANGUAGE, COMPONENT, RACE, EXPERTISE, TITLE, CLAN, BAN, GOVERNMENT, NOPURGE, BUG, TYPO, IDEA, "
 			+ "WEBSERVER, DEBUGFLAG, DISABLEFLAG, ENABLEFLAG, CRAFTSKILL, GATHERSKILL, CRON, COMMAND, "
-			+ "TRAP, POISON, TWEAK, WRIGHTSKILL, BUILDSKILL, AWARD, DELETE:, or a ROOM");
+			+ "TRAP, POISON, DISEASE, TWEAK, WRIGHTSKILL, BUILDSKILL, AWARD, DELETE:, or a ROOM");
 	}
 
 	public void awards(final MOB mob, final List<String> commands)
@@ -1767,6 +1767,7 @@ public class Destroy extends StdCommand
 		||commandType.equals("CRAFTSKILL")
 		||commandType.equals("GATHERSKILL")
 		||commandType.equals("POISON")
+		||commandType.equals("DISEASE") // P20
 		||commandType.equals("TWEAK")
 		||commandType.equals("WRIGHTSKILL")
 		||commandType.equals("BUILDSKILL") // CR8

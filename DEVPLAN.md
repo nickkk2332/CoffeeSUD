@@ -3242,6 +3242,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   renamed, as GenRace strips a code's trailing digits), the first two
   given by `firstLevel` in charcrStartFinish before NEWCHARLEVEL's
   level-ups; all in the editors.
+- P20 done. `Abilities/Diseases/GenDisease` extends Disease (its spread
+  by message: STD, CONTACT, CONSUMPTION, DAMAGE, GET, HEARING) with per-ID
+  data as GenPoison keeps it: NAME, DISPLAY, TICKS and DELAY formulas,
+  SPREAD (by name; PROXIMITY tries each delay), CATCHCHANCE before the
+  save, DIFFICULTY, the three messages, DAMAGE each delay, ADJUSTMENTS
+  (Prop_Adjuster), EFFECTS (Prop_SpellAdder, kept while it lasts),
+  IMMUNEMASK (checked on invoke and catch), MALICIOUS, SCRIPT (ticked and
+  given its messages, with ONAFFECT, ONTICK, ONEXPIRE through ScriptHooks)
+  and HELP. CREATE, MODIFY and DESTROY DISEASE and modifyGenDisease;
+  CMAbleParms makes one from a Java disease (spread, difficulty) and names
+  the type for COPY.
 
 #### 2p. Presentation (18)
 

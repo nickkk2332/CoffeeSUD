@@ -1940,6 +1940,12 @@ public class Modify extends StdCommand
 
 	protected boolean wrongGenAbilityMessage(final MOB mob, final Ability A)
 	{
+		if(A.getStat("JAVACLASS").equals("GenDisease")) // P20
+		{
+			mob.tell(L("'@x1' is a disease.  Try MODIFY DISEASE.",A.ID()));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return true;
+		}
 		if(A.getStat("JAVACLASS").toLowerCase().indexOf("tweak")>=0)
 		{
 			mob.tell(L("'@x1' is a tweakable.  Try MODIFY TWEAK.",A.ID()));
@@ -2061,6 +2067,44 @@ public class Modify extends StdCommand
 		CMLib.genEd().modifyGenTrap(mob,(Trap)A,-1);
 		CMLib.database().DBDeleteAbility(A.ID());
 		CMLib.database().DBCreateAbility(A.ID(),"GenTrap",A.getStat("ALLXML"));
+		mob.location().showHappens(CMMsg.MSG_OK_ACTION,L("@x1's everywhere shake under the transforming power!",A.name()));
+		return true;
+	}
+
+	/**
+	 * P20: MODIFY DISEASE [ID].
+	 * @param mob the builder
+	 * @param commands the command
+	 * @return true if it was changed
+	 * @throws IOException a session error
+	 */
+	public boolean diseases(final MOB mob, final List<String> commands)
+	throws IOException
+	{
+		if(commands.size()<3)
+		{
+			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY DISEASE [ABILITY ID]\n\r"));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return false;
+		}
+		final String classID=CMParms.combine(commands,2);
+		final Ability A=CMClass.getAbility(classID);
+		if(A==null)
+		{
+			mob.tell(L("'@x1' is an invalid ability id.",classID));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return false;
+		}
+		if((!A.isGeneric())||(!A.getStat("JAVACLASS").equals("GenDisease")))
+		{
+			mob.tell(L("'@x1' is not a data disease.  CREATE DISEASE @x1 makes one in its place.",A.ID()));
+			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
+			return false;
+		}
+		mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> wave(s) <S-HIS-HER> hands around all @x1s.",A.name()));
+		CMLib.genEd().modifyGenDisease(mob,A,-1);
+		CMLib.database().DBDeleteAbility(A.ID());
+		CMLib.database().DBCreateAbility(A.ID(),"GenDisease",A.getStat("ALLXML"));
 		mob.location().showHappens(CMMsg.MSG_OK_ACTION,L("@x1's everywhere shake under the transforming power!",A.name()));
 		return true;
 	}
@@ -2892,7 +2936,7 @@ public class Modify extends StdCommand
 			+ "ALLQUALIFY, AREA, EXIT, COMPONENT, RECIPE, EXPERTISE, QUEST, COMMAND, "
 			+ "MOB, USER, HOLIDAY, ACHIEVEMENT, MANUFACTURER, HELP/AHELP, TRAP, CRON, "
 			+ "GOVERNMENT, JSCRIPT, FACTION, SOCIAL, CLAN, NEWS, DAY, MONTH, YEAR, "
-			+ "TIME, HOUR, POISON, TWEAK, UPDATE:, or ROOM");
+			+ "TIME, HOUR, POISON, DISEASE, TWEAK, UPDATE:, or ROOM");
 	}
 
 	@Override
@@ -3011,6 +3055,13 @@ public class Modify extends StdCommand
 			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDABILITIES))
 				return errorOut(mob);
 			poisons(mob,commands);
+		}
+		else
+		if(commandType.equals("DISEASE")) // P20
+		{
+			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDABILITIES))
+				return errorOut(mob);
+			diseases(mob,commands);
 		}
 		else
 		if(commandType.equals("TWEAK"))

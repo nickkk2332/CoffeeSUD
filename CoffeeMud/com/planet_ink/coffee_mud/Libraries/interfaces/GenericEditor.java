@@ -258,6 +258,15 @@ public interface GenericEditor extends CMLibrary
 	public void modifyGenBuildingSkill(final MOB mob, final Ability me, int showFlag) throws IOException;
 
 	/**
+	 * P20: the editor of a GenDisease.
+	 * @param mob the builder
+	 * @param me the disease
+	 * @param showFlag the field to show, or -1
+	 * @throws IOException a session error
+	 */
+	public void modifyGenDisease(final MOB mob, final Ability me, int showFlag) throws IOException;
+
+	/**
 	 * Prompts the given user using the mud's standard menu interface.
 	 * Allows the editing of an existing Generic Poison.
 	 *

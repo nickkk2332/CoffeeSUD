@@ -10108,6 +10108,61 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 	}
 
 	@Override
+	public void modifyGenDisease(final MOB mob, final Ability me, int showFlag) throws IOException // P20
+	{
+		if(mob.isMonster())
+			return;
+		boolean ok=false;
+		if((showFlag == -1) && (CMProps.getIntVar(CMProps.Int.EDITORTYPE)>0))
+			showFlag=-999;
+		final String help = CMLib.help().getHelpText("MATHFORMULA",mob,true).toString()
+							+"\n\r"
+							+ L("For this formula, @x1 is the giver's level, @x2 its expertise, and @x3 the sufferer's level.");
+		final String spreads = L("Ways it spreads, by commas: STD, CONTACT, PROXIMITY, CONSUMPTION, DAMAGE, GET, HEARING, INHERITED.");
+		while((mob.session()!=null)
+		&&(!mob.session().isStopped())
+		&&(!ok))
+		{
+			int showNumber=0;
+			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Disease name"),"NAME",false);
+			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Display text"),"DISPLAY",true);
+			promptRawStatStr(mob,me,help,++showNumber,showFlag,L("Duration Formula (ticks)"),"TICKS",false);
+			promptRawStatStr(mob,me,help,++showNumber,showFlag,L("Delay Formula (ticks between effects)"),"DELAY",false);
+			promptRawStatStr(mob,me,spreads,++showNumber,showFlag,L("Spread"),"SPREAD",true);
+			promptRawStatStr(mob,me,help,++showNumber,showFlag,L("Catch chance (0-100) Formula"),"CATCHCHANCE",false);
+			promptRawStatStr(mob,me,L("Cures fail when this times 10 is more than the healer's level."),++showNumber,showFlag,L("Difficulty"),"DIFFICULTY",false);
+			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Start Msg"),"STARTMSG",true);
+			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Affect Msg (each delay)"),"AFFECTMSG",true);
+			promptRawStatStr(mob,me,help,++showNumber,showFlag,L("Damage Formula (each delay)"),"DAMAGE",false);
+			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Done Msg"),"DONEMSG",true);
+			promptRawStatStr(mob,me,CMLib.help().getHelpText("Prop_HaveAdjuster",mob,true),++showNumber,showFlag,L("Adjustments"),"ADJUSTMENTS",true);
+			final int[] showNumberArray = new int[] {showNumber};
+			me.setStat("EFFECTS",modifyCodedSpellList(mob,me.getStat("EFFECTS"),showNumberArray,showFlag));
+			showNumber = showNumberArray[0];
+			promptRawStatStr(mob,me,CMLib.help().getHelpText("ZAPPERMASKS",mob,true),++showNumber,showFlag,L("Immune mask"),"IMMUNEMASK",true);
+			promptStatBool(mob, me, ++showNumber, showFlag, L("Malicious"), "MALICIOUS");
+			promptRawStatStr(mob,me,L("A script run with the disease; ONAFFECT, ONTICK and ONEXPIRE functions are called."),++showNumber,showFlag,L("Script"),"SCRIPT",true);
+			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
+			if (showFlag < -900)
+			{
+				ok = true;
+				break;
+			}
+			if (showFlag > 0)
+			{
+				showFlag = -1;
+				continue;
+			}
+			showFlag=CMath.s_int(mob.session().prompt(L("Edit which? "),""));
+			if(showFlag<=0)
+			{
+				showFlag=-1;
+				ok=true;
+			}
+		}
+	}
+
+	@Override
 	public void modifyGenBuildingSkill(final MOB mob, final Ability me, int showFlag) throws IOException // CR8
 	{
 		if(mob.isMonster())

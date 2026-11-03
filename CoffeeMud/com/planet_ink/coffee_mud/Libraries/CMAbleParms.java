@@ -87,6 +87,9 @@ public class CMAbleParms extends StdLibrary implements AbilityParameters
 		if((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_COMMON_SKILL)
 			return "GenGatheringSkill";
 		else
+		if(A.isGeneric()?A.getStat("JAVACLASS").equals("GenDisease"):((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_DISEASE)) // P20
+			return "GenDisease";
+		else
 		if((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_POISON)
 			return "GenPoison";
 		else
@@ -137,6 +140,17 @@ public class CMAbleParms extends StdLibrary implements AbilityParameters
 		else
 		if((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_COMMON_SKILL)
 			CR=(Ability)CMClass.getAbility("GenGatheringSkill").copyOf();
+		else
+		if((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_DISEASE) // P20
+		{
+			CR=(Ability)CMClass.getAbility("GenDisease").copyOf();
+			if(A instanceof DiseaseAffect)
+			{
+				CR.setStat("SPREAD", ""+((DiseaseAffect)A).spreadBitmap());
+				CR.setStat("DIFFICULTY", ""+((DiseaseAffect)A).difficultyLevel());
+				CR.setStat("MALICIOUS", ""+((DiseaseAffect)A).isMalicious());
+			}
+		}
 		else
 		if((A.classificationCode()&Ability.ALL_ACODES)==Ability.ACODE_POISON)
 			CR=(Ability)CMClass.getAbility("GenPoison").copyOf();
