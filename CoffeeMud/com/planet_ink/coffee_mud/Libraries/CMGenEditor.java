@@ -9592,6 +9592,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,L("The parameters for this field are LIKE the parameters for this property:\n\r\n\r@x1\n\r@x2",CMLib.help().getHelpText("Prop_HereAdjuster",mob,true).toString(),varHelp),++showNumber,showFlag,L("Affect Adjustments"),"HERESTATS",true);
 			promptStatStr(mob,me,CMLib.masking().maskHelp("\n","disallow"),++showNumber,showFlag,L("Caster Mask"),"CASTMASK",true);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Caster Mask failure message"),"CASTFAILMSG",true); // P3
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Target mode (SINGLE, ALLENEMIES, ALLALLIES, ALLINROOM, GROUPANYWHERE)"),"TARGETMODE",false); // P4
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Most targets (a formula, @x1 level, @x2 how many)"),"MAXTARGETS",true); // P4
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Area message, once"),"AOEMSG",true); // P4
 			promptStatScript(mob,me,++showNumber,showFlag,L("Scriptable Parm"),"SCRIPT",null,null);
 			promptStatStr(mob,me,CMLib.masking().maskHelp("\n","disallow"),++showNumber,showFlag,L("Target Mask"),"TARGETMASK",true);
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Fizzle Message"),"FIZZLEMSG",true);

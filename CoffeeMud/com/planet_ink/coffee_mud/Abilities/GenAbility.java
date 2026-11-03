@@ -86,8 +86,11 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 	private static final int V_WIND=35;//I C5: windup ticks
 	private static final int V_WMSG=36;//S C5: windup warning
 	private static final int V_CFMS=37;//S P3: cast failure message
+	private static final int V_TMOD=38;//S P4: target mode
+	private static final int V_MAXT=39;//S P4: most targets, a formula
+	private static final int V_AOEM=40;//S P4: message once, before the targets
 
-	private static final int NUM_VS=38;//S
+	private static final int NUM_VS=41;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -130,6 +133,9 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		O[V_WIND]=Integer.valueOf(0);
 		O[V_WMSG]="";
 		O[V_CFMS]="";
+		O[V_TMOD]="SINGLE";
+		O[V_MAXT]="";
+		O[V_AOEM]="";
 		return O;
 	}
 
@@ -500,14 +506,157 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		}
 	}
 
+	/** P4: the target modes */
+	public static final String[] TARGET_MODES={"SINGLE","ALLENEMIES","ALLALLIES","ALLINROOM","GROUPANYWHERE"};
+
+	private static final ThreadLocal<Boolean> aoeSub=new ThreadLocal<Boolean>();
+
+	/** @return P4: its TARGETMODE */
+	protected String targetMode()
+	{
+		final Object o=V(ID,V_TMOD);
+		return (o==null)?"SINGLE":o.toString();
+	}
+
+	/**
+	 * P4: the targets of an area cast: ALLENEMIES (those the caster would
+	 * fight there), ALLALLIES (the caster's group there), ALLINROOM (all there,
+	 * the caster too unless it is malicious) or GROUPANYWHERE (the caster's
+	 * group wherever they are).
+	 * @param mob the caster
+	 * @param auto whether it is cast without the caster's choice
+	 * @return the targets
+	 */
+	protected List<MOB> areaTargets(final MOB mob, final boolean auto)
+	{
+		final List<MOB> L=new ArrayList<MOB>();
+		final Room R=mob.location();
+		if(R==null)
+			return L;
+		final String mode=targetMode();
+		final Set<MOB> group=mob.getGroupMembers(new HashSet<MOB>());
+		if(mode.equals("ALLENEMIES"))
+		{
+			if(abstractQuality()==Ability.QUALITY_MALICIOUS)
+			{
+				final Set<MOB> h=CMLib.combat().properTargets(this,mob,auto);
+				if(h!=null)
+				{
+					for(final MOB M : h)
+					{
+						if((M!=mob)&&(M.location()==R))
+							L.add(M);
+					}
+				}
+			}
+			else
+			{
+				for(int i=0;i<R.numInhabitants();i++)
+				{
+					final MOB M=R.fetchInhabitant(i);
+					if((M!=null)&&(M!=mob)&&(!group.contains(M)))
+						L.add(M);
+				}
+			}
+		}
+		else
+		if(mode.equals("ALLALLIES"))
+		{
+			for(final MOB M : group)
+			{
+				if(M.location()==R)
+					L.add(M);
+			}
+			if(!L.contains(mob))
+				L.add(0,mob);
+		}
+		else
+		if(mode.equals("GROUPANYWHERE"))
+		{
+			L.addAll(group);
+			if(!L.contains(mob))
+				L.add(0,mob);
+		}
+		else
+		if(mode.equals("ALLINROOM"))
+		{
+			for(int i=0;i<R.numInhabitants();i++)
+			{
+				final MOB M=R.fetchInhabitant(i);
+				if((M!=null)&&((M!=mob)||(abstractQuality()!=Ability.QUALITY_MALICIOUS)))
+					L.add(M);
+			}
+		}
+		return L;
+	}
+
+	/**
+	 * P4: an area cast: its targets found, MAXTARGETS (@x1 the caster's
+	 * level, @x2 how many there are) kept, the cost paid once, AOEMSG shown,
+	 * then each target cast at in turn, through the usual steps.
+	 * @param mob the caster
+	 * @param commands what was typed
+	 * @param givenTarget unused
+	 * @param auto whether it is cast without the caster's choice
+	 * @param asLevel the level it is cast at
+	 * @return whether it was cast
+	 */
+	protected boolean castAtAll(final MOB mob, final List<String> commands, final Physical givenTarget, final boolean auto, final int asLevel)
+	{
+		List<MOB> targets=areaTargets(mob,auto);
+		final String maxF=((String)V(ID,V_MAXT)).trim();
+		if((maxF.length()>0)&&(targets.size()>0))
+		{
+			final int max=CMath.s_parseIntExpression(maxF, new double[] { adjustedLevel(mob,asLevel), targets.size() });
+			if((max>=0)&&(max<targets.size()))
+				targets=new ArrayList<MOB>(targets.subList(0,max));
+		}
+		if(targets.size()==0)
+		{
+			mob.tell(L("There is no one here for @x1.",name()));
+			return false;
+		}
+		if(!super.invoke(mob,commands,givenTarget,auto,asLevel))
+			return false;
+		final String aoeMsg=(String)V(ID,V_AOEM);
+		if((aoeMsg.trim().length()>0)&&(mob.location()!=null))
+			mob.location().show(mob,null,this,CMMsg.MSG_OK_ACTION,aoeMsg);
+		final Boolean was=aoeSub.get();
+		aoeSub.set(Boolean.TRUE);
+		try
+		{
+			for(final MOB M : targets)
+			{
+				if(mob.amDead()||(mob.location()==null))
+					break;
+				invoke(mob,new ArrayList<String>(commands),M,auto,asLevel);
+			}
+		}
+		finally
+		{
+			aoeSub.set(was);
+		}
+		return true;
+	}
+
 	@Override
 	public boolean invoke(final MOB mob, final List<String> commands, final Physical givenTarget, final boolean auto, final int asLevel)
 	{
 		oneTimeChecked = false;
 		postEffects.clear();
+		final boolean sub=Boolean.TRUE.equals(aoeSub.get()); // P4: one target of an area cast
+		final boolean aoeHead=(!sub)&&(!targetMode().equals("SINGLE"));
 		// dont forget to allow super. calls to Spell.invoke, Chant.invoke, etc.. based on classification?
 		final int nargs = ((Integer)V(ID,V_NARG)).intValue();
 		Physical target=givenTarget;
+		if(aoeHead)
+			target=null; // P4: each target is found once the cast is paid for
+		else
+		if(sub&&(givenTarget!=null))
+		{
+			// P4: one of an area cast's targets, as given
+		}
+		else
 		if((this.abstractQuality()==Ability.QUALITY_BENEFICIAL_SELF)
 		||(this.abstractQuality()==Ability.QUALITY_OK_SELF))
 		{
@@ -578,6 +727,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			}
 		}
 		if((!auto)
+		&&(!sub)
 		&&(((String)V(ID,V_CMSK)).length()>0)
 		&&(!ScriptHooks.maskCheck((String)V(ID,V_CMSK), mob, target))) // P3: its +IF sees the target as $t
 		{
@@ -589,6 +739,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			return false;
 		}
 		if((!auto)
+		&&(!sub)
 		&&ScriptHooks.refused(ScriptHooks.call(getScripter(), mob, "CANCAST", mob, target, CMParms.combine(commands,0)))) // P3: before any cost
 			return false;
 		if((!auto)
@@ -596,6 +747,8 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		&&(((String)V(ID,V_TMSK)).length()>0)
 		&&(!CMLib.masking().maskCheck((String)V(ID,V_TMSK), target,true)))
 		{
+			if(sub)
+				return false; // P4: an area cast passes over a target its mask turns away
 			if(((String)V(ID,V_TMSF)).length()>0)
 				mob.tell(mob,target,null,(String)V(ID,V_TMSF));
 			else
@@ -605,7 +758,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 
 		// C5: a monster winds it up first: a warning each tick, then the ability itself (Prop_Telegraph)
 		final int windup=((Integer)V(ID,V_WIND)).intValue();
-		if((windup>0)&&(!auto)&&mob.isMonster()&&(!Telegraph.releasing())&&(mob.location()!=null))
+		if((windup>0)&&(!auto)&&(!sub)&&mob.isMonster()&&(!Telegraph.releasing())&&(mob.location()!=null))
 		{
 			if(Telegraph.find(mob,"WINDUP")!=null)
 				return false; // already winding one up
@@ -661,6 +814,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		}
 		if((armorCheck>0)
 		&&(!auto)
+		&&(!sub)
 		&&(!mob.isMonster())
 		&&(!disregardsArmorCheck(mob))
 		&&(!CMLib.utensils().armorCheck(mob,armorCheck))
@@ -671,7 +825,9 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			mob.location().show(mob,null,CMMsg.MSG_OK_VISUAL,L("<S-NAME> fumble(s) @x1 due to <S-HIS-HER> armor!",name()));
 			return false;
 		}
-		if(!super.invoke(mob,commands,givenTarget, auto, asLevel))
+		if(aoeHead) // P4: every target, each in its own cast, the cost paid once
+			return castAtAll(mob,commands,givenTarget,auto,asLevel);
+		if((!sub)&&(!super.invoke(mob,commands,givenTarget, auto, asLevel)))
 			return false;
 
 		final boolean success[]={proficiencyCheck(mob,0,auto)};
@@ -1228,7 +1384,10 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 										 "NUMARGS",//36I
 										 "WINDUP",//37I C5
 										 "WINDUPMSG",//38S C5
-										 "CASTFAILMSG"//39S P3
+										 "CASTFAILMSG",//39S P3
+										 "TARGETMODE",//40S P4
+										 "MAXTARGETS",//41S P4
+										 "AOEMSG"//42S P4
 										};
 
 	@Override
@@ -1333,6 +1492,12 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			return (String) V(ID, V_WMSG);
 		case 39:
 			return (String) V(ID, V_CFMS);
+		case 40:
+			return (String) V(ID, V_TMOD);
+		case 41:
+			return (String) V(ID, V_MAXT);
+		case 42:
+			return (String) V(ID, V_AOEM);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenAbility";
@@ -1491,6 +1656,18 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			break;
 		case 39:
 			SV(ID, V_CFMS, val);
+			break;
+		case 40:
+		{
+			final String m=val.trim().toUpperCase();
+			SV(ID, V_TMOD, (CMParms.indexOf(TARGET_MODES, m)>=0)?m:"SINGLE");
+			break;
+		}
+		case 41:
+			SV(ID, V_MAXT, val.trim());
+			break;
+		case 42:
+			SV(ID, V_AOEM, val);
 			break;
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenAbility"))

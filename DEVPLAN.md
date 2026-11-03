@@ -3028,6 +3028,16 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   spring). The old messages stay. CASTFAILMSG (stat 39, in the editor),
   and the CASTMASK check moved after the target is found, with the
   target as $t in its +IF and -IF (a thread-local the zapper reads).
+- P4 done. GenAbility TARGETMODE (stat 40: SINGLE, ALLENEMIES,
+  ALLALLIES, ALLINROOM, GROUPANYWHERE), MAXTARGETS (41, a formula) and
+  AOEMSG (42). An area cast's head skips the single target, checks the
+  caster's mask and CANCAST, pays the cost once (`castAtAll`) and shows
+  AOEMSG, then invokes itself once a target, a thread-local marking
+  those inner casts: they skip the caster's checks, windup, armour check
+  and cost, pass silently over a target the TARGETMASK turns away, and
+  go through the usual steps. ALLENEMIES uses `properTargets` for a
+  malicious ability (everyone outside the caster's group otherwise).
+  A monster's windup (C5) comes before the area cast as before.
 
 #### 2p. Presentation (18)
 
