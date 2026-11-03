@@ -32,6 +32,7 @@ In the game, <code>HELP SCRIPTABLE</code> has the whole list, and
 <li><a href="#world">World systems</a></li>
 <li><a href="#gen">Generators</a></li>
 <li><a href="#craft">Crafting, gathering and housing</a></li>
+<li><a href="#prog">Characters and progression</a></li>
 <li><a href="#found">Less known</a></li>
 <li><a href="JavaScriptSUD.html">JavaScript</a></li>
 </ul>
@@ -877,6 +878,12 @@ wheat an autumn crop of ten game days, and <code>Prop_CropRules(NEEDSUN=false DO
 lets glowcaps grow in the dark (AHELP PROP_CROPRULES).</p>
 <p>Building skills as data: <code>CREATE BUILDSKILL Icecarving</code> makes a building skill from a recipe
 file in Construction's format, with its own verb, main resource and sound (AHELP GENBUILDSKILL).</p>
+
+<h2><a name="prog">Characters and progression</a></h2>
+<p>Custom properties: a generic ability added to a room as a plain effect works as a property, its
+HERESTATS and MOCKABILITY at once and its SCRIPT running there; <code>EFFECTPARM(FREQ)</code> reads the
+text it was added with, so <code>Prop_Haunted FREQ=5</code> and <code>Prop_Haunted FREQ=40</code> share one
+ability (AHELP GENABILITY).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

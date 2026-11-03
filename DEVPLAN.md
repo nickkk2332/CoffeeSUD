@@ -3010,6 +3010,16 @@ L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14
 P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17,
 P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
 
+- P1 done. A GenAbility added as a plain effect (`setAffectedOne`) builds
+  its HERESTATS (`Prop_HereAdjuster`, at the level of what it is on) and
+  MOCKABILITY effects, as casting does; a copy builds its own. Its
+  script gets the instance text through the engine's PARM values (N7's
+  `setParmValues`): `EFFECTPARM(KEY)` (function 222), `EFFECTPARM(*)` and
+  `$PARMS`. AHELP GENABILITY explains properties made this way, with a
+  worked example. Of the four ways to pass per-instance parameters
+  (SC13's ARG, N7's PARM, P1's EFFECTPARM, JS9's parms), PARM and
+  EFFECTPARM share one store in the engine.
+
 #### 2p. Presentation (18)
 
 PR1, PR2, PR3, PR6, PR7, PR8, PR9, PR10, PR11, PR12, PR13, PR14, PR15, PR16,

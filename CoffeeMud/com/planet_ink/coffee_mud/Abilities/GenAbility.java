@@ -171,6 +171,68 @@ public class GenAbility extends StdAbility
 		return hereEffect;
 	}
 
+	private ScriptingEngine    parmsFor        = null; // P1: the engine the instance text was last given to
+	private String            parmsText        = null;
+	private boolean            staticAffects    = false; // P1: its here and quiet effects were made for what it is on
+
+	/**
+	 * P1: the instance's own text, for its script's EFFECTPARM(KEY) and $PARMS:
+	 * its KEY=VALUE pairs, and the whole text under *.
+	 * @param text the text
+	 * @return the values
+	 */
+	protected static Map<String,String> effectParms(final String text)
+	{
+		final Map<String,String> M=new TreeMap<String,String>(String.CASE_INSENSITIVE_ORDER);
+		M.putAll(CMParms.parseEQParms(text));
+		M.put("*", text);
+		return M;
+	}
+
+	/**
+	 * P1: added as a plain effect, not cast: its HERESTATS and MOCKABILITY,
+	 * which casting would otherwise have set up, at the level of what it is on.
+	 * @param P what it is on
+	 */
+	protected void prepStaticAffects(final Physical P)
+	{
+		if((hereEffect==null)&&(((String)V(ID(), V_HERE)).trim().length()>0))
+		{
+			final Ability A=CMClass.getAbility("Prop_HereAdjuster");
+			if(A!=null)
+			{
+				final String lvl=""+Math.max(1,P.phyStats().level());
+				final String[] vars=new String[] { lvl, lvl, "0", "0", "0", "0", "0", "0", lvl };
+				A.setMiscText(CMStrings.replaceVariables((String)V(ID,V_HERE), vars));
+				hereEffect=A;
+				staticAffects=true;
+			}
+		}
+		final String SID=(String)V(ID,V_MOCK);
+		if((quietEffect==null)&&(SID.length()>0))
+		{
+			final Ability A=CMClass.getAbility(SID);
+			if(A!=null)
+			{
+				A.setAffectedOne(P);
+				A.setMiscText((String)V(ID,V_MOKT));
+				A.makeLongLasting();
+				A.setSavable(false);
+				A.setProficiency(100);
+				quietEffect=A;
+				staticAffects=true;
+			}
+		}
+	}
+
+	@Override
+	public void setAffectedOne(final Physical P)
+	{
+		super.setAffectedOne(P);
+		if(P!=null) // P1: a GenAbility on a room, item or mob without being cast works as a property
+			prepStaticAffects(P);
+	}
+
 	public ScriptingEngine getScripter()
 	{
 		if(((String)V(ID,V_SCRP)).hashCode()!=scriptParmHash)
@@ -190,6 +252,12 @@ public class GenAbility extends StdAbility
 				else
 					scriptParmHash=-1;
 			}
+		}
+		if((scriptObj!=null)&&((scriptObj!=parmsFor)||(!text().equals(parmsText)))) // P1: EFFECTPARM() and $PARMS
+		{
+			parmsFor=scriptObj;
+			parmsText=text();
+			scriptObj.setParmValues(effectParms(parmsText));
 		}
 		return scriptObj;
 	}
@@ -340,6 +408,12 @@ public class GenAbility extends StdAbility
 		if(E instanceof GenAbility)
 		{
 			final GenAbility A=(GenAbility)E;
+			if(A.staticAffects) // P1: a copy makes its own for what it goes on
+			{
+				hereEffect=null;
+				quietEffect=null;
+				staticAffects=false;
+			}
 			A.scriptParmHash=scriptParmHash;
 			if(A.scriptObj!=null)
 			{

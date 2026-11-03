@@ -2774,6 +2774,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					break;
 				case 'p':
 				case 'P':
+					if((c=='P')&&(vchrs.length()>=t+6)&&vchrs.substring(t+1,t+6).equals("PARMS")) // P1: $PARMS, a GenAbility's instance text
+					{
+						final Map<String,String> pv=parmValues;
+						final String all=(pv==null)?null:pv.get("*");
+						middle=(all==null)?"":all;
+						replLen=6;
+						break;
+					}
 					if (ctx.secondaryItem != null)
 						middle = ctx.secondaryItem.name();
 					break;
@@ -16378,6 +16386,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long val=NpcAffinity.get((MOB)N,(W instanceof MOB)?W.Name():varify(ctx,w));
 			return CMParms.getCleanBit(parms,2).equalsIgnoreCase("BAND")?NpcAffinity.band(val):(""+val);
 		}
+		case "EFFECTPARM": // P1: EFFECTPARM(KEY): a GenAbility's own instance text, its KEY=VALUE; EFFECTPARM(*) all of it
+		{
+			final Map<String,String> p=parmValues;
+			final String a=(p==null)?null:p.get((v.length()==0)?"*":v);
+			return (a==null)?"":a;
+		}
 		case "ARG": // SC13: ARG(name): what LOAD=file NAME=value gave the script, or the file's ARGDEFAULT
 		case "PARM": // N7: PARM(name): a generic behaviour's parameter, or its default
 		{
@@ -16449,7 +16463,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(c==null)
 		{
 			final String r=extraValue(ctx,name,inner).trim();
-			if(name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")||name.equalsIgnoreCase("PARM")) // SC4, SC13, N7: set, and not 0 or false
+			if(name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")||name.equalsIgnoreCase("PARM")||name.equalsIgnoreCase("EFFECTPARM")) // SC4, SC13, N7, P1: set, and not 0 or false
 				return (r.length()>0)&&(!r.equals("0"))&&(!r.equalsIgnoreCase("false"));
 			return "true".equalsIgnoreCase(r);
 		}
