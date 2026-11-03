@@ -5437,19 +5437,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				case 50: // isseason
 				{
 					String arg1=varify(ctx,CMParms.cleanBit(tt[t+0]));
+					for(int i=1;i<tlen;i++) // W22: a calendar's own season's name, words and all
+						arg1+=" "+varify(ctx,CMParms.cleanBit(tt[t+i]));
 					returnable=false;
 					if(ctx.monster.location()!=null)
 					{
-						arg1=arg1.toUpperCase();
-						for(final TimeClock.Season season : TimeClock.Season.values())
-						{
-							if(season.toString().startsWith(arg1.toUpperCase())
-							&&(ctx.monster.location().getArea().getTimeObj().getSeasonCode()==season))
-							{
-								returnable=true;
-								break;
-							}
-						}
+						arg1=arg1.toUpperCase().trim();
+						final Calendars.SeasonNow now=Calendars.season(ctx.monster.location().getArea());
+						returnable=now.counts.toString().startsWith(arg1)||(now.named&&now.name.toUpperCase().startsWith(arg1));
 					}
 					break;
 				}
@@ -5472,7 +5467,35 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				case 57: // ismoon
 				{
 					String arg1=varify(ctx,CMParms.cleanBit(tt[t+0]));
+					for(int i=1;i<tlen;i++)
+						arg1+=" "+varify(ctx,CMParms.cleanBit(tt[t+i]));
+					arg1=arg1.trim();
 					returnable=false;
+					final Room moonR=ctx.monster.location();
+					Calendars.Moon named=null; // W22: ismoon(Ember full), or ismoon(Ember) for in the sky
+					String phaseWord="";
+					if(moonR!=null)
+					{
+						for(final Calendars.Moon M : Calendars.moons(moonR.getArea().getTimeObj()))
+						{
+							if(arg1.toUpperCase().startsWith(M.name.toUpperCase())
+							&&((arg1.length()==M.name.length())||(arg1.charAt(M.name.length())==' ')))
+							{
+								named=M;
+								phaseWord=arg1.substring(M.name.length()).trim().toUpperCase();
+								break;
+							}
+						}
+					}
+					if(named!=null)
+					{
+						final TimeClock.MoonPhase P=Calendars.phase(moonR.getArea().getTimeObj(),named,moonR);
+						if(phaseWord.length()==0)
+							returnable=moonR.getArea().getClimateObj().canSeeTheStars(moonR)&&(P!=TimeClock.MoonPhase.NEW);
+						else
+							returnable=P.toString().startsWith(phaseWord);
+					}
+					else
 					if(ctx.monster.location()!=null)
 					{
 						if(arg1.length()==0)
@@ -8751,7 +8774,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			case 50: // isseason
 			{
 				if(ctx.monster.location()!=null)
-					results.append(ctx.monster.location().getArea().getTimeObj().getSeasonCode().toString());
+				{
+					final Calendars.SeasonNow now=Calendars.season(ctx.monster.location().getArea()); // W22
+					results.append(now.named?now.name:now.counts.toString());
+				}
 				break;
 			}
 			case 51: // isweather

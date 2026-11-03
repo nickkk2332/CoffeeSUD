@@ -2507,6 +2507,16 @@ W18, W19, W20, W21, W22, W23, W28, W29
   saved one goes on from its date: its TIMECLOCK record holds only the date
   now. `STARTDATE=Y/M/D/H` in coffeemud.ini (or world.ini) is the global
   clock's START.
+- W22 done. More CALENDAR fields: `SEASONS="the Burn:SUMMER:1-2,the
+  Rains:SPRING:Flood-Silt"` (each season's name, the built-in season it
+  counts as for the weather and the like, and its months, numbers from 1
+  or names), `SEASONOFFSET=n` (an area's own: its seasons n months on, on
+  its parent's clock, for a southern land), `DAYLIGHT="WINTER:2-4"` (a
+  season's dawn and night hours, or all four), `MOONS="Selune:24,Ember:9:3"`
+  (each moon's name, cycle in days and offset; the first is the moon the
+  tides and ISMOON(FULL) follow). ISSEASON(the Burn), ISMOON(Ember full)
+  (ISMOON(Ember): in the sky), `-SEASON "+the Burn"`, VARIES blocks in a
+  season's own name (`<the Burn>...</the Burn>`) and TIME know them.
 
 #### 2j. Generators and random content (16)
 

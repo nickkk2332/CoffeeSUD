@@ -2065,6 +2065,11 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 										v=v2;
 										buf.append(TimeClock.Season.values()[season].toString()+", ");
 									}
+									else
+									{
+										v=v2; // W22: a calendar's own season, by name
+										buf.append(str2.substring(1).trim()+", ");
+									}
 								}
 							}
 						}
@@ -2113,6 +2118,11 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 									{
 										v=v2;
 										buf.append(TimeClock.Season.values()[season].toString()+", ");
+									}
+									else
+									{
+										v=v2; // W22: a calendar's own season, by name
+										buf.append(str2.substring(1).trim()+", ");
 									}
 								}
 							}
@@ -3785,6 +3795,19 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 		return buf.toString();
 	}
 
+	/**
+	 * W22: a season mask's parm: a built-in season's number, or a calendar's own season's name.
+	 * @param o the parm
+	 * @param now the season now
+	 * @return true if it is the season now
+	 */
+	protected final boolean isSeasonMatch(final Object o, final Calendars.SeasonNow now)
+	{
+		if(o instanceof String)
+			return now.named && now.name.toUpperCase().startsWith((String)o);
+		return isDateMatch(o, now.counts.ordinal());
+	}
+
 	protected final boolean isDateMatch(final Object o, final int num)
 	{
 		if(o instanceof Integer)
@@ -5212,6 +5235,9 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 									final int seasonCode=determineSeasonCode(str2.substring(1).trim());
 									if(seasonCode>=0)
 										parms.add(Integer.valueOf(seasonCode));
+									else
+									if((entryType==ZapperKey.SEASON)||(entryType==ZapperKey._SEASON))
+										parms.add(str2.substring(1).trim().toUpperCase()); // W22: a calendar's own season
 								}
 							}
 							v=V.size();
@@ -5992,10 +6018,10 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case BIRTHSEASON: // +birthseason
 				case SEASON: // +season
 					{
-						final int num = C.getSeasonCode().ordinal();
+						final Calendars.SeasonNow now = Calendars.season(C, 0); // W22
 						for(final Object o : entry.parms())
 						{
-							if(isDateMatch(o,num))
+							if(isSeasonMatch(o,now))
 								return false;
 						}
 					}
@@ -6004,10 +6030,10 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _SEASON: // -season
 					{
 						boolean found=false;
-						final int num = C.getSeasonCode().ordinal();
+						final Calendars.SeasonNow now = Calendars.season(C, 0); // W22
 						for(final Object o : entry.parms())
 						{
-							if(isDateMatch(o,num))
+							if(isSeasonMatch(o,now))
 							{
 								found = true;
 								break;
@@ -7660,10 +7686,10 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 					{
 						if(room!=null)
 						{
-							final int num = room.getArea().getTimeObj().getSeasonCode().ordinal();
+							final Calendars.SeasonNow now = Calendars.season(room.getArea()); // W22: and the area's SEASONOFFSET
 							for(final Object o : entry.parms())
 							{
-								if(isDateMatch(o,num))
+								if(isSeasonMatch(o,now))
 									return false;
 							}
 						}
@@ -7674,10 +7700,10 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						boolean found=false;
 						if(room!=null)
 						{
-							final int num = room.getArea().getTimeObj().getSeasonCode().ordinal();
+							final Calendars.SeasonNow now = Calendars.season(room.getArea()); // W22: and the area's SEASONOFFSET
 							for(final Object o : entry.parms())
 							{
-								if(isDateMatch(o,num))
+								if(isSeasonMatch(o,now))
 								{
 									found = true;
 									break;

@@ -2945,7 +2945,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						addMe = ((preview != null) && (preview.timeOfDay != TextPreview.UNSET) ? preview.timeOfDay : A.getTimeObj().getTODCode().ordinal()) == code.num;
 						break;
 					case 'S':
-						addMe = ((preview != null) && (preview.season != TextPreview.UNSET) ? preview.season : A.getTimeObj().getSeasonCode().ordinal()) == code.num;
+						addMe = ((preview != null) && (preview.season != TextPreview.UNSET) ? preview.season : Calendars.season(A).counts.ordinal()) == code.num; // W22
 						break;
 					case 'T': // W8: <HIGHTIDE>, <LOWTIDE>
 						addMe = (room != null) && Tides.is(room, (code.num == 1) ? "HIGH" : "LOW");
@@ -2997,7 +2997,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 	public String parseVaries(final MOB mob, final Area area, final Room room, final String text)
 	{
 		if(text.startsWith("<VARIES>"))
-			return parseVariesCodes(mob,area,room,text.substring(8));
+			return parseVariesCodes(mob,area,room,Calendars.seasonBlocks(area,text.substring(8))); // W22: a calendar's own seasons' blocks
 		return text;
 	}
 }

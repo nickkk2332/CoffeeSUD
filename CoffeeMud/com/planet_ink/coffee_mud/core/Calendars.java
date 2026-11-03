@@ -2,6 +2,7 @@ package com.planet_ink.coffee_mud.core;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Locales.interfaces.*;
 
 import java.util.*;
 
@@ -40,7 +41,94 @@ public final class Calendars
 	public static final String	KEY		= "CALENDAR";
 
 	/** the keys a calendar may give */
-	public static final String[] KEYS	= { "HOURS", "DAYS", "MONTHS", "WEEK", "YEARS", "DAWNHR", "DAYHR", "DUSKHR", "NIGHTHR", "START" };
+	public static final String[] KEYS	= { "HOURS", "DAYS", "MONTHS", "WEEK", "YEARS", "DAWNHR", "DAYHR", "DUSKHR", "NIGHTHR", "START",
+											"SEASONS", "SEASONOFFSET", "DAYLIGHT", "MOONS" };
+
+	/** W22: the keys that are the area's own, not its clock's */
+	private static final String[] AREA_KEYS = { "SEASONOFFSET" };
+
+	/** W22: a named season: what it counts as for weather and the like, and its months */
+	public static final class SeasonDef
+	{
+		/** its name */
+		public final String				name;
+		/** the season it counts as */
+		public final TimeClock.Season	counts;
+		/** its first and last month: a number from 1, or a month's name */
+		public final String				from, to;
+
+		SeasonDef(final String name, final TimeClock.Season counts, final String from, final String to)
+		{
+			this.name = name;
+			this.counts = counts;
+			this.from = from;
+			this.to = to;
+		}
+
+		private static int month(final TimeClock C, final String m)
+		{
+			if(CMath.isInteger(m))
+				return CMath.s_int(m) - 1;
+			final String[] names = C.getMonthNames();
+			for(int i = 0; i < names.length; i++)
+			{
+				if(names[i].equalsIgnoreCase(m))
+					return i;
+			}
+			return -1;
+		}
+
+		/**
+		 * @param C the clock
+		 * @param m a month, from 0
+		 * @return true if the month is in this season
+		 */
+		public boolean covers(final TimeClock C, final int m)
+		{
+			final int a = month(C, from), b = month(C, to);
+			if((a < 0) || (b < 0))
+				return false;
+			if(a <= b)
+				return (m >= a) && (m <= b);
+			return (m >= a) || (m <= b);
+		}
+	}
+
+	/** W22: a moon: its name, its cycle in days, and its offset in days */
+	public static final class Moon
+	{
+		/** its name */
+		public final String	name;
+		/** its cycle, in days */
+		public final int	cycle;
+		/** its offset, in days */
+		public final int	offset;
+
+		Moon(final String name, final int cycle, final int offset)
+		{
+			this.name = name;
+			this.cycle = cycle;
+			this.offset = offset;
+		}
+	}
+
+	/** W22: the season now: its name, and the season it counts as */
+	public static final class SeasonNow
+	{
+		/** its name: a calendar's own, else the built-in one in lower case */
+		public final String				name;
+		/** the season it counts as */
+		public final TimeClock.Season	counts;
+		/** true if it is a calendar's own */
+		public final boolean			named;
+
+		SeasonNow(final String name, final TimeClock.Season counts, final boolean named)
+		{
+			this.name = name;
+			this.counts = counts;
+			this.named = named;
+		}
+	}
 
 	/** a calendar, as read */
 	public static final class Spec
@@ -55,12 +143,35 @@ public final class Calendars
 		public final Integer[]		tod			= new Integer[4];
 		/** year, month, day, hour, or null */
 		public int[]				start		= null;
+		/** W22: its named seasons, or null for the built-in four */
+		public List<SeasonDef>		seasons		= null;
+		/** W22: months the seasons are shifted by in this area, or null */
+		public Integer				seasonOffset = null;
+		/** W22: the dawn, day, dusk and night hours in a season, by its name (upper case), or null */
+		public Map<String, int[]>	daylight	= null;
+		/** W22: its moons, or null for the one built-in moon */
+		public List<Moon>			moons		= null;
+		/** each key as given */
+		public final Map<String, String> raw	= new LinkedHashMap<String, String>();
 		/** what could not be read */
 		public final List<String>	problems	= new ArrayList<String>();
 
 		Spec(final String text)
 		{
 			this.text = text;
+		}
+
+		/**
+		 * @return true if it gives the clock something, not only the area's SEASONOFFSET
+		 */
+		public boolean needsClock()
+		{
+			for(final String k : raw.keySet())
+			{
+				if(!Arrays.asList(AREA_KEYS).contains(k))
+					return true;
+			}
+			return false;
 		}
 	}
 
@@ -114,6 +225,12 @@ public final class Calendars
 				S.problems.add("unknown key " + k);
 				continue;
 			}
+			S.raw.put(k, v);
+			if(x >= 10)
+			{
+				parseW22(S, k, v);
+				continue;
+			}
 			if((x == 0) || (x == 1) || ((x >= 5) && (x <= 8)))
 			{
 				if(!CMath.isInteger(v))
@@ -155,6 +272,93 @@ public final class Calendars
 		return S;
 	}
 
+	private static TimeClock.Season baseSeason(final String s)
+	{
+		for(final TimeClock.Season B : TimeClock.Season.values())
+		{
+			if(B.name().equalsIgnoreCase(s.trim()))
+				return B;
+		}
+		return null;
+	}
+
+	private static void parseW22(final Spec S, final String k, final String v)
+	{
+		if(k.equals("SEASONOFFSET"))
+		{
+			if(CMath.isInteger(v))
+				S.seasonOffset = Integer.valueOf(CMath.s_int(v));
+			else
+				S.problems.add("SEASONOFFSET is not a number: " + v);
+			return;
+		}
+		for(final String part : v.split(","))
+		{
+			if(part.trim().length() == 0)
+				continue;
+			final String[] p = part.trim().split("\\s*:\\s*");
+			if(k.equals("SEASONS"))
+			{
+				// NAME:COUNTS:FROM-TO (a month or a range of them, numbers from 1 or names)
+				final TimeClock.Season B = (p.length == 3) ? baseSeason(p[1]) : null;
+				if((B == null) || (p[0].length() == 0))
+				{
+					S.problems.add("SEASONS: '" + part.trim() + "' is not NAME:SPRING|SUMMER|FALL|WINTER:MONTHS");
+					continue;
+				}
+				final String[] r = p[2].split("\\s*-\\s*");
+				if(S.seasons == null)
+					S.seasons = new ArrayList<SeasonDef>();
+				S.seasons.add(new SeasonDef(p[0], B, r[0], (r.length > 1) ? r[1] : r[0]));
+			}
+			else
+			if(k.equals("DAYLIGHT"))
+			{
+				// SEASON:DAWN-NIGHT, or SEASON:DAWN-DAY-DUSK-NIGHT
+				final String[] h = (p.length == 2) ? p[1].split("\\s*-\\s*") : new String[0];
+				boolean ok = (h.length == 2) || (h.length == 4);
+				for(final String n : h)
+					ok = ok && CMath.isInteger(n);
+				if(!ok)
+				{
+					S.problems.add("DAYLIGHT: '" + part.trim() + "' is not SEASON:DAWN-NIGHT");
+					continue;
+				}
+				final int[] d = new int[4];
+				if(h.length == 4)
+				{
+					for(int i = 0; i < 4; i++)
+						d[i] = CMath.s_int(h[i]);
+				}
+				else
+				{
+					d[0] = CMath.s_int(h[0]);
+					d[3] = CMath.s_int(h[1]);
+					d[1] = Math.min(d[0] + 1, d[3]);
+					d[2] = ((d[3] - 1) > d[1]) ? (d[3] - 1) : d[3];
+				}
+				if(S.daylight == null)
+					S.daylight = new HashMap<String, int[]>();
+				S.daylight.put(p[0].toUpperCase(), d);
+			}
+			else
+			if(k.equals("MOONS"))
+			{
+				// NAME:CYCLE(:OFFSET), in days
+				if((p.length < 2) || (p.length > 3) || (p[0].length() == 0) || (!CMath.isInteger(p[1])) || (CMath.s_int(p[1]) < 1) || ((p.length == 3) && (!CMath.isInteger(p[2]))))
+				{
+					S.problems.add("MOONS: '" + part.trim() + "' is not NAME:DAYS(:OFFSET)");
+					continue;
+				}
+				if(S.moons == null)
+					S.moons = new ArrayList<Moon>();
+				S.moons.add(new Moon(p[0], CMath.s_int(p[1]), (p.length == 3) ? CMath.s_int(p[2]) : 0));
+			}
+		}
+	}
+
+	private static final Map<String, Spec> parsed = new HashMap<String, Spec>();
+
 	/**
 	 * @param A an area
 	 * @return its own calendar, or null
@@ -164,7 +368,246 @@ public final class Calendars
 		final String t = (A == null) ? null : A.getBlurbFlag(KEY);
 		if((t == null) || (t.trim().length() == 0) || t.trim().equalsIgnoreCase("NONE"))
 			return null;
-		return parse(t);
+		synchronized(parsed)
+		{
+			Spec S = parsed.get(t);
+			if(S == null)
+			{
+				if(parsed.size() > 500)
+					parsed.clear();
+				S = parse(t);
+				parsed.put(t, S);
+			}
+			return S;
+		}
+	}
+
+	/**
+	 * W22: the months an area's seasons are shifted by: its own SEASONOFFSET, else its nearest parent's.
+	 * @param A the area
+	 * @return the months
+	 */
+	public static int offset(final Area A)
+	{
+		return offset(A, 0);
+	}
+
+	private static int offset(final Area A, final int depth)
+	{
+		if((A == null) || (depth > 20))
+			return 0;
+		final Spec S = of(A);
+		if((S != null) && (S.seasonOffset != null))
+			return S.seasonOffset.intValue();
+		for(final Enumeration<Area> p = A.getParents(); p.hasMoreElements();)
+		{
+			final int n = offset(p.nextElement(), depth + 1);
+			if(n != 0)
+				return n;
+		}
+		return 0;
+	}
+
+	private static TimeClock.Season builtIn(final TimeClock C, final int m)
+	{
+		final int div = C.getMonthsInSeason();
+		if(m < div)
+			return TimeClock.Season.WINTER;
+		if(m < (div * 2))
+			return TimeClock.Season.SPRING;
+		if(m < (div * 3))
+			return TimeClock.Season.SUMMER;
+		return TimeClock.Season.FALL;
+	}
+
+	/**
+	 * W22: the season an area is in: its calendar's named one, its SEASONOFFSET months on.
+	 * @param A the area, or null for the global clock
+	 * @return the season now
+	 */
+	public static SeasonNow season(final Area A)
+	{
+		final TimeClock C = (A == null) ? CMLib.time().globalClock() : A.getTimeObj();
+		return season(C, offset(A));
+	}
+
+	/**
+	 * W22: a clock's season, some months on.
+	 * @param C the clock
+	 * @param offset the months
+	 * @return the season now
+	 */
+	public static SeasonNow season(final TimeClock C, final int offset)
+	{
+		final int n = Math.max(1, C.getMonthsInYear());
+		final int m = Math.floorMod(C.getMonth() + offset, n);
+		final Spec S = specs.get(C);
+		if((S != null) && (S.seasons != null))
+		{
+			for(final SeasonDef D : S.seasons)
+			{
+				if(D.covers(C, m))
+					return new SeasonNow(D.name, D.counts, true);
+			}
+		}
+		final TimeClock.Season B = builtIn(C, m);
+		return new SeasonNow(B.name().toLowerCase(), B, false);
+	}
+
+	/**
+	 * W22: what a clock's named season in a month counts as, for the clock's own season.
+	 * @param C the clock
+	 * @param m the month, from 0
+	 * @return the season it counts as, or null where the calendar names none
+	 */
+	public static TimeClock.Season countsAs(final TimeClock C, final int m)
+	{
+		final Spec S = specs.get(C);
+		if((S == null) || (S.seasons == null))
+			return null;
+		for(final SeasonDef D : S.seasons)
+		{
+			if(D.covers(C, m))
+				return D.counts;
+		}
+		return null;
+	}
+
+	/**
+	 * W22: a clock's dawn, day, dusk and night hours in its season now (DAYLIGHT).
+	 * @param C the clock
+	 * @return the hours, or null for its own all year
+	 */
+	public static int[] daylight(final TimeClock C)
+	{
+		final Spec S = specs.get(C);
+		if((S == null) || (S.daylight == null))
+			return null;
+		final SeasonNow N = season(C, 0);
+		final int[] d = S.daylight.get(N.name.toUpperCase());
+		return (d != null) ? d : S.daylight.get(N.counts.name());
+	}
+
+	/**
+	 * W22: a clock's moons.
+	 * @param C the clock
+	 * @return its MOONS, or an empty list for the one built-in moon
+	 */
+	public static List<Moon> moons(final TimeClock C)
+	{
+		final Spec S = (C == null) ? null : specs.get(C);
+		return ((S == null) || (S.moons == null)) ? new ArrayList<Moon>(0) : S.moons;
+	}
+
+	/**
+	 * W22: a moon of a clock by name.
+	 * @param C the clock
+	 * @param name its name, or the start of it
+	 * @return the moon, or null
+	 */
+	public static Moon moon(final TimeClock C, final String name)
+	{
+		for(final Moon M : moons(C))
+		{
+			if(M.name.equalsIgnoreCase(name.trim()))
+				return M;
+		}
+		for(final Moon M : moons(C))
+		{
+			if(M.name.toUpperCase().startsWith(name.trim().toUpperCase()))
+				return M;
+		}
+		return null;
+	}
+
+	/**
+	 * W22: the phase a moon is in, from the days since the clock's start, before anything alters it.
+	 * @param C the clock
+	 * @param M the moon
+	 * @return the phase's place, 0 (new) to 7
+	 */
+	public static int phaseIndex(final TimeClock C, final Moon M)
+	{
+		final long day = ((((long)C.getYear() * C.getMonthsInYear()) + C.getMonth()) * C.getDaysInMonth()) + (C.getDayOfMonth() - 1);
+		final long at = Math.floorMod(day + M.offset, (long)M.cycle);
+		return (int)Math.min(7, Math.floor((at * 8.0) / M.cycle));
+	}
+
+	/**
+	 * W22: the phase a moon is in, here: moon-altering effects on the room and its area shift it.
+	 * @param C the clock
+	 * @param M the moon
+	 * @param room the room, or null
+	 * @return the phase
+	 */
+	public static TimeClock.MoonPhase phase(final TimeClock C, final Moon M, final Room room)
+	{
+		int dex = phaseIndex(C, M);
+		if(room != null)
+		{
+			final Area area = room.getArea();
+			final List<com.planet_ink.coffee_mud.Abilities.interfaces.Ability> fx = new ArrayList<com.planet_ink.coffee_mud.Abilities.interfaces.Ability>(1);
+			if(room.numEffects() > 0)
+				fx.addAll(CMLib.flags().domainAffects(room, com.planet_ink.coffee_mud.Abilities.interfaces.Ability.DOMAIN_MOONALTERING));
+			if((area != null) && (area.numEffects() > 0))
+				fx.addAll(CMLib.flags().domainAffects(area, com.planet_ink.coffee_mud.Abilities.interfaces.Ability.DOMAIN_MOONALTERING));
+			for(final com.planet_ink.coffee_mud.Abilities.interfaces.Ability A : fx)
+				dex = (dex + A.abilityCode()) % 8;
+		}
+		return TimeClock.MoonPhase.values()[Math.floorMod(dex, 8)];
+	}
+
+	/**
+	 * W22: a moon's phase in words, as TIME says it.
+	 * @param name the moon's name
+	 * @param P its phase
+	 * @return the line
+	 */
+	public static String phaseLine(final String name, final TimeClock.MoonPhase P)
+	{
+		final String n = name.substring(0, 1).toUpperCase() + name.substring(1);
+		switch(P)
+		{
+		case NEW: return n + " is new.";
+		case WAXCRESCENT: return n + " is a waxing crescent.";
+		case WAXQUARTER: return n + " is in its first quarter.";
+		case WAXGIBBOUS: return n + " is waxing gibbous, almost full.";
+		case FULL: return n + " is full.";
+		case WANEGIBBOUS: return n + " is waning gibbous, no longer full.";
+		case WANEQUARTER: return n + " is in its last quarter.";
+		case WANECRESCENT: return n + " is a waning crescent.";
+		default: return n + " is " + P.name().toLowerCase() + ".";
+		}
+	}
+
+	/**
+	 * W22, for VARIES: a block in a season's own name, <the Burn>...</the Burn>,
+	 * kept in that season and taken out in any other.
+	 * @param A the area
+	 * @param text the text
+	 * @return the text, with its named-season blocks done
+	 */
+	public static String seasonBlocks(final Area A, final String text)
+	{
+		if((A == null) || (text == null) || (text.indexOf('<') < 0))
+			return text;
+		final Spec S = specs.get(A.getTimeObj());
+		if((S == null) || (S.seasons == null))
+			return text;
+		final SeasonNow N = season(A);
+		String t = text;
+		for(final SeasonDef D : S.seasons)
+		{
+			final java.util.regex.Matcher m = java.util.regex.Pattern.compile("<" + java.util.regex.Pattern.quote(D.name) + ">(.*?)</" + java.util.regex.Pattern.quote(D.name) + ">",
+				java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.DOTALL).matcher(t);
+			final StringBuffer b = new StringBuffer();
+			final boolean now = D.name.equalsIgnoreCase(N.name);
+			while(m.find())
+				m.appendReplacement(b, java.util.regex.Matcher.quoteReplacement(now ? m.group(1) : ""));
+			m.appendTail(b);
+			t = b.toString();
+		}
+		return t;
 	}
 
 	/**
@@ -227,6 +670,7 @@ public final class Calendars
 			t[i] = (S.tod[i] != null) ? S.tod[i].intValue() : b[i];
 		C.setDawnToDusk(t[TimeClock.TimeOfDay.DAWN.ordinal()], t[TimeClock.TimeOfDay.DAY.ordinal()],
 						t[TimeClock.TimeOfDay.DUSK.ordinal()], t[TimeClock.TimeOfDay.NIGHT.ordinal()]);
+		C.setMonth(C.getMonth()); // W22: its season again, from its SEASONS
 	}
 
 	/**
@@ -300,7 +744,7 @@ public final class Calendars
 		for(final Area A : areas)
 		{
 			final Spec S = of(A);
-			if(S == null)
+			if((S == null) || (!S.needsClock())) // W22: SEASONOFFSET alone is the area's, not a clock's
 			{
 				if(given.remove(A))
 				{
@@ -363,6 +807,14 @@ public final class Calendars
 			if(old.start[3] >= 0)
 				str.append("/").append(old.start[3]);
 		}
+		if(old != null)
+		{
+			for(final String k : new String[] { "SEASONS", "SEASONOFFSET", "DAYLIGHT", "MOONS" }) // W22
+			{
+				if(old.raw.containsKey(k))
+					str.append(" ").append(k).append("=\"").append(old.raw.get(k)).append("\"");
+			}
+		}
 		return str.toString();
 	}
 
@@ -384,6 +836,12 @@ public final class Calendars
 		{
 			str.append(": ").append(C.getHoursInDay()).append("-hour days, ").append(C.getDaysInMonth()).append(" days a month, months ")
 			   .append(CMParms.toListString(C.getMonthNames())).append("; now ").append(C.getShortTimeDescription());
+			final SeasonNow N = season(A); // W22
+			str.append("; the season ").append(N.name);
+			if(N.named)
+				str.append(" (as ").append(N.counts.name().toLowerCase()).append(")");
+			for(final Moon M : moons(C))
+				str.append("; ").append(phaseLine(M.name, phase(C, M, null)));
 		}
 		if(S != null)
 		{

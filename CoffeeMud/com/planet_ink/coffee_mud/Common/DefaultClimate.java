@@ -107,7 +107,7 @@ public class DefaultClimate implements Climate
 		final int f=Math.abs(from) % Climate.NUM_WEATHER;
 		// W20: a named climate's weights, transitions and allowed weathers in place of the built-in ones
 		final ClimateProfiles.Profile P=ClimateProfiles.of(A);
-		final int sIdx=A.getTimeObj().getSeasonCode().ordinal();
+		final int sIdx=Calendars.season(A).counts.ordinal(); // W22: a calendar's SEASONS, the area's SEASONOFFSET
 		final int[] own=((P!=null)&&(sIdx<P.seasons.length))?P.seasons[sIdx]:null;
 		final int[] weatherChanceChart = new int[Climate.NUM_WEATHER];
 		for(int g=0;g<Climate.NUM_WEATHER;g++)
@@ -649,10 +649,10 @@ public class DefaultClimate implements Climate
 		final CMProps.ListFile listFileEnum = CMProps.ListFile.values()[listFileOrd];
 		final String prefix;
 		//#    NORMAL, WET, COLD (WINTER), HOT (SUMMER), DRY
-		if(((derivedClimate&Places.CLIMASK_COLD)>0)||(A.getTimeObj().getSeasonCode()==TimeClock.Season.WINTER))
+		if(((derivedClimate&Places.CLIMASK_COLD)>0)||(Calendars.season(A).counts==TimeClock.Season.WINTER)) // W22
 			prefix=CMProps.getListFileChoiceFromIndexedList(listFileEnum, 2);
 		else
-		if(((derivedClimate&Places.CLIMASK_HOT)>0)||(A.getTimeObj().getSeasonCode()==TimeClock.Season.SUMMER))
+		if(((derivedClimate&Places.CLIMASK_HOT)>0)||(Calendars.season(A).counts==TimeClock.Season.SUMMER)) // W22
 			prefix=CMProps.getListFileChoiceFromIndexedList(listFileEnum, 3);
 		else
 		if((derivedClimate&Places.CLIMASK_WET)>0)

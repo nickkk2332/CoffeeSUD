@@ -131,7 +131,7 @@ public class Prop_ClosedSeason extends Property
 					}
 					break;
 				case 'S':
-					if(A.getTimeObj().getSeasonCode().ordinal()==code.num)
+					if(Calendars.season(A).counts.ordinal()==code.num) // W22: the area's SEASONOFFSET
 					{
 						if((this.mask != null)
 						&& (!CMLib.masking().maskCheck(mask, P, true)))

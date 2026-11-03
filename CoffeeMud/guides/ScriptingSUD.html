@@ -706,6 +706,10 @@ as they come back.</p>
 START=812/2/3</code> gives it 10-hour days and its own months, and every new game opens there at dawn on
 3 Bloomtide 812; a saved game goes on from its own date (AHELP CALENDAR). <code>STARTDATE=</code> in
 <code>coffeemud.ini</code> does the same for the global clock.</p>
+<p>Seasons and moons of its own: the desert's <code>CALENDAR SEASONS="the Burn:SUMMER:1-6,the Rains:SPRING:7-12"
+MOONS="Selune:28,Ember:9:3"</code> has two seasons and a red second moon; a <code>TIME_PROG</code> that checks
+<code>ismoon(Ember full)</code> starts the cult's ritual, and the southern marsh's <code>SEASONOFFSET=6</code> has
+the Rains while the desert burns (AHELP CALENDAR).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

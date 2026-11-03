@@ -339,8 +339,13 @@ public class DefaultTimeClock implements TimeClock
 		timeDesc.append(" day of "+getMonthNames()[getMonth()]);
 		if(getYearNames().length>0)
 			timeDesc.append(", "+CMStrings.replaceAll(getYearNames()[getYear()%getYearNames().length],"#",""+getYear()));
+		// W22: a calendar's own season by name, the area's SEASONOFFSET months on
+		final Calendars.SeasonNow seasonNow=(room==null)?Calendars.season(this,0):Calendars.season(room.getArea());
 		String seasonName=".";
-		switch(season)
+		if(seasonNow.named)
+			seasonName = L(".\n\rIt is @x1.",seasonNow.name);
+		else
+		switch(seasonNow.counts)
 		{
 		case FALL: seasonName = L(".\n\rIt is fall."); break;
 		case SPRING: seasonName = L(".\n\rIt is spring."); break;
@@ -376,7 +381,14 @@ public class DefaultTimeClock implements TimeClock
 			{
 				final String moon=SkyText.line(room,null,"MOON"); // W13: Prop_SkyText's MOON=
 				if(moon==null)
-					timeDesc.append("\n\r"+getMoonPhase(room).getDesc()); // whats to localize?
+				{
+					final List<Calendars.Moon> moons = Calendars.moons(this); // W22: each of a calendar's MOONS
+					if(moons.isEmpty())
+						timeDesc.append("\n\r"+getMoonPhase(room).getDesc()); // whats to localize?
+					else
+					for(final Calendars.Moon M : moons)
+						timeDesc.append("\n\r"+Calendars.phaseLine(M.name, Calendars.phase(this, M, room)));
+				}
 				else
 				if(moon.length()>0)
 					timeDesc.append("\n\r"+moon);
@@ -433,12 +445,16 @@ public class DefaultTimeClock implements TimeClock
 			season=TimeClock.Season.SUMMER;
 		else
 			season=TimeClock.Season.FALL;
+		final TimeClock.Season named=Calendars.countsAs(this, month); // W22: a calendar's SEASONS
+		if(named!=null)
+			season=named;
 	}
 
 	@Override
 	public MoonPhase getMoonPhase(final Room room)
 	{
-		int moonDex = (int)Math.round(Math.floor(CMath.mul(CMath.div(getDayOfMonth(),getDaysInMonth()+1),8.0)));
+		final List<Calendars.Moon> named = Calendars.moons(this); // W22: the first of a calendar's MOONS
+		int moonDex = named.isEmpty() ? (int)Math.round(Math.floor(CMath.mul(CMath.div(getDayOfMonth(),getDaysInMonth()+1),8.0))) : Calendars.phaseIndex(this, named.get(0));
 		if(room != null)
 		{
 			final Area area = room.getArea();
@@ -520,16 +536,18 @@ public class DefaultTimeClock implements TimeClock
 	@Override
 	public TimeOfDay getTODCode()
 	{
-		if((time>=getDawnToDusk()[TimeClock.TimeOfDay.NIGHT.ordinal()])&&(getDawnToDusk()[TimeClock.TimeOfDay.NIGHT.ordinal()]>=0))
+		final int[] seasonal=Calendars.daylight(this); // W22: DAYLIGHT, the hours in this season
+		final int[] d=(seasonal!=null)?seasonal:getDawnToDusk();
+		if((time>=d[TimeClock.TimeOfDay.NIGHT.ordinal()])&&(d[TimeClock.TimeOfDay.NIGHT.ordinal()]>=0))
 			return TimeClock.TimeOfDay.NIGHT;
-		if((time>=getDawnToDusk()[TimeClock.TimeOfDay.DUSK.ordinal()])&&(getDawnToDusk()[TimeClock.TimeOfDay.DUSK.ordinal()]>=0))
+		if((time>=d[TimeClock.TimeOfDay.DUSK.ordinal()])&&(d[TimeClock.TimeOfDay.DUSK.ordinal()]>=0))
 			return TimeClock.TimeOfDay.DUSK;
-		if((time>=getDawnToDusk()[TimeClock.TimeOfDay.DAY.ordinal()])&&(getDawnToDusk()[TimeClock.TimeOfDay.DAY.ordinal()]>=0))
+		if((time>=d[TimeClock.TimeOfDay.DAY.ordinal()])&&(d[TimeClock.TimeOfDay.DAY.ordinal()]>=0))
 			return TimeClock.TimeOfDay.DAY;
-		if((time>=getDawnToDusk()[TimeClock.TimeOfDay.DAWN.ordinal()])&&(getDawnToDusk()[TimeClock.TimeOfDay.DAWN.ordinal()]>=0))
+		if((time>=d[TimeClock.TimeOfDay.DAWN.ordinal()])&&(d[TimeClock.TimeOfDay.DAWN.ordinal()]>=0))
 			return TimeClock.TimeOfDay.DAWN;
 		// it's before night, dusk, day, and dawn... before dawn is still night.
-		if(getDawnToDusk()[TimeClock.TimeOfDay.NIGHT.ordinal()]>=0)
+		if(d[TimeClock.TimeOfDay.NIGHT.ordinal()]>=0)
 			return TimeClock.TimeOfDay.NIGHT;
 		return TimeClock.TimeOfDay.DAY;
 	}
