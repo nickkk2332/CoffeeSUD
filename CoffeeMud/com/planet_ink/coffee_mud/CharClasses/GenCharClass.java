@@ -80,6 +80,7 @@ public class GenCharClass extends StdCharClass
 	protected CharClass 	eventBuddy				= null;
 	protected int 			disableFlags			= 0;
 	protected String 		startingMoney			= "";
+	protected String		unlockHint				= ""; // P18: UNLOCKHINT
 	@SuppressWarnings("unchecked")
 	protected List<String>[]securityGroups			= new List[0];
 	protected Integer[] 	securityGroupLevels		= {};
@@ -663,6 +664,8 @@ public class GenCharClass extends StdCharClass
 			str.append(CMLib.xml().convertXMLtoTag("SSETLEVEL"+i,securityGroupLevels[i].intValue()));
 		}
 		str.append(CMLib.xml().convertXMLtoTag("MONEY",startingMoney));
+		if(unlockHint.length()>0)
+			str.append(CMLib.xml().convertXMLtoTag("UNLOCKHINT",CMLib.xml().parseOutAngleBrackets(unlockHint))); // P18
 		str.append(CMLib.xml().convertXMLtoTag("ARMORMINOR",""+requiredArmorSourceMinor));
 		str.append(CMLib.xml().convertXMLtoTag("STATCLASS",getCharClassLocatorID(statBuddy)));
 		str.append(CMLib.xml().convertXMLtoTag("EVENTCLASS",getCharClassLocatorID(eventBuddy)));
@@ -956,6 +959,7 @@ public class GenCharClass extends StdCharClass
 		startingMoney=CMLib.xml().getValFromPieces(classData,"MONEY");
 		if(startingMoney==null)
 			startingMoney="";
+		unlockHint=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(classData,"UNLOCKHINT")).trim(); // P18
 		setStat("STATCLASS",CMLib.xml().getValFromPieces(classData,"STATCLASS"));
 		setStat("EVENTCLASS",CMLib.xml().getValFromPieces(classData,"EVENTCLASS"));
 		xtraValues=CMProps.getExtraStatCodesHolder(this);
@@ -997,7 +1001,7 @@ public class GenCharClass extends StdCharClass
 									 "SSETLEVEL","NUMWMAT","GETWMAT","ARMORMINOR","STATCLASS",
 									 "EVENTCLASS","GETCABLEPREQ","GETCABLEMASK","HELP","LEVELCAP",
 									 "GETCABLEMAXP","MAXNCS","MAXCRS","MAXCMS","MAXLGS","GETSTATMIN",
-									 "MONEY"
+									 "MONEY","UNLOCKHINT"
 									 };
 
 	@Override
@@ -1146,6 +1150,8 @@ public class GenCharClass extends StdCharClass
 			return getMinimumStatRequirements()[num].second.toString();
 		case 61:
 			return startingMoney;
+		case 62:
+			return unlockHint; // P18
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1525,6 +1531,9 @@ public class GenCharClass extends StdCharClass
 			break;
 		case 61:
 			startingMoney = val;
+			break;
+		case 62: // P18: UNLOCKHINT
+			unlockHint = (val==null)?"":val.trim();
 			break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);

@@ -3418,7 +3418,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"races.txt",null,CMFile.FLAG_LOGERRORS).text();
 			try
 			{
-				introText = TextMacros.filter(introText);
+				introText = TextMacros.filter(introText, mob); // P18
 			}
 			catch (final Exception ex)
 			{
@@ -3436,6 +3436,20 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				tmpFirst = false;
 			listOfRaces.append("^H"+R.name()+"^N");
 		}
+		if(TextMacros.showLocked())
+		{
+			// P18: SHOWLOCKED=YES: a race with an UNLOCKHINT that is not open yet
+			for(final Enumeration<Race> r=CMClass.races();r.hasMoreElements();)
+			{
+				final Race R=r.nextElement();
+				final String hint=TextMacros.unlockHint(R);
+				if((hint.length()>0)&&(!qualRaces.contains(R)))
+				{
+					listOfRaces.append(tmpFirst?"":", ").append("^w"+R.name()+" (locked: "+hint+")^N");
+					tmpFirst=false;
+				}
+			}
+		}
 		listOfRaces.append("]");
 		session.println(L("\n\r^!Please choose from the following races (?):^N"));
 		session.print(listOfRaces.toString());
@@ -3450,12 +3464,16 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		MOB mob=loginObj.mob;
 
 		if(raceStr.trim().equalsIgnoreCase("?")||(raceStr.length()==0))
-			session.println(null,null,null,"\n\r"+new CMFile(Resources.buildResourcePath("text")+"races.txt",null,CMFile.FLAG_LOGERRORS).text().toString());
+			session.println(null,null,null,"\n\r"+TextMacros.filter(new CMFile(Resources.buildResourcePath("text")+"races.txt",null,CMFile.FLAG_LOGERRORS).text().toString(), mob)); // P18
 		else
 		{
 			Race newRace=CMClass.getRace(raceStr);
 			if((newRace!=null)&&(!raceQualifies(mob, newRace, loginObj.theme)))
+			{
+				if(TextMacros.showLocked()&&(TextMacros.unlockHint(newRace).length()>0))
+					session.println(L("@x1 is locked: @x2.",newRace.name(),TextMacros.unlockHint(newRace))); // P18
 				newRace=null;
+			}
 			if(newRace==null)
 			{
 				for(final Enumeration<Race> r=CMClass.races();r.hasMoreElements();)
@@ -4078,7 +4096,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		}
 		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.CLASSES)
 		&&!mob.baseCharStats().getMyRace().classless())
-			session.println(null,null,null,new CMFile(Resources.buildResourcePath("text")+"classes.txt",null,CMFile.FLAG_LOGERRORS).text().toString());
+			session.println(null,null,null,TextMacros.filter(new CMFile(Resources.buildResourcePath("text")+"classes.txt",null,CMFile.FLAG_LOGERRORS).text().toString(), mob)); // P18
 		loginObj.state=LoginState.CHARCR_CLASSSTART;
 		return null;
 	}
@@ -4088,7 +4106,21 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		mob.baseCharStats().setAllClassInfo("StdCharClass", "0");
 		final List<CharClass> qualClassesV=classQualifies(mob,loginObj.theme);
-		final String listOfClasses = buildQualifyingClassList(mob, qualClassesV, "or");
+		String listOfClasses = buildQualifyingClassList(mob, qualClassesV, "or");
+		if(TextMacros.showLocked())
+		{
+			// P18: SHOWLOCKED=YES: a class with an UNLOCKHINT that is not open yet
+			final StringBuilder locked=new StringBuilder("");
+			for(final Enumeration<CharClass> c=CMClass.charClasses();c.hasMoreElements();)
+			{
+				final CharClass C=c.nextElement();
+				final String hint=TextMacros.unlockHint(C);
+				if((hint.length()>0)&&(!qualClassesV.contains(C)))
+					locked.append(", ^w"+C.name()+" (locked: "+hint+")^N");
+			}
+			if(locked.length()>0)
+				listOfClasses=(listOfClasses.length()>0)?(listOfClasses+locked):locked.substring(2);
+		}
 		session.println(L("\n\r^!Please choose from the following Classes:"));
 		session.print("^N[" + listOfClasses + "^N]");
 		session.promptPrint("\n\r: ");
@@ -4102,7 +4134,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final String ClassStr=loginObj.lastInput;
 		if(ClassStr.trim().equalsIgnoreCase("?"))
 		{
-			session.println(null,null,null,"\n\r"+new CMFile(Resources.buildResourcePath("text")+"classes.txt",null,CMFile.FLAG_LOGERRORS).text().toString());
+			session.println(null,null,null,"\n\r"+TextMacros.filter(new CMFile(Resources.buildResourcePath("text")+"classes.txt",null,CMFile.FLAG_LOGERRORS).text().toString(), mob)); // P18
 			loginObj.state=LoginState.CHARCR_CLASSSTART;
 			return null;
 		}
@@ -4476,7 +4508,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		final CMFile file = new CMFile(Resources.buildResourcePath("text")+"deities.txt",null,CMFile.FLAG_LOGERRORS);
 		if(file.exists() && file.canRead())
-			session.println(null,null,null,"\n\r"+file.text().toString());
+			session.println(null,null,null,"\n\r"+TextMacros.filter(file.text().toString(), mob)); // P18
 		else
 		{
 			final Command C=CMClass.getCommand("Deities");

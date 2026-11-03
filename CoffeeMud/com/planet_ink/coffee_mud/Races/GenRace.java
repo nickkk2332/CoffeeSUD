@@ -65,6 +65,7 @@ public class GenRace extends StdRace
 	protected Race				weaponBuddy			= null;
 	protected String			helpEntry			= "";
 	protected String			nameStyle			= ""; // G12: NAMESTYLE
+	protected String			unlockHint			= ""; // P18: UNLOCKHINT
 	protected String[]			racialEffectNames	= null;
 	protected int[]				racialEffectLevels	= null;
 	protected String[]			racialEffectParms	= null;
@@ -493,6 +494,8 @@ public class GenRace extends StdRace
 		str.append(CMLib.xml().convertXMLtoTag("HELP",CMLib.xml().parseOutAngleBrackets(helpEntry)));
 		if(nameStyle.length()>0)
 			str.append(CMLib.xml().convertXMLtoTag("NAMESTYLE",nameStyle)); // G12
+		if(unlockHint.length()>0)
+			str.append(CMLib.xml().convertXMLtoTag("UNLOCKHINT",CMLib.xml().parseOutAngleBrackets(unlockHint))); // P18
 		str.append(CMLib.xml().convertXMLtoTag("AGING",CMParms.toListString(getAgingChart())));
 		if(adjPStats==null)
 			str.append("<ESTATS/>");
@@ -677,6 +680,7 @@ public class GenRace extends StdRace
 
 		helpEntry=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(raceData,"HELP"));
 		nameStyle=CMLib.xml().getValFromPieces(raceData,"NAMESTYLE").trim(); // G12
+		unlockHint=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(raceData,"UNLOCKHINT")).trim(); // P18
 		final String playerval=CMLib.xml().getValFromPieces(raceData,"PLAYER").trim().toUpperCase();
 		if(playerval.length()>0)
 		{
@@ -948,7 +952,7 @@ public class GenRace extends StdRace
 									 "BREATHES","CANRIDE",
 									 "NUMIABLE","GETIABLE",
 									 "XPADJ", "CLASS",
-									 "GETCABLEPARM", "NAMESTYLE"
+									 "GETCABLEPARM", "NAMESTYLE", "UNLOCKHINT"
 									 };
 
 	@Override
@@ -1090,6 +1094,8 @@ public class GenRace extends StdRace
 			return (culturalAbilityParms == null) ? "" : ("" + culturalAbilityParms[num]);
 		case 55:
 			return nameStyle;
+		case 56:
+			return unlockHint; // P18
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1649,6 +1655,9 @@ public class GenRace extends StdRace
 		}
 		case 55: // G12: NAMESTYLE
 			nameStyle=(val==null)?"":val.trim();
+			break;
+		case 56: // P18: UNLOCKHINT
+			unlockHint=(val==null)?"":val.trim();
 			break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);

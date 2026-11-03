@@ -9338,6 +9338,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			genWeaponMaterials(mob,me,++showNumber,showFlag,"Weapon Materials","NUMWMAT","GETWMAT");
 			genOutfit(mob,me,++showNumber,showFlag);
 			promptStatStr(mob,me,++showNumber,showFlag,L("Starting Money"),"MONEY");
+			promptStatStr(mob,me,++showNumber,showFlag,L("Unlock hint (shown under SHOWLOCKED=YES)"),"UNLOCKHINT"); // P18
 			genClassBuddy(mob,me,++showNumber,showFlag,"Stat-Modifying Class","STATCLASS");
 			genClassBuddy(mob,me,++showNumber,showFlag,"Special Events Class","EVENTCLASS");
 			promptStatChoices(mob,me,null,++showNumber,showFlag,L("Sub Class Switch Rule"),"SUBRUL", CMParms.toStringArray(CharClass.SubClassRule.values()));
@@ -10901,6 +10902,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			genDynamicEffects(mob,me,L("Racial"),L("char"),++showNumber,showFlag);
 			genDynamicImmunitiess(mob,me,"Racial",++showNumber,showFlag);
 			promptStatStr(mob,me,++showNumber,showFlag,L("Name style"),"NAMESTYLE"); // G12
+			promptStatStr(mob,me,++showNumber,showFlag,L("Unlock hint (shown under SHOWLOCKED=YES)"),"UNLOCKHINT"); // P18
 
 			if (showFlag < -900)
 			{

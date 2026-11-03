@@ -3137,6 +3137,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   set at each dispatch: every step RANDOM, no REVIEW; with a template,
   or under CREATIONTEMPLATES=ONLY, a ready-made character (its gender
   not asked). A QUICK character gets no deity.
+- P18 done. `TextMacros.filter(text, mob)` (a thread-local character)
+  adds @ClassList@, @DeityList@, @StatList@, FORMAT=TABLE (name and the
+  first line of its help: its own HELP stat, else the help entry, header
+  lines passed over) and @if?Tattoo=NAME@ (the character's, a clan's or
+  the profile's, as `isTattooedLike`); @RaceList@ now lists only races
+  open to players or unlocked by a RACE_ tattoo. races.txt, classes.txt
+  and deities.txt go through it in creation. UNLOCKHINT on GenRace
+  (stat 56) and GenCharClass (62), kept in their XML and in the editors;
+  SHOWLOCKED=YES (ini) lists a race or class with a hint that the
+  character cannot take, "(locked: hint)", in the macros and the race
+  and class prompts, and typing a locked race's ID says the hint.
 
 #### 2p. Presentation (18)
 
