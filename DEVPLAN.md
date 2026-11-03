@@ -2861,6 +2861,12 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   command; STUDY is the Studying skill's word) copies a recipe book's
   lines in; script command `MPLEARNRECIPE $n skill name|line` (\t in a
   line) and function `KNOWSRECIPE($n skill name)`.
+- CR21 done. GenCraftSkill fields CANLEARN (stat 16, false by default)
+  and LEARNMASK (stat 17, an item mask), in its editor: CANLEARN turns
+  `supportsDeconstruction` on, LEARN [ITEM] goes to `doLearnRecipe`, and
+  `unInvoke` has the LEARNING step (the item taken apart into the blank
+  recipe book by `deconstructRecipeInto`, or a failure that ruins it);
+  LEARNMASK narrows `mayILearnToCraft`. AHELP GENCRAFTSKILL is new.
 
 #### 2l. Factions and organisations (18)
 

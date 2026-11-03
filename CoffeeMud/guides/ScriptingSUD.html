@@ -830,6 +830,10 @@ a better rest (AHELP PROP_FURNISHING).</p>
 which no one else sees; <code>if knowsrecipe($n Weaponsmithing moonblade)</code> tests it. <code>LEARN FROM</code> a
 recipe book learns its recipes by heart, and <code>PROFILERECIPES=true</code> shares them with the whole party
 (AHELP PROP_KNOWNRECIPES).</p>
+<p>Learning by taking apart: a world's own Runecarving skill (<code>CREATE CRAFTSKILL</code>) with
+<code>CANLEARN=true</code> and <code>LEARNMASK=-TAGS +rune</code> lets a carver <code>runecarve learn stone</code>: a rune
+stone found in a barrow is taken apart and its design written into a blank recipe book (AHELP
+GENCRAFTSKILL).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -79,7 +79,9 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	private static final int	V_FIRE			= 11;	// B
 	private static final int	V_HARD			= 12;	// B
 	private static final int	V_STAT			= 13;	// S CR3
-	private static final int	NUM_VS			= 14;	// S
+	private static final int	V_CNLN			= 14;	// B CR21
+	private static final int	V_LRNM			= 15;	// S CR21
+	private static final int	NUM_VS			= 16;	// S
 
 	//
 
@@ -119,7 +121,18 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	@Override
 	public boolean supportsDeconstruction()
 	{
-		return false;
+		final Object o=V(ID,V_CNLN); // CR21: CANLEARN
+		return (o instanceof Boolean)&&((Boolean)o).booleanValue();
+	}
+
+	@Override
+	protected boolean mayILearnToCraft(final MOB mob, final Item I)
+	{
+		final Object o=V(ID,V_LRNM); // CR21: LEARNMASK, an item mask on what it will learn from
+		final String mask=(o==null)?"":o.toString().trim();
+		if((mask.length()>0)&&(I!=null)&&(!CMLib.masking().maskCheck(mask,I,true)))
+			return false;
+		return super.mayILearnToCraft(mob,I);
 	}
 
 	private static final Object[] makeEmpty()
@@ -139,6 +152,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 		O[V_FIRE]=Boolean.valueOf(false);
 		O[V_HARD]=Boolean.valueOf(false);
 		O[V_STAT]="";
+		O[V_CNLN]=Boolean.valueOf(false);
+		O[V_LRNM]="";
 		return O;
 	}
 
@@ -242,6 +257,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 										 "NEEDFIRE",//13B
 										 "NOHARDBONUS",//14B
 										 "STATION",//15S CR3
+										 "CANLEARN",//16B CR21
+										 "LEARNMASK",//17S CR21
 										};
 
 	@Override
@@ -309,6 +326,10 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			return this.skipHardnessBonus()?"true":"false";
 		case 15:
 			return (String) V(ID, V_STAT);
+		case 16:
+			return Boolean.toString(((Boolean) V(ID, V_CNLN)).booleanValue());
+		case 17:
+			return (String) V(ID, V_LRNM);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenCraftSkill";
@@ -393,6 +414,12 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			break;
 		case 15:
 			SV(ID, V_STAT, (val==null)?"":val.trim());
+			break;
+		case 16:
+			SV(ID, V_CNLN, Boolean.valueOf(CMath.s_bool(val)));
+			break;
+		case 17:
+			SV(ID, V_LRNM, (val==null)?"":val.trim());
 			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenCraftSkill"))
@@ -493,6 +520,13 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 				{
 					if(messedUp)
 					{
+						if(activity == CraftingActivity.LEARNING) // CR21
+						{
+							commonEmote(mob,L("<S-NAME> fail(s) to learn how to make @x1.",buildingI.name()));
+							dropALoser(mob,buildingI);
+							buildingI.destroy();
+						}
+						else
 						if(activity == CraftingActivity.MENDING)
 							messedUpCrafting(mob);
 						else
@@ -506,6 +540,12 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 					}
 					else
 					{
+						if(activity == CraftingActivity.LEARNING) // CR21: the item taken apart into the recipe book
+						{
+							deconstructRecipeInto(mob, buildingI, recipeHolder);
+							buildingI.destroy();
+						}
+						else
 						if(activity == CraftingActivity.MENDING)
 						{
 							buildingI.setUsesRemaining(100);
@@ -639,6 +679,9 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 
 		if(super.checkInfo(mob, commands))
 			return true;
+
+		if((commands.size()>0)&&commands.get(0).equalsIgnoreCase("learn")&&(autoGenerate<=0)) // CR21: LEARN [ITEM], with CANLEARN
+			return doLearnRecipe(mob, commands, givenTarget, auto, asLevel);
 
 		final PairVector<EnhancedExpertise,Integer> enhancedTypes=enhancedTypes(mob,commands);
 		int recipeLevel = 1;
