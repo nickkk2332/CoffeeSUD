@@ -3050,6 +3050,21 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   not `createProxy`'s proxy, so a tweak still does not cast as its
   original; P22 takes that up. The proxy's `checkedCastingCost` uses
   the tweak's costs too.
+- P19 done. GenAbility SUMMON (stat 46: a catalog mob's name or a mob
+  class), SUMMONCOUNT (47) and SUMMONLEVEL (48), formulas with @x1 the
+  caster's level, and SUMMONFLAGS (49: FOLLOW, ASSIST, NOSAVE,
+  DISMISSONEXPIRE, BIND; `core/Summons.flags` keeps the known words).
+  After a cast that works, `summonAll` brings them as the stock summon
+  spells do (no rejuv, no experience, no start room; SUMMONLEVEL runs
+  `fillOutMOB`), each with the new Prop_Summoned: its invoker is the
+  caster (or after a restore the mob it follows), BIND sends it away
+  when the caster is dead or out of the game, TICKS counts down to its
+  departure and is kept in its text. With DISMISSONEXPIRE the summons
+  get the effect's time left as TICKS, and the effect's `unInvoke` sends
+  them away at once; with no effect they get the ability's duration.
+  FOLLOW without ASSIST sets AUTOASSIST (they do not join fights);
+  ASSIST also sets the caster's foe as theirs. NOSAVE makes them
+  unsavable and `WorldState.followersOf` passes over them.
 
 #### 2p. Presentation (18)
 

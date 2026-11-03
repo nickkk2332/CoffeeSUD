@@ -1804,6 +1804,7 @@ public final class WorldState
 				&& (!F.amDestroyed())
 				&& (F.location() != null)
 				&& (F.amFollowing() == leader)
+				&& (!Summons.leftOutOfSaves(F)) // P19
 				&& (!all.contains(F)))
 				{
 					all.add(F);

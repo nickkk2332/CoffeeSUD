@@ -9595,6 +9595,10 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Target mode (SINGLE, ALLENEMIES, ALLALLIES, ALLINROOM, GROUPANYWHERE)"),"TARGETMODE",false); // P4
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Most targets (a formula, @x1 level, @x2 how many)"),"MAXTARGETS",true); // P4
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Area message, once"),"AOEMSG",true); // P4
+			promptStatStr(mob,me,L("A catalog mob's name or a mob class, brought when the cast works."),++showNumber,showFlag,L("Summon"),"SUMMON",true); // P19
+			promptStatStr(mob,me,L("A formula, @x1 the caster's level; 1 when blank."),++showNumber,showFlag,L("Summon count"),"SUMMONCOUNT",true); // P19
+			promptStatStr(mob,me,L("A formula, @x1 the caster's level; blank keeps the mob's own."),++showNumber,showFlag,L("Summon level"),"SUMMONLEVEL",true); // P19
+			promptStatStr(mob,me,CMParms.toListString(Summons.FLAGS),++showNumber,showFlag,L("Summon flags"),"SUMMONFLAGS",true); // P19
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
 			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14

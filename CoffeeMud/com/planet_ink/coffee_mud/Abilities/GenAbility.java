@@ -92,8 +92,12 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 	private static final int V_ACTC=41;//D P14: action cost, -1 the default
 	private static final int V_CACT=42;//D P14: combat action cost, -1 the default
 	private static final int V_COMP=43;//S P14: components, a components.txt line
+	private static final int V_SUMM=44;//S P19: a catalog mob's name or a mob class
+	private static final int V_SCNT=45;//S P19: how many, a formula
+	private static final int V_SLVL=46;//S P19: their level, a formula
+	private static final int V_SFLG=47;//S P19: FOLLOW ASSIST NOSAVE DISMISSONEXPIRE BIND
 
-	private static final int NUM_VS=44;//S
+	private static final int NUM_VS=48;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -142,6 +146,10 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		O[V_ACTC]=Double.valueOf(-1);
 		O[V_CACT]=Double.valueOf(-1);
 		O[V_COMP]="";
+		O[V_SUMM]="";
+		O[V_SCNT]="";
+		O[V_SLVL]="";
+		O[V_SFLG]="";
 		return O;
 	}
 
@@ -172,6 +180,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 	protected long			timeToNextCast	= 0;
 	protected boolean		oneTimeChecked	= false;
 	protected List<Ability>	postEffects		= new Vector<Ability>(1);
+	protected List<MOB>	summons			= null; // P19: DISMISSONEXPIRE summons that go with this effect
 	protected Ability		quietEffect		= null;
 	protected Ability		hereEffect		= null;
 
@@ -417,6 +426,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			else
 				A.scriptObj = null;
 			A.postEffects = new ArrayList<Ability>(postEffects);
+			A.summons = null;
 			return A;
 		}
 		catch(final Exception e)
@@ -919,6 +929,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 					adjustedLevel(mob,asLevel)
 				};
 				final int tickOverride = CMath.parseIntExpression((String)V(ID, V_TKOV), dvars);
+				GenAbility tieTo=null; // P19: the effect the summons go with
 				if((msg.value()<=0)&&((msg2==null)||(msg2.value()<=0)))
 				{
 					if((canAffectCode()!=0)&&(target!=null))
@@ -931,6 +942,7 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 						else
 							affectA=(GenAbility)beneficialAffect(mob,target,asLevel,tickOverride);
 						success[0]=affectA!=null;
+						tieTo=affectA;
 						if(success[0])
 						{
 							if((affectA != null)
@@ -956,6 +968,8 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 						}
 					}
 					setTimeOfNextCast(mob);
+					if(success[0]&&(((String)V(ID,V_SUMM)).trim().length()>0))
+						summonAll(mob, tieTo, dvars, tickOverride, asLevel); // P19
 
 					final String afterAffect=(String)V(ID,V_PAFF);
 					if((afterAffect.length()>0)&&(success[0]))
@@ -1227,6 +1241,102 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		return true;
 	}
 
+	/**
+	 * P19: brings the SUMMON mobs to the caster after a cast that worked.
+	 * @param mob the caster
+	 * @param tie the effect the summons go with, or null
+	 * @param dvars the formula values, @x1 the caster's level
+	 * @param tickOverride the ability's TICKSOVERRIDE
+	 * @param asLevel the level it was cast at
+	 */
+	protected void summonAll(final MOB mob, final GenAbility tie, final double[] dvars, final int tickOverride, final int asLevel)
+	{
+		final Room R=mob.location();
+		final String what=((String)V(ID,V_SUMM)).trim();
+		if((R==null)||(what.length()==0))
+			return;
+		final String cntS=((String)V(ID,V_SCNT)).trim();
+		final int count=Math.max(0, Math.min(20, (cntS.length()==0)?1:CMath.parseIntExpression(cntS, dvars)));
+		final String lvlS=((String)V(ID,V_SLVL)).trim();
+		final String flags=(String)V(ID,V_SFLG);
+		final boolean follow=flags.indexOf("FOLLOW")>=0;
+		final boolean assist=flags.indexOf("ASSIST")>=0;
+		final boolean dismiss=flags.indexOf("DISMISSONEXPIRE")>=0;
+		int ticks=-1;
+		if(dismiss)
+		{
+			if(tie!=null)
+				ticks=((tie.tickDown>0)&&(tie.tickDown<(Integer.MAX_VALUE/2)))?tie.tickDown:-1;
+			else
+				ticks=getBeneficialTickdownTime(mob, mob, tickOverride, asLevel);
+		}
+		final MOB victim=mob.getVictim();
+		for(int i=0;i<count;i++)
+		{
+			MOB M=CMLib.catalog().getCatalogMob(what);
+			if(M!=null)
+			{
+				M=(MOB)M.copyOf();
+				try
+				{
+					CMLib.catalog().changeCatalogUsage(M, true);
+				}
+				catch(final Exception e)
+				{
+				}
+			}
+			else
+				M=CMClass.getMOB(what);
+			if(M==null)
+			{
+				Log.errOut("GenAbility", ID+": SUMMON "+what+" is neither a catalog mob nor a mob class.");
+				return;
+			}
+			M.bringToLife(R, true);
+			// after it is brought to life: a generic or catalog mob is made again from its record then
+			if(lvlS.length()>0)
+			{
+				final int level=Math.max(1, CMath.parseIntExpression(lvlS, dvars));
+				M.basePhyStats().setLevel(level);
+				CMLib.leveler().fillOutMOB(M, level);
+			}
+			M.basePhyStats().setRejuv(PhyStats.NO_REJUV);
+			M.recoverCharStats();
+			M.recoverPhyStats();
+			M.recoverMaxState();
+			M.resetToMaxState();
+			M.addNonUninvokableEffect(CMClass.getAbility("Prop_ModExperience","0"));
+			M.addTattoo("SYSTEM_SUMMONED");
+			final Ability P=CMClass.getAbility("Prop_Summoned");
+			if(P!=null)
+			{
+				P.setMiscText("ID="+ID+((ticks>0)?(" TICKS="+ticks):"")+" "+flags);
+				P.setInvoker(mob);
+				M.addNonUninvokableEffect(P);
+			}
+			if(flags.indexOf("NOSAVE")>=0)
+				M.setSavable(false);
+			CMLib.beanCounter().clearZeroMoney(M, null);
+			M.setMoneyVariation(0);
+			M.setStartRoom(null);
+			R.showOthers(M, null, CMMsg.MSG_OK_ACTION, L("<S-NAME> appear(s)!"));
+			if(follow)
+			{
+				CMLib.commands().postFollow(M, mob, true);
+				if(!assist)
+					M.setAttribute(MOB.Attrib.AUTOASSIST, true); // set means it does not assist
+			}
+			if(assist&&(victim!=null)&&(M.getVictim()!=victim))
+				M.setVictim(victim);
+			if(dismiss&&(tie!=null))
+			{
+				if(tie.summons==null)
+					tie.summons=new ArrayList<MOB>(count);
+				tie.summons.add(M);
+			}
+		}
+	}
+
 	@Override
 	public void unInvoke()
 	{
@@ -1235,6 +1345,14 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		super.unInvoke();
 		if(can)
 		{
+			if(summons!=null)
+			{
+				// P19: DISMISSONEXPIRE summons go with the effect
+				final List<MOB> went=new ArrayList<MOB>(summons);
+				summons=null;
+				for(final MOB M : went)
+					Summons.dismiss(M);
+			}
 			final List<Ability> affs = new ArrayList<Ability>(postEffects);
 			postEffects.clear();
 			for(final Ability A : affs)
@@ -1396,7 +1514,11 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 										 "AOEMSG",//42S P4
 										 "ACTIONCOST",//43D P14
 										 "COMBATACTIONCOST",//44D P14
-										 "COMPONENTS"//45S P14
+										 "COMPONENTS",//45S P14
+										 "SUMMON",//46S P19
+										 "SUMMONCOUNT",//47S P19
+										 "SUMMONLEVEL",//48S P19
+										 "SUMMONFLAGS"//49S P19
 										};
 
 	@Override
@@ -1527,6 +1649,14 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			return AbilityCosts.text(((Double)V(ID, V_CACT)).doubleValue());
 		case 45:
 			return (String) V(ID, V_COMP);
+		case 46:
+			return (String) V(ID, V_SUMM);
+		case 47:
+			return (String) V(ID, V_SCNT);
+		case 48:
+			return (String) V(ID, V_SLVL);
+		case 49:
+			return (String) V(ID, V_SFLG);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenAbility";
@@ -1711,6 +1841,18 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			AbilityCosts.componentsChanged(was, (String)V(ID, V_COMP));
 			break;
 		}
+		case 46:
+			SV(ID, V_SUMM, (val==null)?"":val.trim());
+			break;
+		case 47:
+			SV(ID, V_SCNT, (val==null)?"":val.trim());
+			break;
+		case 48:
+			SV(ID, V_SLVL, (val==null)?"":val.trim());
+			break;
+		case 49:
+			SV(ID, V_SFLG, Summons.flags(val));
+			break;
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenAbility"))
 				parseAllXML(val);
