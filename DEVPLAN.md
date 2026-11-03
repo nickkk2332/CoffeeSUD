@@ -2899,6 +2899,18 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   `postExperience`. An Artisan earns it on top of its own award, so a
   world that wants artisans ahead keeps CRAFTXP under 100. A building
   skill's XP value is half the pounds of material it used.
+- CR19 done. `Prop_SalvageYield(SKILL= YIELD= XP= DESTROY=)` on an
+  item or catalog entry (`core/SalvageYield`): YIELD is a list of
+  `resource:n`, `resource(variant):n` and `catalog:name:n`, each with
+  an optional `@pct%`. Scrapping uses it when SKILL (Scrapping when not
+  given) names it: just that item, any material, enchanted or not, and
+  DESTROY=false leaves the item with the property gone. Every crafting
+  skill that calls `checkInfo` gets `[SKILL] DISMANTLE [ITEM]`: the
+  item's own Prop_SalvageYield for that skill, or, for an item it could
+  make, `DISMANTLEPCT` (50 when blank) percent of its recipe's
+  materials times proficiency, in the item's material. It is done at
+  once, with no time taken. The variant is the resource's subtype until
+  CR15 makes variants data.
 
 #### 2l. Factions and organisations (18)
 

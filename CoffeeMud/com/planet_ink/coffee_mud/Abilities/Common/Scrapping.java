@@ -75,6 +75,7 @@ public class Scrapping extends CommonSkill
 	protected String	oldItemName		= "";
 	protected String	foundShortName	= "";
 	protected boolean	messedUp		= false;
+	protected String		salvageYield	= ""; // CR19: a Prop_SalvageYield's text
 
 	public Scrapping()
 	{
@@ -91,7 +92,7 @@ public class Scrapping extends CommonSkill
 		&&(tickID==Tickable.TICKID_MOB))
 		{
 			final MOB mob=(MOB)affected;
-			if((found==null)
+			if(((found==null)&&(salvageYield.length()==0))
 			||(fireRequired
 				&&(getRequiredFire(mob,0)==null)
 				&&(mob.location()==activityRoom)))
@@ -111,10 +112,22 @@ public class Scrapping extends CommonSkill
 			if(affected instanceof MOB)
 			{
 				final MOB mob=(MOB)affected;
-				if((found!=null)&&(!aborted)&&(mob.location()!=null))
+				if(((found!=null)||(salvageYield.length()>0))&&(!aborted)&&(mob.location()!=null))
 				{
 					if(messedUp)
 						commonTelL(mob,"You've messed up scrapping @x1!",oldItemName);
+					else
+					if(salvageYield.length()>0) // CR19: what its Prop_SalvageYield gives
+					{
+						final List<Item> got=SalvageYield.roll(salvageYield);
+						final CMMsg msg=CMClass.getMsg(mob,null,this,getCompletedActivityMessageType(),L("<S-NAME> manage(s) to scrap @x1.",oldItemName));
+						msg.setValue(got.size());
+						if(mob.location().okMessage(mob, msg))
+						{
+							mob.location().send(mob, msg);
+							SalvageYield.give(mob,got,SalvageYield.xp(salvageYield),this);
+						}
+					}
 					else
 					{
 						amount=amount*(baseYield()+abilityCode());
@@ -160,6 +173,8 @@ public class Scrapping extends CommonSkill
 		}
 		boolean okMaterial=true;
 		oldItemName=I.Name();
+		final Ability yieldA=SalvageYield.on(I,this); // CR19: a Prop_SalvageYield says what it gives
+		salvageYield=(yieldA==null)?"":yieldA.text();
 		switch(I.material()&RawMaterial.MATERIAL_MASK)
 		{
 		case RawMaterial.MATERIAL_FLESH:
@@ -175,7 +190,7 @@ public class Scrapping extends CommonSkill
 			okMaterial=true;
 			break;
 		}
-		if(!okMaterial)
+		if((!okMaterial)&&(yieldA==null))
 		{
 			commonFaiL(mob,commands,"You don't know how to scrap @x1.",I.name(mob));
 			return false;
@@ -193,7 +208,7 @@ public class Scrapping extends CommonSkill
 			return false;
 		}
 
-		if(CMLib.flags().isEnchanted(I))
+		if(CMLib.flags().isEnchanted(I)&&(yieldA==null))
 		{
 			commonFaiL(mob,commands,"@x1 is enchanted, and can't be scrapped.",I.name(mob));
 			return false;
@@ -204,7 +219,7 @@ public class Scrapping extends CommonSkill
 		for(int i=0;i<mob.location().numItems();i++)
 		{
 			final Item I2=mob.location().getItem(i);
-			if((I2!=null)&&(I2.sameAs(I)))
+			if((I2!=null)&&((yieldA==null)?I2.sameAs(I):(I2==I)))
 			{
 				totalWeight+=I2.phyStats().weight();
 				V.add(I2);
@@ -228,7 +243,7 @@ public class Scrapping extends CommonSkill
 			}
 		}
 		amount=totalWeight/5;
-		if(amount<1)
+		if((amount<1)&&(yieldA==null))
 		{
 			commonFaiL(mob,commands,"You don't have enough here to get anything from.");
 			return false;
@@ -275,7 +290,10 @@ public class Scrapping extends CommonSkill
 					duration+=V.get(v).phyStats().weight();
 				else
 					duration+=V.get(v).phyStats().weight()/2;
-				V.get(v).destroy();
+				if((yieldA!=null)&&(!SalvageYield.destroys(yieldA.text())))
+					V.get(v).delEffect(yieldA); // CR19: DESTROY=false: it stays, with nothing more in it
+				else
+					V.get(v).destroy();
 			}
 			beneficialAffect(mob,mob,asLevel,duration);
 		}

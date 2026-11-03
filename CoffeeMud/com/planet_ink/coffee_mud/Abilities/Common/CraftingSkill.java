@@ -1151,6 +1151,111 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		return viewFlags;
 	}
 
+	/**
+	 * CR19: [SKILL] DISMANTLE [ITEM]: an item carried or in the room is taken
+	 * apart, for what its Prop_SalvageYield for this skill gives, or else, if
+	 * this skill could make it, for DISMANTLEPCT percent of the materials its
+	 * recipe uses, times the crafter's proficiency.
+	 * @param mob the crafter
+	 * @param commands DISMANTLE and the item
+	 * @return true if it was taken apart
+	 */
+	protected boolean dismantle(final MOB mob, final List<String> commands)
+	{
+		final Room R=mob.location();
+		final String what=CMParms.combine(commands,1);
+		if((R==null)||(what.length()==0))
+		{
+			commonTelL(mob,"Dismantle what?");
+			return false;
+		}
+		Item I=mob.findItem(null,what);
+		if(I==null)
+			I=R.findItem(null,what);
+		if((I==null)||(!CMLib.flags().canBeSeenBy(I,mob)))
+		{
+			commonTelL(mob,"You don't see anything called '@x1' here.",what);
+			return false;
+		}
+		if(I instanceof RawMaterial)
+		{
+			commonTelL(mob,"@x1 is already raw material.",I.name(mob));
+			return false;
+		}
+		final PrivateProperty prop=CMLib.law().getPropertyRecord(I);
+		if(((prop!=null)&&(!CMLib.law().doesHavePrivilegesWith(mob,prop)))
+		||((I.owner()==R)&&(CMLib.law().getLandTitle(R)!=null)&&(!CMLib.law().doesHavePriviledgesHere(mob,R))))
+		{
+			commonTelL(mob,"@x1 isn't yours to take apart.",I.name(mob));
+			return false;
+		}
+		if((I instanceof Container)&&(((Container)I).hasContent()))
+		{
+			commonTelL(mob,"You need to empty @x1 first.",I.name(mob));
+			return false;
+		}
+		final Ability yieldA=SalvageYield.on(I,this);
+		final List<Item> got;
+		final int xp;
+		if(yieldA!=null)
+		{
+			got=SalvageYield.roll(yieldA.text());
+			xp=SalvageYield.xp(yieldA.text());
+		}
+		else
+		{
+			final int pct=SalvageYield.dismantlePct();
+			if(pct<=0)
+			{
+				commonTelL(mob,"Nothing is dismantled for its materials here.");
+				return false;
+			}
+			if((!(this instanceof ItemCraftor))||(!((ItemCraftor)this).mayICraft(I)))
+			{
+				commonTelL(mob,"You don't know how to dismantle @x1.",I.name(mob));
+				return false;
+			}
+			if(CMLib.flags().isEnchanted(I))
+			{
+				commonTelL(mob,"@x1 is enchanted, and can't be dismantled.",I.name(mob));
+				return false;
+			}
+			final List<String> row=RecipeKeys.recipeOf(addRecipes(mob,loadRecipes()),I);
+			if(row==null)
+			{
+				commonTelL(mob,"You don't know how @x1 was made.",I.name(mob));
+				return false;
+			}
+			final String amt=(this instanceof CraftorAbility)?((CraftorAbility)this).getDecodedComponentsDescription(mob,row):"";
+			final int used=CMath.isInteger(amt)?CMath.s_int(amt):I.basePhyStats().weight();
+			final int share=(int)Math.floor(used*(pct/100.0)*(proficiency()/100.0));
+			if(share<1)
+			{
+				commonTelL(mob,"There is too little in @x1 to be worth taking apart.",I.name(mob));
+				return false;
+			}
+			got=new ArrayList<Item>();
+			for(int i=0;i<share;i++)
+			{
+				final Item rsc=CMLib.materials().makeItemResource(I.material());
+				if(rsc==null)
+					break;
+				got.add(rsc);
+			}
+			xp=0;
+		}
+		final CMMsg msg=CMClass.getMsg(mob,I,this,CMMsg.MSG_NOISYMOVEMENT,L("<S-NAME> take(s) @x1 apart.",I.name()));
+		if(!R.okMessage(mob,msg))
+			return false;
+		R.send(mob,msg);
+		if((yieldA!=null)&&(!SalvageYield.destroys(yieldA.text())))
+			I.delEffect(yieldA);
+		else
+			I.destroy();
+		SalvageYield.give(mob,got,xp,this);
+		return true;
+	}
+
 	public boolean checkInfo(final MOB mob, final List<String> commands)
 	{
 		return checkInfo(mob, commands, new PairVector<EnhancedExpertise,Integer>());
@@ -1165,6 +1270,11 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		if((commands!=null)&&(commands.size()>0)&&commands.get(0).equalsIgnoreCase("experiment")&&(mob!=null)) // CR18: [SKILL] EXPERIMENT [MATERIALS]
 		{
 			Experiments.run(mob,this,commands);
+			return true;
+		}
+		if((commands!=null)&&(commands.size()>0)&&commands.get(0).equalsIgnoreCase("dismantle")&&(mob!=null)) // CR19: [SKILL] DISMANTLE [ITEM]
+		{
+			dismantle(mob,commands);
 			return true;
 		}
 		if((commands!=null)
