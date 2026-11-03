@@ -78,6 +78,21 @@ public class Gardening extends GatheringSkill
 	protected Room		room			= null;
 	protected String	foundShortName	= "";
 	protected int		goodticks		= 0;
+	protected int        daylight        = 0; // CR16: a long crop's counted ticks
+	protected String    cropRsc            = ""; // CR16: what is planted, for crops.txt
+	protected String    cropSub            = "";
+	protected String    seedRules        = ""; // CR16: the seed's own Prop_CropRules
+
+	/**
+	 * CR16: the crop's rules here: crops.txt, then Prop_CropRules on the
+	 * area, the room and the seed.
+	 * @param R the room
+	 * @return its rules
+	 */
+	protected CropRules.Rules cropRules(final Room R)
+	{
+		return CropRules.of(R, cropRsc, cropSub, seedRules);
+	}
 
 	public Gardening()
 	{
@@ -105,7 +120,19 @@ public class Gardening extends GatheringSkill
 			final Room R=(Room)affected;
 			if(R!=null)
 			{
-				if(R.getArea().getClimateObj().canSeeTheSun(R))
+				final CropRules.Rules crop=cropRules(R); // CR16: NEEDSUN=, and a long crop's nights do not count against it
+				final boolean sunOK=((crop.needSun!=null)&&(!crop.needSun.booleanValue()))||R.getArea().getClimateObj().canSeeTheSun(R);
+				if(crop.growHours>0)
+				{
+					if((!CropRules.isNight(R))||((crop.needSun!=null)&&(!crop.needSun.booleanValue())))
+					{
+						daylight++;
+						if(sunOK)
+							goodticks++;
+					}
+				}
+				else
+				if(sunOK)
 					goodticks++;
 				final MOB mob=invoker();
 				if(tickUp==6)
@@ -119,7 +146,7 @@ public class Gardening extends GatheringSkill
 					}
 				}
 				else
-				if((tickUp > 10)&&(goodticks < (tickUp/2)))
+				if((crop.growHours>0)?((daylight > 10)&&(goodticks < (daylight/2))):((tickUp > 10)&&(goodticks < (tickUp/2))))
 				{
 					found=null;
 					commonTelL(mob,"Your @x1 garden has failed due to lack of sunlight.\n\r",foundShortName);
@@ -169,7 +196,7 @@ public class Gardening extends GatheringSkill
 			{
 				if((found!=null)&&(!isaborted))
 				{
-					int amount=CMLib.dice().roll(1,7,0)*(baseYield()+abilityCode());
+					int amount=CropRules.yieldRoll(cropRules(room),CMLib.dice().roll(1,7,0))*(baseYield()+abilityCode()); // CR16: YIELD=
 					final int origAmount = amount;
 					int doubleRemain = amount * 10;
 					for(final Enumeration<Item> i=room.items();i.hasMoreElements();)
@@ -236,15 +263,32 @@ public class Gardening extends GatheringSkill
 			final Gardening F=((Gardening)copyOf());
 			F.unInvoked=false;
 			F.tickUp=0;
-			F.tickDown=50;
-			F.startTickDown(invoker,room,50);
+			final int growTicks=CropRules.growTicks(cropRules(room),50); // CR16: GROWHOURS=
+			F.daylight=0;
+			F.tickDown=growTicks;
+			F.startTickDown(invoker,room,growTicks);
 		}
+	}
+
+	/**
+	 * CR16: why the crop will not grow here just now, by its rules, or null.
+	 * @param R the room
+	 * @return the refusal, or null
+	 */
+	protected String gardenRefusal(final Room R)
+	{
+		if((R==null)||(R.getArea()==null))
+			return L("The land is not suitable for gardening here.");
+		return CropRules.refusal(R, cropRules(R), L("You need clear sunlight to do your gardening.  Check the time and weather."),
+			L("The land is not suitable for gardening here."), L("The current drought conditions make gardening useless."));
 	}
 
 	public boolean isPotentialCrop(final Room R, final int code)
 	{
 		if(R==null)
 			return false;
+		if(CropRules.domainNamed(R,cropRules(R))) // CR16: a crop whose DOMAINS name this room
+			return true;
 		if(R.resourceChoices()==null)
 			return false;
 		for(int i=0;i<R.resourceChoices().size();i++)
@@ -290,26 +334,13 @@ public class Gardening extends GatheringSkill
 		}
 
 		verb=L("planting");
-		if((!auto)&&(!R.getArea().getClimateObj().canSeeTheSun(R)))
+		cropRsc=""; // CR16
+		cropSub="";
+		seedRules="";
+		final String noGarden=CropRules.anyRows()?null:gardenRefusal(R);
+		if((!auto)&&(noGarden!=null))
 		{
-			commonFaiL(mob,commands,"You need clear sunlight to do your gardening.  Check the time and weather.");
-			return false;
-		}
-
-		if((!auto)
-		&&(R.domainType()!=Room.DOMAIN_OUTDOORS_HILLS)
-		&&(R.domainType()!=Room.DOMAIN_OUTDOORS_PLAINS)
-		&&(R.domainType()!=Room.DOMAIN_OUTDOORS_WOODS)
-		&&(R.domainType()!=Room.DOMAIN_OUTDOORS_JUNGLE)
-		&&(R.domainType()!=Room.DOMAIN_OUTDOORS_SWAMP)
-		&&(R.myResource()!=RawMaterial.RESOURCE_DIRT))
-		{
-			commonFaiL(mob,commands,"The land is not suitable for gardening here.");
-			return false;
-		}
-		if((!auto)&&(R.getArea().getClimateObj().weatherType(R)==Climate.WEATHER_DROUGHT))
-		{
-			commonFaiL(mob,commands,"The current drought conditions make gardening useless.");
+			commonFaiL(mob,commands,noGarden);
 			return false;
 		}
 		if(R.fetchEffect(ID())!=null)
@@ -427,11 +458,27 @@ public class Gardening extends GatheringSkill
 			commonFaiL(mob,commands,"You'll need to have some @x1 to seed from on the ground first.",foundShortName);
 			return false;
 		}
+		final Ability seedP=mine.fetchEffect("Prop_CropRules"); // CR16: the seed's own rules
+		seedRules=(seedP==null)?"":seedP.text();
 		final String mineName=mine.name();
 		mine=CMLib.materials().unbundle(mine,-1,null);
 		if(mine==null)
 		{
 			commonFaiL(mob,commands,"'@x1' is not suitable for use as seed.",mineName);
+			return false;
+		}
+		cropRsc=RawMaterial.CODES.NAME(code); // CR16: the crop's own rules
+		cropSub=((mine instanceof RawMaterial)&&(!((RawMaterial)mine).getSubType().equalsIgnoreCase(RawMaterial.ResourceSubType.SEED.name())))?((RawMaterial)mine).getSubType():"";
+		final String noCrop=gardenRefusal(R);
+		if((!auto)&&(noCrop!=null))
+		{
+			commonFaiL(mob,commands,noCrop);
+			return false;
+		}
+		final String notNow=CropRules.seasonRefusal(R,cropRules(R));
+		if((!auto)&&(notNow!=null))
+		{
+			commonFaiL(mob,commands,notNow);
 			return false;
 		}
 		if(!(isPotentialCrop(R,code)))

@@ -2971,6 +2971,17 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   the room's calendar), DROP in place of the skill's share. Without it
   rooms behave as before: 20% less each time, back 30 game minutes
   after the first. CR9's @x4 reads the same records.
+- CR16 done. Crop rules (`core/CropRules`): GROWHOURS, SEASONS,
+  NEEDSUN, DOMAINS, WATER (water rooms here or next door, as
+  Irrigation digs), YIELD (dice) and FAILMSG, from a world's
+  `world/crops.txt` (a resource or subtype, then the rules), then
+  `Prop_CropRules` on the area (and its parents), the room and the seed.
+  Farming and Gardening read them for the land, sun, drought and water
+  checks (at planting and while it grows), the season (at planting
+  only), the growing time and the yield; DOMAINS also lets a crop root
+  where the room's resources would not offer it. A crop given
+  GROWHOURS does not count the night against it. With a crops.txt the
+  early land check waits until the crop is known. No rules: as before.
 
 #### 2l. Factions and organisations (18)
 
