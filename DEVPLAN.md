@@ -2954,6 +2954,14 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   cached weighting unless a row has a mask. Fishing rows already carry
   a value, which a masked row keeps. The stock hunting and fishing
   headers name the column.
+- CR11 done. ResourceOverride by the calendar of the room's area:
+  SPRING=, SUMMER=, AUTUMN= (or FALL=) and WINTER= lists swap in as the
+  season turns (none yields nothing); SEASON=, MONTH= and HOUR= (lists
+  and ranges) limit when it applies, and outside them the rooms it
+  changed get `setResource(-1)`, their own back. MSG= is shown in a
+  room when the calendar, not the first tick, changes it. A season
+  with no list falls back to the plain list. It needs no script and
+  survives a restore, since it is the behaviour's own parameters.
 
 #### 2l. Factions and organisations (18)
 

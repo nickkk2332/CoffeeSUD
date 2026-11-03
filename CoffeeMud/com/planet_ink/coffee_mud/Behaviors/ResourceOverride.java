@@ -55,6 +55,94 @@ public class ResourceOverride extends ActiveTicker
 
 	private volatile Pair<MOB,Ability> corpseWatcher = null;
 
+	// CR11: by the calendar
+	private final Map<TimeClock.Season,List<Integer>> bySeason = new EnumMap<TimeClock.Season,List<Integer>>(TimeClock.Season.class);
+	private final Set<TimeClock.Season>    seasons        = EnumSet.noneOf(TimeClock.Season.class);
+	private final Set<Integer>            months        = new TreeSet<Integer>();
+	private final Set<Integer>            hours        = new TreeSet<Integer>();
+	private String                        changeMsg    = "";
+	private String                        lastState    = null;
+	private final Set<Room>                overridden    = Collections.newSetFromMap(new WeakHashMap<Room,Boolean>());
+
+	private static TimeClock.Season seasonNamed(final String s)
+	{
+		final String u=s.trim().toUpperCase();
+		if(u.equals("AUTUMN"))
+			return TimeClock.Season.FALL;
+		return (TimeClock.Season)CMath.s_valueOf(TimeClock.Season.class, u);
+	}
+
+	private static void numbers(final String val, final Set<Integer> into)
+	{
+		for(final String s : CMParms.parseCommas(val, true))
+		{
+			final int dash=s.indexOf('-',1);
+			if(dash>0)
+			{
+				final int lo=CMath.s_int(s.substring(0,dash).trim());
+				final int hi=CMath.s_int(s.substring(dash+1).trim());
+				for(int i=lo;i<=hi;i++)
+					into.add(Integer.valueOf(i));
+			}
+			else
+			if(CMath.isInteger(s.trim()))
+				into.add(Integer.valueOf(CMath.s_int(s.trim())));
+		}
+	}
+
+	/**
+	 * CR11: the resources that apply now, by the clock: none (null) outside
+	 * SEASON=, MONTH= and HOUR=, the season's own list (SPRING=...) when it has
+	 * one, or else the usual list.
+	 * @param C the clock
+	 * @return the resources, or null for the room's own
+	 */
+	protected List<Integer> active(final TimeClock C)
+	{
+		if(C!=null)
+		{
+			if((seasons.size()>0)&&(!seasons.contains(C.getSeasonCode())))
+				return null;
+			if((months.size()>0)&&(!months.contains(Integer.valueOf(C.getMonth()))))
+				return null;
+			if((hours.size()>0)&&(!hours.contains(Integer.valueOf(C.getHourOfDay()))))
+				return null;
+			final List<Integer> L=bySeason.get(C.getSeasonCode());
+			if(L!=null)
+				return L;
+		}
+		return (rscs.size()>0)?rscs:null;
+	}
+
+	/**
+	 * CR11: puts the resources that apply now on a room, or gives it back its
+	 * own, telling MSG= there when the calendar turned it.
+	 * @param R the room
+	 * @param active what applies now, or null
+	 * @param turned whether the calendar just changed it
+	 */
+	protected void applyTo(final Room R, final List<Integer> active, final boolean turned)
+	{
+		boolean changed=false;
+		if(active==null)
+		{
+			if(overridden.remove(R))
+			{
+				R.setResource(-1);
+				changed=true;
+			}
+		}
+		else
+		if((active.size()>0)&&(!active.contains(Integer.valueOf(R.myResource()))))
+		{
+			R.setResource(active.get(CMLib.dice().roll(1,active.size(),-1)).intValue());
+			overridden.add(R);
+			changed=true;
+		}
+		if(changed&&turned&&(changeMsg.length()>0))
+			R.showHappens(CMMsg.MSG_OK_ACTION, changeMsg);
+	}
+
 	@Override
 	public String accountForYourself()
 	{
@@ -107,7 +195,61 @@ public class ResourceOverride extends ActiveTicker
 		crscs.clear();
 		roomTypes.clear();
 		this.mobMask = null;
-		final Vector<String> V=CMParms.parse(getParms());
+		bySeason.clear(); // CR11
+		seasons.clear();
+		months.clear();
+		hours.clear();
+		lastState=null;
+		String parms=getParms();
+		changeMsg=CMParms.getParmStr(parms,"MSG",CMParms.getParmStr(parms,"MESSAGE","")).trim();
+		parms=parms.replaceAll("(?i)\\b(MSG|MESSAGE)\\s*=\\s*(\"[^\"]*\"|\\S+)", " ");
+		final Vector<String> V=CMParms.parse(parms);
+		for(int v=0;v<V.size();v++) // CR11: the calendar's keys, before any MOBMASK=
+		{
+			final String w=V.elementAt(v).trim();
+			if(w.toUpperCase().startsWith("MOBMASK"))
+				break;
+			final int eq=w.indexOf('=');
+			if(eq<=0)
+				continue;
+			final String key=w.substring(0,eq).trim().toUpperCase();
+			final String val=w.substring(eq+1).trim();
+			final TimeClock.Season season=seasonNamed(key);
+			if(season!=null)
+			{
+				final List<Integer> L=new Vector<Integer>();
+				for(final String r : CMParms.parseCommas(val, true))
+				{
+					final Integer c=getRscTypeIfAny(r.trim().toUpperCase());
+					if(c==null)
+						Log.errOut("Unknown ResourceOverride resource '"+r+"' in '"+newStr+"'");
+					else
+					if(!L.contains(c))
+						L.add(c);
+				}
+				bySeason.put(season, L);
+			}
+			else
+			if(key.equals("SEASON")||key.equals("SEASONS"))
+			{
+				for(final String s : CMParms.parseCommas(val, true))
+				{
+					final TimeClock.Season S=seasonNamed(s);
+					if(S!=null)
+						seasons.add(S);
+				}
+			}
+			else
+			if(key.equals("MONTH")||key.equals("MONTHS"))
+				numbers(val, months);
+			else
+			if(key.equals("HOUR")||key.equals("HOURS"))
+				numbers(val, hours);
+			else
+				continue;
+			V.removeElementAt(v);
+			v--;
+		}
 		if(V.size()==0)
 			return;
 		for(int v=0;v<V.size();v++)
@@ -207,21 +349,23 @@ public class ResourceOverride extends ActiveTicker
 	public boolean tick(final Tickable ticking, int tickID)
 	{
 		super.tick(ticking,tickID);
-		if(rscs.size()==0)
+		if((rscs.size()==0)&&(bySeason.size()==0))
 			return true;
 		if(super.canAct(ticking, tickID))
 		{
 			if(tickID == 0)
 				tickID = (ticking instanceof Area) ? Tickable.TICKID_AREA : Tickable.TICKID_ROOM_BEHAVIOR;
+			final TimeClock C=(ticking instanceof Area)?((Area)ticking).getTimeObj()
+				:((ticking instanceof Room)&&(((Room)ticking).getArea()!=null))?((Room)ticking).getArea().getTimeObj():null;
+			final List<Integer> active=active(C); // CR11: by the calendar
+			final String state=(active==null)?"-":active.toString();
+			final boolean turned=(lastState!=null)&&(!lastState.equals(state));
+			lastState=state;
 			switch(tickID)
 			{
 			case Tickable.TICKID_ROOM_BEHAVIOR:
 				if(ticking instanceof Room)
-				{
-					final Room R=(Room)ticking;
-					if(!rscs.contains(Integer.valueOf(R.myResource())))
-						R.setResource(rscs.get(CMLib.dice().roll(1,rscs.size(),-1)).intValue());
-				}
+					applyTo((Room)ticking, active, turned);
 				break;
 			case Tickable.TICKID_AREA:
 				if(ticking instanceof Area)
@@ -232,9 +376,8 @@ public class ResourceOverride extends ActiveTicker
 					{
 						R=e.nextElement();
 						if((R!=null)
-						&&((roomTypes.size()==0)||(roomTypes.contains(Integer.valueOf(R.domainType()))))
-						&&(!rscs.contains(Integer.valueOf(R.myResource()))))
-							R.setResource(rscs.get(CMLib.dice().roll(1,rscs.size(),-1)).intValue());
+						&&((roomTypes.size()==0)||(roomTypes.contains(Integer.valueOf(R.domainType())))))
+							applyTo(R, active, turned);
 					}
 				}
 			}
