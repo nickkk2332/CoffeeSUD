@@ -3089,6 +3089,20 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   ITEM now takes a count and a plain catalog name, and its reader knows
   the new words. STARTINGKIT_n ini keys and LOAD= items are left out:
   the kit files cover them.
+- P8 done. `core/PlayerTemplates`: catalog mobs in the category
+  PLAYERTEMPLATE (not world/templates.cmare, which holds the editors'
+  templates) carrying the new Prop_PlayerTemplate (PITCH, LOCK=NAME,GENDER,
+  NAME=RANDOM). CREATIONTEMPLATES=OFFER (the default), ONLY or NO. After
+  the theme, CharCreation's new CHARCR_TEMPLATESTART lists them (and 0,
+  make your own, unless ONLY); a pick gives race, gender, stats, class
+  (startRacing, startCharacter), the template's level by real level-ups
+  as TESTCHAR does, its abilities (the higher proficiency), expertises,
+  factions, tattoos, items (copies, worn as on it, coins left out),
+  money and description. LOCK=NAME renames the character to the
+  template's name (refused when taken), NAME=RANDOM draws one with
+  NameStyles; without LOCK=GENDER, CHARCR_TEMPLATEGENDER asks. Then the
+  start room, the age and the end of creation, skipping the rest. The
+  ini also lists CHARCREATIONSCRIPTS' ORIGIN code (P6).
 
 #### 2p. Presentation (18)
 

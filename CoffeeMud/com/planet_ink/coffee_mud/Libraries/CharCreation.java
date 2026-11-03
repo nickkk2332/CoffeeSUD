@@ -127,6 +127,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_THEMEDONE,
 		CHARCR_THEMEPICKED,
 		CHARCR_THEMESTART,
+		CHARCR_TEMPLATESTART,
+		CHARCR_TEMPLATEPICKED,
+		CHARCR_TEMPLATEGENDER,
 		CHARCR_GENDERSTART,
 		CHARCR_GENDERDONE,
 		CHARCR_RACEDONE,
@@ -1055,6 +1058,12 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrKitStart(loginObj, session);
 		case CHARCR_KITPICKED:
 			return charcrKitPicked(loginObj, session);
+		case CHARCR_TEMPLATESTART:
+			return charcrTemplateStart(loginObj, session);
+		case CHARCR_TEMPLATEPICKED:
+			return charcrTemplatePicked(loginObj, session);
+		case CHARCR_TEMPLATEGENDER:
+			return charcrTemplateGender(loginObj, session);
 		case CHARCR_FACTIONNEXT:
 			return charcrFactionNext(loginObj, session);
 		case CHARCR_FACTIONPICK:
@@ -2949,8 +2958,117 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		session.setMob(loginObj.mob);
 		executeScript(mob,charCrScripts.get("THEME"));
-		loginObj.state=LoginState.CHARCR_RACESTART;
+		// P8: the ready-made characters first, when there are any
+		loginObj.state=(PlayerTemplates.offered().size()>0)?LoginState.CHARCR_TEMPLATESTART:LoginState.CHARCR_RACESTART;
 		return null;
+	}
+
+	/**
+	 * P8: NEW offers the ready-made characters (catalog PLAYERTEMPLATE mobs),
+	 * next to making one's own unless CREATIONTEMPLATES=ONLY.
+	 */
+	protected LoginResult charcrTemplateStart(final LoginSessionImpl loginObj, final Session session)
+	{
+		final List<MOB> list=PlayerTemplates.offered();
+		if(list.size()==0)
+		{
+			loginObj.state=LoginState.CHARCR_RACESTART;
+			return null;
+		}
+		final boolean only=PlayerTemplates.mode().equals("ONLY");
+		session.println(null,null,null,PlayerTemplates.menu(list, only));
+		session.promptPrint(only?L("^NYour character: "):L("^NYour character (0 to make your own): "));
+		loginObj.state=LoginState.CHARCR_TEMPLATEPICKED;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	protected LoginResult charcrTemplatePicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
+		final boolean only=PlayerTemplates.mode().equals("ONLY");
+		if((!only)&&(input.equals("0")||input.equalsIgnoreCase("own")||input.toLowerCase().startsWith("make")))
+		{
+			loginObj.state=LoginState.CHARCR_RACESTART;
+			return null;
+		}
+		final MOB T=PlayerTemplates.find(PlayerTemplates.offered(), input);
+		if(T==null)
+		{
+			if((input.length()>0)&&(!input.equals("?")))
+				session.println(L("'@x1' is not one of them.",input));
+			loginObj.state=LoginState.CHARCR_TEMPLATESTART;
+			return null;
+		}
+		String name=null;
+		if(PlayerTemplates.locked(T,"NAME")&&(T.Name().trim().indexOf(' ')<0))
+		{
+			name=T.Name().trim();
+			if((!name.equalsIgnoreCase(mob.Name()))&&(!PlayerTemplates.nameFree(name)))
+			{
+				session.println(L("There is a character called @x1 already, so @x1 cannot be made again.",name));
+				loginObj.state=LoginState.CHARCR_TEMPLATESTART;
+				return null;
+			}
+		}
+		PlayerTemplates.apply(mob, T);
+		if(PlayerTemplates.randomName(T))
+		{
+			final String drawn=PlayerTemplates.drawName(mob);
+			if(drawn!=null)
+				name=drawn;
+		}
+		if((name!=null)&&(!name.equals(mob.Name())))
+		{
+			PlayerTemplates.rename(mob, name);
+			loginObj.login=name;
+		}
+		session.println(L("^NYou are ^H@x1^N, a level @x2 @x3 @x4.",mob.Name(),""+mob.basePhyStats().level(),
+			mob.baseCharStats().getMyRace().name(),mob.baseCharStats().getCurrentClass().name()));
+		JSProgression.creationStep(mob,"template"); // JS23's onCreationStep
+		if(!PlayerTemplates.locked(T,"GENDER"))
+		{
+			session.promptPrint(L("^NGender (M/F/N), or nothing for @x1: ",""+(char)mob.baseCharStats().getStat(CharStats.STAT_GENDER)));
+			loginObj.state=LoginState.CHARCR_TEMPLATEGENDER;
+			return LoginResult.INPUT_REQUIRED;
+		}
+		return charcrTemplateDone(loginObj, session);
+	}
+
+	protected LoginResult charcrTemplateGender(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim().toUpperCase();
+		if(input.length()>0)
+		{
+			final char g=input.charAt(0);
+			if((g!='M')&&(g!='F')&&(g!='N'))
+			{
+				session.promptPrint(L("^NGender (M/F/N): "));
+				return LoginResult.INPUT_REQUIRED;
+			}
+			mob.baseCharStats().setStat(CharStats.STAT_GENDER,g);
+			mob.recoverCharStats();
+		}
+		return charcrTemplateDone(loginObj, session);
+	}
+
+	/**
+	 * P8: a ready-made character skips the rest of the questions: their start
+	 * room and age, then the end of creation.
+	 */
+	protected LoginResult charcrTemplateDone(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		mob.setStartRoom(getDefaultStartRoom(mob));
+		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.ALL_AGEING))
+		{
+			final Race R=mob.baseCharStats().getMyRace();
+			final TimeClock C=CMLib.time().localClock(mob.getStartRoom());
+			final int age=mob.playerStats().initializeBirthday(C,0,R);
+			mob.baseCharStats().setStat(CharStats.STAT_AGE,age);
+		}
+		return charcrStartFinish(loginObj, session);
 	}
 
 	protected MOB setMOBClass(final String classID, final LoginSessionImpl loginObj, final Session session)
