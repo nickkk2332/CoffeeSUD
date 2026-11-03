@@ -178,6 +178,12 @@ public interface AreaGenerationLibrary extends CMLibrary
 	public LayoutManager getLayoutManager(String named);
 
 	/**
+	 * G4: the names of the layouts there are, for GENLAYOUT.
+	 * @return the names, sorted
+	 */
+	public List<String> getLayoutManagerNames();
+
+	/**
 	 * Sometimes an object cannot be generated at a given time because some tag which
 	 * will be defined later has not yet been defined, and cannot be resolved at
 	 * generation time.  In those cases, this method is called with the defined id

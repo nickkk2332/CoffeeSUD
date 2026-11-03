@@ -776,6 +776,9 @@ GENERATE).</p>
 <p>Deeper places: <code>&lt;AREA layout="TREE" levels="4" size="60"&gt;</code> makes a goblin mine four floors deep
 with ladders down, its rooms knowing <code>$roomtag_level</code> and <code>$roomtag_stairs</code>; a 'Sky Citadel' uses
 <code>layout="RING" levels="2" levelsdir="UP"</code>, and a sea of reefs <code>ISLANDS</code> (AHELP GENERATE).</p>
+<p>See before you build: <code>GENLAYOUT SPOTTEDMESH 40 SEED=9</code>, run a few times, picks a shape; then
+<code>GENERATE PREVIEW AREA swamp_dungeon theme=swamp level_range=8 SEED=9</code> lists its rooms, mobs and items
+and builds nothing for good, and <code>GENERATE PREVIEW KEEP</code> builds that very area (AHELP GENLAYOUT).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

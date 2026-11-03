@@ -30,17 +30,30 @@ public class LayoutTester
 
 	public static void draw(final LayoutManager layout, final int size, final int dir)
 	{
-		final List<LayoutNode> V=layout.generate(size, dir);
+		testOut.print(drawText(layout, layout.generate(size, dir), dir));
+	}
+
+	/**
+	 * G4: the drawing as text, for GENLAYOUT: the layout's name, size and
+	 * continuity, a count of each node type, and the map, O the entrance.
+	 * @param layout the layout
+	 * @param V the nodes it made
+	 * @param dir the direction it was made in
+	 * @return the drawing
+	 */
+	public static String drawText(final LayoutManager layout, final List<LayoutNode> V, final int dir)
+	{
+		final StringBuilder out=new StringBuilder();
 		final LayoutNode firstNode = (V.size()==0) ? null : V.get(0);
 
-		testOut.println("Layout "+layout.name()+", size="+V.size()+", dir="+DEFAULT_DIRECTIONS_LIST_COMPASS[dir]+": "+continuityCheck(V));
+		out.append("Layout "+layout.name()+", size="+V.size()+", dir="+(((dir>=0)&&(dir<DEFAULT_DIRECTIONS_LIST_COMPASS.length))?DEFAULT_DIRECTIONS_LIST_COMPASS[dir]:""+dir)+": "+(continuityCheck(V)?"all joined":"NOT all joined")).append("\n");
 		final int[] cts = new int[LayoutTypes.values().length];
 		for(final LayoutNode ls : V)
 			cts[ls.type().ordinal()]++;
 		final StringBuilder typstr=new StringBuilder("");
 		for(final LayoutTypes t : LayoutTypes.values())
 			typstr.append(t.name()+"("+cts[t.ordinal()]+")  ");
-		testOut.println(typstr.toString());
+		out.append(typstr.toString()).append("\n");
 
 		long lowestX=Long.MAX_VALUE;
 		long lowestY=Long.MAX_VALUE;
@@ -90,9 +103,10 @@ public class LayoutTester
 					str.append("\n");
 				}
 				final String map = str.toString();//.replace(' ', '.');
-				testOut.print(map);
+				out.append(map);
 			}
 		}
+		return out.toString();
 	}
 
 	public static boolean continuityCheck(final List<LayoutNode> set)

@@ -234,6 +234,12 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	};
 
 	@Override
+	public List<String> getLayoutManagerNames()
+	{
+		return new ArrayList<String>(new TreeSet<String>(mgrs.keySet())); // G4
+	}
+
+	@Override
 	public LayoutManager getLayoutManager(final String named)
 	{
 		final Class<LayoutManager> mgr = mgrs.get(named.toUpperCase().trim());

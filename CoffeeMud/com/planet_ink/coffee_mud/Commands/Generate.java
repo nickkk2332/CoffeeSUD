@@ -163,6 +163,12 @@ public class Generate extends StdCommand
 			mob.tell(GenFill.fill(mob,fillFile,fillId,fillVars,wholeArea,keepText,fillSeed,save));
 			return false;
 		}
+		// G4: GENERATE PREVIEW type id ... [SEED=n] [dir]: built, listed and destroyed; GENERATE PREVIEW KEEP builds it
+		if((commands.size()>2)&&commands.get(1).equalsIgnoreCase("PREVIEW"))
+		{
+			mob.tell(GenPreview.preview(mob,this,new ArrayList<String>(commands.subList(2,commands.size())),metaFlags));
+			return false;
+		}
 		if(commands.size()<3)
 		{
 			mob.tell(L("Generate what? Try GENERATE [TYPE] [ID] (FROM [DATA_FILE_PATH]) ([VAR=VALUE]..) [DIRECTION], or GENERATE CHECK [DATA_FILE_PATH]"));
@@ -491,7 +497,10 @@ public class Generate extends StdCommand
 					if(R==null)
 						R=A.getFilledProperMap().nextElement();
 					if(unlinked)
-						mob.tell(L("'@x1' is built unlinked: LINK @x2 [DIRECTION] from the room it should join.",A.Name(),R.roomID()));
+					{
+						if(!GenPreview.isActive()) // G4
+							mob.tell(L("'@x1' is built unlinked: LINK @x2 [DIRECTION] from the room it should join.",A.Name(),R.roomID()));
+					}
 					else
 						createNewPlace(mob,mob.location(),R,direction,save);
 					CMLib.percolator().postProcess(definedIDs);

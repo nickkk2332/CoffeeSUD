@@ -2717,6 +2717,17 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   the floor's first (DOWN and UP back, or `levelsdir="UP"`); rooms get
   `ROOMTAG_LEVEL` (MAP floors too) and `ROOMTAG_STAIRS`, the area
   `AREA_LEVELS`.
+- G4 done. `GENLAYOUT layout size [dir] [SEED=n] [LEVELS=n]` draws a
+  layout with LayoutTester's drawer, now `drawText` (the name, size,
+  whether all is joined, a count of each node type, the map), seeded, a
+  floor each for LEVELS, and lists the layouts with none given.
+  `GENERATE PREVIEW type id [FROM file] [vars] [SEED=n] [dir]`
+  (`core/GenPreview`) builds an AREA unlinked, a ROOM in a free (or the
+  given) direction, or MOBs and ITEMs in the builder's room, NOSAVE,
+  lists it with the seed (rooms: ID, title, node type, exits, mobs with
+  levels, items; mobs: race, class, gear; items: level, value) and
+  destroys it; `GENERATE PREVIEW KEEP` runs the real GENERATE with the
+  same words and seed, an area unlinked unless a direction was given.
 
 #### 2k. Crafting, gathering and housing (21)
 
