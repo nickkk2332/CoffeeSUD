@@ -170,6 +170,7 @@ public class Prop_Discoverable extends Property implements VerbTaker
 			R.recoverRoomStats();
 		final String m = (msgText.length() > 0) ? msgText : CMLib.lang().L("You find <T-NAME>!");
 		mob.tell(mob, affected, null, m);
+		Discovery.found(mob, affected); // P11: a Prop_Discovery ON=FIND
 		if(!stays)
 		{
 			resetDown = reset;

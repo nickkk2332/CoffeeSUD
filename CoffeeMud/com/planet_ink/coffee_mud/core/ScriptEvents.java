@@ -2877,6 +2877,7 @@ public final class ScriptEvents
 	{
 		if((mob == null) || (R == null))
 			return;
+		Discovery.firstVisit(mob, R); // P11: DISCOVERYXP
 		if(newArea && (R.getArea() != null))
 		{
 			synchronized(firstEntered)

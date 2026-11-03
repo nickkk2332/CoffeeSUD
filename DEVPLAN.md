@@ -3202,6 +3202,16 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   character (WHO=, SCOPE=); RECIPE is CR4's `KnownRecipes.learn`. A
   script line that is a lone number would end the award's words, so
   LOAD= is the way for longer scripts.
+- P11 done. The new Prop_Discovery (rooms, exits, items, mobs) hands
+  its messages to `core/Discovery.fire`: ON (by default ENTER, OPEN, GET
+  or TALK for a room, exit, item or mob), MASK, ONCE (CHARACTER, PARTY:
+  any of the leader's party, PROFILE: an account tattoo), XP (n or n% of
+  the level's span, `postExperience` with DISCOVERY:key), MESSAGE,
+  JOURNAL (a quest journal entry, Q3) and the mark, TATTOO or one made
+  from the thing's ID, name and room. Prop_Discoverable's tryFind calls
+  `Discovery.found` (ON=FIND). DISCOVERYXP=[formula] (ini, world.ini)
+  is paid from ScriptEvents.discovered, the first visit of a room
+  (ST3's point), tagged DISCOVERY:ROOM. Only player characters gain.
 
 #### 2p. Presentation (18)
 
