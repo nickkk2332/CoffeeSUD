@@ -129,6 +129,12 @@ public class Practice extends StdCommand
 			return false;
 		if(!teacherAbility.canBePracticedBy(teacher,mob))
 			return false;
+		final String why=TeacherRules.gate(teacher,mob,myAbility.ID()); // P16
+		if(why!=null)
+		{
+			CMLib.commands().postSay(teacher,mob,why,true,false);
+			return false;
+		}
 		CMMsg msg=CMClass.getMsg(teacher,mob,null,CMMsg.MSG_SPEAK,null);
 		if(!mob.location().okMessage(mob,msg))
 			return false;
@@ -136,6 +142,7 @@ public class Practice extends StdCommand
 		if(!mob.location().okMessage(mob,msg))
 			return false;
 		teacherAbility.practice(teacher,mob);
+		TeacherRules.charge(teacher,mob);
 		mob.location().send(mob,msg);
 		return false;
 	}

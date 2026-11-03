@@ -3218,6 +3218,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   NEWCHARXP (KEEP, FLOOR), in the ini or world.ini. charcrStartFinish
   applies it after the other gifts (not to a ready-made character), by
   `LevelUps.up`, the character put in its start room for the level-ups.
+- P16 done. `core/TeacherRules` reads STUDENTMASK, REFUSEMSG,
+  SKILLMASK.<ID>, PRICE ("N per level" or N) and HIDDEN from a
+  MOBTeacher's parameters (else Prop_Trainer's or Prop_StatTrainer's
+  text); `withoutRules` strips them before the two parse the words of
+  skills and classes. `gate` (the masks, then whether they can pay) is
+  checked by MOBTeacher before TEACH ME / GAIN of a skill or expertise,
+  by PRACTICE after canBePracticedBy, and by TRAIN; `charge` takes the
+  price after the lesson went through. TRAIN with no trainer named takes
+  the first one who is not NOTEACH and does not refuse (else the first,
+  who then says why). TEACHLIST (TeachListCmd) lists what a teacher here
+  offers the student, with its price, and what it will not teach them.
 
 #### 2p. Presentation (18)
 

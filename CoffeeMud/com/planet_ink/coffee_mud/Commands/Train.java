@@ -335,8 +335,14 @@ public class Train extends StdCommand
 				final MOB possTeach=mob.location().fetchInhabitant(i);
 				if((possTeach!=null)&&(possTeach!=mob))
 				{
-					teacher=possTeach;
-					break;
+					if(teacher==null)
+						teacher=possTeach;
+					if((!possTeach.isAttributeSet(MOB.Attrib.NOTEACH))
+					&&(TeacherRules.refusal(possTeach,mob,null)==null)) // P16: skip who will not
+					{
+						teacher=possTeach;
+						break;
+					}
 				}
 			}
 		}
@@ -371,6 +377,12 @@ public class Train extends StdCommand
 		if(mob.isAttributeSet(MOB.Attrib.NOTEACH))
 		{
 			CMLib.commands().postCommandFail(mob,origCmds,L("You are refusing training at this time."));
+			return false;
+		}
+		final String why=TeacherRules.gate(teacher,mob,null); // P16
+		if(why!=null)
+		{
+			CMLib.commands().postSay(teacher,mob,why,true,false);
 			return false;
 		}
 		if(CMLib.flags().isSleeping(mob)||CMLib.flags().isSitting(mob))
@@ -554,6 +566,7 @@ public class Train extends StdCommand
 						finalCost=CMLib.utensils().createCostManager(cost);
 				}
 				finalCost.doSpend(mob);
+				TeacherRules.charge(msg.source(),mob); // P16: the teacher's PRICE
 				switch(trainType)
 				{
 				case MANA:

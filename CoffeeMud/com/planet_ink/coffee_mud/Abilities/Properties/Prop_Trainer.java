@@ -90,7 +90,7 @@ public class Prop_Trainer extends Prop_StatTrainer
 			CharClass currC=mob.charStats().getCurrentClass();
 			final ArrayList<CharClass> allowedClasses=new ArrayList<CharClass>(1);
 			final ArrayList<ExpertiseLibrary.ExpertiseDefinition> allowedExpertises=new ArrayList<ExpertiseLibrary.ExpertiseDefinition>(1);
-			final Vector<String> V=CMParms.parse(text());
+			final Vector<String> V=CMParms.parse(TeacherRules.withoutRules(text())); // P16
 			boolean alsoSkills=false;
 			boolean noExper=false;
 			String s=null;

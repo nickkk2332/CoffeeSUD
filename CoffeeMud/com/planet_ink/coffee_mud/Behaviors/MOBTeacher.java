@@ -229,14 +229,14 @@ public class MOBTeacher extends CombatAbilities
 
 		int pct=100;
 		List<String> V=null;
-		A=CMClass.getAbility(getParms());
+		A=CMClass.getAbility(TeacherRules.withoutRules(getParms())); // P16: the rules are not skills
 		if(A!=null)
 		{
 			addAbility(myMOB,A,pct,myAbles);
 			teachEverything=false;
 		}
 		else
-			V=CMParms.parse(getParms());
+			V=CMParms.parse(TeacherRules.withoutRules(getParms()));
 
 		if(V!=null)
 		{
@@ -510,8 +510,15 @@ public class MOBTeacher extends CombatAbilities
 					}
 					if(theExpertise!=null)
 					{
+						final String why=TeacherRules.gate(monster,student,null); // P16
+						if(why!=null)
+						{
+							CMLib.commands().postSay(monster,student,why,true,false);
+							return;
+						}
 						if(!CMLib.expertises().postTeach(monster,student,theExpertise))
 							return;
+						TeacherRules.charge(monster,student);
 					}
 					else
 					if((CMClass.findCharClass(s.trim())!=null))
@@ -534,6 +541,12 @@ public class MOBTeacher extends CombatAbilities
 					}
 					return;
 				}
+				final String why=TeacherRules.gate(monster,student,teachA.ID()); // P16: STUDENTMASK, SKILLMASK, PRICE
+				if(why!=null)
+				{
+					CMLib.commands().postSay(monster,student,why,true,false);
+					return;
+				}
 				if(giveABonus)
 				{
 					monster.baseCharStats().setStat(CharStats.STAT_INTELLIGENCE,25);
@@ -545,7 +558,8 @@ public class MOBTeacher extends CombatAbilities
 				final double max75 =CMath.div(CMProps.getIntVar(CMProps.Int.PRACMAXPCT), 100.0);
 				final int prof75=(int)Math.round(CMath.mul(CMLib.ableMapper().getMaxProficiency(student,true,teachA.ID()),max75));
 				teachA.setProficiency(prof75/2);
-				CMLib.expertises().postTeach(monster,student,teachA);
+				if(CMLib.expertises().postTeach(monster,student,teachA))
+					TeacherRules.charge(monster,student);
 				monster.baseCharStats().setStat(CharStats.STAT_INTELLIGENCE,19);
 				monster.baseCharStats().setStat(CharStats.STAT_WISDOM,19);
 				monster.recoverCharStats();
