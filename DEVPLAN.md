@@ -2701,6 +2701,22 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   nearest `v` in its column there. Straight streets get their run, and the
   layout's flags are filled in as for the others. Rooms also get
   `ROOMTAG_GLYPH` and `ROOMTAG_DOORS`. The size is the rooms drawn.
+- G16 done. Five layouts in `Libraries/layouts`, on a new
+  `GridLayoutBase` (its own cell map, links both ways, the entrance the
+  room furthest toward the way in, types by links, straight runs, then the
+  layout's flags): CAVE (a grid filled at random and smoothed, its largest
+  region grown to the size and walked from the way in, a quarter of the
+  other neighbours joined too), CLUMP (a square block, the entrance
+  outside, dead ends of one to three rooms), LINEAR (a road two thirds of
+  the size, spurs of one or two rooms), RING (a square loop, the entrance
+  outside, spokes in, or out on a small ring) and ISLANDS (blobs in a row,
+  each joined to the next by one bridge room; about the size). `layout=`
+  takes a comma list and picks one at random. `levels="n"` on an AREA or
+  a ROOM with a layout makes the layout n times, the size shared out, each
+  floor joined to the next by a stair at a room that is not a leaf nor
+  the floor's first (DOWN and UP back, or `levelsdir="UP"`); rooms get
+  `ROOMTAG_LEVEL` (MAP floors too) and `ROOMTAG_STAIRS`, the area
+  `AREA_LEVELS`.
 
 #### 2k. Crafting, gathering and housing (21)
 

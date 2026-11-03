@@ -46,6 +46,18 @@ public class MapLayout extends AbstractLayout
 	protected String								map		= "";
 	protected final Map<LayoutNode, Character>		glyphs	= new HashMap<LayoutNode, Character>();
 	protected final Map<LayoutNode, Set<Integer>>	doors	= new HashMap<LayoutNode, Set<Integer>>();
+	protected final Map<LayoutNode, Integer>		floorOf	= new HashMap<LayoutNode, Integer>();
+
+	/**
+	 * G16: the floor a node was drawn on.
+	 * @param n a node this made
+	 * @return 1 for the first floor drawn, 2 for the one above, and so on
+	 */
+	public int levelOf(final LayoutNode n)
+	{
+		final Integer f = floorOf.get(n);
+		return (f == null) ? 1 : (f.intValue() + 1);
+	}
 
 	/**
 	 * @param text the map, as drawn
@@ -174,6 +186,7 @@ public class MapLayout extends AbstractLayout
 	{
 		glyphs.clear();
 		doors.clear();
+		floorOf.clear();
 		final List<List<String>> floors = floors();
 		final Map<String, LayoutNode> nodes = new HashMap<String, LayoutNode>();
 		final List<LayoutNode> set = new Vector<LayoutNode>();
@@ -205,6 +218,7 @@ public class MapLayout extends AbstractLayout
 					}
 					nodes.put(fl + "," + x + "," + y, n);
 					glyphs.put(n, Character.valueOf(c));
+					floorOf.put(n, Integer.valueOf(fl));
 					doors.put(n, new HashSet<Integer>());
 					set.add(n);
 					if((c == '@') && (entry == null))

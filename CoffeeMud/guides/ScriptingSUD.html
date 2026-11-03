@@ -773,6 +773,9 @@ GENERATE).</p>
 <code>layout="MAP" mapfile="world/maps/abbey.txt"</code> and <code>&lt;GLYPH char="C" room="chapel"/&gt;</code>,
 and the forest-ruins theme dresses the rest; REGENERATE changes text and mobs but keeps the plan (AHELP
 GENERATE).</p>
+<p>Deeper places: <code>&lt;AREA layout="TREE" levels="4" size="60"&gt;</code> makes a goblin mine four floors deep
+with ladders down, its rooms knowing <code>$roomtag_level</code> and <code>$roomtag_stairs</code>; a 'Sky Citadel' uses
+<code>layout="RING" levels="2" levelsdir="UP"</code>, and a sea of reefs <code>ISLANDS</code> (AHELP GENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

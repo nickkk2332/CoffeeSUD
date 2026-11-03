@@ -1045,6 +1045,20 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			t.put("INDEX", "" + i);
 			t.put("X", "" + ((n.coord().length > 0) ? n.coord()[0] : 0));
 			t.put("Y", "" + ((n.coord().length > 1) ? n.coord()[1] : 0));
+			final Object levels=defined.get("LAYOUT_LEVELS"); // G16: the floor, and its stairs
+			if((levels instanceof Map)&&((Map<?,?>)levels).containsKey(n))
+				t.put("LEVEL", ((Map<?,?>)levels).get(n).toString());
+			else
+			if(defined.get("LAYOUT_MANAGER") instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)
+				t.put("LEVEL", "" + ((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)defined.get("LAYOUT_MANAGER")).levelOf(n));
+			else
+				t.put("LEVEL", "1");
+			final StringBuilder stairs=new StringBuilder();
+			if(n.links().containsKey(Integer.valueOf(Directions.UP)))
+				stairs.append("up");
+			if(n.links().containsKey(Integer.valueOf(Directions.DOWN)))
+				stairs.append((stairs.length()>0)?",":"").append("down");
+			t.put("STAIRS", stairs.toString());
 			if(defined.get("LAYOUT_MANAGER") instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout) // G8: the glyph it was drawn with, and its doors
 			{
 				t.put("GLYPH", "" + ((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)defined.get("LAYOUT_MANAGER")).glyphOf(n));
@@ -1993,6 +2007,110 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		}
 	}
 
+	/**
+	 * G16: a layout, or a comma list of layouts, one picked at random.
+	 * @param layoutType the layout attribute
+	 * @return the layout's name
+	 */
+	protected String pickLayout(final String layoutType)
+	{
+		if(layoutType.indexOf(',')<0)
+			return layoutType;
+		final List<String> L=CMParms.parseCommas(layoutType,true);
+		return L.isEmpty()?layoutType:L.get(CMLib.dice().roll(1,L.size(),-1)).trim();
+	}
+
+	/**
+	 * G16: levels="n" on an AREA or a ROOM with a layout: the layout made n
+	 * times, a floor each with its share of the size, each joined to the
+	 * next by a stair (DOWN to the next, UP back, or the other way with
+	 * levelsdir="UP") at rooms that are not leaves, nor a floor's first.
+	 * @param base the layout
+	 * @param piece the tag with the levels
+	 * @param defined the variables, where LAYOUT_LEVELS goes
+	 * @return the layout to lay out with
+	 * @throws CMException if the levels cannot be read
+	 */
+	protected LayoutManager leveled(final LayoutManager base, final XMLTag piece, final Map<String,Object> defined) throws CMException
+	{
+		final String levelsS=piece.getParmValue("LEVELS");
+		if((levelsS==null)||(levelsS.trim().length()==0)||(base instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout))
+			return base;
+		final int levels=CMath.s_parseIntExpression(strFilterNow(null,null,null,levelsS,piece,defined));
+		if(levels<=1)
+			return base;
+		final String way=piece.getParmValue("LEVELSDIR");
+		final int deeper=((way!=null)&&way.trim().toUpperCase().startsWith("U"))?Directions.UP:Directions.DOWN;
+		defined.put("AREA_LEVELS",""+levels);
+		final String name=base.name();
+		return new LayoutManager()
+		{
+			@Override
+			public String name()
+			{
+				return name;
+			}
+
+			@Override
+			public List<LayoutNode> generate(final int num, final int dir)
+			{
+				final List<LayoutNode> all=new ArrayList<LayoutNode>();
+				final Map<LayoutNode,Integer> levelOf=new HashMap<LayoutNode,Integer>();
+				List<LayoutNode> prev=null;
+				for(int l=0;l<levels;l++)
+				{
+					final LayoutManager L=(l==0)?base:getLayoutManager(name);
+					if(L==null)
+						break;
+					final int n=Math.max(2,(num/levels)+((l<(num%levels))?1:0));
+					final List<LayoutNode> floor=L.generate(n,dir);
+					if((floor==null)||(floor.size()==0))
+						break;
+					for(final LayoutNode node : floor)
+						levelOf.put(node,Integer.valueOf(l+1));
+					if(prev!=null)
+					{
+						final LayoutNode a=stairNode(prev,deeper);
+						final LayoutNode b=stairNode(floor,Directions.getOpDirectionCode(deeper));
+						if((a!=null)&&(b!=null))
+						{
+							a.links().put(Integer.valueOf(deeper),b);
+							b.links().put(Integer.valueOf(Directions.getOpDirectionCode(deeper)),a);
+						}
+					}
+					all.addAll(floor);
+					prev=floor;
+				}
+				defined.put("LAYOUT_LEVELS",levelOf);
+				return all;
+			}
+		};
+	}
+
+	/**
+	 * G16: where a stair goes on a floor: a room that is not a leaf, nor the
+	 * floor's first, with the way free; any with it free if there is none.
+	 * @param floor the floor's nodes, its first first
+	 * @param dir the stair's way
+	 * @return the node, or null
+	 */
+	protected LayoutNode stairNode(final List<LayoutNode> floor, final int dir)
+	{
+		final List<LayoutNode> good=new ArrayList<LayoutNode>();
+		final List<LayoutNode> any=new ArrayList<LayoutNode>();
+		for(int i=0;i<floor.size();i++)
+		{
+			final LayoutNode n=floor.get(i);
+			if(n.links().containsKey(Integer.valueOf(dir)))
+				continue;
+			any.add(n);
+			if((i>0)&&(n.type()!=AreaGenerationLibrary.LayoutTypes.leaf))
+				good.add(n);
+		}
+		final List<LayoutNode> from=good.isEmpty()?any:good;
+		return from.isEmpty()?null:from.get(CMLib.dice().roll(1,from.size(),-1));
+	}
+
 	// vars created: LINK_DIRECTION, AREA_CLASS, AREA_NAME, AREA_DESCRIPTION, AREA_LAYOUT, AREA_SIZE
 	@Override
 	public boolean fillInArea(final XMLTag piece, final Map<String,Object> defined, final Area A, final int direction) throws CMException
@@ -2000,7 +2118,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		final String layoutType = findStringNow("layout",piece,defined);
 		if((layoutType==null)||(layoutType.trim().length()==0))
 			throw new CMException("Unable to build area without defined layout");
-		final LayoutManager layoutManager = getLayoutManager(layoutType);
+		final LayoutManager layoutManager = getLayoutManager(pickLayout(layoutType)); // G16: a comma list, one at random
 		if(layoutManager == null)
 			throw new CMException("Undefined Layout "+layoutType);
 		defined.put("AREA_LAYOUT",layoutManager.name());
@@ -2043,7 +2161,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 
 		try
 		{
-			layOutRooms(A, layoutManager, CMath.s_int(size), direction, piece, defined);
+			layOutRooms(A, leveled(layoutManager, piece, defined), CMath.s_int(size), direction, piece, defined); // G16: levels="n"
 			if(layoutManager instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)
 				mapDoors((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)layoutManager,defined); // G8: + on the map, a door
 			applyEnsures(A, piece, defined); // G7: the AREA's ENSURE tags, on the rooms laid out and filled
@@ -2193,7 +2311,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 				final String layoutType=valPiece.parms().get("LAYOUT");
 				if((layoutType!=null)&&(layoutType.length()>0))
 				{
-					final LayoutManager layoutManager = getLayoutManager(layoutType);
+					final LayoutManager layoutManager = getLayoutManager(pickLayout(layoutType)); // G16
 					if(layoutManager == null)
 						throw new CMException("Undefined room Layout "+layoutType);
 					rDefined.put("ROOM_LAYOUT",layoutManager.name());
@@ -2201,7 +2319,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 					if((!CMath.isInteger(size))||(CMath.s_int(size)<=0))
 						throw new CMException("Unable to build room layout of size "+size);
 					defined.put("ROOM_SIZE",size);
-					R=layOutRooms(A, layoutManager, CMath.s_int(size), directions, valPiece, rDefined);
+					R=layOutRooms(A, leveled(layoutManager, valPiece, rDefined), CMath.s_int(size), directions, valPiece, rDefined); // G16
 				}
 				else
 				{
