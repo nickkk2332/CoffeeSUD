@@ -4401,6 +4401,170 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 				}
 			};
 			break;
+		case RANKUP: // P25: NUM, the rank reached on LADDER (world/ranks.ini)
+			A=new Achievement()
+			{
+				private int				num			= -1;
+				private String			ladder		= "";
+
+				@Override
+				public Event getEvent()
+				{
+					return eventType;
+				}
+
+				@Override
+				public Agent getAgent()
+				{
+					return agent;
+				}
+
+				@Override
+				public boolean canBeSeenBy(final MOB mob)
+				{
+					return ((seenMask==null)||(CMLib.masking().maskCheck(seenMask, mob, true)));
+				}
+
+				@Override
+				public boolean canApplyTo(final Agent agent)
+				{
+					return true;
+				}
+
+				@Override
+				public String getTattoo()
+				{
+					return tattoo;
+				}
+
+				@Override
+				public int getDuration()
+				{
+					return duration;
+				}
+
+				@Override
+				public boolean isFlag(final AchievementFlag flag)
+				{
+					return flags.contains(flag);
+				}
+
+				@Override
+				public int getTargetCount()
+				{
+					return num;
+				}
+
+				@Override
+				public boolean isTargetFloor()
+				{
+					return true;
+				}
+
+				@Override
+				public String getDisplayStr()
+				{
+					return displayStr;
+				}
+
+				@Override
+				public Award[] getRewards()
+				{
+					return rewardList;
+				}
+
+				@Override
+				public String getRawParmVal(final String str)
+				{
+					return CMParms.getParmStr(params,str,"");
+				}
+
+				@Override
+				public Tracker getTracker(final String oldVal)
+				{
+					final Achievement me=this;
+					return new Tracker()
+					{
+						private volatile int count = CMath.s_int(oldVal);
+
+						@Override
+						public Achievement getAchievement()
+						{
+							return me;
+						}
+
+						@Override
+						public boolean isAchieved(final Tattooable tracked)
+						{
+							return (num>=0) && (getCount(tracked) >= num);
+						}
+
+						@Override
+						public int getCount(final Tattooable tracked)
+						{
+							if(tracked instanceof MOB)
+								return Ranks.rank((MOB)tracked, ladder);
+							else
+								return count;
+						}
+
+						@Override
+						public String getCountParms(final Tattooable tracked)
+						{
+							return Integer.toString(getCount(tracked));
+						}
+
+						@Override
+						public boolean testBump(final MOB mob, final Tattooable tracked, final int bumpNum, final Object... parms)
+						{
+							if(mob == null)
+								return false;
+							if(((playerMask==null)||(CMLib.masking().maskCheck(playerMask, mob, true)))
+							&&(parms.length>0)&&ladder.equalsIgnoreCase(String.valueOf(parms[0])))
+							{
+								count+=bumpNum;
+								if(count<0)
+									count++;
+								return true;
+							}
+							return false;
+						}
+
+						@Override
+						public Tracker copyOf()
+						{
+							try
+							{
+								return (Tracker)this.clone();
+							}
+							catch(final Exception e)
+							{
+								return this;
+							}
+						}
+					};
+				}
+
+				@Override
+				public boolean isSavableTracker()
+				{
+					return agent == Agent.CLAN;
+				}
+
+				@Override
+				public String parseParms(final String parms)
+				{
+					final String numStr=CMParms.getParmStr(parms, "NUM", "");
+					if(!CMath.isInteger(numStr))
+						return "Error: Missing or invalid NUM parameter: "+numStr+" for "+tattoo+"!";
+					num=CMath.s_int(numStr);
+					ladder=CMStrings.deEscape(CMParms.getParmStr(parms, "LADDER", "")).toUpperCase().trim().replace(' ','_');
+					if(ladder.length()==0)
+						return "Error: Missing LADDER parameter for "+tattoo+"!";
+					return "";
+				}
+			};
+			break;
 		case RETIRE:
 		case REMORT:
 		case LEVELSGAINED:

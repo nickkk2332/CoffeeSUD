@@ -87,6 +87,7 @@ public interface AchievementLibrary extends CMLibrary
 		ACHIEVER("ACHIEVEMENTLIST"),
 		LEVELSGAINED("NUM"),
 		CLASSLEVELSGAINED("NUM","CLASS"),
+		RANKUP("NUM","LADDER"), // P25
 		TIMEPLAYED("SECONDS"),
 		JUSTBE(),
 		DEATHS("NUM","ZAPPERMASK"),
@@ -152,6 +153,7 @@ public interface AchievementLibrary extends CMLibrary
 				case QUESTOR: displayName=CMLib.lang().L("Completing Quests"); break;
 				case ACHIEVER: displayName=CMLib.lang().L("Completing Achievements"); break;
 				case LEVELSGAINED: displayName=CMLib.lang().L("Gaining net Levels"); break;
+				case RANKUP: displayName=CMLib.lang().L("Rising in rank"); break; // P25
 				case CLASSLEVELSGAINED: displayName=CMLib.lang().L("Gaining net Class Levels"); break;
 				case TIMEPLAYED: displayName=CMLib.lang().L("Time Played"); break;
 				case JUSTBE: displayName=CMLib.lang().L("Character State"); break;

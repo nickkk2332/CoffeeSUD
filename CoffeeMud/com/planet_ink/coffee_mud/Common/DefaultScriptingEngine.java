@@ -16330,9 +16330,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final MOB M=Threat.opponent((MOB)N,mask);
 			return (M==null)?"":M.Name();
 		}
-		case "RANK": // C15: RANK(who): its Prop_MobRank's rank, else NORMAL
+		case "RANK": // C15: RANK(who): its Prop_MobRank's rank, else NORMAL; P25: RANK(who LADDER): its rank on that ladder, 0 for none
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
+			final String key=varify(ctx,CMParms.getPastBitClean(parms,0)).trim();
+			if(key.length()>0)
+				return (W instanceof MOB)?(""+Ranks.rank((MOB)W,key)):"0";
 			return (W instanceof MOB)?MobRanks.rankOf((MOB)W):"NORMAL";
 		}
 		case "CHECK": // N29: CHECK(who STAT|skill difficulty [modifier]): d20 plus the stat's or skill's bonus, against the difficulty
@@ -16981,6 +16984,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
 			if(said!=null)
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
+		case "MPRANK": // P25: MPRANK $n LADDER +1|-1|=3|CHECK: $n's rank on a ladder of world/ranks.ini
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String key=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final String how=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(W instanceof MOB))||(key.length()==0))
+			{
+				logError(ctx,cmd,"Syntax",cmd+" $n LADDER +1|-1|=N|CHECK: "+line);
+				return null;
+			}
+			if(Ranks.change((MOB)W,key,(how.length()==0)?"+1":how)<0)
+				logError(ctx,cmd,"RunTime","no ladder "+key+" in world/ranks.ini: "+line);
 			return null;
 		}
 		case "MPRESPEC": // P23: MPRESPEC $n [SKILLS|EXPERTISES|STATS|CLASS|ALL] [name|ALL]: undo purchases, refund them

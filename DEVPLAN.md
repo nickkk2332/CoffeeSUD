@@ -3294,6 +3294,15 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   resources/skills/skillhints.ini (ID= or CLASS.ID=, HINT= and SHOW=HINT),
   in place of fields in allqualifylist and class records, which their
   editors write back without unknown fields.
+- P25 done. `core/Ranks` reads world/ranks.ini (re-read when it
+  changes): ladders with NAME, RANKS, FACTION and RANKn.REQUIRES,
+  REWARDS, EFFECTS, TITLE, NEXT. A rank is the tattoo KEY_n; `set` swaps
+  the tattoo, the rank's effects (non-uninvokable, so saved) and title,
+  gives each rank's REWARDS once (a RANKREWARD_ tattoo) and bumps the new
+  RANKUP achievement event (NUM, LADDER; CLASSLEVELSGAINED's tracker,
+  counting the rank). `check` climbs by REQUIRES, on level-ups (after the
+  perk note), RANKS and MPRANK CHECK. MPRANK (cmd //152), RANK() (func
+  //225), RANKS (RanksCmd).
 
 #### 2p. Presentation (18)
 
