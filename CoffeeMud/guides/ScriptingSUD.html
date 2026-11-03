@@ -821,6 +821,10 @@ SPEED=25 MAXLEVEL=40)</code>, so smithing there is a quarter faster and recipes 
 recipe with <code>STATION=forge</code> is refused elsewhere, and a travel anvil tagged <code>anvil</code> serves
 <code>STATION=anvil</code> with no bonus. A smith's hammer as <code>(held:wear(1):1:TAG(hammer):)</code> in
 components.txt loses one condition per craft and breaks at none (AHELP PROP_WORKSTATION).</p>
+<p>Furnishings: a crafted brazier with <code>Prop_Furnishing(ROOMEFFECT=Prop_RoomLit COMFORT=2 ACTS=fire)</code>
+lights the cellar while it stands there and serves Cooking as a fire; a trophy rack with <code>COMFORT=3</code>
+counts on the floor of the owned house, and an inn script can test <code>if comfort(HERE) &gt;= 5</code> to give
+a better rest (AHELP PROP_FURNISHING).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -2841,6 +2841,16 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   (abilities, items), so Workstations knows stations by the interface
   `Workstations.Station`, and CR1's MPGRANT now docks a vessel through
   `dockNearest` by name (its `instanceof StdBoardable` never held).
+- CR20 done. `Prop_Furnishing` on an item: ROOMEFFECT=ID(PARMS) and
+  ROOMBEHAVIOR=ID(PARMS) (read to the closing parenthesis, spaces and
+  all) go on the room, not saved with it, while the item is placed there
+  (not gettable, as decorated) or lies on the floor of an owned room, and
+  come off when it leaves or is destroyed (checked on its stats and the
+  room's messages); COMFORT= sums into `Prop_Furnishing.comfortOf(room)`,
+  read by the new script function `COMFORT(place)`; ACTS= makes it a
+  `Workstations.Station` of those names, and a fire for crafts that need
+  one (`getRequiredFire` takes `Workstations.itemFor(room, "fire")`).
+  Masks do not read comfort; a script can.
 
 #### 2l. Factions and organisations (18)
 

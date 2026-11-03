@@ -123,6 +123,34 @@ public final class Workstations
 	}
 
 	/**
+	 * CR20: the item lying in a room that serves as a station of that name
+	 * (a furnishing's ACTS, a workstation's TAG, or a tag), as a fire.
+	 * @param R a room
+	 * @param tag the station's name
+	 * @return the item, or null
+	 */
+	public static Item itemFor(final Room R, final String tag)
+	{
+		if((R == null) || (tag == null) || (tag.trim().length() == 0))
+			return null;
+		for(int i = 0; i < R.numItems(); i++)
+		{
+			final Item I = R.getItem(i);
+			if((I == null) || (I.container() != null))
+				continue;
+			for(final Enumeration<Ability> a = I.effects(); a.hasMoreElements();)
+			{
+				final Ability A = a.nextElement();
+				if((A instanceof Station) && ((Station)A).isA(tag))
+					return I;
+			}
+			if((I instanceof Taggable) && ((Taggable)I).hasTag(tag.trim()))
+				return I;
+		}
+		return null;
+	}
+
+	/**
 	 * @param mob a crafter
 	 * @param skill their skill
 	 * @return the stations in their room that help it

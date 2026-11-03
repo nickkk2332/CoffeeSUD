@@ -16114,6 +16114,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final LandTitle LT=titleOf(propertyPlace(ctx,parms.trim()));
 			return (LT==null)?"":(LT.landPropertyID()+" "+LT.getPrice());
 		}
+		case "COMFORT": // CR20: COMFORT(room|HERE|$n): the comfort of the furnishings in it (Prop_Furnishing)
+		{
+			final Physical P=propertyPlace(ctx,parms.trim());
+			final Room R=(P instanceof Room)?(Room)P:CMLib.map().roomLocation(P);
+			return ""+com.planet_ink.coffee_mud.Abilities.Properties.Prop_Furnishing.comfortOf(R);
+		}
 		case "ISHOLIDAY": // W6: ISHOLIDAY(name): that holiday (a quest by that name) is on
 			return Holidays.on(CMParms.combine(unquotedWords(varify(ctx,parms)),0))?"true":"false";
 		case "HOLIDAY": // W6: HOLIDAY(): the holidays on now, by name

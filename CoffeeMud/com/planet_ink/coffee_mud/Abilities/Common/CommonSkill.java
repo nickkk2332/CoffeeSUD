@@ -525,6 +525,8 @@ public class CommonSkill extends StdAbility
 				break;
 			}
 		}
+		if(fire==null)
+			fire=Workstations.itemFor(mob.location(),"fire"); // CR20: a furnishing that ACTS as a fire, or one tagged fire
 		if((fire==null)||(!mob.location().isContent(fire)))
 		{
 			commonTelL(mob,"A fire will need to be built first.");
