@@ -2678,6 +2678,17 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   template's choice on the room itself: title and description unless
   KEEPTEXT or GENLOCK, stats, mobs, items, effects and behaviours; class
   and exits stay. A seeded run; post-processing after each room.
+- G7 done. An AREA's `<ENSURE>` tags run after layout and fill. With
+  `name=` the mobs and items whose names hold the words are counted where
+  they may be (`where="any|reachable|reachable-without:keyname=KEY"`, the
+  last a walk from the entrance not through a door locked to that key),
+  one in the wrong place moved to a right one, then the `fallback=` ITEM
+  or MOB tag built and put there (`in="mob|container|room"`) until `min=`,
+  and `max=` removes extras, the misplaced first; with `var=` the counter
+  is read and set. `<ENSURE room="id" count="n" replace="id">` makes sure
+  that many rooms came from that ROOM template (the percolator now notes
+  each room's template ids): the deepest rooms, of the REPLACE template if
+  given, are emptied and filled from it (G9's fillRoom), their exits kept.
 
 #### 2k. Crafting, gathering and housing (21)
 

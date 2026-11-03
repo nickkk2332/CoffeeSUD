@@ -716,6 +716,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		if(R == null)
 			throw new CMException("Unable to build room on classID '"+classID+"', Data: "+CMParms.toKeyValueSlashListString(piece.parms())+":"+CMStrings.limit(piece.value(),100));
 		addDefinition("ROOM_CLASS",classID,defined);
+		noteTemplate(R,piece,defined); // G7
 		final List<String> ignoreStats=new XArrayList<String>(new String[]{"CLASS","DISPLAY","DESCRIPTION"});
 		fillOutRequiredStatCodeSafe(R, ignoreStats, "ROOM_", "TITLE", "DISPLAY", piece, defined);
 		fillOutRequiredStatCodeSafe(R, ignoreStats, "ROOM_", "DESCRIPTION", "DESCRIPTION", piece, defined);
@@ -1507,6 +1508,400 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		return magicRoom;
 	}
 
+	/** G7: the room template ids each built room came from (its tag's, and its containers'), for ENSURE room= */
+	protected static final String ROOM_TEMPLATES="____G7_ROOM_TEMPLATES";
+
+	/**
+	 * G7: notes the room template ids a room was built from.
+	 * @param R the room
+	 * @param piece its ROOM tag
+	 * @param defined the variables, where the area keeps the record
+	 */
+	@SuppressWarnings("unchecked")
+	protected void noteTemplate(final Room R, final XMLTag piece, final Map<String,Object> defined)
+	{
+		final Object o=defined.get(ROOM_TEMPLATES);
+		if(!(o instanceof Map))
+			return;
+		final Set<String> ids=new HashSet<String>();
+		for(XMLTag t=piece;t!=null;t=t.parent())
+		{
+			final String id=t.getParmValue("ID");
+			if((id!=null)&&(id.trim().length()>0))
+				ids.add(id.trim().toUpperCase());
+		}
+		((Map<Room,Set<String>>)o).put(R,ids);
+	}
+
+	/**
+	 * G7: the rooms of an area reachable from its entrance, by its exits,
+	 * not through a door locked to the key named.
+	 * @param A the area
+	 * @param keyName the key, or null for any door
+	 * @return the rooms, the entrance first
+	 */
+	protected List<Room> reachableRooms(final Area A, final String keyName)
+	{
+		Room entry=A.getRoom(A.Name()+"#0");
+		if(entry==null)
+		{
+			final Enumeration<Room> r=A.getProperMap();
+			entry=r.hasMoreElements()?r.nextElement():null;
+		}
+		final List<Room> found=new ArrayList<Room>();
+		if(entry==null)
+			return found;
+		final String key=(keyName==null)?null:keyName.replace('`','\'').trim();
+		final Set<Room> seen=new HashSet<Room>();
+		final LinkedList<Room> todo=new LinkedList<Room>();
+		seen.add(entry);
+		todo.add(entry);
+		while(todo.size()>0)
+		{
+			final Room R=todo.removeFirst();
+			found.add(R);
+			for(int d=0;d<Directions.NUM_DIRECTIONS();d++)
+			{
+				final Room N=R.rawDoors()[d];
+				final Exit E=R.getRawExit(d);
+				if((N==null)||(N.getArea()!=A)||seen.contains(N))
+					continue;
+				if((key!=null)&&(E!=null)&&E.hasALock()&&(E.keyName()!=null)&&E.keyName().replace('`','\'').trim().equalsIgnoreCase(key))
+					continue;
+				seen.add(N);
+				todo.add(N);
+			}
+		}
+		return found;
+	}
+
+	/**
+	 * G7: the mobs and items in an area whose names hold the words given:
+	 * mobs, items in rooms, in containers and carried.
+	 * @param A the area
+	 * @param name the words
+	 * @return what matches
+	 */
+	protected List<Physical> namedIn(final Area A, final String name)
+	{
+		final String n=name.toLowerCase().replace('`','\'');
+		final List<Physical> found=new ArrayList<Physical>();
+		for(final Enumeration<Room> r=A.getProperMap();r.hasMoreElements();)
+		{
+			final Room R=r.nextElement();
+			for(final Enumeration<Item> i=R.items();i.hasMoreElements();)
+			{
+				final Item I=i.nextElement();
+				if((I!=null)&&I.Name().toLowerCase().replace('`','\'').contains(n))
+					found.add(I);
+			}
+			for(final Enumeration<MOB> m=R.inhabitants();m.hasMoreElements();)
+			{
+				final MOB M=m.nextElement();
+				if(M==null)
+					continue;
+				if(M.Name().toLowerCase().replace('`','\'').contains(n))
+					found.add(M);
+				for(final Enumeration<Item> i=M.items();i.hasMoreElements();)
+				{
+					final Item I=i.nextElement();
+					if((I!=null)&&I.Name().toLowerCase().replace('`','\'').contains(n))
+						found.add(I);
+				}
+			}
+		}
+		return found;
+	}
+
+	/**
+	 * G7: puts a mob or item in one of the rooms: an item in the room, on a
+	 * mob or in a container there, as IN allows (a room if nothing else is
+	 * there).
+	 * @param P the mob or item
+	 * @param rooms where it may go
+	 * @param in ROOM, MOB, CONTAINER
+	 * @return false if there is nowhere
+	 */
+	protected boolean placeIn(final Physical P, final List<Room> rooms, final Set<String> in)
+	{
+		if(rooms.size()==0)
+			return false;
+		if(P instanceof MOB)
+		{
+			final MOB M=(MOB)P;
+			final Room R=rooms.get(CMLib.dice().roll(1,rooms.size(),-1));
+			if(M.location()!=null)
+				R.bringMobHere(M,false);
+			else
+				M.bringToLife(R,true);
+			return true;
+		}
+		if(!(P instanceof Item))
+			return false;
+		final Item I=(Item)P;
+		final List<Object> spots=new ArrayList<Object>();
+		for(final Room R : rooms)
+		{
+			if(in.contains("ROOM"))
+				spots.add(R);
+			if(in.contains("MOB"))
+			{
+				for(final Enumeration<MOB> m=R.inhabitants();m.hasMoreElements();)
+				{
+					final MOB M=m.nextElement();
+					if((M!=null)&&M.isMonster())
+						spots.add(M);
+				}
+			}
+			if(in.contains("CONTAINER"))
+			{
+				for(final Enumeration<Item> i=R.items();i.hasMoreElements();)
+				{
+					final Item C=i.nextElement();
+					if((C instanceof Container)&&(C!=I)&&(C.container()==null)&&(!(C instanceof DoorKey)))
+						spots.add(C);
+				}
+			}
+		}
+		if(spots.size()==0)
+			spots.addAll(rooms);
+		final Object spot=spots.get(CMLib.dice().roll(1,spots.size(),-1));
+		I.removeFromOwnerContainer();
+		I.setContainer(null);
+		if(spot instanceof MOB)
+			((MOB)spot).addItem(I);
+		else
+		if(spot instanceof Container)
+		{
+			final Room R=CMLib.map().roomLocation((Container)spot);
+			if(R==null)
+				return false;
+			R.addItem(I);
+			I.setContainer((Container)spot);
+		}
+		else
+			((Room)spot).addItem(I);
+		return true;
+	}
+
+	/**
+	 * G7: an AREA's ENSURE tags, after the rooms are laid out and filled.
+	 * @param A the area
+	 * @param piece the AREA tag
+	 * @param defined the variables
+	 * @throws CMException if a guarantee cannot be met
+	 */
+	protected void applyEnsures(final Area A, final XMLTag piece, final Map<String,Object> defined) throws CMException
+	{
+		for(final XMLTag E : new XArrayList<XMLTag>(piece.contents()))
+		{
+			if(!E.tag().equalsIgnoreCase("ENSURE"))
+				continue;
+			try
+			{
+				applyEnsure(A,E,defined);
+			}
+			catch(final PostProcessException pe)
+			{
+				throw new CMException("ENSURE: "+pe.getMessage(),pe);
+			}
+		}
+	}
+
+	protected void applyEnsure(final Area A, final XMLTag E, final Map<String,Object> defined) throws CMException, PostProcessException
+	{
+		final String roomId=E.getParmValue("ROOM");
+		if((roomId!=null)&&(roomId.trim().length()>0))
+		{
+			ensureRoom(A,E,roomId.trim(),defined);
+			return;
+		}
+		final String var=E.getParmValue("VAR");
+		final String name=E.getParmValue("NAME");
+		final String minS=E.getParmValue("MIN");
+		final String maxS=E.getParmValue("MAX");
+		final int min=(minS==null)?0:CMath.s_parseIntExpression(strFilterNow(null,null,null,minS,E,defined));
+		final int max=(maxS==null)?-1:CMath.s_parseIntExpression(strFilterNow(null,null,null,maxS,E,defined));
+		String where=E.getParmValue("WHERE");
+		where=(where==null)?"any":strFilterNow(null,null,null,CMLib.xml().restoreAngleBrackets(where),E,defined).trim();
+		final List<Room> rooms;
+		if(where.toLowerCase().startsWith("reachable-without:"))
+		{
+			String k=where.substring(where.indexOf(':')+1).trim();
+			if(k.toLowerCase().startsWith("keyname="))
+				k=k.substring(8).trim();
+			rooms=reachableRooms(A,k);
+		}
+		else
+		if(where.equalsIgnoreCase("reachable"))
+			rooms=reachableRooms(A,null);
+		else
+		{
+			rooms=new ArrayList<Room>();
+			for(final Enumeration<Room> r=A.getProperMap();r.hasMoreElements();)
+				rooms.add(r.nextElement());
+		}
+		final Set<String> in=new HashSet<String>();
+		for(final String w : ((E.getParmValue("IN")==null)?"ROOM":E.getParmValue("IN").toUpperCase()).split("[|,\\s]+"))
+		{
+			if(w.trim().length()>0)
+				in.add(w.trim());
+		}
+		final Set<Room> roomSet=new HashSet<Room>(rooms);
+		final List<Physical> valid=new ArrayList<Physical>();
+		final List<Physical> misplaced=new ArrayList<Physical>();
+		int count;
+		if((name!=null)&&(name.trim().length()>0))
+		{
+			for(final Physical P : namedIn(A,strFilterNow(null,null,null,name,E,defined)))
+			{
+				if(roomSet.contains(CMLib.map().roomLocation(P)))
+					valid.add(P);
+				else
+					misplaced.add(P);
+			}
+			count=valid.size();
+		}
+		else
+			count=((var==null)||(defined.get(var.toUpperCase().trim())==null))?0:CMath.s_int(defined.get(var.toUpperCase().trim()).toString());
+		// what is there but in the wrong place goes to a right one
+		while((count<min)&&(misplaced.size()>0))
+		{
+			final Physical P=misplaced.remove(0);
+			if(placeIn(P,rooms,in))
+			{
+				valid.add(P);
+				count++;
+			}
+		}
+		// then the fallback is built for the rest
+		final String fbId=E.getParmValue("FALLBACK");
+		final Object fbO=(fbId==null)?null:defined.get(fbId.toUpperCase().trim());
+		int tries=0;
+		while((count<min)&&(fbO instanceof XMLTag)&&(tries++<(min*4)+4))
+		{
+			final XMLTag fb=(XMLTag)fbO;
+			final List<Physical> made=new ArrayList<Physical>();
+			if(fb.tag().equalsIgnoreCase("MOB"))
+				made.addAll(findMobs(fb,defined));
+			else
+				made.addAll(findItems(fb,defined));
+			if(made.size()==0)
+				break;
+			for(final Physical P : made)
+			{
+				if(!placeIn(P,rooms,in))
+				{
+					P.destroy();
+					throw new CMException("ENSURE "+((var!=null)?var:name)+": nowhere "+where+" in '"+A.Name()+"' to put "+P.Name());
+				}
+				if(P instanceof MOB)
+					((MOB)P).setSavable(true);
+				else
+				if(P instanceof Item)
+				{
+					((Item)P).setSavable(true);
+					((Item)P).setExpirationDate(0);
+				}
+				valid.add(P);
+				count++;
+			}
+		}
+		if(count<min)
+			Log.errOut("MUDPercolator","ENSURE "+((var!=null)?var:name)+" in '"+A.Name()+"': "+count+" of "+min+((fbO instanceof XMLTag)?"":", and no FALLBACK tag"));
+		// and there are no more than MAX: the misplaced go first
+		if((max>=0)&&(name!=null))
+		{
+			final List<Physical> all=new ArrayList<Physical>(misplaced);
+			all.addAll(valid);
+			while(all.size()>max)
+			{
+				final Physical P=all.remove(0);
+				valid.remove(P);
+				P.destroy();
+			}
+			count=Math.min(count,valid.size());
+		}
+		if(var!=null)
+			defined.put(var.toUpperCase().trim(),""+count);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void ensureRoom(final Area A, final XMLTag E, final String roomId, final Map<String,Object> defined) throws CMException, PostProcessException
+	{
+		final String countS=E.getParmValue("COUNT");
+		final int count=(countS==null)?1:CMath.s_parseIntExpression(strFilterNow(null,null,null,countS,E,defined));
+		final Object rpO=defined.get(roomId.toUpperCase());
+		if((!(rpO instanceof XMLTag))||(!((XMLTag)rpO).tag().equalsIgnoreCase("ROOM")))
+			throw new CMException("ENSURE room="+roomId+": there is no such ROOM tag");
+		final XMLTag rp=(XMLTag)rpO;
+		Object tO=defined.get(ROOM_TEMPLATES);
+		if(!(tO instanceof Map))
+		{
+			tO=new HashMap<Room,Set<String>>();
+			defined.put(ROOM_TEMPLATES,tO);
+		}
+		final Map<Room,Set<String>> templates=(Map<Room,Set<String>>)tO;
+		final String want=roomId.toUpperCase();
+		final String replace=(E.getParmValue("REPLACE")==null)?null:E.getParmValue("REPLACE").trim().toUpperCase();
+		int have=0;
+		final List<Room> others=new ArrayList<Room>();
+		for(final Enumeration<Room> r=A.getProperMap();r.hasMoreElements();)
+		{
+			final Room R=r.nextElement();
+			if(templates.containsKey(R)&&templates.get(R).contains(want))
+				have++;
+			else
+			if((!R.roomID().equalsIgnoreCase(A.Name()+"#0"))
+			&&((replace==null)||(templates.containsKey(R)&&templates.get(R).contains(replace))))
+				others.add(R);
+		}
+		if(have>=count)
+			return;
+		// the deepest rooms first
+		final Map<String,Object> scratch=new Hashtable<String,Object>();
+		final Map<Room,Map<String,String>> depth=GenFill.depthTags(A,scratch);
+		Collections.sort(others,new Comparator<Room>()
+		{
+			@Override
+			public int compare(final Room a, final Room b)
+			{
+				final int da=depth.containsKey(a)?CMath.s_int(depth.get(a).get("DEPTH")):0;
+				final int db=depth.containsKey(b)?CMath.s_int(depth.get(b).get("DEPTH")):0;
+				return Integer.compare(db,da);
+			}
+		});
+		for(int i=0;(i<others.size())&&(have<count);i++)
+		{
+			final Room R=others.get(i);
+			final Map<String,Object> rd=new Hashtable<String,Object>(defined);
+			rd.putAll(scratch);
+			GenFill.nodeTags(R,A,rd);
+			if(depth.containsKey(R))
+			{
+				for(final Map.Entry<String,String> e : depth.get(R).entrySet())
+					rd.put("ROOMTAG_"+e.getKey(),e.getValue());
+			}
+			final List<XMLTag> choices=getAllChoices(null,null,null,"ROOM",rp,rd,true);
+			final XMLTag valPiece=((choices==null)||(choices.size()==0))?rp:choices.get(CMLib.dice().roll(1,choices.size(),-1));
+			for(final MOB M : new XArrayList<MOB>(R.inhabitants()))
+			{
+				if((M!=null)&&M.isMonster())
+					M.destroy();
+			}
+			for(final Item I : new XArrayList<Item>(R.items()))
+			{
+				if(I!=null)
+					I.destroy();
+			}
+			fillRoomUnseeded(R,valPiece,rd,false);
+			noteTemplate(R,valPiece,defined);
+			have++;
+		}
+		if(have<count)
+			Log.errOut("MUDPercolator","ENSURE room="+roomId+" in '"+A.Name()+"': "+have+" of "+count);
+	}
+
 	// vars created: LINK_DIRECTION, AREA_CLASS, AREA_NAME, AREA_DESCRIPTION, AREA_LAYOUT, AREA_SIZE
 	@Override
 	public boolean fillInArea(final XMLTag piece, final Map<String,Object> defined, final Area A, final int direction) throws CMException
@@ -1550,10 +1945,13 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		}
 
 		CMLib.map().addArea(A); // necessary for proper naming.
+		if(!(defined.get(ROOM_TEMPLATES) instanceof Map))
+			defined.put(ROOM_TEMPLATES, new HashMap<Room,Set<String>>()); // G7: for ENSURE room=
 
 		try
 		{
 			layOutRooms(A, layoutManager, CMath.s_int(size), direction, piece, defined);
+			applyEnsures(A, piece, defined); // G7: the AREA's ENSURE tags, on the rooms laid out and filled
 			CMLib.map().delArea(A); // we added it for id assignment, now we are done.
 		}
 		catch(final Exception t)

@@ -763,6 +763,11 @@ its GENSOURCE; its entrance hall and the minotaur's throne room are GENLOCK and 
 <code>GENERATE FILL forest_rooms FROM randareas/forest.xml AREA level_range=5</code> writes each room's text and
 stocks it, a leaf a glade and a straight path a path, from the rooms' real exits; the rooms the story
 needs are written by hand and marked GENLOCK, so a second FILL leaves their text (AHELP GENERATE).</p>
+<p>Guaranteed placements: the prison theme's AREA has <code>&lt;ENSURE name="jail key" min="1" max="1"
+fallback="jail_key" where="reachable-without:keyname=$areaname jail" in="mob|container"/&gt;</code>, so there is
+always exactly one jail key, on a guard or in the warden's desk, never inside a locked cell; and
+<code>&lt;ENSURE room="warden_office" count="1"/&gt;</code> makes sure the warden has an office (AHELP
+GENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
