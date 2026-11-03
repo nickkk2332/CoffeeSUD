@@ -1,4 +1,4 @@
-// P6: world/origins.ini: origins a character may take (MASK, UNLOCK), the ORIGIN creation step after the class (then P7's KIT step), and what an origin gives.
+// P6: world/origins.ini: origins a character may take (MASK, UNLOCK), the ORIGIN creation step after the class (then the next step, the factions when nothing is queued), and what an origin gives.
 FIXFILE = "p6-origins";
 function s(x) { return "" + x; }
 function has(t, p) { return s(t).indexOf(p) >= 0; }
@@ -34,7 +34,7 @@ function step(name) {
 lset("mob", hero);
 try {
 	if (OF.isFile()) OF["delete"]();
-	check("no file", OR.choices(hero).size() == 0 && step("charcrOriginStart") == null && s(lget("state")) == "CHARCR_KITSTART", s(lget("state")));
+	check("no file", OR.choices(hero).size() == 0 && step("charcrOriginStart") == null && s(lget("state")) == "CHARCR_FACTIONNEXT", s(lget("state")));
 	write(OF, ["# test origins",
 		"[FIXORPHAN]",
 		"NAME=Fixp6 Temple Orphan",
@@ -74,7 +74,7 @@ try {
 	check("not one", s(lget("state")) == "CHARCR_ORIGINSTART" && has(o2, "is not one of the origins"), o2);
 	lset("lastInput", "1");
 	step("charcrOriginPicked");
-	check("chosen", s(lget("state")) == "CHARCR_KITSTART" && hero.findTattoo("ORIGIN_FIXORPHAN") != null && s(OR.chosen(hero).id) == "FIXORPHAN", s(lget("state")));
+	check("chosen", s(lget("state")) == "CHARCR_FACTIONNEXT" && hero.findTattoo("ORIGIN_FIXORPHAN") != null && s(OR.chosen(hero).id) == "FIXORPHAN", s(lget("state")));
 	// what it gives
 	var f0 = hero.fetchFaction(fid); if (f0 == java.lang.Integer.MAX_VALUE) f0 = 0;
 	said(); var O = OR.apply(hero); var o3 = said();

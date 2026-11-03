@@ -3103,6 +3103,24 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   NameStyles; without LOCK=GENDER, CHARCR_TEMPLATEGENDER asks. Then the
   start room, the age and the end of creation, skipping the rest. The
   ini also lists CHARCREATIONSCRIPTS' ORIGIN code (P6).
+- P12 done but for REVIEW (P27). `core/CreationSteps` reads
+  world/creation.ini (again when it changes): STEPS, step modes
+  (RANDOM, SKIP, ASK), [NAME] questions with PROMPT, INTRO, SHOWIF,
+  MODE and CHOICE lines (NAME, HELP, MASK, EFFECTS, FACTION, START,
+  SCRIPT). The engine's six steps keep their order (logged when STEPS
+  says otherwise); each one's end now calls `afterStep`, which queues
+  the ORIGIN, KIT and question steps STEPS puts after it, then goes on
+  (new states CHARCR_STATINIT, CHARCR_CLASSINIT and CHARCR_STARTFINISH
+  for the steps that were direct calls). A left-out RACE, GENDER, STATS
+  or CLASS is picked as its DISABLE flag picks; FACTIONS=RANDOM takes a
+  random choice, SKIP the default; DEITY is asked only when listed.
+  CHARCR_QUESTIONSTART and CHARCR_QUESTIONPICKED ask a question (one
+  open answer is taken, MODE=RANDOM picks); the answer is the tattoo
+  CHARCR_[NAME]_[CHOICE]. The origin, the kits and the answers' gifts
+  (achievement rewards, faction added, start room, script in the start
+  room) now come at the start of charcrStartFinish, once every step is
+  done, not in charcrFactionDone (P6, P7), and not for a ready-made
+  character (P8).
 
 #### 2p. Presentation (18)
 

@@ -53,7 +53,7 @@ try {
 	lset("lastInput", "fixp7 sword");
 	step("charcrKitPicked");
 	step("charcrKitStart");
-	check("chosen", s(lget("kits")) == "[fixp7sword]" && s(lget("state")) == "CHARCR_FACTIONNEXT" && lget("index") == -1, s(lget("kits")) + " " + s(lget("state")));
+	check("chosen", s(lget("kits")) == "[fixp7sword]" && s(lget("state")) == "CHARCR_FACTIONNEXT", s(lget("kits")) + " " + s(lget("state")));
 	// the dwarf has only one: taken, with no question
 	lset("mob", D); lset("kitGroup", java.lang.Integer.valueOf(0)); lget("kits").clear();
 	var r3 = step("charcrKitStart");

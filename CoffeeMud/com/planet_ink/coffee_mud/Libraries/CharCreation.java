@@ -149,6 +149,11 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_ORIGINPICKED,
 		CHARCR_KITSTART,
 		CHARCR_KITPICKED,
+		CHARCR_QUESTIONSTART,
+		CHARCR_QUESTIONPICKED,
+		CHARCR_STATINIT,
+		CHARCR_CLASSINIT,
+		CHARCR_STARTFINISH,
 		CHARCR_FACTIONNEXT,
 		CHARCR_FACTIONPICK,
 		CHARCR_FACTIONDONE,
@@ -184,6 +189,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		public ThinnerPlayer player = null;
 		public List<String> kits = new ArrayList<String>(); // P7: starting kits chosen
 		public int			 kitGroup  = 0;
+		public List<String> queue = new ArrayList<String>(); // P12: the steps before the next of the engine's
+		public LoginState	 resume	   = null;
+		public String		 question  = null;
+		public boolean		 fromTemplate = false;
 
 		@Override
 		public String login()
@@ -1058,6 +1067,16 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrKitStart(loginObj, session);
 		case CHARCR_KITPICKED:
 			return charcrKitPicked(loginObj, session);
+		case CHARCR_QUESTIONSTART:
+			return charcrQuestionStart(loginObj, session);
+		case CHARCR_QUESTIONPICKED:
+			return charcrQuestionPicked(loginObj, session);
+		case CHARCR_STATINIT:
+			return charcrStatInit(loginObj, session, 0);
+		case CHARCR_CLASSINIT:
+			return charcrClassInit(loginObj, session);
+		case CHARCR_STARTFINISH:
+			return charcrStartFinish(loginObj, session);
 		case CHARCR_TEMPLATESTART:
 			return charcrTemplateStart(loginObj, session);
 		case CHARCR_TEMPLATEPICKED:
@@ -2958,9 +2977,109 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		session.setMob(loginObj.mob);
 		executeScript(mob,charCrScripts.get("THEME"));
+		loginObj.kits.clear();
+		loginObj.kitGroup=0;
+		loginObj.fromTemplate=false;
 		// P8: the ready-made characters first, when there are any
-		loginObj.state=(PlayerTemplates.offered().size()>0)?LoginState.CHARCR_TEMPLATESTART:LoginState.CHARCR_RACESTART;
+		if(PlayerTemplates.offered().size()>0)
+		{
+			loginObj.state=LoginState.CHARCR_TEMPLATESTART;
+			return null;
+		}
+		return afterStep(loginObj, LoginState.CHARCR_RACESTART, "START");
+	}
+
+	/**
+	 * P12: goes on to the steps creation.ini puts after these steps of the
+	 * engine's, then to the engine's next.
+	 * @param loginObj the login
+	 * @param next the engine's next step
+	 * @param steps the engine's steps just done (or START)
+	 * @return null, to go on
+	 */
+	protected LoginResult afterStep(final LoginSessionImpl loginObj, final LoginState next, final String... steps)
+	{
+		loginObj.queue.clear();
+		for(final String s : steps)
+			loginObj.queue.addAll(CreationSteps.after(s));
+		loginObj.resume=next;
+		return nextQueued(loginObj);
+	}
+
+	/**
+	 * P12: the next step creation.ini put here, or the engine's next.
+	 * @param loginObj the login
+	 * @return null, to go on
+	 */
+	protected LoginResult nextQueued(final LoginSessionImpl loginObj)
+	{
+		if(loginObj.queue.size()==0)
+		{
+			loginObj.state=(loginObj.resume==null)?LoginState.CHARCR_FACTIONNEXT:loginObj.resume;
+			return null;
+		}
+		final String s=loginObj.queue.remove(0);
+		if(s.equals("ORIGIN"))
+			loginObj.state=LoginState.CHARCR_ORIGINSTART;
+		else
+		if(s.equals("KIT"))
+		{
+			loginObj.kitGroup=0;
+			loginObj.state=LoginState.CHARCR_KITSTART;
+		}
+		else
+		{
+			loginObj.question=s;
+			loginObj.state=LoginState.CHARCR_QUESTIONSTART;
+		}
 		return null;
+	}
+
+	/**
+	 * P12: a question of the world's own, from creation.ini.
+	 */
+	protected LoginResult charcrQuestionStart(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final CreationSteps.Question Q=CreationSteps.question(loginObj.question);
+		if((Q==null)||(CreationSteps.mode(Q.name).equals("SKIP"))||(!CreationSteps.shown(mob,Q)))
+			return nextQueued(loginObj);
+		final List<CreationSteps.Choice> choices=CreationSteps.choices(mob,Q);
+		if(choices.size()==0)
+			return nextQueued(loginObj);
+		if((choices.size()==1)||CreationSteps.mode(Q.name).equals("RANDOM"))
+		{
+			CreationSteps.choose(mob,Q,CreationSteps.random(choices));
+			return nextQueued(loginObj);
+		}
+		final String intro=CreationSteps.intro(Q);
+		if(intro.trim().length()>0)
+			session.println(null,null,null,"\n\r"+intro);
+		session.println(null,null,null,CreationSteps.menu(Q,choices));
+		session.promptPrint("^N"+((Q.prompt.length()>0)?Q.prompt:L("Your answer:"))+" ");
+		loginObj.state=LoginState.CHARCR_QUESTIONPICKED;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	protected LoginResult charcrQuestionPicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final CreationSteps.Question Q=CreationSteps.question(loginObj.question);
+		if(Q==null)
+			return nextQueued(loginObj);
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
+		final CreationSteps.Choice C=CreationSteps.find(CreationSteps.choices(mob,Q), input);
+		if(C==null)
+		{
+			if((input.length()>0)&&(!input.equals("?")))
+				session.println(L("'@x1' is not one of the answers.",input));
+			loginObj.state=LoginState.CHARCR_QUESTIONSTART;
+			return null;
+		}
+		CreationSteps.choose(mob,Q,C);
+		session.println(L("^N@x1^N",C.name));
+		JSProgression.creationStep(mob,Q.name.toLowerCase()); // JS23's onCreationStep
+		return nextQueued(loginObj);
 	}
 
 	/**
@@ -2971,10 +3090,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		final List<MOB> list=PlayerTemplates.offered();
 		if(list.size()==0)
-		{
-			loginObj.state=LoginState.CHARCR_RACESTART;
-			return null;
-		}
+			return afterStep(loginObj, LoginState.CHARCR_RACESTART, "START");
 		final boolean only=PlayerTemplates.mode().equals("ONLY");
 		session.println(null,null,null,PlayerTemplates.menu(list, only));
 		session.promptPrint(only?L("^NYour character: "):L("^NYour character (0 to make your own): "));
@@ -2988,11 +3104,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
 		final boolean only=PlayerTemplates.mode().equals("ONLY");
 		if((!only)&&(input.equals("0")||input.equalsIgnoreCase("own")||input.toLowerCase().startsWith("make")))
-		{
-			loginObj.state=LoginState.CHARCR_RACESTART;
-			return null;
-		}
+			return afterStep(loginObj, LoginState.CHARCR_RACESTART, "START");
 		final MOB T=PlayerTemplates.find(PlayerTemplates.offered(), input);
+		loginObj.fromTemplate=(T!=null);
 		if(T==null)
 		{
 			if((input.length()>0)&&(!input.equals("?")))
@@ -3112,7 +3226,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		MOB mob=loginObj.mob;
 		session.setMob(loginObj.mob);
-		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRRACE))
+		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRRACE)||CreationSteps.auto("RACE")) // P12
 		{
 			final List<Race> qualRaces = raceQualifies(mob, loginObj.theme);
 			Race newRace;
@@ -3254,8 +3368,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 		executeScript(mob,charCrScripts.get("RACE"));
 		JSProgression.creationStep(mob,"race"); // JS23
-		loginObj.state=LoginState.CHARCR_GENDERSTART;
-		return null;
+		return afterStep(loginObj, LoginState.CHARCR_GENDERSTART, "RACE"); // P12
 	}
 
 	protected LoginResult charcrGenderStart(final LoginSessionImpl loginObj, final Session session)
@@ -3268,7 +3381,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			&&(!gset[0].toString().trim().endsWith("-")))
 				choices.add(Character.valueOf(Character.toUpperCase(gset[0].toString().charAt(0))));
 		}
-		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRGENDER))
+		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRGENDER)||CreationSteps.auto("GENDER")) // P12
 		{
 			final MOB mob = loginObj.mob;
 			char gender = 'N';
@@ -3306,7 +3419,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		final PlayerAccount acct=loginObj.acct;
 
-		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRGENDER))
+		if((!CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRGENDER))&&(!CreationSteps.auto("GENDER")))
 		{
 			final String gender=loginObj.lastInput.toUpperCase().trim();
 			boolean found=false;
@@ -3335,7 +3448,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 		if((CMProps.getBoolVar(CMProps.Bool.ACCOUNTEXPIRATION))&&(mob.playerStats()!=null)&&(acct==null))
 			mob.playerStats().setAccountExpiration(System.currentTimeMillis()+(1000l*60l*60l*24l*(CMProps.getIntVar(CMProps.Int.TRIALDAYS))));
-		return charcrStatInit(loginObj, session, 0);
+		return afterStep(loginObj, LoginState.CHARCR_STATINIT, "GENDER"); // P12
 	}
 
 	protected LoginResult charcrStatInit(final LoginSessionImpl loginObj, final Session session, final int bonusPoints)
@@ -3364,7 +3477,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			loginObj.state=LoginState.CHARCR_STATDONE;
 		}
 		else
-		if(CMSecurity.isDisabled(DisFlag.CHARCRSTAT))
+		if(CMSecurity.isDisabled(DisFlag.CHARCRSTAT)||CreationSteps.auto("STATS")) // P12
 		{
 			if(startStat < 0)
 				mob.baseCharStats().setAllBaseValues(CMProps.getIntVar(CMProps.Int.BASEMINSTAT));
@@ -3714,7 +3827,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		executeScript(mob,charCrScripts.get("STATS"));
 		JSProgression.creationStep(mob,"stats"); // JS23
-		return charcrClassInit(loginObj, session);
+		return afterStep(loginObj, LoginState.CHARCR_CLASSINIT, "STATS"); // P12
 	}
 
 	protected LoginResult charcrClassInit(final LoginSessionImpl loginObj, final Session session)
@@ -3798,7 +3911,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return null;
 		}
 		else
-		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRCLASS)) // and qualClassesV.size() > 1
+		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CHARCRCLASS)||CreationSteps.auto("CLASS")) // and qualClassesV.size() > 1; P12
 		{
 			final CharClass newClass = qualClassesV.get(CMLib.dice().roll(1, qualClassesV.size(), -1));
 			mob.baseCharStats().setCurrentClass(newClass);
@@ -3925,10 +4038,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		JSProgression.creationStep(mob,"class"); // JS23
 
 		loginObj.index=-1;
-		loginObj.kits.clear();
-		loginObj.kitGroup=0;
-		loginObj.state=LoginState.CHARCR_ORIGINSTART; // P6, P7: then the kits, then the factions
-		return null;
+		return afterStep(loginObj, LoginState.CHARCR_FACTIONNEXT, "CLASS"); // P6, P7, P12: the origin, the kits... then the factions
 	}
 
 	/**
@@ -3940,9 +4050,11 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final MOB mob=loginObj.mob;
 		final List<Origins.Origin> choices=Origins.choices(mob);
 		if(choices.size()==0)
+			return nextQueued(loginObj);
+		if(CreationSteps.mode("ORIGIN").equals("RANDOM"))
 		{
-			loginObj.state=LoginState.CHARCR_KITSTART;
-			return null;
+			Origins.choose(mob, choices.get(CMLib.dice().roll(1, choices.size(), -1)));
+			return nextQueued(loginObj);
 		}
 		session.println(null,null,null,Origins.menu(choices));
 		session.promptPrint(L("^NYour origin: "));
@@ -3965,8 +4077,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		Origins.choose(mob, O);
 		session.println(L("^NYour origin: ^H@x1^N.",O.name()));
 		JSProgression.creationStep(mob,"origin"); // JS23's onCreationStep
-		loginObj.state=LoginState.CHARCR_KITSTART;
-		return null;
+		return nextQueued(loginObj);
 	}
 
 	/**
@@ -3980,6 +4091,12 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		while(loginObj.kitGroup<groups.size())
 		{
 			final List<StartingKits.StartKit> kits=StartingKits.inGroup(mob, groups.get(loginObj.kitGroup));
+			if((kits.size()>1)&&CreationSteps.mode("KIT").equals("RANDOM"))
+			{
+				loginObj.kits.add(kits.get(CMLib.dice().roll(1, kits.size(), -1)).name);
+				loginObj.kitGroup++;
+				continue;
+			}
 			if(kits.size()>1)
 			{
 				session.println(null,null,null,StartingKits.menu(kits));
@@ -3991,9 +4108,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				loginObj.kits.add(kits.get(0).name);
 			loginObj.kitGroup++;
 		}
-		loginObj.index=-1;
-		loginObj.state=LoginState.CHARCR_FACTIONNEXT;
-		return null;
+		return nextQueued(loginObj);
 	}
 
 	protected LoginResult charcrKitPicked(final LoginSessionImpl loginObj, final Session session)
@@ -4043,6 +4158,12 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		}
 		if(mine.size()==0)
 		{
+			return null;
+		}
+		if(CreationSteps.auto("FACTIONS")) // P12: not asked
+		{
+			if(CreationSteps.mode("FACTIONS").equals("RANDOM"))
+				mob.addFaction(F.factionID(),mine.get(CMLib.dice().roll(1,mine.size(),-1)).intValue());
 			return null;
 		}
 
@@ -4126,9 +4247,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.baseCharStats().getCurrentClass().startCharacter(mob,false,false);
 		CMLib.utensils().outfit(mob,mob.baseCharStats().getCurrentClass().outfit(mob));
 		mob.setStartRoom(getDefaultStartRoom(mob));
-		Origins.apply(mob); // P6: its start room, items, abilities, standing, tattoos, money and script
-		executeScript(mob,charCrScripts.get("ORIGIN"));
-		StartingKits.apply(mob, loginObj.kits); // P7: every kit that fits, and those chosen
 		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.ALL_AGEING))
 		{
 			final Race R=mob.baseCharStats().getMyRace();
@@ -4165,13 +4283,11 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 		if((this.requiresDeityMask != null)
 		&&(CMLib.masking().maskCheck(this.requiresDeityMask, mob, true))
+		&&(!CreationSteps.auto("DEITY"))
 		&&(this.deityQualifies(mob, loginObj.theme).size()>0))
-		{
-			loginObj.state=LoginState.CHARCR_DEITYSTART;
-			return null;
-		}
+			return afterStep(loginObj, LoginState.CHARCR_DEITYSTART, "FACTIONS"); // P12
 		else
-			return charcrStartFinish(loginObj, session);
+			return afterStep(loginObj, LoginState.CHARCR_STARTFINISH, "FACTIONS", "DEITY"); // P12
 	}
 
 	protected List<Deity> deityQualifies(final MOB mob, final int theme)
@@ -4308,11 +4424,20 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.resetToMaxState();
 		JSProgression.creationStep(mob,"deity"); // JS23
 
-		return charcrStartFinish(loginObj, session);
+		return afterStep(loginObj, LoginState.CHARCR_STARTFINISH, "DEITY"); // P12
 	}
 
 	protected LoginResult charcrStartFinish(final LoginSessionImpl loginObj, final Session session)
 	{
+		if(!loginObj.fromTemplate)
+		{
+			// P6, P7, P12: what the choices give, once every step is done
+			final MOB mob=loginObj.mob;
+			Origins.apply(mob); // its start room, items, abilities, standing, tattoos, money and script
+			executeScript(mob,charCrScripts.get("ORIGIN"));
+			StartingKits.apply(mob, loginObj.kits); // every kit that fits, and those chosen
+			CreationSteps.applyAnswers(mob); // the answers to creation.ini's questions
+		}
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"newchardone.txt",null,CMFile.FLAG_LOGERRORS).text();
 		try
 		{
