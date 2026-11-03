@@ -3161,6 +3161,18 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   CHARCR_TRAITSPICKED toggle a trait or flaw, DONE refused while the
   points are overspent); trait rewards come at the end of creation.
   HASPERK($n perk) and MPPERK $n [-]perk in scripts.
+- P10 done. `core/WorldRules`: PROFILEMAX, NEWCHARS (ALWAYS,
+  FIRSTONLY, CHEAT, MASK on the profile's character in the world or
+  played last, NEWCHARMASK, NEWCHARMESSAGE), PARTYMAX and PARTYROLES,
+  in coffeemud.ini or world.ini (WorldSettings now lets world.ini set
+  them, and P8's CREATIONTEMPLATES and P18's SHOWLOCKED). The first
+  character is always made. newCharactersAllowed refuses by them; NEW
+  warns of the roles no character of the profile fills, PARTY of those
+  the party lacks. PARTY ADD checks PARTYMAX, and MAXCONNSPERACCOUNT
+  before bringing a character in, so the refusal is said to the player
+  (it went to the new member's own session). The new CHEAT command
+  (ON/OFF) is kept in the save header ("cheat") and shown in SAVES and
+  SAVES INFO.
 
 #### 2p. Presentation (18)
 

@@ -207,6 +207,8 @@ public final class SaveTools
 			str.append(L("  JS stores : @x1\n\r", "" + stores.contents().size()));
 		if("true".equalsIgnoreCase(h.getProperty("dev", "")))
 			str.append(L("  Dev       : made in a developer's game (DEV=1)\n\r"));
+		if("true".equalsIgnoreCase(h.getProperty("cheat", "")))
+			str.append(L("  Cheats    : on (CHEAT ON)\n\r")); // P10
 		final String sum = h.getProperty("worldsum", "");
 		str.append(L("  World     : @x1@x2\n\r", (sum.length() == 0) ? "?" : sum,
 			((sum.length() > 0) && (!sum.equals(WorldFiles.bootChecksum()))) ? L(" (older world)") : L(" (this world)")));

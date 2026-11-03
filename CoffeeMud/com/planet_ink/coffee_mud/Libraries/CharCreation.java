@@ -2061,6 +2061,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 					loginObj.state=LoginState.CHARCR_START;
 					return null;
 				}
+				final String roles=WorldRules.roleWarning(WorldRules.profileCharacters(acct)); // P10: PARTYROLES
+				if(roles.length()>0)
+					session.println(roles);
 				session.promptPrint(L("Create a new character called '@x1' (y/N)?",login));
 				loginObj.state=LoginState.ACCTMENU_CONFIRMCOMMAND;
 				return LoginResult.INPUT_REQUIRED;
@@ -4946,6 +4949,12 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		case OK:
 			if(acct!=null)
 			{
+				final String rule=WorldRules.newCharRefusal(acct, null); // P10: PROFILEMAX, NEWCHARS
+				if(rule!=null)
+				{
+					session.println(rule);
+					return false;
+				}
 				int maxPlayersOnAccount = CMProps.getIntVar(CMProps.Int.COMMONACCOUNTSYSTEM);
 				if(maxPlayersOnAccount < Integer.MAX_VALUE)
 					maxPlayersOnAccount += acct.getBonusCharsLimit();

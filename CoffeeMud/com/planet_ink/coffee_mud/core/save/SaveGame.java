@@ -389,6 +389,7 @@ public final class SaveGame
 		if(gameTime > 0)
 			GameTime.set(gameTime);
 		Party.setMeetWhereLeft("true".equalsIgnoreCase(header.getProperty("partymeet")));
+		WorldRules.setCheats("true".equalsIgnoreCase(header.getProperty("cheat"))); // P10
 		Party.setTurns("ALL".equalsIgnoreCase(header.getProperty("partyturns")) ? Party.Turns.ALL : Party.Turns.LEADER);
 		Party.setOrder(header.getProperty("partyorder", ""));
 		Party.setOnTheirOwn(header.getProperty("partyalone", ""));
@@ -976,6 +977,8 @@ public final class SaveGame
 		header.setProperty("version", Integer.toString(VERSION));
 		if(isDevMode())
 			header.setProperty("dev", "true");
+		if(WorldRules.cheatsOn())
+			header.setProperty("cheat", "true"); // P10
 		header.setProperty("character", mob.Name());
 		header.setProperty("level", Integer.toString(mob.phyStats().level()));
 		header.setProperty("class", mob.charStats().getCurrentClass().name(mob.charStats().getCurrentClassLevel()));

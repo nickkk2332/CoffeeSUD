@@ -197,6 +197,8 @@ public final class SaveSlots
 			str.append(", saved ").append(new java.text.SimpleDateFormat("MMM d HH:mm").format(new Date(slot.savedAt())));
 		if("true".equalsIgnoreCase(h.getProperty("dev", "")))
 			str.append(" [dev]");
+		if("true".equalsIgnoreCase(h.getProperty("cheat", "")))
+			str.append(" [cheat]"); // P10
 		return str.toString();
 	}
 

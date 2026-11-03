@@ -180,6 +180,9 @@ public class PartyCmd extends StdCommand
 		}
 		if(resting.length() > 0)
 			str.append(L("^HResting:^N\n\r")).append(resting);
+		final String roles = WorldRules.roleWarning(party); // P10: PARTYROLES
+		if(roles.length() > 0)
+			str.append(roles).append("\n\r");
 		mob.tell(str.toString());
 	}
 
@@ -212,6 +215,12 @@ public class PartyCmd extends StdCommand
 				mob.tell(L("@x1 is already in your party.", M.Name()));
 				return;
 			}
+			final String full = WorldRules.partyRefusal(profile, Party.inOrder(leader).size(), 0, false); // P10
+			if(full != null)
+			{
+				mob.tell(full);
+				return;
+			}
 			if((M.location() != mob.location()) && (!meet))
 				mob.location().bringMobHere(M, true);
 		}
@@ -221,6 +230,12 @@ public class PartyCmd extends StdCommand
 			if(found == null)
 			{
 				mob.tell(L("You have no character called '@x1'.", name));
+				return;
+			}
+			final String full = WorldRules.partyRefusal(profile, Party.inOrder(leader).size(), WorldRules.inWorld(profile), true); // P10
+			if(full != null)
+			{
+				mob.tell(full);
 				return;
 			}
 			M = Party.bringIn(mob, found, meet ? null : mob.location());
