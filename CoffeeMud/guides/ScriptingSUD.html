@@ -858,6 +858,9 @@ and an item made of one keeps its name too (AHELP WORLDMATERIALS).</p>
 description, smell, effects and nourishment, as <code>moonpetal&#9;HERBS&#9;silvery moonpetal&#9;40</code>;
 <code>ResourceOverride(moonpetal(HERBS moonpetal))</code> makes it grow in a glade, and a recipe asks for
 <code>herbs(moonpetal)</code> (AHELP RESOURCEVARIANTS).</p>
+<p>Weighted finds: in a data gathering skill's ITEMXML, an item's <code>&lt;FREQ&gt;60&lt;/FREQ&gt;</code>,
+<code>&lt;MASK&gt;+WEATHER STORMY&lt;/MASK&gt;</code> and <code>&lt;YIELD&gt;1+(@x2/40)&lt;/YIELD&gt;</code> weight it,
+limit it and set how many; NOTHINGFREQ weights finding nothing (AHELP GENGATHERSKILL).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

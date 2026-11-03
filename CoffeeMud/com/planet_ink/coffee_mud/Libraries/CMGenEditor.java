@@ -10117,6 +10117,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatInt(mob,me,++showNumber, showFlag,L("Min. Ticks"), "MINDUR");
 			promptStatInt(mob,me,++showNumber, showFlag,L("Base Ticks"), "BASEDUR");
 			promptStatInt(mob,me,++showNumber, showFlag,L("Found @ Tick"), "FINDTICK");
+			promptStatInt(mob,me,++showNumber, showFlag,L("Weight of finding nothing"), "NOTHINGFREQ"); // CR9
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Is Cosmetic Only"),"ISCOSMETIC");
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can sit"),"CANSIT");
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can bundle"),"CANBUNDLE");

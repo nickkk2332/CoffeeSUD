@@ -2934,6 +2934,18 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   keeps its own name. WEIGHT_PER_UNIT is in the format but not used: a
   raw resource's weight is its amount everywhere in crafting. CR2's
   material description moved into `adjustResourceName` as well.
+- CR9 done. A data gathering skill's ITEMXML entries take FREQ, MASK
+  and YIELD as tags inside their ITEM (kept when the editor rebuilds
+  the list); the skill gets NOTHINGFREQ (in its editor). A find is
+  picked by weight among those whose MASK the gatherer or their room
+  passes, so mob keys test the gatherer and room keys the room.
+  YIELDFORMULA and YIELD go through `CMath.s_parseIntExpression` with
+  @x1 level, @x2 proficiency, @x3 the expertise bonus (abilityCode) and
+  @x4 the percent of the room's yield left (`GatheringSkill.roomYieldLeft`,
+  which reads the spam counter without using it); @x2 is the gatherer's
+  own proficiency, since the running effect's copy has none. The math
+  parser works left to right, so the help writes 1+(@x2/40). With no
+  options the choice is even, as before.
 
 #### 2l. Factions and organisations (18)
 

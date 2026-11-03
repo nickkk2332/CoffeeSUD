@@ -74,6 +74,27 @@ public class GatheringSkill extends CommonSkill
 		super();
 	}
 
+	/**
+	 * CR9: how much of a room's yield is left, as a percent (100 when it is
+	 * fresh), without using any.
+	 * @param R the room
+	 * @return the percent left
+	 */
+	protected int roomYieldLeft(final Room R)
+	{
+		if(R==null)
+			return 0;
+		synchronized(roomSpamCounter)
+		{
+			final Quad<Room,Integer,short[],Long> rec = roomSpamCounter.get(R);
+			if((rec==null)
+			||(GameTime.now() > rec.fourth.longValue())
+			||(rec.second.intValue() != R.myResource()))
+				return 100;
+			return (int)Math.max(0, Math.round(100.0 - (100.0 * this.getRoomSpamDropRate() * rec.third[0])));
+		}
+	}
+
 	protected double getRoomSpamDropRate()
 	{
 		return 0.20;

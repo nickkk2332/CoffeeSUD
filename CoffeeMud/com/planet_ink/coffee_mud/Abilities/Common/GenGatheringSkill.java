@@ -58,6 +58,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 	}
 
 	private static final Map<String,List<Item>> items = new Hashtable<String,List<Item>>();
+	private static final Map<String,Map<Item,String[]>> finds = new Hashtable<String,Map<Item,String[]>>(); // CR9: FREQ, MASK, YIELD by find
 	private static final Map<String,Object[]> vars=new Hashtable<String,Object[]>();
 	private static final int	V_NAME			= 0;	// S
 	private static final int	V_TRIG			= 1;	// S[]
@@ -79,7 +80,8 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 	private static final int	V_MSG4			= 17;	// S
 	private static final int	V_IXML			= 18;	// S
 	private static final int	V_COSM			= 19;	// B
-	private static final int	NUM_VS			= 20;	// S
+	private static final int	V_NFRQ			= 20;	// I CR9
+	private static final int	NUM_VS			= 21;	// S
 
 	private static final Object[] makeEmpty()
 	{
@@ -104,6 +106,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 		O[V_MSG4]="<S-NAME> manage(s) to gather @x1 @x2.";
 		O[V_IXML]="";
 		O[V_COSM]=Boolean.valueOf(false);
+		O[V_NFRQ]=Integer.valueOf(0);
 		return O;
 	}
 
@@ -153,6 +156,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 	}
 
 	protected Item		found			= null;
+	protected String	findYield		= ""; // CR9: the find's own YIELD
 	protected String	foundShortName	= "";
 
 	public GenGatheringSkill()
@@ -216,6 +220,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 										 "MINDUR",//19I
 										 "BASEDUR",//20I
 										 "FINDTICK",//21I
+										 "NOTHINGFREQ",//22I CR9
 										};
 
 	@Override
@@ -295,6 +300,8 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 			return ((Integer)V(ID, V_BDUR)).toString();
 		case 21:
 			return ((Integer)V(ID, V_FDUR)).toString();
+		case 22:
+			return ((Integer)V(ID, V_NFRQ)).toString();
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenGatheringSkill";
@@ -421,6 +428,9 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 			if(CMath.s_int(val)<=((Integer)V(ID, V_MDUR)).intValue())
 				SV(ID, V_FDUR, Integer.valueOf(CMath.s_int(val)));
 			break;
+		case 22:
+			SV(ID, V_NFRQ, Integer.valueOf(Math.max(0, CMath.s_int(val))));
+			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenGatheringSkill"))
 				parseAllXML(val);
@@ -524,8 +534,10 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 				if((found!=null)&&(!aborted)&&(mob.location()!=null))
 				{
 					final CMMsg msg=CMClass.getMsg(mob,found,this,getCompletedActivityMessageType(),null);
-					final String yieldFormula = (String)V(ID, V_YILD);
-					final int skillYield = CMath.s_parseIntExpression(yieldFormula);
+					final String yieldFormula = (findYield.length()>0)?findYield:(String)V(ID, V_YILD); // CR9: the find's own YIELD
+					final Ability mine = mob.fetchAbility(ID()); // the effect's own proficiency is not the gatherer's
+					final double[] yieldVars = { mob.phyStats().level(), (mine != null) ? mine.proficiency() : proficiency(), abilityCode(), roomYieldLeft(mob.location()) }; // CR9: @x1-@x4
+					final int skillYield = CMath.s_parseIntExpression(yieldFormula, yieldVars);
 					if(skillYield > 0)
 					{
 						final int yield = super.adjustYieldBasedOnRoomSpam(skillYield*(baseYield()+abilityCode()), mob.location());
@@ -598,16 +610,121 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 					Log.errOut(ID, error);
 				}
 			}
+			finds.put(ID, findOptions(xml, choices)); // CR9
 			items.put(ID, choices);
 		}
 		return choices;
 	}
 
+	/**
+	 * CR9: each ITEMXML entry's own FREQ (its weight; 1 when not given), MASK
+	 * (a zapper mask the gatherer or their room must pass) and YIELD (in place
+	 * of YIELDFORMULA), as tags in its ITEM.
+	 * @param xml the ITEMXML
+	 * @param choices the items made from it
+	 * @return the options, by item
+	 */
+	private static Map<Item,String[]> findOptions(final String xml, final List<Item> choices)
+	{
+		final Map<Item,String[]> opts=new IdentityHashMap<Item,String[]>();
+		if(xml.length()==0)
+			return opts;
+		final List<XMLTag> V=CMLib.xml().parseAllXML(xml);
+		final List<XMLTag> blocks=new ArrayList<XMLTag>();
+		final List<XMLTag> iV=CMLib.xml().getContentsFromPieces(V,"ITEMS");
+		for(final XMLTag t : (iV!=null)?iV:V)
+		{
+			if(t.tag().equalsIgnoreCase("ITEM"))
+				blocks.add(t);
+		}
+		if(blocks.size()!=choices.size())
+			return opts;
+		for(int i=0;i<blocks.size();i++)
+		{
+			final XMLTag b=blocks.get(i);
+			final String freq=CMLib.xml().getValFromPieces(b.contents(),"FREQ","").trim();
+			final String mask=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(b.contents(),"MASK","")).trim();
+			final String yield=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(b.contents(),"YIELD","")).trim();
+			if((freq.length()>0)||(mask.length()>0)||(yield.length()>0))
+				opts.put(choices.get(i), new String[]{freq,mask,yield});
+		}
+		return opts;
+	}
+
+	/**
+	 * CR9: a find, by FREQ among those whose MASK the gatherer or their room
+	 * passes, or none, by NOTHINGFREQ.
+	 * @param mob the gatherer
+	 * @param choices the finds
+	 * @return the find, or null
+	 */
+	protected Item pickFind(final MOB mob, final List<Item> choices)
+	{
+		findYield="";
+		final Map<Item,String[]> opts=finds.get(ID);
+		final Room R=mob.location();
+		final List<Item> ok=new ArrayList<Item>(choices.size());
+		final List<Integer> weights=new ArrayList<Integer>(choices.size());
+		final int nothing=((Integer)V(ID, V_NFRQ)).intValue();
+		int total=nothing;
+		for(final Item I : choices)
+		{
+			final String[] o=(opts==null)?null:opts.get(I);
+			int weight=1;
+			if(o!=null)
+			{
+				if(o[0].length()>0)
+					weight=CMath.s_int(o[0]);
+				if((o[1].length()>0)
+				&&(!CMLib.masking().maskCheck(o[1],mob,true))
+				&&((R==null)||(!CMLib.masking().maskCheck(o[1],R,true))))
+					continue;
+			}
+			if(weight<=0)
+				continue;
+			ok.add(I);
+			weights.add(Integer.valueOf(weight));
+			total+=weight;
+		}
+		if(total<=0)
+			return null;
+		int roll=CMLib.dice().roll(1,total,0);
+		if(roll<=nothing)
+			return null;
+		roll-=nothing;
+		for(int i=0;i<ok.size();i++)
+		{
+			roll-=weights.get(i).intValue();
+			if(roll<=0)
+			{
+				final String[] o=(opts==null)?null:opts.get(ok.get(i));
+				findYield=(o==null)?"":o[2];
+				return ok.get(i);
+			}
+		}
+		return null;
+	}
+
 	protected void rebuildItemXML()
 	{
 		final StringBuilder str=new StringBuilder("<ITEMS>");
-		for(final Item I : getItems())
-			str.append(CMLib.coffeeMaker().getItemXML(I));
+		final List<Item> all=getItems();
+		final Map<Item,String[]> opts=finds.get(ID); // CR9: each find's options stay with it
+		for(final Item I : all)
+		{
+			String x=CMLib.coffeeMaker().getItemXML(I);
+			final String[] o=(opts==null)?null:opts.get(I);
+			final int end=x.lastIndexOf("</ITEM>");
+			if((o!=null)&&(end>=0))
+			{
+				x=x.substring(0,end)
+				 +((o[0].length()>0)?("<FREQ>"+o[0]+"</FREQ>"):"")
+				 +((o[1].length()>0)?("<MASK>"+CMLib.xml().parseOutAngleBrackets(o[1])+"</MASK>"):"")
+				 +((o[2].length()>0)?("<YIELD>"+CMLib.xml().parseOutAngleBrackets(o[2])+"</YIELD>"):"")
+				 +x.substring(end);
+			}
+			str.append(x);
+		}
 		str.append("</ITEMS>");
 		SV(ID,V_IXML,str.toString());
 	}
@@ -733,6 +850,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 		verb=(String) V(ID, V_VERB);
 		playSound=null;
 		found=null;
+		findYield="";
 		foundShortName="";
 
 		final String playerMask = (String) V(ID, V_PMSK);
@@ -756,8 +874,9 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 				final List<Item> choices = getItems();
 				if(choices.size()>0)
 				{
-					found=choices.get(CMLib.dice().roll(1, choices.size(), -1));
-					foundShortName=found.name();
+					found=pickFind(mob,choices); // CR9: FREQ, MASK and NOTHINGFREQ
+					if(found!=null)
+						foundShortName=found.name();
 				}
 				else
 				if(((Boolean) V(ID, V_COSM)).booleanValue())
