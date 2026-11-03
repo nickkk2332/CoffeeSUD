@@ -834,6 +834,10 @@ recipe book learns its recipes by heart, and <code>PROFILERECIPES=true</code> sh
 <code>CANLEARN=true</code> and <code>LEARNMASK=-TAGS +rune</code> lets a carver <code>runecarve learn stone</code>: a rune
 stone found in a barrow is taken apart and its design written into a blank recipe book (AHELP
 GENCRAFTSKILL).</p>
+<p>Discovering recipes: a brewing row <code>a mug of spiced cider ... HIDDEN=1 EXPERIMENT=honey,apple,mead
+HINT="It needs something warming..."</code> is found when a brewer tries <code>brew experiment honey apple
+mead</code>; trying honey and apple alone tells the hint, and each miss uses up one of the things tried
+(AHELP RECIPEKEYS).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

@@ -1150,6 +1150,11 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 
 	public boolean checkInfo(final MOB mob, final List<String> commands, final PairVector<EnhancedExpertise,Integer> enhancedTypes)
 	{
+		if((commands!=null)&&(commands.size()>0)&&commands.get(0).equalsIgnoreCase("experiment")&&(mob!=null)) // CR18: [SKILL] EXPERIMENT [MATERIALS]
+		{
+			Experiments.run(mob,this,commands);
+			return true;
+		}
 		if((commands!=null)
 		&&(commands.size()>1)
 		&&(commands.get(0).equalsIgnoreCase("info")))

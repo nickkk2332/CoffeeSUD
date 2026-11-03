@@ -2867,6 +2867,17 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   `unInvoke` has the LEARNING step (the item taken apart into the blank
   recipe book by `deconstructRecipeInto`, or a failure that ruins it);
   LEARNMASK narrows `mayILearnToCraft`. AHELP GENCRAFTSKILL is new.
+- CR18 done. `[SKILL] EXPERIMENT [THING]...` for every crafting skill
+  that calls `CraftingSkill.checkInfo` (35 of them; `core/Experiments`):
+  a recipe of the skill marked HIDDEN=1 with `EXPERIMENT=a,b,c` is found
+  when the crafter, at its level or above, offers just those things
+  (items carried, by name); it goes into Prop_KnownRecipes (CR4) and
+  gives XP= or ten a level. Half or more of them is a near miss that
+  tells HINT=; any other try uses up one of the things offered.
+  `CRAFTEXPERIMENTS` (10 a game day when blank, 0 for no limit) counts
+  tries in memory, so a restart (or a restore) gives them back. Rather
+  than read each skill's own components column, the recipe names what
+  reveals it.
 
 #### 2l. Factions and organisations (18)
 

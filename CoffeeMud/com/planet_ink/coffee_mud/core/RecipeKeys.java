@@ -33,7 +33,8 @@ import com.planet_ink.coffee_mud.Common.interfaces.Clan;
  * crafter is told when ROOMMASK or TOOL fails), XP= (experience on each
  * success), TATTOO= (a tattoo given on the first success) and STATION= (CR3:
  * a workstation of that tag in the room) and HIDDEN=1 (CR4: only for those who
- * know it, KnownRecipes).  None of them becomes an item stat.
+ * know it, KnownRecipes), EXPERIMENT= and HINT= (CR18: Experiments).  None of
+ * them becomes an item stat.
  */
 public final class RecipeKeys
 {
@@ -42,7 +43,7 @@ public final class RecipeKeys
 	}
 
 	/** the keys, none of which is an item stat */
-	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION", "HIDDEN" };
+	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION", "HIDDEN", "EXPERIMENT", "HINT" };
 
 	private static final Pattern	KV		= Pattern.compile("^\\s*[A-Za-z_]+\\s*=");
 
