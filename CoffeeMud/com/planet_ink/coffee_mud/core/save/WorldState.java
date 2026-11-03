@@ -256,6 +256,7 @@ public final class WorldState
 		str.append(JSStore.toXML()); // JS7: cm.store
 		str.append(questsXML(player));
 		str.append(QuestRecords.toXML()); // Q4: each character's quest records
+		str.append(com.planet_ink.coffee_mud.core.Yields.toXML()); // CR14: gathered-out rooms
 		str.append(ridesXML());
 		str.append("</WORLD>\n");
 		return str.toString();
@@ -406,6 +407,7 @@ public final class WorldState
 		if(vars != null)
 			setScriptVars(vars);
 		QuestRecords.fromXML(world.getPieceFromPieces("QUESTRECORDS")); // Q4
+		com.planet_ink.coffee_mud.core.Yields.fromXML(world.getPieceFromPieces("YIELDS")); // CR14
 		final XMLTag quests = world.getPieceFromPieces("QUESTS");
 		if(quests != null)
 		{

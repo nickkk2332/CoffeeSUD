@@ -67,7 +67,7 @@ public class GatheringSkill extends CommonSkill
 	protected static final Map<String, int[]>			supportedUseRscs	= new Hashtable<String, int[]>();
 
 	protected static final long EXPIRE_DURATION = (30 * 60 * 1000);
-	protected static Map<Room,Quad<Room,Integer,short[],Long>> roomSpamCounter = new ExpireHashMap<Room,Quad<Room,Integer,short[],Long>>(EXPIRE_DURATION);
+	// CR14: the records are in core/Yields, on game time and kept in the save
 
 	public GatheringSkill()
 	{
@@ -82,17 +82,7 @@ public class GatheringSkill extends CommonSkill
 	 */
 	protected int roomYieldLeft(final Room R)
 	{
-		if(R==null)
-			return 0;
-		synchronized(roomSpamCounter)
-		{
-			final Quad<Room,Integer,short[],Long> rec = roomSpamCounter.get(R);
-			if((rec==null)
-			||(GameTime.now() > rec.fourth.longValue())
-			||(rec.second.intValue() != R.myResource()))
-				return 100;
-			return (int)Math.max(0, Math.round(100.0 - (100.0 * this.getRoomSpamDropRate() * rec.third[0])));
-		}
+		return Yields.pctLeft(R, this.getRoomSpamDropRate()); // CR14: core/Yields keeps the records
 	}
 
 	protected double getRoomSpamDropRate()
@@ -105,71 +95,12 @@ public class GatheringSkill extends CommonSkill
 		R=CMLib.map().getRoom(R);
 		if(R==null)
 			return false;
-		synchronized(roomSpamCounter)
-		{
-			if(roomSpamCounter.containsKey(R))
-			{
-				final Quad<Room,Integer,short[],Long> oldRecord = roomSpamCounter.get(R);
-				if((oldRecord!=null)
-				&&((GameTime.now() > oldRecord.fourth.longValue())
-				  ||(oldRecord.second.intValue() != R.myResource())))
-				{
-					roomSpamCounter.remove(R);
-					return true;
-				}
-			}
-			final Quad<Room,Integer,short[],Long> curRecord = roomSpamCounter.get(R);
-			if(curRecord == null)
-				return true;
-			final double pctDrop = this.getRoomSpamDropRate() * curRecord.third[0];
-			final int finalYield = (int)Math.round(10 - CMath.mul(10, pctDrop));
-			if(finalYield >= 1)
-				return true;
-			return false;
-		}
+		return Yields.anyLeft(R, this.getRoomSpamDropRate()); // CR14: on game time, with Prop_Yield, saved
 	}
 
 	protected int adjustYieldBasedOnRoomSpam(final int initialYield, final Room R)
 	{
-		if((R==null)
-		||(initialYield==0))
-			return 0;
-		synchronized(roomSpamCounter)
-		{
-			final long now=GameTime.now();
-			if(roomSpamCounter.containsKey(R))
-			{
-				final Quad<Room,Integer,short[],Long> oldRecord = roomSpamCounter.get(R);
-				if((oldRecord!=null)
-				&&((now > oldRecord.fourth.longValue())
-				  ||(oldRecord.second.intValue() != R.myResource())))
-					roomSpamCounter.remove(R);
-			}
-			for(final Iterator<Room> i=roomSpamCounter.keySet().iterator();i.hasNext();)
-			{
-				final Quad<Room,Integer,short[],Long> rec=roomSpamCounter.get(i.next());
-				if(now> rec.fourth.longValue())
-					i.remove();
-			}
-			final Quad<Room,Integer,short[],Long> curRecord = roomSpamCounter.get(R);
-			if(curRecord == null)
-			{
-				final Long expirationTime = Long.valueOf(now + EXPIRE_DURATION); // intentional
-				final short[] first = new short[] {1};
-				final Quad<Room,Integer,short[],Long> record = new Quad<Room,Integer,short[],Long>(R,Integer.valueOf(R.myResource()),first,expirationTime);
-				roomSpamCounter.put(R, record);
-				return initialYield;
-			}
-			else
-			{
-				final double pctDrop = this.getRoomSpamDropRate() * curRecord.third[0];
-				curRecord.third[0]++;
-				final int finalYield = (int)Math.round(initialYield - CMath.mul(initialYield, pctDrop));
-				if(finalYield <= 0)
-					return 0;
-				return finalYield;
-			}
-		}
+		return Yields.harvest(R, initialYield, this.getRoomSpamDropRate()); // CR14
 	}
 
 	@Override

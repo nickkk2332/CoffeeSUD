@@ -2962,6 +2962,15 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   room when the calendar, not the first tick, changes it. A season
   with no list falls back to the plain list. It needs no script and
   survives a restore, since it is the behaviour's own parameters.
+- CR14 done. The rooms' gathering records moved from GatheringSkill's
+  `ExpireHashMap` (which cleared by the computer's clock) to
+  `core/Yields`, on game time only, and the save keeps them (YIELDS,
+  with the time left). `Prop_Yield(HARVESTS= DROP= REGROW= EMPTYMSG=)`
+  on a room or area (or a parent): bare after HARVESTS until REGROW
+  game time after the last harvest (HOURS, DAYS, MONTHS or YEARS of
+  the room's calendar), DROP in place of the skill's share. Without it
+  rooms behave as before: 20% less each time, back 30 game minutes
+  after the first. CR9's @x4 reads the same records.
 
 #### 2l. Factions and organisations (18)
 
