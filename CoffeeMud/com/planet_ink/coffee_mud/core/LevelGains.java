@@ -71,7 +71,7 @@ public class LevelGains
 		};
 		try
 		{
-			return Math.max(0, (int)Math.floor(CMath.parseMathExpression(f, vars)));
+			return Math.max(0, (int)Math.floor(CMath.withSubject(mob, () -> CMath.parseMathExpression(f, vars)))); // P26: @STAT(..)
 		}
 		catch(final Exception e)
 		{

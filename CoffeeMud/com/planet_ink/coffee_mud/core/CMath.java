@@ -57,7 +57,77 @@ public class CMath
 	/** C13: the variable index of @xP in a compiled formula */
 	public static final int				VAR_SIDE		= -1;
 	/** C13: the variable index of @xD in a compiled formula */
-	public static final int				VAR_DIFFICULTY	= -2;
+	public static final int                VAR_DIFFICULTY    = -2;
+	/** P26: the mob a formula is worked out for, for @STAT(NAME) and @BASESTAT(NAME), for each thread */
+	private static final ThreadLocal<Object[]>    formulaSubject    = ThreadLocal.withInitial(() -> new Object[1]);
+	/** P26: the letters a stat code is written in, after @xSTAT or @xBASE (no x, which ends a word here) */
+	private static final String                STAT_LETTERS    = "ABCDEFGHIJKLMNOPQRST";
+	private static final java.util.regex.Pattern STAT_REF    = java.util.regex.Pattern.compile("@(BASE)?STAT\\(\\s*([A-Za-z_0-9]+)\\s*\\)", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+	/**
+	 * P26: sets the mob the formulas this thread works out next are for.
+	 * @param subject the mob, or null
+	 * @return the one it was before
+	 */
+	public final static Object setFormulaSubject(final Object subject)
+	{
+		final Object[] o=formulaSubject.get();
+		final Object was=o[0];
+		o[0]=subject;
+		return was;
+	}
+
+	/**
+	 * P26: works something out with a formula subject, and puts back the one before.
+	 * @param subject the mob the formulas are for
+	 * @param f the working out
+	 * @return its value
+	 */
+	public final static double withSubject(final Object subject, final java.util.function.DoubleSupplier f)
+	{
+		final Object was=setFormulaSubject(subject);
+		try
+		{
+			return f.getAsDouble();
+		}
+		finally
+		{
+			setFormulaSubject(was);
+		}
+	}
+
+	/**
+	 * P26: writes @STAT(NAME) and @BASESTAT(NAME) as the named variables
+	 * @xSTAT.. and @xBASE.. (the stat's code in letters); an unknown stat is 0.
+	 * @param formula a formula
+	 * @return it, ready for the parser
+	 */
+	public final static String withStats(final String formula)
+	{
+		if((formula==null)||(formula.indexOf('@')<0)||(formula.toUpperCase().indexOf("STAT(")<0))
+			return formula;
+		final java.util.regex.Matcher m=STAT_REF.matcher(formula);
+		final StringBuffer s=new StringBuffer("");
+		while(m.find())
+		{
+			int code=com.planet_ink.coffee_mud.Common.interfaces.CharStats.CODES.findWhole(m.group(2),true);
+			String rep="0";
+			if(code>=0)
+			{
+				final StringBuilder enc=new StringBuilder("");
+				do
+				{
+					enc.insert(0,STAT_LETTERS.charAt(code%STAT_LETTERS.length()));
+					code/=STAT_LETTERS.length();
+				}
+				while(code>0);
+				rep="@x"+((m.group(1)!=null)?"BASE":"STAT")+enc.toString();
+			}
+			m.appendReplacement(s,java.util.regex.Matcher.quoteReplacement(rep));
+		}
+		m.appendTail(s);
+		return s.toString();
+	}
 	private final static boolean[]		IS_HEX_DIGITS	= new boolean[128];
 
 	@SuppressWarnings("rawtypes")
@@ -1412,6 +1482,11 @@ public class CMath
 	 */
 	private final static double namedVariable(final int index)
 	{
+		if(index <= -1000) // P26: @STAT(..) is -1000-code, @BASESTAT(..) -100000-code
+		{
+			final boolean base=(index <= -100000);
+			return StatEffects.statOf(formulaSubject.get()[0], base ? (-index - 100000) : (-index - 1000), base);
+		}
 		return (index == VAR_SIDE) ? formulaSide.get()[0] : formulaDifficulty;
 	}
 
@@ -1426,6 +1501,18 @@ public class CMath
 			return VAR_SIDE;
 		if("D".equalsIgnoreCase(word))
 			return VAR_DIFFICULTY;
+		if((word!=null)&&(word.length()>4)&&(word.toUpperCase().startsWith("STAT")||word.toUpperCase().startsWith("BASE")))
+		{
+			int code=0;
+			for(final char c : word.substring(4).toUpperCase().toCharArray())
+			{
+				final int d=STAT_LETTERS.indexOf(c);
+				if(d<0)
+					return 0;
+				code=(code*STAT_LETTERS.length())+d;
+			}
+			return word.toUpperCase().startsWith("BASE") ? (-100000 - code) : (-1000 - code);
+		}
 		return 0;
 	}
 
@@ -1684,7 +1771,7 @@ public class CMath
 	public final static CompiledFormula compileMathExpression(final String formula)
 	{
 		if(formula != null)
-			return compileMathExpression(new StreamTokenizer(new InputStreamReader(new ByteArrayInputStream(formula.getBytes()))),false);
+			return compileMathExpression(new StreamTokenizer(new InputStreamReader(new ByteArrayInputStream(withStats(formula).getBytes()))),false); // P26
 		else
 			return new CompiledFormula();
 	}
@@ -2013,7 +2100,7 @@ public class CMath
 	 */
 	public final static double parseMathExpression(final String formula) throws ArithmeticException
 	{
-		return parseMathExpression(new StreamTokenizer(new InputStreamReader(new ByteArrayInputStream(formula.getBytes()))), rand, false, null, 0);
+		return parseMathExpression(new StreamTokenizer(new InputStreamReader(new ByteArrayInputStream(withStats(formula).getBytes()))), rand, false, null, 0); // P26
 	}
 
 	/**
@@ -2031,7 +2118,7 @@ public class CMath
 	 */
 	public final static double parseMathExpression(final String formula, final double[] vars) throws ArithmeticException
 	{
-		return parseMathExpression(new StreamTokenizer(new InputStreamReader(new ByteArrayInputStream(formula.getBytes()))), rand, false, vars, 0);
+		return parseMathExpression(new StreamTokenizer(new InputStreamReader(new ByteArrayInputStream(withStats(formula).getBytes()))), rand, false, vars, 0); // P26
 	}
 
 	/**

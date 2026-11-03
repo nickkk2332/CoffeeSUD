@@ -224,6 +224,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 	protected static double sideMath(final MOB who, final CMath.CompiledFormula F, final double[] vars, final double previous)
 	{
 		CMath.setFormulaSide(GameDifficulty.playerSide(who) ? 1.0 : 0.0);
+		final Object was=CMath.setFormulaSubject(who); // P26: @STAT(..)
 		try
 		{
 			return CMath.parseMathExpression(F, vars, previous);
@@ -231,6 +232,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		finally
 		{
 			CMath.setFormulaSide(0.0);
+			CMath.setFormulaSubject(was);
 		}
 	}
 
@@ -246,6 +248,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 	protected static double sideMath(final MOB who, final CMath.CompiledFormula F, final Random r, final double[] vars, final double previous)
 	{
 		CMath.setFormulaSide(GameDifficulty.playerSide(who) ? 1.0 : 0.0);
+		final Object was=CMath.setFormulaSubject(who); // P26
 		try
 		{
 			return CMath.parseMathExpression(F, r, vars, previous);
@@ -253,6 +256,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		finally
 		{
 			CMath.setFormulaSide(0.0);
+			CMath.setFormulaSubject(was);
 		}
 	}
 

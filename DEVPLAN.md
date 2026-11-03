@@ -3303,6 +3303,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   counting the rank). `check` climbs by REQUIRES, on level-ups (after the
   perk note), RANKS and MPRANK CHECK. MPRANK (cmd //152), RANK() (func
   //225), RANKS (RanksCmd).
+- P26 done. `core/StatEffects`: STATEFFECT_<STAT> rules (re-read
+  every few seconds, `reload()`), "per [N] point(s) over M:" then +k/-k
+  parts of char stats (SAVES, CRITCHANCE aliases), ATTACK, ARMOR, DAMAGE,
+  SPEED, HITPOINTS, MANA, MOVES, applied at the ends of StdMOB's
+  recoverCharStats, recoverPhyStats and recoverMaxState. CMath rewrites
+  @STAT(NAME)/@BASESTAT(NAME) as named variables (@xSTAT.., @xBASE..,
+  the code in letters), read from a per-thread formula subject set by
+  MUDFight.sideMath, the class gain formulas, the carry/items/follow
+  formulas and LevelGains (withSubject). STATEFFECT_ is a world key
+  prefix. REPLACECHARSTAT (the stat's new name first) is documented and
+  tested: CharStats.CODES rebuilt from it, @StatList@ follows.
 - P28 done. lastXPAward is stamped with GameTime.now() (StdMOB.
   setExperience, DEFER, CoffeeLevels' awards), and the deferral checks
   (gainExperience's timed path, the COMMAND path, deferCommandCheck)

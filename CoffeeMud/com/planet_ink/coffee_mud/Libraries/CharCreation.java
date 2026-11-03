@@ -5577,7 +5577,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				mob.baseCharStats().getStat(CharStats.STAT_STRENGTH),
 				mob.charStats().getMaxStat(CharStats.STAT_STRENGTH)
 			};
-			return (int)Math.round(CMath.parseMathExpression(maxCarryFormula, parms, 0.0));
+			return (int)Math.round(CMath.withSubject(mob, () -> CMath.parseMathExpression(maxCarryFormula, parms, 0.0))); // P26
 		}
 		return 0;
 	}
@@ -5600,7 +5600,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				mob.baseCharStats().getStat(CharStats.STAT_STRENGTH),
 				mob.charStats().getMaxStat(CharStats.STAT_STRENGTH)
 			};
-			return (int)Math.round(CMath.parseMathExpression(maxItemsFormula, parms, 0.0));
+			return (int)Math.round(CMath.withSubject(mob, () -> CMath.parseMathExpression(maxItemsFormula, parms, 0.0))); // P26
 		}
 		return 0;
 	}
@@ -5617,7 +5617,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				mob.baseCharStats().getStat(CharStats.STAT_CHARISMA),
 				mob.charStats().getMaxStat(CharStats.STAT_CHARISMA)
 			};
-			return (int)Math.round(CMath.parseMathExpression(maxFollowersFormula, parms, 0.0));
+			return (int)Math.round(CMath.withSubject(mob, () -> CMath.parseMathExpression(maxFollowersFormula, parms, 0.0))); // P26
 		}
 		return 0;
 	}

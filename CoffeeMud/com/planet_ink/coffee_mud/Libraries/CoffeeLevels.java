@@ -64,7 +64,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 			mob.charStats().getStat(CharStats.STAT_CHARISMA),
 			mob.charStats().getStat(CharStats.STAT_CONSTITUTION)
 		};
-		return (int)Math.round(CMath.parseMathExpression(charClass.getManaFormula()+CMProps.getVar(Str.FORMULA_CLASSMNADD), variables));
+		return (int)Math.round(CMath.withSubject(mob, () -> CMath.parseMathExpression(charClass.getManaFormula()+CMProps.getVar(Str.FORMULA_CLASSMNADD), variables))); // P26
 	}
 
 	@Override
@@ -231,7 +231,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 			mob.charStats().getStat(CharStats.STAT_WISDOM),
 			mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)
 		};
-		return (int)Math.round(CMath.parseMathExpression(charClass.getMovementFormula()+CMProps.getVar(Str.FORMULA_CLASSMVADD), variables));
+		return (int)Math.round(CMath.withSubject(mob, () -> CMath.parseMathExpression(charClass.getMovementFormula()+CMProps.getVar(Str.FORMULA_CLASSMVADD), variables))); // P26
 	}
 
 	@Override
@@ -257,9 +257,9 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 			mob.charStats().getStat(CharStats.STAT_WISDOM),
 			mob.charStats().getStat(CharStats.STAT_INTELLIGENCE)
 		};
-		final int newHitPointGain=(int)Math.round(CMath.parseMathExpression(
+		final int newHitPointGain=(int)Math.round(CMath.withSubject(mob, () -> CMath.parseMathExpression( // P26
 												charClass.getHitPointsFormula()+CMProps.getVar(Str.FORMULA_CLASSHPADD),
-												variables));
+												variables)));
 		if(newHitPointGain<=0)
 		{
 			if(mob.charStats().getStat(CharStats.STAT_CONSTITUTION)>=1)

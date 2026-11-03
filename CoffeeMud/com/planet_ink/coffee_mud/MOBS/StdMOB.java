@@ -835,6 +835,7 @@ public class StdMOB implements MOB
 					phyStats.setDisposition(phyStats().disposition() | PhyStats.IS_LIGHTSOURCE);
 			}
 		}
+		StatEffects.phyStats(this, phyStats); // P26: STATEFFECT_
 	}
 
 	@Override
@@ -952,6 +953,7 @@ public class StdMOB implements MOB
 			else
 				charStats.setStat(CharStats.STAT_CHARISMA, charStats.getStat(CharStats.STAT_CHARISMA) / 2);
 		}
+		StatEffects.charStats(this, charStats); // P26: STATEFFECT_
 	}
 
 	@Override
@@ -1059,6 +1061,7 @@ public class StdMOB implements MOB
 			e.nextElement().affectCharState(this, maxState);
 		if(location() != null)
 			location().affectCharState(this, maxState);
+		StatEffects.state(this, maxState); // P26: STATEFFECT_
 		if(isMonster())
 		{
 			final double f = GameDifficulty.npcHpFactor(this); // C13: the difficulty's NPCHP
