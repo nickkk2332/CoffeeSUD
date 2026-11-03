@@ -32,6 +32,15 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+/**
+ * Resets a room or an area (its mobs and items, from the world) once no
+ * player has been there for TICKS ticks, or DAYS game days of the area's
+ * calendar (W9), or at a mud hour (MUDHOUR) or a real hour (RLHOUR, which
+ * means nothing with pause and turn-based time).  EXCEPT= is a mask of the
+ * mobs and items that never come back once gone: a slain boss stays slain,
+ * one still there stays.  MSG= is shown to the first who comes in after a
+ * reset.
+ */
 public class ResetWhole extends StdBehavior
 {
 	@Override
@@ -51,6 +60,14 @@ public class ResetWhole extends StdBehavior
 	protected int		rlHour		= -1;
 	protected int		mudHour		= -1;
 	protected boolean	resetDone	= false;
+	/** W9: game days on the area's calendar, in place of TICKS, or 0 */
+	protected double	days		= 0;
+	/** W9: what never comes back once gone, or null */
+	protected MaskingLibrary.CompiledZMask exceptMask = null;
+	/** W9: shown on the first entry after a reset */
+	protected String	resetMsg	= "";
+	/** W9: a reset happened and no one has come in since */
+	protected boolean	msgPending	= false;
 
 	@Override
 	public String accountForYourself()
@@ -67,6 +84,7 @@ public class ResetWhole extends StdBehavior
 			time = 30000;
 			rlHour = -1;
 			mudHour= -1;
+			days = 0;
 			resetDone = false;
 			if(CMath.isNumber(parameters))
 			{
@@ -83,39 +101,96 @@ public class ResetWhole extends StdBehavior
 				}
 				else
 				{
-					s = CMParms.getParmStr(parameters, "RLHOUR", "");
-					if(CMath.isNumber(s))
-						this.rlHour = CMath.s_int(s);
+					s = CMParms.getParmStr(parameters, "DAYS", "");
+					if(CMath.isNumber(s) && (CMath.s_double(s) > 0))
+						days = CMath.s_double(s);
 					else
 					{
-						s = CMParms.getParmStr(parameters, "MUDHOUR", "");
+						s = CMParms.getParmStr(parameters, "RLHOUR", "");
 						if(CMath.isNumber(s))
-							this.mudHour=CMath.s_int(s);
+							this.rlHour = CMath.s_int(s);
+						else
+						{
+							s = CMParms.getParmStr(parameters, "MUDHOUR", "");
+							if(CMath.isNumber(s))
+								this.mudHour=CMath.s_int(s);
+						}
 					}
 				}
-
 			}
+			final String except = CMParms.getParmStr(parameters, "EXCEPT", "").trim();
+			exceptMask = (except.length() == 0) ? null : CMLib.masking().getPreCompiledMask(quotedNames(except));
+			resetMsg = CMParms.getParmStr(parameters, "MSG", "").trim();
 		}
 		catch(final Exception e)
 		{
 		}
 	}
 
+	/**
+	 * W9: a mask's +'name with spaces' (or -'...'), as a parameter in double
+	 * quotes can hold it, in the masks' own "+name with spaces" form.
+	 * @param mask the mask
+	 * @return the mask the masking library reads
+	 */
+	public static String quotedNames(final String mask)
+	{
+		return mask.replaceAll("([+-])'([^']*)'", "\"$1$2\"");
+	}
+
+	/**
+	 * W9: how long no player must be there before a reset: DAYS on the
+	 * host's calendar, else TICKS.
+	 * @param host the room or area
+	 * @return the game milliseconds
+	 */
+	protected long period(final Tickable host)
+	{
+		if(days <= 0)
+			return time;
+		final Physical P = (host instanceof Physical) ? (Physical)host : super.getBehaversRoom(host);
+		final TimeClock C = (P == null) ? null : CMLib.time().localClock(P);
+		final int hours = (C == null) ? 24 : Math.max(1, C.getHoursInDay());
+		return Math.round(days * hours * CMProps.getMillisPerMudHour());
+	}
+
+	private boolean mine(final Environmental host, final Room R)
+	{
+		if(R == null)
+			return false;
+		if(host instanceof Area)
+			return ((Area)host).inMyMetroArea(R.getArea());
+		return R == host;
+	}
+
 	@Override
 	public void executeMsg(final Environmental host, final CMMsg msg)
 	{
 		super.executeMsg(host,msg);
-		if(!msg.source().isMonster())
+		if(!msg.source().isMonster() || msg.source().isPlayer())
 		{
-			final Room R=msg.source().location();
-			if(R!=null)
+			if(mine(host, msg.source().location()))
+				lastAccess=GameTime.now();
+			if(msgPending
+			&& (msg.targetMinor() == CMMsg.TYP_ENTER)
+			&& (msg.target() instanceof Room)
+			&& mine(host, (Room)msg.target()))
 			{
-				if((host instanceof Area)
-				&&(((Area)host).inMyMetroArea(R.getArea())))
-					lastAccess=GameTime.now();
-				else
-				if((host instanceof Room) &&(R==host))
-					lastAccess=GameTime.now();
+				lastAccess=GameTime.now();
+				msgPending = false;
+				if(resetMsg.length() > 0)
+				{
+					final MOB M = msg.source();
+					final String text = resetMsg;
+					msg.addTrailerRunnable(new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							M.tell(text);
+						}
+					});
+				}
 			}
 		}
 	}
@@ -131,6 +206,173 @@ public class ResetWhole extends StdBehavior
 		return false;
 	}
 
+	/**
+	 * W9: the rooms a reset reaches: the host room, or each room of the
+	 * host area without a ResetWhole of its own.
+	 * @param ticking the host
+	 * @param all true for every room of the area, those skipped too
+	 * @return the rooms
+	 */
+	protected List<Room> rooms(final Tickable ticking, final boolean all)
+	{
+		final List<Room> list = new ArrayList<Room>();
+		if(ticking instanceof Area)
+		{
+			for(final Enumeration<Room> r=((Area)ticking).getMetroMap();r.hasMoreElements();)
+			{
+				final Room R=r.nextElement();
+				boolean own = false;
+				for(final Enumeration<Behavior> e=R.behaviors();e.hasMoreElements();)
+				{
+					final Behavior B=e.nextElement();
+					if((B!=null)&&(B.ID().equals(ID())))
+						own = true;
+				}
+				if(all || ((!own) && (!this.isRoomBeingCamped(R))))
+					list.add(R);
+			}
+		}
+		else
+		{
+			final Room R = (ticking instanceof Room) ? (Room)ticking : super.getBehaversRoom(ticking);
+			if((R != null) && (all || (!this.isRoomBeingCamped(R))))
+				list.add(R);
+		}
+		return list;
+	}
+
+	private static String key(final Environmental E)
+	{
+		return ((E instanceof MOB) ? "M:" : "I:") + E.Name();
+	}
+
+	private void count(final Environmental E, final Map<String, int[]> counts)
+	{
+		if((E != null) && (!E.amDestroyed()) && CMLib.masking().maskCheck(exceptMask, E, true))
+		{
+			final int[] n = counts.get(key(E));
+			if(n == null)
+				counts.put(key(E), new int[] { 1 });
+			else
+				n[0]++;
+		}
+	}
+
+	/**
+	 * W9: the EXCEPT mobs and items there are now, by name: those in the
+	 * rooms, and carried by their mobs (not by players).
+	 * @param rooms the rooms
+	 * @return the number of each
+	 */
+	protected Map<String, int[]> excepted(final List<Room> rooms)
+	{
+		final Map<String, int[]> counts = new HashMap<String, int[]>();
+		if(exceptMask == null)
+			return counts;
+		for(final Room R : rooms)
+		{
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M == null) || M.isPlayer())
+					continue;
+				count(M, counts);
+				for(final Enumeration<Item> i = M.items(); i.hasMoreElements();)
+					count(i.nextElement(), counts);
+			}
+			for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
+				count(i.nextElement(), counts);
+		}
+		return counts;
+	}
+
+	private boolean keeps(final Environmental E, final Map<String, int[]> before)
+	{
+		if((E == null) || E.amDestroyed() || (!CMLib.masking().maskCheck(exceptMask, E, true)))
+			return true;
+		final int[] n = before.get(key(E));
+		if((n != null) && (n[0] > 0))
+		{
+			n[0]--;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * W9: after a reset, takes away each EXCEPT mob or item beyond the
+	 * number there were before, those in rooms not reset counted first.
+	 * @param rooms every room, those reset last
+	 * @param before the numbers before, from {@link #excepted(List)}
+	 * @return how many it took away
+	 */
+	protected int removeReturned(final List<Room> rooms, final Map<String, int[]> before)
+	{
+		if(exceptMask == null)
+			return 0;
+		final List<Environmental> gone = new ArrayList<Environmental>();
+		for(final Room R : rooms)
+		{
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M == null) || M.isPlayer())
+					continue;
+				if(!keeps(M, before))
+				{
+					gone.add(M);
+					continue;
+				}
+				for(final Enumeration<Item> i = M.items(); i.hasMoreElements();)
+				{
+					final Item I = i.nextElement();
+					if(!keeps(I, before))
+						gone.add(I);
+				}
+			}
+			for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
+			{
+				final Item I = i.nextElement();
+				if(!keeps(I, before))
+					gone.add(I);
+			}
+		}
+		for(final Environmental E : gone)
+			E.destroy();
+		return gone.size();
+	}
+
+	/**
+	 * Resets the rooms now, keeping EXCEPT's gone ones gone.
+	 * @param ticking the host
+	 * @return the number of rooms reset
+	 */
+	protected int resetNow(final Tickable ticking)
+	{
+		final List<Room> reset = rooms(ticking, false);
+		final List<Room> all = rooms(ticking, true);
+		final Map<String, int[]> before = excepted(all);
+		for(final Room R : reset)
+		{
+			resetDone = true;
+			CMLib.map().resetRoom(R, true);
+		}
+		if(reset.size() > 0)
+		{
+			final List<Room> order = new ArrayList<Room>();
+			for(final Room R : all)
+			{
+				if(!reset.contains(R))
+					order.add(R);
+			}
+			order.addAll(reset);
+			removeReturned(order, before);
+			if(resetMsg.length() > 0)
+				msgPending = true;
+		}
+		return reset.size();
+	}
+
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
@@ -138,7 +380,7 @@ public class ResetWhole extends StdBehavior
 		if(lastAccess<0)
 			return true;
 
-		if((lastAccess+time)<GameTime.now())
+		if((lastAccess+period(ticking))<GameTime.now())
 		{
 			if(this.rlHour>=0)
 			{
@@ -177,49 +419,36 @@ public class ResetWhole extends StdBehavior
 				if(resetDone)
 					return true;
 			}
-
-			if(ticking instanceof Area)
-			{
-				for(final Enumeration<Room> r=((Area)ticking).getMetroMap();r.hasMoreElements();)
-				{
-					Room R=r.nextElement();
-					for(final Enumeration<Behavior> e=R.behaviors();e.hasMoreElements();)
-					{
-						final Behavior B=e.nextElement();
-						if((B!=null)&&(B.ID().equals(ID())))
-						{
-							R=null;
-							break;
-						}
-					}
-					if((R!=null)&&(!this.isRoomBeingCamped(R)))
-					{
-						resetDone = true;
-						CMLib.map().resetRoom(R, true);
-					}
-				}
-			}
-			else
-			if(ticking instanceof Room)
-			{
-				if(!this.isRoomBeingCamped((Room)ticking))
-				{
-					resetDone = true;
-					CMLib.map().resetRoom((Room)ticking, true);
-				}
-			}
-			else
-			{
-				final Room room=super.getBehaversRoom(ticking);
-				if((room!=null) && (!this.isRoomBeingCamped(room)))
-				{
-					resetDone = true;
-					CMLib.map().resetRoom(room, true);
-				}
-			}
+			resetNow(ticking);
 			if(time > 0)
 				lastAccess=GameTime.now();
 		}
 		return true;
+	}
+
+	/** W9: the game time since a player was last there, a message waiting, and a reset done this hour, for a save */
+	@Override
+	protected String getRunState()
+	{
+		final boolean done = resetDone && ((rlHour >= 0) || (mudHour >= 0));
+		if((lastAccess < 0) && (!msgPending) && (!done))
+			return "";
+		return "<RESETWHOLE" + ((lastAccess < 0) ? "" : (" AGO=\"" + (GameTime.now() - lastAccess) + "\""))
+			+ (msgPending ? " MSG=\"TRUE\"" : "") + (done ? " DONE=\"TRUE\"" : "") + " />";
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		for(final XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(xml))
+		{
+			if(tag.tag().equalsIgnoreCase("RESETWHOLE"))
+			{
+				final String ago = tag.getParmValue("AGO");
+				lastAccess = ((ago == null) || (ago.length() == 0)) ? -1 : (GameTime.now() - CMath.s_long(ago));
+				msgPending = "TRUE".equalsIgnoreCase(tag.getParmValue("MSG"));
+				resetDone = "TRUE".equalsIgnoreCase(tag.getParmValue("DONE"));
+			}
+		}
 	}
 }

@@ -2488,6 +2488,15 @@ W18, W19, W20, W21, W22, W23, W28, W29
   mode before put back as they leave (`RESTORE=TRUE`, the default),
   `ONLYCOMBAT=TRUE` only while they fight there, `MSG=` as it switches;
   TIMEMODE there says time is held. A save keeps the mode before.
+- W9 done. ResetWhole `DAYS=n` (game days of the area's calendar, in
+  place of TICKS), `EXCEPT=mask` (a mob or item it names that is gone when
+  the reset comes, a slain boss or taken loot, stays gone; one still there
+  stays, once; a name with spaces as `+'the Goblin King'`, which it gives
+  the masks as `"+the Goblin King"`), and `MSG=` shown to the first who
+  comes in after a reset (the move's trailer, after the room's look).
+  Its time since the last visit and a waiting message are kept in a save
+  (its STATE); a party member with no window counts as a visit. RLHOUR is
+  noted in the help as meaning nothing with pause and turn-based time.
 
 #### 2j. Generators and random content (16)
 

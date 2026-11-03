@@ -698,6 +698,10 @@ market open, and a storm's script ends a wait with <code>MPINTERRUPT $n Thunder 
 <p>Zones of their own time: the flooding tomb's <code>Prop_TimeMode MODE=REALTIME MSG="Time seems to quicken."</code>
 runs in real time, the water rising every few seconds; the chess-puzzle hall is always turn-based; the player's own
 choice comes back as they leave, and TIMEMODE cannot change it inside.</p>
+<p>Refilling dungeons: the Goblin Warrens'
+<code>ResetWhole DAYS=7 EXCEPT="-NAME +'the Goblin King'" MSG="Fresh tracks lead into the tunnels."</code>
+fill again a week of game days after the party leaves, but a slain King stays slain; the line tells the player
+as they come back.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
