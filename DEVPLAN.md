@@ -2689,6 +2689,18 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   that many rooms came from that ROOM template (the percolator now notes
   each room's template ids): the deepest rooms, of the REPLACE template if
   given, are emptied and filled from it (G9's fillRoom), their exits kept.
+- G8 done. `layout="MAP"` (`Libraries/layouts/MapLayout`): the AREA's
+  `<MAP>` text or its `MAPFILE=` (a `world/` path or a resource), the
+  indentation its lines share taken off. Characters other than links and
+  spaces are rooms: `.` street, `o` interior, `L` leaf, `@` the entrance
+  (first), `^`/`v` stairs, others by their links' count (leaf, street,
+  square); `<GLYPH char="B" room="id">` builds that glyph from a ROOM
+  template. Rooms side by side join; `-` and `|` join rooms a space apart,
+  `+` with a door (a GenDoor both ways, after the layout), `/` and `\`
+  diagonally; a line of `=` starts the floor above, a `^` joining the
+  nearest `v` in its column there. Straight streets get their run, and the
+  layout's flags are filled in as for the others. Rooms also get
+  `ROOMTAG_GLYPH` and `ROOMTAG_DOORS`. The size is the rooms drawn.
 
 #### 2k. Crafting, gathering and housing (21)
 

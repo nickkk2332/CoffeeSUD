@@ -768,6 +768,11 @@ fallback="jail_key" where="reachable-without:keyname=$areaname jail" in="mob|con
 always exactly one jail key, on a guard or in the warden's desk, never inside a locked cell; and
 <code>&lt;ENSURE room="warden_office" count="1"/&gt;</code> makes sure the warden has an office (AHELP
 GENERATE).</p>
+<p>A drawn floor plan: the owner draws the 25-room Abbey of St. Corwin in <code>world/maps/abbey.txt</code>
+(<code>@</code> the gate, <code>o</code> rooms, <code>+</code> doors, <code>C</code> the chapel), gives the AREA
+<code>layout="MAP" mapfile="world/maps/abbey.txt"</code> and <code>&lt;GLYPH char="C" room="chapel"/&gt;</code>,
+and the forest-ruins theme dresses the rest; REGENERATE changes text and mobs but keeps the plan (AHELP
+GENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

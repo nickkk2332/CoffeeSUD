@@ -1045,6 +1045,11 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			t.put("INDEX", "" + i);
 			t.put("X", "" + ((n.coord().length > 0) ? n.coord()[0] : 0));
 			t.put("Y", "" + ((n.coord().length > 1) ? n.coord()[1] : 0));
+			if(defined.get("LAYOUT_MANAGER") instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout) // G8: the glyph it was drawn with, and its doors
+			{
+				t.put("GLYPH", "" + ((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)defined.get("LAYOUT_MANAGER")).glyphOf(n));
+				t.put("DOORS", ((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)defined.get("LAYOUT_MANAGER")).doorsOf(n));
+			}
 			tags.put(n, t);
 		}
 		defined.put("LAYOUT_NODETAGS", tags);
@@ -1902,6 +1907,92 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			Log.errOut("MUDPercolator","ENSURE room="+roomId+" in '"+A.Name()+"': "+have+" of "+count);
 	}
 
+	/**
+	 * G8: layout="MAP": the map from the AREA's MAP tag or its MAPFILE, and
+	 * its GLYPH tags, a character to a ROOM template's id.
+	 * @param L the layout
+	 * @param piece the AREA tag
+	 * @param defined the variables
+	 * @throws CMException if there is no map
+	 */
+	protected void prepareMap(final com.planet_ink.coffee_mud.Libraries.layouts.MapLayout L, final XMLTag piece, final Map<String,Object> defined) throws CMException
+	{
+		String text=null;
+		final String file=piece.getParmValue("MAPFILE");
+		if((file!=null)&&(file.trim().length()>0))
+		{
+			final String path=strFilterNow(null,null,null,file.trim(),piece,defined).trim();
+			final CMFile F=new CMFile(path.toLowerCase().startsWith("world/")?path:Resources.buildResourcePath(path),null);
+			if(!F.canRead())
+				throw new CMException("The MAPFILE "+path+" cannot be read");
+			text=F.text().toString();
+		}
+		else
+		{
+			for(final XMLTag t : piece.contents())
+			{
+				if(t.tag().equalsIgnoreCase("MAP"))
+				{
+					text=CMLib.xml().restoreAngleBrackets(t.value());
+					break;
+				}
+			}
+		}
+		if((text==null)||(text.trim().length()==0))
+			throw new CMException("layout=MAP needs a MAP tag or a MAPFILE");
+		L.setMap(text);
+		final Map<String,String> glyphRooms=new HashMap<String,String>();
+		for(final XMLTag t : piece.contents())
+		{
+			if(!t.tag().equalsIgnoreCase("GLYPH"))
+				continue;
+			final String c=t.getParmValue("CHAR");
+			final String r=t.getParmValue("ROOM");
+			if((c!=null)&&(c.length()>0)&&(r!=null)&&(r.trim().length()>0))
+				glyphRooms.put(c.substring(0,1),r.trim().toUpperCase());
+		}
+		defined.put("LAYOUT_GLYPHROOMS",glyphRooms);
+	}
+
+	/**
+	 * G8: the exits drawn with a + on the map made doors (GenDoor), both ways.
+	 * @param L the layout
+	 * @param defined the variables, with LAYOUT_NODES
+	 */
+	protected void mapDoors(final com.planet_ink.coffee_mud.Libraries.layouts.MapLayout L, final Map<String,Object> defined)
+	{
+		final Object o=defined.get("LAYOUT_NODES");
+		if(!(o instanceof List))
+			return;
+		for(final Object no : (List<?>)o)
+		{
+			if(!(no instanceof LayoutNode))
+				continue;
+			final LayoutNode n=(LayoutNode)no;
+			final Room R=n.room();
+			if(R==null)
+				continue;
+			for(final String dc : L.doorsOf(n).split(","))
+			{
+				if(dc.trim().length()==0)
+					continue;
+				final int d=CMLib.directions().getGoodDirectionCode(dc.trim());
+				if(d<0)
+					continue;
+				final Exit E=R.getRawExit(d);
+				if((E!=null)&&E.hasADoor())
+					continue;
+				final Exit D=CMClass.getExit("GenDoor");
+				if(D==null)
+					continue;
+				R.setRawExit(d,D);
+				final Room N=R.rawDoors()[d];
+				if(N!=null)
+					N.setRawExit(Directions.getOpDirectionCode(d),D);
+			}
+		}
+	}
+
 	// vars created: LINK_DIRECTION, AREA_CLASS, AREA_NAME, AREA_DESCRIPTION, AREA_LAYOUT, AREA_SIZE
 	@Override
 	public boolean fillInArea(final XMLTag piece, final Map<String,Object> defined, final Area A, final int direction) throws CMException
@@ -1914,7 +2005,9 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			throw new CMException("Undefined Layout "+layoutType);
 		defined.put("AREA_LAYOUT",layoutManager.name());
 		defined.put("LAYOUT_MANAGER",layoutManager);
-		String size = findStringNow("size",piece,defined);
+		if(layoutManager instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout) // G8: the drawn map, and the templates its glyphs name
+			prepareMap((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)layoutManager,piece,defined);
+		String size = (layoutManager instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)?(""+((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)layoutManager).roomCount()):findStringNow("size",piece,defined);
 		if(CMath.isMathExpression(size))
 			size=Integer.toString(CMath.parseIntExpression(size));
 		if((!CMath.isInteger(size))||(CMath.s_int(size)<=0))
@@ -1951,6 +2044,8 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		try
 		{
 			layOutRooms(A, layoutManager, CMath.s_int(size), direction, piece, defined);
+			if(layoutManager instanceof com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)
+				mapDoors((com.planet_ink.coffee_mud.Libraries.layouts.MapLayout)layoutManager,defined); // G8: + on the map, a door
 			applyEnsures(A, piece, defined); // G7: the AREA's ENSURE tags, on the rooms laid out and filled
 			CMLib.map().delArea(A); // we added it for id assignment, now we are done.
 		}
@@ -2005,7 +2100,16 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 				defs.append(key+"="+CMStrings.limit(groupDefined.get(key).toString(),10)+",");
 			Log.debugOut("MUDPercolator","DEFS: "+defs.toString());
 		}
-		final Room R=findRoom(A,piece, groupDefined, exits, direction);
+		XMLTag roomPiece=piece; // G8: a glyph a GLYPH tag names is built from its template
+		final Object glyphRooms=groupDefined.get("LAYOUT_GLYPHROOMS");
+		final Object glyph=groupDefined.get("ROOMTAG_GLYPH");
+		if((glyphRooms instanceof Map)&&(glyph!=null)&&((Map<?,?>)glyphRooms).containsKey(glyph.toString()))
+		{
+			final Object gp=groupDefined.get(((Map<?,?>)glyphRooms).get(glyph.toString()).toString());
+			if((gp instanceof XMLTag)&&((XMLTag)gp).tag().equalsIgnoreCase("ROOM"))
+				roomPiece=(XMLTag)gp;
+		}
+		final Room R=findRoom(A,roomPiece, groupDefined, exits, direction);
 		if(R==null)
 			throw new CMException("Failure to generate room from "+piece.value());
 		R.setRoomID(A.getNewRoomID(null,-1));
