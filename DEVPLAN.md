@@ -3186,6 +3186,11 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   (COMMONACCOUNTSYSTEM, PROFILEMAX) or party (PARTYMAX, the connection
   cap). MPRECRUIT in scripts; the new Prop_Recruitable (MASK, COST,
   MESSAGE, NAME) and RECRUIT command.
+- P2 done. `core/LevelUps`: up(mob, n) posts getExpNeededLevel()+1
+  for each level (or calls level() with no experience), stopping when a
+  level is not gained; down(mob, n) calls unLevel with the experience
+  set back; toNext(mob). MPLEVELUP and MPLEVELDOWN ($n [n]), MPEXP $n
+  NEXTLEVEL and EXPTONEXT($n) use them.
 
 #### 2p. Presentation (18)
 

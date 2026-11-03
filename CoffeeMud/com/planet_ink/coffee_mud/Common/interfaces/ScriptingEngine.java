@@ -793,6 +793,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"KNOWSRECIPE", //221
 		"EFFECTPARM", //222 P1
 		"HASPERK", //223 P13
+		"EXPTONEXT", //224 P2
 	};
 
 	/** String list of all valid mobprog commands */
@@ -946,6 +947,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPLEARNRECIPE", // 146
 		"MPPERK", // 147 P13
 		"MPRECRUIT", // 148 P9
+		"MPLEVELUP", // 149 P2
+		"MPLEVELDOWN", // 150 P2
 	};
 
 	/**

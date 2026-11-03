@@ -11672,6 +11672,12 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if(newTarget instanceof MOB)
 				{
 					final MOB targM = (MOB)newTarget;
+					if(amtStr.equalsIgnoreCase("NEXTLEVEL"))
+					{
+						// P2: exactly what the next level needs
+						LevelUps.up(targM, 1, "SCRIPT:"+defaultQuestName);
+						break;
+					}
 					if((amtStr.endsWith("%"))
 					&&(targM.getExpNeededLevel()<Integer.MAX_VALUE))
 					{
@@ -16122,6 +16128,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final LandTitle LT=titleOf(propertyPlace(ctx,parms.trim()));
 			return (LT==null)?"":(LT.landPropertyID()+" "+LT.getPrice());
 		}
+		case "EXPTONEXT": // P2: EXPTONEXT($n): the experience $n needs for its next level, 0 when none
+		{
+			final Environmental W=getArgumentMOB(parms.trim(),ctx);
+			return (W instanceof MOB)?(""+LevelUps.toNext((MOB)W)):"0";
+		}
 		case "HASPERK": // P13: HASPERK($n PERK_ID): $n has taken that perk (by ID or name)
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -16970,6 +16981,23 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
 			if(said!=null)
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
+		case "MPLEVELUP": // P2: MPLEVELUP $n [n]: exactly n levels (1 if not given)
+		case "MPLEVELDOWN": // P2: MPLEVELDOWN $n [n]: n levels lower, the experience set back
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String nStr=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			final int n=(nStr.length()==0)?1:CMath.s_int(nStr);
+			if((!(W instanceof MOB))||(n<1))
+			{
+				logError(ctx,cmd,"Syntax",cmd+" $n [number of levels]: "+line);
+				return null;
+			}
+			if(cmd.equals("MPLEVELUP"))
+				LevelUps.up((MOB)W,n,"SCRIPT:"+defaultQuestName);
+			else
+				LevelUps.down((MOB)W,n);
 			return null;
 		}
 		case "MPRECRUIT": // P9: MPRECRUIT npc player [PARTY|REST] [NAME=name]: the NPC joins the player's profile
