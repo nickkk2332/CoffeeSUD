@@ -64,6 +64,7 @@ public class GenRace extends StdRace
 	protected Race				eventBuddy			= null;
 	protected Race				weaponBuddy			= null;
 	protected String			helpEntry			= "";
+	protected String			nameStyle			= ""; // G12: NAMESTYLE
 	protected String[]			racialEffectNames	= null;
 	protected int[]				racialEffectLevels	= null;
 	protected String[]			racialEffectParms	= null;
@@ -490,6 +491,8 @@ public class GenRace extends StdRace
 		str.append(CMLib.xml().convertXMLtoTag("ARRIVE",arriveStr()));
 		str.append(CMLib.xml().convertXMLtoTag("LEAVE",leaveStr()));
 		str.append(CMLib.xml().convertXMLtoTag("HELP",CMLib.xml().parseOutAngleBrackets(helpEntry)));
+		if(nameStyle.length()>0)
+			str.append(CMLib.xml().convertXMLtoTag("NAMESTYLE",nameStyle)); // G12
 		str.append(CMLib.xml().convertXMLtoTag("AGING",CMParms.toListString(getAgingChart())));
 		if(adjPStats==null)
 			str.append("<ESTATS/>");
@@ -673,6 +676,7 @@ public class GenRace extends StdRace
 		isRideable=CMLib.xml().getBoolFromPieces(raceData,"RIDE");
 
 		helpEntry=CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(raceData,"HELP"));
+		nameStyle=CMLib.xml().getValFromPieces(raceData,"NAMESTYLE").trim(); // G12
 		final String playerval=CMLib.xml().getValFromPieces(raceData,"PLAYER").trim().toUpperCase();
 		if(playerval.length()>0)
 		{
@@ -944,7 +948,7 @@ public class GenRace extends StdRace
 									 "BREATHES","CANRIDE",
 									 "NUMIABLE","GETIABLE",
 									 "XPADJ", "CLASS",
-									 "GETCABLEPARM"
+									 "GETCABLEPARM", "NAMESTYLE"
 									 };
 
 	@Override
@@ -1084,6 +1088,8 @@ public class GenRace extends StdRace
 			return ID();
 		case 54:
 			return (culturalAbilityParms == null) ? "" : ("" + culturalAbilityParms[num]);
+		case 55:
+			return nameStyle;
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1641,6 +1647,9 @@ public class GenRace extends StdRace
 			this.mappedCulturalAbilities=false;
 			break;
 		}
+		case 55: // G12: NAMESTYLE
+			nameStyle=(val==null)?"":val.trim();
+			break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);
 			break;

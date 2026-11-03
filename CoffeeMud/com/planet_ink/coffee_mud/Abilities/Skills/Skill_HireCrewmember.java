@@ -628,7 +628,7 @@ public class Skill_HireCrewmember extends StdSkill
 			final MOB targetM=CMClass.getMOB("GenMob");
 			final List<Race> races=CMLib.login().raceQualifies(mob, Area.THEME_FANTASY);
 			final Race raceR=races.get(CMLib.dice().roll(1, races.size(), -1));
-			final String name=CMLib.login().generateRandomName(1, 5);
+			final String name=NameStyles.make(NameStyles.styleFor(raceR), 1, 5, '?', false); // G12
 			final String raceName=raceR.name();
 			switch(CMLib.dice().roll(1, 5, -1))
 			{

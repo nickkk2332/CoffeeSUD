@@ -365,7 +365,7 @@ public class Spell_TrueName extends Spell
 				trueName=trueNames.get(target.Name());
 			else
 			{
-				trueName = CMLib.login().generateRandomName(2, 6);
+				trueName = NameStyles.make(NameStyles.styleFor(target), 2, 6, '?', false); // G12: in the target's race's style
 				while(trueNames.size()>100)
 					trueNames.remove(trueNames.keySet().iterator().next());
 				trueNames.put(target.Name(), trueName);

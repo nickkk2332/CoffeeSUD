@@ -745,6 +745,11 @@ first time it is opened, until the room resets; a rare <code>class="catalog"</co
 of the Bear...) give goblin loot like "a Rusty short sword of Bleeding", each fitting the item's kind and level;
 <code>Prop_LootTable ... AFFIXES=0?1</code> or <code>AFFIXES="0?2"</code> on a template ITEM ask for them (AHELP
 AFFIXES).</p>
+<p>Name styles: <code>resources/namegen/dwarvish.ini</code> holds dwarvish syllables, given names and
+family names, so the hold's guards are made with <code>$SYSTEM_RANDOM_NAME:2-3:dwarvish</code> (Thrandin,
+Borgrum), a script's <code>RANDNAME(Dwarf M FULL)</code> gives names like "Thrain Ironhand", and <code>NEW * dwarf</code>
+offers a dwarvish name. Goblins, orcs and kobolds share <code>goblin.ini</code>'s harsh syllables; a GenRace's
+own NAMESTYLE picks another (AHELP NAMESTYLES).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

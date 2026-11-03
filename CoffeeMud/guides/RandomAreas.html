@@ -387,7 +387,13 @@ variables</span>:<br />
       <ul>
         <li>$SYSTEM_RANDOM_NAME:[NUMX]-[NUMY]
 generate a random
-name with between NUMX and NUMY syllables.</li>
+name with between NUMX and NUMY syllables.  CoffeeSUD:
+<code>$SYSTEM_RANDOM_NAME:2-4:elvish</code> names the name style (a style
+in <code>world/namegen/</code> or <code>resources/namegen/</code>, a race
+or a language), and <code>:FULL</code> after it adds the style's family
+name and title.  With no style, a NAMESTYLE the template or its theme
+defines is used, else the mob's race's style (AHELP NAMESTYLES).
+<code>${SYSTEM_RANDOM_NAME:2-4}</code> works too.</li>
         <li>${STAT:[STATNAME]} embed the value from another stat
 on the same object.&nbsp; STATs are things like NAME, DISPLAY,
 DESCRIPTION, etc...</li>

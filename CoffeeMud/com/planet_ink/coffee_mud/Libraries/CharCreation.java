@@ -71,8 +71,6 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	protected final PairList<CompiledZMask, String>	deathRoomMasks			= new PairVector<CompiledZMask, String>();
 	protected final Map<String, String>				bodyRooms				= new Hashtable<String, String>();
 	protected final PairList<CompiledZMask, String>	bodyRoomMasks			= new PairVector<CompiledZMask, String>();
-	protected Pair<String, Integer>[]				randomNameVowels		= null;
-	protected Pair<String, Integer>[]				randomNameConsonants	= null;
 	protected CompiledZMask							requiresDeityMask		= null;
 	protected CompiledZMask							deitiesMask				= null;
 	protected boolean								propertiesReLoaded		= true;
@@ -1205,6 +1203,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return null;
 		}
 		loginObj.login = CMStrings.replaceAll(loginObj.login,"\\","").trim();
+		final String starAfter=loginObj.login.startsWith("*")?loginObj.login.substring(1).trim():""; // G12: * [style|race|language]
 		// this loop is for malformed ansi responses, it strips the trailing letters
 		for(int i=loginObj.login.length()-2;i>=0;i--)
 		{
@@ -1227,13 +1226,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return null;
 		}
 		if(loginObj.login.indexOf('*')>=0)
-		{
-			loginObj.login = generateRandomName(3, 6);
-			while((!isOkName(loginObj.login,false))
-			|| (CMLib.players().playerExistsAllHosts(loginObj.login))
-			|| (CMLib.players().accountExistsAllHosts(loginObj.login)))
-				loginObj.login = generateRandomName(3, 8);
-		}
+			loginObj.login = randomLoginName(starAfter); // G12
 		if(loginObj.login.endsWith("!"))
 		{
 			loginObj.login=loginObj.login.substring(0,loginObj.login.length()-1);
@@ -1983,10 +1976,14 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			}
 			if(parms[1].indexOf('*')>=0)
 			{
-				parms[1]=generateRandomName(3,6);
-				while((!isOkName(parms[1],false)) || (CMLib.players().playerExistsAllHosts(parms[1])) || (CMLib.players().accountExistsAllHosts(parms[1])))
-					parms[1] = generateRandomName(3, 8);
-				loginObj.savedInput=CMStrings.replaceFirst(loginObj.savedInput, "*", parms[1]);
+				// G12: NEW * [style|race|language]: a name in that style
+				String after=parms[1].substring(parms[1].indexOf('*')+1).trim();
+				for(int p=2;(p<parms.length)&&(!parms[p].equalsIgnoreCase("<CONFIRMED>"));p++)
+					after=(after+" "+parms[p]).trim();
+				if((after.length()>0)&&(NameStyles.resolve(after)==null))
+					session.println(L("There is no name style, race or language called '@x1'.",after));
+				parms[1]=randomLoginName(after);
+				loginObj.savedInput=parms[0]+" "+parms[1];
 			}
 			if(CMProps.isSinglePlayer()
 			&&(CMLib.database().DBUserSearch(CMStrings.capitalizeAndLower(parms[1]))!=null))
@@ -5183,92 +5180,36 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	protected Pair<String,Integer>[] makeRandomNameSets(final String rawData)
-	{
-		final List<Pair<String,Integer>> set=new ArrayList<Pair<String,Integer>>();
-		for(int i=0;i<rawData.length();i++)
-		{
-			final int start=i;
-			while((i+1<rawData.length())&&(!Character.isDigit(rawData.charAt(i))))
-				i++;
-			set.add(new Pair<String,Integer>(rawData.substring(start,i),Integer.valueOf(rawData.substring(i,i+1))));
-		}
-		return set.toArray(new Pair[0]);
-	}
-
-	protected Pair<String,Integer>[] getRandomVowels()
-	{
-		if(randomNameVowels == null)
-		{
-			randomNameVowels=makeRandomNameSets("a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7"
-					+"a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7a7e7i7o7u7ae7ai7ao7au7aa7ea7eo7eu7ee7eau7ia7io7iu7ii7oa7oe7oi7ou7oo7'4y7ay7ay7ei7ei7ei7ua7ua7");
-		}
-		return randomNameVowels;
-	}
-
-	protected Pair<String,Integer>[] getRandomConsonants()
-	{
-		if(randomNameConsonants == null)
-		{
-			randomNameConsonants=makeRandomNameSets("b7c7d7f7g7h7j7k7l7m7n7p7qu6r7s7t7v7w7x7y7z7sc7ch7gh7ph7sh7th7wh6ck5nk5rk5sk7wk0cl6fl6gl6kl6ll6pl6sl6"
-					+"br6cr6dr6fr6gr6kr6pr6sr6tr6ss5st7str6b7c7d7f7g7h7j7k7l7m7n7p7r7s7t7v7w7b7c7d7f7g7h7j7k7l7m7n7p7r7s7t7v7w7br6dr6fr6gr6kr6");
-		}
-		return randomNameConsonants;
-	}
-
 	@Override
 	public String generateRandomName(final int minSyllable, final int maxSyllable)
 	{
-		final StringBuilder name=new StringBuilder("");
-		final DiceLibrary dice=CMLib.dice();
-		final int numSyllables = (maxSyllable<=minSyllable)?minSyllable:dice.roll(1, maxSyllable-minSyllable+1, minSyllable-1);
-		boolean isVowel=CMLib.dice().rollPercentage()>0;
-		final Pair<String,Integer>[] vowels=getRandomVowels();
-		final Pair<String,Integer>[] cons=getRandomConsonants();
-		for(int i=1;i<=numSyllables;i++)
-		{
-			Pair<String,Integer> data = null;
-			for(int x=0;x<100;x++)
-			{
-				if (isVowel)
-				{
-					data=vowels[dice.roll(1, vowels.length, -1)];
-				}
-				else
-				{
-					data=cons[dice.roll(1, cons.length, -1)];
-				}
-				if(i==1)
-				{
-					if(CMath.bset(data.second.intValue(),2))
-					{
-						break;
-					}
-				}
-				else
-				if(i==numSyllables)
-				{
-					if(CMath.bset(data.second.intValue(),1))
-					{
-						break;
-					}
-				}
-				else
-				{
-					if(CMath.bset(data.second.intValue(),4))
-					{
-						break;
-					}
-				}
-			}
-			if(data != null)
-			{
-				name.append(data.first);
-			}
-			isVowel = !isVowel;
-		}
-		return CMStrings.capitalizeFirstLetter(name.toString());
+		return NameStyles.make(NameStyles.get(NameStyles.DEFAULT), minSyllable, maxSyllable, '?', false); // G12: the default style
+	}
+
+	/**
+	 * G12: true if a random name cannot be used: not a good name, or taken.
+	 * @param n the name
+	 * @return true if it cannot be used
+	 */
+	protected boolean badRandomName(final String n)
+	{
+		return (!isOkName(n,false)) || (CMLib.players().playerExistsAllHosts(n)) || (CMLib.players().accountExistsAllHosts(n));
+	}
+
+	/**
+	 * G12: a random name for NEW * or a login *, in the style, race or
+	 * language named after the star.
+	 * @param after what came after the star
+	 * @return a name that can be used
+	 */
+	protected String randomLoginName(final String after)
+	{
+		String nm=NameStyles.loginName(after,3,6);
+		for(int tries=0;(tries<200)&&badRandomName(nm);tries++)
+			nm=NameStyles.loginName(after,3,8);
+		while(badRandomName(nm))
+			nm=generateRandomName(3,8);
+		return nm;
 	}
 
 	public LoginResult loginSystem(final Session session, final LoginSessionImpl loginObj) throws IOException

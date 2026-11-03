@@ -16031,6 +16031,47 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return "";
 			}
 		}
+		case "RANDNAME": // G12: RANDNAME([style|race|language] [min max] [M|F|N] [FULL]): a random name in that style
+		{
+			String style=null;
+			char gender='?';
+			boolean full=false;
+			final List<Integer> nums=new ArrayList<Integer>();
+			for(final String x : unquotedWords(varify(ctx,parms)))
+			{
+				final String u=x.toUpperCase().trim();
+				if(CMath.isInteger(u))
+					nums.add(Integer.valueOf(CMath.s_int(u)));
+				else
+				if(u.equals("FULL"))
+					full=true;
+				else
+				if(u.equals("M")||u.equals("MALE"))
+					gender='M';
+				else
+				if(u.equals("F")||u.equals("FEMALE"))
+					gender='F';
+				else
+				if(u.equals("N")||u.equals("NEUTER"))
+					gender='N';
+				else
+				if(u.length()>0)
+					style=(style==null)?x.trim():(style+" "+x.trim());
+			}
+			String s=NameStyles.DEFAULT;
+			if(style!=null)
+			{
+				s=NameStyles.resolve(style);
+				if(s==null)
+				{
+					logError(ctx,"RANDNAME","RunTime","No name style, race or language called '"+style+"'");
+					return "";
+				}
+			}
+			final int lo=(nums.size()>0)?nums.get(0).intValue():0;
+			final int hi=(nums.size()>1)?nums.get(1).intValue():lo;
+			return NameStyles.make(NameStyles.get(s),lo,hi,gender,full);
+		}
 		case "ISHOLIDAY": // W6: ISHOLIDAY(name): that holiday (a quest by that name) is on
 			return Holidays.on(CMParms.combine(unquotedWords(varify(ctx,parms)),0))?"true":"false";
 		case "HOLIDAY": // W6: HOLIDAY(): the holidays on now, by name

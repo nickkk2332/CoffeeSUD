@@ -1870,6 +1870,14 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			{
 				while((x<str.length())&&((str.charAt(x)=='_')||Character.isLetterOrDigit(str.charAt(x))))
 					x++;
+				if((x<str.length())&&(str.charAt(x)==':')&&str.substring(var.outerStart+1,x).equalsIgnoreCase("SYSTEM_RANDOM_NAME"))
+				{
+					// G12: $SYSTEM_RANDOM_NAME:2-4[:style][:FULL] unbraced, as the guide writes it (it stopped at the colon)
+					while((x<str.length())&&((str.charAt(x)==':')||(str.charAt(x)=='-')||(str.charAt(x)=='_')||Character.isLetterOrDigit(str.charAt(x))))
+						x++;
+					while((str.charAt(x-1)==':')||(str.charAt(x-1)=='-'))
+						x--;
+				}
 				var.var = str.substring(var.outerStart+1,x);
 				var.outerEnd=x;
 				if((var.var.length()==0)
@@ -3631,6 +3639,23 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		return found;
 	}
 
+	/**
+	 * G12: the name style for a random name that names none: a NAMESTYLE the
+	 * template or its theme defines, else the mob's race's, else default.
+	 * @param E the thing being built
+	 * @param defined the defined variables
+	 * @return the style, or null for default
+	 */
+	protected String nameStyleFor(final Modifiable E, final Map<String,Object> defined)
+	{
+		final Object o=(defined==null)?null:defined.get("NAMESTYLE");
+		if((o instanceof String)&&(((String)o).trim().length()>0)&&(NameStyles.resolve((String)o)!=null))
+			return NameStyles.resolve((String)o);
+		if(E instanceof MOB)
+			return NameStyles.styleFor((MOB)E);
+		return null;
+	}
+
 	protected String findString(final Modifiable E, final List<String> ignoreStats, final String defPrefix, String tagName,
 								XMLTag piece, final Map<String,Object> defined) throws CMException,PostProcessException
 	{
@@ -3641,9 +3666,31 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		case 'S':
 			if(tagName.startsWith("SYSTEM_RANDOM_NAME:"))
 			{
-				final String[] split=tagName.substring(19).split("-");
-				if((split.length==2)&&(CMath.isInteger(split[0]))&&(CMath.isInteger(split[1])))
-					return CMLib.login().generateRandomName(CMath.s_int(split[0]), CMath.s_int(split[1]));
+				// G12: SYSTEM_RANDOM_NAME:min-max[:style|race|language][:FULL]
+				final String[] parts=tagName.substring(19).split(":");
+				final String[] split=parts[0].split("-");
+				if((split.length==2)&&(CMath.isInteger(split[0].trim()))&&(CMath.isInteger(split[1].trim())))
+				{
+					String style=null;
+					boolean full=false;
+					for(int p=1;p<parts.length;p++)
+					{
+						if(parts[p].trim().equals("FULL"))
+							full=true;
+						else
+						if(parts[p].trim().length()>0)
+							style=parts[p].trim();
+					}
+					if(style!=null)
+					{
+						if(NameStyles.resolve(style)==null)
+							throw new CMException("Unknown name style '"+style+"' in '"+tagName+"' on piece '"+piece.tag()+"'");
+					}
+					else
+						style=nameStyleFor(E,defined);
+					final char gender=(E instanceof MOB)?(char)((MOB)E).baseCharStats().getStat(CharStats.STAT_GENDER):'?';
+					return NameStyles.make(style, CMath.s_int(split[0].trim()), CMath.s_int(split[1].trim()), gender, full);
+				}
 				throw new CMException("Bad random name range in '"+tagName+"' on piece '"+piece.tag()+"', Data: "+CMParms.toKeyValueSlashListString(piece.parms())+":"+CMStrings.limit(piece.value(),100));
 			}
 			break;
@@ -7946,6 +7993,9 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			else
 			if(V.var.equals("$"))
 				val="$";
+			else
+			if(V.var.toUpperCase().startsWith("SYSTEM_RANDOM_NAME:")) // G12: the guide's $SYSTEM_RANDOM_NAME:2-4 was never looked up here
+				val=findString(E,ignoreStats,defPrefix,V.var,piece,defined);
 			else
 				val = defined.get(V.var.toUpperCase().trim());
 			if(val instanceof XMLTag)

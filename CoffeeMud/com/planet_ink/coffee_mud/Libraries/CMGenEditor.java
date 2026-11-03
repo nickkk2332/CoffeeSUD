@@ -9798,8 +9798,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 
 			promptStatBool(mob, me, ++showNumber, showFlag, L("Is Natural"), "NATURALLANG");
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Source Verb"),"VERB",true);
-			promptStatStr(mob,me,null,++showNumber,showFlag,L("Translation Verb"),"TRANVERB",true);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Translation Verb"),"TRANSVERB",true);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Name style"),"NAMESTYLE",true); // G12
 
 			if (showFlag < -900)
 			{
@@ -10834,6 +10835,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			genCulturalAbilities(mob,me,++showNumber,showFlag);
 			genDynamicEffects(mob,me,L("Racial"),L("char"),++showNumber,showFlag);
 			genDynamicImmunitiess(mob,me,"Racial",++showNumber,showFlag);
+			promptStatStr(mob,me,++showNumber,showFlag,L("Name style"),"NAMESTYLE"); // G12
 
 			if (showFlag < -900)
 			{

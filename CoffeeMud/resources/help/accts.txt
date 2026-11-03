@@ -2,6 +2,7 @@
 LIST                    : list your characters
 [CHARACTER NAME]        : play that character
 NEW [CHARACTER NAME]    : create a new character
+NEW * [STYLE OR RACE]   : create one with a random name, in that name style
 RETIRE [CHARACTER NAME] : delete one of your characters
 ANSI [ON/OFF]           : toggle ansi color
 QUIT                    : leave the game

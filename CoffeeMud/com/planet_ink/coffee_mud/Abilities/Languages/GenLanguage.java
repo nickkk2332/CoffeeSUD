@@ -65,7 +65,8 @@ public class GenLanguage extends StdLanguage
 	private static final int V_NAT=5;//L<B>
 	private static final int V_VERB=6;//S
 	private static final int V_TVERB=7;//S
-	private static final int NUM_VS=8;//S
+	private static final int V_NSTYLE=8;//S G12: NAMESTYLE
+	private static final int NUM_VS=9;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -78,6 +79,7 @@ public class GenLanguage extends StdLanguage
 		O[V_NAT]=Boolean.TRUE;
 		O[V_VERB]="";
 		O[V_TVERB]="";
+		O[V_NSTYLE]="";
 		return O;
 	}
 
@@ -191,6 +193,7 @@ public class GenLanguage extends StdLanguage
 										 "NATURALLANG", // B
 										 "VERB", // S
 										 "TRANSVERB", // S
+										 "NAMESTYLE", // S G12
 										};
 
 	@Override
@@ -261,6 +264,8 @@ public class GenLanguage extends StdLanguage
 			return V(ID,V_VERB).toString();
 		case 9:
 			return V(ID,V_TVERB).toString();
+		case 10:
+			return V(ID,V_NSTYLE).toString();
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenLanguage";
@@ -359,6 +364,9 @@ public class GenLanguage extends StdLanguage
 			break;
 		case 9:
 			SV(ID, V_TVERB, val);
+			break;
+		case 10:
+			SV(ID, V_NSTYLE, (val==null)?"":val.trim());
 			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenLanguage"))

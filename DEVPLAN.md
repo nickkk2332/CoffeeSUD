@@ -2605,6 +2605,28 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   uses them when the file has any (ItemGenerator ENCHANTED=, digsites), as
   do `AFFIXES=` on Prop_LootTable and RandomItems and `AFFIXES="0?2"` on a
   template ITEM. A sample file of eight ships.
+- G12 done. `core/NameStyles`: name styles as data, one file per style,
+  `world/namegen/STYLE.ini`, else `resources/namegen/STYLE.ini` (or the
+  world's own copy), read again when the file changes. VOWELS= and
+  CONSONANTS= hold syllables in the old makeRandomNameSets format (digit
+  flags 4 middle, 2 first, 1 last), with START=, SYLLABLES=, PREFIXES= and
+  SUFFIXES= (with chances), MALE=, FEMALE= and NEUTER= given names
+  (GIVENPCT=), FAMILY= or FAMILYSTART= and FAMILYEND=, and TITLES= for the
+  full form. RACES= and LANGUAGES= tie a style to races and languages; a
+  GenRace's or GenLanguage's NAMESTYLE (saved with it, in both editors)
+  comes first. The old table is `default` (generateRandomName gives the
+  same names as before); elvish, dwarvish and goblin ship. Templates write
+  `SYSTEM_RANDOM_NAME:2-4:style[:FULL]` (a style, race or language; an
+  unknown one is an error); with none, a NAMESTYLE the template or theme
+  defines, else the mob's race's. `RANDNAME([style] [min max] [M|F|N]
+  [FULL])` in scripts (216). `NEW * dwarf` and a login `* elvish` offer a
+  name in that style; the name is confirmed before the race is picked, so
+  plain `NEW *` stays default. True Name and hired crew use the race's
+  style. Left for P8: `NAME=RANDOM` on player templates. Also fixed: the
+  guide's `$SYSTEM_RANDOM_NAME:2-4` was never looked up in template text
+  (only as a tag name, and the colon ended the variable), so it threw
+  "Unknown variable"; it works now, braced or not. And the language
+  editor's Translation Verb prompt set nothing (TRANVERB).
 
 #### 2k. Crafting, gathering and housing (21)
 
