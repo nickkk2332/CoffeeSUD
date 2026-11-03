@@ -3253,6 +3253,16 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   and HELP. CREATE, MODIFY and DESTROY DISEASE and modifyGenDisease;
   CMAbleParms makes one from a Java disease (spread, difficulty) and names
   the type for COPY.
+- P21 done. `core/HostScripts`: one engine per skill or poison ID for
+  its named functions (`call`, through a ScriptHooks.call that now takes
+  $o), and an engine per mob for a GenRace's or GenCharClass's SCRIPT,
+  fed their tick, okMessage and executeMsg (WeakHashMap, never saved).
+  GenPoison SCRIPT (stat 20): ONAFFECT from startTickDown, ONTICK when it
+  acts, ONCURE from unInvoke. GenCraftSkill SCRIPT (22): ONCRAFTED after
+  dropAWinner, ONFAILED after dropALoser. GenGatheringSkill SCRIPT (26):
+  ONFOUND or ONFAILED as unInvoke ends. GenRace SCRIPT (61), GenCharClass
+  SCRIPT (64), in their XML. All in the editors. GenTweakAbility's script
+  is P22's.
 
 #### 2p. Presentation (18)
 

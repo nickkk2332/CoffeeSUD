@@ -85,7 +85,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	private static final int	V_ACTC			= 17;	// D P14
 	private static final int	V_CACT			= 18;	// D P14
 	private static final int	V_COMP			= 19;	// S P14
-	private static final int	NUM_VS			= 20;	// S
+	private static final int	V_SCRP			= 20;	// S P21
+	private static final int	NUM_VS			= 21;	// S
 
 	//
 
@@ -162,6 +163,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 		O[V_ACTC]=Double.valueOf(-1);
 		O[V_CACT]=Double.valueOf(-1);
 		O[V_COMP]="";
+		O[V_SCRP]="";
 		return O;
 	}
 
@@ -271,6 +273,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 										 "ACTIONCOST",//19D P14
 										 "COMBATACTIONCOST",//20D P14
 										 "COMPONENTS",//21S P14
+										 "SCRIPT",//22S P21
 										};
 
 	@Override
@@ -364,6 +367,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			return AbilityCosts.text(((Double)V(ID, V_CACT)).doubleValue());
 		case 21:
 			return (String) V(ID, V_COMP);
+		case 22:
+			return (String) V(ID, V_SCRP); // P21
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenCraftSkill";
@@ -471,6 +476,9 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			AbilityCosts.componentsChanged(was, (String)V(ID, V_COMP));
 			break;
 		}
+		case 22:
+			SV(ID, V_SCRP, (val==null)?"":val); // P21
+			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenCraftSkill"))
 				parseAllXML(val);
@@ -586,6 +594,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 						{
 							commonEmote(mob,L("<S-NAME> mess(es) up @x1 @x2.",((String)V(ID,V_VERB)),buildingI.name()));
 							dropALoser(mob,buildingI);
+							HostScripts.call("SKILL:"+ID, (String)V(ID,V_SCRP), mob, "ONFAILED", buildingI, buildingI); // P21
 						}
 					}
 					else
@@ -611,6 +620,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 						{
 							dropAWinner(mob,buildingI);
 							CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CRAFTING, 1, this, buildingI);
+							HostScripts.call("SKILL:"+ID, (String)V(ID,V_SCRP), mob, "ONCRAFTED", buildingI, buildingI); // P21: $o the new item
 							if(key!=null)
 							{
 								dropAWinner(mob,key);

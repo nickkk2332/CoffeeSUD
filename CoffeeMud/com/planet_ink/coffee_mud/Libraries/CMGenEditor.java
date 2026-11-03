@@ -9340,6 +9340,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			genOutfit(mob,me,++showNumber,showFlag);
 			promptStatStr(mob,me,++showNumber,showFlag,L("Starting Money"),"MONEY");
 			promptStatStr(mob,me,++showNumber,showFlag,L("Unlock hint (shown under SHOWLOCKED=YES)"),"UNLOCKHINT"); // P18
+			promptStatStr(mob,me,L("A script run on each mob of it, as an effect it never saves; AHELP SKILLSCRIPTS."),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
 			genClassBuddy(mob,me,++showNumber,showFlag,"Stat-Modifying Class","STATCLASS");
 			genClassBuddy(mob,me,++showNumber,showFlag,"Special Events Class","EVENTCLASS");
 			promptStatChoices(mob,me,null,++showNumber,showFlag,L("Sub Class Switch Rule"),"SUBRUL", CMParms.toStringArray(CharClass.SubClassRule.values()));
@@ -9868,6 +9869,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
 			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
+			promptStatStr(mob,me,L("A script whose functions @x1 are called; AHELP SKILLSCRIPTS.","ONCRAFTED and ONFAILED"),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("MSP file"),"SOUND",false);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 
@@ -10087,6 +10089,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Cast Msg"),"CASTMSG",true);
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Cast Fail Msg"),"FAILMSG",true);
 			promptRawStatStr(mob,me,CMLib.help().getHelpText("Prop_HaveAdjuster",mob,true),++showNumber,showFlag,L("Adjustments"),"ADJUSTMENTS",false);
+			promptStatStr(mob,me,L("A script whose functions @x1 are called; AHELP SKILLSCRIPTS.","ONAFFECT, ONTICK and ONCURE"),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 			if (showFlag < -900)
 			{
@@ -10235,6 +10238,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
 			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
+			promptStatStr(mob,me,L("A script whose functions @x1 are called; AHELP SKILLSCRIPTS.","ONFOUND and ONFAILED"),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Is Cosmetic Only"),"ISCOSMETIC");
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can sit"),"CANSIT");
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can bundle"),"CANBUNDLE");
@@ -10963,6 +10967,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Practices/1stLvl"),"FSTPRAC"); // P17
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Prac/Level"),"LVLPRAC"); // P17
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Trains/Level"),"LVLTRAIN"); // P17
+			promptStatStr(mob,me,L("A script run on each mob of it, as an effect it never saves; AHELP SKILLSCRIPTS."),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
 
 			if (showFlag < -900)
 			{

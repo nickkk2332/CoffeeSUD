@@ -82,6 +82,7 @@ public class GenCharClass extends StdCharClass
 	protected String 		startingMoney			= "";
 	protected String		unlockHint				= ""; // P18: UNLOCKHINT
 	protected int			bonusTrainLevel			= 0; // P17: LVLTRAIN
+	protected final HostScripts	scripts			= new HostScripts(); // P21: SCRIPT
 	@SuppressWarnings("unchecked")
 	protected List<String>[]securityGroups			= new List[0];
 	protected Integer[] 	securityGroupLevels		= {};
@@ -475,6 +476,7 @@ public class GenCharClass extends StdCharClass
 			if(!eventBuddy.tick(ticking,tickID))
 				return false;
 		}
+		scripts.tick(ticking, tickID); // P21
 		return super.tick(ticking, tickID);
 	}
 
@@ -483,6 +485,7 @@ public class GenCharClass extends StdCharClass
 	{
 		if(eventBuddy!=null)
 			eventBuddy.executeMsg(myHost, msg);
+		scripts.executeMsg(myHost, msg); // P21
 		super.executeMsg(myHost, msg);
 	}
 
@@ -491,6 +494,8 @@ public class GenCharClass extends StdCharClass
 	{
 		if((eventBuddy!=null)
 		&&(!eventBuddy.okMessage(myHost, msg)))
+			return false;
+		if(!scripts.okMessage(myHost, msg)) // P21
 			return false;
 		return super.okMessage(myHost, msg);
 
@@ -546,6 +551,8 @@ public class GenCharClass extends StdCharClass
 		str.append(CMLib.xml().convertXMLtoTag("LVLPRAC",""+bonusPracLevel));
 		if(bonusTrainLevel!=0)
 			str.append(CMLib.xml().convertXMLtoTag("LVLTRAIN",""+bonusTrainLevel)); // P17
+		if(scripts.script().length()>0)
+			str.append(CMLib.xml().convertXMLtoTag("SCRIPT",CMLib.xml().parseOutAngleBrackets(scripts.script()))); // P21
 		str.append(CMLib.xml().convertXMLtoTag("MANAFRM",""+manaFormula));
 		str.append(CMLib.xml().convertXMLtoTag("MVMTFRM",""+movementFormula));
 		str.append(CMLib.xml().convertXMLtoTag("HPFRM",""+hitPointsFormula));
@@ -764,6 +771,7 @@ public class GenCharClass extends StdCharClass
 		}
 		bonusPracLevel=CMLib.xml().getIntFromPieces(classData,"LVLPRAC");
 		bonusTrainLevel=CMLib.xml().getIntFromPieces(classData,"LVLTRAIN"); // P17
+		scripts.setScript(CMLib.xml().restoreAngleBrackets(CMLib.xml().getValFromPieces(classData,"SCRIPT"))); // P21
 		manaFormula=CMLib.xml().getValFromPieces(classData,"MANAFRM");
 		if((manaFormula==null)||(manaFormula.length()==0))
 		{
@@ -1005,7 +1013,7 @@ public class GenCharClass extends StdCharClass
 									 "SSETLEVEL","NUMWMAT","GETWMAT","ARMORMINOR","STATCLASS",
 									 "EVENTCLASS","GETCABLEPREQ","GETCABLEMASK","HELP","LEVELCAP",
 									 "GETCABLEMAXP","MAXNCS","MAXCRS","MAXCMS","MAXLGS","GETSTATMIN",
-									 "MONEY","UNLOCKHINT","LVLTRAIN"
+									 "MONEY","UNLOCKHINT","LVLTRAIN","SCRIPT"
 									 };
 
 	@Override
@@ -1158,6 +1166,8 @@ public class GenCharClass extends StdCharClass
 			return unlockHint; // P18
 		case 63:
 			return "" + bonusTrainLevel; // P17
+		case 64:
+			return scripts.script(); // P21
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1543,6 +1553,9 @@ public class GenCharClass extends StdCharClass
 			break;
 		case 63: // P17: LVLTRAIN
 			bonusTrainLevel = CMath.s_parseIntExpression(val);
+			break;
+		case 64: // P21: SCRIPT
+			scripts.setScript(val);
 			break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);

@@ -94,6 +94,22 @@ public final class ScriptHooks
 	 */
 	public static String call(final ScriptingEngine S, final PhysicalAgent host, final String name, final MOB source, final Environmental target, final String args)
 	{
+		return call(S, host, name, source, target, (host instanceof Item) ? (Item)host : null, args);
+	}
+
+	/**
+	 * Runs a named hook, with $o an item (P21: the item found or made).
+	 * @param S the script engine, or null
+	 * @param host what the script is on, or the one acting
+	 * @param name the hook
+	 * @param source $n, or null for the host's own mob
+	 * @param target $t, or null
+	 * @param item $o, or null
+	 * @param args $0..., the words given
+	 * @return what it returned, or null if there is no such hook
+	 */
+	public static String call(final ScriptingEngine S, final PhysicalAgent host, final String name, final MOB source, final Environmental target, final Item item, final String args)
+	{
 		if((host == null) || !has(S, name))
 			return null;
 		final MOB monster = (host instanceof MOB) ? (MOB)host : S.getMakeMOB(host);
@@ -103,7 +119,7 @@ public final class ScriptHooks
 		for(int i = 1; i < tmp.length; i++)
 			tmp[i] = (i <= words.size()) ? words.get(i - 1) : "";
 		final MPContext ctx = new MPContext(host, monster, (source != null) ? source : monster, target,
-			(host instanceof Item) ? (Item)host : null, null, (args == null) ? "" : args, tmp);
+			item, null, (args == null) ? "" : args, tmp);
 		return S.callFunc(name, (args == null) ? "" : args, ctx);
 	}
 

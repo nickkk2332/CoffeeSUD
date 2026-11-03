@@ -84,7 +84,8 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 	private static final int	V_ACTC			= 21;	// D P14
 	private static final int	V_CACT			= 22;	// D P14
 	private static final int	V_COMP			= 23;	// S P14
-	private static final int	NUM_VS			= 24;	// S
+	private static final int	V_SCRP			= 24;	// S P21
+	private static final int	NUM_VS			= 25;	// S
 
 	private static final Object[] makeEmpty()
 	{
@@ -113,6 +114,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 		O[V_ACTC]=Double.valueOf(-1);
 		O[V_CACT]=Double.valueOf(-1);
 		O[V_COMP]="";
+		O[V_SCRP]="";
 		return O;
 	}
 
@@ -230,6 +232,7 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 										 "ACTIONCOST",//23D P14
 										 "COMBATACTIONCOST",//24D P14
 										 "COMPONENTS",//25S P14
+										 "SCRIPT",//26S P21
 										};
 
 	@Override
@@ -331,6 +334,8 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 			return AbilityCosts.text(((Double)V(ID, V_CACT)).doubleValue());
 		case 25:
 			return (String) V(ID, V_COMP);
+		case 26:
+			return (String) V(ID, V_SCRP); // P21
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenGatheringSkill";
@@ -473,6 +478,9 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 			AbilityCosts.componentsChanged(was, (String)V(ID, V_COMP));
 			break;
 		}
+		case 26:
+			SV(ID, V_SCRP, (val==null)?"":val); // P21
+			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenGatheringSkill"))
 				parseAllXML(val);
@@ -568,6 +576,9 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 	@Override
 	public void unInvoke()
 	{
+		// P21: ONFOUND with $o what was found, or ONFAILED, once the work is done
+		final MOB p21mob=(canBeUninvoked()&&(affected instanceof MOB)&&(!aborted)&&(((MOB)affected).location()!=null))?(MOB)affected:null;
+		final Item p21found=found;
 		if(canBeUninvoked())
 		{
 			if(affected instanceof MOB)
@@ -612,6 +623,8 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 				}
 			}
 		}
+		if(p21mob!=null)
+			HostScripts.call("SKILL:"+ID, (String)V(ID,V_SCRP), p21mob, (p21found!=null)?"ONFOUND":"ONFAILED", p21found, p21found);
 		super.unInvoke();
 	}
 

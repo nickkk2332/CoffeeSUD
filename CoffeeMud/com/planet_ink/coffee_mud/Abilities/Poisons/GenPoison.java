@@ -143,8 +143,9 @@ public class GenPoison extends Poison implements SpellHolder
 	protected static final int	V_DAMG			= 15;	// P<S,F>
 	protected static final int	V_MOOD			= 16;	// S
 	protected static final int	V_EFFS			= 17;	// P<S,List<Ability>>
+	protected static final int	V_SCRP			= 18;	// S P21
 
-	protected static final int	NUM_VS			= 18;	//
+	protected static final int	NUM_VS			= 19;	//
 
 	protected Object[] makeEmpty()
 	{
@@ -167,6 +168,7 @@ public class GenPoison extends Poison implements SpellHolder
 		O[V_DAMG]=makeFormulaPair("@x4 + 1?@x1");
 		O[V_MOOD]="";
 		O[V_EFFS]=new Pair<String,List<Ability>>("",new ArrayList<Ability>(0));
+		O[V_SCRP]="";
 		return O;
 	}
 
@@ -434,8 +436,11 @@ public class GenPoison extends Poison implements SpellHolder
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
+		final boolean acts=(affected instanceof MOB)&&(poisonTick<=1); // P21: it acts this tick
 		if(!super.tick(ticking, tickID))
 			return false;
+		if(acts&&(affected instanceof MOB))
+			HostScripts.call("POISON:"+ID, (String)V(ID,V_SCRP), (MOB)affected, "ONTICK", affected, null);
 		getAdjusterA().tick(ticking, tickID);
 		final Ability mood = getMood();
 		if(mood != null)
@@ -443,6 +448,24 @@ public class GenPoison extends Poison implements SpellHolder
 		for(final Ability A : getOtherEffects())
 			A.tick(ticking, tickID);
 		return true;
+	}
+
+	@Override
+	public void startTickDown(final MOB invokerMOB, final Physical affected, final int tickTime)
+	{
+		final boolean had=(affected!=null)&&(affected.fetchEffect(ID())!=null);
+		super.startTickDown(invokerMOB, affected, tickTime);
+		if((!had)&&(affected instanceof MOB)&&(affected.fetchEffect(ID())==this)) // P21: it took
+			HostScripts.call("POISON:"+ID, (String)V(ID,V_SCRP), (MOB)affected, "ONAFFECT", affected, null);
+	}
+
+	@Override
+	public void unInvoke()
+	{
+		final Physical P=affected;
+		if((P instanceof MOB)&&canBeUninvoked()) // P21: cured, or run its course
+			HostScripts.call("POISON:"+ID, (String)V(ID,V_SCRP), (MOB)P, "ONCURE", P, null);
+		super.unInvoke();
 	}
 
 	@Override
@@ -519,6 +542,7 @@ public class GenPoison extends Poison implements SpellHolder
 										 "DAMAGE", // 17P<S,F>
 										 "MOOD", // 18S
 										 "EFFECTS", // 19S
+										 "SCRIPT", // 20S P21
 										};
 
 	@Override
@@ -595,6 +619,8 @@ public class GenPoison extends Poison implements SpellHolder
 			return (String) V(ID, V_MOOD);
 		case 19:
 			return ((Pair) V(ID, V_EFFS)).first.toString();
+		case 20:
+			return (String) V(ID, V_SCRP); // P21
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenPoison";
@@ -689,6 +715,9 @@ public class GenPoison extends Poison implements SpellHolder
 			break;
 		case 19:
 			SV(ID, V_EFFS, GenPoison.makeEffectsPair(val));
+			break;
+		case 20:
+			SV(ID, V_SCRP, (val==null)?"":val); // P21
 			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID().equalsIgnoreCase("GenPoison"))
