@@ -3212,6 +3212,12 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   `Discovery.found` (ON=FIND). DISCOVERYXP=[formula] (ini, world.ini)
   is paid from ScriptEvents.discovered, the first visit of a room
   (ST3's point), tagged DISCOVERY:ROOM. Only player characters gain.
+- P15 done. `core/StartLevel`: NEWCHARLEVEL (a number, PARTYMIN,
+  PARTYAVG over the profile's other characters, LEADER the one in the
+  world or played last, with +n or -n; capped at LASTPLAYERLEVEL) and
+  NEWCHARXP (KEEP, FLOOR), in the ini or world.ini. charcrStartFinish
+  applies it after the other gifts (not to a ready-made character), by
+  `LevelUps.up`, the character put in its start room for the level-ups.
 
 #### 2p. Presentation (18)
 
