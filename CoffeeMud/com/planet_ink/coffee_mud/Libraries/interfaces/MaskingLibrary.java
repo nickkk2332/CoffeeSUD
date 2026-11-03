@@ -509,6 +509,8 @@ public interface MaskingLibrary extends CMLibrary
 		OFFICER,
 		_JUDGE,
 		JUDGE,
+		_HOLIDAY, // W6: -HOLIDAY [name ...]: not while a holiday (one of them) is on
+		HOLIDAY, // +HOLIDAY [name ...]: only while one is
 		_WANTED, // W1: -WANTED [crime ...]: not those wanted by the law (for one of the crimes)
 		WANTED, // +WANTED [crime ...]: only those wanted
 		_PORT,

@@ -3707,6 +3707,28 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case _JUDGE:
 					buf.append(skipFirstWord?L("Not a lega judge "):L("Disallows being a lega judge "));
 					break;
+				case HOLIDAY: // W6
+				case _HOLIDAY:
+					{
+						final List<String> names=new ArrayList<String>();
+						int v2=v+1;
+						for(;v2<V.size();v2++)
+						{
+							final String str2=V.get(v2);
+							if(zapCodes.containsKey(str2))
+								break;
+							names.add((str2.startsWith("+")||str2.startsWith("-"))?str2.substring(1):str2);
+						}
+						v=v2-1;
+						if(key==ZapperKey.HOLIDAY)
+							buf.append(skipFirstWord?L("During a holiday"):L("Allowed only during a holiday"));
+						else
+							buf.append(skipFirstWord?L("Not during a holiday"):L("Disallowed during a holiday"));
+						if(names.size()>0)
+							buf.append(L(": @x1",CMParms.toListString(names)));
+						buf.append(".  ");
+					}
+					break;
 				case WANTED: // W1
 				case _WANTED:
 					{
@@ -5450,6 +5472,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						}
 					}
 					break;
+				case HOLIDAY: // W6: +holiday [name ...]
+				case _HOLIDAY: // -holiday [name ...]
 				case WANTED: // W1: +wanted [crime ...]
 				case _WANTED: // -wanted [crime ...]
 					{
@@ -8802,6 +8826,16 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						return false;
 					break;
 				}
+				case HOLIDAY: // W6: +holiday [name ...]: only while one (of them) is on
+				case _HOLIDAY: // -holiday [name ...]: not while
+				{
+					boolean on=(entry.parms().length==0)&&(Holidays.current().size()>0);
+					for(final Object o : entry.parms())
+						on=on||Holidays.on(o.toString());
+					if(on!=(entry.maskType()==ZapperKey.HOLIDAY))
+						return false;
+					break;
+				}
 				case ROOMDARK: // W10: +roomdark: only those the room is dark to
 				case _ROOMDARK: // -roomdark: not those
 				{
@@ -9956,6 +9990,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case OFFICER: // +officer
 				case _JUDGE: // -judge
 				case JUDGE: // +judge
+				case _HOLIDAY: // W6
+				case HOLIDAY:
 				case _WANTED: // W1: a record is wanted nowhere
 				case WANTED:
 				case _BREATH: // W18: nor short of breath

@@ -616,7 +616,20 @@ public final class Calendars
 	 */
 	public static boolean isContent(final TimeClock C)
 	{
-		return (C != null) && specs.containsKey(C);
+		return (C != null) && specs.containsKey(C) && homes.containsKey(C);
+	}
+
+	/**
+	 * W6: a clock's copy keeps the CALENDAR of the clock it was copied from,
+	 * for its seasons and moons (not its saving: a copy is not saved).
+	 * @param copy the copy
+	 * @param of the clock copied
+	 */
+	public static void alias(final TimeClock copy, final TimeClock of)
+	{
+		final Spec S = (of == null) ? null : specs.get(of);
+		if((S != null) && (copy != null))
+			specs.put(copy, S);
 	}
 
 	/**
@@ -752,7 +765,7 @@ public final class Calendars
 					A.setTimeObj(parentClock(A));
 				}
 				else
-				if(specs.containsKey(A.getTimeObj()) && (A.getTimeObj() != parentClock(A)))
+				if(homes.containsKey(A.getTimeObj()) && specs.containsKey(A.getTimeObj()) && (A.getTimeObj() != parentClock(A))) // W6: not a copy's
 					specs.remove(A.getTimeObj()); // a StdTimeZone's own clock, its CALENDAR taken away
 				continue;
 			}

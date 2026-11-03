@@ -15993,6 +15993,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "ISHOLIDAY": // W6: ISHOLIDAY(name): that holiday (a quest by that name) is on
+			return Holidays.on(CMParms.combine(unquotedWords(varify(ctx,parms)),0))?"true":"false";
+		case "HOLIDAY": // W6: HOLIDAY(): the holidays on now, by name
+			return CMParms.toListString(Holidays.current());
 		case "FLOODLEVEL": // W19: FLOODLEVEL(room|HERE): its Floodable's water, 0 (dry) to 3 (full)
 		{
 			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));

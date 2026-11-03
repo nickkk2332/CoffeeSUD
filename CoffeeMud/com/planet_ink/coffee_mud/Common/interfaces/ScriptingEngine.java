@@ -782,6 +782,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"ROOMSTATE", //210
 		"ISTIDE", //211
 		"FLOODLEVEL", //212
+		"ISHOLIDAY", //213
+		"HOLIDAY", //214
 	};
 
 	/** String list of all valid mobprog commands */

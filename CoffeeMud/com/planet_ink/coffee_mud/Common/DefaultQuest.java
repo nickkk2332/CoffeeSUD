@@ -107,6 +107,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 	protected String shared = "";
 	/** Q15: SET DROPPABLE FALSE: QUESTS DROP refuses */
 	protected boolean droppable = true;
+	/** W6: SET HOLIDAY name: it runs exactly while that holiday (a quest) does */
+	protected String holidayName = "";
 	protected TimeClock	popularClock		= null;
 	protected Area		areaGuessA			= null;
 
@@ -621,6 +623,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		rewards=""; // Q10
 		shared=""; // Q12
 		droppable=true; // Q15
+		holidayName=""; // W6
 		name="";
 		author="";
 		displayName="";
@@ -843,6 +846,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					final String how=CMParms.combine(parsedLine,2).trim().toUpperCase();
 					shared=(how.equals(QuestSharing.PARTY)||how.equals(QuestSharing.PROFILE))?how:"";
 				}
+				else
+				if(var.equals("WEEKDAY")||var.equals("EVERY")||var.equals("SEASONSTART")||var.equals("MOON")) // W6: game-dated recurrences
+					startDate=var+" "+CMParms.combine(parsedLine,2).trim();
+				else
+				if(var.equals("HOLIDAY")) // W6: it runs while the holiday does
+					holidayName=CMParms.combine(parsedLine,2).trim();
 				else
 				if(isStat(var))
 					setStat(var,CMParms.combine(parsedLine,2));
@@ -3698,7 +3707,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					else
 					if(cmd.equals("JSFILE")||cmd.equals("RESTART")||cmd.equals("ENDONWIN")||cmd.equals("AUTOSTART")
 					||cmd.equals("REPEATABLE")||cmd.equals("MAXWINS")||cmd.equals("REWARDS")||cmd.equals("SHARED")
-					||cmd.equals("DROPPABLE")) // JS18, Q1, Q5, Q10, Q12, Q15: read when the script was set
+					||cmd.equals("DROPPABLE")||cmd.equals("WEEKDAY")||cmd.equals("EVERY")||cmd.equals("SEASONSTART")
+					||cmd.equals("MOON")||cmd.equals("HOLIDAY")) // JS18, Q1, Q5, Q10, Q12, Q15, W6: read when the script was set
 					{
 					}
 					else
@@ -5698,6 +5708,11 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			return true;
 		}
 
+		if(holidayName.length()>0) // W6: SET HOLIDAY: it follows the holiday, looked at each tick
+		{
+			waitRemaining=Integer.MAX_VALUE;
+			return true;
+		}
 		if(((minWait()<0)||(maxWait<0))
 		&&(startDate().trim().length()==0))
 			return false;
@@ -5705,9 +5720,20 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			return true;
 		if(startDate().length()>0)
 		{
-			if(startDate().toUpperCase().startsWith("MUDDAY"))
+			final TimeClock NOW=getQuestClock();
+			if(Holidays.isRecurrence(startDate())) // W6: WEEKDAY, EVERY, SEASONSTART, MOON
 			{
-				final String sd2=startDate().substring("MUDDAY".length()).trim();
+				// today counts, being one it falls on, unless it has run since the day began
+				final long todayStart=GameTime.now()-((long)Math.max(0,NOW.getHourOfDay())*CMProps.getMillisPerMudHour());
+				final TimeClock C=Holidays.next(startDate(),NOW,(!ranOnce)||(lastStartDateTime<todayStart));
+				if(C==null)
+					return false;
+				waitRemaining=(int)Math.max(0,C.deriveMillisAfter(NOW)/CMProps.getTickMillis());
+			}
+			else
+			{
+				// W6: DATE m-d as well as MUDDAY m-d, on the game's calendar
+				final String sd2=startDate().toUpperCase().startsWith("MUDDAY")?startDate().substring("MUDDAY".length()).trim():startDate().trim();
 				int x=sd2.indexOf('-');
 				if(x<0)
 					x=sd2.indexOf('/');
@@ -5715,7 +5741,6 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					return false;
 				final int mudmonth=CMath.s_parseIntExpression(sd2.substring(0,x));
 				final int mudday=CMath.s_parseIntExpression(sd2.substring(x+1));
-				final TimeClock NOW=getQuestClock();
 				final TimeClock C=(TimeClock)NOW.copyOf();
 				C.setMonth(mudmonth);
 				C.setDayOfMonth(mudday);
@@ -5727,24 +5752,6 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 					C.setYear(NOW.getYear());
 				final long distance=C.deriveMillisAfter(NOW);
 				waitRemaining=(int)(distance/CMProps.getTickMillis());
-			}
-			else
-			{
-				int x=startDate.indexOf('-');
-				if(x<0)
-					x=startDate.indexOf('/');
-				if(x<0)
-					return false;
-				final int month=CMath.s_parseIntExpression(startDate.substring(0,x));
-				final int day=CMath.s_parseIntExpression(startDate.substring(x+1));
-				int year=Calendar.getInstance().get(Calendar.YEAR);
-				long distance=CMLib.time().string2Millis(month+"/"+day+"/"+year+" 12:00 AM");
-				final Calendar C=Calendar.getInstance();
-				final String todayStr = (C.get(Calendar.MONTH)+1)+"/"+C.get(Calendar.DAY_OF_MONTH)+"/"+C.get(Calendar.YEAR)+" 12:00 AM";
-				final long today=CMLib.time().string2Millis(todayStr);
-				while(distance<today)
-					distance=CMLib.time().string2Millis(month+"/"+day+"/"+(++year)+" 12:00 AM");
-				waitRemaining=(int)((distance-today)/CMProps.getTickMillis());
 			}
 		}
 		else
@@ -6030,6 +6037,25 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		synchronized(this) // mostly just to fix cpu cache issues
 		{
 			tickStatus=Tickable.STATUS_START;
+		}
+		if(holidayName.length()>0) // W6: SET HOLIDAY: running exactly while the holiday is on
+		{
+			final boolean on=Holidays.on(holidayName);
+			if(on&&(!running()))
+			{
+				if(duration()<0)
+					setDuration(0); // it lasts as long as the holiday, with no DURATION of its own
+				startQuestInternal();
+			}
+			else
+			if((!on)&&running())
+			{
+				endReason="HOLIDAY";
+				runEnding=true;
+				stopQuest();
+			}
+			tickStatus=Tickable.STATUS_NOT;
+			return true;
 		}
 		if(running())
 		{
@@ -7166,7 +7192,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		case 2:
 			try
 			{
-				setDuration(CMLib.time().parseTickExpression(getQuestClock(), val));
+				setDuration(CMLib.time().parseTickExpression(getQuestClock(), Holidays.gameUnits(val))); // W6: DAYS and HOURS are the game's
 			}
 			catch(final CMException e)
 			{

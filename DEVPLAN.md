@@ -2517,6 +2517,18 @@ W18, W19, W20, W21, W22, W23, W28, W29
   tides and ISMOON(FULL) follow). ISSEASON(the Burn), ISMOON(Ember full)
   (ISMOON(Ember): in the sky), `-SEASON "+the Burn"`, VARIES blocks in a
   season's own name (`<the Burn>...</the Burn>`) and TIME know them.
+- W6 done. `core/Holidays`. A quest (a holiday is one) starts on more
+  than a MUDDAY: `SET WEEKDAY name`, `SET EVERY n DAYS FROM y/m/d`, `SET
+  SEASONSTART season` (its first day; a calendar's own season by name too)
+  and `SET MOON [moon] phase` (the first day of that phase; a calendar's
+  named moon, else the first); `SET DATE m-d` follows the game's calendar
+  now, and DAYS and HOURS in a DURATION are game ones. `SET HOLIDAY name`
+  has a quest run exactly while that holiday does. ISHOLIDAY(name),
+  HOLIDAY() (the names on now), `+HOLIDAY [name ...]` and `-HOLIDAY`,
+  VARIES `<HOLIDAY name>...</HOLIDAY>`, `cm.holiday(name)` and
+  `cm.holidays()`; CALENDAR HOLIDAYS shows each game-dated one, on now or
+  in how many game days. A clock's copy keeps its area's CALENDAR, so a
+  quest's timing and an instance's seasons and moons follow it.
 
 #### 2j. Generators and random content (16)
 

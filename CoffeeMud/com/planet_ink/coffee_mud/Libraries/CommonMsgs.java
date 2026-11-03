@@ -2997,7 +2997,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 	public String parseVaries(final MOB mob, final Area area, final Room room, final String text)
 	{
 		if(text.startsWith("<VARIES>"))
-			return parseVariesCodes(mob,area,room,Calendars.seasonBlocks(area,text.substring(8))); // W22: a calendar's own seasons' blocks
+			return parseVariesCodes(mob,area,room,Holidays.blocks(Calendars.seasonBlocks(area,text.substring(8)))); // W22: a calendar's own seasons' blocks; W6: holidays'
 		return text;
 	}
 }

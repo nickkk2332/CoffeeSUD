@@ -570,6 +570,7 @@ public class DefaultTimeClock implements TimeClock
 			C.monthsInYear=this.monthsInYear.clone();
 			C.weekNames=this.weekNames.clone();
 			C.yearNames=this.yearNames.clone();
+			Calendars.alias(C, this); // W6: its CALENDAR's seasons and moons
 			return C;
 		}
 		catch(final CloneNotSupportedException e)

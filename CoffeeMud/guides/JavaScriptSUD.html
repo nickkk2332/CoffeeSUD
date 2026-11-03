@@ -155,8 +155,9 @@ the user of JRUN or JCONSOLE. A room, area or mob given as
 <tr><td><code>cm.law([areaOrRoom])</code></td><td>null where there is no law; else <code>warrants([mob])</code>, <code>crimes()</code>, <code>accuse(mob, crime)</code>, <code>pardon(mob [, crime])</code>, <code>fine(mob, amount)</code> (from its money); as LAW does for builders</td></tr>
 <tr><td><code>cm.shop(keeper)</code></td><td>null if it keeps no shop; else <code>stock()</code>, <code>find(name)</code>, <code>price(thing [, buyer])</code>, <code>pays(thing [, seller])</code>, as PRICECHECK</td></tr>
 <tr><td><code>cm.bank(banker)</code></td><td>null if it is no banker; else <code>balance(who)</code>, <code>items(who)</code>, <code>worth(who)</code> (who: a mob, a name, or null for the player)</td></tr>
+<tr><td><code>cm.holiday(name)</code>, <code>cm.holidays()</code></td><td>whether that holiday (a quest by that name) is on; the names of those on now</td></tr>
 </table>
-<p>Holidays and markets come with the world systems that add them.</p>
+<p>Markets come with the world system that adds them.</p>
 
 <h2><a name="events">cm.on</a></h2>
 <p><code>cm.on(event, function [, key])</code> runs the function when the

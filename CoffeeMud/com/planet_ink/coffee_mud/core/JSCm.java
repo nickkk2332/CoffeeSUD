@@ -503,6 +503,26 @@ public class JSCm
 		return weather(null);
 	}
 
+	/**
+	 * W6: whether a holiday (a quest by that name) is on.
+	 * @param name its name
+	 * @return true while it is
+	 */
+	public boolean holiday(final String name)
+	{
+		return (name != null) && Holidays.on(name);
+	}
+
+	/**
+	 * W6: the holidays on now.
+	 * @return their names
+	 */
+	public String[] holidays()
+	{
+		final List<String> L = Holidays.current();
+		return L.toArray(new String[L.size()]);
+	}
+
 	/** @return true in a turn-based game */
 	public boolean isTurnBased()
 	{

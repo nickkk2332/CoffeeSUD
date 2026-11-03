@@ -59,6 +59,7 @@ public class CalendarCmd extends StdCommand
 		NOW,
 		ADD,
 		REMOVE("DELETE"),
+		HOLIDAYS, // W6: each game-dated holiday, on now or in how many game days
 		;
 		public String[] all;
 		private String desc = null;
@@ -83,6 +84,7 @@ public class CalendarCmd extends StdCommand
 				case NOW: desc=CMLib.lang().L("now"); break;
 				case ADD: desc=CMLib.lang().L("add"); break;
 				case REMOVE: desc=CMLib.lang().L("remove"); break;
+				case HOLIDAYS: desc=CMLib.lang().L("holidays"); break;
 				}
 			}
 			return desc;
@@ -308,6 +310,9 @@ public class CalendarCmd extends StdCommand
 		}
 		switch(cmd)
 		{
+		case HOLIDAYS: // W6
+			mob.tell(Holidays.list(CMLib.time().localClock(mob)));
+			return true;
 		case NOW:
 		{
 			final TimeClock C = CMLib.time().localClock(mob);
