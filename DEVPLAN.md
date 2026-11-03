@@ -2666,6 +2666,18 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   are rooms changed in play (S17). `MPREGENERATE area|HERE [SEED=n|SAME]`
   (142) asks the behaviour, or with none re-rolls from the GENSOURCE at
   once when no player is inside.
+- G9 done. `GENERATE FILL roomtemplate [FROM file] [VAR=VALUE ...]
+  ROOM|AREA [KEEPTEXT] [SEED=n]` (`core/GenFill`): each target room (the
+  builder's, or all of its area, in walk order from the entrance) gets the
+  layout's tags from its real exits: ROOMTAG_NODETYPE (leaf, street,
+  square), NODERUN, NODEEXITS, NODEFLAGS (corner, tee, intersection, gate),
+  the neighbours' NODETYPE_x, ROOMTITLE_x and ROOMLINK_x, and NODEGATEEXIT
+  and GATEEXITROOM for an exit out of the area; and G3's depth tags (DEPTH,
+  DEPTHPCT, ISDEEPEST, INDEX, X, Y; AREA_MAXDEPTH, AREA_NUMROOMS) from a
+  walk from the entrance. The percolator's new `fillRoom` runs the ROOM
+  template's choice on the room itself: title and description unless
+  KEEPTEXT or GENLOCK, stats, mobs, items, effects and behaviours; class
+  and exits stay. A seeded run; post-processing after each room.
 
 #### 2k. Crafting, gathering and housing (21)
 

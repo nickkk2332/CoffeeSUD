@@ -101,6 +101,18 @@ public interface AreaGenerationLibrary extends CMLibrary
 	public Room buildRoom(final Area A, XMLTag piece, Map<String,Object> defined, Exit[] exits, int direction) throws CMException;
 
 	/**
+	 * G9: GENERATE FILL: runs a ROOM template on a room that is already there: its title and
+	 * description (unless kept), stats, mobs, items, effects and behaviours; its class and
+	 * exits are left alone.  Post-process the variables after.
+	 * @param R the room
+	 * @param piece the ROOM template
+	 * @param defined the variables, with the room's tags
+	 * @param keepText true to keep the room's title and description
+	 * @throws CMException any parsing or generation errors
+	 */
+	public void fillRoom(Room R, XMLTag piece, Map<String,Object> defined, boolean keepText) throws CMException;
+
+	/**
 	 * Builds a quest script based around the given variables using the given xml tag root.
 	 *
 	 * @see AreaGenerationLibrary#buildDefinedIDSet(List, Map, Set)

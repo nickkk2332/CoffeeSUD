@@ -123,6 +123,46 @@ public class Generate extends StdCommand
 				commands.remove(1);
 			}
 		}
+		// G9: GENERATE FILL roomtemplate [FROM file] [VAR=VALUE ...] ROOM|AREA [KEEPTEXT] [SEED=n]: on rooms that are there
+		if((commands.size()>2)&&commands.get(1).equalsIgnoreCase("FILL"))
+		{
+			final String fillId=commands.get(2);
+			String fillFile="randareas/example.xml";
+			boolean wholeArea=false;
+			boolean keepText=false;
+			String fillSeed=null;
+			final Map<String,String> fillVars=new LinkedHashMap<String,String>();
+			for(int i=3;i<commands.size();i++)
+			{
+				final String w=commands.get(i);
+				if(w.equalsIgnoreCase("FROM")&&(i+1<commands.size()))
+					fillFile=commands.get(++i);
+				else
+				if(w.equalsIgnoreCase("AREA"))
+					wholeArea=true;
+				else
+				if(w.equalsIgnoreCase("ROOM"))
+					wholeArea=false;
+				else
+				if(w.equalsIgnoreCase("KEEPTEXT"))
+					keepText=true;
+				else
+				{
+					final int x=w.indexOf('=');
+					if(x>0)
+					{
+						final String k=w.substring(0,x).trim();
+						final String v=w.substring(x+1).trim();
+						if(k.equalsIgnoreCase("SEED"))
+							fillSeed=v;
+						else
+							fillVars.put(k,v);
+					}
+				}
+			}
+			mob.tell(GenFill.fill(mob,fillFile,fillId,fillVars,wholeArea,keepText,fillSeed,save));
+			return false;
+		}
 		if(commands.size()<3)
 		{
 			mob.tell(L("Generate what? Try GENERATE [TYPE] [ID] (FROM [DATA_FILE_PATH]) ([VAR=VALUE]..) [DIRECTION], or GENERATE CHECK [DATA_FILE_PATH]"));

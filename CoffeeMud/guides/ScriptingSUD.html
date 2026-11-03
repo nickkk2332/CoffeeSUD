@@ -759,6 +759,10 @@ the area's GENSOURCE, and the hand-written rooms stay, still joined to the new o
 its GENSOURCE; its entrance hall and the minotaur's throne room are GENLOCK and stay. A story event can
 <code>MPREGENERATE 'The Shifting Labyrinth'</code>, and the area's GENERATED_PROG restocks the throne room after
 (AHELP BEHAVIOR_REGENERATE).</p>
+<p>Theme on a hand-dug map: the owner digs a 30-room forest with DIG to match their world map, then
+<code>GENERATE FILL forest_rooms FROM randareas/forest.xml AREA level_range=5</code> writes each room's text and
+stocks it, a leaf a glade and a straight path a path, from the rooms' real exits; the rooms the story
+needs are written by hand and marked GENLOCK, so a second FILL leaves their text (AHELP GENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

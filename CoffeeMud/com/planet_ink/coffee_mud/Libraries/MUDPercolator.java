@@ -643,6 +643,70 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		}
 	}
 
+	@Override
+	public void fillRoom(final Room R, final XMLTag piece, final Map<String,Object> defined, final boolean keepText) throws CMException
+	{
+		try
+		{
+			seeded(piece, defined, () -> fillRoomUnseeded(R, piece, defined, keepText)); // G1
+		}
+		catch(final PostProcessException pe)
+		{
+			throw new CMException(pe.getMessage(), pe);
+		}
+	}
+
+	/**
+	 * G9: GENERATE FILL: a ROOM template run on a room that is there, as
+	 * buildRoom would fill a new one, but with the room's own class and
+	 * exits: its title and description (unless kept), stats, mobs, items,
+	 * effects and behaviours.
+	 * @param R the room
+	 * @param piece the ROOM template
+	 * @param defined the variables, with the room's tags
+	 * @param keepText true to keep its title and description
+	 * @return the room
+	 * @throws CMException if it cannot be filled
+	 */
+	protected Room fillRoomUnseeded(final Room R, final XMLTag piece, final Map<String,Object> defined, final boolean keepText) throws CMException
+	{
+		addDefinition("ROOM_CLASS",R.ID(),defined);
+		final List<String> ignoreStats=new XArrayList<String>(new String[]{"CLASS","DISPLAY","DESCRIPTION"});
+		if(!keepText)
+		{
+			fillOutRequiredStatCodeSafe(R, ignoreStats, "ROOM_", "TITLE", "DISPLAY", piece, defined);
+			fillOutRequiredStatCodeSafe(R, ignoreStats, "ROOM_", "DESCRIPTION", "DESCRIPTION", piece, defined);
+		}
+		fillOutCopyCodes(R, ignoreStats, "ROOM_", piece, defined);
+		fillOutStatCodes(R, ignoreStats, "ROOM_", piece, defined);
+		ignoreStats.addAll(Arrays.asList(R.getStatCodes()));
+		fillOutStatCodes(R.basePhyStats(),ignoreStats,"ROOM_",piece,defined);
+		for(final MOB M : findMobs(piece,defined))
+		{
+			M.setSavable(true);
+			M.bringToLife(R,true);
+		}
+		for(final Item I : findItems(piece,defined))
+		{
+			R.addItem(I);
+			I.setSavable(true);
+			I.setExpirationDate(0);
+		}
+		for(final Ability ableA : findAffects(R,piece,defined,null))
+		{
+			ableA.setSavable(true);
+			R.addNonUninvokableEffect(ableA);
+		}
+		for(final Behavior B : findBehaviors(R,piece,defined))
+		{
+			B.setSavable(true);
+			R.addBehavior(B);
+		}
+		R.recoverPhyStats();
+		R.startItemRejuv();
+		return R;
+	}
+
 	protected Room buildRoomUnseeded(final Area A, final XMLTag piece, final Map<String,Object> defined, final Exit[] exits, final int direction) throws CMException
 	{
 		addDefinition("DIRECTION",CMLib.directions().getDirectionName(direction).toLowerCase(),defined);
