@@ -2947,6 +2947,9 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 					case 'S':
 						addMe = ((preview != null) && (preview.season != TextPreview.UNSET) ? preview.season : A.getTimeObj().getSeasonCode().ordinal()) == code.num;
 						break;
+					case 'T': // W8: <HIGHTIDE>, <LOWTIDE>
+						addMe = (room != null) && Tides.is(room, (code.num == 1) ? "HIGH" : "LOW");
+						break;
 					case 'M':
 						addMe = ((mob != null) && (CMath.bset(mob.phyStats().disposition(), code.num)));
 						break;

@@ -163,7 +163,7 @@ public final class BehaviorWhen
 	 * @return true to let it
 	 */
 	/** W7: behaviours whose WHEN= is their own (RoomStates' transitions), not their on and off */
-	public static final Set<String>	OWNWHEN	= Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("RoomStates")));
+	public static final Set<String>	OWNWHEN	= Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("RoomStates", "TidalRoom", "Floodable")));
 
 	public static boolean active(final Behavior B, final Object host)
 	{

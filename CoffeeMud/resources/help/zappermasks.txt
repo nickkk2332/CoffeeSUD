@@ -114,6 +114,8 @@
 +ROOMDARK (<WORD> all but those the room is dark to)
 -BREATH <3 (<WORD> those with fewer than 3 ticks of breath left; also <=, >, >=, =)
 +BREATH <3 (<WORD> all but those)
+-TIDE +HIGH (<WORD> those where the tide is not high; LOW, NONE, SPRING_HIGH, HIGH:2 for a span)
++TIDE -HIGH (<WORD> those where the tide is high)
 -EFFECTS +Sleep "+Wood Chopping" (<WORD> all except those with effects)
 +EFFECTS -Sleep "-Wood Chopping" (<WORD> only those with listed effect)
 -SKILLS +Spell_Sleep(75) (<WORD> all except those with skill proficiency)

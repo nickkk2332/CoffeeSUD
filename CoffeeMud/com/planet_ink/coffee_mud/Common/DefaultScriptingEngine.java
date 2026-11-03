@@ -15967,6 +15967,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "ISTIDE": // W8: ISTIDE(room HIGH|LOW|NONE|SPRING|NEAP[:span]): the tide there now is that one
+		{
+			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));
+			return ((R!=null)&&Tides.is(R,varify(ctx,CMParms.getCleanBit(parms,1)).trim()))?"true":"false";
+		}
 		case "ROOMSTATE": // W7: ROOMSTATE(room|HERE|area): the state of its RoomStates (the room's, else its area's), or nothing
 		{
 			final Behavior B=roomStates(ctx,CMParms.getCleanBit(parms,0));
@@ -19421,15 +19426,33 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	{
 		final String w=varify(ctx,word).trim();
 		final Area A=(w.length()>0)?CMLib.map().getArea(w):null;
-		if((A!=null)&&(A.fetchBehavior("RoomStates")!=null))
-			return A.fetchBehavior("RoomStates");
+		if((A!=null)&&(roomStatesOf(A)!=null))
+			return roomStatesOf(A);
 		final Room R=doorRoom(ctx,word);
 		if(R==null)
 			return null;
-		final Behavior B=R.fetchBehavior("RoomStates");
+		final Behavior B=roomStatesOf(R);
 		if(B!=null)
 			return B;
-		return (R.getArea()==null)?null:R.getArea().fetchBehavior("RoomStates");
+		return (R.getArea()==null)?null:roomStatesOf(R.getArea());
+	}
+
+	/** W7, W8, W19: RoomStates and the behaviours made from it */
+	protected static final String[] ROOMSTATES_IDS = { "RoomStates", "TidalRoom", "Floodable" };
+
+	/**
+	 * @param P a room or an area
+	 * @return its RoomStates (or a preset of it), or null
+	 */
+	protected static Behavior roomStatesOf(final PhysicalAgent P)
+	{
+		for(final String id : ROOMSTATES_IDS)
+		{
+			final Behavior B=P.fetchBehavior(id);
+			if(B!=null)
+				return B;
+		}
+		return null;
 	}
 
 	/**

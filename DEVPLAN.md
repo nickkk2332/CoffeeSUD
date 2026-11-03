@@ -2390,6 +2390,18 @@ W18, W19, W20, W21, W22, W23, W28, W29
   there), then its area's, then the parents'; what is unset comes from the
   climate file (W20), then lists.ini. lists.ini's sun now rises in the east
   and sets in the west.
+- W8 done, on the engine's tide model (low in the hour the day starts,
+  high in the dusk hour, spring or neap by the moon; RISING and EBBING
+  would need a new one): `core/Tides`, with an optional span of hours
+  either side (`HIGH:2`). `ISTIDE(room HIGH|LOW|NONE|SPRING|NEAP[:span])`
+  (211); masks `-TIDE +HIGH` (only there) and `+TIDE -HIGH` (not there),
+  where one stands; VARIES `<HIGHTIDE>` and `<LOWTIDE>`. `Prop_TidalExit`
+  (`OPEN=LOW|HIGH SPAN= MSG=`) lets one through only at that tide.
+  `TidalRoom`, a preset of RoomStates: a swimming room (Chant_Flood) at high
+  tide (`SPAN=`, `TITLE=`, `DESC=`, `FLOODMSG=`), its air water at the spring
+  tides with `DEEP`, `WASH=n` washing away the loose things weighing up to
+  n as the water comes; itself again at the ebb. ROOMSTATE() and
+  MPROOMSTATE reach it (and W19's Floodable) too.
 - W10 done. `ISDARK(room)` and `ISLIT(room)` (207, 208; HERE, a room ID
   or a thing's room). Mask keys `+ROOMDARK` and `-ROOMDARK`, seen from the
   character's side: the room they are in is dark and they cannot see in

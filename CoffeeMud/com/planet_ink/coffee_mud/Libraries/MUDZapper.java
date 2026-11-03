@@ -3361,6 +3361,22 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case ROOMDARK: // W10
 					buf.append(L("Disallows those not in a room that is dark to them.  "));
 					break;
+				case TIDE: // W8
+				case _TIDE:
+					{
+						final List<String> tides=new ArrayList<String>();
+						int v2=v+1;
+						for(;v2<V.size();v2++)
+						{
+							final String str2=V.get(v2);
+							if(zapCodes.containsKey(str2))
+								break;
+							tides.add((str2.startsWith("+")||str2.startsWith("-"))?str2.substring(1):str2);
+						}
+						v=v2-1;
+						buf.append((key==ZapperKey._TIDE)?L("Requires the tide: @x1.  ",CMParms.toListString(tides)):L("Disallows the tide: @x1.  ",CMParms.toListString(tides)));
+					}
+					break;
 				case BREATH: // W18
 				case _BREATH:
 					if((v+1)<V.size())
@@ -5382,6 +5398,22 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						}
 					}
 					break;
+				case TIDE: // W8: +tide -high, -tide +low:2
+				case _TIDE:
+					{
+						final ArrayList<Object> parms=new ArrayList<Object>();
+						int v2=v+1;
+						for(;v2<V.size();v2++)
+						{
+							final String str2=V.get(v2);
+							if(zapCodes.containsKey(str2))
+								break;
+							parms.add((str2.startsWith("+")||str2.startsWith("-"))?str2.substring(1):str2);
+						}
+						v=v2-1;
+						buf.add(new CompiledZapperMaskEntryImpl(entryType,parms.toArray(new Object[0])));
+					}
+					break;
 				case BREATH: // W18: +breath <3, -breath >=5: the ticks of breath left, compared
 				case _BREATH:
 					{
@@ -6673,6 +6705,17 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						final LegalBehavior B=CMLib.law().getLegalBehavior(mob.getStartRoom());
 						if((B!=null)
 						&&(!B.isJudge(CMLib.law().getLegalObject(mob.getStartRoom()), mob)))
+							return false;
+					}
+					break;
+				case TIDE: // W8: +tide -high: not where the tide is high
+				case _TIDE: // -tide +high: only there
+					{
+						final Room tideR=CMLib.map().roomLocation(mob);
+						boolean found=false;
+						for(final Object o : entry.parms())
+							found=found||((tideR!=null)&&Tides.is(tideR,(String)o));
+						if(found!=(entry.maskType()==ZapperKey._TIDE))
 							return false;
 					}
 					break;
@@ -9891,6 +9934,8 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case WANTED:
 				case _BREATH: // W18: nor short of breath
 				case BREATH:
+				case _TIDE: // W8: a record is by no shore
+				case TIDE:
 				case NPC: // +npc
 				case _ACCCHIEVE: // -accchieves
 				case ACCCHIEVE: // +accchieves

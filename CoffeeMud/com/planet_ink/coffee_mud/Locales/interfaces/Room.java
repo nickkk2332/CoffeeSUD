@@ -279,6 +279,8 @@ public interface Room extends PhysicalAgent, ItemPossessor, Places, MOBPossessor
 		COLD('W',Climate.WEATHER_WINTER_COLD),
 		HAIL('W',Climate.WEATHER_HAIL),
 		CLOUDY('W',Climate.WEATHER_CLOUDY),
+		HIGHTIDE('T',1), // W8: the tide
+		LOWTIDE('T',0),
 		SWIMMING('M',PhyStats.IS_SWIMMING),
 		FLYING('M',PhyStats.IS_FLYING),
 		CRAWLING('M',PhyStats.IS_SITTING),

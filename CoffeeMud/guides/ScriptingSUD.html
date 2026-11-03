@@ -685,6 +685,9 @@ A script reads <code>BREATH($n)</code>; <code>+BREATH &lt;2</code> in a mask fin
 ADD="Prop_RoomDark()" BLOCK=down</code> and <code>STATE=cleared TITLE="A shored-up shaft"</code>; a trap's script sets
 the variable its <code>TO=collapsed ONVAR="mine collapse==1"</code> waits for, and the digging script runs
 <code>MPROOMSTATE HERE cleared</code>. <code>TO=flooded WHEN="-WEATHER +RAIN" AFTER=20</code> floods it after a long rain.</p>
+<p>Tides: the causeway to St. Brine's Isle has <code>Prop_TidalExit OPEN=LOW SPAN=1</code>, so at high tide the player
+can be cut off on the island; the shore's <code>TidalRoom DESC="The sea fills the cove." WASH=2</code> floods it.
+<code>&lt;HIGHTIDE&gt;</code> and <code>&lt;LOWTIDE&gt;</code> in VARIES, <code>if istide(HERE LOW)</code> in a script.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

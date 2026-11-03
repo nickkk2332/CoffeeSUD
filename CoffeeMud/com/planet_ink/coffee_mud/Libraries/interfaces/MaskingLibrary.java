@@ -482,6 +482,8 @@ public interface MaskingLibrary extends CMLibrary
 		_ISHOME("-ISHOME"),
 		ISHOME("+ISHOME"),
 		_ROOMDARK("-ROOMDARK"), // W10: not those the room they are in is dark to
+		_TIDE("-TIDE"), // W8: -TIDE +HIGH: only those where the tide is high (LOW, NONE, SPRING_HIGH, HIGH:2 for a span)
+		TIDE("+TIDE"), // +TIDE -HIGH: not those
 		_BREATH("-BREATH"), // W18: -BREATH <3: not those whose breath left compares so
 		BREATH("+BREATH"), // +BREATH <3: only those
 		ROOMDARK("+ROOMDARK"), // only those it is dark to (dark, and they cannot see in the dark)
