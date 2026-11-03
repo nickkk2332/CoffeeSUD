@@ -31,8 +31,8 @@ import com.planet_ink.coffee_mud.Common.interfaces.Clan;
  * crafter is, as -LOCATION +ROOMID(Deepforge#3) or -AREA +Deepforge),
  * TOOL= (an item held, carried or in the room, by name), FAILMSG= (what a
  * crafter is told when ROOMMASK or TOOL fails), XP= (experience on each
- * success) and TATTOO= (a tattoo given on the first success).  None of them
- * becomes an item stat.
+ * success), TATTOO= (a tattoo given on the first success) and STATION= (CR3:
+ * a workstation of that tag in the room).  None of them becomes an item stat.
  */
 public final class RecipeKeys
 {
@@ -41,7 +41,7 @@ public final class RecipeKeys
 	}
 
 	/** the keys, none of which is an item stat */
-	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO" };
+	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION" };
 
 	private static final Pattern	KV		= Pattern.compile("^\\s*[A-Za-z_]+\\s*=");
 
@@ -154,6 +154,9 @@ public final class RecipeKeys
 			return ((fail != null) && (fail.length() > 0)) ? fail : CMLib.lang().L("You need @x1 to make that.", CMLib.english().startWithAorAn(tool.trim()));
 		if(hidden(mob, row))
 			return ((fail != null) && (fail.length() > 0)) ? fail : CMLib.lang().L("You don't know how to make that.");
+		final String station = k.get("STATION"); // CR3: a workstation in the room
+		if((station != null) && (station.trim().length() > 0) && (Workstations.refusal(mob, station) != null))
+			return ((fail != null) && (fail.length() > 0)) ? fail : Workstations.refusal(mob, station);
 		return null;
 	}
 

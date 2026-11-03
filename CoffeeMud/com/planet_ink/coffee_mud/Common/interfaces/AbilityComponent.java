@@ -71,6 +71,18 @@ public interface AbilityComponent extends CMCommon
 	public void setConsumed(boolean isConsumed);
 
 	/**
+	 * CR3: the fate wear(n): a kept component loses this many uses each time.
+	 * @return the wear, or 0
+	 */
+	public int getWear();
+
+	/**
+	 * CR3: sets the fate wear(n).
+	 * @param wear how many uses it loses each time, 0 for none
+	 */
+	public void setWear(int wear);
+
+	/**
 	 * Returns the number of items matching this component which must be present.
 	 * @see com.planet_ink.coffee_mud.Common.interfaces.AbilityComponent#setAmount(int)
 	 * @return the number of items matching this component which must be present.
@@ -228,5 +240,5 @@ public interface AbilityComponent extends CMCommon
 	 * @author Bo Zimmerman
 	 *
 	 */
-	public enum CompType { RESOURCE, MATERIAL, STRING }
+	public enum CompType { RESOURCE, MATERIAL, STRING, TAG } // CR3: TAG(anvil), an item with that tag
 }

@@ -102,6 +102,10 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 		Item container=null;
 		switch(comp.getType())
 		{
+		case TAG: // CR3: an item with that tag
+			if((!(I instanceof Taggable))||(!((Taggable)I).hasTag(comp.getStringType())))
+				return false;
+			break;
 		case STRING:
 			if(!CMLib.english().containsString(I.name(),comp.getStringType()))
 				return false;
@@ -174,10 +178,10 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 				return false;
 			break;
 		}
-		if((comp.getType()!=CompType.STRING)
+		if((comp.getType()!=CompType.STRING)&&(comp.getType()!=CompType.TAG)
 		&&(CMLib.flags().isOnFire(I)||CMLib.flags().isEnchanted(I)))
 			return false;
-		if(comp.getType()==CompType.STRING)
+		if((comp.getType()==CompType.STRING)||(comp.getType()==CompType.TAG))
 		{
 			if(I instanceof PackagedItems)
 				I=CMLib.materials().unbundle(I,amt[0],null);
@@ -197,6 +201,14 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 
 		if(amt[0]<=0)
 		{
+			if((comp.getWear()>0)&&(!comp.isConsumed())) // CR3: wear(n), applied when the components are spent
+			{
+				for(final Object o : thisSet)
+				{
+					if(o instanceof Item)
+						pendingWear.put((Item)o, Integer.valueOf(comp.getWear()));
+				}
+			}
 			if(thisSet.size()>0)
 				thisSet.add(Boolean.valueOf(comp.isConsumed()));
 			return true;
@@ -370,10 +382,16 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 			if(comp.isConsumed())
 				curr.add("FATE","consumed");
 			else
+			if(comp.getWear()>0)
+				curr.add("FATE","wear("+comp.getWear()+")");
+			else
 				curr.add("FATE","kept");
 			curr.add("AMOUNT",""+comp.getAmount());
 			if(comp.getType()==CompType.STRING)
 				itemDesc=comp.getStringType();
+			else
+			if(comp.getType()==CompType.TAG)
+				itemDesc="TAG";
 			else
 			if(comp.getType()==CompType.MATERIAL)
 				itemDesc=RawMaterial.Material.findByMask((int)comp.getLongType()).desc().toUpperCase();
@@ -418,10 +436,14 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 					comp.setConsumed(true);
 				else
 					comp.setConsumed(false);
+				comp.setWear((s[2]!=null)&&s[2].toUpperCase().startsWith("WEAR")?Math.max(1,CMath.s_int(s[2].replaceAll("[^0-9]",""))):0); // CR3
 				comp.setAmount(CMath.s_int(s[3]));
 				final String compType=s[4]==null?"":s[4];
 				final String subType=s[5]==null?"":s[5];
-				int depth=CMLib.materials().findResourceCode(compType,false);
+				int depth=compType.trim().equalsIgnoreCase("TAG")?-1:CMLib.materials().findResourceCode(compType,false);
+				if(compType.trim().equalsIgnoreCase("TAG")) // CR3
+					comp.setType(CompType.TAG, subType.trim().toLowerCase(), subType);
+				else
 				if(depth>=0)
 					comp.setType(CompType.RESOURCE, Integer.valueOf(depth), subType);
 				else
@@ -559,6 +581,9 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 		{
 			amt=comp.getAmount();
 			String subType=comp.getSubType();
+			if(comp.getType()==CompType.TAG) // CR3
+				itemDesc=((amt>1)?(amt+" things"):"something")+" tagged "+comp.getStringType().toLowerCase();
+			else
 			if(subType.trim().length()>0)
 			{
 				subType=subType.trim().toLowerCase();
@@ -764,6 +789,12 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 				if(parmS.substring(0,x).equalsIgnoreCase("kept"))
 					build.setConsumed(false);
 				else
+				if(parmS.substring(0,x).toUpperCase().startsWith("WEAR")) // CR3: wear(n): kept, losing n uses each time
+				{
+					build.setConsumed(false);
+					build.setWear(Math.max(1,CMath.s_int(parmS.substring(0,x).replaceAll("[^0-9]",""))));
+				}
+				else
 				if((x>0)&&(!parmS.substring(0,x).equalsIgnoreCase("consumed")))
 				{
 					error="Malformed component line (code 1-2): "+parmS;
@@ -806,7 +837,10 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 						subType=rsc.substring(y+1,rsc.length()-1);
 					}
 				}
-				int rscC=CMLib.materials().findResourceCode(compType,false);
+				int rscC=compType.trim().equalsIgnoreCase("TAG")?-1:CMLib.materials().findResourceCode(compType,false);
+				if(compType.trim().equalsIgnoreCase("TAG")) // CR3: TAG(anvil)
+					build.setType(CompType.TAG, subType.trim().toLowerCase(), subType);
+				else
 				if(rscC>=0)
 					build.setType(CompType.RESOURCE, Long.valueOf(rscC), subType);
 				else
@@ -897,6 +931,9 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 		return compSocials;
 	}
 
+	/** CR3: kept tools found with the fate wear(n), and how much, until the components are spent */
+	protected final Map<Item,Integer> pendingWear=Collections.synchronizedMap(new WeakHashMap<Item,Integer>());
+
 	@Override
 	public MaterialLibrary.DeadResourceRecord destroyAbilityComponents(final List<Object> found)
 	{
@@ -935,6 +972,13 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 								Integer.valueOf(I.material()),
 								((I instanceof RawMaterial)?((RawMaterial)I).getSubType():"")));
 						I.destroy();
+					}
+					else
+					if((!destroy)&&(found.get(0) instanceof Item)) // CR3: a kept tool wears
+					{
+						final Integer w=pendingWear.remove(found.get(0));
+						if(w!=null)
+							Workstations.wear((Item)found.get(0),w.intValue());
 					}
 					found.remove(0);
 					i--;

@@ -155,8 +155,18 @@ public final class ProfileOwner
 					I.setSavable(false); // the character saves it, not the room
 					pStats.getExtItems().addItem(I);
 				}
-				if((!(I.owner() instanceof Room)) && (near != null) && (I instanceof com.planet_ink.coffee_mud.Items.Basic.StdBoardable))
-					((com.planet_ink.coffee_mud.Items.Basic.StdBoardable)I).dockNearest(near);
+				if((!(I.owner() instanceof Room)) && (near != null))
+				{
+					// (StdBoardable is loaded by the game's own class loader, so its dockNearest is called by name)
+					try
+					{
+						I.getClass().getMethod("dockNearest", Room.class).invoke(I, near);
+					}
+					catch(final Exception e)
+					{
+						((Boardable)I).dockHere(near);
+					}
+				}
 			}
 			else
 				I.setSavable(true);

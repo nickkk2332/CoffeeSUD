@@ -358,7 +358,7 @@ public class CommonSkill extends StdAbility
 		ticks-=(int)Math.round(CMath.mul(ticks, quickPct));
 		if(ticks<minDuration)
 			ticks=minDuration;
-		return ticks;
+		return Workstations.faster(mob,this,ticks,minDuration); // CR3: a station's SPEED
 	}
 
 	@Override
@@ -648,7 +648,13 @@ public class CommonSkill extends StdAbility
 
 	public int xlevel(final MOB mob)
 	{
-		return mob.phyStats().level()+(2*getXLEVELLevel(mob));
+		return Math.max(mob.phyStats().level()+(2*getXLEVELLevel(mob)),Workstations.maxLevel(mob,this)); // CR3: a station's MAXLEVEL
+	}
+
+	@Override
+	public boolean proficiencyCheck(final MOB mob, final int adjustment, final boolean auto)
+	{
+		return super.proficiencyCheck(mob,adjustment+Workstations.prof(mob,this),auto); // CR3: a station's PROF
 	}
 
 	public boolean confirmPossibleMaterialLocation(final int resource, final Room room)

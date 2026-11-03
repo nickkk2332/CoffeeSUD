@@ -2827,6 +2827,20 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   them, not the game's own crafting (loot, stock, a factory worker). A
   filtered LIST (LIST bench) also leaves out a ROOMMASK or TOOL recipe
   that fails there.
+- CR3 done. `Prop_Workstation` on an item or room (TAG=, SKILLS=,
+  SPEED=, PROF=, MAXLEVEL=, QUALITY=) and `core/Workstations`: a crafter
+  in the room gets the best SPEED (CommonSkill.getDuration), PROF (a new
+  CommonSkill.proficiencyCheck) and MAXLEVEL (xlevel) of the stations
+  helping their skill; QUALITY waits for CR17. An item tagged forge
+  (TAGS) is a station with no bonus. STATION= is a recipe key (CR5), and
+  GenCraftSkill has a STATION field (stat 15, in its editor) for all its
+  recipes. Components: `TAG(name)` (CompType.TAG, an item with that tag)
+  and the fate `wear(n)` (kept, n uses off when the components are
+  spent, broken at none), both kept by the editor's encoding. Also: core
+  code cannot test `instanceof` against classes the game loads itself
+  (abilities, items), so Workstations knows stations by the interface
+  `Workstations.Station`, and CR1's MPGRANT now docks a vessel through
+  `dockNearest` by name (its `instanceof StdBoardable` never held).
 
 #### 2l. Factions and organisations (18)
 

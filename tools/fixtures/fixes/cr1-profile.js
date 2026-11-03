@@ -99,6 +99,12 @@ try {
 	check("mpgrant vessel", v1 == "Fixcr1ann" && has(vn, "Fixcrone Seawolf") && kept && !sav && v2 == "" && gone,
 		v1 + " / " + vn + " / " + kept + " / " + sav + " / '" + v2 + "' / " + gone);
 	ship.destroy();
+	// a vessel not in a room is docked near the giver (CR3's fix: dockNearest by name)
+	var raft = CMClass.getItem("GenBoardable"); raft.setName("a fixcr1 raft called [NAME]");
+	A.addItem(raft);
+	PO.grant(raft, A, false, null, R);
+	check("docked", raft.owner() == R && s(raft.getOwnerName()) == "Fixcr1ann", "owner " + raft.owner());
+	raft.destroy();
 	// a bad one is a script error
 	var errs = s(CM.core.ScriptErrors.recent(200, null));
 	run("mpgrant fixcr1nothing Fixcr1ann");

@@ -9,13 +9,15 @@
 #  	 - OR -
 #    (TRIGGER:[RITUAL]:[MASK])
 # [DISPOSITION] is either: inventory, have, held, worn, nearby, onground (default inventory)
-# [FATE] is either: consumed, kept (default consumed)
+# [FATE] is either: consumed, kept (default consumed), or (CoffeeSUD) wear(N): kept, losing N uses
+#    (its condition) each time, and breaking at none
 # [AMOUNT] is the number of amount of the component required (default 1)
 # [COMPONENT ID] is one of the following:
 #   a material name for a raw resource (like cloth, metal, mithril, leather, liquid, etc..)
 #   a resource name for a raw resource (like cotton, iron, spidersteel, leather, oil, etc..)
 #   a material or resource of a subtype in parenthesis like cotton(bolt)
 #   an item name for a string match (like "a long crooked stick" or "stick" or "crooked"
+#   (CoffeeSUD) TAG(name) for an item with that tag (TAGS), as TAG(anvil)
 # * NOTE! If you use && or || conjunctions, the same item may be found multiple times!
 # [MASK] is the zapper mask for which players in which conditions require this component.
 #     Note that only ONE trigger component is permitted per mob/player per skill requirement, 

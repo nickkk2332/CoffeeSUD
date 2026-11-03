@@ -47,6 +47,7 @@ public class DefaultAbilityComponent implements AbilityComponent
 	private String			compSubTypeStr	= "";
 	private CompiledZMask	compiledMask	= null;
 	private String			triggerDef		= "";
+	private int				wear			= 0; // CR3
 
 	@Override
 	public String ID()
@@ -147,6 +148,18 @@ public class DefaultAbilityComponent implements AbilityComponent
 	}
 
 	@Override
+	public int getWear()
+	{
+		return wear;
+	}
+
+	@Override
+	public void setWear(final int wear)
+	{
+		this.wear = Math.max(0, wear);
+	}
+
+	@Override
 	public int getAmount()
 	{
 		return amount;
@@ -197,7 +210,7 @@ public class DefaultAbilityComponent implements AbilityComponent
 			compTypeMatRsc=0;
 		}
 		else
-		if(type == CompType.STRING)
+		if((type == CompType.STRING)||(type == CompType.TAG))
 			compTypeStr = typeObj.toString();
 		else
 			compTypeMatRsc=CMath.s_long(typeObj.toString());

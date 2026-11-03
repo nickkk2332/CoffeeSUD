@@ -302,7 +302,9 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		final List<List<String>> kept=new Vector<List<String>>(matches.size());
 		for(final List<String> V : matches)
 		{
-			final String why=RecipeKeys.refusal(keysCrafter,V);
+			String why=RecipeKeys.refusal(keysCrafter,V);
+			if(why==null)
+				why=Workstations.refusal(keysCrafter,skillStation()); // CR3: the skill's own STATION
 			if(why==null)
 				kept.add(V);
 			else
@@ -312,6 +314,15 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		if(kept.size()>0)
 			keysMatched=kept;
 		return kept;
+	}
+
+	/**
+	 * CR3: the station every recipe of this skill needs (a GenCraftSkill's STATION), or nothing.
+	 * @return the station's name, as forge
+	 */
+	protected String skillStation()
+	{
+		return "";
 	}
 
 	@Override

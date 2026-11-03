@@ -78,7 +78,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	private static final int	V_CNST			= 10;	// B
 	private static final int	V_FIRE			= 11;	// B
 	private static final int	V_HARD			= 12;	// B
-	private static final int	NUM_VS			= 13;	// S
+	private static final int	V_STAT			= 13;	// S CR3
+	private static final int	NUM_VS			= 14;	// S
 
 	//
 
@@ -137,6 +138,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 		O[V_CNST]=Boolean.valueOf(false);
 		O[V_FIRE]=Boolean.valueOf(false);
 		O[V_HARD]=Boolean.valueOf(false);
+		O[V_STAT]="";
 		return O;
 	}
 
@@ -239,6 +241,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 										 "CANSIT",//12S
 										 "NEEDFIRE",//13B
 										 "NOHARDBONUS",//14B
+										 "STATION",//15S CR3
 										};
 
 	@Override
@@ -304,6 +307,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			return this.isFireRequired()?"true":"false";
 		case 14:
 			return this.skipHardnessBonus()?"true":"false";
+		case 15:
+			return (String) V(ID, V_STAT);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenCraftSkill";
@@ -385,6 +390,9 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			break;
 		case 14:
 			SV(ID, V_HARD, Boolean.valueOf(CMath.s_bool(val)));
+			break;
+		case 15:
+			SV(ID, V_STAT, (val==null)?"":val.trim());
 			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenCraftSkill"))
@@ -593,6 +601,13 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	public boolean invoke(final MOB mob, final List<String> commands, final Physical givenTarget, final boolean auto, final int asLevel)
 	{
 		return autoGenInvoke(mob,commands,givenTarget,auto,asLevel,0,false,new ArrayList<CraftedItem>(0));
+	}
+
+	@Override
+	protected String skillStation()
+	{
+		final Object o=V(ID,V_STAT);
+		return (o==null)?"":o.toString(); // CR3: STATION
 	}
 
 	protected boolean checkRecipeRace(final MOB mob, final List<String> recipe)
