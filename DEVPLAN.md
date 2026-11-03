@@ -2565,7 +2565,10 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   (they did, now and then, for a large build). Post-processing (the
   parts that wait for the rooms to be linked) starts again from the seed,
   whatever ran since the build, and the crafting skills' one-time worker
-  and fake fire no longer take rolls from the first build to craft.
+  and fake fire no longer take rolls from the first build to craft. Still
+  open: after other generating in the same session, the first build of a
+  seed whose loot is crafted (metacraft) can still differ from the next;
+  some other one-time setup on that path is not found yet.
 - G3 done. A breadth-first walk from the entrance over the layout's nodes
   gives each room template `ROOMTAG_DEPTH`, `ROOMTAG_DEPTHPCT` (0 to 100),
   `ROOMTAG_ISDEEPEST`, `ROOMTAG_INDEX`, `ROOMTAG_X` and `ROOMTAG_Y`, and the
