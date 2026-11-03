@@ -530,56 +530,38 @@ public class XMLManager extends StdLibrary implements XMLLibrary
 		{
 			switch(s.charAt(loop))
 			{
-			case '&':
-				if(loop<s.length()-3)
+			case '&': // G17: &amp; restored, and an & that starts none of these kept
+				if(s.regionMatches(true,loop+1,"lt;",0,3))
 				{
-					switch(s.charAt(loop+1))
-					{
-					case 'l':
-					case 'L':
-						if(s.substring(loop+1,loop+4).equalsIgnoreCase("lt;"))
-						{
-							buf.append('<');
-							loop+=3;
-						}
-						break;
-					case 'g':
-					case 'G':
-						if(s.substring(loop+1,loop+4).equalsIgnoreCase("gt;"))
-						{
-							buf.append('>');
-							loop+=3;
-						}
-						break;
-					case 'q':
-					case 'Q':
-						if(s.substring(loop+1,loop+6).equalsIgnoreCase("quot;"))
-						{
-							buf.append('\"');
-							loop+=5;
-						}
-						break;
-					case 'a':
-					case 'A':
-						if(s.substring(loop+1,loop+6).equalsIgnoreCase("amp;"))
-						{
-							buf.append('&');
-							loop+=4;
-						}
-						else
-						if(s.substring(loop+1,loop+6).equalsIgnoreCase("apos;"))
-						{
-							buf.append('\'');
-							loop+=5;
-						}
-						break;
-					default:
-						buf.append(s.charAt(loop));
-						break;
-					}
+					buf.append('<');
+					loop+=3;
 				}
 				else
-					buf.append(s.charAt(loop));
+				if(s.regionMatches(true,loop+1,"gt;",0,3))
+				{
+					buf.append('>');
+					loop+=3;
+				}
+				else
+				if(s.regionMatches(true,loop+1,"quot;",0,5))
+				{
+					buf.append('\"');
+					loop+=5;
+				}
+				else
+				if(s.regionMatches(true,loop+1,"amp;",0,4))
+				{
+					buf.append('&');
+					loop+=4;
+				}
+				else
+				if(s.regionMatches(true,loop+1,"apos;",0,5))
+				{
+					buf.append('\'');
+					loop+=5;
+				}
+				else
+					buf.append('&');
 				break;
 			case '%':
 				if(loop<s.length()-2)

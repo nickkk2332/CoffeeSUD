@@ -176,6 +176,25 @@ public final class GenerateCheck
 			if(Boolean.FALSE.equals(ok))
 				W.problem(id, kind, "CLASS " + piece.value().trim() + ": no such " + kind + " class");
 		}
+		for(final String parm : new String[] { "CONDITION", "VALIDATE" })
+		{
+			final String c = piece.getParmValue(parm);
+			if(GenJs.isJs(c)) // G17: a js: one compiles
+			{
+				final String err = GenJs.compileError(GenJs.body(CMLib.xml().restoreAngleBrackets(c)));
+				if(err != null)
+					W.problem(id, tag, parm + " " + CMStrings.limit(c.trim(), 40) + ": " + err);
+			}
+		}
+		if(piece.contents().size() == 0)
+		{
+			for(final String js : GenJs.inText(piece.value())) // G17: and a ${js:...}
+			{
+				final String err = GenJs.compileError(js);
+				if(err != null)
+					W.problem(id, tag, "${js:" + CMStrings.limit(js, 40) + "}: " + err);
+			}
+		}
 		for(final XMLTag sub : piece.contents())
 			walk(W, sub, id, tag.equals("CLASS") ? kind : myKind);
 	}

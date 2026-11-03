@@ -367,7 +367,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 								}
 								else
 								if(parm.equalsIgnoreCase("CONDITION")||parm.equalsIgnoreCase("VALIDATE"))
-									tgt.parms().put(parm, tgtParmVal+" and "+srcParmVal);
+									tgt.parms().put(parm, mergeConditions(tgtParmVal, srcParmVal)); // G17: js: ones too
 								else
 								if(parm.equalsIgnoreCase("INSERT")||parm.equalsIgnoreCase("DEFINE")||parm.equalsIgnoreCase("PREDEFINE"))
 									tgt.parms().put(parm, tgtParmVal+","+srcParmVal);
@@ -4773,12 +4773,104 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		return finalChoices;
 	}
 
+	/**
+	 * G17: runs a js: value or condition (GenJs), its variables filled in
+	 * and its test() conditions tested as the generator's own.
+	 * @param E what is being built, or null
+	 * @param ignoreStats stats not to fill in
+	 * @param defPrefix the prefix of the stats being filled, or null
+	 * @param js the value or condition, js: first
+	 * @param piece the tag it is on
+	 * @param defined the variables
+	 * @return what it gave
+	 * @throws CMException its error, described
+	 * @throws PostProcessException a variable to be filled in later
+	 */
+	protected Object jsEval(final Modifiable E, final List<String> ignoreStats, final String defPrefix, final String js, final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException
+	{
+		final String id=(piece==null)?null:piece.getParmValue("ID");
+		final String where="template "+((piece==null)?"":piece.tag())+(((id!=null)&&(id.length()>0))?(" "+id):"");
+		final GenJs.Lookup lookup=new GenJs.Lookup()
+		{
+			@Override
+			public Object value(final String name) throws Exception
+			{
+				final Object val=(defined==null)?null:defined.get(name);
+				if(val instanceof XMLTag)
+					return findString(E,ignoreStats,defPrefix,"STRING",(XMLTag)val,defined);
+				return val;
+			}
+
+			@Override
+			public boolean test(final String condition) throws Exception
+			{
+				return testCondition(E,ignoreStats,defPrefix,CMLib.xml().restoreAngleBrackets(condition),piece,defined);
+			}
+		};
+		try
+		{
+			return GenJs.eval(GenJs.body(js),E,defined,lookup,where);
+		}
+		catch(final CMException e)
+		{
+			throw e;
+		}
+		catch(final PostProcessException e)
+		{
+			throw e;
+		}
+		catch(final Exception e)
+		{
+			throw new CMException(where+": "+e.getMessage(),e);
+		}
+	}
+
+	/**
+	 * G17: the conditions of two merged tags as one: a and b, or, when
+	 * either is js:, one js: expression, the other in test().
+	 * @param a one
+	 * @param b the other
+	 * @return both
+	 */
+	protected String mergeConditions(final String a, final String b)
+	{
+		if((!GenJs.isJs(a))&&(!GenJs.isJs(b)))
+			return a+" and "+b;
+		return "js:("+jsPart(a)+")&&("+jsPart(b)+")";
+	}
+
+	private static String jsPart(final String c)
+	{
+		if(GenJs.isJs(c))
+			return c.trim().substring(3);
+		final StringBuilder str=new StringBuilder("test(\"");
+		for(final char ch : c.toCharArray())
+		{
+			if((ch<' ')||("\"'\\&%<>`".indexOf(ch)>=0))
+				str.append(String.format("\\u%04x",Integer.valueOf(ch)));
+			else
+				str.append(ch);
+		}
+		return str.append("\")").toString();
+	}
+
 	protected boolean testCondition(final Modifiable E, final List<String> ignoreStats, final String defPrefix, final String condition, final XMLTag piece, final Map<String,Object> defined) throws PostProcessException
 	{
 		if(CMath.s_bool(piece.getParmValue("LLM"))&&(!CMLib.protocol().isLLMInstalled()))
 			return false;
 		if((condition == null)||(condition.length()==0))
 			return true;
+		if(GenJs.isJs(condition)) // G17: CONDITION="js:expr" and VALIDATE="js:expr", kept when it gives a true value
+		{
+			try
+			{
+				return GenJs.truthy(jsEval(E,ignoreStats,defPrefix,condition,piece,defined));
+			}
+			catch(final CMException e)
+			{
+				return false; // described in the log and JS ERRORS
+			}
+		}
 		final Map<String,Object> fixed=new HashMap<String,Object>();
 		try
 		{
@@ -8695,6 +8787,9 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			else
 			if(V.var.equals("$"))
 				val="$";
+			else
+			if(GenJs.isJs(V.var)) // G17: ${js:expr}, what the expression gives
+				val=GenJs.text(jsEval(E,ignoreStats,defPrefix,V.var,piece,defined));
 			else
 			if(V.var.toUpperCase().startsWith("SYSTEM_RANDOM_NAME:")) // G12: the guide's $SYSTEM_RANDOM_NAME:2-4 was never looked up here
 				val=findString(E,ignoreStats,defPrefix,V.var,piece,defined);

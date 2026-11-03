@@ -2747,6 +2747,22 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   checked, where it called the list unknown; and a container a template
   makes now starts as its DEFCLOSED and DEFLOCKED say (it was always made
   open), so a locked chest is locked.
+- G17 done. `${js:expr}` in a template's text and `CONDITION="js:..."`
+  and `VALIDATE="js:..."` on its tags (core/GenJs): the expression sees
+  `defined` (the variables by any case, numbers as numbers, a string tag
+  filled in, set to define), `obj` (what is being built), `test(cond)`
+  (the template grammar) and JSScope's `cm`, `gen`, `sud`, `require()`,
+  `include()` and `debug()`. One scope a build (kept as `_JS_SCOPE` in
+  the variables), so a library's state lasts while an area is made;
+  `Math.random` is the seeded dice. An error stops the build with its
+  line and goes in JS ERRORS; in a condition it is false. Merged tags'
+  js: conditions join with `&&`, a plain one in `test()`. GENERATE CHECK
+  compiles each. JSCRIPTS=0 turns it off. Also:
+  `XMLManager.restoreAngleBrackets` never restored `&amp;` (it compared
+  five characters with the four of `amp;`), dropped the `&` of anything
+  else, and could throw on a short `&qu` at the end; all three fixed.
+  Not done: a `%` followed by two hex digits is still read as an escape
+  in an attribute (a space after it avoids that).
 
 #### 2k. Crafting, gathering and housing (21)
 

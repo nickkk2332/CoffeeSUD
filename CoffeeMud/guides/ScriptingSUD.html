@@ -785,6 +785,11 @@ theme=crypt</code>, or <code>random_dungeon</code> rolls them), with riddle ches
 collapsed passages from <code>inc_setpieces.xml</code>. The owner copies <code>theme_skeleton.xml</code> to
 <code>fungal_caverns.xml</code>, fills in the room text and five mob tags, adds a riddle chest, and
 <code>random_dungeon</code> can roll it.</p>
+<p>JavaScript in templates: <code>&lt;STRING ID="innkeeper_name"&gt;${js:require('names').dwarven(2)}&lt;/STRING&gt;</code>
+names each innkeeper from the owner's dwarven tables in <code>world/js/lib/names.js</code>, the same library
+their play-time scripts use, and <code>&lt;ROOM condition="js:!cm.store('world').bridgeBurnt" ...&gt;</code>
+leaves out the bridge room once the story has burnt it. The expression sees <code>defined</code> (the
+template's variables) and <code>obj</code> (what is being built) (AHELP GENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
