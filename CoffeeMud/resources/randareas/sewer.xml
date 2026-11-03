@@ -1,0 +1,296 @@
+<!--
+   Copyright 2026 CoffeeSUD contributors
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+See guides/RandomAreas.html for information about documents of this type.
+
+G15: the sewer theme, a sewer: channels, cisterns and what lives in the filth below a city.  GENERATE AREA sewer_dungeon FROM randareas/sewer.xml areaname=X
+areasize=30 level_range=10 aggrochance=20 theme=sewer; random_dungeon rolls it too.
+-->
+<string id="randomtheme" merge="true" select="any-1">
+	<string condition="$theme=''">sewer</string>
+</string>
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+<STRING load="/resources/randareas/inc_common.xml" />
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+<STRING load="/resources/randareas/inc_setpieces.xml" />
+
+<!-- the theme's own area: its layout picked from the list (G16), its name once in requires -->
+<AREA id="sewer_dungeon" layout="GRIDCITY,MAZE,CROSS,LINEAR,TREE" requires="areaname=$,areasize=int,level_range=int,aggrochance=int,theme=sewer">
+	<NAME>$areaname</NAME><SIZE>$areasize</SIZE>
+	<CLASS select="any-1"><CLASS condition="$areatype!=''">$areatype</CLASS><CLASS condition="$areatype=''">StdArea</CLASS></CLASS>
+	<ROOM insert="hallway_rooms,interior_rooms,leaf_rooms" />
+</AREA>
+<AREA id="random_dungeon" merge="true" insert="sewer_dungeon" />
+
+<ROOM id="hallway_rooms" merge="true" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
+	<ROOM select="all" condition="$theme='sewer' or $theme='random'">
+		<ROOM class="SewerRoom">
+			<TITLE>a sewer channel</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Filthy water runs along this brick channel. </DESCRIPTION>
+					<DESCRIPTION>A narrow walkway, slick with slime, runs beside the flow. </DESCRIPTION>
+					<DESCRIPTION>You have to stoop in this low culvert. </DESCRIPTION>
+					<DESCRIPTION>Grates above let in a little light from the streets. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The smell is $adj_smelly beyond words. </DESCRIPTION>
+					<DESCRIPTION>Rats squeak somewhere close. </DESCRIPTION>
+					<DESCRIPTION>Refuse drifts past on the current. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a slime-slick walkway</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Filthy water runs along this brick channel. </DESCRIPTION>
+					<DESCRIPTION>A narrow walkway, slick with slime, runs beside the flow. </DESCRIPTION>
+					<DESCRIPTION>You have to stoop in this low culvert. </DESCRIPTION>
+					<DESCRIPTION>Grates above let in a little light from the streets. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The smell is $adj_smelly beyond words. </DESCRIPTION>
+					<DESCRIPTION>Rats squeak somewhere close. </DESCRIPTION>
+					<DESCRIPTION>Refuse drifts past on the current. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a low culvert</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Filthy water runs along this brick channel. </DESCRIPTION>
+					<DESCRIPTION>A narrow walkway, slick with slime, runs beside the flow. </DESCRIPTION>
+					<DESCRIPTION>You have to stoop in this low culvert. </DESCRIPTION>
+					<DESCRIPTION>Grates above let in a little light from the streets. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The smell is $adj_smelly beyond words. </DESCRIPTION>
+					<DESCRIPTION>Rats squeak somewhere close. </DESCRIPTION>
+					<DESCRIPTION>Refuse drifts past on the current. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+		</ROOM>
+		<ROOM insert="setpiece_hall_rooms" />
+	</ROOM>
+</ROOM>
+
+<ROOM id="interior_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
+	<ROOM select="all" condition="$theme='sewer' or $theme='random'">
+		<ROOM class="SewerRoom">
+			<TITLE>an overflow cistern</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Several channels empty into this great cistern. </DESCRIPTION>
+					<DESCRIPTION>Tunnels meet at this junction under a vaulted roof. </DESCRIPTION>
+					<DESCRIPTION>Old pumps and pipes fill this vaulted room. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The water here is deep and still. </DESCRIPTION>
+					<DESCRIPTION>Someone has scratched marks on the walls. </DESCRIPTION>
+					<DESCRIPTION>Pipes groan and drip. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a junction chamber</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Several channels empty into this great cistern. </DESCRIPTION>
+					<DESCRIPTION>Tunnels meet at this junction under a vaulted roof. </DESCRIPTION>
+					<DESCRIPTION>Old pumps and pipes fill this vaulted room. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The water here is deep and still. </DESCRIPTION>
+					<DESCRIPTION>Someone has scratched marks on the walls. </DESCRIPTION>
+					<DESCRIPTION>Pipes groan and drip. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a vaulted pump room</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Several channels empty into this great cistern. </DESCRIPTION>
+					<DESCRIPTION>Tunnels meet at this junction under a vaulted roof. </DESCRIPTION>
+					<DESCRIPTION>Old pumps and pipes fill this vaulted room. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The water here is deep and still. </DESCRIPTION>
+					<DESCRIPTION>Someone has scratched marks on the walls. </DESCRIPTION>
+					<DESCRIPTION>Pipes groan and drip. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+		</ROOM>
+	</ROOM>
+</ROOM>
+
+<ROOM id="leaf_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='leaf'">
+	<ROOM select="all" condition="$theme='sewer' or $theme='random'">
+		<ROOM class="SewerRoom" condition="$roomtag_isdeepest='true' and $__sewerboss&lt;1" define="__sewerboss+=1">
+			<TITLE>a blocked outflow, the deepest place</TITLE>
+			<DESCRIPTION>A grate blocks the outflow here, choked with refuse. It is a dead end. This is the heart of $areaname. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB insert="sewer_boss" condition="$pop_mobs!='false'" />
+			<ITEM select="any-3" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a blocked outflow</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A grate blocks the outflow here, choked with refuse. </DESCRIPTION>
+					<DESCRIPTION>Gnawed bones and rags fill this stinking nest. </DESCRIPTION>
+					<DESCRIPTION>Crates have been hidden in this dry alcove. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>It is a dead end. </DESCRIPTION>
+					<DESCRIPTION>Something has been living here. </DESCRIPTION>
+					<DESCRIPTION>Someone means to come back for these. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a rats' nest</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A grate blocks the outflow here, choked with refuse. </DESCRIPTION>
+					<DESCRIPTION>Gnawed bones and rags fill this stinking nest. </DESCRIPTION>
+					<DESCRIPTION>Crates have been hidden in this dry alcove. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>It is a dead end. </DESCRIPTION>
+					<DESCRIPTION>Something has been living here. </DESCRIPTION>
+					<DESCRIPTION>Someone means to come back for these. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="SewerRoom">
+			<TITLE>a smugglers' cache</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A grate blocks the outflow here, choked with refuse. </DESCRIPTION>
+					<DESCRIPTION>Gnawed bones and rags fill this stinking nest. </DESCRIPTION>
+					<DESCRIPTION>Crates have been hidden in this dry alcove. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>It is a dead end. </DESCRIPTION>
+					<DESCRIPTION>Something has been living here. </DESCRIPTION>
+					<DESCRIPTION>Someone means to come back for these. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sewer_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sewer_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM insert="setpiece_leaf_rooms" />
+	</ROOM>
+</ROOM>
+
+<MOB id="sewer_mobs" select="any-1" requires="level_range=int,aggrochance=int">
+	<MOB class="GenMob" level="$level_range" race="GiantRat" gender="$anygender">
+		<NAME>a sewer rat</NAME>
+		<DISPLAY>$mob_name swims through the filth.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="DireRat" gender="$anygender">
+		<NAME>a dire rat</NAME>
+		<DISPLAY>$mob_name bares yellow teeth.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Crocodile" gender="$anygender">
+		<NAME>a sewer crocodile</NAME>
+		<DISPLAY>$mob_name lies half under the water.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Jelly" gender="$anygender">
+		<NAME>a creeping ooze</NAME>
+		<DISPLAY>$mob_name slides along the bricks.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+</MOB>
+
+<MOB id="sewer_boss" class="GenMob" level="$level_range + 5" race="WereRat" gender="$anygender" hpmod="25">
+	<NAME>the rat king</NAME>
+	<DISPLAY>$mob_name sits on a throne of refuse.</DISPLAY>
+	<BEHAVIOR select="all">
+		<BEHAVIOR class="Aggressive" parms="" condition="$aggrochance&gt;0" />
+		<BEHAVIOR class="CombatAbilities" parms="" />
+	</BEHAVIOR>
+	<ITEM select="any-2" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+</MOB>
+
+<ITEM id="sewer_junk" select="any-1">
+	<ITEM class="GenItem" name="a soggy boot" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a rusted grate key" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a stained purse" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a bundle of rags" display="$item_name lies here." level="$level_range" basegold="1?20" />
+</ITEM>

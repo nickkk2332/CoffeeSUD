@@ -1,0 +1,296 @@
+<!--
+   Copyright 2026 CoffeeSUD contributors
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+See guides/RandomAreas.html for information about documents of this type.
+
+G15: the sky theme, the sky: floating islands, storm temples and aerial lairs.  GENERATE AREA sky_dungeon FROM randareas/sky.xml areaname=X
+areasize=30 level_range=10 aggrochance=20 theme=sky; random_dungeon rolls it too.
+-->
+<string id="randomtheme" merge="true" select="any-1">
+	<string condition="$theme=''">sky</string>
+</string>
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+<STRING load="/resources/randareas/inc_common.xml" />
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+<STRING load="/resources/randareas/inc_setpieces.xml" />
+
+<!-- the theme's own area: its layout picked from the list (G16), its name once in requires -->
+<AREA id="sky_dungeon" layout="ISLANDS,RING,SPOTTEDMESH,LINEAR,CLUMP" requires="areaname=$,areasize=int,level_range=int,aggrochance=int,theme=sky">
+	<NAME>$areaname</NAME><SIZE>$areasize</SIZE>
+	<CLASS select="any-1"><CLASS condition="$areatype!=''">$areatype</CLASS><CLASS condition="$areatype=''">StdArea</CLASS></CLASS>
+	<ROOM insert="hallway_rooms,interior_rooms,leaf_rooms" />
+</AREA>
+<AREA id="random_dungeon" merge="true" insert="sky_dungeon" />
+
+<ROOM id="hallway_rooms" merge="true" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
+	<ROOM select="all" condition="$theme='sky' or $theme='random'">
+		<ROOM class="Hills">
+			<TITLE>a windswept rope bridge</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A rope bridge sways between two floating rocks. </DESCRIPTION>
+					<DESCRIPTION>This path runs along the edge of a floating island, over nothing. </DESCRIPTION>
+					<DESCRIPTION>Steps cut into the rock climb through the clouds. </DESCRIPTION>
+					<DESCRIPTION>Wind howls across this exposed ridge high above the world. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Far below, the land is a patchwork of fields. </DESCRIPTION>
+					<DESCRIPTION>Clouds drift past close enough to touch. </DESCRIPTION>
+					<DESCRIPTION>Birds wheel in the open air below you. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>a path along a floating isle</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A rope bridge sways between two floating rocks. </DESCRIPTION>
+					<DESCRIPTION>This path runs along the edge of a floating island, over nothing. </DESCRIPTION>
+					<DESCRIPTION>Steps cut into the rock climb through the clouds. </DESCRIPTION>
+					<DESCRIPTION>Wind howls across this exposed ridge high above the world. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Far below, the land is a patchwork of fields. </DESCRIPTION>
+					<DESCRIPTION>Clouds drift past close enough to touch. </DESCRIPTION>
+					<DESCRIPTION>Birds wheel in the open air below you. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>a cloud-wreathed stair</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A rope bridge sways between two floating rocks. </DESCRIPTION>
+					<DESCRIPTION>This path runs along the edge of a floating island, over nothing. </DESCRIPTION>
+					<DESCRIPTION>Steps cut into the rock climb through the clouds. </DESCRIPTION>
+					<DESCRIPTION>Wind howls across this exposed ridge high above the world. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Far below, the land is a patchwork of fields. </DESCRIPTION>
+					<DESCRIPTION>Clouds drift past close enough to touch. </DESCRIPTION>
+					<DESCRIPTION>Birds wheel in the open air below you. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+		</ROOM>
+		<ROOM insert="setpiece_hall_rooms" />
+	</ROOM>
+</ROOM>
+
+<ROOM id="interior_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
+	<ROOM select="all" condition="$theme='sky' or $theme='random'">
+		<ROOM class="Hills">
+			<TITLE>a storm temple court</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Lightning rods ring the court of this storm temple. </DESCRIPTION>
+					<DESCRIPTION>A broad platform of stone juts out into the sky here. </DESCRIPTION>
+					<DESCRIPTION>Strange flowers grow in this garden in the clouds. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Thunder rolls somewhere nearby. </DESCRIPTION>
+					<DESCRIPTION>Feathers litter the stones. </DESCRIPTION>
+					<DESCRIPTION>The air is thin and cold. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>an eyrie platform</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Lightning rods ring the court of this storm temple. </DESCRIPTION>
+					<DESCRIPTION>A broad platform of stone juts out into the sky here. </DESCRIPTION>
+					<DESCRIPTION>Strange flowers grow in this garden in the clouds. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Thunder rolls somewhere nearby. </DESCRIPTION>
+					<DESCRIPTION>Feathers litter the stones. </DESCRIPTION>
+					<DESCRIPTION>The air is thin and cold. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>a sky garden</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Lightning rods ring the court of this storm temple. </DESCRIPTION>
+					<DESCRIPTION>A broad platform of stone juts out into the sky here. </DESCRIPTION>
+					<DESCRIPTION>Strange flowers grow in this garden in the clouds. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Thunder rolls somewhere nearby. </DESCRIPTION>
+					<DESCRIPTION>Feathers litter the stones. </DESCRIPTION>
+					<DESCRIPTION>The air is thin and cold. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+		</ROOM>
+	</ROOM>
+</ROOM>
+
+<ROOM id="leaf_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='leaf'">
+	<ROOM select="all" condition="$theme='sky' or $theme='random'">
+		<ROOM class="Hills" condition="$roomtag_isdeepest='true' and $__skyboss&lt;1" define="__skyboss+=1">
+			<TITLE>a floating crag, the deepest place</TITLE>
+			<DESCRIPTION>A lone crag floats here, joined to the rest by a single span. The edge drops away into empty sky. This is the heart of $areaname. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB insert="sky_boss" condition="$pop_mobs!='false'" />
+			<ITEM select="any-3" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>a floating crag</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A lone crag floats here, joined to the rest by a single span. </DESCRIPTION>
+					<DESCRIPTION>Bones and shiny trinkets fill this great nest. </DESCRIPTION>
+					<DESCRIPTION>Wind chimes ring endlessly in this little shrine. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The edge drops away into empty sky. </DESCRIPTION>
+					<DESCRIPTION>Something has hoarded treasure here. </DESCRIPTION>
+					<DESCRIPTION>The view is dizzying. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>a harpy nest</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A lone crag floats here, joined to the rest by a single span. </DESCRIPTION>
+					<DESCRIPTION>Bones and shiny trinkets fill this great nest. </DESCRIPTION>
+					<DESCRIPTION>Wind chimes ring endlessly in this little shrine. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The edge drops away into empty sky. </DESCRIPTION>
+					<DESCRIPTION>Something has hoarded treasure here. </DESCRIPTION>
+					<DESCRIPTION>The view is dizzying. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="Hills">
+			<TITLE>a wind shrine</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A lone crag floats here, joined to the rest by a single span. </DESCRIPTION>
+					<DESCRIPTION>Bones and shiny trinkets fill this great nest. </DESCRIPTION>
+					<DESCRIPTION>Wind chimes ring endlessly in this little shrine. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>The edge drops away into empty sky. </DESCRIPTION>
+					<DESCRIPTION>Something has hoarded treasure here. </DESCRIPTION>
+					<DESCRIPTION>The view is dizzying. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="sky_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="sky_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM insert="setpiece_leaf_rooms" />
+	</ROOM>
+</ROOM>
+
+<MOB id="sky_mobs" select="any-1" requires="level_range=int,aggrochance=int">
+	<MOB class="GenMob" level="$level_range" race="Harpy" gender="$anygender">
+		<NAME>a shrieking harpy</NAME>
+		<DISPLAY>$mob_name circles overhead.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Griffon" gender="$anygender">
+		<NAME>a griffon</NAME>
+		<DISPLAY>$mob_name preens its feathers.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="AirElemental" gender="$anygender">
+		<NAME>a gust of living wind</NAME>
+		<DISPLAY>$mob_name whirls about.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="GreatBird" gender="$anygender">
+		<NAME>a storm eagle</NAME>
+		<DISPLAY>$mob_name watches you from a high perch.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+</MOB>
+
+<MOB id="sky_boss" class="GenMob" level="$level_range + 5" race="Giant" gender="$anygender" hpmod="25">
+	<NAME>a cloud giant</NAME>
+	<DISPLAY>$mob_name sits on a throne of carved cloud-stone.</DISPLAY>
+	<BEHAVIOR select="all">
+		<BEHAVIOR class="Aggressive" parms="" condition="$aggrochance&gt;0" />
+		<BEHAVIOR class="CombatAbilities" parms="" />
+	</BEHAVIOR>
+	<ITEM select="any-2" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+</MOB>
+
+<ITEM id="sky_junk" select="any-1">
+	<ITEM class="GenItem" name="a storm-blue feather" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a bit of cloud crystal" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a brass wind chime" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a frayed length of rope" display="$item_name lies here." level="$level_range" basegold="1?20" />
+</ITEM>

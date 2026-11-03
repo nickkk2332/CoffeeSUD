@@ -3332,6 +3332,17 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	protected List<Item> buildItem(final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException
 	{
 		final List<Item> made=seeded(piece, defined, () -> buildItemUnseeded(piece, defined)); // G1
+		if(made!=null)
+		{
+			for(final Item I : made) // G15: a container made starts as its defaults say, closed and locked
+			{
+				if((I instanceof Container)&&((Container)I).hasADoor())
+				{
+					final Container C=(Container)I;
+					C.setDoorsNLocks(true,!C.defaultsClosed(),C.defaultsClosed(),C.hasALock(),C.hasALock()&&C.defaultsClosed()&&C.defaultsLocked(),C.defaultsLocked());
+				}
+			}
+		}
 		final String affixes=piece.getParmValue("AFFIXES"); // G10: AFFIXES="0?2", that many from the world's affixes
 		if((affixes!=null)&&(affixes.trim().length()>0)&&(made!=null))
 		{

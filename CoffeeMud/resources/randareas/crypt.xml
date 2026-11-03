@@ -1,0 +1,296 @@
+<!--
+   Copyright 2026 CoffeeSUD contributors
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+See guides/RandomAreas.html for information about documents of this type.
+
+G15: the crypt theme, a crypt or graveyard: catacombs and mausoleums of the restless dead.  GENERATE AREA crypt_dungeon FROM randareas/crypt.xml areaname=X
+areasize=30 level_range=10 aggrochance=20 theme=crypt; random_dungeon rolls it too.
+-->
+<string id="randomtheme" merge="true" select="any-1">
+	<string condition="$theme=''">crypt</string>
+</string>
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+<STRING load="/resources/randareas/inc_common.xml" />
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+<STRING load="/resources/randareas/inc_setpieces.xml" />
+
+<!-- the theme's own area: its layout picked from the list (G16), its name once in requires -->
+<AREA id="crypt_dungeon" layout="MAZE,TREE,BRANCH,CLUMP,CAVE" requires="areaname=$,areasize=int,level_range=int,aggrochance=int,theme=crypt">
+	<NAME>$areaname</NAME><SIZE>$areasize</SIZE>
+	<CLASS select="any-1"><CLASS condition="$areatype!=''">$areatype</CLASS><CLASS condition="$areatype=''">StdArea</CLASS></CLASS>
+	<ROOM insert="hallway_rooms,interior_rooms,leaf_rooms" />
+</AREA>
+<AREA id="random_dungeon" merge="true" insert="crypt_dungeon" />
+
+<ROOM id="hallway_rooms" merge="true" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
+	<ROOM select="all" condition="$theme='crypt' or $theme='random'">
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a burial corridor</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Skulls stare from the niches along this $adj_mustydark corridor. </DESCRIPTION>
+					<DESCRIPTION>The walls here are stacked with old bones, $adj_carelessly piled. </DESCRIPTION>
+					<DESCRIPTION>A $adj_faint smell of decay hangs in this $adj_cramped passage. </DESCRIPTION>
+					<DESCRIPTION>Faded names are carved above each burial niche. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Dust lies thick and undisturbed. </DESCRIPTION>
+					<DESCRIPTION>Something has gnawed at the bones. </DESCRIPTION>
+					<DESCRIPTION>Cold air moves though no wind blows. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a passage lined with niches</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Skulls stare from the niches along this $adj_mustydark corridor. </DESCRIPTION>
+					<DESCRIPTION>The walls here are stacked with old bones, $adj_carelessly piled. </DESCRIPTION>
+					<DESCRIPTION>A $adj_faint smell of decay hangs in this $adj_cramped passage. </DESCRIPTION>
+					<DESCRIPTION>Faded names are carved above each burial niche. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Dust lies thick and undisturbed. </DESCRIPTION>
+					<DESCRIPTION>Something has gnawed at the bones. </DESCRIPTION>
+					<DESCRIPTION>Cold air moves though no wind blows. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a crumbling ossuary walk</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Skulls stare from the niches along this $adj_mustydark corridor. </DESCRIPTION>
+					<DESCRIPTION>The walls here are stacked with old bones, $adj_carelessly piled. </DESCRIPTION>
+					<DESCRIPTION>A $adj_faint smell of decay hangs in this $adj_cramped passage. </DESCRIPTION>
+					<DESCRIPTION>Faded names are carved above each burial niche. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Dust lies thick and undisturbed. </DESCRIPTION>
+					<DESCRIPTION>Something has gnawed at the bones. </DESCRIPTION>
+					<DESCRIPTION>Cold air moves though no wind blows. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+		</ROOM>
+		<ROOM insert="setpiece_hall_rooms" />
+	</ROOM>
+</ROOM>
+
+<ROOM id="interior_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
+	<ROOM select="all" condition="$theme='crypt' or $theme='random'">
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a mausoleum chamber</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Stone coffins stand in rows across this $adj_mustydark vault. </DESCRIPTION>
+					<DESCRIPTION>Pillars of stacked skulls hold up the ceiling here. </DESCRIPTION>
+					<DESCRIPTION>An altar of yellowed bone dominates this $adj_scary_feeling chamber. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Candle stubs ring the floor, long burnt out. </DESCRIPTION>
+					<DESCRIPTION>Some of the lids have been pushed aside from within. </DESCRIPTION>
+					<DESCRIPTION>Whispers seem to come from the walls. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a vaulted crypt</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Stone coffins stand in rows across this $adj_mustydark vault. </DESCRIPTION>
+					<DESCRIPTION>Pillars of stacked skulls hold up the ceiling here. </DESCRIPTION>
+					<DESCRIPTION>An altar of yellowed bone dominates this $adj_scary_feeling chamber. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Candle stubs ring the floor, long burnt out. </DESCRIPTION>
+					<DESCRIPTION>Some of the lids have been pushed aside from within. </DESCRIPTION>
+					<DESCRIPTION>Whispers seem to come from the walls. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a chapel of bones</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Stone coffins stand in rows across this $adj_mustydark vault. </DESCRIPTION>
+					<DESCRIPTION>Pillars of stacked skulls hold up the ceiling here. </DESCRIPTION>
+					<DESCRIPTION>An altar of yellowed bone dominates this $adj_scary_feeling chamber. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Candle stubs ring the floor, long burnt out. </DESCRIPTION>
+					<DESCRIPTION>Some of the lids have been pushed aside from within. </DESCRIPTION>
+					<DESCRIPTION>Whispers seem to come from the walls. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+		</ROOM>
+	</ROOM>
+</ROOM>
+
+<ROOM id="leaf_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='leaf'">
+	<ROOM select="all" condition="$theme='crypt' or $theme='random'">
+		<ROOM class="DarkStoneRoom" condition="$roomtag_isdeepest='true' and $__cryptboss&lt;1" define="__cryptboss+=1">
+			<TITLE>a sealed tomb, the deepest place</TITLE>
+			<DESCRIPTION>This tomb was sealed long ago, and the air is stale. Grave goods lie scattered about. This is the heart of $areaname. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB insert="crypt_boss" condition="$pop_mobs!='false'" />
+			<ITEM select="any-3" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a sealed tomb</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>This tomb was sealed long ago, and the air is stale. </DESCRIPTION>
+					<DESCRIPTION>A single sarcophagus fills this $adj_cramped room. </DESCRIPTION>
+					<DESCRIPTION>Jars and hooks of the embalmer's trade line these shelves. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Grave goods lie scattered about. </DESCRIPTION>
+					<DESCRIPTION>The carvings show the dead rising. </DESCRIPTION>
+					<DESCRIPTION>Bones crunch underfoot. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>a forgotten burial niche</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>This tomb was sealed long ago, and the air is stale. </DESCRIPTION>
+					<DESCRIPTION>A single sarcophagus fills this $adj_cramped room. </DESCRIPTION>
+					<DESCRIPTION>Jars and hooks of the embalmer's trade line these shelves. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Grave goods lie scattered about. </DESCRIPTION>
+					<DESCRIPTION>The carvings show the dead rising. </DESCRIPTION>
+					<DESCRIPTION>Bones crunch underfoot. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="DarkStoneRoom">
+			<TITLE>an embalmer's room</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>This tomb was sealed long ago, and the air is stale. </DESCRIPTION>
+					<DESCRIPTION>A single sarcophagus fills this $adj_cramped room. </DESCRIPTION>
+					<DESCRIPTION>Jars and hooks of the embalmer's trade line these shelves. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Grave goods lie scattered about. </DESCRIPTION>
+					<DESCRIPTION>The carvings show the dead rising. </DESCRIPTION>
+					<DESCRIPTION>Bones crunch underfoot. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="crypt_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM insert="setpiece_leaf_rooms" />
+	</ROOM>
+</ROOM>
+
+<MOB id="crypt_mobs" select="any-1" requires="level_range=int,aggrochance=int">
+	<MOB class="GenMob" level="$level_range" race="Skeleton" gender="$anygender">
+		<NAME>(a(n)) $adj_ragged skeleton</NAME>
+		<DISPLAY>$mob_name rattles as it moves.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Zombie" gender="$anygender">
+		<NAME>(a(n)) $adj_filthy zombie</NAME>
+		<DISPLAY>$mob_name shambles about here.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Ghoul" gender="$anygender">
+		<NAME>a hungry ghoul</NAME>
+		<DISPLAY>$mob_name crouches over a pile of bones.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Ghost" gender="$anygender">
+		<NAME>a restless ghost</NAME>
+		<DISPLAY>$mob_name drifts through the stone.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+</MOB>
+
+<MOB id="crypt_boss" class="GenMob" level="$level_range + 5" race="Lich" gender="$anygender" hpmod="25">
+	<NAME>the master of the crypt</NAME>
+	<DISPLAY>$mob_name, a robed lich, watches from the shadows.</DISPLAY>
+	<BEHAVIOR select="all">
+		<BEHAVIOR class="Aggressive" parms="" condition="$aggrochance&gt;0" />
+		<BEHAVIOR class="CombatAbilities" parms="" />
+	</BEHAVIOR>
+	<ITEM select="any-2" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+</MOB>
+
+<ITEM id="crypt_junk" select="any-1">
+	<ITEM class="GenItem" name="a cracked funerary urn" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a tarnished burial coin" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a moldering shroud" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a carved bone charm" display="$item_name lies here." level="$level_range" basegold="1?20" />
+</ITEM>

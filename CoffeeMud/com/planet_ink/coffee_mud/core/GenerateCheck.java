@@ -151,8 +151,14 @@ public final class GenerateCheck
 			}
 		}
 		final String layout = piece.getParmValue("LAYOUT");
-		if(literal(layout) && (CMLib.percolator().getLayoutManager(layout.trim()) == null))
-			W.problem(id, tag, "unknown layout " + layout.trim());
+		if(literal(layout))
+		{
+			for(final String one : CMParms.parseCommas(layout, true)) // G16: a comma list, each one known
+			{
+				if(CMLib.percolator().getLayoutManager(one.trim()) == null)
+					W.problem(id, tag, "unknown layout " + one.trim());
+			}
+		}
 		final String select = piece.getParmValue("SELECT");
 		if((select != null) && (select.trim().length() > 0) && (!SELECT_MODE.matcher(select.trim()).matches())
 		&& (!CMath.isMathExpression(select.trim())) && literal(select))

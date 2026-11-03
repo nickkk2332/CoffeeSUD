@@ -1,0 +1,94 @@
+<!--
+   Copyright 2026 CoffeeSUD contributors
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+See guides/RandomAreas.html for information about documents of this type.
+
+G15: a theme skeleton.  Copy this file to randareas/mytheme.xml, change every "skeleton" to the
+theme's name (its name is in requires once, in the randomtheme choice once, and in the ids), and fill
+the slots.  Add <STRING load="/resources/randareas/mytheme.xml" /> to example.xml so random_dungeon
+rolls it too.  Build it with GENERATE AREA skeleton_dungeon FROM randareas/mytheme.xml areaname=X
+areasize=30 level_range=10 aggrochance=20 theme=skeleton, and GENERATE CHECK randareas/mytheme.xml
+finds its mistakes.
+-->
+<!-- SLOT: the theme's name, for random_dungeon to pick when no theme is given -->
+<string id="randomtheme" merge="true" select="any-1">
+	<string condition="$theme=''">skeleton</string>
+</string>
+<!-- the word banks and set pieces every theme can use -->
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+<STRING load="/resources/randareas/inc_common.xml" />
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+<STRING load="/resources/randareas/inc_setpieces.xml" />
+
+<!-- SLOT: the area: one AREA, its layout one of the list (or $layout, given to GENERATE), the theme's
+     name once in requires -->
+<AREA id="skeleton_dungeon" layout="MAZE,TREE,CAVE" requires="areaname=$,areasize=int,level_range=int,aggrochance=int,theme=skeleton">
+	<NAME>$areaname</NAME><SIZE>$areasize</SIZE>
+	<CLASS>StdArea</CLASS>
+	<ROOM insert="hallway_rooms,interior_rooms,leaf_rooms" />
+</AREA>
+<!-- random_dungeon rolls this area too -->
+<AREA id="random_dungeon" merge="true" insert="skeleton_dungeon" />
+
+<!-- SLOT: the street rooms (two exits, or the way in): merged into the shared group, for this theme -->
+<ROOM id="hallway_rooms" merge="true" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
+	<ROOM select="all" condition="$theme='skeleton'">
+		<ROOM class="StoneRoom">
+			<TITLE>a skeleton passage</TITLE>
+			<DESCRIPTION>A passage of the skeleton theme. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="skeleton_mobs" />
+		</ROOM>
+		<ROOM insert="setpiece_hall_rooms" />
+	</ROOM>
+</ROOM>
+<!-- SLOT: the inner rooms (three exits or more) -->
+<ROOM id="interior_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
+	<ROOM select="all" condition="$theme='skeleton'">
+		<ROOM class="StoneRoom">
+			<TITLE>a skeleton hall</TITLE>
+			<DESCRIPTION>A hall of the skeleton theme. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="skeleton_mobs" />
+		</ROOM>
+	</ROOM>
+</ROOM>
+<!-- SLOT: the dead ends (one exit): the deepest gets the boss, others treasure and set pieces -->
+<ROOM id="leaf_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='leaf'">
+	<ROOM select="all" condition="$theme='skeleton'">
+		<ROOM class="StoneRoom" condition="$roomtag_isdeepest='true' and $__skeletonboss&lt;1" define="__skeletonboss+=1">
+			<TITLE>the skeleton's lair</TITLE>
+			<DESCRIPTION>The deepest place in $areaname.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB insert="skeleton_boss" />
+		</ROOM>
+		<ROOM class="StoneRoom">
+			<TITLE>a skeleton nook</TITLE>
+			<DESCRIPTION>A dead end. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM insert="setpiece_leaf_rooms" />
+	</ROOM>
+</ROOM>
+<!-- SLOT: the mobs, one picked for each room that has one -->
+<MOB id="skeleton_mobs" select="any-1" requires="level_range=int,aggrochance=int">
+	<MOB class="GenMob" level="$level_range" race="Goblin" name="a skeleton goblin" display="$mob_name is here.">
+		<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+	</MOB>
+</MOB>
+<!-- SLOT: the boss -->
+<MOB id="skeleton_boss" class="GenMob" level="$level_range + 5" race="Ogre" name="the skeleton boss" display="$mob_name glowers here." />

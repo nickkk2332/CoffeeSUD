@@ -2728,6 +2728,25 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   levels, items; mobs: race, class, gear; items: level, value) and
   destroys it; `GENERATE PREVIEW KEEP` runs the real GENERATE with the
   same words and seed, an area unlinked unless a direction was given.
+- G15 done. Data: seven themes in `resources/randareas` (crypt, ruins,
+  castle, volcano, sky, mine, sewer), each one file: its `randomtheme`
+  choice, one AREA `<theme>_dungeon` with a layout list (G16) and its name
+  once in `requires`, merged into `random_dungeon`'s choices, three room
+  kinds merged into the shared street, inner and leaf groups for it (a
+  boss in the deepest leaf, G3), four mobs, junk and treasure, all from
+  the shared word banks. `inc_setpieces.xml`: a riddle chest (locked,
+  `Prop_OpenPassword` with the answer to the riddle on its lid), a lever
+  room (`EXECMSG_PROG PULL` loads a cache with MPOLOAD FROMGENFILE), a
+  healing shrine (GREET_PROG MPCAST), a trapped corridor (`RandomTraps`)
+  and a collapsed passage (something hidden under rubble), each gated by
+  `__setpiece` and `ROOMTAG_DEPTH`. `theme_skeleton.xml` with a comment on
+  each slot; `example.xml` loads the new themes. RandomAreas.html: the
+  layouts listed (BRANCH, MESH, SPOTTEDMESH and the new ones), repeat-X
+  told as picks with replacement, and the skeleton and set pieces.
+  Also: GENERATE CHECK now reads G16's comma list of layouts, each one
+  checked, where it called the list unknown; and a container a template
+  makes now starts as its DEFCLOSED and DEFLOCKED say (it was always made
+  open), so a locked chest is locked.
 
 #### 2k. Crafting, gathering and housing (21)
 

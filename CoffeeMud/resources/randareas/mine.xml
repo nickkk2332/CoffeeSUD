@@ -1,0 +1,296 @@
+<!--
+   Copyright 2026 CoffeeSUD contributors
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+See guides/RandomAreas.html for information about documents of this type.
+
+G15: the mine theme, a mine: timbered shafts, ore chambers and the things that dig there.  GENERATE AREA mine_dungeon FROM randareas/mine.xml areaname=X
+areasize=30 level_range=10 aggrochance=20 theme=mine; random_dungeon rolls it too.
+-->
+<string id="randomtheme" merge="true" select="any-1">
+	<string condition="$theme=''">mine</string>
+</string>
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+<STRING load="/resources/randareas/inc_common.xml" />
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+<STRING load="/resources/randareas/inc_setpieces.xml" />
+
+<!-- the theme's own area: its layout picked from the list (G16), its name once in requires -->
+<AREA id="mine_dungeon" layout="LINEAR,TREE,BRANCH,CAVE,MAZE" requires="areaname=$,areasize=int,level_range=int,aggrochance=int,theme=mine">
+	<NAME>$areaname</NAME><SIZE>$areasize</SIZE>
+	<CLASS select="any-1"><CLASS condition="$areatype!=''">$areatype</CLASS><CLASS condition="$areatype=''">StdArea</CLASS></CLASS>
+	<ROOM insert="hallway_rooms,interior_rooms,leaf_rooms" />
+</AREA>
+<AREA id="random_dungeon" merge="true" insert="mine_dungeon" />
+
+<ROOM id="hallway_rooms" merge="true" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
+	<ROOM select="all" condition="$theme='mine' or $theme='random'">
+		<ROOM class="CaveRoom">
+			<TITLE>a timbered shaft</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Old timbers prop up the roof of this shaft. </DESCRIPTION>
+					<DESCRIPTION>Rusted rails run along the floor of this tunnel. </DESCRIPTION>
+					<DESCRIPTION>This seam is barely wide enough to squeeze through. </DESCRIPTION>
+					<DESCRIPTION>Pick marks scar every wall of this passage. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Dust trickles from the ceiling. </DESCRIPTION>
+					<DESCRIPTION>An overturned ore cart blocks part of the way. </DESCRIPTION>
+					<DESCRIPTION>Water drips somewhere in the dark. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>a rail-cart tunnel</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Old timbers prop up the roof of this shaft. </DESCRIPTION>
+					<DESCRIPTION>Rusted rails run along the floor of this tunnel. </DESCRIPTION>
+					<DESCRIPTION>This seam is barely wide enough to squeeze through. </DESCRIPTION>
+					<DESCRIPTION>Pick marks scar every wall of this passage. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Dust trickles from the ceiling. </DESCRIPTION>
+					<DESCRIPTION>An overturned ore cart blocks part of the way. </DESCRIPTION>
+					<DESCRIPTION>Water drips somewhere in the dark. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>a narrow seam</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION condition="$ROOMTAG_NODEGATEEXIT != ''">You are at the way into $areaname. </DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Old timbers prop up the roof of this shaft. </DESCRIPTION>
+					<DESCRIPTION>Rusted rails run along the floor of this tunnel. </DESCRIPTION>
+					<DESCRIPTION>This seam is barely wide enough to squeeze through. </DESCRIPTION>
+					<DESCRIPTION>Pick marks scar every wall of this passage. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Dust trickles from the ceiling. </DESCRIPTION>
+					<DESCRIPTION>An overturned ore cart blocks part of the way. </DESCRIPTION>
+					<DESCRIPTION>Water drips somewhere in the dark. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+		</ROOM>
+		<ROOM insert="setpiece_hall_rooms" />
+	</ROOM>
+</ROOM>
+
+<ROOM id="interior_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
+	<ROOM select="all" condition="$theme='mine' or $theme='random'">
+		<ROOM class="CaveRoom">
+			<TITLE>a vaulted dig chamber</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Miners carved this great chamber out of the rock. </DESCRIPTION>
+					<DESCRIPTION>Heaps of sorted ore fill this cavern. </DESCRIPTION>
+					<DESCRIPTION>Bedrolls and a cold firepit mark an old miners' camp. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Lanterns hang from hooks, unlit. </DESCRIPTION>
+					<DESCRIPTION>Tools lie where they were dropped. </DESCRIPTION>
+					<DESCRIPTION>A rope ladder hangs from a hole above. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>an ore-sorting cavern</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Miners carved this great chamber out of the rock. </DESCRIPTION>
+					<DESCRIPTION>Heaps of sorted ore fill this cavern. </DESCRIPTION>
+					<DESCRIPTION>Bedrolls and a cold firepit mark an old miners' camp. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Lanterns hang from hooks, unlit. </DESCRIPTION>
+					<DESCRIPTION>Tools lie where they were dropped. </DESCRIPTION>
+					<DESCRIPTION>A rope ladder hangs from a hole above. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>a miners' camp</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Miners carved this great chamber out of the rock. </DESCRIPTION>
+					<DESCRIPTION>Heaps of sorted ore fill this cavern. </DESCRIPTION>
+					<DESCRIPTION>Bedrolls and a cold firepit mark an old miners' camp. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>Lanterns hang from hooks, unlit. </DESCRIPTION>
+					<DESCRIPTION>Tools lie where they were dropped. </DESCRIPTION>
+					<DESCRIPTION>A rope ladder hangs from a hole above. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+		</ROOM>
+	</ROOM>
+</ROOM>
+
+<ROOM id="leaf_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='leaf'">
+	<ROOM select="all" condition="$theme='mine' or $theme='random'">
+		<ROOM class="CaveRoom" condition="$roomtag_isdeepest='true' and $__mineboss&lt;1" define="__mineboss+=1">
+			<TITLE>a played-out gallery, the deepest place</TITLE>
+			<DESCRIPTION>This gallery was worked until nothing was left. A glint of ore remains in one wall. This is the heart of $areaname. You can go $roomexits_desc_long.</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB insert="mine_boss" condition="$pop_mobs!='false'" />
+			<ITEM select="any-3" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>a played-out gallery</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>This gallery was worked until nothing was left. </DESCRIPTION>
+					<DESCRIPTION>Dark water fills the bottom of this sump. </DESCRIPTION>
+					<DESCRIPTION>The roof has come down here, ending the drift. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A glint of ore remains in one wall. </DESCRIPTION>
+					<DESCRIPTION>Something moves under the water. </DESCRIPTION>
+					<DESCRIPTION>There is no way on. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>a flooded sump</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>This gallery was worked until nothing was left. </DESCRIPTION>
+					<DESCRIPTION>Dark water fills the bottom of this sump. </DESCRIPTION>
+					<DESCRIPTION>The roof has come down here, ending the drift. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A glint of ore remains in one wall. </DESCRIPTION>
+					<DESCRIPTION>Something moves under the water. </DESCRIPTION>
+					<DESCRIPTION>There is no way on. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM class="CaveRoom">
+			<TITLE>a collapsed drift</TITLE>
+			<DESCRIPTION select="all">
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>This gallery was worked until nothing was left. </DESCRIPTION>
+					<DESCRIPTION>Dark water fills the bottom of this sump. </DESCRIPTION>
+					<DESCRIPTION>The roof has come down here, ending the drift. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1">
+					<DESCRIPTION>A glint of ore remains in one wall. </DESCRIPTION>
+					<DESCRIPTION>Something moves under the water. </DESCRIPTION>
+					<DESCRIPTION>There is no way on. </DESCRIPTION>
+				</DESCRIPTION>
+				<DESCRIPTION select="any-1"><DESCRIPTION>Ways lead $roomexits_desc_long.</DESCRIPTION><DESCRIPTION>You can go $roomexits_desc_long.</DESCRIPTION></DESCRIPTION>
+			</DESCRIPTION>
+			<EXIT class="Open" />
+			<MOB condition="(1?2=1) and ($pop_mobs!='false')" select="any-1" insert="mine_mobs" />
+			<ITEM condition="(1?4=1) and ($pop_items!='false')" select="any-1" insert="mine_junk" />
+			<ITEM condition="(1?3=1) and ($pop_items!='false')" select="any-2" insert="dungeon_treasure_items" />
+		</ROOM>
+		<ROOM insert="setpiece_leaf_rooms" />
+	</ROOM>
+</ROOM>
+
+<MOB id="mine_mobs" select="any-1" requires="level_range=int,aggrochance=int">
+	<MOB class="GenMob" level="$level_range" race="Kobold" gender="$anygender">
+		<NAME>a kobold miner</NAME>
+		<DISPLAY>$mob_name chips at the wall with a pick.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Duergar" gender="$anygender">
+		<NAME>a duergar prospector</NAME>
+		<DISPLAY>$mob_name glares at you from under a heavy brow.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="GiantRat" gender="$anygender">
+		<NAME>a giant mine rat</NAME>
+		<DISPLAY>$mob_name gnaws at a candle stub.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+	<MOB class="GenMob" level="$level_range" race="Bat" gender="$anygender">
+		<NAME>a cave bat</NAME>
+		<DISPLAY>$mob_name hangs from the ceiling.</DISPLAY>
+		<BEHAVIOR select="all">
+			<BEHAVIOR condition="1?100&lt;$aggrochance" class="Aggressive" parms="" />
+			<BEHAVIOR class="Mobile" parms="" condition="$roomtag_nodetype!='leaf'" />
+			<BEHAVIOR class="CombatAbilities" parms="" />
+		</BEHAVIOR>
+	</MOB>
+</MOB>
+
+<MOB id="mine_boss" class="GenMob" level="$level_range + 5" race="UmberHulk" gender="$anygender" hpmod="25">
+	<NAME>an umber hulk</NAME>
+	<DISPLAY>$mob_name claws its way out of the rock.</DISPLAY>
+	<BEHAVIOR select="all">
+		<BEHAVIOR class="Aggressive" parms="" condition="$aggrochance&gt;0" />
+		<BEHAVIOR class="CombatAbilities" parms="" />
+	</BEHAVIOR>
+	<ITEM select="any-2" insert="dungeon_treasure_items" condition="$pop_items!='false'" />
+</MOB>
+
+<ITEM id="mine_junk" select="any-1">
+	<ITEM class="GenItem" name="a broken pick" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a lump of iron ore" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a cracked miner's lantern" display="$item_name lies here." level="$level_range" basegold="1?20" />
+	<ITEM class="GenItem" name="a coil of old rope" display="$item_name lies here." level="$level_range" basegold="1?20" />
+</ITEM>

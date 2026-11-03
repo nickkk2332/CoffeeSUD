@@ -779,6 +779,12 @@ with ladders down, its rooms knowing <code>$roomtag_level</code> and <code>$room
 <p>See before you build: <code>GENLAYOUT SPOTTEDMESH 40 SEED=9</code>, run a few times, picks a shape; then
 <code>GENERATE PREVIEW AREA swamp_dungeon theme=swamp level_range=8 SEED=9</code> lists its rooms, mobs and items
 and builds nothing for good, and <code>GENERATE PREVIEW KEEP</code> builds that very area (AHELP GENLAYOUT).</p>
+<p>New themes: <code>crypt</code>, <code>ruins</code>, <code>castle</code>, <code>volcano</code>, <code>sky</code>,
+<code>mine</code> and <code>sewer</code> ship (<code>GENERATE AREA crypt_dungeon FROM randareas/crypt.xml ...
+theme=crypt</code>, or <code>random_dungeon</code> rolls them), with riddle chests, levers, shrines, traps and
+collapsed passages from <code>inc_setpieces.xml</code>. The owner copies <code>theme_skeleton.xml</code> to
+<code>fungal_caverns.xml</code>, fills in the room text and five mob tags, adds a riddle chest, and
+<code>random_dungeon</code> can roll it.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

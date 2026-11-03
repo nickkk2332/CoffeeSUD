@@ -17,16 +17,9 @@ limitations under the License.
 
 See guides/RandomAreas.html for information about documents of this type.
 
-TODO: more ideas:
-Ruins: Ancient temples, crumbled cities, or necromancer lairs, filled with traps, relics, and undead or scavengers (e.g., skeletons, bandits).
-Graveyard/Crypt: Description: Haunted cemeteries, catacombs, or mausoleums with undead (e.g., ghosts, zombies) and eerie atmosphere.
-Castle/Fortress: Description: Royal strongholds, haunted keeps, or war-torn forts with knights, ghosts, or bandits.
-Volcano/Lava: Description: Fiery craters, magma caves, or demon forges with elemental creatures (e.g., fire elementals, demons).
-Sky/Clouds: Description: Floating islands, storm temples, or aerial lairs with flying creatures (e.g., harpies, cloud giants).
-More layouts:
-Branches: tree layout, but the spokes also branch, etc.
-Clump layout:  perfect square, interconnected, but random leaf rooms with 1 exit
-Sky versions of these layouts, that split the allotment into multiple levels with 1 way up/down for mansions or whatever.
+CoffeeSUD (G15): crypt, ruins, castle, volcano, sky, mine and sewer themes ship, with set pieces in
+inc_setpieces.xml, and theme_skeleton.xml to start a new theme from; G16 added the CAVE, CLUMP, LINEAR,
+RING and ISLANDS layouts and levels="n".
 -->
 <AREADATA>
 
@@ -61,6 +54,13 @@ Sky versions of these layouts, that split the allotment into multiple levels wit
 <STRING load="/resources/randareas/rats.xml" />
 <STRING load="/resources/randareas/lair.xml" />
 <STRING load="/resources/randareas/oceanfloor.xml" />
+<STRING load="/resources/randareas/crypt.xml" />
+<STRING load="/resources/randareas/ruins.xml" />
+<STRING load="/resources/randareas/castle.xml" />
+<STRING load="/resources/randareas/volcano.xml" />
+<STRING load="/resources/randareas/sky.xml" />
+<STRING load="/resources/randareas/mine.xml" />
+<STRING load="/resources/randareas/sewer.xml" />
 
 <string id="randomareasize" select="any-1">
 	<string condition="$areasize!=''">$areasize</string>

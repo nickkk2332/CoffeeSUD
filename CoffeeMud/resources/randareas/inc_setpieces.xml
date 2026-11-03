@@ -1,0 +1,100 @@
+<!--
+   Copyright 2026 CoffeeSUD contributors
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+See guides/RandomAreas.html for information about documents of this type.
+
+G15: set pieces for the themes.  A theme puts <ROOM insert="setpiece_leaf_rooms" /> among its
+leaf rooms and <ROOM insert="setpiece_hall_rooms" /> among its street rooms; each set piece comes at
+most twice an area (the __setpiece counter), only two rooms or more from the entrance (ROOMTAG_DEPTH,
+G3), and only now and then.
+-->
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+<STRING load="/resources/randareas/inc_common.xml" />
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+
+<!-- a riddle chest: Prop_OpenPassword opens it to the answer, spoken aloud -->
+<STRING id="setpiece_riddle_question" select="any-1">
+	<STRING condition="$setpiece_riddle_n=1">I speak without a mouth and hear without ears. What am I?</STRING>
+	<STRING condition="$setpiece_riddle_n=2">The more of me you take, the more you leave behind. What am I?</STRING>
+	<STRING condition="$setpiece_riddle_n=3">I have keys but open no locks. What am I?</STRING>
+	<STRING condition="$setpiece_riddle_n=4">What has roots nobody sees, and is taller than trees?</STRING>
+	<STRING condition="$setpiece_riddle_n=5">Voiceless it cries, wingless flutters, toothless bites, mouthless mutters. What is it?</STRING>
+</STRING>
+<STRING id="setpiece_riddle_answer" select="any-1">
+	<STRING condition="$setpiece_riddle_n=1">echo</STRING>
+	<STRING condition="$setpiece_riddle_n=2">footsteps</STRING>
+	<STRING condition="$setpiece_riddle_n=3">piano</STRING>
+	<STRING condition="$setpiece_riddle_n=4">mountain</STRING>
+	<STRING condition="$setpiece_riddle_n=5">wind</STRING>
+</STRING>
+
+<ROOM id="setpiece_leaf_rooms" select="all">
+	<ROOM id="setpiece_riddle_room" class="StoneRoom" predefine="setpiece_riddle_n=1?5" condition="$roomtag_depth&gt;=2 and $__setpiece&lt;2 and 1?4=1" define="__setpiece+=1">
+		<TITLE>a riddle chamber</TITLE>
+		<DESCRIPTION>An iron-bound chest stands in the middle of this bare room, words carved deep into its lid. You can go $roomexits_desc_long.</DESCRIPTION>
+		<EXIT class="Open" />
+		<ITEM class="GenContainer" name="an iron-bound chest" display="An iron-bound chest, words carved on its lid, stands here." isgettable="false"
+			haslock="true" haslid="true" defclosed="true" deflocked="true" capacity="100">
+			<DESCRIPTION>Carved into the lid: "$setpiece_riddle_question" Perhaps saying the answer aloud would open it.</DESCRIPTION>
+			<AFFECT class="Prop_OpenPassword" parms="$setpiece_riddle_answer" />
+			<CONTENT><ITEM select="any-3" insert="dungeon_treasure_items" /></CONTENT>
+		</ITEM>
+	</ROOM>
+	<ROOM id="setpiece_lever_room" class="StoneRoom" condition="$roomtag_depth&gt;=2 and $__setpiece&lt;2 and 1?4=1" define="__setpiece+=1">
+		<TITLE>a room with a lever</TITLE>
+		<DESCRIPTION>A rusted lever juts from one wall of this small room, beside the outline of a panel. You can go $roomexits_desc_long.</DESCRIPTION>
+		<EXIT class="Open" />
+		<ITEM class="GenItem" name="a rusted lever" display="A rusted lever juts from the wall." isgettable="false">
+			<DESCRIPTION>An old iron lever, set into the wall. It could be pulled.</DESCRIPTION>
+			<BEHAVIOR class="Scriptable" parms="EXECMSG_PROG PULL;if var($i SETPIECELEVER == 1);mpecho The lever will not move again.;else;mpsetvar $i SETPIECELEVER 1;mpecho With a grinding of old chains, a panel in the wall slides open.;mpoload FROMGENFILE randareas/inc_setpieces.xml ANY setpiece_cache;endif;~" />
+		</ITEM>
+	</ROOM>
+	<ROOM id="setpiece_shrine_room" class="StoneRoom" condition="$roomtag_depth&gt;=2 and $__setpiece&lt;2 and 1?4=1" define="__setpiece+=1">
+		<TITLE>a healing shrine</TITLE>
+		<DESCRIPTION>A small shrine glows softly here, a basin of clear water at its feet. You can go $roomexits_desc_long.</DESCRIPTION>
+		<EXIT class="Open" />
+		<ITEM class="GenItem" name="a softly glowing shrine" display="A softly glowing shrine stands here." isgettable="false">
+			<DESCRIPTION>The shrine is warm to the touch, and its light eases the eyes.</DESCRIPTION>
+		</ITEM>
+		<BEHAVIOR class="Scriptable" parms="GREET_PROG 100;if !hitprcnt($n == 100);mpecho A warm light from the shrine washes over $n.;mpcast Prayer_CureSerious $n;endif;~" />
+	</ROOM>
+</ROOM>
+
+<ROOM id="setpiece_hall_rooms" select="all">
+	<ROOM id="setpiece_trapped_corridor" class="StoneRoom" condition="$roomtag_depth&gt;=2 and $__setpiece&lt;2 and 1?5=1" define="__setpiece+=1">
+		<TITLE>a narrow corridor</TITLE>
+		<DESCRIPTION>The walls of this corridor are pocked with small holes, and the floor stones sit oddly. You can go $roomexits_desc_long.</DESCRIPTION>
+		<EXIT class="Open" />
+		<BEHAVIOR class="RandomTraps" parms="mintraps=1 maxtraps=2 rooms=Y exits=N" />
+	</ROOM>
+	<ROOM id="setpiece_collapsed_passage" class="StoneRoom" condition="$roomtag_depth&gt;=2 and $__setpiece&lt;2 and 1?5=1" define="__setpiece+=1">
+		<TITLE>a collapsed passage</TITLE>
+		<DESCRIPTION>Part of the roof has come down here, and you must pick your way over the rubble. You can go $roomexits_desc_long.</DESCRIPTION>
+		<EXIT class="Open" />
+		<ITEM class="GenItem" name="a heap of rubble" display="A heap of rubble half blocks the way." isgettable="false">
+			<DESCRIPTION>Broken stone and old timbers. Something glints underneath.</DESCRIPTION>
+		</ITEM>
+		<ITEM select="any-1" insert="dungeon_treasure_items">
+			<AFFECT class="Prop_Hidden" />
+		</ITEM>
+	</ROOM>
+</ROOM>
+
+<!-- what the lever's panel holds -->
+<ITEM id="setpiece_cache" select="any-1">
+	<ITEM class="GenItem" name="a small velvet pouch" display="A small velvet pouch has been left here." level="1" basegold="50?150" />
+	<ITEM class="GenItem" name="a dusty silver idol" display="A dusty silver idol stands here." level="1" basegold="80?200" />
+</ITEM>

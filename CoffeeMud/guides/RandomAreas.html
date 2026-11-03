@@ -282,11 +282,9 @@ relative weight when selecting among the choices.</li>
               </ul>
               <li>"limit-x": selects up to X** random choices,
 but less is OK too if no more.</li>
-              <li>"repeat-X": always selects every choice, and
-treats the choices as
-if &nbsp;enough of them actually existed to select X** of them,
-even if not
-enough choices were given.</li>
+              <li>"repeat-X": picks X** choices at random, with
+replacement: the same choice may come more than once, and some may not
+come at all.</li>
               <li>"none": always selects none of the choices (why
 would anyone use this?!)</li>
               <li>"first": selects the first choice (another
@@ -624,9 +622,29 @@ MUD.</li>
 use.&nbsp; At
 the moment,
 supported layouts include MAZE, BOXCITY, BOXCITYSQUARE, CROSS,
-GRIDCITY, TREE, APARTMENT</li>
+GRIDCITY, TREE, APARTMENT, BRANCH, MESH and SPOTTEDMESH, and in CoffeeSUD
+CAVE, CLUMP, LINEAR, RING, ISLANDS and MAP; a comma list picks one at
+random, and levels="n" stacks n floors (AHELP GENERATE).</li>
         <li>"SIZE": The number of rooms to create in the area.</li>
       </ul>
+      <p><b>A new theme (CoffeeSUD).</b> Copy
+<code>resources/randareas/theme_skeleton.xml</code> to a file of your own,
+change every "skeleton" to the theme's name, and fill its slots: the
+<code>randomtheme</code> choice, one AREA (its layout from a list, the
+theme's name once in its <code>requires</code>), the street, inner and
+dead-end rooms merged into the shared <code>hallway_rooms</code>,
+<code>interior_rooms</code> and <code>leaf_rooms</code> for that theme, the
+mobs and the boss.  Load it from <code>example.xml</code> and
+<code>random_dungeon</code> rolls it too.  <code>inc_setpieces.xml</code>
+holds set pieces a theme can mix in with <code>&lt;ROOM
+insert="setpiece_leaf_rooms" /&gt;</code> and <code>&lt;ROOM
+insert="setpiece_hall_rooms" /&gt;</code>: a riddle chest that opens to its
+answer (<code>Prop_OpenPassword</code>), a lever that opens a cache (a
+script on the item), a healing shrine, a trapped corridor
+(<code>RandomTraps</code>) and a collapsed passage with something hidden;
+each comes at most twice an area, two rooms or more from the entrance.
+The crypt, ruins, castle, volcano, sky, mine and sewer themes are built
+this way.</p>
       <p>Optional objects: (See below for details on these object
 tag
 types and
