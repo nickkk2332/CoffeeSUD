@@ -1681,13 +1681,13 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 		&&(msg!=null))
 		{
 			final PlayerStats pStats = speaker.playerStats();
-			if(System.currentTimeMillis() < pStats.getLastRolePlayXPTime() + CMProps.getIntVar(CMProps.Int.RP_AWARD_DELAY))
+			if(GameTime.now() < ((pStats.getLastRolePlayXPTime() > GameTime.now()) ? 0 : pStats.getLastRolePlayXPTime()) + CMProps.getIntVar(CMProps.Int.RP_AWARD_DELAY)) // P28
 				return;
 			if(me.isPlayer())
 			{
 				if(CMProps.getIntVar(CMProps.Int.RP_SAY_PC)!=0)
 				{
-					pStats.setLastRolePlayXPTime(System.currentTimeMillis());
+					pStats.setLastRolePlayXPTime(GameTime.now());
 					CMLib.leveler().postRPExperience(speaker, "COMMAND:Say", me, "", CMProps.getIntVar(CMProps.Int.RP_SAY_PC), false);
 				}
 			}
@@ -1695,7 +1695,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			{
 				if(CMProps.getIntVar(CMProps.Int.RP_SAY_NPC)!=0)
 				{
-					pStats.setLastRolePlayXPTime(System.currentTimeMillis());
+					pStats.setLastRolePlayXPTime(GameTime.now());
 					CMLib.leveler().postRPExperience(speaker, "COMMAND:Say", me, "", CMProps.getIntVar(CMProps.Int.RP_SAY_NPC), false);
 				}
 			}

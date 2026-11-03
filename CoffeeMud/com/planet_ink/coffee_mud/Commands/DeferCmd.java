@@ -59,7 +59,7 @@ public class DeferCmd extends StdCommand
 			pStats.setDeferredXP(0);
 			pStats.setRolePlayXP(0);
 			mob.setExperience(mob.getExperience()+amount);
-			pStats.setLastXPAwardMillis(System.currentTimeMillis());
+			pStats.setLastXPAwardMillis(GameTime.now()); // P28
 			String homageMessage;
 			if(rp == 0)
 				homageMessage="";

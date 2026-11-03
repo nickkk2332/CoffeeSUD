@@ -349,7 +349,7 @@ public class StdMOB implements MOB
 		if((newVal > experience) && (this.playerStats() != null))
 		{
 			this.playerStats().bumpLevelCombatStat(PlayerCombatStat.EXPERIENCE_TOTAL, basePhyStats().level(), newVal - experience);
-			this.playerStats().setLastXPAwardMillis(System.currentTimeMillis());
+			this.playerStats().setLastXPAwardMillis(GameTime.now()); // P28
 		}
 		experience = newVal;
 	}

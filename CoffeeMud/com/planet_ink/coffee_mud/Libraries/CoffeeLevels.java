@@ -964,10 +964,10 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		&&(mob.getExpNeededLevel()!=Integer.MAX_VALUE)
 		&&(CMProps.getIntVar(CMProps.Int.EXPDEFER_PCT)>0))
 		{
-			final long lastTime = pStats.getLastXPAwardMillis();
+			final long lastTime = (pStats.getLastXPAwardMillis() > GameTime.now()) ? 0 : pStats.getLastXPAwardMillis(); // P28: game time; a stamp ahead of it (an old wall-clock one) is long ago
 			final long nextTime = lastTime + (CMProps.getIntVar(CMProps.Int.EXPDEFER_SECS) * 1000L);
 			if((CMProps.getVar(CMProps.Str.EXPDEFER_COMMAND).length()==0)
-			&&(System.currentTimeMillis() > nextTime))
+			&&(GameTime.now() > nextTime))
 			{
 				amount += pStats.getDeferredXP();
 				pStats.setDeferredXP(0);
@@ -1005,7 +1005,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		{
 			mob.setExperience(mob.getExperience()+amount);
 			if(pStats != null)
-				pStats.setLastXPAwardMillis(System.currentTimeMillis());
+				pStats.setLastXPAwardMillis(GameTime.now());
 			if(!quiet)
 			{
 				if(amount>1)
@@ -1047,10 +1047,10 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 					if(pStats.getDeferredXP() + pStats.getRolePlayXP() < pStats.getMaxDeferredXP())
 					{
 						pStats.setRolePlayXP(pStats.getRolePlayXP() + amount);
-						final long lastTime = pStats.getLastXPAwardMillis();
+						final long lastTime = (pStats.getLastXPAwardMillis() > GameTime.now()) ? 0 : pStats.getLastXPAwardMillis(); // P28: game time; a stamp ahead of it (an old wall-clock one) is long ago
 						final long nextTime = lastTime + (CMProps.getIntVar(CMProps.Int.EXPDEFER_SECS) * 1000L);
 						if((CMProps.getVar(CMProps.Str.EXPDEFER_COMMAND).length()==0)
-						&&(System.currentTimeMillis() > nextTime))
+						&&(GameTime.now() > nextTime))
 						{
 							amount += pStats.getDeferredXP();
 							pStats.setDeferredXP(0);
@@ -1081,7 +1081,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		{
 			mob.setExperience(mob.getExperience()+amount);
 			if(pStats!=null)
-				pStats.setLastXPAwardMillis(System.currentTimeMillis());
+				pStats.setLastXPAwardMillis(GameTime.now());
 			//if(homageMessage==null)
 			//	homageMessage="";
 			//if(!quiet)
@@ -1555,7 +1555,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		if(mob.isPlayer() && (CMProps.getIntVar(CMProps.Int.EXPDEFER_PCT) >0))
 		{
 			final PlayerStats pStats=mob.playerStats();
-			final long lastTime = pStats.getLastXPAwardMillis();
+			final long lastTime = (pStats.getLastXPAwardMillis() > GameTime.now()) ? 0 : pStats.getLastXPAwardMillis(); // P28: game time; a stamp ahead of it (an old wall-clock one) is long ago
 			final long nextTime = lastTime + (CMProps.getIntVar(CMProps.Int.EXPDEFER_SECS) * 1000L);
 			final String pcmd = CMProps.getVar(CMProps.Str.EXPDEFER_COMMAND);
 			if(pcmd.length()>0)
@@ -1596,7 +1596,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 					if(!comb.equalsIgnoreCase(parg))
 						return C;
 				}
-				if(System.currentTimeMillis() < nextTime)
+				if(GameTime.now() < nextTime)
 				{
 					final Area A=CMLib.map().areaLocation(mob);
 					String diffStr=L("a later time");
@@ -1616,7 +1616,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 				}
 			}
 			else
-			if(System.currentTimeMillis() < nextTime)
+			if(GameTime.now() < nextTime)
 				return C;
 			if(CMProps.getVar(CMProps.Str.EXPDEFER_MASK).length()>0)
 			{

@@ -825,13 +825,13 @@ public class CMChannels extends StdLibrary implements ChannelsLibrary
 		&&(!systemMsg)
 		&&(((CMProps.getIntVar(CMProps.Int.RP_CHANNEL)!=0)||(CMProps.getIntVar(CMProps.Int.RP_CHANNEL_NAMED)!=0))))
 		{
-			if(System.currentTimeMillis() >= pStats.getLastRolePlayXPTime() + CMProps.getIntVar(CMProps.Int.RP_AWARD_DELAY))
+			if(GameTime.now() >= ((pStats.getLastRolePlayXPTime() > GameTime.now()) ? 0 : pStats.getLastRolePlayXPTime()) + CMProps.getIntVar(CMProps.Int.RP_AWARD_DELAY)) // P28
 			{
 				if(CMProps.isSpecialRPChannel(channelName))
 				{
 					if(CMProps.getIntVar(CMProps.Int.RP_CHANNEL_NAMED)!=0)
 					{
-						pStats.setLastRolePlayXPTime(System.currentTimeMillis());
+						pStats.setLastRolePlayXPTime(GameTime.now());
 						CMLib.leveler().postRPExperience(mob, "CHANNEL:"+channelName, null, "", CMProps.getIntVar(CMProps.Int.RP_CHANNEL_NAMED), false);
 					}
 				}
@@ -839,7 +839,7 @@ public class CMChannels extends StdLibrary implements ChannelsLibrary
 				{
 					if(CMProps.getIntVar(CMProps.Int.RP_CHANNEL)!=0)
 					{
-						pStats.setLastRolePlayXPTime(System.currentTimeMillis());
+						pStats.setLastRolePlayXPTime(GameTime.now());
 						CMLib.leveler().postRPExperience(mob, "CHANNEL:"+channelName, null, "", CMProps.getIntVar(CMProps.Int.RP_CHANNEL), false);
 					}
 				}

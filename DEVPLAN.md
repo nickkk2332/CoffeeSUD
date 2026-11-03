@@ -3303,6 +3303,12 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   counting the rank). `check` climbs by REQUIRES, on level-ups (after the
   perk note), RANKS and MPRANK CHECK. MPRANK (cmd //152), RANK() (func
   //225), RANKS (RanksCmd).
+- P28 done. lastXPAward is stamped with GameTime.now() (StdMOB.
+  setExperience, DEFER, CoffeeLevels' awards), and the deferral checks
+  (gainExperience's timed path, the COMMAND path, deferCommandCheck)
+  compare with it; so do the role-play award interval's checks and stamps
+  (CMChannels, CommonMsgs). A stamp ahead of the game clock (an old
+  wall-clock one) counts as long ago, so it cannot hold experience back.
 
 #### 2p. Presentation (18)
 
