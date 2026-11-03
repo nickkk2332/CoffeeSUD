@@ -727,6 +727,9 @@ the custom law lands in <code>world/laws/riverton.ini</code>, so every new game 
 Drowned Crypt every time; generate with seeds 1 to 20, keep the one you like, and write <code>SEED=13</code> into the
 AutoGen area so every new game has that crypt. <code>seed="$[$GAME_DAY]"</code> on a template's AREA makes a dungeon
 of the day (AHELP GENERATE).</p>
+<p>Depth in generated areas: <code>&lt;ROOM condition="$roomtag_isdeepest='true' and $__boss&lt;1" define="__boss+=1"&gt;</code>
+puts the ogre chieftain's hall at the far end, and <code>level="$level_low+$roomtag_depthpct/10"</code> makes mobs
+harder deeper in; <code>order="reverse-depth"</code> on the AREA builds the deep rooms first (AHELP GENERATE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

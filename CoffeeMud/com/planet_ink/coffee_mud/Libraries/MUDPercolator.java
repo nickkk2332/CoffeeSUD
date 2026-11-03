@@ -934,6 +934,59 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		}
 	}
 
+	/**
+	 * G3: each node's distance from the entrance (the first node), by a
+	 * breadth-first walk of the links, with its place in the list and its
+	 * coordinates, for the room templates: ROOMTAG_DEPTH, ROOMTAG_DEPTHPCT
+	 * (0 to 100), ROOMTAG_ISDEEPEST, ROOMTAG_INDEX, ROOMTAG_X and ROOMTAG_Y;
+	 * AREA_MAXDEPTH and AREA_NUMROOMS for the area.
+	 * @param nodes the layout's nodes
+	 * @param entry the entrance
+	 * @param defined the generator's variables
+	 * @return each node's depth
+	 */
+	protected Map<LayoutNode,Integer> layoutDepths(final List<LayoutNode> nodes, final LayoutNode entry, final Map<String,Object> defined)
+	{
+		final Map<LayoutNode,Integer> depth = new HashMap<LayoutNode,Integer>();
+		final LinkedList<LayoutNode> todo = new LinkedList<LayoutNode>();
+		depth.put(entry, Integer.valueOf(0));
+		todo.add(entry);
+		int max = 0;
+		while(todo.size() > 0)
+		{
+			final LayoutNode n = todo.removeFirst();
+			final int d = depth.get(n).intValue();
+			max = Math.max(max, d);
+			for(final Integer dir : new TreeSet<Integer>(n.links().keySet()))
+			{
+				final LayoutNode m = n.links().get(dir);
+				if((m != null) && (!depth.containsKey(m)))
+				{
+					depth.put(m, Integer.valueOf(d + 1));
+					todo.add(m);
+				}
+			}
+		}
+		final Map<LayoutNode,Map<String,String>> tags = new HashMap<LayoutNode,Map<String,String>>();
+		for(int i = 0; i < nodes.size(); i++)
+		{
+			final LayoutNode n = nodes.get(i);
+			final int d = depth.containsKey(n) ? depth.get(n).intValue() : max;
+			final Map<String,String> t = new HashMap<String,String>();
+			t.put("DEPTH", "" + d);
+			t.put("DEPTHPCT", "" + ((max == 0) ? 0 : Math.round((100.0 * d) / max)));
+			t.put("ISDEEPEST", (d == max) ? "true" : "false");
+			t.put("INDEX", "" + i);
+			t.put("X", "" + ((n.coord().length > 0) ? n.coord()[0] : 0));
+			t.put("Y", "" + ((n.coord().length > 1) ? n.coord()[1] : 0));
+			tags.put(n, t);
+		}
+		defined.put("LAYOUT_NODETAGS", tags);
+		defined.put("AREA_MAXDEPTH", "" + max);
+		defined.put("AREA_NUMROOMS", "" + nodes.size());
+		return depth;
+	}
+
 	@SuppressWarnings("unchecked")
 	protected Room layOutRooms(final Area A, final LayoutManager layoutManager, final int size, final int direction, final XMLTag piece, final Map<String,Object> defined) throws CMException
 	{
@@ -946,6 +999,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 		defined.put("LAYOUT_NODES",new XVector<LayoutNode>(roomsToLayOut));
 		final Map<Integer,LayoutNode> mostRooms = new HashMap<Integer,LayoutNode>();
 		final LayoutNode magicRoomNode = roomsToLayOut.get(0);
+		final Map<LayoutNode,Integer> nodeDepths = layoutDepths(roomsToLayOut, magicRoomNode, defined); // G3
 		final List<Integer> useExits = new XArrayList<Integer>(
 				Directions.INORTH, Directions.ISOUTH, Directions.IEAST, Directions.IWEST);
 		final int opDirection = Directions.getOpDirectionCode(direction);
@@ -1201,6 +1255,45 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 				roomsToLayOut.remove(n);
 			roomGroups.add(group);
 		}
+		// G3: order="depth|reverse-depth|random": the order the room groups are built in
+		String groupOrder=piece.getParmValue("ORDER");
+		if((groupOrder!=null)&&(groupOrder.indexOf('$')>=0))
+			groupOrder=strFilterNow(null,null,null,groupOrder,piece,defined);
+		if(groupOrder!=null)
+		{
+			groupOrder=groupOrder.trim().toLowerCase();
+			if(groupOrder.equals("random"))
+				Collections.shuffle(roomGroups, CMath.getRand());
+			else
+			if(groupOrder.equals("depth")||groupOrder.equals("reverse-depth"))
+			{
+				final boolean deepFirst=groupOrder.equals("reverse-depth");
+				final Map<List<LayoutNode>,Integer> groupDepth=new HashMap<List<LayoutNode>,Integer>();
+				for(final List<LayoutNode> group : roomGroups)
+				{
+					int d=deepFirst?0:Integer.MAX_VALUE;
+					for(final LayoutNode n : group)
+					{
+						final Integer nd=nodeDepths.get(n);
+						if(nd!=null)
+							d=deepFirst?Math.max(d,nd.intValue()):Math.min(d,nd.intValue());
+					}
+					groupDepth.put(group, Integer.valueOf(d));
+				}
+				final List<List<LayoutNode>> sorted=new ArrayList<List<LayoutNode>>(roomGroups);
+				Collections.sort(sorted, new Comparator<List<LayoutNode>>()
+				{
+					@Override
+					public int compare(final List<LayoutNode> o1, final List<LayoutNode> o2)
+					{
+						final int c=groupDepth.get(o1).compareTo(groupDepth.get(o2));
+						return deepFirst?-c:c;
+					}
+				});
+				roomGroups.clear();
+				roomGroups.addAll(sorted);
+			}
+		}
 
 		// make CERTAIN that the magic first room in the layout always
 		// gets ID#0.
@@ -1415,6 +1508,17 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 	{
 		for(final LayoutTags key : node.tags().keySet())
 			groupDefined.put("ROOMTAG_"+key.toString().toUpperCase(),node.tags().get(key));
+		final Object nodeTags=groupDefined.get("LAYOUT_NODETAGS"); // G3: depth, place and coordinates
+		if(nodeTags instanceof Map)
+		{
+			@SuppressWarnings("unchecked")
+			final Map<String,String> extra=((Map<LayoutNode,Map<String,String>>)nodeTags).get(node);
+			if(extra!=null)
+			{
+				for(final String key : extra.keySet())
+					groupDefined.put("ROOMTAG_"+key,extra.get(key));
+			}
+		}
 		final Exit[] exits=new Exit[Directions.NUM_DIRECTIONS()];
 		for(final Integer linkDir : node.links().keySet())
 		{

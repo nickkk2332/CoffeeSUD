@@ -2560,6 +2560,12 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   `ENTRY` (a new one each time, kept on the copy). A seeded run skips the
   item cache, metacraft tries 20 times rather than for a second of real
   time, and the BRANCH layout shuffles with the shared generator.
+- G3 done. A breadth-first walk from the entrance over the layout's nodes
+  gives each room template `ROOMTAG_DEPTH`, `ROOMTAG_DEPTHPCT` (0 to 100),
+  `ROOMTAG_ISDEEPEST`, `ROOMTAG_INDEX`, `ROOMTAG_X` and `ROOMTAG_Y`, and the
+  area `AREA_MAXDEPTH` and `AREA_NUMROOMS`. An AREA's `order="depth|reverse-
+  depth|random"` sets the order its room groups are built in (after the
+  entrance), so a counter-gated room lands deep or near.
 
 #### 2k. Crafting, gathering and housing (21)
 
