@@ -3065,6 +3065,18 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   FOLLOW without ASSIST sets AUTOASSIST (they do not join fights);
   ASSIST also sets the caster's foe as theirs. NOSAVE makes them
   unsavable and `WorldState.followersOf` passes over them.
+- P6 done. `core/Origins`: world/origins.ini (not world/data/: the
+  world's other data files sit in world/ itself), [ID] sections of
+  KEY=VALUE (NAME, DESCRIPTION, MASK, UNLOCK, START, ITEMS, ABILITIES,
+  FACTIONS, TATTOOS, MONEY, SCRIPT), read when asked. CharCreation's
+  new CHARCR_ORIGINSTART and CHARCR_ORIGINPICKED come after the class:
+  skipped when no origin is open to the character (MASK passes, UNLOCK
+  is a profile or character tattoo), else a numbered menu with the
+  descriptions, answered by number, ID or name. The choice is the tattoo
+  ORIGIN_[ID]; `Origins.apply` gives the origin in charcrFactionDone,
+  just after the default start room is set (so START replaces it, and
+  the age uses its clock), then the new CHARCREATIONSCRIPTS code ORIGIN
+  runs. JS23's onCreationStep gets "origin".
 
 #### 2p. Presentation (18)
 

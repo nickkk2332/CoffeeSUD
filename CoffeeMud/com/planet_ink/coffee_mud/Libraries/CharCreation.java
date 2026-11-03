@@ -142,6 +142,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_CLASSDONE,
 		CHARCR_CLASSPICKED,
 		CHARCR_CLASSCONFIRM,
+		CHARCR_ORIGINSTART,
+		CHARCR_ORIGINPICKED,
 		CHARCR_FACTIONNEXT,
 		CHARCR_FACTIONPICK,
 		CHARCR_FACTIONDONE,
@@ -626,7 +628,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	{
 		final Hashtable<String,List<String>> extraScripts=new Hashtable<String,List<String>>();
 		final String[] VALID_SCRIPT_CODES={"PASSWORD","EMAIL","ANSI","THEME","RACE","GENDER",
-											"STATS","CLASS","FACTIONS","AUTHENTICATE",
+											"STATS","CLASS","ORIGIN","FACTIONS","AUTHENTICATE",
 											"CHARLOGIN", "ALLCHARLOGIN","END"};
 		final List<String> extras=CMParms.parseCommas(CMProps.getVar(CMProps.Str.CHARCREATIONSCRIPTS),true);
 		for(int e=0;e<extras.size();e++)
@@ -1041,6 +1043,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrClassConfirm(loginObj, session);
 		case CHARCR_CLASSDONE:
 			return charcrClassDone(loginObj, session);
+		case CHARCR_ORIGINSTART:
+			return charcrOriginStart(loginObj, session);
+		case CHARCR_ORIGINPICKED:
+			return charcrOriginPicked(loginObj, session);
 		case CHARCR_FACTIONNEXT:
 			return charcrFactionNext(loginObj, session);
 		case CHARCR_FACTIONPICK:
@@ -3793,6 +3799,45 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		JSProgression.creationStep(mob,"class"); // JS23
 
 		loginObj.index=-1;
+		loginObj.state=LoginState.CHARCR_ORIGINSTART; // P6: then the factions
+		return null;
+	}
+
+	/**
+	 * P6: the ORIGIN step, when world/origins.ini has origins this character
+	 * may take.
+	 */
+	protected LoginResult charcrOriginStart(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final List<Origins.Origin> choices=Origins.choices(mob);
+		if(choices.size()==0)
+		{
+			loginObj.state=LoginState.CHARCR_FACTIONNEXT;
+			return null;
+		}
+		session.println(null,null,null,Origins.menu(choices));
+		session.promptPrint(L("^NYour origin: "));
+		loginObj.state=LoginState.CHARCR_ORIGINPICKED;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	protected LoginResult charcrOriginPicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
+		final Origins.Origin O=Origins.find(Origins.choices(mob), input);
+		if(O==null)
+		{
+			if((input.length()>0)&&(!input.equals("?")))
+				session.println(L("'@x1' is not one of the origins.",input));
+			loginObj.state=LoginState.CHARCR_ORIGINSTART;
+			return null;
+		}
+		Origins.choose(mob, O);
+		session.println(L("^NYour origin: ^H@x1^N.",O.name()));
+		JSProgression.creationStep(mob,"origin"); // JS23's onCreationStep
+		loginObj.index=-1;
 		loginObj.state=LoginState.CHARCR_FACTIONNEXT;
 		return null;
 	}
@@ -3905,6 +3950,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		mob.baseCharStats().getCurrentClass().startCharacter(mob,false,false);
 		CMLib.utensils().outfit(mob,mob.baseCharStats().getCurrentClass().outfit(mob));
 		mob.setStartRoom(getDefaultStartRoom(mob));
+		Origins.apply(mob); // P6: its start room, items, abilities, standing, tattoos, money and script
+		executeScript(mob,charCrScripts.get("ORIGIN"));
 		if(!CMSecurity.isDisabled(CMSecurity.DisFlag.ALL_AGEING))
 		{
 			final Race R=mob.baseCharStats().getMyRace();
