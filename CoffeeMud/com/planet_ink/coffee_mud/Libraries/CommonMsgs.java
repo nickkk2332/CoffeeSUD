@@ -928,10 +928,12 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 					&&(day==bday)
 					&&(mob.getAgeMinutes() > 10))
 						mob.tell(L("Happy Birthday!"));
+					final int p29was=mob.baseCharStats().ageCategory();
 					mob.baseCharStats().setStat(CharStats.STAT_AGE,mob.baseCharStats().getStat(CharStats.STAT_AGE)+1);
 					mob.recoverCharStats();
 					mob.recoverPhyStats();
 					mob.recoverMaxState();
+					Ageing.aged(mob, p29was); // P29: AGE_PROG, AGECATEGORY
 				}
 				if(CMSecurity.isDisabled(CMSecurity.DisFlag.SLOW_AGEING)
 				|| (birthDay[PlayerStats.BIRTHDEX_LASTYEARCELEBRATED]==currYear))
@@ -941,7 +943,8 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			}
 			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.IMMORT))
 			{
-				if((mob.baseCharStats().ageCategory()>=Race.AGE_VENERABLE)
+				final boolean p29=Ageing.diseases(mob); // P29: AGEDISEASES, when set, in place of these
+				if((!p29)&&(mob.baseCharStats().ageCategory()>=Race.AGE_VENERABLE)
 				&&(CMLib.dice().rollPercentage()==1)
 				&&(CMLib.dice().rollPercentage()==1)
 				&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.AUTODISEASE)))
@@ -951,7 +954,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						A.invoke(mob,mob,true,0);
 				}
 				else
-				if((mob.baseCharStats().ageCategory()>=Race.AGE_ANCIENT)
+				if((!p29)&&(mob.baseCharStats().ageCategory()>=Race.AGE_ANCIENT)
 				&&(CMLib.dice().rollPercentage()==1)
 				&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.AUTODISEASE)))
 				{
@@ -960,7 +963,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						A.invoke(mob,mob,true,0);
 				}
 				else
-				if((mob.baseCharStats().ageCategory()>=Race.AGE_ANCIENT)
+				if((!p29)&&(mob.baseCharStats().ageCategory()>=Race.AGE_ANCIENT)
 				&&(CMLib.dice().rollPercentage()==1)
 				&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.AUTODISEASE)))
 				{

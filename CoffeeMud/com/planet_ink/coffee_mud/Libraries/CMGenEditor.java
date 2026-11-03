@@ -10975,6 +10975,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Prac/Level"),"LVLPRAC"); // P17
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Trains/Level"),"LVLTRAIN"); // P17
 			promptStatStr(mob,me,L("A script run on each mob of it, as an effect it never saves; AHELP SKILLSCRIPTS."),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
+			promptStatStr(mob,me,L("MIDDLEAGED: STR-1 DEX-1 WIS+1; VENERABLE: ...  In place of the usual effects of age; AHELP AGEING."),++showNumber,showFlag,L("Age effects"),"AGEEFFECTS",true); // P29
 
 			if (showFlag < -900)
 			{

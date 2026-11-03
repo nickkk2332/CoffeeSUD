@@ -57,6 +57,7 @@ public final class WorldSettings
 		"SAVEMODE", "AUTOSAVE", "AUTOSAVEKEEP", "PARTYMEET", "PARTYFIGHT", "PARTYTURNS",
 		"PARTYMAX", "PARTYROLES", // P10
 		"DISCOVERYXP", // P11
+		"AGEDISEASES", // P29
 		"NEWCHARLEVEL", "NEWCHARXP", // P15
 		"FORMULA_PRACTICESPERLEVEL", "FORMULA_TRAINSPERLEVEL", "TRAINSATLEVELS", // P17
 		// the rules
@@ -81,7 +82,7 @@ public final class WorldSettings
 	/** the starts of key names a world may set, such as START_DWARF */
 	private static final String[]	PREFIXES	=
 	{
-		"START_", "DEATH_", "MORGUE_", "FORMULA_", "ADDCHARSTAT_", "REPLACECHARSTAT_", "STATEFFECT_", "DIFFICULTY_", "MOBRANK_", "CURRENCY_"
+		"START_", "DEATH_", "MORGUE_", "FORMULA_", "ADDCHARSTAT_", "REPLACECHARSTAT_", "STATEFFECT_", "STARTAGE_", "DIFFICULTY_", "MOBRANK_", "CURRENCY_"
 	};
 
 	/** the world settings this game started with, in file order */

@@ -4692,6 +4692,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			CreationSteps.applyAnswers(mob); // the answers to creation.ini's questions
 			Perks.traitRewards(mob); // P13: what the traits and flaws give
 			LevelGains.firstLevel(mob); // P17: the race's FSTTRAN and FSTPRAC, TRAINSATLEVELS 1:n
+			Ageing.startAge(mob); // P29: STARTAGE_
 			StartLevel.apply(mob, (mob.playerStats()==null)?null:mob.playerStats().getAccount()); // P15: NEWCHARLEVEL
 		}
 		StringBuffer introText=new CMFile(Resources.buildResourcePath("text")+"newchardone.txt",null,CMFile.FLAG_LOGERRORS).text();

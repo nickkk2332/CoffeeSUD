@@ -3320,6 +3320,14 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   compare with it; so do the role-play award interval's checks and stamps
   (CMChannels, CommonMsgs). A stamp ahead of the game clock (an old
   wall-clock one) counts as long ago, so it cannot hold experience back.
+- P29 done. `core/Ageing`: a GenRace's AGEEFFECTS (stat 62) is read
+  at the top of StdRace.agingAffects and, when set, stands in for the
+  coded switch; AGEDISEASES (a world key) stands in for tickAging's three
+  coded diseases; tickAging calls `aged` after each birthday: AGE_PROG
+  (trigger 115; BIRTHDAY, CATEGORY, an age, ALL) on the character and the
+  room's hosts, and the new AGECATEGORY achievement event (CATEGORY,
+  RANKUP's tracker counting the age category); STARTAGE_ (a world key
+  prefix) entries set a new character's age in charcrStartFinish.
 
 #### 2p. Presentation (18)
 

@@ -389,6 +389,8 @@ public class StdRace implements Race
 		&&(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.IMMORT))
 		&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.ALL_AGEING)))
 		{
+			if(Ageing.custom(this, mob, baseStats, charStats)) // P29: AGEEFFECTS
+				return;
 			switch(baseStats.ageCategory())
 			{
 			case -1:
