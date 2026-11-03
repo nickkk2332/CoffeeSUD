@@ -3038,6 +3038,18 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   go through the usual steps. ALLENEMIES uses `properTargets` for a
   malicious ability (everyone outside the caster's group otherwise).
   A monster's windup (C5) comes before the area cast as before.
+- P14 done. ACTIONCOST, COMBATACTIONCOST (doubles, -1 the default) and
+  COMPONENTS (a components.txt line) on GenAbility (stats 43-45),
+  GenCraftSkill (19-21), GenGatheringSkill (23-25) and GenTweakAbility
+  (18-20, in its overrides map). `castingTime` and `combatCastingTime`
+  return the field when it is set. The new `core/AbilityCosts` reads
+  every generic ability's COMPONENTS into the component map as the map
+  is read (after components.txt, so the field wins), and a change of the
+  field drops the map to be read again. A tweak's unset cost is now its
+  original's. CMClass hands out a tweak's own record (`newInstance`),
+  not `createProxy`'s proxy, so a tweak still does not cast as its
+  original; P22 takes that up. The proxy's `checkedCastingCost` uses
+  the tweak's costs too.
 
 #### 2p. Presentation (18)
 

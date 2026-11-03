@@ -918,6 +918,7 @@ public class CMAbleComps extends StdLibrary implements AbilityComponents
 						Log.errOut("CMAble",error + " on line " + v);
 				}
 			}
+			AbilityCosts.loadInto(H); // P14: COMPONENTS fields
 			Triggerer.TrigSignal.sig++;
 			Resources.submitResource("COMPONENT_MAP",H);
 		}

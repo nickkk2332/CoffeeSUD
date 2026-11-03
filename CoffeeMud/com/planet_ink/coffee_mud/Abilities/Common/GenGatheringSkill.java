@@ -81,7 +81,10 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 	private static final int	V_IXML			= 18;	// S
 	private static final int	V_COSM			= 19;	// B
 	private static final int	V_NFRQ			= 20;	// I CR9
-	private static final int	NUM_VS			= 21;	// S
+	private static final int	V_ACTC			= 21;	// D P14
+	private static final int	V_CACT			= 22;	// D P14
+	private static final int	V_COMP			= 23;	// S P14
+	private static final int	NUM_VS			= 24;	// S
 
 	private static final Object[] makeEmpty()
 	{
@@ -107,6 +110,9 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 		O[V_IXML]="";
 		O[V_COSM]=Boolean.valueOf(false);
 		O[V_NFRQ]=Integer.valueOf(0);
+		O[V_ACTC]=Double.valueOf(-1);
+		O[V_CACT]=Double.valueOf(-1);
+		O[V_COMP]="";
 		return O;
 	}
 
@@ -221,7 +227,24 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 										 "BASEDUR",//20I
 										 "FINDTICK",//21I
 										 "NOTHINGFREQ",//22I CR9
+										 "ACTIONCOST",//23D P14
+										 "COMBATACTIONCOST",//24D P14
+										 "COMPONENTS",//25S P14
 										};
+
+	@Override
+	public double castingTime(final MOB mob, final List<String> cmds)
+	{
+		final double d=((Double)V(ID, V_ACTC)).doubleValue(); // P14: ACTIONCOST
+		return (d>=0)?d:super.castingTime(mob, cmds);
+	}
+
+	@Override
+	public double combatCastingTime(final MOB mob, final List<String> cmds)
+	{
+		final double d=((Double)V(ID, V_CACT)).doubleValue(); // P14: COMBATACTIONCOST
+		return (d>=0)?d:super.combatCastingTime(mob, cmds);
+	}
 
 	@Override
 	public String[] getStatCodes()
@@ -302,6 +325,12 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 			return ((Integer)V(ID, V_FDUR)).toString();
 		case 22:
 			return ((Integer)V(ID, V_NFRQ)).toString();
+		case 23:
+			return AbilityCosts.text(((Double)V(ID, V_ACTC)).doubleValue());
+		case 24:
+			return AbilityCosts.text(((Double)V(ID, V_CACT)).doubleValue());
+		case 25:
+			return (String) V(ID, V_COMP);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenGatheringSkill";
@@ -431,6 +460,19 @@ public class GenGatheringSkill extends GatheringSkill implements ItemCollection
 		case 22:
 			SV(ID, V_NFRQ, Integer.valueOf(Math.max(0, CMath.s_int(val))));
 			break;
+		case 23:
+			SV(ID, V_ACTC, Double.valueOf(AbilityCosts.parse(val)));
+			break;
+		case 24:
+			SV(ID, V_CACT, Double.valueOf(AbilityCosts.parse(val)));
+			break;
+		case 25:
+		{
+			final String was=(String)V(ID, V_COMP);
+			SV(ID, V_COMP, (val==null)?"":val.trim());
+			AbilityCosts.componentsChanged(was, (String)V(ID, V_COMP));
+			break;
+		}
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenGatheringSkill"))
 				parseAllXML(val);

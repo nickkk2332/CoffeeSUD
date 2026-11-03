@@ -9595,6 +9595,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Target mode (SINGLE, ALLENEMIES, ALLALLIES, ALLINROOM, GROUPANYWHERE)"),"TARGETMODE",false); // P4
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Most targets (a formula, @x1 level, @x2 how many)"),"MAXTARGETS",true); // P4
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Area message, once"),"AOEMSG",true); // P4
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
+			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
 			promptStatScript(mob,me,++showNumber,showFlag,L("Scriptable Parm"),"SCRIPT",null,null);
 			promptStatStr(mob,me,CMLib.masking().maskHelp("\n","disallow"),++showNumber,showFlag,L("Target Mask"),"TARGETMASK",true);
 			promptRawStatStr(mob,me,null,++showNumber,showFlag,L("Fizzle Message"),"FIZZLEMSG",true);
@@ -9682,6 +9685,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,CMParms.toListString(Ability.USAGE_DESCS),++showNumber,showFlag,L("Cost Type"),"USAGEMASK",true);
 			promptStatStr(mob,me,CMParms.toListString(Ability.QUALITY_DESCS),++showNumber,showFlag,L("Quality Code"),"QUALITY",true);
 			promptStatPairsList(mob, me, ++showNumber, showFlag, L("Strings"), "STRING");
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
+			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 
 			if (showFlag < -900)
@@ -9853,6 +9859,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can learn (LEARN from an item)"),"CANLEARN"); // CR21
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Learn mask (items it learns from)"),"LEARNMASK",true); // CR21
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Quality tiers (craftquality.txt)"),"QUALITY"); // CR17
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
+			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("MSP file"),"SOUND",false);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 
@@ -10162,6 +10171,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatInt(mob,me,++showNumber, showFlag,L("Base Ticks"), "BASEDUR");
 			promptStatInt(mob,me,++showNumber, showFlag,L("Found @ Tick"), "FINDTICK");
 			promptStatInt(mob,me,++showNumber, showFlag,L("Weight of finding nothing"), "NOTHINGFREQ"); // CR9
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
+			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
+			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Is Cosmetic Only"),"ISCOSMETIC");
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can sit"),"CANSIT");
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can bundle"),"CANBUNDLE");

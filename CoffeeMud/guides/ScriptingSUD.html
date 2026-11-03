@@ -891,6 +891,10 @@ cast mask's refusal, and the mask's +IF sees the target as $t. A trap has ONTRIG
 <p>Area abilities: a generic ability's TARGETMODE (ALLENEMIES, ALLALLIES, ALLINROOM, GROUPANYWHERE) casts
 it at every target in turn, each with its own saving throw, damage, effects and ONCAST, the cost paid once;
 MAXTARGETS caps them and AOEMSG is shown once (AHELP GENABILITY).</p>
+<p>Costs and components with the ability: ACTIONCOST and COMBATACTIONCOST (in actions, -1 the default)
+and COMPONENTS (a components.txt line, as (inventory:consumed:1:pinch of salt:)) are kept in a generic
+ability's, data craft or gather skill's or tweak's own record, so they go with it in custom.cmare;
+COMPONENTS takes the place of a components.txt line for the same ID (AHELP GENABILITY).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

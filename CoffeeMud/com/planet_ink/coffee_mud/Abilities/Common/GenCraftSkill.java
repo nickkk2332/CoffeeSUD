@@ -82,7 +82,10 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	private static final int	V_CNLN			= 14;	// B CR21
 	private static final int	V_LRNM			= 15;	// S CR21
 	private static final int	V_QUAL			= 16;	// B CR17
-	private static final int	NUM_VS			= 17;	// S
+	private static final int	V_ACTC			= 17;	// D P14
+	private static final int	V_CACT			= 18;	// D P14
+	private static final int	V_COMP			= 19;	// S P14
+	private static final int	NUM_VS			= 20;	// S
 
 	//
 
@@ -156,6 +159,9 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 		O[V_CNLN]=Boolean.valueOf(false);
 		O[V_LRNM]="";
 		O[V_QUAL]=Boolean.valueOf(true);
+		O[V_ACTC]=Double.valueOf(-1);
+		O[V_CACT]=Double.valueOf(-1);
+		O[V_COMP]="";
 		return O;
 	}
 
@@ -262,7 +268,24 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 										 "CANLEARN",//16B CR21
 										 "LEARNMASK",//17S CR21
 										 "QUALITY",//18B CR17
+										 "ACTIONCOST",//19D P14
+										 "COMBATACTIONCOST",//20D P14
+										 "COMPONENTS",//21S P14
 										};
+
+	@Override
+	public double castingTime(final MOB mob, final List<String> cmds)
+	{
+		final double d=((Double)V(ID, V_ACTC)).doubleValue(); // P14: ACTIONCOST
+		return (d>=0)?d:super.castingTime(mob, cmds);
+	}
+
+	@Override
+	public double combatCastingTime(final MOB mob, final List<String> cmds)
+	{
+		final double d=((Double)V(ID, V_CACT)).doubleValue(); // P14: COMBATACTIONCOST
+		return (d>=0)?d:super.combatCastingTime(mob, cmds);
+	}
 
 	@Override
 	public String[] getStatCodes()
@@ -335,6 +358,12 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			return (String) V(ID, V_LRNM);
 		case 18:
 			return Boolean.toString(((Boolean) V(ID, V_QUAL)).booleanValue());
+		case 19:
+			return AbilityCosts.text(((Double)V(ID, V_ACTC)).doubleValue());
+		case 20:
+			return AbilityCosts.text(((Double)V(ID, V_CACT)).doubleValue());
+		case 21:
+			return (String) V(ID, V_COMP);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenCraftSkill";
@@ -429,6 +458,19 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 		case 18:
 			SV(ID, V_QUAL, Boolean.valueOf(CMath.s_bool(val)));
 			break;
+		case 19:
+			SV(ID, V_ACTC, Double.valueOf(AbilityCosts.parse(val)));
+			break;
+		case 20:
+			SV(ID, V_CACT, Double.valueOf(AbilityCosts.parse(val)));
+			break;
+		case 21:
+		{
+			final String was=(String)V(ID, V_COMP);
+			SV(ID, V_COMP, (val==null)?"":val.trim());
+			AbilityCosts.componentsChanged(was, (String)V(ID, V_COMP));
+			break;
+		}
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenCraftSkill"))
 				parseAllXML(val);

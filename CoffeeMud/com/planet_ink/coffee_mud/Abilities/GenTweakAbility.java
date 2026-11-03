@@ -112,6 +112,18 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 					return Integer.valueOf(adjustedMaxInvokerRange(((Integer)o).intValue()));
 				return o;
 			}
+			if(methodName.equals("checkedCastingCost")
+			&&(overrides.get(ID).containsKey("castingTime")||overrides.get(ID).containsKey("combatCastingTime")))
+			{
+				// P14: the delegate's checkedCastingCost would ask its own costs
+				final MOB mob=(MOB)args[0];
+				@SuppressWarnings("unchecked")
+				final List<String> cmds=(List<String>)args[1];
+				final Ability A=(Ability)proxy;
+				if((mob!=null)&&(mob.isInCombat()||(A.abstractQuality()==Ability.QUALITY_MALICIOUS)))
+					return Double.valueOf(A.combatCastingTime(mob, cmds));
+				return Double.valueOf(A.castingTime(mob, cmds));
+			}
 			if(methodName.equals("newInstance") && overrides.get(ID).containsKey("originalID"))
 				return GenTweakAbility.createProxy(overrides.get(ID).get("originalID").toString(), ID);
 		}
@@ -142,6 +154,26 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 			}
 		}
 		return CMLib.lang().fullSessionTranslation(getClass(), str, xs);
+	}
+
+	@Override
+	public double castingTime(final MOB mob, final List<String> cmds)
+	{
+		final Object o=getLocalOverride("castingTime"); // P14: ACTIONCOST
+		if(o instanceof Double)
+			return ((Double)o).doubleValue();
+		final Ability A=getDelegate();
+		return ((A!=null)&&(A!=this))?A.castingTime(mob, cmds):super.castingTime(mob, cmds);
+	}
+
+	@Override
+	public double combatCastingTime(final MOB mob, final List<String> cmds)
+	{
+		final Object o=getLocalOverride("combatCastingTime"); // P14: COMBATACTIONCOST
+		if(o instanceof Double)
+			return ((Double)o).doubleValue();
+		final Ability A=getDelegate();
+		return ((A!=null)&&(A!=this))?A.combatCastingTime(mob, cmds):super.combatCastingTime(mob, cmds);
 	}
 
 	@Override
@@ -197,6 +229,9 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 										 "MAYENCHANT",//15I
 										 "ORIGINAL",//16S
 										 "STRING",//17MAP
+										 "ACTIONCOST",//18D P14
+										 "COMBATACTIONCOST",//19D P14
+										 "COMPONENTS",//20S P14
 										};
 
 	@Override
@@ -304,6 +339,14 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 				}
 			}
 			return "";
+		case 18:
+			return getLocalOverride("castingTime") == null ? "-1" :
+				AbilityCosts.text(((Double)getLocalOverride("castingTime")).doubleValue());
+		case 19:
+			return getLocalOverride("combatCastingTime") == null ? "-1" :
+				AbilityCosts.text(((Double)getLocalOverride("combatCastingTime")).doubleValue());
+		case 20:
+			return getLocalOverride("COMPONENTS") == null ? "" : getLocalOverride("COMPONENTS").toString();
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenTweakAbility";
@@ -497,6 +540,28 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 				}
 			}
 			break;
+		case 18:
+		case 19:
+		{
+			// P14: ACTIONCOST, COMBATACTIONCOST; -1 keeps the original's
+			final String m=(getCodeNum(code)==18)?"castingTime":"combatCastingTime";
+			final double d=AbilityCosts.parse(val);
+			if(d<0)
+				this.removeOverrideMethod(m);
+			else
+				this.overrideMethod(m, Double.valueOf(d));
+			break;
+		}
+		case 20:
+		{
+			final Object was=getLocalOverride("COMPONENTS");
+			if((val==null)||(val.trim().length()==0))
+				this.removeOverrideMethod("COMPONENTS");
+			else
+				this.overrideMethod("COMPONENTS", val.trim());
+			AbilityCosts.componentsChanged((was==null)?"":was.toString(), (val==null)?"":val);
+			break;
+		}
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenTweakAbility"))
 				parseAllXML(val);

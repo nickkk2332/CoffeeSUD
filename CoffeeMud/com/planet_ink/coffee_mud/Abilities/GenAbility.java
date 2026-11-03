@@ -89,8 +89,11 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 	private static final int V_TMOD=38;//S P4: target mode
 	private static final int V_MAXT=39;//S P4: most targets, a formula
 	private static final int V_AOEM=40;//S P4: message once, before the targets
+	private static final int V_ACTC=41;//D P14: action cost, -1 the default
+	private static final int V_CACT=42;//D P14: combat action cost, -1 the default
+	private static final int V_COMP=43;//S P14: components, a components.txt line
 
-	private static final int NUM_VS=41;//S
+	private static final int NUM_VS=44;//S
 
 	private static final Object[] makeEmpty()
 	{
@@ -136,6 +139,9 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		O[V_TMOD]="SINGLE";
 		O[V_MAXT]="";
 		O[V_AOEM]="";
+		O[V_ACTC]=Double.valueOf(-1);
+		O[V_CACT]=Double.valueOf(-1);
+		O[V_COMP]="";
 		return O;
 	}
 
@@ -1387,8 +1393,25 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 										 "CASTFAILMSG",//39S P3
 										 "TARGETMODE",//40S P4
 										 "MAXTARGETS",//41S P4
-										 "AOEMSG"//42S P4
+										 "AOEMSG",//42S P4
+										 "ACTIONCOST",//43D P14
+										 "COMBATACTIONCOST",//44D P14
+										 "COMPONENTS"//45S P14
 										};
+
+	@Override
+	public double castingTime(final MOB mob, final List<String> cmds)
+	{
+		final double d=((Double)V(ID, V_ACTC)).doubleValue(); // P14: ACTIONCOST
+		return (d>=0)?d:super.castingTime(mob, cmds);
+	}
+
+	@Override
+	public double combatCastingTime(final MOB mob, final List<String> cmds)
+	{
+		final double d=((Double)V(ID, V_CACT)).doubleValue(); // P14: COMBATACTIONCOST
+		return (d>=0)?d:super.combatCastingTime(mob, cmds);
+	}
 
 	@Override
 	public String[] getStatCodes()
@@ -1498,6 +1521,12 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 			return (String) V(ID, V_MAXT);
 		case 42:
 			return (String) V(ID, V_AOEM);
+		case 43:
+			return AbilityCosts.text(((Double)V(ID, V_ACTC)).doubleValue());
+		case 44:
+			return AbilityCosts.text(((Double)V(ID, V_CACT)).doubleValue());
+		case 45:
+			return (String) V(ID, V_COMP);
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenAbility";
@@ -1669,6 +1698,19 @@ public class GenAbility extends StdAbility implements ScriptHooks.Learner // P3:
 		case 42:
 			SV(ID, V_AOEM, val);
 			break;
+		case 43:
+			SV(ID, V_ACTC, Double.valueOf(AbilityCosts.parse(val)));
+			break;
+		case 44:
+			SV(ID, V_CACT, Double.valueOf(AbilityCosts.parse(val)));
+			break;
+		case 45:
+		{
+			final String was=(String)V(ID, V_COMP);
+			SV(ID, V_COMP, (val==null)?"":val.trim());
+			AbilityCosts.componentsChanged(was, (String)V(ID, V_COMP));
+			break;
+		}
 		default:
 			if (code.equalsIgnoreCase("allxml") && ID.equalsIgnoreCase("GenAbility"))
 				parseAllXML(val);
