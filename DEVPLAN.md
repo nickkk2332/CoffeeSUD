@@ -3121,6 +3121,22 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   room) now come at the start of charcrStartFinish, once every step is
   done, not in charcrFactionDone (P6, P7), and not for a ready-made
   character (P8).
+- P27 done. `core/CreationReview`: at the first start of each step
+  (RACE, GENDER, STATS, CLASS, ORIGIN, KIT, a question, FACTIONS,
+  DEITY), `snapshotStep`, called before the login's dispatch, keeps a
+  copy of the character (base stats, abilities, effects, items with
+  their containers and worn places, tattoos, factions, expertises, start
+  room, description) and of the login's place (state, queue, kits,
+  indexes). With REVIEW in STEPS, charcrStartFinish first shows the
+  sheet (CHARCR_REVIEWPICKED): BACK [step] restores that snapshot,
+  drops it and the later ones and goes to the step's start; DONE goes
+  on. Every later step is asked again, not only those that depend on
+  the step. NEW [name] QUICK ([template]) at the profile menu
+  (`CreationSteps.quickArgs`; NEW * keeps the words) sets the login's
+  quick flag, which `CreationSteps.mode` reads through a thread-local
+  set at each dispatch: every step RANDOM, no REVIEW; with a template,
+  or under CREATIONTEMPLATES=ONLY, a ready-made character (its gender
+  not asked). A QUICK character gets no deity.
 
 #### 2p. Presentation (18)
 

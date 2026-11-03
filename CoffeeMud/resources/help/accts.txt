@@ -3,6 +3,8 @@ LIST                    : list your characters
 [CHARACTER NAME]        : play that character
 NEW [CHARACTER NAME]    : create a new character
 NEW * [STYLE OR RACE]   : create one with a random name, in that name style
+NEW [NAME] QUICK        : create one with every question answered at random
+NEW [NAME] QUICK [READY-MADE] : create that ready-made character
 RETIRE [CHARACTER NAME] : delete one of your characters
 ANSI [ON/OFF]           : toggle ansi color
 QUIT                    : leave the game

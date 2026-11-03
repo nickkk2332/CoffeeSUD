@@ -90,6 +90,47 @@ public class CreationSteps
 		public boolean						listed		= false;
 	}
 
+	private static final ThreadLocal<Boolean> quick = new ThreadLocal<Boolean>();
+
+	/**
+	 * P27: whether the creation on this thread is a QUICK NEW, every step
+	 * taken at random.
+	 * @param on true for QUICK
+	 */
+	public static void setQuick(final boolean on)
+	{
+		quick.set(Boolean.valueOf(on));
+	}
+
+	/** @return true while a QUICK NEW is made on this thread */
+	public static boolean isQuick()
+	{
+		return Boolean.TRUE.equals(quick.get());
+	}
+
+	/**
+	 * P27: NEW [name] QUICK ([template]): the words after QUICK.
+	 * @param parms NEW's words
+	 * @return null without QUICK, else the template's name ("" for none)
+	 */
+	public static String quickArgs(final String[] parms)
+	{
+		for(int p = 2; p < parms.length; p++)
+		{
+			if(parms[p].equalsIgnoreCase("QUICK"))
+			{
+				final StringBuilder t = new StringBuilder("");
+				for(int q = p + 1; q < parms.length; q++)
+				{
+					if(!parms[q].equalsIgnoreCase("<CONFIRMED>"))
+						t.append(parms[q]).append(' ');
+				}
+				return t.toString().trim();
+			}
+		}
+		return null;
+	}
+
 	private static Plan		cached		= null;
 	private static long		cachedWhen	= -1;
 	private static String	cachedPath	= null;
@@ -259,6 +300,8 @@ public class CreationSteps
 	{
 		final Plan P = plan();
 		final String s = step.toUpperCase();
+		if(isQuick())
+			return s.equals("REVIEW") ? "SKIP" : "RANDOM"; // P27
 		final String m = P.modes.get(s);
 		final boolean four = s.equals("RACE") || s.equals("GENDER") || s.equals("STATS") || s.equals("CLASS");
 		if(!P.steps.contains(s))

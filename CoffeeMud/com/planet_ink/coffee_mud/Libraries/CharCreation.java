@@ -154,6 +154,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_STATINIT,
 		CHARCR_CLASSINIT,
 		CHARCR_STARTFINISH,
+		CHARCR_REVIEWPICKED,
 		CHARCR_FACTIONNEXT,
 		CHARCR_FACTIONPICK,
 		CHARCR_FACTIONDONE,
@@ -193,6 +194,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		public LoginState	 resume	   = null;
 		public String		 question  = null;
 		public boolean		 fromTemplate = false;
+		public LinkedHashMap<String,CreationReview.Snapshot> snapshots = new LinkedHashMap<String,CreationReview.Snapshot>(); // P27
+		public boolean		 reviewed  = false;
+		public boolean		 quick	   = false;
+		public String		 quickTemplate = "";
 
 		@Override
 		public String login()
@@ -957,6 +962,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 	protected LoginResult loginSubsystem(final LoginSessionImpl loginObj, final Session session) throws IOException
 	{
+		CreationSteps.setQuick(loginObj.quick); // P27
+		snapshotStep(loginObj);
 		switch(loginObj.state)
 		{
 		case LOGIN_START:
@@ -1077,6 +1084,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrClassInit(loginObj, session);
 		case CHARCR_STARTFINISH:
 			return charcrStartFinish(loginObj, session);
+		case CHARCR_REVIEWPICKED:
+			return charcrReviewPicked(loginObj, session);
 		case CHARCR_TEMPLATESTART:
 			return charcrTemplateStart(loginObj, session);
 		case CHARCR_TEMPLATEPICKED:
@@ -2020,12 +2029,16 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			{
 				// G12: NEW * [style|race|language]: a name in that style
 				String after=parms[1].substring(parms[1].indexOf('*')+1).trim();
-				for(int p=2;(p<parms.length)&&(!parms[p].equalsIgnoreCase("<CONFIRMED>"));p++)
+				int p=2;
+				for(;(p<parms.length)&&(!parms[p].equalsIgnoreCase("<CONFIRMED>"))&&(!parms[p].equalsIgnoreCase("QUICK"));p++)
 					after=(after+" "+parms[p]).trim();
+				String rest="";
+				for(;(p<parms.length)&&(!parms[p].equalsIgnoreCase("<CONFIRMED>"));p++)
+					rest=rest+" "+parms[p]; // P27: QUICK and its template
 				if((after.length()>0)&&(NameStyles.resolve(after)==null))
 					session.println(L("There is no name style, race or language called '@x1'.",after));
 				parms[1]=randomLoginName(after);
-				loginObj.savedInput=parms[0]+" "+parms[1];
+				loginObj.savedInput=parms[0]+" "+parms[1]+rest;
 			}
 			if(CMProps.isSinglePlayer()
 			&&(CMLib.database().DBUserSearch(CMStrings.capitalizeAndLower(parms[1]))!=null))
@@ -2036,6 +2049,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 				if((parms.length>2)&&(parms[parms.length-1].equalsIgnoreCase("<CONFIRMED>")))
 				{
 					loginObj.login=login;
+					final String quickWith=CreationSteps.quickArgs(parms); // P27: NEW name QUICK (template)
+					loginObj.quick=(quickWith!=null);
+					loginObj.quickTemplate=(quickWith==null)?"":quickWith;
 					loginObj.state=LoginState.CHARCR_START;
 					return null;
 				}
@@ -2980,6 +2996,22 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		loginObj.kits.clear();
 		loginObj.kitGroup=0;
 		loginObj.fromTemplate=false;
+		loginObj.snapshots.clear();
+		loginObj.reviewed=false;
+		if(loginObj.quick)
+		{
+			// P27: NEW name QUICK (template): that template, or every step at random
+			final List<MOB> offered=PlayerTemplates.offered();
+			MOB T=(loginObj.quickTemplate.length()>0)?PlayerTemplates.find(offered, loginObj.quickTemplate):null;
+			if((T==null)&&(offered.size()>0)&&PlayerTemplates.mode().equals("ONLY"))
+				T=offered.get(CMLib.dice().roll(1, offered.size(), -1));
+			if(T!=null)
+			{
+				loginObj.lastInput=T.Name();
+				return charcrTemplatePicked(loginObj, session);
+			}
+			return afterStep(loginObj, LoginState.CHARCR_RACESTART, "START");
+		}
 		// P8: the ready-made characters first, when there are any
 		if(PlayerTemplates.offered().size()>0)
 		{
@@ -2987,6 +3019,131 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return null;
 		}
 		return afterStep(loginObj, LoginState.CHARCR_RACESTART, "START");
+	}
+
+	/**
+	 * P27: the step a state begins, for REVIEW's BACK.
+	 * @param loginObj the login
+	 * @return the step, or null
+	 */
+	protected String stepStarting(final LoginSessionImpl loginObj)
+	{
+		switch(loginObj.state)
+		{
+		case CHARCR_RACESTART:
+			return "RACE";
+		case CHARCR_GENDERSTART:
+			return "GENDER";
+		case CHARCR_STATINIT:
+			return "STATS";
+		case CHARCR_CLASSINIT:
+			return "CLASS";
+		case CHARCR_ORIGINSTART:
+			return "ORIGIN";
+		case CHARCR_KITSTART:
+			return (loginObj.kitGroup==0)?"KIT":null;
+		case CHARCR_QUESTIONSTART:
+			return loginObj.question;
+		case CHARCR_FACTIONNEXT:
+			return (loginObj.index==-1)?"FACTIONS":null;
+		case CHARCR_DEITYSTART:
+			return "DEITY";
+		default:
+			return null;
+		}
+	}
+
+	/**
+	 * P27: keeps the character as it is at the start of a step, the first
+	 * time the step starts.
+	 * @param loginObj the login
+	 */
+	protected void snapshotStep(final LoginSessionImpl loginObj)
+	{
+		final String step=stepStarting(loginObj);
+		if((step==null)||(loginObj.mob==null)||loginObj.snapshots.containsKey(step))
+			return;
+		final CreationReview.Snapshot S=CreationReview.take(loginObj.mob);
+		if(S==null)
+			return;
+		S.loginState=loginObj.state;
+		S.resume=loginObj.resume;
+		S.question=loginObj.question;
+		S.queue.addAll(loginObj.queue);
+		S.kits.addAll(loginObj.kits);
+		S.kitGroup=loginObj.kitGroup;
+		S.index=loginObj.index;
+		loginObj.snapshots.put(step,S);
+	}
+
+	/**
+	 * P27: the REVIEW step, when creation.ini's STEPS lists it: the sheet,
+	 * then BACK [step] or DONE.
+	 */
+	protected LoginResult charcrReviewShow(final LoginSessionImpl loginObj, final Session session)
+	{
+		session.println(null,null,null,CreationReview.sheet(loginObj.mob, loginObj.kits));
+		session.promptPrint(L("^NBACK [step] to change it (@x1), or DONE: ",CMParms.toListString(loginObj.snapshots.keySet())));
+		loginObj.state=LoginState.CHARCR_REVIEWPICKED;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	protected LoginResult charcrReviewPicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final String up=(loginObj.lastInput==null)?"":loginObj.lastInput.trim().toUpperCase();
+		if((up.length()==0)||up.equals("DONE")||up.equals("D")||up.equals("Y")||up.equals("YES"))
+		{
+			loginObj.reviewed=true;
+			return charcrStartFinish(loginObj, session);
+		}
+		if(up.startsWith("BACK"))
+		{
+			final String step=up.substring(4).trim().replace(' ','_');
+			String key=null;
+			for(final String k : loginObj.snapshots.keySet())
+			{
+				if(k.equals(step))
+					key=k;
+			}
+			if((key==null)&&(step.length()>0))
+			{
+				for(final String k : loginObj.snapshots.keySet())
+				{
+					if((key==null)&&k.startsWith(step))
+						key=k;
+				}
+			}
+			if(key!=null)
+			{
+				final CreationReview.Snapshot S=loginObj.snapshots.get(key);
+				CreationReview.restore(loginObj.mob, S);
+				loginObj.resume=(LoginState)S.resume;
+				loginObj.question=S.question;
+				loginObj.queue.clear();
+				loginObj.queue.addAll(S.queue);
+				loginObj.kits.clear();
+				loginObj.kits.addAll(S.kits);
+				loginObj.kitGroup=S.kitGroup;
+				loginObj.index=S.index;
+				// this step and the later ones are asked again
+				boolean from=false;
+				for(final java.util.Iterator<String> i=loginObj.snapshots.keySet().iterator();i.hasNext();)
+				{
+					if(i.next().equals(key))
+						from=true;
+					if(from)
+						i.remove();
+				}
+				loginObj.reviewed=false;
+				loginObj.state=(LoginState)S.loginState;
+				return null;
+			}
+			session.println(L("You can go back to: @x1.",CMParms.toListString(loginObj.snapshots.keySet())));
+		}
+		else
+			session.println(L("Type BACK and a step (@x1), or DONE.",CMParms.toListString(loginObj.snapshots.keySet())));
+		session.promptPrint(L("^NBACK [step], or DONE: "));
+		return LoginResult.INPUT_REQUIRED;
 	}
 
 	/**
@@ -3140,7 +3297,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		session.println(L("^NYou are ^H@x1^N, a level @x2 @x3 @x4.",mob.Name(),""+mob.basePhyStats().level(),
 			mob.baseCharStats().getMyRace().name(),mob.baseCharStats().getCurrentClass().name()));
 		JSProgression.creationStep(mob,"template"); // JS23's onCreationStep
-		if(!PlayerTemplates.locked(T,"GENDER"))
+		if((!PlayerTemplates.locked(T,"GENDER"))&&(!loginObj.quick))
 		{
 			session.promptPrint(L("^NGender (M/F/N), or nothing for @x1: ",""+(char)mob.baseCharStats().getStat(CharStats.STAT_GENDER)));
 			loginObj.state=LoginState.CHARCR_TEMPLATEGENDER;
@@ -4429,6 +4586,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 	protected LoginResult charcrStartFinish(final LoginSessionImpl loginObj, final Session session)
 	{
+		if((!loginObj.reviewed)&&(!loginObj.fromTemplate)
+		&&CreationSteps.plan().steps.contains("REVIEW")&&(!CreationSteps.auto("REVIEW")))
+			return charcrReviewShow(loginObj, session); // P27
 		if(!loginObj.fromTemplate)
 		{
 			// P6, P7, P12: what the choices give, once every step is done
