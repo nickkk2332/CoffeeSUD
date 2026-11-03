@@ -2497,6 +2497,16 @@ W18, W19, W20, W21, W22, W23, W28, W29
   Its time since the last visit and a waiting message are kept in a save
   (its STATE); a party member with no window counts as a visit. RLHOUR is
   noted in the help as meaning nothing with pause and turn-based time.
+- W5 done. An area's calendar as content: the area stat `CALENDAR` (kept in
+  its data, so in its .cmare; `MODIFY AREA CALENDAR HOURS=10 DAYS=20
+  MONTHS="Leafwake,Bloomtide" WEEK= YEARS= DAWNHR= DAYHR= DUSKHR= NIGHTHR=
+  START=812/2/3/0`, NONE takes it away, alone shows it; the area editor's
+  calendar screen writes it). `core/Calendars` gives such an area a clock of
+  its own, shared by its child areas; what it leaves out comes from its
+  parent's clock, else the global one. A new game starts it at START, a
+  saved one goes on from its date: its TIMECLOCK record holds only the date
+  now. `STARTDATE=Y/M/D/H` in coffeemud.ini (or world.ini) is the global
+  clock's START.
 
 #### 2j. Generators and random content (16)
 

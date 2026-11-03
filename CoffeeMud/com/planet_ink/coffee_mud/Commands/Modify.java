@@ -982,7 +982,7 @@ public class Modify extends StdCommand
 
 			String command=commands.get(2).toUpperCase();
 			final STreeSet<String> helpSet=new STreeSet<String>();
-			helpSet.addAll(CMParms.parseCommas("NAME,DESCRIPTION,CLIMATE,FILE,AFFECTS,BEHAVIORS,ADDSUB,DELSUB,XGRID,YGRID,PASSIVE,ACTIVE,FROZEN,STOPPED,WEATHERPROFILE",true));
+			helpSet.addAll(CMParms.parseCommas("NAME,DESCRIPTION,CLIMATE,FILE,AFFECTS,BEHAVIORS,ADDSUB,DELSUB,XGRID,YGRID,PASSIVE,ACTIVE,FROZEN,STOPPED,WEATHERPROFILE,CALENDAR",true));
 			helpSet.addAll(CMLib.coffeeMaker().getAllGenStats(myArea));
 			if((commands.size()>3)&&(!helpSet.contains(command)))
 			{
@@ -1008,6 +1008,31 @@ public class Modify extends StdCommand
 				}
 				myArea.setName(restStr);
 				CMLib.map().renamedArea(myArea);
+			}
+			else
+			if(command.equalsIgnoreCase(Calendars.KEY)) // W5: MODIFY AREA CALENDAR HOURS=n ... START=Y/M/D/H | NONE
+			{
+				final String spec = restStr.trim();
+				if(spec.length() == 0)
+				{
+					mob.tell(Calendars.describe(myArea));
+					return;
+				}
+				if(spec.equalsIgnoreCase("NONE"))
+					myArea.delBlurbFlag(Calendars.KEY);
+				else
+				{
+					final Calendars.Spec S = Calendars.parse(spec);
+					if(S.problems.size() > 0)
+					{
+						mob.tell(L("CALENDAR: @x1.",CMParms.combineWith(S.problems, "; ")));
+						return;
+					}
+					myArea.delBlurbFlag(Calendars.KEY);
+					myArea.addBlurbFlag(Calendars.KEY+" "+spec);
+				}
+				Calendars.applyAll();
+				mob.tell(Calendars.describe(myArea));
 			}
 			else
 			if(command.equalsIgnoreCase(ClimateProfiles.KEY)) // W20: MODIFY AREA WEATHERPROFILE name|NONE

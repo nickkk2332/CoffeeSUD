@@ -496,6 +496,7 @@ public class WorldCmd extends StdCommand
 				lost++;
 		}
 		final Area A2 = CMLib.map().getArea(name);
+		Calendars.applyAll(); // W5: its CALENDAR again
 		final Room first = ((A2 == null) || (!A2.getProperMap().hasMoreElements())) ? null : A2.getProperMap().nextElement();
 		for(int i = 0; i < moved.size(); i++)
 		{

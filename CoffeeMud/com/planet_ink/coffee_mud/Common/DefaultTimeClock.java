@@ -1031,6 +1031,16 @@ public class DefaultTimeClock implements TimeClock
 	@Override
 	public void save()
 	{
+		if((loaded)&&(loadName!=null)&&Calendars.isContent(this))
+		{
+			// W5: its calendar is the area's CALENDAR, in the world's files: only the date is save state
+			CMLib.database().DBReCreatePlayerData(loadName,"TIMECLOCK","TIMECLOCK/"+loadName,
+			"<HOUR>"+getHourOfDay()+"</HOUR>"+
+			"<DAY>"+getDayOfMonth()+"</DAY><MONTH>"+getMonth()+"</MONTH><YEAR>"+getYear()+"</YEAR>"
+			+"<INTOHOUR>"+Math.max(0,Math.min(CMProps.getMillisPerMudHour(),GameTime.now()-lastTicked))+"</INTOHOUR>"
+			);
+		}
+		else
 		if((loaded)&&(loadName!=null))
 		{
 			CMLib.database().DBReCreatePlayerData(loadName,"TIMECLOCK","TIMECLOCK/"+loadName,
@@ -1169,6 +1179,8 @@ public class DefaultTimeClock implements TimeClock
 					setYearNames(CMParms.toStringArray(CMParms.parseCommas(CMLib.xml().getValFromPieces(V,"YEARS"),true)));
 				}
 			}
+			// W5: an area's CALENDAR over what was read, and with no saved date its START (STARTDATE for the global clock)
+			Calendars.loaded(this, (bitV != null) && (bitV.size() > 0));
 			CMLib.map().getClockCache().put(loadName, this);
 			// a saved clock goes on from where it was in its hour, rather than
 			// starting a new hour; a clock that was never saved starts at dawn

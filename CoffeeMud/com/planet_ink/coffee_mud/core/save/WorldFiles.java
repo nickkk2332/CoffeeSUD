@@ -263,6 +263,7 @@ public final class WorldFiles
 			((com.planet_ink.coffee_mud.Libraries.BeanCounter)CMLib.beanCounter()).reloadCurrencies();
 		loadWorldFiles();
 		loadDevAreas();
+		Calendars.applyAll(); // W5: the areas' CALENDARs
 	}
 
 	/**

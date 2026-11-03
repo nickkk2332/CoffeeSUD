@@ -1270,7 +1270,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 				usingParent=true;
 		}
 		if(TC==CMLib.time().globalClock())
-			report.append("Default -- Can't be changed.");
+			report.append("Default -- Can't be changed here (MODIFY AREA CALENDAR gives an area one of its own).");
 		else
 		if(usingParent)
 			report.append("Inherited -- Can't be changed.");
@@ -1306,6 +1306,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			{
 				A.setTimeObj((TimeClock)CMLib.time().globalClock().copyOf());
 				CMLib.database().DBDeletePlayerData(A.Name(),"TIMECLOCK");
+				A.delBlurbFlag(Calendars.KEY); // W5
 				continue;
 			}
 
@@ -1382,6 +1383,14 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 					break;
 				}
 			}
+		}
+		// W5: the calendar is the area's CALENDAR, kept in its .cmare; the clock keeps only its date
+		if((TC != CMLib.time().globalClock()) && (A.getTimeObj() == TC))
+		{
+			final Calendars.Spec old = Calendars.of(A);
+			A.delBlurbFlag(Calendars.KEY);
+			A.addBlurbFlag(Calendars.KEY + " " + Calendars.textOf(TC, old));
+			Calendars.applyAll();
 		}
 		TC.save();
 	}
