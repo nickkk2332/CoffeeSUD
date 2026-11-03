@@ -62,6 +62,7 @@ R.bringMobHere(pip.mob, false);
 // MobileAggressive warns too
 var wolf3 = newMob("GenMob", R);
 wolf3.setName("Fixn17cub");
+CMLib.threads().deleteTick(wolf3, -1); // only the test ticks it: the game's own tick could warn, wander or attack between the steps
 var A3 = CMClass.getBehavior("MobileAggressive");
 A3.setParms("min=100 max=100 " + parms);
 wolf3.addBehavior(A3);
