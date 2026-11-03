@@ -2805,6 +2805,14 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   claim back. CLAIM=false lets them build with no title. Found while
   testing: a build costs movement, and a tired builder is refused with
   only a say.
+- CR13 done. `Prop_HomeBeacon` on a room: SLEEP there (the Sleep
+  command calls `Prop_HomeBeacon.slept`) or `HOME SET` makes it the start
+  room of every character of the party with privileges there (the party:
+  Party's characters and the leader's group). `HOMEBEACONS=true` makes
+  every owned room a home. `HOME` (Commands/Home) takes the whole party,
+  with followers, to the leader's home after `HOMERECALL` turns (3 when
+  blank, 0 for none) through the `GoingHome` effect, which a fight in the
+  party stops; not in combat, and only to a room that is still a home.
 
 #### 2l. Factions and organisations (18)
 

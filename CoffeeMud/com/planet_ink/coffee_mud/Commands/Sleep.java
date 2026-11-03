@@ -101,7 +101,10 @@ public class Sleep extends StdCommand implements Tickable
 		{
 			final CMMsg msg=CMClass.getMsg(mob,null,null,CMMsg.MSG_SLEEP,L("<S-NAME> lay(s) down and take(s) a nap."));
 			if(R.okMessage(mob,msg))
+			{
 				R.send(mob,msg);
+				com.planet_ink.coffee_mud.Abilities.Properties.Prop_HomeBeacon.slept(mob); // CR13: a home is the party's
+			}
 			return false;
 		}
 		final String possibleRideable=CMParms.combine(commands,1);
@@ -126,7 +129,10 @@ public class Sleep extends StdCommand implements Tickable
 		}
 		final CMMsg msg=CMClass.getMsg(mob,E,null,CMMsg.MSG_SLEEP,sourceMountStr,mountStr,mountStr);
 		if(R.okMessage(mob,msg))
+		{
 			R.send(mob,msg);
+			com.planet_ink.coffee_mud.Abilities.Properties.Prop_HomeBeacon.slept(mob); // CR13
+		}
 		else
 			CMLib.commands().postCommandRejection(msg.source(),msg.target(),msg.tool(),origCmds);
 		return false;
