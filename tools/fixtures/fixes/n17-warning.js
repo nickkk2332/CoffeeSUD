@@ -10,6 +10,7 @@ R.rawDoors()[EAST] = R2; R.setRawExit(EAST, CMClass.getExit("StdOpenDoorway"));
 R2.rawDoors()[WEST] = R; R2.setRawExit(WEST, CMClass.getExit("StdOpenDoorway"));
 function person(name, room) {
 	var m = newMob("GenMob", room);
+	CMLib.threads().deleteTick(m, -1); // only the test ticks the test's mobs: the game's own ticks act between its steps
 	m.setName(name);
 	var S = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });
 	S.initialize(null, "MEMORY"); m.setSession(S); S.setMob(m);
@@ -23,6 +24,7 @@ var parms = "WARN=\"Fixn17 the wolf bares its teeth.|Fixn17 the wolf snarls and 
 var spec = AW.parse(parms);
 check("parse", spec != null && spec.lines.length == 2 && spec.ticks == 2 && spec.backoff && spec.near, "spec");
 var wolf = newMob("GenMob", R);
+CMLib.threads().deleteTick(wolf, -1);
 wolf.setName("Fixn17wolf");
 var A = CMClass.getBehavior("Aggressive");
 A.setParms(parms);
@@ -40,6 +42,7 @@ wolf.makePeace(true); pip.mob.makePeace(true);
 
 // backing off: weapon away, held; taken up again, warned afresh
 var wolf2 = newMob("GenMob", R);
+CMLib.threads().deleteTick(wolf2, -1);
 wolf2.setName("Fixn17bitch");
 var A2 = CMClass.getBehavior("Aggressive");
 A2.setParms(parms);
@@ -59,10 +62,11 @@ tick(wolf2, A2);
 check("forgotten", AW.warnedFor(wolf2, "Fixn17pip") == 0, "count " + AW.warnedFor(wolf2, "Fixn17pip") + " wielded " + pip.mob.fetchWieldedItem() + " worn " + sword.rawWornCode() + " owner " + sword.owner() + " sit " + CMLib.flags().isSitting(pip.mob));
 R.bringMobHere(pip.mob, false);
 
-// MobileAggressive warns too
+// MobileAggressive warns too (the fight above over first)
+[pip.mob, wolf, wolf2].forEach(function (m) { m.makePeace(true); });
 var wolf3 = newMob("GenMob", R);
 wolf3.setName("Fixn17cub");
-CMLib.threads().deleteTick(wolf3, -1); // only the test ticks it: the game's own tick could warn, wander or attack between the steps
+CMLib.threads().deleteTick(wolf3, -1);
 var A3 = CMClass.getBehavior("MobileAggressive");
 A3.setParms("min=100 max=100 " + parms);
 wolf3.addBehavior(A3);

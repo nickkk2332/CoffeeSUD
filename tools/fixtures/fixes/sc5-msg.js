@@ -9,6 +9,9 @@ CL.setNextWeatherType(CM.Common.interfaces.Climate.WEATHER_CLEAR);
 CL.forceWeatherTick(R.getArea());
 ["FIXSC5A", "FIXSC5B", "FIXSC5C", "FIXSC5D", "FIXSC5E", "FIXSC5F"].forEach(clearVar);
 var V = newMob("GenMob", R); V.setName("Fixsc5victim");
+// no saving throw against the fireball (its magic save is its save plus its intelligence): the damage is read as sent
+var CS = CM.Common.interfaces.CharStats;
+[V.baseCharStats(), V.charStats()].forEach(function (c) { c.setStat(CS.STAT_SAVE_SPELLS, 0); c.setStat(CS.STAT_SAVE_MAGIC, -c.getStat(CS.STAT_INTELLIGENCE)); });
 var O = newMob("GenMob", R); O.setName("Fixsc5other");
 var S1 = scriptOn(R, "CNCLMSG_PROG DAMAGE ALL\n"
 	+ "mpsetvar FIXTEST FIXSC5A $%MSG(TYPE)%:$%MSG(VALUE)%:$%MSG(TOOLID)%:$%MSG(SOURCE)%:$%MSG(TARGET)%\n"
