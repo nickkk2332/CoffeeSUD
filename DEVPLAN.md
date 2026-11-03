@@ -2794,6 +2794,17 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   again, its room reset as a lost lot is). INROOM's BEACON was already
   fixed in SC14; now `INROOM($n == MYPROPERTY)` and `BEACON` ask of the
   mob on the left, where they asked of the scripted mob.
+- CR7 done. `Prop_Homestead` on a room or area: MASK= (on the
+  builder), SKILLS= (by ID or name), CLAIM=true|false|PROFILE,
+  MAXROOMS=, PRICE= and NOTAX. BuildingSkill: when the builder may not
+  build and the room has no title, the homestead's first build claims it
+  (a `Prop_LotsForSale` owned by the builder or `@PROFILE`, priced PRICE,
+  1 by default, which property tax skips; MAXROOMS as a
+  `Prop_ReqCapacity` rooms limit) and the build runs again as the owner's,
+  so every existing rule applies; a build that does not start takes the
+  claim back. CLAIM=false lets them build with no title. Found while
+  testing: a build costs movement, and a tired builder is refused with
+  only a say.
 
 #### 2l. Factions and organisations (18)
 

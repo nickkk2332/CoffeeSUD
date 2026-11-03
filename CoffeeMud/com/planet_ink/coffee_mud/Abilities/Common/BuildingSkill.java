@@ -1277,6 +1277,7 @@ public class BuildingSkill extends CraftingSkill implements CraftorAbility
 	{
 		if(checkStop(mob, commands))
 			return true;
+		final List<String> origCommands=new XVector<String>(commands); // CR7: for the build again once a homestead is claimed
 
 		randomRecipeFix(mob,addRecipes(mob,loadRecipes(getRecipeFilename())),commands,0);
 
@@ -1480,6 +1481,23 @@ public class BuildingSkill extends CraftingSkill implements CraftorAbility
 			commonFaiL(mob,commands,"'@x1' is not a valid @x2 project.  Try LIST.",firstWord,name());
 			return false;
 		}
+
+		if((!canBuild)&&(title==null)&&(mob.location()!=null)) // CR7: a homestead's first build claims the land, and goes on as the owner's
+		{
+			final List<Ability> claimedA=com.planet_ink.coffee_mud.Abilities.Properties.Prop_Homestead.claim(mob,mob.location(),this);
+			if(claimedA!=null)
+			{
+				if(invoke(mob,origCommands,givenTarget,auto,asLevel))
+				{
+					com.planet_ink.coffee_mud.Abilities.Properties.Prop_Homestead.claimed(mob,mob.location());
+					return true;
+				}
+				com.planet_ink.coffee_mud.Abilities.Properties.Prop_Homestead.unclaim(mob.location(),claimedA); // the build did not start: no claim
+				return false;
+			}
+		}
+		if(!canBuild)
+			canBuild=com.planet_ink.coffee_mud.Abilities.Properties.Prop_Homestead.allows(mob,mob.location(),this); // CR7: CLAIM=false
 
 		final Set<Flag> flags = makeFlags(recipe);
 

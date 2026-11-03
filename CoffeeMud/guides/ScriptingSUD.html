@@ -803,6 +803,10 @@ there and use the chest, and nothing is theft between them. After the quest the 
 <code>if isowner($n)</code> before offering to tend the plot, <code>$%OWNER(HERE)%</code> names who owns a
 room (<code>@PROFILE</code> for the whole party) and <code>$%LANDTITLE(HERE)%</code> gives its lot and price
 (AHELP BEHAVIOR_SCRIPTABLE).</p>
+<p>A camp without a deed: the north ridge of The Wilds carries
+<code>Prop_Homestead(SKILLS=Construction MAXROOMS=3)</code>, so a ranger may <code>build title Ridge Camp</code>,
+then a roof, a fence and a gate; the first build makes the ridge a lot of theirs (or the party's, with
+<code>CLAIM=PROFILE</code>) that grows to three rooms at most (AHELP PROP_HOMESTEAD).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
