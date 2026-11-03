@@ -379,7 +379,8 @@ public interface AchievementLibrary extends CMLibrary
 		CLANCURRENCY,
 		TATTOO,
 		ITEM,
-		MOB
+		MOB,
+		CUSTOM // P5: SCRIPT, EFFECT, FACTION, VAR, RECIPE (core/CustomAwards)
 		;
 	}
 
@@ -455,6 +456,25 @@ public interface AchievementLibrary extends CMLibrary
 	 * @author Bo Zimmerman
 	 *
 	 */
+	/**
+	 * P5: an award of CoffeeSUD's own (SCRIPT, EFFECT, FACTION, VAR, RECIPE),
+	 * which gives itself.
+	 */
+	public interface CustomAward extends Award
+	{
+		/**
+		 * Gives the award to a character.
+		 * @param mob the character
+		 * @return what to tell them, or ""
+		 */
+		public String give(MOB mob);
+
+		/**
+		 * @return the award as written, for the achievements file
+		 */
+		public String getSource();
+	}
+
 	public interface AmountAward extends Award
 	{
 		/**

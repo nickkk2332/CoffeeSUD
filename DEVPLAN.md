@@ -3191,6 +3191,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   level is not gained; down(mob, n) calls unLevel with the experience
   set back; toNext(mob). MPLEVELUP and MPLEVELDOWN ($n [n]), MPEXP $n
   NEXTLEVEL and EXPTONEXT($n) use them.
+- P5 done. One new award type, CUSTOM (`AchievementLibrary.CustomAward`,
+  which gives itself and keeps its source), built by `core/CustomAwards`
+  from SCRIPT(), EFFECT(), FACTION(), VAR() and RECIPE(); parseAwards now
+  keeps the award's text in its case for them. giveAwards gives them,
+  getAwardString writes them back as written, and a wrong one is refused
+  with why. SCRIPT runs like a creation script (ONCE_PROG on a tick)
+  and then FUNCTION_PROG ONACHIEVE; EFFECT with TICKS=0 is a savable,
+  non-uninvokable effect; FACTION adds; VAR sets a variable of the
+  character (WHO=, SCOPE=); RECIPE is CR4's `KnownRecipes.learn`. A
+  script line that is a lone number would end the award's words, so
+  LOAD= is the way for longer scripts.
 
 #### 2p. Presentation (18)
 

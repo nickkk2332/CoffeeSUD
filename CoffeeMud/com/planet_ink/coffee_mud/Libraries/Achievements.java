@@ -105,6 +105,7 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 						a++;
 					}
 					a--;
+					final String rawThing = thing.trim(); // P5: as written, its case kept
 					thing = thing.toUpperCase().trim();
 					if(thing.equals("XP") || thing.startsWith("EXPERIEN") || thing.equals("EXP"))
 					{
@@ -248,6 +249,19 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 								return false;
 							}
 						});
+					}
+					else
+					if(CustomAwards.isCustom(thing))
+					{
+						// P5: SCRIPT(), EFFECT(), FACTION(), VAR(), RECIPE()
+						try
+						{
+							awardsList.add(CustomAwards.parse(number, rawThing));
+						}
+						catch(final IllegalArgumentException e)
+						{
+							throw new CMException("Error: Invalid award for "+eventStr+": "+e.getMessage());
+						}
 					}
 					else
 					if(thing.startsWith("TATTOO"))
@@ -8579,6 +8593,9 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 				mob.setQuestPoint(mob.getQuestPoint() + aaward.getAmount());
 				break;
 			}
+			case CUSTOM:
+				awardMessage.append(((CustomAward)award).give(mob)); // P5
+				break;
 			case NOPURGE:
 			{
 				final Command C=CMClass.getCommand("NoPurge");
@@ -9384,6 +9401,9 @@ public class Achievements extends StdLibrary implements AchievementLibrary
 			case ITEM:
 				awardStr.append(" ").append(((CatalogAward)award).getAmount())
 						.append(" ").append("ITEM(ID="+CMStrings.escape("\""+CMStrings.escape(((CatalogAward)award).getItemName())+"\")"));
+				break;
+			case CUSTOM:
+				awardStr.append(" ").append(((CustomAward)award).getSource()); // P5
 				break;
 			default:
 				break;
