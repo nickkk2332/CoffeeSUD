@@ -1289,6 +1289,7 @@ public class MOBloader
 					{
 						newItem.setMiscText(text);
 					}
+					CMLib.catalog().newInstance(newItem); // item 1: a character's copies are counted
 					if((prevRoom==null)
 					&&(newItem instanceof Boardable))
 					{

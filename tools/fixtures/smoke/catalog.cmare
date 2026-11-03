@@ -1,0 +1,42 @@
+<CATALOG>
+ <CATITEM>
+  <ITEM>
+   <ICLAS>GenWeapon</ICLAS>
+   <IUSES>100</IUSES>
+   <ILEVL>5</ILEVL>
+   <IABLE>0</IABLE>
+   <IREJV>0</IREJV>
+   <ITEXT xml="1">
+    <NAME>the Sunblade</NAME>
+    <DESC>A blade of pale gold, warm to the touch.</DESC>
+    <DISP>the Sunblade lies here, glowing.</DISP>
+    <PROP ABILITY="0" ARMOR="0" ATTACK="0" DAMAGE="5" DISPOSITION="0" LEVEL="5" REJUV="0" SPEED="1.0" WEIGHT="2" HEIGHT="0" SENSES="0" />
+    <IMG />
+    <BEHAVES />
+    <AFFECS />
+    <FLAG>11</FLAG>
+    <IDENT />
+    <VALUE>5</VALUE>
+    <MTRAL>811</MTRAL>
+    <WORNL>false</WORNL>
+    <WORNB>1536</WORNB>
+    <READ />
+    <ACAPA>0</ACAPA>
+    <TYPE>3</TYPE>
+    <CLASS>5</CLASS>
+    <MINR>0</MINR>
+    <MAXR>0</MAXR>
+   </ITEXT>
+  </ITEM>
+  <CATEGORY />
+  <CATADATA xml="1">
+   <CATALOGDATA NAME="the Sunblade" CATAGORY="">
+    <RATE>100%</RATE>
+    <LMASK>-NAMES "+an iron chest"</LMASK>
+    <SPAWN>CONTAINER</SPAWN>
+    <CAP>1</CAP>
+    <UNIQUE>ONCE</UNIQUE>
+   </CATALOGDATA>
+  </CATADATA>
+ </CATITEM>
+</CATALOG>

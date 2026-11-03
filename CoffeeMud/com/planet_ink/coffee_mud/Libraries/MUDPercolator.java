@@ -3649,10 +3649,11 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 				throw new CMException("Unable to find cataloged item called '"+name+"', Data: "+CMParms.toKeyValueSlashListString(piece.parms())+":"+CMStrings.limit(piece.value(),100));
 			// G6: a catalog item keeps its cap: past it, the entry gives nothing
 			final CatalogLibrary.CataData capData=CMLib.catalog().getCatalogItemData(name);
-			if((capData!=null)&&(capData.getCap()>0)&&(capData.numReferences()>=capData.getCap()))
+			if((capData!=null)&&(capData.getCap()>0)&&(!Uniques.mayAppear(I.Name(),capData,null))) // item 1: every copy, and its uniqueness
 				return contents;
 			I=(Item)I.copyOf();
 			CMLib.catalog().changeCatalogUsage(I,true);
+			Uniques.appeared(I.Name(),capData,I);
 			contents.add(I);
 			addDefinition("ITEM_CLASS",I.ID(),defined);
 			addDefinition("ITEM_NAME",I.Name(),defined); // define so we can mess with it

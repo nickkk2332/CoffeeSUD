@@ -240,6 +240,60 @@ public class Catalog extends StdCommand
 		return rooms;
 	}
 
+	/**
+	 * Item 1: the CATALOG EDIT prompts for an item's uniqueness and its extra
+	 * rules.
+	 * @param mob the builder
+	 * @param I the catalog's own item
+	 * @param data its catalog data
+	 * @throws java.io.IOException a session error
+	 */
+	protected void editUniques(final MOB mob, final Item I, final CatalogLibrary.CataData data) throws java.io.IOException
+	{
+		if(data.getCap()>0)
+		{
+			final String how=mob.session().choose(L("Unique: T)at a time, O)nce ever, W)once for a while (@x1): ",
+					""+data.getUnique().charAt(0)),("TOW"), ""+data.getUnique().charAt(0));
+			if(how.trim().length()>0)
+				data.setUnique(how.trim());
+			if(data.getUnique().equals("WHILE"))
+			{
+				final String days=mob.session().prompt(L("Game days before a lost one may appear again (@x1): ",
+						""+data.getUniqueDays()), ""+data.getUniqueDays());
+				if(CMath.isInteger(days.trim()))
+					data.setUniqueDays(CMath.s_int(days.trim()));
+			}
+		}
+		final List<String> rules=new ArrayList<String>(data.getRules());
+		mob.tell(L("Extra rules share the cap and uniqueness: KIND RATE [WHEN] [MASK], as CONTAINER 5% OPEN -SUBNAMES +*chest* or DROP 100% -NAMES +chieftain."));
+		for(int r=0;r<rules.size();r++)
+		{
+			final String s=mob.session().prompt(L("Rule @x1 (@x2), or DELETE: ",""+(r+1),rules.get(r)),rules.get(r)).trim();
+			if(s.equalsIgnoreCase("DELETE"))
+			{
+				rules.remove(r--);
+				continue;
+			}
+			final StringBuilder why=new StringBuilder();
+			if(Uniques.parse(s,why)==null)
+				mob.tell(L("@x1 The rule is kept as it was.",why.toString()));
+			else
+				rules.set(r,s);
+		}
+		for(int tries=0;tries<20;tries++)
+		{
+			final String s=mob.session().prompt(L("Add a rule, or Enter for none: "),"").trim();
+			if(s.length()==0)
+				break;
+			final StringBuilder why=new StringBuilder();
+			if(Uniques.parse(s,why)==null)
+				mob.tell(why.toString());
+			else
+				rules.add(s);
+		}
+		data.setRules(rules);
+	}
+
 	public CatalogKind getObjectType(final List<String> commands)
 	{
 		CatalogKind whatKind=CatalogKind.OBJECT;
@@ -515,7 +569,7 @@ public class Catalog extends StdCommand
 							if((ID.length()==0)||(CMLib.english().containsString(I.Name(),ID)))
 							{
 								list.append(CMStrings.padRight(I.Name(),34)+" ");
-								list.append(CMStrings.padRight(Integer.toString(data.numReferences()),3)+" ");
+								list.append(CMStrings.padRight(Integer.toString(Uniques.live(data,null)),3)+" "); // item 1: in the game
 								if(data.getSpawn() == CataSpawn.NONE)
 								{
 									list.append("N/A   ");
@@ -619,8 +673,9 @@ public class Catalog extends StdCommand
 					}
 					else
 					{
-						choice=mob.session().choose(L("Auto-Spawn: N)o, L)ive mobs,  D)ead mobs, R)oom,  (@x1): ",
-								""+data.getSpawn().name().charAt(0)),("NLDR"), ""+data.getSpawn().name().charAt(0));
+						mob.tell(L("Now: @x1",Uniques.describe(P.Name(),data))); // item 1
+						choice=mob.session().choose(L("Auto-Spawn: N)o, L)ive mobs,  D)ead mobs, R)oom, C)ontainer  (@x1): ",
+								""+data.getSpawn().name().charAt(0)),("NLDRC"), ""+data.getSpawn().name().charAt(0));
 					}
 					if(choice.trim().length()>0)
 					{
@@ -634,7 +689,16 @@ public class Catalog extends StdCommand
 					{
 						data.setMaskStr("");
 						data.setRate(0.0);
-						data.setCap(0);
+						if(P instanceof MOB)
+							data.setCap(0);
+						else
+						{
+							// item 1: an item's cap and uniqueness also hold for its extra rules, and for the copies a builder placed
+							final String newCap=mob.session().prompt(L("Enter a new Max number in world, 0 for no cap (@x1): ",
+									""+data.getCap()), ""+data.getCap());
+							if(CMath.isInteger(newCap.trim()) && (CMath.s_int(newCap.trim())>=0))
+								data.setCap(CMath.s_int(newCap.trim()));
+						}
 					}
 					else
 					{
@@ -668,6 +732,24 @@ public class Catalog extends StdCommand
 						}
 						data.setRate(newPct.doubleValue());
 						String newMask="?";
+						if(data.getSpawn()==CataSpawn.CONTAINER)
+						{
+							final String w=mob.session().choose(L("Roll on O)pening, T)imer, or B)oth (@x1): ",
+									""+data.getWhen().charAt(0)),("OTB"), ""+data.getWhen().charAt(0));
+							if(w.trim().length()>0)
+								data.setWhen(w.trim());
+							while(newMask.equalsIgnoreCase("?"))
+							{
+								newMask=mob.session().prompt(L("Enter new Container selection mask, or NULL for any (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
+								if(newMask.equalsIgnoreCase("?"))
+									mob.tell(CMLib.masking().maskHelp("\n","disallow"));
+							}
+							if(newMask.equalsIgnoreCase("null"))
+								newMask="";
+							data.setMaskStr(newMask);
+							newMask=null; // kept, and any container when empty
+						}
+						else
 						if(data.getSpawn()==CataSpawn.ROOM)
 						{
 							while(newMask.equalsIgnoreCase("?"))
@@ -687,6 +769,9 @@ public class Catalog extends StdCommand
 									mob.tell(CMLib.masking().maskHelp("\n","disallow"));
 							}
 						}
+						if(newMask==null) // item 1: a container rule's mask is set above
+							mob.tell(L("Containers: @x1",(data.getMaskStr().length()==0)?L("any"):data.getMaskStr()));
+						else
 						if((newMask.length()==0)||(newMask.equalsIgnoreCase("null")))
 						{
 							data.setMaskStr("");
@@ -698,6 +783,8 @@ public class Catalog extends StdCommand
 							data.setMaskStr(newMask);
 						}
 					}
+					if(P instanceof Item)
+						editUniques(mob,(Item)P,data); // item 1
 					if(P instanceof Item)
 					{
 						CMLib.database().DBUpdateItem("CATALOG_ITEMS",(Item)P);

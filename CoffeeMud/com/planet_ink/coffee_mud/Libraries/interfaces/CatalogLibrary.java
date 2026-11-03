@@ -558,7 +558,12 @@ public interface CatalogLibrary extends CMLibrary
 		/**
 		 * Item or mob spawns randomly in a room
 		 */
-		ROOM
+		ROOM,
+		/**
+		 * Item is found in a matching container, when it is first opened or on a timer
+		 * (CoffeeSUD, item 1)
+		 */
+		CONTAINER
 	}
 
 
@@ -796,6 +801,71 @@ public interface CatalogLibrary extends CMLibrary
 		 * @param cat the category name
 		 */
 		public void setCategory(String cat);
+
+		/**
+		 * Returns how unique the item is: TIME (at most the cap's number at
+		 * once), ONCE (once the cap's number have appeared, no more) or WHILE
+		 * (as ONCE, but one lost may appear again after the item's days).
+		 * CoffeeSUD, item 1.
+		 * @see CataData#setUnique(String)
+		 * @return TIME, ONCE or WHILE
+		 */
+		public String getUnique();
+
+		/**
+		 * Sets how unique the item is: TIME, ONCE or WHILE.
+		 * @see CataData#getUnique()
+		 * @param how TIME, ONCE or WHILE
+		 */
+		public void setUnique(String how);
+
+		/**
+		 * Returns the game days before a lost copy of an item unique for a
+		 * while (WHILE) may appear again.
+		 * @see CataData#setUniqueDays(int)
+		 * @return the days
+		 */
+		public int getUniqueDays();
+
+		/**
+		 * Sets the game days before a lost copy of an item unique for a while
+		 * (WHILE) may appear again.
+		 * @see CataData#getUniqueDays()
+		 * @param days the days
+		 */
+		public void setUniqueDays(int days);
+
+		/**
+		 * Returns when the item's own CONTAINER rule rolls: OPEN (when a
+		 * matching container is first opened), TIMER (into a random matching
+		 * container, on the catalog's timer) or BOTH.
+		 * @see CataData#setWhen(String)
+		 * @return OPEN, TIMER or BOTH
+		 */
+		public String getWhen();
+
+		/**
+		 * Sets when the item's own CONTAINER rule rolls: OPEN, TIMER or BOTH.
+		 * @see CataData#getWhen()
+		 * @param when OPEN, TIMER or BOTH
+		 */
+		public void setWhen(String when);
+
+		/**
+		 * Returns the item's extra spawn rules, each written KIND RATE [WHEN]
+		 * [MASK], sharing its cap and uniqueness.
+		 * @see CataData#setRules(List)
+		 * @return the rules
+		 */
+		public List<String> getRules();
+
+		/**
+		 * Sets the item's extra spawn rules, each written KIND RATE [WHEN]
+		 * [MASK].
+		 * @see CataData#getRules()
+		 * @param rules the rules
+		 */
+		public void setRules(List<String> rules);
 
 		/**
 		 * Returns this metadata as an xml doc

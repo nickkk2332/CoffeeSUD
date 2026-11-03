@@ -4,7 +4,8 @@
 # plays a little and saves, the next restores the save, then come pause,
 # turn-based time, the random seed, saving and restoring during play, a
 # changed world coming back as it was saved, a second character in the
-# profile, the two of them as a party, its turns in turn-based time, and,
+# profile, the two of them as a party, its turns in turn-based time, a unique
+# item found in a chest and kept as one across a save, and,
 # in a world of their own,
 # a running quest, a follower, a lit torch and a wolf's rolled stats, then
 # the world files: a hand edit picked up, and a builder's edit written.  The
@@ -23,6 +24,8 @@ schema()  # schema DIR: an empty database, as a fresh checkout has
 }
 schema "$W/db"
 cp -r "$GAME/world" "$W/world"
+# the catalog a builder made, for session 8e: the Sunblade, unique once ever
+cp "$ROOT/tools/fixtures/smoke/catalog.cmare" "$W/world/"
 (cd "$W/world" && find . -type f | sort | xargs cksum) > "$W/content.sums"
 schema "$W/qdb"
 cp -r "$GAME/world" "$W/qworld"
@@ -259,6 +262,16 @@ else
 fi
 play pturns2.txt 'partyturns\nquit\nn\n' RESTORE=turns
 expect pturns2.txt "the party's turn waits until each of them"
+
+echo "Session 8e: a unique item found in a chest, saved and restored"
+# the Sunblade (once ever, cap 1) is in the first iron chest opened, not the
+# second; after a save and a restore, the third holds none either
+play unique.txt 'jrun /resources/quests/_smoke/unique1.js\nopen chest\nlook in chest\nopen 2.chest\nsave unique\nrestore unique\ny\nopen 3.chest\njrun /resources/quests/_smoke/unique2.js\nquit\nn\n' RESTORE=hero
+expect unique.txt "UNIQUE ready: CONTAINER ONCE cap 1"
+expect unique.txt "The Sunblade"
+expect unique.txt "Game saved as 'unique'."
+expect unique.txt "Restored 'unique'."
+expect unique.txt "UNIQUE after: 1 in the game, 1 ever; in the chests 1, 0, 0"
 
 }
 

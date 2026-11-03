@@ -438,6 +438,7 @@ public final class WorldFiles
 			final File catalog = new File(worldDir, CATALOG_FILE);
 			if(catalog.isFile())
 				whole = report(catalog, imported(CATALOG_FILE, () -> importCatalog(catalog))) && whole;
+			com.planet_ink.coffee_mud.core.Uniques.registerWorld(); // item 1: the copies placed in the areas, read before the catalog
 			whole = report(new File(worldDir, QUESTS_DIR), imported(QUESTS_DIR, () -> importQuests())) && whole;
 			if(!SaveGame.isRestoring())
 				importExtras(SaveGame.isBuilderMode());

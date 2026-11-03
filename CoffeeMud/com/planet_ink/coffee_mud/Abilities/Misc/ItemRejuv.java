@@ -185,6 +185,8 @@ public class ItemRejuv extends StdAbility implements ItemTicker
 						}
 						continue;
 					}
+					if(!Uniques.mayReturn(ccontents.elementAt(i))) // item 1: a capped catalog item waits
+						continue;
 					final Item newThisItem=(Item)ccontents.elementAt(i).copyOf();
 					contents.setElementAt(newThisItem,i);
 					for(int c=0;c<ccontents.size();c++)
@@ -205,6 +207,9 @@ public class ItemRejuv extends StdAbility implements ItemTicker
 					CMLib.map().registerWorldObjectLoaded(R.getArea(), R, newThisItem);
 
 					newThisItem.setContainer(thisContainer);
+					Uniques.returned(newThisItem); // item 1
+					if(thisContainer!=null)
+						Uniques.refilled(thisContainer); // item 1: its contents reset, so its rules roll again
 				}
 				else
 					thisItem.setContainer(thisContainer);

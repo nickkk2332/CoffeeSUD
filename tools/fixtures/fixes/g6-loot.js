@@ -48,13 +48,13 @@ try {
 	// a catalog item keeps its cap
 	fang = CMClass.getItem("GenItem"); fang.setName("Fixg6 Fang");
 	CMLib.catalog().addCatalog(fang);
-	var cd = CMLib.catalog().getCatalogItemData("Fixg6 Fang"), before = cd.numReferences();
+	var cd = CMLib.catalog().getCatalogItemData("Fixg6 Fang"), before = CM.core.Uniques.live(cd, null); // item 1: the copies in the game
 	cd.setCap(before + 1); // one more may come into the world
 	var chest2 = CMClass.getItem("GenContainer"); chest2.setName("a fixg6 coffer"); R.addItem(chest2);
 	var CP2 = CMClass.getAbility("Prop_LootTable"); CP2.setMiscText("FILE=randareas/fixg6.xml ID=fixg6_fang ROLLS=3"); chest2.addNonUninvokableEffect(CP2);
 	CP2.executeMsg(chest2, CMClass.getMsg(V, chest2, null, CMMsg.MSG_OPEN, "<S-NAME> open(s) <T-NAME>."));
 	var fangs = inside(chest2).filter(function (n) { return n == "Fixg6 Fang"; }).length;
-	check("cap", fangs == 1 && cd.numReferences() == before + 1, "fangs " + fangs + " refs " + before + " -> " + cd.numReferences() + ": " + inside(chest2).join(", "));
+	check("cap", fangs == 1 && CM.core.Uniques.live(cd, null) == before + 1, "fangs " + fangs + " in the game " + before + " -> " + CM.core.Uniques.live(cd, null) + ": " + inside(chest2).join(", "));
 	// the sample tables
 	var L = CM.core.GenCalls.items("randareas/loot.xml", "goblin", null, null, R), L2 = CM.core.GenCalls.items("randareas/loot.xml", "chest", null, null, R);
 	check("sample", L.size() == 1 && L2.size() == 1 && L.get(0).Name().length() > 3, "goblin " + L.size() + " chest " + L2.size());

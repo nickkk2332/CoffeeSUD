@@ -317,7 +317,11 @@ public final class ScriptLib
 	public static boolean catalogFull(final Physical entry)
 	{
 		final CatalogLibrary.CataData data = (entry == null) ? null : CMLib.catalog().getCatalogData(entry);
-		return (data != null) && (data.getCap() > 0) && (data.numReferences() >= data.getCap());
+		if((data == null) || (data.getCap() <= 0))
+			return false;
+		if(entry instanceof com.planet_ink.coffee_mud.Items.interfaces.Item) // item 1: every copy counts, and one unique ever or for a while may not come again
+			return !Uniques.mayAppear(entry.Name(), data, null);
+		return data.numReferences() >= data.getCap();
 	}
 
 	/**
@@ -328,7 +332,7 @@ public final class ScriptLib
 	public static int catalogCount(final Physical entry)
 	{
 		final CatalogLibrary.CataData data = (entry == null) ? null : CMLib.catalog().getCatalogData(entry);
-		return (data == null) ? 0 : data.numReferences();
+		return (data == null) ? 0 : (entry instanceof com.planet_ink.coffee_mud.Items.interfaces.Item) ? Uniques.live(data, null) : data.numReferences(); // item 1
 	}
 
 	/**
@@ -343,6 +347,8 @@ public final class ScriptLib
 			return null;
 		final Physical P = (Physical)entry.copyOf();
 		CMLib.catalog().changeCatalogUsage(P, true);
+		if(P instanceof com.planet_ink.coffee_mud.Items.interfaces.Item)
+			Uniques.appeared(P.Name(), CMLib.catalog().getCatalogData(P), P); // item 1: counted until it is put somewhere
 		return P;
 	}
 

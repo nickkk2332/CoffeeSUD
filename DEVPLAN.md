@@ -11,7 +11,7 @@ build green and `tools/check.sh` passing (the fixes suite and the smoke
 test), the end of each step also the engine suite (`ENGINE=1
 tools/check.sh`), and changes to the engine's behaviour need a reason.
 
-## 1. Unique and rare items: planned
+## 1. Unique and rare items: done
 
 A builder wants, say, one unique sword in the world, with a rare chance to
 be found in a certain kind of chest.
@@ -80,6 +80,52 @@ A smoke session: a catalog item with a container rule, on opening, at a rate
 of 100% and a cap of 1. Opening a matching chest finds it; opening a second
 does not; a save and a restore do not make a second; destroyed, a once-ever
 item does not come back, and a once-for-a-while one does after its time.
+
+### Done
+
+- `core/Uniques`. CataData gains getUnique (TIME, ONCE, WHILE),
+  getUniqueDays, getWhen (OPEN, TIMER, BOTH, for the item's own CONTAINER
+  rule) and getRules (the extra rules, each `KIND RATE [WHEN] [MASK]`),
+  kept in CATALOGDATA as UNIQUE, DAYS, WHEN and RULES/RULE, written only
+  when set, so older data reads and writes as before. `CataSpawn.CONTAINER`
+  is new.
+- Counting: a copy counts while it is in the game (in a room, or carried by
+  a mob or character who is), or made and not yet put anywhere; the
+  catalog's own original, a respawn's kept template and a copy thrown away
+  do not. StdItem's and StdMOB's `copyOf` now register the copy rather than
+  the original again; WorldState's items from a save, and MOBloader's
+  items of a character, are registered as they are made. A mob coming back
+  to life (StdMOB.bringToLife) drops capped catalog items past their cap,
+  and ItemRejuv does not put one back past it; nothing is held back while
+  the world loads, so a builder's placed copies are never lost.
+- Once ever and for a while: per item, the copies ever appeared and the
+  game time each missing copy was lost; a copy coming back (a character
+  carrying it returns) cancels the latest loss, and one appearing for a
+  while uses the oldest. Saves keep it (UNIQUES, read last in the restore,
+  over what the restore's own comings counted); the catalog's timer and a
+  save note losses.
+- Rules: getDropItem rolls every LIVE or DROP rule; the catalog's timer
+  every ROOM rule and every CONTAINER rule on a timer (into a random
+  matching container lying in a room, able to hold it); StdContainer, on an
+  opening (or a look into it while open) by a player's character, rolls
+  every CONTAINER rule on opening once, until ItemRejuv refills it or its
+  room resets; the mark goes in saves (ROLLED). Scripts' CATALOG() and
+  CATALOGCOUNT(), the catalog loads and the generators' catalog entries
+  (G6) go by the same count and uniqueness. Masks match containers by name
+  and the like: `-NAMES "+an iron chest"`, the quote before the +.
+- CATALOG EDIT shows the item's state and rules, offers C)ontainer and its
+  O)pen, T)imer or B)oth, an item's cap even with no rule of its own, the
+  uniqueness (and days), and the extra rules, each checked as typed. AHELP
+  UNIQUES; CATALOG's help points to it; the guide's catalog cookbook.
+- Tests: `item1-uniques` (the smoke session's steps: a chest found, a
+  second not, a save and restore through WorldState's own item writing and
+  reading, once ever, for a while after its days, at a time; and the rules
+  as written, several rules sharing a cap, the timer, a mob coming back to
+  life, a copy's copy counted); G6's cap check now counts the copies in the
+  game; and smoke session 8e, with a real SAVE and RESTORE, on a world
+  whose `catalog.cmare` builder mode wrote. A world rebuilt from its files
+  reads the areas before the catalog, so the copies placed in them are
+  counted once the catalog is in (`Uniques.registerWorld`).
 
 ## 2. Builder capabilities: from the audit
 

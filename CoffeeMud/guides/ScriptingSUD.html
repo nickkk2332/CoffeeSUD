@@ -173,6 +173,11 @@ mpforce $b kill $n
 ~</pre>
 <p>A unique reward, <code>mpoload catalog the Sunblade</code>, does nothing
 while the one Sunblade the catalog allows is in the world.</p>
+<p>Unique and rare: <code>CATALOG EDIT the Sunblade</code> in builder mode sets a cap of 1, <i>once
+ever</i> (gone for good once found and lost) or <i>once for a while</i> (back some game days after it is
+lost), and its rules, as many as needed, sharing the cap: <code>CONTAINER 5% OPEN -SUBNAMES +*chest*</code>
+(a rare chance in a chest, rolled the first time the chest is opened), <code>DROP 100% -NAMES "+the goblin
+chieftain"</code>. A copy from a save, or carried in, counts like any other (AHELP UNIQUES).</p>
 <h3>One script, many guards</h3>
 <p>Give each guard <code>LOAD=progs/guard.script POST=castle#12</code>; in the
 file, <code>ARGDEFAULT POST=gate</code> and <code>$%ARG(POST)%</code>. Before

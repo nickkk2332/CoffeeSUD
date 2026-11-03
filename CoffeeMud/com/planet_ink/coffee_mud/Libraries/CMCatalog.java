@@ -948,10 +948,7 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 				for(int d=0;d<icatalog.size();d++)
 				{
 					data=icatalog.get(d).second;
-					if((data.getSpawn()==(live?CataSpawn.LIVE:CataSpawn.DROP))
-					&&(CMath.random() <= data.getRate())
-					&&(CMLib.masking().maskCheck(data.getMaskV(),M,true))
-					&&(data.numReferences()<data.getCap()))
+					if(Uniques.dropRoll(icatalog.get(d).first.Name(),data,M,live)) // item 1: every LIVE or DROP rule
 					{
 						if(selections==null)
 							selections=new ArrayList<Item>();
@@ -968,6 +965,7 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 		Item I=selections.get(CMLib.dice().roll(1,selections.size(),-1));
 		I=(Item)I.copyOf();
 		changeCatalogUsage(I,true);
+		Uniques.appeared(I.Name(),getCatalogItemData(I.Name()),I); // item 1
 		return I;
 	}
 
@@ -1085,28 +1083,9 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 				{
 					final CataData data=getCatalogItemData(name2);
 					data.cleanHouse();
-					if((data.getSpawn()==CataSpawn.ROOM)
-					&&(data.getCap()>0)
-					&&(data.numReferences()<data.getCap())
-					&&(CMath.random()<data.getRate()))
-					{
-						final List<Room> choiceCache = new ArrayList<Room>();
-						int maxFails = (data.getCap() - data.numReferences()) * 10;
-						while((--maxFails > 0)
-						&&(data.numReferences()<data.getCap()))
-						{
-							final Room R = getSpawnRoom(data, choiceCache, cacheSets);
-							if(R != null)
-							{
-								final Item I = (Item)getCatalogItem(name2).copyOf();
-								I.setSavable(false);
-								R.addItem(I);
-								changeCatalogUsage(I,true);
-								data.addReference(I);
-							}
-						}
-					}
+					Uniques.timer(name2, data); // item 1: each ROOM rule, and each CONTAINER rule on a timer
 				}
+				Uniques.observeAll(); // item 1: copies lost, for those unique for a while
 				setThreadStatus(serviceClient,"catalog mob references.");
 				names = getCatalogMobNames();
 				for (final String name2 : names)
@@ -1219,6 +1198,10 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 		public CataSpawn 	spawn				= CataSpawn.NONE;
 		public double 		rate				= 0.0;
 		public int			cap					= 0;
+		public String		unique				= "TIME"; // item 1
+		public int			uniqueDays			= 0;
+		public String		when				= "OPEN";
+		public List<String>	rules				= new ArrayList<String>(0);
 		public volatile int deathPickup			= 0;
 		public SVector<WeakReference<Physical>>
 							refs				= new SVector<WeakReference<Physical>>(1);
@@ -1500,6 +1483,63 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 		}
 
 		@Override
+		public String getUnique()
+		{
+			return unique;
+		}
+
+		@Override
+		public void setUnique(final String how)
+		{
+			unique=Uniques.howOf(how);
+		}
+
+		@Override
+		public int getUniqueDays()
+		{
+			return uniqueDays;
+		}
+
+		@Override
+		public void setUniqueDays(final int days)
+		{
+			uniqueDays=Math.max(0,days);
+		}
+
+		@Override
+		public String getWhen()
+		{
+			return when;
+		}
+
+		@Override
+		public void setWhen(final String w)
+		{
+			when=Uniques.whenOf(w);
+		}
+
+		@Override
+		public List<String> getRules()
+		{
+			return rules;
+		}
+
+		@Override
+		public void setRules(final List<String> r)
+		{
+			final List<String> list=new ArrayList<String>(0);
+			if(r!=null)
+			{
+				for(final String s : r)
+				{
+					if((s!=null)&&(s.trim().length()>0))
+						list.add(s.trim());
+				}
+			}
+			rules=list;
+		}
+
+		@Override
 		public void setMaskStr(final String s)
 		{
 			lmaskStr=s;
@@ -1533,6 +1573,19 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 			buf.append("<LMASK>"+CMLib.xml().parseOutAngleBrackets(lmaskStr)+"</LMASK>");
 			buf.append("<SPAWN>"+spawn.name()+"</SPAWN>");
 			buf.append("<CAP>"+cap+"</CAP>");
+			if(!unique.equals("TIME")) // item 1
+				buf.append("<UNIQUE>"+unique+"</UNIQUE>");
+			if(uniqueDays>0)
+				buf.append("<DAYS>"+uniqueDays+"</DAYS>");
+			if(!when.equals("OPEN"))
+				buf.append("<WHEN>"+when+"</WHEN>");
+			if(rules.size()>0)
+			{
+				buf.append("<RULES>");
+				for(final String r : rules)
+					buf.append("<RULE>"+CMLib.xml().parseOutAngleBrackets(r)+"</RULE>");
+				buf.append("</RULES>");
+			}
 			//buf.append("<LIVE>"+live+"</LIVE>");
 			buf.append("</CATALOGDATA>");
 			return buf.toString();
@@ -1578,6 +1631,20 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 						if(spawn == null)
 							spawn = CataSpawn.NONE;
 					}
+					unique=Uniques.howOf(piece.getValFromPieces("UNIQUE")); // item 1
+					uniqueDays=piece.getIntFromPieces("DAYS");
+					when=Uniques.whenOf(piece.getValFromPieces("WHEN"));
+					rules=new ArrayList<String>(0);
+					final XMLTag rulesTag=piece.getPieceFromPieces("RULES");
+					if(rulesTag!=null)
+					{
+						for(final XMLTag r : rulesTag.contents())
+						{
+							final String rule=CMLib.xml().restoreAngleBrackets(r.value()).trim();
+							if(r.tag().equalsIgnoreCase("RULE")&&(rule.length()>0))
+								rules.add(rule);
+						}
+					}
 				}
 			}
 			else
@@ -1587,6 +1654,10 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 				spawn=CataSpawn.NONE;
 				rate=0.0;
 				cap=0;
+				unique="TIME";
+				uniqueDays=0;
+				when="OPEN";
+				rules=new ArrayList<String>(0);
 			}
 		}
 

@@ -309,7 +309,7 @@ public class StdItem implements Item
 			//CMClass.bumpCounter(E,CMClass.CMObjectType.ITEM);//removed for mem & perf
 			E.xtraValues=(xtraValues==null)?null:(String[])xtraValues.clone();
 			E.cloneFix(this);
-			CMLib.catalog().newInstance(this);
+			CMLib.catalog().newInstance(E); // item 1: the copy is counted, not the original again
 			return E;
 
 		}

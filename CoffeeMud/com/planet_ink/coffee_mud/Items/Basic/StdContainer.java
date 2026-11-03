@@ -462,6 +462,12 @@ public class StdContainer extends StdItem implements Container
 				}
 			}
 		}
+		if(msg.amITarget(this)
+		&&(isOpen)
+		&&((msg.targetMinor()==CMMsg.TYP_OPEN)
+			||(msg.targetMinor()==CMMsg.TYP_LOOK)
+			||(msg.targetMinor()==CMMsg.TYP_EXAMINE)))
+			Uniques.opened(this,msg.source()); // item 1: CONTAINER rules on opening, once until its contents reset
 		super.executeMsg(myHost,msg);
 	}
 

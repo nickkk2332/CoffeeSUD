@@ -257,6 +257,7 @@ public final class WorldState
 		str.append(questsXML(player));
 		str.append(QuestRecords.toXML()); // Q4: each character's quest records
 		str.append(com.planet_ink.coffee_mud.core.Yields.toXML()); // CR14: gathered-out rooms
+		str.append(com.planet_ink.coffee_mud.core.Uniques.toXML()); // item 1: unique items ever made, and lost
 		str.append(ridesXML());
 		str.append("</WORLD>\n");
 		return str.toString();
@@ -448,6 +449,7 @@ public final class WorldState
 			}
 		}
 		JSStore.fromXML(world.getPieceFromPieces("JSSTATE")); // JS7: before onRestore
+		com.planet_ink.coffee_mud.core.Uniques.fromXML(world.getPieceFromPieces("UNIQUES")); // item 1: last, over what coming back counted
 	}
 
 	/**
@@ -1128,6 +1130,8 @@ public final class WorldState
 				str.append(xml.convertXMLtoTag("EXPIRES", I.expirationDate()));
 			if(I.fetchEffect("ItemRejuv") != null)
 				str.append(xml.convertXMLtoTag("RESPAWNS", "true"));
+			if(com.planet_ink.coffee_mud.core.Uniques.wasRolled(I))
+				str.append(xml.convertXMLtoTag("ROLLED", "true")); // item 1
 			str.append(effectsXML(I));
 			str.append(statesXML(I));
 			str.append("</ITEM>");
@@ -1180,6 +1184,8 @@ public final class WorldState
 			laterEffects(I, tag);
 			noteRestored(I, tag);
 			putStates(I, tag);
+			if(tag.getBoolFromPieces("ROLLED", false))
+				com.planet_ink.coffee_mud.core.Uniques.markRolled(I); // item 1
 			items.add(I);
 		}
 		for(int i = 0; i < tags.size(); i++)
@@ -1198,6 +1204,7 @@ public final class WorldState
 				if(tags.get(i).getBoolFromPieces("RESPAWNS", false))
 					made.respawning.add(I);
 				I.recoverPhyStats();
+				CMLib.catalog().newInstance(I); // item 1: a catalog item's copy from the save is counted
 				made.items.add(I);
 			}
 		}

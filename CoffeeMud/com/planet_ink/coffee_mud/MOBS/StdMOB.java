@@ -765,7 +765,7 @@ public class StdMOB implements MOB
 			// & perf
 			E.xtraValues = (xtraValues == null) ? null : (String[]) xtraValues.clone();
 			E.cloneFix(this);
-			CMLib.catalog().newInstance(this);
+			CMLib.catalog().newInstance(E); // item 1: the copy is counted, not the original again
 			return E;
 		}
 		catch (final CloneNotSupportedException e)
@@ -1372,6 +1372,7 @@ public class StdMOB implements MOB
 
 		if(isMonster())
 		{
+			Uniques.admitCarried(this); // item 1: no unique item past its cap
 			final Item dropItem = CMLib.catalog().getDropItem(this, true);
 			if(dropItem != null)
 				addItem(dropItem);
