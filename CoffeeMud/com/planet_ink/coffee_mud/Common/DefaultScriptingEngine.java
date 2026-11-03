@@ -16972,6 +16972,30 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
 			return null;
 		}
+		case "MPRECRUIT": // P9: MPRECRUIT npc player [PARTY|REST] [NAME=name]: the NPC joins the player's profile
+		{
+			final Environmental N=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,2),ctx);
+			String how="PARTY";
+			String name="";
+			for(final String w : CMParms.parse(varify(ctx,CMParms.getPastBitClean(line,2)).trim()))
+			{
+				if(w.equalsIgnoreCase("REST")||w.equalsIgnoreCase("PARTY"))
+					how=w.toUpperCase();
+				else
+				if(w.toUpperCase().startsWith("NAME="))
+					name=w.substring(5).trim();
+			}
+			if((!(N instanceof MOB))||(!(W instanceof MOB)))
+			{
+				logError(ctx,"MPRECRUIT","Syntax","MPRECRUIT npc player [PARTY|REST] [NAME=name]: "+line);
+				return null;
+			}
+			final String said=Recruits.recruit((MOB)N,(MOB)W,how,name);
+			if(said!=null)
+				((MOB)W).tell(said);
+			return null;
+		}
 		case "MPPERK": // P13: MPPERK $n PERK_ID gives the perk and its rewards; MPPERK $n -PERK_ID takes it off
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);

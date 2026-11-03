@@ -924,6 +924,9 @@ with TRAITS= points, flaws giving points back; HASPERK() and MPPERK in scripts (
 <p>Profile and party rules: PROFILEMAX, NEWCHARS (FIRSTONLY, CHEAT, MASK with NEWCHARMASK and
 NEWCHARMESSAGE), PARTYMAX and PARTYROLES in coffeemud.ini or world.ini, and the player's CHEAT ON/OFF, kept in
 the save (AHELP WORLDRULES).</p>
+<p>Recruits: MPRECRUIT $i $n (PARTY|REST) (NAME=...) makes an NPC a character of the player's profile, keeping
+what it has; Prop_Recruitable (MASK, COST, MESSAGE) lets the player RECRUIT it with no script; from
+JavaScript, core.Recruits.recruit(npc, player, 'PARTY', name) (AHELP PROP_RECRUITABLE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

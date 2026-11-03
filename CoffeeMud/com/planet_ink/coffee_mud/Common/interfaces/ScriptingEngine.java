@@ -945,6 +945,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPUNDEED", // 145
 		"MPLEARNRECIPE", // 146
 		"MPPERK", // 147 P13
+		"MPRECRUIT", // 148 P9
 	};
 
 	/**

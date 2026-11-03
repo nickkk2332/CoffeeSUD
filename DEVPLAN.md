@@ -3173,6 +3173,19 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   (it went to the new member's own session). The new CHEAT command
   (ON/OFF) is kept in the save header ("cheat") and shown in SAVES and
   SAVES INFO.
+- P9 done. `core/Recruits.recruit(npc, player, PARTY|REST, name)`:
+  a StdMOB player of the player's profile with the NPC's base stats
+  (a StdCharClass NPC becomes an Apprentice), its level (armour,
+  attack and damage back to a player's, for the class to give), base
+  state, abilities, savable effects, items (copies, worn and in their
+  containers as they were), factions, tattoos, expertises and
+  description, made as TESTCHAR makes one (DBCreateCharacter, the
+  profile, DBUpdatePlayer); the NPC is destroyed and the character
+  comes in by PARTY ADD where it stood, or rests. It refuses (said to
+  the player) for a bad or taken name (NAME= gives one), a full profile
+  (COMMONACCOUNTSYSTEM, PROFILEMAX) or party (PARTYMAX, the connection
+  cap). MPRECRUIT in scripts; the new Prop_Recruitable (MASK, COST,
+  MESSAGE, NAME) and RECRUIT command.
 
 #### 2p. Presentation (18)
 
