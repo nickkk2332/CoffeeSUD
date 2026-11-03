@@ -2632,7 +2632,15 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 
 	protected List<Item> buildItem(final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException
 	{
-		return seeded(piece, defined, () -> buildItemUnseeded(piece, defined)); // G1
+		final List<Item> made=seeded(piece, defined, () -> buildItemUnseeded(piece, defined)); // G1
+		final String affixes=piece.getParmValue("AFFIXES"); // G10: AFFIXES="0?2", that many from the world's affixes
+		if((affixes!=null)&&(affixes.trim().length()>0)&&(made!=null))
+		{
+			final int n=CMath.s_parseIntExpression(strFilterNow(null,null,null,affixes,piece,defined));
+			for(final Item I : made)
+				Affixes.apply(I,n);
+		}
+		return made;
 	}
 
 	protected List<Item> buildItemUnseeded(final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException

@@ -49,6 +49,8 @@ public class RandomItems extends ActiveTicker
 
 	protected List<Item>	maintained			= new Vector<Item>();
 	protected int			minItems			= 1;
+	/** G10: AFFIXES=, how many of the world's affixes each item gets (math), or "" */
+	protected String		affixes			= "";
 	protected int			maxItems			= 1;
 	protected int			avgItems			= 1;
 	protected boolean		favorMobs			= false;
@@ -170,6 +172,7 @@ public class RandomItems extends ActiveTicker
 		super.setParms(oldParms);
 		rules=SpawnRules.parse(oldParms); // C4
 		minItems=CMParms.getParmInt(oldParms,"minitems",1);
+		affixes=CMParms.getParmStr(oldParms,"AFFIXES","").trim(); // G10
 		maxItems=CMParms.getParmInt(oldParms,"maxitems",1);
 		if(minItems>maxItems)
 			maxItems=minItems;
@@ -420,6 +423,8 @@ public class RandomItems extends ActiveTicker
 				else
 					I=(Item)I.copyOf();
 				I.basePhyStats().setRejuv(PhyStats.NO_REJUV);
+				if(affixes.length()>0) // G10
+					Affixes.apply(I,CMath.s_parseIntExpression(affixes));
 				I.recoverPhyStats();
 				I.text();
 				if(SK!=null)

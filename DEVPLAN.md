@@ -2594,6 +2594,17 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   gives nothing). ItemGenerator now picks from the first item (it began at
   the third). `resources/randareas/loot.xml`: `goblin` and `chest` tables,
   with tiers by pickweight.
+- G10 done. `core/Affixes`: random enchantment as data, `world/affixes.xml`,
+  else `resources/randareas/affixes.xml` (or the world's own copy): each
+  `<AFFIX id name pos="prefix|suffix" kinds="weapon,armor,ammo,item,any"
+  level="5-30" pickweight power cursed>` holds `<AFFECT class parms>` tags.
+  An item gets at most one prefix and one suffix that fit its kind and
+  level, by weight: the name takes them (a/an set again, "of" before a
+  suffix, the display text too), the level rises by power (1 by default),
+  the value by a tenth for each, cursed makes it unremovable. enchant()
+  uses them when the file has any (ItemGenerator ENCHANTED=, digsites), as
+  do `AFFIXES=` on Prop_LootTable and RandomItems and `AFFIXES="0?2"` on a
+  template ITEM. A sample file of eight ships.
 
 #### 2k. Crafting, gathering and housing (21)
 

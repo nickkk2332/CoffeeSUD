@@ -79,6 +79,8 @@ public class Prop_LootTable extends Property
 	protected int		chance	= 100;
 	protected String	gold	= "";
 	protected boolean	rolled	= false;
+	/** G10: how many affixes each item gets (math), or "" */
+	protected String	affixes	= "";
 	/** a mob's roll for its death or this life, made once */
 	protected boolean	lifeRolled	= false;
 
@@ -94,6 +96,7 @@ public class Prop_LootTable extends Property
 		chance = P.containsKey("CHANCE") ? CMath.s_int(P.get("CHANCE").replace('%', ' ').trim()) : 100;
 		gold = P.containsKey("GOLD") ? P.get("GOLD").trim() : "";
 		rolled = P.containsKey("ROLLED") && CMath.s_bool(P.get("ROLLED"));
+		affixes = P.containsKey("AFFIXES") ? P.get("AFFIXES").trim() : "";
 	}
 
 	private String when()
@@ -166,6 +169,8 @@ public class Prop_LootTable extends Property
 			{
 				for(final Item I : GenCalls.items(file, id, vars, player, R))
 				{
+					if(affixes.length() > 0) // G10
+						Affixes.apply(I, CMath.s_parseIntExpression(affixes.replace(" ", "")));
 					place(host, I);
 					given++;
 				}

@@ -1498,6 +1498,11 @@ public class TimsLibrary extends StdLibrary implements ItemBalanceLibrary
 	{
 		if(CMLib.dice().rollPercentage()>pct)
 			return I;
+		if(Affixes.available()) // G10: the world's affixes, one (a second a quarter of the time)
+		{
+			Affixes.apply(I,(CMLib.dice().rollPercentage()<=25)?2:1);
+			return I;
+		}
 		int bump=0;
 		while((CMLib.dice().rollPercentage()<=10)||(bump==0))
 			bump=bump+((CMLib.dice().rollPercentage()<=80)?1:-1);

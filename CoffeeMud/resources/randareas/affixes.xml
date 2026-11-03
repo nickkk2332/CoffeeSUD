@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!--
+Affixes, CoffeeSUD (G10): random enchantments as data.  enchant() uses
+these when this file (or world/affixes.xml, or a world's own copy of this
+one in world/resources/randareas/) has any: ItemGenerator ENCHANTED=,
+Prop_LootTable's and RandomItems' AFFIXES=, and a template ITEM's
+AFFIXES="0?2".  An item gets at most one prefix and one suffix, each
+fitting its kind (weapon, armor, ammo, item, or any) and its level, picked
+by pickweight.  The name takes the prefix (after its a or an) and the
+suffix (with "of"); the level rises by power (1 if not given) and the
+value by a tenth for each; cursed="true" makes it unremovable.  The AFFECT
+tags are the properties it gets, class and parms.
+-->
+<AFFIXES>
+	<AFFIX id="flaming" name="Flaming" pos="prefix" kinds="weapon,ammo" level="5-60" pickweight="10" power="2">
+		<AFFECT class="Prop_FightSpellCast" parms="10%;Spell_BurningHands" />
+	</AFFIX>
+	<AFFIX id="keen" name="Keen" pos="prefix" kinds="weapon" level="1-60" pickweight="20">
+		<AFFECT class="Prop_WearAdjuster" parms="attacks+5" />
+	</AFFIX>
+	<AFFIX id="sturdy" name="Sturdy" pos="prefix" kinds="armor" level="1-60" pickweight="20">
+		<AFFECT class="Prop_WearAdjuster" parms="armor+5" />
+	</AFFIX>
+	<AFFIX id="rusty" name="Rusty" pos="prefix" kinds="weapon,armor" level="1-20" pickweight="8" power="0" cursed="true">
+		<AFFECT class="Prop_WearAdjuster" parms="attacks-5" />
+	</AFFIX>
+	<AFFIX id="bleeding" name="of Bleeding" pos="suffix" kinds="weapon" level="4-12" pickweight="2" power="2">
+		<AFFECT class="Prop_WearAdjuster" parms="damage+2" />
+	</AFFIX>
+	<AFFIX id="bear" name="of the Bear" pos="suffix" kinds="armor,item" level="1-60" pickweight="10">
+		<AFFECT class="Prop_WearAdjuster" parms="strength+1 hitpoints+10" />
+	</AFFIX>
+	<AFFIX id="warding" name="of Warding" pos="suffix" kinds="armor" level="10-60" pickweight="6" power="2">
+		<AFFECT class="Prop_WearAdjuster" parms="savemag+5 savepar+5" />
+	</AFFIX>
+	<AFFIX id="swiftness" name="of Swiftness" pos="suffix" kinds="any" level="15-60" pickweight="3" power="3">
+		<AFFECT class="Prop_WearAdjuster" parms="dexterity+1 movement+25" />
+	</AFFIX>
+</AFFIXES>
