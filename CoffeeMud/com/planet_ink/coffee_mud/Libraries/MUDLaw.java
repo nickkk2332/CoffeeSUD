@@ -465,6 +465,8 @@ public class MUDLaw extends StdLibrary implements LegalLibrary
 			return false;
 		if(record.getOwnerName().equals(mob.Name()))
 			return true;
+		if(ProfileOwner.owns(mob,record.getOwnerName())) // CR1: the profile's characters, and @PROFILE
+			return true;
 		if((record.getOwnerName().equals(mob.getLiegeID())&&(mob.isMarriedToLiege())))
 			return true;
 		final Pair<Clan,Integer> clanRole=mob.getClanRole(record.getOwnerName());
@@ -640,6 +642,8 @@ public class MUDLaw extends StdLibrary implements LegalLibrary
 		final Pair<Clan,Integer> clanRole=mob.getClanRole(record.getOwnerName());
 		if((clanRole!=null)&&(clanRole.first.getAuthority(clanRole.second.intValue(),Clan.Function.PROPERTY_OWNER)!=Clan.Authority.CAN_NOT_DO))
 			return true;
+		if(ProfileOwner.owns(mob,record.getOwnerName())) // CR1
+			return true;
 		if(mob.amFollowing()!=null)
 			return doesOwnThisProperty(mob.amFollowing(),record);
 		return false;
@@ -652,7 +656,7 @@ public class MUDLaw extends StdLibrary implements LegalLibrary
 			return null;
 		if(record.getOwnerName().length()==0)
 			return null;
-		if(record.getOwnerName().startsWith("#"))
+		if(record.getOwnerName().startsWith("#")||ProfileOwner.isToken(record.getOwnerName())) // CR1: @PROFILE is no one character
 			return null;
 		final Clan clan = CMLib.clans().fetchClanAnyHost(record.getOwnerName());
 		if(clan != null)
@@ -674,6 +678,10 @@ public class MUDLaw extends StdLibrary implements LegalLibrary
 			return true;
 		if(record.getOwnerName().equals(mob.Name()))
 			return true;
+		if(ProfileOwner.owns(mob,record.getOwnerName())) // CR1
+			return true;
+		if(ProfileOwner.isToken(record.getOwnerName()))
+			return false;
 		if((record.getOwnerName().equals(mob.getLiegeID())&&(mob.isMarriedToLiege())))
 			return true;
 		final Clan clan = CMLib.clans().fetchClanAnyHost(record.getOwnerName());
@@ -741,6 +749,8 @@ public class MUDLaw extends StdLibrary implements LegalLibrary
 			return true;
 		final Pair<Clan,Integer> clanRole=mob.getClanRole(ownerName);
 		if((clanRole!=null)&&(clanRole.first.getAuthority(clanRole.second.intValue(),Clan.Function.PROPERTY_OWNER)!=Clan.Authority.CAN_NOT_DO))
+			return true;
+		if(ProfileOwner.owns(mob,ownerName)) // CR1
 			return true;
 		if(mob.amFollowing()!=null)
 			return doesOwnThisLand(mob.amFollowing(),room);

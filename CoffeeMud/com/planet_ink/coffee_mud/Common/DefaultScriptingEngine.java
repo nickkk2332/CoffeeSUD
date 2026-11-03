@@ -16859,6 +16859,38 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPREGENERATE","RunTime",said+": "+line);
 			return null;
 		}
+		case "MPGRANT": // CR1: MPGRANT item who|NOBODY [PROFILE] [NAME=new name]: a deed, vessel or private item given (or, to NOBODY, taken back)
+		{
+			final Environmental I=getArgumentItem(CMParms.getCleanBit(line,1),ctx);
+			final String whoWord=CMParms.getCleanBit(line,2);
+			final String rest=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(I instanceof Item))||(whoWord.length()==0))
+			{
+				logError(ctx,"MPGRANT","Syntax","MPGRANT item who|NOBODY [PROFILE] [NAME=new name]: "+line);
+				return null;
+			}
+			MOB to=null;
+			if(!whoWord.equalsIgnoreCase("NOBODY"))
+			{
+				final Environmental W=getArgumentMOB(whoWord,ctx);
+				if(!(W instanceof MOB))
+				{
+					logError(ctx,"MPGRANT","RunTime","No one called '"+whoWord+"': "+line);
+					return null;
+				}
+				to=(MOB)W;
+			}
+			final int nameAt=rest.toUpperCase().indexOf("NAME=");
+			String newName=(nameAt<0)?null:unquoted(rest.substring(nameAt+5).trim());
+			if((newName!=null)&&(newName.length()==0))
+				newName=null;
+			final boolean profile=((nameAt<0)?rest:rest.substring(0,nameAt)).toUpperCase().matches("(^|.*\\s)PROFILE(\\s.*|$)");
+			final Room near=(lastKnownLocation!=null)?lastKnownLocation:CMLib.map().roomLocation(ctx.scripted);
+			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
+			if(said!=null)
+				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
 		case "MPINTERRUPT": // W4: MPINTERRUPT who [message]: ends the wait (or journey) of that character or their party
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);

@@ -31,6 +31,7 @@ In the game, <code>HELP SCRIPTABLE</code> has the whole list, and
 <li><a href="#items">Items and puzzles</a></li>
 <li><a href="#world">World systems</a></li>
 <li><a href="#gen">Generators</a></li>
+<li><a href="#craft">Crafting, gathering and housing</a></li>
 <li><a href="#found">Less known</a></li>
 <li><a href="JavaScriptSUD.html">JavaScript</a></li>
 </ul>
@@ -790,6 +791,13 @@ names each innkeeper from the owner's dwarven tables in <code>world/js/lib/names
 their play-time scripts use, and <code>&lt;ROOM condition="js:!cm.store('world').bridgeBurnt" ...&gt;</code>
 leaves out the bridge room once the story has burnt it. The expression sees <code>defined</code> (the
 template's variables) and <code>obj</code> (what is being built) (AHELP GENERATE).</p>
+
+<h2><a name="craft">Crafting, gathering and housing</a></h2>
+<p>A home that is already the player's: "Your cottage" in the tutorial village carries
+<code>Prop_RoomForSale</code> with <code>@PROFILE/0</code>, so any character the player makes can enter, build
+there and use the chest, and nothing is theft between them. After the quest the harbourmaster runs
+<code>mpgrant skiff $n NAME=Gull</code> and the skiff is theirs, kept with them in the save; with
+<code>PROFILEPROPERTY=true</code> what the player buys belongs to the whole profile (AHELP PROP_ROOMFORSALE).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

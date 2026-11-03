@@ -933,6 +933,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPINTERRUPT", // 140
 		"MPGENERATE", // 141
 		"MPREGENERATE", // 142
+		"MPGRANT", // 143
 	};
 
 	/**

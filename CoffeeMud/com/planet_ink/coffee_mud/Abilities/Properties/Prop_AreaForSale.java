@@ -132,7 +132,7 @@ public class Prop_AreaForSale extends Property implements LandTitle
 		final Clan C=CMLib.clans().fetchClanAnyHost(owner);
 		if(C!=null)
 			return true;
-		return CMLib.players().playerExistsAllHosts(owner);
+		return ProfileOwner.exists(owner)||CMLib.players().playerExistsAllHosts(owner); // CR1: @PROFILE always exists
 	}
 
 	@Override

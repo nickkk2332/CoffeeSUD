@@ -226,7 +226,7 @@ public class StdTitle extends StdItem implements LandTitle
 		final Clan C=CMLib.clans().fetchClanAnyHost(owner);
 		if(C!=null)
 			return true;
-		return CMLib.players().playerExistsAllHosts(owner);
+		return ProfileOwner.exists(owner)||CMLib.players().playerExistsAllHosts(owner); // CR1: @PROFILE always exists
 	}
 
 	@Override
@@ -705,7 +705,7 @@ public class StdTitle extends StdItem implements LandTitle
 			}
 			if(P.getOwnerName().length()==0)
 			{
-				String newOwnerName=msg.source().Name();
+				String newOwnerName=ProfileOwner.buyerName(msg.source()); // CR1: @PROFILE under PROFILEPROPERTY=true
 				if((((ShopKeeper)msg.tool()).isSold(ShopKeeper.DEAL_CLANDSELLER))
 				||(((ShopKeeper)msg.tool()).isSold(ShopKeeper.DEAL_CSHIPSELLER)))
 				{
@@ -733,7 +733,7 @@ public class StdTitle extends StdItem implements LandTitle
 						updateTitle();
 						updateLot(null);
 					}
-					msg.source().tell(L("@x1 is now signed over to @x2.",name(),P.getOwnerName()));
+					msg.source().tell(L("@x1 is now signed over to @x2.",name(),ProfileOwner.shown(P.getOwnerName())));
 				}
 			}
 			recoverPhyStats();

@@ -455,7 +455,7 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 		final Clan C=CMLib.clans().fetchClanAnyHost(owner);
 		if(C!=null)
 			return true;
-		return CMLib.players().playerExistsAllHosts(owner);
+		return ProfileOwner.exists(owner)||CMLib.players().playerExistsAllHosts(owner); // CR1: @PROFILE always exists
 	}
 
 	@Override
@@ -1033,10 +1033,10 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 				CMLib.achievements().possiblyBumpAchievement(buyer, AchievementLibrary.Event.CLANPROPERTY, 1, targetClan, getArea());
 			}
 			else
-				setOwnerName(buyer.Name());
+				setOwnerName(ProfileOwner.buyerName(buyer)); // CR1
 		}
 		else
-			setOwnerName(buyer.Name());
+			setOwnerName(ProfileOwner.buyerName(buyer)); // CR1: @PROFILE under PROFILEPROPERTY=true
 		recoverPhyStats();
 		final Session session=buyer.session();
 		final Room R=CMLib.map().roomLocation(this);
@@ -1211,6 +1211,22 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 	protected Room findNearestDocks(final Room R)
 	{
 		return R;
+	}
+
+	/**
+	 * CR1: docks this at the port nearest a room, as a sale does (MPGRANT).
+	 * @param R the room
+	 * @return where it docked, or null
+	 */
+	public Room dockNearest(final Room R)
+	{
+		final Room D=(R==null)?null:findNearestDocks(R);
+		if(D!=null)
+		{
+			setHomePortID("");
+			dockHere(D);
+		}
+		return D;
 	}
 
 	@Override

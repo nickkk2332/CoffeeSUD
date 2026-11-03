@@ -2769,6 +2769,23 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
 CR1, CR2, CR3, CR4, CR5, CR6, CR7, CR8, CR9, CR10, CR11, CR12, CR13, CR14,
 CR15, CR16, CR17, CR18, CR19, CR20, CR21
 
+- CR1 done. `core/ProfileOwner`: every character of the profile owns
+  what another of them owns, and what the reserved owner `@PROFILE` owns,
+  in `doesHaveWeakPrivilegesWith`, `doesOwnThisProperty`,
+  `doesOwnThisLand` and `canAttackThisProperty`, so nothing is theft
+  between them and any of them can build there. `@PROFILE` always exists
+  (`isProperlyOwned` of the lots, private items, titles and vessels, and
+  the lot owner check), so a world file can ship
+  `Prop_RoomForSale("@PROFILE/0")`; it is no one character for
+  `getPropertyOwner`. `PROFILEPROPERTY=true` in the ini (or world.ini)
+  records land and vessels bought as `@PROFILE`. From T15: `MPGRANT item
+  who|NOBODY [PROFILE] [NAME=new name]` gives a deed (the lot changes
+  hands, the deed goes to them), a vessel (registered with the character
+  so it saves with them, renamed through `rename` with no prompt, which
+  fills a `[NAME]` marker as a shipyard's stock has, docked near the
+  script's room by `StdBoardable.dockNearest` if it is not in a room) or
+  a private item; NOBODY takes it back.
+
 #### 2l. Factions and organisations (18)
 
 F1, F2, F3, F4, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18,
