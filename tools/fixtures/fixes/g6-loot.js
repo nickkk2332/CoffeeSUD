@@ -27,7 +27,8 @@ try {
 	var g = lootMob("Fixg6goblin", "FILE=randareas/fixg6.xml ID=fixg6_loot ROLLS=2 GOLD=5");
 	CMLib.combat().postDeath(K, g, null);
 	var body = corpseOf("Fixg6goblin"), inBody = inside(body);
-	var gems = inBody.filter(function (n) { return n == "a fixg6 gem for 4 from 4"; }).length, coins = 0;
+	// the ini's ITEMLOOTPOLICY=20% RUIN may ruin a gem on the way into the corpse: it still came
+	var gems = inBody.filter(function (n) { return n == "a fixg6 gem for 4 from 4" || n == "a ruined fixg6 gem for 4 from 4"; }).length, coins = 0;
 	for (var i = 0; i < R.numItems(); i++) if (R.getItem(i).container() == body && R.getItem(i) instanceof CM.Items.interfaces.Coins) coins++;
 	check("death", body != null && gems == 2 && coins >= 1, "corpse " + body + " holds " + inBody.join(", "));
 	// CHANCE=0: nothing
