@@ -1047,7 +1047,7 @@ public class CommonSkill extends StdAbility
 			for(final java.lang.reflect.Field F : C.getDeclaredFields())
 			{
 				final int mods = F.getModifiers();
-				if(java.lang.reflect.Modifier.isStatic(mods) || java.lang.reflect.Modifier.isFinal(mods) || F.isSynthetic())
+				if(java.lang.reflect.Modifier.isStatic(mods) || java.lang.reflect.Modifier.isFinal(mods) || java.lang.reflect.Modifier.isTransient(mods) || F.isSynthetic())
 					continue;
 				try
 				{

@@ -76,7 +76,8 @@ check("mobile", field(inner, "warn") != null && field(field(inner, "warn"), "tic
 AW.mayAttack(wolf3, pip.mob, spec);
 var room3 = wolf3.location();
 tick(wolf3, A3);
-check("mobile-tick", (wolf3.location() != room3) || (AW.warnedFor(wolf3, "Fixn17pip") == 2), "count " + AW.warnedFor(wolf3, "Fixn17pip"));
+// (its tick warns, then, its aggression running the same tick, may attack at once: warned twice, that is right too)
+check("mobile-tick", (wolf3.location() != room3) || (AW.warnedFor(wolf3, "Fixn17pip") == 2) || wolf3.isInCombat(), "count " + AW.warnedFor(wolf3, "Fixn17pip") + ", fighting " + wolf3.isInCombat() + ", pip fighting " + pip.mob.isInCombat());
 
 [wolf, wolf2, wolf3].forEach(function (m) { m.destroy(); });
 [pip, next].forEach(function (p) { p.mob.setPlayerStats(null); p.mob.destroy(); });

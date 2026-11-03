@@ -269,10 +269,10 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		return L("@x1 made from @x2. ", name, resourceName);
 	}
 
-	/** CR5: the crafter of this use, for ROOMMASK and TOOL; the recipes asked for; a refusal to tell */
-	protected MOB                       keysCrafter = null;
-	protected List<List<String>>        keysMatched = null;
-	protected String                    keysRefusal = null;
+	/** CR5: the crafter of this use, for ROOMMASK and TOOL; the recipes asked for; a refusal to tell (transient: not kept with a craft under way) */
+	protected transient MOB                       keysCrafter = null;
+	protected transient List<List<String>>        keysMatched = null;
+	protected transient String                    keysRefusal = null;
 
 	protected List<List<String>> addRecipes(final MOB mob, final List<List<String>> recipes)
 	{
