@@ -15967,6 +15967,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "FLOODLEVEL": // W19: FLOODLEVEL(room|HERE): its Floodable's water, 0 (dry) to 3 (full)
+		{
+			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));
+			Behavior B=(R==null)?null:R.fetchBehavior("Floodable");
+			if((B==null)&&(R!=null)&&(R.getArea()!=null))
+				B=R.getArea().fetchBehavior("Floodable");
+			return (B==null)?"0":B.getStat("FLOODLEVEL");
+		}
 		case "ISTIDE": // W8: ISTIDE(room HIGH|LOW|NONE|SPRING|NEAP[:span]): the tide there now is that one
 		{
 			final Room R=doorRoom(ctx,CMParms.getCleanBit(parms,0));

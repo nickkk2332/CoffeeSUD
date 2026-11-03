@@ -2457,6 +2457,15 @@ W18, W19, W20, W21, W22, W23, W28, W29
   keeps the state and puts it back. Its WHEN= is its own: N1's
   BehaviorWhen leaves it on (`BehaviorWhen.OWNWHEN`), where it read the
   first WHEN= as the behaviour's on and off.
+- W19 done. `Floodable`, a preset of RoomStates: levels 0 dry, 1
+  ankle-deep, 2 waist-deep (a swimming room, Chant_Flood; the loose things
+  weighing up to `FLOAT=` float off through `FLOWTO=`, or away), 3 full
+  (its air water: one drowns as W18's breath runs out). While its
+  condition holds (`RISE=` a mask on someone there, `ONVAR=`, `TIDE=`; any
+  of them) the water rises a level each `RATE=` ticks, else it drains a
+  level each `DRAIN=` ticks; rising water puts out lights. `TITLE1=` to
+  `TITLE3=`, `DESC1=` to `DESC3=` and `MSG1=` to `MSG3=` per level.
+  `FLOODLEVEL(room)` (212).
 
 #### 2j. Generators and random content (16)
 

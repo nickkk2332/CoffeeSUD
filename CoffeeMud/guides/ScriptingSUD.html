@@ -688,6 +688,9 @@ the variable its <code>TO=collapsed ONVAR="mine collapse==1"</code> waits for, a
 <p>Tides: the causeway to St. Brine's Isle has <code>Prop_TidalExit OPEN=LOW SPAN=1</code>, so at high tide the player
 can be cut off on the island; the shore's <code>TidalRoom DESC="The sea fills the cove." WASH=2</code> floods it.
 <code>&lt;HIGHTIDE&gt;</code> and <code>&lt;LOWTIDE&gt;</code> in VARIES, <code>if istide(HERE LOW)</code> in a script.</p>
+<p>Rising water: the old city's storm drain has <code>Floodable RISE="-WEATHER +RAIN +THUNDERSTORM" RATE=15 FLOWTO=east</code>,
+a level each 15 ticks of rain; the pump room's wheel sets the variable of <code>ONVAR="pump sluice==open"</code>.
+<code>FLOODLEVEL(HERE)</code> in VARIES (<code>+IF</code>) and scripts tells how deep it is.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
