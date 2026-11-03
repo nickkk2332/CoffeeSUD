@@ -2911,6 +2911,17 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   materials times proficiency, in the item's material. It is done at
   once, with no time taken. The variant is the resource's subtype until
   CR15 makes variants data.
+- CR2 done. `world/materials.txt` (`core/WorldMaterials`, read by
+  `RawMaterial.CODES` right after the built-ins and before the ini's
+  ADDMATERIAL_): NAME, FAMILY, VALUE, FREQUENCY, HARDNESS, BUOYANCY,
+  CATEGORY, SMELL, EFFECTS, DESCRIPTION and CODE, between tabs. A row
+  named as a built-in changes it; the rest are placed at their CODE or
+  sorted by name, a gap before a CODE filled with an unused resource.
+  Item XML writes a world material's name (MTRALN) next to MTRAL, and
+  loading prefers the name, so a renumbering repairs itself; built-ins
+  never move, so their items are written as before. The description
+  goes on the raw resource. Codes have room for 256 resources (210 are
+  built in), and the file is read at start-up only.
 
 #### 2l. Factions and organisations (18)
 

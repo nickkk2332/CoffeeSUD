@@ -950,6 +950,9 @@ public class RawCMaterial extends StdLibrary implements MaterialLibrary
 		adjustResourceName(I);
 		I.setBaseValue(RawMaterial.CODES.VALUE(type));
 		addEffectsToResource(I);
+		final String desc=RawMaterial.CODES.DESCRIPTION(type); // CR2: world/materials.txt
+		if(desc.length()>0)
+			I.setDescription(desc);
 		I.recoverPhyStats();
 		return I;
 	}

@@ -604,6 +604,8 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 			+xmlLib.convertXMLtoTag("VALUE",item.baseGoldValue())
 			//+xml.convertXMLtoTag("USES",item.usesRemaining()) // handled 'from top' & in db
 			+xmlLib.convertXMLtoTag("MTRAL",item.material())
+			+(((item.material()&RawMaterial.RESOURCE_MASK)>=RawMaterial.CODES.BUILTINS()) // CR2: a world material, by name too
+				?xmlLib.convertXMLtoTag("MTRALN",RawMaterial.CODES.NAME(item.material())):"")
 			+xmlLib.convertXMLtoTag("WORNL",item.rawLogicalAnd())
 			+xmlLib.convertXMLtoTag("WORNB",item.rawProperLocationBitmap()));
 			if(!(E instanceof Software))
@@ -4311,7 +4313,15 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 			final Item item=(Item)E;
 			item.setSecretIdentity(xml.getValFromPieces(buf,"IDENT"));
 			item.setBaseValue(xml.getIntFromPieces(buf,"VALUE"));
-			item.setMaterial(xml.getIntFromPieces(buf,"MTRAL"));
+			int mtral=xml.getIntFromPieces(buf,"MTRAL");
+			final String mtralName=xml.getValFromPieces(buf,"MTRALN"); // CR2: a world material's name, in case the numbers moved
+			if((mtralName!=null)&&(mtralName.length()>0))
+			{
+				final int byName=RawMaterial.CODES.FIND_IgnoreCase(mtralName);
+				if(byName>=0)
+					mtral=byName;
+			}
+			item.setMaterial(mtral);
 			//item.setUsesRemaining(CMath.s_int(xml.returnXMLValue(buf,"USES"))); // handled 'from top' & in db
 			if(item instanceof Container)
 			{

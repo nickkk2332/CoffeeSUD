@@ -1,9 +1,11 @@
 package com.planet_ink.coffee_mud.Items.interfaces;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -898,6 +900,7 @@ public interface RawMaterial extends Item
 					final int material = d.code & MATERIAL_MASK;
 					add(material, d.desc, d.smell, d.value, d.frequency, d.hardness, d.buoyancy, d.flag == ResourceFlag.FISH, d.flag == ResourceFlag.BERRY, d.flag == ResourceFlag.WOODY, d.effect);
 				}
+				worldMaterials(); // CR2: world/materials.txt, before the ini's
 				for (int i = 0; i < addExtra.length + repExtra.length; i++)
 				{
 					final String[] array = (i >= addExtra.length) ? repExtra[i - addExtra.length] : addExtra[i];
@@ -940,6 +943,11 @@ public interface RawMaterial extends Item
 					if (material == null)
 					{
 						Log.errOut("RawMaterial", "Unknown material code in coffeemud.ini: " + matStr);
+						continue;
+					}
+					if (type.equalsIgnoreCase("ADD") && descLookup.containsKey(stat))
+					{
+						Log.sysOut("RawMaterial", "ADDMATERIAL_" + stat + " is in world/materials.txt, which is used instead."); // CR2
 						continue;
 					}
 					if (type.equalsIgnoreCase("ADD"))
@@ -1016,6 +1024,108 @@ public interface RawMaterial extends Item
 		private Ability[][]	effectAs		= new Ability[0][];
 
 		private final Map<String,Integer> descLookup		= new TreeMap<String,Integer>(String.CASE_INSENSITIVE_ORDER);
+
+		private final Map<Integer,String> descriptions    = new HashMap<Integer,String>(); // CR2: by code
+
+		/**
+		 * CR2: the world's own materials, from world/materials.txt (core/WorldMaterials).  A row
+		 * named as a built-in changes that one.  The rest come after the built-ins: each at its
+		 * CODE when it has one (a gap before it is filled with an unused resource), the others
+		 * sorted by name, so adding one moves only those after it, and items, which keep a world
+		 * material's name with its number, find it again.
+		 */
+		private void worldMaterials()
+		{
+			final List<WorldMaterials.Row> rows = WorldMaterials.read();
+			if (rows.size() == 0)
+				return;
+			final int builtIns = allCodes.length;
+			final TreeMap<Integer, WorldMaterials.Row> at = new TreeMap<Integer, WorldMaterials.Row>();
+			final List<WorldMaterials.Row> loose = new ArrayList<WorldMaterials.Row>();
+			final Set<String> seen = new TreeSet<String>();
+			for (final WorldMaterials.Row r : rows)
+			{
+				final Material family = Material.findIgnoreCase(r.family);
+				if (family == null)
+				{
+					Log.errOut("RawMaterial", "world/materials.txt line " + r.line + ": no family " + r.family);
+					continue;
+				}
+				if (!seen.add(r.name))
+				{
+					Log.errOut("RawMaterial", "world/materials.txt line " + r.line + ": " + r.name + " twice");
+					continue;
+				}
+				final DefResource d = (DefResource) CMath.s_valueOf(DefResource.class, r.name.replace(' ', '_'));
+				if (d != null)
+				{
+					replace(d.code, family.mask(), d.desc, r.smell, r.value, r.frequency, r.hardness, r.buoyancy,
+							r.category.equals("FISH"), r.category.equals("BERRY"), r.category.equals("WOODY"), r.effects);
+					final Integer code = descLookup.get(d.desc);
+					if ((r.description.length() > 0) && (code != null))
+						descriptions.put(code, r.description);
+					continue;
+				}
+				if ((r.code >= builtIns) && (r.code <= RESOURCE_MASK) && (!at.containsKey(Integer.valueOf(r.code))))
+					at.put(Integer.valueOf(r.code), r);
+				else
+				{
+					if (r.code >= 0)
+						Log.errOut("RawMaterial", "world/materials.txt line " + r.line + ": CODE " + r.code + " is taken or out of " + builtIns + "-" + RESOURCE_MASK);
+					loose.add(r);
+				}
+			}
+			Collections.sort(loose, new Comparator<WorldMaterials.Row>()
+			{
+				@Override
+				public int compare(final WorldMaterials.Row o1, final WorldMaterials.Row o2)
+				{
+					return o1.name.compareTo(o2.name);
+				}
+			});
+			final Iterator<WorldMaterials.Row> l = loose.iterator();
+			while ((at.size() > 0) || l.hasNext())
+			{
+				final int index = allCodes.length;
+				if (index > RESOURCE_MASK)
+				{
+					Log.errOut("RawMaterial", "world/materials.txt: there is no room for more than " + (RESOURCE_MASK + 1) + " resources");
+					break;
+				}
+				WorldMaterials.Row r = at.remove(Integer.valueOf(index));
+				if ((r == null) && l.hasNext())
+					r = l.next();
+				if (r == null)
+				{
+					add(MATERIAL_UNKNOWN, "UNUSED " + index, "", 0, 0, 1, 1000, false, false, false, "");
+					continue;
+				}
+				add(Material.findIgnoreCase(r.family).mask(), r.name, r.smell, r.value, r.frequency, r.hardness, r.buoyancy,
+					r.category.equals("FISH"), r.category.equals("BERRY"), r.category.equals("WOODY"), r.effects);
+				if (r.description.length() > 0)
+					descriptions.put(Integer.valueOf(allCodes[allCodes.length - 1]), r.description);
+			}
+		}
+
+		/**
+		 * CR2: a resource's description, from world/materials.txt
+		 * @param code the resource code
+		 * @return its description, or ""
+		 */
+		public static String DESCRIPTION(final int code)
+		{
+			final String s = c().descriptions.get(Integer.valueOf(code));
+			return (s == null) ? "" : s;
+		}
+
+		/**
+		 * CR2: how many resources are built in; those after them are the world's
+		 * @return the number of built-in resources
+		 */
+		public static int BUILTINS()
+		{
+			return DefResource.values().length;
+		}
 
 		private PairList<Integer, Double>[]	buckets	= null;
 
@@ -1648,6 +1758,11 @@ public interface RawMaterial extends Item
 		 */
 		public synchronized void add(final int material, final String name, final String smell, final int value, final int frequ, final int hardness, final int buoyancy, final boolean fish, final boolean berry, final boolean woody, final String abilityID)
 		{
+			if (allCodes.length > RESOURCE_MASK) // CR2: a code has room for 256
+			{
+				Log.errOut("RawMaterial", "No room for the resource " + name + ": there can be " + (RESOURCE_MASK + 1) + " at most.");
+				return;
+			}
 			final int newResourceCode = allCodes.length | material;
 			allCodes = Arrays.copyOf(allCodes, allCodes.length + 1);
 			allCodes[allCodes.length - 1] = newResourceCode;
