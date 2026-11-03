@@ -838,6 +838,11 @@ GENCRAFTSKILL).</p>
 HINT="It needs something warming..."</code> is found when a brewer tries <code>brew experiment honey apple
 mead</code>; trying honey and apple alone tells the hint, and each miss uses up one of the things tried
 (AHELP RECIPEKEYS).</p>
+<p>Quality tiers: a world's <code>resources/skills/craftquality.txt</code> lists tiers such as
+<code>masterwork&#9;@x2/25+@x1/4+@x3*3&#9;1.5&#9;1.1&#9;1.1&#9;1.2&#9;3</code> (tabs between): when a
+player's craft succeeds, the first tier that rolls under its chance puts its word in the item's name
+and changes its value, armour, damage, uses, level and effects; a good workstation's QUALITY= raises
+the chance through @x3 (AHELP CRAFTQUALITY).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

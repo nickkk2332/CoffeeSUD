@@ -33,8 +33,8 @@ import com.planet_ink.coffee_mud.core.collections.XVector;
  * crafter is told when ROOMMASK or TOOL fails), XP= (experience on each
  * success), TATTOO= (a tattoo given on the first success) and STATION= (CR3:
  * a workstation of that tag in the room) and HIDDEN=1 (CR4: only for those who
- * know it, KnownRecipes), EXPERIMENT= and HINT= (CR18: Experiments).  None of
- * them becomes an item stat.
+ * know it, KnownRecipes), EXPERIMENT= and HINT= (CR18: Experiments) and
+ * NOQUALITY=1 (CR17: no quality tier).  None of them becomes an item stat.
  */
 public final class RecipeKeys
 {
@@ -43,7 +43,7 @@ public final class RecipeKeys
 	}
 
 	/** the keys, none of which is an item stat */
-	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION", "HIDDEN", "EXPERIMENT", "HINT" };
+	public static final String[]	KEYS	= { "MASK", "ROOMMASK", "TOOL", "FAILMSG", "XP", "TATTOO", "STATION", "HIDDEN", "EXPERIMENT", "HINT", "NOQUALITY" };
 
 	private static final Pattern	KV		= Pattern.compile("^\\s*[A-Za-z_]+\\s*=");
 
@@ -248,6 +248,21 @@ public final class RecipeKeys
 				return row;
 		}
 		return (rows.size() == 1) ? rows.get(0) : null;
+	}
+
+	/**
+	 * CR17: whether what was made came from a recipe with NOQUALITY=1.
+	 * @param rows the recipes the craft was asked for
+	 * @param built what was made
+	 * @return true if it rolls no quality tier
+	 */
+	public static boolean noQuality(final List<List<String>> rows, final Item built)
+	{
+		final List<String> row = recipeOf(rows, built);
+		if(row == null)
+			return false;
+		final String v = of(row).get("NOQUALITY");
+		return (v != null) && (v.trim().equals("1") || v.trim().equalsIgnoreCase("true"));
 	}
 
 	/**

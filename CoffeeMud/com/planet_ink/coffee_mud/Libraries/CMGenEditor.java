@@ -9848,6 +9848,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Station (a workstation tag, as forge)"),"STATION",true); // CR3
 			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can learn (LEARN from an item)"),"CANLEARN"); // CR21
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Learn mask (items it learns from)"),"LEARNMASK",true); // CR21
+			promptStatBool(mob,me,null,++showNumber,showFlag,L("Quality tiers (craftquality.txt)"),"QUALITY"); // CR17
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("MSP file"),"SOUND",false);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 

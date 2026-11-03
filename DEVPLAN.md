@@ -2878,6 +2878,17 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   tries in memory, so a restart (or a restore) gives them back. Rather
   than read each skill's own components column, the recipe names what
   reveals it.
+- CR17 done. Quality tiers for what players craft (`core/CraftQuality`),
+  from `resources/skills/craftquality.txt` (a world's own copy first),
+  read again when the file changes. A tier line is NAME, CHANCE (a
+  formula over the level margin, proficiency and the station's QUALITY),
+  multipliers for value, armour, damage and uses, a level bonus and
+  effects. `CraftingSkill.dropAWinner` rolls one for a player's success
+  only, before ITEMGENERATED: the tier's word goes in the item's name
+  (not its brand, so the maker's mark is unchanged). The shipped file
+  has its tiers in comments, so nothing changes until a world gives
+  some; a data skill's QUALITY (on by default) or a recipe's
+  NOQUALITY=1 turns it off.
 
 #### 2l. Factions and organisations (18)
 

@@ -1,0 +1,14 @@
+# CoffeeSUD (CR17): quality tiers for what players craft.  A world turns them on with its own
+# copy, world/resources/skills/craftquality.txt, or by taking the # off the lines below.
+# One tier a line, the fields between tabs:
+#   NAME	CHANCE	VALUE	ARMOR	DAMAGE	USES	LEVEL	EFFECTS
+# NAME is the word put in the item's name.  CHANCE is a percent, as a formula: @x1 is the
+# crafter's level less the item's, @x2 their proficiency in the skill, @x3 the QUALITY of
+# the best workstation helping them (Prop_Workstation).  VALUE, ARMOR, DAMAGE and USES
+# multiply the item's value, armour, damage and uses; LEVEL is added to its level; EFFECTS
+# are put on it, as Prop_HaveResister(fire 10);Prop_WearAdjuster(dex+1).  The tiers are
+# tried from the first; the first that rolls under its chance is the item's, and if none
+# does, it is plain.  A data skill with QUALITY off, or a recipe with NOQUALITY=1, rolls none.
+#masterwork	@x2/25+@x1/4+@x3*3	1.5	1.1	1.1	1.2	3
+#fine	@x2/6+@x1+@x3*5	1.1	1.05	1.05	1.1	1
+#crude	30-@x2/4-@x1	0.8	0.9	0.9	0.9	0

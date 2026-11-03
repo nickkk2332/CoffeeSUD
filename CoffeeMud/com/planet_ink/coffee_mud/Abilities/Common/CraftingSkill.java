@@ -325,6 +325,15 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		return "";
 	}
 
+	/**
+	 * CR17: whether what this skill makes rolls a quality tier (a GenCraftSkill's QUALITY).
+	 * @return true unless turned off
+	 */
+	protected boolean qualityOn()
+	{
+		return true;
+	}
+
 	@Override
 	protected void commonFaiL(final MOB mob, final List<String> commands, final String commonTelStr, final String... vars)
 	{
@@ -495,6 +504,9 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 			commonTelL(mob,"You have built NOTHING?!!");
 		else
 		{
+			if((mob.playerStats()!=null)&&qualityOn()&&((this.buildingI==null)||(this.buildingI==buildingI))
+			&&(!RecipeKeys.noQuality(keysMatched,buildingI))) // CR17: a quality tier, rolled
+				CraftQuality.apply(buildingI,CraftQuality.roll(mob,this,buildingI));
 			final CMMsg msg=CMClass.getMsg(mob,buildingI,this,CMMsg.TYP_ITEMGENERATED|CMMsg.MASK_ALWAYS,null);
 			setMsgXPValue(mob,msg);
 			if(mob.location().okMessage(mob,msg))

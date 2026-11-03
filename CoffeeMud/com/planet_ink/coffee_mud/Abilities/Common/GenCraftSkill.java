@@ -81,7 +81,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	private static final int	V_STAT			= 13;	// S CR3
 	private static final int	V_CNLN			= 14;	// B CR21
 	private static final int	V_LRNM			= 15;	// S CR21
-	private static final int	NUM_VS			= 16;	// S
+	private static final int	V_QUAL			= 16;	// B CR17
+	private static final int	NUM_VS			= 17;	// S
 
 	//
 
@@ -154,6 +155,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 		O[V_STAT]="";
 		O[V_CNLN]=Boolean.valueOf(false);
 		O[V_LRNM]="";
+		O[V_QUAL]=Boolean.valueOf(true);
 		return O;
 	}
 
@@ -259,6 +261,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 										 "STATION",//15S CR3
 										 "CANLEARN",//16B CR21
 										 "LEARNMASK",//17S CR21
+										 "QUALITY",//18B CR17
 										};
 
 	@Override
@@ -330,6 +333,8 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			return Boolean.toString(((Boolean) V(ID, V_CNLN)).booleanValue());
 		case 17:
 			return (String) V(ID, V_LRNM);
+		case 18:
+			return Boolean.toString(((Boolean) V(ID, V_QUAL)).booleanValue());
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenCraftSkill";
@@ -420,6 +425,9 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 			break;
 		case 17:
 			SV(ID, V_LRNM, (val==null)?"":val.trim());
+			break;
+		case 18:
+			SV(ID, V_QUAL, Boolean.valueOf(CMath.s_bool(val)));
 			break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenCraftSkill"))
@@ -641,6 +649,13 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 	public boolean invoke(final MOB mob, final List<String> commands, final Physical givenTarget, final boolean auto, final int asLevel)
 	{
 		return autoGenInvoke(mob,commands,givenTarget,auto,asLevel,0,false,new ArrayList<CraftedItem>(0));
+	}
+
+	@Override
+	protected boolean qualityOn()
+	{
+		final Object o=V(ID,V_QUAL); // CR17: QUALITY
+		return (!(o instanceof Boolean))||((Boolean)o).booleanValue();
 	}
 
 	@Override
