@@ -15,6 +15,7 @@ VS.initialize(null, "MEMORY"); V.setSession(VS); V.setPlayerStats(CMClass.getCom
 var seen = 0;
 function said() { var all = s(field(VS, "bout")); var o = all.substring(seen); seen = all.length; return o.replace(/\s+/g, " "); }
 function reached(t) { return count(t, "FIXP4HIT") + count(t, "and fails"); } // a cast that fizzles still reached its target
+function targeted(t) { return count(t, "uses an ability against"); } // each target's own cast, even one it resists (a save always keeps 5%)
 var made = [], mobs = [];
 function npc(name) { var m = newMob("GenMob", R); m.setName(name); m.basePhyStats().setLevel(1); m.recoverPhyStats(); mobs.push(m); return m; }
 var F = npc("Fixp4ally"); F.setFollowing(V);
@@ -37,7 +38,7 @@ try {
 	check("field", s(A.getStat("TARGETMODE")) == "ALLENEMIES" && has(A.getStat("ALLXML"), "<TARGETMODE>ALLENEMIES</TARGETMODE>"), s(A.getStat("TARGETMODE")));
 	var out = "", cost = spent(function () { said(); A.invoke(V, list(), null, false, 0); out = said(); });
 	peace();
-	check("all enemies", reached(out) == 2 && (has(out, "FIXP4HIT Fixp4enemya") || has(out, "FIXP4HIT Fixp4enemyb")) && !has(out, "FIXP4HIT Fixp4ally") && !has(out, "FIXP4HIT Fixp4caster")
+	check("all enemies", targeted(out) == 2 && reached(out) >= 1 && (has(out, "FIXP4HIT Fixp4enemya") || has(out, "FIXP4HIT Fixp4enemyb")) && !has(out, "FIXP4HIT Fixp4ally") && !has(out, "FIXP4HIT Fixp4caster")
 		&& count(out, "clap(s) like thunder!") == 1, out.substring(0, 300)); // the session keeps the message raw
 	// the cost of one cast
 	A.setStat("TARGETMODE", "SINGLE");
@@ -48,7 +49,7 @@ try {
 	A.setStat("TARGETMODE", "ALLENEMIES"); A.setStat("MAXTARGETS", "@x2-1");
 	said(); A.invoke(V, list(), null, false, 0); var o2 = said();
 	peace();
-	check("maxtargets", reached(o2) == 1, o2.substring(0, 300));
+	check("maxtargets", targeted(o2) == 1, o2.substring(0, 300));
 	// ALLALLIES: the caster's group there
 	var B = gen("FixP4Cadence", AB.QUALITY_BENEFICIAL_OTHERS, "ALLALLIES", {});
 	said(); B.invoke(V, list(), null, false, 0); var o3 = said();

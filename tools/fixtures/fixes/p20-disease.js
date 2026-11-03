@@ -46,9 +46,14 @@ try {
 	var hp0 = miner.curState().getHitPoints();
 	for (var i = 0; i < 2; i++) E.tick(miner, Tickable.TICKID_MOB);
 	check("delay", miner.curState().getHitPoints() < hp0 && gvar("P20TICK") == "yes", hp0 + " -> " + miner.curState().getHitPoints() + " " + gvar("P20TICK"));
-	// PROXIMITY: each delay someone in the room may catch it (here, only the carter can)
+	// PROXIMITY: each delay someone in the room may catch it (here, only the carter can).  A save always
+	// keeps 5% (MUDFight.checkSavingThrows), and one made gives immunity: taken away, so the dice cannot end it
 	dwarf.destroy();
-	for (var j = 0; j < 40 && other.fetchEffect("FixAshLung") == null; j++) E.tick(miner, Tickable.TICKID_MOB);
+	for (var j = 0; j < 40 && other.fetchEffect("FixAshLung") == null; j++) {
+		var TI = other.fetchEffect("TemporaryImmunity");
+		if (TI != null) other.delEffect(TI);
+		E.tick(miner, Tickable.TICKID_MOB);
+	}
 	check("proximity", other.fetchEffect("FixAshLung") != null, "no spread in " + j + " ticks");
 	// a cure: DIFFICULTY 2 is beaten by a healer over level 20
 	var healer = npc("Fixp20 priest", "Human"); healer.basePhyStats().setLevel(30); healer.recoverPhyStats();
