@@ -70,6 +70,7 @@ public final class JSScope
 			final JSCm cm = JSCm.forScope(scope, (host instanceof com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent)
 				? (com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent)host : null);
 			ScriptableObject.putProperty(scope, "cm", Context.javaToJS(cm, scope));
+			ScriptableObject.putProperty(scope, "gen", Context.javaToJS(new JSGen(cm), scope)); // G11
 			ScriptableObject.putProperty(scope, "include", new Include(scope));
 			if(!ScriptableObject.hasProperty(scope, "debug"))
 				ScriptableObject.putProperty(scope, "debug", new Debug((host instanceof com.planet_ink.coffee_mud.core.interfaces.Environmental)

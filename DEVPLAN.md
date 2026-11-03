@@ -2575,6 +2575,13 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   the script off, if a player), AREA_LEVEL, AREA_THEME, HOUR, SEASON,
   WEATHER and GAME_DAY, unless given. `FROMGENFILE ... FRESH` rolls anew
   rather than reusing the kept roll.
+- G11 done. JavaScript's `gen` object, in every scope (JRUN, JCONSOLE,
+  a MOBPROG `<SCRIPT>`, JS_PROG...; `core/JSGen` over G5's GenCalls):
+  `gen.item(file, id, vars)` and `gen.mob(...)` (arrays of live objects,
+  placed nowhere), `gen.string(...)`, `gen.room(file, id, dir)` and
+  `gen.area(file, id, dir, seed, vars)` (linked off the host's room),
+  `gen.layout(name, size, seed)` (the nodes: index, x, y, type, exits, as
+  GENERATE would lay them out with that seed). vars is an object.
 
 #### 2k. Crafting, gathering and housing (21)
 

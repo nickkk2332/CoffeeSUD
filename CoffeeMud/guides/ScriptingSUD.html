@@ -734,6 +734,9 @@ harder deeper in; <code>order="reverse-depth"</code> on the AREA builds the deep
 level_range=$&lt;$n.level&gt; INTO $i</code>, a new roll each time; a tavern drunk says
 <code>$%GENSTRING(randareas/rumors.xml rumor)%</code>; <code>FROMGENFILE ... FRESH</code> rolls anew rather than reusing
 the first roll.</p>
+<p>Generation from JavaScript: a cartographer's <code>JS_PROG</code> calls <code>gen.layout('TREE', 30, seed)</code>
+to draw a treasure map that matches the dungeon later generated with that seed; <code>gen.item(file, id, {level_range:
+5})</code> gives live items for the script to place.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

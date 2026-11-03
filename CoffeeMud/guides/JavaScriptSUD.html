@@ -65,6 +65,13 @@ the save, finding things and variables.</li>
 <li><code>require('name')</code>: a library from <code>world/js/lib/</code>,
 or else <code>resources/js/lib/</code>.</li>
 <li><code>include('path')</code>: runs a file in this scope.</li>
+<li><code>gen</code>: generation from a template file, a fresh roll each call:
+<code>gen.item(file, id, vars)</code> and <code>gen.mob(...)</code> (arrays of live objects, placed
+nowhere), <code>gen.string(...)</code>, <code>gen.room(file, id, dir)</code> and
+<code>gen.area(file, id, dir, seed, vars)</code> (linked off the host's room in a free direction),
+<code>gen.layout(name, size, seed)</code> (the nodes, each with <code>index</code>, <code>x</code>,
+<code>y</code>, <code>type</code> and <code>exits</code>, as GENERATE would lay them out with that seed).
+<code>vars</code> is an object: <code>{level_range: 5}</code>.</li>
 <li><code>debug(x)</code>: writes x to the developer log (DEVLOG) in builder
 and developer games. In a normal game it does nothing.</li>
 <li><code>importPackage(Packages.com.planet_ink.coffee_mud.core)</code> and
