@@ -3285,6 +3285,15 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   list) and gives the trains and practices back. Prop_Respec (WHAT, COST,
   ONCE by tattoo, MASK) with RESPEC/RETRAIN (RespecCmd), and MPRESPEC
   (cmd //151).
+- P24 done. `core/SkillTree`: a class's mappings (getClassAbles), each
+  under the first of its REQUIRES in the class, each line learned (with
+  proficiency), learnable (requirements()), locked (qualifying level, then
+  getUnmetPreRequisites in formatPreRequisites' words, then the applicable
+  mask) or hidden (SECRET, or MASKED with the mask unmet), and `chain` for
+  one skill. SKILLTREE/STREE (SkillTreeCmd). Hints are in one file,
+  resources/skills/skillhints.ini (ID= or CLASS.ID=, HINT= and SHOW=HINT),
+  in place of fields in allqualifylist and class records, which their
+  editors write back without unknown fields.
 
 #### 2p. Presentation (18)
 
