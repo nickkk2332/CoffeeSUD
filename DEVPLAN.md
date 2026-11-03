@@ -2813,6 +2813,20 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   with followers, to the leader's home after `HOMERECALL` turns (3 when
   blank, 0 for none) through the `GoingHome` effect, which a fight in the
   party stops; not in combat, and only to a room that is still a home.
+- CR5 done. `core/RecipeKeys`, for every crafting skill (CraftingSkill):
+  the keys come from GenCraftSkill's KEY_VALUE_PARMS column or any
+  column that starts with a key (a stock skill's extra last column).
+  `addRecipes` drops the rows whose MASK= the crafter fails (so LIST and
+  making leave them out); `matchingRecipes` (the old body is now
+  `matchingRecipesAll`) leaves out those whose ROOMMASK= (a mask on the
+  crafter, as -LOCATION +ROOMID(x)) or TOOL= (held, carried or in the
+  room) fails, and the skill's "You don't know how to" is replaced by
+  FAILMSG= (or a plain refusal); `dropAWinner` gives XP= and, the first
+  time, TATTOO=, for the recipe the item was made from. GenCraftSkill
+  no longer sets them as item stats. Only player crafters are held to
+  them, not the game's own crafting (loot, stock, a factory worker). A
+  filtered LIST (LIST bench) also leaves out a ROOMMASK or TOOL recipe
+  that fails there.
 
 #### 2l. Factions and organisations (18)
 

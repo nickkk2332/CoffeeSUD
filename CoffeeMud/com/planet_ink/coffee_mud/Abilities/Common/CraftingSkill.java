@@ -269,11 +269,62 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 		return L("@x1 made from @x2. ", name, resourceName);
 	}
 
+	/** CR5: the crafter of this use, for ROOMMASK and TOOL; the recipes asked for; a refusal to tell */
+	protected MOB                       keysCrafter = null;
+	protected List<List<String>>        keysMatched = null;
+	protected String                    keysRefusal = null;
+
 	protected List<List<String>> addRecipes(final MOB mob, final List<List<String>> recipes)
 	{
 		if(mob==null)
 			return recipes;
-		return CMLib.utensils().addExtRecipes(mob, ID(), recipes);
+		keysMatched=null;
+		keysRefusal=null;
+		if(mob.playerStats()==null) // CR5: the keys are for players' crafting, not the game's own (loot, stock, a factory worker)
+		{
+			keysCrafter=null;
+			return CMLib.utensils().addExtRecipes(mob, ID(), recipes);
+		}
+		keysCrafter=mob;
+		return RecipeKeys.visible(mob, CMLib.utensils().addExtRecipes(mob, ID(), recipes)); // CR5: MASK= keeps a recipe from those who fail it
+	}
+
+	/**
+	 * CR5: the recipes by that name, less those the crafter may not make
+	 * here and now (ROOMMASK=, TOOL=); the first refusal is told in place of
+	 * "You don't know how to".
+	 */
+	public List<List<String>> matchingRecipes(final List<List<String>> recipes, final String recipeName, final boolean beLoose)
+	{
+		final List<List<String>> matches=matchingRecipesAll(recipes,recipeName,beLoose);
+		if(keysCrafter==null)
+			return matches;
+		final List<List<String>> kept=new Vector<List<String>>(matches.size());
+		for(final List<String> V : matches)
+		{
+			final String why=RecipeKeys.refusal(keysCrafter,V);
+			if(why==null)
+				kept.add(V);
+			else
+			if(keysRefusal==null)
+				keysRefusal=why;
+		}
+		if(kept.size()>0)
+			keysMatched=kept;
+		return kept;
+	}
+
+	@Override
+	protected void commonFaiL(final MOB mob, final List<String> commands, final String commonTelStr, final String... vars)
+	{
+		if((keysRefusal!=null)&&(commonTelStr!=null)&&commonTelStr.startsWith("You don't know how to")) // CR5: FAILMSG=
+		{
+			final String why=keysRefusal;
+			keysRefusal=null;
+			super.commonFaiL(mob,commands,why);
+			return;
+		}
+		super.commonFaiL(mob,commands,commonTelStr,vars);
 	}
 
 	public String replacePercent(final String thisStr, final String withThis)
@@ -449,7 +500,10 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 						CMLib.leveler().postExperience(mob, "ABILITY:"+ID(), null,null,50, false);
 					}
 					else
+					{
+						RecipeKeys.reward(mob,ID(),keysMatched,builtI); // CR5: XP= and TATTOO=
 						return true;
+					}
 				}
 			}
 		}
@@ -1389,7 +1443,7 @@ public class CraftingSkill extends GatheringSkill implements RecipeDriven
 	}
 
 	// don't make protected?! Painting...
-	public List<List<String>> matchingRecipes(final List<List<String>> recipes, String recipeName, final boolean beLoose)
+	public List<List<String>> matchingRecipesAll(final List<List<String>> recipes, String recipeName, final boolean beLoose)
 	{
 		final List<List<String>> matches=new Vector<List<String>>();
 		if(recipeName.length()==0)

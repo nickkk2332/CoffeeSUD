@@ -985,6 +985,7 @@ public class GenCraftSkill extends EnhancedCraftingSkill implements ItemCraftor
 				{
 					final Map<String,String> kvMap=CMParms.parseEQParms(keyValueParmStr);
 					kvMap.remove("RACEREQUIREMENT");
+					RecipeKeys.strip(kvMap); // CR5: MASK, ROOMMASK, TOOL, FAILMSG, XP, TATTOO are no item stats
 					for(final String key : kvMap.keySet())
 						buildingI.setStat(key, kvMap.get(key));
 				}

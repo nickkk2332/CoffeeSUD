@@ -811,6 +811,11 @@ then a roof, a fence and a gate; the first build makes the ridge a lot of theirs
 which makes it the start room of each of them; from then on RECALL, or <code>HOME</code> for the whole party at
 once in a few turns, brings them back to it after a dungeon. <code>HOMEBEACONS=true</code> makes every owned room
 a home (HELP HOME, AHELP PROP_HOMEBEACON).</p>
+<p>A recipe with requirements: the Runeblade row of a data smithing skill ends with
+<code>MASK="-TATTOO +RUNE_TRAINED" ROOMMASK="-LOCATION +ROOMID(Deepforge#3)" TOOL="rune chisel" XP=200
+FAILMSG="Only the Deepforge burns hot enough."</code>: the untrained do not see it, elsewhere it is refused with
+that line, and the first success can give a tattoo (<code>TATTOO=</code>) for a quest to test. A stock skill takes
+the same keys in an extra last column (AHELP RECIPEKEYS).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>
