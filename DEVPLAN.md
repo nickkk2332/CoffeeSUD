@@ -2982,6 +2982,15 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   where the room's resources would not offer it. A crop given
   GROWHOURS does not count the night against it. With a crops.txt the
   early land check waits until the crop is known. No rules: as before.
+- CR8 done. `GenBuildingSkill`, extending BuildingSkill, with NAME,
+  HELP, TRIGSTR, FILENAME, MATLIST, MAINRESOURCE (the word shown),
+  MAINMATERIAL (what `getBasicMaterials` takes), VERB (in place of
+  "building" in its messages), SOUND and CANSIT, stored like the other
+  data skills (ALLXML, read back at boot by its type). `CREATE`,
+  `MODIFY` and `DESTROY BUILDSKILL`, with a CMGenEditor page;
+  `getGenericClassID` and `convertAbilityToGeneric` know building
+  skills. Also fixes MODIFY ABILITY on a building skill, which cast it
+  to ItemCraftor and failed; it now points at MODIFY BUILDSKILL.
 
 #### 2l. Factions and organisations (18)
 

@@ -72,6 +72,9 @@ public class CMAbleParms extends StdLibrary implements AbilityParameters
 		if(A instanceof Trap)
 			return "GenTrap";
 		else
+		if((A.classificationCode()&Ability.ALL_DOMAINS)==Ability.DOMAIN_BUILDINGSKILL) // CR8
+			return "GenBuildingSkill";
+		else
 		if(A instanceof ItemCraftor)
 		{
 			if((((ItemCraftor)A).getRecipeFilename()!=null)
@@ -106,6 +109,20 @@ public class CMAbleParms extends StdLibrary implements AbilityParameters
 		{
 			CR=(Ability)CMClass.getAbility("GenTrap").copyOf();
 			CR.setStat("PERMRESET", ""+((Trap)A).getReset());
+		}
+		else
+		if(((A.classificationCode()&Ability.ALL_DOMAINS)==Ability.DOMAIN_BUILDINGSKILL)&&(A instanceof CraftorAbility)) // CR8
+		{
+			CR=(Ability)CMClass.getAbility("GenBuildingSkill").copyOf();
+			CR.setStat("FILENAME", ((CraftorAbility)A).getRecipeFilename());
+			try
+			{
+				CR.setStat("MATLIST", String.valueOf(A.getClass().getMethod("supportedResourceString").invoke(A))); // a CommonSkill's, by name
+			}
+			catch(final Exception e)
+			{
+			}
+			CR.setStat("TRIGSTR", CMParms.toListString(A.triggerStrings()));
 		}
 		else
 		if(A instanceof ItemCraftor)

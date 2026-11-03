@@ -10089,6 +10089,46 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 	}
 
 	@Override
+	public void modifyGenBuildingSkill(final MOB mob, final Ability me, int showFlag) throws IOException // CR8
+	{
+		if(mob.isMonster())
+			return;
+		boolean ok=false;
+		if((showFlag == -1) && (CMProps.getIntVar(CMProps.Int.EDITORTYPE)>0))
+			showFlag=-999;
+		while((mob.session()!=null)&&(!mob.session().isStopped())&&(!ok))
+		{
+			int showNumber=0;
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Skill name"),"NAME",false);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Skill verb (as building)"),"VERB",false);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Command Words (comma sep)"),"TRIGSTR",false);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Recipe filename"),"FILENAME",false);
+			genRawMaterials(mob, me, ++showNumber, showFlag);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Main resource, as shown"),"MAINRESOURCE",false);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Main resource's material"),"MAINMATERIAL",false);
+			promptStatBool(mob,me,null,++showNumber,showFlag,L("Can sit"),"CANSIT");
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("MSP file"),"SOUND",false);
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
+			if (showFlag < -900)
+			{
+				ok = true;
+				break;
+			}
+			if (showFlag > 0)
+			{
+				showFlag = -1;
+				continue;
+			}
+			showFlag=CMath.s_int(mob.session().prompt(L("Edit which? "),""));
+			if(showFlag<=0)
+			{
+				showFlag=-1;
+				ok=true;
+			}
+		}
+	}
+
+	@Override
 	public void modifyGenGatheringSkill(final MOB mob, final Ability me, int showFlag) throws IOException
 	{
 		if(mob.isMonster())

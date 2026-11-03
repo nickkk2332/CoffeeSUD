@@ -249,6 +249,15 @@ public interface GenericEditor extends CMLibrary
 	public void modifyGenGatheringSkill(final MOB mob, final Ability me, int showFlag) throws IOException;
 
 	/**
+	 * CR8: the editor page of a data building skill (GenBuildingSkill).
+	 * @param mob the builder
+	 * @param me the skill
+	 * @param showFlag the field to show, or -1
+	 * @throws IOException a session error
+	 */
+	public void modifyGenBuildingSkill(final MOB mob, final Ability me, int showFlag) throws IOException;
+
+	/**
 	 * Prompts the given user using the mud's standard menu interface.
 	 * Allows the editing of an existing Generic Poison.
 	 *
