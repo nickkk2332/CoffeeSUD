@@ -3331,6 +3331,7 @@ public class StdMOB implements MOB
 			case CMMsg.TYP_DAMAGE:
 				if(!CMLib.combat().checkDamageSaves(this, msg))
 					return false;
+				TweakRules.scaleDamage(msg); // P22: a tweak's DAMAGEMULT
 				GameDifficulty.scaleDamage(msg, this); // C13
 				break;
 			case CMMsg.TYP_PULL:

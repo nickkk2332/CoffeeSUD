@@ -3263,6 +3263,17 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   ONFOUND or ONFAILED as unInvoke ends. GenRace SCRIPT (61), GenCharClass
   SCRIPT (64), in their XML. All in the editors. GenTweakAbility's script
   is P22's.
+- P22 done. GenTweakAbility stats 21 to 27 (CASTMASK, TARGETMASK,
+  POSTCASTABILITY, POSTCASTAFFECT, SCRIPT, DAMAGEMULT, DURATIONMULT),
+  kept with its overrides under P22:. The record's own invoke now casts
+  its original (with the caster's proficiency; it did nothing before),
+  and the proxy's invoke goes the same way: `tweakInvoke` checks the masks
+  and CANCAST, runs the original, then scales the new effects' tick-down,
+  marks them for `core/TweakRules` (DAMAGEMULT on damage messages whose
+  tool is the casting original or a marked effect, in StdMOB.okMessage
+  beside C13's), leaves a hidden Prop_TweakWatch for ONEXPIRE, puts
+  POSTCASTAFFECT on and casts POSTCASTABILITY (Prop_SpellAdder), then
+  ONCAST. In the tweak editor; AHELP GENTWEAK is new.
 
 #### 2p. Presentation (18)
 

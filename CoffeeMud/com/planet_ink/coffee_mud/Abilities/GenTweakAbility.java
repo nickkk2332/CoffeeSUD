@@ -105,6 +105,8 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 		if(overrides.containsKey(ID))
 		{
 			final String methodName = method.getName();
+			if(methodName.equals("invoke")&&(args!=null)&&((args.length==5)||(args.length==4))&&(args[0] instanceof MOB)&&hasCastRules()) // P22
+				return tweakInvoke((Ability)proxy, getDelegate(), args, method);
 			if(overrides.get(ID).containsKey(methodName))
 			{
 				final Object o = overrides.get(ID).get(methodName);
@@ -128,6 +130,182 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 				return GenTweakAbility.createProxy(overrides.get(ID).get("originalID").toString(), ID);
 		}
 		return method.invoke(getDelegate(), args);
+	}
+
+	/** P22: the cast rules, stats 21 to 27, kept with the overrides under P22: */
+	private static final String[] CASTRULES = { "CASTMASK", "TARGETMASK", "POSTCASTABILITY", "POSTCASTAFFECT", "SCRIPT", "DAMAGEMULT", "DURATIONMULT" };
+
+	private String rule(final String code)
+	{
+		final Object o=getLocalOverride("P22:"+code);
+		return (o==null)?"":o.toString();
+	}
+
+	private double mult(final String code)
+	{
+		final String s=rule(code).trim();
+		return (s.length()==0)?1.0:CMath.s_double(s);
+	}
+
+	private boolean hasCastRules()
+	{
+		for(final String c : CASTRULES)
+		{
+			if(rule(c).length()>0)
+				return true;
+		}
+		return false;
+	}
+
+	private static Set<Ability> effectsOf(final Physical P)
+	{
+		final Set<Ability> set=Collections.newSetFromMap(new IdentityHashMap<Ability,Boolean>());
+		if(P!=null)
+		{
+			for(final Enumeration<Ability> a=P.effects();a.hasMoreElements();)
+			{
+				final Ability A=a.nextElement();
+				if(A!=null)
+					set.add(A);
+			}
+		}
+		return set;
+	}
+
+	private static Physical tweakTarget(final MOB mob, final List<String> cmds, final Physical given, final boolean malicious)
+	{
+		if(given!=null)
+			return given;
+		final Room R=mob.location();
+		if((cmds==null)||(cmds.size()==0)||(R==null))
+			return (malicious&&(mob.getVictim()!=null))?mob.getVictim():mob;
+		final String name=CMParms.combine(cmds,0);
+		final MOB M=R.fetchInhabitant(name);
+		if(M!=null)
+			return M;
+		final Item I=R.findItem(null,name);
+		return (I!=null)?I:mob.findItem(null,name);
+	}
+
+	/**
+	 * P22: a cast of the tweak: CASTMASK and TARGETMASK, then the script's
+	 * CANCAST; the original's own invoke; then for what it left on the target
+	 * DURATIONMULT, DAMAGEMULT and ONEXPIRE's watch, POSTCASTAFFECT,
+	 * POSTCASTABILITY and ONCAST.
+	 */
+	@Override
+	public boolean invoke(final MOB mob, final List<String> commands, final Physical givenTarget, final boolean auto, final int asLevel)
+	{
+		// P22: the tweak's own record casts its original, with the caster's proficiency, under the rules
+		final Ability D=getDelegate();
+		if((D==null)||(D==this)||(mob==null))
+			return super.invoke(mob, commands, givenTarget, auto, asLevel);
+		D.setProficiency(proficiency());
+		try
+		{
+			return Boolean.TRUE.equals(tweakInvoke(this, D, new Object[] { mob, commands, givenTarget, Boolean.valueOf(auto), Integer.valueOf(asLevel) }, null));
+		}
+		catch(final Throwable t)
+		{
+			Log.errOut(ID, t);
+			return false;
+		}
+	}
+
+	private Object tweakInvoke(final Ability proxy, final Ability original, final Object[] args, final Method method) throws Throwable
+	{
+		final MOB mob=(MOB)args[0];
+		final boolean five=(args.length==5);
+		@SuppressWarnings("unchecked")
+		final List<String> cmds=five?(List<String>)args[1]:null;
+		final Physical given=(Physical)(five?args[2]:args[1]);
+		final boolean auto=Boolean.TRUE.equals(five?args[3]:args[2]);
+		final int asLevel=((Integer)(five?args[4]:args[3])).intValue();
+		final Physical target=tweakTarget(mob,cmds,given,proxy.abstractQuality()==Ability.QUALITY_MALICIOUS);
+		final String castMask=rule("CASTMASK");
+		if((castMask.length()>0)&&(!CMLib.masking().maskCheck(castMask,mob,true)))
+		{
+			if(!auto)
+				mob.tell(L("You can't use @x1 here and now.",proxy.name()));
+			return Boolean.FALSE;
+		}
+		final String targetMask=rule("TARGETMASK");
+		if((targetMask.length()>0)&&(target!=null)&&(!CMLib.masking().maskCheck(targetMask,target,true)))
+		{
+			if(!auto)
+				mob.tell(L("@x1 will not work on @x2.",proxy.name(),target.name(mob)));
+			return Boolean.FALSE;
+		}
+		final String script=rule("SCRIPT");
+		final ScriptingEngine S=HostScripts.shared("TWEAK:"+ID, script);
+		final String words=(cmds==null)?"":CMParms.combine(cmds,0);
+		if(ScriptHooks.refused(ScriptHooks.call(S, mob, "CANCAST", mob, target, words)))
+			return Boolean.FALSE;
+		final double dmg=mult("DAMAGEMULT"), dur=mult("DURATIONMULT");
+		final Set<Ability> before=effectsOf(target);
+		final Object r;
+		TweakRules.begin(original, dmg);
+		try
+		{
+			if(method!=null)
+				r=method.invoke(original, args);
+			else
+				r=Boolean.valueOf(original.invoke(mob, cmds, given, auto, asLevel));
+		}
+		catch(final java.lang.reflect.InvocationTargetException e)
+		{
+			throw e.getCause();
+		}
+		finally
+		{
+			TweakRules.end();
+		}
+		if(!Boolean.TRUE.equals(r))
+			return r;
+		if(target!=null)
+		{
+			for(final Ability A : effectsOf(target))
+			{
+				if(before.contains(A))
+					continue;
+				if((dur!=1.0)&&A.canBeUninvoked())
+					A.setExpirationDate(Math.max(1,Math.round(A.expirationDate()*dur)));
+				TweakRules.mark(A, dmg);
+				if((script.length()>0)&&(target instanceof MOB)&&A.canBeUninvoked()&&A.ID().equalsIgnoreCase(original.ID()))
+				{
+					final Ability W=CMClass.getAbility("Prop_TweakWatch");
+					if(W!=null)
+					{
+						W.setMiscText(ID+" "+A.ID());
+						target.addNonUninvokableEffect(W);
+					}
+				}
+			}
+			final String afterAffect=rule("POSTCASTAFFECT");
+			if(afterAffect.length()>0)
+			{
+				final int ticks=(proxy.abstractQuality()==Ability.QUALITY_MALICIOUS)
+					?getMaliciousTickdownTime(mob,target,0,asLevel):getBeneficialTickdownTime(mob,target,0,asLevel);
+				for(final CMObject o : CMLib.coffeeMaker().getCodedSpellsOrBehaviors(afterAffect))
+				{
+					if((o instanceof Ability)&&(target.fetchEffect(((Ability)o).ID())==null))
+					{
+						final Ability A=(Ability)((Ability)o).copyOf();
+						A.setMiscText(((Ability)o).text());
+						A.startTickDown(mob,target,Math.max(1,ticks));
+					}
+				}
+			}
+			final String afterCast=rule("POSTCASTABILITY");
+			if(afterCast.length()>0)
+			{
+				final Ability P=CMClass.getAbility("Prop_SpellAdder");
+				if(P!=null)
+					P.invoke(mob,new XVector<String>(afterCast),target,true,asLevel);
+			}
+		}
+		ScriptHooks.call(S, mob, "ONCAST", mob, target, words);
+		return r;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -232,6 +410,13 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 										 "ACTIONCOST",//18D P14
 										 "COMBATACTIONCOST",//19D P14
 										 "COMPONENTS",//20S P14
+										 "CASTMASK",//21S P22
+										 "TARGETMASK",//22S P22
+										 "POSTCASTABILITY",//23S P22
+										 "POSTCASTAFFECT",//24S P22
+										 "SCRIPT",//25S P22
+										 "DAMAGEMULT",//26D P22
+										 "DURATIONMULT",//27D P22
 										};
 
 	@Override
@@ -347,6 +532,15 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 				AbilityCosts.text(((Double)getLocalOverride("combatCastingTime")).doubleValue());
 		case 20:
 			return getLocalOverride("COMPONENTS") == null ? "" : getLocalOverride("COMPONENTS").toString();
+		case 21:
+		case 22:
+		case 23:
+		case 24:
+		case 25:
+			return rule(CODES[getCodeNum(code)]); // P22
+		case 26:
+		case 27:
+			return (rule(CODES[getCodeNum(code)]).length()==0)?"1":rule(CODES[getCodeNum(code)]); // P22
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenTweakAbility";
@@ -560,6 +754,23 @@ public class GenTweakAbility extends StdAbility implements InvocationHandler
 			else
 				this.overrideMethod("COMPONENTS", val.trim());
 			AbilityCosts.componentsChanged((was==null)?"":was.toString(), (val==null)?"":val);
+			break;
+		}
+		case 21:
+		case 22:
+		case 23:
+		case 24:
+		case 25:
+		case 26:
+		case 27:
+		{
+			// P22: the cast rules; empty (or a multiplier of 1) is none
+			final String k="P22:"+CODES[getCodeNum(code)];
+			final String v=(val==null)?"":val.trim();
+			if((v.length()==0)||((getCodeNum(code)>=26)&&(CMath.s_double(v)==1.0)))
+				this.removeOverrideMethod(k);
+			else
+				this.overrideMethod(k, (getCodeNum(code)==25)?val:v);
 			break;
 		}
 		default:

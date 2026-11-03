@@ -9695,6 +9695,13 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Action cost"),"ACTIONCOST"); // P14
 			promptStatDouble(mob,me,L("In actions; -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini)."),++showNumber,showFlag,L("Combat action cost"),"COMBATACTIONCOST"); // P14
 			promptStatStr(mob,me,L("A components.txt line, as (held:consumed:1:a pinch of salt:); it takes the place of a line for this ID there.  AHELP COMPONENTS."),++showNumber,showFlag,L("Components"),"COMPONENTS",true); // P14
+			promptStatStr(mob,me,CMLib.help().getHelpText("ZAPPERMASKS",mob,true),++showNumber,showFlag,L("Cast mask (who may cast it, and where)"),"CASTMASK",true); // P22
+			promptStatStr(mob,me,CMLib.help().getHelpText("ZAPPERMASKS",mob,true),++showNumber,showFlag,L("Target mask"),"TARGETMASK",true); // P22
+			promptStatStr(mob,me,CMLib.help().getHelpText("Prop_SpellAdder",mob,true),++showNumber,showFlag,L("Post-cast ability (cast on the target after)"),"POSTCASTABILITY",true); // P22
+			promptStatStr(mob,me,CMLib.help().getHelpText("Prop_SpellAdder",mob,true),++showNumber,showFlag,L("Post-cast affect (put on the target after)"),"POSTCASTAFFECT",true); // P22
+			promptStatStr(mob,me,L("A script whose functions CANCAST (return CANCEL to stop it), ONCAST and ONEXPIRE are called; AHELP GENTWEAK."),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P22
+			promptStatStr(mob,me,L("Times the damage its casts and effects do; 1 for none."),++showNumber,showFlag,L("Damage multiplier"),"DAMAGEMULT",true); // P22
+			promptStatStr(mob,me,L("Times how long its effects last; 1 for none."),++showNumber,showFlag,L("Duration multiplier"),"DURATIONMULT",true); // P22
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
 
 			if (showFlag < -900)
