@@ -381,6 +381,7 @@ public final class SaveGame
 		worldPending = true;
 		compareWorlds(header, fresh);
 		GameTime.setTurnBased("TURNS".equalsIgnoreCase(header.getProperty("timemode")));
+		TimeLock.restore(header.getProperty("timemodebefore")); // W28: the mode a zone took over from
 		saveMode = parseSaveMode(header.getProperty("savemode", "ANYWHERE"));
 		if("true".equalsIgnoreCase(header.getProperty("paused")))
 			GameTime.pause();
@@ -993,6 +994,7 @@ public final class SaveGame
 		header.setProperty("saved", Long.toString(System.currentTimeMillis()));
 		header.setProperty("gametime", Long.toString(GameTime.now()));
 		header.setProperty("timemode", GameTime.isTurnBased() ? "TURNS" : "REALTIME");
+		header.setProperty("timemodebefore", (TimeLock.previous() == null) ? "" : (TimeLock.previous().booleanValue() ? "TURNS" : "REALTIME")); // W28
 		header.setProperty("turns", Long.toString(ScriptEvents.turns()));
 		header.setProperty("difficulty", GameDifficulty.current()); // C13
 		header.setProperty("exchange", Exchange.saved()); // W29

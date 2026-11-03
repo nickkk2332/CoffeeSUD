@@ -695,6 +695,9 @@ a level each 15 ticks of rain; the pump room's wheel sets the variable of <code>
 <code>MPPASSTIME 4 HOURS</code>; the world goes on as it would. A player types <code>WAIT UNTIL DAWN</code> or <code>WAIT 8
 HOURS</code> (in an inn's <code>Prop_InnRoom</code>, a full rest), a builder <code>WAIT UNTIL HOUR 20</code> to watch the night
 market open, and a storm's script ends a wait with <code>MPINTERRUPT $n Thunder wakes you.</code></p>
+<p>Zones of their own time: the flooding tomb's <code>Prop_TimeMode MODE=REALTIME MSG="Time seems to quicken."</code>
+runs in real time, the water rising every few seconds; the chess-puzzle hall is always turn-based; the player's own
+choice comes back as they leave, and TIMEMODE cannot change it inside.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

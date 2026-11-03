@@ -102,6 +102,11 @@ public class TimeMode extends StdCommand
 			return false;
 		}
 		final Boolean turns = parseTurnBased(CMParms.combine(commands, 1));
+		if((turns != null) && (TimeLock.heldBy() != null)) // W28: a Prop_TimeMode zone holds it
+		{
+			mob.tell(L("Time is held @x1 here, and cannot be changed until you leave.", GameTime.isTurnBased() ? L("turn by turn") : L("running")));
+			return false;
+		}
 		if(turns == null)
 			mob.tell(L("TIMEMODE REALTIME or TIMEMODE TURNS?"));
 		else

@@ -1759,6 +1759,7 @@ public final class ScriptEvents
 	{
 		if((mob == null) || (to == null))
 			return;
+		TimeLock.check(mob); // W28: into or out of a Prop_TimeMode zone
 		JSEvents.fire("enterroom", mob, to, from); // JS8
 		final Area fromA = (from == null) ? null : from.getArea();
 		final Area toA = to.getArea();

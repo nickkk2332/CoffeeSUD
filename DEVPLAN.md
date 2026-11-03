@@ -2482,6 +2482,12 @@ W18, W19, W20, W21, W22, W23, W28, W29
   `MPINTERRUPT who [message]` (140; the waiter or their party); JavaScript's
   `cm.passHours(n)` and `cm.interrupt(who, msg)`. `Prop_InnRoom` (HOURS=,
   MSG=): a wait there of that long ends in a full rest.
+- W28 done. `Prop_TimeMode` (rooms, areas; `core/TimeLock`, from the move
+  hook ST16 calls after each move): `MODE=TURNS|REALTIME` while one played
+  is in it, switched as TIMEMODE does (its GAME_PROG TIMEMODE too), the
+  mode before put back as they leave (`RESTORE=TRUE`, the default),
+  `ONLYCOMBAT=TRUE` only while they fight there, `MSG=` as it switches;
+  TIMEMODE there says time is held. A save keeps the mode before.
 
 #### 2j. Generators and random content (16)
 
