@@ -1639,7 +1639,10 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 		String s=null;
 		final Item item=(Item)msg.target();
 		if(CMLib.flags().canSmell(msg.source()))
-			s=RawMaterial.CODES.SMELL(item.material()).toLowerCase();
+		{
+			final String variantSmell=ResourceVariants.smell(item); // CR15: world/resources.txt
+			s=(variantSmell.length()>0)?variantSmell.toLowerCase():RawMaterial.CODES.SMELL(item.material()).toLowerCase();
+		}
 		if((s!=null)&&(s.length()>0))
 			msg.source().tell(msg.source(),item,null,L("<T-NAME> has a @x1 smell.",s));
 	}

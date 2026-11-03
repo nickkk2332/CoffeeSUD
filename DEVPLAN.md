@@ -2922,6 +2922,18 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
   never move, so their items are written as before. The description
   goes on the raw resource. Codes have room for 256 resources (210 are
   built in), and the file is read at start-up only.
+- CR15 done. `world/resources.txt` (`core/ResourceVariants`, read
+  again when it changes): SUBTYPE, BASE_RESOURCE (a resource or a
+  family), DISPLAY_NAME, VALUE, WEIGHT_PER_UNIT, DESCRIPTION, SMELL,
+  EFFECTS and NOURISHMENT, between tabs as in world/materials.txt. The
+  three raw resource classes apply the row when their subtype is set,
+  which every path that names a variant goes through, and
+  `makeItemResource` once it has its material; `adjustResourceName`
+  uses its name and description, so bundling keeps them, and SNIFF its
+  smell. Loading an item from XML does not apply it, so a saved item
+  keeps its own name. WEIGHT_PER_UNIT is in the format but not used: a
+  raw resource's weight is its amount everywhere in crafting. CR2's
+  material description moved into `adjustResourceName` as well.
 
 #### 2l. Factions and organisations (18)
 

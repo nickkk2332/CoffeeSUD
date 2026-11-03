@@ -854,6 +854,10 @@ AHELP PROP_SALVAGEYIELD).</p>
 <p>World materials: <code>world/materials.txt</code> adds resources, one a line with tabs between,
 as <code>starsteel&#9;METAL&#9;300&#9;1&#9;6&#9;9000</code>; they keep their codes when others are added,
 and an item made of one keeps its name too (AHELP WORLDMATERIALS).</p>
+<p>Resource variants: <code>world/resources.txt</code> gives a subtype its own name, value,
+description, smell, effects and nourishment, as <code>moonpetal&#9;HERBS&#9;silvery moonpetal&#9;40</code>;
+<code>ResourceOverride(moonpetal(HERBS moonpetal))</code> makes it grow in a glade, and a recipe asks for
+<code>herbs(moonpetal)</code> (AHELP RESOURCEVARIANTS).</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

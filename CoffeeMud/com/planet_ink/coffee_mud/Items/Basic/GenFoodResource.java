@@ -59,7 +59,10 @@ public class GenFoodResource extends GenFood implements RawMaterial, Food
 	@Override
 	public void setSubType(final String subType)
 	{
+		final String old = resourceSubType;
 		resourceSubType = subType;
+		if((resourceSubType != null) && (resourceSubType.length() > 0) && (!resourceSubType.equalsIgnoreCase(old)))
+			ResourceVariants.apply(this); // CR15: world/resources.txt
 	}
 
 	@Override

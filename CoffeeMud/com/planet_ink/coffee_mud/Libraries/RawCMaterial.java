@@ -866,6 +866,9 @@ public class RawCMaterial extends StdLibrary implements MaterialLibrary
 	{
 		String name=RawMaterial.CODES.NAME(I.material()).toLowerCase();
 		I.setDescription(L("It's just @x1.",name));
+		final String worldDesc=RawMaterial.CODES.DESCRIPTION(I.material()); // CR2: world/materials.txt
+		if(worldDesc.length()>0)
+			I.setDescription(worldDesc);
 		final int iMat=I.material()&RawMaterial.MATERIAL_MASK;
 		if((I instanceof RawMaterial)
 		&&(((RawMaterial)I).getSubType().length()>0))
@@ -876,8 +879,12 @@ public class RawCMaterial extends StdLibrary implements MaterialLibrary
 				name=L("@x1 bolt", name);
 			else
 			{
-				name=subType;
-				I.setDescription(L("'@x1' is a special type of @x2 that retains its uniqueness.",name,RawMaterial.CODES.NAME(I.material()).toLowerCase()));
+				final ResourceVariants.Row variant=ResourceVariants.of(I); // CR15: world/resources.txt
+				name=((variant!=null)&&(variant.display.length()>0))?variant.display:subType;
+				if((variant!=null)&&(variant.description.length()>0))
+					I.setDescription(variant.description);
+				else
+					I.setDescription(L("'@x1' is a special type of @x2 that retains its uniqueness.",name,RawMaterial.CODES.NAME(I.material()).toLowerCase()));
 			}
 		}
 		else
@@ -950,9 +957,7 @@ public class RawCMaterial extends StdLibrary implements MaterialLibrary
 		adjustResourceName(I);
 		I.setBaseValue(RawMaterial.CODES.VALUE(type));
 		addEffectsToResource(I);
-		final String desc=RawMaterial.CODES.DESCRIPTION(type); // CR2: world/materials.txt
-		if(desc.length()>0)
-			I.setDescription(desc);
+		ResourceVariants.apply(I); // CR15: its variant's row, now that it has its material
 		I.recoverPhyStats();
 		return I;
 	}

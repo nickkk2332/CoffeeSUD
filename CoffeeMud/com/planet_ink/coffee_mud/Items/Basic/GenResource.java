@@ -79,7 +79,10 @@ public class GenResource extends GenItem implements RawMaterial
 	@Override
 	public void setSubType(final String subType)
 	{
+		final String old = resourceSubType;
 		resourceSubType = (subType == null)?"":subType;
+		if((resourceSubType != null) && (resourceSubType.length() > 0) && (!resourceSubType.equalsIgnoreCase(old)))
+			ResourceVariants.apply(this); // CR15: world/resources.txt
 	}
 
 	@Override

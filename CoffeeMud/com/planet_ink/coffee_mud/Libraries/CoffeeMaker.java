@@ -4514,7 +4514,15 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		if(E instanceof RawMaterial)
 		{
 			((RawMaterial)E).setDomainSource(xml.getValFromPieces(buf,"DOMN"));
-			((RawMaterial)E).setSubType(xml.getValFromPieces(buf,"RSUBT"));
+			final boolean wasLoading=ResourceVariants.loading(true); // CR15: it keeps what it was saved with
+			try
+			{
+				((RawMaterial)E).setSubType(xml.getValFromPieces(buf,"RSUBT"));
+			}
+			finally
+			{
+				ResourceVariants.loading(wasLoading);
+			}
 		}
 
 		if(E instanceof LiquidHolder)
