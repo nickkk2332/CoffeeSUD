@@ -784,6 +784,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"FLOODLEVEL", //212
 		"ISHOLIDAY", //213
 		"HOLIDAY", //214
+		"GENSTRING", //215
 	};
 
 	/** String list of all valid mobprog commands */
@@ -929,6 +930,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPROOMSTATE", // 138
 		"MPPASSTIME", // 139
 		"MPINTERRUPT", // 140
+		"MPGENERATE", // 141
 	};
 
 	/**

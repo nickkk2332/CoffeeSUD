@@ -730,6 +730,10 @@ of the day (AHELP GENERATE).</p>
 <p>Depth in generated areas: <code>&lt;ROOM condition="$roomtag_isdeepest='true' and $__boss&lt;1" define="__boss+=1"&gt;</code>
 puts the ogre chieftain's hall at the far end, and <code>level="$level_low+$roomtag_depthpct/10"</code> makes mobs
 harder deeper in; <code>order="reverse-depth"</code> on the AREA builds the deep rooms first (AHELP GENERATE).</p>
+<p>Generation from scripts: an iron chest's <code>OPEN_PROG</code> runs <code>MPGENERATE ITEM randareas/loot.xml chest_loot
+level_range=$&lt;$n.level&gt; INTO $i</code>, a new roll each time; a tavern drunk says
+<code>$%GENSTRING(randareas/rumors.xml rumor)%</code>; <code>FROMGENFILE ... FRESH</code> rolls anew rather than reusing
+the first roll.</p>
 
 <h2><a name="found">Less known</a></h2>
 <ul>

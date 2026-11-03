@@ -2566,6 +2566,15 @@ G1, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17
   area `AREA_MAXDEPTH` and `AREA_NUMROOMS`. An AREA's `order="depth|reverse-
   depth|random"` sets the order its room groups are built in (after the
   entrance), so a counter-gated room lands deep or near.
+- G5 done. `core/GenCalls`: generation from a template file at play time,
+  a fresh roll each call. `MPGENERATE ITEM|MOB|ROOM|AREA|QUEST file id
+  [VAR=VALUE ...]`, with `INTO container`, `TO mob` or `HERE` for an item,
+  `AT room` for a mob, a direction for a room or area (and `SEED=n`); `$b`
+  is the first thing made. `GENSTRING(file id [VAR=VALUE ...])` returns
+  text. Every call defines PLAYER_LEVEL and PARTY_SIZE (of the one who set
+  the script off, if a player), AREA_LEVEL, AREA_THEME, HOUR, SEASON,
+  WEATHER and GAME_DAY, unless given. `FROMGENFILE ... FRESH` rolls anew
+  rather than reusing the kept roll.
 
 #### 2k. Crafting, gathering and housing (21)
 

@@ -2209,7 +2209,25 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final String filename=CMParms.getCleanBit(thisName, 1);
 				final String name=CMParms.getCleanBit(thisName, 2);
 				final String tagName=CMParms.getCleanBit(thisName, 3);
-				final String theRest=CMParms.getPastBitClean(thisName,3);
+				String theRest=CMParms.getPastBitClean(thisName,3);
+				// G5: FRESH, a new roll each time, not the one kept from the first
+				final boolean fresh=theRest.toUpperCase().matches("(^|.*\\s)FRESH(\\s.*|$)");
+				if(fresh)
+				{
+					theRest=theRest.replaceAll("(?i)(^|\\s)FRESH(?=\\s|$)"," ").trim();
+					try
+					{
+						if(mob)
+							V=GenCalls.mobs(filename,tagName,genVars(theRest),genPlayer(ctx),imHere);
+						else
+							V=GenCalls.items(filename,tagName,genVars(theRest),genPlayer(ctx),imHere);
+					}
+					catch(final CMException e)
+					{
+						logError(ctx,"FROMGENFILE","RunTime",e.getMessage());
+					}
+				}
+				else
 				if(mob)
 					V=generateMobsFromFile(null,filename, tagName, theRest);
 				else
@@ -15993,6 +16011,26 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+		case "GENSTRING": // G5: GENSTRING(file id [VAR=VALUE ...]): text from a STRING tag, a fresh roll
+		{
+			final String gv=varify(ctx,parms).trim();
+			final String file=CMParms.getCleanBit(gv,0);
+			final String id=CMParms.getCleanBit(gv,1);
+			if((file.length()==0)||(id.length()==0))
+			{
+				logError(ctx,"GENSTRING","Syntax","GENSTRING(file id [VAR=VALUE ...]): "+parms);
+				return "";
+			}
+			try
+			{
+				return GenCalls.string(file,id,genVars(CMParms.getPastBitClean(gv,1)),genPlayer(ctx),lastKnownLocation);
+			}
+			catch(final CMException e)
+			{
+				logError(ctx,"GENSTRING","RunTime",e.getMessage());
+				return "";
+			}
+		}
 		case "ISHOLIDAY": // W6: ISHOLIDAY(name): that holiday (a quest by that name) is on
 			return Holidays.on(CMParms.combine(unquotedWords(varify(ctx,parms)),0))?"true":"false";
 		case "HOLIDAY": // W6: HOLIDAY(): the holidays on now, by name
@@ -16623,6 +16661,112 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			if(!Waits.start(who,ms,until,interruptible,quiet))
 				logError(ctx,"MPPASSTIME","RunTime","time is already passing: "+line);
+			return null;
+		}
+		case "MPGENERATE": // G5: MPGENERATE ITEM|MOB|ROOM|AREA|QUEST file id [VAR=VALUE ...] [INTO c|TO mob|HERE|AT room|dir] [SEED=n]: a fresh roll; $b the first
+		{
+			final String v=varify(ctx,CMParms.getPastBit(line,0)).trim();
+			final String kind=CMParms.getCleanBit(v,0).toUpperCase();
+			final String file=CMParms.getCleanBit(v,1);
+			final String id=CMParms.getCleanBit(v,2);
+			if((file.length()==0)||(id.length()==0))
+			{
+				logError(ctx,"MPGENERATE","Syntax","MPGENERATE ITEM|MOB|ROOM|AREA|QUEST file id ...: "+line);
+				return null;
+			}
+			final Map<String,String> vars=new HashMap<String,String>();
+			String into=null, to=null, at=null, dirWord=null, seed=null;
+			final List<String> words=genWords(CMParms.getPastBit(v,2));
+			for(int w=0;w<words.size();w++)
+			{
+				final String word=words.get(w);
+				final int eq=word.indexOf('=');
+				if(eq>0)
+				{
+					String val=word.substring(eq+1).trim();
+					while((val.length()>1)&&("'`\"".indexOf(val.charAt(0))>=0)&&(val.charAt(val.length()-1)==val.charAt(0)))
+						val=val.substring(1,val.length()-1);
+					if(word.substring(0,eq).trim().equalsIgnoreCase("SEED"))
+						seed=val;
+					else
+						vars.put(word.substring(0,eq).trim().toUpperCase(),val);
+				}
+				else
+				if(word.equalsIgnoreCase("INTO")&&(w<words.size()-1))
+					into=unquoted(words.get(++w));
+				else
+				if(word.equalsIgnoreCase("TO")&&(w<words.size()-1))
+					to=unquoted(words.get(++w));
+				else
+				if(word.equalsIgnoreCase("AT")&&(w<words.size()-1))
+					at=unquoted(words.get(++w));
+				else
+				if(!word.equalsIgnoreCase("HERE"))
+					dirWord=word;
+			}
+			final MOB player=genPlayer(ctx);
+			final Room here=lastKnownLocation;
+			try
+			{
+				if(kind.equals("ITEM"))
+				{
+					final List<Item> L=GenCalls.items(file,id,vars,player,here);
+					final PhysicalAgent C=(into==null)?null:getArgumentItem(into,ctx);
+					final PhysicalAgent toM=(to==null)?null:getArgumentMOB(to,ctx);
+					for(final Item I : L)
+					{
+						if((C instanceof Container)&&(((Container)C).owner()!=null))
+						{
+							((Container)C).owner().addItem(I);
+							I.setContainer((Container)C);
+						}
+						else
+						if(toM instanceof MOB)
+							((MOB)toM).addItem(I);
+						else
+						if(here!=null)
+							here.addItem(I,ItemPossessor.Expire.Monster_EQ);
+					}
+					if(L.size()>0)
+						lastLoaded=L.get(0);
+				}
+				else
+				if(kind.equals("MOB"))
+				{
+					final Room R=(at==null)?here:getRoom(at,here);
+					final List<MOB> L=GenCalls.mobs(file,id,vars,player,R);
+					for(final MOB M : L)
+					{
+						if(R!=null)
+							M.bringToLife(R,true);
+					}
+					if(L.size()>0)
+						lastLoaded=L.get(0);
+				}
+				else
+				if(kind.equals("ROOM")||kind.equals("AREA"))
+				{
+					final int dir=(dirWord==null)?-1:CMLib.directions().getGoodDirectionCode(dirWord);
+					if(dir<0)
+					{
+						logError(ctx,"MPGENERATE","Syntax","MPGENERATE "+kind+" file id direction: "+line);
+						return null;
+					}
+					if(kind.equals("ROOM"))
+						lastLoaded=GenCalls.room(file,id,here,dir,vars,player);
+					else
+						lastLoaded=GenCalls.area(file,id,here,dir,vars,seed,player);
+				}
+				else
+				if(kind.equals("QUEST"))
+					GenCalls.quest(file,id,vars,player,here);
+				else
+					logError(ctx,"MPGENERATE","Syntax","MPGENERATE ITEM|MOB|ROOM|AREA|QUEST: "+line);
+			}
+			catch(final CMException e)
+			{
+				logError(ctx,"MPGENERATE","RunTime",e.getMessage()+": "+line);
+			}
 			return null;
 		}
 		case "MPINTERRUPT": // W4: MPINTERRUPT who [message]: ends the wait (or journey) of that character or their party
@@ -19596,6 +19740,67 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 * @param word the word, or ""
 	 * @return the shopkeeper, or null
 	 */
+	/**
+	 * G5: the player a generation is for, as its PLAYER_LEVEL and PARTY_SIZE: the
+	 * one who set the script off, if they are a player.
+	 * @param ctx the script's context
+	 * @return the player, or null
+	 */
+	protected MOB genPlayer(final MPContext ctx)
+	{
+		if((ctx.source!=null)&&((!ctx.source.isMonster())||ctx.source.isPlayer()))
+			return ctx.source;
+		return null;
+	}
+
+	/**
+	 * G5: VAR=VALUE words, quotes and all, as a generation's variables.
+	 * @param words the words
+	 * @return the variables, keys in upper case
+	 */
+	protected Map<String,String> genVars(final String words)
+	{
+		final Map<String,String> vars=new HashMap<String,String>();
+		for(final String word : genWords(words))
+		{
+			final int eq=word.indexOf('=');
+			if(eq>0)
+			{
+				String val=word.substring(eq+1).trim();
+				while((val.length()>1)&&("'`\"".indexOf(val.charAt(0))>=0)&&(val.charAt(val.length()-1)==val.charAt(0)))
+					val=val.substring(1,val.length()-1);
+				vars.put(word.substring(0,eq).trim().toUpperCase(),val);
+			}
+		}
+		return vars;
+	}
+
+	/**
+	 * G5: words, a quoted one ('a big chest', "a big chest", or name='a b') kept whole.
+	 * @param text the text
+	 * @return the words
+	 */
+	protected static List<String> genWords(final String text)
+	{
+		final List<String> words=new ArrayList<String>();
+		final java.util.regex.Matcher m=java.util.regex.Pattern.compile("(?:[^\\s'\"`]*(?:'[^']*'|\"[^\"]*\"|`[^`]*`))+[^\\s]*|\\S+").matcher((text==null)?"":text);
+		while(m.find())
+			words.add(m.group());
+		return words;
+	}
+
+	/**
+	 * G5: a word without the quotes around it.
+	 * @param word the word
+	 * @return it, unquoted
+	 */
+	protected static String unquoted(String word)
+	{
+		while((word.length()>1)&&("'`\"".indexOf(word.charAt(0))>=0)&&(word.charAt(word.length()-1)==word.charAt(0)))
+			word=word.substring(1,word.length()-1);
+		return word;
+	}
+
 	protected MOB shopkeeperFor(final MPContext ctx, final String word)
 	{
 		if((word!=null)&&(word.trim().length()>0))
