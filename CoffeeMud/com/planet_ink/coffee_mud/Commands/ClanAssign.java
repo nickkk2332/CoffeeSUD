@@ -165,7 +165,7 @@ public class ClanAssign extends StdCommand
 							{
 								final String s=currentMembersInNewPosV.get(0);
 								currentMembersInNewPosV.remove(0);
-								CMLib.clans().clanAnnounce(mob,L(" @x1 of the @x2 @x3 is now a @x4.",s,C.getGovernmentName(),C.clanID(),C.getRoleName(C.getGovernment().getAcceptPos(),true,false)));
+								C.clanAnnounce(L(" @x1 of the @x2 @x3 is now a @x4.",s,C.getGovernmentName(),C.clanID(),C.getRoleName(C.getGovernment().getAcceptPos(),true,false)));
 								final MOB M2=CMLib.players().getPlayer(s);
 								if(M2!=null)
 									M2.setClan(C.clanID(),C.getGovernment().getAcceptPos());
@@ -174,7 +174,7 @@ public class ClanAssign extends StdCommand
 							}
 						}
 						// finally, promote
-						CMLib.clans().clanAnnounce(mob,L("@x1 of the @x2 @x3 changed from @x4 to @x5.",M.name(),C.getGovernmentName(),C.clanID(),C.getRoleName(oldRole.second.intValue(),true,false),C.getRoleName(newPos,true,false)));
+						C.clanAnnounce(L("@x1 of the @x2 @x3 changed from @x4 to @x5.",M.name(),C.getGovernmentName(),C.clanID(),C.getRoleName(oldRole.second.intValue(),true,false),C.getRoleName(newPos,true,false)));
 						C.addMember(M,newPos);
 						mob.tell(L("@x1 of the @x2 @x3 has been assigned to be @x4. ",M.Name(),C.getGovernmentName(),C.clanID(),CMLib.english().startWithAorAn(C.getRoleName(newPos,false,false))));
 						if((M.session()!=null)&&(M.session().mob()==M))

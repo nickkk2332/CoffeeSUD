@@ -150,7 +150,7 @@ public class ClanTax extends StdCommand
 		{
 			C.setTaxes(newRate);
 			C.update();
-			CMLib.clans().clanAnnounce(mob,L("The experience tax rate of @x1 @x2 has been changed to @x3",C.getGovernmentName(),C.clanID(),((int)Math.round(C.getTaxes()*100.0)+"%.")));
+			C.clanAnnounce(L("The experience tax rate of @x1 @x2 has been changed to @x3",C.getGovernmentName(),C.clanID(),((int)Math.round(C.getTaxes()*100.0)+"%.")));
 		}
 	}
 

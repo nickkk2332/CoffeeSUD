@@ -64,7 +64,10 @@ public class ClanHelper extends StdBehavior
 				C=CMLib.clans().findClan(clanName.trim());
 			if(C!=null)
 			{
-				observer.setClan(C.clanID(),C.getGovernment().getAcceptPos());
+				final String role=CMParms.getParmStr(parms,"ROLE","");
+				final int roleID=role.length()==0?C.getGovernment().getAcceptPos():Organizations.roleID(C,role);
+				if(roleID<0) return false;
+				observer.setClan(C.clanID(),roleID);
 				return true;
 			}
 			else
@@ -93,6 +96,8 @@ public class ClanHelper extends StdBehavior
 		{
 			final MOB observer=(MOB)forMe;
 			String clanName=parms.trim();
+			if(CMParms.getParmStr(parms,"CLAN","").length()>0)
+			{ this.clanName=CMParms.getParmStr(parms,"CLAN",""); clanSet=setClan(observer); return; }
 			final int x=clanName.lastIndexOf(' ');
 			if(x>0)
 			{

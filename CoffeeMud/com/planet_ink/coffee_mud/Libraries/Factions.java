@@ -596,6 +596,7 @@ public class Factions extends StdLibrary implements FactionManager
 	@Override
 	public Faction getSpecialAreaFaction(final Area A)
 	{
+		if(A==null||A.getStat("REPUTATION").length()==0||A.getStat("REPUTATION").equalsIgnoreCase("NONE")) return null;
 		if((A!=null)
 		&&(!CMath.bset(A.flags(), Area.FLAG_INSTANCE_CHILD))
 		&&(!(A instanceof Boardable)))
@@ -603,7 +604,7 @@ public class Factions extends StdLibrary implements FactionManager
 			final String areaCode = A.Name().toUpperCase().trim().replace(' ','_');
 			Faction F=getFaction("AREA_"+areaCode);
 			if(F==null)
-				F=makeReactionFaction("AREA_",A.ID(),A.Name(),areaCode,"examples/areareaction.ini");
+				F=makeReactionFaction("AREA_",A.ID(),A.Name(),areaCode,A.getStat("REPUTATION"));
 			return F;
 		}
 		return null;
@@ -617,7 +618,7 @@ public class Factions extends StdLibrary implements FactionManager
 		Faction F=null;
 		final String autoReactionTypeStr=CMProps.getVar(CMProps.Str.AUTOREACTION).toUpperCase().trim();
 		if((autoReactionTypeStr!=null)
-		&&(autoReactionTypeStr.length()>0))
+		&&(autoReactionTypeStr.length()>0||R.getArea().getStat("REPUTATION").length()>0))
 		{
 			if(autoReactions == null)
 			{
@@ -638,14 +639,27 @@ public class Factions extends StdLibrary implements FactionManager
 				}
 			}
 			final List<Faction> Fs=new ArrayList<Faction>(1);
+			final Faction areaFaction=getSpecialAreaFaction(R.getArea());
+			if(areaFaction!=null) Fs.add(areaFaction);
 			for(final String autoType : autoReactions)
 			{
 				if(autoType.equals("AREA"))
 				{
 					final Area A=R.getArea();
 					F=getSpecialAreaFaction(A);
-					if(F!=null)
+					if(F!=null&&!Fs.contains(F))
 						Fs.add(F);
+				}
+				else
+				if(autoType.equals("CLAN"))
+				{
+					for(final Enumeration<Clan> ce=CMLib.clans().clans();ce.hasMoreElements();)
+					{
+						final Clan C=ce.nextElement();
+						if(!Organizations.npcRun(C)) continue;
+						final Faction clanF=Organizations.clanFaction(C,false);
+						if(clanF!=null) Fs.add(clanF);
+					}
 				}
 				else
 				if(autoType.equals("NAME"))

@@ -98,7 +98,7 @@ public final class Party
 	 */
 	public static boolean isMeetWhereLeft()
 	{
-		return meetWhereLeft;
+		return meetWhereLeft || WorldRules.partySummon().equals("MEET");
 	}
 
 	/**
@@ -762,6 +762,8 @@ public final class Party
 		final Session console = mob.session();
 		if((acct == null) || (console == null))
 			return null;
+		final String limit=WorldRules.activeRefusal(acct);
+		if(limit!=null) { mob.tell(limit); return null; }
 		final MOB M = CMLib.players().getLoadPlayer(name);
 		if((M == null) || (profileOf(M) != acct) || CMLib.flags().isInTheGame(M, true))
 			return null;

@@ -52,6 +52,15 @@ public class ClanDues extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if((commands.size()>1)&&commands.get(1).equalsIgnoreCase("PAY"))
+		{
+			final String name=CMParms.combine(commands,2);
+			boolean found=false;
+			for(final Pair<Clan,Integer> p : mob.clans())
+				if(name.length()==0||p.first.name().equalsIgnoreCase(name)) { mob.tell(Organizations.payDues(mob,p.first)); found=true; }
+			if(!found) mob.tell("You are not a member of that clan.");
+			return false;
+		}
 		if(commands.size()<=1)
 		{
 			final Session S=mob.session();
@@ -76,7 +85,7 @@ public class ClanDues extends StdCommand
 							if(rec.dues > 0.0)
 								badMembers.add("^H"+rec.name+"^N("+CMLib.beanCounter().nameCurrencyShort(curr, rec.dues)+")");
 						}
-						S.println(L("Dues are presently set at @x1 per year for @x2.",CMLib.beanCounter().nameCurrencyLong(curr, C.getDues()),C.name()));
+						S.println(L("Dues are presently @x1 per @x2 for @x3.",CMLib.beanCounter().nameCurrencyLong(curr,C.getDues()),Organizations.setting(C,"DUESPERIOD","YEAR").toLowerCase(),C.name()));
 						if(badMembers.size()==0)
 							S.println(L("All members are current and paid-up on their dues."));
 						else
@@ -145,7 +154,7 @@ public class ClanDues extends StdCommand
 			return false;
 		}
 		final Pair<String,String> info = C.getPreferredBanking();
-		if((!skipChecks) &&(info == null))
+		if((!skipChecks)&&(info==null)&&"REAL".equalsIgnoreCase(CMProps.instance().getProperty("CLANCLOCK")))
 		{
 			mob.tell(L("The @x1 @x2 requires a clan bank account to collect dues.",C.getGovernmentName(),C.name()));
 			return false;
@@ -209,7 +218,7 @@ public class ClanDues extends StdCommand
 				{
 					final double bestDenom=CMLib.beanCounter().getBestDenomination(curr, C.getDues());
 					currentDues = (C.getDues()/bestDenom)+" "+CMLib.beanCounter().getDenominationName(curr, bestDenom);
-					S.println(L("Dues are presently set at @x1 per year.",CMLib.beanCounter().nameCurrencyLong(curr, C.getDues())));
+					S.println(L("Dues are presently @x1 per @x2.",CMLib.beanCounter().nameCurrencyLong(curr,C.getDues()),Organizations.setting(C,"DUESPERIOD","YEAR").toLowerCase()));
 				}
 				if(badMembers.size()==0)
 					S.println(L("All members are current and paid-up on their dues."));
@@ -220,7 +229,7 @@ public class ClanDues extends StdCommand
 					@Override
 					public void showPrompt()
 					{
-						S.promptPrint(L("Enter your @x1's new amount of dues per year (@x2)\n\r: ", C.getGovernmentName(),currentDues));
+						S.promptPrint(L("Enter your @x1's dues per @x2 (@x3)\n\r: ",C.getGovernmentName(),Organizations.setting(C,"DUESPERIOD","YEAR").toLowerCase(),currentDues));
 					}
 
 					@Override
@@ -294,9 +303,9 @@ public class ClanDues extends StdCommand
 				duesDesc = CMLib.beanCounter().nameCurrencyLong(info.second, newRate);
 			else
 				duesDesc = CMLib.beanCounter().nameCurrencyLong(mob, newRate);
-			C.setDues(newRate);
+			C.setDues(Math.max(0,newRate));
 			C.update();
-			CMLib.clans().clanAnnounce(mob,L("The dues/year amount for @x1 @x2 has been changed to @x3",C.getGovernmentName(),C.clanID(),duesDesc));
+			C.clanAnnounce(L("The dues per period for @x1 @x2 have been changed to @x3",C.getGovernmentName(),C.clanID(),duesDesc));
 		}
 	}
 

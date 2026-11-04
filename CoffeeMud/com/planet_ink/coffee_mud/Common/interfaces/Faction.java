@@ -1313,7 +1313,7 @@ public interface Faction extends CMCommon, MsgListener, Contingent
 		/** some non-ability-related event trigger ids */
 		public static enum MiscTrigger
 		{
-			MURDER,  TIME,  ADDOUTSIDER, KILL, BRIBE, TALK,
+			MURDER,  TIME,  ADDOUTSIDER, KILL, BRIBE, GIFT, TALK,
 			MUDCHAT, ARRESTED, SOCIAL, SINK, SUNK, AREAKILL,
 			AREAASS,  AREAEXPLORE, DYING, CMMSG
 		}
@@ -1889,7 +1889,7 @@ public interface Faction extends CMCommon, MsgListener, Contingent
 		AFFBEHAV_,
 		REACTION_,
 		USELIGHTREACTIONS,
-		INHERITABLE
+		INHERITABLE, SHOWMASK, HIDDENNAME, PLAYEREFFECT_
 		;
 		public final String maskPrefix;
 		private FacTag()

@@ -51,6 +51,11 @@ public class ClanCreate extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if(commands.size()>2&&commands.get(commands.size()-1).equalsIgnoreCase("PARTY"))
+		{
+			mob.tell(Guilds.foundParty(mob,CMParms.combine(commands.subList(1,commands.size()-1)),"FELLOWSHIP"));
+			return false;
+		}
 		int numGovernmentsAvailable=0;
 		Pair<Clan,Integer> p=null;
 		for(final ClanGovernment gvt : CMLib.clans().getStockGovernments())
@@ -257,7 +262,7 @@ public class ClanCreate extends StdCommand
 												newClan.create();
 												CMLib.database().DBUpdateClanMembership(mob.Name(),newClan.getName(),newRoleID);
 												newClan.updateClanPrivileges(mob);
-												CMLib.clans().clanAnnounce(mob, L("The @x1 @x2 is online and can now accept applicants.",newClan.getGovernmentName(),newClan.clanID()));
+												newClan.clanAnnounce( L("The @x1 @x2 is online and can now accept applicants.",newClan.getGovernmentName(),newClan.clanID()));
 											}
 										};
 										session.prompt(IC[0]);

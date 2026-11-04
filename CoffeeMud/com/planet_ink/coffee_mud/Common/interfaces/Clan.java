@@ -1210,7 +1210,9 @@ public interface Clan extends Cloneable, Tickable, CMCommon, Modifiable, Tattooa
 		XP_OVERWRITE,
 		GOLD_OVERWRITE,
 		JOINDATE,
-		JOINDATE_OVERWRITE
+		JOINDATE_OVERWRITE,
+		MERIT,
+		MERIT_DEMOTE
 	}
 
 	/**
@@ -1221,7 +1223,8 @@ public interface Clan extends Cloneable, Tickable, CMCommon, Modifiable, Tattooa
 	public enum ClanFlag
 	{
 		/** Constant for account flags that turns off trophy awards for the clan */
-		NOTROPHY
+		NOTROPHY,
+		NPCRUN
 		;
 		/**
 		 * Returns a comma-delimited list of strings representing the clan flag values

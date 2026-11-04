@@ -51,6 +51,15 @@ public class FactionList extends StdCommand
 		final StringBuffer msg=new StringBuffer(L("\n\r^HFaction Standings:^?^N\n\r"));
 		boolean none=true;
 		final String args = CMParms.combine(commands,1).toUpperCase();
+		if(args.equals("PARTY")) { mob.tell(Organizations.partyFactions(mob)); return false; }
+		final Faction named=args.length()==0?null:CMLib.factions().getFactionByName(args);
+		if(named!=null)
+		{
+			if(Organizations.visible(named,mob)) mob.tell(Organizations.factionLadder(named,mob));
+			else if(named.getTagValue("HIDDENNAME").length()>0) mob.tell(named.getTagValue("HIDDENNAME"));
+			else mob.tell("No known standing by that name.");
+			return false;
+		}
 		final Enumeration<String> factions;
 		if(args.equals("HERE"))
 		{
@@ -113,7 +122,7 @@ public class FactionList extends StdCommand
 		for (final String name : list)
 		{
 			final Faction F=CMLib.factions().getFaction(name);
-			if((F!=null)&&(F.showInFactionsCommand()))
+			if((F!=null)&&(F.showInFactionsCommand())&&Organizations.visible(F,mob))
 			{
 				none=false;
 				msg.append(formatFactionLine(cols,name,mob.fetchFaction(name),useFactionWords));

@@ -3423,6 +3423,12 @@ public class StdMOB implements MOB
 				}
 				break;
 			case CMMsg.TYP_FOLLOW:
+				final String partyRefusal = WorldRules.followRefusal(msg.source(), this);
+				if(partyRefusal != null)
+				{
+					msg.source().tell(partyRefusal);
+					return false;
+				}
 				if(totalFollowers() + srcM.totalFollowers() >= maxFollowers())
 				{
 					srcM.tell(L("@x1 can't accept any more followers.", name(srcM)));
@@ -5846,7 +5852,9 @@ public class StdMOB implements MOB
 		if(T != null)
 		{
 			//CMLib.map().delObjectTag(T.getTattooName(), this);
-			return tattoos.remove(T);
+			final boolean removed=tattoos.remove(T);
+			if(removed) Organizations.changed(this);
+			return removed;
 		}
 		return false;
 	}
@@ -5861,6 +5869,7 @@ public class StdMOB implements MOB
 			return;
 		//CMLib.map().addObjectTag(of.getTattooName(), this);
 		tattoos.addElement(of);
+		Organizations.changed(this);
 	}
 
 	@Override
@@ -5875,6 +5884,7 @@ public class StdMOB implements MOB
 			return;
 		//CMLib.map().delObjectTag(of.getTattooName(), this);
 		tattoos.remove(tat);
+		Organizations.changed(this);
 	}
 
 	@Override
@@ -5915,12 +5925,15 @@ public class StdMOB implements MOB
 			start = F.minimum();
 		which = F.factionID().toUpperCase();
 		Faction.FData data = factions.get(which);
+		final boolean added=(data==null);
 		if(data == null)
 		{
 			data = F.makeFactionData(this);
 			factions.put(which, data);
 		}
+		final int oldValue=data.value();
 		data.setValue(start);
+		if(added||oldValue!=start) Organizations.changed(this);
 	}
 
 	@Override
@@ -5973,7 +5986,7 @@ public class StdMOB implements MOB
 	@Override
 	public void removeFaction(final String which)
 	{
-		factions.remove(which.toUpperCase());
+		if(factions.remove(which.toUpperCase())!=null) Organizations.changed(this);
 	}
 
 	@Override

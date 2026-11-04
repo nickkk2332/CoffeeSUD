@@ -7010,30 +7010,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					}
 					break;
 				}
-				case 66: // clanrank
+				case 66: // clanrank: explicit-clan comparisons use seniority, legacy ones role IDs
 				{
-					if(tlen==1)
-						tt=parseBits(eval,t,"ccr"); /* tt[t+0] */
-					final String arg1=tt[t+0];
-					final String arg2=tt[t+1];
-					final String arg3=varify(ctx,tt[t+2]);
-					final Environmental E=getArgumentMOB(arg1,ctx);
-					if((arg2.length()==0)||(arg3.length()==0))
+					final List<String> p=organizationWords(tt[t]);
+					if(p.size()==4)
 					{
-						logError(ctx,"CLANRANK","Syntax",CMParms.combine(tt,t));
-						return returnable;
+						final Environmental E=getArgumentMOB(p.get(0),ctx);
+						returnable=(E instanceof MOB)&&Organizations.rankTest((MOB)E,varify(ctx,p.get(1)),p.get(2),varify(ctx,p.get(3)));
 					}
-					if(!(E instanceof MOB))
-						returnable=false;
 					else
+					if(p.size()==3)
 					{
-						int val1=-1;
-						Clan C=CMLib.clans().findRivalrousClan((MOB)E);
-						if(C==null)
-							C=((MOB)E).clans().iterator().hasNext()?((MOB)E).clans().iterator().next().first:null;
-						if(C!=null)
-							val1=((MOB)E).getClanRole(C.clanID()).second.intValue();
-						returnable=simpleEval(ctx.scripted,""+val1,arg3,arg2,"CLANRANK");
+						final Environmental E=getArgumentMOB(p.get(0),ctx);
+						final Clan C=(E instanceof MOB)?Organizations.firstClan((MOB)E):null;
+						if(E instanceof MOB) returnable=simpleEval(ctx.scripted,C==null?"-1":""+((MOB)E).getClanRole(C.clanID()).second,varify(ctx,p.get(2)),p.get(1),"CLANRANK");
 					}
 					break;
 				}
@@ -9655,22 +9645,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			case 66: // clanrank
 			{
-				final String arg1=CMParms.cleanBit(funcParms);
-				final Environmental E=getArgumentMOB(arg1,ctx);
-				Clan C=null;
+				final List<String> p=organizationWords(funcParms);
+				final Environmental E=p.isEmpty()?null:getArgumentMOB(p.get(0),ctx);
 				if(E instanceof MOB)
 				{
-					C=CMLib.clans().findRivalrousClan((MOB)E);
-					if(C==null)
-						C=((MOB)E).clans().iterator().hasNext()?((MOB)E).clans().iterator().next().first:null;
-				}
-				else
-					C=CMLib.clans().findClan(varify(ctx,arg1));
-				if(C!=null)
-				{
-					final Pair<Clan,Integer> p=((MOB)E).getClanRole(C.clanID());
-					if(p!=null)
-						results.append(p.second.toString());
+					final MOB M=(MOB)E;
+					final Clan C=(p.size()>1)?CMLib.clans().findClan(varify(ctx,p.get(1))):Organizations.firstClan(M);
+					if((C!=null)&&(M.getClanRole(C.clanID())!=null))
+						results.append(M.getClanRole(C.clanID()).second);
 				}
 				break;
 			}
@@ -15740,13 +15722,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		return new String[]{(start<0)?"":t.substring(0,start).trim(),t.substring(start+1)};
 	}
 
-	/**
-	 * The newer functions' values (SC1 and on): $%NAME(parms)%.
-	 * @param ctx the script's context
-	 * @param name the function
-	 * @param parms what is in its parentheses, not yet varified
-	 * @return its value
-	 */
+	/** MOBPROG uses single quotes to group arguments. */
+	protected static List<String> organizationWords(final String text)
+	{
+		final List<String> words=new ArrayList<String>();
+		for(int i=0;i<CMParms.numBits(text);i++) words.add(CMParms.getCleanBit(text,i));
+		return words;
+	}
+
 	protected String extraValue(final MPContext ctx, final String name, final String parms)
 	{
 		final String v=varify(ctx,parms).trim();
@@ -15757,6 +15740,38 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 		switch(name.toUpperCase())
 		{
+		case "CLANS":
+		case "CLANPOS":
+		case "CLANMEMBER":
+		{
+			final List<String> p=organizationWords(parms);
+			final Environmental E=p.isEmpty()?null:getArgumentMOB(p.get(0),ctx);
+			if(!(E instanceof MOB)) return "";
+			final MOB M=(MOB)E;
+			if(name.equalsIgnoreCase("CLANS")) return Organizations.clanNames(M);
+			final Clan C=(p.size()>1)?CMLib.clans().findClan(varify(ctx,p.get(1))):null;
+			return Organizations.memberValue(M,C,name.equalsIgnoreCase("CLANPOS")?"POSITION":((p.size()>2)?p.get(2):"RANKNAME"));
+		}
+		case "CLANRELATION":
+		{
+			final List<String> p=organizationWords(v);
+			if(p.size()!=2) return "";
+			final Clan A=CMLib.clans().findClan(p.get(0)), B=CMLib.clans().findClan(p.get(1));
+			return ((A==null)||(B==null))?"":Clan.REL_DESCS[CMLib.clans().getCommonClanRelations(A,B)];
+		}
+		case "AREACLAN":
+		case "AREACONTROL":
+		case "REVOLTCHANCE":
+		{
+			final List<String> p=organizationWords(v);
+			final Area A=p.isEmpty()?null:CMLib.map().findArea(p.get(0));
+			final LegalBehavior B=(A==null)?null:CMLib.law().getLegalBehavior(A);
+			if(B==null) return "";
+			if(name.equalsIgnoreCase("AREACLAN")) return B.rulingOrganization();
+			if(name.equalsIgnoreCase("REVOLTCHANCE")) return ""+B.revoltChance();
+			final Clan C=(p.size()>1)?CMLib.clans().findClan(p.get(1)):null;
+			return (C==null)?"0":""+B.getControlPoints(C.clanID());
+		}
 		case "LISTJOIN":
 		{
 			final String[] p=lastWord(v);
@@ -16481,6 +16496,15 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final Object r=jsExpr(ctx,varify(ctx,inner).trim());
 			return (r!=null)&&Context.toBoolean(r);
 		}
+		if(name.equalsIgnoreCase("CLANRELATION")||name.equalsIgnoreCase("AREACLAN"))
+		{
+			final List<String> p=organizationWords(varify(ctx,inner));
+			final int count=name.equalsIgnoreCase("CLANRELATION")?2:1;
+			if(p.size()!=count+2) return false;
+			final StringBuilder value=new StringBuilder();
+			for(int i=0;i<count;i++) value.append("'").append(p.get(i)).append("' ");
+			return ScriptLib.compare(extraValue(ctx,name,value.toString()),p.get(count),p.get(count+1));
+		}
 		final List<String> words=CMParms.parse(inner);
 		final String[] c=ScriptLib.splitCompare(words);
 		if(c==null)
@@ -16984,6 +17008,38 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final String said=ProfileOwner.grant((Item)I,to,profile,newName,near);
 			if(said!=null)
 				logError(ctx,"MPGRANT","RunTime",said+": "+line);
+			return null;
+		}
+		case "MPCLANRELATION":
+		{
+			final List<String> p=organizationWords(varify(ctx,CMParms.getPastBit(line,0)));
+			final Clan A=(p.size()>0)?CMLib.clans().findClan(p.get(0)):null;
+			final Clan B=(p.size()>1)?CMLib.clans().findClan(p.get(1)):null;
+			final int relation=(p.size()>2)?Organizations.relationCode(p.get(2)):-1;
+			if((A==null)||(B==null)||(relation<0)||(p.size()<3)||(p.size()>4)||((p.size()==4)&&!p.get(3).equalsIgnoreCase("MUTUAL")))
+				logError(ctx,"MPCLANRELATION","Syntax",line);
+			else
+			{
+				A.setClanRelations(B.clanID(),relation,Organizations.now());
+				A.update();
+				if((p.size()>3)&&p.get(3).equalsIgnoreCase("MUTUAL"))
+				{
+					B.setClanRelations(A.clanID(),relation,Organizations.now());
+					B.update();
+				}
+			}
+			return null;
+		}
+		case "MPCONQUER":
+		{
+			final List<String> p=organizationWords(varify(ctx,CMParms.getPastBit(line,0)));
+			final Area A=(p.size()>0)?CMLib.map().findArea(p.get(0)):null;
+			final Clan C=(p.size()>1)?CMLib.clans().findClan(p.get(1)):null;
+			final LegalBehavior B=(A==null)?null:CMLib.law().getLegalBehavior(A);
+			if((p.size()!=3)||(C==null)||(!(B instanceof com.planet_ink.coffee_mud.Behaviors.Conquerable))||!p.get(2).toUpperCase().matches("(?:[+-][0-9]+|=[+-]?[0-9]+|RULE|FREE)"))
+				logError(ctx,"MPCONQUER","Syntax",line);
+			else
+				((com.planet_ink.coffee_mud.Behaviors.Conquerable)B).scriptControl(C.clanID(),p.get(2));
 			return null;
 		}
 		case "MPRANK": // P25: MPRANK $n LADDER +1|-1|=3|CHECK: $n's rank on a ladder of world/ranks.ini

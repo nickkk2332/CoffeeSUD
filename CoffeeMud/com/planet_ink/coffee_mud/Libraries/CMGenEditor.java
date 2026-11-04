@@ -9415,6 +9415,8 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatBool(mob, me,++showNumber, showFlag,L("Is Shown"), "ISPUBLIC");
 			promptStatCommaChoices(mob, me,CMParms.toListString(Clan.Function.values()),++showNumber, showFlag,L("Powers"), "FUNCTIONS",Clan.Function.values());
 			promptStatStr(mob,me,L("Format: CR delimited. x1=name,x2=position"),++showNumber,showFlag,L("Title Awards"),"TITLES",true);
+			for(final String key : new String[]{"DUESPERIOD","DUESGRACE","DUESLATE","DUESAUTO","STANDINGFACTION","NPCFLAGS"})
+				promptStatStr(mob,me,null,++showNumber,showFlag,key,key,true);
 
 			if (showFlag < -900)
 			{
@@ -12460,7 +12462,17 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			C.setMinClanMembers(prompt(mob,C.getMinClanMembers(),++showNumber,showFlag,L("Minimum members")));
 			C.setExp(prompt(mob,C.getExp(),++showNumber,showFlag,L("Clan Experience")));
 			C.setTaxes(prompt(mob,C.getTaxes(),++showNumber,showFlag,L("Clan Tax Rate (X 100%)")));
-			C.setDues(prompt(mob,C.getDues(),++showNumber,showFlag,L("Clan Dues/yr")));
+			C.setDues(prompt(mob,C.getDues(),++showNumber,showFlag,L("Clan Dues/period")));
+			for(final String key : new String[]{"DUESPERIOD","DUESGRACE","DUESLATE","DUESAUTO","STANDINGFACTION","FLAGS"})
+				C.setStat(key,prompt(mob,C.getStat(key),++showNumber,showFlag,key));
+			for(final Enumeration<Clan> ce=CMLib.clans().clans();ce.hasMoreElements();)
+			{
+				final Clan other=ce.nextElement();
+				if(other==C) continue;
+				final String rel=prompt(mob,Clan.REL_DESCS[C.getClanRelations(other.clanID())],++showNumber,showFlag,"Relation to "+other.name());
+				final int code=Organizations.relationCode(rel);
+				if(code>=0&&code!=C.getClanRelations(other.clanID())) C.setClanRelations(other.clanID(),code,Organizations.now());
+			}
 			C.setMorgue(genClanRoom(mob,C,C.getMorgue(),". Morgue RoomID: '@x1'.",++showNumber,showFlag));
 			C.setRecall(genClanRoom(mob,C,C.getRecall(),". Clan Home RoomID: '@x1'.",++showNumber,showFlag));
 			C.setDonation(genClanRoom(mob,C,C.getDonation(),". Clan Donate RoomID: '@x1'.",++showNumber,showFlag));
@@ -12934,6 +12946,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			genChildAreas(mob,myArea,++showNumber,showFlag,alsoUpdateAreas);
 			genSubOps(mob,myArea,++showNumber,showFlag);
 			genAreaBlurbs(mob,myArea,++showNumber,showFlag);
+			myArea.setStat("REPUTATION",prompt(mob,myArea.getStat("REPUTATION"),++showNumber,showFlag,"Reputation template (blank/NONE disables)"));
 			if(myArea instanceof GridZones)
 			{
 				genGridLocaleX(mob,(GridZones)myArea,++showNumber,showFlag);

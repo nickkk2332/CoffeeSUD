@@ -391,6 +391,7 @@ public final class ScriptEvents
 	 */
 	public static void quest(final Quest Q, final String kind, final MOB who, final String detail)
 	{
+		if(kind.equals("WIN")) Organizations.changed(who);
 		JSQuests.event(Q, kind, who, detail); // JS18: the quest's JavaScript, and its objects'
 		if((Q != null) && kind.equals("WIN"))
 			JSEvents.fire("questwin", who, Q); // JS8
@@ -1680,6 +1681,7 @@ public final class ScriptEvents
 	 */
 	public static void faction(final MOB mob, final com.planet_ink.coffee_mud.Common.interfaces.Faction F, final int before, final int after)
 	{
+		if(before!=after) Organizations.changed(mob);
 		if((mob != null) && (F != null) && (before != after) && (mob.location() != null))
 			JSEvents.fire("factionchange", mob, F, Integer.valueOf(after - before)); // JS8
 		if((mob == null) || (F == null) || (before == after) || (!isUsed(FACTION_PROG)) || (mob.location() == null))

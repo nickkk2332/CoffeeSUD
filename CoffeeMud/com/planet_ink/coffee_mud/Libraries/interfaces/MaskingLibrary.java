@@ -359,6 +359,7 @@ public interface MaskingLibrary extends CMLibrary
 		_RACECAT("-RACECATS"),
 		RACECAT("+RACECATS"),
 		_CLAN("-CLANS"),
+		_CLANRANK, CLANRANK, _RULER, RULER,
 		CLAN("+CLANS"),
 		_CLANLEVEL("-CLANLEVELS"),
 		CLANLEVEL("+CLANLEVELS"),

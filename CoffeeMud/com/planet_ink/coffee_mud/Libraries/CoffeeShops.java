@@ -20,6 +20,7 @@ import com.planet_ink.coffee_mud.Libraries.interfaces.TrackingLibrary.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.*;
 
 import java.util.*;
+import com.planet_ink.coffee_mud.Abilities.Properties.Prop_StockZapper;
 
 /*
    Copyright 2005-2025 Bo Zimmerman
@@ -552,6 +553,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 
 	protected boolean shownInInventory(final MOB seller, final MOB buyer, final Environmental product, final ShopKeeper shopKeeper)
 	{
+		if(!Prop_StockZapper.visible(product,buyer)) return false;
 		if(buyer!=null)
 		{
 			if(CMSecurity.isAllowed(buyer,buyer.location(),CMSecurity.SecFlag.CMDMOBS))
@@ -652,6 +654,9 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 				priceNote("Prejudice x"+priceNum(CMath.s_double(part.trim()))+": the rule '"+sellorby.trim()+"="+part.trim()+"', for everyone.");
 			return CMath.s_double(part.trim());
 		}
+		final int maskAt=part.toUpperCase().indexOf("MASK(");
+		if(maskAt>=0&&part.trim().endsWith(")"))
+			return CMLib.masking().maskCheck(part.substring(maskAt+5,part.lastIndexOf(')')),customer,true)?CMath.s_double(part.substring(0,maskAt).trim()):0;
 		final List<String> prejudiceBits=CMParms.parse(part.trim().toUpperCase());
 		double d=0.0;
 		boolean yes=false;
@@ -671,7 +676,18 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			final String bit = prejudiceBits.get(v).toUpperCase();
 			if (CMath.s_double(bit) != 0.0)
 				d = CMath.s_double(bit);
-			if(customerFlags.contains(bit))
+			boolean clanMatch=false;
+			if(bit.startsWith("CLAN:"))
+			{
+				final Clan C=CMLib.clans().findClan(bit.substring(5).replace('_',' '));
+				clanMatch=C!=null&&customer.getClanRole(C.clanID())!=null;
+			}
+			else if(bit.startsWith("CLANPOS:"))
+			{
+				final String[] p=bit.substring(8).split(":",2);
+				clanMatch=p.length==2&&Organizations.rankTest(customer,p[0].replace('_',' '),"==",p[1]);
+			}
+			if(customerFlags.contains(bit)||clanMatch)
 			{
 				yes=true;
 				if(d!=0.0)
@@ -1317,6 +1333,11 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 								  final ShopKeeper shop,
 								  final BuySellFlag buyFlag)
 	{
+		if(!Prop_StockZapper.allowed(product,buyerCustM))
+		{
+			buyerCustM.tell(Prop_StockZapper.refusal(product));
+			return false;
+		}
 		final CoffeeShop shopItems = shop.getShop(buyerCustM);
 		if((product!=null)
 		&&(shopItems.doIHaveThisInStock("$"+product.Name()+"$",buyerCustM)))
@@ -1569,7 +1590,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 						num = 1;
 					col += CMStrings.padRight(""+num,4)+" ";
 				}
-				col += CMStrings.padRightPreserve("^<SHOP^>"+E.name()+"^.^N^</SHOP^>",prodWidth);
+				col += CMStrings.padRightPreserve("^<SHOP^>"+E.name()+"^.^N^</SHOP^>"+(Prop_StockZapper.allowed(E,buyer)?"":" (restricted)"),prodWidth);
 				if(E.name().length()>=prodWidth)
 				{
 					if(colNum>0)

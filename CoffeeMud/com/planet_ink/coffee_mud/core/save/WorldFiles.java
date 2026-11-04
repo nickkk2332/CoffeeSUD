@@ -408,19 +408,26 @@ public final class WorldFiles
 		}
 	}
 
+	/** Clan memberships in room/catalog XML resolve against these canonical objects. */
+	private static void preloadClans()
+	{
+		for(final Clan C : CMLib.database().DBReadAllClans())
+			if(CMLib.clans().getClan(C.clanID())==null) CMLib.clans().addClan(C);
+	}
+
 	private static void loadWorldFiles()
 	{
 		loadedWhole = false;
 		if(!rebuild)
 		{
+			if((!SaveGame.isBuilderMode())&&(!SaveGame.isRestoring())) importExtras(false);
+			preloadClans();
 			CMLib.database().DBReadAllRooms(null);
 			loadedWhole = true;
 			// what went wrong when the cache was built from the files
 			loadProblems();
 			// a new game starts with the world's templates, clans, journals and
 			// files; a restored one has them in its save, as it left them
-			if((!SaveGame.isBuilderMode()) && (!SaveGame.isRestoring()))
-				importExtras(false);
 			return;
 		}
 		Log.sysOut("WorldFiles", "Building the world from the files in " + worldDir.getPath());
@@ -433,6 +440,8 @@ public final class WorldFiles
 			{
 				problems.clear();
 			}
+			if(!SaveGame.isRestoring()) importExtras(SaveGame.isBuilderMode());
+			preloadClans();
 			for(final File F : listFiles(new File(worldDir, AREAS_DIR), AREA_EXT))
 				whole = report(F, imported(AREAS_DIR + "/" + F.getName(), () -> importArea(F))) && whole;
 			final File catalog = new File(worldDir, CATALOG_FILE);
@@ -440,8 +449,7 @@ public final class WorldFiles
 				whole = report(catalog, imported(CATALOG_FILE, () -> importCatalog(catalog))) && whole;
 			com.planet_ink.coffee_mud.core.Uniques.registerWorld(); // item 1: the copies placed in the areas, read before the catalog
 			whole = report(new File(worldDir, QUESTS_DIR), imported(QUESTS_DIR, () -> importQuests())) && whole;
-			if(!SaveGame.isRestoring())
-				importExtras(SaveGame.isBuilderMode());
+
 		}
 		finally
 		{
@@ -1656,7 +1664,7 @@ public final class WorldFiles
 		for(final Enumeration<Clan> c = CMLib.clans().clans(); c.hasMoreElements();)
 		{
 			final Clan C = c.nextElement();
-			if((C == null) || (C.getMemberList().size() > 0))
+			if((C == null) || ((!Organizations.npcRun(C))&&(!CMLib.database().DBReadClanMembers(C.clanID()).isEmpty())))
 				continue;
 			final XMLLibrary xml = CMLib.xml();
 			final StringBuilder str = new StringBuilder("<CLAN>");
@@ -1861,6 +1869,43 @@ public final class WorldFiles
 	private static void importExtras(final boolean replace)
 	{
 		final XMLLibrary xml = CMLib.xml();
+		// the file system's files
+		final File vfs = new File(worldDir, VFS_DIR);
+		if(vfs.isDirectory())
+		{
+			final Map<String, String[]> index = new HashMap<String, String[]>();
+			final String idx = readText(new File(vfs, VFS_INDEX));
+			if(idx != null)
+			{
+				for(final String line : idx.split("\n"))
+				{
+					final String[] parts = line.split("\t", -1);
+					if(parts.length >= 3)
+						index.put(parts[0], parts);
+				}
+			}
+			final List<File> all = new ArrayList<File>();
+			collectFiles(vfs, all);
+			final String root = vfs.getPath() + File.separator;
+			for(final File F : all)
+			{
+				if(F.getName().equals(VFS_INDEX))
+					continue;
+				final String path = F.getPath().startsWith(root) ? F.getPath().substring(root.length()).replace(File.separatorChar, '/') : F.getName();
+				final String[] meta = index.get(path);
+				try
+				{
+					CMLib.database().DBUpSertVFSFile(path, (meta == null) ? 0 : CMath.s_int(meta[1]),
+						(meta == null) ? "World" : meta[2], F.lastModified(), java.nio.file.Files.readAllBytes(F.toPath()));
+				}
+				catch(final IOException e)
+				{
+					Log.errOut("WorldFiles", F.getPath() + ": " + e.getMessage());
+				}
+			}
+			// the file system was read from the database already: read it again
+			CMFile.unloadVFS();
+		}
 		// templates, shared, so every builder has them
 		final String templates = readWorldXML(new File(worldDir, TEMPLATES_FILE));
 		if(templates != null)
@@ -1961,43 +2006,6 @@ public final class WorldFiles
 					CMLib.database().DBWriteJournal(name, E);
 				}
 			}
-		}
-		// the file system's files
-		final File vfs = new File(worldDir, VFS_DIR);
-		if(vfs.isDirectory())
-		{
-			final Map<String, String[]> index = new HashMap<String, String[]>();
-			final String idx = readText(new File(vfs, VFS_INDEX));
-			if(idx != null)
-			{
-				for(final String line : idx.split("\n"))
-				{
-					final String[] parts = line.split("\t", -1);
-					if(parts.length >= 3)
-						index.put(parts[0], parts);
-				}
-			}
-			final List<File> all = new ArrayList<File>();
-			collectFiles(vfs, all);
-			final String root = vfs.getPath() + File.separator;
-			for(final File F : all)
-			{
-				if(F.getName().equals(VFS_INDEX))
-					continue;
-				final String path = F.getPath().startsWith(root) ? F.getPath().substring(root.length()).replace(File.separatorChar, '/') : F.getName();
-				final String[] meta = index.get(path);
-				try
-				{
-					CMLib.database().DBUpSertVFSFile(path, (meta == null) ? 0 : CMath.s_int(meta[1]),
-						(meta == null) ? "World" : meta[2], F.lastModified(), java.nio.file.Files.readAllBytes(F.toPath()));
-				}
-				catch(final IOException e)
-				{
-					Log.errOut("WorldFiles", F.getPath() + ": " + e.getMessage());
-				}
-			}
-			// the file system was read from the database already: read it again
-			CMFile.unloadVFS();
 		}
 	}
 

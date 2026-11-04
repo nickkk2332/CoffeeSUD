@@ -795,6 +795,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"EFFECTPARM", //222 P1
 		"HASPERK", //223 P13
 		"EXPTONEXT", //224 P2
+		"CLANPOS", "CLANMEMBER", "CLANS", "CLANRELATION", "AREACLAN", "AREACONTROL", "REVOLTCHANCE",
 	};
 
 	/** String list of all valid mobprog commands */
@@ -952,6 +953,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPLEVELDOWN", // 150 P2
 		"MPRESPEC", // 151 P23
 		"MPRANK", // 152 P25
+		"MPCLANRELATION", "MPCONQUER",
 	};
 
 	/**

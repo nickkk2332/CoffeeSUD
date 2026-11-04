@@ -2446,6 +2446,23 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		&&(!CMath.bset(W.punishmentCode(),Law.PUNISHMENTMASK_SEPARATE)))
 			W.setPunishment((W.punishmentCode()&Law.PUNISHMENT_MASK)/2);
 
+		final String leniency=laws.getInternalStr("LENIENCY");
+		final Faction reputation=CMLib.factions().getSpecialAreaFaction(criminalM.location().getArea());
+		if(reputation!=null&&leniency!=null)
+		{
+			final Faction.FRange band=reputation.fetchRange(criminalM.fetchFaction(reputation.factionID()));
+			if(band!=null) for(final String rule : CMParms.parseSemicolons(leniency.replace("\"",""),true))
+			{
+				final int eq=rule.indexOf('=');
+				if(eq>0&&CMParms.parseCommas(rule.substring(0,eq).toUpperCase(),true).contains(band.codeName().toUpperCase()))
+				{
+					final int old=W.punishmentCode();
+					W.setPunishment((old&~Law.PUNISHMENT_MASK)|Math.max(0,Math.min(Law.PUNISHMENT_HIGHEST,(old&Law.PUNISHMENT_MASK)+CMath.s_int(rule.substring(eq+1)))));
+					break;
+				}
+			}
+		}
+
 		if((isStillACrime(W,CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST)))
 		&&((W.witness()==null)||CMLib.flags().canBeSeenBy(W.criminal(),W.witness())))
 		{

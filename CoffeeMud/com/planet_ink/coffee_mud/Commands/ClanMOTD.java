@@ -119,7 +119,7 @@ public class ClanMOTD extends StdCommand
 				}
 				if(premise.equalsIgnoreCase("DELETE")||premise.equalsIgnoreCase("CLEAR"))
 				{
-					CMLib.clans().clanAnnounce(mob,L("Clan MOTD has been cleared. "));
+					C.clanAnnounce(L("Clan MOTD has been cleared. "));
 					CMLib.database().DBDeleteJournal("CLAN_MOTD_"+C.clanID(), null);
 					return;
 				}
@@ -140,7 +140,7 @@ public class ClanMOTD extends StdCommand
 		final String subj = L("@x1 @x2 Message of the Day",C.getGovernmentName(), C.clanID());
 		CMLib.database().DBDeleteJournal("CLAN_MOTD_"+C.clanID(), null);
 		CMLib.database().DBWriteJournal("CLAN_MOTD_"+C.clanID(), mob.Name(), C.clanID(), subj, text);
-		CMLib.clans().clanAnnounce(mob,L("New MOTD: ")+text);
+		C.clanAnnounce(L("New MOTD: ")+text);
 	}
 
 	@Override

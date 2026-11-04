@@ -166,7 +166,7 @@ public class ClanQual extends StdCommand
 	{
 		C.setAcceptanceSettings(qualMask);
 		C.update();
-		CMLib.clans().clanAnnounce(mob,L("The qualifications of @x1 @x2 have been changed.",C.getGovernmentName(),C.clanID()));
+		C.clanAnnounce(L("The qualifications of @x1 @x2 have been changed.",C.getGovernmentName(),C.clanID()));
 	}
 
 	@Override

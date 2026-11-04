@@ -1384,8 +1384,9 @@ public class MUD extends Thread implements MudHost
 				final List<Clan> clans = CMLib.database().DBReadAllClans();
 				for(final Clan C : clans)
 				{
-					CMLib.clans().addClan(C);
-					clanPostLoads.put(C.clanID(), C);
+					final Clan preloaded=CMLib.clans().getClan(C.clanID());
+					if(preloaded==null) CMLib.clans().addClan(C);
+					clanPostLoads.put(C.clanID(),preloaded==null?C:preloaded);
 				}
 				Log.sysOut(Thread.currentThread().getName(),"Clans loaded      : "+CMLib.clans().numClans());
 				if(clanPostLoads.size()>0)

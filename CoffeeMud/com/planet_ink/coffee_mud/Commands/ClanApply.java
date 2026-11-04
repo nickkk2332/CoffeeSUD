@@ -61,6 +61,11 @@ public class ClanApply extends StdCommand
 			final Clan C=CMLib.clans().findClan(clanName);
 			if(C!=null)
 			{
+				if(Organizations.npcRun(C))
+				{
+					mob.tell("Speak to a guildmaster to join "+C.name()+".");
+					return false;
+				}
 				if(C.isOnlyFamilyApplicants()
 				&&(!CMLib.clans().isFamilyOfMembership(mob,C.getMemberList())))
 				{
@@ -107,14 +112,14 @@ public class ClanApply extends StdCommand
 							if((newRole.second.intValue()!=C.getGovernment().getAcceptPos())
 							&&(newRole.second.intValue()==C.getGovernment().getAutoRole()))
 							{
-								CMLib.clans().clanAnnounce(mob,L("The @x1 @x2 has a new @x4: @x3",C.getGovernmentName(),C.clanID(),mob.Name(),C.getRoleName(newRole.second.intValue(), true, false)));
+								C.clanAnnounce(L("The @x1 @x2 has a new @x4: @x3",C.getGovernmentName(),C.clanID(),mob.Name(),C.getRoleName(newRole.second.intValue(), true, false)));
 								mob.tell(L("You have successfully applied for membership in clan @x1.  Your application will be reviewed by management.  Use SCORE to check for a change in status.",C.clanID()));
 							}
 							else
 							{
 								// ST9: addMember runs the entry script
 								CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CLANMEMBERS, 1, C);
-								CMLib.clans().clanAnnounce(mob,L("The @x1 @x2 has a new member: @x3",C.getGovernmentName(),C.clanID(),mob.Name()));
+								C.clanAnnounce(L("The @x1 @x2 has a new member: @x3",C.getGovernmentName(),C.clanID(),mob.Name()));
 								mob.tell(L("You have successfully joined @x1.  Use CLANDETAILS for information.",C.clanID()));
 							}
 						}

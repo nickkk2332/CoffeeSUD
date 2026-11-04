@@ -1471,6 +1471,16 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						v=appendCommaList(buf,V,v,"-");
 					}
 					break;
+				case _RULER:
+					buf.append(L("Requires territory ruled by: "));
+					v=appendCommaList(buf,V,v,"+");
+					break;
+				case RULER:
+					buf.append(L("Disallows territory ruled by: "));
+					v=appendCommaList(buf,V,v,"-");
+					break;
+
+				case _CLANRANK:
 				case _RANK: // C15: -Rank
 					{
 						if(multipleQuals(V,v,"+"))
@@ -1480,6 +1490,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						v=appendCommaList(buf,V,v,"+");
 					}
 					break;
+				case CLANRANK:
 				case RANK: // C15: +Rank
 					{
 						if(multipleQuals(V,v,"-"))
@@ -4777,11 +4788,13 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 					}
 					break;
 				case _AREA: // -Area
+				case _RULER:
 				case _PARENTAREA: // -parentarea
 					buildRoomFlag=true;
 				//$FALL-THROUGH$
 				case _TATTOO: // -Tattoos
 				case _TAG: // -Tag
+				case _CLANRANK:
 				case _RANK: // C15: -Rank
 				case _MOOD: // -Mood
 				case _ACCCHIEVE: // -Accchieves
@@ -5014,11 +5027,13 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 					}
 					break;
 				case AREA: // +Area
+				case RULER:
 				case PARENTAREA: // +parentarea
 					buildRoomFlag=true;
 				//$FALL-THROUGH$
 				case TATTOO: // +Tattoos
 				case TAG: // +Tag
+				case CLANRANK:
 				case RANK: // C15: +Rank
 				case MOOD: // +Mood
 				case ACCCHIEVE: // +Accchieves
@@ -6592,6 +6607,23 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 						}
 					}
 					break;
+				case _CLANRANK:
+				case CLANRANK:
+				case _RULER:
+				case RULER:
+				{
+					boolean found=false;
+					for(final Object o : entry.parms())
+					{
+						if((entry.maskType()==ZapperKey._RULER)||(entry.maskType()==ZapperKey.RULER))
+							found=found||Organizations.rulerMatches(E,(String)o);
+						else
+							found=found||Organizations.rankMask(mob,(String)o);
+					}
+					if(((entry.maskType()==ZapperKey._CLANRANK)||(entry.maskType()==ZapperKey._RULER))?!found:found)
+						return false;
+					break;
+				}
 				case _RANK: // C15: -rank +elite: only mobs of these ranks
 					{
 						final String rank=MobRanks.rankOf(mob);
@@ -9982,6 +10014,7 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 				case TATTOO: // +tattoo
 				case _TAG: // -tag
 				case TAG: // +tag
+				case _CLANRANK: case CLANRANK: case _RULER: case RULER:
 				case _RANK: // C15: a record has no rank
 				case RANK:
 				case _MOOD: // -mood

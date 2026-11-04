@@ -21,4 +21,13 @@ CMLib.database().DBWriteJournal("a fix notice board", M.Name(), "ALL", "FIXPOST 
 check("post", CMLib.database().DBReadJournalMsgsByUpdateDate("a fix notice board", true).size() == 1, "no post");
 var F = new CM.core.CMFile("::fixdir/fixvfs.txt", null, CM.core.CMFile.FLAG_FORCEALLOW);
 check("vfs", F.saveText("FIXVFS kept in the database"), "the file was not saved");
+// F7/F18: generated organisation content survives a fresh world load.
+var result=CM.core.Guilds.create("Fix Rose Order","ORDER",CMLib.map().getExtendedRoomID(R));
+check("guild generator",String(result).indexOf("Created guild")>=0,String(result));
+var order=CMLib.clans().getClan("Fix Rose Order");
+if(order!=null) {
+ order.setDues(12);order.setStat("DUESNEXT","123456789");order.setStat("TREASURY","35");
+ order.setClanRelations(C.clanID(),CM.Common.interfaces.Clan.REL_WAR,CM.core.Organizations.now());order.update();
+ check("guild scaffold",order.getSize()==3&&R.fetchInhabitant("guildmaster")!=null&&R.fetchInhabitant("quartermaster")!=null,"missing members");
+}
 done();

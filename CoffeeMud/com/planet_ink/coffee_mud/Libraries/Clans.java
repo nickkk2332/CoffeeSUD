@@ -68,7 +68,7 @@ public class Clans extends StdLibrary implements ClanManager
 	{
 		if((clanID1==null)||(clanID2==null)||(clanID1.length()==0)||(clanID2.length()==0))
 			return Clan.REL_NEUTRAL==relation;
-		return getCommonClanRelations(getClan(clanID1),getClan(clanID1)) == relation;
+		return getCommonClanRelations(getClan(clanID1),getClan(clanID2)) == relation;
 	}
 
 	@Override
@@ -674,6 +674,7 @@ public class Clans extends StdLibrary implements ClanManager
 			return false;
 		if(!voteIfNecessary)
 			return true;
+		if(Organizations.soleProfileVoter(mob,C,function)) return true;
 		final String matter=CMParms.combine(commands,0);
 		int numFound=0;
 		for(final Enumeration<Clan.ClanVote> e=C.votes();e.hasMoreElements();)
@@ -707,7 +708,7 @@ public class Clans extends StdLibrary implements ClanManager
 				CV.matter=matter;
 				CV.voteStarter=mob.Name();
 				CV.function=function.ordinal();
-				CV.voteStarted=System.currentTimeMillis();
+				CV.voteStarted=Organizations.now();
 				CV.votes=new PairVector<String,Boolean>();
 				CV.voteStatus=Clan.VSTAT_STARTED;
 				C.addVote(CV);
@@ -726,13 +727,13 @@ public class Clans extends StdLibrary implements ClanManager
 					if(votingRoles.size() >= (C.getRolesList().length-2))
 					{
 						if(function == Clan.Function.ASSIGN)
-							clanAnnounce(mob,"The "+C.getGovernmentName()+" "+C.clanID()+" has a new election to vote upon. "+rest);
+							C.clanAnnounce("The "+C.getGovernmentName()+" "+C.clanID()+" has a new election to vote upon. "+rest);
 						else
-							clanAnnounce(mob,"The "+C.getGovernmentName()+" "+C.clanID()+" has a new matter to vote upon. "+rest);
+							C.clanAnnounce("The "+C.getGovernmentName()+" "+C.clanID()+" has a new matter to vote upon. "+rest);
 					}
 					else
 					if(votingRoles.size()==1)
-						clanAnnounce(mob,"The "+C.getGovernmentName()+" "+C.clanID()+" has a new matter to vote upon. "+rest);
+						C.clanAnnounce("The "+C.getGovernmentName()+" "+C.clanID()+" has a new matter to vote upon. "+rest);
 					else
 					{
 						final String[] roleNames = new String[votingRoles.size()];
@@ -742,7 +743,7 @@ public class Clans extends StdLibrary implements ClanManager
 							roleNames[i]=C.getRoleName(roleID.intValue(), true, true);
 						}
 						final String list = CMLib.english().toEnglishStringList(roleNames,true);
-						clanAnnounce(mob,"The "+C.getGovernmentName()+" "+C.clanID()+" has a new matter to vote upon. "
+						C.clanAnnounce("The "+C.getGovernmentName()+" "+C.clanID()+" has a new matter to vote upon. "
 								+list+" should use CLANVOTE to participate.");
 					}
 				}
@@ -1092,6 +1093,14 @@ public class Clans extends StdLibrary implements ClanManager
 		str.append(indt(1)).append("<PUBLIC>").append(gvt.isPublic()).append("</PUBLIC>\n");
 		str.append(indt(1)).append("<FAMILYONLY>").append(gvt.isFamilyOnly()).append("</FAMILYONLY>\n");
 		str.append(indt(1)).append("<RIVALROUS>").append(gvt.isRivalrous()).append("</RIVALROUS>\n");
+		str.append(indt(1)).append("<DUESPERIOD>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("DUESPERIOD"))).append("</DUESPERIOD>\n");
+		str.append(indt(1)).append("<DUESGRACE>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("DUESGRACE"))).append("</DUESGRACE>\n");
+		str.append(indt(1)).append("<DUESLATE>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("DUESLATE"))).append("</DUESLATE>\n");
+		str.append(indt(1)).append("<DUESAUTO>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("DUESAUTO"))).append("</DUESAUTO>\n");
+		str.append(indt(1)).append("<STANDINGFACTION>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("STANDINGFACTION"))).append("</STANDINGFACTION>\n");
+		str.append(indt(1)).append("<DUESNEXT>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("DUESNEXT"))).append("</DUESNEXT>\n");
+		str.append(indt(1)).append("<TREASURY>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("TREASURY"))).append("</TREASURY>\n");
+		str.append(indt(1)).append("<NPCFLAGS>").append(CMLib.xml().parseOutAngleBrackets(gvt.getStat("NPCFLAGS"))).append("</NPCFLAGS>\n");
 		str.append(indt(1)).append("<MISCVARS>").append(gvt.getMiscVariableSettings()).append("</MISCVARS>\n");
 		str.append(indt(1)).append("<XPPERLEVELFORMULA>").append(gvt.getXpCalculationFormulaStr()).append("</XPPERLEVELFORMULA>\n");
 		if(gvt.getOverrideMinMembers() == null)
@@ -1456,6 +1465,14 @@ public class Clans extends StdLibrary implements ClanManager
 			G.setVoteQuorumPct(minVotingPct);
 			G.setDefault(isDefault);
 			G.setMiscVariableSettings((miscVars != null)?miscVars:"");
+			G.setStat("DUESPERIOD",clanTypePieceTag.getValFromPieces("DUESPERIOD"));
+			G.setStat("DUESGRACE",clanTypePieceTag.getValFromPieces("DUESGRACE"));
+			G.setStat("DUESLATE",clanTypePieceTag.getValFromPieces("DUESLATE"));
+			G.setStat("DUESAUTO",clanTypePieceTag.getValFromPieces("DUESAUTO"));
+			G.setStat("STANDINGFACTION",clanTypePieceTag.getValFromPieces("STANDINGFACTION"));
+			G.setStat("DUESNEXT",clanTypePieceTag.getValFromPieces("DUESNEXT"));
+			G.setStat("TREASURY",clanTypePieceTag.getValFromPieces("TREASURY"));
+			G.setStat("NPCFLAGS",clanTypePieceTag.getValFromPieces("NPCFLAGS"));
 			G.getTitleAwards().addAll(titleAwards);
 
 			final XMLTag abilitiesTag = clanTypePieceTag.getPieceFromPieces( "ABILITIES");
@@ -1594,11 +1611,9 @@ public class Clans extends StdLibrary implements ClanManager
 	@Override
 	public void clanAnnounce(final MOB mob, final String msg)
 	{
-		final List<String> channels=CMLib.channels().getFlaggedChannelNames(ChannelsLibrary.ChannelFlag.CLANINFO, null);
-		for(int i=0;i<channels.size();i++)
-		{
-			CMLib.commands().postChannel(mob,channels.get(i),msg,true);
-		}
+		for(final Pair<Clan,Integer> p : mob.clans()) { Organizations.announce(p.first,msg); return; }
+		if(!"OFF".equalsIgnoreCase(CMProps.instance().getProperty("CLANNEWS"))&&CMLib.channels().getChannelIndex("INFO")>=0)
+			CMLib.commands().postChannel(mob,"INFO",msg,true);
 	}
 
 	protected int filterMedianLevel(final List<FullMemberRecord> members)
@@ -1759,6 +1774,7 @@ public class Clans extends StdLibrary implements ClanManager
 
 	public void clanDues()
 	{
+		if(!"REAL".equalsIgnoreCase(CMProps.instance().getProperty("CLANCLOCK"))) return;
 		final TimeClock clock = CMLib.time().homeClock(CMLib.map().getRandomArea());
 		final long lastDuesPaid = CMath.s_long(Resources.getPropResource(this.name, "LAST_DUES_PAID"));
 		final long hoursPerYear = clock.getHoursInDay() * clock.getDaysInYear();

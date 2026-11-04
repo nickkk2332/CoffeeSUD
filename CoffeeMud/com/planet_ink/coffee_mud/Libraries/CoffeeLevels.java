@@ -544,6 +544,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CLASSLEVELSGAINED, -1, mob);
 		CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.LEVELDOWN, 1, mob);
 		CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CLASSLEVELDOWN, 1, mob);
+		Organizations.changed(mob);
 		if(mob.isPlayer()
 		&&(!CMLib.flags().isInTheGame(mob, true)))
 			CMLib.database().DBUpdatePlayerMOBOnly(mob);
@@ -1255,6 +1256,7 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 		theNews.append("and ^H"+trainGain+"^N training "+ (trainGain != 1? "sessions" : "session" )+".\n\r^N");
 		JSProgression.call("onLevel",mob,Integer.valueOf(mob.basePhyStats().level())); // JS23
 		theNews.append(Perks.levelNote(mob)); // P13: a perk to pick
+		Organizations.changed(mob);
 		Ranks.check(mob); // P25: a rank's REQUIRES met
 
 		if(mob.playerStats()!=null)

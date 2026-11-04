@@ -47,6 +47,9 @@ import java.util.regex.Pattern;
  */
 public class DefaultFaction implements Faction, MsgListener
 {
+	protected String showMask="", hiddenName="";
+	protected List<String> playerEffects=new ArrayList<String>();
+
 	@Override
 	public String ID()
 	{
@@ -550,6 +553,10 @@ public class DefaultFaction implements Faction, MsgListener
 		}
 		if(facProps.isEmpty())
 			return;
+		showMask=facProps.getStr("SHOWMASK");
+		hiddenName=facProps.getStr("HIDDENNAME");
+		playerEffects=new ArrayList<String>();
+		for(int n=1;facProps.containsKey("PLAYEREFFECT"+n);n++) playerEffects.add(facProps.getStr("PLAYEREFFECT"+n));
 		name=facProps.getStr("NAME");
 		upName=name.toUpperCase();
 		choiceIntro=facProps.getStr("CHOICEINTRO");
@@ -682,6 +689,10 @@ public class DefaultFaction implements Faction, MsgListener
 			numCall=CMath.s_int(tag.substring(tagRef.maskPrefix.length()));
 		switch(tagRef)
 		{
+		case SHOWMASK: return showMask;
+		case HIDDENNAME: return hiddenName;
+		case PLAYEREFFECT_:
+			return (numCall<0||numCall>=playerEffects.size())?""+playerEffects.size():playerEffects.get(numCall);
 		case NAME:
 			return name;
 		case MINIMUM:
@@ -850,6 +861,13 @@ public class DefaultFaction implements Faction, MsgListener
 					}
 				}
 			}
+		}
+		if(!mob.isMonster()&&!playerEffects.isEmpty())
+		{
+			final Ability A=CMClass.getAbility("Prop_FactionEffects");
+			A.setMiscText(factionID());
+			A.setAffectedOne(mob);
+			aV.add(A);
 		}
 		data.addHandlers(aV,bV);
 	}
@@ -1463,6 +1481,12 @@ public class DefaultFaction implements Faction, MsgListener
 			}
 			break;
 		case CMMsg.TYP_GIVE:
+			if(msg.source()==myHost&&msg.tool() instanceof Item&&!(msg.tool() instanceof Coins)&&msg.target() instanceof MOB)
+			{
+				events=getChangeEvents(MiscTrigger.GIFT.toString());
+				if(events!=null) for(final FactionChangeEvent event : events)
+					if(event.applies(msg.source(),(MOB)msg.target())) executeChange(msg.source(),(MOB)msg.target(),event);
+			}
 			if((msg.source()==myHost)
 			&&(msg.tool() instanceof Coins)
 			&&(msg.target() instanceof MOB)

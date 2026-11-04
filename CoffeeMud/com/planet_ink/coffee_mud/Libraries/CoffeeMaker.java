@@ -274,6 +274,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 			final Area myArea=(Area)E;
 			final StringBuilder parentstr = new StringBuilder();
 			final StringBuilder childrenstr = new StringBuilder();
+			str.append(xmlLib.convertXMLtoTag("REPUTATION",myArea.getStat("REPUTATION")));
 			str.append(xmlLib.convertXMLtoTag("ARCHP",myArea.getArchivePath()));
 			final Area defaultParentArea=CMLib.map().getDefaultParentArea();
 			for(final Enumeration<Area> e=myArea.getParents(); e.hasMoreElements();)
@@ -2916,6 +2917,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 		else
 		if(E instanceof Area)
 		{
+			E.setStat("REPUTATION",CMLib.xml().getValFromPieces(V,"REPUTATION"));
 			((Area)E).setArchivePath(CMLib.xml().getValFromPieces(V,"ARCHP"));
 			if(E instanceof Boardable)
 				E.setDisplayText(CMLib.xml().getValFromPieces(V,"DISP"));
@@ -4269,7 +4271,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 				{
 					int roleID=C.getGovernment().getAcceptPos();
 					if(p.parms().containsKey("ROLE"))
-						roleID=CMath.s_int(p.parms().get("ROLE"));
+						roleID=Organizations.roleID(C,p.parms().get("ROLE"));
 					mob.setClan(C.clanID(), roleID);
 				}
 			}
@@ -5001,7 +5003,7 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 				mob.setClan(clanPieces.get(0).value(), CMath.s_int(oldRole));
 			else
 			for(final XMLTag p : clanPieces)
-				mob.setClan(p.value(), CMath.s_int(p.parms().get("ROLE")));
+				mob.setClan(p.value(), Organizations.roleID(CMLib.clans().getClan(p.value()),p.parms().get("ROLE")));
 			mob.playerStats().setLastIP(mblk.getValFromPieces("LSIP"));
 			mob.playerStats().setEmail(mblk.getValFromPieces("EMAL"));
 			final String buf=mblk.getValFromPieces("PFIL");

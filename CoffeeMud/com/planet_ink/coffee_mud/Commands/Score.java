@@ -343,7 +343,7 @@ public class Score extends Affect
 					final int factionAmt=mob.fetchFaction(factionID);
 					final Faction.FRange FR=fac.getRange(factionID,factionAmt);
 					if((FR!=null)
-					&&(F.showInScore()))
+					&&(F.showInScore())&&Organizations.visible(F,mob))
 					{
 						if(useFactionWords)
 							msg.append(L("^NYour ")+CMStrings.padRight(L("^<HELP^>@x1^</HELP^>",F.name()),15)+": ^H"+FR.name()+" ^.\n\r");

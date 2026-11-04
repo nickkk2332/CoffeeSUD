@@ -77,6 +77,18 @@ public class PartyCmd extends StdCommand
 		if(what.length() == 0)
 			list(mob, profile);
 		else
+		if(what.equals("CLANS")) mob.tell(Organizations.partyClans(mob));
+		else
+		if(what.equals("RULES"))
+		{
+			mob.tell(L("Party size limit: @x1. Profile limit: @x2. Active character limit: @x4. Summoning: @x3.",
+				WorldRules.partyMax() == 0 ? L("unlimited") : "" + WorldRules.partyMax(),
+				WorldRules.profileMax() == 0 ? L("unlimited") : "" + WorldRules.profileMax(),
+				WorldRules.partySummon().equals("MEET") ? L("meet companions where they are")
+				: WorldRules.partySummon().equals("MASK") ? L("only where this world's conditions allow") : L("allowed"),
+				WorldRules.activeMax()==0?L("unlimited"):""+WorldRules.activeMax()));
+		}
+		else
 		if(what.equals("ADD") || what.equals("JOIN"))
 			add(mob, profile, name);
 		else
@@ -101,7 +113,7 @@ public class PartyCmd extends StdCommand
 		if(what.equals("DISABLE") || what.equals("ENABLE"))
 			onTheirOwn(mob, name, what.equals("DISABLE"));
 		else
-			mob.tell(L("PARTY, then ADD, REMOVE, REST, LEAD, DISABLE or ENABLE and a name, ORDER and names, or MEET or FIGHT and ON or OFF?"));
+			mob.tell(L("PARTY, then ADD, REMOVE, REST, LEAD, DISABLE or ENABLE and a name, ORDER and names, MEET or FIGHT and ON or OFF, RULES, or CLANS?"));
 		return false;
 	}
 
@@ -222,7 +234,15 @@ public class PartyCmd extends StdCommand
 				return;
 			}
 			if((M.location() != mob.location()) && (!meet))
+			{
+				final String refusal = WorldRules.summonRefusal(mob);
+				if(refusal != null)
+				{
+					mob.tell(refusal);
+					return;
+				}
 				mob.location().bringMobHere(M, true);
+			}
 		}
 		else
 		{
@@ -237,6 +257,16 @@ public class PartyCmd extends StdCommand
 			{
 				mob.tell(full);
 				return;
+			}
+			final MOB resting = CMLib.players().getLoadPlayer(found);
+			if((!meet) && ((resting == null) || (resting.location() != mob.location())))
+			{
+				final String refusal = WorldRules.summonRefusal(mob);
+				if(refusal != null)
+				{
+					mob.tell(refusal);
+					return;
+				}
 			}
 			M = Party.bringIn(mob, found, meet ? null : mob.location());
 			if(M == null)
@@ -294,6 +324,11 @@ public class PartyCmd extends StdCommand
 
 	protected void meet(final MOB mob, final String onOff)
 	{
+		if(onOff.equalsIgnoreCase("OFF") && WorldRules.partySummon().equals("MEET"))
+		{
+			mob.tell(WorldRules.summonRefusal(mob));
+			return;
+		}
 		if(onOff.equalsIgnoreCase("ON"))
 			Party.setMeetWhereLeft(true);
 		else

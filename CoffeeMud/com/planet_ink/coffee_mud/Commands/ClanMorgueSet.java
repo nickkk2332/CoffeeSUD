@@ -107,7 +107,7 @@ public class ClanMorgueSet extends StdCommand
 				C.setMorgue(CMLib.map().getExtendedRoomID(R));
 				C.update();
 				mob.tell(L("Your @x1 morgue is now set to @x2.",C.getGovernmentName(),R.displayText(mob)));
-				CMLib.clans().clanAnnounce(mob, L("The morgue of @x1 @x2 is now set to @x3.",C.getGovernmentName(),C.clanID(),R.displayText(mob)));
+				C.clanAnnounce( L("The morgue of @x1 @x2 is now set to @x3.",C.getGovernmentName(),C.clanID(),R.displayText(mob)));
 				return true;
 			}
 		}

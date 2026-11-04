@@ -1825,7 +1825,7 @@ public class Create extends StdCommand
 	protected String listOfThings()
 	{
 		return L("EXIT, ITEM, QUEST, FACTION, COMPONENT, GOVERNMENT, HOLIDAY, COMMAND, "
-			 + "CLAN, MOB, RACE, MIXEDRACE, ABILITY, LANGUAGE, CRAFTSKILL, HELP/AHELP, "
+			 + "CLAN, GUILD, MOB, RACE, MIXEDRACE, ABILITY, LANGUAGE, CRAFTSKILL, HELP/AHELP, "
 			 + "ACHIEVEMENT, MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, "
 			 + "WEBSERVER, DISABLEFLAG, ENABLEFLAG, NEWS, USER, TRAP, WRIGHTSKILL, COMMAND, "
 			 + "GATHERSKILL, BUILDSKILL, POISON, DISEASE, TWEAK, CRON, TITLE, AWARD, or ROOM");
@@ -2437,6 +2437,15 @@ public class Create extends StdCommand
 				return errorOut(mob);
 			helps(mob, commands);
 			return false;
+		}
+		else
+		if(commandType.equals("GUILD"))
+		{
+			if(!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDCLANS)||!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDROOMS)||!CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.CMDMOBS)) return errorOut(mob);
+			final List<String> names=new ArrayList<String>();
+			for(int i=2;i<commands.size();i++) if(commands.get(i).indexOf('=')<0) names.add(commands.get(i));
+			final String options=CMParms.combineQuoted(commands,2);
+			mob.tell(Guilds.create(CMParms.combine(names),CMParms.getParmStr(options,"TEMPLATE","GUILD_NPC"),CMParms.getParmStr(options,"HALL",CMLib.map().getExtendedRoomID(mob.location()))));
 		}
 		else
 		if(commandType.equals("CLAN"))

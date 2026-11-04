@@ -3043,6 +3043,56 @@ CR15, CR16, CR17, CR18, CR19, CR20, CR21
 F1, F2, F3, F4, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18,
 F20
 
+- F1-F4 done. Named-clan member/rank functions compare seniority; scripted
+  diplomacy and conquest share existing transitions and events. New CLANRANK
+  and RULER masks cover rank thresholds and ruled territory. MODIFY CLAN edits
+  outgoing relations. Declaration timestamps survive the politics round trip.
+- F6 done. PLAYEREFFECT rules live in faction data, delegate stats, messages and
+  ticks to transient handlers, and recheck their band/mask without saving copies
+  on the character. Requirement changes also invalidate autoaward checks.
+- F7-F8 done. S10 keeps clans as world content; world NPC clans load before room and catalog
+  populations, using the same canonical objects for the later clan post-load.
+  World export distinguishes NPC members from player members. Mob XML and ClanHelper
+  now accept named roles; live NPC members count for membership and leadership.
+  CLANCLOCK=GAME uses game time for maintenance, votes and declaration waits;
+  member activity and politics state are saved. NPCRUN organisations are safe
+  from multiplayer inactivity purging.
+- F9-F10 done. MERIT/MERIT_DEMOTE use live masks and available seats, with checks
+  on faction, tattoo, level and quest changes and each game day. GuildMaster
+  handles the speaking character's joining, fees, quest gates, advancement,
+  dues, departure and catalog kits issued once per rank. Existing addMember
+  and delMember callbacks remain the entry/exit event path.
+- F11-F14 done. Area REPUTATION opts into a template (blank/NONE opts out),
+  LENIENCY adjusts base law sentences by the town band, and ClanEnemyAggressive
+  follows live diplomacy. Clan/rank/mask prejudice and Prop_StockZapper enforce
+  shop access per customer. SHOWMASK/HIDDENNAME hide undiscovered standings;
+  FACTIONS shows ladders and a party comparison, and SCORE respects discovery.
+- F15-F17 done. CLANNEWS routes announcements to INFO or members, with personal
+  rank messages independent of the setting. Dues use saved calendar deadlines,
+  grace periods and WARN/DEMOTE/EXILE steps; manual or automatic payment credits
+  a bank or treasury. AUTOREACTION=CLAN builds NPCRUN standing from clanreaction
+  templates, with kills, bribes, gifts and live diplomatic propagation.
+- F18/F20 done. Four NPC government templates and CREATE GUILD build editable
+  guild content and a gated members' room. Party founding validates members and
+  charges once; CLANVOTES=PROFILE counts eligible profiles and permits an
+  authorised sole-profile action without another character's vote. PARTY CLANS
+  lists character memberships. Full authoring examples: docs/organizations.md.
+- Party corrections alongside this step: own-character SWITCH bypasses physical
+  possession vetoes (including feign death); HELP PARTY no longer loses to the
+  old glossary entry. PARTY RULES exposes world rules. ACTIVECHARMAX and
+  PARTYSUMMON=ALLOW|MEET|MASK enforce world limits, alongside existing PARTYMAX
+  and PROFILEMAX; ordinary FOLLOW also checks the party size limit.
+
+- Persistence checks also caught the database compactor using shared temporary
+  names across databases and ignoring cross-filesystem rename failures. It now
+  writes an isolated adjacent replacement and updates offsets only after the
+  replacement succeeds. The regression checks reopening and subsequent writes.
+
+- Validation: the full fixes suite passed 3,319 checks and the smoke suite
+  passed 97. TEST ALL matches its 47/50 baseline, including the three existing
+  space-test failures. The new fixtures cover party restrictions, feign-death
+  switching, organisation rules and a fresh-database guild-content round trip.
+
 #### 2m. Travel, vehicles and instances (16)
 
 T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T14, T16, T17, T18, T19

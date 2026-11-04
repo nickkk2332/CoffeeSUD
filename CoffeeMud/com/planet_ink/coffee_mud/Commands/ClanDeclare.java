@@ -148,7 +148,7 @@ public class ClanDeclare extends StdCommand
 				if(lastRelationshipChangeMs>(CMProps.getIntVar(CMProps.Int.TICKSPERMUDMONTH)*CMProps.getTickMillis()))
 				{
 					lastRelationshipChangeMs=lastRelationshipChangeMs+(CMProps.getIntVar(CMProps.Int.TICKSPERMUDMONTH)*CMProps.getTickMillis());
-					if(System.currentTimeMillis()<lastRelationshipChangeMs)
+					if(Organizations.now()<lastRelationshipChangeMs)
 					{
 						mob.tell(L("You must wait at least 1 mud month between relation changes."));
 						return false;
@@ -160,10 +160,10 @@ public class ClanDeclare extends StdCommand
 				commands.add(rel);
 				if(skipChecks||CMLib.clans().goForward(mob,C,commands,Clan.Function.DECLARE,true))
 				{
-					CMLib.clans().clanAnnounce(mob,L("The @x1 @x2 has declared @x3 @x4.",C.getGovernmentName(),C.clanID(),CMStrings.capitalizeAndLower(Clan.REL_STATES[newRelationship].toLowerCase()),C2.name()));
+					C.clanAnnounce(L("The @x1 @x2 has declared @x3 @x4.",C.getGovernmentName(),C.clanID(),CMStrings.capitalizeAndLower(Clan.REL_STATES[newRelationship].toLowerCase()),C2.name()));
 					CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CLANDECLARE, -1, C, Clan.REL_DESCS[oldRelationship]);
 					CMLib.achievements().possiblyBumpAchievement(mob, AchievementLibrary.Event.CLANDECLARE, 1, C, Clan.REL_DESCS[newRelationship]);
-					C.setClanRelations(C2.clanID(),newRelationship,System.currentTimeMillis());
+					C.setClanRelations(C2.clanID(),newRelationship,Organizations.now());
 					C.update();
 					return false;
 				}

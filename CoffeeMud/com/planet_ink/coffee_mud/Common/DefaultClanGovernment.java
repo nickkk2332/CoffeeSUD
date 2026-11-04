@@ -42,6 +42,8 @@ import java.util.*;
 */
 public class DefaultClanGovernment implements ClanGovernment
 {
+	protected Map<String,String> organizationSettings=new java.util.TreeMap<String,String>();
+
 	@Override
 	public String ID()
 	{
@@ -161,7 +163,9 @@ public class DefaultClanGovernment implements ClanGovernment
 	{
 		try
 		{
-			return (ClanGovernment)this.clone();
+			final DefaultClanGovernment copy=(DefaultClanGovernment)this.clone();
+			copy.organizationSettings=new java.util.TreeMap<String,String>(organizationSettings);
+			return copy;
 		}
 		catch(final CloneNotSupportedException e)
 		{
@@ -660,7 +664,7 @@ public class DefaultClanGovernment implements ClanGovernment
 		AUTOPROMOTEBY,VOTEFUNCS,LONGDESC,XPLEVELFORMULA,
 		NUMRABLE,GETRABLE,GETRABLEPROF,GETRABLEQUAL,GETRABLELVL,GETRABLEPARM,
 		NUMREFF,GETREFF,GETREFFPARM,GETREFFLVL,CATEGORY,ISRIVALROUS,
-		ENTRYSCRIPT,EXITSCRIPT,GETREFFROLE,GETRABLEROLE,MISCVARS,TITLES
+		ENTRYSCRIPT,EXITSCRIPT,GETREFFROLE,GETRABLEROLE,MISCVARS,TITLES,DUESPERIOD,DUESGRACE,DUESLATE,DUESAUTO,STANDINGFACTION,DUESNEXT,TREASURY,NPCFLAGS
 	}
 
 	@Override
@@ -683,6 +687,7 @@ public class DefaultClanGovernment implements ClanGovernment
 	@Override
 	public String getStat(String code)
 	{
+		if(java.util.Arrays.asList("DUESPERIOD","DUESGRACE","DUESLATE","DUESAUTO","STANDINGFACTION","DUESNEXT","TREASURY","NPCFLAGS").contains(code.toUpperCase())) { return organizationSettings.containsKey(code.toUpperCase())?organizationSettings.get(code.toUpperCase()):""; }
 		int num=0;
 		int numDex=code.length();
 		while((numDex>0)&&(Character.isDigit(code.charAt(numDex-1))))
@@ -815,6 +820,7 @@ public class DefaultClanGovernment implements ClanGovernment
 	@Override
 	public void setStat(String code, final String val)
 	{
+		if(java.util.Arrays.asList("DUESPERIOD","DUESGRACE","DUESLATE","DUESAUTO","STANDINGFACTION","DUESNEXT","TREASURY","NPCFLAGS").contains(code.toUpperCase())) { organizationSettings.put(code.toUpperCase(),val); return; }
 		int num=0;
 		int numDex=code.length();
 		while((numDex>0)&&(Character.isDigit(code.charAt(numDex-1))))

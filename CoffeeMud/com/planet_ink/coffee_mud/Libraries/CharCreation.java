@@ -2607,6 +2607,11 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		if(realMOB==null || (realMOB.playerStats()==null))
 			return null;
 		final PlayerAccount acct = realMOB.playerStats().getAccount();
+		if(!CMLib.flags().isInTheGame(realMOB,true))
+		{
+			final String limit=WorldRules.activeRefusal(acct);
+			if(limit!=null) { session.println(limit); return null; }
+		}
 		if(acct != null)
 		{
 			int numAccountOnline=0;

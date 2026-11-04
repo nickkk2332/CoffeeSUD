@@ -1303,6 +1303,25 @@ public class Conquerable extends Arrest
 		return false;
 	}
 
+	/** Scripted conquest uses the same transitions and events as normal conquest. */
+	public void scriptControl(final String clanID, final String change)
+	{
+		if(totalControlPoints<0&&myArea!=null) recalculateControlPoints(myArea);
+		if(change.equalsIgnoreCase("RULE"))
+			declareWinner(clanID);
+		else
+		if(change.equalsIgnoreCase("FREE"))
+		{
+			if(clanID.equalsIgnoreCase(rulingOrganization()))
+				endClanRule(" by decree");
+		}
+		else
+		if(change.startsWith("="))
+			setControlPoints(clanID, CMath.s_int(change.substring(1)));
+		else
+			setControlPoints(clanID, getControlPoints(clanID)+CMath.s_int(change));
+	}
+
 	@Override
 	public void setControlPoints(final String clanID, final int newControlPoints)
 	{

@@ -2719,11 +2719,12 @@ public class StdArea implements Area
 		return (xtraValues == null) ? getStatCodes().length : getStatCodes().length - xtraValues.length;
 	}
 
+	protected String reputation="";
 	protected static final String[]	STDAREACODES	= {
 			"CLASS", "CLIMATE", "DESCRIPTION", "TEXT", "THEME", "BLURBS",
 			"PREJUDICE", "BUDGET", "DEVALRATE", "INVRESETRATE", "IGNOREMASK",
 			"PRICEMASKS", "ATMOSPHERE",	"AUTHOR", "NAME", "PLAYERLEVEL", "PASSIVEMINS",
-			"CURRENCY", "AFFBEHAV", "TAGS"
+			"CURRENCY", "AFFBEHAV", "TAGS", "REPUTATION"
 			};
 	private static String[]			codes			= null;
 
@@ -2789,6 +2790,7 @@ public class StdArea implements Area
 			return this.getRawCurrency();
 		case 18:
 			return CMLib.coffeeMaker().getExtraEnvironmentalXML(this);
+		case 20: return reputation;
 		case 19:
 			return CMParms.toListString(tags());
 		default:
@@ -2801,6 +2803,7 @@ public class StdArea implements Area
 	{
 		switch (getCodeNum(code))
 		{
+		case 20: reputation=val.trim(); break;
 		case 0:
 			return;
 		case 1:

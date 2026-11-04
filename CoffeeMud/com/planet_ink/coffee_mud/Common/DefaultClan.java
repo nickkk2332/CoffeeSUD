@@ -55,6 +55,8 @@ import java.util.*;
  */
 public class DefaultClan implements Clan
 {
+	protected Map<String,String> organizationSettings=new java.util.TreeMap<String,String>();
+
 	@Override
 	public String ID()
 	{
@@ -151,6 +153,7 @@ public class DefaultClan implements Clan
 		{
 			final DefaultClan C=(DefaultClan)this.clone();
 			C.extItems=(ItemCollection)extItems.copyOf();
+			C.organizationSettings=new java.util.TreeMap<String,String>(organizationSettings);
 			C.clanFlags = new SHashSet<ClanFlag>(clanFlags);
 			return C;
 		}
@@ -433,7 +436,7 @@ public class DefaultClan implements Clan
 		else
 		{
 			final MemberRecord M = CMLib.database().DBGetClanMember(this.clanID(), memberM.Name());
-			return M.dues;
+			return M==null?0:M.dues;
 		}
 	}
 
@@ -693,6 +696,7 @@ public class DefaultClan implements Clan
 	@Override
 	public void setDues(final double dues)
 	{
+		if(this.dues<=0||dues<=0) organizationSettings.remove("DUESNEXT");
 		this.dues=dues;
 	}
 
@@ -731,6 +735,9 @@ public class DefaultClan implements Clan
 		i[0]=rel;
 		i[1]=time;
 		relations.put(id.toUpperCase(),i);
+		Organizations.refreshRelations(this);
+		final Clan other=CMLib.clans().getClan(id);
+		if(other!=null) Organizations.refreshRelations(other);
 	}
 
 	@Override
@@ -828,9 +835,11 @@ public class DefaultClan implements Clan
 		final int oldRole=(before==null)?-1:before.second.intValue();
 		transientSize=-1;
 		M.setClan(clanID(),role);
-		CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), role);
+		if(!M.isMonster()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), role);
 		updateClanPrivileges(M);
 		bumpTrophyData(Trophy.MonthlyNewMembers, 1);
+		if((oldRole!=role)&&(!isApplicantRole(role)))
+			Organizations.tellMember(M,"You are now "+getRoleName(role,false,false)+" of "+name()+".");
 		// ST9: joining runs the government's entry script, however it comes about; CLAN_PROG
 		final boolean wasIn=(oldRole>=0)&&(!isApplicantRole(oldRole));
 		final boolean isIn=!isApplicantRole(role);
@@ -904,7 +913,7 @@ public class DefaultClan implements Clan
 		if(wasIn)
 			runGovernmentScript(M,getGovernment().getExitScript(),"CLANEXIT");
 		transientSize=-1;
-		CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), -1);
+		if(!M.isMonster()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), -1);
 		M.setClan(clanID(),-1);
 		updateClanPrivileges(M);
 		if(wasIn)
@@ -1468,7 +1477,7 @@ public class DefaultClan implements Clan
 	{
 		if(transientSize < 0)
 			transientSize = CMLib.database().DBReadClanMembers(clanID()).size();
-		return transientSize;
+		return transientSize+Organizations.npcMembers(this).size();
 	}
 
 	@Override
@@ -1605,10 +1614,13 @@ public class DefaultClan implements Clan
 				str.append(xmlLib.convertXMLtoTag("CLAN",key));
 				final long[] i=relations.get(key);
 				str.append(xmlLib.convertXMLtoTag("STATUS",""+i[0]));
+				str.append(xmlLib.convertXMLtoTag("TIME",""+i[1]));
 				str.append("</RELATION>");
 			}
 			str.append("</RELATIONS>");
 		}
+		for(final Map.Entry<String,String> e : organizationSettings.entrySet())
+			str.append(xmlLib.convertXMLtoTag("ORG_"+e.getKey(),xmlLib.parseOutAngleBrackets(e.getValue())));
 		str.append("</POLITICS>");
 		str.append(xmlLib.convertXMLtoTag("ONLINEMINS",""+totalOnlineMins));
 		str.append(xmlLib.convertXMLtoTag("LVLSGAINED",""+totalLevelsGained));
@@ -1631,6 +1643,7 @@ public class DefaultClan implements Clan
 		final XMLLibrary xmlLib=CMLib.xml();
 		XMLTag piece;
 		relations.clear();
+		organizationSettings.clear();
 		government=0;
 		if(politics.trim().length()==0)
 			return;
@@ -1647,6 +1660,8 @@ public class DefaultClan implements Clan
 			Log.errOut("Clans","Unable to get POLITICS data.");
 			return;
 		}
+		for(final XMLTag t : poliData)
+			if(t.tag().startsWith("ORG_")) organizationSettings.put(t.tag().substring(4),xmlLib.restoreAngleBrackets(t.value()));
 		government=xmlLib.getIntFromPieces(poliData,"GOVERNMENT");
 		exp=xmlLib.getLongFromPieces(poliData,"EXP");
 		setClanLevel(xmlLib.getIntFromPieces(poliData,"LEVEL"));
@@ -1713,7 +1728,7 @@ public class DefaultClan implements Clan
 					continue;
 				final String relClanID=iblk.getValFromPieces("CLAN");
 				final int rel=iblk.getIntFromPieces("STATUS");
-				setClanRelations(relClanID,rel,0);
+				setClanRelations(relClanID,rel,iblk.getLongFromPieces("TIME"));
 			}
 		}
 	}
@@ -1728,7 +1743,7 @@ public class DefaultClan implements Clan
 	public void setStatus(final int newStatus)
 	{
 		if(newStatus != clanStatus)
-			this.lastStatusChange=System.currentTimeMillis();
+			this.lastStatusChange=Organizations.now();
 		clanStatus = newStatus;
 	}
 
@@ -1801,6 +1816,7 @@ public class DefaultClan implements Clan
 	{
 		final List<MemberRecord> members=CMLib.database().DBReadClanMembers(clanID());
 		transientSize = members.size();
+		for(final MOB M : Organizations.npcMembers(this)) members.add(new MemberRecord(M.Name(),M.getClanRole(clanID()).second.intValue()));
 		return filterMemberList(members, posFilter);
 	}
 
@@ -1874,6 +1890,8 @@ public class DefaultClan implements Clan
 				}
 			}
 		}
+		for(final MOB M : Organizations.npcMembers(this)) members.add(new FullMemberRecord(new MemberRecord(M.Name(),M.getClanRole(clanID()).second.intValue()),M.phyStats().level(),System.currentTimeMillis(),false));
+		for(final FullMemberRecord record : members) record.lastActiveTimeMs=Organizations.memberActive(this,record.name,record.lastActiveTimeMs);
 		return members;
 	}
 
@@ -1896,15 +1914,15 @@ public class DefaultClan implements Clan
 	@Override
 	public int getNumVoters(final Function function)
 	{
-		int voters=0;
+		final Set<String> voters=new HashSet<String>();
 		final List<MemberRecord> members=getMemberList();
 		final Function voteFunc = (function == Function.ASSIGN) ? Function.VOTE_ASSIGN : Function.VOTE_OTHER;
 		for(final MemberRecord member : members)
 		{
 			if(getAuthority(member.role, voteFunc)==Authority.CAN_DO)
-				voters++;
+				voters.add(Organizations.voterKey(member.name));
 		}
-		return voters;
+		return voters.size();
 	}
 
 	@Override
@@ -2037,7 +2055,7 @@ public class DefaultClan implements Clan
 	{
 		if(getMinClanMembers()<=0)
 			return true;
-		return CMLib.players().noPurge(clanID());
+		return Organizations.npcRun(this)||CMLib.players().noPurge(clanID());
 	}
 
 	@Override
@@ -2047,6 +2065,7 @@ public class DefaultClan implements Clan
 			return true;
 		if(CMSecurity.isDisabled(CMSecurity.DisFlag.CLANTICKS))
 			return true;
+		Organizations.tick(this);
 
 		synchronized(this)
 		{
@@ -2094,14 +2113,14 @@ public class DefaultClan implements Clan
 				this.lastClanTickMs = System.currentTimeMillis();
 			}
 
-			// only do the following once per rl day
-			if(tickUp < CMProps.getTicksPerDay())
+			// Maintenance follows the world's selected clan clock.
+			if(tickUp < ("REAL".equalsIgnoreCase(CMProps.instance().getProperty("CLANCLOCK"))?CMProps.getTicksPerDay():CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)))
 				return true;
 			tickUp = 0;
 
 			final long deathMilis=CMProps.getIntVar(CMProps.Int.DAYSCLANDEATH)*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)*CMProps.getTickMillis();
 			final long overthrowMilis=CMProps.getIntVar(CMProps.Int.DAYSCLANOVERTHROW)*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)*CMProps.getTickMillis();
-			final long purgeDuration=(3L * 24L * 60L * 60L * 1000L);
+			final long purgeDuration="REAL".equalsIgnoreCase(CMProps.instance().getProperty("CLANCLOCK"))?3L*24*60*60*1000:3L*CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)*CMProps.getTickMillis();
 
 			final List<FullMemberRecord> members=getFullMemberList();
 			int activeMembers=0;
@@ -2109,7 +2128,7 @@ public class DefaultClan implements Clan
 			for(final FullMemberRecord member : members)
 			{
 				final long lastLogin=member.lastActiveTimeMs;
-				if(((System.currentTimeMillis()-lastLogin)<deathMilis)||(deathMilis==0))
+				if(((Organizations.now()-lastLogin)<deathMilis)||(deathMilis==0))
 					activeMembers++;
 			}
 			final int minimumMembers = getMinClanMembers();
@@ -2118,6 +2137,8 @@ public class DefaultClan implements Clan
 			boolean noLeaders = false;
 			// handle any necessary promotions
 			if((govt().getAutoPromoteBy() != AutoPromoteFlag.NONE)
+			&&(govt().getAutoPromoteBy() != AutoPromoteFlag.MERIT)
+			&&(govt().getAutoPromoteBy() != AutoPromoteFlag.MERIT_DEMOTE)
 			&&((activeMembers>=minimumMembers)))
 			{
 				// first step is to figure out which positions need filling
@@ -2143,7 +2164,7 @@ public class DefaultClan implements Clan
 					final ThinPlayer M = CMLib.database().getThinUser(member.name);
 					if(M==null)
 						continue;
-					if((((System.currentTimeMillis()-member.lastActiveTimeMs)<overthrowMilis)||(overthrowMilis==0))
+					if((((Organizations.now()-member.lastActiveTimeMs)<overthrowMilis)||(overthrowMilis==0))
 					&&(!highestQualifiedMembers.contains(member)))
 						highestQualifiedMembers.add(member);
 				}
@@ -2156,7 +2177,7 @@ public class DefaultClan implements Clan
 						final ThinPlayer M = CMLib.database().getThinUser(member.name);
 						if(M==null)
 							continue;
-						if((((System.currentTimeMillis()-member.lastActiveTimeMs)<overthrowMilis)||(overthrowMilis==0))
+						if((((Organizations.now()-member.lastActiveTimeMs)<overthrowMilis)||(overthrowMilis==0))
 						&&(!highestQualifiedMembers.contains(member)))
 							highestQualifiedMembers.add(member);
 					}
@@ -2434,7 +2455,7 @@ public class DefaultClan implements Clan
 				final List<MemberRecord> highMembers=new LinkedList<MemberRecord>();
 				for(final FullMemberRecord member : members)
 				{
-					if((((System.currentTimeMillis()-member.lastActiveTimeMs)<deathMilis)||(deathMilis==0))
+					if((((Organizations.now()-member.lastActiveTimeMs)<deathMilis)||(deathMilis==0))
 					&&(highPositionList.contains(Integer.valueOf(member.role))))
 						highMembers.add(member);
 				}
@@ -2447,7 +2468,7 @@ public class DefaultClan implements Clan
 				if(!isSafeFromPurge())
 				{
 					if((lastStatusChange > 0)
-					&& ((System.currentTimeMillis() - this.lastStatusChange)>purgeDuration))
+					&& ((Organizations.now() - this.lastStatusChange)>purgeDuration))
 					{
 						if(getStatus()==CLANSTATUS_FADING)
 						{
@@ -2563,14 +2584,14 @@ public class DefaultClan implements Clan
 						if(CV.votes==null)
 							CV.votes=new PairVector<String,Boolean>();
 						boolean voteIsOver=false;
-						if(System.currentTimeMillis()>endsOn)
+						if(Organizations.now()>endsOn)
 							voteIsOver=true;
 						else
 						if(CV.votes.size()==numVotes)
 							voteIsOver=true;
 						if(voteIsOver)
 						{
-							CV.voteStarted=System.currentTimeMillis();
+							CV.voteStarted=Organizations.now();
 							updateVotes=true;
 							if(CV.votes.size()<quorum)
 								CV.voteStatus=VSTAT_FAILED;
@@ -2608,7 +2629,7 @@ public class DefaultClan implements Clan
 						}
 					}
 					else
-					if(System.currentTimeMillis()>endsOn)
+					if(Organizations.now()>endsOn)
 					{
 						updateVotes=true;
 						votesToRemove.addElement(CV);
@@ -2647,17 +2668,7 @@ public class DefaultClan implements Clan
 	@Override
 	public void clanAnnounce(final String msg)
 	{
-		if(channelSet.size()==0)
-		{
-			synchronized(channelSet)
-			{
-				if(channelSet.size()==0)
-					channelSet.add(new Pair<Clan,Integer>(this,Integer.valueOf(getGovernment().getAcceptPos())));
-			}
-		}
-		final List<String> channels=CMLib.channels().getFlaggedChannelNames(ChannelsLibrary.ChannelFlag.CLANINFO, null);
-		for(int i=0;i<channels.size();i++)
-			CMLib.commands().postChannel(channels.get(i),channelSet,msg,true,null);
+		Organizations.announce(this,msg);
 	}
 
 	private static final SearchIDList<Ability> emptyAbles =new CMUniqSortSVec<Ability>(1);
@@ -2717,7 +2728,11 @@ public class DefaultClan implements Clan
 
 	protected MOB getLoadResponsibleMember()
 	{
-		return CMLib.players().getLoadPlayer(getResponsibleMemberName());
+		final String name=getResponsibleMemberName();
+		final MOB player=CMLib.players().getLoadPlayer(name);
+		if(player!=null) return player;
+		for(final MOB M : Organizations.npcMembers(this)) if(M.Name().equalsIgnoreCase(name)) return M;
+		return null;
 	}
 
 	@Override
@@ -2925,7 +2940,8 @@ public class DefaultClan implements Clan
 		"CLANCHARCLASS", // 21
 		"NAME", // 22
 		"FLAGS", // 23
-		"DUES" //24
+		"DUES", //24
+		"DUESPERIOD", "DUESGRACE", "DUESLATE", "DUESAUTO", "STANDINGFACTION", "DUESNEXT", "TREASURY", "NPCFLAGS", "MEMBERACTIVITY"
 	};
 
 	@Override
@@ -2950,6 +2966,7 @@ public class DefaultClan implements Clan
 	public String getStat(final String code)
 	{
 		final int dex=CMParms.indexOf(getStatCodes(),code.toUpperCase().trim());
+		if(dex>=25) return organizationSettings.containsKey(code.toUpperCase().trim())?organizationSettings.get(code.toUpperCase().trim()):"";
 		if(dex<0)
 			return "";
 		switch(dex)
@@ -3027,6 +3044,13 @@ public class DefaultClan implements Clan
 	public void setStat(final String code, final String val)
 	{
 		final int dex=CMParms.indexOf(getStatCodes(),code.toUpperCase().trim());
+		if(dex>=25)
+		{
+			final String key=code.toUpperCase().trim();
+			if(key.equals("DUESPERIOD")&&!val.equalsIgnoreCase(getStat(key))) organizationSettings.remove("DUESNEXT");
+			organizationSettings.put(key,val);
+			return;
+		}
 		if(dex<0)
 			return;
 		switch(dex)

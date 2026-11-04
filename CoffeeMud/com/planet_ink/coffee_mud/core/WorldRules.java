@@ -65,6 +65,68 @@ public class WorldRules
 		return Math.max(0, CMath.s_int(str("PARTYMAX", "0")));
 	}
 
+	/** @return the world limit on active profile characters, including separate groups. */
+	public static int activeMax() { return Math.max(0,CMath.s_int(str("ACTIVECHARMAX","0"))); }
+
+	/** All live profile characters, including separate groups and windows. */
+	public static int activeCount(final PlayerAccount account)
+	{
+		final java.util.Set<MOB> live=new java.util.HashSet<MOB>();
+		if(account!=null) for(final com.planet_ink.coffee_mud.Common.interfaces.Session S : CMLib.sessions().allIterable())
+		{
+			final MOB M=S.mob();
+			if(M!=null&&Party.profileOf(M)==account&&CMLib.flags().isInTheGame(M,true)) live.add(M);
+		}
+		return live.size();
+	}
+
+	public static String activeRefusal(final PlayerAccount account)
+	{
+		final int max=activeMax();
+		return max>0&&activeCount(account)>=max?CMLib.lang().L("This world allows at most @x1 of your characters in the world at once. Rest a character before bringing in another.",""+max):null;
+	}
+
+	/** The world's summoning rule; a player's PARTY MEET preference cannot relax it. */
+	public static String partySummon()
+	{
+		final String rule = str("PARTYSUMMON", "ALLOW").toUpperCase();
+		if(rule.equals("ALLOW") || rule.equals("MASK"))
+			return rule;
+		return "MEET";
+	}
+
+	/** Why a character elsewhere cannot be summoned here, or null. */
+	public static String summonRefusal(final MOB caller)
+	{
+		if(partySummon().equals("MEET"))
+			return CMLib.lang().L("This world requires you to meet your companions where they are.");
+		if(partySummon().equals("MASK"))
+		{
+			final String mask = str("PARTYSUMMONMASK", "");
+			if((mask.length() == 0) || (caller == null) || !CMLib.masking().maskCheck(mask, caller, true))
+			{
+				final String msg = str("PARTYSUMMONMESSAGE", "");
+				return msg.length() > 0 ? msg : CMLib.lang().L("You cannot summon companions here.");
+			}
+		}
+		return null;
+	}
+
+	/** Check the combined profile group after a FOLLOW, including the follower's followers. */
+	public static String followRefusal(final MOB follower, final MOB leader)
+	{
+		final PlayerAccount acct = Party.profileOf(follower);
+		if((acct == null) || (acct != Party.profileOf(leader)) || (partyMax() == 0))
+			return null;
+		final java.util.Set<MOB> group = leader.getGroupMembers(new java.util.HashSet<MOB>());
+		group.addAll(follower.getGroupMembers(new java.util.HashSet<MOB>()));
+		int count = 0;
+		for(final MOB member : group)
+			if(Party.profileOf(member) == acct)
+				count++;
+		return partyRefusal(acct, count - 1, 0, false);
+	}
+
 	/** @return PROFILEMAX, the most characters in the profile, 0 for no limit */
 	public static int profileMax()
 	{
@@ -130,6 +192,8 @@ public class WorldRules
 		if(have == 0)
 			return null; // the first is always made
 		final String msg = str("NEWCHARMESSAGE", "");
+		final String activeLimit=activeRefusal(acct);
+		if(activeLimit!=null) return activeLimit;
 		final String rule = newChars();
 		if(rule.equals("FIRSTONLY"))
 			return (msg.length() > 0) ? msg : CMLib.lang().L("In this world you play the one character you made first.");
@@ -177,6 +241,9 @@ public class WorldRules
 			return CMLib.lang().L("Your party may have at most @x1 character@x2 in it.", "" + max, (max == 1) ? "" : "s");
 		if(comesIn && (acct != null))
 		{
+			final int activeMax = activeMax();
+			if((activeMax > 0) && (inWorld >= activeMax))
+				return CMLib.lang().L("This world allows at most @x1 of your characters in the world at once.", "" + activeMax);
 			int conns = CMProps.getIntVar(CMProps.Int.MAXCONNSPERACCOUNT);
 			if(conns > 0)
 				conns += acct.getBonusCharsOnlineLimit();

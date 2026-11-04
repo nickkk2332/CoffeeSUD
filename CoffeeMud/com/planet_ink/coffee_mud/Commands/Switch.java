@@ -166,12 +166,17 @@ public class Switch extends StdCommand
 		final Session s2=target.session();
 		if((s2 != null)&&(CMLib.flags().isInTheGame(target, true)))
 		{
-			// live switch
+			// A single player's live character switch changes the view, not the
+			// world.  Feign Death (and other physical-action vetoes) must not
+			// prevent taking control of another of the profile's characters.
+			final boolean ownCharacter = CMProps.isSinglePlayer()
+				&& (mobPStats.getAccount() != null)
+				&& (targetPStats.getAccount() == mobPStats.getAccount());
 			final CMMsg msg=CMClass.getMsg(mob,target,null, CMMsg.MSG_POSSESS, null);
 			final Room room=mob.location();
-			if((room==null)||(room.okMessage(mob, msg)))
+			if(ownCharacter || (room==null) || room.okMessage(mob, msg))
 			{
-				if(room!=null)
+				if((!ownCharacter)&&(room!=null))
 					room.send(mob, msg);
 
 				sess.setMob(target);

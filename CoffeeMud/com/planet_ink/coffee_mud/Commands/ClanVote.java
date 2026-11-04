@@ -103,7 +103,7 @@ public class ClanVote extends StdCommand
 					for(int v=0;v<votesForYou.size();v++)
 					{
 						final Clan.ClanVote CV=votesForYou.get(v);
-						final boolean ivoted=((CV.votes!=null)&&(CV.votes.containsFirst(mob.Name())));
+						final boolean ivoted=((CV.votes!=null)&&(CV.votes.containsFirst(Organizations.voterKey(mob.Name()))));
 						final int votesCast=(CV.votes!=null)?CV.votes.size():0;
 						msg.append((ivoted?"*":" ")
 								  +CMStrings.padRight(""+(v+1),3)
@@ -132,7 +132,7 @@ public class ClanVote extends StdCommand
 					{
 						for(int vs=0;vs<CV.votes.size();vs++)
 						{
-							if(CV.votes.getFirst(vs).equals(mob.Name()))
+							if(CV.votes.getFirst(vs).equals(Organizations.voterKey(mob.Name())))
 								myVote=CV.votes.getSecond(vs);
 							if(CV.votes.getSecond(vs).booleanValue())
 								yeas++;
@@ -188,12 +188,12 @@ public class ClanVote extends StdCommand
 							{
 							case 'Y':
 								msg.append(L("Your YEA vote is recorded."));
-								CV.votes.add(mob.Name(),Boolean.TRUE);
+								CV.votes.add(Organizations.voterKey(mob.Name()),Boolean.TRUE);
 								updateVote=true;
 								yeas++;
 								break;
 							case 'N':
-								CV.votes.add(mob.Name(),Boolean.FALSE);
+								CV.votes.add(Organizations.voterKey(mob.Name()),Boolean.FALSE);
 								msg.append(L("Your NAY vote is recorded."));
 								updateVote=true;
 								nays++;
@@ -203,7 +203,7 @@ public class ClanVote extends StdCommand
 								&&(mob.session().confirm(L("This will cancel this entire vote, are you sure (N/y)?"),"N")))
 								{
 									C.delVote(CV);
-									CMLib.clans().clanAnnounce(mob,L("A prior vote for @x1 @x2 has been deleted.",C.getGovernmentName(),C.clanID()));
+									C.clanAnnounce(L("A prior vote for @x1 @x2 has been deleted.",C.getGovernmentName(),C.clanID()));
 									msg.append(L("The vote has been deleted."));
 									updateVote=true;
 								}

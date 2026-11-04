@@ -75,6 +75,7 @@ public class ClanDetails extends StdCommand
 			else
 			{
 				msg.append(foundClan.getDetail(mob));
+				msg.append("\n\r").append(Organizations.rankDetails(mob,foundClan));
 				final Pair<Clan,Integer> p=mob.getClanRole(foundClan.clanID());
 				if((p!=null)&&(mob.clans().iterator().next().first!=p.first))
 				{
