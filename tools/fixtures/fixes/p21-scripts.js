@@ -23,7 +23,9 @@ try {
 	var P2 = CMClass.getAbility("GenPoison").copyOf(); P2.setStat("ALLXML", P.getStat("ALLXML"));
 	check("poison xml", has(P2.getStat("SCRIPT"), "ONCURE"), s(P2.getStat("SCRIPT")).length);
 	var victim = npc("Fixp21 victim"), biter = npc("Fixp21 spider");
-	P.invoke(biter, victim, true, 10);
+	// Exercise the lifecycle hooks directly: normal poison application always
+	// retains a minimum saving throw, even with a very low poison save.
+	P.startTickDown(biter, victim, 20);
 	var V = victim.fetchEffect("FixP21Venom");
 	check("onaffect", V != null && gvar("P21AFF") == "yes", s(V) + " " + gvar("P21AFF"));
 	if (V != null) for (var k = 0; k < 4; k++) V.tick(victim, Tickable.TICKID_MOB); // it first acts on its third tick
