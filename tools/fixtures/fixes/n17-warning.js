@@ -68,16 +68,16 @@ var wolf3 = newMob("GenMob", R);
 wolf3.setName("Fixn17cub");
 CMLib.threads().deleteTick(wolf3, -1);
 var A3 = CMClass.getBehavior("MobileAggressive");
-A3.setParms("min=100 max=100 " + parms);
+A3.setParms("delay=100 min=100 max=100 " + parms);
 wolf3.addBehavior(A3);
-// (it may wander off on its first tick, so: its inner VeryAggressive has the warning, and its tick carries it on)
+// Hold movement and new aggression while checking that an existing warning advances.
 var inner = field(A3, "veryA");
 check("mobile", field(inner, "warn") != null && field(field(inner, "warn"), "ticks") == 2, "the warning did not reach it");
 AW.mayAttack(wolf3, pip.mob, spec);
 var room3 = wolf3.location();
 tick(wolf3, A3);
-// (its tick warns, then, its aggression running the same tick, may attack at once: warned twice, that is right too)
-check("mobile-tick", (wolf3.location() != room3) || (AW.warnedFor(wolf3, "Fixn17pip") == 2) || wolf3.isInCombat(), "count " + AW.warnedFor(wolf3, "Fixn17pip") + ", fighting " + wolf3.isInCombat() + ", pip fighting " + pip.mob.isInCombat());
+// The queued warning advances before the next scheduled movement/attack.
+check("mobile-tick", wolf3.location() == room3 && AW.warnedFor(wolf3, "Fixn17pip") == 2 && !wolf3.isInCombat(), "count " + AW.warnedFor(wolf3, "Fixn17pip") + ", fighting " + wolf3.isInCombat() + ", pip fighting " + pip.mob.isInCombat());
 
 [wolf, wolf2, wolf3].forEach(function (m) { m.destroy(); });
 [pip, next].forEach(function (p) { p.mob.setPlayerStats(null); p.mob.destroy(); });

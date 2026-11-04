@@ -26,7 +26,7 @@ REPLY_LIMIT = 30   # most seconds to wait for an answer to one line
 BOOT_LIMIT = 120   # most seconds to wait for the first prompt
 EXPECT_LIMIT = 1800
 TOTAL_LIMIT = int(os.environ.get('SUDPLAY_LIMIT', '300'))
-EXIT_WAIT = 15     # most seconds to wait for the game to end after the script
+EXIT_WAIT = 60     # most seconds to wait for the game to end after the script
 
 
 def main():

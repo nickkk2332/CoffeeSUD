@@ -7,19 +7,11 @@
 # keeps each suite's full output in a folder it names.
 #   tools/check.sh            fixes suite and smoke test
 #   ENGINE=1 tools/check.sh   and the engine suite
+#   CHECKS_SERIAL=1 FIXES_JOBS=2 ENGINE=1 tools/check.sh   on small CI machines
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$(mktemp -d "${TMPDIR:-/tmp}/sudcheck.XXXXXX")"
 START=$(date +%s)
 "$ROOT/CoffeeMud/build.sh" > "$OUT/build.txt" 2>&1 || { cat "$OUT/build.txt"; exit 1; }
-
-"$ROOT/tools/fixes.sh" > "$OUT/fixes.txt" 2>&1 &
-F_PID=$!
-"$ROOT/tools/smoke.sh" > "$OUT/smoke.txt" 2>&1 &
-S_PID=$!
-if [ "$ENGINE" = "1" ]; then
-	"$ROOT/tools/engine-tests.sh" > "$OUT/engine.txt" 2>&1 &
-	E_PID=$!
-fi
 
 FAIL=0
 report()  # report NAME PID
@@ -35,8 +27,22 @@ report()  # report NAME PID
 		FAIL=1
 	fi
 }
-report fixes $F_PID
-report smoke $S_PID
+# Serial suites avoid combining the fixes' game instances with the smoke
+# chains and the engine suite. Useful with CHECKS_SERIAL=1 FIXES_JOBS=2.
+"$ROOT/tools/fixes.sh" > "$OUT/fixes.txt" 2>&1 &
+F_PID=$!
+if [ "$CHECKS_SERIAL" = "1" ]; then report fixes $F_PID; fi
+"$ROOT/tools/smoke.sh" > "$OUT/smoke.txt" 2>&1 &
+S_PID=$!
+if [ "$CHECKS_SERIAL" = "1" ]; then report smoke $S_PID; fi
+if [ "$ENGINE" = "1" ]; then
+	"$ROOT/tools/engine-tests.sh" > "$OUT/engine.txt" 2>&1 &
+	E_PID=$!
+fi
+if [ "$CHECKS_SERIAL" != "1" ]; then
+	report fixes $F_PID
+	report smoke $S_PID
+fi
 [ "$ENGINE" = "1" ] && report engine $E_PID
 
 echo "took $(( ($(date +%s) - START) / 60 )) min $(( ($(date +%s) - START) % 60 )) s; output in $OUT"

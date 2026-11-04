@@ -32,7 +32,7 @@ FAIL=0
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 # a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|st6|pr5|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in st1|st6|pr5|s10|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -422,6 +422,34 @@ group_saves2()
 	fi
 }
 
+# The world-content round trip can also run alone while developing it.
+run_s10()
+{
+	# S10: templates, a clan with no players, a notice board's posts and the
+	# database's files go to the world files, and a new game has them
+	play s10-build.txt wdb wworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s10-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s10-build.txt
+	if [ -f "$W/wworld/templates.cmare" ] && grep -q "FIXCLAN" "$W/wworld/clans.cmare" \
+	&& grep -q "FIXPOST" "$W/wworld/journals/"*.xml && grep -q "FIXVFS" "$W/wworld/vfs/fixdir/fixvfs.txt"; then
+		echo "  ok    s10-build: the world files have the template, clan, post and file"
+	else
+		echo "  FAIL  s10-build: the world files lack the template, clan, post or file"; FAIL=1
+	fi
+	mkdir -p "$W/wfreshdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/wfreshdb/"
+	play s10-new.txt wfreshdb wworld "Elric\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s10-check.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults s10-new.txt
+
+}
+
+group_s10()
+{
+	SAVES="$W/wsaves"
+	NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+	mkdir -p "$W/wdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/wdb/"
+	cp -r "$GAME/world" "$W/wworld"
+	run_s10
+}
+
 group_saves3()
 {
 	SAVES="$W/wsaves"
@@ -437,18 +465,7 @@ group_saves3()
 	expect s8-restore.txt "Restored 's8'."
 	jsresults s8-restore.txt
 
-	# S10: templates, a clan with no players, a notice board's posts and the
-	# database's files go to the world files, and a new game has them
-	play s10-build.txt wdb wworld "Builder\n${NEWCHAR}jrun /resources/_fixes/s10-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
-	jsresults s10-build.txt
-	if [ -f "$W/wworld/templates.cmare" ] && grep -q "FIXCLAN" "$W/wworld/clans.cmare" \
-	&& grep -q "FIXPOST" "$W/wworld/journals/"*.xml && grep -q "FIXVFS" "$W/wworld/vfs/fixdir/fixvfs.txt"; then
-		echo "  ok    s10-build: the world files have the template, clan, post and file"
-	else
-		echo "  FAIL  s10-build: the world files lack the template, clan, post or file"; FAIL=1
-	fi
-	play s10-new.txt wdb wworld "Elric\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/s10-check.js\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
-	jsresults s10-new.txt
+	run_s10
 
 	# S13: a save remembers the world it was made with: restoring it after the
 	# world changed says what changed, and FRESH=CHANGED takes the changed
@@ -734,25 +751,20 @@ group_saves5()
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
 if [ $# -eq 0 ]; then
-	group_jrun > "$W/group_jrun.log" 2>&1 &
-	J_PID=$!
-	group_st1 > "$W/group_st1.log" 2>&1 &
-	S_PID=$!
-	group_st6 > "$W/group_st6.log" 2>&1 &
-	S6_PID=$!
-	group_pr5 > "$W/group_pr5.log" 2>&1 &
-	P_PID=$!
-	group_saves > "$W/group_saves.log" 2>&1 &
-	V_PID=$!
-	group_saves2 > "$W/group_saves2.log" 2>&1 &
-	V2_PID=$!
-	group_saves3 > "$W/group_saves3.log" 2>&1 &
-	V3_PID=$!
-	group_saves4 > "$W/group_saves4.log" 2>&1 &
-	V4_PID=$!
-	group_saves5 > "$W/group_saves5.log" 2>&1 &
-	V5_PID=$!
-	wait $J_PID; wait $S_PID; wait $S6_PID; wait $P_PID; wait $V_PID; wait $V2_PID; wait $V3_PID; wait $V4_PID; wait $V5_PID
+	# Limit simultaneous game instances on small CI machines. The default
+	# retains the existing parallel run; FIXES_JOBS=2 runs pairs of groups.
+	LIMIT=${FIXES_JOBS:-9}
+	case "$LIMIT" in ''|*[!0-9]*|0) LIMIT=9;; esac
+	PIDS=""; RUNNING=0
+	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5; do
+		"group_$GROUP" > "$W/group_$GROUP.log" 2>&1 &
+		PIDS="$PIDS $!"; RUNNING=$((RUNNING+1))
+		if [ "$RUNNING" -ge "$LIMIT" ]; then
+			for PID in $PIDS; do wait "$PID"; done
+			PIDS=""; RUNNING=0
+		fi
+	done
+	for PID in $PIDS; do wait "$PID"; done
 	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"
 	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then

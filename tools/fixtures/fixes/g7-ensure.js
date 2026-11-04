@@ -1,3 +1,4 @@
+// Room replacement precedes item guarantees so it cannot erase guaranteed items.
 // G7: ENSURE on an AREA: a key put back outside the door it opens (reachable-without:keyname=, IN=mob|container), a counter
 // made up with its FALLBACK, MAX removing extras, and ROOM= making sure of a room (REPLACE= the template it may take over).
 FIXFILE = "g7-ensure";
@@ -16,10 +17,10 @@ java.nio.file.Files.write(F.toPath(), new java.lang.String('<AREADATA><AREA id="
 	+ '<ITEM class="GenContainer" name="a fixg7 chest" display="A chest." condition="$roomtag_depth=1" />'
 	+ '<MOB class="GenMob" name="a fixg7 guard" level="1" display="A guard." condition="$roomtag_depth=1" /><EXIT class="Open" /></ROOM>'
 	+ '</ROOM>'
+	+ '<ENSURE room="fixg7_shrine" count="1" replace="fixg7_hall" />'
 	+ '<ENSURE name="fixg7 cell key" min="1" max="1" fallback="fixg7_key" where="reachable-without:keyname=fixg7 cellkey" in="mob|container" />'
 	+ '<ENSURE var="__fixtorch" min="2" fallback="fixg7_torch" where="reachable" in="room" />'
 	+ '<ENSURE name="fixg7 pebble" max="1" />'
-	+ '<ENSURE room="fixg7_shrine" count="1" replace="fixg7_hall" />'
 	+ '</AREA>'
 	+ '<ITEM id="fixg7_key" class="GenKey" name="a fixg7 cell key" readabletext="fixg7 cellkey" display="A key lies here." />'
 	+ '<ITEM id="fixg7_torch" class="GenItem" name="a fixg7 torch" display="A torch." define="__fixtorch+=1" />'

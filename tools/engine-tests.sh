@@ -7,7 +7,7 @@ GAME="$ROOT/CoffeeMud"
 W="$(mktemp -d "${TMPDIR:-/tmp}/sudtests.XXXXXX")"
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 # play a copy, so the source tree can be rebuilt while this runs
-cp -r "$GAME" "$W/game"
+cp -pr "$GAME" "$W/game"
 # an empty database, as a fresh checkout has: the game builds the world
 # from the world files
 mkdir "$W/db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/db/"
