@@ -734,6 +734,11 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 			text.append(xmlLib.convertXMLtoTag("STATESUBJSTR",((Rideable)E).getStateStringSubject()));
 			text.append(xmlLib.convertXMLtoTag("RIDERSTR",((Rideable)E).getRideString()));
 		}
+		if(E instanceof Boardable)
+		{
+			for(final String code : new String[]{"FIXEDINTERIOR","TICKSPERMOVE","TICKSPERTURN","WEATHERSPEED"})
+				if(E.isStat(code)) text.append(xmlLib.convertXMLtoTag(code,E.getStat(code)));
+		}
 
 		if(E instanceof RawMaterial)
 		{
@@ -4369,6 +4374,11 @@ public class CoffeeMaker extends StdLibrary implements GenericBuilder
 			((Rideable)E).setRideString(xml.getValFromPieces(buf, "RIDERSTR", ""));
 			((Rideable)E).setStateString(xml.getValFromPieces(buf, "STATESTR", ""));
 			((Rideable)E).setStateStringSubject(xml.getValFromPieces(buf, "STATESUBJSTR", ""));
+		}
+		if(E instanceof Boardable)
+		{
+			for(final String code : new String[]{"FIXEDINTERIOR","TICKSPERMOVE","TICKSPERTURN","WEATHERSPEED"})
+				if(E.isStat(code)&&xml.getPieceFromPieces(buf,code)!=null) E.setStat(code,xml.getValFromPieces(buf,code));
 		}
 		if(E instanceof Electronics)
 		{

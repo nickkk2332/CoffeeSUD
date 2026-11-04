@@ -34,7 +34,7 @@ import java.util.*;
    limitations under the License.
 */
 
-public class MovingRoom extends ActiveTicker
+public class MovingRoom extends ActiveTicker implements Travel.MovingRoute
 {
 	@Override
 	public String ID()
@@ -60,11 +60,28 @@ public class MovingRoom extends ActiveTicker
 	private int					currentStatus	= 1;
 	private boolean				isReversed		= false;
 
+	private boolean initialized=false;
+	private long due=0, departureHour=-1;
+	private transient Room hostRoom;
+	private transient Map<Room,Ability> views=new IdentityHashMap<Room,Ability>();
+    public static void clearAll() { Travel.clearRoutes(); }
+    public static void restoreAll() { Travel.restoreRoutes(); }
+    @Override public boolean isAttached() { return hostRoom!=null&&hostRoom.fetchBehavior(ID())==this; }
+
+	@Override public void startBehavior(final PhysicalAgent P)
+	{
+		super.startBehavior(P); if(P instanceof Room) hostRoom=(Room)P; Travel.registerRoute(this);
+	}
+	@Override public void endBehavior(final PhysicalAgent P)
+	{
+		Travel.unregisterRoute(this); super.endBehavior(P);
+	}
+
 	/** for a saved game: where on its route the room is */
 	@Override
 	protected String getRunState()
 	{
-		return "<STOP>"+currentStop+"</STOP><NEXT>"+nextStop+"</NEXT><STATUS>"+currentStatus+"</STATUS><REV>"+isReversed+"</REV>";
+		return "<STOP>"+currentStop+"</STOP><NEXT>"+nextStop+"</NEXT><STATUS>"+currentStatus+"</STATUS><REV>"+isReversed+"</REV><INIT>"+initialized+"</INIT><WAIT>"+Math.max(0,due-GameTime.now())+"</WAIT><HOUR>"+departureHour+"</HOUR>";
 	}
 
 	@Override
@@ -77,6 +94,11 @@ public class MovingRoom extends ActiveTicker
 		nextStop=CMLib.xml().getIntFromPieces(tags, "NEXT");
 		currentStatus=CMLib.xml().getIntFromPieces(tags, "STATUS");
 		isReversed=CMath.s_bool(CMLib.xml().getValFromPieces(tags, "REV"));
+        initialized=CMLib.xml().getPieceFromPieces(tags,"INIT")==null||CMath.s_bool(CMLib.xml().getValFromPieces(tags,"INIT"));
+        due=GameTime.now()+Math.max(1,CMLib.xml().getLongFromPieces(tags,"WAIT"));
+        departureHour=CMLib.xml().getPieceFromPieces(tags,"HOUR")==null?-1:CMLib.xml().getLongFromPieces(tags,"HOUR");
+        clearOverlay();
+        if(hostRoom!=null) refreshOverlay();
 	}
 
 	//private static final int CODE0_TRAVELDIRECTION=0;
@@ -115,7 +137,30 @@ public class MovingRoom extends ActiveTicker
 	@Override
 	public void setParms(final String newParms)
 	{
-		String myParms=newParms;
+        clearOverlay(); initialized=false; departureHour=-1;
+        String route=CMParms.getParmStr(newParms,"ROUTE","");
+        if(route.length()>0)
+        {
+            listOfRooms=new Vector<String>(); roomInfos=new Vector<String>(); messageInfo=new Vector<List<String>>(); mapInfo=new Vector<String>();
+            String xml=route;
+            if(!route.trim().startsWith("<"))
+            {
+                try
+                {
+                    final java.nio.file.Path root=com.planet_ink.coffee_mud.core.save.WorldFiles.worldDir().toPath().resolve("routes").toAbsolutePath().normalize();
+                    final java.nio.file.Path file=root.resolve(route.startsWith("routes/")?route.substring(7):route).normalize();
+                    xml=file.startsWith(root)?new String(java.nio.file.Files.readAllBytes(file),java.nio.charset.StandardCharsets.UTF_8):"";
+                }
+                catch(final java.io.IOException e) { Log.errOut(ID(),"Unable to read route "+route+": "+e.getMessage()); xml=""; }
+            }
+            final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> roots=CMLib.xml().parseAllXML(xml);
+            final String id=CMParms.getParmStr(newParms,"LINE",roots.isEmpty()?"ROUTE":roots.get(0).tag());
+            roomInfos.add(id); roomInfos.add(""+Math.max(1,CMParms.getParmInt(newParms,"WAIT",10))); roomInfos.add(""+Math.max(1,CMParms.getParmInt(newParms,"TRAVEL",10)));
+            super.setParms(newParms); parms=newParms;
+            if(!roots.isEmpty()) parseMovingXML(xml);
+            return;
+        }
+        String myParms=newParms;
 		listOfRooms=new Vector<String>();
 		roomInfos=new Vector<String>();
 		messageInfo=new Vector<List<String>>();
@@ -139,7 +184,7 @@ public class MovingRoom extends ActiveTicker
 		roomInfos=CMParms.parseSemicolons(myParms,false);
 		parms=newParms;
 		xmlInfo=loadInfo();
-		parseMovingXML(xmlInfo);
+		if(roomInfos.size()>=3) parseMovingXML(xmlInfo);
 	}
 
 	protected static synchronized String loadInfo()
@@ -213,352 +258,118 @@ public class MovingRoom extends ActiveTicker
 		mapInfo.add(CMLib.xml().returnXMLValue(theFullBlock, "DISPLOC"));
 	}
 
-	protected String fixOutputString(String incoming, final Room busstopRoom)
-	{
-		incoming = " " + incoming;
-		int i = incoming.indexOf("$disproom");
-		while(i>0)
-		{
-			incoming=incoming.substring(0,i)+busstopRoom.displayText()+incoming.substring(i+9);
-			i = incoming.indexOf("$disproom");
-		}
-		i = incoming.indexOf("$traveldir");
-		while(i>0)
-		{
-			final int pos=listOfRooms.indexOf(CMLib.map().getExtendedRoomID(busstopRoom));
-			boolean revDirName=false;
-			if (((pos==0)||(pos==listOfRooms.size()-1))&&(currentStatus==1))
-				revDirName=true;
-			List<String> V;
-			if (!revDirName)
-			{
-				if (isReversed)
-					V=messageInfo.get(CODE_REVERSEBLOCK);
-				else
-					V=messageInfo.get(CODE_NORMALBLOCK);
-			}
-			else
-			{
-				if (isReversed)
-					V=messageInfo.get(CODE_NORMALBLOCK);
-				else
-					V=messageInfo.get(CODE_REVERSEBLOCK);
-			}
-			incoming=incoming.substring(1,i)+V.get(0).toString()+incoming.substring(i+10);
-			i = incoming.indexOf("$traveldir");
-		}
-		i = incoming.indexOf("$outopendir");
-		while(i>0)
-		{
-			List<String> V;
-			if (isReversed)
-				V=messageInfo.get(CODE_REVERSEBLOCK);
-			else
-				V=messageInfo.get(CODE_NORMALBLOCK);
-			incoming=incoming.substring(1,i)+CMLib.directions().getDirectionName(CMLib.directions().getOpDirectionCode(V.get(1).toString()))+incoming.substring(i+11);
-			i = incoming.indexOf("$outopendir");
-		}
-		i = incoming.indexOf("$inopendir");
-		while(i>0)
-		{
-			List<String> V;
-			if (isReversed)
-				V=messageInfo.get(CODE_REVERSEBLOCK);
-			else
-				V=messageInfo.get(CODE_NORMALBLOCK);
-			incoming=incoming.substring(1,i)+V.get(1).toString()+incoming.substring(i+10);
-			i = incoming.indexOf("$inopendir");
-		}
-		return incoming.trim();
-	}
-
-	protected void removeStubs(final Room busstopRoom1,final Room busstopRoom2)
-	{
-		if (!stubs.isEmpty())
-		{
-			for(int s=0;s<stubs.size();s++)
-			{
-				int i=busstopRoom1.description().indexOf(stubs.get(s).toString());
-				if (i>0)
-					busstopRoom1.setDescription(busstopRoom1.description().substring(0,i).trim());
-				i=busstopRoom2.description().indexOf(stubs.get(s).toString());
-				if (i>0)
-					busstopRoom2.setDescription(busstopRoom2.description().substring(0,i).trim());
-			}
-		}
-	}
-
-	@Override
-	public boolean tick(final Tickable ticking, final int tickID)
-	{
-		final List<String> normalVec = messageInfo.get(CODE_NORMALBLOCK);
-		final List<String> reverseVec = messageInfo.get(CODE_REVERSEBLOCK);
-		final List<String> theDescriptions = messageInfo.get(CODE_DESCRIPTIONBLOCK);
-		super.tick(ticking,tickID);
-		if(canAct(ticking,tickID))
-		{
-			final Room subwayRoom=getBehaversRoom(ticking);
-			if(subwayRoom==null)
-			{
-				Log.errOut("MovingRoom",ticking.ID()+"/"+ticking.name()+" is NOT A DADGUM ROOM!!!!");
-				return false;
-			}
-			if(areas.size()==0)
-			{
-				synchronized(areas)
-				{
-					if(areas.size()==0)
-					{
-						for(final String roomID : listOfRooms)
-						{
-							final Room currentStopRoom = CMLib.map().getRoom(roomID);
-							if((currentStopRoom != null)
-							&&(!areas.contains(currentStopRoom.getArea())))
-								areas.add(currentStopRoom.getArea());
-						}
-						if((areas.size()>0)
-								&&(!areas.contains(subwayRoom.getArea())))
-							areas.add(subwayRoom.getArea());
-					}
-				}
-			}
-			if(areas.size()>0)
-			{
-				boolean proceed=false;
-				synchronized(areas)
-				{
-					for(final Area A : areas)
-					{
-						if(A.getAreaState()==State.ACTIVE)
-							proceed=true;
-					}
-				}
-				if(!proceed)
-					return false;
-			}
-
-			if (currentStop==0)
-			{
-				isReversed=false;
-				nextStop=currentStop+1;
-			}
-			else
-			if (currentStop>=(listOfRooms.size()-1))
-			{
-				isReversed=true;
-				nextStop=currentStop-1;
-			}
-			else
-			if (isReversed)
-			{
-				nextStop=currentStop-1;
-			}
-			else
-			{
-				nextStop=currentStop+1;
-			}
-			if((currentStop<0)
-			||(currentStop>=listOfRooms.size())
-			||(nextStop<0)
-			||(nextStop>=listOfRooms.size()))
-			{
-				Log.errOut("MovingRoom","Moving Room behavior on "+subwayRoom.roomID()+" HAD malformed rooms list in xml file.");
-				subwayRoom.delBehavior(this);
-				CMLib.threads().deleteTick(this,-1);
-				if((ticking instanceof PhysicalAgent)
-				&&(ticking!=subwayRoom))
-					((PhysicalAgent)ticking).delBehavior(this);
-				return false;
-			}
-
-			final String currentStopS=listOfRooms.get(currentStop);
-			final String nextStopS=listOfRooms.get(nextStop);
-			if(ticking instanceof Room)
-			{
-				Room currentStopRoom = CMLib.map().getRoom(currentStopS);
-				if (currentStopRoom == null)
-					currentStopRoom=getBehaversRoom(ticking);
-				Room nextStopRoom =CMLib.map().getRoom(nextStopS);
-				if (nextStopRoom == null)
-					nextStopRoom=getBehaversRoom(ticking);
-				if (currentStatus==0)
-				{
-					//DEPARTING
-					if (isReversed)
-					{
-						if((currentStopRoom.getArea()!=null)
-						&&(currentStopRoom.getArea().getAreaState()==State.ACTIVE))
-							currentStopRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(reverseVec.get(CODE0_OUTSIDEDEPARTMSG).toString(),nextStopRoom));
-						subwayRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(reverseVec.get(CODE0_INSIDEDEPARTMSG).toString(),nextStopRoom));
-						if (((subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString())]!=null)
-								&& ((currentStop==0)
-										|| (currentStop==(listOfRooms.size()-1))))
-						||(subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString())]!=null))
-						{
-							if ((currentStop==0)||(currentStop==(listOfRooms.size()-1)))
-							{
-								currentStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(normalVec.get(1).toString())]=null;
-								currentStopRoom.setRawExit(CMLib.directions().getOpDirectionCode(normalVec.get(1).toString()),null);
-								subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString())]=null;
-								subwayRoom.setRawExit(CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString()),null);
-							}
-							else
-							{
-								currentStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString())]=null;
-								currentStopRoom.setRawExit(CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString()),null);
-								subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString())]=null;
-								subwayRoom.setRawExit(CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString()),null);
-							}
-							/* OMG NO!
-								CMLib.database().DBUpdateExits(subwayRoom);
-								CMLib.database().DBUpdateExits(currentStopRoom);
-							*/
-							subwayRoom.getArea().fillInAreaRoom(subwayRoom);
-							nextStopRoom.getArea().fillInAreaRoom(currentStopRoom);
-							removeStubs(subwayRoom,currentStopRoom);
-							final String s1=(fixOutputString(theDescriptions.get(CODE1_REVERSEINSIDECLOSED).toString(),nextStopRoom));
-							final String s2=(fixOutputString(theDescriptions.get(CODE1_REVERSEOUTSIDECLOSED).toString(),nextStopRoom));
-							if(!stubs.contains(s1))
-								stubs.add(s1);
-							if(!stubs.contains(s2))
-								stubs.add(s2);
-							subwayRoom.setDescription(subwayRoom.description()+"  "+s1);
-							currentStopRoom.setDescription(currentStopRoom.description()+"  "+s2);
-						}
-						else
-						{
-							Log.errOut("MovingRoom","Previous room links exists, "+subwayRoom.roomID()+" "+currentStopRoom.roomID()+" not unlinking exit.");
-						}
-						super.setParms("min="+roomInfos.get(2)+" max="+roomInfos.get(2)+" chance=100;"+roomInfos.get(0)+";"+roomInfos.get(1)+";"+roomInfos.get(2));
-						currentStatus=1;
-				  	}
-					else
-					{
-						// departing, not reversed
-						currentStopRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(normalVec.get(CODE0_OUTSIDEDEPARTMSG).toString(),nextStopRoom));
-						subwayRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(normalVec.get(CODE0_INSIDEDEPARTMSG).toString(),nextStopRoom));
-						if (((subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString())]!=null)
-								&& ((currentStop==0)
-										|| (currentStop==(listOfRooms.size()-1))))
-						||(subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString())]!=null))
-						{
-							if ((currentStop==0)||(currentStop==(listOfRooms.size()-1)))
-							{
-								currentStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString())]=null;
-								currentStopRoom.setRawExit(CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString()),null);
-								subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString())]=null;
-								subwayRoom.setRawExit(CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString()),null);
-							}
-							else
-							{
-								currentStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(normalVec.get(1).toString())]=null;
-								currentStopRoom.setRawExit(CMLib.directions().getOpDirectionCode(normalVec.get(1).toString()),null);
-								subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString())]=null;
-								subwayRoom.setRawExit(CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString()),null);
-							}
-							/* OMG NO!
-								CMLib.database().DBUpdateExits(subwayRoom);
-								CMLib.database().DBUpdateExits(currentStopRoom);
-							*/
-							subwayRoom.getArea().fillInAreaRoom(subwayRoom);
-							nextStopRoom.getArea().fillInAreaRoom(currentStopRoom);
-							removeStubs(subwayRoom,currentStopRoom);
-							final String s1=(fixOutputString(theDescriptions.get(CODE1_NORMALINSIDECLOSED).toString(),nextStopRoom));
-							final String s2=(fixOutputString(theDescriptions.get(CODE1_NORMALOUTSIDECLOSED).toString(),nextStopRoom));
-							if(!stubs.contains(s1))
-								stubs.add(s1);
-							if(!stubs.contains(s2))
-								stubs.add(s2);
-							subwayRoom.setDescription(subwayRoom.description()+"  "+s1);
-							currentStopRoom.setDescription(currentStopRoom.description()+"  "+s2);
-						}
-						else
-						{
-							Log.errOut("MovingRoom","Previous room links exists, "+subwayRoom.roomID()+" "+currentStopRoom.roomID()+" not unlinking exit.");
-						}
-						super.setParms("min="+roomInfos.get(2)+" max="+roomInfos.get(2)+" chance=100;"+roomInfos.get(0)+";"+roomInfos.get(1)+";"+roomInfos.get(2));
-						currentStatus=1;
-					}
-				}
-				else
-				{
-					//ARRIVING
-					if (isReversed)
-					{
-						subwayRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(reverseVec.get(2).toString(),nextStopRoom));
-						nextStopRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(reverseVec.get(4).toString(),nextStopRoom));
-						currentStatus=0;
-						if ((nextStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString())]==null)
-						||(nextStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString())]==subwayRoom))
-						{
-							final Exit thisNewExit=CMClass.getExit("StdOpenDoorway");
-							subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString())]=nextStopRoom;
-							subwayRoom.setRawExit(CMLib.directions().getGoodDirectionCode(reverseVec.get(1).toString()),thisNewExit);
-							nextStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString())]=subwayRoom;
-							nextStopRoom.setRawExit(CMLib.directions().getOpDirectionCode(reverseVec.get(1).toString()),thisNewExit);
-							/* OMG NO!
-								CMLib.database().DBUpdateExits(subwayRoom);
-								CMLib.database().DBUpdateExits(nextStopRoom);
-							*/
-							subwayRoom.getArea().fillInAreaRoom(subwayRoom);
-							nextStopRoom.getArea().fillInAreaRoom(nextStopRoom);
-							removeStubs(subwayRoom,nextStopRoom);
-							final String s1=(fixOutputString(theDescriptions.get(CODE1_REVERSEINSIDEOPEN).toString(),nextStopRoom));
-							final String s2=(fixOutputString(theDescriptions.get(CODE1_REVERSEOUTSIDEOPEN).toString(),nextStopRoom));
-							if(!stubs.contains(s1))
-								stubs.add(s1);
-							if(!stubs.contains(s2))
-								stubs.add(s2);
-							subwayRoom.setDescription(subwayRoom.description()+"  "+s1);
-							nextStopRoom.setDescription(nextStopRoom.description()+"  "+s2);
-						}
-						else
-						{
-							Log.errOut("MovingRoom","Previous room links exists, "+subwayRoom.roomID()+" "+nextStopRoom.roomID()+" not linking exits.");
-						}
-						super.setParms("min="+roomInfos.get(1)+" max="+roomInfos.get(1)+" chance=100;"+roomInfos.get(0)+";"+roomInfos.get(1)+";"+roomInfos.get(2));
-						currentStop = nextStop;
-				  	}
-					else
-					{
-						// arriving, not reversed
-						subwayRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(normalVec.get(2).toString(),nextStopRoom));
-						nextStopRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(normalVec.get(4).toString(),nextStopRoom));
-						currentStatus=0;
-						if ((nextStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(normalVec.get(1).toString())]==null)
-						||(nextStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(normalVec.get(1).toString())]==subwayRoom))
-						{
-							final Exit thisNewExit=CMClass.getExit("StdOpenDoorway");
-							subwayRoom.rawDoors()[CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString())]=nextStopRoom;
-							subwayRoom.setRawExit(CMLib.directions().getGoodDirectionCode(normalVec.get(1).toString()),thisNewExit);
-							nextStopRoom.rawDoors()[CMLib.directions().getOpDirectionCode(normalVec.get(1).toString())]=subwayRoom;
-							nextStopRoom.setRawExit(CMLib.directions().getOpDirectionCode(normalVec.get(1).toString()),thisNewExit);
-							/* OMG NO!
-								CMLib.database().DBUpdateExits(subwayRoom);
-								CMLib.database().DBUpdateExits(nextStopRoom);
-							*/
-							subwayRoom.getArea().fillInAreaRoom(subwayRoom);
-							nextStopRoom.getArea().fillInAreaRoom(nextStopRoom);
-							removeStubs(subwayRoom,nextStopRoom);
-							final String s1=(fixOutputString(theDescriptions.get(CODE1_NORMALINSIDEOPEN).toString(),nextStopRoom));
-							final String s2=(fixOutputString(theDescriptions.get(CODE1_NORMALOUTSIDEOPEN).toString(),nextStopRoom));
-							if(!stubs.contains(s1))
-								stubs.add(s1);
-							if(!stubs.contains(s2))
-								stubs.add(s2);
-							subwayRoom.setDescription(subwayRoom.description()+"  "+s1);
-							nextStopRoom.setDescription(nextStopRoom.description()+"  "+s2);
-						}
-						else
-						{
-							Log.errOut("MovingRoom","Previous room links exists, "+subwayRoom.roomID()+" "+nextStopRoom.roomID()+" not linking exits.");
-						}
-						super.setParms("min="+roomInfos.get(1)+" max="+roomInfos.get(1)+" chance=100;"+roomInfos.get(0)+";"+roomInfos.get(1)+";"+roomInfos.get(2));
-						currentStop = nextStop;
-					}
-				}
-			}
-		}
-		return true;
-	}
+    protected String fixOutputString(final String incoming, final Room stopRoom)
+    {
+        if(messageInfo.size()<2) return incoming;
+        final List<String> info=messageInfo.get(isReversed?CODE_REVERSEBLOCK:CODE_NORMALBLOCK);
+        final int d=CMLib.directions().getGoodDirectionCode(info.get(1));
+        return incoming.replace("$disproom",stopRoom==null?"":stopRoom.displayText())
+            .replace("$traveldir",info.get(0)).replace("$inopendir",info.get(1))
+            .replace("$outopendir",d<0?"":CMLib.directions().getDirectionName(Directions.getOpDirectionCode(d)));
+    }
+    public void clearOverlay()
+    {
+        Travel.unlink(this);
+        if(views!=null) { for(final Map.Entry<Room,Ability> e : views.entrySet()) e.getKey().delEffect(e.getValue()); views.clear(); }
+    }
+    private void view(final Room R, final String text)
+    {
+        if(R==null||text.length()==0) return;
+        final Ability A=CMClass.getAbility("Prop_TransitView"); A.setSavable(false); A.setMiscText(text); R.addNonUninvokableEffect(A); views.put(R,A);
+    }
+    private void scheduleStop()
+    {
+        due=GameTime.now()+Math.max(1,CMath.s_int(roomInfos.get(1)))*CMProps.getTickMillis();
+        departureHour=-1;
+        if(hostRoom==null) return;
+        final TimeClock C=CMLib.time().localClock(hostRoom);
+        final long now=ScriptEvents.clockHours(C), day=Math.max(1,C.getHoursInDay());
+        long best=Long.MAX_VALUE;
+        for(final String s : CMParms.parseCommas(CMParms.getParmStr(getParms(),"DEPART",""),true))
+        {
+            if(!CMath.isInteger(s)) continue;
+            final int h=CMath.s_int(s); if(h<0||h>=day) continue;
+            long at=now-(now%day)+h; if(at<=now) at+=day; best=Math.min(best,at);
+        }
+        if(best!=Long.MAX_VALUE) departureHour=best;
+    }
+    private void next()
+    {
+        if(currentStop<=0) isReversed=false;
+        if(currentStop>=listOfRooms.size()-1) isReversed=true;
+        nextStop=currentStop+(isReversed?-1:1);
+    }
+    public String timetable()
+    {
+        String line=mapInfo.size()>1&&mapInfo.get(1).length()>0?mapInfo.get(1):hostRoom==null?"Moving room":hostRoom.displayText();
+        if(mapInfo.size()>0&&mapInfo.get(0).length()>0&&!mapInfo.get(0).equals(line)) line+=" ("+mapInfo.get(0)+")";
+        if(listOfRooms.size()<2) return line+": no valid route.";
+        return line+": "+(currentStatus==0?"at "+Travel.label(listOfRooms.get(Math.min(currentStop,listOfRooms.size()-1))):"travelling to "+Travel.label(listOfRooms.get(Math.min(nextStop,listOfRooms.size()-1))))
+            +(currentStatus==0?departureHour>=0?", next departure hour "+(departureHour%Math.max(1,CMLib.time().localClock(hostRoom).getHoursInDay())):", departure in "+Math.max(0,(due-GameTime.now())/CMProps.getTickMillis())+" ticks":"");
+    }
+    public void refreshOverlay()
+    {
+        if(hostRoom==null||listOfRooms.size()<2||roomInfos.size()<3||messageInfo.size()<3) return;
+        if(!initialized) { currentStop=0; currentStatus=0; next(); scheduleStop(); initialized=true; }
+        currentStop=Math.max(0,Math.min(currentStop,listOfRooms.size()-1));
+        nextStop=Math.max(0,Math.min(nextStop,listOfRooms.size()-1));
+        clearOverlay();
+        final List<String> descriptions=messageInfo.get(CODE_DESCRIPTIONBLOCK);
+        final int base=isReversed?4:0;
+        final Room current=CMLib.map().getRoom(listOfRooms.get(currentStop));
+        final Room target=CMLib.map().getRoom(listOfRooms.get(nextStop));
+        if(currentStatus==0&&current!=null)
+        {
+            final int d=CMLib.directions().getGoodDirectionCode(messageInfo.get(isReversed?CODE_REVERSEBLOCK:CODE_NORMALBLOCK).get(1));
+            if(d>=0)
+            {
+                final Exit exit=CMClass.getExit("Open");
+                if(Travel.temporaryLink(this,hostRoom,d,current,exit))
+                {
+                    if(!Travel.temporaryLink(this,current,Directions.getOpDirectionCode(d),hostRoom,exit)) Travel.unlink(this);
+                }
+            }
+        }
+        view(hostRoom,fixOutputString(descriptions.get(base+(currentStatus==0?0:1)),currentStatus==0?current:target));
+        for(int i=0;i<listOfRooms.size();i++)
+        {
+            final Room R=CMLib.map().getRoom(listOfRooms.get(i));
+            if(R==null||R==hostRoom) continue;
+            String text=fixOutputString(descriptions.get(base+(currentStatus==0&&i==currentStop?2:3)),hostRoom);
+            if(CMath.s_bool(CMParms.getParmStr(getParms(),"DISPLOC",mapInfo.size()>2?mapInfo.get(2):"false"))) text+=" "+timetable();
+            view(R,text.trim());
+            final String sign=CMParms.getParmStr(getParms(),"SIGN","");
+            final Item board=sign.length()==0?null:R.findItem(null,sign);
+            if(board!=null) board.setReadableText(timetable());
+        }
+    }
+    @Override public boolean tick(final Tickable ticking, final int tickID)
+    {
+        if(!(ticking instanceof Room)||listOfRooms.size()<2||messageInfo.size()<3) return true;
+        hostRoom=(Room)ticking;
+        if(!initialized) refreshOverlay();
+        final boolean ready=currentStatus==0&&departureHour>=0?ScriptEvents.clockHours(CMLib.time().localClock(hostRoom))>=departureHour:GameTime.now()>=due;
+        if(!ready) return true;
+        final List<String> info=messageInfo.get(isReversed?CODE_REVERSEBLOCK:CODE_NORMALBLOCK);
+        final Room stopRoom=CMLib.map().getRoom(listOfRooms.get(currentStatus==0?currentStop:nextStop));
+        if(stopRoom==null) return true;
+        if(currentStatus==0)
+        {
+            hostRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(info.get(CODE0_INSIDEDEPARTMSG),stopRoom));
+            stopRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(info.get(CODE0_OUTSIDEDEPARTMSG),stopRoom));
+            currentStatus=1; departureHour=-1; due=GameTime.now()+Math.max(1,CMath.s_int(roomInfos.get(2)))*CMProps.getTickMillis();
+        }
+        else
+        {
+            hostRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(info.get(2),stopRoom));
+            stopRoom.showHappens(CMMsg.MSG_OK_ACTION,fixOutputString(info.get(4),stopRoom));
+            currentStop=nextStop; currentStatus=0; next(); scheduleStop();
+        }
+        refreshOverlay();
+        return true;
+    }
+    @Override public CMObject copyOf()
+    {
+        final MovingRoom B=new MovingRoom(); B.setParms(getParms()); return B;
+    }
 }

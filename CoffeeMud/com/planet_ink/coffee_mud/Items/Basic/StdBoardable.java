@@ -52,6 +52,7 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 	protected int 		price 			= 1000;
 	protected int		internalPrice	= 0;
 	protected Area 		area			= null;
+	protected boolean fixedInterior=false;
 	protected String	homePortID		= "";
 
 	protected static String	DEFAULT_NOUN_STRING = CMLib.lang().L("base");
@@ -310,21 +311,23 @@ public class StdBoardable extends StdPortal implements PrivateProperty, Boardabl
 		final String xml=CMLib.coffeeMaker().getAreaObjectXML(getArea(), null, null, null, true).toString();
 		s.setArea(xml);
 		s.setReadableText(readableText()); // in case this was first call to getArea()
-		/* Should we rename?
-		final Area A=s.getArea();
-		final String num=Double.toString(CMath.random());
-		final int x=num.indexOf('.')+1;
-		final int len=((num.length()-x)/2)+1;
-		String oldName=A.Name();
-		A.setName(L("UNNAMED_@x1",num.substring(x,x+len)));
-		for(final Enumeration<Room> r=A.getCompleteMap();r.hasMoreElements();)
-		{
-			final Room R=r.nextElement();
-			if((R!=null)&&(R.roomID().startsWith(oldName)))
-				R.setRoomID(A.Name()+R.roomID().substring(oldName.length()));
-		}
-		s.renameDestinationRooms(oldName,A.Name());
-		*/
+        if(!s.fixedInterior)
+        {
+            final Area A=s.getArea();
+            final String oldName=A.Name();
+            final String next=Travel.newInteriorName(name());
+            if(A instanceof Boardable) ((Boardable)A).rename(next);
+            else
+            {
+                A.setName(next);
+                for(final Enumeration<Room> e=A.getCompleteMap();e.hasMoreElements();)
+                {
+                    final Room R=e.nextElement();
+                    if(R!=null&&R.roomID().startsWith(oldName+"#")) R.setRoomID(next+R.roomID().substring(oldName.length()));
+                }
+            }
+            s.renameDestinationRooms(oldName,A.Name());
+        }
 		//TODO: when you buy a boardable, none of its electronics is registered.  This is bad.
 		//CMLib.tech().unregisterAllElectronics(CMLib.tech().getElectronicsKey(s.getArea()));
 		return s;

@@ -32,7 +32,7 @@ FAIL=0
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 # a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|st6|pr5|s10|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in st1|st6|pr5|s10|travel|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -747,6 +747,26 @@ group_saves5()
 	fi
 }
 
+group_travel()
+{
+    SAVES="$W/travelsaves"
+    NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+    echo "Played: travel, a paused journey, same-name mounts, sister stables, waypoints and a mid-shaft lift"
+    mkdir -p "$W/traveldb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/traveldb/"
+    cp -r "$GAME/world" "$W/travelworld"
+    play travel-build.txt traveldb travelworld "Builder\n${NEWCHAR}jrun /resources/_fixes/travel-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+    jsresults travel-build.txt
+    play travel-play.txt traveldb travelworld "Traveller\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/travel-play.js\n#sleep 3\njrun /resources/_fixes/travel-paused.js\nsave travel\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+    jsresults travel-play.txt
+    expect travel-play.txt "Game saved as 'travel'."
+    play travel-checkpoint.txt traveldb travelworld 'jrun /resources/_fixes/travel-check.js\nsave travelagain\nquit\nn\n' RESTORE=travel TIMEMODE=TURNS
+    jsresults travel-checkpoint.txt
+    expect travel-checkpoint.txt "Game saved as 'travelagain'."
+    play travel-restore.txt traveldb travelworld 'jrun /resources/_fixes/travel-check.js\njourney resume\n#sleep 3\njrun /resources/_fixes/travel-final-scene.js\njourney resume\njrun /resources/_fixes/travel-arrived.js\nquit\nn\n' RESTORE=travelagain TIMEMODE=TURNS
+    expect travel-restore.txt "Restored 'travelagain'."
+    jsresults travel-restore.txt
+}
+
 # the groups share nothing (each has its own world, database and saves), so
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
@@ -756,7 +776,7 @@ if [ $# -eq 0 ]; then
 	LIMIT=${FIXES_JOBS:-9}
 	case "$LIMIT" in ''|*[!0-9]*|0) LIMIT=9;; esac
 	PIDS=""; RUNNING=0
-	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5; do
+	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel; do
 		"group_$GROUP" > "$W/group_$GROUP.log" 2>&1 &
 		PIDS="$PIDS $!"; RUNNING=$((RUNNING+1))
 		if [ "$RUNNING" -ge "$LIMIT" ]; then
@@ -765,8 +785,8 @@ if [ $# -eq 0 ]; then
 		fi
 	done
 	for PID in $PIDS; do wait "$PID"; done
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log"; then FAIL=1; fi
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!

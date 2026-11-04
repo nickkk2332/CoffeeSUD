@@ -11127,6 +11127,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 				genTitleRoom(mob,(LandTitle)me,++showNumber,showFlag);
 			genImage(mob,me,++showNumber,showFlag);
 			genTags(mob,me,++showNumber,showFlag);
+            if(me instanceof Boardable)
+                for(final String field : new String[]{"TICKSPERMOVE","TICKSPERTURN","WEATHERSPEED","FIXEDINTERIOR"})
+                    if(me.isStat(field)) me.setStat(field,prompt(mob,me.getStat(field),++showNumber,showFlag,CMStrings.capitalizeAndLower(field)));
 			for(int x=me.getSaveStatIndex();x<me.getStatCodes().length;x++)
 				me.setStat(me.getStatCodes()[x],prompt(mob,me.getStat(me.getStatCodes()[x]),++showNumber,showFlag,CMStrings.capitalizeAndLower(me.getStatCodes()[x])));
 			if(me.numScripts()>0)
@@ -11569,6 +11572,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			//	me.setStat("OWNER",prompt(mob,((PrivateProperty)me).getOwnerName(),++showNumber,showFlag,CMStrings.capitalizeAndLower("Property Owner")));
 			genImage(mob,me,++showNumber,showFlag);
 			genTags(mob,me,++showNumber,showFlag);
+            if(me instanceof Boardable)
+                for(final String field : new String[]{"TICKSPERMOVE","TICKSPERTURN","WEATHERSPEED","FIXEDINTERIOR"})
+                    if(me.isStat(field)) me.setStat(field,prompt(mob,me.getStat(field),++showNumber,showFlag,CMStrings.capitalizeAndLower(field)));
 			for(int x=me.getSaveStatIndex();x<me.getStatCodes().length;x++)
 				me.setStat(me.getStatCodes()[x],prompt(mob,me.getStat(me.getStatCodes()[x]),++showNumber,showFlag,CMStrings.capitalizeAndLower(me.getStatCodes()[x])));
 			if(me.numScripts()>0)

@@ -151,7 +151,7 @@ public class Concierge extends StdBehavior
 		GREETING(null,null),
 		ENTERMSG(null,null),
 		TALKERNAME(null,null),
-		PERROOM(null,null)
+		PERROOM(null,null), PARTY(null,null), PETS(null,null), CARGO(null,null)
 		;
 		public TrackingFlag tf;
 		public TrackingFlag rf;
@@ -438,6 +438,11 @@ public class Concierge extends StdBehavior
 			return price;
 		}
 		return rates.get(rateIndex).second.doubleValue();
+	}
+
+	protected double getPrice(final MOB customer, final Room centerRoom, final Room destination)
+	{
+		return getPrice(centerRoom,destination);
 	}
 
 	protected final List<Room> getRoomsInRange(final Room centerRoom, final List<Room> roomsInRange, final TrackingFlags roomRadiusFlags)
@@ -950,7 +955,7 @@ public class Concierge extends StdBehavior
 								return;
 							}
 						}
-						final double rate=getPrice(room,roomR);
+						final double rate=getPrice(msg.source(),room,roomR);
 						final Double owed=Double.valueOf(rate);
 						trackingFlags.addAll(myRoomRadiusFlags);
 						destinations.removeElementFirst(msg.source());

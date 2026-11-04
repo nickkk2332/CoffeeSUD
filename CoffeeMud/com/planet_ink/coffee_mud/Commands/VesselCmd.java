@@ -80,8 +80,6 @@ public class VesselCmd extends StdCommand
 		if((course == null) || course.isEmpty())
 			return "none";
 		final List<String> dirs = new ArrayList<String>();
-		if(N.getDirectionFacing() >= 0)
-			dirs.add(CMLib.directions().getDirectionName(N.getDirectionFacing()).toLowerCase());
 		for(final Integer d : course)
 		{
 			if((d != null) && (d.intValue() >= 0))
@@ -224,19 +222,47 @@ public class VesselCmd extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
-		if((commands.size() < 3) || (!commands.get(1).equalsIgnoreCase("STATUS")))
+		if(commands.size() < 3)
 		{
-			mob.tell(L("VESSEL STATUS [NAME]"));
+			mob.tell(L("VESSEL STATUS [NAME], or VESSEL [NAME] ENTER, RENAME [NAME], HOME [ROOM]."));
 			return false;
 		}
-		final String name = CMParms.combine(commands, 2);
+		String action=commands.get(1).toUpperCase();
+		String value="";
+		String name=CMParms.combine(commands,2);
+		if(!action.equals("STATUS"))
+		{
+			int at=-1;
+			for(int i=2;i<commands.size();i++)
+				if(Arrays.asList("ENTER","RENAME","HOME").contains(commands.get(i).toUpperCase())) { at=i; break; }
+			if(at<0) { mob.tell(L("Specify ENTER, RENAME or HOME.")); return false; }
+			action=commands.get(at).toUpperCase();
+			name=CMParms.combine(commands.subList(1,at),0);
+			value=CMParms.combine(commands,at+1);
+		}
 		final Boardable S = findVessel(name);
 		if(S == null)
 		{
 			mob.tell(L("There is no vessel '@x1'.", name));
 			return false;
 		}
-		mob.tell(status(S));
+		if(action.equals("STATUS")) mob.tell(status(S));
+		else if(action.equals("ENTER"))
+		{
+			final Enumeration<Room> rooms=S.getArea().getProperMap();
+			if(rooms.hasMoreElements()) { rooms.nextElement().bringMobHere(mob,false); CMLib.commands().postLook(mob,true); }
+		}
+		else if(action.equals("RENAME"))
+		{
+			if(value.trim().length()==0||CMLib.map().getArea(value)!=null) mob.tell(L("Give a new, unused interior name."));
+			else { S.rename(value); mob.tell(L("Vessel renamed. Save its room to keep the change.")); }
+		}
+		else if(action.equals("HOME"))
+		{
+			final Room home=CMLib.map().getRoom(value);
+			if(home==null) mob.tell(L("Unknown home room."));
+			else { S.setHomePortID(CMLib.map().getExtendedRoomID(home)); mob.tell(L("Home port set. Save its room to keep the change.")); }
+		}
 		return false;
 	}
 

@@ -141,7 +141,7 @@ public class GenCaravan extends GenNavigableBoardable
 	{
 		if(R!=null)
 		{
-			if(CMLib.flags().isDrivableRoom(R))
+			if(Travel.drivable(R,this))
 				return R;
 			TrackingLibrary.TrackingFlags flags;
 			flags = CMLib.tracking().newFlags()
@@ -153,7 +153,7 @@ public class GenCaravan extends GenNavigableBoardable
 			final List<Room> rooms=CMLib.tracking().getRadiantRooms(R, flags, 25);
 			for(final Room R2 : rooms)
 			{
-				if(CMLib.flags().isDrivableRoom(R2))
+				if(Travel.drivable(R2,this))
 					return R2;
 			}
 		}
@@ -203,7 +203,7 @@ public class GenCaravan extends GenNavigableBoardable
 		for(final Enumeration<Room> r=A.getProperMap();r.hasMoreElements();)
 		{
 			final Room R=r.nextElement();
-			if((R!=null)&& (CMLib.flags().isDrivableRoom(R)) &&(CMLib.map().getExtendedRoomID(R).length()>0))
+			if((R!=null)&& (Travel.drivable(R,this)) &&(CMLib.map().getExtendedRoomID(R).length()>0))
 				return R;
 		}
 		return null;
@@ -221,7 +221,7 @@ public class GenCaravan extends GenNavigableBoardable
 		final Room R=CMLib.map().roomLocation(this);
 		if((R==null)
 		|| R.amDestroyed()
-		|| (!CMLib.flags().isDrivableRoom(R))
+		|| (!Travel.drivable(R,this))
 		|| ((!CMLib.flags().isFalling(this)) && (getAnyExitDir(R)<0)))
 			return true;
 		return false;
@@ -256,7 +256,7 @@ public class GenCaravan extends GenNavigableBoardable
 	@Override
 	protected boolean preNavigateCheck(final Room thisRoom, final int direction, final Room destRoom)
 	{
-		if(!CMLib.flags().isDrivableRoom(destRoom))
+		if(!Travel.drivable(destRoom,this))
 		{
 			announceToAllAboard(L("As there is no where to @x2 @x1, <S-NAME> go(es) nowhere.",CMLib.directions().getInDirectionName(direction),verb_sail));
 			courseDirections.clear();

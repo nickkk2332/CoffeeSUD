@@ -41,8 +41,37 @@ import java.util.concurrent.atomic.AtomicInteger;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class InstanceArea extends StdAbility
+public class InstanceArea extends StdAbility implements Travel.InPlaceScaling, Travel.CommittedEntry
 {
+	private boolean inPlaceReady=false;
+	public boolean isInPlace() { return instVars!=null&&CMath.s_bool(instVars.get("INPLACE")); }
+	public synchronized void rebuildInPlace(final Room R, final MOB leader)
+	{
+		if(!isInPlace()) return;
+		if(leader!=null)
+		{
+			instanceLevel=Math.max(1,leader.phyStats().level()); leaderMob=new WeakReference<MOB>(leader);
+		}
+		if(instanceLevel<1) instanceLevel=Math.max(1,R.getArea().getIStat(Area.Stats.MED_LEVEL));
+		fixRoom(R); inPlaceReady=true;
+	}
+	@Override public void entering(final Environmental host, final MOB who, final Room from, final Room to)
+	{
+		if(!isInPlace()||inPlaceReady||!who.isPlayer()) return;
+		final MOB leader=who.getGroupLeader();
+		if(affected instanceof Area)
+			for(final Enumeration<Room> e=((Area)affected).getProperMap();e.hasMoreElements();) rebuildInPlace(e.nextElement(),leader);
+		else if(affected==to) rebuildInPlace(to,leader);
+	}
+	@Override public String travelState()
+	{
+		return isInPlace()?"<INPLACE READY=\""+inPlaceReady+"\" LEVEL=\""+instanceLevel+"\" />":"";
+	}
+	@Override public void restoreTravelState(final String xml)
+	{
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag t : CMLib.xml().parseAllXML(xml))
+			if(t.tag().equals("INPLACE")) { inPlaceReady=CMath.s_bool(t.getParmValue("READY")); instanceLevel=CMath.s_int(t.getParmValue("LEVEL")); }
+	}
 	@Override
 	public String ID()
 	{
@@ -224,6 +253,7 @@ public class InstanceArea extends StdAbility
 	protected void clearVars()
 	{
 		instanceLevel=1;
+		inPlaceReady=false;
 		roomsDone=new WeakArrayList<Room>();
 		instVars=null;
 		promotions=null;
@@ -392,7 +422,7 @@ public class InstanceArea extends StdAbility
 				}
 				for(final String key : instParms.keySet())
 				{
-					if((CMath.s_valueOf(InstVar.class, key)==null)
+					if((CMath.s_valueOf(InstVar.class, key)==null)&&!key.equals("INPLACE")
 					&&(CMLib.factions().getFaction(key)==null)
 					&&(CMLib.factions().getFactionByName(key)==null))
 						Log.errOut("InstanceArea","Unknown instance var: "+key);
@@ -439,7 +469,7 @@ public class InstanceArea extends StdAbility
 			}
 			Area instArea = null;
 			if((affected instanceof Area)
-			&& (CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
+			&& (isInPlace()||CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
 			{
 				instArea=(Area)affected;
 				int medianLevel=instArea.getPlayerLevel();
@@ -892,7 +922,7 @@ public class InstanceArea extends StdAbility
 	{
 		try
 		{
-			final Area instArea = ((affected instanceof Area) && (CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
+			final Area instArea = ((affected instanceof Area) && (isInPlace()||CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
 								 ?(Area)affected:null;
 			final Area parentArea;
 			if(instArea instanceof SubArea)
@@ -1723,6 +1753,7 @@ public class InstanceArea extends StdAbility
 	{
 		if(!super.okMessage(myHost, msg))
 			return false;
+		if(isInPlace()) return true;
 		if((affected instanceof Area)
 		&&(CMath.bset(((Area)affected).flags(), Area.FLAG_INSTANCE_CHILD)))
 		{

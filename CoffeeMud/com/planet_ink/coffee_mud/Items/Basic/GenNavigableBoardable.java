@@ -51,7 +51,8 @@ public class GenNavigableBoardable extends StdNavigableBoardable
 	{
 		"HASLOCK","HASLID","CAPACITY","CONTAINTYPES", "RESETTIME","RIDEBASIS","MOBSHELD",
 		"AREA","OWNER","PRICE","DEFCLOSED","DEFLOCKED", "EXITNAME",
-		"PUTSTR","MOUNTSTR","DISMOUNTSTR","STATESTR","STATESUBJSTR","RIDERSTR"
+		"PUTSTR","MOUNTSTR","DISMOUNTSTR","STATESTR","STATESUBJSTR","RIDERSTR",
+        "TICKSPERMOVE","TICKSPERTURN","WEATHERSPEED","FIXEDINTERIOR"
 	};
 
 	private int getInternalCodeNum(final String code)
@@ -136,6 +137,10 @@ public class GenNavigableBoardable extends StdNavigableBoardable
 			return this.getStateStringSubject();
 		case 18:
 			return this.getRideString();
+        case 19: return ""+ticksPerMoves;
+        case 20: return ""+ticksPerTurn;
+        case 21: return ""+weatherSpeed;
+        case 22: return ""+fixedInterior;
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -204,6 +209,10 @@ public class GenNavigableBoardable extends StdNavigableBoardable
 		case 18:
 			setRideString(val);
 			break;
+        case 19: ticksPerMoves=Math.max(1,CMath.s_int(val)); break;
+        case 20: ticksPerTurn=Math.max(1,CMath.s_int(val)); break;
+        case 21: weatherSpeed=CMath.s_bool(val); break;
+        case 22: fixedInterior=CMath.s_bool(val); break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);
 			break;

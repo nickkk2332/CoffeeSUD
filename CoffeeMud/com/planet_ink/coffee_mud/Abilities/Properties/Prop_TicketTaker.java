@@ -32,7 +32,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class Prop_TicketTaker extends Property
+public class Prop_TicketTaker extends Property implements Travel.BoardingReceipt
 {
 	@Override
 	public String ID()
@@ -66,8 +66,20 @@ public class Prop_TicketTaker extends Property
 
 	protected double	cost		= 0.0;
 	protected String	ticketName	= null;
+	protected boolean leaderPays=false;
+	protected double petFare=0, cargoFare=0;
+	protected Map<MOB,Rideable> groupPaid=new WeakHashMap<MOB,Rideable>();
+	protected Map<CMMsg,List<MOB>> farePlans=new WeakHashMap<CMMsg,List<MOB>>();
 
-	protected final LimitedTreeSet<String> paid		= new LimitedTreeSet<String>(1000,25,false);
+	protected LimitedTreeSet<String> paid		= new LimitedTreeSet<String>(1000,25,false);
+
+	@Override public CMObject copyOf()
+	{
+		final Prop_TicketTaker A=(Prop_TicketTaker)super.copyOf();
+		A.groupPaid=new WeakHashMap<MOB,Rideable>(); A.farePlans=new WeakHashMap<CMMsg,List<MOB>>();
+		A.paid=new LimitedTreeSet<String>(1000,25,false);
+		return A;
+	}
 
 	@Override
 	public void setMiscText(final String text)
@@ -75,8 +87,15 @@ public class Prop_TicketTaker extends Property
 		super.setMiscText(text);
 		cost=0.0;
 		ticketName = null;
+		leaderPays=CMParms.getParmStr(text,"PARTY","EACH").equalsIgnoreCase("LEADER");
+		petFare=Math.max(0,CMParms.getParmDouble(text,"PETS",0));
+		cargoFare=Math.max(0,CMParms.getParmDouble(text,"CARGO",0));
+		groupPaid=new WeakHashMap<MOB,Rideable>();
+		farePlans=new WeakHashMap<CMMsg,List<MOB>>();
 		if(CMath.isNumber(text))
 			cost = Math.abs(CMath.s_double(text));
+		else if(text.indexOf('=')>=0)
+			cost=Math.max(0,CMParms.getParmDouble(text,"FARE",0));
 		else
 		if(text.trim().length()>0)
 			ticketName = text.trim();
@@ -148,6 +167,11 @@ public class Prop_TicketTaker extends Property
 	{
 		if(target instanceof Rideable)
 			return (Rideable)target;
+		if(target instanceof Room&&((Room)target).getArea() instanceof Boardable)
+		{
+			final Item ship=((Boardable)((Room)target).getArea()).getBoardableItem();
+			if(ship instanceof Rideable) return (Rideable)ship;
+		}
 		if((target instanceof Room)
 		&&(CMLib.map().roomLocation(affected) == target))
 		{
@@ -159,10 +183,21 @@ public class Prop_TicketTaker extends Property
 		return null;
 	}
 
+	@Override public void disembarked(final MOB who)
+	{
+		groupPaid.remove(who); paid.remove(who.Name());
+	}
+
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
 		super.executeMsg(myHost,msg);
+		if(msg.sourceMinor()==CMMsg.TYP_DISMOUNT||msg.sourceMinor()==CMMsg.TYP_LEAVE)
+		{
+			final Rideable paidRide=groupPaid.get(msg.source());
+			if(paidRide!=null&&(msg.sourceMinor()==CMMsg.TYP_DISMOUNT
+				||(!(msg.target() instanceof Room)&&msg.target()==paidRide))) groupPaid.remove(msg.source());
+		}
 		final MOB mob=msg.source();
 		if((msg.target()!=null)
 		&&(myHost!=mob)
@@ -176,6 +211,18 @@ public class Prop_TicketTaker extends Property
 			case CMMsg.TYP_SLEEP:
 			{
 				final Rideable ride = getRideable(msg.target(), msg.tool());
+				if(leaderPays&&ride!=null&&isTicketTakingScenario(mob,ride))
+				{
+					if(groupPaid.get(mob)!=ride)
+					{
+						List<MOB> group=farePlans.remove(msg);
+						if(group==null) group=Travel.party(mob,mob.location());
+						final MOB leader=mob.getGroupLeader();
+						if(Travel.fare(leader,group,cost,true,false,petFare,cargoFare,true))
+							for(final MOB member : group) groupPaid.put(member,ride);
+					}
+					break;
+				}
 				if((ride != null)
 				&& (isTicketTakingScenario(msg.source(),ride))
 				&& (!paid.contains(msg.source().Name())))
@@ -230,8 +277,7 @@ public class Prop_TicketTaker extends Property
 		final MOB mob=msg.source();
 		if((msg.target()!=null)
 		&&(myHost!=mob)
-		&&(!mob.isMonster())
-		&&(msg.target() instanceof Rideable))
+		&&(!mob.isMonster()))
 		{
 			switch(msg.sourceMinor())
 			{
@@ -240,8 +286,20 @@ public class Prop_TicketTaker extends Property
 			case CMMsg.TYP_ENTER:
 			case CMMsg.TYP_SLEEP:
 			{
-				if(isTicketTakingScenario(msg.source(),(Rideable)msg.target()))
+				final Rideable ride=getRideable(msg.target(),msg.tool());
+				if(ride!=null&&isTicketTakingScenario(msg.source(),ride))
 				{
+					if(leaderPays)
+					{
+						if(groupPaid.get(mob)==ride) return true;
+						final MOB leader=mob.getGroupLeader();
+						if(leader.location()!=mob.location()) { mob.tell(L("Your party leader must be here to pay the fare.")); return false; }
+						final List<MOB> group=Travel.party(leader,mob.location());
+						group.removeIf(m -> groupPaid.get(m)==ride);
+						farePlans.put(msg,group);
+						return Travel.fare(leader,group,cost,true,false,petFare,cargoFare,false);
+					}
+					if(paid.contains(mob.Name())) return true;
 					if(cost > 0)
 					{
 						String currency=CMLib.beanCounter().getCurrency(affected);

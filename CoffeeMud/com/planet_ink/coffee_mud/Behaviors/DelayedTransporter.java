@@ -43,6 +43,8 @@ public class DelayedTransporter extends ActiveTicker
 
 	protected Map<String, Integer>	transportees	= new Hashtable<String, Integer>();
 	protected List<String>			destRoomNames	= new Vector<String>();
+	protected int destinationIndex=0;
+	protected String options="";
 
 	@Override
 	protected int canImproveCode()
@@ -68,6 +70,7 @@ public class DelayedTransporter extends ActiveTicker
 	{
 		// done so copies work
 		transportees = new Hashtable<String, Integer>();
+		destinationIndex=0; options="";
 		destRoomNames = new Vector<String>();
 		String myParms=origParms;
 		int x=myParms.indexOf(';');
@@ -76,6 +79,7 @@ public class DelayedTransporter extends ActiveTicker
 			final String activeTickParms=myParms.substring(0,x);
 			myParms=myParms.substring(x+1); // and break them for below
 			super.setParms(activeTickParms); // activeticker stuff
+			options=activeTickParms;
 		}
 		super.parms = origParms; // skip activeticker stuff, for now
 		while(myParms.length()>0)
@@ -101,9 +105,16 @@ public class DelayedTransporter extends ActiveTicker
 		final Room room=this.getBehaversRoom(ticking);
 		if((room==null)||(destRoomNames.size()==0))
 			return true;
-		for(int i=0;i<room.numInhabitants();i++)
+		final Set<MOB> carried=new HashSet<MOB>();
+		final List<MOB> occupants=new XVector<MOB>(room.inhabitants());
+		for(final MOB candidate : occupants)
 		{
-			final MOB inhab=room.fetchInhabitant(i);
+			MOB inhab=candidate;
+			final String partyRule=Travel.option(options,"PARTY","FALSE");
+			final boolean together=CMParms.getParmBool(options,"PARTY",false)||partyRule.equalsIgnoreCase("LEADER")||partyRule.equalsIgnoreCase("EACH");
+			if(together&&inhab!=null&&inhab.getGroupLeader().location()==room) inhab=inhab.getGroupLeader();
+			if(carried.contains(inhab)||inhab==null||inhab.location()!=room) continue;
+			carried.add(inhab);
 			if(inhab!=null)
 			{
 				Integer I=transportees.get(inhab.Name());
@@ -115,16 +126,37 @@ public class DelayedTransporter extends ActiveTicker
 				boolean gone=false;
 				if(I.intValue()>=minTicks)
 				{
-					if((CMLib.dice().rollPercentage()<chance)||(I.intValue()>maxTicks))
+					if((CMLib.dice().rollPercentage()<=chance)||(I.intValue()>maxTicks))
 					{
-						final String roomName=destRoomNames.get(CMLib.dice().roll(1,destRoomNames.size(),-1));
+						final boolean ordered=Travel.option(options,"DEST","RANDOM").equalsIgnoreCase("ORDER");
+						final String roomName=destRoomNames.get(ordered?destinationIndex%destRoomNames.size():CMLib.dice().roll(1,destRoomNames.size(),-1));
 						final Room otherRoom=CMLib.map().getRoom(roomName);
 						if(otherRoom==null)
 							inhab.tell(L("You are whisked nowhere at all, since '@x1' is nowhere to be found.",roomName));
 						else
-							otherRoom.bringMobHere(inhab,true);
-						transportees.remove(inhab.Name());
-						gone=true;
+						{
+							final MOB leader=inhab;
+							final List<MOB> group=together?Travel.party(leader,room):new XVector<MOB>(leader.getGroupMembers(new HashSet<MOB>()));
+							final String mask=Organizations.parameterMask(Travel.option(options,"MASK",""));
+							group.removeIf(m -> m.location()!=room||!CMLib.masking().maskCheck(mask,m,true));
+							final double fare=Math.max(0,CMParms.getParmDouble(options,"FARE",0));
+							final boolean perHead=CMParms.getParmBool(options,"PERHEAD",false);
+							final boolean each=Travel.option(options,"PARTY",perHead?"EACH":"LEADER").equalsIgnoreCase("EACH");
+							if(group.contains(leader)&&Travel.transfer(leader,group,otherRoom,CMParms.getParmBool(options,"LOOK",false),
+								() -> {
+									if(!Travel.fare(leader,group,fare,perHead,each,0,0,true)) return false;
+									final String depart=Travel.option(options,"DEPARTMSG","");
+									if(depart.length()>0) room.showHappens(CMMsg.MSG_OK_VISUAL,depart);
+									return true;
+								}))
+							{
+								final String arrive=Travel.option(options,"ARRIVEMSG","");
+								if(arrive.length()>0) otherRoom.showHappens(CMMsg.MSG_OK_VISUAL,arrive);
+								for(final MOB member : group) { transportees.remove(member.Name()); carried.add(member); }
+								if(ordered) destinationIndex++;
+								gone=true;
+							}
+						}
 					}
 				}
 				if(!gone)
@@ -135,5 +167,21 @@ public class DelayedTransporter extends ActiveTicker
 			}
 		}
 		return true;
+	}
+
+	@Override protected String getRunState()
+	{
+		final StringBuilder out=new StringBuilder("<DESTINDEX>"+destinationIndex+"</DESTINDEX>");
+		for(final Map.Entry<String,Integer> e : transportees.entrySet())
+			out.append("<PASSENGER N=\"").append(CMLib.xml().parseOutAngleBrackets(e.getKey())).append("\">").append(e.getValue()).append("</PASSENGER>");
+		return out.toString();
+	}
+	@Override protected void setRunState(final String xml)
+	{
+		transportees.clear();
+		final List<com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag> tags=CMLib.xml().parseAllXML(xml);
+		destinationIndex=Math.max(0,CMLib.xml().getIntFromPieces(tags,"DESTINDEX"));
+		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag t : tags)
+			if(t.tag().equals("PASSENGER")) transportees.put(CMLib.xml().restoreAngleBrackets(t.getParmValue("N")),Integer.valueOf(CMath.s_int(t.value())));
 	}
 }

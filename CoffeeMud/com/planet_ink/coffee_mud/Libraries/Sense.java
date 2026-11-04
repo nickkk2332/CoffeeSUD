@@ -2044,6 +2044,8 @@ public class Sense extends StdLibrary implements CMFlagLibrary
 	@Override
 	public boolean isDrivableRoom(final Room R)
 	{
+		if(Travel.road(R)!=null)
+			return true;
 		if(R==null)
 			return false;
 		switch(R.domainType())

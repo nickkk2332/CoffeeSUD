@@ -1921,7 +1921,10 @@ public class CMCatalog extends StdLibrary implements CatalogLibrary
 		final PlayerData PD=getBuilderTemplates(playerName,true).get(ID.toUpperCase().trim());
 		if(PD==null)
 			return null;
-		return CMLib.coffeeMaker().unpackUnknownFromXML(PD.xml());
+		final Environmental object=CMLib.coffeeMaker().unpackUnknownFromXML(PD.xml());
+		if(object instanceof Boardable&&!CMath.s_bool(object.getStat("FIXEDINTERIOR")))
+			((Boardable)object).rename(Travel.newInteriorName(object.Name()));
+		return object;
 	}
 
 	@Override

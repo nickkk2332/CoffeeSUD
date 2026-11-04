@@ -34,7 +34,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class Nanny extends StdBehavior
+public class Nanny extends StdBehavior implements Travel.StableService
 {
 	@Override
 	public String ID()
@@ -42,14 +42,25 @@ public class Nanny extends StdBehavior
 		return "Nanny";
 	}
 
+	@Override public CMObject copyOf()
+	{
+		final Nanny B=new Nanny(); B.setParms(getParms()); B.setStat("STATE",getStat("STATE")); return B;
+	}
+
 	/** the charges and payments from a saved game, until the charges are found in the room */
 	protected List<String[]> savedDropOffs = null;
+	protected long savedDropOffAt=0;
 
 	@Override
 	protected String getRunState()
 	{
 		final StringBuilder str=new StringBuilder("");
-		if(dropOffs!=null)
+		if(savedDropOffs!=null)
+			for(final String[] saved : savedDropOffs)
+				str.append("<CHARGE N=\"").append(CMLib.xml().parseOutAngleBrackets(saved[0]))
+				   .append("\" M=\"").append(CMLib.xml().parseOutAngleBrackets(saved[1]))
+				   .append("\" AGO=\"").append(Math.max(0,GameTime.now()-savedDropOffAt+CMath.s_long(saved[2]))).append("\" />");
+		else if(dropOffs!=null)
 		{
 			for(final DropOff D : dropOffs)
 			{
@@ -68,7 +79,7 @@ public class Nanny extends StdBehavior
 	@Override
 	protected void setRunState(final String xml)
 	{
-		savedDropOffs=new ArrayList<String[]>();
+		savedDropOffs=new ArrayList<String[]>(); savedDropOffAt=GameTime.now(); payments.clear(); dropOffs=null;
 		for(final com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag tag : CMLib.xml().parseAllXML(xml))
 		{
 			if(tag.tag().equalsIgnoreCase("CHARGE"))
@@ -100,16 +111,16 @@ public class Nanny extends StdBehavior
 			PhysicalAgent baby=null;
 			for(int i=0;(i<R.numInhabitants())&&(baby==null);i++)
 			{
-				if(R.fetchInhabitant(i).Name().equals(D[0]))
+				if(R.fetchInhabitant(i).Name().equals(D[0])&&!isDroppedOff(R.fetchInhabitant(i)))
 					baby=R.fetchInhabitant(i);
 			}
 			for(int i=0;(i<R.numItems())&&(baby==null);i++)
 			{
-				if(R.getItem(i).Name().equals(D[0]))
+				if(R.getItem(i).Name().equals(D[0])&&!isDroppedOff(R.getItem(i)))
 					baby=R.getItem(i);
 			}
 			if((baby!=null)&&(!isDroppedOff(baby)))
-				dropOffs.add(new DropOff(D[1],baby,GameTime.now()-CMath.s_long(D[2])));
+				dropOffs.add(new DropOff(D[1],baby,savedDropOffAt-CMath.s_long(D[2])));
 		}
 	}
 
@@ -130,6 +141,8 @@ public class Nanny extends StdBehavior
 	protected boolean	changedSinceLastSave	= false;
 	protected String	place					= "Nursery";
 	protected double	hourlyRate				= 1.0;
+	protected String stableNetwork="";
+	protected double sendFee=0;
 
 	protected List<DropOff>	dropOffs	= null;
 	protected List<Payment>	payments	= new SVector<Payment>();
@@ -657,6 +670,13 @@ public class Nanny extends StdBehavior
 	public void executeMsg(final Environmental host, final CMMsg msg)
 	{
 		super.executeMsg(host,msg);
+		if(host instanceof MOB&&msg.sourceMinor()==CMMsg.TYP_SPEAK&&msg.source()!=host
+		&&msg.source().location()==((MOB)host).location()&&(msg.target()==null||msg.target()==host))
+		{
+			final String words=CMStrings.getSayFromMessage(msg.sourceMessage());
+			if(words!=null&&words.matches("(?i)^(?:stable|retrieve|list)(?:\\s.*)?$"))
+				msg.source().tell(stable((MOB)host,msg.source(),words));
+		}
 		if(dropOffs==null)
 			return;
 
@@ -836,6 +856,7 @@ public class Nanny extends StdBehavior
 		final StringBuffer parms=new StringBuffer("");
 		parms.append("RATE="+hourlyRate+" ");
 		parms.append("NAME=\""+place+"\" ");
+		if(stableNetwork.length()>0) parms.append("NETWORK=\"").append(stableNetwork).append("\" SENDFEE=").append(sendFee).append(' ');
 		parms.append("WATCHES=\"");
 		if(watchesBabies)
 			parms.append("Babies,");
@@ -885,6 +906,8 @@ public class Nanny extends StdBehavior
 		if(x>0)
 			dropOffs=null;
 		hourlyRate=CMParms.getParmDouble(parms,"RATE",2.0);
+		stableNetwork=CMParms.getParmStr(parms,"NETWORK","");
+		sendFee=Math.max(0,CMParms.getParmDouble(parms,"SENDFEE",0));
 		place=CMParms.getParmStr(parms,"NAME","nursery");
 		final List<String> watches=CMParms.parseCommas(CMParms.getParmStr(parms,"WATCHES","Babies,Children").toUpperCase(),true);
 		String watch=null;
@@ -1164,5 +1187,77 @@ public class Nanny extends StdBehavior
 			}
 		}
 		return true;
+	}
+
+	/** Explicit stable service; remote collection retains the original owner's bill. */
+	public String stable(final MOB attendant, final MOB who, final String request)
+	{
+		final Room here=attendant.location();
+		if(here==null||who.location()!=here) return "Visit the stable keeper first.";
+		if(savedDropOffs!=null) resumeSavedDropOffs(here);
+		if(dropOffs==null) dropOffs=new SVector<DropOff>();
+		final List<String> words=CMParms.parse(request);
+		if(words.isEmpty()) return "Say stable [mount], retrieve [mount], or list.";
+		final String action=words.get(0).toUpperCase(), name=CMParms.combine(words,1);
+		if(action.equals("STABLE"))
+		{
+			PhysicalAgent animal=here.fetchInhabitant(name);
+			if(animal==null) animal=here.findItem(null,name);
+			if(animal==null||!isDropOffable(animal)) return "There is no mount or vehicle of that name to stable here.";
+			if(getMommyOf(animal)!=who&&!(animal instanceof PrivateProperty&&CMLib.law().doesOwnThisProperty(who,(PrivateProperty)animal))) return "That mount or vehicle is not yours.";
+			if(isDroppedOff(animal)) return "It is already in our care.";
+			if(animal instanceof Rideable)
+			{
+				for(final Enumeration<Rider> e=((Rideable)animal).riders();e.hasMoreElements();)
+					if(e.nextElement()!=who) return "Ask the other riders to dismount first.";
+			}
+			if(who.riding()==animal) who.setRiding(null);
+			if(animal instanceof MOB) ((MOB)animal).setFollowing(null);
+			else if(animal instanceof Rider) ((Rider)animal).setRiding(null);
+			final PhysicalAgent kept=animal;
+			for(final DropOff d : new ArrayList<DropOff>(associations)) if(d.baby==kept) associations.remove(d);
+			dropOffs.add(new DropOff(who.Name(),animal,GameTime.now())); changedSinceLastSave=true;
+			return animal.Name()+" is now in our care.";
+		}
+		final Map<Nanny,MOB> keepers=new LinkedHashMap<Nanny,MOB>();
+		keepers.put(this,attendant);
+		if(stableNetwork.length()>0)
+			for(final Enumeration<MOB> e=CMLib.map().worldMobs();e.hasMoreElements();)
+			{
+				final MOB M=e.nextElement(); final Behavior B=M.fetchBehavior(ID());
+				if(B instanceof Nanny&&((Nanny)B).stableNetwork.equalsIgnoreCase(stableNetwork)&&M.location()!=null)
+					keepers.put((Nanny)B,M);
+			}
+		final List<String> entries=new ArrayList<String>();
+		for(final Map.Entry<Nanny,MOB> entry : keepers.entrySet())
+		{
+			final Nanny keeper=entry.getKey(); final Room room=entry.getValue().location();
+			if(keeper.savedDropOffs!=null) keeper.resumeSavedDropOffs(room);
+			if(keeper.dropOffs==null) continue;
+			for(final DropOff D : new ArrayList<DropOff>(keeper.dropOffs))
+			{
+				if(D.baby==null||D.baby.amDestroyed()||!D.mommyMname.equalsIgnoreCase(who.Name())) continue;
+				final double hours=Math.max(0,Math.ceil((GameTime.now()-D.dropOffTime)/(double)CMProps.getMillisPerMudHour()));
+				final double fee=hours*Math.max(0,keeper.hourlyRate)+(keeper==this?0:sendFee);
+				entries.add(D.baby.Name()+" at "+keeper.place+": "+CMLib.beanCounter().nameCurrencyShort(who,Math.max(0,fee-keeper.getPaidBy(who))));
+				if(!action.equals("RETRIEVE")||!CMLib.english().containsString(D.baby.Name(),name)||name.length()==0) continue;
+				if(CMLib.map().roomLocation(D.baby)!=room) return "That mount is no longer at its recorded stable.";
+				final double credit=Math.min(fee,Math.max(0,keeper.getPaidBy(who))), owed=Math.max(0,fee-credit);
+				if(CMLib.beanCounter().getTotalAbsoluteNativeValue(who)<owed) return "You cannot afford the keep and send fee.";
+				if(D.baby instanceof MOB)
+				{
+					final MOB mount=(MOB)D.baby;
+					final CMMsg enter=CMClass.getMsg(mount,here,null,CMMsg.MSG_ENTER,null);
+					if(!here.okMessage(mount,enter)) return "The mount cannot enter this stable.";
+				}
+				CMLib.beanCounter().subtractMoney(who,owed); keeper.addPayment(who,-credit);
+				keeper.dropOffs.remove(D); for(final DropOff d : new ArrayList<DropOff>(keeper.associations)) if(d.baby==D.baby) keeper.associations.remove(d); keeper.changedSinceLastSave=true;
+				if(D.baby instanceof MOB) { here.bringMobHere((MOB)D.baby,false); CMLib.commands().postFollow((MOB)D.baby,who,true); }
+				else if(D.baby instanceof Item) here.moveItemTo((Item)D.baby);
+				return "You retrieve "+D.baby.Name()+" for "+CMLib.beanCounter().nameCurrencyShort(who,owed)+".";
+			}
+		}
+		if(action.equals("LIST")) return entries.isEmpty()?"You have nothing in this stable network.":String.join("\n\r",entries);
+		return "No mount of yours by that name is in this stable network.";
 	}
 }

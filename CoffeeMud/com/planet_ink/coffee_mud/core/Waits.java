@@ -194,6 +194,20 @@ public final class Waits
 				return null;
 			}
 			final long since = GameTime.now();
+			com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior line=V.fetchBehavior("TransportLine");
+			if(line==null&&V instanceof Rideable)
+				for(final Enumeration<Rider> riders=((Rideable)V).riders();riders.hasMoreElements();)
+				{
+					final Rider rider=riders.nextElement();
+					if(rider instanceof MOB&&((MOB)rider).fetchBehavior("TransportLine") instanceof Travel.Line)
+					{ line=((MOB)rider).fetchBehavior("TransportLine"); break; }
+				}
+			if(line instanceof Travel.Line)
+			{
+				final Travel.Line transport=(Travel.Line)line;
+				final long arrived=transport.arrivals();
+				return () -> transport.arrivals()>arrived;
+			}
 			final Room[] last = { CMLib.map().roomLocation(V) };
 			final boolean[] moved = { false };
 			final boolean dockOnly = w.equals("DOCK");

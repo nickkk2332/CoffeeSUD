@@ -1659,6 +1659,25 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 
 	protected boolean move(final MOB mob, final int directionCode, final boolean flee, final boolean nolook, final boolean noriders, final boolean always, final boolean running)
 	{
+		final Room from=mob.location();
+		final boolean outer=travelDepth.get().intValue()==0;
+		travelDepth.set(Integer.valueOf(travelDepth.get().intValue()+1));
+		try
+		{
+			final boolean moved=moveInternal(mob,directionCode,flee,nolook,noriders,always,running);
+			if(moved&&outer&&!flee&&from!=null)
+				Travel.moved(mob,from,mob.location(),from.getExitInDir(directionCode));
+			return moved;
+		}
+		finally { travelDepth.set(Integer.valueOf(travelDepth.get().intValue()-1)); }
+	}
+
+	private static final ThreadLocal<Integer> travelDepth=new ThreadLocal<Integer>() {
+		@Override protected Integer initialValue() { return Integer.valueOf(0); }
+	};
+
+	protected boolean moveInternal(final MOB mob, final int directionCode, final boolean flee, final boolean nolook, final boolean noriders, final boolean always, final boolean running)
+	{
 		// B9: BUILD DIG makes a room where the builder walks and there is none
 		if(!flee)
 			DigMode.beforeMove(mob,directionCode);
@@ -1826,6 +1845,7 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 		}
 		else
 			enterTrailersSoFar=null;
+		Travel.entering(mob,(Room)leaveMsg.target(),(Room)enterMsg.target());
 		if(exit!=null)
 			exit.executeMsg(mob,enterMsg);
 		if(mob.location()!=null)
@@ -2025,6 +2045,7 @@ public class MUDTracker extends StdLibrary implements TrackingLibrary
 					}
 				}
 			}
+			if(travelDepth.get().intValue()==0) Travel.moved(I,thisRoom,thatRoom,E);
 			return true;
 		}
 		return false;

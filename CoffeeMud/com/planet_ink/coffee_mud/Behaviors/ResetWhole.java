@@ -41,7 +41,7 @@ import java.util.*;
  * one still there stays.  MSG= is shown to the first who comes in after a
  * reset.
  */
-public class ResetWhole extends StdBehavior
+public class ResetWhole extends StdBehavior implements Travel.CommittedEntry
 {
 	@Override
 	public String ID()
@@ -68,6 +68,9 @@ public class ResetWhole extends StdBehavior
 	protected String	resetMsg	= "";
 	/** W9: a reset happened and no one has come in since */
 	protected boolean	msgPending	= false;
+	protected boolean onReentry=false, away=false;
+	protected double minAway=0;
+	protected MaskingLibrary.CompiledZMask skipRooms=null;
 
 	@Override
 	public String accountForYourself()
@@ -120,7 +123,11 @@ public class ResetWhole extends StdBehavior
 			}
 			final String except = CMParms.getParmStr(parameters, "EXCEPT", "").trim();
 			exceptMask = (except.length() == 0) ? null : CMLib.masking().getPreCompiledMask(quotedNames(except));
-			resetMsg = CMParms.getParmStr(parameters, "MSG", "").trim();
+			resetMsg = CMParms.getParmStr(parameters,"RESETMSG",CMParms.getParmStr(parameters, "MSG", "")).trim();
+			onReentry=CMParms.getParmBool(parameters,"ONREENTRY",false);
+			minAway=Math.max(0,CMParms.getParmDouble(parameters,"MINAWAY",0));
+			final String skip=quotedNames(Organizations.parameterMask(CMParms.getParmStr(parameters,"SKIPROOMS","")));
+			skipRooms=skip.length()==0?null:CMLib.masking().getPreCompiledMask(skip);
 		}
 		catch(final Exception e)
 		{
@@ -169,6 +176,9 @@ public class ResetWhole extends StdBehavior
 		super.executeMsg(host,msg);
 		if(!msg.source().isMonster() || msg.source().isPlayer())
 		{
+			if(msg.targetMinor()==CMMsg.TYP_LEAVE&&msg.target() instanceof Room&&mine(host,(Room)msg.target())&&!occupied(host,msg.source()))
+			{ away=true; lastAccess=GameTime.now(); }
+			if(msg.targetMinor()==CMMsg.TYP_ENTER&&msg.target() instanceof Room&&mine(host,(Room)msg.target())) away=false;
 			if(mine(host, msg.source().location()))
 				lastAccess=GameTime.now();
 			if(msgPending
@@ -192,6 +202,24 @@ public class ResetWhole extends StdBehavior
 					});
 				}
 			}
+		}
+	}
+
+	private boolean occupied(final Environmental host, final MOB except)
+	{
+		if(!(host instanceof Tickable)) return false;
+		for(final Room R : rooms((Tickable)host,true))
+			for(final Enumeration<MOB> e=R.inhabitants();e.hasMoreElements();)
+			{ final MOB M=e.nextElement(); if(M!=except&&M.isPlayer()) return true; }
+		return false;
+	}
+
+	@Override public void entering(final Environmental host, final MOB who, final Room from, final Room to)
+	{
+		if(onReentry&&away&&lastAccess>=0&&who.isPlayer()&&mine(host,to)&&!mine(host,from)
+		&&!occupied(host,who)&&GameTime.now()-lastAccess>=Math.round(minAway*CMProps.getMillisPerMudHour()))
+		{
+			resetNow((Tickable)host,who.getGroupLeader()); away=false; lastAccess=GameTime.now();
 		}
 	}
 
@@ -228,14 +256,14 @@ public class ResetWhole extends StdBehavior
 					if((B!=null)&&(B.ID().equals(ID())))
 						own = true;
 				}
-				if(all || ((!own) && (!this.isRoomBeingCamped(R))))
+				if(all || ((!own) && (!this.isRoomBeingCamped(R)) && (skipRooms==null||!CMLib.masking().maskCheck(skipRooms,R,true))))
 					list.add(R);
 			}
 		}
 		else
 		{
 			final Room R = (ticking instanceof Room) ? (Room)ticking : super.getBehaversRoom(ticking);
-			if((R != null) && (all || (!this.isRoomBeingCamped(R))))
+			if((R != null) && (all || ((!this.isRoomBeingCamped(R))&&(skipRooms==null||!CMLib.masking().maskCheck(skipRooms,R,true)))))
 				list.add(R);
 		}
 		return list;
@@ -349,6 +377,11 @@ public class ResetWhole extends StdBehavior
 	 */
 	protected int resetNow(final Tickable ticking)
 	{
+		return resetNow(ticking,null);
+	}
+
+	protected int resetNow(final Tickable ticking, final MOB leader)
+	{
 		final List<Room> reset = rooms(ticking, false);
 		final List<Room> all = rooms(ticking, true);
 		final Map<String, int[]> before = excepted(all);
@@ -356,6 +389,10 @@ public class ResetWhole extends StdBehavior
 		{
 			resetDone = true;
 			CMLib.map().resetRoom(R, true);
+			Ability scaling=R.fetchEffect("InstanceArea");
+			if(scaling==null) scaling=R.getArea().fetchEffect("InstanceArea");
+			if(scaling instanceof Travel.InPlaceScaling)
+				((Travel.InPlaceScaling)scaling).rebuildInPlace(R,leader);
 		}
 		if(reset.size() > 0)
 		{
@@ -377,6 +414,7 @@ public class ResetWhole extends StdBehavior
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
 		super.tick(ticking,tickID);
+		if(onReentry) return true;
 		if(lastAccess<0)
 			return true;
 
@@ -434,7 +472,7 @@ public class ResetWhole extends StdBehavior
 		if((lastAccess < 0) && (!msgPending) && (!done))
 			return "";
 		return "<RESETWHOLE" + ((lastAccess < 0) ? "" : (" AGO=\"" + (GameTime.now() - lastAccess) + "\""))
-			+ (msgPending ? " MSG=\"TRUE\"" : "") + (done ? " DONE=\"TRUE\"" : "") + " />";
+			+ (msgPending ? " MSG=\"TRUE\"" : "") + (done ? " DONE=\"TRUE\"" : "") + (away?" AWAY=\"TRUE\"":"") + " />";
 	}
 
 	@Override
@@ -448,6 +486,7 @@ public class ResetWhole extends StdBehavior
 				lastAccess = ((ago == null) || (ago.length() == 0)) ? -1 : (GameTime.now() - CMath.s_long(ago));
 				msgPending = "TRUE".equalsIgnoreCase(tag.getParmValue("MSG"));
 				resetDone = "TRUE".equalsIgnoreCase(tag.getParmValue("DONE"));
+				away="TRUE".equalsIgnoreCase(tag.getParmValue("AWAY"));
 			}
 		}
 	}

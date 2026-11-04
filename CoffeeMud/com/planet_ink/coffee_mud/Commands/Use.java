@@ -56,7 +56,8 @@ public class Use extends StdCommand
 		final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?i)^(.+?)\\s+(?:on|with|in)\\s+(.+)$").matcher(rest);
 		final String what = m.matches() ? m.group(1).trim() : rest;
 		final String on = m.matches() ? m.group(2).trim() : "";
-		final Environmental A = Combinations.thing(mob, what);
+		final Environmental A = Waypoints.target(mob, what);
+		if(on.length()==0&&Waypoints.use(mob,A)) return false;
 		if(!(A instanceof Item))
 		{
 			mob.tell(L("You don't have '@x1'.", what));

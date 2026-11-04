@@ -3097,6 +3097,83 @@ F20
 
 T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T14, T16, T17, T18, T19
 
+Implemented. Verified: 3,445 regression checks and 97 smoke checks passed;
+the engine suite matched its existing baseline (47 passed, 3 known failures).
+Authoring examples and parameter
+reference: `docs/travel.md`, HELP TRAVEL/JOURNEY/PORTS/TIMETABLE/STABLE/TOUCH,
+and the corresponding AHELP property and behaviour topics.
+
+- T2: `ResetWhole ONREENTRY=true MINAWAY=<game hours> SKIPROOMS="<room mask>"
+  RESETMSG="..."`. Reuses W9's saved last access, with saved absence. A refused
+  entry cannot reset the area. `InstanceArea INPLACE=true` applies normal type
+  adjustments to the real rooms at entry/reset, using the entering leader's
+  level; runtime readiness/level are saved separately from authored text.
+- T3/T7/T14: shared one-shot routing for `MPSAIL vessel TO room|area|port`,
+  direction lists, `COURSE TO`, `SAIL TO` and `DRIVE TO`. `Prop_Port` names
+  SEA/ROAD/AIR/SPACE destinations, with HIDDEN and KNOWNMASK; `PORTS` lists
+  known ones. Sea Charting indices also resolve. Routes use open exits and
+  vessel terrain, with normal movement checks at each step. `MPANCHOR`,
+  `MPMOVEVESSEL`, `MPBOARD`, `MPHITCH` and `MPUNHITCH` cover the remaining
+  transport operations. Hitching refuses riding loops; boarding carries the
+  local party. ABOARD, RIDING, RIDERS, ISANCHORED, ISDOCKED, COURSE, VESSELROOM,
+  SPEED and HULL work in MOBPROG and the JavaScript bridge.
+- T4/T18: `Prop_TravelTime TIME=<game minutes>` on an exit, room or area,
+  with MOUNTED/VEHICLE/NIGHT multipliers. Movement advances through the game
+  scheduler once per party movement, so weather, hunger and scripts run.
+  Unoccupied NPC transport does not accelerate global time. `Prop_Road`
+  admits caravans without changing terrain/resources; TIME multiplies the
+  travel cost and NOTFOR excludes named vehicle types.
+- T5/T8/T9: `TransportLine` on a vessel, rideable or mounted driver has STOPS,
+  DEPART hours or WAIT ticks, LOOP/BACK, stop fares, messages, a timetable
+  sign and a saved position/departure/arrival count. WAIT UNTIL ARRIVAL sees
+  line arrivals. PASSENGERONLY supplies a temporary crew-only helm unless
+  an explicit property is present. `Prop_HelmRestrict` supplies NAVMASK,
+  MESSAGE and ONFAIL; Sailor crew aboard and item builders pass. Generic
+  navigable craft expose TICKSPERMOVE, TICKSPERTURN and WEATHERSPEED in the
+  editor, script stats and XML templates.
+- T6: `Prop_Journey DEST=... VIA=... DURATION=<game hours>` moves the party
+  through hourly event rolls (functions, mob loads or encounter tables).
+  Combat pauses it; a scene returning PAUSE waits for JOURNEY RESUME.
+  JOURNEY reports progress, resumes or cancels at the present location.
+  JOURNEY_PROG has START/HOUR/ARRIVE/CANCEL/ALL, stage in $g, elapsed hours
+  in $0 and destination in $1. Saves retain remaining leg time, final-hour
+  scenes and distinct passenger markers even when mounts have the same name.
+  Script hosts on exits, rooms, items and NPCs are retained across restore.
+- T10/T17: DelayedTransporter adds shared party countdowns, masks, fares,
+  ordered/random destinations, messages and arrival looks; its countdown
+  and destination index save. One fare convention is shared with journeys,
+  lines and TicketTaker: LEADER pays the group; EACH pays individual shares;
+  PERHEAD distinguishes per-character from flat passage fares. TicketTaker
+  and TaxiBehavior support PETS/CARGO; prepaid companions can board without
+  their own money, and disembarking clears their receipt. TaxiBehavior quotes
+  and boards the party together. Entry and funds checks precede transfers.
+- T11: boardable copies get unique interior names and room IDs unless
+  FIXEDINTERIOR is explicitly set. COPY, catalog and template/quest copy paths
+  share this implementation. The existing VESSEL STATUS remains, with
+  VESSEL <name> ENTER/RENAME/HOME added for builders.
+- T12: `Prop_Waypoint` has NETWORK/NAME/ID, discovery by ENTER/TOUCH/RITUAL/QUEST,
+  character/profile discovery, MASK, COST, TIME and MSG. TRAVEL lists known
+  destinations and moves the nearby party after validating every passenger;
+  TOUCH, USE and TRAVEL ATTUNE discover eligible stones. Ritual functions
+  must exist and allow attunement. Discovery survives saves.
+- T16: MovingRoom reads inline XML or files under `world/routes/`, included
+  in world checksums, and supports DEPART hours, signs and TIMETABLE. It
+  retains S9's position with remaining dwell/leg time added. Boarding links
+  and descriptive views are temporary overlays; exports keep authored exits
+  and descriptions. Restore rebuilds overlays after world/player loading.
+- T19: Nanny's NETWORK/SENDFEE supports remote retrieval, with STABLE, RETRIEVE
+  and LIST commands or speech. Existing custody, ownership and payment records
+  are retained. Deferred custody records survive an immediate re-save, and
+  time accrues from the restored drop-off time. Stock NPC names/descriptions
+  now survive saves as well as base stats, preserving renamed mount records.
+
+Checks: the `t-*` JavaScript fixtures cover routing, pacing, party charges,
+helm access, scripting, waypoints, stables, return resets, scaling, journeys
+and lift overlays. The played `travel` group lets the scheduler reach a
+journey scene, saves/restores twice, resumes through the final scene, retrieves
+a stabled horse remotely and uses a discovered waypoint; it also checks the
+same-named passengers, coach state, external route file and mid-shaft lift.
+
 #### 2n. Languages and vocabulary (14)
 
 L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14

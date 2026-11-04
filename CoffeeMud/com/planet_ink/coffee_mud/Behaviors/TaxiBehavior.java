@@ -54,6 +54,21 @@ public class TaxiBehavior extends Concierge
 	protected MOB				riderM			= null;
 	protected List<Room>		trailTo			= null;
 	protected List<Rider>		defaultRiders	= null;
+	protected Map<MOB,Double> partyQuotes=new WeakHashMap<MOB,Double>();
+
+	@Override protected double getPrice(final MOB customer, final Room from, final Room to)
+	{
+		final double price=super.getPrice(customer,from,to);
+		if(!Travel.option(getParms(),"PARTY","EACH").equalsIgnoreCase("LEADER")) return price;
+		double total=0;
+		for(final MOB member : Travel.party(customer,from))
+		{
+			total+=!member.isPlayer()?Math.max(0,CMParms.getParmDouble(getParms(),"PETS",0)):price;
+			total+=Math.max(0,CMParms.getParmDouble(getParms(),"CARGO",0))*Math.ceil(Math.max(0,member.phyStats().weight()-member.basePhyStats().weight())/100.0);
+		}
+		partyQuotes.put(customer,Double.valueOf(total));
+		return total;
+	}
 
 	@Override
 	public String accountForYourself()
@@ -76,6 +91,37 @@ public class TaxiBehavior extends Concierge
 	@Override
 	protected void giveMerchandise(final MOB whoM, final Room destR, final Environmental observer, final Room room, final TrackingFlags trackingFlags)
 	{
+		if(Travel.option(getParms(),"PARTY","EACH").equalsIgnoreCase("LEADER"))
+		{
+			final Rideable ride=observer instanceof Rideable?(Rideable)observer:observer instanceof Rider?((Rider)observer).riding():null;
+			final List<MOB> group=Travel.party(whoM,room);
+			int seats=ride==null?0:ride.numRiders();
+			for(final MOB member : group) if(member.riding()!=ride) seats++;
+			boolean allowed=ride!=null&&seats<=ride.riderCapacity();
+			final List<CMMsg> boards=new ArrayList<CMMsg>();
+			if(allowed) for(final MOB member : group)
+			{
+				if(member.riding()==ride) continue;
+				final CMMsg board=CMClass.getMsg(member,ride,null,CMMsg.MSG_MOUNT,null);
+				if(!room.okMessage(member,board)||!ride.okMessage(member,board)) { allowed=false; break; }
+				boards.add(board);
+			}
+			if(!allowed)
+			{
+				final Double quote=partyQuotes.remove(whoM);
+				if(quote!=null)
+				{
+					CMLib.beanCounter().subtractMoney(getTalker(observer,room),Math.max(0,quote.doubleValue()));
+					CMLib.beanCounter().giveSomeoneMoney(whoM,Math.max(0,quote.doubleValue()));
+				}
+				whoM.tell(L("The whole party cannot board. Your fare has been returned."));
+				return;
+			}
+			if(defaultRiders==null) defaultRiders=new XVector<Rider>(ride.riders());
+			defaultRiders.removeAll(group);
+			for(final CMMsg board : boards) { ((MOB)board.source()).setRiding(ride); room.send(board.source(),board); }
+			partyQuotes.remove(whoM);
+		}
 		final MOB fromM=getTalker(observer,room);
 		//final ArrayList<Room> set=new ArrayList<Room>();
 		//CMLib.tracking().getRadiantRooms(fromM.location(),set,roomRadiusFlags,null,maxRange,null);
@@ -224,6 +270,7 @@ public class TaxiBehavior extends Concierge
 		riderM = null;
 		basePrice=10.0;
 		perRoomPrice=1.0;
+		partyQuotes=new WeakHashMap<MOB,Double>();
 	}
 
 	@Override

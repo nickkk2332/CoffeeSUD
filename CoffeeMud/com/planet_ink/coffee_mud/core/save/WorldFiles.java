@@ -417,12 +417,14 @@ public final class WorldFiles
 
 	private static void loadWorldFiles()
 	{
+		com.planet_ink.coffee_mud.Behaviors.MovingRoom.clearAll();
 		loadedWhole = false;
 		if(!rebuild)
 		{
 			if((!SaveGame.isBuilderMode())&&(!SaveGame.isRestoring())) importExtras(false);
 			preloadClans();
 			CMLib.database().DBReadAllRooms(null);
+			com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
 			loadedWhole = true;
 			// what went wrong when the cache was built from the files
 			loadProblems();
@@ -455,6 +457,7 @@ public final class WorldFiles
 		{
 			importing = false;
 		}
+		com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
 		loadedWhole = whole;
 		saveProblems();
 		final String summary = problemSummary(10);
@@ -2688,7 +2691,7 @@ public final class WorldFiles
 				paths.add(CUSTOM_DIR + "/" + kind + "/" + F.getName());
 		}
 		// JS5: the world's JavaScript and script files
-		for(final String sub : new String[] { "js", "scripts" })
+		for(final String sub : new String[] { "js", "scripts", "routes" })
 		{
 			final File dir = new File(worldDir, sub);
 			if(!dir.isDirectory())

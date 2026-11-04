@@ -1677,6 +1677,7 @@ public class StdRoom implements Room
 		if((direction<0)||(direction>=doors.length)||(amDestroyed))
 			return null;
 		Room nextRoom=doors[direction];
+		if(nextRoom==null) nextRoom=Travel.temporaryDoor(this,direction);
 		if(gridParent!=null)
 			nextRoom=gridParent.prepareGridLocale(this,nextRoom,direction);
 		if(nextRoom!=null)
@@ -1693,6 +1694,11 @@ public class StdRoom implements Room
 	{
 		if((direction<0)||(direction>=exits.length))
 			return null;
+		if(doors[direction]==null)
+		{
+			final Exit overlay=Travel.temporaryExit(this,direction);
+			if(overlay!=null) return overlay;
+		}
 		if((gridParent!=null)&&(getRawExit(direction)==null))
 			getRoomInDir(direction);
 		return getRawExit(direction);

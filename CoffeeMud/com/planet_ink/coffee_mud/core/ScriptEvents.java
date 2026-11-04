@@ -1784,7 +1784,10 @@ public final class ScriptEvents
 		areaHop(AREA_ENTER_PROG, mob, toA, fromA, from);
 		// ST8: on and off vessels
 		if(fromA instanceof Boardable)
+		{
+			Travel.disembarked(mob,(Boardable)fromA);
 			boarded(mob, fromA, to, false);
+		}
 		if(toA instanceof Boardable)
 			boarded(mob, toA, from, true);
 	}

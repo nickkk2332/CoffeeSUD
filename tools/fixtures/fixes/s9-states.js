@@ -144,7 +144,7 @@ check("randomquests", field(RQ2, "numQuests") == 2 && field(RQ2, "myQuests").siz
 var MR = CMClass.getBehavior("MovingRoom"); // no route: the state alone
 MR.setStat("STATE", "<STOP>2</STOP><NEXT>3</NEXT><STATUS>0</STATUS><REV>true</REV>");
 var mstate = String(MR.getStat("STATE"));
-check("movingroom", mstate == "<STOP>2</STOP><NEXT>3</NEXT><STATUS>0</STATUS><REV>true</REV>", "state " + mstate);
+check("movingroom", mstate.indexOf("<STOP>2</STOP><NEXT>3</NEXT><STATUS>0</STATUS><REV>true</REV>") == 0, "state " + mstate);
 
 // TemporaryAffects (S17): what it holds, whose text is spent on adding it
 var TR1 = scratchRoom();

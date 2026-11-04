@@ -554,6 +554,16 @@ public final class WorldState
 			if((state != null) && (state.length() > 0))
 				str.append("<BSTATE ID=\"").append(B.ID()).append("\" N=\"").append(n).append("\">").append(state).append("</BSTATE>");
 		}
+		final Map<String,Integer> abilityCounts=new HashMap<String,Integer>();
+		for(final Enumeration<Ability> e=P.effects();e.hasMoreElements();)
+		{
+			final Ability A=e.nextElement();
+			if(!(A instanceof Travel.Stateful)) continue;
+			final int n=abilityCounts.containsKey(A.ID())?abilityCounts.get(A.ID()).intValue():0;
+			abilityCounts.put(A.ID(),Integer.valueOf(n+1));
+			final String state=((Travel.Stateful)A).travelState();
+			if(state.length()>0) str.append("<ASTATE ID=\"").append(A.ID()).append("\" N=\"").append(n).append("\">").append(state).append("</ASTATE>");
+		}
 		for(final Enumeration<ScriptingEngine> e = P.scripts(); e.hasMoreElements();)
 		{
 			final ScriptingEngine S = e.nextElement();
@@ -584,6 +594,17 @@ public final class WorldState
 			return;
 		for(final XMLTag tag : states.contents())
 		{
+			if(tag.tag().equalsIgnoreCase("ASTATE"))
+			{
+				int n=CMath.s_int(tag.getParmValue("N"));
+				for(final Enumeration<Ability> e=P.effects();e.hasMoreElements();)
+				{
+					final Ability A=e.nextElement();
+					if(A instanceof Travel.Stateful&&A.ID().equals(tag.getParmValue("ID"))&&n--==0)
+					{ ((Travel.Stateful)A).restoreTravelState(tag.value()); break; }
+				}
+				continue;
+			}
 			if(tag.tag().equalsIgnoreCase("BSTATE"))
 			{
 				final String ID = tag.getParmValue("ID");
@@ -1079,6 +1100,9 @@ public final class WorldState
 		{
 			// the built-in classes roll these when made, and their text does not hold them
 			str.append("<BASE>");
+			str.append(xml.convertXMLtoTag("NAME",xml.parseOutAngleBrackets(M.Name())));
+			str.append(xml.convertXMLtoTag("DISPLAY",xml.parseOutAngleBrackets(M.displayText())));
+			str.append(xml.convertXMLtoTag("DESCRIPTION",xml.parseOutAngleBrackets(M.description())));
 			str.append(statsXML("PHY", M.basePhyStats()));
 			str.append(statsXML("CHAR", M.baseCharStats()));
 			str.append(statsXML("STATE", M.baseState()));
@@ -1252,6 +1276,9 @@ public final class WorldState
 		final XMLTag base = tag.getPieceFromPieces("BASE");
 		if(base != null)
 		{
+			if(base.getPieceFromPieces("NAME")!=null) M.setName(CMLib.xml().restoreAngleBrackets(base.getValFromPieces("NAME")));
+			if(base.getPieceFromPieces("DISPLAY")!=null) M.setDisplayText(CMLib.xml().restoreAngleBrackets(base.getValFromPieces("DISPLAY")));
+			if(base.getPieceFromPieces("DESCRIPTION")!=null) M.setDescription(CMLib.xml().restoreAngleBrackets(base.getValFromPieces("DESCRIPTION")));
 			setStats(M.basePhyStats(), base.getPieceFromPieces("PHY"));
 			setStats(M.baseCharStats(), base.getPieceFromPieces("CHAR"));
 			setStats(M.baseState(), base.getPieceFromPieces("STATE"));
@@ -1620,6 +1647,7 @@ public final class WorldState
 			if(!p.first.amDestroyed())
 				putEffects(p.first, p.second, mob);
 		}
+		com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
 		restored.clear(); // after the effects, whose activities may name what was restored
 		takeBackRemadeAreas();
 	}

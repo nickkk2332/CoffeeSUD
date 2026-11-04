@@ -15740,6 +15740,19 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		}
 		switch(name.toUpperCase())
 		{
+		case "ABOARD": case "RIDERS": case "ISANCHORED": case "ISDOCKED": case "COURSE":
+		case "VESSELROOM": case "RIDING": case "SPEED": case "HULL":
+		{
+			final List<String> p=organizationWords(parms);
+			Environmental E=p.isEmpty()?null:getArgumentItem(p.get(0),ctx);
+			if(E==null&&!p.isEmpty()) E=getArgumentMOB(p.get(0),ctx);
+			if(E==null)
+			{
+				final Boardable S=Travel.vessel(unquoted(v));
+				if(S!=null) E=S.getBoardableItem();
+			}
+			return E==null?"":Travel.value(name.toUpperCase(),E);
+		}
 		case "CLANS":
 		case "CLANPOS":
 		case "CLANMEMBER":
@@ -16695,6 +16708,51 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	{
 		switch(cmd)
 		{
+		case "MPSAIL": case "MPANCHOR": case "MPMOVEVESSEL": case "MPBOARD": case "MPHITCH": case "MPUNHITCH":
+		{
+			final List<String> p=organizationWords(CMParms.getPastBit(line,0));
+			if(p.isEmpty()) { logError(ctx,cmd,"Syntax",line); return null; }
+			String error=null;
+			if(cmd.equals("MPHITCH")||cmd.equals("MPUNHITCH"))
+			{
+				final Environmental I=getArgumentItem(p.get(0),ctx);
+				Environmental mount=p.size()>1?getArgumentItem(p.get(1),ctx):null;
+				if(mount==null&&p.size()>1) mount=getArgumentMOB(p.get(1),ctx);
+				if(!(I instanceof Rider)||(!cmd.equals("MPUNHITCH")&&!(mount instanceof Rideable))) error="Expected a rider and a mount.";
+				else error=Travel.hitch((Rider)I,cmd.equals("MPUNHITCH")?null:(Rideable)mount);
+			}
+			else
+			{
+				final int vesselAt=cmd.equals("MPBOARD")?1:0;
+				final Boardable S=p.size()>vesselAt?Travel.vessel(varify(ctx,p.get(vesselAt))):null;
+				if(S==null) error="Unknown vessel.";
+				else if(cmd.equals("MPBOARD"))
+				{
+					final Environmental W=getArgumentMOB(p.get(0),ctx);
+					final Enumeration<Room> rooms=S.getArea().getProperMap();
+					final Room target=p.size()>2?CMLib.map().getRoom(varify(ctx,p.get(2))):(rooms.hasMoreElements()?rooms.nextElement():null);
+					if(!(W instanceof MOB)||target==null||target.getArea()!=S.getArea()) error="Invalid passenger or vessel room.";
+					else if(!Travel.transfer((MOB)W,Travel.party((MOB)W,((MOB)W).location()),target,true)) error="Boarding was refused.";
+				}
+				else if(cmd.equals("MPMOVEVESSEL"))
+				{
+					final Room target=Travel.destination(varify(ctx,String.join(" ",p.subList(1,p.size()))),null);
+					if(target==null) error="Unknown destination.";
+					else
+					{
+						if(S instanceof NavigableItem) { ((NavigableItem)S).setCurrentCourse(new ArrayList<Integer>()); ((NavigableItem)S).setAnchorDown(true); }
+						S.unDock(false); target.moveItemTo(S.getBoardableItem()); S.dockHere(target);
+						ScriptEvents.vesselArrived(S.getBoardableItem(),target);
+					}
+				}
+				else if(!(S instanceof NavigableItem)) error="Vessel is not navigable.";
+				else if(cmd.equals("MPSAIL")) error=Travel.sail((NavigableItem)S,varify(ctx,String.join(" ",p.subList(1,p.size()))),null);
+				else if(p.size()!=2||!p.get(1).matches("(?i)UP|DOWN")) error="Use UP or DOWN.";
+				else ((NavigableItem)S).setAnchorDown(p.get(1).equalsIgnoreCase("DOWN"));
+			}
+			if(error!=null) logError(ctx,cmd,"RunTime",error+" "+line);
+			return null;
+		}
 		case "MPLIST": // SC1: MPLIST host var ADD|ADDUNIQUE|DEL|CLEAR|SHUFFLE|SORT words
 		{
 			final String which=varHostFor(ctx,CMParms.getCleanBit(line,1));

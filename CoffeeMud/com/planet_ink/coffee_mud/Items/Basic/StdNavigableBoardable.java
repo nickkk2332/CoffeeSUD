@@ -37,7 +37,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class StdNavigableBoardable extends StdSiegableBoardable implements NavigableItem
+public class StdNavigableBoardable extends StdSiegableBoardable implements NavigableItem, Travel.PacedVehicle
 {
 	@Override
 	public String ID()
@@ -49,12 +49,15 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 	protected volatile boolean		anchorDown			= true;
 	protected final List<Integer>	courseDirections	= new Vector<Integer>();
 	protected volatile int			directionFacing		= 0;
+	private long travelReadyAt=0;
+	@Override public boolean travelReady() { return GameTime.now()>=travelReadyAt; }
 	protected volatile int			ticksSinceMove		= 0;
 	protected volatile int			ticksSinceLastTurn	= 0;
 	protected volatile Item			tenderItem			= null;
 	protected List<Item>			smallTenderRequests	= new SLinkedList<Item>();
 	protected volatile Room			prevItemRoom		= null;
 	protected volatile Item			following			= null;
+	protected boolean weatherSpeed=true;
 	protected int					ticksPerTurn		= 1;
 	protected int					ticksPerMoves		= 1;
 
@@ -159,7 +162,7 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 	public int getMaxSpeed()
 	{
 		int speed=phyStats().ability();
-		if((speed > 0)
+		if(weatherSpeed && (speed > 0)
 		&&(navBasis()!=Rideable.Basis.LAND_BASED)
 		&&(owner() instanceof Room))
 		{
@@ -247,9 +250,33 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 		return true;
 	}
 
+    @Override public boolean securityCheck(final MOB mob)
+    {
+        if(mob!=null&&!mob.isPlayer()&&mob.fetchBehavior("Sailor")!=null&&mob.location()!=null&&mob.location().getArea()==getArea()) return true;
+        final Ability A=fetchEffect("Prop_HelmRestrict");
+        if(A instanceof Travel.Helm&&!((Travel.Helm)A).allowed(mob,this)) return false;
+        return super.securityCheck(mob);
+    }
+
 	@Override
 	public boolean okMessage(final Environmental myHost, final CMMsg msg)
 	{
+		final Ability helm=fetchEffect("Prop_HelmRestrict");
+		if(helm!=null&&!helm.okMessage(myHost,msg)) return false;
+		if((msg.sourceMinor()==CMMsg.TYP_HUH||msg.sourceMinor()==CMMsg.TYP_SKILLFAIL)
+		&&msg.targetMessage()!=null&&area==CMLib.map().areaLocation(msg.source())
+		&&msg.targetMessage().matches("(?i)^(?:COURSE|SAIL|DRIVE)\\s+TO\\s+.+"))
+		{
+			if(!securityCheck(msg.source())||!canSteer(msg.source(),msg.source().location()))
+				msg.source().tell(getNoPermissionStr());
+			else
+			{
+				final String command=msg.targetMessage();
+				final String error=Travel.sail(this,command.substring(command.indexOf(' ')+1).trim(),msg.source());
+				msg.source().tell(error==null?L("Course set."):error);
+			}
+			return false;
+		}
 		if(((msg.sourceMinor()==CMMsg.TYP_HUH)
 			||(msg.sourceMinor()==CMMsg.TYP_SKILLFAIL))
 		&&(msg.targetMessage()!=null)
@@ -1587,6 +1614,7 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 
 	protected NavResult navMove(final int direction)
 	{
+		if(!amInTacticalMode()&&!travelReady()) return NavResult.REPEAT;
 		final Room thisRoom=CMLib.map().roomLocation(this);
 		if(thisRoom != null)
 		{
@@ -1722,6 +1750,8 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 						((Room)enterMsg.target()).send(mob, enterMsg);
 						haveEveryoneLookOutside();
 						ScriptEvents.vesselArrived(this, (Room)enterMsg.target()); // ST8
+						travelReadyAt=GameTime.now()+Travel.stepMillis(this,thisRoom,(Room)enterMsg.target(),exit);
+						Travel.moved(this,thisRoom,(Room)enterMsg.target(),exit);
 						return NavResult.CONTINUE;
 					}
 					else
@@ -1928,6 +1958,7 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 		final StringBuilder str = new StringBuilder("<TRAVEL ANCHOR=\"").append(anchorDown)
 			.append("\" DIR=\"").append(courseDirection)
 			.append("\" FACING=\"").append(directionFacing)
+			.append("\" WAIT=\"").append(Math.max(0,travelReadyAt-GameTime.now()))
 			.append("\" MOVED=\"").append(ticksSinceMove)
 			.append("\" TURNED=\"").append(ticksSinceLastTurn)
 			.append("\" COURSE=\"");
@@ -1949,6 +1980,7 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 			return;
 		final XMLLibrary.XMLTag tag = tags.get(0);
 		anchorDown = CMath.s_bool(tag.getParmValue("ANCHOR"));
+		travelReadyAt=GameTime.now()+Math.max(0,CMath.s_long(tag.getParmValue("WAIT")));
 		courseDirection = CMath.s_int(tag.getParmValue("DIR"));
 		directionFacing = CMath.s_int(tag.getParmValue("FACING"));
 		ticksSinceMove = CMath.s_int(tag.getParmValue("MOVED"));
@@ -1979,9 +2011,12 @@ public class StdNavigableBoardable extends StdSiegableBoardable implements Navig
 	@Override
 	public List<Integer> getCurrentCourse()
 	{
-		if(getTopCourse()>=0)
+		if(courseDirection>=0||getTopCourse()>=0)
 		{
-			return this.courseDirections;
+			final List<Integer> result=new ArrayList<Integer>();
+			if(courseDirection>=0) result.add(Integer.valueOf(courseDirection));
+			result.addAll(courseDirections);
+			return result;
 		}
 		return new ArrayList<Integer>(0);
 	}

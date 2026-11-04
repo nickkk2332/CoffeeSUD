@@ -60,7 +60,7 @@ public class GenBoardable extends StdBoardable
 	{
 		"HASLOCK","HASLID","CAPACITY","CONTAINTYPES", "RESETTIME","RIDEBASIS","MOBSHELD",
 		"AREA","OWNER","PRICE","DEFCLOSED","DEFLOCKED", "EXITNAME",
-		"PUTSTR","MOUNTSTR","DISMOUNTSTR","STATESTR","STATESUBJSTR","RIDERSTR"
+		"PUTSTR","MOUNTSTR","DISMOUNTSTR","STATESTR","STATESUBJSTR","RIDERSTR","FIXEDINTERIOR"
 	};
 
 	private int getInternalCodeNum(final String code)
@@ -145,6 +145,7 @@ public class GenBoardable extends StdBoardable
 			return this.getStateStringSubject();
 		case 18:
 			return this.getRideString();
+        case 19: return ""+fixedInterior;
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -213,6 +214,7 @@ public class GenBoardable extends StdBoardable
 		case 18:
 			setRideString(val);
 			break;
+        case 19: fixedInterior=CMath.s_bool(val); break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);
 			break;
