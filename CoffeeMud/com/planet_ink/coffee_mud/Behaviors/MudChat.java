@@ -2266,6 +2266,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			return;
 		final MOB srcMob=msg.source();
 		final MOB meMob=(MOB)affecting;
+        if(msg.sourceMinor()==CMMsg.TYP_SPEAK&&msg.source()!=meMob&&!Languages.understoodSpeech(meMob,msg))return;
 		chatHost=meMob; // N11
 		if((msg.source()==meMob)
 		&&(msg.sourceMinor()==CMMsg.TYP_SPEAK)
@@ -2291,7 +2292,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			&&(lastReactedToM!=msg.source())
 			&&(msg.sourceMessage()!=null)
 			&&(msg.targetMessage()!=null)
-			&&((str=CMStrings.getSayFromMessage(msg.sourceMessage()))!=null))
+			&&((str=Languages.speechText(meMob,msg))!=null))
 			{
 				checkReactionReset(msg.source());
 				str=CMLib.english().stripEnglishPunctuation(str).toLowerCase().trim();

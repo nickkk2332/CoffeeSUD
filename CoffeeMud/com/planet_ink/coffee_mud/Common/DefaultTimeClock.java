@@ -786,14 +786,14 @@ public class DefaultTimeClock implements TimeClock
 									&&(CMLib.flags().canSee(mob)))
 									{
 										final String own = SkyText.tod(R, true, getTODCode()); // W13: Prop_SkyText's own
-										final String message = (own != null) ? own : CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_OUTSIDE, getTODCode().ordinal());
+										final String message = (own != null) ? own : CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_OUTSIDE, getTODCode().ordinal(),mob);
 										if(message.trim().length()>0)
 											mob.tell(message);
 									}
 									else
 									{
 										final String own = SkyText.tod(R, false, getTODCode()); // W13
-										final String message = (own != null) ? own : CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_INSIDE, getTODCode().ordinal());
+										final String message = (own != null) ? own : CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.TOD_CHANGE_INSIDE, getTODCode().ordinal(),mob);
 										if(message.trim().length()>0)
 											mob.tell(message);
 									}

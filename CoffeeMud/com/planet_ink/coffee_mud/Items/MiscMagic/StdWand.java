@@ -198,7 +198,7 @@ public class StdWand extends StdItem implements Wand
 				break;
 			}
 		}
-		return id+"\n\rSay the magic word :`"+secretWord+"` to the target.";
+		return id+"\n\rSay the magic word :`"+magicWord()+"` to the target.";
 	}
 
 	@Override
@@ -337,7 +337,7 @@ public class StdWand extends StdItem implements Wand
 	@Override
 	public String magicWord()
 	{
-		return secretWord;
+		return Vocabulary.magicWord(this,miscText,secretWord);
 	}
 
 	@Override

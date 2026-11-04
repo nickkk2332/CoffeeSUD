@@ -230,10 +230,13 @@ public class GenTome extends GenReadable implements Paged, VerbTaker
 		final String head = "Page " + page + ((p.title.length() > 0) ? (": " + p.title) : "") + "\n\r";
 		if(torn(page))
 			return head + "The page has been torn out.";
-		if((p.lang.length() > 0) && (mob != null) && (mob.fetchAbility(p.lang) == null) && (mob.fetchEffect(p.lang) == null))
-			return head + "It is written in " + p.lang + ", which you cannot read.";
+        final int comprehension=p.lang.isEmpty()?100:Languages.proficiency(mob,p.lang,p.text);
+        if(!p.lang.isEmpty())Languages.expose(mob,p.lang,"READ",this);
+        if(comprehension==0)
+            return head + "It is written in " + p.lang + ", which you cannot read.";
 		String text = p.text;
 		text=StoryText.render(mob,this,text);
+        if(!p.lang.isEmpty())text=Languages.render(p.lang,text,comprehension);
 		if((p.lore.length() > 0) && (mob != null) && (mob.findTattoo("LORE:" + p.lore.toUpperCase()) == null))
 			{ mob.addTattoo("LORE:"+p.lore.toUpperCase()); LoreBook.unlock(mob,p.lore,false,this); }
 		return head + text;

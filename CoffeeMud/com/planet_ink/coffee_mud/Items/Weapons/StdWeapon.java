@@ -375,13 +375,15 @@ public class StdWeapon extends StdItem implements Weapon, AmmunitionWeapon
 	@Override
 	public String missString()
 	{
-		return CMLib.combat().standardMissString(weaponDamageType,weaponClassification,name(),useExtendedMissString);
+		final String own=Vocabulary.weapon(this,false,0);
+        return own==null?CMLib.combat().standardMissString(weaponDamageType,weaponClassification,name(),useExtendedMissString):own;
 	}
 
 	@Override
 	public String hitString(final int damageAmount)
 	{
-		return CMLib.combat().standardHitString(weaponDamageType, weaponClassification,damageAmount,name());
+		final String own=Vocabulary.weapon(this,true,damageAmount);
+        return Vocabulary.damageMessage(this,own==null?CMLib.combat().standardHitString(weaponDamageType, weaponClassification,damageAmount,name()):own,weaponDamageType,damageAmount);
 	}
 
 	@Override

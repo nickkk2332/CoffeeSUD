@@ -2871,6 +2871,12 @@ public final class ScriptEvents
 		return true;
 	}
 
+    public static final int NOTUNDERSTOOD_PROG=code("NOTUNDERSTOOD_PROG");
+    // CMParms repeats the final token when an optional clean bit is absent.
+    public static void notUnderstood(final MOB listener,final CMMsg message,final String language,final String garbled) {
+        fire(Collections.singletonList(listener),NOTUNDERSTOOD_PROG,message.source(),listener,language,new Object[]{garbled},"CCr",t -> (t.length<2||t[1].trim().isEmpty()||t[1].equalsIgnoreCase(t[0])||t[1].equalsIgnoreCase("P")||t[1].equalsIgnoreCase("ANY")||t[1].equalsIgnoreCase(language))&&(t.length<3||t[2].trim().isEmpty()||garbled.toUpperCase().contains(t[2].replaceFirst("(?i)^P\\s+","").toUpperCase())));
+    }
+
     /** A keyword detail was examined; LOOK_PROG receives the keyword in $g. */
     public static void detail(final PhysicalAgent host, final MOB viewer, final String keyword)
     {

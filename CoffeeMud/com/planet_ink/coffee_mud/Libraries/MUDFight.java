@@ -646,7 +646,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		{
 			final Environmental E = addHere.tool();
 			final Integer xtraCode=Weapon.MSG_TYPE_MAP.get(Integer.valueOf(addHere.sourceMinor()));
-			targetMsg=getDeathCorpseAddOn(E,xtraCode);
+			targetMsg=Vocabulary.corpse(deadM,E,xtraCode);
+            if(targetMsg==null)targetMsg=getDeathCorpseAddOn(E,xtraCode);
 			if((targetMsg!=null)&&(targetMsg.trim().length()==0))
 				targetMsg=null;
 		}
@@ -974,11 +975,11 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 							   msg.target(),
 							   msg.tool(),
 							   msg.sourceCode(),
-							   replaceDamageTag(msg.sourceMessage(),msg.value(),damageType,CMMsg.View.SOURCE),
+							   replaceDamageTag(Vocabulary.damageMessage(attacker.location()==null?target:attacker,msg.sourceMessage(),damageType,msg.value()),msg.value(),damageType,CMMsg.View.SOURCE),
 							   msg.targetCode(),
-							   replaceDamageTag(msg.targetMessage(),msg.value(),damageType,CMMsg.View.TARGET),
+							   replaceDamageTag(Vocabulary.damageMessage(attacker.location()==null?target:attacker,msg.targetMessage(),damageType,msg.value()),msg.value(),damageType,CMMsg.View.TARGET),
 							   msg.othersCode(),
-							   replaceDamageTag(msg.othersMessage(),msg.value(),damageType,CMMsg.View.OTHERS));
+							   replaceDamageTag(Vocabulary.damageMessage(attacker.location()==null?target:attacker,msg.othersMessage(),damageType,msg.value()),msg.value(),damageType,CMMsg.View.OTHERS));
 				}
 				R.send(target,msg);
 			}
@@ -1256,7 +1257,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		}
 		// calculate Base Damage (with Strength bonus)
 		final String oldHitString="^F^<FIGHT^>"+((weapon!=null)?
-							weapon.hitString(damageInt):
+							Vocabulary.hit(weapon,source,damageInt):
 							standardHitString(Weapon.TYPE_NATURAL,Weapon.CLASS_BLUNT,damageInt,item.name()))+"^</FIGHT^>^?";
 		final CMMsg msg=CMClass.getMsg(source,
 								target,
@@ -1337,7 +1338,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		else
 		{
 			final String missString="^F^<FIGHT^>"+((weapon!=null)?
-								weapon.missString():
+								Vocabulary.miss(weapon,sourceM):
 								standardMissString(Weapon.TYPE_BASHING,Weapon.CLASS_BLUNT,item.name(),false))+"^</FIGHT^>^?";
 			final CMMsg msg=CMClass.getMsg(sourceM,
 									targetM,
@@ -1413,14 +1414,14 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		{
 			// calculate Base Damage (with Strength bonus)
 			final String oldHitString="^F^<FIGHT^>"+((weapon!=null)?
-								weapon.hitString(damageInt):
+								Vocabulary.hit(weapon,source,damageInt):
 								standardHitString(Weapon.TYPE_NATURAL,Weapon.CLASS_BLUNT,(int)Math.round(Math.pow(2,damageInt)),attacker.Name()))+"^</FIGHT^>^?";
 			postSiegeDamage(source, attacker, defender, weapon, oldHitString, damageType, damageInt);
 		}
 		else
 		{
 			final String missString="^F^<FIGHT^>"+((weapon!=null)?
-								weapon.missString():
+								Vocabulary.miss(weapon,source):
 								standardMissString(Weapon.TYPE_BASHING,Weapon.CLASS_BLUNT,attacker.name(),false))+"^</FIGHT^>^?";
 			final CMMsg msg=CMClass.getMsg(source,
 											defender,
@@ -2235,7 +2236,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		final int numHealthDescs=CMProps.getListFileIndexedListSize(CMProps.ListFile.HEALTH_CHART);
 		if(pct>=numHealthDescs)
 			pct=numHealthDescs-1;
-		return CMStrings.replaceAll(CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.HEALTH_CHART,pct),"<MOB>",mob.name(viewer));
+		return CMStrings.replaceAll(CMProps.getListFileChoiceFromIndexedList(CMProps.ListFile.HEALTH_CHART,pct,mob),"<MOB>",mob.name(viewer));
 	}
 
 	@Override

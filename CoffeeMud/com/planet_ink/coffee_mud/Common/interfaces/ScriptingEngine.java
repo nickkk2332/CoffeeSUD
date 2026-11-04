@@ -566,7 +566,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"COMBINE_PROG", // 113
 		"SET_PROG", // 114
 		"AGE_PROG", // 115 P29
-		"JOURNEY_PROG", // 116
+		"JOURNEY_PROG", // 116,
+        "NOTUNDERSTOOD_PROG"
 	};
 
 	/** String list of all valid mobprog functions for logical expressions or string functions */
@@ -798,6 +799,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"EXPTONEXT", //224 P2
 		"CLANPOS", "CLANMEMBER", "CLANS", "CLANRELATION", "AREACLAN", "AREACONTROL", "REVOLTCHANCE",
 		"ABOARD", "RIDERS", "ISANCHORED", "ISDOCKED", "COURSE", "VESSELROOM", "RIDING", "SPEED", "HULL",
+        "UNDERSTANDS", "UNDERSTANDS$"
 	};
 
 	/** String list of all valid mobprog commands */
@@ -957,7 +959,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPRANK", // 152 P25
 		"MPCLANRELATION", "MPCONQUER",
 		"MPSAIL", "MPANCHOR", "MPMOVEVESSEL", "MPBOARD", "MPHITCH", "MPUNHITCH",
-        "MPLORE", "MPJOURNAL", "MPNARRATE",
+        "MPLORE", "MPJOURNAL", "MPNARRATE", "MPLEARNLANG", "MPSAYIN",
 	};
 
 	/**

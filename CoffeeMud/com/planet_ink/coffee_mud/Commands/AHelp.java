@@ -155,6 +155,7 @@ public class AHelp extends StdCommand
 			if((textP != null) && (textP.second != null))
 			{
 				thisTag=new StringBuffer(textP.second.toString());
+                final String source=WorldHelp.source(textP.first,HelpLibrary.HelpSection.ArchonOnly);if(source!=null)thisTag.append("\n\r[Source: ").append(source).append("]");
 				final List<String> seeAlso = CMLib.help().getSeeAlsoHelpOn(mob, CMLib.help().getArcHelpFile(), helpStr, textP.first, textP.second, 5);
 				if(seeAlso.size()>0)
 				{

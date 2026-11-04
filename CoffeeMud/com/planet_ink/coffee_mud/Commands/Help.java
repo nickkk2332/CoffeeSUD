@@ -71,6 +71,7 @@ public class Help extends StdCommand
 			&&(match.second!=null))
 			{
 				helpText = match.second;
+                if(CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.AHELP)){final String source=WorldHelp.source(match.first);if(source!=null)helpText+="\n\r[Source: "+source+"]";}
 				final List<String> seeAlso = CMLib.help().getSeeAlsoHelpOn(mob, helpProps, helpStr, match.first, match.second, 5);
 				if(CMSecurity.isAllowed(mob,mob.location(),CMSecurity.SecFlag.AHELP))
 				{

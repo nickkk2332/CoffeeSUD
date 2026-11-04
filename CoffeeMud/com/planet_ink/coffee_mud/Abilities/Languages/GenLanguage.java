@@ -66,7 +66,8 @@ public class GenLanguage extends StdLanguage
 	private static final int V_VERB=6;//S
 	private static final int V_TVERB=7;//S
 	private static final int V_NSTYLE=8;//S G12: NAMESTYLE
-	private static final int NUM_VS=9;//S
+	private static final int V_FILE=9,V_SUFFIX=10,V_SYLLABLES=11,V_KEEP=12,V_NAMES=13,V_WRITTEN=14,V_SCRIPT=15,V_INTERPRETS=16;
+    private static final int NUM_VS=17;
 
 	private static final Object[] makeEmpty()
 	{
@@ -80,6 +81,7 @@ public class GenLanguage extends StdLanguage
 		O[V_VERB]="";
 		O[V_TVERB]="";
 		O[V_NSTYLE]="";
+        for(int i=9;i<NUM_VS;i++)O[i]="";
 		return O;
 	}
 
@@ -129,6 +131,12 @@ public class GenLanguage extends StdLanguage
 	{
 		return (Set<String>)V(ID,V_INTS);
 	}
+
+    @Override public boolean translatesLanguage(final String language,final String words){return ID().equalsIgnoreCase(language)||LanguageLexicon.interpretation(getStat("INTERPRETS"),language)>0;}
+    @Override public int getProficiency(final String language){return ID().equalsIgnoreCase(language)?proficiency():proficiency()*LanguageLexicon.interpretation(getStat("INTERPRETS"),language)/100;}
+    @Override public String writtenName(){final String name=getStat("WRITTENNAME");return name.isEmpty()?name():name;}
+    @Override public String translate(final String language,final String word){final String value=LanguageLexicon.translate(this,word);return value==null?super.translate(language,word):value;}
+    @Override public String scrambleAll(final String language,final String text,final int count){final String value=LanguageLexicon.script(this,"garble",text,Integer.valueOf(count));return value==null?super.scrambleAll(language,text,count):value;}
 
 	@Override
 	public boolean isANaturalLanguage()
@@ -194,6 +202,7 @@ public class GenLanguage extends StdLanguage
 										 "VERB", // S
 										 "TRANSVERB", // S
 										 "NAMESTYLE", // S G12
+                                     "WORDFILE","SUFFIXES","SYLLABLES","KEEPWORDS","KEEPNAMES","WRITTENNAME","TRANSLATESCRIPT",
 										};
 
 	@Override
@@ -257,7 +266,7 @@ public class GenLanguage extends StdLanguage
 		case 5:
 			return (String) V(ID, V_HELP);
 		case 6:
-			return CMParms.combineWith((Set<String>)V(ID,V_INTS), ',');
+			return V(ID,V_INTERPRETS).toString().isEmpty()?CMParms.combineWith((Set<String>)V(ID,V_INTS), ','):V(ID,V_INTERPRETS).toString();
 		case 7:
 			return V(ID,V_NAT).toString();
 		case 8:
@@ -266,6 +275,7 @@ public class GenLanguage extends StdLanguage
 			return V(ID,V_TVERB).toString();
 		case 10:
 			return V(ID,V_NSTYLE).toString();
+        case 11:case 12:case 13:case 14:case 15:case 16:case 17:return V(ID,getCodeNum(code)-2).toString();
 		default:
 			if (code.equalsIgnoreCase("javaclass"))
 				return "GenLanguage";
@@ -345,7 +355,9 @@ public class GenLanguage extends StdLanguage
 			break;
 		case 6:
 		{
-			final Set<String> ints = new XHashSet<String>(CMParms.parseCommas(val, true));
+			SV(ID,V_INTERPRETS,val);
+            final Set<String> ints = new XHashSet<String>();
+            for(final String part:CMParms.parseCommas(val,true))ints.add(part.replaceAll("\\([0-9]+\\)",""));
 			if(!ints.contains(ID()))
 				ints.add(ID());
 			SV(ID, V_INTS, ints);
@@ -368,6 +380,7 @@ public class GenLanguage extends StdLanguage
 		case 10:
 			SV(ID, V_NSTYLE, (val==null)?"":val.trim());
 			break;
+        case 11:case 12:case 13:case 14:case 15:case 16:case 17:SV(ID,getCodeNum(code)-2,val==null?"":val);break;
 		default:
 			if(code.equalsIgnoreCase("allxml")&&ID.equalsIgnoreCase("GenLanguage"))
 				parseAllXML(val);

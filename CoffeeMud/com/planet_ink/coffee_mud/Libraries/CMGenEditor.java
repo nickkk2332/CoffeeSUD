@@ -9826,7 +9826,8 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Source Verb"),"VERB",true);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Translation Verb"),"TRANSVERB",true);
 			promptStatStr(mob,me,null,++showNumber,showFlag,L("Help Text"),"HELP",true);
-			promptStatStr(mob,me,null,++showNumber,showFlag,L("Name style"),"NAMESTYLE",true); // G12
+			promptStatStr(mob,me,null,++showNumber,showFlag,L("Name style"),"NAMESTYLE",true);
+            for(final String field:new String[]{"WORDFILE","SUFFIXES","SYLLABLES","KEEPWORDS","KEEPNAMES","WRITTENNAME","TRANSLATESCRIPT"})promptStatStr(mob,me,null,++showNumber,showFlag,field,field,true); // G12
 
 			if (showFlag < -900)
 			{
@@ -10977,7 +10978,9 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Prac/Level"),"LVLPRAC"); // P17
 			promptStatInt(mob,me,++showNumber,showFlag,L("Extra Trains/Level"),"LVLTRAIN"); // P17
 			promptStatStr(mob,me,L("A script run on each mob of it, as an effect it never saves; AHELP SKILLSCRIPTS."),++showNumber,showFlag,L("Script"),"SCRIPT",true); // P21
-			promptStatStr(mob,me,L("MIDDLEAGED: STR-1 DEX-1 WIS+1; VENERABLE: ...  In place of the usual effects of age; AHELP AGEING."),++showNumber,showFlag,L("Age effects"),"AGEEFFECTS",true); // P29
+			promptStatStr(mob,me,L("MIDDLEAGED: STR-1 DEX-1 WIS+1; VENERABLE: ...  In place of the usual effects of age; AHELP AGEING."),++showNumber,showFlag,L("Age effects"),"AGEEFFECTS",true);
+            promptStatStr(mob,me,null,++showNumber,showFlag,L("Health chart"),"HEALTHCHART",true);
+            promptStatStr(mob,me,null,++showNumber,showFlag,L("Corpse descriptions"),"CORPSEBLURBS",true); // P29
 
 			if (showFlag < -900)
 			{

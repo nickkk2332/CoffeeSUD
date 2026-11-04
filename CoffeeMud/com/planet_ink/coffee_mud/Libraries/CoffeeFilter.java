@@ -893,7 +893,7 @@ public class CoffeeFilter extends StdLibrary implements TelnetFilter
 
 		if(msg.length()==0)
 			return msg;
-		final StringBuilder buf=new StringBuilder(ColorAliases.expand(msg,S==null?null:S.mob()));
+		final StringBuilder buf=new StringBuilder(ColorAliases.expand(Languages.inline(S==null?null:S.mob(),msg,S!=null),S==null?null:S.mob()));
 		final Session CS=S;
 		//if(CS==null) CS=(Session)CMClass.getCommon("DefaultSession");
 		int loop=0;
@@ -1156,7 +1156,7 @@ public class CoffeeFilter extends StdLibrary implements TelnetFilter
 		boolean doSagain=false;
 		boolean firstSdone=false;
 		boolean capitalize = true;
-		final StringBuilder buf=new StringBuilder(ColorAliases.expand(msg,mob));
+		final StringBuilder buf=new StringBuilder(ColorAliases.expand(Languages.inline(mob,msg,S!=null),mob));
 
 		final int wrap=(S!=null)?S.getWrap():78;
 		int len=(wrap>0)?wrap:(Integer.MAX_VALUE/3);

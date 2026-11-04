@@ -1196,16 +1196,18 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 		{
 			final String resp = basicParser(item,"SESSION-TRANSLATION:"+clazz.getCanonicalName(),false,false);
 			if(resp != null)
-				return resp;
+				return Vocabulary.glossary(resp,clazz.getName().contains("Help")?"HELP":clazz.getName().contains("Score")?"SCORE":"ALL",false);
 			clazz = clazz.getSuperclass();
 		}
-		return basicParser(item,"SESSION-TRANSLATION",false,false);
+		final String translated=basicParser(item,"SESSION-TRANSLATION",false,false);
+        final String value=Vocabulary.glossary(translated==null?item:translated,"ALL",false);return value.equals(item)&&translated==null?null:value;
 	}
 
 	@Override
 	public String finalTranslation(final String item)
 	{
-		return basicParser(item,"FINAL-TRANSLATION",false,false);
+		final String translated=basicParser(item,"FINAL-TRANSLATION",false,false);
+        final String value=Vocabulary.glossary(translated==null?item:translated,"ALL",true);return value.equals(item)&&translated==null?null:value;
 	}
 
 	@Override

@@ -121,8 +121,10 @@ public class Gait extends StdAbility
 	}
 
 	public String[][] getGaits()
-	{
-		final Object[][][] set = CMProps.getListFileGrid(CMProps.ListFile.GAIT_LIST);
+	{return getGaits(null);}
+    public String[][] getGaits(final MOB viewer)
+    {
+		final Object[][][] set = CMProps.getListFileGrid(CMProps.ListFile.GAIT_LIST,viewer);
 
 		final String[][] fset = new String[set.length][4];
 		for(int x=0;x<set.length;x++)
@@ -157,7 +159,7 @@ public class Gait extends StdAbility
 			mob.tell(L("You are currently using @x1 gait.",gaitName));
 			return false;
 		}
-		final String[][] gaits = getGaits();
+		final String[][] gaits = getGaits(mob);
 		if(entered.equalsIgnoreCase("RANDOM"))
 		{
 			final int rand=CMLib.dice().roll(1,gaits.length+3,-1);

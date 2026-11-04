@@ -2,7 +2,6 @@ package com.planet_ink.coffee_mud.Commands;
 import com.planet_ink.coffee_mud.core.interfaces.*;
 import com.planet_ink.coffee_mud.core.*;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
-import com.planet_ink.coffee_mud.Abilities.Languages.StdLanguage;
 import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Areas.interfaces.*;
 import com.planet_ink.coffee_mud.Commands.interfaces.*;
@@ -82,6 +81,7 @@ public class LangToolsCmd extends StdCommand
 	 */
 	public static String wordSource(final Language L, final String word)
 	{
+        if(L.isGeneric()){final String source=LanguageLexicon.source(L,word);if(source!=null)return source;}
 		if(L.translationHash(L.ID()).containsKey(word.toUpperCase()))
 			return "dictionary";
 		if(CMLib.players().getPlayerAllHosts(word) != null)
@@ -103,14 +103,14 @@ public class LangToolsCmd extends StdCommand
 	{
 		final StringBuilder str = new StringBuilder("'" + text + "' in " + L.name() + " (" + L.ID() + "), at " + prof + "%:");
 		final int mess = (int)Math.round(CMath.mul(letters(text), CMath.div(100 - prof, 100)));
-		if(L instanceof StdLanguage)
+		if(L instanceof com.planet_ink.coffee_mud.core.Languages.Scrambler)
 		{
-			final StdLanguage S = (StdLanguage)L;
+			final com.planet_ink.coffee_mud.core.Languages.Scrambler S = (com.planet_ink.coffee_mud.core.Languages.Scrambler)L;
 			str.append("\n\r  One who does not know it hears: ").append(S.scrambleAll(L.ID(), text, 0));
-			str.append("\n\r  A listener at ").append(prof).append("% understands: ").append(S.messChars(L.ID(), text, mess));
+			str.append("\n\r  A listener at ").append(prof).append("% understands: ").append(com.planet_ink.coffee_mud.core.Languages.render(L.ID(), text, prof));
 			str.append("\n\r  The speaker at ").append(prof).append("% is heard by those who do not know it as: ").append(S.scrambleAll(L.ID(), text, mess));
 			str.append("\n\r  Written, it says '").append(S.scrambleAll(L.ID(), text, mess).trim()).append("'; a reader at ").append(prof)
-				.append("% reads: ").append(S.messChars(L.ID(), text, mess));
+				.append("% reads: ").append(com.planet_ink.coffee_mud.core.Languages.render(L.ID(), text, prof));
 		}
 		else
 			str.append("\n\r  (").append(L.ID()).append(" is no standard language: only its words are shown.)");
@@ -199,7 +199,7 @@ public class LangToolsCmd extends StdCommand
 			if(w.length() == 0)
 				continue;
 			words++;
-			if(dict.containsKey(w.toUpperCase()))
+			if(dict.containsKey(w.toUpperCase())||(L.isGeneric()&&LanguageLexicon.dictionary(L,w)!=null))
 				hits++;
 			else
 			{

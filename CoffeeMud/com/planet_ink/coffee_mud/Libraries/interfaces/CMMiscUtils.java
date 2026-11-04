@@ -186,6 +186,9 @@ public interface CMMiscUtils extends CMLibrary
 	 * @param P the mob to check
 	 * @return the language being spoken.
 	 */
+    public boolean understands(MOB mob,String language);
+    public int languageProficiency(MOB mob,String language);
+
 	public Language getLanguageSpoken(Physical P);
 
 	/**

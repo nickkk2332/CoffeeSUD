@@ -32,7 +32,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class Semaphore extends StdLanguage
+public class Semaphore extends StdLanguage implements Languages.Visual
 {
 	@Override
 	public String ID()

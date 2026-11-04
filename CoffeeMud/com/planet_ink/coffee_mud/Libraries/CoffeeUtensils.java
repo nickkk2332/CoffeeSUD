@@ -614,6 +614,9 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 	}
 
 	@Override
+    public boolean understands(final MOB mob,final String language){return Languages.proficiency(mob,language)>0;}
+    public int languageProficiency(final MOB mob,final String language){return Languages.proficiency(mob,language);}
+
 	public Language getLanguageSpoken(final Physical P)
 	{
 		Ability A=null;

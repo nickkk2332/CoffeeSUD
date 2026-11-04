@@ -213,6 +213,10 @@ public class Socials extends StdLibrary implements SocialsList
 			Resources.submitResource("PARSED_SOCIALS: "+filename,soc);
 			final List<String> V=Resources.getFileLineVector(new CMFile(filename,null,CMFile.FLAG_LOGERRORS).text());
 			putSocialsInHash(soc,V);
+            final Properties settings=Vocabulary.properties("vocab/socials.ini");final String stock=settings.getProperty("STOCK","ALL");
+            if(stock.equalsIgnoreCase("NONE"))soc.clear();else if(!stock.equalsIgnoreCase("ALL")){final Set<String> keep=new HashSet<String>();for(final String key:CMParms.parseCommas(stock,true))keep.add(key.toUpperCase());soc.keySet().retainAll(keep);}
+            for(final String key:CMParms.parseCommas(settings.getProperty("REMOVE",""),true))soc.remove(key.toUpperCase());
+            putSocialsInHash(soc,Arrays.asList(Vocabulary.read("vocab/socials.txt").split("\\r?\\n")));
 			unloadDerivedResources();
 		}
 		return soc;
@@ -1047,7 +1051,9 @@ public class Socials extends StdLibrary implements SocialsList
 			buf.append(socObj.getEncodedLine());
 		}
 		// allowed is forced because this is already protected by SOCIALS security flag
-		if(!new CMFile(filename,whom,CMFile.FLAG_FORCEALLOW).saveText(buf))
+		if(com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()) {
+            Vocabulary.write("vocab/socials.txt",buf.toString());final Properties config=Vocabulary.properties("vocab/socials.ini");config.setProperty("STOCK","NONE");try{final java.io.StringWriter out=new java.io.StringWriter();config.store(out,"World socials snapshot");Vocabulary.write("vocab/socials.ini",out.toString());}catch(final java.io.IOException e){Log.errOut("Socials",e);}
+        } else if(!new CMFile(filename,whom,CMFile.FLAG_FORCEALLOW).saveText(buf))
 			Log.errOut("Socials","Unable to save socials.txt!");
 		unloadDerivedResources();
 	}

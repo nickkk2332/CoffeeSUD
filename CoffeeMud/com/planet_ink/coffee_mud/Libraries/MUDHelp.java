@@ -1659,7 +1659,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 
 		if(noFix)
 			return new Triad<String, String, HelpMatchType>(helpKey, helpText, matchType);
-		final String finalHelpText = fixHelp(helpKey,helpText,forM);
+		final String finalHelpText = Vocabulary.scopedOutput(fixHelp(helpKey,helpText,forM),"HELP");
 		return new Triad<String, String, HelpMatchType>(helpKey, finalHelpText, matchType);
 	}
 
@@ -1707,6 +1707,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 				if((directory.canRead())&&(directory.isDirectory()))
 				{
 					final String[] list=directory.list();
+                    Arrays.sort(list,String.CASE_INSENSITIVE_ORDER);
 					for (final String item : list)
 					{
 						if((item!=null)
@@ -1717,6 +1718,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 							final Properties local=new Properties();
 							local.load(new ByteArrayInputStream(new CMFile(Resources.buildResourcePath("help")+item,null,CMFile.FLAG_LOGERRORS).raw()));
 							arcHelpFile.putAll(local);
+                            WorldHelp.record(local,"resources/help/"+item,true);
 							for(final Object key : local.keySet())
 							{
 								final String keyStr=key.toString();
@@ -1727,7 +1729,8 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 						}
 					}
 				}
-				for(final Enumeration<Object> e=arcHelpFile.keys();e.hasMoreElements();)
+				WorldHelp.merge(arcHelpFile,true);
+                for(final Enumeration<Object> e=arcHelpFile.keys();e.hasMoreElements();)
 				{
 					final String key=(String)e.nextElement();
 					String entry=(String)arcHelpFile.get(key);
@@ -1768,6 +1771,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 				if((directory.canRead())&&(directory.isDirectory()))
 				{
 					final String[] list=directory.list();
+                    Arrays.sort(list,String.CASE_INSENSITIVE_ORDER);
 					for (final String element : list)
 					{
 						final String item=element;
@@ -1779,6 +1783,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 							final Properties local=new Properties();
 							local.load(new ByteArrayInputStream(new CMFile(Resources.buildResourcePath("help")+item,null,CMFile.FLAG_LOGERRORS).raw()));
 							helpFile.putAll(local);
+                            WorldHelp.record(local,"resources/help/"+item,false);
 							for(final Object key : local.keySet())
 							{
 								final String keyStr=key.toString();
@@ -1791,7 +1796,8 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 						}
 					}
 				}
-				for(final Enumeration<Object> e=helpFile.keys();e.hasMoreElements();)
+				WorldHelp.merge(helpFile,false);
+                for(final Enumeration<Object> e=helpFile.keys();e.hasMoreElements();)
 				{
 					final String key=(String)e.nextElement();
 					String entry=(String)helpFile.get(key);
@@ -1822,6 +1828,10 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 	@Override
 	public String findHelpFile(final String key, final HelpSection searchSection, final boolean exactOnly)
 	{
+        getHelpFile();getArcHelpFile();
+        final String worldSource=WorldHelp.source(key,searchSection);
+        if(worldSource!=null)return worldSource;
+
 		final String ukey=key.toUpperCase().trim().replace(' ','_');
 		final CMFile directory=new CMFile(Resources.buildResourcePath("help"),null,CMFile.FLAG_LOGERRORS);
 		final Filterer.TextFilter  arcFilter = new Filterer.TextFilter(".arc", true);
@@ -1829,6 +1839,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 		if((directory.canRead())&&(directory.isDirectory()))
 		{
 			final String[] list=directory.list();
+                    Arrays.sort(list,String.CASE_INSENSITIVE_ORDER);
 			final List<Filterer<String>> filters;
 			switch(searchSection)
 			{
@@ -1878,7 +1889,8 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 	{
 		final StringBuilder upStr=new StringBuilder("");
 		final StringBuilder dnStr=new StringBuilder("");
-		final CMFile F = new CMFile(helpFile, null, CMFile.FLAG_LOGERRORS);
+		final String destination=com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode()?WorldHelp.prepare(helpFile,helpKey,deleteOnly):helpFile;
+        final CMFile F = new CMFile(destination, null,CMFile.FLAG_LOGERRORS|CMFile.FLAG_FORCEALLOW);
 		final List<String> bV;
 		if(F.exists())
 			bV = Resources.getFileLineVector(F.text());
@@ -2044,6 +2056,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 	@Override
 	public void unloadHelpFile(final MOB mob)
 	{
+        WorldHelp.clear();
 		if(Resources.getResource("PLAYER TOPICS")!=null)
 			Resources.removeResource("PLAYER TOPICS");
 		if(Resources.getResource("ARCHON TOPICS")!=null)

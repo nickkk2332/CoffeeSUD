@@ -113,6 +113,8 @@ world.
 
 Guides:
 
+- [`docs/languages.md`](docs/languages.md): custom languages, comprehension and
+  immersion, local vocabulary, and world-owned socials and help.
 - [`CoffeeMud/guides/ScriptingSUD.html`](CoffeeMud/guides/ScriptingSUD.html):
   CoffeeSUD's additions to MOBPROG scripting and quests.
 - [`CoffeeMud/guides/JavaScriptSUD.html`](CoffeeMud/guides/JavaScriptSUD.html):

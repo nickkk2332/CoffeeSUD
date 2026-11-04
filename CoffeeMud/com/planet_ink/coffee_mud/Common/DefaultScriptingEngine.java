@@ -4692,16 +4692,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					else
 					{
 						final MOB TM=(MOB)E;
-						final Language L=CMLib.utensils().getLanguageSpoken(TM);
-						if((L!=null)
-						&&(!L.ID().equalsIgnoreCase("Common"))
-						&&(L.ID().equalsIgnoreCase(arg2)||L.Name().equalsIgnoreCase(arg2)||arg2.equalsIgnoreCase("any")))
-							returnable=true;
-						else
-						if(arg2.equalsIgnoreCase("common")||arg2.equalsIgnoreCase("none"))
-							returnable=(L==null)||L.ID().equalsIgnoreCase("Common"); // SC9: only when it speaks no other
-						else
-							returnable=false;
+                        final String speaking=ctx.script!=null&&ctx.script.getTriggerCode()==ScriptEvents.NOTUNDERSTOOD_PROG&&E==ctx.source?ctx.msg:Languages.spoken(TM);
+                        returnable=arg2.equalsIgnoreCase("any")?!speaking.equalsIgnoreCase("Common"):arg2.equalsIgnoreCase("none")?speaking.equalsIgnoreCase("Common"):speaking.equalsIgnoreCase(Languages.id(arg2));
 					}
 					break;
 				}
@@ -8209,11 +8201,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				if((E!=null)&&(E instanceof MOB))
 				{
 					final MOB TM=(MOB)E;
-					final Language L=CMLib.utensils().getLanguageSpoken(TM);
-					if(L!=null)
-						results.append(L.Name());
-					else
-						results.append("Common");
+                    final String speaking=ctx.script!=null&&ctx.script.getTriggerCode()==ScriptEvents.NOTUNDERSTOOD_PROG&&E==ctx.source?ctx.msg:Languages.spoken(TM);
+                    final Language language=Languages.language(speaking);results.append(language==null?speaking:language.name());
 				}
 				break;
 			}
@@ -14812,6 +14801,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					else
 					if(p2.trim().startsWith("--"))
 						p2=""+(A.proficiency()-CMath.s_int(p2.trim().substring(2)));
+                    if(A instanceof Language&&((MOB)newTarget).fetchAbility(A.ID())==null){final String err=Languages.learn((MOB)newTarget,A.ID(),p2.trim(),false);if(err!=null){logError(ctx,"MPENABLE","RunTime",err);break;}A=((MOB)newTarget).fetchAbility(A.ID());}
 					A.setProficiency(CMath.s_int(p2.trim()));
 					A.setMiscText(m2);
 					if(((MOB)newTarget).fetchAbility(A.ID())==null)
@@ -14819,6 +14809,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 						((MOB)newTarget).addAbility(A);
 						A.autoInvocation((MOB)newTarget, false);
 					}
+                    if(A instanceof Language){final Ability live=((MOB)newTarget).fetchEffect(A.ID());if(live!=null)live.setProficiency(A.proficiency());}
 				}
 				break;
 			}
@@ -16055,6 +16046,11 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			final long count=((w.size()>2)&&CMath.isInteger(w.get(2)))?CMath.s_long(w.get(2)):1;
 			return CMLib.beanCounter().getDenominationName(w.get(0).toUpperCase(),CMath.s_double(w.get(1)),count);
 		}
+        case "UNDERSTANDS":case "UNDERSTANDS$":
+        {
+            final List<String> p=organizationWords(parms);if(p.size()<2)return "0";final Environmental who=getArgumentMOB(p.get(0),ctx);final int n=who instanceof MOB?Languages.proficiency((MOB)who,varify(ctx,p.get(1))):0;return name.endsWith("$")?Integer.toString(n):Boolean.toString(n>0);
+        }
+
 		case "GENSTRING": // G5: GENSTRING(file id [VAR=VALUE ...]): text from a STRING tag, a fresh roll
 		{
 			final String gv=varify(ctx,parms).trim();
@@ -16524,7 +16520,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(c==null)
 		{
 			final String r=extraValue(ctx,name,inner).trim();
-			if(name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")||name.equalsIgnoreCase("PARM")||name.equalsIgnoreCase("EFFECTPARM")) // SC4, SC13, N7, P1: set, and not 0 or false
+			if(name.equalsIgnoreCase("UNDERSTANDS")||name.equalsIgnoreCase("UNDERSTANDS$")||name.equalsIgnoreCase("STATE")||name.equalsIgnoreCase("ARG")||name.equalsIgnoreCase("PARM")||name.equalsIgnoreCase("EFFECTPARM")) // SC4, SC13, N7, P1: set, and not 0 or false
 				return (r.length()>0)&&(!r.equals("0"))&&(!r.equalsIgnoreCase("false"));
 			return "true".equalsIgnoreCase(r);
 		}
@@ -16781,6 +16777,18 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPQOBJECTIVE","Syntax",err+": "+line);
 			return null;
 		}
+        case "MPLEARNLANG":
+        {
+            final List<String> p=organizationWords(CMParms.getPastBit(line,0));
+            if(p.size()<3){logError(ctx,cmd,"Syntax","MPLEARNLANG who language amount [FORCE]");return null;}
+            final Environmental who=getArgumentMOB(p.get(0),ctx);if(!(who instanceof MOB)){logError(ctx,cmd,"RunTime","No such character");return null;}
+            final String err=Languages.learn((MOB)who,varify(ctx,p.get(1)),varify(ctx,p.get(2)),p.size()>3&&p.get(3).equalsIgnoreCase("FORCE"));if(err!=null)logError(ctx,cmd,"RunTime",err);return null;
+        }
+        case "MPSAYIN":
+        {
+            final String lang=varify(ctx,CMParms.getCleanBit(line,1));if(Languages.language(lang)==null&&!lang.equalsIgnoreCase("Common")){logError(ctx,cmd,"RunTime","Unknown language "+lang);return null;}
+            Languages.sayIn(ctx.monster,lang,varify(ctx,CMParms.getPastBitClean(line,1)));return null;
+        }
         case "MPNARRATE":
         {
             final List<String> p=organizationWords(CMParms.getPastBit(line,0));
@@ -18892,13 +18900,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					&&canTrigger(3)
 					&&(!msg.amISource(monster))
 					&&(!msg.othersMajor(CMMsg.MASK_CHANNEL))
-					&&(((msg.othersMessage()!=null)
-						&&((msg.tool()==null)
-						  ||(!(msg.tool() instanceof Ability))
-						  ||((((Ability)msg.tool()).classificationCode()&Ability.ALL_ACODES)!=Ability.ACODE_LANGUAGE)))
-					  ||((msg.target()==monster)
-						&&(msg.targetMessage()!=null)
-						&&(msg.tool()==null)))
+                    &&((msg.othersMessage()!=null)||(msg.target()==monster&&msg.targetMessage()!=null))
+                    &&(!(affecting instanceof MOB)||(msg.sourceMinor()==CMMsg.TYP_SPEAK&&Languages.understoodSpeech(monster,msg)))
 					&&((!(affecting instanceof MOB)) || isFreeToBeTriggered(monster)))
 					{
 						if(t==null)
@@ -18910,12 +18913,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 									t[i]=t[i].replace('`', '\'');
 							}
 						}
-						String str=null;
-						if(msg.othersMessage() != null)
-							str=CMStrings.getSayFromMessage(msg.othersMessage().toUpperCase());
-						else
-						if(msg.targetMessage() != null)
-							str=CMStrings.getSayFromMessage(msg.targetMessage().toUpperCase());
+                        String str=affecting instanceof MOB?Languages.speechText(monster,msg):CMStrings.getSayFromMessage(msg.othersMessage()!=null?msg.othersMessage():msg.targetMessage());
 						if(str != null)
 						{
 							str=(" "+str.replace('`', '\'')+" ").toUpperCase();

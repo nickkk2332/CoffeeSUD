@@ -3176,7 +3176,49 @@ same-named passengers, coach state, external route file and mid-shaft lift.
 
 #### 2n. Languages and vocabulary (14)
 
-L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13, L14
+L1–L14 done. Authoring examples and file formats are in
+[docs/languages.md](docs/languages.md); AHELP LANGUAGE_AUTHORING,
+LANGUAGE_SCRIPTING and WORLD_VOCABULARY describe the tools in-game.
+
+- L1, L4, L10, L11: one comprehension lookup (`core/Languages`) serves
+  hearing, reading, NPC speech/MudChat, scripts and inline inscriptions.
+  It includes Common restrictions, own knowledge, related languages with
+  percentage INTERPRETS, and translators on creatures, carried items and
+  rooms. Visual-language formatting and private delivery are preserved for
+  Sign Language and Semaphore, including deaf readers who can see the speaker. Prop_Monolingual and Prop_LanguageSpeaker UNDERSTANDS=ONLY remove
+  automatic Common; optional CONFUSED text and NOTUNDERSTOOD_PROG supply
+  reactions. UNDERSTANDS/UNDERSTANDS$ expose boolean/numeric knowledge.
+  MPLEARNLANG updates stored and live proficiency, observes character
+  language limits and accepts FORCE; MPENABLE synchronizes live effects;
+  MPSAYIN restores the previous speaking language after one utterance.
+  Existing HOMEONLY and Common ISSPEAKING fixes remain in place.
+- L5, L6, L12: GenLanguage adds saved/editor WORDFILE, SUFFIXES, SYLLABLES,
+  KEEPWORDS, KEEPNAMES, WRITTENNAME and TRANSLATESCRIPT. Dictionaries use
+  UTF-8 world/vocab/languages files; inline words win. Approved, bounded
+  JavaScript can translate words or garble sentences, with null fallback.
+  Language previews and coverage include the new sources. Inline LANG
+  markup renders foreign text and viewer-specific translations in normal
+  and wrapless output, including help; tomes also use shared comprehension.
+- L2, L3, L7, L8: world/vocab/glossary.ini applies whole-word, case-preserving
+  terminology, plurals, exceptions, HELP/SCORE scopes and FINAL rules.
+  Prop_LocalLists checks creature, room, area, parents and global fallbacks
+  for time, health, damage, hit/miss, corpse, magic-word and gait lists.
+  GenRace HEALTHCHART/CORPSEBLURBS and Prop_WeaponMessages override their
+  specific creature/weapon text; natural weapons receive wielder context.
+- L9, L14: world vocab socials load after selected/pruned stock socials,
+  and builder edits save a world snapshot. Prop_Socials LOAD checks vocab.
+  Help loads stock and world files in fixed alphabetical order, supports
+  hidden stock keys and world replacements, and shows provenance to
+  Archons. Builder help edits write world/vocab/help files.
+- L13: Prop_LanguageImmersion grants and improves a language through
+  hearing/reading, with configurable chance, threshold, starting knowledge
+  and cap. Saved character records retain exposure counts before the
+  language is granted; learned abilities and live effects stay synchronized.
+
+Validation: 3,684 checks in the full fixes suite (3,277 JavaScript checks in
+316 fixtures and 407 played checks); 170 focused checks after the final
+visual-language and optional-trigger fixes; 97 smoke checks. TEST ALL matches
+its baseline of 47 passes and three existing failures.
 
 #### 2o. Characters, progression and custom abilities (29)
 

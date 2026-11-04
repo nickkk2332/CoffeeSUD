@@ -114,7 +114,7 @@ public class Prop_ClanEquipment extends Property implements TriggeredAffect
 		}
 		if((affected instanceof Wand)&&(typeOfEffect<1000))
 		{
-			id.append("Does "+(1*powerLevel)+"-"+(6*powerLevel)+" "+type.toLowerCase()+" damage when the user says `"+secretWord+"` to the target.");
+			id.append("Does "+(1*powerLevel)+"-"+(6*powerLevel)+" "+type.toLowerCase()+" damage when the user says `"+magicWord()+"` to the target.");
 		}
 		return id.toString();
 	}
@@ -253,12 +253,14 @@ public class Prop_ClanEquipment extends Property implements TriggeredAffect
 		return CMProps.getListFileChoiceFromIndexedListByHash(CMProps.ListFile.MAGIC_WORDS,hash);
 	}
 
+    protected String magicWord(){return Vocabulary.magicWord(affected,text(),secretWord);}
+
 	public boolean checkWave(final MOB mob, final String message, final Wand me)
 	{
 		if((mob.isMine(me))
 		&&(me.amBeingWornProperly()))
 		{
-			final int x=message.toUpperCase().indexOf(secretWord.toUpperCase());
+			final int x=message.toUpperCase().indexOf(magicWord().toUpperCase());
 			return (x>=0);
 		}
 		return false;
@@ -276,10 +278,10 @@ public class Prop_ClanEquipment extends Property implements TriggeredAffect
 			{
 				target=(MOB)afftarget;
 			}
-			final int x=message.toUpperCase().indexOf(secretWord.toUpperCase());
+			final int x=message.toUpperCase().indexOf(magicWord().toUpperCase());
 			if(x>=0)
 			{
-				message=message.substring(x+secretWord.length());
+				message=message.substring(x+magicWord().length());
 				final int y=message.indexOf('\'');
 				if(y>=0)
 				{

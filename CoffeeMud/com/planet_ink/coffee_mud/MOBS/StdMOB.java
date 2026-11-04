@@ -3516,6 +3516,7 @@ public class StdMOB implements MOB
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
         if(msg.amISource(this)&&msg.sourceMinor()==CMMsg.TYP_READ)Ambience.activity(this);
+        Languages.heard(this,msg);
 		DialogueTime.heard(this, msg); // N10: an NPC spoke to it
 		CraftXP.heard(this, msg); // CR12: XP for a craft or a find
 		final Deity deity = charStats().getMyDeity();

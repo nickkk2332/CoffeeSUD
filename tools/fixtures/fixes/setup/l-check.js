@@ -1,0 +1,12 @@
+FIXFILE="l-check";
+var r=M.location(),L=CMClass.getAbility("FixSaveLanguage");
+check("room restored",String(r.roomID())=="FixLanguageSave#0"&&r.fetchEffect("Prop_LanguageImmersion")!=null,r.roomID());
+check("custom fields restored",L!=null&&String(L.getStat("SUFFIXES"))=="S:en"&&String(L.writtenName())=="Saved Runes","fields lost");
+check("dictionary restored",L!=null&&String(L.translate(L.ID(),"gate"))=="esh","dictionary missing after restore");
+check("known proficiency restored",M.fetchAbility("Elvish")!=null&&M.fetchAbility("Elvish").proficiency()==37&&M.fetchEffect("Elvish")!=null&&M.fetchEffect("Elvish").proficiency()==37,"stored/live knowledge lost");
+check("unknown remains unknown",M.fetchAbility("FixSaveLanguage")==null,"learned before restored exposure");
+CM.core.Languages.expose(M,"FixSaveLanguage","READ",r);
+check("pregrant counter restored",M.fetchAbility("FixSaveLanguage")!=null&&M.fetchAbility("FixSaveLanguage").proficiency()==7,"did not learn on third exposure");
+CM.core.Languages.expose(M,"FixSaveLanguage","READ",r);CM.core.Languages.expose(M,"FixSaveLanguage","READ",r);CM.core.Languages.expose(M,"FixSaveLanguage","READ",r);
+check("learning cap after restore",M.fetchEffect("FixSaveLanguage")!=null&&M.fetchEffect("FixSaveLanguage").proficiency()==11,"cap failed");
+check("world help after restore",String(CMLib.help().getHelpFile().getProperty("FIXSAVEDLANGUAGE"))=="FIX_SAVED_LANGUAGE_HELP","help missing after restore");done();

@@ -67,7 +67,8 @@ public class GenRace extends StdRace
 	protected String			nameStyle			= ""; // G12: NAMESTYLE
 	protected String			unlockHint			= ""; // P18: UNLOCKHINT
 	protected final HostScripts	scripts			= new HostScripts(); // P21: SCRIPT
-	protected String			ageEffects			= ""; // P29: AGEEFFECTS
+	protected String healthChart="",corpseBlurbs="";
+    protected String			ageEffects			= ""; // P29: AGEEFFECTS
 	protected int[]				levelGains			= new int[4]; // P17: FSTTRAN, FSTPRAC, LVLPRAC, LVLTRAIN
 	protected String[]			racialEffectNames	= null;
 	protected int[]				racialEffectLevels	= null;
@@ -376,7 +377,8 @@ public class GenRace extends StdRace
 	@Override
 	public String healthText(final MOB viewer, final MOB mob)
 	{
-		if((healthBuddy!=null)&&(healthBuddy!=this))
+		if(!healthChart.isEmpty()){int index=(int)Math.floor(10.0*mob.curState().getHitPoints()/Math.max(1,mob.maxState().getHitPoints()));return Vocabulary.pick(healthChart,index).replace("<MOB>",mob.name(viewer));}
+        if((healthBuddy!=null)&&(healthBuddy!=this))
 			return healthBuddy.healthText(viewer,mob);
 		return CMLib.combat().standardMobCondition(viewer,mob);
 	}
@@ -490,6 +492,7 @@ public class GenRace extends StdRace
 		str.append(CMLib.xml().convertXMLtoTag("BODY",bbody.toString()));
 		str.append(CMLib.xml().convertXMLtoTag("XPADJ",""+getXPAdjustment()));
 		str.append(CMLib.xml().convertXMLtoTag("HEALTHRACE",getRaceLocatorID(healthBuddy)));
+        str.append(CMLib.xml().convertXMLtoTag("HEALTHCHART",healthChart));str.append(CMLib.xml().convertXMLtoTag("CORPSEBLURBS",corpseBlurbs));
 		str.append(CMLib.xml().convertXMLtoTag("EVENTRACE",getRaceLocatorID(eventBuddy)));
 		str.append(CMLib.xml().convertXMLtoTag("WEAPONRACE",getRaceLocatorID(weaponBuddy)));
 		str.append(CMLib.xml().convertXMLtoTag("ARRIVE",arriveStr()));
@@ -727,6 +730,7 @@ public class GenRace extends StdRace
 		leaveStr=CMLib.xml().getValFromPieces(raceData,"LEAVE");
 		arriveStr=CMLib.xml().getValFromPieces(raceData,"ARRIVE");
 		setStat("HEALTHRACE",CMLib.xml().getValFromPieces(raceData,"HEALTHRACE"));
+        healthChart=CMLib.xml().getValFromPieces(raceData,"HEALTHCHART");corpseBlurbs=CMLib.xml().getValFromPieces(raceData,"CORPSEBLURBS");
 		setStat("EVENTRACE",CMLib.xml().getValFromPieces(raceData,"EVENTRACE"));
 		setStat("WEAPONRACE",CMLib.xml().getValFromPieces(raceData,"WEAPONRACE"));
 		xpAdjustmentPct=CMLib.xml().getIntFromPieces(raceData, "XPADJ");
@@ -970,7 +974,7 @@ public class GenRace extends StdRace
 									 "NUMIABLE","GETIABLE",
 									 "XPADJ", "CLASS",
 									 "GETCABLEPARM", "NAMESTYLE", "UNLOCKHINT",
-									 "FSTTRAN", "FSTPRAC", "LVLPRAC", "LVLTRAIN", "SCRIPT", "AGEEFFECTS"
+									 "FSTTRAN", "FSTPRAC", "LVLPRAC", "LVLTRAIN", "SCRIPT", "AGEEFFECTS", "HEALTHCHART", "CORPSEBLURBS"
 									 };
 
 	private static final String[] LEVELGAINS = { "FSTTRAN", "FSTPRAC", "LVLPRAC", "LVLTRAIN" }; // P17, stats 57 to 60
@@ -1125,6 +1129,8 @@ public class GenRace extends StdRace
 			return scripts.script(); // P21
 		case 62:
 			return ageEffects; // P29
+        case 63:return healthChart;
+        case 64:return corpseBlurbs;
 		default:
 			return CMProps.getStatCodeExtensionValue(getStatCodes(), xtraValues, code);
 		}
@@ -1704,6 +1710,8 @@ public class GenRace extends StdRace
 		case 62: // P29: AGEEFFECTS
 			ageEffects=(val==null)?"":val.trim();
 			break;
+        case 63:healthChart=val==null?"":val;break;
+        case 64:corpseBlurbs=val==null?"":val;break;
 		default:
 			CMProps.setStatCodeExtensionValue(getStatCodes(), xtraValues, code, val);
 			break;

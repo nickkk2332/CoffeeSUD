@@ -35,7 +35,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class StdLanguage extends StdAbility implements Language
+public class StdLanguage extends StdAbility implements Language, Languages.Scrambler, Languages.SpeechTranslator
 {
 	@Override
 	public String ID()
@@ -402,23 +402,10 @@ public class StdLanguage extends StdAbility implements Language
 
 	protected Language getAnyTranslator(final String id, final MOB mob, final String words)
 	{
-		Language winner = null;
-		winner = getMyTranslator(id, mob, winner, words);
-		if(winner == null)
-			winner = getMyTranslator(id, mob.location(), winner, words);
-		if(winner == null)
-		{
-			for(int i=0;i<mob.numItems();i++)
-			{
-				winner=getMyTranslator(id, mob.getItem(i), winner, words);
-				if(winner != null)
-					break;
-			}
-		}
-		if((winner == null)
-		&&(languagesSupported().contains(id)))
-			return this;
-		return winner;
+        final int p=Languages.proficiency(mob,id,words);
+        if(p<=0)return null;
+        final Language effective=(Language)this.copyOf();effective.setProficiency(p);return effective;
+
 	}
 
 	protected String fixSayVerb(final String fullSay, final String verb)
@@ -667,11 +654,11 @@ public class StdLanguage extends StdAbility implements Language
 			int numToMess=numChars(str);
 			if(numToMess>0)
 			{
-				final Language L=(Language)msg.source().fetchEffect(ID());
-				if(L!=null)
-					numToMess=(int)Math.round(CMath.mul(numChars(str),CMath.div(100-L.getProficiency(ID()),100)));
-				final String original=messChars(ID(),str,numToMess);
-				str=scrambleAll(ID(),str,numToMess);
+				final int understood=Languages.proficiency(msg.source(),ID(),str);
+                final Language L=understood>0?this:null;
+                numToMess=(int)Math.round(CMath.mul(numChars(str),CMath.div(100-understood,100)));
+				final String original=Languages.render(ID(),str,understood);
+				str=Languages.render(ID(),str,0);
 				msg.setSourceMessage(L("It says '@x1'.  ",str.trim()));
 				if((L!=null)&&(!original.equals(str)))
 				{
@@ -679,6 +666,7 @@ public class StdLanguage extends StdAbility implements Language
 					msg.setTargetMessage(original);
 				}
 			}
+            Languages.expose(msg.source(),ID(),"READ",affected);
 		}
 		return super.okMessage(myHost,msg);
 	}
@@ -804,34 +792,31 @@ public class StdLanguage extends StdAbility implements Language
 		return false;
 	}
 
+    /** Keep language-specific speech formatting while delivering a private translation. */
+    @Override
+    public void translateFor(final MOB listener,final CMMsg message,final String words)
+    {
+        final StdLanguage translator=(StdLanguage)copyOf();
+        translator.setAffectedOne(listener);
+        final int before=message.trailerMsgs()==null?0:message.trailerMsgs().size();
+        if(!translator.translateChannelMessage(message,words)
+        &&!translator.translateTargetMessage(message,words))
+            translator.translateOthersMessage(message,words);
+        final List<CMMsg> trailers=message.trailerMsgs();
+        if(trailers!=null)for(int i=before;i<trailers.size();i++)
+        {
+            final CMMsg translated=trailers.get(i);
+            final String text=translated.targetMessage()==null?translated.othersMessage():translated.targetMessage();
+            final int code=translated.targetCode()==CMMsg.NO_EFFECT?translated.othersCode():translated.targetCode();
+            translated.modify(translated.source(),listener,translated.tool(),CMMsg.NO_EFFECT,null,code,text,CMMsg.NO_EFFECT,null);
+        }
+    }
+
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
 		super.executeMsg(myHost,msg);
 
-		if((affected instanceof MOB)
-		&&(!msg.amISource((MOB)affected))
-		&&((msg.sourceMinor()==CMMsg.TYP_SPEAK)
-		   ||(msg.sourceMinor()==CMMsg.TYP_TELL)
-		   ||(CMath.bset(msg.sourceMajor(),CMMsg.MASK_CHANNEL)))
-		&&(msg.sourceMessage()!=null)
-		&&(msg.tool() instanceof Language)
-		&&(msg.tool().ID().equals(ID())))
-		{
-			String str=CMStrings.getSayFromMessage(msg.sourceMessage());
-			if(str!=null)
-			{
-				final int numToMess=(int)Math.round(CMath.mul(numChars(str),CMath.div(100-getProficiency(ID()),100)));
-				if(numToMess>0)
-					str=messChars(ID(),str,numToMess);
-				if(!translateChannelMessage(msg,str))
-				{
-					if(!translateTargetMessage(msg,str))
-						translateOthersMessage(msg, str);
-				}
-			}
-		}
-		else
 		if((affected instanceof MOB)
 		&&(msg.source()==affected)
 		&&(beingSpoken(ID()))

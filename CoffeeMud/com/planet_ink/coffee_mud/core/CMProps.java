@@ -1,4 +1,5 @@
 package com.planet_ink.coffee_mud.core;
+import com.planet_ink.coffee_mud.core.interfaces.Physical;
 
 import com.planet_ink.coffee_mud.Abilities.interfaces.Ability;
 import com.planet_ink.coffee_mud.Common.interfaces.Session;
@@ -2497,6 +2498,10 @@ public class CMProps extends Properties
 	 * @param listIndex the index into the string list, to determine which choices to use
 	 * @return a random string from the indexed string list
 	 */
+    public static String getListFileChoiceFromIndexedList(final ListFile key,final int index,final Physical context){return Vocabulary.choice(key,index,context);}
+    public static String getListFileChoiceFromIndexedList(final ListFile key,final Physical context,final int index){return Vocabulary.choice(key,index,context);}
+    public static Object[][][] getListFileGrid(final ListFile key,final Physical context){final String value=Vocabulary.local(context,key.name());return value==null?getListFileGrid(key):Vocabulary.grid(value);}
+
 	public static final String getListFileChoiceFromIndexedList(final ListFile varCode, final int listIndex)
 	{
 		final Object[] set = getListFileStringChoices(varCode)[listIndex];
