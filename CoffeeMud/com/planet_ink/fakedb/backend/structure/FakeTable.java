@@ -452,31 +452,46 @@ public class FakeTable
 	 */
 	private void vacuum() throws IOException
 	{
-		final File tempFileName = new File(fileName.getName() + ".tmp");
-		final File tempFileName2 = new File(fileName.getName() + ".cpy");
-		final RandomAccessFile tempOut = new RandomAccessFile(tempFileName, "rw");
-		file.seek(0);
-		for(int i=0;i<dataStart;i++)
-			tempOut.write(file.read());
-		int newFileSize = dataStart;
-		for (final Iterator<RecordInfo> iter = rowRecords.iterator(-1, false); iter.hasNext();)
+		// Keep the replacement beside this database. A process-wide temporary
+		// name races other databases and renameTo silently fails across mounts.
+		final File temporary=File.createTempFile(fileName.getName()+".vacuum-", ".tmp",fileName.getAbsoluteFile().getParentFile());
+		final Map<RecordInfo,Integer> offsets=new LinkedHashMap<RecordInfo,Integer>();
+		int compactSize=dataStart;
+		try
 		{
-			final RecordInfo info = iter.next();
-			file.seek(info.offset);
-			file.readFully(fileBuffer, 0, info.size);
-			tempOut.write(fileBuffer, 0, info.size);
-			info.offset = newFileSize;
-			newFileSize += info.size;
+			try(final RandomAccessFile output=new RandomAccessFile(temporary,"rw"))
+			{
+				file.seek(0);
+				for(int i=0;i<dataStart;i++) output.write(file.read());
+				for(final Iterator<RecordInfo> iter=rowRecords.iterator(-1,false);iter.hasNext();)
+				{
+					final RecordInfo info=iter.next();
+					file.seek(info.offset);
+					file.readFully(fileBuffer,0,info.size);
+					output.write(fileBuffer,0,info.size);
+					offsets.put(info,Integer.valueOf(compactSize));
+					compactSize+=info.size;
+				}
+				output.getFD().sync();
+			}
+			file.close();
+			try
+			{
+				try
+				{
+					java.nio.file.Files.move(temporary.toPath(),fileName.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING,java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+				}
+				catch(final java.nio.file.AtomicMoveNotSupportedException e)
+				{
+					java.nio.file.Files.move(temporary.toPath(),fileName.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
+			finally { file=new RandomAccessFile(fileName,"rw"); }
+			// An unsuccessful replacement leaves both the old file and offsets intact.
+			for(final Map.Entry<RecordInfo,Integer> entry : offsets.entrySet()) entry.getKey().offset=entry.getValue().intValue();
+			fileSize=compactSize;
 		}
-		tempOut.getFD().sync();
-		tempOut.close();
-		file.close();
-		tempFileName2.delete();
-		fileName.renameTo(tempFileName2);
-		tempFileName.renameTo(fileName);
-		tempFileName2.delete();
-		file = new RandomAccessFile(fileName, "rw");
-		fileSize = newFileSize;
+		finally { java.nio.file.Files.deleteIfExists(temporary.toPath()); }
 	}
 
 	/**
