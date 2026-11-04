@@ -304,7 +304,10 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 			QuestRecords.accepted(name(),mob.Name()); // Q4: ACTIVE
 			final QuestState qs=questState; // Q3: the step's objectives and entry
 			if(qs!=null)
-				QuestJournal.applyStep(mob,name(),qs.stepObjectives,qs.stepJournal);
+				{
+                QuestJournal.applyStep(mob,name(),qs.stepObjectives,qs.stepJournal);
+                for(final String key:qs.stepLore) LoreBook.unlock(mob,key,false,mob);
+            }
 			ScriptEvents.quest(this,"ACCEPT",mob,"");
 			// Q12: SET SHARED PARTY: the party members here take it on with them
 			final List<MOB> party=QuestSharing.partyHere(this,mob);
@@ -1375,6 +1378,7 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		q.done=false;
 		q.stepObjectives.clear(); // Q3: this step's
 		q.stepJournal.clear();
+        q.stepLore.clear();
 		q.nextStepNumber=0; // Q6
 		if(vStart>=script.size())
 			return;
@@ -3707,6 +3711,12 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 							QuestJournal.applyStep(M,name(),oneO,new ArrayList<String>());
 					}
 					else
+                    if(cmd.equals("LORE"))
+                    {
+                        final String key=CMParms.combine(p,2);q.stepLore.add(key);
+                        for(final MOB M:QuestJournal.onQuest(this))LoreBook.unlock(M,key,false,M);
+                    }
+                    else
 					if(cmd.equals("JOURNAL")) // Q3: SET JOURNAL text: the step's entry, for those on the quest
 					{
 						final String text=CMParms.combine(p,2);
@@ -7582,7 +7592,8 @@ public class DefaultQuest implements Quest, Tickable, CMObject
 		public boolean		beQuiet					= false;
 		/** Q3: the step's SET OBJECTIVE (id, target, text) and SET JOURNAL lines */
 		public List<String[]>	stepObjectives		= new ArrayList<String[]>();
-		public List<String>	stepJournal			= new ArrayList<String>();
+		public List<String> stepLore=new ArrayList<String>();
+        public List<String>	stepJournal			= new ArrayList<String>();
 		/** Q6: STEP GOTO's step, to go to when this one steps on, or 0 */
 		public int			nextStepNumber		= 0;
 		public boolean		isOptional				= false;

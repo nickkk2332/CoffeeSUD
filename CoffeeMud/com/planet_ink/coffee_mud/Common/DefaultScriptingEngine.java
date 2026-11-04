@@ -10183,6 +10183,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			Log.debugOut(CMStrings.padRight(ctx.scripted.Name(), 15)+": * EXECUTE: "+script.getTriggerLine());
 		for(;ctx.line<script.size();ctx.line++)
 		{
+            if(!StoryText.withinBudget()) return "";
 			s=script.get(ctx.line).first;
 			tt=script.get(ctx.line).second;
 			if(tt!=null)
@@ -16780,6 +16781,36 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				logError(ctx,"MPQOBJECTIVE","Syntax",err+": "+line);
 			return null;
 		}
+        case "MPNARRATE":
+        {
+            final List<String> p=organizationWords(CMParms.getPastBit(line,0));
+            if(p.size()<2) {logError(ctx,cmd,"Syntax","MPNARRATE target file[#section] [PAUSE|NOPAUSE] [STYLE=name]");return null;}
+            final String file=varify(ctx,p.get(1)),raw=Narration.section(file);
+            final String body=varify(ctx,raw),style=Scenery.option(String.join(" ",p),"STYLE","");
+            final boolean pause=p.stream().anyMatch(w->w.equalsIgnoreCase("PAUSE"));
+            final List<MOB> viewers=new ArrayList<MOB>();
+            if(p.get(0).equalsIgnoreCase("ROOM")) {if(ctx.monster.location()!=null)for(final Enumeration<MOB> e=ctx.monster.location().inhabitants();e.hasMoreElements();)viewers.add(e.nextElement());}
+            else if(p.get(0).equalsIgnoreCase("AREA")) {if(ctx.monster.location()!=null)for(final Enumeration<Room> rooms=ctx.monster.location().getArea().getProperMap();rooms.hasMoreElements();)for(final Enumeration<MOB> e=rooms.nextElement().inhabitants();e.hasMoreElements();)viewers.add(e.nextElement());}
+            else {final Environmental target=getArgumentMOB(p.get(0),ctx);if(target instanceof MOB)viewers.add((MOB)target);}
+            for(final MOB who:viewers) if(who.isPlayer()) Narration.show(who,ctx.scripted,body,pause,style);
+            return null;
+        }
+		case "MPLORE":
+        case "MPJOURNAL":
+        {
+            final List<String> p=organizationWords(CMParms.getPastBit(line,0));
+            if(p.size()<(cmd.equalsIgnoreCase("MPLORE")?3:2)) { logError(ctx,cmd,"Syntax","Expected target and entry/text"); return null; }
+            final Environmental target=getArgumentMOB(p.get(0),ctx);
+            if(!(target instanceof MOB)) { logError(ctx,cmd,"RunTime","No such character"); return null; }
+            final MOB who=(MOB)target;
+            if(cmd.equalsIgnoreCase("MPLORE")) {
+                if(!p.get(1).equalsIgnoreCase("ADD")) { logError(ctx,cmd,"Syntax","Use MPLORE target ADD key [PROFILE]"); return null; }
+                LoreBook.unlock(who,varify(ctx,p.get(2)),p.size()>3&&p.get(3).equalsIgnoreCase("PROFILE"),ctx.scripted);
+            } else {
+                Chronicle.add(who,p.size()==2?"Notes":varify(ctx,p.get(1)),varify(ctx,p.size()==2?p.get(1):String.join(" ",p.subList(2,p.size()))),ctx.scripted);
+            }
+            return null;
+        }
 		case "MPQJOURNAL": // Q3: MPQJOURNAL who quest text: an entry, dated on the game calendar
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);

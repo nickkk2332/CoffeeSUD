@@ -855,6 +855,7 @@ public class DefaultSession implements Session
 	public void setKillFlag(final boolean truefalse)
 	{
 		killFlag=truefalse;
+        if(truefalse) Narration.cancel(this);
 	}
 
 	@Override
@@ -2390,6 +2391,7 @@ public class DefaultSession implements Session
 	@Override
 	public void stopSession(final boolean disconnect, final boolean removeMOB, final boolean dropSession, final boolean killThread)
 	{
+        Narration.cancel(this);
 		setKillFlag(true);
 		setStatus(SessionStatus.LOGOUT5);
 		if(dropSession)
@@ -2699,6 +2701,8 @@ public class DefaultSession implements Session
 						callBack.setInput(input);
 						if(!callBack.waitForInput())
 						{
+                            // Clear the answered callback before it asynchronously opens another prompt.
+                            if(inputCallback==callBack) inputCallback=null;
 							CMLib.threads().executeRunnable(groupName,new Runnable()
 							{
 								@Override
@@ -2726,7 +2730,7 @@ public class DefaultSession implements Session
 				{
 
 				}
-				if(!callBack.waitForInput())
+				if(inputCallback==callBack&&!callBack.waitForInput())
 					inputCallback=null;
 			}
 			else

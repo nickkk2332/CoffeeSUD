@@ -49,7 +49,7 @@ public final class PropCheck
 	{
 	}
 
-	private static final Pattern	KEY		= Pattern.compile("(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*)\\s*=");
+	private static final Pattern	KEY		= Pattern.compile("(?<![A-Za-z0-9_=])([A-Za-z][A-Za-z0-9_]*)\\s*=");
 	private static final Pattern	ROOM_ID	= Pattern.compile("(?<![A-Za-z0-9_#])([A-Za-z][^\\s;,=()'\"#]*#[0-9]+)(?![0-9])");
 	/** the words of a spell list that are not abilities */
 	private static final Set<String> LIST_WORDS = new TreeSet<String>(java.util.Arrays.asList(new String[] {
@@ -108,7 +108,15 @@ public final class PropCheck
 		final Set<String> known = keysOf(ID);
 		if(known.isEmpty() || (text == null))
 			return out;
-		final Matcher m = KEY.matcher(unquoted(text));
+		String inspect=text;
+        if(ID.equalsIgnoreCase("Prop_Details")) {
+            final StringBuilder bodies=new StringBuilder();
+            for(final String record:Scenery.statements(text)){final int at=record.indexOf('=');if(at>=0)bodies.append(record.substring(at+1)).append(';');}
+            inspect=bodies.toString().replaceAll("<[^>]*>","");
+        }
+        if(ID.equalsIgnoreCase("BEHAVIOR_EMOTER")||ID.equalsIgnoreCase("BEHAVIOR_SOUNDER"))
+            inspect=inspect.replaceAll("(?i)\\bIFVAR\\s+[^;\\s]+","IFVAR");
+        final Matcher m = KEY.matcher(unquoted(inspect));
 		while(m.find())
 		{
 			final String k = m.group(1).toUpperCase();

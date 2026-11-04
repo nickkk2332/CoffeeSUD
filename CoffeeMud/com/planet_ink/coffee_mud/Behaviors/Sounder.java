@@ -157,13 +157,32 @@ public class Sounder extends StdBehavior
 				continue;
 			if((E.chance<100)&&(CMLib.dice().rollPercentage()>E.chance))
 				continue;
-			final Barks.Line L=Barks.pick(E,about);
+            final Environmental origin=host instanceof Environmental?(Environmental)host:about;
+            if(about==null&&E.lines.stream().anyMatch(l->l.condition!=null&&(l.condition.once||!l.condition.mask.isEmpty()||!l.condition.conditions.isEmpty()))) {
+                final List<Room> rooms=new ArrayList<Room>();
+                if(origin instanceof Area)for(final Enumeration<Room> it=((Area)origin).getProperMap();it.hasMoreElements();)rooms.add(it.nextElement());else {final Room room=CMLib.map().roomLocation(origin);if(room!=null)rooms.add(room);}
+                boolean heard=false;
+                for(final Room room:rooms)for(final Enumeration<MOB> it=room.inhabitants();it.hasMoreElements();){final MOB viewer=it.nextElement();if(!viewer.isPlayer()||!CMLib.flags().canHear(viewer))continue;
+                    final Barks.Line chosen=Barks.pick(E,viewer,room);if(chosen==null)continue;
+                    final String words=Barks.fill(chosen.text,viewer);
+                    if(origin instanceof MOB&&chosen.kind.equals("SAY"))viewer.tell((MOB)origin,viewer,null,"<S-NAME> say(s) '"+words+"'");else viewer.tell(StoryText.render(viewer,origin,words));
+                    if(chosen.condition!=null)Ambience.heard(chosen.condition,viewer);heard=true;
+                }
+                if(heard)barkedAt.put(event,Long.valueOf(barkTicks));
+                if(heard)return true;else continue;
+            }
+            final Barks.Line L=Barks.pick(E,about,origin);
 			if(L==null)
 				continue;
+            if(L.condition!=null)Ambience.heard(L.condition,about);
 			barkedAt.put(event,Long.valueOf(barkTicks));
 			if(E.oncePer&&(about!=null))
 				barkedFor.add(once);
 			final String text=Barks.fill(L.text,about);
+            if(L.condition!=null&&L.condition.once&&about!=null){
+                if(origin instanceof MOB&&L.kind.equals("SAY"))about.tell((MOB)origin,about,null,"<S-NAME> say(s) '"+text+"'");else about.tell(StoryText.render(about,origin,text));
+                return true;
+            }
 			if(host instanceof MOB)
 			{
 				final MOB mob=(MOB)host;

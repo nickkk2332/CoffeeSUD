@@ -375,7 +375,7 @@ public class Say extends StdCommand
 		if(R.okMessage(mob,msg))
 		{
 			R.send(mob,msg);
-			NpcTopics.teach(mob,R,taught); // N24: who heard it learns its topics
+			NpcTopics.teach(mob,R,taught,combinedCommands); // N24: who heard it learns its topics
 			if(theCommand.equals("YELL"))
 			{
 				int dirCode=-1;

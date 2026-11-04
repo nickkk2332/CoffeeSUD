@@ -3502,10 +3502,43 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
   RANKUP's tracker counting the age category); STARTAGE_ (a world key
   prefix) entries set a new character's age in charcrStartFinish.
 
-#### 2p. Presentation (18)
+#### 2p. Presentation (18) — done
 
 PR1, PR2, PR3, PR6, PR7, PR8, PR9, PR10, PR11, PR12, PR13, PR14, PR15, PR16,
-PR17, PR18, PR19, PR20
+PR17, PR18, PR19, PR20. Authoring reference: [docs/presentation.md](docs/presentation.md).
+
+- Viewer-aware descriptions and readable text share StoryText: existing VARIES
+  tags plus world variables, quests, party tattoos, holidays, wanted status,
+  combat, darkness, clock/moon and first-entry checks; bounded, cached CALL
+  results never rewrite authored text. Prop_FirstEntry supports character or
+  profile once markers. PREVIEW and CHECKTEXT understand the shared syntax.
+- LORE/CODEX, Prop_Lore, MPLORE and quest SET LORE unlock world/lore entries;
+  existing tome lore remains compatible. JOURNAL and MPJOURNAL keep a saved,
+  dated personal chronicle, with optional quest/level/discovery/lore and
+  dialogue entries; Scene NOTE records overheard clues. NOTES stays builder-only.
+- Prop_Details adds keyword descriptions and clues; Prop_Senses powers LISTEN,
+  TOUCH/FEEL and TASTE in darkness. TOUCH keeps waypoint and social behavior;
+  EAVESDROP/THIEFLISTEN invokes the learned thief skill directly.
+- MAP, AUTOMAP SIZE and the window panel share indoor/outdoor fog filtering,
+  glyphs and legends. Prop_MapReveal saves knowledge and marks without changing
+  visits; map items use viewer-specific titles. CARTOGRAPHY makes paper maps;
+  WORLD MAP remains the builder tool. Unmappable and hidden rooms stay excluded.
+- Emoter fixes stand-in location and per-line masks, adds shared conditional
+  prefixes, weights, once-per-character lines, retry, repetition suppression
+  and reading/combat quiet periods; Sounder bark-table lines share the predicates.
+- Prop_DarkDescription and DARK/LIT provide dark-room text. Prop_ShowWhen gates
+  visibility and interactions per viewer; successful SEARCH discovers HIDDEN
+  hosts while UNSEEN requires its condition.
+- MPNARRATE reads sectioned story files and pages using asynchronous session
+  callbacks, holding the single-player real-time clock; Enter takes no turns.
+  Answered callbacks cannot clear a replacement prompt; disconnect releases holds.
+- Prompt player/quest/time-mode/leader tokens, world score lines and room
+  header/footer templates share rendering. Existing VAR prompt forms remain
+  compatible. COLORALIASES and saved COLORSET overrides support named colors.
+- In-game help, configuration comments and focused/played regression coverage
+  accompany the features. Verified: 3,571 regression checks (3,182 JavaScript
+  across 313 fixtures and 389 played checks), 97 smoke checks, and the engine
+  suite unchanged at its 47-pass / 3-known-failure baseline.
 
 Item 1 (unique and rare items) can go with 2h, or before it; `G6` (loot
 tables) builds on it.

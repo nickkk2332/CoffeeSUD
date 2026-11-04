@@ -645,7 +645,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 				if(location.okMessage(mob,msg))
 				{
 					location.send(mob,msg);
-					NpcTopics.teach(mob,location,taught); // N24: who heard it learns its topics
+					NpcTopics.teach(mob,location,taught,text); // N24: who heard it learns its topics
 				}
 			}
 		}
@@ -663,7 +663,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			if(location.okMessage(mob,msg))
 			{
 				location.send(mob,msg);
-				NpcTopics.teach(mob,location,taught); // N24: who heard it learns its topics
+				NpcTopics.teach(mob,location,taught,text); // N24: who heard it learns its topics
 			}
 		}
 	}
@@ -1830,10 +1830,12 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 		}
 		if(flags.canBeSeenBy(room,mob))
 		{
-			finalLookStr.append("^O^<RName^>" + room.displayText(mob)+"^</RName^>"+flags.getDispositionBlurbs(room,mob)+"^L\n\r");
+			final String header=CMProps.instance().getStr("ROOMHEADER");
+            if(header.isEmpty()) finalLookStr.append("^O^<RName^>" + room.displayText(mob)+"^</RName^>"+flags.getDispositionBlurbs(room,mob)+"^L\n\r");
+            else finalLookStr.append(Presentation.line(mob,room,header)).append("\n\r");
 			if(!useBrief)
 			{
-				String roomDesc=room.description(mob);
+				String roomDesc=Scenery.highlight(mob,room,room.description(mob));
 				if(lookCode==LookView.LOOK_LONG)
 				{
 					Vector<String> keyWords=null;
@@ -2019,6 +2021,9 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 				}
 			}
 		}
+        if(!flags.canBeSeenBy(room,mob)) finalLookStr.insert(0,Presentation.dark(mob,room));
+        final String footer=CMProps.instance().getStr("ROOMFOOTER");
+        if(flags.canBeSeenBy(room,mob)&&!footer.isEmpty()) finalLookStr.append("\n\r").append(Presentation.line(mob,room,footer)).append("\n\r");
 		if(finalLookStr.length()>0)
 		{
 			if(itemsInTheDarkness>0)
@@ -2049,32 +2054,15 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			lookCode=((msg.sourceMessage()==null)||mob.isAttributeSet(MOB.Attrib.COMPRESS))?LookView.LOOK_BRIEFOK:LookView.LOOK_NORMAL;
 
 
-		final String finalLookStr=getFullRoomView(mob, room, lookCode, sess.getClientTelnetMode(Session.TELNET_MXP));
+		final LookView view=lookCode;
+		final String finalLookStr=StoryText.look(() -> getFullRoomView(mob,room,view,sess.getClientTelnetMode(Session.TELNET_MXP)));
 
 		if(finalLookStr.length()==0)
 			mob.tell(L("You can't see anything!"));
 		else
 		{
 			mob.tell(finalLookStr.toString());
-			if((CMProps.getIntVar(CMProps.Int.AWARERANGE)>0)
-			&&(!mob.isAttributeSet(MOB.Attrib.AUTOMAP)))
-			{
-				if(awarenessA==null)
-					awarenessA=CMClass.getAbility("Skill_RegionalAwareness");
-				final Room mobLocR=mob.location();
-				if((awarenessA!=null)&&(mobLocR != null))
-				{
-					sess.colorOnlyPrintln("", true);
-					final List<String> list=new Vector<String>();
-					awarenessA.invoke(mob, list, mobLocR, true, CMProps.getIntVar(CMProps.Int.AWARERANGE));
-					for(final String o : list)
-					{
-						sess.setIdleTimers();
-						sess.colorOnlyPrintln(o, true); // the zero turns off stack
-					}
-					sess.colorOnlyPrintln("\n\r", true);
-				}
-			}
+            if(PlayerMaps.automatic(mob)) sess.colorOnlyPrintln(PlayerMaps.render(mob,room,PlayerMaps.size(mob)),true);
 		}
 	}
 
@@ -2568,9 +2556,11 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 					}
 					if((text!=null)&&(text.length()>0))
 					{
+						Ambience.activity(mob);
+                        final String renderedText=StoryText.render(mob,msg.target(),text);
 						final CMMsg readMsg=CMClass.getMsg(msg.source(), msg.target(), msg.tool(),
-								 CMMsg.MSG_WASREAD|CMMsg.MASK_ALWAYS, L("It says '@x1'.",text),
-								 CMMsg.MSG_WASREAD|CMMsg.MASK_ALWAYS, text,
+								 CMMsg.MSG_WASREAD|CMMsg.MASK_ALWAYS, L("It says '@x1'.",renderedText),
+								 CMMsg.MSG_WASREAD|CMMsg.MASK_ALWAYS, renderedText,
 								 CMMsg.NO_EFFECT, null);
 						msg.addTrailerMsg(readMsg);
 					}
@@ -3002,8 +2992,6 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 	@Override
 	public String parseVaries(final MOB mob, final Area area, final Room room, final String text)
 	{
-		if(text.startsWith("<VARIES>"))
-			return parseVariesCodes(mob,area,room,Holidays.blocks(Calendars.seasonBlocks(area,text.substring(8)))); // W22: a calendar's own seasons' blocks; W6: holidays'
-		return text;
+		return StoryText.render(mob,room==null?area:room,area,room,text);
 	}
 }

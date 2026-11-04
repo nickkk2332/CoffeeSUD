@@ -108,6 +108,7 @@ public class Read extends StdCommand
 				theRest=CMParms.combine(commands,0);
 			}
 		}
+		if(thisThang==null&&Scenery.detail(mob,CMParms.combine(commands,0),"READ")) return false;
 		read(mob,thisThang, theRest, false);
 		return false;
 	}

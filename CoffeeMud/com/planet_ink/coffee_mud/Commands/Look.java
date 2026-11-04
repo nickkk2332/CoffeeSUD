@@ -306,7 +306,7 @@ public class Look extends StdCommand
 					CMLib.commands().postCommandRejection(msg.source(),msg.target(),msg.tool(),origCmds);
 			}
 			else
-				CMLib.commands().postCommandFail(mob,origCmds,L("You don't see that here!"));
+				if(!Scenery.detail(mob,CMParms.combine(origCmds,1),"LOOK")) CMLib.commands().postCommandFail(mob,origCmds,L("You don't see that here!"));
 		}
 		else
 		{

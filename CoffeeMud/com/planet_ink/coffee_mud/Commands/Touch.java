@@ -6,7 +6,7 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 /** Touch an authored object, including attunable waystones. */
 public class Touch extends StdCommand
 {
-    private final String[] access=I(new String[]{"TOUCH"});
+    private final String[] access=I(new String[]{"TOUCH","FEEL"});
     @Override public String[] getAccessWords() { return access; }
     @Override public boolean execute(final MOB M, final List<String> commands, final int flags)
     {
@@ -17,9 +17,14 @@ public class Touch extends StdCommand
             if(!found) M.tell(L("Touch what here?"));
             return false;
         }
-        final Environmental target=Waypoints.target(M,CMParms.combine(commands,1));
+        final Environmental waypoint=Waypoints.target(M,CMParms.combine(commands,1));
+        final Environmental target=waypoint==null?Scenery.target(M,CMParms.combine(commands,1)):waypoint;
         if(target==null) M.tell(L("Touch what here?"));
-        else if(!Waypoints.use(M,target)) Combinations.act(M,"TOUCH",target,null);
+        else if(!ViewRules.allowed(target,M)) M.tell("You cannot find that here.");
+        else if(!Waypoints.use(M,target)&&!Scenery.sense(M,target,"TOUCH")) {
+            final com.planet_ink.coffee_mud.Common.interfaces.Social social=CMLib.socials().fetchSocial(commands,true,true);
+            if(social!=null) social.invoke(M,commands,target instanceof Physical?(Physical)target:null,false); else Combinations.act(M,"TOUCH",target,null);
+        }
         return false;
     }
     @Override public boolean canBeOrdered() { return true; }

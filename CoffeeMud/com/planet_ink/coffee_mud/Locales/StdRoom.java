@@ -916,6 +916,8 @@ public class StdRoom implements Room
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
+        if(msg.amITarget(this)&&(msg.targetMinor()==CMMsg.TYP_ENTER||msg.targetMinor()==CMMsg.TYP_RECALL)&&msg.source().playerStats()!=null&&msg.source().soulMate()==null)
+            StoryText.arriving(msg.source(),this,!msg.source().playerStats().hasVisited(this));
 		getArea().executeMsg(this,msg);
 
 		if(msg.amITarget(this))
@@ -1420,13 +1422,13 @@ public class StdRoom implements Room
 	@Override
 	public String displayText(final MOB mob)
 	{
-		return CMLib.commands().parseVaries(mob,getArea(),this,displayText());
+		return StoryText.render(mob,this,getArea(),this,displayText());
 	}
 
 	@Override
 	public String description(final MOB mob)
 	{
-		return CMLib.commands().parseVaries(mob,getArea(),this,description());
+		return StoryText.render(mob,this,getArea(),this,description());
 	}
 
 	@Override

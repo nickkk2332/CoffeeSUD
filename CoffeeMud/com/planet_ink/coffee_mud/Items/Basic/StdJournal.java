@@ -956,6 +956,7 @@ public class StdJournal extends StdItem implements Book
 
 			if((allMine)||(to.equals("ALL")))
 			{
+                if(reader!=null)message=StoryText.render(reader,this,message);
 				buf.append("\n\r^<JRNL \""+CMStrings.removeColors(name())+"\"^>"+CMStrings.padRightPreserve((which+1)+"",4)+"^</JRNL^>)\n\r"
 						   +"FROM: "+from
 						   +"\n\rTO  : "+to

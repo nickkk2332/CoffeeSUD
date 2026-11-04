@@ -1473,6 +1473,7 @@ public class Sense extends StdLibrary implements CMFlagLibrary
 		&&(seer.isAttributeSet(MOB.Attrib.SYSOPMSGS)))
 			return true;
 
+		if(!ViewRules.allowed(seen,seer)) return false;
 		if(!canSee(seer))
 			return false;
 

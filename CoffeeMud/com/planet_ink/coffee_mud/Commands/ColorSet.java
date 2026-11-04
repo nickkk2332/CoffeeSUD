@@ -158,11 +158,13 @@ public class ColorSet extends StdCommand
 		final PlayerStats pstats=mob.playerStats();
 		if(pstats==null)
 			return false;
-		final String[][] clookup=new String[][]{session.getColorCodes().clone()};
+		if(ColorAliases.command(mob,commands)) return false;
+        final String[][] clookup=new String[][]{session.getColorCodes().clone()};
 		if((commands.size()>1)
 		&&("DEFAULT".startsWith(CMParms.combine(commands,1).toUpperCase())))
 		{
 			pstats.setColorStr("");
+            final MiniJSON.JSONObject data=StoryRecords.read(mob);data.remove("colors");StoryRecords.write(mob,data);
 			mob.tell(L("Your colors have been changed back to default."));
 			return false;
 		}

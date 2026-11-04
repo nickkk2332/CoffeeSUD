@@ -74,7 +74,7 @@ public class Skill_Map extends StdSkill
 		return Ability.QUALITY_INDIFFERENT;
 	}
 
-	private static final String[]	triggerStrings	= I(new String[] { "MAP" });
+	private static final String[]	triggerStrings	= I(new String[] { "CARTOGRAPHY" });
 
 	@Override
 	public String[] triggerStrings()

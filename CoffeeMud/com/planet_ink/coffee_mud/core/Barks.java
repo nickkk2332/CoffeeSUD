@@ -34,6 +34,7 @@ public final class Barks
 	/** one line */
 	public static final class Line
 	{
+        public Ambience.Line condition=null;
 		/** its weight */
 		public int		weight	= 1;
 		/** a zapper mask on the one it is about, or null */
@@ -146,6 +147,10 @@ public final class Barks
 					t = t.substring(x + 1).trim();
 				}
 			}
+            L.condition=Ambience.parse(t);
+            L.weight=L.condition.weight==1?L.weight:L.condition.weight;
+            if(!L.condition.kind.isEmpty())L.kind=L.condition.kind.equals("SIGHT")?"EMOTE":L.condition.kind;
+            t=L.condition.text;
 			final String up = t.toUpperCase();
 			if(up.startsWith("SAY "))
 			{
@@ -193,10 +198,17 @@ public final class Barks
 	 */
 	public static Line pick(final Entry E, final Environmental about)
 	{
+        return pick(E,about,about);
+    }
+    public static Line pick(final Entry E,final Environmental about,final Environmental host)
+    {
+        final com.planet_ink.coffee_mud.Locales.interfaces.Room room=CMLib.map().roomLocation(host);
+        final MOB viewer=about instanceof MOB?(MOB)about:host instanceof MOB?(MOB)host:null;
 		final List<Line> fit = new ArrayList<Line>();
 		int total = 0;
 		for(final Line L : E.lines)
 		{
+            if(L.condition!=null&&!Ambience.fits(L.condition,viewer,host,room)) continue;
 			if((L.mask != null) && (L.mask.length() > 0))
 			{
 				if((about == null) || (!CMLib.masking().maskCheck(L.mask, about, true)))

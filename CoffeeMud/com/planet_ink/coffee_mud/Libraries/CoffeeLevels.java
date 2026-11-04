@@ -1231,7 +1231,8 @@ public class CoffeeLevels extends StdLibrary implements ExpLevelLibrary
 
 		final int[] costGains = new int[CostDef.CostType.values().length];
 		final String levelAdjustmentMsg = doBaseLevelAdjustment(mob,costGains,true);
-		JSEvents.fire("levelup",mob,Integer.valueOf(mob.basePhyStats().level())); // JS8
+		JSEvents.fire("levelup",mob,Integer.valueOf(mob.basePhyStats().level()));
+		Chronicle.auto(mob,"LEVEL","Reached level "+mob.basePhyStats().level()+".",mob); // JS8
 
 		final StringBuilder theNews=new StringBuilder("^xYou have L E V E L E D ! ! ! ! ! ^.^N\n\r\n\r"+CMLib.protocol().msp("levelgain.wav",60));
 		CharClass curClass=mob.baseCharStats().getCurrentClass();

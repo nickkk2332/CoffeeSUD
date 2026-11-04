@@ -141,7 +141,7 @@ public class StdExit implements Exit
 	@Override
 	public String description(final MOB viewerMob)
 	{
-		return description();
+		return StoryText.render(viewerMob,this,description());
 	}
 
 	@Override
@@ -171,7 +171,7 @@ public class StdExit implements Exit
 	@Override
 	public String displayText(final MOB viewerMob)
 	{
-		return displayText();
+		return StoryText.render(viewerMob,this,displayText());
 	}
 
 	@Override

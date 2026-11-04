@@ -136,6 +136,10 @@ public final class NpcTopics
 	 */
 	public static void teach(final MOB speaker, final Room R, final List<String> topics)
 	{
+        teach(speaker,R,topics,"");
+    }
+    public static void teach(final MOB speaker,final Room R,final List<String> topics,final String text)
+    {
 		if((R == null) || (topics == null) || topics.isEmpty())
 			return;
 		for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
@@ -145,8 +149,8 @@ public final class NpcTopics
 				continue;
 			if((speaker != null) && (!CMLib.flags().canBeHeardSpeakingBy(speaker, M)))
 				continue;
-			for(final String t : topics)
-				learn(M, t, false);
+			for(final String t : topics) learn(M,t,false);
+            if(CMProps.instance().getStr("JOURNALTALK").equalsIgnoreCase("true")) Chronicle.add(M,"People",text.isEmpty()?(speaker==null?"Someone":speaker.Name())+" mentioned "+String.join(", ",topics)+".":CMStrings.removeColors(text),speaker);
 		}
 	}
 

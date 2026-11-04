@@ -99,6 +99,7 @@ public final class QuestRecords
 	public static void won(final String quest, final String who)
 	{
 		recordWon(quest, who);
+		Chronicle.auto(CMLib.players().getPlayerAllHosts(who),"QUEST","Completed quest: "+quest,null);
 		QuestItems.left(quest, who, WON); // Q8: what was bound to it, as REMOVEON says
 		QuestTimers.left(quest, who); // Q11: and their deadline
 	}
@@ -181,6 +182,7 @@ public final class QuestRecords
 			return;
 		final Record R = make(quest, who);
 		R.status = ACTIVE;
+		Chronicle.auto(CMLib.players().getPlayerAllHosts(who),"QUEST","Accepted quest: "+quest,null);
 		R.outcome = "";
 		R.when = GameTime.now();
 	}

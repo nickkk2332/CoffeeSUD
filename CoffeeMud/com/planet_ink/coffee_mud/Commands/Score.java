@@ -370,6 +370,7 @@ public class Score extends Affect
 		{
 			msg.append(getAffects(mob.session(),mob,false,false,null,-1));
 		}
+		if(arg==null) msg.append(Presentation.score(mob));
 		return msg;
 	}
 

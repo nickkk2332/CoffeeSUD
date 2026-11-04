@@ -72,7 +72,7 @@ public class Thief_Listen extends ThiefSkill
 		return Ability.ACODE_THIEF_SKILL | Ability.DOMAIN_ALERT;
 	}
 
-	private static final String[]	triggerStrings	= I(new String[] { "LISTEN" });
+	private static final String[]	triggerStrings	= I(new String[] { "EAVESDROP", "THIEFLISTEN" });
 
 	@Override
 	public String[] triggerStrings()

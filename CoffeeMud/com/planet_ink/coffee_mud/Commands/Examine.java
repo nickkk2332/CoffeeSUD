@@ -156,7 +156,7 @@ public class Examine extends StdCommand
 					msg.addTrailerMsg(CMClass.getMsg(mob,thisThang,null,CMMsg.MSG_LOOK_EXITS,null));
 			}
 			else
-				CMLib.commands().postCommandFail(mob,origCmds,L("You don't see that here!"));
+				if(!Scenery.detail(mob,CMParms.combine(origCmds,1),"EXAMINE")) CMLib.commands().postCommandFail(mob,origCmds,L("You don't see that here!"));
 		}
 		else
 		{

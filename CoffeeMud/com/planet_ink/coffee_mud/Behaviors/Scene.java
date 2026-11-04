@@ -181,7 +181,8 @@ public class Scene extends StdBehavior
 				actors.put(name, mask);
 			return;
 		}
-		if(up.startsWith("NAME="))
+		if(up.startsWith("NOTE ")) {final Step step=new Step();step.kind="NOTE";step.text=unquote(s.substring(5).trim());steps.add(step);return;}
+        if(up.startsWith("NAME="))
 		{
 			sceneName = s.substring(5).trim().toUpperCase().replaceAll("[^A-Z0-9_]+", "_");
 			return;
@@ -481,7 +482,9 @@ public class Scene extends StdBehavior
 		if(S.kind.equals("PAUSE"))
 			wait = S.n - 1;
 		else
-		if(S.kind.equals("ECHO"))
+		if(S.kind.equals("NOTE")) {for(final Enumeration<MOB> e=R.inhabitants();e.hasMoreElements();) {final MOB m=e.nextElement();if(m.isPlayer())Chronicle.add(m,"Rumors",fill(S.text,P),R);}}
+        else
+        if(S.kind.equals("ECHO"))
 			R.showHappens(CMMsg.MSG_OK_VISUAL, fill(S.text, P));
 		else
 		if(S.kind.equals("DO"))

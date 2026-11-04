@@ -135,7 +135,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 				thisTag=getHelpText(helpStr,getArcHelpFile(),forM,noFix);
 			}
 		}
-		return thisTag;
+		return LoreBook.help(forM,thisTag);
 	}
 
 	@Override
@@ -1653,7 +1653,8 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 				break;
 		}
 
-		if(helpText==null)
+		helpText=LoreBook.help(forM,helpText);
+        if(helpText==null)
 			return null;
 
 		if(noFix)

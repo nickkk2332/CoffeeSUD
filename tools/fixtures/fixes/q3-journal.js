@@ -24,10 +24,10 @@ CMLib.catalog().addCatalog(giver);
 giver.destroy();
 var script = [
 	"set name fixq3", "set display The Fixes Bell", "set category main", "set duration 2000", "set room any",
-	"set objective drowned 5 Lay 5 drowned men to rest", "set journal The bell rang under the water.",
+	"set lore FIXQ3START", "set objective drowned 5 Lay 5 drowned men to rest", "set journal The bell rang under the water.",
 	"load mob catalog a fixq3 giver", "give script LOAD=fixq3giver.script",
 	"step", "set duration 2000",
-	"set objective priest 1 Bring the bell to the priest", "set journal Ned said to take it to the chapel.",
+	"set lore FIXQ3NEXT", "set objective priest 1 Bring the bell to the priest", "set journal Ned said to take it to the chapel.",
 	"step break",
 	"<?xml version=\"1.0\"?>",
 	"<FILE><NAME>fixq3giver.script</NAME><DATA>",
@@ -44,6 +44,7 @@ check("running", Q.running() && s(Q.getStat("STEPNUM")) == "1", "running " + Q.r
 
 // accepting gives the step's objective and entry
 Q.acceptQuest(V);
+check("lore on accept", V.findTattoo("LORE_FIXQ3START") != null, "step lore missing");
 var said = out();
 check("accept-step", QJ.value(V, "fixq3", "drowned") == "0" && has(QJ.entries(V, "fixq3", 10), "The bell rang under the water."),
 	"drowned '" + QJ.value(V, "fixq3", "drowned") + "', entries " + QJ.entries(V, "fixq3", 10));
@@ -77,6 +78,7 @@ check("unknown", QJ.objective(V, "fixq3", "BUMP", "nosuch") != null && QJ.value(
 
 // the next step's defaults, for those on the quest
 Q.stepQuest();
+check("lore on step", V.findTattoo("LORE_FIXQ3NEXT") != null, "next step lore missing");
 check("step-defaults", s(Q.getStat("STEPNUM")) == "2" && QJ.value(V, "fixq3", "priest") == "0" && has(QJ.entries(V, "fixq3", 10), "Ned said to take it to the chapel."),
 	"step " + Q.getStat("STEPNUM") + ", priest '" + QJ.value(V, "fixq3", "priest") + "'");
 

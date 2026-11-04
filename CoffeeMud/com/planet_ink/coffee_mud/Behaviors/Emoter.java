@@ -34,7 +34,7 @@ import java.util.*;
    limitations under the License.
 */
 
-public class Emoter extends ActiveTicker
+public class Emoter extends ActiveTicker implements Ambience.Source
 {
 	@Override
 	public String ID()
@@ -97,6 +97,7 @@ public class Emoter extends ActiveTicker
 			newParms=newParms.substring(x+1);
 		}
 		expires=CMParms.getParmInt(firstParms,"expires",0);
+        noRepeat=CMParms.getParmInt(firstParms,"NOREPEAT",0);quietAfter=CMParms.getParmInt(firstParms,"QUIETAFTER",0);retry=Scenery.flag(firstParms,"RETRY");history.clear();
 		inroomIDs=CMParms.parseCommas(CMParms.getParmStr(firstParms,"inroom","").toUpperCase().trim(),true);
 		mask = null;
 		final String maskStr = CMParms.getParmStr(firstParms, "MASK", null);
@@ -107,9 +108,13 @@ public class Emoter extends ActiveTicker
 		{
 			if(thisEmote.trim().length()==0)
 				continue;
-			final Vector<String> V=CMParms.parse(thisEmote);
+			final Ambience.Line condition=Ambience.parse(thisEmote);
+            thisEmote=condition.text;
+            final Vector<String> V=CMParms.parse(thisEmote);
 			final int oldSize = V.size();
 			final EmoteObj localFlags = flags.clone(null);
+            localFlags.condition=condition;localFlags.mask=condition.mask.isEmpty()?null:condition.mask;
+            if(!condition.kind.isEmpty())setEmoteType(condition.kind,localFlags);
 			setEmoteTypes(V,localFlags,true);
 			if(V.size() != oldSize)
 				thisEmote=CMParms.combine(V,0);
@@ -138,6 +143,10 @@ public class Emoter extends ActiveTicker
 		}
 	}
 
+	protected int noRepeat=0,quietAfter=0;
+    protected boolean retry=false;
+    protected final Map<Room,Deque<String>> history=new WeakHashMap<Room,Deque<String>>();
+
 	protected static class EmoteObj implements Cloneable
 	{
 		public boolean broadcast=false;
@@ -147,6 +156,7 @@ public class Emoter extends ActiveTicker
 		public MaskingLibrary.CompiledZMask zmask = null;
 		public EMOTE_TYPE type=EMOTE_TYPE.EMOTE_VISUAL;
 		public String msg = "";
+        public Ambience.Line condition=null;
 		public EmoteObj() {}
 		public EmoteObj clone(final String msg)
 		{
@@ -350,7 +360,7 @@ public class Emoter extends ActiveTicker
 
 	protected void emoteHere(final Room room,
 							 final MOB emoter,
-							 final EmoteObj emote,
+							 final EmoteObj selected,
 							 final MOB emoteTo,
 							 final boolean wrapper)
 	{
@@ -358,14 +368,15 @@ public class Emoter extends ActiveTicker
 			return;
 		if(!inRoom(room))
 			return;
-		if((mask!=null)&&(!CMLib.masking().maskCheck(mask, emoter, true)))
-			return;
-
-		CMMsg msg;
-		final Room oldLoc=emoter.location();
-		String str=emote.msg;
-		if(emoter.location()!=room)
-			emoter.setLocation(room);
+        final Room oldLoc=emoter.location();
+        emoter.setLocation(room);
+        try {
+        if((mask!=null)&&(!CMLib.masking().maskCheck(mask, emoter, true))) return;
+        if(Ambience.quiet(room,quietAfter)) return;
+        final EmoteObj emote=choose(room,emoter,emoteTo,selected);
+        if(emote==null) return;
+        CMMsg msg;
+        String str=emote.msg;
 		if(emote.type==EMOTE_TYPE.EMOTE_SOCIAL)
 		{
 			Social S=CMLib.socials().fetchSocial(str,true);
@@ -374,6 +385,8 @@ public class Emoter extends ActiveTicker
 			if(S!=null)
 			{
 				S.invoke(emoter,CMParms.parse(str),emoteTo,false);
+                if(emote.condition!=null&&emote.condition.once)for(final Enumeration<MOB> it=room.inhabitants();it.hasMoreElements();){final MOB viewer=it.nextElement();if(viewer.isPlayer()&&Ambience.fits(emote.condition,viewer,room,room))Ambience.heard(emote.condition,viewer);}
+                remember(room,emote);
 				return;
 			}
 		}
@@ -382,6 +395,7 @@ public class Emoter extends ActiveTicker
 		if(emoteTo!=null)
 		{
 			emoteTo.tell(emoter,emoteTo,null,str);
+            if(emote.condition!=null)Ambience.heard(emote.condition,emoteTo);remember(room,emote);
 			return;
 		}
 		if(emote.emoteOnly)
@@ -404,11 +418,43 @@ public class Emoter extends ActiveTicker
 			msg=null;
 			break;
 		}
-		if((msg != null) && (room.okMessage(emoter,msg)))
-			room.send(emoter, msg);
-		if(oldLoc!=null)
-			emoter.setLocation(oldLoc);
+        if((msg != null) && (room.okMessage(emoter,msg))) {
+            if(emote.condition!=null&&(emote.condition.once||!emote.condition.mask.isEmpty())) {
+                for(final Enumeration<MOB> e=room.inhabitants();e.hasMoreElements();) {final MOB who=e.nextElement();if(who.isPlayer()&&Ambience.fits(emote.condition,who,room,room)&&(emote.type==EMOTE_TYPE.EMOTE_SOUND?CMLib.flags().canHear(who):emote.type==EMOTE_TYPE.EMOTE_SMELL?CMLib.flags().canSmell(who):CMLib.flags().canBeSeenBy(room,who))){who.tell(emoter,who,null,str);Ambience.heard(emote.condition,who);}}
+            } else room.send(emoter,msg);
+            remember(room,emote);
+        }
+        } finally { emoter.setLocation(oldLoc); }
 	}
+
+    private boolean eligible(final Room room,final MOB standin,final MOB viewer,final EmoteObj e) {
+        if(e.condition==null)return true;
+        if(viewer!=null)return Ambience.fits(e.condition,viewer,room,room);
+        boolean players=false;
+        for(final Enumeration<MOB> it=room.inhabitants();it.hasMoreElements();) {final MOB m=it.nextElement();if(m.isPlayer()){players=true;if(Ambience.fits(e.condition,m,room,room))return true;}}
+        return !players&&Ambience.fits(e.condition,standin,room,room);
+    }
+    private synchronized EmoteObj choose(final Room room,final MOB standin,final MOB viewer,final EmoteObj selected) {
+        final List<EmoteObj> pool=new ArrayList<EmoteObj>();int total=0;
+        final boolean weighted=emotes.stream().anyMatch(e->e.condition!=null&&e.condition.weight!=1);
+        final List<EmoteObj> candidates=viewer!=null&&selected.type==EMOTE_TYPE.EMOTE_SMELL&&smells!=null?smells:emotes;
+        final List<EmoteObj> source=retry||weighted||noRepeat>0?candidates:Collections.singletonList(selected);
+        final Deque<String> recent=history.get(room);
+        for(final EmoteObj e:source) if(eligible(room,standin,viewer,e)&&(recent==null||!recent.contains(e.msg))) {pool.add(e);total+=e.condition==null?1:e.condition.weight;}
+        if(pool.isEmpty()) return null;
+        int roll=CMLib.dice().roll(1,total,0);for(final EmoteObj e:pool){roll-=e.condition==null?1:e.condition.weight;if(roll<=0)return e;}return pool.get(0);
+    }
+    private synchronized void remember(final Room room,final EmoteObj e) {
+        if(noRepeat<=0)return;Deque<String> h=history.get(room);if(h==null){h=new ArrayDeque<String>();history.put(room,h);}h.addLast(e.msg);while(h.size()>Math.min(noRepeat,Math.max(0,emotes.size()-1)))h.removeFirst();
+    }
+    @Override public boolean listen(final MOB viewer,final PhysicalAgent host) {
+        final Room room=viewer.location();if(room==null||!inRoom(room)||!CMLib.flags().canHear(viewer)||(mask!=null&&!CMLib.masking().maskCheck(mask,viewer,true)))return false;
+        final List<EmoteObj> pool=new ArrayList<EmoteObj>();int total=0;
+        for(final EmoteObj e:emotes)if(e.type==EMOTE_TYPE.EMOTE_SOUND&&eligible(room,viewer,viewer,e)){pool.add(e);total+=e.condition==null?1:e.condition.weight;}
+        if(pool.isEmpty())return false;int roll=CMLib.dice().roll(1,total,0);EmoteObj picked=pool.get(0);
+        for(final EmoteObj e:pool){roll-=e.condition==null?1:e.condition.weight;if(roll<=0){picked=e;break;}}
+        viewer.tell(StoryText.render(viewer,host,picked.msg));if(picked.condition!=null)Ambience.heard(picked.condition,viewer);return true;
+    }
 
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
@@ -426,10 +472,7 @@ public class Emoter extends ActiveTicker
 				return false;
 			}
 			final EmoteObj emote=emotes.get(CMLib.dice().roll(1,emotes.size(),-1));
-			if((emote.zmask != null)
-			&&(ticking instanceof Environmental)
-			&&(!CMLib.masking().maskCheck(emote.zmask,(Environmental)ticking,true)))
-				return true;
+
 			MOB emoter=null;
 			if(ticking instanceof Area)
 			{

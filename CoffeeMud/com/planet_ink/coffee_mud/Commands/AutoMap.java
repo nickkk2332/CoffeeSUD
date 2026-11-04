@@ -50,14 +50,19 @@ public class AutoMap extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+        if(commands.size()>2&&commands.get(1).equalsIgnoreCase("SIZE")) {
+            final int n=CMath.s_int(commands.get(2)); if(n<1||n>12) {mob.tell("Map size must be 1 through 12.");return false;}
+            final MiniJSON.JSONObject data=StoryRecords.read(mob);data.put("mapSize",Integer.valueOf(n));StoryRecords.write(mob,data);mob.tell("Automap radius set to "+n+".");return false;
+        }
 		final String parm = (commands.size() > 1) ? CMParms.combine(commands,1) : "";
 		if((mob.isAttributeSet(MOB.Attrib.AUTOMAP) && (parm.length()==0))||(parm.equalsIgnoreCase("ON")))
 		{
 			mob.setAttribute(MOB.Attrib.AUTOMAP,false);
+            if(CMProps.getIntVar(CMProps.Int.AWARERANGE)==0&&StoryRecords.string(StoryRecords.read(mob),"mapSize").isEmpty()){final MiniJSON.JSONObject d=StoryRecords.read(mob);d.put("mapSize",Integer.valueOf(3));StoryRecords.write(mob,d);}
 			mob.tell(L("Automap has been turned on."));
 		}
 		else
-		if((mob.isAttributeSet(MOB.Attrib.AUTOMAP) && (parm.length()==0))||(parm.equalsIgnoreCase("OFF")))
+		if((!mob.isAttributeSet(MOB.Attrib.AUTOMAP) && (parm.length()==0))||(parm.equalsIgnoreCase("OFF")))
 		{
 			mob.setAttribute(MOB.Attrib.AUTOMAP,true);
 			mob.tell(L("Automap has been turned off."));
@@ -79,7 +84,7 @@ public class AutoMap extends StdCommand
 	@Override
 	public boolean securityCheck(final MOB mob)
 	{
-		return CMProps.getIntVar(CMProps.Int.AWARERANGE) > 0;
+		return true;
 	}
 }
 

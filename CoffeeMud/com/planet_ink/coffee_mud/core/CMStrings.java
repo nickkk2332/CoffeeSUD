@@ -2190,7 +2190,7 @@ public class CMStrings
 			return "";
 		if((s.indexOf('^')<0)&&(s.indexOf((char)27)<0))
 			return s;
-		final StringBuilder str=new StringBuilder(s);
+		final StringBuilder str=new StringBuilder(ColorAliases.strip(s));
 		int colorStart=-1;
 		for(int i=0;i<str.length();i++)
 		{
@@ -2533,6 +2533,7 @@ public class CMStrings
 	 */
 	public final static int lengthMinusColors(final String thisStr)
 	{
+        if(thisStr!=null&&thisStr.contains("^{")) return lengthMinusColors(ColorAliases.strip(thisStr));
 		if(thisStr==null)
 			return 0;
 		if((thisStr.indexOf('^')<0)&&(thisStr.indexOf((char)27)<0))

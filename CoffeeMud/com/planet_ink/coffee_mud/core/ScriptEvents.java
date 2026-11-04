@@ -2863,11 +2863,19 @@ public final class ScriptEvents
 		if((ps == null) || (R == null))
 			return false;
 		final boolean newArea = (R.getArea() != null) && (!ps.hasVisited(R.getArea()));
+		final boolean fresh=!ps.hasVisited(R);
+		StoryText.arriving(mob,R,fresh);
 		if(!ps.addRoomVisit(R))
 			return false;
 		discovered(mob, R, newArea);
 		return true;
 	}
+
+    /** A keyword detail was examined; LOOK_PROG receives the keyword in $g. */
+    public static void detail(final PhysicalAgent host, final MOB viewer, final String keyword)
+    {
+        fire(Collections.singletonList(host),code("LOOK_PROG"),viewer,host,keyword,null,"Cr",t -> t.length<2||t[1].equals("100")||t[1].equalsIgnoreCase(keyword));
+    }
 
 	/**
 	 * ST3: a character's first visit to a room, and maybe its area.
@@ -2878,10 +2886,12 @@ public final class ScriptEvents
 	 * @param R the room
 	 * @param newArea true if it is the first room of its area they visit
 	 */
+
 	public static void discovered(final MOB mob, final Room R, final boolean newArea)
 	{
 		if((mob == null) || (R == null))
 			return;
+		if(newArea) Chronicle.auto(mob,"AREA","Discovered "+R.getArea().Name()+".",R);
 		Discovery.firstVisit(mob, R); // P11: DISCOVERYXP
 		if(newArea && (R.getArea() != null))
 		{

@@ -1985,7 +1985,7 @@ public class StdMOB implements MOB
 			sendBack.append(".");
 			return sendBack.toString();
 		}
-		return displayText;
+		return StoryText.render(viewerMob,this,displayText);
 	}
 
 	@Override
@@ -2023,7 +2023,7 @@ public class StdMOB implements MOB
 	@Override
 	public String description(final MOB viewerMob)
 	{
-		return description();
+		return StoryText.render(viewerMob,this,description());
 	}
 
 	@Override
@@ -3515,6 +3515,7 @@ public class StdMOB implements MOB
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
+        if(msg.amISource(this)&&msg.sourceMinor()==CMMsg.TYP_READ)Ambience.activity(this);
 		DialogueTime.heard(this, msg); // N10: an NPC spoke to it
 		CraftXP.heard(this, msg); // CR12: XP for a craft or a find
 		final Deity deity = charStats().getMyDeity();
@@ -5898,9 +5899,12 @@ public class StdMOB implements MOB
 	{
 		if((of == null) || (of.length() == 0))
 			return null;
-		if(of.endsWith("*"))
-			return tattoos.findStartsWith(of.substring(0, of.length() - 1));
-		return tattoos.find(of.trim());
+        final Tattoo local=of.endsWith("*")?tattoos.findStartsWith(of.substring(0,of.length()-1)):tattoos.find(of.trim());
+        if(local!=null) return local;
+        // Profile lore is queryable through the same character masks and script tests.
+        if(of.trim().toUpperCase().startsWith("LORE_")&&playerStats()!=null&&playerStats().getAccount()!=null)
+            return playerStats().getAccount().findTattoo(of.trim());
+        return null;
 	}
 
 	@Override

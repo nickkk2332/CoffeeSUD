@@ -40,7 +40,7 @@ public final class TextCheck
 	{
 	}
 
-	private static final Pattern TAG = Pattern.compile("<(/?)([A-Za-z]+)([^>]*)>");
+	private static final Pattern TAG = Pattern.compile("<(/?)([A-Za-z][A-Za-z0-9]*)([^>]*)>");
 
 	private static VariationCode codeOf(final String name)
 	{
@@ -66,17 +66,18 @@ public final class TextCheck
 			final boolean close = m.group(1).length() > 0;
 			final String name = m.group(2);
 			final VariationCode code = codeOf(name);
-			if(code == null)
+			if(code == null&&!StoryText.known(name.toUpperCase())&&!name.equalsIgnoreCase("CALL"))
 			{
 				if(varies)
 					out.add("<" + m.group(1) + name + "> is not a tag");
 				continue;
 			}
-			anyCode = true;
+			if(name.equalsIgnoreCase("CALL")) continue;
+            anyCode = true;
 			if(!name.equals(name.toUpperCase()))
 				out.add("<" + m.group(1) + name + ">: write it <" + m.group(1) + name.toUpperCase() + ">, or the parser will not find where it ends");
 			final String up = name.toUpperCase();
-			if((code == VariationCode.MASK) && (!close))
+			if((name.toUpperCase().startsWith("MASK")) && (!close))
 			{
 				final String mask = m.group(3).trim();
 				if(mask.endsWith("+") || mask.endsWith("-"))

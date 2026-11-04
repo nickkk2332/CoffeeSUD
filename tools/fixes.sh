@@ -32,7 +32,7 @@ FAIL=0
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 # a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|st6|pr5|s10|travel|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in st1|st6|pr5|s10|travel|presentation|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -767,6 +767,33 @@ group_travel()
     jsresults travel-restore.txt
 }
 
+group_presentation()
+{
+    SAVES="$W/presentationsaves"
+    NEWCHAR='Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
+    echo "Played: presentation, first visits, asynchronous narration and saved lore, journal, maps and preferences"
+    mkdir -p "$W/presentationdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/presentationdb/"
+    cp -r "$GAME/world" "$W/presentationworld"
+    play pr-build.txt presentationdb presentationworld "Builder\n${NEWCHAR}jrun /resources/_fixes/pr-build.js\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+    jsresults pr-build.txt
+    play pr-play.txt presentationdb presentationworld "Reader\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/pr-play.js\neast\nwest\neast\nwest\nlore SAVEDENTRY\njrun /resources/_fixes/pr-narrate.js\n\n\njrun /resources/_fixes/pr-after-pages.js\nsave presentation\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS COLORALIASES=LORE=LIGHTRED
+    jsresults pr-play.txt
+    expect pr-play.txt "FIX_FIRST_VISIT"
+    count pr-play.txt "FIX_AREA_FIRST" 1
+    expect pr-play.txt "FIX_RETURN_VISIT"
+    count pr-play.txt "FIX_ONCE_ENTRY" 1
+    expect pr-play.txt "FIX_NARRATE_ONE"
+    expect pr-play.txt "FIX_NARRATE_TWO"
+    expect pr-play.txt "FIX_NARRATE_THREE"
+    expect pr-play.txt "Game saved as 'presentation'."
+    play pr-restore.txt presentationdb presentationworld 'jrun /resources/_fixes/pr-check.js\neast\nwest\nquit\nn\n' RESTORE=presentation TIMEMODE=TURNS COLORALIASES=LORE=LIGHTRED
+    jsresults pr-restore.txt
+    play pr-real.txt presentationdb presentationworld 'jrun /resources/_fixes/pr-narrate-real.js\n#sleep 2\n\n\njrun /resources/_fixes/pr-after-real.js\nquit\nn\n' RESTORE=presentation TIMEMODE=TURNS COLORALIASES=LORE=LIGHTRED
+    jsresults pr-real.txt
+    count pr-restore.txt "FIX_ONCE_ENTRY" 0
+    expect pr-restore.txt "FIX_RETURN_VISIT"
+}
+
 # the groups share nothing (each has its own world, database and saves), so
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
@@ -776,7 +803,7 @@ if [ $# -eq 0 ]; then
 	LIMIT=${FIXES_JOBS:-9}
 	case "$LIMIT" in ''|*[!0-9]*|0) LIMIT=9;; esac
 	PIDS=""; RUNNING=0
-	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel; do
+	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation; do
 		"group_$GROUP" > "$W/group_$GROUP.log" 2>&1 &
 		PIDS="$PIDS $!"; RUNNING=$((RUNNING+1))
 		if [ "$RUNNING" -ge "$LIMIT" ]; then
@@ -785,8 +812,8 @@ if [ $# -eq 0 ]; then
 		fi
 	done
 	for PID in $PIDS; do wait "$PID"; done
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log"; then FAIL=1; fi
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!

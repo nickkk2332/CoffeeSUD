@@ -741,9 +741,10 @@ public class StdBook extends StdItem implements Book
 			if(message.startsWith("<cmvp>"))
 				message=new String(TextMacros.filter(message.substring(6).getBytes()));
 
-			if(to.equals("ALL")||mineAble)
-				buf.append("\n\r"+subject
-						   +"\n\r"+message);
+            if(to.equals("ALL")||mineAble) {
+                if(readerMOB!=null)message=StoryText.render(readerMOB,this,message);
+                buf.append("\n\r"+subject+"\n\r"+message);
+            }
 		}
 		reply.third = buf;
 		return reply;

@@ -302,7 +302,7 @@ public class StdMap extends StdItem implements com.planet_ink.coffee_mud.Items.i
 					}
 					else
 					{
-						final String paddedName=CMStrings.padRight(room.r.displayText().trim(),30);
+						final String paddedName=CMStrings.padRight(room.r.displayText(PlayerMaps.reader()).trim(),30);
 						line1+="---"+dirChar(Directions.NORTH,grid,x,y,'-')+"----";
 						line2+="|"+paddedName.substring(0,6)+"|";
 						line3+=dirChar(Directions.WEST,grid,x,y,'|')+paddedName.substring(6,12)+dirChar(Directions.EAST,grid,x,y,'|');
@@ -344,7 +344,7 @@ public class StdMap extends StdItem implements com.planet_ink.coffee_mud.Items.i
 		if(myMap!=null)
 			return myMap;
 
-		Object o=Resources.getResource("map"+phyStats().level()+":"+getMapArea());
+		Object o=PlayerMaps.reader()==null?Resources.getResource("map"+phyStats().level()+":"+getMapArea()):null;
 		if((o!=null)&&(o instanceof StringBuffer[][]))
 			myMap=(StringBuffer[][])o;
 
@@ -352,7 +352,7 @@ public class StdMap extends StdItem implements com.planet_ink.coffee_mud.Items.i
 			return myMap;
 		*/
 		myMap=finishMapMaking(width);
-		Resources.submitResource("map"+phyStats().level()+":"+getMapArea(),myMap);
+		if(PlayerMaps.reader()==null) Resources.submitResource("map"+phyStats().level()+":"+getMapArea(),myMap);
 		return myMap;
 	}
 
@@ -625,7 +625,8 @@ public class StdMap extends StdItem implements com.planet_ink.coffee_mud.Items.i
 					else
 						cols += 2;
 				}
-				final StringBuffer map[][]=getMyMappedRoom(cols);
+				final int mapWidth=cols;
+                final StringBuffer map[][]=PlayerMaps.reading(mob,()->getMyMappedRoom(mapWidth));
 				if((isReadable())
 				&&(map!=null)
 				&&(map.length>0)

@@ -798,7 +798,7 @@ public class StdArea implements Area
 	@Override
 	public String displayText(final MOB viewerMob)
 	{
-		return displayText();
+		return StoryText.render(viewerMob,this,displayText());
 	}
 
 	@Override
@@ -1056,7 +1056,7 @@ public class StdArea implements Area
 	@Override
 	public String description(final MOB viewerMob)
 	{
-		return description();
+		return StoryText.render(viewerMob,this,description());
 	}
 
 	@Override

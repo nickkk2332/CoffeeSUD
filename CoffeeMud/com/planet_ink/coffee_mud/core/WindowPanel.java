@@ -258,30 +258,7 @@ public final class WindowPanel
 	 */
 	private static String map(final MOB mob)
 	{
-		final Room R = mob.location();
-		if(R == null)
-			return "";
-		final Ability A = CMClass.getAbility("Skill_RegionalAwareness");
-		if(A == null)
-			return "";
-		try
-		{
-			final Method M = A.getClass().getMethod("getMiniMap", MOB.class, Room.class, int.class, boolean.class);
-			final String[] rows = (String[])M.invoke(A, mob, R, Integer.valueOf(MAP_ROOMS), Boolean.FALSE);
-			final StringBuilder out = new StringBuilder();
-			for(final String row : rows)
-			{
-				if(out.length() > 0)
-					out.append('\n');
-				out.append(row);
-			}
-			return out.toString();
-		}
-		catch(final Exception e)
-		{
-			Log.errOut("WindowPanel", "No map: " + e);
-			return "";
-		}
+        return PlayerMaps.render(mob,mob.location(),Math.max(1,MAP_ROOMS/2));
 	}
 
 	/**

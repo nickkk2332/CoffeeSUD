@@ -2786,24 +2786,22 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 					c++;
 					break;
 				}
-				case '{':
-				{
-					// %{VAR name}: the character's script variable, else one of that name on any host;
-					// %{VAR host name}: that host's
-					final int close=prompt.indexOf('}',c);
-					final String inner=(close<0)?"":prompt.substring(c+1,close).trim();
-					if(inner.toUpperCase().startsWith("VAR ")&&(inner.substring(4).trim().length()>0))
-					{
-						buf.append(promptVar(mob, inner.substring(4).trim()));
-						c=close+1;
-					}
-					else
-					{
-						buf.append("%{");
-						c++;
-					}
-					break;
-				}
+                case '{':
+                {
+                    final int close=prompt.indexOf('}',c);
+                    final String inner=close<0?"":prompt.substring(c+1,close).trim(),upper=inner.toUpperCase();
+                    String value=null;
+                    if(upper.startsWith("VAR ")) value=promptVar(mob,inner.substring(4).trim());
+                    else if(upper.startsWith("PVAR ")) value=StoryText.variable(mob.Name(),inner.substring(5).trim());
+                    else if(upper.startsWith("QVAR ")) {
+                        final String spec=inner.substring(5).trim();final int space=spec.lastIndexOf(' ');
+                        value=space<0?"":StoryText.questVariable(StoryText.unquote(spec.substring(0,space).trim()),spec.substring(space+1).trim());
+                    }
+                    else if(upper.equals("TIMEMODE")) value=GameTime.isTurnBased()?"TURN":"REAL";
+                    else if(upper.equals("LEADER")) {final MOB leader=Party.leaderOf(mob);value=leader==null?mob.name():leader.name();}
+                    if(value!=null){buf.append(value);c=close+1;}else{buf.append("%{");c++;}
+                    break;
+                }
 				default:
 				{
 					buf.append("%" + prompt.charAt(c));
