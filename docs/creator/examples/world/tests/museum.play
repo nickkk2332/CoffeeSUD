@@ -1,0 +1,31 @@
+# Ordinary-character behavior, after build.js and builder SAVE.
+#char Visitor,Human,Apprentice
+look
+#expect Museum entrance
+#expect The east gate is closed.
+say gate
+1
+#expect How do I open the gate?
+#expect Pull the brass lever
+pull lever
+#expect The east gate grinds open.
+look
+#expect The east gate stands open.
+east
+#assert HERE CreatorMuseum#1
+look inscription
+#expect Nine carved waves
+listen
+#expect The distant surf
+read tablet
+#expect You learn the history
+lore COAST
+#expect The Drowned Coast
+north
+#expect A single candle
+#assert HERE CreatorMuseum#2
+south
+north
+#reject A single candle
+museumbell
+#expect Museum bell count: 1

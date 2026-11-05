@@ -9,6 +9,9 @@
 <table border="1" cellpadding="10" cellspacing="0" width="90%"><tbody>
 <tr><td colspan="2" align="left" bgcolor="#dfdfdf" width="100%">
 <h1>JavaScript in CoffeeSUD</h1>
+<p>Start with the <a href="../../docs/creator/README.md">CoffeeSUD creator handbook</a>
+for current workflows, the cookbook, runnable examples and tool audit. This page
+remains a detailed scripting reference.</p>
 <p>JavaScript runs in a script's <code>&lt;SCRIPT&gt;</code> block, in
 <code>JRUN</code> files and <code>JCONSOLE</code>, in quests and cron jobs, in
 <code>world/js/init.js</code>, and in JavaScript classes. Every one of these
@@ -140,7 +143,8 @@ the user of JRUN or JCONSOLE. A room, area or mob given as
 <tr><td><code>cm.findMob(name [, where])</code>, <code>cm.findItem(name [, where])</code></td><td>the first of that name in the host's room, its area, then the world; or in <i>where</i> (a room, an area, or a mob for items)</td></tr>
 <tr><td><code>cm.loadMob(catalogName [, room])</code>, <code>cm.loadItem(catalogName [, roomOrMob])</code></td><td>a copy from the catalog, brought into the world (the catalog's caps hold)</td></tr>
 <tr><td><code>cm.echo([room,] text)</code>, <code>cm.tell(mob, text)</code></td><td>text to a room, or to one mob</td></tr>
-<tr><td><code>cm.say(mob, text)</code>, <code>cm.emote(mob, text)</code>, <code>cm.cmd(mob, command)</code></td><td>a mob says, emotes, or does a command</td></tr>
+<tr><td><code>cm.say(mob, text)</code>, <code>cm.emote(mob, text)</code>, <code>cm.cmd(mob, command)</code></td><td>a mob says, emotes, or does a forced command (as MPFORCE).
+The forced path does not run local-verb interception for queued player input.</td></tr>
 <tr><td><code>cm.mp('MPECHO hello')</code></td><td>runs MOBPROG lines for the host ($-codes work, lines split by newlines or ;); returns what RETURN gave</td></tr>
 <tr><td><code>cm.dice('3d6+2')</code>, <code>cm.dice(3, 6, 2)</code>, <code>cm.chance(pct)</code></td><td>rolls</td></tr>
 <tr><td><code>cm.now()</code>, <code>cm.ticks()</code></td><td>the game's time, in game milliseconds or in ticks; it stands still while the game is paused</td></tr>
@@ -221,8 +225,10 @@ function onBoot() {
 what a script puts in it is saved with the game as JSON, and is there again
 after a restore. <i>key</i> is <code>'world'</code> (also
 <code>cm.store()</code>), <code>'quest:name'</code>, any string, or a room
-(keyed by its ID), a mob (by its start room and name), an item (by where it is
-and its name) or an area. <code>cm.storeKey(x)</code> gives the key,
+(keyed by its ID), a mob or item (by its persistent instance ID), or an area.
+Moving or renaming a mob/item retains its store; cloning creates a distinct
+instance. Unambiguous legacy name stores migrate on access; ambiguous old data
+remains available under its explicit string key. <code>cm.storeKey(x)</code> gives the key,
 <code>cm.stores()</code> lists them. A new game starts from
 <code>world/js/state.json</code> if the world has one:
 <code>{"world": {"gold": 0}, "quest:smith": {"orders": []}}</code>.</p>
@@ -235,7 +241,7 @@ replaces it, and <code>JS STATE key DELETE</code> takes it away.</p>
 // a smith's &lt;SCRIPT&gt;: an order, due on day 12, still due after SAVE and RESTORE
 var orders = cm.store(cm.host());
 orders.list = orders.list || [];
-orders.list.push({who: source.Name(), item: 'longsword', readyDay: cm.clock().day() + 3});
+orders.list.push({who: source().Name(), item: 'longsword', readyDay: cm.clock().day() + 3});
 </pre>
 
 <h2><a name="timers">Timers</a></h2>

@@ -1,5 +1,7 @@
 # Presentation authoring
 
+[Creator handbook](creator/README.md) · [Cookbook](creator/cookbook.md)
+
 Presentation text is evaluated for each viewer without changing the authored
 text. Existing title screens and character panels remain available. `NOTES`
 still means builder playtest notes, `WORLD MAP` still draws the builder map,

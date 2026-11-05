@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-05",
+  "parent_revision": "e92d3e4afb6efac272def18e65282671942d3a8f",
+  "runtime_change": {
+    "file": "CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java",
+    "sha256": "d6354430f300b2c65f81e1e1ce5edc0363516ed402bf76015d8339778b58d0dc",
+    "purpose": "Keep literal presentation/property values intact during readable export"
+  },
+  "documentation": {
+    "command": "python3 tools/creator_docs.py --check",
+    "passed": true,
+    "feature_mappings": 409,
+    "help_topics": 342,
+    "command_gates": 90,
+    "local_links_and_anchors": true,
+    "generated_references_fresh": true
+  },
+  "museum": {
+    "command": "python3 docs/creator/examples/check.py",
+    "passed": true,
+    "player_checks": 15,
+    "javascript_test_cases": 6,
+    "build_save_restore_transcript_checks": 9,
+    "fresh_process_restore": true,
+    "ordinary_save_restore_sessions_without_dev": true
+  },
+  "exporter_regression": {
+    "command": "tools/fixes.sh s25-markup",
+    "passed": true,
+    "checks": 13
+  },
+  "headless_world": {
+    "command": "CoffeeMud/sud.sh CHECK=1 WORLDDIR=<isolated museum using resource-overlay scripts>",
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 4,
+    "warnings_detail": [
+      "starter-area rooms unreachable from museum start",
+      "starter-area boilerplate description",
+      "valid Prop_Switch MSG_UP flagged unknown",
+      "valid Prop_Switch MSG_DOWN flagged unknown"
+    ]
+  },
+  "probes": {
+    "world_setting_allowlist": {
+      "GAMENAME": true,
+      "WINDOWPANEL": false,
+      "COLORALIASES": false,
+      "ROOMHEADER": false,
+      "ROOMFOOTER": false,
+      "MAPFOG": false,
+      "JOURNALAUTO": false,
+      "JOURNALTALK": false
+    },
+    "script_lint_world_scheme": "Valid runtime LOAD=world:scripts/museum-guide.script incorrectly reports no such file",
+    "script_lint_resource_overlay": "SCRIPTCHECK ALL: no problems found",
+    "world_set_presentation_key": "WINDOWPANEL is not a world setting"
+  },
+  "aggregate": {
+    "command": "FIXES_JOBS=2 ENGINE=1 tools/check.sh",
+    "status": "failed",
+    "javascript_checks_passed": 3488,
+    "javascript_fixtures_completed": 333,
+    "javascript_failures": 0,
+    "engine_passes": 47,
+    "engine_known_baseline_failures": [
+      "Spaceangles",
+      "Spaceinterception",
+      "Spaceinterception2"
+    ],
+    "smoke_passes": 94,
+    "smoke_failures": 3,
+    "smoke_failure_scenario": "unique catalog container spawn after the full smoke campaign sequence",
+    "exit_code": 1,
+    "played_checks_passed": 429,
+    "fixes_failure": "PR21 graphical case could not start because xvfb-run was not on PATH",
+    "source_revision_and_runtime_frozen_during_run": true
+  },
+  "comparison": {
+    "old_exporter_short_new_and_restore": "CONTAINER ONCE cap 1 before and after restore",
+    "old_exporter_full_smoke": {
+      "passed": true,
+      "checks": 97
+    },
+    "old_exporter_on_failed_cache": "NONE TIME cap 0",
+    "current_exporter_on_healthy_cache": "CONTAINER ONCE cap 1",
+    "cache_rebuilt_during_restore_probes": false
+  },
+  "separate_panel_check": {
+    "passed": true,
+    "checks": 13,
+    "virtual_display": "workspace Xvfb",
+    "combined_played_checks": 442
+  },
+  "smoke_replay": {
+    "passed": false,
+    "passes": 94,
+    "failures": 3,
+    "scenario": "unique catalog container spawn",
+    "cause": "unresolved cache-creation history; bad cached policy reproduced with old exporter"
+  },
+  "helper_syntax_check": true,
+  "staged_whitespace_check": true
+}

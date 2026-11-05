@@ -27,7 +27,8 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
 - **Save games.**
   - `SAVE name` writes the whole live world, including rooms, mobs, items,
     timed effects, quest progress, script state, weather and factions.
-  - `RESTORE name` puts that world back exactly. `SAVES` lists the slots.
+  - `RESTORE name` restores that campaign state. External world assets remain
+    live; keep the matching world version for older campaigns. `SAVES` lists slots.
   - The launcher offers the saves when it starts.
 - **The world is files.** Areas, the catalog, quests, scripts and custom
   races, classes, abilities and commands live as readable files in
@@ -113,6 +114,9 @@ world.
 
 Guides:
 
+- **[CoffeeSUD creator handbook](docs/creator/README.md)**: the current front
+  door for world authors and developers, with system chapters, a cookbook,
+  runnable examples, tool/settings references and a complete feature index.
 - [`docs/languages.md`](docs/languages.md): custom languages, comprehension and
   immersion, local vocabulary, and world-owned socials and help.
 - [`CoffeeMud/guides/ScriptingSUD.html`](CoffeeMud/guides/ScriptingSUD.html):
@@ -122,8 +126,9 @@ Guides:
 - `CoffeeMud/guides/`: CoffeeMud's own manuals (Game Builder's Guide,
   Archon's Guide and others). These still apply to the engine. Ignore their
   parts on servers, web pages and multiplayer administration.
-- `CoffeeMud/coffeemud.ini`: every setting, with comments. A world can set
-  most of them in `CoffeeMud/world/world.ini`.
+- `CoffeeMud/coffeemud.ini`: engine settings, with comments. The
+  [world settings allowlist](docs/creator/world-settings.md) identifies which
+  rules a world can override in `CoffeeMud/world/world.ini`.
 
 ## Development
 

@@ -4,6 +4,10 @@ CoffeeMud/.build-stamp
 CoffeeMud/.build.log
 CoffeeMud/.sources*.list
 
+# Python authoring/check helpers
+__pycache__/
+*.pyc
+
 # Runtime logs
 CoffeeMud/mud*.log
 CoffeeMud/SQLErrors.que

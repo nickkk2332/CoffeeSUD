@@ -1,0 +1,4 @@
+HELLO=sela
+SEA=mar
+GATE=esh
+FRIEND=tavi

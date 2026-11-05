@@ -1,5 +1,7 @@
 # Languages and world vocabulary
 
+[Creator handbook](creator/README.md) · [Cookbook](creator/cookbook.md)
+
 World vocabulary files live under `world/vocab/` and ship with the world.
 Learned proficiency and immersion counters are part of saved games. Files use UTF-8. `.ini` files use Java properties escaping and line
 continuations unless noted below. Builders can edit languages and races through

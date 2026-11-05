@@ -1,5 +1,7 @@
 # Party rules for a world
 
+[Creator handbook](creator/README.md) · [Cookbook](creator/cookbook.md)
+
 Put these in the world's `world.ini`, or use `WORLD SET` in builder mode:
 
 ```ini

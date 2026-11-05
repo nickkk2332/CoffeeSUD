@@ -1,5 +1,7 @@
 # Travel, vehicles and instances
 
+[Creator handbook](creator/README.md) · [Cookbook](creator/cookbook.md)
+
 These features use the game clock in real-time and turn-based games. Authored
 travel advances the scheduler, so weather, hunger, NPCs and scripts run during
 the time spent travelling. Saves keep transport progress separately from the

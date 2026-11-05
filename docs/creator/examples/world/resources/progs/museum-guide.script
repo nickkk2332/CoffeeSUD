@@ -1,0 +1,14 @@
+SPEECH_PROG p gate
+mpmenu $n MUSEUM_GUIDE "What would you like to know?" gate:"How do I open the gate?" history:"What is this place?" bye:"Goodbye" bye
+~
+
+FUNCTION_PROG MUSEUM_GUIDE
+switch $0
+case gate
+  mpechoat $n Pull the brass lever to open the east gate.
+case history
+  mpechoat $n This museum keeps the memory of the drowned coast.
+case bye
+  mpechoat $n The guide returns to the ledger.
+endswitch
+~

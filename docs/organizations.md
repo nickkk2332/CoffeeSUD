@@ -1,5 +1,7 @@
 # Factions and organisations
 
+[Creator handbook](creator/README.md) · [Cookbook](creator/cookbook.md)
+
 Organisations use the existing clan system. Membership belongs to each character, so two companions can join different guilds or hold different ranks. Standing is a faction; belonging to an organisation and being liked by it are separate things.
 
 ## Make a guild

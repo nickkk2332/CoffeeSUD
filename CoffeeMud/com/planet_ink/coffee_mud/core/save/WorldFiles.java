@@ -2361,7 +2361,22 @@ public final class WorldFiles
 				parts.add(xml.substring(lt));
 				break;
 			}
-			parts.add(xml.substring(lt, gt + 1));
+			final String opening = xml.substring(lt, gt + 1);
+			final String valueName = tagName(opening);
+			// Presentation markup in a value is literal data, not file structure.
+			// Indenting it changes its contents and hides a leading <VARIES>.
+			if(isLiteralValue(valueName) && (!opening.endsWith("/>")))
+			{
+				final String close = "</" + valueName + ">";
+				final int end = xml.indexOf(close, gt + 1);
+				if(end >= 0)
+				{
+					parts.add(xml.substring(lt, end + close.length()));
+					i = end + close.length();
+					continue;
+				}
+			}
+			parts.add(opening);
 			i = gt + 1;
 		}
 		final StringBuilder out = new StringBuilder();
@@ -2388,6 +2403,11 @@ public final class WorldFiles
 			}
 			// an element holding only text, or nothing, goes on one line
 			final String name = tagName(part);
+			if(isLiteralValue(name) && part.endsWith("</" + name + ">"))
+			{
+				indent(out, depth).append(part).append('\n');
+				continue;
+			}
 			if((p + 1 < parts.size()) && parts.get(p + 1).equals("</" + name + ">"))
 			{
 				indent(out, depth).append(part).append(parts.get(p + 1)).append('\n');
@@ -2406,6 +2426,13 @@ public final class WorldFiles
 			depth++;
 		}
 		return out.toString();
+	}
+
+	private static boolean isLiteralValue(final String name)
+	{
+		return name.equals("RDESC") || name.equals("RDISP")
+			|| name.equals("NAME") || name.equals("DESC") || name.equals("DISP")
+			|| name.equals("ATEXT");
 	}
 
 	private static String tagName(final String tag)

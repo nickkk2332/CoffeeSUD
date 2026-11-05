@@ -1,0 +1,7 @@
+<AREADATA>
+  <STRING id="museum_rumour" select="any-1">
+    <STRING>The drowned bells ring at dusk.</STRING>
+    <STRING>The old keeper still watches the coast.</STRING>
+  </STRING>
+  <STRING id="museum_modulo">${js:100%7}</STRING>
+</AREADATA>

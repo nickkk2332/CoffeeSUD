@@ -1,5 +1,7 @@
 # Authoring identities, checks and recovery
 
+[Creator handbook](creator/README.md) · [Cookbook](creator/cookbook.md)
+
 The presentation, vocabulary and travel properties share an option parser.
 Double-quoted values can contain spaces, semicolons and text that resembles
 settings. Inside a value, `\"` means a literal quote and `\\` a literal
