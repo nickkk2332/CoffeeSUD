@@ -851,21 +851,21 @@ public final class MiniJSON
 		case '9':
 			return parseNumber(doc,index);
 		case 't':
-			if((index[0] < doc.length-5) && (new String(doc,index[0],4).equals(TRUE_STR)))
+			if((index[0] <= doc.length-4) && (new String(doc,index[0],4).equals(TRUE_STR)))
 			{
 				index[0]+=3;
 				return Boolean.TRUE;
 			}
 			throw new MJSONException("Invalid true at "+index[0]);
 		case 'f':
-			if((index[0] < doc.length-6) && (new String(doc,index[0],5).equals(FALSE_STR)))
+			if((index[0] <= doc.length-5) && (new String(doc,index[0],5).equals(FALSE_STR)))
 			{
 				index[0]+=4;
 				return Boolean.FALSE;
 			}
 			throw new MJSONException("Invalid false at "+index[0]);
 		case 'n':
-			if((index[0] < doc.length-5) && (new String(doc,index[0],4).equals(NULL_STR)))
+			if((index[0] <= doc.length-4) && (new String(doc,index[0],4).equals(NULL_STR)))
 			{
 				index[0]+=3;
 				return NULL;

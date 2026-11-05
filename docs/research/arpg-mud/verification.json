@@ -3,7 +3,7 @@
   "checked_at_utc_date": "2026-11-05",
   "baseline_commit": "df43a4c7",
   "markdown_files": 11,
-  "markdown_words": 27094,
+  "markdown_words": 27125,
   "proposals": 96,
   "proposal_kinds": {
     "defer": 1,
@@ -21,7 +21,7 @@
     "indexed-excerpt": 43,
     "rendering-limited": 3
   },
-  "local_file_links": 243,
+  "local_file_links": 244,
   "external_link_occurrences": 284,
   "proposal_only_yaml_examples": 4,
   "poe1_league_entries": 48,

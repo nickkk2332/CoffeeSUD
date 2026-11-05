@@ -17,6 +17,7 @@ separate when designing a reusable system.
 | Script trigger history and queues | Supported ONCE/time/delay guards, alarms, waits and pending responses persist | Use explicit stages; do not assume an arbitrary active interpreter stack is saved |
 | Local variables/function parameters | Temporary invocation data | Put durable facts in saved state before suspending |
 | JS cm.store | JSON-compatible data persists | Store values/IDs, not functions or live Java objects |
+| Optional module state | Versions, settings, scoped owner records and suspension payloads persist | Declare dependencies, scope and migrations; [inspect/adopt/reload](14-optional-modules.md) explicitly |
 | JS listeners, commands, verbs, every/at schedules | Code registration is recreated at boot | Register idempotently in init.js; use stable registration keys |
 | JS after callbacks | One-shot timer/data and function text persist | The restored function must use data/cm rather than captured locals |
 | Background jobs | Cancelled on new game/restore; not saved | Handle cancellation, timeout and missing results; apply world changes in the callback |

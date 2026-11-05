@@ -162,6 +162,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [LOOK](#look)
 - [MASTERLEATHERWORKING](#masterleatherworking)
 - [MODIFY](#modify)
+- [MODULES](#modules)
 - [MYCOLOGY](#mycology)
 - [NAMESTYLES](#namestyles)
 - [NOTE](#note)
@@ -357,6 +358,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [WORLD](#world)
 - [WORLDMATERIALS](#worldmaterials)
 - [WORLDRULES](#worldrules)
+- [WORLD_MODULES](#world-modules)
 
 <a id="accept"></a>
 
@@ -4454,6 +4456,7 @@ Command  : WORLD
 Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
+Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
 Usage    : WORLD TEST ([FILE.play/FILE.test/FILE.js])
 Usage    : WORLD CHECK (AREA ([NAME])) (LOG) (ONLY=[PART],[PART]...)
 Usage    : WORLD DEV (([AREA]) ON/OFF)
@@ -5991,6 +5994,28 @@ effects that can affect the thing, each with a line of its help.  An effect it h
 is offered Prop_MultiEffects, which holds both copies, as a second copy alone would be
 ignored.  CoffeeSUD: MODIFY BEHAVIOR [ID] edits a generic behaviour, and MODIFY BEHAVIOR
 [ID] [FIELD] [VALUE] sets one field of it (AHELP GENBEHAVIOR).
+```
+
+<a id="modules"></a>
+
+## MODULES
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3198.
+
+```text
+Command : MODULES
+Usage   : MODULES
+Usage   : MODULES DEMO [MODULE ID]
+Lists this campaign's optional modules and any suspension reason. New modules are default
+off; the world's MODULES setting selects roots and their declared dependencies. Existing
+campaigns keep their saved selection and effective settings. Installing a manifest alone
+does not enable it.
+The optional example.counter module provides MODULES DEMO example.counter, which advances a
+character-owned practice counter without changing combat or rewards. It must be installed
+and selected by the creator.
+Creators can use WORLD MODULES in builder mode or DEV=1 to inspect, validate, plan/reload
+definitions, explicitly adopt a world-selected module, configure a campaign setting or
+inspect saved state. See AHELP WORLD_MODULES.
 ```
 
 <a id="mycology"></a>
@@ -11163,6 +11188,7 @@ Command  : WORLD
 Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
+Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
 Usage    : WORLD TEST ([FILE.play/FILE.test/FILE.js])
 Usage    : WORLD CHECK (AREA ([NAME])) (LOG) (ONLY=[PART],[PART]...)
 Usage    : WORLD DEV (([AREA]) ON/OFF)
@@ -11300,4 +11326,33 @@ more trains at those levels (level 1's as creation ends).  A GenRace's FSTTRAN a
 are more at creation; its LVLPRAC and LVLTRAIN, and a GenCharClass's LVLTRAIN, are more each
  level.  A lost level takes back what it gave.  A world's JavaScript practicesForLevel and
 trainsForLevel, when set, have the last word.
+```
+
+<a id="world-modules"></a>
+
+## WORLD_MODULES
+
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3349.
+
+```text
+Command : WORLD MODULES
+Usage   : WORLD MODULES ([ID])
+Usage   : WORLD MODULES CHECK/PLAN/RELOAD
+Usage   : WORLD MODULES ADOPT [ID]
+Usage   : WORLD MODULES CONFIGURE [ID] [SETTING] [VALUE]
+Usage   : WORLD MODULES STATE [ID]
+Builder/DEV tooling for optional world modules. Flat JSON manifests live in
+world/modules/<id>.json. MODULES selects root IDs; MODULESETTINGS supplies typed world
+defaults as JSON. World settings take effect at the next process start.
+CHECK validates definitions and selection; WORLD CHECK ONLY=MODULES also checks the current
+clock. PLAN previews saved-state compatibility without applying it. RELOAD applies validated
+ definition changes while retaining saved settings. ADOPT explicitly adds a world-selected
+module and dependencies to a campaign. CONFIGURE changes one compatible active campaign
+setting; SAVE keeps it and world defaults remain unchanged. STATE inspects a saved capsule,
+including suspended records.
+Saved versions, contract fingerprints, settings, removal policies and scoped state
+participate in campaign saves. Missing/incompatible modules suspend with data retained, or
+refuse restoration according to their saved policy. Version changes need declared
+migrations. Ordinary MODULES/DEMO never grant creator permissions. See
+docs/creator/14-optional-modules.md and its runnable example.
 ```

@@ -15,6 +15,11 @@ every proposal**. Names, example commands, formats, settings, and APIs in the
 proposal chapters are illustrative unless explicitly identified as existing.
 Use the [creator handbook](../../creator/README.md) for commands that work today.
 
+Implementation update: the [optional-module foundation](../../creator/14-optional-modules.md)
+now supplies module manifests, validation, scoped state and basic version
+migrations. These establish the first Q01/Q02/Q06 contracts; feature-specific
+ARPG validators, migrations and gameplay remain separate work.
+
 ## Reading routes
 
 | Start here if you want… | Guide |

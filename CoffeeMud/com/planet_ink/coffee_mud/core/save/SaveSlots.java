@@ -53,6 +53,9 @@ public final class SaveSlots
 	/** the file in a slot that describes it */
 	public static final String HEADER_FILE = "header.properties";
 
+	/** Saves carrying module state require a reader that understands its lifecycle. */
+	public static final int MODULE_FORMAT_VERSION = 2;
+
 	private static final String DB_DIR = "db";
 	private static final String TABLE_PREFIX = "fakedb.data.";
 	private static final String WORKING_PREFIX = ".play-";
@@ -575,8 +578,11 @@ public final class SaveSlots
 		final File dir = new File(saveDir, slot);
 		if(!complete(dir)) throw new IOException("The save '" + slot + "' is incomplete or damaged.");
 		final Properties header = readHeader(dir);
-		if(!"1".equals(header.getProperty("version", "1")))
-			throw new IOException("Unsupported save format " + header.getProperty("version") + " in '" + slot + "'. This engine supports version 1.");
+        final String format = header.getProperty("version", "1");
+        if(!format.equals("1") && !format.equals(Integer.toString(MODULE_FORMAT_VERSION)))
+            throw new IOException("Unsupported save format " + format + " in '" + slot + "'. This engine supports versions 1 and 2.");
+        if(format.equals(Integer.toString(MODULE_FORMAT_VERSION)) && (!"1".equals(header.getProperty("moduleformat")) || !new File(dir, "modules.json").isFile()))
+            throw new IOException("The module-aware save '" + slot + "' is missing its module metadata.");
 		final String world = readFile(saveDir, slot, "world.xml");
 		if(world == null || !world.trim().matches("(?is)<WORLD(?:\\s[^>]*)?(?:/>|>.*</WORLD\\s*>)"))
 			throw new IOException("The world snapshot in '" + slot + "' is incomplete or damaged.");

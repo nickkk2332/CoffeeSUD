@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "example.core",
+  "title": "Example module capability",
+  "version": 1,
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["world"],
+  "provides": ["counter"]
+}

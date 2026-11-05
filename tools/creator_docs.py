@@ -132,10 +132,11 @@ def generate(rows):
                    'GENPOISON GENDISEASE GENTRAP GENTWEAKABILITY GENBEHAVIOR GENCOMMAND '
                    'ORIGINS CREATIONSTEPS CREATIONTEMPLATES STARTINGKITS TESTCHAR KIT PERKS TRAITS '
                    'CRAFTQUALITY RECIPEKEYS KNOWNRECIPES MUDCHAT ENCOUNTERS RANKS '
-                   'QUESTS QUESTINFO QUESTCHECK QUESTMAKER ITEMSETS WORLD MATERIALS RESOURCES '
+                   'QUESTS QUESTINFO QUESTCHECK QUESTMAKER ITEMSETS WORLD MODULES WORLD_MODULES MATERIALS RESOURCES '
                    'LANGUAGE VOCAB SOCIAL HELP AHELP COMPONENTS'.split())
     commands = {}
-    source_paths = sorted({p for r in rows for p in r['source_references'].split(';') if p})
+    source_paths = sorted({p for r in rows for p in r['source_references'].split(';') if p} |
+                          {'CoffeeMud/com/planet_ink/coffee_mud/Commands/Modules.java'})
     for path in source_paths:
         p = ROOT / path
         name = p.stem.upper()
@@ -204,7 +205,8 @@ def generate(rows):
     out['tool-reference.md'] = '\n'.join(line.rstrip() for line in ref).rstrip() + '\n'
     gates = ['# Command entry points and gates', '', NOTICE,
              '[Handbook](README.md) · [Tool reference](tool-reference.md)', '',
-             'Source audit of command classes linked by the feature inventory. Aliases are',
+             'Source audit of command classes linked by the original feature inventory and',
+             'newer handbook chapters. Aliases are',
              'the literal access words declared by each class. The source link is authoritative',
              'when words are constructed dynamically. The securityCheck body below is a code',
              'excerpt, not a claim that every subcommand has identical permissions: execute()',

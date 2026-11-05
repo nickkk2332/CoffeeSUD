@@ -43,6 +43,7 @@ public final class WorldSettings
 	{
 		// the game
 		"GAMENAME", "MUD_NAME", "MUDTHEME",
+		"MODULES", "MODULESETTINGS", // optional world-owned gameplay modules
 		// where characters start and go when they die
 		"START", "DEATH", "MORGUE",
 		// new characters

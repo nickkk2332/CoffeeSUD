@@ -209,6 +209,14 @@ public class SUD
 					showPrologue();
 			}
 		}
+		final String moduleProblem = SaveGame.moduleStartupProblem(settings);
+		if(moduleProblem != null)
+		{
+			System.out.println(moduleProblem);
+			if(!builderMode) SaveSlots.release(saveDir);
+			System.exit(1);
+			return;
+		}
 		final List<String> fullArgs = new ArrayList<String>();
 		fullArgs.add(gameName);
 		fullArgs.addAll(Arrays.asList(SINGLE_PLAYER_SETTINGS));

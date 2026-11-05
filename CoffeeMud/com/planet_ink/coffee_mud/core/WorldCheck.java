@@ -60,7 +60,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES" };
 
 	/** one thing found */
 	public static final class Finding
@@ -338,6 +338,18 @@ public final class WorldCheck
 		final List<Finding> out = new ArrayList<Finding>();
 		final List<Room> rooms = roomsOf(only);
 		final boolean all = (parts == null) || parts.isEmpty();
+		if(all || parts.contains("MODULES"))
+		{
+			final ModuleDefinitions.Plan modules = OptionalModules.configuredPlan();
+			for(final String error : modules.errors)
+				out.add(new Finding(Severity.ERROR, "MODULES", error));
+			for(final String id : modules.enabled)
+			{
+				final String clock = GameTime.isTurnBased() ? "TURNS" : "REALTIME";
+				if(!modules.definitions.get(id).modes.contains(clock))
+					out.add(new Finding(Severity.ERROR, "MODULES", modules.definitions.get(id).path + ": does not support " + clock));
+			}
+		}
 		if(all || parts.contains("EXITS"))
 			exits(rooms, out);
 		if(all || parts.contains("REACH"))

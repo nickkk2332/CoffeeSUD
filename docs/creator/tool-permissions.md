@@ -4,7 +4,8 @@
 
 [Handbook](README.md) · [Tool reference](tool-reference.md)
 
-Source audit of command classes linked by the feature inventory. Aliases are
+Source audit of command classes linked by the original feature inventory and
+newer handbook chapters. Aliases are
 the literal access words declared by each class. The source link is authoritative
 when words are constructed dynamically. The securityCheck body below is a code
 excerpt, not a claim that every subcommand has identical permissions: execute()
@@ -321,6 +322,14 @@ Inherited; inspect execute() for operation-specific checks.
 
 ```java
 return CMSecurity.isAllowedContainsAny(mob, mob.location(), CMSecurity.SECURITY_CMD_GROUP);
+```
+
+## MODULES
+
+[Modules.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modules.java)
+
+```java
+return CMProps.isSinglePlayer();
 ```
 
 ## NOTE, NOTES

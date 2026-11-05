@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "example.counter",
+  "title": "Practice journal",
+  "version": 1,
+  "handler": "example.counter",
+  "requires": {"example.core": 1},
+  "references": [{"module": "example.core", "name": "counter"}],
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character"],
+  "on_disable": "suspend",
+  "settings": {"step": {"type": "integer", "default": 1, "min": 1, "max": 10}},
+  "state": {"count": {"type": "integer", "default": 0, "min": 0, "max": 1000000}}
+}

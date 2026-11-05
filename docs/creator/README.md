@@ -26,6 +26,7 @@ names such as `Harbour#2` are placeholders; create them or substitute your IDs.
 | Write descriptions, lore, senses, maps, languages and interface text | [Presentation and vocabulary](11-presentation-language.md) |
 | Generate dungeons, encounters, loot and names | [Generation](12-generation.md) |
 | Diagnose, automate tests, migrate saves and release a world | [Testing and release](13-testing-release.md) |
+| Select optional modules and preserve their scoped campaign state | [Optional modules](14-optional-modules.md) |
 
 ## References and examples
 
@@ -60,13 +61,16 @@ You can author with data and editors, add MOBPROG, add JavaScript with direct
 engine access, or extend Java. These layers work together. Begin with an
 existing generic class and properties; add code when its behavior needs it.
 
-The implementation inventory records **388 implemented, one partial and 20
+The original review inventory records **388 implemented, one partial and 20
 deferred**. This documentation audit also identifies integration gaps and a cached-catalog test failure,
 described in the [audit report](../../audit/developer-tools-audit.md). “Implemented” identifies available behavior and regression coverage;
 it does not promise that every imaginable combination is tested. JS2 remains
 partial because arbitrary synchronous native Java cannot be safely interrupted.
 The [feature index](feature-index.md#deferred-work) lists deliberate deferrals.
 The proposed “executions” cutscene system is a design draft, not an available API.
+The newer [optional-module foundation](14-optional-modules.md) is documented
+separately from those 409 review entries. Its working example does not implement
+the ARPG, guild or companion features proposed in the research dossiers.
 
 ## Finding authoritative detail
 

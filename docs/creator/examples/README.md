@@ -7,6 +7,10 @@ conditional text, a sensory clue, lore, first-entry text, a world language,
 random strings and two JavaScript commands with saved state. It uses the
 current engine APIs; there are no external services or packages.
 
+The separate [optional-module example](optional-modules/README.md) demonstrates
+default-off selection, a character-owned practice counter, dependencies and
+fresh-process save compatibility without changing this museum or the default world.
+
 ## Automated tour
 
 From the repository root, with a JDK on PATH:

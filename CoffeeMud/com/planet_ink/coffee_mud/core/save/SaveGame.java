@@ -274,6 +274,19 @@ public final class SaveGame
 		nextBoot = slot;
 	}
 
+	/** Validate module compatibility before the launcher starts or touches a working campaign. */
+	public static String moduleStartupProblem(final Properties settings)
+	{
+		if(builderMode || WorldCheck.isHeadless()) return null;
+		try
+		{
+			final ModuleDefinitions.Plan plan = ModuleDefinitions.load(WorldFiles.worldDir(), settings.getProperty("MODULES", ""), settings.getProperty("MODULESETTINGS", ""));
+			OptionalModules.prepare(plan, nextBoot == null ? null : OptionalModules.readSave(saveDir, nextBoot), nextBoot != null);
+			return null;
+		}
+		catch(final IOException e) { return "Optional modules: " + e.getMessage(); }
+	}
+
 	/**
 	 * Returns the save this game was restored from or last saved to.
 	 * @return its name, or null if it has not been saved yet
@@ -311,6 +324,7 @@ public final class SaveGame
 	 */
 	public static void beforeBoot(final String contentDbService)
 	{
+		OptionalModules.reset();
 		JSJobs.reset();
 		ScriptMenus.fromXML(null); Narration.clear();
 		bootOverrides.clear();
@@ -334,6 +348,12 @@ public final class SaveGame
 			worldReport.clear();
 		}
 		WorldState.setFresh(null, null);
+		try
+		{
+			OptionalModules.boot(slot == null ? null : OptionalModules.readSave(saveDir, slot), slot != null);
+			for(final String note : OptionalModules.notes()) noteWorldChange(note);
+		}
+		catch(final IOException e) { throw new IllegalStateException("Cannot load optional modules: " + e.getMessage(), e); }
 		final boolean fakeDb = (contentDbService != null) && contentDbService.startsWith(FAKEDB);
 		if(!fakeDb)
 		{
@@ -1039,6 +1059,16 @@ public final class SaveGame
 		if(dice != null)
 			header.setProperty("dice", dice.toString());
 		final Map<String, String> files = new HashMap<String, String>();
+		try
+		{
+			if(OptionalModules.hasModules())
+			{
+				files.put(OptionalModules.FILE, OptionalModules.snapshot());
+				header.setProperty("moduleformat", "1");
+                header.setProperty("version", Integer.toString(SaveSlots.MODULE_FORMAT_VERSION));
+			}
+		}
+		catch(final IOException e) { return "The module state could not be saved: " + e.getMessage(); }
 		final Properties manifest = new Properties();
 		manifest.putAll(WorldFiles.loadedManifest());
 		try
@@ -1079,6 +1109,8 @@ public final class SaveGame
 			return CMLib.lang().L("There is no saved game called '@x1'.", slot);
 		try { SaveSlots.validateFormat(saveDir, found.name); }
 		catch(final IOException e) { return e.getMessage(); }
+		try { OptionalModules.prepare(OptionalModules.configuredPlan(), OptionalModules.readSave(saveDir, found.name), true); }
+		catch(final IOException e) { return "The save cannot load its optional modules: " + e.getMessage(); }
 		final List<MudHost> hosts = CMLib.hosts();
 		if(hosts.size() == 0)
 			return CMLib.lang().L("The game cannot restart.");

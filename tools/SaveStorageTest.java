@@ -107,6 +107,17 @@ public final class SaveStorageTest
             files.put("world.xml","<WORLD VERSION=\"999\"/>");SaveSlots.write(root,"futureworld",db,header("futureworld"),files);
             refused=false;try {SaveSlots.validateFormat(root,"futureworld");}catch(final IOException e){refused=e.getMessage().contains("Unsupported world snapshot");}
             check(refused,"unsupported world format refused before restore");
+            files.put("world.xml","<WORLD VERSION=\"1\"/>");
+            final Properties modular=header("modular");modular.setProperty("version","2");modular.setProperty("moduleformat","1");
+            SaveSlots.write(root,"missingmodule",db,modular,files);
+            refused=false;try {SaveSlots.validateFormat(root,"missingmodule");}catch(final IOException e){refused=e.getMessage().contains("module metadata");}
+            check(refused,"module-aware format refuses missing payload");
+            files.put("modules.json","{\"schema\":1,\"modules\":[]}");SaveSlots.write(root,"modular",db,modular,files);
+            SaveSlots.validateFormat(root,"modular");check(true,"module-aware format accepts complete metadata");
+            modular.remove("moduleformat");SaveSlots.write(root,"missingmarker",db,modular,files);
+            refused=false;try {SaveSlots.validateFormat(root,"missingmarker");}catch(final IOException e){refused=e.getMessage().contains("module metadata");}
+            check(refused,"module-aware format refuses missing marker");
+
             check(SaveSlots.delete(root,"hero")&&!new File(root,".old-hero").exists(),"deleting a save also removes recovery generations");
             SaveSlots.release(root);
             final Process holder=child("--hold",root);

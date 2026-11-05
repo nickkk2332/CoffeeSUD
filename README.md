@@ -46,6 +46,10 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
   - world checks and script checks;
   - playtest files you can replay;
   - tracing and debugging for scripts.
+- **Optional world modules.** Creators can select versioned modules, validate
+  dependencies and keep typed campaign state with migration/suspension rules.
+  New modules default off; an example counter demonstrates the lifecycle.
+  See the [module guide](docs/creator/14-optional-modules.md).
 - **More for content authors.** CoffeeSUD adds new MOBPROG triggers and
   functions, and fuller JavaScript (Rhino, ES6). Quests gain:
   - a journal with objectives;

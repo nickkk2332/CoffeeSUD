@@ -987,6 +987,54 @@ public class WorldCmd extends StdCommand
 			mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2)));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("MODULES"))
+		{
+			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))
+			{
+				mob.tell(L("WORLD MODULES is for builder mode or a DEV=1 game. MODULES lists this campaign's modules."));
+				return false;
+			}
+			try
+			{
+				final String sub = commands.size() > 2 ? commands.get(2) : "";
+				if(sub.equalsIgnoreCase("CHECK"))
+				{
+					final ModuleDefinitions.Plan plan = OptionalModules.configuredPlan();
+					mob.tell(plan.errors.isEmpty() ? "Module definitions and selection are valid." : plan.problems());
+				}
+				else if(sub.equalsIgnoreCase("PLAN") || sub.equalsIgnoreCase("RELOAD"))
+					mob.tell(OptionalModules.reload(sub.equalsIgnoreCase("RELOAD")));
+				else if(sub.equalsIgnoreCase("ADOPT") && commands.size() == 4)
+				{
+					OptionalModules.adopt(commands.get(3));
+					mob.tell("Adopted " + commands.get(3) + " and its declared dependencies in this campaign.");
+				}
+				else if(sub.equalsIgnoreCase("CONFIGURE") && commands.size() >= 6)
+				{
+					OptionalModules.configure(commands.get(3), commands.get(4), CMParms.combine(commands, 5));
+					mob.tell("Updated " + commands.get(3) + "." + commands.get(4) + " in this campaign; SAVE keeps it. World defaults are unchanged.");
+				}
+				else if(sub.equalsIgnoreCase("STATE") && commands.size() == 4)
+				{
+					final MiniJSON.JSONObject snapshot = ModuleDefinitions.parse(OptionalModules.snapshot());
+					boolean found = false;
+					for(final Object raw : (Object[])snapshot.get("modules"))
+					{
+						final MiniJSON.JSONObject saved = (MiniJSON.JSONObject)raw;
+						if(commands.get(3).equals(saved.get("id")))
+						{
+							final String text = ModuleDefinitions.json(saved);
+							mob.tell(text.length() > 8000 ? text.substring(0, 8000) + "\n[Display truncated; the complete module state is retained in the save.]" : text);
+							found = true;
+						}
+					}
+					if(!found) mob.tell("No saved module state for " + commands.get(3) + ".");
+				}
+				else mob.tell(OptionalModules.describe(sub, true));
+			}
+			catch(final java.io.IOException e) { mob.tell("Modules: " + e.getMessage()); }
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("CHECK"))
 		{
 			if((!SaveGame.isBuilderMode()) && (!SaveGame.isDevMode()) && (!CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS)))

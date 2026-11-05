@@ -23,6 +23,8 @@ read the comments in [coffeemud.ini](../../CoffeeMud/coffeemud.ini), the
 - `GAMENAME`
 - `MUD_NAME`
 - `MUDTHEME`
+- `MODULES`
+- `MODULESETTINGS`
 - `START`
 - `DEATH`
 - `MORGUE`
