@@ -40,6 +40,10 @@ public class Prop_WearEnabler extends Prop_HaveEnabler
 		return "Prop_WearEnabler";
 	}
 
+	protected String legacySet="";
+	@Override public String getStat(final String code) { return code.equalsIgnoreCase("ALLSET") ? legacySet : super.getStat(code); }
+	@Override public String text() { return super.text()+(legacySet.isEmpty()?"":" ALLSET=\""+legacySet+"\""); }
+
 	@Override
 	public String name()
 	{
@@ -105,7 +109,8 @@ public class Prop_WearEnabler extends Prop_HaveEnabler
 	@Override
 	public void setMiscText(final String newText)
 	{
-		super.setMiscText(newText);
+		legacySet=ItemSets.legacySpec(newText);
+		super.setMiscText(ItemSets.withoutLegacy(newText));
 		layered=CMParms.parseSemicolons(newText.toUpperCase(),true).indexOf("LAYERED")>=0;
 	}
 
@@ -134,7 +139,7 @@ public class Prop_WearEnabler extends Prop_HaveEnabler
 	@Override
 	public boolean addMeIfNeccessary(final Environmental source, final Environmental target, final short maxTicks)
 	{
-		if(disabled&&checked)
+		if(disabled&&checked || affected instanceof Item && !ItemSets.legacyEnabled((Item)affected,legacySet))
 			return false;
 		return super.addMeIfNeccessary(source,target,maxTicks);
 	}
@@ -170,7 +175,7 @@ public class Prop_WearEnabler extends Prop_HaveEnabler
 			final Item I=myItem;
 			if(I!=null)
 			{
-				final boolean worn=(!I.amWearingAt(Wearable.IN_INVENTORY))
+				final boolean worn=ItemSets.legacyEnabled(I,legacySet) && (!I.amWearingAt(Wearable.IN_INVENTORY))
 				&&((!I.amWearingAt(Wearable.WORN_FLOATING_NEARBY))||(I.fitsOn(Wearable.WORN_FLOATING_NEARBY)));
 
 				if((lastMOB instanceof MOB)

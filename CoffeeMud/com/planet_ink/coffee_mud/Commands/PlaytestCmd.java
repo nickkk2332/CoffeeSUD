@@ -54,11 +54,12 @@ public class PlaytestCmd extends StdCommand
 	{
 		final Ability P = mob.fetchEffect("Prop_Playtest");
 		final String what = (commands.size() > 1) ? commands.get(1).toUpperCase() : "";
+		if(what.equals("RUN")) { mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2))); return false; }
 		if(what.equals("GAME")) { mob.tell(IsolatedPlaytest.launch(mob)); return false; }
 		final boolean on = what.equals("ON") || (what.length() == 0 && (P == null));
 		if((!what.equals("ON")) && (!what.equals("OFF")) && (what.length() > 0))
 		{
-			mob.tell(L("PLAYTEST ON, PLAYTEST OFF, or PLAYTEST GAME for a disposable campaign."));
+			mob.tell(L("PLAYTEST ON (PARTY=names) (KIT=name) (DIFFICULTY=preset), OFF, GAME, or RUN [FILE]."));
 			return false;
 		}
 		if(on)
@@ -67,6 +68,43 @@ public class PlaytestCmd extends StdCommand
 			{
 				mob.tell(L("You are playtesting already.  PLAYTEST OFF ends it."));
 				return false;
+			}
+			for(int i=2;i<commands.size();i++)if(commands.get(i).indexOf('=')<1)
+			{ mob.tell(L("Use PARTY=names, KIT=name or DIFFICULTY=preset.")); return false; }
+			final Map<String,String> opts = CMParms.parseEQParms(CMParms.combine(commands, 2));
+			for(final String key : opts.keySet())
+				if(!Arrays.asList("PARTY", "DIFFICULTY", "KIT").contains(key.toUpperCase()))
+				{ mob.tell(L("Unknown PLAYTEST option: @x1", key)); return false; }
+			final String difficulty = opts.get("DIFFICULTY");
+			if(difficulty != null && GameDifficulty.find(difficulty) == null)
+			{ mob.tell(L("Unknown difficulty: @x1", difficulty)); return false; }
+			final String kitName = opts.get("KIT");
+			final KitCmd.Kit kit = kitName == null ? null : KitCmd.readKit(kitName);
+			if(kitName != null && (kit == null || !kit.problems.isEmpty()))
+			{ mob.tell(L("Missing or invalid kit: @x1", kitName)); return false; }
+			final List<String> names = CMParms.parseCommas(opts.containsKey("PARTY") ? opts.get("PARTY") : "", true);
+			for(final String name : names)
+			{
+				final MOB member = CMLib.players().getLoadPlayer(name);
+				if(member == null || Party.profileOf(member) != Party.profileOf(mob))
+				{ mob.tell(L("No character in this profile: @x1", name)); return false; }
+			}
+			for(final String name : names)
+				CMClass.getCommand("PartyCmd").execute(mob, Arrays.asList("PARTY", "ADD", name), metaFlags);
+			if(difficulty != null) GameDifficulty.set(GameDifficulty.find(difficulty), mob.location());
+			if(kit != null)
+			{
+				final List<String> problems = new ArrayList<String>();
+				KitCmd.applyMaking(mob, kit, false, problems);
+				KitCmd.applyGear(mob, kit, false, problems);
+				for(final String problem : problems) mob.tell(problem);
+			}
+			for(final MOB member : Party.inOrder(Party.leaderOf(mob)))
+			{
+				if(member == mob || member.fetchEffect("Prop_Playtest") != null) continue;
+				final Ability test = CMClass.getAbility("Prop_Playtest");
+				test.setMiscText(CMLib.map().getExtendedRoomID(member.location()));
+				member.addNonUninvokableEffect(test);
 			}
 			final Room R = mob.location();
 			final Ability A = CMClass.getAbility("Prop_Playtest");
@@ -81,6 +119,12 @@ public class PlaytestCmd extends StdCommand
 		{
 			mob.tell(L("You are not playtesting."));
 			return false;
+		}
+		for(final MOB member : Party.inOrder(Party.leaderOf(mob)))
+		{
+			final Ability test = member.fetchEffect("Prop_Playtest");
+			if(test != null) member.delEffect(test);
+			Prop_Playtest.makeWhole(member);
 		}
 		mob.delEffect(P);
 		Prop_Playtest.makeWhole(mob);

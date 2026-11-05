@@ -19,6 +19,19 @@ See guides/RandomAreas.html for information about documents of this type.
 -->
 <!--  include file full of useful common string selectors for treasure, materials, and races -->
 
+<STRING load="/resources/randareas/inc_adjectives.xml" />
+
+<STRING id="subtheme_adjusted_name" select="any-1" merge="true">
+	<STRING condition="$adj_subtheme=''">${STAT:NAME}</STRING>
+	<STRING condition="$adj_subtheme!=''">(a(n)) ${l:adj_subtheme} ${STAT:NAME}</STRING>
+</STRING>
+
+<STRING id="subtheme_adjusted_display" select="any-1" merge="true">
+	<STRING condition="$adj_subtheme=''">${STAT:DISPLAY}</STRING>
+	<STRING condition="$adj_subtheme!=''">(a(n)) ${l:adj_subtheme} ${STAT:DISPLAY}</STRING>
+</STRING>
+
+
 <ITEM class="metacraft:any-alchemy &lt; $level_range" id="any_alchemy_item" requires="level_range=int"/>
 <ITEM class="metacraft:any-herbalism &lt; $level_range" id="any_herbalism_item" requires="level_range=int"/>
 <ITEM class="metacraft:any-apothecary &lt; $level_range" id="any_apothecary_item" requires="level_range=int"/>

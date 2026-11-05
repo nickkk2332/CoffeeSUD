@@ -32,7 +32,7 @@ check("class-ok", !has(probs, "MPOLOAD GenItem"), probs);
 check("variable", !has(probs, "$i"), probs);
 var said = puzzle("CHECK AREA " + R.getArea().Name());
 check("command", has(said, "PUZZLE CHECK " + R.getArea().Name() + ": ") && has(said, "MPGOTO Nowherefix#99: no such room"), said);
-check("usage", has(puzzle(""), "PUZZLE CHECK (AREA [NAME])"), "no words");
+check("usage", has(puzzle(""), "Puzzle wiring in " + R.getArea().Name()), "no words");
 s.destroy();
 B.setSession(null);
 B.destroy();

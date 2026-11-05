@@ -154,7 +154,7 @@ public final class JSConsole
 			return dot(cx, scope, builder, target, l);
 		remember(builder, l);
 		final long t0 = System.nanoTime();
-		final Object r = cx.evaluateString(scope, l.replace('`', '\''), "<cmd>", 1, null);
+		final Object r = cx.evaluateString(scope, l, "<cmd>", 1, null);
 		final String out = show(r);
 		if(timed.contains(builder.Name()))
 			return out + "\n\r(" + String.format("%.2f", Double.valueOf((System.nanoTime() - t0) / 1000000.0)) + " ms)";

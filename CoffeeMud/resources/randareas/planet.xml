@@ -34,6 +34,8 @@ See guides/RandomAreas.html for information about documents of this type.
 <STRING load="/resources/randareas/desert.xml" />
 <STRING load="/resources/randareas/town.xml" />
 
+<STRING id="randomlayout" select="any-1"><STRING>BOXCITY</STRING><STRING>MAZE</STRING><STRING>BRANCH</STRING></STRING>
+
 <AREA id="random_planet_area" layout="$randomlayout" requires="areaname=$,areasize=int,racename=$" predefine="theme=$randomtheme,level_range=1">
 	<NAME>$areaname</NAME><SIZE>$areasize</SIZE><ATMOSPHERE>$randomatmo</ATMOSPHERE>
 	<CLASS select="any-1"><CLASS condition="$areatype!=''">$areatype</CLASS><CLASS condition="$areatype=''">StdThinPlanet</CLASS></CLASS>
@@ -41,7 +43,7 @@ See guides/RandomAreas.html for information about documents of this type.
 	<!-- TODO: arrest, with silly laws -->
 </AREA>
 
-<STRING id="randomatmo" pick="any-1">
+<STRING id="randomatmo" select="any-1">
 	<STRING pickweight="9" define="atmosphere" condition="$theme!='ocean'">air</STRING>
 	<STRING pickweight="1" define="atmosphere" condition="$theme!='ocean'">flourine</STRING>
 	<STRING pickweight="1" define="atmosphere" condition="$theme!='ocean'">nitrogen</STRING>
@@ -50,7 +52,7 @@ See guides/RandomAreas.html for information about documents of this type.
 	<STRING pickweight="1" define="atmosphere" condition="$theme='ocean'">saltwater</STRING>
 </STRING>
 
-<STRING id="randomtheme" pick="any-1">
+<STRING id="randomtheme" merge="true" select="any-1">
 	<STRING pickweight="9">city3000</STRING>
 	<STRING pickweight="5">forest</STRING>
 	<STRING pickweight="5">desert</STRING>
@@ -68,13 +70,13 @@ See guides/RandomAreas.html for information about documents of this type.
 	<STRING pickweight="1">tribal</STRING>
 </STRING>
 
-<ROOM id="hallway_rooms" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
+<ROOM id="hallway_rooms" merge="true" select="pick-1" condition="$roomtag_nodetype='street' or $roomtag_nodetype='surround'">
 </ROOM>
 
-<ROOM id="interior_rooms" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
+<ROOM id="interior_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='interior' or $roomtag_nodetype='square'">
 </ROOM>
 
-<ROOM id="leaf_rooms" select="any-1" condition="$roomtag_nodetype='leaf'">
+<ROOM id="leaf_rooms" merge="true" select="any-1" condition="$roomtag_nodetype='leaf'">
 </ROOM>
 
 </AREADATA>

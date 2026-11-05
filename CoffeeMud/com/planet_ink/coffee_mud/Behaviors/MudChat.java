@@ -2007,8 +2007,58 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 				   .append(c.switchDB.length()>0?(" (switches to group "+c.switchDB+")"):"").append("\n\r");
 			}
 		}
+		out.append("Tick entries (first successful entry per active group; independent rolls):\n\r");
+		for(final Iterator<ChattyGroup> group=active.firstIterator();group.hasNext();)
+		{
+			double remaining=1.0;
+			for(final ChattyEntry entry:group.next().tickies)
+			{
+				if(entry.combatEntry!=combat)continue;
+				int successes=0;
+				for(int roll=1;roll<=100;roll++)if(match(npc,entry.expression,roll))successes++;
+				out.append("  ").append(describe(entry.expression)).append(": ").append(successes).append("% per eligible tick; first-match odds ")
+					.append(String.format(java.util.Locale.ROOT,"%.2f",Double.valueOf(remaining*successes))).append("%");
+				if(entry.guard!=null && !entry.guard.isEmpty())out.append(" when guard holds: ").append(entry.guard);
+				out.append("\n\r");
+				remaining*=1.0-successes/100.0;
+			}
+		}
+		out.append("Tick delay remaining: ").append(tickDown).append("; queued replies: ").append(responseQue.size()).append(".\n\r");
 		return out.toString();
 	}
+
+    private static List<ChatMatch> literalAlternatives(final ChatExpression expression)
+    {
+        final List<ChatMatch> result=new ArrayList<ChatMatch>();
+        for(final Pair<Object,ChatExpConn> term:expression.exp)
+        {
+            if(term.second!=ChatExpConn.OR && term.second!=ChatExpConn.END)return null;
+            if(term.first instanceof ChatExpression)
+            { final List<ChatMatch> inner=literalAlternatives((ChatExpression)term.first);if(inner==null)return null;result.addAll(inner); }
+            else if(term.first instanceof ChatMatch && ((ChatMatch)term.first).flag!=ChatMatchFlag.ZAPPER)result.add((ChatMatch)term.first);
+            else return null;
+        }
+        return result;
+    }
+    private static boolean covers(final ChatExpression broad,final ChatExpression narrow)
+    {
+        if(broad.type!=narrow.type)return false;
+        final List<ChatMatch> a=literalAlternatives(broad),b=literalAlternatives(narrow);
+        if(a==null || b==null || b.isEmpty())return false;
+        for(final ChatMatch target:b)
+        {
+            boolean covered=false;
+            for(final ChatMatch previous:a)
+            {
+                final String one=previous.str.toLowerCase(),two=target.str.toLowerCase();
+                if(previous.flag==ChatMatchFlag.INSTR && two.contains(one)
+                || previous.flag==target.flag && one.equals(two)
+                || previous.flag==ChatMatchFlag.TOP && target.flag==ChatMatchFlag.EXACT && two.startsWith(one))covered=true;
+            }
+            if(!covered)return false;
+        }
+        return true;
+    }
 
 	/**
 	 * Checks a chat file's text, as the parser reads it, for what it would
@@ -2029,6 +2079,10 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 		int entryLine=0;
 		int entryReplies=0;
 		String entryText="";
+		final List<ChatExpression> previous=new ArrayList<ChatExpression>();
+		final List<Integer> previousLines=new ArrayList<Integer>();
+		final List<String> previousModes=new ArrayList<String>();
+		boolean guarded=false;
 		for(int i=0;i<lines.length;i++)
 		{
 			final int lineNum=i+1;
@@ -2036,10 +2090,14 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 			if(str.length()==0)
 				continue;
 			char c=str.charAt(0);
+			String entryMode="";
 			if((c=='*')||(c=='L')||(c=='.'))
 			{
 				while((str.length()>0)&&("*L.".indexOf(str.charAt(0))>=0))
+				{
+					entryMode+=str.charAt(0);
 					str=str.substring(1);
+				}
 				if((str.length()==0)||("([{<".indexOf(str.charAt(0))<0))
 					continue;
 				c=str.charAt(0);
@@ -2054,7 +2112,14 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					problems.add("line "+entryLine+": the pattern "+entryText+" has no replies");
 				try
 				{
-					parseExpression(str);
+					final ChatExpression expression=parseExpression(str);
+					if(!guarded)
+					{
+						for(int n=0;n<previous.size();n++)if(previousModes.get(n).equals(entryMode) && covers(previous.get(n),expression))
+						{problems.add("line "+lineNum+": pattern is hidden by the earlier pattern on line "+previousLines.get(n));break;}
+						previous.add(expression);previousLines.add(Integer.valueOf(lineNum));previousModes.add(entryMode);
+					}
+					guarded=false;
 					inEntry=true;
 					entryLine=lineNum;
 					entryReplies=0;
@@ -2078,6 +2143,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					problems.add("line "+entryLine+": the pattern "+entryText+" has no replies");
 				inEntry=false;
 				groups.add(newChattyGroup(str.substring(1).trim()));
+				previous.clear();previousLines.clear();previousModes.clear();guarded=false;
 				break;
 			case '@':
 				if(matchChatGroup(null,str.substring(1).trim(),groups.toArray(new ChattyGroup[0]))==null)
@@ -2097,6 +2163,7 @@ public class MudChat extends StdBehavior implements ChattyBehavior
 					problems.add("line "+lineNum+": a reply of weight 0 is never chosen: "+str);
 				break;
 			case '?':
+				guarded=true;
 				if(str.substring(1).trim().length()==0)
 					problems.add("line "+lineNum+": a guard (?) with no condition");
 				break;

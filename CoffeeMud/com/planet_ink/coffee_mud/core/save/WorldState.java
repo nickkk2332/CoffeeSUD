@@ -112,6 +112,7 @@ public final class WorldState
 	 */
 	private static Map<Physical, Integer>	written	= null;
 	private static XMLTag pendingCombat = null;
+	private static final List<com.planet_ink.coffee_mud.Abilities.Common.CommonSkill> activityLinks = new ArrayList<com.planet_ink.coffee_mud.Abilities.Common.CommonSkill>();
 
 	private static String combatXML()
 	{
@@ -370,6 +371,7 @@ public final class WorldState
 		if(version != null && version.length() > 0 && !Integer.toString(VERSION).equals(version))
 			throw new IllegalArgumentException("Unsupported world snapshot version " + version);
 		pendingCombat = world.getPieceFromPieces("COMBAT");
+		activityLinks.clear();
 		restored.clear();
 		laterRides.clear();
 		laterRooms.clear();
@@ -1705,8 +1707,25 @@ public final class WorldState
 		}
 		com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
 		putBackCombat();
+		for(final com.planet_ink.coffee_mud.Abilities.Common.CommonSkill activity : activityLinks)
+			activity.resolveActivityLinks();
+		activityLinks.clear();
 		restored.clear(); // after the effects, whose activities may name what was restored
 		takeBackRemadeAreas();
+		// Some generic objects already carry their effects, and remade areas may
+		// supply their final instances only at this point. Include the login room
+		// directly while it is still being registered in the global map.
+		final java.util.function.Consumer<Physical> resolve = host -> {
+			for(final Enumeration<Ability> e=host.effects();e.hasMoreElements();)
+			{
+				final Ability effect=e.nextElement();
+				if(effect instanceof com.planet_ink.coffee_mud.Abilities.Common.CommonSkill)
+					((com.planet_ink.coffee_mud.Abilities.Common.CommonSkill)effect).resolveActivityLinks();
+			}
+		};
+		InstanceIds.visit(resolve);
+		resolve.accept(mob);
+		if(mob.location()!=null)for(final Enumeration<MOB> e=mob.location().inhabitants();e.hasMoreElements();)resolve.accept(e.nextElement());
 	}
 
 	/**
@@ -1756,19 +1775,28 @@ public final class WorldState
 	{
 		for(final XMLTag tag : effects.contents())
 		{
-			final Ability A = CMClass.getAbility(tag.getValFromPieces("ID"));
+			Ability A = CMClass.getAbility(tag.getValFromPieces("ID"));
 			if(A == null)
 				continue;
 			final int ticks = tag.getIntFromPieces("TICKS");
-			if((ticks <= 0) || (P.fetchEffect(A.ID()) != null))
+			if(ticks <= 0)
 				continue;
+			final Ability existing = P.fetchEffect(A.ID());
+			if(existing != null) A = existing;
+			else
+			{
 			A.setMiscText(CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("TEXT")));
 			A.setProficiency(tag.getIntFromPieces("PROF"));
 			A.startTickDown(causeOf(CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("BY")), P, mob), P, ticks);
+			}
 			A.setStat("TICKDOWN", Integer.toString(ticks));
 			final XMLTag activity = tag.getPieceFromPieces("ACTIVITY");
 			if(activity != null)
+			{
 				A.setStat("ACTIVITY", activity.value());
+				if(A instanceof com.planet_ink.coffee_mud.Abilities.Common.CommonSkill)
+					activityLinks.add((com.planet_ink.coffee_mud.Abilities.Common.CommonSkill)A);
+			}
 		}
 		if(P instanceof MOB)
 		{

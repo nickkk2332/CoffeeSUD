@@ -511,19 +511,10 @@ public class XMLManager extends StdLibrary implements XMLLibrary
 	{
 		if(s==null)
 			return "";
-		int loop=s.indexOf('&');
-		if(loop<0)
-		{
-			loop=s.indexOf('%');
-			if(loop<0)
-				return s;
-		}
-		else
-		{
-			final int chk=s.indexOf('%');
-			if((chk>=0)&&(chk<loop))
-				loop=chk;
-		}
+		final int first=s.indexOf('&');
+		if(first<0)
+			return s;
+		int loop=first;
 		final StringBuilder buf=new StringBuilder();
 		buf.append(s.substring(0,loop));
 		while(loop<s.length())
@@ -562,22 +553,6 @@ public class XMLManager extends StdLibrary implements XMLLibrary
 				}
 				else
 					buf.append('&');
-				break;
-			case '%':
-				if(loop<s.length()-2)
-				{
-					final int dig1=HEX_DIGITS.indexOf(s.charAt(loop+1));
-					final int dig2=HEX_DIGITS.indexOf(s.charAt(loop+2));
-					if((dig1>=0)&&(dig2>=0))
-					{
-						buf.append((char)((dig1*16)+dig2));
-						loop+=2;
-					}
-					else
-						buf.append(s.charAt(loop));
-				}
-				else
-					buf.append(s.charAt(loop));
 				break;
 			default:
 				buf.append(s.charAt(loop));

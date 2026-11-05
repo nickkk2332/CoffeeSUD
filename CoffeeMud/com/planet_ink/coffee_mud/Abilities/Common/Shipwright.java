@@ -104,7 +104,8 @@ public class Shipwright extends CraftingSkill implements ItemCraftor, MendingSki
 	{
 		if((affected instanceof MOB)&&(tickID==Tickable.TICKID_MOB))
 		{
-			if((buildingI==null)
+			if((!helping)
+			&&(buildingI==null)
 			&&(activity != CraftingActivity.RETITLING)
 			&&(activity != CraftingActivity.DOORING)
 			&&(activity != CraftingActivity.DEMOLISH))

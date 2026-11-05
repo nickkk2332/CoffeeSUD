@@ -94,6 +94,54 @@ public final class DevLog implements Log.Listener
 	private static String				modules		= "*";
 	/** the last line told, and how many times since */
 	private static Entry				lastTold	= null;
+	private static volatile CharacterWindow logWindow = null;
+	private static Level windowLevel = Level.WARN;
+	private static String windowModules = "*";
+
+	/** Opens a separate, display-only log view, retaining the terminal watcher. */
+	public static boolean openWindow(final Level severity, final String mask)
+	{
+		register();
+		if(!CharacterWindow.canOpen())
+			return false;
+		closeWindow();
+		final CharacterWindow W = CharacterWindow.open("Developer log", "UTF-8", "UTF-8", () -> closeWindow());
+		if(W == null)
+			return false;
+		W.setInputEnabled(false);
+		synchronized(DevLog.class)
+		{
+			windowLevel = severity;
+			windowModules = mask;
+			logWindow = W;
+			for(final String line : last(KEEP, severity, mask))
+				windowLine(line);
+		}
+		return true;
+	}
+
+	public static synchronized void closeWindow()
+	{
+		final CharacterWindow W = logWindow;
+		logWindow = null;
+		if(W != null && !W.isClosed())
+			W.close();
+	}
+
+	public static boolean hasWindow()
+	{
+		return logWindow != null && !logWindow.isClosed();
+	}
+
+	private static void windowLine(final String text)
+	{
+		final CharacterWindow W = logWindow;
+		if(W != null && !W.isClosed())
+		{
+			try { W.output().write((CMStrings.removeColors(text) + "\r\n").getBytes("UTF-8")); }
+			catch(final java.io.IOException e) { closeWindow(); }
+		}
+	}
 	private static boolean				registered	= false;
 	/** so that what telling the watcher logs is not told again */
 	private static final ThreadLocal<Boolean> telling = new ThreadLocal<Boolean>();
@@ -176,6 +224,8 @@ public final class DevLog implements Log.Listener
 				while(recent.size() > KEEP)
 					recent.removeFirst();
 			}
+			if(hasWindow() && l.ordinal() <= windowLevel.ordinal() && matches(windowModules, mod))
+				windowLine(new Entry(l, mod, msg).line());
 			M = (watcher == null) ? null : watcher.get();
 			if((M == null) || ((!DEBUG_MODULE.equals(mod)) && ((l.ordinal() > level.ordinal()) || (!matches(modules, mod)))))
 				return;

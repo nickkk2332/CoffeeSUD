@@ -2151,23 +2151,56 @@ public class Arrest extends StdBehavior implements LegalBehavior
 								  String sentence,
 								  final String warnMsg)
 	{
+		return checkWarrant(criminalM, laws, myArea, victimM, crimeLocs, crimeFlags, crime, sentence, warnMsg, false, null);
+	}
+
+	/** Checks the actual warrant rules without changing the docket or rolling the game's dice. */
+	public String testCrime(final Area area, final MOB actor, final Environmental victim, final String key)
+	{
+		if(!theLawIsEnabled()) return "Law enforcement is disabled.";
+		final Law laws = legalInfo(area);
+		if(laws == null || !laws.lawIsActivated()) return "The law is not activated.";
+		String[] crime = laws.basicCrimes().get(key.toUpperCase());
+		if(crime == null) crime = laws.abilityCrimes().get(key.toUpperCase());
+		if(crime == null) return "No crime definition for " + key + ". LAW CRIMES lists the keys.";
+		if(isCrimeSuppressed(crime[Law.BIT_CRIMENAME]) || isCrimeSuppressed("ALL")) return "This crime is suppressed.";
+		final List<String> reasons = new ArrayList<String>();
+		final Long state = GenSeed.begin(112358);
+		try
+		{
+			final boolean allowed = checkWarrant(actor, laws, area, victim, crime[Law.BIT_CRIMELOCS], crime[Law.BIT_CRIMEFLAGS],
+				crime[Law.BIT_CRIMENAME], crime[Law.BIT_SENTENCE], crime[Law.BIT_WARNMSG], true, reasons);
+			return (allowed ? "Would issue a warrant" : "Would not issue a warrant") + " for " + crime[Law.BIT_CRIMENAME]
+				+ ": " + (reasons.isEmpty() ? "all eligibility checks pass" : String.join("; ", reasons))
+				+ ". Flags: " + crime[Law.BIT_CRIMEFLAGS] + ". Random ignore rules use a fixed diagnostic roll.";
+		}
+		finally { GenSeed.end(state); }
+	}
+
+	private boolean checkWarrant(final MOB criminalM, final Law laws, final Area myArea, final Environmental victimM,
+		final String crimeLocs, final String crimeFlags, final String crime, String sentence, final String warnMsg,
+		final boolean dryRun, final List<String> reasons)
+	{
 		if(criminalM.amDead())
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+" * IS DEAD!");
-			return false;
+			if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+" * IS DEAD!");
+				return false;
 		}
 		if(criminalM.location()==null)
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused is not here.");
-			return false;
+			if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused is not here.");
+				return false;
 		}
 		if((myArea!=null)&&(!myArea.inMyMetroArea(criminalM.location().getArea())))
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused is not in the area.");
-			return false;
+			if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused is not in the area.");
+				return false;
 		}
 
 		if(isAnyKindOfOfficer(laws,criminalM)
@@ -2177,7 +2210,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused is an officer ("+isAnyKindOfOfficer(laws,criminalM)+"), judge ("+isTheJudge(laws,criminalM)+"), or above the law ("+CMSecurity.isAllowed(criminalM,criminalM.location(),CMSecurity.SecFlag.ABOVELAW)+").");
-			return false;
+			if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused is an officer ("+isAnyKindOfOfficer(laws,criminalM)+"), judge ("+isTheJudge(laws,criminalM)+"), or above the law ("+CMSecurity.isAllowed(criminalM,criminalM.location(),CMSecurity.SecFlag.ABOVELAW)+").");
+				return false;
 		}
 
 		// is there a witness
@@ -2192,7 +2226,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused and victim are the same.");
-			return false;
+			if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Accused and victim are the same.");
+				return false;
 		}
 
 		// any special circumstances?
@@ -2211,7 +2246,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 					{
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 							Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Witness required, but not present.");
-						return false;
+						if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Witness required, but not present.");
+				return false;
 					}
 				}
 				else
@@ -2222,7 +2258,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 					{
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 							Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Ignore chance.");
-						return false;
+						if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Ignore chance.");
+				return false;
 					}
 				}
 				else
@@ -2233,7 +2270,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 					{
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 							Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* !Ignore chance.");
-						return false;
+						if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* !Ignore chance.");
+				return false;
 					}
 				}
 				else
@@ -2245,7 +2283,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* In combat, but shouldn't be!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* In combat, but shouldn't be!");
+				return false;
 						}
 					}
 					else
@@ -2254,7 +2293,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Not in combat, but should be!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Not in combat, but should be!");
+				return false;
 						}
 					}
 				}
@@ -2269,7 +2309,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Not recently, but is!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Not recently, but is!");
+				return false;
 						}
 					}
 					else
@@ -2278,7 +2319,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Recently required, but it isn't!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Recently required, but it isn't!");
+				return false;
 						}
 					}
 				}
@@ -2288,7 +2330,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Witness required, and none present: .");
-			return false;
+			if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Witness required, and none present: .");
+				return false;
 		}
 
 		// is the location significant to this crime?
@@ -2308,7 +2351,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Shouldn't be indoors, but is!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Shouldn't be indoors, but is!");
+				return false;
 						}
 					}
 					else
@@ -2317,7 +2361,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should be indoors, but isn't!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should be indoors, but isn't!");
+				return false;
 						}
 					}
 					aCrime=true;
@@ -2331,14 +2376,16 @@ public class Arrest extends StdBehavior implements LegalBehavior
 						{
 							if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 								Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should not be home, but is!");
-							return false;
+							if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should not be home, but is!");
+				return false;
 						}
 					}
 					if(!str.startsWith("!"))
 					{
 						if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 							Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should be home, but is not!");
-						return false;
+						if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should be home, but is not!");
+				return false;
 					}
 					aCrime=true;
 				}
@@ -2347,7 +2394,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 				{
 					if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 						Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should not be at '"+str.substring(1)+"', but is!");
-					return false;
+					if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Should not be at '"+str.substring(1)+"', but is!");
+				return false;
 				}
 				else
 				if(CMLib.english().containsString(display,str))
@@ -2360,6 +2408,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			{
 				if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 					Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Crime flag failure!");
+				if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Crime flag failure!");
 				return false;
 			}
 		}
@@ -2371,6 +2420,7 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			{
 				if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 					Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Victim is not a protected race!");
+				if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Victim is not a protected race!");
 				return false;
 			}
 		}
@@ -2385,10 +2435,11 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			{
 				if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 					Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Warrant already exists.");
+				if(dryRun) reasons.add("("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Warrant already exists.");
 				return false;
 			}
 		}
-		W=laws.getOldWarrant(criminalM,crime,true);
+		W=dryRun ? null : laws.getOldWarrant(criminalM,crime,true);
 		if(W==null)
 			W=(LegalWarrant)CMClass.getCommon("DefaultArrestWarrant");
 
@@ -2436,7 +2487,8 @@ public class Arrest extends StdBehavior implements LegalBehavior
 			}
 			if(!actionCodeSet)
 			{
-				Log.errOut("Arrest","Unknown sentence: "+s+" for crime "+crime);
+				if(dryRun) reasons.add("Unknown sentence: "+s);
+				else Log.errOut("Arrest","Unknown sentence: "+s+" for crime "+crime);
 				return false;
 			}
 		}
@@ -2468,12 +2520,14 @@ public class Arrest extends StdBehavior implements LegalBehavior
 		{
 			if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 				Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Warrant filled out.");
+			if(dryRun) return true;
 			if(!addWarrant(laws,W))
 				return false;
 		}
 		else
 		if(CMSecurity.isDebugging(CMSecurity.DbgFlag.ARREST))
 			Log.debugOut("ARREST","("+lastAreaName+"): "+criminalM.name()+", data: "+crimeLocs+"->"+crimeFlags+"->"+crime+"->"+sentence+"* Warrant fails the is a crime check.");
+		if(dryRun) { reasons.add("The final crime or witness visibility check fails"); return false; }
 		return true;
 	}
 

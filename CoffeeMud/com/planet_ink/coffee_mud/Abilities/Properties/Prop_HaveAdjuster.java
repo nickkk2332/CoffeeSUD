@@ -633,48 +633,8 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 
 	protected boolean setCheck(final Item I)
 	{
-		final ItemSetDef allSet;
-		synchronized(this)
-		{
-			allSet=this.allSet;
-		}
-		if(allSet==null)
-			return true;
-		final ItemPossessor P=I.owner();
-		if(!(P instanceof MOB))
-		{
-			allSet.setChecked=false;
-			allSet.setActivated=false;
-			return false;
-		}
-		if(allSet.setChecked)
-			return allSet.setActivated;
-		final MOB mob=(MOB)P;
-		int ct=0;
-		final List<ItemSetDef> allDefs=new LinkedList<ItemSetDef>();
-		for(int i=0;i<mob.numItems();i++)
-		{
-			final Item I2=mob.getItem(i);
-			if((I2!=null) && (I2.numEffects()>0))
-			{
-				final Prop_HaveAdjuster hA=(Prop_HaveAdjuster)I2.fetchEffect(ID());
-				if((hA!=null)
-				&&(hA.allSet!=null)
-				&&(hA.allSet.name.equalsIgnoreCase(allSet.name))) // just having it is enough
-				{
-					if(setItemCheck(I2))
-						ct++;
-					allDefs.add(hA.allSet);
-				}
-			}
-		}
-		final boolean setActivated=ct >= allSet.allSetReqNum;
-		for(final ItemSetDef def : allDefs)
-		{
-			def.setChecked=true;
-			def.setActivated=ct >= def.allSetReqNum; // I6: each piece its own threshold
-		}
-		return setActivated;
+		final ItemSetDef definition=allSet;
+		return definition==null || ItemSets.legacyEnabled(I,definition.name+"-"+definition.allSetReqNum,this instanceof Prop_WearAdjuster);
 	}
 
 	protected void clearSet(final MOB mob, final ItemSetDef allSet)
@@ -993,6 +953,7 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 	@Override
 	public String getStat(final String code)
 	{
+		if("ALLSET".equalsIgnoreCase(code)) return allSet==null ? "" : allSet.name+"-"+allSet.allSetReqNum;
 		if(code == null)
 			return "";
 		if(code.equalsIgnoreCase("STAT-LEVEL"))

@@ -74,6 +74,38 @@ public class PartyCmd extends StdCommand
 		}
 		final String what = (commands.size() > 1) ? commands.get(1).toUpperCase() : "";
 		final String name = CMParms.combine(commands, 2).trim();
+		if(what.equals("MORTAL") || what.equals("ARCHON"))
+		{
+			if(!com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode())
+			{
+				mob.tell(L("PARTY MORTAL and ARCHON are available in builder mode."));
+				return false;
+			}
+			final MOB member = name.equalsIgnoreCase("ME") ? mob : Party.findInWorld(mob, name);
+			if(member == null || !Party.isInParty(Party.leaderOf(mob), member))
+			{
+				mob.tell(L("Choose a character in your party."));
+				return false;
+			}
+			final Ability old = member.fetchEffect("Prop_Playtest");
+			if(what.equals("MORTAL"))
+			{
+				if(old == null)
+				{
+					final Ability p = CMClass.getAbility("Prop_Playtest");
+					p.setMiscText(CMLib.map().getExtendedRoomID(member.location()));
+					member.addNonUninvokableEffect(p);
+				}
+			}
+			else
+			{
+				if(old != null) member.delEffect(old);
+				com.planet_ink.coffee_mud.core.save.SaveGame.makeArchon(member);
+			}
+			member.recoverPhyStats();
+			mob.tell(L("@x1 now tests as @x2.", member.Name(), what.toLowerCase()));
+			return false;
+		}
 		if(what.length() == 0)
 			list(mob, profile);
 		else

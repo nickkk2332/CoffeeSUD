@@ -41,7 +41,7 @@ public class DevLogCmd extends StdCommand
 		return access;
 	}
 
-	private static final String USAGE = "DEVLOG ON (ERROR/WARN/INFO/DEBUG) (MODULE [MASK]), DEVLOG OFF, DEVLOG LAST ([N]) ([LEVEL]) (MODULE [MASK]), DEVLOG CLEAR";
+	private static final String USAGE = "DEVLOG ON (ERROR/WARN/INFO/DEBUG) (MODULE [MASK]), DEVLOG OFF, DEVLOG LAST ([N]) ([LEVEL]) (MODULE [MASK]), DEVLOG CLEAR, DEVLOG WINDOW ([LEVEL]) (MODULE [MASK]), DEVLOG WINDOW OFF";
 
 	/** reads [level] [MODULE mask] from the words after the verb: [level, mask, n] */
 	private static Object[] options(final List<String> words, final Level defLevel)
@@ -122,7 +122,21 @@ public class DevLogCmd extends StdCommand
 		}
 		else
 		if(verb.equals("WINDOW"))
-			mob.tell(L("DEVLOG WINDOW is not made yet; the lines come to your own window."));
+		{
+			if(rest.size() == 1 && rest.get(0).equalsIgnoreCase("OFF"))
+			{
+				DevLog.closeWindow();
+				mob.tell(L("The developer log window is closed."));
+			}
+			else
+			{
+				final Object[] o = options(rest, Level.WARN);
+				if(o == null) mob.tell(L(USAGE));
+				else mob.tell(DevLog.openWindow((Level)o[0], (String)o[1])
+					? L("The developer log window is open.")
+					: L("No display is available. DEVLOG ON or LAST shows the log in this terminal."));
+			}
+		}
 		else
 			mob.tell(L(USAGE));
 		return false;

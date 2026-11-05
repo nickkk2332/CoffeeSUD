@@ -29,6 +29,37 @@ public final class ItemSets
 	{
 	}
 
+	private static final java.util.regex.Pattern LEGACY = java.util.regex.Pattern.compile("(?i)\\bALLSET\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^;\\s]+))");
+	public static String legacySpec(final String text)
+	{
+		final java.util.regex.Matcher m=LEGACY.matcher(text);
+		return m.find() ? (m.group(1)!=null?m.group(1):m.group(2)!=null?m.group(2):m.group(3)) : "";
+	}
+	public static String withoutLegacy(final String text) { return LEGACY.matcher(text).replaceAll(""); }
+	private static String legacyName(final String spec) { return spec.replaceFirst("-\\d+$","").trim(); }
+	public static boolean legacyEnabled(final Item item, final String spec) { return legacyEnabled(item,spec,true); }
+	public static boolean legacyEnabled(final Item item, final String spec, final boolean wornOnly)
+	{
+		if(spec.isEmpty()) return true;
+		if(!(item.owner() instanceof MOB)) return false;
+		final String name=legacyName(spec);
+		final int dash=spec.lastIndexOf('-');
+		final int needed=dash>0&&CMath.isInteger(spec.substring(dash+1)) ? Math.max(1,CMath.s_int(spec.substring(dash+1))) : 2;
+		int count=0;
+		for(final java.util.Enumeration<Item> e=((MOB)item.owner()).items();e.hasMoreElements();)
+		{
+			final Item piece=e.nextElement();
+			if(wornOnly && !piece.amBeingWornProperly()) continue;
+			for(final java.util.Enumeration<Ability> a=piece.effects();a.hasMoreElements();)
+			{
+				final Ability effect=a.nextElement();
+				final String other=effect.getStat("ALLSET");
+				if(!other.isEmpty() && legacyName(other).equalsIgnoreCase(name)) {count++;break;}
+			}
+		}
+		return count>=needed;
+	}
+
 	/**
 	 * The pieces of a set one has that count: worn, or carried when a piece
 	 * says COUNT=HELD.

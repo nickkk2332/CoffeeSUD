@@ -2,7 +2,9 @@
 
 The [first follow-up implementation](project-review-fixes.md) addresses the six
 summary areas. The findings and counts below preserve the original review baseline;
-the CSV includes separate follow-up status columns.
+the CSV includes separate follow-up status columns. The
+[remaining implementation follow-up](remaining-implementation-fixes.md) closes
+18 more gaps; current totals are 388 implemented, 1 partial and 20 deferred.
 
 Reviewed on 2026-11-05 at `d1787779`. This covers the single-player conversion in PLAN.md,
 the 409 numbered items in the builder audit, the recent authoring consolidation,

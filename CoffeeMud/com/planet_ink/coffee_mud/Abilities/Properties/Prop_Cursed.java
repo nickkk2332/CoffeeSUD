@@ -70,6 +70,11 @@ public class Prop_Cursed extends Property
 		return shown() ? "Cursed" : "";
 	}
 
+	public boolean detectedBy(final MOB viewer)
+	{
+		return viewer != null && viewer.phyStats().level() >= level;
+	}
+
 	protected String						base		= "";
 	protected Map<String, String>			parms		= new HashMap<String, String>();
 	protected int							level		= 1;

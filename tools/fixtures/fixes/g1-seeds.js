@@ -47,7 +47,6 @@ try {
 	roller.setDaemon(true);
 	roller.start();
 	var t1 = null, t2 = null;
-	generate(370170); // built once first: a session's first build of a seed can still differ (the open gap DEVPLAN notes)
 	try { t1 = generate(370170); t2 = generate(370170); } finally { stop.set(true); roller.join(5000); }
 	var l1 = t1.snap.split("\n"), l2 = t2.snap.split("\n"), at = 0;
 	while (at < l1.length && at < l2.length && l1[at] == l2[at]) at++;

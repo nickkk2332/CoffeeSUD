@@ -77,15 +77,6 @@ RING and ISLANDS layouts and levels="n".
 	<string condition="$theme=''">random</string>
 </string>
 
-<STRING id="subtheme_adjusted_name" select="any-1" merge="true">
-	<STRING condition="$adj_subtheme=''">${STAT:NAME}</STRING>
-	<STRING condition="$adj_subtheme!=''">(a(n)) ${l:adj_subtheme} ${STAT:NAME}</STRING>
-</STRING>
-
-<STRING id="subtheme_adjusted_display" select="any-1" merge="true">
-	<STRING condition="$adj_subtheme=''">${STAT:DISPLAY}</STRING>
-	<STRING condition="$adj_subtheme!=''">(a(n)) ${l:adj_subtheme} ${STAT:DISPLAY}</STRING>
-</STRING>
 
 </AREADATA>
 

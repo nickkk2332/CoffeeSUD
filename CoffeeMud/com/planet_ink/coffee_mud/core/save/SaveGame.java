@@ -599,7 +599,7 @@ public final class SaveGame
 	 * as reading the Archon's manual does: by having them read one.
 	 * @param mob the player
 	 */
-	private static void makeArchon(final MOB mob)
+	public static void makeArchon(final MOB mob)
 	{
 		final CharClass current = mob.baseCharStats().getCurrentClass();
 		if((current != null) && current.ID().equals("Archon"))

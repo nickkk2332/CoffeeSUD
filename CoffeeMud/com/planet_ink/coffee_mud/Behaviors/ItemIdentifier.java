@@ -145,9 +145,9 @@ public class ItemIdentifier extends StdBehavior
 				up.append("It is a "+Weapon.CLASS_DESCS[w.weaponClassification()].toLowerCase()+" weapon.\n\r");
 				up.append("It does "+Weapon.TYPE_DESCS[w.weaponDamageType()].toLowerCase()+" damage.\n\r");
 			}
-			if((CMLib.flags().domainAffects(I,Ability.DOMAIN_CURSING).size()>0)||(!CMLib.flags().isRemovable(I)))
+			if(!ItemIdentity.concealsCurse(I,observer) && ((CMLib.flags().domainAffects(I,Ability.DOMAIN_CURSING).size()>0)||(!CMLib.flags().isRemovable(I))))
 				up.append("It is cursed.\n\r");
-			up.append(I.secretIdentity());
+			up.append(ItemIdentity.describe(I,observer));
 			newMsg=CMClass.getMsg(observer,null,null,CMMsg.MSG_SPEAK,L("^T<S-NAME> say(s) '@x1'^?.",up.toString()));
 			msg.addTrailerMsg(newMsg);
 			newMsg=CMClass.getMsg(observer,source,I,CMMsg.MSG_GIVE,L("<S-NAME> give(s) <O-NAME> to <T-NAMESELF>."));

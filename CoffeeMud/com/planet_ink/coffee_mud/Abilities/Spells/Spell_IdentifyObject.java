@@ -91,7 +91,7 @@ public class Spell_IdentifyObject extends Spell
 			if(mob.location().okMessage(mob,msg))
 			{
 				mob.location().send(mob,msg);
-				final String identity=target.secretIdentity();
+				final String identity=ItemIdentity.describe(target,mob);
 				if(mob.isMonster())
 					CMLib.commands().postSay(mob,null,identity,false,false);
 				else

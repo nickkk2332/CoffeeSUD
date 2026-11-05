@@ -8,6 +8,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.planet_ink.coffee_mud.Areas.interfaces.Area;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.interfaces.Readable;
+import com.planet_ink.coffee_mud.Abilities.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room.VariationCode;
 
@@ -148,6 +153,55 @@ public final class TextCheck
 		return out;
 	}
 
+    public static List<String> checkHost(final Physical host)
+    {
+        final List<String> out=new ArrayList<String>();
+        final Room room=CMLib.map().roomLocation(host);
+        final String where=(room==null?"":CMLib.map().getExtendedRoomID(room)+" / ")+host.Name();
+        final String[] fields={host.displayText(),host.description()};
+        for(int i=0;i<fields.length;i++)
+            for(final String problem:checkText(fields[i]))out.add(where+" "+(i==0?(host instanceof Room?"title":"display"):"description")+": "+problem);
+        if(host instanceof Readable)
+        {
+            final String text=((Readable)host).readableText();
+            if(text.trim().toUpperCase().startsWith("FILE="))
+            {
+                final String path=text.trim().substring(5).trim();
+                if(path.startsWith("world/"))
+                {
+                    final java.io.File file=new java.io.File(com.planet_ink.coffee_mud.core.save.WorldFiles.worldDir(),path.substring(6));
+                    if(!file.isFile()) out.add(where+": missing FILE="+path);
+                    else try { for(final String problem:checkText(new String(java.nio.file.Files.readAllBytes(file.toPath()),"UTF-8")))out.add(where+" FILE="+path+": "+problem); }
+                    catch(final java.io.IOException e) {out.add(where+": unreadable FILE="+path);}
+                }
+                else
+                {
+                    final CMFile file=new CMFile(Resources.makeFileResourceName(path),null,CMFile.FLAG_FORCEALLOW);
+                    if(!file.canRead()) out.add(where+": missing FILE="+path);
+                    else for(final String problem:checkText(file.text().toString()))out.add(where+" FILE="+path+": "+problem);
+                }
+            }
+            else for(final String problem:checkText(text))out.add(where+" readable text: "+problem);
+        }
+        final Ability details=host.fetchEffect("Prop_Details");
+        if(details!=null)
+        {
+            final java.util.Set<String> keywords=new java.util.HashSet<String>();
+            for(final String record:Scenery.statements(details.text()))
+            {
+                final int eq=record.indexOf('=');
+                if(eq<1) {out.add(where+" Prop_Details: expected keywords=text: "+record);continue;}
+                for(final String key:record.substring(0,eq).split(",",-1))
+                {
+                    if(key.trim().isEmpty())out.add(where+" Prop_Details: empty keyword");
+                    else if(!keywords.add(key.trim().toUpperCase()))out.add(where+" Prop_Details: duplicate keyword "+key.trim());
+                }
+                for(final String problem:checkText(record.substring(eq+1)))out.add(where+" Prop_Details "+record.substring(0,eq)+": "+problem);
+            }
+        }
+        return out;
+    }
+
 	/**
 	 * Checks a room's title and description.
 	 * @param R the room
@@ -158,11 +212,16 @@ public final class TextCheck
 		final List<String> out = new ArrayList<String>();
 		if(R == null)
 			return out;
-		final String id = CMLib.map().getExtendedRoomID(R);
-		for(final String p : checkText(R.displayText()))
-			out.add(id + " title: " + p);
-		for(final String p : checkText(R.description()))
-			out.add(id + " description: " + p);
+		out.addAll(checkHost(R));
+		final java.util.Set<Physical> seen=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Physical,Boolean>());
+		for(int d=0;d<Directions.NUM_DIRECTIONS();d++)if(R.getExitInDir(d)!=null)seen.add(R.getExitInDir(d));
+		for(final Enumeration<Item> e=R.items();e.hasMoreElements();)seen.add(e.nextElement());
+		for(final Enumeration<MOB> e=R.inhabitants();e.hasMoreElements();)
+		{
+			final MOB mob=e.nextElement();seen.add(mob);
+			for(final Enumeration<Item> i=mob.items();i.hasMoreElements();)seen.add(i.nextElement());
+		}
+		for(final Physical host:seen)out.addAll(checkHost(host));
 		return out;
 	}
 

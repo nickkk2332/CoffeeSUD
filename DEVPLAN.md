@@ -3648,3 +3648,30 @@ assertions inside the new integration driver; 97 smoke checks; 17 storage/proces
 checks. The engine comparison matched its 47-pass / 3-known-failure baseline.
 The follow-up record describes the callback correction, virtual-display setup,
 and focused replays rather than counting repeated checks twice.
+
+
+## Project review: remaining implementation completion
+
+The follow-up closes 18 remaining gaps. Current inventory: **388 implemented,
+1 partial, 20 deferred**. Historical "left" notes above describe the earlier
+implementation passes; the current details and validation are in
+[`audit/remaining-implementation-fixes.md`](audit/remaining-implementation-fixes.md).
+
+Completed: chat reachability/tick diagnostics; playtest party, kit and difficulty
+options and per-member powers; the log window; in-game test runners; broader script,
+generator and text checking; live behavior state; law testing/editing; the console
+for existing puzzle primitives; cold generation/dice isolation; percent-safe template
+JavaScript and console backticks; legacy item sets and identification; curse detection;
+weapon damage against blockages; assisted activity references across saves; and the
+original scripting self-test automation. Shipped generator defects exposed by the
+checker are repaired as part of this pass.
+
+Arbitrary synchronous native/compiled Java still cannot be forcibly stopped safely
+while it can mutate live game objects. JS2 remains partial for that boundary;
+interpreted instruction budgets and bounded background jobs are supported.
+The deliberate deferrals and executions design are separate.
+
+Validation: 3,475 JavaScript checks across 332 fixtures, 442 played checks,
+97 smoke checks, four additional graphical log checks, and the engine baseline
+(47 passes/3 known failures). The report records the initial assertion correction
+and the complete JavaScript replay.

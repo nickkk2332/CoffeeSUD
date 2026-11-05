@@ -1,0 +1,38 @@
+Reference commit: d1787779
+Review date: 2026-11-05
+The latest scratch run completed with harness PASS. Observations below are
+normalized for terminal line wrapping; PASS is not a correctness assertion.
+Boss phase configuration: AT=ROUND 10: ROOM EMOTE A delayed phase.
+
+Running-game/serialization probes (scratch fixes world):
+AUDIT same_name_npcs_share_js_store=true
+AUDIT object_vars_control_distinct=true
+AUDIT moving_item_loses_js_store=true
+AUDIT moving_back_recovers_old_store=true
+AUDIT untracked_author_files=creation.ini,origins.ini,perks.ini,panel.txt,combinations.txt,itemsets.txt,kits/audit-probe.kit,encounters/audit-probe.enc
+AUDIT vocab_tracking_control=true
+AUDIT gapped_route_runtime_stop_count=1
+AUDIT gapped_route_validation=[]
+AUDIT second_detail_duplicate_id_validation=[]
+AUDIT xml_percent_formula=level   + 1
+AUDIT live_reload_keeps_old_boot_stamp=true
+AUDIT rotation_state_length=0
+AUDIT rotation_round_before_after=7:0
+AUDIT rotation_cooldowns_after=0
+AUDIT boss_before_first_phase_state_length=0
+AUDIT boss_round_before_after=7:0
+AUDIT boss_after_phase_control_round=7
+AUDIT boss_engaged_before_after=true:false
+
+Filesystem probe:
+listed_before=1
+old_complete=true
+listed_after_interrupted_replacement=0
+found_after_interrupted_replacement=false
+second_start_deletes_first_working_state=true
+second_working_created=true
+
+Runtime budget probe:
+result=42
+elapsed_ms=1657
+budget_ms=1000

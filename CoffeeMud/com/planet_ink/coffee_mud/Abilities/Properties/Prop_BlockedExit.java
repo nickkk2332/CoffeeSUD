@@ -224,7 +224,22 @@ public class Prop_BlockedExit extends Property implements VerbTaker
 				return true;
 			}
 		}
-		final int dmg = Math.max(1, CMLib.dice().roll(1, 6, 0) + Prop_Ambush.bonus(mob, skill));
+		int dmg;
+		if(v.equals("attack") || v.equals("hit") || v.equals("smash"))
+		{
+			final Item held=mob.fetchWieldedItem();
+			final Weapon weapon=held instanceof Weapon ? (Weapon)held : mob.getNaturalWeapon();
+			final CMMsg attack=CMClass.getMsg(mob,affected,weapon,CMMsg.MSG_WEAPONATTACK,
+				CMLib.lang().L("<S-NAME> strike(s) @x1 with <O-NAME>.",blockName));
+			if(!R.okMessage(mob,attack)) return true;
+			R.send(mob,attack);
+			final CMMsg damage=CMClass.getMsg(mob,affected,weapon,CMMsg.MASK_MALICIOUS|CMMsg.TYP_DAMAGE,null);
+			damage.setValue(Math.max(0,CMLib.combat().adjustedDamage(mob,weapon,null,0,false,false)));
+			if(!R.okMessage(mob,damage)) return true;
+			R.send(mob,damage);
+			dmg=Math.max(0,damage.value());
+		}
+		else dmg = Math.max(1, CMLib.dice().roll(1, 6, 0) + Prop_Ambush.bonus(mob, skill));
 		final String m = CMParms.getParmStr(parms, "MSG", CMLib.lang().L("<S-NAME> work(s) at @x1.", blockName));
 		R.show(mob, null, CMMsg.MSG_OK_ACTION, m);
 		setLeft(left - dmg, R, dir);

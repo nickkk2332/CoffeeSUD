@@ -40,6 +40,9 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 		return "Prop_AddDamage";
 	}
 
+	protected String legacySet="";
+	@Override public String text() { return super.text()+(legacySet.isEmpty()?"":" ALLSET=\""+legacySet+"\""); }
+
 	@Override
 	public String name()
 	{
@@ -96,14 +99,15 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 		bonusDamage=0;
 		weaponDamageType=Weapon.TYPE_NATURAL;
 		typeOfEffect=CMMsg.TYP_WEAPONATTACK;
-		super.setMiscText(newMiscText);
+		legacySet=ItemSets.legacySpec(newMiscText);
+		super.setMiscText(ItemSets.withoutLegacy(newMiscText));
 		// C12: TARGETMASK="mask" and LEECH=n%, read by exact key and taken out of the words
 		final Map<String,String> q=CMParms.parseExactParms(newMiscText);
 		final String tm=CMParms.getParmStr(q,"TARGETMASK","").trim();
 		targetMask=(tm.length()==0)?null:CMLib.masking().getPreCompiledMask(tm);
 		final String lc=CMParms.getParmStr(q,"LEECH","").trim();
 		leech=(lc.length()==0)?0.0:(CMath.s_double(lc.replace("%",""))/100.0);
-		final String rest=newMiscText.replaceAll("(?i)(TARGETMASK|LEECH)=(\"[^\"]*\"|\\S+)","");
+		final String rest=ItemSets.withoutLegacy(newMiscText).replaceAll("(?i)(TARGETMASK|LEECH)=(\"[^\"]*\"|\\S+)","");
 		final List<String> parms=CMParms.parse(rest.toUpperCase());
 		for(String s : parms)
 		{
@@ -205,6 +209,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
 		super.executeMsg(myHost,msg);
+		if(affected instanceof Item && !ItemSets.legacyEnabled((Item)affected,legacySet)) return;
 		MOB mob=null;
 		if(affected instanceof Item)
 		{
@@ -294,6 +299,7 @@ public class Prop_AddDamage extends Property implements TriggeredAffect
 	@Override
 	public String getStat(final String code)
 	{
+		if("ALLSET".equalsIgnoreCase(code)) return legacySet;
 		if(code == null)
 			return "";
 		if(code.equalsIgnoreCase("STAT-LEVEL"))

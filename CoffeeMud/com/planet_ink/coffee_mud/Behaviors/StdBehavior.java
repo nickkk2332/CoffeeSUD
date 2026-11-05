@@ -342,7 +342,47 @@ public class StdBehavior implements Behavior
 		final String state=getRunState();
 		if((state!=null)&&(state.length()>0))
 			str.append("; state: ").append(state);
+		for(Class<?> c = getClass(); c != null && c != StdBehavior.class; c = c.getSuperclass())
+		{
+			for(final java.lang.reflect.Field f : c.getDeclaredFields())
+			{
+				if(java.lang.reflect.Modifier.isStatic(f.getModifiers()) || f.isSynthetic()) continue;
+				try
+				{
+					f.setAccessible(true);
+					final Object value = f.get(this);
+					final String shown = debugValue(value);
+					if(shown != null) str.append("; ").append(f.getName()).append("=").append(CMStrings.limit(shown, 160));
+				}
+				catch(final Exception e) { /* state may change while a collection is inspected */ }
+			}
+		}
 		return str.toString();
+	}
+
+	private static String debugValue(final Object value)
+	{
+		if(value == null) return "none";
+		if(value instanceof Number || value instanceof Boolean || value instanceof Enum || value instanceof String)
+			return value.toString();
+		if(value instanceof Environmental)
+			return ((Environmental)value).Name() + " (" + ((Environmental)value).ID() + ")";
+		if(value instanceof Collection)
+			{
+				final Collection<?> entries=(Collection<?>)value;
+				final List<String> shown=new ArrayList<String>();
+				int count=0;for(final Object entry:entries)
+				{
+					if(count++>=3)break;
+					if(entry instanceof Environmental)shown.add(((Environmental)entry).Name());
+					else if(entry instanceof String || entry instanceof Number || entry instanceof Enum)shown.add(entry.toString());
+				}
+				return entries.size()+" entries"+(shown.isEmpty()?"":": "+String.join(", ",shown));
+			}
+		if(value instanceof Map)
+			return ((Map<?,?>)value).size() + " entries";
+		if(value.getClass().isArray()) return java.lang.reflect.Array.getLength(value) + " entries";
+		return null;
 	}
 
 	/**

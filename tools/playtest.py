@@ -141,14 +141,37 @@ def segments(transcript):
 
 
 def run(path):
+    javascript = path.endswith('.js')
     play = Play(path)
-    play.read()
+    if not javascript:
+        play.read()
+    else:
+        play.builder = True
+        play.lines = [('cmd', 'jrun /resources/_worldtest/test.js', 1),
+                      ('expect', 'WORLDTEST SCRIPT PASS', 1),
+                      ('reject', 'WORLDTEST SCRIPT FAIL', 1)]
     script, checks = play.script()
     work = tempfile.mkdtemp(prefix='sudplaytest.')
     try:
         os.makedirs(os.path.join(work, 'db'))
         shutil.copy(os.path.join(GAME, 'resources', 'fakedb', 'fakedb.schema'), os.path.join(work, 'db'))
         shutil.copytree(os.environ.get('WORLD', os.path.join(GAME, 'world')), os.path.join(work, 'world'))
+        if javascript:
+            testdir = os.path.join(work, 'world', 'resources', '_worldtest')
+            os.makedirs(testdir, exist_ok=True)
+            prelude = """var __testFailures = [], __testCount = 0;
+function assert(ok, message) { if (!ok) throw new Error(message || 'assertion failed'); }
+assert.equal = function(a,b) { assert(a === b, 'expected ' + b + ', got ' + a); };
+function test(name, fn) { __testCount++; try { fn(); } catch(e) { __testFailures.push(name + ': ' + e); } }
+try {
+"""
+            epilogue = """
+} catch(e) { __testFailures.push('script: ' + e); }
+if (__testFailures.length) mob().tell('WORLDTEST SCRIPT FAIL: ' + __testFailures.join(' | '));
+else mob().tell('WORLDTEST SCRIPT PASS (' + __testCount + ' tests)');
+"""
+            with open(os.path.join(testdir, 'test.js'), 'w', encoding='utf-8') as target:
+                target.write(prelude + open(path, encoding='utf-8').read() + epilogue)
         sfile = os.path.join(work, 'play.script')
         with open(sfile, 'w', encoding='utf-8') as f:
             f.write('\n'.join(script) + '\n')
@@ -169,6 +192,10 @@ def run(path):
             f.write(transcript)
         segs = segments(transcript)
         fails = []
+        if res.returncode != 0:
+            fails.append('game process exited with status %d' % res.returncode)
+        if 'JS error in JRUN' in transcript or 'JavaScript error' in transcript:
+            fails.append('JavaScript failed; see transcript')
         for mark, kind, text, n in checks:
             seg = segs.get(mark)
             if seg is None:
@@ -197,10 +224,17 @@ def run(path):
 
 def main():
     files = sys.argv[1:]
+    expanded = []
+    for path in files:
+        if os.path.isdir(path):
+            expanded.extend(os.path.join(path, f) for f in sorted(os.listdir(path)) if f.endswith(('.play', '.test', '.js')))
+        else:
+            expanded.append(path)
+    files = expanded
     if not files:
         tests = os.path.join(GAME, 'world', 'tests')
         if os.path.isdir(tests):
-            files = sorted(os.path.join(tests, f) for f in os.listdir(tests) if f.endswith('.play'))
+            files = sorted(os.path.join(tests, f) for f in os.listdir(tests) if f.endswith(('.play', '.test', '.js')))
     if not files:
         print('No playtest files (world/tests/*.play).')
         return 0

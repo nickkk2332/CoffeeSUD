@@ -100,8 +100,8 @@ public class Thief_Lore extends ThiefSkill
 					levelDiff*=5;
 					final boolean success=proficiencyCheck(mob,-levelDiff,auto);
 					commands.clear();
-					if(success && ((Item)givenTarget).secretIdentity().length()>0)
-						commands.add(((Item)givenTarget).secretIdentity());
+					if(success && ItemIdentity.describe((Item)givenTarget,mob).length()>0)
+						commands.add(ItemIdentity.describe((Item)givenTarget,mob));
 					else
 						commands.add(L("You discover no ancient lore about @x1.",givenTarget.name()));
 					return true;
@@ -133,7 +133,7 @@ public class Thief_Lore extends ThiefSkill
 			if(mob.location().okMessage(mob,msg))
 			{
 				mob.location().send(mob,msg);
-				final String identity=target.secretIdentity();
+				final String identity=ItemIdentity.describe(target,mob);
 				if(report)
 					CMLib.commands().postSay(mob, L("@x1 idenfies as @x2",target.name(),identity));
 				else

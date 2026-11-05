@@ -18,6 +18,7 @@ See guides/RandomAreas.html for information about documents of this type.
 
 -->
 <!--  include file for common dungeon blurbs -->
+<STRING load="/resources/randareas/inc_adjectives.xml" />
 <STRING id="dungeon_random_blurbs" select="all">
 	<STRING select="any-1">
 		<STRING>The $adj_any walls are nearly pitch black.</STRING>

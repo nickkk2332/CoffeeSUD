@@ -75,6 +75,30 @@ public class CommonSkill extends StdAbility
 	protected boolean		helping			= false;
 	protected boolean		bundling		= false;
 	public Ability			helpingAbility	= null;
+	private transient Map<String,String[]> activityLinks = new HashMap<String,String[]>();
+
+	@Override protected void cloneFix(final Ability from)
+	{
+		super.cloneFix(from);
+		activityLinks=new HashMap<String,String[]>(((CommonSkill)from).activityLinks);
+	}
+
+	/** Rebinds links after all participants and effects have been restored. */
+	public void resolveActivityLinks()
+	{
+		for(final Pair<String, java.lang.reflect.Field> p : activityFields())
+		{
+			final String[] link = activityLinks.get(p.first);
+			if(link == null) continue;
+			final Environmental owner = InstanceIds.find(link[0]);
+			final Ability effect = owner instanceof Physical ? ((Physical)owner).fetchEffect(link[1]) : null;
+			if(effect != null)
+			{
+				try { p.second.set(this, effect); activityLinks.remove(p.first); }
+				catch(final IllegalAccessException e) { Log.errOut(ID(), e); }
+			}
+		}
+	}
 	protected volatile int	tickUp			= 0;
 	protected String		verb			= DEFAULT_WORKING_WORD;
 	protected String		playSound		= null;
@@ -229,6 +253,7 @@ public class CommonSkill extends StdAbility
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
+		resolveActivityLinks();
 		if((affected instanceof MOB)
 		&&(tickID==Tickable.TICKID_MOB))
 		{
@@ -1092,13 +1117,29 @@ public class CommonSkill extends StdAbility
 				continue;
 			}
 			if(val == null)
+			{
+				final String[] link = activityLinks.get(p.first);
+				if(link != null)
+					str.append("<F N=\"").append(p.first).append("\" T=\"ABILITY\" OWNER=\"")
+						.append(xml.parseOutAngleBracketsAndQuotes(link[0])).append("\">").append(link[1]).append("</F>");
 				continue;
+			}
 			final String head = "<F N=\"" + p.first + "\"";
 			if((val instanceof String) || (val instanceof Number) || (val instanceof Boolean) || (val instanceof Character))
 				str.append(head).append(">").append(xml.parseOutAngleBrackets(val.toString())).append("</F>");
 			else
 			if(val instanceof Enum)
 				str.append(head).append(">").append(((Enum<?>)val).name()).append("</F>");
+			else
+			if(val instanceof Ability)
+			{
+				final Ability A = (Ability)val;
+				if(A.affecting() != null)
+					str.append(head).append(" T=\"ABILITY\" OWNER=\"")
+						.append(xml.parseOutAngleBracketsAndQuotes(InstanceIds.reference(A.affecting())))
+						.append("\">").append(A.ID()).append("</F>");
+				else skipped.add(p.first);
+			}
 			else
 			if(val instanceof Room)
 			{
@@ -1174,6 +1215,7 @@ public class CommonSkill extends StdAbility
 	 */
 	protected void putActivityXML(final String xml)
 	{
+		activityLinks.clear();
 		final List<XMLLibrary.XMLTag> tags = CMLib.xml().parseAllXML(xml);
 		if(tags == null)
 			return;
@@ -1195,6 +1237,12 @@ public class CommonSkill extends StdAbility
 			Object val = null;
 			try
 			{
+				if("ABILITY".equals(kind))
+				{
+					activityLinks.put(p.first, new String[] { CMLib.xml().restoreAngleBrackets(tag.getParmValue("OWNER")), text });
+					continue;
+				}
+				else
 				if("ROOM".equals(kind))
 					val = CMLib.map().getRoom(text);
 				else

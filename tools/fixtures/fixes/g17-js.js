@@ -14,6 +14,7 @@ try {
 	CM.core.JSScope.reload();
 	write(T, '<AREADATA>'
 		+ '<STRING id="fixg17_a">${js:\'a\'+\'b\'+(1+2)} and ${js:[1,2,3].map(function(x){return x*2;}).join(\'-\')}</STRING>'
+		+ '<STRING id="fixg17_percent">${js:100%20} ${js:99%11} ${js:100%2+1} 50%AB</STRING>'
 		+ '<STRING id="fixg17_req">${js:require(\'fixg17names\').made()} ${js:require(\'fixg17names\').dwarven(2)}</STRING>'
 		+ '<STRING id="fixg17_def">${js:defined.fixlevel*2} ${js:defined.FixName} ${js:typeof defined.fixnothing}</STRING>'
 		+ '<STRING id="fixg17_set">$fixset ${js:defined.fixset=\'zz\',\'x\'}</STRING>'
@@ -31,6 +32,7 @@ try {
 		+ '<MOB id="fixg17_mob" class="GenMob" level="1" name="${js:\'a fixg17 \'+obj.ID().toLowerCase()}" display="A fixg17 mob is here." />'
 		+ '</AREADATA>');
 	check("text", str("fixg17_a") == "ab3 and 2-4-6", str("fixg17_a"));
+	check("percent expressions", str("fixg17_percent") == "0 0 1 50%AB", str("fixg17_percent"));
 	var r = str("fixg17_req");
 	check("require", r == "1 Thrgrum", r); // filled from the last: a run's scope keeps the library's state
 	var d = str("fixg17_def", { FIXLEVEL: 7, FIXNAME: "Bob" });

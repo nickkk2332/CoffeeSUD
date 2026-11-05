@@ -40,6 +40,10 @@ public class Prop_WearResister extends Prop_HaveResister
 		return "Prop_WearResister";
 	}
 
+	protected String legacySet="";
+	@Override public String getStat(final String code) { return code.equalsIgnoreCase("ALLSET") ? legacySet : super.getStat(code); }
+	@Override public String text() { return super.text()+(legacySet.isEmpty()?"":" ALLSET=\""+legacySet+"\""); }
+
 	@Override
 	public String name()
 	{
@@ -102,7 +106,8 @@ public class Prop_WearResister extends Prop_HaveResister
 	@Override
 	public void setMiscText(final String newText)
 	{
-		super.setMiscText(newText);
+		legacySet=ItemSets.legacySpec(newText);
+		super.setMiscText(ItemSets.withoutLegacy(newText));
 		layered=CMParms.parseSemicolons(newText.toUpperCase(),true).indexOf("LAYERED")>=0;
 	}
 
@@ -130,6 +135,7 @@ public class Prop_WearResister extends Prop_HaveResister
 	@Override
 	public boolean canResist(final Environmental E)
 	{
+		if(affected instanceof Item && !ItemSets.legacyEnabled((Item)affected,legacySet)) return false;
 		if(!super.canResist(E))
 			return false;
 		if(disabled&&checked)

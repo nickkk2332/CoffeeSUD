@@ -24,4 +24,7 @@ var loaded = CM.core.CMClass.loadClass(CM.core.CMClass.CMObjectType.MOB, "/resou
 var lem = CMClass.getMOB("Lemming");
 check("js-class", loaded && lem != null, "Lemming.js loaded=" + loaded + " made=" + lem);
 if (lem != null) lem.destroy();
+var cx = Packages.org.mozilla.javascript.Context.getCurrentContext();
+var scope = cx.initStandardObjects();
+check("console template", CM.core.JSConsole.run(cx, scope, M, null, '`n=${1+2}`') == "n=3", "console changed template quotes");
 done();

@@ -137,8 +137,8 @@ public final class GenSeed
 	}
 
 	/**
-	 * G1: runs something with the game's shared rolls, outside this thread's
-	 * seeded run, so that a one-time setup it does (a crafting skill's worker
+	 * G1: runs one-time setup on its own fixed stream, outside this thread's
+	 * generation stream, so that a one-time setup it does (a crafting skill's worker
 	 * put in a random room) does not use up the run's rolls the first time
 	 * only, which made the first build of a seed differ from the next.
 	 * @param <T> what it gives
@@ -150,7 +150,7 @@ public final class GenSeed
 		final Random r = CMath.getRand();
 		if(!(r instanceof GameRandom))
 			return what.get();
-		final long[] cur = ((GameRandom)r).pauseOwn();
+		final long[] cur = ((GameRandom)r).beginOwn(0x53455455504CL);
 		try
 		{
 			return what.get();
@@ -172,7 +172,7 @@ public final class GenSeed
 		final Deque<Object[]> runs = ownRuns.get();
 		if((r instanceof GameRandom) && (runs.size() > 0))
 			((GameRandom)r).endOwn((long[])runs.pop()[0]);
-		if(before != null)
+		if(before != null && !(r instanceof GameRandom))
 			CMath.setRandState(before.longValue());
 	}
 
@@ -181,7 +181,7 @@ public final class GenSeed
 	 */
 	public static boolean seeded()
 	{
-		return seededRuns > 0;
+		return (CMath.getRand() instanceof GameRandom) ? !ownRuns.get().isEmpty() : seededRuns > 0;
 	}
 
 	/**

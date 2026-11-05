@@ -201,6 +201,44 @@ public class LawCmd extends StdCommand
 		}
 		final String verb = commands.get(1).toUpperCase();
 		final String rest = CMParms.combine(commands, 2);
+		if(verb.equals("TEST"))
+		{
+			if(commands.size() < 3) { mob.tell(L("LAW TEST [CRIME] (AS [CHARACTER]) (AGAINST [VICTIM])")); return false; }
+			MOB actor = mob, victim = null;
+			for(int i=3; i<commands.size(); i+=2)
+			{
+				if(i+1>=commands.size()) { mob.tell(L("AS and AGAINST need a name.")); return false; }
+				final MOB person=findPerson(mob,commands.get(i+1));
+				if(person==null) { mob.tell(L("No person: @x1",commands.get(i+1))); return false; }
+				if(commands.get(i).equalsIgnoreCase("AS")) actor=person;
+				else if(commands.get(i).equalsIgnoreCase("AGAINST")) victim=person;
+				else { mob.tell(L("Use AS or AGAINST.")); return false; }
+			}
+			if(B instanceof com.planet_ink.coffee_mud.Behaviors.Arrest)
+				mob.tell(((com.planet_ink.coffee_mud.Behaviors.Arrest)B).testCrime(A,actor,victim,commands.get(2)));
+			else mob.tell(L("This legal behavior does not provide a diagnostic crime test."));
+			return false;
+		}
+		if(verb.equals("SET"))
+		{
+			final int eq=rest.indexOf('=');
+			if(eq<1) { mob.tell(L("LAW SET KEY=VALUE (LAW CRIMES lists crime keys).")); return false; }
+			final String key=rest.substring(0,eq).trim().toUpperCase(), value=rest.substring(eq+1);
+			if(!key.matches("[A-Z][A-Z0-9_]*") || value.indexOf('~')>=0 || value.indexOf('\n')>=0)
+			{ mob.tell(L("Use a law key and one value without line separators.")); return false; }
+			if(!B.getParms().trim().toLowerCase().startsWith("custom"))
+			{
+				CMLib.database().DBReCreatePlayerData(A.Name(),"ARREST",A.Name()+"/ARREST",L.rawLawString());
+				if(SaveGame.isBuilderMode()) com.planet_ink.coffee_mud.core.save.WorldFiles.writeLaw(A.Name(),L.rawLawString());
+				B.setParms("custom");
+			}
+			final Law editable=B.legalInfo(A);
+			editable.setInternalStr(key,value);
+			B.updateLaw(A);
+			if(SaveGame.isBuilderMode()) CMLib.database().DBUpdateArea(A.Name(),A);
+			mob.tell(L("@x1=@x2 is now part of @x3's custom law.",key,value,A.Name()));
+			return false;
+		}
 		if(verb.equals("CRIMES"))
 		{
 			final StringBuilder str = new StringBuilder("Crimes of " + A.Name() + ":");
@@ -283,7 +321,7 @@ public class LawCmd extends StdCommand
 			mob.tell(L("@x1 warrants against @x2 taken away.", "" + n, M.Name()));
 			return false;
 		}
-		mob.tell(L("LAW (CRIMES ([TEXT])/WARRANTS ([NAME])/PARDON [NAME] ([CRIME]/ALL)/ACCUSE [NAME] [CRIME])"));
+		mob.tell(L("LAW (CRIMES ([TEXT])/WARRANTS ([NAME])/PARDON [NAME] ([CRIME]/ALL)/ACCUSE [NAME] [CRIME]/TEST [CRIME] (AS [NAME]) (AGAINST [NAME])/SET KEY=VALUE)"));
 		return false;
 	}
 

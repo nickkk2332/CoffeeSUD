@@ -167,6 +167,15 @@ public class Prop_Switch extends Property implements VerbTaker
 			super.setStat(code, val);
 	}
 
+	public void reset(final MOB actor)
+	{
+		CMLib.threads().deleteTick(this, Tickable.TICKID_PROPERTY_SPECIAL);
+		ticking=false;
+		resetDown=0;
+		moved=false;
+		moveTo(actor,start,"reset");
+	}
+
 	protected String parm(final String key, final String st)
 	{
 		return CMParms.getParmStr(parms, key + "_" + st, "");

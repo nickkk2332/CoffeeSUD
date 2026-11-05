@@ -64,7 +64,7 @@ public class Prop_ItemSet extends Property
 	@Override
 	public String accountForYourself()
 	{
-		return "Part of " + setName();
+		return progress((affected instanceof Item && ((Item)affected).owner() instanceof MOB) ? (MOB)((Item)affected).owner() : null);
 	}
 
 	protected String						setId		= "";
@@ -279,6 +279,22 @@ public class Prop_ItemSet extends Property
 		apply(M, pieces(M, setId));
 	}
 
+	public String progress(final MOB M)
+	{
+		final List<Item> counted = pieces(M, setId);
+		final Map<String, String> d = def(counted);
+		final TreeMap<Integer, String> tiers = tiers(d);
+		final String count = CMParms.getParmStr(d, "COUNT", "WORN").toUpperCase();
+		int total = CMParms.getParmInt(d, "PIECES", 0);
+		if((total <= 0) && (!tiers.isEmpty()))
+			total = tiers.lastKey().intValue();
+		final StringBuilder b = new StringBuilder("Set: ").append(CMParms.getParmStr(d, "NAME", setName()))
+			.append(", ").append(counted.size()).append((total > 0) ? ("/" + total) : "").append(count.equals("HELD") ? " held." : " worn.");
+		for(final Integer n : tiers.keySet())
+			b.append("\n\r  ").append(n).append(" pieces: ").append((counted.size() >= n.intValue()) ? "active" : "inactive");
+		return b.toString();
+	}
+
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
@@ -287,17 +303,7 @@ public class Prop_ItemSet extends Property
 		&& ((msg.targetMinor() == CMMsg.TYP_LOOK) || (msg.targetMinor() == CMMsg.TYP_EXAMINE)))
 		{
 			final MOB M = msg.source();
-			final List<Item> counted = pieces(M, setId);
-			final Map<String, String> d = def(counted);
-			final TreeMap<Integer, String> tiers = tiers(d);
-			final String count = CMParms.getParmStr(d, "COUNT", "WORN").toUpperCase();
-			int total = CMParms.getParmInt(d, "PIECES", 0);
-			if((total <= 0) && (!tiers.isEmpty()))
-				total = tiers.lastKey().intValue();
-			final StringBuilder b = new StringBuilder("Set: ").append(CMParms.getParmStr(d, "NAME", setName()))
-				.append(", ").append(counted.size()).append((total > 0) ? ("/" + total) : "").append(count.equals("HELD") ? " held." : " worn.");
-			for(final Integer n : tiers.keySet())
-				b.append("\n\r  ").append(n).append(" pieces: ").append((counted.size() >= n.intValue()) ? "active" : "inactive");
+			final StringBuilder b = new StringBuilder(progress(M));
 			msg.addTrailerMsg(CMClass.getMsg(M, affected, null, CMMsg.MSG_OK_VISUAL, b.toString(), CMMsg.NO_EFFECT, null, CMMsg.NO_EFFECT, null));
 		}
 	}

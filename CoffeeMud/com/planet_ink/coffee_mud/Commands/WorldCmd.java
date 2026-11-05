@@ -982,6 +982,11 @@ public class WorldCmd extends StdCommand
 			mob.tell(str.toString());
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("TEST"))
+		{
+			mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2)));
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("CHECK"))
 		{
 			if((!SaveGame.isBuilderMode()) && (!SaveGame.isDevMode()) && (!CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS)))

@@ -1,6 +1,7 @@
 package com.planet_ink.coffee_mud.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,6 +80,7 @@ public final class ScriptCheck
 		final Map<String, String>			files;
 		final Set<String>					functions	= new HashSet<String>();
 		final List<Src>						calls		= new ArrayList<Src>();
+		final Set<String> assigned = new HashSet<String>();
 
 		Run(final Map<String, String> files)
 		{
@@ -299,17 +301,55 @@ public final class ScriptCheck
 		return (x < 0) ? "" : s.substring(x + 1).trim();
 	}
 
+    private static void checkFunctionArguments(final Run run,final Stmt at,final String text,final Matcher call,final boolean condition)
+    {
+        final String name=call.group(1).toUpperCase();
+        int end=call.end(),depth=1;char quote=0;
+        for(;end<text.length();end++)
+        {
+            final char c=text.charAt(end);
+            if(quote!=0){if(c==quote&&(end==0||text.charAt(end-1)!='\\'))quote=0;continue;}
+            if(c=='\''||c=='"'||c=='`'){quote=c;continue;}
+            if(c=='(')depth++;else if(c==')'&&--depth==0)break;
+        }
+        if(end>=text.length())return;
+        final String args=text.substring(call.end(),end);
+        int minimum=-1;
+        if(Arrays.asList("VAR","STAT","GSTAT","QVAR").contains(name))minimum=condition?3:2;
+        else if(Arrays.asList("HAS","WORN","ISNAME","INCONTAINER","HASTATTOO","HASTAG","ISBEHAVE","AFFECTED").contains(name))minimum=2;
+        else if(Arrays.asList("ISNPC","ISPC","ISGOOD","ISEVIL","ISNEUTRAL","RAND","MATH","LEVEL","INROOM","INAREA","ISALIVE","ISABLE").contains(name))minimum=1;
+        if(minimum>=0 && CMParms.parse(args).size()<minimum)
+            run.problem(at.at.file,at.at.line,name+"() needs at least "+minimum+" arguments");
+    }
+
+    private static String outsideQuotes(final String text)
+    {
+        final StringBuilder masked=new StringBuilder(text);char quote=0;
+        for(int i=0;i<text.length();i++)
+        {
+            final char c=text.charAt(i);
+            if(quote!=0)
+            {
+                masked.setCharAt(i,' ');
+                if(c==quote&&(i==0||text.charAt(i-1)!='\\'))quote=0;
+            }
+            else if(c=='\''||c=='"'||c=='`'){quote=c;masked.setCharAt(i,' ');}
+        }
+        return masked.toString();
+    }
+
 	/** checks the functions named in a condition or a $%FUNC()% value */
 	private static void checkFunctions(final Run run, final Stmt S, final String text, final boolean condition)
 	{
 		if(condition)
 		{
-			final Matcher m = CONDITION_FUNC.matcher(text.replaceAll("'[^']*'|\"[^\"]*\"|`[^`]*`", "''"));
+			final Matcher m = CONDITION_FUNC.matcher(outsideQuotes(text));
 			while(m.find())
 			{
 				final String name = m.group(1).toUpperCase();
 				if((!FUNCS.contains(name)) && (!name.equals("AND")) && (!name.equals("OR")) && (!name.equals("NOT")))
 					run.problem(S.at.file, S.at.line, "unknown function " + name + "()");
+				else if(FUNCS.contains(name))checkFunctionArguments(run,S,text,m,true);
 			}
 		}
 		final Matcher v = VALUE_FUNC.matcher(text);
@@ -318,8 +358,37 @@ public final class ScriptCheck
 			final String name = v.group(1).toUpperCase();
 			if(!FUNCS.contains(name))
 				run.problem(S.at.file, S.at.line, "unknown function $%" + name + "()%");
+			else checkFunctionArguments(run,S,text,v,false);
 		}
 	}
+
+    private static String variableKey(final String host, final String name)
+    { return host.trim().toUpperCase()+" "+name.trim().toUpperCase(); }
+
+    private static void collectAssignments(final Run run, final List<List<Stmt>> units)
+    {
+        for(final List<Stmt> unit:units) for(final Stmt statement:unit)
+        {
+            if(statement.script) continue;
+            final List<String> words=CMParms.parse(statement.text);
+            if(words.size()>=3 && Arrays.asList("MPSETVAR","MPLOADVAR","MPPROMPT","MPCONFIRM","MPCHOOSE","MPSTATE").contains(words.get(0).toUpperCase()))
+                run.assigned.add(variableKey(words.get(1),words.get(2)));
+        }
+    }
+
+    private static void checkVariables(final Run run, final Stmt statement)
+    {
+        final Matcher reads=Pattern.compile("\\$<([^>]+)>").matcher(statement.text);
+        final Set<String> reported=new HashSet<String>();
+        while(reads.find())
+        {
+            final List<String> words=CMParms.parse(reads.group(1));
+            if(words.size()!=2 || words.get(1).contains("$") || words.get(1).contains(".")) continue;
+            final String key=variableKey(words.get(0),words.get(1));
+            if(!run.assigned.contains(key) && reported.add(key))
+                run.problem(statement.at.file,statement.at.line,"variable "+key+" read without a known assignment (external state may supply it)");
+        }
+    }
 
 	private static boolean balanced(final String s)
 	{
@@ -411,7 +480,10 @@ public final class ScriptCheck
 			}
 			if(METHODS.contains(cmd) || cmd.equals("ELSE"))
 			{
-				if(cmd.equals("IF"))
+				final String signature = ScriptSignatures.error(cmd,args);
+				if(signature != null) run.problem(S.at.file,S.at.line,signature);
+				checkVariables(run,S);
+				if(cmd.equals("IF") || cmd.equals("WHILE"))
 				{
 					blocks.push(S);
 					checkFunctions(run, S, args, true);
@@ -425,7 +497,7 @@ public final class ScriptCheck
 					checkFunctions(run, S, args, false);
 				}
 				else
-				if(cmd.equals("ELSE") || cmd.equals("ENDIF"))
+				if(cmd.equals("ELSE") || cmd.equals("ELSEIF") || cmd.equals("ENDIF"))
 				{
 					if(blocks.isEmpty() || (!firstWord(blocks.peek().text).equals("IF")))
 						run.problem(S.at.file, S.at.line, cmd + " without IF");
@@ -441,6 +513,12 @@ public final class ScriptCheck
 					else
 					if(cmd.equals("ENDSWITCH"))
 						blocks.pop();
+				}
+				else
+				if(cmd.equals("ENDWHILE"))
+				{
+					if(blocks.isEmpty() || !firstWord(blocks.peek().text).equals("WHILE"))run.problem(S.at.file,S.at.line,"ENDWHILE without WHILE");
+					else blocks.pop();
 				}
 				else
 				if(cmd.equals("NEXT"))
@@ -493,7 +571,7 @@ public final class ScriptCheck
 		}
 		for(final Stmt open : blocks)
 			run.problem(open.at.file, open.at.line, firstWord(open.text) + " without " + (firstWord(open.text).equals("IF") ? "ENDIF"
-				: firstWord(open.text).equals("SWITCH") ? "ENDSWITCH" : "NEXT"));
+				: firstWord(open.text).equals("WHILE") ? "ENDWHILE" : firstWord(open.text).equals("SWITCH") ? "ENDSWITCH" : "NEXT"));
 	}
 
 	/** the n-th word of the arguments, quotes kept together */
@@ -535,7 +613,9 @@ public final class ScriptCheck
 		if(t.trim().toUpperCase().startsWith("STATIC="))
 			t = t.trim().substring(7);
 		expand(run, name, t, 0, lines);
-		for(final List<Stmt> unit : split(run, lines))
+		final List<List<Stmt>> units = split(run, lines);
+		collectAssignments(run,units);
+		for(final List<Stmt> unit : units)
 			checkUnit(run, unit);
 		for(final Src call : run.calls)
 		{

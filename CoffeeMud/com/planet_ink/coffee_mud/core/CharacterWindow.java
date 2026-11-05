@@ -367,6 +367,12 @@ public final class CharacterWindow
 	 * Returns whether the window has been closed.
 	 * @return true if it has
 	 */
+	/** Makes a utility window display-only. */
+	public void setInputEnabled(final boolean enabled)
+	{
+		SwingUtilities.invokeLater(() -> line.setEnabled(enabled));
+	}
+
 	public boolean isClosed()
 	{
 		return closed;

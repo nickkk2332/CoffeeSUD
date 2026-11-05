@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-05",
+  "runtime": "OpenJDK 21.0.5+11; Java 8 source target",
+  "runtime_java_sha256": "0954734b9282d4502f9e334f29a5586bb717e089b046bb3938bac5f470270265",
+  "inventory": {
+    "implemented": 388,
+    "partial": 1,
+    "deferred": 20
+  },
+  "results": {
+    "javascript": {
+      "fixtures": 332,
+      "passed_checks": 3475,
+      "failed_checks": 0,
+      "exit_code": 0,
+      "isolated_copy": true
+    },
+    "played": {
+      "passed_checks": 442,
+      "failed_checks": 0
+    },
+    "smoke": {
+      "passed_checks": 97,
+      "exit_code": 0
+    },
+    "engine": {
+      "passes": 47,
+      "known_baseline_failures": [
+        "Spaceangles",
+        "Spaceinterception",
+        "Spaceinterception2"
+      ],
+      "matches_baseline": true
+    },
+    "additional_gui": {
+      "passed_checks": 4,
+      "virtual_display": true
+    },
+    "cold_generation": {
+      "independent_process_hashes_match": true,
+      "seeds": [
+        370170,
+        13,
+        14,
+        91827
+      ]
+    },
+    "standalone_runner": {
+      "play_passes": true,
+      "test_passes": true,
+      "javascript_passes": true,
+      "javascript_failure_exits_nonzero": true
+    }
+  },
+  "aggregate_run": {
+    "command": "FIXES_JOBS=2 ENGINE=1 xvfb-run -a tools/check.sh",
+    "exit_code": 1,
+    "note": "The initial aggregate completed played/smoke/engine checks but failed a new assertion that assumed a particular random damage roll. Message handlers also consume dice. The corrected test sets damage through CNCLMSG and checks the final blockage HP. The complete 332-fixture JavaScript sequence then passed on a byte-identical runtime source copy. No engine code changed after the aggregate build."
+  }
+}

@@ -477,6 +477,15 @@ public class StdExit implements Exit
 		else
 		switch(msg.targetMinor())
 		{
+		case CMMsg.TYP_WEAPONATTACK:
+		case CMMsg.TYP_DAMAGE:
+		{
+			final Ability blockage=fetchEffect("Prop_BlockedExit");
+			if(blockage instanceof com.planet_ink.coffee_mud.Abilities.Properties.Prop_BlockedExit
+			&& ((com.planet_ink.coffee_mud.Abilities.Properties.Prop_BlockedExit)blockage).blocks())
+				return true;
+			break;
+		}
 		case CMMsg.TYP_LOOK:
 		case CMMsg.TYP_EXAMINE:
 		case CMMsg.TYP_READ:

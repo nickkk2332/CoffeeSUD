@@ -577,3 +577,8 @@ A `WRAPS` field or an `X = Y` line format would only make this tidier.
 - There is no automatic reload when a file changes, which an optional `SCRIPTWATCH` could add.
 
 Otherwise document this in `AHELP` rather than build a new command.
+
+
+The [remaining implementation follow-up](remaining-implementation-fixes.md) records
+the completed authoring tools and integration fixes, current counts, verification
+and the one remaining native-Java timeout boundary.
