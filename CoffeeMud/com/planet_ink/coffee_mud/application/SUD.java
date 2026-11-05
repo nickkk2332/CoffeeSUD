@@ -133,6 +133,11 @@ public class SUD
 		if(gameName.length() == 0)
 			gameName = "CoffeeSUD";
 		SaveGame.configure(saveDir, builderMode);
+		if(!builderMode)
+		{
+			try { SaveSlots.acquire(saveDir); SaveSlots.recover(saveDir); }
+			catch(final java.io.IOException e) { System.out.println(e.getMessage()); System.exit(1); return; }
+		}
 		WorldFiles.configure(new File(settings.getProperty("WORLDDIR", "world").trim()));
 		final String dev = settings.getProperty("DEV", "").trim().toUpperCase();
 		if(dev.equals("1") || dev.startsWith("Y") || dev.startsWith("T") || dev.equals("ON"))
@@ -187,11 +192,18 @@ public class SUD
 					System.exit(1);
 				}
 				SaveGame.setNextBoot(slot.name);
+				try { SaveSlots.validateFormat(saveDir, slot.name); }
+				catch(final java.io.IOException e) { System.out.println(e.getMessage()); System.exit(1); return; }
 				SaveGame.setNextFresh(settings.getProperty("FRESH", ""));
 			}
 			else
 			{
 				final String chosen = chooseSave(saveDir);
+				if(chosen != null)
+				{
+					try { SaveSlots.validateFormat(saveDir, chosen); }
+					catch(final java.io.IOException e) { System.out.println(e.getMessage()); System.exit(1); return; }
+				}
 				SaveGame.setNextBoot(chosen);
 				if(chosen == null)
 					showPrologue();
@@ -208,9 +220,8 @@ public class SUD
 			fullArgs.add(e.getKey() + "=" + e.getValue());
 		fullArgs.addAll(Arrays.asList(args));
 		System.out.println("Loading the world...");
-		MUD.main(fullArgs.toArray(new String[fullArgs.size()]));
-		if(!builderMode)
-			SaveSlots.deleteWorkingDatabases(saveDir);
+		try { MUD.main(fullArgs.toArray(new String[fullArgs.size()])); }
+		finally { if(!builderMode) SaveSlots.release(saveDir); }
 		System.exit(checkOnly ? WorldCheck.exitCode() : 0);
 	}
 

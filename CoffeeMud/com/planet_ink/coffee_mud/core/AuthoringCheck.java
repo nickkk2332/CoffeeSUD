@@ -157,9 +157,16 @@ public final class AuthoringCheck
     {if(id.contains("Language")||id.equals("Prop_Monolingual")||id.equals("Prop_LocalLists")||id.equals("Prop_WeaponMessages"))return "VOCAB";if(id.equals("Prop_Lore"))return "LORE";if(id.equals("Prop_Journey")||id.equals("Prop_Waypoint")||id.equals("Prop_Port")||id.equals("Prop_Road")||id.equals("Prop_TravelTime")||id.equals("Prop_HelmRestrict"))return "ROUTES";return "TEMPLATES";}
     private static void route(final List<WorldCheck.Finding> out,final String where,final String xml)
     {
-        final Matcher stops=Pattern.compile("(?is)<STOP(\\d+)>\\s*([^<]+)\\s*</STOP\\1>").matcher(xml);int count=0;
-        while(stops.find()){count++;final String id=stops.group(2).trim();if(CMLib.map().getRoom(id)==null)add(out,"ROUTES",where+":"+lineOf(xml,stops.start()),"no route stop room "+id);}
-        if(count<2)add(out,"ROUTES",where+":1","route needs at least two STOPn rooms");
+        final Matcher blocks=Pattern.compile("(?is)<STOPS\\s*>(.*?)</STOPS\\s*>").matcher(xml);int count=0;
+        while(blocks.find())
+        {
+            count++;
+            final String source=where+":"+lineOf(xml,blocks.start());
+            final RouteStops stops=RouteStops.parse(blocks.group(1));
+            for(final String error:stops.errors)add(out,"ROUTES",source,error);
+            for(final String id:stops.rooms)if(CMLib.map().getRoom(id)==null)add(out,"ROUTES",source,"no route stop room "+id);
+        }
+        if(count==0)add(out,"ROUTES",where+":1","route needs a STOPS block");
     }
     public static List<WorldCheck.Finding> run(final String part,final Area only)
     {
@@ -195,10 +202,15 @@ public final class AuthoringCheck
                 }
                 if(part.equals("IDS")&&(!a.ID().equals("Prop_Waypoint")||r!=null))
                 {
-                    final String id=Scenery.option(a.text(),"ID","");if(id.isEmpty()||!AuthoringSchema.keys(a.ID()).contains("ALIASES"))continue;
+                    final List<String> records=a.ID().equals("Prop_Details")?Scenery.detailBodies(a.text()):Collections.singletonList(a.text());
+                    for(int record=0;record<records.size();record++)
+                    {
+                    final String id=Scenery.option(records.get(record),"ID","");if(id.isEmpty()||!AuthoringSchema.keys(a.ID()).contains("ALIASES"))continue;
                     final String network=a.ID().equals("Prop_Waypoint")?Waypoints.network(a).toUpperCase()+":":"";
-                    final String old=ids.put(a.ID()+":"+network+id.toUpperCase(),where);
-                    if(old!=null)out.add(new WorldCheck.Finding(a.ID().equals("Prop_Waypoint")?WorldCheck.Severity.ERROR:WorldCheck.Severity.WARNING,part,where+": duplicate "+a.ID()+" ID "+id+" at "+old+"; copied sources share saved state"));
+                    final String location=where+(a.ID().equals("Prop_Details")?" detail "+(record+1):"");
+                    final String old=ids.put(a.ID()+":"+network+id.toUpperCase(),location);
+                    if(old!=null)out.add(new WorldCheck.Finding(a.ID().equals("Prop_Waypoint")?WorldCheck.Severity.ERROR:WorldCheck.Severity.WARNING,part,location+": duplicate "+a.ID()+" ID "+id+" at "+old+"; copied sources share saved state"));
+                    }
                 }
                 if(part.equals("ROUTES")&&a.ID().equals("Prop_Waypoint")&&r!=null)
                 {

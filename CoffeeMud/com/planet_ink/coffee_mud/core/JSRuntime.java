@@ -44,7 +44,9 @@ import com.planet_ink.coffee_mud.core.save.SaveGame;
  * Rhino's global context factory, so it covers every Context.enter(): script
  * blocks, JRUN, JCONSOLE, quests and cron jobs.  JavaScript classes
  * (//extends) are compiled to Java bytecode, which instruction counting
- * cannot see, so they have no limit.  Scripts are ES6.  This class is loaded
+ * cannot see, so they have no instruction limit. Blocking Java calls also
+ * cannot be preempted safely on the game thread. Use cm.background for bounded
+ * work with JSON data and game-thread completion. Scripts are ES6. This class is loaded
  * once per process, so it survives the engine's restarts.
  */
 public final class JSRuntime

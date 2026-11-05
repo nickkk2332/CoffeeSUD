@@ -76,6 +76,7 @@ public class Prop_ItemSet extends Property
 
 	private static Map<String, Map<String, String>>	fileSets	= new HashMap<String, Map<String, String>>();
 	private static long								fileStamp	= -1;
+	public static synchronized void clearDefinitions() { fileStamp = -1; fileSets = new HashMap<String, Map<String, String>>(); }
 
 	@Override
 	public void setMiscText(final String newText)

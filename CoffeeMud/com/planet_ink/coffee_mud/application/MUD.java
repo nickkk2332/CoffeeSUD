@@ -1757,7 +1757,7 @@ public class MUD extends Thread implements MudHost
 		}
 		if ((page==null)||(!page.isLoaded()))
 		{
-			Log.instance().configureLogFile("mud",1);
+			Log.instance().configureLogFile(System.getProperty("sud.log.prefix","mud"),1);
 			for(final Log.Type logType : Log.Type.values())
 				Log.instance().configureLog(logType, "BOTH");
 			Log.errOut(Thread.currentThread().getName(),"ERROR: Unable to read ini file: '"+iniFile+"'.");
@@ -1770,7 +1770,7 @@ public class MUD extends Thread implements MudHost
 		if(bootSeed!=null)
 			CMath.seedRand(bootSeed.longValue());
 		Log.shareWith(MudHost.MAIN_HOST);
-		Log.instance().configureLogFile("mud",page.getInt("NUMLOGS"));
+		Log.instance().configureLogFile(System.getProperty("sud.log.prefix","mud"),page.getInt("NUMLOGS"));
 		for(final Log.Type logType : Log.Type.values())
 			Log.instance().configureLog(logType, page.getStr(logType.getLogCode()));
 

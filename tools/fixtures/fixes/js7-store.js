@@ -15,7 +15,7 @@ smith.setName("a fixjs7 smith");
 smith.setStartRoom(R);
 cm.store(smith).mood = "busy";
 var rid = s(CMLib.map().getExtendedRoomID(R));
-check("key-mob", s(cm.storeKey(smith)) == "mob:" + rid + "/a fixjs7 smith", s(cm.storeKey(smith)));
+check("key-mob", s(cm.storeKey(smith)) == "instance:" + CM.core.InstanceIds.id(smith), s(cm.storeKey(smith)));
 check("key-room", s(cm.storeKey(R)) == "room:" + rid && s(cm.storeKey("quest:fixjs7")) == "quest:fixjs7" && s(cm.storeKey(R.getArea())) == "area:" + R.getArea().Name(),
 	s(cm.storeKey(R)));
 check("stores", cm.stores().contains("world") && cm.stores().size() == 2, s(cm.stores()));

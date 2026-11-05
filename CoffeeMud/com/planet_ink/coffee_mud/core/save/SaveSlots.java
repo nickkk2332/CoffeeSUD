@@ -1,6 +1,9 @@
 package com.planet_ink.coffee_mud.core.save;
 
 import java.io.*;
+import java.nio.channels.*;
+import java.nio.file.*;
+import java.security.*;
 import java.util.*;
 
 /*
@@ -53,6 +56,71 @@ public final class SaveSlots
 	private static final String DB_DIR = "db";
 	private static final String TABLE_PREFIX = "fakedb.data.";
 	private static final String WORKING_PREFIX = ".play-";
+	private static final String COMPLETE_FILE = ".complete";
+	private static final Map<String, FileChannel> owners = new HashMap<String, FileChannel>();
+	private static final Set<String> activeWorking = new HashSet<String>();
+	static
+	{
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> closeAll(), "save-folder-locks"));
+	}
+
+	/** Own the save folder for the lifetime of this process, including its startup menu. */
+	public static synchronized void acquire(final File saveDir) throws IOException
+	{
+		final String key = saveDir.getCanonicalPath();
+		if(owners.containsKey(key))
+			return;
+		if(!saveDir.isDirectory() && !saveDir.mkdirs())
+			throw new IOException("Cannot make the save folder " + key);
+		final FileChannel channel = FileChannel.open(new File(saveDir, ".owner.lock").toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+		try
+		{
+			if(channel.tryLock() == null)
+				throw new IOException("Another game is using the save folder " + key + ". Close it or choose a different SAVEDIR.");
+			owners.put(key, channel);
+		}
+		catch(final IOException | OverlappingFileLockException e)
+		{
+			channel.close();
+			throw new IOException(e.getMessage(), e);
+		}
+	}
+
+	/** Called only after the database has closed, including an in-process restore. */
+	public static synchronized void releaseWorkingDatabase(final File work)
+	{
+		if(work == null)
+			return;
+		try { activeWorking.remove(work.getCanonicalPath()); }
+		catch(final IOException e) { return; }
+		deleteTree(work);
+	}
+
+	/** Release ownership after the game has closed its database. Never unlink the lock file. */
+	public static synchronized void release(final File saveDir)
+	{
+		try
+		{
+			final String key = saveDir.getCanonicalPath();
+			if(!owners.containsKey(key))
+				return;
+			for(final String path : new ArrayList<String>(activeWorking))
+				if(new File(path).getParentFile().getCanonicalPath().equals(key))
+					releaseWorkingDatabase(new File(path));
+			owners.remove(key).close();
+		}
+		catch(final IOException e)
+		{
+			// The OS also releases the advisory lock when the process exits.
+		}
+	}
+
+	private static synchronized void closeAll()
+	{
+		for(final FileChannel channel : owners.values())
+			try { channel.close(); } catch(final IOException e) { }
+		owners.clear();
+	}
 
 	private SaveSlots()
 	{
@@ -118,8 +186,9 @@ public final class SaveSlots
 	 * @param saveDir the folder that holds the saves
 	 * @return the saves
 	 */
-	public static List<Slot> list(final File saveDir)
+	public static synchronized List<Slot> list(final File saveDir)
 	{
+		try { acquire(saveDir); recover(saveDir); } catch(final IOException e) { /* read-only listing if another process owns it */ }
 		final List<Slot> slots = new ArrayList<Slot>();
 		final File[] dirs = saveDir.listFiles();
 		if(dirs == null)
@@ -221,7 +290,7 @@ public final class SaveSlots
 			header.load(in);
 			return header;
 		}
-		catch(final IOException e)
+		catch(final IOException | IllegalArgumentException e)
 		{
 			return null;
 		}
@@ -267,16 +336,19 @@ public final class SaveSlots
 	 * @return the working database's folder
 	 * @throws IOException if it cannot be made
 	 */
-	public static File prepareWorkingDatabase(final File contentDb, final File saveDir, final String slot, final String[] tables) throws IOException
+	public static synchronized File prepareWorkingDatabase(final File contentDb, final File saveDir, final String slot, final String[] tables) throws IOException
 	{
-		if(!saveDir.isDirectory() && !saveDir.mkdirs())
-			throw new IOException("Cannot make the save folder " + saveDir.getPath());
+		acquire(saveDir);
+		recover(saveDir);
+		if(slot != null)
+			validateFormat(saveDir, slot);
 		deleteWorkingDatabases(saveDir);
 		File work = new File(saveDir, WORKING_PREFIX + System.currentTimeMillis());
 		for(int i = 1; work.exists(); i++)
 			work = new File(saveDir, WORKING_PREFIX + System.currentTimeMillis() + "-" + i);
 		if(!work.mkdirs())
 			throw new IOException("Cannot make the working database " + work.getPath());
+		synchronized(SaveSlots.class) { activeWorking.add(work.getCanonicalPath()); }
 		final File schema = new File(contentDb, "fakedb.schema");
 		if(!schema.isFile())
 			throw new IOException("There is no fake database in " + contentDb.getPath());
@@ -307,15 +379,20 @@ public final class SaveSlots
 	 * be deleted.
 	 * @param saveDir the folder that holds the saves
 	 */
-	public static void deleteWorkingDatabases(final File saveDir)
+	public static synchronized void deleteWorkingDatabases(final File saveDir)
 	{
+		try { acquire(saveDir); } catch(final IOException e) { return; }
 		final File[] old = saveDir.listFiles();
 		if(old != null)
 		{
 			for(final File F : old)
 			{
-				if(F.isDirectory() && F.getName().startsWith(WORKING_PREFIX))
-					deleteTree(F);
+				try
+				{
+					if(F.isDirectory() && F.getName().startsWith(WORKING_PREFIX)
+					&& !activeWorking.contains(F.getCanonicalPath())) deleteTree(F);
+				}
+				catch(final IOException e) { /* An uncertain owner is never removed. */ }
 			}
 		}
 	}
@@ -332,11 +409,13 @@ public final class SaveSlots
 	 * @param files other files to write, by name
 	 * @throws IOException if it cannot be written
 	 */
-	public static void write(final File saveDir, final String slot, final File workingDb,
+	public static synchronized void write(final File saveDir, final String slot, final File workingDb,
 							 final Properties header, final Map<String, String> files) throws IOException
 	{
 		if(!isValidName(slot))
 			throw new IOException("Bad save name: " + slot);
+		acquire(saveDir);
+		recover(saveDir);
 		final File tmp = new File(saveDir, ".new-" + slot);
 		deleteTree(tmp);
 		final File tables = new File(tmp, DB_DIR);
@@ -350,26 +429,40 @@ public final class SaveSlots
 		}
 		for(final Map.Entry<String, String> e : files.entrySet())
 		{
-			try(OutputStream out = new FileOutputStream(new File(tmp, e.getKey())))
+			try(FileOutputStream out = new FileOutputStream(new File(tmp, e.getKey())))
 			{
 				out.write(e.getValue().getBytes("UTF-8"));
+				out.getFD().sync();
 			}
 		}
-		try(OutputStream out = new FileOutputStream(new File(tmp, HEADER_FILE)))
+		try(FileOutputStream out = new FileOutputStream(new File(tmp, HEADER_FILE)))
 		{
 			header.store(out, "CoffeeSUD saved game");
+			out.getFD().sync();
 		}
+		final Properties complete = new Properties();
+		for(final File file : snapshotFiles(tmp))
+			complete.setProperty(tmp.toPath().relativize(file.toPath()).toString().replace(File.separatorChar,'/'), digest(file));
+		try(FileOutputStream out = new FileOutputStream(new File(tmp, COMPLETE_FILE)))
+		{
+			complete.store(out, "Complete snapshot: SHA-256 per file");
+			out.getFD().sync();
+		}
+		syncDirectory(tables);
+		syncDirectory(tmp);
 		final File target = new File(saveDir, slot);
 		final File old = new File(saveDir, ".old-" + slot);
 		deleteTree(old);
 		if(target.exists() && !target.renameTo(old))
 			throw new IOException("Cannot replace the save " + target.getPath());
+		syncDirectory(saveDir);
 		if(!tmp.renameTo(target))
 		{
 			old.renameTo(target);
 			throw new IOException("Cannot write the save " + target.getPath());
 		}
-		deleteTree(old);
+		syncDirectory(saveDir);
+		// Keep the previous complete generation until the next successful write.
 	}
 
 	/**
@@ -378,24 +471,124 @@ public final class SaveSlots
 	 * @param slot the save's name
 	 * @return true if it is gone
 	 */
-	public static boolean delete(final File saveDir, final String slot)
+	public static synchronized boolean delete(final File saveDir, final String slot)
 	{
 		if(!isValidName(slot))
 			return false;
+		try { acquire(saveDir); recover(saveDir); } catch(final IOException e) { return false; }
 		final File F = new File(saveDir, slot);
 		deleteTree(F);
+		deleteTree(new File(saveDir, ".old-" + slot));
+		deleteTree(new File(saveDir, ".new-" + slot));
 		return !F.exists();
 	}
 
 	private static void copy(final File from, final File to) throws IOException
 	{
-		try(InputStream in = new FileInputStream(from); OutputStream out = new FileOutputStream(to))
+		try(InputStream in = new FileInputStream(from); FileOutputStream out = new FileOutputStream(to))
 		{
 			final byte[] buf = new byte[65536];
 			int n;
 			while((n = in.read(buf)) > 0)
 				out.write(buf, 0, n);
+			out.getFD().sync();
 		}
+	}
+
+	private static List<File> snapshotFiles(final File root)
+	{
+		final List<File> files = new ArrayList<File>();
+		final File[] children = root.listFiles();
+		if(children != null)
+			for(final File child : children)
+				if(child.isDirectory()) files.addAll(snapshotFiles(child));
+				else if(!child.getName().equals(COMPLETE_FILE)) files.add(child);
+		return files;
+	}
+
+	private static String digest(final File file) throws IOException
+	{
+		try
+		{
+			final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			try(InputStream in = new FileInputStream(file))
+			{
+				final byte[] bytes = new byte[65536]; int n;
+				while((n = in.read(bytes)) > 0) digest.update(bytes, 0, n);
+			}
+			final StringBuilder result = new StringBuilder();
+			for(final byte b : digest.digest()) result.append(String.format("%02x", b & 255));
+			return result.toString();
+		}
+		catch(final NoSuchAlgorithmException e) { throw new IOException(e); }
+	}
+
+	private static boolean complete(final File dir)
+	{
+		final Properties header = readHeader(dir);
+		if(header == null || header.isEmpty() || !new File(dir, DB_DIR).isDirectory() || !new File(dir, "world.xml").isFile())
+			return false;
+		final File marker = new File(dir, COMPLETE_FILE);
+		if(!marker.isFile()) return true; // Legacy version-1 snapshots predate the manifest.
+		try(InputStream in = new FileInputStream(marker))
+		{
+			final Properties expected = new Properties(); expected.load(in);
+			final List<File> files = snapshotFiles(dir);
+			if(expected.size() != files.size()) return false;
+			for(final File file : files)
+				if(!digest(file).equals(expected.getProperty(dir.toPath().relativize(file.toPath()).toString().replace(File.separatorChar,'/')))) return false;
+			return true;
+		}
+		catch(final IOException | IllegalArgumentException e) { return false; }
+	}
+
+	/** Repair interrupted renames under exclusive folder ownership. Prefer the last public/old generation. */
+	public static synchronized void recover(final File saveDir) throws IOException
+	{
+		acquire(saveDir);
+		final File[] dirs = saveDir.listFiles();
+		if(dirs == null) return;
+		final Set<String> names = new TreeSet<String>();
+		for(final File dir : dirs)
+			if(dir.getName().startsWith(".old-") || dir.getName().startsWith(".new-"))
+				names.add(dir.getName().substring(5));
+		for(final String name : names)
+		{
+			if(!isValidName(name)) continue;
+			final File target = new File(saveDir, name), old = new File(saveDir, ".old-" + name), next = new File(saveDir, ".new-" + name);
+			if(complete(target)) continue;
+			final File candidate = complete(old) ? old : (new File(next, COMPLETE_FILE).isFile() && complete(next) ? next : null);
+			if(candidate == null) continue;
+			if(target.exists())
+			{
+				final File damaged = new File(saveDir, ".damaged-" + name + "-" + System.currentTimeMillis());
+				if(!target.renameTo(damaged)) throw new IOException("Cannot preserve damaged save " + name);
+			}
+			if(!candidate.renameTo(target)) throw new IOException("Cannot recover save " + name);
+			syncDirectory(saveDir);
+		}
+	}
+
+	/** Validate compatibility before replacing any live state. Version-less legacy data is version 1. */
+	public static void validateFormat(final File saveDir, final String slot) throws IOException
+	{
+		final File dir = new File(saveDir, slot);
+		if(!complete(dir)) throw new IOException("The save '" + slot + "' is incomplete or damaged.");
+		final Properties header = readHeader(dir);
+		if(!"1".equals(header.getProperty("version", "1")))
+			throw new IOException("Unsupported save format " + header.getProperty("version") + " in '" + slot + "'. This engine supports version 1.");
+		final String world = readFile(saveDir, slot, "world.xml");
+		if(world == null || !world.trim().matches("(?is)<WORLD(?:\\s[^>]*)?(?:/>|>.*</WORLD\\s*>)"))
+			throw new IOException("The world snapshot in '" + slot + "' is incomplete or damaged.");
+		final java.util.regex.Matcher version = java.util.regex.Pattern.compile("(?i)<WORLD\\b[^>]*\\bVERSION\\s*=\\s*[\"']([^\"']+)[\"']").matcher(world);
+		if(version.find() && !version.group(1).equals("1"))
+			throw new IOException("Unsupported world snapshot version " + version.group(1) + " in '" + slot + "'.");
+	}
+
+	private static void syncDirectory(final File dir)
+	{
+		try(FileChannel channel = FileChannel.open(dir.toPath(), StandardOpenOption.READ)) { channel.force(true); }
+		catch(final IOException | UnsupportedOperationException e) { /* Directory fsync is not supported on every platform. */ }
 	}
 
 	private static void deleteTree(final File F)

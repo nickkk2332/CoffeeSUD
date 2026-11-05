@@ -85,7 +85,7 @@ write(CF, "//extends com.planet_ink.coffee_mud.Behaviors.StdBehavior\nfunction I
 touch(CF);
 said = report("behaviors/FixJs10Beh.js");
 var NB = holder.fetchBehavior("FixJs10Beh");
-check("class-replaced", has(said, "class FixJs10Beh compiled again; 1 in the world replaced.") && NB != null && s(NB.accountForYourself()) == "two" && s(NB.getParms()) == "KEEP=me",
+check("class-replaced", has(said, "class FixJs10Beh compiled again; 1 in the world replaced") && NB != null && s(NB.accountForYourself()) == "two" && s(NB.getParms()) == "KEEP=me",
 	said + " / " + (NB && NB.accountForYourself()));
 
 // JS RELOAD and JS WATCH as commands

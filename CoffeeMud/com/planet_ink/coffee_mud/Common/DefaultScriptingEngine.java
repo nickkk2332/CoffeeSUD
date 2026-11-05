@@ -15039,7 +15039,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 
 	private static String nameOf(final Environmental E)
 	{
-		return (E==null)?"":CMLib.xml().parseOutAngleBrackets(E.Name());
+		return CMLib.xml().parseOutAngleBrackets(InstanceIds.reference(E));
 	}
 
 	@Override
@@ -15252,9 +15252,10 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				}
 				if((scr==null)||(scr.size()==0))
 					continue;
-				final MOB monster=getMakeMOB(host);
+				final MOB savedMonster=findSavedMOB(host,q.getValFromPieces("MON"));
+				final MOB monster=savedMonster==null?getMakeMOB(host):savedMonster;
 				final MPContext ctx=new MPContext((PhysicalAgent)host,
-					(monster==null)?findSavedMOB(host,q.getValFromPieces("MON")):monster,
+					monster,
 					findSavedMOB(host,q.getValFromPieces("SRC")),
 					findSavedThing(host,q.getValFromPieces("TGT")),
 					findSavedItem(host,q.getValFromPieces("PI")),
@@ -15305,19 +15306,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected MOB findSavedMOB(final Environmental host, final String name)
 	{
 		final String n=CMLib.xml().restoreAngleBrackets(name);
-		if(n.length()==0)
-			return null;
-		final Room R=CMLib.map().roomLocation(host);
-		if(R!=null)
-		{
-			for(int i=0;i<R.numInhabitants();i++)
-			{
-				final MOB M=R.fetchInhabitant(i);
-				if((M!=null)&&(M.Name().equals(n)))
-					return M;
-			}
-		}
-		return CMLib.players().getPlayer(n);
+		final Environmental found=InstanceIds.isReference(n)?InstanceIds.find(n):InstanceIds.legacy(host,n,MOB.class);
+		return found instanceof MOB?(MOB)found:null;
 	}
 
 	/**
@@ -15330,16 +15320,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	protected Item findSavedItem(final Environmental host, final String name)
 	{
 		final String n=CMLib.xml().restoreAngleBrackets(name);
-		if(n.length()==0)
-			return null;
-		if(host instanceof MOB)
-		{
-			final Item I=((MOB)host).findItem(null,n);
-			if(I!=null)
-				return I;
-		}
-		final Room R=CMLib.map().roomLocation(host);
-		return (R==null)?null:R.findItem(null,n);
+		final Environmental found=InstanceIds.isReference(n)?InstanceIds.find(n):InstanceIds.legacy(host,n,Item.class);
+		return found instanceof Item?(Item)found:null;
 	}
 
 	/**
@@ -15351,13 +15333,8 @@ public class DefaultScriptingEngine implements ScriptingEngine
 	 */
 	protected Environmental findSavedThing(final Environmental host, final String name)
 	{
-		final MOB M=findSavedMOB(host,name);
-		if(M!=null)
-			return M;
-		final Item I=findSavedItem(host,name);
-		if(I!=null)
-			return I;
-		return ((host!=null)&&(host.Name().equals(CMLib.xml().restoreAngleBrackets(name))))?host:null;
+		final String reference=CMLib.xml().restoreAngleBrackets(name);
+		return InstanceIds.isReference(reference)?InstanceIds.find(reference):InstanceIds.legacy(host,reference,Environmental.class);
 	}
 
 	@Override

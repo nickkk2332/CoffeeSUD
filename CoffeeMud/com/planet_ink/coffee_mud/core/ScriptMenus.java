@@ -7,6 +7,9 @@ import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine;
 import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine.MPContext;
 import com.planet_ink.coffee_mud.Common.interfaces.Session;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior;
+import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag;
 
 /*
    Copyright 2026 CoffeeSUD contributors
@@ -72,10 +75,11 @@ public final class ScriptMenus
 	}
 
 	private static final Map<String, Menu>	open	= new ConcurrentHashMap<String, Menu>();
+	private static final List<XMLTag> restored = new ArrayList<XMLTag>();
 
 	private static String key(final MOB mob)
 	{
-		return mob.Name().toUpperCase();
+		return InstanceIds.reference(mob);
 	}
 
 	/**
@@ -204,6 +208,7 @@ public final class ScriptMenus
 			M.who.tell(text(M));
 			return;
 		}
+		Narration.cancel(S);
 		S.prompt(new Session.InputCallback(Session.InputCallback.Type.PROMPT, "", 0)
 		{
 			@Override
@@ -279,6 +284,7 @@ public final class ScriptMenus
 			return true;
 		}
 		open.remove(key(mob));
+		if(S != null && S.isWaitingForInput()) S.prompt((Session.InputCallback)null);
 		if(M.engine == null) // N9: a menu of commands, TALK's services
 		{
 			for(final Option O : M.options)
@@ -289,10 +295,12 @@ public final class ScriptMenus
 					break;
 				}
 			}
+			resumeSaved();
 			return true;
 		}
 		final MPContext c = new MPContext(M.ctx.scripted, M.ctx.monster, mob, M.ctx.scripted, null, null, k, new Object[] { k });
 		M.engine.callFunc(M.func, k, c);
+		resumeSaved();
 		return true;
 	}
 
@@ -304,5 +312,86 @@ public final class ScriptMenus
 	{
 		if(mob != null)
 			open.remove(key(mob));
+	}
+
+	/** Save the displayed options, callback binding and actor identity, without running the script. */
+	public static String toXML()
+	{
+		final StringBuilder out = new StringBuilder("<MENUS>");
+		for(final Menu menu : open.values())
+		{
+			out.append("<MENU>");
+			append(out,"WHO",InstanceIds.reference(menu.who));
+			append(out,"HOST",menu.ctx == null ? "" : InstanceIds.reference(menu.ctx.scripted));
+			append(out,"MON",menu.ctx == null ? "" : InstanceIds.reference(menu.ctx.monster));
+			append(out,"SCRIPT",menu.engine == null ? "" : menu.engine.getScript());
+			append(out,"FUNCTION",menu.func); append(out,"PROMPT",menu.prompt); append(out,"DEFAULT",menu.dflt);
+			for(final Option option : menu.options)
+			{
+				out.append("<OPTION>"); append(out,"KEY",option.key); append(out,"LABEL",option.label); append(out,"COMMAND",option.command); out.append("</OPTION>");
+			}
+			out.append("</MENU>");
+		}
+		for(final XMLTag tag : restored) out.append(tag.toString());
+		return out.append("</MENUS>").toString();
+	}
+
+	private static void append(final StringBuilder out, final String key, final String value)
+	{
+		out.append(CMLib.xml().convertXMLtoTag(key,CMLib.xml().parseOutAngleBrackets(value == null ? "" : value)));
+	}
+	private static String value(final XMLTag tag, final String key)
+	{
+		return CMLib.xml().restoreAngleBrackets(tag.getValFromPieces(key));
+	}
+
+	public static void fromXML(final XMLTag menus)
+	{
+		for(final Menu menu : open.values()) if(menu.who != null && menu.who.session() != null) menu.who.session().prompt((Session.InputCallback)null);
+		open.clear(); restored.clear();
+		if(menus != null) restored.addAll(menus.contents());
+	}
+
+	/** Bind only after all characters, hosts and their scripts have returned. Changed/missing scripts cancel visibly. */
+	public static void resumeSaved()
+	{
+		for(final XMLTag tag : new ArrayList<XMLTag>(restored))
+		{
+			final Environmental found = InstanceIds.find(value(tag,"WHO"));
+			if(!(found instanceof MOB) || ((MOB)found).session() == null) continue;
+			final Menu menu = new Menu(); menu.who = (MOB)found;
+			final Session session = Party.isBackground(menu.who) && !Party.isWindowed(menu.who)
+				? Party.terminalOf(menu.who) : menu.who.session();
+			if(session == null || session.isWaitingForInput()) continue;
+			final Environmental host = InstanceIds.find(value(tag,"HOST"));
+			final Environmental monster = InstanceIds.find(value(tag,"MON"));
+			final String script = value(tag,"SCRIPT");
+			if(!script.isEmpty() && host instanceof PhysicalAgent)
+			{
+				final PhysicalAgent physical = (PhysicalAgent)host;
+				for(final Enumeration<ScriptingEngine> scripts = physical.scripts(); scripts.hasMoreElements();)
+				{
+					final ScriptingEngine engine = scripts.nextElement(); if(engine.getScript().equals(script)) menu.engine = engine;
+				}
+				for(final Enumeration<Behavior> behaviors = physical.behaviors(); behaviors.hasMoreElements();)
+				{
+					final Behavior behavior = behaviors.nextElement();
+					if(behavior instanceof ScriptingEngine && ((ScriptingEngine)behavior).getScript().equals(script)) menu.engine = (ScriptingEngine)behavior;
+				}
+				menu.ctx = new MPContext(physical,monster instanceof MOB?(MOB)monster:menu.engine==null?null:menu.engine.getMakeMOB(physical),menu.who,physical,null,null,"",null);
+			}
+			if(!script.isEmpty() && menu.engine == null)
+				menu.who.tell("The saved conversation has ended because its source script is unavailable or changed.");
+			else
+			{
+				menu.func=value(tag,"FUNCTION");menu.prompt=value(tag,"PROMPT");menu.dflt=value(tag,"DEFAULT");
+				for(final XMLTag option : tag.contents()) if(option.tag().equals("OPTION"))
+				{
+					final Option choice=new Option();choice.key=value(option,"KEY");choice.label=value(option,"LABEL");choice.command=value(option,"COMMAND");menu.options.add(choice);
+				}
+				open(menu,session);
+			}
+			restored.remove(tag);
+		}
 	}
 }

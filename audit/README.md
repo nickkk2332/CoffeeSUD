@@ -6,6 +6,13 @@ commands, JavaScript hooks, behaviours, properties, quest features, builder
 and debugging tools, world options and data files. Each is built once, and
 the owner then uses it as content. It is item 2 of `DEVPLAN.md`.
 
+For implementation status at `d1787779`, see the
+[project status review](project-status-review.md) and the
+[complete feature inventory](project-feature-status.csv). The decisions below
+record the original scope; the review checks current code and remaining gaps.
+The [first implementation follow-up](project-review-fixes.md) records the fixes
+and the inventory's separate follow-up status columns.
+
 ## Decisions
 
 The owner went through every item on 2026-10-31: 388 yes, 20 later and 1

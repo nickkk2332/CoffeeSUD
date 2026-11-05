@@ -16,6 +16,7 @@ goes to standard output.  Exits with the game's exit code, or 124 if it does
 not finish in time.
 """
 import os
+import json
 import subprocess
 import sys
 import threading
@@ -24,7 +25,7 @@ import time
 QUIET = 0.8        # seconds of silence that mean "the game is waiting"
 REPLY_LIMIT = 30   # most seconds to wait for an answer to one line
 BOOT_LIMIT = 120   # most seconds to wait for the first prompt
-EXPECT_LIMIT = 1800
+EXPECT_LIMIT = int(os.environ.get('SUDPLAY_EXPECT_LIMIT', '1800'))
 TOTAL_LIMIT = int(os.environ.get('SUDPLAY_LIMIT', '300'))
 EXIT_WAIT = 60     # most seconds to wait for the game to end after the script
 
@@ -35,7 +36,8 @@ def main():
         script.pop()
     game_dir = os.environ.get('SUD_GAME_DIR') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'CoffeeMud')
     game = os.path.join(game_dir, 'sud.sh')
-    proc = subprocess.Popen([game] + sys.argv[2:], stdin=subprocess.PIPE,
+    command = json.loads(os.environ['SUDPLAY_COMMAND']) if 'SUDPLAY_COMMAND' in os.environ else [game]
+    proc = subprocess.Popen(command + sys.argv[2:], stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lock = threading.Lock()
     state = {'last': time.time(), 'count': 0, 'text': bytearray()}

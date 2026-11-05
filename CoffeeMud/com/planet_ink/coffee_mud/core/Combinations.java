@@ -99,6 +99,8 @@ public final class Combinations
 	/**
 	 * @return the rows of world/combinations.txt, read again when it changes
 	 */
+	public static synchronized void clear() { loaded = -1; loadedFrom = ""; rows = new ArrayList<Row>(); }
+
 	public static synchronized List<Row> rows()
 	{
 		final File F = file();

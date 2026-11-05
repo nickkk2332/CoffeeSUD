@@ -87,6 +87,8 @@ public class Perks
 	}
 
 	/** @return perks.ini as it is now; none without it */
+	public static synchronized void clear() { cached = null; cachedWhen = -1; cachedPath = null; }
+
 	public static synchronized Plan plan()
 	{
 		final File F = file();

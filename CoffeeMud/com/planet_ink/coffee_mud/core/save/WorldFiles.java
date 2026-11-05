@@ -2586,6 +2586,18 @@ public final class WorldFiles
 		return new TreeMap<String, String>(bootAreaSums);
 	}
 
+	public static Map<String,String> loadedAreaSums()
+	{
+		final Map<String,String> sums = new TreeMap<String,String>();
+		for(final Map.Entry<String,String> entry : knownSums.entrySet())
+			if(entry.getKey().startsWith(AREAS_DIR + "/"))
+			{
+				final int dash = entry.getValue().indexOf('-');
+				sums.put(entry.getKey().substring(AREAS_DIR.length()+1), dash < 0 ? entry.getValue() : entry.getValue().substring(dash+1));
+			}
+		return sums;
+	}
+
 	/**
 	 * Returns a checksum of each area file in the world folder.
 	 * @return the checksums, by file name
@@ -2772,28 +2784,32 @@ public final class WorldFiles
 	 */
 	public static String checksum()
 	{
-		final List<String> paths = contentPaths();
-        paths.addAll(com.planet_ink.coffee_mud.core.WorldAssets.paths());
-		Collections.sort(paths);
+		return manifestChecksum(fileSums());
+	}
+
+	/** The definitions actually accepted by this process, including explicit live reloads. */
+	public static String loadedChecksum()
+	{
+		return manifestChecksum(knownSums);
+	}
+
+	public static Map<String,String> loadedManifest()
+	{
+		return new TreeMap<String,String>(knownSums);
+	}
+
+	private static String manifestChecksum(final Map<String,String> manifest)
+	{
 		final CRC32 crc = new CRC32();
-		final byte[] buf = new byte[65536];
-		for(final String path : paths)
+		int count = 0;
+		for(final Map.Entry<String,String> entry : new TreeMap<String,String>(manifest).entrySet())
 		{
-			try(InputStream in = new FileInputStream(new File(worldDir, path)))
-			{
-				crc.update(path.getBytes("UTF-8"));
-				crc.update(0);
-				int n;
-				while((n = in.read(buf)) > 0)
-					crc.update(buf, 0, n);
-				crc.update(0);
-			}
-			catch(final IOException e)
-			{
-				crc.update(1);
-			}
+			if(entry.getKey().startsWith(DEV_DIR + "/")) continue;
+			crc.update(entry.getKey().getBytes(java.nio.charset.StandardCharsets.UTF_8)); crc.update(0);
+			crc.update(entry.getValue().getBytes(java.nio.charset.StandardCharsets.UTF_8)); crc.update(0);
+			count++;
 		}
-		return "2-" + paths.size() + "-" + Long.toHexString(crc.getValue());
+		return "3-" + count + "-" + Long.toHexString(crc.getValue());
 	}
 
 	private static String readSum(final File dbDir)

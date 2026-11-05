@@ -21,7 +21,7 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
     @Override public String displayText() { return "(Travelling)"; }
     @Override protected int canAffectCode() { return CAN_MOBS; }
     private String definition="", origin="", sourceName="", destination="", transit="";
-    private String hostRoom="", sourceType="";
+    private String hostRoom="", sourceType="", sourceRef="";
     private int sourceDirection=-1;
     private transient PhysicalAgent sourceHost;
     private List<String> names=new ArrayList<String>();
@@ -84,6 +84,7 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
         state.definition=definition; state.origin=CMLib.map().getExtendedRoomID(from);
         state.sourceName=source==null?"":source.Name();
         state.sourceHost=source instanceof PhysicalAgent?(PhysicalAgent)source:null;
+        state.sourceRef=InstanceIds.reference(source);
         state.sourceType=source instanceof Exit?"EXIT":source instanceof Room?"ROOM":source instanceof MOB?"MOB":"ITEM";
         Room scriptRoom=source instanceof Room?(Room)source:CMLib.map().roomLocation(source);
         if(source instanceof Exit)
@@ -182,14 +183,19 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
     private PhysicalAgent host()
     {
         if(sourceHost!=null&&!sourceHost.amDestroyed()) return sourceHost;
+        if(!sourceRef.isEmpty())
+        {
+            final Environmental found=InstanceIds.find(sourceRef);
+            return found instanceof PhysicalAgent?(PhysicalAgent)found:null;
+        }
         final Room R=CMLib.map().getRoom(hostRoom.length()==0?origin:hostRoom);
         if(R!=null)
         {
             if(sourceType.equals("EXIT")&&sourceDirection>=0) return R.getRawExit(sourceDirection);
             if(sourceType.equals("ROOM")) return R;
-            final MOB M=R.fetchInhabitant(sourceName); if(M!=null&&!sourceType.equals("ITEM")) return M;
-            final Item I=R.findItem(null,sourceName); if(I!=null) return I;
-            return R;
+            if(sourceName.isEmpty())return R;
+            final Environmental found=InstanceIds.legacy(R,sourceName,sourceType.equals("MOB")?MOB.class:sourceType.equals("ITEM")?Item.class:PhysicalAgent.class);
+            return found instanceof PhysicalAgent?(PhysicalAgent)found:null;
         }
         return leader()==null?null:leader().location();
     }
@@ -365,6 +371,7 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
         out.append(xml.convertXMLtoTag("DEFINITION",xml.parseOutAngleBrackets(definition)));
         out.append(xml.convertXMLtoTag("ORIGIN",origin)).append(xml.convertXMLtoTag("SOURCE",xml.parseOutAngleBrackets(sourceName)));
         out.append(xml.convertXMLtoTag("HOSTROOM",hostRoom)).append(xml.convertXMLtoTag("SOURCETYPE",sourceType)).append(xml.convertXMLtoTag("EXITDIR",sourceDirection));
+        out.append(xml.convertXMLtoTag("SOURCEREF",sourceRef));
         out.append(xml.convertXMLtoTag("DEST",destination)).append(xml.convertXMLtoTag("VIA",transit));
         out.append(xml.convertXMLtoTag("LEFT",""+hours)).append(xml.convertXMLtoTag("ELAPSED",""+elapsed));
         out.append(xml.convertXMLtoTag("REMAINING",armed?Math.max(1,due-GameTime.now()):remaining));
@@ -388,6 +395,7 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
         final XMLTag root=roots.get(0);
         definition=root.getValFromPieces("DEFINITION"); origin=root.getValFromPieces("ORIGIN"); sourceName=root.getValFromPieces("SOURCE");
         sourceHost=null; hostRoom=root.getValFromPieces("HOSTROOM"); sourceType=root.getValFromPieces("SOURCETYPE");
+        sourceRef=root.getValFromPieces("SOURCEREF");
         sourceDirection=root.getPieceFromPieces("EXITDIR")==null?-1:CMath.s_int(root.getValFromPieces("EXITDIR"));
         destination=root.getValFromPieces("DEST"); transit=root.getValFromPieces("VIA");
         hours=CMath.s_double(root.getValFromPieces("LEFT")); elapsed=CMath.s_double(root.getValFromPieces("ELAPSED"));

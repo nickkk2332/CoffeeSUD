@@ -66,6 +66,12 @@ public class JSCm
 		return host;
 	}
 
+	/** JSON-only background work. The completion function runs on the game thread as (error, result). */
+	public JSJobs.Job background(final Function worker, final Object data, final int timeoutMs, final Function callback)
+	{
+		return JSJobs.start(worker,data,timeoutMs,callback,scope,host);
+	}
+
 	// ---------------------------------------------------------------- finding
 
 	/**

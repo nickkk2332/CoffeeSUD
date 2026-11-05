@@ -11,8 +11,9 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
 public final class WorldAssets
 {
     private WorldAssets() {}
-    public static final List<String> DIRECTORIES=Collections.unmodifiableList(Arrays.asList("vocab","lore","text","resources"));
-    public static final List<String> FILES=Collections.unmodifiableList(Arrays.asList("score.txt","ranks.ini","crops.txt","resources.txt","materials.txt"));
+    public static final List<String> DIRECTORIES=Collections.unmodifiableList(Arrays.asList("vocab","lore","text","resources","kits","encounters","classes"));
+    public static final List<String> FILES=Collections.unmodifiableList(Arrays.asList("score.txt","ranks.ini","crops.txt","resources.txt","materials.txt",
+        "creation.ini","origins.ini","perks.ini","combinations.txt","itemsets.txt"));
     public static boolean contains(final String path)
     {
         if(FILES.contains(path)) return true;
@@ -21,7 +22,8 @@ public final class WorldAssets
     }
     /** These readers use live files or the caches cleared by reload(). Other resources need their own loaders. */
     public static boolean reloadable(final String path)
-    {return path.startsWith("vocab/")||path.startsWith("lore/")||path.startsWith("text/")||path.equals("score.txt");}
+    {return path.startsWith("vocab/")||path.startsWith("lore/")||path.startsWith("text/")||path.startsWith("kits/")||path.startsWith("encounters/")
+        ||Arrays.asList("score.txt","creation.ini","origins.ini","perks.ini","combinations.txt","itemsets.txt").contains(path);}
     /** An explicit script reload acknowledges only the dependencies it actually reads. */
     public static void scriptsLoaded(final Collection<String> files)
     {
@@ -53,6 +55,8 @@ public final class WorldAssets
     public static void reload()
     {
         Vocabulary.clear(); LanguageLexicon.clear();
+        CreationSteps.clear(); Perks.clear(); Combinations.clear(); Encounters.forget();
+        com.planet_ink.coffee_mud.Abilities.Properties.Prop_ItemSet.clearDefinitions();
         CMLib.help().unloadHelpFile(null); CMLib.socials().unloadSocials();
         PropCheck.clearHelpKeys();
         WorldFiles.acceptAssetChanges();

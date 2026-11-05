@@ -54,10 +54,11 @@ public class PlaytestCmd extends StdCommand
 	{
 		final Ability P = mob.fetchEffect("Prop_Playtest");
 		final String what = (commands.size() > 1) ? commands.get(1).toUpperCase() : "";
+		if(what.equals("GAME")) { mob.tell(IsolatedPlaytest.launch(mob)); return false; }
 		final boolean on = what.equals("ON") || (what.length() == 0 && (P == null));
 		if((!what.equals("ON")) && (!what.equals("OFF")) && (what.length() > 0))
 		{
-			mob.tell(L("PLAYTEST ON or PLAYTEST OFF."));
+			mob.tell(L("PLAYTEST ON, PLAYTEST OFF, or PLAYTEST GAME for a disposable campaign."));
 			return false;
 		}
 		if(on)
@@ -73,7 +74,7 @@ public class PlaytestCmd extends StdCommand
 			mob.addNonUninvokableEffect(A);
 			mob.recoverPhyStats();
 			mob.tell(L("Playtest: the world now treats you as a mortal.  A death brings you back here.  "
-					+ "BUILD [COMMAND] runs a command with your powers; PLAYTEST OFF ends it."));
+					+ "BUILD [COMMAND] runs a command with your powers; PLAYTEST OFF ends it. This mode keeps changes; PLAYTEST GAME isolates and discards them."));
 			return false;
 		}
 		if(P == null)

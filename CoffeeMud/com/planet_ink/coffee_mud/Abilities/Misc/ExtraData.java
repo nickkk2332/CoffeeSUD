@@ -198,8 +198,9 @@ public class ExtraData extends ThinAbility
 
 	private void cloneFix(final ExtraData E)
 	{
-		this.data.clear();
-		this.data.putAll(E.data);
+		this.data = new Hashtable<String,String>(E.data);
+		// A copy is a new runtime instance. XML restore retains the saved ID through setMiscText.
+		this.data.remove(InstanceIds.STAT);
 		CODES=BASE_CODES;
 	}
 

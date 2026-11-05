@@ -311,6 +311,8 @@ public final class SaveGame
 	 */
 	public static void beforeBoot(final String contentDbService)
 	{
+		JSJobs.reset();
+		ScriptMenus.fromXML(null); Narration.clear();
 		bootOverrides.clear();
 		saveMode = SaveMode.ANYWHERE;
 		if(autoSaver != null)
@@ -319,6 +321,7 @@ public final class SaveGame
 			autoSaver = null;
 		}
 		worldPending = false;
+		SaveSlots.releaseWorkingDatabase(workingDb);
 		workingDb = null;
 		databaseDir = null;
 		restoring = null;
@@ -357,13 +360,7 @@ public final class SaveGame
 		}
 		catch(final IOException e)
 		{
-			System.out.println("Saved games are off: " + e.getMessage());
-			Log.errOut("SaveGame", e);
-			databaseDir = cache;
-			if(!current)
-				WorldFiles.clearContentTables(cache);
-			WorldFiles.beginBoot(!current, null);
-			return;
+			throw new IllegalStateException("Cannot start the game safely: " + e.getMessage(), e);
 		}
 		databaseDir = workingDb;
 		bootOverrides.put("DBSERVICE", FAKEDB + workingDb.getPath());
@@ -425,6 +422,7 @@ public final class SaveGame
 		final Properties header = restoring;
 		// ST6: the world host of the game before is gone; GAME_PROG NEWGAME or RESTORE at the first login; the turns
 		WorldHost.forget();
+		ScriptMenus.fromXML(null); Narration.fromXML(null);
 		bootEvent = (header == null) ? "NEWGAME" : "RESTORE";
 		ScriptEvents.setTurns((header == null) ? 0 : parseLong(header.getProperty("turns"), 0));
 		GameDifficulty.restore((header == null) ? null : header.getProperty("difficulty")); // C13
@@ -480,6 +478,11 @@ public final class SaveGame
 		if(mob.actions() < mob.phyStats().speed())
 			mob.setActions(mob.phyStats().speed());
 		WorldState.finishRestore(mob);
+		if(Boolean.getBoolean("sud.isolated.playtest") && mob.fetchEffect("Prop_Playtest")==null)
+		{
+			final com.planet_ink.coffee_mud.Abilities.interfaces.Ability test=CMClass.getAbility("Prop_Playtest");
+			test.setMiscText(CMLib.map().getExtendedRoomID(mob.location()));mob.addNonUninvokableEffect(test);
+		}
 		final List<String> report;
 		synchronized(worldReport)
 		{
@@ -536,6 +539,7 @@ public final class SaveGame
 			ScriptEvents.game(ev, mob, ev.equals("RESTORE") ? currentSlot : "");
 		}
 		WorldJS.call("onPlayerEnter", mob);
+		ScriptMenus.resumeSaved(); Narration.resumeSaved();
 	}
 
 	/**
@@ -965,9 +969,22 @@ public final class SaveGame
 			slot = defaultSlot(mob);
 		if(!SaveSlots.isValidName(slot))
 			return CMLib.lang().L("A save's name is letters, digits, dashes and underscores, at most 32 of them.");
+		return writeSnapshot(mob,slot,saveDir,workingDb);
+	}
+
+	/** A disposable test campaign uses the same snapshot format without changing the builder's save mode. */
+	public static String exportPlaytest(final MOB mob, final File destination)
+	{
+		if(!builderMode || databaseDir == null) return "An isolated playtest needs a builder world with a local database.";
+		return writeSnapshot(mob,"playtest",destination,databaseDir);
+	}
+
+	private static String writeSnapshot(final MOB mob, final String slot, final File destination, final File sourceDb)
+	{
 		// ST6: onBeforeSave and GAME_PROG SAVE, before the snapshot, either of which may refuse it
 		if(!ScriptEvents.gameCheck(mob, slot))
 			return CMLib.lang().L("The game was not saved.");
+		InstanceIds.prepareSave();
 		CMLib.players().savePlayer(mob);
 		for(final MOB M : Party.othersInWorld(mob))
 			CMLib.players().savePlayer(M);
@@ -1007,9 +1024,9 @@ public final class SaveGame
 		if(CMLib.time().globalClock() != null)
 			header.setProperty("gamedate", CMLib.time().globalClock().getShortTimeDescription());
 		// the world this game plays on, so a restore can say what changed since
-		header.setProperty("worldsum", WorldFiles.bootChecksum());
+		header.setProperty("worldsum", WorldFiles.loadedChecksum());
 		final StringBuilder areaSums = new StringBuilder();
-		for(final Map.Entry<String, String> e : WorldFiles.bootAreaSums().entrySet())
+		for(final Map.Entry<String, String> e : WorldFiles.loadedAreaSums().entrySet())
 			areaSums.append((areaSums.length() > 0) ? ";" : "").append(e.getKey()).append('=').append(e.getValue());
 		header.setProperty("areasums", areaSums.toString());
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
@@ -1022,17 +1039,26 @@ public final class SaveGame
 		if(dice != null)
 			header.setProperty("dice", dice.toString());
 		final Map<String, String> files = new HashMap<String, String>();
+		final Properties manifest = new Properties();
+		manifest.putAll(WorldFiles.loadedManifest());
+		try
+		{
+			final java.io.StringWriter text = new java.io.StringWriter();
+			manifest.store(text, "Loaded world definitions; external assets remain live");
+			files.put("world-manifest.properties", text.toString());
+		}
+		catch(final IOException e) { throw new IllegalStateException(e); }
 		files.put(WorldState.FILE, WorldState.capture(mob));
 		try
 		{
-			SaveSlots.write(saveDir, slot, workingDb, header, files);
+			SaveSlots.write(destination, slot, sourceDb, header, files);
 		}
 		catch(final IOException e)
 		{
 			Log.errOut("SaveGame", e);
 			return CMLib.lang().L("The game could not be saved: @x1", e.getMessage());
 		}
-		currentSlot = slot;
+		if(destination.equals(saveDir)) currentSlot = slot;
 		return null;
 	}
 
@@ -1051,6 +1077,8 @@ public final class SaveGame
 		final SaveSlots.Slot found = SaveSlots.find(saveDir, slot);
 		if(found == null)
 			return CMLib.lang().L("There is no saved game called '@x1'.", slot);
+		try { SaveSlots.validateFormat(saveDir, found.name); }
+		catch(final IOException e) { return e.getMessage(); }
 		final List<MudHost> hosts = CMLib.hosts();
 		if(hosts.size() == 0)
 			return CMLib.lang().L("The game cannot restart.");

@@ -65,9 +65,10 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 	/** C22: the rounds of this fight it has acted in */
 	protected int				round				= 0;
 	/** C22: the round each skill was last tried in, this fight */
-	protected final Map<String,Integer>	lastUsedRound	= new HashMap<String,Integer>();
+	protected Map<String,Integer>	lastUsedRound	= new HashMap<String,Integer>();
 	/** C22: what it tried this fight, ID@round, for STAT BEHAVIORS and tests */
-	protected final List<String>	rotationLog		= new ArrayList<String>();
+	protected List<String>	rotationLog		= new ArrayList<String>();
+	protected Map<String,Integer> pendingThreat = new HashMap<String,Integer>();
 
 	/** C22: one +SKILL(...) entry's rules */
 	protected static class RotationRule
@@ -126,6 +127,73 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 	public String accountForYourself()
 	{
 		return "skillful ability using";
+	}
+
+	@Override
+	public CMObject copyOf()
+	{
+		final CombatAbilities copy=(CombatAbilities)super.copyOf();
+		copy.lastUsedRound=new HashMap<String,Integer>(lastUsedRound);
+		copy.rotationLog=new ArrayList<String>(rotationLog);
+		copy.pendingThreat=new HashMap<String,Integer>(pendingThreat);
+		copy.aggro=aggro==null?null:new Hashtable<MOB,int[]>();
+		if(aggro!=null)for(final Map.Entry<MOB,int[]> entry:aggro.entrySet())copy.aggro.put(entry.getKey(),entry.getValue().clone());
+		copy.weaponSet=new InternalWeaponSet();
+		return copy;
+	}
+
+	@Override
+	protected String getRunState()
+	{
+		final XMLLibrary xml = CMLib.xml();
+		final StringBuilder out = new StringBuilder("<COMBAT ROUND=\"").append(round)
+			.append("\" TICKS=\"").append(tickDown).append("\" PRECAST=\"").append(preCastDown).append("\">");
+		out.append(xml.convertXMLtoTag("LAST", xml.parseOutAngleBrackets(lastSpell == null ? "" : lastSpell)));
+		for(final Map.Entry<String,Integer> use : lastUsedRound.entrySet())
+			out.append("<USED ID=\"").append(use.getKey()).append("\" ROUND=\"").append(use.getValue()).append("\" />");
+		for(final String entry : rotationLog) out.append(xml.convertXMLtoTag("LOG", xml.parseOutAngleBrackets(entry)));
+		final Map<String,Integer> threats = new TreeMap<String,Integer>(pendingThreat);
+		if(aggro != null) for(final Map.Entry<MOB,int[]> entry : aggro.entrySet())
+			if(entry.getKey() != null && !entry.getKey().amDestroyed()) threats.put(InstanceIds.reference(entry.getKey()), Integer.valueOf(entry.getValue()[0]));
+		for(final Map.Entry<String,Integer> entry : threats.entrySet())
+			out.append("<THREAT REF=\"").append(entry.getKey()).append("\" VALUE=\"").append(entry.getValue()).append("\" />");
+		return out.append("</COMBAT>").toString();
+	}
+
+	@Override
+	protected void setRunState(final String text)
+	{
+		lastUsedRound.clear(); rotationLog.clear(); pendingThreat.clear();
+		round = 0;
+		if(text == null || text.trim().isEmpty()) return;
+		final List<XMLLibrary.XMLTag> roots = CMLib.xml().parseAllXML(text);
+		if(roots.isEmpty() || !roots.get(0).tag().equals("COMBAT")) return;
+		final XMLLibrary.XMLTag root = roots.get(0);
+		round = Math.max(0, CMath.s_int(root.getParmValue("ROUND")));
+		tickDown = CMath.s_int(root.getParmValue("TICKS"));
+		preCastDown = CMath.s_int(root.getParmValue("PRECAST"));
+		lastSpell = CMLib.xml().restoreAngleBrackets(root.getValFromPieces("LAST"));
+		aggro = new Hashtable<MOB,int[]>();
+		for(final XMLLibrary.XMLTag entry : root.contents())
+		{
+			if(entry.tag().equals("USED")) lastUsedRound.put(entry.getParmValue("ID"), Integer.valueOf(CMath.s_int(entry.getParmValue("ROUND"))));
+			if(entry.tag().equals("LOG")) rotationLog.add(CMLib.xml().restoreAngleBrackets(entry.value()));
+			if(entry.tag().equals("THREAT")) pendingThreat.put(entry.getParmValue("REF"), Integer.valueOf(CMath.s_int(entry.getParmValue("VALUE"))));
+		}
+	}
+
+	private void restoreThreat()
+	{
+		for(final Iterator<Map.Entry<String,Integer>> entries = pendingThreat.entrySet().iterator(); entries.hasNext();)
+		{
+			final Map.Entry<String,Integer> entry = entries.next();
+			final Environmental target = InstanceIds.find(entry.getKey());
+			if(target instanceof MOB)
+			{
+				if(aggro == null) aggro = new Hashtable<MOB,int[]>();
+				aggro.put((MOB)target, new int[]{ entry.getValue().intValue() }); entries.remove();
+			}
+		}
 	}
 
 	@Override
@@ -1062,6 +1130,7 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
+		restoreThreat();
 		super.tick(ticking,tickID);
 		if(ticking==null)
 			return true;

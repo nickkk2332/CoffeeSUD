@@ -96,6 +96,7 @@ public final class WorldState
 		}
 		try
 		{
+			InstanceIds.prepareSave();
 			return captureWorld(player);
 		}
 		finally
@@ -110,6 +111,46 @@ public final class WorldState
 	 * written after them.
 	 */
 	private static Map<Physical, Integer>	written	= null;
+	private static XMLTag pendingCombat = null;
+
+	private static String combatXML()
+	{
+		final StringBuilder out = new StringBuilder("<COMBAT>");
+		for(final Physical host : written.keySet()) if(host instanceof MOB)
+		{
+			final MOB mob = (MOB)host, victim = mob.getVictim();
+			final MOB leader = mob.amFollowing();
+			if(leader != null && written.containsKey(leader))
+				out.append("<FOLLOW ACTOR=\"").append(InstanceIds.reference(mob)).append("\" LEADER=\"").append(InstanceIds.reference(leader)).append("\" />");
+			if(victim != null && written.containsKey(victim))
+				out.append("<FIGHT ACTOR=\"").append(InstanceIds.reference(mob)).append("\" TARGET=\"").append(InstanceIds.reference(victim))
+					.append("\" RANGE=\"").append(mob.rangeToTarget()).append("\" ACTIONS=\"").append(mob.actions()).append("\" />");
+		}
+		return out.append("</COMBAT>").toString();
+	}
+
+	private static void putBackCombat()
+	{
+		if(pendingCombat == null) return;
+		for(final XMLTag fight : pendingCombat.contents())
+		{
+			if(fight.tag().equals("FOLLOW"))
+			{
+				final Environmental follower = InstanceIds.find(fight.getParmValue("ACTOR")), leader = InstanceIds.find(fight.getParmValue("LEADER"));
+				if(follower instanceof MOB && leader instanceof MOB && follower != leader && !((MOB)follower).amDead() && !((MOB)leader).amDead())
+					((MOB)follower).setFollowing((MOB)leader);
+				continue;
+			}
+			final Environmental actor = InstanceIds.find(fight.getParmValue("ACTOR")), target = InstanceIds.find(fight.getParmValue("TARGET"));
+			if(actor instanceof MOB && target instanceof MOB && !((MOB)actor).amDead() && !((MOB)target).amDead()
+			&& ((MOB)actor).location() != null && ((MOB)actor).location() == ((MOB)target).location())
+			{
+				((MOB)actor).setVictim((MOB)target); ((MOB)actor).setRangeToTarget(CMath.s_int(fight.getParmValue("RANGE")));
+				((MOB)actor).setActions(CMath.s_double(fight.getParmValue("ACTIONS")));
+			}
+		}
+		pendingCombat = null;
+	}
 
 	/**
 	 * Returns the number a mob, player or item is written to the save with.
@@ -155,6 +196,7 @@ public final class WorldState
 	{
 		final XMLLibrary xml = CMLib.xml();
 		final StringBuilder str = new StringBuilder("<WORLD VERSION=\"" + VERSION + "\">\n");
+		str.append(ScriptMenus.toXML()).append(Narration.toXML());
 		if(player != null)
 		{
 			str.append(playerXML(player));
@@ -185,9 +227,10 @@ public final class WorldState
 				if(E == null)
 					continue;
 				final String effects = effectsXML(E);
-				if(E.hasADoor() || (effects.length() > 0))
+				if(E.hasADoor() || (effects.length() > 0) || !InstanceIds.existing(E).isEmpty())
 				{
 					str.append("<DOOR DIR=\"").append(d)
+					   .append("\" IID=\"").append(InstanceIds.existing(E))
 					   .append("\" OPEN=\"").append(E.isOpen())
 					   .append("\" LOCKED=\"").append(E.isLocked()).append("\">")
 					   .append(effects).append("</DOOR>");
@@ -259,6 +302,7 @@ public final class WorldState
 		str.append(com.planet_ink.coffee_mud.core.Yields.toXML()); // CR14: gathered-out rooms
 		str.append(com.planet_ink.coffee_mud.core.Uniques.toXML()); // item 1: unique items ever made, and lost
 		str.append(ridesXML());
+		str.append(combatXML());
 		str.append("</WORLD>\n");
 		return str.toString();
 	}
@@ -274,6 +318,7 @@ public final class WorldState
 	{
 		final XMLLibrary xml = CMLib.xml();
 		final StringBuilder str = new StringBuilder("<PLAYER SID=\"" + sid(player) + "\">");
+		str.append(xml.convertXMLtoTag("INSTANCE",InstanceIds.id(player)));
 		str.append(xml.convertXMLtoTag("NAME", xml.parseOutAngleBrackets(player.Name())));
 		str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(player.location()))));
 		final MOB leader = player.amFollowing();
@@ -321,6 +366,10 @@ public final class WorldState
 			return;
 		}
 		final XMLTag world = all.get(0);
+		final String version = world.getParmValue("VERSION");
+		if(version != null && version.length() > 0 && !Integer.toString(VERSION).equals(version))
+			throw new IllegalArgumentException("Unsupported world snapshot version " + version);
+		pendingCombat = world.getPieceFromPieces("COMBAT");
 		restored.clear();
 		laterRides.clear();
 		laterRooms.clear();
@@ -449,6 +498,8 @@ public final class WorldState
 			}
 		}
 		JSStore.fromXML(world.getPieceFromPieces("JSSTATE")); // JS7: before onRestore
+		ScriptMenus.fromXML(world.getPieceFromPieces("MENUS"));
+		Narration.fromXML(world.getPieceFromPieces("NARRATION"));
 		com.planet_ink.coffee_mud.core.Uniques.fromXML(world.getPieceFromPieces("UNIQUES")); // item 1: last, over what coming back counted
 	}
 
@@ -1091,6 +1142,7 @@ public final class WorldState
 	{
 		final XMLLibrary xml = CMLib.xml();
 		final StringBuilder str = new StringBuilder("<" + tag + " SID=\"" + sid(M) + "\">");
+		str.append(xml.convertXMLtoTag("INSTANCE",InstanceIds.id(M)));
 		str.append(xml.convertXMLtoTag("CLASS", CMClass.classID(M)));
 		str.append(xml.convertXMLtoTag("LEVEL", M.basePhyStats().level()));
 		str.append(xml.convertXMLtoTag("ABILITY", M.basePhyStats().ability()));
@@ -1142,6 +1194,7 @@ public final class WorldState
 		for(final Item I : items)
 		{
 			str.append("<ITEM SID=\"").append(sid(I)).append("\">");
+			str.append(xml.convertXMLtoTag("INSTANCE",InstanceIds.id(I)));
 			str.append(xml.convertXMLtoTag("CLASS", CMClass.classID(I)));
 			str.append(xml.convertXMLtoTag("USES", I.usesRemaining()));
 			str.append(xml.convertXMLtoTag("LEVEL", I.basePhyStats().level()));
@@ -1202,6 +1255,7 @@ public final class WorldState
 			I.basePhyStats().setRejuv(tag.getIntFromPieces("REJUV"));
 			I.setUsesRemaining(tag.getIntFromPieces("USES"));
 			I.setMiscText(CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("TEXT")));
+			InstanceIds.restore(I,tag.getValFromPieces("INSTANCE"));
 			I.setContainer(null);
 			I.setRawWornCode(tag.getLongFromPieces("WORN", 0));
 			I.setExpirationDate(tag.getLongFromPieces("EXPIRES", 0));
@@ -1270,6 +1324,7 @@ public final class WorldState
 		}
 		noteRestored(M, tag);
 		M.setMiscText(CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("TEXT")));
+		InstanceIds.restore(M,tag.getValFromPieces("INSTANCE"));
 		M.basePhyStats().setLevel(tag.getIntFromPieces("LEVEL"));
 		M.basePhyStats().setAbility(tag.getIntFromPieces("ABILITY"));
 		M.basePhyStats().setRejuv(tag.getIntFromPieces("REJUV"));
@@ -1357,8 +1412,9 @@ public final class WorldState
 		if((dir < 0) || (dir >= Directions.NUM_DIRECTIONS()))
 			return;
 		final Exit E = R.getRawExit(dir);
-		if((E == null) || (!E.hasADoor()))
+		if(E == null)
 			return;
+		InstanceIds.restore(E,tag.getParmValue("IID"));
 		final boolean open = CMath.s_bool(tag.getParmValue("OPEN"));
 		final boolean locked = CMath.s_bool(tag.getParmValue("LOCKED"));
 		if(E.hasADoor())
@@ -1648,6 +1704,7 @@ public final class WorldState
 				putEffects(p.first, p.second, mob);
 		}
 		com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
+		putBackCombat();
 		restored.clear(); // after the effects, whose activities may name what was restored
 		takeBackRemadeAreas();
 	}
@@ -1661,6 +1718,7 @@ public final class WorldState
 	 */
 	private static void putBackPlayer(final MOB mob, final XMLTag playerTag)
 	{
+		InstanceIds.restore(mob,playerTag.getValFromPieces("INSTANCE"));
 		noteRestored(mob, playerTag);
 		putBackLimits(mob, playerTag.getPieceFromPieces("LIMITS"));
 		final XMLTag inventory = playerTag.getPieceFromPieces("INVENTORY");

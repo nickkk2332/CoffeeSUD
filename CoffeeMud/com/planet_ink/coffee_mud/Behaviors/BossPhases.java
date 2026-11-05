@@ -74,17 +74,31 @@ public class BossPhases extends StdBehavior
 		List<String>	actions	= new ArrayList<String>();
 	}
 
-	protected final List<Phase>		phases		= new ArrayList<Phase>();
+	protected List<Phase>		phases		= new ArrayList<Phase>();
 	protected String				reset		= "FULLHEAL";
 
 	// the fight
-	protected final Set<Integer>	fired		= new HashSet<Integer>();
+	protected Set<Integer>	fired		= new HashSet<Integer>();
 	protected int					phase		= 1;
 	protected int					round		= 0;
 	protected boolean				engaged		= false;
 	protected int					immuneFor	= 0;
-	protected final List<MOB>		summoned	= new ArrayList<MOB>();
+	protected List<MOB>		summoned	= new ArrayList<MOB>();
 	protected boolean				everSummoned= false;
+	protected List<String> pendingSummoned = new ArrayList<String>();
+
+	@Override
+	public CMObject copyOf()
+	{
+		try
+		{
+			final BossPhases copy=(BossPhases)clone();
+			copy.phases=new ArrayList<Phase>();copy.fired=new HashSet<Integer>();copy.summoned=new ArrayList<MOB>();copy.pendingSummoned=new ArrayList<String>();
+			copy.setParms(getParms());copy.rearm(null);
+			return copy;
+		}
+		catch(final CloneNotSupportedException e) { return newInstance(); }
+	}
 
 	@Override
 	public void setParms(final String newParms)
@@ -167,6 +181,7 @@ public class BossPhases extends StdBehavior
 	/** the phases ready again; its summons gone */
 	protected void rearm(final MOB mob)
 	{
+		restoreSummoned();
 		fired.clear();
 		phase = 1;
 		round = 0;
@@ -183,6 +198,16 @@ public class BossPhases extends StdBehavior
 		}
 		summoned.clear();
 		everSummoned = false;
+	}
+
+	private void restoreSummoned()
+	{
+		for(final String ref : pendingSummoned)
+		{
+			final Environmental found = InstanceIds.find(ref);
+			if(found instanceof MOB && !summoned.contains(found)) summoned.add((MOB)found);
+		}
+		pendingSummoned.clear();
 	}
 
 	/** does one action */
@@ -394,6 +419,7 @@ public class BossPhases extends StdBehavior
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
+		restoreSummoned();
 		if(!super.tick(ticking, tickID))
 			return false;
 		if((tickID != Tickable.TICKID_MOB) || (!(ticking instanceof MOB)))
@@ -495,26 +521,37 @@ public class BossPhases extends StdBehavior
 	@Override
 	protected String getRunState()
 	{
-		if((phase <= 1) && fired.isEmpty())
-			return "";
 		final StringBuilder f = new StringBuilder("");
 		for(final Integer I : fired)
 			f.append(f.length() > 0 ? "," : "").append(I);
-		return "<PHASES PHASE=\"" + phase + "\" ROUND=\"" + round + "\" FIRED=\"" + f + "\" />";
+		final StringBuilder out = new StringBuilder("<PHASES PHASE=\"").append(phase).append("\" ROUND=\"").append(round)
+			.append("\" FIRED=\"").append(f).append("\" ENGAGED=\"").append(engaged).append("\" IMMUNE=\"").append(immuneFor)
+			.append("\" EVERSUMMONED=\"").append(everSummoned).append("\">");
+		for(final MOB mob : summoned)
+			if(mob != null && !mob.amDestroyed()) out.append(CMLib.xml().convertXMLtoTag("SUMMON", InstanceIds.reference(mob)));
+		for(final String ref : pendingSummoned) out.append(CMLib.xml().convertXMLtoTag("SUMMON", ref));
+		return out.append("</PHASES>").toString();
 	}
 
 	@Override
 	protected void setRunState(final String xml)
 	{
+		phase = 1; round = 0; engaged = false; immuneFor = 0; everSummoned = false;
+		fired.clear(); summoned.clear(); pendingSummoned.clear();
 		if((xml == null) || (xml.trim().length() == 0))
 			return;
 		final List<XMLLibrary.XMLTag> V = CMLib.xml().parseAllXML(xml);
 		if((V == null) || V.isEmpty())
 			return;
-		phase = CMath.s_int(V.get(0).getParmValue("PHASE"));
+		phase = Math.max(1, CMath.s_int(V.get(0).getParmValue("PHASE")));
 		round = CMath.s_int(V.get(0).getParmValue("ROUND"));
+		engaged = CMath.s_bool(V.get(0).getParmValue("ENGAGED"));
+		immuneFor = Math.max(0, CMath.s_int(V.get(0).getParmValue("IMMUNE")));
+		everSummoned = CMath.s_bool(V.get(0).getParmValue("EVERSUMMONED"));
 		fired.clear();
 		for(final String s : CMParms.parseCommas(V.get(0).getParmValue("FIRED"), true))
 			fired.add(Integer.valueOf(CMath.s_int(s)));
+		for(final XMLLibrary.XMLTag tag : V.get(0).contents())
+			if(tag.tag().equals("SUMMON")) pendingSummoned.add(tag.value());
 	}
 }

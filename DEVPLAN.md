@@ -3616,3 +3616,35 @@ casting-hook fixtures now explicitly control their random success conditions.
 
 Items to come, as the owner raises them. Things the owner wants but that
 are out of the current scope are kept in [`LATER.md`](LATER.md).
+
+
+## Project review: campaign and authoring reliability
+
+The six summary areas from [the project review](audit/project-status-review.md)
+have a first implementation pass. [The follow-up record](audit/project-review-fixes.md)
+separates those changes from the remaining partial/deferred items; the
+[usage guide](CoffeeMud/guides/ReviewReliability.md) explains compatibility.
+
+- Save folders have process ownership; active working copies survive cleanup.
+  Interrupted replacements recover a validated complete generation, with synced
+  snapshot files, retained previous generations and format checks before restore.
+- Combat behaviors preserve rotation/phase state, owned summons and threat;
+  snapshots restore combat targets, action state and follow links.
+- Mutable JavaScript stores, queued actors and journey hosts use runtime instance
+  identities, with independent copies and explicit legacy migration behavior.
+- The authored-asset registry includes creation, origins, perks, Java classes, kits,
+  encounters, combinations and item sets. Saves record accepted loaded versions
+  and a per-file manifest, including reloads.
+- Route parsing and validation agree on stop structure; every detail record is
+  checked for identity collisions.
+- PLAYTEST GAME prepares a disposable mortal campaign; compiled reload preserves
+  declared state/effect lifetime or retains an incompatible old instance. Pending
+  menus/narration resume with terminal/window routing and pause ownership.
+  cm.background provides bounded JSON jobs with game-thread completion.
+
+Verified across the full regression run and targeted replays: 3,851 reported
+checks (3,422 JavaScript across 326 fixtures and 429 played), plus 15 in-session
+assertions inside the new integration driver; 97 smoke checks; 17 storage/process
+checks. The engine comparison matched its 47-pass / 3-known-failure baseline.
+The follow-up record describes the callback correction, virtual-display setup,
+and focused replays rather than counting repeated checks twice.

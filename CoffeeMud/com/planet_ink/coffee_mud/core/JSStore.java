@@ -33,8 +33,8 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
 /**
  * JS7: cm.store(key), a plain JavaScript object kept with the game.  A key
  * is a string ('world', 'quest:name', anything) or an object: a room is
- * keyed by its ID, a mob by its start room and name, an item by where it is
- * and its name, an area and a quest by name.  A save writes each store as
+	 * keyed by its ID, mobs/items by persistent instance IDs, an area and a quest
+	 * by name. Unambiguous legacy name keys migrate when requested. A save writes each store as
  * JSON in world.xml's &lt;JSSTATE&gt;; a restore puts them back (at the end of
  * WorldState.apply, before onRestore), and a new game starts from
  * world/js/state.json ({"key": {...}, ...}) if the world has one.  Stores
@@ -47,6 +47,7 @@ public final class JSStore
 	private static final Map<String, Scriptable>	live	= new TreeMap<String, Scriptable>();
 	/** the stores not yet asked for since the restore or new game, as JSON */
 	private static final Map<String, String>		saved	= new TreeMap<String, String>();
+	private static final Set<String> warnedLegacy=new HashSet<String>();
 
 	private JSStore()
 	{
@@ -61,6 +62,17 @@ public final class JSStore
 	{
 		if(holder instanceof Room)
 			return "room:" + CMLib.map().getExtendedRoomID((Room)holder);
+		if(holder instanceof MOB || holder instanceof Item)
+		{
+			final String key = "instance:" + InstanceIds.id((com.planet_ink.coffee_mud.core.interfaces.Physical)holder);
+			migrateLegacy(holder, key);
+			return key;
+		}
+		return legacyKey(holder);
+	}
+
+	private static String legacyKey(final Object holder)
+	{
 		if(holder instanceof MOB)
 		{
 			final MOB M = (MOB)holder;
@@ -75,7 +87,7 @@ public final class JSStore
 				where = CMLib.map().getExtendedRoomID((Room)I.owner());
 			else
 			if(I.owner() instanceof MOB)
-				where = keyOf(I.owner()).substring(4);
+				where = legacyKey(I.owner()).substring(4);
 			else
 				where = "";
 			return "item:" + where + "/" + I.Name();
@@ -86,6 +98,23 @@ public final class JSStore
 			return "quest:" + ((Quest)holder).name();
 		final String s = (holder == null) ? "world" : holder.toString().trim();
 		return (s.length() == 0) ? "world" : s;
+	}
+
+	private static synchronized void migrateLegacy(final Object holder, final String key)
+	{
+		final String legacy = legacyKey(holder);
+		if(has(key) || !has(legacy)) return;
+		final int[] matches = { 0 };
+		InstanceIds.visit(host -> { if((host instanceof MOB || host instanceof Item) && legacyKey(host).equals(legacy)) matches[0]++; });
+		if(matches[0] != 1)
+		{
+			if(warnedLegacy.add(legacy))Log.warnOut("JSStore", "Ambiguous legacy store '" + legacy + "' retained under its explicit string key; assign its data to the intended instance with JS STATE.");
+			return;
+		}
+		final Scriptable value = live.remove(legacy);
+		if(value != null) live.put(key, value);
+		final String json = saved.remove(legacy);
+		if(json != null) saved.put(key, json);
 	}
 
 	/**
@@ -249,6 +278,7 @@ public final class JSStore
 	{
 		live.clear();
 		saved.clear();
+		warnedLegacy.clear();
 	}
 
 	/**

@@ -19,6 +19,12 @@ public final class Scenery
   return AuthoringOptions.option(text,key,fallback);
  }
  public static boolean flag(final String text,final String key) {return AuthoringOptions.flag(text,key);}
+ /** Every detail's options are independent; validation and dispatch use the same record boundaries. */
+ public static List<String> detailBodies(final String text) {
+  final List<String> out=new ArrayList<String>();
+  for(final String record:statements(text)){final int at=record.indexOf('=');if(at>0)out.add(record.substring(at+1).trim());}
+  return out;
+ }
  public static String clean(final String text) {return AuthoringOptions.without(text,new HashSet<String>(Arrays.asList("READ","SETVAR","TATTOO","MASK","ID","ALIASES","LEGACYKEYS")),new HashSet<String>(Arrays.asList("EXAMINEONLY","HIGHLIGHT")));}
  public static void clue(final MOB who,final Physical host,final String params,final String kind) {
   final String id=host instanceof Room?CMLib.map().getExtendedRoomID((Room)host):CMLib.map().getExtendedRoomID(CMLib.map().roomLocation(host))+":"+host.ID()+":"+host.Name();

@@ -11,6 +11,7 @@ import com.planet_ink.coffee_mud.Commands.interfaces.*;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
 import com.planet_ink.coffee_mud.Exits.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
+import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary;
 import com.planet_ink.coffee_mud.Libraries.interfaces.*;
 import com.planet_ink.coffee_mud.Locales.interfaces.*;
 import com.planet_ink.coffee_mud.MOBS.interfaces.*;
@@ -212,19 +213,20 @@ public class MovingRoom extends ActiveTicker implements Travel.MovingRoute
 	protected void parseMovingXML(final String roomToParse)
 	{
 		final List<String> V = new Vector<String>();
-		final String theFullBlock=CMLib.xml().returnXMLBlock(roomToParse, roomInfos.get(0).toString().toUpperCase());
+		final XMLLibrary.XMLTag route=RouteStops.find(CMLib.xml().parseAllXML(roomToParse),roomInfos.get(0));
+		final String theFullBlock=route==null?"":route.toString();
 		final String theStopsBlock=CMLib.xml().returnXMLBlock(theFullBlock, "STOPS");
 		final String theNormalDirBlock=CMLib.xml().returnXMLBlock(theFullBlock, "NORMALDIRECTION");
 		final String theReverseDirBlock=CMLib.xml().returnXMLBlock(theFullBlock, "REVERSEDIRECTION");
 		final String theDescriptionsBlock=CMLib.xml().returnXMLBlock(theFullBlock, "ROOMDESCRIPTIONS");
-		int x=1;
-		String thisone=CMLib.xml().returnXMLValue(theStopsBlock, "STOP1");
-		while (!"".equals(thisone))
+		final RouteStops stops = RouteStops.parse(CMLib.xml().returnXMLValue(theFullBlock, "STOPS"));
+		if(!stops.errors.isEmpty())
 		{
-			++x;
-			listOfRooms.add(thisone);
-			thisone=CMLib.xml().returnXMLValue(theStopsBlock, "STOP"+x);
+			Log.errOut(ID(), "Invalid route " + roomInfos.get(0) + ": " + CMParms.toListString(stops.errors));
+			listOfRooms.clear();
+			return;
 		}
+		listOfRooms.addAll(stops.rooms);
 		V.add(CMLib.xml().returnXMLValue(theNormalDirBlock, "TRAVELDIRECTION"));
 		V.add(CMLib.xml().returnXMLValue(theNormalDirBlock, "DOORSDIRECTION"));
 		V.add(CMLib.xml().returnXMLValue(CMLib.xml().returnXMLBlock(theNormalDirBlock, "INSIDE"), "ARRIVALINFO"));

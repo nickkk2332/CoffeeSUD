@@ -286,7 +286,7 @@ public final class JSReload
 			return "world/" + p + ": loaded, but there is no class " + name + " now.";
 		final String id = ((CMObject)proto).ID();
 		final Class<?> now = proto.getClass();
-		final int[] n = { 0 };
+		final int[] n = { 0 }, refused = { 0 };
 		everything(P ->
 		{
 			if(proto instanceof Behavior)
@@ -302,8 +302,18 @@ public final class JSReload
 				{
 					final Behavior N = (Behavior)((CMObject)proto).newInstance();
 					N.setParms(B.getParms());
+					final String state;
+					try
+					{
+						state = B.getStat("STATE");
+						N.setStat("STATE", state);
+						if(state != null && !state.isEmpty() && N.getStat("STATE").isEmpty())
+							throw new IllegalArgumentException("new class cannot accept saved behavior state");
+					}
+					catch(final RuntimeException e) { refused[0]++; Log.warnOut("JSReload",id+" on "+P.Name()+": kept old instance: "+e.getMessage()); continue; }
 					P.delBehavior(B);
 					P.addBehavior(N);
+					N.setStat("STATE",state);
 					n[0]++;
 				}
 			}
@@ -320,17 +330,33 @@ public final class JSReload
 				for(final Ability A : old)
 				{
 					final Ability N = (Ability)((CMObject)proto).newInstance();
-					N.setMiscText(A.text());
-					N.setInvoker(A.invoker());
+					try { migrateAbility(A,N); }
+					catch(final RuntimeException e) { refused[0]++; Log.warnOut("JSReload",id+" on "+P.Name()+": kept old effect: "+e.getMessage()); continue; }
 					final boolean lasting = !A.canBeUninvoked();
+					final boolean savedFlag = A.isSavable();
+					final Map<String,String> states=new LinkedHashMap<String,String>();
+					for(final String code:new String[]{"STATE","ACTIVITY"})
+					{
+						final String value=A.getStat(code);if(value!=null&&!value.isEmpty())states.put(code,value);
+					}
+					final int ticks = CMath.s_int(A.getStat("TICKDOWN"));
+					final boolean wasTicking=CMLib.threads().isTicking(A,Tickable.TICKID_MOB);
 					P.delEffect(A);
+					A.setAffectedOne(null);
+					CMLib.threads().deleteTick(A,-1);
 					if(lasting)
 						P.addNonUninvokableEffect(N);
 					else
 					{
 						P.addEffect(N);
-						N.setAffectedOne(P);
 					}
+					for(final Map.Entry<String,String> saved:states.entrySet())N.setStat(saved.getKey(),saved.getValue());
+					N.setStat("TICKDOWN",Integer.toString(ticks));
+					if(!(P instanceof MOB)&&(ticks>0||wasTicking))CMLib.threads().startTickDown(N,Tickable.TICKID_MOB,1);
+					N.setSavable(savedFlag);
+					P.recoverPhyStats();
+					if(P instanceof MOB){((MOB)P).recoverCharStats();((MOB)P).recoverMaxState();}
+					else if(P instanceof Room)((Room)P).recoverRoomStats();
 					n[0]++;
 				}
 				if(P instanceof MOB)
@@ -340,8 +366,8 @@ public final class JSReload
 					if((A != null) && (A.getClass() != now))
 					{
 						final Ability N = (Ability)((CMObject)proto).newInstance();
-						N.setMiscText(A.text());
-						N.setProficiency(A.proficiency());
+						try { migrateAbility(A,N); }
+						catch(final RuntimeException e) { refused[0]++; Log.warnOut("JSReload",id+" on "+P.Name()+": kept old learned ability: "+e.getMessage()); return; }
 						M.delAbility(A);
 						M.addAbility(N);
 						n[0]++;
@@ -350,8 +376,26 @@ public final class JSReload
 			}
 		});
 		if((proto instanceof Behavior) || (proto instanceof Ability))
-			return "world/" + p + ": class " + id + " compiled again; " + n[0] + " in the world replaced.";
+			return "world/" + p + ": class " + id + " compiled again; " + n[0] + " in the world replaced; " + refused[0] + " incompatible instances kept (see log).";
 		return "world/" + p + ": class " + id + " compiled again; those made from now on use it, those in the world keep the old code until they are made again.";
+	}
+
+	/** Only state declared through the engine's public state APIs can migrate automatically. */
+	public static void migrateAbility(final Ability from, final Ability to)
+	{
+		to.setMiscText(from.text()); to.setInvoker(from.invoker()); to.setProficiency(from.proficiency()); to.setSavable(from.isSavable());
+		for(final String code : new String[]{"STATE","ACTIVITY"})
+		{
+			final String state = from.getStat(code);
+			if(state != null && !state.isEmpty())
+			{
+				to.setStat(code,state);
+				if(to.getStat(code).isEmpty()) throw new IllegalArgumentException("new class cannot accept " + code);
+			}
+		}
+		to.setStat("TICKDOWN",from.getStat("TICKDOWN"));
+		to.setStat("CANUNINVOKE",Boolean.toString(from.canBeUninvoked()));
+		to.setStat("NEXTCAST",from.getStat("NEXTCAST"));
 	}
 
 	/**

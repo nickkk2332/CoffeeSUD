@@ -146,6 +146,8 @@ public class CreationSteps
 	 * creation.ini as it is now; the default steps without it.
 	 * @return the plan
 	 */
+	public static synchronized void clear() { cached = null; cachedWhen = -1; cachedPath = null; }
+
 	public static synchronized Plan plan()
 	{
 		final File F = file();
