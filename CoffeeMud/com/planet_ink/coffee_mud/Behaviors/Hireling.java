@@ -575,7 +575,8 @@ public class Hireling extends StdBehavior
 		&&(msg.sourceMessage()!=null)
 		&&(!msg.source().isMonster()))
 		{
-			final String upperSrcMsg=CMStrings.getSayFromMessage(msg.sourceMessage().toUpperCase());
+			final String heard=Languages.speechText(observer,msg);
+			final String upperSrcMsg=heard==null?null:heard.toUpperCase();
 			if(upperSrcMsg == null)
 			{
 				// nothing done

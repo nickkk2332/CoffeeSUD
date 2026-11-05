@@ -213,3 +213,7 @@ Use `^{LORE}text^N` anywhere normal color codes work. COLORSET ALIASES lists
 aliases; COLORSET LORE LIGHTGREEN saves a personal override, and COLORSET LORE
 DEFAULT removes it. COLORSET DEFAULT resets all color preferences. Named
 aliases expand before wrapping and strip cleanly with ANSI disabled.
+
+
+See [authoring identities, checks and recovery](authoring-reliability.md) for
+saved source IDs, migration aliases, validation and world asset tracking.

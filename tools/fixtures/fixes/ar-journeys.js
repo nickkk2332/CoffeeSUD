@@ -1,0 +1,33 @@
+// Missing/dead passengers, rescue, returns and saved fare receipts.
+FIXFILE="ar-journeys";
+var JT=CM.core.GameTime,J=CM.Abilities.Properties.Prop_JourneyState,WF=CM.core.save.WorldFiles;
+var area=CMClass.getAreaType('StdArea');area.setName('ArJourneys');CMLib.map().addArea(area);
+function room(i){var r=CMClass.getLocale('Plains');r.setRoomID('ArJourneys#'+i);r.setArea(area);area.addProperRoom(r);return r;}
+var origin=room(0),transit=room(1),dest=room(2),away=room(3),p=newMob('GenMob',origin),q=newMob('GenMob',origin);
+p.setName('Arjourneypayer');p.setPlayerStats(CMClass.getCommon('DefaultPlayerStats'));var session=CMClass.getCommon('PartySession');session.initialize(null,'0');session.setMob(p);p.setSession(session);q.setFollowing(p);
+function reset(){var s=p.fetchEffect('Prop_JourneyState');if(s!=null)s.cancelJourney();JT.cancelAdvance();origin.bringMobHere(p,false);origin.bringMobHere(q,false);q.setFollowing(p);}
+function begin(options){var error=J.begin(p,origin,'DEST='+dest.roomID()+' VIA='+transit.roomID()+' DURATION=2 '+options);JT.cancelAdvance();check('departure '+options,error==null,String(error));return p.fetchEffect('Prop_JourneyState');}
+try {
+ var s=begin('MISSING=CONTINUE');away.bringMobHere(q,false);s.hour();s.hour();JT.cancelAdvance();check('continue without separated passenger',p.location()==dest&&q.location()==away&&p.fetchEffect('Prop_JourneyState')==null&&q.fetchEffect('Prop_JourneyPassenger')==null,'arrival stuck');reset();
+ s=begin('MISSING=WAIT');away.bringMobHere(q,false);s.hour();check('wait does not spend travel time',String(s.status()).indexOf('2.0 game hours')>=0&&String(s.status()).indexOf('paused')>=0,s.status());transit.bringMobHere(q,false);s.resumeJourney();JT.cancelAdvance();s.hour();s.hour();JT.cancelAdvance();check('reunited party resumes',p.location()==dest&&q.location()==dest,'resume failed');reset();
+ s=begin('MISSING=RESCUE');away.bringMobHere(q,false);s.hour();JT.cancelAdvance();check('rescue restores separated passenger',q.location()==transit,'rescue did not retrieve companion');s.hour();JT.cancelAdvance();reset();
+ CMLib.beanCounter().addMoney(p,100);var money=Number(CMLib.beanCounter().getTotalAbsoluteNativeValue(p));s=begin('FARE=10 CANCEL=RETURN REFUND=UNUSED');s.hour();JT.cancelAdvance();
+ var saved=String(s.text()),again=CMClass.getAbility('Prop_JourneyState');again.setMiscText(saved);p.delEffect(s);again.startTickDown(p,p,2147483647);again.cancelJourney();JT.cancelAdvance();
+ check('cancel returns party to origin',p.location()==origin&&q.location()==origin&&p.fetchEffect('Prop_JourneyState')==null,'return policy ignored');
+ check('saved unused fare refunded',Number(CMLib.beanCounter().getTotalAbsoluteNativeValue(p))==money-5,'money '+CMLib.beanCounter().getTotalAbsoluteNativeValue(p)+' expected '+(money-5));
+ again.cancelJourney();check('cancel refund once only',Number(CMLib.beanCounter().getTotalAbsoluteNativeValue(p))==money-5,'duplicate refund');
+ s=begin('MISSING=RETURN REFUND=FULL FARE=10');away.bringMobHere(q,false);s.hour();JT.cancelAdvance();check('missing passenger can end trip with return',p.location()==origin&&p.fetchEffect('Prop_JourneyState')==null&&q.fetchEffect('Prop_JourneyPassenger')==null,'return or cleanup failed');
+ reset();s=begin('MISSING=CONTINUE');q.delEffect(q.fetchEffect('Prop_JourneyPassenger'));s.hour();s.hour();JT.cancelAdvance();check('lost marker can be abandoned',p.location()==dest&&p.fetchEffect('Prop_JourneyState')==null,'missing marker trapped journey');
+ reset();s=begin('CANCEL=RETURN REFUND=FULL FARE=10');var funds=Number(CMLib.beanCounter().getTotalAbsoluteNativeValue(p)),gate=CMClass.getAbility('Prop_ReqEntry');gate.setMiscText('NOFOLLOW NOSNEAK -TATTOO +AR_RETURN_ALLOWED');origin.addNonUninvokableEffect(gate);s.cancelJourney();JT.cancelAdvance();
+ check('refused return keeps trip and fare',p.location()==transit&&p.fetchEffect('Prop_JourneyState')!=null&&Number(CMLib.beanCounter().getTotalAbsoluteNativeValue(p))==funds,'refused return partially committed');
+ saved=String(s.text());again=CMClass.getAbility('Prop_JourneyState');again.setMiscText(saved);p.delEffect(s);again.startTickDown(p,p,2147483647);origin.delEffect(gate);again.resumeJourney();JT.cancelAdvance();check('pending return survives restore',p.location()==origin&&p.fetchEffect('Prop_JourneyState')==null&&Number(CMLib.beanCounter().getTotalAbsoluteNativeValue(p))==funds+10,'saved return did not finish/refund');
+ reset();var fareArea=CMClass.getAreaType('StdArea');fareArea.setName('ArFareCurrency');fareArea.setCurrency('ARFARE=1 brass token(s)');CMLib.map().addArea(fareArea);var fareRoom=CMClass.getLocale('Plains');fareRoom.setRoomID('ArFareCurrency#0');fareRoom.setArea(fareArea);fareArea.addProperRoom(fareRoom);
+ var startBefore=p.getStartRoom();p.setStartRoom(null);var currencyBefore=String(CMLib.beanCounter().getCurrency(p)),valueBefore=Number(CMLib.beanCounter().getTotalAbsoluteValue(p,currencyBefore));
+ var currencyError=J.begin(p,origin,'DEST='+dest.roomID()+' VIA='+fareRoom.roomID()+' DURATION=2 FARE=10 REFUND=FULL');JT.cancelAdvance();s=p.fetchEffect('Prop_JourneyState');
+ check('transit can use another currency',currencyError==null&&String(CMLib.beanCounter().getCurrency(p))!=currencyBefore,'currency setup: '+currencyError);
+ var fareSave=String(s.text());again=CMClass.getAbility('Prop_JourneyState');again.setMiscText(fareSave);p.delEffect(s);again.startTickDown(p,p,2147483647);again.cancelJourney();JT.cancelAdvance();
+ check('saved receipt refunds payment currency',Number(CMLib.beanCounter().getTotalAbsoluteValue(p,currencyBefore))==valueBefore&&Number(CMLib.beanCounter().getTotalAbsoluteValue(p,'ARFARE'))==0,'fare refunded in transit currency');reset();p.setStartRoom(startBefore);CMLib.map().delArea(fareArea);fareArea.destroy();fareArea=null;
+ reset();s=begin('DEAD=CONTINUE');q.destroy();var deathSave=String(s.text());check('dead passenger saved as dead',deathSave.indexOf('<DEADSEAT>')>=0,'death lost when mob leaves map');
+ again=CMClass.getAbility('Prop_JourneyState');again.setMiscText(deathSave);p.delEffect(s);again.startTickDown(p,p,2147483647);again.hour();again.hour();JT.cancelAdvance();check('dead passenger does not block restored arrival',p.location()==dest&&p.fetchEffect('Prop_JourneyState')==null,'dead passenger still required');
+} finally {JT.cancelAdvance();var s=p.fetchEffect('Prop_JourneyState');if(s!=null)s.cancelJourney();p.setSession(null);p.setPlayerStats(null);p.destroy();q.destroy();if(typeof fareArea!='undefined'&&fareArea!=null){CMLib.map().delArea(fareArea);fareArea.destroy();}CMLib.map().delArea(area);area.destroy();}
+done();

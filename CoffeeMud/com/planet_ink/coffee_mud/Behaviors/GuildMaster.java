@@ -98,7 +98,7 @@ public class GuildMaster extends StdBehavior
         if(!(host instanceof MOB)||msg.source()==host||msg.sourceMinor()!=CMMsg.TYP_SPEAK||msg.sourceMessage()==null) return;
         final MOB master=(MOB)host;
         if(msg.source().location()!=master.location()||(msg.target()!=null&&msg.target()!=master)) return;
-        final String words=CMStrings.getSayFromMessage(msg.sourceMessage());
+        final String words=Languages.speechText(master,msg);
         if(words==null) return;
         final String command=words.trim().toLowerCase();
         if(Arrays.asList("join","rank","advance","leave","dues","kit","kit replace").contains(command)) say(master,msg.source(),serve(master,msg.source(),command));

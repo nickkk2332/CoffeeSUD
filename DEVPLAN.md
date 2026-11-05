@@ -3585,6 +3585,33 @@ PR17, PR18, PR19, PR20. Authoring reference: [docs/presentation.md](docs/present
 Item 1 (unique and rare items) can go with 2h, or before it; `G6` (loot
 tables) builds on it.
 
+## Authoring reliability consolidation
+
+The first seven findings from [the authoring review](audit/authoring-limit-review.md)
+are implemented. [The authoring reliability guide](docs/authoring-reliability.md)
+describes compatibility and the new controls.
+
+- Service NPCs and MOB JavaScript speech callbacks share perception and partial
+  language comprehension. Same-name NPCs count as distinct organisation rank seats.
+- Shared option parsing respects quoted settings, escaped quotes and separators;
+  schemas supply typed checks and builder/AHELP option metadata.
+- Discovery, sensory/detail clues, first-entry state, waypoints and immersion
+  counters use explicit or saved source identities, with aliases and old-key migration.
+- Builder help overrides load last; final deletion markers suppress world definitions
+  and are cleared when a topic is recreated.
+- World checksums/status track vocabulary, lore, presentation and resource assets;
+  SAVE does not generate or delete them. WORLD RELOAD ASSETS clears content caches.
+- WORLD CHECK adds VOCAB, LORE, TEMPLATES, ROUTES and IDS with source diagnostics;
+  valid LANG markup is handled separately from VARIES.
+- Journeys support missing/dead/disconnected passenger policies, rescue, return,
+  saved fare receipts, full/unused refunds and marker cleanup.
+
+Verified: 3,773 regression checks (3,362 JavaScript across 322 fixtures and
+411 played checks), 97 smoke checks, and the engine suite at its existing
+47-pass / 3-known-failure baseline. The final JavaScript replay covers script
+reload acknowledgement and saved refunds across currency boundaries. Crop and
+casting-hook fixtures now explicitly control their random success conditions.
+
 ## More to come
 
 Items to come, as the owner raises them. Things the owner wants but that

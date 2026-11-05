@@ -285,7 +285,7 @@ public class Riddler extends StdBehavior implements VerbTaker
 		if((msg.sourceMinor() == CMMsg.TYP_SPEAK) && (msg.sourceMessage() != null) && asked.containsKey(src) && (src.location() == R)
 		&& ((msg.target() == null) || (msg.target() == host)))
 		{
-			final String said = CMStrings.getSayFromMessage(msg.sourceMessage());
+			final String said = host instanceof MOB?Languages.speechText((MOB)host,msg):CMStrings.getSayFromMessage(msg.sourceMessage());
 			if((said != null) && (said.trim().length() > 0))
 				answer(src, said);
 		}

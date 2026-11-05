@@ -31,7 +31,7 @@ public final class LoreBook
     if(e.text.startsWith("FILE=")) e.text=readFile(dir,e.text.substring(5));
     out.put(e.key,e);
    }
-  } catch(final IOException ex) { Log.errOut("LoreBook",ex.getMessage()); }
+  } catch(final IOException|IllegalArgumentException ex) { Log.errOut("LoreBook",ex.getMessage()); }
   return out;
  }
  public static String readFile(final File root,final String name) {

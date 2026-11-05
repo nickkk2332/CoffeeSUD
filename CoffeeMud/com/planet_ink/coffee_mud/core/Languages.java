@@ -41,8 +41,8 @@ public final class Languages
  }
  public static String spoken(final MOB who){final Language l=who==null?null:CMLib.utensils().getLanguageSpoken(who);return l==null?"Common":l.ID();}
  public static String messageLanguage(final CMMsg msg){return msg.tool() instanceof Language?msg.tool().ID():"Common";}
- public static boolean understoodSpeech(final MOB listener,final CMMsg msg){return listener==msg.source()||proficiency(listener,messageLanguage(msg),CMStrings.getSayFromMessage(msg.sourceMessage()))>0;}
- public static String speechText(final MOB listener,final CMMsg msg){final String text=CMStrings.getSayFromMessage(msg.sourceMessage());return text==null?null:render(listener,messageLanguage(msg),text);}
+ public static boolean understoodSpeech(final MOB listener,final CMMsg msg){return listener!=null&&msg.sourceMessage()!=null&&(listener==msg.source()||perceives(listener,msg)&&proficiency(listener,messageLanguage(msg),CMStrings.getSayFromMessage(msg.sourceMessage()))>0);}
+ public static String speechText(final MOB listener,final CMMsg msg){if(!understoodSpeech(listener,msg))return null;final String text=CMStrings.getSayFromMessage(msg.sourceMessage());return text==null?null:render(listener,messageLanguage(msg),text);}
  private static boolean perceives(final MOB listener,final CMMsg message){return message.tool() instanceof Visual?CMLib.flags().canBeSeenBy(message.source(),listener):CMLib.flags().canBeHeardSpeakingBy(message.source(),listener);}
  private static final Pattern WORD=Pattern.compile("[\\p{L}]+(?:['’][\\p{L}]+)*");
  public static String render(final MOB viewer,final String language,final String text){return render(language,text,proficiency(viewer,language,text));}
@@ -99,8 +99,9 @@ public final class Languages
   for(final Physical host:hosts){final Ability p=host.fetchEffect("Prop_LanguageImmersion");if(p==null||!seen.add(p))continue;final String spec=Scenery.option(p.text(),"LANGUAGE","ANY");if(!spec.equalsIgnoreCase("ANY")&&!id(spec).equalsIgnoreCase(id))continue;
    final int gain=CMath.s_int(Scenery.option(p.text(),event,"0"));if(gain<=0)continue;
    final Ability known=who.fetchAbility(id);final int max=CMath.s_int(Scenery.option(p.text(),"MAX","60"));if(known!=null&&known.proficiency()>=max)continue;
-   final String key=StoryRecords.token("LANG_",host.ID()+":"+host.Name()+":"+(host instanceof Room?CMLib.map().getExtendedRoomID((Room)host):"")+":"+p.text()+":"+id);
-   final long exposures; synchronized(who){final MiniJSON.JSONObject data=StoryRecords.read(who),counts=StoryRecords.object(data,"languageExposure");exposures=StoryRecords.number(counts,key)+1;counts.put(key,Long.valueOf(exposures));StoryRecords.write(who,data);}
+   final String legacy=StoryRecords.token("LANG_",host.ID()+":"+host.Name()+":"+(host instanceof Room?CMLib.map().getExtendedRoomID((Room)host):"")+":"+p.text()+":"+id);
+   final List<String> keys=AuthorIds.keys("LANG_",host,"IMMERSION",p.text(),id,legacy,true);
+   final long exposures; synchronized(who){final MiniJSON.JSONObject data=StoryRecords.read(who),counts=StoryRecords.object(data,"languageExposure");long previous=0;for(final String key:keys)previous=Math.max(previous,StoryRecords.number(counts,key));exposures=previous+1;counts.put(keys.get(0),Long.valueOf(exposures));StoryRecords.write(who,data);}
    if(CMLib.dice().rollPercentage()>CMath.s_int(Scenery.option(p.text(),"CHANCE","20").replace("%","")))continue;
    if(known==null){if(exposures<CMath.s_int(Scenery.option(p.text(),"GRANTAFTER","25")))continue;learn(who,id,""+Math.min(max,CMath.s_int(Scenery.option(p.text(),"START","5"))),false);}
    else learn(who,id,""+Math.min(max,known.proficiency()+gain),false);

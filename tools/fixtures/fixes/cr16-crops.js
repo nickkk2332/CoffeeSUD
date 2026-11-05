@@ -28,6 +28,7 @@ try {
 	var M1 = "sun", M2 = "land", M3 = "drought";
 	var r1 = CR.refusal(cave, CR.of(cave, "", "", ""), M1, M2, M3);
 	var cave2 = room("CaveRoom");
+	cave2.setResource(RM.RESOURCE_STONE); // A randomly selected dirt floor is valid farmland.
 	var r2 = CR.refusal(cave2, CR.of(cave2, "", "", "NEEDSUN=false"), M1, M2, M3);
 	var plain = room("Plains"), wet = room("ShallowWater");
 	var r3 = CR.refusal(plain, CR.of(plain, "", "", "NEEDSUN=false WATER=1"), M1, M2, M3);
@@ -48,6 +49,7 @@ try {
 	V.basePhyStats().setSensesMask(V.basePhyStats().sensesMask() | CM.Common.interfaces.PhyStats.CAN_SEE_DARK); V.recoverPhyStats(); // a cellar is dark
 	var VS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });
 	VS.initialize(null, "MEMORY"); V.setSession(VS); V.setPlayerStats(CMClass.getCommon("DefaultPlayerStats")); VS.setMob(V);
+	V.playerStats().getSetSecurityFlags("SUPERSKILL"); // This case measures planting rules and growth duration.
 	var Fa = CMClass.getAbility("Farming"); Fa.setProficiency(100); V.addAbility(Fa); Fa = V.fetchAbility("Farming");
 	var seed = CMLib.materials().makeItemResource(RM.RESOURCE_WHEAT); cave.addItem(seed);
 	var C1 = new java.util.ArrayList(); C1.add("wheat");

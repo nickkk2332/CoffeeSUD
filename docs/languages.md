@@ -211,3 +211,10 @@ Builder HELP edits write `world/vocab/help/world_help.ini`; AHELP edits write
 `arc_world_help.ini`. Destroyed stock entries receive a hide marker. Archons
 see the selected entry's source path after its text. Restart or unload the
 relevant help/social cache after editing files directly.
+
+
+See [authoring identities, checks and recovery](authoring-reliability.md) for
+quoted/escaped settings, stable immersion IDs and migration aliases, help edit
+precedence and final deletions, asset reloads and the new WORLD CHECK domains.
+NPC services now consume perceived, understood speech, including partial
+comprehension and visual languages.

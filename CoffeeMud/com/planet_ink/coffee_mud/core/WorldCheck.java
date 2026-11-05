@@ -60,7 +60,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS" };
 
 	/** one thing found */
 	public static final class Finding
@@ -366,6 +366,8 @@ public final class WorldCheck
 			for(final String p : (only == null) ? PropCheck.checkAll() : PropCheck.checkArea(only))
 				out.add(new Finding(Severity.WARNING, "PROPS", p));
 		}
+        for(final String part:new String[]{"VOCAB","LORE","TEMPLATES","ROUTES","IDS"})
+            if(all||parts.contains(part))out.addAll(AuthoringCheck.run(part,only));
 		final List<Finding> sorted = new ArrayList<Finding>();
 		for(final Severity S : Severity.values())
 		{

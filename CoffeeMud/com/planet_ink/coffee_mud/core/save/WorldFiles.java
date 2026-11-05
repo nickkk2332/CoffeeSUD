@@ -681,7 +681,7 @@ public final class WorldFiles
 	public static Map<String, String> fileSums()
 	{
 		final Map<String, String> sums = new TreeMap<String, String>();
-		for(final String path : managedPaths())
+		for(final String path : trackedPaths())
 		{
 			final String sum = sumOf(new File(worldDir, path));
 			if(sum != null)
@@ -741,7 +741,7 @@ public final class WorldFiles
 	 */
 	public static String findPath(final String what, final ExportPlan plan)
 	{
-		final Set<String> all = new TreeSet<String>(managedPaths());
+		final Set<String> all = new TreeSet<String>(trackedPaths());
 		if(plan != null)
 		{
 			all.addAll(plan.writes);
@@ -2746,6 +2746,25 @@ public final class WorldFiles
 		return paths;
 	}
 
+    private static List<String> trackedPaths()
+    {
+        final List<String> paths=managedPaths();
+        paths.addAll(com.planet_ink.coffee_mud.core.WorldAssets.paths());
+        return paths;
+    }
+    public static synchronized void acceptAssetChanges()
+    {
+        final Map<String,String> next=new TreeMap<String,String>(knownSums);
+        next.keySet().removeIf(com.planet_ink.coffee_mud.core.WorldAssets::reloadable);
+        for(final String path:com.planet_ink.coffee_mud.core.WorldAssets.paths())
+        {
+            if(!com.planet_ink.coffee_mud.core.WorldAssets.reloadable(path))continue;
+            final String sum=sumOf(new File(worldDir,path));
+            if(sum!=null) next.put(path,sum);
+        }
+        knownSums=next;
+    }
+
 	/**
 	 * Returns a checksum of the content files: their paths in the world folder
 	 * and their contents.
@@ -2754,6 +2773,7 @@ public final class WorldFiles
 	public static String checksum()
 	{
 		final List<String> paths = contentPaths();
+        paths.addAll(com.planet_ink.coffee_mud.core.WorldAssets.paths());
 		Collections.sort(paths);
 		final CRC32 crc = new CRC32();
 		final byte[] buf = new byte[65536];

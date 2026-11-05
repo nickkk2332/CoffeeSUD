@@ -66,10 +66,10 @@ public class Prop_LanguageSpeaker extends Property
 	public void setMiscText(final String txt)
 	{
 
-		doPlayers=CMParms.getParmBool(txt,"PLAYERS",false);
-		noMobs=CMParms.getParmBool(txt,"NOMOBS",false);
-		homeOnly=CMParms.getParmBool(txt,"HOMEONLY",false);
-		langStr=CMParms.getParmStr(txt,"LANGUAGE","").trim();
+		doPlayers=AuthoringOptions.bool(txt,"PLAYERS",false);
+		noMobs=AuthoringOptions.bool(txt,"NOMOBS",false);
+		homeOnly=AuthoringOptions.bool(txt,"HOMEONLY",false);
+		langStr=AuthoringOptions.option(txt,"LANGUAGE","").trim();
 		final int x=txt.indexOf(';');
 		mobMask=null;
 		if((x>=0)&&(txt.substring(x+1).trim().length()>0))

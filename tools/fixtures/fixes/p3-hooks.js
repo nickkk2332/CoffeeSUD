@@ -11,6 +11,7 @@ V.basePhyStats().setLevel(10); V.recoverPhyStats();
 V.baseState().setMana(1000); V.recoverMaxState(); V.resetToMaxState();
 var VS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });
 VS.initialize(null, "MEMORY"); V.setSession(VS); V.setPlayerStats(CMClass.getCommon("DefaultPlayerStats")); VS.setMob(V);
+V.playerStats().getSetSecurityFlags("SUPERSKILL"); // Hook assertions need successful proficiency checks.
 var seen = 0;
 function said() { var all = s(field(VS, "bout")); var o = all.substring(seen); seen = all.length; return o; }
 var made = [];

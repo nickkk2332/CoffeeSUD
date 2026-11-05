@@ -58,11 +58,39 @@ public final class TextCheck
 		if((text == null) || (text.length() == 0))
 			return out;
 		final boolean varies = text.startsWith("<VARIES>");
+		final Matcher languages=Pattern.compile("\\^<(/?)LANG\\b(.*?)\\^>",Pattern.CASE_INSENSITIVE|Pattern.DOTALL).matcher(text);
+        boolean languageOpen=false;int languageTags=0;
+        while(languages.find())
+        {
+            languageTags++;
+            if(!languages.group(1).isEmpty())
+            {
+                if(!languageOpen)out.add("closing LANG has no opening LANG");
+                if(!languages.group(2).trim().isEmpty())out.add("closing LANG takes no attributes");
+                languageOpen=false;
+            }
+            else
+            {
+                if(languageOpen)out.add("nested LANG tags are not supported");
+                languageOpen=true;
+                final String[] parts=languages.group(2).trim().split("\\s+",2);
+                if(parts[0].isEmpty()||Languages.language(parts[0])==null)out.add("unknown LANG language "+parts[0]);
+                if(parts.length>1)
+                {
+                    out.addAll(AuthoringOptions.errors(parts[1]));
+                    for(final AuthoringOptions.Token token:AuthoringOptions.tokens(parts[1]))if(!token.assignment||!token.key.equals("NOTE"))out.add("unknown LANG attribute "+token.value);
+                }
+            }
+        }
+        final Matcher starts=Pattern.compile("\\^</?LANG\\b",Pattern.CASE_INSENSITIVE).matcher(text);int languageStarts=0;while(starts.find())languageStarts++;
+        if(languageStarts>languageTags)out.add("LANG tag is missing its ^> terminator");
+        if(languageOpen)out.add("LANG is not closed");
 		final Matcher m = TAG.matcher(text);
 		final LinkedList<String> open = new LinkedList<String>();
 		boolean anyCode = false;
 		while(m.find())
 		{
+			if(m.start()>0&&text.charAt(m.start()-1)=='^')continue; // MXP and LANG are not VARIES tags.
 			final boolean close = m.group(1).length() > 0;
 			final String name = m.group(2);
 			final VariationCode code = codeOf(name);

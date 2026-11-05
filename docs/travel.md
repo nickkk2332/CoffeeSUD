@@ -263,3 +263,8 @@ VESSELROOM returns a room ID and HULL the current condition percentage.
 
 In JavaScript, use the standard uppercase MOBPROG bridge: `VESSELROOM$("the Gull")`
 returns its string value, while `ISANCHORED("the Gull")` returns a boolean.
+
+
+See [authoring identities, checks and recovery](authoring-reliability.md) for
+saved source IDs, migration aliases, validation and world asset tracking.
+Journey recovery, return and refund policies are documented there too.

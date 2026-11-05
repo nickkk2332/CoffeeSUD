@@ -130,6 +130,7 @@ CMLib.map().obliterateMapArea(A2);
 F["delete"]();
 host.destroy();
 gf["delete"]();
+WF.markLoaded("resources/fixb5/greet.script");
 WF.exportAll();
 var left = WF.changedOutside();
 check("clean", !left.containsKey("areas/fixb5-area.cmare") && !left.containsKey("quests/fixb5.quest"), "" + left);

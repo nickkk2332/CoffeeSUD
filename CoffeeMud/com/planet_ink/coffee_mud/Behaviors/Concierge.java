@@ -886,7 +886,7 @@ public class Concierge extends StdBehavior
 				&&((!(observer instanceof Rideable))||(msg.source().riding()==observer))
 				&&(msg.sourceMessage()!=null))
 				{
-					String say=CMStrings.getSayFromMessage(msg.sourceMessage());
+					String say=observer instanceof MOB?Languages.speechText((MOB)observer,msg):CMStrings.getSayFromMessage(msg.sourceMessage());
 					if((say!=null)&&(say.length()>0))
 					{
 						final List<String> parsedSay = CMParms.parse(say);

@@ -49,6 +49,8 @@ public final class PropCheck
 	{
 	}
 
+	public static synchronized void clearHelpKeys() { helpKeys.clear(); }
+
 	private static final Pattern	KEY		= Pattern.compile("(?<![A-Za-z0-9_=])([A-Za-z][A-Za-z0-9_]*)\\s*=");
 	private static final Pattern	ROOM_ID	= Pattern.compile("(?<![A-Za-z0-9_#])([A-Za-z][^\\s;,=()'\"#]*#[0-9]+)(?![0-9])");
 	/** the words of a spell list that are not abilities */
@@ -93,6 +95,7 @@ public final class PropCheck
 			}
 			helpKeys.put(id, keys);
 		}
+		keys.addAll(AuthoringSchema.keys(ID));
 		return keys;
 	}
 
@@ -116,10 +119,10 @@ public final class PropCheck
         }
         if(ID.equalsIgnoreCase("BEHAVIOR_EMOTER")||ID.equalsIgnoreCase("BEHAVIOR_SOUNDER"))
             inspect=inspect.replaceAll("(?i)\\bIFVAR\\s+[^;\\s]+","IFVAR");
-        final Matcher m = KEY.matcher(unquoted(inspect));
-		while(m.find())
+		for(final AuthoringOptions.Token token:AuthoringOptions.tokens(inspect))
 		{
-			final String k = m.group(1).toUpperCase();
+			if(!token.assignment)continue;
+            final String k = token.key;
 			if((!known.contains(k)) && (!out.contains(k)))
 				out.add(k);
 		}
@@ -153,6 +156,7 @@ public final class PropCheck
 	{
 		final List<String> out = new ArrayList<String>();
 		final String text = (A.text() == null) ? "" : A.text();
+		out.addAll(AuthoringSchema.check(A.ID(),text));
 		// what the class itself says of the text
 		final Ability fresh = CMClass.getAbility(A.ID());
 		if(fresh != null)

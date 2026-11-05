@@ -16,13 +16,14 @@ import com.planet_ink.coffee_mud.Items.interfaces.*;
 public final class Vocabulary
 {
  private Vocabulary() {}
+ public static synchronized void clear(){glossaryStamp=Long.MIN_VALUE;glossaryPath="";rules=Collections.emptyList();}
  public static File file(final String name) {
   try {final File root=WorldFiles.worldDir().getCanonicalFile(),f=new File(root,name.replace('\\','/')).getCanonicalFile();return f.toPath().startsWith(root.toPath())?f:null;}
   catch(final IOException e){return null;}
  }
  public static String read(final String name) {final File f=file(name);if(f==null||!f.isFile())return "";try{return new String(Files.readAllBytes(f.toPath()),StandardCharsets.UTF_8);}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());return "";}}
  public static Properties properties(final String name) {
-  final Properties p=new Properties();try{p.load(new StringReader(read(name)));}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());}return p;
+  final Properties p=new Properties();try{p.load(new StringReader(read(name)));}catch(final IOException|IllegalArgumentException e){Log.errOut("Vocabulary",e.getMessage());}return p;
  }
  public static boolean write(final String name,final String text) {
   final File f=file(name);if(f==null)return false;try{Files.createDirectories(f.toPath().getParent());Files.write(f.toPath(),text.getBytes(StandardCharsets.UTF_8));return true;}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());return false;}

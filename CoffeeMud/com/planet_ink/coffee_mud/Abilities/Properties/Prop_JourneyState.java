@@ -25,6 +25,17 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
     private int sourceDirection=-1;
     private transient PhysicalAgent sourceHost;
     private List<String> names=new ArrayList<String>();
+    private List<Receipt> receipts=new ArrayList<Receipt>();
+    private transient Map<String,MOB> boundPassengers=new HashMap<String,MOB>();
+    private Set<String> deadSeats=new HashSet<String>();
+    private Map<String,String> playerNames=new HashMap<String,String>();
+    private boolean returnPending=false;
+    private static final class Receipt
+    {
+        String seat, player, currency; double amount;
+        Receipt(final String seat,final String player,final String currency,final double amount)
+        {this.seat=seat;this.player=player;this.currency=currency;this.amount=amount;}
+    }
     private double hours=0, elapsed=0;
     private long due=0, remaining=0, generation=0, pausedAt=0;
     private boolean waiting=false, manual=false, armed=false;
@@ -52,18 +63,23 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
         if(GameTime.isAdvancing()) return "Wait for the current passage of time to finish.";
         final Room to=Travel.destination(Travel.option(definition,"DEST",""),who);
         if(to==null) return "The journey has no valid destination.";
-        final double duration=CMParms.getParmDouble(definition,"DURATION",0);
+        final double duration=AuthoringOptions.number(definition,"DURATION",0);
         if(duration<=0||!Double.isFinite(duration)) return "The journey needs a positive DURATION in game hours.";
         final String via=Travel.option(definition,"VIA","");
         final Room through=via.length()==0?leader.location():Travel.destination(via,null);
         if(through==null) return "The journey has no valid transit room.";
         final List<MOB> party=Travel.party(leader,leader.location());
         for(final MOB M : party) if(M.isInCombat()) return "Finish the fight before departing.";
-        final double fare=Math.max(0,CMParms.getParmDouble(definition,"FARE",0));
+        final double fare=Math.max(0,AuthoringOptions.number(definition,"FARE",0));
         final boolean each=Travel.option(definition,"PARTY","LEADER").equalsIgnoreCase("EACH");
-        final boolean perHead=CMParms.getParmBool(definition,"PERHEAD",true);
+        final boolean perHead=AuthoringOptions.bool(definition,"PERHEAD",true);
+        final Map<MOB,Double> charges=Travel.fares(leader,party,fare,perHead,each,0,0);
+        final Map<MOB,String> currencies=new IdentityHashMap<MOB,String>();
         final Room from=leader.location();
-        if(!Travel.transfer(leader,party,through,true,() -> Travel.fare(leader,party,fare,perHead,each,0,0,true))) return "The party cannot depart.";
+        if(!Travel.transfer(leader,party,through,true,() -> {
+            for(final MOB payer:charges.keySet())currencies.put(payer,CMLib.beanCounter().getCurrency(payer));
+            return Travel.fare(leader,party,fare,perHead,each,0,0,true);
+        })) return "The party cannot depart.";
         final Prop_JourneyState state=new Prop_JourneyState();
         state.definition=definition; state.origin=CMLib.map().getExtendedRoomID(from);
         state.sourceName=source==null?"":source.Name();
@@ -92,6 +108,10 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
             final Ability marker=CMClass.getAbility("Prop_JourneyPassenger");
             final String seat=trip+"_"+state.names.size();
             marker.setMiscText(seat); marker.startTickDown(leader,M,Integer.MAX_VALUE); state.names.add(seat);
+            state.boundPassengers.put(seat,M);
+            if(M.isPlayer())state.playerNames.put(seat,M.Name());
+            final double paid=charges.containsKey(M)?charges.get(M).doubleValue():0;
+            if(paid>0) state.receipts.add(new Receipt(seat,M.isPlayer()?M.Name():"",currencies.get(M),paid));
         }
         state.startTickDown(leader,leader,Integer.MAX_VALUE);
         state.event("START");
@@ -114,6 +134,50 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
                 if(marker!=null&&marker.text().equals(name)) { result.add(member); break; }
             }
         return result;
+    }
+    private Map<String,MOB> locatedPassengers()
+    {
+        final Map<String,MOB> found=new HashMap<String,MOB>(boundPassengers);
+        final Set<MOB> all=Collections.newSetFromMap(new IdentityHashMap<MOB,Boolean>());
+        for(final Enumeration<MOB> e=CMLib.map().worldMobs();e.hasMoreElements();) all.add(e.nextElement());
+        for(final Enumeration<MOB> e=CMLib.players().players();e.hasMoreElements();) all.add(e.nextElement());
+        all.addAll(passengers());
+        for(final MOB M:all)
+        {
+            final Ability marker=M.fetchEffect("Prop_JourneyPassenger");
+            if(marker!=null&&(names.contains(marker.text())||receipts.stream().anyMatch(r->r.seat.equals(marker.text())))) found.put(marker.text(),M);
+        }
+        return found;
+    }
+    /** Reconcile seats before advancing or retrying arrival. No names are used as passenger identities. */
+    private boolean reconcile()
+    {
+        final Map<String,MOB> found=locatedPassengers();
+        for(final String seat:new ArrayList<String>(names))
+        {
+            final MOB member=found.get(seat);
+            final boolean dead=member==null?deadSeats.contains(seat):member.amDead()||member.amDestroyed();
+            final Ability marker=member==null?null:member.fetchEffect("Prop_JourneyPassenger");
+            final boolean missing=member==null||member.location()!=leader().location()||marker==null||!marker.text().equals(seat);
+            final boolean disconnected=member!=null&&member.isPlayer()&&member.session()==null;
+            if(!dead&&!missing&&!disconnected) continue;
+            final String policy=Travel.option(definition,dead?"DEAD":missing?"MISSING":"DISCONNECTED",dead?"CONTINUE":missing?"WAIT":"TRAVEL").toUpperCase();
+            if(policy.equals("TRAVEL")&&!dead&&!missing) continue;
+            if(policy.equals("CONTINUE"))
+            {
+                names.remove(seat);
+                clearPassengerMarker(seat,member);
+                continue;
+            }
+            if(policy.equals("CANCEL")) {cancelJourney();return false;}
+            if(policy.equals("RETURN")) {finishCancellation(true);return false;}
+            if(policy.equals("RESCUE")&&member!=null&&!dead&&!member.isInCombat()&&marker!=null&&marker.text().equals(seat)
+            &&Travel.transfer(leader(),Collections.singletonList(member),leader().location(),true)) continue;
+            pauseJourney(true);
+            leader().tell("A travelling companion is "+(dead?"dead":missing?"missing":"disconnected")+". This journey's "+(dead?"DEAD":missing?"MISSING":"DISCONNECTED")+" policy is "+policy+". JOURNEY RESUME retries recovery; JOURNEY CANCEL ends the trip.");
+            return false;
+        }
+        return true;
     }
     private PhysicalAgent host()
     {
@@ -165,25 +229,62 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
     }
     public String resumeJourney()
     {
+        if(leader()==null)return "The journey has ended.";
+        if(returnPending){finishCancellation(true);return leader()==null?"The journey has ended.":"The return remains blocked.";}
         if(fighting()) return "Finish the encounter before continuing.";
-        if(passengers().size()!=names.size()) return "Gather every travelling companion before continuing.";
+        if(!reconcile()) return leader()==null?"The journey has ended.":"The journey remains paused.";
         waiting=false; manual=false;
         if(hours<=0) arrive(); else arm(true);
         return "Your journey continues.";
     }
     public void cancelJourney()
     {
-        final MOB M=leader(); generation++; armed=false;
-        event("CANCEL");
-        clearMarkers();
-        if(M!=null) { M.tell("Your journey has ended here."); M.delEffect(this); }
-        setAffectedOne(null);
-        GameTime.cancelAdvance();
+        finishCancellation(returnPending||Travel.option(definition,"CANCEL","HERE").equalsIgnoreCase("RETURN"));
+    }
+    private void finishCancellation(final boolean returnHome)
+    {
+        final MOB M=leader();
+        if(M==null) return;
+        if(returnHome&&!M.amDead())
+        {
+            final List<MOB> group=passengers();
+            if(!Travel.transfer(M,group,CMLib.map().getRoom(origin),true))
+            {returnPending=true;pauseJourney(true);M.tell("The party cannot return to the origin yet. JOURNEY CANCEL retries the return.");return;}
+        }
+        generation++; armed=false;
+        event("CANCEL"); refund(); clearMarkers();
+        M.tell(returnHome?"Your journey has ended at its origin.":"Your journey has ended here."); M.delEffect(this);
+        setAffectedOne(null); GameTime.cancelAdvance();
+    }
+    private void refund()
+    {
+        final String mode=Travel.option(definition,"REFUND","NONE");
+        if(mode.equalsIgnoreCase("NONE")) return;
+        final double fraction=mode.equalsIgnoreCase("UNUSED")?(hours+elapsed>0?hours/(hours+elapsed):0):1;
+        final Map<String,MOB> found=locatedPassengers();
+        for(final Receipt r:receipts)
+        {
+            MOB payer=found.get(r.seat); boolean offline=false;
+            if((payer==null||payer.amDestroyed())&&!r.player.isEmpty()) {payer=CMLib.players().getLoadPlayer(r.player);offline=payer!=null&&CMLib.players().getPlayer(r.player)!=payer;}
+            if(payer==null) continue;
+            final String token=StoryRecords.token("FARE_REFUND_",r.seat);
+            if(payer.findTattoo(token)==null)
+            {
+                CMLib.beanCounter().addMoney(payer,r.currency,r.amount*fraction); payer.addTattoo(token);
+                if(offline)
+                {
+                    final Ability marker=payer.fetchEffect("Prop_JourneyPassenger");
+                    if(marker!=null&&marker.text().equals(r.seat))payer.delEffect(marker);
+                    CMLib.database().DBUpdatePlayer(payer);
+                }
+            }
+        }
+        receipts.clear();
     }
     private void arrive()
     {
+        if(leader()==null||!reconcile()) return;
         final MOB M=leader(); final List<MOB> group=passengers();
-        if(M==null) return;
         if(group.size()!=names.size()||!Travel.transfer(M,group,CMLib.map().getRoom(destination),true))
         { waiting=true; manual=true; M.tell("The party cannot arrive yet. JOURNEY RESUME retries arrival."); return; }
         message("ARRIVEMSG"); event("ARRIVE"); generation++; clearMarkers(); M.delEffect(this); setAffectedOne(null);
@@ -200,10 +301,24 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
             final MOB M=e.nextElement(); final Ability marker=M.fetchEffect("Prop_JourneyPassenger");
             if(marker!=null&&names.contains(marker.text())) M.delEffect(marker);
         }
+        for(final String seat:playerNames.keySet())clearPassengerMarker(seat,boundPassengers.get(seat));
+    }
+    private void clearPassengerMarker(final String seat,final MOB known)
+    {
+        MOB member=known;boolean offline=false;
+        if((member==null||member.amDestroyed())&&playerNames.containsKey(seat))
+        {
+            member=CMLib.players().getLoadPlayer(playerNames.get(seat));
+            offline=member!=null&&CMLib.players().getPlayer(playerNames.get(seat))!=member;
+        }
+        if(member==null)return;
+        final Ability marker=member.fetchEffect("Prop_JourneyPassenger");
+        if(marker!=null&&marker.text().equals(seat))
+        {member.delEffect(marker);if(offline)CMLib.database().DBUpdatePlayer(member);}
     }
     public void hour()
     {
-        if(leader()==null||waiting) return;
+        if(leader()==null||waiting||!reconcile()) return;
         if(fighting()) { pauseJourney(false); return; }
         armed=false;
         final double leg=Math.min(1,hours); hours=Math.max(0,hours-leg); elapsed+=leg;
@@ -234,8 +349,9 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
     @Override public boolean tick(final Tickable ticking, final int id)
     {
         if(!super.tick(ticking,id)) return false;
-        if(leader()==null||leader().amDead()) { cancelJourney(); return false; }
-        if(leader().location()!=CMLib.map().getRoom(transit)) { cancelJourney(); return false; }
+        if(leader()==null) return false;
+        if(leader().amDead()) {finishCancellation(false);return false;}
+        if(leader().location()!=CMLib.map().getRoom(transit)) {finishCancellation(false);return false;}
         if(!waiting&&fighting()) pauseJourney(false);
         else if(waiting&&!manual&&!fighting()&&GameTime.now()-pausedAt>=CMProps.getTickMillis()) resumeJourney();
         else if(!waiting&&!armed) arm(true);
@@ -253,7 +369,16 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
         out.append(xml.convertXMLtoTag("LEFT",""+hours)).append(xml.convertXMLtoTag("ELAPSED",""+elapsed));
         out.append(xml.convertXMLtoTag("REMAINING",armed?Math.max(1,due-GameTime.now()):remaining));
         out.append(xml.convertXMLtoTag("WAITING",waiting)).append(xml.convertXMLtoTag("MANUAL",manual));
+        out.append(xml.convertXMLtoTag("RETURNPENDING",returnPending));
         for(final String name : names) out.append(xml.convertXMLtoTag("MEMBER",xml.parseOutAngleBrackets(name)));
+        for(final Map.Entry<String,String> p:playerNames.entrySet())out.append("<PLAYERSEAT>").append(xml.convertXMLtoTag("SEAT",p.getKey())).append(xml.convertXMLtoTag("NAME",xml.parseOutAngleBrackets(p.getValue()))).append("</PLAYERSEAT>");
+        for(final String seat:names)
+        {
+            final MOB member=boundPassengers.get(seat);
+            if(member==null?deadSeats.contains(seat):member.amDead()||member.amDestroyed())out.append(xml.convertXMLtoTag("DEADSEAT",seat));
+        }
+        for(final Receipt r:receipts)
+            out.append("<RECEIPT>").append(xml.convertXMLtoTag("SEAT",r.seat)).append(xml.convertXMLtoTag("PLAYER",xml.parseOutAngleBrackets(r.player))).append(xml.convertXMLtoTag("CURRENCY",xml.parseOutAngleBrackets(r.currency))).append(xml.convertXMLtoTag("AMOUNT",""+r.amount)).append("</RECEIPT>");
         return out.append("</JOURNEY>").toString();
     }
     @Override public void setMiscText(final String text)
@@ -267,12 +392,17 @@ public class Prop_JourneyState extends StdAbility implements Travel.Passage
         destination=root.getValFromPieces("DEST"); transit=root.getValFromPieces("VIA");
         hours=CMath.s_double(root.getValFromPieces("LEFT")); elapsed=CMath.s_double(root.getValFromPieces("ELAPSED"));
         remaining=CMath.s_long(root.getValFromPieces("REMAINING")); waiting=CMath.s_bool(root.getValFromPieces("WAITING")); manual=CMath.s_bool(root.getValFromPieces("MANUAL"));
+        returnPending=CMath.s_bool(root.getValFromPieces("RETURNPENDING"));
+        boundPassengers=new HashMap<String,MOB>();deadSeats=new HashSet<String>();for(final XMLTag t:root.contents())if(t.tag().equals("DEADSEAT"))deadSeats.add(t.value());
         names=new ArrayList<String>(); for(final XMLTag t : root.contents()) if(t.tag().equals("MEMBER")) names.add(CMLib.xml().restoreAngleBrackets(t.value()));
+        playerNames=new HashMap<String,String>();for(final XMLTag t:root.contents())if(t.tag().equals("PLAYERSEAT"))playerNames.put(t.getValFromPieces("SEAT"),CMLib.xml().restoreAngleBrackets(t.getValFromPieces("NAME")));
+        receipts=new ArrayList<Receipt>();for(final XMLTag t:root.contents()) if(t.tag().equals("RECEIPT"))
+            receipts.add(new Receipt(t.getValFromPieces("SEAT"),CMLib.xml().restoreAngleBrackets(t.getValFromPieces("PLAYER")),CMLib.xml().restoreAngleBrackets(t.getValFromPieces("CURRENCY")),CMath.s_double(t.getValFromPieces("AMOUNT"))));
         definition=CMLib.xml().restoreAngleBrackets(definition); sourceName=CMLib.xml().restoreAngleBrackets(sourceName);
         armed=false; generation++; pausedAt=GameTime.now();
     }
     @Override public CMObject copyOf()
     {
-        final Prop_JourneyState A=(Prop_JourneyState)super.copyOf(); A.names=new ArrayList<String>(names); A.armed=false; A.remaining=armed?Math.max(1,due-GameTime.now()):remaining; return A;
+        final Prop_JourneyState A=(Prop_JourneyState)super.copyOf(); A.names=new ArrayList<String>(names); A.receipts=new ArrayList<Receipt>(receipts); A.boundPassengers=new HashMap<String,MOB>(boundPassengers);A.deadSeats=new HashSet<String>(deadSeats);A.playerNames=new HashMap<String,String>(playerNames); A.armed=false; A.remaining=armed?Math.max(1,due-GameTime.now()):remaining; return A;
     }
 }

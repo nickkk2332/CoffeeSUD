@@ -13,20 +13,20 @@ public final class Scenery
 {
  private Scenery() {}
  public static List<String> statements(final String text) {
-  final List<String> out=new ArrayList<String>(); final StringBuilder s=new StringBuilder(); char quote=0;
-  for(int i=0;i<text.length();i++) { final char c=text.charAt(i); if(c=='"') quote=quote==0?c:0; if(c==';'&&quote==0) {out.add(s.toString().trim());s.setLength(0);} else s.append(c); }
-  out.add(s.toString().trim()); return out;
+  return AuthoringOptions.statements(text);
  }
  public static String option(final String text,final String key,final String fallback) {
-  final Matcher m=Pattern.compile("(?:^|[;\\s])"+Pattern.quote(key)+"=(?:\"([^\"]*)\"|([^;\\s]+))",Pattern.CASE_INSENSITIVE).matcher(text);
-  return m.find()?m.group(1)==null?m.group(2):m.group(1):fallback;
+  return AuthoringOptions.option(text,key,fallback);
  }
- public static boolean flag(final String text,final String key) {return Pattern.compile("(?:^|[;\\s])"+Pattern.quote(key)+"(?:$|[;\\s])",Pattern.CASE_INSENSITIVE).matcher(text).find();}
- public static String clean(final String text) {return text.replaceAll("(?i)(?:^|\\s)(?:READ|SETVAR|TATTOO|MASK)=(?:\"[^\"]*\"|[^\\s]+)","").replaceAll("(?i)(?:^|\\s)(?:EXAMINEONLY|HIGHLIGHT)(?=\\s|$)","").trim();}
+ public static boolean flag(final String text,final String key) {return AuthoringOptions.flag(text,key);}
+ public static String clean(final String text) {return AuthoringOptions.without(text,new HashSet<String>(Arrays.asList("READ","SETVAR","TATTOO","MASK","ID","ALIASES","LEGACYKEYS")),new HashSet<String>(Arrays.asList("EXAMINEONLY","HIGHLIGHT")));}
  public static void clue(final MOB who,final Physical host,final String params,final String kind) {
   final String id=host instanceof Room?CMLib.map().getExtendedRoomID((Room)host):CMLib.map().getExtendedRoomID(CMLib.map().roomLocation(host))+":"+host.ID()+":"+host.Name();
-  final String token=StoryRecords.token("SCENERY_",id+":"+kind+":"+params);
-  if(who.findTattoo(token)!=null) return; who.addTattoo(token);
+  final String legacy=StoryRecords.token("SCENERY_",id+":"+kind+":"+params);
+  final String scope=Arrays.asList("SOUND","TOUCH","TASTE").contains(kind)?"SENSES":"DETAILS";
+  final String part=scope.equals("DETAILS")&&!option(params,"ID","").isEmpty()?"":kind;
+  if(AuthorIds.recorded(who,"SCENERY_",host,scope,params,part,legacy)) return;
+  who.addTattoo(AuthorIds.key("SCENERY_",host,scope,params,part,true));
   final String tattoo=option(params,"TATTOO",""); if(!tattoo.isEmpty()) who.addTattoo(tattoo);
   StoryText.setVariable(who,option(params,"SETVAR",""));
  }
@@ -85,7 +85,7 @@ public final class Scenery
   if(!(target instanceof Physical)||!ViewRules.allowed(target,who)||sense.equals("SOUND")&&!CMLib.flags().canHear(who)) return false;
   final Ability a=((Physical)target).fetchEffect("Prop_Senses");
   if(a!=null) { final String raw=option(a.text(),sense,"");
-   if(!raw.isEmpty()) { if(CMLib.dice().rollPercentage()>CMath.s_int(option(a.text(),"CHANCE","100"))) return true;
+   if(!raw.isEmpty()) { if(CMLib.dice().rollPercentage()>AuthoringOptions.integer(a.text(),"CHANCE",100)) return true;
     final String[] choices=raw.split("\\|"); final String rendered=StoryText.render(who,target,choices[CMLib.dice().roll(1,choices.length,-1)]);
     who.tell(rendered); clue(who,(Physical)target,a.text(),sense); Ambience.activity(who); return true;
    }

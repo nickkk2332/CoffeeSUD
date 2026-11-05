@@ -1659,7 +1659,7 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 
 		if(noFix)
 			return new Triad<String, String, HelpMatchType>(helpKey, helpText, matchType);
-		final String finalHelpText = Vocabulary.scopedOutput(fixHelp(helpKey,helpText,forM),"HELP");
+		final String finalHelpText = Vocabulary.scopedOutput(fixHelp(helpKey,helpText,forM)+(AuthoringSchema.keys(helpKey).isEmpty()?"":"\n\r"+AuthoringSchema.describe(helpKey)),"HELP");
 		return new Triad<String, String, HelpMatchType>(helpKey, finalHelpText, matchType);
 	}
 
@@ -1988,7 +1988,8 @@ public class MUDHelp extends StdLibrary implements HelpLibrary
 								newHelp.append("\n");
 						}
 						newHelp.append(af.toString());
-						file.saveText(newHelp);
+						if(file.saveText(newHelp)&&com.planet_ink.coffee_mud.core.save.SaveGame.isBuilderMode())
+                            WorldHelp.deleted(destination.toLowerCase().contains("arc_"),key,false);
 						unloadHelpFile(null);
 					}
 				}

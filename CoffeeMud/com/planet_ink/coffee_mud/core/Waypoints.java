@@ -20,7 +20,7 @@ public final class Waypoints
         final PlayerAccount profile=Party.profileOf(M);
         return Travel.option(A.text(),"SCOPE","CHARACTER").equalsIgnoreCase("PROFILE")&&profile!=null?profile:M;
     }
-    public static String key(final Ability A)
+    private static String legacyKey(final Ability A)
     {
         final Room R=CMLib.map().roomLocation(A.affecting());
         final String text=network(A).toUpperCase()+"\n"+Travel.option(A.text(),"ID",CMLib.map().getExtendedRoomID(R)+"/"+name(A)).toUpperCase();
@@ -33,7 +33,8 @@ public final class Waypoints
         }
         catch(final java.security.NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
     }
-    public static boolean known(final MOB M, final Ability A) { return record(M,A).findTattoo(key(A))!=null; }
+    public static String key(final Ability A) { return AuthorIds.key("WAYPOINT_",A.affecting(),"WAYPOINT",A.text(),network(A).toUpperCase(),true); }
+    public static boolean known(final MOB M, final Ability A) { return AuthorIds.recorded(record(M,A),"WAYPOINT_",A.affecting(),"WAYPOINT",A.text(),network(A).toUpperCase(),legacyKey(A)); }
     private static boolean fits(final MOB M, final Ability A)
     {
         return CMLib.masking().maskCheck(Organizations.parameterMask(Travel.option(A.text(),"MASK","")),M,true);
@@ -151,7 +152,7 @@ public final class Waypoints
         })) return "The party cannot enter that destination.";
         final String message=Travel.option(from.text(),"MSG","");
         if(message.length()>0) for(final MOB member : party) member.tell(message);
-        Travel.elapse(Math.round(Math.max(0,CMParms.getParmDouble(from.text(),"TIME",0))*CMProps.getMillisPerMudHour()));
+        Travel.elapse(Math.round(Math.max(0,AuthoringOptions.number(from.text(),"TIME",0))*CMProps.getMillisPerMudHour()));
         return "You travel to "+name(target)+".";
     }
 }

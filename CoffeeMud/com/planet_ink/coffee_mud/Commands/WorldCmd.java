@@ -322,7 +322,7 @@ public class WorldCmd extends StdCommand
 	public static final String RELOAD_SLOT = "world-reload";
 
 	private static final String RELOAD_USAGE = "WORLD RELOAD [AREA] [NAME] (FORCE), WORLD RELOAD SCRIPT [FILE]/ALL (RESET), "
-		+ "WORLD RELOAD QUEST [NAME], WORLD RELOAD QUESTS, WORLD RELOAD CATALOG, WORLD RELOAD CHANGED";
+		+ "WORLD RELOAD QUEST [NAME], WORLD RELOAD QUESTS, WORLD RELOAD CATALOG, WORLD RELOAD ASSETS, WORLD RELOAD CHANGED";
 
 	/**
 	 * WORLD RELOAD (B5): world files loaded again into the running world.  In
@@ -355,6 +355,12 @@ public class WorldCmd extends StdCommand
 			return RELOAD_USAGE;
 		final String what = words.get(0).toUpperCase();
 		final String rest = CMParms.combine(words, 1).trim();
+        if(what.equals("ASSETS"))
+        {
+            WorldAssets.reload();
+            return "Vocabulary, help, socials and presentation assets reloaded. Resource overrides can require their subsystem's reload or a restart. WORLD CHECK ONLY=VOCAB,LORE,TEMPLATES,ROUTES,IDS validates authoring definitions.";
+        }
+
 		if(what.equals("SCRIPT") || what.equals("SCRIPTS"))
 		{
 			final boolean reset = (words.size() > 1) && words.get(words.size() - 1).equalsIgnoreCase("RESET");
@@ -567,6 +573,7 @@ public class WorldCmd extends StdCommand
 				if((want != null) && ((script == null) || (!script.toUpperCase().contains(want))))
 					continue;
 				S.setScript(script);
+				WorldAssets.scriptsLoaded(S.externalFiles());
 				if(reset)
 					S.resetTriggers("ALL");
 				n++;
@@ -638,7 +645,17 @@ public class WorldCmd extends StdCommand
 		{
 			final String path = e.getKey();
 			String did;
-			if(e.getValue().equals("deleted"))
+            if(path.startsWith("resources/")&&(path.toLowerCase(Locale.ROOT).endsWith(".script")||path.toLowerCase(Locale.ROOT).endsWith(".js")))
+                did=reloadScripts(path.substring("resources/".length()),false);
+            else
+            if(WorldAssets.contains(path))
+            {
+                if(WorldAssets.reloadable(path))
+                {WorldAssets.reload();did=path+" is live; vocabulary and presentation caches reloaded.";}
+                else did=path+" needs its subsystem's reload or a restart; it remains listed as changed.";
+            }
+            else
+            if(e.getValue().equals("deleted"))
 				did = path + " was deleted: start the game again to leave it out, or SAVE FORCE to write it back.";
 			else
 			if((path.startsWith("areas/") || path.startsWith("dev/")) && path.endsWith(".cmare"))

@@ -168,7 +168,8 @@ public final class Organizations
         final ClanPosition current=C.getGovernment().getPosition(role.second.toString());
         if(current==null) return;
         ClanPosition best=null;
-        final List<Clan.MemberRecord> members=C.getMemberList();
+        final List<Clan.MemberRecord> members=CMLib.database().DBReadClanMembers(C.clanID());
+        final List<MOB> npcs=npcMembers(C);
         for(final ClanPosition P : C.getGovernment().getPositions())
         {
             if((P.getRoleID()==C.getGovernment().getAutoRole())&&(C.getGovernment().getAutoRole()!=C.getGovernment().getAcceptPos())) continue;
@@ -176,7 +177,9 @@ public final class Organizations
             if(P.getRank()<current.getRank()&&!M.isMonster()&&C.getDues()>0&&C.getCurrentClanDuesOwed(M)>C.getDues()*(1+Math.max(0,CMath.s_int(setting(C,"DUESGRACE","0"))))) continue;
             if(!CMLib.masking().maskCheck(P.getInnerMaskStr(),M,true)) continue;
             int seats=0;
-            for(final Clan.MemberRecord r : members) if(r.role==P.getRoleID()&&!r.name.equalsIgnoreCase(M.Name())) seats++;
+            for(final Clan.MemberRecord r : members) if(r.role==P.getRoleID()&&(M.isMonster()||!r.name.equalsIgnoreCase(M.Name()))) seats++;
+            // NPC names are not identities: exclude only this exact candidate.
+            for(final MOB npc:npcs) if(npc!=M&&npc.getClanRole(C.clanID()).second.intValue()==P.getRoleID()) seats++;
             final int max=C.getMostInRole(P.getRoleID());
             if(max>0&&seats>=max) continue;
             if(best==null||P.getRank()<best.getRank()) best=P;

@@ -673,7 +673,7 @@ public class Nanny extends StdBehavior implements Travel.StableService
 		if(host instanceof MOB&&msg.sourceMinor()==CMMsg.TYP_SPEAK&&msg.source()!=host
 		&&msg.source().location()==((MOB)host).location()&&(msg.target()==null||msg.target()==host))
 		{
-			final String words=CMStrings.getSayFromMessage(msg.sourceMessage());
+			final String words=Languages.speechText((MOB)host,msg);
 			if(words!=null&&words.matches("(?i)^(?:stable|retrieve|list)(?:\\s.*)?$"))
 				msg.source().tell(stable((MOB)host,msg.source(),words));
 		}
@@ -821,7 +821,7 @@ public class Nanny extends StdBehavior implements Travel.StableService
 		&&(CMSecurity.isAllowed(msg.source(), msg.source().location(), CMSecurity.SecFlag.CMDMOBS))
 		&&(msg.sourceMessage()!=null))
 		{
-			final String say=CMStrings.getSayFromMessage(msg.sourceMessage());
+			final String say=Languages.speechText((MOB)host,msg);
 			if((say != null)
 			&&(say.toLowerCase().indexOf(I("report"))>=0))
 			{

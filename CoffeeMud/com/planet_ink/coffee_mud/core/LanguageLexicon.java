@@ -19,6 +19,7 @@ public final class LanguageLexicon {
   names=Collections.unmodifiableSet(found);namesUntil=System.currentTimeMillis()+30000;return names;
  }
  private static final Map<String,Scriptable> scripts=new HashMap<String,Scriptable>();
+ public static void clear(){synchronized(dictionaries){dictionaries.clear();}synchronized(scripts){scripts.clear();}namesUntil=0;}
  public static int interpretation(final String list,final String language){for(final String part:list.split(",")){final String p=part.trim();final int at=p.indexOf('(');if((at<0?p:p.substring(0,at)).equalsIgnoreCase(language))return at<0?100:Math.max(0,Math.min(100,CMath.s_int(p.substring(at+1).replace(")",""))));}return 0;}
  public static String dictionary(final Language l,final String word) {
   final String file=l.getStat("WORDFILE");if(file.isEmpty())return null;final java.io.File f=Vocabulary.file(file.startsWith("vocab/")?file:"vocab/languages/"+file);if(f==null||!f.isFile())return null;

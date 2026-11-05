@@ -362,20 +362,8 @@ public class MOBTeacher extends CombatAbilities
 		&&(msg.targetMinor()==CMMsg.TYP_SPEAK)
 		&&(!CMSecurity.isDisabled(CMSecurity.DisFlag.MOBTEACHER)))
 		{
-			String sayMsg=CMStrings.getSayFromMessage(msg.sourceMessage());
-			if(sayMsg==null)
-			{
-				final int start=msg.sourceMessage().indexOf('\'');
-				if(start>0)
-				{
-					sayMsg=msg.sourceMessage().substring(start+1);
-					final int x=sayMsg.lastIndexOf("\'");
-					if(x>0)
-						sayMsg=sayMsg.substring(0,x);
-				}
-				else
-					sayMsg=msg.sourceMessage();
-			}
+			String sayMsg=Languages.speechText(monster,msg);
+			if(sayMsg==null) return;
 			final int x1=sayMsg.toUpperCase().indexOf("TEACH");
 			final int x2=sayMsg.toUpperCase().indexOf("GAIN ");
 			int x=x1;

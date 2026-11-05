@@ -154,7 +154,7 @@ public final class Travel
 
     public static String option(final String text, final String key, final String fallback)
     {
-        return CMParms.getParmStr(text,key,fallback);
+        return AuthoringOptions.option(text,key,fallback);
     }
 
     public static Ability property(final Physical object, final String id)
@@ -212,17 +212,17 @@ public final class Travel
         if(A==null) A=property(from,"Prop_TravelTime");
         if(A==null&&from!=null) A=property(from.getArea(),"Prop_TravelTime");
         if(A==null) return 0;
-        double minutes=Math.max(0,CMParms.getParmDouble(A.text(),"TIME",0));
+        double minutes=Math.max(0,AuthoringOptions.number(A.text(),"TIME",0));
         if(traveler instanceof Item&&traveler instanceof Rideable)
-            minutes*=Math.max(0,CMParms.getParmDouble(A.text(),"VEHICLE",0.7));
+            minutes*=Math.max(0,AuthoringOptions.number(A.text(),"VEHICLE",0.7));
         else if(traveler instanceof MOB&&((MOB)traveler).riding()!=null)
-            minutes*=Math.max(0,CMParms.getParmDouble(A.text(),((MOB)traveler).riding() instanceof Item?"VEHICLE":"MOUNTED",((MOB)traveler).riding() instanceof Item?0.7:0.5));
+            minutes*=Math.max(0,AuthoringOptions.number(A.text(),((MOB)traveler).riding() instanceof Item?"VEHICLE":"MOUNTED",((MOB)traveler).riding() instanceof Item?0.7:0.5));
         else if(traveler instanceof MOB&&traveler instanceof Rideable&&((Rideable)traveler).numRiders()>0)
-            minutes*=Math.max(0,CMParms.getParmDouble(A.text(),"MOUNTED",0.5));
+            minutes*=Math.max(0,AuthoringOptions.number(A.text(),"MOUNTED",0.5));
         final TimeClock C=CMLib.time().localClock(to==null?from:to);
-        if(C!=null&&C.getTODCode()==TimeClock.TimeOfDay.NIGHT) minutes*=Math.max(0,CMParms.getParmDouble(A.text(),"NIGHT",1.5));
+        if(C!=null&&C.getTODCode()==TimeClock.TimeOfDay.NIGHT) minutes*=Math.max(0,AuthoringOptions.number(A.text(),"NIGHT",1.5));
         final Ability road=road(to);
-        if(road!=null) minutes*=Math.max(0,CMParms.getParmDouble(road.text(),"TIME",1));
+        if(road!=null) minutes*=Math.max(0,AuthoringOptions.number(road.text(),"TIME",1));
         return Math.round(minutes*CMProps.getMillisPerMudHour()/60.0);
     }
 
@@ -270,7 +270,7 @@ public final class Travel
         if(P==null) return false;
         if(who==null||CMSecurity.isAllowed(who,who.location(),CMSecurity.SecFlag.CMDROOMS)) return true;
         final String mask=Organizations.parameterMask(option(P.text(),"KNOWNMASK",""));
-        return CMLib.flags().canAccess(who,R)&&(mask.length()>0?CMLib.masking().maskCheck(mask,who,true):!CMParms.getParmBool(P.text(),"HIDDEN",false));
+        return CMLib.flags().canAccess(who,R)&&(mask.length()>0?CMLib.masking().maskCheck(mask,who,true):!AuthoringOptions.bool(P.text(),"HIDDEN",false));
     }
 
     public static String label(final String destination)
@@ -446,6 +446,16 @@ public final class Travel
     public static boolean fare(final MOB leader, final List<MOB> passengers, final double price, final boolean perHead,
                                final boolean each, final double pets, final double cargo, final boolean collect)
     {
+        final Map<MOB,Double> charges=fares(leader,passengers,price,perHead,each,pets,cargo);
+        for(final Map.Entry<MOB,Double> entry : charges.entrySet())
+            if(CMLib.beanCounter().getTotalAbsoluteNativeValue(entry.getKey())<entry.getValue().doubleValue())
+            { leader.tell(entry.getKey().Name()+" cannot afford the fare."); return false; }
+        if(collect) for(final Map.Entry<MOB,Double> entry : charges.entrySet()) CMLib.beanCounter().subtractMoney(entry.getKey(),entry.getValue().doubleValue());
+        return true;
+    }
+    public static Map<MOB,Double> fares(final MOB leader,final List<MOB> passengers,final double price,final boolean perHead,
+                                      final boolean each,final double pets,final double cargo)
+    {
         final Map<MOB,Double> charges=new LinkedHashMap<MOB,Double>();
         double total=0;
         for(final MOB M : passengers)
@@ -458,10 +468,6 @@ public final class Travel
         }
         if(!perHead) total+=price;
         if(total>0||!each) charges.put(leader,Double.valueOf(total+(charges.containsKey(leader)?charges.get(leader).doubleValue():0)));
-        for(final Map.Entry<MOB,Double> entry : charges.entrySet())
-            if(CMLib.beanCounter().getTotalAbsoluteNativeValue(entry.getKey())<entry.getValue().doubleValue())
-            { leader.tell(entry.getKey().Name()+" cannot afford the fare."); return false; }
-        if(collect) for(final Map.Entry<MOB,Double> entry : charges.entrySet()) CMLib.beanCounter().subtractMoney(entry.getKey(),entry.getValue().doubleValue());
-        return true;
+        return charges;
     }
 }

@@ -13,7 +13,7 @@ public final class ViewRules {
  public static boolean allowed(final Environmental host,final MOB viewer) {
   if(!(host instanceof Physical)) return true; final Ability a=((Physical)host).fetchEffect("Prop_ShowWhen"); if(a==null) return true;
   if(viewer!=null&&viewer.isAttributeSet(MOB.Attrib.SYSOPMSGS)) return true;
-  if(viewer!=null&&Scenery.option(a.text(),"HIDEMODE","UNSEEN").equalsIgnoreCase("HIDDEN")&&viewer.findTattoo(token(host,a))!=null) return true;
+  if(viewer!=null&&Scenery.option(a.text(),"HIDEMODE","UNSEEN").equalsIgnoreCase("HIDDEN")&&AuthorIds.recorded(viewer,"FOUND_",(Physical)host,"SHOWWHEN",a.text(),"",token(host,a))) return true;
   if(!checking.get().add(host)) return false;
   try {
    final String check=Scenery.option(a.text(),"CHECK","VIEWER"); final Room room=CMLib.map().roomLocation(host);
@@ -34,7 +34,7 @@ public final class ViewRules {
  }
  public static void discover(final MOB who,final Physical host) {
   if(host==null) return; final Ability a=host.fetchEffect("Prop_ShowWhen");
-  if(a!=null&&Scenery.option(a.text(),"HIDEMODE","UNSEEN").equalsIgnoreCase("HIDDEN")&&!allowed(host,who)) {who.addTattoo(token(host,a));who.tell("You discover "+host.name(who)+".");}
+  if(a!=null&&Scenery.option(a.text(),"HIDEMODE","UNSEEN").equalsIgnoreCase("HIDDEN")&&!allowed(host,who)) {who.addTattoo(AuthorIds.key("FOUND_",(Physical)host,"SHOWWHEN",a.text(),"",true));who.tell("You discover "+host.name(who)+".");}
  }
  public static void search(final MOB who) {
   final Room r=who.location(); if(r==null) return;

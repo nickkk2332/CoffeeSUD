@@ -427,7 +427,7 @@ public class JScriptable extends StdBehavior implements JSReload.Holder, ScriptE
 		{
 			if((src != host) && (msg.sourceMessage() != null))
 			{
-				final String said = CMStrings.getSayFromMessage(msg.sourceMessage());
+				final String said = host instanceof MOB?Languages.speechText((MOB)host,msg):CMStrings.getSayFromMessage(msg.sourceMessage());
 				if(said != null)
 					call("onSpeech", src, said);
 			}
