@@ -1,0 +1,45 @@
+game,domain,depth,guide,proposal_ids,limits
+PoE1,Class and passive construction,systems and named roster,poe1-systems.md,A01;A05;A06;A07,Named branches recorded; every passive balance not enumerated
+PoE1,Skill and support composition,systems,poe1-systems.md,A02;A03;A16,Every skill variant not enumerated
+PoE1,Combat scaling and conversion,systems,poe1-systems.md,A01;A04;A09,Indexed wiki excerpts and versioned design rather than exhaustive formula replication
+PoE1,Defense ailments resources and recovery,systems,poe1-systems.md,A12;A13;A14;A15;A18,Exact caps depend on revision
+PoE1,Items rarity affixes sockets and quality,systems,poe1-systems.md,I01;I02;I05;I09,Not an item database
+PoE1,Crafting operations and restrictions,systems,poe1-systems.md,I03;I04;I06;I07;I08;I10;I11;I13,Legacy acquisition routes not all revalidated
+PoE1,Economy storage trade and filtering,systems,poe1-systems.md,I14;I15;I16;I20,No live economy measurements
+PoE1,Early paired leagues and expansions,historical introductions,poe1-history.md,A24;G03;G05;G06;G07;G08,Early wiki facts partly indexed
+PoE1,Versions 2.1 through 2.6,historical introductions,poe1-history.md,G09;G10;G11;G12;G24,Original launch rules distinguished from current access
+PoE1,Versions 3.0 through 3.9,historical introductions,poe1-history.md,G09;G13;G14;G15;G16;G17;G18,No complete current reward-source inventory
+PoE1,Versions 3.10 through 3.19,historical introductions,poe1-history.md,G04;G11;G19;G20;G21,Retired activities distinguished from surviving rewards
+PoE1,Versions 3.20 through 3.29,historical and current family,poe1-history.md,G01;G02;G12;G13;G16;G20;P05,Every minor patch not separately summarized
+PoE1,Version 3.30,announcement only,poe1-history.md,G24,Not released at cutoff
+PoE1,Races and special events,families,poe1-history.md,G12;G14;G16;G24;P12;P13,Not a calendar of all races or Gauntlets
+PoE2,Early Access progression 0.1 through 0.5.5,major revisions,poe2.md,Q01;Q06,Every minor patch not separately summarized
+PoE2,Classes and ascendancies,current community roster,poe2.md,A06;P01,Class reference direct open unsupported; indexed and cross-referenced
+PoE2,Action commitment weapons and loadouts,systems,poe2.md,A10;A11;A19;A20;A21,Text translation is original proposal
+PoE2,Supports Spirit and triggers,systems,poe2.md,A02;A03;A14;A15,Old support restriction labeled historical
+PoE2,Damage defense and ailments,systems,poe2.md,A09;A12;A13,Rule profiles intentionally separate from PoE1
+PoE2,Currency runes omens and crafting,systems,poe2.md,I03;I04;I05;I07;I13,No exact crafting cost simulation
+PoE2,Atlas quests and activity progression,systems and revisions,poe2.md,G01;G02;G04;G12;G13;I18,0.5 progression distinguished from launch
+PoE2,Full release 1.0,announced only,poe2.md,Q01;Q06,Future content not counted live
+3Kingdoms,Mudskills professions and milestones,system pages,three-kingdoms.md,P01;P02;P13;P15,Older reproduced help may be stale
+3Kingdoms,Guild-specific game loops,selected deep guild guides,three-kingdoms.md,A15;A21;P01;P04;P08,Not every guild power or secret form
+3Kingdoms,Linked items and mastery,system page,three-kingdoms.md,I11;I12,Character versus registered-account scope varies by item
+3Kingdoms,Crafting and specialized professions,system and profession pages,three-kingdoms.md,I04;I06;G18;G20,Some embedded notes explicitly historical
+3Kingdoms,Companions housing and reputation,system pages,three-kingdoms.md,P05;P16;I14,Live exact costs not audited
+3Kingdoms,Missions skillquests dungeons and waypoints,system pages and sampled dungeons,three-kingdoms.md,G01;G03;G23;P15,Not every room route or scaler table
+3Kingdoms,Creator documentation,coding primer survey,three-kingdoms.md,Q10,LPC syntax is not a CoffeeSUD API
+3Scapes,Published headline feature status,official feature page,three-scapes.md,P01;P06;P09;G22,Four advertised systems explicitly upcoming
+3Scapes,Guilds,all 22 linked descriptions,three-scapes.md,A08;A21;P01;P03;P04;P05;P10,Count includes Adventurer; descriptions not live power audits
+3Scapes,Supporting systems and onboarding,selected official help,three-scapes.md,I20;P01;P13;P14;P16,Legacy help may conflict with current branding
+Lost Souls,Attributes races cultures and traits,system pages and directories,lost-souls.md,A01;A21;A23;P11,Not every playable or creature race individually read
+Lost Souls,Skills and specialties,system pages,lost-souls.md,P01;P02;Q01,Some skills explicitly placeholders
+Lost Souls,Guilds associations and compatibility,directories plus 19 deep guild pages,lost-souls.md,P03;P04;P10,Other guilds directory-level; rumors and defunct entries separated
+Lost Souls,Anatomy equipment and death,system pages,lost-souls.md,A21;A22;I09;P14,No server execution of injury rules
+Lost Souls,Materials damage and perception,system directories,lost-souls.md,A09;A23;I09,Not every material or type interaction validated
+Lost Souls,Bonds chakras and wild talents,system pages and selected guilds,lost-souls.md,A08;A15;A23;P05;P15,Community notes mark some bonuses uncertain
+Lost Souls,Challenges fates and voluntary transformations,system pages,lost-souls.md,G10;G23;I17,Fates mappings anecdotal
+Lost Souls,Services areas and community history,system pages and directories,lost-souls.md,P04;P13;P16,Area and creature category pagination not exhaustively traversed
+Lost Souls,Developer and messaging contracts,selected public manuals,lost-souls.md,A23;Q07;Q10,Source engine code not ported or audited
+CoffeeSUD,Existing authoring foundations,handbook audit and targeted source review,architecture.md,Q01;Q02;Q05;Q06,Not a repeat audit of every engine feature
+CoffeeSUD,Optional architecture and roadmap,original proposal,architecture.md,A01;I03;G01;G03;P01;Q11,No gameplay implementation in this task
+CoffeeSUD,Worked design recipes,ten original designs,cookbook.md,Q10,Proposed YAML explicitly non-runnable
