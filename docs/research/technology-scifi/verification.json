@@ -1,0 +1,32 @@
+{
+  "result": "pass",
+  "audit_date_utc": "2026-11-05",
+  "baseline": "8df259443699f517d7380696460644d395b9c4a8",
+  "proposals": 72,
+  "proposal_kinds": {
+    "extend": 47,
+    "new": 10,
+    "recipe": 3,
+    "repair": 12
+  },
+  "findings": 28,
+  "finding_evidence": {
+    "design limitation": 2,
+    "integration gap": 3,
+    "runtime observation": 11,
+    "static defect": 11,
+    "test gap": 1
+  },
+  "capability_groups": 34,
+  "source_snapshots": 121,
+  "dependency_edges": 175,
+  "dependency_graph_acyclic": true,
+  "markdown_files": 6,
+  "markdown_words": 20684,
+  "local_links": 259,
+  "proposal_only_yaml_sketches": 2,
+  "scenario_designs": 8,
+  "recorded_observation_lines": 16,
+  "scope": "Document/catalog/source-snapshot integrity; not proposed engine feature acceptance tests",
+  "runtime_scope": "Isolated narrow JRUN observations and Spaceangles baseline reproduction; no full engine suite or full ship campaign-restore run"
+}

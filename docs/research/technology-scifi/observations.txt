@@ -1,0 +1,16 @@
+TECHOBS F01 GenFuellessGenerator cap=40 rem=250
+TECHOBS F01 GenCompGenerator cap=40 rem=250
+TECHOBS F01 GenSpaceDrive cap=40 rem=250
+TECHOBS F02 recharge=1
+TECHOBS F03 type=SHIP_ENVIRO_CONTROL sameAs=false
+TECHOBS F04 health: 0%  a generic mob has a few bloody wounds.
+TECHOBS F05 DatabaseProgram provides=[IDENTIFICATION]
+TECHOBS F05 ShipSensorProgram provides=[]
+TECHOBS F06 ERROR NullPointerException
+TECHOBS F10 contact=an item original=audit asteroid
+TECHOBS F11 arc-index-errors=10/32
+TECHOBS F17 reachable-intercept=null
+TECHOBS F22 exported=true warns-unsaved=true
+TECHOBS F21 courseSet=true roundtrip=false
+TECHOBS DONE completed
+<20hp 100m 100mv> Spaceangles: OF Test #5 failed: 360.0,0.0
