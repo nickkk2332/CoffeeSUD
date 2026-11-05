@@ -102,6 +102,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [COMBATDEBUG](#combatdebug)
 - [COMBINE](#combine)
 - [COMPONENTS](#components)
+- [COMPOSE](#compose)
 - [CONSIDER](#consider)
 - [COSTUMING](#costuming)
 - [CRAFTQUALITY](#craftquality)
@@ -358,6 +359,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [WORLD](#world)
 - [WORLDMATERIALS](#worldmaterials)
 - [WORLDRULES](#worldrules)
+- [WORLD_COMPOSITIONS](#world-compositions)
 - [WORLD_MODULES](#world-modules)
 
 <a id="accept"></a>
@@ -4202,6 +4204,33 @@ exempt. You can enter LIST COMPONENTS to see current definitions, or CREATE COMP
 maintained in resources/skills/components.txt
 ```
 
+<a id="compose"></a>
+
+## COMPOSE
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3198.
+
+```text
+Ability : Ability composition (Skill_Compose)
+Usage   : COMPOSE (LIST)
+Usage   : COMPOSE LEARN/SHOW/FORGET [skill ID]
+Usage   : COMPOSE LINK/UNLINK [skill ID] [support ID]
+Usage   : COMPOSE CAST [skill ID] [target]
+Requires the optional abilities.composition module and the learned Skill_Compose ability.
+Installing the module does not grant it. LEARN selects an eligible authored skill version;
+LINK adds a compatible support. SHOW explains the compiled values and each modifier's
+source. UNLINK removes one support. FORGET removes a chosen skill; neither it nor LEARN
+resets cooldowns.
+Up to four chosen skills and three supports per skill are supported; the creator may lower
+limits. Each character keeps separate choices. Existing skills retain their selected
+versions across save/restore and content upgrades. LEARN explicitly adopts the latest
+version and clears supports. A missing or changed version suspends its binding until
+repaired or removed.
+The world controls available skills, prerequisites, support compatibility, costs, timing,
+chain limits and secondary effects. Existing native abilities keep their ordinary behavior.
+See AHELP WORLD_COMPOSITIONS for creator tools.
+```
+
 <a id="consider"></a>
 
 ## CONSIDER
@@ -6000,7 +6029,7 @@ ignored.  CoffeeSUD: MODIFY BEHAVIOR [ID] edits a generic behaviour, and MODIFY 
 
 ## MODULES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3198.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3218.
 
 ```text
 Command : MODULES
@@ -11328,11 +11357,35 @@ are more at creation; its LVLPRAC and LVLTRAIN, and a GenCharClass's LVLTRAIN, a
 trainsForLevel, when set, have the last word.
 ```
 
+<a id="world-compositions"></a>
+
+## WORLD_COMPOSITIONS
+
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3349.
+
+```text
+Command : WORLD COMPOSITIONS
+Usage   : WORLD COMPOSITIONS CHECK/RELOAD
+Builder/DEV tools for the optional abilities.composition module. CHECK validates flat
+world/compositions/<id>.v<version>.json files without changing the live library; WORLD CHECK
+ ONLY=COMPOSITIONS also includes these findings. RELOAD atomically accepts a valid library
+and its file provenance. Existing character bindings keep their selected versions and
+hashes; missing or changed pins suspend.
+The module is default off and is selected/adopted using WORLD MODULES. Grant Skill_Compose
+through normal progression or creator tools; then COMPOSE lets players select skills and
+link compatible supports. Data definitions control typed damage, tags, prerequisites,
+modifiers, costs, timing, bounded chaining and burning. SAVE preserves hand-authored files
+and character-owned choices.
+See docs/creator/15-ability-composition.md and its runnable example pack.
+No arbitrary scripts execute inside the modifier compiler. Existing abilities are unaffected
+ unless explicitly integrated into an opt-in adapter.
+```
+
 <a id="world-modules"></a>
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3349.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3366.
 
 ```text
 Command : WORLD MODULES

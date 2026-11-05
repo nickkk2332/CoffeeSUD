@@ -325,6 +325,7 @@ public final class SaveGame
 	public static void beforeBoot(final String contentDbService)
 	{
 		OptionalModules.reset();
+		AbilityComposition.reset();
 		JSJobs.reset();
 		ScriptMenus.fromXML(null); Narration.clear();
 		bootOverrides.clear();

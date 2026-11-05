@@ -60,7 +60,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS" };
 
 	/** one thing found */
 	public static final class Finding
@@ -338,6 +338,9 @@ public final class WorldCheck
 		final List<Finding> out = new ArrayList<Finding>();
 		final List<Room> rooms = roomsOf(only);
 		final boolean all = (parts == null) || parts.isEmpty();
+		if(all || parts.contains("COMPOSITIONS"))
+			for(final String error : AbilityComposition.check().errors)
+				out.add(new Finding(Severity.ERROR, "COMPOSITIONS", error));
 		if(all || parts.contains("MODULES"))
 		{
 			final ModuleDefinitions.Plan modules = OptionalModules.configuredPlan();

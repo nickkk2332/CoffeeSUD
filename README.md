@@ -50,6 +50,10 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
   dependencies and keep typed campaign state with migration/suspension rules.
   New modules default off; an example counter demonstrates the lifecycle.
   See the [module guide](docs/creator/14-optional-modules.md).
+- **Optional composed abilities.** Versioned base skills and supports combine
+  tags, damage, costs, timing, bounded chains and burning through an inspectable
+  modifier pipeline. Characters retain independent choices and cooldowns across
+  saves. See the [guide and example](docs/creator/15-ability-composition.md).
 - **More for content authors.** CoffeeSUD adds new MOBPROG triggers and
   functions, and fuller JavaScript (Rhino, ES6). Quests gain:
   - a journal with objectives;

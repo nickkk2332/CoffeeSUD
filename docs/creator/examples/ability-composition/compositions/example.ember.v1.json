@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "kind": "skill",
+  "id": "example.ember",
+  "version": 1,
+  "name": "Ember bolt",
+  "tags": ["spell", "projectile", "fire"],
+  "damage": {"fire": 12},
+  "stats": {"mana": 6, "actions": 1, "cooldown": 2, "range": 5}
+}

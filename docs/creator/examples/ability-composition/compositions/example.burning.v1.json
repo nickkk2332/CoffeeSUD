@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "kind": "support",
+  "id": "example.burning",
+  "version": 1,
+  "name": "Lingering fire",
+  "requires_all": ["fire"],
+  "adds_tags": ["burning"],
+  "modifiers": [
+    {"stat": "burn_damage", "op": "flat", "value": 3},
+    {"stat": "burn_ticks", "op": "flat", "value": 3},
+    {"stat": "burn_chance", "op": "cap", "value": 75},
+    {"stat": "mana", "op": "flat", "value": 2}
+  ]
+}

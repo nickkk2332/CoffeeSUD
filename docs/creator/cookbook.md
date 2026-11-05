@@ -2,6 +2,11 @@
 
 [Handbook](README.md) · [Runnable museum](examples/README.md)
 
+For the optional ARPG skill/support recipe, see
+[ability composition](15-ability-composition.md#install-the-playable-example):
+install the module separately, grant its adapter, then link chaining, burning
+and power supports to Ember bolt.
+
 These recipes combine systems rather than listing hypothetical features.
 The museum pack supplies a tested end-to-end world for recipes 1–7, 17 and 21's
 language foundation. Other recipes are authoring patterns with explicit setup

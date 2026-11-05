@@ -987,6 +987,22 @@ public class WorldCmd extends StdCommand
 			mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2)));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("COMPOSITIONS"))
+		{
+			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))
+				mob.tell("WORLD COMPOSITIONS is for builder mode or a DEV=1 game.");
+			else
+			{
+				try
+				{
+					if(commands.size() == 3 && commands.get(2).equalsIgnoreCase("RELOAD")) mob.tell(AbilityComposition.reload());
+					else if(commands.size() == 2 || commands.size() == 3 && commands.get(2).equalsIgnoreCase("CHECK")) mob.tell(AbilityComposition.check().report());
+					else mob.tell("WORLD COMPOSITIONS [CHECK/RELOAD]; definitions live in world/compositions/*.json.");
+				}
+				catch(final java.io.IOException e) { mob.tell("Compositions: " + e.getMessage()); }
+			}
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("MODULES"))
 		{
 			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))

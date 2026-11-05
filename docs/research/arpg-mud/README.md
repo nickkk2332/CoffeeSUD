@@ -20,6 +20,12 @@ now supplies module manifests, validation, scoped state and basic version
 migrations. These establish the first Q01/Q02/Q06 contracts; feature-specific
 ARPG validators, migrations and gameplay remain separate work.
 
+Stage 2's [ability-composition slice](../../creator/15-ability-composition.md)
+implements the first A01/A02 family: authored direct-hit skills, three example
+supports, deterministic modifiers, bounded chaining/burning and version-pinned
+character loadouts. It remains default off. This does not mark the broader
+trigger, item, passive-tree or other research proposals complete.
+
 ## Reading routes
 
 | Start here if you want… | Guide |

@@ -67,7 +67,7 @@ The following is supported JSON, not proposal syntax:
 | `id` | Stable module identity, matching the filename |
 | `title` | Human-readable name; changing it alone does not change the rule contract |
 | `version` | Positive integer rule/schema version; saved campaigns record it |
-| `handler` | `data` by default; `example.counter` is the included demonstration handler |
+| `handler` | `data` by default; `example.counter` is the demonstration; `abilities.composition` selects the registered [native skill adapter](15-ability-composition.md) |
 | `requires` | Object mapping dependency IDs to exact positive integer versions |
 | `conflicts` | IDs that cannot be selected together; one declaration is sufficient |
 | `clock_modes` | Nonempty array drawn from `TURNS`, `REALTIME` |
@@ -124,6 +124,13 @@ may truncate a long display while preserving the complete saved data.
 Nested arbitrary state objects, executable migration scripts and arbitrary
 handler class names are not part of schema 1. Trusted Java/JavaScript extensions
 can use the state API and explicitly guard their behavior with module activation.
+
+Native consumers can require an engine capability in their saved capsule.
+`abilities.composition` writes `requires_handler`, retained even when suspended
+or its definition is removed. Unsupported handlers refuse restoration before
+objects/effects load. Older readers reject the capability field rather than
+silently dropping native abilities. Data-only capsules retain their original
+shape and compatibility.
 
 ## State ownership and extension APIs
 

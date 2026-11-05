@@ -13,7 +13,17 @@ V.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
 function find(name, tags) { var I = CMClass.getItem("GenItem"); I.setName(name); I.setDisplayText(name + " is here."); var x = s(CMLib.coffeeMaker().getItemXML(I)); I.destroy(); var e = x.lastIndexOf("</ITEM>"); return x.substring(0, e) + tags + x.substring(e); }
 function skill(cls, xml, yieldF) { var G = CMClass.getAbility("GenGatheringSkill").copyOf(); G.setStat("CLASS", cls); G.setStat("NAME", cls); G.setStat("TRIGSTR", cls.toUpperCase()); G.setStat("ITEMXML", "<ITEMS>" + xml + "</ITEMS>"); G.setStat("YIELDFORMULA", yieldF); G.setStat("MATLIST", "WOODEN"); var A = G.copyOf(); A.setProficiency(100); V.addAbility(A); return V.fetchAbility(cls); }
 function count(name) { var n = 0; for (var i = 0; i < X.numItems(); i++) if (has(X.getItem(i).Name(), name)) n++; for (var e = V.items(); e.hasMoreElements();) if (has(e.nextElement().Name(), name)) n++; return n; }
-function gather(A) { var C = new java.util.ArrayList(); A.invoke(V, C, null, false, 0); var E = V.fetchEffect(A.ID()); var f = (E == null) ? null : field(E, "found"); if (E != null) { E.unInvoke(); V.delEffect(E); } return f; }
+// This fixture checks yield data. Native skills keep a failure chance at proficiency 100,
+// so allow an ordinary fizzle without making the yield assertion depend on one roll.
+function gather(A) {
+    for (var attempt = 0; attempt < 10; attempt++) {
+        var C = new java.util.ArrayList(); A.invoke(V, C, null, false, 0);
+        var E = V.fetchEffect(A.ID()), f = (E == null) ? null : field(E, "found");
+        if (E != null) { E.unInvoke(); V.delEffect(E); }
+        if (f != null) return f;
+    }
+    return null;
+}
 try {
 	var A = skill("FixCr9Combing", find("a fixcr9 driftwood", "<FREQ>90</FREQ>") + find("a fixcr9 shell", "<FREQ>10</FREQ><YIELD>@x1</YIELD>")
 		+ find("a fixcr9 amber", "<MASK>-LEVEL +&gt;50</MASK>") + find("a fixcr9 bottle", "<FREQ>0</FREQ>"), "1");

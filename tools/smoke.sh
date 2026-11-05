@@ -204,7 +204,8 @@ else
 fi
 
 echo "Session 8b: a second character in the profile, then back to the first"
-play profile.txt 'profile\nlogoff\ny\nnew Bran\ny\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nswitch hero\nscore\nsave party\nquit\nn\n' RESTORE=hero
+# Keep the creation/menu test independent of live combat and wait for its asynchronous menu.
+play profile.txt 'purge minotaur\npurge goblin\nprofile\nlogoff\ny\n#expect Command or Name\nnew Bran\ny\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nswitch hero\nscore\nsave party\nquit\nn\n' RESTORE=hero RANDOMSEED=42 TIMEMODE=TURNS
 expect profile.txt "Your characters:"
 expect profile.txt "Create a new character called 'Bran'"
 expect profile.txt "You are Bran the level 1 Apprentice."

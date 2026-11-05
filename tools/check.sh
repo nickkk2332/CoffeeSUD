@@ -14,6 +14,13 @@ START=$(date +%s)
 "$ROOT/CoffeeMud/build.sh" > "$OUT/build.txt" 2>&1 || { cat "$OUT/build.txt"; exit 1; }
 
 FAIL=0
+"$ROOT/tools/composition-tests.sh" > "$OUT/composition.txt" 2>&1
+if [ $? -eq 0 ]; then
+	echo "composition: PASS ($(grep -c '^ok ' "$OUT/composition.txt") checks)"
+else
+	echo "composition: FAILED (see $OUT/composition.txt)"
+	FAIL=1
+fi
 report()  # report NAME PID
 {
 	wait "$2"

@@ -72,16 +72,20 @@ public final class OptionalModules
     private static final class Capsule
     {
         final String id;
+        final String requiredHandler;
         int version;
         String fingerprint, removal, problem = "";
         JSONObject settings;
         final Map<String,JSONObject> records = new TreeMap<String,JSONObject>();
         Capsule(final Definition def, final JSONObject configured) throws IOException
-        { id = def.id; version = def.version; fingerprint = def.fingerprint; removal = def.removal; settings = ModuleDefinitions.copy(configured); }
+        { id = def.id; requiredHandler = ModuleDefinitions.nativeHandler(def.handler) ? def.handler : ""; version = def.version; fingerprint = def.fingerprint; removal = def.removal; settings = ModuleDefinitions.copy(configured); }
         Capsule(final JSONObject saved) throws IOException
         {
-            ModuleDefinitions.keys(saved, "saved module", "id", "version", "fingerprint", "on_disable", "settings", "records");
+            ModuleDefinitions.keys(saved, "saved module", "id", "version", "fingerprint", "on_disable", "settings", "records", "requires_handler");
             id = ModuleDefinitions.id(saved.get("id")); version = ModuleDefinitions.integer(saved.get("version"), "saved module version");
+            requiredHandler = saved.containsKey("requires_handler") ? ModuleDefinitions.string(saved.get("requires_handler"), "requires_handler") : ModuleDefinitions.nativeHandler(id) ? id : "";
+            if(saved.containsKey("requires_handler") && !ModuleDefinitions.nativeHandler(requiredHandler)
+                || ModuleDefinitions.nativeHandler(id) && !id.equals(requiredHandler)) throw new IOException(id + ": unavailable native module handler " + requiredHandler);
             fingerprint = ModuleDefinitions.string(saved.get("fingerprint"), "saved fingerprint");
             if(!fingerprint.matches("[0-9a-f]{64}")) throw new IOException(id + ": invalid saved fingerprint");
             removal = ModuleDefinitions.string(saved.get("on_disable"), "saved on_disable");
@@ -100,6 +104,7 @@ public final class OptionalModules
         JSONObject saved()
         {
             final JSONObject out = new JSONObject(); out.put("id", id); out.put("version", Long.valueOf(version));
+            if(!requiredHandler.isEmpty()) out.put("requires_handler", requiredHandler);
             out.put("fingerprint", fingerprint); out.put("on_disable", removal); out.put("settings", settings);
             out.put("records", records.values().toArray(new Object[0])); return out;
         }

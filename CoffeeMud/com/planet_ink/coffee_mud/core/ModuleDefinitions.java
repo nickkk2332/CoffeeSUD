@@ -11,6 +11,8 @@ import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 /** Pure world-owned optional-module definitions. Loading/validation never activates gameplay. */
 public final class ModuleDefinitions
 {
+    /** Native consumers that must be present before their saved abilities/effects can be restored. */
+    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler); }
     private ModuleDefinitions() { }
     public static final int SCHEMA = 1;
     public static final int MAX_FILES = 256, MAX_FILE_BYTES = 262144, MAX_RECORDS = 10000;
@@ -171,7 +173,9 @@ public final class ModuleDefinitions
             removal = obj.containsKey("on_disable") ? string(obj.get("on_disable"), "on_disable") : "suspend";
             if(!names("suspend", "refuse").contains(removal)) throw new IOException("on_disable must be suspend or refuse");
             handler = obj.containsKey("handler") ? string(obj.get("handler"), "handler") : "data";
-            if(!names("data", "example.counter").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
+            if(!names("data", "example.counter", "abilities.composition").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
+            if(nativeHandler(handler) && !id.equals(handler) || nativeHandler(id) && !handler.equals(id))
+                throw new IOException("abilities.composition requires its registered native handler and module ID");
             final Map<String,Integer> deps = new TreeMap<String,Integer>();
             final JSONObject requested = optionalObject(obj, "requires");
             for(final String dep : requested.keySet()) deps.put(id(dep), Integer.valueOf(integer(requested.get(dep), "requires." + dep)));
@@ -187,6 +191,24 @@ public final class ModuleDefinitions
             if(owners.isEmpty() || !SCOPES.containsAll(owners)) throw new IOException("scopes must name supported state owners");
             scopes = Collections.unmodifiableSet(owners);
             settings = fields(optionalObject(obj, "settings"), "settings"); state = fields(optionalObject(obj, "state"), "state");
+            if(nativeHandler(handler))
+            {
+                if(!scopes.contains("character")) throw new IOException("abilities.composition requires character scope");
+                for(final String key : names("loadouts", "cooldowns"))
+                {
+                    final Field field = state.get(key);
+                    if(field == null || !field.type.equals("string") || field.length != 4096 || !field.choices.isEmpty()
+                        || !parse((String)field.initial).isEmpty()) throw new IOException("abilities.composition requires empty JSON-object string state." + key + " with max_length 4096");
+                }
+                final String[] keys = { "max_supports", "max_chains", "event_budget" }; final long[] mins = { 0, 0, 1 }, maxes = { 3, 8, 64 };
+                for(int i = 0; i < keys.length; i++)
+                {
+                    final Field field = settings.get(keys[i]);
+                    if(field == null || !field.type.equals("integer") || field.minimum == null || field.maximum == null
+                        || field.minimum.longValue() < mins[i] || field.maximum.longValue() > maxes[i])
+                        throw new IOException("abilities.composition requires bounded integer settings." + keys[i] + " within " + mins[i] + ".." + maxes[i]);
+                }
+            }
             if(handler.equals("example.counter") && (state.size() != 1 || !state.containsKey("count") || !state.get("count").type.equals("integer")
                 || !settings.containsKey("step") || !settings.get("step").type.equals("integer") || !scopes.contains("character")))
                 throw new IOException("example.counter requires integer state.count, integer settings.step and character scope");

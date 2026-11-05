@@ -2818,6 +2818,20 @@ public final class WorldFiles
         knownSums=next;
     }
 
+    /** Only the flat JSON assets actually validated by WORLD COMPOSITIONS RELOAD. */
+    public static synchronized void acceptCompositionChanges()
+    {
+        final Map<String,String> next = new TreeMap<String,String>(knownSums);
+        next.keySet().removeIf(path -> path.startsWith("compositions/") && path.endsWith(".json") && path.substring(13).indexOf('/') < 0);
+        for(final String path : com.planet_ink.coffee_mud.core.WorldAssets.paths())
+            if(path.startsWith("compositions/") && path.endsWith(".json") && path.substring(13).indexOf('/') < 0)
+            {
+                final String sum = sumOf(new File(worldDir,path));
+                if(sum != null) next.put(path,sum);
+            }
+        knownSums = next;
+    }
+
 	/**
 	 * Returns a checksum of the content files: their paths in the world folder
 	 * and their contents.

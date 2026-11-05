@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "abilities.composition",
+  "title": "Optional composed abilities",
+  "version": 1,
+  "handler": "abilities.composition",
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character"],
+  "on_disable": "suspend",
+  "settings": {
+    "max_supports": {"type": "integer", "default": 3, "min": 0, "max": 3},
+    "max_chains": {"type": "integer", "default": 4, "min": 0, "max": 8},
+    "event_budget": {"type": "integer", "default": 32, "min": 1, "max": 64}
+  },
+  "state": {
+    "loadouts": {"type": "string", "default": "{}", "max_length": 4096},
+    "cooldowns": {"type": "string", "default": "{}", "max_length": 4096}
+  }
+}

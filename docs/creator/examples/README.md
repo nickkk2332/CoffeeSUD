@@ -11,6 +11,9 @@ The separate [optional-module example](optional-modules/README.md) demonstrates
 default-off selection, a character-owned practice counter, dependencies and
 fresh-process save compatibility without changing this museum or the default world.
 
+The [ability-composition pack](ability-composition/README.md) adds a separately
+enabled Ember bolt skill with chaining, burning and power supports.
+
 ## Automated tour
 
 From the repository root, with a JDK on PATH:

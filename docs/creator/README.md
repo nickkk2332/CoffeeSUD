@@ -27,6 +27,7 @@ names such as `Harbour#2` are placeholders; create them or substitute your IDs.
 | Generate dungeons, encounters, loot and names | [Generation](12-generation.md) |
 | Diagnose, automate tests, migrate saves and release a world | [Testing and release](13-testing-release.md) |
 | Select optional modules and preserve their scoped campaign state | [Optional modules](14-optional-modules.md) |
+| Author optional tagged skills, supports, chains and burning | [Ability composition](15-ability-composition.md) |
 
 ## References and examples
 
@@ -70,7 +71,9 @@ The [feature index](feature-index.md#deferred-work) lists deliberate deferrals.
 The proposed “executions” cutscene system is a design draft, not an available API.
 The newer [optional-module foundation](14-optional-modules.md) is documented
 separately from those 409 review entries. Its working example does not implement
-the ARPG, guild or companion features proposed in the research dossiers.
+the guild or companion features proposed in the research dossiers. The newer
+[ability-composition slice](15-ability-composition.md) supplies opt-in direct-hit
+skills and supports, separately from the original review inventory.
 
 ## Finding authoritative detail
 
