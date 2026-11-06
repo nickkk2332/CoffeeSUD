@@ -121,7 +121,7 @@ try {
     throws("invalid-mask-reload-refused",function(){AC.reload();});badMask.delete();
     check("failed-gate-reload-keeps-pins",AC.compiled(bob,"test.gated").skill.version==1,"gate reload altered binding");
     // No paid invocation while inactive; all already-applied burns stop safely.
-    CM.Abilities.Misc.CompositionBurn.apply(bob,victim,5,3,skill);
+    var burnSeed=CM.core.GenSeed.begin(1);try{CM.Abilities.Misc.CompositionBurn.apply(bob,victim,5,3,skill);}finally{CM.core.GenSeed.end(burnSeed);}
     check("burn-before-disable",victim.fetchEffect("CompositionBurn")!=null,"missing burn");
     var offPlan=MD.load(folder,"","");currentField.set(null,OM.prepare(offPlan,String(OM.snapshot()),true));
     var hp=victim.curState().getHitPoints(),manaBefore=bob.curState().getMana();

@@ -100,6 +100,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [CLANRESIGN](#clanresign)
 - [COBBLING](#cobbling)
 - [COMBATDEBUG](#combatdebug)
+- [COMBATRESULT](#combatresult)
 - [COMBINE](#combine)
 - [COMPONENTS](#components)
 - [COMPOSE](#compose)
@@ -199,6 +200,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_CLOSECOMMAND](#prop-closecommand)
 - [PROP_CLOSEDDAYNIGHT](#prop-closeddaynight)
 - [PROP_CLOSEDSEASON](#prop-closedseason)
+- [PROP_COMBATSTATS](#prop-combatstats)
 - [PROP_COMBOLOCK](#prop-combolock)
 - [PROP_CRAFTXP](#prop-craftxp)
 - [PROP_CROPRULES](#prop-croprules)
@@ -359,6 +361,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [WORLD](#world)
 - [WORLDMATERIALS](#worldmaterials)
 - [WORLDRULES](#worldrules)
+- [WORLD_COMBAT](#world-combat)
 - [WORLD_COMPOSITIONS](#world-compositions)
 - [WORLD_MODULES](#world-modules)
 
@@ -4174,6 +4177,27 @@ or that stopped it, and what was dealt.  Damage outside an attack, a spell's, ge
  its own.  LOG writes the lines to a file as well.
 ```
 
+<a id="combatresult"></a>
+
+## COMBATRESULT
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3218.
+
+```text
+Command : COMBATRESULT
+Usage   : COMBATRESULT ([1-8])
+Usage   : COMBATRESULT STATS
+Read your recent resolved combat-profile events, or your current profile stats. Requires the
+ optional combat.profiles module and its player_trace setting. The newest result is 1.
+Chains and burn ticks each create results, so the latest may be a burn. Shows the recorded
+rolls, rules, world approval and HP removed; reading it repeats no action and consumes no
+dice or scheduler time.
+Only composed direct hits and their profiled burns currently use these rules. Ordinary
+native combat keeps its existing behavior. History holds at most eight events per
+participant and starts anew after boot/restore. Creators can use WORLD COMBAT for profile
+selection, validation and broader inspection.
+```
+
 <a id="combine"></a>
 
 ## COMBINE
@@ -4486,6 +4510,8 @@ Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
+Usage    : WORLD COMPOSITIONS CHECK/RELOAD
+Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD TEST ([FILE.play/FILE.test/FILE.js])
 Usage    : WORLD CHECK (AREA ([NAME])) (LOG) (ONLY=[PART],[PART]...)
 Usage    : WORLD DEV (([AREA]) ON/OFF)
@@ -6029,7 +6055,7 @@ ignored.  CoffeeSUD: MODIFY BEHAVIOR [ID] edits a generic behaviour, and MODIFY 
 
 ## MODULES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3218.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3232.
 
 ```text
 Command : MODULES
@@ -6955,6 +6981,27 @@ Description:
 Affects the thing with this property depending on the weather, or time of the year. By
 default, this property does not activate.  You must specify one or more times, seasons, or
 conditions under which the object will no longer be visible.
+```
+
+<a id="prop-combatstats"></a>
+
+## PROP_COMBATSTATS
+
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3388.
+
+```text
+Property : Combat profile stats
+Parameters: strict JSON, e.g.
+{"schema":1,"armor":200,"resistance":{"fire":50},"penetration":{"fire":20}}
+CoffeeSUD optional profile combat only. Attach to a MOB or owned worn top-level item. Adds
+accuracy/evasion/armor, block/spell_block/crit_chance/crit_multiplier points, typed
+resistance/penetration and immune type lists. Types: physical, fire, cold, electric, acid;
+immunity also accepts burning. Critical multiplier is additive points: +50 changes default
+150% to 200%. Unequipping/removing the source removes the bonus; ordinary engine stats are
+not changed.
+At most 64 sources per actor and 8192 characters per property. Invalid primary stats reject
+casts before costs. WORLD CHECK ONLY=COMBAT diagnoses properties. See AHELP WORLD_COMBAT and
+ docs/creator/16-combat-profiles.md for ranges and order.
 ```
 
 <a id="prop-combolock"></a>
@@ -11218,6 +11265,8 @@ Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
+Usage    : WORLD COMPOSITIONS CHECK/RELOAD
+Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD TEST ([FILE.play/FILE.test/FILE.js])
 Usage    : WORLD CHECK (AREA ([NAME])) (LOG) (ONLY=[PART],[PART]...)
 Usage    : WORLD DEV (([AREA]) ON/OFF)
@@ -11357,11 +11406,38 @@ are more at creation; its LVLPRAC and LVLTRAIN, and a GenCharClass's LVLTRAIN, a
 trainsForLevel, when set, have the last word.
 ```
 
+<a id="world-combat"></a>
+
+## WORLD_COMBAT
+
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3368.
+
+```text
+Command : WORLD COMBAT
+Usage   : WORLD COMBAT LIST/CHECK/RELOAD
+Usage   : WORLD COMBAT PIN/USE [ID] ([version])
+Usage   : WORLD COMBAT TRACE/STATS ([character])
+Builder/DEV tools for default-off combat.profiles, which depends on abilities.composition.
+Flat world/combat/<id>.v<version>.json files define final/history conversion, accuracy,
+armor, resistance, penetration, block, criticals and caps for composed hits and their
+profiled burns. Ordinary native attacks/spells keep their rules.
+CHECK validates disk and the selected campaign pin; WORLD CHECK ONLY=COMBAT also checks
+loaded stat properties. RELOAD accepts a valid library/provenance atomically without
+upgrading existing pins. PIN prints an escaped ID/version/hash setting string. USE selects a
+ profile for this campaign; SAVE retains it. Omitting the version explicitly selects the
+highest installed version. Keep old profile files for saved choices and pending burns.
+Missing/changed pins suspend affected events.
+TRACE reads the latest actual result; STATS reads merged profile stats. Player COMBATRESULT
+reads only their own history, unless player_trace is disabled. Histories are bounded and
+clear on boot/restore. Inspection rolls no dice. See docs/creator/16-combat-profiles.md for
+schema, formulas and limitations.
+```
+
 <a id="world-compositions"></a>
 
 ## WORLD_COMPOSITIONS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3349.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3351.
 
 ```text
 Command : WORLD COMPOSITIONS
@@ -11385,7 +11461,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3366.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3401.
 
 ```text
 Command : WORLD MODULES

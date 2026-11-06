@@ -94,16 +94,27 @@ public class Skill_Compose extends StdAbility
         {
             final MOB target = getTarget(mob, new ArrayList<String>(args.subList(2, args.size())), givenTarget);
             if(!legal(mob, target, mob.location())) return false;
+            final CombatProfiles.Cast profile = CombatProfiles.prepare(mob, target);
             AbilityComposition.canCast(mob, compiled.skill.id);
             final int chains = Math.min((int)Math.floor(compiled.value("chains")), AbilityComposition.setting("max_chains", 0, 8));
             final Budget budget = new Budget(AbilityComposition.setting("event_budget", 1, 64));
-            if(!super.invoke(mob, args, target, false, asLevel)) return false;
+            final int manaBefore = mob.curState().getMana(), movementBefore = mob.curState().getMovement();
+            final boolean invoked = super.invoke(mob, args, target, false, asLevel);
+            CombatProfiles.paid(profile, Math.max(0,manaBefore-mob.curState().getMana()), Math.max(0,movementBefore-mob.curState().getMovement()));
+            if(!invoked) { CombatProfiles.failed(mob,target,compiled,profile,"Native invocation rejected."); return false; }
             AbilityComposition.cooldown(mob, compiled.skill.id, (int)Math.ceil(compiled.value("cooldown")));
-            if(!proficiencyCheck(mob, 0, false)) return maliciousFizzle(mob, target, "<S-NAME> fail(s) to use " + compiled.skill.name + ".");
+            if(!proficiencyCheck(mob, 0, false))
+            {
+                CombatProfiles.failed(mob,target,compiled,profile,"Native proficiency fizzle; cooldown retained.");
+                return maliciousFizzle(mob, target, "<S-NAME> fail(s) to use " + compiled.skill.name + ".");
+            }
             final Room room = mob.location();
             final CMMsg msg = CMClass.getMsg(mob, target, this, CMMsg.MASK_MALICIOUS | CMMsg.MSG_NOISYMOVEMENT, "<S-NAME> use(s) " + compiled.skill.name + " against <T-NAMESELF>!");
-            if(!room.okMessage(mob, msg)) return false;
-            room.send(mob, msg); setInvoker(mob);
+            final boolean delivered;
+            if(profile != null) delivered=CombatProfiles.announce(mob,target,this,msg);
+            else { delivered=room.okMessage(mob,msg); if(delivered) room.send(mob,msg); }
+            if(!delivered) { CombatProfiles.failed(mob,target,compiled,profile,"World vetoed or redirected the paid cast."); return false; }
+            setInvoker(mob);
             // Snapshot candidates once. New arrivals, recursive effects and duplicate names cannot add hops.
             final List<MOB> targets = new ArrayList<MOB>(); targets.add(target);
             for(int i = 0; i < room.numInhabitants() && targets.size() <= chains; i++)
@@ -114,7 +125,8 @@ public class Skill_Compose extends StdAbility
             for(final MOB victim : targets)
             {
                 if(budget.left <= 0 || !legal(mob, victim, room)) continue;
-                hit(mob, victim, compiled, budget);
+                if(profile == null) hit(mob, victim, compiled, budget);
+                else CombatProfiles.hit(mob, victim, this, compiled, profile, budget);
             }
             return true;
         }
@@ -125,7 +137,7 @@ public class Skill_Compose extends StdAbility
         if(caster == null || target == null || target == caster || room == null || caster.location() != room || target.location() != room || caster.amDead() || target.amDead() || target.amDestroyed() || !caster.mayIFight(target)) return false;
         return !caster.getGroupMembers(new HashSet<MOB>()).contains(target) && CMLib.flags().canBeSeenBy(target, caster);
     }
-    private static final class Budget { int left; Budget(final int n) { left = n; } boolean take() { if(left <= 0) return false; left--; return true; } }
+    private static final class Budget implements CombatProfiles.Budget { int left; Budget(final int n) { left = n; } public boolean take() { if(left <= 0) return false; left--; return true; } }
     private static final int[] MESSAGES = { CMMsg.TYP_JUSTICE, CMMsg.TYP_FIRE, CMMsg.TYP_COLD, CMMsg.TYP_ELECTRIC, CMMsg.TYP_ACID };
     private static final int[] WEAPONS = { Weapon.TYPE_BASHING, Weapon.TYPE_BURNING, Weapon.TYPE_FROSTING, Weapon.TYPE_STRIKING, Weapon.TYPE_MELTING };
     private void hit(final MOB caster, final MOB victim, final Compiled compiled, final Budget budget) throws IOException

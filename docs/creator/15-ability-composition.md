@@ -65,6 +65,10 @@ With all three supports: 14.4 damage (rounded to 14 at the hit boundary),
 three ticks of 3 fire damage. Proficiency, attack rolls for attacks, saves,
 immunities, engine damage adjustments, criticals and death handling still apply.
 Compiled values describe the composition layer, rather than guaranteed HP loss.
+With the optional [combat-profile module](16-combat-profiles.md), composed hits
+and their new burns instead use its explicit damage/defense pipeline and
+resolved-event traces. The native behavior described here applies when that
+child module is off.
 
 ## Author skills and supports
 

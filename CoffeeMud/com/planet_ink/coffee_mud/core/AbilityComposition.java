@@ -167,7 +167,7 @@ public final class AbilityComposition
     public static String show(final MOB mob, final String id) throws IOException
     {
         final Compiled c = compiled(mob, id);
-        return c.describe() + "\nCampaign limits: " + setting("max_supports", 0, 3) + " supports; " + setting("max_chains", 0, 8)
+        return (OptionalModules.enabled(CombatRules.MODULE) ? CombatProfiles.describe(mob, c) : c.describe()) + "\nCampaign limits: " + setting("max_supports", 0, 3) + " supports; " + setting("max_chains", 0, 8)
             + " chain hops; " + setting("event_budget", 1, 64) + " damage/secondary events per cast."
             + "\nCooldown remaining: " + remaining(mob, id) + " ticks. Engine damage adjustments still apply.";
     }

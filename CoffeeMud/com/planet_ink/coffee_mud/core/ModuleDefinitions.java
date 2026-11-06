@@ -12,7 +12,7 @@ import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 public final class ModuleDefinitions
 {
     /** Native consumers that must be present before their saved abilities/effects can be restored. */
-    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler); }
+    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler) || "combat.profiles".equals(handler); }
     private ModuleDefinitions() { }
     public static final int SCHEMA = 1;
     public static final int MAX_FILES = 256, MAX_FILE_BYTES = 262144, MAX_RECORDS = 10000;
@@ -173,9 +173,9 @@ public final class ModuleDefinitions
             removal = obj.containsKey("on_disable") ? string(obj.get("on_disable"), "on_disable") : "suspend";
             if(!names("suspend", "refuse").contains(removal)) throw new IOException("on_disable must be suspend or refuse");
             handler = obj.containsKey("handler") ? string(obj.get("handler"), "handler") : "data";
-            if(!names("data", "example.counter", "abilities.composition").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
+            if(!names("data", "example.counter", "abilities.composition", "combat.profiles").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
             if(nativeHandler(handler) && !id.equals(handler) || nativeHandler(id) && !handler.equals(id))
-                throw new IOException("abilities.composition requires its registered native handler and module ID");
+                throw new IOException("native modules require their registered handler and matching module ID");
             final Map<String,Integer> deps = new TreeMap<String,Integer>();
             final JSONObject requested = optionalObject(obj, "requires");
             for(final String dep : requested.keySet()) deps.put(id(dep), Integer.valueOf(integer(requested.get(dep), "requires." + dep)));
@@ -191,7 +191,7 @@ public final class ModuleDefinitions
             if(owners.isEmpty() || !SCOPES.containsAll(owners)) throw new IOException("scopes must name supported state owners");
             scopes = Collections.unmodifiableSet(owners);
             settings = fields(optionalObject(obj, "settings"), "settings"); state = fields(optionalObject(obj, "state"), "state");
-            if(nativeHandler(handler))
+            if(handler.equals("abilities.composition"))
             {
                 if(!scopes.contains("character")) throw new IOException("abilities.composition requires character scope");
                 for(final String key : names("loadouts", "cooldowns"))
@@ -212,6 +212,14 @@ public final class ModuleDefinitions
             if(handler.equals("example.counter") && (state.size() != 1 || !state.containsKey("count") || !state.get("count").type.equals("integer")
                 || !settings.containsKey("step") || !settings.get("step").type.equals("integer") || !scopes.contains("character")))
                 throw new IOException("example.counter requires integer state.count, integer settings.step and character scope");
+            if(handler.equals("combat.profiles"))
+            {
+                if(!requires.containsKey("abilities.composition") || !scopes.contains("world")) throw new IOException("combat.profiles requires abilities.composition and world scope");
+                final Field profile = settings.get("profile"), trace = settings.get("player_trace");
+                if(profile == null || !profile.type.equals("string") || profile.length != 4096 || trace == null || !trace.type.equals("boolean"))
+                    throw new IOException("combat.profiles requires string settings.profile (max_length 4096) and boolean settings.player_trace");
+                CombatRules.checkPin(parse((String)profile.initial));
+            }
             provides = Collections.unmodifiableSet(strings(obj, "provides")); for(final String name : provides) id(name);
             final List<JSONObject> refs = new ArrayList<JSONObject>();
             if(obj.containsKey("references")) for(final Object ref : array(obj.get("references"), "references"))

@@ -6,6 +6,9 @@ For the optional ARPG skill/support recipe, see
 [ability composition](15-ability-composition.md#install-the-playable-example):
 install the module separately, grant its adapter, then link chaining, burning
 and power supports to Ember bolt.
+For optional armor, resistance, penetration, block, criticals and alternative
+conversion rules, follow the [combat-profile recipe](16-combat-profiles.md#install-and-play)
+and [stat-property examples](16-combat-profiles.md#add-defense-and-offense-stats).
 
 These recipes combine systems rather than listing hypothetical features.
 The museum pack supplies a tested end-to-end world for recipes 1–7, 17 and 21's

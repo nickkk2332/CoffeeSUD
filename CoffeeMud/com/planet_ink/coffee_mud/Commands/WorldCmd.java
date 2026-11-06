@@ -987,6 +987,48 @@ public class WorldCmd extends StdCommand
 			mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2)));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("COMBAT"))
+		{
+			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))
+				mob.tell("WORLD COMBAT is for builder mode or a DEV=1 game. COMBATRESULT inspects your own resolved events.");
+			else try
+			{
+				final String sub = commands.size() > 2 ? commands.get(2).toUpperCase(java.util.Locale.ROOT) : "LIST";
+				if(sub.equals("CHECK"))
+				{
+					final CombatRules.Library lib = CombatProfiles.check();
+					mob.tell(lib.report() + "\n" + CombatProfiles.selectionProblem(lib));
+				}
+				else if(sub.equals("LIST")) mob.tell(CombatProfiles.list());
+				else if(sub.equals("RELOAD")) mob.tell(CombatProfiles.reload());
+				else if((sub.equals("PIN") || sub.equals("USE")) && (commands.size() == 4 || commands.size() == 5))
+				{
+					int version = 0;
+					if(commands.size() == 5)
+					{
+						try { version = Integer.parseInt(commands.get(4)); } catch(final NumberFormatException e) { throw new java.io.IOException("version must be a positive integer"); }
+						if(version < 1) throw new java.io.IOException("version must be positive");
+					}
+					final String id = commands.get(3).toLowerCase(java.util.Locale.ROOT);
+					mob.tell(sub.equals("USE") ? CombatProfiles.use(id, version) : ModuleDefinitions.json(CombatProfiles.pin(id, version)));
+				}
+				else if(sub.equals("TRACE") || sub.equals("STATS"))
+				{
+					MOB target = mob;
+					if(commands.size() > 3)
+					{
+						final String name = CMParms.combine(commands, 3);
+						target = mob.location() == null ? null : mob.location().fetchInhabitant(name);
+						if(target == null) target = CMLib.players().getPlayer(name);
+						if(target == null) throw new java.io.IOException("no such available character");
+					}
+					mob.tell(sub.equals("TRACE") ? CombatProfiles.trace(target, 1) : CombatProfiles.describeStats(target));
+				}
+				else mob.tell("WORLD COMBAT LIST/CHECK/RELOAD, PIN/USE [id] ([version]), TRACE/STATS ([character]).");
+			}
+			catch(final java.io.IOException e) { mob.tell("Combat profiles: " + e.getMessage()); }
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("COMPOSITIONS"))
 		{
 			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))

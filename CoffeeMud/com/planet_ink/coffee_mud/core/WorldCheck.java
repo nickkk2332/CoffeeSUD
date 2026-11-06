@@ -60,7 +60,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT" };
 
 	/** one thing found */
 	public static final class Finding
@@ -338,6 +338,14 @@ public final class WorldCheck
 		final List<Finding> out = new ArrayList<Finding>();
 		final List<Room> rooms = roomsOf(only);
 		final boolean all = (parts == null) || parts.isEmpty();
+		if(all || parts.contains("COMBAT"))
+		{
+			final CombatRules.Library profiles = CombatProfiles.check();
+			for(final String error : profiles.errors) out.add(new Finding(Severity.ERROR, "COMBAT", error));
+			final String selection = CombatProfiles.selectionProblem(profiles);
+			if(!selection.isEmpty()) out.add(new Finding(Severity.ERROR, "COMBAT", selection));
+			for(final String error : CombatProfiles.checkProperties(rooms)) out.add(new Finding(Severity.ERROR, "COMBAT", error));
+		}
 		if(all || parts.contains("COMPOSITIONS"))
 			for(final String error : AbilityComposition.check().errors)
 				out.add(new Finding(Severity.ERROR, "COMPOSITIONS", error));

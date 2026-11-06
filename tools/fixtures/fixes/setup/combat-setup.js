@@ -1,0 +1,11 @@
+FIXFILE="combat-played-setup";
+var ability=CMClass.getAbility("Skill_Compose");ability.setProficiency(100);M.addAbility(ability);
+M.baseState().setMana(1000);M.baseState().setHitPoints(10000);M.recoverMaxState();M.resetToMaxState();
+var target=newMob("GenMob",M.location());target.setName("ProfileTarget");target.setDisplayText("ProfileTarget stands here.");
+target.baseState().setHitPoints(10000);target.baseCharStats().setStat(CM.Common.interfaces.CharStats.STAT_SAVE_FIRE,1000);target.recoverCharStats();target.recoverMaxState();target.resetToMaxState();
+var ward=CMClass.getAbility("Prop_CombatStats");ward.setMiscText('{"schema":1,"resistance":{"fire":50}}');target.addNonUninvokableEffect(ward);
+var item=CMClass.getItem("GenArmor");item.setName("ProfileMail");item.setRawProperLocationBitmap(CM.Items.interfaces.Wearable.WORN_TORSO);M.addItem(item);
+var pen=CMClass.getAbility("Prop_CombatStats");pen.setMiscText('{"schema":1,"penetration":{"fire":20}}');item.addNonUninvokableEffect(pen);item.wearAt(CM.Items.interfaces.Wearable.WORN_TORSO);
+check("both-modules-enabled",CM.core.OptionalModules.enabled("combat.profiles")&&CM.core.OptionalModules.enabled("abilities.composition"),"module off");
+check("ordinary-character-not-archon",!CMSecurity.isASysOp(M),"test unexpectedly has all skills");
+done();

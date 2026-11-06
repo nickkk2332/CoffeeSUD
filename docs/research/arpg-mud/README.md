@@ -26,6 +26,12 @@ supports, deterministic modifiers, bounded chaining/burning and version-pinned
 character loadouts. It remains default off. This does not mark the broader
 trigger, item, passive-tree or other research proposals complete.
 
+Stage 3's [combat-profile slice](../../creator/16-combat-profiles.md) implements
+the first A09/A04 contracts for composed direct hits and their burns: final-type
+versus type-history conversion, explicit defenses, removable stat sources,
+version-pinned profiles and inspection of actual resolved events. Native combat,
+further ailments and recovery pools remain separate work. It is also default off.
+
 ## Reading routes
 
 | Start here if you want… | Guide |

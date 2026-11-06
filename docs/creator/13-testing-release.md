@@ -45,6 +45,7 @@ SAVEDIR. Character windows in one process share that process's campaign.
 | ORGCHECK | Organization/faction/government cross-references |
 | LAW TEST / PRICECHECK / PROGRESSION | Explain law, price and advancement decisions |
 | PUZZLE CHECK | Inspect existing switches/plates/blockages/signals |
+| WORLD COMPOSITIONS CHECK / WORLD COMBAT CHECK | Optional skill definitions and pinned combat rules; WORLD CHECK ONLY=COMBAT also checks loaded stat properties |
 
 `WORLD CHECK ONLY=VOCAB,LORE,TEMPLATES,ROUTES,IDS` targets the newer asset
 domains. Use WORLD CHECK with no filter for the complete running-build set.

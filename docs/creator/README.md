@@ -28,6 +28,7 @@ names such as `Harbour#2` are placeholders; create them or substitute your IDs.
 | Diagnose, automate tests, migrate saves and release a world | [Testing and release](13-testing-release.md) |
 | Select optional modules and preserve their scoped campaign state | [Optional modules](14-optional-modules.md) |
 | Author optional tagged skills, supports, chains and burning | [Ability composition](15-ability-composition.md) |
+| Choose optional damage/defense rules and explain actual combat results | [Combat profiles](16-combat-profiles.md) |
 
 ## References and examples
 
@@ -74,6 +75,8 @@ separately from those 409 review entries. Its working example does not implement
 the guild or companion features proposed in the research dossiers. The newer
 [ability-composition slice](15-ability-composition.md) supplies opt-in direct-hit
 skills and supports, separately from the original review inventory.
+Stage 3 adds [optional combat profiles](16-combat-profiles.md) and resolved-event
+traces for those skills and their burns.
 
 ## Finding authoritative detail
 

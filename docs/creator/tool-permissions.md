@@ -100,6 +100,14 @@ Inherited; inspect execute() for operation-specific checks.
 return SaveGame.isBuilderMode() || SaveGame.isDevMode() || CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDMOBS);
 ```
 
+## COMBATRESULT
+
+[CombatResult.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/CombatResult.java)
+
+```java
+return CMProps.isSinglePlayer();
+```
+
 ## COMBINE
 
 [Combine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Combine.java)

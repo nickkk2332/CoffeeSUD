@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "id": "combat.profiles",
+  "version": 1,
+  "title": "Optional combat profiles",
+  "handler": "combat.profiles",
+  "requires": {
+    "abilities.composition": 1
+  },
+  "clock_modes": [
+    "TURNS",
+    "REALTIME"
+  ],
+  "scopes": [
+    "world"
+  ],
+  "on_disable": "suspend",
+  "settings": {
+    "profile": {
+      "type": "string",
+      "default": "{\"hash\":\"d3fbc1cacf5086765d397badf73bf7ce66bfcd0ec6e2f9fd6b4c3375e88f15cf\",\"id\":\"example.final\",\"version\":1}",
+      "max_length": 4096
+    },
+    "player_trace": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "state": {}
+}

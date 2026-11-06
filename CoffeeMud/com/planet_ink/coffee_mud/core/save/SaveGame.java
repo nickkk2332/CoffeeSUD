@@ -326,6 +326,7 @@ public final class SaveGame
 	{
 		OptionalModules.reset();
 		AbilityComposition.reset();
+		CombatProfiles.reset();
 		JSJobs.reset();
 		ScriptMenus.fromXML(null); Narration.clear();
 		bootOverrides.clear();

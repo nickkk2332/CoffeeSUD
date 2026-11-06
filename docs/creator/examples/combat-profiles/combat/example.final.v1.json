@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "example.final",
+  "version": 1,
+  "title": "Final type scaling",
+  "conversion": "final",
+  "hit": {
+    "minimum": 5,
+    "maximum": 95
+  },
+  "armor": {
+    "constant": 5,
+    "maximum_reduction": 90
+  },
+  "resistance": {
+    "minimum": -100,
+    "maximum": 75
+  },
+  "block_cap": 75,
+  "block_reduction": 100,
+  "maximum_damage": 1000000
+}

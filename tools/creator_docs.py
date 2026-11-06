@@ -132,11 +132,12 @@ def generate(rows):
                    'GENPOISON GENDISEASE GENTRAP GENTWEAKABILITY GENBEHAVIOR GENCOMMAND '
                    'ORIGINS CREATIONSTEPS CREATIONTEMPLATES STARTINGKITS TESTCHAR KIT PERKS TRAITS '
                    'CRAFTQUALITY RECIPEKEYS KNOWNRECIPES MUDCHAT ENCOUNTERS RANKS '
-                   'QUESTS QUESTINFO QUESTCHECK QUESTMAKER ITEMSETS WORLD MODULES WORLD_MODULES COMPOSE WORLD_COMPOSITIONS MATERIALS RESOURCES '
+                   'QUESTS QUESTINFO QUESTCHECK QUESTMAKER ITEMSETS WORLD MODULES WORLD_MODULES COMPOSE WORLD_COMPOSITIONS COMBATRESULT WORLD_COMBAT MATERIALS RESOURCES '
                    'LANGUAGE VOCAB SOCIAL HELP AHELP COMPONENTS'.split())
     commands = {}
     source_paths = sorted({p for r in rows for p in r['source_references'].split(';') if p} |
-                          {'CoffeeMud/com/planet_ink/coffee_mud/Commands/Modules.java'})
+                          {'CoffeeMud/com/planet_ink/coffee_mud/Commands/Modules.java',
+                           'CoffeeMud/com/planet_ink/coffee_mud/Commands/CombatResult.java'})
     for path in source_paths:
         p = ROOT / path
         name = p.stem.upper()

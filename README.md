@@ -54,6 +54,9 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
   tags, damage, costs, timing, bounded chains and burning through an inspectable
   modifier pipeline. Characters retain independent choices and cooldowns across
   saves. See the [guide and example](docs/creator/15-ability-composition.md).
+- **Optional combat profiles.** Composed skills and their burns can use versioned
+  conversion/defense rules, equipment stats and recorded result explanations.
+  See the [guide and examples](docs/creator/16-combat-profiles.md).
 - **More for content authors.** CoffeeSUD adds new MOBPROG triggers and
   functions, and fuller JavaScript (Rhino, ES6). Quests gain:
   - a journal with objectives;

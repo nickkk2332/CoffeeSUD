@@ -925,6 +925,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 	{
 		if((attacker==null)||(target==null)||(target.location()==null))
 			return;
+		final CombatProfiles.Receipt profileReceipt = CombatProfiles.claim(attacker, target, weapon);
 		if(allDisplayMessage!=null)
 			allDisplayMessage="^F^<FIGHT^>"+allDisplayMessage+"^</FIGHT^>^?";
 
@@ -935,7 +936,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 		{
 			if(weapon instanceof Ability)
 			{
-				if((damage>0)
+				if((profileReceipt==null)&&(damage>0)
 				&&(attacker.isMine(weapon)||(attacker.phyStats().level()>1))) // why >1? because quickly made fake-mobs tend to have lvl=1
 					damage = modifySpellDamage(attacker, target, damage);
 				if((((Ability)weapon).affecting() instanceof Item)
@@ -953,6 +954,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 															  damageTypeMsg,allDisplayMessage,
 															  messageCode,allDisplayMessage);
 		msg.setValue(damage);
+		CombatProfiles.bind(profileReceipt, msg);
 		CMLib.color().fixSourceFightColor(msg);
 		final Room R=target.location();
 		if(R!=null)
@@ -960,7 +962,8 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 			final boolean dbg=CombatDebug.involves(attacker, target);
 			if(dbg)
 				CombatDebug.note(attacker, target, "damage "+damage+((weapon!=null)?(" by "+weapon.name()):""));
-			if(!R.okMessage(target,msg))
+			final boolean allowed = CombatProfiles.approved(profileReceipt, msg, R.okMessage(target,msg));
+			if(!allowed)
 			{
 				if(dbg)
 					CombatDebug.note(attacker, target, "stopped");
@@ -2716,7 +2719,10 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 					attacker.playerStats().bumpLevelCombatStat(PlayerCombatStat.DAMAGE_DONE, attacker.basePhyStats().level(), dmg);
 				if(target.playerStats()!=null)
 					target.playerStats().bumpLevelCombatStat(PlayerCombatStat.DAMAGE_TAKEN, target.basePhyStats().level(), dmg);
-				if((!target.curState().adjHitPoints(-dmg,target.maxState()))
+				final int beforeHP = target.curState().getHitPoints();
+				final boolean survives = target.curState().adjHitPoints(-dmg,target.maxState());
+				CombatProfiles.applied(msg, beforeHP, target.curState().getHitPoints());
+				if((!survives)
 				&&(target.curState().getHitPoints()<1)
 				&&(target.location()!=null))
 					postDeath(attacker,target,msg);

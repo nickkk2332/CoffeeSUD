@@ -3276,7 +3276,7 @@ public class StdMOB implements MOB
 						setRangeToTarget(0);
 					}
 				}
-				if(!CMLib.combat().checkSavingThrows(this, msg))
+				if((!CombatProfiles.resolved(msg))&&(!CMLib.combat().checkSavingThrows(this, msg)))
 					return false;
 			}
 
@@ -3333,7 +3333,7 @@ public class StdMOB implements MOB
 					return false;
 				break;
 			case CMMsg.TYP_DAMAGE:
-				if(!CMLib.combat().checkDamageSaves(this, msg))
+				if((!CombatProfiles.resolved(msg))&&(!CMLib.combat().checkDamageSaves(this, msg)))
 					return false;
 				TweakRules.scaleDamage(msg); // P22: a tweak's DAMAGEMULT
 				GameDifficulty.scaleDamage(msg, this); // C13

@@ -260,10 +260,17 @@ public final class CompositionDefinitions
         public double value(final String key) throws IOException { return values(Collections.<String>emptySet()).get(key); }
         /** Numeric values before engine proficiency, saves, criticals, and damage adjustments. */
         public String describe() throws IOException
+        { return describeDamage(null, ""); }
+        public String describeDamage(final Map<String,Double> damage, final String model) throws IOException
         {
             final StringBuilder out = new StringBuilder(skill.name + " (" + skill.key() + ")\nTags: " + tags + "\nSupports:");
             for(final Definition support : supports) out.append(" ").append(support.key());
-            final Map<String,Double> result = values(Collections.<String>emptySet());
+            final Map<String,Double> result = new LinkedHashMap<String,Double>(values(Collections.<String>emptySet()));
+            if(damage != null)
+            {
+                for(final String type : TYPES) result.put("damage." + type, damage.get(type));
+                out.append("\n").append(model);
+            }
             out.append("\nBase: ").append(display(skill.base)).append("\nUnconditional result: ").append(display(result));
             out.append("\nCast boundary: ").append((int)Math.ceil(result.get("mana"))).append(" mana, ").append((int)Math.ceil(result.get("movement")))
                 .append(" movement, ").append(display(result.get("actions"))).append(" actions, ").append((int)Math.ceil(result.get("cooldown"))).append(" cooldown ticks.");

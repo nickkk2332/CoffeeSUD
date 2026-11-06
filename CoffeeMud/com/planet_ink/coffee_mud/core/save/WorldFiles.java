@@ -2832,6 +2832,19 @@ public final class WorldFiles
         knownSums = next;
     }
 
+    /** Only a successful explicit reload acknowledges these hand-authored rule profiles. */
+    public static synchronized void acceptCombatChanges()
+    {
+        final Map<String,String> next = new TreeMap<String,String>(knownSums);
+        next.keySet().removeIf(path -> path.startsWith("combat/") && path.endsWith(".json") && path.substring(7).indexOf('/') < 0);
+        for(final String path : com.planet_ink.coffee_mud.core.WorldAssets.paths())
+            if(path.startsWith("combat/") && path.endsWith(".json") && path.substring(7).indexOf('/') < 0)
+            {
+                final String sum = sumOf(new File(worldDir,path)); if(sum != null) next.put(path,sum);
+            }
+        knownSums = next;
+    }
+
 	/**
 	 * Returns a checksum of the content files: their paths in the world folder
 	 * and their contents.

@@ -21,6 +21,13 @@ else
 	echo "composition: FAILED (see $OUT/composition.txt)"
 	FAIL=1
 fi
+"$ROOT/tools/combat-rules-tests.sh" > "$OUT/combat-rules.txt" 2>&1
+if [ $? -eq 0 ]; then
+	echo "combat rules: PASS ($(grep -c '^ok ' "$OUT/combat-rules.txt") checks)"
+else
+	echo "combat rules: FAILED (see $OUT/combat-rules.txt)"
+	FAIL=1
+fi
 report()  # report NAME PID
 {
 	wait "$2"
