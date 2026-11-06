@@ -133,7 +133,7 @@ New items that suffer wear and tear (armor) start at 100 condition
 ### MODIFY ITEM
 
 ```text
-MODIFY ITEM [ITEM NAME](@room | @[mob name] | @[container name])
+MODIFY ITEM [ITEM NAME] (@room | @[mob name] | @[container name])
 MODIFY ITEM [ITEM NAME] [FIELD] [VALUE]
 ```
 

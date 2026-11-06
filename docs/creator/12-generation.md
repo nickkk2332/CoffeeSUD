@@ -557,7 +557,7 @@ stronger by adding hit points, mana and movement through a `Prop_Adjuster` and
 shifting armor, attack, damage and speed.
 
 **Children:** `ITEM` (carried; worn automatically when it can be, unless the
-item has `nowear="true"`), `MOB` (copied stats), `AFFECT` (properties),
+item has `nowear="true"`), `AFFECT` (properties),
 `ABILITY` (skills the mob knows), `BEHAVIOR`, `FACTION` (`<FACTION id="..."
 value="..."/>` sets a faction value), `SHOPINVENTORY` (for shopkeepers).
 
@@ -586,8 +586,10 @@ reached, the tag silently gives nothing), or `metacraft:...` (see
 ignored and those items keep their default value. [GENERATE CHECK](#generate-check)
 flags such unknown attributes; use it on your own files.
 
-**Children:** `CONTENT` (items inside a container), `AFFECT`, `BEHAVIOR`, `MOB`
-and `EXIT` where they make sense, and `SHOPINVENTORY` items.
+**Children the parser reads:** `CONTENT` (items inside a container), `AFFECT`
+and `BEHAVIOR`. (The old guide listed `MOB` and `EXIT` children of an
+item; the parser ignores them. An `ITEM` directly inside an `ITEM` does not put
+it in the container: it makes the outer tag a selection group. Use `CONTENT`.)
 
 | Attribute | Meaning |
 |---|---|

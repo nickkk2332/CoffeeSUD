@@ -855,3 +855,251 @@ called from speech) is safe.
 
 For the very first screens of a new game (the title and the prologue), see
 [Title, prologue and character windows](#title-prologue-and-character-windows).
+
+## Maps, ambience and interface
+
+### The player map: MAP and AUTOMAP
+
+Source: [PlayerMaps](../../CoffeeMud/com/planet_ink/coffee_mud/core/PlayerMaps.java),
+[PlayerMap command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/PlayerMap.java),
+[AutoMap command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/AutoMap.java).
+
+Every character has a free map of what they know. It works indoors and
+outdoors, honours unmappable rooms and areas, and never reveals rooms the
+character has not learned about.
+
+```text
+MAP                     the map around you, at your automap radius
+MAP 5                   radius 5 (1 to 12)
+MAP AREA Old Vael       centred on the first known room of that area, radius 12
+AUTOMAP                 toggle the automatic map after each look
+AUTOMAP ON
+AUTOMAP OFF
+AUTOMAP SIZE 4          save your own radius (1 to 12)
+```
+
+- `MAP` is the player's map. `CARTOGRAPHY` invokes the paper-making Cartography
+  skill, and `WORLD MAP` is the builder's diagnostic map with IDs and flags.
+  They are different tools.
+- The default radius is the saved `AUTOMAP SIZE`, otherwise half of the world's
+  `AWARERANGE` (minimum 1). `AWARERANGE` is a world setting (shipped value 3).
+- With `AUTOMAP` on, the map is printed after every room look. Automap is on by
+  default when `AWARERANGE` is above 0 or the player has set a size. A player
+  can switch it on even when `AWARERANGE` is 0 (it then uses radius 3 unless a
+  size is saved).
+- Only the floor you stand on is drawn. Exits up and down appear in the legend
+  as `<` and `>` with the destination's title, from your own floor.
+- Rooms are drawn as `#` (indoors) or `o` (outdoors), `*` is you. Rooms you
+  have only learned about are drawn dim (dark grey). Corridors are `|`, `-`,
+  `/` and `\`.
+- A map is limited to about 1000 rooms and the chosen radius.
+
+**Fog of war.** `MAPFOG` (in `coffeemud.ini` or a launch override; see
+[where settings may be set](#where-presentation-settings-may-be-set)) decides
+which rooms are drawn:
+
+| `MAPFOG` | Rooms drawn |
+| --- | --- |
+| `KNOWN` (default) | Rooms the character has visited, plus rooms revealed by map items or scripts. |
+| `VISITED` | Only rooms visited. Revealed rooms stay off the map until entered. |
+| `ALL` | Every mappable room (an author opt-in; spoils exploration). |
+
+Whichever value is set, the room you stand in is always drawn, and rooms or
+areas flagged unmappable (`Prop_RoomUnmappable`, the area's unmappable flag), rooms hidden by Prop_ShowWhen
+and rooms whose glyph property says `HIDE` are never drawn. An exit that
+Prop_ShowWhen hides from the viewer is not drawn either. Revealing a room never
+records a visit: `VISITED` markers, `VISITED` tags and discovery experience are
+unaffected.
+
+### Prop_MapGlyph: room symbols and legends
+
+Source: [Prop_MapGlyph](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_MapGlyph.java). Targets: rooms.
+
+```text
+CHAR=I COLOR=y LABEL="Inn" LEGEND
+HIDE
+```
+
+| Option | Meaning |
+| --- | --- |
+| `CHAR=x` | The symbol (first character used). Default `#` indoors, `o` outdoors. |
+| `COLOR=code` | A colour code letter (`y`) or code (`^y`). Default `w`. |
+| `LABEL="text"` | The legend text. |
+| `LEGEND` (flag) | Add this glyph and label to the legend. Without it the label is not listed. |
+| `HIDE` (flag) | The room is never drawn on the player's map. |
+
+Unvisited (revealed-only) rooms are drawn dark grey whatever the glyph colour.
+
+### Map items: Prop_MapReveal
+
+Source: [Prop_MapReveal](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_MapReveal.java). Targets: readable items.
+
+Reading an item with Prop_MapReveal teaches the reader rooms and marks. The
+knowledge is saved on the character.
+
+```text
+ROOMS=Coast#1-40,Coast#45 MARK=Coast#12:X:"Buried chest" COLOR=r
+AREA="Old Vael"
+```
+
+| Option | Meaning |
+| --- | --- |
+| `ROOMS=` | Comma-separated room IDs, or ranges `Area#first-last` (at most 10 000 rooms per range). |
+| `AREA="name"` | Every room of that area. |
+| `MARK=room:G:"label"` | A labelled single-character glyph on a room. The label can be quoted or one word. Several `MARK=` may be given. |
+| `COLOR=code` | Colour of the marks (default `r`). |
+
+A marked room is also revealed. Marks appear in the map legend. Reading the item
+again changes nothing that was already known. Use Prop_MapReveal on a plain
+readable item; the stock map items (`BardMap`, `GenMap`) draw their own text
+(see [chapter 22](22-items.md)).
+
+### Ambient lines: Emoter and Sounder conditions
+
+Emoter and Sounder (see [chapter 24](24-behaviors-and-masks.md)) produce ambient
+lines. CoffeeSUD lets each line carry conditions, a weight, and a once-only flag:
+
+```text
+min=8 max=20 chance=40 RETRY NOREPEAT=2 QUIETAFTER=3;NIGHT SOUND an owl hoots.;IFVAR WOLVES=1 WEIGHT=3 ONCE SOUND wolves howl nearby.
+```
+
+**Per-line prefixes** come before the line's type word (`SIGHT`, `SOUND`,
+`SMELL`, `SOCIAL`, `PUFF`, and the other type words of the behavior) and must be
+written in capitals:
+
+| Prefix | Meaning |
+| --- | --- |
+| `DAY`, `NIGHT`, `DAWN`, `DUSK` | Time of day. |
+| `SPRING`, `SUMMER`, `FALL`, `WINTER` | Season. |
+| `RAIN`, `SNOW`, `FOG` | Weather. |
+| `INDOORS`, `OUTDOORS` | Room type. |
+| `IFVAR name=value` | A world variable test; the expression is the next word with no spaces (`IFVAR WOLVES=1`, `IFVAR CHAPTER>=3`). |
+| `MASK="zapper"` | The listener must pass the mask. |
+| `WEIGHT=n` | Relative chance (1 to 10000, default 1). |
+| `ONCE` | The line is heard at most once per character (saved). |
+
+All the prefixes on a line must hold. A line whose first word is ordinary
+mixed-case text ("Fog rolls in...") has no prefixes; only the capitalised
+keywords above are read, so the old syntax is unchanged. The line separator is
+`;` (or `/` when there is no `;`), so line text cannot contain it.
+
+**First-field options** (the part before the first `;`):
+
+| Option | Meaning |
+| --- | --- |
+| `RETRY` (flag) | If the chosen line is not eligible, pick again among the eligible lines. |
+| `NOREPEAT=n` | The last `n` lines used in a room are not repeated while alternatives exist. |
+| `QUIETAFTER=n` | Stay silent in a room while a player is in combat or being narrated to, and for `n` game ticks after reading a detail, a sense or a narration page. `0` (the default) never silences. Emoter only. |
+| `MASK="zapper"` | A mask for the whole behavior. |
+
+Notes:
+
+- Lines are selected with the game's dice, by weight, among those whose
+  conditions fit. Conditions are tested in the actual room; an area-level Emoter
+  tests each room's own conditions and speaks only in rooms with players.
+- If any line has a mask or `ONCE`, the line is delivered individually to the
+  players in the room who qualify and can perceive it, and each one's `ONCE`
+  marker is set; otherwise it is sent to the room.
+- `LISTEN` uses the `SOUND` lines of a behavior on the target (or on the area
+  for a room) and honours their conditions.
+- Sounder bark tables (`IDLE:`, `GREET:` and the other events) accept the same
+  prefixes: `IDLE: ONCE SOUND the bell tolls once.`
+- Use random lines to enrich the scene. Critical directions or puzzle
+  instructions need a reliable route (a detail, a sign, a script), not an
+  ambient line the player may never see.
+
+### Prompts and templates
+
+The prompt, `world/score.txt`, `ROOMHEADER`, `ROOMFOOTER` and the window panel
+text all use the same prompt-token engine (`CMLib.utensils().buildPrompt`), so
+the tokens below work in all of them. Players set their own prompt with
+`PROMPT`; `PROMPT DEFAULT` restores the default. `AHELP`/`HELP PROMPT` lists
+the classic tokens (hit points `%h/%H`, mana `%m/%M`, moves `%v/%V`, room name
+`%r`, area name `%z`, time `%t`/`%T`, weather `%@`, group `%j`, factions
+`%f NAME`, stats `%-STAT NAME`, combat sections `%/` and `%\`, and so on).
+
+CoffeeSUD adds these script and party tokens:
+
+| Token | Value |
+| --- | --- |
+| `%{VAR name}` | The character's own script variable `name`; if empty, the first variable of that name on any host. |
+| `%{VAR * name}` | Explicitly the first variable of that name on any host. |
+| `%{VAR host name}` | The variable `name` of a named host (for example `WORLD`). |
+| `%{PVAR name}` | Only the character's own variable. |
+| `%{QVAR quest name}` | A quest-scoped variable. Quote a quest name with spaces: `%{QVAR "Ashes of Vael" STAGE}`. |
+| `%{TIMEMODE}` | `REAL` or `TURN`. |
+| `%{LEADER}` | The party leader's name. |
+
+An unrecognised `%{...}` is printed as written. Colour codes work in all
+templates.
+
+**`world/score.txt`** adds lines to the plain `SCORE` command (after the
+effects; not to `SCORE DETAILS` and the other forms). One template per row;
+each row is rendered with VARIES first and then the tokens above; a row that
+renders to nothing (only colour codes or blanks) is not shown.
+
+```text
+Chapter : %{VAR CHAPTER}
+<VARIES><IFVAR CURSED=1>^rThe ash-mark burns on your palm.^N</IFVAR></VARIES>
+```
+
+**`ROOMHEADER` and `ROOMFOOTER`** (settings; see
+[where settings may be set](#where-presentation-settings-may-be-set)). The
+header replaces the first line of a room look, which is normally the room title
+(in the `^O` room-title colour) followed by disposition notes such as
+"(hidden)". The footer is appended after the room's contents. Both use the
+template engine, so they can show the area, a danger marker, the time or a
+story variable:
+
+```ini
+ROOMHEADER=^O%r^N ^w[%z]^N
+ROOMFOOTER=Chapter %{VAR CHAPTER}
+```
+
+Empty values (the shipped defaults) keep the standard layout. Templates are
+used only when the viewer can see the room, so a hidden room's title is not
+leaked. A header replaces the disposition notes and the MXP room-name link; if
+you want either, write it into the template. Check the result with ANSI off.
+
+### Colours and named aliases
+
+The colour codes are `^` followed by a letter: `^w` white, `^r` red, `^g`
+green, `^y` yellow, `^b` blue, `^p` purple, `^c` cyan, `^k` black (upper case
+letters are the darker or brighter pair; `^W` is grey in the in-game colour
+chart, `^N` returns to normal, `^?` to the previous colour). The game also has
+semantic codes that a player can recolour with `COLORSET`: `^H` highlighted
+text, `^O` room titles, `^L` room descriptions, `^J` weather, `^D`/`^d`
+explored exits and doors, `^U`/`^u` unexplored ones, `^I` items, `^M` creatures,
+`^E` emotes, `^T` says, `^S` spells, and the fight colours `^f`, `^e` and `^F`.
+A 24-bit colour is written `^##RRGGBB`. `^!`, `^_` and `^/` are bold,
+underline and italics. Several codes (`^x`, `^X`, `^Z`) are unused in
+single player and a world may use them freely.
+
+For readable, restyle-able colour, the world defines **named aliases** and text
+uses them:
+
+```ini
+COLORALIASES=LORE=##C8A060,DANGER=LIGHTRED+BOLD,WHISPER=DARKGREY,MAGIC=LIGHTPURPLE
+```
+
+Then any text where colour codes work can say `^{LORE}The kingdom fell.^N`.
+
+- Each alias is `NAME=value`, separated by commas. Names use letters, digits
+  and `_`. A value is one or more parts joined with `+`: a colour name
+  (`WHITE`, `LIGHTGREEN`, `LIGHTBLUE`, `LIGHTRED`, `YELLOW`, `LIGHTCYAN`,
+  `LIGHTPURPLE`, `GREY`, `GREEN`, `BLUE`, `RED`, `BROWN`, `CYAN`, `PURPLE`,
+  `DARKGREY`, `BLACK`), `BOLD`, `UNDERLINE`, `ITALICS`, a single code letter
+  (`y` or `^y`) or a hex colour (`##C8A060`).
+- Aliases expand before line wrapping and are stripped when the player's ANSI
+  is off. An alias that is not defined expands to nothing (plain text).
+- Players use `COLORSET ALIASES` to list the aliases and their values,
+  `COLORSET LORE LIGHTGREEN` to override one for themselves (saved on the
+  character) and `COLORSET LORE DEFAULT` to remove the override. `COLORSET
+  DEFAULT` resets all colour preferences, aliases included. Only names the world
+  defines can be overridden; `COLORSET` alone opens the stock colour menu.
+- The engine itself uses `LORE` for lore entry titles and accepts any alias in
+  MPNARRATE's `STYLE=`. A world that does not define `LORE` shows those
+  uncoloured.
+
+Choose colours that also read on a plain terminal, and test with ANSI off,
+a narrow terminal and headless output.

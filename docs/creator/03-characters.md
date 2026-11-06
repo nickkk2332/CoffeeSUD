@@ -1488,3 +1488,286 @@ rewards of arbitrary dynamic scripts. Use `CHARGEN` (`CHARGEN COMBAT <class>
 <level>`) to compare example characters with mobs of the same level, and
 `TESTCHAR` for a quick test character (see [13-testing-release.md](13-testing-release.md)).
 
+## Make advancement discoverable
+
+### Skill trees and hints
+
+Source: [SkillTree.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/SkillTree.java),
+[SkillTreeCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/SkillTreeCmd.java).
+Fixture: [p24-skilltree.js](../../tools/fixtures/fixes/p24-skilltree.js).
+
+`SKILLTREE` (short form `STREE`) shows a class's skills arranged by what each
+needs first. A skill is *under* another when its class-ability pre-requisites
+(`GETCABLEPREQ`, [Qualifying abilities](#qualifying-abilities)) name it. The
+forms are:
+
+```text
+SKILLTREE            your own class
+SKILLTREE ranger     another class
+SKILLTREE camouflage the chain that leads to one skill
+```
+
+Each skill is marked one of:
+
+| Mark | Meaning |
+| --- | --- |
+| `(learned, 75%)` | Known, with the proficiency |
+| `(learnable: ...)` | Qualified for now; the text is what it costs |
+| `(locked: level 7)` | The class level is not reached |
+| `(locked: needs Skill_Trip(50))` | A pre-requisite skill is missing |
+| `(locked: ...)` | The requirement mask is not met |
+| not shown | `SECRET`, or `MASKED` with the mask unmet, and no hint |
+
+A hint is a line pointing the player to where a skill is taught. Hints live in
+`resources/skills/skillhints.ini`, and a world's own
+`world/resources/skills/skillhints.ini` is read in its place. One line each,
+`KEY=VALUE`, where the key is an ability ID or `CLASSID.ABILITYID` (the class
+form wins) and the value is `HINT="..."` with an optional `SHOW=HINT`:
+
+```ini
+# world/resources/skills/skillhints.ini
+Spell_DetectInvisible=HINT="seek the Druid circle in the Fernwood"
+Ranger.Spell_Infravision=HINT="for elves alone" SHOW=HINT
+```
+
+A hint shows after a locked or learnable skill (`- seek the Druid circle...`).
+A secret skill with a hint shows as `??? - <hint>` so the player knows there is
+something to find; with `SHOW=HINT` it shows its name, `Spell_Infravision
+(locked: for elves alone)`. A hint should point to a real teacher, quest or
+place, not merely expose a forbidden ability ID. `TEACHLIST` and the teacher
+rules should agree with the chains.
+
+### Perks after creation
+
+See [perks.ini](#perksini-perks-traits-and-flaws). During play, `PERKS` shows
+what the character has, can take now and cannot yet (with the reason), and the
+picks left in each pool; `PERK <name>` takes one. A level-up that leaves a
+pick to spend says so. `HASPERK`, `MPPERK` and the perk tattoo let quests and
+shops respond to a choice.
+
+### Rank ladders
+
+Source: [Ranks.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Ranks.java),
+[RanksCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/RanksCmd.java).
+Fixture: [p25-ranks.js](../../tools/fixtures/fixes/p25-ranks.js).
+In-game help: `AHELP RANKLADDERS`.
+
+A rank ladder is a named progression beside levels: a guild, an order, a
+reputation. Ladders are `[KEY]` sections in `world/ranks.ini` (re-read when the
+file changes):
+
+| Key | Meaning |
+| --- | --- |
+| `NAME=` | Display name (the key, capitalised, if missing) |
+| `RANKS="Footpad, Cutpurse, Shadow, Master"` | The ranks, lowest first, numbered from 1 |
+| `FACTION=` | A faction ID whose standing `RANKS` shows beside the rank |
+| `RANK<n>.REQUIRES="mask"` | A zapper mask. When the character meets it, they rise to rank *n* **by themselves** (at level-up, when they look at `RANKS`, or on `MPRANK who KEY CHECK`). With no `REQUIRES`, only a script raises a character to that rank |
+| `RANK<n>.REWARDS="2 QP 100 XP"` | Achievement-style rewards, given **once** the first time the rank is reached (a hidden tattoo `RANKREWARD_<KEY>_<n>` remembers) |
+| `RANK<n>.EFFECTS=Prop_Smell;lamp oil` | Effects held while at the rank (`Prop_SpellAdder` syntax: ID, `;`, parameters), taken off when the rank is left |
+| `RANK<n>.TITLE="*, the Cutpurse"` | A title added while at the rank (`*` is the character's name) |
+| `RANK<n>.NEXT=text` | What `RANKS` says the next rank needs |
+
+A character's rank is the tattoo `KEY_n` (`GUILD_2`), so masks
+(`-TATTOOS +GUILD_3`), `Prop_ReqTattoo` and shops can gate on it. `RANKS` lists
+the ladders the character is on, or can climb by themselves (a ladder with a
+rank-1 `REQUIRES` or `NEXT`), with the rank, how far up, what the next rank
+needs and the standing in the ladder's faction.
+
+| Tool | Effect |
+| --- | --- |
+| `MPRANK who KEY +N`, `-N`, `=N`, `CHECK` | Move up or down (`+1` if no amount), go to rank N (`=0` leaves the ladder), or raise as far as `REQUIRES` allow. See [27-mobprog-commands.md](27-mobprog-commands.md#mprank) |
+| `RANK(who KEY)` | The rank number, 0 for none: `$%RANK($n GUILD)%`. See [28-mobprog-functions.md](28-mobprog-functions.md#rank) |
+| achievement event | `EVENT="RANKUP" NUM=<rank> LADDER=<KEY>` is won on reaching a rank |
+| JavaScript | `Packages.com.planet_ink.coffee_mud.core.Ranks.change(mob, key, "+1")` |
+
+```ini
+# world/ranks.ini
+[LANTERN]
+NAME=Order of the Lantern
+RANKS="Initiate, Acolyte, Lantern-bearer, Warden, Keeper"
+FACTION=alignment.ini
+RANK1.REQUIRES="-TATTOOS +SWORN_AT_SHRINE"
+RANK1.NEXT=an oath at the shrine
+RANK2.REWARDS="2 QP"
+RANK3.EFFECTS=Prop_Smell;lamp oil
+RANK3.TITLE=*, Lantern-bearer
+RANK4.NEXT=the Vigil of Ash
+```
+
+Moving down removes the rank's effects and title, and does not repeat the
+rewards on the way back up.
+
+## Ageing
+
+Source: [Ageing.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Ageing.java),
+[CommonMsgs.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CommonMsgs.java) (`tickAging`).
+Fixture: [p29-ageing.js](../../tools/fixtures/fixes/p29-ageing.js).
+In-game help: `AHELP AGEING`.
+
+A player's **age** is in years of the game calendar of the character's start
+room. A character is born on the day it is created, with the age of its race's
+*young adult* entry (`AGING`), and has a birthday on that date each year, on
+which its age rises by one ("Happy Birthday!"). A character who has been away
+for years ages only about a year (`DISABLE=SLOW_AGEING` makes it age once per
+elapsed year instead). Builders with the `IMMORT` flag do not age;
+`DISABLE=ALL_AGEING` turns the whole system off. The race's ageing chart gives
+the age category (infant, toddler, child, young adult, adult, mature, old,
+venerable, ancient; see [the chart](#body-parts-wear-locations-and-ageing-charts)).
+Time and the calendar are in [10-world-simulation.md](10-world-simulation.md).
+
+**Effects of age.** By default (coded in `StdRace`): infants and toddlers get
+worse mind saves and lower maximum Strength, Intelligence and Wisdom; children a
+little less; young adults and adults are unchanged; mature (`MIDDLEAGED`)
+characters lose maximum Strength, Constitution and Dexterity and gain maximum
+Intelligence, Wisdom and Charisma, and more so at old, venerable and ancient
+(which also lowers the save against undead). These adjust the *maximum* of each
+stat, not the stat itself. A character whose maximum falls below 1 dies. From
+the venerable age a small chance each ageing check brings cancer, and from the
+ancient age arthritis and Alzheimer's (`DISABLE=AUTODISEASE` turns these off).
+
+**Ageing as data.** CoffeeSUD lets a world replace those rules:
+
+| Setting | Meaning |
+| --- | --- |
+| GenRace `AGEEFFECTS` | `MIDDLEAGED: STR-1 DEX-1 WIS+1; VENERABLE: STR-2 CON-2`. In place of the coded effects *for that race*: each age's stat changes, as `STAT+N` or `STAT-N` pairs (any stat by name, or by its first letters), `;` between ages. An age not named has no change. The ages are `INFANT`, `TODDLER`, `CHILD`, `YOUNGADULT`, `MATURE`, `MIDDLEAGED`, `OLD`, `VENERABLE`, `ANCIENT` (or the displayed words). These change the stat itself, not its maximum |
+| `AGEDISEASES` (ini or world.ini) | `"VENERABLE:Disease_Cancer:0.01, ANCIENT:Disease_Arthritis:1"`. In place of the coded diseases for everyone: from each age on, a percent chance at each ageing check to catch the disease (1 if no number is given). `DISABLE=AUTODISEASE` still stops them |
+| `STARTAGE_<NAME>` | `STARTAGE_VETERAN="-TATTOOS +ORIGIN_VETERAN:35"`: a zapper mask, a colon, and an age in years. A new character who meets the mask starts at that age (the first that fits). Applied at the end of creation (not to template characters) |
+| `AGE_PROG` | A trigger: on each birthday, scripts on the character and those around it run `AGE_PROG [BIRTHDAY\|CATEGORY\|<age name>\|ALL]`, with `$0` the age category, `$1` the age, `$2` `BIRTHDAY` or `CATEGORY` (the latter when the age category changed). See [26-mobprog-triggers.md](26-mobprog-triggers.md#age_prog) |
+| `AGECATEGORY` | Achievement event `EVENT="AGECATEGORY" CATEGORY=OLD`, won on reaching that age |
+
+Keep starting ages and age charts consistent: a race with `AGING` of
+`0,1,3,15,35,53,70,74,78` that starts at 15 and a `STARTAGE_` of 5 would start a
+character as a child.
+
+## Death, rebirth and remort
+
+How combat kills and what a downed state is belong to
+[29-combat-and-encounters.md](29-combat-and-encounters.md). The settings that act
+on the *character* are:
+
+| Setting | W | Meaning |
+| --- | --- | --- |
+| `PLAYERDEATH` | W | Comma list of consequences of dying (shipped value `(@x1 * 50) < 2000`). Entries: `EXPERIENCE` (lose 100 experience a level), a number (that much experience), an expression with `@x1` the player's level and `@x2` the killer's, `UNLEVEL X` (lose X levels), `LOSESKILL` (lose a random skill), `RETAIN` (keep the equipment), `PURGE X` (erased after X deaths), `ASTRAL`, `ASTRAL_RES` (an astral spirit, the latter may resurrect itself), `OUT X` (unconscious X ticks), `RECALL` (back to the death room with no body), and CoffeeSUD's `DOWNED X Y` (a player or follower falls for X rounds; an ally's `REVIVE`, or a heal of Y hit points, brings them back, and they get up at 1 hit point when the fight is over; when X runs out the rest of the list applies) |
+| `PARTYDEFEAT`, `PARTYDEFEATGOLD` | | When everyone in a room is down or dead and no `PARTYDEFEAT_PROG` handles it: `RESTORE` (offer the last save), `CHECKPOINT` (wake at the leader's checkpoint at 1 hit point, `PARTYDEFEATGOLD` percent of gold gone), `WAIT`, `DEATH` (default) |
+| `MOBDEATH` | W | What happens when a non-player dies (`DEATH`, or `OUT (expression)`) |
+| `FLEE` | | Cost of fleeing combat; the same entries as `PLAYERDEATH`; blank for none |
+| `DEATH`, `DEATH_<key>`, `DEATH_MASK<n>` | W | Where a dead character wakes: a room ID, `START` (its recall room, the default), `MORGUE` (where the body is), `HERE` (not recommended), `CHECKPOINT` (its last checkpoint from `Prop_Checkpoint` or `MPSETRESPAWN`, else recall). Qualified keys use the same grammar as `START_` |
+| `MORGUE`, `MORGUE_<key>` | W | Where the bodies of dead characters go: `HERE` (default), a room, `DEATH` or `START` |
+| `CORPSEGUARD` | | Who may loot a dead player's body (`ALL`, `SELFONLY`, `PKONLY`) |
+| `ITEMLOOTPOLICY` | | What becomes of a dead mob's items (`20% RUIN`...) |
+| `RACE_`/`CHARCLASS_` flags | | See [availability](#who-may-be-what-availability-and-unlocking) |
+
+**Remort and retire.** `REMORT` (inherited) strips a character of levels,
+skills, stats and personal attributes, keeping equipment, banks, properties
+and clan, so it can try another direction. Who may is `REMORTMASK`
+(`-LEVEL +>60`), and what it keeps is `REMORTRETAIN`: a comma list of
+`HITPOINTS`, `MANA`, `MOVES`, `FACTIONS`, `LEVELS`, `ATTACK`, `QUESTPOINT`,
+`DAMAGE`, `SKILLS`, `SKILLSAT100`, `DEFENSE`, `EXPERTISES`, `BONUSSTATPOINTS`,
+and the specials `RACE`, `GENDER`, `CHARCLASS`, `STATS`, `WARRANTS`,
+`VISITATION`, each optionally with a percent (`100% FACTIONS`). An achievement
+with the `REMORT` flag is attainable again afterwards. `RETIRE` deletes the
+character. Both are engine-ini settings; they are inherited behaviour that is
+not exercised by CoffeeSUD's own fixtures, so test them in your world before
+relying on them.
+
+## Achievements and titles
+
+Source: [Achievements.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/Achievements.java),
+[CustomAwards.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CustomAwards.java).
+Fixture: [p5-awards.js](../../tools/fixtures/fixes/p5-awards.js).
+In-game help: `AHELP ACHIEVEMENTRewards`.
+
+An achievement is an automatically checked goal tracked on the character (or
+the profile) as a tattoo. They are defined in `resources/achievements.ini`; a
+world's own `world/resources/achievements.ini` replaces it, and
+`DISABLE=STDACHIEVEMENTS` turns the stock ones off. The file has the sections
+`[PLAYER]` (a character earns it), `[ACCOUNT]` (the profile earns it) and
+`[CLAN]`. Each achievement is one line:
+
+```text
+TATTOONAME= EVENT="KILLS" NUM=50 ZAPPERMASK="-RACE +Orc" DISPLAY="Orc slayer" TITLE="*, Orc-bane" REWARDS="100 XP 1 QP"
+```
+
+`TATTOONAME` is the unique tattoo that marks it (it must not begin with a digit).
+Common fields: `EVENT`, `DISPLAY`, `TITLE`, `REWARDS`, `PLAYERMASK` (who can
+progress it), `VISIBLEMASK`, `DURATION` (ticks), `FLAGS` (`REMORT`). The events
+most tied to characters include `LEVELSGAINED`, `CLASSLEVELSGAINED`,
+`LEVELUP`/`CLASSLEVELUP`/`LEVELDOWN`/`CLASSLEVELDOWN`, `STATVALUE` (a stat
+above or below a value), `SKILLPROF`, `SKILLUSE`, `RANKUP`, `AGECATEGORY`,
+`TIMEPLAYED`, `DEATHS`, `REMORT`, `RETIRE`, `FACTION`, `FACTIONS`, `EXPLORE`,
+`ROOMENTER`, `KILLS`, `QUESTOR`, `ACHIEVER`, `CHARACTERS` and `SCRIPTED`; the
+header of `achievements.ini` gives each event's own parameters.
+
+**Rewards.** `REWARDS` is a list of `amount word` entries:
+
+| Reward | Example |
+| --- | --- |
+| Experience, quest points, money | `10 XP`, `1 QP`, `10 "gold coins"` |
+| A stat | `2 MAXSTRENGTH`, `10 BONUSCOMMON`, `BONUSCHARSTATS`, `BONUSCHARLIMIT`, `ACCOUNT BONUSCOMMON` |
+| An ability, from a level | `17 Spell_Light`, or with settings `21 "Spell_Light(autogain=false)"` (keys `AUTOGAIN`, `MASK`, `PARMS`, `PREREQS`) |
+| An expertise | `7 VEXING1`, `12 VEXING1(autogain=false)` |
+| Trains and practices | `1 PRACTICES 1 TRAINS` |
+| Protection from purging | `1 NOPURGE` |
+| A tattoo | `1 "TATTOO(ID=RACE_ELF DESC=\"create an elf character\")"`; `ACCOUNT=true` puts it on the profile (this is how races and classes are unlocked) |
+| An item or a follower from the catalog | `1 "ITEM(ID=\"a small mace\")"`, `1 "MOB(ID=\"a faithful hound\")"` |
+| CoffeeSUD: a script | `1 SCRIPT(LOAD=progs/x.script)` or `1 SCRIPT(ONCE_PROG 100;mpecho Well done.;~)`, run once on the character: its `ONCE_PROG`, then its `FUNCTION_PROG ONACHIEVE` |
+| CoffeeSUD: an effect | `1 EFFECT(ID=Prop_Adjuster PARMS="con+1" TICKS=0)`: for good with `TICKS=0` (kept with the character), otherwise for that many ticks |
+| CoffeeSUD: standing | `500 FACTION(ID=elves.ini)` or `1 FACTION(ID=elves.ini AMOUNT=500)` |
+| CoffeeSUD: a script variable | `1 VAR(NAME=chapter VALUE=2)` (`WHO=` for another name, `*` for the game's) |
+| CoffeeSUD: a known recipe | `1 RECIPE(SKILL=Weaponsmithing NAME="rune blade")` |
+
+The same reward syntax is used by perks, creation answers, ranks, `MPREWARD`
+and quest rewards. On an `[ACCOUNT]` achievement, rewards go to each *later*
+character of the profile, so make once-only and repeatable grants deliberate.
+`ACHIEVEMENTS` shows what each gives (`ACHIEVEMENTS ALL`, `NOW`, `FUTURE`,
+`AWARDS`...). `CREATE ACHIEVEMENT` and `MODIFY ACHIEVEMENT` edit the file in
+builder mode (security flag `ACHIEVEMENTS`).
+
+**Titles.** A title is text shown with a character's name. They come from
+achievements' `TITLE`, rank ladders' `RANK<n>.TITLE`, `MPTITLE who (-) text`
+(adds or removes one), and `resources/titles.ini`:
+
+```text
+{* the dude}=-area "+new area" +midgaard
+Father *=1:-area "+new area" +midgaard
+```
+
+Each line is `TITLE=[MAX HOLDERS:]ZAPPER MASK`: `*` is the character's name;
+a title in braces is mandatory; with a maximum the most idle holder loses the
+title when it is exceeded. Titles are re-evaluated every game hour. The `TITLE`
+command lets a player pick a prefix and a suffix title, or mark the current
+one for the random rotation. `STDTITLES` in `DISABLE` turns the stock file off.
+
+## Profile, party and recruitment
+
+One profile owns multiple playable characters. `PROFILE` lists them; `SWITCH`
+changes the controlled character. `PARTY ADD` brings in a profile character,
+`PARTY REMOVE` removes them from the group but leaves them active, and `PARTY
+REST` sends them back to the profile. `AS name command` orders one character.
+Windows are views of characters in the same running world; they do not create
+independent campaigns. The full model, the commands and the turn rules are in
+[31-saves-and-party.md](31-saves-and-party.md) and
+[the party rules](../party-rules.md); the settings that bear on characters are:
+
+| Setting | Meaning |
+| --- | --- |
+| `PROFILEMAX` | Most characters in the profile (`0` unlimited; `1` for a one-character world) |
+| `NEWCHARS` | `ALWAYS`, `FIRSTONLY`, `CHEAT` (with `CHEAT ON`) or `MASK` (`NEWCHARMASK`, checked on the character played last, as `-LOCATION +ROOMSTR(Adventurers)`); `NEWCHARMESSAGE` says where to go when one is refused. The first character is always made |
+| `PARTYMAX`, `ACTIVECHARMAX` | Most in the party at once; most profile characters in the world at once (`0` unlimited). Lowering a limit does not delete existing characters |
+| `PARTYSUMMON`, `PARTYSUMMONMASK`, `PARTYSUMMONMESSAGE` | Whether remote characters can be called in (`ALLOW`, `MEET`, `MASK`) |
+| `PARTYROLES` | `"healer:-BASECLASS +Cleric +Druid; scout:-BASECLASS +Thief"`: `PARTY` and `NEW` say which roles no character fills |
+
+`MPRECRUIT npc player (PARTY|REST) (NAME=name)` turns a met NPC into a
+character of the player's profile (keeping its race, class and level, stats,
+abilities, effects, inventory, factions, tattoos and description) and removes
+it from the world as an NPC; it joins the party (the default) or rests. It
+refuses, telling the player, when the profile or party is full or the name is
+taken. `Prop_Recruitable` on an NPC gives players a `RECRUIT` command route:
+`MASK`, `COST`, `MESSAGE`, `NAME` (see
+[23-properties-reference.md](23-properties-reference.md#prop_recruitable)). From
+JavaScript: `Packages.com.planet_ink.coffee_mud.core.Recruits.recruit(npc, player,
+'PARTY', name)`. Ordinary followers, hired help and summoned mobs remain distinct
+from recruited player characters. Training that consumes game time (P30) is not
+implemented; teachers, followers, affinity, hirelings and recruitment are
+available now.
+

@@ -1028,9 +1028,9 @@ command, and "Goodbye" runs `TALK BYE`:
 | --- | --- | --- |
 | A shopkeeper | "Trade (LIST, BUY, SELL)" | `LIST` |
 | A banker | "Banking (LIST, DEPOSIT, WITHDRAW)" | `LIST` |
-| Has `MOBTeacher` | "Learn" | `QUALIFY` |
+| Has `MOBTeacher` | "Learn (QUALIFY, then SAYTO it TEACH ME a skill)" | `QUALIFY` |
 | Has `Hireling` | "Hire (its terms)" | `SAYTO <npc> hire` |
-| A quest giver (a quest marker) | "Quests" | `QUESTS OFFERED` |
+| A quest giver (a quest marker) | "Quests (QUESTS OFFERED)" | `QUESTS OFFERED` |
 
 No menu appears for an NPC with none of these. The menu uses the same
 mechanism as [MPMENU](#mpmenu-numbered-choices): it does not block, an Enter

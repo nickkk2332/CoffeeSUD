@@ -565,13 +565,13 @@ Examples:
 ```text
 gmodify area class=GenDoor change=hasalock=true
 gmodify area class=GenDoor&&name=[ss]wooden door change=name=[ss]stone door
-gmodify room name=[ss]door change=closedtext=a heavy door stands shut
+gmodify room class=GenDoor change=closedtext=a heavy door stands shut
 gmodify area class=Woods change=class=Jungle
-gmodify world tags$.*TODO.*
-gmodify area desc=[ss]Lord Varn change=desc=[ss]Lady Varn
+gmodify #TODO
+gmodify area description=[ss]Lord Varn change=description=[ss]Lady Varn
 ```
 
-(The fourth and fifth lines assume the field names `class`, `tags` and `desc`/`description` as the rooms' stat codes spell them. Run the search form first and read the hits.)
+In order: the first example gives every generic door in the area a lock; the second renames just the matched words of doors called "wooden door"; the third sets the closed text of every generic door in your room; the fourth changes every `Woods` room in the area to a `Jungle`; the fifth lists every object tagged `TODO` (what `WORLD DIG` and `WORLD PATH` left for you to describe); the sixth rewrites a name inside the descriptions of the area's rooms, mobs and items. Run each without the `change=` part first and read the hits.
 
 **Cautions.**
 
