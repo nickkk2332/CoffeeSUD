@@ -191,7 +191,7 @@ Entries added by CoffeeSUD (not in the original CoffeeMud) are marked **CoffeeSU
 | Loading and removing | [MPMLOAD](#mpmload), [MPOLOAD](#mpoload), [MPOLOADROOM](#mpoloadroom), [MPMLOADSHOP](#mpmloadshop), [MPOLOADSHOP](#mpoloadshop), [MPGENERATE](#mpgenerate), [MPTRANSFORM](#mptransform), [MPM2I2M](#mpm2i2m), [MPJUNK](#mpjunk), [MPPURGE](#mppurge), [MPSLAY](#mpslay), [MPRLOAD](#mprload) |
 | Doors, exits, visibility | [MPOPEN](#mpopen), [MPCLOSE](#mpclose), [MPLOCK](#mplock), [MPUNLOCK](#mpunlock), [MPDOOR](#mpdoor), [MPHIDE](#mphide), [MPUNHIDE](#mpunhide) |
 | Variables and state | [MPSETVAR](#mpsetvar), [MPSAVEVAR](#mpsavevar), [MPLOADVAR](#mploadvar), [MPLIST](#mplist), [MPLOCAL](#mplocal), [MPARGSET](#mpargset), [MPSTATE](#mpstate), [MPTAG](#mptag), [MPSET](#mpset), [MPGSET](#mpgset), [MPSETINTERNAL](#mpsetinternal) |
-| Calling and timing | [MPCALLFUNC](#mpcallfunc), [MPALARM](#mpalarm), [MPALARMCANCEL](#mpalarmcancel), [MPWAIT](#mpwait), [MPSIGNAL](#mpsignal), [MPNOTRIGGER](#mpnotrigger), [MPINTERRUPT](#mpinterrupt), [MPPASSTIME](#mppasstime), [MPSCRIPT](#mpscript), [MPUNLOADSCRIPT](#mpunloadscript), [MPJSFILE](#mpjsfile), [MPBEHAVE](#mpbehave), [MPUNBEHAVE](#mpunbehave) |
+| Calling and timing | [MPCALLFUNC](#mpcallfunc), [MPFORCE](#mpforce), [MPALARM](#mpalarm), [MPALARMCANCEL](#mpalarmcancel), [MPWAIT](#mpwait), [MPSIGNAL](#mpsignal), [MPNOTRIGGER](#mpnotrigger), [MPINTERRUPT](#mpinterrupt), [MPPASSTIME](#mppasstime), [MPSCRIPT](#mpscript), [MPUNLOADSCRIPT](#mpunloadscript), [MPJSFILE](#mpjsfile), [MPBEHAVE](#mpbehave), [MPUNBEHAVE](#mpunbehave) |
 | Asking the player | [MPPROMPT](#mpprompt), [MPCONFIRM](#mpconfirm), [MPCHOOSE](#mpchoose), [MPMENU](#mpmenu), [MPLLM](#mpllm) |
 | Stats and progression | [MPEXP](#mpexp), [MPRPEXP](#mprpexp), [MPLEVELUP](#mplevelup), [MPLEVELDOWN](#mpleveldown), [MPQUESTPOINTS](#mpquestpoints), [MPTRAINS](#mptrains), [MPPRACS](#mppracs), [MPENABLE](#mpenable), [MPDISABLE](#mpdisable), [MPLEARNRECIPE](#mplearnrecipe), [MPLEARNLANG](#mplearnlang), [MPPERK](#mpperk), [MPRANK](#mprank), [MPRESPEC](#mprespec), [MPPLAYERCLASS](#mpplayerclass), [MPTITLE](#mptitle), [MPTATTOO](#mptattoo), [MPACCTATTOO](#mpacctattoo), [MPACHIEVE](#mpachieve), [MPRECRUIT](#mprecruit) |
 | Combat and effects | [MPKILL](#mpkill), [MPHIT](#mphit), [MPDAMAGE](#mpdamage), [MPHEAL](#mpheal), [MPCAST](#mpcast), [MPCASTEXT](#mpcastext), [MPAFFECT](#mpaffect), [MPUNAFFECT](#mpunaffect), [MPSTOP](#mpstop), [MPTHREAT](#mpthreat), [MPTELEGRAPH](#mptelegraph), [MPWAVE](#mpwave), [MPREJUV](#mprejuv), [MPRESET](#mpreset) |
@@ -2280,9 +2280,7 @@ mpshop $i PRICE 'a healing potion' 40
 
 **Example:** `MPREGENERATE Fixg14Maze SEED=7`
 
-### MPPASSTIME
-
-Makes game time pass; see [MPPASSTIME](#mppasstime) under *Calling, timing and script management*.
+`MPPASSTIME`, which makes game time pass, is described under [Calling, timing and script management](#calling-timing-and-script-management).
 
 ## Travel and vessels
 

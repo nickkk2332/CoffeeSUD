@@ -2090,3 +2090,514 @@ first state. On an area all its rooms (or `ROOMS=`) change together.
 ```text
 RoomStates STATE=dry TITLE="A dusty shaft"; STATE=collapsed TITLE="A collapsed shaft" ADD="Prop_RoomDark()" BLOCK=down; TO=collapsed ONVAR="mine collapse==1"; START=dry
 ```
+
+### Sailor
+
+Hosts: mobs. Turns a mob into a member of the crew of a large boardable sailing
+ship. With no arguments the mob stands idle until its ship is in combat, then
+loads and aims weapons it finds. By default it acts more often by level (1 to
+30). If the mob also has the Shipwright behavior (a crafting skill) it mends the
+ship when not in combat or when the ship is badly hurt; a mob with Grapples and
+Mobile throws grapples and boards enemy ships. See
+[chapter 30](30-travel-vehicles-instances.md).
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `TICKDELAY=n` | Ticks between actions, in combat or not. | 30 less `TICKBONUS` less level/4 |
+| `TICKBONUS=n` | Subtracted from the delay. | 0 |
+| `PEACEMOVER=true/false` | Sails the ship around at random when not in combat. | false |
+| `AREAONLY=true/false` | The ship stays in the area when sailing around. | true |
+| `FIGHTMOVER=true/false` | Sails around during combat. | true |
+| `WIMPY=true/false` | With `FIGHTMOVER`, runs away when losing. | true |
+| `FIGHTTECH=true/false` | Loads and aims weapons in combat. | true |
+| `AGGRO=true/false` | Targets other ships it meets and starts fights. | false |
+| `AGGROMOBS=true/false` | With `AGGRO`, also fights mob-only ships. | false |
+| `AGGROLEVELCHECK=true/false` | With `AGGRO`, only near-level enemy ships. | false |
+| `AGGROMASK=[MASK]` | With `AGGRO`, a zapper mask to filter enemies. | none |
+| `DEFENDER=true/false` | Seeks the deck to defend against boarders. | false |
+| `BOARDER=true/false` | Seeks the enemy ship to attack its crew. | false |
+
+```text
+Sailor tickdelay=10 peacemover=true areaonly=false
+```
+
+### Scavenger
+
+Hosts: mobs. Timing default 1/10/99. The mob picks up and takes away random
+objects in its room, but does not do its work while a player character is in
+the room. When "filled up" it destroys the items unless told otherwise.
+Parameters before an optional `;`, then an item mask (allowed is picked up).
+
+| Parameter | Meaning |
+| --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing. |
+| `TRASH=[ROOMID]` | Track to that room and put the things in any ungettable container there, or on the ground. `TRASH="no"` does nothing with them (they are kept). |
+| `ATNIGHT=true` | (not in the help) at night it works every tick and dumps its haul. |
+
+```text
+Scavenger min=10 max=20 chance=75 trash="Midgaard#3021"
+Scavenger min=10 max=20 chance=75 ; -JAVACLASS +GENWEAPON
+```
+
+### Scene
+
+Hosts: rooms, mobs. CoffeeSUD. NPCs play out a scene for a player character to
+overhear. The parameter is statements separated by `;`, or one per line in
+`FILE=[PATH]`.
+
+| Statement | Meaning |
+| --- | --- |
+| `NAME=[NAME]` | The scene's name (the saved variable `SCENE_[NAME]`). |
+| `ACTOR [NAME]=[MASK OR NAME]` | A part, and how to find the NPC in the room: a zapper mask (starting with `+` or `-`), or words of its name; on an NPC host, `SELF` is the NPC itself. |
+| `[NAME]: [COMMAND]` | A line: `say ...`, `emote ...`, or any command the NPC can do; `$n` is the character's name; `[[topic]]` in a line said teaches the topic (`AHELP NPCTOPICS`). One line a tick (a turn in turn-based time). |
+| `PAUSE [N]` | N ticks of silence. |
+| `ECHO [TEXT]` | Text for the room. |
+| `DO [MOBPROG]` | Run a script line with `$n` the character (`MPSETVAR`, `MPQJOURNAL`, `MPCALLFUNC`...). |
+| `IF=[CONDITION]` | A script condition (`$n` the character, `$i` the first actor). |
+| `ONCE` / `REPEAT=[DAYS]` | Played once to each character (default), or again after N game days. |
+| `DELAY=[N]` | Ticks between lines. |
+| `INTERRUPTIBLE` | A character who speaks to an actor stops it and the actors turn to them; it plays to them again when they have left and come back. |
+| `WHEN=`, `TOD=`, `HOURS=` | Hold it back (the gate above). |
+
+It begins when a player character is in the room who it has not played to, all
+its actors are there, awake and not fighting, and `IF` holds. Played to the end,
+each player character there has heard it: the variable `SCENE_[NAME]` on them is
+the game day. It stops, not heard, when the character or an actor goes, or an
+actor fights. Where it is in a scene is saved. `STAT BEHAVIORS` shows it and any
+statement it did not understand.
+
+```text
+Scene NAME=bribes;ACTOR guard1=tall guard;ACTOR guard2=-NAMES +"short guard";guard1: say Heard the bandits hit the mill again.;guard2: emote spits.;PAUSE 1;guard1: say The [[captain]] takes their coin, they say.;DO mpsetvar $n HEARD_BRIBES yes;TOD=NIGHT
+```
+
+### Schedule
+
+Hosts: mobs. CoffeeSUD. A daily routine over several places. Entries are
+separated by `;`; the first whose `WHEN` holds is the one in force.
+
+```text
+[WHEN]: [PLACE] ([ACTIVITY]...) (SAY [TEXT]/EMOTE [TEXT]); ...; (SHOPMSG="[TEXT]")
+```
+
+| Part | Meaning |
+| --- | --- |
+| `WHEN` | `DAWN`, `DAY`, `DUSK` or `NIGHT`, or hours (`2-5`, or `7`, on the area's clock), then any of `DAYS=[FROM]-[TO]` (days of the month), `SEASON=`, `WEATHER=` (`CLEAR`, `RAIN`, `SNOW`...) and `MASK="[ZAPPER MASK]"` (on the mob). |
+| `PLACE` | A room ID (it runs to the first activity word, so an ID with spaces is fine), `HOME` or `START` (where the mob starts), or `ANY:"[ROOM MASK]"` (a room of its area that fits). |
+| Activities | `SLEEP` or `SIT`, each with an optional item to do it on; `WANDER [N]`; `SHOP` (it trades only while here: elsewhere, or on the way, it says `SHOPMSG`); `WORK "[EMOTE]\|[EMOTE]"` (now and then); `LOCK` (closes and locks the place's doors while there, and unlocks them when the entry ends); `HIDE`. |
+| `SAY` / `EMOTE` | Last; said on arriving. |
+
+It walks there, holding [Mobile](#mobile) off on the way, and goes back to the
+routine after a fight; woken, it goes back to sleep after a while. When no
+player is in the area of either room, it is put there at once, so a restored
+game, a time jump or an area nobody is in finds it where its routine says. With
+no entry in force it stays where it is. `STAT($i SCHEDULE)` is the entry in
+force, and `STAT BEHAVIORS` shows it.
+
+```text
+Schedule DAWN: Mill#2 WORK "pours grain into the hopper|wipes flour from his hands"; DAY: Market#5 SHOP; DUSK: Inn#1 SIT "stool" SAY Long day.; NIGHT: Mill#9 SLEEP "straw bed" LOCK
+```
+
+### Scriptable
+
+Hosts: mobs, items, rooms (areas and exits use the other scripting hooks, see
+[chapter 4](04-mobprog.md)). Runs a MOBPROG script on its host. The parameter is
+the script: complete scripts and/or `LOAD=[PATH]` lines.
+
+- With a file, each command line ends with a line feed or a `;`. If the whole
+  script is in the parameters, every line ends with `;`.
+- Several scripts with several triggers may be included; separate each script
+  and trigger with `~`.
+- The first line of each script is a trigger and its parameters (for example
+  `GREET_PROG 100`); the rest is the body (`IF`, commands, `$` codes).
+- `LOAD=progs/my.script~` loads another file (files under `resources/progs/`
+  ship as examples).
+- The `WHEN`, `TOD` and `HOURS` gate does not apply to it: its parameters are
+  the script.
+
+The scripting language is documented in four chapters: the guide
+([chapter 4](04-mobprog.md)), the triggers
+([chapter 26](26-mobprog-triggers.md)), the commands
+([chapter 27](27-mobprog-commands.md)), and the functions and `$` codes
+([chapter 28](28-mobprog-functions.md)). Script variables and trigger state are
+saved with the game. ScriptableEverymob and the `Scriptable` of
+[GenBehavior](#genbehavior) build on it.
+
+```text
+Scriptable LOAD=progs/mrinfo.script~
+```
+
+### ScriptableEverymob
+
+Hosts: areas, rooms. Gives every mob native to the area or room a script
+automatically; mobs that already have Scriptable behaviors are unaffected.
+Parameters are those of [Scriptable](#scriptable).
+
+```text
+ScriptableEverymob LOAD=progs/mrinfo.script~
+```
+
+### Sentry
+
+Hosts: mobs. CoffeeSUD. A lookout. It sees an intruder here or next door: a
+player's character, or one following them, or whoever `INTRUDERS` fits. One
+hidden or sneaking it spots at `SPOT` percent a tick, less their Hide or Sneak
+proficiency, and half that next door. Then, or when it is attacked, it raises the
+alarm: a shout of `MSG` (a NOISE message, which `EXECMSG_PROG` can catch), and
+every NPC within `RADIUS` rooms that fits `MASK` wakes (a Sleeper stays up) and
+is alert for `ALERTTICKS`: it heads for the alarm room, or for the intruder if
+they are near, and attacks them or their party, while its Schedule or Patroller
+waits. It raises the alarm at most once in `ALERTTICKS`.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `SPOT=[N]` | Percent chance per tick of spotting a hidden or sneaking intruder. | 25 |
+| `INTRUDERS="[MASK]"` | Whom it counts as an intruder (besides players' characters). | players' side |
+| `ALARM="RADIUS=[N] MASK=[MASK] MSG=[TEXT]"` | The alarm: how many rooms, which NPCs, what is shouted. | radius 6 |
+| `ALERTTICKS=[N]` | How long NPCs are alert. | 40 |
+| `ALARMITEM="[ITEM NAME]"` | An item in its room that anyone, a player too, may `PUSH` or `PULL` to raise the alarm. | none |
+
+```text
+Sentry SPOT=30 ALARM="RADIUS=6 MASK=-NAMES +bandit MSG=Intruders! To arms!" ALERTTICKS=40 ALARMITEM="a brass gong"
+```
+
+### Sleeper
+
+Hosts: mobs. CoffeeSUD. A sleeping NPC that noise wakes.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `ALWAYS` or `SLEEPS=[DAWN/DAY/DUSK/NIGHT/FROM-TO]` | When it sleeps: a time of day or hours on the area's clock (do not use `TOD=` or `HOURS=`: they would switch the whole behavior off). | `ALWAYS` |
+| `BED="[ITEM]"` | Sleeps on that item if it is there. | none |
+| `WAKEON=[ATTACK,NOISE,ENTER,LIGHT,TOUCH]` | What may wake it. `TOUCH` is anything done to it but looking. | all |
+| `WAKECHANCE=[N]` | How likely each is. A fight in the room makes it likelier, one next door less likely; someone entering sneaking or hidden takes off their Sneak or Hide proficiency; one carrying a light adds to it. | 50 |
+| `DEEP` | Only an attack wakes it. | off |
+| `GRUMBLE="[TEXT]"` | Said when woken. | none |
+| `AWAKEFOR=[TICKS]` | How long it stays up before sleeping again. | 20 |
+| `ALARM` | When woken it shouts an alarm that wakes the NPCs round about: its [Sentry](#sentry)'s `ALARM=` if it has one, else six rooms and "Intruders!". | off |
+
+`LOOK` at it says it is sleeping soundly, or that it stirs when something nearly
+woke it.
+
+```text
+Sleeper ALWAYS WAKEON=NOISE,ENTER WAKECHANCE=40 GRUMBLE="Who disturbs Grok?" ALARM
+```
+
+### Sounder
+
+Hosts: rooms, mobs, items, areas, exits. Default timing min=max=23 ticks.
+An alternative to [Emoter](#emoter): very simple emoting triggers based on a
+percent chance each tick, or on event triggers such as getting an item or leaving
+a room. The parameter is `;` separated. The first field may set the ticks
+(`min=20 max=20`); each other field is `[CODE] [STRING]`. Strings may use `$p`
+(the item with the behavior), `$n` (the source of the trigger), `$e` (he or she
+of `$n`) and `$s` (his or her of `$n`).
+
+| Code | Fires and emotes to |
+| --- | --- |
+| `SOUND [PCT]` | Every min/max ticks, this percent of the time. |
+| `GET`, `DROP`, `PUSH`, `PULL`, `EAT`, `MOUNT`, `DRINK`, `SIT`, `SLEEP`, `WEAR`, `OPEN`, `CLOSE`, `HOLD`, `WIELD`, `REMOVE` | If an item is gotten, dropped etc. (or THE item, when on an item), to the actor. |
+| `GET_ROOM`, `DROP_ROOM`, `PUSH_ROOM`, `PULL_ROOM`, `EAT_ROOM`, `MOUNT_ROOM`, `DRINK_ROOM`, `SIT_ROOM`, `SLEEP_ROOM`, `WEAR_ROOM`, `OPEN_ROOM`, `CLOSE_ROOM`, `HOLD_ROOM`, `WIELD_ROOM`, `REMOVE_ROOM` | The same, to the room (not the actor). |
+| `PORTAL_ENTER`, `PORTAL_EXIT` | If the room is entered or left: to the one entering or leaving. |
+| `PORTAL_ENTER_ROOM`, `PORTAL_EXIT_ROOM` | To the others in the room. |
+| `DAMAGE`, `FIGHT` | If the object is hurt or attacking (or used to hurt or attack): to the one hurting or attacking. |
+| `DAMAGE_ROOM`, `FIGHT_ROOM` | To the others in the room. |
+
+CoffeeSUD bark table: entries `EVENT: [CHANCE=N] [COOLDOWN=N] [ONCEPERPLAYER] line
+| line ...`, among the codes above or one to a line in a file named by
+`FILE=[PATH]`. A line is `[WEIGHT] [{MASK}] [SAY|EMOTE|SOUND] text` (`"text` is
+said, `:text` emoted, an emote by default; `$n` the one it is about). One line
+is drawn by weight with the game's dice, of those whose mask fits `$n`.
+`CHANCE=` is the percent chance it barks at all, `COOLDOWN=` the ticks before
+that event barks again, `ONCEPERPLAYER` once for each character. Lines also
+accept Emoter's conditional prefixes (`DAY`/`NIGHT`, seasons, weather,
+`INDOORS`/`OUTDOORS`, `IFVAR name=value`), `MASK="..."`, `ONCE` and `WEIGHT=n`;
+idle `ONCE` lines are selected for each reader.
+
+| Bark event | Fires when |
+| --- | --- |
+| `GREET` | A character arrives. `GREET_FIRST`: the first time it sees them (`GREET` if it has none). |
+| `SEE_MOB(MASK)` | Anyone arriving who fits the mask or has the words in their name. |
+| `SEE_ITEM(MASK)` | A character arrives carrying such an item. |
+| `KILL` | It kills `$n`. |
+| `ALLY_DIES` | One of its group or race dies; `$n` is the killer. |
+| `FLEE` | It flees. |
+| `FIGHT` | It is attacked. |
+| `HURT<N` | Below N% of its hit points, once until it heals. |
+| `IDLE` | Each tick (give it a `CHANCE=`). |
+| `DAWN`, `DAY`, `DUSK`, `NIGHT` | As each begins. |
+| `RAIN`, `SNOW`, `CLEAR` | As each begins. |
+| `SHOP_LIST`, `SHOP_BUY`, `BRIBED` | A shop is listed, a purchase, given money. |
+| `WIELD(MASK)`, `WEAR`, `HOLD`, `GET`, `DROP` | An item is so handled, by anyone in the room. |
+
+A saved game keeps whom it has greeted and its once-per-character barks.
+
+```text
+Sounder sound 80 wiggles his bottom.;sound 60 smiles evilly.;sound 20 burps!
+Sounder min=20 max=20;wear $p looks good on you.;remove Now you don't look so good.;remove_room $n doesn't look so good.
+Sounder GREET: COOLDOWN=20 2 SAY Move along. | 1 SAY Keep your blade sheathed.;WIELD(+WEAPONCLASS SWORD): SAY Put that away in the city!;NIGHT: SAY Curfew's at the bell.;HURT<30: SAY To me! Guards!
+```
+
+### StdBehavior
+
+Hosts: mobs. The base class of every behavior; it does nothing (the standard
+ID, empty `tick`, `executeMsg` and `okMessage`). Its built-in stats are `CLASS`
+(the ID) and `TEXT` (the parameters), plus the internal `NAME`, `STATE` (run
+state, see [How behaviors save](#how-behaviors-save)) and `DEBUG` (what `STAT
+BEHAVIORS` shows). Engine developers extend it; see
+[chapter 32](32-engine-programming.md).
+
+### TargetPlayer
+
+Hosts: mobs. Timing default 3/12/100. In combat the mob targets the weakest
+player in its enemies' group.
+
+```text
+TargetPlayer min=2 max=3 chance=99
+```
+
+### TargetPriority
+
+Hosts: mobs. CoffeeSUD. Chooses which of its foes the monster attacks (its foes
+are those it or they fight, whom it can see).
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `PREFER=` a comma list | In order, what it goes for; the first that names someone here wins. See below. | |
+| `SWITCH=[N]` | Percent chance each tick that it looks again. | 30 |
+| `STICKY=[N]` | Ticks after a switch before it may switch again. | 3 |
+| `TAUNTABLE` | One with a clear lead in its threat (half as much again as the next: damage, healing, `MPTHREAT`, a taunt) comes before the list. | off |
+
+`PREFER` values: `HEALER` (the most healing abilities), `CASTER` (the most
+spells, prayers, chants or songs), `LOWESTHP` (the least hit points left),
+`LOWESTARMOR` (the worst protected), `LEADER` (the party's leader), `LASTHITME`
+(whoever hit it last), `STRONGEST` (the most powerful), `MASK:[ZAPPER MASK]` (the
+first one the mask fits; last in the list, and the list in quotes when the mask
+has spaces).
+
+```text
+TargetPriority PREFER=CASTER,LOWESTHP SWITCH=50
+TargetPriority PREFER=LASTHITME STICKY=4
+TargetPriority PREFER="LOWESTHP,MASK:-CLASS +Cleric" TAUNTABLE
+```
+
+### TaxCollector
+
+Hosts: mobs. A very annoying and somewhat dangerous collector of money from
+players and mobs. By default it demands 10% of any money held by a random person
+it meets as a "citizens tax". The person has `WAIT` to give it over before it
+charges them with tax evasion or attacks. If paid (mobs always pay) they have
+`GRACE` before money is demanded again. It never demands from a member of its own
+clan. In areas with law it charges the Citizens Tax rate instead of 10%, and any
+back property taxes.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `WAIT=[TIME]` | Milliseconds to pay. | 120000 (2 minutes) |
+| `GRACE=[TIME]` | Milliseconds before it asks again. | 3600000 (1 hour) |
+
+```text
+TaxCollector WAIT=60000 GRACE=600000
+```
+
+### TaxiBehavior
+
+Hosts: mobs, items (rideables). Extends [Concierge](#concierge): the host
+carries riders to places for a price. It takes the same parameter syntax as
+Concierge (`[price]/[place]=[price]/[setting]=[value]` separated by `;`), with
+its own defaults: a base price of 10 and 1 per room, and trails limited to open,
+outdoor routes. `GREETING`, `ENTERMSG` (told to a rider after they mount) and
+`TALKERNAME` (default "the driver" on an item) apply; `AREAONLY`, `MAXRANGE`,
+`PERROOM`, `NOWATER`, `NOAIR`, `NOLOCKS`, `NOHOMES`, `NOCLIMB` and `NOCRAWL` as
+for Concierge. The help also lists `INDOOROK=true` to allow indoor rooms (see the
+audit notes: the parser maps it to the same flag as `NOINDOOR`).
+
+```text
+TaxiBehavior 1.5
+TaxiBehavior Midgaard#3001=1.5; Smurfville=2.0; 70 ; AREAONLY=true
+TaxiBehavior Midgaard#3032; 100 ; INDOOROK=false; MAXRANGE=100
+```
+
+### Thiefness
+
+Hosts: mobs. A [CombatAbilities](#combatabilities) preset: the mob becomes a Thief
+by class with thief skills suited to its level, including non-combat abilities:
+sneaking and hiding, backstabbing, picking pockets, and stealing at high levels.
+Parameters as in [Fighterness](#fighterness).
+
+```text
+Thiefness Assassin MIXEDOFFENSIVE
+```
+
+### TidalRoom
+
+Hosts: rooms (and areas). CoffeeSUD, built from [RoomStates](#roomstates). A
+shore room the tide floods. At high tide (`SPAN` hours either side) it is a
+swimming room with its own title and description, and `FLOODMSG` for those who
+come in; with `DEEP` its air is water at the spring tides; `WASH` washes away
+the loose things there that weigh up to that much as the water comes. At the ebb
+it is itself again. `ROOMSTATE()` says `ebb`, `flooded` or `deep`.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `SPAN=[HOURS]` | Hours either side of high tide it is flooded. | 0 |
+| `TITLE=`, `DESC=` | The room's title and description while flooded. | the room's own |
+| `FLOODMSG=` | Told to those who come in while flooded. | `The tide is in: the sea swirls about you.` |
+| `DEEP` | Its air is water at the spring tides. | off |
+| `WASH=[WEIGHT]` | Washes away loose things up to that weight. | 0 |
+
+```text
+TidalRoom SPAN=1 DESC="The sea fills the cove." WASH=2 DEEP
+```
+
+### TransportLine
+
+Hosts: items, mobs. CoffeeSUD (no shipped help entry). A scheduled transport: the
+host (an item vehicle, or a mob, or the thing a mob rides) travels between stops
+on a route, with a fare and a timetable. It adds the properties
+`Prop_TicketTaker` (the fare) and, for a navigable item, `Prop_HelmRestrict`
+(only passengers, no players at the helm) while it runs. Position, direction and
+timing are saved.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `STOPS="[ROOM ID];[ROOM ID];..."` | The stops (at least two). | required |
+| `ROUND=LOOP/BACK` | Loop round to the first, or go back and forth. | `LOOP` |
+| `WAIT=[ticks]` | Ticks at each stop. | 10 |
+| `DEPART=[hours]` | Comma list of game hours to depart; the next one overrides `WAIT`. | none |
+| `FARE=[price]` | Fare. | 0 |
+| `FARES="[STOP ID]:[price],..."` | A different fare when leaving that stop. | none |
+| `PARTY=LEADER` etc. | Passed to `Prop_TicketTaker` (who pays for the group). | `LEADER` |
+| `PETS`, `CARGO` | Passed to `Prop_TicketTaker`. | 0 |
+| `PASSENGERONLY=true/false` | Install `Prop_HelmRestrict NAVMASK="-PLAYERS"`. | true |
+| `BOARDCALL`, `DEPARTMSG`, `ARRIVEMSG` | Announcements; `$stop` and `$next` are replaced by the stop and next stop names. | none |
+| `SIGN="[item name]"` | An item at each stop whose readable text becomes the timetable. | none |
+
+`TIMETABLE` shows the line. See [chapter 30](30-travel-vehicles-instances.md).
+
+```text
+TransportLine STOPS="Gate#1;Pier#4;Fort#2" WAIT=100 ROUND=BACK FARE=2 PARTY=LEADER PASSENGERONLY=true
+```
+
+### Vagrant
+
+Hosts: mobs. No parameters. The mob spontaneously goes to sleep wherever it is,
+and wakes after a while.
+
+### VeryAggressive
+
+Hosts: mobs. Extends [Aggressive](#aggressive). Attacks any player it detects in
+its room as soon as it enters, and also detects players in adjacent rooms and
+moves to attack them, but only when they meet all the criteria and are within 16
+levels. With no other parameters it attacks anyone within 8 levels. Ignores
+archons and builders with `CMDMOBS`. Parameters: `message=`, `delay=`,
+`mobkill`, `nogang`, `misbehave`, `BRIBE=`, `BRIBEPAYMSG=`, `BRIBEPAIDMSG=` and
+the mask, as for Aggressive.
+
+```text
+VeryAggressive -race +elf message="die! You!"
+VeryAggressive mobkill misbehave -race +elf
+```
+
+### WaterCurrents
+
+Hosts: areas, rooms. Timing default 3/5/75. The mob, item or boat in the room is
+drawn along in the directions given. If an exit is available in the first
+direction it is chosen, else the second, and so on.
+
+| Parameter | Meaning |
+| --- | --- |
+| `GO=[DIRECTION] [DIRECTION] ...` | The directions, in preference order. Each direction word as `east=true` also works. Default `north` then `east`. |
+| `INMSG="..."` | Message to the room it enters (`<S-NAME>`, `<S-IS-ARE>`, `@x1` the direction it comes from). |
+| `OUTMSG="..."` | Message to the room it leaves (`@x1` the direction). |
+| `BOATS` | (not in the help) also moves boats. |
+
+```text
+WaterCurrents min=1 max=3 chance=99 go=east south
+WaterCurrents east=true south=true inmsg="<S-NAME> enter(s) from @x1."
+```
+
+### WaveSpawner
+
+Hosts: rooms. CoffeeSUD. An arena of waves.
+
+| Parameter | Meaning |
+| --- | --- |
+| `WAVE1="[WAVE]"`, `WAVE2=`... | Each wave is `name*dice` joined with `+` (from the catalog, `catalog:` being optional, or a mob class), or `encounter:[TABLE]`, a roll of an encounter table (`AHELP ENCOUNTER`). |
+| `NEXT=CLEAR` / `NEXT=TICKS=[N]` | The next wave comes when the last is dead, or after N ticks. |
+| `START=ENTER` (default) / `START=CALL` | Starts when the party walks in, or when a script runs `MPWAVE START`. |
+| `LOCKEXITS=true` | Keeps the party in until it is done. |
+| `ONWIN=[FUNCTION]/UNLOCK` | When the last wave is dead, the winner gets `REWARD`, `ONWIN`'s `FUNCTION_PROG` of the room's scripts runs (`$n` the winner). |
+| `REWARD="[ITEM]"` | The reward. |
+| `ONLOSE=RESET/SPARRING(:[ROOM ID])` | If the party leaves or falls, what is left of the wave leaves; `SPARRING` puts `Prop_SparringRoom` on the room while it runs, so a defeat is not death (the room ID is where the loser wakes). |
+| `RESETAFTER=[N]` | Ticks after which it may start again. |
+
+`WAVE_PROG [N]`, `ARENAWIN_PROG` and `ARENALOSE_PROG` run on the room's scripts
+and its NPCs' (an arena master's). The wave is saved. See
+[chapter 29](29-combat-and-encounters.md).
+
+```text
+WaveSpawner WAVE1="catalog:goblin*3" WAVE2="goblin*2+goblin archer*2" WAVE3="encounter:goblin_boss" LOCKEXITS=true REWARD="a laurel" ONLOSE=SPARRING:Arena#2
+```
+
+### WeatherAffects
+
+Hosts: rooms, areas. Handles most of the effects of weather on players and the
+environment; change the parameters to tune, tweak or switch off effects.
+Defaults from the code:
+
+| Parameter (code key) | Meaning | Default |
+| --- | --- | --- |
+| `windsheer` | Percent chance that a ranged attack or thrown item is blown off course. | 10 |
+| `puddlepct` | Percent chance, after wet weather, that puddles, snow piles or dust form. | 50 |
+| `rainslipchance` | Percent chance during wet weather that someone slips while moving. | 1 |
+| `snowSlipChance` | Same, during snow. | 5 |
+| `sleetSlipChance` | Same, during sleet. | 10 |
+| `iceoverchance` | Percent chance, in cold weather after cold weather, that an available water surface freezes over for a time. (The help names this `freezeOverChance`; the code reads `iceoverchance`.) | 50 |
+| `droughtFireChance` | Percent chance, during a drought, that a random item in the available rooms ignites. | 1 |
+| `boatslipchance` | (not in the help) the chance for boats. | 20 |
+| `botherticks` | Ticks between reminders of current weather. | 50 (one third of 150) |
+| `diseaseticks` | Ticks between small chances of a weather-related disease (cold, flu, frostbite, heat). | 300 |
+| `rustticks` | Ticks between chances that a wet player's item rusts and is damaged. | 30 |
+| `lightningticks` | Ticks between chances, in thunderstorms, that someone in a room is struck by lightning. | 1200 |
+| `rumbleticks` | Ticks between more personal weather reminders. | 37 |
+| `gustticks` | Ticks between chances, in windy weather, of a gust buffeting someone. | 300 |
+| `tornadoticks` | Ticks between chances, in thunderstorm and wind, of a tornado touching down. | 2250 |
+| `hailticks` | Ticks between chances, in hail, of being buffeted. | 150 |
+| `dustticks` | Ticks between chances, in dust storms, of dirt in the eye. | 50 |
+| `weather=[name]` | Forces that weather's effects, even indoors. Names: `CLEAR`, `CLOUDY`, `WINDY`, `RAIN`, `THUNDERSTORM`, `SNOW`, `HAIL`, `HEAT`, `SLEET`, `BLIZZARD`, `DUST`, `DROUGHT`, `COLD`, `FOG`. | none |
+| `skyweather=[name]` | The same, outdoors only. | none |
+| `shipdmgpct=[formula]` | Percent chance (0 to 100) that a ship or boat passing through takes damage. Formula variables: `@x1` rooms in the ship (boats are 0), `@x2` wind level (0, 1, 2), `@x3` wet level (0, 1 rain, 2 storm, 3 storm and wet). | none |
+| `dmgship=[formula]` | Amount of damage to the ship (the help calls this `shipdmg`; the code reads `dmgship`). It must be given with `shipdmgpct` or neither takes effect. | none |
+| `dmgname="[NAME]"` | The source name given for ship damage. | none |
+
+(The tick defaults are multiples of `Climate.WEATHER_TICK_DOWN`, 150 ticks.)
+
+```text
+WeatherAffects windsheer=10 puddlepct=20
+```
+
+### Wimpy
+
+Hosts: mobs. The mob flees any player it detects in the same room; with no
+parameters it flees anyone. Mask: allowed is fled from, disallowed is not.
+
+| Parameter | Meaning |
+| --- | --- |
+| `DELAY=x` | Ticks to wait before looking for someone to fear. |
+| `VERY=1` | Flee even if not in combat. |
+
+```text
+Wimpy -race +elf
+```
+
+### WimpyAggressive
+
+Hosts: mobs. Extends [Aggressive](#aggressive). Attacks any sleeping player it
+detects in the room. Ignores archons and builders with `CMDMOBS`. With no other
+parameters it attacks anyone. Parameters: `message=`, `delay=`, `mobkill`,
+`misbehave`, `BRIBE=`, `BRIBEPAYMSG=`, `BRIBEPAIDMSG=` and the mask, as for
+Aggressive.
+
+```text
+WimpyAggressive -race +elf misbehave mobkill
+```

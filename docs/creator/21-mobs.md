@@ -1187,3 +1187,348 @@ chosen rooms that *are* flagged hidden, so in practice always give a mask.
 A catalog mob is still a normal object when placed: its per-instance state (who
 it likes, what it carries, variables) is its own. The catalog entry only
 decides its definition.
+
+## Copying, destroying and bulk editing
+
+| Command | Does |
+| --- | --- |
+| `COPY ([number]) [mob name]` | Makes copies of a mob (found in the room, or the nearest anywhere in the world). Each copy is placed in your room and that room becomes its start room. Needs `COPYMOBS`. `COPY Longsword@orc` puts a copy of an item into a mob's inventory. |
+| `DESTROY MOB [name]` | Removes a mob in the room (a player is refused). `DESTROY MOB ALL [name]`, `ALL.[name]` and `[name].ALL` remove every match. If the mob was saved with the room, `SAVE ROOM` afterwards makes it permanent; until then it returns on reset. |
+| `GMODIFY (AREA\|ROOM\|WORLD\|#TAG) [FIELD=VALUE](&&\|\|...) (CHANGE=[FIELD=VALUE])` | Selects mobs (and items) by field values and optionally changes them. `GMODIFY ?` lists the fields. Preview your selection first and keep version control: this edits everything that matches. |
+| `RESET ROOM`, `RESET AREA` | Revives mobs and returns strays to their start rooms; unsaved changes to those rooms are lost. `RESET REJUV ROOM` revives dead mobs only. |
+| `RESET MOBCOMBATSTATS (ROOM\|AREA\|WORLD\|CATALOG) (NOSAVE) ([AREA NAME])` | Re-normalizes the combat numbers of mobs from their level. `NOSAVE` previews. |
+| `DEVIATIONS MOBS (ROOM\|AREA\|METRO) (SORTBY NAME\|LEVEL\|PLEVEL\|TYPE)` | Shows how mobs deviate from the norms for their level. |
+| `STAT [mob]` | Shows a mob's stats (`STAT BEHAVIORS [mob]` its behaviors' state). |
+| `CONSIDER [mob]` | The player view of the odds against it; `CONSIDER ALL` for a whole fight. |
+| `TEMPLATE ADD [id] [mob]` | Saves a mob to your personal builder templates; `CREATE MOB [id]` makes a copy. |
+
+Name multiple-word mobs in quotes in commands that take a token: `MODIFY MOB
+"the town guard" MISC`.
+
+Stat changes made with `MODIFY MOB` or `GMODIFY` to a placed mob change that
+mob in the live game. `GMODIFY` writes changes to the rooms (in builder mode
+they are saved on `SAVE`); see `AHELP GMODIFY`.
+
+## How mobs are saved
+
+### In an area file
+
+A room's mobs are stored inside the area's `world/areas/NAME.cmare` file, in
+the room's `ROOMMOBS`:
+
+```xml
+<ROOMCONTENT>
+ <ROOMMOBS>
+  <RMOB>
+   <MCLAS>GenMob</MCLAS>
+   <MLEVL>8</MLEVL>
+   <MABLE>11</MABLE>
+   <MREJV>90</MREJV>
+   <MTEXT>... the mob, XML-escaped ...</MTEXT>
+   <MRIDE />
+  </RMOB>
+ </ROOMMOBS>
+ <ROOMITEMS />
+</ROOMCONTENT>
+```
+
+| Tag | Content |
+| --- | --- |
+| `MCLAS` | The Java class ID (`GenMob`, `GenShopkeeper`, `Orc`...). |
+| `MIDEN` | Present only when the mob has riders or followers; a handle other mobs refer to. |
+| `MLEVL`, `MABLE`, `MREJV` | Level, "ability" (hit point modifier) and rejuvenation ticks. For a standard mob these three (plus `MTEXT`) are everything. |
+| `MTEXT` | For generic mobs, everything else, as XML text (escaped: `&lt;NAME&gt;...`). |
+| `MRIDE` | The `MIDEN` of what the mob rides or follows, if anything. |
+
+Mobs that follow a *player* are not saved (`mob.amFollowing()` must be empty or
+a monster).
+
+Unescaped, the `MTEXT` of a generic mob contains, in this order (empty tags
+may be written `<TAG />`):
+
+| Tag | Content |
+| --- | --- |
+| `NAME`, `DESC`, `DISP` | Name, description, display text. |
+| `PROP` | The base stats as one bar-separated list: ability, armor, attack, damage, disposition, level, rejuv, speed, weight, height, senses (for example `11\|76\|1\|1\|0\|1\|0\|1.0\|19\|23\|0\|`). |
+| `IMG` | Image path. |
+| `PREJFC`, `IGNMSK`, `BUDGET`, `DEVALR`, `INVRER`, `CURRENCY`, `IPRICS` | Economy settings (shopkeepers). |
+| `BEHAVES` | `<BHAVE><BCLASS>id</BCLASS><BPARMS>parms</BPARMS></BHAVE>` per behavior. |
+| `AFFECS` | `<AFF><ACLASS>id</ACLASS><ATEXT>parms</ATEXT></AFF>` per effect. |
+| `SCRPTS`, `TAGS` | Script objects and tags, when present. |
+| `FLAG` | A legacy flag number. |
+| `MONEY`, `VARMONEY` | Money and money variation. |
+| `CLAN` | `<CLAN ROLE=n>clanid</CLAN>` per membership. |
+| `GENDER`, `MRACE` | Gender letter and race ID. |
+| `FACTIONS` | `<FCTN ID="ALIGNMENT.INI">value</FCTN>` per faction. |
+| `INVEN` | `<ITEM><ICLASS>..</ICLASS><IDATA>..</IDATA></ITEM>` per carried or worn item (wear state and rejuv included). |
+| `ABLTYS` | `<ABLTY><ACLASS>id</ACLASS><APROF>75</APROF><ADATA>..</ADATA></ABLTY>` per ability. |
+| `TATTS`, `EDUS` | Tattoos and expertises, semicolon-separated. |
+| shop tags | `SELLCD` (what is sold), `SELLIMSK` (item mask), `STORE` of `SHITEM` (`SICLASS`, `SITYPE`, `SISTOCK`, `SIPRICE`, `SIDATA`) and `SIVTYP` (view flags); banker (`BANK`, `COININT`, `ITEMINT`, `LOANINT`), postman (`POSTCHAIN`, `POSTMIN`, `POSTLBS`, `POSTHOLD`, `POSTNEW`, `POSTHELD`), librarian (`LIBRCHAIN`, `LIBROVERCHG`, `LIBRDAYCHG`, `LIBROVERPCT`, `LIBDAYPCT`, `LIBMINDAYS`, `LIBMAXDAYS`, `LIBMAXBORROW`, `POSTCMASK`), auctioneer (`AUCHOUSE`, `TIMEPRICE`, `TIMEPCT`, `TIMECUT`, `MAXADAYS`, `MINADAYS`), craft broker (`BROCHAIN`, `MAXCDAYS`, `MAXLISTINGS`, `COMMPCT`), deity (`CLEREQ`, `WORREQ`, `CLERIT`, `WORRIT`, `CLERSIT`, `WORRSIT`, `CLERPOW`, `SVCRIT`, `BLESSINGS`, `CURSES`, `POWERS`). |
+
+A catalog mob appears in `world/catalog.cmare` as `<CATMOB>` with the same
+`<MOB>` XML plus its `CATEGORY` and `CATADATA` (spawn kind, rate, cap, mask).
+You normally never hand-edit these; let the game export them and edit with
+`MODIFY`. If you must edit XML, change one thing, `WORLD DIFF` it
+([02-world-workflow.md](02-world-workflow.md)), and reload.
+
+The shipped examples are `resources/examples/monsters.cmare` (a file of
+`GenMob` definitions, the kind a `RandomMonsters` behavior reads) and
+`resources/examples/deities.cmare`.
+
+### Saving
+
+- **Builder mode:** `SAVE ROOM` (the same as `SAVE ROOM HOME`) saves each mob into
+  its own *start room*, wherever it now stands; mobs standing in the room whose
+  home is elsewhere are listed as skipped, and this room's mobs that have
+  wandered off are kept. `SAVE ROOM ALL` saves every mob standing here. `SAVE
+  CHANGED` saves every room a building command changed, and `SAVE` writes all
+  world files. `LIST UNSAVED` shows what is pending. A world file edited outside
+  the game is not overwritten without `SAVE FORCE`. See `AHELP SAVE` and
+  [02-world-workflow.md](02-world-workflow.md).
+- **Normal game:** the mobs you create or change are part of that game's
+  campaign save (see [31-saves-and-party.md](31-saves-and-party.md)); the world
+  folder is not touched.
+- **Edits are live first.** `CREATE`, `MODIFY` and `DESTROY` change the running
+  game; nothing reaches the world files until you save. `QUIT` asks whether to
+  save pending rooms.
+- **Hit points are re-rolled** on every load and reset (see above), and
+  **variable equipment is re-rolled** on creation and rejuvenation.
+
+### From a script
+
+Mobs can also be built in JavaScript; see [05-javascript.md](05-javascript.md)
+and the example `docs/creator/examples/ember-trial/world/resources/creator/build.js`,
+which creates `GenMob`s with `CC.getMOB('GenMob')`, sets their name, display,
+level, rejuv, tattoos, properties and behaviors, calls `setStartRoom`, and
+`bringToLife(room, true)`.
+
+## Recipes
+
+Each recipe lists the answers to give in the editor. Create the mob in the room
+where it will live; set fields by their labels.
+
+### A weapon and armor shopkeeper
+
+```text
+CREATE ITEM Longsword
+CREATE ITEM Dagger
+CREATE MOB GenShopkeeper
+```
+
+Answers:
+
+| Field | Value |
+| --- | --- |
+| Name / Display | `Garrick the smith` / `Garrick the smith hammers at an anvil.` |
+| Description | `A broad-shouldered man with burn scars up both forearms.` |
+| Level | `8` (above 1, so the combat numbers are rescored) |
+| Rejuv Ticks | `300` |
+| Race / Gender | `Human` / `M` |
+| Behaviors | `MudChat` (default group chosen from the name; see [06-npcs-dialogue.md](06-npcs-dialogue.md)) |
+| Shopkeeper type | `4` (WEAPONS) and `2` (ARMOR) |
+| Inventory | `Longsword`, then `3` and `-1`; `Dagger`, then `5` and `-1` |
+| Prejudice | `BUY=0.9 Dwarf ; BUY=1.0 ; SELL=1.0` |
+| Budget | `2000 DAY` |
+
+Then delete the loose test items (`DESTROY ITEM Longsword`), and `SAVE ROOM`.
+Check the prices with `PRICECHECK longsword`. A dwarf customer pays 10% less. To
+make him a trainer or caster too, add types `8` (TRAINER) or `9` (CASTER) and stock ability
+IDs. To stock a generic item, build it first, leave it on the floor, and type
+its name at the Inventory prompt.
+
+### A town guard
+
+```text
+CREATE MOB GenMob
+```
+
+| Field | Value |
+| --- | --- |
+| Name / Display | `a town guard` / `A town guard watches the street.` |
+| Level / Race | `10` / `Human` |
+| alignment | `good` |
+| Hit Points Bonus Modifier | `13` |
+| Rejuv Ticks | `150` |
+| Behaviors | `Fighterness` with parameter `Fighter`; `Guard`; `Mobile` with `min=10 max=20 chance=50 leash=3 opendoors` |
+| Effects | `Prop_MobRank` with `RANK=NORMAL` (optional) |
+
+Dress him:
+
+```text
+CREATE ITEM Longsword@town guard
+CREATE ITEM LeatherArmor@town guard
+DRESS guard Longsword
+DRESS guard LeatherArmor
+SAVE ROOM
+```
+
+`Guard` makes him come to the aid of anyone attacked in his room.
+`Fighterness` makes him fight with fighter abilities. For gates, doors and
+sentries see `GateGuard`, `DoorwayGuardian` and `Sentry`
+([24-behaviors-and-masks.md](24-behaviors-and-masks.md)).
+
+### A quest giver
+
+```text
+CREATE MOB GenMob
+```
+
+| Field | Value |
+| --- | --- |
+| Name / Display | `Elder Marta` / `Elder Marta leans on a stick by the well.` |
+| Level / Race | `3` / `Human` |
+| Behaviors | `MudChat` |
+| Effects | `Prop_QuestGiver` with `QUEST="rat_hunt" TRIGGER=SPEAK`; `Prop_QuestMarker` with `QUEST=*` |
+| Disposition | `O` (unattackable) so the story cannot be broken |
+
+`Prop_QuestGiver` offers the named quest when a character speaks to the mob. The
+quest must be loaded and running and have an accept script; its default trigger
+on a mob is the mob's death. `Prop_QuestMarker` shows a `(!)` after her name while
+a quest is available and a `(?)` once it is active. The quest itself is written
+as in [08-quests.md](08-quests.md); the mob's conversation as in
+[06-npcs-dialogue.md](06-npcs-dialogue.md).
+
+### A mount you can buy
+
+First build the horse, in the stable room:
+
+```text
+CREATE MOB GenHorse
+```
+
+| Field | Value |
+| --- | --- |
+| Name / Display | `a chestnut mare` / `A chestnut mare stands saddled here.` |
+| Level / Race | `3` / `Horse` |
+| Rideable Type / Rider capacity | `L` / `1` |
+| Rejuv Ticks | `0` |
+| Behaviors | none (it should not wander) |
+
+Then make a `GenShopkeeper` ("the stablemaster"), choose type `5` (PETS) and, at
+the Inventory prompt, type `chestnut mare` (the mob standing in the room is
+copied into the shop) with a count of `1` and a price such as `120`. Destroy the
+original horse so only the shop copy remains. A buyer receives the mount and
+can `MOUNT` it. See
+[30-travel-vehicles-instances.md](30-travel-vehicles-instances.md) for stables.
+
+### A boss template
+
+```text
+CREATE MOB GenMob
+```
+
+| Field | Value |
+| --- | --- |
+| Name / Display | `Gruk the Ember Warden` / `Gruk the Ember Warden blocks the furnace door.` |
+| Level / Race | `20` / `Ogre` |
+| Hit Points Bonus Modifier | `14` |
+| Rejuv Ticks | `0` (a one-time encounter) |
+| Behaviors | `Fighterness`; `BossPhases` with `ONENGAGE: SAY "You should have left."; AT=50%: HEAL 10%, SAY "Still standing!"; RESET=FULLHEAL`; `EncounterReset` with `RADIUS=1 IDLE=5 HEAL=100` |
+| Effects | `Prop_MobRank` with `RANK=BOSS`; `Prop_Essential` with `MODE=YIELD AT=10% TICKS=20`; optionally `Prop_PartyScaler` with `BASE=3 HP=+25%/MEMBER` |
+
+Add it to the catalog (`CATALOG Gruk`) so encounters, `WaveSpawner`
+(`WAVE3="catalog:Gruk the Ember Warden"`) and `MPMLOAD CATALOG` can reuse it.
+After building, test it with `CONSIDER`, `COMBATDEBUG` and an ordinary
+character (see [29-combat-and-encounters.md](29-combat-and-encounters.md) and
+[13-testing-release.md](13-testing-release.md)): an invulnerable archon gives
+misleading results.
+
+### A banker
+
+`CREATE MOB GenBanker`; set Name and Display; type `C`; Bank Chain `Town`
+(all bankers with that chain share accounts); Coin Interest `1` (percent per real
+day), Item Interest `0`, Loan Interest `5`. Leave Prejudice and Currency empty
+to inherit the area's.
+
+## Worked examples
+
+### Example 1: a village with a fixed population and a wild forest
+
+1. In builder mode, stand in the village square and create the people:
+   `CREATE MOB GenMob` (the herald), a guard as above, and the smith. After each,
+   `SAVE ROOM`. The mobs are now in `world/areas/<village>.cmare` on `SAVE`.
+2. Catalog the guard: `CATALOG guard`. Catalog the wolf you built in the
+   forest: `CATALOG a grey wolf` (set `CATALOG CATEGORY wildlife` first to file
+   it).
+3. Put `RandomMonsters` on the forest *area* with `CATALOG` weights so the
+   forest has wolves that vanish at dawn:
+
+   ```text
+   min=20 max=40 chance=60 minmonsters=2 maxmonsters=6 CATALOG="a grey wolf=4,a dire wolf=1" DESPAWN=DAWN
+   ```
+
+4. `SAVE`. Start a normal game and walk the village: the people are always there
+   and return after death; the wolves come and go.
+5. Later you improve the wolf: `MODIFY a grey wolf`; at the end the editor says
+   it is cataloged; choose **U** to update, and every tied copy, in rooms or in
+   the spawner's pool, now matches.
+
+### Example 2: a boss that follows the story
+
+1. Build `Gruk` as above and place him in the furnace room with `Rejuv Ticks` set
+   to `500`.
+2. Add `Prop_RejuvWhen` with `WHEN="-IF !VAR(* FURNACE == COLD)" ELSE="REPLACE:a cold slag heap"` (the quest or a
+   script sets the world variable `FURNACE` to `COLD`).
+3. Catalog "a cold slag heap" as a harmless `GenMob` named so.
+4. Kill Gruk. While the furnace is lit he comes back after 500 ticks; once the
+   variable is `COLD`, the next rejuvenation puts the slag heap there for good.
+5. Test both paths: set the variable by script, kill him, wait, save and
+   restore, and check the heap is still there.
+
+## Troubleshooting and gotchas
+
+- **Created in the wrong room / "I don't see ..."** Editing commands act on the
+  mob in your room. Wrap multi-word names in quotes.
+- **A mob's stats look random after reload.** Hit points are re-rolled from level
+  and modifier on every load; they are never stored. Use the Hit Points Bonus
+  Modifier, `Prop_Adjuster`, or `Prop_MobRank`.
+- **Changing the level did nothing to its attack.** Only the 1 to 2+ transition
+  in the editor and `MODIFY MOB x LEVEL n` re-derive combat numbers. Otherwise
+  set Attack, Damage and Armor yourself, or run `RESET MOBCOMBATSTATS ROOM`.
+- **The mob's abilities are never used.** A combat behavior is needed
+  (`CombatAbilities`, `Fighterness`, `Mageness`...). Do not stack two of them.
+- **Equipment is gone after a reload.** Only generic mobs save equipment; standard
+  mobs rebuild theirs. For variable gear, remember the Rejuv/Pct rules and use
+  `RESET ROOM` before editing.
+- **Duplicate mobs.** A mob that wandered out of its room is saved with the room
+  it is *homed* in, but `RESET ROOM` can also make a replacement; do not both
+  rejuvenate and spawn into the same slot. `SAVE ROOM` lists strays it skipped.
+- **A mob never comes back.** Rejuv Ticks is 0, its start room was destroyed,
+  `Prop_RejuvWhen` said `WAIT` or `NEVER`, or a player is camping its start room
+  and the mob or room is flagged can't-be-camped.
+- **The catalog prompts "Update/Detach/Cancel" every time.** The placed copy
+  differs from the catalog entry. Choose **U** to make the entry match, **D** to
+  stop tying it, or **C** to discard your change.
+- **A shopkeeper has no stock after a long time.** Generic shopkeepers restore
+  their saved stock at each inventory reset (default every 64800 ticks);
+  anything the player sold is cleared then. A *standard* shopkeeper has no saved
+  stock at all.
+- **Buying a trainer's skill costs nothing / wrong price.** Check the price you
+  gave the stock item: `-1` is automatic; a negative number below `-99` is quest
+  points or experience.
+- **`MODIFY MOB` says "failed to specify an aspect".** The word is not a valid
+  stat code for that mob; the message prints the list. `LIBCMASK` and the other
+  subclass codes only exist on that subclass.
+- **A mob is "a player".** Players and copies of players are edited with
+  `MODIFY USER`; `COPY` of a player makes a `GenMob` clone.
+- **Mobs avoid or ignore you.** Wandering and aggressive mobs will not act in a
+  room that has a visible builder with `CMDMOBS` in it.
+- **Editor shows only four fields.** The mob is not generic; recreate it from a
+  `Gen*` class.
+
+## See also
+
+- [06-npcs-dialogue.md](06-npcs-dialogue.md): schedules, sentries, memory, hirelings, escorts, MudChat, TALK, barks.
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): every behavior and the zapper mask language used in shop and spawn masks.
+- [23-properties-reference.md](23-properties-reference.md): every `Prop_*` that goes in a mob's Effects.
+- [29-combat-and-encounters.md](29-combat-and-encounters.md): the combat formulas, rank, party scaling, bosses, spawners, death rules.
+- [03-characters.md](03-characters.md): races, classes, stats and templates.
+- [22-items.md](22-items.md): the items that mobs carry, wear and sell.
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md): the rooms mobs live in, area economy fields.
+- [04-mobprog.md](04-mobprog.md), [05-javascript.md](05-javascript.md): scripting mobs.
+- [08-quests.md](08-quests.md): quest givers and quest mobs.
+- [09-society.md](09-society.md): clans, factions, law, currencies and shop economics.
+- [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md): mounts, stables and travel.
+- [02-world-workflow.md](02-world-workflow.md): world files, SAVE, WORLD DIFF, catalog files.
+- [31-saves-and-party.md](31-saves-and-party.md): campaign saves and the party.
+- [tool-reference.md](tool-reference.md): the generated command reference.
