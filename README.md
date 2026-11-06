@@ -57,6 +57,9 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
 - **Optional combat profiles.** Composed skills and their burns can use versioned
   conversion/defense rules, equipment stats and recorded result explanations.
   See the [guide and examples](docs/creator/16-combat-profiles.md).
+  [Tracked item modifiers and crafting](docs/creator/17-item-modifiers-crafting.md)
+  add saved numeric rolls, exclusive groups, selective edits, protection and
+  repeat-safe material costs through another optional module.
   The [Ember Trial](docs/creator/examples/ember-trial/README.md) combines these
   opt-in systems in a complete playable sample adventure.
 - **More for content authors.** CoffeeSUD adds new MOBPROG triggers and

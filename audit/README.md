@@ -5,6 +5,10 @@ The [developer-tool audit](developer-tools-audit.md) covers the current tool
 contracts and documentation; the topic files below preserve original proposals
 and baseline analysis. Use `followup_status` in the inventory for current status.
 
+The newer optional [item-modifier and crafting validation](item-modifiers-crafting.md)
+records Stage 5's boundaries, regression results and legacy scenario replays,
+separately from the original 409-item inventory.
+
 This is a list of engine additions that would let the owner build the world
 without editing the engine's Java: new script triggers, functions and
 commands, JavaScript hooks, behaviours, properties, quest features, builder

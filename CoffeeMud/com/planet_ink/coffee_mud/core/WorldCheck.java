@@ -60,7 +60,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT", "ITEMMODS" };
 
 	/** one thing found */
 	public static final class Finding
@@ -338,6 +338,12 @@ public final class WorldCheck
 		final List<Finding> out = new ArrayList<Finding>();
 		final List<Room> rooms = roomsOf(only);
 		final boolean all = (parts == null) || parts.isEmpty();
+		if(all || parts.contains("ITEMMODS"))
+		{
+			final ItemModifierRules.Library lib=ItemModifiers.check();
+			for(final String error:lib.errors)out.add(new Finding(Severity.ERROR,"ITEMMODS",error));
+			for(final String error:ItemModifiers.checkItems(rooms,lib))out.add(new Finding(Severity.ERROR,"ITEMMODS",error));
+		}
 		if(all || parts.contains("COMBAT"))
 		{
 			final CombatRules.Library profiles = CombatProfiles.check();

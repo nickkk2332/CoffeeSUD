@@ -12,7 +12,7 @@ import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 public final class ModuleDefinitions
 {
     /** Native consumers that must be present before their saved abilities/effects can be restored. */
-    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler) || "combat.profiles".equals(handler); }
+    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler) || "combat.profiles".equals(handler) || "items.modifiers".equals(handler); }
     private ModuleDefinitions() { }
     public static final int SCHEMA = 1;
     public static final int MAX_FILES = 256, MAX_FILE_BYTES = 262144, MAX_RECORDS = 10000;
@@ -173,7 +173,7 @@ public final class ModuleDefinitions
             removal = obj.containsKey("on_disable") ? string(obj.get("on_disable"), "on_disable") : "suspend";
             if(!names("suspend", "refuse").contains(removal)) throw new IOException("on_disable must be suspend or refuse");
             handler = obj.containsKey("handler") ? string(obj.get("handler"), "handler") : "data";
-            if(!names("data", "example.counter", "abilities.composition", "combat.profiles").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
+            if(!names("data", "example.counter", "abilities.composition", "combat.profiles", "items.modifiers").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
             if(nativeHandler(handler) && !id.equals(handler) || nativeHandler(id) && !handler.equals(id))
                 throw new IOException("native modules require their registered handler and matching module ID");
             final Map<String,Integer> deps = new TreeMap<String,Integer>();
@@ -219,6 +219,15 @@ public final class ModuleDefinitions
                 if(profile == null || !profile.type.equals("string") || profile.length != 4096 || trace == null || !trace.type.equals("boolean"))
                     throw new IOException("combat.profiles requires string settings.profile (max_length 4096) and boolean settings.player_trace");
                 CombatRules.checkPin(parse((String)profile.initial));
+            }
+            if(handler.equals("items.modifiers"))
+            {
+                if(!requires.containsKey("combat.profiles")||!scopes.contains("character"))throw new IOException("items.modifiers requires combat.profiles and character scope");
+                for(final String key:names("pending","receipts")){final Field f=state.get(key);if(f==null||!f.type.equals("string")||f.length!=4096)throw new IOException("items.modifiers requires 4096-character string state."+key);}
+                for(final String key:names("serial","settled")){final Field f=state.get(key);if(f==null||!f.type.equals("integer")||f.minimum==null||f.maximum==null||f.minimum.longValue()!=0||f.maximum.longValue()!=1000000000)throw new IOException("items.modifiers requires integer state."+key+" bounded 0..1000000000");}
+                final Field allow=settings.get("allow_crafting"),max=settings.get("max_modifiers");
+                if(allow==null||!allow.type.equals("boolean")||max==null||!max.type.equals("integer")||max.minimum==null||max.maximum==null||max.minimum.longValue()<0||max.maximum.longValue()>6)throw new IOException("items.modifiers needs boolean allow_crafting and bounded max_modifiers (0..6)");
+                if(!parse((String)state.get("receipts").initial).isEmpty()||!((String)state.get("pending").initial).isEmpty()||((Number)state.get("serial").initial).longValue()!=0||((Number)state.get("settled").initial).longValue()!=0)throw new IOException("initial craft counters, pending request and receipts must be empty/zero");
             }
             provides = Collections.unmodifiableSet(strings(obj, "provides")); for(final String name : provides) id(name);
             final List<JSONObject> refs = new ArrayList<JSONObject>();

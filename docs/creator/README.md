@@ -29,6 +29,7 @@ names such as `Harbour#2` are placeholders; create them or substitute your IDs.
 | Select optional modules and preserve their scoped campaign state | [Optional modules](14-optional-modules.md) |
 | Author optional tagged skills, supports, chains and burning | [Ability composition](15-ability-composition.md) |
 | Choose optional damage/defense rules and explain actual combat results | [Combat profiles](16-combat-profiles.md) |
+| Generate tracked equipment and author selective, protected crafting | [Item modifiers and crafting](17-item-modifiers-crafting.md) |
 | Play and adapt a complete optional ARPG sample adventure | [The Ember Trial](examples/ember-trial/README.md) |
 
 ## References and examples
@@ -78,6 +79,10 @@ the guild or companion features proposed in the research dossiers. The newer
 skills and supports, separately from the original review inventory.
 Stage 3 adds [optional combat profiles](16-combat-profiles.md) and resolved-event
 traces for those skills and their burns.
+Stage 5 adds [tracked numeric item modifiers and controlled crafting](17-item-modifiers-crafting.md)
+over the existing affix/generation/workstation tools, with a workbench in the
+Ember Trial. Further rarity policies, arbitrary effect layers and crafting
+currency families remain separate work.
 
 ## Finding authoritative detail
 

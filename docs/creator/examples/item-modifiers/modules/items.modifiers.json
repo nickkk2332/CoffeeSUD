@@ -1,0 +1,16 @@
+{
+  "schema": 1, "id": "items.modifiers", "version": 1,
+  "title": "Tracked item modifiers and controlled crafting", "handler": "items.modifiers",
+  "requires": {"combat.profiles": 1}, "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character"], "on_disable": "suspend",
+  "settings": {
+    "allow_crafting": {"type": "boolean", "default": true},
+    "max_modifiers": {"type": "integer", "default": 6, "min": 0, "max": 6}
+  },
+  "state": {
+    "serial": {"type": "integer", "default": 0, "min": 0, "max": 1000000000},
+    "settled": {"type": "integer", "default": 0, "min": 0, "max": 1000000000},
+    "pending": {"type": "string", "default": "", "max_length": 4096},
+    "receipts": {"type": "string", "default": "{}", "max_length": 4096}
+  }
+}

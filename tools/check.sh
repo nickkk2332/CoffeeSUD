@@ -28,6 +28,13 @@ else
 	echo "combat rules: FAILED (see $OUT/combat-rules.txt)"
 	FAIL=1
 fi
+"$ROOT/tools/item-modifier-tests.sh" > "$OUT/item-modifiers.txt" 2>&1
+if [ $? -eq 0 ]; then
+	echo "item modifiers: PASS ($(grep -c '^ok ' "$OUT/item-modifiers.txt") checks)"
+else
+	echo "item modifiers: FAILED (see $OUT/item-modifiers.txt)"
+	FAIL=1
+fi
 report()  # report NAME PID
 {
 	wait "$2"

@@ -5,6 +5,8 @@ Stage 4 turns the [optional modules](../../14-optional-modules.md),
 [combat profiles](../../16-combat-profiles.md) into a small adventure.
 Recover a cooling heart from an abandoned furnace, choosing supports and
 equipment along the way. It uses current engine APIs and ordinary characters.
+Stage 5 extends the sample with [tracked modifiers and selective crafting](../../17-item-modifiers-crafting.md):
+a supply coffer, rolled mantle, eight units of iron and an ember forge at camp.
 No developer permissions, external packages or online services are needed to play.
 
 Everything is installed in a **separate deployment**. The starter world and
@@ -31,6 +33,35 @@ Use `--restore trial` on `play.py` to restore a named save, or `--new` for a new
 campaign. With neither option, the engine offers its usual save selection.
 Quote paths containing spaces. The normal launcher accepts the same explicit
 WORLDDIR, DBSERVICE and SAVEDIR options if you prefer to launch it yourself.
+
+## Try the forge
+
+Try the new forge at camp before setting out:
+
+```text
+OPEN supply coffer
+GET "trial mantle" coffer
+GET "cinder iron" coffer
+ITEMMODS trial mantle
+MODCRAFT LIST
+MODCRAFT POOL "trial mantle"
+MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1
+MODCRAFT PREPARE embertrial.reroll "trial mantle" 1
+MODCRAFT COMMIT 1
+WEAR trial mantle
+COMBATRESULT STATS
+SAVE forge
+```
+
+Use the request number PREPARE prints. Only COMMIT spends iron and draws new
+values. Repeating a settled request cannot spend or edit again. REMOVE the
+mantle before further crafting. The five operations add/remove/reroll/protect/
+unprotect individual modifiers; the [guide](../../17-item-modifiers-crafting.md)
+explains costs, groups, locks, receipts and stale requests. The supply coffer
+rolls once and remains spent after save/restore. This optional equipment does
+not disappear when its module is disabled: worn bonuses/crafting suspend, and
+the scripted guard preserves an unopened coffer until reactivation. It does
+not change the fixed-stat training/expedition walkthrough below.
 
 ## Your first expedition
 
@@ -158,13 +189,15 @@ The campaign saves this choice; changing it never rewrites an existing burn.
 ## Creator controls and recipes
 
 The root manifest selects `embertrial.adventure`, which declares
-`combat.profiles`, which declares `abilities.composition`. The assembly tool
+`items.modifiers`, which declares `combat.profiles`, which declares
+`abilities.composition`. The assembly tool
 copies the published parent manifests and preset files; it does not fork their
 hashes. Only this deployment opts into them.
 
 | Edit | File / operation |
 | --- | --- |
 | Rooms, exits, creature templates, equipment and properties | [Builder recipe](world/resources/creator/build.js) |
+| Rolled mantle, affix definitions, costs and five forge operations | [Item-modifier pack](../item-modifiers/README.md) |
 | Three player skills, enemy skills and three supports | [Compositions](world/compositions/embertrial.ember.v1.json) and adjacent JSON files |
 | Campaign/character state and configurable safety | [Adventure manifest](world/modules/embertrial.adventure.json) |
 | Startup grants, progress gates, rescue and rewards | [World hooks](world/js/init.js) |

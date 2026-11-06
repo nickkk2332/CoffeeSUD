@@ -148,6 +148,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [HUNTING](#hunting)
 - [INSTANCEAREA](#instancearea)
 - [INSTRUMENTMAKING](#instrumentmaking)
+- [ITEMMODS](#itemmods)
 - [ITEMREJUV](#itemrejuv)
 - [JCONSOLE](#jconsole)
 - [JEWELMAKING](#jewelmaking)
@@ -163,6 +164,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [LIST](#list)
 - [LOOK](#look)
 - [MASTERLEATHERWORKING](#masterleatherworking)
+- [MODCRAFT](#modcraft)
 - [MODIFY](#modify)
 - [MODULES](#modules)
 - [MYCOLOGY](#mycology)
@@ -229,6 +231,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_INSTANTDEATH](#prop-instantdeath)
 - [PROP_INVOKABLE](#prop-invokable)
 - [PROP_ITEMGROWTH](#prop-itemgrowth)
+- [PROP_ITEMMODIFIERS](#prop-itemmodifiers)
 - [PROP_ITEMSET](#prop-itemset)
 - [PROP_JOURNEY](#prop-journey)
 - [PROP_JSCRIPT](#prop-jscript)
@@ -363,6 +366,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [WORLDRULES](#worldrules)
 - [WORLD_COMBAT](#world-combat)
 - [WORLD_COMPOSITIONS](#world-compositions)
+- [WORLD_ITEMMODS](#world-itemmods)
 - [WORLD_MODULES](#world-modules)
 
 <a id="accept"></a>
@@ -384,7 +388,7 @@ its name.  Without a board, it takes on a quest offered to you, as QUESTS ACCEPT
 
 ## ACHIEVEMENTREWARDS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1234.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1239.
 
 ```text
 CoffeeSUD: rewards an achievement's REWARDS (and MPREWARD, and quest rewards) may give
@@ -419,13 +423,18 @@ Flaming short sword of Bleeding), its level rises by the power, its value by a t
 each, and a cursed one cannot be taken off.  Random enchantment (ItemGenerator ENCHANTED=)
 uses them when the file has any, as do AFFIXES=[MATH] on Prop_LootTable and RandomItems and
 AFFIXES="0?2" on a template ITEM.
+Optional tracked numeric entries add TRACKED="true", VERSION, TIER, GROUP, TAGS and ROLL
+STAT/MIN/MAX children; POWER must be 0, with no CURSED=true or AFFECT children.
+MODBASE="base.id" on a template opts into saved per-modifier records and selective crafting
+when items.modifiers is enabled. Ordinary affixes retain the behavior above. See AHELP
+WORLD_ITEMMODS and docs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="ageing"></a>
 
 ## AGEING
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1069.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1074.
 
 ```text
 CoffeeSUD: ageing as data.  A GenRace's AGEEFFECTS="MIDDLEAGED: STR-1 DEX-1 WIS+1;
@@ -4314,7 +4323,7 @@ parameter. The raw materials for costuming are created using the Papermake skill
 
 ## CRAFTQUALITY
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1281.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1286.
 
 ```text
 CoffeeSUD: quality tiers for what players craft, in resources/skills/craftquality.txt (a
@@ -4368,7 +4377,7 @@ makes a behaviour defined as data, a script with parameters (AHELP GENBEHAVIOR).
 
 ## CREATIONSCREENS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1189.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1194.
 
 ```text
 CoffeeSUD: the creation texts in resources/text (races.txt, classes.txt, deities.txt) are
@@ -4388,7 +4397,7 @@ includes the skill-only flag).
 
 ## CREATIONSTEPS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1169.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1174.
 
 ```text
 CoffeeSUD: the steps of character creation and the world's own questions, in
@@ -4512,6 +4521,7 @@ Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
+Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
 Usage    : WORLD TEST ([FILE.play/FILE.test/FILE.js])
 Usage    : WORLD CHECK (AREA ([NAME])) (LOG) (ONLY=[PART],[PART]...)
 Usage    : WORLD DEV (([AREA]) ON/OFF)
@@ -4836,7 +4846,7 @@ Composting skill.
 
 ## GATHERTABLES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1246.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1251.
 
 ```text
 CoffeeSUD: the tables gathering skills choose from take a MASK column, a zapper mask the
@@ -4854,7 +4864,7 @@ fishing row, with tabs where the commas are: Salmon, 5, lantern eel, 12, -AREA +
 
 ## GENABILITY
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1080.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1085.
 
 ```text
 CoffeeSUD: a generic ability (CREATE ABILITY [ID], MODIFY ABILITY [ID]) is a spell, skill or
@@ -4911,7 +4921,7 @@ SUMMONCOUNT=1+(@x1/10), TICKSOVERRIDE=20, SUMMONFLAGS=FOLLOW ASSIST DISMISSONEXP
 
 ## GENBUILDSKILL
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 979.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 984.
 
 ```text
 CoffeeSUD: a building skill as data, as Construction or Masonry are in code: CREATE
@@ -4930,7 +4940,7 @@ walls and an igloo roof from ICE.
 
 ## GENCRAFTSKILL
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 970.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 975.
 
 ```text
 CoffeeSUD: what a data crafting skill (CREATE CRAFTSKILL, MODIFY CRAFTSKILL) has besides its
@@ -4948,7 +4958,7 @@ on a generic ability (AHELP GENABILITY).
 
 ## GENDISEASE
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 988.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 993.
 
 ```text
 CoffeeSUD: a disease as data, as the Disease_ ones are in code: CREATE DISEASE [ID] makes
@@ -5115,7 +5125,7 @@ to construct your own.
 
 ## GENGATHERSKILL
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1133.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1138.
 
 ```text
 CoffeeSUD: what a data gathering skill (CREATE GATHERSKILL, MODIFY GATHERSKILL) finds.  Each
@@ -5223,7 +5233,7 @@ skill), $n the one who did, if known.
 
 ## GENTWEAK
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1014.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1019.
 
 ```text
 CoffeeSUD: a tweak (CREATE TWEAK [ID], MODIFY TWEAK [ID]) is a coded ability (its ORIGINAL)
@@ -5563,6 +5573,23 @@ crafted with balsa can be done with half the required wood listed, while instrum
  with ironwood will require twice the required wood listed.
 ```
 
+<a id="itemmods"></a>
+
+## ITEMMODS
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3247.
+
+```text
+Command : ITEMMODS
+Usage   : ITEMMODS [carried item name]
+Inspect an item's tracked numeric modifiers: rolls, tier, group, protection and definition
+source. It works on your carried equipment and spends no actions, materials or random rolls.
+ The optional items.modifiers module must be installed/selected to generate or craft these
+items; inspection of saved records remains available while bonuses and crafting are
+suspended. Use MODCRAFT for selective crafting. Ordinary legacy affixes retain their native
+behavior.
+```
+
 <a id="itemrejuv"></a>
 
 ## ITEMREJUV
@@ -5714,9 +5741,9 @@ replaces it and JS STATE key DELETE takes it away (in builder mode).
 cm.on also hears the world, wherever it happens: death(victim, killer), beforeDeath (false
 keeps the victim alive), levelUp(mob, level), questWin(mob, quest), questEnd(quest, mob,
 why), enterRoom(mob, room, from), beforeEnterRoom (false keeps the mover out),
-enterArea(mob, area, from), itemGained(mob, item), itemLost(mob, item), factionChange(mob,
-faction, change) and turn(leader, count); cm.off(event, fn) takes one away.  Register them
-in world/js/init.js's onBoot.
+enterArea(mob, area, from), itemGained(mob, item), itemLost(mob, item), itemCrafted(mob,
+item, receiptJSON), factionChange(mob, faction, change) and turn(leader, count);
+cm.off(event, fn) takes one away.  Register them in world/js/init.js's onBoot.
 The property Prop_JScript and the behaviour JSBehavior run a JavaScript file:
 SCRIPT=world:js/props/x.js and parameters, which the file has as parms (see AHELP
 PROP_JSCRIPT and AHELP BEHAVIOR_JSBEHAVIOR).
@@ -6022,6 +6049,35 @@ players for equipment that may be mended by this skill, using the scan parameter
 leather for leather working is found using the Butchering skill.
 ```
 
+<a id="modcraft"></a>
+
+## MODCRAFT
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3256.
+
+```text
+Command : MODCRAFT
+Usage   : MODCRAFT LIST / STATUS / POOL "[item name]"
+Usage   : MODCRAFT PREVIEW/PREPARE [operation ID] "[item name]" [modifier number or affix
+ID]
+Usage   : MODCRAFT COMMIT/CANCEL ([request number])
+Usage   : MODCRAFT RECEIPT [request number]
+Requires the optional items.modifiers module. LIST shows operations, costs and stations;
+POOL shows affix IDs, ranges and eligibility reasons. ITEMMODS numbers current modifiers.
+PREVIEW checks without spending or rolling. PREPARE records one request, also without
+spending or drawing outcomes. COMMIT rechecks custody, station, item/material state and
+version pins, then settles costs, rolls and a saved receipt once. Repeating a settled
+request cannot apply it again. CANCEL discards a pending request freely. Quote multiword
+item names.
+Craft alive and outside combat, with the target directly carried, unworn and outside a
+container. Costs use plain raw-material piles. Protected modifiers refuse reroll/removal; an
+ authored unprotect operation releases them. Add takes an affix ID and respects pools, tags,
+ levels, groups and capacity. In the Ember Trial, open the supply coffer at camp and collect
+ the mantle/iron, then try MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT
+spends iron and rolls values. A stale request requires cancellation and fresh preparation.
+See docs/creator/17-item-modifiers-crafting.md.
+```
+
 <a id="modify"></a>
 
 ## MODIFY
@@ -6093,7 +6149,7 @@ are obtained by using the Foraging skill.
 
 ## NAMESTYLES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1295.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1300.
 
 ```text
 CoffeeSUD: random names by culture, one file per style: world/namegen/STYLE.ini, else
@@ -6218,7 +6274,7 @@ ENTRYSCRIPT does not pass SCRIPTCHECK, and ALL, the default, does it all.
 
 ## ORIGINS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1144.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1149.
 
 ```text
 CoffeeSUD: character origins (backgrounds), in world/origins.ini.  Each starts with [ID] and
@@ -6378,7 +6434,7 @@ CoffeeSUD: in a world with perks, PERKS shows the perks you have, those you can 
 
 ## PERKSINI
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1199.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1204.
 
 ```text
 CoffeeSUD: perks, traits and flaws, in world/perks.ini.  A perk is a line: its ID, then
@@ -6401,7 +6457,7 @@ FLAW_BADBACK POOL=TRAIT COST=-1.
 
 ## PLAYERTEMPLATES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1158.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1163.
 
 ```text
 CoffeeSUD: ready-made characters.  A catalog mob in the category PLAYERTEMPLATE (CATALOG it
@@ -6987,7 +7043,7 @@ conditions under which the object will no longer be visible.
 
 ## PROP_COMBATSTATS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3388.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3389.
 
 ```text
 Property : Combat profile stats
@@ -7635,6 +7691,26 @@ each amount it takes the NAME (DISPLAY too) and PROPS of that stage (a semicolon
  next stage), and its holder is told MSG ($p the item).  BIND=CHARACTER: it grows for its
 first owner only.  Its growth, stage and owner are kept with it; identifying it shows the
 stage and the way to the next.
+```
+
+<a id="prop-itemmodifiers"></a>
+
+## PROP_ITEMMODIFIERS
+
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3440.
+
+```text
+Property: Prop_ItemModifiers
+Applied by optional MODBASE generation to standard generic items/equipment. Carries a strict
+ saved JSON record with item identity, base pin/revision, display baselines and per-modifier
+ identity, source pin, tier, group, tags, numeric rolls and protection. ITEMMODS inspects
+it; MODCRAFT performs controlled selective edits. Do not hand-attach an empty property. Use
+ItemModifiers.initialize on fresh unowned generated items; ItemModifiers.copyOf is the
+managed clone API with fresh identities and preserved values.
+Numeric deltas feed the optional combat-profile collector when correctly worn. Disabling
+items.modifiers suspends bonuses/crafting and keeps records/receipts. This first family does
+ not own arbitrary AFFECT layers, new crafting currencies or staged choices. See
+docs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="prop-itemset"></a>
@@ -9681,7 +9757,7 @@ Exit the mud and close your connection.
 
 ## RANKLADDERS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1025.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1030.
 
 ```text
 CoffeeSUD: rank ladders, in world/ranks.ini: [KEY] starts one, then NAME="Thieves' Guild",
@@ -9748,7 +9824,7 @@ PAGE 3 FROM BOOK takes a page out, to keep or to give.
 
 ## RECIPEKEYS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 953.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 958.
 
 ```text
 CoffeeSUD: keys a crafting recipe can carry: in a data skill's (GenCraftSkill)
@@ -9845,7 +9921,7 @@ on a schedule, at a moon or when the party leaves, and its GENERATED_PROG runs a
 
 ## RESOURCEVARIANTS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1269.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1274.
 
 ```text
 CoffeeSUD: named variants of resources, as moonpetal herbs, in world/resources.txt, one a
@@ -10299,7 +10375,7 @@ found using the Chopping skill.
 
 ## SKILLSCRIPTS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1003.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1008.
 
 ```text
 CoffeeSUD: scripts that come with a thing, set in its editor's Script field (MOBPROG text,
@@ -10512,7 +10588,7 @@ adjusted value.
 
 ## STATEFFECTS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1035.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1040.
 
 ```text
 CoffeeSUD: what a stat does, ADDCHARSTAT's new ones above all, in the ini or world.ini:
@@ -11267,6 +11343,7 @@ Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
+Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
 Usage    : WORLD TEST ([FILE.play/FILE.test/FILE.js])
 Usage    : WORLD CHECK (AREA ([NAME])) (LOG) (ONLY=[PART],[PART]...)
 Usage    : WORLD DEV (([AREA]) ON/OFF)
@@ -11352,7 +11429,7 @@ area's map to world/maps/FILE.html, each room with its exits as links.
 
 ## WORLDMATERIALS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1255.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1260.
 
 ```text
 CoffeeSUD: a world's own materials (resources), in world/materials.txt, one a line, the
@@ -11376,7 +11453,7 @@ Prop_HaveResister(fire 5), A sliver of metal that never cools.
 
 ## WORLDRULES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1212.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1217.
 
 ```text
 CoffeeSUD: the world's rules for the profile and the party, in coffeemud.ini or world.ini.
@@ -11410,7 +11487,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3368.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3369.
 
 ```text
 Command : WORLD COMBAT
@@ -11437,7 +11514,7 @@ schema, formulas and limitations.
 
 ## WORLD_COMPOSITIONS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3351.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3352.
 
 ```text
 Command : WORLD COMPOSITIONS
@@ -11457,11 +11534,36 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
  unless explicitly integrated into an opt-in adapter.
 ```
 
+<a id="world-itemmods"></a>
+
+## WORLD_ITEMMODS
+
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3425.
+
+```text
+Command : WORLD ITEMMODS
+Usage   : WORLD ITEMMODS LIST/CHECK/RELOAD
+Creator controls for optional tracked item modifiers, requiring builder/DEV or room-creation
+ permission. LIST shows base/affix/operation versions. CHECK validates itemmods/*.json and
+TRACKED entries in the existing affixes.xml without accepting edits. RELOAD swaps only valid
+ definitions and accepts their provenance; a failed reload preserves the old accepted
+library. WORLD CHECK ONLY=ITEMMODS also checks loaded item records.
+A template ITEM opts in with MODBASE="base.id" and AFFIXES="2". Install/select
+items.modifiers and its combat.profiles/abilities.composition dependencies explicitly.
+Existing campaigns require adoption. Tracked XML affixes require POWER=0, no curse/AFFECT,
+VERSION/TIER/GROUP and numeric ROLL entries. Bases declare kinds, tags, pools and
+prefix/suffix capacities. Operations declare add/remove/reroll/protect/ unprotect, station,
+material cost and filters. Retain released versions: saved pins preserve exact rolls, while
+missing/changed pins suspend crafting. Existing numeric rolls remain frozen. Ordinary
+untracked affixes retain their existing rules. See
+docs/creator/17-item-modifiers-crafting.md.
+```
+
 <a id="world-modules"></a>
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3401.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3402.
 
 ```text
 Command : WORLD MODULES

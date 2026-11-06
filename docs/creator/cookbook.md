@@ -535,3 +535,26 @@ instructions and licenses. Keep dev-only rooms out of mandatory routes.
 Check that no .builder conflict, scratch database or test save was accidentally
 published. A successful static check is evidence about structure; completing
 the game as an ordinary character is evidence about the experience. Keep both.
+
+## 29. A selective equipment workbench
+
+Use the [item-modifier pack](examples/item-modifiers/README.md) with its parent
+composition/profile modules, or generate the complete
+[Ember Trial](examples/ember-trial/README.md). Select items.modifiers explicitly.
+Merge the tracked affixes into affixes.xml, declare a base's capacities/pool,
+and add MODBASE/AFFIXES to the existing loot item. Place an ember-forge
+Prop_Workstation and supply plain IRON resources.
+
+As an ordinary character, open the coffer, collect the mantle/iron, inspect
+ITEMMODS and MODCRAFT POOL, then PREVIEW/PREPARE/COMMIT embertrial.reroll for one
+modifier. Protect that modifier and confirm reroll/removal refuse without cost.
+Unprotect, remove and add an eligible affix by ID. The other modifier retains
+its rolls and identity. Wear it and inspect COMBATRESULT STATS.
+
+Save a prepared request and quit; commit after restoring in another process.
+Repeat the same request number and verify neither cost nor result repeats.
+Reopen the saved coffer to verify it cannot replenish its loot. Disable/re-enable
+the module to check suspension preserves rolls/receipts. The
+[complete guide](17-item-modifiers-crafting.md) supplies schemas, limits and
+the post-commit itemCrafted event. This family uses numeric profile deltas and
+plain resource costs; arbitrary effect-layer ownership remains future work.

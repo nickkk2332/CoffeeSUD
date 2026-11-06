@@ -76,6 +76,23 @@ equipment('a quilted mantle',W.WORN_ABOUT_BODY,{armor:120},'Worn: +120 profile a
 equipment('a piercing signet',W.WORN_RIGHT_FINGER,{penetration:{fire:20}},'Worn: +20 fire penetration.');
 equipment('critical bracers',W.WORN_ARMS,{crit_chance:25,crit_multiplier:50},'Worn: +25 critical chance, +50 critical multiplier points.');
 
+// Stage 5 reuses the ordinary OPEN loot-table flow and the existing workstation tag.
+var coffer = CC.getItem('GenContainer'); coffer.setName('a supply coffer');
+coffer.setDisplayText('A supply coffer rests beside an ember forge.');
+coffer.setDescription('OPEN the coffer, then GET trial mantle coffer and GET cinder iron coffer. ITEMMODS trial mantle explains the generated modifiers.');
+coffer.setDoorsNLocks(true,false,true,false,false,false); CL.flags().setGettable(coffer,false);
+var loot = CC.getAbility('Prop_LootTable');
+loot.setMiscText('FILE=randareas/embertrial-loot.xml ID=embertrial_supply ON=OPEN ROLLS=1');
+coffer.addNonUninvokableEffect(loot); rooms[0].addItem(coffer);
+var lootGuard = CC.getAbility('Prop_JScript');
+lootGuard.setMiscText('SCRIPT=world:js/props/itemmods-loot-guard.js');
+coffer.addNonUninvokableEffect(lootGuard);
+var forge = CC.getItem('GenItem'); forge.setName('an ember forge');
+forge.setDisplayText('An ember forge glows beside the supply coffer.');
+forge.setDescription('MODCRAFT LIST shows the operations. PREVIEW or PREPARE an operation on an unworn item and modifier number, then COMMIT the request. Only COMMIT rolls and spends cinder iron.');
+CL.flags().setGettable(forge,false);var station = CC.getAbility('Prop_Workstation');
+station.setMiscText('TAG=ember-forge');forge.addNonUninvokableEffect(station);rooms[0].addItem(forge);
+
 var guide = CC.getMOB('GenMob'); guide.setName('the ember keeper');
 guide.setDisplayText('The ember keeper tends the cooling brazier.'); guide.setStartRoom(rooms[0]);
 guide.basePhyStats().setRejuv(CM.Common.interfaces.PhyStats.NO_REJUV);

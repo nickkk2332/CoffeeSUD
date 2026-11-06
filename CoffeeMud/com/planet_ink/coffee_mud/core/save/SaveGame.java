@@ -327,6 +327,7 @@ public final class SaveGame
 		OptionalModules.reset();
 		AbilityComposition.reset();
 		CombatProfiles.reset();
+		ItemModifiers.reset();
 		JSJobs.reset();
 		ScriptMenus.fromXML(null); Narration.clear();
 		bootOverrides.clear();
@@ -1003,6 +1004,7 @@ public final class SaveGame
 
 	private static String writeSnapshot(final MOB mob, final String slot, final File destination, final File sourceDb)
 	{
+		if(ItemCrafting.inCommit())return "An item transaction is committing; save at a settled boundary.";
 		// ST6: onBeforeSave and GAME_PROG SAVE, before the snapshot, either of which may refuse it
 		if(!ScriptEvents.gameCheck(mob, slot))
 			return CMLib.lang().L("The game was not saved.");

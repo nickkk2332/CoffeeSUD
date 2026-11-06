@@ -11,9 +11,9 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
 public final class WorldAssets
 {
     private WorldAssets() {}
-    public static final List<String> DIRECTORIES=Collections.unmodifiableList(Arrays.asList("vocab","lore","text","resources","kits","encounters","classes","modules","compositions","combat"));
+    public static final List<String> DIRECTORIES=Collections.unmodifiableList(Arrays.asList("vocab","lore","text","resources","kits","encounters","classes","modules","compositions","combat","itemmods"));
     public static final List<String> FILES=Collections.unmodifiableList(Arrays.asList("score.txt","ranks.ini","crops.txt","resources.txt","materials.txt",
-        "creation.ini","origins.ini","perks.ini","combinations.txt","itemsets.txt"));
+        "creation.ini","origins.ini","perks.ini","combinations.txt","itemsets.txt","affixes.xml"));
     public static boolean contains(final String path)
     {
         if(FILES.contains(path)) return true;

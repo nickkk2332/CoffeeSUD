@@ -44,6 +44,13 @@ and the handbook's current status notes.
 
 ## Optionality is an architectural requirement
 
+Stage 5 now provides the first controlled item transaction consumer through
+[items.modifiers](../../creator/17-item-modifiers-crafting.md). It extends the
+affix/generation/workstation foundations with numeric modifier records, plain
+resource costs, saved request/settlement ledgers and deferred item notifications.
+The broader transaction/reward designs in this dossier remain proposals beyond
+that documented family.
+
 1. **Default off:** existing worlds and saves keep their current formulas,
    equipment, actions, death behavior and presentation.
 2. **Independent modules:** supports do not require an Atlas; guild research does

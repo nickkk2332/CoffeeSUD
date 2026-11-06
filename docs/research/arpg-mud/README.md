@@ -37,6 +37,14 @@ Stages 1–3 into an isolated playable sample with training, support builds,
 defense equipment, scripted enemies, a boss and persistent completion. It adds
 example content and authoring recipes rather than more engine mechanic families.
 
+Stage 5's [tracked item modifiers and crafting](../../creator/17-item-modifiers-crafting.md)
+implements a first I01/I03/I04 family over existing affix XML, generation,
+loot and workstations: numeric rolls, capacities, exclusive groups, selective
+add/remove/reroll/protect/unprotect, plain resource costs and saved settlement
+receipts. The Ember Trial adds a playable forge. Arbitrary effect layers,
+rarity/guarantee policies, new currencies, staged choices and escrow remain
+proposals. The new family remains default off.
+
 ## Reading routes
 
 | Start here if you want… | Guide |

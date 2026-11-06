@@ -1,0 +1,19 @@
+<AFFIXES>
+  <!-- Existing affix format, extended only when TRACKED=true. Legacy entries
+       remain ordinary AFFIX/AFFECT definitions and retain their old consumers. -->
+  <AFFIX ID="embertrial.fireguard1" NAME="Wardwoven" POS="prefix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="10" POWER="0" TRACKED="true" VERSION="1"
+         TIER="1" GROUP="fire-resistance" TAGS="defense,elemental">
+    <ROLL STAT="resistance.fire" MIN="10" MAX="20" />
+  </AFFIX>
+  <AFFIX ID="embertrial.fireguard2" NAME="Flameward" POS="prefix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="2" POWER="0" TRACKED="true" VERSION="1"
+         TIER="2" GROUP="fire-resistance" TAGS="defense,elemental">
+    <ROLL STAT="resistance.fire" MIN="21" MAX="30" />
+  </AFFIX>
+  <AFFIX ID="embertrial.piercing" NAME="Embers" POS="suffix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="10" POWER="0" TRACKED="true" VERSION="1"
+         TIER="1" GROUP="fire-penetration" TAGS="offense,elemental">
+    <ROLL STAT="penetration.fire" MIN="5" MAX="15" />
+  </AFFIX>
+</AFFIXES>

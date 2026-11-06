@@ -1,0 +1,103 @@
+FIXFILE='item-modifiers';
+var IM=CM.core.ItemModifiers,IC=CM.core.ItemCrafting,IR=CM.core.ItemModifierRules,OM=CM.core.OptionalModules,MD=CM.core.ModuleDefinitions,CP=CM.core.CombatProfiles;
+var Files=java.nio.file.Files,JString=java.lang.String,seed=CM.core.GenSeed.begin(19),root=Files.createTempDirectory('sud-item-live-').toFile();
+var originalWorld=WorldFiles.worldDir(),current=java.lang.Class.forName('com.planet_ink.coffee_mud.core.OptionalModules').getDeclaredField('current');current.setAccessible(true);var oldCampaign=current.get(null);
+var known=java.lang.Class.forName('com.planet_ink.coffee_mud.core.save.WorldFiles').getDeclaredField('knownSums');known.setAccessible(true);var oldKnown=known.get(null);
+var R=scratchRoom(),actors=[],items=[];
+function refuse(name,fn){var bad=false;try{fn();}catch(e){bad=true;}check(name,bad,'expected refusal');}
+function copy(from,to){if(from.isDirectory()){to.mkdirs();var list=from.listFiles();for(var i=0;i<list.length;i++)copy(list[i],new java.io.File(to,String(list[i].getName())));}else Files.copy(from.toPath(),to.toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING);}
+function read(f){return String(new JString(Files.readAllBytes(f.toPath()),'UTF-8'));}
+function write(f,text){Files.write(f.toPath(),new JString(text).getBytes('UTF-8'));}
+function data(item){return JSON.parse(String(MD.json(IM.data(item))));}
+function state(a){return String(MD.json(OM.get('items.modifiers',OM.character(a))));}
+function actor(name){var a=newMob('GenMob',R);a.setName(name);actors.push(a);return a;}
+function ore(a,weight){var i=CMClass.getItem('GenResource');i.setName('some test iron');i.setMaterial(CM.Items.interfaces.RawMaterial.RESOURCE_IRON);i.basePhyStats().setWeight(weight);i.setBaseValue(weight);i.recoverPhyStats();a.addItem(i);items.push(i);return i;}
+function make(a){var list=CM.core.GenCalls.items('randareas/embertrial-loot.xml','embertrial_mantle',null,a,R);var item=list.get(0);items.push(item);a.addItem(item);return item;}
+function prepare(a,op,item,index){return String(IC.prepare(a,'embertrial.'+op,item,String(index)));}
+function commit(a,id){return String(IC.commit(a,id||0));}
+try{
+ var examples=new java.io.File('../docs/creator/examples');
+ copy(new java.io.File(examples,'ability-composition/modules'),new java.io.File(root,'modules'));
+ copy(new java.io.File(examples,'combat-profiles/modules'),new java.io.File(root,'modules'));
+ copy(new java.io.File(examples,'combat-profiles/combat'),new java.io.File(root,'combat'));
+ copy(new java.io.File(examples,'item-modifiers'),root);
+ var affixFile=new java.io.File(root,'affixes.xml'),affixText=read(affixFile);
+ var legacy='<AFFIX ID="test.legacy" NAME="Old" POS="prefix" KINDS="armor" LEVEL="1-99" PICKWEIGHT="1" POWER="1"><AFFECT CLASS="Prop_WearAdjuster" PARMS="armor-1"/></AFFIX>';
+ write(affixFile,affixText.replace('</AFFIXES>',legacy+'</AFFIXES>'));
+ WorldFiles.configure(root);CP.reset();IM.reset();CM.core.Affixes.reload();
+ var plan=MD.load(root,'items.modifiers','');check('native-contract-and-dependencies-valid',plan.errors.isEmpty(),String(plan.problems()));current.set(null,OM.prepare(plan,null,false));
+ var manifest=new java.io.File(root,'modules/items.modifiers.json'),manifestText=read(manifest),badInitial=JSON.parse(manifestText);badInitial.state.serial.default=1;write(manifest,JSON.stringify(badInitial));check('native-contract-rejects-prefilled-craft-counter',!MD.load(root,'items.modifiers','').errors.isEmpty(),'prefilled ledger accepted');write(manifest,manifestText);
+ check('all-family-definitions-valid',IM.check().errors.isEmpty(),String(IM.check().report()));
+ check('native-save-marker',String(OM.snapshot()).indexOf('"requires_handler":"items.modifiers"')>=0,'missing native reader requirement');
+ var A=actor('Forge owner'),B=actor('Other owner');var forge=CMClass.getItem('GenItem'),station=CMClass.getAbility('Prop_Workstation');station.setMiscText('TAG=ember-forge');forge.addNonUninvokableEffect(station);R.addItem(forge);items.push(forge);
+ var material=ore(A,8),item=make(A),first=data(item);
+ check('existing-generator-produces-two-tracked-modifiers',first.modifiers.length==2,String(IM.inspect(item)));
+ check('exclusive-groups-prevent-two-fire-prefixes',first.modifiers[0].group!==first.modifiers[1].group,'group duplicate');
+ var originalRecord=String(item.fetchEffect('Prop_ItemModifiers').text()),badRecord=JSON.parse(originalRecord),statKey=Object.keys(badRecord.modifiers[0].values)[0];badRecord.modifiers[0].values[statKey]=99;item.fetchEffect('Prop_ItemModifiers').setMiscText(JSON.stringify(badRecord));check('world-check-diagnoses-corrupt-source-values',!IM.checkItems(java.util.Arrays.asList(R),IM.check()).isEmpty(),'out-of-range roll was not diagnosed');item.fetchEffect('Prop_ItemModifiers').setMiscText(originalRecord);
+ check('room-display-includes-rendered-modifiers',String(item.displayText()).toLowerCase().indexOf(String(item.Name()).toLowerCase())>=0,'room display stale');
+ var template=new java.io.File(root,'resources/randareas/embertrial-loot.xml'),seeded=new java.io.File(root,'resources/randareas/item-seeded.xml');write(seeded,read(template).replace('ID="embertrial_mantle"','ID="seeded_mantle" SEED="732"'));
+ var savedDice=CMath.getRandState(),seededA=CM.core.GenCalls.items('randareas/item-seeded.xml','seeded_mantle',null,A,R).get(0),seededB=CM.core.GenCalls.items('randareas/item-seeded.xml','seeded_mantle',null,A,R).get(0);items.push(seededA);items.push(seededB);
+ var aMods=data(seededA).modifiers,bMods=data(seededB).modifiers;for(var si=0;si<aMods.length;si++){delete aMods[si].uid;delete bMods[si].uid;}
+ check('template-seed-covers-affix-selection-and-rolls',JSON.stringify(aMods)===JSON.stringify(bMods),'seeded rolls differ');
+ check('template-seed-preserves-campaign-dice-stream',savedDice.equals(CMath.getRandState()),'seed leaked into campaign rolls');
+ var dice=CMath.getRandState(),snapshot=state(A),raw=String(item.text()),weight=material.basePhyStats().weight();
+ IC.preview(A,'embertrial.reroll',item,'1');IM.inspect(item);IC.operations();IC.pool(item);CMClass.getCommand('ItemMods').execute(A,CM.core.CMParms.parse('ITEMMODS "trial mantle"'),0);
+ check('preview-inspection-no-dice-state-or-item-mutation',dice.equals(CMath.getRandState())&&snapshot===state(A)&&raw===String(item.text())&&weight==material.basePhyStats().weight(),'inspection mutated');
+ check('inspection-and-craft-command-costs-zero',CMClass.getCommand('ModCraft').checkedActionsCost(A,CM.core.CMParms.parse('MODCRAFT STATUS'))==0&&CMClass.getCommand('ItemMods').checkedActionsCost(A,CM.core.CMParms.parse('ITEMMODS mantle'))==0,'action cost');
+ refuse('other-character-cannot-prepare-owner-item',function(){prepare(B,'reroll',item,1);});
+ OM.configure('items.modifiers','allow_crafting','false');refuse('campaign-crafting-switch-also-blocks-preview',function(){IC.preview(A,'embertrial.reroll',item,'1');});OM.configure('items.modifiers','allow_crafting','true');
+ CMClass.getCommand('Wear').execute(A,CM.core.CMParms.parse('WEAR "trial mantle"'),0);check('sample-mantle-uses-normal-wear-command',item.rawWornCode()==CM.Items.interfaces.Wearable.WORN_ABOUT_BODY,'sample not wearable');refuse('worn-item-cannot-be-crafted',function(){prepare(A,'reroll',item,1);});
+ var merged=CP.stats(A,CP.current()).stats,fire=0,pen=0;for(var m=0;m<first.modifiers.length;m++){fire+=first.modifiers[m].values['resistance.fire']||0;pen+=first.modifiers[m].values['penetration.fire']||0;}
+ check('rolled-stats-feed-native-profile-collector',merged.get('resistance.fire')==fire&&merged.get('penetration.fire')==pen&&merged.get('crit_multiplier')==150,String(merged.describe()));item.unWear();
+ check('unequipping-removes-only-tracked-bonuses',CP.stats(A,CP.current()).stats.get('resistance.fire')==0,'stale bonuses');
+ var draws=CMath.getRandState();prepare(A,'reroll',item,1);check('preparation-does-not-roll-or-spend',draws.equals(CMath.getRandState())&&material.basePhyStats().weight()==8,'preparation spent');
+ material.basePhyStats().setWeight(9);material.recoverPhyStats();var stale=state(A);draws=CMath.getRandState();
+ refuse('changed-material-snapshot-refuses-commit',function(){commit(A);});
+ check('stale-refusal-atomic-and-no-dice',stale===state(A)&&draws.equals(CMath.getRandState())&&data(item).revision==0,'stale request changed');
+ material.basePhyStats().setWeight(8);material.recoverPhyStats();IC.cancel(A,0);
+ var notifications=0,settledBeforeCallback=false,reentrantRefused=false,lostSettled=false;
+ cm.on('itemLost',function(who,cost){if(who===A&&cost===material){var s=JSON.parse(state(A));lostSettled=!IC.inCommit()&&s.pending===''&&s.settled==s.serial&&cost.amDestroyed();}},'fix-item-cost-lost');
+ cm.on('itemCrafted',function(who,target,receipt){if(who!==A)return;notifications++;var r=JSON.parse(String(receipt)),s=JSON.parse(state(A));settledBeforeCallback=!IC.inCommit()&&s.pending===''&&s.settled==r.request&&data(target).revision==r.revision;try{prepare(A,'reroll',item,1);}catch(e){reentrantRefused=true;}return false;},'fix-item-crafted');
+ prepare(A,'reroll',item,1);var pending=JSON.parse(state(A)),request=pending.serial,before=data(item);commit(A);var after=data(item);
+ check('one-cost-and-one-revision',material.basePhyStats().weight()==7&&after.revision==1,'cost/revision mismatch');
+ check('selective-reroll-preserves-other-source',JSON.stringify(before.modifiers[1])===JSON.stringify(after.modifiers[1])&&before.modifiers[0].uid===after.modifiers[0].uid,'unselected modifier changed');
+ check('advisory-event-sees-settled-state',notifications==1&&settledBeforeCallback&&reentrantRefused,'observer boundary failed');
+ var committedState=state(A),committedText=String(item.text());draws=CMath.getRandState();commit(A,request);
+ check('duplicate-commit-is-idempotent',committedState===state(A)&&committedText===String(item.text())&&material.basePhyStats().weight()==7&&notifications==1&&draws.equals(CMath.getRandState()),'duplicate charged or fired');
+ prepare(A,'protect',item,1);commit(A);check('protection-saved',data(item).modifiers[0].protected===true,'lock missing');draws=CMath.getRandState();weight=material.basePhyStats().weight();
+ refuse('protected-reroll-rejected',function(){prepare(A,'reroll',item,1);});refuse('protected-removal-rejected',function(){prepare(A,'remove',item,1);});
+ check('rejected-protection-spends-nothing',draws.equals(CMath.getRandState())&&weight==material.basePhyStats().weight(),'protected path spent');
+ prepare(A,'unprotect',item,1);commit(A);var removed=data(item).modifiers[0],remaining=data(item).modifiers[1];prepare(A,'remove',item,1);commit(A);
+ check('remove-affects-one-modifier',data(item).modifiers.length==1&&data(item).modifiers[0].uid===remaining.uid,'bad removal');
+ prepare(A,'add',item,removed.pin.id);commit(A);check('addition-obeys-freed-slot-and-group',data(item).modifiers.length==2&&material.basePhyStats().weight()==2,'addition/cost failed');
+ item.setName('a renamed mantle');prepare(A,'reroll',item,1);commit(A);prepare(A,'reroll',item,1);commit(A);
+ check('external-rename-survives-repeated-edits',String(item.Name())==='a renamed mantle'&&material.amDestroyed(),'name reset or full pile not consumed');
+ check('full-cost-item-event-observes-settled-transaction',lostSettled,'itemLost saw partial state');
+ var clone=IM.copyOf(item);items.push(clone);var original=data(item),copied=data(clone);
+ check('explicit-copy-keeps-rolls-with-new-identities',original.item!==copied.item&&original.modifiers[0].uid!==copied.modifiers[0].uid&&JSON.stringify(original.modifiers[0].values)===JSON.stringify(copied.modifiers[0].values),'copy identity/values failed');
+ check('explicit-copy-is-unplaced-and-unworn',clone.owner()==null&&clone.container()==null&&clone.rawWornCode()==0,'copy remained placed');
+ var plain=CMClass.getItem('GenArmor');plain.setName('a plain legacy armor');plain.basePhyStats().setLevel(1);plain.recoverPhyStats();items.push(plain);
+ check('legacy-affix-path-preserved',CM.core.Affixes.apply(plain,2)==1&&String(plain.Name()).indexOf('Old')>=0&&!IM.isManaged(plain),'legacy changed');
+ var critical=java.lang.Class.forName('com.planet_ink.coffee_mud.core.ItemCrafting').getDeclaredField('critical');critical.setAccessible(true);critical.setBoolean(null,true);var refusedSnapshot=false;
+ try{try{CM.core.save.WorldState.capture(M);}catch(e){refusedSnapshot=true;}check('save-refuses-partial-transaction',String(CM.core.save.SaveGame.exportPlaytest(M,new java.io.File(root,'guard-save'))).indexOf('settled boundary')>=0&&refusedSnapshot,'partial save permitted');}finally{critical.setBoolean(null,false);}
+ item.wearAt(CM.Items.interfaces.Wearable.WORN_TORSO);var activeFire=CP.stats(A,CP.current()).stats.get('resistance.fire');
+ var off=MD.load(root,'combat.profiles','');current.set(null,OM.prepare(off,String(OM.snapshot()),true));
+ check('disable-suspends-bonuses-with-record-kept',CP.stats(A,CP.current()).stats.get('resistance.fire')==0&&data(item).modifiers.length==2&&String(OM.snapshot()).indexOf('"requires_handler":"items.modifiers"')>=0,'disable lost data or kept bonus');
+ current.set(null,OM.prepare(plan,String(OM.snapshot()),true));check('resume-restores-frozen-rolls',CP.stats(A,CP.current()).stats.get('resistance.fire')==activeFire,'rolls reinterpreted');item.unWear();
+ var extra=ore(A,3),sourceText=read(affixFile);
+ prepare(A,'reroll',item,1);var validLedger=state(A),badLedger=JSON.parse(validLedger);badLedger.receipts='{"01":{}}';OM.put('items.modifiers',OM.character(A),MD.parse(JSON.stringify(badLedger)));draws=CMath.getRandState();weight=extra.basePhyStats().weight();refuse('noncanonical-receipt-key-refused-before-commit',function(){commit(A);});check('malformed-ledger-refusal-does-not-roll-or-charge',draws.equals(CMath.getRandState())&&extra.basePhyStats().weight()==weight,'bad ledger changed dice or costs');OM.put('items.modifiers',OM.character(A),MD.parse(validLedger));IC.cancel(A,0);
+ write(affixFile,sourceText.replace('<ROLL','<AFFECT/><ROLL'));check('strict-xml-rejects-empty-effect-child',!IM.check().errors.isEmpty(),'empty AFFECT accepted');write(affixFile,sourceText);
+ var operationFile=new java.io.File(root,'itemmods/embertrial.reroll.v1.json'),operationText=read(operationFile),materialCheck=JSON.parse(operationText);materialCheck.material='NOT_A_REGISTERED_MATERIAL';write(operationFile,JSON.stringify(materialCheck));check('definition-check-diagnoses-unregistered-material',!IM.check().errors.isEmpty(),'unknown material accepted');materialCheck.material='WHITE GOLD';write(operationFile,JSON.stringify(materialCheck));check('definition-check-accepts-native-multiword-material',IM.check().errors.isEmpty(),String(IM.check().report()));write(operationFile,operationText);
+ var invalidAttributes=['POS="bogus"','POWER="bogus"','CURSED="bogus"','LEVEL="1-2-3"'];for(var ia=0;ia<invalidAttributes.length;ia++){var invalidAttribute=invalidAttributes[ia],attr=String(invalidAttribute).split('=')[0],badText=sourceText.replace('TRACKED="true"','TRACKED="true" '+invalidAttribute);if(attr!=='CURSED')badText=badText.replace(new RegExp(attr+'="[^\"]*"'),invalidAttribute);write(affixFile,badText);check('strict-xml-rejects-'+attr, !IM.check().errors.isEmpty(),String(IM.check().report()));}
+ write(affixFile,sourceText.replace('NAME="Wardwoven"','NAME="Changed ward"'));IM.reload();
+ var oldPinRejected=false;try{for(var v=0;v<original.modifiers.length;v++)IM.definitions().pinned(MD.parse(JSON.stringify(original.modifiers[v].pin)),'affix');}catch(e){oldPinRejected=true;}
+ check('same-version-xml-edit-suspends-crafting',oldPinRejected||removed.pin.id!=='embertrial.fireguard1','edit silently changed pin');
+ write(affixFile,sourceText);IM.reload();prepare(A,'reroll',item,1);draws=CMath.getRandState();write(new java.io.File(root,'itemmods/bad.v1.json'),'{}');refuse('invalid-reload-atomic',function(){IM.reload();});
+ check('failed-reload-keeps-old-accepted-library',IM.definitions().errors.isEmpty()&&draws.equals(CMath.getRandState()),'partial reload');new java.io.File(root,'itemmods/bad.v1.json').delete();IC.cancel(A,0);
+ check('receipt-retained-through-module-state-roundtrip',JSON.parse(state(A)).settled>0&&String(IC.receipt(A,request)).indexOf('"operation"')>=0,'receipt missing');
+}finally{
+ CM.core.JSEvents.off('itemcrafted','fix-item-crafted');CM.core.JSEvents.off('itemlost','fix-item-cost-lost');for(var i=0;i<actors.length;i++)actors[i].destroy();for(var j=0;j<items.length;j++)items[j].destroy();R.destroy();
+ WorldFiles.configure(originalWorld);known.set(null,oldKnown);current.set(null,oldCampaign);CP.reset();IM.reset();CM.core.Affixes.reload();
+ var paths=Files.walk(root.toPath());try{var list=paths.sorted(java.util.Comparator.reverseOrder()).iterator();while(list.hasNext())Files.deleteIfExists(list.next());}finally{paths.close();CM.core.GenSeed.end(seed);}
+}
+done();

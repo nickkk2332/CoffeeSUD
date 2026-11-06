@@ -3331,7 +3331,19 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 
 	protected List<Item> buildItem(final XMLTag piece, final Map<String,Object> defined) throws CMException, PostProcessException
 	{
-		final List<Item> made=seeded(piece, defined, () -> buildItemUnseeded(piece, defined)); // G1
+		final String affixes=piece.getParmValue("AFFIXES");
+		final String modbase=piece.getParmValue("MODBASE");
+		final boolean tracked=(modbase!=null)&&(modbase.trim().length()>0);
+		final List<Item> made=seeded(piece, defined, () -> {
+			final List<Item> items=buildItemUnseeded(piece, defined);
+			if(tracked&&(items!=null))
+			{
+				final int n=affixes==null?0:CMath.s_parseIntExpression(strFilterNow(null,null,null,affixes,piece,defined));
+				try{for(final Item I:items)ItemModifiers.initialize(I,modbase.trim(),n,"template:"+String.valueOf(piece.getParmValue("ID")));}
+				catch(final java.io.IOException e){for(final Item I:items)I.destroy();throw new CMException("MODBASE: "+e.getMessage());}
+			}
+			return items;
+		}); // Include tracked rolls in the template's existing SEED scope.
 		if(made!=null)
 		{
 			for(final Item I : made) // G15: a container made starts as its defaults say, closed and locked
@@ -3343,8 +3355,7 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 				}
 			}
 		}
-		final String affixes=piece.getParmValue("AFFIXES"); // G10: AFFIXES="0?2", that many from the world's affixes
-		if((affixes!=null)&&(affixes.trim().length()>0)&&(made!=null))
+		if(!tracked&&(affixes!=null)&&(affixes.trim().length()>0)&&(made!=null)) // Preserve legacy affix RNG behavior.
 		{
 			final int n=CMath.s_parseIntExpression(strFilterNow(null,null,null,affixes,piece,defined));
 			for(final Item I : made)

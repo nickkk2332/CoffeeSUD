@@ -22,6 +22,8 @@ def create(destination):
     shutil.copy(examples / 'ability-composition/modules/abilities.composition.json', dest / 'world/modules')
     shutil.copy(examples / 'combat-profiles/modules/combat.profiles.json', dest / 'world/modules')
     shutil.copytree(examples / 'combat-profiles/combat', dest / 'world/combat')
+    shutil.copytree(examples / 'item-modifiers', dest / 'world', dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('README.md'))
     (dest / 'db').mkdir()
     shutil.copy(ROOT / 'CoffeeMud/resources/fakedb/fakedb.schema', dest / 'db/fakedb.schema')
     (dest / 'saves').mkdir()
@@ -32,7 +34,7 @@ def publish(dest):
     work = dest / '.build'; work.mkdir()
     script = work / 'publish.input'
     script.write_text('Trialbuilder\nY\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
-                      'jrun /resources/creator/build.js\nworld check only=modules,compositions,combat,scripts\n'
+                      'jrun /resources/creator/build.js\nworld check only=modules,compositions,combat,itemmods,scripts\n'
                       'save\nquit\nY\n', encoding='utf-8')
     env = dict(os.environ, SUDPLAY_LIMIT='360')
     env['JAVA_TOOL_OPTIONS'] = '-Djava.awt.headless=true ' + env.get('JAVA_TOOL_OPTIONS', '')
@@ -47,7 +49,7 @@ def publish(dest):
             or not list((dest / 'world/areas').glob('*ember*'))):
         raise RuntimeError('Sample publication failed; see ' + str(work / 'publish.txt'))
     # Builder profiles/saves are separate from the actual adventure's SAVEDIR.
-    (dest / '.ember-trial').write_text('Ember Trial v1\n', encoding='utf-8')
+    (dest / '.ember-trial').write_text('Ember Trial v2 (modifier forge)\n', encoding='utf-8')
 
 
 def main():

@@ -60,6 +60,7 @@ function helpText() {
         + '\nFor the road add embertrial.chain and embertrial.power. COMPOSE SHOW embertrial.ember explains the costs.'
         + '\nNorth: two ash creatures; east from them: equipment; then north past sentinel and warden to the heart.'
         + '\nUse GET, WEAR and REMOVE. COMBATRESULT STATS shows current defenses; WAIT 2 lets a cooldown/burn advance.'
+        + '\nAt camp OPEN supply coffer for generated equipment and cinder iron. ITEMMODS lists rolls; MODCRAFT LIST shows workbench operations.'
         + '\nSAVE trial keeps your adventure. Lethal damage returns you to camp while safe_death is enabled.';
 }
 function help(who) { cm.tell(who,helpText()); }

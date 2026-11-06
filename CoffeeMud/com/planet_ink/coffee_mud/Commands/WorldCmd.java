@@ -987,6 +987,20 @@ public class WorldCmd extends StdCommand
 			mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2)));
 			return false;
 		}
+		if(commands.get(1).equalsIgnoreCase("ITEMMODS"))
+		{
+			if(!SaveGame.isBuilderMode()&&!SaveGame.isDevMode()&&!CMSecurity.isAllowedAnywhere(mob,CMSecurity.SecFlag.CMDROOMS))mob.tell("WORLD ITEMMODS is for builder mode or DEV=1. ITEMMODS inspects your own equipment.");
+			else try
+			{
+				final String sub=commands.size()>2?commands.get(2).toUpperCase(java.util.Locale.ROOT):"LIST";
+				if(sub.equals("CHECK"))mob.tell(ItemModifiers.check().report());
+				else if(sub.equals("RELOAD"))mob.tell(ItemModifiers.reload());
+				else if(sub.equals("LIST"))mob.tell(ItemModifiers.list());
+				else mob.tell("WORLD ITEMMODS LIST/CHECK/RELOAD; WORLD CHECK ONLY=ITEMMODS also checks loaded item records.");
+			}
+			catch(final java.io.IOException e){mob.tell("Item modifiers: "+e.getMessage());}
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("COMBAT"))
 		{
 			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))

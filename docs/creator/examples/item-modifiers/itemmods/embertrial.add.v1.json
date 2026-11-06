@@ -1,0 +1,6 @@
+{
+  "schema": 1, "kind": "operation", "id": "embertrial.add", "version": 1,
+  "name": "Weave one modifier", "action": "add", "station": "ember-forge",
+  "material": "IRON", "units": 2, "item_tags": ["trial-equipment"],
+  "modifier_tags": [], "affixes": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"]
+}

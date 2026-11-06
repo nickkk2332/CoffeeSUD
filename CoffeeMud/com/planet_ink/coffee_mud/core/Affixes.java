@@ -4,6 +4,7 @@ import com.planet_ink.coffee_mud.Abilities.interfaces.*;
 import com.planet_ink.coffee_mud.Items.interfaces.*;
 import com.planet_ink.coffee_mud.Libraries.interfaces.XMLLibrary.XMLTag;
 import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 
 import java.util.*;
 
@@ -58,6 +59,8 @@ public final class Affixes
 		public final boolean		cursed;
 		/** its effects: class and parameters */
 		public final List<String[]>	affects	= new ArrayList<String[]>();
+		/** Optional opt-in structured record; legacy affixes retain their old path. */
+		public JSONObject tracked = null;
 
 		Affix(final String id, final String name, final boolean prefix, final int lo, final int hi, final double weight, final int power, final boolean cursed)
 		{
@@ -99,7 +102,13 @@ public final class Affixes
 		List<Affix> L = cache;
 		if(L != null)
 			return L;
-		L = new ArrayList<Affix>();
+		L = read(); cache = L; return L;
+	}
+
+	/** A fresh read for validation without replacing the accepted legacy cache. */
+	public static List<Affix> read()
+	{
+		final List<Affix> L = new ArrayList<Affix>();
 		final String t = text();
 		if(t != null)
 		{
@@ -113,7 +122,7 @@ public final class Affixes
 					if(!a.tag().equalsIgnoreCase("AFFIX"))
 						continue;
 					final String name = (a.getParmValue("NAME") == null) ? "" : a.getParmValue("NAME").trim();
-					if(name.length() == 0)
+					if(name.length() == 0 && !"true".equalsIgnoreCase(a.getParmValue("TRACKED")))
 						continue;
 					final String lv = (a.getParmValue("LEVEL") == null) ? "1-9999" : a.getParmValue("LEVEL");
 					final String[] r = lv.split("\\s*-\\s*");
@@ -135,12 +144,42 @@ public final class Affixes
 									(e.getParmValue("PARMS") != null) ? CMLib.xml().restoreAngleBrackets(e.getParmValue("PARMS")) : e.value() });
 						}
 					}
+					final String tracked = a.getParmValue("TRACKED");
+					if(tracked != null && !tracked.equalsIgnoreCase("false")) X.tracked = tracked(a,X);
 					L.add(X);
 				}
 			}
 		}
-		cache = L;
 		return L;
+	}
+
+	private static Object whole(final String text)
+	{ try { return Long.valueOf(text); } catch(final Exception e) { return text == null ? "" : text; } }
+	private static JSONObject tracked(final XMLTag tag, final Affix a)
+	{
+		final JSONObject out=new JSONObject();out.put("schema",Long.valueOf(1));out.put("kind","affix");out.put("id",a.id);out.put("name",a.name);
+		out.put("version",whole(tag.getParmValue("VERSION")));out.put("tier",whole(tag.getParmValue("TIER")));out.put("group",tag.getParmValue("GROUP"));
+		out.put("position",a.prefix?"prefix":"suffix");out.put("kinds",new TreeSet<String>(a.kinds).toArray());
+		out.put("minimum_level",Long.valueOf(a.lo));out.put("maximum_level",Long.valueOf(a.hi));out.put("weight",Double.valueOf(a.weight));out.put("power",Long.valueOf(a.power));out.put("cursed",Boolean.valueOf(a.cursed));
+		out.put("effects",a.affects.toArray());final String tags=tag.getParmValue("TAGS");out.put("tags",tags==null||tags.trim().isEmpty()?new Object[0]:tags.trim().split("\\s*,\\s*"));
+		final String pos=tag.getParmValue("POS"),power=tag.getParmValue("POWER"),cursed=tag.getParmValue("CURSED"),level=tag.getParmValue("LEVEL");
+		if(pos!=null&&!pos.equalsIgnoreCase("prefix")&&!pos.equalsIgnoreCase("suffix"))out.put("invalid_position",pos);
+		if(power!=null)out.put("power",whole(power));
+		if(cursed!=null&&!cursed.equalsIgnoreCase("true")&&!cursed.equalsIgnoreCase("false"))out.put("invalid_curse",cursed);
+		if(level!=null&&!level.matches("[0-9]+(?:\\s*-\\s*[0-9]+)?"))out.put("invalid_level",level);
+		final JSONObject rolls=new JSONObject();out.put("rolls",rolls);
+		final Set<String> allowed=new HashSet<String>(Arrays.asList("ID","NAME","POS","KINDS","LEVEL","PICKWEIGHT","POWER","CURSED","TRACKED","VERSION","TIER","GROUP","TAGS"));
+		for(final String key:tag.parms().keySet())if(!allowed.contains(key.toUpperCase()))out.put("unknown_attribute_"+key,tag.getParmValue(key));
+		if(!"true".equalsIgnoreCase(tag.getParmValue("TRACKED")))out.put("invalid_tracked_flag",tag.getParmValue("TRACKED"));
+		if(tag.contents()!=null)for(final XMLTag r:tag.contents())
+		{
+			if(r.tag().equalsIgnoreCase("AFFECT")){out.put("unsupported_effect_entry",Boolean.TRUE);continue;}
+			if(!r.tag().equalsIgnoreCase("ROLL")){out.put("unknown_element_"+r.tag(),r.value());continue;}
+			final String stat=r.getParmValue("STAT");final JSONObject range=new JSONObject();range.put("min",whole(r.getParmValue("MIN")));range.put("max",whole(r.getParmValue("MAX")));
+			for(final String key:r.parms().keySet())if(!Arrays.asList("STAT","MIN","MAX").contains(key.toUpperCase()))range.put(key,r.getParmValue(key));
+			if(stat==null||rolls.containsKey(stat))out.put("duplicate_or_missing_roll_stat",String.valueOf(stat));else rolls.put(stat,range);
+		}
+		return out;
 	}
 
 	/**
@@ -148,7 +187,8 @@ public final class Affixes
 	 */
 	public static boolean available()
 	{
-		return all().size() > 0;
+		for(final Affix a:all())if(a.tracked==null)return true;
+		return false;
 	}
 
 	/**
@@ -174,7 +214,7 @@ public final class Affixes
 		double total = 0;
 		for(final Affix A : all())
 		{
-			if(((prefix != null) && (A.prefix != prefix.booleanValue())) || used.contains(A.id)
+			if(A.tracked != null || ((prefix != null) && (A.prefix != prefix.booleanValue())) || used.contains(A.id)
 			|| ((!A.kinds.contains(kind)) && (!A.kinds.contains("any")))
 			|| (level < A.lo) || (level > A.hi) || (A.weight <= 0))
 				continue;
@@ -222,6 +262,10 @@ public final class Affixes
 	 */
 	public static int apply(final Item I, final int count)
 	{
+		if(ItemModifiers.isManaged(I))
+		{
+			try { return ItemModifiers.addGenerated(I,count); } catch(final java.io.IOException e) { throw new IllegalArgumentException(e.getMessage(),e); }
+		}
 		if((I == null) || (count <= 0) || (!available()))
 			return 0;
 		final Set<String> used = new HashSet<String>();

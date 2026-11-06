@@ -2845,6 +2845,15 @@ public final class WorldFiles
         knownSums = next;
     }
 
+    /** Item rules and their shared world affix file are accepted only by explicit family reload. */
+    public static synchronized void acceptItemModifierChanges()
+    {
+        final Map<String,String> next=new TreeMap<String,String>(knownSums);
+        next.keySet().removeIf(p->p.equals("affixes.xml")||p.startsWith("itemmods/")&&p.endsWith(".json")&&p.substring(9).indexOf('/')<0);
+        for(final String p:com.planet_ink.coffee_mud.core.WorldAssets.paths())if(p.equals("affixes.xml")||p.startsWith("itemmods/")&&p.endsWith(".json")&&p.substring(9).indexOf('/')<0){final String sum=sumOf(new File(worldDir,p));if(sum!=null)next.put(p,sum);}
+        knownSums=next;
+    }
+
 	/**
 	 * Returns a checksum of the content files: their paths in the world folder
 	 * and their contents.

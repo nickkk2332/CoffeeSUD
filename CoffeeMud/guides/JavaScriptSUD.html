@@ -202,6 +202,12 @@ why).</li>
 (mob, area, from).</li>
 <li><code>itemGained</code> (mob, item) and <code>itemLost</code> (mob,
 item), as a mob in a room gets or loses a thing.</li>
+<li><code>itemCrafted</code> (mob, item, receiptJSON), after a controlled
+items.modifiers craft has settled. Item-loss notifications from its consumed
+costs are also deferred until settlement. Returning false cannot roll the
+transaction back; a repeated settled request emits no second event. Listeners
+may inspect/save the result but cannot start a crafting mutation reentrantly.
+See <a href="../../docs/creator/17-item-modifiers-crafting.md">the crafting guide</a>.</li>
 <li><code>factionChange</code> (mob, faction, change).</li>
 <li><code>turn</code> (leader, count): each step of turn-based time.</li>
 </ul>

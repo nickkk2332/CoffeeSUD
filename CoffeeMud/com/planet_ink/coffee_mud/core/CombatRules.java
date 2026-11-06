@@ -108,6 +108,13 @@ public final class CombatRules
         for(final String type : TYPES) out.put("penetration." + type, bound(out.get("penetration." + type), 0, 100));
         return new Stats(out, immune);
     }
+    /** Sum already validated deltas without introducing absolute-stat defaults/floors. */
+    public static Stats sumBonuses(final Collection<Stats> sources)
+    {
+        final Map<String,BigDecimal> out=zeroes();final Set<String> immune=new LinkedHashSet<String>();
+        for(final Stats source:sources){for(final String key:out.keySet())out.put(key,out.get(key).add(source.values.get(key),MC));immune.addAll(source.immune);}
+        return new Stats(out,immune);
+    }
     public static final class Profile
     {
         public final String id, title, conversion, hash, path;

@@ -8,4 +8,6 @@ import com.planet_ink.coffee_mud.core.CombatRules;
 public interface CombatStatSource
 {
     CombatRules.Stats combatStats() throws IOException;
+    /** Optional immutable source breakdown for resolved-result explanations. */
+    default java.util.List<String> combatStatDetails() throws IOException { return java.util.Collections.emptyList(); }
 }

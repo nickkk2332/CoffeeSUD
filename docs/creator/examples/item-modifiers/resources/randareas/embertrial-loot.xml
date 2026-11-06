@@ -1,0 +1,9 @@
+<AREADATA>
+ <ITEM ID="embertrial_supply" SELECT="all">
+  <ITEM ID="embertrial_mantle" CLASS="GenArmor" LEVEL="1" NAME="a trial mantle"
+        DISPLAY="A trial mantle lies folded here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+        PROPERWORN="body" MODBASE="embertrial.mantle" AFFIXES="2" />
+  <ITEM ID="embertrial_iron" CLASS="GenResource" LEVEL="1" NAME="some cinder iron"
+        DISPLAY="Some cinder iron lies here." MATERIAL="IRON" WEIGHT="8" VALUE="8" />
+ </ITEM>
+</AREADATA>

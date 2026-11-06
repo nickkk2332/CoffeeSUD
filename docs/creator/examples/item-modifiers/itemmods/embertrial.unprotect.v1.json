@@ -1,0 +1,6 @@
+{
+  "schema": 1, "kind": "operation", "id": "embertrial.unprotect", "version": 1,
+  "name": "Release one modifier", "action": "unprotect", "station": "ember-forge",
+  "material": "IRON", "units": 1, "item_tags": ["trial-equipment"],
+  "modifier_tags": [], "affixes": []
+}

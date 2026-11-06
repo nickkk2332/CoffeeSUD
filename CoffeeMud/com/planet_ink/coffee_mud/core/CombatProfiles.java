@@ -78,7 +78,10 @@ public final class CombatProfiles
             {
                 if(values.size() >= 64) throw new IOException("at most 64 active combat stat sources per actor");
                 final Stats delta = ((CombatStatSource)a).combatStats(); values.add(delta);
-                sources.add(host.Name().replaceAll("[\\p{Cntrl}<>^]", "") + ": " + delta.describe());
+                final String label=host.Name().replaceAll("[\\p{Cntrl}<>^]", "");
+                sources.add(label + ": " + delta.describe());
+                final List<String> details=((CombatStatSource)a).combatStatDetails();
+                for(int i=0;i<Math.min(6,details.size());i++)sources.add(label+" / "+details.get(i));
             }
         }
     }

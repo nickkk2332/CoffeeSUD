@@ -1,0 +1,6 @@
+{
+  "schema": 1, "kind": "base", "id": "embertrial.mantle", "version": 1,
+  "name": "Trial mantle modifier contract", "item_kind": "armor",
+  "prefixes": 2, "suffixes": 1, "tags": ["cloth", "trial-equipment"],
+  "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"]
+}

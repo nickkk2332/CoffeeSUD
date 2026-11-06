@@ -32,7 +32,7 @@ FAIL=0
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 # a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|st6|pr5|s10|travel|presentation|language|review|remaining|modules|composition|combat|trial|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in st1|st6|pr5|s10|travel|presentation|language|review|remaining|modules|composition|combat|trial|itemcraft|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -721,7 +721,8 @@ group_saves5()
 	jsresults s25-fresh.txt
 	play s19-play.txt ydb yworld "Raider\n${NEWCHAR}get book\nread book\ndown\nnorth\njrun /resources/_fixes/s19-play.js\nsave s19\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	jsresults s19-play.txt
-	play s19-restore.txt ydb yworld 'jrun /resources/_fixes/s19-check.js\nsouth\nup\ndown\njrun /resources/_fixes/s19-again.js\nquit\nn\n' RESTORE=s19 TIMEMODE=TURNS
+	# JRUN costs no action; wait for each queued move before inspecting location.
+	play s19-restore.txt ydb yworld 'jrun /resources/_fixes/s19-check.js\nsouth\n#expect A crypt stair\nup\n#expect New Room\ndown\n#expect A crypt stair\njrun /resources/_fixes/s19-again.js\nquit\nn\n' RESTORE=s19 TIMEMODE=TURNS
 	expect s19-restore.txt "Restored 's19'."
 	jsresults s19-restore.txt
 	play s18-play.txt ydb yworld "Miner\n${NEWCHAR}get book\nread book\nwest\njrun /resources/_fixes/s18-kill.js\njrun /resources/_fixes/s18-sig.js\nsave s18\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
@@ -853,6 +854,13 @@ group_trial()
     jsresults trial.txt
 }
 
+group_itemcraft()
+{
+    echo "Played: generated modifier records, workbench transactions and saved settlement"
+    python3 "$ROOT/tools/item-modifier-integration.py" "$W/itemcraft" > "$W/itemcraft.txt" 2>&1 || FAIL=1
+    jsresults itemcraft.txt
+}
+
 # the groups share nothing (each has its own world, database and saves), so
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
@@ -862,7 +870,7 @@ if [ $# -eq 0 ]; then
 	LIMIT=${FIXES_JOBS:-9}
 	case "$LIMIT" in ''|*[!0-9]*|0) LIMIT=9;; esac
 	PIDS=""; RUNNING=0
-	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation language review remaining modules composition combat trial; do
+	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation language review remaining modules composition combat trial itemcraft; do
 		"group_$GROUP" > "$W/group_$GROUP.log" 2>&1 &
 		PIDS="$PIDS $!"; RUNNING=$((RUNNING+1))
 		if [ "$RUNNING" -ge "$LIMIT" ]; then
@@ -871,8 +879,8 @@ if [ $# -eq 0 ]; then
 		fi
 	done
 	for PID in $PIDS; do wait "$PID"; done
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log"; then FAIL=1; fi
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!

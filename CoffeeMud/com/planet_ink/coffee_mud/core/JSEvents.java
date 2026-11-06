@@ -56,7 +56,21 @@ public final class JSEvents
 	 * step of turn-based time.  Names are in any case.
 	 */
 	public static final String[]	WORLD_EVENTS	= { "death", "beforedeath", "levelup", "questwin", "questend", "enterroom", "beforeenterroom",
-		"enterarea", "itemgained", "itemlost", "factionchange", "turn" };
+		"enterarea", "itemgained", "itemlost", "itemcrafted", "factionchange", "turn" };
+
+	/** Narrow outbox for controlled item transactions; vetoable world events are never deferred. */
+	public static final class ItemOutbox
+	{
+		private final List<Object[]> events=new ArrayList<Object[]>();
+		public void finish(final boolean committed)
+		{
+			if(itemOutbox.get()!=this)throw new IllegalStateException("wrong item outbox");
+			itemOutbox.remove();if(committed)for(final Object[] e:events)fire((String)e[0],(Object[])e[1]);events.clear();
+		}
+	}
+	private static final ThreadLocal<ItemOutbox> itemOutbox=new ThreadLocal<ItemOutbox>();
+	public static ItemOutbox deferItemEvents()
+	{if(itemOutbox.get()!=null)throw new IllegalStateException("item transaction already active");final ItemOutbox box=new ItemOutbox();itemOutbox.set(box);return box;}
 
 	/** JS8: whether anything listens for itemGained or itemLost, looked at as a mob's items change */
 	public static volatile boolean	itemEvents	= false;
@@ -233,6 +247,8 @@ public final class JSEvents
 	 */
 	public static boolean fire(final String event, final Object... args)
 	{
+		final ItemOutbox box=itemOutbox.get();
+		if(box!=null&&(event.equals("itemgained")||event.equals("itemlost"))){box.events.add(new Object[]{event,args.clone()});return true;}
 		boolean ok = true;
 		for(final Listener L : listeners)
 		{

@@ -283,6 +283,12 @@ Budget individual and pack-level traits with exclusions, telegraphs and readable
 
 ## Items, crafting and economy
 
+Implementation update: Stage 5 delivers a bounded numeric-modifier and controlled
+crafting family for I01/I03/I04. See the
+[working creator guide](../../creator/17-item-modifiers-crafting.md) for supported
+schemas and commands. Broader goals below, including arbitrary effect layers,
+rarity policies, staged production and additional currencies, remain proposals.
+
 ### I01 — Structured item modifier records
 
 **extend · L · phase 1 · depends on A01, Q01.**

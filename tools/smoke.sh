@@ -92,7 +92,8 @@ echo "Session 3: pause and resume (one mud hour per 4-second tick)"
 # up to 30 seconds of real time, which turns the hour at least once even when
 # the machine is busy with the other games of tools/check.sh running beside
 # this one (15 seconds was once not enough)
-play pause.txt 'time\n#sleep 15\ntime\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+# Select the scenario's real-time mode explicitly before sampling the clock.
+play pause.txt 'timemode realtime\ntime\n#sleep 15\ntime\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect pause.txt "The world holds still."
 expect pause.txt "(paused) "
 expect pause.txt "The world moves again."

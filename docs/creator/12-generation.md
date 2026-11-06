@@ -5,6 +5,13 @@
 
 ## Templates produce engine objects
 
+The optional [tracked-modifier family](17-item-modifiers-crafting.md) adds
+`MODBASE="base.id"` beside existing `AFFIXES="2"` on a generated ITEM. It records
+each numeric affix's identity, tier, group and rolled values, and permits
+selective crafting afterward. An ITEM SEED covers its tracked selection and
+rolls; new instance IDs remain distinct. Without MODBASE, existing generation
+keeps its ordinary affix behavior.
+
 The generator reads XML definitions of strings, items, mobs, rooms, areas and
 quests. IDs identify callable templates. Variables supply level, theme and
 context. Selection, conditions, validation and layout rules determine the

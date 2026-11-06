@@ -244,6 +244,14 @@ Inherited; inspect execute() for operation-specific checks.
 Inherited; inspect execute() for operation-specific checks.
 ```
 
+## ITEMMODS
+
+[ItemMods.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ItemMods.java)
+
+```java
+return CMProps.isSinglePlayer();
+```
+
 ## JCONSOLE
 
 [JConsole.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/JConsole.java)
@@ -322,6 +330,14 @@ Inherited; inspect execute() for operation-specific checks.
 
 ```java
 Inherited; inspect execute() for operation-specific checks.
+```
+
+## MODCRAFT
+
+[ModCraft.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ModCraft.java)
+
+```java
+return CMProps.isSinglePlayer();
 ```
 
 ## MODIFY, MOD

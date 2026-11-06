@@ -1,9 +1,10 @@
 {
   "schema": 1,
   "id": "embertrial.adventure",
-  "version": 1,
+  "version": 2,
   "title": "The Ember Trial sample adventure",
-  "requires": {"combat.profiles": 1},
+  "requires": {"items.modifiers": 1},
+  "migrations": [{"from": 1, "to": 2}],
   "clock_modes": ["TURNS", "REALTIME"],
   "scopes": ["world", "character"],
   "on_disable": "suspend",

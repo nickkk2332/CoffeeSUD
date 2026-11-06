@@ -89,6 +89,7 @@ public final class WorldState
 	 */
 	public static String capture(final MOB player)
 	{
+		if(ItemCrafting.inCommit())throw new IllegalStateException("cannot snapshot a partial item transaction");
 		written = new IdentityHashMap<Physical, Integer>();
 		synchronized(partlyKept)
 		{

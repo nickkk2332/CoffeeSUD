@@ -34,6 +34,13 @@ enablers, resisters and extra damage with independent thresholds. Test equip,
 remove, destruction, death and restore. Identification shows active/inactive
 tiers; hidden curse detection depends on the examiner's level.
 
+For individually editable numeric rolls, use the opt-in
+[tracked-modifier and crafting guide](17-item-modifiers-crafting.md). It extends
+the existing affix XML and item generator with versioned pools, prefix/suffix
+capacity, exclusive groups, protected modifiers and selective transactions.
+The Ember Trial's supply coffer and forge demonstrate it. Its costs use plain
+raw-resource piles; legacy recipe crafting retains its existing rules.
+
 ## Puzzle primitives
 
 | Primitive | Player action / author contract |
