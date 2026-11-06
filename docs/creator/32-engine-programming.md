@@ -1086,8 +1086,8 @@ runs. In a party, only the leader's turn moves the world
 ### The calendar
 
 The game calendar is a `TimeClock` (`Common/interfaces/TimeClock`). The world
-has a global one (`CMLib.time().globalClock()`) and each area may have its own
-(`area.getTimeObj()`, from its `TIMEZONE`/clock settings). One game hour is
+has a global one (`CMLib.time().globalClock()`) and each area has one
+(`area.getTimeObj()`: its own clock, else its parent's, else the global one). One game hour is
 `MILLISPERMUDHOUR` (600,000 ms by default, ten real minutes). The clock
 advances through `tickTock(int hours)` when `GameTime.now()` has moved a whole
 hour past `lastTicked`, so the calendar obeys pause, turn-based time and
