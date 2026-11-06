@@ -1112,3 +1112,575 @@ The game's random numbers (`CMath.random()`, `CMLib.dice().roll(...)`,
 `rollPercentage()`) are a seeded `GameRandom` whose state is saved with the
 campaign. A test that needs exact reproduction starts the game with
 `RANDOMSEED=42` (and `TIMEMODE=TURNS`; see [Testing](13-testing-release.md)).
+
+## Writing new classes
+
+Every kind of class follows the same recipe: pick the standard base class,
+override `ID()` and the few methods that make it yours, put the file in the
+package folder, build, and the class is found at the next start. The classes
+in this section were written for this chapter, compiled against the current
+sources with `--release 8`, and are not part of the repository; the file names
+are the class names. The folders they go in are the real ones.
+
+### Rules every class follows
+
+1. **Package, folder and name.** The file `Foo.java` with `package
+   com.planet_ink.coffee_mud.Commands;` goes in
+   `com/planet_ink/coffee_mud/Commands/Foo.java`. The class is `public`, not
+   `abstract`, and has a public no-argument constructor (the implicit one will
+   do). No nested classes are registered, and a class with `$` in its name is
+   never scanned.
+2. **`ID()` returns the class name exactly.** It is the key in every lookup, the
+   text saved in world files and the name builders type. A mismatch is logged as
+   `Possible class ID misnaming`.
+3. **`name()` is the display name.** For abilities it is what the player types
+   (`CAST FORTIFY`), so make it unique among abilities; for races and classes it
+   is what character creation lists. Localise it (see
+   [Localisation](#localisation)).
+4. **Extend the standard class, not the interface.** The `Std` classes carry
+   hundreds of lines of inherited rules (see the table above). Override a
+   method and call `super` unless you mean to replace the rule.
+5. **The constructor builds the prototype at boot.** It runs once when the
+   class is scanned, before the world exists: do not look up rooms, mobs, the
+   map or the database. Load order matters for what you may call by name:
+   libraries first, then common objects, races, character classes, mobs,
+   exits, areas, locales, abilities, items, behaviors, commands, tests. A mob's
+   constructor can ask for a race (`CMClass.getRace`); a race's cannot ask for an
+   ability (races name theirs in `racialAbilityNames()`, which is read later).
+   Static fields initialised from `CMLib.lang().L("...")` are fine, and
+   `CMProps` values are loaded.
+6. **`newInstance()` and `copyOf()`** (inherited) are what turn a prototype into
+   live objects and clone live ones. `newInstance()` calls your public
+   no-argument constructor. `copyOf()` is a shallow `clone()`. If your class
+   holds a mutable field that two copies must not share (a list, a map, an
+   array), override `copyOf()`, call `super.copyOf()` and replace the field with
+   a copy; forgetting this makes two mobs share one list.
+7. **Split saved configuration from runtime state.** Configuration goes in the
+   object's parameter string (`setMiscText`/`text()` or, for a behavior,
+   `setParms`/`getParms`) and your class parses it into fields in the setter.
+   Runtime state lives in fields and is lost on save unless you declare it (see
+   [Saving and configuring your classes](#saving-and-configuring-your-classes)).
+8. **Show the player text through `L()`, address people with tags**, and never
+   `System.out`.
+9. **Use the libraries**, not your own copies of their logic (`CMLib.flags()`
+   for senses, `CMLib.combat()` for damage, `CMLib.commands().post...` for
+   standard actions).
+
+Imports: `core.interfaces.*`, `core.*`, `core.collections.*`, and the
+`interfaces.*` package of each kind (`Abilities`, `Areas`, `Behaviors`,
+`CharClasses`, `Commands`, `Common`, `Exits`, `Items`, `Libraries`, `Locales`,
+`MOBS`, `Races`), plus `java.util.*`. The shipped files import all of them
+rather than picking and choosing. Import another concrete class only when you
+subclass it (see "Two class loaders" above). Every file starts with the Apache
+2.0 header; files written for CoffeeSUD say `Copyright 2026 CoffeeSUD
+contributors`. The headers are left out of the listings below.
+
+### Command
+
+A command is a `Command` registered under one or more words. Base class:
+`Commands/StdCommand`. Put it in `Commands/`.
+
+What to override:
+
+| Method | Notes |
+| --- | --- |
+| `getAccessWords()` | The words that run it, in upper case, the main one first. Wrap the array in `I(...)` (inherited static from `StdCommand`) so a translation can rename them. Each word becomes a key in the command table; the first word is the one help and error messages show |
+| `execute(MOB mob, List<String> commands, int metaFlags)` | The body. `commands.get(0)` is the word typed; the rest are the arguments split at spaces (quoted phrases stay whole). The return value means little (most commands return `false`); do not rely on it. `metaFlags` is a bit set of `MUDCmdProcessor.METAFLAG_*` (`FORCED`, `ORDER`, `MPFORCED`, `AS`, `POSSESSED`, `SNOOPED`, ...) saying how the command arrived; test it with `CMath.bset(metaFlags, MUDCmdProcessor.METAFLAG_ORDER)` when a forced or ordered command must behave differently |
+| `actionsCost(mob, cmds)` and `combatActionsCost(mob, cmds)` | How many action points it uses out of combat and in it. `StdCommand` returns `CMProps.getCommandActionCost(ID(), 0.0)`: free unless `DEFCMDTIME` in `coffeemud.ini` lists the command. To cost the normal amount, return `CMProps.getCommandActionCost(ID())` and `CMProps.getCommandCombatActionCost(ID())` as `Yell` does |
+| `securityCheck(MOB mob)` | Whether this mob may use (and even know of) the command. When false the parser acts as if the word did not exist. Defaults to `true` |
+| `canBeOrdered()` | Whether a leader may `ORDER` a follower to do it. Default `true`; return `false` for anything that must stay with the player (building, system and testing commands) |
+| `canBeCancelled()` | Whether a command waiting for action points can be dropped. Default `false` |
+| `preExecute(...)` | Called each second while the mob is still short of action points, with `secondsElapsed` -1 on cancellation; return `false` to cancel. Rarely needed |
+| `executeInternal(MOB, int, Object...)` | An entry point for other Java code to call the command with typed arguments. `StdCommand`'s version builds a word list from the arguments and calls `execute` |
+
+How the parser finds a command (`EnglishParser.findCommand`): the first word, in
+upper case, is looked up in the command table; if the command passes its
+`securityCheck` and has not been disabled (`DISABLE=COMMAND_...`), it runs. Then
+come the mob's skills by trigger word, socials, channels, journals. Only after
+all of those fail does it retry with prefix matches (`TAL` for `TALLY`). The
+prefix match takes the first command found whose access word starts with what
+was typed, in no promised order, so give a command a short word of its own if
+it should be typeable in short form, and make sure the word does not hide
+behind a skill or social that has the same one.
+
+```java
+package com.planet_ink.coffee_mud.Commands;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Items.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+import java.util.*;
+
+/**
+ * TALLY [name]: counts what a mob carries and wears.
+ */
+public class Tally extends StdCommand
+{
+	public Tally()
+	{
+	}
+
+	private final String[] access = I(new String[] { "TALLY" });
+
+	@Override
+	public String[] getAccessWords()
+	{
+		return access;
+	}
+
+	@Override
+	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
+		throws java.io.IOException
+	{
+		MOB target = mob;
+		if(commands.size() > 1)
+		{
+			target = getVisibleRoomTarget(mob, CMParms.combine(commands, 1));
+			if(target == null)
+			{
+				mob.tell(L("You don't see anyone like that here."));
+				return false;
+			}
+		}
+		int carried = 0;
+		int worn = 0;
+		for(final Enumeration<Item> i = target.items(); i.hasMoreElements();)
+		{
+			final Item I = i.nextElement();
+			if(I.amWearingAt(Wearable.IN_INVENTORY))
+				carried++;
+			else
+				worn++;
+		}
+		final String coin = CMLib.beanCounter().nameCurrencyShort(target, CMLib.beanCounter().getTotalAbsoluteNativeValue(target));
+		mob.tell(L("@x1 carries @x2 and wears @x3 item(s), and has @x4.", target.name(mob), "" + carried, "" + worn, coin));
+		return true;
+	}
+
+	@Override
+	public boolean canBeOrdered()
+	{
+		return false;
+	}
+
+	@Override
+	public boolean securityCheck(final MOB mob)
+	{
+		return CMProps.isSinglePlayer();
+	}
+}
+```
+
+Things to notice: `getVisibleRoomTarget` is a helper `StdCommand` provides for
+finding a visible mob in the room; `mob.tell` sends text to that mob only (use
+`mob.location().show(...)` when the room should see an action); every
+player-visible string goes through `L()` with `@x1`...`@x4` variables.
+
+Security patterns used in the code base: `CMProps.isSinglePlayer()` (any
+player; `Wait`), `SaveGame.isDevMode() || SaveGame.isBuilderMode()` (developer
+commands such as `TIMESCALE`), `CMSecurity.isAllowed(mob, mob.location(),
+CMSecurity.SecFlag.X)` and `CMSecurity.isAllowedAnywhere(mob, SecFlag.X)`
+(`Goto`: permissions granted to the Archon group), and plain `true`.
+
+A command should also have a help entry, a key in one of the `resources/help/`
+files (`help.ini` for player commands, `arc_help.ini` for builder commands):
+
+```text
+TALLY=\
+Command : TALLY\n\r\
+Usage   : TALLY ([NAME])\n\r\
+Example : tally\n\r\
+Short(s) : \n\r\
+Counts what you, or someone here, is carrying and wearing.
+```
+
+`UNLOAD HELP` reloads the help files in a running game. The format of an entry
+is `KEY=\` followed by lines each ending in `\n\r\` (the last without a trailing
+backslash), with a blank line between entries. Copy the layout of a neighbour
+(`WAIT=` in `help.ini`, `TIMESCALE=` in `arc_help.ini`).
+
+Commands from the world: a builder can also define a command without Java
+(`GenCommand`, kept in `world/custom/commands/`). A JavaScript command is a
+`.js` file in `world/js/commands/` or a `cm.command(...)` registration; see
+[JavaScript](05-javascript.md).
+
+### Ability (a spell)
+
+Spells, prayers, chants, songs, skills, common skills, languages, diseases,
+poisons and traps are all `Ability` objects. The type is chosen by the base
+class and by `classificationCode()`. For a spell the base class is
+`Abilities/Spells/Spell` (it supplies the trigger words `CAST`, `CA`, `C`, the
+spell classification and the chain/immunity helpers); put the file in
+`Abilities/Spells/`.
+
+| Method | Notes |
+| --- | --- |
+| `ID()`, `name()`, `displayText()` | `displayText()` is what the status list shows while the effect is on a target, in parentheses by convention (`(Shield spell)`). Return `""` for an effect that should not show |
+| `classificationCode()` | `Ability.ACODE_SPELL \| Ability.DOMAIN_ABJURATION` and so on: a type from `ACODE_SKILL`...`ACODE_TECH` and a domain from `DOMAIN_*` |
+| `abstractQuality()` | What kind of act it is: `QUALITY_MALICIOUS` (an attack), `QUALITY_BENEFICIAL_SELF`, `QUALITY_BENEFICIAL_OTHERS`, `QUALITY_OK_SELF`, `QUALITY_OK_OTHERS`, `QUALITY_INDIFFERENT`. The AI uses it to choose spells and the engine to decide whether an act is hostile |
+| `canAffectCode()` | Which host types the *effect* may sit on (`CAN_MOBS`, `CAN_ITEMS`, `CAN_ROOMS`, `CAN_AREAS`, `CAN_EXITS`, ORed) |
+| `canTargetCode()` | Which target types the *invocation* may name (`Spell` defaults to `CAN_MOBS`) |
+| `invoke(MOB, List<String>, Physical, boolean auto, int asLevel)` | The act of casting. See below |
+| `affectPhyStats`, `affectCharStats`, `affectCharState` | The effect's numbers while it is on a host. Call `super` first |
+| `okMessage`, `executeMsg` | The effect's rules while it is on a host |
+| `tick(Tickable, int)` | Extra periodic work. Call `super.tick(ticking, tickID)` and return `false` if it does; that is how the duration runs out |
+| `unInvoke()` | Called when the effect ends (time up, dispelled, host leaves). Check `canBeUninvoked()` before announcing, and always call `super.unInvoke()`, which removes the effect and recomputes the host |
+| `maxRange()`, `castingTime`, `usageCost`, `triggerStrings()` | Range in rooms (`adjustedMaxInvokerRange(1)` for a one-room spell), cost and time, and the words that invoke it |
+| `accountForYourself()` | One line for help and item descriptions |
+
+A skeleton `invoke` for a spell on a target mob, adapted from `Spell_Shield`:
+
+```java
+package com.planet_ink.coffee_mud.Abilities.Spells;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Abilities.interfaces.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Locales.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+import java.util.*;
+
+public class Spell_Fortify extends Spell
+{
+	@Override
+	public String ID()
+	{
+		return "Spell_Fortify";
+	}
+
+	private final static String localizedName = CMLib.lang().L("Fortify");
+
+	@Override
+	public String name()
+	{
+		return localizedName;
+	}
+
+	private final static String localizedStaticDisplay = CMLib.lang().L("(Fortified)");
+
+	@Override
+	public String displayText()
+	{
+		return localizedStaticDisplay;
+	}
+
+	@Override
+	public int abstractQuality()
+	{
+		return Ability.QUALITY_BENEFICIAL_OTHERS;
+	}
+
+	@Override
+	protected int canAffectCode()
+	{
+		return CAN_MOBS;
+	}
+
+	@Override
+	public int classificationCode()
+	{
+		return Ability.ACODE_SPELL | Ability.DOMAIN_ABJURATION;
+	}
+
+	@Override
+	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
+	{
+		super.affectPhyStats(affected, affectableStats);
+		affectableStats.setArmor(affectableStats.armor() - 15 - (2 * getXLEVELLevel(invoker())));
+	}
+
+	@Override
+	public void unInvoke()
+	{
+		if(!(affected instanceof MOB))
+			return;
+		final MOB mob = (MOB)affected;
+		super.unInvoke();
+		if(canBeUninvoked())
+			mob.tell(L("Your fortification fades."));
+	}
+
+	@Override
+	public boolean invoke(final MOB mob, final List<String> commands, final Physical givenTarget, final boolean auto, final int asLevel)
+	{
+		final MOB target = this.getTarget(mob, commands, givenTarget);   // names the target, or tells the caster why not
+		if(target == null)
+			return false;
+		if(target.fetchEffect(ID()) != null)
+		{
+			failureTell(mob, target, auto, L("<T-NAME> <T-IS-ARE> already fortified."), commands);
+			return false;
+		}
+		if(!super.invoke(mob, commands, givenTarget, auto, asLevel))     // checks and pays the cost
+			return false;
+		final boolean success = proficiencyCheck(mob, 0, auto);          // does the caster pull it off?
+		if(success)
+		{
+			final CMMsg msg = CMClass.getMsg(mob, target, this, verbalCastCode(mob, target, auto),
+					auto ? "" : L("^S<S-NAME> chant(s) a ward of stone around <T-NAMESELF>.^?"));
+			if(mob.location().okMessage(mob, msg))                       // may the room allow it?
+			{
+				mob.location().send(mob, msg);
+				beneficialAffect(mob, target, asLevel, 0);               // copy the spell onto the target and start its timer
+			}
+		}
+		else
+			return beneficialWordsFizzle(mob, target, L("<S-NAME> chant(s) to <T-NAMESELF>, but nothing happens."));
+		return success;
+	}
+}
+```
+
+The pieces of `StdAbility` the skeleton uses:
+
+- `getTarget(mob, commands, givenTarget)` resolves the target from the typed
+  words (or `givenTarget` when invoked by something else), and tells the caster
+  when it cannot. `getAnyTarget(...)` does the same for any `Physical` (items,
+  rooms).
+- `super.invoke(...)` is where the common checks and the cost happen (mana,
+  level, whether the caster can speak or move, a cooldown); if it returns
+  `false` you stop. `auto` is `true` when something else is casting for free
+  (an item, a script): skip words and costs.
+- `proficiencyCheck(mob, adjust, auto)` rolls the caster's proficiency.
+  `adjustedLevel(mob, asLevel)` is the effective level (`asLevel` of 0 means
+  "the caster's own"), and `getXLEVELLevel(mob)` the bonus from expertise.
+- `verbalCastCode` and `somaticCastCode` choose the message code (spoken or
+  gestured, malicious or not) and respect `auto`. For an attack, post the
+  message with `MSG_CAST_ATTACK_VERBAL_SPELL`-style codes (the `...Malicious`
+  helpers pick them) and use `maliciousAffect(...)` and `maliciousFizzle(...)`
+  in place of `beneficialAffect` and `beneficialWordsFizzle`.
+- `beneficialAffect` and `maliciousAffect` copy the ability, set its invoker,
+  give it a duration (`getBeneficialTickdownTime`; `tickAdjustmentFromStandard`
+  is the second-to-last argument, 0 for the standard length) and register it on
+  the target. The copy, not the prototype, is the effect, which is why
+  `affectPhyStats` can use `invoker()`.
+- A malicious spell should check `msg.value()` after sending: a positive value
+  means the target made its saving throw. Damage goes through
+  `CMLib.combat().postDamage(...)`, healing through `postHealing(...)`.
+
+Getting a spell to players. The class existing is not enough; a player must
+*know* it:
+
+- **A class gets it at a level**: in the class's `initializeClass()`, `CMLib.ableMapper().addCharAbilityMapping(ID(), level, "Spell_Fortify", autoGain)`.
+  `autoGain` is `true` when the class gets it free at that level, `false`
+  when the player must be taught or must learn it (there are overloads with a
+  default proficiency, prerequisites and mask; see `AbilityMapper`). The
+  character class `Tinker` below does this. The same mapping can be added
+  from outside the class, for example from the ability's own
+  `initializeClass()` (`addCharAbilityMapping("Mage", 7, ID(), false)`); the
+  abilities are initialised after the classes, so the target class exists (not
+  exercised by any shipped ability).
+- **A race gets it**: list it in the race's `racialAbilityNames()`.
+- **A mob or item carries it**: add the ability to the mob (`mob.addAbility(CMClass.getAbility("Spell_Fortify"))`), or put it on an item as a spell-casting property.
+- **A script grants it**: `MPABILITY`-style commands; see the
+  [MOBPROG command reference](27-mobprog-commands.md).
+
+Give the spell a help entry so `HELP FORTIFY` works. Ability help lives in
+`resources/help/spell_help.ini` (spells), `prayer_help.ini`, `chant_help.ini`,
+`songs_help.ini` or `skill_help.ini`; the key is the ability ID in upper case
+and `<ABILITY>` makes the engine add the level, cost, domain and the rest:
+
+```text
+SPELL_FORTIFY=<ABILITY>\
+Usage    : CAST FORTIFY [TARGET NAME] \n\r\
+Example  : cast fortify bob\n\r\
+This spell wraps the target in a ward of stone, making them harder to hit.
+```
+
+The other ability families differ mostly in base class and what `invoke` posts:
+a **skill** extends `Skills/StdSkill` (trigger word is its own name); a **prayer**
+extends `Prayers/Prayer`; a **chant** `Druid/Chant`; a **song** `Songs/Song`
+(songs tick every round on the singer and the listeners); a **common skill**
+(`Common/CommonSkill`) is a timed activity that ticks while the player works,
+and crafting skills extend `Common/EnhancedCraftingSkill`; a **language** extends
+`Languages/StdLanguage`; a **disease** `Diseases/Disease`; a **poison**
+`Poisons/Poison`; a **trap** `Traps/StdTrap`. Read the nearest sibling in the
+same folder; each family has a dozen tidy examples. The data-driven
+alternatives, `GenAbility` and the ability-composition system, need no Java:
+[Abilities and effects](25-abilities-and-effects.md) and
+[Ability composition](15-ability-composition.md).
+
+### Property
+
+A property is an `Ability` that never runs: it sits on an object as a permanent
+effect, carrying a parameter string, and alters the object's stats or rules. The
+base class is `Abilities/Properties/Property` (a thin `ThinAbility`). Put the
+file in `Abilities/Properties/` and name it `Prop_Something`; builders add it
+to a room, mob, item, exit or area by that ID with its parameters as the text.
+
+| Method | Notes |
+| --- | --- |
+| `ID()` | `Prop_...` |
+| `name()` | A short name for lists |
+| `canAffectCode()` | Which hosts it may be put on (`Ability.CAN_MOBS \| Ability.CAN_ITEMS ...`). Default `0`: nothing |
+| `setMiscText(String)` | Parse the parameters into fields, then `super.setMiscText(text)` so `text()` returns them |
+| `accountForYourself()` | The description shown by identify spells and the like |
+| `affectPhyStats`, `affectCharStats`, `affectCharState` | Alter the host's numbers |
+| `okMessage`, `executeMsg` | Alter or veto what happens to or around the host |
+| `flags()`, `triggerMask()` (with `implements TriggeredAffect`) | Mark a property as a restriction (`Ability.FLAG_ZAPPER`) or say when an item's property applies (worn, held, wielded...) |
+
+```java
+package com.planet_ink.coffee_mud.Abilities.Properties;
+import com.planet_ink.coffee_mud.Abilities.interfaces.*;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+/**
+ * Prop_Sturdy [BONUS=n]: the host is harder to hit by n (default 5).
+ */
+public class Prop_Sturdy extends Property
+{
+	@Override
+	public String ID()
+	{
+		return "Prop_Sturdy";
+	}
+
+	@Override
+	public String name()
+	{
+		return "Sturdy";
+	}
+
+	@Override
+	protected int canAffectCode()
+	{
+		return Ability.CAN_MOBS | Ability.CAN_ITEMS;
+	}
+
+	protected int bonus = 5;
+
+	@Override
+	public void setMiscText(final String newMiscText)
+	{
+		super.setMiscText(newMiscText);
+		bonus = CMParms.getParmInt(newMiscText, "BONUS", 5);
+	}
+
+	@Override
+	public String accountForYourself()
+	{
+		return "Makes the host " + bonus + " points harder to hit.";
+	}
+
+	@Override
+	public void affectPhyStats(final Physical affected, final PhyStats affectableStats)
+	{
+		super.affectPhyStats(affected, affectableStats);
+		affectableStats.setArmor(affectableStats.armor() - bonus);
+	}
+}
+```
+
+On an item, a property's effect applies to the item's *owner* only if the
+property implements `TriggeredAffect` and says when (`Prop_HaveAdjuster`,
+`Prop_WearAdjuster` and the other `Have`/`Wear`/`Ride`/`Here` families are the
+models); otherwise it applies to the item itself. Parameter parsing helpers: the
+`CMParms.getParm...` family reads `KEY=value` anywhere in a string (the match is
+case-insensitive and by start of word); `CMParms.parseEQParms(text)` returns a
+map. A property's help goes in `resources/help/arc_properties.ini` as
+`PROP_STURDY=` with the `Property`, `Targets`, `Parameters`, `Example` and
+`Description` lines (copy `PROP_REQNOMOB=`). The properties that already exist
+are the reference of [Properties](23-properties-reference.md).
+
+### Behavior
+
+A behavior gives a mob, item, room, area or exit a timed or message-driven
+habit, configured by a parameter string. Base class: `Behaviors/StdBehavior`;
+put the file in `Behaviors/`.
+
+| Method | Notes |
+| --- | --- |
+| `ID()` | The class name; this is what builders type |
+| `canImproveCode()` | Which hosts it fits (`Behavior.CAN_MOBS`, `CAN_ITEMS`, `CAN_ROOMS`, `CAN_AREAS`, `CAN_EXITS`, ORed). Default is mobs only; a wrong value makes builder commands refuse to attach it |
+| `setParms(String)` | Parse the parameters into fields; call `super.setParms` first |
+| `tick(Tickable ticking, int tickID)` | Called by the host's own tick. `ticking` is the host. A mob host sends `TICKID_MOB`, an item `TICKID_ITEM_BEHAVIOR`, a room `TICKID_ROOM_BEHAVIOR`, an area `TICKID_AREA`, an exit `TICKID_EXIT_BEHAVIOR`: test the ID you expect and return `true` for the rest. Call `super.tick` and honour a `false` |
+| `okMessage(Environmental host, CMMsg)`, `executeMsg(...)` | React to what happens around the host |
+| `startBehavior(PhysicalAgent)`, `endBehavior(PhysicalAgent)` | The host just gained or lost it |
+| `flags()` | `FLAG_MOBILITY`, `FLAG_TROUBLEMAKING`, `FLAG_POTENTIALLYAGGRESSIVE`, `FLAG_LEGALBEHAVIOR`... for the engine's own queries |
+| `accountForYourself()` | One lower-case phrase for lists ("sneezing") |
+| `getRunState()` and `setRunState(String xml)` | Runtime state to keep in a campaign save (see below) |
+| `catchUp(host, ticks)` | What to do at once when the host's area wakes after sleeping |
+| `canFreelyBehaveNormal(ticking)`, `canActAtAll(ticking)` | Inherited statics: whether the host is awake, mobile and in a state to act. Test one before doing anything the host would do by itself |
+
+```java
+package com.planet_ink.coffee_mud.Behaviors;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Locales.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+/**
+ * Sneezer [CHANCE=n]: each tick, n percent (default 5) of the time, the mob sneezes.
+ */
+public class Sneezer extends StdBehavior
+{
+	@Override
+	public String ID()
+	{
+		return "Sneezer";
+	}
+
+	@Override
+	public String accountForYourself()
+	{
+		return "sneezing";
+	}
+
+	protected int chance = 5;
+	protected int sneezes = 0;
+
+	@Override
+	public void setParms(final String newParms)
+	{
+		super.setParms(newParms);
+		chance = CMParms.getParmInt(newParms, "CHANCE", 5);
+	}
+
+	@Override
+	protected String getRunState()
+	{
+		return (sneezes <= 0) ? "" : ("<SNEEZES>" + sneezes + "</SNEEZES>");
+	}
+
+	@Override
+	protected void setRunState(final String xml)
+	{
+		sneezes = CMath.s_int(CMLib.xml().getValFromPieces(CMLib.xml().parseAllXML(xml), "SNEEZES"));
+	}
+
+	@Override
+	public boolean tick(final Tickable ticking, final int tickID)
+	{
+		if(!super.tick(ticking, tickID))
+			return false;
+		if((tickID != Tickable.TICKID_MOB)
+		|| (!(ticking instanceof MOB))
+		|| (!canFreelyBehaveNormal(ticking)))
+			return true;
+		final MOB mob = (MOB)ticking;
+		final Room R = mob.location();
+		if((R != null) && (CMLib.dice().rollPercentage() <= chance))
+		{
+			sneezes++;
+			R.show(mob, null, CMMsg.MSG_NOISE, L("<S-NAME> sneeze(s) loudly."));
+		}
+		return true;
+	}
+}
+```
+
+Notes: (1) the host calls `tick` on its behaviors only while the behavior's
+condition holds; CoffeeSUD adds a `WHEN=`, `TOD=` and `HOURS=` gate that any
+behavior gets for free from `core/BehaviorWhen`, so do not write your own.
+(2) A behavior is cloned for each host with `copyOf()`, which calls
+`setParms(getParms())` on the clone; parse everything in `setParms`. (3) A
+scripted `Scriptable` behavior is unrelated; see [MOBPROG](04-mobprog.md). The
+behaviors that already exist are listed in
+[Behaviors and masks](24-behaviors-and-masks.md); the help entry goes in
+`arc_behaviors.ini` as `BEHAVIOR_SNEEZER=` (copy `BEHAVIOR_GOLDLOOTER=`).

@@ -1224,7 +1224,7 @@ a gas:
 
 - pick an underwater locale (`UnderWater`, `UnderSaltWater`, `IndoorUnderWater`,
   grid and maze versions; `LIST LOCALES`);
-- set the room's or area's atmosphere stat: `MODIFY ROOM ATMOSPHERE SALTWATER`
+- set the room's or area's atmosphere stat: `MODIFY ROOM ATMOSPHERE SALT WATER`
   (a raw material name, or `-1` to inherit from the area; see
   [20-areas-rooms-exits.md](20-areas-rooms-exits.md));
 - let a state or behavior change it ([RoomStates](#room-states) `ATMOSPHERE=WATER`,
@@ -1758,7 +1758,7 @@ Dawn lights the way, and the air runs out.
 underwater locale), and make its darkness absolute:
 
 ```text
-MODIFY ROOM ATMOSPHERE SALTWATER
+MODIFY ROOM ATMOSPHERE SALT WATER
 Prop_RoomDark ABSOLUTE=TRUE LIGHTMASK="-TAGS +DAWNLANTERN" SNUFF=100 SNUFFMSG="Your @x1 drowns in the black water."
 Prop_DarkDanger LOST=10% STUMBLE=5% LURKER=drowned_priest LURK=4% LURKMSG="A drowned priest drifts out of the black water."
 ```

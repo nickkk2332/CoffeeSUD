@@ -237,7 +237,7 @@ The one-line form changes one aspect directly:
 
 A wrong field name prints the list of valid ones: `NAME,AREA,DESCRIPTION,AFFECTS,BEHAVIORS,CLASS,XGRID,YGRID,[ROOM ID]` plus the stat codes. (`ID` works although that message leaves it out.) Needs `CMDROOMS`. Save to the database is immediate.
 
-**Stat code values.** `CLIMATE` takes a number or the names `NORMAL`, `WET`, `COLD`, `WINDY`, `HOT`, `DRY`, `VOID` combined with `|` (for example `WET|HOT`); `-1` means inherit from the area. `ATMOSPHERE` takes a raw material name such as `AIR` or `FRESHWATER` (a number works as well), or `-1` to inherit. `TAGS` takes a comma-separated list and *replaces* all tags. `TEXT` is the room's raw property text.
+**Stat code values.** `CLIMATE` takes a number or the names `NORMAL`, `WET`, `COLD`, `WINDY`, `HOT`, `DRY`, `VOID` combined with `|` (for example `WET|HOT`); `-1` means inherit from the area. `ATMOSPHERE` takes a raw material name as players see it, such as `AIR`, `WATER` or `SALT WATER` (a number works as well; the Java constant names such as `FRESHWATER` are not accepted), or `-1` to inherit. `TAGS` takes a comma-separated list and *replaces* all tags. `TEXT` is the room's raw property text.
 
 ### Changing a room's locale class
 
@@ -479,7 +479,7 @@ An `StdTimeZone` or `StdPlanet` parent also gives its children its own calendar.
 
 - **Theme** (field "Theme setting") says which of three rule-sets are allowed: Fantasy (magic), Technical, Heroic (superpowers). Values: Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. In an area whose theme has no Fantasy bit, magic fails ("Magic doesn't seem to work here"); with no Heroic bit, superpowers fail ("Powers don't seem to work here"). A third gate refuses technology ("Technology doesn't seem to work here"), but the code only reaches it when the theme has the Heroic bit and lacks the Technical bit (see [Troubleshooting and gotchas](#troubleshooting-and-gotchas)), so a plain Fantasy area does not block technology. Inherited takes the parent's theme, or at the top `MUDTHEME` (shipped `1`, Fantasy).
 - **Climate** is a set of bits: wet, cold, windy, hot, dry, void, or Normal, or Inherited. The default for a new area is Normal. It shifts the weather the [simulation chapter](10-world-simulation.md) generates and the movement cost. A room that fixes its own climate (see [Reference: locale classes](#reference-locale-classes)) ignores the area's.
-- **Atmosphere** is the raw material the area breathes ("AIR", "FRESHWATER", "NOTHING"...). Inherited by default. It decides what can breathe there; races list what they breathe (see [Characters](03-characters.md)).
+- **Atmosphere** is the raw material the area breathes ("AIR", "WATER", "NOTHING"...). Inherited by default. It decides what can breathe there; races list what they breathe (see [Characters](03-characters.md)).
 
 ### Calendars and climate profiles
 
@@ -912,7 +912,7 @@ For `MODIFY EXIT [dir] [code] [value]`, `GMODIFY`, and scripts. The generic exit
 | Author | all | The creator's name, free text. `AREAS SORT=AUTHOR` can sort by it. |
 | Theme setting | all | Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. `?` lists them. |
 | Climate | all | A screen toggling I (inherited), R (wet), H (hot), C (cold), W (windy), D (dry); the engine also has a void bit not reachable from this screen. |
-| Atmosphere | all | A raw material name (`AIR`, `FRESHWATER`, `SALTWATER`, `NOTHING`...) or `Inherited`. `?` lists them. |
+| Atmosphere | all | A raw material name (`AIR`, `WATER`, `SALT WATER`, `NOTHING`...) or `Inherited`. `?` lists them. |
 | Calendar | all | The clock settings screen: shows `Default` for an area on the world clock and `Inherited` for one on its parent's; offers hours per day, dawn, day, dusk and night hours, days per month, weekdays, months and year titles, or `global` to return to the world clock. |
 | Player Level | all | `0` means use the median level of the area's mobs when judging suggested levels; any other number is used instead. |
 | Parent Areas | all | Area names to add or remove; `*clear*` removes all. |

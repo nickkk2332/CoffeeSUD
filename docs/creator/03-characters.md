@@ -325,7 +325,7 @@ before they are shown, for the character being made:
 | --- | --- |
 | `@RaceList@` | The races open to this player, and those the character or its profile has unlocked with a `RACE_` tattoo |
 | `@ClassList@` | The same for classes (`CHARCLASS_` tattoos) |
-| `@DeityList@` | The deities that qualify |
+| `@DeityList@` | Every deity in the world (not filtered by the character) |
 | `@StatList@` | The stats, including `ADDCHARSTAT_` ones and renames |
 | `@RaceList?FORMAT=TABLE@` (also the other lists) | One entry a line, each with the first line of its help |
 | `@if?Tattoo=NAME@ ... @else@ ... @endif@` | Text shown only if the character or profile has the tattoo (`Tattoo=!NAME` for not) |
@@ -446,7 +446,7 @@ for masks (`-TATTOOS +ORIGIN_ORPHAN`) and scripts; a character holds only one.
 | --- | --- |
 | `NAME` | Name in the menu (the ID if missing) |
 | `DESCRIPTION` | One line shown beside the name |
-| `MASK` | Zapper mask: who may take it, as `-RACE +Human +Half-Elf` |
+| `MASK` | Zapper mask: who may take it, as `-RACE +Human +HalfElf` |
 | `UNLOCK` | A tattoo the character or its profile must have (for example one a profile achievement gives); otherwise the origin is hidden |
 | `START` | A room ID (`Area#12`): the character's start room. Logged if no such room |
 | `ITEMS` | Comma list of catalog item names or item class IDs, a count first for more than one (`2 Torch, a travelling cloak`). The catalog is tried before the class IDs; the count is limited to 1 to 100. Logged if neither exists |
@@ -467,7 +467,7 @@ at random; with no origin open to a character the step is skipped.
 [ORPHAN]
 NAME=Temple Orphan
 DESCRIPTION=Raised beside the temple library.
-MASK=-RACE +Human +Half-Elf
+MASK=-RACE +Human +HalfElf
 START=Ashford#12
 ITEMS=a worn prayer book, 2 Torch
 ABILITIES=Prayer_Bless 25
@@ -579,7 +579,7 @@ script and `MPPERK who -PERK` takes it off (its rewards stay; see
 # world/perks.ini
 PICKS=GENERAL every 3 levels; CLASS:Fighter at 1,5,10
 TRAITS=2
-PERK_PACKMULE NAME="Pack mule" POOL=GENERAL HELP="Carry more." REWARDS="50 MAXCARRY"
+PERK_PACKMULE NAME="Pack mule" POOL=GENERAL HELP="Carry more." REWARDS="1 STRENGTH"
 PERK_IRONWILL NAME="Iron will" POOL=GENERAL MASK="-LEVEL +>=3" REQUIRES=PERK_PACKMULE COST=1
 PERK_SHIELDWALL NAME="Shield wall" POOL=CLASS MASK="-CLASS +Fighter"
 TRAIT_LUCKY NAME="Lucky" POOL=TRAIT COST=2 REWARDS="1 CHARISMA"
@@ -822,7 +822,7 @@ record stores. Indexed codes carry a trailing number (`GETRABLE0`, `GETRABLE1`).
 | 21 | PhysStat Adjustments | `ESTATS` | none | Adjustments to level, senses (`SENSES`), armor, damage, attack, disposition (`DISPOSITION`), weight, height. Type a stat name, then a value |
 | 22 | CharStat Adjustments | `ASTATS` | none | Adjustments to base stats, saves, max-stat adjustments, crit, age, faith and the like (descriptions such as `STRENGTH`, `SAVE VS FIRE`, `MAX STRENGTH ADJ.`) |
 | 23 | CharStat Settings | `CSTATS` | none | The same stats, but set to a value rather than adjusted |
-| 24 | CharState Adjustments | `ASTATE` | none | Adjustments to maximum hit points, mana, moves, hunger, thirst, fatigue. Hunger or thirst above two billion disables them; fatigue below minus two billion disables fatigue |
+| 24 | CharState Adjustments | `ASTATE` | none | Adjustments to maximum hit points, mana, moves, hunger, thirst, fatigue. A hunger or thirst maximum above about a billion (`Integer.MAX_VALUE/2`, as the stock plant and stone races use) disables them; a fatigue maximum below `Long.MIN_VALUE/2` disables fatigue |
 | 25 | New Player CharState Adj. | `STARTASTATE` | none | The same, applied once when a new character of the race starts |
 | 26 | Resources | `NUMRSC`, `GETRSCID<n>`, `GETRSCPARM<n>` | none | Raw materials the corpse yields when butchered. `new <item>` adds a copy of an item from your inventory; name one to remove it |
 | 27 | Outfit | `NUMOFT`, `GETOFTID<n>`, `GETOFTPARM<n>` | none | Items a new character of the race starts in, and `OUTFIT` gives. `new <item>` from your inventory |
@@ -1235,10 +1235,9 @@ When a character reaches a level (`CoffeeLevels.level`) the engine, in order:
 
 1. Raises the level and the class level, and adds the class's hit point,
    mana and move gains (shown in the level message).
-2. Gives practices and trains (below).
-3. Calls the JavaScript `levelup` event, writes a `LEVEL` line in the
-   character's chronicle if `JOURNALAUTO` has `LEVEL`, and calls
-   `progression.js` `onLevel`.
+2. Calls the JavaScript `levelup` event and writes a `LEVEL` line in the
+   character's chronicle if `JOURNALAUTO` has `LEVEL`.
+3. Gives practices and trains (below), then calls `progression.js` `onLevel`.
 4. Mentions a pick to spend if there are perks to choose (`PERKS`).
 5. Checks rank ladders (`Ranks.check`) so that a rank whose `REQUIRES` is now
    met is awarded.
@@ -1301,14 +1300,15 @@ takes an action. `EXPDEFER=` is blank for normal behaviour; otherwise it is:
 EXPDEFER=<mud hours> <percent> [$]<COMMAND>(<argument>) [<zapper mask>]
 ```
 
-The percentage of experience to hold back, how often it is released (in game
-hours), the command that releases it (and its argument; `*` is a wildcard),
+How often experience is released (in game hours), the percentage to hold
+back, the command that releases it (and its argument; `*` is a wildcard),
 and an optional mask of who must be in the same room, which may use player
 variables in braces such as `{RACE}`, `{CHARCLASS}` and `{LEVEL}`. A `$` before
 the command name still runs the command after the experience is paid. Example
 from the ini: `6 200% SAY(Give me XP!) -EFFECTS +MOBTeacher -ANYCLASS
 +{CHARCLASS}`. Held experience is paid when the player enters that command (the
-engine runs it through `DeferCmd`); a bare `TRAIN` also collects it. In CoffeeSUD the interval runs on the
+engine runs it through `DeferCmd`). With no command given, the first command a
+player enters after the interval has passed collects it. In CoffeeSUD the interval runs on the
 **game clock**, so a paused or turn-based game releases experience by game
 time (fixture [p28-xptime.js](../../tools/fixtures/fixes/p28-xptime.js)).
 
@@ -1371,8 +1371,9 @@ skill proficiency. Both are earned at levels (above) and counted in the
 score.
 
 **TRAIN.** `TRAIN` alone shows the character's trains and what each thing
-costs. `TRAIN <thing> (teacher)` buys one, with a trainer in the room (a mob with
-`Prop_Trainer`; see below). `TRAIN GAIN` trades something else (7 practices by
+costs. `TRAIN <thing> (teacher)` buys one, with a willing teacher in the room (usually a
+mob with `Prop_Trainer`; see below). For a stat, the teacher's own score in it
+must be higher than yours. `TRAIN GAIN` trades something else (7 practices by
 default) for a train. A thing is a stat name (`STRENGTH`...), `HIT POINTS`,
 `MANA`, `MOVEMENT`, `PRACTICES`, `GAIN`, or a class name (changing class; see
 [class systems](#class-systems-subclasses-and-multi-classing)). `NOPROMPT` at the
@@ -1464,7 +1465,7 @@ these functions, each called only if present:
 | Function | When | Effect of the result |
 | --- | --- | --- |
 | `onCreated(mob)` | A character has been made | none |
-| `onCreationStep(mob, step, answer)` | After each creation step: `race`, `gender`, `stats`, `class`, `factions`, `deity`, and `origin`, `kit`, `traits`, `template` | none |
+| `onCreationStep(mob, step, answer)` | After each creation step: `race`, `gender`, `stats`, `class`, `factions`, `deity`, and `origin`, `kit`, `traits`, `template`, and the lower-case name of each `creation.ini` question | none |
 | `statRoll(mob, bonus)` | `STARTSTAT=SCRIPT`: set the stats yourself, or return `{ strength: 14, dexterity: 12 }` (names, abbreviations or name starts) or a list in base stat order; stats left out are `BASEMINSTAT` | the stats |
 | `xpGain(mob, source, amount)` | Each positive experience gain, with its source tag | the experience given instead; not below 0 |
 | `onLevel(mob, level)` | After a level's gains | none |
@@ -1484,7 +1485,8 @@ function trainsForLevel(mob) { return mob.basePhyStats().level() % 5 === 0 ? 3 :
 ### Checking the curve
 
 `PROGRESSION <class> (<race>) (<to level>)` (builder mode, a `DEV=1` game or the
-`CMDCLASSES` flag) prints a class's level curve for a Human by default: for
+`CMDCLASSES` flag) prints a class's level curve for a Human by default, to level 10 unless a
+number (at most 100) is given: for
 each level the experience it takes, hit points, mana, moves, practices, trains
 and skills gained (those given at once are marked `*`). `PROGRESSION XP (<area>)`
 adds up the experience the content gives: the achievements', then each area's
@@ -1538,7 +1540,7 @@ Ranger.Spell_Infravision=HINT="for elves alone" SHOW=HINT
 
 A hint shows after a locked or learnable skill (`- seek the Druid circle...`).
 A secret skill with a hint shows as `??? - <hint>` so the player knows there is
-something to find; with `SHOW=HINT` it shows its name, `Spell_Infravision
+something to find; with `SHOW=HINT` it shows its name, `Infravision
 (locked: for elves alone)`. A hint should point to a real teacher, quest or
 place, not merely expose a forbidden ability ID. `TEACHLIST` and the teacher
 rules should agree with the chains.
@@ -1635,7 +1637,7 @@ ancient age arthritis and Alzheimer's (`DISABLE=AUTODISEASE` turns these off).
 
 | Setting | Meaning |
 | --- | --- |
-| GenRace `AGEEFFECTS` | `MIDDLEAGED: STR-1 DEX-1 WIS+1; VENERABLE: STR-2 CON-2`. In place of the coded effects *for that race*: each age's stat changes, as `STAT+N` or `STAT-N` pairs (any stat by name, or by its first letters), `;` between ages. An age not named has no change. The ages are `INFANT`, `TODDLER`, `CHILD`, `YOUNGADULT`, `MATURE`, `MIDDLEAGED`, `OLD`, `VENERABLE`, `ANCIENT` (or the displayed words). These change the stat itself, not its maximum |
+| GenRace `AGEEFFECTS` | `MIDDLEAGED: STR-1 DEX-1 WIS+1; VENERABLE: STR-2 CON-2`. In place of the coded effects *for that race*: each age's stat changes, as `STAT+N` or `STAT-N` pairs (any stat by name, or by its first letters), `;` between ages. An age not named has no change. The ages are `INFANT`, `TODDLER`, `CHILD`, `YOUNGADULT`, `MATURE`, `MIDDLEAGED`, `OLD`, `VENERABLE`, `ANCIENT` (or the displayed words, except that the word `Mature` reads as `MATURE`, index 4; write `MIDDLEAGED` for the age shown as Mature). These change the stat itself, not its maximum |
 | `AGEDISEASES` (ini or world.ini) | `"VENERABLE:Disease_Cancer:0.01, ANCIENT:Disease_Arthritis:1"`. In place of the coded diseases for everyone: from each age on, a percent chance at each ageing check to catch the disease (1 if no number is given). `DISABLE=AUTODISEASE` still stops them |
 | `STARTAGE_<NAME>` | `STARTAGE_VETERAN="-TATTOOS +ORIGIN_VETERAN:35"`: a zapper mask, a colon, and an age in years. A new character who meets the mask starts at that age (the first that fits). Applied at the end of creation (not to template characters) |
 | `AGE_PROG` | A trigger: on each birthday, scripts on the character and those around it run `AGE_PROG [BIRTHDAY\|CATEGORY\|<age name>\|ALL]`, with `$0` the age category, `$1` the age, `$2` `BIRTHDAY` or `CATEGORY` (the latter when the age category changed). See [26-mobprog-triggers.md](26-mobprog-triggers.md#age_prog) |
@@ -1671,7 +1673,8 @@ and clan, so it can try another direction. Who may is `REMORTMASK`
 and the specials `RACE`, `GENDER`, `CHARCLASS`, `STATS`, `WARRANTS`,
 `VISITATION`, each optionally with a percent (`100% FACTIONS`). An achievement
 with the `REMORT` flag is attainable again afterwards. `RETIRE` deletes the
-character. Both are engine-ini settings; they are inherited behaviour that is
+character after asking the player to re-enter the character's password, which
+single-player characters never see (so RETIRE is probably unusable there; unverified). Both are engine-ini settings; they are inherited behaviour that is
 not exercised by CoffeeSUD's own fixtures, so test them in your world before
 relying on them.
 
@@ -1852,7 +1855,7 @@ CHOICE=NAME="Carefully" HELP="You look before you leap." EFFECTS="1 WISDOM"
 [ORPHAN]
 NAME=Temple Orphan
 DESCRIPTION=Raised beside the temple library.
-MASK=-RACE +Human +Half-Elf
+MASK=-RACE +Human +HalfElf
 START=Ashford#12
 ABILITIES=Prayer_Bless 25
 TATTOOS=ORPHAN
@@ -1891,7 +1894,7 @@ TRAITS=2
 TRAIT_LUCKY NAME="Lucky" POOL=TRAIT COST=2 REWARDS="1 CHARISMA"
 TRAIT_KEEN NAME="Keen eyed" POOL=TRAIT COST=1
 FLAW_BADBACK NAME="Bad back" POOL=TRAIT COST=-1
-PERK_PACKMULE NAME="Pack mule" POOL=GENERAL REWARDS="50 MAXCARRY"
+PERK_PACKMULE NAME="Pack mule" POOL=GENERAL REWARDS="1 STRENGTH"
 ```
 
 To test: start a new game, `NEW Tester`, and walk the flow as an ordinary
