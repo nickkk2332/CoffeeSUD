@@ -38,21 +38,19 @@ is; you do not need to know any Java.
 
 ## What you will build
 
-A village called Brindlewick, in one area of five rooms:
+A village called Brindlewick, in one area of five rooms. North is up:
 
 ```text
-                  [Brindlewick#4]
-                  Harl's storeroom
-                        |  (locked door)
-                  [Brindlewick#1]
-                  Harl's smithy
-                        |
-[Brindlewick#3]---[Brindlewick#0]---[Brindlewick#2]
- The well house     The green         The village gate
+                 [#4 Harl's storeroom]
+                          ||  (locked door)
+                 [#1 Harl's smithy]
+                          |
+                 [#0 The Brindlewick green]----[#2 The village gate]
+                          |
+                 [#3 The well house]
 ```
 
-Drawn properly, the well house is south of the green, not west; the picture
-only shows who is connected to whom. The exits are:
+The exits are:
 
 | Room ID | Title | Locale class | Exits |
 | --- | --- | --- | --- |
@@ -649,8 +647,8 @@ MODIFY ITEM key@chest DESCRIPTION A small brass key on a loop of cord, with a ta
 MODIFY ITEM key@chest READABLETEXT harl.store
 ```
 
-`CREATE ITEM GenKey@chest` answers that the key drops into the chest's arms
-(or the sky, depending on the form). The `@chest` on the `MODIFY` lines tells
+`CREATE ITEM GenKey@chest` answers `Suddenly, a key drops from the sky.` and the
+key lands inside the chest. The `@chest` on the `MODIFY` lines tells
 the command to look inside the chest. The key code is the item's readable text:
 `harl.store`, exactly the text on the door. Codes compare without regard to
 case. Check:
@@ -786,7 +784,8 @@ EDIT SCRIPT guard
 ```
 
 `SCRIPTCHECK guard` prints `SCRIPTCHECK guard: no problems found.` `EDIT
-SCRIPT guard` reopens the same line editor on the script; use `Q` to leave it.
+SCRIPT guard` reopens the same line editor on the script; use `Q` and then `Y` to
+leave it without changes.
 Everything about the language is in the [MOBPROG guide](04-mobprog.md), its
 [triggers](26-mobprog-triggers.md), [commands](27-mobprog-commands.md) and
 [functions](28-mobprog-functions.md).
@@ -878,9 +877,12 @@ DESTROY AREA New Area
 ```
 
 The game asks `Area: "New Area", OBLITERATE IT???`. Type `Y`. (You cannot
-destroy the area you are standing in; you are in Brindlewick.) Then `SAVE`
-again; `WORLD STATUS` before it would have said that `SAVE would delete:
-areas/new-area.cmare`. Also remove the old test outside the game (next).
+destroy the area you are standing in; you are in Brindlewick.) `WORLD STATUS`
+now says that `SAVE would delete: areas/new-area.cmare`; the next `SAVE` (or
+the quit below) does it. Your builder character was made in `New Area#0`; if
+you would rather not find out how your character copes with that room going
+away (this chapter's author did not exercise it), skip this step and accept the
+warnings. Also remove the old test outside the game (step 17).
 
 ### Leave the game
 
@@ -1326,8 +1328,9 @@ then:
 echo $?
 ```
 
-It loads the world as a new game would, prints `WORLD CHECK: 0 errors, 0
-warnings.`, and exits. The status is `0` when there are no errors and `1` when
+It loads the world as a new game would, prints the same report as `WORLD
+CHECK` (`WORLD CHECK: 0 errors, 0 warnings.` when the starter area is gone and
+all is well), and exits. The status is `0` when there are no errors and `1` when
 there is at least one. `CHECK=1` shows no title screen and no menu.
 
 ## Make a reliable opening

@@ -942,10 +942,10 @@ file](#the-law-file)).
 | Script item | Form | Notes |
 | --- | --- | --- |
 | `MPFACTION` | `MPFACTION $n THIEVES.INI 50`; `MPFACTION $n THIEVES.INI +50`; `MPFACTION $n THIEVES.INI --50`; `MPFACTION $n THIEVES.INI TRUSTED` | A number sets the value; `+n` adds, `--n` subtracts; a band name or code (`TRUSTED`, `THIEVES_TRUSTED`) sets the middle of the band of that faction. Tells the character what changed. |
-| `FACTION()` condition | `if faction($n THIEVES.INI > 500)`; `if faction($n THIEVES.INI == Trusted)` | A number compares the value; otherwise the band's display name. |
+| `FACTION()` condition | `if faction($n THIEVES.INI > 500)` | Compares the numeric value. **Known fault:** the comparison is always numeric, so a band name on the right (`== Trusted`) reads as 0 on both sides and is always true. Test a band with `FACTIONBAND` instead: `if factionband($n THIEVES.INI == TRUSTED)`. |
 | `$%FACTION(who id)%` | band display name | Empty when the mob has no standing. Here `id` must be the faction ID (file name, with or without `.ini`). |
 | `$%FACTIONVALUE(who id)%` | the number | |
-| `$%FACTIONBAND(who id)%` | the band code | |
+| `FACTIONBAND()` condition, `$%FACTIONBAND(who id)%` | `if factionband($n THIEVES.INI == TRUSTED)`; the band code | Compares the band's code name as text. |
 | `FACTION_PROG` | `FACTION_PROG (@GLOBAL) id RANGE/ANY/UP/DOWN (mask)` | Fires when a standing changes or enters a band. See [26-mobprog-triggers.md](26-mobprog-triggers.md). |
 | Masks | `-FACTION +CODE`, `+FACTION -CODE` | Range codes, optionally `faction.code`. |
 

@@ -1773,7 +1773,7 @@ QuestChat +(speak | talk | words::DONE_SPEAKING);9only said this to YOU once.
 Hosts: mobs. Supports ROM area files. The mob attacks any other mob that has
 this behavior but is in a different gang. Not active when a mob with
 [ROMPatrolman](#rompatrolman) is in the room. Parameters:
-`[GANG NAME](;[ATTACK MESSAGE]...)`: the first is the gang, the rest are things
+`[GANG NAME] (;[ATTACK MESSAGE]...)`: the first is the gang, the rest are things
 the mob says before attacking.
 
 ```text

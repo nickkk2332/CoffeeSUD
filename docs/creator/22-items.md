@@ -541,7 +541,7 @@ create it. See [Weapons](#weapons).
 | `GenContainer` | `StdContainer` | General container: capacity 50, optional lid and lock, types allowed |
 | `GenGiftContainer` | `GenContainer` | A gift-wrapped container ("Open it and find out what's in it!") |
 | `GenBagOfHolding` | `BagOfHolding` | Container whose contents weigh less than normal |
-| `GenBagOfEndlessness` | `BagOfEndlessness` | A bag that refills. Archon only in its plain form |
+| `GenBagOfEndlessness` | `BagOfEndlessness` | A bag that refills. Archon only (`BagOfEndlessness` is `ArchonOnly`) |
 | `GenDrink` | `StdDrink` | A drinking container (a drink is a container): capacity 5, fresh water, leather, quenches per sip |
 | `GenEmptyDrink` | `GenDrink` | A drink container that starts empty |
 | `GenWater`, `GenFountain` | `GenDrink`/`GenWater` | An unlimited source of liquid (puddle, fountain) that fills drink containers |
@@ -597,7 +597,7 @@ are mainly filler and examples; for your own world, copy a generic class.
 | `Items/Weapons` | `Dagger`, `Dirk`, `Stiletto`, `Sword`, `Shortsword`, `Longsword`, `Claymore`, `Katana`, `Rapier`, `Sabre`, `Scimitar`, `TwoHandedSword`, `BattleAxe`, `Halberd`, `Glaive`, `Spear`, `Javelin`, `Mace`, `SmallMace`, `WarHammer`, `SmallHammer`, `Quarterstaff`, `Staff`, `Whip`, `Sickle`, `Trident`, `Cestus`, `Arquebus`, `Broom`, `Ruler`, `ThrowingStone`, `ShieldWeapon` and the themed `Drow*`, `FlamingSword`, `HolyAvenger`, `DaggerOfVenom`, `DragonClaw`, `EternityQuarterstaff` |
 | `Items/Armor` | `LeatherArmor`, `StuddedLeatherArmor`, `PaddedArmor`, `HideArmor`, `ChainMailArmor`, `ChainMailVest`, `RingMail`, `ScaleMail`, `SplintMail`, `BandedArmor`, `FieldPlate`, `FullPlate`, `Helmet`, `GreatHelm`, `LeatherCap`, `Hat`, `Hood`, `Robes`, `ThreadbareRobes`, `Shirt`, `Pants`, `Dress`, `Shoes`, `WalkingBoots`, `LeatherBoots`, `LeatherBracers`, `MetalBracers`, `LeatherGauntlets`, `SteelGauntlets`, `StdShield`, plus themed `Eternity*`, `MichaelsMithrilChain`, `GlovesSpeed`, `Hat_Intelligence`, `GlowingMageArmor` |
 | `Items/Basic` | `Apple`, `Ration`, `Waterskin`, `Wineskin`, `OilFlask`, `Torch`, `Lantern`, `Backpack`, `SmallSack`, `LargeSack`, `SmallChest`, `LargeChest`, `NeedleChest`, `TrappedChest`, `Bed`, `Chair`, `Boat`, `HorseCart`, `Ring`, `Ring_Ornamental`, `Gem`, `Parchment`, `Pot`, `Pan`, `StdKey`, `StdInnKey`, `Spring`, `HoleInTheGround`, `Corpse`, `QuestPoint`, `BardMap`, `SeaMap`, `LockableContainer`, `CloseableContainer`, `Star`, `Moonlet`, `DwarfStar`, `GasGiant`, `Asteroid`, `MassiveStar` |
-| `Items/MiscMagic` | `BagOfHolding`, `BagOfEndlessness`, `CubicGate`, `PortableHole`, `LifeFountain`, `DruidicMonument`, `Ring_Protection`, `RingOfFortitude`, `RingOfMagicResistance`, `RingOfColdProtection`, `RingOfElectricity`, `RingOfJustice`, `Wand_Fire`, `Wand_Nourishment`, `Wand_Advancement`, `PracticePoint`, `TrainingSession`, `Ingredients`, `HerbChest`, `ScrollSpell`, and the archon-only `WandArchon`, `ManualArchon`, `ManualClasses`, `ManualAdvancement`, `GoodyBag`, `ArchonJournal`, `ArchonStaff` |
+| `Items/MiscMagic` | `BagOfHolding`, `CubicGate`, `PortableHole`, `LifeFountain`, `DruidicMonument`, `Ring_Protection`, `RingOfFortitude`, `RingOfMagicResistance`, `RingOfColdProtection`, `RingOfElectricity`, `RingOfJustice`, `Wand_Fire`, `Wand_Nourishment`, `PracticePoint`, `TrainingSession`, `Ingredients`, `HerbChest`, `ScrollSpell`, and the archon-only `BagOfEndlessness`, `Wand_Advancement`, `WandArchon`, `ManualArchon`, `ManualClasses`, `ManualAdvancement`, `GoodyBag`, `ArchonJournal` (and `ArchonStaff`, which lives in `Items/Weapons`) |
 
 Names in `Items/` that end in `Wrapper` (`StdItemWrapper` and so on) are
 engine helpers for proxying objects, not items to create.
@@ -1916,7 +1916,7 @@ collapsed to one with a `COUNT` attribute when a room has more than 20 items.
 | Tag | Meaning |
 | --- | --- |
 | `ICLAS` | Class ID |
-| `IIDEN` | Present on containers and rideables with riders: an identity string other items point to |
+| `IIDEN` | Present on containers with a capacity above 0 and on rideables that have riders: an identity string other items point to |
 | `ILOCA` | Empty, or the `IIDEN` of the container this item is inside |
 | `IRIDE` | The rideable this item is riding (if it is in the room too) |
 | `IREJV` | Rejuv |

@@ -648,3 +648,459 @@ is not to start threads at all (see the next section).
 restored with a campaign save, and which `RANDOMSEED=n` seeds for reproducible
 runs. Code that must replay identically (including tests) uses only these.
 `Math.random()` and `new Random()` break that guarantee.
+
+## The message model
+
+CoffeeSUD is a message-passing engine. Nothing of consequence happens in the
+world (a step, a swing, a spell, picking up a coin, a shopkeeper's greeting) by
+a method call that changes state directly. The actor builds a **message**
+(`Common/interfaces/CMMsg`, normally a `DefaultMessage`), asks the room whether
+it is allowed (**preview**), and then sends it (**execute**), and everything
+near the event gets to veto, change or react to it. Almost all game rules are
+`okMessage` and `executeMsg` methods on effects, items, behaviors, races,
+classes and rooms.
+
+### Anatomy of a message
+
+| Part | Accessors | Meaning |
+| --- | --- | --- |
+| source | `source()`, `setSource(MOB)` | The MOB doing it. Never null. When no mob is involved the engine uses a factory mob (`CMLib.map().getFactoryMOB(room)` or `CMClass.getFactoryMOB()`) |
+| target | `target()`, `setTarget(Environmental)` | What it is done to, or null: a mob, item, room, exit, or even an ability |
+| tool | `tool()`, `setTool(Environmental)` | What it is done with, or null: the spell being cast (an `Ability`), the weapon (an `Item`) |
+| three codes | `sourceCode()`, `targetCode()`, `othersCode()` | What the event is, as seen by the source, the target and everyone else in the room (see below) |
+| three texts | `sourceMessage()`, `targetMessage()`, `othersMessage()`, and the `set...Message` methods | What each of those three audiences is told. A null text tells that audience nothing |
+| value | `value()`, `setValue(int)` | A number the message carries: the damage in a `TYP_DAMAGE` message, the amount in a healing message, whether a saving throw was made in an attack. Defaults to 0 |
+| trailers | `trailerMsgs()`, `addTrailerMsg(CMMsg)`, `trailerRunnables()`, `addTrailerRunnable(Runnable)` | Follow-up messages and jobs, run after this one has been delivered (see below) |
+
+A **code** is an `int` with two parts. The low 11 bits (`MINOR_MASK`, 2047) are
+the **minor type**, "what happened": one of the `TYP_` constants (0 to 154, plus
+the 2000 to 2047 range for channels). The remaining bits (`MAJOR_MASK`) are the
+**major mask**, "how it can be perceived and what it needs": a combination of
+`MASK_` flags. A `MSG_` constant is a ready-made code, a minor type with its
+usual flags: `MSG_GET = MASK_HANDS | TYP_GET`, `MSG_SPEAK = MASK_SOUND |
+MASK_MOUTH | TYP_SPEAK`. Read them back with `sourceMinor()`, `targetMinor()`,
+`othersMinor()` (the type) and `sourceMajor()`, `targetMajor()`, `othersMajor()`
+(the mask), or test them with `targetMajor(int mask)` (all the bits are set),
+`targetMajorAny(int mask)` (any of them) and `isTarget(int)` (and the same for
+`source` and `others`).
+
+| Mask | Value | Meaning |
+| --- | --- | --- |
+| `MASK_HANDS` | 2048 | uses the hands; blocked if the source cannot use its hands |
+| `MASK_MOVE` | 4096 | whole-body movement |
+| `MASK_EYES` | 8192 | needs sight |
+| `MASK_MOUTH` | 16384 | speaking or eating |
+| `MASK_SOUND` | 32768 | makes noise |
+| `MASK_ALWAYS` | 65536 | must happen whatever the source's state: skips the source's ability checks, and `Room.show` does not preview it |
+| `MASK_MAGIC` | 131072 | magical |
+| `MASK_DELICATE` | 262144 | fine work (thief skills) |
+| `MASK_MALICIOUS` | 524288 | an attack |
+| `MASK_CHANNEL` | 1048576 | channel traffic |
+| `MASK_OPTIMIZE` | 2097152 | a repeated message: skip expensive recomputation |
+| `MASK_CNTRLMSG` | 4194304 | an internal control message, not an in-world event |
+| `MASK_INTERMSG` | 8388608 | one step of a larger action |
+| `MASK_SPAMMY` | 16777216 | frequent and unimportant (combat spam filtering) |
+
+Helpful combinations: `MSK_CAST_VERBAL`, `MSK_CAST_SOMANTIC`, `MSK_CAST`,
+`MSK_CAST_MALICIOUS`, `MSK_HAGGLE`.
+
+A grouped guide to the minor types. The exhaustive list, with the matching
+`MSG_` constants, is [CMMsg.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/CMMsg.java).
+
+| Group | Types |
+| --- | --- |
+| Moving | `LEAVE`, `ENTER`, `FLEE`, `RETREAT`, `RECALL`, `NOISYMOVEMENT`, `QUIETMOVEMENT`, `TRAVEL`, `ADVANCE`, `MOUNT`, `DISMOUNT`, `SIT`, `STAND`, `SLEEP`, `SITMOVE`, `FOLLOW`, `NOFOLLOW`, `GRAVITY` |
+| Handling things | `GET`, `PUT`, `DROP`, `GIVE`, `WEAR`, `WIELD`, `HOLD`, `REMOVE`, `OPEN`, `CLOSE`, `LOCK`, `UNLOCK`, `PUSH`, `PULL`, `FILL`, `POUR`, `EAT`, `DRINK`, `THROW`, `ACTIVATE`, `DEACTIVATE`, `REPAIR`, `ENHANCE`, `INSTALL`, `RELOAD`, `UNLOAD`, `WAND_USE`, `DIG` |
+| Commerce | `BUY`, `SELL`, `VALUE`, `LIST`, `BID`, `DEPOSIT`, `WITHDRAW`, `BORROW`, `SERVE` |
+| Looking and reading | `LOOK`, `EXAMINE`, `GLANCE`, `READ`, `WASREAD`, `WRITE`, `WROTE`, `REWRITE`, `LOOK_EXITS`, `SNIFF`, `AROMA` |
+| Speech | `SPEAK`, `EMOTE`, `TELL`, `ORDER`, `THINK`, `VIEW`, `DUELCHALLENGE` |
+| Combat and magic | `WEAPONATTACK`, `ATTACKMISS`, `DAMAGE`, `HEALING`, `DEATH`, `CAST_SPELL`, `PREINVOKE`, `PANIC`, `PARALYZE`, `DISEASE`, `EXTINGUISH`, and the saving-throw kinds `FIRE`, `COLD`, `WATER`, `GAS`, `MIND`, `GENERAL`, `JUSTICE`, `ACID`, `ELECTRIC`, `POISON`, `UNDEAD`, `LASER`, `SONIC` |
+| Character | `EXPCHANGE`, `RPXPCHANGE`, `LEVEL`, `FACTIONCHANGE`, `PRACTICE`, `TEACH`, `TRAIN`, `RECIPELEARNED`, `LIFE`, `POSSESS`, `DISPOSSESS` |
+| System | `OK_ACTION` and `OK_VISUAL` (text only, no game meaning), `AREAAFFECT`, `ROOMRESET`, `EXPIRE`, `LOGIN`, `QUIT`, `SHUTDOWN`, `STARTUP`, `COMMAND`, `COMMANDFAIL`, `COMMANDREJECT`, `HUH`, `WEATHER`, `WEATHERCHANGE`, `TODCHANGE`, `DATECHANGE`, `NEWROOM`, `GENERATED`, `ITEMGENERATED`, `LEGALWARRANT`, `LEGALSTATE`, `CLANEVENT`, `HOLYEVENT`, `RITUAL` |
+
+`TYP_OK_ACTION` and `TYP_OK_VISUAL` are the "just show this text" types. A
+sound or sight that nothing needs to veto is `MSG_OK_ACTION` (audible) or
+`MSG_OK_VISUAL` (visible).
+
+### Building a message
+
+`CMClass.getMsg` has these forms (all return a `CMMsg`; the first form that is
+not "all" gives each audience its own code and text):
+
+```java
+CMClass.getMsg(source, allCode, text)
+CMClass.getMsg(source, allCode, text, value)
+CMClass.getMsg(source, target, allCode, text)
+CMClass.getMsg(source, target, tool, allCode, text)
+CMClass.getMsg(source, target, tool, sourceCode, targetCode, othersCode, text)
+CMClass.getMsg(source, target, tool, allCode, sourceText, targetText, othersText)
+CMClass.getMsg(source, target, tool, sourceCode, sourceText, targetCode, targetText, othersCode, othersText)
+```
+
+For example, the spell-casting message in `Spell_Shield`:
+
+```java
+final CMMsg msg = CMClass.getMsg(mob, target, this,
+		verbalCastCode(mob, target, auto),
+		auto ? "" : L("^S<S-NAME> invoke(s) a shield upon <T-NAMESELF>.^?"));
+```
+
+Texts are templates, not final strings. The output filter
+(`Libraries/CoffeeFilter`) rewrites them separately for each reader:
+
+| Tag | Result for reader R |
+| --- | --- |
+| `<S-NAME>`, `<T-NAME>`, `<O-NAME>` | The name of the source, target or tool: "you" for R itself, "someone" or "something" if R cannot see it, otherwise its `name(R)` |
+| `<S-NAMESELF>`, `<T-NAMESELF>` | As NAME, but "yourself" when it is R and the actor is its own target, and "himself"/"herself"/"itself" for reflexive cases |
+| `<S-HIS-HER>`, `<S-HIM-HER>`, `<S-HE-SHE>` | "your" / "you" / "you" for R itself; otherwise the pronoun for that mob's gender (`<T-...>` and `<O-...>` likewise) |
+| `<S-HIM-HERSELF>`, `<S-HIS-HERSELF>` | "yourself" for R, otherwise himself or herself |
+| `<S-YOUPOSS>` | "your" for R, otherwise the name with `'s` |
+| `<S-IS-ARE>`, `<S-HAS-HAVE>` | "are"/"have" for R, otherwise "is"/"has" (the verb agrees with whether the subject is "you") |
+| `<S-NAMENOART>`, `<S-SIRMADAM>`, `<S-MRMS>`, `<S-MISTERMADAM>`, `<S-WITHNAME>` | Name without article; sir/madam; Mr/Ms; Mister/Madam; " with <name>" |
+| verb endings `invoke(s)`, `push(es)`, `cr(ys)` | Dropped for "you" or an article-less subject ("you invoke"), kept as s, es or ies otherwise ("Bob invokes") |
+| `@x1`, `@x2`, ... | Variables filled by `L(text, a, b, ...)` before filtering; see [Localisation](#localisation) |
+| `^S` ... `^?` | Colour codes (`^S` is the spell colour, `^?` resets); see [Presentation](11-presentation-language.md) |
+
+Because the three texts are filtered per reader, write one template with tags
+for the whole room, not a separate string per audience, unless the audiences
+really need different wording.
+
+### Sending a message: preview, then execute
+
+The standard idiom (from `Spell_MagicMissile`):
+
+```java
+final CMMsg msg = CMClass.getMsg(mob, target, this, somaticCastCode(mob, target, auto), text);
+if(mob.location().okMessage(mob, msg))          // 1. preview: may anyone veto?
+{
+	mob.location().send(mob, msg);              // 2. execute: everyone reacts
+	if(msg.value() <= 0)                        // 3. look at what the handlers did to it
+		CMLib.combat().postDamage(mob, target, this, damage, CMMsg.MASK_ALWAYS | CMMsg.TYP_CAST_SPELL,
+				Weapon.TYPE_BURSTING, L("^SThe missile <DAMAGE> <T-NAME>!^?"));
+}
+```
+
+`Room.show(source, target, [tool,] code, text)` builds the message, previews it
+(unless the code has `MASK_ALWAYS`), sends it, and returns whether it was
+allowed: the shortest way to post simple events. The `Room` interface has many
+overloads (`show`, `showOthers`, `showSource`, `showHappens`, `send`,
+`sendOthers`): `showOthers` leaves the source out, `showSource` tells only the
+source, `showHappens` has no actor (it uses a factory mob), and `sendOthers`
+skips the source's own `executeMsg`.
+
+Posting a message to a room only reaches that room. To tell several rooms,
+post to each. The area hears every message of every one of its rooms first
+(`StdRoom.okMessage` begins with `getArea().okMessage(this, msg)`), which is
+how area-wide properties and behaviors work.
+
+**Preview (`okMessage`).** `StdRoom.okMessage` asks, in this order, and stops
+at the first `false`: the area, the room's own rules for entering and leaving,
+the source mob, every other mob in the room, every item lying in the room, the
+room's effects, behaviors and scripts, and each of its exits. A mob in turn
+asks its deity, its classes, its race, its effects, the items it carries, its
+behaviors, its scripts and its factions, and applies its own checks (you
+cannot speak if you cannot breathe, you cannot use your hands if they are
+bound, a dead mob cannot act). Items ask their own effects and behaviors the same
+way. A `false` from anyone means the event does not happen and nothing is
+sent. The previewer is expected to tell the source why
+(`msg.source().tell(...)`); a silent veto confuses players.
+
+**Execute (`executeMsg`).** `Room.send(source, msg)` runs `executeMsg` on
+the source first, then on every other mob in the room, then on the room itself
+(which passes it to the area, to the items lying in the room, to its exits,
+behaviors, scripts and effects), then offers it to the global monitors
+(`CMLib.commands().addGlobalMonitor(MsgMonitor)`). Execute methods change the
+world: they move the item, apply the damage, start the effect. They cannot veto.
+
+**Trailers.** A handler that wants something to happen after the current event
+finishes, rather than in the middle of it, attaches a trailer:
+
+- `msg.addTrailerMsg(CMMsg)` queues another message. After the first message
+  has been executed, the room previews each trailer (a trailer aimed at a dead
+  mob is dropped, except a death), sends it, and processes its own trailers, to
+  a depth of three. `Behaviors/ItemIdentifier` uses them to make a mob say,
+  examine and hand back an item in sequence.
+- `msg.addTrailerRunnable(Runnable)` queues a job. After the trailer messages,
+  each runnable is given to `CMLib.threads().executeRunnable`, which in
+  CoffeeSUD queues it on the game thread to run after the current job, in
+  order (`Behaviors/Beggar` uses one to take the coins it was given out of its
+  inventory). A runnable does not run in the middle of the event.
+- `msg.suspendResumeTrailers(Boolean)` turns a message's trailers off and on.
+- Trailers fire only when the message goes through `Room.send`, `sendOthers` or
+  a `show` call. Calling a listener's `executeMsg` directly skips them.
+
+**Altering a message.** The message object is shared by every handler, so a
+handler can change it for those after it. Common changes: `msg.setValue(...)`
+(a damage-reducing effect lowers it in `okMessage`; a save raises it by one),
+`msg.setSourceMessage/TargetMessage/OthersMessage(...)` (change or blank the
+text), `msg.setTarget(...)` (redirect), `msg.setTool(...)`, `msg.setSourceCode`
+/ `setTargetCode` / `setOthersCode` (change what it is), and the `modify(...)`
+family, which re-initialises all fields at once. Change only in `okMessage`,
+which runs before anyone has acted; by `executeMsg` it is too late for the
+change to affect what others decide. Do not keep a reference to a `CMMsg` for
+later use and expect its fields to stay as they were: the same object is
+reused by later handlers and, once nothing refers to it, `DefaultMessage`'s
+finalizer clears it and returns it to a cache that `CMClass.getMsg()` draws
+from. Copy out what you need. Do not call `CMClass.returnMsg` yourself unless
+you built the message, are finished with it and nothing else has seen it (as
+`StdElecPanel` does).
+
+### Writing handlers
+
+Every `MsgListener` has the same shape. The `myHost` argument is the object
+the listener is attached to (for a behavior or an effect, the thing it is on);
+for an `Ability` it equals `affected`.
+
+```java
+@Override
+public boolean okMessage(final Environmental myHost, final CMMsg msg)
+{
+	// veto: only for the thing this effect is on, only for the event we care about
+	if(msg.amITarget(myHost) && (msg.targetMinor() == CMMsg.TYP_GET))
+	{
+		msg.source().tell(L("It is stuck fast."));
+		return false;
+	}
+	return super.okMessage(myHost, msg);          // always give the parents their say
+}
+
+@Override
+public void executeMsg(final Environmental myHost, final CMMsg msg)
+{
+	super.executeMsg(myHost, msg);
+	if(msg.amISource((MOB)myHost) && (msg.sourceMinor() == CMMsg.TYP_DEATH))
+		msg.addTrailerMsg(CMClass.getMsg((MOB)myHost, CMMsg.MSG_OK_ACTION, L("<S-NAME> mutter(s) a last word.")));
+}
+```
+
+Rules of thumb:
+
+1. Always begin by testing that the message concerns you: `amITarget(myHost)`,
+   `amISource(mob)`, `msg.tool() == myHost`, the minor type. Handlers run for every
+   message in the room, many times a second; return `true` fast.
+2. Return `super.okMessage(...)` at the end, not `true`, so inherited rules
+   still apply. Call `super.executeMsg(...)` first (or last, as the class does).
+3. `okMessage` must not change the world (no moves, damage or tells other than
+   the explanation for a veto): the event may still be vetoed by a later handler.
+   Do that work in `executeMsg`.
+4. Do not post a new message from inside `okMessage`. Post it from
+   `executeMsg`, or attach it as a trailer.
+5. Never throw out of a handler; the engine logs the exception and the event
+   dies half-processed.
+6. The type of `msg.target()` is `Environmental`; cast only after `instanceof`.
+
+To change an existing rule without editing its class, add an effect or a
+behavior to the thing and let it veto or alter the message. Many `Prop_`
+classes are exactly this: `Prop_ReqNoMOB` is an `okMessage` that refuses a
+`TYP_ENTER` or `TYP_SIT` into its room for any mob that is not a player.
+
+### Commands post messages too
+
+A typed command is not special: it builds a message and sends it. `Wimpy`
+just sets a value; `Say` previews and sends `MSG_SPEAK`; `Get` ends in
+`CMLib.commands().postGet(mob, container, item, quiet)`, which builds
+`MSG_GET`, previews and sends it. When you write a command that does one of the
+common actions, call the `CMLib.commands().post...` helper rather than
+building the message yourself, so every inherited rule still applies.
+
+## Ticks, time and the game thread
+
+### Ticks
+
+Things that act over time implement `Tickable.tick(Tickable ticking, int
+tickID)` and are registered with the thread engine:
+
+```java
+CMLib.threads().startTickDown(this, Tickable.TICKID_MISCELLANEOUS, 1);   // every tick
+CMLib.threads().startTickDown(this, MY_TICK_ID, 5);                      // every 5th tick
+CMLib.threads().startTickDown(this, MY_TICK_ID, 3000, 1);                // every 3000 ms
+CMLib.threads().deleteTick(this, MY_TICK_ID);                            // stop it
+CMLib.threads().isTicking(this, MY_TICK_ID);
+```
+
+`startTickDown(E, tickID, numTicks)` ticks `E` every `numTicks` ticks of the
+standard length `CMProps.getTickMillis()` (the `TICKTIME` setting, 4000 ms).
+The four-argument form takes the tick length in milliseconds. A second request
+for the same object and ID is ignored. `tick` returns `true` to keep ticking
+and `false` to be removed; `destroy()` on an object also removes it. The
+`tickID` says which timer fired, so an object with two timers can tell them
+apart; the constants are in `Tickable`:
+
+| Constant | Used for |
+| --- | --- |
+| `TICKID_MOB` (0) | Every mob; also passed to the effects and behaviors a mob ticks |
+| `TICKID_ITEM_BEHAVIOR` (1), `TICKID_ROOM_BEHAVIOR` (8), `TICKID_EXIT_BEHAVIOR` (11) | Hosts that tick only because they have a behavior; stops when the last one is removed |
+| `TICKID_AREA` (9) | Every area |
+| `TICKID_SPELL_AFFECT` (12) | Effects on non-mob hosts |
+| `TICKID_EXIT_REOPEN` (2), `TICKID_DEADBODY_DECAY` (3), `TICKID_LIGHT_FLICKERS` (4), `TICKID_TRAP_RESET` (5), `TICKID_TRAP_DESTRUCTION` (6), `TICKID_ITEM_BOUNCEBACK` (7), `TICKID_ROOM_ITEM_REJUV` (10) | Their named timers |
+| `TICKID_QUEST` (13), `TICKID_CLAN` (14), `TICKID_CLANITEM` (15), `TICKID_LIVEAUCTION` (18), `TICKID_TIMEAUCTION` (19) | Quests, clans, auctions |
+| `TICKID_MISCELLANEOUS` (20), `TICKID_PROPERTY_SPECIAL` (21), `TICKID_ELECTRONICS` (22), `TICKID_SUPPORT` (23), `TICKID_SPECIALMANEUVER` (24), `TICKID_SPECIALCOMBAT` (25), `TICKID_BALLISTICK` (26), `TICKID_EVENT` (27) | General purpose and subsystem timers |
+| `TICKID_SOLITARYMASK` (65536) | OR it in to give the object a tick group of its own (`TICKID_EMAIL` and the library service tickers do); otherwise ticking objects with the same period share a group |
+| `TICKID_LONGERMASK` (256), `TICKID_SHORTERMASK` (255) | Masks for sorting ids by group |
+
+Objects that tick by the same period are batched into tick groups
+(`core/threads/StdTickGroup`); `OBJSPERTHREAD` (512) caps a group's size. A group
+runs all its members in turn when its time comes. `getTickStatus()` is for
+diagnosis: set a status (`Tickable.STATUS_*`, or your own) so that `LIST TICKS`
+and a hung-thread report can say where a tick was.
+
+The default ticks:
+
+- A **mob** is ticked once per tick for as long as it is in the world
+  (`bringToLife` starts it). `StdMOB.tick` runs the mob's own upkeep, takes
+  commands off its queue, and then ticks, in this order: its **effects**
+  (`A.tick(...)`; one that returns `false` is `unInvoke()`d), its **behaviors**,
+  its **scripts**. So an `Ability`'s `tick` is called by its host, not by the
+  scheduler, with `tickID == TICKID_MOB`.
+- An **item, room or exit** is ticked only when it has behaviors or scripts.
+- An **area** ticks every tick.
+- A timed effect counts its own life down in `StdAbility.tick`: each tick it
+  decrements `tickDown`, and at zero calls `unInvoke()` and returns `false`.
+  The initial value comes from `startTickDown` (and the class `classDurationModifier`).
+
+### Time: what the CoffeeSUD clock changes
+
+In CoffeeMud, ticks were driven by the system clock and many threads. In
+CoffeeSUD there is **one game clock** (`core/GameTime`) and **one game thread**,
+because a single player needs to be able to pause the world and to make time
+advance only when they act.
+
+`GameTime.now()` returns the game time in milliseconds. While the clock runs it
+is the system time (same scale and origin as `System.currentTimeMillis()`); it
+differs because it:
+
+- **stands still while the game is paused** (`PAUSE`) **or turn-based**
+  (`TIMEMODE TURNS`), and moves only when asked to;
+- **runs faster or slower** than real time under `TIMESCALE` (0.1 to 20);
+- **can be set** (a restored save sets it back to the saved time).
+
+| Method | Meaning |
+| --- | --- |
+| `GameTime.now()` | The game time |
+| `GameTime.isPaused()`, `isTurnBased()`, `isStopped()` | `isStopped()` is true when either is on: the clock does not move by itself |
+| `GameTime.rate()`, `rateText()`, `setRate(double)`, `realMs(long gameMs)` | The `TIMESCALE` factor, and how many real milliseconds a game span takes |
+| `GameTime.pause()`, `resume()`, `setTurnBased(boolean)` | What `PAUSE`, `RESUME` and `TIMEMODE` call |
+| `GameTime.advance(long ms)` | Move the clock forward at once, running nothing in between |
+| `GameTime.requestAdvance(long ms)`, `requestAdvance(ms, BooleanSupplier until)`, `requestAdvance(ms, until, Runnable after)` | While stopped: ask the scheduler to move the clock forward by `ms`, running everything that falls due on the way, in order, optionally stopping early when `until` says so; `Wait` and the turn-based command loop use it |
+| `GameTime.isAdvancing()`, `cancelAdvance()`, `takeAdvance(long maxStep)`, `checkStop()`, `set(long)` | The scheduler's side, and loading a save |
+
+**The rule for new code: anything that times something in the world reads
+`GameTime.now()`, never `System.currentTimeMillis()`.** That includes
+cooldowns, durations, expiry, decay, "when did this last happen", delays, and
+anything saved with a time in it. Then pause, turn-based play and TIMESCALE
+work on your feature for free. (`DefaultTimeClock`, expirations, scripts and
+the ability cooldowns all use it: about 560 uses of `GameTime.now()` in
+`Abilities`, `Behaviors` and `MOBS` against 20 of `System.currentTimeMillis()`.)
+Keep `System.currentTimeMillis()` for the real world: logs, input timeouts, the
+profile's "last played" date, thread health checks, cache expiry.
+
+A tick-count countdown (an effect's `tickDown`, an NPC's "wait 5 ticks") needs
+no clock reading at all: ticks stop when the clock stops, so the countdown
+pauses with the game. A `startTickDown(..., 3000, 1)` period in milliseconds is
+also measured in game time.
+
+### The game thread
+
+`core/threads/ServiceEngine` implements `ThreadEngine` (it is `CMLib.threads()`).
+In single-player it has a driving thread, `Scheduler0`, which sets a static
+`gameThread` when the engine is `RUNNING`. From then on **that thread runs the
+whole game**: every tick group, every delayed job and every job handed to
+`executeRunnable`, one at a time. (Before then, during boot and shutdown, work
+runs on worker thread pools as in CoffeeMud.) Consequences:
+
+- **Game code runs on one thread; you need no locks for game objects.** A tick, a
+  `MsgListener`, a command's `execute`, a script and a JavaScript hook never run
+  concurrently with each other. Typed commands run on this thread too: the
+  session reads the typed line, puts it in the mob's command queue
+  (`enqueCommand`), and `StdMOB.dequeCommand` (called from the session's loop
+  and from the mob's tick) runs it when the mob has enough action points and the
+  clock allows.
+- **Never block it.** A `Thread.sleep`, a blocking read, a network call or a long
+  loop freezes the whole game, including input echo. Wait by being ticked: record
+  that you are waiting, return from `tick`, and continue on a later tick. To
+  prompt the player, use an input callback (the session's asynchronous prompt
+  methods with an `InputCallback`) rather than a blocking `prompt(...)` from a
+  tick. If you must sleep (rare), call `CMLib.s_sleep(ms)`, which first runs
+  the jobs queued for the game thread so a hand-off that waits for itself still
+  finishes.
+- **Work handed to `executeRunnable` runs later on the same thread.**
+  `CMLib.threads().executeRunnable(Runnable)` (and the `String` and `char`
+  group-name overloads) queue the job for the game thread, to run after the
+  current job, in the order queued. It is not parallel. Use it to defer work out
+  of the middle of a message or to break a long job into pieces.
+- **Delayed work**: `CMLib.threads().scheduleRunnable(Runnable R, long ellapsedMs)`
+  runs `R` on the game thread once `ellapsedMs` of *game time* has passed. It
+  waits out a pause and stops with turn-based play.
+- **Jobs that should wait for a quiet moment**: `ServiceEngine.runWhenStill(Runnable)`
+  runs a job once the stopped clock has nothing left to run (the world is
+  between player turns). Seeding the dice and saving use it.
+- **Detecting the thread**: `ServiceEngine.isGameThread()` and
+  `ServiceEngine.hasGameThread()` are static. `core/ItemModifiers.gameThread()`
+  refuses item mutations made elsewhere, and a save runs on the game thread.
+- **Off-thread work is the exception.** Reading a file or computing something
+  slow can be done on a separate `Thread`, but it must be started in the game's
+  thread group (see above), may touch no game object, and must hand its result
+  back with `CMLib.threads().executeRunnable(...)`. JavaScript has this packaged as
+  `cm.background` ([JavaScript](05-javascript.md)).
+
+The scheduler loop (`ServiceEngine.run`), in outline:
+
+1. Run the queued game jobs.
+2. If the clock is stopped and time has been asked for (`requestAdvance`), move
+   the clock to the next thing that falls due.
+3. Run every delayed job whose game time has come.
+4. Find every tick group whose next time has come and run it. Groups of
+   objects flagged real-time (`runsInRealTime`: the session list, so the
+   console keeps reading input while the game is paused, and the engine's own
+   health check) are timed by the system clock; every other group is timed by
+   the game clock.
+5. Run the queued game jobs again; if the clock is stopped, check whether the
+   requested advance should end early, and run the "still" jobs once nothing
+   is left to do.
+6. Sleep until the next group or job is due (a stopped clock sleeps in 250 ms
+   slices), or until woken by a queued job or a `TIMESCALE` change.
+
+### Commands and action points
+
+A mob does not run a command as soon as it is typed; the command waits in a
+queue until the mob has paid for it. `Command.actionsCost(mob, cmds)` and
+`combatActionsCost` say how many "actions" a command costs (1.0 is a whole
+tick); defaults come from `DEFCMDTIME` (0.20) and `DEFCOMCMDTIME` (1.0) in
+`coffeemud.ini`, with per-command exceptions
+(`CMProps.getCommandActionCost(ID(), default)`). A player's free actions refill
+as time passes, so with the clock stopped (paused or turn-based) a command that
+costs time waits: paused, it waits for the game to resume; turn-based, the
+dequeue loop asks the clock to move forward by what the command costs
+(`GameTime.requestAdvance`), the world catches up, and then the command
+runs. In a party, only the leader's turn moves the world
+([Saves and party](31-saves-and-party.md)).
+
+### The calendar
+
+The game calendar is a `TimeClock` (`Common/interfaces/TimeClock`). The world
+has a global one (`CMLib.time().globalClock()`) and each area may have its own
+(`area.getTimeObj()`, from its `TIMEZONE`/clock settings). One game hour is
+`MILLISPERMUDHOUR` (600,000 ms by default, ten real minutes). The clock
+advances through `tickTock(int hours)` when `GameTime.now()` has moved a whole
+hour past `lastTicked`, so the calendar obeys pause, turn-based time and
+TIMESCALE. Read it with `getHourOfDay()`, `getTODCode()` (dawn, day, dusk,
+night), `getDayOfMonth()`, `getMonth()`, `getYear()`, `getSeasonCode()`,
+`getMoonPhase(room)`. Dates and durations are in the
+[World simulation](10-world-simulation.md) chapter. Never convert calendar time
+with your own arithmetic; `TimeClock.deriveClock(millis)`, `deriveMillisAfter`
+and `bump(TimePeriod, n)` exist for it.
+
+### Catch-up
+
+A passive area (no player has been near it for a while) stops ticking its
+contents. When it wakes, CoffeeSUD calls `Behavior.catchUp(host, ticks)` and
+`Ability.catchUp(host, ticks)` (default no-ops) so a behavior can do at once
+what it would have done meanwhile (grow a crop, finish a journey). Implement
+them if your class has a timer. `core/AreaCatchUp` is the caller.
+
+### Game dice
+
+The game's random numbers (`CMath.random()`, `CMLib.dice().roll(...)`,
+`rollPercentage()`) are a seeded `GameRandom` whose state is saved with the
+campaign. A test that needs exact reproduction starts the game with
+`RANDOMSEED=42` (and `TIMEMODE=TURNS`; see [Testing](13-testing-release.md)).

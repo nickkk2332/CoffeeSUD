@@ -193,8 +193,10 @@ if it holds content built from files, add it to `CONTENT_TABLES` and teach
 
 ### Locks, generations, manifests and recovery
 
-`SaveSlots` is the only class that touches slot directories. All public methods
-are `static synchronized`.
+`SaveSlots` is the only class that touches slot directories. The methods that
+change or scan the folder (`acquire`, `release`, `list`, `prepareWorkingDatabase`,
+`write`, `delete`, `recover`) are `static synchronized`; `isValidName`, `find`,
+`validateFormat` and the header readers are not.
 
 **Ownership lock.** `acquire(saveDir)` opens `.owner.lock` and takes a
 `FileChannel.tryLock()`. If another process holds it the call throws
@@ -300,9 +302,9 @@ the world-change report; calls `OptionalModules.boot(...)` (module preflight and
 the player-facing module report); then, if `DBSERVICE` is a fake database, either
 points at the cache (builder mode, clearing content tables when the files changed)
 or prepares the working database (normal mode) and calls
-`WorldFiles.beginBoot(rebuild, cache)`. When restoring it finally sets the game
-clock, the time mode, `TimeLock.restore`, the save mode, the pause, `GameTime.set`,
-and the `Party` settings from the header, and runs `compareWorlds`.
+`WorldFiles.beginBoot(rebuild, cache)`. When restoring it finally reads the header: it runs `compareWorlds`, then sets the
+time mode, `TimeLock.restore`, the save mode, the pause, `GameTime.set`, and the
+`Party` settings.
 
 **`afterBoot(session)`** runs on the game thread for the first job
 (`loadClocks`, `WorldFiles.loadSpace`, `WorldState.noteContentQuests`,
@@ -903,10 +905,10 @@ route.
 
 ### Campaign preparation: `prepare`
 
-`OptionalModules.prepare(plan, savedJson, restoring)` builds a staged `Campaign`
-without touching the running one. It is called at three times with the same logic:
-the launcher's startup check (`SaveGame.moduleStartupProblem`), `OptionalModules.boot`
-(from `beforeBoot`), and `reload(apply)` (WORLD MODULES PLAN/RELOAD, which prepares
+`OptionalModules.prepare(plan, saved, restoring)` builds a staged `Campaign`
+without touching the running one. It is called from several places with the same logic:
+the launcher's startup check (`SaveGame.moduleStartupProblem`), the preflight in
+`SaveGame.restore`, `OptionalModules.boot` (from `beforeBoot`), and `reload(apply)` (WORLD MODULES PLAN/RELOAD, which prepares
 against `snapshot()` of the running campaign).
 
 - New game (`restoring == false`): one fresh `Capsule` per module in `plan.enabled`,
@@ -1086,7 +1088,8 @@ Source: [AuthorIds.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/AuthorId
 [StoryRecords.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/StoryRecords.java),
 [StoryText.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/StoryText.java).
 
-`identity(host, scope, params, create)` resolves in order:
+The private `identity(host, scope, params, create)` (reached through `key`, `keys`
+and `recorded`) resolves in order:
 
 1. `ID=` in the feature's parameter text (`Scenery.option(params, "ID", "")`).
 2. A saved identity in the host's `Prop_AuthorIdentity` effect, whose text holds
@@ -1109,8 +1112,8 @@ only had a legacy one, so keys migrate forward by use.
 Use `ALIASES` for old authored ids a content revision replaced, and `LEGACYKEYS` for
 complete old saved tokens when the key shape or location changed. Ambiguous legacy
 physical-name references stay unbound by design. Authored identities are used by
-`Prop_FirstEntry`, `Waypoints`, `Languages`, `Scenery`, `ViewRules`, `AutoMap` and
-`ColorSet` (see the callers of `AuthorIds.` in the source).
+`Prop_FirstEntry`, `Waypoints`, `Languages`, `Scenery` and `ViewRules` (see the
+callers of `AuthorIds.` in the source).
 
 ### StoryRecords: per-character JSON
 
@@ -1120,7 +1123,8 @@ physical-name references stay unbound by design. Authored identities are used by
 `object(data, key)`, `string`, `number` and `token` keep callers null-safe. Because it
 is an effect with text on the character, it saves and restores with the character
 tables. `LoreBook`, `Chronicle`, `Ambience`,
-`Languages`, `ColorAliases`, `Emoter`, `Sounder` and others keep their per-character
+`Languages`, `ColorAliases`, `PlayerMaps`, `ViewRules`, `Prop_FirstEntry` and the
+`AUTOMAP` and `COLORSET` commands keep their per-character
 "seen once" and knowledge records here.
 
 ### StoryText: conditional text
@@ -1662,7 +1666,7 @@ Source: [Travel.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java
 | `Travel.Passage` | `depart`, `status`, `resumeJourney`, `cancelJourney` | `Prop_JourneyState` (and `Commands/Journey`) |
 | `Travel.StableService` | `stable(attendant, customer, request)` | `Nanny` |
 | `Travel.PacedVehicle` | `travelReady()` | `StdNavigableBoardable` |
-| `Travel.Timetable`, `Line` | `timetable()`; `arrivals()`, `isMoving()` | `TransportLine`, `Waits` |
+| `Travel.Timetable`, `Line` | `timetable()`; `arrivals()`, `isMoving()` | `TransportLine` (`Waits` only reads `Line`) |
 | `Travel.MovingRoute` | `refreshOverlay`, `clearOverlay`, `isAttached` | `MovingRoom` |
 
 `Travel.entering(who, from, to)` is the "entry work runs after veto checks and payment,
