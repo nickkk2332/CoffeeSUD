@@ -101,7 +101,7 @@ Consequences you must design for:
 - Anything that reads or changes the world (rooms, mobs, items, effects) runs on
   the game thread. Boot still loads on worker threads, so code in the load path
   must not assume the game thread exists yet. `SaveGame.afterBoot` therefore
-  uses a private `runOnGameThread` that waits (up to 50 x 50 ms) for
+  uses a private `runOnGameThread` that waits (up to 200 x 50 ms) for
   `hasGameThread()` and then blocks until its job finishes (120 second limit).
 - `SaveGame.save` runs on the game thread, so the world stands still while it
   writes. That is what makes `WorldState.capture` consistent without locks.
@@ -374,7 +374,7 @@ helpers: `nextInTurn(CHECKPOINT_SLOT, CHECKPOINTS)` to write and
 `SAVES INFO name`, `DELETE name`, `COPY from to`, `DIFF a b` and `CHECK`. `SAVES
 CHECK` calls `WorldState.notKept(mob)`, which reports what a save would not keep;
 extend it when you add a thing a save cannot hold. `SaveTools.copy` copies the
-tree; `SaveTools.info`/`diff` read the headers and world XML.
+save folder tree; `SaveTools.info` and `SaveTools.diff` produce the `INFO` and `DIFF` reports.
 
 ### What world.xml holds (WorldState)
 
@@ -1601,8 +1601,8 @@ stores real time would not be.
 
 `Narration` and `Waits` pause the clock for paged text and long waits
 (`GameTime.pause()` when single-player and not turn-based) and release it afterwards;
-the saved-state fields `paused` plus "temporary pause ownership" ensure a restore does
-not leave the game stuck paused.
+[the persistence matrix](state-and-persistence.md) lists unread pages and temporary pause
+ownership as saved, so a restore does not leave the game stuck paused.
 
 ### TimeLock (zones)
 
@@ -1622,7 +1622,11 @@ mode is saved as header `timemodebefore` and restored with `TimeLock.restore`.
   `Travel.elapse`, which pauses, requests the advance and resumes in the `after`
   callback.
 - `GameTime` statics survive an in-process restore (the class is in `core`); the
-  restore sets them from the header. A new game does not reset `rate`.
+  restore sets the clock, mode and pause from the header. The rate is not saved: `MUD.java`
+  applies the `TIMESCALE` setting (if numeric and above 0) at each boot, and the
+  `TIMESCALE` command (`Commands/TimeScaleCmd`, builders and DEV=1) changes it for the
+  running process only; a boot with no `TIMESCALE` setting does not reset a rate set earlier
+  in the same process.
 
 ### Tests
 
@@ -1649,7 +1653,7 @@ Source: [Travel.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java
 
 | Interface | Methods | Implemented by |
 | --- | --- | --- |
-| `Travel.Stateful` | `travelState()`, `restoreTravelState(xml)` | `InstanceArea` and other effects; saved as `<ASTATE>` by `WorldState.statesXML` |
+| `Travel.Stateful` | `travelState()`, `restoreTravelState(xml)` | `InstanceArea`; any effect that implements it is saved as `<ASTATE>` by `WorldState.statesXML` |
 | `Travel.InPlaceScaling` (extends `Stateful`) | `isInPlace()`, `rebuildInPlace(room, leader)` | `InstanceArea` |
 | `Travel.Helm` | `allowed(mob, ship)` | `Prop_HelmRestrict` |
 | `Travel.CommittedEntry` | `entering(host, who, from, to)` | `ResetWhole`, `InstanceArea` |
@@ -1685,7 +1689,7 @@ calls `BoardingReceipt` on hosts aboard.
   destination area, source room or source area (first found), scaled by `VEHICLE`
   (default 0.7), `MOUNTED` (0.5), `NIGHT` (1.5) options and a road's `TIME`; minutes
   converted with `CMProps.getMillisPerMudHour()`.
-- `route(from, to, vehicle)`: the shortest path of directions; `sail`, `hitch`
+- `route(from, to, vehicle)`: a breadth-first path of directions (fewest steps) over open exits that suit the vehicle's terrain, searching at most 10,000 rooms; null when unreachable; `sail`, `hitch`
   (refuses a riding loop), `destination(name, who)`, `knownPort`, `vessel(name)`,
   `label`, `value(function, object)` (script functions).
 - `temporaryLink(owner, from, dir, to, exit)`, `temporaryDoor`, `temporaryExit`,
@@ -1748,8 +1752,8 @@ Source: [Uniques.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Uniques.ja
   `ever < cap` true; `ONCE` false; `WHILE` true if the oldest `lost` entry is at least
   `uniqueDays * dayMillis()` old. `appeared(name, data, P)` increments `ever` or
   consumes the oldest `lost`.
-- Hook points in the engine: `CMCatalog` (LIVE/DROP rolls via `dropRoll`, `ROOM` and
-  `CONTAINER` timers via `timer`, `observeAll` per catalog tick), `StdContainer.opened`
+- Hook points in the engine: `CMCatalog` (LIVE/DROP rolls via `dropRoll`; `ROOM` and
+  `CONTAINER` timers via `timer` and `observeAll` in the catalog's maintenance pass), `StdContainer.opened`
   (`Uniques.opened`), `ItemRejuv` (`mayReturn`, `returned`), `StdMOB.admitCarried`
   (a carried copy counts), `MUDPercolator` and `ScriptLib` (generators and
   `MPOLOAD CATALOG` respect the cap), `WorldFiles.loadWorldFiles` (`registerWorld`
@@ -1836,3 +1840,294 @@ STATES (`s5-law.js`).
 `f-organizations.js`, `f-guilds.js`, `f-party-clan.js`, `ar-organizations.js`
 (rank cap counts same-name NPCs), `dt37-orgcheck.js`, `s5-law.js`.
 
+## The authoring checks
+
+### Purpose
+
+Static checks read the world and report problems by file and line without running
+game logic. Creators run them through commands; CI runs them through `sud.sh CHECK=1`
+(world loaded as a new game on a scratch copy, `WorldCheck.run(null, null)` printed,
+exit code 1 if any error). The checks are read-only: they never assign IDs, run
+scripts or change the world.
+
+| Class | Command | Reads |
+| --- | --- | --- |
+| `WorldCheck` | `WORLD CHECK [ONLY=parts]`, `CHECK=1` | The whole world, by part |
+| `ScriptCheck` | `SCRIPTCHECK` | MOBPROG scripts with `LOAD=` followed, never run |
+| `PropCheck` | `PROPCHECK` | Each effect's text on rooms, exits, mobs and items, and the catalog |
+| `AuthoringCheck` + `AuthoringSchema` | via `WorldCheck` parts `VOCAB, LORE, TEMPLATES, ROUTES, IDS` | Text lists, dictionaries, lore, templates, routes, authored IDs |
+| `QuestCheck` | `QUESTCHECK` | Quest scripts |
+| `PuzzleCheck` | `PUZZLE CHECK` | Rooms, doors and objects scripts name |
+| `OrgCheck` | `ORGCHECK` | Faction files, clan references, government entry scripts |
+| `TextCheck` | `CHECKTEXT` (`PREVIEW`) | Room and area VARIES text |
+| `GenerateCheck` | `GENERATE CHECK` | Generator XML files |
+
+### WorldCheck
+
+`WorldCheck.PARTS` = `EXITS, REACH, KEYS, TEXT, SHOPS, DATA, SCRIPTS, PROPS, JS,
+VOCAB, LORE, TEMPLATES, ROUTES, IDS, MODULES, COMPOSITIONS, COMBAT, ITEMMODS`.
+`run(Area only, Set<String> parts)` returns `Finding`s (`Severity` ERROR or WARNING;
+`part`; `what`) sorted errors first. A `null` or empty part set runs everything.
+`DATA` (what the world files could not load) and `JS` (`JSScope.checkWorldClasses`)
+run only for the whole world (`only == null`). `SCRIPTS` maps
+`ScriptCheck.isWarning(p)` lines to warnings and the rest to errors; `PROPS` findings
+are always warnings. The four module-framework parts (`MODULES`, `COMPOSITIONS`,
+`COMBAT`, `ITEMMODS`) are errors, except `ITEMMODS`, which is a warning unless
+`ItemModifiers.inUse()` (a world that never opted in keeps its legacy `affixes.xml`).
+`MODULES` reports `plan.blocking` as errors and `plan.warnings()` as warnings and
+checks each enabled module's `clock_modes` against the current clock.
+`report(found)` formats `WORLD CHECK: n errors, m warnings.` and the lines;
+`errors(found)` counts; `setHeadless`/`runHeadless`/`exitCode` implement `CHECK=1`.
+
+Add a part by adding its name to `PARTS`, a block in `run`, and a test in
+`dt13-worldcheck.js` or a family fixture. Parts are cheap to run alone with `ONLY=`.
+
+### ScriptCheck
+
+`checkText(name, text, files)`: expands `LOAD=` includes (recording the file and line
+of every statement in `Src` records), splits into units the way the engine's parser
+does (`;` between commands, `~` between triggers, `#` comments), collects assignments,
+then `checkUnit` per unit, then verifies every `MPCALLFUNC` target has a
+`FUNCTION_PROG`. It checks triggers against `ScriptingEngine.progs`, commands against
+`ScriptingEngine.methods` (exact, no prefix matching), functions against `funcs`,
+IF/ELSE/ENDIF, SWITCH/CASE and FOR/NEXT balance, `MPWHILE` parentheses, unterminated
+`<SCRIPT>`, JavaScript that does not compile, unapproved blocks where approval is
+needed, missing `LOAD=` files and room IDs in `MPGOTO`, `MPTRANSFER` and `MPOLOADROOM`.
+Findings read `file:line what`; things the checker cannot be sure of (counts and
+variables a script may get another way) are `file:line warning: what`. `checkHost`,
+`checkArea` (area, rooms, exits, mobs, what mobs carry, room items) and `checkAll`
+accumulate with a shared file cache so a file many hosts load is reported once.
+`ScriptSignatures` holds argument counts for commands (`add("MPECHO", 1, true)`); add
+a new command's signature there.
+
+### PropCheck and AuthoringSchema
+
+`PropCheck.checkEffect(host, A)` reports: `AuthoringSchema.check(ID, text)` problems
+(typed options), what the class logs when it reads its own text (captured with
+`Log.startCapture`/`stopCapture` by instantiating a fresh effect and calling
+`setMiscText`), `KEY=` words that the effect's `AHELP` entry does not name
+(`keysOf(ID)` parses `[A-Za-z][A-Za-z0-9_]*\s*=` out of the help text, cached per ID and
+cleared by `WorldAssets.reload()`), room IDs of the form `Area#12` that do not resolve,
+unknown abilities in a `Prop_` spell list, and effects that `canAffect` says cannot
+affect their host. Only `isSavable()` and not-`canBeUninvoked()` effects are checked
+(what was set on a thing, not what was cast on it).
+
+`AuthoringSchema` registers typed option metadata for the newer authored properties
+(`schema("Prop_Waypoint", "NETWORK:text", "DISCOVER:enum:ENTER,TOUCH,RITUAL,QUEST",
+...)`) with types `text`, `int:min:max`, `number:min:max`, `boolean`, `enum:...`,
+`room`, `file:prefix`, `list`, `language`, `languages`, `lore`; `identities(...)` adds
+`ID`, `ALIASES`, `LEGACYKEYS`. `keys(id)` feeds both `PropCheck` (so a new property's
+keys need not be in help to be accepted) and `AuthoringCheck`. **When you add a
+property with options, add a schema.** `AuthoringCheck.checkList(key, value)` validates
+`HEALTH_CHART`/`HEALTHCHART` (11 entries), `WEAPON_HIT_DESCS`/`WEAPON_MISS_DESCS` (6) and
+`DAMAGE_WORDS` rows. `AuthoringCheck.run(part, only)` also detects duplicate `ID`s
+(`IDS`: error for a duplicate `Prop_Waypoint` ID within a network, warning otherwise),
+ambiguous waypoint names and `TransportLine`/`MovingRoute` stops that do not resolve.
+
+### Findings format and exit codes
+
+Plain strings: `where / host / ID: problem`, or `file:line problem`. Findings from
+commands are told to the player; from `CHECK=1` they print on standard output. Exit
+code 1 only for errors.
+
+### Tests
+
+`dt11-scriptcheck.js`, `dt12-propcheck.js`, `dt13-worldcheck.js`, `dt32-questcheck.js`,
+`dt37-orgcheck.js`, `dt14-generatecheck.js`, `pr-authoring.js`,
+`remaining-authoring.js`, `ar-validation.js`, `ar-assets.js`, `review-core.js`
+(parser/validator parity for route stops).
+
+### Pitfalls
+
+- Keep the checkers and the engine's parser in step. `ScriptCheck` reads
+  `ScriptingEngine.progs`, `methods` and `funcs`, so a new command or function is
+  accepted automatically, but its argument rules need a `ScriptSignatures` entry.
+- Validators that "pass" a reproduced bad case are regressions: the project review
+  added fixtures for false-green cases (`review-core.js`); add one when you fix a miss.
+
+## The isolated playtest
+
+### Purpose
+
+Builder mode shares the cache and writes the world, so a risky test (dying, balance,
+long play) is awkward. `PLAYTEST GAME` (`Commands/PlaytestCmd`) launches a **separate
+process** on a disposable copy of the builder's world with a new save, so the builder
+session and its files are untouched. `PLAYTEST ON/OFF` is different: it only suspends
+the builder's sysop powers in place (`Prop_Playtest`) and keeps its changes.
+`PLAYTEST RUN [FILE]` and `WORLD TEST [FILE]` run `.play`, `.test` or `.js` files under
+`world/tests` through `tools/playtest.py` (`PlaytestRunner`).
+
+Source: [IsolatedPlaytest.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/IsolatedPlaytest.java),
+[PlaytestRunner.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/PlaytestRunner.java),
+`Commands/PlaytestCmd.java`.
+
+### How IsolatedPlaytest.prepare works
+
+1. `Files.createTempDirectory("sud-playtest-")` with `world/`, `db/`, `saves/`, `logs/`.
+2. Copy the builder's world folder, then apply `WorldFiles.plan()`: write every file the
+   next SAVE would write (`plan.texts`) and delete what it would delete, so unsaved
+   builder edits are in the test world. If `plan()` is null (the world did not load
+   whole) it fails.
+3. Copy `fakedb.schema` from the builder's database folder.
+4. `SaveGame.exportPlaytest(builder, saves)` writes a save named `playtest` into the
+   temp `saves/` through the normal `writeSnapshot` path with the builder's cache as the
+   source database (`SaveGame.databaseDir()`); it requires builder mode.
+5. Release the temp save folder's lock (`SaveSlots.release`) so the child can own it.
+6. Build the command: the JVM's own `java`, `-Dsud.isolated.playtest=true`,
+   `-Dsud.log.prefix=<temp>/logs/mud`, the current class path (absolute paths), `SUD`
+   with `BUILDER=0 DEV=0 RESTORE=playtest WINDOWS=0`, the charset settings, and
+   `WORLDDIR`, `SAVEDIR`, `DBSERVICE` pointing into the temp folder.
+
+`launch` runs that process and, when a display exists, opens a `CharacterWindow` wired
+to the process's standard input and output ("close to discard"); with no display it
+returns the prepared command line to run in another terminal. When the process ends the
+temp directory is deleted. In the child, `SaveGame.playerLoggedIn` sees
+`sud.isolated.playtest` and gives the character `Prop_Playtest` at the starting room
+so a death returns to the start.
+
+### Invariants
+
+- The child is an ordinary normal-mode `RESTORE` of a snapshot, so it exercises the real
+  restore path; anything that cannot restore also fails the playtest.
+- The playtest never writes the builder's world: its world folder and database are
+  copies.
+- Closing the window destroys the process; deleting the temp folder is best effort
+  (`deleteTree`).
+
+### Tests
+
+`dt8-playtest.js`, `review-workflows.js` (independent playtest preparation),
+`review-isolation.js` and `review-play.js` in `tools/fixtures/fixes/setup/`, and the
+played `review` group.
+
+## Tests
+
+### How the suites work
+
+- `tools/fixes.sh` runs every `tools/fixtures/fixes/*.js` (except `prelude.js`) with
+  `JRUN` in a builder-mode game on a scratch copy of the world, after `prelude.js`.
+  A fixture reports `FIXTEST ok FILE/NAME` or `FIXTEST FAIL FILE/NAME: why` and ends
+  with `FIXTEST done FILE`. `prelude.js` provides `M` (the builder's mob), `CM`
+  (`Packages.com.planet_ink.coffee_mud`), `check(name, cond, why)`, `ok`, `fail`, `done`,
+  `scratchRoom()`, `newMob(cls, R)`, `scriptOn`, `scriptedMob(name, script)`, `gvar`,
+  `clearVar`, `field(obj, name)`, `call(obj, name, args)` and `callTyped(obj, cls, name,
+  typeNames, args)` (the last three reach private members by reflection, which is how
+  fixtures exercise private statics such as `WorldFiles.importCatalog`). Engine classes
+  are reachable as `CM.core.X`, `CM.core.save.X`.
+- Played groups run real processes with their own world, database and saves: `st1`,
+  `st6`, `pr5`, `saves` (alias `saves1`), `saves2` to `saves5`, `travel`, `presentation`,
+  `language`, `review`, `remaining`, `modules`, `composition`, `combat`, `trial`,
+  `itemcraft`, plus `jrun` for the JavaScript tests. Run one with `tools/fixes.sh GROUP`;
+  run chosen fixtures with `tools/fixes.sh NAME ...`; `KEEP=1` keeps the scratch folder.
+- `tools/storage-tests.sh` compiles and runs `tools/SaveStorageTest.java` (file-level
+  save safety, with a real second process).
+- `tools/smoke.sh` is the single-player path; `tools/check.sh` is the commit check
+  (fixes and smoke side by side); `ENGINE=1 tools/check.sh` adds the engine suite
+  (`tools/engine-tests.sh`, `TEST ALL`, about 15 minutes). Package-specific drivers:
+  `tools/modules-integration.py`, `combat-integration.py`, `composition-integration.py`,
+  `item-modifier-integration.py`, `review-integration.py`, `remaining-integration.py`
+  and their `*-tests.sh` wrappers.
+
+```sh
+tools/fixes.sh optional-modules      # one fixture
+tools/fixes.sh saves3                # one played group
+tools/storage-tests.sh               # save folder safety
+```
+
+### Coverage by subsystem
+
+| Subsystem | Where it is tested |
+| --- | --- |
+| Save folder safety | `SaveStorageTest`; `saves*` groups |
+| WorldState capture/apply | `s5-law.js`, `s9-states.js`, `item1-uniques.js`, `js7-store.js`, `t-instances.js`, `review-*`, played `saves*` |
+| World files and cache | `b2-handedits`, `b5-reload`, `b6-undo`, `catalog-import`, `s6-overlay`, `dt27-dev`, `ar-assets`, `w21-lawfile`, smoke |
+| Modules | `optional-modules`, `ability-composition`, `combat-profiles`, `item-modifiers`, `modules-integration.py` |
+| Identities and story text | `review-core`, `ar-shared`, `pr-*`, `l-language` |
+| Script events | `st*.js`, `dt7-script.js`, `p21-scripts.js` |
+| JavaScript | `js*.js`, `review-reload`, `review-workflows` |
+| Party and time | `party-controls`, `sc8-party`, `st10-party`, `w28-timemode`, `dt23-timescale`, `sc2-time` |
+| Travel | `t-*.js`, `ar-journeys` |
+| Organisations | `f-*.js`, `ar-organizations`, `dt37-orgcheck` |
+| Checks | `dt11` to `dt14`, `dt32`, `dt37`, `pr-authoring`, `remaining-authoring`, `ar-validation` |
+
+## Recipes for common changes
+
+### Add a field that must survive a save
+
+1. Decide who owns it (see [Extension points](#extension-points-persisting-new-state)).
+2. For behaviours/effects: implement `getStat("STATE")`/`setStat("STATE", ...)`. Write
+   times as game time left. Return an empty string when there is nothing to keep.
+3. Add a fixture in the style of `s9-states.js`: set state, read it with `getStat`, put
+   it back on a fresh instance, assert equality.
+4. If it names other objects, use `InstanceIds.reference` and resolve in `setStat` late
+   or in `restoreTravelState`-like callbacks.
+5. If a restore can't hold it, add a `WorldState.notKept` line so `SAVES CHECK` says so.
+
+### Add a world file kind
+
+1. Constants and a loader in `WorldFiles` (`importExtras` or `loadWorldFiles`), in the
+   right place in the boot (after what it needs).
+2. A writer in `exportAllReadable` using `writeOrDelete`/`writeFolder` so B2 and backups
+   apply.
+3. List its files in `contentPaths()` (and `managedPaths()` if the export writes it).
+4. Decide whether it belongs in the world sum; if hand-authored and versioned by its
+   own system, put it in `WorldAssets.VERSIONED_APART`.
+5. Add a fixture using a separate `WORLDDIR` (see `s6-overlay.js`).
+
+### Add a header setting
+
+Write it in `writeSnapshot`, read it in `beforeBoot` (before the world loads) or
+`afterBoot`, and set a default when absent so old saves load. Remember
+`SaveSlots.validateFormat` only checks `version`.
+
+### Add a restore-time reset
+
+If a class keeps static state that must not leak between games, add a `reset()` and
+call it from `SaveGame.beforeBoot` next to `JSJobs.reset()`.
+
+### Add a check
+
+See [Add a part to WorldCheck](#worldcheck) and, for properties, an
+`AuthoringSchema.schema(...)` line.
+
+## Pitfalls
+
+- Static state is the norm in this layer. A restore runs in the same process, so every
+  new static needs a reset path; tests that pass in a fresh process and fail after
+  `RESTORE` are almost always a missing reset.
+- Game time versus real time: store game time left or absolute game time, never system
+  time, in saved state.
+- Do not hold live objects across restores or reloads; hold references and resolve them.
+- Builder mode and normal mode diverge in the same methods (`SaveGame.isBuilderMode()`):
+  test both when you change anything near saves, the cache or `WorldFiles`.
+- Order matters at boot (custom objects before classes load; extras before rooms;
+  catalog after areas) and at restore (see the diagram). Moving a call is a behaviour
+  change.
+- Anything the exporter or checks parse is a file format. Changing a format means
+  keeping old files readable (the exporter rewrites on the next SAVE, but a game may
+  load an old cache or save first).
+- Class loading: `core/` is loaded once by the system class loader, while the session
+  classes (`Common/*Session`) are loaded again at each boot (the note in `ConsoleInput`
+  says so). Static state in `core/` therefore survives an in-process restore unless a
+  reset clears it; do not assume a class outside `core/` keeps its statics, and check
+  [chapter 32](32-engine-programming.md) for how the engine loads each kind.
+
+## See also
+
+- [Chapter 32: engine programming](32-engine-programming.md): object model, message flow,
+  writing new classes, build and class loading.
+- [Chapter 2: world workflow](02-world-workflow.md): the creator view of world files,
+  SAVE, WORLD STATUS/DIFF/RELOAD, UNDO.
+- [Chapter 31: saves and party](31-saves-and-party.md): the single-player model.
+- [Chapter 14: optional modules](14-optional-modules.md), and the families it supports:
+  [15](15-ability-composition.md), [16](16-combat-profiles.md),
+  [17](17-item-modifiers-crafting.md).
+- [Chapter 5: JavaScript](05-javascript.md), [chapter 4: MOBPROG](04-mobprog.md) and
+  [chapter 26: triggers](26-mobprog-triggers.md).
+- [Chapter 30: travel, vehicles and instances](30-travel-vehicles-instances.md).
+- [Chapter 13: testing and release](13-testing-release.md) for the creator-side test tools.
+- [State, persistence and reload matrix](state-and-persistence.md).
+- Plans: `PLAN.md` (phases 3 to 5: clock, saves, world files), `DEVPLAN.md`
+  (engine capabilities), `audit/project-review-fixes.md` (save safety and identity
+  follow-ups), `audit/S-saves-and-world-files.md` (the save and world-file feature
+  proposals, many of them built).

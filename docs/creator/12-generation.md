@@ -1296,7 +1296,7 @@ extras.
 | `max` | At most this many (only with `name`); extras are destroyed, those in invalid places first. |
 | `fallback` | The `id` of an `ITEM` (or `MOB`) tag built to make up the shortfall, repeated until `min` is reached (at most `min*4+4` tries). |
 | `where` | `any` (default), `reachable` (from the entrance, through exits), or `reachable-without:keyname=KEY` (from the entrance without passing a door locked with that key name, in either direction). |
-| `in` | Where a thing may go: `ROOM` (default), `MOB` (a monster there carries it), `CONTAINER` (an unlocked-or-closed container in a room, not itself a key); combine with `\|`, commas or spaces. A thing with no suitable place goes on a room floor. |
+| `in` | Where a thing may go: `ROOM` (default), `MOB` (a monster there carries it), `CONTAINER` (a container lying in a room there; a key is never a container); combine with `\|`, commas or spaces. If none of the chosen kinds is available it goes on a room floor. |
 
 The key pattern: the locked room's `EXIT` says `keyname="barrow vault"`, the key
 item's `readabletext` is that same text, and the rule above puts the key
@@ -1656,3 +1656,359 @@ Notes:
 - Use stable ids for content whose discovery must persist across template
   versions.
 
+## Worked examples
+
+The examples are meant to be typed in: each template goes in
+`world/resources/randareas/` (your world's overlay; create the folder if it is
+not there) and is then named `randareas/<file>` in commands. Run
+`GENERATE CHECK` on every file before using it.
+
+### Example 1: a random dungeon area
+
+A burial mound, 24 rooms, a TREE or a CAVE shape picked by the seed, with a
+boss at the far end, a locked vault whose key is guaranteed to be reachable,
+and undead that get tougher with depth. File
+`world/resources/randareas/barrow.xml`:
+
+```xml
+<AREADATA>
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+
+<AREA id="barrow" layout="TREE,CAVE" order="reverse-depth"
+      requires="areaname=$,areasize=int,level_range=int">
+  <NAME>$areaname</NAME>
+  <SIZE>$areasize</SIZE>
+  <CLASS>StdArea</CLASS>
+  <DESCRIPTION>Cold passages under a burial mound.</DESCRIPTION>
+  <ROOM select="first">
+    <!-- the deepest room, once -->
+    <ROOM id="barrow_king_hall" class="StoneRoom"
+          condition="$roomtag_isdeepest='true' and $__king&lt;1" define="__king+=1">
+      <TITLE>the Barrow King's hall</TITLE>
+      <DESCRIPTION>Bones and grave goods crowd a stone dais. You can go $roomexits_desc_long.</DESCRIPTION>
+      <EXIT class="Open" />
+      <MOB insert="barrow_king" />
+    </ROOM>
+    <!-- one locked vault in a dead end -->
+    <ROOM id="barrow_vault" class="StoneRoom"
+          condition="$roomtag_nodetype='leaf' and $roomtag_depth&gt;1 and $__vault&lt;1" define="__vault+=1">
+      <TITLE>a sealed vault</TITLE>
+      <DESCRIPTION>A low chamber behind an iron-banded door.</DESCRIPTION>
+      <EXIT class="GenDoor" hasalock="true" deflocked="true" defclosed="true" keyname="barrow vault" />
+      <ITEM class="GenContainer" name="a bronze-bound chest" display="A bronze-bound chest sits here."
+            haslid="true" defclosed="true">
+        <AFFECT class="Prop_LootTable" parms="FILE=randareas/barrow_loot.xml ID=barrow_chest ROLLS=2?4 ON=OPEN" />
+      </ITEM>
+    </ROOM>
+    <!-- everything else -->
+    <ROOM id="barrow_passage" class="StoneRoom">
+      <TITLE>a cold passage</TITLE>
+      <DESCRIPTION>Dust lies thick and undisturbed. You can go $roomexits_desc_long.</DESCRIPTION>
+      <EXIT class="Open" />
+      <MOB condition="1?3=1" insert="barrow_dead" />
+    </ROOM>
+  </ROOM>
+  <!-- the vault's key: never behind the door it opens -->
+  <ENSURE name="barrow vault key" min="1" max="1" fallback="barrow_key"
+          where="reachable-without:keyname=barrow vault" in="mob|container" />
+</AREA>
+
+<MOB id="barrow_dead" select="any-1">
+  <MOB class="GenMob" race="Skeleton" gender="N" level="$level_range + ($roomtag_depthpct / 10)"
+       name="a barrow skeleton" display="$mob_name rattles here.">
+    <BEHAVIOR class="Aggressive" />
+  </MOB>
+  <MOB class="GenMob" race="Zombie" gender="N" level="$level_range + ($roomtag_depthpct / 10) + 1"
+       name="a barrow zombie" display="$mob_name shambles here.">
+    <BEHAVIOR class="Aggressive" />
+  </MOB>
+</MOB>
+
+<MOB id="barrow_king" class="GenMob" race="Skeleton" gender="M" level="$level_range + 6"
+     name="the Barrow King" display="$mob_name sits enthroned here.">
+  <BEHAVIOR class="Aggressive" />
+  <AFFECT class="Prop_LootTable" parms="FILE=randareas/barrow_loot.xml ID=barrow_king ROLLS=1 ON=DEATH GOLD=60?120" />
+</MOB>
+
+<ITEM id="barrow_key" class="GenKey" name="a barrow vault key" readabletext="barrow vault"
+      display="A tarnished key lies here." />
+</AREADATA>
+```
+
+Build it:
+
+```text
+GENERATE CHECK randareas/barrow.xml
+GENLAYOUT TREE 24 SEED=5
+GENERATE PREVIEW AREA barrow FROM randareas/barrow.xml areaname=Barrow areasize=24 level_range=8 SEED=5
+GENERATE PREVIEW AREA barrow FROM randareas/barrow.xml areaname=Barrow areasize=24 level_range=8 SEED=6
+GENERATE PREVIEW KEEP
+```
+
+Read the preview: the boss at the deepest room (`isdeepest`), mob levels rising
+with depth, exactly one vault door and one key reachable without it.
+`PREVIEW KEEP` builds the last preview unlinked ("`Barrow#0`"); stand where the
+tunnel mouth should be and `LINK Barrow#0 down`, then `SAVE`. To regenerate it
+with a better description file later: `REGENERATE LOCK` the rooms you edited by
+hand and `REGENERATE AREA SEED=SAME`.
+
+Things to notice: the `ROOM select="first"` picks the first eligible template per
+node, so ordering is priority. `$__king` and `$__vault` are area counters. A
+small area might have no eligible leaf for the vault, in which case the key is
+still made (by its `min="1"`); give the area enough rooms (12 or more) or drop
+the vault condition's depth test.
+
+### Example 2: a loot table for the boss
+
+File `world/resources/randareas/barrow_loot.xml`. `barrow_king` always drops one
+blade with one or two [affixes](#affixes-and-random-item-properties), plus one
+extra weighted pick; `barrow_chest` is the vault's three tiers.
+
+```xml
+<AREADATA>
+<ITEM id="barrow_king" select="all">
+  <ITEM class="GenWeapon" level="$mob_level" name="a barrow-iron blade"
+        display="A barrow-iron blade lies here." material="IRON"
+        weapontype="PIERCING" weaponclass="DAGGER" basegold="300" affixes="1?2" />
+  <ITEM select="pick-1">
+    <ITEM pickweight="60" class="GenItem" level="$mob_level" name="a string of grave beads"
+          display="A string of grave beads lies here." material="GLASS" basegold="40" />
+    <ITEM pickweight="30" class="GenItem" level="$mob_level" name="a jade burial mask"
+          display="A jade burial mask lies here." material="JADE" basegold="200" />
+    <ITEM pickweight="1" class="catalog" name="Crown of the Barrow King" />
+  </ITEM>
+</ITEM>
+
+<ITEM id="barrow_chest" select="pick-1">
+  <ITEM pickweight="70" select="pick-1">
+    <ITEM class="GenItem" level="$area_level" name="a coil of rope" display="A coil of rope lies here." material="HEMP" basegold="4" />
+    <ITEM class="GenItem" level="$area_level" name="a stub of candle" display="A stub of candle lies here." material="TALLOW" basegold="1" />
+  </ITEM>
+  <ITEM pickweight="25" class="GenItem" level="$area_level" name="a silver ring"
+        display="A silver ring lies here." material="SILVER" basegold="60" />
+  <ITEM pickweight="5" class="GenItem" level="$area_level" name="a ruby the size of an egg"
+        display="A ruby the size of an egg lies here." material="RUBY" basegold="400" />
+</ITEM>
+</AREADATA>
+```
+
+Attach it as in example 1, with an `<AFFECT class="Prop_LootTable" .../>` in
+the mob's or container's template, or add the `Prop_LootTable` property to a
+mob you built by hand ([Properties](23-properties-reference.md#prop_loottable)),
+and roll the table
+without killing anything:
+
+```text
+GENERATE ITEM barrow_king FROM randareas/barrow_loot.xml mob_level=10 SEED=3
+GENERATE ITEM barrow_king FROM randareas/barrow_loot.xml mob_level=10 SEED=4
+```
+
+Each command creates the blade (check its name for affixes) and the extra item
+in your room. The last pick (weight 1 of 91) is a catalog item: make the
+catalog entry and set its cap with `CATALOG EDIT` first
+([Unique and rare items](22-items.md#unique-and-rare-items)), or remove the entry
+until you have; a `catalog` entry naming something that is not cataloged is an
+error that stops that roll.
+
+### Example 3: a named-item affix set
+
+The Barrow's loot gets a flavour of its own: a set of affixes whose names
+tell where the gear came from. Put this in `world/affixes.xml`.
+**This file replaces the stock `affixes.xml` completely** (the first file found
+is used; they are not merged), so paste back any stock affixes you want to keep
+from `resources/randareas/affixes.xml`.
+
+```xml
+<AFFIXES>
+  <AFFIX id="grave_cold" name="Grave-cold" pos="prefix" kinds="weapon,ammo"
+         level="6-40" pickweight="12" power="2">
+    <AFFECT class="Prop_FightSpellCast" parms="10%;Spell_Frost" />
+  </AFFIX>
+  <AFFIX id="barrow_forged" name="Barrow-forged" pos="prefix" kinds="armor"
+         level="6-40" pickweight="12">
+    <AFFECT class="Prop_WearAdjuster" parms="armor+5" />
+  </AFFIX>
+  <AFFIX id="last_watch" name="of the Last Watch" pos="suffix" kinds="weapon,armor,item"
+         level="10-60" pickweight="6" power="2">
+    <AFFECT class="Prop_WearAdjuster" parms="strength+1 hitpoints+10" />
+  </AFFIX>
+  <AFFIX id="hollow_bones" name="of Hollow Bones" pos="suffix" kinds="weapon,armor"
+         level="1-30" pickweight="4" power="0" cursed="true">
+    <AFFECT class="Prop_WearAdjuster" parms="attacks-5" />
+  </AFFIX>
+</AFFIXES>
+```
+
+Restart the game (the file is cached after first use), and roll the boss table a
+few times, preferably with seeds:
+
+```text
+GENERATE ITEM barrow_king FROM randareas/barrow_loot.xml mob_level=12 SEED=1
+GENERATE ITEM barrow_king FROM randareas/barrow_loot.xml mob_level=12 SEED=2
+```
+
+What you may see: "a Grave-cold barrow-iron blade of the Last Watch" (level
+raised by 2 + 2, value by 20% + 20%, a 10% chance to cast Frost on a hit, +1
+strength and +10 hit points while wielded), or "a barrow-iron blade of Hollow
+Bones" (cursed: it cannot be taken off). The level window matters: at
+`mob_level=3` no `grave_cold` or `last_watch` can be picked and the blade comes
+out with fewer or no affixes. At most one prefix and one suffix are ever applied
+(`affixes="1?2"` means "one or two"). A cursed item is dangerous in
+play-testing; give it a way out ([Items](22-items.md)).
+
+For affixes that remember what they rolled and can be crafted on later, see
+[17-item-modifiers-crafting.md](17-item-modifiers-crafting.md) (`tracked="true"`
+affixes and `modbase=`).
+
+### Example 4: a themed village
+
+A small dwarf village with its own naming style, an inn-like hall, a smithy and
+homes, in a cross shape: a lane through a green. `world/resources/randareas/stonehollow.xml`:
+
+```xml
+<AREADATA>
+<STRING load="/resources/randareas/inc_roomruns.xml" />
+
+<AREA id="stonehollow" layout="CROSS" requires="areaname=$,areasize=int,level_range=int">
+  <NAME>$areaname</NAME>
+  <SIZE>$areasize</SIZE>
+  <CLASS>StdArea</CLASS>
+  <DESCRIPTION>A dwarf village of low stone halls.</DESCRIPTION>
+  <ROOM select="first">
+    <ROOM id="sh_smithy" class="StoneRoom"
+          condition="$roomtag_nodetype='leaf' and $__smithy&lt;1" define="__smithy+=1">
+      <TITLE>the village smithy</TITLE>
+      <DESCRIPTION>A forge glows red under a low roof. You can go $roomexits_desc_long.</DESCRIPTION>
+      <EXIT class="Open" />
+      <MOB class="GenShopkeeper" race="Dwarf" gender="M" level="$level_range + 2" whatisell="inventory only">
+        <NAME>Smith ${SYSTEM_RANDOM_NAME:2-3:dwarvish}</NAME>
+        <DISPLAY>$mob_name hammers at an anvil.</DISPLAY>
+        <BEHAVIOR class="MudChat" parms="" />
+        <SHOPINVENTORY number="5">
+          <ITEM class="GenWeapon" level="$level_range" name="a dwarven hand-axe"
+                display="A dwarven hand-axe lies here." material="IRON"
+                weapontype="SLASHING" weaponclass="AXE" basegold="40" />
+        </SHOPINVENTORY>
+      </MOB>
+    </ROOM>
+    <ROOM id="sh_home" class="StoneRoom" condition="$roomtag_nodetype='leaf'">
+      <TITLE>a dwarf home</TITLE>
+      <DESCRIPTION>A snug stone room with a hearth. You can go $roomexits_desc_long.</DESCRIPTION>
+      <EXIT class="GenDoor" defclosed="true" />
+      <MOB class="GenMob" race="Dwarf" level="$level_range" condition="1?4&gt;1">
+        <NAME>${SYSTEM_RANDOM_NAME:2-3:dwarvish:FULL}</NAME>
+        <DISPLAY>$mob_name is here, stoking the fire.</DISPLAY>
+      </MOB>
+    </ROOM>
+    <ROOM id="sh_green" class="Road" condition="$roomtag_nodetype='square'">
+      <TITLE>the village green</TITLE>
+      <DESCRIPTION>A trodden square of grass where the lanes meet. You can go $roomexits_desc_long.</DESCRIPTION>
+      <EXIT class="Open" />
+    </ROOM>
+    <ROOM id="sh_lane" class="Road">
+      <TITLE>a stone lane</TITLE>
+      <DESCRIPTION>A paved lane between walls of fitted granite. You can go $roomexits_desc_long.</DESCRIPTION>
+      <EXIT class="Open" />
+    </ROOM>
+  </ROOM>
+</AREA>
+</AREADATA>
+```
+
+```text
+GENERATE CHECK randareas/stonehollow.xml
+GENERATE PREVIEW AREA stonehollow FROM randareas/stonehollow.xml areaname=Stonehollow areasize=14 level_range=6 SEED=2
+GENERATE PREVIEW KEEP
+```
+
+The style comes from `resources/namegen/dwarvish.ini`
+([Name styles](#name-styles)); with `:FULL` a villager gets a family name and
+perhaps a title ("Thrain Ironhand the Stout"). To make every dwarf in your world
+sound alike, add `RACES=Dwarf` to a world copy of that file (the stock one
+already lists it). The `ROOM select="first"` makes the smithy the first leaf, the
+homes the remaining leaves, the green the square (if the layout has one; a
+`CROSS` has one at the crossing), and lanes everything else. To dress hand-dug
+rooms with the same rules instead, use `GENERATE FILL sh_home ... ROOM`.
+
+## Validate the generated game
+
+`GENERATE CHECK` covers class, reference, selector, layout and JavaScript
+problems, unknown attributes, undeclared variables and contradictory requirements.
+It cannot prove every random combination is reachable, solvable or balanced. A
+release checklist for generated content:
+
+1. Run `GENERATE CHECK` on every template you ship and on the ones they load.
+2. `GENERATE PREVIEW` over a dozen seeds and a spread of sizes and level ranges.
+   Look for empty areas (every `condition` false), missing bosses and keys,
+   and absurd mob levels.
+3. `WORLD CHECK` the result ([testing and release](13-testing-release.md)).
+4. Play it as a mortal: reach the boss, open the vault, loot the chest, die once.
+5. Save inside it, restore in a fresh process, and finish it.
+6. Check that a failed attempt does not leave orphaned objects or block a
+   mandatory quest.
+7. For anything that regenerates, test the occupied case, a quest holding a
+   room, and a save/restore mid-way.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `Required ids for X were missing: ...` | The `AREA`/`ROOM` `requires` list a variable you did not pass. Add `name=value` to the command; the message gives the type. |
+| `The AREA id 'x' has not been defined in the data file.` | Wrong id or wrong `FROM`; run `GENERATE AREA LIST FROM file`. Remember `FROM` must come right after the id. |
+| `When creating an area or room, the LAST parameter to this command must be a direction` | Add a direction as the very last word (or `UNLINKED` for an area). |
+| `A room already exists in direction ...` | The way is taken; choose a free direction or `UNLINK` first. |
+| `Unable to create area 'X', you must destroy the old one first.` | An area of that name exists. Change `areaname`, or `DESTROY AREA`. |
+| `Can't make selection among NONE` / `Can't pick N of M` | A `select` found fewer eligible children than it needs. Use `limit-N`, or make the conditions total. |
+| `Unknown variable '$x'` | Undefined variable in a value. Declare it in `requires`, `define` it, or fix the spelling (`GENERATE CHECK` finds these). |
+| `Undefined insert: 'x'` | `insert=` names an id that is not loaded. Check the `load=` and the id's spelling. |
+| `Duplicate ID` in the log | Two tags share an id without `merge="true"` on both. |
+| A detail has no effect | It is not a stat code of that class (for example `value` on an item; use `basegold`). `GENERATE CHECK` reports "unknown attribute". |
+| A condition is never true | `<` and `>` unescaped (XML would reject the file), a string compared without quotes, or a variable that is a math expression (`1?3`) compared as text. Turn on `DEBUG=MUDPERCOLATOR` (with `DBGMSGS`) in `coffeemud.ini` for a trace of every condition test and define. |
+| Same seed, different dungeon | A different template, recipe set, name style, variable or engine version; a changed `areaname` changes text. Check `GEN_SEED` and the `GENSEED` area flag. |
+| `${js:...}` gives nothing | `JSCRIPTS=0`. Or an error: `JS ERRORS`. |
+| Loot never appears from a container | It already rolled (`ROLLED=TRUE`) and its contents have not reset; or `CHANCE` failed; or the item is a capped catalog entry at its cap. |
+| Boss is next to the entrance | You relied on build order. Use `$roomtag_isdeepest`/`depthpct` and `order="reverse-depth"`. |
+| `REGENERATE` says there is no GENSOURCE | The area was not made by `GENERATE AREA` (or the flag was cleared). Use `Regenerate` with `FILE=`/`ID=`. |
+| New area saved into `world/areas` after a "trial" | `NOSAVE` does not keep builder-mode exports out. Use `SANDBOX` or `GENERATE PREVIEW`, or `DESTROY AREA` before saving. |
+| A theme loads but never appears in `random_dungeon` | Its `randomtheme` choice or its `random_dungeon` `insert` is missing, or its `theme` value does not match the theme tests in the room groups. |
+
+## Differences from the old guide
+
+For readers who know `guides/RandomAreas.html`:
+
+- `select="repeat-X"` draws X times *with replacement*; it does not select every
+  choice.
+- A detail given as an attribute beats a variable of the same name, which beats a
+  child tag (the guide said the variable beats both).
+- `BRANCH`, `MESH` and `SPOTTEDMESH` layouts exist; the guide's list is
+  incomplete. `CAVE`, `CLUMP`, `LINEAR`, `RING`, `ISLANDS` and `MAP` are
+  CoffeeSUD's.
+- An `ITEM` has no `MOB`/`EXIT` children in the parser; items inside items are
+  groups, not container contents (use `CONTENT`).
+- There is no `value` attribute for items (it is `basegold`).
+- `NOSAVE` does not prevent a builder-mode export of the area.
+- Template JavaScript is not subject to the per-script approval list (see
+  [JavaScript in templates](#javascript-in-templates)).
+- GENERATE accepts the types `STRING`, `AREA`, `MOB`, `ROOM`, `ITEM`, `QUEST` and
+  `SCRIPT`; the guide omitted `SCRIPT`.
+
+## See also
+
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md): area and room fields, `StdAutoGenInstance`.
+- [21-mobs.md](21-mobs.md), [22-items.md](22-items.md): the fields a template
+  fills in, catalog caps and uniques.
+- [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md): `MODBASE` and tracked modifiers.
+- [23-properties-reference.md](23-properties-reference.md): `Prop_LootTable`, `Prop_GenLock`, `Prop_OpenPassword`.
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): `Regenerate`, `RandomMonsters`, `RandomItems`, `ItemGenerator`, `RandomTraps`, `RandomQuests`.
+- [27-mobprog-commands.md](27-mobprog-commands.md): `MPGENERATE`, `MPREGENERATE`, `FROMGENFILE`.
+- [28-mobprog-functions.md](28-mobprog-functions.md): `GENSTRING`, `RANDNAME`, `GENVAR`.
+- [26-mobprog-triggers.md](26-mobprog-triggers.md): `GENERATED_PROG`.
+- [05-javascript.md](05-javascript.md): the `gen` object and `cm`.
+- [08-quests.md](08-quests.md): generated quests.
+- [29-combat-and-encounters.md](29-combat-and-encounters.md): random encounters.
+- [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md), [31-saves-and-party.md](31-saves-and-party.md): instances and saves.
+- [02-world-workflow.md](02-world-workflow.md), [13-testing-release.md](13-testing-release.md): files, `WORLD CHECK`, testing.
+- Reference: [tool reference](tool-reference.md), [feature index (G)](feature-index.md#g),
+  [state and persistence](state-and-persistence.md), the inherited
+  [RandomAreas guide](../../CoffeeMud/guides/RandomAreas.html), and the fixtures
+  `tools/fixtures/fixes/g1-seeds.js` ... `g17-js.js`, `dt14-generatecheck.js`.

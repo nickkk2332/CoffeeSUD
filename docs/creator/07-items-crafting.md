@@ -326,9 +326,9 @@ followed by its parameters in brackets, as `Prop_WearAdjuster(dex+1)` or
 `Prop_HaveResister(fire 10)`. An entry that starts with `*` is not tried as a
 spell, it is put on the item as a property (the stock file uses
 `*Prop_ImproveGather;amt=2 skills=Chopping,MasterChopping`, which makes the
-crafted lumberjack saw a gathering tool). The Guide's field list adds that a
-parameter equal to `__DELETE__` removes an effect the item already has
-instead of adding one. In a Cooking row the same column holds the smell list
+crafted lumberjack saw a gathering tool). An entry written `*ID;__DELETE__` (a `*` entry whose parameter is
+`__DELETE__`) removes that effect or behaviour from the item instead of
+adding one. In a Cooking row the same column holds the smell list
 (for food) or the spell effects of the dish (`*Poison_Caffeine;`).
 
 ### MATERIALS_REQUIRED and components

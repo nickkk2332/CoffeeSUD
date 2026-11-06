@@ -259,7 +259,7 @@ interfaces (`genMiscSet`):
 | `Container` (`GenContainer`, `GenRideable` and furniture, `GenBoardable`, `GenPortal`...) | Container editor |
 | class ID `GenWallpaper` | Wallpaper editor (name, description, readable text) |
 | anything else generic (`GenItem`, `GenKey`, `GenCoins`, `GenReadable`, `GenWand`, `GenScroll`, `GenLightSource`, `GenBook`...) | General item editor |
-| a non-generic (standard) item | Short editor: Level, Magical Ability, Rejuv, Uses Remaining, Misc Text |
+| a non-generic (standard) item | Not part of this list. `MODIFY ITEM name` does not open an editor for it; `MODIFY name` (without the word `ITEM`) opens a short editor: Level, Magical Ability, Rejuv, Uses Remaining, Misc Text |
 
 Numbers in the editor are not fixed: a field that does not apply to the class
 is skipped and later numbers shift. Edit by number, or use the name forms of

@@ -33,13 +33,13 @@ command
 - The arguments are the rest of the line. Most engines upper-case them before matching, so matching is case-insensitive. Text you test with `$g` is therefore often upper case; use `$g` (lower case) or `$G` (as stored) accordingly.
 - The block is the commands up to `~`. A script in a file has one command per line; a script typed into a behaviour's parameters ends each line with `;`. The details of files, `LOAD=` and quoting are in [MOBPROG scripting](04-mobprog.md).
 - A block whose trigger takes no arguments (`ONCE_PROG`, `DEATH_PROG`, `PARTYDEFEAT_PROG`) still needs the line.
-- An argument is required, or the block never matches, for the CoffeeSUD "event plus subject" triggers: `QUEST_PROG`, `GAME_PROG`, `PARTY_PROG`, `COMBAT_PROG`, `AFFECT_PROG`, `SKILL_PROG`, `DISCOVER_PROG`, `SAIL_PROG`, `VAR_PROG`, `CLAN_PROG`, `CRAFT_PROG`, `RECIPE_PROG`, `FACTION_PROG`. Their entries say so.
+- An argument is required, or the block never matches, for the CoffeeSUD "event plus subject" triggers: `QUEST_PROG`, `QUESTFAIL_PROG`, `ACHIEVE_PROG`, `GAME_PROG`, `PARTY_PROG`, `COMBAT_PROG`, `AFFECT_PROG`, `SKILL_PROG`, `DISCOVER_PROG`, `SAIL_PROG`, `VAR_PROG`, `CLAN_PROG`, `CRAFT_PROG`, `RECIPE_PROG`, `FACTION_PROG`, and the calendar and sky triggers `WEATHER_PROG`, `MOON_PROG`, `SEASON_PROG`, `MONTH_PROG`, `YEAR_PROG`, `WEEKDAY_PROG`. Their entries say so.
 
 ### Argument forms
 
 The triggers fall into a few families by the shape of their arguments.
 
-**Chance or mask** (`GREET_PROG`, `ALL_GREET_PROG`, `GROUP_GREET_PROG`, `ARRIVE_PROG`, `ENTRY_PROG`, `EXIT_PROG`, `FIGHT_PROG`, `LOGIN_PROG`, `LOGOFF_PROG`, `LEVEL_PROG`, `AREA_ENTER_PROG`, `AREA_LEAVE_PROG`, `FIRSTGREET_PROG`, `REGREET_PROG`, `GENERATED_PROG`):
+**Chance or mask** (`GREET_PROG`, `ALL_GREET_PROG`, `GROUP_GREET_PROG`, `ARRIVE_PROG`, `ENTRY_PROG`, `EXIT_PROG`, `FIGHT_PROG`, `LOGIN_PROG`, `LOGOFF_PROG`, `LEVEL_PROG`, `AREA_ENTER_PROG`, `AREA_LEAVE_PROG`, `FIRSTGREET_PROG`, `REGREET_PROG`; `GENERATED_PROG` takes only a number, see its entry):
 
 - No argument: always.
 - A number: that percent chance (`GREET_PROG 25`). The roll is 1 to 100 and the script runs if it is at or under the number, so 100 is always.
@@ -83,7 +83,7 @@ What a host hears depends on the trigger. Each entry's **Hosts** line says which
 
 ### Busy hosts
 
-Most mob-hosted message triggers (the greetings, speech, the give/get/drop family, buying and selling, mounting, and similar) run only while the mob is **free**: able to act, not in combat, not following someone (a player's follower is exempt), and with at least half of its hit points. A sleeping, bound, fighting or badly hurt mob does not respond. The same test guards the event triggers that are queued for a mob (`SKILL_PROG`, `QUEST_PROG`, the calendar triggers and the like). `MPSETINTERNAL ACTIVETRIGGER TRUE` relaxes it to "able to act". The tick triggers (`RAND_PROG` and friends), `DEATH_PROG`, `KILL_PROG`, `DAMAGE_PROG`, `FIGHT_PROG`, `HITPRCNT_PROG`, `ACT_PROG` and the other message-mask triggers, `CNCLMSG_PROG`, `EXECMSG_PROG`, `SOCIAL_PROG`, and the event triggers that run at once (`TALK_PROG`, `PHASE_PROG`, `DESTROY_PROG` and so on) do not check it. Non-mob hosts are never busy.
+Most mob-hosted message triggers (the greetings, speech, the give/get/drop family, buying and selling, mounting, and similar) run only while the mob is **free**: able to act, not in combat, not following someone (a player's follower is exempt), and with at least half of its hit points. A sleeping, bound, fighting or badly hurt mob does not respond. The same test guards the event triggers that are queued for a mob (`SKILL_PROG`, `QUEST_PROG`, the calendar triggers and the like). `MPSETINTERNAL ACTIVETRIGGER TRUE` relaxes it to "able to act". The tick triggers (`RAND_PROG` and friends), `DEATH_PROG`, `KILL_PROG`, `DAMAGE_PROG`, `FIGHT_PROG`, `HITPRCNT_PROG`, `ACT_PROG` and the other message-mask triggers, `CNCLMSG_PROG`, `CMDFAIL_PROG`, `READ_PROG`, `EXECMSG_PROG`, `SOCIAL_PROG`, and the event triggers that run at once (`TALK_PROG`, `PHASE_PROG`, `DESTROY_PROG` and so on) do not check it. `VERB_PROG`, `USE_PROG` and `COMBINE_PROG` run at once but do check it for a mob host. Non-mob hosts are never busy.
 
 ### When a trigger runs
 
@@ -114,7 +114,7 @@ A host may have several script engines (several `Scriptable` behaviours, several
 - For a **message trigger**, an engine looks down its blocks in order and, after the first block that fires, stops: later blocks, even of another trigger, do not run for that message. That is why `BRIBE_PROG` blocks are listed from the largest sum down, and why `GIVE_PROG all` goes last. With `MPSETINTERNAL MULTITRIGGER TRUE` the engine runs every block that fits.
 - `CNCLMSG_PROG` and `CMDFAIL_PROG` are the exception: every fitting block runs, in order, until one returns `CANCEL`.
 - For **tick triggers** every block of the engine is tested each tick.
-- For **event triggers** every fitting block runs, except where an entry says the first one wins (`VERB_PROG`, `USE_PROG`, `COMBINE_PROG`).
+- For **event triggers** it depends on how the game code hands the event over. Those marked "now" in the index (`TALK_PROG`, `PHASE_PROG`, `DESTROY_PROG`, `GAME_PROG SAVE` and the like) run every fitting block of the engine. `VERB_PROG`, `USE_PROG` and `COMBINE_PROG` stop at the first block that fits. Those marked "queued" (`SKILL_PROG`, `QUEST_PROG`, the calendar triggers, `SIGNAL_PROG` and the like) queue only the first fitting block of an engine, unless `MPSETINTERNAL MULTITRIGGER TRUE`.
 - Different hosts hear the same message independently: the room, the mob and the item each run their own blocks.
 
 ### What the codes mean in a trigger
@@ -181,7 +181,7 @@ The scripts in `world/scripts/*.script` run on the WORLD host. It hears world-wi
 
 ### Message codes
 
-`EXECMSG_PROG` and `CNCLMSG_PROG` take a **message code** as their first argument (after `@GLOBAL`). The names are those of `LIST MSGTYPES` (types such as `GET`, `DEATH`, `SPEAK`, `HUH`) and `LIST MSGMASKS` (masks such as `MAGIC`). Messages carry three codes, one for the source, one for the target and one for the others. The forms are:
+`EXECMSG_PROG` and `CNCLMSG_PROG` take a **message code** as their first argument (after `@GLOBAL`, which only `EXECMSG_PROG` accepts). The names are those of `LIST MSGTYPES` (types such as `GET`, `DEATH`, `SPEAK`, `HUH`) and `LIST MSGMASKS` (masks such as `MAGIC`). Messages carry three codes, one for the source, one for the target and one for the others. The forms are:
 
 | Form | Matches |
 | --- | --- |
@@ -207,7 +207,7 @@ CoffeeSUD also sends these messages to the scripts of an area so that `EXECMSG_P
 ```text
 SCRIPT LIST baker
 SCRIPT FIRE baker TIME_PROG 5 AS Bob
-SCRIPT FIRE innkeeper SPEECH room AS me
+SCRIPT FIRE innkeeper SPEECH room AS Bob
 SCRIPT FIRE guard GIVE WITH pass
 SCRIPT ALARMS baker
 SCRIPTTRACE baker
@@ -516,7 +516,7 @@ mpecho The sentry blows a short note on his horn as the group files in.
 Syntax:
 
 ```text
-FIRSTGREET_PROG [chance]
+FIRSTGREET_PROG [chance | zapper mask]
 ```
 
 **Arguments.** Optional percent chance (or mask) as GREET_PROG, tested on the arriving character.
@@ -931,7 +931,7 @@ Syntax:
 SOCIAL_PROG [EXACT] [ME] social name
 ```
 
-**Arguments.** The social's name: it matches any social whose name starts with the word given. `EXACT` requires the whole name. `ME` requires the social to be aimed at the scripted mob.
+**Arguments.** The social's name: it matches any social whose name starts with the word given. `EXACT` requires a one-word name to equal the first word of the social's name (a longer name must equal the whole name). `ME` requires the social to be aimed at the scripted mob.
 
 **Fires.** When a creature other than the host performs a matching social that the host hears.
 
@@ -1029,7 +1029,7 @@ GIVE_PROG [ALL | P name | word word ...]
 
 **Fires.** When another creature gives the host mob an item (the host is the target), or, on the item itself, when it is given to someone; on a room or area, any giving.
 
-**Does not fire.** The host giving something (that is [GIVING_PROG](#giving_prog)); gifts of money (that is [BRIBE_PROG](#bribe_prog)).
+**Does not fire.** The host giving something (that is [GIVING_PROG](#giving_prog)). A gift of coins is also an item given, so `GIVE_PROG ALL` (or a word in the coins' name) matches it too; use [BRIBE_PROG](#bribe_prog) to test the sum.
 
 **Hosts.** Mob (the receiver), item (the thing given), room, area. A mob host runs it only while it is free (see [Busy hosts](#busy-hosts)).
 
@@ -1558,7 +1558,7 @@ LLOOK_PROG [ALL | P name | word word ...]
 
 **Hosts.** As LOOK_PROG.
 
-**Codes.** As LOOK_PROG: `$t` the thing examined, `$o` and `$p` the host item.
+**Codes.** As LOOK_PROG: `$t` the thing examined, `$o` the host item, `$p` empty.
 
 Example:
 
@@ -1586,7 +1586,7 @@ READ_PROG [ALL | P phrase | word word ... | PAGE number-or-title]
 
 **Does not fire.** Readings of other things (on an item host).
 
-**Hosts.** Item (the thing read), its holder mob, room, area. A mob host runs it only while it is free (see [Busy hosts](#busy-hosts)).
+**Hosts.** Item (the thing read); a mob, room or area hears any reading in its reach. A mob host is not subject to the busy test here (see [Busy hosts](#busy-hosts)).
 
 **Codes.** `$n` the reader; `$t` and `$o` the thing read; `$p` the host item; `$g` the thing's name.
 
@@ -1949,7 +1949,7 @@ Example:
 
 ```text
 HITPRCNT_PROG 25
-if !var($i RAGED)
+if !var($i RAGED == yes)
   mpsetvar $i RAGED yes
   mpecho $i howls and its eyes go red.
 endif
@@ -2002,7 +2002,7 @@ DEATH_PROG [@GLOBAL [zapper mask]]
 
 **Arguments.** With no argument: the host's own death. With `@GLOBAL`: any death anywhere, heard once, optionally only of one who fits the mask (tested on the dead).
 
-**Fires.** As the death message executes: it is the dying mob's last word. The script runs at once, and the host still dies afterward whatever it does. On an item, room or area it fires for any death it hears; an item carried by a mob fires for the carrier's death.
+**Fires.** As the death message executes: it is the dying mob's last word. The script runs at once, and the host still dies afterward whatever it does. On an item, room or area it fires for any death it hears (an item carried by a mob hears its carrier's death too).
 
 **Does not fire.** A DEATH_PROG that restores hit points does not save the mob.
 
@@ -2331,7 +2331,7 @@ Syntax:
 AMBUSH_PROG [SURPRISED | SPOTTED | AVOIDED | ALL]
 ```
 
-**Arguments.** The outcome to hear, or `ALL`/nothing for every outcome.
+**Arguments.** The outcome to hear, written in upper case (`SPOTTED`; the match is case-sensitive here), or `ALL`/nothing for every outcome.
 
 **Fires.** When a [Prop_Ambush](23-properties-reference.md#prop_ambush) on the room springs, with how it went.
 
@@ -2405,7 +2405,7 @@ CAST_PROG [ALL | P name | word word ...]
 Example:
 
 ```text
-CAST_PROG fire ice
+CAST_PROG fireball frost
 say Fire at me? Fool!
 ~
 CAST_PROG p Spell_Fireball
@@ -2540,7 +2540,7 @@ mpsetvar $i SHIFT 0
 ~
 ```
 
-**Notes.** Only one ONCE_PROG per script engine is meaningful; use ONCE_PROG for ever-once, and a tattoo or variable for once per character. `SCRIPT RESET host ONCE` lets it run again.
+**Notes.** Each ONCE_PROG block runs once on its own (the engine remembers which blocks have run); use ONCE_PROG for ever-once, and a tattoo or variable for once per character. `SCRIPT RESET host ONCE` lets it run again.
 
 ### TIME_PROG
 
@@ -2568,12 +2568,12 @@ Example:
 TIME_PROG DAWN
 mpecho The baker throws open the shutters.
 ~
-TIME_PROG 20-23/1
+TIME_PROG 4-5
 mpecho $i bars the door for the night.
 ~
 ```
 
-**Notes.** The hour a script last ran is kept in a save. The number of hours in a day depends on the clock (CoffeeMud's default clock has 16 per day, not 24). Fixture: `st11-calendar.js`. See [World simulation](10-world-simulation.md).
+**Notes.** The hour a script last ran is kept in a save. The number of hours in a day depends on the clock: `HOURSINDAY` in `coffeemud.ini` sets the default clock's (6 as shipped, hours 0 to 5, with dawn at 0, day at 1, dusk at 4 and night at 5), so `TIME_PROG 4-5` above is the evening on the shipped clock; an area with its own calendar differs. Fixture: `st11-calendar.js`. See [World simulation](10-world-simulation.md).
 
 ### DAY_PROG
 
@@ -2652,7 +2652,7 @@ WEEKDAY_PROG weekday name ... | ANY
 
 **Fires.** At the start of each new day of the clock the host's area is on.
 
-**Does not fire.** Clocks with no weeks.
+**Does not fire.** Clocks with no weeks. The shipped default clock has none (`DAYSINWEEK` in `coffeemud.ini` is empty), so this trigger does nothing until the clock names its days of the week.
 
 **Hosts.** Hosts in areas on the clock, and the world's script host.
 
@@ -2678,7 +2678,7 @@ Syntax:
 MONTH_PROG number | month name ... | ANY
 ```
 
-**Arguments.** Month numbers as the clock counts them, or month names, separated by spaces or commas; `ANY` for every change.
+**Arguments.** Month numbers as the clock counts them, or month names, separated by spaces or commas; `ANY` for every change. The words are split at spaces, so a month name with spaces (the shipped names are "the 1st month" and so on) cannot be matched by name: use the number.
 
 **Fires.** When the host's area clock enters one of the months.
 
@@ -2877,7 +2877,7 @@ mpecho The quest is over and the room goes quiet.
 ~
 ```
 
-**Notes.** The run is remembered, so it does not repeat. For start, win and end seen by every host use [QUEST_PROG](#quest_prog). See [Quests](08-quests.md).
+**Notes.** The run is remembered, so it does not repeat. For `-1` and `-2` the quest name in the trigger is compared in upper case with the quest's own name, so use `*` (or an all-capitals quest name). For start, win and end seen by every host use [QUEST_PROG](#quest_prog). See [Quests](08-quests.md).
 
 ### QUEST_PROG
 
@@ -3031,7 +3031,7 @@ mpechoat $n You wake in the Gilded Goose. The fire has burned low.
 ~
 ```
 
-**Notes.** For the game's own events (new game, restore, save) prefer [GAME_PROG](#game_prog). The audit says a SWITCH to another character also sends a login (not re-checked). Fixture: `st1-global-triggers.js`.
+**Notes.** For the game's own events (new game, restore, save) prefer [GAME_PROG](#game_prog). Whether a SWITCH to another character sends a login is unverified. Fixture: `st1-global-triggers.js`.
 
 ### LOGOFF_PROG
 
@@ -3196,7 +3196,7 @@ Syntax:
 CLAN_PROG JOIN|LEAVE|PROMOTE|DEMOTE|EXILE|RELATION|CONQUER|LOSEAREA|LEVEL|DUESLATE|ALL clan|ALL
 ```
 
-**Arguments.** The event, then the clan's ID or name, or `ALL` or nothing for any clan.
+**Arguments.** The event (`ALL` or `ANY` for every event), then the clan's ID or name, or `ALL` or nothing for any clan.
 
 **Fires.** JOIN, LEAVE, PROMOTE, DEMOTE, EXILE of a member; RELATION when its relation with another clan changes; CONQUER or LOSEAREA when it wins or loses an area; LEVEL when the clan changes level; DUESLATE when a member's dues are overdue.
 
@@ -3412,7 +3412,7 @@ Syntax:
 GENERATED_PROG [percent]
 ```
 
-**Arguments.** An optional percent chance.
+**Arguments.** An optional percent chance. Any word that is not a number is ignored (the trigger then always runs; there is no mask form).
 
 **Fires.** When a generator makes an area or a room: on the area, its rooms and what they hold (or the room and its contents). An area's `onGenerate` text runs once as a GENERATED_PROG script.
 
@@ -4032,12 +4032,12 @@ How it works:
 To try it without waiting for dusk:
 
 ```text
-SCRIPT FIRE keeper TIME_PROG 18
-SCRIPT FIRE keeper GREET
+SCRIPT FIRE keeper TIME_PROG DUSK
+SCRIPT FIRE keeper FIRSTGREET
 SCRIPT LIST keeper
 ```
 
-The hour in `SCRIPT FIRE ... TIME_PROG` must be one of the hours the block lists; `DUSK` fires at the hour your clock calls dusk (check with `TIME`).
+The words after the trigger name in `SCRIPT FIRE` must be words that appear on the block's trigger line (here `DUSK`); the block runs whatever the hour is.
 
 ### A puzzle room with three braziers
 

@@ -709,7 +709,7 @@ settings:
 Each following field is one emote. It may start with a type word (`SIGHT`,
 `SMELL`, `NOISE`, `SOCIAL`, `PUFF`) or end with one, which gives that one emote a
 different type than the default. CoffeeSUD lets each line begin with
-conditions before its type: `DAY`, `NIGHT`, `DAWN`, `DUSK`, a season, `RAIN`,
+conditions before its type, which must be written in capitals (a capitalised first word of the text is text, not a condition): `DAY`, `NIGHT`, `DAWN`, `DUSK`, a season (`SPRING`, `SUMMER`, `FALL`, `WINTER`), `RAIN`,
 `SNOW`, `FOG`, `INDOORS`, `OUTDOORS`, `IFVAR name=value`, `MASK="zapper"`,
 `ONCE` (saved per character), `WEIGHT=n`. Area emotes test each room's own
 conditions.

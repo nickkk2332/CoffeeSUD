@@ -542,9 +542,10 @@ A target hidden from the viewer by Prop_ShowWhen is treated as absent
 
 **Smell.** `SNIFF` is the inherited command and uses the older
 [Prop_Smell](23-properties-reference.md#prop_smell) property on rooms, areas,
-exits and items (and creatures): `<T-NAME> smells awful!;<T-NAME> smells BAD!`
-gives several smells separated by semicolons, `CHANCE=50 ...` weights a smell,
-and on creatures `TICKS=n`, `EMOTE` and `BROADCAST` make it emote on its own.
+exits and items: `<T-NAME> smells awful!;<T-NAME> smells BAD!` gives several
+smells separated by semicolons, `CHANCE=50 ...` sets a smell's chance, and the
+`TICKS=n`, `EMOTE` and `BROADCAST` options make it emote on its own (see the
+property's help).
 Prop_Senses deliberately has no smell option; use Prop_Smell for smell, or an
 Emoter `SMELL` line (below) for an ambient scent.
 
@@ -2083,7 +2084,7 @@ All of the options for these properties are described in the property help
 | `MAXLANGUAGES` | `3` | coffeemud.ini | Stock language allowance per class. |
 | `LANGCOST` | `3 PRACTICE` | coffeemud.ini | Cost of learning a language. |
 | `JSCRIPTS` | `2` | coffeemud.ini | Approval policy for TRANSLATESCRIPT and other scripts. |
-| `LISTFILE` | `/resources/lists.ini` | coffeemud.ini | The global lists file; a `world/resources/lists.ini` overlays it (`VOCAB LIST` shows which wins). |
+| `LISTFILE` | `/resources/lists.ini` | coffeemud.ini | The global lists file(s): a comma list; later files override earlier keys, and an entry written `KEY=value` sets a single key. `VOCAB LIST KEY` shows the value in effect and its file. |
 
 ## Persistence notes
 

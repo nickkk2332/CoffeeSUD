@@ -637,7 +637,7 @@ The text before the first semicolon is options; every later semicolon-separated 
 | `DEST` | `RANDOM` | `RANDOM` picks a destination from the list; `ORDER` cycles through it in order (the position is saved). |
 | `PARTY` | false | `true` or `LEADER`, or `EACH`: the group is carried together when the first member's time is up, so nobody is left behind or sent ahead alone. Without `PARTY`, the character and those following it go. |
 | `PERHEAD` | false | Charge `FARE` for each eligible character; otherwise `FARE` is a flat charge. |
-| `FARE` | 0 | Price. Charged to the leader, or each player with `PERHEAD` and `PARTY=EACH`. |
+| `FARE` | 0 | Price. The leader pays for the group (a flat price, or per head with `PERHEAD=true` and `PARTY=LEADER`). With `PERHEAD=true` and no `PARTY` setting, or `PARTY=EACH`, each player character pays their own. |
 | `MASK` | none | Zapper mask of who is carried. A leader that does not match carries no one. |
 | `LOOK` | false | Show the arrival room to everyone after the move. |
 | `DEPARTMSG`, `ARRIVEMSG` | none | Shown in the old and the new room. |
