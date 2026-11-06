@@ -205,7 +205,7 @@ Ambushes, surprise, telegraphs, party scaling, death rules, safe and dummy targe
 
 Light and dark, hazards, air, weather, time zones, terrain.
 
-[Prop_RoomDark](#prop_roomdark), [Prop_RoomLit](#prop_roomlit), [Prop_DarkDanger](#prop_darkdanger), [Prop_Hazard](#prop_hazard), [Prop_Weather](#prop_weather), [Prop_SkyText](#prop_skytext), [Prop_TimeMode](#prop_timemode), [Prop_TidalExit](#prop_tidalexit), [Prop_NarrowLedge](#prop_narrowledge), [Prop_WeakBridge](#prop_weakbridge), [Prop_Climbable](#prop_climbable), [Prop_Crawlspace](#prop_crawlspace), [Prop_EnlargeRoom](#prop_enlargeroom), [Prop_EnlargeRoom](#prop_enlargeroom), [Prop_RoomUnmappable](#prop_roomunmappable), [Prop_Road](#prop_road), [Prop_Yield](#prop_yield), [Prop_CropRules](#prop_croprules), [Prop_ImproveGather](#prop_improvegather), [Prop_CraftXP](#prop_craftxp), [Prop_CommonTwister](#prop_commontwister)
+[Prop_RoomDark](#prop_roomdark), [Prop_RoomLit](#prop_roomlit), [Prop_DarkDanger](#prop_darkdanger), [Prop_Hazard](#prop_hazard), [Prop_Weather](#prop_weather), [Prop_SkyText](#prop_skytext), [Prop_TimeMode](#prop_timemode), [Prop_TidalExit](#prop_tidalexit), [Prop_NarrowLedge](#prop_narrowledge), [Prop_WeakBridge](#prop_weakbridge), [Prop_Climbable](#prop_climbable), [Prop_Crawlspace](#prop_crawlspace), [Prop_EnlargeRoom](#prop_enlargeroom), [Prop_RoomUnmappable](#prop_roomunmappable), [Prop_Road](#prop_road), [Prop_Yield](#prop_yield), [Prop_CropRules](#prop_croprules), [Prop_ImproveGather](#prop_improvegather), [Prop_CraftXP](#prop_craftxp), [Prop_CommonTwister](#prop_commontwister)
 
 ### Presentation, text and sound
 
@@ -1454,7 +1454,7 @@ CoffeeSUD addition. A once-only message for a character's first entry into the r
 CHANCE=[PCT] (ITEM=WORN/HERE/HAVE/PRESENT) (MASK=[ZAPPERMASK])
 (MSG="<S-NAME> fail(s) to do @x1 to <T-NAME> because @x2.")
 (PRIVATE=TRUE/FALSE) (AID=[ABILITY ID],..) (WEAPON=TRUE/FALSE)
-(ATYPE=[ABILITY TYPE],...) (ADOMAIN=[DOMAIN],...)
+(ATYPE=[ABILITY TYPE],...) (ADOMAIN=[DOMAIN],...) (AFLAG=[FLAG],...)
 (CAST=[ABILITY ID(ARGS)],...)
 ```
 
@@ -1462,11 +1462,13 @@ CHANCE=[PCT] (ITEM=WORN/HERE/HAVE/PRESENT) (MASK=[ZAPPERMASK])
 
 ```text
 chance=50% mask="-race +elf" aid=Spell_Fireball,Spell_Light
-chance=50% atype=spell,skill domain=stealthy
+chance=50% atype=spell,skill adomain=stealthy
 chance=50% atype=spell cast=Spell_Fireball
 ```
 
 Causes a spell or skill to fumble and show a message according to the given chance%. The skills to fumble are identified as belonging to the given ATYPE (if specified) AND either belonging to the ADOMAIN, having an AFLAG, or having its Ability ID in the list of AID. The skill will fumble if the caster matches the given MASK zappermask. The message MSG= may be specified, with special codes @x1 for the skill name, and @x2 for the affected item name. The message can be shown PRIVATE= ly, or to everyone in the room. If the affected is an item, the ITEM= parameter can be used to specify the state that the item must be in to cause the fumble. Lastly, a CAST= argument can be given to cause fumbles to be accompanied by a spell being cast by the item against the skill user.
+
+Defaults in the code: `CHANCE=100%`, `ITEM=WORN` (`WEAR` is accepted for WORN, `HAS` or anything starting `INV` for HAVE, `ROOM` for HERE), `PRIVATE=TRUE`, `ATYPE=ALL`. The domain key is `ADOMAIN` (a bare `DOMAIN=` is not read).
 
 Prop_Fumble also has another mode of operation. If WEAPON=TRUE, then instead of fumbling skills, it will fumble attacks and cause the attacker to suffer the consequences.
 
@@ -2937,7 +2939,7 @@ Disallows the casting of gate, teleport, portal, plantpass, and other spells INT
 **Parameters:**
 
 ```text
-(EXCEPTIONS=[ROOMID/AREANAME,etc..])
+(EXCEPTIONS=[ROOMID/AREANAME,etc..]) (INTERAREAOK=true/false)
 ```
 
 **Example:**
@@ -3215,7 +3217,7 @@ CoffeeSUD: a board of jobs, quests generated as the RandomQuests behavior makes 
 ```text
 QUEST="[NAME]/GENERATE:([ARGS])" (MESSAGE="[ANNOUNCEMENT]")
 (DETAILS="TRUE/FALSE") (OPTIONAL="TRUE/FALSE") (REOFFER="ALWAYS/ONCE/[GAME TIME]")
-(TRIGGER="GET/ENTER/LEAVE/PUTIN/DEATH/SPEAK/WEAR/WIELD/READ")
+(TRIGGER="GET/ENTER/LEAVE/PUTIN/DEATH/SPEAK/WEAR/WIELD/READ/LOOK")
 ```
 
 **Example:**
@@ -3455,7 +3457,7 @@ See AHELP ZAPPERMASK, where allowed can enter, and disallowed is not.
 
 Notes:
 
-- CoffeeSUD additions: the `event=` and `message=` options (blocking versus accusing a crime), and `actual`. The help calls the follower option `nofol`, but the code tests for words starting with `NOFOLLOW`, so write `nofollow` (a bare `nofol` is ignored). Option words are matched case-insensitively; the mask is whatever follows the first term that begins with `+` or `-`.
+- CoffeeSUD additions: the `event=` and `message=` options (blocking versus accusing a crime), and `actual`. The help calls the follower option `nofol`, but the code tests for words starting with `NOFOLLOW`, so write `nofollow` (a bare `nofol` is ignored). Option words are matched case-insensitively; the mask is built from each term that begins with `+` or `-` and the plain words that follow it (an option word such as `nosneak` is still read as an option wherever it stands).
 - Followers of an allowed character are let in unless `nofollow` is given.
 - It carries `FLAG_ZAPPER`, so tools that list zapper-using properties include it. Mask syntax: chapter 24 (zapper masks).
 
@@ -6087,12 +6089,14 @@ This is used by diseases primarily to provide a mob or player with temporary (30
 **Example:**
 
 ```text
-Disease_Cold/12312312323;Spell_Fireball/123123132
+(ID=Spell_Bless TICKS=100 ONTRIGGER=ADD TRIGGER="SAY \"praise the light\"" MESSAGE="A warm glow settles on the room.")
 ```
 
 This allows other properties or effects to be automatically add or removed, for a limited time, based on a triggering event performed by someone in the same room.
 
 One parameter list is required for each Property or effect. Multiple property lists must be grouped in (parenthesis).
+
+Note: the shipped help gives the `Disease_Cold/12312312323;...` form as this property's example, which is the format of TemporaryImmunity and is not read here. The code reads only `KEY=value` lists (`ID`, `PARMS`, `TICKS`, `TRIGGER`, `ONTRIGGER`, `IMEANIT`, `MESSAGE`, `INVOKE`), so the example above was written from the parser. The text may begin with `+` to add to the existing list, or `-name` to remove one; without a `+` a new text replaces what was there. The trigger text in the example is illustrative; see AHELP RITUALS for the ritual syntax.
 
 Each parameter list has some required and some optional keywords. These are listed in key="value" format.
 
@@ -6104,7 +6108,7 @@ TICKS=\[NUMBER OF TICKS\] - how long the effect will remain or be gone after tri
 
 ONTRIGGER=ADD/REMOVE - whether to add the effect on trigger, or remove it.
 
-TRIGGER=\[RITUAL\] - the ritual that triggers the change, see AHELP RITUAL.
+TRIGGER=\[RITUAL\] - the ritual that triggers the change, see AHELP RITUALS.
 
 Optional Keywords:
 

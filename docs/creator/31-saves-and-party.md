@@ -458,7 +458,7 @@ Turn-based time stops the clock and moves it only when you ask:
 | `TIMEMODE REALTIME` (also `REAL`, `REAL-TIME`) | Switches back to real time. |
 | `TIMEMODE DIALOGUE INSTANT` / `TICKS` / `DEFAULT` | Chooses whether NPCs answer at once (before your next prompt, taking no time) or on their own ticks. `DEFAULT` is instant in turn-based time and ticks in real time. Same as `DIALOGUETIME` in the ini or world. |
 | `WAIT`, `WAIT n` | Lets one (or n, up to 100) ticks pass. |
-| `WAIT n HOURS/DAYS/WEEKS`, `WAIT UNTIL ...` | Lets game time pass in long steps (up to three game days); governed by `LONGWAIT`. `HELP WAIT` lists the forms. |
+| `WAIT n HOURS/DAYS/WEEKS`, `WAIT UNTIL ...` | Lets game time pass in long steps (at most 72 game hours; see [World simulation](10-world-simulation.md#wait)); governed by `LONGWAIT`. `HELP WAIT` lists the forms. |
 
 What moves the clock in turn-based time:
 
@@ -945,9 +945,10 @@ sections, in the order written:
 | `PLAYER`, `PARTY` | The played character, and each other character in the world: room, leader, hit points, mana, movement, timed effects, entry limits, inventory with item state, followers. |
 | `ROOMSHAPES` | Rooms made (`NEWROOM`), changed (`CHANGEDROOM`) or destroyed (`GONEROOM`) in play, areas made or changed in play. |
 | `ROOMS` | For every room: effects, states, doors (`DOOR DIR OPEN LOCKED`), the mobs (`MOB`) and items placed in it now. |
-| `SPACE`, `VESSELS` | Things in space; vessels and their travel state. |
+| `SPACE` | Things in space. |
 | `DEAD`, `TAKEN` | Mobs waiting to respawn, with time left; items taken away and due back. |
 | `WEATHER`, `AREAS` | Each area's weather and held weather; area states. |
+| `VESSELS` | Vessels and their travel state. |
 | `SCRIPTVARS` | `MPSETVAR` variables of every scope that is saved. |
 | `JSSTATE` | JavaScript `cm.store` data. |
 | `QUESTS`, `QUESTRECORDS` | Quest controllers, steps, winners, variables, time left; each character's quest records. |
@@ -1493,7 +1494,7 @@ sure it gets the initial state ([State and persistence](state-and-persistence.md
 | `PARTYTURNS` | `PARTYTURNS (LEADER/ALL)` | `LEAD` is accepted for `LEADER`. |
 | `TIMEMODE` | `TIMEMODE (REALTIME/TURNS)`, `TIMEMODE DIALOGUE (INSTANT/TICKS/DEFAULT)` | |
 | `PAUSE`, `RESUME`, `UNPAUSE` | `PAUSE`, `RESUME` | Stops and starts the clock in real time. |
-| `WAIT` | `WAIT (TICKS)`, `WAIT N HOURS/DAYS/WEEKS`, `WAIT UNTIL ...` | Lets time pass. Up to 100 ticks; longer forms up to three game days. |
+| `WAIT` | `WAIT (TICKS)`, `WAIT N HOURS/DAYS/WEEKS`, `WAIT UNTIL ...` | Lets time pass. Up to 100 ticks; longer forms up to 72 game hours. |
 | `TIMESCALE` | `TIMESCALE (RATE)` | 0.1 to 20; builder mode and `DEV=1`. |
 | `CHEAT` | `CHEAT (ON/OFF)` | Kept in the save. |
 

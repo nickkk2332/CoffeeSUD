@@ -278,13 +278,15 @@ allowed is attacked, disallowed is spared.
 | `NEAR=1` | The rooms next door hear the warning. |
 
 Any word starting with `+` or `-` begins the mask; the mask runs to the end of
-the text. VeryAggressive, WimpyAggressive and MobileAggressive take the same
-flags (MobileAggressive reads its own copy). Paid bribes are saved.
+the text. A bare `+word` is not a mask token (it is dropped with a log line), so
+the mask must use keys (`-RACE +Elf`) or bare `-word` forbids (`-Fighter`). VeryAggressive,
+WimpyAggressive and MobileAggressive take the same flags (MobileAggressive reads
+its own copy). Paid bribes are saved.
 
 ```text
-Aggressive +elf -fighter
-Aggressive message="All must die!!" -elf +fighter
-Aggressive MOBKILL MISBEHAVE +elf -fighter
+Aggressive -RACE +Elf -Fighter
+Aggressive message="All must die!!" -Elf -CLASS +Fighter
+Aggressive MOBKILL MISBEHAVE -RACE +Elf -Fighter
 Aggressive WARN="The wolf bares its teeth.|The wolf snarls and crouches!" WARNTICKS=2 BACKOFF=true +ITEM "-raw meat"
 Aggressive BRIBE=50,300,40 BRIBEPAYMSG="Give me @x1 or I will clobber you!"
 ```
@@ -1390,7 +1392,7 @@ Mobile's, plus the aggression flags of [Aggressive](#aggressive): `MESSAGE=`,
 `BRIBEPAYMSG=`, `BRIBEPAIDMSG=`, and a mask (allowed is attacked).
 
 ```text
-MobileAggressive min=10 max=20 chance=75 -underwater -thief +elf
+MobileAggressive min=10 max=20 chance=75 -underwater -RACE +Elf -Thief
 MobileAggressive min=10 max=20 chance=75 message="aha!" -air -elf
 MobileAggressive min=10 max=20 chance=75 mobkill misbehave
 ```
@@ -2261,7 +2263,7 @@ waits. It raises the alarm at most once in `ALERTTICKS`.
 | `ALARMITEM="[ITEM NAME]"` | An item in its room that anyone, a player too, may `PUSH` or `PULL` to raise the alarm. | none |
 
 ```text
-Sentry SPOT=30 ALARM="RADIUS=6 MASK=-NAMES +bandit MSG=Intruders! To arms!" ALERTTICKS=40 ALARMITEM="a brass gong"
+Sentry SPOT=30 ALARM="RADIUS=6 MASK=-SUBNAMES +bandit MSG=Intruders! To arms!" ALERTTICKS=40 ALARMITEM="a brass gong"
 ```
 
 ### Sleeper
@@ -2847,7 +2849,7 @@ above 10).
 | `-PORT` / `+PORT` | `+n` | Inherited: tests the number of the game's server port. There is no networking in CoffeeSUD, so this is always the same value; do not use. |
 | `-ROOMDARK` | none | Forbids being in a room dark to the mob (dark, and it cannot see in the dark). **`+ROOMDARK` requires it.** |
 | `-WEATHER` / `+WEATHER` | `+RAIN` ... | Requires / forbids the area's current weather: `CLEAR`, `CLOUDY`, `WINDY`, `RAIN`, `THUNDERSTORM`, `SNOW`, `HAIL`, `HEAT`, `SLEET`, `BLIZZARD`, `DUST`, `DROUGHT`, `COLD`, `FOG` (or the number). |
-| `-TIDE` / `+TIDE` | `+HIGH` ... | CoffeeSUD: requires / forbids the tide: `HIGH`, `LOW`, `NONE`, or a phase such as `SPRING_HIGH`, `NEAP_LOW`; add `:n` for a span of n hours either side of the turn (`+HIGH:2`). |
+| `-TIDE` / `+TIDE` | `+HIGH` ... | CoffeeSUD: requires / forbids the tide: `HIGH`, `LOW`, `NONE`, a strength (`SPRING`, `NEAP`, `NORMAL`), or a phase such as `SPRING_HIGH`, `NEAP_LOW`; add `:n` for a span of n hours either side of the turn (`+HIGH:2`). |
 | `-HOLIDAY` | `[name ...]` | Forbids it while a holiday (any, or one of those named) is on. **`+HOLIDAY` requires one.** |
 
 #### When: the clock
@@ -3054,7 +3056,7 @@ Aggressive -Elf -Female +ITEM -bone
 
 ### A night-prowling beast
 
-A wolf that is aggressive only at night, wanders, ignores elves and warns first:
+A wolf that is aggressive only at night, wanders by day, warns first and attacks only humans and dwarves:
 
 ```text
 MobileAggressive TOD=NIGHT min=10 max=20 chance=75 WARN="The wolf bares its teeth.|The wolf snarls and crouches!" WARNTICKS=2 BACKOFF=true -RACE +Human +Dwarf
@@ -3072,7 +3074,7 @@ sleeping guard the alarm can wake. Three mobs, three behaviors:
 
 ```text
 GateGuard keeplocked -RACE +Human +Elf -ALIGNMENT +good
-Sentry SPOT=30 ALARM="RADIUS=5 MASK=-NAMES +guard MSG=Intruders at the gate!" ALERTTICKS=30
+Sentry SPOT=30 ALARM="RADIUS=5 MASK=-SUBNAMES +guard MSG=Intruders at the gate!" ALERTTICKS=30
 Sleeper SLEEPS=NIGHT WAKEON=NOISE,ENTER WAKECHANCE=40 ALARM
 ```
 

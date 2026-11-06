@@ -149,12 +149,17 @@ checks (`-SKILLFLAG`, ability adjustments such as `PROF+HEALING`).
 
 In a `GenAbility` the field `CLASSIFICATION` takes `TYPE,DOMAIN` as words, for
 example `SPELL,EVOCATION` or `SKILL,MARTIAL_LORE`, or the raw number. Names are
-matched ignoring case, and a unique start or end of the name is accepted, so
-`SPELL,EVOCATION` matches the domain `INVOCATION/EVOCATION`. The valid words:
+matched ignoring case. A type word must be given in full, with its space
+(`THIEF SKILL`, `COMMON SKILL`); a domain word may also be the start or the end
+of the name (the first domain that fits is used), so `SPELL,EVOCATION` matches
+the domain `INVOCATION/EVOCATION`. A word that matches nothing is ignored
+without an error. The valid words:
 
 - Types: `SKILL`, `SPELL`, `PRAYER`, `SONG`, `TRAP`, `PROPERTY`, `THIEF SKILL`,
   `LANGUAGE`, `CHANT`, `COMMON SKILL`, `DISEASE`, `POISON`, `SUPERPOWER`.
-  (`LIST ABILITYCODES` prints them with underscores.)
+  (`LIST ABILITYCODES` prints them with underscores, `THIEF_SKILL`, but a
+  `CLASSIFICATION` needs the space; the underscore form is ignored and leaves
+  the type at `SKILL`.)
 - Domains, by index:
 
 | Domain names (as `LIST ABILITYDOMAINS` shows them) | Usually seen with |
@@ -176,7 +181,10 @@ in `ANIMAL_AFFINITY`; prayers also use `COSMOLOGY`).
 **Developer note.** In `Ability.ACODE.DESCS` the array has 15 entries but
 `ACODE_TECH` is 13, so the word at index 13 reads `ARCHON SKILL` and `TECH
 SKILL` is 14. Do not use `TECH SKILL` or `ARCHON SKILL` in `CLASSIFICATION`;
-use the numbers (`13`) if you really need the tech type.
+use the numbers (`13`) if you really need the tech type. The word `ARCHON` as
+a domain cannot be typed either: it is taken for the start of `ARCHON SKILL`
+and dropped, so use the number (an archon skill is `288`, which is `SKILL` with
+domain 9 shifted left five bits).
 
 ## Quality, targets and range
 
@@ -251,8 +259,9 @@ amount comes from, in order of precedence:
    `2147483647-(1 to 100)`;
 4. the world default `MANACOST` (`-1`), reduced by about 1/30 for each level
    the caster has above the qualifying level, never below `MANAMINCOST`
-   (`coffeemud.ini`: `MANAMINCOST=-1, 10`). The minimum is applied before the
-   overrides above, so an override may go below it.
+   (`coffeemud.ini`: `MANAMINCOST=-1, 10`; the `-1` means the ability's lowest
+   qualifying level, and the `10` is the floor under that). The minimum is
+   applied before the overrides above, so an override may go below it.
 
 `XLOWCOST` and `XLOWFREECOST` expertise reduce it. `MANACOMPOUND` in
 `coffeemud.ini` can make repeating the same ability within a few ticks cost more
@@ -291,10 +300,10 @@ COMPONENT` to manage the file in game.
 
 **Proficiency** is a character's skill with one ability, 0 to 100. When an
 ability is used by a player (not automatically), the engine rolls against its
-proficiency: the chance is the proficiency, plus twice the `XLEVEL` expertise
+proficiency: the chance is the proficiency, plus or minus any `PROF` ability
+adjustments from items and properties, plus twice the `XLEVEL` expertise
 level, kept between 5 and 95 percent (unless the `DIS955RULE` disable flag is
-set), plus half the expertise again, and plus or minus `PROF` ability
-adjustments from items and properties. A miss fizzles the ability with its
+set), plus half the expertise level again. A miss fizzles the ability with its
 failure message and runs any `SKILL_PROG FAIL` script ([26](26-mobprog-triggers.md)).
 Holders of the `SUPERSKILL` security flag never fail.
 
@@ -516,6 +525,10 @@ engine computes it when the hostile message reaches the target:
    `ATTACKCODE` field.
 3. Add or subtract the squared level difference between target and attacker
    (a target 5 levels higher gains 25 percentage points; one 5 lower loses 25).
+   The kind-of-harm saves are not bare numbers: each is the stored save plus a
+   bonus from the target's stats (for example `SAVE_FIRE` adds half of
+   constitution plus dexterity, `SAVE_MIND` a third of wisdom, intelligence
+   and charisma).
 4. Clamp the result to 5 to 95 percent and roll. A roll below it means the
    target *resists*: the engine sends a resistance message ("X shake(s) off the
    mental attack"), the effect is not applied, and damage from the ability is
@@ -879,8 +892,8 @@ to a mob directly.
 
 ### GenAbility fields
 
-The editor's prompts, in order, with the field names that appear in the saved
-record, in `GMODIFY` and in JS (`ability.setStat("NAME", ...)`). Fields with no
+The fields, with their editor prompts (the menu numbers are listed above)
+and the names that appear in the saved record, in `GMODIFY` and in JS (`ability.setStat("NAME", ...)`). Fields with no
 editor prompt are marked; set them by editing the record (see
 [The saved record](#the-saved-record)).
 
@@ -934,7 +947,7 @@ editor prompt are marked; set them by editing the record (see
 | `HELP` | Help Text | `<ABILITY>This ability is not yet documented.` | The page `HELP [NAME]` shows. Starting with `<ABILITY>` puts the generated header (domain, classes, cost, range) above the text. |
 | `CHANNELING` | (none) | `false` | A channeled effect ends when its invoker speaks, moves or uses their hands. It also keeps the invoker from auto-attacking. |
 | `WINDUP` | Windup ticks, for monsters (0=NO) | `0` | A monster that casts it first warns for that many ticks ([29-combat-and-encounters.md](29-combat-and-encounters.md)). |
-| `WINDUPMSG` | Windup warning | `<S-NAME> begin(s) to gather power!` | The warning text. |
+| `WINDUPMSG` | Windup warning | blank | The warning text; blank uses `<S-NAME> begin(s) to gather power!`. |
 
 Some further notes about the table:
 
@@ -954,7 +967,7 @@ Some further notes about the table:
 Numeric fields that accept a formula (`TICKSOVERRIDE`, `POSTCASTDAMAGE`,
 `SUMMONCOUNT`, `SUMMONLEVEL`, `MAXTARGETS`, `OVERRIDEMANA`) use the engine's
 formula language ([`AHELP MATH_FORMULA`](tool-reference.md)):
-numbers, `+ - * /` and `\`, `^` (power), parentheses, `?` (a random number
+numbers, `+ - * /` and `\` (both divide), `%` (remainder), `^` (power), parentheses, `?` (a random number
 between its two sides, so `2?6` is a number from 2 to 6), `>` and `<`
 (the larger or smaller of its two sides) and `=` and `!` (1 if equal or
 different). **Evaluation is strictly left to right with no operator

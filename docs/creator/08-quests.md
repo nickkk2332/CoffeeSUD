@@ -1,6 +1,6 @@
 # Quests
 
-[Handbook](README.md) · [Quest feature index](feature-index.md#q)
+[Handbook](README.md) · [Quest feature index](feature-index.md#q-quests)
 
 This chapter is the complete guide to quests in CoffeeSUD: the quest script
 format and every command in it, where quest files live and how a quest is
@@ -307,9 +307,9 @@ finds no suitable room just does not start, quietly.
 | `WEEKDAY`, `EVERY`, `SEASONSTART`, `MOON` | Game-dated starts (W6): `SET WEEKDAY monday`, `SET EVERY 3 DAYS FROM 1/1/1`, `SET SEASONSTART WINTER`, `SET MOON FULL`. Details in [World simulation](10-world-simulation.md). |
 | `HOLIDAY NAME` | The quest runs exactly while that holiday is on (W6). A quest with `SET HOLIDAY` and no `DURATION` of its own lasts as long as the holiday. |
 | `SCHEDULE "rules"` | Runs in a game-time window: `HOUR a-b`, `WEEKDAY`, `EVERY n DAYS`, `SEASON`, `MONTH`, `MOON`, `HOLIDAY`, `WEATHER` (W23). Pair with `SET DURATION UNTIL ...`. |
-| `MINPLAYERS n` | Players that must be online for a *timed* start. |
+| `MINPLAYERS n` | Players that must be online for a *timed* start. Ignored when the quest's `DURATION` is 0 (such a quest starts on schedule regardless). |
 | `PLAYERMASK mask` | A zapper mask that narrows who counts for MINPLAYERS. It is also checked on a character who tries to accept: a character who fails the mask cannot take the quest (`canAcceptQuest`). See [masks](24-behaviors-and-masks.md). |
-| `RUNLEVEL n` | If 0 or more, a timed start is skipped while another running quest with a run level of 0 or more and at or below this one is active. Default -1 (no limit). |
+| `RUNLEVEL n` | If 0 or more, a timed start is skipped while another running quest with a run level of 0 or more and at or below this one is active (a running quest with `DURATION 0` does not count). Default -1 (no limit). |
 | `SPAWNABLE` | `TRUE`/`FIRST`, `ONCE`, `ALL`, `ALLONCE`, `ANY`, `ANYONCE` (values of `Quest.Spawn`; `NO` is the default). When the quest starts it spawns *copies* instead of running itself: `TRUE`/`FIRST` spawns the first step as a copy, `ALL` spawns every step as its own copy, `ANY` a random step. The `...ONCE` forms allow only one copy of a name at a time. Copies share the winners list. |
 | `PERSISTANCE true/false` | (The spelling is the engine's.) If the quest hits an error *while starting*, retry: first after 10 ticks, then the pause doubles each time. Default false (give up, then wait as usual). The GameBuildersGuide describes this differently; this is what the code does. |
 | `EXPIRATION time` | Makes the quest a temporary copy that lives this long and is then removed from the list for good (RandomQuests sets it). `0` (default) is permanent. |
@@ -572,7 +572,8 @@ Ways an offer reaches the player:
 
 How a timed start is decided each tick: when the wait has run out, the engine
 checks `RUNLEVEL` (skip if a quest with a run level at or below this one is
-running) and `MINPLAYERS` (with `PLAYERMASK`); if allowed, it starts, otherwise
+running and has a duration) and `MINPLAYERS` (with `PLAYERMASK`; not checked when
+the quest's `DURATION` is 0); if allowed, it starts, otherwise
 it goes back to waiting. A quest that raised an error while starting and has
 `PERSISTANCE true` retries sooner (10 ticks, then 20, 40, ...).
 
@@ -662,7 +663,7 @@ and [tool permissions](tool-permissions.md)). Full syntax is generated into
 
 | Command | Does |
 | --- | --- |
-| `CREATE QUEST script` | Adds a quest. The script is a whole quest script (commands separated by `;`) or `LOAD=path`. `CREATE QUEST LOAD=quests/robbed/robbed.quest` loads a shipped one. It is refused if the script names no quest or has no `SET DURATION`; an existing name asks before loading a duplicate. After `CREATE QUEST`, run `SAVE QUESTS` (or SAVE) to keep it. |
+| `CREATE QUEST script` | Adds a quest. The script is a whole quest script (commands separated by `;`) or `LOAD=path`. `CREATE QUEST LOAD=quests/mine/bell.quest` loads a script saved under `resources/quests/` (the shipped `resources/quests/` folders hold only templates, generator documents and the holidays). It is refused if the script names no quest or has no `SET DURATION`; an existing name asks before loading a duplicate. After `CREATE QUEST`, run `SAVE QUESTS` (or SAVE) to keep it. |
 | `CREATE QUEST` (no script) | Offers the Quest Maker wizard ([below](#story-templates-and-the-quest-maker)). |
 | `MODIFY QUEST name-or-number` | Opens the quest's menu: Started, Enabled, and the script text in the editor. Add `START`, `STOP`, `ENABLE` or `DISABLE` as the last word to do it without the menu. A changed script is rejected if it has no name, no duration, or the name clashes with another quest. |
 | `MODIFY QUEST name STEP n-or-label` | Test control. Moves a running quest to a step. Reports if it went with errors. |
@@ -723,7 +724,7 @@ Players see the quests of the character they are playing; party members and the
 ## CoffeeSUD quest features Q1 to Q16
 
 These are the additions CoffeeSUD made around the inherited quest engine. The
-feature ids are those of [the feature index](feature-index.md#q). Each is covered
+feature ids are those of [the feature index](feature-index.md#q-quests). Each is covered
 by a fixture in `tools/fixtures/fixes/` named after it (`q1-finished.js` ...
 `q16-where.js`), which is a good place to see exact syntax. Source:
 [DefaultQuest](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java),
@@ -1038,8 +1039,8 @@ answers for the first open objective with a place: `... lies to the north.`,
 path is known.
 
 `QUESTTRACK=OFF|AREA|PATH` in `coffeemud.ini` or `world.ini` sets how much is
-revealed: nothing, the area, or (default) the area, room and the first
-direction.
+revealed: nothing (`OFF`); the area and room in `QUESTS`, and only the area in
+`QUESTS WHERE` (`AREA`); or (default `PATH`) that and the first direction.
 
 ## Quest properties, items and behaviors
 
@@ -1578,15 +1579,16 @@ FUNCTION_PROG DECIDE
 <DATA>
 GREET_PROG 100
 	if ISPC($n) and QUESTSCRIPTED($n *)
+		mpqjournal $n * Captain Hale heard what became of the chief.
 		if QVAR(* FATE == spared)
 			sayto "$n" You let him go?  Well, the Fen is quiet.
 			mpreward $n "10% XP"
+			mpquestwin $n * OUTCOME spared
 		else
 			sayto "$n" He is dead.  The pass is open again.
 			mpreward $n "100 CURRENCY"
+			mpquestwin $n * OUTCOME slain
 		endif
-		mpqjournal $n * Captain Hale heard what became of the chief.
-		mpquestwin $n * OUTCOME $%QVAR(* FATE)%
 		mpendquest $n
 		mpqset * STATISTICS SUCCESS
 	endif
@@ -1619,8 +1621,10 @@ Points to copy:
   object, so it survives the steps.
 - The branch is remembered in a quest variable (`mpqset * FATE ...`), saved with
   the quest, and read back with `QVAR(* FATE == spared)` and
-  `$%QVAR(* FATE)%`. `QUESTOUTCOME($n bandits == spared)` then answers from
-  `OUTCOME`; `QUESTS WON` shows `bandits (spared)`.
+  `$%QVAR(* FATE)%`. The `OUTCOME` of `MPQUESTWIN` is a single word, so the
+  epilogue writes it out in each branch rather than passing a `$%...%` value.
+  `QUESTOUTCOME($n bandits == spared)` then answers from `OUTCOME`; `QUESTS WON`
+  shows `bandits (spared)`.
 - `set droppable false`: `QUESTS DROP bandits` refuses (the main story).
 - The saved game stores the step number *and* its name, so editing the file and
   adding a step above does not send a restored game to the wrong step.
@@ -1708,7 +1712,7 @@ ONCE_PROG 100
 ~
 
 EXECMSG_PROG STO=DEATH ALL
-	if ISNPC($n) and ISLIKE($n '+NAMES "a wolf"') and !QOBJECTIVE($i * kills == DONE)
+	if ISNPC($n) and ISLIKE($n '+NAMES "-a wolf"') and !QOBJECTIVE($i * kills == DONE)
 		mpqobjective $i * BUMP kills
 	endif
 ~

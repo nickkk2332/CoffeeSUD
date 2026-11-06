@@ -370,12 +370,12 @@ or a `<S-NAME>`/`<T-NAME>` tag to players, never `Name()`.
 
 | Kind | Interface | Standard base class | Notable subclasses | Generic (data-defined) classes |
 | --- | --- | --- | --- | --- |
-| Item | `Item` | `Items/Basic/StdItem` | `StdContainer`, `StdFood`, `LightSource`, `StdKey`, `StdBook`; `Items/Weapons/StdWeapon`; `Items/Armor/StdArmor` (extends `StdContainer`); `StdDrink` (extends `StdContainer`); `Items/MiscMagic/StdWand`, `StdPotion`, `StdScroll`... | `GenItem`, `GenContainer`, `GenFood`, `GenDrink`, `GenWeapon`, `GenArmor`, `GenWand`, `GenBoat`... (about 250 `Gen*` item classes) |
+| Item | `Item` | `Items/Basic/StdItem` | `StdContainer`, `StdFood`, `LightSource`, `StdKey`, `StdBook`; `Items/Weapons/StdWeapon`; `Items/Armor/StdArmor` (extends `StdContainer`); `StdDrink` (extends `StdContainer`); `Items/MiscMagic/StdWand`, `StdPotion`, `StdScroll`... | `GenItem`, `GenContainer`, `GenFood`, `GenDrink`, `GenWeapon`, `GenArmor`, `GenWand`, `GenBoat`... (about 180 `Gen*` item classes) |
 | MOB | `MOB` | `MOBS/StdMOB` | `StdRideable`, `StdShopKeeper`, `StdBanker`, `StdDeity`, `StdPostman`, `StdAuctioneer`, creature classes such as `Chicken` | `GenMob`, `GenRideable`, `GenShopkeeper`, `GenBanker`, `GenUndead`, `GenCow`... |
 | Room | `Room` | `Locales/StdRoom` | `StoneRoom`, `Woods`, `Plains`, grids (`StdGrid`), mazes, water locales | none: every room stores its own display text, description, exits and effects |
 | Exit | `Exit` | `Exits/StdExit` | `StdOpenDoorway`, `StdClosedDoorway`, `StdLockedDoorway`, `Door`, `Gate` | `GenExit`, `GenDoor`, `GenCurtain`, `GenAirLock` |
 | Area | `Area` | `Areas/StdArea` | `StdGridArea`, `StdThinArea`, `StdThinInstance`, `StdBoardableShip` | none |
-| Ability | `Ability` | `Abilities/StdAbility`; `Properties/Property` (extends the small `ThinAbility`) | `Spells/Spell`, `Prayers/Prayer`, `Druid/Chant`, `Songs/Song`, `Skills/StdSkill`, `Common/CommonSkill`, `Languages/Language`, `Diseases/Disease`, `Poisons/Poison`, `Traps/StdTrap` | `GenAbility`, `GenCraftSkill`, `GenGatheringSkill`, `GenWrightSkill`, `GenDisease`, `GenPoison`, `GenTrap`, `GenLanguage` |
+| Ability | `Ability` | `Abilities/StdAbility`; `Properties/Property` (extends the small `ThinAbility`) | `Spells/Spell`, `Prayers/Prayer`, `Druid/Chant`, `Songs/Song`, `Skills/StdSkill`, `Common/CommonSkill`, `Languages/StdLanguage`, `Diseases/Disease`, `Poisons/Poison`, `Traps/StdTrap` | `GenAbility`, `GenCraftSkill`, `GenGatheringSkill`, `GenWrightSkill`, `GenDisease`, `GenPoison`, `GenTrap`, `GenLanguage` |
 | Behavior | `Behavior` | `Behaviors/StdBehavior` | all behaviors | `GenBehavior` |
 | Command | `Command` | `Commands/StdCommand` | all commands | `GenCommand` |
 | Race | `Race` | `Races/StdRace` | all races | `GenRace` |
@@ -428,10 +428,11 @@ A newly created object is not yet *in* the world:
 - Remove either for good with `destroy()`; `destroy()` stops ticking, removes it
   from its holder and marks it `amDestroyed()`. Test `amDestroyed()` before using
   a reference you kept across ticks.
-- An effect is added with `host.addEffect(ability)` after
-  `ability.setAffectedOne(host)`, or more simply with `host.addNonUninvokableEffect(ability)`
-  for a permanent property, or by invoking a spell (`beneficialAffect` and
-  `maliciousAffect` do it).
+- A permanent effect (a property) is added with
+  `host.addNonUninvokableEffect(ability)`; a timed one is added by invoking the
+  spell (`beneficialAffect` and `maliciousAffect` copy the ability, call
+  `startTickDown` and recompute the stats). Plain `host.addEffect(ability)` adds
+  an effect that is removed only when its `unInvoke()` runs.
 
 ### Where the engine keeps instances
 
@@ -470,10 +471,15 @@ The rules:
    `affectableStats.setArmor(affectableStats.armor() - 10 - ...)`. Lower armor
    means harder to hit.
 3. **Call the recompute after you add, remove or change anything that
-   affects**: after `addEffect`, after changing a base stat, after moving an
-   item onto a mob. The engine does this for its own operations (`addEffect`
-   and `delEffect` call `recoverPhyStats`; moving items calls it too), but code
-   that reaches in and edits fields must do it itself.
+   affects**: after changing a base stat, after `addEffect` or `delEffect`,
+   after moving an item onto a mob. `addEffect`, `addNonUninvokableEffect` and
+   `delEffect` only edit the list of effects (and, on adding, call
+   `setAffectedOne`); they do *not* recompute. The ability helpers do:
+   `startTickDown` (so `beneficialAffect` and `maliciousAffect`) and
+   `unInvoke` recompute the host's stats. Code that adds or removes an effect
+   itself must call `recoverPhyStats()` (and for a mob `recoverCharStats()` and
+   `recoverMaxState()` if the effect changes those) afterwards. Note also that
+   `addEffect` silently ignores an effect whose ID the host already has.
 4. **`CharStats` and `CharState` have more than one recompute.** The usual
    order after a big change to a mob is `recoverCharStats()`,
    `recoverPhyStats()`, `recoverMaxState()` (the maximums depend on the stats,
@@ -492,7 +498,7 @@ The rules:
 A related CoffeeSUD helper, `core/StatEffects`, lets world content (item and
 mob property strings named `STATEFFECT_...`) add to the stats without a Java
 class; it is documented in
-[Properties reference](23-properties-reference.md).
+[Characters](03-characters.md).
 
 ## Libraries and global utilities
 
@@ -519,7 +525,7 @@ interface in the third column.
 | `CMLib.coffeeMaker()` | `GenericBuilder` | `CoffeeMaker` | Objects to and from XML: `getItemXML`, `getMobXML`, `getRoomXML`, `getAnyGenStat`, `setAnyGenStat`, `unpackItemFromXML` |
 | `CMLib.genEd()` | `GenericEditor` | `CMGenEditor` | The in-game editor screens (`modifyStdItem`, `modifyStdMob`, `modifyGenRace`, `genMiscText`...) |
 | `CMLib.catalog()` | `CatalogLibrary` | `CMCatalog` | Catalogued template mobs and items |
-| `CMLib.beanCounter()` | `MoneyLibrary` | `BeanCounter` | Currencies and coins: `getTotalAbsoluteNativeValue(mob)`, `nameCurrencyShort(...)`, `subtractMoney`, `giveMoney` |
+| `CMLib.beanCounter()` | `MoneyLibrary` | `BeanCounter` | Currencies and coins: `getTotalAbsoluteNativeValue(mob)`, `nameCurrencyShort(...)`, `addMoney(holder, amount)`, `subtractMoneyGiveChange(...)` |
 | `CMLib.coffeeShops()` | `ShoppingLibrary` | `CoffeeShops` | Shopkeeper stock and pricing |
 | `CMLib.materials()` | `MaterialLibrary` | `RawCMaterial` | Raw materials and resources |
 | `CMLib.itemBuilder()` | `ItemBalanceLibrary` | `TimsLibrary` | Item power calculation and balancing |
