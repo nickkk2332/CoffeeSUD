@@ -1035,3 +1035,247 @@ Reference: [26-mobprog-triggers.md](26-mobprog-triggers.md). Argument details ar
 | `LIST SHIPS`, `LIST INSTANCES`, `LIST PLANES` | builder | Inventory of vessels, instances and planes. |
 | `CREATE\|MODIFY\|DESTROY PLANE` | `PLANES` flag | Edit planes. |
 | `WORLD CHECK ROUTES`, `WORLD CHECK IDS` | builder | Validate travel definitions. |
+
+## Worked examples
+
+### Example 1: a ferry with a timetable
+
+Goal: "The Gull" sails Port Azure, Saltmarsh and Gullrock at 6, 12 and 18 o'clock, charging two coins per head, with a board at each quay. Checked by the `t-transport.js` fixture (line, fares, saved progress).
+
+1. **Rooms.** In the area `Azure Coast`, build a strip joined by open east/west exits:
+
+   | Room | Locale | Role |
+   | --- | --- | --- |
+   | `Azure Coast#1` | `SeaPort` | Port Azure quay |
+   | `Azure Coast#2`, `#3` | `WaterSurface` | open water |
+   | `Azure Coast#4` | `SeaPort` | Saltmarsh quay |
+   | `Azure Coast#5`, `#6` | `WaterSurface` | open water |
+   | `Azure Coast#7` | `SeaPort` | Gullrock quay |
+
+   A ship routes only through water and seaport rooms, so the strip has to be continuous.
+
+2. **Ports.** `GOTO Azure Coast#1`, `MODIFY ROOM`, add the effect `Prop_Port` with `NAME="Port Azure"`. Do the same at `#4` (`NAME="Saltmarsh"`) and `#7` (`NAME="Gullrock"`).
+
+3. **Signs.** At each quay `CREATE ITEM GenReadable` and name it `a timetable board` (give it a description; its readable text is filled in by the line).
+
+4. **The ship.** At `Azure Coast#1`:
+
+   ```text
+   CREATE ITEM GenSailingShip
+   MODIFY ITEM sailing ship
+   ```
+
+   Set the name to `the Gull`, `Moves per Tick` to 1, `TICKSPERMOVE` to 3, leave `OWNER` empty. Then `VESSEL the Gull ENTER` and build a `WoodenDeck` and a cabin below it with the ship directions (`CREATE ROOM BELOW`...). `SAVE` the room.
+
+5. **The line.** `MODIFY ITEM the Gull`, in Behaviors add `TransportLine` with:
+
+   ```text
+   STOPS="Port Azure;Saltmarsh;Gullrock" DEPART=6,12,18 ROUND=BACK FARE=2 PARTY=LEADER PETS=5 BOARDCALL="The Gull is boarding for $next." DEPARTMSG="The Gull casts off from $stop, bound for $next." ARRIVEMSG="The Gull ties up at $stop." SIGN="a timetable board"
+   ```
+
+6. **Slow the sea (optional).** On the area, add `Prop_TravelTime TIME=20` so each sea room takes twenty game minutes.
+
+7. **Check it.**
+
+   ```text
+   WORLD CHECK ROUTES
+   TIMETABLE
+   VESSEL STATUS the Gull
+   ```
+
+   `WORLD CHECK ROUTES` proves each stop resolves; `TIMETABLE` should say "the Gull: at Port Azure; next Saltmarsh, departure hour 6" (or the next listed hour).
+
+8. **Ride it.** As a normal character with coins, standing at Port Azure:
+
+   ```text
+   BOARD gull
+   WAIT UNTIL ARRIVAL
+   LOOK
+   ```
+
+   The leader pays 2 for each player character plus 5 for each non-player companion, the party goes aboard together, and the line announces departure at the hour. Because `PASSENGERONLY` defaults to true, `SAIL EAST` aboard gives "The crew will not let you use the helm."
+
+Variants: use `WAIT=30` instead of `DEPART` for a ferry that leaves every 30 ticks; `FARES="Gullrock:3"` to charge three when boarding at Gullrock; `ROUND=LOOP` for a circular route.
+
+### Example 2: a mountain journey with an ambush
+
+Goal: an eight-hour coach ride from Highmark to Stonereach. Each hour there is a chance of an ambush scene or wolves. The party can cancel and get a partial refund.
+
+World:
+
+- `Highmark#1` the coach yard, with an exit east into `Highmark#2` ("Inside the mountain coach"), a closed-in room with no other exits.
+- `Stonereach#1` the destination.
+
+On the east exit of `Highmark#1` (`MODIFY EXIT east`), add `Prop_Journey`:
+
+```text
+DEST=Stonereach#1 VIA=Highmark#2 DURATION=8 FARE=6 PARTY=LEADER PERHEAD=true LEAVEMSG="The driver cracks the whip and the coach lurches uphill." ARRIVEMSG="Stonereach's lamps appear through the snow." EVENTS="12%:ambush;10%:LOAD MOB mountain wolf*1d3" MISSING=WAIT DEAD=CONTINUE DISCONNECTED=TRAVEL CANCEL=RETURN REFUND=UNUSED
+```
+
+Attach this script to the same exit (as a script on the exit, see [04-mobprog.md](04-mobprog.md)):
+
+```text
+FUNCTION_PROG AMBUSH
+mpechoat $n Rocks crash across the road. Figures with crossbows rise from the snow.
+mpechoat $n Type JOURNEY RESUME when you are ready to go on.
+return PAUSE
+~
+JOURNEY_PROG HOUR
+mpechoat $n The road climbs. Hour $0 of the journey.
+~
+JOURNEY_PROG ARRIVE
+mpechoat $n The coach shudders to a stop at Stonereach.
+~
+```
+
+How it plays:
+
+1. The party walks east. Fare is checked for all, the party is moved into the coach, and `JOURNEY_PROG START` and `LEAVEMSG` fire. The clock advances one hour; the weather and hunger run.
+2. Each hour: a 12% roll for `AMBUSH`, then a 10% roll for wolves (the first success ends the roll). `AMBUSH` returns `PAUSE`, so the party must type `JOURNEY RESUME`, after talking, searching or fighting in the coach. Wolves are loaded into the coach and fighting pauses travel by itself; when the wolves are dead the next tick resumes.
+3. `JOURNEY` at any time reports "5.0 game hours remain to Stonereach."
+4. `JOURNEY CANCEL` ends the trip. `CANCEL=RETURN` sends the present party back to `Highmark#1`; `REFUND=UNUSED` repays the fraction of the 6 coins for the hours not travelled.
+5. After the eighth hour and any final scene the party arrives; `ARRIVEMSG` and the `ARRIVE` script run.
+
+Tests to run: two party members with one short of coins (nobody departs); a companion who wanders out of the coach (`MISSING=WAIT` pauses with an explanation; `JOURNEY RESUME` re-checks); a death; a save in the middle of the ambush pause, reloaded in a fresh game; a refused return (lock the origin exit) which stays paused. The fixtures `t-journeys.js` and `ar-journeys.js` do exactly these.
+
+### Example 3: a fast-travel waypoint network
+
+Goal: three elven stones. The first is known from the start, the second must be touched, the third needs a ritual. Travel costs mana and an hour.
+
+Properties (one per stone, on an item named `an elven standing stone` lying in the room; the `ID` keeps discovery stable):
+
+```text
+NETWORK=ELVEN NAME="Mirewood Stone" ID=mirewood DISCOVER=ENTER SCOPE=PROFILE COST="mana 20" TIME=1 MSG="Moss and moonlight swirl around you."
+NETWORK=ELVEN NAME="Highpeak Stone" ID=highpeak DISCOVER=TOUCH SCOPE=PROFILE COST="mana 20" TIME=1
+NETWORK=ELVEN NAME="Sunken Stone" ID=sunken DISCOVER=RITUAL RITUAL=SINGTOSTONE SCOPE=PROFILE COST="gold 5" TIME=2 MASK="-TATTOO +ELVEN_ATTUNEMENT"
+```
+
+The Sunken Stone's room carries a `FUNCTION_PROG SINGTOSTONE` that checks, for example, that the character has the song and returns something other than a refusal.
+
+Play-through:
+
+```text
+(walk into Mirewood)         You attune to Mirewood Stone (ELVEN).
+TRAVEL                       ELVEN: no discovered destinations
+(go to Highpeak)
+TOUCH highpeak stone         You attune to Highpeak Stone (ELVEN).
+                             ELVEN: Mirewood Stone
+TRAVEL Mirewood Stone        You travel to Mirewood Stone.
+```
+
+The party arrives together, 20 mana is charged once to the leader, and an hour of game time passes. `TRAVEL` at the Sunken Stone before the ritual says nothing useful; `TRAVEL ATTUNE` runs `SINGTOSTONE` and answers "Waypoint attuned." or "The ritual is incomplete.", and the character without `ELVEN_ATTUNEMENT` gets "You cannot attune to this waypoint.".
+
+Run `WORLD CHECK ROUTES,IDS` for duplicate names and IDs, and test: a second character in the same profile sees the same discoveries (`SCOPE=PROFILE`); one with 5 mana is refused ("You cannot pay the waypoint's cost.") and nobody moves; a renamed stone with the same `ID` is still discovered.
+
+### Example 4: a scaled dungeon instance
+
+Goal: "The Drowned Barrow" restocks and rescales at the party's level when the party returns after 12 or more game hours, but a half-cleared barrow survives a save.
+
+On the area (`MODIFY AREA`):
+
+- Effect `InstanceArea`: `ID=DROWNED_BARROW INPLACE=true LEVELADJ=@x1 PREFIX=weathered`
+- Behavior `ResetWhole`: `ONREENTRY=true MINAWAY=12 SKIPROOMS="-LOCATION '+ROOMSTR(Sanctum)'" RESETMSG="Fresh tracks lead into the barrow."`
+
+What happens: the first time a player enters, the whole area is rescaled to the leader's level (`@x1`) and its mobs are prefixed "weathered". The party kills some mobs and leaves. If it comes back before 12 game hours, nothing is reset: the barrow is as they left it. After 12 hours, entry resets every room except the Sanctum, which keeps its contents, shows the message to the first one in, and scales the new mobs to the entering leader's level. A save inside restores the same rooms, the same scaling state and last-access time.
+
+For a copy-per-party dungeon with entry limits use the other mode instead:
+
+```text
+ID=CRYPT LEVELADJ=@x3 DURATION=900 LIMIT=1/DAY PREFIX="restless,chilled"
+```
+
+on the area. Each party that enters gets its own `1_The Crypt` copy; `LIST INSTANCES` shows it with its remaining ticks; after one entry, the leader is refused for a day. Both are in `t-instances.js` (in-place) or the `InstanceArea` help.
+
+Test list: enter at two different levels; leave and return early and late; leave one companion inside; save inside and restore in a fresh process; return from a destroyed entry vehicle; make sure a safe recovery exit exists.
+
+### Example 5: a player ship
+
+Goal: the party buys a sloop, names it, and sails it to a port by name with one crew NPC.
+
+1. **Build the ship.** At the shipwright's quay: `CREATE ITEM GenSailingShip`, name it `a sloop [NEWNAME]`, `PRICE` 4000, `OWNER` empty, `Moves per Tick` 2, `TICKSPERMOVE` 2. `VESSEL a sloop ENTER` and build `WoodenDeck` (fore), cabin and hold, with `Prop_ReqCapacity` on the deck.
+2. **Sell it.** Add the finished item to the inventory of a shopkeeper that sells ships (the shopkeeper type that sells vessels, per the Archon guide), or give it in a script: `mpgrant $o $n NAME='The Wavewalker' PROFILE`. `PROFILE` makes the whole profile the owner, so every party character may steer; `NAME=` fills the `[NEWNAME]` and renames the interior.
+3. **Crew.** Put a `GenMob` on the deck with the `Sailor` behavior. A `Sailor` aboard is always allowed to steer and will man siege weapons in combat.
+4. **Name the ports.** Put `Prop_Port` on the quays: `NAME="Port Azure"`, `NAME="Gullrock"` (see Example 1).
+5. **Sail.** On deck:
+
+   ```text
+   PORTS
+   COURSE TO Gullrock
+   RAISE ANCHOR
+   ```
+
+   The ship plots the route, sails it under its pace and the `Prop_TravelTime` of the sea rooms, and stops at the end of its course. `LOWER ANCHOR` at a quay; `TENDER`, `JUMP OVERBOARD`, `STEER` and `COURSE north north east` work as in the sailing help (`HELP SAILING`).
+6. **Inspect.** `VESSEL STATUS wavewalker` as a builder shows the position, course, hull, owner and crew; `LIST SHIPS` lists it with anchor, course and owner.
+7. **Persist.** Save. The vessel is kept with the owning character; its anchor, course, facing, remaining step time and the vessel it follows are in the campaign's vessel records.
+
+## Persistence
+
+What is saved where. "World" means the world files (`SAVE` in builder mode publishes them); "campaign" means the save slot.
+
+| Feature | Authored definition (world) | Runtime state (campaign) |
+| --- | --- | --- |
+| `Prop_TravelTime`, `Prop_Road`, `Prop_Port`, `Prop_HelmRestrict`, `Prop_TicketTaker` | Property text on the host | Nothing; ticket receipts and `groupPaid` are in memory only (a reload may charge a boarding again). |
+| `Prop_Journey` | Property text | The running trip is `Prop_JourneyState` on the leader, saved with the character: definition, origin, destination, transit room, hours left and elapsed, remaining leg time, waiting and manual-pause flags, seats, player names, dead seats, fare receipts, host reference. Passenger markers (`Prop_JourneyPassenger`) are saved with each member. After a restore the timers are rebuilt from the remaining time. |
+| `TransportLine` | Behavior parameters | `<LINE>` state: stop, next stop, direction, moving flag, initialized, remaining travel wait, remaining departure wait, departure hour, arrival count. |
+| Vessels | The item and its interior area | `<VESSELS>`: anchor, direction, facing, remaining step wait, ticks since move and turn, the course, and the vessel followed. Riders and positions are in the world state. |
+| `MovingRoom` | Behavior parameters, route file | Current stop, next stop, status, direction, initialized flag, remaining wait, departure hour. Links and overlay text are rebuilt after load. |
+| `DelayedTransporter` | Behavior parameters | The destination index and each passenger's ticks present. |
+| `Concierge`, `TaxiBehavior` | Parameters | Quoted trips (who, destination, price, flags) and the saved home room. |
+| `Nanny` | Parameters (rate, name, network, fees, watches) | Custody records after `\|~\|` in the saved parameters: animal, owner, drop-off time and payments. Remote retrieval retains the original owner's bill. |
+| `Prop_Waypoint` | Property text | Discovery tattoos on the character (or the profile for `SCOPE=PROFILE`), keyed by the waypoint's ID. |
+| `InstanceArea` copy mode | Property text | Instance areas made in play are saved as `NEWAREA` records and rebuilt on restore; entry-limit counters live in the leader's player record. |
+| `InstanceArea INPLACE` | Property text | `<INPLACE READY LEVEL>` state. |
+| `ResetWhole` | Behavior parameters | `<RESETWHOLE AGO AWAY MSG DONE>`: time since last access, away flag, pending message. |
+| Planes and generated areas | `planesofexistence.txt`, templates | Remade areas with their seeds (`GENSEED`). |
+
+Reload rules: reloading the world (`WORLD RELOAD`) re-creates the authored definitions from the files and leaves campaign state alone where the identities still match. A line, route or journey whose host has been deleted or renamed can fall back to name matching (documented as an ambiguity in the audit); give hosts stable IDs (`ID=` on waypoints) and unique names. See [state-and-persistence.md](state-and-persistence.md) for the general rules and [02-world-workflow.md](02-world-workflow.md) for `SAVE` and `WORLD`.
+
+## Checking your work
+
+| Tool | What it proves |
+| --- | --- |
+| `WORLD CHECK ROUTES` | Stops resolve, route XML is well formed, route files exist, waypoint names are not ambiguous, `Prop_Journey` options are valid. |
+| `WORLD CHECK IDS` | No two waypoints in a network share an `ID`. |
+| `VESSEL STATUS <name>` | A vessel's real state: position, course, anchor, hull, behaviors, crew. |
+| `TIMETABLE` | Every line and moving room. |
+| `PORTS` | The ports a character knows (test with a normal and a builder character). |
+| `LIST SHIPS`, `LIST INSTANCES`, `LIST PLANES` | What exists. |
+| `JOURNEY` | State of a running trip. |
+| Fixtures | `t-travel-core.js`, `t-transport.js`, `t-journeys.js`, `t-waypoints-stables.js`, `t-instances.js`, `dt28-vessel.js` in `tools/fixtures/fixes/` show working syntax; `setup/travel-*.js` builds and saves a small travel world. |
+
+Test with an ordinary character, not a builder: builders bypass helm restrictions, ports, masks and limits.
+
+## Troubleshooting and gotchas
+
+- **Travel time does nothing.** `Prop_TravelTime` is only charged when a player character moves, in single-player. Check `TIME` is above 0, and that an exit or nearer property is not overriding it (exit first, then destination, then source).
+- **A caravan will not leave the road.** The rooms need `Prop_Road` (or a drivable locale). `NOTFOR` may be excluding it by name.
+- **"There is no navigable route."** The router only uses open, traversable exits through terrain the vessel accepts. A closed door, a land room in a water route, or the 10,000 room limit stops it. Ships also treat indoor rooms as unsuitable only for air vessels; a ship needs water or seaport rooms between the stops.
+- **A passenger took the ferry's helm.** An unowned vessel with no `Prop_HelmRestrict` allows everyone. Add `NAVMASK="-PLAYERS"` or use a `TransportLine`. `FLOAT`, `RISE`, `DIVE` and `TIEDOWN` are refused without the custom `MESSAGE`.
+- **The line never leaves.** It needs two or more stops that resolve, an anchor that it can raise, a route, and, with `DEPART`, an hour inside the day's range. A closed exit along the route or a stop in non-water rooms for a ship will make it wait and retry.
+- **Fare is charged twice.** Two ticket takers (a mob and a vehicle) or `PARTY=EACH` with an unremembered receipt after reload. Use one and prefer `PARTY=LEADER`.
+- **A ticket-item taker does not block.** With a named ticket (`a red ticket`) the property says the player needs one but does not stop boarding in the current code; use a numeric fare.
+- **Journey stops at once.** The leader left the transit room (an exit, a `JOURNEY` host in a room with open exits) or died. Keep the transit room closed in.
+- **Journey will not start.** "The party cannot depart": a member is in combat, cannot afford the fare, or is refused by an entry property of the transit room. "The journey has no valid destination": a hidden port, a missing room.
+- **`DelayedTransporter` ignores my message.** A semicolon inside an option message ends the option list. Remove it.
+- **`DelayedTransporter` teleports through a locked gate.** `ENTRY=FORCE` is the default. Use `ENTRY=CHECK`.
+- **The moving room has no door.** The car or the stop already has an exit in the door direction; temporary links never replace authored ones. Remove that exit.
+- **Hidden port still listed.** `KNOWNMASK` replaces `HIDDEN`; a mask that everyone matches makes it public. Builders see all ports.
+- **Waypoint discovery lost after renaming.** Without `ID`, an item waypoint's identity is a saved hidden one, but a room waypoint is keyed to its room ID. Give every waypoint an explicit `ID` before release and use `ALIASES` when changing it.
+- **`STABLE` does nothing.** There is no keeper with `Nanny` in the room, the animal is not owned by you, or `WATCHES` omits its kind. The ranger skill word is `STABLEMOUNT`.
+- **Two copies of one ship have the same interior.** `FIXEDINTERIOR=true` on the original. Set it back to `false`.
+- **An instance never resets.** `InstanceArea` copy mode builds a fresh copy per party; it does not reset the real area. Use `ResetWhole` for that.
+- **An in-place barrow rescales every time.** It should not: scaling happens on the first committed entry and then on resets. If it does, check `ResetWhole` is not resetting at every entry (`ONREENTRY` without `MINAWAY`).
+- **Ports named like rooms.** If a port name equals an unknown-to-the-player port, the lookup stops rather than falling through to a room or area of the same name.
+
+## See also
+
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md) for areas, locales and exits.
+- [21-mobs.md](21-mobs.md) for rideable creatures, shopkeepers and Sailor/Nanny hosts.
+- [22-items.md](22-items.md) for boardable and rideable item fields.
+- [23-properties-reference.md](23-properties-reference.md) and [24-behaviors-and-masks.md](24-behaviors-and-masks.md) for every property and behavior named here, and the zapper masks.
+- [26-mobprog-triggers.md](26-mobprog-triggers.md), [27-mobprog-commands.md](27-mobprog-commands.md), [28-mobprog-functions.md](28-mobprog-functions.md) and [05-javascript.md](05-javascript.md) for scripting.
+- [29-combat-and-encounters.md](29-combat-and-encounters.md) for ship combat and `EncounterReset`.
+- [10-world-simulation.md](10-world-simulation.md) for time, weather and calendars.
+- [12-generation.md](12-generation.md) for generated dungeons and seeds.
+- [31-saves-and-party.md](31-saves-and-party.md) and [33-engine-internals.md](33-engine-internals.md) for the single-player party model and engine internals.
+- [state-and-persistence.md](state-and-persistence.md), [cookbook.md](cookbook.md) (recipes 22 and 23) and the older [travel reference](../travel.md).

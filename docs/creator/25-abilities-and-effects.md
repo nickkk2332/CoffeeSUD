@@ -10,7 +10,8 @@ notes where they matter and a short section for engine developers. It explains h
 are classified and costed, how characters and mobs obtain them, how timed
 effects behave and are saved, how to build your own without Java (`GenAbility`,
 `GenTweakAbility`, `GenPoison`, `GenDisease`, `GenTrap`), how to find the stock
-abilities in game, and ends with worked examples.
+abilities in game, and gives worked examples, persistence rules and a
+troubleshooting list.
 
 The properties themselves (the `Prop_*` family) are catalogued in
 [23-properties-reference.md](23-properties-reference.md). Class and race
