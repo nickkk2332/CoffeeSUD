@@ -21,7 +21,7 @@ public class Prop_ItemModifiers extends StdAbility implements CombatStatSource
     private String withheld="";
     /**
      * The item's own modifiers, or null: a generic copy (bound to another item), a corrupt record or one over the
-     * campaign's limit grants nothing, logged once and named by WORLD CHECK ITEMMODS, and its wearer's combat goes on.
+     * campaign's limit grants nothing, logged once and named by WORLD CHECK ONLY=itemmods, and its wearer's combat goes on.
      */
     private List<CombatRules.Stats> granted()
     {

@@ -35,7 +35,9 @@ import com.planet_ink.coffee_mud.Locales.interfaces.Room.VariationCode;
  * CHECKTEXT (DT17): what in a room's title and description would print as
  * text instead of varying: variation tags in a text that does not start with
  * &lt;VARIES&gt;; tags that are none (&lt;nigth&gt;); tags written in small
- * letters (the parser finds the closing tag only in capitals); tags opened
+ * letters (still reported as not the usual spelling, though StoryText.parse
+ * finds a closing tag whatever its letters; only a leading &lt;VARIES&gt; must
+ * be in capitals); tags opened
  * and not closed, or closed and not opened; a MASK whose mask has a &gt; in
  * it, which ends the tag; and a colour code left open at the end.
  */
@@ -108,7 +110,7 @@ public final class TextCheck
 			if(name.equalsIgnoreCase("CALL")) continue;
             anyCode = true;
 			if(!name.equals(name.toUpperCase()))
-				out.add("<" + m.group(1) + name + ">: write it <" + m.group(1) + name.toUpperCase() + ">, or the parser will not find where it ends");
+				out.add("<" + m.group(1) + name + ">: write it <" + m.group(1) + name.toUpperCase() + "> (the usual spelling; a closing tag is found whatever its letters, but a leading <VARIES> must be in capitals)");
 			final String up = name.toUpperCase();
 			if((name.toUpperCase().startsWith("MASK")) && (!close))
 			{

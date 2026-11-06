@@ -330,7 +330,10 @@ public interface EnglishParsing extends CMLibrary
 	/**
 	 * Given a user input array, this method will find the skill, command, social,
 	 * channel, or journal that is trying to be invoked by the user input and,
-	 * if found, return it.  Will silently return null otherwise.
+	 * if found, return it.  Will silently return null otherwise.  An exact
+	 * pass looks for commands, then skills, socials, channels and journals; an
+	 * inexact (abbreviation) pass then looks for skills, commands, socials,
+	 * channels and journals, in that order.
 	 *
 	 * @param mob the player/mob trying to invoke a command
 	 * @param commands the user input array of the invocation

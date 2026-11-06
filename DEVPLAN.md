@@ -2031,7 +2031,9 @@ C18, C19, C20, C21, C22, C23, C25
   RandomEncounters (areas, rooms): TABLE=, CHANCE=, COOLDOWN=n rooms or
   nDAYS, LOCALES=, TRIGGER=, MAXACTIVE=, DESPAWN= ticks with no party
   near (not fighting), BUDGET=; an ENTER by the party's leader queues a
-  roll for its next tick (trailer runnables run off the game thread).
+  roll for its next tick (in single-player StdRoom.sendTrailermsgs hands the
+  trailer runnables to executeRunnable, which queues them on the game thread
+  to run after the current job; they do not run on their own thread).
   ENCOUNTER LIST/SHOW/ADD/DEL/ROLL/CHECK/RESET (Commands/EncounterCmd).
   MPMLOAD ENCOUNTER table ($b the leader), quest LOAD ENCOUNTER table
   (its mobs the quest's), and catalog:name wherever CATALOG name goes.

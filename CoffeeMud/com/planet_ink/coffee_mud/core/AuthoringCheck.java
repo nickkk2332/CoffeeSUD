@@ -177,7 +177,7 @@ public final class AuthoringCheck
             if(part.equals("LORE"))lore(out);
             if(part.equals("TEMPLATES"))
             {
-                for(final String setting:new String[]{"ROOMHEADER","ROOMFOOTER"})text(out,part,"world.ini "+setting,CMProps.instance().getStr(setting));
+                for(final String setting:new String[]{"ROOMHEADER","ROOMFOOTER"})text(out,part,"coffeemud.ini "+setting,CMProps.instance().getStr(setting));
                 if(Vocabulary.file("score.txt").isFile())text(out,part,"world/score.txt:1",Vocabulary.read("score.txt"));
                 for(final String path:WorldAssets.paths())if(path.startsWith("text/"))text(out,part,"world/"+path+":1",Vocabulary.read(path));
                 for(final Enumeration<Race> e=CMClass.races();e.hasMoreElements();){final Race race=e.nextElement();if(race.isGeneric()&&!race.getStat("HEALTHCHART").isEmpty())for(final String error:checkList("HEALTHCHART",race.getStat("HEALTHCHART")))add(out,part,race.ID(),error);}

@@ -1,7 +1,8 @@
 #!/bin/sh
 # Compiles every source file in place. CMClass discovers game classes by
 # scanning the package folders for .class files, so the output must sit
-# next to the sources.
+# next to the sources.  It compiles with --release 8, which needs javac 9 or
+# newer (the README's minimum).
 #   ./build.sh          rebuild if any source is newer than the last good build
 #   ./build.sh clean    delete all .class files first
 # When a source file is added or deleted the build starts clean, because a

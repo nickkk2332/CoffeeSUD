@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class SaveGame
 {
-	/** the version of the save format this writes */
+	/** the version of the save format this writes (the header's "version" when no module state is saved; unrelated to SaveSlots.MODULE_FORMAT_VERSION and WorldState.VERSION) */
 	public static final int VERSION = 1;
 
 	private static final String FAKEDB = "jdbc:fakedb:";

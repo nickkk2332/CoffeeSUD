@@ -1,10 +1,13 @@
 #!/bin/sh
-# The checks for a commit: the fixes suite and the smoke test, side by side
-# (about ten minutes).  With ENGINE=1, also the engine's own TEST ALL suite
-# (about a quarter of an hour more, alongside), for the end of a step and for
-# changes to the engine's core.  Builds once first, so that the suites do not
-# build at the same time.  Prints each suite's result and the time taken, and
-# keeps each suite's full output in a folder it names.
+# The checks for a commit: the creator-docs check and the composition, combat
+# rules and item modifier tests, then the fixes suite and the smoke test, run
+# in parallel (measured on one container: fixes about 30 minutes, smoke about
+# 15, engine about 13, so expect 10 to 30 minutes in all, the slowest suite
+# deciding).  With ENGINE=1, the engine's own TEST ALL suite runs too, in
+# parallel with them, for the end of a step and for changes to the engine's
+# core.  It does not run tools/storage-tests.sh.  Builds once first, so that
+# the suites do not build at the same time.  Prints each suite's result and
+# the time taken, and keeps each suite's full output in a folder it names.
 #   tools/check.sh            fixes suite and smoke test
 #   ENGINE=1 tools/check.sh   and the engine suite
 #   CHECKS_SERIAL=1 FIXES_JOBS=2 ENGINE=1 tools/check.sh   on small CI machines

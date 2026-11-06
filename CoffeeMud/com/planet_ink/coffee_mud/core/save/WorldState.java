@@ -36,8 +36,11 @@ import java.util.*;
 /**
  * The live world in a saved game.  The database holds the world as built:
  * a restored game boots that, with every mob and item where the builder put
- * it, and {@link #apply(String)} then makes the world as it was when saved.
- * Saved here:
+ * it, and {@link #apply(String)} then makes the world as it was when saved
+ * (it first starts the quests of the world that were running at the save, so
+ * that they take over their mobs and items again before the world is cleared,
+ * and it keeps rooms that the save does not have, made since, as the world has
+ * them rather than emptying them).  Saved here, as tags of world.xml:
  * <ul>
  * <li>what is in each room: its mobs, where they belong and how hurt they are,
  * with what they carry, and the items on the floor;</li>
@@ -62,7 +65,14 @@ import java.util.*;
  * <li>what the behaviours and scripts of mobs, items, rooms and areas have
  * built up while running (their STATE): which ONCE_PROGs have run, DELAY
  * countdowns, queued MPALARMs, their own variables, and each behaviour's
- * own.</li>
+ * own;</li>
+ * <li>ROOMSHAPES, the rooms' exits and sizes where they differ from the
+ * database's; COMBAT, the fights under way, joined again once the player is
+ * in; RIDES and VESSELS, who rides what and the ships and their rooms;
+ * UNIQUES, how many of each unique catalog item have appeared and when
+ * copies were lost; JSSTATE, what JavaScript has stored for the world;
+ * MENUS, the script menus; NARRATION, the narration cursor; QUESTRECORDS,
+ * the quests' records; and YIELDS, what the gathering skills have used up.</li>
  * </ul>
  * Mobs that cannot be saved, such as summoned ones, are left out unless they
  * follow the player, and things a quest is using are left to the quest.  The
@@ -75,6 +85,7 @@ public final class WorldState
 	/** the file in a save that holds the world */
 	public static final String	FILE	= "world.xml";
 
+	/** the version of this file's XML (world.xml's VERSION); unrelated to SaveGame.VERSION (the save's manifest) and SaveSlots.MODULE_FORMAT_VERSION (modules.json) */
 	private static final int	VERSION	= 1;
 
 	private WorldState()

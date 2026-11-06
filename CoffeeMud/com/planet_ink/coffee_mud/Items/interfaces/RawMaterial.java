@@ -613,8 +613,16 @@ public interface RawMaterial extends Item
 	 * code, value, frequency, hardness, bouyancy, smell, effects, ResourceFlag flags
 	 *
 	 * value is in base gold value/pound
-	 * bouyancy is equal to 1000 times the density of the material in g/cm3
-	 * hardness is based off of the Mohs Scale of Hardness
+	 * frequency is the rarity weight: 1-100, lower is rarer (the built-ins use 1-100;
+	 * a few non-resources use 0)
+	 * hardness is based off of the Mohs Scale of Hardness, 0-11 in the built-ins
+	 * bouyancy is a density-like number, roughly 1000 times the density of the
+	 * material in g/cm3; higher sinks, and the built-ins run from 0 to 21450
+	 * <p>
+	 * The name each shows in play is the enum name with underscores read as
+	 * spaces (and stored as spaces).  It differs from the RESOURCE_ constant for
+	 * WATER (RESOURCE_FRESHWATER), SALT WATER (RESOURCE_SALTWATER), LIQUID
+	 * (RESOURCE_DRINKABLE) and LAMP OIL (RESOURCE_LAMPOIL).
 	 * @author Bo Zimmerman
 	 */
 	public static enum DefResource
@@ -839,9 +847,9 @@ public interface RawMaterial extends Item
 		 * Constructs a default resource enum object
 		 * @param cod the full resource code
 		 * @param val the value in base currency
-		 * @param freq the frequency 1-10
-		 * @param hard the hardness 1-10
-		 * @param bou the bouyancy 0-10000
+		 * @param freq the frequency (rarity weight), 1-100, lower is rarer
+		 * @param hard the hardness, 0-11
+		 * @param bou the bouyancy, a density-like number from 0 to 21450 in the built-ins
 		 * @param sniff the smell you see when sniffing it
 		 * @param eff effects list (semicolon delimited, with parenthesis)
 		 * @param flg the ResourceFlag flags, such as berry or fish or something

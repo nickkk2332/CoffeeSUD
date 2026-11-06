@@ -36,8 +36,14 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  * JS23: world/scripts/progression.js, if there is one, and its functions,
  * each called if the file defines it: onCreated(mob) when a character is
  * made; onCreationStep(mob, step, answer) after each step of making one
- * (race, gender, stats, class, factions, deity); xpGain(mob, source,
- * amount), which returns the experience a gain gives instead; onLevel(mob,
+ * (race, gender, stats, class, factions, deity; CharCreation also names the
+ * steps traits, template, origin and kit, and each creation.ini question by
+ * its name in lower case); xpGain(mob, source,
+ * amount), which returns the experience a gain gives instead (the source is
+ * COMBAT:[level][flag], ABILITY:[id], CLASS:[id], MISC:[id], COMMAND:Teach,
+ * SCRIPT:, DEATH:, FACTION:[id], SIEGE:[id], LIEGE:[name], COST:, HOMAGE[name],
+ * QUEST:, DISCOVERY:, ACHIEVE:, SERVICE:, REMORT: or an ability or behavior's
+ * own ID); onLevel(mob,
  * level) after a level's gains; practicesForLevel(mob) and
  * trainsForLevel(mob), which return the practices and trains a level gives
  * instead of the usual; onLearn(mob, abilityId) when a character gets a
@@ -258,7 +264,8 @@ public final class JSProgression
 	/**
 	 * From CharCreation: onCreationStep, after a step of making a character.
 	 * @param mob the new character
-	 * @param step race, gender, stats, class, factions or deity
+	 * @param step race, gender, stats, class, factions, deity, traits, template, origin, kit,
+	 *             or a creation.ini question's name in lower case
 	 */
 	public static void creationStep(final MOB mob, final String step)
 	{

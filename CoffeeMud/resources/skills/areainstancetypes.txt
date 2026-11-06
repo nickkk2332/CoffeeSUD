@@ -5,14 +5,15 @@ InstanceArea types definitions
 # separated by spaces.  Argument values can also be in quotes.  Argument
 # keys include:
 # CATEGORY: comma delimited list of descriptive categories.
-# OPPOSED: comma delimited list of opposing types.
-# TRANSITIONAL: set to "true" to designate the type as transitional
+# (OPPOSED and TRANSITIONAL are not accepted keys: the engine ignores them.)
 # ALIGNMENT: numeric value for the alignment of mobs in the instance
 # PREFIX: comma delimited list of strings to prefix mob names with
 # LEVELADJ: either a number, or a formula to adjust mob levels:
-#           @x1 = base areas median level, @x2 = specific mob/item level
-#           @x3 = the instance traveling players level
-#           @x4-@x5 = base area min level/max level, @x6 = exprate
+#           @x1 = the instance level: the level of the player who led the
+#                 group in (or, with no leader, the base area's median level)
+#           @x2 = specific mob/item level
+#           @x3 = the instance level again, the same value as @x1
+#           @x4-@x5 = base area min level/max level, @x6 = exprate + 1
 #           @x7 = if playerfactions set, the best value
 # ILEVELADJ: like leveladj, but sets item power level. 
 # MOBRESIST: instance mob resistance arguments, see Prop_Resistance
@@ -59,6 +60,8 @@ InstanceArea types definitions
 # AREAMATCH: comma delimited list of area names to match, limiting instance creation
 # LEADERREQ: a zapper mask that the leader of a group must match to select between
 #            multiple types of the exact same Type ID.  Serves no other purpose.
+# (ARMORADJ, ATTACKADJ, SAVEADJ, HPADJ and DAMAGEADJ are named in the engine's key
+#  list but nothing reads them; use ADJUST or ADJSTAT instead.)
 #
 # * In normal areas, add tattoo NOAINST <type name> to prevent a mob from 
 #   spawning in an instance.

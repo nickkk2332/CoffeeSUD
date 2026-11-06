@@ -552,7 +552,9 @@ public interface CatalogLibrary extends CMLibrary
 		 */
 		LIVE,
 		/**
-		 * Item spawns only on corpses at death
+		 * Item is dropped only on the corpse of a mob that dies
+		 * (the CATALOG EDIT prompt calls this D)rop on corpses; a mob
+		 * that is merely carrying the item is LIVE)
 		 */
 		DROP,
 		/**

@@ -41,9 +41,22 @@ import java.util.zip.CRC32;
  * <pre>
  * areas/NAME.cmare   one area: its rooms and exits, and the mobs and items
  *                    placed in them, as the builder's EXPORT writes them
- * custom.cmare       the custom races, classes, abilities and commands
+ * custom/KIND/       custom races, classes, abilities, commands and behaviors,
+ *                    a file each (KIND is races, classes, abilities, commands
+ *                    or behaviors); custom.cmare is the older single file,
+ *                    still read
  * catalog.cmare      the builder's catalog of mobs and items
+ * templates.cmare    the builder's templates
+ * clans.cmare        the clans
  * quests/NAME.quest  one quest's script, as the quest list holds it
+ * journals/          the journals' entries, a file each
+ * vfs/               the files of the game's virtual file system
+ * laws/NAME.ini     one area's laws (written with its area; not among contentPaths)
+ * js/, scripts/,
+ * routes/            the world's JavaScript, script and route files, tracked
+ *                    for changes and counted in the checksum
+ * world.ini          the world's settings (WorldSettings): read at every
+ *                    start, not part of world.sum
  * dev/NAME.cmare     an area for building and testing only: loaded in builder
  *                    mode and DEV=1 games, never in a normal one (DT27)
  * space.cmare        the things in space and in no room (ships, stations,
@@ -2711,8 +2724,12 @@ public final class WorldFiles
 	}
 
 	/**
-	 * The content files' paths in the world folder, as {@link #checksum()}
-	 * takes them.
+	 * The content files' paths in the world folder: areas, quests, custom
+	 * objects, js/, scripts/ and routes/, the catalog, world.ini (the world's
+	 * settings), templates, clans, space, journals and vfs.  The checksum
+	 * does not take them all: {@link #managedPaths()} leaves out world.ini
+	 * (read at every start, never in world.sum) and the dev areas, and
+	 * {@link #checksum()} adds the module assets of WorldAssets.
 	 * @return the paths
 	 */
 	private static List<String> contentPaths()

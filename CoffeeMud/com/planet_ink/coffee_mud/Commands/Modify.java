@@ -69,7 +69,8 @@ public class Modify extends StdCommand
 		if(commands.size()<3)
 		{
 			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY ITEM [ITEM NAME](@ room/[MOB NAME]) "
-					+ "[LEVEL, ABILITY, REJUV, USES, MISC, ?] [NUMBER, TEXT]\n\r"));
+					+ "[LEVEL, ABILITY, HEIGHT, REJUV, USES, SAVEABLE, MISC, or a stat code] [NUMBER, TEXT]\n\r"
+					+ "To use the editor instead, enter MODIFY [ITEM NAME] (a generic item) or MODIFY ITEM [ITEM NAME] MISC.\n\r"));
 			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
 			return;
 		}
@@ -287,15 +288,16 @@ public class Modify extends StdCommand
 
 	protected void flunkRoomCmd(final MOB mob)
 	{
-		mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY ROOM [NAME, AREA, DESCRIPTION, "
-				+ "AFFECTS, BEHAVIORS, CLASS, XGRID, YGRID, ?] [TEXT]\n\r"));
+		mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY ROOM [NAME, DESCRIPTION, "
+				+ "ID, AREA, CLASS, XGRID, YGRID, AFFECTS, BEHAVIORS, or a stat code] [TEXT]\n\r"));
 		mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 	}
 
 	protected void flunkAreaCmd(final MOB mob)
 	{
 		mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY AREA [NAME, DESCRIPTION, CLIMATE, "
-				+ "FILE, AFFECTS, BEHAVIORS, ADDSUB, DELSUB, XGRID, YGRID, ?] [TEXT]\n\r"));
+				+ "FILE, AFFECTS, BEHAVIORS, ADDSUB, DELSUB, XGRID, YGRID, PASSIVE, ACTIVE, FROZEN, STOPPED, "
+				+ "WEATHERPROFILE, CALENDAR, or a stat code] [TEXT]\n\r"));
 		mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 	}
 
@@ -2821,7 +2823,8 @@ public class Modify extends StdCommand
 
 		if(commands.size()<4)
 		{
-			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY MOB [MOB NAME] [LEVEL, ABILITY, REJUV, MISC, ?] [NUMBER, TEXT]\n\r"));
+			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY MOB [MOB NAME] [LEVEL, ABILITY, REJUV, MISC, or a stat code] [NUMBER, TEXT]\n\r"
+					+ "To use the editor instead, enter MODIFY [MOB NAME] or MODIFY MOB [MOB NAME] MISC.\n\r"));
 			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 			return;
 		}

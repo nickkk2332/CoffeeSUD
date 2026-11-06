@@ -34,7 +34,7 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
  * XML with their mobs and items, taken when the command starts (the
  * builder's room) and before each room's mobs or items first change.  An
  * entry is kept only if a room changed.  They are kept in memory and in
- * world/.history/, a file each.  HISTORY lists them, UNDO (n) puts the last
+ * world/.history/, a file each.  UNDO LIST lists them, UNDO (n) puts the last
  * n back, newest first: each room is made again from its XML, those in it
  * waiting outside, the exits into it from other rooms linked again.
  */
@@ -332,14 +332,14 @@ public final class UndoLog
 	}
 
 	/**
-	 * HISTORY: the entries, newest first, numbered as UNDO counts them.
+	 * UNDO LIST: the entries, newest first, numbered as UNDO counts them.
 	 * @param max the most to list
 	 * @return the list
 	 */
 	public static String history(final int max)
 	{
 		if(!SaveGame.isBuilderMode())
-			return "HISTORY is for builder mode.";
+			return "UNDO LIST is for builder mode.";
 		final List<Entry> list = entries();
 		if(list.isEmpty())
 			return "No building command is logged to undo.";

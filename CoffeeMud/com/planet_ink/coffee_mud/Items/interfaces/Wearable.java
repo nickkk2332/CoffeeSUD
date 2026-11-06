@@ -517,6 +517,9 @@ public interface Wearable extends Environmental
 					final String stat = array[0].toLowerCase().trim().replace('_',' ');
 					final String p=array[1];
 					final List<String> V=CMParms.parseCommas(p, false);
+					// a row is exactly 6 fields (dependents, armor, order, cloth, leather, metal), as
+					// coffeemud.ini documents; the 7th, the usual name read below, can never be reached
+					// (audit D-IC-8), so every added location is called "unusual"
 					if(V.size()!=6)
 					{
 						Log.errOut("Wearable","Bad coffeemud.ini wear loc row (requires 6 elements, separated by ,): "+p);

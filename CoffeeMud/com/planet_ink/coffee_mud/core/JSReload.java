@@ -376,7 +376,7 @@ public final class JSReload
 			}
 		});
 		if((proto instanceof Behavior) || (proto instanceof Ability))
-			return "world/" + p + ": class " + id + " compiled again; " + n[0] + " in the world replaced; " + refused[0] + " incompatible instances kept (see log).";
+			return "world/" + p + ": class " + id + " compiled again; " + n[0] + " in the world replaced; " + refused[0] + " incompatible instances kept (they cannot take the new class's state, so they keep running the old class; see log).";
 		return "world/" + p + ": class " + id + " compiled again; those made from now on use it, those in the world keep the old code until they are made again.";
 	}
 

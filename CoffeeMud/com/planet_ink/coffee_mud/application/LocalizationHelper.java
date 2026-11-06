@@ -31,7 +31,9 @@ import com.planet_ink.coffee_mud.core.collections.Pair;
  * A tool for helping with localization of CoffeeMud. It scans all java files
  * for instances of I("string") and L("string") and reports those strings,
  * de-dupped, and categorizes them by class. It also reports any strings it
- * can't figure out.
+ * can't figure out.  The first argument is T (strings given to L) or I
+ * (strings given to I), and nothing else; then the command (USE, DEDUP,
+ * BROKE or ALL).
  *
  * @author Bo Zimmerman
  */

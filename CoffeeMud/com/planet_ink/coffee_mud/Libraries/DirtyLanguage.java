@@ -758,6 +758,10 @@ public class DirtyLanguage extends StdLibrary implements LanguageLibrary
 		ParserSections translationSections=(ParserSections)Resources.getResource(translatorKey);
 		if(translationSections==null)
 		{
+			// the name is built with LANGUAGE and COUNTRY upper-cased (translation_EN_TX.properties),
+			// while the shipped file, and coffeemud.ini, spell it translation_en_TX.properties: the
+			// file is found only if CMFile matches names without regard to case (not checked on a
+			// case-sensitive file system)
 			translationSections=loadFileSections("resources/translation_"+language.toUpperCase()+"_"+country.toUpperCase()+".properties");
 			if(translationSections == null)
 				translationSections=new ParserSections();

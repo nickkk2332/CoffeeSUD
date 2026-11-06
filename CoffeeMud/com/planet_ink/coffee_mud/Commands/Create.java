@@ -477,7 +477,7 @@ public class Create extends StdCommand
 				E.destroy();
 			if(thisRoom==null)
 			{
-				mob.tell(L("You have failed to specify a valid room type '@x1'.\n\rThe format is CREATE ROOM [DIRECTION] ([ROOM TYPE] / LINK [ROOM ID]) \n\r",possLocale));
+				mob.tell(L("You have failed to specify a valid room type '@x1'.\n\rThe format is CREATE ROOM [DIRECTION] [ROOM TYPE or catalog room name]\n\r",possLocale));
 				mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 				return;
 			}
@@ -1824,11 +1824,12 @@ public class Create extends StdCommand
 
 	protected String listOfThings()
 	{
-		return L("EXIT, ITEM, QUEST, FACTION, COMPONENT, GOVERNMENT, HOLIDAY, COMMAND, "
+		return L("AREA, EXIT, ITEM, QUEST, FACTION, COMPONENT, GOVERNMENT, HOLIDAY, COMMAND, "
 			 + "CLAN, GUILD, MOB, RACE, MIXEDRACE, ABILITY, LANGUAGE, CRAFTSKILL, HELP/AHELP, "
-			 + "ACHIEVEMENT, MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, "
-			 + "WEBSERVER, DISABLEFLAG, ENABLEFLAG, NEWS, USER, TRAP, WRIGHTSKILL, COMMAND, "
-			 + "GATHERSKILL, BUILDSKILL, POISON, DISEASE, TWEAK, CRON, TITLE, AWARD, or ROOM");
+			 + "ACHIEVEMENT, MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, BEHAVIOR, SOCIAL, PLANE, EXPERTISE, "
+			 + "DISABLEFLAG, ENABLEFLAG, NEWS, USER, TRAP, WRIGHTSKILL, ACCOUNT, "
+			 + "GATHERSKILL, BUILDSKILL, POISON, DISEASE, TWEAK, CRON, TITLE, AWARD, or ROOM; "
+			 + "also CREATE <class or catalog name>, CREATE <n> <command>, CREATE <n> <material>");
 	}
 
 	public void classes(final MOB mob, final List<String> commands)
