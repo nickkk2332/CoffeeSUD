@@ -284,8 +284,9 @@ or choose with `limit`.
 
 What a parent does when it has **no** `select`:
 
-- `AREA` and `ROOM` choices: one is picked at random (if its `validate` fails,
-  another is tried).
+- `AREA` and `ROOM` choices: whatever survives (everything, when there is no
+  `select`) forms a pool and *one* of it is picked at random; if its `validate`
+  fails, another is tried.
 - `MOB`, `ITEM`, `AFFECT`, `ABILITY`, `BEHAVIOR`, `CONTENT`, `FACTION`:
   every eligible child is built.
 - `EXIT` choices: one is picked at random for each direction the layout needs.
@@ -521,8 +522,8 @@ joins gets an exit chosen from the room's `EXIT` children; `GENERATE ROOM`
 ### EXIT
 
 **Required detail:** `CLASS` (an exit class: `Open`, `GenDoor`...).
-**Stat codes:** `NAME`, `DISPLAY`, `DESCRIPTION`, `DOOR`, `LEVEL`, `ABILITY`,
-`ISREADABLE`, `READABLETEXT`, `DISPOSITION`, `HASADOOR`, `DEFCLOSED`,
+**Stat codes:** `NAME`, `DISPLAY`, `DESCRIPTION`, `DOOR`, `LEVEL`, `ABILITY`
+(written `MAGICABILITY`), `ISREADABLE`, `READABLETEXT`, `DISPOSITION`, `HASADOOR`, `DEFCLOSED`,
 `HASALOCK`, `DEFLOCKED`, `KEYNAME`, `RESETTIME`, `CLOSEWORD`, `OPENWORD`,
 `CLOSEDTEXT`, `TAGS`, `AFFBEHAV`. **Children:** `AFFECT`, `BEHAVIOR`.
 
@@ -572,7 +573,7 @@ reached, the tag silently gives nothing), or `metacraft:...` (see
 [above](#meta-attributes)).
 
 **Details (stat codes of a generic item):** `NAME`, `DISPLAY`, `DESCRIPTION`,
-`SECRET`, `LEVEL`, `USES`, `ABILITY`, `PROPERWORN`, `WORNAND`, `BASEGOLD`
+`SECRET`, `LEVEL`, `USES`, `ABILITY` (written `MAGICABILITY` in a template), `PROPERWORN`, `WORNAND`, `BASEGOLD`
 (the item's base value; there is no `value` attribute, see the note below),
 `ISREADABLE`, `ISGETTABLE`, `ISDROPPABLE`, `ISREMOVABLE`, `MATERIAL`,
 `AFFBEHAV`, `DISPOSITION`, `WEIGHT`, `ARMOR`, `DAMAGE`, `ATTACK`,
@@ -1191,11 +1192,14 @@ mob, or on the floor of the host's room (expiring like a monster's equipment).
 Mobs are brought to life in the room. A room or area is linked off the host's
 room in a *free* direction (an error otherwise), and the area is recorded for
 `REGENERATE`. A quest is created and started. The script line is parsed with
-the usual `$` substitutions first, so `level=$<$n.level>`-style values work.
-Failures are logged as script errors and the script continues.
+the usual `$` substitutions first, so script codes inside values are expanded
+before the template sees them. Failures are logged as script errors and the
+script continues.
 
 ```text
-MPGENERATE ITEM randareas/loot.xml chest_loot level_range=$<$n.level> INTO $i
+MPGENERATE ITEM randareas/loot.xml chest INTO $i
+MPGENERATE MOB randareas/barrow.xml barrow_dead level_range=8
+MPGENERATE AREA randareas/barrow.xml barrow down areaname=Barrow2 areasize=20 level_range=8 SEED=GAME
 ```
 
 Reference entry: [MPGENERATE](27-mobprog-commands.md#mpgenerate) and
@@ -1208,8 +1212,10 @@ Reference entry: [MPGENERATE](27-mobprog-commands.md#mpgenerate) and
 returns a random name ([Name styles](#name-styles)).
 
 ```text
-say $%GENSTRING(randareas/rumors.xml rumor area=$a)%
+MPECHO The tavern gossip: $%GENSTRING(randareas/rumors.xml rumor)%
 ```
+
+(`rumors.xml` is a file you write, with a `<STRING id="rumor">`.)
 
 ### FROMGENFILE
 

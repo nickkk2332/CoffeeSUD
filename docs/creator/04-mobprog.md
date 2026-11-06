@@ -320,6 +320,8 @@ WORLD RELOAD SCRIPT progs/guard.script
 WORLD RELOAD SCRIPT ALL RESET
 ```
 
+`WORLD RELOAD SCRIPT` works in builder mode only (in a normal game every
+`WORLD RELOAD` form saves and restores the whole game instead).
 `WORLD RELOAD SCRIPT [FILE]` forgets every parsed program and re-reads the
 scripts that name the file (or all with `ALL`); adding `RESET` also lets
 `ONCE_PROG`s, `DELAY_PROG` waits and the `TIME_PROG`/`DAY_PROG` marks run

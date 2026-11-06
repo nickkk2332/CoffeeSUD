@@ -929,7 +929,7 @@ editor prompt are marked; set them by editing the record (see
 | `MOCKABILITY` | Quiet effect ID | none | The ID of another ability held silently as a second effect while this one lasts (it adds to this one's stat changes and message handling). |
 | `MOCKABLETEXT` | (none) | none | Parameter text for the quiet effect; `@x1`.. are the words the caster typed. |
 | `POSTCASTAFFECT` | Public effects | none | A [`Prop_SpellAdder`](23-properties-reference.md#prop_spelladder) list of abilities put as effects on the target when the cast lands, lasting as long as the main effect: `Spell_Slow;Prop_Adjuster(/con-2)`. |
-| `POSTCASTABILITY` | Extra castings | none | A `Prop_SpellAdder` list cast *at* the target afterward (with chance prefixes): `20%;Fighter_Trip`. |
+| `POSTCASTABILITY` | Extra castings | none | A `Prop_SpellAdder` list cast *at* the target afterward (with chance prefixes): `20%;Skill_Trip`. |
 | `POSTCASTDAMAGE` | Damage/Healing Formula | `0` | Positive damages the target, negative heals it. Variables below. |
 | `HELP` | Help Text | `<ABILITY>This ability is not yet documented.` | The page `HELP [NAME]` shows. Starting with `<ABILITY>` puts the generated header (domain, classes, cost, range) above the text. |
 | `CHANNELING` | (none) | `false` | A channeled effect ends when its invoker speaks, moves or uses their hands. It also keeps the invoker from auto-attacking. |
@@ -1216,7 +1216,7 @@ Fields (stat codes are those of the saved record):
 
 Players, classes and scrolls refer to the tweak by its new ID; the original
 remains available under its own. Example: *Stormcall*, a tweak of
-`Spell_Lightning` with `POSTCASTABILITY` `20%;Fighter_Trip` and
+`Spell_Lightning` with `POSTCASTABILITY` `20%;Skill_Trip` and
 `DAMAGEMULT` `1.25`.
 
 Note that the `-LOCALE +OUTDOORS` sample in the shipped `GENTWEAK` help is not a
