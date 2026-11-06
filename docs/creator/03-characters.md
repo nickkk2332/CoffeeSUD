@@ -191,9 +191,10 @@ applies, in this order:
    level-ups.
 9. After the character is in the world: `CHARCREATIONSCRIPTS` `END:` scripts.
 
-A ready-made character (a player template) skips steps 7 to 12 and gifts 1 to
-8: its own contents are applied instead, and then only its race and class are
-started (see [templates](#ready-made-characters-player-templates)).
+A ready-made character (a player template) skips the questions after the
+template menu and all of the gifts above: the template's own contents are
+applied instead, and then the character gets a start room and a birthday (see
+[templates](#ready-made-characters-player-templates)).
 
 Two earlier gifts come from the class and race themselves: the class's
 abilities, first-level practices and trains, outfit and starting money (end of
@@ -290,7 +291,7 @@ the player `MAXSTATS - 6 * BASEMINSTAT` points, plus any bonus points from
 achievements, to spend with no stat above `BASEMAXSTAT`. With `0` the engine
 rolls a total of `MAXSTATS` points over the six stats, retrying up to 50 times
 until some class qualifies, and offers a re-roll. With a number `N`, every stat
-is `N` and the theme-bonus points are added to random stats.
+starts at `N` and the player is not asked.
 
 ### Creation scripts
 

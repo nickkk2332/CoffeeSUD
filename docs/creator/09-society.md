@@ -1,114 +1,118 @@
-# Factions, organizations, law and services
+# Society: clans, factions, organisations, law and economy
 
 [Handbook](README.md) · [Organization option reference](../organizations.md)
 · [F feature index](feature-index.md#f)
 
-## Standing, membership and rule
+This chapter covers the systems that make a world feel inhabited by groups
+rather than individuals: who belongs to what (clans, governments and NPC
+guilds), how much each group likes the player (factions and reputation), what
+the law forbids and what happens to criminals (the Arrest behavior), who rules
+which territory (conquest), and how money moves (currencies, shops, bankers,
+exchange). It is written for world creators who build these in the game and in
+world files, for scripters who drive them from MOBPROG and JavaScript, and, in
+a few places, for engine developers who need to know which Java class owns a
+rule.
 
-Faction standing is a numeric value with named ranges, reactions and change
-rules. Clan/organization membership is an affiliation with positions, authority,
-dues and diplomacy. Area control belongs to conquest systems. A player can have
-high standing with a temple without being a member, or membership in a guild
-while wanted by the local law. Model these separately.
+Almost all of this machinery is inherited from CoffeeMud 5.11 and works as it
+did there. CoffeeSUD adds a layer on top for a single player with a party of
+characters: NPC-run organisations (`NPCRUN` clans, the `GuildMaster` behavior
+and `CREATE GUILD`), clan timers on the game clock, merit-based ranks,
+`PLAYEREFFECT` faction handlers, town reputation, the `LAW` and `PRICECHECK`
+tools, currency files and exchange rates, and a set of script commands for
+warrants, shops, banks and diplomacy. Each section says which is which.
 
-Create/edit factions with their generic editor and export them with the world.
-Use FACTION_PROG for changes/range crossings and masks for gates. Membership
-changes use CLAN_PROG and entry/exit scripts. AUTOREACTION and area reputation
-are opt-in policies; an area's REPUTATION setting can select a file or NONE.
-Use ORGCHECK to validate cross-references rather than relying on matching prose
-names.
+## In this chapter
 
-## Scaffold a guild
+- [How the pieces fit](#how-the-pieces-fit)
+- [What CoffeeSUD removed or changed](#what-coffeesud-removed-or-changed)
+- [Clans and governments](#clans-and-governments)
+  - [Concepts](#clan-concepts)
+  - [Stock governments](#stock-governments)
+  - [The governments file](#the-governments-file)
+  - [Powers and voting](#powers-and-voting)
+  - [Clans as world content](#clans-as-world-content)
+  - [Clan commands](#clan-commands)
+  - [Dues, ranks, merit and news](#dues-ranks-merit-and-news)
+  - [Clan settings](#clan-settings)
+  - [Party-founded clans](#party-founded-clans)
+- [NPC organisations and guilds](#npc-organisations-and-guilds)
+  - [Scaffold a guild](#scaffold-a-guild)
+  - [GuildMaster](#guildmaster)
+  - [Recruitment and advancement](#recruitment-and-advancement)
+  - [Diplomacy and ClanEnemyAggressive](#diplomacy-and-conquest)
+- [Factions](#factions)
+  - [Faction files](#faction-files)
+  - [Change triggers](#change-triggers)
+  - [Abilities, effects and reactions](#abilities-effects-and-reactions)
+  - [Who holds a faction](#who-holds-a-faction)
+  - [Automatic reaction factions](#automatic-reaction-factions)
+  - [Scripting factions](#scripting-factions)
+  - [Faction tools](#faction-tools)
+- [Law and crime](#law-and-crime)
+  - [Setting up a legal system](#setting-up-a-legal-system)
+  - [The law file](#the-law-file)
+  - [Arrest, trial and punishment](#arrest-trial-and-punishment)
+  - [Law tools](#law-tools)
+  - [Law and scripts](#law-and-scripts)
+- [Conquest and area control](#conquest-and-area-control)
+- [Economy](#economy)
+  - [Currencies](#currencies)
+  - [Money handling](#money-handling)
+  - [Shops and shopkeeper pricing](#shops-banks-and-currencies)
+  - [Banks and debts](#banks-and-debts)
+  - [Money changers and exchange rates](#money-changers-and-exchange-rates)
+  - [Economy scripting](#economy-scripting)
+- [Worked examples](#worked-examples)
+- [Persistence notes](#persistence-notes)
+- [Troubleshooting and gotchas](#troubleshooting-and-gotchas)
+- [See also](#see-also)
 
-```text
-CREATE GUILD Knights of the Rose TEMPLATE=ORDER HALL=Castle#14
-```
+## How the pieces fit
 
-Substitute a real hall. Templates include GUILD_NPC, ORDER, TEMPLE and CULT.
-The scaffold creates an organization, standing faction, guildmaster, trainer,
-empty quartermaster and a members' room when a free adjacent exit is available.
-It is a starting point: stock the quartermaster, set trainers, replace masks,
-check doors and write dialogue before calling it finished.
+Four things are easy to confuse. Keep them separate when you design.
 
-`SAVE` exports clans, governments and factions in builder mode. The default
-scaffold uses NPC administration, merit advancement and five positions. Lower
-numeric RANK is more senior; MAX limits seats, including NPC occupants. Replace
-placeholder INNERMASK prerequisites with real quests, standing or skills.
+| Concept | What it is | Where it lives | How a player changes it |
+| --- | --- | --- | --- |
+| Membership (clan) | An affiliation with a named group, with a position (rank), powers, dues and diplomacy | Clan definition plus a position per member; clans with no player members in `world/clans.cmare`, others in the save | Joining, promotion, `CLANASSIGN`, merit, scripts |
+| Standing (faction) | A number with named bands, reactions and effects | A faction file (`.ini`); each character's value is saved with the character | Deeds that match change triggers, `MPFACTION`, scripts |
+| Rule (law, conquest) | Which acts are crimes in an area, and which clan rules it | An `Arrest` or `Conquerable` behavior on an area plus a law file; control points in the save | Committing crimes, fighting, flags, `MPCONQUER` |
+| Money | Coins in a currency, bank accounts, shop prices | Currency definitions, shopkeeper and area settings, coin items | Buying, selling, banking, tax, fines |
 
-## Recruitment and advancement
+A player can be liked by a temple without belonging to it, hold a guild rank
+while a town's watch wants them, and rule a town while despised by it. Model
+each axis separately and connect them deliberately:
 
-GuildMaster can handle join, rank, advance, leave, dues and kit dialogue. Its
-parameters include CLAN, JOINMASK, JOINFEE, JOINQUEST, RANKS, DUES,
-`KIT.position` and KITFEE. Kits refer to catalog item names. Test lack of money,
-missing quest, full rank seats and leaving/rejoining.
+- Gate things on membership with `-CLAN` and `-CLANRANK` masks.
+- Gate things on standing with `-FACTION` masks, faction range codes in shop
+  PREJUDICE, and `FACTION_PROG` triggers.
+- Gate things on rule with `-RULER` masks and the area script functions.
+- Gate things on law with `-WANTED`, `-OFFICER`, `-JUDGE` masks and the warrant
+  script functions.
 
-MERIT promotes to the highest qualifying available position. MERIT_DEMOTE can
-also lower rank when requirements cease to hold. SCRIPT with AUTOPROMOTEBY=NONE
-leaves advancement to your scripts. Governance, voting rights and authority are
-independent of a flattering rank title. Configure who can recruit, expel, spend
-funds and declare relations.
+Masks are the glue. The mask language is described in
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md); the keys used in this
+chapter are `-CLAN`, `-CLANRANK`, `-RULER`, `-FACTION`, `-TATTOO`, `-WANTED`,
+`-OFFICER` and `-JUDGE`. In a mask, a minus key starts a list of required
+values written with plus signs (`-CLAN "+Thieves Guild"` means "is in the
+Thieves Guild"), and a plus key starts a list of excluded values written with
+minus signs. The flag-style keys `+WANTED`/`-WANTED` and `+OFFICER`/`-OFFICER`
+work the other way round: `+WANTED` requires the subject to be wanted and
+`-WANTED` requires them not to be.
 
-CLANCLOCK selects GAME or REAL timing. CLANVOTES selects CHARACTER or PROFILE;
-profile voting avoids one player multiplying votes through extra characters.
-CLANNEWS chooses INFO, MEMBERS or OFF. Dues define period, grace, late action
-and automatic collection. NPCs do not accrue player dues. Test a time jump,
-late payment and save/restore around the due date.
+## What CoffeeSUD removed or changed
 
-`CLANCREATE name PARTY` can create a Fellowship for the party after validation
-and charging once. PARTYCLANS shows those affiliations. This differs from an
-NPC-run guild and from ordinary group membership.
+| Inherited feature | In CoffeeSUD |
+| --- | --- |
+| Players founding clans for each other, elections among players | Still present in code. A single player has one profile with a party of characters; `CLANVOTES=PROFILE` makes the profile a single voter. |
+| Clan web sites, clan forums (`CLANWEBSITES`, `CLANFORUMDATA`) | The web server and forum system were removed; the ini keys are read but nothing serves them. |
+| `CHANNEL` power and clan channels | No player-to-player channels. Only the `INFO` and `QUESTCHAT` channels exist; clan news goes to `INFO` or to member windows (`CLANNEWS`). |
+| Inactivity purge of clans by real login time | Clan maintenance counts game time when `CLANCLOCK=GAME` (the default). Clans with minimum members `0` are never purged. |
+| Real-time dues collected once a year | Replaced by per-clan dues periods on the game calendar (`DUESPERIOD`). The old yearly sweep remains only under `CLANCLOCK=REAL`. |
+| Clan PK, `CLANPVPKILLS` | The commands exist, but a player's characters are one person; player-versus-player rules follow `PARTYFIGHT`. |
+| Autonomous NPC clan warfare (`ClanWarfare`), deity holy days, `Prop_ClanDisguise` | Not implemented (deferred in the project plan). Do not rely on them. |
+| Wanted posters, bounty hunters, supply and demand market | Not implemented (deferred). Use scripts and explicit restock schedules. |
 
-## Diplomacy and conquest
-
-Script CLANRANK supports named positions. MPCLANRELATION sets mutual diplomatic
-relations; MPCONQUER adjusts control through Conquerable. Functions expose
-positions, members, clans, relations, area rulers/control and revolt chance.
-Masks can test membership/rank or ruler, such as
-`-CLANRANK "+Thieves Guild>=CUTPURSE"`. Check names against your definitions.
-
-ClanEnemyAggressive reacts to selected hostile/war relations with its own
-chance, level and message rules. Conquest state survives saves. Design who
-counts as a defender, how control changes and what happens to services after
-capture. Fully autonomous ClanWarfare, deity-specific holy days/favor gates/portents
-and uniform-based clan disguise remain deferred; current diplomacy, calendars
-and conquest do not imply those integrations.
-
-## Law and crime
-
-An area's legal behavior/law book defines crimes, protected parties,
-punishment, arrests, fines and taxation. Warrants, fines and records save with
-the campaign. Masks and script functions can inspect wanted status or fines;
-law script commands can issue or resolve legal consequences. Use normal law
-operations when you want normal immunity, visibility and jurisdiction rules.
-
-```text
-LAW TEST ASSAULT AS Alice AGAINST Bob
-LAW SET SALESTAX=7.25
-```
-
-TEST is a dry run through warrant eligibility: it issues no warrant and does
-not advance campaign dice. It uses a fixed diagnostic roll for ignore chances.
-An Archon above the law may be refused, so choose representative AS/AGAINST
-actors. SET clones a shared law into area-specific custom law before editing;
-in builder mode the change exports with the world. Restart to verify the
-definition is independent of a prior area's runtime edits.
-
-The generic wanted-poster/bounty-hunter feature remains deferred. Existing
-legal officers, warrants and script-based consequences are available.
-
-## Shops, banks and currencies
-
-Shopkeepers need inventory, pricing and opening/service rules. Schedule can
-close a shop when the keeper is away. MPSHOP removes, restocks or reprices
-stock. PRICECHECK diagnoses a transaction's adjustments; check it with a
-normal customer because Archon privileges can bypass restrictions.
-
-Currency files and DEFAULTCURRENCY define world money. Coin material,
-weight and descriptions, money formatting and changing exchange rates are
-available. Price, denomination and total numeric value are distinct. Bank
-accounts and debts can be read/changed from scripts or the JS bank wrapper;
-include refusal and insufficient-funds branches.
-
-Economy tools expose authored rules, not a guaranteed simulated market.
-Gradual conditional restocking and a persistent supply/demand Market remain
-deferred. Use explicit stock/reprice schedules when that is the intended model.
+Clan commands, governments, conquest items (flags, law books, banners,
+pamphlets and so on), clan banks and the clan spells still exist and are
+reachable. They were designed for groups of players, so a single-player world
+mostly uses clans as the membership layer of NPC organisations.

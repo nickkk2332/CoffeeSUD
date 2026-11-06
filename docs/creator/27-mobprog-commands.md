@@ -2061,3 +2061,104 @@ MPQOBJECTIVE $n bell BUMP drowned
 
 **Notes:** see [11](11-presentation-language.md) for narration files.
 
+## Money, shops, banks and property
+
+### MPMONEY
+
+**Syntax:** `MPMONEY <target> <[+|-]amount [currency]>`. Minimum: 2 words.
+
+**Arguments:** a mob, an item or a room; the amount as a number, or a number with a coin name (`10 gold`; the currency comes from the amount's words, else the actor's currency); a leading `-` takes money instead of giving it.
+
+**Behaviour:** to a mob: gives or takes the amount from its purse. To an item: acts on the holder of the item (if it is a container the coins go into or come out of the container when it is not held by a creature). To a room (or a target that is none of these): coins are dropped on the floor or removed from it.
+
+**Example:** `mpmoney $n 25 gold` pays the player; `mpmoney $n -5 gold` charges them.
+
+**Notes:** taking more than the target has takes what there is. For bank accounts use [MPBANK](#mpbank).
+
+### MPSHOP
+
+**Syntax**
+
+```text
+MPSHOP <shopkeeper> REMOVE <item> [n | ALL]
+MPSHOP <shopkeeper> STOCK  <item> <n>
+MPSHOP <shopkeeper> PRICE  <item> <amount | -1>
+MPSHOP <shopkeeper> CLEAR
+MPSHOP <shopkeeper> RESET
+MPSHOP <shopkeeper> BUDGET <amount>
+```
+
+**CoffeeSUD.** Minimum: 2 words.
+
+**Arguments:** the shopkeeper (a `$` code or name; empty means the host or the one in its room); the item name (quote a name with spaces: `'a healing potion'`).
+
+**Behaviour**
+
+| Verb | Effect |
+| --- | --- |
+| `REMOVE item [n\|ALL]` | takes *n* (default 1) or all of the product off the shelf |
+| `STOCK item n` | sets how many are stocked; an item not stocked, but one the script can find or the catalog has, is copied onto a new shelf |
+| `PRICE item amount` | fixes the price of a stocked item; `-1` returns to the usual price |
+| `CLEAR` | empties the shelves |
+| `RESET` | puts the stock back as built (a generic shopkeeper only) |
+| `BUDGET amount` | sets what is left of the shopkeeper's buying budget |
+
+Errors: `no shopkeeper`, `not in stock`, `only a generic shopkeeper's stock can be put back`.
+
+**Example**
+
+```text
+ONCE_PROG
+mpshop $i STOCK 'a healing potion' 5
+mpshop $i PRICE 'a healing potion' 40
+~
+```
+
+**Notes:** read stock and prices with `SHOPPRICE()` and `SHOPBUDGET()` ([28](28-mobprog-functions.md)). Shops are in [09](09-society.md).
+
+### MPBANK
+
+**Syntax:** `MPBANK <who> <chain> <+amount | -amount> [reason]`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** pays into (`+`) or takes out of (`-`) the character's account at the bank chain, opening the account as a deposit would, with a dated line in its ledger. Amounts are in base value. A chain name with spaces is quoted. Taking out more than there is logs `has not that much at <chain>`.
+
+**Example:** `mpbank $n Brenn +100 reward for the wolves`
+
+### MPDEBT
+
+**Syntax:** `MPDEBT <who> <owed to> <+amount | -amount> [INTEREST <pct>] [DUE <n> <HOURS|DAYS|WEEKS|MONTHS>] [FOR <reason>]` or `MPDEBT <who> <owed to> CLEAR`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** adds to (or, with a minus, pays off) what the character owes someone (a bank chain, as its loans do, or anyone), with monthly interest and a due date on the game clock. `CLEAR` forgives it all. Read it with `DEBT()`.
+
+**Example:** `mpdebt $n Brenn +200 INTEREST 5 DUE 30 DAYS FOR the ferry fare`
+
+### MPEXCHANGE
+
+**Syntax:** `MPEXCHANGE <currency code | DEFAULT> <percent>`. **CoffeeSUD.** Minimum: 3 words per the table (2 are used).
+
+**Behaviour:** sets what coins of a currency fetch at every money changer, in percent of their value (100 means as they are, which ends it), on top of each changer's own `RATE` and cut. Kept in a save. Read it with `EXCHANGE()`. See [09](09-society.md).
+
+**Example:** `mpexchange GOLD 90`
+
+### MPDEED
+
+**Syntax:** `MPDEED <room | area | lot id | HERE> <who | @PROFILE> [price]`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** the land (a room or area with `Prop_RoomForSale`, `Prop_LotsForSale` or `Prop_AreaForSale`) belongs to the character, or to the whole profile with `@PROFILE`. Back taxes are cleared, the price is set if given, and the room is updated as a sale does. A place without a title logs `has no title`.
+
+**Example:** `mpdeed HERE $n 5000`
+
+### MPUNDEED
+
+**Syntax:** `MPUNDEED <room | area | lot id | HERE>`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** the land is for sale again: owner cleared, back taxes cleared, the room reset as a lost lot is.
+
+### MPGRANT
+
+**Syntax:** `MPGRANT <item> <who | NOBODY> [PROFILE] [NAME=<new name>]`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** gives property: a *deed* (its land changes hands and the deed goes to them), a *vessel* (kept with that character so it saves with them, renamed with no prompt, which fills the `[NAME]` in its name, and docked near here if it is not in a room), or an item with `Prop_PrivateProperty`. `PROFILE` records the owner as `@PROFILE`, the whole profile. `NOBODY` takes it back. Errors are logged as `MPGRANT RunTime`.
+
+**Example:** `mpgrant $o $n NAME='The Gull'`
+
