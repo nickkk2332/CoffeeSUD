@@ -1198,7 +1198,7 @@ script continues.
 
 ```text
 MPGENERATE ITEM randareas/loot.xml chest INTO $i
-MPGENERATE MOB randareas/barrow.xml barrow_dead level_range=8
+MPGENERATE MOB randareas/forest.xml forest_faerie_mob level_range=5
 MPGENERATE AREA randareas/barrow.xml barrow down areaname=Barrow2 areasize=20 level_range=8 SEED=GAME
 ```
 

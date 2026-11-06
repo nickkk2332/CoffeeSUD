@@ -437,7 +437,7 @@ str+2 dex-2 move+100 class=thief race=elf gender=F
 str+2 dex-2 move+100 MASK=-Race +Dwarf
 ```
 
-The listed effects will be given to the mob. All parameters use the + or - adjuster, except the class, race, and gender, ableprofs, ableticks, ablehpcosts, ablemncosts, ablemvcosts, and ablelvls parameters. Valid parameters are as follows:
+The listed effects will be given to the mob. All parameters use the + or - adjuster, except the class, race, and gender, ableprofs, ableticks, ablehpcosts, ablemncosts, ablemvcosts, and ablelvls parameters (but see the first note below). Valid parameters are as follows:
 
 strength dexterity constitution charisma wisdom intelligence
 
@@ -454,6 +454,11 @@ By default, the values + or - are added to the existing values. However, if MULT
 The RONDEATH parameter, when set to true, causes this property to disappear on the death of the item owner, the mob, or a mob in the room.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. This may seem a strange parameter for a mobs-only property, but perhaps you can find a use for it. :) See ZAPPERMASKS for more information on zapper mask syntax.
+
+Notes:
+
+- Code check: the word list the parser knows (shared by Prop_Adjuster, Prop_HaveAdjuster, Prop_WearAdjuster, Prop_RideAdjuster, Prop_HereAdjuster and Prop_UseAdjuster) contains `ABLEPROFS` and `ABLELVLS` but not `ABLETICKS`, `ABLEHPCOSTS`, `ABLEMNCOSTS` or `ABLEMVCOSTS`. The code that would apply those four exists, but a text using them is reported as an illegal parameter and they do nothing. Only `ableprofs` and `ablelvls` work (unverified by running the game; tested by calling the parser on its own).
+- Names are matched by prefix: the three-letter forms `str`, `dex`, `con`, `int`, `wis`, `cha`, `maxstr` and so on work, as do `abi`, `arm`, `att`, `dam`, `dis`, `lev`, `rej`, `sen`, `spe`, `wei`, `hei`, `hit`, `hun`, `man`, `mov`, `thi`.
 
 ### Prop_AffectReTick
 

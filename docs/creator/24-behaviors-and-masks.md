@@ -1942,11 +1942,14 @@ area.
 | `ITEMS=YES/CONT/LID/LOCK/NO` | `YES`: any items; `CONT`: containers only; `LID`: containers with lids; `LOCK`: containers with locks; `NO`: never. | NO |
 | locale words | Which room types are checked (`-ALL +CityStreet`). | all |
 
-The settings go before the first `;`.
+The `ROOMS`, `ITEMS`, `EXITS` settings and the locale words are read only when the
+parameter text contains a `;` (they are taken from the part before it); with no
+`;` they are ignored and the defaults apply. The shipped help examples have no
+`;`, so as written they only get the defaults: end the settings with a `;`.
 
 ```text
-RandomTraps min=10 max=20 chance=25 mintraps=1 maxtraps=10 EXITS="YES" ITEMS="YES" ROOMS="YES"
-RandomTraps min=10 max=20 chance=25 ROOMS="YES" ITEMS="NO" -ALL +CityStreet
+RandomTraps min=10 max=20 chance=25 mintraps=1 maxtraps=10 EXITS="YES" ITEMS="YES" ROOMS="YES";
+RandomTraps min=10 max=20 chance=25 ROOMS="YES" ITEMS="NO" -ALL +CityStreet;
 ```
 
 ### Regenerate
