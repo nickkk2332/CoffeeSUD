@@ -1465,7 +1465,7 @@ these functions, each called only if present:
 | Function | When | Effect of the result |
 | --- | --- | --- |
 | `onCreated(mob)` | A character has been made | none |
-| `onCreationStep(mob, step, answer)` | After each creation step: `race`, `gender`, `stats`, `class`, `factions`, `deity`, and `origin`, `kit`, `traits`, `template`, and the lower-case name of each `creation.ini` question | none |
+| `onCreationStep(mob, step, answer)` | After each creation step: `race`, `gender`, `stats`, `class`, `factions`, `deity`, `origin`, `kit`, `traits`, `template`, and the lower-case name of each `creation.ini` question | none |
 | `statRoll(mob, bonus)` | `STARTSTAT=SCRIPT`: set the stats yourself, or return `{ strength: 14, dexterity: 12 }` (names, abbreviations or name starts) or a list in base stat order; stats left out are `BASEMINSTAT` | the stats |
 | `xpGain(mob, source, amount)` | Each positive experience gain, with its source tag | the experience given instead; not below 0 |
 | `onLevel(mob, level)` | After a level's gains | none |

@@ -1279,7 +1279,7 @@ player-visible string goes through `L()` with `@x1`...`@x4` variables.
 
 Security patterns used in the code base: `CMProps.isSinglePlayer()` (any
 player; `Wait`), `SaveGame.isDevMode() || SaveGame.isBuilderMode()` (developer
-commands such as `TIMESCALE`), `CMSecurity.isAllowed(mob, mob.location(),
+commands such as `TIMESCALE`; `SaveGame` is `core.save.SaveGame`), `CMSecurity.isAllowed(mob, mob.location(),
 CMSecurity.SecFlag.X)` and `CMSecurity.isAllowedAnywhere(mob, SecFlag.X)`
 (`Goto`: permissions granted to the Archon group), and plain `true`.
 
@@ -1300,10 +1300,10 @@ is `KEY=\` followed by lines each ending in `\n\r\` (the last without a trailing
 backslash), with a blank line between entries. Copy the layout of a neighbour
 (`WAIT=` in `help.ini`, `TIMESCALE=` in `arc_help.ini`).
 
-Commands from the world: a builder can also define a command without Java
-(`GenCommand`, kept in `world/custom/commands/`). A JavaScript command is a
-`.js` file in `world/js/commands/` or a `cm.command(...)` registration; see
-[JavaScript](05-javascript.md).
+Commands without Java: a builder can define a generic command (`GenCommand`,
+kept with the world's custom objects; see [World workflow](02-world-workflow.md)),
+and a JavaScript command is a `.js` file in `world/js/commands/` or a
+`cm.command(name, fn)` registration; see [JavaScript](05-javascript.md).
 
 ### Ability (a spell)
 
@@ -1576,10 +1576,14 @@ public class Prop_Sturdy extends Property
 }
 ```
 
-On an item, a property's effect applies to the item's *owner* only if the
-property implements `TriggeredAffect` and says when (`Prop_HaveAdjuster`,
-`Prop_WearAdjuster` and the other `Have`/`Wear`/`Ride`/`Here` families are the
-models); otherwise it applies to the item itself. Parameter parsing helpers: the
+A property on an item normally affects the item itself. The properties meant to
+affect whoever carries, wears, rides or stands in something (the
+`Prop_Have...`, `Prop_Wear...`, `Prop_Ride...` and `Prop_Here...` families:
+`Prop_HaveAdjuster`, `Prop_WearAdjuster`...) are written to apply to the owner
+and implement `TriggeredAffect`, whose `triggerMask()` says when it applies
+(`TRIGGER_ALWAYS`, `TRIGGER_WEAR_WIELD`, `TRIGGER_GET`, `TRIGGER_USE`,
+`TRIGGER_ENTER`, `TRIGGER_BEING_HIT`...). Copy one of those for an item
+property. Parameter parsing helpers: the
 `CMParms.getParm...` family reads `KEY=value` anywhere in a string (the match is
 case-insensitive and by start of word); `CMParms.parseEQParms(text)` returns a
 map. A property's help goes in `resources/help/arc_properties.ini` as

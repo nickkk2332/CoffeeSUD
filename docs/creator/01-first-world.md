@@ -590,7 +590,8 @@ MODIFY harl
 ```
 
 (`MODIFY MOB harl` with no field is an error; `MODIFY` followed only by the
-name opens the editor for a mob or an item.) Read the menu for the line that
+name opens the editor for a mob or an item, and `MODIFY MOB harl MISC` does
+the same.) Read the menu for the line that
 starts `Inventory:`; on a stock build it is number 25 (the numbers shift if
 your world adds factions). Type its number at `Edit which?`, then:
 
