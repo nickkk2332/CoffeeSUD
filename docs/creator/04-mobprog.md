@@ -468,8 +468,11 @@ Other facts about the loop:
   area) is a runaway: the engine logs `Attempt to enque more than N events`
   with a queue report and clears it.
 - Scripts run on the single game thread. A prompt command (`MPPROMPT`,
-  `MPCONFIRM`, `MPCHOOSE`) marks its program to run on its own thread so the game
-  does not freeze while the player types; `MPWAIT` and `MPMENU` never block.
+  `MPCONFIRM`, `MPCHOOSE`) marks its program as one that may block, but in
+  single-player it is still queued as a job on the game thread, so while it waits
+  for the player's answer no tick group runs (read from the code, not observed in
+  play; see [MPPROMPT](27-mobprog-commands.md#mpprompt)). `MPWAIT` and `MPMENU`
+  never block, which is why `MPMENU` is the better choice.
 - A long-running program holds up the game. `SCRIPTSLOW=ms` in `coffeemud.ini`
   logs every trigger that runs longer, with its host, file and line.
 
@@ -1853,7 +1856,7 @@ while a save holds paused bodies or alarms is allowed but can leave stale entrie
 | A name with spaces fails as a target | Quote the first argument of `MPAT`, `MPFORCE`, `MPCAST`, `MPECHOAT` (`'The Gate Room'`), or pass an object code (`$n`). |
 | A shared script file edit changes every user | That is `EDIT SCRIPT` on a `LOAD=` host: it edits the file. Use `EXTRACT SCRIPT` to split a host from a shared file, or give each host its own copy. |
 | JavaScript block does nothing | `JSCRIPTS` is 0, or 1 and the block is not approved (`MODIFY JSCRIPTS`); the block has a syntax error (`SCRIPTCHECK` compiles it). |
-| Prompt commands seem to freeze or double up | `MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` run on their own thread; do not start two on one input stream. Prefer `MPMENU`. |
+| Prompt commands seem to freeze or double up | `MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` wait for the player on the game thread, so the world stands still until the answer or the timeout; do not start two on one input stream. Prefer `MPMENU`. |
 | `LOAD=world:scripts/x.script` runs twice | Every file in `world/scripts/` is also attached to the hidden `WORLD` host. Move per-NPC scripts to `world/resources/progs/`. |
 
 ### Style rules that prevent most bugs

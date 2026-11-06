@@ -192,7 +192,7 @@ default folder plus any extra paths in the matching `coffeemud.ini` key:
 | `ARMOR` | `Items/Armor/` | `Armor` | `ARMOR` |
 | `MISCMAGIC` | `Items/MiscMagic/` | `MiscMagic` | `MISCMAGIC` |
 | `CLANITEMS` | `Items/ClanItems/` | `ClanItem` | `CLANITEM` |
-| `TECH`, `COMPTECH`, `SOFTWARE` | `Items/BasicTech/`, `Items/CompTech/`, `Items/Software/` | `Technical`, `TechComponent`, `Software` | `TECH` (all three) |
+| `TECH`, `COMPTECH`, `SOFTWARE` | `Items/BasicTech/`, `Items/CompTech/`, `Items/Software/` | `Technical`, `TechComponent`, `Software` | `TECH`, `COMPTECH`, `SOFTWARE` |
 | `BEHAVIORS` | `Behaviors/` | `Behavior` | `BEHAVIOR` |
 | `COMMANDS` | `Commands/` | `Command` | `COMMAND` |
 | `CMTESTS` | `Tests/` | `CMTest` | `TEST` |
@@ -510,7 +510,7 @@ object created at boot from a class in `Libraries/` (or `core/database`,
 every time (`CMLib.flags().isSleeping(mob)`); do not cache the library in a
 static field, because the accessor depends on the current thread group (see
 below). The `CMLib.Library` enum lists them; each accessor returns the
-interface in the third column.
+interface in the second column.
 
 | Accessor | Interface | Implementation | What it is for |
 | --- | --- | --- | --- |
@@ -575,7 +575,7 @@ interface in the third column.
 | `CMath` | Numbers: `s_int`, `s_double`, `isInteger`, `isNumber`, `bset(mask, bit)`, `div`, `mul`, `random()` (the seeded game generator; never use `Math.random()` or a new `java.util.Random`, see below) |
 | `CMStrings` | Strings: `capitalizeAndLower`, `padRight`, `removeColors`, `replaceVariables`, `startsWithIgnoreCase` |
 | `CMParms` | Parameter strings and lists: `parse`, `combine(list, from)`, `parseCommas`, `getParmInt/Str/Bool/Double(text, key, default)` (read `KEY=value` from a parameter string, key match is case-insensitive and by start of word), `parseEQParms`, `toListString` |
-| `Resources` | The text and object cache: `getFileResource(name, reload)`, `submitResource`, `removeResource` |
+| `Resources` | The text and object cache: `getFileResource(name, reportErrors)`, `submitResource`, `removeResource` |
 | `CMFile` | The sandboxed virtual file system (`CMFile.FLAG_LOGERRORS`...). Paths are relative to `CoffeeMud/`, forward slashes, and cannot leave it |
 | `Log` | Logging, see [Logging](#logging) |
 | `GameTime`, `GameRandom` | The game clock and the seeded generator, see below |
@@ -1204,8 +1204,9 @@ How the parser finds a command (`EnglishParser.findCommand`): the first word, in
 upper case, is looked up in the command table; if the command passes its
 `securityCheck` and has not been disabled (`DISABLE=COMMAND_...`), it runs. Then
 come the mob's skills by trigger word, socials, channels, journals. Only after
-all of those fail does it retry with prefix matches (`TAL` for `TALLY`). The
-prefix match takes the first command found whose access word starts with what
+all of those fail does it retry with prefix matches (`TAL` for `TALLY`), in the
+order the mob's skills, then commands, then socials, channels and journals. The
+command prefix match takes the first command whose access word starts with what
 was typed, in no promised order, so give a command a short word of its own if
 it should be typeable in short form, and make sure the word does not hide
 behind a skill or social that has the same one.
@@ -1460,7 +1461,8 @@ The pieces of `StdAbility` the skeleton uses:
   in place of `beneficialAffect` and `beneficialWordsFizzle`.
 - `beneficialAffect` and `maliciousAffect` copy the ability, set its invoker,
   give it a duration (`getBeneficialTickdownTime`; `tickAdjustmentFromStandard`
-  is the second-to-last argument, 0 for the standard length) and register it on
+  is the last argument of `beneficialAffect` and the second-to-last of
+  `maliciousAffect`, 0 for the standard length) and register it on
   the target. The copy, not the prototype, is the effect, which is why
   `affectPhyStats` can use `invoker()`.
 - A malicious spell should check `msg.value()` after sending: a positive value
@@ -2306,7 +2308,7 @@ its ID plus one string**; state outside that string needs a hook.
 | Behavior | ID and `getParms()` in the host's behavior list | `getRunState()` and `setRunState(String xml)`: the `STATE` stat. The campaign save writes it under the behavior's ID and its position among behaviors of that ID. Times in it should be game time *left*, not absolute times, so they mean the same after a restore. Reached through `getStat("STATE")` / `setStat("STATE", xml)` and displayed by `STAT BEHAVIORS` through `getStat("DEBUG")` |
 | Item (standard class) | ID, level, ability, uses, rejuv and `text()` (`ITEXT`) | `text()` and `setMiscText` |
 | Item (generic class) | Every stat code: `getStatCodes()` and `getStat`/`setStat` | `GenItem` stat codes; add more with `EXTVAR_` (below) |
-| Mob (standard class) | Class ID, level, ability, rejuv and `text()` (`MTEXT`), plus the mob's inventory, effects and behaviors; the stats and names its constructor sets come back from the constructor | `setMiscText` / `text()` |
+| Mob (standard class) | In the world file: class ID, level, ability, rejuv and `text()` (`MTEXT`) only; the stats, names, equipment, behaviors and permanent effects its constructor sets come back from the constructor. A campaign save adds the mob's timed effects and behavior `STATE` | `setMiscText` / `text()` |
 | Locale, exit | The room's or exit's data fields; for a locale the class ID | Properties and behaviors on the room |
 | Race, class, command, behavior from world data | A `Gen*` object saved as XML in `world/custom/...` | `getStat`/`setStat` |
 | Library | Nothing (a service, rebuilt each start) | State in a world file or save is your library's own job: see `core/save/` |

@@ -166,7 +166,7 @@ Every program is executed top to bottom. Blocks (`IF`, `SWITCH`, `FOR`, `WHILE`,
 - `BREAK` ends the program (or the nearest enclosing `FOR` / `WHILE` loop).
 - `CONTINUE` ends the current pass of the nearest `FOR` / `WHILE` loop.
 - A command that pauses the program (`MPWAIT`) ends the current run and queues the rest.
-- A prompt command (`MPPROMPT`, `MPCONFIRM`, `MPCHOOSE`) marks the program as one that may block, and runs it on its own thread so the game does not freeze while the player answers.
+- A prompt command (`MPPROMPT`, `MPCONFIRM`, `MPCHOOSE`) marks the program as one that may block (flag `SPAWN`) and hands it to the thread engine's `executeRunnable`. In single-player that queues it as a job on the game thread, not a thread of its own, so it runs after the current job, and while it waits for the player's answer no tick group runs (only other queued jobs do). Read from the code, not observed in play.
 
 ### Timing
 
@@ -1524,7 +1524,7 @@ mpscript $n SAVABLE GREET_PROG 100\;mpecho The wolves howl, $n.\;~\;
 
 ## Asking the player
 
-`MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` **block**: the program waits for the player's answer, so the engine runs such a program on a separate thread (it marks the program `SPAWN`). They need a character with a session, that is a player or party member; aimed at an NPC they do nothing. With party windows off, a prompt to a party member in the background appears at the terminal with the member's name in front. If the player does not answer in time, or leaves, the program ends (the command returns an empty result). `MPMENU` does **not** block.
+`MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` **block**: the program waits for the player's answer, so the engine marks the program `SPAWN` and queues it with `executeRunnable`. In single-player that is a job on the game thread (not a separate thread), so the world's ticks pause until the player answers or the prompt times out (read from the code, not observed in play). They need a character with a session, that is a player or party member; aimed at an NPC they do nothing. With party windows off, a prompt to a party member in the background appears at the terminal with the member's name in front. If the player does not answer in time, or leaves, the program ends (the command returns an empty result). `MPMENU` does **not** block.
 
 The answer is stored as a script variable on the *target's name* (`MPSETVAR <name> <var> <answer>`), so read it back with `$<$n VAR>` or `VAR($n VAR == ...)`.
 
