@@ -1511,8 +1511,8 @@ properties. An item gets at most one prefix and one suffix that fit its kind and
 level, picked by weight.
 
 **Where the data is.** `world/affixes.xml`, else `resources/randareas/affixes.xml`
-(or the world's own copy of it in `world/resources/randareas/`). It is read once;
-`Affixes.reload()` (used by tests) rereads it, and a game restart picks up edits.
+(or the world's own copy of it in `world/resources/randareas/`). It is read the
+first time it is needed and then cached: restart the game after editing it.
 
 **Format.** `<AFFIXES>` holds `<AFFIX>` tags:
 

@@ -945,7 +945,7 @@ AREA="Old Vael"
 
 | Option | Meaning |
 | --- | --- |
-| `ROOMS=` | Comma-separated room IDs, or ranges `Area#first-last` (at most 10 000 rooms per range). |
+| `ROOMS=` | Comma-separated room IDs, or ranges `Area#first-last` (a range covers at most about 10 000 rooms). |
 | `AREA="name"` | Every room of that area. |
 | `MARK=room:G:"label"` | A labelled single-character glyph on a room. The label can be quoted or one word. Several `MARK=` may be given. |
 | `COLOR=code` | Colour of the marks (default `r`). |
@@ -1311,7 +1311,8 @@ Learned languages, translators, and room and carried-item interpreters still
 work, so a captured interpreter (`Prop_LangTranslator`) or a player who has
 learned Orcish can bargain with the chieftain; everyone else gets shrugs. When
 it is attached, a monolingual creature that speaks Common switches to its first
-declared language, so its replies are in that language.
+declared language (unless Common is one of the declared languages), so its
+replies are in that language.
 
 The same restriction is available on `Prop_LanguageSpeaker` with
 `UNDERSTANDS=ONLY LANGUAGE=Orcish`.
@@ -1477,7 +1478,8 @@ and the items the learner carries. Every exposure is counted (even when the
 chance roll fails); a successful roll grants the language at `START` once the
 count has reached `GRANTAFTER`, respecting the language limit, or raises a known
 language by the gain, up to `MAX`. Live effects are updated immediately.
-Counters are saved per character, and an item keeps its identity when it moves
+Only one immersion property helps with each exposure (the first that passes its
+chance and cap). Counters are saved per character, and an item keeps its identity when it moves
 from room to room, so a carried teaching item does not start over.
 
 ### Foreign inscriptions inside descriptions

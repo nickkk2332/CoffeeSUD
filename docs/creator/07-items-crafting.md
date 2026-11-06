@@ -930,8 +930,8 @@ Shrimp	1	lantern eel	12	-HOUR +22
 ```
 
 A masked fishing row carries its own value, so a fish can be worth more in one
-area. Hunting and fishing pick among the matching rows weighted by their frequency; the
-herb, flower and mushroom picks weigh each row by frequency plus one.
+area. Hunting and fishing pick among the matching rows weighted by their frequency;
+when a mushroom table has masks, Mycology weighs each row by frequency plus one.
 `VALIDATE RECIPES ALL` checks `hunting.txt` and `fishing.txt`.
 
 ### Data gathering skills

@@ -1,6 +1,6 @@
 # Characters, game start and progression
 
-[Handbook](README.md) · Feature families [P](feature-index.md#p), [S](feature-index.md#s)
+[Handbook](README.md) · Feature families [P](feature-index.md#p-characters-and-progression), [S](feature-index.md#s-saves-and-world-files)
 
 This chapter covers everything that makes a player character: races, character
 classes, the creation flow and the data files that shape it (creation steps,

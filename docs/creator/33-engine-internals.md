@@ -1422,3 +1422,417 @@ interruption can hold a worker.
 replacement keeps declared state and refuses incompatible state),
 `review-workflows.js` (isolated jobs, native call timeout completion).
 
+## The party and session layer
+
+### Purpose
+
+CoffeeSUD has one human player and one process console. The player can have several
+characters in the world at once (a party, or characters left on their own). The
+engine still expects every player character to have a `Session`, so each character
+that is not at the terminal gets a session with nothing behind it.
+
+Source: [Party.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java),
+`Common/ConsoleSession.java`, `Common/PartySession.java`, `Common/WindowSession.java`,
+[CharacterWindow.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CharacterWindow.java),
+[WindowPanel.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/WindowPanel.java),
+[ConsoleInput.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ConsoleInput.java),
+[ProfileOwner.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ProfileOwner.java).
+Creator-facing commands (PARTY, AS, SWITCH, CONTROL) are in
+[chapter 31](31-saves-and-party.md).
+
+### Sessions
+
+- `ConsoleSession` (`Common`) is the terminal: a `DefaultSession` whose connection is
+  the process's standard input and output. No telnet negotiation is sent and telnet
+  commands the session writes are filtered. When standard input ends, the connection
+  reports itself closed, so the session logs out and saves the player.
+- `ConsoleInput` is a singleton `InputStream` with one daemon pump thread reading
+  `System.in` into a `LinkedBlockingDeque<Integer>`. It lives in `core`, which the
+  system class loader loads once, while session classes are reloaded at each boot;
+  that is how an in-process `RESTORE` keeps what the player typed ahead. `isFinished()`
+  is true when standard input ended, the queue is empty and 1.5 seconds passed.
+- `PartySession` extends `DefaultSession` with a `PartySocket` that reads nothing and
+  discards output. Its `autoLogin(name, password)` loads the character with
+  `CMLib.players().getLoadPlayer` and runs `CMLib.login().completePlayerLogin`; there
+  is no password because these sessions exist only for the player's own characters.
+- `WindowSession` extends `PartySession`: with `WINDOWS=1` and a display
+  (`CharacterWindow.canOpen()`), its socket is a `CharacterWindow` (Swing) showing what
+  the character sees, with a line to type commands into and an optional panel
+  (`WindowPanel`: character state, map, party; `WindowPanel.setSections`). Closing the
+  window calls `Party.rest(mob)` on the game thread. With no display it behaves as a
+  `PartySession`.
+
+`Party.isPartySession(S)` is true for both. Code that wants "the player's terminal"
+must exclude party sessions: `Party.terminalOf(mob)` returns the non-party session of
+the same profile. Several engine places already do (`DefaultScriptingEngine`
+`MPECHOAT` routing, `JSCm.player`, `Narration`).
+
+### Profile and ownership
+
+All the player's characters share one `PlayerAccount` (the profile, `CMACCT`); the
+login replaces CoffeeMud accounts. `Party.profileOf(mob)` returns
+`mob.playerStats().getAccount()`. `othersInWorld(mob)` lists the profile's other
+characters currently in the game. `ProfileOwner` implements the reserved owner
+`@PROFILE`: any character of the profile owns what the profile owns (land, rooms,
+private items, vessels), and a world file can ship a home owned by `@PROFILE` that is
+never wiped as a nonexistent owner. `OptionalModules.profile(mob)` keys on the same
+account.
+
+### Party model and turns
+
+A party is the group following one leader (`leaderOf(mob)` is
+`mob.getGroupLeader()` or the mob). `leadsParty(leader)` is true if another of the
+profile's characters in the world follows them. State is static in `Party`:
+`turns` (`Turns.LEADER` or `Turns.ALL`), `order` (names), `onTheirOwn` (names),
+`meetWhereLeft`, `fightEachOther`, `windows`, plus per-turn sets `waited` and `told`
+and the member currently `acting`. All of the persistent ones are written to the save
+header (`partymeet`, `partyfight`, `partyturns`, `partyorder`, `partyalone`) and
+restored in `beforeBoot`; `fightEachOther` is applied in `afterBoot` after the boot
+read `PLAYERKILL`. `setFightEachOther` rewrites `CMProps.Str.PKILL` to
+`ALWAYS-100000` or `NEVER` and sets each player's `PLAYERKILL` attribute, because the
+engine allows player versus player fights only when both have it.
+
+Turn-based time with a party (`turnOf(mob)` answers what a command that takes time may
+do):
+
+| Result | Meaning |
+| --- | --- |
+| `Turn.LEAD` | Go ahead and move the world: the leader, or anyone not in a party. In `Turns.ALL` the leader is held (`WAIT`) until every member who is not `onTheirOwn` has a queued command or has `WAIT`ed; `toldWaiting` limits the message. |
+| `Turn.ORDER` | The member currently `acting`: run without moving the world. |
+| `Turn.WAIT` | A non-leader's command waits for the leader's turn. |
+
+`beforeLeaderActs(leader)` runs members' queued orders before the leader acts (all of
+them in `LEADER`; those ahead of the leader in the party's order in `ALL`);
+`afterLeaderActs(leader)` runs those after the leader in `ALL`, ends the turn
+(`endTurn` clears `waited`, `told`, `toldWaiting`) and fires `ScriptEvents.turn(leader)`
+(TURN_PROG and the turn count). `passTurn(leader)` is `WAIT`. `carryOut(M)` sets
+`acting = M` and runs `M.dequeCommand()` through `actWithTerminal`. `turnMillis(leader,
+ms)` returns how far the world advances after the leader's action: at least one tick
+in `ALL`.
+
+`actWithTerminal(M, r)` is the trick that lets a background character's action show
+on the terminal: it swaps sessions between `M` and the character being played
+(`M.setSession(T); T.setMob(M); played.setSession(mine); mine.setMob(played)`) inside
+`synchronized(T)`, runs `r`, then swaps back in a `finally`. A windowed character just
+runs `r` (its own window shows it).
+
+Membership operations: `bringIn(mob, name, room[, restoring])` makes a `PartySession`
+or `WindowSession`, sets its account and `autoLogin`s the resting character (checks
+`WorldRules.activeRefusal(acct)` for the active-character limit unless `restoring`);
+`rest(M)` hands the lead on if needed, fires `ScriptEvents.party("REST", ...)`, saves
+the character and stops the session; `release(M)` detaches a background character's
+session so the terminal can play it (SWITCH); `handOver(leader, to)` makes `to` the
+leader and fires `party("LEAD", ...)`. `setWindows(on)` moves every existing
+background character to a new session type with `moveToNewSession`.
+
+### Persistence and restore
+
+`playerXML` writes each character with location, leader, hit points, effects, items and
+followers; `WorldState.finishRestore` brings back the played character, then calls
+`Party.bringIn(..., restoring = true)` for each member in `PARTY`, restores their
+state and sets leaders. Header fields restore the party settings. A character in the
+world but not played is saved with the others; characters resting in the profile are in
+the character tables only.
+
+### Invariants and pitfalls
+
+- A background character's session never reads input; commands reach it only through
+  `AS`, orders carried out by `carryOut`, or scripts.
+- Session classes are reloaded each boot but `Party`'s statics are not (it is in
+  `core`); `SaveGame.beforeBoot` resets what must be reset through the header. Do not
+  hold a `Session` in a static.
+- When touching code that sends text to "the player", send to the terminal's mob, not
+  to a party member, or the text is discarded by `PartySocket`.
+- Swapping sessions in `actWithTerminal` is not re-entrant for the same pair; do not
+  call it from inside itself for another member.
+
+### Tests
+
+`party-controls.js`, `sc8-party.js`, `st10-party.js`, `f-party-clan.js`, `p9-recruit.js`,
+`dt16-testchar.js`, `review-background.js` (background-party prompts go to the shared
+terminal; restored choices queue; narration without a visible window releases its
+hold).
+
+## Game time, time modes and pause
+
+### GameTime
+
+`GameTime` is the world's clock. Game logic reads `GameTime.now()` instead of
+`System.currentTimeMillis()`; logs, input timeouts and real dates stay on the system
+clock. It holds one immutable `State(gameAt, realAt, rate)` in a `volatile` field,
+replaced whole so a reader never sees half a change. While running,
+`now = gameAt + (sysNow - realAt) * rate`; while stopped (`realAt == 0`) it is
+`gameAt`.
+
+| Method | Effect |
+| --- | --- |
+| `now()`, `rate()`, `rateText()` | Read. |
+| `setRate(r)` | `TIMESCALE`: game milliseconds per real one, clamped to `MIN_RATE` 0.1 .. `MAX_RATE` 20; the scheduler is told through `setRateListener` because its sleeps were computed at the old rate. |
+| `isPaused()`, `isTurnBased()`, `isStopped()` | Pause, turn-based flag, or either (clock stopped). |
+| `pause()`, `resume()` | `PAUSE`: `pause` does nothing when turn-based (already stopped). |
+| `setTurnBased(on)` | Switch mode; clears `paused`; stops or starts the clock. |
+| `advance(ms)` | Move the clock at once; runs nothing on the way. |
+| `requestAdvance(ms[, until[, after]])` | Ask the scheduler to move a **stopped** clock forward step by step (no effect while it runs); `until` is a stop test checked after each step; `after` runs when the time has been taken (W4). |
+| `takeAdvance(maxStep)` | Scheduler only: take up to `maxStep` of the pending time, advance, and run `after` when it is all taken. |
+| `isAdvancing()`, `cancelAdvance()`, `checkStop()` | Query, cancel, and apply the stop test. |
+| `set(ms)` | Used only by a restore. |
+
+Why `requestAdvance` instead of `advance`: if you jump the clock, nothing due on the
+way (weather, hunger, scripts, cooldowns) happens. The scheduler
+(`ServiceEngine`) takes the pending time a step at a time, up to the next thing due,
+so everything happens in order. This is also why `Travel.elapse` uses it.
+
+### TimeMode and PAUSE
+
+`TIMEMODE TURNS|REALTIME` (`Commands/TimeMode.java`) calls `GameTime.setTurnBased` and
+fires GAME_PROG `TIMEMODE`. `PAUSE`/`RESUME` (`Commands/Pause.java`) call
+`pause()`/`resume()` and fire GAME_PROG `PAUSE`/`RESUME`. `WAIT [n]` (`Commands/Wait`)
+asks for `n` ticks with an early stop if the player is hurt, attacked or moved. In
+turn-based play a command that takes time runs and then the world moves on by as long
+as it took (`StdMOB` consults `Party.turnOf` and requests the advance); a command that
+must wait for its actions advances the world to the moment it can go. The prompt shows
+`(paused)`.
+
+The mode and pause are saved in the header (`timemode`, `paused`, `gametime`) and set
+in `beforeBoot` before the world loads. Anything that stores an **absolute game time**
+(cooldowns, contract end times, the unique-item `lost` list, `DUESNEXT`-style
+deadlines) is consistent because `GameTime.set` restores the same epoch; anything that
+stores real time would not be.
+
+`Narration` and `Waits` pause the clock for paged text and long waits
+(`GameTime.pause()` when single-player and not turn-based) and release it afterwards;
+the saved-state fields `paused` plus "temporary pause ownership" ensure a restore does
+not leave the game stuck paused.
+
+### TimeLock (zones)
+
+`Prop_TimeMode` on a room or area holds the time mode while the played character is in
+it (`MODE=TURNS|REAL...`, `ONLYCOMBAT`, `RESTORE`, `MSG`). `TimeLock.check(mob)` runs
+after moves and fight changes for a played character: entering a zone saves
+`previous` (the mode before) and `hold`s the zone's mode (firing GAME_PROG `TIMEMODE`);
+leaving, or ending combat when `ONLYCOMBAT`, `release`s and restores `previous` unless
+`RESTORE=false`. `TimeLock.heldBy()` lets `TIMEMODE` refuse while held. The previous
+mode is saved as header `timemodebefore` and restored with `TimeLock.restore`.
+
+### Pitfalls
+
+- Never use `System.currentTimeMillis()` for a duration that should freeze when the
+  game is paused or turn-based.
+- `requestAdvance` is ignored while the clock runs; check `isStopped()` first or use
+  `Travel.elapse`, which pauses, requests the advance and resumes in the `after`
+  callback.
+- `GameTime` statics survive an in-process restore (the class is in `core`); the
+  restore sets them from the header. A new game does not reset `rate`.
+
+### Tests
+
+`dt23-timescale.js`, `w28-timemode.js`, `w4-wait.js`, `sc2-time.js`, `st11-calendar.js`,
+`q11-deadline.js`, `p28-xptime.js`.
+
+## Travel helpers
+
+### Purpose
+
+`Travel` is the shared rule set for authored transport: journeys, transport lines,
+moving rooms, vessels, stables, tickets and travel time. Behaviours and properties
+implement small interfaces declared in `Travel`; the class itself holds routing,
+fares, temporary links and the elapsed-time bridge to `GameTime`. Creator-facing
+behaviour is in [chapter 30](30-travel-vehicles-instances.md).
+
+Source: [Travel.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java),
+[RouteStops.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/RouteStops.java),
+[Waypoints.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Waypoints.java),
+`Abilities/Properties/Prop_JourneyState.java`, `Prop_Journey.java`,
+`Behaviors/TransportLine.java`, `MovingRoom.java`, `Abilities/Misc/InstanceArea.java`.
+
+### Interfaces and their implementers
+
+| Interface | Methods | Implemented by |
+| --- | --- | --- |
+| `Travel.Stateful` | `travelState()`, `restoreTravelState(xml)` | `InstanceArea` and other effects; saved as `<ASTATE>` by `WorldState.statesXML` |
+| `Travel.InPlaceScaling` (extends `Stateful`) | `isInPlace()`, `rebuildInPlace(room, leader)` | `InstanceArea` |
+| `Travel.Helm` | `allowed(mob, ship)` | `Prop_HelmRestrict` |
+| `Travel.CommittedEntry` | `entering(host, who, from, to)` | `ResetWhole`, `InstanceArea` |
+| `Travel.BoardingReceipt` | `disembarked(who)` | `Prop_TicketTaker` |
+| `Travel.PassageSource` | `begin(who)` | `Prop_Journey` |
+| `Travel.Passage` | `depart`, `status`, `resumeJourney`, `cancelJourney` | `Prop_JourneyState` (and `Commands/Journey`) |
+| `Travel.StableService` | `stable(attendant, customer, request)` | `Nanny` |
+| `Travel.PacedVehicle` | `travelReady()` | `StdNavigableBoardable` |
+| `Travel.Timetable`, `Line` | `timetable()`; `arrivals()`, `isMoving()` | `TransportLine`, `Waits` |
+| `Travel.MovingRoute` | `refreshOverlay`, `clearOverlay`, `isAttached` | `MovingRoom` |
+
+`Travel.entering(who, from, to)` is the "entry work runs after veto checks and payment,
+before rooms receive ENTER" hook: it calls `CommittedEntry.entering` on the behaviours
+and effects of the destination room and its area. `Travel.disembarked(who, vessel)`
+calls `BoardingReceipt` on hosts aboard.
+
+### Key operations
+
+- `transfer(leader, passengers, to, look[, commit[, force]])`: validates **every**
+  passenger first (access, `okMessage` of the mob, the destination and the room being
+  left), returns false without moving anyone if one refuses, calls the `commit`
+  supplier (a fare), then moves them together, sending leave and enter messages and
+  `ScriptEvents.moved`. `force = true` skips the checks (a teleport).
+- `fare(...)` / `fares(...)`: one fare convention: price per head or flat, per-player
+  or leader pays, pet and cargo supplements; `fare` checks affordability of everyone
+  before charging anyone (`collect` false only checks).
+- `elapse(ms)`: advance the clock through the scheduler without skipping weather,
+  hunger or scripts. Single-player only; pauses a running clock, requests the advance
+  and resumes afterwards. `moved(traveler, from, to, exit)` calls it with
+  `stepMillis(...)` when a player is involved (`hasPlayer`), called from `MUDTracker`
+  and `StdNavigableBoardable`.
+- `stepMillis`: travel time from `Prop_TravelTime` on the exit, destination room,
+  destination area, source room or source area (first found), scaled by `VEHICLE`
+  (default 0.7), `MOUNTED` (0.5), `NIGHT` (1.5) options and a road's `TIME`; minutes
+  converted with `CMProps.getMillisPerMudHour()`.
+- `route(from, to, vehicle)`: the shortest path of directions; `sail`, `hitch`
+  (refuses a riding loop), `destination(name, who)`, `knownPort`, `vessel(name)`,
+  `label`, `value(function, object)` (script functions).
+- `temporaryLink(owner, from, dir, to, exit)`, `temporaryDoor`, `temporaryExit`,
+  `unlink(owner)`, `clearLinks()`: owner-keyed overlay links that do not exist in the
+  world files (a moving room's current door). The overlay is in weak maps and is
+  cleared by `clearRoutes()` (`MovingRoom.clearAll()` at load) and re-established by
+  `restoreRoutes()` (`MovingRoom.restoreAll()`), never exported.
+- `newInteriorName(base)` makes a unique instance area name `base_vN`.
+- `beginJourney(who, source, definition)` gets a `Prop_JourneyState` ability and calls
+  `depart`.
+
+### Persistence
+
+State that must survive a save is carried by `Travel.Stateful` effects (`<ASTATE>`),
+vessels' `getTravelStateXML()` (`<VESSELS>`), and the host behaviours' `STATE`
+(`MovingRoom`'s position). The restore order places vessels before characters
+(`putBackVessels` runs in `finishRestore` after the characters' own vessels are back)
+and calls `MovingRoom.restoreAll()` after effects.
+
+### Pitfalls
+
+- Never move several passengers one by one with `bringMobHere`; use `transfer` so that
+  a refusal moves none.
+- Temporary links are keyed by owner identity; unlink in the owner's `finalize`/stop
+  path or they leak until `clearRoutes`.
+- `elapse` does nothing when the game is not single-player or `ms <= 0`.
+
+### Tests
+
+`t-travel-core.js`, `t-journeys.js`, `t-transport.js`, `t-waypoints-stables.js`,
+`t-instances.js` (return resets, in-place scaling state, MovingRoom overlays never
+export), `ar-journeys.js`, and the played `travel` group.
+
+## Unique items
+
+### Purpose
+
+Unique and rare catalog items (DEVPLAN item 1): a catalog item has a **cap** (most copies
+in the world) and one of three kinds of uniqueness: `TIME` (at most the cap at once),
+`ONCE` (once the cap's number have appeared, no more) and `WHILE` (as once, but a lost
+copy may appear again after the item's number of game days). It may have several spawn
+rules, each `KIND RATE [WHEN] [MASK]`, sharing the cap. Kinds are `LIVE`, `DROP`,
+`ROOM`, `CONTAINER`; a container rule rolls on first `OPEN`, on the catalog's `TIMER`
+into a random matching container, or `BOTH`.
+
+Source: [Uniques.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Uniques.java).
+
+### Design
+
+- `Rule` (spawn kind, rate, `when`, mask text and compiled mask) is parsed by
+  `Uniques.parse(line, why)`; `rules(CataData)` returns the catalog's own rule plus the
+  extra ones, caching compiled rules by text. `Rule.text()` re-writes a rule as stored.
+- `Track` per item (upper-case name): `ever` (copies that have appeared), `lastLive`,
+  and `lost` (game times, oldest first). `HOWS = {TIME, ONCE, WHILE}`;
+  `WHENS = {OPEN, TIMER, BOTH}`.
+- `live(data, exclude)` counts copies in the game (in a room, or carried by a mob that
+  is) plus copies made but not yet placed (`pending`, a weak map filled by `appeared`
+  for copies not yet in the game).
+- `mayAppear(name, data, exclude)`: false if no cap or `live >= cap`; `TIME` true; else
+  `ever < cap` true; `ONCE` false; `WHILE` true if the oldest `lost` entry is at least
+  `uniqueDays * dayMillis()` old. `appeared(name, data, P)` increments `ever` or
+  consumes the oldest `lost`.
+- Hook points in the engine: `CMCatalog` (LIVE/DROP rolls via `dropRoll`, `ROOM` and
+  `CONTAINER` timers via `timer`, `observeAll` per catalog tick), `StdContainer.opened`
+  (`Uniques.opened`), `ItemRejuv` (`mayReturn`, `returned`), `StdMOB.admitCarried`
+  (a carried copy counts), `MUDPercolator` and `ScriptLib` (generators and
+  `MPOLOAD CATALOG` respect the cap), `WorldFiles.loadWorldFiles` (`registerWorld`
+  counts the copies placed in areas, **before** the catalog is read).
+
+### Persistence
+
+`toXML()` calls `observeAll()` then writes
+`<UNIQUES><U NAME EVER LIVE LOST="t1,t2"/>...</UNIQUES>` into `world.xml`;
+`fromXML(tag)` clears `tracks` and refills them. `UNIQUES` is **last** in the restore
+because items coming back from the save have already been counted by `admit`; a missing
+tag (older save) starts again from the copies in the game. Absolute game times in `lost`
+rely on `GameTime.set`.
+
+### Tests
+
+`item1-uniques.js`, `g6-loot.js`, `catalog-import.js`.
+
+## Organisations and guilds
+
+### Purpose
+
+`Organizations` and `Guilds` hold shared rules for clans, governments and NPC-run
+organisations so that commands, scripts and world content use one implementation.
+The creator view is in [chapter 9](09-society.md).
+
+Source: [Organizations.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java),
+[Guilds.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Guilds.java),
+[OrgCheck.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/OrgCheck.java),
+`Common/DefaultClan.java` (calls `Organizations.tick`).
+
+### Organizations
+
+- Clock: `now()` is `GameTime.now()` unless `CLANCLOCK` is not `GAME` (then the system
+  clock). `tick(C)` is called from `DefaultClan`'s tick; if `CLANCLOCK` is not `REAL` it
+  runs `dues(C)`, and once per game day it runs `changed(M)` for each member
+  and each NPC member, then `C.update()`.
+- Rules from data: `setting(C, key, fallback)` reads the clan's own stat first, then its
+  government's (`NPCFLAGS`, `DUESPERIOD`, `DUESGRACE`, `DUESLATE`, `DUESAUTO`,
+  `DUESNEXT`); `npcRun(C)` is the `NPCRUN` clan flag or `NPCFLAGS` containing it;
+  `npcMembers(C)` scans world mobs with a role in the clan.
+- Ranks: `rankTest`, `rankMask`, `memberValue(mob, clan, field)` (`POSITION`,
+  `RANKNAME`, `JOINDATE`, `DUESOWED`, `DONATEDGOLD`, `DONATEDXP`), `roleID`,
+  `rankDetails`, `merit(M, C)` (merit promotion/demotion: picks the best-ranked position
+  whose inner mask the member meets, whose seats are not full (NPC seats counted by
+  identity, not name), and, for a demotion, whose dues are not late), `changed(M)`
+  (re-evaluates a member's clans, forces `AutoAwards`, recovers stats; guarded by a
+  thread-local set against re-entry).
+- Dues: `dues(C)` advances the saved `DUESNEXT` deadline **before** collecting (so a
+  restore cannot charge twice), adds `periods * dues` to each member's owed amount,
+  optionally auto-pays (`payDues`, `payFromBanks`), and applies the late step
+  (`WARN`, `DEMOTE`, `EXILE` from `DUESLATE`) while firing CLAN_PROG `DUESLATE`.
+  `periodHours(C)` converts `DUESPERIOD` (`DAY, WEEK, MONTH, YEAR`) to hours of the
+  global clock.
+- Factions: every NPC-run clan gets a reaction faction `CLAN_<CODE>` from
+  `clanreaction_<code>.ini` or `examples/clanreaction.ini` (`clanFaction`, persisted or
+  `IFLAG_NEVERSAVE`); `refreshRelations` maps clan relations ally/war to faction
+  relations (+0.5 / -0.5).
+- Single-player voting: `soleProfileVoter` (a profile that holds all votes); party
+  helpers `partyClans`, `partyFactions`, `voterKey`, `memberActive`.
+
+### Guilds
+
+`Guilds.create(name, template, hallID)` is the validated scaffold used by `CREATE
+GUILD`: checks name, free exit in the hall, template government (`government(name)`
+searches stock governments), then creates an NPC-run `DefaultClan` (`C.create()`),
+its reaction faction, a guildmaster (`GuildMaster` behaviour with `CLAN=` `RANKS=MERIT`
+`DUES=TRUE`), a trainer (`MOBTeacher`), a quartermaster shopkeeper with a clan
+price rule, and a members' room gated by `Prop_ReqEntry` with `-CLANRANK`, linked to
+the hall and written to the cache (`DBCreateRoom`, `DBUpdateExits`, `DBUpdateMOBs`). It
+returns a reminder to save the world. `foundParty(founder, name, template)` founds a
+player clan from a party (single player only): every member must share the profile
+and be eligible; the cost (`CLANCOST`) is paid once by the founder.
+
+### Persistence
+
+Clans are in the state tables `CMCLAN` and `CMCLIT` and carried by saves; clans without
+player members are also world content (`clans.cmare`). The faction definitions for clans
+are files under the factions folder. Law and conquest state is saved in the area
+STATES (`s5-law.js`).
+
+### Tests
+
+`f-organizations.js`, `f-guilds.js`, `f-party-clan.js`, `ar-organizations.js`
+(rank cap counts same-name NPCs), `dt37-orgcheck.js`, `s5-law.js`.
+
