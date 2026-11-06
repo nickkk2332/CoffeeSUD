@@ -500,8 +500,9 @@ their `displayText()`: the *Affect String* of a `GenAbility`
 (`DISPLAY`). Effects with an empty display text are hidden. A display text
 wrapped in parentheses, such as `(Emberward)`, has the time remaining
 appended. `AFFECTS [TYPE or DOMAIN] [NAME|TYPE|DOMAIN|REMAIN]` filters and sorts;
-`AFFECTS spell`, `AFFECTS name "common skill"`. A character with the `CMDMOBS` flag can say `AFFECT`
-followed by `ROOM`, `AREA` or a target's name to see the effects on that
+`AFFECTS spell`, `AFFECTS spell remain`, `AFFECTS common_skill name` (join the words of a
+type or domain with an underscore). A character with the `CMDMOBS` flag can say `AFFECT`
+followed by `ROOM` (or `HERE`), `AREA` (or `ZONE`) or a target's name to see the effects on that
 thing (the output includes who caused each one).
 
 A character with the `SYSOPMSGS` attribute set also sees effects that have no
