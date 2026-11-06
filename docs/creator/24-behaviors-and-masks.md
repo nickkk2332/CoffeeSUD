@@ -1274,7 +1274,7 @@ MOBHunter min=50 max=1200 chance=75 -NAME "+Evil Wizards"
 
 Hosts: mobs. Timing default 140/140/100. Updates the mob in the engine's mob
 database at the given interval. In CoffeeSUD, where worlds are saved as world
-files and campaign saves, its use is doubtful; see the audit notes. It writes
+files and campaign saves, its use is doubtful. It writes
 the mob's base character stats (`STR=`, `INT=`... abbreviations) into its own
 parameters and restores them.
 
@@ -1921,7 +1921,7 @@ the map, by default anywhere in the world.
 | `NOWANDER` | Keep it in its area. |
 | locale words | Restrict the room types (`-air -underwater`). |
 | `"POOFIN=[MESSAGE]"` | Message when it arrives (spacing and quotation sensitive). |
-| `"POOFOUT=[MESSAGE]"` | Message when it leaves. Known defect: in the code `POOFOUT=` assigns the poof-in message (see the audit notes). |
+| `"POOFOUT=[MESSAGE]"` | Message when it leaves. Known defect: in the code `POOFOUT=` assigns the poof-in message, so the leave message is never set. |
 
 ```text
 RandomTeleporter min=10 max=20 chance=75 -air -underwater
@@ -2002,6 +2002,8 @@ item to 0.
 | `ONREENTRY=true` | CoffeeSUD: resets on return after everyone has left. | false |
 | `MINAWAY=[game hours]` | Minimum absence. | 0 |
 | `SKIPROOMS="[room mask]"` | Matching rooms are left unchanged, for example `SKIPROOMS="-LOCATION '+ROOMSTR(Sanctum)'"`. | none |
+
+Only one timing form is used: a bare number, else `TICKS`, else `DAYS`, else `RLHOUR`, else `MUDHOUR` (the first present wins).
 
 Last access and absence survive saves. `InstanceArea INPLACE=true` reapplies its
 type adjustments after resetting the real rooms, using the entering leader's

@@ -1794,7 +1794,7 @@ to change them all.
 ### 8. A custom verb on a room
 
 ```text
-CMDFAIL_PROG PRAY ALTAR
+CMDFAIL_PROG VENERATE ALTAR
 mpecho $n kneels before the altar and prays.
 if !affected($n Prayer_Bless)
   mpcast Prayer_Bless $n
@@ -1803,9 +1803,11 @@ return cancel
 ~
 ```
 
-On the altar's room, `pray at altar` now works: `CMDFAIL_PROG` runs when a command
+On the altar's room, `venerate altar` now works: `CMDFAIL_PROG` runs when a command
 fails or is unknown (before the player would see "Huh?"), the first word is the
-verb typed, and `RETURN CANCEL` keeps the failure message back. For a verb
+verb typed (pick a verb that is not already a command, skill or social: `PRAY` is
+a social, so the game would answer it itself), and `RETURN CANCEL` keeps the
+failure message back. For a verb
 that should always win over skills and socials, and be tied to one object, use
 `VERB_PROG` as in example 3.
 

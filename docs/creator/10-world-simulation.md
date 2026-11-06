@@ -245,7 +245,8 @@ WAIT UNTIL ARRIVAL
   A wait is capped at 72 game hours (the code says "You can wait three days
   at most", which is right only for 24-hour days); longer asks are cut to
   that.
-- `WAIT n` with n over 100 ticks is treated as a long wait.
+- `WAIT n` with n over 100 ticks is treated as a long wait (so `LONGWAIT`
+  applies; where it is `BUILDERS`, others are held to 100 ticks).
 - `WAIT UNTIL` takes `DAWN`, `DAY` (or `MORNING`), `DUSK`, `NIGHT`, `HOUR n`
   (0 up to hours-in-day minus 1), `DAY n` (day of the month), and on a
   vessel or mount `ARRIVAL`, `STOP` or `DOCK`. If it is already that time of
@@ -572,7 +573,7 @@ A calendar gives seasons a name; these tools make the world react:
 | `Schedule` behavior | An NPC's daily routine by `SEASON=`, `DAYS=`, `WEATHER=` as well as the hour. See [06-npcs-dialogue.md](06-npcs-dialogue.md). |
 | Holidays and `SCHEDULE` | Quests and holidays that start or run in a season. |
 
-**Prop_ClosedSeason** takes one or more of `SUMMER SPRING WINTER FALL DAY NIGHT DUSK DAWN RAIN SLEET SNOW CLEAR HEATWAVE THUNDERSTORM BLIZZARD WINDY DROUGHT DUSTSTORM COLD HAIL CLOUDY`
+**Prop_ClosedSeason** takes one or more of `SUMMER SPRING WINTER FALL DAY NIGHT DUSK DAWN RAIN SLEET SNOW CLEAR FOG HEATWAVE THUNDERSTORM BLIZZARD WINDY DROUGHT DUSTSTORM COLD HAIL CLOUDY`
 and an optional `MASK=[zapper mask]` last. While any named condition holds,
 the thing it is on is "closed": a mob or item becomes unseen, silent and
 unable to move or hear; a room becomes dark; an exit's door closes.

@@ -414,8 +414,8 @@ tag's class.
 | `AREA_NUMLEAFS` | layout | Number of leaf rooms. |
 | `AREA_MAXDEPTH`, `AREA_NUMROOMS` | layout | Greatest depth from the entrance, and number of rooms. |
 | `AREA_LEVELS` | `levels=` used | Number of floors. |
-| `ROOMTAG_NODETYPE` | each room | `surround`, `leaf`, `offleaf`, `street`, `square` or `interior`. |
-| `ROOMTAG_NODERUN` | each room | For streets: `ns`, `ew`, `nwse`, `nesw` (or `ud` under FILL). |
+| `ROOMTAG_NODETYPE` | each room | `surround`, `leaf`, `street`, `square` or `interior`. |
+| `ROOMTAG_NODERUN` | each room | For streets: `ns`, `ew`, `ud`, `nwse`, `nesw`. |
 | `ROOMTAG_NODEFLAGS` | each room | Any of `corner`, `gate`, `intersection`, `tee`, `offleaf`. |
 | `ROOMTAG_NODEEXITS` | each room | Comma list of exits (`,n,e,`). |
 | `ROOMTAG_NODEGATEEXIT`, `ROOMTAG_GATEEXITROOM`, `ROOMTAG_GATEEXITCLASS` | gate rooms | Direction of the way out of the area, the room outside, the exit class; with a direction number suffix (`ROOMTAG_NODEGATEEXIT3`) for gates of other directions. |
@@ -638,9 +638,9 @@ Under a `RACE` tag the same tags take extra attributes, `PROFF`, `LEVEL`,
 
 Used by a mob's `RACE` detail. If `CLASS` names an existing race, that race
 is used. Otherwise a new `GenRace` is built from the tag, needing at least five of the
-race's stat codes as attributes or children, and **it is registered as a new
-race and stored in the database**, so it persists. Because of that, `RACE`
-tags that build races are best kept to one-time use. Required: `CLASS`, `NAME`.
+race's stat codes as attributes or children, and **it is added to the engine's race list and
+saved through the race store (`DBCreateRace`)**, so it outlives the build.
+Because of that, `RACE` tags that build races are best kept to one-time use. Required: `CLASS`, `NAME`.
 Optional children: `WEAPON` (holding an `ITEM`: the natural weapon),
 `RESOURCES` (items), `OUTFIT` (items), `ABILITY`, `CULTUREABILITY`, `AFFECT`,
 `IMMUNITY`. Details are GenRace's stat codes, for example `CAT`, `VWEIGHT`,
@@ -722,8 +722,8 @@ GENLAYOUT
 
 | Layout | Origin | Shape |
 |---|---|---|
-| `MAZE`, `TREE`, `BRANCH`, `CROSS`, `MESH`, `SPOTTEDMESH` | inherited | Dungeon-like shapes: corridors, branches, crossing passages, meshes of rooms. |
-| `GRIDCITY`, `BOXCITY`, `BOXCITYSQUARE`, `APARTMENT` | inherited | Town-like: streets, blocks of buildings, squares, apartment blocks. |
+| `MAZE`, `TREE`, `BRANCH`, `CROSS`, `MESH`, `SPOTTEDMESH` | inherited | Dungeon-style shapes (a maze, a branching tree, a cross, meshes of rooms). |
+| `GRIDCITY`, `BOXCITY`, `BOXCITYSQUARE`, `APARTMENT` | inherited | Town-style shapes with streets, blocks and squares. |
 | `CAVE` | G16 | Smoothed random blobs and winding passages: a grid filled at random and smoothed, its largest open region grown to the size, each room joined to the one it was reached from and to about a quarter of its other open neighbours. |
 | `CLUMP` | G16 | A square block of rooms all joined to their neighbours, with short dead ends off its sides. The entrance is outside it. |
 | `LINEAR` | G16 | A road running away from the entrance (two thirds of the rooms) with spurs of one or two rooms off either side. |
@@ -738,10 +738,10 @@ percolator loads the folder, including the `LIBRARY` path's own `layouts/`
 folder).
 
 **Node types** (`$roomtag_nodetype`): `leaf` (one exit: a dead end), `street`
-(two exits in a line or corner), `square` (more than two), `interior`,
-`offleaf` (an interior beside a leaf), `surround`. **Flags**
-(`$roomtag_nodeflags`): `corner`, `gate`, `intersection`, `tee`, `offleaf`.
-**Runs** (`$roomtag_noderun`) for a street: `ns`, `ew`, `nwse`, `nesw`.
+(part of a run of rooms), `square` (a crossing of several), `interior`, and
+`surround` (the stock room groups treat it like a street). **Flags**
+(`$roomtag_nodeflags`): `corner`, `gate`, `intersection`, `tee`, `offleaf`. **Runs** (`$roomtag_noderun`) for a street: `ns`,
+`ew`, `ud`, `nwse`, `nesw`.
 
 **Build order.** Room templates run per node. The first node, the entrance,
 becomes room `#0` and is built first. Then **leaf groups** (in a randomised
@@ -1409,7 +1409,7 @@ how to look and who lives there. The stock themes (loaded by `example.xml` so
 | `town.xml` | A town (streets, houses, shops, an inn; adds an `Arrest` behavior). |
 | `prison.xml`, `rats.xml`, `lair.xml`, `oceanfloor.xml` | Special-purpose dungeons. |
 | `crypt.xml`, `ruins.xml`, `castle.xml`, `volcano.xml`, `sky.xml`, `mine.xml`, `sewer.xml` | G15 themes. |
-| `planet.xml` | Loads a set of the above for planetary use. |
+| `planet.xml` | A root file like `example.xml`: loads the shared banks and several terrain themes. |
 
 Shared banks: `inc_roomruns.xml` (directional wording such as
 `$roomexits_desc_long`), `inc_common.xml` (races, metals, woods, junk and
@@ -1639,7 +1639,7 @@ names no style.
 | Situation | What is saved | Where |
 |---|---|---|
 | Builder mode, `GENERATE AREA ... ` (not sandbox) | The area as ordinary content, with its `GENSEED` and `GENSOURCE` blurb flags. Rooms, exits, mobs, items. | `world/areas/<name>.cmare`, written by `SAVE` or on quit (the exporter writes every live area). |
-| Builder mode, `GENERATE ROOM/MOB/ITEM` | Ordinary content in the room it was placed. | The room's data in the world files; mobs and items need `SAVE CHANGED` ([World workflow](02-world-workflow.md#unsaved-rooms-undo-and-history)). |
+| Builder mode, `GENERATE ROOM/MOB/ITEM` | Ordinary content in the room it was placed, saved like anything built by hand. | The world files; see `LIST UNSAVED` and `SAVE CHANGED` in [World workflow](02-world-workflow.md#unsaved-rooms-undo-and-history). |
 | `GENERATE ... SANDBOX` | Nothing. The sandbox area and areas generated into it are unsavable. | None. |
 | `GENERATE PREVIEW` | Nothing. Built and destroyed. | None. |
 | A game in play (normal mode), `GENERATE`/`MPGENERATE`/`gen.area`/autogen instances | Areas and rooms made in play are recorded in the save as shapes (a new area's class, name and area data; new, changed and destroyed rooms), the instance children are remade by their parent, and the contents of rooms (mobs, items, doors) are applied on top as for any room. Generated quests are saved whole and made again from their scripts. | The campaign save ([state and persistence](state-and-persistence.md), [saves and party](31-saves-and-party.md)). |
@@ -1857,8 +1857,8 @@ What you may see: "a Grave-cold barrow-iron blade of the Last Watch" (level
 raised by 2 + 2, value by 20% + 20%, a 10% chance to cast Frost on a hit, +1
 strength and +10 hit points while wielded), or "a barrow-iron blade of Hollow
 Bones" (cursed: it cannot be taken off). The level window matters: at
-`mob_level=3` no `grave_cold` or `last_watch` can be picked and the blade comes
-out with fewer or no affixes. At most one prefix and one suffix are ever applied
+`mob_level=3` neither `grave_cold` nor `last_watch` can be picked, so the blade
+can only get `of Hollow Bones` or nothing. At most one prefix and one suffix are ever applied
 (`affixes="1?2"` means "one or two"). A cursed item is dangerous in
 play-testing; give it a way out ([Items](22-items.md)).
 
@@ -1901,7 +1901,7 @@ homes, in a cross shape: a lane through a green. `world/resources/randareas/ston
       <TITLE>a dwarf home</TITLE>
       <DESCRIPTION>A snug stone room with a hearth. You can go $roomexits_desc_long.</DESCRIPTION>
       <EXIT class="GenDoor" defclosed="true" />
-      <MOB class="GenMob" race="Dwarf" level="$level_range" condition="1?4&gt;1">
+      <MOB class="GenMob" race="Dwarf" level="$level_range" condition="1?2=1">
         <NAME>${SYSTEM_RANDOM_NAME:2-3:dwarvish:FULL}</NAME>
         <DISPLAY>$mob_name is here, stoking the fire.</DISPLAY>
       </MOB>

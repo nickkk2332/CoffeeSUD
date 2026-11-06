@@ -1681,7 +1681,7 @@ TYPE=COLD DAMAGE=1d6 SAVE=COLD WHEN="-WEATHER +BLIZZARD +SNOW" PROTECT="-EFFECTS
 TYPE=HEAT DAMAGE=@x1/2 ROOMS="-DOMAIN +DESERT" WARN="The sand burns through your boots."
 ```
 
-CoffeeSUD: a hazard zone. Each tick (EVERY) those in the room, or in the area (ROOMS a mask on each of them, as -DOMAIN +MOUNTAINS, for some of its rooms), take DAMAGE as TYPE's damage (COLD, HEAT, ACID, GAS, POISON, ELECTRIC, HOLY, UNHOLY, DISEASE, THINAIR), so resistances count: dice as 1d6+2 or a formula, @x1 their level. SAVE names the save that halves it (the type's own by default). DRAIN=MOVE or MANA takes it from moves or mana instead (THINAIR's default). AFFECT may give an effect, that percent of the time. WHEN is a mask checked on each every tick (the weather, the time), PROTECT the mask of those it spares; ONSET ticks pass before it starts, ESCALATE adds that percent each time in a row; WARN is said once as it starts. DARKONLY and LITONLY: only in the dark, or the light; NONPC: players only. NAME is what hurts (the biting cold), MSG the damage line.
+CoffeeSUD: a hazard zone. Each tick (EVERY) those in the room, or in the area (ROOMS a mask on each of them, as -DOMAIN +MOUNTAINS, for some of its rooms), take DAMAGE as TYPE's damage (COLD, HEAT, ACID, GAS, POISON, ELECTRIC, HOLY, UNHOLY, DISEASE, THINAIR), so resistances count: dice as 1d6+2 or a formula, @x1 their level. SAVE names the save that halves it (the type's own by default). DRAIN=MOVE or MANA takes it from moves or mana instead (THINAIR's default). AFFECT may give an effect, that percent of the time. WHEN is a mask checked on each every tick (the weather, the time), PROTECT the mask of those it spares; ONSET ticks pass before it starts, ESCALATE adds that percent each time in a row; WARN is said once as it starts. DARKONLY and LITONLY: only in the dark, or the light; NONPC: players only. NAME is what hurts (the biting cold), MSG the damage line. `DRAINMSG="[TEXT]"` (not in the parameter line above) is what a DRAIN is told.
 
 ### Prop_HelmRestrict
 
@@ -1937,7 +1937,7 @@ CoffeeSUD: an item's powers on demand, for anyone, with no class skill. Its hold
 **Parameters:**
 
 ```text
-TO=CHARACTER/ACCOUNT/CLAN/PLAYER/NPC/NOONE ON=PICKUP/EQUIP
+TO=CHARACTER/ACCOUNT/GROUP/CLAN/PLAYER/NPC/NOONE ON=PICKUP/EQUIP
 : (MESSAGE=[ZAPMSG]) (DEATHKEEP=TRUE/FALSE)
 ```
 
@@ -1951,6 +1951,7 @@ Allows an item to be bound when an event occurs to the person, account, or clan 
 
 Notes:
 
+- `GROUP` is accepted by the code but missing from the help. `TO=` and `ON=` take a full name or an abbreviation (`TO=CH`); the default is `TO=CHARACTER ON=PICKUP`, and `BOUND=` is written back by the engine to record who it is bound to.
 - `ON=` values match abbreviations correctly now (it compared against the TO string). In single-player the binding is to a character name.
 
 ### Prop_ItemGrowth
@@ -2264,6 +2265,8 @@ LANGUAGE=Orcish HEAR=1 READ=2 CHANCE=25% START=5 MAX=60 GRANTAFTER=20 ID=orc-cam
 
 CoffeeSUD addition. Lets a character pick up a language by exposure. `LANGUAGE=ANY` covers every language. `HEAR` and `READ` are the proficiency points gained per successful exposure by hearing or reading it; `CHANCE` is rolled per exposure. A language the character does not know is granted at proficiency `START` after `GRANTAFTER` exposures (within the world's `MAXLANGUAGES`). Knowledge grows up to `MAX`, immediately updating live effects. Exposure counters and learned abilities survive saves. The property can be carried, given to a creature, or placed on a room or area where immersion should happen. See the languages notes in chapter 11.
 
+Defaults (from the code): `LANGUAGE=ANY`, `HEAR=0`, `READ=0` (so set at least one of them or nothing is ever gained), `CHANCE=20`, `START=5`, `MAX=60`, `GRANTAFTER=25`. Exposure is counted before the `CHANCE` roll, so `GRANTAFTER` counts exposures, not successes. Only players are affected, and the first matching host (the character, the source, the room, the area, then carried items) is used for each exposure.
+
 ### Prop_LanguageSpeaker
 
 **Hosts:** rooms, areas, mobs, items (shipped help: Mobs, Items, Rooms, Exits, Areas)
@@ -2435,7 +2438,7 @@ FILE=randareas/loot.xml ID=goblin ROLLS=0?2 ON=DEATH GOLD=1?10
 FILE=randareas/loot.xml ID=chest ROLLS=1?3 ON=OPEN
 ```
 
-CoffeeSUD: a loot table: the ITEM tag ID of a template file (resources/randareas/, or the world's own), rolled ROLLS times, each a fresh roll with $mob_level, $area_level, $theme and $player_level set, if CHANCE (a percent, 100 by default) allows, and GOLD as money. ON=DEATH (a mob's default) puts it in the mob's corpse as it dies; ON=OPEN (a container's default) the first time the container is opened, and it stays rolled until its contents reset (a save keeps that); ON=SPAWN or RESET as the mob is brought to life, or as a player first comes into the container's room. A catalog entry (class="catalog") keeps the catalog's cap. A roll that gives nothing because its tracked items (MODBASE) cannot be made yet, as the items.modifiers module is off or its definitions fail CHECK, is not spent: a container rolls at its next opening, a mob's ON=SPAWN roll is made as it dies. resources/randareas/loot.xml has sample tables (goblin, chest).
+CoffeeSUD: a loot table: the ITEM tag ID of a template file (resources/randareas/, or the world's own), rolled ROLLS times, each a fresh roll with $mob_level, $area_level, $theme and $player_level set, if CHANCE (a percent, 100 by default) allows, and GOLD as money. ON=DEATH (a mob's default) puts it in the mob's corpse as it dies; ON=OPEN (a container's default) the first time the container is opened, and it stays rolled until its contents reset (a save keeps that); ON=SPAWN or RESET as the mob is brought to life, or as a player first comes into the container's room. A catalog entry (class="catalog") keeps the catalog's cap. A roll that gives nothing because its tracked items (MODBASE) cannot be made yet, as the items.modifiers module is off or its definitions fail CHECK, is not spent: a container rolls at its next opening, a mob's ON=SPAWN roll is made as it dies. resources/randareas/loot.xml has sample tables (goblin, chest). Defaults when not given: `FILE=randareas/loot.xml`, `ROLLS=1`, `CHANCE=100`.
 
 ### Prop_Lore
 
@@ -2549,7 +2552,7 @@ CHAR=I COLOR=y LABEL="Inn" LEGEND      or      HIDE
 CHAR=I COLOR=y LABEL="Inn" LEGEND
 ```
 
-CoffeeSUD addition. Sets a custom glyph and legend entry for the room on `MAP`, `AUTOMAP` and the window panel. `HIDE` hides the room's glyph. Rooms and areas made unmappable ([Prop_RoomUnmappable](#prop_roomunmappable)) stay excluded.
+CoffeeSUD addition. Sets a custom glyph and legend entry for the room on `MAP`, `AUTOMAP` and the window panel. `HIDE` hides the room's glyph. Defaults: `CHAR` is `#` for an indoor room and `o` otherwise, `COLOR` is `w`; `LABEL` appears in the legend only with `LEGEND`. Rooms and areas made unmappable ([Prop_RoomUnmappable](#prop_roomunmappable)) stay excluded.
 
 ### Prop_MapReveal
 
@@ -2905,6 +2908,8 @@ The game cannot be saved here, whatever its save mode (SAVEMODE in coffeemud.ini
 
 Disallows summoning of creatures or people INTO the affected place. The optional ALLOWNONAGGR parm may be added to disallow summoning only of aggressive mobs.
 
+The code also reads `MAGICONLY` (not in the help): by default the property stops any summoning skill, with the message "<name> attempt fails" for a non-magic one; with `MAGICONLY` only spell, prayer, chant and song summoning is stopped and non-magical summoning skills still work. Words are matched case-insensitively and separated by spaces.
+
 ### Prop_NoTeleport
 
 **Hosts:** rooms, areas
@@ -2923,7 +2928,7 @@ Disallows summoning of creatures or people INTO the affected place. The optional
 exceptions="area name#12,other area name"
 ```
 
-Disallows the casting of gate, teleport, portal, plantpass, and other spells INTO this area. If this is placed on an area, specific room or area exceptions may be given. By default, mob summoning skills, such as monster summoning, ARE allowed, but can also be disabled with nosummon=true. The optional exceptions argument can list room ids, area names, planarability, or spell ids. The NOSUMMON argument prevents summoning also, and INTERAREAOK allows/prevents teleportation inside an area with this property. MESSAGE can be used to change the fizzle message seen by the casters. REDIRECT is an optional room ID that will allow the teleport to procede, but only to the specific room.
+Disallows the casting of gate, teleport, portal, plantpass, and other spells INTO this area. If this is placed on an area, specific room or area exceptions may be given. By default, mob summoning skills, such as monster summoning, ARE allowed, but can also be disabled with nosummon=true. The optional exceptions argument can list room ids, area names, planarability, or spell ids. The NOSUMMON argument prevents summoning also, and INTERAREAOK (default true) allows/prevents teleportation inside an area with this property (false also blocks a teleport whose caster and destination are both inside the area). MESSAGE can be used to change the fizzle message seen by the casters. REDIRECT is an optional room ID that will allow the teleport to procede, but only to the specific room.
 
 ### Prop_NoTeleportOut
 
