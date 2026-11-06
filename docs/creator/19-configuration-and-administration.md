@@ -205,9 +205,9 @@ Read by the launcher (`SUD.java`) unless stated.
 | `JSTIMELIMIT_JRUN` | `30` | The same for `JRUN` scripts. |
 | `WINDOWPANEL` | commented | Panel sections beside each window: `STATUS`, `MAP`, `PARTY`. |
 
-Only `1` turns on `PARTYMEET`, `PARTYFIGHT` and `BUILDERAUTOSAVE` (the code
-compares the value to the string `1`). `BUILDER`, `DEV` and `WINDOWS` accept
-`1`, any word starting with `Y` or `T`, or `ON`.
+`BUILDER`, `DEV`, `WINDOWS`, `PARTYMEET` and `PARTYFIGHT` accept `1`, `ON`, or
+any word starting with `Y` or `T` (so `true`, `yes` and `on` work). Only `1`
+turns on `BUILDERAUTOSAVE` (the code compares the value to the string `1`).
 
 ### Time and calendar keys
 
@@ -484,7 +484,7 @@ game.
 | `DISCORD_JAR_PATH`, `DISCORD_BOT_KEY`, `TWITTER_*` | Chat integrations. |
 | `PRIVATERESOURCES`, `PRIVATERESOURCEPATH` | Resource sharing for several hosts in one process. |
 | `PROMPTBEHAVIOR` | Telnet go-ahead and carriage-return suffix. |
-| `KILMSGS`, `ACCMSGS` | `KILMSGS` is misspelt; the log channel is `KILLMSGS` (see [Logs](#logs-devlog-and-diagnostics)). `ACCMSGS` is the web server access log. |
+| `KILLMSGS`, `ACCMSGS` | `KILLMSGS` is the kills log channel (see [Logs](#logs-devlog-and-diagnostics)); the old spelling `KILMSGS` is still read. `ACCMSGS` is the web server access log. |
 | `CHANNELFILTER`, `EMOTEFILTER`, `SAYFILTER`, `POSEFILTER` | Profanity filters for player-to-player text. Left over; no players share a channel. |
 | `PRIDECATS`, `PRIDECOUNT`, `LOGOUTMASK` | Multiplayer features (top-player lists, restricting log-off) (unverified; they load without error). |
 | `I3ROUTERS`, `SMTPSERVERNAME`, `GVCLIENTID`, `GVCLIENTSECRET` | Intermud, mail and Grapevine; not in the shipped file. |
@@ -1063,7 +1063,7 @@ The log has channels, each set to one of `ON` (terminal), `OFF`, `FILE`
 | `WRNMSGS` | `BOTH`, forced to `FILE` | Warnings. |
 | `DBGMSGS` | `BOTH`, forced to `FILE` | Debug lines; needs `DEBUG` flags. |
 | `HLPMSGS` | `OWNFILE` | Failed `HELP` requests. |
-| `KILLMSGS` | `OFF` in the file as `KILMSGS` | Kills. The key the code reads is `KILLMSGS`; the shipped file's `KILMSGS=OFF` has no effect (the channel is off when blank). Set `KILLMSGS` to turn it on. |
+| `KILLMSGS` | `OFF` | Kills. The old spelling `KILMSGS` is also read, if `KILLMSGS` is blank. |
 | `CBTMSGS` | `OFF` | Detailed combat and XP lines. |
 | `ACCMSGS` | `OFF` | Web access log; inert. |
 
@@ -1507,7 +1507,6 @@ A reload (`WORLD RELOAD`) changes the world definitions, not `coffeemud.ini`;
 - **The log shows nothing on screen.** Intended: the launcher sends the main
   channels to `FILE`. Use `DEVLOG`, `tail -f mud.log`, or
   `./sud.sh DBGMSGS=BOTH`.
-- **`KILMSGS=ON` does nothing.** The key is `KILLMSGS`.
 - **The game rebuilds the world at every start.** The world files' checksum
   differs from `resources/fakedb/world.sum` each time: a file changes between
   runs (a tool rewriting it) or the cache folder cannot be written. `WORLD

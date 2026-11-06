@@ -2639,7 +2639,7 @@ Log.debugOut(ID(), "state is " + state);          // only when the DBGMSGS chann
 The channels are `info` (`sysOut`, `infoOut`), `warning` (`warnOut`), `error`
 (`errOut`), `debug` (`debugOut`), `help` (`helpOut`), `kills` (`killsOut`),
 `combat` (`combatOut`) and `access` (`accessOut`), controlled by
-`SYSMSGS`, `WRNMSGS`, `ERRMSGS`, `DBGMSGS`, `HLPMSGS`, `KILMSGS`, `CBTMSGS` and
+`SYSMSGS`, `WRNMSGS`, `ERRMSGS`, `DBGMSGS`, `HLPMSGS`, `KILLMSGS`, `CBTMSGS` and
 `ACCMSGS` in `coffeemud.ini` (`ON`, `OFF`, `FILE`, `BOTH`, `OWNFILE`). The
 single-player launcher sets the first four to `FILE`, so they go to
 `CoffeeMud/mud.log` (older logs rotate to `mud1.log` ... by `NUMLOGS`) and not

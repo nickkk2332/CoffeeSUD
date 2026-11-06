@@ -507,8 +507,8 @@ their `displayText()`: the *Affect String* of a `GenAbility`
 (`DISPLAY`). Effects with an empty display text are hidden. A display text
 wrapped in parentheses, such as `(Emberward)`, has the time remaining
 appended. `AFFECTS [TYPE] [NAME|TYPE|DOMAIN|REMAIN]` filters by ability type and sorts
-(a domain word is also parsed as a filter, but in this build it computes the
-wrong mask and lists nothing, so filter by type);
+(a domain word filters too: `AFFECTS ABJURATION` lists only the effects of that
+domain);
 `AFFECTS spell`, `AFFECTS spell remain`, `AFFECTS common_skill name` (join the words of a
 type or domain with an underscore). A character with the `CMDMOBS` flag can say `AFFECT`
 followed by `ROOM` (or `HERE`), `AREA` (or `ZONE`) or a target's name to see the effects on that
@@ -1304,7 +1304,7 @@ instead of per ID.
 | `MAKEPEACE` | Force Peace | `false` | After poisoning, ends a fight that the poisoning itself started. Good for poisoned food. |
 | `DAMAGE` | Damage Formula | `@x4 + 1?@x1` | Damage each delay; `0` for none. Read left to right: a random number between `@x4 + 1` and `@x1`. |
 | `MOOD` | Mood | none | A `Mood` name held while poisoned (`AHELP MOOD`). |
-| `EFFECTS` | (a list editor) | none | Coded abilities (`Prop_SpellAdder` syntax) held while poisoned. See the note below. |
+| `EFFECTS` | (a list editor) | none | Coded abilities (`Prop_SpellAdder` syntax) put on the victim along with the poison. See the note below. |
 | `DONEMSG` | Done Msg | `The poison runs its course.` | Told to the victim when it ends. |
 | `ADDCHANCE` | Addiction (0-100) Formula | `0` | Chance that a drink, food or magic dust poison also makes the victim addicted (adds an `Addictions` effect). |
 | `CASTMSG` | Cast Msg | `^F^<FIGHT^><S-NAME> attempt(s) to poison <T-NAMESELF>!^</FIGHT^>^?` | When it is applied by a character. |
@@ -1318,9 +1318,9 @@ Formula variables for `TICKS`, `DELAY`, `DAMAGE`, `ADDCHANCE` and `ADJUSTMENTS`:
 victim's level, `@x4` the `RANK`. A poison that was not applied by anybody has
 all of these at 0 except what the host supplies.
 
-Note: in this build the `EFFECTS` list of a `GenPoison` is stored and shown but
-the effects it names are never built (the loop that should collect them does not
-add them), so use `ADJUSTMENTS` or `MOOD`, or `GenDisease`, for lasting extras.
+Note: the `EFFECTS` listed in a `GenPoison` are put on the victim along with the
+poison, and stay while it lasts. `ADJUSTMENTS` and `MOOD` are still the simpler
+way to change stats or mood.
 
 For the poison to appear in play, put it where it is delivered:
 
@@ -1504,7 +1504,7 @@ ones that exist.)
 | `BASELEVEL` | Level | `0` | The trap level of every new copy. Characters need at least this level to lay it, and damage formulas read it as `@x1`. |
 | `LEVEL` | (none) | the base level | The level of one copy; `:LEVEL/CODE:` in a copy's parameter text sets it. |
 | `ACODE` | (none) | `0` | The default ability code (bonus). |
-| `ISBOMB` | Is Bomb | `false` | Stored, but not used: `GenTrap` does not turn into a bomb in this build. |
+| `ISBOMB` | Is Bomb | `false` | When `true` the trap is a bomb (`isABomb()`), as the stock bombs are. |
 | `CANAFFECTMASK` | Can Affect | `ITEMS` | What it can sit on: `ITEMS`, `EXITS`, `ROOMS`. A container needs `ITEMS`. |
 | `CANTARGETMASK` | Can Target | `0` | |
 | `PERMRESET` | Reset Ticks | `60` | Ticks until a sprung or disarmed trap re-arms. |
@@ -1976,8 +1976,6 @@ Round-trip anything an effect needs through `text()` or `setStat`/`getStat`.
   racial immunity), the disease's `IMMUNEMASK`, `TICKS` and `DELAY` (0 delay is
   forced to 1), and that the effect is on the target (`AFFECT [TARGET]` as an
   archon). `Poison` `Affect Target` must be `true` for a lasting effect.
-- **`GenPoison` `EFFECTS` has no effect.** See above; use `ADJUSTMENTS`.
-- **`GenTrap` `ISBOMB` does nothing.** It is stored but not used.
 - **A trap that never triggers.** `Can Affect` must include the kind of host
   (`ITEMS` for a chest as well as a lid; `ROOMS` for a room), `TRIGGERS` must
   name the message kind, and mobs whose home is in the same area are exempt

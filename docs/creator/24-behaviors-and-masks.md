@@ -472,7 +472,7 @@ combat round.
 | `PROFICIENT` | All skills at 100% instead of level-based. |
 | `NOSTATS` | Do not reshape the mob's stats to fit the class. |
 | `NOCOMBATSTAT` | Do not set the combat stats (attack, armor, damage, hit points, mana, move). |
-| `BSIZE=[N]` | Limit the size of the skill rotation used. (Unverified in play: `setParms` reads it from the previous parameter string, so it has no effect the first time the parameters are set.) |
+| `BSIZE=[N]` | Limit the size of the skill rotation used. |
 | `MINTICKS=n`, `MAXTICKS=n`, `CHANCE=n` | Ticks between uses and the chance (the usual timing keys, matched by their start); default 1/1/100, one try per combat round. |
 | `SUPPORT=LEADER` (default) / `SELF` / `GROUP` / `MASK:"[ZAPPER MASK]"` | CoffeeSUD: whom it helps. LEADER is itself and the mob it follows, GROUP its group in the room, MASK anyone there the mask fits (NPCs too). |
 | `HEALAT=[N]` | CoffeeSUD: it heals only those under N% of their hit points, the most hurt first, and before anything else. |
@@ -545,6 +545,7 @@ parameter is a list separated by `;` of entries:
 | `ENTERMSG=msg` | Told to a player who mounts it (rideables only). |
 | `TALKERNAME=name` | Changes the apparent speaker name. |
 | `PERROOM=n` | Adds a price per room of distance. |
+| `INDOOROK=true/false` | `true` allows indoor destinations, removing the outdoor-only restriction; `false` keeps to the outdoors. |
 | `NOWATER`, `NOAIR`, `NOLOCKS`, `NOHOMES`, `NOINDOOR`, `NOCLIMB`, `NOCRAWL` `=true` | Trails avoid those (water, air, locked doors, private homes, indoor rooms, climbable exits, crawlable exits). By default trails already skip empty grid rooms and private homes. |
 | `PORTAL=true` | Creates a magical portal rather than giving directions. |
 | `CLAN=[name]` | Destinations limited to that clan's conquered or property rooms. |
@@ -937,7 +938,7 @@ the room meets the mask. With no parameters it always acts.
 | Flag | Meaning |
 | --- | --- |
 | `KEEPLOCKED` | If the door has a lock, keep it locked. |
-| `ALLNIGHT` | Does not behave differently at night than by day. |
+| `ALLNIGHT` | Does not behave differently at night than by day. Can be given together with `KEEPLOCKED`. |
 
 Only one of the two flags is read: the parser stops at the first it finds, so
 give just one. The rest of the text is the mask.
@@ -1893,7 +1894,7 @@ generation is CPU-intensive.
 | --- | --- | --- |
 | `MIN`, `MAX`, `CHANCE` | How often an attempt is made. | 10/20/100 |
 | `MINQUESTS`, `MAXQUESTS` | How many quests are generated at one time; elapsed quests are replaced. If several are offered by one mob the player must complete them in order. | 1 and 3 |
-| `PATH` | XML document the random quest data is read from. | `randareas/example.xml` |
+| `PATH` | XML document the random quest data is read from. | `quests/random/all.xml` |
 | `TAGID` | Tag of the QUEST object in the document. | `all_quests` |
 | `EXPIRE` | How long a quest runs before expiring forever, even if accepted moments before. | `3 hours` |
 | `MAXATTEMPTS` | Attempts to generate one quest (not all areas or people support every type). | 3 |
@@ -1923,7 +1924,7 @@ the map, by default anywhere in the world.
 | `NOWANDER` | Keep it in its area. |
 | locale words | Restrict the room types (`-air -underwater`). |
 | `"POOFIN=[MESSAGE]"` | Message when it arrives (spacing and quotation sensitive). |
-| `"POOFOUT=[MESSAGE]"` | Message when it leaves. Known defect: in the code `POOFOUT=` assigns the poof-in message, so the leave message is never set. |
+| `"POOFOUT=[MESSAGE]"` | Message when it leaves. |
 
 ```text
 RandomTeleporter min=10 max=20 chance=75 -air -underwater
@@ -1944,14 +1945,12 @@ area.
 | `ITEMS=YES/CONT/LID/LOCK/NO` | `YES`: any items; `CONT`: containers only; `LID`: containers with lids; `LOCK`: containers with locks; `NO`: never. | NO |
 | locale words | Which room types are checked (`-ALL +CityStreet`). | all |
 
-The `ROOMS`, `ITEMS`, `EXITS` settings and the locale words are read only when the
-parameter text contains a `;` (they are taken from the part before it); with no
-`;` they are ignored and the defaults apply. The shipped help examples have no
-`;`, so as written they only get the defaults: end the settings with a `;`.
+The `ROOMS`, `ITEMS`, `EXITS` settings and the locale words are read with or
+without a `;` in the text. Anything after a `;` is ignored.
 
 ```text
-RandomTraps min=10 max=20 chance=25 mintraps=1 maxtraps=10 EXITS="YES" ITEMS="YES" ROOMS="YES";
-RandomTraps min=10 max=20 chance=25 ROOMS="YES" ITEMS="NO" -ALL +CityStreet;
+RandomTraps min=10 max=20 chance=25 mintraps=1 maxtraps=10 EXITS="YES" ITEMS="YES" ROOMS="YES"
+RandomTraps min=10 max=20 chance=25 ROOMS="YES" ITEMS="NO" -ALL +CityStreet
 ```
 
 ### Regenerate
@@ -2414,8 +2413,8 @@ its own defaults: a base price of 10 and 1 per room, and trails limited to open,
 outdoor routes. `GREETING`, `ENTERMSG` (told to a rider after they mount) and
 `TALKERNAME` (default "the driver" on an item) apply; `AREAONLY`, `MAXRANGE`,
 `PERROOM`, `NOWATER`, `NOAIR`, `NOLOCKS`, `NOHOMES`, `NOCLIMB` and `NOCRAWL` as
-for Concierge. The help also lists `INDOOROK=true` to allow indoor rooms, but the
-parser maps `INDOOROK` to the same flag as `NOINDOOR` (outdoor only), so it cannot allow them.
+for Concierge. A TaxiBehavior is outdoor-only by default; `INDOOROK=true` lets it
+take riders to indoor rooms, and `INDOOROK=false` keeps it to the outdoors.
 
 ```text
 TaxiBehavior 1.5
@@ -3127,7 +3126,6 @@ file (picked by the mob's name), and a Memory that greets returning customers.
 | `Aggressive +elf` aggresses nothing different | A bare `+word` is not a mask key. Write `-RACE +Elf`. |
 | Two behaviors fight (Fighterness with Mageness) | Only one `CombatAbilities`-family behavior per mob. |
 | After removing a combat preset the mob keeps strange stats | The presets rewrite the mob's stats; reset the room and check them by hand. |
-| `GateGuard keeplocked allnight` ignores `allnight` | Only the first of the two flags is read. |
 | `WeatherAffects shipdmg=...` has no effect | The code reads `dmgship` (with `shipdmgpct`). |
 | STAT BEHAVIORS lists a key as unknown | It is not named in the behavior's help (it may still work: for example `ATNIGHT` of Scavenger). |
 

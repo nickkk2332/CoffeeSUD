@@ -437,7 +437,7 @@ str+2 dex-2 move+100 class=thief race=elf gender=F
 str+2 dex-2 move+100 MASK=-Race +Dwarf
 ```
 
-The listed effects will be given to the mob. All parameters use the + or - adjuster, except the class, race, and gender, ableprofs, ableticks, ablehpcosts, ablemncosts, ablemvcosts, and ablelvls parameters (but see the first note below). Valid parameters are as follows:
+The listed effects will be given to the mob. All parameters use the + or - adjuster, except the class, race, and gender, ableprofs, ableticks, ablehpcosts, ablemncosts, ablemvcosts, and ablelvls parameters. Valid parameters are as follows:
 
 strength dexterity constitution charisma wisdom intelligence
 
@@ -457,7 +457,7 @@ The parameters may also END with the key word MASK= followed by a mask. This mas
 
 Notes:
 
-- Code check: the word list the parser knows (shared by Prop_Adjuster, Prop_HaveAdjuster, Prop_WearAdjuster, Prop_RideAdjuster, Prop_HereAdjuster and Prop_UseAdjuster) contains `ABLEPROFS` and `ABLELVLS` but not `ABLETICKS`, `ABLEHPCOSTS`, `ABLEMNCOSTS` or `ABLEMVCOSTS`. The code that would apply those four exists, but a text using them is reported as an illegal parameter and they do nothing. Only `ableprofs` and `ablelvls` work (unverified by running the game; tested by calling the parser on its own).
+- `ableprofs`, `ableticks`, `ablehpcosts`, `ablemncosts`, `ablemvcosts` and `ablelvls` all work in `Prop_Adjuster`, `Prop_HaveAdjuster`, `Prop_WearAdjuster`, `Prop_RideAdjuster`, `Prop_HereAdjuster` and `Prop_UseAdjuster`. Each takes a comma-delimited list of ability IDs, each followed by a number in parentheses.
 - Names are matched by prefix: the three-letter forms `str`, `dex`, `con`, `int`, `wis`, `cha`, `maxstr` and so on work, as do `abi`, `arm`, `att`, `dam`, `dis`, `lev`, `rej`, `sen`, `spe`, `wei`, `hei`, `hit`, `hun`, `man`, `mov`, `thi`.
 
 ### Prop_AffectReTick

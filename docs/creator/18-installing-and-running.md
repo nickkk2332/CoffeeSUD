@@ -357,7 +357,7 @@ only" means a restored game keeps the value saved with it.
 | `RANDOMSEED=n` | blank | A whole number that seeds the dice when the world loads and again when play starts. Not applied to a restored game (it restores the saved dice). A non-number is logged as an error and ignored. | [13](13-testing-release.md) |
 | `SAVEMODE=` | `ANYWHERE` | `ANYWHERE`, `NOTINCOMBAT`, `SAVEPOINTS` or `IRONMAN`. New game only. | [31](31-saves-and-party.md) |
 | `AUTOSAVE=`, `AUTOSAVEKEEP=` | blank, `3` | Autosave every N game minutes, or `ON-AREA-CHANGE`. Not in builder mode. | [31](31-saves-and-party.md) |
-| `PARTYMEET=1`, `PARTYFIGHT=1`, `PARTYTURNS=LEADER`/`ALL` | blank, blank, `LEADER` | Party behaviour at start. New game only; `PARTYMEET` and `PARTYFIGHT` are true only when exactly `1`. | [03](03-characters.md) |
+| `PARTYMEET=1`, `PARTYFIGHT=1`, `PARTYTURNS=LEADER`/`ALL` | blank, blank, `LEADER` | Party behaviour at start. New game only; `PARTYMEET` and `PARTYFIGHT` are on for `1`, `ON`, or any word starting `Y` or `T`. | [03](03-characters.md) |
 | `DEVGROUP=`, `DEVSTART=`, `DEVLOG=` | unset | Developer's-game and builder-mode helpers. | [19](19-configuration-and-administration.md) |
 | `RECORDINPUT=1` | `0` | Write every typed line to a replayable `.play` file in `SAVEDIR/recordings/`. | [13](13-testing-release.md) |
 | `EDITOR=LINE`/`WINDOW`/`EXTERNAL`, `EDITORCOMMAND=` | `LINE` | Where builders edit scripts and descriptions. | [19](19-configuration-and-administration.md) |
@@ -1010,13 +1010,13 @@ The log channels and their `coffeemud.ini` keys:
 | `WRNMSGS` | `warn`: warnings | `FILE` (forced by the launcher) |
 | `DBGMSGS` | `debug`: debug output (needs `DEBUG=...` too) | `FILE` (forced by the launcher) |
 | `HLPMSGS` | failed `HELP` lookups | `OWNFILE`: `mud_help.log` |
-| `KILLMSGS`, `CBTMSGS` | kills; detailed combat and XP | `OFF` (see the note below on the key's spelling) |
+| `KILLMSGS`, `CBTMSGS` | kills; detailed combat and XP | `OFF` |
 | `ACCMSGS` | web access log | `OFF` (there is no web server) |
 
 Values: `OFF`; `ON` (screen only); `FILE` (`mud.log` only); `BOTH` (screen and
 `mud.log`); `OWNFILE` (its own file, with optional roll rules such as
-`OWNFILE<9999L`, see the ini). `coffeemud.ini` spells the kills key `KILMSGS`, but the code reads `KILLMSGS`
-(see the audit notes), so use the longer spelling on the command line. The
+`OWNFILE<9999L`, see the ini). The kills key is `KILLMSGS`; the old spelling
+`KILMSGS` is still read when `KILLMSGS` is blank. The
 launcher forces the four main channels to
 `FILE` so the log does not scroll over the game; put `SYSMSGS=BOTH` or
 `ERRMSGS=BOTH` on the command line if you want to watch them. The builder help
@@ -1190,7 +1190,7 @@ here. Playtest files, assertions and recording one by hand (`RECORD INPUT`,
 | `tools/fixes.sh [NAME ...]` | One or more of the JavaScript fix tests in `tools/fixtures/fixes/`, each run with `JRUN` in a builder-mode game on a scratch world. |
 | `tools/smoke.sh` | The single-player path on its own: character creation, save, restore, pause, turn-based time, party, the world files, builder edits. `KEEP=1` keeps the scratch folder. |
 | `tools/engine-tests.sh` | The engine's `TEST ALL` suite (about 15 minutes). |
-| `tools/saveinspect.py SAVE` | Prints a saved game's contents, and with `--var`, `--hp` or `--room` edits a few things in it (the game must not be running on that save; the old `world.xml` is kept as `world.xml.bak`). |
+| `tools/saveinspect.py SAVE` | Prints a saved game's contents, and with `--var`, `--hp` or `--room` edits a few things in it (the game must not be running on that save; the old `world.xml` is kept as `world.xml.bak`, and the checksum in `.complete` is updated). |
 | `tools/worlddiff.py OLD NEW` or `--git REV` | Compares two world folders object by object. Exit 1 if they differ. |
 | `python3 docs/creator/examples/check.py` | The museum example's automated tour (builds a world, publishes it, plays it, restores it in a fresh process). |
 
@@ -1321,7 +1321,7 @@ Consequences worth remembering:
   areas you edit last until the game ends (the building commands say so).
 - **A restore plays the save's version of the world**, laid over a freshly built
   copy of the world's content. Changes to world files since the save are
-  reported at login; scripts, text and other external assets are read live from
+  reported at login (rooms new since the save are kept as the world has them); scripts, text and other external assets are read live from
   the world folder, so they do take effect on a restore. See
   [State and persistence](state-and-persistence.md).
 - **Deleting the cache is safe.** Everything in `resources/fakedb/` but the schema

@@ -1108,11 +1108,10 @@ generator as a variable (`TEMPLATE=normal|auto|random|<template>`,
 `QUEST_MULTIPLE`, `TARGET_MIN_AREALEVEL`, `TARGET_MAX_AREALEVEL`,
 `ANNOUNCECHANNEL`, ...: see `AHELP RandomQuests`).
 
-**`PATH` must be set.** The code's default is `randareas/example.xml`, which
-defines no `all_quests`, so a RandomQuests (or `GENERATE:` giver, or board
-without `FILE=`) left at the default reports "The quest id 'ALL_QUESTS' has not
-been defined" and disables itself. Use the quest generator document that ships:
-`PATH=quests/random/all.xml`.
+**`PATH` is optional.** With no `PATH`, a RandomQuests (and a `GENERATE:`
+giver, and a board without `FILE=`) uses the generator that ships,
+`quests/random/all.xml`, which defines `all_quests`. Set `PATH` only to use your
+own generator document.
 
 ## Story templates and the Quest Maker
 
@@ -1907,7 +1906,7 @@ prove a complete story or all possible player choices. See
 | Quest ends when a mob dies | `GIVE STAT KEYPLAYER TRUE` resets the quest on death. Use `FAIL` to fail it for the characters instead, or no keyplayer. |
 | A step's objects vanished | They are cleaned up at the next step. `SET PRESERVE n` keeps them `n` steps, or select them again in the new step. |
 | Edited a quest file, nothing changed | `WORLD RELOAD QUEST name`, `MODIFY QUEST name RELOAD`, or `DEVWATCH ON`. In builder mode a changed file is not overwritten by SAVE if it changed outside the game; see [World workflow](02-world-workflow.md). |
-| Random quests / board report "ALL_QUESTS has not been defined" | `PATH`/`FILE` left at the default. Set it to `quests/random/all.xml` or your document. |
+| Random quests / board report "ALL_QUESTS has not been defined" | `PATH`/`FILE` points at a document with no `all_quests`. Leave it unset for the shipped `quests/random/all.xml`, or point it at a document that defines your `TAGID`. |
 | Board shows no jobs | Generation failed (see the log), or the reader cannot take them (`PLAYERMASK`, level criteria). Quests listed by a `StdQuestBoard` need `DISPLAY`, `INSTRUCTIONS` and an accept script. |
 | Marker shows `(!)` for a quest the player cannot take | `CAN_ACCEPT` and the marker agree by construction (the marker asks the same engine). Check the player's `QUESTS OFFERED`; remember the party and per-character windows: the marker is per viewer. |
 | QUESTCHECK reports `SET WEEKDAY unknown` etc. | Known limits of its word list (see [Builder commands](#builder-commands)). |

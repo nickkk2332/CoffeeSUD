@@ -263,7 +263,7 @@ pulls them to you or makes you go to them.
 
 | Setting | Values | Default | Meaning |
 | --- | --- | --- | --- |
-| `PARTYMEET` | `1` or blank/`0` | blank | Start-of-game value of `PARTY MEET`: `1` means companions stay where they are (a resting one returns where they last were) and you go to meet them. Only the exact value `1` counts. The `PARTY MEET ON/OFF` command changes it during play, and a save keeps it (`partymeet`). |
+| `PARTYMEET` | `1`/`ON`/`Y...`/`T...` or blank/`0` | blank | Start-of-game value of `PARTY MEET`: a yes word (`1`, `ON`, or any word starting `Y` or `T`, such as `true`) means companions stay where they are (a resting one returns where they last were) and you go to meet them. The `PARTY MEET ON/OFF` command changes it during play, and a save keeps it (`partymeet`). |
 | `PARTYSUMMON` | `ALLOW`, `MEET`, `MASK` | `ALLOW` | The world's rule. `ALLOW`: the player's `PARTY MEET` choice decides. `MEET`: always meet; `PARTY MEET OFF` is refused. `MASK`: companions can be called to you only where the caller passes `PARTYSUMMONMASK`. Any other value counts as `MEET`. |
 | `PARTYSUMMONMASK` | zapper mask | empty | Used by `PARTYSUMMON=MASK`. The mask is run on the character who gives the `PARTY ADD`, including where they stand, so `-AREA "+Sanctuary"` or `-LOCATION +ROOMSTR(Inn)` limit summoning to a place. An empty mask in `MASK` mode refuses summoning. |
 | `PARTYSUMMONMESSAGE` | text | empty | What the player is told when the mask refuses; otherwise "You cannot summon companions here." |
@@ -313,7 +313,7 @@ empty mask is filled by anyone.
 
 ### Fighting each other: PARTYFIGHT
 
-`PARTYFIGHT=1` (or `PARTY FIGHT ON`) lets your characters attack each other.
+`PARTYFIGHT=1` (or `true`, `yes`, `on`; or `PARTY FIGHT ON`) lets your characters attack each other.
 It works by setting the `PLAYERKILL` attribute on everyone and the server-wide
 `PLAYERKILL` setting to `ALWAYS-100000` (no level limit), so `PARTYFIGHT`
 overrides `PLAYERKILL` in the ini. `PARTY FIGHT OFF` (the default) stops any

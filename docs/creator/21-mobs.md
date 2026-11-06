@@ -1165,7 +1165,7 @@ Rules:
 | --- | --- |
 | `CATALOG [mob name]` | Adds the mob in your room (or `ME`) to the catalog in your current category, or updates the entry. If a different version is already there, it lists the differences and asks. A `CATALOG` of an item works the same way. |
 | `CATALOG LIST (MOBS\|ITEMS\|CATEGORIES) [name mask]` | Lists entries: name, number of copies in use (`#`), spawn kind and rate and mask. `MOBS` and `ITEMS` may be shortened (`M`, `I`). |
-| `CATALOG DELETE [MOBS\|ITEMS] [name]` | Removes an entry after asking. `everydamnmob`, `everydamnitem`, `everydamnthing` delete all of a kind. |
+| `CATALOG DELETE [MOBS\|ITEMS] [name]` | Removes an entry after asking. `everydamnmob`, `everydamnitem`, `everydamnthing` delete all of a kind, after one confirmation for the whole set. |
 | `CATALOG EDIT [mob name]` | Edits the spawn rules (below). |
 | `CATALOG CATEGORY LIST` | Lists categories. |
 | `CATALOG CATEGORY [name]` | Sets the category new entries go in (you are asked before a new category is created). `NONE` returns to the global category. The words `GLOBAL`, `NONE` and `UNCATEGORIZED` cannot be new categories. |

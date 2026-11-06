@@ -493,7 +493,7 @@ the others are engine-wide. A world.ini value overrides `coffeemud.ini`.
 | `PROWESSOPTIONS` | ini | blank | What the `SCORE` prowess lines show (`ARMOR-NUMBER`, `COMBAT-ADJ`, `NONE`...). Blank means absolute and numeric armor and combat. |
 | `INJURYSYSTEM` | ini, world.ini | `100,60,25,100,2,10,15,20,100` | Nine comma-separated numbers; see [Injury and bleeding](#injury-and-bleeding). |
 | `PLAYERKILL` | ini | `NEVER` | Characters never kill each other, unless `PARTYFIGHT`. |
-| `PARTYFIGHT` | ini, world.ini | blank | `1` lets party members fight each other. |
+| `PARTYFIGHT` | ini, world.ini | blank | `1` (or `ON`, or a word starting `Y` or `T`) lets party members fight each other. |
 | `PLAYERDEATH` | ini, world.ini | `(@x1 * 50) < 2000` | What happens to a character who dies; entries in [Death, corpses and loot](#death-corpses-and-loot). |
 | `MOBDEATH` | ini, world.ini | `DEATH` | `DEATH`, or `OUT <expression>`. |
 | `PARTYDEFEAT` | ini | `DEATH` | CoffeeSUD: what happens when every party member in a room is down or dead: `RESTORE`, `CHECKPOINT`, `WAIT`, `DEATH`, comma separated, first that applies ([C8](#c8-downed-state-and-party-defeat)). |

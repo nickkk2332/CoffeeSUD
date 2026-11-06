@@ -591,6 +591,7 @@ Both read a semicolon-separated list. The grammar is:
 | `PORTAL=true` | Open a short-lived portal item to the destination instead of giving directions. |
 | `AREAONLY=true` | Stay inside the host's own area. |
 | `NOCLIMB`, `NOCRAWL`, `NOWATER`, `NOAIR`, `NOLOCKS`, `NOHOMES`, `NOINDOOR` | `=true` removes those kinds of rooms from the search. |
+| `INDOOROK` | `true` allows indoor destinations; `false` keeps to the outdoors. A `TaxiBehavior` is outdoor-only unless `INDOOROK=true`. |
 | `PARTY`, `PETS`, `CARGO` | Read by `TaxiBehavior` only (see below). They are accepted and ignored by `Concierge`. |
 
 Players can narrow a request by ending it with `noclimb`, `nodoors`, `noswim`, `noprivate`, `nofly`, `nolocks` or `nocrawl`. A request for a place that is not served gets "I'm sorry, I don't know where 'X' is."
