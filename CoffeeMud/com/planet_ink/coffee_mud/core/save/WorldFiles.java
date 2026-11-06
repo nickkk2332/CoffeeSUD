@@ -1216,7 +1216,10 @@ public final class WorldFiles
 			if((data != null) && (dataXML.length() > 0))
 			{
 				data.build(dataXML);
-				CMLib.catalog().updateCatalogCategory(P, data.category());
+				// the catalog's own copy has the database row: writing the file's copy, which has
+				// none, added a second row, and the next boot kept either of the two
+				final Physical own = (P instanceof MOB) ? CMLib.catalog().getCatalogMob(P.Name()) : CMLib.catalog().getCatalogItem(P.Name());
+				CMLib.catalog().updateCatalogCategory((own != null) ? own : P, data.category());
 			}
 			P.destroy();
 		}

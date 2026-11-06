@@ -1103,6 +1103,40 @@ public class RoomLoader
 		return null;
 	}
 
+	/**
+	 * The order to read catalog rows in: by name, and for a name with more than one row, a row with
+	 * catalog data before one with none.  The first row of a name becomes the catalog's entry and the
+	 * rest are deleted, and a cache built before that was fixed holds two rows for an entry imported
+	 * from the world files: one with empty data, written as the entry was added, and one with its data.
+	 * @param itemNums the rows, by their numbers
+	 * @param cataData their catalog data, by the same numbers, or null
+	 * @return the numbers, in order
+	 */
+	public static List<String> catalogOrder(final Map<String, ? extends Environmental> itemNums, final Map<String,String> cataData)
+	{
+		final String empty=CMLib.catalog().sampleCataData("").data(null);
+		final Map<String,Boolean> hasData=new HashMap<String,Boolean>();
+		for(final String num : itemNums.keySet())
+		{
+			final String data=(cataData==null)?null:cataData.get(num);
+			hasData.put(num, Boolean.valueOf((data!=null)&&(data.length()>0)&&(!CMLib.catalog().sampleCataData(data).data(null).equals(empty))));
+		}
+		final List<String> order=new ArrayList<String>(itemNums.keySet());
+		Collections.sort(order, new Comparator<String>()
+		{
+			@Override
+			public int compare(final String a, final String b)
+			{
+				final int byName=itemNums.get(a).Name().compareToIgnoreCase(itemNums.get(b).Name());
+				if(byName!=0)
+					return byName;
+				final int byData=Boolean.compare(hasData.get(b).booleanValue(), hasData.get(a).booleanValue());
+				return (byData!=0)?byData:a.compareTo(b);
+			}
+		});
+		return order;
+	}
+
 	private void fixItemKeys(final Hashtable<Item,String> itemLocs, final Hashtable<String, PhysicalAgent> itemNums)
 	{
 		for(final Enumeration<Item> e=itemLocs.keys();e.hasMoreElements();)
@@ -1572,9 +1606,9 @@ public class RoomLoader
 			Item I;
 			String data;
 			fixContentContainers(itemNums,stuff,"CATALOG_ITEMS",null,debug,false);
-			for(final Enumeration<String> e=itemNums.keys();e.hasMoreElements();)
+			for(final String nextNum : catalogOrder(itemNums,cataData))
 			{
-				itemNum=e.nextElement();
+				itemNum=nextNum;
 				I=(Item)itemNums.get(itemNum);
 				data=(cataData!=null)?cataData.get(itemNum):null;
 				final Item oldI=CMLib.catalog().getCatalogItem(I.Name());
@@ -1604,9 +1638,9 @@ public class RoomLoader
 			MOB M;
 			String data;
 			fixContentContainers(itemNums,stuff,"CATALOG_MOBS",null,debug,false);
-			for(final Enumeration<String> e=itemNums.keys();e.hasMoreElements();)
+			for(final String nextNum : catalogOrder(itemNums,cataData))
 			{
-				itemNum=e.nextElement();
+				itemNum=nextNum;
 				M=(MOB)itemNums.get(itemNum);
 				data=(cataData!=null)?cataData.get(itemNum):null;
 				final MOB oldM=CMLib.catalog().getCatalogMob(M.Name());
