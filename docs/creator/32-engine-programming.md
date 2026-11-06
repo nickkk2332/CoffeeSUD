@@ -1691,3 +1691,696 @@ scripted `Scriptable` behavior is unrelated; see [MOBPROG](04-mobprog.md). The
 behaviors that already exist are listed in
 [Behaviors and masks](24-behaviors-and-masks.md); the help entry goes in
 `arc_behaviors.ini` as `BEHAVIOR_SNEEZER=` (copy `BEHAVIOR_GOLDLOOTER=`).
+
+### Item
+
+Pick the base class that already does most of what you want, in
+`Items/Basic/`, `Items/Weapons/`, `Items/Armor/` or `Items/MiscMagic/`:
+
+| Base class | For |
+| --- | --- |
+| `StdItem` | A plain thing |
+| `StdContainer` | Holds other items; lockable (`Container`) |
+| `StdFood`, `StdDrink`, `StdPill`, `StdPotion` | Things that are consumed |
+| `LightSource` | A torch or lantern: burns down, goes out in the rain |
+| `StdKey` | A key |
+| `StdWeapon` and its subclasses (`StdBow`, `StdSling`, `StdSpear`...) | Weapons: damage type, class, range, ammunition |
+| `StdArmor`, `StdShield`, `StdThinArmor` | Worn protection: wear locations, layers |
+| `StdWand`, `StdScroll` | Magic items that cast spells |
+| `StdBook`, `StdPaper`, `StdMap`, `StdJournal` | Readable and writable things |
+| `StdRideable` (`Items/Basic`), `StdBoardable`, `StdNavigableBoardable` | Furniture, mounts, boats, ships |
+
+Set the defaults in the constructor (`setName`, `setDisplayText`,
+`setDescription`, `basePhyStats().setWeight(...)`, `setBaseValue(...)`,
+the `material` field, then `recoverPhyStats()`) and override the hooks you need:
+`okMessage` and `executeMsg` (what happens to it and around it),
+`affectPhyStats`, `affectCharStats` and `affectCharState` (what it does to its
+holder; the base class already applies the item's effects that bubble), `tick`
+(only if you also start a tick), `setMiscText` and `text()` (its saved
+parameters).
+
+```java
+package com.planet_ink.coffee_mud.Items.Basic;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Items.interfaces.*;
+
+/**
+ * A coin that lands heads or tails when dropped, and counts its drops in its text.
+ */
+public class LuckyCoin extends StdItem
+{
+	@Override
+	public String ID()
+	{
+		return "LuckyCoin";
+	}
+
+	protected int drops = 0;
+
+	public LuckyCoin()
+	{
+		super();
+		setName("a lucky coin");
+		setDisplayText("a lucky coin lies here.");
+		setDescription("A worn silver coin, bright where thumbs have rubbed it.");
+		basePhyStats().setWeight(1);
+		setBaseValue(1);
+		material = RawMaterial.RESOURCE_SILVER;
+		recoverPhyStats();
+	}
+
+	@Override
+	public void setMiscText(final String newText)
+	{
+		super.setMiscText(newText);
+		drops = CMath.s_int(newText);
+	}
+
+	@Override
+	public void executeMsg(final Environmental myHost, final CMMsg msg)
+	{
+		super.executeMsg(myHost, msg);
+		if(msg.amITarget(this) && (msg.targetMinor() == CMMsg.TYP_DROP))
+		{
+			drops++;
+			setMiscText("" + drops);
+			final String side = (CMLib.dice().rollPercentage() <= 50) ? L("heads") : L("tails");
+			msg.addTrailerMsg(CMClass.getMsg(msg.source(), CMMsg.MSG_OK_VISUAL, L("The lucky coin lands @x1.", side)));
+		}
+	}
+}
+```
+
+The count is kept in the item's text, which `StdItem` saves with the item (see
+[Saving and configuring your classes](#saving-and-configuring-your-classes)), so
+it survives a save and a restore; the result line is a trailer message so it
+prints after the "You drop..." line. Create the item in play with `CREATE ITEM
+LuckyCoin` in builder mode, or `CMClass.getItem("LuckyCoin")` in code.
+
+### MOB
+
+Most mobs need no Java at all: a builder makes a `GenMob` (or a `GenShopkeeper`,
+`GenRideable`...) and gives it behaviors, properties, equipment and scripts. Write
+a mob class when the mob needs logic that cannot be a behavior, or a fixed
+creature a builder should be able to create by class name. Base class:
+`MOBS/StdMOB` (or `StdRideable`, `StdShopKeeper`, `StdBanker`...). The
+constructor sets everything:
+
+```java
+package com.planet_ink.coffee_mud.MOBS;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.Libraries.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+public class Sparrow extends StdMOB
+{
+	@Override
+	public String ID()
+	{
+		return "Sparrow";
+	}
+
+	public Sparrow()
+	{
+		super();
+		_name = "a sparrow";
+		setDescription("a small brown bird.");
+		setDisplayText("A sparrow hops about here.");
+		CMLib.factions().setAlignment(this, Faction.Align.NEUTRAL);
+		setMoney(0);
+		setWimpHitPoint(0);
+		baseCharStats().setStat(CharStats.STAT_INTELLIGENCE, 1);
+		basePhyStats().setDamage(1);
+		basePhyStats().setSpeed(1.0);
+		basePhyStats().setAbility(CMProps.getMobHPBase());
+		basePhyStats().setLevel(1);
+		basePhyStats().setArmor(90);
+		basePhyStats().setDisposition(basePhyStats().disposition() | PhyStats.IS_FLYING);
+		baseCharStats().setMyRace(CMClass.getRace("SongBird"));
+		baseCharStats().getMyRace().startRacing(this, false);
+		baseState.setHitPoints(CMLib.dice().roll(basePhyStats().level(), 20, basePhyStats().level()));
+		recoverMaxState();
+		resetToMaxState();
+		recoverPhyStats();
+		recoverCharStats();
+	}
+}
+```
+
+(This is `Parakeet` with a new name, the shipped pattern for creatures.) The
+order at the end matters: set the base stats, `recoverMaxState()` to compute the
+caps, `resetToMaxState()` to fill the live values, then recover the other two.
+Override `tick`, `okMessage` and `executeMsg` for custom logic, calling `super`.
+Placing the mob: `mob.bringToLife(room, true)`; give it a home with
+`mob.setStartRoom(room)` first if it should rejuvenate (`basePhyStats().setRejuv(ticks)`
+sets how long). The mob's combat behavior, wandering and the rest come from
+behaviors: add `Aggressive`, `Mobile` and so on with `mob.addBehavior(CMClass.getBehavior("Mobile"))`.
+
+### Locale
+
+A locale class defines a kind of room: its terrain type, movement cost,
+climate, resources and any special rule. Base class `Locales/StdRoom`; put it
+in `Locales/`. Builders pick a locale by class name when they create or
+`MODIFY` a room. Each room still has its own title, description, exits, items
+and mobs, saved in the world file, so a locale carries only the type.
+
+```java
+package com.planet_ink.coffee_mud.Locales;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.Locales.interfaces.*;
+
+public class Cellar extends StdRoom
+{
+	@Override
+	public String ID()
+	{
+		return "Cellar";
+	}
+
+	public Cellar()
+	{
+		super();
+		name = "the cellar";
+		setMovementCost(1);
+		climask = Places.CLIMASK_COLD;
+		recoverPhyStats();
+	}
+
+	@Override
+	public int domainType()
+	{
+		return Room.DOMAIN_INDOORS_STONE;
+	}
+}
+```
+
+- `domainType()` must be one of the `Room.DOMAIN_INDOORS_*` or
+  `Room.DOMAIN_OUTDOORS_*` constants. Rules everywhere key off it (weather
+  reaches outdoor rooms, water types let things swim or sink, the description
+  tables). Adding a brand-new domain means editing `Room` and every table indexed
+  by it, so reuse one.
+- `climask` is the climate bit mask (`Places.CLIMASK_NORMAL`, `CLIMASK_WET`,
+  `CLIMASK_COLD`, `CLIMASK_WINDY`...); the default `CLIMASK_INHERIT` takes it
+  from the area.
+- Override `resourceChoices()` to return a `List<Integer>` of
+  `RawMaterial.RESOURCE_*` codes (see `Plains`) if gatherers should find
+  resources here.
+- To make a *grid* (a block of rooms made from one definition) extend `StdGrid`,
+  `StdThinGrid` or `StdMaze` instead; look at `Locales/WoodsGrid`.
+- A locale can veto or react to messages like any other object
+  (`okMessage` / `executeMsg`); `Locales/ClimbableSurface` and `Locales/InTheAir`
+  are models.
+
+### Race
+
+A race sets a creature's body, size, stat bonuses, natural weapon, innate
+abilities and descriptions. Base class `Races/StdRace` (a humanoid by default);
+put it in `Races/`. A race a builder defines in data is a `GenRace` (see
+[Characters](03-characters.md)); write Java when the race needs a rule.
+
+| Method | Notes |
+| --- | --- |
+| `ID()`, `name()`, `racialCategory()` | `racialCategory()` groups races for breeding and lists ("Amphibian") |
+| `shortestMale()`, `shortestFemale()`, `heightVariance()`, `lightestWeight()`, `weightVariance()` | Size (inches and pounds) for rolling a new body's height and weight |
+| `availabilityCode()` | Combination of `Area.THEME_FANTASY`, `THEME_TECHNOLOGY`, `THEME_HEROIC` (or `THEME_ALLTHEMES`) for the themes where the race may be chosen at character creation. OR in `Area.THEME_SKILLONLYMASK` to hide it from creation (a race reachable only by spells or shape-shifting, like `Frog`). The default is `THEME_FANTASY \| THEME_SKILLONLYMASK` |
+| `affectCharStats`, `unaffectCharStats`, `affectPhyStats`, `affectCharState` | Racial stat adjustments (`setRacialStat(CharStats.STAT_STRENGTH, n)`), flags (`IS_SWIMMING`, ...), caps. `unaffectCharStats` undoes the stat change when the mob wears a temporary race (see `Frog`) |
+| `bodyMask()`, `getAgingChart()`, `forbiddenWornBits()` | Body parts (arrays indexed by `Race.BODY_*`), ages at each life stage, and which wear locations the body cannot use |
+| `racialAbilityNames()` (with `racialAbilityLevels()`, `racialAbilityProficiencies()`, `racialAbilityQuals()`, `racialAbilityParms()`) | Abilities the race grants, by ID and level |
+| `getNaturalWeapons()`, `myResources()`, `makeMobName(char, int)`, `healthText(...)`, `arriveStr()`, `leaveStr()` | Natural weapon, what the body yields, the creature's name at each age, health wording, movement verbs |
+| `outfit(MOB)` | Starting clothing |
+
+```java
+package com.planet_ink.coffee_mud.Races;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Areas.interfaces.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+public class Gnomelet extends StdRace
+{
+	@Override
+	public String ID()
+	{
+		return "Gnomelet";
+	}
+
+	private final static String localizedStaticName = CMLib.lang().L("Gnomelet");
+
+	@Override
+	public String name()
+	{
+		return localizedStaticName;
+	}
+
+	@Override
+	public int shortestMale()
+	{
+		return 36;
+	}
+
+	@Override
+	public int shortestFemale()
+	{
+		return 34;
+	}
+
+	@Override
+	public int heightVariance()
+	{
+		return 6;
+	}
+
+	@Override
+	public int lightestWeight()
+	{
+		return 60;
+	}
+
+	@Override
+	public int weightVariance()
+	{
+		return 20;
+	}
+
+	private final static String localizedStaticRacialCat = CMLib.lang().L("Gnomish");
+
+	@Override
+	public String racialCategory()
+	{
+		return localizedStaticRacialCat;
+	}
+
+	@Override
+	public int availabilityCode()
+	{
+		return Area.THEME_ALLTHEMES;
+	}
+
+	@Override
+	public void affectCharStats(final MOB affectedMOB, final CharStats affectableStats)
+	{
+		super.affectCharStats(affectedMOB, affectableStats);
+		affectableStats.setRacialStat(CharStats.STAT_INTELLIGENCE, 12);
+		affectableStats.setRacialStat(CharStats.STAT_STRENGTH, 8);
+	}
+
+	@Override
+	public void unaffectCharStats(final MOB affectedMOB, final CharStats affectableStats)
+	{
+		super.unaffectCharStats(affectedMOB, affectableStats);
+		affectableStats.setStat(CharStats.STAT_STRENGTH, affectedMOB.baseCharStats().getStat(CharStats.STAT_STRENGTH));
+		affectableStats.setStat(CharStats.STAT_MAX_STRENGTH_ADJ, affectedMOB.baseCharStats().getStat(CharStats.STAT_MAX_STRENGTH_ADJ));
+		affectableStats.setStat(CharStats.STAT_INTELLIGENCE, affectedMOB.baseCharStats().getStat(CharStats.STAT_INTELLIGENCE));
+		affectableStats.setStat(CharStats.STAT_MAX_INTELLIGENCE_ADJ, affectedMOB.baseCharStats().getStat(CharStats.STAT_MAX_INTELLIGENCE_ADJ));
+	}
+
+	@Override
+	public String arriveStr()
+	{
+		return "scurries in";
+	}
+
+	@Override
+	public String leaveStr()
+	{
+		return "scurries";
+	}
+}
+```
+
+Races are prototypes shared by every creature of the race: keep no
+per-creature state in fields. Whether the race shows up in character creation
+also depends on the creation templates and origins
+([Characters](03-characters.md)); `Race.availabilityCode()` is the engine's own
+filter.
+
+### Character class
+
+A class sets hit point and mana growth, the armor and weapons allowed, the
+prime attribute, requirements, the abilities by level and any class rules.
+Base class `CharClasses/StdCharClass`; put it in `CharClasses/`.
+
+| Method | Notes |
+| --- | --- |
+| `ID()`, `name()` | |
+| `baseClass()` | The family name used to group classes ("Mage", "Fighter", "Commoner"). Several classes share one; it need not be the name of a Java class. Default is the class's own ID |
+| `getLevelCap()` | Highest level (`-1`, the default, means no cap; `Apprentice` has 1) |
+| `getAttackAttribute()` | The stat that adds to attack (`CharStats.STAT_*`) |
+| `getHitPointsFormula()`, `getManaFormula()`, `getMovementFormula()` | Gain per level, in the engine's formula syntax (`@x1`..`@x9` for stats and level). The variables are listed under "Stats" in [Characters](03-characters.md) |
+| `getBonusPracLevel()`, `getPracsFirstLevel()`, `getTrainsFirstLevel()`, `getBonusAttackLevel()`, `getLevelsPerBonusDamage()` | Practice, train, attack and damage progression |
+| `allowedArmorLevel()`, `allowedWeaponLevel()`, `disallowedWeaponClasses(MOB)`, `requiredWeaponMaterials()` | Armor and weapon restrictions (`CharClass.ARMOR_*`, `WEAPONS_*`) |
+| `getSubClassRule()` | Whether the class may be taken as a second class (`SubClassRule.ANY`, ...) |
+| `qualifiesForThisClass(MOB, boolean quiet)` | The entry test. Call `super` first |
+| `getRequiredRaceList()`, `getMinimumStatRequirements()` | Race and stat prerequisites |
+| `availabilityCode()` | Themes in which it can be chosen at creation (see Race) |
+| `initializeClass()` | Map abilities to levels: `CMLib.ableMapper().addCharAbilityMapping(ID(), level, "Ability_ID", autoGain)`. The overload with a proficiency is `(ID, level, abilityID, defaultProficiency, autoGain)` |
+| `outfit(MOB)`, `getSecurityFlags(int classLevel)`, `startCharacter`, `level`, `unLevel` | Starting gear, security groups by level, and hooks on adoption and level changes |
+| `affectPhyStats`, `affectCharStats`, `affectCharState`, `okMessage`, `executeMsg`, `tick` | Class rules, like any other effect |
+
+```java
+package com.planet_ink.coffee_mud.CharClasses;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.Areas.interfaces.*;
+import com.planet_ink.coffee_mud.CharClasses.interfaces.*;
+import com.planet_ink.coffee_mud.Common.interfaces.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+
+public class Tinker extends StdCharClass
+{
+	@Override
+	public String ID()
+	{
+		return "Tinker";
+	}
+
+	private final static String localizedStaticName = CMLib.lang().L("Tinker");
+
+	@Override
+	public String name()
+	{
+		return localizedStaticName;
+	}
+
+	@Override
+	public String baseClass()
+	{
+		return "Commoner";
+	}
+
+	@Override
+	public int getBonusPracLevel()
+	{
+		return 2;
+	}
+
+	@Override
+	public int getAttackAttribute()
+	{
+		return CharStats.STAT_DEXTERITY;
+	}
+
+	@Override
+	public int getLevelsPerBonusDamage()
+	{
+		return 10;
+	}
+
+	@Override
+	public String getHitPointsFormula()
+	{
+		return "((@x6<@x7)/9)+(1*(1?4))";
+	}
+
+	@Override
+	public String getManaFormula()
+	{
+		return "((@x4<@x5)/10)+(1*(1?2))";
+	}
+
+	@Override
+	public int allowedArmorLevel()
+	{
+		return CharClass.ARMOR_LEATHER;
+	}
+
+	@Override
+	public int allowedWeaponLevel()
+	{
+		return CharClass.WEAPONS_DAGGERONLY;
+	}
+
+	@Override
+	public int availabilityCode()
+	{
+		return Area.THEME_FANTASY;
+	}
+
+	@Override
+	public void initializeClass()
+	{
+		super.initializeClass();
+		CMLib.ableMapper().addCharAbilityMapping(ID(), 1, "Skill_Write", true);
+		CMLib.ableMapper().addCharAbilityMapping(ID(), 1, "Skill_Recall", 25, true);
+		CMLib.ableMapper().addCharAbilityMapping(ID(), 3, "Spell_Fortify", false);
+	}
+}
+```
+
+(The formulas are `Apprentice`'s. The spell is the one above; mapping it here is
+what lets a Tinker learn it at level 3.) Like races, classes are shared
+prototypes. How classes interact with the profile, templates, skill trees and
+respec is in [Characters](03-characters.md).
+
+### Library
+
+Libraries are the engine's services and there is exactly one implementation of
+each interface in a running game. There are two reasons to touch one.
+
+**Replace an implementation** (change how combat or shopping works): write a
+class with the same simple name as the stock one in a folder that is not part of
+the scanned source tree, list the folder after `%DEFAULT%`, and subclass the
+stock class to change only what you need:
+
+```text
+LIBRARY=%DEFAULT%;resources/mylibs
+```
+
+A later entry with the same simple name replaces the earlier one, so
+`resources/mylibs/MUDFight.class` (a class named `MUDFight` that extends
+`com.planet_ink.coffee_mud.Libraries.MUDFight`) takes over the `CMLib.combat()`
+slot. Libraries are registered by what interface they implement
+(`CMLib.convertToLibraryCode`), so a library class that implements `CombatLibrary`
+fills the combat slot. `LIBRARY` is not one of the keys the world's `classes/`
+folder can extend (see above); change `coffeemud.ini` or pass `LIBRARY=...` on the
+`sud.sh` command line. This route is not exercised by anything shipped.
+
+**Add a new library** (a new service everything can call). This is a change to
+the engine, in four steps:
+
+1. An interface in `Libraries/interfaces/` that extends `CMLibrary`.
+2. A class in `Libraries/` that extends `StdLibrary` and implements it.
+3. A constant in the `CMLib.Library` enum (`RUMORS(RumorLibrary.class)`) and an
+   accessor in `core/CMLib.java` that casts
+   `l().libraries[Library.RUMORS.ordinal()]`. The enum is also what makes boot
+   fail with `libraries are unregistered` if a library has no class.
+4. If it needs a periodic job, start a service tick in `activate()` and stop it
+   in `shutdown()`.
+
+```java
+package com.planet_ink.coffee_mud.Libraries.interfaces;
+
+public interface RumorLibrary extends CMLibrary
+{
+	public String randomRumor();
+}
+```
+
+```java
+package com.planet_ink.coffee_mud.Libraries;
+import com.planet_ink.coffee_mud.Libraries.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+
+public class RumorMill extends StdLibrary implements RumorLibrary
+{
+	@Override
+	public String ID()
+	{
+		return "RumorMill";
+	}
+
+	@Override
+	public String randomRumor()
+	{
+		final String[] rumors = { "The bridge is out.", "The miller owes the baker money." };
+		return rumors[CMLib.dice().roll(1, rumors.length, -1)];
+	}
+}
+```
+
+`StdLibrary` supplies `activate()` (sets the service name), `shutdown()`,
+`propertiesLoaded()` (called after the ini is read), `L()` and `getTickStatus()`.
+A library with a service tick follows `Libraries/CMCatalog`: in `activate()`
+call `CMLib.threads().startTickDown(this, Tickable.TICKID_SUPPORT |
+Tickable.TICKID_SOLITARYMASK, periodMs, 1)` and keep the returned `TickClient`
+in `serviceClient`; in `shutdown()` call `deleteTick`.
+
+Before adding a library, consider the other way CoffeeSUD adds engine services:
+a `final` utility class of static methods in `core/` that calls into the
+existing libraries, with a small hook in the Std classes that need it. Most of
+the 200 classes CoffeeSUD added to `core/` are of that kind, because it needs
+no change to the library registry. [Engine internals](33-engine-internals.md)
+lists them.
+
+### Test
+
+The engine's own regression tests are `CMTest` objects in `Tests/` run by the
+`TEST` command (see [Testing a Java change](#testing-a-java-change)). Base class
+`Tests/StdTest`:
+
+```java
+package com.planet_ink.coffee_mud.Tests;
+import com.planet_ink.coffee_mud.core.interfaces.*;
+import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.MOBS.interfaces.*;
+import com.planet_ink.coffee_mud.Tests.interfaces.*;
+
+import java.util.*;
+
+public class Dicecheck extends StdTest
+{
+	@Override
+	public String ID()
+	{
+		return "Dicecheck";
+	}
+
+	@Override
+	public String[] getTestGroups()
+	{
+		return new String[] { "all" };
+	}
+
+	@Override
+	public String doTest(final MOB mob, final int metaFlags, final String what, final List<String> commands)
+	{
+		for(int i = 0; i < 1000; i++)
+		{
+			final int r = CMLib.dice().roll(1, 6, 0);
+			if((r < 1) || (r > 6))
+				return "1d6 rolled " + r;
+		}
+		return null;
+	}
+}
+```
+
+`doTest` returns `null` for a pass and a message for a failure; `TEST` prints
+`Passed` for a null. `getTestGroups()` lists the categories it belongs to; the
+stock ones are `all`, `all_properties`, `all_zappers`, `all_masks`, `spaceall`
+and `info_all`. A new test in the `all` group is picked up by `engine-tests.sh`,
+which compares each test's result with `tools/baseline/test-all.txt`, so add a
+line `Dicecheck           : Passed` to that file in the right alphabetical
+place (the engine tests are sorted by name).
+
+## Saving and configuring your classes
+
+What survives a save, and how a builder can change it, depends on the kind of
+object. The rule of thumb is that **everything a class needs to be rebuilt is
+its ID plus one string**; state outside that string needs a hook.
+
+| Kind | Saved as | Hook for state outside the string |
+| --- | --- | --- |
+| Property (and any effect that is a permanent part of its host) | ID and `text()` in the host's effects list, in the world file or campaign save | Keep the state in `text()`; make `setMiscText` parse it and rewrite `text()` when the state changes |
+| Timed effect (a spell on a mob or item) | In a **campaign save**, ID, `text()`, ticks left, proficiency and invoker, for timed effects that have ticks left. Not in world files | A common skill's work in progress is its `ACTIVITY` stat (`getStat("ACTIVITY")` / `setStat`); other state: put it in `text()` |
+| Behavior | ID and `getParms()` in the host's behavior list | `getRunState()` and `setRunState(String xml)`: the `STATE` stat. The campaign save writes it under the behavior's ID and its position among behaviors of that ID. Times in it should be game time *left*, not absolute times, so they mean the same after a restore. Reached through `getStat("STATE")` / `setStat("STATE", xml)` and displayed by `STAT BEHAVIORS` through `getStat("DEBUG")` |
+| Item (standard class) | ID, level, ability, uses, rejuv and `text()` (`ITEXT`) | `text()` and `setMiscText` |
+| Item (generic class) | Every stat code: `getStatCodes()` and `getStat`/`setStat` | `GenItem` stat codes; add more with `EXTVAR_` (below) |
+| Mob (standard class) | Class ID, level, ability, rejuv and `text()` (`MTEXT`), plus the mob's inventory, effects and behaviors; the stats and names its constructor sets come back from the constructor | `setMiscText` / `text()` |
+| Locale, exit | The room's or exit's data fields; for a locale the class ID | Properties and behaviors on the room |
+| Race, class, command, behavior from world data | A `Gen*` object saved as XML in `world/custom/...` | `getStat`/`setStat` |
+| Library | Nothing (a service, rebuilt each start) | State in a world file or save is your library's own job: see `core/save/` |
+
+**`setMiscText` / `text()`** (an `Environmental`) and **`setParms` / `getParms()`**
+(a `Behavior`) are the configuration string: parsed in the setter and returned by
+the getter. The base `StdAbility`, `ThinAbility` and `StdItem` store the string
+in a field; `StdMOB` stores it compressed if `MOBCOMPRESS` is set. Parse in the
+setter, not lazily, so a copy (`copyOf`) ends up in the same state. `miscTextFormat()`
+and `parmsFormat()` return a format descriptor for editors; every shipped class
+returns `CMParms.FORMAT_UNDEFINED`, so you may leave them.
+
+**Stat codes for generic editing.** `Modifiable` is the contract that `GMODIFY`,
+the generic editor and the XML writers use: `getStatCodes()` lists the names,
+`getStat(code)` reads one, `setStat(code, value)` writes one, `isStat(code)`
+asks whether a name is one, and `getSaveStatIndex()` is how many of the listed
+codes are the class's own (the codes after that index are the optional
+`EXTVAR_` extras). A class may also answer a few internal names that
+`getStatCodes()` does not list (a behavior answers `STATE`, `DEBUG` and `NAME`).
+A standard class inherits sensible codes (`CLASS`, `TEXT`, `NAME`; items add
+`USES`, `LEVEL`, `ABILITY`). Add your own by overriding the three methods and calling
+`super` for the others. `Modifiable` also underlies the `GenXXX` classes: a
+`GenItem`'s stat codes are the `GenericBuilder.GenItemCode` enum, a `GenMob`'s
+are `GenMOBCode`, and `CMLib.coffeeMaker().getAnyGenStat(M, code)` /
+`setAnyGenStat(M, code, value)` read and write them for any `Modifiable`.
+
+**Adding stats to a generic class without Java.** `coffeemud.ini` can append
+stat codes to a generic class with `EXTVAR_<ClassID>=NAME1,NAME2`:
+
+```text
+EXTVAR_GenArmor=SHININESS,COLOR,EMBLEM
+```
+
+The class must call `CMProps.getExtraStatCodesHolder(this)` in its constructor
+and use `CMProps.getStatCodesList` / `getStatCodeExtensionValue` /
+`setStatCodeExtensionValue` in its stat methods; `GenItem` and the other `Gen`
+classes already do. The extra values are saved with the object and shown by the
+generic editor.
+
+**The generic editor** (`MODIFY ITEM`, `MODIFY MOB`...) is `Libraries/CMGenEditor`,
+one `modify...` method per kind. For a *standard* class it falls back to
+`genMiscText`, a single prompt for the whole configuration string (`E.setMiscText(
+prompt(...))`). If your property or behavior has a complicated string, document
+its format in its help entry; building a dedicated editor screen means editing
+`CMGenEditor`.
+
+**What the campaign save does with your class.** A restore re-creates objects
+from their saved data, so your class must be loadable at restore time with the
+same ID. Keep IDs stable once a world has shipped, and keep the classes of
+anything a player could have saved: an object whose class cannot be created
+cannot be restored. For the format of
+saves and what `WORLD` and `SAVE` write where, see
+[Engine internals](33-engine-internals.md), [State and
+persistence](state-and-persistence.md) and
+[Saves and party](31-saves-and-party.md).
+
+## Getting your classes into a game
+
+| How | When |
+| --- | --- |
+| Put the source in the tree (`Commands/Tally.java`) and run `CoffeeMud/build.sh` | The normal way for engine code. Adding a file triggers a clean rebuild (about a minute) |
+| `LOAD <TYPE> path/File.java` in builder mode | Try a class in a running game without a restart. Compiles with the JDK's compiler and loads the result. The class is not part of the next start unless it is also in a scanned folder |
+| `LOAD <TYPE> path/File.class` | Load an already compiled class from any folder in `CoffeeMud/` |
+| A folder listed in `coffeemud.ini` after `%DEFAULT%` (`COMMANDS=%DEFAULT%;resources/mycommands`) | Classes kept out of the source tree; also `NAME=VALUE` on the `sud.sh` command line |
+| `WORLDDIR/classes/<kind>/` (and `WORLDDIR/js/<kind>/` for JavaScript) | Classes that belong to one world, shipped with it |
+| A `.js` file with a `//extends` line (`resources/examples/Lemming.js`) | A class written in JavaScript; see [JavaScript](05-javascript.md) |
+
+Whichever you use, remember that the class set is read at boot and the world is
+built from it: a world file that names a class which is not loaded gets a
+warning in the log and the object is skipped or replaced. Test a restore as well
+as a new game.
+
+To see an effect or class in play quickly:
+
+- A property or effect on yourself: in builder mode, `JRUN` a one-off script. A
+  script file in `resources/` (say `resources/scratch.js`) runs with `mob()` as
+  the player:
+
+  ```js
+  var CMClass = Packages.com.planet_ink.coffee_mud.core.CMClass;
+  var A = CMClass.getAbility("Prop_Sturdy");
+  A.setMiscText("BONUS=20");
+  mob().addNonUninvokableEffect(A);
+  mob().recoverPhyStats();
+  mob().tell("Armor now " + mob().phyStats().armor());
+  ```
+
+  (`JRUN resources/scratch.js`; see [JavaScript](05-javascript.md) for what
+  `JRUN` accepts and for the `cm` API, which can do the same in fewer lines.)
+- A spell: give it to yourself the same way
+  (`mob().addAbility(CMClass.getAbility("Spell_Fortify"))`), then `CAST FORTIFY`.
+- A behavior: `mob.addBehavior(CMClass.getBehavior("Sneezer"))` on an NPC, or the
+  builder's `MODIFY MOB` screen, which lists behaviors by ID with a parameters
+  prompt. Use `TRACEB` and `STAT BEHAVIORS` to see what it is doing
+  ([Testing and release](13-testing-release.md)).
+- A mob or item: `CREATE MOB Sparrow` / `CREATE ITEM LuckyCoin` in builder mode
+  (`HELP CREATE` lists the forms).
+- A locale: `CREATE ROOM E Cellar` (a new room to the east with the locale
+  class `Cellar`; the form is in `HELP CREATE`), or `MODIFY ROOM` and change the
+  locale type; see [Areas, rooms and exits](20-areas-rooms-exits.md).
+- A race or class: `MODIFY MOB` and set its race or class, or start a new
+  character with a profile that allows it.

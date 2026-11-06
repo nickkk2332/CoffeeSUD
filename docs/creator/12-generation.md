@@ -895,7 +895,7 @@ whole game's dice when the world loads and is unrelated.
 
 CoffeeSUD (G17). `${js:expr}` puts in what a JavaScript expression gives;
 `condition="js:expr"` and `validate="js:expr"` keep a tag when the expression is
-true. A value that begins `js:` is JavaScript for the whole value.
+true.
 
 ```xml
 <STRING ID="innkeeper_name">${js:require('names').dwarven(2)}</STRING>
@@ -909,7 +909,7 @@ true. A value that begins `js:` is JavaScript for the whole value.
 | `obj` | The object being built (the mob, for its own stats; the room, for its mobs' `validate`), or `null` for a plain string. |
 | `test('cond')` | A condition in the template's own grammar: `test('$level_range > 5')`. |
 | `cm`, `gen`, `sud` | What every script scope has: `cm.store('world')`, the [generator calls](#generating-in-play), the CoffeeSUD helpers ([JavaScript](05-javascript.md)). |
-| `require('name')`, `include(file)`, `debug()` | Libraries from `world/js/lib/` and `resources/js/lib/`. |
+| `require('name')`, `include(file)`, `debug()` | Libraries from `world/js/lib/` and `resources/js/lib/`. None ships: the `names` library in the example above is one you write (`world/js/lib/names.js`). |
 
 Rules and cautions:
 
