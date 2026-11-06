@@ -70,7 +70,6 @@ check("stale threat dropped", pending.isEmpty(), pending);
 var JSS = java.lang.Class.forName("com.planet_ink.coffee_mud.core.JSStore"), savedF = JSS.getDeclaredField("saved");
 savedF.setAccessible(true);
 var stores = savedF.get(null), RR = scratchRoom();
-RR.setRoomID("FixStoreArea#1");
 var g1 = newMob("GenMob", RR), g2 = newMob("GenMob", RR);
 g1.setName("a fixstore guard"); g2.setName("a fixstore guard"); g1.setStartRoom(RR); g2.setStartRoom(RR);
 var legacy = "mob:" + CMLib.map().getExtendedRoomID(RR) + "/a fixstore guard";
@@ -81,8 +80,8 @@ check("duplicate legacy store copied", k1 != k2 && s(stores.get(k1)) == '{"seen"
 stores.remove(legacy); stores.remove(k1); stores.remove(k2); g1.destroy(); g2.destroy();
 
 // DelayedTransporter moves as a teleport does, unless ENTRY=CHECK asks the rooms first
-var from = scratchRoom(), to = CMClass.getLocale("StdRoom"), homeArea = M.location().getArea();
-to.setRoomID(homeArea.Name() + "#7701"); to.setArea(homeArea); to.setDisplayText("Fix portal end"); homeArea.addProperRoom(to);
+// (the portal's end is a room of the world, found by its ID, with an entry check added for the test and taken off after)
+var from = scratchRoom(), to = otherRoom();
 var req = CMClass.getAbility("Prop_ReqEntry"); req.setMiscText("-race +elf"); to.addNonUninvokableEffect(req);
 var walker = newMob("GenMob", from);
 function portalTo(entry) {
@@ -99,7 +98,7 @@ if (lookup == to) {
 }
 else
 	check("portal forces, ENTRY=CHECK asks", false, "the test room is not found by its ID");
-walker.destroy(); homeArea.delProperRoom(to); to.destroy();
+walker.destroy(); to.delEffect(req);
 
 // NPC organisations: a character may belong to several
 check("several NPC guilds", CMProps.getMaxClansThisCategory("NPCGUILD") == 10 && CMProps.getMaxClansThisCategory("SOMETHINGELSE") == 1,
