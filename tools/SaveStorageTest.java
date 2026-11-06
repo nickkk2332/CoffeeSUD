@@ -90,6 +90,15 @@ public final class SaveStorageTest
             check("one".equals(SaveSlots.readHeader(root,"hero").getProperty("generation")),"recovery retains old complete generation");
             write(root,db,"hero","two");
             check(new File(root,".old-hero/.complete").isFile(),"last complete generation retained");
+            final File stray=new File(root,"hero/.DS_Store"); Files.write(stray.toPath(),"desktop".getBytes("UTF-8"));
+            SaveSlots.recover(root);
+            check("two".equals(SaveSlots.readHeader(root,"hero").getProperty("generation"))&&Arrays.stream(root.list()).noneMatch(s->s.startsWith(".damaged-hero-")),"a stray file does not roll a complete save back");
+            stray.delete();
+            write(root,db,"crash","a"); write(root,db,"crash","b");
+            copyTree(new File(root,"crash").toPath(),new File(root,".new-crash").toPath());
+            try(java.util.stream.Stream<Path> walk=Files.walk(new File(root,"crash").toPath())) { walk.sorted(Comparator.reverseOrder()).forEach(p->p.toFile().delete()); }
+            SaveSlots.recover(root);
+            check("b".equals(SaveSlots.readHeader(root,"crash").getProperty("generation")),"a crash between the renames keeps the newer complete generation");
             Files.write(new File(root,"hero/world.xml").toPath(),"truncated".getBytes("UTF-8"));
             SaveSlots.recover(root);
             check("one".equals(SaveSlots.readHeader(root,"hero").getProperty("generation")),"damaged public generation falls back to valid backup");
@@ -122,7 +131,8 @@ public final class SaveStorageTest
             SaveSlots.release(root);
             final Process holder=child("--hold",root);
             final BufferedReader reader=new BufferedReader(new InputStreamReader(holder.getInputStream(),"UTF-8"));
-            check("OWNED".equals(reader.readLine()),"new process acquires released folder");
+            String owned=reader.readLine(); while((owned!=null)&&owned.startsWith("Picked up ")) owned=reader.readLine(); // a JVM banner (JAVA_TOOL_OPTIONS) comes first on some machines
+            check("OWNED".equals(owned),"new process acquires released folder");
             holder.destroyForcibly();holder.waitFor();
             SaveSlots.acquire(root);
             check(new File(root,".owner.lock").exists(),"OS releases crashed owner; stale lock file is harmless");

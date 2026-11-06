@@ -372,6 +372,10 @@ public class Concierge extends StdBehavior
 					case PERROOM:
 						perRoomPrice=CMath.s_double(numStr);
 						continue;
+					case PARTY:
+					case PETS:
+					case CARGO:
+						continue; // read by the transport itself; not a destination
 					default:
 						if(tw.tf != null)
 						{

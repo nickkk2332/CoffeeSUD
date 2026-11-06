@@ -24,6 +24,28 @@ public final class StoryText
         int calls=0;
         final long deadline=System.nanoTime()+Math.max(1,JSRuntime.limitSeconds())*1000000000L;
     }
+    /** whether each entering move is its mover's first visit, noted as the move was allowed */
+    private static final Map<CMMsg,Boolean> FIRST_VISITS=Collections.synchronizedMap(new WeakHashMap<CMMsg,Boolean>());
+    /**
+     * Notes, as an entering move is allowed, whether it is a first visit.
+     * @param msg the move
+     * @param first true if the mover has not been there
+     */
+    public static void noteFirstVisit(final CMMsg msg, final boolean first)
+    {
+        FIRST_VISITS.put(msg,Boolean.valueOf(first)); // each pass: messages are reused
+    }
+    /**
+     * Returns whether a move was its mover's first visit, as noted when it was allowed.
+     * @param msg the move
+     * @param otherwise the answer when nothing was noted
+     * @return true for a first visit
+     */
+    public static boolean firstVisit(final CMMsg msg, final boolean otherwise)
+    {
+        final Boolean noted=FIRST_VISITS.remove(msg);
+        return (noted==null)?otherwise:noted.booleanValue();
+    }
     public static void arriving(final MOB who, final Room room, final boolean first)
     { if(first) firstEntries.put(who,room); else firstEntries.remove(who); }
     public static boolean first(final MOB who, final Room room)
@@ -180,7 +202,7 @@ public final class StoryText
         if(code==null) return false;
         switch(code.c)
         {
-        case 'W': return (preview!=null&&preview.weather!=TextPreview.UNSET?preview.weather:area==null?Climate.WEATHER_CLEAR:area.getClimateObj().weatherType(room))==code.num;
+        case 'W': return (preview!=null&&preview.weather!=TextPreview.UNSET?preview.weather:area==null?Climate.WEATHER_CLEAR:area.getClimateObj().weatherType(null))==code.num; // the area's weather, as before: indoor text may speak of the rain outside
         case 'C': return (preview!=null&&preview.timeOfDay!=TextPreview.UNSET?preview.timeOfDay:clock.getTODCode().ordinal())==code.num;
         case 'S': return (preview!=null&&preview.season!=TextPreview.UNSET?preview.season:area==null?clock.getSeasonCode().ordinal():Calendars.season(area).counts.ordinal())==code.num;
         case 'T': return room!=null&&Tides.is(room,code.num==1?"HIGH":"LOW");

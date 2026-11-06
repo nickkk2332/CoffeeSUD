@@ -22,8 +22,12 @@ public class Touch extends StdCommand
         if(target==null) M.tell(L("Touch what here?"));
         else if(!ViewRules.allowed(target,M)) M.tell("You cannot find that here.");
         else if(!Waypoints.use(M,target)&&!Scenery.sense(M,target,"TOUCH")) {
+            // a USE_PROG or a TOUCH combination comes first; the stock TOUCH social matches any
+            // target, so trying it first meant those never ran
+            if(ScriptEvents.use("TOUCH",M,target,null)) return false;
+            if(Combinations.find("TOUCH",target,null)!=null) { Combinations.act(M,"TOUCH",target,null); return false; }
             final com.planet_ink.coffee_mud.Common.interfaces.Social social=CMLib.socials().fetchSocial(commands,true,true);
-            if(social!=null) social.invoke(M,commands,target instanceof Physical?(Physical)target:null,false); else Combinations.act(M,"TOUCH",target,null);
+            if(social!=null) social.invoke(M,commands,target instanceof Physical?(Physical)target:null,false); else M.tell(L("Nothing happens."));
         }
         return false;
     }

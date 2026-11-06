@@ -149,8 +149,11 @@ public final class NpcTopics
 				continue;
 			if((speaker != null) && (!CMLib.flags().canBeHeardSpeakingBy(speaker, M)))
 				continue;
-			for(final String t : topics) learn(M,t,false);
-            if(CMProps.instance().getStr("JOURNALTALK").equalsIgnoreCase("true")) Chronicle.add(M,"People",text.isEmpty()?(speaker==null?"Someone":speaker.Name())+" mentioned "+String.join(", ",topics)+".":CMStrings.removeColors(text),speaker);
+			final List<String> learned=new ArrayList<String>();
+			for(final String t : topics) if(learn(M,t,false)) learned.add(t);
+			// JOURNALTALK: what was learned, once: a repeated bark adds nothing new, and is not
+			// to push the player's own notes out of the journal
+            if((!learned.isEmpty())&&CMProps.instance().getStr("JOURNALTALK").equalsIgnoreCase("true")) Chronicle.add(M,"People",text.isEmpty()?(speaker==null?"Someone":speaker.Name())+" mentioned "+String.join(", ",learned)+".":CMStrings.removeColors(text),speaker);
 		}
 	}
 

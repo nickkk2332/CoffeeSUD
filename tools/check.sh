@@ -14,6 +14,14 @@ START=$(date +%s)
 "$ROOT/CoffeeMud/build.sh" > "$OUT/build.txt" 2>&1 || { cat "$OUT/build.txt"; exit 1; }
 
 FAIL=0
+# the creator handbook's generated references and links, against the sources
+python3 "$ROOT/tools/creator_docs.py" --check > "$OUT/creator-docs.txt" 2>&1
+if [ $? -eq 0 ]; then
+	echo "creator docs: PASS ($(tail -1 "$OUT/creator-docs.txt"))"
+else
+	echo "creator docs: FAILED (see $OUT/creator-docs.txt)"
+	FAIL=1
+fi
 "$ROOT/tools/composition-tests.sh" > "$OUT/composition.txt" 2>&1
 if [ $? -eq 0 ]; then
 	echo "composition: PASS ($(grep -c '^ok ' "$OUT/composition.txt") checks)"

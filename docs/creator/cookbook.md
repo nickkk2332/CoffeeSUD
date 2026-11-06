@@ -361,7 +361,7 @@ TAG=forge SKILLS=Blacksmithing,Weaponsmithing SPEED=25 PROF=+10 QUALITY=+1
 Add `STATION=forge TOOL="rune chisel" FAILMSG="You need the forge and a rune chisel."`
 to the supported recipe requirements column, preserving all original tab
 columns. For GenCraftSkill use KEY_VALUE_PARMS. Check with/without station and
-tool, and VALIDATERECIPES. QUALITY changes tier rolls only when the world has
+tool, and VALIDATE RECIPES. QUALITY changes tier rolls only when the world has
 enabled tiers in `resources/skills/craftquality.txt`; shipped tiers are comments.
 Use NOQUALITY=1 for a recipe whose output should be fixed.
 

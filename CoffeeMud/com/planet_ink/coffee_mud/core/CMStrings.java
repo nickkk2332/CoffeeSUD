@@ -2533,7 +2533,14 @@ public class CMStrings
 	 */
 	public final static int lengthMinusColors(final String thisStr)
 	{
-        if(thisStr!=null&&thisStr.contains("^{")) return lengthMinusColors(ColorAliases.strip(thisStr));
+        if(thisStr!=null&&thisStr.contains("^{"))
+        {
+            // only complete ^{NAME} aliases are stripped: a lone "^{" (a typo, a player's text) stays,
+            // and recursing on an unchanged string never ended
+            final String stripped=ColorAliases.strip(thisStr);
+            if(!stripped.equals(thisStr))
+                return lengthMinusColors(stripped);
+        }
 		if(thisStr==null)
 			return 0;
 		if((thisStr.indexOf('^')<0)&&(thisStr.indexOf((char)27)<0))

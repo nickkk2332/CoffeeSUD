@@ -536,10 +536,15 @@ public final class SaveSlots
 		try(InputStream in = new FileInputStream(marker))
 		{
 			final Properties expected = new Properties(); expected.load(in);
-			final List<File> files = snapshotFiles(dir);
-			if(expected.size() != files.size()) return false;
-			for(final File file : files)
-				if(!digest(file).equals(expected.getProperty(dir.toPath().relativize(file.toPath()).toString().replace(File.separatorChar,'/')))) return false;
+			if(expected.isEmpty()) return false;
+			// Every file the manifest lists must be there unchanged. A file it does not list (a
+			// desktop's .DS_Store, a sync tool's marker) is not part of the save, and must not make a
+			// complete save look damaged, which would roll it back to the previous generation.
+			for(final String name : expected.stringPropertyNames())
+			{
+				final File file = new File(dir, name.replace('/', File.separatorChar));
+				if(!file.isFile() || !digest(file).equals(expected.getProperty(name))) return false;
+			}
 			return true;
 		}
 		catch(final IOException | IllegalArgumentException e) { return false; }
@@ -560,7 +565,10 @@ public final class SaveSlots
 			if(!isValidName(name)) continue;
 			final File target = new File(saveDir, name), old = new File(saveDir, ".old-" + name), next = new File(saveDir, ".new-" + name);
 			if(complete(target)) continue;
-			final File candidate = complete(old) ? old : (new File(next, COMPLETE_FILE).isFile() && complete(next) ? next : null);
+			// With no public generation left (a crash between the two renames), the new generation,
+			// written in full, is the save the player asked for; otherwise the last public one.
+			final boolean nextComplete = new File(next, COMPLETE_FILE).isFile() && complete(next);
+			final File candidate = ((!target.exists()) && nextComplete) ? next : complete(old) ? old : (nextComplete ? next : null);
 			if(candidate == null) continue;
 			if(target.exists())
 			{

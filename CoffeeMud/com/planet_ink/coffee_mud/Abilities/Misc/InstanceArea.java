@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class InstanceArea extends StdAbility implements Travel.InPlaceScaling, Travel.CommittedEntry
 {
 	private boolean inPlaceReady=false;
+	/** while scaling real rooms in place, fixRoom keeps everything that is there: docked vessels, a titled room's contents, dropped gear */
+	private boolean fixingInPlace=false;
 	public boolean isInPlace() { return instVars!=null&&CMath.s_bool(instVars.get("INPLACE")); }
 	public synchronized void rebuildInPlace(final Room R, final MOB leader)
 	{
@@ -53,7 +55,9 @@ public class InstanceArea extends StdAbility implements Travel.InPlaceScaling, T
 			instanceLevel=Math.max(1,leader.phyStats().level()); leaderMob=new WeakReference<MOB>(leader);
 		}
 		if(instanceLevel<1) instanceLevel=Math.max(1,R.getArea().getIStat(Area.Stats.MED_LEVEL));
-		fixRoom(R); inPlaceReady=true;
+		fixingInPlace=true;
+		try { fixRoom(R); } finally { fixingInPlace=false; }
+		inPlaceReady=true;
 	}
 	@Override public void entering(final Environmental host, final MOB who, final Room from, final Room to)
 	{
@@ -985,7 +989,8 @@ public class InstanceArea extends StdAbility implements Travel.InPlaceScaling, T
 				}
 			}
 
-			if(CMLib.law().getLandTitle(room)!=null)
+			// scaling real rooms in place: nothing there is a disposable copy, so nothing is destroyed
+			if((!fixingInPlace)&&(CMLib.law().getLandTitle(room)!=null))
 			{
 				final List<Physical> destroyMe=new ArrayList<Physical>();
 				final Set<Rider> protSet = new HashSet<Rider>();
@@ -1019,7 +1024,7 @@ public class InstanceArea extends StdAbility implements Travel.InPlaceScaling, T
 				final Item I=i.nextElement();
 				if(I==null)
 					continue;
-				if((I instanceof Exit)&&((I instanceof Boardable)))
+				if((!fixingInPlace)&&(I instanceof Exit)&&((I instanceof Boardable)))
 				{
 					for(int x=0;x<100;x++)
 					{
@@ -1056,7 +1061,7 @@ public class InstanceArea extends StdAbility implements Travel.InPlaceScaling, T
 					I.setReadableText(finalAdj.toString());
 				}
 				else
-				if((I instanceof Weapon)||(I instanceof Armor))
+				if((!fixingInPlace)&&((I instanceof Weapon)||(I instanceof Armor))) // in place: a player's dropped gear keeps its level
 				{
 					final String adjust = instVars.get(InstVar.IADJUST.toString());
 					if(adjust != null)

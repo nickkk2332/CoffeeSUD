@@ -382,7 +382,7 @@ public final class WorldCheck
 		if(all || parts.contains("SCRIPTS"))
 		{
 			for(final String p : (only == null) ? ScriptCheck.checkAll() : ScriptCheck.checkArea(only, null))
-				out.add(new Finding(Severity.ERROR, "SCRIPTS", p));
+				out.add(new Finding(ScriptCheck.isWarning(p) ? Severity.WARNING : Severity.ERROR, "SCRIPTS", p));
 		}
 		if((all || parts.contains("JS")) && (only == null))
 		{

@@ -72,6 +72,8 @@ public class Prop_TicketTaker extends Property implements Travel.BoardingReceipt
 	protected Map<CMMsg,List<MOB>> farePlans=new WeakHashMap<CMMsg,List<MOB>>();
 
 	protected LimitedTreeSet<String> paid		= new LimitedTreeSet<String>(1000,25,false);
+	/** moves inside the vessel, decided as they were allowed, before the mover changed rooms */
+	protected final Set<CMMsg>		insideMoves	= Collections.newSetFromMap(new WeakHashMap<CMMsg,Boolean>());
 
 	@Override public CMObject copyOf()
 	{
@@ -163,6 +165,20 @@ public class Prop_TicketTaker extends Property implements Travel.BoardingReceipt
 		return false;
 	}
 
+	/**
+	 * Returns whether someone is already in one of a vessel's own rooms.
+	 * @param mob who moves
+	 * @param ride the vessel
+	 * @return true if they are aboard it
+	 */
+	protected boolean alreadyAboard(final MOB mob, final Rideable ride)
+	{
+		final Room from=(mob==null)?null:mob.location();
+		return (from!=null)
+			&&(from.getArea() instanceof Boardable)
+			&&(((Boardable)from.getArea()).getBoardableItem()==ride);
+	}
+
 	protected Rideable getRideable(final Environmental target, final Environmental exit)
 	{
 		if(target instanceof Rideable)
@@ -211,6 +227,8 @@ public class Prop_TicketTaker extends Property implements Travel.BoardingReceipt
 			case CMMsg.TYP_SLEEP:
 			{
 				final Rideable ride = getRideable(msg.target(), msg.tool());
+				if(insideMoves.remove(msg))
+					break; // decided before the move: they were already aboard
 				if(leaderPays&&ride!=null&&isTicketTakingScenario(mob,ride))
 				{
 					if(groupPaid.get(mob)!=ride)
@@ -287,6 +305,11 @@ public class Prop_TicketTaker extends Property implements Travel.BoardingReceipt
 			case CMMsg.TYP_SLEEP:
 			{
 				final Rideable ride=getRideable(msg.target(),msg.tool());
+				if(ride!=null&&(msg.target() instanceof Room)&&alreadyAboard(mob,ride))
+				{
+					insideMoves.add(msg); // walking between the vessel's own rooms is not boarding it
+					return true;
+				}
 				if(ride!=null&&isTicketTakingScenario(msg.source(),ride))
 				{
 					if(leaderPays)

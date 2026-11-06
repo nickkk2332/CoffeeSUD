@@ -101,7 +101,8 @@ public final class Vocabulary
   for(final String line:read("vocab/glossary.ini").split("\\r?\\n")){final String t=line.trim();if(t.isEmpty()||t.startsWith("#")||t.startsWith(";"))continue;if(t.toUpperCase().startsWith("NOT:")){exceptions=CMParms.parseCommas(t.substring(4),true);continue;}if(t.toUpperCase().startsWith("SCOPE=")){scope=t.substring(6).trim().toUpperCase();continue;}final int at=t.indexOf('=');if(at<1)continue;
    String term=t.substring(0,at).trim();final Rule r=new Rule();r.fin=term.toUpperCase().startsWith("FINAL ");if(r.fin)term=term.substring(6).trim();r.plural=term.endsWith("(s)");if(r.plural)term=term.substring(0,term.length()-3);
    final List<String> parts=Scenery.statements(t.substring(at+1));r.replacement=StoryText.unquote(parts.get(0));r.scope=Scenery.option(t.substring(at+1),"SCOPE",scope).toUpperCase();r.fin=r.fin||Scenery.flag(t.substring(at+1),"FINAL");r.except=new ArrayList<String>(exceptions);for(final String part:parts)if(part.toUpperCase().startsWith("NOT:"))r.except.addAll(CMParms.parseCommas(part.substring(4),true));
-   r.pattern=Pattern.compile("(?iu)(?<![\\p{L}\\p{N}_])"+Pattern.quote(term).replace(" ","\\E\\s+\\Q")+(r.plural?"(?:\\(s\\)|s)?":"")+"(?![\\p{L}\\p{N}_])");next.add(r);
+   // a term may follow a colour code (^H) or an ANSI sequence, whose last character is a letter
+   r.pattern=Pattern.compile("(?iu)(?:(?<=\\^.)|(?<=\u001b\\[[0-9;]{1,12}m)|(?<![\\p{L}\\p{N}_]))"+Pattern.quote(term).replace(" ","\\E\\s+\\Q")+(r.plural?"(?:\\(s\\)|s)?":"")+"(?![\\p{L}\\p{N}_])");next.add(r);
   }
   rules=next;glossaryStamp=stamp;glossaryPath=path;return rules;
  }
@@ -114,6 +115,8 @@ public final class Vocabulary
    while(m.find()){boolean except=false;for(final String name:r.except){final Matcher ex=Pattern.compile(Pattern.quote(name),Pattern.CASE_INSENSITIVE).matcher(out);while(ex.find())if(m.start()<ex.end()&&m.end()>ex.start())except=true;}
     // Do not alter markup attributes or color codes.
     final int open=out.lastIndexOf("^<",m.start()),close=out.lastIndexOf("^>",m.start());if(open>close)except=true;
+    // nor inside a tag: an MXP link's command, or an engine placeholder such as <S-NAME>
+    final int lt=out.lastIndexOf('<',m.start()),gt=out.lastIndexOf('>',m.start());if(lt>gt)except=true;
     String replacement=r.plural?r.replacement.replace("(s)",""):r.replacement;if(r.plural){if(m.group().endsWith("(s)"))replacement+="(s)";else if(m.group().toLowerCase().endsWith("s"))replacement+="s";}
     replacement=caseLike(m.group(),replacement);m.appendReplacement(result,Matcher.quoteReplacement(except?m.group():replacement));
    }m.appendTail(result);out=result.toString();

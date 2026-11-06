@@ -80,7 +80,7 @@ current description. Duplicate source IDs intentionally share clue state.
 Generic craft/gather/wright skills are data definitions. Existing native
 crafting skills also consume recipe resources. Overlay world-specific files
 under `world/resources/`; keep their tab-separated column layout. Use
-`VALIDATERECIPES` before asking a player to spend materials.
+`VALIDATE RECIPES` before asking a player to spend materials.
 
 Recipe requirement keys can include:
 

@@ -20,13 +20,16 @@ public final class Ambience {
   final Line line=new Line();String rest=input.trim();
   while(!rest.isEmpty()) {
    final Matcher m=Pattern.compile("^([^\\s=]+)(?:=(\"[^\"]*\"|[^\\s]+))?(?:\\s+|$)").matcher(rest);if(!m.find())break;
+   // prefixes are written in capitals and end at the line's type: a line's own first word
+   // ("Fog rolls in", "Once again...") is text, as it was before conditions existed
+   if(!m.group(1).equals(m.group(1).toUpperCase()))break;
    final String key=m.group(1).toUpperCase(),value=m.group(2)==null?"":StoryText.unquote(m.group(2));int end=m.end();
    if(Arrays.asList("DAY","NIGHT","DAWN","DUSK","SPRING","SUMMER","FALL","WINTER","RAIN","SNOW","FOG","INDOORS","OUTDOORS").contains(key))line.conditions.add(new String[]{key,""});
    else if(key.equals("MASK"))line.mask=value;
    else if(key.equals("WEIGHT"))line.weight=Math.max(1,Math.min(10000,CMath.s_int(value)));
    else if(key.equals("ONCE"))line.once=true;
    else if(key.equals("IFVAR")) { final Matcher v=Pattern.compile("^(\\S+)(?:\\s+|$)").matcher(rest.substring(end));if(!v.find())break;line.conditions.add(new String[]{"IFVAR",v.group(1)});end+=v.end(); }
-   else if(Arrays.asList("SOUND","NOISE","SMELL","AROMA","PUFF","SIGHT","VISUAL","SAY","EMOTE","SOCIAL").contains(key))line.kind=key;
+   else if(Arrays.asList("SOUND","NOISE","SMELL","AROMA","PUFF","SIGHT","VISUAL","SAY","EMOTE","SOCIAL").contains(key)) { line.kind=key; rest=rest.substring(end).trim(); break; }
    else break;
    rest=rest.substring(end).trim();
   }

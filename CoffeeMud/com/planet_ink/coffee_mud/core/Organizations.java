@@ -174,7 +174,9 @@ public final class Organizations
         {
             if((P.getRoleID()==C.getGovernment().getAutoRole())&&(C.getGovernment().getAutoRole()!=C.getGovernment().getAcceptPos())) continue;
             if(mode==Clan.AutoPromoteFlag.MERIT&&P.getRank()>current.getRank()) continue;
-            if(P.getRank()<current.getRank()&&!M.isMonster()&&C.getDues()>0&&C.getCurrentClanDuesOwed(M)>C.getDues()*(1+Math.max(0,CMath.s_int(setting(C,"DUESGRACE","0"))))) continue;
+            // a member late with dues is not promoted: the same lateness the dues steps use, or a
+            // DEMOTE step is undone by the next merit check
+            if(P.getRank()<current.getRank()&&M.isPlayer()&&duesLate(C,M)>0) continue;
             if(!CMLib.masking().maskCheck(P.getInnerMaskStr(),M,true)) continue;
             int seats=0;
             for(final Clan.MemberRecord r : members) if(r.role==P.getRoleID()&&(M.isMonster()||!r.name.equalsIgnoreCase(M.Name()))) seats++;
@@ -185,6 +187,19 @@ public final class Organizations
             if(best==null||P.getRank()<best.getRank()) best=P;
         }
         if(best!=null&&best.getRoleID()!=current.getRoleID()) C.addMember(M,best.getRoleID());
+    }
+
+    /**
+     * How many periods a member's dues are past their grace: 0 or less when not late.
+     * @param C the organisation
+     * @param M the member
+     * @return the periods late
+     */
+    public static int duesLate(final Clan C, final MOB M)
+    {
+        if((C==null)||(M==null)||(C.getDues()<=0)) return 0;
+        final int grace=Math.max(0,CMath.s_int(setting(C,"DUESGRACE","0")));
+        return (int)Math.ceil(C.getCurrentClanDuesOwed(M)/C.getDues())-grace;
     }
 
     public static String rankDetails(final MOB M, final Clan C)
@@ -280,7 +295,7 @@ public final class Organizations
                     payFromBanks(M,C);
                 }
                 final double owed=C.getCurrentClanDuesOwed(M);
-                final int late=(int)Math.ceil(owed/C.getDues())-grace;
+                final int late=duesLate(C,M);
                 if(late<=0||steps.isEmpty()) continue;
                 final String step=steps.get(Math.min(late-1,steps.size()-1)).toUpperCase();
                 tellMember(M,"Your dues to "+C.name()+" are overdue ("+step.toLowerCase()+").");
@@ -288,7 +303,9 @@ public final class Organizations
                 if(step.equals("EXILE")) C.delMember(M);
                 else if(step.equals("DEMOTE"))
                 {
-                    final ClanPosition old=C.getGovernment().getPosition(M.getClanRole(C.clanID()).second.toString());
+                    final Pair<Clan,Integer> held=M.getClanRole(C.clanID());
+                    final ClanPosition old=(held==null)?null:C.getGovernment().getPosition(held.second.toString());
+                    if(old==null) continue; // no longer a member here (an earlier step, or elsewhere)
                     ClanPosition lower=null;
                     for(final ClanPosition P : C.getGovernment().getPositions())
                         if(P.getRank()>old.getRank()&&(lower==null||P.getRank()<lower.getRank())) lower=P;

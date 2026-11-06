@@ -759,6 +759,10 @@ public class StdRoom implements Room
 	{
 		if(!getArea().okMessage(this,msg))
 			return false;
+		// FIRSTVISIT: decided before the move runs, since some classes (bards, sailors) record the
+		// visit in their own executeMsg, which runs before this room's
+		if(msg.amITarget(this)&&(msg.targetMinor()==CMMsg.TYP_ENTER||msg.targetMinor()==CMMsg.TYP_RECALL)&&msg.source().playerStats()!=null)
+			StoryText.noteFirstVisit(msg,!msg.source().playerStats().hasVisited(this));
 
 		if(msg.amITarget(this))
 		{
@@ -917,7 +921,7 @@ public class StdRoom implements Room
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
         if(msg.amITarget(this)&&(msg.targetMinor()==CMMsg.TYP_ENTER||msg.targetMinor()==CMMsg.TYP_RECALL)&&msg.source().playerStats()!=null&&msg.source().soulMate()==null)
-            StoryText.arriving(msg.source(),this,!msg.source().playerStats().hasVisited(this));
+            StoryText.arriving(msg.source(),this,StoryText.firstVisit(msg,!msg.source().playerStats().hasVisited(this)));
 		getArea().executeMsg(this,msg);
 
 		if(msg.amITarget(this))

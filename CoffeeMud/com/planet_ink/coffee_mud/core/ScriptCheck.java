@@ -91,6 +91,25 @@ public final class ScriptCheck
 		{
 			problems.add(file + ":" + line + " " + what);
 		}
+
+		// a finding the check cannot be sure of (counts and variables the script may get some other way): WORLD CHECK lists it, not failing on it
+		void warn(final String file, final int line, final String what)
+		{
+			problems.add(file + ":" + line + " " + WARNING + what);
+		}
+	}
+
+	/** what a warning's text starts with, after its file and line */
+	public static final String WARNING = "warning: ";
+
+	/**
+	 * Whether a finding is a warning (one the check cannot be sure of).
+	 * @param finding one of the check's findings
+	 * @return true for a warning
+	 */
+	public static boolean isWarning(final String finding)
+	{
+		return (finding != null) && finding.contains(" " + WARNING);
 	}
 
 	private static final Pattern	CONDITION_FUNC	= Pattern.compile("([A-Za-z_][A-Za-z0-9_]*)\\s*\\(");
@@ -319,7 +338,7 @@ public final class ScriptCheck
         else if(Arrays.asList("HAS","WORN","ISNAME","INCONTAINER","HASTATTOO","HASTAG","ISBEHAVE","AFFECTED").contains(name))minimum=2;
         else if(Arrays.asList("ISNPC","ISPC","ISGOOD","ISEVIL","ISNEUTRAL","RAND","MATH","LEVEL","INROOM","INAREA","ISALIVE","ISABLE").contains(name))minimum=1;
         if(minimum>=0 && CMParms.parse(args).size()<minimum)
-            run.problem(at.at.file,at.at.line,name+"() needs at least "+minimum+" arguments");
+            run.warn(at.at.file,at.at.line,name+"() needs at least "+minimum+" arguments");
     }
 
     private static String outsideQuotes(final String text)
@@ -386,7 +405,7 @@ public final class ScriptCheck
             if(words.size()!=2 || words.get(1).contains("$") || words.get(1).contains(".")) continue;
             final String key=variableKey(words.get(0),words.get(1));
             if(!run.assigned.contains(key) && reported.add(key))
-                run.problem(statement.at.file,statement.at.line,"variable "+key+" read without a known assignment (external state may supply it)");
+                run.warn(statement.at.file,statement.at.line,"variable "+key+" read without a known assignment (external state may supply it)");
         }
     }
 
@@ -481,7 +500,7 @@ public final class ScriptCheck
 			if(METHODS.contains(cmd) || cmd.equals("ELSE"))
 			{
 				final String signature = ScriptSignatures.error(cmd,args);
-				if(signature != null) run.problem(S.at.file,S.at.line,signature);
+				if(signature != null) run.warn(S.at.file,S.at.line,signature);
 				checkVariables(run,S);
 				if(cmd.equals("IF") || cmd.equals("WHILE"))
 				{

@@ -302,7 +302,9 @@ public class Save extends StdCommand
 			mob.tell(L("Unsaved mobs or items in @x1, which the world files do not have: @x2.  SAVE CHANGED saves them (LIST UNSAVED lists them).",
 				(unsaved==1)?L("1 room"):L("@x1 rooms",""+unsaved),Unsaved.summary(5)));
 		// what a check of the world's scripts finds (DT11)
-		final int scriptProblems=ScriptCheck.checkAll().size();
+		int scriptProblems=0;
+		for(final String p : ScriptCheck.checkAll())
+			scriptProblems+=ScriptCheck.isWarning(p)?0:1;
 		if(scriptProblems>0)
 			mob.tell(L("SCRIPTCHECK ALL finds @x1 problems in the world's scripts.",""+scriptProblems));
 	}

@@ -70,9 +70,15 @@ public class Prop_Cursed extends Property
 		return shown() ? "Cursed" : "";
 	}
 
+	/**
+	 * Returns whether identifying the item shows this curse to someone: a curse shown on the item is
+	 * plain to anyone; a hidden one only to an examiner of its level or more.
+	 * @param viewer who examines
+	 * @return true if they learn of it
+	 */
 	public boolean detectedBy(final MOB viewer)
 	{
-		return viewer != null && viewer.phyStats().level() >= level;
+		return shown() || ((viewer != null) && (viewer.phyStats().level() >= level));
 	}
 
 	protected String						base		= "";

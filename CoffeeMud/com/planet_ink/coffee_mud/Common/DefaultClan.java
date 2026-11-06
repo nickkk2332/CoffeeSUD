@@ -835,7 +835,7 @@ public class DefaultClan implements Clan
 		final int oldRole=(before==null)?-1:before.second.intValue();
 		transientSize=-1;
 		M.setClan(clanID(),role);
-		if(!M.isMonster()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), role);
+		if(M.isPlayer()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), role); // a character not in the world too; NPC members have no rows
 		updateClanPrivileges(M);
 		bumpTrophyData(Trophy.MonthlyNewMembers, 1);
 		if((oldRole!=role)&&(!isApplicantRole(role)))
@@ -913,7 +913,7 @@ public class DefaultClan implements Clan
 		if(wasIn)
 			runGovernmentScript(M,getGovernment().getExitScript(),"CLANEXIT");
 		transientSize=-1;
-		if(!M.isMonster()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), -1);
+		if(M.isPlayer()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), -1);
 		M.setClan(clanID(),-1);
 		updateClanPrivileges(M);
 		if(wasIn)

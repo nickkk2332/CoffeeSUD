@@ -59,6 +59,21 @@ public final class Languages
    m.appendReplacement(out,Matcher.quoteReplacement(shown));if(learn&&viewer!=null&&exposed.add(id))expose(viewer,id,"READ",viewer.location());
   }m.appendTail(out);return out.toString();
  }
+ /**
+  * Returns whether a translator the listener has already shows them its own "(translated from ...)"
+  * line for this speech: Speak with Animals, and Prop_LangTranslator unless NOTRANSLATE (passive).
+  * A second line from here would repeat it.
+  */
+ private static boolean translatedElsewhere(final MOB listener,final String id,final String words) {
+  final List<Physical> hosts=new ArrayList<Physical>();hosts.add(listener);if(listener.location()!=null)hosts.add(listener.location());
+  for(final Enumeration<Item> e=listener.items();e.hasMoreElements();)hosts.add(e.nextElement());
+  for(final Physical host:hosts)for(final Enumeration<Ability> e=host.effects();e.hasMoreElements();){
+   final Ability a=e.nextElement();if(!(a instanceof Language)||!((Language)a).translatesLanguage(id,words))continue;
+   if(a.ID().equals("Chant_SpeakWithAnimals"))return true;
+   if(a.ID().equals("Prop_LangTranslator")&&!a.text().toUpperCase().contains("NOTRANSLATE"))return true;
+  }
+  return false;
+ }
  /** Translate exactly once per listener; original speech remains available to its owner. */
  public static void heard(final MOB listener,final CMMsg msg) {
   if(listener==msg.source()||(msg.sourceMinor()!=CMMsg.TYP_SPEAK&&msg.sourceMinor()!=CMMsg.TYP_TELL&&!msg.sourceMajor(CMMsg.MASK_CHANNEL))||msg.sourceMessage()==null||(msg.sourceMinor()==CMMsg.TYP_SPEAK&&!perceives(listener,msg)))return;
@@ -67,7 +82,7 @@ public final class Languages
   final List<String> only=restricted(listener);if(!only.isEmpty()&&!only.contains("Common")&&spoken(listener).equalsIgnoreCase("Common"))ensureSpoken(listener,only.get(0));
   final String language=messageLanguage(msg);final int p=proficiency(listener,language,text);
   if(p==0){ScriptEvents.notUnderstood(listener,msg,language,render(language,text,0));final Ability mono=listener.fetchEffect("Prop_Monolingual");if(mono!=null){final String confused=Scenery.option(mono.text(),"CONFUSED","");if(!confused.isEmpty()&&listener.location()!=null)listener.location().show(listener,msg.source(),CMMsg.MSG_NOISE,confused);}}
-  if(!language.equalsIgnoreCase("Common")&&p>0){
+  if(!language.equalsIgnoreCase("Common")&&p>0&&!translatedElsewhere(listener,language,text)){
    final Language spoken=language(language);
    final String words=render(language,text,p);
    if(spoken instanceof SpeechTranslator)((SpeechTranslator)spoken).translateFor(listener,msg,words);

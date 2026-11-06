@@ -100,7 +100,7 @@ the reviewable history for the complete world.
 | `WORLD RELOAD ASSETS` | Clear vocabulary, dictionary, translation, help and social caches |
 | `WORLD RELOAD CHANGED` | Dispatch supported changed files to their loaders |
 | `JS RELOAD [file/ALL]` | Replace compatible JavaScript classes/scopes using declared state contracts |
-| `DEVWATCH ON [seconds]` | Watch world files and resource scripts; changes are logged |
+| `DEVWATCH ON [seconds]` | Watch world files and resource scripts; changed files are reloaded |
 | `JS WATCH ON [seconds]` | Watch JavaScript files in builder mode |
 
 Reload is not a universal restart. Native classes are tracked at boot, but asset

@@ -35,7 +35,19 @@ public final class ItemSets
 		final java.util.regex.Matcher m=LEGACY.matcher(text);
 		return m.find() ? (m.group(1)!=null?m.group(1):m.group(2)!=null?m.group(2):m.group(3)) : "";
 	}
-	public static String withoutLegacy(final String text) { return LEGACY.matcher(text).replaceAll(""); }
+	/** the legacy ALLSET= option with the space before it, as text() writes it back */
+	private static final java.util.regex.Pattern LEGACY_SPACED = java.util.regex.Pattern.compile("(?i)\\s*\\bALLSET\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^;\\s]+))");
+	/**
+	 * Returns a property's text without its legacy ALLSET= option, and without the space before it,
+	 * so that text(), which writes it back after a space, gives the same text on every load.
+	 * @param text the property's text
+	 * @return the text without ALLSET=
+	 */
+	public static String withoutLegacy(final String text)
+	{
+		final String out = LEGACY_SPACED.matcher(text).replaceAll("");
+		return out.equals(text) ? text : out.replaceAll("\\s+$", "");
+	}
 	private static String legacyName(final String spec) { return spec.replaceFirst("-\\d+$","").trim(); }
 	public static boolean legacyEnabled(final Item item, final String spec) { return legacyEnabled(item,spec,true); }
 	public static boolean legacyEnabled(final Item item, final String spec, final boolean wornOnly)

@@ -87,7 +87,7 @@ program and its local variables are not serialized.
 
 ## Calls, signals and pauses
 
-`FUNCTION_PROG name` exposes a script function. `MPCALL` invokes a function;
+`FUNCTION_PROG name` exposes a script function. `MPCALLFUNC` invokes a function;
 `MPSIGNAL` broadcasts to a selected scope and `SIGNAL_PROG` receives it. This
 is useful for a switch notifying a gate or a boss notifying its arena. Use
 documented target/scope forms rather than hoping every distant host is loaded.
@@ -133,8 +133,8 @@ teaches or adjusts proficiency. See [language rules](../languages.md).
 
 ## Debugging
 
-Run `SCRIPTCHECK` on a file or host before testing it. Use SCRIPT/SCRIPTFIRE
-to inspect or invoke a program, SCRIPTCALL to invoke a function, VARS to inspect
+Run `SCRIPTCHECK` on a file or host before testing it. Use SCRIPT LIST/SCRIPT FIRE
+to inspect or invoke a program, SCRIPT CALL to invoke a function, VARS to inspect
 scopes, SCRIPTTRACE to follow execution, SCRIPTPROF to find expensive triggers,
 and SCRIPTERRORS/DEVLOG for context. Exact usage is in the [tool reference](tool-reference.md).
 

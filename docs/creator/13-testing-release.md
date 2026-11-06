@@ -40,7 +40,7 @@ SAVEDIR. Character windows in one process share that process's campaign.
 | GENERATE CHECK | XML templates, classes, IDs, selectors, layouts, variables and JS |
 | CHECKTEXT / PREVIEW | Markup, links, details and rendered views |
 | CHATLINT / CHATTEST | Dialogue patterns, proven shadowing and simulated responses |
-| VALIDATERECIPES | Recipe shapes and content references |
+| VALIDATE RECIPES | Recipe shapes and content references |
 | VOCAB / LANGUAGE PREVIEW / COVERAGE | Replacement/translation output and dictionary coverage |
 | ORGCHECK | Organization/faction/government cross-references |
 | LAW TEST / PRICECHECK / PROGRESSION | Explain law, price and advancement decisions |
@@ -76,12 +76,12 @@ distinguishes this known warning from an actual unsupported parameter.
 
 ## Runtime inspection
 
-Use VARS for MOBPROG state and JS STATE for JSON stores. SCRIPT/SCRIPTFIRE,
-SCRIPTCALL and reset controls exercise specific scripts; SCRIPTTRACE follows
+Use VARS for MOBPROG state and JS STATE for JSON stores. SCRIPT LIST/SCRIPT FIRE,
+SCRIPT CALL and reset controls exercise specific scripts; SCRIPTTRACE follows
 execution, SCRIPTPROF finds hot scripts. STAT BEHAVIORS provides bounded live
 fields, TRACEB observes behavior transitions, and COMBATDEBUG exposes combat
-calculations. VESSEL and LISTINSTANCES inspect transport/instances. WEATHER,
-TIME, LOOKAS and HAZARDS preview the player's environment.
+calculations. VESSEL and LIST INSTANCES inspect transport/instances. WEATHER,
+TIME, LOOK AS and HAZARDS preview the player's environment.
 
 DEVLOG has terminal ON/OFF, LAST/history and filters. `DEVLOG WINDOW WARN
 MODULE Scripting,Quest*` opens a display-only log view with independent filters;

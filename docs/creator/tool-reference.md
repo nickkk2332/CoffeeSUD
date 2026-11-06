@@ -11325,8 +11325,8 @@ WINDOWS PANEL ON gives each window a panel beside its text, drawn again at each 
 WINDOWS PANEL OFF takes it away.  Give the sections to show, in their order, in place of ON:
  STATUS (the world's text/panel.txt, with the codes of PROMPT, or the character's points,
 room and area), MAP (the rooms about the character) and PARTY (each of the party with a bar
-of their hit points).  WINDOWPANEL=STATUS,MAP,PARTY in coffeemud.ini or world.ini starts a
-game with it.
+of their hit points).  WINDOWPANEL=STATUS,MAP,PARTY in coffeemud.ini (or a launch override;
+a world's world.ini cannot set it) starts a game with it.
 ```
 
 <a id="world"></a>

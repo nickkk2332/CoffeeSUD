@@ -63,7 +63,7 @@ their own start rooms rather than treating every visitor as a local resident.
 
 Keep reusable designs in the `CATALOG`. A catalog definition and a placed copy
 are different things. Catalog updates and placement rules can affect many copies;
-test these deliberately. `CATALOG PREVIEW` and `SANDBOX PREVIEW name` let you
+test these deliberately. `CATALOG LIST` and `SANDBOX PREVIEW name` (a catalog name) let you
 inspect designs without adding permanent residents.
 
 ## Give it one interaction
