@@ -142,7 +142,11 @@ work even if a definition or prerequisite is missing.
 Stats are optional. Burn application requires an actual direct hit removing
 HP, positive rounded burn damage, and at least one duration tick. All direct
 targets must be living, visible, legal combat targets outside the caster's
-group. No self-targeting, remote rooms or implicit friendly fire.
+group, and not down. No self-targeting, remote rooms or implicit friendly fire.
+Every typed component reaches its target as an attack, so the world's attack
+rules apply to each one: a target that is down, has yielded or is otherwise
+protected refuses the components that follow, and a chained target joins the
+fight as it would against any other attack.
 
 ## Modifier algebra
 
@@ -161,7 +165,9 @@ not add an accidental resource/timing unit or change an integer chance threshold
 
 Global `damage` bonuses combine with destination-channel bonuses. Flat damage
 must name a type, such as `damage.fire`. Global damage floor/cap applies to
-each component, not their sum. Increased/more may be negative down to -100%;
+each component, not their sum. A floor raises only a type the hit deals; it
+never adds a type, so a fire bolt with a global floor still deals only fire.
+Use a typed `flat` to add a type. Increased/more may be negative down to -100%;
 flat may be negative too. Negative pools and increased factors clamp to zero.
 Conflicting floors/caps are rejected before selection or spending resources.
 
@@ -193,18 +199,20 @@ invocations cannot bypass these gates.
 
 Chains snapshot eligible inhabitants in room order after the primary target,
 up to the lesser of authored and campaign hop limits. Every actor appears
-once. Positive typed damage attempts and burn attempts each use one event;
-misses use one. Exhausting `event_budget` stops remaining events. Reentrant
+once. Positive typed damage attempts and burn attempts each use one event,
+a burn attempt whether or not its chance roll succeeds; misses use one.
+Exhausting `event_budget` stops remaining events. Reentrant
 composed casts are refused. Burning cannot chain or apply supports. Arbitrary
 author scripts retain their normal Java access outside this event graph.
 
 One burn exists per target: stronger damage replaces weaker, equal refreshes,
 weaker leaves it unchanged. The native timed effect saves snapshot damage,
 caster instance ID and remaining ticks. Attribution uses that stable ID after
-restore, rather than matching display names. Missing/dead sources or illegal
-combat relationships terminate it safely. Removing a support affects future
-casts; an existing burn keeps its snapshot. Module disable prevents further
-damage and removes burns next tick; terminated effects do not return on enable.
+restore, rather than matching display names. Missing/dead sources, a target
+that is down, or illegal combat relationships terminate it safely. Removing a
+support affects future casts; an existing burn keeps its snapshot. Module
+disable prevents further damage and removes burns next tick; terminated effects
+do not return on enable.
 
 Cooldowns use the campaign game clock in both clock modes, separately from
 loadouts. Forgetting, unlinking, upgrading or switching cannot clear them.

@@ -155,7 +155,8 @@ proficiency, prerequisites, costs/components and external world rules still run.
    native resources once for the cast, then test the learned adapter's proficiency.
 2. Sample target conditions; apply composition flats and one simultaneous
    conversion pass. Apply increased/more bonuses using the selected model, then
-   final-type floors, caps and composition safety limits.
+   final-type floors, caps and composition safety limits. A floor raises only a
+   type the hit deals; it never adds one.
 3. Attacks roll against `100 * accuracy / (accuracy + evasion)`, clamped to the
    profile's hit range. Zero total starts at zero before clamping. Spells skip
    accuracy. One hit roll covers all components against that target.
@@ -169,9 +170,13 @@ proficiency, prerequisites, costs/components and external world rules still run.
    Thus 100% raw resistance with a 75% cap and 20 penetration becomes 55% effective.
 7. Apply partial block reduction, if any. Clamp damage to the profile limit and
    round half up once per component. Typed immunity rejects its component.
-8. Deliver through native combat messaging. Record world approval and actual HP
-   removed. A successful damaging hit may attempt its authored burn, within the
-   shared event budget.
+8. Deliver through native combat messaging. Each target, chained ones included,
+   first receives an attack message, and each later component another, so native
+   attack rules, downed and yielded protections and the target's fight reaction
+   apply to every target and component. A refused target uses one event and
+   takes nothing; a refused component is not delivered. Record world approval and
+   actual HP removed. A successful damaging hit may attempt its authored burn,
+   within the shared event budget; the attempt uses its event before any roll.
 
 Arithmetic uses DECIMAL128. Random tests use integer percentiles 1–100 with
 `roll <= chance`; fractional chances therefore have one-percent granularity.
@@ -222,7 +227,8 @@ preceding hit. A critical hit does not automatically increase it.
 Missing/changed profile files or invalid defense sources suspend an individual
 tick while ordinary duration continues; repairing them can resume later ticks.
 Fire/burning immunity or disabling the profile module removes the effect next
-tick. Missing/dead sources and illegal combat relationships also terminate it.
+tick. Missing/dead sources, a downed target and illegal combat relationships
+also terminate it.
 Terminated effects do not reappear on enable. Burns created by the legacy
 stage-2 path retain that path even if combat profiles are enabled later.
 

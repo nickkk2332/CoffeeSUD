@@ -158,9 +158,12 @@ public final class CombatProfiles
     private static boolean legal(final MOB source, final MOB target, final Room room)
     {
         return room != null && source != target && source.location() == room && target.location() == room && !source.amDead() && !source.amDestroyed()
-            && !target.amDead() && !target.amDestroyed() && source.mayIFight(target) && CMLib.flags().canBeSeenBy(target, source)
+            && !target.amDead() && !target.amDestroyed() && !Downed.isDown(target) && source.mayIFight(target) && CMLib.flags().canBeSeenBy(target, source)
             && !source.getGroupMembers(new HashSet<MOB>()).contains(target);
     }
+    /** A malicious message per victim and per later component: native attack rules, downed/yielded refusals and assault reactions apply; saves do not. */
+    private static boolean assault(final MOB caster, final MOB target, final Ability tool)
+    { return announce(caster, target, tool, CMClass.getMsg(caster, target, tool, CMMsg.MASK_MALICIOUS | CMMsg.MSG_NOISYMOVEMENT, null)); }
     public static void hit(final MOB caster, final MOB target, final Ability tool, final Compiled c, final Cast cast, final Budget budget) throws IOException
     {
         final Room room = caster.location(); final List<String> lines = new ArrayList<String>();
@@ -170,6 +173,8 @@ public final class CombatProfiles
         final Collected defender;
         try { defender = stats(target, cast.profile); }
         catch(final IOException e) { budget.take(); lines.add("Rejected target: " + e.getMessage()); record(caster, target, cast.profile, "hit", lines); return; }
+        if(!assault(caster, target, tool))
+        { budget.take(); lines.add("Rejected target: the world refused the attack (for example the target is down or has yielded); no rolls or damage."); record(caster, target, cast.profile, "hit", lines); return; }
         sourceLines(lines, "Defender", defender);
         final Set<String> conditions = new LinkedHashSet<String>();
         if(target.curState().getHitPoints() < target.maxState().getHitPoints()/2.0) conditions.add("target_wounded");
@@ -177,7 +182,7 @@ public final class CombatProfiles
         lines.add("Target conditions: " + conditions);
         final Offense offense = CombatRules.offense(c, conditions, cast.profile.conversion); lines.addAll(offense.lines);
         final Resolution resolved = CombatRules.resolve(cast.profile, offense.damage, cast.attacker.stats, defender.stats, c.tags.contains("spell"), false, DICE); lines.addAll(resolved.lines);
-        boolean hurt = false;
+        boolean hurt = false, announced = true;
         if(!resolved.hit || resolved.blocked && cast.profile.blockReduction >= 100)
         {
             budget.take(); room.show(caster, target, tool, CMMsg.MSG_NOISYMOVEMENT,
@@ -189,6 +194,9 @@ public final class CombatProfiles
             if(!budget.take()) { lines.add(type + ": event budget exhausted; not delivered"); continue; }
             final int damage = resolved.damage.get(type).intValue(); if(damage <= 0) continue;
             if(!OptionalModules.enabled(MODULE) || !legal(caster, target, room)) { lines.add(type + ": profile disabled or participant unavailable/no longer legal; not delivered"); continue; }
+            // A component landing after another must pass the attack rules again: the earlier one may have downed or beaten the target.
+            if(!announced && !assault(caster, target, tool)) { lines.add(type + ": world refused a further attack (for example the target is now down or has yielded); not delivered"); continue; }
+            announced = false;
             final Receipt receipt = post(caster, target, tool, damage, MESSAGES[i], WEAPONS[i], c.skill.name + " <DAMAGE> <T-NAME>!");
             lines.add(receipt.describe(type)); hurt |= receipt.applied > 0;
         }

@@ -78,7 +78,7 @@ public class CompositionBurn extends StdAbility implements ComposedBurn
         final Environmental found = InstanceIds.find(source);
         if(!(affected instanceof MOB) || !(found instanceof MOB) || damage < 1 || !OptionalModules.enabled(CompositionDefinitions.MODULE)) { unInvoke(); return false; }
         final MOB victim = (MOB)affected, caster = (MOB)found;
-        if(victim.amDead() || victim.amDestroyed() || caster.amDead() || caster.amDestroyed() || victim.location() == null || !caster.mayIFight(victim)
+        if(victim.amDead() || victim.amDestroyed() || Downed.isDown(victim) || caster.amDead() || caster.amDestroyed() || victim.location() == null || !caster.mayIFight(victim)
             || caster.getGroupMembers(new java.util.HashSet<MOB>()).contains(victim)) { unInvoke(); return false; }
         setInvoker(caster);
         if(profile != null)

@@ -134,7 +134,7 @@ public class Skill_Compose extends StdAbility
     }
     private boolean legal(final MOB caster, final MOB target, final Room room)
     {
-        if(caster == null || target == null || target == caster || room == null || caster.location() != room || target.location() != room || caster.amDead() || target.amDead() || target.amDestroyed() || !caster.mayIFight(target)) return false;
+        if(caster == null || target == null || target == caster || room == null || caster.location() != room || target.location() != room || caster.amDead() || target.amDead() || target.amDestroyed() || Downed.isDown(target) || !caster.mayIFight(target)) return false;
         return !caster.getGroupMembers(new HashSet<MOB>()).contains(target) && CMLib.flags().canBeSeenBy(target, caster);
     }
     private static final class Budget implements CombatProfiles.Budget { int left; Budget(final int n) { left = n; } public boolean take() { if(left <= 0) return false; left--; return true; } }
@@ -166,8 +166,9 @@ public class Skill_Compose extends StdAbility
             CMLib.combat().postDamage(caster, victim, this, damage, CMMsg.MASK_ALWAYS | MESSAGES[i], WEAPONS[i], compiled.skill.name + " <DAMAGE> <T-NAME>!");
             accepted |= victim.curState().getHitPoints() < before;
         }
+        // Every burn attempt uses one event, whether or not its chance roll succeeds.
         if(accepted && legal(caster, victim, origin) && values.get("burn_damage") >= .5 && values.get("burn_ticks") >= 1
-            && CMLib.dice().rollPercentage() <= values.get("burn_chance") && budget.take())
+            && budget.take() && CMLib.dice().rollPercentage() <= values.get("burn_chance"))
             CompositionBurn.apply(caster, victim, (int)Math.round(values.get("burn_damage")), (int)Math.floor(values.get("burn_ticks")), this);
     }
 }

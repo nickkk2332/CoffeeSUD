@@ -8,8 +8,9 @@ function read(f){return String(new JString(Files.readAllBytes(f.toPath()),"UTF-8
 function write(f,obj){Files.write(f.toPath(),new JString(JSON.stringify(obj)).getBytes("UTF-8"));}
 function throws(name,fn){var refused=false;try{fn();}catch(e){refused=true;}check(name,refused,"expected refusal");}
 function copyDir(source,target){target.mkdirs();var files=source.listFiles();for(var i=0;i<files.length;i++)Files.copy(files[i].toPath(),new java.io.File(target,String(files[i].getName())).toPath(),java.nio.file.StandardCopyOption.REPLACE_EXISTING);}
-var room=scratchRoom(),actors=[];
-function actor(name){var a=newMob("GenMob",room);a.setName(name);a.baseState().setHitPoints(10000);a.baseState().setMana(1000);a.baseState().setMovement(1000);a.recoverMaxState();a.resetToMaxState();actors.push(a);return a;}
+var room=scratchRoom(),actors=[],rooms=[room],heroes=[];
+function actorIn(name,where,hp){var a=newMob("GenMob",where);a.setName(name);a.baseState().setHitPoints(hp||10000);a.baseState().setMana(1000);a.baseState().setMovement(1000);a.recoverMaxState();a.resetToMaxState();actors.push(a);return a;}
+function actor(name){return actorIn(name,room);}
 function property(host,values){var a=CMClass.getAbility("Prop_CombatStats");a.setMiscText(JSON.stringify(values));host.addNonUninvokableEffect(a);return a;}
 function cast(source,target,id){var own=CM.core.GenSeed.begin(1);try{return source.fetchAbility("Skill_Compose").invoke(source,CM.core.CMParms.parse("CAST "+(id||"example.ember")),target,false,0);}finally{CM.core.GenSeed.end(own);}}
 function learn(a,id){var skill=a.fetchAbility("Skill_Compose");if(skill==null){skill=CMClass.getAbility("Skill_Compose");skill.setProficiency(100);a.addAbility(skill);}AC.learn(a,id||"example.ember");return skill;}
@@ -106,6 +107,31 @@ try{
  for(var recent=0;recent<10;recent++)cast(a,b);
  check("history-bounded-to-eight-events",String(CP.trace(a,8)).indexOf("Combat result #")>=0&&String(CP.trace(a,9)).indexOf("No such")>=0,"history bound incorrect");
  OM.configure("combat.profiles","player_trace","false");throws("creator-can-hide-player-traces",function(){CP.playerAccess();});OM.configure("combat.profiles","player_trace","true");
+ // Each target, and each component after the first, passes the native attack rules: down or yielded targets take nothing more.
+ var twin=JSON.parse(JSON.stringify(ember));twin.id="test.twin";twin.name="Twin bolt";twin.damage={fire:30,cold:30};twin.stats.mana=0;write(new java.io.File(defs,"test.twin.v1.json"),twin);
+ write(new java.io.File(defs,"test.floor.v1.json"),{schema:1,kind:"support",id:"test.floor",version:1,name:"Steady power",modifiers:[{stat:"damage",op:"floor",value:5}]});AC.reload();
+ var arena=scratchRoom();rooms.push(arena);var deathRules=CMClass.getAbility("Prop_DeathRules");deathRules.setMiscText('PLAYERDEATH="DOWNED 20 5"');arena.addNonUninvokableEffect(deathRules);
+ var foe=actorIn("Arena foe",arena),hero=actorIn("Arena hero",arena,10),pal=actorIn("Arena pal",arena);hero.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));heroes.push(hero);
+ pal["setFollowing(com.planet_ink.coffee_mud.MOBS.interfaces.MOB)"](hero);var foeSkill=learn(foe,"test.twin");
+ CM.Abilities.Misc.CompositionBurn.applyProfile(foe,hero,5,3,foeSkill,CP.prepare(foe,hero).pin(),0);var heroBurn=hero.fetchEffect("CompositionBurn");
+ cast(foe,hero,"test.twin");trace=String(CP.trace(foe,1));
+ check("component-after-downing-not-delivered",CM.core.Downed.isDown(hero)&&!hero.amDead()&&hero.curState().getHitPoints()==1&&trace.indexOf("cold delivery")<0&&trace.indexOf("cold: ")>=0,trace);
+ if(heroBurn!=null)heroBurn.tick(hero,Tickable.TICKID_MOB);
+ check("burn-ends-on-downed-target",heroBurn!=null&&hero.fetchEffect("CompositionBurn")==null&&CM.core.Downed.isDown(hero)&&!hero.amDead()&&hero.curState().getHitPoints()==1,"burn missing or struck a downed target");
+ learn(foe,"example.ember");AC.link(foe,"example.ember","example.chain");var palHp=pal.curState().getHitPoints();cast(foe,pal);
+ check("chain-skips-downed-ally",pal.curState().getHitPoints()<palHp&&CM.core.Downed.isDown(hero)&&!hero.amDead()&&hero.curState().getHitPoints()==1,"downed ally struck: "+String(CP.trace(hero,1)));
+ var foeMana=foe.curState().getMana();check("downed-primary-refused-before-cost",!cast(foe,hero)&&foe.curState().getMana()==foeMana&&hero.curState().getHitPoints()==1&&!hero.amDead(),"downed target charged or struck");
+ var yard=scratchRoom();rooms.push(yard);var ranger=actorIn("Yard ranger",yard),brute=actorIn("Yard brute",yard),knight=actorIn("Yard knight",yard,20);
+ var yielding=CMClass.getAbility("Prop_Essential");yielding.setMiscText("MODE=YIELD AT=60 TICKS=20 NOXP");knight.addNonUninvokableEffect(yielding);
+ CMLib.combat().postDamage(ranger,knight,null,10,CMMsg.MSG_OK_VISUAL|CMMsg.MASK_ALWAYS,-1,null);
+ check("knight-yielded-before-chain",field(yielding,"sparedFor")>0&&knight.curState().getHitPoints()==10,"knight did not yield");
+ learn(ranger);AC.link(ranger,"example.ember","example.chain");var bruteHp=brute.curState().getHitPoints();cast(ranger,brute);
+ check("chain-refused-by-yielded-npc",brute.curState().getHitPoints()<bruteHp&&!knight.amDead()&&knight.curState().getHitPoints()==10&&String(CP.trace(knight,1)).indexOf("world refused the attack")>=0,String(CP.trace(knight,1)));
+ var squire=actorIn("Yard squire",yard,100),squireYield=CMClass.getAbility("Prop_Essential");squireYield.setMiscText("MODE=YIELD AT=80 TICKS=20 NOXP");squire.addNonUninvokableEffect(squireYield);
+ learn(ranger,"test.twin");cast(ranger,squire,"test.twin");trace=String(CP.trace(ranger,1));
+ check("component-after-yield-refused",squire.curState().getHitPoints()==70&&trace.indexOf("cold: world refused a further attack")>=0,trace);
+ AC.link(a,"example.ember","test.floor");hp=b.curState().getHitPoints();cast(a,b);trace=String(CP.trace(a,1));AC.unlink(a,"example.ember","test.floor");
+ check("damage-floor-adds-no-type",b.curState().getHitPoints()==hp-6&&trace.indexOf("fire delivery")>=0&&!/(physical|cold|electric|acid) delivery/.test(trace),trace);
  var spec=CP.prepare(a,b);CM.Abilities.Misc.CompositionBurn.applyProfile(a,b,10,3,skill,spec.pin(),0);check("pending-burn-before-disable",b.fetchEffect("CompositionBurn")!=null,"missing pending burn");
  var off=MD.load(folder,"abilities.composition","");currentField.set(null,OM.prepare(off,String(OM.snapshot()),true));hp=b.curState().getHitPoints();b.fetchEffect("CompositionBurn").tick(b,Tickable.TICKID_MOB);
  check("disabled-profile-burn-stops",b.curState().getHitPoints()==hp&&b.fetchEffect("CompositionBurn")==null,"disabled burn damaged");
@@ -117,7 +143,7 @@ try{
  CP.reset();check("history-clears-on-campaign-reset",String(CP.trace(a,1)).indexOf("No such")>=0,"old trace crossed campaigns");
  currentField.set(null,OM.prepare(plan,null,true));check("legacy-save-does-not-auto-adopt-combat",!OM.enabled("combat.profiles"),"legacy save auto adopted");
 }finally{
- for(var i=0;i<actors.length;i++)actors[i].destroy();room.destroy();WorldFiles.configure(originalWorld);knownField.set(null,originalKnown);currentField.set(null,originalCampaign);AC.reset();CP.reset();
+ for(var i=0;i<heroes.length;i++)heroes[i].setPlayerStats(null);for(var i=0;i<actors.length;i++)actors[i].destroy();for(var i=0;i<rooms.length;i++)rooms[i].destroy();WorldFiles.configure(originalWorld);knownField.set(null,originalKnown);currentField.set(null,originalCampaign);AC.reset();CP.reset();
  var stream=Files.walk(folder.toPath());try{var paths=stream.sorted(java.util.Comparator.reverseOrder()).iterator();while(paths.hasNext())Files.deleteIfExists(paths.next());}finally{stream.close();CM.core.GenSeed.end(seeded);}
 }
 done();

@@ -66,6 +66,9 @@ public final class CompositionTest
         near(compile("[{\"stat\":\"chains\",\"op\":\"flat\",\"value\":100000}]").value("chains"), 8, "hard chain safety cap");
         near(compile("[{\"stat\":\"actions\",\"op\":\"more\",\"value\":-100}]").value("actions"), .25, "timing safety floor");
         near(compile("[{\"stat\":\"damage.physical\",\"op\":\"flat\",\"value\":-1000}]").value("damage.physical"), 0, "negative pools clamped");
+        final Compiled floored = compile("[{\"stat\":\"damage.physical\",\"op\":\"flat\",\"value\":-97},{\"stat\":\"damage\",\"op\":\"floor\",\"value\":5},{\"stat\":\"damage.fire\",\"op\":\"floor\",\"value\":5}]");
+        check(floored.value("damage.physical") == 5 && floored.value("damage.fire") == 0 && floored.value("damage.cold") == 0 && floored.value("damage.electric") == 0 && floored.value("damage.acid") == 0,
+            "damage floors raise dealt types and add none");
         refuses("contradictory floor/cap rejected", () -> compile("[{\"stat\":\"mana\",\"op\":\"floor\",\"value\":20},{\"stat\":\"mana\",\"op\":\"cap\",\"value\":10}]"));
         refuses("conditional timing rejected", () -> support("[{\"stat\":\"actions\",\"op\":\"more\",\"value\":50,\"condition\":\"target_wounded\"}]"));
         refuses("typo stat rejected", () -> support("[{\"stat\":\"damge\",\"op\":\"more\",\"value\":50}]"));

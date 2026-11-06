@@ -270,7 +270,8 @@ public final class CombatRules
             for(final Modifier m : active) if(m.stat.equals("damage") || m.stat.equals("damage." + type))
             { if(m.op.equals("floor")) floor = floor.max(d(m.value)); if(m.op.equals("cap")) cap = cap.min(d(m.value)); }
             if(floor.compareTo(cap) > 0) throw new IOException("damage." + type + ": floor exceeds cap");
-            result.put(type, canonical == null ? totals.get(type).max(floor).min(cap).doubleValue() : canonical.get("damage." + type));
+            final BigDecimal total = totals.get(type), raised = total.signum() > 0 ? total.max(floor) : total; // floors never add a type
+            result.put(type, canonical == null ? raised.min(cap).doubleValue() : canonical.get("damage." + type));
         }
         return new Offense(result, lines);
     }

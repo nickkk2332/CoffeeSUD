@@ -86,6 +86,15 @@ try {
     var noChainCaster=actor("No chain caster");learn(noChainCaster);AC.link(noChainCaster,"example.ember","example.chain");otherHP=second.curState().getHitPoints();
     check("zero-chain-campaign-setting",cast(noChainCaster,victim)&&second.curState().getHitPoints()==otherHP,"zero chain limit ignored");
     OM.configure("abilities.composition","max_chains","4");
+    // A burn attempt uses its event even when its chance roll fails, as with profiles.
+    write(new java.io.File(defs,"test.dud.v1.json"),{schema:1,kind:"support",id:"test.dud",version:1,name:"Dud flame",requires_all:["fire"],modifiers:[{stat:"burn_damage",op:"flat",value:3},{stat:"burn_ticks",op:"flat",value:3},{stat:"burn_chance",op:"cap",value:0}]});AC.reload();
+    var dudCaster=actor("Dud caster");learn(dudCaster);AC.link(dudCaster,"example.ember","example.chain");AC.link(dudCaster,"example.ember","test.dud");
+    var bystanders=[];for(var i=0;i<actors.length;i++)if(actors[i]!==victim&&actors[i]!==dudCaster)bystanders.push([actors[i],actors[i].curState().getHitPoints()]);
+    OM.configure("abilities.composition","event_budget","2");var dudHP=victim.curState().getHitPoints(),spared=true;
+    check("failed-burn-roll-cast",cast(dudCaster,victim)&&victim.curState().getHitPoints()<dudHP,"dud cast missed its target");
+    for(var i=0;i<bystanders.length;i++)if(bystanders[i][0].curState().getHitPoints()<bystanders[i][1])spared=false;
+    check("failed-burn-roll-spends-its-event",spared&&victim.fetchEffect("CompositionBurn")==null,"a failed burn roll left its event for a chained hit");
+    OM.configure("abilities.composition","event_budget","32");
     // Native auto/script invocation must still pay the configured cost.
     cleanCombat();callTyped(bob,null,"setFollowing",["MOB"],[null]);var bobMana=bob.curState().getMana();
     check("auto-does-not-bypass-cost",cast(bob,victim,true)&&bob.curState().getMana()==bobMana-9,"auto bypass");

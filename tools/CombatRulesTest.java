@@ -114,14 +114,26 @@ public final class CombatRulesTest
         refuses("out of range damage cap rejected",()->profile(",\"maximum_damage\":1000001"));
         refuses("unknown profile fields rejected",()->profile(",\"typo\":1"));
         refuses("invalid roller rejected",()->CombatRules.resolve(p,damage("physical",1),ordinary,evade,false,false,new Rolls(101)));
+        final Compiled flooredBolt=skill("{\"fire\":12}","[{\"stat\":\"damage\",\"op\":\"floor\",\"value\":5}]"), flooredSpark=skill("{\"fire\":3}","[{\"stat\":\"damage\",\"op\":\"floor\",\"value\":5},{\"stat\":\"damage.cold\",\"op\":\"floor\",\"value\":5}]");
+        for(final String mode:Arrays.asList("final","history"))
+        {
+            final Map<String,Double> bolt=CombatRules.offense(flooredBolt,Collections.<String>emptySet(),mode).damage, spark=CombatRules.offense(flooredSpark,Collections.<String>emptySet(),mode).damage;
+            check(bolt.get("fire")==12&&bolt.get("physical")==0&&bolt.get("cold")==0&&bolt.get("electric")==0&&bolt.get("acid")==0,"a global damage floor adds no damage type ("+mode+")");
+            check(spark.get("fire")==5&&spark.get("cold")==0,"a floor raises a dealt type but not an absent typed floor ("+mode+")");
+        }
         final Random random=new Random(719);
         for(int i=0;i<60;i++)
         {
-            final int phys=random.nextInt(100), fire=random.nextInt(20), convert=random.nextInt(101), flat=random.nextInt(61)-30, increase=random.nextInt(100)-50;
-            final Compiled c=skill("{\"physical\":"+phys+",\"fire\":"+fire+"}","[{\"op\":\"convert\",\"from\":\"physical\",\"to\":\"fire\",\"value\":"+convert+"},{\"stat\":\"damage.fire\",\"op\":\"flat\",\"value\":"+flat+"},{\"stat\":\"damage\",\"op\":\"increased\",\"value\":"+increase+"}]");
-            final Map<String,Double> legacy=c.values(Collections.<String>emptySet()), modern=CombatRules.offense(c,Collections.<String>emptySet(),"final").damage, historical=CombatRules.offense(c,Collections.<String>emptySet(),"history").damage;
+            final int phys=random.nextInt(100), fire=random.nextInt(20), convert=random.nextInt(101), flat=random.nextInt(61)-30, increase=random.nextInt(100)-50, floor=random.nextInt(31);
+            final Compiled c=skill("{\"physical\":"+phys+",\"fire\":"+fire+"}","[{\"op\":\"convert\",\"from\":\"physical\",\"to\":\"fire\",\"value\":"+convert+"},{\"stat\":\"damage.fire\",\"op\":\"flat\",\"value\":"+flat+"},{\"stat\":\"damage\",\"op\":\"increased\",\"value\":"+increase+"},{\"stat\":\"damage\",\"op\":\"floor\",\"value\":"+floor+"}]");
+            // Independent stage 2 expectation, in hundredths so a zero pool is exact: flat, convert, scale, then a floor on dealt types only.
+            final Map<String,Double> expected=new LinkedHashMap<String,Double>();for(final String type:CombatRules.TYPES)expected.put(type,0.0);
+            final long moved=(long)phys*convert, physical=phys*100L-moved, fired=(fire+flat)*100L+moved;final double scale=1+increase/100.0;
+            if(physical>0)expected.put("physical",Math.max(physical/100.0*scale,floor));
+            if(fired>0)expected.put("fire",Math.max(fired/100.0*scale,floor));
+            final Map<String,Double> modern=CombatRules.offense(c,Collections.<String>emptySet(),"final").damage, historical=CombatRules.offense(c,Collections.<String>emptySet(),"history").damage;
             for(final String type:CombatRules.TYPES)
-            {near(modern.get(type),legacy.get("damage."+type),"final conversion preserves stage 2 algebra "+i+"/"+type);near(historical.get(type),modern.get(type),"no type-specific bonuses means both models agree "+i+"/"+type);}
+            {near(modern.get(type),expected.get(type),"final conversion matches independent stage 2 algebra "+i+"/"+type);near(historical.get(type),modern.get(type),"no type-specific bonuses means both models agree "+i+"/"+type);}
         }
         final Profile example=examples.find("example.final",1);final JSONObject pin=CombatRules.pin(example);
         check(examples.pinned(pin)==example,"profile pins resolve by version and hash");pin.put("hash","wrong");refuses("same-version edits suspend",()->examples.pinned(pin));pin.put("version",Long.valueOf(9));refuses("missing profile version suspends",()->examples.pinned(pin));

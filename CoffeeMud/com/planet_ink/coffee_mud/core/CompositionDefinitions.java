@@ -251,7 +251,8 @@ public final class CompositionDefinitions
                 if(floor.compareTo(cap) > 0) throw new IOException(key + ": floor exceeds cap");
                 final BigDecimal scaled = values.get(key).max(BigDecimal.ZERO)
                     .multiply(BigDecimal.ONE.add(increased.movePointLeft(2), NUMBERS).max(BigDecimal.ZERO), NUMBERS).multiply(more, NUMBERS);
-                final double n = scaled.max(floor).min(cap).doubleValue();
+                // A damage floor raises a type the hit deals; it never adds a type the hit lacks.
+                final double n = (key.startsWith("damage.") && scaled.signum() <= 0 ? scaled : scaled.max(floor)).min(cap).doubleValue();
                 if(!Double.isFinite(n)) throw new IOException(key + ": non-finite result");
                 result.put(key, n);
             }
