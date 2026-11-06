@@ -310,3 +310,335 @@ catalog, loads rooms and builds the map, loads quests, and goes online
 (`CMProps.HostState` moves `BOOTING`, `LOADINGMAP`, `STARTING`, `RUNNING`; shutdown
 is `SHUTTINGDOWN`, `STOPPED`). The scheduler thread waits until the state is
 `RUNNING` before it starts ticking anything.
+
+## The object model
+
+Everything in the world is an object that implements a stack of small
+interfaces, and almost every interface has a standard class (`Std...`) and, for
+things a builder can define in data, a generic class (`Gen...`).
+
+### The interfaces
+
+```text
+CMObject                  ID(), name(), newInstance(), copyOf(), initializeClass()
+ +- Tickable              tick(), getTickStatus()
+ |   `- Environmental     + StatsAffecting, MsgListener, Contingent, Modifiable, Expireable
+ |       +- Physical      + Affectable: has PhyStats and a list of effects
+ |       |   `- PhysicalAgent   + Behavable, Taggable: also has behaviors and scripts
+ |       |       +- MOB          (also Rider, ItemPossessor, AbilityContainer, Combatant, ...)
+ |       |       +- Item         (through Rider; also Wearable, Readable)
+ |       |       +- Room         (through Places; also ItemPossessor, MOBPossessor)
+ |       |       +- Area         (through Places)
+ |       |       `- Exit         (also Readable, CloseableLockable)
+ |       `- Ability      an effect, skill, spell, prayer, song, language, trap or property
+ +- Behavior              Tickable + MsgListener + Contingent + Modifiable
+ +- Command               typed commands
+ +- Race, CharClass       Tickable + StatsAffecting + MsgListener + Modifiable
+ +- CMLibrary             a service library
+ `- CMCommon              data objects: CMMsg, PhyStats, CharStats, CharState, TimeClock, Session, ...
+```
+
+What each interface contributes (the methods you will actually call and
+override; all are in `core/interfaces/` unless noted):
+
+| Interface | Key methods |
+| --- | --- |
+| `CMObject` | `ID()` (the class name; the lookup key), `name()`, `newInstance()` (a fresh object of the same class), `copyOf()` (a clone with its state), `initializeClass()` (called once on the prototype at boot) |
+| `Environmental` | `Name()` and `setName`, `name()` (what viewers see; may be changed by `PhyStats.newName()`), `displayText()` / `setDisplayText`, `description()` / `setDescription`, `image()`, `isGeneric()`, `text()` / `setMiscText(String)` (the saved parameter string), `miscTextFormat()`, `sameAs(Environmental)`, `L(String, String...)` |
+| `Tickable` | `tick(Tickable ticking, int tickID)` (return `false` to stop being ticked), `getTickStatus()` |
+| `MsgListener` | `okMessage(Environmental myHost, CMMsg msg)` (may veto or alter), `executeMsg(Environmental myHost, CMMsg msg)` (react) |
+| `StatsAffecting` | `affectPhyStats(Physical affected, PhyStats stats)`, `affectCharStats(MOB, CharStats)`, `affectCharState(MOB, CharState)` |
+| `Contingent` | `destroy()`, `amDestroyed()`, `isSavable()`, `setSavable(boolean)` |
+| `Modifiable` | `getStatCodes()`, `getStat(String)`, `setStat(String, String)`, `isStat(String)`, `getSaveStatIndex()` |
+| `Expireable` | `expirationDate()`, `setExpirationDate(long)` (a game time; see below) |
+| `Affectable` (`Physical`) | `basePhyStats()`, `phyStats()`, `recoverPhyStats()`, `addEffect(Ability)`, `addNonUninvokableEffect(Ability)`, `delEffect(Ability)`, `fetchEffect(String ID)`, `effects()`, `numEffects()`, `eachEffect(EachApplicable<Ability>)`, `delAllEffects(boolean)` |
+| `Behavable` (`PhysicalAgent`) | `addBehavior(Behavior)`, `delBehavior`, `fetchBehavior(String ID)`, `behaviors()`, `addScript(ScriptingEngine)`, `scripts()`, `delAllBehaviors()` |
+| `MOB` (`MOBS/interfaces`) | `baseCharStats()` / `charStats()` / `recoverCharStats()`, `baseState()` / `curState()` / `maxState()` / `recoverMaxState()` / `resetToMaxState()`, `location()` / `setLocation(Room)`, `getStartRoom()` / `setStartRoom(Room)`, `bringToLife(Room, boolean resetStats)`, `removeFromGame(...)`, `getVictim()`, `isPlayer()` / `isMonster()`, `session()`, `tell(String)`, `playerStats()`, `getMoney()`; from `ItemPossessor`: `items()`, `addItem`, `delItem`, `findItem`, `moveItemTo`; from `AbilityContainer`: `addAbility`, `fetchAbility`, `abilities()`; from `MUDCmdProcessor`: `enqueCommand`, `doCommand`, `dequeCommand`, `actions()` |
+| `Item` (`Items/interfaces`) | `owner()` / `setOwner`, `container()` / `setContainer`, `material()`, `value()` / `baseGoldValue()` / `setBaseValue`, `usesRemaining()`, `amWearingAt(long)` (from `Wearable`), `secretIdentity()`, `stopTicking()` |
+| `Room` (`Locales/interfaces`) | `roomID()`, `getArea()`, `domainType()`, `getRoomInDir(int)`, `getRawExit(int)`, `getExitInDir(int)`, `show(...)` / `send(MOB, CMMsg)` / `showHappens(...)` (message posting), `addItem`, `fetchInhabitant`, `inhabitants()`, `recoverRoomStats()`, `numPCInhabitants()` |
+| `Area` (`Areas/interfaces`) | `getProperMap()` (its rooms), `getRoom(String id)`, `getClimateObj()`, `getTimeObj()` (its `TimeClock`), `getTheme()`, `getAreaState()`, children and parents |
+| `Exit` (`Exits/interfaces`) | `doorName()`, `openWord()`, `closeWord()`, `viewableText(MOB, Room)`, plus lock and open state from `CloseableLockable` |
+| `Ability` (`Abilities/interfaces`) | `invoke(MOB, List<String>, Physical, boolean auto, int asLevel)`, `unInvoke()`, `triggerStrings()`, `classificationCode()`, `abstractQuality()`, `canAffect(Physical)`, `affecting()`, `invoker()`, `proficiency()`, `proficiencyCheck(...)`, `startTickDown(...)`, `accountForYourself()`, `canBeUninvoked()` |
+| `Behavior` (`Behaviors/interfaces`) | `getParms()` / `setParms(String)`, `startBehavior(PhysicalAgent)`, `endBehavior(PhysicalAgent)`, `canImprove(PhysicalAgent)`, `flags()`, `accountForYourself()`; CoffeeSUD adds default `catchUp(PhysicalAgent host, long ticks)` and `repliesNow(PhysicalAgent host)` |
+| `Command` (`Commands/interfaces`) | `getAccessWords()`, `execute(MOB, List<String>, int metaFlags)`, `preExecute(...)`, `securityCheck(MOB)`, `actionsCost(...)`, `combatActionsCost(...)`, `canBeOrdered()`, `canBeCancelled()`, `executeInternal(MOB, int, Object...)` |
+
+`Environmental.Name()` is the object's own name; `name()` and `name(MOB viewer)`
+are the name as seen (the second is on `Physical`). Always show `name(viewer)`
+or a `<S-NAME>`/`<T-NAME>` tag to players, never `Name()`.
+
+### Standard classes and generic classes
+
+| Kind | Interface | Standard base class | Notable subclasses | Generic (data-defined) classes |
+| --- | --- | --- | --- | --- |
+| Item | `Item` | `Items/Basic/StdItem` | `StdContainer`, `StdFood`, `LightSource`, `StdKey`, `StdBook`; `Items/Weapons/StdWeapon`; `Items/Armor/StdArmor` (extends `StdContainer`); `StdDrink` (extends `StdContainer`); `Items/MiscMagic/StdWand`, `StdPotion`, `StdScroll`... | `GenItem`, `GenContainer`, `GenFood`, `GenDrink`, `GenWeapon`, `GenArmor`, `GenWand`, `GenBoat`... (about 250 `Gen*` item classes) |
+| MOB | `MOB` | `MOBS/StdMOB` | `StdRideable`, `StdShopKeeper`, `StdBanker`, `StdDeity`, `StdPostman`, `StdAuctioneer`, creature classes such as `Chicken` | `GenMob`, `GenRideable`, `GenShopkeeper`, `GenBanker`, `GenUndead`, `GenCow`... |
+| Room | `Room` | `Locales/StdRoom` | `StoneRoom`, `Woods`, `Plains`, grids (`StdGrid`), mazes, water locales | none: every room stores its own display text, description, exits and effects |
+| Exit | `Exit` | `Exits/StdExit` | `StdOpenDoorway`, `StdClosedDoorway`, `StdLockedDoorway`, `Door`, `Gate` | `GenExit`, `GenDoor`, `GenCurtain`, `GenAirLock` |
+| Area | `Area` | `Areas/StdArea` | `StdGridArea`, `StdThinArea`, `StdThinInstance`, `StdBoardableShip` | none |
+| Ability | `Ability` | `Abilities/StdAbility`; `Properties/Property` (extends the small `ThinAbility`) | `Spells/Spell`, `Prayers/Prayer`, `Druid/Chant`, `Songs/Song`, `Skills/StdSkill`, `Common/CommonSkill`, `Languages/Language`, `Diseases/Disease`, `Poisons/Poison`, `Traps/StdTrap` | `GenAbility`, `GenCraftSkill`, `GenGatheringSkill`, `GenWrightSkill`, `GenDisease`, `GenPoison`, `GenTrap`, `GenLanguage` |
+| Behavior | `Behavior` | `Behaviors/StdBehavior` | all behaviors | `GenBehavior` |
+| Command | `Command` | `Commands/StdCommand` | all commands | `GenCommand` |
+| Race | `Race` | `Races/StdRace` | all races | `GenRace` |
+| Character class | `CharClass` | `CharClasses/StdCharClass` | all classes | `GenCharClass` |
+
+(`Skills/StdSkill` and the other intermediate classes named above are in the
+folders shown. Check the file before relying on a name: for example `Prayer` is
+in `Abilities/Prayers/` and `Chant` in `Abilities/Druid/`.)
+
+A **standard** class is complete Java: its behavior, name and defaults are
+written in code, and an instance stores only what changes (for an item, the
+use count, level, ability and a text string; for a mob, its stats, inventory
+and effects). A **generic** class is a thin Java class whose entire definition
+is data: its fields are read and written through `getStat`/`setStat`
+(`Modifiable`), serialised to XML by `Libraries/CoffeeMaker`
+(`GenericBuilder`), edited by the builder's `MODIFY` screens
+(`Libraries/CMGenEditor`), and stored in world files and the catalog. Builders
+create generic objects with no programmer involved; programmers write standard
+classes. See [Mobs](21-mobs.md), [Items](22-items.md) and
+[Characters](03-characters.md) for the data side.
+
+### Prototypes and instances
+
+The sets built at boot hold **prototypes**. Never put a prototype in the world.
+Use the getters, which return a new instance (`newInstance()`):
+
+| You want | Call |
+| --- | --- |
+| An ability (spell, property...) | `CMClass.getAbility("Spell_Fortify")`, or `CMClass.getAbility(id, miscText)` to set its parameters |
+| A behavior | `CMClass.getBehavior("Sneezer")` |
+| An item of any item type | `CMClass.getItem("LuckyCoin")`; also `getWeapon`, `getArmor`, `getMiscMagic`, `getBasicItem` |
+| A mob | `CMClass.getMOB("Sparrow")` |
+| A room, exit, area | `CMClass.getLocale("StoneRoom")`, `getExit(...)`, `getAreaType(...)` |
+| A race, class | `CMClass.getRace("Human")`, `CMClass.getCharClass("Mage")` (these return the shared prototype; races and classes are stateless) |
+| A command | `CMClass.getCommand("Say")` (the shared prototype; commands keep no per-use state) |
+| A common object | `CMClass.getCommon("DefaultScriptingEngine")`, `CMClass.getCommon("DefaultPhyStats")` |
+| Anything by ID | `CMClass.getUnknown(id)` (items first, then mobs and abilities) |
+| The prototype itself, for reading only | `CMClass.getAbilityPrototype(id)`, `getItemPrototype`, `getMOBPrototype`, `getCommonPrototype`, `getPrototypeByID(type, id)` |
+
+Each getter returns `null` for an unknown ID; check before using it.
+`CMClass.findAbility`, `findRace`, `findCharClass` and `findCommand` also match by
+display name.
+
+A newly created object is not yet *in* the world:
+
+- A mob is placed with `mob.bringToLife(room, true)` (and `setStartRoom(room)`
+  first if it should rejuvenate there). `bringToLife` starts its tick.
+- An item is placed with `room.addItem(item)` or `mob.addItem(item)`, then the
+  holder's `recoverRoomStats()` or `recoverPhyStats()`.
+- Remove either for good with `destroy()`; `destroy()` stops ticking, removes it
+  from its holder and marks it `amDestroyed()`. Test `amDestroyed()` before using
+  a reference you kept across ticks.
+- An effect is added with `host.addEffect(ability)` after
+  `ability.setAffectedOne(host)`, or more simply with `host.addNonUninvokableEffect(ability)`
+  for a permanent property, or by invoking a spell (`beneficialAffect` and
+  `maliciousAffect` do it).
+
+### Where the engine keeps instances
+
+- `CMLib.map()` (`WorldMap`) holds the areas and rooms: `getArea(name)`,
+  `getRoom(roomID)`, `areas()`, `rooms()`, `roomLocation(Environmental)`.
+- A room holds its inhabitants and items; a mob holds its inventory; an item may
+  sit in a container. `owner()` and `container()` say where an item is.
+- Prototypes live in `CMClass`. The catalog (`CMLib.catalog()`) holds named
+  template mobs and items.
+
+## Physical state: PhyStats, CharStats and CharState
+
+Three small data objects (in `Common/interfaces/`) hold the numbers that
+describe a thing right now. Each exists in two copies on the object: a **base**
+copy that is the real, saved value, and a **current** copy that is recomputed
+from the base plus everything that affects the object.
+
+| Object | Base | Current | Recompute | What it holds |
+| --- | --- | --- | --- | --- |
+| `PhyStats` | `basePhyStats()` | `phyStats()` | `recoverPhyStats()` | On every `Physical`: `level`, `ability`, `rejuv`, `weight`, `height`, `armor`, `damage`, `speed`, `attackAdjustment`, `disposition` (a bit mask of `IS_*` flags such as `IS_HIDDEN`, `IS_INVISIBLE`, `IS_SLEEPING`, `IS_FLYING`, `IS_SWIMMING`, `IS_LIGHTSOURCE`, `IS_DARK`), `sensesMask` (`CAN_NOT_SEE`, `CAN_SEE_HIDDEN`, `CAN_NOT_HEAR`, `CAN_NOT_MOVE`, ...), `newName` and ambiances |
+| `CharStats` | `baseCharStats()` | `charStats()` | `recoverCharStats()` | On MOBs: the six stats (`STAT_STRENGTH`, `STAT_INTELLIGENCE`, `STAT_DEXTERITY`, `STAT_CONSTITUTION`, `STAT_CHARISMA`, `STAT_WISDOM`), gender, the saving throws (`STAT_SAVE_FIRE`, `STAT_SAVE_MAGIC`, `STAT_SAVE_SPELLS`, ...), maximum-stat adjustments, age, weight adjustment, the race (`getMyRace()`), the classes and levels (`getCurrentClass()`), the deity |
+| `CharState` | `baseState()` | `maxState()` (the caps); `curState()` is the live value | `recoverMaxState()` | On MOBs: hit points, mana, movement, hunger, thirst, fatigue |
+
+The rules:
+
+1. **Change the base to make a lasting change, then recompute.** For example
+   `mob.basePhyStats().setLevel(10); mob.recoverPhyStats();`. Writing to
+   `phyStats()` directly works only until the next recompute, which can be a few
+   milliseconds away.
+2. **To make a temporary change, be an effect.** Anything that is on the
+   object and implements `StatsAffecting` (an `Ability`, an item the mob holds,
+   the room it stands in, its race and class, a faction) gets a turn to alter
+   the *current* copy in `affectPhyStats`, `affectCharStats` or
+   `affectCharState`. That is how a spell like `Spell_Shield` lowers armor for
+   as long as it lasts: it overrides `affectPhyStats` and does
+   `affectableStats.setArmor(affectableStats.armor() - 10 - ...)`. Lower armor
+   means harder to hit.
+3. **Call the recompute after you add, remove or change anything that
+   affects**: after `addEffect`, after changing a base stat, after moving an
+   item onto a mob. The engine does this for its own operations (`addEffect`
+   and `delEffect` call `recoverPhyStats`; moving items calls it too), but code
+   that reaches in and edits fields must do it itself.
+4. **`CharStats` and `CharState` have more than one recompute.** The usual
+   order after a big change to a mob is `recoverCharStats()`,
+   `recoverPhyStats()`, `recoverMaxState()` (the maximums depend on the stats,
+   and the stats depend on the class and race). `StdMOB.recoverPhyStats()` starts
+   from a copy of the base, then applies (in this order) the room, the mount, the
+   deity, each class, the race, each item, each effect, each faction, and
+   CoffeeSUD's `core/StatEffects` (the `STATEFFECT_` properties); see
+   `MOBS/StdMOB.java` near line 796.
+5. **`affect*` methods are called very often.** Keep them free of side effects,
+   allocation and anything slow. Never call `recoverPhyStats()` from inside an
+   `affect*` method.
+6. `curState()` is the one live value of the three: damage and healing change
+   it directly (`curState().adjHitPoints(...)`, normally through
+   `CMLib.combat().postDamage`), and `resetToMaxState()` refills it.
+
+A related CoffeeSUD helper, `core/StatEffects`, lets world content (item and
+mob property strings named `STATEFFECT_...`) add to the stats without a Java
+class; it is documented in
+[Properties reference](23-properties-reference.md).
+
+## Libraries and global utilities
+
+### CMLib
+
+`core/CMLib` is the single access point for services. Every library is an
+object created at boot from a class in `Libraries/` (or `core/database`,
+`core/threads`) and reached through a static accessor. Always call the accessor
+every time (`CMLib.flags().isSleeping(mob)`); do not cache the library in a
+static field, because the accessor depends on the current thread group (see
+below). The `CMLib.Library` enum lists them; each accessor returns the
+interface in the third column.
+
+| Accessor | Interface | Implementation | What it is for |
+| --- | --- | --- | --- |
+| `CMLib.map()` | `WorldMap` | `CMMap` | Areas and rooms: `getRoom(id)`, `getArea(name)`, `roomLocation(E)`, `areas()`, `rooms()`, factory MOBs |
+| `CMLib.hunt()` | `WorldHuntLibrary` | `WorldHuntUtils` | Searches across the whole map for mobs, items, rooms, exits |
+| `CMLib.flags()` | `CMFlagLibrary` | `Sense` | State queries: `canBeSeenBy`, `isSleeping`, `isInDark`, `isAnimalIntelligence`, `canMove`, `isGettable`, `isAliveAwakeMobile`... Use these instead of testing `PhyStats` bits by hand |
+| `CMLib.combat()` | `CombatLibrary` | `MUDFight` | Attacks, damage, healing, death, saves: `postAttack`, `postDamage`, `postHealing`, `postDeath`, `checkSavingThrows`, `checkDamageSaves`, `standardMobCondition` |
+| `CMLib.commands()` | `CommonCommands` | `CommonMsgs` | The shared bodies of common commands, as `post*` methods: `postGet`, `postDrop`, `postGive`, `postOpen`, `postWear`, `postSay`, `postLook`, `postFlee`, `postCommandFail`, `postCommandRejection`, `handleUnknownCommand` |
+| `CMLib.english()` | `EnglishParsing` | `EnglishParser` | Command and target parsing: `findCommand(mob, words)`, `fetchItemList`, `startsWithAnIndefiniteArticle`, skill invocation |
+| `CMLib.masking()` | `MaskingLibrary` | `MUDZapper` | The zapper mask language: `getPreCompiledMask(String)`, `maskCheck(...)`. See [Behaviors and masks](24-behaviors-and-masks.md) |
+| `CMLib.tracking()` | `TrackingLibrary` | `MUDTracker` | Movement and path finding: `walk`, `move`, tracking helpers |
+| `CMLib.coffeeMaker()` | `GenericBuilder` | `CoffeeMaker` | Objects to and from XML: `getItemXML`, `getMobXML`, `getRoomXML`, `getAnyGenStat`, `setAnyGenStat`, `unpackItemFromXML` |
+| `CMLib.genEd()` | `GenericEditor` | `CMGenEditor` | The in-game editor screens (`modifyStdItem`, `modifyStdMob`, `modifyGenRace`, `genMiscText`...) |
+| `CMLib.catalog()` | `CatalogLibrary` | `CMCatalog` | Catalogued template mobs and items |
+| `CMLib.beanCounter()` | `MoneyLibrary` | `BeanCounter` | Currencies and coins: `getTotalAbsoluteNativeValue(mob)`, `nameCurrencyShort(...)`, `subtractMoney`, `giveMoney` |
+| `CMLib.coffeeShops()` | `ShoppingLibrary` | `CoffeeShops` | Shopkeeper stock and pricing |
+| `CMLib.materials()` | `MaterialLibrary` | `RawCMaterial` | Raw materials and resources |
+| `CMLib.itemBuilder()` | `ItemBalanceLibrary` | `TimsLibrary` | Item power calculation and balancing |
+| `CMLib.law()` | `LegalLibrary` | `MUDLaw` | Laws, crimes and warrants |
+| `CMLib.factions()` | `FactionManager` | `Factions` | Factions and alignment (`setAlignment`) |
+| `CMLib.clans()` | `ClanManager` | `Clans` | Clans |
+| `CMLib.quests()` | `QuestManager` | `Quests` | Quest scripts and state |
+| `CMLib.leveler()` | `ExpLevelLibrary` | `CoffeeLevels` | Experience and leveling |
+| `CMLib.expertises()` | `ExpertiseLibrary` | `ColumbiaUniv` | Expertises |
+| `CMLib.ableMapper()` | `AbilityMapper` | `CMAbleMap` | Which class or race gets which ability at which level: `addCharAbilityMapping`, `qualifyingLevel`, `qualifiesByLevel` |
+| `CMLib.ableComponents()` | `AbilityComponents` | `CMAbleComps` | Spell components |
+| `CMLib.ableParms()` | `AbilityParameters` | `CMAbleParms` | Recipe parameter tables for craft skills |
+| `CMLib.percolator()` | `AreaGenerationLibrary` | `MUDPercolator` | Random area and object generation. See [Generation](12-generation.md) |
+| `CMLib.time()` | `TimeManager` | `CoffeeTime` | The global calendar (`globalClock()`) and time formatting |
+| `CMLib.dice()` | `DiceLibrary` | `Dice` | Dice: `roll(n, d, bonus)`, `rollPercentage()` |
+| `CMLib.lang()` | `LanguageLibrary` | `DirtyLanguage` | Translation (`L`, `fullSessionTranslation`) and in-world speech garbling |
+| `CMLib.coffeeFilter()` | `TelnetFilter` | `CoffeeFilter` | The output filter: colour codes, `<S-NAME>` pronoun tags, wrapping |
+| `CMLib.color()` | `ColorLibrary` | `Brown` | Colour code tables |
+| `CMLib.help()` | `HelpLibrary` | `MUDHelp` | Help lookup and the generated ability help |
+| `CMLib.lister()` | `ListingLibrary` | `CMLister` | The tables the `LIST` command prints |
+| `CMLib.journals()` | `JournalsLibrary` | `CMJournals` | Journals and the in-game mailbox (`postToMailbox`) |
+| `CMLib.socials()` | `SocialsList` | `Socials` | Socials |
+| `CMLib.sessions()` | `SessionsList` | `Sessions` | The list of sessions (the player's console and windows) |
+| `CMLib.login()` | `CharCreationLibrary` | `CharCreation` | Character creation and the profile flow |
+| `CMLib.players()` | `PlayerLibrary` | `CMPlayers` | Player character cache |
+| `CMLib.achievements()` | `AchievementLibrary` | `Achievements` | Achievements |
+| `CMLib.awards()` | `AutoAwardsLibrary` | `AutoAwards` | Automatic titles and properties |
+| `CMLib.xml()` | `XMLLibrary` | `XMLManager` | XML parsing and writing |
+| `CMLib.encoder()` | `TextEncoders` | `CMEncoder` | Compression and encoding |
+| `CMLib.coffeeTables()` | `StatisticsLibrary` | `CoffeeTables` | Statistics |
+| `CMLib.utensils()` | `CMMiscUtils` | `CoffeeUtensils` | Miscellaneous helpers that fit nowhere else |
+| `CMLib.channels()` | `ChannelsLibrary` | `CMChannels` | Channels (largely vestigial in a single-player game) |
+| `CMLib.slavery()` | `SlaveryLibrary` | `SlaveryParser` | Geas and orders given to followers |
+| `CMLib.tech()` | `TechLibrary` | `GroundWired` | Electronics circuits |
+| `CMLib.space()` | `GalacticMap` | `CoffeeDark` | Space objects |
+| `CMLib.city()` | `CityMap` | `CityCafe` | A cache of bank, post office, auction and library objects |
+| `CMLib.protocol()` | `ProtocolLibrary` | `CMProtocols` | What is left of the client protocol code (sound tags are discarded) |
+| `CMLib.database()` | `DatabaseEngine` | `core/database/DBInterface` | The SQL cache (`jdbc:fakedb:`), the loaders for rooms, mobs, players, journals |
+| `CMLib.threads()` | `ThreadEngine` | `core/threads/ServiceEngine` | Ticks, delayed and queued jobs, the scheduler. See [Ticks, time and the game thread](#ticks-time-and-the-game-thread) |
+
+`CMLib` also hands out the static utility classes through `CMLib.math()`,
+`parms()`, `strings()`, `classes()`, `security()`, `directions()`, `log()`,
+`resources()` and `props()`, but code calls those classes directly:
+
+| Class | Use |
+| --- | --- |
+| `CMath` | Numbers: `s_int`, `s_double`, `isInteger`, `isNumber`, `bset(mask, bit)`, `div`, `mul`, `random()` (the seeded game generator; never use `Math.random()` or a new `java.util.Random`, see below) |
+| `CMStrings` | Strings: `capitalizeAndLower`, `padRight`, `removeColors`, `replaceVariables`, `startsWithIgnoreCase` |
+| `CMParms` | Parameter strings and lists: `parse`, `combine(list, from)`, `parseCommas`, `getParmInt/Str/Bool/Double(text, key, default)` (read `KEY=value` from a parameter string, key match is case-insensitive and by start of word), `parseEQParms`, `toListString` |
+| `Resources` | The text and object cache: `getFileResource(name, reload)`, `submitResource`, `removeResource` |
+| `CMFile` | The sandboxed virtual file system (`CMFile.FLAG_LOGERRORS`...). Paths are relative to `CoffeeMud/`, forward slashes, and cannot leave it |
+| `Log` | Logging, see [Logging](#logging) |
+| `GameTime`, `GameRandom` | The game clock and the seeded generator, see below |
+| `CMClass` | The class registry, see above |
+
+### CMProps
+
+`core/CMProps` holds `coffeemud.ini` after parsing (and the world's
+`world.ini`, and any command-line override). It has typed enums:
+
+```java
+CMProps.getVar(CMProps.Str.MUDSTATUS)          // a string setting
+CMProps.getIntVar(CMProps.Int.TICKSPERMUDDAY)   // an integer
+CMProps.getBoolVar(CMProps.Bool.MOBCOMPRESS)    // a flag
+CMProps.getTickMillis()                         // TICKTIME: 4000 ms by default
+CMProps.getMillisPerMudHour()                   // MILLISPERMUDHOUR: 600000 by default
+CMProps.isSinglePlayer()                        // true in CoffeeSUD
+CMProps.getProp("SOMEKEY")                      // any raw key, as a string
+CMProps.getCommandActionCost(ID(), default)     // see Command, below
+CMProps.isState(CMProps.HostState.RUNNING)      // the engine's boot state
+```
+
+To add a setting for your own feature, read it with `CMProps.getProp("MYKEY")`
+or `CMProps.instance().getStr("MYKEY", "default")` where you use it; you do not
+need a new enum entry. Settings that scripts and builders change at run time
+should go through [World settings](world-settings.md) instead.
+
+`CMProps` also carries the `EXTVAR_<ClassID>` mechanism that adds stat codes to
+a generic class, covered in
+[Saving and configuring your classes](#saving-and-configuring-your-classes).
+
+### CMSecurity
+
+`core/CMSecurity` answers "may this player do this?" and "is this feature
+turned off?":
+
+```java
+CMSecurity.isAllowed(mob, room, CMSecurity.SecFlag.CMDMOBS) // does the mob's security group allow it here?
+CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.GOTO)
+CMSecurity.isASysOp(mob)                                    // an Archon
+CMSecurity.isDisabled(CMSecurity.DisFlag.AUTODISEASE)       // the DISABLE= list
+CMSecurity.isDebugging(CMSecurity.DbgFlag.MESSAGES)         // the DEBUG= list
+CMSecurity.isCommandDisabled("TALLY")                       // DISABLE=COMMAND_X
+CMSecurity.isAbilityDisabled("SPELL_FORTIFY")
+```
+
+In CoffeeSUD the player is an ordinary mob with no special rights. Builder mode
+(`BUILDER=1`) gives the character the Archon group; `DEV=1` gives the `DEV`
+group (`GROUP_DEV` in `coffeemud.ini`). `SaveGame.isBuilderMode()` and
+`SaveGame.isDevMode()` (in `core/save/`) tell you which game this is. Use them,
+not `SecFlag`s, for developer-only commands. See
+[Configuration and administration](19-configuration-and-administration.md).
+
+### Thread groups: why the statics work
+
+`CMClass`, `CMLib`, `CMProps`, `Log` and `Resources` keep *one instance per
+thread group*, indexed by the first character of the current thread's thread
+group name. The game runs in the group named `0-MUD`. This is a leftover of
+CoffeeMud's ability to host several muds in one JVM. The consequence for you:
+**any thread you start yourself must be created in the game's thread group**
+(`new Thread(Thread.currentThread().getThreadGroup(), runnable)` from game
+code), or every call to `CMLib.x()` on it fails with a `NullPointerException`.
+Threads created from game code inherit the group by default. The usual answer
+is not to start threads at all (see the next section).
+
+### The seeded dice
+
+`CMath.random()`, `CMLib.dice()` and `CMath.s_int`-style helpers draw from one
+`GameRandom` that behaves like `java.util.Random` but whose state is saved and
+restored with a campaign save, and which `RANDOMSEED=n` seeds for reproducible
+runs. Code that must replay identically (including tests) uses only these.
+`Math.random()` and `new Random()` break that guarantee.
