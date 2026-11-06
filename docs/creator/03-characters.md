@@ -63,6 +63,7 @@ and saved games are the subject of [31-saves-and-party.md](31-saves-and-party.md
 - [Death, rebirth and remort](#death-rebirth-and-remort)
 - [Achievements and titles](#achievements-and-titles)
 - [Profile, party and recruitment](#profile-party-and-recruitment)
+- [Command quick reference](#command-quick-reference)
 - [Worked examples](#worked-examples)
 - [Persistence notes](#persistence-notes)
 - [Troubleshooting](#troubleshooting)
@@ -196,9 +197,10 @@ template menu and all of the gifts above: the template's own contents are
 applied instead, and then the character gets a start room and a birthday (see
 [templates](#ready-made-characters-player-templates)).
 
-Two earlier gifts come from the class and race themselves: the class's
-abilities, first-level practices and trains, outfit and starting money (end of
-step 11), and the race's outfit and abilities (at the class step).
+Some gifts come earlier, from the class and race themselves: the race's
+abilities (when gender is settled), the race outfit and `STARTINGITEMS` (at the
+class step), and the class's abilities, first-level practices and trains,
+outfit and starting money (end of the `FACTIONS` step).
 
 ### Start rooms
 
@@ -727,7 +729,7 @@ the **Availability** field in the editors, with these values:
 | Value | Meaning |
 | --- | --- |
 | 0 | Unavailable |
-| 1 to 7 | Open to players in those themes (1 fantasy, 2 tech, 3 fantasy and tech, 4 heroic, 5, 6, 7 all) |
+| 1 to 7 | Open to players in those themes: 1 fantasy, 2 technological, 3 fantasy and technological, 4 heroic, 5 heroic and fantasy, 6 heroic and technological, 7 all |
 | 8 to 15 | The same themes, but "skill only": not offered to players |
 
 A race or class is offered at creation when its theme bits meet `MUDTHEME` and
@@ -840,7 +842,10 @@ record stores. Indexed codes carry a trailing number (`GETRABLE0`, `GETRABLE1`).
 | 42 | Health chart | `HEALTHCHART` | none | Eleven comma-separated combat health lines (worst first), `<MOB>` for the name, `\|` for alternatives |
 | 43 | Corpse descriptions | `CORPSEBLURBS` | none | `CAUSE=phrase\|alternative; ALL=phrase`, the corpse text by cause of death, for example `BURNING=molten gears;ALL=a heap of springs` |
 
-Not in the editor: `HELP` (a help entry stored in the record). Fields 21 to
+Not in the editor: `HELP` (a help entry stored in the record). Extra fields can
+be added to generic races and classes with `EXTVAR_GenRace=NAME,NAME` and
+`EXTVAR_GenCharClass=NAME` in `coffeemud.ini`; they are saved with the record
+(unverified whether the race and class editors list them). Fields 21 to
 25 take stat names; the editor lists the valid ones on a bad entry. Racial and
 cultural abilities, effects, and the fields that need an item in your inventory
 (`new <item>`) are edited by naming the entry to remove it or a new name to add
@@ -1814,7 +1819,7 @@ Builder and developer commands:
 
 Goal: players choose between a temple orphan and a dockside sailor, may pick a
 starting kit, answer one personality question, and spend two points on traits;
-later characters join at the party's level.
+later characters start at the level of the profile's lowest character.
 
 `world/world.ini`:
 
@@ -1926,7 +1931,6 @@ finish):
 | Cultural Abilities | add `Common` (proficiency `100`, character level `0`, auto-gained `Y`) |
 | Racial Effects | add `Prop_Resistance`, level `1`, parameters `fire 25% cold -10%` |
 | Extra Practices/1stLvl | `1` |
-| Name style | the style your world uses for fire-folk (see [12-generation.md](12-generation.md)) |
 
 Then the class:
 
@@ -1953,7 +1957,7 @@ level for a level-1 character. `LIST CLASSES` and `LIST RACES` list both. With
 `SHOWLOCKED=YES`, `NEW` shows `Emberkin (locked: Swear the Ashen Oath in the
 Cinder Hall)`. Give the oath as an achievement reward in
 `world/resources/achievements.ini`, on a profile achievement so it unlocks the
-race for later characters, or add `RACE_EMBERKIN` as a tattoo with a script. Save
+race for later characters, or give the tattoo `RACE_EMBERKIN` from a script with `MPTATTOO who RACE_EMBERKIN`. Save
 (builder mode writes `world/custom/races/Emberkin.cmare` and
 `world/custom/classes/Pyromancer.cmare`).
 
@@ -1993,7 +1997,8 @@ SPEECH_PROG p I seek the vigil
 A retraining shrine: on the shrine room (or an NPC) add the effect
 `Prop_Respec` with `WHAT="SKILLS,STATS" COST="5 per skill" ONCE=YES`. A player
 standing there types `RESPEC`, sees what was bought and what each undo costs,
-and `RESPEC ALL` refunds the trains and practices (less 5 gold per skill).
+and `RESPEC ALL` refunds the trains and practices; each skill undone costs 5
+gold.
 
 A discovery: on the grotto room add `Prop_Discovery` with `XP=150
 ONCE=PROFILE MESSAGE="Behind the falls lies a hidden grotto!"
@@ -2007,7 +2012,7 @@ whole party should share one reward and `ONCE=CHARACTER` for one each.
 | --- | --- | --- |
 | `world.ini` character settings | `world/world.ini` | Read at start; `WORLD SET KEY=value` writes it in builder mode and applies at the next start |
 | `coffeemud.ini` settings | `coffeemud.ini` | Engine ini; restart to change |
-| `creation.ini`, `origins.ini`, `perks.ini`, `ranks.ini`, kits | `world/` | World files, re-read as used (creation, perks and ranks cache by file time). Not stored in saved campaigns: a restored campaign uses the world files of the running world |
+| `creation.ini`, `origins.ini`, `perks.ini`, `ranks.ini`, kits | `world/` | World files, re-read as used (creation, perks and ranks cache by file time). They are not part of a saved campaign (see [state-and-persistence.md](state-and-persistence.md)) |
 | Generic races and classes | `world/custom/races/`, `world/custom/classes/` | Built into the database cache at start; builder-mode SAVE writes them back |
 | Ready-made characters | `world/catalog.cmare` | Catalog mobs in the category `PLAYERTEMPLATE` |
 | Achievements, titles, hints, `EXP_CHART` | `world/resources/...` copies of `resources/...` | A world's own copy replaces the stock file |
@@ -2022,8 +2027,7 @@ choice, or a rank ladder's key, orphans the marks existing characters have, so
 keep IDs stable and add new ones instead. Saved characters refer to their race
 and class by ID: do not delete or rename a generic race or class a saved
 character uses. Changing a stat definition (`ADDCHARSTAT_`, `REPLACECHARSTAT_`)
-needs a restart, and existing characters keep the stat values they were saved
-with. A new campaign (`NEW`) always starts from the world files; a restore uses
+needs a restart. A new campaign (`NEW`) always starts from the world files; a restore uses
 the saved characters. Test across a save and restore as in
 [state-and-persistence.md](state-and-persistence.md).
 
@@ -2043,9 +2047,9 @@ the saved characters. Test across a save and restore as in
 | `STARTINGITEMS` ignores an item | A name that is also a race ID starts a per-race list; use a catalog name instead |
 | `TRAIN GAIN` does nothing | `TRAINCOSTS` has no `GAIN` entry. The ini comment says `TRAINS 1 7 PRACTICE`, but the code (and the default) use `GAIN` |
 | No role-play experience | `RPAWARDS` is blank; no role-play experience is earned while fatigued, hungry or thirsty; the code's name for the emote-yourself award is `EMOTE-OTH` (the ini comment says `EMOTE-OTHER`) |
-| Victims give no experience at `EXPRATE=0` | In code, a victim lower than the killer gives nothing whenever `EXPRATE` is below the difference, so `EXPRATE=0` removes experience for lower-level victims rather than removing the level scaling (the ini comment says otherwise). Use a large `EXPRATE` instead |
+| Lower-level victims give no experience at `EXPRATE=0` | As the code reads, a victim more than `EXPRATE` levels below the killer gives nothing, so at 0 any lower-level victim pays 0, while equal or higher ones pay the unscaled amount; the ini comment says 0 means no level scaling. A large `EXPRATE` approximates "no scaling" |
 | A rank does not rise by itself | The next rank has no `REQUIRES`, or the mask is not met; ranks are re-checked at level-up, on `RANKS`, and by `MPRANK ... CHECK` |
-| A perk reward is repeated | `MPPERK ... -PERK` takes the perk away but its rewards stay; give repeatable bonuses by an effect, not a stat reward |
+| A perk's reward is given twice | `MPPERK who -PERK` takes the perk away but its rewards stay, and taking the perk again gives them again; do not remove and re-grant a perk whose rewards are stat or experience gifts |
 | `SKILLTREE` shows few skills | The class's abilities have no pre-requisites (the tree is flat), or they are `SECRET`/`MASKED` with no hint |
 | Level-ups give the wrong practices or trains | A formula that does not compile is logged and falls back to the usual; check the log for `LevelGains` |
 | `NEWCHARLEVEL=PARTYAVG` gives level 1 | The profile has no other character yet |

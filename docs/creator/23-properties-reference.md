@@ -266,7 +266,7 @@ OWNER;Disease_Cold;Disease_Flu;Spell_Fireball
 Disease_Cold=<T-NAME> is immune to <O-NAME>;Spell_Fireball=<T-NAME> can't be burnt!
 ```
 
-Makes the mob, item, or whatever immune to the listed disease, spell or similar affects. Items will pass their immunity on to their owners if the OWNER flag is present, or the wielder if the WIELDER flag is present.
+Makes the mob, item, or whatever immune to the listed disease, spell or similar affects. Items will pass their immunity on to their owners if the OWNER flag is present, or the wearer (an item worn rather than just carried) if the WEARER flag is present.
 
 Notes:
 
@@ -474,13 +474,13 @@ scan="items,mobs" scanmask="-levels +>5" Prayer_Bless="@x1+1"
 
 This property alters the tick-down time of any ability effect that it finds on a scannable target that matches the given scanmask.
 
-The SCAN code can be MOBS, ITEMS, ROOMS, EXITS, OWNERS, or WEARERS, and will attempt to scan to every available object in the room as the property, except OWNER, which will limit the scan only to the affected mob, or the owner of an affected item.
+The SCAN code is a comma list of MOBS, ITEMS, AREAS, ROOMS, EXITS or OWNER(S) (default MOBS when SCAN is absent; the help's WEARERS is not recognised by the code and is logged as an unknown scan code), and will attempt to scan to every available object in the room as the property, except OWNER, which will limit the scan only to the affected mob, or the owner of an affected item.
 
 The SCANMASK narrows which items will be scanned for effects with a ZAPPERMASK. See ahelp ZAPPERMASK for more info on that.
 
 The remaining arguments are ability Ids of effects to retick, which are set equal to a math formula on how to alter its tickdown time. The formula MUST contain the variable @x1, which represents the existing tick down time.
 
-Once the tick-down time on an effect has been altered by this property, it will not be altered again, so while getting an affected item may cause an alteration, dropping it will not 'revert' the alterations UNLESS the OWNERS OR WEARERS scan value is used instead of the others.
+Once the tick-down time on an effect has been altered by this property, it will not be altered again, so while getting an affected item may cause an alteration, dropping it will not 'revert' the alterations UNLESS the OWNERS scan value is used instead of the others.
 
 ### Prop_Affinity
 

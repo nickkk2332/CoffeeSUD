@@ -163,8 +163,7 @@ queued.) If `PARTYROLES` is set, a line such as `Your party has no healer or
 scout.` follows.
 
 There is no command called `CONTROL`. "Taking control" of a character is
-`SWITCH` (to play it) or `AS` (to give it one command); the handbook map and
-older notes sometimes say CONTROL for these.
+`SWITCH` (to play it) or `AS` (to give it one command).
 
 ### PARTY command reference
 
@@ -572,7 +571,10 @@ PLAYERS CHARACTERS USER PLAYER CHARACTER CHAR GRACES ITEMS AREA REWORLD ROOM
 MOBS QUESTS FACTION` (as the first or the last word) is the inherited builder
 SAVE, not a game save. Without builder powers you get "You are not allowed to
 do that."; with them it saves objects to the (copy of the) database and warns
-that the game plays on a copy of the world. So you cannot name a slot `room`.
+that the game plays on a copy of the world. So you cannot name a slot `room`. Note also that the sub-commands belong
+to `SAVES`: `SAVE CHECK` does not check anything, it saves a slot called `check`,
+and `SAVE INFO hero` is refused as a bad name. Type `SAVES CHECK`, `SAVES INFO
+hero`.
 
 ### What SAVE does
 
@@ -1412,3 +1414,143 @@ Prevention: turn on `AUTOSAVE` (three rotating saves cost little), `SAVES COPY` 
 risky changes, and keep `saves/` out of cloud-sync folders that rewrite files while
 the game runs.
 
+## Persistence notes
+
+| Thing | In the world files | In a save | A restore does |
+| --- | --- | --- | --- |
+| Profile and characters | no | yes (state tables) | Brings back exactly those that existed at the save. A new game starts with an empty profile. |
+| Which characters are in the world, and their places | no | yes (`PLAYER`, `PARTY`) | Brings them back where they were; the others rest. |
+| Party membership, order, `PARTY DISABLE` list, meet and fight settings, `PARTYTURNS` | initial values from `PARTYMEET`, `PARTYFIGHT`, `PARTYTURNS` | yes (header) | Uses the saved values; ini and world values apply only to new games. |
+| World limits (`PARTYMAX`, `ACTIVECHARMAX`, `PROFILEMAX`, `PARTYSUMMON...`, `PARTYROLES`, `NEWCHARS...`) | yes (`world.ini`) | no | Always read from the current files, so a patch can tighten or loosen them. Existing characters are never deleted to fit. |
+| Time mode, pause, game clock, dice | initial `TIMEMODE` | yes | Uses the saved mode, pause and clock. |
+| Save rules | initial `SAVEMODE` | yes (`savemode`) | Uses the saved mode. |
+| `AUTOSAVE`, `AUTOSAVEKEEP` | yes | no | Read from the current ini/world. |
+| `WINDOWS`, `WINDOWPANEL`, `TIMESCALE` | engine ini or launch | no | Start-up values only. |
+| Rooms, exits, areas | yes | only what play changed | Files first, then play's changes over them. |
+| Mobs and items placed in rooms | yes, as the initial state | yes, as they are now | The save replaces them (unless the area is `FRESH`). |
+| Script variables, JavaScript `cm.store`, quest state, behaviour and script state | no | yes | Put back before play resumes. |
+| Command queues, pending `AS` orders, open prompts | no | no | Start empty. Pending menus and narration are the exception. |
+| Windows | no | no | Characters come back on plain party sessions. |
+
+### Reload versus restore
+
+A restore restarts the engine and so re-reads every world file, which is the
+cleanest test. A live reload (`WORLD RELOAD`, `JS RELOAD`, composition and
+module reloads in builder mode or `DEV=1`) changes definitions without touching
+campaign state. For anything involving saved state, test across a real process
+boundary: save, quit, start a new process, restore, and then start `NEW` to be
+sure it gets the initial state ([State and persistence](state-and-persistence.md)).
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `There are no saved games in builder mode.` | Builder mode (`BUILDER=1`) writes the world files and keeps no saves. Start a normal game to use `SAVE`. |
+| `Saved games are off.` | The game is not running on a fake database (`DBSERVICE` is not `jdbc:fakedb:...`), so there is nothing to save. |
+| `A save's name is letters, digits, dashes and underscores, at most 32 of them.` | Choose another name; it must start with a letter or digit. A name equal to a builder word (`room`, `mobs`, `items`, ...) cannot be used. |
+| `You can only save the game at a save point.` / `You cannot save the game during a fight.` / the place's own message | The world's save rules (`SAVEMODE`, `Prop_SavePoint`, `Prop_NoSave`). Go to a save point, finish the fight, or ask the world's author. |
+| `This is an ironman game: ...` | `SAVEMODE=IRONMAN` was chosen for this campaign. Only `QUIT` and autosaves write; there is no restore in play. Start the launcher again to continue. |
+| `The game was not saved.` | A `GAME_PROG SAVE`, JavaScript `onBeforeSave` or `cm.on('save')` hook refused. Read the world's scripts. |
+| `Another game is using the save folder ... Close it or choose a different SAVEDIR.` | A second CoffeeSUD process has `saves/` open. Close it, or give this one its own `SAVEDIR=`. |
+| `The save 'x' is incomplete or damaged.` | See [Example 4](#example-4-recovering-a-damaged-save). Common cause: a hand edit of `world.xml` (for example with `saveinspect.py`) that left `.complete` stale. |
+| `Unsupported save format N` | The save is from a newer engine. Open it with that version. |
+| `The save cannot load its optional modules: ...` | The world no longer provides the modules (or their versions) the save used; see [Optional modules](14-optional-modules.md). |
+| After a restore, my edit to a room's mobs or items is missing | By default the save's room contents win. Use `RESTORE name FRESH=CHANGED` (or name the areas), or test with `FRESH=ALL`. |
+| After a restore, a new room is empty | Its placed mobs and items are not in the save; take its area `FRESH`. |
+| A monster I summoned is gone after a restore | Not saved. `SAVES CHECK` lists such mobs. A summoned creature that follows a character is saved with that character, except one summoned with `NOSAVE` (it carries `Prop_Summoned` and is flagged unsavable), which a save leaves out. |
+| `Your party may have at most N characters in it.` | `PARTYMAX`. Remove someone (`PARTY REMOVE`) or rest them. |
+| `This world allows at most N of your characters in the world at once.` | `ACTIVECHARMAX` counts everyone in the world, party or not. `PARTY REST` one. |
+| `You may only have N of your characters on at one time.` | The engine's `MAXCONNSPERACCOUNT`; it ships as 50. |
+| `This world requires you to meet your companions where they are.` | `PARTYSUMMON=MEET` (or `PARTY MEET OFF` against it). Walk to them, then `PARTY ADD`. |
+| A companion is "in The Old Mill. Go and meet them there, then PARTY ADD them." | `PARTY MEET ON` or a `MEET` world; same fix. |
+| `Bran will do that on Hero's turn.` and nothing happens | Turn-based time: a member's time-taking command is an order for the leader's turn. Act with the leader, or `WAIT`. |
+| `The turn waits for Bran to be given something to do ...` | `PARTYTURNS ALL`. Give each member an order or `AS name WAIT`, or `PARTY DISABLE name`, or `PARTYTURNS LEADER`. |
+| The world does not move | Turn-based (`TIMEMODE`), or paused (prompt shows `(paused)`; `RESUME`), or you are only using commands that take no time. |
+| `Time is held turn by turn here, and cannot be changed until you leave.` | A `Prop_TimeMode` zone. |
+| `There is no display here, so the windows cannot open.` | `WINDOWS ON` needs a display; the terminal and `AS` work without. |
+| A window closed and the character vanished | Closing a window sends the character to rest. `PARTY ADD name` brings them back. |
+| The game started paused | It was saved paused (`paused=true`). `RESUME`. |
+| Changing `SAVEMODE`, `TIMEMODE` or `PARTYTURNS` in `world.ini` did nothing for my campaign | Those are initial values; a campaign keeps its own. Use the commands (`TIMEMODE`, `PARTYTURNS`), or start a new game. `SAVEMODE` is kept in the save header and cannot be changed for a running campaign except by editing it there. |
+
+## Reference
+
+### Commands
+
+| Command | Syntax | Notes |
+| --- | --- | --- |
+| `SAVE` | `SAVE (NAME)` | Game save. Builder words (`ROOM`, `MOBS`, ...) make it the builder's SAVE. In builder mode: `SAVE`, `SAVE FORCE`, `SAVE CHANGED`. |
+| `SAVES` | `SAVES`, `SAVES CHECK`, `SAVES INFO NAME`, `SAVES DELETE NAME`, `SAVES COPY NAME NEW`, `SAVES DIFF NAME NAME` | An alias of `RESTORE` with no name. |
+| `RESTORE` | `RESTORE NAME/NUMBER (FRESH=CHANGED/ALL/AREA,AREA)` | Asks to confirm. Refused in ironman and builder mode. |
+| `CHECKPOINT` | `CHECKPOINT` | Saves into `checkpoint1`..`checkpoint3` in turn. |
+| `ROLLBACK` | `ROLLBACK` | Restores the newest checkpoint, after asking. |
+| `QUIT` | `QUIT` (aliases `QUI`, `Q`) | Offers to save. |
+| `LOGOFF` | `LOGOFF`, `LOGOUT` | To the profile menu. Does not save. |
+| `PROFILE` | `PROFILE (SORT FIELD) (FIELD)...` (alias `ACCOUNT`) | Lists characters. |
+| `SWITCH` | `SWITCH NAME` | Plays another character of the profile. |
+| `PARTY` | `PARTY`, `ADD/JOIN`, `REMOVE/LEAVE`, `REST/DISMISS`, `MEET (ON/OFF)`, `FIGHT (ON/OFF)`, `ORDER NAME...`, `LEAD NAME`, `DISABLE NAME`, `ENABLE NAME`, `RULES`, `CLANS`, `MORTAL/ARCHON NAME` (builder mode) | See [PARTY command reference](#party-command-reference). |
+| `AS` | `AS NAME COMMAND` | A party member does it; also the archon `AS`. |
+| `WINDOWS` | `WINDOWS (ON/OFF)`, `WINDOWS PANEL (ON/OFF/STATUS,MAP,PARTY)` | Needs a display. |
+| `PARTYTURNS` | `PARTYTURNS (LEADER/ALL)` | `LEAD` is accepted for `LEADER`. |
+| `TIMEMODE` | `TIMEMODE (REALTIME/TURNS)`, `TIMEMODE DIALOGUE (INSTANT/TICKS/DEFAULT)` | |
+| `PAUSE`, `RESUME`, `UNPAUSE` | `PAUSE`, `RESUME` | Stops and starts the clock in real time. |
+| `WAIT` | `WAIT (TICKS)`, `WAIT N HOURS/DAYS/WEEKS`, `WAIT UNTIL ...` | Lets time pass. Up to 100 ticks; longer forms up to three game days. |
+| `TIMESCALE` | `TIMESCALE (RATE)` | 0.1 to 20; builder mode and `DEV=1`. |
+| `CHEAT` | `CHEAT (ON/OFF)` | Kept in the save. |
+
+### Settings
+
+| Key | Where | Default | Read | Saved? |
+| --- | --- | --- | --- | --- |
+| `TIMEMODE` | ini, world | `REALTIME` | new game | yes (as the mode) |
+| `TIMESCALE` | ini | `1` | start | no |
+| `DIALOGUETIME` | ini, world | blank | start | no |
+| `PARTYTURNS` | ini, world | `LEADER` | new game | yes |
+| `PARTYMEET` | ini, world | blank | new game | yes |
+| `PARTYFIGHT` | ini, world | blank | new game | yes |
+| `PARTYMAX` | ini, world | `0` | live | no |
+| `ACTIVECHARMAX` | ini, world | `0` | live | no |
+| `PROFILEMAX` | ini, world | `0` | live | no |
+| `NEWCHARS`, `NEWCHARMASK`, `NEWCHARMESSAGE` | ini, world | `ALWAYS` | live | no |
+| `PARTYSUMMON`, `PARTYSUMMONMASK`, `PARTYSUMMONMESSAGE` | ini, world | `ALLOW` | live | no |
+| `PARTYROLES` | ini, world | blank | live | no |
+| `SAVEMODE` | ini, world | `ANYWHERE` | new game | yes |
+| `AUTOSAVE`, `AUTOSAVEKEEP` | ini, world | blank, `3` | when the played character enters | no |
+| `SAVEDIR` | ini, launch | `saves` | start | n/a |
+| `RESTORE`, `FRESH` | ini, launch | blank | start | n/a |
+| `WINDOWS`, `WINDOWPANEL` | ini, launch | blank | start | no |
+| `LONGWAIT` | ini, world | `ALL` | live | no |
+| `LOGOUTMASK` | ini, launch | blank | live | no |
+| `MAXCONNSPERACCOUNT` | ini | 50 | live | no |
+| `DEFCMDTIME`, `DEFCOMCMDTIME` | ini | `0.20`, `1.0` | start | no |
+| `RECORDINPUT` | ini, launch | blank | start | n/a |
+
+"ini" is `coffeemud.ini`; "world" is `world/world.ini` (only the keys in the
+[allowlist](world-settings.md)); "launch" is a `NAME=VALUE` argument. A world's
+value overrides the ini; the launch argument overrides both.
+
+### Script and JavaScript hooks
+
+| Hook | Event |
+| --- | --- |
+| `GAME_PROG NEWGAME / RESTORE / SAVE / NEWCHAR / SWITCHTO / SWITCHFROM / PAUSE / RESUME / TIMEMODE / ANY` | `$g` is the save's name for `SAVE` and `RESTORE`, otherwise the event; `$1` is the detail (the other character, or `TURNS`/`REALTIME`). `RETURN CANCEL` in a `SAVE` handler refuses the save. |
+| `PARTY_PROG JOIN / LEAVE / REST / LEAD / SWITCH / ANY` | Party changes. |
+| `TURN_PROG (EVERY N)` | The end of each party turn (turn-based) or time-taking player command (real time). |
+| JavaScript `onBoot`, `onBeforeSave(slot)`, `onRestore(player, slot)`, `onSwitch(from, to)`, `onPlayerEnter` | See [JavaScript](05-javascript.md). |
+
+## See also
+
+- [Installing and running](18-installing-and-running.md): the launcher, `RESTORE=`, `FRESH=`, the saves folder and windows from the operator's side.
+- [World files and builder mode](02-world-workflow.md): the world folder, `SAVE` in builder mode, `WORLD STATUS/DIFF`.
+- [Configuration and administration](19-configuration-and-administration.md): ini keys and permissions.
+- [World settings](world-settings.md): the `world.ini` allowlist.
+- [State and persistence](state-and-persistence.md): what each system keeps across a restore.
+- [Optional modules](14-optional-modules.md): module state in saves.
+- [World simulation](10-world-simulation.md): the calendar, `Prop_TimeMode`, weather.
+- [Properties reference](23-properties-reference.md): `Prop_SavePoint`, `Prop_NoSave`, `Prop_AutoSave`, `Prop_TimeMode`, `Prop_Checkpoint`.
+- [MOBPROG triggers](26-mobprog-triggers.md): `GAME_PROG`, `PARTY_PROG`, `TURN_PROG`.
+- [JavaScript](05-javascript.md): lifecycle hooks, `cm.store`.
+- [Combat and encounters](29-combat-and-encounters.md): party defeat, downed characters.
+- [Testing and release](13-testing-release.md): playtests, `#save`/`#restore`, save tests.
+- [Characters](03-characters.md): creation, templates, levels.
+- [Party rules for a world](../party-rules.md) and the [cookbook](cookbook.md).
+- [Engine internals](33-engine-internals.md): how saves, world files and the party work inside.

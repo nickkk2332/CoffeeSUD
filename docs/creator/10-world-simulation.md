@@ -103,8 +103,8 @@ turn-based play, `TIMESCALE` and long waits. The one exception is the
 `RLHOUR` option of [ResetWhole](#whole-area-resets), which reads the real
 clock and is deprecated for single-player worlds.
 
-CoffeeSUD adds to inherited CoffeeMud nearly everything in this chapter that
-is marked W below: per-area calendars, custom seasons and moons, holiday
+CoffeeSUD adds to inherited CoffeeMud much of what this chapter covers:
+per-area calendars, custom seasons and moons, holiday
 recurrences and tests by name, quest schedules, weather commands, climate
 files, sky text, tides for builders, room states, floodable rooms,
 darkness dangers, deep darkness, breath, typed hazards, `ResetWhole`
@@ -322,7 +322,7 @@ TIME SEASON WINTER
 - `TICKTOCK [N]` advances the area's clock N hours (negative goes back);
   `TICKTOCK [N] [HOUR|DAY|WEEK|MONTH|SEASON|YEAR]` (plurals work) bumps by that period.
   `TICKTOCK SET Y/M/D/H` or `M/D/Y Hh` sets the date. It needs the
-  `TICKTOCK` security flag (a builder or `DEV=1` game has it). `TICKTOCK
+  `TICKTOCK` security flag. `TICKTOCK
   CLANTICK` and `TICKTOCK` with a service name also exist (see the generated
   [tool reference](tool-reference.md)).
 - `TIME SET [HOUR|DAWN|DAY|DUSK|NIGHT]` runs the area's clock forward, hour by
@@ -512,10 +512,10 @@ Where a named season is understood:
 ### SEASONOFFSET
 
 `SEASONOFFSET=n` shifts that area's seasons by n months on its parent's
-clock, so a southern land can be in summer while its parent is in winter
-without a clock of its own. It is the area's own (not inherited by `HOURS`
-and the like) but child areas inherit it from their nearest parent that has
-one. `Prop_ClosedSeason`, weather odds, `ISSEASON`, masks and `VARIES` use
+clock, so a southern land can be in summer while its parent is in winter.
+It belongs to the area, not to a clock, so setting it alone does not give the
+area a clock of its own; child areas take it from their nearest parent that
+has one. `Prop_ClosedSeason`, weather odds, `ISSEASON`, masks and `VARIES` use
 the offset; `DAYLIGHT` does not (day length follows the clock's season).
 
 ### DAYLIGHT
@@ -546,8 +546,7 @@ Each is `NAME:CYCLE` or `NAME:CYCLE:OFFSET`, in days. A moon has the eight
 phases of the built-in moon (NEW, WAXCRESCENT, WAXQUARTER, WAXGIBBOUS, FULL,
 WANEGIBBOUS, WANEQUARTER, WANECRESCENT), worked out from the days since the
 calendar began plus the offset. **The first moon listed is "the moon"**: tides,
-`MOON_PROG`, `ISMOON(FULL)`, `+MOON` masks and the moon-altering spells follow
-it. The others are read by name: `ISMOON(Ember full)`. At night `TIME` tells
+`MOON_PROG`, `ISMOON(FULL)` and the moon-altering effects follow it. The others are read by name: `ISMOON(Ember full)`. At night `TIME` tells
 each moon's phase.
 
 ### Putting it together
@@ -643,7 +642,8 @@ GIVE STAT PRICEMASKS 0.9 +JAVACLASS -WandArchon
 STEP BREAK
 ```
 
-To change the stock set for one world, put your own file at
+`CREATE HOLIDAY` appends its block to the holiday file in effect. To change
+the stock set for one world, copy the stock file and put your own at
 `world/resources/quests/holidays/holidays.quest` (the world's copy of a
 resource file is read instead of the stock one; see
 [19-configuration-and-administration.md](19-configuration-and-administration.md)
@@ -1356,9 +1356,11 @@ Lists what an area holds that acts on those in it: the area's own behaviors
 and effects (spawners such as `RandomMonsters`, weather), and in its rooms,
 exits and items their behaviors, traps, `Prop_InstantDeath`,
 `Prop_NarrowLedge` and `Prop_Weather`, each with its state (as `STAT BEHAVIORS`
-gives it) or parameters. `Prop_Hazard` on a room is not specially named in
-the list; it shows with the room's other effects. Use it before shipping to
-find forgotten spawners and traps.
+gives it) or parameters. **Gap:** on rooms, exits and items it lists only
+those traps and the three properties named; `Prop_Hazard`, `Prop_RoomDark`,
+`Prop_DarkDanger` and other effects on a *room* are not listed (only effects
+on the area itself are all listed). Check rooms with the effects editor or
+`STAT`. Use `HAZARDS` before shipping to find forgotten spawners and traps.
 
 Source: [Prop_Hazard](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Hazard.java),
 [EnvToolsCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/EnvToolsCmd.java).

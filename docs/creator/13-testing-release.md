@@ -310,10 +310,18 @@ SCRIPTCHECK [FILE/TARGET/AREA/ALL]
 Parses MOBPROG scripts with `LOAD=` followed, runs nothing, and reports by
 file and line. The argument is a script file in the resources (for example
 `scripts/guard.script`, as it would be named in `LOAD=`), a mob or item here
-or carried, `ROOM`, `name@room`, `AREA` (your area) or `ALL` (everything in the
-world, including quests' scripts). The result is `SCRIPTCHECK x: no problems
+or carried, `ROOM`, `name@room`, `AREA` (your area) or `ALL` (every area of the
+world). The result is `SCRIPTCHECK x: no problems
 found.` or `SCRIPTCHECK x: N problems:` followed by one `file:line message`
-line each.
+line each, for example:
+
+```text
+SCRIPTCHECK scripts/miller.script: 4 problems:
+scripts/miller.script:2 unknown trigger GREETPROG
+scripts/miller.script:7 unknown command MPECHOT
+scripts/miller.script:8 MPSE is not a command; write MPSET or MPSETVAR
+scripts/miller.script:15 MPCALLFUNC NOSUCHFUNCTION: no such FUNCTION_PROG
+```
 
 It reports unknown triggers (a misspelled `GREETPROG` never fires), unknown
 commands (strict: no prefix matching, so `mpechot` is an error and not the
@@ -554,10 +562,6 @@ world: N problems.` and a list. SET, RESET and SIGNAL change the world.
 Access: builder mode, DEV=1 or CMDROOMS. A generic puzzle controller remains
 deferred. Puzzle objects are in [chapter 7](07-items-crafting.md).
 
-### LAW TEST and the other LAW tools
-
-See [LAW](#law) under runtime inspection; `LAW TEST` is the static explainer.
-
 ## Runtime inspection
 
 These tools look at a running world. Several of them change it (they run a
@@ -737,7 +741,9 @@ SCRIPTERRORS CLEAR
 
 Lists the script errors kept (the last 200, MOBPROG and JavaScript both),
 oldest first, each with its file and line, for example
-`progs/elder.script:212 unknown command MPECHOT`. A number limits it (20 by
+`progs/elder.script:212 MPECHOT Syntax: unknown command MPECHOT (a quest
+giver @ Dunmoor#4)` or `... MPSE Syntax: ambiguous command MPSE: MPSET,
+MPSETVAR`. A number limits it (20 by
 default) and text keeps only errors holding that text. Access: builder mode,
 DEV=1, CMDMOBS or JSCRIPTS.
 
@@ -2098,8 +2104,8 @@ area, and a player has a save from before.
 | What | Where it lives | Reload or restart effect |
 | --- | --- | --- |
 | Playtest files, kits, notes' target | `world/tests`, `world/kits` (in the world folder); notes in `notes/playtest.txt` outside the world and saves | Tests and kits are world files, read when used. Notes survive a world reload |
-| `PLAYTEST ON`'s mortal mode | A `Prop_Playtest` effect on the character, with the room to return to | Saved with the character in a builder-mode profile; `PLAYTEST OFF` removes it. `PLAYTEST GAME` re-applies it in its disposable campaign |
-| GOD cheats | `Prop_DevCheats` effect saved with the character | Survive save and restore until `GOD RESET` or `GOD ALL OFF`. A game started without DEV=1 takes the DEV security group away again |
+| `PLAYTEST ON`'s mortal mode | A `Prop_Playtest` effect on the character, with the room to return to | An effect on the character (and on party members you test); `PLAYTEST OFF` removes it. `PLAYTEST GAME` puts it on the restored character in its disposable campaign |
+| GOD cheats | `Prop_DevCheats` effect kept with the character | Stay until `GOD RESET` or `GOD ALL OFF`. A game started without DEV=1 takes the DEV security group away again |
 | DEVLOG settings | Builder mode: beside the database. Otherwise the `DEVLOG=` ini key | Per game |
 | VARS, quest variables | The save's script-variable stores | Saved with the campaign; `VARS SET` writes live state |
 | SCRIPT DISABLE, SCRIPTTRACE, SCRIPTPROF, COMBATDEBUG, TRACEB | Memory only | Gone at restart; not saved |
@@ -2111,10 +2117,11 @@ area, and a player has a save from before.
 | Saves' world sums | `header.properties` (`worldsum`, `areasums`) | Compared at every restore |
 | Test scratch campaigns | Temporary folders (`sudplaytest.*`, `sud-playtest-*`) | Removed after a pass (unless `KEEP=1`); kept after a fail |
 
-TIME SET, WEATHER SET, VARS SET, PUZZLE SET and SCRIPT FIRE change live state
-and so are saved with a campaign's next save; in builder mode there are no
-saves and none of them is written to the world files (only `SAVE` writes
-those, and it writes the world's definitions rather than live state). See
+TIME SET, WEATHER SET, VARS SET, PUZZLE SET and SCRIPT FIRE change live state,
+which a campaign's next save records (the clock, weather, script variables
+and the rest are in the save). In builder mode there are no campaign saves, so
+review the result of any state-changing tool before you `SAVE`; `WORLD DIFF`
+shows what `SAVE` would write. See
 [state and persistence](state-and-persistence.md) and
 [chapter 31](31-saves-and-party.md).
 

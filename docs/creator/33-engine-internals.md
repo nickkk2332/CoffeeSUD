@@ -835,3 +835,317 @@ Rules to keep in mind when touching code that uses it:
 Tests: `catalog-import.js`, `sc3-catalog.js`, `fixes.sh` smoke checks for
 normal-play world-file preservation.
 
+## Optional modules
+
+### Purpose
+
+Optional modules let a world declare gameplay features that are off by default, pin
+their rule versions into each campaign, and keep their per-owner state in the save
+with a defined lifecycle (migrate, suspend, refuse). Creator-facing rules are in
+[chapter 14](14-optional-modules.md); this section is about how the framework is
+built and how a feature family plugs in.
+
+Source: [ModuleDefinitions.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ModuleDefinitions.java)
+(manifests), [OptionalModules.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/OptionalModules.java)
+(campaign state, plans, capsules), `WORLD MODULES` in `Commands/WorldCmd.java`.
+
+### Two classes, three concepts
+
+- A **definition** (`ModuleDefinitions.Definition`) is a validated manifest read from
+  `world/modules/<id>.json`: id, title, version, handler, `requires`, `conflicts`,
+  `clock_modes`, `scopes`, typed `settings` and `state` fields, `on_disable`,
+  `provides`, `references`, `migrations`.
+- A **plan** (`ModuleDefinitions.Plan`) is the result of `ModuleDefinitions.load(world,
+  selection, rawSettings)`: all definitions found, the selection (`roots`), the
+  transitive `enabled` set, `reasons` (which root selected each module), per-module
+  effective `settings`, and two lists of problems: `errors` (everything) and
+  `blocking` (those that touch the selection, `MODULES` itself, `MODULESETTINGS`
+  while anything is selected, or a selected dependency). `requireValid()` throws the
+  blocking list. Anything non-blocking is a warning (`warnings()`).
+- A **campaign** (`OptionalModules.Campaign`) is the live state of one game: a map
+  of module id to `Capsule` (id, `requires_handler`, version, fingerprint, removal
+  policy, settings, records) plus the `plan` it was prepared against. `OptionalModules`
+  holds the `current` campaign in a static field; its static methods are
+  `synchronized`.
+
+### Definitions and fingerprints
+
+A `Definition` constructor rejects unknown keys (`keys(obj, source, ...)`), duplicate
+JSON keys and trailing data (via the strict parser `ModuleDefinitions.StrictJson`),
+bad ids (lower-case letters, digits, `.`, `_`, `-`, starting with a letter, at most
+96 characters, through `id(...)`), self-dependency and self-conflict, bad clock modes
+or scopes, and field types other than `integer`, `boolean`, `string`. Limits:
+`MAX_FILES = 256` manifests, `MAX_FILE_BYTES = 262144`, `MAX_RECORDS = 10000`, 128
+settings and 128 state fields per module, strings at most 4096 characters.
+
+`handler` is one of `data`, `example.counter`, `abilities.composition`,
+`combat.profiles`, `items.modifiers`. `ModuleDefinitions.nativeHandler(h)` is true
+for the last three; a native module's id must equal its handler. Each native handler
+imposes extra shape rules in the `Definition` constructor (required settings and state
+fields with fixed bounds, and required dependencies: `combat.profiles` requires
+`abilities.composition` and `world` scope; `items.modifiers` requires
+`combat.profiles` and `character` scope).
+
+The **fingerprint** is SHA-256 (hex) of the canonical JSON of `contract()`: schema,
+id, version, handler, `on_disable`, `requires`, sorted `conflicts`, `clock_modes`,
+`scopes`, `provides`, each field's `contract()` (type, default, bounds, and for
+strings `max_length` and sorted `choices`), and sorted `references`. Title and
+`migrations` are excluded. Whitespace, key order, set-like array order and written-out
+defaults therefore do not change it. When you add a manifest field that changes
+behaviour, add it to `contract()`; when you add one that does not, leave it out.
+
+A `Migration` has `from`, `to` (`to > from`), `state_renames` and `setting_renames`
+(old name to new name; destinations must be unique). `Migration.apply` renames
+simultaneously, so swaps work, and refuses to overwrite an existing destination.
+`Definition.route(from)` returns the chain of steps to the current version or throws
+`no migration from version n to v`; the constructor checks every start version has a
+route.
+
+### Campaign preparation: `prepare`
+
+`OptionalModules.prepare(plan, savedJson, restoring)` builds a staged `Campaign`
+without touching the running one. It is called at three times with the same logic:
+the launcher's startup check (`SaveGame.moduleStartupProblem`), `OptionalModules.boot`
+(from `beforeBoot`), and `reload(apply)` (WORLD MODULES PLAN/RELOAD, which prepares
+against `snapshot()` of the running campaign).
+
+- New game (`restoring == false`): one fresh `Capsule` per module in `plan.enabled`,
+  with the plan's settings.
+- Restore: the save's `modules.json` is parsed (`schema` must be 1, size at most twice
+  `MAX_STATE_BYTES` = 8 MiB). For each saved module the removal policy and handler
+  are read first, since without them there is no policy to apply. If parsing the
+  capsule fails: policy `refuse` throws; policy `suspend` keeps the object as saved
+  (`Capsule(saved, id, problem)`) and writes it back unchanged in later saves. If the
+  module is not enabled or its definition is gone, or its version is equal but the
+  fingerprint differs, or no migration route exists, or an owner's scope is no longer
+  supported: the same refuse/suspend split applies. Otherwise every record and the
+  settings are migrated into staging variables and only committed after all validated.
+- A module with a dependency that is not active becomes suspended (or refuses),
+  repeated until stable (transitive).
+- Modules the world enables that the save lacks are **not** added; a creator note
+  suggests `WORLD MODULES ADOPT`.
+- `account()` enforces 8 MiB of serialized records and 10,000 records.
+
+`Campaign.problem(id)` is the activation test: not adopted, disabled by the world, a
+saved problem, a missing definition, or a clock mode (`TURNS` or `REALTIME`)
+that the module or any module in its dependency closure does not support. Empty means
+active. `OptionalModules.enabled(id)` is `current != null && current.problem(id).isEmpty()`.
+Every consumer must test `enabled` at the point of use, not once at startup, because
+the clock mode can change in play and a dependency can become suspended.
+
+### Reading and writing state
+
+Owners are created with `OptionalModules.world()`, `character(mob)`, `item(item)`,
+`profile(mob)` (`@profile:<account name>`), `organization(clan)`
+(`@organization:<clanID>`), `relationship(first, second)` (ordered pair), and
+`owner(scope, persistentKey)` for adapters that already hold a stable key. Character
+and item keys come from `InstanceIds.reference(...)` (see [Instance IDs](#instance-ids)),
+never from a name. Keys are non-empty, at most 512 characters, with no control
+characters.
+
+`get(id, owner)` returns a copy of the stored values or the defaults (reads do not
+allocate a record); `put(id, owner, values)` validates the complete record against the
+module's `state` schema, then replaces it atomically, adjusting `stateBytes` and
+`recordCount` and refusing when a budget would be exceeded. `setting(id, key)` returns
+the effective typed setting. `configure(id, key, text)` is the typed creator-only
+change to a campaign setting. Calls are `synchronized` individually; a read-modify-write
+spanning calls belongs on the game thread or in the caller's own coordination.
+
+### Persistence
+
+`SaveGame.writeSnapshot` calls `OptionalModules.hasModules()` and, if true, writes
+`OptionalModules.snapshot()` as `modules.json`, sets header `moduleformat=1` and
+raises the header `version` to `SaveSlots.MODULE_FORMAT_VERSION` (2). The snapshot is
+`{"schema":1,"modules":[ capsule... ]}`, each capsule
+`{id, version, fingerprint, on_disable, settings, records:[{scope, owner, values}],
+requires_handler?}`. `SaveSlots.validateFormat` and `OptionalModules.readSave`
+refuse a version-2 save without `moduleformat=1` and `modules.json`. Because the file
+is in the manifest of the atomic write, a damaged module file makes the whole save
+incomplete rather than silently legacy.
+
+`WorldAssets.VERSIONED_APART` keeps `modules/` out of the world sum.
+`WorldFiles.acceptModuleChanges()` acknowledges only the flat `modules/*.json`
+manifests after an explicit `WORLD MODULES RELOAD`.
+
+### How a feature family plugs in
+
+The three shipped families (composition, combat profiles, item modifiers;
+[chapters 15, 16, 17](15-ability-composition.md)) follow one pattern. To add a fourth:
+
+1. Add a native handler id to `ModuleDefinitions.nativeHandler` and the allowed
+   handler list in the `Definition` constructor, with the shape checks that fix the
+   settings and state fields your code reads (so a hand-written manifest cannot break
+   your invariants) and any `requires`.
+2. Create a library class (static, like `AbilityComposition`) with `MODULE = "<id>"`,
+   `reset()`, `check()` (a validation of your world files returning a report of
+   errors), `reload()` (which on success updates your cache and calls a new
+   `WorldFiles.acceptXChanges()` that acknowledges just your folder), and a
+   `require()` that throws when `!OptionalModules.enabled(MODULE)`.
+3. Call `reset()` from `SaveGame.beforeBoot`.
+4. Keep its hand-authored source folder in `WorldAssets.DIRECTORIES` and
+   `VERSIONED_APART`.
+5. Store campaign state through `OptionalModules.get/put` with the right owner, and
+   keep any reference to saved things as `InstanceIds` references.
+6. Add a `WorldCheck` part in `WorldCheck.PARTS` and `run` (the existing parts
+   `MODULES`, `COMPOSITIONS`, `COMBAT`, `ITEMMODS` are the model), and a `WORLD`
+   subcommand in `WorldCmd` if creators need to reload.
+7. Guard every runtime entry point with `enabled(MODULE)` and behave harmlessly when
+   suspended (see `CompositionBurn` and `CombatProfiles`, which stop a timed effect
+   if the module goes inactive).
+
+### Tests
+
+`optional-modules.js` (schemas, dependencies, conflicts, references, state isolation,
+Unicode, pinned settings, migrations, suspension and refusal, clocks, warnings,
+byte-order marks, fingerprints, damaged capsules, the world sum without module
+files), `ability-composition.js`, `combat-profiles.js`, `item-modifiers.js`; the
+played driver `tools/modules-integration.py` (group `modules` of `tools/fixes.sh`),
+and `SaveStorageTest` for the module-aware format.
+
+### Pitfalls
+
+- A saved capsule with an unknown native handler refuses the restore whatever its
+  policy, so an old engine never drops native state silently.
+- `MODULES` and `MODULESETTINGS` are read once per process through
+  `OptionalModules.launchedWith` (the launcher's raw values), not from the engine's
+  copy, which has Java properties escapes and HTML entities applied. Settings
+  changes need a restart.
+- Do not change a contract field without raising `version` (and adding a migration);
+  the fingerprint check suspends or refuses saved campaigns.
+
+## Instance IDs
+
+### Purpose
+
+`InstanceIds` gives each physical mob or item a durable identity that survives
+moving, renaming and save/restore, and is distinct for copies. Anything that must
+refer to "that sword" across a save (module records, JS stores, combat links, item
+modifier ledgers, journey bindings, queued script actors) stores an instance reference,
+not a name.
+
+Source: [InstanceIds.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/InstanceIds.java).
+
+### Design
+
+An ID is a UUID stored as the `INSTANCEID` stat (`InstanceIds.STAT`) of an `ExtraData`
+effect on the host, created on demand. A reference string is:
+
+| Form | Meaning |
+| --- | --- |
+| `@instance:<uuid>` (`InstanceIds.PREFIX`) | a mob or item (any `Physical` other than room/area) |
+| `@room:<extended room id>` | a room, by its extended ID |
+| `@area:<name>` | an area, by name |
+| anything else | `reference` returns the host's `Name()` (only for non-physical hosts) |
+
+`reference(Environmental)` produces these; `isReference(value)` recognises them;
+`find(reference)` resolves them: rooms and areas through `CMLib.map()`, instances
+through a `ConcurrentHashMap<String, WeakReference<Physical>>` index with a fall-back
+to a full world walk (`visit`) when the cached object is gone or no longer carries that
+ID. `id(host)` is `synchronized(host)`: it creates the `ExtraData` if needed and, if
+the existing ID is empty **or another live, non-destroyed object in the index already
+carries the same ID** (which is what a copy of the object looks like, since copying
+duplicates its effects), assigns a fresh UUID. That is how copies get independent
+identities without copy hooks. Consequence: a copy shares the ID string until
+somebody calls `id(copy)`; code that must tell the original from a copy (as
+`ItemModifiers` does) checks `InstanceIds.find(ref) == item` as well as the string.
+
+`restore(host, id)` re-attaches a saved ID after a restore (`WorldState` calls it for
+items, mobs, doors via `IID`, and the player via `INSTANCE`). `existing(host)` returns
+the ID without creating one. `legacy(host, name, type)` is the migration helper for
+old name-only references: it rebinds only when exactly one candidate (in the host's
+room, the host's inventory, the named player, or the host itself) matches and logs
+`Ambiguous legacy ... was not rebound` otherwise. `visit(Consumer<Physical>)` walks
+every room, exit, floor item, inhabitant and inventory item, and each player, once.
+`prepareSave()` assigns IDs to every mob and item before a save writes anything, so
+forward and backward references in one document both resolve.
+
+### Invariants and threading
+
+- IDs are assigned and read on the game thread; `id()` locks the host only.
+- Never store an `@instance:` reference in content (world files): IDs are
+  per-campaign. Authored identity is `AuthorIds`.
+- Resolution can be O(world) when the index is stale; cache the `Physical` for the
+  duration of one operation, not across ticks.
+- Resolve late, after `WorldState.finishRestore`, not in `apply`: people and followers
+  are not all back until then.
+
+### Tests
+
+`review-core.js` (copies get distinct IDs; legacy store migration), `js7-store.js`,
+`item-modifiers.js`, `review-background.js`.
+
+## Author identities, story records and story text
+
+### AuthorIds: stable source identity
+
+Some state is about an authored thing (a clue, a first entry, a waypoint) rather than
+a physical instance: a copy of the room or a re-saved item must keep the discovered
+flag. `AuthorIds` provides that identity.
+
+Source: [AuthorIds.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/AuthorIds.java),
+[StoryRecords.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/StoryRecords.java),
+[StoryText.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/StoryText.java).
+
+`identity(host, scope, params, create)` resolves in order:
+
+1. `ID=` in the feature's parameter text (`Scenery.option(params, "ID", "")`).
+2. A saved identity in the host's `Prop_AuthorIdentity` effect, whose text holds
+   `SCOPE=AUTO:<uuid>` per scope.
+3. For a room or area with none saved, a stable one: `AUTO:ROOM:<extended room id>` or
+   `AUTO:AREA:<name>`. Nothing is written onto the room, so the room does not look
+   "changed by play" and author fixes reach restored games.
+4. If `create` is true (items and mobs), a new `AUTO:<uuid>` is appended to
+   `Prop_AuthorIdentity`.
+
+`key(prefix, host, scope, params, part, create)` returns
+`StoryRecords.token(prefix, scope + ":" + id + ":" + part)`, which is
+`prefix + upper-case SHA-256 hex` of the upper-cased key. `keys(...)` returns the
+canonical key first, then a `legacy` key if given, then keys built from the parameter
+`ALIASES` (for scope `FIRSTENTRY` also the bare alias, for `WAYPOINT` the older
+`part\nalias` form) and any literal `LEGACYKEYS`. `recorded(record, ...)` returns true
+if the record `Tattooable` carries any of those and **adds the canonical tattoo** if it
+only had a legacy one, so keys migrate forward by use.
+
+Use `ALIASES` for old authored ids a content revision replaced, and `LEGACYKEYS` for
+complete old saved tokens when the key shape or location changed. Ambiguous legacy
+physical-name references stay unbound by design. Authored identities are used by
+`Prop_FirstEntry`, `Waypoints`, `Languages`, `Scenery`, `ViewRules`, `AutoMap` and
+`ColorSet` (see the callers of `AuthorIds.` in the source).
+
+### StoryRecords: per-character JSON
+
+`StoryRecords.read(mob)` parses the character's `Prop_StoryRecords` effect text as a
+`MiniJSON.JSONObject` (empty if absent or unparsable, with the error logged);
+`write(mob, data)` creates the effect if needed and stores `data.toString()`. Helpers
+`object(data, key)`, `string`, `number` and `token` keep callers null-safe. Because it
+is an effect with text on the character, it saves and restores with the character
+tables. `LoreBook`, `Chronicle`, `Ambience`,
+`Languages`, `ColorAliases`, `Emoter`, `Sounder` and others keep their per-character
+"seen once" and knowledge records here.
+
+### StoryText: conditional text
+
+`StoryText.render(viewer, host, text)` expands the markup in room, area, item, mob, exit
+and book text. Text with no `<` is returned as is (the fast path for most text). A
+`<VARIES>` document is parsed into tags and conditional blocks; other text only has
+`<CALL function args>` expanded (up to 32 calls per look, results cached per
+viewer/host/command in a thread-local `Frame`, with a time budget derived from
+`JSRuntime.limitSeconds()`; `StoryText.look(Supplier)` shares one frame across title,
+description and details of one look). Recursion is limited to depth 32.
+`test(viewer, host, area, room, name, args)` decides a condition tag: `MASK`/`MASKn`,
+`FIRSTVISIT`, `INCOMBAT`, `DARK`/`LIT`, `INDOORS`/`OUTDOORS`, `HOLIDAY`,
+`WANTED`, `FULLMOON`/`NEWMOON`/`WAXING`/`WANING`, `HOUR`, `MONTH`, `VAR`/`IFVAR`,
+`PARTYTATTOO`, `QUESTWON`/`QUESTRUNNING`/`QUESTSTEP`, and the `Room.VariationCode`
+names (weather, time of day, season, tides, disposition, visited, from-direction).
+`known(name)` lists the same names for the validators. `ELSE` is true when the
+previous sibling was false. `TextPreview` can override weather, time of day, season,
+visited and direction so authors can preview text; `noteFirstVisit`/`firstVisit`/
+`arriving`/`first` carry the "first visit" decision across the move message so
+descriptions read consistently.
+
+Invariants: rendering must not advance state (a `CALL` is computed once per frame and
+should be a pure function); `StoryText` is read-only apart from `setVariable`.
+
+Tests: `ar-shared.js`, `pr1-review.js`, `pr-presentation.js`, `pr-text.js`,
+`pr-render.js`, `l-language.js`.
+

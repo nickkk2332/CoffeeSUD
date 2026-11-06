@@ -1004,3 +1004,270 @@ objects in your area or the world; a touched room is marked unsaved
 (`LIST UNSAVED`, `SAVE CHANGED`; see
 [World workflow](02-world-workflow.md#unsaved-rooms-undo-and-history)).
 
+## The commands
+
+All of `GENERATE`, `GENLAYOUT` and `REGENERATE` need the `CMDAREAS` security
+flag (builders and archons; see
+[Configuration and administration](19-configuration-and-administration.md)).
+In a normal (non-builder) game a warning reminds you that you are changing the
+world.
+
+### GENERATE
+
+```text
+GENERATE [NOSAVE] [TYPE] [ID] (FROM [FILE]) ([VAR]=[VALUE] ...) ([DIRECTION]/[TARGET])
+GENERATE [TYPE] LIST (FROM [FILE])
+GENERATE CHECK [FILE]
+GENERATE PREVIEW [TYPE] [ID] ...      GENERATE PREVIEW KEEP
+GENERATE FILL [ROOM ID] ...
+GENERATE [...] SANDBOX
+```
+
+| Part | Meaning |
+|---|---|
+| `NOSAVE` | Must be the first word after `GENERATE`. Skips the database writes of the new rooms. In CoffeeSUD builder mode this is *not* enough to keep a generated area out of the world files (see [Where generated content lives](#where-generated-content-lives)): use `SANDBOX`, or `DESTROY` the area. |
+| `TYPE` | `STRING`, `AREA`, `MOB`, `ROOM`, `ITEM`, `QUEST` or `SCRIPT`. An abbreviation works if it identifies the type by its first letters (`ARE`, `MO`, `ROO`, `IT`, `QU`), but `S` means `SCRIPT` (the last match wins), so spell `STRING`. |
+| `ID` | The `id` of the tag (case-insensitive). `LIST` prints every id the file defines, by type. `ALL` builds every tag of that type in the file, one after another (for `AREA` that is one area per id). |
+| `FROM file` | Must be the *fourth* word, directly after the id. A path under `resources/` (or the world's overlay). Default `randareas/example.xml`. |
+| `VAR=VALUE` | Variables for the build and overrides of any detail. Math is allowed for numbers. Quote a value with spaces: `"areaname=The Old Mine"`. `SEED=` is special (see below). |
+| direction | The *last* word, required for `AREA` and `ROOM`. The result is linked to the room you stand in, in that direction. The way must be free ("A room already exists in direction ... Action aborted"). |
+| target | The last word for `SCRIPT`: the mob, item or room (in your room) that gets the script. |
+| `UNLINKED` | Last word for an `AREA` (before the direction, which may then be omitted): build with no gate, to `LINK` later. The entrance's room id is reported. |
+| `SEED=n` | See [Seeds](#seeds-and-reproducibility). Reported when you do not give one. |
+| `SANDBOX` | Last word: build in the [sandbox](#sandbox). |
+
+What each type does:
+
+- `STRING` / `SCRIPT`: prints the string (or attaches the script).
+- `MOB`, `ITEM`: created in your room ("X appears."), the mob alive.
+- `ROOM`: built and linked off your room. In a layout-free `ROOM` template the
+  tag's own `EXIT` choices decide the far-side exit.
+- `AREA`: built, recorded (`GENSEED` and `GENSOURCE` flags, see
+  [regeneration](#fill-regeneration-and-genlock)), added to the world, linked
+  (unless `UNLINKED`), and, without `NOSAVE`, written to the database.
+- `QUEST`: builds a quest script, creates and starts the quest (refusing if the
+  quest has no `QUEST_ID`, no name, or a duplicate name).
+
+Anything you generate with this command also fires `GENERATED_PROG` on the
+area or room that was built ([ST20](26-mobprog-triggers.md)).
+
+Examples:
+
+```text
+generate area maze_dungeon from randareas/example.xml areasize=50 areaname=test level_range=10?20 aggrochance=50 theme=kobolds south
+generate area crypt_dungeon from randareas/crypt.xml areaname=Barrow areasize=30 level_range=10 aggrochance=20 theme=crypt SEED=13 up
+generate item goblin from randareas/loot.xml level=4
+generate string list
+generate quest all_quests template=normal "expiration=20 minutes"
+```
+
+Messages worth knowing: "The AREA id 'x' has not been defined in the data
+file" (and then the list of ids); "Required ids for x were missing: ..." (name
+and type of every variable you still owe); "Unable to fully generate: ..."
+(the parser's reason); "Random data file ... not found. Aborting."; "Nothing
+generated."
+
+### GENERATE CHECK
+
+```text
+GENERATE CHECK randareas/mytheme.xml
+```
+
+Loads the file as `GENERATE` would (with `LOAD`/`FROM` includes), builds
+nothing, and lists problems as `file:line TAG id: message`:
+
+- what loading logs: duplicate ids, merge conflicts, missing includes, `FROM`
+  without an id;
+- `INSERT` ids that are not defined; `LIKE` ids not defined or of a different
+  tag kind;
+- `CLASS` values that are not a class of the tag's kind (catalog and metacraft
+  values are exempt);
+- unknown `layout` names (each name of a comma list);
+- unknown `SELECT` modes;
+- `js:` conditions and `${js:...}` that do not compile;
+- attributes that are neither generator attributes nor stat codes of the
+  tag's class ("unknown attribute");
+- variables used but never defined, declared in `REQUIRES`, or created by the
+  engine ("variable $x is not defined or declared in REQUIRES");
+- `REQUIRES` definitions that cannot be met, and allowed-word lists that merge
+  to nothing.
+
+It cannot prove a random combination is reachable, solvable or balanced; see
+[Validate the generated game](#validate-the-generated-game). The checks only
+look at literal values: anything containing `$`, `(`, `<` or `{` is skipped.
+
+### GENERATE PREVIEW and PREVIEW KEEP
+
+```text
+GENERATE PREVIEW [TYPE] [ID] (FROM [FILE]) ([VAR]=[VALUE] ...) (SEED=[N]) ([DIR])
+GENERATE PREVIEW KEEP
+```
+
+Builds an `AREA` (unlinked), a `ROOM` (in a free direction, or the one given), a
+`MOB` or an `ITEM` exactly as `GENERATE` would, with the database left out; lists
+the result with its seed; and destroys it. An area listing shows each room's
+id, title, node type, exits, mobs with levels and items, with counts; a mob shows
+its race, class and gear; an item its level and value. If you gave no seed one is
+chosen and printed. `GENERATE PREVIEW KEEP` runs the real `GENERATE` with the same
+words and seed (an area unlinked, unless a direction was given) and says
+"Kept: ...". The preview is remembered per builder, until the next preview or
+`KEEP`.
+
+### GENERATE FILL
+
+```text
+GENERATE FILL [ROOM TEMPLATE ID] (FROM [FILE]) ([VAR]=[VALUE] ...) ROOM|AREA (KEEPTEXT) (SEED=[N])
+```
+
+Runs a `ROOM` template on rooms that already exist (the room you stand in, or
+every room of the area). See [Fill](#generate-fill-on-hand-built-rooms).
+
+### GENLAYOUT
+
+```text
+GENLAYOUT [LAYOUT] [SIZE] ([DIRECTION]) (SEED=[N]) (LEVELS=[N])
+```
+
+Draws the layout as an ASCII map without building anything: its name and size,
+whether all the rooms are joined, a count of each node type, and the map. `O` is
+the entrance; other letters are node types and flags. `SEED=n` repeats a
+drawing (the seed is printed); `LEVELS=n` draws n floors. `MAP` cannot be
+drawn this way (it is drawn in its template). `GENLAYOUT` alone lists layouts.
+
+### REGENERATE
+
+```text
+REGENERATE (NOSAVE) AREA ([SEED=N]/[SEED=SAME]) ([VAR]=[VALUE] ...)
+REGENERATE LOCK | UNLOCK
+REGENERATE
+```
+
+Rebuilds the area you are in from its `GENSOURCE`. Details under
+[Fill, regeneration and GENLOCK](#fill-regeneration-and-genlock).
+
+### SANDBOX
+
+`SANDBOX ENTER` / `LEAVE` / `CLEAR` / `PREVIEW [name]` and `GENERATE ... SANDBOX`.
+The sandbox is a scratch area of four bare rooms in a row, marked unsavable so
+neither the world files nor the database ever see it. `GENERATE ... SANDBOX`
+adds `NOSAVE`, builds there, and makes any area it builds unsavable too;
+`SANDBOX CLEAR` removes the mobs, items and areas generated for it.
+
+## Inspect before committing a dungeon
+
+The routine for any new template:
+
+1. `GENERATE CHECK randareas/name.xml` until it is clean.
+2. `GENLAYOUT <layout> <size> SEED=n` a few times to pick a shape.
+3. `GENERATE PREVIEW AREA <id> FROM randareas/name.xml <vars> SEED=n` over
+   several seeds; read the levels, the mob counts, the boss and key placement.
+4. `GENERATE PREVIEW KEEP` for the one you want, then `LINK` it.
+5. `WORLD CHECK`, then walk it as a mortal (see
+   [Validate the generated game](#validate-the-generated-game)).
+
+A preview of an `AREA` tag needs an *area* template: a bare `STRING` file
+cannot be used with it. Remember to supply the template's required variables.
+
+## Generating in play
+
+During play a script can make new things at the moment they are needed. Every
+call here is a **fresh roll** (there is no cache), and defines
+`PLAYER_LEVEL`, `PARTY_SIZE`, `AREA_LEVEL`, `AREA_THEME`, `HOUR`, `SEASON`,
+`WEATHER` and `GAME_DAY` for the template unless you pass your own. The
+"player" is the character that triggered the script (if it was a player).
+
+### MPGENERATE
+
+```text
+MPGENERATE ITEM  file id [VAR=VALUE ...] [INTO container | TO mob | HERE]
+MPGENERATE MOB   file id [VAR=VALUE ...] [HERE | AT room]
+MPGENERATE ROOM  file id direction [VAR=VALUE ...]
+MPGENERATE AREA  file id direction [VAR=VALUE ...] [SEED=n]
+MPGENERATE QUEST file id [VAR=VALUE ...]
+```
+
+`$b` is set to the first thing created. Items go into the container, onto the
+mob, or on the floor of the host's room (expiring like a monster's equipment).
+Mobs are brought to life in the room. A room or area is linked off the host's
+room in a *free* direction (an error otherwise), and the area is recorded for
+`REGENERATE`. A quest is created and started. The script line is parsed with
+the usual `$` substitutions first, so `level=$<$n.level>`-style values work.
+Failures are logged as script errors and the script continues.
+
+```text
+MPGENERATE ITEM randareas/loot.xml chest_loot level_range=$<$n.level> INTO $i
+```
+
+Reference entry: [MPGENERATE](27-mobprog-commands.md#mpgenerate) and
+[MPREGENERATE](27-mobprog-commands.md#mpregenerate).
+
+### GENSTRING and RANDNAME
+
+`GENSTRING(file id [VAR=VALUE ...])` is a function returning the text of a
+`STRING` tag; `RANDNAME([style|race|language] [min max] [M|F|N] [FULL])`
+returns a random name ([Name styles](#name-styles)).
+
+```text
+say $%GENSTRING(randareas/rumors.xml rumor area=$a)%
+```
+
+### FROMGENFILE
+
+The inherited `MPOLOAD`, `MPMLOAD` and friends accept `FROMGENFILE file name
+tag [vars]`. It is **cached** by default: the same file, tag and variables give
+the same result every time. Add the word `FRESH` for a new roll. Prefer
+`MPGENERATE` for new scripts. (Unique "nonce" variables to defeat the cache
+leave an entry behind for each value.)
+
+### JavaScript: `gen`
+
+In every JavaScript scope (a `JRUN` script, a MOBPROG `<SCRIPT>` block, a
+template's own JS) there is a `gen` object. Results are live objects the script
+places or destroys itself. `vars` is a plain object (`{level_range: 5}`).
+
+| Call | Returns |
+|---|---|
+| `gen.item(file, id, vars)` | An array of items, placed nowhere. |
+| `gen.mob(file, id, vars)` | An array of mobs, not yet alive (`bringToLife(room, true)`). |
+| `gen.string(file, id, vars)` | Text. |
+| `gen.room(file, id, dir)` | A room linked off the host's room in a free direction. |
+| `gen.area(file, id, dir, seed, vars)` | An area linked the same way; `seed` a number or `GAME` or `null`. |
+| `gen.layout(name, size, seed)` | An array of nodes `{index, x, y, type, exits}` as `GENERATE` would lay out; the same seed gives the same nodes. |
+
+Errors are thrown as exceptions naming the file and id. See
+[JavaScript](05-javascript.md).
+
+```js
+var charm = gen.item('randareas/loot.xml', 'goblin', {mob_level: 4})[0];
+// a cartographer sells a map of the dungeon later made with the same seed
+var nodes = gen.layout('TREE', 30, seed);
+```
+
+## Autogenerated areas
+
+Two inherited classes build random content as players arrive.
+
+**`StdAutoGenInstance`** (an area class). Each party entering gets its own
+fresh copy of the generated area, which lasts until the party has left and
+`PASSIVEMINS` have passed. Its two stat codes (editable like any area stat):
+`GENERATIONFILEPATH` (the template file, under `resources/`, default root) and
+`OTHERVARS` (`NAME=VALUE` pairs, the template's variables). Special variables:
+
+| Variable | Meaning |
+|---|---|
+| `AREA_ID` / `AREA_IDS` / `AREAID` / `AREAIDS` | The `AREA` tag id, or a comma list to pick from at random. |
+| `AREASIZE`, `LEVEL_RANGE`, `AGGROCHANCE`, `THEME` | Template inputs. `StdAutoGenInstance` defaults when absent: size 50, a level range just below the entering player's level, aggro chance equal to their level, a random allowed theme. `AutoGrid` defaults: size from its grid, `LEVEL_RANGE` 1, `AGGROCHANCE` 50 (it logs a warning). |
+| `SEED` | A number (the same dungeon each time), `GAME` (the save's own seed, mixed with the area name: the same dungeon every visit in this save) or `ENTRY` (a new seed per entry, saved with the instance). The seed is stored as `GENSEED`. |
+| `PASSIVEMINS` | Minutes the instance stays after it empties (default 30). |
+| `NORESET` | `true` stops players using the reset-instance trick. |
+| `PERSIST` | `true` keeps each group's dungeon, empty or not, until it is reset. |
+
+**`AutoGrid`** (a locale class). A grid locale whose rooms are generated when
+someone gets near, using `GENERATIONFILEPATH`/`OTHERVARS` the same way; its
+x-by-y size only sets the total room count, since the layout decides the shape.
+It takes `SEED` too. Build it as small as you can; generation time is that of any
+other random area.
+
+See [Travel, vehicles and instances](30-travel-vehicles-instances.md) for the
+instance machinery, and [Areas](20-areas-rooms-exits.md).
+

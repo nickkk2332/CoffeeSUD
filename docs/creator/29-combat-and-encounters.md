@@ -1742,8 +1742,9 @@ feature you are debugging. See [13-testing-release.md](13-testing-release.md) fo
 running them.
 
 Engine internals: the engine log has a `combat` writer used by `handleBeingDamaged`
-(`DAMG` records of attacker and target stats) when it is enabled in the logging
-configuration (see [18-installing-and-running.md](18-installing-and-running.md)).
+(`DAMG` records of attacker and target stats) when the `CBTMSGS` key of
+`coffeemud.ini` (shipped `OFF`) is set to `FILE`, `BOTH` or `OWNFILE` (see
+[18-installing-and-running.md](18-installing-and-running.md)).
 
 ## Persistence notes
 

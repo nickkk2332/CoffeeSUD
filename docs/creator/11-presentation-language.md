@@ -1287,9 +1287,11 @@ What the number does:
 Learned proficiency is campaign state. Languages are learned by training
 (`LANGCOST`, shipped `3 PRACTICE`), taught by NPCs, given by scripts, or picked
 up by exposure. The number of languages a character can learn is limited by
-`MAXLANGUAGES` (shipped `3`) together with class, race and bonus allowances;
-cultural/natural languages are exempt. Scripts and properties that grant a new
-language respect that limit unless they say `FORCE`.
+their class's language allowance (the `MAXLANGUAGES` setting, shipped `3`, is
+the stock value; `0` on a class means unlimited) plus any bonus granted to the
+character or profile; `QUALIFY` shows how many more a character may learn.
+Scripts and properties that grant a new language respect that limit unless they
+say `FORCE`.
 
 ### Prop_Monolingual: a creature that knows one language
 
@@ -1358,7 +1360,7 @@ below. In a world-building script the same fields are set with `setStat` on a
 | `WORDS` (`N letter words`) | Fallback word lists by word length, separated by `/` (one list per length), used for unknown words when nothing else applies. |
 | `HASHEDWORDS` | An inline dictionary, `WORD=translation` pairs separated by `/`. **Wins over** the dictionary file. |
 | `INTERPRETS` | Other languages this one partly understands: `Elvish(60),Sylvan(30)`. See the comprehension model. The editor's prompt adds plain IDs (full strength); percentages are set with `setStat` or in the stored definition. |
-| `NATURALLANG` | True for a natural language of a race (exempt from the learned-language limit). |
+| `NATURALLANG` | Whether this is a natural (spoken or written) language. Spells such as Fluency and Read Language act only on natural languages; the default for a new language is true. |
 | `VERB`, `TRANSVERB` | The speaking and translating verbs in messages. |
 | `HELP` | Help text for the language. |
 | `NAMESTYLE` | A name-generation style for this language ([chapter 12](12-generation.md)). |

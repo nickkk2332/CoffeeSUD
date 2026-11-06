@@ -1084,7 +1084,8 @@ DEVLOG ON (ERROR|WARN|INFO|DEBUG) (MODULE [MASK])
 DEVLOG OFF
 DEVLOG LAST ([number]) (ERROR|WARN|INFO|DEBUG) (MODULE [MASK])
 DEVLOG CLEAR
-DEVLOG WINDOW (ERROR|WARN|INFO|DEBUG) (MODULE [MASK])   (help only; see below)
+DEVLOG WINDOW (ERROR|WARN|INFO|DEBUG) (MODULE [MASK])
+DEVLOG WINDOW OFF
 ```
 
 Examples:
@@ -1105,8 +1106,9 @@ the ini key `DEVLOG` sets the start value:
 DEVLOG=WARN Scripting,Quest*
 ```
 
-The project's own audit marks `DEVLOG WINDOW` as not implemented (the help
-mentions it); expect an error or no effect (audit finding DT9).
+`DEVLOG WINDOW` opens a display-only log window with the same level and module
+options (`DEVLOG WINDOW OFF` closes it). It needs a display; without one it says
+so and the terminal carries on.
 
 `MPDEBUG` and JavaScript's `debug()` send lines to the debug log, which
 `DEVLOG LAST` keeps and the watcher is always told of, and which do nothing
@@ -1450,7 +1452,7 @@ A mob stops answering after you edited its script.
 
 1. In builder mode: `SCRIPTERRORS 20` lists the newest script errors with
    file and line (`progs/elder.script:212 MPECHOT ...`).
-2. `DEVLOG ON WARN Scripting` shows new ones as they happen.
+2. `DEVLOG ON WARN MODULE Scripting` shows new ones as they happen.
 3. `LIST LOG BACK 40` or `tail -n 40 mud.log` shows the log tail.
 4. Edit the script and `WORLD RELOAD CHANGED`, or `SCRIPT RESET` the host.
 5. If it was slow, not wrong: `SCRIPTPROF`, or set `SCRIPTSLOW=50` and read

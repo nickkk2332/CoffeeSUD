@@ -264,9 +264,10 @@ use `EVAL` or `MATH` with value forms:
   an item together.
 - A `$` preceded by `\` is not expanded (the backslash is left in the text).
   `$$` produces one literal `$`.
-- If a substituted value itself contains `$x`, the `$` is replaced by `_` so a
-  player cannot inject codes by typing them (`$n` set to "$i" would otherwise
-  recurse).
+- If a substituted value itself contains the same code that produced it (the text
+  substituted for `$n` contains `$n`), that `$` is replaced by `_` so the expansion
+  cannot recurse. Other `$` codes in a substituted value are not escaped by the
+  engine and are expanded in turn.
 - Case: function names, connectors, flag words (`DAYS`, `WORN`...) and most
   compared words are case-insensitive. Variable names are stored in upper case.
 

@@ -1040,7 +1040,7 @@ were loaded, which doubles as a sanity check that a build is whole: if a count i
 zero, the class files for that kind are missing; run `build.sh clean`.
 
 In a builder or DEV game, `DEVLOG` tells you the engine's log lines as they happen
-(`DEVLOG ON WARN Scripting,Quest*`), with a level (ERROR, WARN, INFO, DEBUG) and
+(`DEVLOG ON WARN MODULE Scripting,Quest*`), with a level (ERROR, WARN, INFO, DEBUG) and
 a module mask, whatever `mud.log` is set to keep. `DEVLOG LAST` replays the last
 500 lines, and `DEVLOG WINDOW` opens a display-only log window (it works; the
 older audit note that said otherwise is out of date). `SCRIPTERRORS` lists the

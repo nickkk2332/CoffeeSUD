@@ -854,6 +854,18 @@ DESTROY ABILITY [ID]
   two fields before you rely on the new one, or better, make a
   [tweak](#gentweakability-renamed-and-adjusted-java-abilities) under a new ID.
 
+In the `MENU` editor the `GenAbility` fields are numbered: 1 name, 2 type and
+domain, 3 command words, 4 minimum range, 5 maximum range, 6 ticks between casts,
+7 duration override, 8 affect string, 9 auto-invoking, 10 flags, 11 override cost,
+12 cost type, 13 number of arguments, 14 can affect, 15 tick/periodic affects,
+16 can target, 17 quality, 18 affect adjustments, 19 caster mask, 20 caster
+mask failure message, 21 target mode, 22 most targets, 23 area message, 24 to 27
+the summon fields, 28 action cost, 29 combat action cost, 30 components, 31
+script, 32 target mask, 33 fizzle message, 34 auto-cast message, 35 normal-cast
+message, 36 post-cast message, 37 uninvoke message, 38 attack type, 39 quiet
+effect ID, 40 public effects, 41 extra castings, 42 damage/healing formula, 43
+help text, 44 windup ticks, 45 windup warning.
+
 The new ability is registered as soon as you set its ID, and written to the
 content database when you leave the editor. In builder mode `SAVE` (and a
 clean shutdown) exports it to
@@ -1442,7 +1454,7 @@ come from the recipe file `resources/skills/traps.txt` (tab separated: name,
 level, a blank, trap ID, an extra text for the trap, and optionally the three
 messages), plus `mtraps.txt` for the minor-trapping skill. Adding a line
 there with the ID of a `GenTrap` lets thieves lay your custom trap.
-`Ranger_SetSnare`, `Thief_Caltrops`, wards (`Spell_WardArea`,
+`MTRAP` lays minor traps. `Ranger_SetSnare` (`SETSNARE`), `Thief_Caltrops`, wards (`Spell_WardArea`,
 `Prayer_*WardingGlyph`) and plant traps (`Chant_PlantTrap`) are other setters.
 
 ### GenTrap fields
@@ -1569,3 +1581,405 @@ Examples worth knowing by ID: `Spell_MagicMissile`, `Spell_Fireball`,
 `Thief_Poison`; `Fighter_Kick`, `Fighter_Berzerk`; `Disease_Cold`,
 `Disease_Flu`, `Disease_Plague`; `Poison_Venom`, `Poison_Sting`;
 `Trap_BearTrap`, `Trap_RoomPit`, `Bomb_Explosive`.
+
+## For engine developers
+
+The contract is the
+[Ability](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/interfaces/Ability.java)
+interface; [StdAbility](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdAbility.java)
+implements most of it. The methods that matter when writing a new Java ability
+(full treatment in [32-engine-programming.md](32-engine-programming.md)):
+
+| Method | Purpose |
+| --- | --- |
+| `ID()`, `name()`, `displayText()`, `triggerStrings()` | Identity and invoke words. `ID()` must equal the class name. |
+| `classificationCode()` | `ACODE_* \| DOMAIN_*`. |
+| `abstractQuality()`, `enchantQuality()`, `castingQuality(mob, target)` | What the ability is, and what it is *now* against this target (used by NPC AI). |
+| `canAffectCode()`, `canTargetCode()` (protected) | The `CAN_*` masks. |
+| `usageType()`, `overrideMana()`, `usageCost(mob, ignoreClassOverride)` | What it costs. |
+| `castingTime`, `combatCastingTime`, `checkedCastingCost` | Action time. |
+| `getTicksBetweenCasts()` | Cooldown. |
+| `flags()`, `minRange()`, `maxRange()` | Flags and combat range. |
+| `invoke(mob, commands, target, auto, asLevel)` | The act. Call `super.invoke` first for costs. `auto` skips costs and proficiency. `asLevel > 0` forces the cast level. |
+| `preInvoke(...)` | For abilities that take time (common skills): a chance to veto before each action. |
+| `startTickDown(invoker, affected, ticks)` | Put the copy on `affected` for `ticks` (called by `beneficialAffect` and `maliciousAffect`, which also set the invoker and pick the standard duration). |
+| `tick(ticking, tickID)`, `unInvoke()`, `canBeUninvoked()`, `makeNonUninvokable()`, `makeLongLasting()` | Effect life cycle. |
+| `affectPhyStats`, `affectCharStats`, `affectCharState` | Stat changes, recalculated whenever the host's stats are. |
+| `okMessage`, `executeMsg` | Message flow ([32-engine-programming.md](32-engine-programming.md)). |
+| `autoInvocation(mob, force)`, `isAutoInvoked()`, `isNowAnAutoEffect()` | Passive abilities. |
+| `canBeTaughtBy`, `canBePracticedBy`, `canBeLearnedBy`, `teach`, `practice`, `unlearn`, `requirements` | Teaching rules. |
+| `proficiencyCheck(mob, adjustment, auto)`, `helpProficiency(mob, adjustment)` | The roll and the improvement chance. |
+| `adjustedLevel(mob, asLevel)` | The level to scale by. |
+| `getStatCodes()`, `getStat`, `setStat`, `isGeneric()` | Data-driven abilities; `getSaveStatIndex()` says where extra saved stats start. |
+| `catchUp(host, ticks)` | Optional: what to do at once when the host's area wakes after sleeping (item N8). |
+
+Rules of thumb: set the invoker before an effect can do damage; use
+`getTarget` and `getAnyTarget` to resolve targets (they print the standard
+refusals); do not keep per-instance data in static fields unless it is
+keyed like the `Gen*` classes do; put saved state in `text()` or in
+declared stats so the campaign save (below) can restore it. A new class under
+`Abilities/` is picked up by the class loader like any other.
+
+## Worked examples
+
+The examples are complete in the sense that each can be typed in as written.
+They assume a builder or archon with the `CMDABILITIES` flag. Adapt the IDs.
+
+### A custom attack spell: Cinderlash
+
+A hostile fire spell, instant (no lingering effect), with a fire save, damage
+that scales with the caster, a small chance to slow the victim, and a
+cooldown.
+
+```text
+CREATE ABILITY Spell_Cinderlash
+```
+
+Set the fields (menu number in brackets):
+
+| Prompt (number) | Value |
+| --- | --- |
+| Ability/Skill name (1) | `Cinderlash` |
+| Type, Domain (2) | `SPELL,EVOCATION` |
+| Command Words (3) | `CAST,CA,C` |
+| Maximum Range (5) | `LONG` |
+| Ticks Between Casts (6) | `2` |
+| Skill Flags (10) | `BURNING` |
+| Override Cost (11) | `30` |
+| Cost Type (12) | `MANA` |
+| Can Affect (14) | `0` |
+| Can Target (16) | `MOBS` |
+| Quality Code (17) | `MALICIOUS` |
+| Fizzle Message (33) | `^S<S-NAME> flick(s) a whip of cinders at <T-NAMESELF>, but it falls to ash.^?` |
+| Normal-Cast Message (35) | `^S<S-NAME> lash(es) <T-NAMESELF> with a whip of glowing cinders!^?` |
+| Post-Cast Message (36) | `The cinders <DAMAGE> <T-NAME>!` |
+| Attack-Type (38) | `FIRE` |
+| Extra castings (41) | `25%;Spell_Slow` |
+| Damage/Healing Formula (42) | `(2?6)+(@x9/2)` |
+| Help Text (43) | `<ABILITY>Usage   : CAST CINDERLASH [TARGET]` |
+
+How it plays: the caster pays 30 mana and waits two ticks before another
+cast; a proficiency roll may fail; on success the target gets a fire save
+(plus the spell-save and the level difference, [Saving throws](#saving-throws)).
+A target that resists takes half damage; one that does not takes it all and has a
+one in four chance of being slowed by `Spell_Slow` (which makes its own roll).
+The damage formula is a random 2 to 6 plus half the adjusted caster level,
+with the parentheses doing the work because evaluation is left to right.
+
+Let characters learn it. For a quick test give it to every class from level 1
+(`CREATE ALLQUALIFY EACH Spell_Cinderlash`, answer the prompts for level 1,
+not auto-gained, default proficiency 25), set a teacher in a test room with the
+`MOBTeacher` behavior and the parameter `Spell_Cinderlash`, and from the
+character:
+
+```text
+say teach me cinderlash
+practice cinderlash [TEACHER]
+cast cinderlash goblin
+```
+
+For the real game, instead list `Spell_Cinderlash` in the class's ability map
+([03-characters.md](03-characters.md)). Reread the ability's text in `HELP
+CINDERLASH`, which shows the generated header.
+
+### A timed buff handed out by a script: Emberward
+
+A protective buff that an NPC priest grants to anyone who asks, lasting 120
+ticks (about eight minutes).
+
+```text
+CREATE ABILITY Spell_Emberward
+```
+
+| Prompt | Value |
+| --- | --- |
+| Ability/Skill name | `Emberward` |
+| Type, Domain | `SPELL,ABJURATION` |
+| Affect String | `(Emberward)` |
+| Skill Flags | `RESISTER` |
+| Can Affect / Can Target | `MOBS` / `MOBS` |
+| Quality Code | `BENEFICIAL_OTHERS` |
+| Duration Override | `120` |
+| Affect Adjustments | `savefir+30 saveacid+15` |
+| Auto-Cast Message | `^S<T-NAME> <T-IS-ARE> wreathed in a faint, warm glow.^?` |
+| Uninvoke Message | `The warm glow around you fades.` |
+
+Attach this to the priest (`MODIFY MOB`, Behaviors, `Scriptable`, parameter
+text; or `LOAD=` a file, see [04-mobprog.md](04-mobprog.md)):
+
+```text
+SPEECH_PROG p ember ward
+if affected($n Spell_Emberward)
+ say You already bear the ward, $n.
+else
+ say Stand still, $n.
+ mpaffect Spell_Emberward $n 120 ticks
+endif
+~
+```
+
+`mpaffect` casts it as an automatic cast, so the priest needs no mana and the
+roll cannot fail; `120 ticks` sets how long it lasts (the 120 in the
+ability's own `Duration Override` is the default when a caster uses it). A
+player who says "ember ward" gets the glow, sees `(Emberward)` with its time left
+in `AFFECTS`, and takes the extra fire and acid resistance until it fades. To
+let players cast it themselves later, list it in a class; the same definition
+works. If you need the buff to end early, `MPUNAFFECT $n Spell_Emberward`.
+
+To react to the end of the buff, add to the ability's own script:
+
+```text
+FUNCTION_PROG ONEXPIRE
+mpecho The ember glow around $t gutters out.
+~
+```
+
+### A custom poison: Emberbite
+
+```text
+CREATE POISON Poison_Emberbite
+```
+
+| Prompt | Value |
+| --- | --- |
+| Poison name | `Emberbite` |
+| Duration Formula | `30` |
+| Delay Formula | `2` |
+| Start Msg | `^G<S-NAME> wince(s) as embers seem to crawl under <S-HIS-HER> skin!^?` |
+| Affect Msg | `<S-NAME> flinch(es) as the embers burn.` |
+| Force Peace | `true` |
+| Damage Formula | `(@x1/6)+(1?4)` |
+| Done Msg | `The burning in your veins fades.` |
+| Adjustments | `dex-1 savefir-10` |
+| Script | `FUNCTION_PROG ONCURE` / `mpecho The embers in $i's blood die down.` / `~` |
+
+(`@x1` is the poisoner's level.) Put it on a weapon or a drink:
+
+```text
+MODIFY ITEM rusty dagger     Effects: Poison_Emberbite       parameters: RANK=2
+MODIFY ITEM flask of cider   Effects: Poison_Emberbite
+```
+
+Hitting a mob with the dagger, or drinking the flask, now rolls a poison save; on
+failure the victim burns for 30 ticks, taking damage every second tick, with
+lowered dexterity and fire resistance, until it runs out, `Prayer_RemovePoison`
+cures it or `MPUNAFFECT $n Poison_Emberbite` ends it. With `Force Peace` set
+the poisoned flask does not start a fight with the drinker. Use `MPAFFECT
+Poison_Emberbite $n` from a script to poison directly.
+
+### A spreading disease: Ash Lung
+
+```text
+CREATE DISEASE Disease_AshLung
+```
+
+| Prompt | Value |
+| --- | --- |
+| Disease name | `Ash Lung` |
+| Display text | `(Ash Lung)` |
+| Duration Formula (ticks) | `100` |
+| Delay Formula | `5` |
+| Spread | `PROXIMITY, CONTACT` |
+| Catch chance | `100` |
+| Difficulty | `2` |
+| Affect Msg | `<S-NAME> cough(s) up grey ash.` |
+| Damage Formula | `1?4` |
+| Adjustments | `con-2` |
+| Immune mask | `-RACE +Dwarf` |
+| Script | `FUNCTION_PROG ONEXPIRE` / `mpecho The rattle leaves $t's chest.` / `~` |
+
+A mob that catches it loses 2 constitution, coughs ash every fifth tick for 1 to 4
+damage, and, because of `PROXIMITY`, may pass it to someone in the room at each
+cough (after their disease save). Dwarves never catch it. A priest needs a
+level of at least 20 to cure it (difficulty 2 times 10). Give it to something to
+carry: a monster that exhales it,
+
+```text
+FIGHT_PROG 15
+mpecho $i exhales a cloud of grey ash over $n!
+mpcast Disease_AshLung $n
+~
+```
+
+or put `Disease_AshLung` in the Effects of a food item to make it a plague
+meal (add `CONSUMPTION` to the `Spread` first).
+
+### A scripted tripwire: Trap_AshChest
+
+```text
+CREATE TRAP Trap_AshChest
+```
+
+| Prompt | Value |
+| --- | --- |
+| Trap name | `ash-chest trap` |
+| Level | `3` |
+| Can Affect | `ITEMS` |
+| Reset Ticks | `120` |
+| Triggers | `OPEN` |
+| Disarm | `verb:cut red wire` |
+| Spring Msg | `<S-NAME> open(s) the lid and set(s) off a trap!` |
+| Damage Msg | `A gout of cinders <DAMAGE> <T-NAME>!` |
+| Damage Formula | `(@x1*4)+(1?6)` |
+| Damage Type | `BURNING` |
+| Dmg Msg Type | `FIRE` |
+| Scriptable Parm | see below |
+
+```text
+FUNCTION_PROG ONTRIGGER
+mpecho Cinders roar out of the chest at $n!
+~
+FUNCTION_PROG ONDISARM
+mpecho The red wire parts with a soft click.
+~
+```
+
+Place it: `MODIFY ITEM the oak chest` (it must be a container with a lid), add
+`Trap_AshChest` to its Effects. Opening the chest springs it (a `SAVE_TRAPS`
+save can avoid it, and builders' own area mobs are exempt); typing `cut red
+wire` first in the same room disarms it and the script reports it. After the reset
+ticks it re-arms. Add a line for it in `resources/skills/traps.txt` if thieves
+should be able to lay it themselves.
+
+### An area buff for a party: Marching Cadence
+
+A `GenAbility` of type SONG (command words `PLAY`, quality `BENEFICIAL_OTHERS`)
+with `Target mode` `ALLALLIES`, `Can Affect` and `Can Target` `MOBS`, `Affect
+Adjustments` `movement+50`, `Duration Override` `40` and `Area message`
+`<S-NAME> strike(s) up a marching cadence!`. The caster pays once; every member of
+the group in the room gets the effect with their own cast message. Compare
+`ALLENEMIES` for Thunderclap (damage `(2?6)+(@x9/2)`, `Public effects`
+`Spell_Deafness`) and a summon for "Call the Pack": `Summon` `a grey wolf` (a
+catalog mob), `Summon count` `1+(@x1/10)`, `Duration Override` `20`, `Summon
+flags` `FOLLOW ASSIST DISMISSONEXPIRE`.
+
+### A reusable haunting property: Prop_Haunted
+
+A property with a script, set per room by text.
+
+```text
+CREATE ABILITY Prop_Haunted
+```
+
+Set `Type, Domain` to `PROPERTY`, `Can Affect` to `ROOMS`, and the script:
+
+```text
+RAND_PROG 10
+if effectparm(LOUD == yes)
+ mpecho Something moans behind the walls!
+else
+ mpecho A cold draft slips through the room.
+endif
+~
+```
+
+Then in each room's Effects add `Prop_Haunted` with parameters `LOUD=yes`, or
+`LOUD=no`. One definition, many settings. Test with the plain attachment (no
+casting), then save and restart ([Persistence](#persistence)).
+
+## Persistence
+
+| What | Where it is kept | On reload or restart |
+| --- | --- | --- |
+| A custom ability's **definition** (`GenAbility`, `GenPoison`, `GenDisease`, `GenTrap`, `GenTweakAbility`, ...) | The content database, and in builder mode the files `world/custom/abilities/*.cmare` (+ `.script`) | Loaded with the engine's classes at boot, before areas. Hand edits to the files are rebuilt at the next start. In a normal game the files are the content and the database is a cache of them ([02-world-workflow.md](02-world-workflow.md)). |
+| **Known abilities and proficiency** of a character | The character's record in the campaign | Restored with the character. An ability whose definition has gone is dropped. |
+| A **permanent effect** on a room, exit, item or mob (properties, traps, permanent spells) | In the thing's record: ID plus parameter text (`<AFF><ACLASS>..</ACLASS><ATEXT>..</ATEXT></AFF>`) | Re-created from its ID and text. Any state not in `text()` (a trap's sprung state, a GenAbility's cooldown) is lost. |
+| A **timed effect** (a cast spell, a poison, a disease, a laid trap, a crop in progress) | Not in the world files. The *campaign save* records every effect with ticks left on the player, mobs, items, rooms, exits and areas: its ID, text, ticks left, proficiency, who caused it, and the activity of a common skill | Put back with its remaining ticks by the save's loader; the cause is the character if they made it, else a nearby mob of that name, else the host. Effects that do not keep their state in `text()` come back with defaults. |
+| **Cooldowns** | On the ability object the character holds, by game time | Not guaranteed across a restart for custom abilities; do not rely on them. |
+| **Summons** with `NOSAVE` | Not saved | Gone after a save and restore; others follow with the party. |
+
+Developers: effects decide their own persistence through `isSavable()`;
+`startTickDown` turns it off for cast effects and `makeNonUninvokable` turns it
+on. The campaign save also stores effects with `TICKDOWN > 0` that
+`canBeUninvoked()` and are not `isAutoInvoked()` and not item tickers (see
+[33-engine-internals.md](33-engine-internals.md), `WorldState`).
+Round-trip anything an effect needs through `text()` or `setStat`/`getStat`.
+
+## Troubleshooting and gotchas
+
+- **"A generic ability with the ID 'X' already exists!"** `CREATE` refuses an ID
+  that is already a generic of any kind. `MODIFY` it, or destroy it first.
+- **"'X' is an invalid id, because it contains a space."** IDs have no spaces.
+- **The wrong `MODIFY` verb.** `MODIFY ABILITY` tells you the right one:
+  `MODIFY TRAP`, `POISON`, `DISEASE`, `TWEAK`, `LANGUAGE`, `CRAFTSKILL`,
+  `GATHERSKILL`, `BUILDSKILL`.
+- **A custom spell is not castable by anyone.** Creating the ability does not
+  qualify any class. Add it to a class's ability map, `allqualifylist.txt`, a
+  teacher's `MOBTeacher` list, or hand it out with `MPENABLE`. Check `QUALIFY`
+  and `SKILLTREE`. If the level of the character is below the ability's
+  qualifying level it is not learnable.
+- **`cast xyz` says nothing.** The trigger words and name must match what the
+  character types; `NAME` is what follows `CAST`, and `TRIGSTR` for a spell must
+  contain `CAST`. Another ability with the same first letters may be chosen
+  first; type more of the name.
+- **Casting an instant attack leaves a lasting effect or none.** `Can Affect`
+  `0` makes it instant; any other value puts a copy on the target for the
+  duration. Do not give an instant attack a non-zero `Can Affect` just to get a
+  message.
+- **`TICKAFFECTS` and damage.** In a `GenAbility` that leaves an effect
+  (`Can Affect` not `0`), the effect re-runs its post-cast step on every tick,
+  so a damage or healing formula is applied each tick for the length of the
+  effect, and its script's `ONCAST` is called again. `TICKAFFECTS` controls
+  whether the post-cast *message* repeats too. Read the code path before
+  relying on the exact repetition rules for a damage-over-time ability, and
+  test it with `AFFECTS`; use `Can Affect` `0` and a separate effect through
+  `Public effects` when you want exactly one hit plus a timed penalty.
+- **`ROOMS` and `EXITS` targets.** With `Can Target` `ROOMS` the effect of an
+  ordinary cast lands on the caster, because the target is the caster; it
+  lands on a room only when a script, item or trap casts it automatically at
+  the room. `EXITS` only checks that the named exit exists. For room effects
+  prefer a property (a `GenAbility` of type `PROPERTY`) put on the room.
+- **Messages blank or odd after hand-editing a record.** A missing tag reads as
+  an empty value ([The saved record](#the-saved-record)).
+- **Percent signs in `MOBPROG`.** Anything inside a script ability is subject to
+  the same quoting rules as any script ([27-mobprog-commands.md](27-mobprog-commands.md)).
+- **A formula gives an odd number.** There is no operator precedence; add
+  parentheses. `?` is a random number between its two sides, not a dice roll
+  (use `(1?6)+(1?6)` for 2d6).
+- **Poison or disease does nothing.** Check the save (a strong target or a
+  racial immunity), the disease's `IMMUNEMASK`, `TICKS` and `DELAY` (0 delay is
+  forced to 1), and that the effect is on the target (`AFFECT [TARGET]` as an
+  archon). `Poison` `Affect Target` must be `true` for a lasting effect.
+- **`GenPoison` `EFFECTS` has no effect.** See above; use `ADJUSTMENTS`.
+- **`GenTrap` `ISBOMB` does nothing.** It is stored but not used.
+- **A trap that never triggers.** `Can Affect` must include the kind of host
+  (`ITEMS` for a chest as well as a lid; `ROOMS` for a room), `TRIGGERS` must
+  name the message kind, and mobs whose home is in the same area are exempt
+  from a *permanent* trap, so test with a player or a mob from another area.
+- **A trap or a poison on an item never runs out.** Builder-placed effects are
+  permanent. Use a script and `MPAFFECT ... N TICKS` for a temporary one.
+- **A summon is left behind.** Use `DISMISSONEXPIRE` and `BIND`, give the
+  ability a duration (`TICKSOVERRIDE`), and test death of the summoner.
+- **Changing a definition changes every copy.** `MODIFY ABILITY` edits the one
+  shared definition. Effects already on things pick up the new fields at once
+  (stats are recalculated); text already told to players is not changed.
+- **Stock `Gen*` help shows an old file name.** The shipped `GENABILITY` help
+  still says custom abilities live in `world/custom.cmare`; they are now one
+  file each under `world/custom/abilities/`.
+
+## See also
+
+- [03-characters.md](03-characters.md): classes, races, ability maps,
+  expertise, training and respec.
+- [04-mobprog.md](04-mobprog.md), [26-mobprog-triggers.md](26-mobprog-triggers.md),
+  [27-mobprog-commands.md](27-mobprog-commands.md) and
+  [28-mobprog-functions.md](28-mobprog-functions.md): scripts, including the
+  `SKILL_PROG` trigger and `MPAFFECT`, `MPCAST`, `MPENABLE`.
+- [05-javascript.md](05-javascript.md): JS-defined classes and hooks.
+- [15-ability-composition.md](15-ability-composition.md): the optional composed
+  skills.
+- [16-combat-profiles.md](16-combat-profiles.md) and
+  [29-combat-and-encounters.md](29-combat-and-encounters.md): damage, saves,
+  action time and encounters.
+- [21-mobs.md](21-mobs.md), [22-items.md](22-items.md),
+  [20-areas-rooms-exits.md](20-areas-rooms-exits.md): giving mobs, items and
+  rooms abilities and effects.
+- [23-properties-reference.md](23-properties-reference.md): every property.
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): `MOBTeacher` and the
+  zapper mask language.
+- [02-world-workflow.md](02-world-workflow.md),
+  [state-and-persistence.md](state-and-persistence.md): where definitions and
+  saves live.
+- [tool-reference.md](tool-reference.md): generated help, including `GENABILITY`,
+  `GENDISEASE`, `GENTWEAK`, `GENTRAP`, `SKILLSCRIPTS` and the commands above.
+- [32-engine-programming.md](32-engine-programming.md): writing Java abilities.

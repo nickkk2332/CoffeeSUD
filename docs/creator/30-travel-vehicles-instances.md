@@ -713,3 +713,325 @@ Rules:
 The links between the car and the stops, and the changing description text, are runtime overlays (`Travel.temporaryLink` and the `Prop_TransitView` effect). They are not saved with rooms and not written by room export, so a builder saving a stop room does not bake a door into it. Removing the behavior, or reloading the world, removes them. The route position (current stop, direction, status, remaining wait) is saved with the game.
 
 `TIMETABLE` and `SIGN` show where the car is.
+
+## Riding, mounts and carts
+
+Riding is the base of both mounts and vehicles. Hosts: any `Rideable` (a creature such as `GenHorse`, `GenRideable`; an item such as a boat or `HorseCart`). The commands are `MOUNT`, `BOARD`, `RIDE` and `M` (all the same command), `DISMOUNT`, and `LEAVE`:
+
+| Command | Effect |
+| --- | --- |
+| `MOUNT horse` | Climb onto a visible rideable in the room (creature or item). |
+| `BOARD ship` | Same words; on a boardable vessel `BOARD` runs `ENTER` instead (you go inside, you do not ride on it). |
+| `MOUNT cart horse` | Hitch: put an item (or willing/bound creature) onto another rideable. A cart pulled by a horse moves when the horse moves. |
+| `DISMOUNT`, `LEAVE` | Get off. |
+
+The ride basis (`RIDEBASIS`, one of `LAND_BASED`, `WATER_BASED`, `AIR_FLYING`, `FURNITURE_SIT`, `FURNITURE_SLEEP`, `FURNITURE_TABLE`, `ENTER_IN`, `LADDER`, `WAGON`, `FURNITURE_HOOK`) says what kind of thing it is and what terrain it can cross; `MOBSHELD` (rider capacity) says how many it carries. The `MOUNTSTR`, `DISMOUNTSTR` and related strings give the verbs. See [21-mobs.md](21-mobs.md#rideable-mobs-and-mounts) and [22-items.md](22-items.md#furniture-rideables-and-boardables).
+
+What riding changes in travel:
+
+- A mounted rider pays no movement points; the mount is carried and moves with them.
+- A mounted step uses the `MOUNTED` multiplier of `Prop_TravelTime`; a rider on an item (cart, boat) or a moving vehicle uses `VEHICLE`.
+- The party fares count a mount as a party member that is not a player character, so `PETS` applies to it under `PARTY=LEADER`.
+- Scripts can hitch and unhitch with `MPHITCH` and `MPUNHITCH`; the engine refuses to create a riding loop (a cart cannot ride what rides it).
+
+Practical setups:
+
+- A horse and cart for hire: a `GenHorse` with `Prop_TicketTaker FARE=5 PARTY=LEADER`, or a `GenRideable` coach with `TransportLine` for a scheduled route.
+- A taxi: `TaxiBehavior` on a rideable item or mob, see above.
+- A wagon train: `GenCaravan` plus `Prop_Road` on the road rooms.
+
+## Stables
+
+Source: [Nanny](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Nanny.java), [Stable command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Stable.java). Reference entry: [24-behaviors-and-masks.md](24-behaviors-and-masks.md#nanny).
+
+A stable keeper is a mob with the `Nanny` behavior. It keeps mounts, wagons, boats and children (whatever `WATCHES` lists) safe while the owner is away. CoffeeSUD adds explicit commands and sister stables that share custody records.
+
+### Nanny options
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `RATE` | 2.0 | Fee per game hour per creature. |
+| `NAME` | `nursery` | Name of the place, used in the keeper's speech and in `STABLE LIST`. |
+| `WATCHES` | `Babies,Children` | Comma list of what the keeper takes. Words (abbreviated to three letters): `Babies`, `Children`, `Mounts`, `Wagons`, `Cars`, `Boats`, `AirCars`, `Followers`. |
+| `NETWORK` | none | Name of a stable network. Keepers with the same network name are sister stables. |
+| `SENDFEE` | 0 | Extra fee for retrieving a mount at a stable other than the one that holds it. |
+
+```text
+RATE=2 NAME="Port Azure Livery" WATCHES="mounts,wagons" NETWORK=ROYAL_STABLES SENDFEE=5
+```
+
+### Using a stable
+
+Two ways work together.
+
+- **Passive** (the original behavior): when a party that owns watched creatures enters the keeper's room, the keeper offers to hold them. Once the owner leaves, the creatures stay in the keeper's care and cannot be attacked or decay. On return the keeper quotes the bill; the player pays by giving coins to the keeper and the creatures follow again.
+- **Explicit** (CoffeeSUD): at the keeper, type
+
+```text
+STABLE horse
+STABLE LIST
+RETRIEVE horse
+```
+
+`STABLE <name>` leaves a mount or vehicle that is yours in the keeper's care. It must be of a kind in `WATCHES`, you must be its owner, and nobody else may be riding it. `STABLE` with no name, or `STABLE LIST`, lists your animals in this network, each with the stable it is at and its current bill. `RETRIEVE <name>` collects one, paying keep (hours kept, rounded up, times `RATE`, less any earlier payment) plus `SENDFEE` if it is held at a different sister stable. It refuses for another owner ("No mount of yours by that name is in this stable network."), when you cannot afford it, or when the mount cannot enter the room. The keeper also understands `stable`, `retrieve` and `list` when spoken in the room. The ranger skill that stables a mount in the wild is `STABLEMOUNT`.
+
+Records (owner, drop-off time, payments) are saved with the keeper (see [Persistence](#persistence)). Give each keeper in a network the same `NETWORK` text and a different `NAME`.
+
+## Waypoints and fast travel
+
+Source: [Prop_Waypoint](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Waypoint.java), [Waypoints](../../CoffeeMud/com/planet_ink/coffee_mud/core/Waypoints.java), [TravelCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TravelCmd.java), [AuthorIds](../../CoffeeMud/com/planet_ink/coffee_mud/core/AuthorIds.java). Reference entry: [23-properties-reference.md](23-properties-reference.md#prop_waypoint).
+
+A waypoint network is a set of `Prop_Waypoint` stones (or rooms) with the same `NETWORK` name. A character can travel from a waypoint they are at to any other waypoint of the network that they have discovered. Discovery is remembered per character or shared per profile.
+
+### Prop_Waypoint options
+
+Hosts: rooms and items. An item must lie in a room (or be carried, to act as the departure point); destinations are looked up among rooms and the items lying in rooms.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `NETWORK` | `DEFAULT` | Network name (case-insensitive). |
+| `NAME` | the host's name | Destination name shown in `TRAVEL` and typed after it. Names within a network should be unique; duplicate names make `WORLD CHECK ROUTES` warn. |
+| `ID` | derived | A stable author ID. Discovery is stored under it, so moving or renaming the stone never makes it a new place or loses discovery. IDs are scoped to the network and duplicates in one network are an error. Without `ID` a room waypoint is keyed by its room ID, and an item waypoint by a hidden saved identity the engine attaches to it. |
+| `ALIASES` | none | Comma list of old IDs, still recognized as the same waypoint after you change `ID`. |
+| `LEGACYKEYS` | none | Comma list of old saved discovery tokens to honor. |
+| `DISCOVER` | `ENTER` | How a character finds it: `ENTER`, `TOUCH`, `RITUAL`, `QUEST`. See below. |
+| `SCOPE` | `CHARACTER` | `CHARACTER`: each character discovers separately. `PROFILE`: discovery is shared by every character of the player's profile. |
+| `COST` | `moves 0` | `mana N`, `moves N` (or `movement`), or `gold N` (or `money`) charged to the leader once per trip. |
+| `TIME` | 0 | Game hours the trip takes (the clock advances through the scheduler). |
+| `MASK` | none | Zapper mask. Characters who do not match cannot discover, see or use it. |
+| `MSG` | none | Text shown to the travellers on arrival. |
+| `RITUAL` | none | With `DISCOVER=RITUAL`, the name of a script function that must not refuse. |
+| `QUEST` | none | With `DISCOVER=QUEST`, the quest that must have been won by the character. |
+
+```text
+NETWORK=ELVEN NAME="Mirewood Stone" ID=mirewood-stone DISCOVER=TOUCH SCOPE=PROFILE COST="mana 20" TIME=1 MASK="-TATTOO +ELVEN_ATTUNEMENT"
+```
+
+### Discovery
+
+| `DISCOVER` | How a character discovers it |
+| --- | --- |
+| `ENTER` | Walking into the waypoint's room. Also `TOUCH <stone>`, `USE <stone>` and `TRAVEL ATTUNE`. |
+| `TOUCH` | `TOUCH <name>` or `USE <name>` at the stone (the stone can be named, or the waypoint name used), or `TRAVEL ATTUNE`. |
+| `RITUAL` | `TRAVEL ATTUNE`, which first runs the `RITUAL` function if named. An undefined function leaves the ritual "incomplete". |
+| `QUEST` | `TOUCH`, `USE` or `TRAVEL ATTUNE`, once the character has won `QUEST`. |
+| (script) | A script or Java code may award discovery directly with `Waypoints.discover(character, property, true)`, bypassing the mode but not the `MASK`. |
+
+Only player characters can discover. Discovery writes a tattoo on the character (or on the profile for `SCOPE=PROFILE`), shown to nobody. On a first discovery the character sees "You attune to Name (NETWORK)."
+
+### Travel
+
+At a waypoint you are attuned to:
+
+```text
+TRAVEL
+TRAVEL Highpeak Stone
+TRAVEL ATTUNE
+TOUCH Mirewood Stone
+```
+
+| Command | Effect |
+| --- | --- |
+| `TRAVEL` | List the discovered destinations of the network of every waypoint here. Undiscovered ones are not listed, and neither are ones the character's `MASK` excludes. |
+| `TRAVEL <name>` | Take the party to that destination. |
+| `TRAVEL ATTUNE` | Try to discover the waypoints here (checks mask, ritual, quest). |
+| `TOUCH [name]`, `USE [name]` | Touch or use a waypoint here; this discovers it for `TOUCH`/`ENTER`/`QUEST` modes and then lists destinations. |
+
+`TRAVEL <name>` checks, in order: no journey is in progress; this waypoint is discovered and passes its mask ("You must attune to this waypoint first."); the destination is discovered ("You have not discovered that destination in this network."); it is not here ("You are already there."); nobody in the party is fighting; the `COST` text is valid; the leader can afford it. The party is then moved together after every member has passed leave and enter checks; only then is the cost paid, `MSG` shown and `TIME` game hours advanced. A failed check changes nothing.
+
+The "here" waypoints are the room's own, visible items in the room, and items the character carries. Destinations are rooms with a waypoint and items with one that lie in rooms (not inside containers or inventories).
+
+To make a fast-travel network:
+
+1. In each location add `Prop_Waypoint` to a stone item (or the room): same `NETWORK`, a distinct `NAME`, a distinct `ID`.
+2. Choose `DISCOVER` and `SCOPE`, and a `COST` and `TIME`.
+3. `WORLD CHECK ROUTES,IDS` to catch duplicate IDs and names.
+4. Test: attune, `TRAVEL`, travel with a companion, travel with too little mana, rename a stone and keep its ID.
+
+## Instances, resets and planes
+
+Many places should be fresh each visit, private to the party, scaled to its level, or reset after the party has been away. Four mechanisms:
+
+| Need | Mechanism |
+| --- | --- |
+| A private copy of an area per party | `InstanceArea` on the area (default: copy mode) |
+| The real area, rescaled to the party | `InstanceArea` with `INPLACE=true` |
+| A fresh area when the party returns | `ResetWhole` (optionally with `ONREENTRY`/`MINAWAY`) |
+| A different dungeon each time (or the same, seeded) | `StdAutoGenInstance` areas, see [12-generation.md](12-generation.md) |
+| An alternative reality of an area | Planes (`StdPlanarAbility`) |
+
+### InstanceArea
+
+Source: [InstanceArea](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/InstanceArea.java), types in `resources/skills/areainstancetypes.txt`, reference entry [23-properties-reference.md](23-properties-reference.md#instancearea).
+
+`InstanceArea` is an Ability (property) that goes on an area. When a player character crosses into the area from outside, the party is moved into a private copy of it (a `SubThinInstance` area named `<n>_<Area Name>`), whose mobs and items are adjusted by the options. The same group entering again goes to the same copy while it exists. It can also be given to a mob, an item or a room (with `AREAMATCH` naming the areas it applies to).
+
+The parameter text is either the name of an instance type from `areainstancetypes.txt` (the shipped file defines `Triumph` and its variants, which depend on player factions), or a list of `KEY=value` options. `ID=` names the type and is required in the inline form.
+
+Options (`InstVar`):
+
+| Option | Meaning |
+| --- | --- |
+| `ID` | Type name. Required unless the text is just a type name. |
+| `LIKE` | Name of another type to inherit every option from. Options given here override. |
+| `INPLACE` | `true`: do not copy; scale the real area instead (below). |
+| `AREAMATCH` | Comma list of area names the property applies to when it is on a mob, item or room. |
+| `DISPLAY`, `DESCRIPTION`, `CATEGORY` | Informational: display name, text, categories. |
+| `LEVELADJ` | A formula for each mob's level. `@x1` area median level, `@x2` the mob's own level, `@x3` the instance level (the party's top level), `@x4`/`@x5` area min/max level, `@x6` experience rate plus 1, `@x7` best player faction value. A bare `@x1` leaves each mob at the party's level. |
+| `ILEVELADJ` | The same for item levels. |
+| `ELITE` | Elite level, a number or formula; raises hit points, attack, damage and saves. |
+| `PREFIX` | Comma list of strings to prefix mob names with (one chosen at random per instance). |
+| `ALIGNMENT` | Numeric alignment for mobs. |
+| `MOBCOPY` | How many times each mob is copied. |
+| `BEHAVE` | Space list of behaviors (with `(parms)`) added to mobs. |
+| `BEHAVAFFID` | `oldID=newID` replacements for behaviors. |
+| `ENABLE` | Abilities granted to mobs: `AbilityID(arg)`, a domain, a flag, a type, or `number(x/y)` skills per levels. |
+| `MOBRESIST`, `ABSORB` | Resistance and damage absorption arguments (`Prop_Resistance`, `Prop_AbsorbDamage`). |
+| `SETSTAT`, `ADJSTAT`, `ADJSIZE`, `ADJUST` | Set or adjust mob stats and size (`Prop_StatTrainer`, `Prop_StatAdjuster`, `height=x weight=y`, `Prop_Adjuster`). |
+| `MIXRACE` | A race ID every mob becomes a mix of. |
+| `PROMOTIONS` | Names with chance in parentheses for promoted mobs. |
+| `ROOMCOLOR`, `ROOMADJS` | Colour code for room titles; adjectives sprinkled into room descriptions. |
+| `REFFECT`, `AEFFECT`, `IEFFECT` | Behaviors or properties added to rooms, the instance area, or armor and weapons. |
+| `IADJUST` | `Prop_WearAdjuster` arguments for armor and weapons. |
+| `WEAPONMAXRANGE`, `BONUSDAMAGESTAT`, `REQWEAPONS` | Combat rules inside the instance. |
+| `ATMOSPHERE`, `AREABLURBS`, `HOURS`, `RECOVERRATE`, `FATIGUERATE`, `SPECFLAGS` | Environment rules (`SPECFLAGS`: `NOINFRAVISION`, `BADMUNDANEARMOR`, `ALLBREATHE`). |
+| `FACTIONS`, `PLAYFACTIONS` | Factions given to mobs or entering players. |
+| `DURATION` | Ticks before the instance times out (`LIST INSTANCES` shows the remaining ticks). |
+| `LIMIT` | Entry limits for the group leader: `N/period`, comma separated, for example `1/DAY`. |
+| `LEADERREQ` | A mask the leader must match, to choose between types with the same name. |
+| `OPPOSED`, `TRANSITIONAL` | Listed in the type file's header but not recognised by `InstanceArea` (they belong to planes): using them logs "Unknown instance var". |
+| `ARMORADJ`, `ATTACKADJ`, `SAVEADJ`, `HPADJ`, `DAMAGEADJ` | Accepted names; no effect found in the code (see audit notes). |
+
+`LIMIT` periods are `ticks`, `seconds`, `minutes`, `hours`, `days` or `weeks` (the first letters are enough), measured in fixed milliseconds of the game clock, not calendar days of the game world. A leader who has entered `N` times within the period is refused ("You are not allowed to re-enter this special place right now."), unless a builder (`CMDAREAS`). The counters are stored in the leader's player record.
+
+Unknown options are logged as "Unknown instance var". A missing `ID` is logged too.
+
+```text
+ID=CRYPT LEVELADJ=@x3 PREFIX="restless,bone-chilled" DURATION=900 LIMIT=1/DAY ELITE=1
+```
+
+Give a mob the tattoo `NOAINST <type name>` in the normal area to keep it from spawning in that instance copy (the type file's header describes this).
+
+Tools: `LIST INSTANCES` shows every instance (parent, class, who it is for, remaining ticks, room count and a room to `GOTO`). The zapper masks `+AREAINSTANCE` and `-AREAINSTANCE` test it.
+
+### In-place scaling
+
+`INPLACE=true` avoids copies. The real area is scaled to the entering leader's level the first time a player enters it (and again whenever `ResetWhole` resets it):
+
+```text
+ID=DROWNED_BARROW INPLACE=true LEVELADJ=@x1 PREFIX=weathered
+```
+
+- On the first committed entry (`Travel.entering`, after fares and entry vetoes) the whole area's rooms are rebuilt with the instance's adjustments, using the leader's level as the instance level.
+- `ResetWhole` resets rooms and then calls the same rebuild for each reset room (using the entering leader, or the last known level), so the returning party meets freshly stocked rooms at its own level.
+- Docked vessels, a titled room's contents and dropped gear are kept (`fixingInPlace`).
+- The state (`READY`, `LEVEL`) is saved in the campaign, so a save inside restores the half-cleared barrow and the same scaling.
+- There is no timer, `LIMIT`, `LIST INSTANCES` entry or private copy: it is the one real area.
+
+### ResetWhole
+
+Source: [ResetWhole](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/ResetWhole.java). Reference entry: [24-behaviors-and-masks.md](24-behaviors-and-masks.md#resetwhole).
+
+`ResetWhole` resets a room or area (every mob and item back to its definition). Hosts: rooms, areas. An area ignores its rooms that carry their own `ResetWhole`.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| a number, or `TICKS=n` | 30000 ms | Reset when no player has been there for that many ticks. |
+| `DAYS=n` | none | Reset `n` game days (on the area's calendar) after the party was last there. Used when no `TICKS`. |
+| `RLHOUR=h` | none | Reset at a real-clock hour (0 to 23). Means little with pause and turn-based time. |
+| `MUDHOUR=h` | none | Reset at a game hour. |
+| `EXCEPT="mask"` | none | Mobs and items matching never return once gone (a slain boss or taken loot). Names with spaces go in single quotes: `-NAME +'the Goblin King'`. |
+| `MSG="text"` / `RESETMSG="text"` | none | Shown to the first who comes in after a reset. |
+| `ONREENTRY` | false | Reset when a party member enters after everyone has left. |
+| `MINAWAY=h` | 0 | With `ONREENTRY`, minimum game hours the area must have been empty. |
+| `SKIPROOMS="mask"` | none | Rooms matching the mask are left as they are, for example `SKIPROOMS="-LOCATION '+ROOMSTR(Sanctum)'"`. |
+
+Last access, the "away" flag and a pending message are saved. Whether a cleared dungeon should reset on return is a design decision: neither seeding nor saving decides it. `EncounterReset` is a different tool, which resets a boss that the party has walked away from (see [29-combat-and-encounters.md](29-combat-and-encounters.md)).
+
+### Generated instances
+
+An area of class `StdAutoGenInstance` builds a new random layout when entered. Its `SEED` variable controls repeatability: a number (the same dungeon every time), `GAME` (the save's own seed: the same dungeon on every visit of this campaign) or `ENTRY` (a new layout each entry). The seed in use is stored in the area as `GENSEED`. Created layouts and copies made in play are saved with the campaign, so a save inside a generated dungeon restores it. Authoring templates are in [12-generation.md](12-generation.md).
+
+### Planes
+
+A plane is a variant of an area that follows different rules, made by planeshift magic (`Spell_Planeshift`, `Prayer_PlanarTravel` and relatives). Source: [StdPlanarAbility](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdPlanarAbility.java), `resources/skills/planesofexistence.txt`.
+
+- The file defines planes (Earth, Air, Fire, Water, Astral, Ethereal, Limbo, Nirvana, Abyss, Nine Hells and others, about 37 entries) with the same style of options as instances (`PREFIX`, `LEVELADJ`, `MOBRESIST`, `BEHAVE`, `REQWEAPONS`, `ATMOSPHERE`, `SPECFLAGS`, `HOURS`, `RECOVERRATE`, `OPPOSED`, `TRANSITIONAL`, `DESCRIPTION` and more; the file header lists each).
+- `CAST "PLANESHIFT" nirvana` moves the caster's group to a copy of the current area under that plane's rules, for a time. "To return home, travel to the Prime Material plane."
+- The ability `PlanarAbility` (ID `StdPlanarAbility`) on a normal area means "this is a plane": players cannot travel to that same plane from there, and only a few of the plane's attributes (`SPECFLAGS`, `BONUSDAMAGESTAT`, `RECOVERRATE`, `WEAPONMAXRANGE`, `REQWEAPONS`) apply.
+- Builders with the `PLANES` security flag edit the list in game: `CREATE PLANE <name>`, `MODIFY PLANE <name>`, `DESTROY PLANE <name>`; `LIST PLANES` shows them. Instances of planes made in play are saved with the campaign.
+
+## Scripting travel
+
+### MOBPROG commands
+
+These commands (all in [27-mobprog-commands.md](27-mobprog-commands.md)) drive vessels from scripts. Multiword arguments use single quotes. Names resolve across the whole world (`Travel.vessel`).
+
+| Command | Syntax | Effect |
+| --- | --- | --- |
+| `MPSAIL` | `MPSAIL <vessel> TO <room id\|area\|port>` or `MPSAIL <vessel> <dir> <dir> ...` | One-shot course; clears the anchor. Hidden ports are allowed (scripts have no character). |
+| `MPANCHOR` | `MPANCHOR <vessel> UP\|DOWN` | Set the anchor (brake, tie-down). |
+| `MPMOVEVESSEL` | `MPMOVEVESSEL <vessel> <room id\|port\|area>` | Move and dock it there with no voyage; clears its course and drops the anchor; fires `VESSEL_ARRIVE_PROG`. |
+| `MPBOARD` | `MPBOARD <who> <vessel> [interior room id]` | Move `who` and their nearby party aboard (the first interior room, or the named one). |
+| `MPHITCH` | `MPHITCH <item> <mount>` | Hitch a rider to a rideable. Both must be in the same room; loops refused. |
+| `MPUNHITCH` | `MPUNHITCH <item>` | Unhitch. |
+
+```text
+mpboard $n 'the Black Gull'
+mpsail 'the Black Gull' TO 'Hidden Cove#1'
+mpanchor 'the Black Gull' DOWN
+mpmovevessel 'the Black Gull' 'Harbour#2'
+mphitch 'a merchant wagon' 'an ox'
+mpunhitch 'a merchant wagon'
+```
+
+Errors (unknown vessel, no route, loops) are logged to the script error log with "RunTime".
+
+### Functions and values
+
+Documented in [28-mobprog-functions.md](28-mobprog-functions.md). All take a vessel name (or, for `RIDING`/`ABOARD`, a character; for `RIDERS`, a rideable):
+
+| Function | Returns |
+| --- | --- |
+| `ABOARD(who)` | Name of the vessel the character is inside, or empty. |
+| `RIDING(who)` | Name of what the character rides, or empty. |
+| `RIDERS(rideable)` | Number of riders. |
+| `ISANCHORED(vessel)` | `true` or `false`. |
+| `ISDOCKED(vessel)` | `true` if docked. |
+| `COURSE(vessel)` | The remaining directions, space separated. |
+| `VESSELROOM(vessel)` | Room ID where the vessel is. |
+| `SPEED(vessel)` | Top speed (`getMaxSpeed`). |
+| `HULL(vessel)` | Hull condition percentage (uses remaining). |
+
+As values: `$%COURSE('the Fix Travel Gull')%`. In JavaScript use the uppercase bridge: `VESSELROOM$("the Gull")` returns a string, `ISANCHORED("the Gull")` a boolean, `HULL$("the Gull")` a string. See [05-javascript.md](05-javascript.md).
+
+### Triggers
+
+| Trigger | When |
+| --- | --- |
+| `JOURNEY_PROG START\|HOUR\|ARRIVE\|CANCEL\|ALL` | A journey changes stage. |
+| `SAIL_PROG` | A helm order (anchor, steer, course, other) is given aboard by someone allowed. |
+| `DOCK_PROG` | A vessel's anchor goes down. |
+| `VESSEL_ARRIVE_PROG [room id\|area\|ALL]` | A vessel moves into a room (heard aboard). |
+| `VESSEL_GREET_PROG` | A vessel arrives where the script's host is. |
+
+Reference: [26-mobprog-triggers.md](26-mobprog-triggers.md). Argument details are in `ScriptEvents`: for `SAIL_PROG` the order kind is `ANCHOR`, `STEER`, `COURSE` or the command word; the room ID or area is matched on the arrival triggers.
+
+## Command reference
+
+| Command | Who | Syntax and effect |
+| --- | --- | --- |
+| `JOURNEY` | any | `JOURNEY [host\|RESUME\|CANCEL]`, see [Journey commands](#journey-commands). |
+| `PORTS` | any | List known ports. |
+| `COURSE TO`, `SAIL TO`, `DRIVE TO` | helm | Plot to a port, room ID, area or chart point. |
+| `COURSE`, `STEER`, `SAIL`/`DRIVE`/`FLOAT`, `RISE`, `DIVE`, `RAISE ANCHOR`, `LOWER ANCHOR`, `TENDER`, `RAISE`, `LOWER`, `JUMP OVERBOARD`, `FOLLOW` | helm | Vessel control, see [Vessels](#vessels-rideables-boardables-ships-and-caravans). |
+| `TIMETABLE` | any | `TIMETABLE [line]`. |
+| `WAIT UNTIL ARRIVAL\|STOP\|DOCK` | passenger | Pass time until the vessel arrives, stops, or docks (`HELP WAIT`). |
+| `MOUNT`, `BOARD`, `RIDE`, `DISMOUNT`, `LEAVE` | any | See [Riding](#riding-mounts-and-carts). |
+| `STABLE`, `RETRIEVE` | any | At a stable keeper. |
+| `TRAVEL` | any | `TRAVEL [name\|ATTUNE]` at a waypoint. |
+| `TOUCH`, `USE` | any | Activate a waypoint (and other things). |
+| `VESSEL` | builder | `VESSEL STATUS <name>`, `VESSEL <name> ENTER\|RENAME <text>\|HOME <room>`. |
+| `LIST SHIPS`, `LIST INSTANCES`, `LIST PLANES` | builder | Inventory of vessels, instances and planes. |
+| `CREATE\|MODIFY\|DESTROY PLANE` | `PLANES` flag | Edit planes. |
+| `WORLD CHECK ROUTES`, `WORLD CHECK IDS` | builder | Validate travel definitions. |

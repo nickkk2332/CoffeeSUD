@@ -1009,7 +1009,7 @@ Land is sold through a **title** (a deed) tied to a room or an area:
 | --- | --- | --- |
 | `Prop_RoomForSale` | Room | One room for sale. Parameter `[OWNER/][RENTAL ][GRID ][ALLOWTHEFT ]PRICE`, such as `1000000` or `Bob/100000` |
 | `Prop_RoomsForSale` | Room | A group of adjacent rooms sold together |
-| `Prop_RoomsPlusForSale` | Room | As above, and building skills may add rooms |
+| `Prop_RoomPlusForSale` | Room | As above, and building skills may add rooms |
 | `Prop_LotsForSale` | Room | A room and its future neighbours: when one is sold, adjacent lots appear so the owner can expand; `GRID` links new rooms by demolishable walls |
 | `Prop_AreaForSale` | Area | A whole area |
 | `Prop_PrivateProperty` | Item | A private item: `OWNER="name" PRICE=n EXPIRESEC=n`; a ship or other boardable can be owned this way |
@@ -1212,8 +1212,8 @@ something happens (`ACTION_up=`, `ON=`, `OFF=`, `ONOPEN=`, `ONWRONG=`,
 `ONFULL=`, `ONCLEAR=`, `ONRIGHT=`, `ONOUT=`, `ONSTART=`, `ONEND=`, a combination
 row's `ACTIONS=`, a Cursed item's deeds). Rules (`core/Actions`):
 
-- Commands are separated by `;` (or a newline). A semicolon inside quotes does
-  not split.
+- Commands are separated by `;` (or a newline). A semicolon always splits,
+  even inside quotes, so an `echo` in an action cannot contain one.
 - They are MOBPROG commands, and the `MP` prefix may be left off: `door open
   Gate#3 east; signal WORLD gate1 up; unhide 'a narrow stair'` runs `MPDOOR`,
   `MPSIGNAL` and `MPUNHIDE`. A word that is a command in its own right is not
