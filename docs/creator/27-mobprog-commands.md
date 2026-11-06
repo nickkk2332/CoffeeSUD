@@ -1120,7 +1120,7 @@ The scope is chosen by `MPSETINTERNAL SCOPE`: the default shared store, a named 
 | --- | --- |
 | `++` / `--` | add / subtract one (an unset variable counts as 0) |
 | `+n` / `-n` | add / subtract the whole number n |
-| `*n` / `/n` | multiply / integer-divide (division by 0 is logged and leaves the value) |
+| `*n` / `/n` | multiply / integer-divide (division by 0 is logged and the variable is set to `0`) |
 | `%n` | remainder after dividing by n (**CoffeeSUD**) |
 | `^n` | raise to the power n (**CoffeeSUD**) |
 | `=text` | the text exactly as written; the way to store `-5` or `*x` literally (**CoffeeSUD**) |

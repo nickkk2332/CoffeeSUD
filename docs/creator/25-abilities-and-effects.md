@@ -43,6 +43,7 @@ MOBPROG chapters ([04](04-mobprog.md), [26](26-mobprog-triggers.md),
 - [Traps](#traps)
 - [Other generic ability types](#other-generic-ability-types)
 - [The stock ability catalogue](#the-stock-ability-catalogue)
+- [For engine developers](#for-engine-developers)
 - [Worked examples](#worked-examples)
 - [Persistence](#persistence)
 - [Troubleshooting and gotchas](#troubleshooting-and-gotchas)

@@ -267,7 +267,7 @@ allowed is attacked, disallowed is spared.
 | `MOBKILL` | Attack other mobs as well as players (`MOBKILLER` also works). |
 | `NOGANG` | Skip players already in combat (`NOGANGUP` also works). |
 | `MISBEHAVE` | Attack even when wounded or following someone. |
-| `CHECKLEVEL` | Only attack those within 6 levels below the mob. |
+| `CHECKLEVEL` | Skip targets that are `EXPRATE` (coffeemud.ini, default 6) or more levels below the mob. |
 | `WANDER` | Lets VeryAggressive follow prey into rooms of another area (it otherwise stays in its own). No effect on plain Aggressive. |
 | `BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY]` | The mob demands a bribe instead. Amount is base gold in the mob's currency (default 1), peace is how many ticks a payment buys (default 100), pay window is how long a new arrival has before ordinary aggression resumes (default 20000). |
 | `BRIBEPAYMSG="..."` | Told to newly met players; `@x1` is the amount. Default "Pay me @x1 or I will kill you." |

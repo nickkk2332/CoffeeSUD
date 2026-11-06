@@ -1976,3 +1976,227 @@ MPJOURNAL $n Clues "The old smuggler's map marks a chest on the coast. (the sage
 After reading the item, `MAP` (with `MAPFOG=KNOWN`) shows the coves dim, a red
 `X` with "Buried chest" in the legend; `JOURNAL SEARCH chest` finds the clue.
 Under `MAPFOG=VISITED` the coves would not appear until walked.
+
+## Quick reference
+
+### Commands
+
+| Command | Audience | Purpose |
+| --- | --- | --- |
+| `LORE`, `CODEX` | player | Codex: `LORE`, `LORE category`, `LORE key-or-title`, `LORE NEW`. |
+| `JOURNAL` | player | `JOURNAL [category]`, `JOURNAL WRITE text`, `JOURNAL DELETE id`, `JOURNAL SEARCH words`. |
+| `MAP` | player | `MAP [radius]`, `MAP AREA name`. |
+| `AUTOMAP` | player | `AUTOMAP [ON\|OFF]`, `AUTOMAP SIZE n`. |
+| `LISTEN [target]`, `TOUCH`/`FEEL [target]`, `TASTE target` | player | Sense text from Prop_Senses; `SNIFF` uses Prop_Smell. |
+| `LOOK`/`EXAMINE`/`READ keyword`, `LOOK keyword ON object` | player | Reach Prop_Details after real objects. |
+| `PROMPT [text\|DEFAULT]` | player | The prompt template. |
+| `COLORSET`, `COLORSET ALIASES`, `COLORSET NAME colour\|DEFAULT`, `COLORSET DEFAULT` | player | Colours and personal alias overrides. |
+| `LANGUAGES`, `LANGS`, `SPEAK language` | player | Known languages; choose the language you speak. |
+| `WINDOWS PANEL [ON\|OFF\|sections]` | player | The window side panel (single-player games with a display). |
+| `PREVIEW [conditions]`, `CHECKTEXT [ROOM\|AREA\|WORLD]` | builder (CMDROOMS) | Render and lint conditional text. |
+| `LANGUAGE PREVIEW id [prof] text`, `LANGUAGE COVERAGE id target` | builder (CMDABILITIES) | Inspect an invented language. |
+| `CREATE LANGUAGE id`, `MODIFY LANGUAGE id` | builder | Edit a generic language. |
+| `VOCAB TEST\|INPUT\|LIST\|RELOAD\|ADD` | builder (CMDAREAS) | Test and edit translation and parser rule files. |
+| `WORLD RELOAD ASSETS` | builder | Reload vocabulary, help, socials and presentation assets. |
+| `WORLD CHECK ONLY=VOCAB,LORE,TEMPLATES,IDS` | builder | Lint presentation assets. |
+
+See also the generated [tool reference](tool-reference.md) for each command's
+shipped help.
+
+### Scripting elements
+
+| Element | Where | Purpose |
+| --- | --- | --- |
+| `MPNARRATE target file[#section] [PAUSE\|NOPAUSE] [STYLE=ALIAS]` | MOBPROG | Paged story text. |
+| `MPLORE target ADD key [PROFILE]` | MOBPROG | Unlock a lore entry. |
+| `MPJOURNAL target [category] "text"` | MOBPROG | Add a journal entry. |
+| `MPLEARNLANG who language N\|+N\|-N [FORCE]` | MOBPROG | Set or adjust a language. |
+| `MPSAYIN language text` | MOBPROG | Speak one line in a language. |
+| `NOTUNDERSTOOD_PROG [language\|ANY] [p text]` | trigger | Heard speech that is 0% understood. |
+| `UNDERSTANDS(who language)`, `UNDERSTANDS$(who language)`, `ISSPEAKING(who [language])` | function | Comprehension tests. |
+| `SET LORE key` | quest script | Unlock a lore entry for the step's participants. |
+| `<CALL function args>` | any text | Text computed by `FUNCTION_PROG` or JavaScript. |
+
+### Properties
+
+| Property | Targets | Options |
+| --- | --- | --- |
+| `Prop_FirstEntry` | rooms, areas | `TEXT ONCE ID TATTOO SETVAR ALIASES LEGACYKEYS` |
+| `Prop_Details` | rooms, items, creatures | per detail: `EXAMINEONLY READ HIGHLIGHT MASK TATTOO SETVAR ID ALIASES LEGACYKEYS` |
+| `Prop_Senses` | rooms, items, creatures, exits | `SOUND TOUCH TASTE CHANCE TATTOO SETVAR ID ALIASES LEGACYKEYS` |
+| `Prop_DarkDescription` | rooms | `TITLE DESC` |
+| `Prop_ShowWhen` | items, creatures, exits, rooms | `MASK WHEN CHECK HIDEMODE ID ALIASES LEGACYKEYS` |
+| `Prop_Lore` | items, rooms, creatures | `ENTRY ON MSG SCOPE` |
+| `Prop_MapGlyph` | rooms | `CHAR COLOR LABEL LEGEND HIDE` |
+| `Prop_MapReveal` | readable items | `ROOMS AREA MARK COLOR` |
+| `Prop_Monolingual` | creatures | `LANGUAGES CONFUSED` |
+| `Prop_LanguageSpeaker` | creatures, items, rooms, exits, areas | `LANGUAGE PLAYERS NOMOBS HOMEONLY UNDERSTANDS` and a mask after `;` |
+| `Prop_LangTranslator` | creatures, items, rooms | `NOTRANSLATE`, percentages, languages, `` `words ``, `#PLAYER` |
+| `Prop_LanguageImmersion` | areas, rooms, creatures, items | `LANGUAGE HEAR READ CHANCE START MAX GRANTAFTER ID ALIASES LEGACYKEYS` |
+| `Prop_LocalLists` | areas, rooms, creatures | `LOAD` and the nine list keys |
+| `Prop_WeaponMessages` | weapons | `HIT MISS DAMAGEWORDS` |
+
+All of the options for these properties are described in the property help
+(`AHELP PROP_<NAME>`) and [chapter 23](23-properties-reference.md).
+
+### Files in the world folder
+
+| File | Purpose |
+| --- | --- |
+| `world/lore/*.ini` | Codex entries (`KEY=title\|category\|text`, optional `FILE=`). |
+| `world/lore/*` (other) | Long lore bodies named by `FILE=`. |
+| `world/text/NAME.txt` | MPNARRATE sources (`[section]`, blank-line pages). |
+| `world/text/title.txt`, `world/text/prologue.txt` | Launch screens. |
+| `world/text/panel.txt` | STATUS section of the window panel. |
+| `world/score.txt` | Extra SCORE lines. |
+| `world/vocab/glossary.ini` | Whole-word renames. |
+| `world/vocab/languages/*.txt` | Language dictionaries (`WORD=translation`). |
+| `world/vocab/*.ini` | `LOAD=` lists for Prop_LocalLists. |
+| `world/vocab/socials.txt`, `world/vocab/socials.ini` | World socials and pruning. |
+| `world/vocab/help/*.ini`, `hide.txt`, `settings.ini`, `deleted.txt` | Help overlay. |
+| `world/resources/translation_*.properties`, `parser_*.properties` | The world's translation and parser rules. |
+| `world/custom/abilities/ID.cmare` | Generic languages. |
+
+### Settings
+
+| Setting | Default | Where | Meaning |
+| --- | --- | --- | --- |
+| `GAMENAME` | `CoffeeSUD` | world.ini or coffeemud.ini | Game name; `@MudInfo?NAME@`. |
+| `AWARERANGE` | `3` | world.ini or coffeemud.ini | Automap and `MAP` default radius (half), 0 disables the automatic map unless a player set a size. |
+| `CHARCREATIONSCRIPTS` | empty | world.ini or coffeemud.ini | Creation scripts, including a scripted prologue (`END:`). |
+| `MAPFOG` | `KNOWN` | coffeemud.ini / launch | `KNOWN`, `VISITED`, `ALL`. |
+| `JOURNALAUTO` | empty | coffeemud.ini / launch | `QUEST,LEVEL,AREA,LORE`. |
+| `JOURNALTALK` | `false` | coffeemud.ini / launch | Record `[[topic]]` dialogue as journal entries. |
+| `ROOMHEADER`, `ROOMFOOTER` | empty | coffeemud.ini / launch | Room look templates. |
+| `COLORALIASES` | empty | coffeemud.ini / launch | Named colour aliases. |
+| `WINDOWPANEL` | empty | coffeemud.ini / launch | Window panel sections. |
+| `MAXLANGUAGES` | `3` | coffeemud.ini | Stock language allowance per class. |
+| `LANGCOST` | `3 PRACTICE` | coffeemud.ini | Cost of learning a language. |
+| `JSCRIPTS` | `2` | coffeemud.ini | Approval policy for TRANSLATESCRIPT and other scripts. |
+| `LISTFILE` | `/resources/lists.ini` | coffeemud.ini | The global lists file (world copies under `world/` overlay it). |
+
+## Persistence notes
+
+| What | Stored in | A reload or restore |
+| --- | --- | --- |
+| Description, Prop_* options, GenLanguage fields | World files (areas and `custom/abilities`) | `WORLD RELOAD` reloads areas; a new game starts from them. |
+| Lore, text, vocab, glossary, dictionaries, score, panel, title, prologue | Live world asset files | Read when needed; `WORLD RELOAD ASSETS` clears caches. Every campaign sees the current files. |
+| Lore unlocks, first-entry markers, clue and found markers | Tattoos on the character (or profile with `PROFILE`/`ONCE=PROFILE`) | Saved with the campaign. |
+| Lore read markers, journal and its counters, map reveals and marks, automap size, personal colour overrides, language exposure counters | The character's `Prop_StoryRecords` record | Saved with the campaign. |
+| Learned languages and proficiency | The character's abilities | Saved with the campaign. |
+| Variables read by `IFVAR`, `%{VAR}` | Script variable stores (`WORLD`, quests, characters) | Saved with the campaign. |
+| Unread narration pages and pause ownership | The campaign's narration record | Resumed on restore. |
+| Window panel sections set with `WINDOWS PANEL` | Memory | Not saved; set `WINDOWPANEL` to make it permanent. |
+| `MAPFOG`, `ROOMHEADER` and the other ini settings | `coffeemud.ini` or launch override | Read at start. |
+
+A campaign never embeds a private copy of the world's lore or text files: it
+refers to them, so distribute matching world versions with a save. The
+character's own records survive edits to the files; a deleted lore entry just
+stops being listed, and a deleted language leaves a dangling ability.
+
+## Troubleshooting
+
+**Tags appear in the text.** The text does not start with `<VARIES>`. Run
+`CHECKTEXT`. Unknown tags (typos) are left in the text on purpose.
+
+**A condition with `>` or `<` breaks the tag.** Write `&gt;` / `&lt;`, or use
+`IFVAR name GE 3`.
+
+**`ELSE` shows when it should not, or twice.** It inverts the previous sibling
+only. Nest alternatives inside an `ELSE` for three or more branches.
+
+**`IFVAR` is true for every character.** It reads the `*` scope, any host's
+variable. Use a tattoo with `MASKn`, or `PARTYTATTOO`, for per-character text.
+
+**`+IF` mask always passes.** Write `-IF "condition"`.
+
+**First-visit line never shows.** `VISITED` is already true on arrival; use
+`FIRSTVISIT` or Prop_FirstEntry. Prop_FirstEntry fires for player characters
+entering (or recalling to) a room it is on, or a room of an area it is on.
+Moving to a changed `ID` shows the line again; keep `ID` when editing.
+
+**A clue repeats or is lost on rewrite.** The marker follows `ID`. Without it,
+the identity follows the keywords (Prop_Details) or an engine-generated ID.
+Add `ID=` before shipping and `ALIASES=` when renaming.
+
+**`LOOK keyword` finds nothing.** The keyword must match a whole keyword of the
+record; a bare `;` ended the record early; the host is hidden by Prop_ShowWhen,
+inside a closed container, or the room is dark (a dark room's details need
+light).
+
+**`LISTEN`/`FEEL` is silent.** The target has no text for that sense, the
+`CHANCE` roll failed, or the viewer cannot hear.
+
+**A lore entry never appears.** Keys are case-insensitive but must be exactly
+the `ENTRY=`/`MPLORE` key; files must end in `.ini` and sit directly in
+`world/lore/`; a malformed properties line (a stray backslash, `\u` followed by
+non-hex) can drop an entry. `WORLD CHECK ONLY=LORE` reports it.
+
+**The journal has no automatic entries.** `JOURNALAUTO` is empty by default and
+cannot be set in `world.ini`.
+
+**`ROOMHEADER`/`MAPFOG`/`COLORALIASES`/`WINDOWPANEL` in `world.ini` do
+nothing.** They are not world keys. Put them in `coffeemud.ini` or pass them on
+the command line.
+
+**`MAP` says "No map is available here."** The starting room is unmappable or
+hidden, or not yet known; or `MAP AREA` found no known room in that area.
+
+**Ambient lines never play.** Check the prefixes are capitals, the separator
+`;`, that `QUIETAFTER` is not silencing combat or narration, that a player
+is in the room, and any mask. A line whose first word is an ordinary capitalised
+word is text, not a prefix.
+
+**`MPNARRATE ... PAUSE` seems stuck.** It waits for Enter. A pending script
+menu or another narration for the same character replaces it. Background party
+members receive the whole text at once.
+
+**A glossary rule does nothing.** The rule is whole-word and case-folded:
+`mana` does not touch `manage`; a rule under another `SCOPE` runs only there;
+`FINAL` rules run at the last stage; edits are noticed within a second;
+renaming never changes engine IDs, commands or masks.
+
+**Title screen colours are wrong.** `title.txt` and `prologue.txt` accept only
+the launcher's sixteen colour codes, `^N`, `^?` and `^^`; aliases and
+semantic codes (`^H`) do not exist before the engine starts.
+
+**`COLORSET LORE red` opens the colour menu.** `LORE` is not defined in
+`COLORALIASES`.
+
+**Language:** speech to an NPC is silently ignored because its language is
+not understood (`NOTUNDERSTOOD_PROG` runs instead); `UNDERSTANDS$()` gives the
+number to debug with. A `TRANSLATESCRIPT` that is not approved is ignored
+(`WORLD CHECK ONLY=VOCAB` warns). With `KEEPNAMES=true` the first word of a
+sentence is kept too. The editor's INTERPRETS prompt cannot set percentages.
+Staff characters have full stock languages; test as an ordinary character.
+
+## See also
+
+- [Handbook index](README.md)
+- [World workflow and file formats](02-world-workflow.md): `vocab/`, `lore/`,
+  `text/` in the world folder, `WORLD RELOAD`, `WORLD CHECK`.
+- [Areas, rooms and exits](20-areas-rooms-exits.md): descriptions, exits,
+  unmappable rooms.
+- [Items](22-items.md): readable items, `GenTome` pages with `LANG=` and `LORE=`,
+  maps.
+- [Properties reference](23-properties-reference.md) and
+  [behaviors and masks](24-behaviors-and-masks.md): Prop_* options, Emoter,
+  Sounder, zapper masks.
+- [MOBPROG guide](04-mobprog.md), [triggers](26-mobprog-triggers.md),
+  [commands](27-mobprog-commands.md), [functions](28-mobprog-functions.md):
+  MPNARRATE, MPLORE, MPJOURNAL, MPLEARNLANG, MPSAYIN, NOTUNDERSTOOD_PROG.
+- [JavaScript](05-javascript.md): building languages and worlds from scripts.
+- [NPC dialogue](06-npcs-dialogue.md): `[[topic]]` lines, scenes, barks.
+- [Quests](08-quests.md): `SET LORE`, quest journals.
+- [World simulation](10-world-simulation.md): time of day, seasons, weather,
+  holidays, tides, darkness.
+- [Saves and party](31-saves-and-party.md): windows, profile, what persists.
+- [Installing and running](18-installing-and-running.md): the title screen and
+  launch overrides.
+- [Configuration](19-configuration-and-administration.md),
+  [world settings](world-settings.md), [state and persistence](state-and-persistence.md).
+- [Testing and release](13-testing-release.md): PREVIEW, CHECKTEXT and world checks.
+- [Cookbook](cookbook.md) and the [example world pack](examples/world/).
+- [Presentation options](../presentation.md), [language options](../languages.md)
+  and [identities and validation](../authoring-reliability.md): the original
+  feature notes.
