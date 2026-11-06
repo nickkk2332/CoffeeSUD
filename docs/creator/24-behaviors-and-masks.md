@@ -690,8 +690,7 @@ Druidness SkyWatcher DEFENSIVE
 
 ### Emoter
 
-Hosts: all except exit-less cases (valid on areas, exits, items, mobs and
-rooms). Timing default 10/30/50. A series of random emotes separated by `;`
+Hosts: mobs, items, rooms, areas, exits. Timing default 10/30/50. A series of random emotes separated by `;`
 (or by `/` if there is no `;`). The first field, which may be empty, holds the
 settings:
 
@@ -798,11 +797,16 @@ regeneration roughly once per 5 ticks. All parameters are optional.
 
 | Parameter | Meaning |
 | --- | --- |
-| `HEALTH=n` | Extra recovery ticks of every kind: 2 means 1 extra regen per tick, 3 means 2 extra, and so on. Values of 1 or less do nothing. |
-| `BURST=n` | Bursts of extra speed. |
+| `HEALTH=n` | The number of regeneration ticks the mob gets each normal tick. 2 gives 1 extra regen per tick, 3 gives 2 extra, and so on; values of 1 or less give none. |
+| `BURST=n` | Bursts of extra speed equal to the number given. |
 | `HITS=n`, `MANA=n`, `MOVE=n` | The same, for one pool. |
-| `n` | a number; `+n`/`-n` an exact adjustment (not another full recovery tick); `n%` a percentage of the current recovery amount (a chance when used with the next form). |
-| `n/ticks` | Temper it: a single extra burst every `ticks` ticks (`MANA=2/5`). A percentage first number is the chance that it happens. |
+
+Value forms, for any of the above: a plain number (a count of full recovery
+ticks); `+n` or `-n` (an adjustment of exactly that amount rather than another
+full recovery tick); `n%` (a percentage of the current recovery amount). Any of
+them may be followed by `/ticks` to temper it: `MANA=2/5` is a single extra
+burst of mana every 5 ticks, and a percentage as the first number is the chance
+that the regeneration happens.
 
 ```text
 FasterRecovery burst=2
@@ -823,7 +827,7 @@ dropped), burning emotes, and finally the room becomes a burnt-out room.
 | `DAMAGE=n` | Damage to inhabitants each behavior tick. | 10 |
 | `TITLE="..."` | Room title when burnt out. | `A Charred Ruin` |
 | `DESCRIPTION="..."` | Room description when burnt out. | `Whatever was once here is now nothing more than ash.` |
-| `EQCHANCE=n` | How unlikely equipment bursts into flames or heats (the help calls it the "unlikeliness"). | 0 (no equipment destruction) |
+| `EQCHANCE=n` | Chance that equipment bursts into flames or heats up. | 0 (no equipment destruction) |
 | `BURNTICKS=n` | Behavior ticks to keep burning. | 12 |
 | `NOSTOP` | Never burn out (title, description, burnticks are then moot). | off |
 | `NONPC` | No damage or equipment burning to NPCs. | off |
@@ -888,8 +892,8 @@ level in scripts. The state is saved.
 | `ONVAR="[HOST] [VAR]==[VALUE]"` | A script variable. | none |
 | `TIDE=HIGH` | At high tide. | none |
 | `RATE=n` | Ticks per rising level. | 10 |
-| `DRAIN=n` | Ticks per draining level. | see help |
-| `FLOWTO=[DIR]` | Where loose things float to. | away |
+| `DRAIN=n` | Ticks per draining level. | the value of `RATE` |
+| `FLOWTO=[DIR]` | Direction loose things float off through (otherwise they float away). | none |
 | `FLOAT=n` | Weight that floats. | 2 |
 | `TITLE1=` to `TITLE3=`, `DESC1=` to `DESC3=`, `MSG1=` to `MSG3=` | Per-level texts. | none |
 

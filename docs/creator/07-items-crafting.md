@@ -561,8 +561,8 @@ TAG=forge,anvil SKILLS=Blacksmithing,Weaponsmithing SPEED=25 PROF=+10 MAXLEVEL=4
 
 It works for a crafter in the same room as the host. If several stations help
 the same skill, the *best* value of each of SPEED, PROF, MAXLEVEL and QUALITY
-is used; they do not add. Only stationary items count: an item inside a
-container is ignored.
+is used; they do not add. An item counts only when it lies loose in the room;
+one inside a container is ignored.
 
 **Tags without the property.** An item with a tag (`TAGS`, the item editor's
 Tags entry) lying in the room counts as a station of that name, with no bonus.
@@ -572,8 +572,9 @@ A "travel anvil" tagged `anvil` satisfies `STATION=anvil`.
 `STATION=forge`; for every recipe of a data skill, the `STATION` field of the
 GenCraftSkill. A player lacking it is told "You need a forge here."
 
-**Fire.** Skills that need a fire (Blacksmithing sets `fireRequired`, Cooking,
-Smelting...) look for a burning item in the room; CoffeeSUD also accepts an
+**Fire.** Skills that need a fire (Blacksmithing sets `fireRequired`; a
+GenCraftSkill has the `NEEDFIRE` field) look for a burning item in the room;
+CoffeeSUD also accepts an
 item that serves as a station named `fire`: a `Prop_Furnishing` with
 `ACTS=fire`, a `Prop_Workstation` tagged `fire`, or an item tagged `fire`.
 
@@ -646,8 +647,8 @@ per-recipe reward.
 Two ways to take things apart.
 
 **Scrapping** (`SCRAP`) gives a fifth of an item's weight in its material. It
-refuses flesh, liquid, paper, energy, gas, vegetation and unknown materials and
-refuses enchanted items.
+refuses flesh, liquid, paper, energy, gas, vegetation and unknown materials,
+and refuses enchanted items that have no `Prop_SalvageYield`.
 
 **`Prop_SalvageYield`** on an item or a catalog entry replaces that with data:
 
@@ -708,7 +709,7 @@ usually `-LOCATION`), `PLAYMASK` (who may start), `YIELDFORMULA` (default
 `ISCOSMETIC` (shown but not created), `MINDUR` (12), `BASEDUR` (40), `FINDTICK`
 (6), `NOTHINGFREQ` (weight of finding nothing), `ACTIONCOST`,
 `COMBATACTIONCOST`, `COMPONENTS` and `SCRIPT` (`ONFOUND`, `ONFAILED`).
-[Weighted finds](#gathering-skills-as-data) are described below.
+[Weighted finds](#data-gathering-skills) are described below.
 
 **GenWrightSkill fields:** `NAME`, `HELP`, `TRIGSTR`, `FILENAME`, `MATLIST`,
 `VERB`, `CANMEND`, `CANDOOR`, `CANTITLE`, `SOUND`, `CANDESC`, `CLANONLY`.
@@ -726,7 +727,7 @@ file first (tabs as shown by ` | `):
 
 ```text
 world/resources/skills/runecarving.txt
-rune of ward | 3 | 30 | 2 | 40 | GenItem |  |  |  |  | Prop_HaveResister(magic 10) | STATION=carvingbench XP=15
+rune of ward | 3 | 30 | 2 | 40 | GenItem |  |  |  |  | Prop_HaveResister(fire 5) | STATION=carvingbench XP=15
 rune of light | 1 | 20 | 1 | 15 | GenItem |  |  |  |  | Spell_Light |
 ```
 
@@ -806,3 +807,327 @@ it, and the name follows the row when it is bundled or split. An item loaded
 from a save keeps what it was saved with. Recipes and components ask for a
 variant as `herbs(moonpetal)`. The file is re-read when it changes. Help:
 `AHELP RESOURCEVARIANTS`.
+
+## Resources and gathering
+
+### Gathering skills
+
+A gathering skill finds raw resources (or, for the data kind, any items) in
+the room where it is used. Typical commands: `MINE`, `GDIG` (Digging), `CHOP`,
+`DRILL`, `FORAGE`, `FISH`, `TRAWL`, `HUNT`, `BUTCHER`, `SHEAR`, `PLANT` (Farming),
+`GPLANT` (Gardening), `COMPOST`, `BAIT`, `ATRAP`. "Master" versions
+(`MMINE`, `MCHOP`, `MFISH`, `MFORAGE`, `MBUTCHERING`, `MSHEAR`, `MTRAWL`,
+`MPLANT`...) are faster or better. The finds go into the room as raw-resource
+items, which crafting skills then `BUNDLE` or use.
+
+How much a gather yields:
+
+1. The skill finds out what the room offers (below).
+2. A proficiency roll and the room's `Yields` record decide whether and how
+   much: each harvest in a room takes a share (20 percent for most skills) off
+   the next. See [Yield, depletion and regrowth](#yield-depletion-and-regrowth).
+3. `Prop_ImproveGather` on the gatherer, a tool they carry, the room or the
+   area multiplies the yield:
+
+   ```text
+   AMT=3 MASK="-SEASON +SPRING" SKILLS=Farming,Foraging
+   ```
+
+   `AMT` is the multiplier (0 removes the yield), `MASK` is tested on the
+   gatherer, and `SKILLS` is a list of skill IDs or `ALL`.
+
+CoffeeSUD gives every class `GATHERXP` per unit (see [Craft and gather
+XP](#craft-and-gather-xp)).
+
+### Where resources come from
+
+- **A room's locale.** Outdoor and indoor locales (Woods, Plains, Mountains,
+  Cave...) each have a list of resources. A room rolls one from its locale's
+  list, weighted by each resource's frequency, and a quarter of the weight goes to
+  the resources its neighbours of the same locale rolled (so patches form).
+- **`ResourceOverride`** (a behaviour on a room, area or mob) replaces that list.
+  Parameters: resources by name or code, optionally room types to apply to when
+  put on an area, `MIN=` `MAX=` `CHANCE=` for how often the room re-rolls, a
+  custom item as `"item name(RESOURCE SUBTYPE)"`, and `MOBMASK=` for corpses
+  (butchering). After changing an area's ResourceOverride, `RESET AREA` to put
+  the rooms back. See [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
+- **A named variant** such as `"moonpetal" HERBS` (see [resource
+  variants](#resource-variants-resourcestxt)): `ResourceOverride(moonpetal(HERBS moonpetal))`.
+- **A building skill** can install it: the stock "tomato field" Landscaping
+  row adds `ResourceOverride(Tomatoes)` to an outdoor room, and "till land"
+  removes it.
+- **Data skills** (`GenGatheringSkill`) do not use the room's resource at all:
+  they find the items named in their own list.
+
+### Seasons and hours
+
+Gathering does not read the calendar by itself. CoffeeSUD (CR11) adds
+calendar parameters to `ResourceOverride`, evaluated on the room's area clock:
+
+| Parameter | Meaning |
+| --- | --- |
+| `SPRING=`, `SUMMER=`, `AUTUMN=` (or `FALL=`), `WINTER=` | A comma list of resources for that season, or `none` for nothing. A season without a list uses the plain list if there is one, else the room's own resource |
+| `SEASON=`, `MONTH=`, `HOUR=` | Comma lists (ranges like `20-23` allowed) that limit when the override applies at all; outside them the room has its own resource back |
+| `MSG="text"` (or `MESSAGE=`) | Shown in the room when the calendar changes its resource |
+
+```text
+SPRING=flowers,herbs SUMMER=blueberries AUTUMN=apples WINTER=none MSG="The orchard turns with the season."
+MUSHROOMS SEASON=autumn HOUR=20-23,0-4
+```
+
+For a season-based *yield* (not what is there), put `Prop_ImproveGather
+AMT=0 MASK="-SEASON +WINTER"` on the area. Seasons and the clock are described
+in [10-world-simulation.md](10-world-simulation.md).
+
+### Yield, depletion and regrowth
+
+Each room remembers how often it has been harvested. By default the first
+harvest is full, each later one takes a further 20 percent off, and the room
+regrows 30 game minutes after the first harvest.
+
+`Prop_Yield` on a room or an area (and, through the area, its child rooms)
+changes that:
+
+```text
+HARVESTS=5 DROP=0% REGROW=7 DAYS EMPTYMSG="The glade is picked clean."
+```
+
+| Parameter | Meaning |
+| --- | --- |
+| `HARVESTS` | How many harvests before the room is bare (0 or omitted: no hard limit) |
+| `DROP` | Share taken off each successive harvest, as `20%` (default: the skill's own, 20% for most) |
+| `REGROW` | How long after the *last* harvest the room grows back: a number plus `HOURS`, `DAYS`, `MONTHS` or `YEARS` of the area's calendar (a bare number is game hours) |
+| `EMPTYMSG` | Shown when someone tries a bare room, which finds nothing |
+
+All of it runs on game time and waits while the game is paused or between
+turns; the records are saved (`YIELDS` in the save). A skill that finds a room
+bare reports it and gives nothing.
+
+### Hunting, fishing, herb and mushroom tables
+
+Several gathering skills pick from data tables in `resources/skills/` (a
+world's copy replaces them, as for recipes). Rows are tab-separated, `#` starts
+a comment. CoffeeSUD (CR10) added an optional last **MASK** column to the
+tables that pick a name, a zapper mask the hunter or their room must pass
+(room keys `-AREA`, `-SEASON`, `-HOUR`, `-WEATHER`, mob keys `-LEVEL`, `-CLASS`;
+see [24-behaviors-and-masks.md](24-behaviors-and-masks.md)). A row without a
+mask applies everywhere.
+
+| File | Skill | Columns |
+| --- | --- | --- |
+| `hunting.txt` | Hunting | `RESOURCE`, `DOMAIN` (`*`, a room domain or a locale class ID), `FREQUENCY`, `MOB` (catalog or class name of the animal), `MASK` |
+| `fishing.txt` | Fishing and relatives | `RESOURCE`, `FREQUENCY`, `NAME` (the catch), `VALUE`, `MASK` |
+| `herbology.txt` | Herbology | One herb name per line, optional tab and `MASK` |
+| `floristry.txt` | Floristry | One flower per line, optional tab and `MASK` |
+| `mycology.txt` | Mycology | `NAME`, `FREQUENCY`, `VALUE`, `MASK` (the fifth column in the code is the mask) |
+| `taxidermy.txt` | Taxidermy | Pose names and the messages for each (text blocks, not rows) |
+
+```text
+Shrimp	10	Shrimp	1
+Shrimp	1	lantern eel	12	-AREA +BogOfLights -HOUR +20-23
+```
+
+A masked fishing row carries its own value, so a fish can be worth more in one
+area. Picks among several matching rows are weighted by frequency plus one.
+`VALIDATE RECIPES ALL` checks `hunting.txt` and `fishing.txt`.
+
+### Data gathering skills
+
+A **GenGatheringSkill** (`CREATE GATHERSKILL`) gets its finds from the `ITEMXML`
+field, a list of items. Per item, CoffeeSUD (CR9) adds three optional tags
+inside the item's `ITEM` element of the XML:
+
+| Tag | Meaning |
+| --- | --- |
+| `<FREQ>n</FREQ>` | The item's weight (default 1; 0 means never found) |
+| `<MASK>zapper</MASK>` | Found only when the gatherer or their room passes it. Write `<` and `>` as `&lt;` and `&gt;` |
+| `<YIELD>formula</YIELD>` | How many, in place of `YIELDFORMULA` |
+
+`NOTHINGFREQ` is the weight of finding nothing. `YIELDFORMULA` and `YIELD`
+take variables: `@x1` the gatherer's level, `@x2` their proficiency, `@x3`
+their expertise bonus, `@x4` the percent of the room's yield left (100 when
+fresh). Formulas are worked strictly left to right, so bracket them: `1+(@x2/40)`.
+
+The editor adds items to the list (`new [item name from your inventory]`) and
+removes them by name; the FREQ, MASK and YIELD tags are kept when the list is
+rebuilt but are written into the text of `ITEMXML` (for example by editing the
+skill's definition file, or its `ITEMXML` stat). "Beachcombing" example:
+driftwood `<FREQ>60</FREQ>`, shells `<FREQ>30</FREQ>`, amber
+`<FREQ>5</FREQ><MASK>-WEATHER +THUNDERSTORM</MASK>`, a catalog "message in a
+bottle" `<FREQ>1</FREQ>`, `YIELDFORMULA` `1+(@x2/40)`.
+
+The skill's messages are `MSGSTART`, `MSGFOUND` (`@x1` the item), `MSGNOTFOUND`
+and `MSGCOMPLETE` (`@x1` the count, `@x2` the name). `ROOMMASK` decides which
+rooms work at all, `PLAYMASK` who may try.
+
+### Crops and farming
+
+Farming (`PLANT`) and Gardening (`GPLANT`) plant a seed in a room, and the
+crop grows over time into harvestable resources. Defaults: it grows in 50
+ticks, needs `canSeeTheSun` and an outdoor hills, plains, woods, jungle or
+swamp room (or a dirt resource), is refused in a drought, and yields 1d7
+times the skill's base. CoffeeSUD (CR16) lets a world change all of that with
+**crop rules** (`core/CropRules`):
+
+| Rule | Meaning |
+| --- | --- |
+| `GROWHOURS=n` | Game hours to grow (instead of 50 ticks). A crop given hours is not set back by the nights while it grows |
+| `SEASONS=` | When it may be planted: `SPRING`, `SUMMER`, `AUTUMN` (or `FALL`), `WINTER`; otherwise "This is not the season for planting that." |
+| `NEEDSUN=true\|false` | `false` lets it grow without sunlight (default true) |
+| `DOMAINS=` | Kinds of room it grows in (`PLAINS`, `HILLS`, `WOODS`, `JUNGLE`, `SWAMP`, `CAVE`, `STONE`...; `ANY`), in place of the usual farmland. A dirt resource still counts |
+| `WATER=n` | That many water rooms (this one or the ones next to it; a pond Irrigation digs counts) must be near |
+| `YIELD=dice` | Instead of 1d7, such as `2d6+1`; still multiplied by the skill's yield |
+| `FAILMSG="text"` | Told when a rule refuses |
+
+Rules come from, in this order, each over the last:
+
+1. **`world/crops.txt`**: one line per crop, `[RESOURCE or SUBTYPE] [rules...]`, `#`
+   comments:
+
+   ```text
+   WHEAT GROWHOURS=240 SEASONS=AUTUMN YIELD=2d4+1 FAILMSG="The wheat will not take root here."
+   ```
+2. a **`Prop_CropRules`** on the area (and its parents), then the room;
+3. a **`Prop_CropRules`** on the seed item.
+
+A crop with none grows as before. The in-progress growth is part of the save.
+`MasterFarming` shortens planting only; the other rules are the same.
+For a cellar farm add `NEEDSUN=false DOMAINS=CAVE` on the cellar room.
+Remember that rules about the sun are not rules about soil: a stone floor
+fails the domain test unless `DOMAINS` names it or the room's resource is dirt.
+
+## Housing, construction and furniture
+
+### Ownership model
+
+Land is sold through a **title** (a deed) tied to a room or an area:
+
+| Property | Targets | Purpose |
+| --- | --- | --- |
+| `Prop_RoomForSale` | Room | One room for sale. Parameter `[OWNER/][RENTAL ][GRID ][ALLOWTHEFT ]PRICE`, such as `1000000` or `Bob/100000` |
+| `Prop_RoomsForSale` | Room | A group of adjacent rooms sold together |
+| `Prop_RoomsPlusForSale` | Room | As above, and building skills may add rooms |
+| `Prop_LotsForSale` | Room | A room and its future neighbours: when one is sold, adjacent lots appear so the owner can expand; `GRID` links new rooms by demolishable walls |
+| `Prop_AreaForSale` | Area | A whole area |
+| `Prop_PrivateProperty` | Item | A private item: `OWNER="name" PRICE=n EXPIRESEC=n`; a ship or other boardable can be owned this way |
+| `Prop_ReqCapacity` | Room, area | Limits on people, items, weight and rooms (`ROOMS=n` limits how far a lot grows) |
+
+Once sold, a lot shows as `Owner/price`. A shopkeeper of type **LAND**
+(`ShopKeeper` deal type, "LAND") lists the lots of its own area; any shopkeeper
+can sell a `StdTitle` or `GenTitle` item whose property ID is the lot's ID.
+The buyer gets a title they can `GIVE` or `SELL`. `LOOK ID` in a lot shows its
+ID. A `RENTAL` price is charged every month from the owner's bank account;
+failing to pay returns the lot to sale. `ALLOWTHEFT` turns off robbery
+enforcement there. Items left in an owned room are kept for the owner.
+
+**CoffeeSUD ownership by profile (CR1).** Single-player replaces accounts
+with a *profile* (the player's set of characters, see
+[31-saves-and-party.md](31-saves-and-party.md)). Every character of a profile
+counts as owner of what another of them owns (land, rooms, private items,
+vessels). The reserved owner `@PROFILE` stands for the whole profile:
+
+```text
+@PROFILE/0
+```
+
+as the parameter of a `Prop_RoomForSale` is a home that is already the
+player's, never wiped as an owner who "does not exist". `PROFILEPROPERTY=true`
+in the ini records everything the player buys as `@PROFILE`. In scripts,
+`MPGRANT [item] [who|NOBODY] [PROFILE] [NAME=new name]` gives a deed, vessel
+or private item (and registers a vessel so it saves, docking it if needed).
+
+**Scripts and property.** `OWNER(room|area|HERE|$n|$i)` (the owner's name,
+`@PROFILE`, or empty), `ISOWNER($n [room|area|$i])`, `LANDTITLE(room|area|HERE)`
+(lot ID and price); commands `MPDEED room|area|lotID $n|@PROFILE [price]` and
+`MPUNDEED room|area|lotID` (the lot returns to sale). These honour the profile
+rule. See [27-mobprog-commands.md](27-mobprog-commands.md) and
+[28-mobprog-functions.md](28-mobprog-functions.md).
+
+### Building without a deed: Prop_Homestead
+
+Building skills normally need land the builder owns (or the `CMDROOMS`
+security flag). `Prop_Homestead` (CR7) on a room or an area lets a character
+build where no deed was ever sold:
+
+```text
+SKILLS=Construction,Masonry MAXROOMS=3
+```
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `MASK` | none | A zapper mask the builder must pass |
+| `SKILLS` | all | Building skills allowed, by ID or name |
+| `CLAIM` | `true` | `true`: the first build in a room with no title claims it; `PROFILE`: claims it for `@PROFILE`; `false`: builders may build there with no title at all |
+| `MAXROOMS` | 0 | With a claim, adds `Prop_ReqCapacity rooms=n` so the lot grows to n rooms at most |
+| `PRICE` | 1 | The claimed lot's price. At 1, no property tax is due |
+| `NOTAX` | | Forces the price to 1 |
+
+A claim creates a `Prop_LotsForSale` on the room owned by the builder (or
+`@PROFILE`). If the build does not start (no materials), the claim is taken
+back. The homestead can also sit on a parent area. Use masks and `MAXROOMS` so
+construction cannot erase routes the story needs.
+
+### Building recipes
+
+Building skills (Construction, Masonry, Excavation, Landscaping, Irrigation,
+Welding and GenBuildingSkill data skills) read a different recipe layout, one
+row per project (see the column list above). The important columns:
+
+| Column | Meaning |
+| --- | --- |
+| `BUILDING_FLAGS` (6th) | Where it may be used, space-separated: `DIR` (needs a direction), `DIRUPDOWN`, `NOWALL`, `INDOOR`, `OUTDOOR`, `CAVEONLY`, `NODOWN`, `DOWNONLY`, `WATERONLY`, `WATERSURFACEONLY`, `UNDERWATERONLY`, `SALTWATER`, `FRESHWATER`, `UPONLY` |
+| `BUILDING_CODE` (7th) | What the project does: `WALL`, `DOOR` (an exit of the class in column 8), `ROOM` (a new room of that class), `ITEM` (an item class), `DEMOLISH`, `TITLE` and `DESC` (let the owner set the room's title or description), `STAIRS`, `EXCAVATE`, `ROOMEFFECT` (put the ability in the spell column on the room), `EXITEFFECT`, `DELEFFECT` (remove it) |
+| Class column (8th) | The room, exit or item class |
+| `PCODED_SPELL_LIST` | Properties or behaviours to attach, with parameters, such as `Prop_Crawlspace()` or `ResourceOverride(Tomatoes)` |
+| `BUILDING_NOUN` | Shown while working, with `@x1` for the direction |
+| `BUILDER_MASK` | Zapper mask on the builder (`-ANYCLASS +Minstrel`) |
+| `BUILDER_DESC` | Description in the `LIST` |
+
+A project the builder cannot start (materials, land, a missing roof) is
+refused with a reason. A claimed homestead lot expands by the usual building
+rules (each added room is covered by the lot's `Prop_ReqCapacity`). Building is
+refused aboard a boardable (a vessel).
+
+### A home the party can use
+
+`Prop_HomeBeacon` (CR13) on a room makes it a **home**: sleeping there (or `HOME
+SET`) makes it the start room of every character in the party who has
+privileges there, so `RECALL` returns everyone to it. In the ini,
+`HOMEBEACONS=true` makes every owned room (one with an owned land title) a home
+without the property.
+
+| Command | Effect |
+| --- | --- |
+| `HOME` | Takes the whole party home, over `HOMERECALL` turns (default 3; 0 means no HOME), not while anyone is fighting. Needs a home set |
+| `HOME SET` | Makes the room you are in your home. Needs a home room and privileges there |
+
+### Furnishings
+
+`Prop_Furnishing` (CR20) on an item makes furniture that changes its room:
+
+```text
+ROOMEFFECT=Prop_RoomLit COMFORT=2 ACTS=fire
+COMFORT=3 ROOMBEHAVIOR=Emoter(min=5 max=9 chance=50;creaks.)
+```
+
+| Parameter | Meaning |
+| --- | --- |
+| `ROOMEFFECT=ID(PARMS)` | An ability put on the room while the item is there |
+| `ROOMBEHAVIOR=ID(PARMS)` | A behaviour put on the room |
+| `COMFORT=n` | Adds to the room's comfort, which `COMFORT(room\|HERE\|$n)` reads in scripts |
+| `ACTS=a,b` | Makes the item a workstation of those names with no bonus (`ACTS=fire`) |
+
+It takes effect while the item is **placed** (not gettable, like a mounted or
+decorated thing) or lies on the floor of an **owned** room, and ends when the
+item leaves. Effects are never saved with the room. A gettable item in an
+unowned room does nothing.
+
+Other furnishing helpers: `Prop_IceBox` on a room or container (nothing in it
+spoils: a pantry), `Prop_LimitedContents` (see below), and the `Decorating`
+building skill for description changes.
+
+### What is not there
+
+A linked chest shared by the profile (`Prop_SharedStash`, CR22) is deferred.
+Ordinary chests and profile-owned property work. Test a home from two
+characters of one profile, after leaving it, and after a restore.

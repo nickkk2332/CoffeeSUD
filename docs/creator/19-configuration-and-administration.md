@@ -164,9 +164,10 @@ key is allowlisted) or on the command line.
 | `IDLETIMERS` | `0 0` | No idle warning or idle log-off. |
 | `SYSMSGS`, `ERRMSGS`, `WRNMSGS`, `DBGMSGS` | `FILE` | Log lines go to `mud.log` and not to the player's terminal. The ini says `BOTH`; that value is overridden. |
 
-This is why a log setting you change in `coffeemud.ini` appears to be
-ignored: for the four channels above, put the new value on the command line
-(`./sud.sh DBGMSGS=BOTH`) or in nothing else.
+This is why a change to one of these four log settings in `coffeemud.ini`
+appears to be ignored. They are not world.ini keys, so the only way to
+change them is the command line (`./sud.sh DBGMSGS=BOTH`). The same holds
+for the other forced keys unless they are allowlisted.
 
 ### Launch and mode keys
 
@@ -298,7 +299,9 @@ All world-allowlisted unless noted. Several are covered in more depth in
 | `RECOVERRATE` | `1` | Five-tick periods between natural recovery. |
 | `REMORTMASK`, `REMORTRETAIN` | `-LEVEL +>60`, see file | The REMORT command's rules. |
 | `HUNGER`, `THIRST` | `500,100,100`, `1000,100,100` | Capacity and two percentages. |
-| `EXPDEFER`, `RPAWARDS`, `LOGOUTMASK`, `PRIDECATS`, `PRIDECOUNT`, `XPMOD` | blank | Experience deferral, role-play awards, logout rule, top-player lists, and global XP modifiers. These are multiplayer-era; see the [inert list](#inert-keys) for which still do anything. |
+| `EXPDEFER`, `RPAWARDS` | blank | Hold earned XP until the configured command is used (the release is done by the internal `DeferCmd`, which has no typed name), and XP for role-play actions. CoffeeSUD runs the deferral and the award interval on the game clock, so a paused or turn-based game releases held XP by game time. Syntax is in the ini's own comments. |
+| `XPMOD` | blank | Global XP modifiers, with the arguments of `Prop_ModExperience`. |
+| `LOGOUTMASK`, `PRIDECATS`, `PRIDECOUNT` | blank, blank, `10` | A mask a character must match to log off, and top-player lists. Multiplayer-era; see the [inert list](#inert-keys). |
 
 ### Death, combat and survival keys
 
@@ -461,7 +464,8 @@ the fake database, so they are off" otherwise). Treat the database as fixed.
 
 These keys are still in `coffeemud.ini` because CoffeeSUD kept the file, but
 the code that read them served a network server, accounts or other features
-removed from the fork. Setting them has no effect in a CoffeeSUD game.
+removed from the fork. Setting them has no effect you can use in a CoffeeSUD
+game.
 
 | Keys | Why inert |
 | --- | --- |
@@ -470,7 +474,7 @@ removed from the fork. Setting them has no effect in a CoffeeSUD game.
 | `MUDSTATE`, `ADMINEMAIL` | Reported to intermud and MSSP, both removed. |
 | `EMAILREQ`, `IDLETIMERS`, `COMMONACCOUNTSYSTEM` | Replaced by the launcher (see above); `COMMONACCOUNTSYSTEM` is forced to 50. |
 | `ACCOUNTEXPIRATION`, `TRIALDAYS`, `EXPCONTACTLINE`, `ACCOUNTPURGE`, `AUTOPURGE`, `HASHPASSWORDS` | Account and player purging and passwords. Leave `AUTOPURGE` at `>=0 0 0` (off). |
-| `COMMANDJOURNALS`, `FORUMJOURNALS`, `JOURNALLIMIT`, `CHANNELBACKLOG` | Player-to-admin journals and web forums. The shipped lists are empty. |
+| `COMMANDJOURNALS`, `FORUMJOURNALS`, `JOURNALLIMIT` | Player-to-admin journals and web forums. The shipped lists are empty. `CHANNELBACKLOG` (the stored history of channel messages) is left over too (unverified). |
 | `CLANWEBSITES`, `CLANFORUMDATA`, `PUBLICCLANCATS`, `CLANVOTEO`, `CLANVOTED`, `CLANVOTER` | Clan web pages, forums and vote timings. The three vote keys are not read by any Java code at all. |
 | `SOUNDPATH`, `MXPIMAGEPATH`, `MSXPVARS` | MSP, MXP and MSXP client protocols. |
 | `DISCORD_JAR_PATH`, `DISCORD_BOT_KEY`, `TWITTER_*` | Chat integrations. |
@@ -478,14 +482,14 @@ removed from the fork. Setting them has no effect in a CoffeeSUD game.
 | `PROMPTBEHAVIOR` | Telnet go-ahead and carriage-return suffix. |
 | `KILMSGS`, `ACCMSGS` | `KILMSGS` is misspelt; the log channel is `KILLMSGS` (see [Logs](#logs-devlog-and-diagnostics)). `ACCMSGS` is the web server access log. |
 | `CHANNELFILTER`, `EMOTEFILTER`, `SAYFILTER`, `POSEFILTER` | Profanity filters for player-to-player text. Left over; no players share a channel. |
-| `PRIDECATS`, `PRIDECOUNT`, `RPAWARDS`, `EXPDEFER`, `LOGOUTMASK` | Multiplayer features (top-player lists, role-play XP, deferred XP, restricting log-off). They load without error but give nothing a single player can use. |
+| `PRIDECATS`, `PRIDECOUNT`, `LOGOUTMASK` | Multiplayer features (top-player lists, restricting log-off) (unverified; they load without error). |
 | `I3ROUTERS`, `SMTPSERVERNAME`, `GVCLIENTID`, `GVCLIENTSECRET` | Intermud, mail and Grapevine; not in the shipped file. |
 | `LANGCHAIN4J_JAR_PATH`, `LANGCHAIN4J_LLM_TYPE`, `LANGCHAIN4J_BASEURL` | Optional LLM bridge for the `LLM` command and `LLMIFY`; unrelated to world authoring. |
 
-Keys in this table other than the forced and the verified-unread ones are
-marked inert because the system they configure has no entry point in a
-single-player game; a few (the profanity filters, `CHARSETINPUT`) may still
-be applied to the console stream. Where unsure, leave the shipped value.
+Most entries above are inert because the system they configure has no entry
+point in a single-player game. A few (the profanity filters, `CHARSETINPUT`,
+`CHARSETOUTPUT`) may still be applied to the console stream; this was not
+traced to the end (unverified). Where unsure, leave the shipped value.
 
 ## world.ini, coffeemud.ini and launch overrides
 
@@ -618,7 +622,8 @@ Flags that open a command of the same name:
 `AFTER`, `AHELP`, `AS`, `ASYNC`, `AT`, `BEACON`, `CATALOG`, `CHARGEN`,
 `CLOAK`, `DUMPFILE`, `EVERY`, `GMODIFY`, `GOTO`, `MERGE`, `PAUSE`, `POSSESS`,
 `PURGE`, `RESET`, `RESTRING`, `SHUTDOWN`, `SNOOP`, `STAT`, `SYSMSGS`,
-`TICKTOCK`, `TRAILTO`, `TRANSFER`, `WHERE`, `WIZEMOTE`, `WIZINV`, `ORDER`.
+`TICKTOCK`, `TRAILTO`, `TRANSFER`, `WHERE`, `WIZEMOTE`, `WIZINV`.
+(`PAUSE` is open to everyone in single-player, so its flag is moot.)
 
 | Flag | Grants |
 | --- | --- |
@@ -976,9 +981,9 @@ chapters ([World workflow](02-world-workflow.md),
 | Command | Gate | Purpose |
 | --- | --- | --- |
 | `LIST ...` | per list; see below | Lists of nearly everything. |
-| `STAT ...` | open to all; admin forms need `STAT` | Characteristics of mobs, items and rooms, and the engine's statistics. |
+| `STAT ...` | the command is open to all; targets and forms may need the `STAT` flag | Characteristics of mobs, items and rooms, and the engine's statistics. |
 | `TICKTOCK [n] (HOURS/...)` / `TICKTOCK SET [date]` / `TICKTOCK [THREAD]` | `TICKTOCK` here | Advance the game clock, set the date, or run a maintenance thread once. |
-| `SHUTDOWN` | `SHUTDOWN` here | End the game. Forms: `SHUTDOWN` (asks), `SHUTDOWN NOPROMPT`, `SHUTDOWN FOR [reason]`, `SHUTDOWN IN [n] [unit]`, `SHUTDOWN AT [time]`, `SHUTDOWN CANCEL`. The `RESTART` option of the original was removed. A builder should `SAVE` first; a normal game's `QUIT` is the normal exit. |
+| `SHUTDOWN` | `SHUTDOWN` here | End the game. Forms: `SHUTDOWN` (asks), `SHUTDOWN NOPROMPT`, `SHUTDOWN FOR [reason]`, `SHUTDOWN IN [n] [unit]`, `SHUTDOWN AT [time]`, `SHUTDOWN CANCEL`. The code has no `RESTART` option. A builder should `SAVE` first; a normal game's `QUIT` is the normal exit. |
 | `LOAD`, `RELOAD`, `UNLOAD` | `LOADUNLOAD` | Load or unload resources, areas, and class files (Java source or JavaScript). `UNLOAD HELP`, `UNLOAD ALL`, `UNLOAD CLASS x` refresh caches. |
 | `SHELL`, `CMFS`, `.` | any `FS:`/`VFS:` path | A file manager within the granted paths. |
 | `DUMPFILE (RAW) [USER/ALL] [file]` | `DUMPFILE` | Show a text file. |
@@ -996,10 +1001,10 @@ player controls described in [Saves and party](31-saves-and-party.md).
 
 #### LIST
 
-`LIST` is the main inspection command. Typing `LIST` alone shows the
-available topics for the character's flags. Each topic needs one of several
+`LIST` is the main inspection command. Each topic needs one of several
 flags (for example `LIST MOBS` needs `CMDMOBS`; the system lists need
-`LISTADMIN`). A few that matter for an administrator:
+`LISTADMIN`); a SysOp may list them all, and `LIST LIST` or `LIST HELP`
+names the topics. A few that matter for an administrator:
 
 | Topic | Shows |
 | --- | --- |
@@ -1020,7 +1025,7 @@ flags (for example `LIST MOBS` needs `CMDMOBS`; the system lists need
 | `LIST TESTS` | The built-in tests (the help text misspells it `TETS`). |
 | `LIST DBCONNECTIONS (LONG)`, `LIST SQL [query]` | The database connections; a raw query against the cache. |
 | `LIST HELP`, `LIST LIST`, `LIST TAGS` | The list of list topics and tags. |
-| `LIST SESSIONS`, `LIST USERS`, `LIST ACCOUNTS`, `LIST BANNED`, `LIST EXPIRED`, `LIST NOPURGE`, `LIST WHO`, `LIST POSTOFFICES`, `LIST NEWS` | Inherited multiplayer lists. They run but show only the one local session or nothing. |
+| `LIST SESSIONS`, `LIST USERS`, `LIST ACCOUNTS`, `LIST BANNED`, `LIST EXPIRED`, `LIST NOPURGE`, `LIST WHO`, `LIST POSTOFFICES`, `LIST NEWS` | Inherited multiplayer lists. They are still registered; with one local player they show at most that player (unverified). |
 
 Content lists (`LIST ITEMS`, `ARMOR`, `WEAPONS`, `MOBS`, `ROOMS`, `AREA`,
 `AREAS`, `LOCALES`, `EXITS`, `BEHAVIORS`, `PROPERTIES`, `RACES`, `CLASSES`,
@@ -1031,8 +1036,8 @@ Content lists (`LIST ITEMS`, `ARMOR`, `WEAPONS`, `MOBS`, `ROOMS`, `AREA`,
 `ORPHANS`, `ONEWAYDOORS`, `CONTENTS`, `PLANES`, `CLANS`, `GOVERNMENTS`,
 `SOCIALS`, `COMMANDS`, `VERBS`, `MANUFACTURERS`, `SOFTWARE`, `TECH`,
 `MAGIC`, `SPACE`, `PLANETS`, `SHIPS` and so on) are the builder's catalogues;
-`LIST` with no argument prints the complete set the character may see. Their
-usage is in the generated [tool reference](tool-reference.md).
+Their usage is in the generated [tool reference](tool-reference.md) and in
+`AHELP LIST_name` (for example `AHELP LIST_TICKS`).
 
 ## Logs, DEVLOG and diagnostics
 
@@ -1127,8 +1132,8 @@ that runs longer. `VARS` shows and sets script variables.
 
 `DEBUG=` takes comma-separated names (see
 [the flag section](#disable-enable-debug-save-and-nocache-flags)) and
-needs `DBGMSGS` not `OFF` (it is `FILE` in a CoffeeSUD game). The ones that
-still produce output for a single-player game include `PROPERTY`, `ARREST`,
+needs `DBGMSGS` not `OFF` (it is `FILE` in a CoffeeSUD game). Flags
+for features that are still in the game, and so may log, include `PROPERTY`, `ARREST`,
 `CONQUEST`, `MUDPERCOLATOR`, `GMODIFY`, `MERGE`, `BADSCRIPTS`,
 `CLASSLOADER`, `DBROOMPOP`, `DBROOMS`, `CMAREA`, `MISSINGKIDS`,
 `FLAGWATCHING`, `UTILITHREAD`, `MAPTHREAD`, `VACUUM`, `EXPORT`, `IMPORT`,
@@ -1157,7 +1162,7 @@ Routine jobs for a creator or a developer.
 | Pull in files edited outside the game | `WORLD RELOAD` (or `DEVWATCH ON`). |
 | Back up a campaign | Copy a folder from `SAVEDIR`; or `SAVE name`, `CHECKPOINT`. See [Saves and party](31-saves-and-party.md). |
 | Reset the content cache | Delete the contents of `resources/fakedb/` except `fakedb.schema`; the next start rebuilds it from the world files. |
-| Clear the working databases of dead games | Normal: done at start (`SaveSlots.deleteWorkingDatabases`). If a crash leaves `saves/work-*` folders and a lock, remove the lock file only after you are sure no game is running. |
+| Clear the working databases of dead games | Done at start (`SaveSlots.deleteWorkingDatabases`). A crash can leave `saves/.play-*` folders; they are safe to delete when no game is running. The `saves/.owner.lock` file is an operating-system file lock that is released when the game's process ends; do not delete it to start a second game. |
 | Free memory | `LIST REPORTS`, `LIST OBJCOUNTERS`; remove `ROOMVISITS` (see below); use `NOCACHE`. |
 | Fire a schedule now | `TICKTOCK [thread]`, `TICKTOCK 6` (hours). |
 | Test as a mortal | `PLAYTEST ON`, or `GOD ALL OFF`. |
@@ -1226,7 +1231,7 @@ in turn). The multi-threaded design of CoffeeMud is mostly dormant.
 | `TIMESCALE` | `1` | Runs the game clock `0.1` to `20` times real time (affects everything on the game clock: ticks, cooldowns, decay, calendar). The `TIMESCALE` command changes it in builder mode or a DEV game. |
 | `TIMEMODE` | `REALTIME` | `TURNS` moves the clock only when the player acts, so the world costs nothing while you think. |
 | `OBJSPERTHREAD` | `512` | Ticking objects per tick group. With one game thread the groups run one after another, so this only decides how objects are batched, and how long one group can hold the thread. |
-| `MINWORKERTHREADS`, `MAXWORKERTHREADS` | `5`, `60` | Size of the worker pool for threads outside the game thread (some asynchronous work). Values of `0` or less for the maximum mean no limit. Raising them does not make a game thread faster. |
+| `MINWORKERTHREADS`, `MAXWORKERTHREADS` | `5`, `60` | Size of the worker pool for work that runs off the game thread. Values of `0` or less for the maximum mean no limit. Raising them does not make a game thread faster. |
 | `JSTIMELIMIT`, `JSTIMELIMIT_JRUN` | `2`, `30` | Seconds before a runaway script is stopped. Keeps one bad script from freezing the single game thread. |
 | `SCRIPTSLOW` | `0` | Warn about slow script triggers (the game thread waits for them). |
 | `NOCACHE` | `MAPFINDERS` | See below. |
@@ -1354,7 +1359,7 @@ CoffeeSUD.
 | Intermud (I3, IMC2, Grapevine), Discord, Twitter, polls | Flags remain, features removed. |
 | Channels between players, forums, command journals (BUG, IDEA, TYPO) | Removed. Only `INFO` and `QUESTCHAT` channels remain, for the world's own news and quest announcements. |
 | The `AS ... PORT x`, `TRANSFER ... SRVR` forms | Multi-host; do not apply. |
-| `SHUTDOWN RESTART` | Removed from the command. |
+| `SHUTDOWN RESTART` | Not in the command's code. |
 | Multi-host servers (`PRIVATERESOURCES`) | Inert. |
 | Player-versus-player law (`PLAYERKILL`, `CORPSEGUARD` and the `PKILL` flag) | A player's characters are one person; `PARTYFIGHT` is the exception. |
 | MSP, MXP and MSXP protocols, charset negotiation | Telnet client features; no clients. |
@@ -1415,7 +1420,7 @@ only be saved at inns.
    SAVEMODE=SAVEPOINTS
    PARTYMAX=4
    PROFILEMAX=6
-   PLAYERDEATH=DOWNED 4 10, 250
+   PLAYERDEATH=DOWNED 4 10, EXPERIENCE
    COMBATSYSTEM=TURNBASED
    DISABLE=DBERRORQUESTART, COMMAND_POSE, QUITREASON, RETIREREASON, CHANNELAUCTION, HUNGER, THIRST
    ```
@@ -1464,7 +1469,7 @@ A mob stops answering after you edited its script.
 | `DEVLOG` setting | `devlog.txt` beside the database in builder mode | Builder sessions; the ini key is the fallback. |
 | Logs | `mud.log`, `mud1.log` ... | Rotated each boot up to `NUMLOGS`. |
 | Content cache | `resources/fakedb/` | Disposable; rebuilt from the world files when `world.sum` disagrees. |
-| Working databases | `saves/work-*` | Disposable; deleted at the next start. |
+| Working databases | `saves/.play-*` | Disposable; deleted at the next start. |
 
 A reload (`WORLD RELOAD`) changes the world definitions, not `coffeemud.ini`;
 `RESET INIFILE` does the reverse.
@@ -1485,10 +1490,10 @@ A reload (`WORLD RELOAD`) changes the world definitions, not `coffeemud.ini`;
   `BUILD`.
 - **`DEV=1 is for a normal game: builder mode has every power already.`**
   You passed both; remove one.
-- **Archon powers missing in a game started with `BUILDER=1`.** The
-  character must be an Archon; a character created before builder mode
-  exists in the cache may be a plain one. Read the Archon's manual, or use
-  `MODIFY USER` as an Archon.
+- **Archon powers missing in a game started with `BUILDER=1`.** Powers come
+  from the Archon class (`SYSOPMASK`). Builder mode makes the player an
+  Archon as they come in (`SaveGame.makeArchon`); check `STAT` on yourself
+  for the class, and that `SYSOPMASK` was not edited.
 - **`Unknown security flag: X in group Y` in `mud.log`.** The `GROUP_Y`
   line names a flag that is not in `SecFlag` (a typo, or one of the inherited
   names such as `TASKS`).
@@ -1496,9 +1501,10 @@ A reload (`WORLD RELOAD`) changes the world definitions, not `coffeemud.ini`;
   channels to `FILE`. Use `DEVLOG`, `tail -f mud.log`, or
   `./sud.sh DBGMSGS=BOTH`.
 - **`KILMSGS=ON` does nothing.** The key is `KILLMSGS`.
-- **The game rebuilt the world every start.** Something changes a world file
-  each time (a script rewriting a file) or `resources/fakedb` is read-only.
-  Check `WORLD STATUS`.
+- **The game rebuilds the world at every start.** The world files' checksum
+  differs from `resources/fakedb/world.sum` each time: a file changes between
+  runs (a tool rewriting it) or the cache folder cannot be written. `WORLD
+  STATUS` lists files changed outside the game.
 - **"The world files and saved games need the fake database, so they are
   off."** `DBSERVICE` does not start `jdbc:fakedb:`.
 - **A second launch refuses to start.** Another game holds the save

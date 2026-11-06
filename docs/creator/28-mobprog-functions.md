@@ -695,3 +695,282 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF GENVAR('The Old Crypt' AREA_SIZE >= 20)`
 - **Notes:** not inherited. Empty for an area no generator made. See [12-generation.md](12-generation.md).
 
+### Creatures: who or what someone is
+
+### ISNPC
+
+- **Test:** `ISNPC(who)`: true if the creature exists and is not player-controlled.
+- **Value:** `$%ISNPC(who)%`: `true` or `false`.
+- **Example:** `IF ISNPC($n)`
+- **Notes:** "player-controlled" means the hero and the party members; every other creature is an NPC.
+
+### ISPC
+
+- **Test:** `ISPC(who)`: true if the creature is player-controlled (the opposite of `ISNPC` for a creature that exists).
+- **Value:** `$%ISPC(who)%`: `true` or `false`.
+- **Example:** `IF ISPC($n)`
+
+### ISALIVE
+
+- **Test:** `ISALIVE(who)`: true if the creature exists and is not dead.
+- **Value:** `$%ISALIVE(who)%`: the creature's health in words while alive, or `<name> is dead.`; empty if there is no such creature.
+- **Example:** `IF !ISALIVE($t)`
+
+### ISFIGHT
+
+- **Test:** `ISFIGHT(who)`: true if the creature is in combat.
+- **Value:** `$%ISFIGHT(who)%`: the name of its current opponent, empty if not fighting.
+- **Example:** `IF ISFIGHT($i) AND HITPRCNT($i < 25)`
+
+### ISIMMORT
+
+- **Test:** `ISIMMORT(who)`: true if the creature holds the IMMORT security flag (a game-master or cheat-mode character).
+- **Value:** `$%ISIMMORT(who)%`: `true` or `false`.
+- **Example:** `IF !ISIMMORT($n)`
+
+### ISCHARMED
+
+- **Test:** `ISCHARMED(who)`: true if the creature has an effect flagged as charming.
+- **Value:** `$%ISCHARMED(who)%`: the names of those effects, each followed by a space.
+- **Example:** `IF ISCHARMED($t)`
+
+### ISFOLLOW
+
+- **Test:** `ISFOLLOW(who)`: true if the creature follows someone who is in the host's room.
+- **Value:** `$%ISFOLLOW(who)%`: the leader's name, if in the room.
+- **Example:** `IF ISFOLLOW($n)`
+
+### ISSERVANT
+
+- **Test:** `ISSERVANT(who)`: true if the creature has a liege and that liege is in the room with the host.
+- **Value:** `$%ISSERVANT(who)%`: the liege's name, if the creature has one (in the room or not).
+- **Example:** `IF ISSERVANT($n)`
+
+### ISPKILL
+
+- **Test:** `ISPKILL(who)`: true if the creature has the player-kill attribute set.
+- **Value:** `$%ISPKILL(who)%`: `true` or `false`.
+- **Example:** `IF ISPKILL($n)`
+- **Notes:** inherited from multiplayer; the flag exists on any creature but nothing in single-player play sets it by default.
+
+### ISGOOD
+
+- **Test:** `ISGOOD(thing)`: true if the creature (or item) counts as good.
+- **Value:** `$%ISGOOD(who)%`: the creature's alignment band name, or its alignment number if it has no band.
+- **Example:** `IF ISGOOD($n) AND !ISEVIL($t)`
+- **Notes:** true when the thing's disposition has the Good flag set (and not Evil); otherwise, for a creature, when its alignment faction is in the good range. `ISEVIL` and `ISNEUTRAL` are the matching checks.
+
+### ISEVIL
+
+- **Test:** `ISEVIL(thing)`: true if evil.
+- **Value:** `$%ISEVIL(who)%`: the creature's alignment name in lower case.
+- **Example:** `IF ISEVIL($n)`
+
+### ISNEUTRAL
+
+- **Test:** `ISNEUTRAL(thing)`: true if neither good nor evil.
+- **Value:** `$%ISNEUTRAL(who)%`: the creature's alignment number.
+- **Example:** `IF ISNEUTRAL($n)`
+
+### ISBIRTHDAY
+
+- **Test:** `ISBIRTHDAY(who)`: true if the character's birthday is today and this year's has been marked as celebrated.
+- **Value:** `$%ISBIRTHDAY(who)%`: the next birthday spelled out in the calendar's words (weekday, day, month, year name).
+- **Example:** `IF ISBIRTHDAY($n)`
+- **Notes:** player-controlled characters only; false for NPCs. The date is read on the clock of the character's start room.
+
+### IPADDRESS
+
+- **Test:** `IPADDRESS(who cmp text)`: compares the address of the character's session.
+- **Value:** `$%IPADDRESS(who)%`
+- **Example:** `IF IPADDRESS($n == 127.0.0.1)`
+- **Notes:** inherited. CoffeeSUD has no network connections, so this has no practical use; the value is whatever the local session reports and is empty for NPCs.
+
+### NAME
+
+- **Test:** `NAME(thing cmp text)`: compares the thing's name as text.
+- **Value:** `$%NAME(thing)%`: the name.
+- **Example:** `IF NAME($t == 'a rusty key')`
+- **Notes:** compare with `==`, `!=`, `>`, `<` or `.in.`; for a word-anywhere search use [ISNAME](#isname).
+
+### ISNAME
+
+- **Test:** `ISNAME(thing text)`: true if the thing's name contains the text as a name-search would match it.
+- **Value:** `$%ISNAME(thing)%`: the name.
+- **Example:** `IF ISNAME($t guard)`
+
+### SEX
+
+- **Test:** `SEX(who == M)`, `SEX(who != F)`. The value is `M`, `F` or `N` (or the words `MALE`, `FEMALE`, `NEUTER`, or the numbers 1, 2, 0). Only `==` and `!=` are accepted.
+- **Value:** `$%SEX(who)%`: `male`, `female` or `neuter`.
+- **Example:** `IF SEX($n == F)`
+
+### POSITION
+
+- **Test:** `POSITION(thing == STANDING)`: `STANDING`, `SITTING` or `SLEEPING`; only `==` and `!=`; the position must start with your word.
+- **Value:** `$%POSITION(thing)%`: `STANDING`, `SITTING` or `SLEEPING`.
+- **Example:** `IF POSITION($n == SLEEPING)`
+
+### LEVEL
+
+- **Test:** `LEVEL(thing cmp n)`: the thing's level (creature or item).
+- **Value:** `$%LEVEL(thing)%`
+- **Example:** `IF LEVEL($n >= 10)`
+
+### CLASS
+
+- **Test:** `CLASS(who == name)`: the creature's current class (its display name) starts with the name; only `==`/`!=`.
+- **Value:** `$%CLASS(who)%`: the class display name.
+- **Example:** `IF CLASS($n == Mage)`
+
+### BASECLASS
+
+- **Test:** `BASECLASS(who == name)`: the base class of the current class starts with the name; `==`/`!=`.
+- **Value:** `$%BASECLASS(who)%`
+- **Example:** `IF BASECLASS($n != Fighter)`
+
+### RACE
+
+- **Test:** `RACE(who == name)`: the race name starts with the name; `==`/`!=`.
+- **Value:** `$%RACE(who)%`
+- **Example:** `IF RACE($n == Dwarf)`
+
+### RACECAT
+
+- **Test:** `RACECAT(who == name)`: the racial category (Humanoid, Undead...) starts with the name; `==`/`!=`.
+- **Value:** `$%RACECAT(who)%`
+- **Example:** `IF RACECAT($t == Undead)`
+
+### DEITY
+
+- **Test:** `DEITY(who == name)`: the name of the deity the creature worships equals the name (empty for none); `==`/`!=`.
+- **Value:** `$%DEITY(who)%`
+- **Example:** `IF DEITY($n == Aphrodite)`
+
+### MOOD
+
+- **Test:** `MOOD(who == name)`: the creature's `Mood` effect equals the name; `==`/`!=`.
+- **Value:** `$%MOOD(who)%`: the mood name, capitalised; empty if it has no mood.
+- **Example:** `IF MOOD($i == GRUMPY)`
+- **Notes:** a creature with no `Mood` effect gives false even for `!=`.
+
+### HASTITLE
+
+- **Test:** `HASTITLE(who title)`: true if the player-controlled character has earned the exact title.
+- **Value:** `$%HASTITLE(who title)%`: the character's *active* title (empty if the title argument is empty or the creature is not a player).
+- **Example:** `IF HASTITLE($n 'the Brave')`
+
+### STAT
+
+- **Test:** `STAT(thing STATNAME cmp value)`: compares one stat of the object.
+- **Value:** `$%STAT(thing STATNAME)%`
+- **Example:** `IF STAT($n HITS < 20)`; `IF STAT($n STRENGTH >= 15)`
+- **Notes:** `STATNAME` is any stat code the object itself exposes (its modify codes), then for creatures: character stats (`STRENGTH`, `CHARISMA`...), current state (`HITS`, `MANA`, `MOVE`, `HUNGER`, `THIRST`, `FATIGUE`), physical stats (`SENSES`, `DISPOSITION`, `LEVEL`, `ABILITY`, `REJUV`, `WEIGHT`, `HEIGHT`, `ARMOR`, `DAMAGE`, `ATTACK`), player stats, the `BASE` and `MAX` forms of those, `STINK`, and the Gen mob/item/physical pseudo-stats; also a stat of one of the object's behaviors. `==`/`!=` compare as case-insensitive text; every other operator as whole numbers. An unknown stat logs a `Syntax` error and is false. The full code lists are in [21-mobs.md](21-mobs.md) and [22-items.md](22-items.md); [GSTAT](#gstat) uses the Gen-code names instead.
+
+### GSTAT
+
+- **Test:** `GSTAT(thing STATNAME cmp value)`: as `STAT`, but the stat name is a "Gen" code: `GenMob` codes for creatures (including `LEVEL`, `RACE`, `CLASS`, `ALIGNMENT`...), `GenItem` codes for items.
+- **Value:** `$%GSTAT(thing STATNAME)%`
+- **Example:** `IF GSTAT($n CHARISMA > 10)`; `IF GSTAT($i IDLETICKS .in. '2 3 4')`
+- **Notes:** also reads character stats, current/base/max state, physical stats and player stats. Operators as in `STAT`.
+
+### HITPRCNT
+
+- **Test:** `HITPRCNT(who cmp percent)`: hit points as a percentage of the maximum, rounded to a whole number.
+- **Value:** `$%HITPRCNT(who)%`
+- **Example:** `IF HITPRCNT($i < 50)`
+
+### OBJTYPE
+
+- **Test:** `OBJTYPE(thing == ClassID)`: true if the object's Java class ID contains the text; `==`/`!=`.
+- **Value:** `$%OBJTYPE(thing)%`: the class ID in lower case.
+- **Example:** `IF OBJTYPE($o == Weapon)`
+- **Notes:** the class ID is the engine class name such as `GenWeapon` or `StdMOB`; "contains" lets `Weapon` match both.
+
+### ISLIKE
+
+- **Test:** `ISLIKE(thing mask)`: true if the thing passes the zapper mask.
+- **Value:** `$%ISLIKE(mask)%`: the mask in plain words.
+- **Example:** `IF ISLIKE($n '-CLASS +Mage -LEVEL +>=10')`
+- **Notes:** the mask language is described in [24-behaviors-and-masks.md](24-behaviors-and-masks.md). Quote the mask.
+
+### AFFECTED
+
+- **Test:** `AFFECTED(thing effect)`: true if the thing is affected by that ability, spell, property or disease. `*` means "any effect at all".
+- **Value:** `$%AFFECTED(thing)%`: the name of the thing's first effect, if any.
+- **Example:** `IF AFFECTED($n Spell_Sleep)`; `IF AFFECTED($t *)`
+- **Notes:** give the ability ID (`Spell_Sleep`) or its name; an unknown name logs an error and tests the text as an ID.
+
+### ISBEHAVE
+
+- **Test:** `ISBEHAVE(thing behavior)`: true if the thing has that behavior. `*` means "any behavior".
+- **Value:** `$%ISBEHAVE(thing)%`: the behavior IDs, space separated.
+- **Example:** `IF ISBEHAVE($i Sentinel)`
+
+### ISABLE
+
+- **Test:** `ISABLE(who skill)`: true if the living creature knows the skill, spell or expertise.
+- **Value:** `$%ISABLE(who skill)%`: the skill's proficiency number; for an expertise, its name and level.
+- **Example:** `IF ISABLE($n Skill_Dodge)`
+
+### EXPERTISE
+
+- **Test:** `EXPERTISE(who skill KIND cmp n)`: the creature's expertise level in the skill.
+- **Value:** `$%EXPERTISE(who skill KIND)%`
+- **Example:** `IF EXPERTISE($n Spell_Fireball LEVEL >= 2)`
+- **Notes:** `KIND` is `X1`..`X6`, `LEVEL`, `TIME`, `MAXRANGE`, `LOWCOST`, `XPCOST` or `LOWFREECOST`. An unknown creature, skill or kind logs an error and is false.
+
+### HASPERK
+
+- **Test:** `HASPERK(who PERK_ID)`: true if the character has taken the perk (by ID or name).
+- **Value:** `$%HASPERK(who PERK_ID)%`: `true` or `false`.
+- **Example:** `IF HASPERK($n ARTISAN)`
+- **Notes:** not inherited. An unknown perk name falls back to checking for a tattoo of that name. See [03-characters.md](03-characters.md).
+
+### KNOWSRECIPE
+
+- **Test:** `KNOWSRECIPE(who skill recipe name)`: true if the character knows the recipe.
+- **Value:** `$%KNOWSRECIPE(who skill recipe name)%`: `true` or `false`.
+- **Example:** `IF KNOWSRECIPE($n Blacksmithing 'iron sword')`
+- **Notes:** not inherited. Where recipes are kept on the profile (`PROFILERECIPES`), the profile's knowledge counts. See [07-items-crafting.md](07-items-crafting.md).
+
+### CANSEE
+
+- **Test:** `CANSEE(who thing)`: true if `who` can see `thing` (lighting, hiding, invisibility).
+- **Value:** `$%CANSEE(who thing)%`: `true` or `false`.
+- **Example:** `IF CANSEE($i $n)`
+
+### CANHEAR
+
+- **Test:** `CANHEAR(who thing)`: true if `who` can hear `thing` move.
+- **Value:** `$%CANHEAR(who thing)%`: `true` or `false`.
+- **Example:** `IF CANHEAR($i $n)`
+
+### ISSPEAKING
+
+- **Test:** `ISSPEAKING(who language)`: true if the creature currently speaks the language. `any` means "anything but Common", `none` means "Common".
+- **Value:** `$%ISSPEAKING(who)%`: the name of the language it speaks.
+- **Example:** `IF ISSPEAKING($n Elvish)`
+- **Notes:** inside a `NOTUNDERSTOOD_PROG` and for the speaker (`$n`), it reports the language of the unintelligible speech. See [11-presentation-language.md](11-presentation-language.md).
+
+### UNDERSTANDS
+
+- **Test:** `UNDERSTANDS(who language)`: true if the creature understands the language at all (proficiency above 0).
+- **Value:** `$%UNDERSTANDS(who language)%`: `true` or `false`. `$%UNDERSTANDS$(who language)%`: the effective proficiency, 0 to 100.
+- **Example:** `IF UNDERSTANDS($n Elvish)`; `IF EVAL($%UNDERSTANDS$($n Elvish)% >= 50)`
+- **Notes:** not inherited. Counts known languages, related languages and translators. `UNDERSTANDS$` is a real name in the table but a `$` cannot appear in a condition, so it is available only as a value (`$%UNDERSTANDS$(...)%`), typically inside `EVAL` or `MATH`. A bare `UNDERSTANDS(...)` test is true when the value is non-empty, not `0` and not `false`.
+
+### BREATH
+
+- **Test:** `BREATH(who cmp n)`
+- **Value:** `$%BREATH(who)%`: the ticks of breath the creature has left (all of it where it can breathe).
+- **Example:** `IF BREATH($n < 5)`
+- **Notes:** not inherited; see [10-world-simulation.md](10-world-simulation.md).
+
+### CHECK
+
+- **Test:** `CHECK(who STAT|skill difficulty [modifier])`: rolls a d20, adds the stat or skill bonus and the modifier, and is true when the total reaches the difficulty.
+- **Value:** `$%CHECK(who STAT|skill difficulty [modifier])%`: `true` or `false` (the same roll).
+- **Example:** `IF CHECK($n CHA 15)`; `IF CHECK($n Skill_Disarm 12 +2)`
+- **Notes:** not inherited. `STAT` is a base stat by name, short name or three-letter prefix (`CHA`, `CHARISMA`); its bonus is `(value - 10) / 2`. A skill's bonus is its proficiency divided by 10. The modifier is a small arithmetic expression and may use a value form: `CHECK($n CHA 15 $%AFFINITY($i $n)%/10)`. Each call rolls anew and has side effects: it stores the margin (total minus difficulty) as the variable `CHECKMARGIN` for the character, and tells the character the result unless the `CHECKROLLS` setting is `OFF` (`FULL` shows the roll). See [29-combat-and-encounters.md](29-combat-and-encounters.md).
+

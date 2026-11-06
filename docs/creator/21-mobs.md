@@ -686,3 +686,259 @@ Cautions:
 For gear that depends on the story, consider scripts or a catalog item with
 auto-drop rules ([The mob catalog](#the-mob-catalog)); for loot tables see
 [12-generation.md](12-generation.md).
+
+## Shopkeepers and other service mobs
+
+Source: `CMGenEditor.modifyGenShopkeeper`,
+[`StdShopKeeper`](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdShopKeeper.java),
+[`ShopKeeper`](../../CoffeeMud/com/planet_ink/coffee_mud/core/interfaces/ShopKeeper.java),
+`Libraries/CoffeeShops.java`. Economic theory (currencies, taxes, area
+defaults) is in [09-society.md](09-society.md); this section is the mob
+side.
+
+Every `Gen*` service mob uses the shop editor. It has all the common mob fields
+(see above, in the same order up to Effects) followed by the shop block, then
+Dispositions, Senses, Factions, Tattoos, Expertises, Scripts, Image and Tags as
+usual. Players deal with them using `LIST`, `BUY`, `SELL`, `VALUE`, `VIEW` and
+`INFO`, plus type-specific verbs below.
+
+### The shop block
+
+| Label | Applies to | Meaning |
+| --- | --- | --- |
+| Shopkeeper type | all but the auctioneer | What the mob buys and sells (a set of toggles; see below). |
+| Item Buy Mask (?) | all but the auctioneer | A zapper mask that further narrows the items the shop deals in. `?` shows the mask syntax ([24-behaviors-and-masks.md](24-behaviors-and-masks.md)). Empty means no extra filter. |
+| Inventory | all but the auctioneer | The stock. See below. |
+| View flags/types | all but the auctioneer | What `VIEW` reveals: `BASIC`, `IDENTIFY` or `FALSE` (toggle each). |
+| Prejudice | all but the auctioneer | Price adjustments by customer attributes. |
+| Inventory reset rate [ticks] | all but the auctioneer | How often the stock returns to the saved stock. |
+| Currency | all | The currency the shop deals in. |
+| Ignore Mask | all | A zapper mask of customers the shopkeeper rudely ignores. |
+| Item Pricing Factors | plain shopkeepers (and trainers, casters, ...) | Price multipliers by item mask. |
+| Budget | plain shopkeepers | How much the shop spends buying from you per time period. |
+| Devaluation rate(s) | plain shopkeepers | How far its buying price drops per copy already held. |
+
+Banker, postman, librarian, auctioneer and craft broker replace the last three
+(Item Pricing Factors, Budget, Devaluation) with their own fields, below.
+
+Anything left empty or at 0 in Prejudice, Item Pricing Factors, Ignore Mask,
+Budget, Devaluation and Inventory reset rate is inherited: first from the
+shopkeeper's start area (and its parent areas), then from `coffeemud.ini` (the
+defaults in `PREJUDICE`, `PRICEFACTORS`, `IGNOREMASK`, `BUDGET`, `DEVALUERATE`
+and `INVRESETRATE`; an area sets them with its own economy fields).
+`INVRESETRATE` defaults to 64800 ticks. For `Currency`, `DEFAULT` means the
+area's currency.
+
+### Shopkeeper type
+
+The type prompt lists letters; choosing a letter toggles that type. A shop may
+have several types at once, except for conflicting pairs (post office with clan
+post office, bank with clan bank, the four land and ship sellers, trainer with
+caster). Choosing `0` clears everything and makes the shop deal in anything.
+Removing a type also removes stock it no longer covers.
+
+| Code | Type | The shop buys and sells |
+| --- | --- | --- |
+| `0` | ANYTHING | Anything except land titles and children. |
+| `1` | GENERAL | Ordinary items: not armor, magic, clan items, weapons, ammunition, raw resources, land titles, boats, caged animals or abilities. |
+| `2` | ARMOR | Armor. |
+| `3` | MAGIC | Miscellaneous magic items (wands, scrolls, potions, ...). |
+| `4` | WEAPONS | Weapons and ammunition. |
+| `5` | PETS | Animals (mobs or caged animals of animal intelligence). |
+| `6` | LEATHER | Leather items (not raw resources). |
+| `7` | INVENTORY ONLY | Only what is already in its stock; it buys back what it sells, nothing else. |
+| `8` | TRAINER | Teaches the abilities stocked as inventory (a skill/spell/prayer/song teacher). Does not buy. |
+| `9` | CASTER | Casts the stocked abilities on the buyer for a price. Does not buy. |
+| `A` | JEWELRY | Glass or precious items, and items worn on ears, neck or fingers. |
+| `B` | POTIONS | Potions. |
+| `C` | BANKER | (Bankers only.) |
+| `D` | LAND | Land titles for sale (rooms in the shop's area that carry sale properties; see `Prop_RoomForSale`, `Prop_RoomsForSale`, `Prop_LotForSale`, `Prop_LotsForSale`). |
+| `E` | ANY TECHNOLOGY | Electronics. |
+| `F` | CLAN LAND | Land titles for clan members only. |
+| `G` | FOODS | Food and drink (not raw resources). |
+| `H` | MEATS | Raw flesh resources. |
+| `I` | VEGETABLES | Raw plant resources. |
+| `J` | HIDES | Hide, feathers, leather, scales, wool and fur resources. |
+| `K` | LUMBER | Raw wood. |
+| `L` | METALS | Raw metals and mithril. |
+| `M` | ROCKS | Raw stone and precious materials. |
+| `N` | CLAN BANKER | (Bankers only.) |
+| `O` | INN KEEPER | Inn keys (`StdInnKey`). See [Innkeepers](#innkeepers). |
+| `P` | SHIP SELLER | Ships and ship titles. |
+| `Q` | CLAN SHIP SELLER | Ships, for clan members only. |
+| `R` | SLAVES | Mobs or caged mobs that are slaves. |
+| `S` | POSTMAN | (Post offices only.) |
+| `T` | CLAN POSTMAN | (Post offices only.) |
+| `U` | AUCTIONEER | (Auctioneers only.) |
+| `V` | INSTRUMENTS | Musical instruments. |
+| `W` | BOOKS | Readable items whose class ID ends in `Book`. |
+| `X` | READABLES | Any readable item. |
+| `Y` | CLOTHS | Raw cloth resources. |
+| `Z` | CHILDREN | Children (aged mobs). |
+
+Bankers are offered only types `C` and `N`; post offices `S` and `T`; the
+auctioneer has no type prompt. All other shop mobs (including librarians and
+craft brokers) are offered every type except `C`, `N`, `S` and `T`.
+`GenShopkeeper` accepts either the numeric mask or a type name in its
+`WHATISELL` stat code.
+
+### Inventory (stock)
+
+The Inventory prompt is "Enter something to add/remove (?)". Type a name that
+is already in stock to remove it (every copy goes). Otherwise type one of:
+
+- the **class ID** of a standard item, mob or ability (`Longsword`, `Horse`,
+  `Spell_Sleep`); `?` lists the possibilities;
+- the **name of an item or inhabitant in the room, or an item you carry** (a
+  copy of it is stocked). This is the *only* way to stock a generic item or
+  generic mob, so build the item first.
+
+If the shop type does not deal in that thing, you are asked to confirm. You are
+then asked "How many?" (not for abilities) and "At what price?":
+
+| Price | Meaning |
+| --- | --- |
+| `0` or more | A fixed price in multiples of the base currency unit, before charisma, prejudice and the other adjustments. |
+| `-1` | Let the engine price it from the item's value (recommended). |
+| `-2` to `-99` | Treated like `-1`. |
+| `-100` to `-999` | Sold for quest points: the price is the absolute value minus 100 (`-135` is 35 quest points). |
+| `-1000` or lower | Sold for experience points: the absolute value minus 1000 (`-1500` is 500 XP). |
+
+A shop that sells for quest points or experience points buys nothing back
+of those items.
+
+Stock for *trainers* and *casters* is abilities, stocked by ID, with no count. A
+trainer teaches them for the listed price. The saved stock of a generic
+shopkeeper is put back by the periodic inventory reset (Inventory reset rate)
+and when the mob is reset; goods the shop bought from players are removed then.
+
+### Prejudice, price factors, budget and devaluation
+
+**Prejudice** adjusts prices by who the customer is. It is a list of rules
+separated by semicolons; each rule is `BUY=` (when the customer buys from
+the shop) or `SELL=` (when the customer sells to the shop) followed by a
+number and, optionally, words that name which customers it applies to:
+
+```text
+BUY=5.5 Elf Dwarf ; SELL=0.4 Elf Dwarf ; BUY=1.0 ; SELL=1.0
+```
+
+Rules are read left to right and the first matching one wins, so list
+specific ones first and a bare `BUY=`/`SELL=` last. The words can be a race
+or racial category, an alignment (`good`, `neutral`, `evil`), a gender, a
+class name, a faction range name, or a tattoo. `CLAN:name` matches members of a
+clan (underscores stand for spaces), and `MASK(...)` takes a zapper mask:
+
+```text
+BUY=0.8 MASK(-CLASS +Fighter)
+```
+
+A bare number (no `=`) is one factor for everyone. Values must be above 0 (use
+`0.000000001` to all but forbid trade). Two extra settings may appear in the
+same field: `LIMIT=n` (the most rows a `LIST` shows) and `RANGE=n` (the level
+range, around the median level of the shop's area, of items it will buy).
+
+**Item Pricing Factors** multiply the price by item type. Each is a number and a
+zapper mask, for example `0.5 -MATERIAL +WOODEN` halves wooden items; the editor
+asks for the multiplier and then the mask (`?` explains the syntax), and removes
+a factor by its number. In `coffeemud.ini` and the `PRICEMASKS` stat code
+several are written separated by semicolons.
+
+**Budget** is the most gold the shop spends buying from the player per period:
+an amount followed by a period (`HOUR`, `DAY`, `WEEK`, `MONTH`, `YEAR`), for
+example `5000 DAY`. Periods are game-time periods. The default is `500000 MONTH`.
+
+**Devaluation rate(s)** is the percent drop of its buying price for each copy
+of an item it already holds: `20 0.2` means 20% per finished item, 0.2% per raw
+resource. One number applies to both. The default is `20 0.2`; an empty value
+inherits from the area.
+
+The customer's charisma against the keeper's wisdom also adjusts every price
+(roughly twice the price at charisma 0, the base price at 35, golems excepted).
+`PRICECHECK [item] (AT [shopkeeper]) (FOR [character]) (SELL)` shows where a
+price came from, step by step (builder mode, `DEV=1`, or `CMDMOBS`): see
+`AHELP PRICECHECK`.
+
+### Bankers
+
+`GenBanker` has types `C` (Banker) or `N` (Clan banker). Players use `DEPOSIT`,
+`WITHDRAW`, `BORROW` and `LIST`. Extra fields:
+
+| Label | Meaning |
+| --- | --- |
+| Coin Interest [% per real day] | Interest paid (negative: charged) on money left in an account. |
+| Item Interest [% per real day] | Interest on items left in the account. Making it above 0.5 disables holding items. |
+| Bank Chain | Name tying banker mobs together: all bankers with the same chain share accounts. |
+| Loan Interest [% per mud month] | Interest charged on loans. Making it below -0.5 disables loans. |
+
+### Post office clerks
+
+`GenPostman` has types `S` (Postman) or `T` (Clan postman). Players use `GIVE`,
+`WITHDRAW`, `LIST` and `SAY`. Extra fields:
+
+| Label | Meaning |
+| --- | --- |
+| Postal chain | Mail travels only among postmen of one chain. |
+| Fee to open a new box | Cost to open a box with this clerk. |
+| Minimum postage cost | Minimum charge to deliver. |
+| Postage cost per pound after 1st pound | Per-pound charge. |
+| Holding fee per pound per month | Charged each mud month a parcel sits idle (first month free). |
+| Maximum number of months held | After this the parcel is sold to recoup costs. |
+
+### Auctioneers
+
+`GenAuctioneer` takes only the auction type; no stock. Players use `BID`,
+`SELL`, `INFO` and `LIST`. Extra fields:
+
+| Label | Meaning |
+| --- | --- |
+| Auction house | The chain name; all auctioneers with the same name list the same items. |
+| Flat fee per auction | Fee for each listing, in base gold. |
+| Listing Cut/%Pct per day | Percent of the base value, per day, charged at listing. Keep it small (0.5%). |
+| Cut/%Pct of final price | Percent of the winning bid kept by the house. |
+| Maximum number of auction mud-days | Longest auction. |
+| Minimum number of auction mud-days | Shortest auction. |
+
+### Craft brokers
+
+`GenCraftBroker` brokers requests: a player lists what they want with `REQUEST`;
+others `SELL` matching items to the broker. Extra fields:
+
+| Label | Meaning |
+| --- | --- |
+| Broker Chain | Name linking brokers' listings. |
+| Maximum number of listing mud-days | Longest a listing stays; 0 is forever. |
+| Maximum number of listings | Per player; 0 is unlimited. |
+| Commission Pct% | Percent of the final price charged to the buyer. |
+
+### Librarians
+
+`GenLibrarian` loans items instead of selling. Players use `BORROW`, `GIVE`,
+`LIST`, `SELL` and `VIEW`. Extra fields:
+
+| Label | Meaning |
+| --- | --- |
+| Library name | Chain name; librarians sharing it share check-out records. |
+| Max borrowed | Most distinct items a character may hold at once. |
+| Overdue mud-days | Days after check-out before charges begin. |
+| Reclaim mud-days | Days after which the item returns on its own (charges stay). |
+| Overdue charge, Overdue charge pct | Flat amount and percent of the item's value when overdue. |
+| Daily overdue charge, Daily overdue charge pct | Flat amount and percent for each further day. |
+| (not in the menu) `LIBCMASK` | Who may contribute items. Set with `MODIFY MOB [name] LIBCMASK [mask]`. |
+
+### Innkeepers
+
+An inn is a `GenShopkeeper` with type `O` (INN KEEPER) stocking `StdInnKey`
+items, one per room to let. Each inn room needs a locked door whose key code is
+`INN1`, `INN2`, ... A key added to the keeper's stock is renamed "key to room
+N" and given the code `INN<N>` in the order it is stocked. Players buy keys; a
+key returns to the shop's stock after one mud day, and works only in the
+keeper's area. After stocking the keys run `RESET ROOM` on the keeper's room
+and save it.
+
+### Land and ship sellers
+
+Type `D` (or `F` for clan members) sells the rooms of the shopkeeper's area
+that have `Prop_RoomForSale`, `Prop_RoomsForSale`, `Prop_LotForSale` or
+`Prop_LotsForSale`; `P` and `Q` sell ships. Housing is covered in
+[07-items-crafting.md](07-items-crafting.md).

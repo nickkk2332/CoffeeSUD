@@ -811,9 +811,9 @@ A few rules that follow:
 
 - A comparison belongs inside function parentheses: `IF LEVEL($n >= 10)`, not
   `IF $%LEVEL($n)% >= 10`.
-- A mask is not a condition: you cannot write `if -RACE +Elf`; use
-  `MASK($n -RACE +Elf)`... (see the function list for the mask-testing
-  function) or a function such as `RACE($n == Elf)`.
+- A mask is not a condition: you cannot write `if -RACE +Elf`. Test a mask with
+  the function [ISLIKE](28-mobprog-functions.md#islike), as in
+  `if islike($n -RACE +Elf)`, or use a function such as `RACE($n == Elf)`.
 - Text for a game command is substituted first, then split into words, so
   `give $o $n` works, but a name that contains spaces needs the `$` code (an
   object) rather than text.
@@ -938,12 +938,10 @@ mpcast Prayer_Bless $n
 A paused body keeps `$n`, `$t`, `$o`, `$0`..`$9` and the `IF` and `SWITCH` blocks it
 is inside, and the pending wait is saved with the game. Limits: `MPWAIT` cannot
 pause inside a `FOR`, `WHILE` or `MPWHILE` loop, nor in a function that another
-line called (it logs and carries on without waiting); and ordinary locals set
-with `MPLOCAL` before the wait are copied, but a function's named parameters do
-not become general persistent memory. `MPSETINTERNAL CANCELWAITS` drops pending
-waits. In turn-based time a tick passes when the party acts, so `MPWAIT 3` waits
-three turns; a wait of several ticks ends early when an NPC speaks to the one
-waiting.
+line called (it logs and carries on without waiting). Locals set with `MPLOCAL`
+before the wait are copied into the resumed body in the running game but are not
+part of a save. `MPSETINTERNAL CANCELWAITS` drops pending waits. In turn-based
+time a tick passes when the party acts, so `MPWAIT 3` waits about three turns.
 
 A cut-scene is usually a `GREET_PROG` or `VERB_PROG` that echoes, `MPWAIT`s,
 echoes again; for exchanges between several NPCs see the Scene behavior in
@@ -1016,4 +1014,119 @@ Unknown speech does not enter ordinary `SPEECH_PROG` or MudChat handling on a
 listener who does not understand it. `NOTUNDERSTOOD_PROG` provides a response;
 `UNDERSTANDS()` tests comprehension. `MPSAYIN` selects a language for one line
 and `MPLEARNLANG` teaches or adjusts proficiency ([chapter 11](11-presentation-language.md)).
+
+## What CoffeeSUD adds to the language
+
+CoffeeSUD is CoffeeMud played alone, and its scripting is a superset of
+CoffeeMud 5.11's. The additions are tracked by ids in the audit
+([script language `SC`](../../audit/SC-script-language-functions-and-commands.md),
+[triggers `ST`](../../audit/ST-script-triggers.md),
+[tools `DT`](../../audit/DT-testing-and-debugging-tools.md)); the in-game
+`HELP SCRIPTABLE` and `AHELP BEHAVIOR_SCRIPTABLE` list every trigger, function
+and command and mark the CoffeeSUD ones. Where they appear in this chapter:
+
+### Language features (SC)
+
+| Id | Addition | See |
+| --- | --- | --- |
+| SC1 | Lists in variables: `MPLIST`, `FOR $1 IN LIST ...`, `LISTJOIN/LISTHAS/LISTCOUNT/LISTGET/LISTFIND/LISTPICK` | [variables](#script-variables-mpsetvar) |
+| SC2 | Game-time stamps: `MPSETVAR host var NOW`, `ELAPSED()`, `GAMETIME()`, `DATETIME(STAMP)`, `WEEKDAY()`, `ISWEEKDAY()`, `TICKS(3 DAYS)` | [clocks](#other-clocks-delay-once-time-day-every-turn) |
+| SC3 | Catalog spawns: `MPMLOAD CATALOG name [count]`, `MPOLOAD CATALOG name`, `CATALOG()`, `CATALOGCOUNT()` | [commands](27-mobprog-commands.md#mpmload) |
+| SC4 | Variables kept on one object: `@$i`, `MPSTATE`, `STATE()`, `MPSETINTERNAL VARHOST INSTANCE` | [variables](#script-variables-mpsetvar) |
+| SC5 | Read and change the message in `CNCLMSG_PROG`/`EXECMSG_PROG`: `MSG()`, `MPMSG` | [CNCLMSG_PROG](26-mobprog-triggers.md#cnclmsg_prog) |
+| SC6 | Signals and cross-object calls: `MPSIGNAL`, `SIGNAL_PROG`, `MPCALLFUNC target func`, `CALLFUNC(target func)` | [signals](#signals) |
+| SC7 | `MPWAIT ticks`, `MPWAIT n HOURS`, `MPWAIT UNTIL (cond)` | [MPWAIT](#mpwait-pausing-a-program) |
+| SC8 | Party and terminal: `$u`, `ISPLAYED()`, `INPARTY()`, `PARTYSIZE()`, `PARTYLEADER()`, `PARTY()` | [party](#party-and-language-awareness) |
+| SC9 | `CMDFAIL_PROG`, the custom-verb trigger, and help brought up to date | [CMDFAIL_PROG](26-mobprog-triggers.md#cmdfail_prog) |
+| SC10 | String functions: `UPPER`, `LOWER`, `CAP`, `LEN`, `SUBSTR`, `REPLACE`, `TRIM`, `PADRIGHT`, `ANAME`, `PLURAL`, `STRSTARTS`, `STRENDS`, `STRPOS` | [functions](28-mobprog-functions.md) |
+| SC11 | Numbers and dice: `DICE()`, `PICK()`, `WPICK()`, `ROLLNORMAL()`, `CLAMP()`, `ABS()`, `MATH()` operators, `MPSETVAR ... =value`, `%N`, `^N` | [functions](28-mobprog-functions.md) |
+| SC12 | Tags from scripts: `MPTAG`, `TAGGED()`, `NUMTAGGED()`, `TAGS()`, `HASTAG()` | [commands](27-mobprog-commands.md#mptag) |
+| SC13 | File arguments: `LOAD=file KEY=value`, `ARG()`, `ARGDEFAULT` | [LOAD arguments](#load-arguments-and-arg) |
+| SC14 | Fixes to confirmed MOBPROG bugs (`LEVEL_PROG` locals, `NUMMOBS` masks, `MPDAMAGE ... KILL`, prefix matching...) | — |
+| SC16 | Mask keys `+ANYINGROUP`/`+ALLINGROUP` (group tests) | [chapter 24](24-behaviors-and-masks.md) |
+| SC17 | `ELSEIF`, `WHILE`/`ENDWHILE`, `CONTINUE`, `MPLOCAL`, named function parameters | [control flow](#control-flow) |
+
+### Triggers (ST)
+
+The added trigger families, all in the [trigger reference](26-mobprog-triggers.md):
+
+| Family | Triggers |
+| --- | --- |
+| Single-player login and game events | `LOGIN_PROG` and `LOGOFF_PROG` fire for a character coming into the world and leaving; `GAME_PROG` NEWGAME, RESTORE, SAVE (can cancel a save), NEWCHAR, SWITCHTO, SWITCHFROM, PAUSE, RESUME, TIMEMODE; `TURN_PROG`; `PARTY_PROG` (ST1, ST6, ST10) |
+| World and time | `WEATHER_PROG`, `MOON_PROG`, `SEASON_PROG`, `MONTH_PROG`, `YEAR_PROG`, `WEEKDAY_PROG`, `EVERY_PROG`, richer `TIME_PROG`/`DAY_PROG` forms (ST4, ST11, ST24) |
+| Exploration | `DISCOVER_PROG`, `AREA_ENTER_PROG`, `AREA_LEAVE_PROG`, `GENERATED_PROG` (ST3, ST16, ST20) |
+| Meetings and talk | `FIRSTGREET_PROG`, `REGREET_PROG`, `TALK_PROG`, `NOTUNDERSTOOD_PROG`, richer `SOCIAL_PROG` (ST21, ST22, N9) |
+| Items and puzzles | `VERB_PROG`, `USE_PROG`, `COMBINE_PROG`, `SWITCH_PROG`, `SET_PROG`, `READ_PROG`, `DESTROY_PROG`, `DECAY_PROG`, `RIDE`/`DISMOUNT`/`REMOVING` fixes (ST7, ST18, ST19, ST27) |
+| Combat and encounters | `COMBAT_PROG`, `PHASE_PROG`, `YIELD_PROG`, `DEFEAT_PROG`, `SURRENDER_PROG`, `RESET_PROG`, `WAVE_PROG`, `ARENAWIN_PROG`, `ARENALOSE_PROG`, `AMBUSH_PROG`, `PARTYDEFEAT_PROG` (ST15 and the C-series) |
+| Progress | `QUEST_PROG`, `QUESTFAIL_PROG`, `QUESTTIMEOUT_PROG`, `SKILL_PROG`, `LEVEL_PROG` for loss, `FACTION_PROG`, `CLAN_PROG`, `CRAFT_PROG`, `RECIPE_PROG`, `ACHIEVE_PROG`, `AFFECT_PROG`, `VAR_PROG` (ST2, ST5, ST9, ST13, ST14, ST17, ST25, ST26, ST29) |
+| Vessels | `BOARD_PROG`, `DISEMBARK_PROG`, `SAIL_PROG`, `VESSEL_ARRIVE_PROG`, `VESSEL_GREET_PROG`, `DOCK_PROG` (ST8) |
+| Signals | `SIGNAL_PROG` (SC6) |
+| World-wide listeners | `@GLOBAL` on `DEATH_PROG`, `KILL_PROG`, `EXECMSG_PROG`, `SKILL_PROG`, `FACTION_PROG`: hear the event anywhere in the world, once (ST12) |
+
+### Commands and functions
+
+CoffeeSUD adds well over a hundred commands and functions for features that did
+not exist before: menus (`MPMENU`), quest journals and objectives
+(`MPQOBJECTIVE`, `MPQJOURNAL`, `MPQUESTFAIL`, `MPREWARD`, `MPQTIMER`), doors
+(`MPDOOR`), combat helpers (`MPTELEGRAPH`, `MPTHREAT`, `MPWAVE`, `MPSETRESPAWN`),
+affinity (`MPAFFINITY`), law and economy (`MPFINE`, `MPPARDON`, `MPBANK`,
+`MPDEBT`, `MPSHOP`, `MPEXCHANGE`), time and world (`MPPASSTIME`, `MPWEATHER`,
+`MPROOMSTATE`), generation (`MPGENERATE`, `MPREGENERATE`), property (`MPGRANT`,
+`MPDEED`), characters (`MPRECRUIT`, `MPLEVELUP`, `MPRANK`, `MPRESPEC`,
+`MPPERK`, `MPLEARNRECIPE`), vessels (`MPSAIL`, `MPANCHOR`, `MPBOARD`...), language
+and text (`MPSAYIN`, `MPLEARNLANG`, `MPNARRATE`, `MPJOURNAL`, `MPLORE`) and
+debugging (`MPDEBUG`). They are in [chapter 27](27-mobprog-commands.md) with a
+**CoffeeSUD** marker, and each owning chapter (quests, society, travel...) shows
+how they fit together.
+
+### What does not apply
+
+CoffeeSUD removed networking and multiplayer, so several inherited script
+features have no useful meaning: `IPADDRESS()`, `ISPKILL()`, `MPPOSSESS` (the
+player side), anything about other players being online, and almost all of
+`CHANNEL_PROG` (only the `INFO` and `QUESTCHAT` channels remain). `LOGIN_PROG`
+means "a character came into the world" (a new game, or a restored one), not
+"a player logged in". `HASACCTATTOO()`/`MPACCTATTOO` act on the local profile.
+
+## Pick the right event
+
+The names below omit `_PROG`. Full syntax and arguments are in
+[chapter 26](26-mobprog-triggers.md).
+
+| Event family | Useful triggers |
+| --- | --- |
+| Conversation and meetings | SPEECH, NOTUNDERSTOOD, TALK, FIRSTGREET, REGREET, SOCIAL |
+| Arrival and departure | GREET, ALL_GREET, GROUP_GREET, ARRIVE, ENTRY, EXIT |
+| Object interaction | GET/GIVE, PUT, DROP, READ, USE/COMBINE, SWITCH, RIDE/DISMOUNT, WEAR/REMOVE, OPEN/CLOSE/LOCK/UNLOCK, VERB |
+| Commerce | BUY, SELL, BRIBE |
+| Combat and effects | FIGHT, COMBAT, HITPRCNT, DAMAGE, KILL/DEATH, AFFECT, SURRENDER/YIELD, PHASE |
+| Story and progression | QUEST, FACTION, CLAN, PARTY, LEVEL, SKILL, RECIPE/CRAFT, ACHIEVE, VAR |
+| Exploration and world | DISCOVER, area borders, WEATHER/MOON, GENERATED, DESTROY/DECAY |
+| Time | TURN, EVERY, TIME, DAY, DELAY, RAND, ONCE and the calendar triggers |
+| Game lifecycle | GAME NEWGAME/RESTORE/SAVE/NEWCHAR/SWITCHTO/SWITCHFROM/PAUSE/RESUME/TIMEMODE |
+| Message interception | EXECMSG and CNCLMSG, including selected `@GLOBAL` forms |
+| Between scripts | FUNCTION, SIGNAL |
+
+Notes on choosing:
+
+- `GREET_PROG` fires when someone arrives where the host is. The help text says
+  "players", but the engine does not restrict it to players, so guard with
+  `ISPC($n)` when it matters. It only fires if the host can sense the arrival (a
+  sneaker passes it); `ALL_GREET_PROG` also hears sneakers. `ARRIVE_PROG` and
+  `ENTRY_PROG` are about the *host* arriving somewhere, `EXIT_PROG` about anyone
+  leaving the host's room; see their entries for the exact difference.
+- `VERB_PROG` gives an object its own verbs (`turn dial`, `light brazier`) before
+  skills and socials. `CMDFAIL_PROG` is the catch-all for a word nothing else
+  claims; do not let it silently absorb unrelated commands.
+- `CNCLMSG_PROG` can inspect or rewrite a message and answer `RETURN CANCEL` to
+  refuse it; `EXECMSG_PROG` observes what was accepted. To change damage use the
+  message tools (`MPMSG VALUE *0.5`), not hit-point arithmetic in an unrelated
+  output event.
+- `LOGIN`, `LEVEL`, `LOGOFF` and `CHANNEL` register with the world when the
+  script loads; they need not wait for a local tick, and a listener hears
+  events outside its room. Global listeners can double-count: keep filters
+  narrow so rewards and counters do not run twice.
+- Several triggers accept either a percent chance or a **mask** (a mask
+  replaces the chance and is tested against the actor). A percent is rolled at
+  the moment of the event: `GREET_PROG 25` runs for a quarter of the arrivals.
 

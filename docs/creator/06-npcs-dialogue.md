@@ -1428,3 +1428,481 @@ menu answer runs at once.
 **Talking to the player's party.** `$n` is the actor. `IF ISGROUP`-style tests
 and `HASTATTOO($n ...)` read the *character*; party members are separate
 characters ([31](31-saves-and-party.md)).
+
+## Reference
+
+### Commands
+
+| Command | Who | What |
+| --- | --- | --- |
+| `TALK [npc] [ABOUT topic]`, `TALK BYE` | player | Begin or end a conversation; see [TALK](#talk-and-talk_prog). Aliases for ending: `TALK END`, `TALK STOP`. |
+| `SAY`, `SAYTO <npc> text`, `ASK [npc] text`, `ASK [npc] ABOUT` | player | Speech; `ASK ... ABOUT` alone lists known topics. `'` is a SAY shortcut. |
+| `HIRE <mob>`, `HIRE <mob> PAY` | player | A hireling's terms as a menu; pay its price. |
+| `ORDER <mob> <command>` | player | Give a hired NPC an order. |
+| `CHATTEST <npc> <speech>`, `CHATLINT <file>`, `CHAT RELOAD [file]` | builder (CMDMOBS) | MudChat dry run, file check, reload. |
+| `STAT BEHAVIORS [mob/item/HERE]`, `TRACEB <mob> [ticks]`, `TRACEB OFF` | builder | Inspect and trace behaviours. |
+| `TIMEMODE DIALOGUE INSTANT\|TICKS\|DEFAULT` | player | Whether NPC replies come before the next prompt. |
+| `WAIT UNTIL DAWN\|DAY\|DUSK\|NIGHT`, `WAIT n HOURS` | player | Advance time to test routines. |
+| `CREATE BEHAVIOR <ID>`, `MODIFY BEHAVIOR <ID> [FIELD VALUE]`, `DESTROY BEHAVIOR <ID>` | builder | Generic behaviours. |
+| `MODIFY MOB <name>` | builder | Behaviors and Effects fields. |
+
+### Behaviours and properties used in this chapter
+
+| ID | Kind | Hosts | Purpose | Section |
+| --- | --- | --- | --- | --- |
+| [Schedule](24-behaviors-and-masks.md#schedule) | behaviour | mobs | Daily routine | [Schedule](#schedule-a-daily-routine) |
+| [Sleeper](24-behaviors-and-masks.md#sleeper) | behaviour | mobs | Sleep, woken by events | [Sleeper](#sleeper-sleeping-npcs-woken-by-noise) |
+| [Sentry](24-behaviors-and-masks.md#sentry) | behaviour | mobs | Lookout and alarm | [Sentry](#sentry-and-alarms) |
+| [Memory](24-behaviors-and-masks.md#memory) | behaviour | mobs | Facts about each character | [Memory](#memory-what-an-npc-remembers) |
+| [Escortee](24-behaviors-and-masks.md#escortee) | behaviour | mobs | Escort to a destination | [Escortee](#escortee-an-npc-you-take-somewhere) |
+| [Hireling](24-behaviors-and-masks.md#hireling) | behaviour | mobs | Paid service | [Hireling](#hireling-paid-help) |
+| [Patroller](24-behaviors-and-masks.md#patroller) | behaviour | mobs, items | Walk a path | [Wandering](#wandering-and-patrols) |
+| [Mobile](24-behaviors-and-masks.md#mobile) | behaviour | mobs | Random wandering | [Wandering](#wandering-and-patrols) |
+| [Aggressive](24-behaviors-and-masks.md#aggressive) (also VeryAggressive, MobileAggressive) | behaviour | mobs | Attack, with `WARN=` | [Warnings](#warnings-before-aggression) |
+| [GenBehavior](24-behaviors-and-masks.md#genbehavior) | behaviour | per CANIMPROVE | Behaviour defined as data | [GenBehavior](#genbehavior-your-own-parameterised-behaviour) |
+| [MudChat](24-behaviors-and-masks.md#mudchat) | behaviour | mobs | Pattern replies | [MudChat](#mudchat) |
+| [QuestChat](24-behaviors-and-masks.md#questchat) | behaviour | mobs | MudChat with once-per-player quest phrases (`pattern::VAR`, read by `QVAR(quest CHAT:NAME)`) | [08](08-quests.md) |
+| [Sounder](24-behaviors-and-masks.md#sounder) | behaviour | mobs, items, rooms, exits, areas | Event emotes and bark tables | [Barks](#barks-and-ambient-lines-sounder-and-emoter) |
+| [Emoter](24-behaviors-and-masks.md#emoter) | behaviour | mobs, items, rooms, areas | Random emotes | [Barks](#barks-and-ambient-lines-sounder-and-emoter) |
+| [Scene](24-behaviors-and-masks.md#scene) | behaviour | rooms, mobs | Overheard exchanges | [Scene](#scene-exchanges-the-player-overhears) |
+| [Scriptable](24-behaviors-and-masks.md#scriptable) | behaviour | any | MOBPROG host | [04](04-mobprog.md) |
+| [Prop_Affinity](23-properties-reference.md#prop_affinity) | property | mobs, areas | Opinion of each character | [Prop_Affinity](#prop_affinity-an-opinion-of-each-character) |
+| [Prop_NPCLines](23-properties-reference.md#prop_npclines) | property | mobs, areas | Stock-line wording | [Prop_NPCLines](#prop_npclines-shopkeeper-and-service-wording) |
+| [Prop_ClosedDayNight](23-properties-reference.md#prop_closeddaynight) | property | mobs | Two-place day/night keeper (older than Schedule) | [Schedule](#schedule-a-daily-routine) |
+
+### Settings (coffeemud.ini or a world's world.ini)
+
+See [world-settings.md](world-settings.md) for which keys a world may set.
+
+| Key | Values | Effect |
+| --- | --- | --- |
+| `CHATDEFAULT` | file name, `NONE`, blank | Chat file for MudChat NPCs whose parameters name none. Blank means `chat.dat`. |
+| `DIALOGUETIME` | `INSTANT`, `TICKS`, blank | NPC replies before the next prompt. Blank: INSTANT in turn-based time. |
+| `HINTTOPICS` | `true`, blank | Every NPC tells its topics the first time a character talks with it. |
+| `JOURNALTALK` | `true`/`false` | Record newly learned topics in the journal. |
+| `CATCHUP` | `OFF`, blank | OFF turns off area catch-up everywhere. |
+| `CHECKROLLS` | `OFF`, `BRIEF`, `FULL` | What a script's `CHECK()` tells the character. |
+| `DISABLE=MUDCHAT` | flag | Turn MudChat off. `DISABLE=EMOTERS` turns Emoter and bark tables off; `DISABLE=SCRIPTABLEDELAY` removes script reply delay. |
+
+Tags (on a mob or area): `HINTTOPICS` (one NPC hints its topics), `NOCATCHUP`
+(an area does not catch up).
+
+### MOBPROG items for NPC life and dialogue
+
+| Item | Where | Use |
+| --- | --- | --- |
+| [TALK_PROG](26-mobprog-triggers.md#talk_prog) | trigger | Conversation begins with TALK. |
+| [SPEECH_PROG](26-mobprog-triggers.md#speech_prog) | trigger | Words or phrase said. |
+| [GREET_PROG](26-mobprog-triggers.md#greet_prog), [FIRSTGREET_PROG](26-mobprog-triggers.md#firstgreet_prog) | trigger | Arrivals; first meeting; `REGREET_PROG` on return. |
+| [GIVE_PROG](26-mobprog-triggers.md#give_prog), [BRIBE_PROG](26-mobprog-triggers.md#bribe_prog) | trigger | Items or money given. |
+| [FUNCTION_PROG](26-mobprog-triggers.md#function_prog) | trigger | Named block; `FUNCTION_PROG CATCHUP` runs on area wake with `$g` the ticks. |
+| [MPMENU](27-mobprog-commands.md#mpmenu) | command | Numbered menu. |
+| [MPAFFINITY](27-mobprog-commands.md#mpaffinity) | command | Change an NPC's opinion. |
+| [MPBEHAVE](27-mobprog-commands.md#mpbehave), [MPUNBEHAVE](27-mobprog-commands.md#mpunbehave) | command | Add or remove a behaviour. |
+| [MPFORCE](27-mobprog-commands.md#mpforce) | command | Make an NPC do a command (`follow`, `say`). |
+| [AFFINITY](28-mobprog-functions.md#affinity) | function | Opinion number or band. |
+| [CHECK](28-mobprog-functions.md#check) | function | Skill check. |
+| [MEMORY](28-mobprog-functions.md#memory) | function | Meetings and last TALK topic. |
+| [STAT](28-mobprog-functions.md#stat) | function | `STAT($i SCHEDULE)`. |
+| [VAR](28-mobprog-functions.md#var) | function | Variables, including `MEM_*`, `KNOWN_TOPICS`. |
+
+### Saved variables
+
+| Variable | Holder | Meaning |
+| --- | --- | --- |
+| `MEM_<FACT>_<NAME>` | the Memory NPC | A fact about a character. |
+| `AFFINITY_<NAME>`, `AFFINITYAT_<NAME>`, `AFFINITYQ_...`, `AFFINITYLAST_...` | the NPC (or area) with Prop_Affinity | Value, last update, quest wins counted, rule cooldowns. |
+| `KNOWN_TOPICS` | the character | Topics learned, `\|`-separated. |
+| `TOPICS_HINTED` | the character | NPCs that already told their topics. |
+| `MUDCHAT_GROUP_<SPEAKER>` | the MudChat NPC | A kept `$@!` group. |
+| `SCENE_<NAME>` | the character | Game day a Scene was played to them. |
+| `<NAME>_TOPIC` (via `MEMORY`) | the NPC | Last TALK topic. |
+
+## Worked examples
+
+The room IDs and area names below are placeholders: replace `Brenn Village#2` and
+the others with real IDs from your world (LIST ROOMS or the map tools,
+[20](20-areas-rooms-exits.md)). Create each NPC with `CREATE MOB`, set its
+description and level ([21](21-mobs.md)), add the behaviours and effects with
+`MODIFY MOB`, then test as the sections say. Put new chat files in
+`world/resources/chat/`.
+
+### Example 1: a shopkeeper with a routine and greetings
+
+Hobb the miller sells flour. By day he is at his market stall and open; at
+dawn he works at the mill; at dusk he sits at the inn; at night he sleeps at
+home with the door locked. He greets customers by name, treats friends better,
+and remembers thieves.
+
+Create `a GenShopkeeper` named "Hobb the miller" with his stock ([21](21-mobs.md)).
+Start him in the stall room. Add:
+
+**Behaviour `Schedule`:**
+
+```text
+DAWN: Brenn Village#2 WORK "pours grain into the hopper|wipes flour from his hands"; DAY: Brenn Village#5 SHOP SAY Morning, all! The mill's turning.; DUSK: Brenn Village#1 SIT "stool" SAY Long day.; NIGHT: Brenn Village#9 SLEEP "straw bed" LOCK; SHOPMSG="The stall is shut. Come back after dawn."
+```
+
+**Behaviour `Sounder`** (greetings; one entry list in a single parameter):
+
+```text
+GREET_FIRST: SAY Fresh flour, stranger! Ask what I [[grind]].;GREET: COOLDOWN=30 CHANCE=60 3 SAY Good day, $n. | 1 EMOTE nods to $n.;SHOP_BUY: SAY A fine choice.;BRIBED: ONCEPERPLAYER SAY I saw nothing, friend.
+```
+
+**Behaviour `MudChat`:** `chat/hobb.dat=hobb`, with
+`world/resources/chat/hobb.dat`:
+
+```text
+# fallback if the group is not found
+(hello)
+9"Hello.
+
+>hobb
+?AFFINITY($i $t >= 25)
+(hello|hi|morning)
+9"Ah, $t! My best customer. Flour today?
+(hello|hi|morning)
+9"Morning. Flour is on the shelf; ask for my LIST.
+(grind|grinding|mill)
+9"Wheat, mostly. Barley when the cart comes. Sweetest flour in the valley.
+(thief|robbed|stolen)
+5"Keep your hands to yourself, $t.
+4:glares.
+()
+3"Hm?
+```
+
+**Behaviour `Memory`:**
+
+```text
+REFUSEIF=STOLE>0 REFUSE="I remember you, thief. Out of my stall." GREETIF=MET>2 GREET="Back again, $n?" FORGET=30d
+```
+
+**Effect `Prop_Affinity`:**
+
+```text
+GIFT(flower)=+5 ATTACKED=-40 DECAY=1 SHOPFACTOR=FRIENDLY:0.9,DEVOTED:0.8 REFUSE=HOSTILE REFUSEMSG="Get out of my stall."
+```
+
+**Effect `Prop_NPCLines`:**
+
+```text
+NOTBUYING="Bah, I deal in grain, not junk."|"No use for that here." NOTBUYING="Not today, friend. Ask me again tomorrow."[AFFINITY FRIENDLY] TOOPOOR="Not enough coin for @x1, my friend."
+```
+
+How the pieces cooperate:
+
+- Schedule decides where Hobb is and whether he trades. At the mill or at night
+  a LIST gets the SHOPMSG; asleep, "Hobb looks asleep." The `SHOP` activity
+  restricts trading only to the `DAY` entry.
+- Sounder barks greet arrivals when he is awake and in the room; the first greeting
+  teaches the topic "grind", and MudChat has an entry for it.
+- The MudChat guard `?AFFINITY($i $t >= 25)` gives friends the warmer greeting.
+  Gifts of flowers raise Affinity; `SHOPFACTOR` discounts friends; Prop_NPCLines
+  (also masked by affinity) rewords stock lines for friends.
+- Memory's `STOLE` fact (theft from him) makes him refuse to deal; `GREETIF=MET>2`
+  greets someone who has come in several times. Both Memory and Prop_Affinity
+  refuse trade; keep one of them (Memory for a flat grudge, Affinity for bands).
+- `TALK hobb` opens a "Trade" menu automatically because he is a shopkeeper.
+
+Test: `WAIT UNTIL DAWN`, `WAIT UNTIL DAY`, `WAIT UNTIL NIGHT`, `STAT BEHAVIORS hobb`
+at each step; try `LIST` at night; `CHATLINT chat/hobb.dat`; `CHATTEST hobb
+hello`; steal from him (Memory then refuses); `GIVE` him a flower and re-read
+`STAT BEHAVIORS`.
+
+### Example 2: an informant with topics
+
+Mara the fishwife knows the story of the wrecked ship. Each of her answers
+points to the next thing to ask, using `[[topic]]` markup, so the player builds up
+a list with `ASK mara ABOUT`. Flags on the player change what she says.
+
+Create "Mara the fishwife" (a plain GenMob), add `MudChat chat/mara.dat=mara`:
+
+```text
+>mara
+?VAR($t HEARD_WRECK == yes)
+(wreck|ship|marigold)
+9"You know it already, $t. Ask the [[harbourmaster]] who signed her out.
+(hello|hi|morning)
+9"Fresh catch, $t! Mind your feet. They say the [[old lighthouse]] shows a light again.
+(old lighthouse|lighthouse|light)
+9"Nobody has kept it since the [[wreck]]. A light at night, they say.
+(wreck|shipwreck|marigold|ship)
+9"The Marigold, three winters back, all hands lost.~&mpsetvar $n HEARD_WRECK yes~"Ask the [[harbourmaster]] who signed her out.
+(harbourmaster|harbor master)
+9"Old Venn. Drinks at the Anchor. He will not speak of it sober.
+()
+4"Eh? Buy a fish or move along.
+1:gutters a herring.
+```
+
+Notes on the file: the guard covers only the entry right after it; the first
+entry for "wreck" is the repeat version once `HEARD_WRECK` is set. The second,
+unguarded one sets it with a `&` reply (a MOBPROG command run as Mara, `$n` the
+player) and continues with another say. `[[...]]` in each `"` reply teaches the
+topic.
+
+Play it:
+
+```text
+talk mara
+ask mara about old lighthouse
+ask mara about
+ask mara about wreck
+ask mara about
+chattest mara wreck
+```
+
+The first TALK falls through to MudChat as "Hello", teaching "old lighthouse".
+`ASK mara ABOUT` then lists "old lighthouse"; after the wreck answer the list
+grows to include "wreck", then "harbourmaster". The repeat answer appears once
+the flag is set. `CHATTEST` shows which entry fires and why.
+
+To hand her topics out without markup, set the tag `HINTTOPICS` on her instead,
+but then every word of her chat entries (including "hello") becomes a topic, so
+the markup is cleaner for a quest chain. If a topic should open a numbered menu
+instead, answer it with a script: `SPEECH_PROG harbourmaster` that runs `MPMENU`.
+
+### Example 3: a hireling
+
+Tarn the sellsword sits in the inn for hire: 150 gold for three days, wages of
+2 a day, quits in a fight below 30 percent unless he likes you, will not drop
+or give away your things. Buying him ale builds loyalty.
+
+Behaviour `Hireling`:
+
+```text
+150;3;KEYWORDS=SWORD,MERCENARY,HIRE CONTRACT=DAYS UPKEEP=2 FLEEHP=30 LOYAL=40 MSG_OFFER="A sword for @x1, @x2. Ask me what I can do." MSG_HIRED="Done, @x1. @x2. Lead on." MSG_EXPIRE="My days are up. It's been good steel." REFUSE=DROP,GIVE MSG_NOORDER="That's not what you pay me for."
+```
+
+Effect `Prop_Affinity` (so loyalty can be earned): `GIFT(ale)=+10 TALK(brave)=+5 DECAY=1`.
+
+Effect `Prop_NPCLines`: `ONTHEJOB="Still on your coin, boss."|"Three days, I said." SKILLS="Here is what I can do: @x1."`
+
+Behaviour `MudChat` with a short file:
+
+```text
+>tarn
+(sword|blade)
+9"Forty fights, no regrets. [[hire|Hire]] me if you want a second blade.
+(hire|work|price)
+9"Ask and I'll tell you my terms.
+```
+
+Play it:
+
+```text
+talk tarn          (the menu offers "Hire (its terms)")
+hire tarn          (terms as a menu; choose 1)
+order tarn kill rat
+say sword          (on the job: he says how long)
+wait 2 days        (watch the wages; give him ale)
+```
+
+Things to check: he follows you; refusing `ORDER tarn drop sword`; below 30
+percent of his hit points in a fight he quits unless `AFFINITY` is at least 40
+(buy him ale first); after two unpaid days he leaves; at expiry he returns to his
+start room (`allDone` walks him home). Remember that `CONTRACT=DAYS` makes the
+second number days, not minutes.
+
+### Example 4: an escort quest NPC
+
+Pell the courier must reach Riverford. He waits at the inn until the player
+agrees, follows, remarks at a bridge, cowers if attacked, avoids the bog road,
+and on arrival thanks the party and sets a flag the quest can check.
+
+On Pell, behaviour `Escortee`:
+
+```text
+DEST=Riverford#1 MODE=FOLLOW WAITFOR=LEADER WAITCALL=3 WAITMSG="Wait for me!" PANIC=COWER AVOID=Bog#1 TALK="Bridge#3:They say wolves hunt near the bridge." TIMEOUT=900 ONTIMEOUT="say I have lost the day. Farewell.;mpsetvar $n ESCORT_FAILED 1" ONDEATH="mpsetvar $n ESCORT_FAILED 1" ONARRIVE="say Thank you, friends! Here is what I promised.;mpsetvar $n ESCORTED 1"
+```
+
+Behaviour `Scriptable` with the start of the escort:
+
+```text
+SPEECH_PROG riverford
+if VAR($n ESCORTED == 1)
+  say You already brought me, $n. Thank you again.
+else
+  say I must reach [[Riverford]] by the river road. Keep close, I will follow you.
+  mpforce $i follow $n
+endif
+~
+```
+
+(To pay a reward through a quest, add `mpquestwin $n <quest name>` to
+`ONARRIVE`; the quest itself is defined as in [08](08-quests.md). Quests can
+also start the escort with `MPFORCE`.)
+
+Test cases: stand still (after 3 ticks he calls "Wait for me!" and does not go
+on without you); attack him (he cowers); try the bog road (he refuses with "I
+won't go there."); reach Riverford#1 (ONARRIVE runs, he stops following); let
+the timeout run; save and restore mid-escort (leader, tick count and remarks
+survive). For a courier who walks ahead instead, use `MODE=LEAD`; he then walks
+the shortest way to `DEST` himself, a step a tick, and `WAITFOR=LEADER` makes
+him stop when you fall behind.
+
+### Example 5: an ambient town crier
+
+The crier walks the square by day ringing a bell and calling news, barks at the
+dawn, dusk and rain, chats with a guard now and then for someone who is
+listening, and goes to bed at night.
+
+On the crier:
+
+**`Patroller`** (day only, using the behaviour gate; the path is room IDs of the square):
+
+```text
+TOD=DAWN,DAY,DUSK min=8 max=8 chance=100;Brenn Village#10;WAIT=2;EMOTE=rings his handbell.;DO=say Hear ye, hear ye!;Brenn Village#11;WAIT=2;Brenn Village#12;RESTART
+```
+
+**`Schedule`** (so that he is in bed at night; he stays where he is by day, when
+no entry is in force):
+
+```text
+NIGHT: Brenn Village#14 SLEEP "cot"
+```
+
+**`Sounder`** (barks; one parameter):
+
+```text
+DAWN: SAY Hear ye! A new day dawns on Brenn!;DUSK: SAY The gates close at dark!;RAIN: SAY Mind the mud, good folk!;GREET_FIRST: SAY Hear ye, stranger! The [[harvest fair]] opens soon!;IDLE: CHANCE=2 COOLDOWN=40 3 SAY Hear ye, hear ye! | 1 EMOTE rings a handbell.
+```
+
+**`Emoter`** (ambience when nobody is talking; quiet during combat or when the
+player is reading):
+
+```text
+min=30 max=60 chance=60 NOREPEAT=1 QUIETAFTER=3;rings a handbell.;clears his throat.;DAWN SOUND a bell tolls in the square.
+```
+
+**`Scene`** (he and a guard bicker for anyone who walks in; once every two days;
+daytime only; the player can interrupt by speaking to either):
+
+```text
+NAME=crier;ACTOR crier=SELF;ACTOR guard=-NAMES +"town guard";crier: say Hear ye! The [[harvest fair]] opens on Saturday!;guard: say Again? He said that an hour ago.;PAUSE 1;crier: emote glares at the guard.;REPEAT=2;INTERRUPTIBLE;TOD=DAY
+```
+
+**`MudChat`** (questions): `chat/crier.dat=crier` with
+
+```text
+>crier
+(fair|harvest)
+9"Saturday at noon, in the square! Pies, races, and a prize for the best [[scarecrow]].
+(scarecrow)
+9"Straw and old coats. Entries to the reeve, by Friday.
+(news|hear)
+9"Hear ye: the road to Riverford is clear, the bog road is not.
+```
+
+Notes: the `[[harvest fair]]` topic is taught by the Sounder greeting and by the
+Scene, and the MudChat file answers it. Since the Patroller is gated by `TOD`, it
+stops entirely at night while the Schedule's `NIGHT` entry takes the crier to
+bed; by day Schedule has no entry in force and leaves him alone. Come back
+from the dungeon after a night and the area catch-up places him: `Schedule`
+puts him at the cot or the Patroller picks up the steps it missed.
+Test with `WAIT UNTIL DAWN`, `WAIT UNTIL DUSK`, `WAIT UNTIL NIGHT`, `TRACEB crier 40`
+and `STAT BEHAVIORS crier`.
+
+## Persistence notes
+
+| What | Where it lives | A reload or restore does |
+| --- | --- | --- |
+| Behaviour parameters, Prop_* text | The mob's definition in the world file (`.cmare`), or in the campaign save for mobs created in play | World load reads them; `SAVE` writes them. |
+| What a behaviour has built up (Schedule's locked room, Memory's facts, Escortee's leader and progress, Hireling's contract and wages, Sounder's greeted names, Scene's progress, Patroller's step, MudChat's temporary group switches) | The campaign save (the behaviour's STATE) | Restored with the save; not in world files. |
+| Memory facts | NPC script variables `MEM_*` (mirrored) | Kept in a saved game. |
+| Prop_Affinity values | NPC/area script variables `AFFINITY_*` | Kept in a saved game. |
+| Topics a character knows | Character variable `KNOWN_TOPICS` | Kept with the character. |
+| Kept `$@!` chat groups | NPC variable `MUDCHAT_GROUP_*` | Kept; read back after a restore. |
+| Pending MPMENU choices | Saved with the displayed options and source | Reissued on restore, or visibly cancelled if the source changed or is gone. |
+| Chat files, bark `FILE=`, scene `FILE=` | `resources/` or `world/resources/` | Read when first needed; reload with `CHAT RELOAD` (chat) or restart. Builder mode re-reads an edited chat file. |
+| Generic behaviours | `custom/behaviors/` in the world folder | `SAVE` writes them; `DESTROY BEHAVIOR` leaves copies in place until the world is loaded again. |
+
+Run-state is saved when the campaign is saved, not when the world is saved with
+`SAVE ROOM`; see [state-and-persistence.md](state-and-persistence.md) and
+[31](31-saves-and-party.md). Edit a behaviour's parameters and an existing
+instance reparses them; a changed schedule starts again from its new entries.
+
+## Troubleshooting and gotchas
+
+- **The NPC never answers MudChat.** Run `CHATTEST npc what-you-said`. Common
+  causes: three or more players in the room and you used SAY (use SAYTO, ASK or
+  TALK); another NPC just spoke; the NPC cannot see or hear you or is asleep;
+  the group was not found and the first group's entries do not match; an earlier
+  entry matched first; the language is not understood; `DISABLE=MUDCHAT`.
+- **Wrong group.** Group names match the whole NPC name (article removed), then
+  race, then class. Give the group in the parameters: `file=group`.
+- **Two replies.** MudChat and a SPEECH_PROG both matched. See
+  [mixing](#dialogue-with-mobprog).
+- **A tick line comes out as "sayto" a name.** Tick entries need `"` or `:` on
+  their replies.
+- **`$@` seems ignored.** It must end the last reply segment, and the group
+  must exist in the same file under that name.
+- **Case in zapper masks inside patterns.** Speech is lower-cased before
+  matching, so `/+NAME Bob/` style masks in a pattern may not match; use a
+  guard line (`?`) with a script condition instead.
+- **`Schedule: no room ...` in the log.** The room ID is wrong, or the area is
+  not loaded.
+- **The shopkeeper is closed all day.** With `SHOP` in some entries only those
+  entries open the shop. No entry in force or one without `SHOP` is closed;
+  see `STAT BEHAVIORS`.
+- **A routine breaks after a fight.** The NPC goes back to it after a fight;
+  an Alerted NPC pauses Schedule and Patroller for the alert time.
+- **TOD= makes my Sleeper never sleep.** Use `SLEEPS=NIGHT`, not `TOD=NIGHT`,
+  inside Sleeper's parameters.
+- **A condition on a script behaviour does nothing.** `Scriptable` ignores
+  `WHEN/TOD/HOURS`; put the test in the script.
+- **Topics do not list.** `ASK npc ABOUT` lists only topics the character
+  knows *and* the NPC answers (a SPEECH_PROG word, TALK_PROG word, or a MudChat
+  entry with those words). A `()` catch-all does not count.
+- **Menu answers do nothing.** MPMENU runs a `FUNCTION_PROG` of the same script
+  with the key as `$0`; the function name must match exactly. See the pending
+  menu notes above. One menu per character at a time.
+- **Hireling price is read as 100.** The first parameter must be a number; the
+  `KEY=value` terms come after `price;minutes;`.
+- **The hireling has no `HIRE` menu.** The menu appears only for a Hireling that
+  is not already working.
+- **Replies feel late in turn-based play.** Check `TIMEMODE DIALOGUE`.
+  `INSTANT` is the default in turn-based time.
+- **A bark never fires.** Check the event name against the table, the cooldown,
+  the chance and the mask; `IDLE` needs a `CHANCE=`; a sleeping NPC does not bark
+  at arrivals.
+- **Escort stalls.** The leader is whoever it follows; if it never followed
+  anyone (`mpforce $i follow $n` never ran) it is "not yet escorted" (see
+  `STAT BEHAVIORS`). In `FOLLOW` mode it never walks on its own.
+- **Facts in Memory disappeared.** `FORGET=` fades them; they are read lazily.
+
+## What is not in CoffeeSUD
+
+These appear in the audit as planned and are deferred; they are **not
+implemented**, so do not rely on them (the planning notes are in the
+[audit](../../audit/N-npc-behaviour-and-dialogue.md)):
+
+- A **Companion behaviour** for NPC party members who take orders and comment
+  (N13). Use Hireling, scripts and the party features instead.
+- **Dialogue trees**: a `Dialogue` behaviour, `.dlg` files and `MPDIALOG` (N14).
+  Use MudChat with guards, MPMENU and scripts. The TALK command already falls
+  back to MudChat.
+- A **rumour** list with gossiping NPCs (N23).
+- **LLM NPCs**: off-thread calls, saved memory per player, whitelisted actions
+  (N25 to N27). The inherited MudChat file syntax still has `L`, `.` and the
+  `` ` `` reply operator for an LLM integration, but CoffeeSUD does not provide
+  one; entries marked `.` are active and those marked `L` never fire.
+- Chat between players, the web and telnet front ends, and anything else removed
+  with multiplayer ([18](18-installing-and-running.md)).
+
+## See also
+
+- [21 NPCs and mobs](21-mobs.md): creating the NPC itself, shopkeepers, bankers, MOBTeacher.
+- [24 behaviours and masks](24-behaviors-and-masks.md) and [23 properties](23-properties-reference.md): the reference entries linked throughout.
+- [04 MOBPROG](04-mobprog.md), [26 triggers](26-mobprog-triggers.md), [27 commands](27-mobprog-commands.md), [28 functions](28-mobprog-functions.md): scripting dialogue.
+- [05 JavaScript](05-javascript.md): `catchUp` hooks and JS behaviours.
+- [08 quests](08-quests.md): quest givers, MPSTARTQUEST, MPQUESTWIN, markers.
+- [09 society](09-society.md): factions, law and shops (group opinions, prices).
+- [10 world simulation](10-world-simulation.md): the clock, weather and seasons that WHEN/Schedule read.
+- [11 presentation and language](11-presentation-language.md) and [languages](../languages.md): speech, translation and what NPCs understand.
+- [29 combat and encounters](29-combat-and-encounters.md): combat AI, bosses, morale (formerly the second half of this chapter).
+- [31 saves and party](31-saves-and-party.md): party members, CONTROL, what a save keeps.
+- [13 testing](13-testing-release.md): playtest files that drive conversations.
+- [cookbook](cookbook.md): a complete MPMENU conversation in the museum pack.
+- The inherited [MUDChat manual](../../CoffeeMud/guides/MUDChat.html) and [ScriptingSUD](../../CoffeeMud/guides/ScriptingSUD.html).

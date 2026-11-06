@@ -198,9 +198,9 @@ command, see [31-saves-and-party.md](31-saves-and-party.md)) sets the starting
 distance of group members. Ranged weapons (class `RANGED`, `THROWN`) use the
 ranged damage formulas below. The help topic `RANGE` explains the same rules.
 
-There is no player command named `ADVANCE` or `RETREAT` in CoffeeSUD: advancing
-and retreating are done by `AUTOMELEE` or by abilities (charge, spring, forceback...).
-(unverified for any alias outside `Commands/`; none was found.)
+There is no command file named `ADVANCE` or `RETREAT` in `Commands/`: advancing
+and retreating are done by `AUTOMELEE` and by abilities (charge, spring, forceback
+and the like).
 
 ### The hit roll
 
@@ -409,14 +409,14 @@ The **`PLAYERDEATH`** list (comma separated; each entry applies in order):
 | Entry | Effect |
 | --- | --- |
 | `EXPERIENCE` | Lose 100 experience per level of the character (minimum 100). |
-| a number, or a math expression | Lose that experience. In an expression `@x1` is the character's level, `@x2` the killer's level, `@x3` its rejuv ticks. Shipped value: `(@x1 * 50) < 2000`. |
+| a number, or a math expression | Lose that experience. In an expression `@x1` is the character's level, `@x2` the killer's level, `@x3` its rejuv ticks. In CoffeeMud math `<` means "at most": the shipped `(@x1 * 50) < 2000` loses 50 experience per level, up to 2000. |
 | `UNLEVEL X` | Lose X levels. |
 | `LOSESKILL` | Forget a random skill. |
 | `RETAIN` | Keep equipment. |
 | `ASTRAL` / `ASTRAL_RES` | Become a spirit (`Prop_AstralSpirit`); `ASTRAL_RES` can self-resurrect. |
 | `OUT X` | Go safely unconscious for X ticks (an expression is allowed); no corpse is made. |
 | `RECALL` | Recall to the death room, no body. |
-| `PURGE X` | Erased after X deaths. Not meaningful for a single-player profile; avoid. |
+| `PURGE X` | Inherited: the character is erased after X deaths. Destructive; avoid in CoffeeSUD. |
 | `DOWNED X Y` | CoffeeSUD: fall down for X rounds; an ally's `REVIVE` or a heal of Y points brings you back. See [C8](#c8-downed-state-and-party-defeat). |
 
 `MOBDEATH` takes `DEATH` (the default: the mob dies and returns on its rejuv) or
@@ -1250,7 +1250,7 @@ DIFFICULTY_NIGHTMARE=NPCDAMAGE=160 NPCHP=150 PLAYERDAMAGE=90 PLAYERXP=130 D=1.5
 ```
 
 In the game, `DIFFICULTY` shows the current preset and the choices;
-`DIFFICULTY <name>` changes it (a unique prefix is enough; not in the middle of a
+`DIFFICULTY <name>` changes it (a prefix of the name is enough; not in the middle of a
 fight). The save keeps the choice. "Player's side" means characters and mobs in a
 group led by a character. Damage scaling is applied to each damage message
 between the two sides (damage inside a side is not scaled, and at least 1 point
@@ -1757,9 +1757,8 @@ configuration (see [18-installing-and-running.md](18-installing-and-running.md))
 - **Campaign saves** keep the run state of the fight machinery: boss phase and
   rounds, engagement, immunity, summon bindings and combat targets; rotation round,
   cooldowns and ONCE history, threat and scheduling; wave state; named alarms and
-  telegraphs; each character's checkpoint; the chosen difficulty; an ambush's
-  sprung state; Scene state. `Prop_Downed` is not saved (a saved character is not
-  down). See [state-and-persistence.md](state-and-persistence.md).
+  telegraphs; each character's checkpoint; and the chosen difficulty.
+  `Prop_Downed` is not saved with the character. See [state-and-persistence.md](state-and-persistence.md).
 - A **world reload** re-reads parameters but not necessarily fight state; a mob in a
   fight at reload is a new object. Treat `RELOAD` as a fight reset.
 - **Rejuvenation** re-creates a dead mob from its world definition at its start

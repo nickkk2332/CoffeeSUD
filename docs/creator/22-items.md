@@ -267,7 +267,7 @@ is skipped and later numbers shift. Edit by number, or use the name forms of
 | Field (prompt text) | What it is | Stat code | Notes |
 | --- | --- | --- | --- |
 | Name | The item's name, which players type: "a rusty sword" | `NAME` | If the display text started with the old name, it is rewritten with the new name |
-| Display | Text shown in the room listing ("a rusty sword lies here."). `null` makes it blank, which hides it from the room listing (a "blended" item shown only when examined) | `DISPLAY` | |
+| Display | Text shown in the room listing ("a rusty sword lies here."). Enter `null` to blank it. An item with no display text is "blended": it gets no line of its own in the room listing, and the room description is expected to mention it | `DISPLAY` | A blended item can still be looked at and picked up by name |
 | Description | What `LOOK AT` shows. `+` opens the multi-line editor | `DESCRIPTION` | Supports VARIES/story text, see [11-presentation-language.md](11-presentation-language.md) |
 | Level | Level of the item. Wearers below this level cannot wear, wield or hold it | `LEVEL` | Default 1 for most generics, 5 for `GenWeapon`, 0 for `GenStaff`. Re-balances weapons and armor |
 | Material Type | The resource the item is made of, which gives it its family (metal, cloth...), weight/hardness effects and its value basis. `?` lists names | `MATERIAL` | See [Materials](#materials) |
@@ -302,7 +302,7 @@ done. They set sense flags on the item.
 | B | Is Droppable | It can be dropped |
 | C | Is Removable | It can be taken off once worn |
 | D | Non-Locatable | Locate magic cannot find it |
-| E | Blend Display | Item is always compressed into the room's item summary |
+| E | Blend Display | Always listed in the compact item summary (by name) instead of by its display text |
 | F | Semi-Hidden | Hidden in plain sight (found with a search) |
 | G | Contents Access (containers) | Contents can be seen/reached from outside |
 | G | Is Two-Handed (weapons) | The weapon needs both hands (`WORNAND`) |
@@ -338,9 +338,9 @@ names `PhyStats.IS_CODES` holds, or the numeric bitmap.
 | Layer | Layer number, plus see-through and multi-wear flags (see [Armor and wear locations](#armor-and-wear-locations)) | `LAYER`, `LAYERATTRIB` |
 | Armor (higher-better) | The armor value this item adds to the wearer | `ARMOR` |
 | Condition | Wear-and-tear score (100 is new), if the item suffers wear | `USES` |
-| Capacity, Can contain, Lid/Lock, Key Code, Size | If the armor is also a container (`GenCloak`, `GenGangline`-type armor and so on) | `CAPACITY`, `CONTAINTYPES`... |
-| Cloak Name | For `GenCloak` only: the cloak's concealed name (`READABLETEXT`) | `READABLETEXT` |
-| Size | Height the armor is cut for; must fit the wearer's height to within a tolerance (see below) | `HEIGHT` via `MODIFY ITEM x HEIGHT n` |
+| Capacity, Can contain, Lid/Lock | Every `GenArmor` class is also a container (`StdArmor` extends `StdContainer`) with capacity 0, so nothing fits until you raise it. Not shown for electronics, and `GenThinArmor` classes are not containers | `CAPACITY`, `CONTAINTYPES`... |
+| Cloak Name | For `GenCloak` only (replaces the lid/lock prompts): the name wearers appear under while it is worn | `READABLETEXT` |
+| Size | Shown for every `GenArmor` class, not `GenThinArmor`: the height the armor is cut for; it must fit the wearer's height to within a tolerance (see [Armor and wear locations](#armor-and-wear-locations)) | `HEIGHT` via `MODIFY ITEM x HEIGHT n` |
 
 ### Weapon editor extras
 
@@ -363,7 +363,7 @@ names `PhyStats.IS_CODES` holds, or the numeric bitmap.
 | Capacity | The maximum weight that fits inside (weight is used as volume) | `CAPACITY` |
 | Can contain | Types of item allowed; none selected means anything | `CONTAINTYPES` |
 | Has a lid / lock | See [Containers, lids, locks and keys](#containers-lids-locks-and-keys) | `HASLID`, `HASLOCK`, `DEFCLOSED`, `DEFLOCKED`, `RESETTIME` |
-| Key Code | Shown when it has a lid and a lock and is not readable | `READABLETEXT`-style key name via the editor; stored as the item's key name |
+| Key Code | Shown when it has a lid and a lock and is not readable. A key whose code fits this name unlocks it (matching is case-insensitive) | `READABLETEXT` (a generic container keeps its key name there) |
 
 ### Food editor extras
 

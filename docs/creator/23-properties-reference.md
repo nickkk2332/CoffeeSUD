@@ -290,36 +290,37 @@ Damage Absorption percentages or amounts, the list of absorbed damage types
 25% +ALL -LEVEL15
 15% +BASHING 1 +IRON 3 +STEEL 15% +MAGIC
 40% +BURNING SOURCEMASK="-RACECAT +Dragon"
-CoffeeSUD: SOURCEMASK="[ZAPPER MASK]" makes it work only against the attackers it fits.
 ```
+
+CoffeeSUD: SOURCEMASK="\[ZAPPER MASK\]" makes it work only against the attackers it fits.
 
 Whenever the item with this property is worn, or for the mob with this property, or anyone in the area or room with this property, they will attain damage absorption from the types and/or materials of weapons specified. Damage absorption may be represented as a percentage or as a straight amount. Damage amounts must be before the type of damage absorbed in the parameters. Damage amounts/percentages in the negative will add to the damage. If the term "ENHANCED" is included in the parameters, and percentage absorption amounts are used, then this will also attempt to auto-save against skills according to the percentage change, or, if the percentage is negative, make the effect last longer. Here are the parameters:
 
 +ALL - Specifies that, by default, the mob has ALL damage absorbed.
 
--[DAMAGETYPE]- Creates an exception to the +ALL rule by permitting normal damage of the given type. Examples for DAMAGETYPE would be -PIERCING, -GASSING, -SLASHING, -BURNING, -MELTING, -NATURAL, -BASHING, etc.
+-\[DAMAGETYPE\]- Creates an exception to the +ALL rule by permitting normal damage of the given type. Examples for DAMAGETYPE would be -PIERCING, -GASSING, -SLASHING, -BURNING, -MELTING, -NATURAL, -BASHING, etc.
 
-+[DAMAGETYPE]- Can be used instead of +ALL to absorb damage from the given damage type. Examples for DAMAGETYPE would be +PIERCING, +GASSING, +SLASHING, +BURNING, +MELTING, +NATURAL, +BASHING, etc.
++\[DAMAGETYPE\]- Can be used instead of +ALL to absorb damage from the given damage type. Examples for DAMAGETYPE would be +PIERCING, +GASSING, +SLASHING, +BURNING, +MELTING, +NATURAL, +BASHING, etc.
 
--[WEAPONCLASS]- Creates an exception to the +ALL rule by permitting normal damage of the given class. Examples for WEAPONCLASS would be -AXE, -BLUNT, -EDGED, -FLAILED, -HAMMER, -KARATE, -POLEARM, -RANGED, -SWORD, -DAGGER, -STAFF, -THROWN, etc.
+-\[WEAPONCLASS\]- Creates an exception to the +ALL rule by permitting normal damage of the given class. Examples for WEAPONCLASS would be -AXE, -BLUNT, -EDGED, -FLAILED, -HAMMER, -KARATE, -POLEARM, -RANGED, -SWORD, -DAGGER, -STAFF, -THROWN, etc.
 
--[WEAPONCLASS]- Can be used instead of +ALL to absorb damage from the given weapon class. Examples for WEAPONCLASS would be +AXE, +BLUNT, +EDGED, +FLAILED, +HAMMER, +KARATE, +POLEARM, +RANGED, +SWORD, +DAGGER, +STAFF, +THROWN, etc.
+-\[WEAPONCLASS\]- Can be used instead of +ALL to absorb damage from the given weapon class. Examples for WEAPONCLASS would be +AXE, +BLUNT, +EDGED, +FLAILED, +HAMMER, +KARATE, +POLEARM, +RANGED, +SWORD, +DAGGER, +STAFF, +THROWN, etc.
 
--[ABILITYCODE]- Creates an exception to the +ALL rule by permitting normal damage of the given type of ability. Examples for ABILITYCODE would be -THIEF_SKILL, -PRAYER, etc. Do list abilitycodes.
+-\[ABILITYCODE\]- Creates an exception to the +ALL rule by permitting normal damage of the given type of ability. Examples for ABILITYCODE would be -THIEF_SKILL, -PRAYER, etc. Do list abilitycodes.
 
-+[ABILITYCODE]- Can be used instead of +ALL to absorb damage from the given type of ability. Examples for ABILITYCODE be +SPELL, +SONG, etc.. Do list abilitycodes.
++\[ABILITYCODE\]- Can be used instead of +ALL to absorb damage from the given type of ability. Examples for ABILITYCODE be +SPELL, +SONG, etc.. Do list abilitycodes.
 
--[ABILITYDOMAIN]- Creates an exception to the +ALL rule by permitting normal damage of the given domain of ability. Examples for ABILITYDOMAIN would be -ILLUSION, -DEATH_LORE, etc. Do list abilitydomains.
+-\[ABILITYDOMAIN\]- Creates an exception to the +ALL rule by permitting normal damage of the given domain of ability. Examples for ABILITYDOMAIN would be -ILLUSION, -DEATH_LORE, etc. Do list abilitydomains.
 
-+[ABILITYDOMAIN]- Can be used instead of +ALL to absorb damage from the given domain of ability. Examples for ABILITYDOMAIN be +SPELL, +SONG, etc.. Do list abilitydomains.
++\[ABILITYDOMAIN\]- Can be used instead of +ALL to absorb damage from the given domain of ability. Examples for ABILITYDOMAIN be +SPELL, +SONG, etc.. Do list abilitydomains.
 
--[ABILITYFLAG]- Creates an exception to the +ALL rule by permitting normal damage of the given flagged abilities. Examples for ABILITYFLAG would be -UNHOLY, -CHARMING, etc. Do list abilityflags.
+-\[ABILITYFLAG\]- Creates an exception to the +ALL rule by permitting normal damage of the given flagged abilities. Examples for ABILITYFLAG would be -UNHOLY, -CHARMING, etc. Do list abilityflags.
 
-+[ABILITYFLAG]- Can be used instead of +ALL to absorb damage from the given flagged abilities. Examples for ABILITYDOMAIN be +HOLY, +CHARMING, etc.. Do list abilityflags.
++\[ABILITYFLAG\]- Can be used instead of +ALL to absorb damage from the given flagged abilities. Examples for ABILITYDOMAIN be +HOLY, +CHARMING, etc.. Do list abilityflags.
 
--[ABILITYID]- Creates an exception to the +ALL rule by permitting normal damage of the given specific ability. Examples for ABILITYID would be -SPELL_FIREBALL, etc.
+-\[ABILITYID\]- Creates an exception to the +ALL rule by permitting normal damage of the given specific ability. Examples for ABILITYID would be -SPELL_FIREBALL, etc.
 
-+[ABILITYID]- Can be used instead of +ALL to absorb damage from the given specific ability. Examples for ABILITYID be +SPELL_MAGICMISSILE, etc..
++\[ABILITYID\]- Can be used instead of +ALL to absorb damage from the given specific ability. Examples for ABILITYID be +SPELL_MAGICMISSILE, etc..
 
 -MAGIC - Creates an exception to the +ALL rule by permitting normal damage from magical spells and magical weapons.
 
@@ -414,7 +415,7 @@ NATURAL, SLASHING, PIERCING, BASHING, BURNING, BURSTING, SHOOTING, FROSTING, GAS
 
 PARALYSIS, FIRE, COLD, WATER, GAS, MIND, JUSTICE, ACID, ELECTRICITY, POISON, UNDEAD, DISEASE, TRAPS, WEAPONATTACK.
 
-\* CoffeeSUD: TARGETMASK="[ZAPPER MASK]" gives the extra damage only to the victims it fits (a bane weapon), and LEECH=[N]% heals the wielder that share of the damage dealt, the hit and the extra.
+\* CoffeeSUD: TARGETMASK="\[ZAPPER MASK\]" gives the extra damage only to the victims it fits (a bane weapon), and LEECH=\[N\]% heals the wielder that share of the damage dealt, the hit and the extra.
 
 ALLSET="set-name-N" activates this bonus when at least N worn pieces share the set name, including pieces using the other ALLSET bonus properties. Each property keeps its own threshold; the default is two pieces.
 
@@ -497,7 +498,7 @@ Once the tick-down time on an effect has been altered by this property, it will 
 GIFT(rare ore)=+10 QUESTWIN(The Smith's Blade)=+30 ATTACKED=-40 SHOPFACTOR=FRIENDLY:0.9,DEVOTED:0.8 REFUSE=HOSTILE
 ```
 
-CoffeeSUD: the NPC's opinion of each character, a number from START (0): HOSTILE below -50, COLD below 0, NEUTRAL, FRIENDLY from 25, DEVOTED from 75. It moves by the rules: an item given that GIFT's item names (words of its name, or a +/- mask), money given (BRIBE points a gold), a word said to it (TALK, at most once a game day each), a quest won (QUESTWIN, counted when next read), an attack on it (ATTACKED, once a game hour), a theft from it (STOLE), or a killing it sees of a mob KILLED names. DECAY brings it that much toward 0 a game day. SHOPFACTOR multiplies its prices by band (a friend sells for less and pays more); REFUSE: at or below that band it will not trade, saying REFUSEMSG. On an area, it is the village's opinion, shared by its NPCs that have none of their own. It is kept in the game's script variables AFFINITY_[CHARACTER] of the NPC (or the area), so a save keeps it; it does not show in FACTIONS. Scripts read AFFINITY($i $n) (or AFFINITY($i $n BAND)) and change it with MPAFFINITY; Prop_NPCLines takes [AFFINITY \>=25] or [AFFINITY FRIENDLY] after an entry; MudChat a ?AFFINITY($i $t \> 25) guard.
+CoffeeSUD: the NPC's opinion of each character, a number from START (0): HOSTILE below -50, COLD below 0, NEUTRAL, FRIENDLY from 25, DEVOTED from 75. It moves by the rules: an item given that GIFT's item names (words of its name, or a +/- mask), money given (BRIBE points a gold), a word said to it (TALK, at most once a game day each), a quest won (QUESTWIN, counted when next read), an attack on it (ATTACKED, once a game hour), a theft from it (STOLE), or a killing it sees of a mob KILLED names. DECAY brings it that much toward 0 a game day. SHOPFACTOR multiplies its prices by band (a friend sells for less and pays more); REFUSE: at or below that band it will not trade, saying REFUSEMSG. On an area, it is the village's opinion, shared by its NPCs that have none of their own. It is kept in the game's script variables AFFINITY_\[CHARACTER\] of the NPC (or the area), so a save keeps it; it does not show in FACTIONS. Scripts read AFFINITY($i $n) (or AFFINITY($i $n BAND)) and change it with MPAFFINITY; Prop_NPCLines takes \[AFFINITY \>=25\] or \[AFFINITY FRIENDLY\] after an entry; MudChat a ?AFFINITY($i $t \> 25) guard.
 
 ### Prop_AirSupply
 
@@ -534,7 +535,7 @@ MOBS="encounter:bandits" DETECT=WIS+Thief_DetectTraps:15 MSG="Figures burst from
 MOBS="catalog:a bandit*3" CHANCE=50 RESET=300 MASK="-LEVEL +>4"
 ```
 
-CoffeeSUD: an ambush. When the party walks in (its leader, at CHANCE percent, 100, if MASK fits), MOBS come out: name\*dice joined with + (catalog: optional) or encounter:[TABLE]. The party's best rolls DETECT: d20, a stat's (N-10)/2 and a skill's proficiency/10, against the number (15). Not spotted: MSG shows, the ambushers strike, and the party is caught by surprise for SURPRISE rounds (1; Prop_Surprised), unable to move or strike. Spotted: the party sees SPOTMSG and may strike first or walk on (the ambushers go) before WAIT ticks (2) are up, when they attack. It springs once, or again RESET ticks later. AMBUSH_PROG SURPRISED, SPOTTED or AVOIDED runs on the room's scripts and its NPCs'.
+CoffeeSUD: an ambush. When the party walks in (its leader, at CHANCE percent, 100, if MASK fits), MOBS come out: name\*dice joined with + (catalog: optional) or encounter:\[TABLE\]. The party's best rolls DETECT: d20, a stat's (N-10)/2 and a skill's proficiency/10, against the number (15). Not spotted: MSG shows, the ambushers strike, and the party is caught by surprise for SURPRISE rounds (1; Prop_Surprised), unable to move or strike. Spotted: the party sees SPOTMSG and may strike first or walk on (the ambushers go) before WAIT ticks (2) are up, when they attack. It springs once, or again RESET ticks later. AMBUSH_PROG SURPRISED, SPOTTED or AVOIDED runs on the room's scripts and its NPCs'.
 
 ### Prop_AreaBanner
 
@@ -651,7 +652,6 @@ nocast - the item may not have ANY spells cast upon it
 Notes:
 
 - Only the phrase "reset prop_artifact", said by someone allowed to edit items, destroys or resets the artifact; ordinary speech at the item no longer does.
-- An artifact keeps its identity across reloads: it is persisted in its last known place and, optionally, always restored.
 
 ### Prop_AstralSpirit
 
@@ -678,7 +678,7 @@ PROPS="Prop_WearEnabler(Spell_Haste);Prop_WearAdjuster(dex+2)" HOW=REST:10 LIMIT
 PROPS="Prop_WearEnabler(Chant_Barkskin)" RITUAL="INROOM Grove#1 & SAY attune"
 ```
 
-CoffeeSUD: powers that wake only once the item is attuned. PROPS stay inert until then. One attunes by resting with it (HOW=REST:[TICKS], sitting or sleeping while carrying it), by a RITUAL (in the room, saying the words; either part may be left out), or by wearing it (ON=EQUIP). LIMIT is how many items a character may be attuned to (3); UNATTUNE [ITEM] frees one. BIND keeps it inert in anyone else's hands. MSG is what the one who attunes is told; MASK is who may. Identifying it says it requires attunement, or to whom it is attuned.
+CoffeeSUD: powers that wake only once the item is attuned. PROPS stay inert until then. One attunes by resting with it (HOW=REST:\[TICKS\], sitting or sleeping while carrying it), by a RITUAL (in the room, saying the words; either part may be left out), or by wearing it (ON=EQUIP). LIMIT is how many items a character may be attuned to (3); UNATTUNE \[ITEM\] frees one. BIND keeps it inert in anyone else's hands. MSG is what the one who attunes is told; MASK is who may. Identifying it says it requires attunement, or to whom it is attuned.
 
 ### Prop_AuthorIdentity
 
@@ -711,7 +711,7 @@ ONCE=CHAR MSG="[Autosaved]"
 SLOT=auto ROTATE=3
 ```
 
-Saves the game when the player comes into the room, or into the area from outside it. With ONCE=CHAR, only the first time each character comes in. The save is called SLOT (auto if not given); with ROTATE, the saves take turns, SLOT1 to SLOT3 for ROTATE=3, so the last three are kept. The player is told MSG, or [Autosaved]. It is skipped while the party fights (unless the save mode is ANYWHERE), but saves even where Prop_NoSave or the lack of a save point would refuse a SAVE. In an ironman game it writes the game's one save.
+Saves the game when the player comes into the room, or into the area from outside it. With ONCE=CHAR, only the first time each character comes in. The save is called SLOT (auto if not given); with ROTATE, the saves take turns, SLOT1 to SLOT3 for ROTATE=3, so the last three are kept. The player is told MSG, or \[Autosaved\]. It is skipped while the party fights (unless the save mode is ANYWHERE), but saves even where Prop_NoSave or the lack of a save point would refuse a SAVE. In an ironman game it writes the game's one save.
 
 ### Prop_BlockedExit
 
@@ -938,7 +938,7 @@ CODE=739 RELOCK=30
 CODE=RANDOM DIALS=4 VAR=VAULTCODE
 ```
 
-CoffeeSUD: a combination lock on a door or a container. TURN DIAL 2 TO 3 sets one dial (VERB changes the word), SET DIALS 7 3 9 all of them, ENTER 739 a keypad's code; ON [THING] picks one when there are more. SYMBOLS are each dial's (0-9 by default); DIALS how many (as many as the code has). When the dials read the code, it unlocks and opens, on both sides of a door, with MSG, and runs ONOPEN; RELOCK shuts and locks it again after that many ticks. SHOW adds what the dials read to LOOK. After TRIES wrong codes, ONWRONG runs. CODE=RANDOM rolls one for each new game (DIALS of the SYMBOLS), kept with the lock, and VAR puts it in the script variable $\<COMBO [NAME]\> for a clue to print. Actions are script commands, as in Prop_Switch.
+CoffeeSUD: a combination lock on a door or a container. TURN DIAL 2 TO 3 sets one dial (VERB changes the word), SET DIALS 7 3 9 all of them, ENTER 739 a keypad's code; ON \[THING\] picks one when there are more. SYMBOLS are each dial's (0-9 by default); DIALS how many (as many as the code has). When the dials read the code, it unlocks and opens, on both sides of a door, with MSG, and runs ONOPEN; RELOCK shuts and locks it again after that many ticks. SHOW adds what the dials read to LOOK. After TRIES wrong codes, ONWRONG runs. CODE=RANDOM rolls one for each new game (DIALS of the SYMBOLS), kept with the lock, and VAR puts it in the script variable $\<COMBO \[NAME\]\> for a clue to print. Actions are script commands, as in Prop_Switch.
 
 ### Prop_CommonTwister
 
@@ -979,7 +979,7 @@ Notes:
 PCT=50 GATHER=2 SKILLS=Blacksmithing,Mining MASK="-LEVEL +<20"
 ```
 
-CoffeeSUD: crafting and gathering XP for a player character of any class. When their crafting, cooking or building skill makes something, it has an XP value (what an Artisan earns for it): CRAFTXP=[PCT] in the ini gives every player character that percent of it, and PCT here adds its own. When a gathering skill finds something, GATHERXP=[N] in the ini, and GATHER here, are XP for every unit found. It counts on the character, on an item they carry, on the room or an item lying in it, and on the area or one of its parents, as PCT=50 on a guild hall that teaches. SKILLS are the skills it is for (all when not given) and MASK who it is for. The XP goes through the usual way, so Prop_ModExperience and achievements see it, and an Artisan earns it on top of their own.
+CoffeeSUD: crafting and gathering XP for a player character of any class. When their crafting, cooking or building skill makes something, it has an XP value (what an Artisan earns for it): CRAFTXP=\[PCT\] in the ini gives every player character that percent of it, and PCT here adds its own. When a gathering skill finds something, GATHERXP=\[N\] in the ini, and GATHER here, are XP for every unit found. It counts on the character, on an item they carry, on the room or an item lying in it, and on the area or one of its parents, as PCT=50 on a guild hall that teaches. SKILLS are the skills it is for (all when not given) and MASK who it is for. The XP goes through the usual way, so Prop_ModExperience and achievements see it, and an Artisan earns it on top of their own.
 
 ### Prop_Crawlspace
 
@@ -1033,7 +1033,7 @@ CoffeeSUD: crop rules for Farming and Gardening, on a room or an area (all crops
 LEVEL=15 HIDDEN NOREMOVE PENALTY="Prop_WearAdjuster(wis-3);Prop_WearSpellCast(Prayer_CurseLuck)" REVEAL="The ring tightens on your finger!" BREAK="SAY:i confess;ENTER:Chapel#3" ONBREAK=CRUMBLE
 ```
 
-CoffeeSUD: a curse on an item that Remove Curse ends cleanly. It is of the cursing domain, so Remove Curse finds it, but only a priest of LEVEL or more lifts it. HIDDEN shows nothing until it is first worn, when REVEAL is told. NOREMOVE and NODROP keep it on and in hand. PENALTY is what it does (properties and their arguments, a semicolon between). BREAK is a list of deeds, done in order by the one who has it (SAY:[WORDS], ENTER:[ROOM ID]); BREAKMASK a mask they come to fit. Lifted or broken, its penalties go with it, and the item stays (KEEP), crumbles (CRUMBLE), or becomes another (BECOME:[ITEM]).
+CoffeeSUD: a curse on an item that Remove Curse ends cleanly. It is of the cursing domain, so Remove Curse finds it, but only a priest of LEVEL or more lifts it. HIDDEN shows nothing until it is first worn, when REVEAL is told. NOREMOVE and NODROP keep it on and in hand. PENALTY is what it does (properties and their arguments, a semicolon between). BREAK is a list of deeds, done in order by the one who has it (SAY:\[WORDS\], ENTER:\[ROOM ID\]); BREAKMASK a mask they come to fit. Lifted or broken, its penalties go with it, and the item stays (KEEP), crumbles (CRUMBLE), or becomes another (BECOME:\[ITEM\]).
 
 ### Prop_DarkDanger
 
@@ -1197,7 +1197,7 @@ XP=[N or N%] ON=[ENTER/LOOK/READ/OPEN/GET/FIND/TALK] ONCE=[CHARACTER/PARTY/PROFI
 XP=150 ONCE=PARTY MESSAGE="Behind the falls lies a hidden grotto!" TATTOO=FOUND_GROTTO
 ```
 
-CoffeeSUD: a discovery. The first time its event happens to a character (ON: ENTER the room, LOOK at it, READ, OPEN, GET, TALK to the mob, or FIND it when it is hidden with Prop_Discoverable; by default ENTER for a room, OPEN an exit, GET an item, TALK a mob) and MASK lets them in, they get XP (a number, or a percent of their level's experience; tagged DISCOVERY:, so XPMOD can scale it), are told MESSAGE, get a JOURNAL line in their quest journal, and the tattoo TATTOO (or one of its own) marks it done: for them, their whole party (ONCE=PARTY) or every character of the profile (ONCE=PROFILE). DISCOVERYXP=[formula] in the ini or world.ini pays each room a character enters for the first time (@x1 their level, @x2 the area's median level).
+CoffeeSUD: a discovery. The first time its event happens to a character (ON: ENTER the room, LOOK at it, READ, OPEN, GET, TALK to the mob, or FIND it when it is hidden with Prop_Discoverable; by default ENTER for a room, OPEN an exit, GET an item, TALK a mob) and MASK lets them in, they get XP (a number, or a percent of their level's experience; tagged DISCOVERY:, so XPMOD can scale it), are told MESSAGE, get a JOURNAL line in their quest journal, and the tattoo TATTOO (or one of its own) marks it done: for them, their whole party (ONCE=PARTY) or every character of the profile (ONCE=PROFILE). DISCOVERYXP=\[formula\] in the ini or world.ini pays each room a character enters for the first time (@x1 their level, @x2 the area's median level).
 
 ### Prop_Doppleganger
 
@@ -1405,9 +1405,9 @@ Spell_Portal(Somewhere else);MASK=-RACE +Dwarf
 
 Causes a spell to be cast upon the target being struck during melee combat. This property also supports a % chance of triggering. Siege weapons will also affect a random mob/item on the deck, or all if ALLMOBS/ALLITEMS added, orselectively if ONLYMOBS/ONLYITEMS added.
 
-The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The flag NOOWN can be used to skip item ownership checks.
 
@@ -1524,7 +1524,7 @@ ability (magical level), armor, attacks (prowess), damage (max), disposition (se
 
 By default, the values + or - are added to the existing values. However, if MULTIPLYPH=true is included in the parameters, then attack, armor, damage, weight and height will instead have their values multiplied by the given value / 100, and speed by the given value itself (SPEED+1.5 is one and a half times). Likewise, if MULTIPLYCH=true is included, then hitpoints, mana, and movement are similarly multiplied instead of added. All other values act the same.
 
-Parameters may also include ALLSET=[SET_NAME]-[NUMBER] where SET_NAME is a arbitrary un-spaced name of the set to which the item belongs. Only when [NUMBER] items in that set are possessed (or worn for Prop_WearAdjuster) will all of the stats be adjusted according to their parameters.
+Parameters may also include ALLSET=\[SET_NAME\]-\[NUMBER\] where SET_NAME is a arbitrary un-spaced name of the set to which the item belongs. Only when \[NUMBER\] items in that set are possessed (or worn for Prop_WearAdjuster) will all of the stats be adjusted according to their parameters.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. See ZAPPERMASKS for more information on zapper mask syntax.
 
@@ -1575,8 +1575,9 @@ Parameters may be followed by an optional mask
 magic 50% poison -10%
 magic poison 50% pierce -10% MASK=-RACE +Dwarf
 fire 40% SOURCEMASK="-RACECAT +Dragon"
-CoffeeSUD: SOURCEMASK="[ZAPPER MASK]" makes it work only against the attackers it fits; MASK= is still whom it protects.
 ```
+
+CoffeeSUD: SOURCEMASK="\[ZAPPER MASK\]" makes it work only against the attackers it fits; MASK= is still whom it protects.
 
 So long as the item with this property is owned, the owner will gain certain resistances and immunities in the parameters. The effects which may be included are:
 
@@ -1624,9 +1625,9 @@ Spell_MageArmor;Spell_Shield
 Spell_MageArmor;Spell_Shield; MASK=-RACE +Dwarf
 ```
 
-So long as the item with this property is owned, the owner will be under the effect of the listed spells. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+So long as the item with this property is owned, the owner will be under the effect of the listed spells. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. See ZAPPERMASKS for more information on zapper mask syntax.
 
@@ -1767,9 +1768,9 @@ Spell_MageArmor;Spell_Shield
 Spell_MageArmor;Spell_Shield; MASK=-RACE +Dwarf
 ```
 
-So long as the room with this property is occupied, the occupants will be under the effect of the listed spells. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+So long as the room with this property is occupied, the occupants will be under the effect of the listed spells. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. See ZAPPERMASKS for more information on zapper mask syntax.
 
@@ -1918,7 +1919,7 @@ An alternative to setting a mob permanently invisible, this will keep the MOB in
 WORD=Ignis SPELLS="Spell_Fireball;LEVEL=12" TARGET=ENEMY CHARGES=3 RECHARGE=DAWN REQUIRE=WORN EMPTYMSG="The ring is cold."
 ```
 
-CoffeeSUD: an item's powers on demand, for anyone, with no class skill. Its holder says WORD, or types VERB and its name (INVOKE [ITEM], the default without a WORD). It casts SPELLS, each at LEVEL (or the item's level), on its user (SELF), their foe (ENEMY) or about them (ROOM). CHARGES is how many uses it holds (what is left is kept with it); RECHARGE fills them again at dawn, each game day, or every N ticks. COOLDOWN ticks pass between uses. REQUIRE: it must be worn, or held. MASK is who may use it. MSG is what the room sees (\<S-NAME\> the user, \<T-NAME\> the item); EMPTYMSG what they are told when it is spent. Identifying it tells its charges and recharge.
+CoffeeSUD: an item's powers on demand, for anyone, with no class skill. Its holder says WORD, or types VERB and its name (INVOKE \[ITEM\], the default without a WORD). It casts SPELLS, each at LEVEL (or the item's level), on its user (SELF), their foe (ENEMY) or about them (ROOM). CHARGES is how many uses it holds (what is left is kept with it); RECHARGE fills them again at dawn, each game day, or every N ticks. COOLDOWN ticks pass between uses. REQUIRE: it must be worn, or held. MASK is who may use it. MSG is what the room sees (\<S-NAME\> the user, \<T-NAME\> the item); EMPTYMSG what they are told when it is spent. Identifying it tells its charges and recharge.
 
 ### Prop_ItemBinder
 
@@ -2004,7 +2005,7 @@ SET=drowned_king NAME="Regalia of the Drowned King" PIECES=5 TIER2="Prop_WearAdj
 SET=drowned_king
 ```
 
-CoffeeSUD: a piece of an item set. Every piece has SET, the set's id; one piece (or a line of world/itemsets.txt, SET=[ID] NAME=... TIER2=..., for a set none of whose pieces says) has the tiers: TIER[N] what wearing N pieces gives (COUNT=HELD: carrying them), properties and their arguments in brackets, a semicolon between. Every tier met applies: its properties go on one of the counted pieces, unsaved, and come off when a piece does. ONMSG and OFFMSG tell the wearer as a tier comes and goes ($t the tier); MASK is who may have them; PIECES how many there are. LOOK at a piece shows "Set: 3/5 worn" and each tier. Scripts: SETCOUNT([CODE] [SET]) and SET_PROG. The ALLSET of Prop_HaveAdjuster and Prop_WearAdjuster now gives each piece its own number of pieces needed.
+CoffeeSUD: a piece of an item set. Every piece has SET, the set's id; one piece (or a line of world/itemsets.txt, SET=\[ID\] NAME=... TIER2=..., for a set none of whose pieces says) has the tiers: TIER\[N\] what wearing N pieces gives (COUNT=HELD: carrying them), properties and their arguments in brackets, a semicolon between. Every tier met applies: its properties go on one of the counted pieces, unsaved, and come off when a piece does. ONMSG and OFFMSG tell the wearer as a tier comes and goes ($t the tier); MASK is who may have them; PIECES how many there are. LOOK at a piece shows "Set: 3/5 worn" and each tier. Scripts: SETCOUNT(\[CODE\] \[SET\]) and SET_PROG. The ALLSET of Prop_HaveAdjuster and Prop_WearAdjuster now gives each piece its own number of pieces needed.
 
 ### Prop_ItemSlot
 
@@ -2575,7 +2576,7 @@ RANK=[MINION/NORMAL/ELITE/BOSS/ANOTHER]
 RANK=BOSS
 ```
 
-CoffeeSUD: the mob's rank. It gets the rank's numbers, from MOBRANK_[NAME] in coffeemud.ini (or a world's world.ini): HP+n% DAMAGE+n% ATTACK+n ARMOR-n (lower is better) SPEED+n, XP\*x (the experience for killing it), RESIST="fire 25% mind 25%" (saving throws), POWER=x (what an encounter budget counts it as) and TAG=text, which LOOK and CONSIDER show. The numbers are read each time the mob's stats are worked out, so one edit retunes every mob of the rank. The defaults: MINION HP-50% DAMAGE-25% ATTACK-10 XP\*0.5 TAG=[minion]; NORMAL nothing; ELITE HP+100% DAMAGE+25% ATTACK+10 ARMOR-10 XP\*2.5 TAG=[elite]; BOSS HP+300% DAMAGE+50% ATTACK+20 ARMOR-20 XP\*5 TAG=[boss]. A world may add ranks of its own (MOBRANK_CHAMPION=...). Scripts read RANK($i) (NORMAL for a mob without one) or test RANK($i == BOSS); masks take -RANK +ELITE +BOSS (only those) and +RANK -MINION (not those).
+CoffeeSUD: the mob's rank. It gets the rank's numbers, from MOBRANK_\[NAME\] in coffeemud.ini (or a world's world.ini): HP+n% DAMAGE+n% ATTACK+n ARMOR-n (lower is better) SPEED+n, XP\*x (the experience for killing it), RESIST="fire 25% mind 25%" (saving throws), POWER=x (what an encounter budget counts it as) and TAG=text, which LOOK and CONSIDER show. The numbers are read each time the mob's stats are worked out, so one edit retunes every mob of the rank. The defaults: MINION HP-50% DAMAGE-25% ATTACK-10 XP\*0.5 TAG=\[minion\]; NORMAL nothing; ELITE HP+100% DAMAGE+25% ATTACK+10 ARMOR-10 XP\*2.5 TAG=\[elite\]; BOSS HP+300% DAMAGE+50% ATTACK+20 ARMOR-20 XP\*5 TAG=\[boss\]. A world may add ranks of its own (MOBRANK_CHAMPION=...). Scripts read RANK($i) (NORMAL for a mob without one) or test RANK($i == BOSS); masks take -RANK +ELITE +BOSS (only those) and +RANK -MINION (not those).
 
 ### Prop_ModExperience
 
@@ -2600,7 +2601,7 @@ CoffeeSUD: the mob's rank. It gets the rank's numbers, from MOBRANK_[NAME] in co
 *2
 ```
 
-Allows the archon to modify the amount of experience gained by each player for slaying the mob. If placed on a mob, the experience will be granted according to the parm, so long as the player meets the mask, and xp meets the type parameters (both optional). The property will apply to the mob with this property him or herself only if the word SELF is included in the first parameters. The property will apply to riders of mobs with this property, unless RIDEOK is included in the first parameters. This property will only apply to targeted xp (like combat) with the TARGET parameter. Other arguments include: NEGATIVE to apply only to lost experience, or POSINEGA to apply to positive and negative experience. POSITIVE experience only is the default. If placed on an item, the xp mod will be applied to the wearer (or wielder or holder) . If placed on a Room or Area, the experience mods will be apply to those inside. If no mask or xp type is given, the experience is always granted. For valid masks, see AHELP ZAPPERMASK, where allowed is modified, and disallowed is not modified. Valid xp types include things like: "ABILITY:[ability id]", "COMBAT:\*", "SCRIPT:[quest name]", "CLASS:[class name]", "ACHIEVE:\*", "COMMAND:[command id]", "LIEGE:[name]", "MISC:\*", etc. The type can be matched using \* or ? characters. Multiple independent XP changes may be specified by grouping all arguments in [], and separating multiple groupings with commas.
+Allows the archon to modify the amount of experience gained by each player for slaying the mob. If placed on a mob, the experience will be granted according to the parm, so long as the player meets the mask, and xp meets the type parameters (both optional). The property will apply to the mob with this property him or herself only if the word SELF is included in the first parameters. The property will apply to riders of mobs with this property, unless RIDEOK is included in the first parameters. This property will only apply to targeted xp (like combat) with the TARGET parameter. Other arguments include: NEGATIVE to apply only to lost experience, or POSINEGA to apply to positive and negative experience. POSITIVE experience only is the default. If placed on an item, the xp mod will be applied to the wearer (or wielder or holder) . If placed on a Room or Area, the experience mods will be apply to those inside. If no mask or xp type is given, the experience is always granted. For valid masks, see AHELP ZAPPERMASK, where allowed is modified, and disallowed is not modified. Valid xp types include things like: "ABILITY:\[ability id\]", "COMBAT:\*", "SCRIPT:\[quest name\]", "CLASS:\[class name\]", "ACHIEVE:\*", "COMMAND:\[command id\]", "LIEGE:\[name\]", "MISC:\*", etc. The type can be matched using \* or ? characters. Multiple independent XP changes may be specified by grouping all arguments in \[\], and separating multiple groupings with commas.
 
 Notes:
 
@@ -2728,7 +2729,7 @@ Notes:
 NOTBUYING="Bah! I've no use for that junk."|"Take that rubbish elsewhere." STOLEN="I know where that came from, $n."
 ```
 
-CoffeeSUD: the NPC's own words for the stock lines a shopkeeper, banker, postman, hireling or the like says. Each entry names a line by a short key or by the line itself in quotes; its text is what is said instead, one of several split by \| at random, with @x1, @x2... the line's values (a price, an item) and $n the one spoken to. A [MASK] after the text makes it that customer's alone, and such entries come first; [AFFINITY \>=25] or [AFFINITY FRIENDLY] tests the NPC's opinion of them (AHELP PROP_AFFINITY). An empty text says nothing. On an area it gives the whole town's words; an NPC's own come first. The keys: NOTBUYING (I'm not interested.), NOTBUYINGTHOSE, STOLEN, OUTOFSTOCK, TOOPOOR (@x1 the item), SHOPPOOR, TOODEAR, OFFER (@x1 the price, @x2 the item), FIRM, TOOADVANCED, TOOLOW, CLANSONLY, BALANCE, NOLOANS, ACCOUNTCLOSED, ONLYCURRENCY, SAFE, DELIVER, FORHIRE, HIRED, PRICE, ONTHEJOB, TIMEUP, GOODBYE, WONTWORK, SKILLS. Any other line the NPC says may be named in quotes.
+CoffeeSUD: the NPC's own words for the stock lines a shopkeeper, banker, postman, hireling or the like says. Each entry names a line by a short key or by the line itself in quotes; its text is what is said instead, one of several split by \| at random, with @x1, @x2... the line's values (a price, an item) and $n the one spoken to. A \[MASK\] after the text makes it that customer's alone, and such entries come first; \[AFFINITY \>=25\] or \[AFFINITY FRIENDLY\] tests the NPC's opinion of them (AHELP PROP_AFFINITY). An empty text says nothing. On an area it gives the whole town's words; an NPC's own come first. The keys: NOTBUYING (I'm not interested.), NOTBUYINGTHOSE, STOLEN, OUTOFSTOCK, TOOPOOR (@x1 the item), SHOPPOOR, TOODEAR, OFFER (@x1 the price, @x2 the item), FIRM, TOOADVANCED, TOOLOW, CLANSONLY, BALANCE, NOLOANS, ACCOUNTCLOSED, ONLYCURRENCY, SAFE, DELIVER, FORHIRE, HIRED, PRICE, ONTHEJOB, TIMEUP, GOODBYE, WONTWORK, SKILLS. Any other line the NPC says may be named in quotes.
 
 ### Prop_NarrowLedge
 
@@ -3150,7 +3151,7 @@ trigger=get bubble=false ammocapacity=10
 trigger=always bubble=false capacity="@x1+${WEIGHT}+5"
 ```
 
-This property changes the settable fields on the affected object, or an items owner if bubble=true. The change occurs on the trigger, and is undone on an opposing event, if the trigger has one. The supported triggers are: ALWAYS, ENTER, BEING_HIT, WEAR_WIELD, GET, USE, PUT ,MOUNT, DROP_PUTIN, HITTING_WITH. The stats you can discover by using LIST STATS [CLASSNAME].
+This property changes the settable fields on the affected object, or an items owner if bubble=true. The change occurs on the trigger, and is undone on an opposing event, if the trigger has one. The supported triggers are: ALWAYS, ENTER, BEING_HIT, WEAR_WIELD, GET, USE, PUT ,MOUNT, DROP_PUTIN, HITTING_WITH. The stats you can discover by using LIST STATS \[CLASSNAME\].
 
 "VALUE"s can be anything, including math formulas based on the previous numeric value by including the @x1 variable, or by referencing some other stat using ${OTHERSTAT} syntax inside the value.
 
@@ -3189,7 +3190,7 @@ Notes:
 COUNT=3 REFRESH="1 mudday" TEMPLATE=normal LEVELRANGE=3
 ```
 
-CoffeeSUD: a board of jobs, quests generated as the RandomQuests behavior makes them (TEMPLATE, FILE as its PATH, TAGID, and its other parameters, such as SOURCENAME= for the giver, are passed on; VARS sets more of the generator's variables). LOOK at the board (or READ it, if the item is readable; LOOK in the room, on a room) lists the jobs the reader may take, COUNT of them (3), and ACCEPT [NUMBER] takes one. At each REFRESH (1 MUDDAY, or MUDDAY:1), on the game clock, the jobs done or given up go and new ones come up to COUNT, or with none taken the oldest is replaced; a job taken stays until it is done. The generator is told the reader's PLAYER_LEVEL, PARTY_SIZE (the players' characters of their group), PLAYER_FACTION_[ID] and QUESTS_DONE, and with LEVELRANGE=[N] TARGET_MIN_AREALEVEL and TARGET_MAX_AREALEVEL that far around the level. A job waits on the board with no expiry unless EXPIRE= says one. The jobs are kept in a saved game with the board.
+CoffeeSUD: a board of jobs, quests generated as the RandomQuests behavior makes them (TEMPLATE, FILE as its PATH, TAGID, and its other parameters, such as SOURCENAME= for the giver, are passed on; VARS sets more of the generator's variables). LOOK at the board (or READ it, if the item is readable; LOOK in the room, on a room) lists the jobs the reader may take, COUNT of them (3), and ACCEPT \[NUMBER\] takes one. At each REFRESH (1 MUDDAY, or MUDDAY:1), on the game clock, the jobs done or given up go and new ones come up to COUNT, or with none taken the oldest is replaced; a job taken stays until it is done. The generator is told the reader's PLAYER_LEVEL, PARTY_SIZE (the players' characters of their group), PLAYER_FACTION_\[ID\] and QUESTS_DONE, and with LEVELRANGE=\[N\] TARGET_MIN_AREALEVEL and TARGET_MAX_AREALEVEL that far around the level. A job waits on the board with no expiry unless EXPIRE= says one. The jobs are kept in a saved game with the board.
 
 ### Prop_QuestGiver
 
@@ -3227,7 +3228,7 @@ QUEST=[NAME] (NODROP) (NOSELL) (NOGIVE) (KEEPONDEATH) (REMOVEON=[WON,FAILED,ABAN
 QUEST=bell NODROP NOSELL REMOVEON=WON
 ```
 
-CoffeeSUD: binds the item to a quest. NODROP, NOSELL and NOGIVE refuse those, with a message; KEEPONDEATH keeps it with the character when they die. It goes when the quest leaves ACTIVE for its holder as REMOVEON says: WON, FAILED, ABANDONED (dropped), EXPIRED, or ENDED (the quest stopped); ALL, the default, is any of them, NONE none. QUESTS [QUEST] lists what the character carries for it.
+CoffeeSUD: binds the item to a quest. NODROP, NOSELL and NOGIVE refuse those, with a message; KEEPONDEATH keeps it with the character when they die. It goes when the quest leaves ACTIVE for its holder as REMOVEON says: WON, FAILED, ABANDONED (dropped), EXPIRED, or ENDED (the quest stopped); ALL, the default, is any of them, NONE none. QUESTS \[QUEST\] lists what the character carries for it.
 
 ### Prop_QuestLog
 
@@ -3434,13 +3435,13 @@ actual (discount disguises)
 
 "message= ... " (override the default no-entry message.
 
-"event= ..." (comma-delim event: default='block', or 'accuse,[crime],..')
+"event= ..." (comma-delim event: default='block', or 'accuse,\[crime\],..')
 
 See AHELP ZAPPERMASK, where allowed can enter, and disallowed is not.
 
 Notes:
 
-- CoffeeSUD additions: the `event=` and `message=` options (blocking versus accusing a crime), and `actual`. The `nofol` word in the help is read as `nofollow` as well.
+- CoffeeSUD additions: the `event=` and `message=` options (blocking versus accusing a crime), and `actual`. The help calls the follower option `nofol`, but the code tests for words starting with `NOFOLLOW`, so write `nofollow` (a bare `nofol` is ignored). Option words are matched case-insensitively; the mask is whatever follows the first term that begins with `+` or `-`.
 - Followers of an allowed character are let in unless `nofollow` is given.
 - It carries `FLAG_ZAPPER`, so tools that list zapper-using properties include it. Mask syntax: chapter 24 (zapper masks).
 
@@ -3833,9 +3834,9 @@ Spell_MageArmor;Spell_Shield
 Spell_MageArmor;Spell_Shield; MASK=-RACE +Dwarf
 ```
 
-So long as the item with this property is being mounted or ridden, the owner will be under the effect of the listed spells. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+So long as the item with this property is being mounted or ridden, the owner will be under the effect of the listed spells. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The flag ONCLOSED can be used to invoke effects only when the container is closed.
 
@@ -4118,7 +4119,7 @@ Makes the mob with this property completely unattackable. The default message ca
 YIELD="brass:4, iron(clockwork):1@25%, catalog:soul gear@5%" XP=20
 ```
 
-CoffeeSUD: what taking the item apart gives, in place of the usual. SKILL is Scrapping when not given, or a crafting skill, for its DISMANTLE (\* for any). YIELD is a comma list (in quotes when it has spaces): [RESOURCE]:[N] is N units of a resource, [RESOURCE]([VARIANT]):[N] the resource as a named variant, and catalog:[ITEM NAME]:[N] a catalog item; @[PCT]% after one is the chance of it. XP is given on success, and DESTROY=false leaves the item where it is, with nothing more in it. With it, Scrapping takes just that item, whatever its material, enchanted or not. It works on a catalog entry too. Without one, [SKILL] DISMANTLE [ITEM] takes apart an item the skill could make, carried or in the room, for DISMANTLEPCT (in the ini: 50 when blank, 0 for none) percent of the materials its recipe uses, times the crafter's proficiency.
+CoffeeSUD: what taking the item apart gives, in place of the usual. SKILL is Scrapping when not given, or a crafting skill, for its DISMANTLE (\* for any). YIELD is a comma list (in quotes when it has spaces): \[RESOURCE\]:\[N\] is N units of a resource, \[RESOURCE\](\[VARIANT\]):\[N\] the resource as a named variant, and catalog:\[ITEM NAME\]:\[N\] a catalog item; @\[PCT\]% after one is the chance of it. XP is given on success, and DESTROY=false leaves the item where it is, with nothing more in it. With it, Scrapping takes just that item, whatever its material, enchanted or not. It works on a catalog entry too. Without one, \[SKILL\] DISMANTLE \[ITEM\] takes apart an item the skill could make, carried or in the room, for DISMANTLEPCT (in the ini: 50 when blank, 0 for none) percent of the materials its recipe uses, times the crafter's proficiency.
 
 ### Prop_SavePoint
 
@@ -4218,7 +4219,7 @@ DAWN="The red sun drags itself over the ash dunes." WEATHER_SNOW="Grey ash begin
 DAWN=NONE NIGHT="The glowcaps dim as night falls on the surface far above."
 ```
 
-CoffeeSUD: an area's or a room's own lines for the sky. DAWN, DAY, DUSK and NIGHT are told under the sky as the time of day changes, INDAWN to INNIGHT indoors; WEATHER_[STATE] (CLEAR, CLOUDY, WINDY, RAIN, THUNDERSTORM, SNOW, HAIL, HEAT, SLEET, BLIZZARD, DUST, DROUGHT, COLD, FOG) is the weather's description, as it starts and as LOOK and WEATHER tell it, STOP_[STATE] its ending line, MOON TIME's moon line. Alternatives go between \|, one picked each time; NONE says nothing. A room's own come before its area's, an area's before its parents'; what none sets comes from the area's climate file (AHELP WEATHERPROFILE), then resources/lists.ini.
+CoffeeSUD: an area's or a room's own lines for the sky. DAWN, DAY, DUSK and NIGHT are told under the sky as the time of day changes, INDAWN to INNIGHT indoors; WEATHER_\[STATE\] (CLEAR, CLOUDY, WINDY, RAIN, THUNDERSTORM, SNOW, HAIL, HEAT, SLEET, BLIZZARD, DUST, DROUGHT, COLD, FOG) is the weather's description, as it starts and as LOOK and WEATHER tell it, STOP_\[STATE\] its ending line, MOON TIME's moon line. Alternatives go between \|, one picked each time; NONE says nothing. A room's own come before its area's, an area's before its parents'; what none sets comes from the area's climate file (AHELP WEATHERPROFILE), then resources/lists.ini.
 
 ### Prop_Smell
 
@@ -4283,7 +4284,7 @@ SRCCODE = source letter: W)ords, M) hands, V)isual, S)ound, O) movement
 
 TGTCODE = target letter: T)hands, S)ounds, W)ords, V)noisy moves, O) visual
 
-TARGET = target: \<T-NAME\> SELF ALL \<I-NAME\> \<V-NAME\> \<E-NAME\> [ITEM]
+TARGET = target: \<T-NAME\> SELF ALL \<I-NAME\> \<V-NAME\> \<E-NAME\> \[ITEM\]
 
 YOUSEE = What the command invoker sees (\<S-NAME\>) sees.
 
@@ -4383,7 +4384,7 @@ Casts the spells in the parameters on the next one to enter the same room. as th
 
 Notes:
 
-- The hand-off between the old and new target is fixed; the fallback room is the default.
+- The spell list is parsed by the same code as [Prop_HereSpellCast](#prop_herespellcast): `;`-separated entries that can be a spell with optional text in parentheses (`Prayer_SummonElemental(/FIRE)`), an entry with a leading `NN% ` chance, or the flags `NOUNINVOKE`, `LEVEL=[N]`, `MAXTICKS=[N]` and `TICKS=[N]`. The code also reads an `ONCLOSED` flag that the help does not describe (see the audit notes).
 
 ### Prop_SpellReflecting
 
@@ -4539,7 +4540,7 @@ STATES="down,up" DESC_up="The lever is up." ACTION_up="door open Gate#3 east" AC
 VERBS=turn STATES=1-8 ACTION_5="signal WORLD vault dial5"
 ```
 
-CoffeeSUD: a lever, button, crank or dial that keeps its state. One of VERBS (pull, push, turn, press, flip), with the thing's name, moves it to its next state, before the game's own command of that name; "TURN DIAL TO 3" to that state; ACTIVATE and DEACTIVATE to the second state and the first. STATES are words or a range of numbers (a dial); START the first. DESC_[STATE] is added to LOOK; MSG_[STATE] is what the room sees (\<S-NAME\> who, \<T-NAME\> it); ACTION_[STATE] runs script commands, a semicolon between them and MP left off if you like (door open Gate#3 east; signal WORLD gate1 up; unhide 'a narrow stair'), for the thing, $n who moved it. RESET goes back to START after that many ticks, running its action. REQUIRES (or MASK) is who may move it, REQMSG what the others are told; ONCE moves it once. SWITCH_PROG [STATE] runs on its scripts and its room's, and SWITCHSTATE() reads it. The state is kept in the property's text (STATE=), so saves and world files keep it.
+CoffeeSUD: a lever, button, crank or dial that keeps its state. One of VERBS (pull, push, turn, press, flip), with the thing's name, moves it to its next state, before the game's own command of that name; "TURN DIAL TO 3" to that state; ACTIVATE and DEACTIVATE to the second state and the first. STATES are words or a range of numbers (a dial); START the first. DESC_\[STATE\] is added to LOOK; MSG_\[STATE\] is what the room sees (\<S-NAME\> who, \<T-NAME\> it); ACTION_\[STATE\] runs script commands, a semicolon between them and MP left off if you like (door open Gate#3 east; signal WORLD gate1 up; unhide 'a narrow stair'), for the thing, $n who moved it. RESET goes back to START after that many ticks, running its action. REQUIRES (or MASK) is who may move it, REQMSG what the others are told; ONCE moves it once. SWITCH_PROG \[STATE\] runs on its scripts and its room's, and SWITCHSTATE() reads it. The state is kept in the property's text (STATE=), so saves and world files keep it.
 
 ### Prop_Tattoo
 
@@ -4657,7 +4658,7 @@ a red ticket
 
 This property makes a mob or item the master of a carriage, horse, ship, or other rideable item. They will require the payment specified in the parameters before allowing anyone else to board. Non-player mobs will always be allowed to board. The ticket taker must be riding either the carriage, or riding a horse pulling it, or actually BE the carriage, or either be just outside or just inside the ship or caravan type boardable.
 
-CoffeeSUD: also accepts FARE=[price] PARTY=LEADER\|EACH PETS=[price per pet] CARGO=[price per 100 lbs]. LEADER charges once for the nearby party and admits its companions on the same payment. Disembarking clears the receipt. EACH preserves individual payment. The original numeric and named-ticket formats still work.
+CoffeeSUD: also accepts FARE=\[price\] PARTY=LEADER\|EACH PETS=\[price per pet\] CARGO=\[price per 100 lbs\]. LEADER charges once for the nearby party and admits its companions on the same payment. Disembarking clears the receipt. EACH preserves individual payment. The original numeric and named-ticket formats still work.
 
 ### Prop_TidalExit
 
@@ -4717,7 +4718,7 @@ all Fighter all Cleric
 
 This property makes a mob a suitable target for the TRAIN command for players. With no parameter, it will set all stats to 25, give them 0 levels in all classes, and give them all expertises. Other parameters may be entered in order to set the stats of the mob to the specified values. Any values not given will default to 25. If you do not want the mob to also be a trainer, you may include the NOTEACH flag. Listing one or more class names will make that trainer have 0 levels in those classes (able to train to it). Not listing any will give the mob ALL classes at level 0. Listing expertise IDs works similarly.
 
-CoffeeSUD: the teacher's rules, in any order among the rest: STUDENTMASK="[ZAPPER MASK]" (whom it teaches at all; REFUSEMSG="[TEXT]" is what it says to others), SKILLMASK.[ABILITY ID]="[ZAPPER MASK]" (whom it teaches that skill), PRICE="[N] per level" or PRICE=[N] (money it takes for each lesson, on top of the usual cost) and HIDDEN=[ID],[ID] (skills it teaches but leaves off TEACHLIST). They gate TEACH ME, GAIN, PRACTICE and TRAIN with it, and TRAIN with no trainer named passes over one who refuses. TEACHLIST shows a student what this teacher offers them.
+CoffeeSUD: the teacher's rules, in any order among the rest: STUDENTMASK="\[ZAPPER MASK\]" (whom it teaches at all; REFUSEMSG="\[TEXT\]" is what it says to others), SKILLMASK.\[ABILITY ID\]="\[ZAPPER MASK\]" (whom it teaches that skill), PRICE="\[N\] per level" or PRICE=\[N\] (money it takes for each lesson, on top of the usual cost) and HIDDEN=\[ID\],\[ID\] (skills it teaches but leaves off TEACHLIST). They gate TEACH ME, GAIN, PRACTICE and TRAIN with it, and TRAIN with no trainer named passes over one who refuses. TEACHLIST shows a student what this teacher offers them.
 
 ### Prop_Transform
 
@@ -5020,9 +5021,9 @@ Spell_MageArmor;Spell_Shield; MASK=-RACE +Dwarf
 
 When the item with this property is worn or wielded, filled or has something placed in it, the owner will be affected by the listed spells.
 
-The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. See ZAPPERMASKS for more information on zapper mask syntax.
 
@@ -5048,9 +5049,9 @@ Spell_MageArmor;Spell_Shield; MASK=-RACE +Dwarf
 
 When the item with this property is touched, or in the case of food and drink, eaten or drank, the owner will be affected by the listed spells.
 
-The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. See ZAPPERMASKS for more information on zapper mask syntax.
 
@@ -5322,10 +5323,11 @@ May include optional LAYERED flag
 magic 50% poison -10%
 magic poison 50% pierce -10% MASK=-RACE +Dwarf
 fire 40% SOURCEMASK="-RACECAT +Dragon"
-CoffeeSUD: SOURCEMASK="[ZAPPER MASK]" makes it work only against the attackers it fits; MASK= is still whom it protects.
 magic 50% poison -10%
 magic 50% poison -10% LAYERED MASK=-RACE +Dwarf
 ```
+
+CoffeeSUD: SOURCEMASK="\[ZAPPER MASK\]" makes it work only against the attackers it fits; MASK= is still whom it protects.
 
 Whenever the item having this property is wielded or worn, the owner gains certain resistances and immunities described in the parameters. When removed, the resistances and immunities are also cancelled. The Layered flag may be used to prevent resistance stacking due to multiple items worn on the same location. The effects which may be included are:
 
@@ -5371,9 +5373,9 @@ Spell_MageArmor;LAYERED;Spell_Shield
 Spell_MageArmor;Spell_Shield; MASK=-RACE +Dwarf
 ```
 
-So long as the item with this property is being worn, wielded, or smoked, the owner will be under the effect of the listed spells. The layered flag means that, among layers of armor, only the top layer will grant its effect. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=[NUMBER] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=[NUMBER] can be used to shorten the length of all spell casts.
+So long as the item with this property is being worn, wielded, or smoked, the owner will be under the effect of the listed spells. The layered flag means that, among layers of armor, only the top layer will grant its effect. The flag NOUNINVOKE can be substituted for a spell to make all the effects non-dispellable until the property no longer applies; use this flag with care! The flag LEVEL=\[NUMBER\] can also be substituted for a spell name to force all the listed effects be cast at a different level than default.The flag MAXTICKS=\[NUMBER\] can be used to shorten the length of all spell casts.
 
-The flag TICKS=[NUMBER] can be used to shorten the length of all subsequent listed spells.
+The flag TICKS=\[NUMBER\] can be used to shorten the length of all subsequent listed spells.
 
 The parameters may also END with the key word MASK= followed by a mask. This mask will select which kinds of mobs and players will be affected by this property. See ZAPPERMASKS for more information on zapper mask syntax.ALLSET="set-name-N" activates this bonus when at least N worn pieces share the set name, including pieces using the other ALLSET bonus properties. Each property keeps its own threshold; the default is two pieces.
 
@@ -5463,7 +5465,7 @@ TAG=[NAME],... (SKILLS=[SKILL ID],...) (SPEED=[PCT]) (PROF=[N]) (MAXLEVEL=[N]) (
 TAG=forge,anvil SKILLS=Blacksmithing,Weaponsmithing SPEED=25 PROF=+10 MAXLEVEL=40 QUALITY=+1
 ```
 
-CoffeeSUD: a workstation, for a crafter in the room with it (on the room, or on an item lying there). TAG is what it is, as a recipe's or skill's STATION asks for it. SKILLS are the skills it helps (all when not given). SPEED takes that percent off the time a craft takes, PROF is added to the crafter's proficiency, MAXLEVEL lets recipes up to that level be made here (above the crafter's own), and QUALITY is for quality tiers (AHELP CRAFTQUALITY). An item with a tag (TAGS) and no Prop_Workstation counts as a station of that name too, with no bonus. A recipe asks for one with STATION=[NAME] (AHELP RECIPEKEYS), and a data skill (GenCraftSkill) for all its recipes with its STATION field.
+CoffeeSUD: a workstation, for a crafter in the room with it (on the room, or on an item lying there). TAG is what it is, as a recipe's or skill's STATION asks for it. SKILLS are the skills it helps (all when not given). SPEED takes that percent off the time a craft takes, PROF is added to the crafter's proficiency, MAXLEVEL lets recipes up to that level be made here (above the crafter's own), and QUALITY is for quality tiers (AHELP CRAFTQUALITY). An item with a tag (TAGS) and no Prop_Workstation counts as a station of that name too, with no bonus. A recipe asks for one with STATION=\[NAME\] (AHELP RECIPEKEYS), and a data skill (GenCraftSkill) for all its recipes with its STATION field.
 
 ### Prop_Yield
 
@@ -5538,7 +5540,7 @@ The ability to age from infancy (an item) to adulthood (a mob). The normal argum
 
 This process can also alter the race of a mob using the /resources/skills/age.txt instructions. The format of that rules in that doc is as follows:
 
-[RACEID] \</\> [AGE CATEGORY] [GENDER CHAR]/\* [NEWRACEID]
+\[RACEID\] \</\> \[AGE CATEGORY\] \[GENDER CHAR\]/\* \[NEWRACEID\]
 
 Each field is tab-separated. The first is the existing race, then a \< or \> character, then the age category that the race needs to be greater or less than, then either the Gender to match that line, or an \* to match any unlisted Genders, and lastly the race to convert them into.
 
@@ -6079,19 +6081,19 @@ Each parameter list has some required and some optional keywords. These are list
 
 The required keywords for each parameter list are:
 
-ID=[ABILITY ID]/[BEHAVIOR ID]/AMBIANCE
+ID=\[ABILITY ID\]/\[BEHAVIOR ID\]/AMBIANCE
 
-TICKS=[NUMBER OF TICKS] - how long the effect will remain or be gone after triggering.
+TICKS=\[NUMBER OF TICKS\] - how long the effect will remain or be gone after triggering.
 
 ONTRIGGER=ADD/REMOVE - whether to add the effect on trigger, or remove it.
 
-TRIGGER=[RITUAL] - the ritual that triggers the change, see AHELP RITUAL.
+TRIGGER=\[RITUAL\] - the ritual that triggers the change, see AHELP RITUAL.
 
 Optional Keywords:
 
-PARMS=[PARMS] - Parameters for the property or behavior, or the ambiance.
+PARMS=\[PARMS\] - Parameters for the property or behavior, or the ambiance.
 
-MESSAGE=[MSG] - The message to echo to the room when a trigger occurs.
+MESSAGE=\[MSG\] - The message to echo to the room when a trigger occurs.
 
 IMEANIT=TRUE/FALSE - PARMS apply to Behaviors even when applied to a non-agent.
 
@@ -6198,4 +6200,112 @@ Senses: `cannotsee, canseehidden, canseeinvisible, canseeevil, canseegood, canse
 
 Dispositions: `isunseen, ishidden, isinvisible, isevil, isgood, issneaking, isbonus, isdark, isgolem, issleeping, issitting, isflying, isswimming, isglowing, isclimbing, isfalling, islight, isbound, iscloaked, isunsavable, iscataloged, isunattackable, iscustom, isunhelpful`.
 
-x
+## Worked examples
+
+### 1. An elves-only guild hall
+
+Goal: a hall that humans cannot enter (even following an elf), smelling faintly of cedar.
+
+```text
+MODIFY ROOM
+```
+
+Choose the **Effects** field by its number, then:
+
+```text
+Enter an effect to add, -ID to remove, =ID or its number to edit, ?P for the properties that fit (?)
+:Prop_ReqEntry
+Enter any effect parameters (?)
+:"message=The wardens bar your way: elves only." nofollow -race +elf
+Prop_ReqEntry added.
+:Prop_Smell
+Enter any effect parameters (?)
+:CHANCE=50 <T-NAME> smells of cedar and beeswax.
+Prop_Smell added.
+:
+```
+
+[Prop_ReqEntry](#prop_reqentry) is "options then a mask": `nofollow` stops followers of an elf, and `-race +elf` is the zapper mask meaning "disallow everyone, allow elves". The quoted `message=` replaces the default refusal. Put `nosneak` in front to stop sneaking past. To apply the same rule to a whole area, put the same property on the area in `MODIFY AREA`. Test with a non-elf character; `PROPCHECK ROOM` lists anything it could not parse.
+
+### 2. A combination-locked vault door that relocks itself
+
+Put on the *exit* (the vault door must be a real door with a lock; see chapter 20 for doors and keys):
+
+```text
+Prop_ComboLock   CODE=739 RELOCK=30
+Prop_LockRules   PICK=NEVER
+```
+
+[Prop_ComboLock](#prop_combolock): `TURN DIAL 2 TO 3` sets one dial, `SET DIALS 7 3 9` sets them all, `ENTER 739` works on a keypad; when the dials read the code the door unlocks and opens on both sides, and after 30 ticks it shuts and locks again. [Prop_LockRules](#prop_lockrules) with `PICK=NEVER` stops thieves picking it. For a code the player must discover, use `CODE=RANDOM DIALS=4 VAR=VAULT` and print the clue with the script variable `$<COMBO VAULT>`.
+
+### 3. A ring that helps against cold, for dwarves only
+
+On a ring item:
+
+```text
+Prop_WearAdjuster   con+1 savecol+20 MASK=-Race +Dwarf
+```
+
+While worn by a dwarf the ring adds one constitution and 20 to the cold save. A non-dwarf wearing it gets nothing, because the trailing `MASK=` selects who is affected. To make the ring unwearable by others instead, use [Prop_WearZapper](#prop_wearzapper) with `-race +dwarf`.
+
+### 4. Adding properties from a script
+
+JavaScript (as in the passing fixtures `tools/fixtures/fixes/*.js`):
+
+```js
+var P = CMClass.getAbility("Prop_ComboLock");
+P.setMiscText("CODE=739 RELOCK=30");
+door.addNonUninvokableEffect(P);
+```
+
+MOBPROG, on whatever the script can name:
+
+```text
+MPAFFECT Prop_Adjuster $n str+1
+MPAFFECT Prop_Adjuster $n 50TICKS str+1
+MPUNAFFECT $n Prop_Adjuster
+```
+
+The first line is permanent; the second runs for 50 ticks through `TemporaryAffects`. To turn a property on and off with a condition (night only, once per day) wrap it in [Prop_When](#prop_when).
+
+## Persistence
+
+- **World files.** Every savable property on a room, area, exit, mob or item is written with its host as an `AFF` entry: the class ID and the parameter text. Building with the effects editor and `SAVE` therefore stores the properties with the world. A hand-edited world file works the same way. A class ID that no longer exists is skipped on load with a log error.
+- **Campaign saves.** Items and characters carry their properties into a campaign save. A property that keeps running state in its own text (a countdown, a charge, an owner, a switch position, saved exposure markers) saves the current text, so a restored game continues where it was. A property whose class declares itself non-savable (engine-made ones such as [Prop_Playtest](#prop_playtest), [Prop_TweakWatch](#prop_tweakwatch), [Prop_TransitView](#prop_transitview), the item-set tier effects of [Prop_ItemSet](#prop_itemset) and the faction handlers of [Prop_FactionEffects](#prop_factioneffects)) is never written and is rebuilt from its source when needed.
+- **Authoring markers.** Once-only flags, discoveries and exposure counters are keyed by the property's `ID` (see [Saved identities](#saved-identities)); keep IDs stable when you edit shipped content.
+- **Reload.** Reloading a world resets host objects to the world-file text; campaign state then applies on top as in `state-and-persistence.md`.
+- **Edits in a running game.** `-ID` in the effects editor removes a property immediately; changing the text with `=ID` re-parses it (`setMiscText`), which for some properties (those that count or keep a charge) also resets that state.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| The property does not appear in `?P` | The class declares no host type (see its entry) or the host is the wrong kind. Type the ID anyway if the entry says it works on that host. |
+| "'X' is not recognized. Try '?'." | A misspelled class ID. IDs are matched case-insensitively but must be the full name, such as `Prop_ReqEntry`. |
+| A KEY=value setting is ignored | A key preceded by letters, a `+` or `-` before the `=`, or an unquoted value containing spaces or `:`/`;`. Quote the value. Run `PROPCHECK`. |
+| The mask does nothing | The mask belongs after `MASK=` for adjuster-style properties, but is the bare tail of the text for `Prop_ReqEntry` style ones; copy the pattern from the entry's example. |
+| Two copies of one property on a host | Only one is used; the editor offers to wrap both in `Prop_MultiEffects`. |
+| An item property has no effect | It applies when worn/held/owned/ridden/used as the class name says: `Wear*` when worn or wielded, `Have*` when owned, `Ride*` when ridden, `Use*` when touched or consumed. |
+| Entry restriction lets NPCs or followers through | Followers pass unless `nofollow` is given; sneaking passes unless `nosneak`. NPCs are subject to the mask like anyone else. |
+| A once-only message repeats after a rename | The property had no explicit `ID=`; add one (and `ALIASES=` for the old identity). |
+| Clan or multiplayer wording in help | Inherited text; clans, accounts and player-to-player channels are not part of CoffeeSUD play. See chapter 31 for the single-player model. |
+
+## Audit notes and known mismatches
+
+Recorded while writing this chapter (the full list is in the audit notes for chapter 23):
+
+- 13 properties have no shipped help entry: Prop_AreaBanner, Prop_AreaEntry (mentioned only inside the Scriptable help), Prop_AuthorIdentity, Prop_Broken, Prop_FactionEffects, Prop_JourneyPassenger, Prop_JourneyState, Prop_Playtest, Prop_Purchases, Prop_StoryRecords, Prop_TransitView, Prop_TweakWatch and Prop_Verbs (mentioned inside the Scriptable help). Their entries here come from the code.
+- Four Abilities/Misc properties (Dusty, Alerted, GoingHome, Phobias) have no help either; their entries come from the code.
+- Where the shipped help names different hosts from the code, the entry shows both. Examples: Prop_AbsorbDamage lists areas and rooms in help but declares only items and mobs; Prop_Adjuster help says "Mobs" while the class accepts all five host kinds.
+- Prop_CombatAdjuster, Prop_MOBEmoter, Prop_Undroppable and Prop_Unsellable declare no host type, so the effects editor's `?P` never lists them.
+- The Prop_ReqEntry help writes `nofol` for the follower option, but `Prop_ReqEntry.setMiscText` only recognises words that start with `NOFOLLOW`; `nofol` does nothing (Prop_ReqEntry.java line 91).
+
+## See also
+
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): behaviours, and the zapper mask language that most `Req*`, `*Zapper` and `MASK=` parameters use.
+- [25-abilities-and-effects.md](25-abilities-and-effects.md): timed effects, `GenAbility`, and the difference between a property and a spell.
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md), [21-mobs.md](21-mobs.md), [22-items.md](22-items.md): the editors that hold the Effects field.
+- [07-items-crafting.md](07-items-crafting.md): puzzle items built from `Prop_Switch`, `Prop_PressurePlate`, `Prop_ComboLock`.
+- [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md): journeys, ports, waypoints and travel time.
+- [11-presentation-language.md](11-presentation-language.md): details, senses, lore and language properties in context.
+- [state-and-persistence.md](state-and-persistence.md), [tool-reference.md](tool-reference.md), [feature-index.md](feature-index.md).

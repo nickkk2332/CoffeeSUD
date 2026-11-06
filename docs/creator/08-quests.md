@@ -230,8 +230,9 @@ step break
 
 It names the quest, gives it a 1000-tick life, picks any room, loads a mob
 there from an imported file, and gives the mob a script. `step break` ends the
-script. Without a `STEP BREAK` (or a plain `STEP`) at the end the engine
-reports "Nothing parsed ... quest not started".
+script. The final `step break` is optional: a script simply ends after its
+last line (the shipped templates end at `set duration 0`), but a script with no
+commands at all reports "Nothing parsed ... quest not started".
 
 ### Steps
 
@@ -718,4 +719,325 @@ room exists, or that the quest can find objects to select.
 
 Players see the quests of the character they are playing; party members and the
 `CONTROL` / `AS` commands act per character ([Saves and party](31-saves-and-party.md)).
+
+## CoffeeSUD quest features Q1 to Q16
+
+These are the additions CoffeeSUD made around the inherited quest engine. The
+feature ids are those of [the feature index](feature-index.md#q). Each is covered
+by a fixture in `tools/fixtures/fixes/` named after it (`q1-finished.js` ...
+`q16-where.js`), which is a good place to see exact syntax. Source:
+[DefaultQuest](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java),
+[Questwins](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Questwins.java) and the
+`Quest*` classes in [core](../../CoffeeMud/com/planet_ink/coffee_mud/core/).
+
+### Q1: Finished quests stay known
+
+A quest that has run and then stops, with no wait/interval/date schedule (a
+story quest started by `MPSTARTQUEST`, say), is no longer deleted. It stays in
+the list as FINISHED, keeps its winners and variables, and is saved that way.
+`QUESTWINNER`, `-QUESTWIN` and `QUESTS WON` keep knowing it. Only `DESTROY
+QUEST` removes it.
+
+| Setting | Meaning |
+| --- | --- |
+| `SET RESTART ALWAYS` | The default (blank is the same). A finished quest may be started again by hand or script. |
+| `SET RESTART NEVER` | Once it has run it stays finished. `MODIFY QUEST x START` and `MPSTARTQUEST` do nothing until `MODIFY QUEST x REOPEN`. |
+| `SET RESTART 1 MUDDAY` | A game time. After it finishes it waits that long, then starts again by itself; a manual start before then is refused. `LIST QUESTS` says `finished (starts again in n ticks)`. |
+| `SET ENDONWIN TRUE` | `MPQUESTWIN` stops the quest, which cleans up the mobs and items it loaded. Without it a win leaves the quest running for other characters. |
+| `SET AUTOSTART BOOT` | Starts the quest once, a tick after the game begins, then it is finished. (Short for a one-tick `WAIT`.) |
+
+`MODIFY QUEST x REOPEN` makes a finished quest as if it never ran, for testing
+or for a scripted reset. A scheduled quest that has finished its run is
+`waiting`, not `finished`. In JavaScript, `quests.status(name)` says `finished`.
+
+### Q2: Quest-giver and turn-in markers
+
+`Prop_QuestMarker` shows a mark after a mob or item in the room listing, by how
+the quest stands for the *character looking* (each character sees their own):
+
+| Mark | Shown | Default |
+| --- | --- | --- |
+| `AVAILABLE` | While the character may accept the quest (`CAN_ACCEPT` says yes, running, repeat rules pass) | `^Y(!)^?` (bright yellow) |
+| `ACTIVE` | Once they have accepted it | `^w(?)^?` (grey) |
+| `READY` | When `READYFUNC` returns something (not `CANCEL`) | `^Y(?)^?` |
+
+Parameters: `QUEST=name` or `*` (default: every running quest the object has a
+script from, is the first quest mob or item of, or gives by `Prop_QuestGiver`),
+`AVAILABLE=""`, `ACTIVE=""`, `READY=""` (an empty string suppresses that mark),
+and `READYFUNC=NAME`, a `FUNCTION_PROG` of this mob's or item's own script,
+run with the viewer as `$n`. Example on the turn-in NPC:
+
+```text
+give affect Prop_QuestMarker QUEST=bell READYFUNC=CAN_COMPLETE AVAILABLE=
+```
+
+with, in its script:
+
+```text
+FUNCTION_PROG CAN_COMPLETE
+	if HAS($n 'the silver bell')
+		RETURN TRUE
+	endif
+	RETURN
+~
+```
+
+Only the player's characters see marks (a monster viewer sees none). The world
+option `QUESTMARKERS=AUTO` (in `coffeemud.ini` or `world.ini`) marks every
+running quest's first quest mob and every `Prop_QuestGiver` host without the
+property.
+
+### Q3: Quest journal, objectives and history
+
+Each character has a journal: objectives per quest and dated entries (the
+last 200 are kept), held in the hidden effect `Prop_QuestLog` so it saves with
+the character. `QUESTS` shows it.
+
+`MPQOBJECTIVE who quest OP ...`:
+
+| Operation | Effect |
+| --- | --- |
+| `ADD id count text` | Adds an objective that is done at `count` (an `id` already there has its target and text updated). Optionally `AT=where` after the id ([Q16](#q16-objective-locations-and-quests-where)). Announced as `Quest updated: ...`. |
+| `SET id n` | Sets the count. Reaching the target makes it DONE; dropping below un-does that. |
+| `BUMP id (n)` | Adds `n` (default 1). |
+| `DONE id` | Marks it done and raises the count to the target. |
+| `FAIL id` | Marks it failed (`[-]`). |
+| `HIDE id` / `SHOW id` | Hides it from `QUESTS` and from notices, or shows it. |
+| `CLEAR (id)` | Removes one objective, or all of the quest's. |
+| `AT id where` | Sets, or with no place clears, where it is. |
+
+`MPQJOURNAL who quest text` adds an entry dated on the game calendar.
+`QOBJECTIVE(who quest id == value)` and `$%QOBJECTIVE(who quest id)%` read an
+objective: the count, `DONE` or `FAILED` (or nothing if there is none).
+
+A step can give objectives and entries itself, so they appear for whoever is on
+the quest when the step starts and whoever accepts during the step:
+
+```text
+set objective drowned 5 Lay 5 drowned men to rest
+set journal The bell rang under the water.
+```
+
+An objective the character already has is left as it is; an entry is not
+written twice running.
+
+In `QUESTS` an objective reads `[x] Lay 5 drowned men to rest 5/5 (done)` or
+`[ ] Bring the bell to the chapel`; time left is on the game clock
+(`about 3 game hours`, `less than a game hour`). `QUESTS NAME` adds the history;
+`QUESTS LOG` the latest entries of all quests. The older hand-set script
+variables still work and are shown the same way: `OBJECTIVE1` ... `OBJECTIVE20`
+(with `OBJECTIVEnDONE`), `PROGRESS`, `TIME_REMAINING`, `TIME_REMAINING_TYPE`
+and `INSTRUCTIONS`, set with `MPSETVAR $i NAME value` in the tracking script.
+
+The "Quest updated:" lines are told to the character whenever an objective or
+entry changes. `QUESTNOTICES=OFF` in `coffeemud.ini` or `world.ini` keeps them
+back (the journal still fills).
+
+### Q4: Per-character status and outcome
+
+Each quest has, for each character, a status (`QuestRecords`):
+
+| Status | Set by |
+| --- | --- |
+| `ACTIVE` | Accepting the quest. A character who carries the quest's script with no record is also ACTIVE. |
+| `WON` | `MPQUESTWIN`. |
+| `FAILED` | `MPQUESTFAIL`; a `KEYPLAYER FAIL` mob dying. |
+| `ABANDONED` | `QUESTS DROP` (outcome `DROPPED`). |
+| `EXPIRED` | A personal deadline ran out with no `QUESTTIMEOUT_PROG` ([Q11](#q11-per-character-quest-deadlines)). |
+
+Plus an outcome word and the game time. Scripting:
+
+```text
+MPQUESTWIN $n bandits OUTCOME spared
+MPQUESTFAIL $n oskar the escort died
+if QUESTSTATUS($n oskar == FAILED)
+	say You let him die.
+endif
+if QUESTOUTCOME($n bandits == spared)
+	say The chief is a guard in town now.
+endif
+```
+
+`MPQUESTFAIL who quest (reason)` records FAILED with the reason (default
+`FAILED`), fires `QUESTFAIL_PROG` and `QUEST_PROG FAIL`, and ends and removes
+the character's tracking scripts as `MPENDQUEST who` would. It does not stop
+the quest for others. `GIVE STAT KEYPLAYER FAIL` on a mob does it for everyone
+on the quest, with the reason `KEYPLAYER`, when that mob dies; plain
+`KEYPLAYER TRUE` instead resets the whole quest (a server-event habit that
+does not suit a personal story).
+
+Masks: `-QUESTFAIL +quest`, `-QUESTOUTCOME +quest:word` (and the
+`+`/`-` inverses). `QUESTS WON` shows the outcome word and win count;
+`QUESTS FAILED` lists the rest.
+
+### Q5: Repeatable quests with win counts and cooldowns
+
+Winners now carry a count and a game-clock time of the last win.
+
+| Setting | Meaning |
+| --- | --- |
+| `SET REPEATABLE NO` | Once won, never offered again. |
+| `SET REPEATABLE YES` | May be taken again (also the default when unset: the engine only blocks, it does not require, so a giver's `CAN_ACCEPT` that tests `QUESTWINNER` can still block). |
+| `SET REPEATABLE 1 MUDDAY` | May be taken again once that game time has passed since the last win. |
+| `SET MAXWINS n` | At most `n` wins per character. |
+
+The engine checks these in `canAcceptQuest`, *before* the giver's
+`CAN_ACCEPT`, so markers, offers and boards all honour them. Functions:
+`QUESTWINS(who quest >= n)` (a winner from before counts were kept counts as
+1), `QUESTWINAGE(who quest > hours)` (-1 if never). A quest that opens after
+ten wins of another: `SET PLAYERMASK -QUESTWINS +wolf_bounty:>=10`.
+
+### Q6: Named steps and jumps
+
+`STEP label` names the step that follows. Jump with `MPSTEPQUEST quest =label`
+(or `=3`, `+2`), end a branch with `STEP GOTO label`, test with
+`QVAR(quest STEPNAME == label)` or `$%QVAR(quest STEPNAME)%`. `QUESTINFO`
+shows `Step: 3 (spared)`. The save stores the label as well as the number, so
+an edited quest file restores to the right step. A jump to a name that does
+not exist is logged (`MPSTEPQUEST ... Unknown Step`) and nothing happens. See
+[Steps](#steps) and the branching [worked example](#example-2-a-branching-story-quest).
+
+### Q7: Offers, re-offers and a declined quest accepted later
+
+`Prop_QuestGiver ... REOFFER=ALWAYS|ONCE|<game time>`:
+
+| Value | Offers |
+| --- | --- |
+| (none) | An area offers once per character per run of the quest; a room, exit, mob or item whenever its trigger comes. |
+| `ALWAYS` | Whenever the trigger comes. |
+| `ONCE` | Once per run of the quest. |
+| `1 MUDDAY` (a game time) | Again after that long since the last offer. |
+
+Offers are recorded in the quest's variables (`OFFERED:CHARNAME`, with the game
+time; `SHOWN:CHARNAME` for a quest merely shown by a default giver or read on
+a board), so a saved game keeps them. `QUESTS OFFERED` lists the running
+quests offered or shown to the character that they can still take now;
+`QUESTS ACCEPT n` takes one. A "no" at the prompt is therefore not for ever.
+
+### Q8: Prop_QuestItem
+
+`Prop_QuestItem QUEST=name (NODROP) (NOSELL) (NOGIVE) (KEEPONDEATH) (REMOVEON=...)`
+binds an item to a quest:
+
+| Flag | Effect |
+| --- | --- |
+| `NODROP`, `NOSELL`, `NOGIVE` | Refuse those actions with a message ("You cannot drop X: it is for a quest."). |
+| `KEEPONDEATH` | The item stays with the character when they die. |
+| `REMOVEON=WON,FAILED,ABANDONED,EXPIRED,ENDED` | The item vanishes (and the character is told) when the quest leaves ACTIVE for its holder that way. `ENDED` means the quest itself stopped. `ALL` (the default) is any of them; `NONE` never. |
+
+`QUESTS name` lists what the character carries for it ("Quest items:").
+Default removal is broad; set `REMOVEON` explicitly when an artifact should
+remain after completion. Items given to a character by quest scripts are best
+registered with `MPQSET * QUESTOBJ $o` as well, so the quest cleans them up if
+it stops.
+
+### Q9: QUIET and the quest-script help
+
+`QUIET` and `OPTIONAL` work as described in [QUIET and OPTIONAL](#quiet-and-optional).
+The quest-script reference is `AHELP QUESTS` (and `AHELP QUESTINFO`,
+`AHELP QUESTCHECK`); this chapter is the long form. `MPSTEPQUEST`'s `+N`, `=N`
+and `=LABEL` forms, `MPQUESTWIN -name`, `TIME_REMAINING_TYPE`, and
+`QUEST_TIME_PROG` with `-1` and `-2` are documented above.
+
+### Q10: Declarative rewards
+
+`SET REWARDS "awards"` states what winning gives, in the words of achievements:
+
+| Word | Gives |
+| --- | --- |
+| `100 CURRENCY` | Money |
+| `50 XP` | Experience |
+| `10% XP` | CoffeeSUD: 10 percent of a level's experience span |
+| `2 QP` | Quest points |
+| `TITLE=...`, `ABILITY=...`, `EXPERTISE=...`, `STAT=...`, `TATTOO=...`, `ITEM=...`, `MOB=...` | The achievement award of that name; the exact forms are those of `AHELP ACHIEVEMENTS` |
+| `FACTION:id:+200` | CoffeeSUD: faction standing (`+n`/`-n`) |
+| `ITEM:catalog_name` | CoffeeSUD: a copy of a catalog item (underscores are spaces) |
+| `SCRIPT(...)`, `EFFECT(...)`, `FACTION(ID=...)`, `VAR(...)`, `RECIPE(...)` | The extra achievement awards (`AHELP ACHIEVEMENTREWARDS`) |
+
+```text
+set rewards "100 CURRENCY 15% XP ITEM:silver_bell_charm FACTION:Brenn:+200"
+```
+
+`MPQUESTWIN $n quest REWARD` records the win and gives the awards with one
+message (`Your reward: ...`). `MPREWARD $n "awards"` gives an ad-hoc set the
+same way. The reward is shown as `Reward:` in `Prop_QuestGiver`'s details, on
+boards, and in `QUESTS name`. A catalog item that does not exist, or a faction
+that does not, is logged and skipped. **Do not both `MPQUESTWIN ... REWARD`
+and also pay by hand (`mpexp`, `give`): the player is paid twice.** Pick one
+path. With `SET SHARED PARTY` each party member on the quest is paid.
+
+### Q11: Per-character quest deadlines
+
+`SET DURATION` is the quest's own clock, counted from the quest's start. A
+*personal* deadline counts from when you set it:
+
+```text
+MPQTIMER $n medicine 6 mudhours
+MPQTIMER $n medicine OFF
+```
+
+The deadline is kept with the character (saved), counts on the game clock
+(a pause or turn-based time holds it), and shows in `QUESTS` (the sooner of
+the quest's and the personal one). When it comes: if a `QUESTTIMEOUT_PROG`
+exists on the character's scripts (bare, or naming the quest) it runs and
+decides; if none exists, the quest fails for them with the status `EXPIRED`
+(see [Q4](#q4-per-character-status-and-outcome)). A win or any end of the
+quest for that character clears the deadline.
+
+### Q12: Credit for the party or the profile
+
+`SET SHARED` says whose a quest is:
+
+| Value | Meaning |
+| --- | --- |
+| `NONE` | Default. Each character's own. |
+| `PARTY` | When one character accepts, the party members in the same room (the player's characters in the group) take it on too. `MPQUESTWIN` and `MPQUESTFAIL` go to every party member *on* the quest (with `OUTCOME` and `REWARD`). A member in another room when it was accepted is not on it. |
+| `PROFILE` | A win, the status and the win count of any character of the profile (the player's whole roster) answers for all of them: `QUESTWINNER`, `QUESTSTATUS`, `QUESTOUTCOME`, `QUESTWINS`, the `QUESTWIN` masks, `REPEATABLE` and `MAXWINS`. The journal and `QUESTS name` are readable by all of them ("carried by Name"). |
+
+A late recruit or a companion resting elsewhere does not get the quest
+retroactively. Test both, with two characters.
+
+### Q13: Story templates
+
+Six single-player templates are in the Quest Maker: see
+[Story templates and the Quest Maker](#story-templates-and-the-quest-maker).
+
+### Q14: Boards with generated jobs
+
+`Prop_QuestBoard`: see [Quest boards and generated quests](#quest-boards-and-generated-quests).
+
+### Q15: Undroppable main quests and a drop hook
+
+- `SET DROPPABLE FALSE` makes `QUESTS DROP` refuse ("'X' is not a quest you
+  can drop.").
+- `FUNCTION_PROG CAN_DROP` on the character's tracking script (tried first) or
+  on the accept script: a non-empty return refuses and is shown to the player.
+- `FUNCTION_PROG DO_DROP` on both runs when the drop is confirmed, before the
+  quest's scripts go. The character is then recorded ABANDONED (outcome
+  `DROPPED`), `QUEST_PROG END` fires with `DROPPED`, their tracking scripts are
+  removed, and `Prop_QuestItem` items marked `ABANDONED`/`ALL` vanish.
+- The older `DO_DROP` that only ran when the quest no longer existed still
+  runs in that case.
+
+### Q16: Objective locations and QUESTS WHERE
+
+An objective can say where it is:
+
+```text
+mpqobjective $n * ADD bell 1 Return the bell AT="Brenn#42"
+mpqobjective $n * ADD ned 1 Speak to Old Ned AT=QUESTOBJ:1
+mpqobjective $n * AT bell Brenn
+```
+
+`AT=` takes a room id (`Brenn#42`), an area name, or `QUESTOBJ:n` (also
+`QUESTMOB:` / `QUESTITEM:`, by number or name): wherever the quest's *n*th mob
+or item is now. `QUESTS` shows an open objective as `(Area, Room title)` (only
+the area for an area); a done objective shows no place. `QUESTS WHERE n`
+answers for the first open objective with a place: `... lies to the north.`,
+`... you are there.`, or `in Area; you do not know the way from here` when no
+path is known.
+
+`QUESTTRACK=OFF|AREA|PATH` in `coffeemud.ini` or `world.ini` sets how much is
+revealed: nothing, the area, or (default) the area, room and the first
+direction.
 

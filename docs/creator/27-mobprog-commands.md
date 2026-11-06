@@ -1555,9 +1555,9 @@ mpecho $n calls the pup $<$n PETNAME>.
 
 **Syntax:** `MPCHOOSE <player> <variable> <choices> <default> <prompt text>`. Minimum: 5 words.
 
-**Arguments:** `<choices>` is a string of hotkey characters (for example `ABC`, or `YNM`); `<default>` the key taken on an empty answer.
+**Arguments:** `<choices>` is a string of upper-case hotkey characters (for example `ABC`, or `YNM`); `<default>` the key taken on an empty answer.
 
-**Behaviour:** shows the prompt and waits (up to one minute) for one of the keys; stores the key typed in the variable.
+**Behaviour:** shows the prompt and waits (up to one minute) for one of the keys, asking again after a key that is not a choice; stores the key typed in the variable.
 
 **Example**
 
@@ -1759,4 +1759,305 @@ The target of these commands is a character: a `$` code or a name; many accept N
 **Syntax:** `MPRECRUIT <npc> <player> [PARTY | REST] [NAME=<name>]`. **CoffeeSUD.** Minimum: 1 word (needs 2).
 
 **Behaviour:** the NPC becomes a character of the player's profile, keeping its race, class, level, stats, abilities, effects, inventory, factions, tattoos and description, and leaves the world as an NPC. It joins the party (`PARTY`, the default) or rests (`REST`). `NAME=` names it (else the first word of the NPC's name). It refuses, telling the player, if the profile or party is full or the name is taken. See [03](03-characters.md) and [31](31-saves-and-party.md).
+
+## Combat and effects
+
+### MPKILL
+
+**Syntax:** `MPKILL <mob>`. Minimum: 1 word.
+
+**Behaviour:** the script's mob makes the target its victim, so it starts attacking it on its next turn. Nothing happens for a target that is not a mob or player.
+
+**Example:** `mpkill $n` in a `SPEECH_PROG` for the insult that starts a fight. To make another mob fight use `MPFORCE <mob> kill <target>`.
+
+### MPHIT
+
+**Syntax:** `MPHIT <mob>`. Minimum: 1 word.
+
+**Behaviour:** the script's mob makes a single attack on the target with the weapon it wields, as a combat round would, and no one's fight target is changed by it (everyone in the room keeps the victim they had).
+
+**Example:** `mphit $n` in a trap item's `GET_PROG`.
+
+### MPDAMAGE
+
+**Syntax:** `MPDAMAGE <target> <min> <max> [ME] [KILL] [MEKILL] [type]`. Minimum: 3 words.
+
+**Arguments:** a mob, player or item; the damage range (a random value between, or exactly `min` when `max` is not larger); then option words in any order: `ME` (the script's mob is credited as the attacker; otherwise the target "hurts itself"), `KILL` (allow it to kill), `MEKILL` (both), and a damage type word such as `FIRE`, `COLD`, `WATER`, `GAS`, `MIND`, `ACID`, `ELECTRIC`, `POISON`, `DISEASE`, `PARALYZE`, `UNDEAD` or `JUSTICE` (the default is a spell-like hit).
+
+**Behaviour:** on a mob or player: does that damage directly (there is no to-hit roll, so it cannot miss), but **never kills** unless `KILL` or `MEKILL` is given: the hit is cut so that one hit point is left. Damage below 1 does nothing. On an item that wears out: reduces its remaining uses by the amount (leaving 1 unless `KILL`), and destroys it when none are left (`<item> is destroyed!`); an item that does not wear out is destroyed only by `KILL`.
+
+**Example**
+
+```text
+GET_PROG
+mpecho A needle springs from the chest!
+mpdamage $n 5 15 POISON
+~
+```
+
+**Notes:** the damage is a script effect; for attacks that should be dodgeable, use `MPCAST` or `MPHIT`, or telegraph them with [MPTELEGRAPH](#mptelegraph) (see [29](29-combat-and-encounters.md)).
+
+### MPHEAL
+
+**Syntax:** `MPHEAL <target> <min> <max>`. Minimum: 3 words.
+
+**Behaviour:** heals a mob or player by a random amount from `min` to `max` hit points (exactly `min` if `max` is not larger), with the normal healing message path. On an item that wears out, mends it by that much (up to 100 uses). An amount below 1 does nothing.
+
+**Example:** `mpheal $n 10 20`
+
+### MPCAST
+
+**Syntax:** `MPCAST <spell> <target>`. Minimum: 1 word.
+
+**Arguments:** an ability name or ID (a spell, prayer, skill ...); quote a name with spaces. The target may be left out for abilities that take none.
+
+**Behaviour:** the script's mob uses the ability at 100 proficiency. A mob host pays the usual costs (mana and so on) and may fail for lack of them; a stand-in for an item, room, exit or area host is refilled to full first, so those hosts always can. An unknown ability logs `MPCAST RunTime: X is not a valid ability name.`
+
+**Example:** `mpcast fireball $n`; `mpcast 'Prayer_Bless' $n`
+
+**Notes:** for abilities that need extra words (a direction, a target item) use [MPCASTEXT](#mpcastext).
+
+### MPCASTEXT
+
+**Syntax:** `MPCASTEXT <spell> <target> <arguments>`. Minimum: 3 words.
+
+**Behaviour:** like `MPCAST`, but the rest of the line is given to the ability as the extra words a player would type after its name.
+
+**Example:** `mpcastext Skill_Track $n north`
+
+### MPAFFECT
+
+**Syntax:** `MPAFFECT <ability> <target> [parameters]`. Minimum: 2 words.
+
+**Arguments:** an ability name or ID; the target; the rest of the line is passed to the ability as its parameter text. A parameter text beginning with `<n> TICKS ` limits how long it lasts. Prefix the ability with `property:` (for example `property:Spell_Fly`) to apply it as a permanent effect whatever its type.
+
+**Behaviour:** puts the ability on the target. For a *property*-type ability (or with `property:`), it is added as a permanent effect (or, with `TICKS`, as a temporary one through `TemporaryAffects`). For other abilities, it is cast on the target with auto-invocation (no cost, no checks), and with `TICKS` its expiry is set. An unknown ability logs `MPAFFECT RunTime: X is not a valid ability name.`
+
+**Example**
+
+```text
+ONCE_PROG
+mpaffect Prop_ReqAlignment $i +GOOD
+mpaffect Spell_Haste $n 20 TICKS
+~
+```
+
+**Notes:** properties are in [23](23-properties-reference.md); abilities in [25](25-abilities-and-effects.md).
+
+### MPUNAFFECT
+
+**Syntax:** `MPUNAFFECT <target> [ALL | <ability>]`. Minimum: 2 words.
+
+**Behaviour:** ends the named effect on the target (it is un-invoked, then removed if it stays), or every effect with `ALL` or no word. Properties go too.
+
+**Example:** `mpunaffect $n Poison_Venom`
+
+### MPSTOP
+
+**Syntax:** `MPSTOP <mob | ALL>`. Minimum: 0 words.
+
+**Behaviour:** makes the mob stop fighting (peace) and stops any crafting or other common skill it is performing. `ALL` does so for every creature in the host's room.
+
+**Example:** `mpstop all` when a duel ends or an oath is sworn.
+
+### MPTHREAT
+
+**Syntax:** `MPTHREAT <npc> <who> <+n | -n | =n | *x>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** changes how threatening `<who>` is to the NPC (its target choice in combat): add, subtract, set (`=`) or multiply (`*`). See [29](29-combat-and-encounters.md) and `TOPTHREAT`.
+
+**Example:** `mpthreat $t $n *3` (a taunt).
+
+### MPTELEGRAPH
+
+**Syntax**
+
+```text
+MPTELEGRAPH [NAME=<name>] <ticks> "<warning>" <command> [INTERRUPT=<list>] [AVOID=<list>] [INTERRUPTMSG="<text>"]
+```
+
+**CoffeeSUD.** Minimum: 2 words. **Host:** a mob in a room.
+
+**Behaviour:** the mob *winds up* an attack. The warning shows now and each tick, `LOOK` at the mob shows it is gathering power, and after `<ticks>` the command runs once for each foe in the room (`$n` each one) who did not avoid it: those who left, hid (`AVOID=HIDE`) or typed the avoid word. Options:
+
+| Option | Meaning |
+| --- | --- |
+| `INTERRUPT=STUN,DAMAGE>20%,MOVE` | what stops the wind-up: a stun, a sleep or a hold always does; `DAMAGE>n%` when it loses that share of its hit points meanwhile; `MOVE` when it leaves the room |
+| `AVOID=LEAVE,HIDE,COMMAND:brace` | how a foe avoids it: leaving, hiding, typing the word `brace` |
+| `INTERRUPTMSG="text"` | shown when it is interrupted |
+
+It is a named alarm (`TELEGRAPH` unless `NAME=` is given), so `ALARM($i TELEGRAPH)` and [MPALARMCANCEL](#mpalarmcancel) work on it. A second telegraph of the same name replaces the first.
+
+**Example**
+
+```text
+FUNCTION_PROG BREATH
+mptelegraph 2 "<S-NAME> rears back, flames gathering in its throat!" mpdamage $n 30 60 FIRE INTERRUPT=STUN,DAMAGE>20% AVOID=HIDE,COMMAND:brace
+~
+```
+
+**Notes:** for an item or room host it logs `only a mob in a room can wind up an attack`. The `Prop_Telegraph` property holds the state; see [29](29-combat-and-encounters.md).
+
+### MPWAVE
+
+**Syntax:** `MPWAVE <START | NEXT | STOP | RESET>`. **CoffeeSUD.** Minimum: 2 words per the table; one is required.
+
+**Behaviour:** drives the `WaveSpawner` behaviour of the room: start it (`START=CALL` waits for this), bring the next wave, end it as a loss, or clear it to start again. Run it from the room itself or from a mob in the room. Without `WaveSpawner` there it logs `MPWAVE RunTime: ..., in a room with WaveSpawner`.
+
+**Example:** `mpwave NEXT`
+
+### MPREJUV
+
+**Syntax:** `MPREJUV <AREA | ROOM | room id | area name> [items | mobs]`. Minimum: 1 word.
+
+**Behaviour:** triggers the rejuvenation tick (as if the room's reset time had come) for the host's area or room, or a named room or area: dead mobs come back, lost items return. `items` or `mobs` (write them in lower case) limits it to those. An unknown place logs `MPREJUV Syntax: Unknown location`.
+
+**Example:** `mprejuv room mobs`
+
+### MPRESET
+
+**Syntax:** `MPRESET <AREA | ROOM | room id | area name | item | mob>`. Minimum: 0 words.
+
+**Behaviour:** `AREA` resets the host's area as an area reset does; `ROOM` or a room ID resets that room; an area name resets that area; an item is taken out of its container and mended to 100 uses; a mob is restored to full hit points, mana and movement. An unknown target logs `Unknown location or item`.
+
+**Example:** `mpreset room` at the end of a puzzle's reset button.
+
+## Quests
+
+A quest is defined in a quest script (see [08](08-quests.md)). These commands drive a quest from a MOBPROG. In quest arguments, `*` stands for the quest the script belongs to (the script's *default quest*), when the script was given to the host by a quest.
+
+### MPSTARTQUEST
+
+**Syntax:** `MPSTARTQUEST <quest name>`. Minimum: 1 word.
+
+**Behaviour:** starts the quest with that name, as `QUEST START` would. An unknown name logs `MPSTARTQUEST Unknown: Quest`.
+
+**Example:** `mpstartquest bell` in the giver's `FUNCTION_PROG DO_ACCEPT`.
+
+### MPSTEPQUEST
+
+**Syntax:** `MPSTEPQUEST <quest name> [+n | =n | =label]`. Minimum: 1 word.
+
+**Behaviour:** moves the quest on to its next step. `+n` skips *n* steps; `=n` jumps to step number *n*; `=label` (**CoffeeSUD**) jumps to the step the quest script named with `STEP NAME label`. An unknown quest or label is logged.
+
+**Example:** `mpstepquest bandits =spared`
+
+### MPENDQUEST
+
+**Syntax:** `MPENDQUEST <quest name | mob>`. Minimum: 1 word.
+
+**Behaviour:** with a quest's name: stops that quest (it announces the end, clears its objects and counts the stop). With a mob (when the script itself belongs to a quest): removes that quest's scripts from the mob and runs their end handling. With a name matching one of the host's own quest scripts: ends that script. An unknown name logs `MPENDQUEST Unknown: Quest`.
+
+**Example:** `mpendquest bell`
+
+### MPQUESTWIN
+
+**Syntax:** `MPQUESTWIN <who> <quest name> [OUTCOME <word>] [REWARD]`. Minimum: 2 words.
+
+**Behaviour:** declares the character a winner of the quest, bumps the "quests completed" statistic and the QUESTOR achievement, and sends the win message to scripts. `OUTCOME word` (**CoffeeSUD**) keeps a one-word record of how it ended, read with `QUESTOUTCOME()` and shown in `QUESTS WON`. `REWARD` gives the quest's `SET REWARDS`. With a shared quest (`SET SHARED PARTY`) the party members present win with them. An unknown quest logs `MPQUESTWIN Unknown: Quest`.
+
+**Example:** `mpquestwin $n bandits OUTCOME spared REWARD`
+
+### MPQUESTFAIL
+
+**Syntax:** `MPQUESTFAIL <who> <quest name> [reason]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** the quest fails for that character: it is recorded (`QUESTSTATUS`, `QUESTS FAILED`), `QUESTFAIL_PROG` and `QUEST_PROG FAIL` fire, and their quest scripts end and go, as `MPENDQUEST <who>` does. The rest of the line is the reason.
+
+**Example:** `mpquestfail $n oskar the escort died`
+
+### MPREWARD
+
+**Syntax:** `MPREWARD <who> "<awards>"`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** gives the character a reward, written in the words a quest's `SET REWARDS` uses (a number of coins, `QP`, `XP`, `ITEM:name`, `FACTION:name:+n` and so on), with one message. See [08](08-quests.md) for the reward words.
+
+**Example:** `mpreward $n "5 QP"`
+
+### MPQSET
+
+**Syntax:** `MPQSET <quest> <variable> <value>`. Minimum: 3 words.
+
+**Behaviour:** sets a quest variable to a value (`++` and `--` add and subtract one). Special variables: `QUESTOBJ` with an object registers the object with the quest (so it is removed when the quest ends and not saved); `STATISTICS` with `ACCEPTED`, `SUCCESS` (or `WON`) or `FAILED` bumps that quest statistic. An unknown quest logs `MPQSET Syntax: Unknown quest`.
+
+**Example:** `mpqset bell STATISTICS ACCEPTED`
+
+### MPLOADQUESTOBJ
+
+**Syntax:** `MPLOADQUESTOBJ <quest> <quest variable> <$x>`. Minimum: 3 words.
+
+**Behaviour:** takes the object the quest stored under the variable name (a mob, item or room the quest script designated) and puts it into one of the program's slots: `$0`-`$9`, `$n`, `$t`, `$i`, `$o`, `$p`, `$b` or `$d`. Then the rest of the program can use it as a target. Unknown quest, unknown variable and a bad slot are logged.
+
+**Example:** `mploadquestobj bell BELLITEM $0`
+
+### MPQOBJECTIVE
+
+**Syntax:** `MPQOBJECTIVE <who> <quest> <ADD|SET|BUMP|DONE|FAIL|HIDE|SHOW|AT|CLEAR> <id> [...]`. **CoffeeSUD.** Minimum: 3 words.
+
+| Form | Effect |
+| --- | --- |
+| `ADD <id> <count> <text>` | gives the character an objective in the quest journal; `AT=<place>` after the id says where it is (`AT=Brenn#14`, `AT=QUESTOBJ:2`) |
+| `SET <id> <n>` | sets the progress |
+| `BUMP <id> [n]` | adds *n* (1) to the progress; reaching the count makes it done |
+| `DONE <id>` / `FAIL <id>` | marks it finished / failed |
+| `HIDE <id>` / `SHOW <id>` | hides it from the journal / shows it again |
+| `AT <id> [where]` | sets where the objective is; no place forgets it |
+| `CLEAR [id]` | removes one objective, or all of the quest's |
+
+The character is told of each change. `QOBJECTIVE(who quest id)` reads the state. `*` as the quest is this script's quest.
+
+**Example**
+
+```text
+MPQOBJECTIVE $n bell ADD drowned 5 Lay 5 drowned men to rest
+MPQOBJECTIVE $n bell BUMP drowned
+```
+
+### MPQJOURNAL
+
+**Syntax:** `MPQJOURNAL <who> <quest> <text>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** adds an entry to the character's quest journal, dated on the game calendar (`QUESTS <quest>`, `QUESTS LOG`).
+
+**Example:** `mpqjournal $n bell The bell rang under the water.`
+
+### MPQTIMER
+
+**Syntax:** `MPQTIMER <who> <quest> <game time | OFF>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** the character's own deadline for the quest, from now, as `6 MUDHOURS`, `2 MUDDAYS` or a number of ticks; `OFF` takes it away (and so does the quest's end for them). It is kept with the character (in saves too) and counted on the game clock. When it comes, a `QUESTTIMEOUT_PROG` in the script the quest gave them runs, or, with none, the quest fails for them (status `EXPIRED`).
+
+**Example:** `mpqtimer $n bell 2 muddays`
+
+## Journal, lore and narration
+
+### MPJOURNAL
+
+**Syntax:** `MPJOURNAL <who> [category] <text>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** adds a dated personal journal entry for a player character: the date on the game calendar, the script host as source and the character's location. With two words after the command the second is the text and the category is `Notes`; with more, the second word is the category (single-quote it if it has spaces) and the rest is the text. At most 300 entries are kept per character; the oldest goes first.
+
+**Example:** `MPJOURNAL $n Rumors Beware the beast of the marsh`
+
+**Notes:** see [11](11-presentation-language.md) for the `JOURNAL` command and categories.
+
+### MPLORE
+
+**Syntax:** `MPLORE <who> ADD <key> [PROFILE]`. **CoffeeSUD.** Minimum: 2 words (the engine needs 3).
+
+**Behaviour:** unlocks a lore (codex) entry: it is saved as the tattoo `LORE_<KEY>` on the character, or on the profile with `PROFILE`. The first time, a journal line `Learned <title>.` is added. Any word but `ADD` logs `Use MPLORE target ADD key [PROFILE]`.
+
+**Example:** `mplore $n ADD FIXBEAST`
+
+### MPNARRATE
+
+**Syntax:** `MPNARRATE <target> <file[#section]> [PAUSE | NOPAUSE] [STYLE=<name>]`. **CoffeeSUD.** Minimum: 1 word (needs 2).
+
+**Arguments:** `<target>` a character, `ROOM` or `AREA`; `<file>` a text file under `world/text/` (the `#section` picks the lines under a `[section]` header; without one the whole file is used, ignoring header lines); `PAUSE` pages the text a paragraph at a time with Enter between (the clock is held in real-time play and nothing is spent in turn-based play); `NOPAUSE` (the default) shows it all; `STYLE=` a `COLORALIASES` name for the colour.
+
+**Behaviour:** reads the text (script codes such as `$n` and `VARIES` text are expanded) and shows it to the player characters in the target. Non-player creatures are ignored. Blank lines separate paragraphs.
+
+**Example:** `MPNARRATE $n museum.txt#arrival PAUSE`
+
+**Notes:** see [11](11-presentation-language.md) for narration files.
 
