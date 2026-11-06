@@ -1,0 +1,536 @@
+# CoffeeSUD documentation audit, November 2026
+
+Part of the [audit folder](README.md). Linked from the [creator handbook](../docs/creator/README.md).
+
+## Introduction
+
+In November 2026 the creator handbook (`docs/creator/`, chapters 01 to 33) was rewritten chapter by chapter, and each chapter was then checked against the Java by a second pass (verification). Both passes kept notes. This report collects what those notes found that is not a handbook problem: code that does not do what its own help, javadoc or obvious intent says, and shipped text that disagrees with the code.
+
+The report holds:
+
+1. [Engine defects](#engine-defects), IDs `D-<area>-<n>`.
+2. [Help and comment mismatches](#help-and-comment-mismatches), IDs `H-<area>-<n>`.
+3. [Inherited guide differences](#inherited-guide-differences).
+4. [Not verified](#not-verified).
+5. [Suggested next steps](#suggested-next-steps).
+
+How to read it. Each defect names the file and line, what the code does, what was expected, a severity, and the handbook chapter that documents the real behaviour. Severity: **high** silently breaks content or loses data; **medium** a documented option does nothing or misbehaves; **low** cosmetic or edge case. Java paths are relative to `CoffeeMud/com/planet_ink/coffee_mud/` unless they start with `tools/`, `audit/`, `docs/` or `CoffeeMud/`. Line numbers were taken from the notes and re-checked for the high-severity items; others may have drifted by a few lines.
+
+The handbook already documents the real behaviour wherever it differs from the code's stated intent, and warns about the traps below. Nothing here was fixed in the engine. Where a verifier corrected a writer, or the integration pass corrected both, this report follows the later conclusion. Nothing was run during the rewrite or the checks; items marked "not run" were read from code only.
+
+Area codes: BW building and world files, SC scripting (MOBPROG), JS JavaScript, PR properties, BM behaviors and masks, IC items and crafting, AB abilities, CH characters and progression, QU quests, SE society and economy, WS world simulation, TI travel and instances, SP saves and party, GE generation, DT developer tools and scripts, CF configuration.
+
+---
+
+## Engine defects
+
+### Building and world files
+
+- <a id="d-bw-1"></a>**D-BW-1. MODIFY MOB ... LEVEL always re-fills the mob's stats.** `Commands/Modify.java:2912` (`mobs()`, end). The test `(!mob.isGeneric())&&(modMOB.basePhyStats().level()!=oldLevel)` checks the builder (`mob`), which is never generic, so `fillOutMOB` runs after every level change, including on generic mobs, overwriting hand-set attack, damage, armor, speed, hit points, mana, move and money. Expected: test `modMOB`. Severity: **high**. Handbook: [21][c21], [01][c01].
+- <a id="d-bw-2"></a>**D-BW-2. CATALOG DELETE skips the confirmation when more than 10 entries match.** `Commands/Catalog.java:632` and `:645` (`del.length>10||confirm`). A broad name such as `everydamnthing` deletes the whole catalog with no prompt. Expected: confirm whenever anything is deleted. Severity: **high**. Handbook: [02][c02].
+- <a id="d-bw-3"></a>**D-BW-3. WORLD CHECK TEXT does not flag undescribed rooms.** `core/WorldCheck.java:272-285` (`text()`); `Commands/Create.java:487-488, 1009-1010`. CREATE ROOM and CREATE AREA give a room the title `ClassName-roomID` and an empty description; `sameText()` ignores empty strings, so neither test fires. Only WORLD DIG/PATH rooms (TODO tag) are caught. Expected: flag an empty description and a `Class-roomID` title. Severity: medium. Handbook: [20][c20], [01][c01].
+- <a id="d-bw-4"></a>**D-BW-4. CREATE ROOM can leave an orphan room.** `Commands/Create.java` `rooms()`. `DBCreateRoom` runs before `createNewExit`, which refuses with "Opposite room already exists and heads this way." The room is saved but never linked (shows in LIST ORPHANS). Expected: fail before saving. Severity: medium. Handbook: [20][c20].
+- <a id="d-bw-5"></a>**D-BW-5. MODIFY AREA CLIMATE D sets windy, not dry.** `Commands/Modify.java` ~1132 (`areas()`, `case 'D'` uses `CLIMASK_WINDY`). The editor (`CMGenEditor.genClimateType`) handles D correctly. Severity: medium. Handbook: [20][c20], [10][c10].
+- <a id="d-bw-6"></a>**D-BW-6. The climate editor offers V (void) but cannot select it.** `Libraries/CMGenEditor.java` `genClimateType`: the allowed letters are `"RHCWDI\n"`. Void is reachable only through the stat form. Severity: low. Handbook: [20][c20].
+- <a id="d-bw-7"></a>**D-BW-7. "Technology doesn't seem to work here" only triggers for the wrong themes.** `Areas/StdArea.java` `okMessage`, ~1141-1245. The branch is the `else` of `if(!bset(theme,THEME_HEROIC))`, so a Fantasy-only area does not block technology. Probably meant a separate `if`. Severity: medium. Handbook: [20][c20].
+- <a id="d-bw-8"></a>**D-BW-8. COPY of an exit shares the Exit object.** `Commands/Copy.java` ~365 (`setRawExit(dirCode,(Exit)E)`). Edits to one apply to both until reload. Expected: a copy. Severity: medium. Handbook: [20][c20].
+- <a id="d-bw-9"></a>**D-BW-9. IndoorWaterThinSurface points at a class that does not exist.** `Locales/IndoorWaterThinSurface.java:62`, `UnderWaterLocaleID()` returns `IndoorWaterThinGrid`; the class is `IndoorUnderWaterThinGrid`. Severity: low. Handbook: [20][c20].
+- <a id="d-bw-10"></a>**D-BW-10. Indoor seaport domain labels look swapped.** `Locales/interfaces/Room.java` `DOMAIN_INDOORS_DESCS`: index 8 (CAVE_SEAPORT) is labelled INNERSEAPORT and index 9 (SEAPORT) CAVESEAPORT. Severity: low. Handbook: [20][c20].
+- <a id="d-bw-11"></a>**D-BW-11. `CREATE <AreaClass> <dir>` names the area "north StdArea".** `Commands/Create.java` ~2590-2625. The shorthand is rewritten to `CREATE AREA <dir> <AreaClass>`. Expected: refuse. Severity: low. Handbook: [20][c20].
+- <a id="d-bw-12"></a>**D-BW-12. GMODIFY CHANGE= with no criteria matches everything and forces areas ACTIVE.** `Commands/GModify.java`. There is no safeguard, and after the run every touched area is set ACTIVE even if the builder had made it PASSIVE or FROZEN. Severity: medium. Handbook: [20][c20].
+- <a id="d-bw-13"></a>**D-BW-13. WORLD MAP FLAGS marks any lockable door "+".** `Commands/WorldCmd.java`, `hasALock()` rather than the locked state; help says "a locked door". Severity: low. Handbook: [20][c20].
+- <a id="d-bw-14"></a>**D-BW-14. Shopkeeper stock editor tries class IDs before searching.** `Libraries/CMGenEditor.java` ~5310-5325 (`genShopkeeperShopInventory`). The typed text is tried as `CMClass.getUnknown(...)` first, so a custom item whose name contains a stock class ID (`shortsword`, `dagger`) stocks the standard class. "<ID> added." also prints the class ID, not the name. Severity: medium. Handbook: [01][c01], [21][c21].
+- <a id="d-bw-15"></a>**D-BW-15. Catalog auto-spawn room choice looks inverted.** `Libraries/CMCatalog.java` ~993-1030 (`getSpawnRoom`). With an empty mask only hidden rooms are accepted; with a mask hidden rooms are skipped. Expected: an empty mask means any room. Severity: medium. Handbook: [21][c21].
+- <a id="d-bw-16"></a>**D-BW-16. WORLD SET START is not seen by WORLD CHECK REACH until restart.** `WorldCheck.startRoomIDs()` reads the live `CMProps` value while WORLD SET writes `world.ini`; REACH finds no start rooms and checks nothing. Severity: low. Handbook: [01][c01].
+- <a id="d-bw-17"></a>**D-BW-17. A hand-made area file with a non-canonical name is rewritten and the original deleted on the next SAVE.** `core/save/WorldFiles.java` (`exportAllReadable`, `writeFolder`). Not mentioned in help. Severity: low. Handbook: [02][c02].
+- <a id="d-bw-18"></a>**D-BW-18. Some world folders are not tracked, and `world.ini` is not in the world sum.** `core/save/WorldFiles.java` `managedPaths()` (2782-2790) removes `world.ini`; `macros/`, `tests/`, `maps/`, `laws/`, `namegen/`, `upgrades.txt` are not in `WorldAssets`. Editing them never shows in WORLD STATUS or changes the saved world version. Probably intended for macros/tests/maps; questionable for laws, namegen and upgrades. Severity: low. Handbook: [02][c02], [33][c33].
+- <a id="d-bw-19"></a>**D-BW-19. A world file that cannot be read leaves a half-loaded world with only a start-up console line.** `WorldFiles.exportAll` returns -1 both for "not builder mode / not loaded whole" and for I/O failure, and clears `heldBack` before checking the mode. Severity: low. Handbook: [02][c02], [33][c33].
+- <a id="d-bw-20"></a>**D-BW-20. In builder mode `SAVE <anything>` silently behaves as plain SAVE.** `Commands/Save.java` ~243. Typing a slot name there saves the world. Severity: low. Handbook: [02][c02].
+- <a id="d-bw-21"></a>**D-BW-21. REGENERATE cannot be undone.** `core/UndoLog.java:54` (`COMMANDS`) omits REGENERATE, which `Unsaved.COMMANDS` does track. Severity: low. Handbook: [02][c02].
+- <a id="d-bw-22"></a>**D-BW-22. `CATALOG [name]` only looks in the room.** `Commands/Catalog.java` (`fetchFromRoomFavorMOBs`). An item in the builder's own inventory is not found although help implies any object. Severity: low. Handbook: [22][c22].
+- <a id="d-bw-23"></a>**D-BW-23. Mob editor rough edges.** `CREATE MOB a Elf Fighter` only names the mob and adds `Prop_Trainer` (GenMob has no class field; `CLASS` is a no-op on set); `DRESS` takes only the last word as the item name (`Commands/Dress.java`) and looks in the builder's inventory; the abilities editor shows `ID()` with no parameter text (`CMGenEditor.genAbilities` ~5655); `Create.mobs()` default rejuv is 2.5 minutes of ticks where the variable names suggest 1.5; the shopkeeper type prompt lists `DEAL_AUCTIONEER` twice (~5170-5200). Severity: low. Handbook: [21][c21].
+- <a id="d-bw-24"></a>**D-BW-24. The shopkeeper editor has no prompt for the Librarian contributor mask.** `CMGenEditor.modifyGenShopkeeper` (~12600). The stat exists as `LIBCMASK` (GenLibrarian, XML `POSTCMASK`); use MODIFY MOB. LIVEPRICE/LIVECUT for auctioneers are also missing. Severity: low. Handbook: [21][c21].
+
+### Scripting (MOBPROG)
+
+- <a id="d-sc-1"></a>**D-SC-1. The FACTION() condition is always true when compared with a range name.** `Common/DefaultScriptingEngine.java`, `case 72` (~9122, `simpleEval`). Both sides are read numerically, so `FACTION($n == Trusted)` compares 0 with 0. Expected: a string compare when the right side is not a number. Workaround: FACTIONBAND. Severity: **high**. Handbook: [28][c28], [09][c09].
+- <a id="d-sc-2"></a>**D-SC-2. SCRIPTCHECK minimum argument counts disagree with the parsers.** `core/ScriptSignatures.java`. Too high or low for MPM2I2M (3, engine 1), MPNOTRIGGER (0, needs 2), MPLORE (2, needs 3), MPLEARNLANG (2, needs 3), MPWAVE (2, uses 1), MPEXCHANGE (3, uses 2), MPANCHOR, MPBOARD, MPNARRATE, MPRECRUIT, MPDOOR (needs 2 or 3 where the table says 1 or 2), MPTRANSFER, MPSHOP, MPMSG. SCRIPTCHECK warns on valid short forms and misses some bad ones. Severity: medium. Handbook: [27][c27].
+- <a id="d-sc-3"></a>**D-SC-3. SCRIPTCHECK cannot check `LOAD=file ARGS` or ARGDEFAULT files.** `core/ScriptCheck.java:183-215` (`expand`) takes everything after `LOAD=` up to `~` as the file name, so `LOAD=progs/guard.script POST=castle#12` is reported "no such file"; ARGDEFAULT lines are not stripped, likely giving "unknown trigger ARGDEFAULT". The runtime uses `loadFileAndArgs` and `withoutArgDefaults` (DefaultScriptingEngine.java:1256). `fileText` (:151) also cannot resolve `world:` paths (known open gap). Severity: medium. Handbook: [04][c04].
+- <a id="d-sc-4"></a>**D-SC-4. MPREJUV only understands lower-case `item` / `mob`.** `DefaultScriptingEngine.java` 12358-12366 compares the raw text. `MPREJUV area ITEMS` (as in help) silently rejuvs everything. Severity: medium. Handbook: [27][c27].
+- <a id="d-sc-5"></a>**D-SC-5. MPGSET MAX<state> with ++/-- reads the base state, not the max.** `DefaultScriptingEngine.java` 11524-11534. Likely a copy-paste slip. Severity: medium. Handbook: [27][c27].
+- <a id="d-sc-6"></a>**D-SC-6. MPSETVAR `/0` sets the variable to "0".** `setVar` strips the `/` before the zero check, so "leave unchanged" does not work. Severity: medium. Handbook: [27][c27].
+- <a id="d-sc-7"></a>**D-SC-7. AMBUSH_PROG (and WAVE/ARENA triggers) never match a lower-case argument.** `core/ScriptEvents.java` `arena`: `w.equals(n)` is case-sensitive and the "Cr" bit is not upper-cased, so `AMBUSH_PROG spotted` never fires. Severity: medium. Handbook: [26][c26].
+- <a id="d-sc-8"></a>**D-SC-8. QUEST_TIME_PROG -1/-2 only matches `*` or an all-capital quest name.** `stepEndQuest` compares the upper-cased trigger name with the quest's raw name (`tt[1].equals(quest)`). Severity: medium. Handbook: [26][c26].
+- <a id="d-sc-9"></a>**D-SC-9. Event triggers are dropped when the host mob is "busy".** `eventTrigger` honours `isFreeToBeTriggered` (cannot act, in combat, following, under 50% HP), so a sleeping or fighting mob ignores SKILL_PROG, QUEST_PROG and calendar triggers. `ACTIVETRIGGER` relaxes it. May be unintended for world-wide triggers. Severity: medium. Handbook: [26][c26], [04][c04].
+- <a id="d-sc-10"></a>**D-SC-10. FIGHT_PROG and HITPRCNT_PROG on an item pass a null target.** `DefaultScriptingEngine.java` ~20707, ~20735 use the stand-in mob's victim, not the carrier's. Severity: medium. Handbook: [26][c26].
+- <a id="d-sc-11"></a>**D-SC-11. `MPNOTRIGGER DROPPING_PROG` does nothing.** DROPPING_PROG checks `canTrigger(22)` (DROP_PROG), not its own 53; GETTING/WEARING/REMOVING check both. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-12"></a>**D-SC-12. Several triggers match nothing when written without an argument.** SAIL_PROG (unlike BOARD_PROG/DOCK_PROG), QUEST_PROG, GAME_PROG, PARTY_PROG, COMBAT_PROG, AFFECT_PROG, QUESTFAIL_PROG, ACHIEVE_PROG, WEATHER_PROG, MOON_PROG, SEASON/MONTH/YEAR/WEEKDAY_PROG. The `t.length<2` guards in `ScriptEvents` are dead code because `parseBits` always returns full-length arrays. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-13"></a>**D-SC-13. LOOK_PROG oddities.** A detail look (from `Prop_Details`) fires only for argument `100` or the exact keyword, so `LOOK_PROG ALL` does not hear it (`ScriptEvents.detail` ~2893); on an item or room host it hears every look in range, not only looks at the host. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-14"></a>**D-SC-14. SPEECH_PROG words keep punctuation.** Unlike ACT/MASK/IMASK, "tower" does not match "tower?". Severity: low. Handbook: [26][c26].
+- <a id="d-sc-15"></a>**D-SC-15. ENTRY_PROG on an item host accepts any ENTER message,** not only the carrier's moves. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-16"></a>**D-SC-16. CMDFAIL_PROG has no TYP_HUH check.** `DefaultScriptingEngine.java` okMessage case 51 (~18268). Any message whose target text starts with a prefix of the verb can fire. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-17"></a>**D-SC-17. GENERATED_PROG with a non-numeric argument always fires.** It is not treated as a mask. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-18"></a>**D-SC-18. DEATH_PROG and KILL_PROG set `$i` to the victim.** `DefaultScriptingEngine.java` ~19706, ~19727 use `monster = ded`, unlike the "host is `$i`" convention of other triggers. Severity: low. Handbook: [26][c26].
+- <a id="d-sc-19"></a>**D-SC-19. `$%...%` ends at the first `%`, so nesting and the `%` operator fail.** `varify` (`vchrs.indexOf("%",t+2)`). `$%CAP($%ANAME($o)%)%` (used in the older audit text) does not work; MATH's `%` modulus cannot appear in value form. Expected: nesting or a `\%` escape. Severity: medium. Handbook: [28][c28].
+- <a id="d-sc-20"></a>**D-SC-20. `\$` leaves the backslash in the output.** `varify` skips the `$`, but the final `deEscape` removes only `\"` and `\\`. Severity: low. Handbook: [28][c28].
+- <a id="d-sc-21"></a>**D-SC-21. UNDERSTANDS$ and JS$ work only as value forms.** `parseEval` rejects `$` ("Unknown character"). Severity: low. Handbook: [28][c28].
+- <a id="d-sc-22"></a>**D-SC-22. `CALLFUNC(target func)` as a condition cannot reach another object.** `DefaultScriptingEngine.java` case 62 (~4781) finds only the host's own FUNCTION_PROG or JS function. Only the value form `$%CALLFUNC(target func)%` calls other objects. Severity: low. Handbook: [28][c28], [04][c04].
+- <a id="d-sc-23"></a>**D-SC-23. RAND(n) is off by one.** True when a 1..100 roll is below n: RAND(100) is 99%, RAND(1) never. Severity: low. Handbook: [28][c28].
+- <a id="d-sc-24"></a>**D-SC-24. Function value forms are inconsistent.** ISODD is false for negative odd numbers; `$%NUMBER(2.5)%` is 0; ISTIME returns "it is daytime " with a trailing space; ISHERE returns the area name; ISLIT is true and ISDARK false for an unresolved room; ISLOCKED returns the key name; ISGOOD/ISEVIL/ISNEUTRAL return three different kinds of text; WEAKEST's comment says percent but it returns a name; WORNON's empty-words branch is unreachable. Severity: low. Handbook: [28][c28].
+- <a id="d-sc-25"></a>**D-SC-25. Connector quirks.** `A NOT B` (no AND/OR) folds as `A OR NOT B`, unlike `A B` (AND); `.in.` works for older functions but not the LISTJOIN..UNDERSTANDS$ group (`ScriptLib.COMPARES`); quoting differs between the inherited functions (`'` and `` ` ``) and the extras (double quotes). Severity: low. Handbook: [28][c28].
+- <a id="d-sc-26"></a>**D-SC-26. `$%FACTION(who id)%` accepts only a faction ID.** The FACTION() condition, FACTIONVALUE and FACTIONBAND also accept names. Severity: low. Handbook: [09][c09], [28][c28].
+- <a id="d-sc-27"></a>**D-SC-27. MPPURGE on a player ends their session.** `DefaultScriptingEngine.java` 13380-13430 moves the player to the start room and calls `stopSession`. Dangerous in a single-player game. Severity: medium. Handbook: [27][c27].
+- <a id="d-sc-28"></a>**D-SC-28. Small command slips.** MPUNLINK logs under the label "MPLINK" (14151-14172); MPEXP and MPRPEXP handle percentages differently; MPPOSSESS is multi-user era code with no party guard; MPJOURNAL keeps double quotes written as in help. Severity: low. Handbook: [27][c27].
+- <a id="d-sc-29"></a>**D-SC-29. Flow-control leaks.** A stray `ELSE` runs as a game command; `CONTINUE` outside a loop returns a marker string up to the trigger; `BREAK` inside a FUNCTION_PROG leaks "BREAK" as the function's value; MPCALLFUNC shares the caller's `$0`-`$9` (only named parameters are replaced), so a function using MPARGSET or FOR can change the caller's slots. Severity: low. Handbook: [27][c27], [04][c04].
+- <a id="d-sc-30"></a>**D-SC-30. A script file in `world/scripts/` runs twice if an NPC also LOADs it.** Every `world/scripts/*.script` is attached to the hidden WORLD item (`WorldHost.start`). The handbook recommends `world/resources/progs/` for per-NPC scripts. Suggest a SCRIPTCHECK warning. Severity: medium. Handbook: [04][c04].
+- <a id="d-sc-31"></a>**D-SC-31. IFVAR / VAR with host `*` returns the first host that has the variable.** `DefaultScriptingEngine.getVar` (~996) scans every `SCRIPTVAR-` resource; order is undefined and a value of "0" or empty still counts as found. Player clues set with `StoryText.setVariable` write on the player's host, so one character's clue can make IFVAR true for all. Suggest a per-viewer tag. Severity: medium. Handbook: [11][c11].
+
+### JavaScript
+
+- <a id="d-js-1"></a>**D-JS-1. JSCRIPTS=0 does not disable most JavaScript.** Only `DefaultScriptingEngine` (`<SCRIPT>`, `JS()`, MPJSFILE), `DefaultQuest` legacy `<SCRIPT>`, ScriptCheck, LanguageLexicon, GenJs and AuthoringCheck read it. JScriptable, Prop_JScript, JSBehavior, init.js, progression.js, quest handlers, JRUN and JCONSOLE ignore it. Severity: medium. Handbook: [05][c05].
+- <a id="d-js-2"></a>**D-JS-2. With JSCRIPTS=0 an unapproved `<SCRIPT>` is silent.** The "not authorized" message at `DefaultScriptingEngine.java:10297` is only for mode 1. Severity: low. Handbook: [05][c05].
+- <a id="d-js-3"></a>**D-JS-3. Error rings differ.** ScriptErrors keeps 200 (SCRIPTERRORS), `JSRuntime` keeps 50 (JS ERRORS). Severity: low. Handbook: [05][c05].
+- <a id="d-js-4"></a>**D-JS-4. Hook symmetry.** JScriptable `onWear`/`onRemove`/`onOpen`... also fire for the host's own actions, `onGet`/`onDrop` skip the host. `JSWorldBehavior.onWeather`/`onDaypart` get upper-case names, `cm.on('weather'/'daypart')` lower-case. Severity: low. Handbook: [05][c05].
+- <a id="d-js-5"></a>**D-JS-5. Timers use the player's clock.** `cm.every('N hours')` and `cm.at` use the player's area clock (`JSTimers.clock()`); `cm.at` does not fire if registered or restored while the condition already holds. Severity: low. Handbook: [05][c05], [10][c10].
+- <a id="d-js-6"></a>**D-JS-6. `cm.command` is available to everyone.** It registers with `securityCheck()==true`; the only restriction is a check inside the function. Severity: low. Handbook: [05][c05].
+- <a id="d-js-7"></a>**D-JS-7. Console and runner differ.** JCONSOLE lines keep backticks, but JS HELP, `.inspect` and cron `<SCRIPT>` still replace `` ` `` with `'` (`JSCmd.java:96`, `JSConsole.java:208`, `CMJournals.java:838/864`). JConsole uses the global timed factory (JSTIMELIMIT), JRun uses JSTIMELIMIT_JRUN. Severity: low. Handbook: [05][c05].
+- <a id="d-js-8"></a>**D-JS-8. `JSProgression.STEPS` is stale and unused.** It lists six names; `onCreationStep` also receives traits, template, origin, kit, dynamic CreationSteps names and each creation.ini question's lower-case name (`CharCreation.java:3065, 3304, 3365, 4334, 4387`). Severity: low. Handbook: [05][c05], [03][c03].
+- <a id="d-js-9"></a>**D-JS-9. `MPRun.java` still has multi-user login logic** (`getLoadPlayer`, `matchesPassword`); unreachable in single-player. Severity: low. Handbook: [05][c05].
+
+### Properties
+
+- <a id="d-pr-1"></a>**D-PR-1. The ABLE* adjuster options are dropped.** `Abilities/Properties/Prop_HaveAdjuster.java:309-315`: `ABLETICKS`, `ABLEHPCOSTS`, `ABLEMNCOSTS`, `ABLEMVCOSTS` are applied by `addAbleAdjustments` (445-449) but missing from the word list given to `parseLooseParms`, so the parser reports "Illegal parameter" and drops them (tested by calling the parser). Affects Prop_HaveAdjuster, WearAdjuster, RideAdjuster, HereAdjuster, UseAdjuster; help documents them. Fix: add them to the list. Severity: medium. Handbook: [23][c23].
+- <a id="d-pr-2"></a>**D-PR-2. Prop_ReqEntry does not reset `actual`.** `Prop_ReqEntry.java:80-86` resets `noFollow` and `noSneak` but not `actual`, so removing `actual` from the text has no effect until reload. Severity: low. Handbook: [23][c23].
+- <a id="d-pr-3"></a>**D-PR-3. Some properties never appear in the effects editor's `?P` list.** Prop_CombatAdjuster, Prop_MOBEmoter, Prop_Undroppable and Prop_Unsellable do not override `canAffectCode`. They work when typed. Severity: low. Handbook: [23][c23].
+- <a id="d-pr-4"></a>**D-PR-4. Prop_Dusty removes itself as soon as a mob owns the item** (`Abilities/Misc/Dusty.java`), although it lists rooms and items. Severity: low. Handbook: [23][c23].
+- <a id="d-pr-5"></a>**D-PR-5. The map's MARK colour is never seen on unvisited rooms.** `PlayerMaps.render` forces colour `k` for an unvisited room after the Prop_MapGlyph/MapReveal colour is chosen. Severity: low. Handbook: [11][c11].
+- <a id="d-pr-6"></a>**D-PR-6. Prop_Senses and Prop_Details edge cases.** With CHANCE below 100 a failed roll consumes the command silently (`Scenery.sense`); `HIGHLIGHT` works only for rooms (`Scenery.highlight`). Severity: low. Handbook: [23][c23].
+
+### Behaviors and masks
+
+- <a id="d-bm-1"></a>**D-BM-1. RandomTeleporter POOFOUT sets the arrive message.** `Behaviors/RandomTeleporter.java` `setParms`: `poofin=s.substring(8)` for POOFOUT, so the leave message is never set and the arrive message is overwritten. Severity: medium. Handbook: [24][c24].
+- <a id="d-bm-2"></a>**D-BM-2. GateGuard cannot combine KEEPLOCKED and ALLNIGHT.** `Behaviors/GateGuard.java:66-80`: the loop `break`s after the first. Severity: medium. Handbook: [24][c24].
+- <a id="d-bm-3"></a>**D-BM-3. Concierge/Taxi INDOOROK maps to the outdoor-only flag.** `Behaviors/Concierge.java:145,149`: INDOOROK and NOINDOOR both map to `TrackingFlag.OUTDOORONLY` and are applied when true, so `INDOOROK=true` adds the restriction. TaxiBehavior sets OUTDOORONLY by default, so its documented INDOOROK=true cannot work (not run). Severity: medium. Handbook: [24][c24], [30][c30].
+- <a id="d-bm-4"></a>**D-BM-4. CombatAbilities BSIZE has no effect at load.** `setParms` reads it with `CMParms.getParmInt(parms,...)` before `super.setParms` stores the new text, so it sees the previous (empty) string. Severity: medium. Handbook: [24][c24].
+- <a id="d-bm-5"></a>**D-BM-5. RandomTraps reads ROOMS=, ITEMS=, EXITS= and locale words only if the text contains `;`.** The shipped help examples have no `;`, so they get only the defaults. Severity: medium. Handbook: [24][c24].
+- <a id="d-bm-6"></a>**D-BM-6. `+PLAYER`, `+MOB`, `+SYSOP`, `+SUBOP`, `+IF` and `+JS` end the AND group at once.** `Libraries/MUDZapper.java`: they return true immediately, skipping the rest of the group, so key order matters. Severity: medium. Handbook: [24][c24].
+- <a id="d-bm-7"></a>**D-BM-7. Mask key aliases are uneven.** `CLASS("CLASSES")` has no `+CLASSES`; ALIGNMENT/GENDER plurals exist only for the minus form (`MaskingLibrary.ZapperKey`); `-CHANCE n` exists with no `+CHANCE`; `-PORT/+PORT` tests the single listening port and is meaningless here. Severity: low. Handbook: [24][c24].
+- <a id="d-bm-8"></a>**D-BM-8. `+NAMES "a wolf"` matches nothing.** NAMES counts only `-name` parameters; use `+NAMES "-a wolf"`. Severity: low. Handbook: [08][c08], [24][c24].
+- <a id="d-bm-9"></a>**D-BM-9. `WHEN=` on spawners doubles as an on/off gate.** BehaviorWhen tests the same mask on the host, so a spawn-room mask such as `-LOCATION +ROOMSTR(moonlit)` can switch the whole RandomMonsters/RandomItems off. Possible design defect. Severity: low. Handbook: [24][c24].
+- <a id="d-bm-10"></a>**D-BM-10. Parameter keys are start-partial.** `CMParms.getParmStr` matches case-insensitively by prefix, so `min` matches `minitems`; affects ItemGenerator/RandomItems/RandomMonsters/RandomTraps strings that omit `min=`. Severity: low. Handbook: [24][c24], [23][c23].
+- <a id="d-bm-11"></a>**D-BM-11. MudChat tick entries without an operator say the NPC's own name.** `MudChat.java` ~1397 (`queResponse` default branch). Latent (stock chat.dat has none). Severity: low. Handbook: [06][c06].
+
+### Items and crafting
+
+- <a id="d-ic-1"></a>**D-IC-1. MODIFY RECIPE edits only the main recipe file.** `Libraries/CMAbleParms.java:1295`. VALIDATE RECIPES and the loader include `.1`-`.9` extension files; rows in extensions are invisible to MODIFY RECIPE. No delete option. Severity: medium. Handbook: [07][c07].
+- <a id="d-ic-2"></a>**D-IC-2. Opening the Gettable/Droppable prompt refills a drunk Potion.** `Libraries/CMGenEditor.java:2587` (`genGettable`) calls `setDrunk(false)` before the `showFlag` return. Severity: medium. Handbook: [22][c22].
+- <a id="d-ic-3"></a>**D-IC-3. The weapon type editor offers 7 of 17 types.** `CMGenEditor.java:3726`; FROSTING..SCRAPING only via `MODIFY ITEM x WEAPONTYPE name`; BURNING shows as `F)`. Severity: low. Handbook: [22][c22].
+- <a id="d-ic-4"></a>**D-IC-4. MODIFY ... REJUV cannot enter -1.** Any value 0 or less becomes NO_REJUV; only the full editor allows -1. Severity: low. Handbook: [22][c22].
+- <a id="d-ic-5"></a>**D-IC-5. Armor cannot have "unlimited" uses.** `Items/Armor/StdArmor.java:70` turns `Integer.MAX_VALUE` into 100. Severity: low. Handbook: [22][c22].
+- <a id="d-ic-6"></a>**D-IC-6. Uniques CONTAINER rules accept only full WHEN words.** `core/Uniques.java` ~223: `O`/`T`/`B` (accepted by the CATALOG EDIT prompt) are taken as part of the mask. Severity: low. Handbook: [22][c22].
+- <a id="d-ic-7"></a>**D-IC-7. Container flags set by stat code do not change current state.** `GenContainer.setStat` for HASLID/HASLOCK/DEFCLOSED/DEFLOCKED changes defaults only. Every GenArmor is a Container (`StdArmor.java:37`), so the armor editor shows lid and lock prompts. CATALOG LIST's `#` column counts different things for items and mobs. Severity: low. Handbook: [22][c22].
+- <a id="d-ic-8"></a>**D-IC-8. The seventh ADDWEARLOC field is unreachable.** `Items/interfaces/Wearable.java:520` requires exactly 6 fields; line 557 reads a 7th. Severity: low. Handbook: [22][c22].
+- <a id="d-ic-9"></a>**D-IC-9. Foraging reads `skills/herbs.txt`, which is not shipped.** `Foraging.java:221`; only `herbology.txt` exists. Possibly a dead reference. Severity: low. Handbook: [07][c07].
+- <a id="d-ic-10"></a>**D-IC-10. No editor prompt for FREQ/MASK/YIELD on GenGatheringSkill items** (`CMGenEditor` ~7928). Tags survive a rebuild but must be written by hand. Severity: low. Handbook: [07][c07].
+
+### Abilities
+
+- <a id="d-ab-1"></a>**D-AB-1. GenPoison EFFECTS is never applied.** `Abilities/Poisons/GenPoison.java` ~209-233 (`getOtherEffects`) builds each copy but never adds it to `neffects` (GenDisease does). The field is stored and edited but does nothing. Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-2"></a>**D-AB-2. GenTrap ISBOMB is dead.** `Abilities/Traps/GenTrap.java:91, 596, 696` stores `V_BOMB` but does not override `isABomb()`; the editor still prompts for it (`CMGenEditor.java:10023`). Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-3"></a>**D-AB-3. ACODE descriptions are misaligned.** `Abilities/interfaces/Ability.java` `ACODE.DESCS` has 15 entries but `ACODE_TECH` is 13: `CLASSIFICATION=TECH SKILL` parses to 14 and `ARCHON SKILL` to 13 (= TECH). Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-4"></a>**D-AB-4. GenAbility EXITS and ROOMS targets misbehave.** `Abilities/GenAbility.java` invoke(), ~700-750: `CAN_EXITS` finds `openThis` but never assigns `target`; `CAN_ROOMS` sets `target=mob`; self-quality abilities ignore a Room or Item target. Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-5"></a>**D-AB-5. A lasting GenAbility may re-apply damage and ONCAST every tick.** `GenAbility.skillAction` ~1131-1250: the damage, script cast event and `ONCAST` are outside the `(!oneTimeChecked)||TICKAFFECTS` guard. Not run. Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-6"></a>**D-AB-6. AFFECTS domain filter lists nothing.** `Commands/Affect.java` `execute()`: `mask=(typ+1)<<5` on a value that is already shifted, so `AFFECTS healing` never matches. Should be `mask=typ`. Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-7"></a>**D-AB-7. GenAbility class and domain words parse badly.** `GenAbility.convertClassAndDomain()`: a type found only by prefix (`ARCHON`, `TECH`) is neither assigned nor tried as a domain; types must match with a space while `LIST ABILITYCODES` prints underscores (`THIEF_SKILL`), which does not parse. Severity: medium. Handbook: [25][c25].
+- <a id="d-ab-8"></a>**D-AB-8. A hostile GenAbility at the default MAXRANGE is not flagged malicious at range.** `StdAbility.castingQuality` returns INDIFFERENT for the current victim when `rangeToTarget()>maxRange()`. Also ATTACKCODE gives two independent saving throws. Severity: low. Handbook: [25][c25].
+- <a id="d-ab-9"></a>**D-AB-9. AHELP "more" branch is dead.** `Commands/AHelp.java` ~54-58 guards on `helpStr.length()==0` and `equalsIgnoreCase("more")`. `Abilities/Poisons/UniPoison.java` is referenced only by a refusal message in Modify. Severity: low. Handbook: [25][c25].
+- <a id="d-ab-10"></a>**D-AB-10. Some GenAbility/GenTrap fields have no editor prompt.** GenAbility `MOCKABLETEXT`, `TARGETFAILMSG`, `CHANNELING`, `TEXT`; GenTrap `ACODE`, `LEVEL`. A hand-written record must contain every tag: `parseAllXML` blanks any missing one. Severity: low. Handbook: [25][c25].
+- <a id="d-ab-11"></a>**D-AB-11. The GenLanguage editor's "Translate IDs" changes are invisible once INTERPRETS was set.** `CMGenEditor.modifyGenLanguage` ~9780 edits `languagesSupported()`; `getStat("INTERPRETS")` returns `V_INTERPRETS` when non-empty. Percentages such as `Elvish(60)` cannot be typed in the editor. Severity: medium. Handbook: [11][c11].
+- <a id="d-ab-12"></a>**D-AB-12. KEEPNAMES leaves the first word of every sentence untranslated.** `LanguageLexicon.keep()` keeps any word starting with an upper-case letter. Severity: low. Handbook: [11][c11].
+
+### Characters and progression
+
+- <a id="d-ch-1"></a>**D-CH-1. EXPRATE=0 gives no experience for lower-level victims.** `Libraries/CoffeeLevels.java` ~1498-1507 (`adjustedExperience`) returns 0 whenever `levelDiff < -EXPRATE`; the ini says 0 means no bonus or penalty. Expected: `if(levelLimit>0 && levelDiff<-levelLimit)`. Severity: medium. Handbook: [03][c03].
+- <a id="d-ch-2"></a>**D-CH-2. AGEEFFECTS written with "Mature" hits the wrong age.** `Race.java:504-514`: `AGE_DESCS` shows index 5 as "Mature", but `Ageing.category("Mature")` resolves to index 4 (MATURE). Use MIDDLEAGED. Severity: medium. Handbook: [03][c03].
+- <a id="d-ch-3"></a>**D-CH-3. A new GenRace or GenCharClass cannot be chosen by anyone.** New GenRace has availability 0; new GenCharClass has PLAYER 0, BASE "Commoner" and an empty RACQUAL (admits no race). No warning when the editor closes. Severity: medium. Handbook: [03][c03].
+- <a id="d-ch-4"></a>**D-CH-4. MPPERK -PERK keeps the rewards,** and granting again gives them again (`Perks.remove`). Severity: medium. Handbook: [03][c03].
+- <a id="d-ch-5"></a>**D-CH-5. Origins and kits ignore mistakes quietly.** `Origins.parse` and `StartingKits.give` ignore unknown keys and directives (creation.ini and perks.ini log them); kit `ability ID n` can lower proficiency (origins use max); kit `faction` accepts IDs only and sets rather than adds. Severity: low. Handbook: [03][c03].
+- <a id="d-ch-6"></a>**D-CH-6. Renaming a shrine mob re-opens its once-only respec.** `Prop_Respec.onceTattoo` is built from the room ID or the thing's name. Severity: low. Handbook: [03][c03].
+- <a id="d-ch-7"></a>**D-CH-7. Race and class editor gaps.** GenCharClass `STRWEAP`/`STRARM` are accepted and ignored; the HELP stat exists (GenRace code 47, GenCharClass 53) with no prompt; the aging chart editor needs nine ascending numbers (negative "never" only via file or script); `CHARCREATIONSCRIPTS` accepts AUTHENTICATE but nothing runs it; `@DeityList@` lists every deity, not only those that qualify. Severity: low. Handbook: [03][c03].
+
+### Quests
+
+- <a id="d-qu-1"></a>**D-QU-1. Listing a player's quests deletes tracking scripts of quests that no longer exist.** `Libraries/Quests.java:1847-1862` (`getPlayerPersistentQuests`) calls `stepQuest`, `endQuest` and `player.delScript(SE)` when the quest cannot be found. Renaming or removing a quest, or a failed load, drops it from every character that has the script, as a side effect of QUESTS. Expected: leave the script and report. Severity: **high**. Handbook: [08][c08].
+- <a id="d-qu-2"></a>**D-QU-2. A bare RandomQuests disables itself.** `Behaviors/RandomQuests.java`: the default PATH `randareas/example.xml` defines no `all_quests`. The same applies to `Prop_QuestGiver QUEST="GENERATE:..."` and `Prop_QuestBoard` without FILE ("quest id 'ALL_QUESTS' has not been defined"). The shipped generator is `resources/quests/random/all.xml`. Severity: medium. Handbook: [08][c08].
+- <a id="d-qu-3"></a>**D-QU-3. QUESTCHECK reports false problems for valid scripts.** `core/QuestCheck.java`: `SET_VARS` lacks WEEKDAY, EVERY, SEASONSTART, MOON, HOLIDAY, SCHEDULE and LORE; `LOAD_KINDS` lacks ENCOUNTER; `COMMANDS` lacks `<JSQUEST>`/`</JSQUEST>` and `LOAD=file` lines; it splits only on newlines, so a quest typed on one `;`-separated line (CREATE QUEST) reports false "is no quest command". Severity: medium. Handbook: [08][c08], [10][c10].
+- <a id="d-qu-4"></a>**D-QU-4. Quest-level `LOAD=world:path` is not supported; Quest Maker output lands in `resources/`.** `DefaultQuest.getResourceFileData` reads resources and embedded FILEs only. Quest Maker writes `resources/quests/NAME.quest`; only the `LOAD=quests/NAME.quest` pointer lands in `world/quests`, so wizard output is outside the world folder. Severity: medium. Handbook: [08][c08].
+- <a id="d-qu-5"></a>**D-QU-5. A QuestBound-triggered reset may use a message type as its pause.** `Abilities/Misc/QuestBound.java` ~650: `resetQuest(msg.targetMinor())`. Not run. Severity: medium. Handbook: [08][c08].
+- <a id="d-qu-6"></a>**D-QU-6. LIST quest status prints ticks as minutes** ("waiting (N minutes left)") in `ListCmd`. Severity: low. Handbook: [08][c08].
+
+### Society and economy
+
+- <a id="d-se-1"></a>**D-SE-1. GuildMaster `KIT.<POSITION ID>=` is never read.** `Behaviors/GuildMaster.java:73` uses `param("KIT."+role,"")`; `CMParms.getParmStr` returns the default when the key contains punctuation, and `.` and `_` are punctuation (`CMParms.PUNCTUATION_TABLE`, ~1455/1503). The `kit` request always says "There is no kit for your rank." Fix: parse `KIT.` keys with `parseEQParms` as MoneyChanger and Arrest do. The kit tattoo also uses the raw position ID, so IDs with spaces (FIRST CITIZEN, HIGH PRIEST) cannot be named. Severity: **high**. Handbook: [09][c09].
+- <a id="d-se-2"></a>**D-SE-2. Faction change `CHANCE=n` fires about (100-n) percent of the time.** `Common/DefaultFaction.java:1830-1833` returns when `rollPercentage() < pctChance`. The template says "percent chance of triggering". Not run in play. Severity: **high**. Handbook: [09][c09].
+- <a id="d-se-3"></a>**D-SE-3. MAXCLANCATS=0 blocks membership.** `Behaviors/GuildMaster.java:50`, `ClanApply.java:77`, `ClanCreate.java:65`, `core/Guilds.java:88` test `size()>=max`; coffeemud.ini says 0 means unlimited. Severity: medium. Handbook: [09][c09].
+- <a id="d-se-4"></a>**D-SE-4. Faction MINIMUM and MAXIMUM have no effect.** `DefaultFaction.recalc()` (via `addRange`) recomputes them from the ranges (~540-600, 2639-2645). Shipped `areareaction.ini` has overlapping ranges (RANGE1 -8000..-1500, RANGE2 -10000..-8000, RANGE5 -1500..-500). Severity: medium. Handbook: [09][c09].
+- <a id="d-se-5"></a>**D-SE-5. GuildMaster parameter order matters.** `getParmStr(..,"CLAN",..)` returns "" if a `-CLANRANK` (any `-`/`+` before the `=`) comes first, e.g. JOINMASK before CLAN=. Put CLAN= first. Severity: medium. Handbook: [09][c09].
+- <a id="d-se-6"></a>**D-SE-6. Faction change direction is case sensitive.** `DefaultFactionChangeEvent.setDirection` uses `startsWith("U")`; `up` is not accepted. Severity: low. Handbook: [09][c09].
+- <a id="d-se-7"></a>**D-SE-7. Clan odds and ends.** ClanMorgueSet picks the clan with `Function.MORGUE` but gates the action on `SET_HOME`; `ClanDeclare.java:63` `skipChecks` looks up a clan named after the mob; a fresh `custom` law (`Law.defaultLaw`) has ACTIVATED=FALSE, empty ARMED and harsher ASSAULT/MURDER than `laws.ini`. Severity: low. Handbook: [09][c09].
+
+### World simulation
+
+- <a id="d-ws-1"></a>**D-WS-1. MODIFY CRON [n] SUBJECT renames the job to the word SUBJECT.** `Commands/Modify.java` `cron()` calls `modJob.subj(field)` with the field name; the value is ignored. Severity: medium. Handbook: [10][c10].
+- <a id="d-ws-2"></a>**D-WS-2. Prop_ClosedSeason on a doorless exit does nothing.** It acts through `setDoorsNLocks(hasADoor...)`; help does not say. Its `exitArea` falls back to `getFirstArea()` until someone passes. Severity: medium. Handbook: [10][c10].
+- <a id="d-ws-3"></a>**D-WS-3. Weather tests are inconsistent between features.** Prop_ClosedSeason uses `weatherType(null)` (area weather, even indoors); zapper `-WEATHER` and `Prop_Hazard WHEN` use `weatherType(room)` (always CLEAR indoors). Severity: low. Handbook: [10][c10].
+- <a id="d-ws-4"></a>**D-WS-4. HAZARDS omits some hazards.** `Commands/EnvToolsCmd.java` `isHazard()` lists Trap_*, Prop_InstantDeath, Prop_NarrowLedge, Prop_Weather only; not Prop_Hazard, Prop_RoomDark, Prop_DarkDanger on a room. Severity: low. Handbook: [10][c10].
+- <a id="d-ws-5"></a>**D-WS-5. Calendar edge cases.** `Calendars.daylight()` uses `season(C,0)` so SEASONOFFSET does not move DAYLIGHT; tides use the calendar's DAYHR/DUSKHR (misbehave with DAYHR=-1) and last one game hour without SPAN. Severity: low. Handbook: [10][c10].
+
+### Travel and instances
+
+- <a id="d-ti-1"></a>**D-TI-1. A named-ticket Prop_TicketTaker does not block boarding.** `Abilities/Properties/Prop_TicketTaker.java:346-360`: with no ticket it says "You'll need <ticket> to board." but never returns false (the numeric branch does). Severity: **high**. Handbook: [30][c30].
+- <a id="d-ti-2"></a>**D-TI-2. PARTY=EACH receipts are never cleared for plain rideables.** `Travel.disembarked` is only called on leaving a Boardable area (`core/ScriptEvents.java:1788`), so on a cart or mount a second ride is free. Severity: medium. Handbook: [30][c30].
+- <a id="d-ti-3"></a>**D-TI-3. The Taxi default base fare of 10 is never used.** `Concierge.setParms` calls `resetDefaults()` then sets `basePrice=-1`, finishing with the last parsed price (0 if none). Severity: medium. Handbook: [30][c30].
+- <a id="d-ti-4"></a>**D-TI-4. InstanceArea LEVELADJ as a bare integer builds an unbalanced expression.** `Areas/InstanceArea.java` ~526: `"@x3 + (...)+N) > 1"`. Use formulas. Severity: medium. Handbook: [30][c30].
+- <a id="d-ti-5"></a>**D-TI-5. InstanceArea InstVar entries ARMORADJ, ATTACKADJ, SAVEADJ, HPADJ, DAMAGEADJ are never read,** and OPPOSED/TRANSITIONAL, documented in the type-file header, log "Unknown instance var". Severity: medium. Handbook: [30][c30].
+- <a id="d-ti-6"></a>**D-TI-6. Prop_Port KIND is only printed by PORTS** (`Commands/Ports.java:20`); nothing routes on it. Severity: low. Handbook: [30][c30].
+- <a id="d-ti-7"></a>**D-TI-7. Prop_HelmRestrict MESSAGE/ONFAIL miss some verbs.** The regex covers COURSE|STEER|SAIL|DRIVE|TENDER|RAISE|LOWER|SET|RELEASE|BRAKE|ANCHOR; FLOAT, RISE, DIVE, TIEDOWN and FOLLOW are refused with the generic "You are not permitted to do that." Severity: low. Handbook: [30][c30].
+- <a id="d-ti-8"></a>**D-TI-8. Smaller travel slips.** An unknown Prop_JourneyState policy word behaves like WAIT; instance LIMIT periods use fixed real milliseconds (DAY = 86,400,000), not game days; Nanny RETRIEVE rounds any elapsed time up to a full hour (not exhaustively verified); a TransportLine FARES key that is a port name never matches STOPS written as room IDs; `MPSAIL ... TO` passes `who=null` and can route to hidden ports; the TaxiBehavior ending reads "Best of luck!." with a stray period. Severity: low. Handbook: [30][c30].
+
+### Saves and party
+
+- <a id="d-sp-1"></a>**D-SP-1. tools/saveinspect.py makes the save look damaged.** The script rewrites `world.xml` but not `.complete`. `SaveSlots.complete()` (`core/save/SaveSlots.java:529`) compares SHA-256 of every listed file, so `recover()` renames the edited save `.damaged-NAME-<ms>` and promotes `.old-NAME`, or `validateFormat` refuses it. The script's docstring predates the manifest. Not run. Severity: **high**. Handbook: [31][c31].
+- <a id="d-sp-2"></a>**D-SP-2. A restore may empty rooms added to the world after the save.** `WorldState.clearWorld` empties every non-fresh room and refills only rooms listed in the save, so a room added later has none of its placed mobs and items; the report says nothing unless the area file is new/changed and FRESH is used. Read from `apply`/`clearWorld`, not run. Severity: **high** (if confirmed). Handbook: [31][c31].
+- <a id="d-sp-3"></a>**D-SP-3. Timed AUTOSAVE ignores Prop_NoSave and SAVEPOINTS.** `SaveGame.java` `autoSave` ~690 applies only the fight rule; the SAVEMODE comment does not say autosave is exempt. Severity: medium. Handbook: [31][c31].
+- <a id="d-sp-4"></a>**D-SP-4. A refused timed AUTOSAVE retries every tick.** `SaveTools.AutoSaver.tick` does not advance `lastAt` on refusal, re-running save hooks each time. Severity: medium. Handbook: [31][c31].
+- <a id="d-sp-5"></a>**D-SP-5. Builder words cannot be slot names, with no message.** `Save.BUILDER_WORDS` (ROOM, MOBS, ITEMS, AREA, USER(S), PLAYER(S), CHARACTER(S), CHAR, GRACES, REWORLD, QUESTS, FACTION) silently route to the builder SAVE (refused for players). `SAVE CHECK` and `SAVE INFO x` are not subcommands (they belong to SAVES) and save a slot named "check" or fail. Severity: medium. Handbook: [31][c31].
+- <a id="d-sp-6"></a>**D-SP-6. recover() promotes an older generation without a log line.** `SaveSlots.recover()` renames the damaged folder and promotes `.old-NAME` silently. Severity: medium. Handbook: [31][c31].
+- <a id="d-sp-7"></a>**D-SP-7. A world restore that never runs is reported as done.** `SaveGame.runOnGameThread` (1209-1235) swallows a 120 s timeout and the caller sets `worldPending=false`; it also waits only 10 s for the game thread before queueing anyway. Severity: medium. Handbook: [33][c33].
+- <a id="d-sp-8"></a>**D-SP-8. SWITCH costs an action.** `actionsCost`=DEFCMDTIME, so in turn-based time it advances the world, while PARTY, AS, WINDOWS, SAVE and RESTORE cost nothing. Severity: low. Handbook: [31][c31].
+- <a id="d-sp-9"></a>**D-SP-9. Some state is not saved.** Queued AS orders, WINDOWS state and the TIMESCALE rate (re-applied at boot only from a numeric setting) are not written. Severity: low. Handbook: [31][c31], [33][c33].
+- <a id="d-sp-10"></a>**D-SP-10. Engine fragilities.** `SaveSlots.find/list` match names case-insensitively but slots keep the typed case (`Hero` and `hero` can coexist); `SaveSlots.list()` calls `acquire()`+`recover()`; `UndoLog.xmlOf` reaches a private `getRoomXML` by reflection (falls back silently); `InstanceIds.id()` copies share an id until `id(copy)` is called; `Party.actWithTerminal` swaps sessions with no re-entrancy guard; `WorldFiles.fileNameFor` can rename another area's file on a slug collision. Severity: low. Handbook: [31][c31], [33][c33].
+
+### Generation
+
+- <a id="d-ge-1"></a>**D-GE-1. The sample loot file sets values and a material that do not exist.** `CoffeeMud/resources/randareas/loot.xml` writes `value="..."` on 11 items; the stat is `BASEGOLD`, so the value is ignored. Line 31 uses `material="TALLOW"`, which is not a RawMaterial; unknown names are ignored silently. `GENERATE CHECK` does not flag either (`core/GenerateCheck.java:202` whitelists VALUE, for FACTION, and does not validate materials). Fix: `basegold=`, a real material, and a tag-specific whitelist. Severity: medium. Handbook: [12][c12].
+- <a id="d-ge-2"></a>**D-GE-2. MOB_IGNORE_STATS holds item code names.** `Libraries/interfaces/GenericBuilder.java:134-143`: `GenMOBCode.getAllCodeNames()` fills its array from `GenItemCode.values()`. Probably harmless today. Severity: low. Handbook: [12][c12].
+- <a id="d-ge-3"></a>**D-GE-3. A diagonal `EXIT direction=` cannot be forced.** `MUDPercolator.findExit` compares one letter with `getDirectionChar`, which returns two letters for NE/NW/SE/SW (`core/Directions.java:588`). Severity: medium. Handbook: [12][c12].
+- <a id="d-ge-4"></a>**D-GE-4. `GENERATE S ...` resolves to SCRIPT.** `Commands/Generate.java` ~205: the abbreviation loop does not break. Severity: low. Handbook: [12][c12].
+- <a id="d-ge-5"></a>**D-GE-5. MPGENERATE ignores SEED for everything but AREA.** `DefaultScriptingEngine.java` ~16900-16995 parses SEED for every kind and passes it only to `GenCalls.area`. Severity: medium. Handbook: [12][c12], [27][c27].
+- <a id="d-ge-6"></a>**D-GE-6. Several GENERATE LIST forms fail.** `GENERATE AREA LIST [FROM f]` and `GENERATE ROOM LIST` fail with "the LAST parameter ... must be a direction"; `GENERATE SCRIPT LIST` fails the target lookup. Only STRING, MOB, ITEM and QUEST LIST work. Severity: medium. Handbook: [12][c12].
+- <a id="d-ge-7"></a>**D-GE-7. ENSURE ignores `condition` and does not rebuild exits.** `MUDPercolator.applyEnsure` still builds the key (min>=1) if the vault room was never built; `ensureRoom` refills with `fillRoomUnseeded`, which skips the template's EXIT children, so a locked door declared there is not applied. `reachable-without:keyname=` tests the neighbour-side exit object, so it depends on build order (not run). Severity: medium. Handbook: [12][c12].
+- <a id="d-ge-8"></a>**D-GE-8. Template JavaScript runs without the approval flow.** `core/GenJs.enabled()` tests only `JSCRIPTS != 0`: no approval, no time limit. With `JSCRIPTS=1` a template file in `world/resources/randareas/` can run arbitrary JavaScript. Whether Java interop is closed in `JSScope.prepare` was not checked. Needs a decision. Severity: medium. Handbook: [12][c12].
+- <a id="d-ge-9"></a>**D-GE-9. Generation side effects and caches.** `buildGenRace` calls `CMClass.addRace` and `DBCreateRace` on every build of a RACE tag with an unknown CLASS (persists a race); `Affixes.all()` caches forever (edits to `world/affixes.xml` need a restart; the world file replaces, not merges with, the stock one). Severity: low. Handbook: [12][c12].
+
+### Developer tools and scripts
+
+- <a id="d-dt-1"></a>**D-DT-1. playtest.py with no file arguments always scans `CoffeeMud/world/tests`.** `WORLD=` only chooses the copied source. Severity: medium. Handbook: [13][c13].
+- <a id="d-dt-2"></a>**D-DT-2. `#restore SLOT` always fails in playtest.py.** Each run uses a fresh empty SAVEDIR and `#save` is not kept. RECORD INPUT writes `#restore slot` into recordings that started from a save, which the runner cannot replay. Severity: medium. Handbook: [13][c13].
+- <a id="d-dt-3"></a>**D-DT-3. A plain DEV=1 game cannot use PREVIEW, CHECKTEXT, SANDBOX or DEVWATCH.** `GROUP_DEV` (coffeemud.ini:468) has no CMDROOMS/CMDITEMS/CMDAREAS, while help says tools work "in builder mode or a DEV=1 game". UNDO and RUNFILE also need builder mode or CMDROOMS. Suggest widening the check to `isBuilderMode()||isDevMode()||CMDROOMS`. Severity: medium. Handbook: [13][c13], [19][c19].
+- <a id="d-dt-4"></a>**D-DT-4. `WORLD CHECK AREA` swallows the next word,** even `LOG` or `ONLY=...` (`Commands/WorldCmd.java:146-155`); DATA and JS parts are skipped when AREA is given. Severity: low. Handbook: [13][c13].
+- <a id="d-dt-5"></a>**D-DT-5. DEVWATCH re-queues WORLD RELOAD CHANGED forever for files that cannot reload live.** `Commands/DevWatchCmd.java` ~97-110: custom/**, scripts/**, js/**, routes/**, templates, clans, space, journals, vfs, classes/**, ranks.ini and others are never `markLoaded`. Also nothing reloads WorldHost scripts live (`JS RELOAD` exists for js). Severity: low. Handbook: [02][c02].
+- <a id="d-dt-6"></a>**D-DT-6. PlaytestRunner plays the world on disk and needs a checkout.** It copies the world folder, so unsaved builder edits are not tested; it runs `../tools/playtest.py` relative to the JVM cwd (developer checkout via `CoffeeMud/sud.sh` only), with a 10-minute timeout and output capped near 24000 characters. Severity: low. Handbook: [13][c13].
+- <a id="d-dt-7"></a>**D-DT-7. Smaller tool slips.** `tools/sudplay.py` types any `#` line other than `#expect` and `#sleep` into the game (unlike playtest.py); `tools/check.sh` never runs `tools/storage-tests.sh`. Severity: low. Handbook: [13][c13], [18][c18].
+
+### Configuration
+
+- <a id="d-cf-1"></a>**D-CF-1. `KILMSGS=OFF` in coffeemud.ini is never read.** `CoffeeMud/coffeemud.ini:2284, 2303`; `core/Log.java:101` reads `KILLMSGS`. Blank means OFF, so it fails silently. Severity: medium. Handbook: [18][c18], [19][c19].
+- <a id="d-cf-2"></a>**D-CF-2. PARTYMEET and PARTYFIGHT accept only the literal `1`.** `application/MUD.java:246-247`; WINDOWS accepts 1/Y*/T*/ON (`SUD.java:154`), BUILDER/DEV the same, RECORDINPUT 1/ON/TRUE. `PARTYMEET=true` silently means off. Severity: medium. Handbook: [19][c19], [31][c31].
+- <a id="d-cf-3"></a>**D-CF-3. RESET INIFILE does not re-parse GROUP_ and SYSOPMASK.** It does not call `CMSecurity.parseGroups` or `setSysOp`; those edits need a restart. Severity: medium. Handbook: [19][c19].
+- <a id="d-cf-4"></a>**D-CF-4. The shipped clock makes some calendar triggers unusable.** coffeemud.ini ships HOURSINDAY=6, an empty DAYSINWEEK (WEEKDAY_PROG never fires) and month names such as "the 1st month" with spaces (MONTH_PROG names are unusable, `anyOf` splits at spaces). Severity: medium. Handbook: [26][c26], [10][c10].
+- <a id="d-cf-5"></a>**D-CF-5. BUILDER=1 does not take the SAVEDIR lock.** `SUD.java` skips `SaveSlots.acquire` in builder mode, so two builder games can share a cache. CHECK=1 does take it and conflicts with a running normal game. Severity: medium. Handbook: [18][c18].
+- <a id="d-cf-6"></a>**D-CF-6. COLORSET accepts values that produce a bad code.** `ColorAliases.code` resolves BG* names, BLINK and NONE to `'\0'` and appends `"^\0"`; only the 16 base names plus BOLD, UNDERLINE and ITALICS are real. Severity: low. Handbook: [11][c11].
+- <a id="d-cf-7"></a>**D-CF-7. Launcher leftovers.** `MUD_NAME=ROTLOVE` (coffeemud.ini:229) is still set into the MUD_NAME variable (`CMProps.java:2701`); an empty PORT fails host start ("could not start any listeners", `MUD.java:1572-1580`) although the networking block is inert; sud.bat builds only when `SUD.class` is missing (sud.sh builds every launch); Makefile, build.xml and make.bat still reference the removed `lib/jzlib.jar`. Severity: low. Handbook: [18][c18].
+- <a id="d-cf-8"></a>**D-CF-8. Launcher argument handling.** `SUD.readSettings` parses only single-token `NAME=VALUE` (`RESTORE = hero` is ignored by SUD but reaches the engine); `FRESH=` is honoured only with `RESTORE=name`, not for a save picked from the menu; a misspelt key is silently ignored. Severity: low. Handbook: [18][c18], [31][c31].
+- <a id="d-cf-9"></a>**D-CF-9. Log level labels are cut to five letters** (`Log.Type.sixChars`: `warni`, `comba`, `acces`). Severity: low. Handbook: [18][c18].
+- <a id="d-cf-10"></a>**D-CF-10. Dead flags and constants.** SecFlags with no check outside `CMSecurity` (ABILITIES, ANNOUNCE, CMD, COPY, GRAPEVINE, I3, IMC2, IMPORT, KILL, MISC, POLLS) and DisFlags with no reads (QUITREASON, MSSP, I3, IMC2, MCP, GRAPEVINE; the ini DISABLE default still lists QUITREASON); the `JSCRIPT_*` constants are named backwards (`JSCRIPT__NO_APPROVAL=0` means "never run"); `CLANVOTEO/D/R` are never read; JS approvals persist only in builder mode; RESETUTILS gates only the tail of `Reset.java`'s else-chain. Severity: low. Handbook: [19][c19].
+- <a id="d-cf-11"></a>**D-CF-11. Presentation settings that worlds cannot carry.** ROOMHEADER, ROOMFOOTER, MAPFOG, COLORALIASES, JOURNALAUTO, JOURNALTALK and WINDOWPANEL are not in `WorldSettings.KEYS`, so the allowlist drops them from every shipped world; LOGOUTMASK, PARTYDEFEAT, MAXCONNSPERACCOUNT, DEFCMDTIME, TIMESCALE are not allowlisted either (a world cannot enforce "quit only at an inn"). ROOMHEADER replaces the whole title line including disposition blurbs and the MXP tag. Severity: low. Handbook: [11][c11], [31][c31].
+
+---
+
+## Help and comment mismatches
+
+Each entry names the wrong text and what it should say.
+
+### Building and world files
+
+- <a id="h-bw-1"></a>**H-BW-1.** `AHELP SAVE` usage suggests `SAVE AREA` works; only `SAVE AREA ROOM|ITEMS|MOBS` is handled (`Commands/Save.java`), plain `SAVE AREA` says "You cannot save 'AREA'" and then still exports. Say so. [02][c02]
+- <a id="h-bw-2"></a>**H-BW-2.** `UndoLog.java` and `UndoCmd.java` comments say "HISTORY lists them". HISTORY is the typed-command history; the builder log is `UNDO LIST`. Same slip in the old handbook and `audit/B-builder-tools.md` B6. [02][c02]
+- <a id="h-bw-3"></a>**H-BW-3.** `AHELP WORLD` (`arc_help.ini` ~3180-3260) lists WORLD CHECK parts only up to IDS; `WorldCheck.PARTS` (`core/WorldCheck.java:63`) also has MODULES, COMPOSITIONS, COMBAT, ITEMMODS. It omits `WORLD RELOAD AREA` alone. [02][c02], [13][c13]
+- <a id="h-bw-4"></a>**H-BW-4.** `coffeemud.ini` comment for WORLDDIR does not mention scripts/, js/, routes/, vocab/, lore/, kits/, encounters/, modules/. [02][c02]
+- <a id="h-bw-5"></a>**H-BW-5.** MODIFY usage: `MODIFY MOB [name] [LEVEL, ABILITY, REJUV, MISC, ?]`; `?` is not special (any unknown word prints the aspect list), and `MODIFY MOB guard` errors because it needs 4 words; the editor forms are `MODIFY guard` and `MODIFY MOB guard MISC`. `MODIFY ITEM x` on a non-generic item prints a field list; the short editor is `MODIFY [name]`. [01][c01], [21][c21], [22][c22]
+- <a id="h-bw-6"></a>**H-BW-6.** Mob editor `Hit Points Bonus Modifier` and its `?` text ("level*level + random*level*THIS", `CMGenEditor.java` ~3464) are stale: hit points come from `FORMULA_NPCHITPOINTS` via `Dice.rollHP` and are re-rolled on load (`CoffeeMaker.resetGenMOB`). The Rejuv/Pct prompt for room items means ticks. [21][c21], [22][c22]
+- <a id="h-bw-7"></a>**H-BW-7.** `Create.java` usage for CREATE ROOM shows `([ROOM TYPE] / LINK [ROOM ID])`; there is no LINK branch. `AHELP CREATE` omits GUILD (listed in `Create.java` ~1828), the short forms `CREATE <class or catalog name>`, `CREATE <n> <command>` and `CREATE <n> <material>` (~2560-2680). [20][c20], [22][c22], [09][c09]
+- <a id="h-bw-8"></a>**H-BW-8.** `Modify.java` flunkRoomCmd/flunkAreaCmd lists omit ID (room) and PASSIVE/ACTIVE/FROZEN/STOPPED/WEATHERPROFILE/CALENDAR (area) though accepted. [20][c20]
+- <a id="h-bw-9"></a>**H-BW-9.** `AHELP TEMPLATE` shows "TEMPLATE TEMPLATE ADD"; it is `TEMPLATE ADD`. `AHELP GMODIFY` example `gmodify area name$wooden change=name=stone` implies substring matching; without `[ss]` `$` needs a whole-field match. [20][c20]
+- <a id="h-bw-10"></a>**H-BW-10.** `AHELP CATALOG` (`arc_help.ini:113`) omits `CATALOG CLEAN [ROOM|AREA|WORLD]` and the `CATAGORY` spelling; the CATALOG EDIT prompt "W)once for a while" has a typo and "D)ead mobs" maps to enum DROP whose `CatalogLibrary.CataSpawn` comment says corpses only; mask prompts keep the old mask on Enter (only `NULL` clears). [22][c22], [02][c02]
+- <a id="h-bw-11"></a>**H-BW-11.** `core/save/WorldFiles.java:30-50` javadoc lists only areas/, custom.cmare, catalog.cmare, quests/, dev/, space.cmare; the code also handles custom/<kind>/, templates.cmare, clans.cmare, journals/, vfs/, laws/ and tracks js/, scripts/, routes/. `contentPaths()` javadoc says "as checksum() takes them" but world.ini is not in the sum; `audit/S-saves-and-world-files.md` S3 says world.sum covers it. [33][c33]
+
+### Scripting (MOBPROG)
+
+- <a id="h-sc-1"></a>**H-SC-1.** Help for GREET_PROG says "When players enter the room"; the engine (`DefaultScriptingEngine.java:18634`) only checks that the mob can sense the arrival. Guard with ISPC(). [04][c04]
+- <a id="h-sc-2"></a>**H-SC-2.** Help for BREAK says it skips the rest of the IF block; the code returns "BREAK" through every enclosing IF/SWITCH to the nearest FOR/WHILE or ends the program. [04][c04], [27][c27]
+- <a id="h-sc-3"></a>**H-SC-3.** `HELP SCRIPTABLE` says `TURN_PROG (EVERY N) (MASK)`; the code reads a bare number first (`ScriptEvents.turnMatches` ~1022). It should say `(N)`. [26][c26]
+- <a id="h-sc-4"></a>**H-SC-4.** Scriptable help says "Targets: MOBs, Items, Rooms" (`canImproveCode`); exits and areas also host scripts. Whether the editor can attach Scriptable to an exit or area was not checked. [04][c04], [26][c26]
+- <a id="h-sc-5"></a>**H-SC-5.** The trigger list lacks NOTUNDERSTOOD_PROG (only in `arc_language_authoring.ini`), the MOON_PROG BLUE phase, CLAN_PROG DUESLATE (`core/Organizations.java:302`; `clanMatches` also takes `ANY`), SAIL_PROG's raw command words (RISE, DIVE, TENDER, RAISE, LOWER, JUMP, FOLLOW, ANY), and that TOUCH runs USE_PROG (`Commands/Touch.java:27`). Prop_QuestGiver/Prop_Details LOOK_PROG routing is undocumented. The first firing block ends `executeMsg` unless MULTITRIGGER; queue caps (5/25/150) and the recursion guard are in no manual. [26][c26], [04][c04]
+- <a id="h-sc-6"></a>**H-SC-6.** `ScriptEvents.destroyed` javadoc lists reasons BROKEN and CONSUMED; only JUNKED and DECAY are ever set. `ScriptEvents.uses()` javadoc says the used set is refreshed; it is never cleared on an in-process restore. [26][c26], [33][c33]
+- <a id="h-sc-7"></a>**H-SC-7.** MPAFFECT help says only "automatically casts a spell on a mob"; the duration is recognised only as digits straight into `TICKS` (`120TICKS`, no space). `DefaultScriptingEngine.java` ~12745-12760; `MPAFFECT Prop_X` and `property:AbilityID` add a property permanently. [27][c27], [23][c23], [25][c25]
+- <a id="h-sc-8"></a>**H-SC-8.** MPOPEN/MPCLOSE/MPLOCK/MPUNLOCK help says MPOPEN "opens a closed container or door"; `setDoorsNLocks` also clears the lock, and MPCLOSE leaves the door closed and unlocked. MPFORCE expands `$` codes in the forcer's context. MPLOG accepts any type starting E, I/S or D (`SYSTEM` works). MPCHOOSE needs upper-case choice keys. MPREJUV help writes ITEMS/MOBS upper-case (see D-SC-4). [27][c27]
+- <a id="h-sc-9"></a>**H-SC-9.** No shipped help for MPCLANRELATION and MPCONQUER (`DefaultScriptingEngine.java` 17087-17118), nor function-syntax lines for AREACLAN, AREACONTROL, CAP, CLANMEMBER, CLANPOS, CLANRELATION, CLANS, LEN, LOWER, REVOLTCHANCE, TRIM, UPPER. [27][c27], [28][c28]
+- <a id="h-sc-10"></a>**H-SC-10.** `WORLD RELOAD SCRIPT` works only in builder mode (a normal game ignores the arguments and does a save/restore); help does not say. SCRIPTTRACE line numbers are positions within the program, not file lines. [04][c04]
+- <a id="h-sc-12"></a>**H-SC-12.** CMDFAIL_PROG examples that use `PRAY` (in earlier handbook text) do not fire reliably: PRAY is a social. Use VENERATE. [26][c26], [04][c04]
+
+### JavaScript
+
+- <a id="h-js-1"></a>**H-JS-1.** The `coffeemud.ini` JSCRIPTS comment ("Scriptable behaviors") and the old handbook ("JS execution follows JSCRIPTS") imply every JS path obeys it (see D-JS-1). [05][c05]
+- <a id="h-js-2"></a>**H-JS-2.** The `JSProgression` header comment and the older chapter omit the creation.ini question names passed to `creationStep`; the `xpGain` source list in help is partial (also COMBAT:<level><flag>, ABILITY:, CLASS:, MISC:, COMMAND:Teach, SCRIPT:, DEATH:, FACTION:, SIEGE:, LIEGE:, COST:, HOMAGE). `JS RELOAD` report says "incompatible instances kept (see log)" while the log says "kept old instance". `audit/JS-javascript.md` JS21 says JCONSOLE converts backticks; only partly true. [05][c05], [03][c03]
+
+### Properties
+
+- <a id="h-pr-1"></a>**H-PR-1.** Help for Prop_ReqEntry, ReqAlignments, ReqClasses, ReqRaces, ReqLevels and ReqStat says `nofol`; those classes test `startsWith("NOFOLLOW")` (ReqEntry at `Prop_ReqEntry.java:91`) and ReqStat reads only NOSNEAK. Only Prop_ReqTattoo reads NOFOL. Say `nofollow`. [23][c23]
+- <a id="h-pr-2"></a>**H-PR-2.** Parameter names that differ from the code: Prop_AffectReTick `WEARERS` (code: MOBS/ITEMS/AREAS/ROOMS/EXITS/OWNER(S)); Prop_AbilityImmunity `WIELDER` (code: `WEARER`); Prop_Fumble example `domain=stealthy` (key is `ADOMAIN`); Prop_TriggeredAffects example uses TemporaryImmunity's format; Prop_CommonTwister omits `SUBTYPE`. [23][c23]
+- <a id="h-pr-3"></a>**H-PR-3.** Hosts in help differ from `canAffectCode`: Prop_AbsorbDamage, Adjuster, CommonTwister, AbilityImmunity, Doppleganger, MagicFreedom, NoChannel, NoDamage, NoSummon, ReqCapacity, RestrictSpells, RoomWatch, SparringRoom, SpellAdder, Hidden, LanguageSpeaker, OutfitContainer, LockRules/ComboLock/OpenCommand/CloseCommand/OpenPassword (exits and items, not containers). Prop_Smell help lists Targets MOBS but `canAffectCode` is ROOMS|AREAS|EXITS|ITEMS, so TICKS, EMOTE and BROADCAST are unreachable on a mob. The handbook shows the code's hosts. [23][c23], [11][c11]
+- <a id="h-pr-4"></a>**H-PR-4.** `PROP_ROOMPLUSFORSALE` (`arc_properties.ini`) names the property "Prop_RoomsPlusForSale"; the class is `Prop_RoomPlusForSale`. [07][c07]
+- <a id="h-pr-5"></a>**H-PR-5.** No help entry: Prop_AreaBanner, AreaEntry (a sentence at `arc_behaviors.ini:2200`), AuthorIdentity, Broken, FactionEffects, JourneyPassenger, JourneyState, Playtest, Purchases, StoryRecords, TransitView, TweakWatch, Verbs (a sentence at `arc_behaviors.ini:2178`); Abilities/Misc Dusty, Alerted, GoingHome, Phobias. Prop_QuestLog parameters read "(kept by the game)". `PROP_ITEMMODIFIERS` has no entry in `arc_properties.ini` (its help is at `arc_help.ini:3455`). 22 newer entries do not use the Property/Targets/Parameters/Example/Description layout. [23][c23], [22][c22]
+- <a id="h-pr-6"></a>**H-PR-6.** Options read by code but absent from help: Prop_NoTeleportOut INTERAREAOK, NoSummon MAGICONLY, ItemBinder `TO=GROUP`, Socials alias spellings, SpellAdder/HereSpellCast ONCLOSED/TICKDOWN and trailing `MASK=`, Fumble NOUNINVOKE/TICKDOWN/INV/WEAR, RoomForSale family TAX/ALLOWTHEFT/SYNC/LEVEL, Artifact AUTORESET/NODB/ROOMID, Cursed REMOVECURSE/SHOWN/STEP, DevCheats ALLSKILLS/GOTO/ORDER, UseEmoter AROMA/NOBROADCAST/NOPRIVATE, QuestGiver MINQUESTS, SafePet LIEGEFOLLOW, WeaponImmunity MAGICSPELLS/NONMAGIC, Workstation SPEED clamped to 0-90. Prop_SpellAdder help describes only the room case (on a mob or item it adds the spells to the host). Prop_HaveAdjuster help omits the ABLE*/ALLSAVES/HPCOST tables that Prop_Adjuster help has. Prop_QuestGiver help omits TRIGGER=LOOK. Many are internal state keys; the author-facing ones deserve a follow-up read. [23][c23], [08][c08]
+- <a id="h-pr-7"></a>**H-PR-7.** The `Prop_ItemModifiers` help (`arc_help.ini:3455`) and its javadoc (`Prop_ItemModifiers.java:24`) say `WORLD CHECK ITEMMODS`; WORLD CHECK takes parts only as `ONLY=part,part`. [13][c13], [17][c17]
+- <a id="h-pr-8"></a>**H-PR-8.** Help for Prop_ClanEquipment, Prop_Tattoo and Prop_Req{Alignments,Classes,Races} says deprecated/base; clans are not part of normal single-player play (see `audit/property-defects.md`). [23][c23]
+
+### Behaviors and masks
+
+- <a id="h-bm-1"></a>**H-BM-1.** WeatherAffects help names `freezeOverChance` and `shipdmg`; the code reads `iceoverchance` (`WeatherAffects.java:142`) and `dmgship` (:150), and `boatslipchance` (default 20, :144). With the help names the settings are silently ignored. [24][c24]
+- <a id="h-bm-2"></a>**H-BM-2.** Aggressive, MobileAggressive, VeryAggressive and WimpyAggressive help examples use bare `+elf -fighter`; `MUDZapper.maskCompile` logs "Bad Zappermask key" and drops bare `+word`. Use keys. VeryAggressive/MobileAggressive next-door detection tests 7 levels (15% of ticks), help says 16; `CHECKLEVEL` skips targets EXPRATE (default 6) or more levels below, not "within 6"; the BRIBE third value default is 20000 and "ticks to pay" is unclear. [24][c24]
+- <a id="h-bm-3"></a>**H-BM-3.** NastyAbilities help parameter line says CHECKLEVEL, description says LEVELCHECK (code: CHECKLEVEL). ProtectedCitizen(s) help says ticks are "3 second periods" (TICKTIME is 4000 ms) and has "citiguard" typos. [24][c24]
+- <a id="h-bm-4"></a>**H-BM-4.** Help "Targets" differ from `canImproveCode`: FasterRecovery (help MOBs; code AREAS/ITEMS/ROOMS), PokerDealer (help Rooms; code MOBS); CombatAbilities presets and MOBTeacher inherit all hosts; Floodable and TidalRoom also allow AREAS. [24][c24]
+- <a id="h-bm-5"></a>**H-BM-5.** MovingRoom help title is "Mover" and names `resources/moving.xml`; the file read is `resources/movingroom.xml` (`MovingRoom.java:194`). ResetWhole with no parameter means 30000 ms (about 7 ticks), not the large values the examples imply; the timing form chosen is bare number, TICKS, DAYS, RLHOUR, MUDHOUR in that order. [24][c24], [30][c30]
+- <a id="h-bm-6"></a>**H-BM-6.** Undocumented keys: Scavenger ATNIGHT, ResourceOverride MOBMASK=, Hireling third `;mask` field, RandomQuests INLINE, WaterCurrents BOATS, MovingRoom DISPLOC, Decay REMAIN, Riddler SOLVED, Emoter first-field `MASK=`, Taxi/Concierge PARTY/PETS/CARGO, MOBTeacher NOHLEXP(S). No help entry for StdBehavior; JSWorldBehavior has a paragraph in `arc_help.ini`; GUILDMASTER, CLANENEMYAGGRESSIVE live in `arc_misc.ini` and TRANSPORTLINE in `arc_travel.ini` (not `BEHAVIOR_` keys). [24][c24]
+- <a id="h-bm-7"></a>**H-BM-7.** `zappermasks.txt` omits AREABLURB, AREAINSTANCE, BIRTH* keys, CLANRANK, CLASSTYPE, JUDGE, OFFICER, PLANE, PORT, QUALLVL, RULER. Polarity is not uniform: for flag keys (ISHOME, AREAINSTANCE, ROOMDARK, OFFICER, JUDGE, WANTED, HOLIDAY, BREATH) `+` requires and `-` forbids; TIDE and list keys use `-` to require; numeric `+STR/+GROUPSIZE` mean "at least", `+ABILITY/+VALUE/+WEIGHT/+ARMOR/+DAMAGE/+ATTACK` "at most". The ISHOME line and the W keys (-ROOMDARK, -BREATH, -TIDE, +HOLIDAY) say "<WORD>" without saying what passes. [24][c24], [10][c10]
+- <a id="h-bm-8"></a>**H-BM-8.** `zappermasks.txt` lines 103-110 describe `-QUESTWIN`/`+QUESTWIN` (and QUESTFAIL, QUESTOUTCOME, QUESTWINS) the wrong way round. Code (`MUDZapper.java` ~6915-6955, 2754-2840): `-QUESTWIN +quest` requires a win; `+QUESTWIN -quest` excludes winners. [08][c08]
+- <a id="h-bm-9"></a>**H-BM-9.** Emoter and `docs/presentation.md` say QUIETAFTER quiets ambience "during combat or narration"; `Ambience.quiet` returns false when ticks<=0, so it acts only with QUIETAFTER=n>0, and only Emoter reads it (not Sounder). [06][c06], [11][c11]
+- <a id="h-bm-10"></a>**H-BM-10.** Smaller NPC help gaps: Memory help lists only `> >= = <`, code also accepts `<=` and `!=`; Prop_NPCLines rewords any `postSay` line, not only "stock lines"; Hireling "minutes" are real minutes shown as game hours (game days with CONTRACT=DAYS); Escortee MODE=LEAD help says the party follows (nothing makes it); Escortee PANIC other than FLEE/HIDE acts as COWER; Healer help names five prayers while `audit/C-combat-and-encounters.md` says six. [06][c06], [29][c29]
+
+### Items and crafting
+
+- <a id="h-ic-1"></a>**H-IC-1.** `CMGenEditor.java:3675` (`genWeaponAmmo`) says to put the ammunition type in the secret identity; `GenAmmunition.java:90-98` uses the readable text. [22][c22]
+- <a id="h-ic-2"></a>**H-IC-2.** Material ranges are quoted three ways: WORLDMATERIALS help (`arc_misc.ini`) frequency 1-10 and hardness 1-10; coffeemud.ini ADDMATERIAL rarity 1-100 and hardness 0-6; `RawMaterial.DefResource` javadoc frequency 1-10, hardness 1-10, buoyancy 0-10000, while built-ins reach rarity 100, hardness 11 and buoyancy 21450. [22][c22]
+- <a id="h-ic-3"></a>**H-IC-3.** RECIPEKEYS help says FAILMSG replaces the text "when ROOMMASK or TOOL fails"; it replaces every refusal (ROOMMASK, TOOL, HIDDEN, STATION), and keys apply only to a player. Prop_LimitedContents help says a semicolon inside quotes does not split; `core/Actions.java` splits ACTION_/ONFULL text on every `;`. Experiments help: a successful find does not consume the offered items; tries are counted in memory and reset on restart. [07][c07]
+- <a id="h-ic-4"></a>**H-IC-4.** With any rows in `crops.txt`, Gardening (`Gardening.java:340`) and Farming (:401) skip the up-front refusal in favour of per-crop rules; not in help. `CraftingSkill.addSpellsOrBehaviors` honours `__DELETE__` only as `*ID;__DELETE__`. [07][c07]
+- <a id="h-ic-5"></a>**H-IC-5.** `Items/interfaces/Wearable.java` and coffeemud.ini document 6 ADDWEARLOC fields (see D-IC-8); `RawMaterial.DefResource` names differ from constants for WATER, SALT WATER, LIQUID and LAMP OIL, and underscores are stored as spaces. [22][c22]
+
+### Abilities
+
+- <a id="h-ab-1"></a>**H-AB-1.** `GENDISEASE` and `GENABILITY` help (`arc_misc.ini`) say `1?4` is 1d4 and show "damage 2d6+@x1/2". In `core/CMath.java` ~1624-1626 `?` is a random number between its operands, evaluation is strictly left to right and `2d6` is not syntax. `2?6+@x1/2` is `((2?6)+@x1)/2`. GenPoison default `@x4 + 1?@x1` is a random number between rank+1 and the poisoner's level. [25][c25]
+- <a id="h-ab-2"></a>**H-AB-2.** `GENABILITY` help (`arc_misc.ini` ~1110) says custom abilities are kept in `world/custom.cmare`; the exporter writes one file per ability under `world/custom/abilities/` (`WorldFiles.java:1459-1466`); the old file is still read. [25][c25], [07][c07]
+- <a id="h-ab-3"></a>**H-AB-3.** `GENTRAP` help (`arc_help.ini:2642`) says "CREATE ABILITY GenTrap, MODIFY ABILITY [ID]"; the commands are CREATE/MODIFY/DESTROY TRAP. `GENTWEAK` example `CASTMASK="-LOCALE +OUTDOORS"`: there is no LOCALE key (use `-DOMAIN`). `AHELP GENABILITY` uses `Fighter_Trip` in a POSTCASTABILITY example; it is `Skill_Trip`. [25][c25]
+- <a id="h-ab-4"></a>**H-AB-4.** coffeemud.ini MANAMINCOST comment says the floor is 5; the trailing 10 in `-1, 10` is the `_DEFAULT` exception value. `AHELP GENABILITY` could mention that ATTACKCODE gives the target two saves. [25][c25]
+
+### Characters and progression
+
+- <a id="h-ch-1"></a>**H-CH-1.** coffeemud.ini TRAINCOSTS comment says `TRAINS 1 7 PRACTICE`; `Commands/Train.java:53-61` and the default use `GAIN`. RPAWARDS comment lists `EMOTE-OTHER`; code resolves `RP_EMOTE_OTH` (the ini's own example uses `EMOTE-OTH`). PLAYERDEATH comment gives the default EXPERIENCE; the shipped value is `(@x1 * 50) < 2000`. STARTSTAT comment says point buy gives "MAXSTATS - 18"; the code gives MAXSTATS (clamped) minus 6 x BASEMINSTAT plus achievement points. [03][c03]
+- <a id="h-ch-2"></a>**H-CH-2.** `arc_misc.ini` ORIGINS help (~1151, ~1160) shows `-RACE +Human +Half-Elf`; the race table keys are "Half Elf" and "HalfElf", so `+Half-Elf` matches neither. Use `+HalfElf`. Reward examples using `50 MAXCARRY` (as in the earlier handbook text; shipped help not re-checked) are not valid: MAXCARRY is not a char/phys/state stat. [03][c03]
+- <a id="h-ch-3"></a>**H-CH-3.** `resources/text/races.txt` still describes Drow (not selectable: FANTASY|SKILLONLY); several stock text screens are hand-written lists that disagree with the macros. `core/Ageing.java` header says AGEDISEASES is a GenRace field; it is a global CMProps key. Race.AGE_DESCS and `Ageing.AGE_NAMES` name MATURE/MIDDLEAGED differently; stock ageing changes the MAX stat adjustments while AGEEFFECTS changes the stat itself. [03][c03]
+
+### Quests
+
+- <a id="h-qu-1"></a>**H-QU-1.** The QUESTS help (`arc_behaviors.ini`) says `SET DATE [#DAY]-[#MONTH]` is real life; the code (`resetWaitRemaining` ~5758) reads month-day on the game calendar for DATE and MUDDAY (`arc_misc.ini` is correct). `audit/Q-quests.md` Q9 says `SET QUIET ON/OFF`; QUIET and OPTIONAL are prefix words or switches (`DefaultQuest.java` ~1447-1490). RandomQuests help says EXPIRE defaults to 3 hours; the code default is "6 hours" (`RandomQuests.java:119`), and help does not say a PATH is needed. [08][c08]
+- <a id="h-qu-2"></a>**H-QU-2.** Prop_QuestGiver help lists GET/ENTER/LEAVE/PUTIN/DEATH/SPEAK/WEAR/WIELD/READ; the code also has `TRIGGER=LOOK`. Many quest settings are in no help: DISPLAY, CATEGORY, QUESTTYPE, AUTHOR, INSTRUCTIONS, PERSISTANCE, EXPIRATION, SPAWNABLE values, LORE, PRESERVE, PCMOB/PCMOBGROUP, ABILITY(GROUP), step-level OBJECTIVE/JOURNAL/LORE. [08][c08]
+- <a id="h-qu-3"></a>**H-QU-3.** The old "SET WAIT without SET INTERVAL can cause a controller to disappear" claim is obsolete (WAIT alone never schedules). `startQuestOnTime` ignores MINPLAYERS when DURATION is 0 and RUNLEVEL counts only running quests with a duration. [08][c08]
+
+### Society and economy
+
+- <a id="h-se-1"></a>**H-SE-1.** coffeemud.ini MAXCLANCATS says 0 means unlimited (see D-SE-3). `factiontemplate.ini` says MINIMUM/MAXIMUM set the scale (D-SE-4), says CHANCE is a "percent chance of triggering" (D-SE-2), and omits triggers GIFT, SINK, SUNK and CMMSG (`MSG_<type>`). [09][c09]
+- <a id="h-se-2"></a>**H-SE-2.** `laws.ini` PROPERTYTAX comment contradicts itself ("greater than 0 is divided by 100, anything less than 1 is used directly"); TRESPASSROOM is marked UNUSED. [09][c09]
+- <a id="h-se-3"></a>**H-SE-3.** `MoneyChanger` help `DEFAULT=n` maps to key "" in `setParms`, which `getMyCut` never reads, but it makes `rates.size()>0` and so restricts accepted currencies. ClanQual is gated by PREMISE not ACCEPT (`ClanQual.java:67,84`); CLANMOTD by CREATE_MOTD+READ_MOTD (READ_MOTD javadoc says "writing"). FACTION ANNOUNCE posts only to channels flagged FACTIONANNOUNCEMENTS; CoffeeSUD ships INFO and QUESTCHAT only. [09][c09]
+
+### World simulation
+
+- <a id="h-ws-1"></a>**H-WS-1.** WAIT's message "You can wait three days at most" and the WAIT and MPPASSTIME help ("up to three game days") are only right for 24-hour days; `core/Waits.java` `MAX_HOURS = 72` is hours (12 days with the stock 6-hour day). WAIT over 100 ticks is subject to LONGWAIT. [10][c10], [31][c31]
+- <a id="h-ws-2"></a>**H-WS-2.** Help for WEATHER and TIME omits `WEATHER SET/FORECAST/NEXT` and `TIME SET/SEASON` (only in HAZARDS help, `arc_help.ini` ~1830). HAZARDS help says it lists what an area holds that acts on those in it (see D-WS-4). [10][c10]
+- <a id="h-ws-3"></a>**H-WS-3.** `Quests.getDefaultHoliData` (CREATE HOLIDAY) writes `SET WAIT 900+(1?100)`; the editor's schedule types are RANDOM INTERVAL, MUD-DAY, RL-DAY and do not offer WEEKDAY, EVERY, SEASONSTART, MOON. `TimeScale`, AUTOWEATHERPARMS and AUTOAREAPROPS are coffeemud.ini keys, not world keys. [10][c10]
+
+### Travel and instances
+
+- <a id="h-ti-1"></a>**H-TI-1.** BEHAVIOR_MOVINGROOM documents only the legacy `min= max= chance=` form; ROUTE=, LINE=, DEPART=, SIGN=, DISPLOC= are in `docs/travel.md` only. PROP_JOURNEY help lists REFUND=NONE|FULL|UNUSED; the code treats any value but NONE as a refund and any but UNUSED as full. PROP_TICKETTAKER help is the original; FARE/PARTY/PETS/CARGO are documented only in handbook chapter 23 and `docs/travel.md`. [30][c30]
+- <a id="h-ti-2"></a>**H-TI-2.** TransportLine PASSENGERONLY defaults to true (every vessel with a TransportLine gets a crew-only helm unless it has its own Prop_HelmRestrict); help examples show `true` without saying it is the default. `docs/travel.md`: Prop_Waypoint COST also accepts `movement` and `money`; ResetWhole keeps a bare number, RLHOUR and MUDHOUR rules. `AuthoringSchema` marks Prop_Journey DEST and DURATION required, help calls DEST "[room or port]". [30][c30]
+- <a id="h-ti-3"></a>**H-TI-3.** `areainstancetypes.txt` header says `@x1` is the base area median level; `InstanceArea.java` (~1096, ~1155) passes `instanceLevel` for both `@x1` and `@x3`. The header documents OPPOSED and TRANSITIONAL (not accepted) and omits ARMORADJ and friends (unused). [30][c30]
+
+### Saves and party
+
+- <a id="h-sp-1"></a>**H-SP-1.** `HELP TIMEMODE` says "a step is a fifth of a tick, an action in combat a whole tick"; commands that take time cost DEFCMDTIME (0.20) out of combat or DEFCOMCMDTIME (1.0) in combat, divided by speed; commands that do not override `actionsCost` cost 0. The ini comment "typical non-instant command" is as loose. [31][c31]
+- <a id="h-sp-2"></a>**H-SP-2.** `HELP SAVE` does not say sub-commands live under SAVES or that builder words cannot be slot names (D-SP-5). coffeemud.ini says PARTYMEET is on "if set to 1" (see D-CF-2). The SAVEMODE comment does not say timed autosave is exempt (D-SP-3). There is no CONTROL command; control of a character is `SWITCH` or `AS`. [31][c31]
+- <a id="h-sp-3"></a>**H-SP-3.** Javadoc gaps: `core/save/WorldState.java:23-62` omits ROOMSHAPES, COMBAT, RIDES, VESSELS, UNIQUES, JSSTATE, MENUS, NARRATION, QUESTRECORDS, YIELDS; `SaveSlots.java` diagram omits `world.xml`, `world-manifest.properties`, `modules.json`, `.complete`, `.old-/.new-/.damaged-` and `.owner.lock`; three unrelated version constants (`SaveGame.VERSION=1`, `SaveSlots.MODULE_FORMAT_VERSION=2`, `WorldState.VERSION=1`) have no explanatory comment. [33][c33], [31][c31]
+
+### Generation
+
+- <a id="h-ge-1"></a>**H-GE-1.** `GENERATE` help (`arc_help.ini` ~335) lists OBJ TYPE as AREA, ROOM, MOB, ITEM, SCRIPT, STRING and omits QUEST; `Generate.java`'s usage line mentions neither SCRIPT nor QUEST; the generic LIST form fails for AREA, ROOM and SCRIPT (D-GE-6). `arc_behaviors.ini:2552` shows `(SEED=[N])` for every MPGENERATE kind (D-GE-5). [12][c12], [27][c27]
+- <a id="h-ge-2"></a>**H-GE-2.** AFFIXES help (`arc_misc.ini:944-951`) says value rises "by a tenth for each" affix; `Affixes.apply` multiplies by `1 + power/10` per affix, compounding. `power=0` leaves the value alone; level rises by `power` (default 1). `Prop_LootTable` comment says RESET "again after its room resets"; RESET maps to SPAWN. [12][c12]
+- <a id="h-ge-3"></a>**H-GE-3.** `audit/project-feature-status.csv` G17 (`implemented_with_defect`, percent-hex decoding) and G1 (`partial`) look stale; `g17-js.js` and `g1-cold.js` pass (not re-run). PR12 says the narration cursor is not saved though `Narration.toXML/fromXML/resumeSaved` exist (`WorldState.java:201,505`, `SaveGame.java:457,589`). [12][c12], [11][c11]
+
+### Developer tools and scripts
+
+- <a id="h-dt-1"></a>**H-DT-1.** WORLD CHECK part words: help and javadoc still show bare forms (`arc_help.ini:3455`, `Prop_ItemModifiers.java:24`); the code takes only `ONLY=part,part`. The part list in `AHELP WORLD` stops at IDS (H-BW-3). The `WORLD` help says CHECK=1 runs "on a scratch copy"; the launcher makes no copy and CHECK=1 builds `resources/fakedb` unless DBSERVICE is overridden. [13][c13], [20][c20]
+- <a id="h-dt-2"></a>**H-DT-2.** DEVLOG usage prints `(MODULE [MASK])`; the `DEVLOG` ini key takes a bare mask, and `DevLogCmd.options` needs the word MODULE before a mask. The ini default for `LAST` is DEBUG with count 20 while the ring keeps 500. `AHELP LIST_TESTS` says "LIST TETS". `AS` and `TRANSFER` help still describe `PORT x` / `SRVR`. `ASSERT MARK` is undocumented. [13][c13], [18][c18], [19][c19]
+- <a id="h-dt-3"></a>**H-DT-3.** `tools/check.sh` header says "about ten minutes"; measured on one container: fixes 30 min, smoke 15 min, engine 13 min, run in parallel. PREVIEW/CHECKTEXT help says a lower-case closing tag breaks the closer (`TextCheck.java`); `StoryText.parse` builds the closer regex case-insensitively (only a leading `<VARIES>` is case-sensitive). [13][c13], [11][c11]
+- <a id="h-dt-4"></a>**H-DT-4.** Stale audit text: `audit/DT-testing-and-debugging-tools.md` and `project-feature-status.csv` say DT8 has no PLAYTEST GAME or PARTY MORTAL/ARCHON, DT9 "DEVLOG WINDOW is absent", DT15 in-game PLAYTEST RUN and WORLD TEST are missing, DT21 LAW TEST/SET missing, DT33 PUZZLE "only CHECK". All exist (`IsolatedPlaytest.java`, `PartyCmd.java:77`, `DevLogCmd.java:124`, `PlaytestRunner.java`, `LawCmd.java:204-240`, `PuzzleCmd.java:35-100`). `audit/ST-script-triggers.md` ST1 (lazy registration) and ST6 (NEWGAME_PROG, RESTORE_PROG, SAVE_PROG) are stale; `audit/N-npc-behaviour-and-dialogue.md` is a proposal (Sleeper uses `SLEEPS=`, N13/N14/N23/N25-27 and MPDIALOG do not exist); `audit/B-builder-tools.md` B9/B10 name `BUILD DIG`/`BUILD PATH`/`EXPORT MAP`, shipped are `WORLD DIG`, `WORLD PATH`, `WORLD MAP`. [13][c13], [18][c18], [20][c20]
+
+### Configuration
+
+- <a id="h-cf-1"></a>**H-CF-1.** The launcher (`SUD.java` `SINGLE_PLAYER_SETTINGS`) forces SYSMSGS/ERRMSGS/WRNMSGS/DBGMSGS=FILE, EMAILREQ=DISABLED, IDLETIMERS=0 0 and COMMONACCOUNTSYSTEM=50 over the ini, which still ships BOTH/OPTIONAL/90 85/50. `AHELP BUILDING` ("ERRMSGS=BOTH and JSCRIPTS=2 there help while building") is therefore wrong for ERRMSGS. [19][c19]
+- <a id="h-cf-2"></a>**H-CF-2.** `AHELP SECURITY` (`arc_misc.ini` ~764-900) documents flags that are not SecFlags (TASKS, KILLSTUCK, KILLBUGS, KILLIDEAS, KILLTYPOS) and ANNOUNCE/BAN/BOOT with no command class. The ini DISABLE list omits many DisFlag values (CRONJOBS, BADEXITS, AUTOMOODS...). `AWARERANGE` comment says default 0; the shipped value is 3. Not described in the ini: DEVGROUP, DEVSTART, DEVLOG, SCRIPTERRORS, MOB_HP_BASE, BIND, DBPARMS, NOTESFILE (`NoteCmd.java:70`), LANGCHAIN4J_BASEURL, DIFFICULTY_*/MOBRANK_* presets. `RESET INIFILE` help says only "reload your ini settings" (D-CF-3). [19][c19]
+- <a id="h-cf-3"></a>**H-CF-3.** The INJURYSYSTEM comment says the default is `100,60,10,100,4,10,15,20,100`; the shipped line is `100,60,25,100,2,10,15,20,100` and `CMProps.java:3095-3103` falls back to `100,40,10,100,4,10,15,20,100`. The comment also numbers the fifth value after the fourth. [29][c29]
+- <a id="h-cf-4"></a>**H-CF-4.** README says JDK 9 or newer; `findjava.bat` and `make.bat` say 8 or later. `build.sh` uses `--release 8` (needs javac 9+); `build.bat` does not. [18][c18]
+- <a id="h-cf-5"></a>**H-CF-5.** `WindowPanel.java` javadoc says WINDOWPANEL can be set in coffeemud.ini or world.ini (not in `WorldSettings.KEYS`; HELP WINDOWS agrees); `AuthoringCheck.java` ~180 labels a template check "world.ini ROOMHEADER". HELP PROMPT lists only `%{VAR NAME}`/`%{VAR HOST NAME}`; `%{PVAR}`, `%{QVAR}`, `%{TIMEMODE}`, `%{LEADER}` exist (`CoffeeUtensils.java` ~2796). HELP COLORSET lacks COLORSET ALIASES and COLORALIASES. [11][c11]
+
+---
+
+## Inherited guide differences
+
+Where the old manuals in `CoffeeMud/guides/` are wrong for CoffeeSUD. The handbook chapter named in the last column gives the real behaviour. No note covered the Programming guide.
+
+| Guide | Topic | What is different | Chapter |
+|---|---|---|---|
+| ScriptingSUD.html:146, :205 | cmdfail_prog and cut-scene examples | `isaffected($n Prayer_Bless)`; the function is `AFFECTED`. PRAY (in the example) is a social; use VENERATE | [04][c04], [27][c27] |
+| ScriptingSUD.html:151 | mpsignal TAG | Says each brazier is tagged and runs `mpsignal TAG:sunaltar`; `ScriptEvents.signalHosts` delivers to the objects that carry the tag (the receiver, the altar) | [04][c04] |
+| Scriptable.html | Trigger list | Lists almost none of the CoffeeSUD triggers (SKILL, DISCOVER, WEATHER, MOON, QUEST, GAME, TURN, PARTY, calendar, CLAN, CRAFT, FACTION, COMBAT, vessel, FIRSTGREET/REGREET, SIGNAL, AGE and others); `HELP SCRIPTABLE` names all 116 | [26][c26] |
+| Scriptable.html | time_prog hours per day | Says 16; the engine uses the area clock (shipped default 6) | [26][c26] |
+| Scriptable.html | LOOK_PROG, DEATH_PROG, KILL_PROG | LOOK_PROG on an item or room hears every look in range; DEATH/KILL_PROG set `$i` to the victim | [26][c26] |
+| Scriptable.html | `if`/BREAK | BREAK leaves every enclosing IF/SWITCH up to the nearest loop | [04][c04], [27][c27] |
+| Scriptable.html | and/or | Claims AND binds tighter than OR for `sex($n == M) or isevil($n) and race($n == Harpy)`; evaluation is strictly left to right | [28][c28] |
+| Scriptable.html | MATH | Lists only `+ - * \`; also `% ^ ? < > = !`, left to right | [28][c28] |
+| Scriptable.html, ScriptingSUD.html | Functions | Neither mentions about 35 functions (ABOARD, AREACLAN, CATALOGCOUNT, CLAN*, GENVAR, ISHOLIDAY, ISLIT, LIST*, ROOMSTATE, VARNAMES, VESSELROOM and others) | [28][c28] |
+| JavaScriptSUD.html | Hook table, cm members | Omits `catchUp`, `onReload`, `onPartyChange`, `onBuilderStart`, many cm members (passHours, interrupt, waitUntil, storeKey/stores, timers, Shop/Bank/LawView members) and `<SCRIPT>` extras | [05][c05] |
+| JavaScriptSUD.html | Creation steps | Lists six; progression.js `onCreationStep` also gets traits, template, origin, kit, dynamic step names and each question's name | [05][c05], [03][c03] |
+| RandomAreas.html | `select="repeat-X"` | Selects with replacement (guide: every choice) | [12][c12] |
+| RandomAreas.html | Detail precedence | Attribute beats bare variable beats child tag (guide: variable beats both) | [12][c12] |
+| RandomAreas.html | Node types | `offleaf` is a flag; types are surround, leaf, street, square, interior | [12][c12] |
+| RandomAreas.html | ITEM children | Parser reads CONTENT, AFFECT, BEHAVIOR only (guide lists MOB, EXIT) | [12][c12] |
+| RandomAreas.html | Missing features | BRANCH, MESH, SPOTTEDMESH, NOTIN/NOTLIKE/MATCH/NOTMATCH, ORPHROOMS, RACES, SHOP(S), SHOPITEMS, FIRST, ANY, UPDATE:/DELETE:, GENERATE SCRIPT; NOSAVE does not stop builder-mode export | [12][c12] |
+| ArchonGuide.html | Equipping MOBs | GIVE then DRESS; DRESS searches the builder's inventory and gives and wears in one step | [21][c21] |
+| ArchonGuide.html | Rejuv/Pct | Contradicts itself and says values over 99 always appear; code removes the item when `rollPercentage() < rejuv`, so 100 is almost always absent, -1 gone after first rejuvenation | [21][c21], [22][c22] |
+| ArchonGuide.html | Librarian | Lists a "Contributor Mask" editor field; the editor has none (LIBCMASK via MODIFY MOB) | [21][c21] |
+| ArchonGuide.html | Shop prices | Says -2..-100 is invalid; -2..-99 means auto price, -100..-999 quest points, <= -1000 XP | [21][c21] |
+| ArchonGuide.html | Bank interest | "Every game month"; editor labels say % per real day (coin and item) and per mud month (loans) | [21][c21] |
+| ArchonGuide.html | Building tools | Describes MUDGrinder (removed), StdBoardableShip/StdSpaceShip "unimplemented", two-sided `create Door north`, LINK/UNLINK as the only way (WORLD PATH/DIG exist), blurb flags in HELP, Postman first box free | [20][c20], [21][c21] |
+| GameBuildersGuide.html | Quest step DURATION | Says earlier durations are reused; each step must set its own (`stepQuest` sets -1) | [08][c08] |
+| GameBuildersGuide.html | PERSISTANCE | Says failed start waiting is trivial; code retries after 10 ticks, doubling | [08][c08] |
+| GameBuildersGuide.html / earlier docs | Quest examples | `CREATE QUEST LOAD=quests/robbed/robbed.quest` names a file that is not shipped (which guide carries it was not established) | [08][c08] |
+
+---
+
+## Not verified
+
+Claims the writers and verifiers could not confirm from code. Most need a run.
+
+**01 First world.** The tutorial, its quest file and the `.play` test were never run end to end. Exact character-creation prompts. That `New Area` can be destroyed while it holds the start room. Menu numbers (Behaviors 21, shop Inventory 25). `GREET_PROG`/`SPEECH_PROG` timing under `TIMEMODE=TURNS`, the LIST of a shopkeeper, UNLOCK/OPEN in the dev runner, QUESTWON rendering. Whether arrival at START counts for Prop_FirstEntry. Whether a SAVE ROOM while a quest has loaded items writes them into the world files. `playtest.py` prints relative paths, unlike chapter 13's sample.
+
+**02 World workflow.** Security flags for UNDO/DEVWATCH outside builder mode. EXPORT/IMPORT path examples. Whether placed catalog copies follow a changed catalog entry. Whether UNDO can remove rooms created inside a logged command. Whether `WORLD RELOAD SCRIPT` excludes the WorldHost item. Loader details of lore, vocab, kits, encounters, origins, perks, ranks, creation. Sample output of WORLD STATUS/DIFF/UNDO LIST (composed from format strings).
+
+**03 Characters.** REMORT and RETIRE in the single-player model (RETIRE needs a password the player never types, probably unusable). Whether MODIFY RACE/CLASS lists EXTVAR fields. How `CREATE ALLQUALIFY` takes arguments. Scope of CHANNEL and CHANNEL-NAMED RPAWARDS. Effect of `GENFLAG_THINQUALLIST`. ADDCHARSTAT types other than BASE/SAVE/OTHER. Whether PASSWORD/EMAIL/ANSI creation scripts run for a single-player profile.
+
+**04 MOBPROG.** `SCRIPT FIRE` for VERB_PROG, SIGNAL_PROG, CNCLMSG_PROG. How a builder attaches Scriptable to an exit or area. Whether `VARS LIST` shows `@` variables. Exact effect of NEEDPC. `return` with no value in VERB_PROG. `$i` for item hosts in MPSTATE. Placeholder item names in examples.
+
+**05 JavaScript.** ES6 `class` in Rhino 1.7.15.1. JRUN handling of the `world:` prefix. Cron `<SCRIPT>` reachability. A JavaScript ability extending StdAbility. Whether Property abilities are ticked. The `~` rule in `<SCRIPT>` inside `.script` files. Whether a `require()`d module sees the caller's top-level variables. `<JSQUEST>` semicolon splitting. Whether `Common/JavaScriptingEngine.java` is used at all (05 found no references; 28 documents its NAME/NAME$ bridge).
+
+**06 NPCs.** LISTEN reporting Emoter lines. Comparison operators accepted by `IF AFFINITY`. Order of multiple `~` segments in a MudChat reply. `.add` overlay files for chat. `mpquestwin` in `ONARRIVE=`. Tick-entry masks. How a builder sets the HINTTOPICS tag. LLM availability.
+
+**07 Items and crafting.** Usage text of BUNDLE/MEND/REFIT per skill. The `$<COMBO VAULTCODE>` variable. Arbitrary zapper masks with spaces in tab columns. `LIST RECIPES`/`MODIFY RECIPE` without CMDRECIPES. Editor wording of the item Tags prompt.
+
+**08 Quests.** How MINPLAYERS counts background party members. The pause before a QuestBound reset. Whether MPSTEPQUEST as the last line of a self-cleaning step is safe. Award grammar for TITLE=/ABILITY=/ITEM=. `mpchoose` blocking in the Bandits example. Chapter examples were written from templates and fixtures but not run.
+
+**09 Society.** Clan crafting and flag route to conquest for a single-player clan. MODIFY MOB `PREJUDICE` quick form. Exact LIST FACTIONS/CLANS/GOVERNMENTS forms. MPMONEY currency words; `cm.bank().lend` arguments. Hostile and ally side effects in Conquerable. Whether `LegalBehavior.EXPIRATION_MILLIS` (7 real days) compares with GameTime. D-SE-2 in play.
+
+**10 World simulation.** Whether a holiday started by `SET MOON`/`SET WEEKDAY` starts after TICKTOCK or after the tick wait. Cron jobs in single-player (which character is loaded). MODIFY EXIT/ITEM effects editors. `-WEATHER` accepting HEATWAVE/DUSTSTORM. Whether CREATE HOLIDAY writes to the world copy and MODIFY HOLIDAY keeps a hand-written `SET MOON FULL`. The `ROOMSTATE(HERE == x)` form.
+
+**11 Presentation and language.** `^##RRGGBB` as a map COLOR. Social line layout. Whether `world/resources/lists.ini` overlays LISTFILE. Staff characters getting stock languages at full proficiency. The CALL example using `var(* BUCKETS >= 3)`. Whether Prop_Details quoting hides a `;`. Which of LORE and Thief_Lore wins. Whether AUTOMAP is on for a new character.
+
+**12 Generation.** Descriptions of the inherited layouts (MAZE, TREE, BRANCH, CROSS, MESH, SPOTTEDMESH, GRIDCITY, BOXCITY, BOXCITYSQUARE, APARTMENT) and node type `surround`. LLM attributes. MQL `MATCH` regex. Valid MQL properties per object kind. What a campaign save restores for generated areas. AutoGrid beyond SEED; StdAutoGenInstance PERSIST. Per-class stat codes beyond generic mob/item. `ROOMLINK_<dir>` beyond the first six directions. No worked example was built.
+
+**13 Testing and release.** `#char` answers in worlds with extra creation steps. Whether CHECK=1 leaves anything in `resources/fakedb`. That unknown rooms in a save keep the world's contents. `PLAYTEST ON` across a builder restart.
+
+**18 Installing.** Prompts after the class prompt. A minimal or empty WORLDDIR. Windows quoting in sud.bat. `BOOT=other.ini`. How a stray argument without `=` is folded into the host name. EOF on stdin writes no named save. Definition of the `scripts/` and `routes/` folders.
+
+**19 Configuration.** CHARSET and word filters on the console session (CHARSETINPUT/OUTPUT confirmed applied). SNOOP, LIST SESSIONS/USERS/ACCOUNTS. CHANNELBACKLOG, LOGOUTMASK, PRIDECATS/PRIDECOUNT, HASHPASSWORDS in single-player. Which DEBUG flags still log. Worker-pool use.
+
+**20 Areas, rooms, exits.** Whether area Description appears in `HELP [area name]`. Whether EXPORT/IMPORT of `.cmare` still work. How a hidden exit is found (SEARCH). Whether loaded files give separate Exit objects to the two ends of a door. Whirlpool layout. StdThinInstance per-party copies in single-player.
+
+**21 Mobs.** Whether bought pets follow the buyer. GenHorse as "animal intelligence" for PETS. The `!VAR(* NAME == VALUE)` mask scope. Source of CAN_NOT_BE_CAMPED. Catalog thread interval in turn-based time. Doppleganger mimic mechanics. COPY of a catalog-tied mob. `MOBCOMPRESS` and `MOB_HP_BASE` ini keys.
+
+**22 Items.** Currency names for `CREATE ITEM 100 gold coins`. What ENTER_IN, LADDER, WAGON and FURNITURE_HOOK do. GenPlayerBook vs GenBook; GenLawBook's law link. Tech and ship item classes. Whether clans are reachable in play. Whether the 60-minute catalog interval is scaled by time modes. `DiagProgram.js`.
+
+**23 Properties.** Parameters of help-sourced entries beyond a token check. `Prop_Sounder` triggers. Hosts for Adorable, SmellsLikeCherries, Milkable, ExtraData. Whether Prop_Smell works on a mob when added by name. Whether ONCE in Prop_AreaEntry/Banner repeats after reload. Whether Prop_JourneyPassenger is classified as a property.
+
+**24 Behaviors and masks.** BIRTH* key semantics, the offline ThinPlayer evaluator, `-HOME` with plane names, `-ACCCHIEVE`. Whether MOBReSave does anything without a database ID. Whether the BossPhases/CombatAbilities save fix landed (audit CSV says `implemented_with_defect`). Each run-state override.
+
+**25 Abilities.** Repeating damage of a lasting GenAbility (D-AB-5). Whether CREATE ABILITY over a stock ID recurses (`convertAbilityToGeneric` sets MOCKABILITY/POSTCASTABILITY to the same ID). Whether normal play can run CREATE/MODIFY ABILITY. Spell_Slow as POSTCASTABILITY. Cooldown persistence. Class lists per ability. `Thief_Trap` `addExtRecipes`.
+
+**26 Triggers.** Whether passive-area mobs tick. Whether SWITCH sends LOGIN. Whether exits receive room messages. Whether parent areas hear room messages for message triggers. Prop_JourneyState phase names beyond START, CANCEL, ARRIVE, HOUR. `MPTAG`/`TAG:` targets.
+
+**27 Commands.** Accepted MPDAMAGE damage words. Exit targeting by name in MPOPEN/MPCLOSE. MPSTATE/MPTAG on rooms and exits. Effect of MPFORCED. MPALARM wake rules. MPLLM. MPSAVEVAR/MPLOADVAR against the local store. How MPJOURNAL shows double quotes.
+
+**28 Functions.** Value-form texts that depend on other libraries (doors, tides, laws, banks, shops, journals, checkpoints, ranks, item sets). ISBIRTHDAY, ROOMSTATE, ISTIDE words. Whether group functions equal the visible party list in every party mode. Currency codes in examples. The `FUNC(args) == word` postfix form.
+
+**29 Combat.** How to enable the combat log writer (key CBTMSGS, shipped OFF, is named in the chapter). Any manual ADVANCE/RETREAT command. SPARRING syntax for WaveSpawner ONLOSE. Saved wave, telegraph and threat state. Design examples were not run.
+
+**30 Travel.** Whether a hand-written vessel is auto-docked on load. In-game strings for ship directions in CREATE ROOM. The vessel shopkeeper type label. Passive Nanny immunity claims. LIMIT period vs a game day. Whether `STABLE` resolves to the command or Skill_StableMount. JavaScript vessel function names beyond VESSELROOM$/HULL$. D-BM-3 at runtime.
+
+**31 Saves and party.** The area-level (ADATA) effects XML. TIMESCALE's builder/DEV restriction. Multi-line output of PARTY, AS, SAVES (composed from source strings). The `.complete` regeneration snippet. Whether a room made in play survives a changed area file. D-SP-1 and D-SP-2 in play.
+
+**32 Engine programming.** Notes not available at the time of writing; nothing included.
+
+**33 Engine internals.** Formats of Narration, ScriptMenus, QuestRecords, Yields, ItemCrafting ledgers, Calendars/Holidays. The `parseBits` format strings. What WorldCmd subcommands print. JSCm, JSTimers and related API detail. ProfileOwner's PROFILEPROPERTY key. Unique-item hook list (from call sites). `state-and-persistence.md`'s "temporary pause ownership" header key.
+
+---
+
+## Suggested next steps
+
+Top defects to fix first (high severity, then the medium ones that break documented options):
+
+1. **D-QU-1** `Quests.getPlayerPersistentQuests` deletes character scripts as a side effect of listing quests. Stop deleting.
+2. **D-BW-1** `Modify.mobs` checks the builder instead of the mob and overwrites hand-authored stats on every LEVEL change. Test `modMOB`.
+3. **D-SE-1** GuildMaster `KIT.` keys never read. Use `parseEQParms`.
+4. **D-SE-2** Faction `CHANCE` is inverted (fires about 100-n percent). Flip the comparison.
+5. **D-TI-1** Named-ticket Prop_TicketTaker does not block boarding. Add `return false`.
+6. **D-SP-1** saveinspect.py leaves `.complete` stale so the edited save is rolled back. Rewrite or delete the manifest.
+7. **D-SC-1** FACTION() with a range name is always true. Use a string compare for non-numeric right sides.
+8. **D-BW-2** CATALOG DELETE skips confirmation above 10 matches.
+9. **D-SP-2** Confirm with a run whether RESTORE empties rooms added after the save; add a report line if so.
+10. **D-PR-1** ABLETICKS, ABLEHPCOSTS, ABLEMNCOSTS, ABLEMVCOSTS dropped by the adjuster family. Add them to the word list.
+
+Next in line: D-GE-8 (decide whether template JavaScript follows the JSCRIPTS approval flow), D-QU-2 and D-QU-4 (quest generator default path, Quest Maker output location), D-CF-4 (shipped clock settings that disable WEEKDAY_PROG and MONTH_PROG), D-CF-1 and D-CF-2 (`KILLMSGS`, truthy words for PARTYMEET), D-BM-1 to D-BM-5 (behavior parameter parsing), D-AB-1, D-AB-2 and D-AB-6 (GenPoison EFFECTS, GenTrap ISBOMB, AFFECTS filter).
+
+Help-text batch fix, in one pass over `CoffeeMud/resources/help/*.ini` and `coffeemud.ini`:
+
+- Parameter names: `nofol` to `nofollow` (H-PR-1), `WEARERS`, `WIELDER`, `domain=`, `freezeOverChance`/`shipdmg` (H-PR-2, H-BM-1), CHECKLEVEL/LEVELCHECK (H-BM-3).
+- Examples that do not parse or fire: bare `+elf` in the Aggressive family (H-BM-2), `+Half-Elf` (H-CH-2), `Fighter_Trip` (H-AB-3), `GenTrap` commands (H-AB-3), `-LOCALE` (H-AB-3), `1?4`/`2d6` (H-AB-1), `WORLD CHECK ITEMMODS` (H-PR-7), `Prop_RoomsPlusForSale` (H-PR-4), PRAY (H-SC-12).
+- Reversed or wrong semantics: QUESTWIN/QUESTFAIL lines in `zappermasks.txt` (H-BM-8), `TURN_PROG (N)` (H-SC-3), TRAINCOSTS `GAIN`, `RP_EMOTE_OTH`, `KILLMSGS`, MAXCLANCATS, INJURYSYSTEM defaults, STARTSTAT, PLAYERDEATH (H-CH-1, H-SE-1, H-CF-3, D-CF-1).
+- Missing entries: QUEST and SCRIPT in GENERATE, GUILD in CREATE, `WORLD CHECK` parts, WEATHER/TIME subcommands, MPCLANRELATION, MPCONQUER, function syntax lines, Prop and behavior help for the classes in H-PR-5 and H-BM-6.
+- Stale audit text in `audit/` (H-DT-4) can be corrected in the same pass.
+
+[c01]: ../docs/creator/01-first-world.md
+[c02]: ../docs/creator/02-world-workflow.md
+[c03]: ../docs/creator/03-characters.md
+[c04]: ../docs/creator/04-mobprog.md
+[c05]: ../docs/creator/05-javascript.md
+[c06]: ../docs/creator/06-npcs-dialogue.md
+[c07]: ../docs/creator/07-items-crafting.md
+[c08]: ../docs/creator/08-quests.md
+[c09]: ../docs/creator/09-society.md
+[c10]: ../docs/creator/10-world-simulation.md
+[c11]: ../docs/creator/11-presentation-language.md
+[c12]: ../docs/creator/12-generation.md
+[c13]: ../docs/creator/13-testing-release.md
+[c17]: ../docs/creator/17-item-modifiers-crafting.md
+[c18]: ../docs/creator/18-installing-and-running.md
+[c19]: ../docs/creator/19-configuration-and-administration.md
+[c20]: ../docs/creator/20-areas-rooms-exits.md
+[c21]: ../docs/creator/21-mobs.md
+[c22]: ../docs/creator/22-items.md
+[c23]: ../docs/creator/23-properties-reference.md
+[c24]: ../docs/creator/24-behaviors-and-masks.md
+[c25]: ../docs/creator/25-abilities-and-effects.md
+[c26]: ../docs/creator/26-mobprog-triggers.md
+[c27]: ../docs/creator/27-mobprog-commands.md
+[c28]: ../docs/creator/28-mobprog-functions.md
+[c29]: ../docs/creator/29-combat-and-encounters.md
+[c30]: ../docs/creator/30-travel-vehicles-instances.md
+[c31]: ../docs/creator/31-saves-and-party.md
+[c33]: ../docs/creator/33-engine-internals.md
