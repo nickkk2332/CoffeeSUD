@@ -1,6 +1,6 @@
 # NPC life and dialogue
 
-[Handbook](README.md) · Feature family [N](feature-index.md#n) · Source audit:
+[Handbook](README.md) · Feature family [N](feature-index.md#n-npcs-and-dialogue) · Source audit:
 [N: NPC behaviour and dialogue](../../audit/N-npc-behaviour-and-dialogue.md)
 
 This chapter is about making a non-player character feel like a person who
@@ -94,7 +94,7 @@ are inherited from CoffeeMud. Schedule, Sleeper, Sentry, Memory, Escortee, Scene
 GenBehavior, Prop_Affinity, Prop_NPCLines, the WHEN/TOD/HOURS gate, TALK, topics,
 MPMENU, CHECK, bark tables, DIALOGUETIME, area catch-up, CHATTEST/CHATLINT and
 the chat-file guards, `&` replies and `$@!` groups are CoffeeSUD additions (feature
-ids N1 to N29 in the [feature index](feature-index.md#n)). Where a CoffeeSUD
+ids N1 to N29 in the [feature index](feature-index.md#n-npcs-and-dialogue)). Where a CoffeeSUD
 addition extends an inherited behaviour (Patroller steps, Hireling terms, Sounder
 barks, Aggressive warnings) the extension is marked.
 

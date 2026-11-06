@@ -23,7 +23,7 @@ warrants, shops, banks and diplomacy. Each section says which is which.
 
 ## In this chapter
 
-- [How the pieces fit](#how-the-pieces-fit)
+- [Standing, membership and rule](#standing-membership-and-rule)
 - [What CoffeeSUD removed or changed](#what-coffeesud-removed-or-changed)
 - [Clans and governments](#clans-and-governments)
   - [Concepts](#clan-concepts)
@@ -40,6 +40,7 @@ warrants, shops, banks and diplomacy. Each section says which is which.
   - [GuildMaster](#guildmaster)
   - [Recruitment and advancement](#recruitment-and-advancement)
   - [Diplomacy and ClanEnemyAggressive](#diplomacy-and-conquest)
+  - [Rank by deeds and its alternatives](#recruitment-and-advancement)
 - [Factions](#factions)
   - [Faction files](#faction-files)
   - [Change triggers](#change-triggers)
@@ -67,7 +68,7 @@ warrants, shops, banks and diplomacy. Each section says which is which.
 - [Troubleshooting and gotchas](#troubleshooting-and-gotchas)
 - [See also](#see-also)
 
-## How the pieces fit
+## Standing, membership and rule
 
 Four things are easy to confuse. Keep them separate when you design.
 
@@ -1182,3 +1183,301 @@ LAW SET SALESTAX=7.25
 Examples: a corrupt magistrate, `BRIBE_PROG 500` running `MPPARDON $n ALL` if
 `ISWANTED($n)`; a shop whose `IGNOREMASK` is `+WANTED` and which refuses
 criminals.
+
+## Conquest and area control
+
+Source: [Conquerable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Conquerable.java),
+`HELP CONQUEST`, and the clan item classes under
+[Items/ClanItems](../../CoffeeMud/com/planet_ink/coffee_mud/Items/ClanItems/).
+
+An area with the `Conquerable` behavior can be ruled by a clan. Every
+conquerable area is also a legal area (the behavior extends `Arrest`), but its
+law is always the area's own `custom` law and is inactive unless the behavior
+says `LAW=TRUE`. A clan whose government has `CONQUEST ENABLED` may take part.
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `JOURNAL="name"` | none | A journal that receives conquest events. |
+| `LAW=TRUE\|FALSE` | `FALSE` | Whether the ruling clan may maintain law. With it, officers are members of the ruling clan carrying a clan banner and the judge is a member holding a clan gavel, instead of being found by name. |
+| `OWNERSHIP=TRUE\|FALSE` | `TRUE` | Whether private property is signed over to the ruling clan. |
+| `LOYALTY=pct` | `0` | Percent loyalty residents gain toward the ruling clan. |
+| `LEVELDIFF=n` | twice `EXPRATE` | How far below the killer a resident's level may be and still score control points. |
+
+**How conquest works (inherited).** A clan member with the `Clan Crafting`
+skill makes a clan flag and drops it in the area; dropping it reports who
+rules, how many control points rule needs and the clans' current scores. A
+control point is scored when a resident, intelligent, near-level mob is killed,
+made to follow a member, or (for theocracies) converted; the award is the mob's
+level. Points fade over time. When a clan's points reach the total the clan
+rules the area: residents repudiate the former ruler and swear to the new one,
+the former ruler's items can later be cleared for experience, and members with
+the order power may command the residents. A flag must remain on the ground or
+the area reverts. The ruling clan taxes experience earned there. Conquered areas
+can revolt unless clan-crafted items keep enough residents happy. A clan may
+only attack a ruled area if it is hostile or at war with the ruler.
+
+**Conquest items.** Book of the Laws (edit the area's law), Guardbanner
+(makes the holder an officer), Judge's Gavel (the judge), Donation List,
+Pamphlet (spread disloyalty), Shop Apron (the holder becomes a shopkeeper),
+Membership Card (loyalty), gathering and crafting items (put residents to
+work), and others. Whether to use them in a single-player world is a design
+choice: they are powerful but tied to player-clan mechanics. Most worlds
+control ownership by script instead.
+
+**Script control (CoffeeSUD).** Set and read rule without items:
+
+| Item | Meaning |
+| --- | --- |
+| `MPCONQUER area clan +n` / `-n` / `=n` | Add to, subtract from or set the clan's control points. Reaching the total gives the clan rule. |
+| `MPCONQUER area clan RULE` | The clan rules the area outright (fires `CLAN_PROG CONQUER`). |
+| `MPCONQUER area clan FREE` | Ends the clan's rule if it rules (fires `CLAN_PROG LOSEAREA`). |
+| `areaclan(area == clan)`, `$%AREACLAN(area)%` | The ruling clan, empty if none. |
+| `$%AREACONTROL(area clan)%` | The clan's control points. |
+| `$%REVOLTCHANCE(area)%` | The current chance of revolt. |
+| Mask `-RULER "+Orc Horde"`, `-RULER +*` | Subject is in territory ruled by that clan, or by any clan. |
+| `clandata(clan AREAS)` | The areas a clan rules. |
+
+```text
+mpconquer Millbrook 'Orc Horde' RULE
+mpconquer Millbrook 'Orc Horde' -200
+mpconquer Millbrook 'Orc Horde' FREE
+```
+
+Control points and the ruler are saved with the campaign. Only areas with a
+`Conquerable` behavior accept these commands. Design questions to answer
+before you rely on conquest: which NPCs are the defenders and how do they react
+to the new ruler (`-RULER` in an `Aggressive` mask works), what happens to
+shops, guards and quest givers after capture, and how a player takes the
+area back. Fully autonomous clan raids (`ClanWarfare`) are not implemented.
+
+## Economy
+
+### Currencies
+
+A **currency** is a named set of coin denominations. Items and shops carry
+plain numbers as values; the currency decides how a number is shown and paid in
+coins. With the standard `GOLD` currency a price of 36 is 36 gold pieces; with
+`CROWN` as defined below it is 3 silver shillings. Currency
+definitions have this form (values in the lowest denomination, the plural in
+parentheses, the short name in brackets after):
+
+```text
+CROWN=1 copper penny(s) (cp);12 silver shilling(s) (ss);240 gold crown(s) (gc)
+```
+
+Built-in codes: `GOLD` (copper, silver, gold and platinum pieces, valued
+`0.01, 0.1, 1.0, 5.0`), `COPPER`, `CREDIT`, `DOLLAR` and `VICTORY`. A
+definition that begins with `notrade;` makes coins nobody can spend or change
+in shops (`VICTORY=notrade;1 victory point(s) (v)` is the built-in example).
+
+**Where currencies come from (CoffeeSUD).**
+
+| Source | Form |
+| --- | --- |
+| `world/resources/currencies.ini` (else `resources/currencies.ini`) | One `CODE=definition` line per currency, and `DEFAULT=CODE`. |
+| `CURRENCY_CODE=definition` in `coffeemud.ini` or `world/world.ini` | The same, one key per currency (the key is world-allowlisted as the `CURRENCY_*` family). |
+| `DEFAULTCURRENCY=CODE` in `coffeemud.ini` or `world.ini` | The currency of every area with none of its own. Blank keeps the gold coins and Archon notes. |
+| An area's `CURRENCY` field | A code (`CROWN`) or a full definition (`CROWN=1 copper...`). Areas inherit from their parent area. |
+
+Files are read after the engine ini, and `coffeemud.ini` or `world.ini` values
+come after the file. If a code is defined twice differently (in the file and in
+an area, say) the first definition wins and the log says so.
+
+Set an area's currency with `MODIFY AREA name CURRENCY CROWN` (the area editor
+has a Currency line too). Mobs, shopkeepers and bankers use the currency of
+their start room's area.
+
+**Denomination appearance.** A denomination may end in braces, in any currency
+definition including an area's:
+
+```text
+12 silver shilling(s) (ss) {MATERIAL=SILVER WEIGHT=0.02 DESC="A thin disc stamped with the crowned stag."}
+```
+
+| Key | Meaning |
+| --- | --- |
+| `MATERIAL=name` | What the coins are made of (a resource name). Without it the first material word of the denomination's name is used (note, bill and dollar are paper). |
+| `WEIGHT=n` | Weight of one coin. Default: a hundred coins to the pound. |
+| `DESC="text"` | The coins' description, shown before "Equal to ...". |
+
+A currency file is plain text; restart the game after editing it. A
+coin item is a `GenCoins` or `StdCoins` (fields `NUMCOINS`, `CURRENCY`,
+`DENOM`); money in a mob's pockets is its `MONEY`, or `VARMONEY` for an amount
+in a named currency (see [21-mobs.md](21-mobs.md) and
+[22-items.md](22-items.md)).
+
+### Money handling
+
+| Task | How |
+| --- | --- |
+| Give or take money by script | `MPMONEY $n +50` or `MPMONEY $n -50`; the target may be a mob (carried coins), a container or a room (coins appear on, or are taken from, the floor). The amount may name a currency; see `MPMONEY` in [27-mobprog-commands.md](27-mobprog-commands.md). |
+| Test what someone carries | `if value($n CROWN >= 30)` and `if goldamt($n > 100)`; see [28-mobprog-functions.md](28-mobprog-functions.md). |
+| Show an amount | `$%MONEYSTR(36 CROWN LONG)%` gives "3 silver shillings"; add `SHORT` for abbreviations; without a code the host's currency is used. `$%DENOMNAME(CROWN 12 3)%` gives "3 silver shillings" (the denomination worth 12, three of them). In JavaScript `MONEYSTR$(250, 'CROWN', 'LONG')`. |
+| Ask a shop's price | `$%SHOPPRICE(shopkeeper item (customer))%` (base value) and `$%PRICE(item shopkeeper)%` (in coin names) for the price the shop asks the script's `$n`. |
+| Taxes | `SALESTAX` and `CITTAX` in the law; `TaxCollector` (see [Law and crime](#law-and-crime)). |
+| Fines | Owed under the law: `MPFINE`, `FINESOWED()`; collected by a `TaxCollector`. |
+| Clan money | A clan's `TREASURY` setting or a clan bank account. |
+
+### Shops, banks and currencies
+
+A shopkeeper is a mob with a shelf, a deal type and pricing rules. Creating and
+configuring shopkeepers, bankers and other service mobs (`GenShopkeeper`,
+`GenBanker`, `StdAuctioneer`, postmen, trainers) is covered in
+[21-mobs.md](21-mobs.md); this section covers the pricing rules that make a
+town's economy.
+
+**Pricing settings.** Each is a field on the shopkeeper (`MODIFY MOB name
+STAT value`) and on an area (`MODIFY AREA name STAT value`); the value in
+force is the shopkeeper's, else its area's, else a parent area's, else the
+default in `coffeemud.ini`.
+
+| Setting | Meaning |
+| --- | --- |
+| `PREJUDICE` | Price multipliers by customer. See below. Ini default blank (no change). |
+| `PRICEMASKS` (ini `PRICEFACTORS`) | Multipliers by item: `0.5 -MATERIAL +WOODEN; 2.0 -MATERIAL +MITHRIL` makes wood half price and mithril double. Every entry whose mask matches the item multiplies. |
+| `IGNOREMASK` | Customers the shopkeeper (banker, postal clerk) rudely ignores, as a mask (for example `+WANTED`). |
+| `BUDGET` | What the shop spends buying from customers per period: `500000 MONTH` (`HOUR`, `DAY`, `WEEK`, `MONTH`, `YEAR` game periods). Default `500000 MONTH`; `0` means it buys nothing. |
+| `DEVALRATE` | Percent price drop per copy already in stock: `20 0.2` is 20 percent per copy for ordinary items and 0.2 percent for raw resources. `100` limits stock to one. |
+| `INVRESETRATE` | Ticks between full restocks (`0` never; default 64800, about three real days): purchases from players are cleared and default stock restored. Only generic shopkeepers reset. |
+| `WHATISELL` | The deal type (what the shop buys and sells: `ANYTHING`, `GENERAL`, `ARMOR`, `WEAPONS`, `INVENTORY ONLY`, `BANKER`, ...). |
+
+The `coffeemud.ini` keys `PREJUDICE`, `PRICEFACTORS`, `IGNOREMASK`, `BUDGET`,
+`DEVALUERATE`, `INVRESETRATE` and `AUCTIONRATES` are engine ini settings; they
+are not accepted from `world.ini`, so a world sets these per shopkeeper or per
+area.
+
+**`PREJUDICE` grammar.** A bare number is a multiplier for everyone. Otherwise
+the value is a semicolon list of rules, each starting `BUY=` (what the shop
+charges customers) or `SELL=` (what it pays them). The first rule of the
+right kind that matches the customer decides; if none matches the multiplier
+is 1.
+
+| Rule | Matches |
+| --- | --- |
+| `BUY=1.5` | Everyone. |
+| `BUY=0.8 DWARF HUMAN` | A customer with any of the words: race, race category, gender, class, alignment name, any tattoo name, or the code of the band they are in for any faction (`SMITHS_HONOURED`). Case does not matter. |
+| `BUY=0.8 CLAN:Knights_of_the_Rose` | A member of the clan (underscores stand for spaces). |
+| `BUY=0.8 CLANPOS:Knights_of_the_Rose:KNIGHT` | A member holding exactly that position. |
+| `BUY=0.8 MASK(-CLANRANK "+Knights of the Rose>=KNIGHT")` | A customer who passes the mask. |
+| `RANGE=3` or `RANGE=25%` | Not a price: the shop refuses to buy items whose level is more than that far from the area's median level. |
+
+Example: `BUY=0.7 SMITHS_EXALTED;BUY=0.85 SMITHS_HONOURED;BUY=1.5 SMITHS_SHUNNED SELL=0.8 CLAN:Smiths_Guild`.
+Put the strictest rule first, since the first match wins.
+
+**How the price is worked out.** This is the order the engine uses, and
+`PRICECHECK` prints exactly these steps:
+
+1. Base price: the shop's own price for the item, else the item's value. Spells
+   and skills sold by trainers and casters cost their qualifying level times 100 or 75;
+   retainers cost by level.
+2. Multiply by the `PREJUDICE` rule, by the shopkeeper's opinion of the customer (the
+   NPC affinity `SHOPFACTOR`; see [06-npcs-dialogue.md](06-npcs-dialogue.md)),
+   and by every matching price mask.
+3. Charisma against wisdom: for a living shopkeeper, the price is scaled by
+   `2 - (customer charisma - shopkeeper wisdom) / ((charisma + wisdom) * 0.8)`
+   (charisma at least 1, wisdom at least 3): a charming customer pays less.
+   Golems and player shops skip this.
+4. Sales tax from the law's `SALESTAX`.
+5. Rounded to coins; at least 1.
+6. Half price on magic items for a customer under a magical aura.
+
+When the shop buys from a customer, the same prejudice (using the `SELL`
+rules, with the affinity factor divided out), price masks and charisma step
+apply, then a drop for each copy already in stock (`DEVALRATE`), capped at what
+the shop itself would sell it for, limited by `BUDGET`; the shop will not buy
+stolen goods.
+
+**Gated stock and restricted shops.** A `Prop_StockZapper` on a stock
+prototype restricts who can buy it
+([23-properties-reference.md](23-properties-reference.md#prop_stockzapper)):
+
+```text
+MASK="-CLANRANK '+Knights of the Rose>=KNIGHT'" HIDE=TRUE MSG="Only Knights may buy this armour."
+```
+
+`HIDE=TRUE` hides the item from `LIST` for failing customers; `HIDE=FALSE`
+lists it as restricted. Either way `BUY` is refused. To turn customers away
+altogether use `IGNOREMASK` or `Prop_ReqEntry` on the shop room. A script can
+cancel one sale with `CNCLMSG_PROG` on the shopkeeper.
+
+**Stock by script.** `MPSHOP`:
+
+| Form | Meaning |
+| --- | --- |
+| `MPSHOP keeper REMOVE item (n/ALL)` | Take some (one) or all of a product away. |
+| `MPSHOP keeper STOCK item n` | Set how many there are; an item not stocked is copied from one the script can find, or from the catalog. |
+| `MPSHOP keeper PRICE item amount` | Fix the price (`-1` restores the usual). |
+| `MPSHOP keeper CLEAR` | Empty the shelves. |
+| `MPSHOP keeper RESET` | Restore the stock as built (generic shopkeepers only). |
+| `MPSHOP keeper BUDGET amount` | Set the budget left. |
+
+`SHOPBUDGET(keeper)` returns the budget left (`-1` for no limit). Gradual,
+conditional restocking and a persistent supply-and-demand market are not
+implemented: restock with `RESET`/`STOCK` on a timer script if you want that.
+
+**PRICECHECK.** In builder mode, DEV mode or with `CMDMOBS`:
+
+```text
+PRICECHECK [item] (AT [shopkeeper]) (FOR [character]) (SELL)
+```
+
+It lists each pricing setting with where it came from (the shopkeeper, its
+area, a parent area, the ini, or a running quest that gave it a `PRICEMASKS`)
+and then each step of the sum above for that customer; with `SELL` it works
+out what the shop pays instead. The item is looked for in the shop's stock,
+then the character's and your own inventory, then the room. Without `AT` the
+first non-player shopkeeper here is used; without `FOR`, yourself. Always test
+with a normal character: an Archon's privileges may bypass restrictions.
+
+### Banks and debts
+
+A banker (`GenBanker`) keeps accounts for a **chain** (`BANKCHAIN`): bankers
+with the same chain name share accounts, so a deposit in one town can be
+withdrawn in another. Accounts hold coins and items. Customers use `DEPOSIT`,
+`WITHDRAW`, `LIST`, `BORROW`, `VIEW` and `BID` as in other shops. Banker fields
+are `COININT` (coin interest, percent per real day), `ITEMINT` (item interest, percent per real day),
+`LOANINT` (loan interest, percent per game month), `BANKCHAIN`, plus the shop
+pricing fields; see [21-mobs.md](21-mobs.md). Clan treasurers use the clan's
+own account (`DEPOSIT`/`WITHDRAW` powers).
+
+Scripts and JavaScript can read and change accounts and debts:
+
+| Item | Meaning |
+| --- | --- |
+| `$%BANKBALANCE(who chain (currency))%` | Their coins at the chain, in base value. |
+| `MPBANK who chain +n / -n (reason)` | Pay into (opening the account if needed) or take from the account, with a dated ledger line. A minus that cannot be covered is refused and logged. |
+| `$%DEBT(who owedTo)%` | What they owe a bank chain or anyone. |
+| `$%DEBT(who owedTo DUE)%` | Game hours until the debt falls due (below 0 when past due). |
+| `MPDEBT who owedTo +n / -n (INTEREST pct) (DUE n HOURS/DAYS/WEEKS/MONTHS) (FOR reason)` or `MPDEBT who owedTo CLEAR` | Add to, pay off or forgive a debt, with monthly interest and a due date on the game clock. |
+| JavaScript `cm.bank(banker)` | `pay(who, amount, reason)`, `debt(who)`, `lend(who, amount, ...)`, `forgive(who)`. See [05-javascript.md](05-javascript.md). |
+
+Write both the refusal and the insufficient-funds branches of any script that
+takes money.
+
+### Money changers and exchange rates
+
+A `MoneyChanger` NPC takes coins of any tradable currency and hands back coins
+of its own area's currency, keeping a cut.
+
+| Parameter | Meaning |
+| --- | --- |
+| `CUT=n` | Percent the changer keeps (default 5). |
+| `CURRENCY=n` (for example `GOLD=5 INGITS=10`) | A separate cut for each named currency. When any is given the changer takes only those currencies. |
+| `RATE.CURRENCY=+n` or `-n` | CoffeeSUD: a premium (+) or discount (-) percent on what coins of that currency fetch, before the cut (`RATE.DEFAULT` for the default currency). It is not a fee: the changer still takes every currency. |
+| `SPACEMAXCUT`, `SPACEMAXDISTANCE` | Distance-scaled cuts for interstellar currencies. |
+
+`MPEXCHANGE CODE|DEFAULT percent` sets what coins of a currency fetch at every
+money changer in the world (100 as they are, which ends the adjustment); it is
+kept in the save and combines with each changer's own `RATE`. Read it with
+`$%EXCHANGE(CODE)%`. Without rates, every currency converts one to one on base
+value, so a world with unequal currencies must set rates to be believable.
+
+### Economy scripting
+
+Summary of the economy items scripts can use (details in
+[27-mobprog-commands.md](27-mobprog-commands.md) and
+[28-mobprog-functions.md](28-mobprog-functions.md)): `MPMONEY`, `VALUE()`,
+`GOLDAMT()`, `MONEYSTR()`, `DENOMNAME()`, `PRICE()`, `SHOPPRICE()`,
+`SHOPBUDGET()`, `MPSHOP`, `MPBANK`, `MPDEBT`, `BANKBALANCE()`, `DEBT()`,
+`MPEXCHANGE`, `EXCHANGE()`; JavaScript `cm.shop(keeper)` (`remove`, `stock`,
+`setPrice`, `setBudget`, `budget`, `reset`), `cm.bank(banker)`, `cm.law(room)`.

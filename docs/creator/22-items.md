@@ -26,6 +26,7 @@ properties you attach to items are in
 - [Money](#money)
 - [Furniture, rideables and boardables](#furniture-rideables-and-boardables)
 - [Technology and clan items](#technology-and-clan-items)
+- [Instruments](#instruments)
 - [Materials](#materials)
 - [Enchantments and item properties](#enchantments-and-item-properties)
 - [Item rejuvenation](#item-rejuvenation)
@@ -79,7 +80,7 @@ hand; the editor, `MODIFY ITEM`, the catalog and the world files produce it.
 See [How items are saved](#how-items-are-saved) for the tags.
 
 **Permissions.** `CREATE ITEM`, `MODIFY ITEM`, `DESTROY ITEM` need the `CMDITEMS`
-security flag; `CATALOG` needs `CATALOG`; `COPY` needs `COPYITEMS`. See
+security flag; `CATALOG` needs `CATALOG`; `COPY` needs `COPYITEMS`; `RESET` needs `RESET`. See
 [19-configuration-and-administration.md](19-configuration-and-administration.md).
 
 **Builder mode vs. a normal game.** In a normal single-player game, items you
@@ -208,7 +209,7 @@ MODIFY ITEM ring PROPERWORN LEFT FINGER, RIGHT FINGER
 | `LIST ITEMS`, `LIST ARMOR`, `LIST WEAPONS`, `LIST MAGIC`, `LIST TECH`, `LIST CLANITEMS` | Lists the item classes you can create |
 | `LIST MATERIALS` | Lists the resources/materials |
 | `LIST UNSAVED`, `SAVE`, `SAVE ROOM`, `SAVE CHANGED` | See [How items are saved](#how-items-are-saved) |
-| `RESET ITEMSTATS ROOM/AREA/WORLD/CATALOG` | Re-normalizes damage/armor/value of every item to its level |
+| `RESET ITEMSTATS ROOM/AREA/WORLD/CATALOG` | Re-normalizes damage/armor/value of every item to its level (sysop only) |
 | `RESET REJUV ROOM/AREA ITEMS` | Brings back missing resettable items |
 | `DEVIATIONS ITEMS ROOM/AREA` | Shows items that deviate from the norm for their type and level |
 | `TEMPLATE` | Personal and shared templates of items (and rooms, mobs, exits) |
@@ -279,7 +280,7 @@ is skipped and later numbers shift. Edit by number, or use the name forms of
 | Weight | Weight in the engine's units. Containers weigh their contents too | `WEIGHT` | |
 | Dispositions | Toggles listed below | `DISPOSITION` | |
 | Behaviors | Add or remove behaviors by ID; `?` lists them | (`AFFBEHAV`) | See [24-behaviors-and-masks.md](24-behaviors-and-masks.md) |
-| Effects | Add (`ID`), remove (`-ID`), edit (`=ID` or its number); `?` lists abilities, `?P` lists the properties that fit this item | (`AFFBEHAV`) | See [23-properties-reference.md](23-properties-reference.md) |
+| Effects | Add (`ID`, then it asks `Enter any effect parameters (?)`; `?` there shows the property's help), remove (`-ID`), edit (`=ID` or its number); `?` lists abilities, `?P` lists the properties that fit this item. A second copy of an effect the item already has would be ignored, so you are offered `Prop_MultiEffects` to hold both | (`AFFBEHAV`) | See [23-properties-reference.md](23-properties-reference.md) |
 | MXP Image | Image file name for MXP-aware displays | `IMG` | |
 | Tags | Free tags to add or remove (entering an existing tag removes it) | `TAGS` | Used by scripts and filters |
 | Scripts | Edit MOBPROG scripts on the item. Only shown when the item already has scripts | | Add scripts with the Effects/Behaviors editors (`Scriptable`) or script commands |
@@ -1939,3 +1940,239 @@ changed outside is guarded by `WORLD STATUS`. For bulk work, build items from
 a script instead ([Worked examples](#worked-examples)) or export and merge
 (`EXPORT`/`MERGE`/`IMPORT`, `AHELP MERGE`).
 
+## Worked examples
+
+These use builder mode (`BUILDER=1`) so that `SAVE` publishes the result.
+Commands are entered one per line; after `CREATE ITEM` of a generic class the
+editor opens, and pressing Enter at `Edit which?` leaves it.
+
+### Example 1: a named, magical sword
+
+```text
+CREATE ITEM GenWeapon
+```
+
+Leave the editor with Enter, then set the fields with `MODIFY ITEM`. The new
+item is still called "a generic weapon", so the first command finds it as
+`generic`:
+
+```text
+MODIFY ITEM generic NAME the Emberfang
+MODIFY ITEM emberfang DISPLAY the Emberfang lies here, still warm.
+MODIFY ITEM emberfang DESCRIPTION A slim blade of dark steel that glows faintly red along its edge.
+MODIFY ITEM emberfang LEVEL 12
+MODIFY ITEM emberfang MATERIAL STEEL
+MODIFY ITEM emberfang WEAPONTYPE SLASHING
+MODIFY ITEM emberfang WEAPONCLASS SWORD
+MODIFY ITEM emberfang ABILITY 2
+MODIFY ITEM emberfang DISPOSITION ISGLOWING ISBONUS
+```
+
+Notes: the command-line `LEVEL` only sets the number. If you want the engine's
+balanced damage, attack and value for the level, change the Level inside the
+editor (`MODIFY ITEM emberfang`, pick the Level line) instead; it re-balances
+on the spot. The `ABILITY` of 2 adds 2 to its damage and 20 to its attack.
+Check the result with `STAT item emberfang`. To make it fire-flavoured, add a
+property in the editor: `MODIFY ITEM emberfang`, pick the Effects line, enter
+`Prop_AddDamage`, and at `Enter any effect parameters (?)` give `5 BURNING FIRE`
+(type `?` there for the property's help). Save with `SAVE ROOM`.
+
+### Example 2: a locked chest and its key
+
+```text
+CREATE ITEM GenContainer
+```
+
+In the editor set the name (`an iron-bound chest`), the capacity (`200`) and
+then the lid/lock line. Answer: Has a lid `Y`, Defaults closed `Y`, Has a lock
+`Y`, Defaults locked `Y`, reset delay `30`. Enter a **Key Code**, such as
+`emberchest`. Leave the editor, then make the key:
+
+```text
+CREATE ITEM GenKey
+MODIFY ITEM key NAME a smoky iron key
+MODIFY ITEM smoky READABLETEXT emberchest
+```
+
+(`GenKey`'s readable text is the key code. You may also give the code a list,
+`emberchest;vault`, or end it with `*` for a master key, `ember.*`, which fits
+every lock whose code begins `ember.`) Then:
+
+Put the key in the chest's room, or into a mob's pack with
+`CREATE ITEM GenKey@a guard` when you create it. Then save:
+
+```text
+SAVE ROOM
+```
+
+Gotcha: setting the lid and lock with the stat codes `HASLID`, `HASLOCK`,
+`DEFCLOSED` and `DEFLOCKED` changes only the *defaults*; the chest keeps its
+current open/unlocked state until it next resets. The editor sets both, so use
+the editor for locks.
+
+To use up the key when it opens the chest, add `Prop_KeyRules` with
+`CONSUME=true` to the key (see [Prop_KeyRules](23-properties-reference.md#prop_keyrules)).
+
+### Example 3: a magic ring
+
+A ring is thin armor (it has no size or wear and tear).
+
+```text
+CREATE ITEM GenThinArmor
+```
+
+In the editor: set the name `a copper ring of vigor`, display and description;
+**Wear locations**: at the `Select an option number above to TOGGLE` prompt
+type `left finger`, then `right finger` (each toggles), then `0` to finish
+(leave the setting on "any ONE of these locations" so it fits either hand);
+**Material** `COPPER`; **Layer**: `0`, not see-through, multi-wear `Y` (so a
+character can wear two rings); **Armor** `0`. Then, at the **Effects** line,
+enter the property ID, and give its parameters at the next prompt:
+
+```text
+Prop_WearAdjuster
+str+1 hitpoints+10
+```
+
+Add a spell cast on the wearer with a second effect, `Prop_WearSpellCast`
+with the parameters `Spell_Shield`. To make the ring show to detect-magic,
+toggle the `magical` disposition. `?P` at the Effects prompt lists every
+property that fits an item.
+
+### Example 4: a wand
+
+```text
+CREATE ITEM GenWand
+MODIFY ITEM wand NAME a rowan wand
+MODIFY ITEM rowan SPELL Spell_MagicMissile
+MODIFY ITEM rowan ENCHTYPE SPELL
+MODIFY ITEM rowan MAXUSES 8
+MODIFY ITEM rowan USES 8
+MODIFY ITEM rowan LEVEL 10
+```
+
+A character who holds the wand and has `Skill_WandUse` says its magic word to
+the target (`SAY orc "word"`). The word is not set by you: it comes from the
+spell through the `MAGIC_WORDS` list in `resources/lists.ini`, and identify
+magic (`Spell_IdentifyObject`) tells the holder "Say the magic word".
+
+### Example 5: a book of lore
+
+A static, paged book whose pages are in the world files:
+
+```text
+CREATE ITEM GenTome
+MODIFY ITEM tome NAME the Annals of Ost
+MODIFY ITEM annals
+```
+
+then, in the editor, pick the **Assigned Read Text** line and enter the pages.
+(Use the editor or a script for this text; on the one-line command form the
+quote marks in `TITLE="..."` can be lost to the command parser.)
+
+```text
+<PAGE TITLE="The Founding">Ost was founded by the river.</PAGE><PAGE TITLE="The Fall" LORE=ost.fall>The tower fell in the seventh year.</PAGE>
+```
+
+`READ annals` lists the contents, `READ 2 annals` reads page 2 (and gives the
+reader the `LORE:ost.fall` tattoo), and `TEAR PAGE 2 FROM annals` makes a
+single page item. For longer text, put `FILE=world/texts/ost.txt` in the
+readable text, and in that file start each page with a line
+`=== The Founding ===`.
+
+### Example 6: a unique treasure, found once
+
+Follow [Making a unique item, step by step](#making-a-unique-item-step-by-step).
+The result is a catalog entry with `CAP 1`, `UNIQUE ONCE` and a container rule;
+the world file holds it in `catalog.cmare`.
+
+### Example 7: build items from a script
+
+For many items, or to repeat a build, a JavaScript builder recipe is easier to
+keep in version control than a sequence of editor sessions. This one is adapted
+from the shipped Ember Trial recipe
+([build.js](examples/ember-trial/world/resources/creator/build.js)); run it with
+`JRUN /resources/creator/build.js` in a builder game, then `SAVE`.
+
+```js
+var CM = Packages.com.planet_ink.coffee_mud;
+var CC = CM.core.CMClass, W = CM.Items.interfaces.Wearable;
+var room = mob().location();
+
+function mantle(name, slot, adjust) {
+    var item = CC.getItem('GenArmor');
+    item.setName(name);
+    item.setDisplayText(name + ' lies on a rack.');
+    item.setDescription('A hand-made piece of armor.');
+    item.setRawProperLocationBitmap(slot);          // where it is worn
+    item.setMaterial(CM.Items.interfaces.RawMaterial.RESOURCE_COTTON);
+    item.basePhyStats().setArmor(0);
+    item.basePhyStats().setWeight(1);
+    var prop = CC.getAbility('Prop_WearAdjuster');   // a property on the item
+    prop.setMiscText(adjust);
+    item.addNonUninvokableEffect(prop);
+    item.recoverPhyStats();                          // always, after changes
+    room.addItem(item);
+    return item;
+}
+mantle('an ember mantle', W.WORN_ABOUT_BODY, 'str+1 hitpoints+20');
+mantle('a signet ring', W.WORN_RIGHT_FINGER, 'dex+1');
+```
+
+The calls mirror the editor: `setName`, `setDisplayText`, `setDescription`,
+`setRawProperLocationBitmap`, `setMaterial`, `basePhyStats().setArmor/Damage/
+Level/Weight/Ability`, `setBaseValue`, `setUsesRemaining`, `setReadableText`,
+`setCapacity`, `setDoorsNLocks(hasLid, open, defaultsClosed, hasLock, locked,
+defaultsLocked)`, `addNonUninvokableEffect`, `addBehavior`. See
+[05-javascript.md](05-javascript.md) and
+[32-engine-programming.md](32-engine-programming.md) for the object model.
+
+### Example 8: an item the engine hands out
+
+Create `a goblin chieftain's torque` as a `GenThinArmor` with
+`Prop_WearAdjuster` `cha+1`, catalog it (`CATALOG a goblin chieftain's
+torque`), then `CATALOG EDIT` it: Auto-Spawn `D` (dead mobs), cap `3`, rate
+`25%`, mask `-NAMES "+the goblin chieftain"`, uniqueness `T`. Each time that
+chieftain dies, there is a one in four chance a copy is on his corpse, and never
+more than three in the game.
+
+## Troubleshooting
+
+| Problem | Cause and fix |
+| --- | --- |
+| "You can't wear that" for a new `GenArmor` | A new armor has no wear location. Set the location in the editor (and toggle any/all) |
+| "looks too advanced for you" | The item's Level is above the character's. Lower it, or the character gains levels |
+| A piece of armor "doesn't fit -- it's too big/small" | Armor size is checked against height. Set **Size** to 0 to fit anyone, or disable `EQUIPSIZE` |
+| A weapon does less damage than set | Condition is below 100 (wear and tear) or Level was re-balanced. Check `USES`, and note that changing Level in the editor rewrites damage |
+| Damage changes when you change Level | By design: the editor re-balances weapons and armor to the engine's norms for the level. Change Level first, then the rest |
+| A scroll "has been read off" or reads blank | A new scroll has 0 uses. Set Uses Remaining to 1 or more |
+| A wand "glows faintly then fades" | The character has no wand skill of the right kind, or failed its proficiency check |
+| An ammunition weapon says "is out of arrows" | The weapon needs a `GenAmmunition` whose readable text equals the weapon's ammo type, and reloading |
+| The chest is open at the start though "defaults closed" | The default and the current state differ. Use the editor's lid/lock prompts, which set both |
+| A key does not fit | The key's code must equal the lock name (case-insensitive), be in a list with it, or be a `*` master key. Check both `READABLETEXT` values |
+| A removed room item does not return | Rejuv is 0, or the room has not been saved since you set Rejuv. `SAVE ROOM`, or `RESET ROOM` |
+| A mob's loot is missing | Its Rejuv is a percent chance to be left out. Set it to 0 to always carry it |
+| `CREATE ITEM x` says "no such thing" | The class does not exist or the name is a typo. `LIST ITEMS`; for a catalog item, `CATALOG LIST ITEMS` |
+| `MODIFY ITEM long name` fails | The item name is one parameter. Quote it: `MODIFY ITEM "iron sword@the guard"` |
+| Changing a cataloged item asks to update, detach or cancel | It is tied to the catalog. `U` updates the entry for everyone, `D` detaches this copy |
+| A catalog item does not spawn | The cap is reached, it is `ONCE` and has already appeared, the mask does not match, or the catalog thread is disabled (`CATALOGTHREAD`). `CATALOG EDIT` shows how many have appeared and how many are in the game |
+| Edited the item in a normal game and the world did not change | A normal game works on a copy. Use `BUILDER=1` and `SAVE` |
+| `MODIFY ITEM x DISPOSITION` removed other dispositions | The command replaces the whole set; use the editor to toggle one |
+| A hand-edited item in a world file is skipped | World files are checked at load (`WORLD PROBLEMS` reports skipped definitions) and guarded against overwriting (`WORLD STATUS`). Export from the editor and edit that copy |
+
+## See also
+
+- [07-items-crafting.md](07-items-crafting.md): crafting, gathering, recipes, interactive items and puzzles.
+- [23-properties-reference.md](23-properties-reference.md): every property you can put on an item.
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): behaviors and the zapper mask language used by catalog rules.
+- [12-generation.md](12-generation.md): random items, loot tables and affixes.
+- [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md): tracked item modifiers.
+- [21-mobs.md](21-mobs.md): putting items on mobs, shopkeepers' stock, equipment.
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md): doors, locks and keys on exits.
+- [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md): boardables, ships and vehicles.
+- [09-society.md](09-society.md): currencies, shops, clan items, the law.
+- [02-world-workflow.md](02-world-workflow.md): world files, `SAVE` and reload.
+- [31-saves-and-party.md](31-saves-and-party.md): what a campaign save keeps of items.
+- [11-presentation-language.md](11-presentation-language.md): descriptions, VARIES, readable text and lore.
+- [32-engine-programming.md](32-engine-programming.md): writing a new item class in Java or JS.
+- [tool-reference.md](tool-reference.md): the generated command help (`CREATE`, `MODIFY`, `CATALOG`, `COPY`, `RESET`, `LIST`).

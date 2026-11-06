@@ -161,3 +161,297 @@ To make a forest road for caravans:
 4. Test with `GenCaravan`: `DRIVE north` should move along the road and refuse into the unmarked forest.
 
 ## Journeys
+
+A journey is an abstract trip: the party is moved to a transit room, a number of game hours pass in hourly legs, random or scripted events can interrupt, and the party arrives somewhere else. Use it for passages you do not want to build room by room (a coach ride, a sea crossing, a trek through the mountains). Use [TransportLine](#transport-lines-and-timetables) instead when the vehicle should physically exist and move through rooms.
+
+Source: [Prop_Journey](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Journey.java) (the definition), [Prop_JourneyState](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_JourneyState.java) (the running trip), [Prop_JourneyPassenger](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_JourneyPassenger.java) (per-passenger marker), [Journey command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Journey.java).
+
+### How a journey runs
+
+1. **Definition.** A `Prop_Journey` sits on a room, exit, item or mob (the host). It carries the options in the table below.
+2. **Start.** A player character entering the host (an `ENTER` message whose target is the host, or whose tool is the host exit) starts the trip, or any character types `JOURNEY <host>`. For a room host, entering the room starts it; for an exit host, walking through the exit starts it; for an item host (a boardable, portal or rideable), entering it starts it.
+3. **Checks.** Nothing happens unless all of these hold: the party is not already travelling; the clock is not in the middle of another time advance; `DEST` resolves to a room the traveller may see (a hidden port the traveller does not know fails); `DURATION` is positive; `VIA`, if given, resolves; and nobody in the party is in combat. Each refusal is a message to the traveller ("Your party is already travelling.", "The journey has no valid destination.", "Finish the fight before departing." and so on).
+4. **Depart.** The party is everyone in the leader's group in the same room, plus the creatures they ride. They are moved together to the transit room (`VIA`, or the room they stand in if `VIA` is empty), using the normal leave and enter checks. If anyone is refused, nobody moves and no fare is charged ("The party cannot depart."). Otherwise the fare is charged, each member gets a hidden `Prop_JourneyPassenger` marker with a unique seat ID, the leader gets `Prop_JourneyState` (shown as "(Travelling)"), `JOURNEY_PROG START` fires and `LEAVEMSG` is shown.
+5. **Legs.** The journey runs in legs of at most one game hour. For each leg the game clock is advanced through the scheduler, so the world lives on. At the end of a leg `JOURNEY_PROG HOUR` fires and the `EVENTS` are rolled.
+6. **Events.** The entries of `EVENTS` are tried in the order written. Each has a percentage chance. The first that succeeds fires; at most one event happens per leg. The journey then pauses (see below).
+7. **Arrive.** After the last leg, every surviving passenger is moved to `DEST` with ordinary entry checks, `ARRIVEMSG` is shown, `JOURNEY_PROG ARRIVE` fires, and all markers and the state are removed. If an entry check refuses, the journey stays paused and says "The party cannot arrive yet. JOURNEY RESUME retries arrival."
+8. **Abort.** The state checks every tick. If the leader dies, or the leader is no longer in the transit room (walked out, was moved), the journey ends where the leader is, `JOURNEY_PROG CANCEL` fires and refunds are applied per `REFUND`. The transit room must therefore be a place the party stays in.
+
+A leg is `min(1, hours left)`; a `DURATION` of 2.5 gives legs of 1, 1 and 0.5 hours. The first leg's length is fixed when the journey starts; remaining time is kept exactly across pauses and saves.
+
+### Prop_Journey options
+
+Hosts: rooms, exits, items, mobs. `DEST` and `DURATION` are required; `WORLD CHECK ROUTES` and the property editor refuse a definition without them.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `DEST` | required | Destination: a room ID, a port name (`Prop_Port`), an area name (first accessible room), or `CHART n` / a number for the traveller's numbered Sea Charting point. |
+| `DURATION` | required | Game hours, fractional allowed, greater than 0. |
+| `VIA` | where the party stands | Transit room ID or port name. The party waits here. Give a dedicated room (a cabin, a coach interior) if the players should see something while they wait. |
+| `FARE` | 0 | Price in the base currency of the traveller. |
+| `PARTY` | `LEADER` | `LEADER`: the leader pays for everyone. `EACH`: every player character pays their own share. |
+| `PERHEAD` | `true` | With `true` each player character in the party costs `FARE`; with `false` the fare is a flat price for the whole party. Creatures that are not player characters (mounts, followers) are never charged on a journey. |
+| `LEAVEMSG` | none | Text shown to every passenger on departure. |
+| `ARRIVEMSG` | none | Text shown to every passenger on arrival. |
+| `EVENTS` | none | Quoted list `chance%:action;chance%:action...`. See below. |
+| `MISSING` | `WAIT` | Policy for a passenger who is alive but not with the leader. `WAIT`, `CONTINUE`, `RESCUE`, `CANCEL`, `RETURN`. |
+| `DEAD` | `CONTINUE` | Policy for a dead passenger. `CONTINUE`, `WAIT`, `CANCEL`, `RETURN`. |
+| `DISCONNECTED` | `TRAVEL` | Policy for a player character that has no session (a background party member not in a window). `TRAVEL`, `WAIT`, `CONTINUE`, `CANCEL`, `RETURN`. |
+| `CANCEL` | `HERE` | Where `JOURNEY CANCEL` ends the trip: `HERE` (where the party is now, normally the transit room) or `RETURN` (back to the room the journey started from). |
+| `REFUND` | `NONE` | What a cancelled trip refunds: `NONE`, `FULL` (everything the payer paid), `UNUSED` (the part of the fare for the hours not yet travelled). |
+
+```text
+DEST=Gullrock#0 VIA=Ferry#Cabin DURATION=6 FARE=2 PARTY=LEADER LEAVEMSG="The mainland falls astern." ARRIVEMSG="Gullrock rises ahead." EVENTS="10%:storm_scene;5%:LOAD MOB pirate band;2%:CATALOG encounter-sea"
+```
+
+### Events
+
+An `EVENTS` entry is `chance%:action`. The chance is 0 to 100 (the `%` is optional). The action is one of:
+
+| Action | Effect |
+| --- | --- |
+| a function name | Calls `FUNCTION_PROG <name>` (or the JavaScript equivalent) on the journey host's scripts, passing the hours already travelled and the leader. If the function returns `PAUSE` the journey waits until someone types `JOURNEY RESUME`; any other result lets it resume by itself. |
+| `LOAD MOB <spec>` | Spawns mobs into the transit room, hostile to the party: `<spec>` is one or more `name*dice` parts joined by `+` (a catalog mob name or mob class ID; `2d3`, `1d4+1`, `3` or `2-5` as the dice), or `encounter:<table>`, or `catalog:<name>`. Mobs spawned are not rejuvenated. |
+| `CATALOG <table>` | Rolls an encounter table (`world/encounters/<table>.enc`) in the transit room against the leader. See [29-combat-and-encounters.md](29-combat-and-encounters.md). |
+
+After any event the journey is paused. A pause caused by an event that is not a `PAUSE` function, or by combat, lifts by itself at the next tick once nobody in the party is fighting. A pause caused by `PAUSE`, or by a passenger policy, needs `JOURNEY RESUME`. This lets a scene run to its end (a conversation, a puzzle) before travel continues.
+
+Because `EVENTS` is a list of statements separated by `;`, it must be quoted. Function names are looked up on the host: an exit host needs its `FUNCTION_PROG` scripts on that exit, a room host on the room, and so on. The saved journey remembers the host by its persistent ID; see [Persistence](#persistence).
+
+### Passenger policies
+
+Before every leg and before arrival the journey checks each seat:
+
+- **Dead**: the passenger is dead or destroyed.
+- **Missing**: the passenger is alive but is not in the leader's room, or has lost the marker.
+- **Disconnected**: a player character whose session is gone.
+
+| Policy | Meaning |
+| --- | --- |
+| `TRAVEL` | (Disconnected only) keep the character travelling with the group. |
+| `CONTINUE` | Release the seat and carry on without that passenger. A dead or missing passenger never blocks arrival. |
+| `WAIT` | Pause without spending time and tell the leader why. `JOURNEY RESUME` re-checks. Unknown policy words behave like `WAIT`. |
+| `RESCUE` | (Missing only) try to move the living, non-fighting passenger back to the leader through normal leave/enter checks; if that fails, wait. |
+| `CANCEL` | End the trip now, where the party is (refund per `REFUND`). |
+| `RETURN` | End the trip now and send the present passengers back to the origin. |
+
+When a refused `RETURN` leaves the party stuck, the journey stays paused with "The party cannot return to the origin yet. JOURNEY CANCEL retries the return."; provide a recovery route in the transit room.
+
+### Refunds
+
+At the start every payer's actual payment is saved as a receipt (seat, player, currency, amount). A cancelled journey (by `JOURNEY CANCEL`, a policy, or an abort) pays `REFUND` back: nothing, the full amount, or the unused fraction `hoursLeft / (hoursLeft + hoursElapsed)`. Each receipt pays once: a tattoo `FARE_REFUND_...` marks it, so repeated cancel attempts or a reload cannot pay twice. A successful arrival never refunds. A trip saved before receipts existed cannot reconstruct an old fare.
+
+### JOURNEY_PROG
+
+The `JOURNEY_PROG` trigger lets scripts follow a trip. Syntax: `JOURNEY_PROG START`, `HOUR`, `ARRIVE`, `CANCEL` or `ALL` (no argument also means all). In the script `$g` is the stage name in lowercase, `$0` the game hours completed and `$1` the destination room ID. It runs on the scripts in the transit room and its occupants, the journey host, and any script that registered for the trigger anywhere (those see it as if from a distance). Reference: [26-mobprog-triggers.md](26-mobprog-triggers.md#journey_prog).
+
+```text
+JOURNEY_PROG START
+  mpecho The ship leaves harbour.
+~
+JOURNEY_PROG HOUR
+  mpecho Another hour passes at sea.
+~
+JOURNEY_PROG ARRIVE
+  mpecho Land at last.
+~
+```
+
+### Journey commands
+
+| Command | Effect |
+| --- | --- |
+| `JOURNEY` | While travelling: show progress ("2.0 game hours remain to Gullrock (paused). JOURNEY RESUME or CANCEL."). Otherwise start the journey of the room you stand in. |
+| `JOURNEY <host>` | Start the journey on a named host (an item, mob or exit in the room). "You are on no journey. JOURNEY [passage] begins one here." if it has none. |
+| `JOURNEY RESUME` | Continue after a scene, or retry recovery or arrival. Refused while anyone fights. |
+| `JOURNEY CANCEL` | End the trip according to `CANCEL=` and `REFUND=`. |
+
+Further reading: [Journey recovery](../authoring-reliability.md#journey-recovery) in the reliability guide, and the cookbook recipe "A paid abstract journey with recovery" in [cookbook.md](cookbook.md).
+
+To make a journey, step by step:
+
+1. Build the destination room and the transit room (say `Ferry#Cabin`). Keep the transit room self-contained: exits out of it let players walk away and abort the trip.
+2. Choose the host. A ferry gangplank exit is natural: `MODIFY EXIT` on the quay's exit into the ferry, and add `Prop_Journey`.
+3. Write the definition on one line (see the example above). Quote `EVENTS`, messages and any value with spaces.
+4. Put event functions in `FUNCTION_PROG` scripts on the same host.
+5. Test as a party of two: pay, depart, `JOURNEY`, force an event, fight, `JOURNEY RESUME`, `JOURNEY CANCEL`, save in the middle and restore.
+
+## Named ports and routes
+
+Source: [Prop_Port](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Port.java), [Ports command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Ports.java), [Travel.destination / route / sail](../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java).
+
+A port is a room with `Prop_Port`:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `NAME` | the room's title | The name players type: `COURSE TO Port Azure`. |
+| `KIND` | `SEA` | `SEA`, `ROAD`, `AIR` or `SPACE`. This is only a label shown by `PORTS`; routing is decided by the vessel's terrain rules, not by `KIND`. |
+| `HIDDEN` | `false` | A hidden port is not listed or accepted until the character qualifies. |
+| `KNOWNMASK` | none | A zapper mask. If given, only characters matching it know the port (this replaces the `HIDDEN` test). Builders with `CMDROOMS` always know all ports. |
+
+```text
+NAME="Port Azure" KIND=SEA HIDDEN=false
+NAME="Smuggler Cove" KIND=SEA HIDDEN=true KNOWNMASK="-TATTOO +COVE_CHART"
+```
+
+`PORTS` lists the ports the character knows, sorted, as `Name (KIND)`. A mask-hidden port stays out of the list, out of `COURSE TO`, and out of `Prop_Journey` `DEST` for that character, until they have the tattoo (or whatever the mask checks).
+
+### Where a destination name can come from
+
+`Travel.destination(name, who)` resolves, in order:
+
+1. An exact room ID (`Harbour#2`). The character must be able to access the room, and if it is a port they must know it.
+2. For a character, a number or `CHART n`: the nth point in the character's `Skill_SeaCharting` list (`SEACHART` ... `SEANAVIGATE n`).
+3. A port `NAME` (case-insensitive). If a port by that name exists but the character does not know it, resolution stops with "unknown" rather than falling through.
+4. An area name: the first accessible room of the area.
+
+Scripts and `TransportLine` stops pass no character, so they see hidden ports too.
+
+### COURSE TO, SAIL TO, DRIVE TO
+
+From inside a navigable vessel (on any of its decks), the helm holder types one of:
+
+```text
+COURSE TO Port Azure
+SAIL TO Port Azure
+DRIVE TO Hidden Cove#1
+```
+
+The three words are interchangeable on any vessel (the engine matches `COURSE|SAIL|DRIVE TO ...`). The command refuses without the helm ("You are not permitted to do that."), and answers "Unknown or inaccessible destination." or "There is no navigable route to that destination." or "The vessel is already there." Success says "Course set.", clears the anchor and sets the course; the vessel then moves under the normal pacing rules and checks.
+
+The route is a breadth-first search over open exits from the vessel's room, limited to 10,000 rooms, over rooms its terrain accepts:
+
+| Vessel kind | Rooms it may route through |
+| --- | --- |
+| Water based (ship, boat) | watery rooms and seaports |
+| Land based or wagon (caravan, cart) | drivable rooms: `Prop_Road` rooms, plains, city, seaport/spaceport, some caves |
+| Air flying | outdoor rooms (not indoors) |
+
+It finds the fewest steps, not the quickest by travel time, and does not predict locks or hazards that appear later. The same router serves `MPSAIL ... TO`, `TransportLine` stops and the taxi.
+
+## Vessels: rideables, boardables, ships and caravans
+
+Item field-by-field editing is in [22-items.md](22-items.md#furniture-rideables-and-boardables); mounts that are creatures are in [21-mobs.md](21-mobs.md#rideable-mobs-and-mounts). This section is about how vessels behave and how to build and control them.
+
+### Kinds of vehicle
+
+| Class | Kind | Notes |
+| --- | --- | --- |
+| `Boat`, `GenBoat`, `GenRideable` (default basis water) | Rideable item | You `MOUNT`/`BOARD` it and ride on it; no interior. Movement commands move the boat and its riders. `GenBoat` adds siege combat. |
+| `HorseCart`, `StdRideable` with basis `WAGON` | Rideable item | A cart with rider capacity (HorseCart: 10). It must be pulled: `MOUNT cart horse` hitches it to a creature (see [Riding](#riding-mounts-and-carts)). |
+| `GenCageRideable` | Rideable item | A wagon-basis cage for captives. |
+| `GenBoardable` (and `StdBoardable`) | Boardable, not navigable | A thing with an interior area you can `ENTER` and leave: a hut on wheels, a barge fixed to a quay, a tower. It does not move on its own. Owned, priced, lockable. |
+| `GenNavigableBoardable` | Boardable base class | Adds navigation. Create one of the concrete classes below instead. |
+| `GenSailingShip` | Navigable | Water. `SAIL <dir>`, anchor, tender, jump overboard. |
+| `GenCaravan` | Navigable | Land. `DRIVE <dir>`, brake. Runs only on drivable rooms (see [Prop_Road](#prop_road)). Ride basis `WAGON`; riders capacity 0 (people enter, not ride). |
+| `GenAirShip` | Navigable | Air. `SAIL <dir>`, `RISE`, `DIVE`, tie-downs instead of an anchor. Routes only through outdoor rooms. |
+| `GenBalloon` | Navigable (an air ship) | `FLOAT <dir>`, `RISE`, `DIVE`; ticks per move 3 by default (slow). |
+| `GenSiegableBoardable` | Boardable with ship-to-ship combat | See [29-combat-and-encounters.md](29-combat-and-encounters.md). |
+
+Helm command names depend on the class (from each class's `findNavCommand`):
+
+| Action | Sailing ship | Caravan | Air ship | Balloon |
+| --- | --- | --- | --- | --- |
+| Move one step | `SAIL <dir>` | `DRIVE <dir>` | `SAIL <dir>` | `FLOAT <dir>` |
+| Keep going in a direction | `STEER <dir>` | `STEER <dir>` | `STEER <dir>` | `STEER <dir>` |
+| Series of moves | `COURSE <dir> <dir> ...` (or `SET COURSE ...`) | same | same | same |
+| Plot to a place | `COURSE TO <place>` or `SAIL TO`, `DRIVE TO` | same | same | same |
+| Stop moving | `LOWER ANCHOR` | `SET BRAKE` | `TIEDOWN` or `TIE DOWN` | same as air ship |
+| Start moving | `RAISE ANCHOR` | `RELEASE BRAKE` or `UNSET BRAKE` | `RELEASE TIEDOWNS` (also `ROPE`, `ROPES`, `TIEDOWN`, `TIES`) | same as air ship |
+| Climb / descend | not available | not available | `RISE`, `DIVE` | `RISE`, `DIVE` |
+| Meet another vessel | `TENDER <other>`, `RAISE <boat>`, `LOWER <boat>` | same | same | same |
+| Leave the vessel in water | `JUMP OVERBOARD` | | | |
+| Follow another vessel | `FOLLOW <vessel>` | same | same | same |
+
+Steering and tendering must be done from a deck (an outdoor room of the interior); indoors you get "You must be on deck to steer your ship." Direction words aboard a ship are `Foreward` (`FORE`), `Aft`, `Starboard` (`STB`), `Portside` (`PORT`), `Above` and `Below`; caravans say forward, back, right and left. Help topics: `HELP SAILING`, `HELP SHIP_COMBAT`.
+
+### The interior
+
+A boardable is an item plus an interior area (class `StdBoardableShip`). The area belongs to the item: it travels with it, appears in `LIST SHIPS` and is saved with it. At least one interior room should be outdoors (a `WoodenDeck`, for example): that is where players see out, steer and mount siege weapons, and the deck rooms are the ones linked to the outside through the `EXITNAME` exit (default "gangplank"). A docked vessel's outer deck exits lead to the room the vessel sits in; as it moves, the links move too.
+
+To build a ship (the method of the original guides, plus the CoffeeSUD `VESSEL` command):
+
+1. Stand in a water or port room. `CREATE ITEM GenSailingShip` (or `GenCaravan`, `GenAirShip`, `GenBalloon`, `GenBoardable`).
+2. `MODIFY ITEM <ship>`: set the name (a name with `[NEWNAME]` lets a buyer rename it), `Moves per Tick` (the top speed), the `OWNER` (empty means nobody owns it), `PRICE`, and the pacing fields below. Add `Prop_HelmRestrict` or behaviors in the Effects and Behaviors fields.
+3. Go inside: `VESSEL <ship> ENTER` (builders), or `ENTER <ship>`. You are on its first interior room.
+4. Build the rooms with `CREATE ROOM <direction> [locale]`, using ship directions instead of compass ones (the Archon guide names port, starboard, fore, aft, above and below; the engine's names are `Foreward`, `Aft`, `Starboard`, `Portside`, `Above`, `Below`). Build the ship north to south, which is fore to aft. Make at least one room outdoors, use `Prop_ReqCapacity` on deck rooms to limit siege weapons, and add exits from the deck back to the dock room if the vessel is to be sold there.
+5. Mob crew belong on the deck; `Sailor` makes them crew (see below).
+6. `SAVE`. The interior, the vessel's position and its owner go into the world file.
+
+An NPC vessel shared by several copies must have unique names. CoffeeSUD does this for you (see "Copies" below).
+
+### Vessel stats
+
+Beyond the standard item fields, boardables expose these stats to `MODIFY`, `MPSET` and the catalog (`GenBoardable.getStatCodes`, `GenNavigableBoardable`):
+
+| Stat | Applies to | Meaning |
+| --- | --- | --- |
+| `HASLOCK`, `HASLID`, `DEFCLOSED`, `DEFLOCKED` | all boardables | Whether the gangplank/door can be closed or locked and its default state. |
+| `CAPACITY`, `CONTAINTYPES`, `RESETTIME` | all | Container capacity, accepted contents, door reset ticks. |
+| `RIDEBASIS`, `MOBSHELD` | all | Ride basis and rider capacity. Read-only on boardables: the class decides. |
+| `AREA` | all | The interior area as XML. Normally edited by building the rooms, not by hand. |
+| `OWNER`, `PRICE` | all | Owner name and base price. With an empty `OWNER` anyone may give helm orders. |
+| `EXITNAME` | all | Name of the gangplank exit. |
+| `PUTSTR`, `MOUNTSTR`, `DISMOUNTSTR`, `STATESTR`, `STATESUBJSTR`, `RIDERSTR` | all | Text used when boarding, leaving, and describing riders. |
+| `TICKSPERMOVE` | navigable | Minimum ticks between moves, at least 1. A river barge with `ABILITY=1 TICKSPERMOVE=6` drifts about one room per six ticks. |
+| `TICKSPERTURN` | navigable | Minimum ticks between direction changes, at least 1. |
+| `WEATHERSPEED` | navigable | `true` (default) lets wind add to the top speed on water and air; `false` ignores weather. |
+| `FIXEDINTERIOR` | all | `false` (default): every copy gets its own interior name and room IDs. `true`: a copy keeps the original interior name. Use `true` only for one deliberately named craft. |
+
+The editor shows `ABILITY` of a navigable item as "Moves per Tick". Top speed is that value, plus 1 in windy weather and another 1 where the climate is windy (or a 50% chance of +1 in windy climate on a calm day), unless `WEATHERSPEED` is false or the vessel is a caravan; then scaled by hull condition (`usesRemaining/100`, and 0 below 10%); minimum 1. A vessel with no hull left "won't seem to move".
+
+### Docking and the anchor
+
+A vessel is either docked (sitting in a room with its deck exits linked to it) or not. `LOWER ANCHOR`/`SET BRAKE`/`TIEDOWN` holds it in place and fires `DOCK_PROG` on the vessel, its occupants and the occupants of the room it is in. `RAISE ANCHOR` lets it move. `COURSE`, `STEER` and `SAIL` need the anchor up. The vessel's home port (`homePortID`) is the room it was first docked in; `VESSEL <ship> HOME <room>` changes it.
+
+### Who has the helm
+
+Every helm command asks the vessel's `securityCheck`:
+
+1. A non-player mob with the `Sailor` behavior inside the vessel always passes.
+2. If the vessel has `Prop_HelmRestrict` and its mask refuses the character, the character fails.
+3. Otherwise standard ownership: anyone with the `CMDITEMS` security flag (builders), anyone if `OWNER` is empty, the owner (or someone with legal privileges on the property), or a wearer of a sailor's cap of the owning clan.
+
+So an unowned world vessel can be taken by any passenger. Close that with `Prop_HelmRestrict` (or a transport line's `PASSENGERONLY`).
+
+### Prop_HelmRestrict
+
+Source: [Prop_HelmRestrict](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_HelmRestrict.java). Host: items (vessels).
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `NAVMASK` | none | Zapper mask a character must match to give helm orders. Empty allows everyone. (`MASK` is accepted as a synonym.) `-PLAYERS` keeps player characters off the helm. |
+| `MESSAGE` | "The crew will not let you use the helm." | Shown to a refused character. |
+| `ONFAIL` | none | A function name called on the vessel's scripts when someone is refused, with the character and the order text. |
+
+```text
+NAVMASK="-PLAYERS" MESSAGE="The captain says: hands off the wheel."
+NAVMASK="-TATTOO +MUTINEER" ONFAIL=warn_passenger
+```
+
+Pass rules: builders with `CMDITEMS`, then non-player mobs with `Sailor` aboard, then the mask. The orders it screens (by first word): `COURSE`, `STEER`, `SAIL`, `DRIVE`, `TENDER`, `RAISE`, `LOWER`, `SET`, `RELEASE`, `BRAKE`, `ANCHOR`. The words `FLOAT`, `RISE`, `DIVE`, `TIEDOWN` and `FOLLOW` are still refused by the underlying security check, but with the generic "You are not permitted to do that." and without `MESSAGE` or `ONFAIL`. `TransportLine` adds `NAVMASK="-PLAYERS"` automatically unless the craft already has `Prop_HelmRestrict`.
+
+### Crew
+
+The `Sailor` behavior (mobs) makes a mob a crew member: it takes part in ship battles, and a `Sailor` aboard is always allowed at the helm even when `Prop_HelmRestrict` refuses passengers. See [24-behaviors-and-masks.md](24-behaviors-and-masks.md#sailor). A transport line steers its own vessel without a crew mob.
+
+### Copies and unique interiors
+
+When a vessel is copied (`COPY`, the item's `copyOf`, a catalog spawn or a catalog template), the copy's interior area and room IDs are renamed to a fresh unique name derived from the vessel's name (`Travel.newInteriorName`, such as `the_Gull_v3`) unless `FIXEDINTERIOR` is true. The old engine had every copy share room IDs, which confused room lookups. A hand-built NPC ship that you copy five times therefore gets five separate decks. `VESSEL <ship> RENAME <new interior name>` renames an interior deliberately; it must be unused.
+
+### Builder tools for vessels
+
+| Command | Effect |
+| --- | --- |
+| `VESSEL STATUS <name>` | Print a vessel: where it is and where it is docked, facing, anchor, course, top speed and pace, hull points and percentage (and "sunk"), owner and home port, the behaviors on the vessel, its decks and every mob aboard (with their state, as `STAT BEHAVIORS` shows it), crew (monsters not following anyone) and passengers. |
+| `VESSEL <name> ENTER` | Move yourself to the vessel's first interior room and look. |
+| `VESSEL <name> RENAME <interior name>` | Rename the interior. Refused if empty or already an area name. Save the room to keep it. |
+| `VESSEL <name> HOME <room>` | Set the home port to a room. Save the room to keep it. |
+| `LIST SHIPS` | Every active ship, with its location, registration, anchor (`up`/`down`), course and owner. |
+| `LIST INSTANCES` | Every instance area (see [Instances](#instances-resets-and-planes)). |
+
+`VESSEL` is available in builder mode, in a DEV game, or with the `CMDAREAS` security flag. A name matches exactly first, then as a substring of a vessel's name. The syntax is `VESSEL STATUS <name>` or `VESSEL <name> ENTER|RENAME <text>|HOME <room>`; the action word comes after the name. With too few words it prints the usage line.
+
+### Tender, follow and siege
+
+`TENDER <other ship>` offers a gangplank to another vessel in the same room; when the other captain tenders back, crews walk between them. Both must be docked, neither in combat; sailing away or fighting disconnects them. A small boat that tenders your ship can be hoisted aboard with `RAISE <boat>` and put back with `LOWER <boat>`. `FOLLOW <ship>` makes the vessel trail another. Ship-to-ship combat, `AIM` and siege weapons are covered in [29-combat-and-encounters.md](29-combat-and-encounters.md).

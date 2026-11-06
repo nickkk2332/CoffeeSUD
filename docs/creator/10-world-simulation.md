@@ -1123,3 +1123,383 @@ spell-like flood, `Chant_Flood` (both in
 [FLOODLEVEL](28-mobprog-functions.md#floodlevel).
 
 Source: [Floodable](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Floodable.java).
+
+## Darkness
+
+Audience: creators, scripters.
+
+A room is **dark** when its dark disposition is set and no light overcomes
+it. In the stock rules darkness comes from:
+
+- night, in a room under the sky (`DISABLE=DARKNIGHTS` turns this off), and
+  blizzards and dust storms (`DISABLE=DARKWEATHER`);
+- a locale that is dark by nature (caves, many underground and underwater
+  locales);
+- [Prop_RoomDark](23-properties-reference.md#prop_roomdark) on a room or area;
+- [Prop_ClosedSeason](23-properties-reference.md#prop_closedseason) or
+  [Prop_ClosedDayNight](23-properties-reference.md#prop_closeddaynight) on a room;
+- spells such as darkness.
+
+A **lit light** (a torch, a lantern, a glowing item) in the room, carried or
+lying there, ends ordinary darkness. A character who **sees in the dark**
+(darkvision, infravision, a spell) sees anyway. Darkness *to a character*
+means: the room is dark, and that character cannot see in the dark.
+
+### Testing darkness
+
+| Where | Form |
+| --- | --- |
+| Script condition | `ISDARK(HERE)`, `ISLIT(HERE)`, `ISDARK(Cave#5)`; also as values `$%ISDARK(HERE)%` |
+| Zapper mask | `+ROOMDARK` passes those the room they stand in is dark to; `-ROOMDARK` passes everyone else. (This key reads the room from the character's side, so it works as a `WHEN` in properties like `Prop_Hazard`.) |
+| Description text | `Prop_DarkDescription` and `<DARK>`/`<LIT>` blocks (see below) |
+
+References: [ISDARK and ISLIT](28-mobprog-functions.md#isdark).
+
+[Prop_DarkDescription](23-properties-reference.md#prop_darkdescription) gives a
+dark room a description that does not reveal its contents:
+`TITLE="Somewhere dark" DESC="Cold water laps at your knees."`; `<VARIES>` is
+allowed in it. Alternatively put `DARK` and `LIT` blocks in the room's
+description text ([11-presentation-language.md](11-presentation-language.md)).
+
+### Prop_RoomDark
+
+Ordinary darkness, optionally only at certain hours, or deep darkness that
+lights cannot beat.
+
+| Parameter | Meaning |
+| --- | --- |
+| `HOURS=1,4,0` | Dark only in these hours of the day (comma separated numbers, on the area's clock). Without it the room is always dark. |
+| `ABSOLUTE=TRUE` | Deep darkness. The lights of those in the room, and of what lies there, go dark while they are in it. Everything ordinary light can do is overruled until they leave. |
+| `LIGHTMASK="mask"` | With `ABSOLUTE`, the lights that still work: an item mask such as `"-TAGS +DAWNLANTERN"` (a tag set in the item editor's Tags field). |
+| `SEEMASK="mask"` | Who still sees in the dark: a mask on the character, such as `"-RACE +Dwarf"`. |
+| `SNUFF=[pct]` | The percent chance that each lit light a character carries goes out as they walk in. |
+| `SNUFFMSG="text"` | What they are told (`@x1` is the light's name; default "Your @x1 gutters out in the dark."). |
+
+```text
+Prop_RoomDark HOURS=1,4,0
+Prop_RoomDark ABSOLUTE=TRUE LIGHTMASK="-TAGS +DAWNLANTERN" SEEMASK="-RACE +Dwarf" SNUFF=30
+```
+
+Plain `Prop_RoomDark` is beaten by any torch (lights are applied after room
+effects). `ABSOLUTE=TRUE` reapplies the darkness after people and items have
+been counted, and switches off their light source flag, as the darkness-globe
+spell does. A torch can still burn (it is lit, it just gives no light) and
+lights again outside.
+
+### Prop_DarkDanger: dangers in the dark
+
+[Prop_DarkDanger](23-properties-reference.md#prop_darkdanger) goes on a room or
+area. It acts only on a **player** who is in a room that is dark to them (a lit
+torch or darkvision ends it).
+
+| Parameter | Meaning |
+| --- | --- |
+| `LOST=[pct]%` | A move goes a random open way instead (`MSG` says so; default "You lose your way in the dark."). |
+| `STUMBLE=[pct]%` | A move fails and costs 5 movement (`STUMBLEMSG`; default "You stumble in the dark and fall."). |
+| `LURKER=[catalog mob]` | With `LURK=[pct]%` (3% if only `LURKER` is given): as they come in, a copy of this catalog mob (or mob class) comes out of the dark (`LURKMSG`; default "Something comes at you out of the dark!"). A `catalog:` prefix is allowed. |
+
+```text
+Prop_DarkDanger LOST=10% STUMBLE=5% LURKER=ghoul LURK=3%
+```
+
+`STUMBLE` is checked before `LOST`. The mob must exist in the catalog (or be
+a valid mob class) or an error is logged.
+
+Dark rooms also pair well with [Prop_Hazard](#hazards) (`DARKONLY`).
+
+Source: [Prop_RoomDark](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_RoomDark.java),
+[Prop_DarkDanger](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_DarkDanger.java).
+
+## Breath and underwater rooms
+
+Audience: creators, scripters.
+
+**Atmosphere** is a room's (or area's) breathable medium: the raw material
+that fills it. Normal rooms hold air; an underwater room holds water. A
+character who cannot breathe the room's atmosphere (a land-dweller in water, an
+air-breather in a gas, an undead in air that is not theirs, whatever the race
+says) is "short of air". There are three ways to make a place hold water or
+a gas:
+
+- pick an underwater locale (`UnderWater`, `UnderSaltWater`, `IndoorUnderWater`,
+  grid and maze versions; `LIST LOCALES`);
+- set the room's or area's atmosphere stat: `MODIFY ROOM ATMOSPHERE SALTWATER`
+  (a raw material name, or `-1` to inherit from the area; see
+  [20-areas-rooms-exits.md](20-areas-rooms-exits.md));
+- let a state or behavior change it ([RoomStates](#room-states) `ATMOSPHERE=WATER`,
+  [Floodable](#flooding) level 3, [TidalRoom](#tides) `DEEP`).
+
+### The breath count
+
+CoffeeSUD gives everyone a held breath before choking or drowning starts.
+Each tick a character is short of air they spend a tick of breath. At half
+and at a quarter of the count they are warned ("You have half your breath
+left", "Your lungs burn: you are nearly out of breath!"); at zero ("Your
+breath is gone!") the old rules apply: damage every tick ("`<name>` can't
+breathe!" or "is drowning in water!"). Breathable air fills the breath again
+("You gasp in a breath of air."). Golems do not breathe.
+
+The size of the breath is the **`BREATHTICKS`** setting plus carried air:
+
+```ini
+BREATHTICKS=@x1/3
+```
+
+`BREATHTICKS` is a formula (`@x1` the character's constitution, `@x2` the
+level); the stock value is `@x1/3`, so constitution 12 holds breath for 4 ticks. `0`
+turns the count off (immediate damage, as before). It is a world key
+(`coffeemud.ini` or `world.ini`).
+
+[Prop_AirSupply](23-properties-reference.md#prop_airsupply) on an **item**
+adds to it: whoever carries the item can hold their breath `TICKS` ticks
+longer.
+
+```text
+Prop_AirSupply TICKS=6
+```
+
+Put that on an air bladder, a diving bell hood or a bottle of sweet air. The
+effects add: an air bladder of 6 on a character with a breath of 4 gives 10.
+
+Magic and races that let a character breathe the medium (water breathing, gills,
+the room's atmosphere matching their race) mean they are never short of air.
+
+### Reading breath
+
+| Where | Form |
+| --- | --- |
+| Script value | `$%BREATH(who)%`: ticks of breath left (all of it where they can breathe) |
+| Zapper mask | `+BREATH <2` passes those with fewer than 2 ticks left; `-BREATH <2` passes everyone else; also `<=`, `>`, `>=`, `=`, `!=` |
+
+References: [BREATH](28-mobprog-functions.md#breath). The mask makes a good
+`WHEN` or `PROTECT` in a [Prop_Hazard](#hazards).
+
+Source: [Breath](../../CoffeeMud/com/planet_ink/coffee_mud/core/Breath.java),
+[Prop_AirSupply](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AirSupply.java).
+
+## Hazards
+
+Audience: creators, scripters.
+
+A **hazard** is a place that hurts those in it. CoffeeSUD gives you one
+typed, tunable property for it, [Prop_Hazard](23-properties-reference.md#prop_hazard),
+and a command that lists every hazard in an area.
+
+### Prop_Hazard
+
+On a room, `Prop_Hazard` hurts everyone in the room. On an area, it hurts
+everyone in any room of the area (and its children) that fits the filter. It
+ticks every game tick for as long as it is attached.
+
+| Parameter | Meaning |
+| --- | --- |
+| `TYPE=` | `COLD`, `HEAT`, `ACID`, `GAS`, `POISON`, `ELECTRIC`, `HOLY`, `UNHOLY`, `DISEASE` or `THINAIR` (default `COLD`). The damage is dealt as that type, so the type's saving throw and resistances (spells, `Prop_Resistance`, race) count. |
+| `DAMAGE=` | Dice (`1d6`, `2d4+2`) or a formula where `@x1` is the victim's level (`@x1/2`, `3+@x1`). |
+| `SAVE=` | The saving throw that halves it (default: the type's own: cold, fire, acid, gas, poison, electric, justice, undead, disease; `THINAIR` uses gas). Give a type name or any save stat name. The chance is the victim's save value as a percent. |
+| `DRAIN=MOVE` or `DRAIN=MANA` | Takes DAMAGE from movement or mana instead of hit points (the default for `THINAIR`; damage defaults to 1d6 if only DRAIN is given). `DRAINMSG="..."` is what they are told. |
+| `AFFECT="[ID] [pct]%"` | An effect to put on the victim that percent of the time (100 if omitted) unless they already have it: `AFFECT="Disease_FrostBite 20%"`. |
+| `ROOMS="mask"` | On an area: a mask run on each victim that picks which rooms count, e.g. `"-DOMAIN +MOUNTAINS"`. |
+| `WHEN="mask"` | A mask checked on each victim every tick, e.g. `"-WEATHER +BLIZZARD +SNOW"` or `"-SEASON +WINTER"`. |
+| `PROTECT="mask"` | Victims who fit this mask are spared, e.g. `"-EFFECTS +Spell_ResistCold"` or `"-NAMES +Fred"`. |
+| `EVERY=[ticks]` | Hurt once in this many ticks (default 1). |
+| `ONSET=[ticks]` | Ticks of exposure before it starts. |
+| `ESCALATE=[pct]` | Each time in a row, the damage grows by this percent of the base (a 20 means 1.2x, 1.4x, 1.6x...). Leaving and coming back starts again. |
+| `WARN="text"` | Said once, as they start being exposed. |
+| `DARKONLY`, `LITONLY` | Only when the room is dark to the victim, or when it is not. |
+| `NONPC` | Players only; NPCs are spared. |
+| `NAME="text"` | What hurts (default by type: "the biting cold", "the searing heat", "the acid", "the foul gas", "the poison", "the lightning", "the holy light", "the unholy taint", "the sickness", "the thin air"). |
+| `MSG="text"` | The damage line (default `<S-NAME> <DAMAGES> <T-NAME>!`). |
+
+```text
+Prop_Hazard TYPE=COLD DAMAGE=1d6 SAVE=COLD WHEN="-WEATHER +BLIZZARD +SNOW" PROTECT="-EFFECTS +Spell_ResistCold" ESCALATE=20 WARN="The wind bites through your clothes."
+Prop_Hazard TYPE=HEAT DAMAGE=@x1/2 ROOMS="-DOMAIN +DESERT" WARN="The sand burns through your boots."
+Prop_Hazard TYPE=THINAIR DAMAGE=10 EVERY=2
+Prop_Hazard TYPE=GAS DAMAGE=2d4 DARKONLY NONPC
+```
+
+Notes:
+
+- Immortal characters (those with the `IMMORT` flag) are never hurt.
+- A victim's time in the hazard resets when they leave for a tick; `ONSET`
+  and `ESCALATE` count again on return.
+- `WHEN` and `ROOMS` and `PROTECT` are masks on *the victim*, so they can
+  test race, level, names, effects, weather, season, `ROOMDARK` and `BREATH`.
+- Test a hazard with the weakest character you expect to meet it, and with
+  `ESCALATE` on.
+- For a hazard that depends on a script variable, put the test in a
+  `RoomStates` and attach the hazard in that state's `ADD`.
+
+### Other hazards
+
+| Tool | Does |
+| --- | --- |
+| [Prop_InstantDeath](23-properties-reference.md#prop_instantdeath) | Kills (or damages) anyone who enters the room or area, attacks the mob or uses the item; `MASK=`, `DAMAGE=`, `DMGPCT=`, `MSG=`. Untyped, and only on entry. |
+| `Prop_NarrowLedge` | A fall check on entering a room or exit (`check=`, `name=`, `room=`). |
+| `FieryRoom` behavior | A room that burns, burning equipment. |
+| Traps (`Trap_*`) | Sprung once; see [25-abilities-and-effects.md](25-abilities-and-effects.md). |
+| `Prop_ClosedSeason` | Closes or darkens by weather and season. |
+| Weather itself | With `WeatherAffects`. |
+
+Exposure and body-temperature simulation (clothing, shelter, warmth) is
+**not implemented** (deferred); `Prop_Hazard` with `WHEN`/`PROTECT` is the
+supported way to make cold and heat matter.
+
+### HAZARDS
+
+```text
+HAZARDS
+HAZARDS Frostfang Pass
+```
+
+For builders (builder mode, a `DEV=1` game, or `CMDAREAS`/`CMDROOMS`).
+Lists what an area holds that acts on those in it: the area's own behaviors
+and effects (spawners such as `RandomMonsters`, weather), and in its rooms,
+exits and items their behaviors, traps, `Prop_InstantDeath`,
+`Prop_NarrowLedge` and `Prop_Weather`, each with its state (as `STAT BEHAVIORS`
+gives it) or parameters. `Prop_Hazard` on a room is not specially named in
+the list; it shows with the room's other effects. Use it before shipping to
+find forgotten spawners and traps.
+
+Source: [Prop_Hazard](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Hazard.java),
+[EnvToolsCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/EnvToolsCmd.java).
+
+## Whole-area resets
+
+Audience: creators, scripters.
+
+The normal respawn is per mob and item (`Prop_RejuvWhen` and the rejuvenation
+rates). **ResetWhole** instead rebuilds a room or area wholesale, from the
+world, once no player has been there for a while: all mobs and items come
+back as the world file has them. Details are in
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md#resetwhole) and
+[21-mobs.md](21-mobs.md); the CoffeeSUD simulation options are:
+
+| Parameter | Meaning |
+| --- | --- |
+| a bare number, or `TICKS=[n]` | Reset after n ticks with no player in the room or area. |
+| `DAYS=[n]` | Reset after n game days (on the area's calendar) with no player there, in place of `TICKS`. |
+| `MUDHOUR=[hour]` | Reset at that game hour of the day. |
+| `RLHOUR=[hour]` | Reset at a real-life hour. Real-clock only; meaningless with pause and turn-based time, so use `MUDHOUR` or `DAYS`. |
+| `EXCEPT="mask"` | Mobs and items that never come back once gone (a slain boss, taken loot): a mask on them; names with spaces go in single quotes, e.g. `EXCEPT="-NAME +'the Goblin King'"`. Those still there at the reset stay. |
+| `MSG="text"` (or `RESETMSG=`) | Said to the first player who walks in after a reset. |
+| `ONREENTRY=true` | Reset when the party returns after everyone has left (rather than while they are away). |
+| `MINAWAY=[game hours]` | With `ONREENTRY`, the least time away that counts. |
+| `SKIPROOMS="room mask"` | Rooms to leave unchanged, e.g. `SKIPROOMS="-LOCATION '+ROOMSTR(Sanctum)'"`. |
+
+```text
+ResetWhole DAYS=7 EXCEPT="-NAME +'the Goblin King'" MSG="Fresh tracks lead into the tunnels."
+ResetWhole ONREENTRY=true MINAWAY=48 SKIPROOMS="-LOCATION '+ROOMSTR(Sanctum)'"
+```
+
+An area's `ResetWhole` skips rooms that carry a `ResetWhole` of their own, so
+a boss lair can keep a different timetable. A camped room (a player sitting
+in it where camping is unwelcome) is not reset. `ResetWhole` does not stop the
+ordinary per-mob rejuvenation; to use it alone, set the rejuvenation rate on
+the mobs and items to 0. Last-visit times and absence survive saves. For
+`InstanceArea`'s `INPLACE=true` reset see
+[30-travel-vehicles-instances.md](30-travel-vehicles-instances.md); unique items
+and once-only loot are in [22-items.md](22-items.md).
+
+## Scheduled tasks on the game clock
+
+There are four ways to make something happen at a game time. They all run on
+the game clock, so they respect pause, turn-based time and `TIMESCALE`.
+
+| Tool | Best for | Notes |
+| --- | --- | --- |
+| `TIME_PROG`, `DAY_PROG`, `DELAY_PROG` on a mob, item or room | Things tied to an object: the baker opens at dawn | `TIME_PROG [hours]` takes hour numbers, `DAWN`, `DAY`, `DUSK`, `NIGHT`, ranges `6-18`, and steps `6-18/3`. `DAY_PROG` takes days of the month and ranges. `DELAY_PROG low high` a random number of ticks. |
+| `Schedule` behavior | An NPC's daily routine | See [06-npcs-dialogue.md](06-npcs-dialogue.md). |
+| Quest `SET SCHEDULE`, holidays | A story window, a festival | [Quest schedules](#quest-schedules) and [Holidays](#holidays) above. |
+| **Cron jobs** | World-wide maintenance: restock a market weekly, run a script every game day | Below. |
+| JavaScript `cm.every`, `cm.at`, `cm.after`, `cm.waitUntil` | Mod code | Below, and [05-javascript.md](05-javascript.md). |
+
+### Cron jobs
+
+A cron job is a list of commands or a script run again and again at an
+interval on the game clock. The CoffeeSUD cron runs on game time (not while
+the game is paused, and in turn-based time as game time passes), is checked
+once a game minute, and keeps its next run in the saved game.
+
+```text
+CREATE CRON weekly-restock 7 days
+MODIFY CRON weekly-restock SCRIPT
+MODIFY CRON weekly-restock INTERVAL 3 days
+LIST CRON
+LIST CRON 1
+DESTROY CRON weekly-restock
+```
+
+- `CREATE CRON [NAME] [INTERVAL]`: the interval is a time such as `10 minutes`,
+  `6 hours`, `1 day`, a formula, or a boundary word (`hourly`, `daily`,
+  `monthly`); the units are game time on the creator's clock.
+- `MODIFY CRON [NAME/#] SCRIPT` opens a message editor for the job's commands.
+  A line is a command run as the job's creator; a block between `<MOBPROG>`
+  and `</MOBPROG>` is a MOBPROG script, and one between `<SCRIPT>` and
+  `</SCRIPT>` is JavaScript (CoffeeSUD).
+- `INTERVAL` changes how often; `LIST CRON [n]` shows the job and the time to
+  its next run in game time. (`MODIFY CRON ... SUBJECT` is documented but
+  sets the name to the word SUBJECT; to rename a job, destroy it and create
+  it again.)
+- All of these need the `CMDCRON` security flag (`LIST CRON` also
+  `LISTADMIN`). The jobs themselves live in the world's files
+  (`world/journals`), written in builder mode.
+
+Cron is an archon-level tool. It is checked and run as the character who
+created it; if that character cannot be found the job logs an error and does
+nothing.
+For anything tied to an object prefer a `TIME_PROG`; for one-shots a quest
+or `cm.after`.
+
+### JavaScript timers
+
+In JavaScript (see [05-javascript.md](05-javascript.md)):
+
+```js
+cm.every("1 day", function () { /* each game day */ }, "daily-tax");
+cm.at("hour 6", function () { /* at dawn */ }, "dawn-bell");
+cm.at("season winter", function () { /* ... */ });
+cm.after(10, function (data) { /* 10 ticks on, kept in the save */ }, { id: 3 });
+cm.waitUntil(function () { return cm.weather().get() == "rain"; }, function () { /* then */ });
+cm.stopTimer("daily-tax");
+```
+
+`every` and `at` are registered at boot (in `init.js`'s `onBoot`) and are not
+saved; `after` is saved with the game and, after a restore, the function is
+rebuilt from its text, so it must use its `data` argument, not captured
+variables. `cm.timers()` lists them. Specs are ticks (`6`), `"6 hours"`,
+`"1 day"`; `at` takes `"hour 6"`, `"day 1"`, `"month 3"`, `"season winter"`,
+or several (`"day 1 hour 8"`).
+
+## Reading time and weather from scripts
+
+A summary of the hooks; each links to its full entry.
+
+**Triggers** ([26-mobprog-triggers.md](26-mobprog-triggers.md)):
+
+| Trigger | Fires |
+| --- | --- |
+| `TIME_PROG [hours]` | At listed hours (numbers, `DAWN`/`DAY`/`DUSK`/`NIGHT`, ranges, steps). |
+| `DAY_PROG [days]` | On listed days of the month. |
+| `DELAY_PROG low high` | Every low to high ticks. |
+| `WEATHER_PROG [WEATHER/ANY] (OLD)` | When the area's weather changes. `$g` new, `$0` old, `$1` forecast. |
+| `MOON_PROG [PHASE/ANY]` | When the moon becomes the phase. `$g` new phase, `$0` old. |
+| `EXECMSG_PROG` with `WEATHERCHANGE`, `TODCHANGE`, `DATECHANGE` | A change of weather, of the time of day, a new day. |
+| `GAME_PROG [NEWGAME/RESTORE/SAVE/PAUSE/RESUME/TIMEMODE/...]` | Game-level events. |
+
+**Conditions and values** ([28-mobprog-functions.md](28-mobprog-functions.md)):
+`ISTIME`, `ISHOUR`, `ISDAY`, `ISMONTH`, `ISYEAR`, `ISSEASON`, `ISWEATHER`,
+`ISMOON`, `ISWEEKDAY`, `WEEKDAY`, `DATETIME`, `GAMETIME`, `ISHOLIDAY`,
+`HOLIDAY`, `ISTIDE`, `ISDARK`, `ISLIT`, `ROOMSTATE`, `FLOODLEVEL`, `BREATH`,
+`ISTURNBASED`, `ISPAUSED`.
+
+**Commands** ([27-mobprog-commands.md](27-mobprog-commands.md)):
+`MPWEATHER`, `MPROOMSTATE`, `MPPASSTIME`, `MPINTERRUPT`, and for pinning
+weather `MPAFFECT Prop_Weather`.
+
+**JavaScript `cm`**: `cm.clock(area)` (`hour()`, `day()`, `month()`, `year()`,
+`daypart()`, `season()`, `moon()`, `absHours()`, `hoursInDay()`, `daysInMonth()`,
+`monthsInYear()`, `text()`, `pass(hours)`), `cm.calendar()` (the engine's
+`TimeClock`), `cm.weather(area)`, `cm.holiday(name)`, `cm.holidays()`,
+`cm.isTurnBased()`, `cm.passTime`, `cm.passHours`, `cm.advance`, `cm.interrupt`.
+`daypart()` returns `dawn`, `day`, `dusk` or `night`; `season()` returns the
+built-in season a named season counts as.

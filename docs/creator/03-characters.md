@@ -1050,3 +1050,441 @@ day it is created (by the game calendar of its start room). A value below zero
 in a file means "never" (`Integer.MAX_VALUE`). See [Ageing](#ageing) for
 effects.
 
+## Stats and derived values
+
+A character has two copies of its stats. The **base** stats (`baseCharStats`,
+`basePhyStats`, `baseState`) are what training, creation and level-ups change.
+The **effective** stats (`charStats`, `phyStats`, `curState`) are rebuilt
+whenever something changes, by starting from the base and applying, in turn,
+the race, the class, the ageing rules, every effect, every worn item and
+anything the world adds with `STATEFFECT_` rules. Scripts and abilities
+should change the base value only when the change is permanent; a spell
+changes the effective one by being an effect.
+
+**Base stats.** Six: `STRENGTH`, `INTELLIGENCE`, `DEXTERITY`, `CONSTITUTION`,
+`CHARISMA`, `WISDOM`. Each has a ceiling, `BASEMAXSTAT` (18) plus the
+**max-stat adjustment** of race, class, ageing and effects (the `MAX STRENGTH
+ADJ.` charstats): training can take a stat up to that ceiling and no further.
+`BASEMINSTAT` is the floor a stat starts from.
+
+**Other charstats.** Gender; about thirty saving throws (paralysis, fire, cold,
+water, gas, mind, general, justice, acid, electricity, poison, undead, magic,
+disease, traps, detection, overlooking, doubt, blunt, pierce, slash, spells,
+prayers, songs, chants, polymorph); age and weight adjustment; critical chance
+and damage (weapon and magic); faith; recovery rate; an experience adjustment
+percent (`XP ADJUSTMENT PCT`). Races, classes, items and effects adjust these
+by name (`SAVE VS FIRE`, `CRIT WEAPON CHANCE PCT`...). A saving throw is the
+stat plus a contribution of the base stats (for example half of
+Constitution plus Strength for paralysis); see
+[29-combat-and-encounters.md](29-combat-and-encounters.md) for how saves,
+attack and armor are used.
+
+**Derived pools.**
+
+| Value | How it is worked out | Settings |
+| --- | --- | --- |
+| Hit points | `STARTHP` at level 1; each level then adds one result of the class's `HITPOINTSFORMULA` (at least 1) to the base. Racial and class `CharState` adjustments and `STATEFFECT_` hit point parts are added on top | `STARTHP`, class formula |
+| Mana | `STARTMANA` at level 1, then each level adds the mana formula's result | `STARTMANA`, class formula |
+| Moves | `STARTMOVE` at level 1, then each level adds the movement formula's result | `STARTMOVE`, class formula |
+| Attack bonus | each level adds floor(attack attribute / 18) + the class's `LVLATT` to the base attack, +1 more with the attribute at 22 or more, +2 at 25 or more | class `ATTATT`, `LVLATT` |
+| Damage | +1 base damage every `LVLDAM` class levels | class `LVLDAM` |
+| Practices and trains | see [What a level gives](#what-a-level-gives) | formulas |
+| Carrying weight | `FORMULA_MAXCARRY` (default `@x1 + ((@x2 + 10.0) * @x2 * @x1 / 150.0) + (@x2 * 5.0)`; @x1 base body weight, @x2 current Strength, @x3 base Strength, @x4 maximum trainable Strength) | `FORMULA_MAXCARRY` |
+| Items carried | `FORMULA_MAXITEMS` (default `(2 * @x1) + (2 * @x3) + (2 * @x2)`; @x1 number of wear locations, @x2 level, @x3 current Dexterity, ...) | `FORMULA_MAXITEMS` |
+| Followers | `FORMULA_MAXFOLLOW` (default `1 + ((@x2 - 6.0) / 3.0)`; @x1 level, @x2 current Charisma) | `FORMULA_MAXFOLLOW` |
+| Proficiency gain by use | `FORMULA_PROFGAIN` (default `(100 - (@x3 * 50)) * ((@x1 + 1 - @x2) / ((@x1 * 2) + (10 * @x2)))`; @x1 last player level, @x2 the skill's qualifying level, @x3 1 if fatigued) | `FORMULA_PROFGAIN` |
+
+The `FORMULA_` keys can be set in `world.ini` (the prefix `FORMULA_` is
+allowed). The combat formulas (`FORMULA_ATTACKADJUSTMENT` and the others) are
+in [29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+### Adding, renaming and giving effects to stats
+
+Source: [StatEffects.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/StatEffects.java),
+[CharStats.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/CharStats.java).
+Fixture: [p26-stateffects.js](../../tools/fixtures/fixes/p26-stateffects.js).
+In-game help: `AHELP STATEFFECTS`.
+
+A world can add stats and rename them in `coffeemud.ini` or `world.ini`:
+
+| Key | Value |
+| --- | --- |
+| `ADDCHARSTAT_<NAME>` | `type,abbreviation,description,adjective`. The type is `BASE` (a new base stat, bought and rolled like the six), `SAVE` (a saving throw), or `OTHER`. The abbreviation is unique, two letters. Example: `ADDCHARSTAT_LUCK=BASE,lu,luck,lucky` |
+| `REPLACECHARSTAT_<OLD>` | `new name,abbreviation,description,adjective`. Example: `REPLACECHARSTAT_CHARISMA=PRESENCE,pr,presence,commanding` makes Charisma read as Presence in the score, the creation screens and `@StatList@` |
+
+A new base stat takes part in creation (point buy, random roll, `MAXSTATS`),
+in `TRAIN`, in stat achievements and in `@StatList@`. A stat that no formula,
+effect or script reads does nothing; give it a purpose:
+
+`STATEFFECT_<STAT>="per point over 10: +1 SAVES, +2 ATTACK"` gives a stat its
+effects. The head is `per point over N`, `per K points over N` or `per point`
+(over 0). The character gets the parts for each whole step of K points above
+N. Each part is `+N NAME` or `-N NAME`, where NAME is:
+
+| NAME | What it changes |
+| --- | --- |
+| a char stat name (`STRENGTH`, `SAVE_FIRE`, `CRIT_CHANCE_PCT_WEAPON`, or any stat, including an added one) | that stat |
+| `SAVES` | every saving throw |
+| `CRITCHANCE` (a trailing `%` is ignored) | weapon and magic critical chance |
+| `ATTACK`, `DAMAGE`, `SPEED` | the effective attack bonus, damage, attack speed |
+| `ARMOR` | armor; `+N` is N better |
+| `HITPOINTS` (`HP`), `MANA`, `MOVES` (`MOVEMENT`) | maximum hit points, mana, moves |
+
+```ini
+ADDCHARSTAT_LUCK=BASE,lu,luck,lucky
+STATEFFECT_LUCK="per point over 10: +1 SAVES, +1 CRITCHANCE%"
+STATEFFECT_WISDOM="per 2 points over 12: +1 DAMAGE, +3 CRITCHANCE%"
+```
+
+The rules are re-read about every three seconds, and applied each time a
+character's stats are worked out. In formulas (the level, practice, train and
+hit point formulas, and `FORMULA_MAXCARRY`, `MAXITEMS`, `MAXFOLLOW`),
+`@STAT(NAME)` reads the effective stat of the mob the formula is for, and
+`@BASESTAT(NAME)` the base stat: `FORMULA_TRAINSPERLEVEL=1 + (@STAT(LUCK) / 10)`.
+
+## Abilities, properties, diseases, poisons and trades
+
+Everything a character can do, and everything that can be done to it, is an
+ability: spells, skills, prayers, chants, songs, common (crafting and
+gathering) skills, languages, properties, diseases, poisons and traps. This
+chapter covers how a *class or race* qualifies for abilities. How abilities
+themselves are authored (`CREATE ABILITY`, generic abilities with
+`TARGETMODE`, `ACTIONCOST` and `COMPONENTS`, summons, lifecycle hooks such as
+`CANCAST`/`ONCAST`/`ONTICK`/`ONEXPIRE`/`ONLEARN`, diseases with `GenDisease`,
+poison, trade-skill and tweak scripts), their flags, qualities and domains,
+and teaching and granting, are in
+[25-abilities-and-effects.md](25-abilities-and-effects.md). The properties a
+creator attaches to rooms, items and mobs (including `Prop_Trainer`,
+`Prop_Respec`, `Prop_Discovery`, `Prop_PlayerTemplate`, `Prop_Recruitable`)
+are in [23-properties-reference.md](23-properties-reference.md).
+
+## Advancement and discovery
+
+### Levels and experience
+
+Source: [CoffeeLevels.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeLevels.java).
+
+A player advances one level at a time. The experience a level-*L* character
+needs before it becomes level *L*+1 is entry *L* of `EXP_CHART` in
+`resources/lists.ini` (a world's own `world/resources/lists.ini` replaces it):
+
+```text
+EXP_CHART= 0, 500, 1100, 1800, 2600, 3500, 4500, 5600, 6800, 8100, 9500, ...
+```
+
+So a level-1 character levels at 500 experience, a level-2 at 1100, and so on.
+Past the last entry the chart extends by repeating the final difference.
+`LASTPLAYERLEVEL` (91) is the highest level mundane experience reaches.
+
+Experience comes from:
+
+| Source | Notes |
+| --- | --- |
+| Combat | A killed mob pays through `FORMULA_TOTALCOMBATXP` and `FORMULA_INDCOMBATXP` (below), scaled by `EXPRATE` and the level difference |
+| Scripts | `MPEXP who amount` (an amount, or a percent of a level, or `NEXTLEVEL`), quest rewards, achievement `XP` rewards, perk and creation `EFFECTS` |
+| Discovery | `Prop_Discovery` and `DISCOVERYXP` |
+| Role-play | `RPAWARDS` |
+| Abilities | Skills that award experience when used |
+| Death | A negative amount, set by `PLAYERDEATH` |
+
+Every gain passes through a chain of modifiers: the class's and the race's
+`adjustExperienceGain` for the whole group, the race's `XPADJ` percent, the
+`XPMOD` setting (and any `Prop_ModExperience` on the character, its items, its
+room or area; see [23-properties-reference.md](23-properties-reference.md#prop_modexperience)),
+the `progression.js` `xpGain` function, and the experience deferral. A race or
+class flagged `EXPLESS` earns nothing; `DISABLE=EXPERIENCE` and
+`DISABLE=LEVELS` turn gaining experience and levels off for the whole game.
+Each gain has a source tag that `XPMOD`'s `;;TYPE` and `xpGain` see:
+`COMBAT:<victim level>` (with `P` appended for a player victim), `DEATH:`,
+`DISCOVERY:<tattoo>` and `DISCOVERY:ROOM`, `SCRIPT:...`, `ABILITY:<id>`,
+`COMMAND:TEMPLATE` and `CHARCREATION:NEWCHARLEVEL`.
+
+**Combat experience.** Two formulas in `coffeemud.ini` (and `world.ini`, as
+`FORMULA_` keys) decide the amount:
+
+```ini
+# @x1 killers dividing the pool, @x2 sum of their squared levels, @x3 sum of their levels,
+# @x4 number of killers, @x5 highest killer level, @x6 killed mob's level
+FORMULA_TOTALCOMBATXP=100 + ((25*@x1) - (@x1*((25*@x1)^.5)))
+# @x1 the pool, @x2 this killer's level squared, @x3 sum of squared levels, @x4 this killer's level, ...
+FORMULA_INDCOMBATXP=(@x1 * (@x2 / @x3)) < 100
+```
+
+Then `EXPRATE` (default 6) scales the share by level difference. A victim more
+than `EXPRATE` levels below the killer gives nothing. If the highest-level
+character in the room is more than `EXPRATE` levels above the victim, or above
+the killer, the share shrinks by `(EXPRATE / difference)` squared, so
+powerlevelling a low-level character is penalised. Otherwise the share is
+raised or lowered in proportion to `(victim level - killer level) / EXPRATE`. Setting
+`EXPRATE=0` is documented as "no bonus or penalty", but see the notes in
+[Troubleshooting](#troubleshooting).
+
+**Level caps.** `LASTPLAYERLEVEL` caps mundane levels. A class's `LEVELCAP`
+caps levels *in that class*. `EXPLESS`, `LEVELLESS` and `CLASSLESS` flags
+(on race and class) switch parts of the system off for what has them.
+
+### What a level gives
+
+When a character reaches a level (`CoffeeLevels.level`) the engine, in order:
+
+1. Raises the level and the class level, and adds the class's hit point,
+   mana and move gains (shown in the level message).
+2. Gives practices and trains (below).
+3. Calls the JavaScript `levelup` event, writes a `LEVEL` line in the
+   character's chronicle if `JOURNALAUTO` has `LEVEL`, and calls
+   `progression.js` `onLevel`.
+4. Mentions a pick to spend if there are perks to choose (`PERKS`).
+5. Checks rank ladders (`Ranks.check`) so that a rank whose `REQUIRES` is now
+   met is awarded.
+6. Grants every class and race ability whose level is now reached, and any
+   achievement-granted skills and expertises, and starts auto-invoked ones.
+
+Practices and trains per level are:
+
+| Setting | Meaning |
+| --- | --- |
+| `FORMULA_PRACTICESPERLEVEL` | Practices a level gives, a formula of `@x1` the new level, `@x2` Wisdom (capped at its max), `@x3` Intelligence, `@x4` the class's `LVLPRAC`, `@x5` the race's `LVLPRAC`. Blank (default): Wisdom / 6 plus both `LVLPRAC`s, at least 1 |
+| `FORMULA_TRAINSPERLEVEL` | Trains a level gives, same variables (`@x4` the class's, `@x5` the race's `LVLTRAIN`). Blank: 1 plus both `LVLTRAIN`s |
+| `TRAINSATLEVELS` | Extra trains at certain levels: `"1:3, 5:2, 10:2"` (level 1's come as creation ends). Always added |
+| class and race first-level fields | `FSTPRAC`, `FSTTRAN` at creation |
+| `progression.js` | `practicesForLevel(mob)` and `trainsForLevel(mob)`, when defined, give the number in place of all of the above |
+
+```ini
+FORMULA_PRACTICESPERLEVEL=2
+FORMULA_TRAINSPERLEVEL=(@x1+1)%2
+TRAINSATLEVELS=1:3, 5:2
+```
+
+(A formula result is rounded down and not below zero.) A lost level takes back
+what it gave: `MPLEVELDOWN` and the level-loss effects undo the hit points,
+practices and trains of the level.
+
+### Starting level for later characters
+
+`NEWCHARLEVEL` is the level a character made later starts at, reached by real
+level-ups as creation ends, so hit points, practices, trains and level-granted
+skills are earned: `1` (default), a number, `PARTYMIN`, `PARTYAVG` (average of
+the profile's other characters) or `LEADER` (the one played last), each with
+an optional `+N` or `-N` (`PARTYMIN-1`). It never exceeds `LASTPLAYERLEVEL`.
+`PARTYMIN`, `PARTYAVG` and `LEADER` give 1 when the profile has no other
+character. `NEWCHARXP=FLOOR` then sets
+the experience to the least the level needs; `KEEP` (default) leaves what the
+level-ups gave. Template characters keep their template level.
+
+### Scripted level changes
+
+| Tool | Effect |
+| --- | --- |
+| `MPLEVELUP who (N)` | Exactly N levels (1 by default), each by the experience that level needs, wherever the character is within its level |
+| `MPLEVELDOWN who (N)` | N levels lost, with the experience set back |
+| `MPEXP who NEXTLEVEL` | Exactly the next level |
+| `EXPTONEXT(who)` | The experience needed for the next level (0 when none); `$%EXPTONEXT($n)%` or in a comparison |
+| JavaScript | `Packages.com.planet_ink.coffee_mud.core.LevelUps.up(mob, n, 'SCRIPT:name')`, `.down(mob, n)`, `.toNext(mob)` |
+
+Directly setting `LEVEL` is not equivalent: it skips the gains, hooks and
+grants above. See [27-mobprog-commands.md](27-mobprog-commands.md#mplevelup) and
+[28-mobprog-functions.md](28-mobprog-functions.md#exptonext).
+Fixture: [p2-levelups.js](../../tools/fixtures/fixes/p2-levelups.js).
+
+### Experience over time and by role-play
+
+`EXPDEFER` (engine ini only) holds earned experience back until the player
+takes an action. `EXPDEFER=` is blank for normal behaviour; otherwise it is:
+
+```text
+EXPDEFER=<mud hours> <percent> [$]<COMMAND>(<argument>) [<zapper mask>]
+```
+
+The percentage of experience to hold back, how often it is released (in game
+hours), the command that releases it (and its argument; `*` is a wildcard),
+and an optional mask of who must be in the same room, which may use player
+variables in braces such as `{RACE}`, `{CHARCLASS}` and `{LEVEL}`. A `$` before
+the command name still runs the command after the experience is paid. Example
+from the ini: `6 200% SAY(Give me XP!) -EFFECTS +MOBTeacher -ANYCLASS
++{CHARCLASS}`. Held experience is paid when the player enters that command (the
+engine runs it through `DeferCmd`); a bare `TRAIN` also collects it. In CoffeeSUD the interval runs on the
+**game clock**, so a paused or turn-based game releases experience by game
+time (fixture [p28-xptime.js](../../tools/fixtures/fixes/p28-xptime.js)).
+
+`RPAWARDS` (engine ini only) pays experience for role-play actions:
+
+```text
+RPAWARDS=<percent of a level> <seconds between awards>, <ACTION> <amount>, ...
+```
+
+The first item is the most role-play experience that may be earned per level
+(a percent or amount) and the minimum seconds between awards (default 8). Each
+later item is an action and a nominal amount (negative takes some away). The
+actions are `INTRODUCE-PC`, `INTRODUCE-NPC`, `SAY-PC`, `SAY-NPC`, `SOCIAL-PC`,
+`SOCIAL-NPC`, `SOCIAL-OTH`, `EMOTE-PC`, `EMOTE-NPC`, `EMOTE-OTH`, `GOAFK`,
+`CHANNEL` and `CHANNEL-NAMED(NAME1,NAME2)`. No role-play experience is earned
+while fatigued, hungry or thirsty.
+
+```ini
+RPAWARDS=25% 8, INTRODUCE-PC 20, INTRODUCE-NPC 5, SAY-PC 5, SAY-NPC 1, SOCIAL-PC 10
+```
+
+### Discovery experience
+
+Source: [Discovery.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Discovery.java),
+[Prop_Discovery](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Discovery.java).
+Fixture: [p11-discovery.js](../../tools/fixtures/fixes/p11-discovery.js).
+
+`Prop_Discovery` on a room, exit, item or mob pays experience, a message, a
+tattoo and a journal line the first time a character does something there. Its
+parameters (full reference in
+[23-properties-reference.md](23-properties-reference.md#prop_discovery)):
+
+| Parameter | Meaning |
+| --- | --- |
+| `XP=N` or `XP=N%` | Experience, or a percent of the character's current level span |
+| `ON=` | `ENTER`, `LOOK`, `READ`, `OPEN`, `GET`, `FIND` or `TALK` (several with `\|` or commas). Default: `ENTER` on a room, `OPEN` on an exit, `GET` on an item, `TALK` on a mob, `LOOK` otherwise |
+| `ONCE=` | `CHARACTER` (default), `PARTY` or `PROFILE`: who counts as having made the discovery |
+| `MESSAGE="..."` | Told to the discoverer |
+| `TATTOO=NAME` | The tattoo that records it (made up from the thing's identity if not given) |
+| `MASK="..."` | Who can make the discovery |
+| `JOURNAL="..."` | A line added to the character's quest journal |
+
+The experience is tagged `DISCOVERY:<tattoo>`, so `XPMOD` can scale it. For an
+exploration formula across the whole world, `DISCOVERYXP` pays each *new room* a
+character enters:
+
+```ini
+DISCOVERYXP=5+@x1
+```
+
+(`@x1` the character's level, `@x2` the area's median level; tagged
+`DISCOVERY:ROOM`.) Test discovery rewards with two party members and with two
+separate campaigns to catch scope mistakes: `CHARACTER`, `PARTY` and `PROFILE`
+scopes differ in who is marked.
+
+### Training, practice and teachers
+
+A character spends **trains** on stats, pools and classes, and **practices** on
+skill proficiency. Both are earned at levels (above) and counted in the
+score.
+
+**TRAIN.** `TRAIN` alone shows the character's trains and what each thing
+costs. `TRAIN <thing> (teacher)` buys one, with a trainer in the room (a mob with
+`Prop_Trainer`; see below). `TRAIN GAIN` trades something else (7 practices by
+default) for a train. A thing is a stat name (`STRENGTH`...), `HIT POINTS`,
+`MANA`, `MOVEMENT`, `PRACTICES`, `GAIN`, or a class name (changing class; see
+[class systems](#class-systems-subclasses-and-multi-classing)). `NOPROMPT` at the
+end skips the confirmation. With several trainers in the room, a trainer who
+refuses the student (see teacher rules) is skipped.
+
+| Setting | Format | Default |
+| --- | --- | --- |
+| `STATCOSTS` | Comma list of `<condition on the current stat> cost [type]`: `<18 1, <22 2, <25 3, <99 5`. The cost type defaults to `TRAIN`; others are `PRACTICE`, `MANA`, `MOVEMENT`, `HITPOINT`, `XP`, `GOLD`, `QP`, a denomination or currency (quote words: `<99 5 "GOLD BIT"`) | `<18 1, <22 2, <25 3, <99 5` |
+| `TRAINCOSTS` | Comma list of `<thing> <amount gained> <cost> <cost type>`; things are `HITPOINTS`, `MANA`, `MOVES`, `GAIN`, `PRACTICES`, `CCLASS`, `ATTRIBUTE`. An amount of 0 turns an entry off. `HITPOINTS 10 1 TRAIN` means one train buys 10 hit points; `GAIN 1 7 PRACTICE` means 7 practices buy one train | `HITPOINTS 10 1 TRAIN, MANA 20 1 TRAIN, MOVES 20 1 TRAIN, GAIN 1 7 PRACTICE, PRACTICES 5 1 TRAIN` |
+| `SKILLCOST`, `COMMONCOST`, `LANGCOST` | `<number> TRAIN\|PRACTICE\|XP\|GOLD`, with per-ability overrides prefixed by the ability ID; `@x1` the skill's level, `@x2` the player's: `1 TRAIN, Spell_Sleep 50*@x1 GOLD` | `1 TRAIN`, `1 TRAIN`, `3 PRACTICE` |
+| `PRACMAXPCT` | Highest proficiency a practice point can reach | `75` |
+| `DISABLE=CLASSTRAINING` | Removes class changes from `TRAIN` | off |
+
+**Learning a skill.** A character *qualifies* for a skill by class, race,
+cultural, qualify-all or achievement grants (`QUALIFY` lists them,
+`WILLQUALIFY` previews). To learn one it is **taught**: anyone with at least 25%
+proficiency can `TEACH <student> <skill>`, and a mob with `MOBTeacher` teaches
+when asked (`SAY teach me <skill>`, or `GAIN <skill>`). The student pays the
+skill's cost (`SKILLCOST` and friends), then `PRACTICE <skill> (teacher)`
+raises proficiency by spending practices, up to `PRACMAXPCT` (75% by default).
+Further proficiency comes by use, at the chance `FORMULA_PROFGAIN` gives. The
+teaching mob must itself know the skill sufficiently.
+
+**Teacher rules.** `MOBTeacher` (see
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md#mobteacher)) and
+`Prop_Trainer` accept, in any order among their usual parameters:
+
+| Parameter | Meaning |
+| --- | --- |
+| `STUDENTMASK="mask"` | Whom it teaches at all. Others hear `REFUSEMSG` |
+| `REFUSEMSG="text"` | What it says to refused students |
+| `SKILLMASK.<ABILITY ID>="mask"` | Whom it teaches that one skill |
+| `PRICE="5 per level"` or `PRICE=50` | Money taken for each lesson, on top of the usual cost |
+| `HIDDEN=ID,ID` | Skills it teaches but leaves off `TEACHLIST` |
+
+They gate `TEACH ME`, `GAIN`, `PRACTICE` and `TRAIN`. `TEACHLIST (teacher)`
+shows a student what a teacher offers them, with its price, and what it will not
+teach. A trainer's `Prop_Trainer` parameters (`STR=25 INT=25 ...`, class names,
+expertise names, `NOTEACH`) set the stats it trains; it can train a class by
+having level 0 in it. Fixture: [p16-teach.js](../../tools/fixtures/fixes/p16-teach.js).
+Make the teacher rules agree with the `SKILLTREE` chains and hints so a
+player is never pointed at a skill nobody will teach.
+
+**Expertises.** An expertise is a level of improvement to an ability's
+numbers (range, duration, cost, damage) bought with trains by `GAIN`; the list
+is `resources/skills/expertises.txt` (`LIST EXPERTISES`, `CREATE EXPERTISE`);
+`EXPERTISES` shows a character's.
+
+### Respec and refunds
+
+Source: [Prop_Respec](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Respec.java),
+[RespecCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/RespecCmd.java).
+Fixture: [p23-respec.js](../../tools/fixtures/fixes/p23-respec.js).
+
+The engine records (in a hidden saved effect, `Prop_Purchases`) what a character
+bought with trains and practices: skills learned and practised, stats trained,
+expertises, class changes. Where a character may retrain, `RESPEC` lists what it
+may undo and what each cost, `RESPEC <thing>` undoes one and gives back what it
+cost, and `RESPEC ALL` undoes them all. A place is anything that carries the
+property `Prop_Respec` (a room, an item, or a mob):
+
+| Parameter | Meaning |
+| --- | --- |
+| `WHAT=` | Kinds it undoes, by commas: `STATS`, `SKILLS`, `EXPERTISES`, `CLASS`, or `ALL` (default) |
+| `COST=` | Money: `"500"` for the whole respec, or `"500 per skill"` for each thing undone |
+| `ONCE=YES` | Once per character at that place (tracked by a tattoo) |
+| `MASK="..."` | Who may retrain there |
+
+```text
+WHAT="SKILLS,STATS" COST="5 per skill" ONCE=YES
+```
+
+`MPRESPEC who (SKILLS|EXPERTISES|STATS|CLASS|ALL) (name|ALL)` does it from a
+script, free; from JavaScript use
+`Packages.com.planet_ink.coffee_mud.core.Purchases.respec(mob, 'SKILLS', 'ALL')`.
+Skills that come by themselves (class, race and achievement grants) stay.
+`RETRAIN` is a synonym of `RESPEC`.
+
+### Scripted progression (progression.js)
+
+Source: [JSProgression.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSProgression.java).
+Full JavaScript conventions are in [05-javascript.md](05-javascript.md).
+
+If `world/scripts/progression.js` exists it is read (and read again when it
+changes), under the usual JavaScript scope and time limit. It may define any of
+these functions, each called only if present:
+
+| Function | When | Effect of the result |
+| --- | --- | --- |
+| `onCreated(mob)` | A character has been made | none |
+| `onCreationStep(mob, step, answer)` | After each creation step: `race`, `gender`, `stats`, `class`, `factions`, `deity`, and `origin`, `kit`, `traits`, `template` | none |
+| `statRoll(mob, bonus)` | `STARTSTAT=SCRIPT`: set the stats yourself, or return `{ strength: 14, dexterity: 12 }` (names, abbreviations or name starts) or a list in base stat order; stats left out are `BASEMINSTAT` | the stats |
+| `xpGain(mob, source, amount)` | Each positive experience gain, with its source tag | the experience given instead; not below 0 |
+| `onLevel(mob, level)` | After a level's gains | none |
+| `practicesForLevel(mob)`, `trainsForLevel(mob)` | A level's practices and trains | used in place of the usual number |
+| `onLearn(mob, abilityId)` | A character gets a skill | none |
+| `onTrain(mob, what, amount)` | After `TRAIN` | none |
+
+```js
+// world/scripts/progression.js
+function xpGain(mob, source, amount) {
+    if (String(source).indexOf("COMBAT:") === 0) return Math.round(amount * 0.5);
+    return amount;
+}
+function trainsForLevel(mob) { return mob.basePhyStats().level() % 5 === 0 ? 3 : 1; }
+```
+
+### Checking the curve
+
+`PROGRESSION <class> (<race>) (<to level>)` (builder mode, a `DEV=1` game or the
+`CMDCLASSES` flag) prints a class's level curve for a Human by default: for
+each level the experience it takes, hit points, mana, moves, practices, trains
+and skills gained (those given at once are marked `*`). `PROGRESSION XP (<area>)`
+adds up the experience the content gives: the achievements', then each area's
+literal `MPEXP` amounts and `Prop_EnterAdjuster` experience, with the level a
+character would reach having done it all, area by area. It cannot prove the
+rewards of arbitrary dynamic scripts. Use `CHARGEN` (`CHARGEN COMBAT <class>
+<level>`) to compare example characters with mobs of the same level, and
+`TESTCHAR` for a quick test character (see [13-testing-release.md](13-testing-release.md)).
+

@@ -557,3 +557,892 @@ deferred. Puzzle objects are in [chapter 7](07-items-crafting.md).
 ### LAW TEST and the other LAW tools
 
 See [LAW](#law) under runtime inspection; `LAW TEST` is the static explainer.
+
+## Runtime inspection
+
+These tools look at a running world. Several of them change it (they run a
+script, set a variable, move a puzzle, change the weather or the clock);
+read-only diagnostic output does not imply that every command in the same
+tool family is read-only. Each entry below says which verbs change state.
+
+### VARS
+
+```text
+VARS LIST ([SCOPE]) ([HOST]) ([MASK])
+VARS SCOPES
+VARS SET [HOST] [NAME] [VALUE] (SCOPE [SCOPE])
+VARS CLEAR [HOST] ([NAME]/*) (SCOPE [SCOPE])
+VARS WATCH ([HOST] [NAME]) / VARS UNWATCH
+VARS DUMP [FILE]
+```
+
+Shows and changes the variables scripts keep (`MPSETVAR`, `$%VAR()%`). Access:
+CMDQUESTS. Without a verb it is `LIST`.
+
+- **LIST** prints one line per variable: `scope  host  name = value`. The
+  scope argument is `*` (all, the default), `GLOBAL`, `QUEST name` (or just a
+  quest's name), a scope name set by `MPSETINTERNAL SCOPE`, or `INDIVIDUAL`
+  for engines that keep their own variables (listed as
+  `INDIVIDUAL:<owner>`). The host and mask arguments accept `*` as a wild
+  card anywhere in the word and are matched without regard to case.
+  `vars list * Hero QUEST_*` shows the hero's quest flags.
+- **SCOPES** counts hosts and variables per scope (`FIXSCOPE: 1 hosts, 1
+  variables`).
+- **SET** sets one as `MPSETVAR` would, so `++`, `+5` and `-2` do arithmetic.
+  The scope is global unless `SCOPE x` closes the command. The value is every
+  word after the name. `vars set Hero ACT 3` starts a test at act 3. Names are
+  stored in capitals.
+- **CLEAR** clears one variable, or all a host has when the name is `*` or
+  omitted.
+- **WATCH host name** (either may be `*`) tells you of each change, with the
+  script file that made it and the room it ran in: `GLOBAL FIXHOST FIXA =
+  '12' (an inline script in ...)`. `VARS WATCH` alone lists yours; `UNWATCH`
+  stops them. Use it to find the script that keeps resetting a variable.
+- **DUMP file** writes the whole list to a file (a path the CMFile system
+  allows you to write, for example `/resources/dump1.txt`) so you can compare
+  two runs.
+
+A script can list names too: `$%VARNAMES(host prefix)%`, also usable as a
+condition (see [chapter 28](28-mobprog-functions.md)). Source:
+[Vars](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Vars.java).
+
+### QUESTINFO
+
+```text
+QUESTINFO [QUEST NAME/NUMBER]
+MODIFY QUEST [NAME] STEP [NUMBER/STEP NAME]
+MODIFY QUEST [NAME] WIN [CHARACTER]
+MODIFY QUEST [NAME] UNWIN [CHARACTER]
+MODIFY QUEST [NAME] RESETWINNERS
+MODIFY QUEST [NAME] REOPEN
+MODIFY QUEST [NAME] VAR [NAME] [VALUE]
+MODIFY QUEST [NAME] RELOAD
+```
+
+`QUESTINFO` shows a quest on one screen. The number is the one `LIST QUESTS`
+gives (counting from 1). The screen holds: whether it runs, waits, is stopped
+or finished; its step number and name; the time left (or until it starts); its
+variables; the MOB, ITEM, ROOM and AREA it designated and its groups, with
+where each is; the mobs and items it holds; the scripts, behaviors and
+effects it added and to what; its winners; and its last errors. A step that
+sets no duration stops the quest and says so here. Access: CMDQUESTS.
+
+The `MODIFY QUEST` verbs are the quest test controls:
+
+| Verb | Effect |
+| --- | --- |
+| `STEP n` / `STEP name` | Jump a running quest to a step by number or by step name. Tells you if the step failed or had errors |
+| `WIN name` | Declare a character a winner |
+| `UNWIN name` | Remove a winner |
+| `RESETWINNERS` | Forget every winner |
+| `REOPEN` | Make a finished quest one that has not run, so it can start again |
+| `VAR name value` | Set a quest variable (name in capitals) |
+| `RELOAD` | Drop the parsed-script cache, re-read the quest script and the scripts it loads, and if it was running restart it at the step it was at with its variables |
+
+Example: after editing a quest file, `MODIFY QUEST bell RELOAD`, then `MODIFY
+QUEST bell STEP 4`, then `QUESTINFO bell` shows the ghost in its room, the
+wall count and the last error ("no mob found named drowned priest"). The quest
+language is in [chapter 8](08-quests.md). Source:
+[QuestInfo](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/QuestInfo.java)
+and `questTestVerb` in
+[Modify](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modify.java).
+
+### SCRIPT
+
+```text
+SCRIPT LIST [TARGET]
+SCRIPT FIRE [TARGET] [TRIGGER] ([WORDS]) (AS [WHO]) (WITH [ITEM])
+SCRIPT CALL [TARGET] [FUNCTION] ([ARGUMENTS])
+SCRIPT RESET [TARGET] (ONCE/DELAY/TIME/ALL)
+SCRIPT DISABLE/ENABLE [TARGET] ([TRIGGER])
+SCRIPT ALARMS [TARGET] (LIST/CLEAR)
+```
+
+Runs a host's script triggers on demand, to test them without waiting for the
+moment they are for. The target is a mob or item here (or carried), `ROOM`
+(or `HERE`), `AREA`, or `name@room`. A host with no scripts is refused. Access:
+CMDMOBS, CMDITEMS or CMDROOMS.
+
+| Verb | What it does |
+| --- | --- |
+| `LIST` | The host's triggers, numbered, with `(file:line)` where each is written; `[off]` marks a disabled trigger and `[done]` a `ONCE_PROG` that has run |
+| `FIRE trigger [words] [AS who] [WITH item]` | Runs the triggers of that kind now, as if `who` (you by default; a mob in the room or a player) had caused them, whatever their own conditions and odds. `trigger` may be `SPEECH` or `SPEECH_PROG`, `GREET`, `GIVE`, `DEATH`, `TIME_PROG`, and so on. Given words, only the triggers that answer to them run (a `SPEECH_PROG` with the word; the `TIME_PROG` of the hour given), and the words are the message (`$g`); `WITH` supplies the item (`$o`). Says how many ran, or `has no SPEECH_PROG answering 'x'` |
+| `CALL function [args]` | Runs a `FUNCTION_PROG` and prints `NAME returned 'value'` |
+| `RESET [ONCE/DELAY/TIME/ALL]` | Lets `ONCE_PROG`s, `DELAY_PROG` waits, or the `TIME_PROG` and `DAY_PROG` of this hour and day run again; `ALL` (the default) is all three |
+| `DISABLE` / `ENABLE [trigger]` | Turns one trigger kind, or all, off or on, as `MPNOTRIGGER` does from inside a script |
+| `ALARMS [LIST/CLEAR]` | Lists what is queued to run (`MPALARM`s and triggers waiting their tick); `CLEAR` forgets them |
+
+Examples:
+
+```text
+script list baker
+script fire baker TIME_PROG 5 AS Bob
+script fire innkeeper SPEECH room AS me
+script fire guard GIVE WITH pass
+script call innkeeper PayRoom 5
+script reset innkeeper ONCE
+script alarms innkeeper
+```
+
+`SCRIPT FIRE` and `CALL` really run the script: its commands change the
+world. The trigger and function names are the ones in
+[chapter 26](26-mobprog-triggers.md) and the commands in
+[chapter 27](27-mobprog-commands.md). Source:
+[ScriptCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ScriptCmd.java).
+
+### DEVLOG
+
+```text
+DEVLOG ON (ERROR/WARN/INFO/DEBUG) (MODULE [MASK])
+DEVLOG OFF
+DEVLOG LAST ([NUMBER]) (ERROR/WARN/INFO/DEBUG) (MODULE [MASK])
+DEVLOG CLEAR
+DEVLOG WINDOW (ERROR/WARN/INFO/DEBUG) (MODULE [MASK])
+DEVLOG WINDOW OFF
+DEVWATCH ON ([SECONDS]) / DEVWATCH OFF
+```
+
+Access: builder mode or DEV=1. Single-player writes every log stream to
+`mud.log`; DEVLOG shows each line the engine logs to you as it is logged,
+whatever `mud.log` keeps: script errors, JavaScript errors, `MPLOG`, `MPDEBUG`
+and `debug()` lines (shown whatever you watch), quest failures and what the
+world files' loader skipped.
+
+- **ON** takes the minimum level (`ERROR`, `WARN` which is the default,
+  `INFO`, `DEBUG`; each includes those above it) and `MODULE mask`, module
+  names separated by commas with `*` for any letters (`Scripting,Quest*`).
+  Each line comes as one coloured line with its level and module. A line
+  repeated is shown once, then the count when something else comes.
+- **OFF** stops it.
+- **LAST** replays the last lines kept (up to 500), repeats counted. The
+  number defaults to 20 and the level to DEBUG (everything).
+- **CLEAR** forgets the kept lines.
+- **WINDOW** opens a separate display-only log window with its own filters
+  and recent history; `WINDOW OFF` closes it. With no display (headless),
+  `ON` and `LAST` show the log in the terminal and WINDOW says so.
+
+In builder mode the setting is kept beside the database for next time; the
+`DEVLOG=` key in `coffeemud.ini` (`DEVLOG=WARN Scripting,Quest*`) gives a
+default otherwise. `DEVWATCH ON [seconds]` looks at the world files and the
+resources' scripts every few seconds and runs the reload that matches what
+changed, each noted in DEVLOG; `OFF` stops it (builder mode or CMDROOMS).
+Source: [DevLog](../../CoffeeMud/com/planet_ink/coffee_mud/core/DevLog.java).
+
+### SCRIPTERRORS
+
+```text
+SCRIPTERRORS ([NUMBER]) ([TEXT])
+SCRIPTERRORS CLEAR
+```
+
+Lists the script errors kept (the last 200, MOBPROG and JavaScript both),
+oldest first, each with its file and line, for example
+`progs/elder.script:212 unknown command MPECHOT`. A number limits it (20 by
+default) and text keeps only errors holding that text. Access: builder mode,
+DEV=1, CMDMOBS or JSCRIPTS.
+
+What a normal game does with script errors is the `SCRIPTERRORS` ini key:
+`LOG` (the default) only logs them, `NOTICE` tells each player once that a
+script went wrong, `SHOW` shows each to the room it happened in. Builder mode
+and DEV=1 always tell the builder each one, so a playtester never reads a raw
+engine error. An unknown command is an error, as is an ambiguous MP word.
+Source: [ScriptErrors](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptErrors.java).
+
+### SCRIPTTRACE
+
+```text
+SCRIPTTRACE [TARGET/ROOM/AREA] ([TRIGGER])
+SCRIPTTRACE OFF
+```
+
+Traces the scripts of a mob or item (here, carried, or `name@room`), of
+everything in this room (`ROOM`), or in this area (`AREA`) to your session
+only, not the log, until `SCRIPTTRACE OFF`. A trigger name after the target
+traces that trigger only. It reports each trigger's chance as it is rolled
+and whether it ran (`GREET_PROG 50: rolled 73 of 50, skipped`), a trigger
+turned off (`MPNOTRIGGER` or `SCRIPT DISABLE`), a host too busy to be
+triggered (asleep, fighting), each line run, and each variable changed. One
+trace at a time; it is not saved. Access: CMDMOBS or CMDROOMS.
+
+A script can trace itself with `MPSETINTERNAL TRACE TRUE` (honored only in
+builder mode or DEV=1), and can ask whether the game is in builder mode with
+`ISBUILDER()`, as a condition or as `$%ISBUILDER()%`; `ISDEV()` asks the same of
+a DEV=1 game. Use these to guard debug-only script lines, but prefer
+`MPDEBUG`, which is silent outside developer games on its own.
+
+### SCRIPTPROF
+
+```text
+SCRIPTPROF ON/OFF/RESET
+SCRIPTPROF REPORT ([NUMBER]) (AREA)
+```
+
+Times each script trigger. `ON` counts and times every trigger run (the whole
+run, including the functions and loops it calls) by file and line. `REPORT`
+lists the ones that took longest in all (10, or the number given), each with
+its share, runs, longest run and the host of that run; `AREA` limits it to your
+area. `OFF` stops counting but keeps the numbers until `RESET`. The ini key
+`SCRIPTSLOW=` (milliseconds, 0 for none) logs a warning to `mud.log` for each
+trigger run longer than that, with host, file and line, because the one game
+thread waits for it; an `MPWHILE` cut off at its 4-second cap now says so.
+Access: builder mode, DEV=1 or CMDROOMS.
+
+### STAT BEHAVIORS and TRACEB
+
+```text
+STAT BEHAVIORS ([MOB/ITEM/HERE])
+TRACEB [MOB/ITEM/HERE] ([TICKS])
+TRACEB OFF
+```
+
+`STAT BEHAVIORS` (also spelled `BEHAVIOURS`) lists each behavior of a mob, item
+or this room (`HERE`, also `name@room`) numbered, with its parameters and what
+it has built up while running; for a behavior on a timer it adds how many
+ticks until it acts, how often, its chance and when it last acted. Keys in the
+parameters that the behavior's help (`AHELP BEHAVIOR_...`) does not name are
+reported as `unknown key X (AHELP BEHAVIOR_NAME)`; the generic `WHEN`, `TOD` and
+`HOURS` keys are exempt. Useful live internal state is exposed only by some
+behaviors.
+
+`TRACEB` tells you, for the number of ticks given (20 by default), each
+decision of the host's timed behaviors: when one's time comes, whether it
+acts, could not act (asleep, bound) or lost its chance roll. `TRACEB OFF`
+stops. Access: CMDMOBS or CMDROOMS. Behaviors are in
+[chapter 24](24-behaviors-and-masks.md).
+
+### MPDEBUG and debug()
+
+`MPDEBUG message` is a MOBPROG command; `debug(x)` is its JavaScript
+counterpart in `<SCRIPT>` blocks and world JavaScript. In builder mode or
+DEV=1 they write the message to the developer log as
+`[debug host@room file:line] message`, and DEVLOG shows these lines whatever
+level and module filters you set. In a normal game they do nothing, so you
+can leave them in a shipped script. `MPLOG` is the older variant that writes
+to the log file. Compare `SCRIPTTRACE`, which shows every line run.
+
+### WEATHER, TIME, LOOK AS and HAZARDS
+
+```text
+HAZARDS ([AREA NAME])
+WEATHER SET [WEATHER] (FOR [N] HOURS/DAYS) (AREA [NAME]) (NEXT)
+WEATHER FORECAST
+WEATHER NEXT
+TIME SET [HOUR/DAWN/DAY/DUSK/NIGHT]
+TIME SEASON [SPRING/SUMMER/FALL/WINTER]
+LOOK AS [CONDITION]...
+```
+
+Available in builder mode, DEV=1 or with CMDAREAS (HAZARDS also CMDROOMS). The
+plain WEATHER, TIME and LOOK commands are the player's; these words are added
+for builders.
+
+- **HAZARDS** lists what an area holds that acts on those in it: the area's own
+  behaviors and effects (spawners such as `RandomMonsters`, weather) and, in
+  its rooms, exits and items, their behaviors, traps, `Prop_InstantDeath`,
+  `Prop_NarrowLedge` and `Prop_Weather`, each with its state (as STAT BEHAVIORS
+  gives it) or its parameters. It ends `none.` if the area has none.
+- **WEATHER SET** changes the area's weather now, as a change of weather comes,
+  with its messages and the scripts that wait on it. Names: CLEAR, CLOUDY,
+  WINDY, RAIN, THUNDERSTORM, SNOW, HAIL, HEAT, SLEET, BLIZZARD, DUST, DROUGHT,
+  COLD, FOG (the variation names HEATWAVE and DUSTSTORM also work). `NEXT`
+  changes only the weather that comes next. `FOR 3 HOURS` holds the weather
+  there, each change coming back to it, for that much game time (units HOURS,
+  DAYS, WEEKS, MONTHS or TICKS). `AREA name` targets another area.
+- **WEATHER FORECAST** shows the weather now, what comes next, a hold, and the
+  odds of each weather the step after, from the area's season and climate.
+  **WEATHER NEXT** steps to the next weather.
+- **TIME SET** moves the area's clock forward to the hour (a number, or
+  DAWN/DAY/DUSK/NIGHT) hour by hour as `TICKTOCK` does, so time-based
+  triggers run; it always moves forward, wrapping past the end of the day, and
+  never back. **TIME SEASON** advances a month at a time, events running, until the season
+  comes (at most 24 months).
+- **LOOK AS** is PREVIEW (see [above](#preview-and-checktext)).
+
+TIME SET, TIME SEASON and WEATHER SET change the live world and its clock.
+Environment systems are in
+[chapter 10](10-world-simulation.md).
+
+### LAW
+
+```text
+LAW
+LAW CRIMES ([TEXT])
+LAW WARRANTS ([NAME])
+LAW PARDON [NAME] ([CRIME]/ALL)
+LAW ACCUSE [NAME] [CRIME]
+LAW TEST [CRIME] (AS [CHARACTER]) (AGAINST [VICTIM])
+LAW SET KEY=VALUE
+```
+
+Inspects the law of the area you are in, as it found its people and places by
+name. Access: builder mode, DEV=1 or ABOVELAW. Bare `LAW` shows the legal
+behavior and its law file, the officers and judges it found among the area's
+mobs (or that it found none, so a misnamed guard shows at once, and a mob named
+as one that cannot be, with why: an officer must wander, a judge must stay
+put), the jail and release rooms each name found (or `FOUND NOWHERE`), the
+taxes, and the counts of crimes and warrants.
+
+- **CRIMES** lists crimes with names, sentences, places and circumstances, or
+  those holding the text.
+- **WARRANTS** lists the warrants out, or a person's.
+- **PARDON** removes a person's warrants, or those for one crime.
+- **ACCUSE** makes a warrant, as a witness would.
+- **TEST** applies the real warrant-eligibility rules and explains the refusal
+  (or the warrant that would result) without changing warrants or campaign
+  dice; it uses a fixed roll for random ignore flags. `AS` names the actor and
+  `AGAINST` the victim.
+- **SET** copies a shared law into the area's custom law before editing one key
+  (`KEY=VALUE`, key letters/digits/underscore); in builder mode the custom
+  definition is exported with the world.
+
+PARDON, ACCUSE and SET change the world. Law is described in
+[chapter 9](09-society.md).
+
+### PRICECHECK
+
+```text
+PRICECHECK [ITEM] (AT [SHOPKEEPER]) (FOR [CHARACTER]) (SELL)
+```
+
+Explains how a shop's price was reached. It lists the settings the shop prices
+by (`PREJUDICE`, `PRICEMASKS`, `BUDGET`, `DEVALRATE`, `INVRESETRATE` and
+`IGNOREMASK`) with where each came from (the shopkeeper, its area, a parent
+area, the ini, or a running quest), then each step of the sum: base price, the
+prejudice rule that matched, each price mask that matched, charisma against the
+keeper's wisdom, sales tax, the fall for what is in stock, and the rounding to
+coins; last both prices, the budget left and when the stock is next put back.
+Without `SELL` it is what the shop asks; with `SELL` what it pays. The item is
+looked for in the shop's stock, then the character's and your own inventory,
+then the room. With no `AT`, the first shopkeeper here that is not a player;
+with no `FOR`, yourself. Access: builder mode, DEV=1, CMDAREAS or CMDMOBS.
+
+### TIMESCALE
+
+```text
+TIMESCALE ([RATE])
+```
+
+Shows or sets how fast the game clock runs against real time, from 0.1 to 20.
+At 8, eight game seconds pass in each real one, so ticks, cooldowns, decay,
+effects and the calendar all come eight times as soon; a caravan route or a
+weather change is watched in minutes. PAUSE and turn-based time work as
+before, and the prompt shows `(x8)` while the rate is not 1. Outside the range
+it refuses (`TIMESCALE is from 0.1 to 20.`). The `TIMESCALE=` ini key sets it
+at start. Access: builder mode or DEV=1.
+
+### RECORD INPUT
+
+```text
+RECORD INPUT [FILE]
+RECORD INPUT
+RECORD INPUT OFF
+RECORD MARK [TEXT]
+```
+
+Access: builder mode or DEV=1 (`RECORD [player]` and `RECORD SET` remain the
+Archon recording skill). `RECORD INPUT file` writes each line typed, in every
+window, to a playtest file: `FILE.play` in the saves folder's `recordings`
+folder unless FILE contains a folder. The file starts with a header of what the
+game started from (the dice seed, `#realtime` if not turn-based, `#builder` or
+`#restore slot` or `#new`, the character as a `#char` line, and the world's
+checksum) and a comment before each typed line gives the character and the
+game time. `RECORD MARK text` puts a `# MARK` comment where you saw the bug.
+`RECORD INPUT` alone shows what is being recorded, `OFF` stops it. The ini key
+`RECORDINPUT=1` records each game from when the player comes into the world,
+into `input-DATE-TIME.play`.
+
+The file is a starting point for a `.play` test: delete the lines you do not
+want, then add `#expect` and `#assert` lines (see
+[World tests](#world-tests)). Edit sensitive or incidental input before
+sharing. A recording plus a fixed seed is not an exact deterministic session
+replay; that dedicated feature (`DETERMINISTIC=1`) remains deferred.
+
+### NOTE and NOTES
+
+```text
+NOTE (HERE) [TEXT]
+NOTES (ALL)
+NOTES DONE [NUMBER]
+NOTES UNDONE [NUMBER]
+NOTES GOTO [NUMBER]
+```
+
+Works in any game. `NOTE text` appends a playtest note to `notes/playtest.txt`
+(the `NOTESFILE=` ini key changes the path), outside the world and the saves,
+so a note made while playing reaches builder mode. Each note records the date,
+the save, the character, the room's ID and name, the game time and the text.
+`NOTE HERE text` also records the room as it is: its exits, mobs, items,
+effects and behaviors. `NOTES` lists notes still to do, numbered (`ALL` adds
+those done); `DONE` and `UNDONE` mark one; `GOTO` takes you to the note's room
+(builder mode or DEV=1 only). Give testers `NOTE` as the way to report a
+problem while playing in a normal game.
+
+### World dev areas
+
+```text
+WORLD DEV
+WORLD DEV [AREA] ON
+WORLD DEV [AREA] OFF
+```
+
+Areas in `world/dev` are for building and testing only: builder mode and DEV=1
+games load them, a normal game never does, and they do not count toward the
+world checksum that makes a game rebuild its world (they have their own
+`dev.sum`). `WORLD DEV` lists them. In builder mode `WORLD DEV area ON` makes
+an area a dev area (SAVE writes it to `world/dev`) and `OFF` makes a shipped
+one again. `DEVSTART=` in `coffeemud.ini` can start new characters in one, such
+as a hub with portals and test gear. WORLD CHECK warns of an exit from a shipped
+area into a dev area, which leads nowhere in a normal game. A dev area is the
+place for test fixtures that must never ship: debug NPCs, teleporters, gear
+stashes. See [chapter 2](02-world-workflow.md).
+
+### SANDBOX
+
+```text
+SANDBOX ENTER / LEAVE / CLEAR
+SANDBOX PREVIEW [CATALOG NAME/TEMPLATE]
+GENERATE ... SANDBOX
+```
+
+The Sandbox is a scratch area of four bare rooms in a row, marked unsavable, so
+neither the world files nor the database ever hold it. `ENTER` takes you there
+(creating it the first time) and `LEAVE` takes you back where you were; `CLEAR`
+removes its mobs and items and the areas GENERATE made for it. `PREVIEW`
+places a copy of a catalog mob or item, or a builder template, in it and shows
+it, its gear and what it sells, until you leave. `GENERATE ... SANDBOX`
+generates there with `NOSAVE`, and an area it makes is unsavable too. Access:
+builder mode or CMDROOMS. Use it to try a generator or a catalog entry
+before it touches the real map.
+
+### VESSEL STATUS and LIST INSTANCES
+
+```text
+VESSEL STATUS [NAME]
+LIST SHIPS
+LIST INSTANCES
+LIST UNSAVED
+```
+
+Access: builder mode, DEV=1 or CMDAREAS. `VESSEL STATUS` shows a vessel as it
+is: where it is and where it is docked, the way it faces, its anchor, course,
+top speed and pace, hull, owner and home port, the behaviors on it, its decks
+and those aboard with their state, and its crew and passengers. `LIST SHIPS`
+adds each vessel's anchor, course and owner. `LIST INSTANCES` lists the
+instance areas made from others, each with its parent, its class, the
+characters it was made for, the ticks until it times out, its rooms and a room
+to `GOTO`. In builder mode `LIST UNSAVED` lists each room whose mobs or items a
+building command (CREATE, MODIFY, DESTROY, COPY, TRANSFER, RESTRING, EVERY,
+GENERATE) changed since it was saved, with the commands and the change in its
+counts; `SAVE CHANGED` saves them. Also: `VESSEL <name> ENTER` visits its first
+interior room, `VESSEL <name> RENAME <new name>` renames the interior and room
+IDs, `VESSEL <name> HOME <room ID>` changes its home port. See
+[chapter 30](30-travel-vehicles-instances.md).
+
+### COMBATDEBUG
+
+```text
+COMBATDEBUG ON/OFF ([TARGET])
+COMBATDEBUG LOG [FILE]/OFF
+```
+
+Explains each attack on one line. With a target (a character in the room) it
+covers attacks by or on that character; with none, every attack. A line shows
+the attack against the armor, the fudge, the hit chance and the roll, the
+damage of each formula (`TARGETED`, `CRIT`, `FUDGE`), each effect or item that
+changed the damage and what it made of it (an absorb or a resistance) or that
+stopped it, and what was dealt. Damage outside an attack, such as a spell's,
+gets a line of its own. `LOG file` writes the lines to a file as well; `LOG
+OFF` stops. `COMBATDEBUG` alone reports what it is watching. Access: builder
+mode, DEV=1 or CMDMOBS. Use it while tuning armor, formulas
+(`FORMULA_NPCATTACK` and friends) and difficulty. See
+[chapter 29](29-combat-and-encounters.md).
+
+### COMBATRESULT
+
+```text
+COMBATRESULT ([1-8])
+COMBATRESULT STATS
+```
+
+A player-side command that is also useful when testing the optional
+`combat.profiles` module (see [chapter 16](16-combat-profiles.md)). It needs
+the module and its `player_trace` setting. It reads your recent resolved
+combat-profile events, newest first (history holds at most eight events per
+participant and starts anew after boot or restore) or your current profile
+stats. Chains and burn ticks each create results, so the newest may be a burn.
+Reading repeats no action and consumes no dice or scheduler time. Only
+composed direct hits and their profiled burns use these rules; ordinary
+native combat is unchanged. `WORLD COMBAT` is the creator-side inspector.
+
+### PROGRESSION
+
+```text
+PROGRESSION [CLASS] ([RACE]) ([TO] [LEVEL])
+PROGRESSION XP ([AREA])
+```
+
+The first form prints the level curve of a class (a Human to level 10 unless
+a race and level are given; the level is clamped to 1-100): for each level the
+experience it takes, the hit points, mana and moves, practices and trains, and
+the skills gained, those given at once marked `*`. `PROGRESSION XP` adds up
+the experience the content gives: the achievements', then each area's (the
+literal `MPEXP` amounts in its scripts and its `Prop_EnterAdjuster`
+experience), with the level a character reaches having done it all, area by
+area in order, for example `Dunmoor: 1200 (3400 in all, level 7)`. Use it to
+check that the world's rewards match the curve. Access: builder mode, DEV=1
+or CMDCLASSES. See [chapter 3](03-characters.md).
+
+## Playing the world as a mortal
+
+Builder mode makes every character an Archon, which hides most problems: the
+Archon is not attacked by `Aggressive` mobs, is not followed by `Follower`,
+is not scaled to by `Prop_Doppleganger`, gets no rolled variable equipment and
+can walk through anything. These tools let you meet the world as a player
+would.
+
+### PLAYTEST
+
+```text
+PLAYTEST ON (PARTY=name,name) (DIFFICULTY=preset) (KIT=name)
+PLAYTEST OFF
+PLAYTEST GAME
+PLAYTEST RUN [FILE]
+PARTY MORTAL [NAME]
+PARTY ARCHON [NAME]
+BUILD [COMMAND]
+```
+
+Access: builder mode. `PLAYTEST` with no word toggles mortal mode.
+
+**ON.** While on, every sysop power you have is suspended: aggressive mobs
+attack you, followers follow, dopplegangers scale to you, spawns spawn as for
+a player, and the prompt says `(playtest)`. A death takes you back, whole, to
+the room you began the playtest in (a `Prop_Playtest` effect remembers it).
+The options are `key=value` words: `PARTY=a,b` brings those characters of your
+profile into the party (and tests them as mortals too), `DIFFICULTY=preset`
+sets a difficulty preset (an unknown one is refused), `KIT=name` gives you a
+kit from `world/kits` (a missing or invalid kit refuses the whole command).
+Any other option is refused. ON keeps inventory, XP and world changes: it is
+the same world you are building.
+
+**OFF** ends it, restores your powers, makes you whole and makes peace, for
+the party too.
+
+**BUILD command** runs one command with your powers back, so you can fix
+something without leaving mortal mode (`build modify mob sentry`). `BUILD` is a
+command only during a playtest; otherwise `BUILD` is the Building skill. An
+editor that asks for input after the command returns may refuse; end the
+playtest instead.
+
+**GAME** snapshots the current world, including unsaved builder definitions,
+and the party into a disposable campaign in another process and window, as a
+normal (non-builder, non-DEV) game with a restored character who has the
+playtest effect. Close the window to discard every change; the builder world
+stays open and unchanged. With no display (headless) it prints the temporary
+folder and the exact command to run in another terminal, and the folder must
+be removed by hand. It refuses if the world did not load whole (see WORLD
+PROBLEMS and WORLD STATUS). Source:
+[IsolatedPlaytest](../../CoffeeMud/com/planet_ink/coffee_mud/core/IsolatedPlaytest.java).
+
+**RUN file** runs playtest files in disposable campaigns; it is the same as
+`WORLD TEST` (see [World tests](#world-tests)).
+
+**PARTY MORTAL name** and **PARTY ARCHON name** (builder mode only; `ME` names
+yourself) change one member of your party: MORTAL puts the playtest effect on
+them, ARCHON removes it and makes them an Archon again. This lets you `SWITCH`
+to a mortal tester while you stay an Archon.
+
+Tip: PLAYTEST ON for quick checks of one room's ambush, `PLAYTEST GAME` for
+anything that changes lots of state (a boss fight, a long quest), and a normal
+DEV=1 or plain game for the final pass. `GOD ALL OFF` in a DEV=1 game is the
+lightest version of the same idea.
+
+### TESTCHAR and KIT
+
+```text
+TESTCHAR [NAME] (KIT=[KIT]) (PARTY)
+KIT [KIT] ([CHARACTER OR MOB])
+```
+
+Access: builder mode or DEV=1. `TESTCHAR` makes a character of your profile
+with no questions: an average Human Apprentice of level 1 (every base stat 10),
+or what the kit says, levelled by the CHARGEN levelling rules, starting where
+you are or in the kit's room. With `PARTY` the new character is brought into
+the world and the party (as `PARTY ADD`); without it they rest in the profile
+and `PARTY ADD name` brings them in. A name already in use is refused. Any
+problem inside the kit is listed after "But:" and the character is still
+made.
+
+`KIT name [target]` gives a character, follower or mob here (you by default,
+or a profile member found anywhere) the kit: race, class, gender and
+alignment first, then level, items, gold, abilities, factions and variables,
+and finally the room.
+
+Kits live with the world, one per file: `world/kits/NAME.kit`. Each line is a
+setting word and its value; `#` starts a comment. Unknown words and empty
+values are reported (`NAME.kit:7: 'xyz' is not a kit setting`).
+
+| Setting | Value | Notes |
+| --- | --- | --- |
+| `race` | Race ID or name | |
+| `class` | Class ID or name | |
+| `gender` | M, F or N (first letter used) | |
+| `alignment` | good, neutral, evil... | A faction alignment name |
+| `level` | Whole number | Levelled up from 1 by granting experience |
+| `gold` | Number | Sets the character's money (replaces it; a starting kit adds) |
+| `room` | Room ID | Start room and location for a new character; with KIT on a live character, moves them |
+| `item` | Item class, or `catalog:NAME`, or a plain catalog name | Worn if it can be. A count may come first: `item 2 catalog:a ration` (1 to 100) |
+| `ability` | `ID` and optional proficiency | Default proficiency 100 |
+| `faction` | `ID VALUE` | Sets standing |
+| `var` | `NAME VALUE` | A global script variable of the character, so a test can start at act 3 |
+| `wear` | `no` | Keep items in the pack instead of wearing them |
+| `starting` | `all`, or a zapper mask such as `-BASECLASS +Fighter` or `-TATTOO +ORIGIN_NOBLE` | Makes the kit a starting kit: given to every new character it lets in |
+| `choose` | A group name | Kits sharing a group form a menu in the KIT step of character creation, after the origin; one is taken (a lone one with no question) |
+| `title` | Text | The kit's name in that menu |
+
+A starting kit gives its items, gold (added), abilities, factions and vars
+but not its race, class, level or room. Starting kits are part of character
+creation ([chapter 3](03-characters.md)); this chapter uses kits as test
+fixtures. Example kit for a mid-game Ranger:
+
+```text
+# world/kits/act2-ranger.kit
+race Elf
+class Ranger
+gender F
+alignment good
+level 5
+gold 120
+room Moor#12
+item catalog:Hunter's Longbow
+item 2 catalog:a ration
+ability Skill_Dodge 75
+faction Merchants 2500
+var ACT 2
+```
+
+```text
+testchar Tess KIT=act2-ranger PARTY
+kit act2-ranger Heals
+```
+
+Source:
+[TestCharCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TestCharCmd.java)
+and [KitCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/KitCmd.java).
+
+### BUILDER and DEV characters in tests
+
+When you only need to test as a different character, use `PARTY MORTAL`,
+`SWITCH` and TESTCHAR instead of editing your own Archon. The playtest runner
+uses a DEV=1 mortal by default and an Archon only for `#builder` files.
+
+## World tests
+
+A world test is a text file kept in the world's `tests` folder
+(`world/tests/`). The runner plays it in a fresh disposable campaign and
+reports PASS or FAIL. Because the world's tests live with the world, they
+travel with a release and anyone can run them.
+
+There are three kinds of file, all in `world/tests`:
+
+| Extension | Runs as | Use for |
+| --- | --- | --- |
+| `.play` | A new game (default) as a mortal DEV=1 character, typing the commands | Player-visible behavior: text, movement, quests, shops |
+| `.test` | Identical to `.play` | A naming convention only |
+| `.js` | A JavaScript test in a builder campaign, via JRUN | Direct checks of world data and engine state |
+
+### Running tests
+
+In the game (builder mode or DEV=1):
+
+```text
+PLAYTEST RUN start.play
+PLAYTEST RUN
+WORLD TEST start.play
+WORLD TEST
+```
+
+With no file name it runs everything under `world/tests`. The runner accepts
+only paths inside the world's `tests` folder, and `.play`, `.test` or `.js`
+files. It launches Python, so it needs the developer checkout's
+`tools/playtest.py` (found as `../tools/playtest.py` from the `CoffeeMud`
+folder you launched in) and Python 3; the `sud.python` system property selects
+the executable (`python3` on Unix, `python` on Windows). One run at a time;
+a run is stopped after 10 minutes; the results arrive asynchronously as a
+`WORLD TEST PASS` or `WORLD TEST FAIL` message with up to about 24000
+characters of output and the log file's path. The runner copies the world
+folder as it is on disk, so save your builder changes first.
+
+From the repository root:
+
+```sh
+python3 tools/playtest.py                                  # every file in CoffeeMud/world/tests
+python3 tools/playtest.py CoffeeMud/world/tests/start.play # one file
+python3 tools/playtest.py path/to/tests                    # every .play/.test/.js in a folder
+WORLD=/abs/path/world python3 tools/playtest.py /abs/path/world/tests
+tools/playtest.sh ...                                      # the same, as a shell wrapper
+```
+
+`WORLD=/absolute/world` selects the source world copied for each run; the
+default is `CoffeeMud/world`. Note that with no file arguments the runner
+always looks in `CoffeeMud/world/tests`, even when `WORLD` is set, so pass the
+test files or folder explicitly for another world. Each file gets its own
+fresh world copy, fresh database and saves, `RANDOMSEED` 42 and turn-based
+time unless overridden. Output per file:
+
+```text
+PASS  CoffeeMud/world/tests/start.play (3 checks)
+FAIL  CoffeeMud/world/tests/shop.play
+        line 14: expected 'You buy'
+        line 20: ASSERT FAIL: HAS sword: the character has no such thing
+        (transcript: /tmp/sudplaytest.ab12cd/transcript.txt)
+```
+
+The exit status is 1 if any file failed, 0 otherwise. A passing run's scratch
+folder is removed unless `KEEP=1`; a failing run's folder always stays (its
+path is on the last line) so you can read the full transcript. Separate files
+do not share a prior file's saved slot. The underlying driver,
+[sudplay.py](../../tools/sudplay.py), feeds the input one line at a time and waits
+for the game to go quiet between lines; its timeouts can be raised with
+environment variables for slow tests: `SUDPLAY_LIMIT` (whole run, default 300
+seconds) and `SUDPLAY_EXPECT_LIMIT` (longest wait for an expected text,
+default 1800).
+
+### The .play file format
+
+One command per line. Blank lines are ignored. Lines beginning with `#` are
+directives or comments (an unknown directive is a comment).
+
+| Line | Meaning |
+| --- | --- |
+| `# anything` | A comment |
+| `#char NAME,RACE,CLASS[,GENDER[,ALIGNMENT]]` | The character a new game creates. Default `Wanderer,Human,Apprentice,M,good` |
+| `#seed N` | The dice seed. Default 42 |
+| `#realtime` | Real time instead of turn-based time (`TIMEMODE=REALTIME`) |
+| `#builder` | Run in builder mode as an Archon instead of a mortal DEV=1 game |
+| `#new` | A new game (the default) |
+| `#restore SLOT` | Restore this save instead of starting a new game (see the note below) |
+| `#expect TEXT` | `TEXT` appears in what the preceding commands printed |
+| `#reject TEXT` | `TEXT` does not appear in it |
+| `#assert WHAT` | The developer `ASSERT WHAT` answers `ASSERT ok` |
+| `#wait N` | `WAIT N`: N ticks pass |
+| `#save SLOT` | `SAVE SLOT` |
+| any other line | A command typed into the game |
+
+A **step** is a run of commands up to the next `#expect`, `#reject` or
+`#assert`. The runner puts an invisible mark (`ASSERT MARK n`, which prints
+`PLAYSTEP n`) after the last command of each step, and `#expect` and `#reject`
+look at everything the game printed between the previous mark and this one,
+including asynchronous messages from NPCs. Several checks in a row all look at
+the same step. Text matching is a case-sensitive substring test. A check with
+no command before it in a fresh step (for example two `#assert` lines in a row)
+looks at the state at that point.
+
+If the game ends early, later checks fail with `the play did not reach this
+step`. The run also fails when the game process exits with a non-zero status
+or the transcript shows a JavaScript error.
+
+The runner answers the stock character-creation prompts with a fixed
+sequence built from `#char`: name, `Y`, `N`, race, `Y`, gender, `N`, class,
+`Y`, alignment, then an empty line. A world that adds creation steps
+(origins, kit menus, a prologue) changes that sequence, and the runner has no
+directive for the extra answers (unverified for such worlds); for those tests
+start from a save instead or use a `.js` test.
+
+`#restore SLOT` makes the run start with `RESTORE=SLOT`, but each file has a
+fresh, empty save folder, so there is no slot to restore and the run fails
+with "There is no saved game". The directive exists so recordings that started
+from a save parse; it is not yet a way to chain tests.
+
+Group a menu command and its answer before the first expectation: the
+assertion markers use the shared input stream and can otherwise be consumed as
+menu answers. For example:
+
+```text
+say gate
+1
+#expect How do I open the gate?
+```
+
+These directives belong to the Python runner. They do nothing in a script
+attached to an NPC.
+
+### ASSERT
+
+```text
+ASSERT HERE [ROOM ID]
+ASSERT HAS [ITEM]
+ASSERT VAR [HOST] [NAME] [=/!=/</>/<=/>=] [VALUE]
+ASSERT QUEST [NAME] STEP [NUMBER]
+ASSERT MARK [N]
+```
+
+Access: builder mode or DEV=1. `ASSERT` answers with a line a test (or you)
+can read: `ASSERT ok: ...` or `ASSERT FAIL: ... and why`.
+
+| Form | Passes when | Failure message |
+| --- | --- | --- |
+| `HERE roomID` | The character is in that room (compared with the extended room ID, e.g. `New Area#0`, ignoring case) | `HERE x: the character is in y` |
+| `HAS item` | The character carries or wears something matching the name | `HAS x: the character has no such thing` |
+| `VAR host name op value` | The global script variable compares so. Numbers compare as numbers if both sides are numeric, otherwise case-insensitively as text. Operators `=` (`==`), `!=` (`<>`), `<`, `>`, `<=`, `>=` | `VAR host NAME op v: it is 'x'`, or `'op' is no comparison` |
+| `QUEST name STEP n` | The quest (name or `LIST QUESTS` number) is running at step n | `it is at step m` or `not running`, or `there is no such quest` |
+| `MARK n` | Always; prints `PLAYSTEP n` (the runner's own step marker) | |
+
+The command `ASSERT` is also useful by hand when you want an exact yes or no
+rather than reading output.
+
+### JavaScript tests
+
+A `.js` file in `world/tests` is wrapped by the runner with a tiny test
+library and run through `JRUN` in a builder campaign. The wrapper defines:
+
+- `test(name, fn)`: runs `fn`, records a failure instead of stopping.
+- `assert(condition, message)`: throws if the condition is false.
+- `assert.equal(actual, expected)`: strict equality (`===`).
+
+and ends by printing `WORLDTEST SCRIPT PASS (n tests)` or `WORLDTEST SCRIPT
+FAIL: name: error | ...`. The runner needs the PASS line and rejects the FAIL
+line. The whole [JavaScript API](05-javascript.md) (`cm`, `mob()`, `gen`,
+`Packages...`) is available.
+
+```javascript
+test('the starting room exists', function () {
+    assert(cm.room('New Area#0') != null, 'missing start');
+});
+test('dice bounds', function () {
+    var n = cm.dice(1, 6, 0);
+    assert(n >= 1 && n <= 6, 'roll out of range');
+});
+test('the guide passes the script checker', function () {
+    var guide = cm.findMob('museum guide', cm.room('CreatorMuseum#0'));
+    var problems = Packages.com.planet_ink.coffee_mud.core.ScriptCheck.checkHost(guide, null);
+    assert(problems.isEmpty(), String(problems));
+});
+```
+
+Convert returned Java strings with `String(value)` when comparing. Syntax
+errors, thrown errors and failed assertions fail the run. A test that only
+proves an object exposes the field your setup just assigned is weak; prefer
+visible behavior and state transitions. To test checks that only exist in
+Java (such as `ScriptCheck.checkHost`), call them through `Packages...` as
+above. Because the file runs in a builder campaign, it sees the world as
+saved and acts as an Archon: use it for data and engine state, and a `.play`
+file for what a player experiences. The [example pack](examples/README.md)
+supplies a playable test pair (`museum.play` and `museum.js`).
+
+### Writing good world tests
+
+- Test visible outcomes: text the player reads, where they end up, what they
+  hold, what a quest says. Avoid asserting internal fields.
+- Keep each file focused (one scene or one system) and short enough to
+  diagnose from its transcript.
+- Seed matters. The runner fixes the seed at 42 and uses turn-based time so
+  combat and random strings repeat; do not depend on a particular roll, test
+  that a roll is possible.
+- Start with RECORD INPUT while you play the scene by hand, then trim it and
+  add the expectations.
+- Verify door, key and permission gating in a normal game as well: the runner
+  gives its character the DEV group, whose GOTO bypasses movement
+  restrictions.
+- Run the tests on a clean checkout of the released world, not only on your
+  working folder.

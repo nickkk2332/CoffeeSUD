@@ -78,12 +78,11 @@ Before you build, you need to move around and see what is there.
 ```text
 GOTO New Area#0
 GOTO the greasy pub
-GOTO Midgaard
+GOTO New Area
 GOTO PREVIOUS
 GOTO PARENT
-AT New Area#4 LOOK
-AT PLAYERS SAY hello
-STAT ROOM New Area#4
+AT New Area#1 LOOK
+STAT ROOM New Area#1
 STAT AREA New Area
 EXITS
 SYSMSGS
@@ -150,7 +149,7 @@ create ROOM s Plains
 - The new room's title is `ClassName-roomID` and its description is empty. Write them with `MODIFY ROOM` (the `WORLD CHECK` TEXT report lists rooms that still have the default text).
 - The locale may also be the ID of a **builder template** (see [Templates](#templates)). A template room is copied whole: title, description, effects, behaviors, tags and the mobs and items in it, but not its exits; it gets a new ID and your current area.
 - The command is refused inside a grid child ("This command is invalid from within a GridLocaleChild room") and refused when the direction is not valid for the room ("Room was created without that possible direction" for grids that lack it, or "A room may not be created in that direction" at the edge of a grid area).
-- Making a room where one already exists does not stop you. `create StoneRoom north` twice leaves the first new room in place with a link from it back to you; you now have a one-way exit to the old room, and a new room to the north. Use `LINK` and `UNLINK` to tidy.
+- Creating a room in a direction that already has one does not stop you, but the result depends on the old link. If the room there links back to you, the engine still creates and saves the new room but cannot join it ("Opposite room already exists and heads this way."), so the new room is an orphan (`LIST ORPHANS` shows it): link to it with `LINK` from a free direction, or `DESTROY ROOM [room ID]`. If the old room did not link back, your link is simply moved to the new room and the old room is left behind.
 - Needs `CMDROOMS`.
 
 The usage message of `CREATE ROOM` mentions `LINK [ROOM ID]` as an alternative to a locale. That is a leftover from older versions: `CREATE ROOM` does not accept it. Use the separate `LINK` command.
@@ -184,7 +183,7 @@ COPY [area name]
 | --- | --- |
 | `COPY east` | Copies the room you are in into the room to the east (a new room, linked both ways). |
 | `COPY 5 east` | Does that five times in a row, each copy east of the last, giving a straight chain of five new linked rooms. |
-| `COPY Midgaard#12 north` | Copies any room by ID. |
+| `COPY New Area#1 north` | Copies any room by ID. |
 | `COPY ROOM south east` | Copies the room that lies to the south of you into the east. The word before the directions must be `ROOM` or `EXIT`. |
 | `COPY Emberfall` | Copies a whole area as a new area named `Copy of Emberfall` (and `Copy of Copy of Emberfall`... if taken). Every room is renumbered into the new area, and its mobs and items come with it. Needs both `CMDAREAS` and `COPYROOMS`. |
 
@@ -236,13 +235,13 @@ The one-line form changes one aspect directly:
 | `MODIFY ROOM AFFECTS` / `BEHAVIORS` | Opens the effects or behaviors editor. |
 | `MODIFY ROOM [stat] [value]` | Any room stat code: `CLASS`, `DISPLAY`, `DESCRIPTION`, `TEXT`, `AFFBEHAV`, `IMAGE`, `CLIMATE`, `ATMOSPHERE`, `ROOMID`, `TAGS`. |
 
-A wrong field name prints the list of valid ones: `NAME,AREA,DESCRIPTION,AFFECTS,BEHAVIORS,CLASS,XGRID,YGRID,[ROOM ID]` plus the stat codes. The one-line form has no `ID` in that message but does accept it. Needs `CMDROOMS`. Save to the database is immediate.
+A wrong field name prints the list of valid ones: `NAME,AREA,DESCRIPTION,AFFECTS,BEHAVIORS,CLASS,XGRID,YGRID,[ROOM ID]` plus the stat codes. (`ID` works although that message leaves it out.) Needs `CMDROOMS`. Save to the database is immediate.
 
 **Stat code values.** `CLIMATE` takes a number or the names `NORMAL`, `WET`, `COLD`, `WINDY`, `HOT`, `DRY`, `VOID` combined with `|` (for example `WET|HOT`); `-1` means inherit from the area. `ATMOSPHERE` takes a raw material name such as `AIR` or `FRESHWATER` (a number works as well), or `-1` to inherit. `TAGS` takes a comma-separated list and *replaces* all tags. `TEXT` is the room's raw property text.
 
 ### Changing a room's locale class
 
-`MODIFY ROOM CLASS [locale]` and the editor's field 1 ("Type") swap the room for a new one of the other class, keeping its ID, links, exits, title, description, mobs, items, behaviors and permanent effects. The editor asks you to confirm, and warns that it permanently saves any mobs and items in the room. Use `LIST LOCALES` for the names.
+`MODIFY ROOM CLASS [locale]` and the editor's field 1 ("Type") swap the room for a new one of the other class, keeping its ID, links, exits, title, description, mobs, items, behaviors and permanent effects. The editor field asks you to confirm and warns that it permanently saves the mobs and items in the room; the one-line command does not ask. Use `LIST LOCALES` for the names.
 
 ### Titles and descriptions
 
@@ -280,7 +279,7 @@ LINK [room ID or room text] [direction]
 UNLINK [direction]
 ```
 
-`LINK midgaard#3001 north` makes the room you stand in lead north into that room. The new link uses a `StdOpenDoorway` exit unless the direction already has an exit. If the target room has nothing yet in the opposite direction, the engine also links it back, using the same exit object; if the opposite slot is occupied, the link you made is one-way. If the direction you are linking already led to a room that linked back to you, that room keeps its link back and the command says "Opposite room already exists and heads this way. One-way link created." A bad ID gives `Room "x" is unknown. Try again.` In a ship or other boardable area, `LINK outside [direction]` links to the room the ship sits in. You can link to a grid child (`Area#12#(3,2)`). Needs `CMDEXITS`.
+`LINK Emberfall#3 north` makes the room you stand in lead north into that room. The new link uses a `StdOpenDoorway` exit unless the direction already has an exit. If the target room has nothing yet in the opposite direction, the engine also links it back, using the same exit object; if the opposite slot is occupied, the link you made is one-way. If the direction you are linking already led to a room that linked back to you, that room keeps its link back and the command says "Opposite room already exists and heads this way. One-way link created." A bad ID gives `Room "x" is unknown. Try again.` In a ship or other boardable area, `LINK outside [direction]` links to the room the ship sits in. You can link to a grid child (`Area#12#(3,2)`). Needs `CMDEXITS`.
 
 `UNLINK north` removes the link and exit to the north *from this room only*. The room to the north keeps its link back, so you may need to go there and `UNLINK south` too. It is the same command as `DESTROY ROOM north`. Needs `CMDEXITS`.
 
@@ -323,7 +322,7 @@ To turn an ordinary exit into an editable one: `CREATE EXIT north GenDoor`.
 DESTROY EXIT [direction]
 ```
 
-Removes the exit object in that direction (this side only). The *link* to the room stays. In the editor the direction then shows no exit; a character cannot pass it, though a builder using `GOTO` still can. A removed exit on one side does not touch the other side. Use `CREATE EXIT [direction] [class]` afterwards to fit a different exit. A link with no exit is reported by `WORLD CHECK`; an exit with no link is an "exit to nowhere" (errors in the check).
+Removes the exit object in that direction (this side only). The *link* to the room stays. Ordinary characters cannot pass a direction that has a link but no exit (the original Archon guide notes that Archons still can). A removed exit on one side does not touch the other side. Use `CREATE EXIT [direction] [class]` afterwards to fit a different exit. A link with no exit is reported by `WORLD CHECK`; an exit with no link is an "exit to nowhere" (errors in the check).
 
 ### One-way links and exits that lead nowhere
 
@@ -443,7 +442,7 @@ With no field, `MODIFY AREA` opens the **area editor** for your area ([Reference
 
 A wrong field prints the valid ones. Needs `CMDAREAS`. The area is saved to the database straight away.
 
-Notes on the stat-code values (all verified in [StdArea.setStat](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdArea.java)):
+Notes on the stat-code values (from [StdArea.setStat](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdArea.java)):
 
 - `THEME` takes names from `FANTASY`, `TECH`, `HEROIC`, `SKILLONLY` combined with `|` (or a number).
 - `BLURBS`: `+FLAG text` adds a blurb flag, `-FLAG` removes one, anything else replaces them all.
@@ -461,14 +460,14 @@ Changing an area's name (field 1, or `MODIFY AREA NAME`) asks "Is changing the n
 
 ### Area properties and behaviors
 
-Areas hold **effects** (properties) and **behaviors**, exactly as rooms do: choose field *Behaviors* or *Effects* in the editor, or `MODIFY AREA BEHAVIORS`. At the effect prompt: an ID adds an effect, `-ID` removes it, `=ID` (or its number) edits its parameters in place with the current text shown, `?` lists everything, `?P` lists only the properties and effects that fit. A second copy of an effect already present is offered `Prop_MultiEffects`. Behaviors use the same prompt without `=`.
+Areas hold **effects** (properties) and **behaviors**, exactly as rooms do: choose field *Behaviors* or *Effects* in the editor, or `MODIFY AREA BEHAVIORS`. At the effect prompt: an ID adds an effect, `-ID` removes it, `=ID` (or its number) edits its parameters in place with the current text shown, `?` lists everything, `?P` lists only the properties and effects that fit. A second copy of an effect already present is offered `Prop_MultiEffects`. The behaviors prompt takes an ID to add a behavior, and an ID already present to remove it; `?` lists them.
 
-Typical area additions: weather behaviors, law and conquest behaviors (`Arrest`), `Prop_ReqCapacity`, theme-like properties. All are listed in the [properties reference](23-properties-reference.md) and [behaviors reference](24-behaviors-and-masks.md). Two `coffeemud.ini` keys add some to every new `StdArea` automatically:
+Typical area additions: weather behaviors, law and conquest behaviors (`Arrest`), `Prop_ReqCapacity`, theme-like properties. All are listed in the [properties reference](23-properties-reference.md) and [behaviors reference](24-behaviors-and-masks.md). Two `coffeemud.ini` keys add some to every area of class `StdArea` (when it is created or loaded) automatically:
 
 | Key | Effect |
 | --- | --- |
 | `AUTOWEATHERPARMS` | If not `NO`, the `WeatherAffects` behavior is added (not saved to the file) to every `StdArea`, using this value as its parameters. Default empty (added with default parameters). |
-| `AUTOAREAPROPS` | A semicolon list of properties and behaviors, each `ID` or `ID(parameters)`, added to every new `StdArea`, e.g. `Prop_ReqCapacity(weight=1000);Arrest(custom)`. Default empty. |
+| `AUTOAREAPROPS` | A semicolon list of properties and behaviors, each `ID` or `ID(parameters)`, added to every `StdArea`, e.g. `Prop_ReqCapacity(weight=1000);Arrest(custom)`. Default empty. |
 
 ### Parent and child areas
 
@@ -480,7 +479,7 @@ An `StdTimeZone` or `StdPlanet` parent also gives its children its own calendar.
 
 - **Theme** (field "Theme setting") says which of three rule-sets are allowed: Fantasy (magic), Technical, Heroic (superpowers). Values: Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. In an area whose theme has no Fantasy bit, magic fails ("Magic doesn't seem to work here"); with no Heroic bit, superpowers fail ("Powers don't seem to work here"). A third gate refuses technology ("Technology doesn't seem to work here"), but the code only reaches it when the theme has the Heroic bit and lacks the Technical bit (see [Troubleshooting and gotchas](#troubleshooting-and-gotchas)), so a plain Fantasy area does not block technology. Inherited takes the parent's theme, or at the top `MUDTHEME` (shipped `1`, Fantasy).
 - **Climate** is a set of bits: wet, cold, windy, hot, dry, void, or Normal, or Inherited. The default for a new area is Normal. It shifts the weather the [simulation chapter](10-world-simulation.md) generates and the movement cost (rooms add their own bits: a `Jungle` is wet and hot regardless of the area).
-- **Atmosphere** is the raw material the area breathes ("AIR", "FRESHWATER", "NOTHING"...). Inherited by default. A character who cannot breathe it suffers.
+- **Atmosphere** is the raw material the area breathes ("AIR", "FRESHWATER", "NOTHING"...). Inherited by default. It decides what can breathe there; races list what they breathe (see [Characters](03-characters.md)).
 
 ### Calendars and climate profiles
 
@@ -1036,7 +1035,7 @@ A generic exit's `EXDAT` holds the fields of the exit editor. For a closed, lock
  <XDOOR>Hollowmere#2</XDOOR>
  <XEXIT>
   <EXID>GenDoor</EXID>
-  <EXDAT>
+  <EXDAT xml="1">
    <NAME>a heavy cellar door</NAME>
    <DESC>Oak planks bound with iron, set into a stone step.</DESC>
    <DISP />
@@ -1044,7 +1043,7 @@ A generic exit's `EXDAT` holds the fields of the exit editor. For a closed, lock
    <IMG />
    <BEHAVES />
    <AFFECS />
-   <FLAG>240</FLAG>
+   <FLAG>496</FLAG>
    <CLOSTX>a heavy cellar door</CLOSTX>
    <DOORNM>door</DOORNM>
    <OPENNM>open</OPENNM>
@@ -1056,7 +1055,7 @@ A generic exit's `EXDAT` holds the fields of the exit editor. For a closed, lock
 </REXIT>
 ```
 
-`NAME`, `DESC`, `DISP` are the name, description and display text; `PROP` is the base physical stats (ability, armor, attack, damage, disposition, level, rejuv, speed, weight, height, senses, in that order; the export may write them as named attributes); `FLAG` is a bit field (4 readable, 16 always set for doors, 32 has a door, 64 has a lock, 128 defaults closed, 256 defaults locked; the example is 16+32+64+128 = 240, a closed unlocked door with a lock, add 256 for locked); `CLOSTX`, `DOORNM`, `OPENNM`, `CLOSNM` are the closed text, door name, open word and close word; `KEYNM` is the key code (or the readable text of a readable exit); `OPENTK` is the reset delay in ticks.
+`NAME`, `DESC`, `DISP` are the name, description and display text; `PROP` is the base physical stats (ability, armor, attack, damage, disposition, level, rejuv, speed, weight, height, senses, in that order; the export may write them as named attributes); `FLAG` is a bit field (4 readable, 16 always set for doors, 32 has a door, 64 has a lock, 128 defaults closed, 256 defaults locked; the example is 16+32+64+128+256 = 496, a door with a lock that starts closed and locked); `CLOSTX`, `DOORNM`, `OPENNM`, `CLOSNM` are the closed text, door name, open word and close word; `KEYNM` is the key code (or the readable text of a readable exit); `OPENTK` is the reset delay in ticks. The `xml="1"` mark on `EXDAT` is what the current export writes (older files hold the same tags escaped on one line); a hand-written element must carry the mark if its tags are nested like this.
 
 **Editing by hand.** You can edit a `.cmare` in a text editor (change a title, retarget `XDOOR`, add a `REXIT`), but two links must agree: every `XDOOR` has to name a room that exists, and a two-way passage needs a `REXIT` in each room. Run `WORLD CHECK` afterwards; `WORLD RELOAD [area]` loads the file into a running builder game. A file edited while a builder game runs is protected from being overwritten by the next `SAVE`; see [World files and editing](02-world-workflow.md).
 
@@ -1112,12 +1111,13 @@ Set its *Assigned Key Code* to `hollowmere.cellar`, then `GET key`, go west, `DR
 ```text
 GOTO New Area#1
 LINK Hollowmere#0 east
+GOTO Hollowmere#1
 WORLD CHECK AREA Hollowmere
 WORLD MAP AREA IDS FLAGS
 SAVE
 ```
 
-`LINK` also links `Hollowmere#0` back west because that side was free. The check lists the lane, gate and cellar as needing real descriptions only if you skipped them, and `WORLD MAP` shows the locked door as `+`. `SAVE` writes `world/areas/hollowmere.cmare`.
+`LINK` also links `Hollowmere#0` back west because that side was free. The check should report nothing for Hollowmere (a `TEXT` warning would mean a room still has default text). `WORLD MAP` draws the area you are standing in, so run it from inside Hollowmere; it shows the locked door as `+`. `SAVE` writes `world/areas/hollowmere.cmare`.
 
 ### Example 2: laying a trail, then fixing every door at once
 
@@ -1125,45 +1125,49 @@ A wilderness trail of ten rooms, mostly woods:
 
 ```text
 GOTO Hollowmere#0
-WORLD PATH w,w,w,nw,nw,w,w,sw,w,w TYPE=Woods NAME="A forest trail" DESC="Roots cross a narrow trail between tall pines."
-WORLD MAP RADIUS 12 IDS
+WORLD PATH n,n,n,e,e,e TYPE=Woods NAME="A forest trail" DESC="Roots cross a narrow trail between tall pines."
+WORLD MAP RADIUS 8 IDS
 ```
 
-(The `nw` and `sw` steps need `DIRECTIONS=11`; with the default 7 directions use `n` and `s`.) Every new room carries the `TODO` tag until you give it its own description, and `WORLD CHECK ONLY=TEXT` lists them. Give one a description with `EDIT DESC HERE`.
+(North of the gate was free; a direction that already has a link would be followed, not built. Diagonals such as `ne` need `DIRECTIONS=11`.) Every new room carries the `TODO` tag until you give it its own description, and `WORLD CHECK ONLY=TEXT` lists them. Give one a description with `EDIT DESC HERE`.
 
 Later you decide every door in the area should read "oak door" and have a new closed text. Always search first:
 
 ```text
 GMODIFY AREA class=GenDoor
-GMODIFY AREA class=GenDoor&&name=[ss]door CHANGE=name=[ss]oak door
+GMODIFY AREA class=GenDoor&&name=a door CHANGE=name=an oak door
 GMODIFY AREA class=GenDoor CHANGE=closedtext=a closed oak door
 LIST UNSAVED
 SAVE
 ```
 
-The first line only prints `Matched on ... from room` lines. The second replaces just the matched word in each name (`a heavy cellar door` becomes `a heavy cellar oak door` if you are not careful, so choose the substring you search for with the final name in mind). The third sets the closed text on every generic door in the area. Exits are saved with their room automatically.
+The first line only prints `Matched on ... from room` lines. The second renames every generic door whose whole name is exactly `a door` (without `[ss]` the value must equal the whole field; with `[ss]` on both sides only the matched part is replaced). The third sets the closed text of every generic door in the area, whatever its name. Exits are saved with their room automatically; mobs and items need `SAVE ROOM` as always, and `GMODIFY CHANGE=` asks before it drops unsaved ones.
 
 ### Example 3: a hidden passage and a one-way chute
 
-In a room, create a hidden door to the east that leads to an existing room:
+In the lane (`Hollowmere#1`), build a store room to the north and hide its door:
 
 ```text
-CREATE ROOM east StoneRoom
-east
-CREATE EXIT west HiddenClosedDoorway
+CREATE ROOM north StoneRoom
+CREATE EXIT north HiddenClosedDoorway
 ```
 
-Now `west` from the new room is a concealed closed door: it is absent from the exit list and a character who cannot see hidden things will not find the way, while the engine still counts it as a door for `WORLD CHECK EXITS` (it warns if the room on the other side does not lead back, which here it does).
-
-A chute: from a room `Hollowmere#2`, make a one-way drop to a lower room.
+`CREATE EXIT` replaces the exit on your side and, because the store room had an exit back, on the far side too. The door is now a closed, hidden door from both rooms. It is left out of the exit list for a character who cannot see hidden things. Give the store room its description, then make the door one-way, a trapdoor that only opens inward:
 
 ```text
-CREATE ROOM down StoneRoom
-down
-UNLINK up
+north
+UNLINK south
 ```
 
-`UNLINK up` removes the link back, so you can fall in but not climb out. `LIST ONEWAYDOORS AREA` now shows it, `WORLD MAP AREA FLAGS` marks the exit with an arrow, and `WORLD CHECK` does not complain, because only *doors* without a way back are warnings. If the way back should exist but is climbable only, `CREATE EXIT up ClimbableExit` after relinking with `LINK`.
+`UNLINK south` removes the store room's link and exit back to the lane, so you can enter but there is no way out except the builder's `GOTO`. Check it:
+
+```text
+LIST ONEWAYDOORS AREA
+WORLD MAP AREA FLAGS
+WORLD CHECK ONLY=EXITS
+```
+
+`LIST ONEWAYDOORS` names the lane's north link to the store room (`Hollowmere#9` if you built the trail of Example 2 first, `#3` otherwise), the map draws a `^` on the lane's north exit, and `WORLD CHECK` warns "a door into Hollowmere#9, which has no way back" because the exit is a door. Run `LINK Hollowmere#1 south` from the store room to give it a way out again; then the warning goes away.
 
 ## Persistence notes
 
@@ -1186,11 +1190,11 @@ UNLINK up
 - **"This command is invalid from within a GridLocaleChild room."** You are in a grid or maze child. `GOTO PARENT`, edit the parent, then `RESET ROOM`.
 - **"A room may not be created in that direction."** `CREATE ROOM` could not get a room ID there, typically at the edge of a `StdGridArea`.
 - **A new room's exit goes only one way.** `LINK` and `CREATE ROOM` link back only when the opposite direction of the far room is free. Check with `LIST ONEWAYDOORS AREA`.
-- **`CREATE ROOM` twice in one direction.** The first room is not removed; you keep a one-way exit from it back to you. Use `UNLINK` and `DESTROY ROOM [id]`.
+- **`CREATE ROOM` into a direction that is already taken.** The new room may be created but left unlinked (an orphan). `LIST ORPHANS AREA` finds it; `LINK` it from a free direction or `DESTROY ROOM [id]` it.
 - **A door works from one side only.** You edited only one end. `CREATE EXIT [dir] GenDoor` twice, or `MODIFY EXIT` in each room.
 - **"You don't seem to have the key."** The key code does not equal the lock's key name (compare `STAT` output, remember case is ignored but spaces count), or the lock's name is empty, or a `Prop_KeyRules` mask excludes you. `WORLD CHECK ONLY=KEYS` finds locks no key exists for.
 - **A door will not stay open or unlocked.** A door that defaults closed or locked resets after its delay ticks (default 45).
-- **Players cannot pass a destroyed exit; you can.** `DESTROY EXIT` leaves the link, and builders and `GOTO` walk through; players do not. `WORLD CHECK` does not flag a link with no exit. `LIST UNLINKEDEXITS` flags the reverse (an exit with no room).
+- **A destroyed exit still has its link.** `DESTROY EXIT` leaves the link, so the room still counts as connected for the reports, while ordinary characters cannot pass. `WORLD CHECK` does not flag a link with no exit; `LIST UNLINKEDEXITS` flags the reverse (an exit with no room).
 - **Exits to nowhere after destroying a room.** `DESTROY ROOM` cuts links into the room, but a generic exit there keeps the dead room's ID in its key name and stays in the exit list. `DESTROY EXIT` them or relink.
 - **`MODIFY AREA CLIMATE` letters.** `D` sets windy rather than dry in the one-line command (see [MODIFY AREA](#modify-area)); use the stat form `MODIFY AREA CLIMATE DRY` or the editor.
 - **Technology gate only with the Heroic bit.** The theme check that stops technology (`Technology doesn't seem to work here`) is attached to the Heroic test in the engine: it runs only when the theme has Heroic and lacks Technical. A Fantasy-only area does not block technology items.

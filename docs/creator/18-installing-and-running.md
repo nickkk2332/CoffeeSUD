@@ -699,9 +699,10 @@ or items, and a pointer to `AHELP BUILDING`.
   each file `SAVE` replaces, in `world/.backup/`.
 - **No saved games.** `SAVE` means "write the world". There is no `RESTORE`.
 - **Undo.** `UNDO` reverses the last building commands.
-- **Tools.** Builder-mode-only tools include `WORLD` (STATUS, DIFF, RELOAD,
-  CHECK, BACKUPS...), `PLAYTEST`, `DEVLOG`, `DEVWATCH`, `SCRIPTCHECK`, `PROPCHECK`,
-  `QUESTCHECK`, `RECORD INPUT`, and `TIMESCALE`.
+- **Tools.** Builder mode has `WORLD` (STATUS, DIFF, RELOAD, CHECK,
+  BACKUPS...), `PLAYTEST` (builder mode only), `DEVWATCH`, `SCRIPTCHECK`,
+  `PROPCHECK`, and the tools it shares with DEV games: `DEVLOG`, `QUESTCHECK`,
+  `RECORD INPUT`, `TIMESCALE`, `SCRIPTERRORS`, `ASSERT`, `GOD`.
 - **Characters.** Builder characters are stored in the cache, not in any save,
   so they last until the cache folder is deleted, and they are not in normal
   games.
@@ -734,9 +735,12 @@ changed, and the class does not change.
 - `world/dev/` areas are loaded (they never are in a normal game and are left out
   of the world checksum, so they do not make a normal game rebuild its cache).
 - `DEVSTART=<room id>` makes new characters start in a room such as a dev hub.
-- `DEVLOG`, script-error notices (`ScriptErrors`), `SCRIPTTRACE`, `VARS`, `GOD`
-  (cheat toggles), `RECORD INPUT`, `PLAYTEST RUN` and `ASSERT` work, as in builder
-  mode. Scripts can ask `ISDEV()`.
+- `DEVLOG`, `SCRIPTERRORS`, `TIMESCALE`, `GOD` (cheat toggles), `RECORD INPUT`,
+  `ASSERT`, `QUESTCHECK` and `WORLD CHECK` / `WORLD TEST` work, as in builder
+  mode (`PLAYTEST`, including `PLAYTEST RUN`, is builder mode only). Scripts can
+  ask `ISDEV()`. `SCRIPTTRACE` (needs `CMDMOBS` or `CMDROOMS`) and `VARS` (needs
+  `CMDQUESTS`) depend on security flags, not on the mode; the DEV group has both
+  `CMDMOBS` and `CMDQUESTS`.
 - Use it to play-test with extra eyes without risking the world, and for the test
   runners (`tools/playtest.py` plays every `.play` file as a `DEV=1` game).
 
@@ -991,8 +995,8 @@ playtest uses this to log under its temp folder.
 20261106.1008.48 info  WorldFiles     Wrote the world files: 2 changed.
 ```
 
-Each line is `yyyyMMdd.HHmm.ss`, the level in five letters (`info`, `error`,
-`warni` for a warning, `debug`, `help`, `kills`, `combat`, `access`), the
+Each line is `yyyyMMdd.HHmm.ss`, the level cut to five letters (`info`, `error`,
+`warni` for a warning, `debug`, `help`, `kills`, `comba` for combat, `acces` for access), the
 source (a thread or component name), and the message. Java stack traces (stderr) go to the same file.
 
 ### What goes where
@@ -1173,8 +1177,8 @@ south
 
 A `.js` file in `world/tests/` is a JavaScript test: it runs in builder mode
 through `JRUN` with `test(name, fn)` and `assert(...)` provided, and passes when
-it reports `WORLDTEST SCRIPT PASS`. Inside a builder or DEV game, `PLAYTEST RUN
-[FILE]` and `WORLD TEST` run the same files in disposable campaigns and report
+it reports `WORLDTEST SCRIPT PASS`. Inside a builder game, `PLAYTEST RUN
+[FILE]` (and, in a builder or DEV game, `WORLD TEST`) run the same files in disposable campaigns and report
 here. Playtest files, assertions and recording one by hand (`RECORD INPUT`,
 `RECORDINPUT=1`) are covered in [Testing and release](13-testing-release.md).
 
@@ -1182,7 +1186,7 @@ here. Playtest files, assertions and recording one by hand (`RECORD INPUT`,
 
 | Tool | What it does |
 | --- | --- |
-| `tools/check.sh` | The checks for a commit: the creator-docs check, the module, composition, combat and item-modifier suites, the fixes suite and the smoke test (about ten minutes). `ENGINE=1 tools/check.sh` adds the engine's own `TEST ALL` suite. |
+| `tools/check.sh` | The checks for a commit: the creator-docs check, the composition, combat and item-modifier suites, the fixes suite and the smoke test (about ten minutes). `ENGINE=1 tools/check.sh` adds the engine's own `TEST ALL` suite. |
 | `tools/fixes.sh [NAME ...]` | One or more of the JavaScript fix tests in `tools/fixtures/fixes/`, each run with `JRUN` in a builder-mode game on a scratch world. |
 | `tools/smoke.sh` | The single-player path on its own: character creation, save, restore, pause, turn-based time, party, the world files, builder edits. `KEEP=1` keeps the scratch folder. |
 | `tools/engine-tests.sh` | The engine's `TEST ALL` suite (about 15 minutes). |

@@ -1,9 +1,9 @@
 # Behaviors and zapper masks
 
 This chapter is the reference for two things that appear all over CoffeeSUD
-content. Part 1 documents every behavior: the small Java (or JavaScript) classes
+content. The first half documents every behavior: the small Java (or JavaScript) classes
 that make a mob, item, room, area or exit do something on its own, with the full
-parameter syntax of each. Part 2 documents the zapper mask language: the
+parameter syntax of each. The second half documents the zapper mask language: the
 `-RACE +Elf`, `+LEVEL ->5` style expressions that behaviors, properties,
 catalog rules, quests and scripts use to say "who or what does this apply to".
 It is written for world creators who configure behaviors, scripters who add
@@ -33,7 +33,6 @@ them from MOBPROG or JavaScript, and engine developers who write new ones.
 - [Troubleshooting](#troubleshooting)
 - [See also](#see-also)
 
-# Part 1: Behaviors
 
 ## How behaviors work
 
@@ -88,7 +87,7 @@ that most classes share:
   `min=` exists, see [Troubleshooting](#troubleshooting)), it must not be
   preceded by a letter, and an unquoted value ends at a space, `;` or `:`.
 - Bare flag words: `WANDER`, `OPENDOORS`, `MOBKILL`. Case-insensitive.
-- A zapper mask ([Part 2](#zapper-masks)) as the tail of the string, such as
+- A zapper mask ([zapper masks](#zapper-masks)) as the tail of the string, such as
   `min=10 max=20 chance=75 -RACE +Elf`.
 - Some behaviors split the string at the first `;` into "settings;list": the
   `Emoter`, `Sounder`, `DelayedTransporter` and `Patroller` families, and
@@ -258,7 +257,7 @@ and `MINGRP` to the behaviors that extend it (see
 Hosts: mobs. Makes the mob attack any player it can detect in its room, from
 the moment the player arrives (or the mob does). Badly wounded mobs are not
 aggressive, and mobs ignore archons and builders who hold the `CMDMOBS` security
-flag. With no parameters it attacks anyone. A mask (Part 2) decides who:
+flag. With no parameters it attacks anyone. A mask ([Zapper masks](#zapper-masks)) decides who:
 allowed is attacked, disallowed is spared.
 
 | Parameter | Meaning |
@@ -269,7 +268,7 @@ allowed is attacked, disallowed is spared.
 | `NOGANG` | Skip players already in combat (`NOGANGUP` also works). |
 | `MISBEHAVE` | Attack even when wounded or following someone. |
 | `CHECKLEVEL` | Only attack those within 6 levels below the mob. |
-| `WANDER` | Flag read by the mob-moving subclasses. |
+| `WANDER` | Lets VeryAggressive follow prey into rooms of another area (it otherwise stays in its own). No effect on plain Aggressive. |
 | `BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY]` | The mob demands a bribe instead. Amount is base gold in the mob's currency (default 1), peace is how many ticks a payment buys (default 100), pay window is how long a new arrival has before ordinary aggression resumes (default 20000). |
 | `BRIBEPAYMSG="..."` | Told to newly met players; `@x1` is the amount. Default "Pay me @x1 or I will kill you." |
 | `BRIBEPAIDMSG="..."` | Told to a payer; `@x1` is the peace time. Default "Ok then, you are safe for @x1." |
@@ -903,9 +902,9 @@ Floodable ONVAR="pump sluice==open" RATE=5
 
 ### Follower
 
-Hosts: mobs, items. Timing is 0/0/100: following is instant by default (min
-and max -1 and no `GROUP` also mean instant). The mob follows any other mob
-that leaves the room.
+Hosts: mobs, items. Timing default 0/0/100: the mob follows any other mob that
+leaves the room on its next tick; with `MIN` and `MAX` of -1 (and no `GROUP`) it
+follows at once.
 
 | Parameter | Meaning |
 | --- | --- |
@@ -1990,7 +1989,7 @@ item to 0.
 
 | Parameter | Meaning | Default |
 | --- | --- | --- |
-| a bare number | Ticks of inactivity before the reset. | 30000 ms (see below) |
+| a bare number | Ticks of inactivity before the reset. | 30 seconds (30000 ms) when no time is given |
 | `TICKS=n` | The same. A tick is `TICKTIME` ms. | |
 | `DAYS=n` | CoffeeSUD: game days on the area's calendar after the party was last there, instead of ticks. | |
 | `RLHOUR=h` | Real-life hour (0 to 23) of the reset. Reads the real clock, which means nothing with pause and turn-based time; use `MUDHOUR` or `DAYS`. | |
@@ -2199,8 +2198,8 @@ Schedule DAWN: Mill#2 WORK "pours grain into the hopper|wipes flour from his han
 
 ### Scriptable
 
-Hosts: mobs, items, rooms (areas and exits use the other scripting hooks, see
-[chapter 4](04-mobprog.md)). Runs a MOBPROG script on its host. The parameter is
+Hosts: mobs, items, rooms (per `canImproveCode`; for scripts on areas and exits
+see [chapter 4](04-mobprog.md)). Runs a MOBPROG script on its host. The parameter is
 the script: complete scripts and/or `LOAD=[PATH]` lines.
 
 - With a file, each command line ends with a line feed or a `;`. If the whole
@@ -2602,7 +2601,6 @@ Aggressive.
 WimpyAggressive -race +elf misbehave mobkill
 ```
 
-# Part 2: Zapper masks
 
 ## Zapper masks
 
@@ -2934,7 +2932,8 @@ Masks are accepted wherever the matching help or chapter says "zapper mask" or
   mask.
 
 `maskDesc(mask)` returns the English reading of a mask ("Allows only the following
-races: Elf, Dwarf"); builders see it in several editors.
+races: Elf, Dwarf"); it is what the engine uses wherever it explains a mask in
+words.
 
 ### Mask examples
 

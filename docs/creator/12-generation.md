@@ -165,3 +165,545 @@ GENERATE AREA random_dungeon areaname=Deep north
 
 With no `FROM`, `randareas/example.xml` is used.
 
+## Template file reference
+
+### File structure and includes
+
+A file is a list of tags. A typical themed file (see `forest.xml`) has, in order:
+
+1. a `<STRING id="randomtheme" merge="true">` that adds the theme to the pool
+   `random_dungeon` draws from;
+2. `<STRING load="/resources/randareas/inc_common.xml" />` lines that pull in
+   shared word banks;
+3. `AREA` tags (one per layout) that name the layout and the room groups;
+4. shared `ROOM` groups (`hallway_rooms`, `interior_rooms`, `leaf_rooms`) that
+   several themes each add their own rooms to with `merge="true"`;
+5. `MOB`, `ITEM` and `STRING` banks the rooms insert.
+
+To build with it, `GENERATE` reads the file named by `FROM`, registers every
+id, then builds the tag whose id you gave. `example.xml` loads every stock
+theme so that one `random_dungeon` can choose among them.
+
+Two includes exist and are resolved while ids are registered, before anything
+is built:
+
+| Attribute | Meaning |
+|---|---|
+| `load="path"` | The XML in that file is parsed and added as children of this tag, and its ids are registered. A `condition` on the same tag is tested first; false skips the load. A file is loaded once per run. The path is normally `/resources/randareas/name.xml`. |
+| `from="path"` + `id` | This tag must have an `id`. The file is read and the tag with that same id in it is merged into this one (its attributes and children are copied in). Without an `id` the include is refused with a log line. |
+
+Missing files are logged ("Failed loading XML file ..."), and
+[GENERATE CHECK](#generate-check) reports them.
+
+### Meta-attributes
+
+These can appear on any tag.
+
+| Attribute | Value | Meaning |
+|---|---|---|
+| `id` | a name | Registers the tag as callable (case-insensitive). A duplicate id is an error unless both tags have `merge` (see below); the first tag wins and a line is logged. |
+| `load`, `from` | path | Includes; see above. |
+| `content_load` | path | The text of the file is the value of the tag (variables in it are filled in). Used for long descriptions. A missing file is an error. |
+| `like` | ids | Comma list of ids of tags of the *same* kind, not container tags. This tag is built as if it held the listed tags' attributes and children, with its own attributes winning. For one-off variations. |
+| `insert` | ids | Comma list of ids of tags of any kind, containers allowed. The wanted kind of tag from each is added as children of this tag, after the inserted tag's own `condition`/`select` ran. `$` before an id is allowed. An unknown id is an error ("Undefined insert"). May instead be an MQL `SELECT:` query ([MQL](#mql-the-query-language)), whose result column named like the wanted tag becomes the choices. |
+| `copyof` | id or class | Copies the stats of the tag with that id, or of a prototype class (any mob or item class id, `Cat`, `GenWeapon`), into the object before the tag's own details are applied. |
+| `validate` | condition | Tested after a tag was chosen, just before it is built; false skips it silently. For rooms and areas the next candidate is tried instead. |
+| `condition` | condition | Tested to decide whether the tag is eligible among its parent's choices. |
+| `llm` | `true` | CoffeeSUD keeps this inherited attribute. The tag is dropped when LLM integration is not installed, and when it is, the tag's text is sent to the model as a prompt and replaced by the reply. Stock town and forest descriptions have such lines; without the integration they are silently skipped. |
+| `define` | list | Comma list. Applied after the tag is selected. See [DEFINE](#variables-define-and-scope). |
+| `predefine` | list | Same syntax, applied whenever the tag is *encountered*, before its choices are considered, whether or not it is later selected. |
+| `tagdefine` | list | Same syntax, but the value assigned is the tag itself after `select`/`insert` processing (children replaced by the chosen ones, `select` set to `all`). |
+| `select` | mode | How many children to use. See [SELECT modes](#select-modes). |
+| `pickweight` | math | Relative weight of this child under a parent using `select="pick-N"`. |
+| `merge` | `true`, `false`, `over`, `overN` | Lets two tags with the same id combine. See below. |
+| `action` | `append`, `replace`, `prepend` | On a `STRING`-like child: how its value joins the text built so far. The default is append with a space. Anything else is an error. |
+| `requires` | list | Variables the caller must define. See below. |
+| `seed` | math or word | Seeds the generator for just this `AREA`, `ROOM`, `MOB` or `ITEM`. See [Seeds](#seeds-and-reproducibility). |
+
+**`requires`** is a comma list of `name=type`. Types are `#` (or `number`,
+`double`): a number or math expression; `int` (or `integer`): a whole number or
+expression; `$` (or `string`): any non-empty text; or a semicolon list of
+allowed words (`theme=forest;crypt`). A bare name only demands the variable
+exist. `GENERATE` fails with "Required ids for X were missing" and prints what is
+needed. Merged tags combine their `requires` (type keywords such as `int` must
+agree; allowed-word lists for the same variable are joined with `;`).
+
+**`merge`.** Several theme files each declare `<ROOM id="hallway_rooms"
+merge="true">`. When two tags share an id and both carry `merge="true"`: attributes
+the first lacks are copied in; `requires` are combined; `condition` and `validate`
+are joined with `and`; `insert`, `define` and `predefine` are joined with commas;
+any other attribute that differs is logged ("Unable to merge SELECT parm") and the
+first wins; the second tag's children are appended, except children marked
+`merge="false"` (use that to keep one copy of a child). Tags of different kinds
+cannot merge. `merge="over"` makes a tag replace others with its id outright;
+`over9` beats `over4`. If a duplicate lacks the merge flag the first tag wins.
+
+**Metacrafted and catalog items.** An `ITEM` or `MOB` `class` can be
+`catalog` (with `name`: copy the cataloged object; an item keeps its catalog
+cap, see [Loot tables](#loot-tables)). An `ITEM` `class` may also begin
+`metacraft:`, to craft a real recipe from the crafting skills:
+
+| `class=` | Result |
+|---|---|
+| `metacraft:long sword` | The recipe whose name matches. |
+| `metacraft:anything` | A random recipe from any crafting skill (the shipwright-type skills are excluded). Tries up to 20 skills. |
+| `metacraft:any-blacksmithing` | A random item from one named crafting skill. `any-resources` (or `any-rawmaterials`) gives a random raw resource; `any-farmables` a random farmable. |
+| `metacraft:all-<skill>` | Every item of that skill (many items from one tag). `all-resources`, `all-farmables` likewise; `all` alone is every skill. |
+| `metacraft` + `name="long sword"` | Same as the first form, naming the recipe in `name`. |
+
+Filters are appended after the recipe: `<` followed by an upper level limit,
+`>` a lower level limit, `{` an upper value limit, `}` a lower value limit,
+and `=` a class id the item must be an instance of (for example
+`metacraft:anything<20{500=GenWeapon`; limits are math). A separate
+`material="IRON"` attribute fixes the material. With `class="metacraft:..."` the
+level and name still may be overridden by `level=` and `name=`.
+
+### SELECT modes
+
+`select` chooses among the child tags of a container (children of the same
+tag kind that fit their own `condition`). `X` below is a number or math
+expression (variables allowed).
+
+| Mode | Chooses |
+|---|---|
+| `all` | Every eligible child. |
+| `none` | No child. |
+| `first`, `last` | The first or the last. |
+| `first-X`, `last-X` | The first X or last X. Error if X is larger than the number of children. |
+| `any` | One at random. |
+| `any-X` | X different children at random, without repeats. Error if X exceeds the number available, so cover the case where conditions have removed some. |
+| `pick-X` | X different children by weight: each child's `pickweight` (math). A child with no `pickweight` weighs 0. If every weight is 0 the choice is uniform; if some are 0 and some not, the 0-weight children are never picked. A negative weight removes the child from the draw. |
+| `limit-X` | Up to X at random; fewer is fine, including none. |
+| `repeat-X` | X draws *with* replacement: one child may come several times. (The old guide said `repeat` takes every choice; it does not.) |
+| a bare number or expression | Treated as `any-X`. |
+
+If there are no eligible children, any mode except `any-0`, `first-0`,
+`last-0`, `pick-0` and `limit-X` is an error ("Can't make selection among
+NONE"), which stops the build: guard the case with a `condition` on the parent
+or choose with `limit`.
+
+What a parent does when it has **no** `select`:
+
+- `AREA` and `ROOM` choices: one is picked at random (if its `validate` fails,
+  another is tried).
+- `MOB`, `ITEM`, `AFFECT`, `ABILITY`, `BEHAVIOR`, `CONTENT`, `FACTION`:
+  every eligible child is built.
+- `EXIT` choices: one is picked at random for each direction the layout needs.
+- `STRING`-valued tags (`NAME`, `TITLE`, `DESCRIPTION`, a `STRING`...): every
+  eligible child is joined with spaces, in order. Use `select="any-1"` to pick
+  one, and `action` to control the join.
+
+### Conditions and VALIDATE
+
+A condition is a boolean expression evaluated against the current variables.
+Everything is compared case-insensitively (the whole expression is upper-cased).
+
+- Variables are written `$name`. An undefined variable is the empty string `''`.
+- Constants: numbers; strings in single quotes `'text'` (double quotes and backticks also work).
+- Comparison: `=` (also `==`), `!=` (also `<>`), `<`, `>`, `<=`, `>=`.
+  Strings and numbers both compare; numeric text compares as a number.
+- `x IN y`: true when the string `x` appears inside the string `y`.
+- Combining: `AND` / `&&`, `OR` / `||`, `NOT` / `!`, and parentheses.
+- A variable may hold a math expression (`1?3`); it is evaluated *once* and the
+  result stored, so `$level_range` is stable inside one object.
+- A condition can contain an embedded MQL query as a value.
+- Math in a condition: `(1?3=1)` is "one chance in three" (see
+  [math](#value-substitution)).
+- In an XML attribute `<` and `>` must be written `&lt;` and `&gt;`, `&` as
+  `&amp;`: `condition="$__boss&lt;1"`.
+- `condition="js:expr"` is a JavaScript expression instead
+  ([JavaScript in templates](#javascript-in-templates)).
+
+Examples (from the stock files):
+
+```xml
+<ROOM condition="$roomtag_isdeepest='true' and $__skeletonboss&lt;1" define="__skeletonboss+=1" ...>
+<MOB condition="(1?3=1) and ($pop_mobs!='false')" select="any-1" insert="crypt_mobs" />
+<STRING condition="$ROOMTAG_NODEGATEEXIT != ''" action="PREPEND">You are at the entrance. </STRING>
+```
+
+`validate` uses the same grammar. The difference: a failed `condition` removes
+the tag from the pool *before* `select` counts it (so `select="any-1"` picks among
+the survivors); a failed `validate` removes it *after* it was chosen (so you can
+end up with nothing). Prefer `condition`.
+
+### Variables, DEFINE and scope
+
+`define`, `predefine` and `tagdefine` take a comma list of items:
+
+| Item | Effect |
+|---|---|
+| `id` | Sets variable `id` to the value this tag resolves to (its text, or for a tag-valued variable the built tag). |
+| `id=value` | Sets `id` to `value` (variables and math inside are evaluated; a pure math expression becomes a whole number). |
+| `id+=n`, `id-=n`, `id*=n`, `id/=n` | Reads the variable (undefined or empty counts as 0), applies the operation, stores the result. |
+
+Variable names are stored upper-case. Scope depends on the name:
+
+| Name starts with | Visible to |
+|---|---|
+| (a letter) | The one room being built (and everything in it). |
+| `_` | Every room in the same layout group (a street, a leaf cluster, or the rest). |
+| `__` | The whole area. |
+
+So `define="__boss+=1"` with `condition="... and $__boss<1"` hands out one boss
+per area. `define` on a nested tag also applies the `define` of its parent if the
+parent is the same kind of tag.
+
+Variables the caller passes (`GENERATE ... areaname=Woods`) are "defined" in the
+same table. They are *not* the same as MOBPROG variables or saved script
+state: they exist for one generation run and are not saved.
+
+### Value substitution
+
+Any text value (a tag's text or an attribute) can contain:
+
+| Form | Meaning |
+|---|---|
+| `$name` | The variable, case-insensitive; names are letters, digits and `_`. A string beginning with `$` is read as an identifier. If the variable is a tag, the tag is evaluated as a string (`STRING` banks). An unknown variable is an error naming it and the string. |
+| `${name}` | The same, with explicit bounds, and optional prefixes: `u:` upper-case, `l:` lower-case, `p:` plural, `c:` capitalised (first letter upper, rest lower), `j:` safe inside JavaScript/MOBPROG (JSON-quoted), `1:` single line, `_:` punctuation removed and spaces to underscores. Prefixes stack: `${c:p:adj_color}`. |
+| `$[formula]` | A number from a math formula. |
+| `(a(n))` | Removes any article at the start of the following word and puts `a` or `an` according to its first letter. At the very start of a value it also strips articles from the substituted text. |
+| `$SYSTEM_RANDOM_NAME:2-4` or `${SYSTEM_RANDOM_NAME:2-4:style:FULL}` | A made-up name of 2 to 4 syllables; see [Name styles](#name-styles). |
+| `${STAT:NAME}` | A stat of the object being built (`NAME`, `DISPLAY`, `LEVEL`...). |
+| `${STAT:path:...:STATNAME}` | A stat of a *different* object, reached by a path of `ROOM`, `AREA`, a direction (`NORTH`, `EAST`, `UP`...), `ANYROOM` (a random connected room), `MOB` / `ITEM` (a random one in the room), `AREAGATE` (a connected room outside the area). `${STAT:ROOM:EAST:MOB:NAME}` is a mob's name in the room to the east. These wait for post-processing so the neighbouring room exists. |
+| `${js:expr}` | What a JavaScript expression gives. |
+| `${SELECT: ... }` | The result of an MQL query. |
+| `\$` | A literal `$`. |
+
+Math formulas use `+ - * /`, parentheses, and the operators `?` (random
+number: `2?5` is a whole number from 2 to 5), `<` (the lesser) and `>` (the
+greater), `=` (1 if equal, else 0) and `!` (1 if different). Because `<` and
+`>` are operators there, XML writers must still escape them in attributes.
+
+One engine convention to know: every generated text has its apostrophes
+turned into backticks (the engine's internal quote; players see apostrophes),
+unless `GEN_BACKTICKS=false` in `coffeemud.ini` (see
+[Where generated content lives](#where-generated-content-lives)).
+
+### Details given as attributes, tags or variables
+
+Most of an object's fields are "details" (`NAME`, `LEVEL`, `RACE`...). For
+each, the generator looks, in this order, and uses the first that exists:
+
+1. a value already defined for this kind of object, `PREFIX_NAME` (for example
+   `$mob_level` once the mob's level was set; prefixes `AREA_`, `ROOM_`, `MOB_`,
+   `ITEM_`, `EXIT_`, `RACE_`);
+2. an attribute on the tag (`level="5"`);
+3. a variable of that bare name (`LEVEL` defined by the caller or a `define`);
+4. `content_load`;
+5. a child tag of that name (`<LEVEL>5</LEVEL>`), which may itself have
+   `select`/`condition` children.
+
+So an attribute beats a bare variable beats a child tag. Passing `level=7` on
+the `GENERATE` line therefore overrides a `<LEVEL>` child, but not a `level=`
+attribute. (The old guide said a defined variable beats attributes; the parser
+does the opposite.) Stat codes that do not apply to a class are ignored.
+
+Because detail names *are* the object's stat codes, the attribute list for
+`MOB`, `ITEM`, `ROOM`, `EXIT` and `AREA` is the stat-code list of the class you
+chose. Lists are given with each tag below. [GENERATE CHECK](#generate-check)
+reports attributes that are neither generator attributes nor stat codes of the
+tag's class.
+
+### Variables the generator defines
+
+| Variable | Defined | Meaning |
+|---|---|---|
+| `AREA_CLASS`, `AREA_NAME`, `AREA_DESCRIPTION`, `AREA_AUTHOR`, `AREA_LAYOUT`, `AREA_SIZE`, `AREA_*` | building an area | Each area detail as it resolves. |
+| `AREA_NUMLEAFS` | layout | Number of leaf rooms. |
+| `AREA_MAXDEPTH`, `AREA_NUMROOMS` | layout | Greatest depth from the entrance, and number of rooms. |
+| `AREA_LEVELS` | `levels=` used | Number of floors. |
+| `ROOMTAG_NODETYPE` | each room | `surround`, `leaf`, `offleaf`, `street`, `square` or `interior`. |
+| `ROOMTAG_NODERUN` | each room | For streets: `ns`, `ew`, `nwse`, `nesw` (or `ud` under FILL). |
+| `ROOMTAG_NODEFLAGS` | each room | Any of `corner`, `gate`, `intersection`, `tee`, `offleaf`. |
+| `ROOMTAG_NODEEXITS` | each room | Comma list of exits (`,n,e,`). |
+| `ROOMTAG_NODEGATEEXIT`, `ROOMTAG_GATEEXITROOM`, `ROOMTAG_GATEEXITCLASS` | gate rooms | Direction of the way out of the area, the room outside, the exit class; with a direction number suffix (`ROOMTAG_NODEGATEEXIT3`) for gates of other directions. |
+| `ROOMTAG_DEPTH` | each room | Rooms from the entrance. |
+| `ROOMTAG_DEPTHPCT` | each room | Depth as a percent of the deepest (0-100). |
+| `ROOMTAG_ISDEEPEST` | each room | `true` or `false`. |
+| `ROOMTAG_INDEX`, `ROOMTAG_X`, `ROOMTAG_Y` | each room | Place in the layout list and coordinates. |
+| `ROOMTAG_LEVEL`, `ROOMTAG_STAIRS` | each room | Floor number (1 for the entrance's) and `up`, `down` or `up,down`. |
+| `ROOMTAG_GLYPH`, `ROOMTAG_DOORS` | `layout="MAP"` | The map character and the doors drawn (`,e,n,`). |
+| `ROOMLINK_N`, `_S`, `_E`, `_W`, `_NE`... | each room | `true` where the layout has an exit. |
+| `ROOMLINK_DIR`, `ROOMLINK_REQUIRED` | choosing an exit | The direction being built and whether the layout requires an exit there. |
+| `ROOMTITLE_N`... | each room | The title of the neighbouring room that way, if already built. |
+| `NODETYPE_N`... | each room | The node type of the neighbour that way. |
+| `ROOM_CLASS`, `ROOM_TITLE`, ...; `MOB_NAME`, `MOB_LEVEL`...; `ITEM_NAME`...; `EXIT_*` | building that object | Details as resolved; cleared after the object is built. The plural form (`MOB_NAMES`) accumulates a comma list. |
+| `DIRECTION` | building a room | The direction it is placed in. |
+| `GEN_SEED` | seeded run | The seed in use. |
+| `GAME_DAY` | every run | The global clock's day number (for `seed="$[$GAME_DAY]"`). |
+| `PLAYER_LEVEL`, `PARTY_SIZE`, `AREA_LEVEL`, `AREA_THEME`, `HOUR`, `SEASON`, `WEATHER` | `MPGENERATE`, `GENSTRING`, `gen.*`, loot tables | Context of the host. Not set by the `GENERATE` command. |
+| `MOB_LEVEL`, `AREA_LEVEL`, `THEME`, `PLAYER_LEVEL` | `Prop_LootTable` | See [Loot tables](#loot-tables). |
+
+Themes define more (`level_range`, `aggrochance`, `theme`, `pop_mobs`,
+`pop_items`, `areatype`, `nofantasy`, `multi_level`): these are conventions of
+the stock files, not engine variables. `pop_mobs=false` and `pop_items=false`
+passed on the `GENERATE` line build an empty shell in every stock theme.
+
+## Tag reference
+
+Each tag below lists what it needs, what it may contain, and its attributes.
+"Details" are the stat codes described under
+[Details given as attributes, tags or variables](#details-given-as-attributes-tags-or-variables);
+any of them may be written as an attribute or a child tag.
+Write attribute names in any case. The stat-code lists are those of the
+shipped Java classes; the per-class fields of items and mobs are explained in
+[Mobs](21-mobs.md) and [Items](22-items.md).
+
+### AREA
+
+Builds an area and all its rooms. Called by `GENERATE AREA`, `MPGENERATE AREA`,
+`gen.area`, `StdAutoGenInstance`, `Regenerate`.
+
+**Required details:** `CLASS` (an area class, normally `StdArea`; the stock
+themes use `$areatype` if given), `NAME` (must not already exist: building fails
+with "you must destroy the old one first"), `LAYOUT` and `SIZE` (rooms; with
+`layout="MAP"` the size is the number of rooms drawn and need not be given).
+
+**Optional details** (stat codes of the area class): `DESCRIPTION`, `AUTHOR`,
+`CLIMATE`, `THEME`, `BLURBS`, `PREJUDICE`, `BUDGET`, `DEVALRATE`,
+`INVRESETRATE`, `IGNOREMASK`, `PRICEMASKS`, `ATMOSPHERE`, `PLAYERLEVEL`,
+`PASSIVEMINS`, `CURRENCY`, `TAGS`, `REPUTATION`, `TEXT`, `AFFBEHAV`. See
+[Areas](20-areas-rooms-exits.md). Each one is stored in a variable `AREA_<NAME>`.
+
+**Children:** `ROOM` tags (the room templates), `AFFECT` and `BEHAVIOR` tags
+(put on the area), `ENSURE` tags, a `MAP` tag and `GLYPH` tags.
+
+**Attributes specific to AREA:**
+
+| Attribute | Meaning |
+|---|---|
+| `layout` | A layout name, or a comma list (one is picked at random: `layout="MAZE,TREE,CAVE"`). May be a variable. |
+| `size` | Rooms to make (math allowed). Also a child tag. |
+| `levels` | Number of floors; the size is split over them. See [Multi-level](#multi-level-areas). |
+| `levelsdir` | `UP` makes each next floor lie upward; default is `DOWN`. |
+| `order` | `depth`, `reverse-depth` or `random`: the order room groups are built in after the entrance. `reverse-depth` builds the deepest groups first so a "one boss" counter is used up at the far end. May be a variable. |
+| `mapfile` | Path of a text file with the floor plan for `layout="MAP"`. Resolved under `resources/`, or a path starting `world/` is the world folder. |
+| `seed` | Seeds this build. See [Seeds](#seeds-and-reproducibility). |
+| `onGenerate` | CoffeeSUD (ST20). Script lines run once, as the area's `GENERATED_PROG`, when the area has been built (`;` stands for a line break), or `LOAD=path` to run a script file. See `GENERATED_PROG` in [triggers](26-mobprog-triggers.md). |
+| `requires`, `condition`, `define`, ... | The [meta-attributes](#meta-attributes). |
+
+If a build fails midway, the partial area and its rooms are destroyed.
+
+### ROOM
+
+Builds one room (or, with `layout`, a whole cluster of rooms).
+
+**Required details:** `CLASS` (a locale class: `StdRoom`, `Woods`, `StoneRoom`,
+`DarkStoneRoom`, `Road`...), `TITLE` (the room's displayed title; `DISPLAY` is
+the stat it fills), `DESCRIPTION`.
+
+**Other details** (locale stat codes): `TEXT`, `AFFBEHAV`, `IMAGE`, `CLIMATE`,
+`ATMOSPHERE`, `ROOMID`, `TAGS`, and the physical stats `SENSES`, `DISPOSITION`,
+`WEIGHT`, `HEIGHT`, `REJUV`, `LEVEL`, `ABILITY`, `ARMOR`, `DAMAGE`, `ATTACK`,
+`AMBIANCES`.
+
+**Children:** `MOB`, `ITEM`, `AFFECT`, `BEHAVIOR` and `EXIT` tags.
+
+**Attributes specific to ROOM:**
+
+| Attribute | Meaning |
+|---|---|
+| `layout`, `size`, `levels`, `levelsdir` | A ROOM with `layout` builds a *sub-layout*: all `ROOM` tags inside (or inserted) are used to build `size` rooms in that shape, joined to the surrounding layout. Used for a building inside a town. `size` is required. |
+| `seed` | Seeds just this room. |
+
+**How rooms are chosen for a layout node.** For each node the AREA's `ROOM`
+children are filtered by `condition`, one is picked at random, and if its
+`validate` fails another is tried. All the usual nesting works: a group tag
+with `insert` and `select`, whose own children carry the `roomtag_nodetype`
+conditions (`hallway_rooms`, `interior_rooms`, `leaf_rooms` in the stock files
+select rooms for street, interior and leaf nodes).
+
+**Exits.** After the room's contents are made, each direction the layout
+joins gets an exit chosen from the room's `EXIT` children; `GENERATE ROOM`
+(not part of an area) builds only the exits you ask for with `DIRECTION`.
+
+### EXIT
+
+**Required detail:** `CLASS` (an exit class: `Open`, `GenDoor`...).
+**Stat codes:** `NAME`, `DISPLAY`, `DESCRIPTION`, `DOOR`, `LEVEL`, `ABILITY`,
+`ISREADABLE`, `READABLETEXT`, `DISPOSITION`, `HASADOOR`, `DEFCLOSED`,
+`HASALOCK`, `DEFLOCKED`, `KEYNAME`, `RESETTIME`, `CLOSEWORD`, `OPENWORD`,
+`CLOSEDTEXT`, `TAGS`, `AFFBEHAV`. **Children:** `AFFECT`, `BEHAVIOR`.
+
+| Attribute | Meaning |
+|---|---|
+| `direction` | Limits this exit to one direction (`N`, `E`, `north`...). Only the first letter is compared. |
+| `roomlink` | For an exit the layout did not ask for (`$ROOMLINK_REQUIRED` is `false`): the room id of an existing room to link to. |
+| a nested `ROOM` | Instead of `roomlink`, a room template to build on the far side of this exit, in this direction. |
+
+An exit with no `direction` is a candidate only for directions the layout
+requires. To add extras (a secret door), give `direction` and either
+`roomlink` or a nested `ROOM`. A locked door needs a matching key; see
+[ENSURE](#guarantees-ensure).
+
+### MOB
+
+**Required detail:** `CLASS`: a mob class (`GenMob`, `GenShopkeeper`,
+`GenBanker`...), or `catalog` (then `NAME` is required and names a catalog
+mob; a copy is made and counted against its cap).
+
+**Details, stat codes of a generic mob:** `RACE` (a race id, or a `RACE` tag
+which may select several), `LEVEL` (a level; at least 1; setting it re-balances
+the mob's stats to that level), `GENDER` (first letter used; random M or F
+if absent), `NAME`, `DISPLAY`, `DESCRIPTION`, `MONEY`, `VARMONEY`, `ALIGNMENT`,
+`DISPOSITION`, `SENSES`, `ARMOR`, `DAMAGE`, `ATTACK`, `SPEED`, `TATTS`
+(tattoos), `EXPS`, `IMG`, `FACTIONS`, `TAGS`, and `HPMOD` (the mob class's
+`ABILITY` stat; an adjustment to hit points). Character stats by name
+(`STRENGTH`, `DEXTERITY`...) and `HITS`, `MANA`, `MOVE`, `HUNGER`,
+`THIRST`, `FATIGUE` are also accepted as attributes.
+`MOB_POWERBONUS` / `POWERBONUS` makes the mob effectively that many levels
+stronger by adding hit points, mana and movement through a `Prop_Adjuster` and
+shifting armor, attack, damage and speed.
+
+**Children:** `ITEM` (carried; worn automatically when it can be, unless the
+item has `nowear="true"`), `MOB` (copied stats), `AFFECT` (properties),
+`ABILITY` (skills the mob knows), `BEHAVIOR`, `FACTION` (`<FACTION id="..."
+value="..."/>` sets a faction value), `SHOPINVENTORY` (for shopkeepers).
+
+A mob is *not* placed by the tag; the room (or `GENERATE`) brings it to life.
+
+### ITEM
+
+**Required detail:** `CLASS`: an item class (`GenItem`, `GenWeapon`,
+`GenArmor`, `GenContainer`, `GenFood`, `GenDrink`, `GenKey`...), `catalog` with
+`NAME` (a copy of a catalog item; if the catalog entry has a cap and it has been
+reached, the tag silently gives nothing), or `metacraft:...` (see
+[above](#meta-attributes)).
+
+**Details (stat codes of a generic item):** `NAME`, `DISPLAY`, `DESCRIPTION`,
+`SECRET`, `LEVEL`, `USES`, `ABILITY`, `PROPERWORN`, `WORNAND`, `BASEGOLD`
+(the item's base value; there is no `value` attribute, see the note below),
+`ISREADABLE`, `ISGETTABLE`, `ISDROPPABLE`, `ISREMOVABLE`, `MATERIAL`,
+`AFFBEHAV`, `DISPOSITION`, `WEIGHT`, `ARMOR`, `DAMAGE`, `ATTACK`,
+`READABLETEXT`, `IMG`, `TAGS`, plus the class's own codes: for a `GenWeapon`
+`WEAPONTYPE`, `WEAPONCLASS`, `MINRANGE`, `MAXRANGE`, `AMMOTYPE`,
+`AMMOCAPACITY`; for containers `HASLOCK`, `HASLID`, `CAPACITY`, `CONTAINTYPES`,
+`DEFCLOSED`, `DEFLOCKED`, `RESETTIME`; for armor `LAYER`, `LAYERATTRIB`; for food
+`NOURISHMENT`, `BITE`; for drinks `QUENCHED`, `LIQUIDHELD`, `LIQUIDTYPE`.
+**Note:** write the base value as `basegold="75"`. The stock `loot.xml` writes
+`value="75"`, which is not a stat code of any item class, so the attribute is
+ignored and those items keep their default value. [GENERATE CHECK](#generate-check)
+flags such unknown attributes; use it on your own files.
+
+**Children:** `CONTENT` (items inside a container), `AFFECT`, `BEHAVIOR`, `MOB`
+and `EXIT` where they make sense, and `SHOPINVENTORY` items.
+
+| Attribute | Meaning |
+|---|---|
+| `nowear` | `true` stops a mob wearing the item automatically. |
+| `powerbonus` / `item_powerbonus` | Re-balances the item as if it were that many levels higher (adds protection or damage) but leaves its level. Skipped if the item already has a `Prop_Adjuster`. |
+| `affixes` | Math. Rolls that many [affixes](#affixes-and-random-item-properties) onto the item (at most 2: a prefix and a suffix). |
+| `modbase` | A modifier base id. Opts the item into tracked, craftable modifiers; see [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md). With `affixes` it also sets how many are rolled. |
+| `seed` | Seeds this one item. |
+
+A container item built from a template is closed and locked as its defaults say,
+whatever the template did to it afterwards.
+
+### CONTENT
+
+A pure container that holds `ITEM` tags: the contents of a `GenContainer` (see
+the riddle chest example in `inc_setpieces.xml`). It may carry `select`,
+`condition`, etc., like any container: `<CONTENT><ITEM select="any-3"
+insert="dungeon_treasure_items" /></CONTENT>`. Its items are placed inside the
+container item.
+
+### SHOPINVENTORY
+
+Inside a shopkeeper `MOB`: the stock. It holds `ITEM`, `MOB` and `ABILITY`
+tags (what the shop sells). Either the `SHOPINVENTORY` tag or each of those tags
+may carry `number` (stock count, math) and `price` (a value; `-1` is the default
+price). If any inventory is generated the shop's existing stock is emptied first.
+
+### AFFECT, ABILITY, BEHAVIOR
+
+**Required:** `CLASS` (an ability id, or a name the engine can find, for
+`AFFECT`/`ABILITY`; a behavior id for `BEHAVIOR`). **Optional:** `PARMS`.
+
+- `AFFECT` puts a permanent effect on the thing it is inside: an area, room,
+  exit, mob or item (for example `<AFFECT class="Prop_Hidden" />`,
+  `<AFFECT class="Prop_OpenPassword" parms="echo" />`). The parameter syntax is
+  the property's own: [Properties](23-properties-reference.md).
+- `ABILITY` gives a mob a skill it knows (proficiency from `parms`).
+- `BEHAVIOR` adds a behavior with `parms`
+  ([Behaviors](24-behaviors-and-masks.md)).
+
+Under a `RACE` tag the same tags take extra attributes, `PROFF`, `LEVEL`,
+`QUALIFY`; `CULTUREABILITY` is the same as `ABILITY` but for a culture.
+
+### RACE
+
+Used by a mob's `RACE` detail. If `CLASS` names an existing race, that race
+is used. Otherwise a new `GenRace` is built from the tag, needing at least five of the
+race's stat codes as attributes or children, and **it is registered as a new
+race and stored in the database**, so it persists. Because of that, `RACE`
+tags that build races are best kept to one-time use. Required: `CLASS`, `NAME`.
+Optional children: `WEAPON` (holding an `ITEM`: the natural weapon),
+`RESOURCES` (items), `OUTFIT` (items), `ABILITY`, `CULTUREABILITY`, `AFFECT`,
+`IMMUNITY`. Details are GenRace's stat codes, for example `CAT`, `VWEIGHT`,
+`BWEIGHT`, `VHEIGHT`, `FHEIGHT`, `MHEIGHT`, `AVAIL`, `LEAVE`, `ARRIVE`,
+`BODYKILL`, `AGING`, `HELP`, `BREATHES`, `HEALTHRACE`, `BODY`, `WEAPONRACE`,
+`DISFLAGS`, `EVENTRACE`, `WEAR`, `ESTATS`, `ASTATS`, `CSTATS`, `ASTATE`,
+`STARTASTATE`. Races are explained in [Characters](03-characters.md).
+
+### FACTION
+
+`<FACTION id="factionid" value="500" />` inside a `MOB`: sets the mob's value
+in that faction ([Society](09-society.md)). Both attributes are required and the
+value is a whole number.
+
+### QUEST
+
+Builds a quest *script* (a string), which the quest manager then runs. It is
+not an object in the world. Give `QUEST_TEMPLATE_ID` the name of a quest
+template (`normal_capture1`) or a path; the template is read from
+`resources/quests/templates/NAME.quest`. Every line of its header that starts
+with `#$` is a required detail, filled from child tags or variables by the usual
+rules; the values are substituted into the script. Optional `DURATION` or
+`EXPIRATION` details replace the template's own timing (an `EXPIRATION` quest
+is not saved to the database). `generate quest all_quests template=normal
+"expiration=20 minutes"` is the stock example, using the documents in
+`resources/quests/random/`. The command refuses to continue unless a `QUEST_ID`
+variable ended up defined (the quest's name), and refuses a name already in
+use. Quest scripts themselves are covered in [Quests](08-quests.md).
+
+### OBJECT
+
+A tag that may hold any mixture of `MOB`, `ITEM`, `AREA`, `ROOM` tags and need
+not build anything: if its value begins with `SELECT:` it is an MQL query
+that *selects existing objects from the world* instead (and the result carries
+their properties). Used mainly by the random quest documents, to pick a real
+mob or room as a quest subject. See [MQL](#mql-the-query-language).
+
+### STRING
+
+A text bank. Its value is plain text with substitutions, or children with
+`select` and `action`. `GENERATE STRING id` prints one roll. A `STRING` with an
+id is also a variable: `$greeting` evaluates it each time it is used.
+
+```xml
+<STRING id="museum_greeting" select="any-1">
+  <STRING>The bells are silent.</STRING>
+  <STRING>A gull circles the tower.</STRING>
+</STRING>
+```
+
+Within one build, a string variable is evaluated *every time* it is used. To
+use the same roll twice, capture it with `define`:
+`<STRING id="x" define="whom">$name_bank</STRING>`.
+
+### SCRIPT
+
+`GENERATE SCRIPT id FROM file [vars] target` builds the tag's text as a script and
+attaches it to the mob, item or room named by `target`, as a MOBPROG script
+host. A `SCRIPT` tag is a string tag whose text is a script (remember that `$n`
+style script codes would be taken as variables; escape them with `\$`).
+
+### ENSURE
+
+Child of `AREA`. See [Guarantees: ENSURE](#guarantees-ensure).
+
+### MAP and GLYPH
+
+Children of an `AREA` with `layout="MAP"`. See [MAP layout](#map-layout).
+

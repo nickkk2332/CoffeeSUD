@@ -410,3 +410,448 @@ bridge stays built; a new game starts with the ropes.
 `FIRSTVISIT` is only true on the first arrival look. For text that should be
 remembered across the whole game, use Prop_FirstEntry (next section) so the
 once-only marker is saved.
+
+## First entry, clues and sensory actions
+
+These properties are attached with `CREATE PROPERTY`-style editing in the
+builder (the `Properties` field of a room, item, creature or area; see
+[chapter 23](23-properties-reference.md)) or in a world-building script
+(`host.addNonUninvokableEffect(ability)` with `setMiscText`). Each one has an
+in-game help entry (`AHELP PROP_FIRSTENTRY`, `PROP_DETAILS`, `PROP_SENSES`,
+`PROP_DARKDESCRIPTION`, `PROP_SHOWWHEN`) that lists its options.
+
+### Prop_FirstEntry
+
+Source: [Prop_FirstEntry](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_FirstEntry.java).
+Targets: rooms and areas.
+
+A once-only line shown when a player character enters the room (or any room of
+the area). Unlike the `FIRSTVISIT` tag, which is only true for one look, the
+marker is saved, so the message is never repeated for that character.
+
+| Option | Meaning |
+| --- | --- |
+| `TEXT="..."` | The message. VARIES and `<CALL>` are allowed. Colour codes allowed. |
+| `ONCE=CHARACTER` or `ONCE=PROFILE` | Whose memory holds the marker. `CHARACTER` is the default. `PROFILE` shares it across every character of the profile. |
+| `ID=name` | Stable identity of the marker (recommended). |
+| `TATTOO=name` | A tattoo given to the character on first entry (scripts and masks can test it). |
+| `SETVAR=NAME=value` | A script variable written on the entering character (a literal value). |
+| `ALIASES`, `LEGACYKEYS` | Migration of older markers. |
+
+It triggers on an ordinary entry or a recall into the room, only for player
+characters.
+
+```text
+ID=throne-room TEXT="^xThe torches flare as one, and the empty throne seems to turn toward you.^N" TATTOO=SAW_THRONE SETVAR=THRONE=1 ONCE=PROFILE
+```
+
+The message is printed in addition to the room look. Because text with a tattoo
+or variable is a state change, it is the right place for "first time" effects;
+`<FIRSTVISIT>` is the right tool for text that is merely different the first
+time you look.
+
+### Prop_Details
+
+Source: [Prop_Details](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Details.java),
+dispatch in [Scenery](../../CoffeeMud/com/planet_ink/coffee_mud/core/Scenery.java).
+Targets: rooms, items, creatures.
+
+Prop_Details gives a room (or object) extra things to look at, without creating
+an item for each one. A detail is a set of keywords and a description:
+
+```text
+fountain,basin=A cracked marble basin. HIGHLIGHT;ledger,red ledger=EXAMINEONLY An entry is circled. READ="Vault, third bell." TATTOO=CLUE_VAULT SETVAR=LEDGER=1 MASK="-INT +8"
+```
+
+The text is a list of records separated by `;`. A record is
+`keyword,keyword,...=description options`. The description is the text that is
+left once the options are removed.
+
+| Option | Meaning |
+| --- | --- |
+| `EXAMINEONLY` (flag) | Only `EXAMINE` shows this detail; `LOOK` and `READ` skip it. |
+| `READ="text"` | Text shown by `READ keyword`. A detail with no `READ` text is not shown by `READ`. |
+| `HIGHLIGHT` (flag) | Marks the detail's keywords in the room description (the same `^H` highlight that hidden items get). |
+| `MASK="zapper"` | The detail is available only to viewers who pass the mask. |
+| `TATTOO=name` | Given to the viewer the first time they see the detail. |
+| `SETVAR=NAME=value` | A script variable written on the viewer the first time. |
+| `ID=name` | Stable identity for the clue marker (otherwise the keyword list is the identity). |
+| `ALIASES`, `LEGACYKEYS` | Migration. |
+
+How it is used:
+
+- `LOOK keyword`, `EXAMINE keyword` and `READ keyword` try real objects first;
+  only when none matches do they look through the details of the room, the
+  items there, the creatures there and the items you carry. A keyword must
+  match a whole keyword of a record, ignoring case (`LOOK AT` / `LOOK THE` is
+  understood). The details of a room are unavailable to a viewer who cannot
+  see the room (it is dark and they have no light or darkvision).
+- `LOOK keyword ON object` limits the search to one host.
+- A detail on a creature or item is available only while that host can be seen,
+  is not inside a closed container, and passes any Prop_ShowWhen on it.
+- The clue options (`TATTOO`, `SETVAR`) run once per character and detail,
+  while the description is shown every time.
+- A matching `LOOK_PROG` on the host receives the matched keyword in `$g`, so a
+  script can react to "looked at the runes".
+- The description may contain VARIES and `<CALL>`.
+
+Gotchas:
+
+- A bare `;` ends a record. Rewrite the sentence (comma, dash, full stop). Do
+  not rely on quoting the whole description to hide a semicolon: option parsing
+  keeps the quote marks in the text it leaves (unverified in play; test it).
+- Details are not objects. They cannot be taken, moved, attacked or counted.
+  When the player must carry, open or fight it, make a real item or creature.
+- `WORLD CHECK ONLY=IDS` and `PROPCHECK` validate options; `CHECKTEXT` checks
+  the VARIES text of room descriptions but not text inside a property.
+
+### Prop_Senses and the sense commands
+
+Source: [Prop_Senses](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Senses.java).
+Targets: rooms, items, creatures, exits.
+
+```text
+SOUND="Water drips.|A pebble falls." TOUCH="Nine studs; the third is loose." TASTE="Salt." CHANCE=100 TATTOO=FOUND_STUD
+```
+
+| Option | Meaning |
+| --- | --- |
+| `SOUND="..."` | Text for `LISTEN`. |
+| `TOUCH="..."` | Text for `TOUCH` / `FEEL`. |
+| `TASTE="..."` | Text for `TASTE`. |
+| `CHANCE=n` | Percent chance (default 100) that the sense produces text. When the roll fails the command ends with no output. |
+| `TATTOO=name`, `SETVAR=NAME=value` | First-use clue, tracked separately for each sense. |
+| `ID=name`, `ALIASES`, `LEGACYKEYS` | Stable identity. |
+
+Within a value, `|` separates alternatives; one is chosen at random each time.
+Values can contain VARIES. Quote values that contain spaces or semicolons.
+
+The commands:
+
+| Command | Behaviour |
+| --- | --- |
+| `LISTEN [target]` | Needs hearing. Uses the target's Prop_Senses `SOUND`; else the sound lines of an Emoter or Sounder on the target (for a room, also on its area); else a learned Thief Listen skill; else "You hear nothing unusual." |
+| `TOUCH target` / `FEEL target` | Waypoint use first (TOUCH still attunes waypoints); then Prop_Senses `TOUCH`; then a script `USE_PROG` or a TOUCH combination; finally the stock `TOUCH` social. `TOUCH` with no target touches any waypoints in the room. |
+| `TASTE target` | Prop_Senses `TASTE` only; else "You taste nothing unusual." |
+| `SNIFF` | Unchanged; uses `Prop_Smell` ([chapter 23](23-properties-reference.md)). |
+
+The target may be nothing (the room), `HERE`/`ROOM`, a direction (the exit), or
+an item or creature in the room or carried. These commands work in the dark.
+A target hidden from the viewer by Prop_ShowWhen is treated as absent
+(`TOUCH` answers "You cannot find that here.").
+
+Use senses for atmosphere and hints (an owl, a loose stud, a smell of ash).
+Because a failed `CHANCE` roll is silent, do not make a puzzle depend on one
+roll; keep `CHANCE=100` for clues.
+
+### Prop_DarkDescription: dark rooms
+
+Source: [Prop_DarkDescription](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_DarkDescription.java) and
+[Presentation.dark](../../CoffeeMud/com/planet_ink/coffee_mud/core/Presentation.java).
+Targets: rooms.
+
+When a viewer cannot see a dark room, the look normally says "You can't see
+anything!". With Prop_DarkDescription the room supplies a safe title and
+description instead; the contents of the room stay hidden, and exits and
+senses behave as normal.
+
+```text
+TITLE="Somewhere dark" DESC="Cold water laps at your knees."
+```
+
+Defaults: `TITLE` is "Somewhere dark", `DESC` is empty. Both accept VARIES.
+
+An alternative needs no property: write the room's description with `DARK` and
+`LIT` blocks.
+
+```text
+<VARIES><DARK>You feel cold walls on both sides.</DARK><LIT>Carved reliefs line a narrow gallery.</LIT></VARIES>
+```
+
+If the description starts with `<VARIES>` and contains `<DARK>`, an unseen
+viewer gets the rendered description (without a title) as the dark fallback.
+`DARK` and `LIT` test the room's own darkness, not the viewer's darkvision, so
+a viewer with darkvision reads the lit text even though the room is dark.
+
+### Prop_ShowWhen: things only some viewers see
+
+Source: [Prop_ShowWhen](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_ShowWhen.java) and
+[ViewRules](../../CoffeeMud/com/planet_ink/coffee_mud/core/ViewRules.java).
+Targets: items, creatures, exits, rooms.
+
+Prop_ShowWhen hides its host from viewers who do not satisfy a condition:
+
+```text
+MASK="-TATTOO +SPIRITSIGHT" WHEN="IFVAR GHOSTS=1" HIDEMODE=UNSEEN
+```
+
+| Option | Meaning |
+| --- | --- |
+| `MASK="zapper"` | The viewer must pass this mask. |
+| `WHEN="..."` | A further condition: a VARIES tag with its argument (`IFVAR GHOSTS=1`, `NIGHT`, `QUESTWON "The Seer"`), or a zapper mask. |
+| `CHECK=VIEWER` (default) | Whose mask is tested: the viewer. |
+| `CHECK=ROOMPLAYERS` | Visible if any player character in the host's room passes. |
+| `CHECK=ANYPLAYER` | Visible if any player character anywhere passes. |
+| `CHECK=HOST` | The host is tested instead (a creature's own mask). |
+| `HIDEMODE=UNSEEN` (default) | Visible only while the condition holds. |
+| `HIDEMODE=HIDDEN` | Not seen until the character finds it with `SEARCH`; once found it stays visible to that character even when the condition later fails. |
+| `ID=name`, `ALIASES`, `LEGACYKEYS` | Stable identity of the discovery marker. |
+
+Until the condition passes, the host cannot be seen, listed, targeted, handled,
+attacked or (for an exit) crossed: actions aimed at it fail with "You cannot
+find that here." Builders with the SYSOPMSGS attribute (builder mode) see
+everything. Maps and the map renderer honour it for rooms and exits.
+
+Prop_ShowWhen is not a purely visual filter: test `LOOK`, `GET`, targeting,
+map and interaction paths when you add it to something. A hidden creature that
+is already fighting a party member keeps fighting; use it for scenery, clues,
+doors and ghosts, not as an invisibility spell.
+
+### Worked example: a crypt with clues
+
+Goal: a crypt whose runes can be read, whose vault door can be felt in the dark,
+and whose ghosts only appear after the player drinks the seer's tea (which
+grants the tattoo `SPIRITSIGHT`).
+
+On the crypt room:
+
+```text
+Prop_Details:     inscription,runes=Ancient letters spiral around a seal. HIGHLIGHT READ="Beneath the ninth bell the vault opens." ID=crypt-runes TATTOO=READ_RUNES SETVAR=READ_RUNES=1
+Prop_Senses:      ID=crypt-air SOUND="Water drips.|Something shifts in the dark." TOUCH="Cold stone; a ring of nine studs." CHANCE=100
+Prop_DarkDescription: TITLE="The crypt, unlit" DESC="Cold air and the echo of your own steps."
+Prop_FirstEntry:  ID=crypt-first TEXT="The air tastes of old smoke." ONCE=CHARACTER
+```
+
+The crypt's description, with a clue that appears after the runes are read:
+
+```text
+<VARIES>Pillars march into the gloom. <MASK1 -TATTOO +READ_RUNES>You know what the nine studs on the vault door are for.</MASK1></VARIES>
+```
+
+The tattoo `READ_RUNES` was given to the character who read the runes, so the
+sentence appears for that character only. (`<IFVAR READ_RUNES>` would also work,
+but it reads the first `READ_RUNES` variable found on any host, so once one
+character has read the runes it is true for every character.)
+
+On the ghost (a creature), so that only a player who has the tea sees it:
+
+```text
+Prop_ShowWhen: MASK="-TATTOO +SPIRITSIGHT" ID=crypt-ghost
+```
+
+Test as a fresh character: `LOOK`, `LOOK runes`, `READ runes`, `LISTEN`, `FEEL`
+(in the dark as well as lit). The ghost does not appear until the tattoo is
+given (with the default `HIDEMODE=UNSEEN` no `SEARCH` is needed; after the
+tattoo the ghost is simply there). Test with a second character that has not
+read the runes: the clue sentence must not appear for them.
+
+## Lore, journals and opening narration
+
+### The lore codex
+
+Source: [LoreBook](../../CoffeeMud/com/planet_ink/coffee_mud/core/LoreBook.java),
+[Lore command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Lore.java),
+[Prop_Lore](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Lore.java).
+
+The codex is a reference the player fills as they learn. A lore entry is
+defined in the world and unlocked per character (or per profile); nothing about
+an entry is visible until it is unlocked.
+
+**Defining entries.** Put UTF-8 files named `*.ini` in `world/lore/` (not in
+subfolders). Each line is a Java-properties entry:
+
+```ini
+SUNDERING=The Sundering|History|^{LORE}The kingdom fell beneath the sea.^N
+BESTIARY=The Deep Ones|Creatures|FILE=deep-ones.txt
+COAST=The Drowned Coast|History|The museum was built after the sea took the old harbour.
+```
+
+- The key (`SUNDERING`) is case-insensitive and is stored upper case. Keep keys
+  unique across all files (`WORLD CHECK ONLY=LORE` reports duplicates; if two
+  files define a key, the later file by name wins).
+- The value is `title|category|text`. The text may contain `|` (only the first
+  two pipes separate fields). A missing category is `Lore`.
+- The text is rendered for the reader, so it can use VARIES, `<CALL>`, colour
+  codes and aliases.
+- `FILE=name.txt` as the text field reads the entry's body from a file under
+  `world/lore/`. A line that is only `KEY=FILE=name.txt` makes the key the title
+  and `Lore` the category. Paths that leave `world/lore/` are refused.
+- Because the files are read as Java properties, a backslash at the end of a
+  line continues it, and `\n`, `\t` and `\\` are escapes. Use `FILE=` for long
+  entries instead of long continuation lines.
+- The files are read each time the codex is used (there is no cache), so an
+  edit shows at once. After editing during a game, `WORLD RELOAD ASSETS`
+  acknowledges the changed asset files.
+
+**Unlocking entries.** Three ways, all of which store a tattoo `LORE_KEY` on the
+character:
+
+1. A script: `MPLORE $n ADD SUNDERING` (character) or
+   `MPLORE $n ADD SUNDERING PROFILE` (shared by every character of the
+   profile). See [the MOBPROG command reference](27-mobprog-commands.md).
+2. A property, Prop_Lore, on an item, room or creature:
+
+   ```text
+   ENTRY=SUNDERING ON=READ MSG="You decipher the old account." SCOPE=CHAR
+   ```
+
+   | Option | Meaning |
+   | --- | --- |
+   | `ENTRY=key` | The lore key to unlock (required). |
+   | `ON=` | `READ` (default), `GET`, `EXAMINE`, `ENTER`, `KILL` or `DEATH`. `READ`/`GET`/`EXAMINE`/`ENTER` fire when the character does that to the host. `KILL` fires when the host dies and credits its killer. `DEATH` fires when the host (a player character) dies and credits that character. |
+   | `MSG="..."` | A line shown when the entry is newly unlocked. |
+   | `SCOPE=CHAR` (default) or `PROFILE` | Where the tattoo is stored. Aliases: `CHARACTER`. |
+
+   Prop_Lore targets items, rooms and creatures, and fires only for player
+   characters. The message appears only the first time.
+3. A quest step: `SET LORE key` in the quest script unlocks the entry for the
+   quest's participants for that step, including characters who accept
+   while the step is current. See [chapter 8](08-quests.md).
+
+A `GenTome` page can also carry `LORE=key` (see [chapter 22](22-items.md)); older
+`LORE:KEY` tattoos from tome pages are still recognised.
+
+**The command.** `LORE` and `CODEX` are the same command.
+
+```text
+LORE                    categories with counts
+LORE History            entries in a category (a star marks unread entries)
+LORE SUNDERING          read an entry, by key
+LORE The Sundering      ... or by full title
+LORE NEW                unread entries
+```
+
+Reading an entry shows its title in the colour alias `LORE` (if the world
+defines one; see [Colours](#colours-and-named-aliases)) followed by its category and text, and
+marks it read. With nothing matching the player sees "No unlocked lore
+matches." Locked entries are never listed.
+
+**Gated help entries.** A help entry (in `world/vocab/help/*.ini`) may begin
+with metadata that is stripped before display:
+
+```text
+<MASK=-TATTOO +LORE_SUNDERING><LOCKED=You have not yet learned this.><CATEGORY=History>The full text...
+```
+
+When the viewer fails the mask the help shows the `LOCKED` teaser, or nothing
+if there is none.
+
+**Thief skill clash.** The thief skill `Thief_Lore` also uses the word `LORE`.
+The command defined here is the one players reach with `LORE`; do not give the
+same word a second meaning in your own content.
+
+### The personal journal
+
+Source: [Chronicle](../../CoffeeMud/com/planet_ink/coffee_mud/core/Chronicle.java),
+[Journal command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Journal.java).
+
+The journal is the player's saved, dated notebook. It is not the same thing as
+a `GenJournal` or `GenBook` item (a board in the world), the quest journal
+(`QUESTS`, see [chapter 8](08-quests.md)) or the builder's `NOTES` command (which
+is the playtest-notes tool).
+
+```text
+JOURNAL                         all entries, newest first
+JOURNAL Clues                   only the category "Clues"
+JOURNAL WRITE Remember the hermit.
+JOURNAL SEARCH vault            entries whose text, category or source contains "vault"
+JOURNAL DELETE 12               delete entry number 12
+```
+
+Each entry shows `#id [category] game date — text (source; location)`.
+Entry numbers never change and are not reused after a deletion. Only the newest
+300 entries are kept; the oldest is dropped when the 301st is added. `JOURNAL
+WRITE` makes an entry in the category `Notes`.
+
+**Writing entries from scripts.** `MPJOURNAL target [category] "text"`:
+
+```text
+MPJOURNAL $n Clues "The vault opens to the word Ashgrove."
+MPJOURNAL $n "Remember the hermit."
+```
+
+With two arguments the category is `Notes`. The entry records the script's host
+as its source, the character's location, and the game date of the character's
+local clock. Quote the text. In a scene (`Scene` behavior), a `NOTE "text"`
+step writes a `Rumors` entry for every player present; see
+[chapter 6](06-npcs-dialogue.md).
+
+**Automatic entries.** The engine can add entries for you. Set in
+`coffeemud.ini` or a launch override (not `world.ini`; see
+[where settings may be set](#where-presentation-settings-may-be-set)):
+
+```ini
+JOURNALAUTO=QUEST,LEVEL,AREA,LORE
+JOURNALTALK=true
+```
+
+| Kind in `JOURNALAUTO` | Entry |
+| --- | --- |
+| `QUEST` | "Accepted quest: ..." and "Completed quest: ..." |
+| `LEVEL` | "Reached level N." |
+| `AREA` | "Discovered AREA NAME." (first entry to a new area) |
+| `LORE` | "Learned TITLE." (when a lore entry is unlocked) |
+
+`JOURNALAUTO` is empty by default. `JOURNALTALK=true` records the topics a
+character learns from `[[topic]]` dialogue lines, once each, in category
+`People`. Do not spam the journal: a repeated ambient bark should never write
+an entry.
+
+### Narration: story text from files
+
+Source: [Narration](../../CoffeeMud/com/planet_ink/coffee_mud/core/Narration.java).
+
+`MPNARRATE` shows a block of story text from a file, page by page, to a player,
+the whole room or the whole area.
+
+```text
+MPNARRATE $n opening.txt#arrival PAUSE STYLE=LORE
+MPNARRATE ROOM crypt.txt#awakening
+MPNARRATE AREA bells.txt NOPAUSE
+```
+
+Syntax: `MPNARRATE target file[#section] [PAUSE|NOPAUSE] [STYLE=ALIAS]`.
+
+- `target` is a character reference such as `$n`, or `ROOM` or `AREA` (relative
+  to the script's host). Only player characters receive it.
+- `file` is a file under `world/text/` (paths that escape that folder return
+  nothing). With `#section` only the lines after a line that is exactly
+  `[section]` (until the next `[...]` line) are used; without it the whole file
+  is used with the section header lines removed.
+- Blank lines separate pages (paragraphs).
+- Script substitutions (`$n`, `$i`, ...) and VARIES apply to the text, for each
+  viewer.
+- `STYLE=NAME` wraps the text in the colour alias `NAME` (for example `LORE`).
+- `NOPAUSE` is the default. With `PAUSE` each paragraph is printed and the
+  player is prompted `[Enter to continue]` before the next.
+
+```text
+[arrival]
+The guide sets a ledger on the desk.
+
+'Some things here still remember the sea,' she says.
+```
+
+How `PAUSE` behaves in a single-player game:
+
+- It uses asynchronous Enter callbacks. No game thread blocks. It takes no
+  game turns.
+- In real-time mode it holds the real-time clock (a pause) while any reader is
+  on a page, and releases only its own hold when the last reader finishes. A
+  pause the player set by hand is left in place.
+- In turn-based mode nothing moves while the reader is paging anyway.
+- A party member in the background (or a window that cannot open) receives
+  the whole text at once with no hold. A character in an open window pages in
+  that window.
+- Starting a narration cancels a pending script menu for that character, and
+  a menu replaces a pending narration; one input stream carries only one.
+- Unread pages and the pause ownership are saved in the campaign and resume
+  after a restore.
+
+Script menus (`MPMENU`) and narration share input; do not start narration from a
+tick-driven trigger that can fire while the player is in a menu. A narration
+from a player-caused trigger (`GREET_PROG`, `ENTRY_PROG`, a `FUNCTION_PROG`
+called from speech) is safe.
+
+For the very first screens of a new game (the title and the prologue), see
+[Title, prologue and character windows](#title-prologue-and-character-windows).

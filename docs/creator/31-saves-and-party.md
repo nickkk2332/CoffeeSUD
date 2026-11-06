@@ -441,9 +441,10 @@ In single-player `PAUSE` stops the clock and `PAUSE` again (or `RESUME`,
 - A save made while paused restores paused (`paused=true` in the header).
 
 In turn-based time `PAUSE` only reminds you that the world already waits.
-`PAUSE` raises `GAME_PROG PAUSE` and `RESUME`. (On other builds PAUSE
-suspends ticking objects; in CoffeeSUD single-player that archon use is not
-reachable by the same words.)
+`PAUSE` raises `GAME_PROG PAUSE` and `RESUME`. The inherited archon forms
+`PAUSE AREA`, `PAUSE ROOM` and `PAUSE name` (suspend or resume the ticks of one
+object) still exist and need the `PAUSE` security flag, which a normal player
+does not have.
 
 ### Turn-based time
 
@@ -461,9 +462,14 @@ Turn-based time stops the clock and moves it only when you ask:
 What moves the clock in turn-based time:
 
 1. Doing something that **takes time**: the world then moves forward by as long
-   as the action takes (the action cost divided by the character's speed, times
-   a tick). `HELP TIMEMODE` puts it as "a step is a fifth of a tick, an action
-   in combat a whole tick".
+   as the action takes. A command's cost is its action cost divided by the
+   character's speed, times a tick. Commands that take time (movement, skills,
+   attacks, `SWITCH` and the like) cost `DEFCMDTIME` actions out of combat
+   (0.20 by default, so a step is a fifth of a tick) and `DEFCOMCMDTIME` in
+   combat (1.0, a whole tick); the ini can list exceptions per command
+   (`DEFCMDTIME=Score 1.0, East 0.5, 0.15`). Commands without a cost of their
+   own, such as `SAVE`, `RESTORE`, `PARTY`, `AS`, `WINDOWS` and `WAIT`, take no
+   time.
 2. `WAIT`.
 3. A long `WAIT`, which runs the game's own ticks (so one heals, shops restock,
    things respawn and `TIME_PROG`s fire), and ends early if you are hurt,
@@ -475,10 +481,10 @@ second action waits.
 
 The `TIMEMODE` key in `coffeemud.ini` or `world.ini` sets how a *new* game
 starts (the value only needs to start with `TURN`). A restored game keeps the
-mode it was saved with (`timemode=` in the header). The command can be used at
-any time, which also means a world that is designed for turn-based play (for
-example one whose puzzles assume enemies do nothing while you think) should say
-so in its text or lock the mode with [`Prop_TimeMode`](23-properties-reference.md#prop_timemode).
+mode it was saved with (`timemode=` in the header). The player can change the mode at
+any time, so a world designed for one mode (for example puzzles that assume
+enemies do nothing while you think) should either say so in its text or lock
+the mode with [`Prop_TimeMode`](23-properties-reference.md#prop_timemode).
 
 `Prop_TimeMode MODE=TURNS|REALTIME [ONLYCOMBAT=TRUE] [RESTORE=TRUE|FALSE]
 [MSG="..."]` on a room or area holds the time mode while a player is there:
@@ -524,4 +530,557 @@ Source: [GameTime.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/GameTime.
 (`turnOf`, `beforeLeaderActs`, `afterLeaderActs`, `passTurn`),
 `StdMOB.dequeCommand`, [Wait.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Wait.java),
 [TimeMode.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TimeMode.java).
+
+## Saving
+
+### The commands
+
+| Command | Effect |
+| --- | --- |
+| `SAVE` | Saves the game under the default name. |
+| `SAVE name` | Saves under `name`. |
+| `SAVES` (or `RESTORE` with no name) | Lists the saved games, newest first, numbered. |
+| `RESTORE name` or `RESTORE number` | Restores a save after a yes/no question. |
+| `RESTORE name FRESH=CHANGED` / `ALL` / `Area,Area` | Restores, taking some areas from the world as it is now ([below](#restoring-after-the-world-changed)). |
+| `SAVES CHECK` | Says what a save made now would not keep. |
+| `SAVES INFO name` | Describes one save. |
+| `SAVES COPY from to` | Copies a save to a new name. |
+| `SAVES DIFF a b` | Lists what differs between two saves. |
+| `SAVES DELETE name` | Deletes a save (and its recovery generations) after asking. |
+| `CHECKPOINT`, `ROLLBACK` | Quick saves in a ring of three; see below. |
+| `QUIT` | Offers to save before leaving. |
+
+All of these are single-player commands. In builder mode `SAVE` writes the
+world files instead (see [World files](02-world-workflow.md)) and `SAVES` and
+`RESTORE` say "There are no saved games in builder mode."
+
+### Slot names
+
+A slot name is 1 to 32 letters, digits, dashes and underscores, and must start
+with a letter or digit. Names are case-insensitive for lookup. You can also use
+a save's number from the `SAVES` list. The folder on disk has the same name.
+
+`SAVE` with no name writes to the save this game came from or was last saved
+to. In a brand-new game that has no save yet, the name is made from the
+character's name (lower case, only letters, digits, `-` and `_`; `game` if
+nothing is left).
+
+One trap: in a normal game, `SAVE` followed by any of the builder words `USERS
+PLAYERS CHARACTERS USER PLAYER CHARACTER CHAR GRACES ITEMS AREA REWORLD ROOM
+MOBS QUESTS FACTION` (as the first or the last word) is the inherited builder
+SAVE, not a game save. Without builder powers you get "You are not allowed to
+do that."; with them it saves objects to the (copy of the) database and warns
+that the game plays on a copy of the world. So you cannot name a slot `room`.
+
+### What SAVE does
+
+1. Checks the [save rules](#save-rules-for-world-creators) (`SAVEMODE`,
+   `Prop_NoSave`, `Prop_SavePoint`).
+2. Runs the save hooks. `onBeforeSave(slot)` in `world/js/init.js`, JavaScript
+   `cm.on('save')` listeners and `GAME_PROG SAVE` scripts all run before the
+   snapshot is taken, and any of them may refuse the save ("The game was not
+   saved."). What they set is saved. See [JavaScript](05-javascript.md) and
+   [`GAME_PROG`](26-mobprog-triggers.md#game_prog).
+3. Saves the played character and every other character in the world to the
+   database tables, saves the clocks, flushes database writes.
+4. Writes the snapshot folder (see [The save folder](#the-save-folder)).
+5. Prints `Game saved as 'name'.`, preceded by the save point's `MSG=` if the room
+   or area has a [`Prop_SavePoint`](23-properties-reference.md#prop_savepoint),
+   followed by a line `Kept in part: <skill> under way.  A restore starts those
+   parts afresh.` for each crafting or gathering activity the save could only keep
+   in part.
+
+While an item transaction is being committed a save is refused ("An item
+transaction is committing; save at a settled boundary."); try again.
+
+### RESTORE
+
+`RESTORE name` asks `Restore 'name'?  Anything since you last saved will be lost
+(y/N)?`. On yes it checks the save is whole and its format supported
+([The save folder](#the-save-folder)), checks the optional modules it needs
+([Optional modules](14-optional-modules.md)), prints `Restoring 'name'...`, and
+restarts the engine in the same process: the world is rebuilt from its files and
+the save is laid over it. The terminal stays; the game logs your saved character
+in again.
+
+- An IRONMAN game refuses: "This is an ironman game: there is no going back to a
+  save.  QUIT keeps the game."
+- A save that is incomplete or in an unsupported format is refused with the
+  reason, and the running game continues.
+- `RESTORE 2` uses the number from `SAVES`.
+
+When CoffeeSUD starts it lists the saves and asks which to restore (`C`ontinue the
+newest, `N`ew game, `Q`uit, or a name or number). `RESTORE=name` or `RESTORE=NEW`
+on the command line skips the question, and `FRESH=` on the command line goes
+with `RESTORE=name` (it is not read when you choose from the menu). See
+[Installing and running](18-installing-and-running.md).
+
+### SAVES, SAVES INFO and SAVES DIFF
+
+`SAVES` prints one line per save:
+
+```text
+Saved games:
+   1) team         Hero, level 4 Fighter, with Bran, Mira, in The Rocky Room, saved Nov 6 14:03 (this game)
+   2) before-boss  Hero, level 3 Fighter, in The Old Mill, saved Nov 5 21:40 (older world)
+```
+
+`(this game)` marks the save this campaign came from or was last saved to;
+`(older world)` marks a save made with a different version of the world files;
+`[dev]` is a save from a `DEV=1` game and `[cheat]` a save with `CHEAT ON`.
+
+`SAVES INFO name` prints the character, place, save time, game date, time mode
+(and `, paused`), save mode, the party members and where they are, the running
+quests with their steps, how many script variables and JavaScript stores the
+save holds, whether it was made in a developer's game or with cheats on, and the
+world sum with `(this world)` or `(older world)`.
+
+`SAVES DIFF a b` compares two saves and prints lines such as `place: The Old
+Mill -> The Rocky Room`, `player hp: 40 -> 31`, `carried: +potion`, `variable
+Throne DOORS: 0 -> 1`, `quest Siege: running, step 1 -> running, step 2`, and,
+for each room, `Room#12 mobs: -2 goblin`. It compares the header keys
+`character level class place area timemode savemode party gamedate`, the played
+character's room, hit points, mana, movement and inventory, script variables,
+quests, and the mobs and items placed in each room. It is the quickest way to
+see what a fight or a decision changed.
+
+`SAVES CHECK` lists what a save made right now would not keep:
+
+```text
+A save now would not keep:
+  a sprite in The Glade (Glade#3) cannot be saved, so a restore will not have it, nor its scripts' state.
+  4 things in space (ships, stations, planets) are not saved where they are.
+```
+
+It reports monsters that cannot be saved (flagged unsavable, or summoned with no
+one to follow) and the things in space. "A save now would keep everything in the
+world." means nothing is lost.
+
+### CHECKPOINT and ROLLBACK
+
+`CHECKPOINT` saves into `checkpoint1`, `checkpoint2` or `checkpoint3`, in turn:
+the slot never written, else the oldest. `ROLLBACK` restores the newest after
+asking `Go back to checkpoint 'checkpoint2'?  Anything since then will be lost
+(y/N)?`. Both obey the save rules. (`Prop_Checkpoint` on a room is a different
+thing, a respawn point; see [Combat and encounters](29-combat-and-encounters.md).)
+
+### Autosave
+
+Three ways, all writing ordinary saves:
+
+| Way | Setting | Slots |
+| --- | --- | --- |
+| Timed | `AUTOSAVE=30` in `coffeemud.ini` or `world.ini`: every 30 *game* minutes (the game clock, so turn-based play counts game time passing) | `autosave1` ... `autosaveN`, N = `AUTOSAVEKEEP` (default 3, at least 1), taking turns |
+| On changing area | `AUTOSAVE=ON-AREA-CHANGE` (anything starting `ON-AREA`) | the same |
+| By place | [`Prop_AutoSave`](23-properties-reference.md#prop_autosave) on a room or area | `SLOT=` (default `auto`), with `ROTATE=n` for `slot1`..`slotn` |
+
+Blank or `0` for `AUTOSAVE` means none. The player is told `[Autosaved as
+'autosave2']` (timed) or `[Autosaved]` (or the property's `MSG=`). Timed
+autosaving starts when the played character enters the game and watches the
+played character's area.
+
+A timed or area autosave skips a fight unless the save mode is `ANYWHERE`; a
+refused autosave is silent (a timed one is tried again at the next tick, an
+area one at the next area change). `Prop_AutoSave`
+saves even where `Prop_NoSave` or the lack of a save point would refuse a `SAVE`;
+the timed autosave also ignores `Prop_NoSave` (it only checks the fighting rule).
+In an ironman game an autosave writes the game's single save.
+
+### QUIT
+
+`QUIT` in a normal game asks `Quit -- save the game as 'hero' first (Y/n), or
+cancel (c)?`. `Y` saves (obeying the save rules; if they refuse, you are told why
+and are not quit), `n` quits without saving, `c` cancels. If the rules forbid a
+save here the question becomes the reason plus `Quit without saving (n), or
+cancel (C)?`. Ending the terminal's input (end of file) quits without writing
+anything.
+
+## Save rules for world creators
+
+A world decides **when** a campaign may be saved. This is the main tool for
+hardcore, roguelike or checkpoint-based designs. Three things work together: the
+`SAVEMODE` setting, and the room/area properties `Prop_SavePoint`, `Prop_NoSave`
+and `Prop_AutoSave`.
+
+### SAVEMODE
+
+`SAVEMODE` goes in `world/world.ini` or `coffeemud.ini` (the world wins). It is
+read when a **new** game starts, and the mode is then kept in the campaign's
+saves (`savemode=` in the header). A restored game uses the mode in its save,
+whatever the ini says now, so editing `world.ini` never changes a running
+campaign's rules.
+
+| Value | Meaning |
+| --- | --- |
+| `ANYWHERE` (default) | Save at any time, even in a fight. |
+| `NOTINCOMBAT` | Refuses while the played character, any of your characters in the world, or anyone in the played character's group is in combat: "You cannot save the game during a fight." |
+| `SAVEPOINTS` | As `NOTINCOMBAT`, and only in a room whose own effects, its area's, or a parent area's include `Prop_SavePoint`: "You can only save the game at a save point." |
+| `IRONMAN` | One save only. `SAVE` with any other name is refused ("This is an ironman game: it has one save, 'hero', which it keeps for you."), `RESTORE` and `ROLLBACK` in play are refused, and `QUIT` always writes the save wherever you stand (`Quit -- the game is saved as 'hero' (Y), or cancel (c)?`). The name is the default slot (the campaign's name, or made from the character's name). The launcher still lists the save at the next start, so you can continue. |
+
+An unrecognised value is logged and counts as `ANYWHERE`.
+
+### How a save is judged (order of checks)
+
+For `SAVE`, `CHECKPOINT` and the offer in `QUIT` (`SaveGame.whyNotSave`):
+
+1. Ironman: a different slot name is refused; saving at `QUIT` is always allowed.
+2. `Prop_NoSave` in the room, its area or a parent area: refused with its `MSG=` or
+   "You cannot save the game here." (so a no-save zone beats a save point).
+3. Any mode but `ANYWHERE` and the party is fighting: refused.
+4. `SAVEPOINTS` and no `Prop_SavePoint` here: refused.
+5. Then the [save hooks](#what-save-does) may still refuse.
+
+Autosaves (the timed ones and `Prop_AutoSave`) only perform step 3, so a no-save
+area does not stop them. That is deliberate: a `Prop_AutoSave` is how a world
+saves *for* the player in a place where they may not save themselves.
+
+### Prop_SavePoint
+
+```text
+Prop_SavePoint MSG="You rest by the fire and set down your journey."
+```
+
+On a room or an area (every room of it, and of sub-areas). `MSG=` is printed after
+`Game saved as 'x'.` Only meaningful with `SAVEMODE=SAVEPOINTS`; harmless
+otherwise. See [Prop_SavePoint](23-properties-reference.md#prop_savepoint).
+
+### Prop_NoSave
+
+```text
+Prop_NoSave MSG="The water's whispering drowns your thoughts."
+```
+
+On a room or an area. The game cannot be saved here with `SAVE`, `CHECKPOINT` or
+`QUIT`'s offer (an ironman `QUIT` still keeps the game). See
+[Prop_NoSave](23-properties-reference.md#prop_nosave).
+
+### Prop_AutoSave
+
+```text
+Prop_AutoSave ONCE=CHAR SLOT=gate ROTATE=3 MSG="[Progress kept]"
+```
+
+Saves when the played character comes into the room (or into the area from
+outside it). `ONCE=CHAR` only the first time for each character (a tattoo
+`AUTOSAVE:ROOMID` records it); `SLOT=` the slot name (default `auto`); `ROTATE=n`
+uses `SLOT1`..`SLOTn` in turn; `MSG=` replaces `[Autosaved]`. It does nothing for
+a party member who is not the character played at the terminal. See
+[Prop_AutoSave](23-properties-reference.md#prop_autosave).
+
+### Putting properties on rooms
+
+In builder mode: `MODIFY ROOM AFFECTS` (or `MODIFY AREA AFFECTS`) opens the effects
+editor; add `Prop_SavePoint` and enter its text. In the world file the effect is
+the usual effect entry, in a room's `RTEXT` (XML-escaped there):
+
+```xml
+<AFFECS><AFF><ACLASS>Prop_SavePoint</ACLASS><ATEXT>MSG="You rest by the fire."</ATEXT></AFF></AFFECS>
+```
+
+and in an area's `ADATA` block the same `AFFECS` element, unescaped. See
+[Areas, rooms and exits](20-areas-rooms-exits.md) and
+[World files](02-world-workflow.md).
+
+### Other save-related settings
+
+| Key | Where | Default | Effect |
+| --- | --- | --- | --- |
+| `SAVEMODE` | ini/world | `ANYWHERE` | See above. |
+| `AUTOSAVE`, `AUTOSAVEKEEP` | ini/world | blank, `3` | Timed autosave. |
+| `SAVEDIR` | ini or command line (not world.ini) | `saves` | Folder for saves, relative to `CoffeeMud/` unless absolute. |
+| `RESTORE` | ini or command line | blank | `NAME` restores that save at start without asking; `NEW` starts a new game. |
+| `FRESH` | command line | blank | With `RESTORE=name`, same as `RESTORE name FRESH=`. |
+| `PARTYDEFEAT` | ini | `DEATH` | `CHECKPOINT` has a defeated party wake together at the leader's checkpoint ([Combat and encounters](29-combat-and-encounters.md)). |
+| `LONGWAIT` | ini/world | `ALL` | `BUILDERS` restricts long `WAIT`s. |
+| `BUILDER` | command line | blank | Builder mode: no saves. |
+| `DEV` | command line | blank | A developer's game: saves are marked `[dev]`. |
+
+## The save folder
+
+A save is a folder named after the slot, under `SAVEDIR`:
+
+```text
+saves/
+  .owner.lock                   held by the running game (never delete while a game runs)
+  hero/                         one save
+    header.properties           who, where, when, clock, time mode, party, sums
+    db/                         the state tables, as fake-database files
+      fakedb.data.CMCHAR        characters
+      fakedb.data.CMCHAB        their abilities
+      fakedb.data.CMCHIT        their items
+      fakedb.data.CMCHFO        their followers
+      fakedb.data.CMCHCL        their classes' data
+      fakedb.data.CMACCT        the profile
+      fakedb.data.CMPDAT        per-player and shared data
+      fakedb.data.CMJRNL        journals
+      fakedb.data.CMCLAN        clans
+      fakedb.data.CMCLIT        clan items
+    world.xml                   the live world (rooms' contents, quests, variables ...)
+    world-manifest.properties   checksums of the world files the game had loaded
+    modules.json                optional-module state (only when modules are in use)
+    .complete                   SHA-256 of every file above: proves the save is whole
+  autosave1/ autosave2/ ...     rotating autosaves
+  checkpoint1/ ...              CHECKPOINT ring
+  .play-1730900000000/          the running game's working database (removed at the next start)
+  .old-hero/                    the previous generation of hero
+  .new-hero/                    hero being written
+  .damaged-hero-1730900100000/  a hero found damaged and set aside
+  recordings/                   RECORDINPUT playtest files
+```
+
+Dot-folders are never listed as saves. Only folders with a valid name and a
+`header.properties` are.
+
+### Writing a save safely
+
+`SaveSlots.write` never edits a save in place:
+
+1. Write everything into `.new-NAME` (tables, `world.xml`, manifest, `modules.json`,
+   header), flush each file to disk, then write `.complete`, a Java properties file
+   with one `path=sha256` line per file, and flush the folders.
+2. Delete the previous `.old-NAME`, rename the current `NAME` to `.old-NAME`.
+3. Rename `.new-NAME` to `NAME`. If that fails, `.old-NAME` is put back.
+
+The last complete generation therefore stays as `.old-NAME` until the next
+successful write. The save folder is owned by one process at a time; a second
+game on the same `SAVEDIR` is refused with "Another game is using the save
+folder ... Close it or choose a different SAVEDIR." The operating system releases
+the lock if the game crashes, and the stale lock file is harmless.
+
+### Recovery
+
+At every start, listing, save and delete, the folder is repaired
+(`SaveSlots.recover`). For each name that has a `.old-` or `.new-` folder, and
+whose public folder is not whole:
+
+| Situation | Result |
+| --- | --- |
+| Public folder whole | Nothing to do. |
+| Public folder missing (crash between the two renames) and `.new-NAME` whole | `.new-NAME` becomes `NAME`: the save you asked for. |
+| Public folder missing or damaged and `.old-NAME` whole | `.old-NAME` becomes `NAME` (the previous generation). |
+| Only `.new-NAME` whole | It becomes `NAME`. |
+| None whole | Nothing is done; `NAME` stays as it is and will be refused. |
+
+A damaged public folder is not deleted: it is renamed to
+`.damaged-NAME-<milliseconds>` so that you can inspect it. "Whole" means: a
+non-empty readable `header.properties`, a `db/` folder, `world.xml`, and, if `.complete`
+exists, every file it lists present with the listed SHA-256. Files the manifest
+does not list (a desktop's `.DS_Store`, a sync tool's marker, `world.xml.bak`) are
+ignored, so they do not make a good save look damaged. A save with no `.complete`
+at all is a legacy snapshot and is accepted if it has the other parts.
+
+### Format versions
+
+| Item | Value | Meaning |
+| --- | --- | --- |
+| `version` in `header.properties` | `1` (also when absent) | Plain save. |
+| | `2` | Module-aware save: also has `moduleformat=1` and a `modules.json`. Written only when optional modules are in use, so a world without modules keeps writing version 1. |
+| `VERSION` on `<WORLD>` in `world.xml` | `1` | The only snapshot version this engine reads. |
+
+Before replacing anything, `RESTORE` and the launcher validate the save and refuse
+with: `The save 'x' is incomplete or damaged.`, `Unsupported save format N in
+'x'. This engine supports versions 1 and 2.`, `The module-aware save 'x' is
+missing its module metadata.`, `The world snapshot in 'x' is incomplete or
+damaged.` or `Unsupported world snapshot version N in 'x'.` A save that needs
+optional modules the world no longer provides is refused with "The save cannot
+load its optional modules: ...". The module capsule (selection, versions,
+settings, scoped owner records) is described in
+[Optional modules](14-optional-modules.md); the world-manifest records which
+module files were loaded.
+
+## What a save contains, and what comes from the world files
+
+### Two layers
+
+A running campaign is the world files plus the save. The engine never mixes
+them in the files: every start rebuilds the *content* from `world/` into a
+working database (a cache, `resources/fakedb`, is used when the files have not
+changed), and a restore lays the *campaign state* over it.
+
+| Comes from the world files at every start | Comes from the save |
+| --- | --- |
+| Areas, rooms (names, descriptions, exits, locales), room and area effects and behaviours | The profile and every character: stats, skills, items, followers, accounts, journals, clans (the state tables) |
+| Mobs and items as placed, the catalog | What is in each room now: mobs (and how hurt they are), items on the floor, with their saved state |
+| Custom races, classes, abilities, commands, quests (definitions), scripts, JavaScript, text, help, `world.ini` | Dead mobs waiting to respawn and items taken from where they belong |
+| Optional-module definitions | Open/locked doors, weather, room states, timed effects with time left |
+| Whatever `resources/` holds | Script variables, JavaScript `cm.store` data, quest state and variables, per-object script and behaviour state, rides, fights under way, unique items found, crafting yields |
+| | The game clock, time mode, pause, dice, difficulty, party order and settings |
+| | Rooms and areas built or changed in play (a normal game), vessels |
+
+### header.properties
+
+| Key | Meaning |
+| --- | --- |
+| `version`, `moduleformat` | Format (see above). |
+| `character`, `level`, `class`, `race` | The played character, for the menu. The character is logged in again at restore. |
+| `party` | Names of the other characters in the world, comma separated. |
+| `place`, `area` | The played character's room and area. |
+| `saved` | Real time of the save, milliseconds. Orders the list. |
+| `gametime`, `gamedate` | The game clock in milliseconds, and the calendar date as text. |
+| `timemode`, `timemodebefore` | `TURNS` or `REALTIME`; the mode a `Prop_TimeMode` zone took over from. |
+| `paused` | `true` restores the game paused. |
+| `turns` | The count `TURN_PROG` and `TURNS()` use. |
+| `savemode` | The save rules (see above). |
+| `partymeet`, `partyfight`, `partyturns`, `partyorder`, `partyalone` | The `PARTY MEET`, `PARTY FIGHT`, `PARTYTURNS`, `PARTY ORDER` and `PARTY DISABLE` states. |
+| `difficulty`, `exchange`, `genseed` | The difficulty setting, currency exchange rates and `SEED=GAME` generator seed. |
+| `dice` | The random generator's state, set last so play carries on exactly where it stopped. |
+| `cheat`, `dev` | `true` when the save was made with `CHEAT ON` or in a `DEV=1` game. |
+| `worldsum`, `areasums` | Checksums of the world files at the time ([below](#world-sums)). |
+
+Not saved: `TIMESCALE`, `WINDOWS` and `WINDOWPANEL`, `AUTOSAVE`, any `coffeemud.ini` or
+`world.ini` value other than the ones above.
+
+### world.xml
+
+`world.xml` is CoffeeSUD's own XML (text escaped only for `<` and `>`). Its main
+sections, in the order written:
+
+| Tag | Holds |
+| --- | --- |
+| `MENUS`, `NARRATION` | Pending script menus and paged narration. |
+| `PLAYER`, `PARTY` | The played character, and each other character in the world: room, leader, hit points, mana, movement, timed effects, entry limits, inventory with item state, followers. |
+| `ROOMSHAPES` | Rooms made (`NEWROOM`), changed (`CHANGEDROOM`) or destroyed (`GONEROOM`) in play, areas made or changed in play. |
+| `ROOMS` | For every room: effects, states, doors (`DOOR DIR OPEN LOCKED`), the mobs (`MOB`) and items placed in it now. |
+| `SPACE`, `VESSELS` | Things in space; vessels and their travel state. |
+| `DEAD`, `TAKEN` | Mobs waiting to respawn, with time left; items taken away and due back. |
+| `WEATHER`, `AREAS` | Each area's weather and held weather; area states. |
+| `SCRIPTVARS` | `MPSETVAR` variables of every scope that is saved. |
+| `JSSTATE` | JavaScript `cm.store` data. |
+| `QUESTS`, `QUESTRECORDS` | Quest controllers, steps, winners, variables, time left; each character's quest records. |
+| `YIELDS`, `UNIQUES` | Gathered-out rooms; unique items ever made or lost. |
+| `RIDES`, `COMBAT` | Who rides what; who follows whom and who fights whom. |
+
+Behaviours, properties and scripts add their own runtime state inside the object
+they belong to (`BSTATE`, `ASTATE`, `SSTATE`): which `ONCE_PROG`s have run,
+`DELAY_PROG` countdowns, queued `MPALARM`s, a hireling's contract, and so on.
+Behaviours that declare no state simply start fresh.
+
+Mobs that cannot be saved (flagged unsavable, or summoned and left out of saves)
+are not kept unless they follow a player. Mobs and items belonging to a running
+quest are left to the quest.
+
+What a save does **not** keep whole: the call stack of a running script
+interpreter (use explicit stages), anything held only in Java statics of custom
+code, background jobs (cancelled on restore), native I/O. The per-system answers
+are in [State and persistence](state-and-persistence.md).
+
+### Restoring: the sequence
+
+1. Validate the save and its modules; remember the restore request.
+2. The engine restarts. `beforeBoot` makes a fresh working database from the
+   content and puts the save's tables over it, then reads the header: clock, time
+   mode (and pause), save mode, party settings, cheat flag.
+3. The world boots from the files; the clocks read their dates; the world's
+   JavaScript `init.js` and `onBoot()` run (the world is flagged *pending* so
+   scripts wait rather than run what they already ran).
+4. `WorldState.apply` empties every room of the mobs and items the boot placed
+   and puts back what the save holds, then doors, weather, area states, variables,
+   quests, rides and so on.
+5. The played character logs in. `finishRestore` brings the other characters back
+   into the world where they were, resolves who follows whom, puts hit points and
+   timed effects back, and restores fights and rides.
+6. The dice state is restored last. `GAME_PROG RESTORE` and the JavaScript
+   `onRestore(player, slot)` hook fire; any change report is shown ([below](#the-restore-report)).
+
+## Restoring after the world changed
+
+You edit `world/` after a campaign has been saved. What does a restore do?
+
+### World sums
+
+Every save records `worldsum` (a checksum of all the world files the game had
+loaded, written `3-<count>-<crc>`) and `areasums` (a checksum of each area file).
+At a restore the game compares them with the files it just booted from.
+
+- The first part of a sum is its *kind*. Sums of different kinds (a save from an
+  older version of CoffeeSUD) cannot be compared; only the area files are
+  compared, and the world is said to have changed only if one has.
+- Optional-module files and the `dev/` areas are tracked separately and do not
+  count in the world sum; modules are versioned by their own manifests.
+- `SAVES` marks a save `(older world)` when its sum differs from the world as it
+  is now.
+
+### Default: the save wins, for contents
+
+By default every room's **contents** come from the save. The restore empties
+every room of the mobs and items the boot placed and puts back the saved ones.
+That means:
+
+- Changes to a room's name, description, exits, flags, effects, and to areas,
+  custom classes, quest definitions, scripts, help and text show up after a
+  restore, because those come from the files.
+- Changes to the mobs and items **placed** in a room by an area file that already
+  existed when the save was made do **not** show up: the save's version of the
+  room wins.
+- A room that is in the files but did not exist when the save was made has nothing in
+  the save, so, by the code (`clearWorld` and `apply`), it is emptied of its placed mobs
+  and items unless its area is taken fresh (below). Test this with your own world
+  before shipping a patch; take the area `FRESH` if it holds new rooms.
+- Rooms, exits and areas the player built or changed in play are kept as built
+  (`ROOMSHAPES`), unless their area is taken fresh.
+- A saved room that the files no longer have is reported, and its saved mobs and
+  items are dropped.
+
+### FRESH
+
+`FRESH=` tells the restore to take some areas' room contents from the world as it
+is now instead of from the save. Characters and everything else still come from
+the save.
+
+| Value | Areas taken fresh |
+| --- | --- |
+| `CHANGED` | The area files that are new or whose checksum differs from the save's `areasums`. |
+| `ALL` | Every area. |
+| `Name,Name` | The named areas (area names or area file names, comma separated, case-insensitive). |
+
+```text
+RESTORE hero FRESH=CHANGED
+RESTORE 2 FRESH=Millbrook,The Old Mill
+```
+```sh
+CoffeeMud/sud.sh RESTORE=hero FRESH=CHANGED
+```
+
+In a fresh area the dead and taken lists are not applied and room shapes from the
+save are skipped: the area is as the files have it. A character inside it keeps
+their saved location, so a restore into a fresh area is as if the character walked
+into a freshly reset area.
+
+`CHANGED` only sees area files (`areas/*.cmare`); a change that is not in an area
+file (the catalog, quests, scripts) shows up in `worldsum` but names no area.
+
+### The restore report
+
+If anything changed, the first thing the restored character sees is:
+
+```text
+This save was made with another version of the world:
+  The world has changed since this game was saved.
+  Changed area file: millbrook.cmare
+  New area file: sewers.cmare
+  Area file gone: old-keep.cmare
+RESTORE name FRESH=CHANGED takes the changed areas' rooms as they are now.
+```
+
+Other lines can appear in the list, each the result of a specific loss:
+`Room X is gone, with N mobs and M items saved there.`, `The vessel room X is gone,
+with what was saved there.`, `No mob class X: a saved mob is lost.`, `No item class
+X: a saved item is lost.`, `A room made in play could not be made again: ...`,
+`The area X, made in play, is of a kind this game does not have.`, `Room X became a
+kind of room this game does not have (Y).` and `Quest X is gone from the world.` At
+most 60 lines are kept. A separate block, `The save's optional modules:`, reports
+what the restore did with the save's module state; `FRESH=` does not affect it.
+
+### A checklist for shipping a patch to a world with existing saves
+
+1. Keep a save made before the change (`SAVES COPY hero hero-before-patch`); a
+   test made after the edit cannot prove that migration works.
+2. Prefer changes the files carry: descriptions, exits, scripts, quests, items'
+   definitions. Moves of placed mobs or items need `FRESH` or a script that places
+   them (for example an `ENTRY_PROG` that makes the mob if the quest says so).
+3. Keep IDs: area names, room IDs, quest names and instance/source IDs ([State and
+   persistence](state-and-persistence.md)).
+4. Restore the old save twice: once as is (see the report) and once with
+   `FRESH=CHANGED`; compare with `SAVES DIFF` after saving each as a new slot.
+5. Start a new game too, and check it has the new initial state.
 
