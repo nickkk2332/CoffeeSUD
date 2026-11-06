@@ -2069,11 +2069,11 @@ MPQOBJECTIVE $n bell BUMP drowned
 
 **Arguments:** a mob, an item or a room; the amount as a number, or a number with a coin name (`10 gold`; the currency comes from the amount's words, else the actor's currency); a leading `-` takes money instead of giving it.
 
-**Behaviour:** to a mob: gives or takes the amount from its purse. To an item: acts on the holder of the item (if it is a container the coins go into or come out of the container when it is not held by a creature). To a room (or a target that is none of these): coins are dropped on the floor or removed from it.
+**Behaviour:** to a mob: gives or takes the amount from its purse. To an item: acts on the item's holder: a creature's purse, or, if the item lies in a room, the floor (inside the item when it is a container). To a room (or a target that is none of these): coins are dropped on the floor or removed from it.
 
 **Example:** `mpmoney $n 25 gold` pays the player; `mpmoney $n -5 gold` charges them.
 
-**Notes:** taking more than the target has takes what there is. For bank accounts use [MPBANK](#mpbank).
+**Notes:** for bank accounts use [MPBANK](#mpbank).
 
 ### MPSHOP
 

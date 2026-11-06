@@ -442,3 +442,153 @@ Classes not in this table (for example `GenItem`, `GenKey`, `GenReadable`,
 `GenScroll`, `GenLightSource`, `GenJournal`, `GenMap`) have only the generic
 codes. Their special value lives in `READABLETEXT`.
 
+## Item classes
+
+`LIST ITEMS`, `LIST ARMOR`, `LIST WEAPONS`, `LIST MAGIC`, `LIST TECH` and `LIST CLANITEMS`
+print what the running engine can create. This section describes the
+generic (`Gen*`) classes in
+[Items/](../../CoffeeMud/com/planet_ink/coffee_mud/Items/), what each one
+adds over its parent, and the ready-made standard items. When a class's
+default is mentioned, it is what the constructor sets before you edit it.
+
+The inheritance matters because the editor that opens, the stat codes and the
+behaviour all follow it: for example every armor is a container, every drink is
+a container, and every rideable is a container.
+
+### Plain items
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenItem` | `StdItem` | The universal item: name, description, weight 2, value 5, level 1, oak. Use it for anything with no special behaviour: treasure, tools, quest objects, scenery |
+| `GenReadable` | `GenItem` | An item that is always readable; its readable text is what `READ` shows. A text starting `FILE=` reads a file instead (below) |
+| `GenWallpaper` | `Item` | A very light item for scenery: just a name, description and readable text (no stats, not gettable). Hundreds of these cost little memory |
+| `GenFatWallpaper` | `GenWallpaper` | Wallpaper that also has display text |
+| `GenFixture` | `GenItem` | A fixed object (not gettable, weight 20, value 10), e.g. an anvil or an altar |
+| `GenMirror` | `GenItem` | A mirror: looking at it shows the viewer to themselves |
+| `GenKey` | `GenItem` | A key. Its readable text is the key code. See [keys](#keys) |
+| `GenResource` | `GenItem` | A raw resource item (a pile of iron, a log of oak). Adds the editor fields *Rsc Sub-Type*, and stat codes `DOMAINSRC` and `RSUBTYPE` |
+| `GenFoodResource`, `GenLiquidResource` | `GenFood`, `GenDrink` | Raw resources that can be eaten or drunk |
+| `GenRuinedItem` | `GenItem` | The shell of an item that wore out or was ruined; cannot be worn or wielded |
+| `GenAmmunition` | `StdItem` | A stack of ammunition (arrows, bolts). Its *readable text* is the ammunition type, and *Uses Remaining* is the count. Weapons that require ammunition match this type |
+| `GenCaged` | `GenItem` | A caged creature: a mob frozen into an item (a pet in a cage), which is released as a mob |
+| `GenPackagedItems`, `GenPackagedStack`, `GenPackagedVariety` | `GenItem` | Package items made by the `PACKAGE` command; hold copies of one or several kinds of item. Field: *Number of items in the package* |
+| `GenPerfume` | `StdPerfume` | A perfume bottle (a drink container); adds *Smells list* |
+| `GenCigar`, `GenPipe` | `StdSmokable` | Smokeable items; wearing in the mouth lights them. Adds a burn duration (default 200) |
+| `GenLimb` | `StdLimb` | A false limb; field *Race ID* (the race whose limb it replaces) |
+| `GenGrapples` | `StdGrapples` | A set of ship grapples that can be thrown to lash vessels together |
+| `GenTitle` | `StdTitle` | A land title: *Owner*, *Price* and *Land plot ID* (a room) |
+| `GenMagicInstrument`, `GenInstrument` | | see [instruments](#instruments) |
+
+### Readables, books and boards
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenPaper` | `StdPaper` | A sheet or book of writable paper, with *Max Pages* and *Chars/Page* |
+| `GenBook` | `StdBook` | A book readers `READ [n] BOOK` and writers `WRITE` chapters into. Chapters are kept as journal entries named after the book. Adds *Max Pages*, *Chars/Page* |
+| `GenJournal` | `StdJournal` | A journal/board with read and write permissions as masks |
+| `GenPlayerBook` | `StdPlayerBook` | A book that players write and read |
+| `GenTome` | `GenReadable` | A static paged book (`READ 3 TOME`, `READ NEXT`, `READ PREV`, `TEAR PAGE 2 FROM TOME`). Pages live in the item text, so they are in world files |
+| `GenMap` | `StdMap` | A map of one or more areas (readable text: area names separated by `;`) |
+| `GenRecipe` | `GenReadable` | A recipe book that teaches or lists crafting recipes for one skill; stat codes `SKILLID`, `RECIPES`, `NUMRECIPES` |
+| `GenDissertation` | `StdDissertation` | A scroll of instructions/lore that can be studied |
+| `GenLawBook` | `StdLawBook` | A book that holds an area's legal entries |
+| `GenQuestBoard` | `StdQuestBoard` | A notice board that lists open quests; `READ` shows them |
+
+Detail for books follows in [Readable items](#readable-items-books-journals-maps-scrolls).
+
+### Weapons
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenWeapon` | `StdWeapon` | The general weapon. Wield or hold, steel, damage 5, level 5. Adds attack type, classification, ranges, ammunition |
+| `GenBow`, `GenHandBow` | `StdBow` | Ranged weapons with ammunition (arrows), ranges 1-3, two-handed (bows) |
+| `GenSling` | `StdSling` | Ranged weapon fired with stones |
+| `GenSpear` | `StdSpear` | A thrown or held spear |
+| `GenBoffWeapon` | `StdBoffWeapon` | A harmless "boff" weapon that deals soft hits ("puff", "boff") for practice and play |
+| `GenLasso`, `GenNet` | `StdLasso`, `StdNet` | Entangling tools used as weapons |
+| `GenStaff` | `GenWeapon` + `Wand` | A staff that is both a weapon and a wand (spell, charges, enchant type) |
+| `GenSiegeWeapon` | `StdSiegeWeapon` | A rideable siege engine with ammunition and ranges (default max range 10); see [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md) |
+| `GenShield` | `GenArmor` + `Shield` | Armor held in the hand |
+
+`Natural` is the weapon type used for creatures' natural attacks; you do not
+create it. See [Weapons](#weapons).
+
+### Armor
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenArmor` | `StdArmor` | General armor. Weight 25, armor 10, leather, level 1. A container with capacity 0, subject to wear and tear, sized by height |
+| `GenThinArmor` | `StdThinArmor` | Clothing-grade armor: not a container, no wear and tear, ignores size |
+| `GenShirt`, `GenPants`, `GenShoes`, `GenDress`, `GenBelt` | `GenArmor` | Pre-set wear location and look for clothes |
+| `GenCloak` | `GenArmor` | A cloak that replaces the wearer's visible name with its *Cloak Name* while worn |
+| `GenGangline` | `GenArmor` | Leather straps that bind a team of animals together |
+| `GenEarring` | `GenThinArmor` | Jewelry worn on a pierced body part (ears), multi-wear at layer -10 |
+| `GenShield` | `GenArmor` + `Shield` | A shield held in a hand |
+
+### Containers, drink and food
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenContainer` | `StdContainer` | General container: capacity 50, optional lid and lock, types allowed |
+| `GenGiftContainer` | `GenContainer` | A gift-wrapped container ("Open it and find out what's in it!") |
+| `GenBagOfHolding` | `BagOfHolding` | Container whose contents weigh less than normal |
+| `GenBagOfEndlessness` | `BagOfEndlessness` | A bag that refills. Archon only in its plain form |
+| `GenDrink` | `StdDrink` | A drinking container (a drink is a container): capacity 5, fresh water, leather, quenches per sip |
+| `GenEmptyDrink` | `GenDrink` | A drink container that starts empty |
+| `GenWater`, `GenFountain` | `GenDrink`/`GenWater` | An unlimited source of liquid (puddle, fountain) that fills drink containers |
+| `GenTub` | `StdTub` | A bath tub that can hold riders and liquid |
+| `GenLantern` | `GenLightSource` + `LiquidHolder` | A lantern fuelled by liquid (lamp oil); default duration 800 |
+| `GenStove` | `GenContainer` + `Light` + `FuelConsumer` | A stove or cooker that burns fuel (`CONSUMEDTYPES`) |
+| `GenBurnOven` | `GenContainer` | A wood-burning oven |
+| `GenFood` | `StdFood` | Food. Adds *Nourishment* and *Bite size* |
+| `GenPill` | `StdPill` | A pill that casts spells when eaten (spell list in readable text) |
+| `GenSuperPill` | `GenPill` | Archon pill: stat/training boosts. Archon only |
+| `GenPotion` | `StdPotion` | A potion that casts spells on drinking |
+| `GenMultiPotion` | `GenDrink` + `Potion` | A flask with several doses |
+| `GenPowder` | `StdPowder` | Magic dust (`MagicDust`), thrown or scattered |
+| `GenLightSource` | `LightSource` | A light that burns for a duration (readable text) and may be destroyed when it runs out |
+
+### Magic items
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenWand` | `StdWand` | A wand: one spell, charges, enchant type. Words activate it |
+| `GenStaff` | `GenWeapon` + `Wand` | A staff that is also a weapon |
+| `GenScroll` | `StdScroll` | A scroll of one or more spells, read off to cast them |
+| `GenPotion`, `GenPill`, `GenPowder`, `GenMultiPotion` | | see above |
+| `GenMagicInstrument` | `GenItem` + `MusicalInstrument` + `Wand` | An instrument that casts a spell |
+| `GenDice`, `GenPlayingCard` | `StdDice`, `StdPlayingCard` | Dice and cards (`DeckOfCards`, `HandOfCards`) |
+
+### Furniture, rideables and boardables
+
+| Class | Based on | What it is / adds |
+| --- | --- | --- |
+| `GenRideable` | `StdRideable` | The base for anything creatures can sit on, sleep on or ride. Default is a generic boat |
+| `GenFurniture` | `GenRideable` | Furniture (sit, 2 riders, not gettable, oak, weight 40) |
+| `GenChair`, `GenBed`, `GenTable`, `GenTent`, `GenScale` | `GenRideable` | Seat, bed, table, tent and scales with the right rider basis |
+| `GenBoat` | `GenRideable` + `SiegableItem` | A simple boat |
+| `GenCage`, `GenCageRideable` | | A cage holding a caged animal; a cage wagon |
+| `GenPortal` | `StdPortal` | An item that is also an exit: its readable text lists room IDs |
+| `GenMobilePortal` | `GenPortal` | A rideable portal that can be carried or moved |
+| `GenBoardable` | `StdBoardable` | An item you can enter, with its own area and rooms (a house-like vessel) |
+| `GenNavigableBoardable`, `GenSailingShip`, `GenCaravan`, `GenAirShip`, `GenBalloon` | | Boardables that move; `GenSiegableBoardable`, `GenCastle` add siege |
+| `GenSpaceBody`, `GenWormhole` | | Bodies and wormholes in space |
+
+Boardables, ships and vehicles are covered in
+[30-travel-vehicles-instances.md](30-travel-vehicles-instances.md).
+
+### Standard (ready-made) items
+
+These classes have fixed stats and are created with `CREATE ITEM [ID]`. They
+are mainly filler and examples; for your own world, copy a generic class.
+
+| Folder | Examples |
+| --- | --- |
+| `Items/Weapons` | `Dagger`, `Dirk`, `Stiletto`, `Sword`, `Shortsword`, `Longsword`, `Claymore`, `Katana`, `Rapier`, `Sabre`, `Scimitar`, `TwoHandedSword`, `BattleAxe`, `Halberd`, `Glaive`, `Spear`, `Javelin`, `Mace`, `SmallMace`, `WarHammer`, `SmallHammer`, `Quarterstaff`, `Staff`, `Whip`, `Sickle`, `Trident`, `Cestus`, `Arquebus`, `Broom`, `Ruler`, `ThrowingStone`, `ShieldWeapon` and the themed `Drow*`, `FlamingSword`, `HolyAvenger`, `DaggerOfVenom`, `DragonClaw`, `EternityQuarterstaff` |
+| `Items/Armor` | `LeatherArmor`, `StuddedLeatherArmor`, `PaddedArmor`, `HideArmor`, `ChainMailArmor`, `ChainMailVest`, `RingMail`, `ScaleMail`, `SplintMail`, `BandedArmor`, `FieldPlate`, `FullPlate`, `Helmet`, `GreatHelm`, `LeatherCap`, `Hat`, `Hood`, `Robes`, `ThreadbareRobes`, `Shirt`, `Pants`, `Dress`, `Shoes`, `WalkingBoots`, `LeatherBoots`, `LeatherBracers`, `MetalBracers`, `LeatherGauntlets`, `SteelGauntlets`, `StdShield`, plus themed `Eternity*`, `MichaelsMithrilChain`, `GlovesSpeed`, `Hat_Intelligence`, `GlowingMageArmor` |
+| `Items/Basic` | `Apple`, `Ration`, `Waterskin`, `Wineskin`, `OilFlask`, `Torch`, `Lantern`, `Backpack`, `SmallSack`, `LargeSack`, `SmallChest`, `LargeChest`, `NeedleChest`, `TrappedChest`, `Bed`, `Chair`, `Boat`, `HorseCart`, `Ring`, `Ring_Ornamental`, `Gem`, `Parchment`, `Pot`, `Pan`, `StdKey`, `StdInnKey`, `Spring`, `HoleInTheGround`, `Corpse`, `QuestPoint`, `BardMap`, `SeaMap`, `LockableContainer`, `CloseableContainer`, `Star`, `Moonlet`, `DwarfStar`, `GasGiant`, `Asteroid`, `MassiveStar` |
+| `Items/MiscMagic` | `BagOfHolding`, `BagOfEndlessness`, `CubicGate`, `PortableHole`, `LifeFountain`, `DruidicMonument`, `Ring_Protection`, `RingOfFortitude`, `RingOfMagicResistance`, `RingOfColdProtection`, `RingOfElectricity`, `RingOfJustice`, `Wand_Fire`, `Wand_Nourishment`, `Wand_Advancement`, `PracticePoint`, `TrainingSession`, `Ingredients`, `HerbChest`, `ScrollSpell`, and the archon-only `WandArchon`, `ManualArchon`, `ManualClasses`, `ManualAdvancement`, `GoodyBag`, `ArchonJournal`, `ArchonStaff` |
+
+Names in `Items/` that end in `Wrapper` (`StdItemWrapper` and so on) are
+engine helpers for proxying objects, not items to create.
+

@@ -846,10 +846,9 @@ XP](#craft-and-gather-xp)).
   list, weighted by each resource's frequency, and a quarter of the weight goes to
   the resources its neighbours of the same locale rolled (so patches form).
 - **`ResourceOverride`** (a behaviour on a room, area or mob) replaces that list.
-  Parameters: resources by name or code, optionally room types to apply to when
-  put on an area, `MIN=` `MAX=` `CHANCE=` for how often the room re-rolls, a
-  custom item as `"item name(RESOURCE SUBTYPE)"`, and `MOBMASK=` for corpses
-  (butchering). After changing an area's ResourceOverride, `RESET AREA` to put
+  Parameters: resources by name or code, room types to apply to when put on an
+  area, `MIN=`, `MAX=` and `CHANCE=` (timing and chance), a custom item as
+  `"item name(RESOURCE SUBTYPE)"`, and `MOBMASK=` for corpses (butchering). After changing an area's ResourceOverride, `RESET AREA` to put
   the rooms back. See [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
 - **A named variant** such as `"moonpetal" HERBS` (see [resource
   variants](#resource-variants-resourcestxt)): `ResourceOverride(moonpetal(HERBS moonpetal))`.
@@ -915,16 +914,16 @@ mask applies everywhere.
 
 | File | Skill | Columns |
 | --- | --- | --- |
-| `hunting.txt` | Hunting | `RESOURCE`, `DOMAIN` (`*`, a room domain or a locale class ID), `FREQUENCY`, `MOB` (catalog or class name of the animal), `MASK` |
+| `hunting.txt` | Hunting | `RESOURCE`, `DOMAIN` (`*`, a room domain or a locale class ID), `FREQUENCY`, `MOB` (a mob or race the hunter finds), `MASK` |
 | `fishing.txt` | Fishing and relatives | `RESOURCE`, `FREQUENCY`, `NAME` (the catch), `VALUE`, `MASK` |
 | `herbology.txt` | Herbology | One herb name per line, optional tab and `MASK` |
 | `floristry.txt` | Floristry | One flower per line, optional tab and `MASK` |
-| `mycology.txt` | Mycology | `NAME`, `FREQUENCY`, `VALUE`, `MASK` (the fifth column in the code is the mask) |
+| `mycology.txt` | Mycology | `NAME`, `FREQUENCY`, `VALUE`, `SPELLS` (may be empty), `MASK` |
 | `taxidermy.txt` | Taxidermy | Pose names and the messages for each (text blocks, not rows) |
 
 ```text
 Shrimp	10	Shrimp	1
-Shrimp	1	lantern eel	12	-AREA +BogOfLights -HOUR +20-23
+Shrimp	1	lantern eel	12	-HOUR +22
 ```
 
 A masked fishing row carries its own value, so a fish can be worth more in one
@@ -1018,7 +1017,7 @@ can sell a `StdTitle` or `GenTitle` item whose property ID is the lot's ID.
 The buyer gets a title they can `GIVE` or `SELL`. `LOOK ID` in a lot shows its
 ID. A `RENTAL` price is charged every month from the owner's bank account;
 failing to pay returns the lot to sale. `ALLOWTHEFT` turns off robbery
-enforcement there. Items left in an owned room are kept for the owner.
+enforcement there. The engine keeps the items left in a sold room.
 
 **CoffeeSUD ownership by profile (CR1).** Single-player replaces accounts
 with a *profile* (the player's set of characters, see

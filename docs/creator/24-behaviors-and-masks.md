@@ -1035,3 +1035,502 @@ organisations system ([chapter 9](09-society.md)).
 ```text
 GuildMaster CLAN="Iron Guard" JOINFEE=50 KIT.MEMBER="iron badge" KITFEE=10
 ```
+
+### Healer
+
+Hosts: mobs. Timing default 10/20/100. The mob gains Cure Disease, Cure Light
+Wounds, Cure Serious Wounds, Bless and Sanctuary, and at random casts them on
+player mobs in the room. CoffeeSUD adds choice of whom and what.
+
+| Parameter | Meaning |
+| --- | --- |
+| `SPELLS=[ID],[ID]` | Its own spells instead of the stock set (the help says "those six"). |
+| `HEALAT=[N]` | Heal only those under N% of their hit points, the most hurt first (its cures, for poison and disease, first of all). Default 0 (off). |
+| `TARGET=GROUP` / `TARGET=MASK:"[ZAPPER MASK]"` | Whom it heals; NPCs too. |
+
+With any of `SPELLS`, `HEALAT` or `TARGET` it chooses whom it heals rather than
+at random.
+
+```text
+Healer min=10 max=20 chance=75
+Healer min=1 max=2 chance=100 HEALAT=70 SPELLS=Prayer_CureSerious,Prayer_CureDisease TARGET=MASK:"-NPC"
+```
+
+### Hireling
+
+Hosts: mobs. Lets a mob hire itself out for money for a time. When the time
+expires it returns to its start room. The parameter is
+
+```text
+price;minutes(;mask) KEY=value ...
+```
+
+The first number is the price to hire (in the mob's base currency), the second
+is the minutes of service it buys (default 30 if omitted), and an optional third
+section is a zapper mask of who it will work for. Additional money extends the
+time. The CoffeeSUD terms are `KEY=value` words after those, extracted first
+(quote a value with spaces):
+
+| Key | Meaning |
+| --- | --- |
+| `KEYWORDS=[WORD],...` | Words that ask its terms (default `HIRE`, `HIRELING`, `WORK`, `WORKS`, `TIME`, `AVAILABLE`). |
+| `MSG_OFFER` | Its offer; `@x1` is the price, `@x2` the term. |
+| `MSG_HIRED` | When hired; `@x1` is the term, `@x2` its skills. |
+| `MSG_REFUSE`, `MSG_EXPIRE`, `MSG_NOORDER` | Other lines. (`Prop_NPCLines` rewords the stock ones too.) |
+| `CONTRACT=MINUTES` (the second number), `DAYS` (that many game days), `"QUEST:[NAME]"` (until the employer's quest is won, failed or dropped), `UNTILFIRED` (until the employer says `FIRED`) | The kind of contract. |
+| `UPKEEP=[N]` | Wages per game day, taken from the employer; after two unpaid days it leaves. |
+| `FLEEHP=[N]` | Below N% of its hit points in a fight it quits, unless its opinion of the employer (`Prop_Affinity`) is at least `LOYAL=[N]` (25). |
+| `REFUSE=[COMMAND],...` | Orders it will not take. |
+
+`HIRE [MOB]` shows its terms as a menu; `HIRE [MOB] PAY` pays its price. The
+contract and wages are saved.
+
+```text
+Hireling 10000;30
+Hireling 500;0;CONTRACT="QUEST:goblinwar" UPKEEP=5 MSG_HIRED="My blade is yours till the goblin king falls."
+```
+
+### InstantDeath
+
+Hosts: mobs, items, rooms, areas (and exits). Timing default 1/1/100. The host's
+owner or inhabitants are killed. MOBs do not kill until attacked; food kills
+when eaten, drink when sipped; items when picked up; weapons when first
+wielded; armor when first worn. Rooms merely need to be entered, and kill all
+their inhabitants. `MASK="[zapper mask]"`: allowed is killed, disallowed spared.
+
+```text
+InstantDeath min=10 max=20 chance=75 mask="-RACE +ORC"
+```
+
+### ItemGenerator
+
+Hosts: areas, rooms, mobs, items (containers). Generates items from the standard
+common (crafting) skills' item lists, adding random enchantments and curses a
+percentage of the time. Items are chosen pseudo-randomly, weighted toward the
+least valuable ones (to avoid a plethora of the most valuable). Items taken
+away are replaced, even if looted. Parameters before the first `;` describe
+rate and amount; after it, a mask selects which items may be generated
+(allowed is generated).
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing: it tries every min to max ticks, if the chance roll succeeds. | 10/30/100 |
+| `MINITEMS`, `MAXITEMS` | At least and at most this many items. | 1 and 1 |
+| `MAXDUPS` | Most copies of one item. | unlimited |
+| `ENCHANTED=n` | Percent of items enchanted or cursed. | 10 |
+| `MOBS` | Put the items on a mob if possible (items on mobs are worn if possible). Automatic when the host is a mob. On a shopkeeper the shop stocks them. | off |
+| locale words | `-ALL +CITY ...` on an area: which room types may get items (see [Locale restriction words](#locale-restriction-words)). With none, every room qualifies. | all |
+
+On an area a random room is picked for each item.
+
+```text
+ItemGenerator min=10 max=20 chance=75 minitems=1 maxitems=10 maxdups=0;-LEVELS +>10
+ItemGenerator minitems=10 maxitems=20 MOBS -ALL +CITY;-MATERIAL +IRON +BRONZE
+ItemGenerator minitems=10 maxitems=20 enchanted=20;-NAME "+Short Sword"
+```
+
+### ItemIdentifier
+
+Hosts: mobs. For a price the mob identifies items. It does not work for archons.
+`COST="[FORMULA]"` changes the price formula; variables: `@x1` level, `@x2`
+value, `@x3` condition (0-100), `@x4` magical (1.0) or non-magical (0.0).
+
+```text
+ItemIdentifier COST="100+@x1"
+```
+
+### ItemMender
+
+Hosts: mobs. For a price the mob repairs damaged weapons and armor. It does not
+work for archons. `COST="[FORMULA]"` as in [ItemIdentifier](#itemidentifier).
+
+```text
+ItemMender COST="100+@x1"
+```
+
+### ItemRefitter
+
+Hosts: mobs. For a price the mob resizes armor to fit the customer. Not for
+archons. `COST="[FORMULA]"` as in [ItemIdentifier](#itemidentifier).
+
+### ItemUpgrader
+
+Hosts: mobs, items. CoffeeSUD. A smith, or a workbench, that upgrades items
+along set paths. Each row is `UPGRADE1` to `UPGRADE9`, or one per line in the
+file named by `UPGRADES=` (for example `world/upgrades.txt`), using the same
+keys inside the row:
+
+| Key in a row | Meaning |
+| --- | --- |
+| `FROM=` | The items it takes: a name, `tag:X` or `catalog:X`, `\|` between alternatives. |
+| `TO=catalog:[ITEM]` | A catalog item it becomes in its place (held or worn as it was; `KEEP` as `MPTRANSFORM`'s). |
+| `ADJ="dam+N att+N arm+N lvl+N"` | Instead of `TO`: the same item better. |
+| `COST=[GOLD]` | Gold cost. |
+| `MATERIALS="[NAME] x[N], [NAME]"` | What is used up (`x3` for three). |
+| `LEVEL=[N]` | The least item level. |
+| `KEEP=[KEEPS]` | What survives the change (as `MPTRANSFORM`'s KEEP, such as `TAGS,STATE`). |
+| `MSG="[TEXT]"` | What is seen. |
+
+An item with the `Prop_UpgradePath` property carries its own row.
+`UPGRADE [ITEM]` tells what it would take; `UPGRADE [ITEM] CONFIRM` does it.
+
+```text
+ItemUpgrader UPGRADE1="FROM=notched TO=\"catalog:Starfall, the reforged blade\" COST=2000 MATERIALS=\"starmetal ingot x3\" LEVEL=20 KEEP=TAGS,STATE"
+```
+
+### JSBehavior
+
+Hosts: mobs, items, exits, rooms, areas. CoffeeSUD. Runs a JavaScript file as
+`Prop_JScript` does. Parameter: `SCRIPT=[FILE] ([NAME]=[VALUE])...`. The script
+may define `okMessage(host, msg)` (false refuses the message), `executeMsg(host,
+msg)`, `tick(host, tickID)`, `onAdded(host)`, `onRemoved(host)` and
+`catchUp(host, ticks)`. A behavior is not asked for stat changes (`Prop_JScript`
+has those hooks). Whatever a hook changes in `parms` is written back to the
+behavior's parameters. See [chapter 5](05-javascript.md).
+
+```text
+JSBehavior SCRIPT=world:js/props/bellringer.js EVERY=12
+```
+
+### JSWorldBehavior
+
+Hosts: rooms, areas. CoffeeSUD (no shipped help entry). The base class for a
+JavaScript class in `world/js/behaviors/` that extends
+`com.planet_ink.coffee_mud.Behaviors.JSWorldBehavior` (a `//extends` line),
+giving a room or area event hooks. The hooks, all optional: `onEnter(mob,
+room)`, `onLeave(mob, room)` (someone enters or leaves a room it is on, or one of
+its area's), `onWeather(area, was, now)` and `onDaypart(area, was, now)` (time of
+day `DAWN`, `DAY`, `DUSK`, `NIGHT`). Helpers: `echo(text)` to the host (a room,
+or every occupied room of an area), `roll("3d6")`, `spawn(catalogName)` (a
+catalog mob copy in its room, the catalog's cap holds), `room()`, `area()` and
+`parm(name)` (a `KEY=value` of its own parameters). See
+[chapter 5](05-javascript.md) and [chapter 32](32-engine-programming.md).
+
+### JScriptable
+
+Hosts: mobs, items, exits, rooms, areas. CoffeeSUD. Scripts its host wholly in
+JavaScript. Parameter: `LOAD=[FILE] (SCOPE=[INDIVIDUAL/GLOBAL/NAME])`, or the
+script text itself. A `SCOPE` other than `INDIVIDUAL` shares one script among
+all hosts that name it. The script defines the handlers it wants:
+`onLoad`, `onGreet(who)`, `onArrive(room)`, `onLeave(who)`, `onSpeech(who,
+text)`, `onGive(who, item)`, `onGet`, `onDrop`, `onWear`, `onRemove` (who, item),
+`onOpen`, `onClose`, `onLock`, `onUnlock` (who, thing), `onDeath(killer)`,
+`onKill(victim)`, `onDamage(who, amount)`, `onCast(who, ability, target)`,
+`onLook(who)`, `onTick`, `onHour(hour)`, `onDay(day)`, `onCommand(who, verb,
+rest)` (true handles a command typed near the host), `canMessage(msg)` (false
+refuses it), `afterMessage(msg)` and `onReload(old)`. Its other functions answer
+`MPCALLFUNC` and `CALLFUNC`. The script has `me`, `cm`, `CMMsg` and `state`, the
+host's `cm.store`, saved with the game. See
+[chapter 5](05-javascript.md).
+
+```text
+JScriptable LOAD=world:js/npc/ferryman.js
+```
+
+### LinkedWeather
+
+Hosts: areas. Forces the area to mimic the weather of another area. The
+parameter is the area name; followed by `;ROLLING` the area instead takes on the
+linked area's weather at its next weather change, so weather appears to roll in.
+
+```text
+LinkedWeather My Area
+LinkedWeather My Area;ROLLING
+```
+
+### MOBEater
+
+Hosts: mobs. Timing default 4/8/50. The mob eats other mobs or players and
+digests them. Another player must kill the mob to free those inside. It does not
+work unless the mob weighs at least twice as much as the target. `ACIDPCT=n` is
+the percent of a victim's hit points the stomach acid takes (default 50). Run state is saved.
+
+```text
+MOBEater min=4 max=8 chance=5 acidpct=50
+```
+
+### MOBHelper
+
+Hosts: mobs. The mob comes to the defence of any non-player mob attacked in its
+presence. Optional: a number (most combatants that may join) and
+`MSG="[ATTACK MESSAGE]"`.
+
+```text
+MOBHelper 5 MSG="OMG ATTACK!"
+```
+
+### MOBHunter
+
+Hosts: mobs. Timing default 600/1200/100. The mob seeks a victim within
+`RADIUS` rooms (default 15) and hunts and assassinates it. `MIN`/`MAX` is the
+wait between hunts and `CHANCE` the chance a hunt begins then. The remaining
+text is a mask of who makes a good victim (allowed is hunted, disallowed
+ignored).
+
+```text
+MOBHunter min=600 max=1200 chance=99 radius=50 -RACE +Human
+MOBHunter min=50 max=1200 chance=75 -NAME "+Evil Wizards"
+```
+
+### MOBReSave
+
+Hosts: mobs. Timing default 140/140/100. Updates the mob in the engine's mob
+database at the given interval. In CoffeeSUD, where worlds are saved as world
+files and campaign saves, its use is doubtful; see the audit notes. It writes
+the mob's base character stats (`STR=`, `INT=`... abbreviations) into its own
+parameters and restores them.
+
+### MOBTeacher
+
+Hosts: mobs. Makes the mob able to teach skills, spells, prayers, songs or
+expertises. The parameter is a list of tokens:
+
+| Token | Meaning |
+| --- | --- |
+| a character class name | Teach abilities of that class (not base classes: list every subclass for a whole base class). Any class may always practice with a MOBTeacher; the mob teaches only those abilities of the classes named. |
+| an ability ID | Teach that ability. |
+| an expertise name | Teach that expertise. |
+| `[N]%` | Chance that following classes or spells are known by the teacher; a later percentage overrides it. |
+| `NOTEACH` | The mob neither teaches nor uses the skills. |
+| `NOCOMMON` | Does not teach common skills. |
+| `NOEXPS` | Does not teach expertises. |
+| empty | Teaches all basic skills; expertises only if it otherwise qualifies; class changes only if it is that class. |
+
+CoffeeSUD teacher rules, in any order among the rest:
+
+| Key | Meaning |
+| --- | --- |
+| `STUDENTMASK="[ZAPPER MASK]"` | Whom it teaches at all; `REFUSEMSG="[TEXT]"` is what it says to others. |
+| `SKILLMASK.[ABILITY ID]="[ZAPPER MASK]"` | Whom it teaches that skill. |
+| `PRICE="[N] per level"` or `PRICE=[N]` | Money taken for each lesson, on top of the usual cost. |
+| `HIDDEN=[ID],[ID]` | Skills it teaches but leaves off TEACHLIST. |
+
+These gate `TEACH ME`, `GAIN`, `PRACTICE` and `TRAIN` with it; `TRAIN` with no
+trainer named passes over one who refuses. `TEACHLIST` shows a student what this
+teacher offers them. Single quotes may be used inside the masks
+(`'+Temple of Arden>=ACOLYTE'`).
+
+```text
+MOBTeacher mage evoker illusionist transmuter
+MOBTeacher 100% mage 10% Thief_Steal NOCOMMON
+MOBTeacher Spell_Sleep 5% Spell_Wish
+MOBTeacher Prayer_Bless Prayer_Sanctuary STUDENTMASK="-CLANRANK '+Temple of Arden>=ACOLYTE'" SKILLMASK.Prayer_Sanctuary="-CLANRANK '+Temple of Arden>=PRIEST'" PRICE="5 per level"
+```
+
+### Mageness
+
+Hosts: mobs. A [CombatAbilities](#combatabilities) preset: the mob becomes a
+Mage by class with spells suited to its level. Parameters as in
+[Fighterness](#fighterness).
+
+```text
+Mageness Illusionist MIXEDDEFENSIVE
+```
+
+### Memory
+
+Hosts: mobs. CoffeeSUD. The NPC remembers what each character did, as script
+variables of the NPC named `MEM_[FACT]_[NAME]` (so a script reads `VAR($i
+MEM_ATTACKED_$n)` or `$<$i MEM_GAVE_$n>`); they are saved. Facts recorded:
+`MET` (with `FIRSTMET` and `LASTMET`, game dates), `ATTACKED` (once a fight),
+`HURT` (the damage), `HEALED`, `GAVE` (the value given), `STOLE`, `KILLEDKIN`
+(of those `KIN` fits), `TALKED`, and `TRACK` facts.
+
+| Parameter | Meaning |
+| --- | --- |
+| `KIN="[MASK]"` | What counts as the NPC's kin for `KILLEDKIN`. |
+| `TRACK=[NAME]:[REGEX]` (also `TRACK1=` to `TRACK9=`) | A count of what it sees the character do that the regex fits. |
+| `FORGET=30d` (or `12h`) | A fact fades that long, in game time, after it last grew. |
+| `HOSTILEIF=[COND]` | It attacks them on sight. |
+| `GREETIF=[COND] GREET="[TEXT]"` | It greets them when they come in (`$n` is their name). |
+| `REFUSEIF=[COND] REFUSE="[TEXT]"` | It will not buy, sell or teach for them. |
+| `SHARE=AREA` or a mask | It tells what it learns to the other Memory NPCs in its area (those the mask fits). |
+
+A condition is `FACT>N`, `FACT>=N`, `FACT=N` or `FACT<N`, joined by `&` or `|`.
+The script function `MEMORY([NPC] [WHO] [MET/COUNT/LASTSEEN/DAYSSINCE/LASTTOPIC]
+== [VALUE])` reads some of it.
+
+```text
+Memory KIN="-NAMES +villager" SHARE=AREA HOSTILEIF=KILLEDKIN>0 REFUSEIF=STOLE>0 REFUSE="Thief! Out!" GREETIF=HEALED>0 GREET="Welcome back, $n." FORGET=30d
+```
+
+### Mime
+
+Hosts: mobs, items, exits, rooms. Timing default 1/1/100. Makes the thing
+mimic any emote or social a player in the same room performs, back at that
+player.
+
+### Mobile
+
+Hosts: mobs. Timing default 20/60/100. The mob travels in a random available
+direction. It does not leave a room holding a visible archon or builder with
+the `CMDMOBS` flag. When an area wakes after being passive it takes the steps it
+would have wandered meanwhile (at most 10), unseen.
+
+| Parameter | Meaning |
+| --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing. |
+| `WANDER` | Required if the mob may leave its area. |
+| `OPENDOORS` | Open closed doors, and unlock locked ones if it has the key. |
+| `LEASH=n` | Do not get farther than n rooms from home. |
+| locale words | `-ALL`, `+CITY`, `-UNDERWATER`... see [Locale restriction words](#locale-restriction-words). |
+
+```text
+Mobile min=10 max=20 chance=75 wander -air -underwater
+Mobile min=10 max=20 chance=75 opendoors
+Mobile min=10 max=20 chance=75 leash=3 opendoors
+```
+
+### MobileAggressive
+
+Hosts: mobs. Extends [Mobile](#mobile) (timing 20/60/100). Wanders like Mobile
+and attacks any player it comes across; especially aggressive toward players
+within 16 levels in adjacent rooms. With no mask it attacks anyone within 8
+levels. It ignores archons and builders with `CMDMOBS`. Parameters: all of
+Mobile's, plus the aggression flags of [Aggressive](#aggressive): `MESSAGE=`,
+`DELAY=`, `MOBKILL`, `NOGANG`, `MISBEHAVE`, `CHECKLEVEL`, `BRIBE=`,
+`BRIBEPAYMSG=`, `BRIBEPAIDMSG=`, and a mask (allowed is attacked).
+
+```text
+MobileAggressive min=10 max=20 chance=75 -underwater -thief +elf
+MobileAggressive min=10 max=20 chance=75 message="aha!" -air -elf
+MobileAggressive min=10 max=20 chance=75 mobkill misbehave
+```
+
+### MobileGoodGuardian
+
+Hosts: mobs. Extends [Mobile](#mobile). Like [GoodGuardian](#goodguardian) but
+the mob also wanders the area. Parameters as for Mobile. It does not leave
+rooms holding a `CMDMOBS` archon.
+
+```text
+MobileGoodGuardian min=10 max=20 chance=75 wander -air -underwater
+```
+
+### MoneyChanger
+
+Hosts: mobs. When a player gives the mob coins it gives back a bag holding an
+equivalent amount in its native currency, less its cut.
+
+| Parameter | Meaning |
+| --- | --- |
+| `CUT=n` | Percent the changer keeps (default 5). |
+| `DEFAULT=n` | Percent cut for currencies not otherwise named. |
+| `[CURRENCY]=n` | A percent cut for a named currency (`GOLD=5 INGITS=10`). |
+| `SPACEMAXCUT=n` | For interstellar currencies: the percent cut for an unknown or maximum-distance currency. |
+| `SPACEMAXDISTANCE=n` | Percentage of the galactic radius used as the maximum distance. |
+| `RATE.[CURRENCY]=+n%` / `-n%` | CoffeeSUD: a premium (+) or discount (-) on what coins of that currency fetch, before the cut. It is no fee, so the changer still takes every currency. `RATE.DEFAULT` for the default currency. |
+
+`MPEXCHANGE` sets a rate for every money changer in the world, kept in the
+save.
+
+```text
+MoneyChanger cut=5
+MoneyChanger default=0 GOLD=5 INGITS=10
+MoneyChanger cut=5 spacemaxcut=90 spacemaxdistance=35
+MoneyChanger cut=5 RATE.CROWN=-30 RATE.LEAF=+10
+```
+
+### Morale
+
+Hosts: mobs. CoffeeSUD. The mob's nerve breaks: when its hit points fall under
+`FLEEAT`, when its foes here outnumber its side `OUTNUMBERED` to one, or as
+`BREAK` says. Its side is its group, its leader's, and NPCs of its race here who
+fight. Then, at `CHANCE` percent a tick, it says `MSG` (`:text` for an emote) and
+does `ACTION`.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `FLEEAT=[N]%` | Break when hit points drop under N%. | 0 (off) |
+| `OUTNUMBERED=[X]` | Break when foes outnumber its side X to one. | 0 (off) |
+| `BREAK=LEADERDEAD,[N]%DEAD,HP<[N]%` | Comma list: its leader dies (the one `LEADER` names, or the mob it follows), that share of its side has fallen, its side's hit points together. | none |
+| `LEADER="[ZAPPER MASK]"` | Who counts as its leader. | the mob it follows |
+| `ACTION=FLEE/SURRENDER/BERSERK` | `FLEE` goes to `RALLY` and waits `REGROUP` ticks, then returns with the NPCs it finds there and attacks those it fled from. `SURRENDER`: surrenders. `BERSERK`: a third more damage and a tenth less attack until the fight ends. | FLEE |
+| `CHANCE=[N]` | Percent chance per tick. | 100 |
+| `MSG="[TEXT]"` | What it says. | none |
+| `RALLY=[ROOM ID]/HOME` | Where it flees to. | none |
+| `REGROUP=[N]` | Ticks waiting at the rally point. | 10 |
+| `SURRENDERAT=[N]%` | Surrenders whatever else: drops its weapon, foes and it make peace, it says `SURRENDERMSG`, its scripts' `SURRENDER_PROG` runs (`$n` one it fought). | 0 (off) |
+| `SURRENDERMSG="[TEXT]"` | | `I yield! Mercy!` |
+| `BRAVE="[ZAPPER MASK]"` | Those the mask fits never break. | none |
+
+```text
+Morale FLEEAT=40% BREAK=LEADERDEAD ACTION=FLEE RALLY=Warren#12 REGROUP=15
+Morale SURRENDERAT=20% SURRENDERMSG="Mercy! I'll show you the loot!"
+```
+
+### MovingRoom
+
+Hosts: rooms. A room that moves between stops: subways, buses, caravans,
+elevators, ships, stargates. The classic form of the parameter (help ID
+`BEHAVIOR_MOVINGROOM`, title "Mover"):
+
+```text
+min=3 max=3 chance=100;[xmlsection];[ticks at stops];[ticks between stops]
+```
+
+It reads the named section of `resources/movingroom.xml` (the shipped example is
+`SUBWAY`). Requirements: the rooms the mover opens to must already exist; the
+XML section must be written first; a moving room cannot override an existing
+exit (if room A links south to B, the mover cannot link north to A). In the XML
+the strings `$disproom`, `$inopendir`, `$outopendir` and `$traveldir` are
+replaced on the fly. `<STOPS>` lists the room IDs (`<STOP1>`...);
+`<NORMALDIRECTION>` and `<REVERSEDIRECTION>` define going out and coming back
+(`TRAVELDIRECTION`, `DOORSDIRECTION`, `<INSIDE>`/`<OUTSIDE>` with `ARRIVALINFO`
+and `DEPARTINFO`); `<ROOMDESCRIPTIONS>` holds the text appended with
+`DOOROPENED` and `DOORCLOSED`.
+
+CoffeeSUD adds timetable-style keys:
+
+| Key | Meaning |
+| --- | --- |
+| `ROUTE=[file under world/routes/]` or `ROUTE="[inline XML]"` | The route. |
+| `LINE=[section]` | The section of the route file. |
+| `WAIT=[ticks]` | Ticks at stops (default 10). |
+| `TRAVEL=[ticks]` | Ticks per leg (default 10). |
+| `DEPART=[game hours, comma separated]` | Departure hours. |
+| `SIGN="[item name]"` | An item whose text shows the timetable. |
+| `DISPLOC=true/false` | Add the timetable to the room description. |
+
+Position, direction and remaining time are saved. Boarding exits and
+descriptive text are temporary overlays excluded from export. `TIMETABLE` shows
+the line and position. See [chapter 30](30-travel-vehicles-instances.md).
+
+```text
+MovingRoom min=3 max=3 chance=100;SUBWAY;3;10
+```
+
+### MudChat
+
+Hosts: mobs. Makes the mob speak and answer speech from a chat file. The
+parameter is `(([data file]=)[group])(+[extra entries])`.
+
+- `chat.dat` (in `resources/`) holds templates for different speech behaviors;
+  MudChat chooses one from the mob's name unless a group is named. The default
+  patterns include: default, dog fido beastly fido_dog, cat kitten lion, pig
+  boar, doll toy, papa_smurf smurf, monster, smurfette, healer cleric doctor.
+- `smurf` names a group in the default file; `mychat.dat=cityguard` names a file
+  and a group; `mychat.dat=` the file with the group chosen by name.
+- A leading `+` introduces a `;`-delimited list of chat entries in `chat.dat`
+  format; a `+` after the file or group adds entries to it.
+- `DELAY=[N]` anywhere in the parameters: ticks it waits before it answers
+  (default 2). When replies come at once (the `DIALOGUETIME` setting,
+  `TIMEMODE DIALOGUE`) its answer comes before the player's next prompt
+  whatever the delay.
+- CoffeeSUD chat-file extensions: a line `?[CONDITION]` before an entry is a
+  script condition, as after `IF`, which must hold for it (`$t` and `$n` are
+  the speaker, `$i` the mob), for example `?QUESTSCRIPTED($t mine)` and `?VAR($t
+  MET == 1)`. A reply starting with `&` runs the rest as a MOBPROG line with the
+  mob as host and the speaker as `$n` (`9"Clear the rats.~&mpsetvar $n JOB
+  given`). `$@[GROUP]` at a reply's end switches to that group for that speaker
+  alone for six minutes; `$@![GROUP]` until it is changed (kept in the saved
+  variable `MUDCHAT_GROUP_[SPEAKER]` of the mob); `$@-` back to the base group.
+
+The chat file format is covered in [chapter 6](06-npcs-dialogue.md).
+
+```text
+MudChat smurf
+MudChat chat.dat=smurf+(smurfy);9Smurfy!
+MudChat mychat.dat=cityguard
+MudChat +(here there);9neither;5well, where?;1nowhere
+```

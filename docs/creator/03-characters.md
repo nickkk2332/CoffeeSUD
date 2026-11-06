@@ -155,7 +155,7 @@ character of a profile is always allowed. See
 | 6 | `CLASS` | Pick from the classes whose requirements the stats and race meet. Sets level 1, gives `STARTINGITEMS`, the race outfit and a random allergy. Runs `CLASS` scripts | `CLASSSYSTEM`, class qualifications, `DISABLE=CLASSES` |
 | 7 | `ORIGIN` | Asked when `origins.ini` has an origin open to the character | [origins.ini](#originsini-origins) |
 | 8 | `KIT` | A menu for each `choose` group of starting kits that fits the character; a lone kit in a group is taken without asking | [Kits](#kits) |
-| 9 | `TRAITS` | Spend trait points on traits and flaws from `perks.ini` (skipped with no `TRAITS` points or no trait perks) | [perks.ini](#perksini-perks-traits-and-flaws) |
+| 9 | `TRAITS` | Take or drop traits and flaws from `perks.ini` by name, then `DONE`; the points must not be overspent (skipped when no trait is open to the character, or `TRAITS=RANDOM`/`SKIP`) | [perks.ini](#perksini-perks-traits-and-flaws) |
 | 10 | World questions | `creation.ini` `[NAME]` sections, wherever `STEPS` puts them | [creation.ini](#creationini-steps-and-questions) |
 | 11 | `FACTIONS` | For each faction that offers a choice for this character, a pick. Factions with a single choice or an automatic default are set silently. Runs `FACTIONS` scripts. Then: class start-up (class abilities, first-level practices and trains), the class outfit, the start room, birthday and age, the class's starting money | faction files, [09-society.md](09-society.md) |
 | 12 | `DEITY` | Only when `DEITYPOLICY` has a `REQUIREDMASK` the character meets and some deity qualifies | `DEITYPOLICY` |

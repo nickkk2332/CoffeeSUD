@@ -974,3 +974,233 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF CHECK($n CHA 15)`; `IF CHECK($n Skill_Disarm 12 +2)`
 - **Notes:** not inherited. `STAT` is a base stat by name, short name or three-letter prefix (`CHA`, `CHARISMA`); its bonus is `(value - 10) / 2`. A skill's bonus is its proficiency divided by 10. The modifier is a small arithmetic expression and may use a value form: `CHECK($n CHA 15 $%AFFINITY($i $n)%/10)`. Each call rolls anew and has side effects: it stores the margin (total minus difficulty) as the variable `CHECKMARGIN` for the character, and tells the character the result unless the `CHECKROLLS` setting is `OFF` (`FULL` shows the roll). See [29-combat-and-encounters.md](29-combat-and-encounters.md).
 
+### Advancement, money and standing
+
+### EXP
+
+- **Test:** `EXP(who cmp n)`: the creature's experience points.
+- **Value:** `$%EXP(who)%`
+- **Example:** `IF EXP($n >= 1000)`
+
+### EXPTONEXT
+
+- **Value:** `$%EXPTONEXT(who)%`: the experience the character still needs for its next level; `0` when there is no next level.
+- **Test:** `EXPTONEXT(who cmp n)`
+- **Example:** `IF EXPTONEXT($n <= 50)`
+- **Notes:** not inherited.
+
+### TRAINS
+
+- **Test:** `TRAINS(who cmp n)`: unspent training sessions.
+- **Value:** `$%TRAINS(who)%`
+- **Example:** `IF TRAINS($n > 0)`
+
+### PRACS
+
+- **Test:** `PRACS(who cmp n)`: unspent practice sessions.
+- **Value:** `$%PRACS(who)%`
+- **Example:** `IF PRACS($n >= 5)`
+
+### QUESTPOINTS
+
+- **Test:** `QUESTPOINTS(who cmp n)`
+- **Value:** `$%QUESTPOINTS(who)%`
+- **Example:** `IF QUESTPOINTS($n >= 10)`
+
+### GOLDAMT
+
+- **Test:** `GOLDAMT(thing cmp n)`: the money a creature carries, counted in the *host's* currency and expressed in base value (rounded); for a coin item its total value; for any other item its worth.
+- **Value:** `$%GOLDAMT(thing)%`
+- **Example:** `IF GOLDAMT($n >= 100)`; `IF GOLDAMT($o < 100)`
+- **Notes:** other kinds of thing log a `Syntax` error. For a specific currency use [VALUE](#value).
+
+### VALUE
+
+- **Test:** `VALUE(thing CURRENCY cmp n)`: like `GOLDAMT` but in the designated currency (for a creature, its money in that currency; for a coin item, its value if the coin is of that currency; for other items their worth).
+- **Value:** `$%VALUE(thing CURRENCY)%`
+- **Example:** `IF VALUE($n CROWN >= 5)`
+- **Notes:** an unknown currency logs an error and the test is false. Currency designations and denominations are in [09-society.md](09-society.md).
+
+### CURRENCY
+
+- **Test:** `CURRENCY(thing cmp code)`: compares the currency the thing uses as text.
+- **Value:** `$%CURRENCY(thing)%`: the currency code (empty for the default).
+- **Example:** `IF CURRENCY($i == CROWN)`
+
+### MONEYSTR
+
+- **Value:** `$%MONEYSTR(amount [CODE] [LONG|SHORT])%`: an amount in base value spelled in coin names.
+- **Example:** `MPECHO The crossing costs $%MONEYSTR(36 CROWN LONG)%.`
+- **Notes:** not inherited. `CODE` defaults to the host's currency; `SHORT` abbreviates. `amount` must be a number or a `Syntax` error is logged.
+
+### DENOMNAME
+
+- **Value:** `$%DENOMNAME(CODE value [count])%`: the name of the denomination of that currency worth `value`, for `count` coins (default 1).
+- **Example:** `$%DENOMNAME(CROWN 240)%`
+- **Notes:** not inherited.
+
+### EXCHANGE
+
+- **Value:** `$%EXCHANGE(CODE)%`: what a money changer pays for coins of that currency, in percent of their value.
+- **Test:** `EXCHANGE(CODE cmp n)`
+- **Example:** `IF EXCHANGE(COPPER < 90)`
+- **Notes:** not inherited; see `MPEXCHANGE` in [27-mobprog-commands.md](27-mobprog-commands.md).
+
+### BANKBALANCE
+
+- **Value:** `$%BANKBALANCE(who chain [currency])%`: the money the person has on deposit with that bank chain, in base value.
+- **Test:** `BANKBALANCE(who chain [currency] cmp n)`
+- **Example:** `IF BANKBALANCE($n 'Guild Trust' >= 500)`
+- **Notes:** not inherited. `who` may be a creature or a plain name.
+
+### DEBT
+
+- **Value:** `$%DEBT(who owedTo)%`: what `who` owes `owedTo`, in base value. With `DUE` (`$%DEBT(who owedTo DUE)%`): the game hours until it falls due (negative once overdue), empty if there is no debt.
+- **Test:** `DEBT(who owedTo [DUE] cmp n)`
+- **Example:** `IF DEBT($n Vargo > 0)`; `IF DEBT($n Vargo DUE < 0)`
+- **Notes:** not inherited.
+
+### FACTION
+
+- **Test:** `FACTION(who faction cmp value)`: the creature's standing with the faction. If `value` is a number the creature's faction value is compared; otherwise the name of its range (Friendly, Hostile...).
+- **Value:** `$%FACTION(who faction)%`: the name of the range the creature is in; empty if it has no standing.
+- **Example:** `IF FACTION($n alignment.ini >= 500)`
+- **Notes:** `faction` is the faction ID (the file name, such as `alignment.ini`), its name, or a band code. **Known fault:** the comparison is always done as whole numbers, so a range *name* on the right (`FACTION($n alignment.ini == GOOD)`) reads as 0 on both sides and `==` is always true. Use [FACTIONBAND](#factionband) to test a band by name and [FACTIONVALUE](#factionvalue) for the number. See [09-society.md](09-society.md).
+
+### FACTIONVALUE
+
+- **Test:** `FACTIONVALUE(who faction cmp n)`: the creature's numeric standing.
+- **Value:** `$%FACTIONVALUE(who faction)%`: the number; empty if the creature has no standing with that faction.
+- **Example:** `IF FACTIONVALUE($n elves.ini <= -500)`
+- **Notes:** not inherited. An unknown creature or faction logs an error and is false.
+
+### FACTIONBAND
+
+- **Test:** `FACTIONBAND(who faction cmp CODE)`: compares the code name of the band the creature is in, as text.
+- **Value:** `$%FACTIONBAND(who faction)%`: that code name, empty if none.
+- **Example:** `IF FACTIONBAND($n inclination.ini == GOOD)`
+- **Notes:** not inherited. The band codes are those listed in the faction's `RANGE=` lines.
+
+### RANK
+
+- **Value:** `$%RANK(who)%`: the creature's `Prop_MobRank` rank (`NORMAL` when none). `$%RANK(who LADDER)%`: its rank number on a progression ladder, `0` for none.
+- **Test:** `RANK(who == ELITE)`; `RANK(who LADDER >= 2)`
+- **Example:** `IF RANK($i == ELITE)`
+- **Notes:** not inherited. See [29-combat-and-encounters.md](29-combat-and-encounters.md) and [03-characters.md](03-characters.md).
+
+### AFFINITY
+
+- **Value:** `$%AFFINITY(npc who [BAND])%`: how much the NPC likes `who`, as a number, or with `BAND` as its band name.
+- **Test:** `AFFINITY(npc who cmp n)`
+- **Example:** `IF AFFINITY($i $n >= 20)`
+- **Notes:** not inherited; see [06-npcs-dialogue.md](06-npcs-dialogue.md).
+
+### EXPLORED
+
+- **Test:** `EXPLORED(who where cmp percent)`: how much of `where` the character has seen. `where` is `world`, an area name, a thing in an area, or a single room (a room counts 100 if visited, otherwise 0).
+- **Value:** `$%EXPLORED(who where)%`: the percentage, for `world`, an area name or a thing in an area; empty otherwise.
+- **Example:** `IF EXPLORED($n world >= 50)`; `IF EXPLORED($n 'Old Keep' == 100)`
+- **Notes:** player-controlled characters only; others give false.
+
+### SETCOUNT
+
+- **Value:** `$%SETCOUNT(who set)%`: how many pieces of an item set the character has (worn or carried, as the set counts them).
+- **Test:** `SETCOUNT(who set cmp n)`
+- **Example:** `IF SETCOUNT($n bone_armor >= 3)`
+- **Notes:** not inherited; see [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md).
+
+### Items and containers
+
+### HAS
+
+- **Test:** `HAS(thing item words)`: true if the creature carries (or wears) something matching the words; for a room, if it holds such an item; for an item, if its name matches.
+- **Value:** `$%HAS(thing)%`: the name of a random item the creature carries (loose, not worn, not inside a container); for a container, a random item inside it; for a room, a random item lying there.
+- **Example:** `IF HAS($n 'a long sword')`; `IF HAS($i $o)`
+- **Notes:** the item words can be an object code (`$o`), in which case that very object is checked.
+
+### HASNUM
+
+- **Test:** `HASNUM(thing item cmp n)`: how many things matching `item` the creature (or room) holds. `item` may be `all`.
+- **Value:** `$%HASNUM(thing item)%`
+- **Example:** `IF HASNUM($n 'healing potion' >= 2)`; `IF HASNUM($i all == 0)`
+- **Notes:** counts stacks as one each.
+
+### WORN
+
+- **Test:** `WORN(thing item words)`: true if the creature is *wearing or wielding* an item matching the words; for an item, if its name matches and it is not in inventory.
+- **Value:** `$%WORN(thing)%`: a random worn item's name.
+- **Example:** `IF WORN($n mace)`
+
+### WORNON
+
+- **Test:** `WORNON(who LOCATION item words)`: true if what is worn on that body location matches the words; with empty words, true if nothing is worn there.
+- **Value:** `$%WORNON(who LOCATION)%`: the names of the items worn there.
+- **Example:** `IF WORNON($n WIELD sword)`; `IF WORNON($n HEAD '')`
+- **Notes:** `LOCATION` is a wear-location name such as `HEAD`, `WIELD`, `TORSO`, `FEET` (see [22-items.md](22-items.md)); an unknown one logs an error.
+
+### ITEMCOUNT
+
+- **Test:** `ITEMCOUNT(thing cmp n)`: the number of items the thing holds, stacks counted by their size.
+- **Value:** `$%ITEMCOUNT(thing)%`
+- **Example:** `IF ITEMCOUNT($o >= 10)`
+- **Notes:** for a creature or room, the items present; for an area, every item in it; for a container, the container plus its contents; for raw material, its weight.
+
+### MOBITEM
+
+- **Test:** `MOBITEM(creature number words)`: true if the creature's item at that position (1-based, loose items only) matches the words.
+- **Value:** `$%MOBITEM(creature number)%`: that item's name.
+- **Example:** `IF MOBITEM($n 1 sword)`
+- **Notes:** the creature is looked up *in the host's room* by name or position.
+
+### NUMITEMSMOB
+
+- **Test:** `NUMITEMSMOB(creature cmp n)`: the number of loose items the creature carries.
+- **Value:** `$%NUMITEMSMOB(creature)%`
+- **Example:** `IF NUMITEMSMOB($n == 0)`
+
+### INCONTAINER
+
+- **Test:** `INCONTAINER(thing [container])`: for an item, true if it is inside that container; for a creature, if it is riding that mount. With no second argument: true if it is in nothing / riding nothing.
+- **Value:** `$%INCONTAINER(thing)%`: the name of what it is in or riding; for a container with nothing around it, the quoted names of its contents.
+- **Example:** `IF INCONTAINER($o)`; `IF INCONTAINER($n horse)`
+
+### ISCONTENT
+
+- **Test:** `ISCONTENT(thing [words])`: for a rideable (a mount, boat, bed), true if a rider matching the words is aboard (with no words, if nobody is); for a container, if it holds a matching item (with no words, if it is empty).
+- **Value:** `$%ISCONTENT(thing)%`: the names of the riders and the contents.
+- **Example:** `IF ISCONTENT(ship)`; `IF ISCONTENT($i)`
+
+### ISOPEN
+
+- **Test:** `ISOPEN(direction | thing)`: true if the exit in that direction (from the host's room), or the named container or exit, is open.
+- **Value:** `$%ISOPEN(direction | thing)%`: `true` or `false`.
+- **Example:** `IF ISOPEN(north)`; `IF ISOPEN($o)`
+
+### ISLOCKED
+
+- **Test:** `ISLOCKED(direction | thing)`: true if that exit or container is locked.
+- **Value:** `$%ISLOCKED(direction | thing)%`: the *key name* of the lock (empty when it has none), not `true`/`false`.
+- **Example:** `IF ISLOCKED(east)`
+- **Notes:** use `$%DOORSTATE(...)%` to read `open`, `closed` or `locked` directly.
+
+### DOORSTATE
+
+- **Value:** `$%DOORSTATE(room direction)%` or `$%DOORSTATE(container)%`: `open`, `closed` or `locked`; empty if there is nothing there.
+- **Test:** `DOORSTATE(room direction == locked)`
+- **Example:** `IF DOORSTATE(HERE north == locked)`
+- **Notes:** not inherited. `room` is `HERE`, a room ID, or a thing whose room is used.
+
+### SWITCHSTATE
+
+- **Value:** `$%SWITCHSTATE(thing)%`: the state of the `Prop_Switch` effect on a thing, or on an exit written `room:direction`; empty if it has none.
+- **Test:** `SWITCHSTATE(thing == state)`
+- **Example:** `IF SWITCHSTATE('rusted lever' == UP)`
+- **Notes:** not inherited; see [07-items-crafting.md](07-items-crafting.md).
+
+### CONTENTWEIGHT
+
+- **Value:** `$%CONTENTWEIGHT(thing)%`: the weight of what is in or on the item (0 if it is not an item).
+- **Test:** `CONTENTWEIGHT(thing cmp n)`
+- **Example:** `IF CONTENTWEIGHT('stone pedestal' >= 50)`
+- **Notes:** not inherited; used by weighing puzzles.
+

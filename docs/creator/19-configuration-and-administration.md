@@ -180,6 +180,7 @@ Read by the launcher (`SUD.java`) unless stated.
 | `DEVGROUP` | not set | Name of the security group a DEV game gives each character; `GROUP_` before the name is accepted and removed. Default `DEV`. |
 | `DEVSTART` | not set | Room ID where a new character starts in builder mode and DEV games (for example a dev hub). Ignored in a normal game. |
 | `DEVLOG` | not set | Initial DEVLOG level and module mask for DEV games and as a fallback in builder mode; see [Logs, DEVLOG and diagnostics](#logs-devlog-and-diagnostics). |
+| `NOTESFILE` | not set | File the `NOTE` command writes playtest notes to; default `notes/playtest.txt`. |
 | `SCRIPTERRORS` | not set (`LOG`) | What a normal game does with a script error: `LOG`, `NOTICE` (tell each player once) or `SHOW` (show the error to the room). |
 | `CHECK` | launch only | `1` loads the world, checks it, and ends the game with a result code. |
 | `RESTORE` | blank | The save to restore without asking; `NEW` starts a new game without asking. |
@@ -295,6 +296,7 @@ All world-allowlisted unless noted. Several are covered in more depth in
 | `MAXITEMSHOWN` | `5` | Items listed by `LOOK` before it summarises. Engine-only. |
 | `MAXITEMSWORN` | `0` | Cap on worn items; `0` is no cap. Engine-only. |
 | `MAXWEARPERLOC` | `6` | Cap per body-part type; `0` is no cap. Engine-only. |
+| `BADNAMES` | a long list | Names refused for characters. Probably still checked when a character is named (unverified). |
 | `DEFAULTPLAYERFLAGS` | blank | Player option flags on for new characters (`AUTOLOOT`, `AUTOEXITS`, ...). |
 | `RECOVERRATE` | `1` | Five-tick periods between natural recovery. |
 | `REMORTMASK`, `REMORTRETAIN` | `-LEVEL +>60`, see file | The REMORT command's rules. |
@@ -896,8 +898,7 @@ The cheats:
 
 `GOD` stores its state as the text of `Prop_DevCheats`, a space-separated
 list: a cheat name turns it on, `-NAME` turns a cheat off even where a
-power would give it, and `-FLAG` suspends that security flag. You can read
-the list with `STAT` on yourself or `LIST`. The suspension only counts while
+power would give it, and `-FLAG` suspends that security flag. `GOD` alone shows the state. The suspension only counts while
 the effect is present: if the effect is removed from the character the
 suspension lapses automatically.
 

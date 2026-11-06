@@ -1041,3 +1041,273 @@ path is known.
 revealed: nothing, the area, or (default) the area, room and the first
 direction.
 
+## Quest properties, items and behaviors
+
+| Class | Kind | Use |
+| --- | --- | --- |
+| [Prop_QuestGiver](23-properties-reference.md#prop_questgiver) | Property | Offers a quest to a character when a trigger fires on its host. |
+| [Prop_QuestMarker](23-properties-reference.md#prop_questmarker) | Property | `(!)` / `(?)` marks after a mob or item in room listings ([Q2](#q2-quest-giver-and-turn-in-markers)). |
+| [Prop_QuestItem](23-properties-reference.md#prop_questitem) | Property | Binds an item to a quest ([Q8](#q8-prop_questitem)). |
+| [Prop_QuestBoard](23-properties-reference.md#prop_questboard) | Property | A board of generated jobs on an item or room. |
+| [Prop_QuestLog](23-properties-reference.md#prop_questlog) | Property | The character's hidden journal. Kept by the game; never give it by hand. |
+| [QuestBound](23-properties-reference.md#questbound) | Effect | Put by the engine on every quest mob, item and room; with parameter `*` it makes a mob or item ineligible for quest selection. Resets the quest when a quest object is destroyed or its room resets. |
+| [StdQuestBoard](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdQuestBoard.java), `GenQuestBoard` | Item | A readable board that lists *running* quests ([22-items.md](22-items.md)). |
+| [RandomQuests](24-behaviors-and-masks.md#randomquests) | Behavior | Generates quests from the random-quest templates ([12-generation.md](12-generation.md)). |
+
+### Prop_QuestGiver
+
+Parameters: `QUEST="name"` or `QUEST="GENERATE:(args)"`, `MESSAGE="text"`,
+`DETAILS=TRUE|FALSE` (default TRUE), `OPTIONAL=TRUE|FALSE` (default TRUE),
+`REOFFER=ALWAYS|ONCE|time`, `TRIGGER=...`.
+
+Works on areas, rooms, exits, mobs and items. When the trigger fires for a
+player's character, the quest is offered if it is running, the repeat rules and
+`REOFFER` allow it, and its accept script's `CAN_ACCEPT` says yes. The
+character sees the `MESSAGE`, then the details (quest name, the giver and
+where, in which area, the instructions, the reward) and a `Accept this quest
+(y/N)?` prompt. `OPTIONAL=FALSE` skips the prompt and accepts at once.
+`DETAILS=FALSE` leaves the details out.
+
+| Host | Default `TRIGGER` | What it means |
+| --- | --- | --- |
+| Area | `ENTER` | A character entering the area from outside. |
+| Room, exit | `ENTER` | A character entering the room, or passing through the exit. |
+| Mob | `DEATH` | The mob dying. For a living giver set `TRIGGER=ENTER` (a character enters the mob's room) or `SPEAK` (a character speaks to the mob). |
+| Item | `GET` | A character taking the item. |
+
+Other values: `LEAVE`, `PUTIN`, `WEAR`, `WIELD`, `READ`, `LOOK` (the code accepts
+`LOOK`; the shipped help lists the others only). `QUEST="GENERATE:..."`
+generates a quest through `RandomQuests` with the rest as its parameters. An
+unknown trigger or quest name is logged once.
+
+### Quest boards, in short
+
+`StdQuestBoard` and `GenQuestBoard` list every *running* quest that has
+`DISPLAY` and `INSTRUCTIONS`, an accept script, and that the reader may take.
+`READ board` lists them by display name; `READ board 2` shows the quest, giver,
+instructions and reward and asks `Accept this quest (y/N)?`. Reading adds the
+quest to `QUESTS OFFERED`. The board's readable text can filter:
+`SAREAMASK` (giver's area), `TAREAMASK` (target areas), `AAREAMASK` (either),
+`GIVERMASK` (the giver mob), `TYPFILTER` (quest type), `CATFILTER`
+(category). The list is recomputed every few seconds when quests change.
+
+### RandomQuests
+
+Parameters: `MIN`, `MAX`, `CHANCE` (how often to try; defaults 10 to 20 ticks,
+chance 100), `MINQUESTS`, `MAXQUESTS` (how many at once), `PATH` (the generator
+document), `TAGID` (default `all_quests`), `EXPIRE` (how long a generated quest
+lives; the code defaults to `6 hours`, the shipped help says 3), `MAXATTEMPTS`
+(default 3), `INLINE`, and every other `NAME=value` is passed to the
+generator as a variable (`TEMPLATE=normal|auto|random|<template>`,
+`AREA_NAME`, `SOURCE_NAME`, `TARGETAREA_NAME`, `TARGETNAME`, `NUM_TARGETS`,
+`XP_AMOUNT_AWARDED`, `GOLD_AMOUNT_AWARDED`, `QUEST_POINT_AWARDED`,
+`QUEST_MULTIPLE`, `TARGET_MIN_AREALEVEL`, `TARGET_MAX_AREALEVEL`,
+`ANNOUNCECHANNEL`, ...: see `AHELP RandomQuests`).
+
+**`PATH` must be set.** The code's default is `randareas/example.xml`, which
+defines no `all_quests`, so a RandomQuests (or `GENERATE:` giver, or board
+without `FILE=`) left at the default reports "The quest id 'ALL_QUESTS' has not
+been defined" and disables itself. Use the quest generator document that ships:
+`PATH=quests/random/all.xml`.
+
+## Story templates and the Quest Maker
+
+`CREATE QUEST` with no script offers the Quest Maker wizard: you pick a template,
+fill in pages of prompts, review each page, and confirm. The wizard replaces the
+template's `$VARIABLES` in the quest text, saves it as
+`resources/quests/NAME.quest`, creates a quest whose script is
+`LOAD=quests/NAME.quest`, and saves the quest list. In builder mode, SAVE then
+writes the quest to `world/quests` as well.
+
+At the `Select a quest template (?):` prompt, `?` lists templates with their
+descriptions, `CANCEL` or Enter leaves.
+
+### Templates shipped
+
+Templates are `resources/quests/templates/*.quest`.
+
+| Templates | Use |
+| --- | --- |
+| `story_talk1` | Speak with a mob, optionally handing over an item (Story Talk #1). |
+| `story_chain1` | Three stages, each with its own mob, speech, objective and journal text (Story Chain #1). |
+| `story_choice1` | Two outcomes chosen with `MPCHOOSE`, each with its own text, reward, journal entry and outcome word; the second can slay the mob (Story Choice #1). |
+| `story_useitem1` | The giver hands over an item; the player leaves it in a room (Story Use-Item #1). |
+| `story_explore1` | Go to a place (Story Explore #1). |
+| `story_bounty1` | A kill count, paid at the giver, offered again after a cooldown (`SET REPEATABLE`) (Story Bounty #1). |
+| `normal_capture1-4`, `normal_collect1-5`, `normal_delivery1-4`, `normal_dispel1`, `normal_escort1-2`, `normal_killer1-2`, `normal_mystery1-2`, `normal_protect1-2`, `normal_travel1-4` | The inherited one-player-at-a-time quest shapes, also the shapes that `RandomQuests` generates. They use `set wait 1 / set interval 1` so they start by themselves, and announce on `$QUEST_ANNOUNCECHANNEL` if set. |
+| `auto_*` | The inherited "auto" variants (the quest takes itself on). |
+| `competitive_*` | Race between several players. Marked `#!QUESTMAKER_MODE MULTIPLAYER`: hidden from the wizard's list in a single-player game, but loadable by name. |
+
+The story templates share one shape: they pick an *existing* giver by area,
+room and name, give it `Prop_QuestGiver ... TRIGGER=ENTER REOFFER=ALWAYS`
+and `Prop_QuestMarker`, make `KEYPLAYER TRUE` of it, set `SET DURATION 0`,
+use `SET REWARDS`, `MPQOBJECTIVE`/`MPQJOURNAL`, `MPQUESTWIN ... REWARD`, and end
+the character's script with `MPENDQUEST $n`. The tracking script fails the quest
+for the character (`MPQUESTFAIL`) if the person they must find is gone.
+
+### Writing your own template
+
+A template is a quest script with a header. Everything starts with `#`:
+
+```text
+#!QUESTMAKER_START_SCRIPT My Template #1
+#!QUESTMAKER_MODE SINGLE
+#A free-form description, shown when the player types ? at the template prompt.
+#
+#!QUESTMAKER_PAGE Quest Name/Criteria
+#Instructions for the page.
+#
+#Quest ID:
+#Label shown before the next variable.
+#$QUEST_ID=$UNIQUE_QUEST_NAME=my_quest_1
+#
+#Category:
+#$CATEGORY=($STRING)=side
+#
+#!QUESTMAKER_END_SCRIPT My Template #1
+
+set name $QUEST_ID
+...
+```
+
+- `#!QUESTMAKER_START_SCRIPT name` begins and names the template (the name
+  must match the `#!QUESTMAKER_END_SCRIPT`). `#!QUESTMAKER_MODE MULTIPLAYER`
+  hides it from a single-player list; `SINGLE` or no line shows it.
+- `#!QUESTMAKER_PAGE title` starts a page. Plain `#text` lines are the page's
+  instructions and the labels of the variables after them.
+- `#$NAME=$TYPE=default` defines a variable. Put the type in brackets,
+  `($STRING)`, for an optional entry. For `$CHOOSE` the default is the
+  comma-separated list of choices.
+- After the end line comes the quest script, written with the `$NAME`s. The
+  wizard replaces each `$NAME` with the answer, as plain text, **in page order**,
+  so no variable name may begin another's (`$GIVER_NAME` and `$GIVER_NAME2`
+  would clash; the fixture checks the shipped ones). `$#AUTHOR` is the creator's
+  name. Embedded `<?xml ... <FILE>` sections can use the variables too, which is
+  how a template carries its MOBPROG scripts. `${2 *}` inside such scripts is a
+  MOBPROG form, not a template variable.
+- Quest names the wizard accepts (`$UNIQUE_QUEST_NAME`) are letters, digits and
+  `_` only, and must not exist.
+
+Variable types: `$UNIQUE_QUEST_NAME`, `$STRING`, `$LONG_STRING`, `$NAME`,
+`$EXPRESSION` (arithmetic), `$TIMEEXPRESSION`, `$ZAPPERMASK`, `$ROOMID`,
+`$AREA`, `$CHOOSE`, `$FACTION`, `$ABILITY`, `$MEFFECT` (an ability or
+behavior), `$EXISTING_QUEST_NAME`, `$ITEMXML`, `$ITEMXML_ONEORMORE`,
+`$ITEMXML_ZEROORMORE`, `$MOBXML`, `$MOBXML_ONEORMORE`, `$HIDDEN` (not asked; the
+default is used), and the display-only `$TITLE`/`$LABEL`.
+
+## Quest boards and generated quests
+
+### The board property (Q14)
+
+`Prop_QuestBoard` makes an item or a room a board of generated jobs:
+
+```text
+Prop_QuestBoard COUNT=3 REFRESH="1 mudday" TEMPLATE=normal LEVELRANGE=3 FILE=quests/random/all.xml
+```
+
+| Parameter | Meaning |
+| --- | --- |
+| `COUNT` | Jobs kept on the board (default 3). |
+| `REFRESH` | How often it renews, on the game clock (`1 mudday`, or `MUDDAY:1`; default 1 mudday). |
+| `TEMPLATE` | The generator template (default `normal`). |
+| `FILE` | The generator document, passed to `RandomQuests` as `PATH`. **Set it** (see above). |
+| `TAGID` | The quest tag in that document (default `all_quests`). |
+| `VARS="NAME=value ..."` | More generator variables. |
+| `LEVELRANGE=n` | Sets `TARGET_MIN_AREALEVEL` and `TARGET_MAX_AREALEVEL` to the reader's level minus and plus `n`. |
+| anything else | Passed to `RandomQuests` (`SOURCENAME`-style variables: `SOURCE_NAME`, `AREA_NAME`, ...). `EXPIRE` is empty unless you set it: a job waits on the board until a refresh. |
+
+LOOK at the board (or READ it, for an item; LOOK in the room, for a room)
+lists the jobs the reader may take, with reward, and `ACCEPT n` takes one. At
+each refresh, jobs done or given up go and new ones come up to `COUNT`; with
+none taken and the board full, the oldest is replaced; a job in progress stays.
+The generator is told `PLAYER_LEVEL`, `PARTY_SIZE` (the player's characters in
+the reader's group), `PLAYER_FACTION_ID` per faction and `QUESTS_DONE`, so a
+template (or `$player_level` in a generator document) can fit the job to the
+reader. Jobs are saved with the board.
+
+Reading a board adds each job it shows to `QUESTS OFFERED`.
+
+### Generated quests in general
+
+- **Documents.** `resources/quests/random/all.xml` picks a template by the
+  `TEMPLATE` variable (`normal`, `auto`, `random` or a template name) and loads
+  `normal_*.xml` / `auto_*.xml`, which define a `<QUEST>` with a quest id,
+  criteria, announcer, target, rewards and so on, built by the MUDPercolator
+  ([12-generation.md](12-generation.md) has the tag reference). Your own
+  document can define `all_quests` or any `TAGID`, like
+  `tools/fixtures/fixes/setup/q14jobs.xml` does with `QUEST_TEMPLATE_ID="story_talk1"`.
+- **Bounded attempts.** Generation is tried `MAXATTEMPTS` times and the
+  behavior disables itself on a permanent failure (missing document, unknown
+  tag id, requirements missing). Design a board to tell the player when it
+  has nothing, rather than depending on a job.
+- **They are copies.** A generated quest is a copy: it deletes itself when it
+  stops. A saved game keeps copies whole (their script) with progress, and a
+  restore makes them again.
+- **Requirements.** Generation needs areas with suitable givers
+  (`mql_viable_questgivers`: named mobs with an intelligence over 5, not
+  aggressive, with exits) and, for a collect or capture, suitable targets. In a
+  tiny world generation may often fail.
+- **Level criteria.** Generated quests set `QUEST_CRITERIA` with a level window
+  and `+SYSOP` (in the shipped `normal_travel2.xml`). Check a generated quest's
+  `QUESTINFO` if a character cannot take it.
+
+## JavaScript quest handlers
+
+A quest can have JavaScript handlers, either in a file named by `SET JSFILE`
+(`SET JSFILE world:js/quests/bell.js`) or in a `<JSQUEST>` ... `</JSQUEST>`
+block of the quest script. Functions (all optional):
+
+| Function | Called |
+| --- | --- |
+| `onStart(state)` | The quest starts. |
+| `onStep(n, state)` | A step starts. |
+| `onTimeUp(state)` | The duration ran out. |
+| `onWin(player)` | `MPQUESTWIN` named a winner. |
+| `onAccept(player)` | A character accepted. |
+| `onStop()` | The quest stopped. |
+
+`state` is `cm.store('quest:name')`, saved with the game. The scope also has
+`quest` (the `Quest` object) and `quests`, a helper: `quests.get(name)`,
+`start(name)`, `step(name)`, `win(name, who)`, `fail(name)`, `stop(name)`,
+`running(name)`, `stepNumber(name)`, `status(name)` (`running`, `stopping`,
+`finished`, `waiting`, `stopped`, `none`), `objective(name)`, `journal(name)`,
+`getVar(name, var)`, `setVar(name, var, value)`. JScriptable objects of the
+quest's mobs and items may also define `onQuestAccept(quest, mob)`,
+`onQuestStep(quest, step, label)`, `onQuestWin(quest, mob, outcome)`,
+`onQuestFail(quest, mob, reason)` and `onQuestEnd(quest, reason)`. `fail(name)`
+stops the quest; it does not fail it for one character. Register one
+authoritative reward path: quest events and handler callbacks can both observe
+the same completion. See [JavaScript](05-javascript.md).
+
+## Quest state in saves
+
+What a campaign save holds for quests (`WorldState` in
+[core/save](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java)):
+
+- **`QUESTS`**, one `QUEST` per quest in the list: the name, `WINNERS`
+  (`name@time;`), `RUNNING`, `FINISHED` (Q1), the quest variables (`VARS`:
+  `MPQSET` variables, `OFFERED:`, `SHOWN:`, `POSTED`, `QUESTGIVER`, ...), the
+  wait left if not running, and when running: `STEP`, `STEPNAME` (Q6),
+  `REMAINING`, and for each quest mob (`QMOB`) and item (`QITEM`) where it is,
+  or that it is gone (mobs also their base stats and hit points). A quest that
+  is not in the world's files (generated, a copy) is saved whole with its
+  `SCRIPT`, so a restore can make it again.
+- **`QUESTRECORDS`**, one record per quest and character: status, outcome
+  word, game time, win count, last win (Q4, Q5).
+- **The character** (their save): the tracking scripts given `SAVABLE`, the
+  hidden `Prop_QuestLog` (objectives, entries, deadlines), carried
+  `Prop_QuestItem` items.
+- **Script variables** in the variable scopes (the quest's name for `GIVE
+  SCRIPT` scripts, `*` per character for `INDIVIDUAL`): see
+  [state and persistence](state-and-persistence.md).
+- **Not saved:** `DELAY_PROG` timers in the quest's scripts; objects the quest
+  loaded are re-made when the quest restarts and then matched to the save.
+
+A restore that cannot find a saved quest in the world's files reports "Quest X is
+gone from the world." A quest that was running starts again, goes to its saved
+step (by name when it has one, so an edited file still restores), gets its time
+left and has its mobs and items put back or removed. The world files do not hold
+winners or running state; those are only in the campaign save. Editing a quest
+file between a save and a restore therefore keeps the progress but may
+drop objects that no longer exist. See [Saves and party](31-saves-and-party.md).
+
