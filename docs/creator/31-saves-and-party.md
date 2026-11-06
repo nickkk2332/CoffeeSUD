@@ -1019,7 +1019,7 @@ That means:
   room wins.
 - A room that is in the files but did not exist when the save was made is kept as
   the world has it, with its placed mobs and items (the save holds every room, so a
-  room it does not have is new). The restore report lists such rooms: "N room(s) are
+  room it does not have is new). The restore report lists such rooms: "3 rooms are
   new since this save and are as the world has them now: ...".
 - Rooms, exits and areas the player built or changed in play are kept as built
   (`ROOMSHAPES`), unless their area is taken fresh.

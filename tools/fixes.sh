@@ -507,16 +507,19 @@ group_saves3()
 	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" >> "$W/s23-inspect.txt" 2>&1
 	expect s23-inspect.txt "Character: Saver in New Area#0"
 	expect s23-inspect.txt "hit points 7,"
-	# D-SP-1 and D-SP-2 (docs audit): the save edited by saveinspect.py is still
+	# D-SP-1 and D-SP-2 (docs audit): a save edited by saveinspect.py is still
 	# whole (its .complete list is brought up to date), and a room added to the
 	# world after the save keeps what the world puts in it
+	play audit-save.txt wdb wworld "Auditor\n${NEWCHAR}get book\nread book\nsave auditsp\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/auditsp" --hp 7 > "$W/audit-inspect.txt" 2>&1
+	expect audit-inspect.txt "hit points 7,"
 	cp "$W/wworld/areas/new-area.cmare" "$W/new-area.before-audit"
 	python3 -c 'import sys; p, r = sys.argv[1], open(sys.argv[2]).read(); s = open(p).read(); open(p, "w").write(s.replace(" </AROOMS>", r + " </AROOMS>", 1))' "$W/wworld/areas/new-area.cmare" "$FX/setup/audit-newroom.xml"
-	play audit-restore.txt wdb wworld 'jrun /resources/_fixes/audit-restore.js\nquit\nn\n' RESTORE=s23a TIMEMODE=TURNS
-	expect audit-restore.txt "Restored 's23a'."
-	expect audit-restore.txt "room(s) are new since this save and are as the world has them now: New Area#7."
-	jsresults audit-restore.txt
+	play audit-restore.txt wdb wworld 'jrun /resources/_fixes/audit-restore.js\nquit\nn\n' RESTORE=auditsp TIMEMODE=TURNS
+	expect audit-restore.txt "Restored 'auditsp'."
+	expect audit-restore.txt "1 room is new since this save and is as the world has it now: New Area#7."
 	count audit-restore.txt "is incomplete or damaged" 0
+	jsresults audit-restore.txt
 	cp "$W/new-area.before-audit" "$W/wworld/areas/new-area.cmare"
 
 	# S22: a character's entry limits (InstanceArea's LIMIT) and planar

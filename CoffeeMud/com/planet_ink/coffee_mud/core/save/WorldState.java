@@ -402,7 +402,10 @@ public final class WorldState
 				final List<String> some = new ArrayList<String>(newRooms);
 				Collections.sort(some);
 				final String list = (some.size() > 8) ? (CMParms.toListString(some.subList(0, 8).iterator()) + ", ...") : CMParms.toListString(some.iterator());
-				SaveGame.noteWorldChange(CMLib.lang().L("@x1 room(s) are new since this save and are as the world has them now: @x2.", "" + some.size(), list));
+				if(some.size() == 1)
+					SaveGame.noteWorldChange(CMLib.lang().L("1 room is new since this save and is as the world has it now: @x1.", list));
+				else
+					SaveGame.noteWorldChange(CMLib.lang().L("@x1 rooms are new since this save and are as the world has them now: @x2.", "" + some.size(), list));
 			}
 		}
 		clearWorld();
