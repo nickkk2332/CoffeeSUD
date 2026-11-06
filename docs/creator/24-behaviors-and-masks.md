@@ -2601,3 +2601,545 @@ Aggressive.
 ```text
 WimpyAggressive -race +elf misbehave mobkill
 ```
+
+# Part 2: Zapper masks
+
+## Zapper masks
+
+A zapper mask is a short text expression that answers one question about one
+thing: does this mob, item, room or area qualify? Masks are the one shared
+filtering language of the engine. They appear in behavior parameters
+(`Aggressive -RACE +Elf`), property parameters (`Prop_ReqEntry`, the
+`SOURCEMASK=`/`TARGETMASK=` of the damage properties), spawn rules, catalog and
+shop rules, clan and deity requirements, class and skill qualifications,
+quests, script conditions (`ISLIKE`, `=S MASK=`) and JavaScript
+(`CMLib.masking().maskCheck(mask, host, true)`). The parser and evaluator are
+in
+[MUDZapper](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java);
+the key list is the `ZapperKey` enum in
+[MaskingLibrary](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java);
+the in-game help text is
+[zappermasks.txt](../../CoffeeMud/resources/help/zappermasks.txt) (shown by
+`AHELP ZAPPERMASKS`, where `<WORD>` reads "disallow").
+
+### Mask syntax
+
+A mask is a list of space-separated tokens. The text is compiled in upper case,
+so case never matters (the one exception: the expression of `JS` keeps its
+case). A mask has two kinds of token.
+
+**Keys** start with `-` or `+` and name a test: `-RACE`, `+LEVEL`, `-NAMES`,
+`+TATTOO`. The sign of a key sets the default direction of the test:
+
+| Form | Reading |
+| --- | --- |
+| `-KEY value value...` | Disallow everything, except those who fit one of the values. In short: require. |
+| `+KEY value value...` | Allow everything, except those who fit one of the values. In short: forbid. |
+
+The values after a key carry the opposite sign: `-RACE +Elf +Dwarf` (only elves
+and dwarves), `+RACE -Elf -Dwarf` (anyone but elves and dwarves). A value list
+runs until the next key; any word in it that lacks the expected sign is silently
+skipped. (The lists of `CLASS`, `BASECLASS`, `RACE`, `RACECAT`, `ALIGNMENT`,
+`GENDER`, `WEAPONTYPE` and `WEAPONCLASS` instead end at the first word that is not
+one of their names, and that word is then read as the next token of the mask.) Many keys also have plural spellings (`-RACES`, `-NAMES`).
+
+Exceptions to the "minus requires" rule are flagged in the tables below: a few
+tests with no values (`+ISHOME`, `+ROOMDARK`, `+OFFICER`, `+JUDGE`,
+`+AREAINSTANCE`, `+WANTED`, `+HOLIDAY`, `+BREATH`) require when written with
+`+` and forbid with `-`, and the numeric keys differ in which side of the number
+they pass.
+
+**Bare words** are shorthand for a single "forbid" test and need no key. A `-`
+word naming a character class, a race, an alignment (`-Good`, `-Neutral`,
+`-Evil`), a gender (`-Male`, `-Female`, `-Neuter`), a faction range code, or a
+level test (`->5`, `->=7`, `-<13`, `-<=20`, `-=3`) disallows that class, race
+and so on. `Aggressive -Elf -Mage` spares elves and mages. Bare words must be
+written with `-`; a bare `+Elf` is not understood (it logs "Bad Zappermask
+key"), so write `-RACE +Elf`. Names of classes, races, alignments and genders are
+matched by their start (`-Mag` is `-Mage` if no earlier name begins with `Mag`).
+
+**Quoting.** A value with spaces is wrapped in double quotes, sign inside:
+`-NAMES "+Short Sword" +Bob`. A backslash escapes the next character. Where a
+mask is itself a quoted parameter of a behavior or property, the inner quotes are
+written `\"`, or with single quotes in the places that convert them
+(`Prop_HelmRestrict`, `Prop_StockZapper`, `DelayedTransporter`, `GuildMaster`,
+`ResetWhole`, and the rules of `Travel` and `Waypoints`): `EXCEPT="-NAME
++'the Goblin King'"`.
+
+**Where a mask ends.** Parsing stops at the first word that is not a key, not a
+bare word, and does not start with `+` or `-` (it is where the mask's text
+ends). A behavior that puts a mask last in its parameters (`Follower`,
+`Aggressive`...) hands the compiler everything from the first `+` or `-` word to
+the end. Anything after a list value is swallowed by that list.
+
+**Combining.** Tests are joined by AND, evaluated left to right. `+OR` and `-OR`
+join groups: `A +OR B` passes if A or B passes; `A -OR B` passes if A passes or B
+fails ("`-OR` negates the following condition(s)").
+
+**Nesting.** `-RIDE`, `+RIDE`, `-FOLLOW`, `+FOLLOW`, `+ANYINGROUP`,
+`-ANYINGROUP`, `+ALLINGROUP` and `-ALLINGROUP` apply the *rest of the mask* to
+something else (the mount, the leader, the group here) and end the evaluation
+with that answer.
+
+### How a mask is evaluated
+
+`maskCheck(mask, host, actual)` takes the mask text (or a pre-compiled mask), the
+host (a mob, item, room, area or exit) and an `actual` flag. `actual=true` reads
+base values (a mob's real class and race, and real name); `false` reads current
+values (what a disguise or polymorph shows). Behaviors and properties that use a
+mask call it with `true` unless they say otherwise.
+
+- An empty mask, or a null host, always passes.
+- Compiled masks are cached by lower-cased text (200 entries, ten minutes).
+- Each token of the AND group is a gate: it either fails the whole mask at
+  once or lets evaluation go on; reaching the end means the mask passes.
+- A few gates succeed at once and skip the rest: `+PLAYER`, `+MOB` (`+NPC`),
+  `+SYSOP`, `+SUBOP`, `+JS` and `+IF` return true as soon as they match. Put
+  them first and deliberately.
+- A key whose subject is a mob, tested on an item, room or area host, is tested
+  on a blank stand-in mob; a key about items is tested on the host itself when
+  it is an item, and otherwise on the first item of the mob or a blank item.
+  Area hosts read an outdoor room of the area for room keys.
+- Keys about places (`AREA`, `DOMAIN`, `WEATHER`, `SEASON`, `HOUR`...) use the
+  host's room; time keys use the room's area clock.
+
+### Mask key reference
+
+Tables list every key. "Pass" is what lets the thing through. Unless the row
+says otherwise, `-KEY` requires a listed value and `+KEY` forbids one. Aliases
+in parentheses work the same way.
+
+#### Who: type, name and identity
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-PLAYER` (`-PLAYERS`) | none | Fails for a player; passes NPCs. |
+| `+PLAYER` (`+PLAYERS`) | none | Passes at once for a player (the rest of the mask is skipped); no effect on NPCs. |
+| `-NPC` (`-MOB`, `-MOBS`) | none | Fails for an NPC; passes players. |
+| `+NPC` (`+MOB`, `+MOBS`) | none | Passes at once for an NPC (rest skipped); no effect on players. |
+| `-CHANCE` | `n` | Passes `100-n` percent of the time (fails when a d100 roll is under `n`). No `+CHANCE`. |
+| `-NAMES` (`-NAME`) | `+name` ... | Requires the host's name to equal one of them exactly (case-insensitive). Quote names with spaces. Uses the real name when `actual`. |
+| `+NAMES` (`+NAME`) | `-name` ... | Forbids those names. |
+| `-SUBNAMES` | `+text` ... | Requires the name to contain the text. `*` wildcards: `+*ending`, `+start*`, `+*inside*`. |
+| `+SUBNAMES` | `-text` ... | Forbids those partial names. |
+| `-ACCOUNTS` (`-ACCOUNT`) | `+name` ... | Requires the player's account name (CoffeeSUD: the profile name) to equal one of them; for a non-player, the host name. |
+| `+ACCOUNTS` | `-name` ... | Forbids those accounts. |
+| `-TATTOOS` (`-TATTOO`) | `+tattoo` ... | Requires one of the tattoos on the mob, or an area blurb flag of the room's area of that name. |
+| `+TATTOOS` | `-tattoo` ... | Forbids those tattoos. |
+| `-TAG` (`-TAGS`) | `+tag` ... | Requires the host (an item's own tags, else the mob's) to carry a tag (see `MPTAG`). |
+| `+TAG` | `-tag` ... | Forbids those tags. |
+| `-RANK` (`-RANKS`) | `+rank` ... | Requires a mob rank from `Prop_MobRank`: `MINION`, `NORMAL` (none), `ELITE`, `BOSS` or one the world adds. |
+| `+RANK` | `-rank` ... | Forbids those ranks. |
+| `-JAVACLASS` | `+ID` or `+.Name` | Requires the host's class ID to equal `ID` (`+GENMOB`), or, with a leading dot, its class or any ancestor class or interface to end with `.Name` (`+.Drink`). |
+| `+JAVACLASS` | `-ID` | Forbids those. |
+| `-CLASSTYPE` | `+JavaType` ... | Requires the host to be an instance of the named Java type (class or interface name, searched in the engine packages). |
+| `+CLASSTYPE` | `-JavaType` ... | Forbids those. |
+| `-EFFECT` (`-EFFECTS`) | `+name` ... | Requires an effect (an ability ID or name) or a behavior of that ID or name on the host. |
+| `+EFFECT` | `-name` ... | Forbids those. |
+
+#### Who: class, race, alignment, gender
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-CLASS` (`-CLASSES`) | `+class` ... | Requires the current class. Class names or IDs; prefix-matched. With `actual`, the real class; otherwise the displayed one. |
+| `+CLASS` | `-class` ... | Forbids those classes. |
+| `-BASECLASS` (`-BASECLASSES`) | `+base` ... | Requires the base class (`Fighter`, `Mage`...). |
+| `+BASECLASS` | `-base` ... | Forbids those. |
+| `-ANYCLASS` (`-ANYCLASSES`) | `+class` ... | Requires levels in one of these classes (multi-classing). |
+| `+ANYCLASS` | `-class` ... | Forbids having levels in any of them. |
+| `-RACE` (`-RACES`) | `+race` ... | Requires the race (name or ID, prefix-matched). |
+| `+RACE` | `-race` ... | Forbids those races. |
+| `-RACECAT` (`-RACECATS`) | `+category` ... | Requires the racial category (`humanoid`, `undead`, `insect`...). |
+| `+RACECAT` | `-category` ... | Forbids those categories. |
+| `-ALIGNMENT` (`-ALIGNMENTS`, `-ALIGN`) | `+good` `+neutral` `+evil` | Requires the alignment (also matches inclination names). |
+| `+ALIGNMENT` | `-good`... | Forbids those. |
+| `-GENDER` (`-GENDERS`) | `+male` `+female` `+neuter` | Requires the gender. |
+| `+GENDER` | `-male`... | Forbids those. |
+| `-FACTION` | `+faction.rangecode` ... | Requires the mob to stand in the given faction range (a range code such as `GOOD`, or `faction.range`). |
+| `+FACTION` | `-rangecode` ... | Forbids those ranges (a bare `-rangecode` is the same). |
+| `-DEITY` | `+Name` ... or `+ANY` | Requires worship of the named deity (`+ANY`: any deity). |
+| `+DEITY` | `-Name` ... | Forbids worshippers of them. |
+| `-MOOD` (`-MOODS`) | `+mood` ... | Requires the mood from the `Mood` effect (`NORMAL` when none). |
+| `+MOOD` | `-mood` ... | Forbids those. |
+
+#### Who: levels and stats
+
+Level ranges are tokens `=N`, `>N`, `>=N`, `<N` and `<=N`, signed opposite to
+the key: `-LEVEL +>5 +=2` (levels above 5 or exactly 2), `+LEVEL ->10` (nothing
+above 10).
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-LEVEL` (`-LEVELS`) | `+range` ... | Requires the host's level (base level when `actual`) to fit one range. Works on mobs, items and anything with a level. |
+| `+LEVEL` | `-range` ... | Forbids levels that fit any range. |
+| `-CLASSLEVEL` / `+CLASSLEVEL` | `+range` / `-range` | The same, for the level in the current class. |
+| `-MAXCLASSLEVEL` / `+MAXCLASSLEVEL` | `+range` / `-range` | The same, for the highest class level held. |
+| `-ANYCLASSLEVEL` | `+class +range ...` | Requires, for one of the classes named, a level in range (a class, then its ranges, then the next class). |
+| `+ANYCLASSLEVEL` | `-class -range ...` | Forbids that. |
+| bare `->N`, `->=N`, `-<N`, `-<=N`, `-=N` | | Forbids levels above N, at or above N, below N, at or below N, or equal to N. |
+| `-QUALLVL` | `Ability [adjustment]` | Requires the mob's class level to be no more than the level at which it qualifies for the ability, plus the adjustment (still before qualifying). |
+| `+QUALLVL` | `Ability [adjustment]` | Requires the mob to have reached the level it qualifies for the ability plus the adjustment. |
+| `-STR` `-INT` `-WIS` `-DEX` `-CON` `-CHA` (`-STRENGTH`...) | `n` | Requires the base stat to be at most `n`. |
+| `+STR` ... | `n` | Requires the base stat to be at least `n`. |
+| `-ADJSTR` `-ADJINT` `-ADJWIS` `-ADJDEX` `-ADJCON` `-ADJCHA` (`-ADJSTRENGTH`...) | `n` | As above, but the current (adjusted) stat: at most `n`. |
+| `+ADJSTR` ... | `n` | The current stat: at least `n`. |
+| `-GROUPSIZE` / `+GROUPSIZE` | `n` | Requires a group of at most / at least `n` members (the group of the mob; for an area, its population). |
+| `-VALUE` / `+VALUE` | `n` | Requires value or money at least / at most `n` (for a mob, all its money; for an item, its base gold value). |
+| `-WEIGHT` / `+WEIGHT` | `n` | Weight at least / at most `n`. |
+| `-ARMOR` / `+ARMOR` | `n` | Armor adjustment at least / at most `n`. |
+| `-DAMAGE` / `+DAMAGE` | `n` | Damage adjustment at least / at most `n`. |
+| `-ATTACK` / `+ATTACK` | `n` | Attack adjustment at least / at most `n`. |
+| `-ABILITY` (`-ABLE`, `-ABILITIES`) / `+ABILITY` | `n` | Magical ability (item "plus") at least / at most `n`. |
+
+#### Who: skills, standing and organisations
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-SKILLS` (`-SKILL`) | `+Ability_ID` or `+Ability_ID(75)` ... | Requires the mob to know one of the abilities, at proficiency at least the number in brackets (default 0). On a wand or staff, requires one of the spells in its spell list. |
+| `+SKILLS` | `-Ability_ID(n)` | Forbids. |
+| `-SKILLFLAG` (`-SKILLFLAGS`) | `+flag` ... | Requires the mob to have a skill of an ability type (`SPELL`, `PRAYER`, `SONG`...), a domain (`ENCHANTMENT`...), a flag or a quality. Combine with `&` and `!` (`+ENCHANTMENT&!MALICIOUS`). |
+| `+SKILLFLAG` | `-flag` ... | Forbids. |
+| `-EXPERTISES` (`-EXPERTISE`) | `+id` ... | Requires one of the expertises. |
+| `+EXPERTISES` | `-id` ... | Forbids. |
+| `-CLAN` (`-CLANS`) | `+Clan` / `+Clan(ROLE)` / `+Clan(FUNCTION)` / `+*` | Requires membership; with a role or function in brackets, requires that position (a clan position name) or a clan function the position can do. `+*` is any clan. On a clan item, the item's clan. |
+| `+CLAN` | `-Clan` / `-Clan(ROLE)` | Forbids. |
+| `-CLANLEVEL` (`-CLANLEVELS`) | `+clan +range ...` | Requires the clan's own level in range; `+*` is any clan the mob is in, `+1` its first clan. |
+| `+CLANLEVEL` | `-clan -range ...` | Forbids that. |
+| `-CLANRANK` / `+CLANRANK` | `"+Clan Name>=RANK"` | CoffeeSUD: requires / forbids a rank condition in a clan or organisation: a name, an operator (`>=`, `<=`, `==`, `!=`, `>`, `<`) and a rank name (quote the value; see `Organizations.rankMask`). |
+| `-RULER` / `+RULER` | `+Clan` or `+*` | CoffeeSUD: requires / forbids the host being in territory ruled by that clan (`*`: by any ruler). |
+| `-SECURITY` (`-SEC`, `-SECURITIES`) | `+flag` ... | Requires one of the security flags (`CMDROOMS`, `AREA`, `CMDITEMS`...; spaces as underscores) for the mob in the room. |
+| `+SECURITY` | `-flag` ... | Forbids. |
+| `-ACCCHIEVES` (`-ACCCHIEVE`) | `+id` ... | Requires an achievement earned by the account (the profile). |
+| `+ACCCHIEVES` | `-id` ... | Forbids. |
+| `-QUESTWIN` | `+quest` ... | Requires having won one of the quests. |
+| `+QUESTWIN` | `-quest` ... | Forbids having won. |
+| `-QUESTFAIL` / `+QUESTFAIL` | `+quest` / `-quest` | CoffeeSUD: requires / forbids having failed the quest. |
+| `-QUESTOUTCOME` / `+QUESTOUTCOME` | `+quest:word` / `-quest:word` | CoffeeSUD: the outcome word that `MPQUESTWIN` gave, or the failure reason. |
+| `-QUESTWINS` / `+QUESTWINS` | `+quest:>=10` / `-quest:>=10` | CoffeeSUD: the number of times the quest was won, with a comparison (`=`, `>`, `>=`, `<`, `<=`). |
+| `-WANTED` | `[crime ...]` | Forbids (fails for) one wanted by the law where they stand, or for one of the crimes named. **`+WANTED` requires it.** |
+| `-OFFICER` / `+OFFICER` | none | Forbids / requires being an officer of the law of the mob's start area (`+OFFICER` also fails for players). |
+| `-JUDGE` / `+JUDGE` | none | Forbids / requires being a judge. |
+| `-BREATH` | `<3` etc. | Forbids those whose breath left (in ticks) compares so: `<`, `<=`, `>`, `>=`, `=`, `!=`. **`+BREATH` requires it.** |
+| `-SYSOP` (`-SYSOPS`) | none | Fails for archons (sysops). |
+| `+SYSOP` | none | Passes at once for an archon, skipping the rest. |
+| `-SUBOP` / `+SUBOP` | none | The same for an area staff member (a sub-op of the area) or an archon. |
+
+#### Where: area, room and environment
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-AREA` (`-AREAS`) | `+name` ... | Requires the host's room to be in the area. Names match the area's name exactly; a leading `*` matches the end of the name (`+*Forest`). |
+| `+AREA` | `-name` ... | Forbids those areas. |
+| `-PARENTAREA` / `+PARENTAREA` | `+name` / `-name` | The same, but an area also counts if a parent area has that name. |
+| `-AREAINSTANCE` | none | Forbids being in an area instance. **`+AREAINSTANCE` requires it.** |
+| `-AREABLURB` / `+AREABLURB` | `+blurb` or `"+blurb value"`; `+*end`, `+start*` | CoffeeSUD: requires / forbids the area's blurb flag with that name (and value, if a value is given). |
+| `-HOME` / `+HOME` | `+area` / `-area` | Requires / forbids that the mob's home (start or beacon) area, or a plane of that name, is the one named; `*` suffix allowed. |
+| `-ISHOME` | none | Forbids being in the home area (fails when at home). **`+ISHOME` requires being at home.** |
+| `-LOCATION` | `+OWNED` `+CLANOWNED` `+PRIV` `+ROOMID(text)` `+ROOMSTR(text)` | Requires one of: the room owned by the mob (for a non-mob: owned by anyone); owned by a clan the mob belongs to; the mob has privileges there; the room ID starts with the text; the room's title or description contains the text. |
+| `+LOCATION` | `-OWNED` ... | Forbids those. |
+| `-DOMAIN` / `+DOMAIN` | `+CITY` `+WOODS` ... | Requires / forbids the room's locale type: a locale name (the outdoor and indoor names under [Locale restriction words](#locale-restriction-words)) or a number. |
+| `-PLANE` / `+PLANE` | `+name` | Requires / forbids being on the named plane (`Prime Material` when none). |
+| `-PORT` / `+PORT` | `+n` | Inherited: tests the number of the game's server port. There is no networking in CoffeeSUD, so this is always the same value; do not use. |
+| `-ROOMDARK` | none | Forbids being in a room dark to the mob (dark, and it cannot see in the dark). **`+ROOMDARK` requires it.** |
+| `-WEATHER` / `+WEATHER` | `+RAIN` ... | Requires / forbids the area's current weather: `CLEAR`, `CLOUDY`, `WINDY`, `RAIN`, `THUNDERSTORM`, `SNOW`, `HAIL`, `HEAT`, `SLEET`, `BLIZZARD`, `DUST`, `DROUGHT`, `COLD`, `FOG` (or the number). |
+| `-TIDE` / `+TIDE` | `+HIGH` ... | CoffeeSUD: requires / forbids the tide: `HIGH`, `LOW`, `NONE`, or a phase such as `SPRING_HIGH`, `NEAP_LOW`; add `:n` for a span of n hours either side of the turn (`+HIGH:2`). |
+| `-HOLIDAY` | `[name ...]` | Forbids it while a holiday (any, or one of those named) is on. **`+HOLIDAY` requires one.** |
+
+#### When: the clock
+
+All time keys read the host's area clock. Their values are numbers, signed
+opposite to the key: `-HOUR +20 +21 +22`. A value with a space must be quoted
+and takes one of two extra forms: `"+3 of 5"` (the value modulo 5 equals 3) and
+`"+3rd 5"` (the 3rd block of 5).
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-HOUR` (`-HOURS`) / `+HOUR` | `+n` / `-n` | Hour of the day. |
+| `-DAY` / `+DAY` | | Day of the month. |
+| `-DAYOFYEAR` / `+DAYOFYEAR` | | Day of the year. |
+| `-WEEK` (`-WEEKS`) / `+WEEK` | | Week of the month. |
+| `-WEEKOFYEAR` (`-WEEKSOFYEAR`) / `+WEEKOFYEAR` | | Week of the year. |
+| `-MONTH` (`-MONTHS`) / `+MONTH` | | Month number. |
+| `-YEAR` (`-YEARS`) / `+YEAR` | | Year. |
+| `-SEASON` (`-SEASONS`) / `+SEASON` | `+SPRING` ... | `SPRING`, `SUMMER`, `FALL`, `WINTER` (or a number, or a season name of the area's own calendar). |
+| `-BIRTHDAY`, `-BIRTHDAYOFYEAR`, `-BIRTHWEEK`, `-BIRTHWEEKOFYEAR`, `-BIRTHMONTH`, `-BIRTHYEAR`, `-BIRTHSEASON` (and `+` forms) | as the above | The same, on the date the mob was born (the age calendar), not now. |
+
+Times of day and `-HOUR`: `-HOUR +20 +21 +22 +23 +0 +1 +2 +3` is night hours.
+
+#### What: items and equipment
+
+Item keys test the host if it is an item, or, for a mob host, the things it
+carries or wields as stated.
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-ITEM` | `+name` ... | Requires the mob to have an item of that name. |
+| `+ITEM` | `-name` ... | Forbids having it. |
+| `-WORN` | `+name` ... | Requires the mob to be wearing (not just carrying) that item. For an item host: that it is being worn. |
+| `+WORN` | `-name` ... | Forbids wearing it. |
+| `-MATERIAL` / `+MATERIAL` | `+WOODEN` ... | Requires / forbids a material type (`CLOTH`, `METAL`, `WOODEN`, `GLASS`...). |
+| `-RESOURCES` (`-RESOURCE`) / `+RESOURCES` | `+OAK` ... | Requires / forbids a resource (exact resource name, or a resource flag name that expands to its resources). |
+| `-WORNON` / `+WORNON` | `+TORSO` ... | Requires / forbids items wearable on those locations. |
+| `-WEAPONTYPE` / `+WEAPONTYPE` | `+SLASHING` ... | The type of the wielded weapon (`SLASHING`, `PIERCING`, `BASHING`...). |
+| `-WEAPONCLASS` / `+WEAPONCLASS` | `+SWORD` ... | The class of the wielded weapon (`SWORD`, `AXE`, `DAGGER`...). |
+| `-WEAPONAMMO` / `+WEAPONAMMO` | `+arrow` ... | The ammunition type the wielded weapon uses. |
+| `-DISPOSITION` / `+DISPOSITION` | `+ISHIDDEN` ... | Requires / forbids a disposition flag: `ISUNSEEN`, `ISHIDDEN`, `ISINVISIBLE`, `ISEVIL`, `ISGOOD`, `ISSNEAKING`, `ISBONUS`, `ISDARK`, `ISGOLEM`, `ISSLEEPING`, `ISSITTING`, `ISFLYING`, `ISSWIMMING`, `ISGLOWING`, `ISCLIMBING`, `ISFALLING`, `ISLIGHT`, `ISBOUND`, `ISCLOAKED`, `ISUNSAVABLE`, `ISCATALOGED`, `ISUNATTACKABLE`, `ISCUSTOM`, `ISUNHELPFUL`. |
+| `-SENSES` / `+SENSES` | `+CANSEEDARK` ... | Requires / forbids a sense flag: `CANNOTSEE`, `CANSEEHIDDEN`, `CANSEEINVISIBLE`, `CANSEEEVIL`, `CANSEEGOOD`, `CANSEESNEAKERS`, `CANSEEBONUS`, `CANSEEDARK`, `CANSEEINFRARED`, `CANNOTHEAR`, `CANNOTMOVE`, `CANNOTSMELL`, `CANNOTTASTE`, `CANNOTSPEAK`, `CANNOTBREATHE`, `CANSEEVICTIM`, `CANSEEMETAL`, `CANNOTTHINK`, `CANNOTTRACK`, `CANNOTAUTOATTACK`, `CANNOTBECAMPED`, `CANGRUNTWHENSTUPID`, `CANSEEITEMSHIDDEN`. |
+| `-IFSTAT` / `+IFSTAT` | `+STAT=VALUE` ... | Requires / forbids that one of the host's generic stats (the names of the generic editor: `LEVEL`, `NAME`, `RACE`...) equals the value, case-insensitively. Quote a value with spaces: `"+DESCRIPTION=a red door"`. |
+
+#### Logic: scripts and structure
+
+| Key | Values | Meaning |
+| --- | --- | --- |
+| `-IF` | `"condition"` ... | Requires a MOBPROG condition to be true (the text of an `IF`, such as `"ISNPC($i)"`, evaluated with the host as the scripted object; in a cast mask `$t` is the target). Each space-separated (so, quoted) token after the key is a separate condition and any one true is enough; the text is read in upper case. |
+| `+IF` | `"condition"` ... | Passes at once when a condition is true (rest skipped). |
+| `-JS` | `"expr"` | Requires the JavaScript expression to be true (`mob`, `item`, `room`, `target`, `cm` are defined; an error counts as false). |
+| `+JS` | `"expr"` | Passes at once when the expression is true. |
+| `+OR`, `-OR` | none | Joins groups of tests: `+OR` is plain OR, `-OR` ORs with the negation of what follows. |
+| `-RIDE` | rest of the mask | The rest of the mask must be true of what the host is riding (fails if not riding). |
+| `+RIDE` | rest of the mask | The rest must not be true of what it rides (passes if not riding). |
+| `-FOLLOW` / `+FOLLOW` | rest of the mask | The same, for the mob it follows. |
+| `+ANYINGROUP` | rest of the mask | True if the host or anyone of its group in the room fits the rest. |
+| `+ALLINGROUP` | rest of the mask | True if the host and everyone of its group in the room fit the rest. |
+| `-ANYINGROUP` | rest of the mask | True if no one of them fits. |
+| `-ALLINGROUP` | rest of the mask | True if not everyone fits. |
+
+### Where masks are used
+
+Masks are accepted wherever the matching help or chapter says "zapper mask" or
+"mask". A grep for the masking library finds users in:
+
+- **Behaviors** (this chapter): the aggression and helper families, `Follower`,
+  `GateGuard`, `DoorwayGuardian`, `ObjectGuardian`, `CorpseEater`, `Decay`,
+  `InstantDeath`, `Scavenger`, `MOBHunter`, `Wimpy`, `Pursue`, `Morale`,
+  `TargetPriority`, `Sentry`, `Healer`, `Hireling`, `MOBTeacher`,
+  `GuildMaster`, `Schedule`, `Scene`, `Sounder`, `Emoter`, the spawners'
+  `WHEN`, `RandomEncounters` `TRIGGER`, `ResetWhole` `EXCEPT`, and the `WHEN`
+  gate of every behavior.
+- **Properties** ([chapter 23](23-properties-reference.md)): the `Prop_Req*`
+  family (`Prop_ReqEntry` and its relatives), `Prop_AddDamage` `TARGETMASK=`,
+  `Prop_AbsorbDamage`, `Prop_HaveResister` and `Prop_WearResister`
+  `SOURCEMASK=`, `Prop_StockZapper`, `Prop_HelmRestrict`.
+- **Scripts**: `ISLIKE([CODE] [MASK])`, `=S MASK=[ZAPPER MASK]` in
+  `EXECMSG_PROG` and `CNCLMSG_PROG`, and the optional `(MASK)` of triggers such as
+  `GAME_PROG`, `SKILL_PROG` and `DEATH_PROG @GLOBAL`
+  ([chapters 26 to 28](26-mobprog-triggers.md)).
+- **Catalog, quests, clans, deities, classes and skills**: catalog rules in the
+  `CATALOG` command, quest scripts, clan requirements (`CLANQUAL`), deity cleric
+  and worshipper requirements, character class and skill qualifications,
+  factions, achievements, perks, origins, waypoints, encounter tables, death
+  rules and rejuvenation rules.
+- **JavaScript**: `CMLib.masking().maskCheck(mask, host, true)` and
+  `maskDesc(mask)` (see [chapter 5](05-javascript.md)); `-JS` and `+JS` inside a
+  mask.
+
+`maskDesc(mask)` returns the English reading of a mask ("Allows only the following
+races: Elf, Dwarf"); builders see it in several editors.
+
+### Mask examples
+
+```text
+-RACE +Elf +Dwarf
+```
+
+Only elves and dwarves.
+
+```text
++RACE -Elf -Dwarf -CLASS +Thief
+```
+
+Anyone but elves and dwarves, and among those only thieves.
+
+```text
+-LEVEL +>=10 +<=20 -NAMES "+Captain Brand" +Marlow
+```
+
+A host level 10 to 20, named Captain Brand or Marlow.
+
+```text
+-PLAYER
+```
+
+Never players (only NPCs get through).
+
+```text
+-HOUR +20 +21 +22 +23 +0 +1 +2 +3 -SEASON +WINTER
+```
+
+Night hours, in winter only.
+
+```text
+-AREA "+Sylvan Wood" +*Forest -WEATHER +RAIN +THUNDERSTORM
+```
+
+In the area named Sylvan Wood or any whose name ends in Forest, while it rains.
+
+```text
+-ITEM "+raw meat" +OR -TATTOO +BAITED
+```
+
+Carrying raw meat, or tattooed BAITED.
+
+```text
+-CLASS +Paladin +OR -ALIGNMENT +good -LEVEL +>5
+```
+
+A paladin, or a good-aligned host above level 5.
+
+```text
++WANTED THEFT ASSAULT
+```
+
+Only those wanted for theft or assault where they are.
+
+```text
+-FOLLOW -RACE +Human
+```
+
+Only mobs that follow a human.
+
+```text
+-IFSTAT +LEVEL=20
+```
+
+Only a host whose `LEVEL` stat is 20.
+
+```text
+-JS "cm.store('world').bellRung && cm.clock().hour() < 4"
+```
+
+True after the bell is rung and before four in the morning.
+
+A complete property example (a door only the guild's members may use):
+
+```text
+Prop_ReqEntry: -CLAN "+Silver Hand"
+```
+
+and a behavior example, an aggressive dog that spares elves, women and anyone
+carrying a bone:
+
+```text
+Aggressive -Elf -Female +ITEM -bone
+```
+
+### Mask gotchas
+
+- Values are matched by `-KEY +value`, not `KEY value`. A forgotten sign makes the
+  value skipped without any message.
+- A bare `+word` is an error; use a key. Bare `-word` is a forbid test.
+- A class, race, alignment or gender abbreviation matches the first name that
+  starts with it in alphabetical order.
+- A list swallows everything up to the next key. Put plain-text parameters (like
+  `message="..."` of `Aggressive`) before the mask, not inside it.
+- `+PLAYER`, `+MOB`, `+SYSOP`, `+SUBOP`, `+IF` and `+JS` pass immediately.
+- `-CHANCE n` passes `100-n` percent of the time (it is "disallow n percent").
+- `-ISHOME`, `-ROOMDARK`, `-OFFICER`, `-WANTED`... read against the standard
+  direction: check the tables before relying on them.
+- Mob keys on a non-mob host test a blank mob; if a mask on a room says
+  `-RACE +Elf`, no room fits it.
+- Time keys use the area clock; a mask on a mob outside any area has none.
+- `-ALL` and `+ALL` are locale words of the behaviors that take them, not mask
+  keys.
+- The key set is large. Mistyped keys log "Bad Zappermask key" or "Bad ZapperMask
+  parm" in the log and the test is dropped.
+
+## Worked examples
+
+### A night-prowling beast
+
+A wolf that is aggressive only at night, wanders, ignores elves and warns first:
+
+```text
+MobileAggressive TOD=NIGHT min=10 max=20 chance=75 WARN="The wolf bares its teeth.|The wolf snarls and crouches!" WARNTICKS=2 BACKOFF=true -RACE +Human +Dwarf
+Mobile TOD=DAY min=20 max=60 wander
+```
+
+`TOD=NIGHT` gates the first behavior; the second takes over in daylight. The mask
+`-RACE +Human +Dwarf` makes only humans and dwarves a target. `STAT BEHAVIORS
+wolf` shows which of the two is on now.
+
+### A city gate
+
+A gate guard who lets in only some visitors, a lookout who raises the alarm, and a
+sleeping guard the alarm can wake. Three mobs, three behaviors:
+
+```text
+GateGuard keeplocked -RACE +Human +Elf -ALIGNMENT +good
+Sentry SPOT=30 ALARM="RADIUS=5 MASK=-NAMES +guard MSG=Intruders at the gate!" ALERTTICKS=30
+Sleeper SLEEPS=NIGHT WAKEON=NOISE,ENTER WAKECHANCE=40 ALARM
+```
+
+Use `MODIFY MOB [name]` and add each behavior at the `Behaviors` line. The guard
+opens and closes the door for players who fit the mask (the guard counts
+players it can see in its room who pass it), and keeps the door locked
+otherwise. The sentry spots hidden or sneaking intruders at 30% a tick and, when
+it does, shouts to every NPC within five rooms whose name has "guard"; the sleeper
+sleeps through the night and is woken by noise or an entrance, and then raises
+its own alarm.
+
+### A tavern with barks and a rumour keeper
+
+```text
+Sounder GREET: COOLDOWN=30 2 SAY Welcome, friend. | 1 SAY Mind the dog.;SEE_MOB(-RACE +Elf): SAY We don't get many of your kind in here.;NIGHT: SAY Last call soon!
+MudChat
+Memory GREETIF=MET>0 GREET="Welcome back, $n." FORGET=30d
+```
+
+The innkeeper has three behaviors: barks (a greeting drawn by weight, a remark
+about elves, and a night line), a MudChat that answers speech from the chat
+file (picked by the mob's name), and a Memory that greets returning customers.
+
+## Persistence notes
+
+- A behavior and its parameter text are part of its host's definition: they are
+  written to world files (`BEHAVES`) by `SAVE` in builder mode and carried into
+  campaign saves with the host.
+- Run state (patrol position, hireling contract, spawn counts...) is written only
+  to campaign saves, as `BSTATE` entries, and restored once the behaviors are
+  recreated on their hosts after a restore. Definition changes in the world files
+  therefore win for parameters, while a saved game keeps its run state.
+- `Decay` writes its remaining countdown into its parameters (`remain=`), so
+  that survives even a world save.
+- `GenBehavior` definitions live in `world/custom/behaviors/`; destroying a
+  definition leaves behaviors that carry it on their hosts until the next load.
+- Masks are not saved separately: they are text in the parameters (or property
+  text) that contains them, and are recompiled from text.
+- Run state belongs to a behavior on a host that loads; a behavior removed from a
+  host loses its state with it.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+| --- | --- |
+| A behavior does nothing | The host is not a valid type (`canImproveCode`), the mob is asleep or bound (timed behaviors do not act), the `WHEN`/`TOD`/`HOURS` gate is closed (`STAT BEHAVIORS`), or the countdown has not ended (use `TRACEB`). |
+| `minitems=10` makes ticks too long | Key matching is by start: `min` matches `minitems`. Put `min=` and `max=` before the item keys, or give them explicitly. |
+| A mask lets everyone through | The mask text is empty (no key found), a `+PLAYER` or similar passed early, or an unknown key was dropped; check the log for "Bad Zappermask key". |
+| A mask lets no one through | A `-KEY` list with no valid values for it (all skipped); a mob key on a non-mob host; a typo in a value (`+Elph`). |
+| `Aggressive +elf` aggresses nothing different | A bare `+word` is not a mask key. Write `-RACE +Elf`. |
+| Two behaviors fight (Fighterness with Mageness) | Only one `CombatAbilities`-family behavior per mob. |
+| After removing a combat preset the mob keeps strange stats | The presets rewrite the mob's stats; reset the room and check them by hand. |
+| `GateGuard keeplocked allnight` ignores `allnight` | Only the first of the two flags is read. |
+| `WeatherAffects shipdmg=...` has no effect | The code reads `dmgship` (with `shipdmgpct`). |
+| STAT BEHAVIORS lists a key as unknown | It is not named in the behavior's help (it may still work: for example `ATNIGHT` of Scavenger). |
+
+## See also
+
+- [Properties reference](23-properties-reference.md): the `Prop_*` abilities,
+  including the `Prop_Req*` masks.
+- [MOBPROG guide](04-mobprog.md), [triggers](26-mobprog-triggers.md),
+  [commands](27-mobprog-commands.md), [functions](28-mobprog-functions.md): the
+  language behind `Scriptable`, `GenBehavior` and `-IF`.
+- [NPCs and dialogue](06-npcs-dialogue.md): MudChat files, schedules, sentries,
+  barks, scenes.
+- [Combat and encounters](29-combat-and-encounters.md): morale, phases, waves,
+  encounter tables, threat.
+- [Society](09-society.md): law, clans, economy.
+- [Travel, vehicles and instances](30-travel-vehicles-instances.md): transport
+  behaviors.
+- [Generation](12-generation.md): random spawners and area regeneration.
+- [JavaScript](05-javascript.md): `JSBehavior`, `JScriptable`, `-JS` masks.
+- [Engine programming](32-engine-programming.md): writing a new behavior class.
+- [State and persistence](state-and-persistence.md).
+- [Tool reference](tool-reference.md): the generated help text, including
+  `BEHAVIOR_*` and `ZAPPERMASKS`.

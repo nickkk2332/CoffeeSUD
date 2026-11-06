@@ -1655,3 +1655,282 @@ value sets "never rejuvenate". Use the full editor to enter -1.
 Shopkeepers' stock follows the same rule for stocked items, and the mob's own
 respawn time (its Rejuv Ticks) is in [21-mobs.md](21-mobs.md).
 
+## The catalog
+
+The catalog is a global set of named mob and item templates. Source:
+[Commands/Catalog.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Catalog.java),
+[Libraries/CMCatalog.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMCatalog.java).
+Use it when the same item appears in many places, or when you want one change
+to reach every copy, or when you want the engine to hand the item out by rule
+(drops, room spawns, chests).
+
+How it behaves:
+
+- A catalog entry is keyed by the item's **name**. Do not rename a cataloged
+  item; renaming detaches it from the catalog.
+- `CREATE ITEM [catalog name]` (or `CREATE [catalog name]`) makes a copy tied to
+  the entry: a copy carries the "cataloged" flag, and `MODIFY` tells you
+  `*** This object is Cataloged **`.
+- If you change a cataloged item, finishing the editor shows what differs
+  (`CATALOG:` and `YOURS  :` lines per changed stat) and asks `Enter U to
+  update the cataloged version, or D to detach this object from the catalog, or
+  C to Cancel (u/d/C)?`. `U` rewrites the catalog entry, so every tied copy
+  follows when it is next created; `D` makes this copy independent; `C` throws
+  your change away.
+- An object that cannot be saved to the database is refused ("can not be
+  cataloged"), and an object's class must match the existing entry of that
+  name.
+- Scripts load catalog items with `MPOLOAD CATALOG [name]` (also
+  `MPOLOADROOM`, `MPOLOADSHOP`, `CATALOG:[name]`); copies are counted and none
+  is made past the cap unless `FORCE` is given ([27-mobprog-commands.md](27-mobprog-commands.md)).
+  A crafting recipe's result may be `CATALOG:name`; see [07-items-crafting.md](07-items-crafting.md).
+- Permission: the `CATALOG` security flag (`AHELP CATALOG`).
+
+### CATALOG commands
+
+Source help: `AHELP CATALOG`.
+
+| Command | Does |
+| --- | --- |
+| `CATALOG [name]` | Catalogs the item or mob found in your room or inventory by that name (`SELF` or `ME` for yourself). A new entry goes into your current category. If an entry of that name exists, you are shown the differences and asked to confirm updating it |
+| `CATALOG LIST` | Lists the catalog: mobs, then items. Columns are Name, the number of copies in the game (`#`), the auto-spawn kind (first letter, or `N/A`), the rate and the mask |
+| `CATALOG LIST MOBS [mask]`, `CATALOG LIST ITEMS [mask]` | Lists one kind, filtered by name |
+| `CATALOG LIST CATEGORIES` | Lists the category names |
+| `CATALOG CATEGORY [name]` | Sets the category your next additions go into. A new name asks for confirmation. `NONE` returns to the global category; `LIST` lists them. (`GLOBAL`, `NONE` and `UNCATEGORIZED` cannot be created) |
+| `CATALOG DELETE [ITEMS or MOBS] [name]` | Deletes an entry after a confirmation (a delete of more than 10 entries at once is not confirmed). Copies already placed are detached, not destroyed. `everydamnitem`, `everydamnmob` and `everydamnthing` delete in bulk |
+| `CATALOG EDIT [ITEMS or MOBS] [name]` | Edits spawn rules, cap, uniqueness and rules; see below |
+| `CATALOG ROOM\|AREA\|WORLD [MOBS\|ITEMS]` | Catalogs every mob or item there. It resets and saves the rooms, so it asks first: once for `ROOM`, twice for `AREA` or `WORLD` |
+| `CATALOG SCAN\|DBSCAN ROOM\|AREA\|WORLD [MOBS\|ITEMS]` | Reports cataloged objects, and which are falsely cataloged (tied to a missing entry). `DBSCAN` checks the saved rooms |
+| `CATALOG OVERLOOK\|DBOVERLOOK ROOM\|AREA\|WORLD [MOBS\|ITEMS]` | Reports objects that are not cataloged, or that should be tied to the catalog |
+| `CATALOG CLEAN ROOM\|AREA\|WORLD [MOBS\|ITEMS]` | Detaches objects tied to entries that no longer exist, and saves (the code accepts this subcommand; `AHELP CATALOG` does not list it) |
+
+`MOBS` and `ITEMS` may be shortened (`M`, `IT`). When omitted, both kinds are used.
+
+Coins are never cataloged.
+
+### CATALOG EDIT: spawn rules for items
+
+`CATALOG EDIT [item]` asks, in order:
+
+1. It prints `Now:` and the item's uniqueness and rules (see the next section).
+2. `Auto-Spawn: N)o, L)ive mobs, D)ead mobs, R)oom, C)ontainer`. The item's own
+   rule. The kinds:
+
+   | Kind | Letter | When the item appears |
+   | --- | --- | --- |
+   | NONE | N | Never, by this rule (the item is only a template) |
+   | LIVE | L | In the inventory of a mob that matches the mask when it comes to life |
+   | DROP | D | On the corpse of a mob that matches the mask when it dies |
+   | ROOM | R | In a random room matching the mask, on the catalog's timer |
+   | CONTAINER | C | In a container item matching the mask; see below |
+
+3. If the kind is not N: `Enter a new Max number in world` (the **cap**: a
+   positive number), and `Enter a new Drop Rate` (a percentage above 0, such as
+   `10%`). If the kind is N, only the cap is asked (0 for no cap).
+4. For CONTAINER: `Roll on O)pening, T)imer, or B)oth`, then the container mask.
+   For ROOM: a room mask. For LIVE or DROP: a mob mask. `?` at a mask prompt
+   prints the zapper mask help; `NULL` or empty clears the mask (for a
+   container rule, no mask means any container).
+5. If the cap is above 0: `Unique: T)at a time, O)nce ever, W)once for a while`.
+   For W: `Game days before a lost one may appear again`.
+6. The extra rules: each existing rule is offered for change (`Rule 1 (text),
+   or DELETE:`; Enter keeps it), then `Add a rule, or Enter for none:` repeats
+   (up to 20) for new rules.
+
+Then the entry is saved. The mask is a zapper mask (`-NAMES`, `-SUBNAMES`,
+`-AREA`...); see [24-behaviors-and-masks.md](24-behaviors-and-masks.md). The
+**cap** is the most copies in the world; the **rate** is the chance on each
+chance to appear; for ROOM, CONTAINER-on-timer and mob spawns the "chance"
+comes each time the catalog's housekeeping runs, which happens about every 60
+minutes (`MudHost.TIME_SAVETHREAD_SLEEP`) and can be turned off with
+`CATALOGTHREAD` in `DISABLE`.
+
+Mobs in the catalog take only N and R spawning (`CATALOG EDIT MOBS`).
+
+## Unique and rare items
+
+CoffeeSUD item 1 (theme I; fixture `tools/fixtures/fixes/item1-uniques.js`)
+makes catalog items unique or rare. `AHELP UNIQUES` is the shipped summary;
+source: [core/Uniques.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Uniques.java).
+
+### Uniqueness kinds
+
+A catalog item has a **cap** (the most copies in the whole game, all rules
+together) and one of three kinds of uniqueness:
+
+| Kind | Editor letter | Rule |
+| --- | --- | --- |
+| TIME (at a time) | T | At most `cap` exist at once. One lost, destroyed or picked off can appear again at once. The default and the old behaviour |
+| ONCE (once ever) | O | Once `cap` copies have appeared, no more ever appear, even if they are all destroyed |
+| WHILE (once for a while) | W | As ONCE, but a lost copy may appear again after the entry's number of game days (`DAYS`) |
+
+Every copy counts as it comes into the game: made by a rule, a script
+(`MPOLOAD CATALOG`), a generator or a quest, loaded with the world or a save,
+or carried in by a character. A mob that comes back to life with a capped item,
+or an item put back in its room (rejuvenation), brings none past the cap: it is
+held back. `CATALOG LIST` shows the number in the game, and `CATALOG EDIT`
+shows "Once ever: 1 may appear in all; 0 have, 0 now" and for WHILE how many
+game days until the next may appear. A save keeps how many have ever appeared
+and when each missing copy was lost, so a restored game does not reroll.
+
+### Rules
+
+An entry has its own rule (the *Auto-Spawn* answer) and any number of **extra
+rules**, all sharing the same cap and uniqueness. An extra rule is one line:
+
+```text
+KIND RATE [WHEN] [MASK]
+```
+
+| Part | Values |
+| --- | --- |
+| KIND | `LIVE`, `DROP`, `ROOM`, `CONTAINER`; a unique prefix is enough (`CONT`, `DR`) |
+| RATE | A percentage: `5%`, `100%`. (A bare number is read as a percent as well; write the `%`) |
+| WHEN | Only for CONTAINER: `OPEN` (default), `TIMER` or `BOTH`, spelled out in a rule line |
+| MASK | A zapper mask. LIVE/DROP: tested on the mob. ROOM: tested on the room. CONTAINER: tested on the container item. Empty means any |
+
+How each kind is evaluated:
+
+- **LIVE** and **DROP**: when a mob comes to life, or dies, each rule of that
+  kind rolls its rate; the first one that hits for a mob matching its mask
+  gives a copy, if the cap and uniqueness allow it, in the mob's inventory or
+  on its corpse.
+- **ROOM**: on the catalog's timer, into a random room that matches the mask.
+- **CONTAINER** with `OPEN`: the first time a player's character opens a
+  matching container (or looks into it while open), it rolls. A rolled
+  container stays rolled until its contents are put back (its room is reset or
+  its items come back).
+- **CONTAINER** with `TIMER`: like ROOM, but into a random matching container
+  lying in a room, to be found. `BOTH` does both.
+
+Examples of extra rules:
+
+```text
+CONTAINER 5% OPEN -SUBNAMES +*chest*
+DROP 100% -NAMES "+the goblin chieftain"
+ROOM 1% -AREA "+New Area"
+CONTAINER 50% TIMER -NAMES "+an iron chest"
+```
+
+Quote a name of several words in a mask with its `+` inside the quotes, as
+`-NAMES "+an iron chest"`.
+
+### Making a unique item, step by step
+
+1. Create and finish the item (for example a `GenWeapon` named
+   `the Sunblade`).
+2. Catalog it: `CATALOG the Sunblade`.
+3. `CATALOG EDIT the Sunblade`.
+4. Auto-Spawn `C` (container), cap `1`, rate `100%`, roll on `O`, mask
+   `-NAMES "+an iron chest"`.
+5. Unique: `O` (once ever).
+6. No extra rules (press Enter), or add `DROP 100% -NAMES "+the goblin
+   chieftain"`.
+7. Place the iron chest in a room (`CREATE ITEM GenContainer`, name it
+   `an iron chest`, give it a lid) and save. The first character to open an iron
+   chest gets the Sunblade, once; after that no iron chest ever holds it.
+
+### In the world file
+
+A catalog entry in `world/catalog.cmare` carries its rules in its
+`CATALOGDATA`. Editing by hand is supported. Tags:
+
+| Tag | Meaning |
+| --- | --- |
+| `RATE` | The entry's own rule rate (`100%`) |
+| `LMASK` | Its mask |
+| `SPAWN` | `NONE`, `LIVE`, `DROP`, `ROOM` or `CONTAINER` |
+| `CAP` | The cap |
+| `UNIQUE` | `ONCE` or `WHILE` (absent means TIME) |
+| `DAYS` | Game days, for WHILE |
+| `WHEN` | `TIMER` or `BOTH` for the entry's own CONTAINER rule (absent means OPEN) |
+| `RULES` | A list of `<RULE>` lines, each as written above |
+
+```xml
+<CATALOGDATA NAME="the Sunblade" CATAGORY="">
+ <RATE>100%</RATE>
+ <LMASK>-NAMES "+an iron chest"</LMASK>
+ <SPAWN>CONTAINER</SPAWN>
+ <CAP>1</CAP>
+ <UNIQUE>ONCE</UNIQUE>
+ <RULES><RULE>DROP 100% -NAMES +chieftain</RULE></RULES>
+</CATALOGDATA>
+```
+
+(`CATAGORY` is spelled that way in the file.) A full example is
+`tools/fixtures/smoke/catalog.cmare`. `WORLD RELOAD CATALOG` reloads a changed
+file into a running builder game.
+
+## How items are saved
+
+Where an item lives decides where it is saved.
+
+| The item is... | Saved in | Written when |
+| --- | --- | --- |
+| In a room, or in a container in a room | The room's `<ROOMITEMS>` in `world/areas/NAME.cmare` | Builder mode `SAVE`, `SAVE ROOM`, `SAVE ITEMS`, `SAVE CHANGED`, and at shutdown |
+| In a mob's inventory, worn, or in its pack | The mob's `<ROOMMOBS>` entry with the mob (worn code `IWORN`, container link `ILOC`) | `SAVE`, `SAVE ROOM`/`SAVE MOBS` |
+| In a shopkeeper's stock | The shopkeeper's entry, with count and price | With the shopkeeper |
+| In the catalog | `world/catalog.cmare` | `SAVE`; `CATALOG EDIT` also updates the cached catalog at once |
+| In space (planets, ships...) | `world/space.cmare` | `SAVE` |
+| In a normal game | The campaign save (slots), not the world files | `SAVE slot`; see [31-saves-and-party.md](31-saves-and-party.md) |
+
+In a normal game, items you create or change stay in that game's saves but are
+never written back to the world; builder mode (`BUILDER=1`) writes them to the
+world files. A world file edited outside the game is protected from being
+overwritten (`WORLD STATUS`, `SAVE FORCE`); see
+[02-world-workflow.md](02-world-workflow.md).
+
+### Item XML
+
+Each room item is stored as an `<RITEM>` element. Identical entries are
+collapsed to one with a `COUNT` attribute when a room has more than 20 items.
+
+```xml
+<RITEM>
+ <ICLAS>GenWeapon</ICLAS>
+ <ILOCA />
+ <IREJV>0</IREJV>
+ <IUSES>100</IUSES>
+ <ILEVL>5</ILEVL>
+ <IABLE>0</IABLE>
+ <ITEXT xml="1">...the item's own text...</ITEXT>
+</RITEM>
+```
+
+| Tag | Meaning |
+| --- | --- |
+| `ICLAS` | Class ID |
+| `IIDEN` | Present on containers and rideables with riders: an identity string other items point to |
+| `ILOCA` | Empty, or the `IIDEN` of the container this item is inside |
+| `IRIDE` | The rideable this item is riding (if it is in the room too) |
+| `IREJV` | Rejuv |
+| `IUSES` | Uses remaining / condition |
+| `ILEVL` | Level |
+| `IABLE` | Magical ability |
+| `ITEXT` | The item's text: for generic items, the tags below; for standard items, its misc text |
+
+The `ITEXT` of a generic item holds (from
+[CoffeeMaker.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeMaker.java)):
+
+| Tag | Meaning |
+| --- | --- |
+| `NAME`, `DESC`, `DISP` | Name, description, display text |
+| `PROP` | Base stats: `ABILITY`, `ARMOR`, `ATTACK`, `DAMAGE`, `DISPOSITION`, `LEVEL`, `REJUV`, `SPEED`, `WEIGHT`, `HEIGHT`, `SENSES` as attributes (older files use `\|`-separated numbers) |
+| `IMG` | MXP image |
+| `BEHAVES`, `AFFECS`, `SCRPTS`, `TAGS` | Behaviors (`BHAVE`: `BCLASS`, `BPARMS`), effects (`AFF`: `ACLASS`, `ATEXT`), scripts, tags |
+| `FLAG` | Bits: 1 droppable, 2 gettable, 4 readable, 8 removable; for lidded things also 16 (new style), 32 lid, 64 lock, 128 defaults closed, 256 defaults locked |
+| `IDENT` | Secret identity |
+| `VALUE` | Base value |
+| `MTRAL` / `MTRALN` | Material number, and its name for world-defined materials |
+| `WORNL` | Wear locations are "all" (`true`) or "any one" |
+| `WORNB` | Wear location bitmap |
+| `READ` | Readable text |
+| `CAPA`, `CONT`, `OPENTK` | Containers: capacity, content types, reset ticks |
+| class-specific tags | One short tag per class field: for weapons `TYPE`, `CLASS`, `MINR`, `MAXR` and `ACAPA`; for containers `CAPA`, `CONT` and `OPENTK`; and so on. They differ from the stat code names, so export a sample to see them |
+
+Do not hand-write `ITEXT` for a new item unless you copy an exported one. Let
+the editor create it, `SAVE`, then edit the exported text if you must; a file
+changed outside is guarded by `WORLD STATUS`. For bulk work, build items from
+a script instead ([Worked examples](#worked-examples)) or export and merge
+(`EXPORT`/`MERGE`/`IMPORT`, `AHELP MERGE`).
+

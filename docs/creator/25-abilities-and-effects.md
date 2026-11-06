@@ -795,3 +795,409 @@ cost, quality, targets and range.
 `LISTADMIN`); see [19-configuration-and-administration.md](19-configuration-and-administration.md).
 The generated [tool-reference.md](tool-reference.md) mirrors the help text of
 all of these commands.
+
+## GenAbility: custom abilities
+
+`GenAbility` is a data-driven ability: a spell, skill, prayer, song or property
+described by fields instead of Java. One `GenAbility` definition is registered
+under its own ID and then behaves like any stock ability: it can be taught,
+cast, given to classes, put on rooms, items and mobs, and appear in lists and
+help. Source:
+[GenAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/GenAbility.java).
+
+Use it when an ability is one of: a single-target or area hit or heal with a
+formula; a buff or debuff that changes stats for a while; a spell that
+combines existing abilities (adds effects, casts others); a passive property
+whose behaviour is a script; a summon of catalog mobs. Reach for Java (see
+[32-engine-programming.md](32-engine-programming.md)) when you need behaviour
+the fields cannot express, such as moving the caster, changing exits, or
+interacting with many objects. For small changes to a stock ability, a
+[tweak](#gentweakability-renamed-and-adjusted-java-abilities) is simpler.
+
+### Creating, modifying and destroying
+
+You need the `CMDABILITIES` security flag (archons, and builders whose security
+group includes it). In a normal game the commands are in the builder tools;
+builder mode and `DEV` mode are described in
+[18-installing-and-running.md](18-installing-and-running.md).
+
+```text
+CREATE ABILITY [ID]
+MODIFY ABILITY [ID]
+DESTROY ABILITY [ID]
+```
+
+- `[ID]` is the new ability's Java-style ID, with no spaces (`Spell_Cinderlash`,
+  `Prop_Haunted`). The ID is permanent: to rename, destroy and create again.
+  Conventions: `Spell_`, `Prayer_`, `Chant_`, `Skill_`, `Prop_` prefixes
+  match the stock IDs and make `LIST ABILITIES` easy to read.
+- `CREATE ABILITY` opens the editor. With `EDITORTYPE=MENU` in
+  `coffeemud.ini` the editor lists every field with a number and its current
+  value; type a number to change it, a blank line or `0` to finish. With
+  `EDITORTYPE=WIZARD` it steps through the fields in order. Each prompt shows
+  the allowed words; typing `?` often prints help.
+- `MODIFY ABILITY` edits an existing generic ability. The change applies at once
+  to every copy in the world (the message reads "X's everywhere shake under
+  the transforming power!"). Other kinds have their own verbs, and `MODIFY
+  ABILITY` names the right one if you use the wrong one: `MODIFY TRAP`, `MODIFY
+  POISON`, `MODIFY DISEASE`, `MODIFY TWEAK`, `MODIFY LANGUAGE`, `MODIFY
+  CRAFTSKILL`, `MODIFY WRIGHTSKILL`, `MODIFY GATHERSKILL`, `MODIFY BUILDSKILL`.
+- `DESTROY ABILITY [ID]` removes a generic ability of any of those kinds
+  (`DESTROY TRAP`, `DESTROY POISON` ... all reach the same code). Stock Java
+  abilities cannot be destroyed or modified. Copies already on mobs and things
+  stay until their records are reloaded; remove the ID from classes, races and
+  item properties yourself.
+- `CREATE ABILITY` on the ID of a stock Java ability does not make a tweak: it
+  *replaces* that ID with a generic ability seeded from the old one's
+  classification, trigger words, range, flags, cost type, masks and quality
+  (and with `MOCKABILITY` and `POSTCASTABILITY` set to the old ID). Clear those
+  two fields before you rely on the new one, or better, make a
+  [tweak](#gentweakability-renamed-and-adjusted-java-abilities) under a new ID.
+
+The new ability is registered as soon as you set its ID, and written to the
+content database when you leave the editor. In builder mode `SAVE` (and a
+clean shutdown) exports it to
+`world/custom/abilities/[id].cmare` ([The saved record](#the-saved-record)).
+Add it to a class or to `allqualifylist.txt` so characters can learn it
+([How characters get abilities](#how-characters-get-abilities)) or hand it
+to a mob directly.
+
+### GenAbility fields
+
+The editor's prompts, in order, with the field names that appear in the saved
+record, in `GMODIFY` and in JS (`ability.setStat("NAME", ...)`). Fields with no
+editor prompt are marked; set them by editing the record (see
+[The saved record](#the-saved-record)).
+
+| Field | Editor prompt | Default | What it does |
+| --- | --- | --- | --- |
+| `CLASS` | (set by `CREATE`) | `GenAbility` | The ability's ID. |
+| `TEXT` | (none) | empty | The *instance* text of an effect or property: the parameter string given where it is attached. Not part of the definition. Read by `EFFECTPARM(KEY)` and `$PARMS` in the script. |
+| `NAME` | Ability/Skill name | `an ability` | The name players see and type (`cast cinder` matches `Cinderlash`). |
+| `CLASSIFICATION` | Type, Domain | `SPELL,ABJURATION` | [Type and domain](#classification-type-and-domain): `SPELL,EVOCATION`, `SKILL,MARTIAL_LORE`, `PROPERTY`. A number is also accepted. |
+| `TRIGSTR` | Command Words | `CAST,CA,C` | Comma list of the words that invoke it, stored in upper case. For a spell, prayer or chant keep the family's words (`CAST,CA,C`); for a skill use its own command (`MOONBLADE`). |
+| `MINRANGE`, `MAXRANGE` | Minimum Range, Maximum Range | `MELEE` | [Combat range](#range) of a hostile use. |
+| `TICKSBETWEENCASTS` | Ticks Between Casts | `0` | Cooldown, in ticks. |
+| `TICKSOVERRIDE` | Duration Override (0=NO) | `0` | Formula: exact ticks if positive, standard if `0`, percent of standard if negative. Variables below. |
+| `DISPLAY` | Affect String | `(An Affect)` | The text `AFFECTS` shows for the effect. Blank hides it; wrap in `( )` to have the time left shown. |
+| `AUTOINVOKE` | Is Auto-invoking | `false` | A known ability is turned into a permanent automatic effect on its owner (a passive skill). |
+| `FLAGS` | Skill Flags | none | [Flag words](#ability-flags). |
+| `OVERRIDEMANA` | Override Cost | `-1` | `-1` normal cost formula; a number; or `2147483647` minus a percent. |
+| `USAGEMASK` | Cost Type | `MANA` | `MANA`, `MOVEMENT`, `HITPOINTS`, comma list. |
+| `NUMARGS` | Num. Arguments | `0` | With 2 or more, the first word typed is the target and the rest (merged into the last argument) are free text: available as `$0`.. in script hooks, and as `@x1`... in `MOCKABLETEXT` and the text part of `POSTCASTAFFECT`. |
+| `CANAFFECTMASK` | Can Affect | `MOBS` | What a lasting effect can sit on; `0` makes it instant. |
+| `TICKAFFECTS` | Tick/Periodic Affects | `false` | Repeats the post-cast message each tick of the effect (see [gotchas](#troubleshooting-and-gotchas)). |
+| `CANTARGETMASK` | Can Target | `MOBS` | What the caster can aim it at. |
+| `QUALITY` | Quality Code | `BENEFICIAL_OTHERS` | [Quality](#quality). |
+| `HERESTATS` | Affect Adjustments | none | While the effect is on something, stat changes in `Prop_Adjuster` syntax: `dex+2 savefir+20`, optional `MASK=`. Variables `@x1`..`@x9` are replaced first. See [`Prop_HereAdjuster`](23-properties-reference.md#prop_hereadjuster). |
+| `CASTMASK` | Caster Mask | none | A [zapper mask](24-behaviors-and-masks.md) the caster must pass; failing says `You do not meet the requirements: ...` or `CASTFAILMSG`. `-IF "..."` conditions see the target as `$t`. Not checked for automatic casts. |
+| `CASTFAILMSG` | Caster Mask failure message | none | Replaces the standard refusal (`<T-NAME>` is the target). |
+| `TARGETMODE` | Target mode | `SINGLE` | [Area abilities](#area-abilities). |
+| `MAXTARGETS` | Most targets | none | Formula, `@x1` caster level, `@x2` number of candidates. |
+| `AOEMSG` | Area message, once | none | Shown once before the per-target messages. |
+| `SUMMON` | Summon | none | A catalog mob name or mob class brought when the cast works. [Summons](#summons). |
+| `SUMMONCOUNT` | Summon count | `1` | Formula, capped at 20. |
+| `SUMMONLEVEL` | Summon level | mob's own | Formula. |
+| `SUMMONFLAGS` | Summon flags | none | `FOLLOW ASSIST NOSAVE DISMISSONEXPIRE BIND`. |
+| `ACTIONCOST` | Action cost | `-1` | Actions used out of combat; `-1` the ini default. |
+| `COMBATACTIONCOST` | Combat action cost | `-1` | Actions used in combat or when malicious. |
+| `COMPONENTS` | Components | none | A `components.txt` line, [see below](#costs-and-components-in-a-genability). |
+| `SCRIPT` | Scriptable Parm | none | The ability's script (MOBPROG text or `LOAD=file`). [Script hooks](#script-hooks). |
+| `TARGETMASK` | Target Mask | none | A zapper mask the target must pass; failing says `The target is invalid: ...` or `TARGETFAILMSG`. |
+| `TARGETFAILMSG` | (none) | none | The refusal for `TARGETMASK`. |
+| `FIZZLEMSG` | Fizzle Message | `<S-NAME> attempts to use this ability against <T-NAME>, and fails` | When proficiency fails. |
+| `AUTOCASTMSG` | Auto-Cast Message | `An amazing thing happens to <T-NAME>!` | Cast message when cast automatically (item, script, trap). |
+| `CASTMSG` | Normal-Cast Message | `<S-NAME> uses an ability against <T-NAME>` | Cast message when a character casts it. |
+| `POSTCASTMSG` | Post-Cast Message | `<T-NAME> is <DAMAGE> by an ability from <S-NAME>!` | Shown when the effect lands (with the damage verb filled in for `<DAMAGE>`). Blank shows nothing. |
+| `UNINVOKEMSG` | Uninvoke Message | none | Told to the host when the effect ends. |
+| `ATTACKCODE` | Attack-Type | `NOTHING` | A second message of this kind aimed at the target so its matching [saving throw](#saving-throws) applies: `FIRE`, `COLD`, `WATER`, `GAS`, `MIND`, `GENERAL`, `ACID`, `ELECTRIC`, `POISON`, `UNDEAD`, `PARALYZE`, `DISEASE`, ... (any message type word). Also names the damage's message type. |
+| `MOCKABILITY` | Quiet effect ID | none | The ID of another ability held silently as a second effect while this one lasts (it adds to this one's stat changes and message handling). |
+| `MOCKABLETEXT` | (none) | none | Parameter text for the quiet effect; `@x1`.. are the words the caster typed. |
+| `POSTCASTAFFECT` | Public effects | none | A [`Prop_SpellAdder`](23-properties-reference.md#prop_spelladder) list of abilities put as effects on the target when the cast lands, lasting as long as the main effect: `Spell_Slow;Prop_Adjuster(/con-2)`. |
+| `POSTCASTABILITY` | Extra castings | none | A `Prop_SpellAdder` list cast *at* the target afterward (with chance prefixes): `20%;Fighter_Trip`. |
+| `POSTCASTDAMAGE` | Damage/Healing Formula | `0` | Positive damages the target, negative heals it. Variables below. |
+| `HELP` | Help Text | `<ABILITY>This ability is not yet documented.` | The page `HELP [NAME]` shows. Starting with `<ABILITY>` puts the generated header (domain, classes, cost, range) above the text. |
+| `CHANNELING` | (none) | `false` | A channeled effect ends when its invoker speaks, moves or uses their hands. It also keeps the invoker from auto-attacking. |
+| `WINDUP` | Windup ticks, for monsters (0=NO) | `0` | A monster that casts it first warns for that many ticks ([29-combat-and-encounters.md](29-combat-and-encounters.md)). |
+| `WINDUPMSG` | Windup warning | `<S-NAME> begin(s) to gather power!` | The warning text. |
+
+Some further notes about the table:
+
+- `FLAGS`, `CANAFFECTMASK`, `CANTARGETMASK` and `USAGEMASK` take comma lists of
+  words, a number, or a unique start of a word. `QUALITY` and the range fields
+  take one word (note that a start such as `BENEFICIAL` matches the first
+  choice that starts with it, `BENEFICIAL_SELF`).
+- Message fields are raw text: they may use `<S-NAME>`, `<T-NAME>`,
+  `<T-NAMESELF>`, `<S-HIS-HER>` style tokens and the colour codes `^S ... ^?`
+  (spell colour; `^?` restores). See
+  [11-presentation-language.md](11-presentation-language.md).
+- `MOCKABILITY`, `MOCKABLETEXT`, `TARGETFAILMSG` and `CHANNELING` have no
+  editor prompt in this build.
+
+### Formulas and variables
+
+Numeric fields that accept a formula (`TICKSOVERRIDE`, `POSTCASTDAMAGE`,
+`SUMMONCOUNT`, `SUMMONLEVEL`, `MAXTARGETS`, `OVERRIDEMANA`) use the engine's
+formula language ([`AHELP MATH_FORMULA`](tool-reference.md)):
+numbers, `+ - * /` and `\`, `^` (power), parentheses, `?` (a random number
+between its two sides, so `2?6` is a number from 2 to 6), `>` and `<`
+(the larger or smaller of its two sides) and `=` and `!` (1 if equal or
+different). **Evaluation is strictly left to right with no operator
+precedence**: `2?6+@x1/3` means `((2?6)+@x1)/3`. Use parentheses.
+
+Inside a cast, these placeholders are replaced:
+
+| Variable | Value |
+| --- | --- |
+| `@x1` | the caster's level |
+| `@x2` | the target's level (the caster's, with no target) |
+| `@x3` | the caster's `XLEVEL` expertise level |
+| `@x4` to `@x8` | the caster's `X1` to `X5` expertise levels |
+| `@x9` | the adjusted caster level (what duration and strength scale with) |
+
+`MAXTARGETS` is different: `@x1` is the adjusted caster level and `@x2` is the
+number of candidate targets. `HERESTATS` takes the same variables as text
+substitution (`hitpoints+@x9`). When a `GenAbility` is added as a property
+rather than cast, all nine are the level of the thing it is on.
+
+### What happens when it is cast
+
+For developers and scripters who need to know the order. A player's
+`CAST CINDERLASH ORC` (or the skill's own command) runs `invoke`:
+
+1. **Target.** `BENEFICIAL_SELF` and `OK_SELF` use the caster (an automatic
+   cast to another mob honours that mob) and refuse if the caster already has the
+   effect. Other qualities look for a target by `CANTARGETMASK`: `MOBS` a mob
+   named in the arguments or in combat, `ITEMS` an item, `ROOMS` the caster
+   (the effect then lands on the caster unless a script or item casts it
+   automatically at a room), `EXITS` only checks that the named door or
+   direction exists, `0` no target, and other combinations a mob or an item.
+   No target means a refusal.
+2. **Checks that cost nothing.** `CASTMASK` (message: `CASTFAILMSG` or the
+   standard one), then the script's `CANCAST` hook, then `TARGETMASK`
+   (`TARGETFAILMSG`). All three are skipped for automatic casts.
+3. **Windup**, for a monster with `WINDUP`: it warns and the cast comes later.
+4. **Armor.** For spells (cloth) and chants and thief skills (leather), a
+   player who does not qualify for the ability by level and wears heavy armor
+   has a 50 percent chance to fumble.
+5. **Area abilities** divert here ([Area abilities](#area-abilities)).
+6. **Payment.** Cooldown, bindings (movement costs), mana/moves/hit points,
+   components, the compounding rule (`MANACOMPOUND`), and the pre-invoke
+   message. Failing any of these is a refusal with no effect.
+7. **Proficiency roll.** On failure: `FIZZLEMSG`, shown as a hostile fizzle for
+   `MALICIOUS` quality, otherwise as a visual one. Nothing else happens.
+8. **Cast message.** `CASTMSG` (or `AUTOCASTMSG` when automatic) is sent as a
+   message whose type comes from the ability type (spells, prayers and
+   superpowers are somatic casts; chants verbal; thief skills thief actions;
+   languages and properties visual; the rest noisy movement), flagged malicious
+   for hostile qualities. If `ATTACKCODE` is set, a second message of that kind
+   follows so the matching save applies. The room, the target and every effect
+   in sight may veto them (`okMessage`).
+9. **Result.** If the target resisted (`value` above zero) no effect is applied
+   and any damage is halved. Otherwise, if `CANAFFECTMASK` is not `0` and there
+   is a target, the effect is put on it with `maliciousAffect` or
+   `beneficialAffect` (duration as in [Duration](#duration)); `HERESTATS` and
+   `MOCKABILITY` are set up on it; the cooldown starts; `SUMMON` runs; and
+   `POSTCASTAFFECT` effects are added with the same duration.
+10. **Aftermath.** `POSTCASTMSG` and the `POSTCASTDAMAGE` formula (damage as
+    a burst, or healing), then the script gets its cast event and `ONCAST`,
+    then `POSTCASTABILITY` is cast at the target. If damage or the aftermath
+    killed the target, any effect just applied is removed.
+
+When the effect later ends, the host is told `UNINVOKEMSG`, the script's
+`ONEXPIRE` runs and any `POSTCASTAFFECT` effects it added are removed.
+
+### Using a GenAbility as a property
+
+Put a `GenAbility` on a room, exit, item or mob like any property
+([Putting effects on things](#putting-effects-on-things)). It then works as a
+permanent effect with no casting:
+
+- its `HERESTATS` apply at once, at the level of the thing it is on;
+- its `MOCKABILITY` effect is created with `MOCKABLETEXT`, silent and permanent;
+- its `SCRIPT` runs as that thing's own script: ticks, messages and triggers
+  (`RAND_PROG`, `GREET_PROG`, ...) reach it.
+
+The text typed where it is attached (`LOUD=yes MSG=moan`) reaches the script as
+`$PARMS` (all of it) and `EFFECTPARM(KEY)` (a `KEY=VALUE` pair, case
+insensitive; `EFFECTPARM(*)` is all of it). One definition therefore serves any
+number of settings. As with all script functions, put the comparison inside
+the brackets: `effectparm(LOUD == yes)`. Worked example in
+[Worked examples](#worked-examples) (a haunted room).
+
+### Script hooks
+
+The ability's `SCRIPT` is ordinary MOBPROG text ([04](04-mobprog.md)). On top of
+the normal triggers, the engine calls named functions, each written as a
+`FUNCTION_PROG`:
+
+| Hook | When it runs | `$n` | `$t` | `$0`... |
+| --- | --- | --- | --- | --- |
+| `CANCAST` | After `CASTMASK`, before any cost. `RETURN false` (or `0` or `CANCEL`) refuses the cast. Not run for automatic casts or for the later targets of an area cast. | the caster | the target | the words typed |
+| `ONCAST` | After a cast that worked, once per target | the caster | the target | the words typed |
+| `ONTICK` | Each tick the effect (or property) is on something | the invoker | the host | none |
+| `ONEXPIRE` | When the effect ends | the invoker | the host | none |
+| `ONLEARN` | When a mob gains the ability | the learner | the learner | none |
+
+```text
+FUNCTION_PROG CANCAST
+if !istime(night)
+ mpecho The moon is hidden.
+ return false
+endif
+~
+FUNCTION_PROG ONEXPIRE
+mpecho The moonlight fades.
+~
+```
+
+Older routes still work: the script receives the cast as a message whose text is
+the ability ID, so `IMASK_PROG p [ID]` can match it, and on expiry the text is
+`UNINVOKE-[ID]`. `SKILL_PROG` triggers (`LEARN`, `IMPROVE`, `MASTER`, `FAIL`)
+fire for every ability, generic or not
+([26-mobprog-triggers.md](26-mobprog-triggers.md)). A `GenTrap` has
+`ONTRIGGER` and `ONDISARM` instead ([Traps](#traps)).
+
+### Area abilities
+
+`TARGETMODE` turns a single-target cast into an area one:
+
+| Mode | Targets |
+| --- | --- |
+| `SINGLE` | One target (default). |
+| `ALLENEMIES` | Everything the caster would fight in the room (for a `MALICIOUS` ability: the combat-legal targets; otherwise every other mob not in the caster's group). The caster is never one. |
+| `ALLALLIES` | The caster and the caster's group members in the room. |
+| `ALLINROOM` | Everyone in the room; the caster too unless the ability is `MALICIOUS`. |
+| `GROUPANYWHERE` | The caster and the whole group wherever they are. |
+
+The caster's mask, `CANCAST`, windup and the resource cost happen **once**; then
+each target gets its own cast: target mask (a target it turns away is skipped),
+cast message, saving throw, damage or healing, `HERESTATS`, effects, extra
+castings and `ONCAST`. `MAXTARGETS` keeps only that many of the candidates;
+`AOEMSG` is shown once before them. With no candidates the caster is told
+`There is no one here for [NAME].` before anything is paid.
+
+### Summons
+
+`SUMMON` names a **catalog mob** (`CATALOG` entry by name) or a mob class; each
+successful cast brings `SUMMONCOUNT` copies (1 when blank, at most 20) into the
+caster's room at `SUMMONLEVEL` (their own level when blank). Each carries
+[`Prop_Summoned`](23-properties-reference.md#prop_summoned), gives no experience,
+and is not rejuvenated. `SUMMONFLAGS`:
+
+| Flag | Effect |
+| --- | --- |
+| `FOLLOW` | Follows the caster (so it takes part in party turns and goes along). |
+| `ASSIST` | Fights the caster's current victim; without it a follower does not assist on its own. |
+| `NOSAVE` | Left out of campaign saves. |
+| `DISMISSONEXPIRE` | Departs when the ability's effect ends, or after its duration if it leaves no effect. |
+| `BIND` | Departs when its summoner dies or leaves the game. |
+
+### Costs and components in a GenAbility
+
+`ACTIONCOST`, `COMBATACTIONCOST`, `OVERRIDEMANA`, `USAGEMASK` and
+`TICKSBETWEENCASTS` travel with the ability's record, so a custom spell needs no
+entries in `coffeemud.ini`. `COMPONENTS` is one line of `resources/skills/components.txt`
+without the leading `ID=`:
+
+```text
+(inventory:consumed:1:a pinch of salt:)
+(held:kept:1:*wand*:) && (inventory:consumed:1:SAND:-class +mage)
+```
+
+Each part is `([DISPOSITION]:[FATE]:[AMOUNT]:[COMPONENT]:[MASK])`:
+disposition `inventory`, `have`, `held`, `worn`, `nearby` or `onground`;
+fate `consumed`, `kept` or `wear(N)` (CoffeeSUD: kept, losing `N` uses of
+condition each time, breaking at none); the component a material, a resource,
+an item name (with `*` wildcards) or `TAG(name)`; and an optional zapper mask
+naming who needs it. `&&` and `||` combine parts. The field replaces any
+`components.txt` line for that ID. A caster without the components is refused
+(`You do not have the requirements to use this`) before anything is spent.
+Archons, mobs and holders of `COMPONENTS` are exempt.
+
+### The saved record
+
+Every `Gen*` ability definition is stored as one element, kept in the content
+database and exported by the builder tools to a file per ability:
+
+```text
+world/custom/abilities/spell-cinderlash.cmare
+world/custom/abilities/spell-cinderlash.script   (only when the SCRIPT has several lines)
+```
+
+The file name is the lower-cased ID with other characters turned to dashes.
+Its content is the ability's type and every field except `TEXT`:
+
+```xml
+<ABILITY ID="Spell_Cinderlash" TYPE="GenAbility">
+ <CLASS>Spell_Cinderlash</CLASS>
+ <NAME>Cinderlash</NAME>
+ <DISPLAY>(An Affect)</DISPLAY>
+ <TRIGSTR>CAST,CA,C</TRIGSTR>
+ <MAXRANGE>LONG</MAXRANGE>
+ <CLASSIFICATION>SPELL,INVOCATION/EVOCATION</CLASSIFICATION>
+ <QUALITY>MALICIOUS</QUALITY>
+ <CANAFFECTMASK>0</CANAFFECTMASK>
+ <CANTARGETMASK>MOBS</CANTARGETMASK>
+ <ATTACKCODE>FIRE</ATTACKCODE>
+ <POSTCASTDAMAGE>(2?6)+(@x1/2)</POSTCASTDAMAGE>
+ <SCRIPT>FILE:spell-cinderlash.script</SCRIPT>
+ ...every other field...
+</ABILITY>
+```
+
+(Abbreviated: the real file lists all the fields in the order of the table
+above.) A multi-line script lives in the `.script` file next to it and the
+element names it with `FILE:`. The files are the content: at the next start,
+if they differ from the content database's checksum, the engine rebuilds the
+database from them, so a hand edit to a `.cmare` or `.script` file is picked up
+on restart. See [02-world-workflow.md](02-world-workflow.md) for the folder,
+`WORLD STATUS`/`DIFF`, and what builder mode writes when, and
+[state-and-persistence.md](state-and-persistence.md).
+
+An older single file, `world/custom.cmare`, is still read when it exists; the
+exporter no longer writes it.
+
+For developers: all `Gen*` abilities keep their per-ID definitions in a static
+map shared by every copy, so editing one definition changes all of them at
+once. The instance-specific part is only `text()` (and the live effect state).
+Round trips use `getStat("ALLXML")` and `setStat("ALLXML", xml)`.
+
+## GenTweakAbility: renamed and adjusted Java abilities
+
+A tweak is a stock Java ability under a *new ID* with some settings changed.
+It keeps all the original's behaviour: cast, it casts the original at the
+caster's proficiency, through a proxy that substitutes your overrides. Source:
+[GenTweakAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/GenTweakAbility.java).
+
+```text
+CREATE TWEAK [NEW ID]
+MODIFY TWEAK [ID]
+DESTROY TWEAK [ID]
+```
+
+An ID that already exists is refused (use a new one). The editor offers every
+non-property, non-language, non-trap, non-common-skill ability as the base.
+Fields (stat codes are those of the saved record):
+
+| Field | Editor prompt | Meaning |
+| --- | --- | --- |
+| `ORIGINAL` | Base Ability/Skill ID | The Java ability it wraps. |
+| `NAME`, `DISPLAY`, `TRIGSTR`, `MAXRANGE`, `MINRANGE`, `CLASSIFICATION`, `FLAGS`, `OVERRIDEMANA`, `USAGEMASK`, `QUALITY`, `TICKSBETWEENCASTS`, `HELP` | as for [GenAbility](#genability-fields) | Blank keeps the original's value. |
+| `AUTOINVOKE`, `MAYENCHANT` | Is Auto-invoking, Is enchantable | Whether it is a passive ability; whether it may be put into scrolls and wands. |
+| `STRING` | Strings | A table of text replacements: the original's message strings (the English text it passes to its translation function) mapped to new text. Add a key to see its current value; a blank value removes it. |
+| `ACTIONCOST`, `COMBATACTIONCOST`, `COMPONENTS` | as for GenAbility | `-1` keeps the original's. |
+| `CASTMASK`, `TARGETMASK` | Cast mask, Target mask | Zapper masks checked before delegating. |
+| `POSTCASTABILITY`, `POSTCASTAFFECT` | Post-cast ability, Post-cast affect | `Prop_SpellAdder` lists cast on the target or put on it after a successful cast. |
+| `SCRIPT` | Script | Functions `CANCAST` (return `false` or `CANCEL` to stop it, `$t` the target), `ONCAST` (after a cast that worked) and `ONEXPIRE` (when the effect it left wears off). |
+| `DAMAGEMULT`, `DURATIONMULT` | Damage multiplier, Duration multiplier | Multiply the damage of its casts and effects, and how long its effects last (`1` for none). |
+
+Players, classes and scrolls refer to the tweak by its new ID; the original
+remains available under its own. Example: *Stormcall*, a tweak of
+`Spell_Lightning` with `POSTCASTABILITY` `20%;Fighter_Trip` and
+`DAMAGEMULT` `1.25`.
+
+Note that the `-LOCALE +OUTDOORS` sample in the shipped `GENTWEAK` help is not a
+valid zapper mask in this build; use the keys in
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md) (for example
+`-DOMAIN +WOODS` for "only in woods").

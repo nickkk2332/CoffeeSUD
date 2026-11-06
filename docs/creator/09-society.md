@@ -1052,7 +1052,7 @@ heavily commented; copy it. Keys:
 | `JAIL1TIME`..`JAIL4TIME` | ticks (4 seconds) | Jail time. Shipped 20, 40, 80, 160. |
 | `PAROLE1TIME`..`PAROLE4TIME` | ticks | Parole time. Shipped 40, 80, 160, 320. |
 | `TREASURY` | `roomID;container` | Where tax money goes; `*` as the room with a container that may move. |
-| `PROPERTYTAX` | number | Percent of a property's price charged each game month (a value of 1 or more is divided by 100). Shipped 0.0025. |
+| `PROPERTYTAX` | number | Share of a property's price charged each game month, paid to the treasury (see the comment in `laws.ini` for how small and large values are read). Shipped `0.0025`. |
 | `SALESTAX` | percent | Added to the price in shops under this law. |
 | `CITTAX` | percent | Taken by a `TaxCollector` from the money a citizen carries. |
 | `LENIENCY` | `RANGECODES=n;RANGECODES=n` | CoffeeSUD: shifts the sentence by town reputation. `RIVERTON_HERO=-1;RIVERTON_VILLAIN=1` makes heroes one step lighter and villains one step heavier (keeping modifier flags). Needs the area's `REPUTATION` faction. |
@@ -1079,9 +1079,9 @@ need for one; `combat` and `!combat` require the act to happen in or out of
 combat; `recently` and `!recently` require that the criminal has or has not
 been caught for it recently. **A crime needs a witness unless it is flagged
 `!witness`.** The witness must be an intelligent NPC (an officer always
-counts), found in the criminal's room or an adjacent one, and the case dies if
-the witness dies, is a friend of the accused, or if the accused is not seen. A
-party member can never be the witness.
+counts), found in the criminal's room or an adjacent one. The case dies if
+the witness dies or is a friend of the accused, and a witness who cannot see
+the criminal makes no case. Characters are never witnesses.
 
 Sentence modifiers, space separated after the punishment: `separate` (do not
 escalate with other offences), `skiptrial` (the officer punishes at once, no
@@ -1090,9 +1090,9 @@ fine), `norelease` (do not release from prison), `punishcap=PUNISHMENT` (the
 most severe sentence for a repeat offender), `shame=DAYS` (public shaming for
 game days), `banish=DAYS[,ROOMID]` (banish for game days).
 
-Repeat offences escalate the sentence one step at a time. A criminal who has
-done a good deed of standing is treated slightly more leniently, and a victim
-who is a known trouble-maker halves the sentence. `punishcap` interacts with
+Repeat offences escalate the sentence step by step (offences of different
+crimes escalate each other unless `separate`), a good-aligned criminal gets one
+step back, and a victim who is a known trouble-maker halves the sentence. `punishcap` interacts with
 escalation in surprising ways (a capped crime may start at its cap); test
 with `LAW TEST` before trusting a sentence ladder.
 
@@ -1155,7 +1155,7 @@ described in [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
 | `LAW WARRANTS (name)` | List warrants (criminal, crime, victim, offence count, state). |
 | `LAW ACCUSE name crime` | Make a warrant as a witness would, by crime key. |
 | `LAW PARDON name (crime/ALL)` | Take warrants away. |
-| `LAW TEST crime (AS name) (AGAINST name)` | A dry run: says whether a warrant would be issued for the crime by that actor against that victim, and why not. It issues nothing and advances no dice; "ignore" chances use a fixed diagnostic roll. The actor and victim must be present or known; an actor above the law is refused, so choose representative characters. |
+| `LAW TEST crime (AS name) (AGAINST name)` | A dry run: says whether a warrant would be issued for the crime by that actor against that victim, and why not. It issues nothing and advances no dice; "ignore" chances use a fixed diagnostic roll. `AS` and `AGAINST` name a person in the room, a player or a party character. An actor above the law is refused, so choose representative characters. |
 | `LAW SET KEY=value` | Set one key in this area's law. If the area's law is not already `custom`, the current law is copied into a `custom` law first (the file reference is replaced by `custom`); then the key is set. In builder mode the change is written to `world/laws/AREA.ini`. |
 
 ```text

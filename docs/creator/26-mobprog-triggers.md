@@ -2782,7 +2782,7 @@ mpecho Three more turns, and the candle is gone.
 ~
 ```
 
-**Notes.** Queued. `TURNS()` and `ISTURNBASED()` read the count and the mode (see [MOBPROG functions](28-mobprog-functions.md)). Fixture: `st6-game.js`.
+**Notes.** Queued. Write the number alone (`TURN_PROG 3`); `EVERY` is not a keyword here, although `HELP SCRIPTABLE` shows "(EVERY N)". `TURNS()` and `ISTURNBASED()` read the count and the mode (see [MOBPROG functions](28-mobprog-functions.md)). Fixture: `st6-game.js`.
 
 ### WEATHER_PROG
 

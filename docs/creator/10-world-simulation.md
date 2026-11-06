@@ -718,3 +718,408 @@ unreadable `HOUR` or `EVERY`.
 
 Source: [Schedules](../../CoffeeMud/com/planet_ink/coffee_mud/core/Schedules.java),
 [Holidays](../../CoffeeMud/com/planet_ink/coffee_mud/core/Holidays.java).
+
+## Weather and climate
+
+Audience: creators (climate, commands, files), scripters (`MPWEATHER`, triggers), engine developers.
+
+### How weather works
+
+Each area has a climate object that keeps the weather *now* and the weather
+*next*. About every 150 ticks (ten minutes of game time with the default 4
+second tick, one game hour at the stock `MILLISPERMUDHOUR`) the next weather
+becomes the current one, a new next weather is rolled, and everyone under the
+sky is told ("It starts to rain", "The rain stops"). The roll depends on
+the weather that is coming, the area's season, and the area's climate bits.
+
+The 14 weather states, as `WEATHER` and the commands name them:
+
+`CLEAR`, `CLOUDY`, `WINDY`, `RAIN`, `THUNDERSTORM`, `SNOW`, `HAIL`, `HEAT`,
+`SLEET`, `BLIZZARD`, `DUST`, `DROUGHT`, `COLD`, `FOG`.
+
+`<VARIES>` tags and `Prop_ClosedSeason` spell `HEAT` as `HEATWAVE` and
+`DUST` as `DUSTSTORM`; the weather commands accept both spellings. Masks use
+the list above (`-WEATHER +BLIZZARD +SNOW`).
+
+Rules that are worth knowing:
+
+- Indoor rooms, and rooms with no sky, always read as `CLEAR`; only rooms
+  under a sky are told about the weather.
+- At night, and in a blizzard or dust storm, a room under the sky is dark
+  unless a light is lit in it (`DISABLE=DARKNIGHTS` and `DISABLE=DARKWEATHER`
+  turn those two causes off).
+- An area whose climate has the *void* bit is always `CLEAR`.
+- `DISABLE=WEATHER` turns the whole system off (everything stays `CLEAR`),
+  `DISABLE=WEATHERCHANGES` stops it changing, and `DISABLE=WEATHERNOTIFIES`
+  and `DISABLE=TODNOTIFIES` silence the "it starts to rain" and "the sun
+  rises" lines. These are `DISABLE` flags in `world.ini` (see
+  [19-configuration-and-administration.md](19-configuration-and-administration.md)).
+- The effects of weather on the world (slipping in rain, lightning, rust,
+  wind, hail, gusts, puddles, ships damaged by storms) belong to the
+  `WeatherAffects` behavior. It is added to every standard area
+  automatically; `AUTOWEATHERPARMS` in `coffeemud.ini` sets its parameters
+  for all areas, or `NO` to keep it off. Its parameters are listed in
+  [24-behaviors-and-masks.md](24-behaviors-and-masks.md#weatheraffects).
+
+### Climate bits
+
+An area has five climate bits and a "void" bit: wet, cold, windy, hot, dry
+(and void). A room can override its area's (`-1` or "inherit" means use the
+area's). They add weight to the weather odds: a wet area rains more, a cold
+one snows, a hot one has heat waves.
+
+```text
+MODIFY AREA CLIMATE RC
+MODIFY AREA CLIMATE WET|COLD
+MODIFY ROOM CLIMATE HOT|DRY
+```
+
+The one-line letters are `R` rainy/wet, `H` hot, `C` cold, `W` windy, `D` dry,
+`N` normal. **Bug:** in `MODIFY AREA CLIMATE`, the `D` letter sets the windy
+bit, not dry; use the named form (`DRY|HOT`) for exactness (see
+[20-areas-rooms-exits.md](20-areas-rooms-exits.md)). Locale classes bring
+their own default climate where an area leaves it open.
+
+### Named climates: climate files
+
+An area can instead use a **climate file**, which gives exact weights for
+every weather in every season. This is the way to make a monsoon coast, a
+desert that never snows, or a cave that only has fog.
+
+```text
+MODIFY AREA WEATHERPROFILE monsoon
+MODIFY AREA WEATHERPROFILE NONE
+```
+
+The name picks `world/climates/monsoon.ini`, else
+`resources/climates/monsoon.ini`. Child areas inherit the climate; the
+area's climate bits still add to the file's weights. The file is plain text,
+one `KEY=value` per line; `#` starts a comment:
+
+```ini
+# world/climates/monsoon.ini
+SUMMER=RAIN 40, THUNDERSTORM 25, CLOUDY 20, CLEAR 10, FOG 5
+WINTER=CLEAR 50, CLOUDY 30, WINDY 20
+ALL=CLEAR 40, CLOUDY 30, RAIN 20, FOG 10
+TRANSITION=RAIN->THUNDERSTORM=30, CLEAR->RAIN=10
+HOLD=3
+TEXT_RAIN=Warm monsoon rain drums on the reeds.|Monsoon rain hammers the thatch.
+STOP_RAIN=The monsoon rain thins to a drizzle.
+```
+
+| Key | Meaning |
+| --- | --- |
+| `SPRING`, `SUMMER`, `FALL`, `WINTER` | A season's weights: `WEATHER N` pairs, comma separated (`:` and `=` also work between name and number). |
+| `ALL` | The weights for every season the file does not give. |
+| `TRANSITION` | `FROM->TO=N` pairs: the chance of moving from one weather to another, in place of the built-in one (a negative number all but forbids it). |
+| `HOLD` | The fewest game hours a weather lasts before it changes on its own. Forced changes (`WEATHER SET`, `NEXT`) ignore it. |
+| `ALLOW` | The only weathers this climate has (`ALLOW=FOG,CLEAR`); an odd weather is never rolled. |
+| `TEXT_[WEATHER]` | The weather's description, as LOOK and WEATHER tell it, in place of `lists.ini`'s. Alternatives are separated by `\|`; `NONE` for nothing. |
+| `STOP_[WEATHER]` | The line told as that weather ends. Same form. |
+
+Weather names are those of the list above; `STORM` and `THUNDER` read as
+THUNDERSTORM, `DUSTSTORM` as DUST, `WINTER`/`WINTERCOLD` as COLD. An
+unreadable line or a missing file is logged (`mud.log`) and the area keeps
+the built-in climate. `WEATHER FORECAST` names the climate in use. Which
+season's weights apply is the season the area is in *as it counts for the
+weather*, so a named season (`the Rains` counting as `SPRING`) uses the SPRING
+line. The files are cached; restart or reload the world to re-read them.
+
+Source: [ClimateProfiles](../../CoffeeMud/com/planet_ink/coffee_mud/core/ClimateProfiles.java),
+[DefaultClimate](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClimate.java).
+
+### Pinning and linking weather
+
+- [Prop_Weather](23-properties-reference.md#prop_weather) on an area pins the
+  weather: `Prop_Weather RAIN` keeps it raining; `Prop_Weather RAIN CLIMATE_WET`
+  also sets climate bits (`CLIMATE_NORMAL`, `CLIMATE_WET`, `CLIMATE_COLD`,
+  `CLIMATE_WINDY`, `CLIMATE_HOT`, `CLIMATE_DRY`, `CLIMATE_VOID`). It sets the
+  current and next weather every time the area recalculates, so a pinned area
+  does not change and `WEATHER SET` is overridden. In a script,
+  `MPAFFECT Prop_Weather $a 300TICKS THUNDERSTORM` pins it for 300 ticks.
+- [LinkedWeather](24-behaviors-and-masks.md#linkedweather) makes an area copy
+  another's weather (`LinkedWeather Hidden Area`), or with `;ROLLING` take it
+  on the next change. A hidden "climate template" area plus linked areas is
+  a cheap way to give a region one weather.
+
+### Commands
+
+Builder commands need builder mode, a `DEV=1` game, or the `CMDAREAS` flag.
+
+```text
+WEATHER
+WEATHER WORLD
+WEATHER SET THUNDERSTORM
+WEATHER SET SNOW NEXT
+WEATHER SET FOG FOR 3 HOURS
+WEATHER SET RAIN AREA Riverton
+WEATHER FORECAST
+WEATHER NEXT
+```
+
+| Command | Does |
+| --- | --- |
+| `WEATHER` | Everyone: the weather where you stand, in words. |
+| `WEATHER WORLD` | Everyone, outdoors: each area's weather. |
+| `WEATHER SET [weather] (FOR [n] HOURS\|DAYS\|WEEKS\|MONTHS\|TICKS) (AREA [name]) (NEXT)` | Changes the area's weather *now*, as a natural change does (the end and start messages, `WEATHER_PROG` and `EXECMSG_PROG WEATHERCHANGE` fire). With `NEXT`, sets only the weather that comes next. With `FOR`, holds it there: each change comes back to it until the time is up, then the weather goes on its own. An unknown word answers `'X' is no weather` and lists them. |
+| `WEATHER FORECAST` | Builders: the weather now and next, the climate file in use, a hold with the game hours left, and the odds of each weather the step after that. |
+| `WEATHER NEXT` | Builders: makes the next change happen now. |
+
+`WEATHER FORECAST` is the quick check after editing a climate or a calendar.
+A sample answer:
+
+```text
+Weather in Riverton: rain, then fog.
+Climate: monsoon (climates/monsoon.ini)
+After that: rain 35%, thunderstorm 25%, cloudy 20%, clear 10%, fog 10%.
+```
+
+From a MOBPROG:
+
+```text
+MPWEATHER HERE THUNDERSTORM FOR 2 HOURS
+MPWEATHER $a RAIN NEXT
+MPWEATHER Riverton CLEAR QUIET
+```
+
+`MPWEATHER [AREA/HERE] [WEATHER] (NEXT) (FOR [N] HOURS/DAYS) (QUIET)`: the
+area is `HERE` (the host's area), an area name, or an object code whose area is
+used. It sends the normal messages and `WEATHER_PROG`s unless `QUIET`. A hold
+survives a save. Reference: [27-mobprog-commands.md](27-mobprog-commands.md#mpweather).
+JavaScript: `cm.weather(area)` has `get()`, `next()`, `describe()`,
+`forecast()`, `set(word)`, `setNext(word)`, `hold(word, hours)` and
+`chances()`.
+
+Scripts react to weather with `WEATHER_PROG [WEATHER/ANY] (OLD WEATHER)`
+(`$g` the new weather, `$0` the old, `$1` the forecast),
+`ISWEATHER(RAIN)`, and the mask key `-WEATHER +RAIN +THUNDERSTORM`. They also
+react to the moon with `MOON_PROG`. Reference: [26-mobprog-triggers.md](26-mobprog-triggers.md#weather_prog).
+
+## Sky and time-of-day text
+
+The lines the world says as dawn breaks, as it starts to snow, or as the moon
+rises come from `resources/lists.ini` (`TOD_CHANGE_OUTSIDE`,
+`TOD_CHANGE_INSIDE`, `WEATHER_*` and `WEATHER_ENDS`) for the whole world. Those
+lists are shared by a cave city and a desert, so each area can override them
+with [Prop_SkyText](23-properties-reference.md#prop_skytext) on the area or a
+room:
+
+| Key | Text |
+| --- | --- |
+| `DAWN`, `DAY`, `DUSK`, `NIGHT` | Told under the sky as the time of day changes. |
+| `INDAWN`, `INDAY`, `INDUSK`, `INNIGHT` | The same, indoors (in rooms with no sky). |
+| `WEATHER_[STATE]` | That weather's description, as it starts and as LOOK and WEATHER tell it (`WEATHER_SNOW`, `WEATHER_RAIN`, ...). |
+| `STOP_[STATE]` | That weather's ending line. |
+| `MOON` | `TIME`'s moon line. |
+
+```text
+Prop_SkyText DAWN="The red sun drags itself over the ash dunes." WEATHER_SNOW="Grey ash begins to fall."
+Prop_SkyText DAWN=NONE NIGHT="The glowcaps dim as night falls on the surface far above."
+```
+
+Alternatives separated by `|` are picked at random each time; `NONE` says
+nothing. A room's own line comes before its area's, an area's before its
+parents'; what none of them sets comes from the area's climate file
+(`TEXT_` and `STOP_`), then `lists.ini`. The three ways to give an area its
+own text are `Prop_SkyText` (per object, in the world), climate files (per
+climate) and `Prop_LocalLists`; pick one so they do not fight. To go
+further, `DISABLE=TODNOTIFIES` or `WEATHERNOTIFIES` silences the stock
+lines and your own `TIME_PROG`/`WEATHER_PROG` scripts can `MPECHO` instead.
+
+Source: [Prop_SkyText](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_SkyText.java),
+[SkyText](../../CoffeeMud/com/planet_ink/coffee_mud/core/SkyText.java).
+
+### Previewing a room under conditions
+
+`LOOK AS [CONDITIONS]` (builders, same flags as the weather commands) shows
+the room's title and description under made-up conditions, as `PREVIEW` does:
+
+```text
+LOOK AS NIGHT FOG
+LOOK AS DAY
+LOOK AS WINTER SNOW
+```
+
+Conditions are time of day (`DAY`, `NIGHT`, `DAWN`, `DUSK`), season, weather,
+`FROM [DIRECTION]`, `VISITED`/`FIRSTVISIT`, `AS [CHARACTER]` and
+`VAR [NAME]=[VALUE]`. It is the fastest way to test `<VARIES>` text.
+
+## Tides
+
+Audience: creators and scripters.
+
+CoffeeMud's clock already worked out a tide; CoffeeSUD makes it usable by
+builders. The tide in a room comes from its area's clock and moon:
+
+- **Low tide** in the hour the day begins (`DAYHR`), **high tide** in the
+  dusk hour (`DUSKHR`), and **no tide** the rest of the time.
+- Its strength comes from the moon (the first named moon, if the calendar
+  has `MOONS`): SPRING tides at new and full moon, NORMAL between, NEAP at the
+  quarters. The phases are `SPRING_HIGH`, `SPRING_LOW`, `NORMAL_HIGH`,
+  `NORMAL_LOW`, `NEAP_HIGH`, `NEAP_LOW` and `NO_TIDE`.
+- Tide-altering spells and effects on the room or area shift the phase.
+
+With the stock six-hour day that is one game hour of low tide and one of high
+tide per day, so a bare check is brief. Everything below therefore takes a
+**span**: the number of hours either side of the tide's hour that still count.
+A span of 2 on a six-hour day makes it high tide for most of the evening.
+
+### Reading the tide
+
+| Where | Form |
+| --- | --- |
+| Script condition | `ISTIDE(HERE HIGH)`, `ISTIDE(Cove#3 LOW)`, `ISTIDE(HERE SPRING_HIGH)`, `ISTIDE(HERE HIGH:2)` |
+| Zapper mask | `-TIDE +HIGH` (passes at high tide), `+TIDE -HIGH` (passes unless it is high tide); `LOW`, `NONE`, `SPRING`, `NEAP`, `NORMAL`, a full phase name, and `:span` |
+| `<VARIES>` text | `<HIGHTIDE>...</HIGHTIDE>`, `<LOWTIDE>...</LOWTIDE>` |
+
+The words are `HIGH`, `LOW`, `NONE` (or `NO_TIDE`), `SPRING`, `NEAP`, `NORMAL` or a
+phase name; `HIGH:2` means "high tide within two hours". Reference:
+[ISTIDE](28-mobprog-functions.md#istide).
+
+### Prop_TidalExit: a way open at one tide
+
+[Prop_TidalExit](23-properties-reference.md#prop_tidalexit) goes on an exit:
+the exit can be used only at one tide.
+
+| Parameter | Meaning |
+| --- | --- |
+| `OPEN=LOW` or `OPEN=HIGH` | The tide at which the exit works (default `LOW`). |
+| `SPAN=[hours]` | Hours either side of the tide's hour that count (default 0, only the tide's own hour). |
+| `MSG="text"` | Said to someone who tries it the rest of the time (default "The way is under water; it is passable only at low tide."). |
+
+```text
+Prop_TidalExit OPEN=LOW SPAN=1 MSG="The causeway is under water."
+```
+
+### TidalRoom: a shore room the tide floods
+
+[TidalRoom](24-behaviors-and-masks.md#tidalroom) is a [RoomStates](#room-states)
+preset on a room. At high tide it is a swimming room with its own title and
+description; with `DEEP`, at the spring tides its air is water; at the ebb it
+is itself again.
+
+| Parameter | Meaning |
+| --- | --- |
+| `SPAN=[hours]` | Hours either side of high tide that count as flooded. |
+| `TITLE="..."`, `DESC="..."` | The room's title and description while flooded. |
+| `FLOODMSG="..."` | What those who come in while it is flooded are told (default "The tide is in: the sea swirls about you."). |
+| `DEEP` | At spring high tides the room's atmosphere becomes water (a drowning room; see [Breath](#breath-and-underwater-rooms)). |
+| `WASH=[weight]` | Loose, gettable things weighing up to this are washed away as the water comes. |
+
+The state names are `ebb`, `flooded` and `deep`; `ROOMSTATE(HERE)` reads
+them. See [Worked example 1](#example-1-a-coastal-town-with-tides-and-storms).
+Source: [Tides](../../CoffeeMud/com/planet_ink/coffee_mud/core/Tides.java),
+[Prop_TidalExit](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_TidalExit.java),
+[TidalRoom](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TidalRoom.java).
+
+## Room states
+
+Audience: creators, scripters.
+
+A room (or a whole area) can have named versions that a behavior switches
+between: a mine shaft that is dry, flooded, collapsed or cleared; a market
+square that is a fairground on festival days. [RoomStates](24-behaviors-and-masks.md#roomstates)
+declares the versions and the rules for moving between them in one place.
+
+The parameters are **clauses separated by semicolons** (a semicolon inside
+double quotes does not split). There are three kinds.
+
+**A state** — `STATE=name` with any of:
+
+| Key | Meaning |
+| --- | --- |
+| `TITLE="..."`, `DESC="..."` | The room's display text and description in this state. |
+| `ATMOSPHERE=` | `WATER`, `AIR`, or any raw material name. `AIR`, `NORMAL` and `DEFAULT` restore the normal air. A state in `WATER` makes the room drown people unless they can breathe it. |
+| `CLIMATE=` | Climate bits: `WET`, `COLD`, `WINDY`, `HOT`, `DRY`, comma separated. |
+| `ADD="Prop_RoomDark();WaterCurrents(go=east)"` | Effects and behaviors the room has while in this state, as `ID(parameters)`, separated by `;` inside the quotes. They are removed when the state ends. |
+| `BLOCK=north,down` | Ways out that are refused ("The way north is blocked.") while in this state. |
+| `OPEN=up` | Doors that open in this state. |
+| `ENTERMSG="..."` | Said to those who come in. |
+
+What a state leaves unset is the room's own. The first state is the start state.
+
+**A transition** — `TO=name` with any of:
+
+| Key | Meaning |
+| --- | --- |
+| `FROM=a,b` | Only from these states (default any). |
+| `WHEN="mask"` | A zapper mask checked on a character in the room each tick. |
+| `AFTER=n` | The `WHEN` must hold for n ticks in a row (without `WHEN`: n ticks in the state). |
+| `TICKS=n` | After this many ticks in the current state. |
+| `ONVAR="[host] name==value"` | A script variable test; the host `*` if not given. |
+
+A transition fires when all its given conditions hold. The first that does wins.
+
+**Settings**: `START=name` the first state (the first declared if omitted);
+`ROOMS=Area#1,Area#2` (on an area) the rooms that change; without it every
+room in the area changes together.
+
+```text
+RoomStates STATE=dry TITLE="A dusty shaft"; STATE=flooded TITLE="A flooded shaft" ADD="Chant_Flood()" BLOCK=down ENTERMSG="Cold water swirls round your knees."; TO=flooded WHEN="-WEATHER +RAIN" AFTER=2; TO=dry FROM=flooded TICKS=300; START=dry
+```
+
+**Changing and reading a state from a script:**
+
+```text
+MPROOMSTATE HERE flooded
+MPROOMSTATE Deepdelve cleared
+MPSETVAR $i SHAFT $%ROOMSTATE(HERE)%
+IF ROOMSTATE(HERE == flooded)
+```
+
+`MPROOMSTATE [ROOM ID/HERE/AREA NAME] [STATE]` switches at once (a script
+error is logged if no `RoomStates` is there or the state is unknown).
+`ROOMSTATE([ROOM ID/HERE/AREA NAME])` reads the state of the room's (else
+its area's) behavior. `VARIES` masks can test it too. A transition that
+needs a script variable fires without you calling `MPROOMSTATE`. See
+[ROOMSTATE](28-mobprog-functions.md#roomstate) and
+[MPROOMSTATE](27-mobprog-commands.md#mproomstate).
+
+The current state is saved with the campaign (as a room change), so a
+collapsed shaft stays collapsed after a restore. The room's original title,
+description, atmosphere and climate are remembered and come back when the
+state sets none.
+
+Source: [RoomStates](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RoomStates.java).
+
+## Flooding
+
+[Floodable](24-behaviors-and-masks.md#floodable) is a RoomStates preset for a
+room whose water level rises and falls by itself. It has four levels:
+
+| Level | State | Effect |
+| --- | --- | --- |
+| 0 | `dry` | Nothing. |
+| 1 | `ankle` | Ankle-deep (text only unless you give `DESC1`). |
+| 2 | `waist` | A swimming room (`Chant_Flood`); lit torches are put out; loose things weighing up to `FLOAT` float off. |
+| 3 | `full` | The room's air is water: whoever is in it drowns once their breath runs out. |
+
+While its condition holds the water rises one level every `RATE` ticks; when
+it does not, it drains one level every `DRAIN` ticks.
+
+| Parameter | Meaning |
+| --- | --- |
+| `RISE="mask"` | The water rises while someone in the room fits the mask, e.g. `"-WEATHER +RAIN +THUNDERSTORM"`. |
+| `ONVAR="[host] name==value"` | Rises while the script variable holds. |
+| `TIDE=HIGH` | Rises at high tide (same words as `ISTIDE`). |
+| `RATE=[ticks]` | Ticks per level rising (default 10). |
+| `DRAIN=[ticks]` | Ticks per level draining (default = `RATE`). |
+| `FLOWTO=[dir]` | Where floated-off things go; without it they are destroyed. |
+| `FLOAT=[weight]` | Loose things this light or lighter float off (default 2). |
+| `TITLE1`..`TITLE3`, `DESC1`..`DESC3` | The title and description at levels 1 to 3. |
+| `MSG1`..`MSG3` | What those coming in are told at that level. |
+
+Any one of `RISE`, `ONVAR`, `TIDE` holding makes the water rise. Read the
+level with `FLOODLEVEL(HERE)` (0 to 3) in a script.
+
+```text
+Floodable RISE="-WEATHER +RAIN +THUNDERSTORM" RATE=15 DRAIN=30 FLOWTO=east DESC2="Storm water swirls waist-deep through the drain."
+Floodable ONVAR="pump sluice==open" RATE=5
+```
+
+For a trap that floods once and drains, use `Trap_FloodRoom`; for a timed
+spell-like flood, `Chant_Flood` (both in
+[25-abilities-and-effects.md](25-abilities-and-effects.md)). Reference:
+[FLOODLEVEL](28-mobprog-functions.md#floodlevel).
+
+Source: [Floodable](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Floodable.java).
