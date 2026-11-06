@@ -567,3 +567,131 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Value:** `$%LISTPICK(list)%`: a random item.
 - **Example:** `MPSETVAR WORLD CULPRIT $%LISTPICK($<WORLD SUSPECTS>)%`
 
+### Variables, tags and script glue
+
+### VAR
+
+- **Test:** `VAR(host NAME cmp value)`: reads the saved script variable `NAME` kept for `host` and compares it.
+- **Value:** `$%VAR(host NAME)%`: the variable's text (the same as `$<host NAME>`); empty when unset.
+- **Example:** `IF VAR($n STAGE == 2)`; `IF VAR(@$i BRIBED == yes)`; `IF VAR(* ALARM == ON)`
+- **Notes:** `host` is a creature or item (`$n`, `$i`, a name), a room ID, `*` (any host that has the variable), or `@code` for a variable stored on that exact object (`@$i`). `==`/`=`/`!=`/`<>` compare the two texts *exactly and case-sensitively*; the other operators compare as whole numbers, where an unset or non-numeric variable is 0. The variable name is upper-cased. If the value contains spaces, the word after the operator is the whole rest of the line, so no quotes are needed. How variables are stored and scoped (script, quest, world, per-object) is in [04-mobprog.md](04-mobprog.md); setting them is `MPSETVAR`, in [27-mobprog-commands.md](27-mobprog-commands.md).
+
+### VARNAMES
+
+- **Test:** `VARNAMES(host prefix cmp value)`: the sorted, space-separated names of `host`'s variables starting with `prefix`, compared as text (`.in.` works).
+- **Value:** `$%VARNAMES(host prefix)%`: that list; an empty host means any host (`*`).
+- **Example:** `IF VARNAMES($n QUEST_ .in. QUEST_ONE)`; `FOR $0 IN $%VARNAMES($n QUEST_)%`
+- **Notes:** not inherited. Names come back upper case. Use with `FOR` to walk a family of variables.
+
+### QVAR
+
+- **Test:** `QVAR(quest STAT cmp value)`: compares a stat of a quest as text.
+- **Value:** `$%QVAR(quest STAT)%`
+- **Example:** `IF QVAR(rescue STEPNAME == spared)`
+- **Notes:** `quest` is a quest name (`*` for the quest this script belongs to). `STAT` is any quest stat (`NAME`, `DURATION`, `FINISHED`, `REPEATABLE`, `MAXWINS`, `REMAINING`, `STEPNAME`, `STEPOF:label`, ...) or a variable the quest script set. An unknown quest gives false. See [08-quests.md](08-quests.md).
+
+### STATE
+
+- **Test:** `STATE(thing NAME)`: true if the value kept on that one object is set (not empty, not `0`, not `false`); `STATE(thing NAME cmp value)` compares it.
+- **Value:** `$%STATE(thing NAME)%`
+- **Example:** `IF STATE($i open)`; `MPSTATE $i open clear` (command) clears it.
+- **Notes:** not inherited. Per-object state lives on the object and moves and dies with it, unlike `VAR`, which is keyed by name. See [27-mobprog-commands.md](27-mobprog-commands.md) for `MPSTATE`.
+
+### HASTAG
+
+- **Test:** `HASTAG(thing tag)`: true if the object carries that tag.
+- **Value:** `$%HASTAG(thing)%`: all the object's tags, space separated, quoted if they contain spaces.
+- **Example:** `IF HASTAG($i sentry)`
+- **Notes:** tags can be on creatures, items, rooms and exits. A syntax error is logged under the label `HASTATTOO`. `TAGS` is the clearer name for the value form.
+
+### TAGS
+
+- **Value:** `$%TAGS(thing)%`: the object's tags, space separated, quoted if needed.
+- **Test:** `TAGS(thing cmp text)`
+- **Example:** `MPECHO Tags: $%TAGS($i)%`
+- **Notes:** not inherited; the same list `$%HASTAG(thing)%` gives.
+
+### TAGGED
+
+- **Test:** `TAGGED(tag)`: true if any object in the world has the tag.
+- **Value:** `$%TAGGED(tag)%`: `true` or `false`.
+- **Example:** `IF TAGGED(grateful) AND !TAGGED(hunted)`
+- **Notes:** not inherited. Counts creatures, items, rooms and exits that carry the tag. `FOR $0 IN #tag` loops over them (see [27-mobprog-commands.md](27-mobprog-commands.md)).
+
+### NUMTAGGED
+
+- **Value:** `$%NUMTAGGED(tag)%`: how many objects carry the tag.
+- **Test:** `NUMTAGGED(tag cmp n)`
+- **Example:** `IF NUMTAGGED(grateful >= 5)`
+- **Notes:** not inherited.
+
+### HASTATTOO
+
+- **Test:** `HASTATTOO(who tattoo)`: true if the creature carries the tattoo (a named flag set with `MPTATTOO`).
+- **Value:** `$%HASTATTOO(who)%`: all the creature's tattoo names, space separated.
+- **Example:** `IF HASTATTOO($n KNOWS_TOWER)`; `IF !HASTATTOO($n SEEN_ELDER)`
+- **Notes:** the tattoo name is matched whole, ignoring case. Tattoos are saved with the character and are the standard once-per-player flag. A syntax error (empty tattoo) is logged. Timed tattoos: [HASTATTOOTIME](#hastattootime).
+
+### HASTATTOOTIME
+
+- **Test:** `HASTATTOOTIME(who tattoo cmp ticks)`: compares the ticks left on a timed tattoo (as set by `MPTATTOO who 'ticks NAME'`).
+- **Value:** `$%HASTATTOOTIME(who tattoo)%`: the ticks left; empty if the creature has no such tattoo.
+- **Example:** `IF HASTATTOOTIME($n COOLDOWN < 15)`
+- **Notes:** false if the tattoo is not present. Use [TICKS](#ticks) to convert game time to ticks.
+
+### HASACCTATTOO
+
+- **Test:** `HASACCTATTOO(who tattoo)`: true if the creature's *account* tattoo list has the tattoo.
+- **Value:** `$%HASACCTATTOO(who)%`: the account's tattoo names, space separated.
+- **Example:** `IF HASACCTATTOO($n BEASTMARK)`
+- **Notes:** CoffeeSUD has no logins; the "account" is the single-player profile, shared by all characters in it. `$` codes are allowed in the tattoo name. Set with `MPACCTATTOO`.
+
+### ARG
+
+- **Test:** `ARG(NAME)`: true if the argument is set (not empty, not `0`, not `false`); `ARG(NAME cmp value)` compares it.
+- **Value:** `$%ARG(NAME)%`: the value given by `LOAD=file NAME=value`, else the file's `ARGDEFAULT NAME=value`, else empty.
+- **Example:** `LOAD=progs/guard.script POST=castle#12` on the host and `IF ARG(POST == castle#12)` in the file
+- **Notes:** not inherited. This is how one script file serves many hosts. A generic behaviour's parameters are read the same way: [PARM](#parm).
+
+### PARM
+
+- **Test:** `PARM(NAME)` or `PARM(NAME cmp value)`, as [ARG](#arg).
+- **Value:** `$%PARM(NAME)%`: the parameter of the generic behaviour (or the `LOAD=` argument) of that name.
+- **Example:** `MPECHO The price is $%PARM(price)% crowns.`
+- **Notes:** not inherited; it shares one lookup with `ARG`: the generic behaviour's parameters first, then `LOAD=` arguments.
+
+### EFFECTPARM
+
+- **Test:** `EFFECTPARM(KEY)` or `EFFECTPARM(KEY cmp value)`.
+- **Value:** `$%EFFECTPARM(KEY)%`: the `KEY=VALUE` instance text of a `GenAbility` effect that is running this script; `EFFECTPARM(*)` gives all of it.
+- **Example:** `IF EFFECTPARM(FREQ == 5)`
+- **Notes:** not inherited. Empty outside a `GenAbility` script. `$PARMS` is the whole text as a code.
+
+### CALLFUNC
+
+- **Test:** `CALLFUNC(name args)`: runs the host's own `FUNCTION_PROG name` (or a JavaScript function of that name) with `args` as its `$g`; true if it returned any text other than `CANCEL`.
+- **Value:** `$%CALLFUNC(name args)%`: what the function returned (`RETURN text`). `$%CALLFUNC(target name args)%` runs the function on another script host (room ID, `TAG:tag`, object name).
+- **Example:** `IF CALLFUNC(is_open $n)`; `MPECHO The gate stands at $%CALLFUNC(Gatehouse height)% feet.`
+- **Notes:** the cross-script form exists only in the value form; the test form finds only the host's own functions. See `FUNCTION_PROG` in [26-mobprog-triggers.md](26-mobprog-triggers.md) and `MPCALLFUNC` in [27-mobprog-commands.md](27-mobprog-commands.md).
+
+### JS
+
+- **Test:** `JS(expression)`: runs a JavaScript expression and is true if the result is truthy.
+- **Value:** `$%JS(expression)%` or `$%JS$(expression)%`: the result as text (whole numbers without a decimal point, nothing for `undefined`).
+- **Example:** `IF JS(cm.random(100) < 30)`; `MPECHO Hits: $%JS$(host().getHitPoints())%`
+- **Notes:** not inherited. The expression runs in the same scope as a `<SCRIPT>` block (`host()`, `source()`, `target()`, `cm` and so on) and is subject to the same JavaScript approval rule; an unapproved expression logs a `Security` error and is false/empty. `JS$` is a second spelling of the value form. See [05-javascript.md](05-javascript.md).
+
+### MEMORY
+
+- **Test:** `MEMORY(npc who field cmp value)`: what an NPC remembers about a character.
+- **Value:** `$%MEMORY(npc who field)%`
+- **Example:** `IF MEMORY($i $n MET == true)`; `IF MEMORY($i $n DAYSSINCE >= 7)`
+- **Notes:** not inherited. `field` is `MET` (`true`/`false`), `COUNT` (meetings), `LASTSEEN` (game time stamp), `DAYSSINCE` (game days since last seen, or `-1` if never met) or `LASTTOPIC`. Numbers compare as numbers, anything else as text. See [06-npcs-dialogue.md](06-npcs-dialogue.md).
+
+### GENVAR
+
+- **Test:** `GENVAR(area NAME cmp value)`: compares a variable a generator recorded for an area it made, as text.
+- **Value:** `$%GENVAR(area NAME)%`
+- **Example:** `IF GENVAR('The Old Crypt' AREA_SIZE >= 20)`
+- **Notes:** not inherited. Empty for an area no generator made. See [12-generation.md](12-generation.md).
+

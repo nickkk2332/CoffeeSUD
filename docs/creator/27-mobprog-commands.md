@@ -1522,3 +1522,241 @@ mpscript $n SAVABLE GREET_PROG 100\;mpecho The wolves howl, $n.\;~\;
 
 **Behaviour:** removes the behaviour from the target, if present.
 
+## Asking the player
+
+`MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` **block**: the program waits for the player's answer, so the engine runs such a program on a separate thread (it marks the program `SPAWN`). They need a character with a session, that is a player or party member; aimed at an NPC they do nothing. With party windows off, a prompt to a party member in the background appears at the terminal with the member's name in front. If the player does not answer in time, or leaves, the program ends (the command returns an empty result). `MPMENU` does **not** block.
+
+The answer is stored as a script variable on the *target's name* (`MPSETVAR <name> <var> <answer>`), so read it back with `$<$n VAR>` or `VAR($n VAR == ...)`.
+
+### MPPROMPT
+
+**Syntax:** `MPPROMPT <player> <variable> <prompt text>`. Minimum: 3 words.
+
+**Behaviour:** shows the prompt and waits (up to six minutes) for a line of text; stores the line in the variable.
+
+**Example**
+
+```text
+SPEECH_PROG p name
+mpprompt $n PETNAME What will you name the pup?
+mpecho $n calls the pup $<$n PETNAME>.
+~
+```
+
+### MPCONFIRM
+
+**Syntax:** `MPCONFIRM <player> <variable> <default Y|N> <prompt text>`. Minimum: 4 words.
+
+**Behaviour:** asks a yes/no question (waits up to one minute); stores `Y` or `N`. The default is taken on an empty answer.
+
+**Example:** `mpconfirm $n SURE N Are you certain you want to open the vault?`
+
+### MPCHOOSE
+
+**Syntax:** `MPCHOOSE <player> <variable> <choices> <default> <prompt text>`. Minimum: 5 words.
+
+**Arguments:** `<choices>` is a string of hotkey characters (for example `ABC`, or `YNM`); `<default>` the key taken on an empty answer.
+
+**Behaviour:** shows the prompt and waits (up to one minute) for one of the keys; stores the key typed in the variable.
+
+**Example**
+
+```text
+SPEECH_PROG p choice
+mpchoose $n PATH SKN S What do you do? (S)pare, (K)ill, (N)either?
+if var($n PATH == K)
+  mpkill $n
+endif
+~
+```
+
+### MPMENU
+
+**Syntax:** `MPMENU <player> <FUNCTION> "<prompt>" <key>:"<label>"[IF <condition>] ... [default key]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Arguments:** the character; the name of a `FUNCTION_PROG` in the same script; a double-quoted prompt; then the choices, each `key:"label"`, optionally followed by `[IF condition]` (the choice is shown only if the condition is true); a final bare word is the default key.
+
+**Behaviour:** shows the prompt and a numbered list of the choices. The script **goes on at once**: the character's next line of input answers it, by number or by key. An empty line, or an answer that matches nothing, takes the default (with no default it asks again). The answer is not a command, so it takes no game time in turn-based play. Then `FUNCTION_PROG <FUNCTION>` runs with the key as `$0` and `$g`, the character as `$n` and the host as `$i`. One menu per character: a new one replaces the old. An unknown function logs `no FUNCTION_PROG X`.
+
+**Example**
+
+```text
+GREET_PROG 100
+if ispc($n)
+  mpmenu $n SAGE "The old sage regards you." tower:"Ask about the tower" ring:"Show him the ring"[IF HAS($n ring)] bye:"Leave" bye
+endif
+~
+
+FUNCTION_PROG SAGE
+switch $0
+case tower
+  say The tower fell a century ago.
+case ring
+  say Where did you find that?
+endswitch
+~
+```
+
+**Notes:** a menu of items for a conversation is the usual job; see [06](06-npcs-dialogue.md) for dialogue design.
+
+### MPLLM
+
+**Syntax:** `MPLLM <host> <variable> <message>`. Minimum: 3 words.
+
+**Behaviour:** sends the message to this host's LLM chat and stores the reply in the script variable, as `MPSETVAR` would (but not for `@` hosts). The first call creates the chat: with `MPSETINTERNAL LLMPROMPT <text>` the instructions are that text, otherwise the first message *becomes* the instructions (and the variable is set empty). `MPSETINTERNAL LLMMAXMSGS <n>` sets how many messages it remembers (default 5). The program is marked as one that may take a long time. If no LLM is configured (the `LANGCHAIN4J_` settings in `coffeemud.ini`), it logs `MPLLM RunTime: Could not create LLM Session.`
+
+**Example**
+
+```text
+SPEECH_PROG all
+mpllm $n REPLY $g
+say $<$n REPLY>
+~
+```
+
+**Notes:** optional; a world should work without it. Setup is in [19](19-configuration-and-administration.md).
+
+## Stats, skills and progression
+
+The target of these commands is a character: a `$` code or a name; many accept NPCs too. Where a number is taken, `++n` and `--n` add and subtract from the current value, and a plain number sets it.
+
+### MPEXP
+
+**Syntax:** `MPEXP <who> <amount | NEXTLEVEL | n%>`. Minimum: 2 words.
+
+**Behaviour:** gives experience through the normal experience routine (so level-ups, caps and the party's share apply). `NEXTLEVEL` gives exactly what the next level needs (**CoffeeSUD**). `n%` gives that percentage of the experience needed for the character's current level (for example `25%`).
+
+**Example:** `mpexp $n 150`; `mpexp $n 50%`.
+
+### MPRPEXP
+
+**Syntax:** `MPRPEXP <who> <amount | n%>`. Minimum: 2 words.
+
+**Behaviour:** like `MPEXP`, but role-playing experience, the kind the `RPAWARDS` setting in `coffeemud.ini` sets up. While `RPAWARDS` is empty (the default) it has no effect.
+
+### MPLEVELUP
+
+**Syntax:** `MPLEVELUP <who> [n]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** the character gains exactly *n* levels (default 1), each by the experience it needs, wherever the character is within its level. `n` must be at least 1.
+
+### MPLEVELDOWN
+
+**Syntax:** `MPLEVELDOWN <who> [n]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** the character loses *n* levels (default 1), its experience set back with them.
+
+### MPQUESTPOINTS
+
+**Syntax:** `MPQUESTPOINTS <who> <n | ++n | --n>`. Minimum: 2 words.
+
+**Behaviour:** sets the character's quest points, or adds (`++5`) or subtracts (`--5`). Gains count toward the "quest points earned" statistic. Anything else logs `Bad syntax`.
+
+**Example:** `mpquestpoints $n ++3`
+
+### MPTRAINS
+
+**Syntax:** `MPTRAINS <who> <n | ++n | --n>`. Minimum: 2 words.
+
+**Behaviour:** sets or adjusts the character's training sessions. Like `MPQUESTPOINTS` in form.
+
+### MPPRACS
+
+**Syntax:** `MPPRACS <who> <n | ++n | --n>`. Minimum: 2 words.
+
+**Behaviour:** sets or adjusts the character's practice sessions.
+
+### MPENABLE
+
+**Syntax:** `MPENABLE <who> <ability | expertise> <proficiency> [parameters]`. Minimum: 2 words.
+
+**Arguments:** the character; a skill, spell or other ability (name or ID), or an expertise ID; proficiency as a number 0-100, or `++n` / `--n` relative to the current; optional text the ability receives as its parameters.
+
+**Behaviour:** teaches the character the ability at that proficiency (or changes it if known); an expertise is added. A language is checked against the language cap (`MAXLANGUAGES`) first: if the character cannot learn another, the error is logged and nothing happens. Adding an ability also starts its auto-invocation (so a passive skill takes effect). An unknown name logs `Unknown skill/expertise`.
+
+**Example:** `mpenable $n Skill_Haggle 75`; `mpenable $n Dwarven ++20`.
+
+### MPDISABLE
+
+**Syntax:** `MPDISABLE <who> <ability | expertise>`. Minimum: 2 words.
+
+**Behaviour:** removes the ability, and the expertise of that name, from the character.
+
+### MPLEARNRECIPE
+
+**Syntax:** `MPLEARNRECIPE <who> <skill> <recipe name | recipe line>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** the character knows that recipe for good: one of the crafting skill's own recipes by name (including one marked `HIDDEN=1`), or a whole recipe line whose fields are joined with `\t` (written as the two characters backslash and `t`). The character is told `You know how to make X now.` See [07](07-items-crafting.md) for recipes.
+
+**Example:** `mplearnrecipe $n Blacksmithing 'steel dagger'`
+
+### MPLEARNLANG
+
+**Syntax:** `MPLEARNLANG <who> <language> <n | +n | -n> [FORCE]`. **CoffeeSUD.** Minimum: 2 words (the engine needs 3).
+
+**Behaviour:** sets (`40`) or adjusts (`+10`) the character's knowledge of a language, between 0 and 100, and brings any live effect up to date. A language the character does not yet know is refused when it would pass the language cap, unless `FORCE`. The character is told `Your grasp of X improves.` when it rises.
+
+**Example:** `mplearnlang $n MuseumSpeech 40`
+
+### MPPERK
+
+**Syntax:** `MPPERK <who> <perk id>` or `MPPERK <who> -<perk id>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** gives the character a perk of `world/perks.ini` with its rewards, or (with `-`) takes it off; the rewards stay. An unknown perk logs `MPPERK $n [-]perk (a perk of world/perks.ini)`. See [03](03-characters.md).
+
+### MPRANK
+
+**Syntax:** `MPRANK <who> <ladder> [+n | -n | =n | CHECK]`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** moves the character up (`+1` if not given) or down a rank ladder of `world/ranks.ini`, or to rank *n* (`=0` takes them off it), with the rank's effects, title and (once) rewards. `CHECK` raises them as far as the next ranks' `REQUIRES` allow. An unknown ladder logs `no ladder X in world/ranks.ini`. Read the rank with `RANK(who ladder)`.
+
+**Example:** `mprank $n GUILD +1`
+
+### MPRESPEC
+
+**Syntax:** `MPRESPEC <who> [SKILLS|EXPERTISES|STATS|CLASS|ALL] [name|ALL]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** undoes what the character bought with trains and practices, of those kinds (`ALL` if not given), the one named or all, and gives back what each cost, free. Skills that come by themselves stay. The character is told `You unlearn X.` for each.
+
+### MPPLAYERCLASS
+
+**Syntax:** `MPPLAYERCLASS <who> <class | level> ...`. Minimum: 2 words.
+
+**Behaviour:** the rest of the line is read word by word: a number sets the level of the character's current class; a class name or ID changes the current class (only to classes that are available to players). So `mpplayerclass $n Mage 5` makes them a level-5 Mage.
+
+### MPTITLE
+
+**Syntax:** `MPTITLE <who> [-]<title>`. Minimum: 2 words.
+
+**Behaviour:** adds a title to a player character, or (with a leading `-`) removes it. Adding a title they already have moves it to the top. Has no effect on mobs without player data.
+
+**Example:** `mptitle $n the Slayer of Rats`
+
+### MPTATTOO
+
+**Syntax:** `MPTATTOO <who> [-]<tattoo>`. Minimum: 2 words.
+
+**Behaviour:** adds the tattoo to the character if it is not there; with a leading `-` removes it. A tattoo is a one-word flag kept with the character and saved; test with `HASTATTOO($n NAME)`. A tattoo name starting with a number of ticks and a word (`'450 PLANTED'`, quoted) is a *timed* tattoo that wears off. Adding a tattoo that is already present does nothing.
+
+**Example:** `mptattoo $n BELLHEARD`; `mptattoo $n -BELLHEARD`.
+
+### MPACCTATTOO
+
+**Syntax:** `MPACCTATTOO <who> [-]<tattoo>`. Minimum: 2 words.
+
+**Behaviour:** like `MPTATTOO`, but on the player's **account**, which in CoffeeSUD is the *profile* shared by all of the player's characters. Test with `HASACCTATTOO`. Does nothing for a character without a profile.
+
+### MPACHIEVE
+
+**Syntax:** `MPACHIEVE <player> <achievement id> [amount]`. Minimum: 3 words.
+
+**Behaviour:** adds *amount* to the player's progress in the achievement. With no amount it *grants* the achievement outright, but only from a mob that has the `CMDPLAYERS` security flag. A non-player target, an unknown achievement or a bad amount is logged.
+
+**Example:** `mpachieve $n SLAYER 1`
+
+### MPRECRUIT
+
+**Syntax:** `MPRECRUIT <npc> <player> [PARTY | REST] [NAME=<name>]`. **CoffeeSUD.** Minimum: 1 word (needs 2).
+
+**Behaviour:** the NPC becomes a character of the player's profile, keeping its race, class, level, stats, abilities, effects, inventory, factions, tattoos and description, and leaves the world as an NPC. It joins the party (`PARTY`, the default) or rests (`REST`). `NAME=` names it (else the first word of the NPC's name). It refuses, telling the player, if the profile or party is full or the name is taken. See [03](03-characters.md) and [31](31-saves-and-party.md).
+

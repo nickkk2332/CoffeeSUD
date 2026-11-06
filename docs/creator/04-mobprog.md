@@ -639,3 +639,381 @@ destroyed.
 passes in, so choose loop variables that do not clash with values you still
 need.
 
+## State and scope
+
+A script has no variables of its own that outlive one run. Anything that must
+survive from one event to the next has to be stored somewhere the game keeps.
+This section covers the places, from the shortest-lived to the longest.
+
+### The codes in text
+
+Almost every argument of a command is passed through *variable substitution*
+first. The `$` forms are the way a program refers to the cast of the current
+event and to stored values. The complete list is in
+[chapter 28](28-mobprog-functions.md); the ones you need constantly:
+
+| Code | Meaning |
+| --- | --- |
+| `$n` | name of the actor (the creature that caused the event) |
+| `$t` | name of the target of the event, where the trigger provides one |
+| `$i` | the mob the script acts as (the host if it is a mob; else the stand-in) |
+| `$q` | the host itself, whatever it is |
+| `$o`, `$p` | the first and second item of the event |
+| `$w` | the holder of `$o` |
+| `$g` | the event's words in lower case (the speech, the item words, a function's arguments); `$G` keeps the case |
+| `$u` | the character at the terminal (the one the player is controlling) |
+| `$b` | the last thing created by `MPMLOAD` or `MPOLOAD` |
+| `$e` `$m` `$s` | he/she, his/her, him/her of the actor; `$j` `$k` `$h` for the host; `$E` `$M` `$S` for the target |
+| `$r`, `$c` | a random player (or any creature) in the room |
+| `$a`, `$d` | the area's name, the room's title |
+| `$0`..`$9` | temporary slots: a function's arguments, `FOR` counters, `MPARGSET` values |
+| `$(name)` | a named local (`MPLOCAL`, a function's named parameters) |
+| `$<host name>` | the value of the script variable `name` of `host` |
+| `$%FUNC(args)%` | the value form of a function: `$%LEVEL($n)%`, `$%RANDNUM(6)%` |
+| `$$` | a literal `$` |
+
+Which of `$n`, `$t`, `$o`, `$p`, `$g` exist depends on the trigger. A
+`GREET_PROG` has an actor and no items; a `GIVE_PROG` has an actor, the item as
+`$o` and the host as `$t`; a `FUNCTION_PROG` has only what its caller passed
+(`$g`, `$n` for who called). Check the trigger's entry and never assume a name
+is set. An unset code becomes an empty string, so a typo is silent: test with
+`SCRIPTTRACE`.
+
+A code may be followed by `.N` to take the N-th word (`$g.1`), `.N..` for "from
+the N-th word on", `.LENGTH#` for the number of words, `.DECOMMA#` and
+`.DESEMICOLON#` to turn comma or semicolon lists into words. These are the same
+list conventions `FOR ... IN LIST` and the `LIST` functions use.
+
+`$0`..`$9` and `$(name)` are *per run*: gone when the program ends. A called
+function shares the `$0`..`$9` array of its caller (the context is copied
+shallowly), so `MPARGSET` in a function can change a caller's slot; use named
+locals (`$(name)` with `MPLOCAL`, or named function parameters) when that
+matters.
+
+### Script variables (MPSETVAR)
+
+The general-purpose store. A variable has a **host name**, a **variable name**
+and a text value:
+
+```text
+mpsetvar $n CHAPTER 2            # on the creature $n (stored under its name)
+mpsetvar WORLD GATE_OPEN 1       # on an arbitrary key; WORLD is only a convention
+mpsetvar @$i BRIBED yes          # on this one object, not its name (SC4)
+mpsetvar $n VISITS ++            # add 1;  ++ -- +5 -3 *2 /2 %7 ^2 are arithmetic
+mpsetvar $n SEEN NOW             # the area clock's stamp (SC2), for ELAPSED()
+mpsetvar $n CHAPTER              # no value: delete the variable
+```
+
+Read it back:
+
+```text
+if var($n CHAPTER == 2)                 # test, inside IF
+say Chapter $<$n CHAPTER>, $n.          # substitute into text
+mpsetvar WORLD OLD $%VAR($n CHAPTER)%   # the value form of the function
+```
+
+Rules and traps:
+
+- The host argument is a code (`$n`, `$i`, `$t`, `$o`...) or a plain key. For a
+  creature or item, the code is turned into its **name**, so every "a city
+  guard" shares the variables stored under that name. Use `@$i`, `@$t`, `@$n`
+  (CoffeeSUD addition SC4) to keep a value on that one object instead: it is
+  stored in the object's `ExtraData` effect, goes with that copy, is saved with
+  it, and is not seen by its twins. `MPSETINTERNAL VARHOST INSTANCE` makes a bare
+  `$i` mean `@$i` for the whole script. For a room, the host is its room ID; for
+  an area, its name.
+- `MPSTATE` and `STATE()` are the same per-object store with a nicer shape for
+  flags (`MPSTATE $i open 1`, `STATE($i open)`, `MPSTATE $i open CLEAR`). A mob
+  that dies and is reborn loses these values unless one of them is named
+  `PERSIST`.
+- Names are case-insensitive (stored upper case); values are text. Arithmetic
+  works on whole numbers (64-bit). `MPSETVAR host var -5` *subtracts* 5; to store
+  a negative number write `=-5`, `=` meaning "this literal text".
+- An empty value deletes the variable. Reading an unset variable gives an empty
+  string; `VAR($n X == )` tests for "unset".
+- `MPLIST host var ADD|ADDUNIQUE|DEL|CLEAR|SHUFFLE|SORT words` treats a variable
+  as a space-separated list (SC1); `LISTCOUNT()`, `LISTHAS()`, `LISTGET()`,
+  `LISTFIND()`, `LISTPICK()` and `LISTJOIN()` read lists
+  ([chapter 28](28-mobprog-functions.md)). `FOR $1 IN LIST $<host var>` loops over
+  one.
+- `VARS` (below) lists, sets, clears and watches variables in game.
+
+Command and function references: [MPSETVAR](27-mobprog-commands.md#mpsetvar),
+[MPSTATE](27-mobprog-commands.md#mpstate), [MPLIST](27-mobprog-commands.md#mplist),
+[VAR](28-mobprog-functions.md#var), [STATE](28-mobprog-functions.md#state).
+
+### Variable scopes
+
+Variables live in a **scope**; each script engine has one. By default every
+script uses the same scope, called *global*, so any script can read what any
+other wrote, given the host and name. A script can change its own:
+
+```text
+mpsetinternal scope MYQUEST     # share a store with other scripts that name MYQUEST
+mpsetinternal scope *           # a private store, invisible to other scripts
+mpsetinternal scope global      # back to the shared one
+```
+
+A read looks first in the script's own scope, then in its default quest's
+scope (if `DEFAULTQUEST` or a quest set one), then in the global scope. A
+private (`*`/`INDIVIDUAL`) scope is saved with that engine; use it for state no
+other script may touch, and `@` variables when each object needs its own.
+`VARS SCOPES` lists the scopes in game.
+
+### Tattoos, quest state and the JavaScript store
+
+| Storage | Use it for | Who sees it |
+| --- | --- | --- |
+| `MPTATTOO $n NAME` / `HASTATTOO($n NAME)` | A yes/no flag on one character. Masks can test it (`-TATTOO +NAME`), so it also gates behaviors and properties. A number of ticks before the name (`MPTATTOO $n '450 PLANTED'`) makes it wear off; `HASTATTOOTIME()` reads the time left. | that character |
+| `MPACCTATTOO $n NAME` / `HASACCTATTOO()` | A flag on the **profile**: shared by every character of the player. (CoffeeMud's "account" is the local profile in CoffeeSUD.) | all of the player's characters |
+| Script variable (above) | Counters, stages, remembered names, lists, timestamps. | anything that reads that host/name |
+| Quest state (`QUESTSTATUS()`, `QOBJECTIVE()`, `MPQUESTWIN`, `MPQOBJECTIVE`, `MPQTIMER`...) | The *official* progress of a quest: shown in the journal (`QUESTS`), saved and queryable by masks. See [chapter 8](08-quests.md). | the journal, other scripts |
+| `cm.store(key)` in `<SCRIPT>` or JS | Structured JSON shared with JavaScript. | JavaScript and `state()` |
+| `MPLOCAL`, `MPARGSET`, `$0`..`$9`, function parameters | Temporary values inside one run. | that run only |
+
+Choose by what has to be true later: "has this character ever done X" is a
+tattoo; "how many times / what stage" is a variable; "is this quest done"
+is quest state; "scratch space" is a local.
+
+Do not key variables by a display name that two things share; if several guards
+run one script, use `@$i`. And do not use a tattoo as a counter: it has no
+value, only presence (and, optionally, an expiry).
+
+### What a save keeps
+
+A campaign save keeps the following; anything not listed is gone after a
+save and restore:
+
+| Kept | Not kept |
+| --- | --- |
+| Script variables of every host and scope (`MPSETVAR`); a private scope with its engine | `MPLOCAL` locals and function parameters; `$0`..`$9` of a body that is not paused |
+| Per-object variables (`@$i`, `MPSTATE`), in the object's `ExtraData` | A trigger that was running at the instant of the save |
+| Which `ONCE_PROG`s ran, when each `TIME_PROG`, `DAY_PROG` and `EVERY_PROG` last ran, `DELAY_PROG` waits, `MPNOTRIGGER` timers | `ONCE_PROG BOOT` programs (they run again at each load by design) |
+| What is queued: `MPALARM`, delayed responses, bodies paused by `MPWAIT`, signals sent with `DELAY` | An arbitrary interrupted interpreter state: persist stages explicitly |
+| Tattoos (and their expiry), quest state, FIRSTGREET/REGREET meetings, the turn count | |
+
+See [Persistence notes](#persistence-notes) for where each lives and what a
+world reload does.
+
+## Four grammars, not one
+
+A MOBPROG line can contain four different mini-languages, and mixing them up is
+the commonest source of a "nothing happens" bug:
+
+| Grammar | Where it appears | Looks like | Notes |
+| --- | --- | --- | --- |
+| **Script commands** | the first word of a body line | `mpecho The gate opens.` | `MP...` words and control words. Their own argument rules (target, quoted names, rest of line). Reference: [chapter 27](27-mobprog-commands.md). |
+| **Game commands** | any body line whose first word is not a script word | `say Hello`, `give sword $n`, `open north` | Run by `$i` (the mob, or the stand-in) as an ordinary command, with the "mob was forced" flag. Permission and skill checks of a real command apply (a bound mob cannot `give`). Not run if the first word is an `MP` word that is unknown. |
+| **Functions** | inside `IF`/`WHILE`/`MPWAIT UNTIL` parentheses, and as `$%FUNC()%` in text | `hastattoo($n KEY)`, `var($n X >= 3)`, `$%level($n)%` | Condition form returns true/false and takes the comparison inside the parentheses; value form returns text. Reference: [chapter 28](28-mobprog-functions.md). |
+| **Masks** | trigger parameters of a few triggers (`GREET_PROG`, `ARRIVE_PROG`...), and arguments of commands that take masks | `-RACE +Elf -LEVEL +>10` | The zapper mask language shared by behaviors and properties ([chapter 24](24-behaviors-and-masks.md)). A mask replaces the percent chance. |
+
+A few rules that follow:
+
+- A comparison belongs inside function parentheses: `IF LEVEL($n >= 10)`, not
+  `IF $%LEVEL($n)% >= 10`.
+- A mask is not a condition: you cannot write `if -RACE +Elf`; use
+  `MASK($n -RACE +Elf)`... (see the function list for the mask-testing
+  function) or a function such as `RACE($n == Elf)`.
+- Text for a game command is substituted first, then split into words, so
+  `give $o $n` works, but a name that contains spaces needs the `$` code (an
+  object) rather than text.
+- Commands that take a *target* accept `$` codes as real objects: `mpkill $n` hits
+  that creature, not whoever shares the name.
+
+## Calls, signals and pauses
+
+### FUNCTION_PROG and MPCALLFUNC
+
+`FUNCTION_PROG name` declares a subroutine. A function is found in the scripts of
+its own host:
+
+```text
+FUNCTION_PROG greet WHO
+say Welcome to the gate, $(WHO).
+return ok
+~
+```
+
+- Call it with `MPCALLFUNC greet $n` (a command; the value is discarded),
+  `$%CALLFUNC(greet $n)%` (the value form) or `CALLFUNC(greet $n)` (the
+  condition form: true if it returned something). `SCRIPT CALL host greet Bob`
+  runs it by hand and prints what it returned.
+- The words after the name become `$g`. If the `FUNCTION_PROG` line itself lists
+  names after the function name (as above), the words of the call are bound to
+  them as `$(name)` locals, the last name taking the rest of the line
+  (CoffeeSUD addition SC17); the caller's own `$(...)` locals are untouched.
+- `MPCALLFUNC otherthing funcname args` and `CALLFUNC(otherthing funcname args)`
+  call a function on **another** object (SC6). `otherthing` is a `$` code or a
+  name. A host whose behaviors include a JavaScript-scripted behavior can
+  answer these calls from JavaScript too.
+- A function that does not exist is logged as `MPCALLFUNC Unknown: Function:
+  name` (and found by `SCRIPTCHECK` when it can see it).
+- The function runs immediately, inside the caller's run, and the caller waits
+  for it. Do not make functions call each other in circles.
+
+A common use of `FUNCTION_PROG` is as the *answer* of `MPMENU` (below), as a
+`CAN_COMPLETE`-style hook that `Prop_QuestMarker` calls, and as a way to share
+code between triggers of one host.
+
+### Signals
+
+`MPSIGNAL` sends a *named message* to other scripted objects, which receive it
+with `SIGNAL_PROG` (CoffeeSUD addition SC6). It is the clean way for a lever to
+tell a gate, or a boss to tell its arena.
+
+```text
+mpsignal TARGET NAME [ARGS] [DELAY TICKS]
+```
+
+| Target | Who hears it |
+| --- | --- |
+| a name or `$` code | that one object |
+| `ROOM` | the objects in the sender's room (the room, its items, its mobs) |
+| `AREA` | every scripted object in the sender's area |
+| `WORLD` | every scripted object in the world |
+| `TAG:tagname` | the objects *carrying that tag* in the sender's area |
+| `TAG:tagname@WORLD` | the tagged objects anywhere |
+| `ROOMID` | that room |
+| `ROOMID:NORTH` or `HERE:NORTH` | that room's exit in that direction |
+
+On the receiving side:
+
+```text
+SIGNAL_PROG lit
+# $g = the arguments, $n = who caused it, $t = the sending thing
+mpsetvar @$i LIT ++
+~
+```
+
+`SIGNAL_PROG name` matches one name, `SIGNAL_PROG ALL` any. Signals are queued
+(one tick by default; `DELAY n` waits n ticks, and delayed signals are saved),
+silent, and never seen by players. The receiver's tag is what `TAG:` looks for:
+tag the *receivers* (edit the object's *Tags* line in `MODIFY`, or `MPTAG`).
+A signal with no one to hear it logs `no one to hear it`.
+
+[MPSIGNAL](27-mobprog-commands.md#mpsignal) ·
+[SIGNAL_PROG](26-mobprog-triggers.md#signal_prog) ·
+fixture [`sc6-signals.js`](../../tools/fixtures/fixes/sc6-signals.js).
+
+### MPALARM, MPALARMCANCEL and ALARM()
+
+`MPALARM ticks command` runs one command after a delay. Everything about the
+event ($n, $t, $o...) is kept for the delayed command:
+
+```text
+mpalarm 5 say Your time is up, $n.
+mpalarm NAME=curfew 20 mpecho The bell tolls.
+mpalarmcancel curfew
+if alarm($i curfew)               # still pending?
+```
+
+A **named** alarm (`NAME=`) replaces an earlier one of the same name, is kept in
+a saved game, can be cancelled, and is dropped when its mob dies, sleeps or is
+held or bound (CoffeeSUD addition C5). `ALARM($i curfew)` gives the ticks left
+(0 if none). `MPTELEGRAPH` is built on the same alarms: a telegraphed attack is
+a named alarm called `TELEGRAPH` unless `NAME=` says otherwise. An unnamed
+`MPALARM` is simpler but is not cancellable.
+
+### MPWAIT: pausing a program
+
+`MPWAIT` suspends the *rest of the program* and resumes it at the next line
+(CoffeeSUD addition SC7):
+
+```text
+GREET_PROG 100
+mpecho The candles gutter.
+mpwait 2
+mpecho A voice whispers your name, $n.
+mpwait 3
+mpcast Prayer_Bless $n
+~
+```
+
+| Form | Waits for |
+| --- | --- |
+| `MPWAIT 3` | 3 ticks |
+| `MPWAIT 2 HOURS` (also `DAYS`, `WEEKS`, `MONTHS`) | game time on the area's clock |
+| `MPWAIT UNTIL (condition) [max ticks]` | the condition to be true, tested each tick, at most 1000 ticks unless a maximum is given |
+
+A paused body keeps `$n`, `$t`, `$o`, `$0`..`$9` and the `IF` and `SWITCH` blocks it
+is inside, and the pending wait is saved with the game. Limits: `MPWAIT` cannot
+pause inside a `FOR`, `WHILE` or `MPWHILE` loop, nor in a function that another
+line called (it logs and carries on without waiting); and ordinary locals set
+with `MPLOCAL` before the wait are copied, but a function's named parameters do
+not become general persistent memory. `MPSETINTERNAL CANCELWAITS` drops pending
+waits. In turn-based time a tick passes when the party acts, so `MPWAIT 3` waits
+three turns; a wait of several ticks ends early when an NPC speaks to the one
+waiting.
+
+A cut-scene is usually a `GREET_PROG` or `VERB_PROG` that echoes, `MPWAIT`s,
+echoes again; for exchanges between several NPCs see the Scene behavior in
+[chapter 6](06-npcs-dialogue.md).
+
+### Other clocks: DELAY, ONCE, TIME, DAY, EVERY, TURN
+
+| Trigger | Fires | Saved |
+| --- | --- | --- |
+| [`ONCE_PROG`](26-mobprog-triggers.md#once_prog) | the first time it is due, never again (until `SCRIPT RESET host ONCE`); `ONCE_PROG BOOT` runs at every load | that it ran |
+| [`DELAY_PROG`](26-mobprog-triggers.md#delay_prog) `low high` | at a random interval of low..high ticks, repeatedly | the wait |
+| [`TIME_PROG`](26-mobprog-triggers.md#time_prog) hours | once at each listed hour of the area's clock (`6`, `DAWN`, `NIGHT`, `6-18/3`) | the last hour done |
+| [`DAY_PROG`](26-mobprog-triggers.md#day_prog) days | once on each listed day of the month | the last day done |
+| [`EVERY_PROG`](26-mobprog-triggers.md#every_prog) N unit [CATCHUP] | every N hours/days/weeks/months of the area's clock; `CATCHUP` tells the script ($g) how many it missed | the next time |
+| [`TURN_PROG`](26-mobprog-triggers.md#turn_prog) | at the end of each game turn, or every N | the turn count |
+| [`RAND_PROG`](26-mobprog-triggers.md#rand_prog) pct | each tick, with that chance | nothing |
+
+`MPNOTRIGGER trigger milliseconds` (and `SCRIPT DISABLE`) silences a trigger for
+a while; use it to stop a `GREET_PROG` repeating for the same crowd. For
+deadlines in game time use `MPSETVAR $n X NOW` and `ELAPSED($<$n X> DAYS >= 3)`,
+or `TICKS(3 DAYS)` for tattoo durations; the `ISRL...` functions read the
+computer's clock and mean nothing in a paused or turn-based game.
+
+## Dialogue input
+
+`MPMENU` shows filtered numbered choices and later calls a `FUNCTION_PROG` with
+the selected key in `$0` and the answering character in `$n`. It does **not**
+block the rest of the initiating program, so dependent work goes in the answer
+function:
+
+```text
+SPEECH_PROG p gate
+mpmenu $n GUIDE "What would you like to know?" gate:"How do I open the gate?" ring:"I have a ring"[IF HAS($n ring)] bye:"Goodbye" bye
+~
+FUNCTION_PROG GUIDE
+switch $0
+case gate
+  mpechoat $n Pull the brass lever.
+case ring
+  mpechoat $n The guide examines it carefully.
+case bye
+  mpechoat $n The guide returns to the ledger.
+endswitch
+~
+```
+
+Pending menus save their displayed options and source binding; a restore
+reissues the prompt, and a changed or missing source cancels it with an
+explanation. New menu or narration input replaces another interaction on that
+input stream, so avoid overlapping prompts from several NPCs. `MPPROMPT`,
+`MPCONFIRM` and `MPCHOOSE` also exist and run their program on a separate
+thread while the player types. See the
+[dialogue recipe](cookbook.md#2-a-numbered-npc-conversation) and
+[chapter 6](06-npcs-dialogue.md) for TALK and topics.
+
+## Party and language awareness
+
+CoffeeSUD has one player controlling a *party* of characters. `$u` is the
+character at the terminal and `$n` is whoever caused the event, which may be a
+background party member. `ISPLAYED($n)` says whether a character is the one
+being played (or has a window of its own); `INPARTY($n)`, `PARTYSIZE($n)`,
+`PARTYLEADER($n)` and `$%PARTY($n)%` describe groups. A follower is not
+necessarily a playable character. With party windows off, `MPECHOAT`, `MPPROMPT`,
+`MPCONFIRM`, `MPCHOOSE` and `MPMENU` aimed at a background member go to the
+terminal with the member's name in front. Award quest and discovery credit
+through their sharing policies (a quest's `SET SHARED`) rather than an extra
+loop that pays each member again. See [chapter 31](31-saves-and-party.md).
+
+Unknown speech does not enter ordinary `SPEECH_PROG` or MudChat handling on a
+listener who does not understand it. `NOTUNDERSTOOD_PROG` provides a response;
+`UNDERSTANDS()` tests comprehension. `MPSAYIN` selects a language for one line
+and `MPLEARNLANG` teaches or adjusts proficiency ([chapter 11](11-presentation-language.md)).
+

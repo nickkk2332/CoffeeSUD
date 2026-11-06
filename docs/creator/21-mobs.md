@@ -517,3 +517,171 @@ innkeepers are not evil. To use another faction on a mob, add it in the
 Factions field with a value, or give the mob a script that sets it. Faction
 definitions live in `resources/factions/*.ini` and are covered in
 [09-society.md](09-society.md).
+
+## Abilities, behaviors, effects and scripts
+
+Four separate lists in the editor hold things a mob does. They are easy to
+confuse.
+
+| List | What it holds | Who uses it |
+| --- | --- | --- |
+| Abilities | Skills, spells, prayers, songs and other abilities the mob *knows* | The mob can invoke them; `CombatAbilities`-family behaviors choose when. |
+| Behaviors | Behavior objects (AI) with parameters | See [24-behaviors-and-masks.md](24-behaviors-and-masks.md). |
+| Effects | Properties and spell-like effects that are *always on* | See [23-properties-reference.md](23-properties-reference.md). |
+| Scripts | MOBPROG script objects attached to the mob | See [04-mobprog.md](04-mobprog.md). |
+
+### Abilities
+
+The prompt is "Enter an ability to add/remove (?)". Type an ability's ID to add
+it; type the ID again to remove it (this also removes the same effect if the
+ability put one on the mob). `?` lists abilities. To give arguments, add them in
+brackets at once: `Spell_Fireball(arg text)`; otherwise you are asked "Enter any
+arguments". An ability added in the editor has 75% proficiency. Abilities of the
+Archon domain can only be added by a sysop.
+
+Giving a mob abilities is not enough: it must also have a combat behavior
+(`CombatAbilities`, or one of its subclasses `Fighterness`, `Mageness`,
+`Clericness`, `Thiefness`, ...) to *use* them in a fight. A subclass already
+comes loaded with the abilities of its type; do not stack two of them. Put
+properties (`Prop_*`) in Effects, not in Abilities.
+
+### Behaviors
+
+Type a behavior's ID to add it; you are asked "Enter any behavior parameters
+(?)" and `?` there prints that behavior's help. Type the ID again to remove it.
+`?` at the main prompt lists behaviors, highlighting those that can improve this
+kind of host. A behavior can appear only once on a mob.
+
+A `Scriptable` behavior (MOBPROG) opens the multi-line text editor for its
+parameters. A script is either written inline or loaded from a file:
+
+```text
+LOAD=progs/museum-guide.script
+```
+
+Files named like this are looked up in `resources/progs/` (a world's own
+`world/resources/progs/` takes precedence). See
+[04-mobprog.md](04-mobprog.md) for the language.
+
+The most used behaviors on mobs, with the chapter that documents each:
+
+| Behavior | Gives the mob |
+| --- | --- |
+| `Mobile` | Random wandering. `min=10 max=20 chance=75 wander` moves between rooms; `leash=3` keeps it near home; `opendoors` opens doors. Mobs will not walk out of a room with a visible builder (CMDMOBS) in it. |
+| `Aggressive`, `MobileAggressive` | Attacks characters on sight (masks restrict whom). |
+| `CombatAbilities`, `Fighterness`, `Mageness`, `Clericness`, `Thiefness` | Use of known abilities in fights. |
+| `MudChat` | Chat from `resources/chat.dat` groups. See [06-npcs-dialogue.md](06-npcs-dialogue.md). |
+| `Guard`, `GoodGuardian`, `GateGuard`, `DoorwayGuardian`, `Sentry` | Defending others, doors and gates. |
+| `MOBTeacher`, `Hireling`, `Escortee`, `Patroller`, `Schedule` | Teaching, hire, escort, patrol, daily routine. See [06-npcs-dialogue.md](06-npcs-dialogue.md). |
+| `RandomMonsters`, `WaveSpawner`, `RandomEncounters` | Spawners (host is a room or area; see [Spawning](#spawning)). |
+
+All behaviors accept a `WHEN=` condition (see
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md)).
+
+### Effects
+
+Effects are permanent properties, such as `Prop_MobRank` or
+`Prop_Resistance`, or permanent spell effects such as `Spell_Levitate` (flying).
+The prompt is "Enter an effect to add, -ID to remove, =ID or its number to edit,
+?P for the properties that fit (?)":
+
+| Entry | Does |
+| --- | --- |
+| `ID` | Adds the effect and asks for its parameters (`?` shows its help; `NULL` empties them). |
+| `-ID` | Removes it. |
+| `=ID` or its list number | Edits its parameters in place, showing the current ones; ENTER keeps them. |
+| `?` | Lists all abilities; those that can affect this mob are marked. |
+| `?P` | Lists only properties and effects that fit this mob, each with a line of its help. |
+
+Typing an ID the mob already has offers `Prop_MultiEffects`, which can hold
+both copies; a second copy on its own would be ignored.
+
+Properties that matter on mobs include `Prop_MobRank`, `Prop_Essential`,
+`Prop_PartyScaler`, `Prop_Resistance`, `Prop_Adjuster`, `Prop_RejuvWhen`,
+`Prop_Trainer`, `Prop_QuestGiver`, `Prop_QuestMarker`, `Prop_NPCLines` and
+`Prop_Affinity`; all are in
+[23-properties-reference.md](23-properties-reference.md).
+
+### Scripts
+
+The Scripts line appears when the mob has script objects attached (for example
+by a quest). Enter a script's number to remove it. Author new scripts as a
+`Scriptable` behavior as above.
+
+## Money
+
+The Money field is the amount of base currency the mob carries (a "20" is 20
+gold in the default currency, whatever coins that is made of in the area's
+currency). Money Variation adds a random 0..N more to the *corpse* when the mob
+dies. A thief can take it first.
+
+Inside the file, coins are folded into `<MONEY>`; carried coin objects are not
+stored one by one. When you edit the Money field, loose coins in the inventory
+are first merged into it.
+
+Shopkeepers and bankers use their own currency setting; see
+[Shopkeepers](#shopkeepers-and-other-service-mobs) and
+[09-society.md](09-society.md).
+
+## Equipment and inventory
+
+Only a *generic* mob keeps equipment when the world is saved. (A standard mob
+such as `Skeleton` creates its gear in its constructor each time.) Any item,
+generic or not, can be carried or worn.
+
+To equip a mob in builder mode:
+
+1. Create or fetch the item, putting it in the mob's inventory with the `@`
+   form of `CREATE ITEM`:
+
+   ```text
+   CREATE ITEM Longsword@town guard
+   CREATE ITEM the iron breastplate@town guard
+   ```
+
+   or `GIVE` an item you carry to the mob.
+
+2. Make the mob wear or wield it with `DRESS` (a builder power; the target must
+   be a monster in the room):
+
+   ```text
+   DRESS guard longsword
+   ```
+
+   `DRESS [mob] [item]` takes the mob first and a *single word* for the item last.
+   The mob puts the item on in the first slot that fits, or holds it if nothing
+   fits.
+
+3. Save the room (`SAVE ROOM`, see [How mobs are saved](#how-mobs-are-saved)).
+
+Edit a carried item with `MODIFY ITEM sword@guard`. The item types and their
+fields are in [22-items.md](22-items.md).
+
+### Variable equipment (the item's Rejuv/Pct)
+
+An item in a mob's inventory has a Rejuv/Pct field with a different meaning
+from an item lying in a room. In a mob's pack:
+
+| Value | Meaning |
+| --- | --- |
+| `0` (or anything out of range) | Always there. |
+| `1` to `99` | N% chance, each time the mob is created or rejuvenates, that the item is *absent*. |
+| `-1` | Present only the first time (at boot or creation); gone after the mob rejuvenates. |
+
+If several items on the same mob have a value and share a wear location, exactly
+one of them is kept; the chance of being kept is weighted by the values.
+
+Edit it with `MODIFY ITEM sword@guard` and choose the Rejuv/Pct field.
+
+Cautions:
+
+- The variable-equipment rules do **not** run while a builder (a player with
+  `CMDMOBS`) stands in the room with the mob. If you finish editing and save
+  while a mob has variable gear, the gear stays as it is. Use `RESET ROOM`
+  before editing again so the mob regains items you want to edit.
+- Do not copy a mob's variable item into a room with its Rejuv/Pct set: in a
+  room, that field means something else (the ticks until the item reappears).
+
+For gear that depends on the story, consider scripts or a catalog item with
+auto-drop rules ([The mob catalog](#the-mob-catalog)); for loot tables see
+[12-generation.md](12-generation.md).

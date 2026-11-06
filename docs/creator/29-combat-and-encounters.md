@@ -877,7 +877,7 @@ lets `ONCE` and `COOLDOWN` entries come again.
 | --- | --- | --- |
 | `TABLE=name` | none | The table file to roll. |
 | `CHANCE=N%` | `10` | Chance per room entered. |
-| `COOLDOWN=N` or `N DAYS` | `0` | Rooms (or game days) that pass after one. |
+| `COOLDOWN=N` or `COOLDOWN=NDAYS` | `0` | Rooms (or, with `DAYS`/`D`, game days: `COOLDOWN=2DAYS`) that pass after one. |
 | `LOCALES="PLAINS,HILLS"` | any | The kinds of room it applies to. |
 | `TRIGGER="[zapper]"` | any | A mask on the one who came in. |
 | `MAXACTIVE=N` | `6` | Monsters of its encounters about at once. |
@@ -1424,3 +1424,407 @@ difficulty: run it as a mortal under `PLAYTEST`, not as an invulnerable archon.
 Area-wide invasions and raids are deferred (listed in `LATER.md`; status
 `deferred` in the feature audit). Use the existing primitives: `RandomMonsters` with
 `NEAR=PARTY`, wave rooms, scripts and quests.
+
+## Script hooks for encounters
+
+Encounter tools talk to MOBPROG and JavaScript. The full entries are in the
+reference chapters: [26-mobprog-triggers.md](26-mobprog-triggers.md),
+[27-mobprog-commands.md](27-mobprog-commands.md),
+[28-mobprog-functions.md](28-mobprog-functions.md) and
+[05-javascript.md](05-javascript.md).
+
+| Script element | Kind | Fired or used by | Reference |
+| --- | --- | --- | --- |
+| `COMBAT_PROG [START/END/FLEE/ANY]` | trigger | A monster's fight starting, ending or fleeing. | [COMBAT_PROG](26-mobprog-triggers.md#combat_prog) |
+| `PHASE_PROG N` | trigger | BossPhases entering phase N ([C3](#c3-boss-phases)). | [PHASE_PROG](26-mobprog-triggers.md#phase_prog) |
+| `SURRENDER_PROG` | trigger | Morale surrender; `$n` is the one it fought ([C2](#c2-morale)). | [SURRENDER_PROG](26-mobprog-triggers.md#surrender_prog) |
+| `YIELD_PROG`, `DEFEAT_PROG` | triggers | Prop_Essential yield / knockout; `$n` is the victor ([C17](#c17-essential-and-yielding-npcs)). | [YIELD_PROG](26-mobprog-triggers.md#yield_prog), [DEFEAT_PROG](26-mobprog-triggers.md#defeat_prog) |
+| `RESET_PROG` | trigger | EncounterReset ([C21](#c21-leash-and-encounter-reset)). | [RESET_PROG](26-mobprog-triggers.md#reset_prog) |
+| `WAVE_PROG N`, `ARENAWIN_PROG`, `ARENALOSE_PROG` | triggers | WaveSpawner ([C20](#c20-wave-and-arena-rooms)), on the room's scripts and its NPCs'. | [WAVE_PROG](26-mobprog-triggers.md#wave_prog) |
+| `AMBUSH_PROG SURPRISED/SPOTTED/AVOIDED` | trigger | Prop_Ambush ([C23](#c23-ambushes)). | [AMBUSH_PROG](26-mobprog-triggers.md#ambush_prog) |
+| `PARTYDEFEAT_PROG` | trigger | Whole party down or dead ([C8](#c8-downed-state-and-party-defeat)); takes the defeat from `PARTYDEFEAT`. | [PARTYDEFEAT_PROG](26-mobprog-triggers.md#partydefeat_prog) |
+| `FUNCTION_PROG name` | trigger | Called by BossPhases `CALL`, encounter-table `FUNC`, WaveSpawner `ONWIN=`. | [FUNCTION_PROG](26-mobprog-triggers.md#function_prog) |
+| `MPTELEGRAPH`, `MPALARM NAME=`, `MPALARMCANCEL` | commands | Wind-ups ([C5](#c5-telegraphed-attacks)). | [MPTELEGRAPH](27-mobprog-commands.md#mptelegraph) |
+| `MPTHREAT` | command | Raise, lower, set or multiply threat ([C18](#c18-threat)). | [MPTHREAT](27-mobprog-commands.md#mpthreat) |
+| `MPWAVE START/NEXT/STOP/RESET` | command | Drive a wave room. | [MPWAVE](27-mobprog-commands.md#mpwave) |
+| `MPSETRESPAWN` | command | Set or clear a respawn point ([C7](#c7-checkpoints)). | [MPSETRESPAWN](27-mobprog-commands.md#mpsetrespawn) |
+| `MPMLOAD ENCOUNTER` | command | Roll an encounter table ([C9](#c9-random-encounters-and-encounter-tables)). | [MPMLOAD](27-mobprog-commands.md#mpmload) |
+| `PHASE()`, `RANK()`, `THREAT()`, `TOPTHREAT()`, `WEAKEST()`, `OPPONENT()`, `RESPAWNROOM()`, `ALARM()`, `PARTYSIZE()` | functions and conditions | Read encounter state. | [28-mobprog-functions.md](28-mobprog-functions.md) |
+
+JavaScript has `cm.on('beforeDeath', fn)` (return false to keep the victim alive at
+1 hit point) and a `death` hook; see [05-javascript.md](05-javascript.md).
+
+A small script that reacts to a boss phase and a yield:
+
+```text
+PHASE_PROG 2
+  mpecho The crypt walls begin to bleed.
+  mpmload skeleton warrior
+~
+YIELD_PROG
+  say Enough! The key is yours.
+  mpoload the crypt key
+  mpgoto the void
+~
+```
+
+(MPGOTO and the like are standard script commands; the real names and arguments
+are in [27-mobprog-commands.md](27-mobprog-commands.md). Check each against it.)
+
+## Designing encounters
+
+Four patterns, each built from the tools above. Substitute your own room IDs and
+catalog names; build the mobs first (see [21-mobs.md](21-mobs.md)) and add
+them to the catalog if a tool refers to catalog names.
+
+Before any of these: give the mob real fighting numbers. Set a level and let the
+level formulas ([C14](#c14-npc-formulas)) fill attack, armor, damage and hit points,
+give it a weapon or natural attacks, and only then add behaviors.
+
+### A guard post
+
+Goal: guards who warn, call for help, hold a line, chase a little and break when
+their captain dies.
+
+Mob `a gate sergeant` (level 8):
+
+```text
+Behaviors:
+  Aggressive WARN="Halt! State your business.|Turn back, or I'll strike!" WARNTICKS=2 BACKOFF=true
+  Fighterness OFFENSIVE
+  TargetPriority PREFER=CASTER,LOWESTHP SWITCH=40
+  Pursue CHANCE=70 MAXROOMS=3 LEASH=4 GIVEUPMSG="<S-NAME> return(s) to the post."
+  Morale FLEEAT=25% ACTION=SURRENDER SURRENDERAT=15% SURRENDERMSG="Peace! I yield!"
+Effects:
+  Prop_MobRank RANK=ELITE
+```
+
+Mob `a gate guard` (level 5, three copies):
+
+```text
+Behaviors:
+  MOBHelper
+  Fighterness
+  Pursue CHANCE=60 MAXROOMS=2 LEASH=3
+  Morale BREAK=LEADERDEAD LEADER="+NAMES a gate sergeant" ACTION=FLEE RALLY=HOME REGROUP=10
+Effects:
+  Prop_MobRank RANK=NORMAL
+```
+
+How it plays: a visitor gets two warning lines, one per tick, before the attack.
+`BACKOFF=true` spares a visitor who sits down or holds no weapon. When a guard is hit,
+`MOBHelper` brings the others. A visitor who flees is chased up to three rooms (a
+leash of four rooms from the post), then they walk home. When the sergeant dies the
+guards break and flee to their start room, wait ten ticks, and come back together.
+
+Checks: `CONSIDER ALL` before fighting; fight at the party's level; flee past the
+leash; kill the sergeant first and again last; save and restore mid-fight.
+(`LEADER="+NAMES ..."` uses the zapper mask NAMES test; check it in
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md).)
+
+### An ambush on the road
+
+Goal: bandits that burst from the undergrowth on a forest road, unless the party
+spots them.
+
+Table `world/encounters/roadside.enc`:
+
+```text
+MOBS "a bandit*2d2" LEADER="a bandit captain" AMBUSH
+```
+
+Room property on the road room (or on several rooms with a shared
+`RandomEncounters`):
+
+```text
+Prop_Ambush  MOBS="encounter:roadside" CHANCE=60 DETECT=WIS+Thief_DetectTraps:14 SURPRISE=1 WAIT=2 RESET=400 MSG="Bandits burst from the undergrowth!" SPOTMSG="Sunlight glints on steel in the bushes."
+```
+
+A reaction script on the room, to give the spotted case a payoff:
+
+```text
+AMBUSH_PROG SPOTTED
+  mpecho A voice hisses: "Too late!"
+~
+AMBUSH_PROG AVOIDED
+  mpecho The bandits melt back into the trees.
+~
+```
+
+How it plays: when the party's leader enters, there is a 60% chance of the check.
+The party's best member rolls d20 plus a wisdom term plus the skill's
+proficiency/10 against 14. Failure: the bandits attack, the party is surprised for
+one round (cannot move, flee, strike or cast). Success: the party gets
+`SPOTMSG` and two ticks to strike first, or to walk away, which makes the bandits
+go. `RESET=400` lets it spring again after 400 ticks.
+
+Check: the party leader's level vs bandit numbers with `CONSIDER ALL` after the
+fight starts; a stunned or sleeping party; a hidden or invisible leader; re-entry.
+
+### A three-phase boss
+
+Goal: a lich with an opening, a summon phase, an immune desperation phase, and a
+clean reset if the party flees.
+
+Mob `Vorsh the Lich` (level 15, catalog name used by the room's spawn):
+
+```text
+Effects:
+  Prop_MobRank RANK=BOSS
+  Prop_PartyScaler BASE=3 HP=+20%/MEMBER DAMAGE=+8%/MEMBER ADDS="catalog:a bone minion/MEMBER-ABOVE-3"
+Behaviors:
+  Mageness OFFENSIVE +Spell_MagicMissile(EVERY=2) +Spell_Sleep(ONCE FIRST=3) OPENER=Spell_Blind
+  TargetPriority PREFER=HEALER,CASTER,LOWESTHP SWITCH=40 STICKY=4 TAUNTABLE
+  BossPhases ONENGAGE: SAY "You should have left."; AT=70%: SAY "Rise!", SUMMON a bone minion x2, ROOM EMOTE "Bones claw out of the floor."; AT=35%: SAY "Not yet!", HEAL 15%, IMMUNE 2, AFFECT Prop_AbilityImmunity "WEAPONS" 4; AT=ADDSDEAD: SAY "My servants!"; ONDEATH: ROOM EMOTE "The phylactery cracks."; RESET=LEASH
+  EncounterReset RADIUS=1 IDLE=5 HEAL=100 DESPAWNADDS=true
+```
+
+The lich's scripts:
+
+```text
+PHASE_PROG 3
+  mpecho Violet light flares around the lich.
+~
+```
+
+How it plays: phase 1 is a caster fight with a predictable `Spell_MagicMissile`
+every second round and a sleep on round three at the earliest. At 70% it says its
+line and raises two minions, which follow it and attack the party's foe; they are
+tagged `SUMMONED`. `PHASE_PROG 2` runs. At 35% it heals 15%, is immune to all damage for two ticks, and takes a
+weapon immunity for four, so the party must use spells, then phase 3 starts and
+`PHASE_PROG 3` runs. If all the summoned minions die, `AT=ADDSDEAD` fires once. If the
+party flees far enough (past `RADIUS=1` for `IDLE=5` ticks), `EncounterReset` heals
+the lich fully, brings it home, removes minions, and (since `RESET=LEASH`) rearms
+the phases; it is back at phase 1 on death too.
+
+Readability rules: every phase should have a visible line (SAY/EMOTE/ROOM EMOTE), one
+response the player can learn (here: kill the minions or burst through the
+immunity with spells), and a predictable reset policy. Add a telegraph (below) for the
+big hit. Remember `BossPhases` thresholds fire once per fight; do not use an unguarded
+`HITPRCNT` trigger to award a one-time reward each tick.
+
+Add a telegraphed nova:
+
+```text
+Prop_Telegraph NAME=NOVA TICKS=2 WARNING="<S-NAME> gathers a sphere of black fire!" INTERRUPT=STUN,DAMAGE>15% AVOID=LEAVE,COMMAND:duck
+```
+
+then trigger it from a phase with `CALL NOVA` and a `FUNCTION_PROG NOVA` in the
+lich's scripts that runs `MPTELEGRAPH 2 "..." MPDAMAGE $n 60 90 AVOID=COMMAND:duck`
+(see [C5](#c5-telegraphed-attacks)); use one mechanism, the property or the
+script command, not both, for the same attack.
+
+### A defense wave
+
+Goal: a gate room where the party must hold off three waves, win a trophy, and
+be knocked out rather than killed if beaten.
+
+Room `Gate Yard`:
+
+```text
+Behaviors:
+  WaveSpawner WAVE1="catalog:a raider*3" WAVE2="a raider*2+a raider archer*2" WAVE3="encounter:raid_boss" NEXT=CLEAR START=ENTER LOCKEXITS=true REWARD="a laurel" ONWIN=YARDWON ONLOSE=SPARRING:Barracks#1 RESETAFTER=300
+Effects:
+  Prop_PartyScaler BASE=3 HP=+15%/MEMBER
+```
+
+The yard's scripts:
+
+```text
+WAVE_PROG 2
+  mpecho A horn sounds. More raiders pour over the wall!
+~
+FUNCTION_PROG YARDWON
+  mpecho The raiders flee. The garrison cheers $n!
+~
+ARENALOSE_PROG
+  mpecho The captain drags you inside to recover.
+~
+```
+
+`world/encounters/raid_boss.enc` holds the final wave as a table roll:
+
+```text
+MOBS "a raider chief" LEADER="a raider chief" WEIGHT=1
+```
+
+How it plays: walking in starts wave 1 and locks the exits; the next wave comes
+when the last is dead; the third rolls the encounter table. A win unlocks the exits,
+gives the laurel to the winner, runs `YARDWON`, and re-arms after 300 ticks. If the
+party leaves or falls, what is left of the wave leaves, and `ONLOSE=SPARRING`
+makes the defeat non-lethal, waking the loser in `Barracks#1`.
+
+Checks: all `WAVEn` names exist in the catalog; an exit-locked room has a way out
+if the game is saved mid-wave and restored (the current wave is saved); a single
+party member vs a full party (`Prop_PartyScaler` on the room scales each NPC that
+fights the party); the room after the reset.
+
+### Tuning and balance
+
+Several layers multiply: the NPC formulas ([C14](#c14-npc-formulas)), the mob's
+rank ([C15](#c15-mob-ranks)), party scaling ([C6](#c6-party-scaling)), the
+difficulty preset ([C13](#c13-difficulty-presets)) and any `Prop_CombatAdjuster`
+or armor/absorb properties. Tune one layer at a time and record what you changed.
+
+1. Fix the mob's level and let the formulas set the baseline.
+2. Compare with `CONSIDER ALL` (it uses level and rank power, not the fine numbers).
+3. Fight it with `COMBATDEBUG ON <mob>` to see hit chances and damage per swing.
+4. Only then add a rank, scaler or difficulty change.
+
+An invulnerable archon gives misleading balance results. Use `PLAYTEST ON`, which
+suspends builder powers so aggressive mobs, followers, dopplegangers and spawns
+behave as for a player, and build a representative character with `TESTCHAR` /
+`KIT` ([13-testing-release.md](13-testing-release.md)); `PLAYTEST` does not
+rebuild a well-balanced level-1 character from your builder.
+
+## Debugging combat
+
+### COMBATDEBUG
+
+```text
+COMBATDEBUG ON ([target])
+COMBATDEBUG OFF ([target])
+COMBATDEBUG LOG [file]
+COMBATDEBUG LOG OFF
+```
+
+Available in builder mode, in a `DEV=1` game, or with the `CMDMOBS` security flag.
+Each attack by or on a watched character is explained on one line, prefixed
+`[dbg]`. With no target, every attack in the game is watched. `COMBATDEBUG` alone
+tells whether it is on and whom it watches. `LOG` also writes every line to a
+file you name.
+
+A line looks like this (adapted from the DT35 fixture `dt35-combat.js`):
+
+```text
+[dbg] a fixes goblin -> a fixes dummy: atk 58 vs ac -32, fudge -4, hit 50% roll 31 HIT; dmg 7 (TARGETED, from 5); FUDGE(-2 lvls) 6; damage 6 by a rusty sword; Prop_AbsorbDamage(50% +ALL) on a fixes dummy -> 3; deals 3
+```
+
+Read it left to right:
+
+| Piece | Meaning |
+| --- | --- |
+| `atk A vs ac B` | The adjusted attack and adjusted armor used in the hit roll. |
+| `fudge N` | The level-gap fudge added to the hit score (shown only when not 0). |
+| `hit P% roll R HIT/MISS` | The hit score after the 5 to 95 clamp, the d100 roll, and the outcome. |
+| `dmg N (TARGETED, from D)` | Damage after the targeted formula, starting from the damage stat D. |
+| `CRIT (P%) N` | A weapon critical happened, with its chance. |
+| `FUDGE(L lvls) N` | The level-difference fudge applied (L is attacker level minus target level). |
+| `damage N by X` | The damage message posted, and its source. |
+| `Prop_...(parms) on X -> N` | An effect or item that changed the damage and the new value (an absorb, a resistance, a ward). |
+| `stopped` | Something refused the damage. |
+| `deals N` | What was finally dealt. |
+
+Damage outside an attack (a spell's) gets a line of its own. A fight with nobody
+watched says nothing. The state is not saved.
+
+### Other tools
+
+| Tool | Use |
+| --- | --- |
+| `CONSIDER ALL` | The fight in one word, with ranks and party scaling ([C25](#c25-consider-for-the-whole-fight)). |
+| `STAT BEHAVIORS <mob>` | Each behavior of a mob with its parameters and its run state (phase, summons, rotation log, waves, timers), and tells keys it does not recognise. The first check for a typo. |
+| `TRACEB <mob> ([ticks])`, `TRACEB OFF` | Tells each decision of the host's timed behaviors for a while: when its time comes, whether it acts, could not act, or lost its chance roll. |
+| `PLAYTEST ON ([PARTY=name,name] [DIFFICULTY=preset] [KIT=name])`, `PLAYTEST OFF`, `PLAYTEST GAME`, `PLAYTEST RUN [file]` | Meet the world as a mortal; run `.play`, `.test` and JavaScript tests in disposable campaigns. A death takes you back to the room you began in. `BUILD [command]` runs one command with powers back. |
+| `TESTCHAR`, `KIT` | Make a representative character or give a kit. |
+| `ENCOUNTER ROLL <table>`, `ENCOUNTER CHECK ALL` | Roll a table where you stand; check every entry. |
+| `DIFFICULTY <name>` | Try the preset the player will use. |
+| `GOD` | In a DEV game or builder mode, single powers and cheats on and off, instead of `PLAYTEST`. |
+| `SCRIPTCHECK`, `SCRIPTPROF` | Syntax-check a script a hook relies on, profile slow triggers. |
+| `WORLD CHECK`, `WORLD CHECK ONLY=COMBAT` | World linting; `ONLY=COMBAT` checks profile stat properties of the optional [combat profiles](16-combat-profiles.md). |
+| `COMBATRESULT`, `WORLD COMBAT ...` | Only for the optional `combat.profiles` module; see [16-combat-profiles.md](16-combat-profiles.md). |
+
+The fixtures `tools/fixtures/fixes/c*-*.js` and `dt35-combat.js` are executable
+examples of each feature: they construct a mob or room, set the parameters shown
+in this chapter, tick the behavior and assert the result. Read the one for the
+feature you are debugging. See [13-testing-release.md](13-testing-release.md) for
+running them.
+
+Engine internals: the engine log has a `combat` writer used by `handleBeingDamaged`
+(`DAMG` records of attacker and target stats) when it is enabled in the logging
+configuration (see [18-installing-and-running.md](18-installing-and-running.md)).
+
+## Persistence notes
+
+- **World files** (areas, rooms, mobs, items) store behaviors and properties with
+  their parameter text, so `BossPhases`, `Morale`, `TargetPriority`, `Pursue`,
+  `Prop_MobRank`, `Prop_Essential`, `Prop_PartyScaler`, `Prop_DeathRules`,
+  `Prop_Checkpoint`, `Prop_Ambush`, `WaveSpawner` and `RandomEncounters` are saved
+  with the thing they sit on. Encounter tables are `world/encounters/*.enc`.
+  The ini keys (`DIFFICULTY_*`, `MOBRANK_*`, `FORMULA_*`, death keys) are in
+  `world.ini` for a world; see [world-settings.md](world-settings.md).
+- **Campaign saves** keep the run state of the fight machinery: boss phase and
+  rounds, engagement, immunity, summon bindings and combat targets; rotation round,
+  cooldowns and ONCE history, threat and scheduling; wave state; named alarms and
+  telegraphs; each character's checkpoint; the chosen difficulty; an ambush's
+  sprung state; Scene state. `Prop_Downed` is not saved (a saved character is not
+  down). See [state-and-persistence.md](state-and-persistence.md).
+- A **world reload** re-reads parameters but not necessarily fight state; a mob in a
+  fight at reload is a new object. Treat `RELOAD` as a fight reset.
+- **Rejuvenation** re-creates a dead mob from its world definition at its start
+  room, after the `FORMULA_NPCREJUV` time or its own rejuv setting.
+  `Prop_RejuvWhen` can hold it back. Spawners track their spawns; a despawn removes
+  them quietly.
+- **Difficulty** is part of the save; the ini value is only the starting choice.
+
+## Troubleshooting and gotchas
+
+- **A behavior seems to do nothing.** Run `STAT BEHAVIORS <mob>`: unknown parameter
+  keys are reported. Check the help `AHELP BEHAVIOR_<NAME>`. Quote values with
+  spaces. Remember `WHEN`, `TOD` and `HOURS` can switch a behavior off.
+- **Two presets on one mob.** Use exactly one of `CombatAbilities`, `Fighterness`,
+  `Thiefness`, `Mageness`, `Clericness`, `Druidness`, `Bardness`.
+- **A preset changed my mob's stats.** Presets rewrite stats to suit the class.
+  Add `NOSTATS` / `NOCOMBATSTAT` (as the help allows), and reset the room after
+  changing a preset.
+- **Support healer heals nobody.** `HEALAT` needs a target under the percentage; it
+  heals the most hurt first. The mask in `SUPPORT=MASK:` must fit the ally. NPC
+  healers act only when a character is in the room.
+- **A phase fires again after a reset.** `RESET=FULLHEAL` rearms when the boss is
+  whole and out of a fight. Use `LEAVECOMBAT`, `LEASH` or `NEVER` to choose.
+- **Adds never disappear.** `SUMMON` adds go when the phases rearm and with
+  `EncounterReset DESPAWNADDS=true` (NPCs with no home or tagged `SUMMONED`).
+  Adds made by other means need their own cleanup.
+- **A yielding mob keeps getting attacked.** `Prop_Essential` refuses attacks
+  only for `TICKS`; then it can be attacked again. A killing blow in
+  `MODE=YIELD` is not prevented; use `KNOCKOUT` when the mob must survive.
+- **DOWNED does nothing.** It is in `PLAYERDEATH` but the victim is not on the
+  player's side (no `playerStats` and no player group leader), or a
+  `Prop_DeathRules` in the room or area replaces `PLAYERDEATH`.
+- **The party wakes in an unexpected place.** `DEATH=CHECKPOINT` falls back to the
+  recall room. `Prop_DeathRules TO=` overrides death in its room or area.
+- **A save/damage seems 100% or 0%.** Spell saves are clamped to 5 to 95; weapon
+  and spell *damage* saves (the damage-reduction ones) are clamped to plus or
+  minus 100 and have no floor.
+- **Hit chance never reaches 0 or 100.** It is clamped to 5 to 95.
+- **Balance looks wrong as an archon.** Archon powers hide the fight. Use
+  `PLAYTEST`.
+- **Tough numbers stack.** Rank, scaler, difficulty and formulas multiply.
+  Change one at a time.
+- **Turn-based combat and CombatAbilities.** In `TURNBASED`, `CombatAbilities`
+  needs more than one attack and a normal weapon attack; test it.
+- **A telegraph never lands.** Stun, sleep, hold, bind, damage over the threshold
+  or leaving the room cancel it; so can `AVOID` for each foe. Check
+  `ALARM($i NAME)`.
+- **A wave room traps the party.** `LOCKEXITS=true` holds them until the end;
+  test a loss, a death and a save/restore, and keep an `ONLOSE` path.
+- **Catalog names.** Spawners, summons, waves, ambushes and encounter tables
+  refer to catalog names or mob classes. A misspelled name makes nothing appear
+  (use `ENCOUNTER CHECK ALL`).
+
+## See also
+
+- [06-npcs-dialogue.md](06-npcs-dialogue.md): NPC life, schedules, sentries, memory and dialogue.
+- [21-mobs.md](21-mobs.md): creating mobs, equipment, catalog, spawning and rejuvenation.
+- [22-items.md](22-items.md): weapons, armor, damage types and ranges.
+- [23-properties-reference.md](23-properties-reference.md) and [24-behaviors-and-masks.md](24-behaviors-and-masks.md): every property and behavior, and the zapper mask language.
+- [25-abilities-and-effects.md](25-abilities-and-effects.md): spells, skills, effects, `WINDUP` on generic abilities.
+- [04-mobprog.md](04-mobprog.md), [26-mobprog-triggers.md](26-mobprog-triggers.md), [27-mobprog-commands.md](27-mobprog-commands.md), [28-mobprog-functions.md](28-mobprog-functions.md): scripting encounters.
+- [05-javascript.md](05-javascript.md): JavaScript hooks such as `beforeDeath`.
+- [03-characters.md](03-characters.md): levels, experience, classes.
+- [31-saves-and-party.md](31-saves-and-party.md): party, formation, turns, save rules.
+- [13-testing-release.md](13-testing-release.md): PLAYTEST, TESTCHAR, fixtures.
+- [15-ability-composition.md](15-ability-composition.md) and [16-combat-profiles.md](16-combat-profiles.md): the optional composed-ability and combat-profile modules.
+- [19-configuration-and-administration.md](19-configuration-and-administration.md), [world-settings.md](world-settings.md): the ini and world.ini keys.
+- [32-engine-programming.md](32-engine-programming.md): CMMsg flow, ticks and how combat hooks into the engine.
+- [cookbook.md](cookbook.md): short recipes, including a boss phase, a surrender and an encounter table.

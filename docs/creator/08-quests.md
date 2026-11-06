@@ -560,7 +560,7 @@ Ways an offer reaches the player:
 
 | To ... | Do |
 | --- | --- |
-| Start a quest now | `MODIFY QUEST NAME START` (builder), or `MPSTARTQUEST NAME` in a script. Starting a running quest restarts it. |
+| Start a quest now | `MODIFY QUEST NAME START` (builder), or `MPSTARTQUEST NAME` in a script. `MPSTARTQUEST` on a running quest stops it and starts it again; `MODIFY QUEST ... START` refuses ("already running"). |
 | Stop a quest | `MODIFY QUEST NAME STOP`, `MPENDQUEST NAME`, `DESTROY QUEST NAME` (also removes it). A stop cleans up everything the quest loaded or gave and records an END event. |
 | Step it | `MPSTEPQUEST NAME` (next step), `MPSTEPQUEST NAME +N` (skip N steps), `MPSTEPQUEST NAME =N` (go to step N), `MPSTEPQUEST NAME =LABEL` (a named step, Q6). In tests: `MODIFY QUEST NAME STEP n-or-label`. `STEP AUTO` steps when the duration runs out. |
 | Pause a quest from starting | `MODIFY QUEST NAME DISABLE`; `ENABLE` undoes it. A disabled quest is not ticked. The flag is kept in the quest table. |
@@ -584,9 +584,10 @@ What ends a running quest:
 - `SET ENDONWIN TRUE` and a script calls `MPQUESTWIN` (Q1);
 - an object of the quest is destroyed in a way that resets the quest: a
   quest mob or item flagged with `QuestBound` is expired, its room is reset or
-  the game shuts down, or `GIVE STAT KEYPLAYER TRUE` mob dies. The quest is
-  restarted after a short pause. (`QuestBound` is the engine's own effect on every
-  quest object; see its [help](../../CoffeeMud/resources/help/arc_properties.ini).)
+  the game shuts down, or a `GIVE STAT KEYPLAYER TRUE` mob dies. The quest is
+  reset: stopped and started again later. (`QuestBound` is the engine's own
+  effect on every quest object; see `AHELP QUESTBOUND`. The pause before the
+  restart was not verified.)
 
 Events other scripts can hear are in [Quest scripting from MOBPROG](#quest-scripting-from-mobprog).
 
@@ -623,14 +624,14 @@ quest.
 
 | Function | Meaning |
 | --- | --- |
-| [QUESTSCRIPTED](28-mobprog-functions.md#questscripted)`($n quest)` | The character carries a tracking script of the quest (`*` for any quest). |
-| [QUESTWINNER](28-mobprog-functions.md#questwinner)`($n quest)` | The character has won the quest (`*` this quest; `previous` is used by the `normal_*` chain option). |
+| [QUESTSCRIPTED](28-mobprog-functions.md#questscripted)`($n quest)` | The character carries a tracking script of the quest (`*` is this script's quest). `QUESTSCRIPTED($n)` alone, as a value, lists the quests they are scripted for. |
+| [QUESTWINNER](28-mobprog-functions.md#questwinner)`($n quest)` | The character has won the quest (`*` is this script's quest). `QUESTWINNER($n)` alone, as a value, lists the quests they have won. |
 | [QUESTSTATUS](28-mobprog-functions.md#queststatus)`($n quest == STATUS)` | ACTIVE, WON, FAILED, ABANDONED, EXPIRED, or nothing (Q4). |
 | [QUESTOUTCOME](28-mobprog-functions.md#questoutcome)`($n quest == word)` | The outcome word from `MPQUESTWIN ... OUTCOME`, or the failure reason (Q4). |
 | [QUESTWINS](28-mobprog-functions.md#questwins)`($n quest >= n)` | How many times the character won (Q5). |
 | [QUESTWINAGE](28-mobprog-functions.md#questwinage)`($n quest > hours)` | Game hours since their last win, `-1` if never (Q5). |
 | [QOBJECTIVE](28-mobprog-functions.md#qobjective)`($n quest id == value)` | The objective's count, `DONE` or `FAILED` (Q3). |
-| [QVAR](28-mobprog-functions.md#qvar)`(quest NAME op value)` | A quest variable or setting: `STEPNAME`, `REMAINING`, `DURATION`, `FINISHED`, `INSTRUCTIONS`, `PROGRESS`, and any `MPQSET` variable. `$%QVAR(quest NAME)%` returns the value. |
+| [QVAR](28-mobprog-functions.md#qvar)`(quest NAME op value)` | A quest variable or setting: `STEPNAME`, `REMAINING`, `DURATION`, `FINISHED`, `INSTRUCTIONS`, and any `MPQSET` variable. `$%QVAR(quest NAME)%` returns the value. |
 | [QUESTMOB](28-mobprog-functions.md#questmob)`(name quest)` | The mob is one the quest designated. |
 | [QUESTROOM](28-mobprog-functions.md#questroom)`(roomid quest)` | The room is one the quest designated. |
 | [ISQUESTMOBALIVE](28-mobprog-functions.md#isquestmobalive)`(n quest)` | Quest mob number `n` is alive. Tracking scripts use it to end themselves when the giver dies. |
@@ -693,10 +694,10 @@ What QUESTCHECK checks (`core/QuestCheck.java`):
   the resources (a name containing `$` is skipped: it is a template variable);
 - each script given, inline or embedded, is run through `SCRIPTCHECK`.
 
-Known gaps (verified in the source): it does not list the W6/W23 settings
-(`SET WEEKDAY`, `EVERY`, `SEASONSTART`, `MOON`, `HOLIDAY`, `SCHEDULE`), `SET LORE`,
-`SET PRESERVE`'s siblings it was not told, `LOAD ENCOUNTER`, or `<JSQUEST>`
-blocks, and reports them as unknown. Treat those reports as noise and test
+Known gaps (verified in the source): its list of known words lacks the
+W6/W23 settings (`SET WEEKDAY`, `EVERY`, `SEASONSTART`, `MOON`, `HOLIDAY`,
+`SCHEDULE`), `SET LORE`, `LOAD ENCOUNTER` and `<JSQUEST>` blocks, so it reports
+them as unknown. Treat those reports as noise and test
 the quest by playing it. It does not check that a named mob, area or
 room exists, or that the quest can find objects to select.
 

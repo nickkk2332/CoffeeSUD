@@ -119,9 +119,12 @@ Spatial items (planets, stars, ships) accept a coordinate form,
 `CREATE ITEM [ID] @ [COORDS]/[DISTANCE] FROM [SPACE OBJ]`; see
 [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md).
 
-Short forms also work: `CREATE GenWeapon` (without `ITEM`) is rerouted to
-`CREATE ITEM GenWeapon` when the word is a template or the other CREATE words
-do not match.
+Short forms also work. `ITEM` may be left out when the word is not another
+kind of thing: `CREATE GenWeapon`, `CREATE Longsword`, `CREATE the Sunblade`
+(a catalog item) and a builder template ID are all rerouted to `CREATE ITEM`.
+A leading number repeats the command (`CREATE 3 Longsword` makes three) and a
+number before a material name makes raw resources: `CREATE 20 iron` drops 20
+iron resource items on the floor, rebundled into piles of up to 10.
 
 New items that suffer wear and tear (armor) start at 100 condition
 (`usesRemaining` = 100).
