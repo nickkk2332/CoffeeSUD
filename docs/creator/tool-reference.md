@@ -874,8 +874,11 @@ CoffeeSUD: put PARTY=true|LEADER|EACH, FARE=[price], PERHEAD=true, MASK="[passen
 DEST=ORDER|RANDOM, LOOK=true, DEPARTMSG="[text]" and ARRIVEMSG="[text]" before the first
 semicolon. PARTY shares a group countdown and prevents a follower departing alone. PERHEAD
 counts eligible characters; PARTY=LEADER charges the leader and EACH charges individual
-shares. All entry and payment checks complete before any passenger moves or pays. Countdown
-and ordered destination progress survive saves.
+shares. Without PARTY, a character goes with their followers. The move is forced, as a
+teleport, whatever the rooms would allow; ENTRY=CHECK checks every passenger's leaving and
+entering first, and moves none if any is refused. All payment (and, with ENTRY=CHECK, entry)
+ checks complete before any passenger moves or pays. Countdown and ordered destination
+progress survive saves.
 ```
 
 <a id="behavior-emoter"></a>

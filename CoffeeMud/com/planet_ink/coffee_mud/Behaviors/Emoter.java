@@ -453,7 +453,19 @@ public class Emoter extends ActiveTicker implements Ambience.Source
         for(final EmoteObj e:emotes)if(e.type==EMOTE_TYPE.EMOTE_SOUND&&eligible(room,viewer,viewer,e)){pool.add(e);total+=e.condition==null?1:e.condition.weight;}
         if(pool.isEmpty())return false;int roll=CMLib.dice().roll(1,total,0);EmoteObj picked=pool.get(0);
         for(final EmoteObj e:pool){roll-=e.condition==null?1:e.condition.weight;if(roll<=0){picked=e;break;}}
-        viewer.tell(StoryText.render(viewer,host,picked.msg));if(picked.condition!=null)Ambience.heard(picked.condition,viewer);return true;
+        // framed as the tick would show it: the creature's or thing's name first, or "something here" in a room
+        final String text=StoryText.render(viewer,host,picked.msg);
+        final boolean wrap=(host instanceof Room)?picked.broadcast:true;
+        final String str=wrap?("^E<S-NAME> "+text+" ^?"):text;
+        if(host instanceof MOB) viewer.tell((MOB)host,viewer,null,str);
+        else
+        {
+            final MOB emoter=CMClass.getFactoryMOB();
+            emoter.setName((host instanceof Room)?L("something here"):host.name());
+            viewer.tell(emoter,viewer,null,str);
+            emoter.destroy();
+        }
+        if(picked.condition!=null)Ambience.heard(picked.condition,viewer);return true;
     }
 
 	@Override

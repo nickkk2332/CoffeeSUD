@@ -136,7 +136,14 @@ public class DelayedTransporter extends ActiveTicker
 						else
 						{
 							final MOB leader=inhab;
-							final List<MOB> group=together?Travel.party(leader,room):new XVector<MOB>(leader.getGroupMembers(new HashSet<MOB>()));
+							// without PARTY: the character and those following them, as before; not the one they follow
+							final List<MOB> group=together?Travel.party(leader,room):new XVector<MOB>(leader);
+							if(!together)
+								for(int f=0;f<leader.numFollowers();f++)
+								{
+									final MOB follower=leader.fetchFollower(f);
+									if((follower!=null)&&(!group.contains(follower))) group.add(follower);
+								}
 							final String mask=Organizations.parameterMask(Travel.option(options,"MASK",""));
 							group.removeIf(m -> m.location()!=room||!CMLib.masking().maskCheck(mask,m,true));
 							final double fare=Math.max(0,CMParms.getParmDouble(options,"FARE",0));
@@ -148,7 +155,7 @@ public class DelayedTransporter extends ActiveTicker
 									final String depart=Travel.option(options,"DEPARTMSG","");
 									if(depart.length()>0) room.showHappens(CMMsg.MSG_OK_VISUAL,depart);
 									return true;
-								}))
+								},!Travel.option(options,"ENTRY","FORCE").equalsIgnoreCase("CHECK")))
 							{
 								final String arrive=Travel.option(options,"ARRIVEMSG","");
 								if(arrive.length()>0) otherRoom.showHappens(CMMsg.MSG_OK_VISUAL,arrive);

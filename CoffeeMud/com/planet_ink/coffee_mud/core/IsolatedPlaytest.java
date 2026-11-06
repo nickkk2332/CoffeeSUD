@@ -36,6 +36,7 @@ public final class IsolatedPlaytest
         {
             copyTree(WorldFiles.worldDir().toPath(),world.toPath());
             final WorldFiles.ExportPlan plan=WorldFiles.plan();
+            if(plan==null) throw new IOException("the world did not load whole, so a copy of it cannot be made; see WORLD STATUS");
             // Apply the preview to the copy, including live unsaved builder definitions.
             for(final Map.Entry<String,String> text:plan.texts.entrySet())
             {

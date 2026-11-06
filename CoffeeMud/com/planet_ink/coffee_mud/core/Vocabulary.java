@@ -16,17 +16,17 @@ import com.planet_ink.coffee_mud.Items.interfaces.*;
 public final class Vocabulary
 {
  private Vocabulary() {}
- public static synchronized void clear(){glossaryStamp=Long.MIN_VALUE;glossaryPath="";rules=Collections.emptyList();}
+ public static synchronized void clear(){glossaryChecked=Long.MIN_VALUE;glossaryStamp=Long.MIN_VALUE;glossaryPath="";rules=Collections.emptyList();}
  public static File file(final String name) {
   try {final File root=WorldFiles.worldDir().getCanonicalFile(),f=new File(root,name.replace('\\','/')).getCanonicalFile();return f.toPath().startsWith(root.toPath())?f:null;}
   catch(final IOException e){return null;}
  }
- public static String read(final String name) {final File f=file(name);if(f==null||!f.isFile())return "";try{return new String(Files.readAllBytes(f.toPath()),StandardCharsets.UTF_8);}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());return "";}}
+ public static String read(final String name) {final File f=file(name);if(f==null||!f.isFile())return "";try{final String text=new String(Files.readAllBytes(f.toPath()),StandardCharsets.UTF_8);return text.startsWith("\uFEFF")?text.substring(1):text;}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());return "";}}
  public static Properties properties(final String name) {
   final Properties p=new Properties();try{p.load(new StringReader(read(name)));}catch(final IOException|IllegalArgumentException e){Log.errOut("Vocabulary",e.getMessage());}return p;
  }
  public static boolean write(final String name,final String text) {
-  final File f=file(name);if(f==null)return false;try{Files.createDirectories(f.toPath().getParent());Files.write(f.toPath(),text.getBytes(StandardCharsets.UTF_8));return true;}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());return false;}
+  final File f=file(name);if(f==null)return false;try{Files.createDirectories(f.toPath().getParent());Files.write(f.toPath(),text.getBytes(StandardCharsets.UTF_8));glossaryChecked=Long.MIN_VALUE;return true;}catch(final IOException e){Log.errOut("Vocabulary",e.getMessage());return false;}
  }
  private static final ThreadLocal<MOB> combatant=new ThreadLocal<MOB>();
  public static String hit(final Weapon weapon,final MOB source,final int damage){final MOB old=combatant.get();combatant.set(source);try{return weapon.hitString(damage);}finally{if(old==null)combatant.remove();else combatant.set(old);}}
@@ -95,7 +95,10 @@ public final class Vocabulary
  }
  private static final class Rule {Pattern pattern;String replacement,scope;boolean fin,plural;List<String> except=new ArrayList<String>();}
  private static volatile long glossaryStamp=Long.MIN_VALUE;private static volatile String glossaryPath="";private static volatile List<Rule> rules=Collections.emptyList();
+ private static volatile long glossaryChecked=Long.MIN_VALUE;
  private static synchronized List<Rule> glossaryRules() {
+  // L() and every printed line come here: the file is looked at again at most once a second (write() and clear() at once)
+  final long now=System.currentTimeMillis();if(now-glossaryChecked>=0&&now-glossaryChecked<1000)return rules;glossaryChecked=now;
   final File f=file("vocab/glossary.ini");final long stamp=f==null||!f.isFile()?0:f.lastModified();final String path=f==null?"":f.getPath()+":"+f.length();if(stamp==glossaryStamp&&path.equals(glossaryPath))return rules;
   final List<Rule> next=new ArrayList<Rule>();String scope="ALL";List<String> exceptions=new ArrayList<String>();
   for(final String line:read("vocab/glossary.ini").split("\\r?\\n")){final String t=line.trim();if(t.isEmpty()||t.startsWith("#")||t.startsWith(";"))continue;if(t.toUpperCase().startsWith("NOT:")){exceptions=CMParms.parseCommas(t.substring(4),true);continue;}if(t.toUpperCase().startsWith("SCOPE=")){scope=t.substring(6).trim().toUpperCase();continue;}final int at=t.indexOf('=');if(at<1)continue;

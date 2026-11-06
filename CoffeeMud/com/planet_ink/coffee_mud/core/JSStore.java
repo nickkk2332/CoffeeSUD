@@ -104,11 +104,23 @@ public final class JSStore
 	{
 		final String legacy = legacyKey(holder);
 		if(has(key) || !has(legacy)) return;
-		final int[] matches = { 0 };
-		InstanceIds.visit(host -> { if((host instanceof MOB || host instanceof Item) && legacyKey(host).equals(legacy)) matches[0]++; });
-		if(matches[0] != 1)
+		if(!warnedLegacy.contains(legacy))
 		{
-			if(warnedLegacy.add(legacy))Log.warnOut("JSStore", "Ambiguous legacy store '" + legacy + "' retained under its explicit string key; assign its data to the intended instance with JS STATE.");
+			final int[] matches = { 0 };
+			InstanceIds.visit(host -> { if((host instanceof MOB || host instanceof Item) && legacyKey(host).equals(legacy)) matches[0]++; });
+			if(matches[0] != 1)
+			{
+				// known ambiguous from now on: no second search of the world for it
+				warnedLegacy.add(legacy);
+				Log.warnOut("JSStore", "Ambiguous legacy store '" + legacy + "' kept under its string key, and each of its instances starts from a copy of it; give each its own data with JS STATE.");
+			}
+		}
+		if(warnedLegacy.contains(legacy))
+		{
+			// several mobs or items of one name and place shared this store before stores were per instance:
+			// each starts from a copy of it (an authored world/js/state.json entry applies to them all, as it did)
+			final String json = saved.get(legacy);
+			if(json != null) saved.put(key, json);
 			return;
 		}
 		final Scriptable value = live.remove(legacy);

@@ -1677,7 +1677,7 @@ public final class WorldState
 			{
 				for(final XMLTag tag : partyTags)
 				{
-					final MOB M = Party.bringIn(mob, CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("NAME")), getRoom(tag.getValFromPieces("ROOM")));
+					final MOB M = Party.bringIn(mob, CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("NAME")), getRoom(tag.getValFromPieces("ROOM")), true);
 					if(M == null)
 						continue;
 					putBackPlayer(M, tag);

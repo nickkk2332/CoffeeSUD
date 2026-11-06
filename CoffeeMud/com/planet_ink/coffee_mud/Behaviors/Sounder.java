@@ -165,7 +165,7 @@ public class Sounder extends StdBehavior
                 for(final Room room:rooms)for(final Enumeration<MOB> it=room.inhabitants();it.hasMoreElements();){final MOB viewer=it.nextElement();if(!viewer.isPlayer()||!CMLib.flags().canHear(viewer))continue;
                     final Barks.Line chosen=Barks.pick(E,viewer,room);if(chosen==null)continue;
                     final String words=Barks.fill(chosen.text,viewer);
-                    if(origin instanceof MOB&&chosen.kind.equals("SAY"))viewer.tell((MOB)origin,viewer,null,"<S-NAME> say(s) '"+words+"'");else viewer.tell(StoryText.render(viewer,origin,words));
+                    tellOne(viewer,origin,chosen.kind,words);
                     if(chosen.condition!=null)Ambience.heard(chosen.condition,viewer);heard=true;
                 }
                 if(heard)barkedAt.put(event,Long.valueOf(barkTicks));
@@ -180,7 +180,7 @@ public class Sounder extends StdBehavior
 				barkedFor.add(once);
 			final String text=Barks.fill(L.text,about);
             if(L.condition!=null&&L.condition.once&&about!=null){
-                if(origin instanceof MOB&&L.kind.equals("SAY"))about.tell((MOB)origin,about,null,"<S-NAME> say(s) '"+text+"'");else about.tell(StoryText.render(about,origin,text));
+                tellOne(about,origin,L.kind,text);
                 return true;
             }
 			if(host instanceof MOB)
@@ -205,6 +205,40 @@ public class Sounder extends StdBehavior
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Tells one viewer a line as the room would show it to everyone: a sound in its colour, a mob's or a
+	 * thing's emote with its name first, and a mob's speech as speech.
+	 * @param viewer who hears it
+	 * @param origin the mob, item, room or area it comes from
+	 * @param kind the line's kind (SAY, SOUND, EMOTE...)
+	 * @param words the line
+	 */
+	protected void tellOne(final MOB viewer, final Environmental origin, final String kind, final String words)
+	{
+		String text=StoryText.render(viewer,origin,words);
+		if(kind.equals("SOUND")||kind.equals("NOISE"))
+		{
+			viewer.tell("^E"+text+"^?");
+			return;
+		}
+		if(origin instanceof MOB)
+		{
+			viewer.tell((MOB)origin,viewer,null,kind.equals("SAY")?("<S-NAME> say(s) '"+text+"'"):("<S-NAME> "+text));
+			return;
+		}
+		if(origin==null)
+		{
+			viewer.tell(text);
+			return;
+		}
+		text=CMStrings.replaceAll(CMStrings.replaceAll(text,"$p",origin.name()),"$P",origin.name());
+		final MOB emoter=CMClass.getMOB("StdMOB");
+		emoter.setName(origin.name());
+		emoter.charStats().setStat(CharStats.STAT_GENDER,'N');
+		viewer.tell(emoter,viewer,null,"<S-NAME> "+text);
+		emoter.destroy();
 	}
 
 	/** N22: the events the table hears in a message */

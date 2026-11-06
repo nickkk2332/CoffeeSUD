@@ -75,12 +75,15 @@ public final class StoryText
     public static String render(final MOB viewer, final Environmental host, final String text)
     {
         if(text==null||text.isEmpty()) return text==null?"":text;
+        // every tag (VARIES, CALL) starts with '<': text without one, most text, is shown as it is
+        if(text.indexOf('<')<0) return text;
         final Room room=host instanceof Room?(Room)host:CMLib.map().roomLocation(host);
         final Room at=room==null&&viewer!=null?viewer.location():room;
         return render(viewer,host,at==null?host instanceof Area?(Area)host:null:at.getArea(),at,text);
     }
     public static String render(final MOB viewer, final Environmental host, final Area area, final Room room, final String text)
     {
+        if((text!=null)&&(text.indexOf('<')<0)) return text;
         final boolean own=current.get()==null;
         if(own) current.set(new Frame());
         try
@@ -101,9 +104,11 @@ public final class StoryText
         finally { if(was==null) current.remove(); else current.set(was); }
     }
     public static boolean withinBudget() { final Frame frame=current.get();return frame==null||frame.calls==0||System.nanoTime()<=frame.deadline; }
+    private static final Pattern CALL_TAG=Pattern.compile("<CALL\\s+([^>]+)>",Pattern.CASE_INSENSITIVE);
     private static String calls(final MOB viewer, final Environmental host, final String text)
     {
-        final Matcher matcher=Pattern.compile("<CALL\\s+([^>]+)>",Pattern.CASE_INSENSITIVE).matcher(text);
+        if(text.indexOf('<')<0) return text;
+        final Matcher matcher=CALL_TAG.matcher(text);
         final StringBuffer out=new StringBuffer();
         while(matcher.find()) matcher.appendReplacement(out,Matcher.quoteReplacement(call(viewer,host,matcher.group(1))));
         matcher.appendTail(out); return out.toString();

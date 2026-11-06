@@ -417,15 +417,26 @@ public final class Travel
     public static boolean transfer(final MOB leader, final List<MOB> passengers, final Room to, final boolean look,
                                    final java.util.function.BooleanSupplier commit)
     {
+        return transfer(leader,passengers,to,look,commit,false);
+    }
+
+    /**
+     * Moves the passengers together, after the commit (a fare, say) agrees.
+     * @param force true to move them whatever the rooms and they would say (a teleport, as DelayedTransporter
+     *        always did); false to check each one's leaving and entering first, and move none if any is refused
+     */
+    public static boolean transfer(final MOB leader, final List<MOB> passengers, final Room to, final boolean look,
+                                   final java.util.function.BooleanSupplier commit, final boolean force)
+    {
         if(to==null||passengers.isEmpty()) return false;
         final List<CMMsg> messages=new ArrayList<CMMsg>();
         final List<CMMsg> leaves=new ArrayList<CMMsg>();
         for(final MOB M : passengers)
         {
             final CMMsg msg=CMClass.getMsg(M,to,null,CMMsg.MSG_ENTER,null);
-            if(!CMLib.flags().canAccess(M,to)||!M.okMessage(M,msg)||!to.okMessage(M,msg)) return false;
+            if((!force)&&(!CMLib.flags().canAccess(M,to)||!M.okMessage(M,msg)||!to.okMessage(M,msg))) return false;
             final CMMsg leave=CMClass.getMsg(M,M.location(),null,CMMsg.MSG_LEAVE,null);
-            if(M.location()!=null&&M.location()!=to&&!M.location().okMessage(M,leave)) return false;
+            if((!force)&&M.location()!=null&&M.location()!=to&&!M.location().okMessage(M,leave)) return false;
             leaves.add(leave);
             messages.add(msg);
         }

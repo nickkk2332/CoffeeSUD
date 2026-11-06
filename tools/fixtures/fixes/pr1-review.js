@@ -47,4 +47,80 @@ var hidden = C.detectedBy(low);
 C.setMiscText("LEVEL=50 HIDDEN SHOWN=true");
 check("shown curse seen by anyone", !hidden && C.detectedBy(low), hidden + " " + C.detectedBy(low));
 low.destroy();
+
+// a glossary file saved with a byte-order mark reads its first rule
+var hadG = V.file("vocab/glossary.ini").isFile(), oldG = hadG ? s(V.read("vocab/glossary.ini")) : "";
+try {
+	V.write("vocab/glossary.ini", "\uFEFFmana=aether\n");
+	check("glossary with BOM", s(V.glossary("mana", "ALL", false)) == "aether", s(V.glossary("mana", "ALL", false)));
+} finally {
+	if (hadG) V.write("vocab/glossary.ini", oldG); else V.file("vocab/glossary.ini")["delete"]();
+	V.clear();
+}
+
+// a saved threat reference to a mob no longer in the world is dropped, not searched for on every tick
+var CA = CMClass.getBehavior("CombatAbilities"), pending = field(CA, "pendingThreat");
+pending.put("instance:nosuch-fixthreat", java.lang.Integer.valueOf(5));
+for (var k = 0; k < 12; k++) callTyped(CA, null, "restoreThreat", [], []);
+check("stale threat dropped", pending.isEmpty(), pending);
+
+// several mobs of one name and place that shared a legacy JS store each start from a copy of it
+var JSS = java.lang.Class.forName("com.planet_ink.coffee_mud.core.JSStore"), savedF = JSS.getDeclaredField("saved");
+savedF.setAccessible(true);
+var stores = savedF.get(null), RR = scratchRoom();
+RR.setRoomID("FixStoreArea#1");
+var g1 = newMob("GenMob", RR), g2 = newMob("GenMob", RR);
+g1.setName("a fixstore guard"); g2.setName("a fixstore guard"); g1.setStartRoom(RR); g2.setStartRoom(RR);
+var legacy = "mob:" + CMLib.map().getExtendedRoomID(RR) + "/a fixstore guard";
+stores.put(legacy, '{"seen":1}');
+var k1 = s(CM.core.JSStore.keyOf(g1)), k2 = s(CM.core.JSStore.keyOf(g2));
+check("duplicate legacy store copied", k1 != k2 && s(stores.get(k1)) == '{"seen":1}' && s(stores.get(k2)) == '{"seen":1}' && stores.containsKey(legacy),
+	k1 + "=" + stores.get(k1) + " " + k2 + "=" + stores.get(k2));
+stores.remove(legacy); stores.remove(k1); stores.remove(k2); g1.destroy(); g2.destroy();
+
+// DelayedTransporter moves as a teleport does, unless ENTRY=CHECK asks the rooms first
+var from = scratchRoom(), to = CMClass.getLocale("StdRoom"), homeArea = M.location().getArea();
+to.setRoomID(homeArea.Name() + "#7701"); to.setArea(homeArea); to.setDisplayText("Fix portal end"); homeArea.addProperRoom(to);
+var req = CMClass.getAbility("Prop_ReqEntry"); req.setMiscText("-race +elf"); to.addNonUninvokableEffect(req);
+var walker = newMob("GenMob", from);
+function portalTo(entry) {
+	var P = CMClass.getBehavior("DelayedTransporter");
+	P.setParms("min=0 max=0 chance=100" + entry + ";" + CMLib.map().getExtendedRoomID(to));
+	return P;
+}
+var lookup = CMLib.map().getRoom(CMLib.map().getExtendedRoomID(to));
+if (lookup == to) {
+	var P1 = portalTo(" ENTRY=CHECK"); P1.tick(from, Tickable.TICKID_ROOM_BEHAVIOR); P1.tick(from, Tickable.TICKID_ROOM_BEHAVIOR);
+	var checked = walker.location() == from;
+	var P2 = portalTo(""); P2.tick(from, Tickable.TICKID_ROOM_BEHAVIOR); P2.tick(from, Tickable.TICKID_ROOM_BEHAVIOR);
+	check("portal forces, ENTRY=CHECK asks", checked && walker.location() == to, "checked " + checked + ", at " + walker.location());
+}
+else
+	check("portal forces, ENTRY=CHECK asks", false, "the test room is not found by its ID");
+walker.destroy(); homeArea.delProperRoom(to); to.destroy();
+
+// NPC organisations: a character may belong to several
+check("several NPC guilds", CMProps.getMaxClansThisCategory("NPCGUILD") == 10 && CMProps.getMaxClansThisCategory("SOMETHINGELSE") == 1,
+	CMProps.getMaxClansThisCategory("NPCGUILD") + " " + CMProps.getMaxClansThisCategory("SOMETHINGELSE"));
+
+// a line told to one listener alone keeps the framing the room would give it: the emoter's name, a sound's colour
+var LR = scratchRoom(), ear = newMob("GenMob", LR), ES = CMClass.getCommon("FakeSession");
+ES.initialize(null, "MEMORY"); ear.setSession(ES); ES.setMob(ear);
+var heardAt = 0;
+function heardText() { var x = s(field(ES, "bout").toString()), part = x.substring(heardAt); heardAt = x.length; return part; }
+var bell = newMob("GenMob", LR); bell.setName("a fixbell ringer");
+var EM = CMClass.getBehavior("Emoter"); EM.setParms("min=1000 max=1000;SOUND rings the bell slowly"); bell.addBehavior(EM);
+heardText();
+var listened = EM.listen(ear, bell), said = heardText();
+// (the test session prints <S-NAME> from its own character's view, so a name, not which, is checked here)
+function named(text, line) { var at = text.indexOf(line); return at > 0 && /\S/.test(text.substring(0, at)); }
+check("listen keeps the emoter's name", listened && named(said, "rings the bell slowly"), said);
+var SO = CMClass.getBehavior("Sounder");
+callTyped(SO, null, "tellOne", ["MOB", "Environmental", "String", "String"], [ear, bell, "EMOTE", "yawns widely"]);
+var emoted = heardText();
+callTyped(SO, null, "tellOne", ["MOB", "Environmental", "String", "String"], [ear, bell, "SOUND", "A bell tolls."]);
+var sounded = heardText();
+check("sounder per-viewer framing", named(emoted, "yawns widely") && sounded.indexOf("A bell tolls.") >= 0,
+	emoted + " | " + sounded);
+ear.setSession(null); bell.destroy(); ear.destroy();
 done();

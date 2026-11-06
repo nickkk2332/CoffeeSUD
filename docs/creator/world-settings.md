@@ -78,6 +78,7 @@ read the comments in [coffeemud.ini](../../CoffeeMud/coffeemud.ini), the
 - `CLANCOST`
 - `MINCLANMEMBERS`
 - `MAXCLANMEMBERS`
+- `MAXCLANCATS`
 - `DAYSCLANDEATH`
 - `DAYSCLANOVERTHROW`
 - `DISCOVERYXP`

@@ -55,7 +55,13 @@ public class PlaytestCmd extends StdCommand
 		final Ability P = mob.fetchEffect("Prop_Playtest");
 		final String what = (commands.size() > 1) ? commands.get(1).toUpperCase() : "";
 		if(what.equals("RUN")) { mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2))); return false; }
-		if(what.equals("GAME")) { mob.tell(IsolatedPlaytest.launch(mob)); return false; }
+		if(what.equals("GAME"))
+		{
+			// a reason it cannot start (no builder database, a refused script, a world not wholly loaded) is told, not shown as a game bug
+			try { mob.tell(IsolatedPlaytest.launch(mob)); }
+			catch(final java.io.IOException e) { mob.tell(L("PLAYTEST GAME could not start: @x1",""+e.getMessage())); }
+			return false;
+		}
 		final boolean on = what.equals("ON") || (what.length() == 0 && (P == null));
 		if((!what.equals("ON")) && (!what.equals("OFF")) && (what.length() > 0))
 		{

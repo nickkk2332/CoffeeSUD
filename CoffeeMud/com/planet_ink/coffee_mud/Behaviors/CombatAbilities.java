@@ -163,7 +163,7 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 	@Override
 	protected void setRunState(final String text)
 	{
-		lastUsedRound.clear(); rotationLog.clear(); pendingThreat.clear();
+		lastUsedRound.clear(); rotationLog.clear(); pendingThreat.clear(); threatTries = 0;
 		round = 0;
 		if(text == null || text.trim().isEmpty()) return;
 		final List<XMLLibrary.XMLTag> roots = CMLib.xml().parseAllXML(text);
@@ -182,8 +182,14 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 		}
 	}
 
+	/** ticks a saved threat reference has been looked for; after THREAT_TRIES the ones not found are dropped */
+	protected int threatTries = 0;
+	private static final int THREAT_TRIES = 10;
+
 	private void restoreThreat()
 	{
+		if(pendingThreat.isEmpty())
+			return;
 		for(final Iterator<Map.Entry<String,Integer>> entries = pendingThreat.entrySet().iterator(); entries.hasNext();)
 		{
 			final Map.Entry<String,Integer> entry = entries.next();
@@ -194,6 +200,9 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 				aggro.put((MOB)target, new int[]{ entry.getValue().intValue() }); entries.remove();
 			}
 		}
+		// a reference to a mob that is dead or gone is not kept for ever (each look is a search of the world)
+		if((!pendingThreat.isEmpty()) && (++threatTries >= THREAT_TRIES))
+			pendingThreat.clear();
 	}
 
 	@Override

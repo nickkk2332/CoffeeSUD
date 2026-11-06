@@ -838,7 +838,7 @@ public class DefaultFaction implements Faction, MsgListener
 		final List<Behavior> bV=new ArrayList<Behavior>();
 		String ID=null;
 		String[] stuff=null;
-		if(mob.isMonster())
+		if(mob.isMonster()&&!mob.isPlayer()) // a character loaded with no session yet is not an NPC
 		{
 			for(final Enumeration<String> e=affectsBehavs();e.hasMoreElements();)
 			{
@@ -862,7 +862,7 @@ public class DefaultFaction implements Faction, MsgListener
 				}
 			}
 		}
-		if(!mob.isMonster()&&!playerEffects.isEmpty())
+		if((mob.isPlayer()||!mob.isMonster())&&!playerEffects.isEmpty())
 		{
 			final Ability A=CMClass.getAbility("Prop_FactionEffects");
 			A.setMiscText(factionID());
@@ -2826,7 +2826,8 @@ public class DefaultFaction implements Faction, MsgListener
 				noListeners=false;
 				noTickers=false;
 				noStatAffectors=false;
-				lastUpdated=GameTime.now();
+				// the same clock as lastDataChange (when the faction's definition changed), which requiresUpdating compares
+				lastUpdated=System.currentTimeMillis();
 				myEffects=new Ability[0];
 				myBehaviors=new Behavior[0];
 				currentReactionSets = new PairVector<CompiledZMask,List<Faction.FReactionItem>>();

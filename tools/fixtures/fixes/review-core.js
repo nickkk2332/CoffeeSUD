@@ -26,7 +26,7 @@ try {
  var ref=str(II.reference(n2)),text=str(n2.text()),restored=CMClass.getMOB('GenMob');n2.destroy();restored.setMiscText(text);restored.bringToLife(r1,false);n2=restored;
  check('instance reference resolves restored copy',II.find(ref)==n2&&str(II.reference(n2))==ref,ref);
  var legacy='mob:'+r1.roomID()+'/'+n2.Name();JS.set(legacy,'{legacy:true}');keys.push(legacy);JS.remove(str(JS.keyOf(n2)));
- check('ambiguous legacy data is retained explicitly',typeof cm.store(n2).legacy=='undefined'&&JS.has(legacy),'legacy store silently assigned to duplicate');
+ check('ambiguous legacy data is copied to each duplicate and kept',cm.store(n2).legacy===true&&JS.has(legacy),'duplicate did not start from the shared legacy store, or it was moved');
  n2.setName('a unique migration review guard');legacy='mob:'+r1.roomID()+'/'+n2.Name();JS.set(legacy,'{legacy:true}');keys.push(legacy);
  check('unique legacy actor remains compatible',II.legacy(n1,n2.Name(),CM.MOBS.interfaces.MOB)==n2,'unique legacy binding lost');
  JS.remove(str(JS.keyOf(n2))); // remove the empty new store, then request an unambiguous old key

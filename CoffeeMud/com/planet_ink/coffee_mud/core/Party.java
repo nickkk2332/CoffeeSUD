@@ -758,11 +758,26 @@ public final class Party
 	 */
 	public static MOB bringIn(final MOB mob, final String name, final Room room)
 	{
+		return bringIn(mob, name, room, false);
+	}
+
+	/**
+	 * Brings one of the profile's resting characters into the world, as for bringIn, or back in as a save
+	 * had them.
+	 * @param mob the controlling character
+	 * @param name the character to bring in
+	 * @param room where they come in, or null for where they last were
+	 * @param restoring true when a restore brings back a character the save had in the world: the limit on
+	 *        active characters, which may have been lowered since, does not leave them out
+	 * @return the character, now in the world, or null if they could not come
+	 */
+	public static MOB bringIn(final MOB mob, final String name, final Room room, final boolean restoring)
+	{
 		final PlayerAccount acct = profileOf(mob);
 		final Session console = mob.session();
 		if((acct == null) || (console == null))
 			return null;
-		final String limit=WorldRules.activeRefusal(acct);
+		final String limit=restoring?null:WorldRules.activeRefusal(acct);
 		if(limit!=null) { mob.tell(limit); return null; }
 		final MOB M = CMLib.players().getLoadPlayer(name);
 		if((M == null) || (profileOf(M) != acct) || CMLib.flags().isInTheGame(M, true))
