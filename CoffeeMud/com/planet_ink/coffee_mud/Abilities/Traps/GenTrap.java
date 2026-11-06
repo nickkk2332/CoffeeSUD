@@ -204,6 +204,12 @@ public class GenTrap extends StdTrap implements VerbTaker
 	}
 
 	@Override
+	public boolean isABomb()
+	{
+		return ((Boolean)V(ID, V_BOMB)).booleanValue(); // D-AB-2: ISBOMB was stored and edited but never read
+	}
+
+	@Override
 	public String requiresToSet()
 	{
 		if(this.componentsRequirements.size()==0)

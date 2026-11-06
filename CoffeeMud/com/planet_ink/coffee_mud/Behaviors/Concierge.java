@@ -142,7 +142,7 @@ public class Concierge extends StdBehavior
 		NOCLIMB(TrackingFlag.NOCLIMB,null),
 		NOCRAWL(TrackingFlag.NOCRAWL,null),
 		NOWATER(TrackingFlag.NOWATER,null),
-		INDOOROK(TrackingFlag.OUTDOORONLY,null/*--TrackingFlag.OUTDOORONLY*/),
+		INDOOROK(null,null), // D-BM-3: lifts OUTDOORONLY (it mapped to it, so =true added it)
 		NOAIR(TrackingFlag.NOAIR,null),
 		NOLOCKS(TrackingFlag.UNLOCKEDONLY,null),
 		NOHOMES(TrackingFlag.NOHOMES,null),
@@ -376,6 +376,16 @@ public class Concierge extends StdBehavior
 					case PETS:
 					case CARGO:
 						continue; // read by the transport itself; not a destination
+					case INDOOROK:
+						// D-BM-3: INDOOROK=true allows indoor rooms, =false keeps to the outdoors
+						if(isTrue)
+						{
+							this.trackingFlags.remove(TrackingFlag.OUTDOORONLY);
+							this.roomRadiusFlags.remove(TrackingFlag.OUTDOORONLY);
+						}
+						else
+							this.trackingFlags.add(TrackingFlag.OUTDOORONLY);
+						continue;
 					default:
 						if(tw.tf != null)
 						{
