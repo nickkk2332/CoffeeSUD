@@ -127,6 +127,8 @@ public final class Vocabulary
  }
  public static String scopedOutput(final String text,final String scope){String out=glossary(text,scope,false);
   return scopedFinal(out,scope);}
+ /** As scopedOutput, for text whose lines have been through L() already, which gave them the ALL rules: only the scope's own. */
+ public static String scopedOnly(final String text,final String scope){return scopedFinal(applyGlossary(text,scope,false,true),scope);}
  private static String scopedFinal(final String text,final String scope){return applyGlossary(text,scope,true,true);}
  public static String caseLike(final String source,final String target){if(source.equals(source.toUpperCase()))return target.toUpperCase();if(!source.isEmpty()&&Character.isUpperCase(source.charAt(0))){if(source.matches("(?:[A-Z][a-z]*(?:\\s+|$))+")){final StringBuilder out=new StringBuilder();boolean upper=true;for(final char c:target.toCharArray()){out.append(upper?Character.toUpperCase(c):c);upper=Character.isWhitespace(c);}return out.toString();}return target.isEmpty()?target:Character.toUpperCase(target.charAt(0))+target.substring(1);}return target;}
 }

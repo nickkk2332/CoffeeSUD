@@ -18878,7 +18878,9 @@ public class DefaultScriptingEngine implements ScriptingEngine
 					&&(!msg.amISource(monster))
 					&&(!msg.othersMajor(CMMsg.MASK_CHANNEL))
                     &&((msg.othersMessage()!=null)||(msg.target()==monster&&msg.targetMessage()!=null))
-                    &&(!(affecting instanceof MOB)||(msg.sourceMinor()==CMMsg.TYP_SPEAK&&Languages.understoodSpeech(monster,msg)))
+                    // a creature hears what it understands; a room or item, as before languages, no foreign speech at all
+                    &&((affecting instanceof MOB)?(msg.sourceMinor()==CMMsg.TYP_SPEAK&&Languages.understoodSpeech(monster,msg))
+                        :(!(msg.tool() instanceof Ability)||((((Ability)msg.tool()).classificationCode()&Ability.ALL_ACODES)!=Ability.ACODE_LANGUAGE)))
 					&&((!(affecting instanceof MOB)) || isFreeToBeTriggered(monster)))
 					{
 						if(t==null)

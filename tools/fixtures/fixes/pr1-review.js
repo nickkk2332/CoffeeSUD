@@ -51,8 +51,10 @@ low.destroy();
 // a glossary file saved with a byte-order mark reads its first rule
 var hadG = V.file("vocab/glossary.ini").isFile(), oldG = hadG ? s(V.read("vocab/glossary.ini")) : "";
 try {
-	V.write("vocab/glossary.ini", "\uFEFFmana=aether\n");
+	V.write("vocab/glossary.ini", "\uFEFFmana=aether\nsword=short sword\n");
 	check("glossary with BOM", s(V.glossary("mana", "ALL", false)) == "aether", s(V.glossary("mana", "ALL", false)));
+	// SCORE's lines have had the ALL rules from L() already: SCORE adds only its own scope's
+	check("score glossary once", s(V.scopedOnly("a short sword", "SCORE")) == "a short sword", s(V.scopedOnly("a short sword", "SCORE")));
 } finally {
 	if (hadG) V.write("vocab/glossary.ini", oldG); else V.file("vocab/glossary.ini")["delete"]();
 	V.clear();
@@ -123,4 +125,16 @@ var sounded = heardText();
 check("sounder per-viewer framing", named(emoted, "yawns widely") && sounded.indexOf("A bell tolls.") >= 0,
 	emoted + " | " + sounded);
 ear.setSession(null); bell.destroy(); ear.destroy();
+
+// a room's SPEECH_PROG hears no foreign speech (a creature's hears what it understands)
+var SR = scratchRoom(), talker = newMob("GenMob", SR), RS = scriptOn(SR, "SPEECH_PROG hello\nmpsetvar FIXTEST FIXPRROOM yes\n~\n");
+function roomHears(tool) {
+	clearVar("FIXPRROOM");
+	var msg = CMClass.getMsg(talker, null, tool, CMMsg.MSG_SPEAK, "<S-NAME> say(s) 'hello there'");
+	RS.executeMsg(SR, msg); runQueued(RS);
+	return gvar("FIXPRROOM") == "yes";
+}
+var commonHeard = roomHears(null), elvishHeard = roomHears(CMClass.getAbility("Elvish"));
+check("room speech_prog ignores foreign speech", commonHeard && !elvishHeard, "common " + commonHeard + ", elvish " + elvishHeard);
+talker.destroy();
 done();

@@ -267,7 +267,7 @@ public class Score extends Affect
 				msg.append("\n\r");
 			}
 			if(arg == ScoreArgs.INFO)
-				return new StringBuilder(Vocabulary.scopedOutput(msg.toString(),"SCORE"));
+				return new StringBuilder(Vocabulary.scopedOnly(msg.toString(),"SCORE"));
 		}
 		if((arg == null)||(arg == ScoreArgs.BASE)||(arg == ScoreArgs.STATS))
 		{
@@ -279,7 +279,7 @@ public class Score extends Affect
 				msg.append(getStats(mob,prowessCode,arg));
 			}
 			if(arg == ScoreArgs.STATS)
-				return new StringBuilder(Vocabulary.scopedOutput(msg.toString(),"SCORE"));
+				return new StringBuilder(Vocabulary.scopedOnly(msg.toString(),"SCORE"));
 		}
 		if((arg == null)||(arg == ScoreArgs.BASE)||(arg == ScoreArgs.DETAILS))
 		{
@@ -364,14 +364,14 @@ public class Score extends Affect
 
 			msg.append(getMOBState(mob));
 			if(arg == ScoreArgs.DETAILS)
-				return new StringBuilder(Vocabulary.scopedOutput(msg.toString(),"SCORE"));
+				return new StringBuilder(Vocabulary.scopedOnly(msg.toString(),"SCORE"));
 		}
 		if((arg == null)||(arg == ScoreArgs.BASE)||(arg == ScoreArgs.AFFECTS)||(arg == ScoreArgs.EFFECTS))
 		{
 			msg.append(getAffects(mob.session(),mob,false,false,null,-1));
 		}
 		if(arg==null) msg.append(Presentation.score(mob));
-		return new StringBuilder(Vocabulary.scopedOutput(msg.toString(),"SCORE"));
+		return new StringBuilder(Vocabulary.scopedOnly(msg.toString(),"SCORE"));
 	}
 
 	@Override
