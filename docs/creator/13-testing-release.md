@@ -167,7 +167,7 @@ Every tool in this chapter, with the command's access words, who may run it
 | Input recorder | `RECORD INPUT`, `RECORD MARK` | Builder/DEV | [RECORD INPUT](#record-input) |
 | Notes | `NOTE`, `NOTES` | Everyone (NOTES GOTO: Builder/DEV) | [NOTE and NOTES](#note-and-notes) |
 | Dev areas | `WORLD DEV` | as WORLD | [World dev areas](#world-dev-areas) |
-| Vessels, instances | `VESSEL STATUS`, `LIST SHIPS/INSTANCES/UNSAVED` | Builder/DEV or CMDAREAS | [VESSEL STATUS and LIST INSTANCES](#vessel-status-and-list-instances) |
+| Vessels, instances | `VESSEL STATUS`, `LIST SHIPS/INSTANCES/UNSAVED` | Builder/DEV or CMDAREAS (LIST: LISTADMIN or CMDAREAS) | [VESSEL STATUS and LIST INSTANCES](#vessel-status-and-list-instances) |
 | Combat explainer | `COMBATDEBUG` | Builder/DEV or CMDMOBS | [COMBATDEBUG](#combatdebug) |
 | Combat results | `COMBATRESULT` | Anyone (needs the combat.profiles module) | [COMBATRESULT](#combatresult) |
 | Progression | `PROGRESSION` | Builder/DEV or CMDCLASSES | [PROGRESSION](#progression) |
@@ -253,8 +253,9 @@ WORLD CHECK (AREA [NAME]) (LOG) (ONLY=[PART],[PART]...)
 
 Access: builder mode, a DEV=1 game or CMDROOMS. With no filter it runs every
 part over the whole world. `AREA [NAME]` limits the room-based parts to one
-area (with `AREA` and no name, your own area); `LOG` also writes the report to
-the log; `ONLY=` takes one or more part names separated by commas.
+area (with `AREA` and no name, your own area; `AREA` takes the next word as
+the area's name, so write `LOG` and `ONLY=` before it); `LOG` also writes the
+report to the log; `ONLY=` takes one or more part names separated by commas.
 
 Output is a count line, then an `Errors:` block, then a `Warnings:` block,
 each finding as `[part] where: what`:
@@ -291,7 +292,8 @@ The parts, as `ONLY=` names them:
 | `COMBAT` | Combat profile libraries, the selection, and loaded stat properties | error |
 | `ITEMMODS` | Item modifier libraries and tracked items | error when the world opts in to item modifiers, otherwise warning |
 
-An unknown name in `ONLY=` is refused and the valid names are listed.
+`DATA` and `JS` run only on a whole-world check, not with `AREA`. An unknown
+name in `ONLY=` is refused and the valid names are listed.
 `WORLD CHECK ONLY=VOCAB,LORE,TEMPLATES,ROUTES,IDS` targets the newer asset
 domains. Dedicated property checks can append schemas for their current
 options. Source:
@@ -917,9 +919,10 @@ area, the ini, or a running quest), then each step of the sum: base price, the
 prejudice rule that matched, each price mask that matched, charisma against the
 keeper's wisdom, sales tax, the fall for what is in stock, and the rounding to
 coins; last both prices, the budget left and when the stock is next put back.
-Without `SELL` it is what the shop asks; with `SELL` what it pays. The item is
-looked for in the shop's stock, then the character's and your own inventory,
-then the room. With no `AT`, the first shopkeeper here that is not a player;
+Without `SELL` it is what the shop asks; with `SELL` what it pays. Without `SELL` the
+item is looked for in the shop's stock, then the character's and your own
+inventory, then the room; with `SELL` (which must be the last word) the
+character's inventory comes first and the shop's stock after it. With no `AT`, the first shopkeeper here that is not a player;
 with no `FOR`, yourself. Access: builder mode, DEV=1, CMDAREAS or CMDMOBS.
 
 ### TIMESCALE
@@ -1029,7 +1032,9 @@ LIST INSTANCES
 LIST UNSAVED
 ```
 
-Access: builder mode, DEV=1 or CMDAREAS. `VESSEL STATUS` shows a vessel as it
+Access: builder mode, DEV=1 or CMDAREAS for `VESSEL`; the `LIST` forms
+need LISTADMIN or CMDAREAS (`LIST UNSAVED`: LISTADMIN or CMDROOMS), and
+LISTADMIN is in the DEV group. `VESSEL STATUS` shows a vessel as it
 is: where it is and where it is docked, the way it faces, its anchor, course,
 top speed and pace, hull, owner and home port, the behaviors on it, its decks
 and those aboard with their state, and its crew and passengers. `LIST SHIPS`
@@ -1259,7 +1264,8 @@ There are three kinds of file, all in `world/tests`:
 
 ### Running tests
 
-In the game (builder mode or DEV=1):
+In the game (`WORLD TEST` in builder mode or a DEV=1 game; `PLAYTEST RUN`,
+being part of PLAYTEST, in builder mode only):
 
 ```text
 PLAYTEST RUN start.play
@@ -1880,7 +1886,8 @@ if play wrote to the world files. `KEEP=1` keeps the scratch folder.
 `tools/storage-tests.sh` compiles and runs `tools/SaveStorageTest.java`, an
 isolated filesystem and process test of the save store (generations,
 completeness hashes, recovery, locks) that never reads a real campaign save
-folder and boots no engine.
+folder and boots no engine. `tools/check.sh` does not run it; run it yourself
+after changing the save store.
 
 ### The Java rule suites
 

@@ -974,11 +974,14 @@ CMDFAIL_PROG command [ALL | P phrase | word word ...]
 Example:
 
 ```text
-CMDFAIL_PROG PRAY ALTAR
+CMDFAIL_PROG VENERATE ALTAR
 mpecho $n kneels before the altar and prays.
 return cancel
 ~
 ```
+
+Choose a verb that is not already a command, skill or social: PRAY is a social, so a
+line starting with it never fails and the trigger would not fire.
 
 **Notes.** `RETURN CANCEL` keeps the failure message back. It is the only trigger of this kind that can cancel; most others run after the deed. The engine does not check that the message is the Huh message, only that its text starts with the word. Fixtures: `sc9-fixes.js`.
 

@@ -2014,7 +2014,7 @@ For readers who know `guides/RandomAreas.html`:
 - [29-combat-and-encounters.md](29-combat-and-encounters.md): random encounters.
 - [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md), [31-saves-and-party.md](31-saves-and-party.md): instances and saves.
 - [02-world-workflow.md](02-world-workflow.md), [13-testing-release.md](13-testing-release.md): files, `WORLD CHECK`, testing.
-- Reference: [tool reference](tool-reference.md), [feature index (G)](feature-index.md#g),
+- Reference: [tool reference](tool-reference.md), [feature index (G)](feature-index.md#g-generation),
   [state and persistence](state-and-persistence.md), the inherited
   [RandomAreas guide](../../CoffeeMud/guides/RandomAreas.html), and the fixtures
   `tools/fixtures/fixes/g1-seeds.js` ... `g17-js.js`, `dt14-generatecheck.js`.

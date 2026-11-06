@@ -479,9 +479,9 @@ a container, and every rideable is a container.
 | `GenRuinedItem` | `GenItem` | The shell of an item that wore out or was ruined; cannot be worn or wielded |
 | `GenAmmunition` | `StdItem` | A stack of ammunition (arrows, bolts). Its *readable text* is the ammunition type, and *Uses Remaining* is the count. Weapons that require ammunition match this type |
 | `GenCaged` | `GenItem` | A caged creature: a mob frozen into an item (a pet in a cage), which is released as a mob |
-| `GenPackagedItems`, `GenPackagedStack`, `GenPackagedVariety` | `GenItem` | Package items made by the `PACKAGE` command; hold copies of one or several kinds of item. Field: *Number of items in the package* |
+| `GenPackagedItems`, `GenPackagedStack`, `GenPackagedVariety` | `GenItem` (the stack and variety classes extend `GenPackagedItems`) | Package items made by the `PACKAGE` command; hold copies of one or several kinds of item. Field: *Number of items in the package* |
 | `GenPerfume` | `StdPerfume` | A perfume bottle (a drink container); adds *Smells list* |
-| `GenCigar`, `GenPipe` | `StdSmokable` | Smokeable items; wearing in the mouth lights them. Adds a burn duration (default 200) |
+| `GenCigar`, `GenPipe` | `StdSmokable` (`GenPipe` extends `GenCigar`) | Smokeable items; wearing in the mouth lights them. Adds a burn duration (default 200) |
 | `GenLimb` | `StdLimb` | A false limb; field *Race ID* (the race whose limb it replaces) |
 | `GenGrapples` | `StdGrapples` | A set of ship grapples that can be thrown to lash vessels together |
 | `GenTitle` | `StdTitle` | A land title: *Owner*, *Price* and *Land plot ID* (a room) |
@@ -1706,7 +1706,7 @@ Source help: `AHELP CATALOG`.
 
 | Command | Does |
 | --- | --- |
-| `CATALOG [name]` | Catalogs the item or mob found in your room or inventory by that name (`SELF` or `ME` for yourself). A new entry goes into your current category. If an entry of that name exists, you are shown the differences and asked to confirm updating it |
+| `CATALOG [name]` | Catalogs the mob or item found in your room by that name (mobs are searched before items on the floor; items in your inventory are not found, so drop the item first; `SELF` or `ME` for yourself). A new entry goes into your current category. If an entry of that name exists, you are shown the differences and asked to confirm updating it |
 | `CATALOG LIST` | Lists the catalog: mobs, then items. Columns are Name, the number of copies in the game (`#`), the auto-spawn kind (first letter, or `N/A`), the rate and the mask |
 | `CATALOG LIST MOBS [mask]`, `CATALOG LIST ITEMS [mask]` | Lists one kind, filtered by name |
 | `CATALOG LIST CATEGORIES` | Lists the category names |
@@ -1720,7 +1720,7 @@ Source help: `AHELP CATALOG`.
 
 `MOBS` and `ITEMS` may be shortened (`M`, `IT`). When omitted, both kinds are used.
 
-Coins are never cataloged.
+Coins are skipped by the `CATALOG ROOM|AREA|WORLD` forms.
 
 ### CATALOG EDIT: spawn rules for items
 
@@ -1743,8 +1743,10 @@ Coins are never cataloged.
    `10%`). If the kind is N, only the cap is asked (0 for no cap).
 4. For CONTAINER: `Roll on O)pening, T)imer, or B)oth`, then the container mask.
    For ROOM: a room mask. For LIVE or DROP: a mob mask. `?` at a mask prompt
-   prints the zapper mask help; `NULL` or empty clears the mask (for a
-   container rule, no mask means any container).
+   prints the zapper mask help. Enter alone keeps the current mask; `NULL`
+   clears it. For a container rule an empty mask means any container; for a
+   LIVE, DROP or ROOM rule, clearing the mask also sets the rate to 0
+   ("Mask removed.").
 5. If the cap is above 0: `Unique: T)at a time, O)nce ever, W)once for a while`.
    For W: `Game days before a lost one may appear again`.
 6. The extra rules: each existing rule is offered for change (`Rule 1 (text),

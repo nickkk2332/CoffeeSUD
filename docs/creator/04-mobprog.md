@@ -817,7 +817,7 @@ the commonest source of a "nothing happens" bug:
 | --- | --- | --- | --- |
 | **Script commands** | the first word of a body line | `mpecho The gate opens.` | `MP...` words and control words. Their own argument rules (target, quoted names, rest of line). Reference: [chapter 27](27-mobprog-commands.md). |
 | **Game commands** | any body line whose first word is not a script word | `say Hello`, `give sword $n`, `open north` | Run by `$i` (the mob, or the stand-in) as an ordinary command, with the "mob was forced" flag. Permission and skill checks of a real command apply (a bound mob cannot `give`). Not run if the first word is an `MP` word that is unknown. |
-| **Functions** | inside `IF`/`WHILE`/`MPWAIT UNTIL` parentheses, and as `$%FUNC()%` in text | `hastattoo($n KEY)`, `var($n X >= 3)`, `$%level($n)%` | Condition form returns true/false and takes the comparison inside the parentheses; value form returns text. Reference: [chapter 28](28-mobprog-functions.md). |
+| **Functions** | inside `IF`/`WHILE`/`MPWAIT UNTIL` parentheses, and as `$%FUNC()%` in text | `hastattoo($n KEY)`, `var($n X >= 3)`, `$%level($n)%` | Condition form returns true/false and takes the comparison inside the parentheses; value form returns text. In MOBPROG the function name is the same in both forms; only `JS$` and `UNDERSTANDS$` have a `$` spelling, and only in the value form. Reference: [chapter 28](28-mobprog-functions.md). |
 | **Masks** | trigger parameters of a few triggers (`GREET_PROG`, `ARRIVE_PROG`...), and arguments of commands that take masks | `-RACE +Elf` | The zapper mask language shared by behaviors and properties ([chapter 24](24-behaviors-and-masks.md)). A mask replaces the percent chance. |
 
 A few rules that follow:

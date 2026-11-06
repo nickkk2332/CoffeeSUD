@@ -1703,7 +1703,7 @@ CREATE ABILITY Spell_Emberward
 | Can Affect / Can Target | `MOBS` / `MOBS` |
 | Quality Code | `BENEFICIAL_OTHERS` |
 | Duration Override | `120` |
-| Affect Adjustments | `savefir+30 saveacid+15` |
+| Affect Adjustments | `savefir+30 saveaci+15` |
 | Auto-Cast Message | `^S<T-NAME> <T-IS-ARE> wreathed in a faint, warm glow.^?` |
 | Uninvoke Message | `The warm glow around you fades.` |
 
