@@ -6070,8 +6070,9 @@ POOL shows affix IDs, ranges and eligibility reasons. ITEMMODS numbers current m
 PREVIEW checks without spending or rolling. PREPARE records one request, also without
 spending or drawing outcomes. COMMIT rechecks custody, station, item/material state and
 version pins, then settles costs, rolls and a saved receipt once. Repeating a settled
-request cannot apply it again. CANCEL discards a pending request freely. Quote multiword
-item names.
+request cannot apply it again. CANCEL discards a pending request freely, also while the
+campaign has crafting switched off; COMMIT or RECEIPT of the last cancelled request says it
+was cancelled. Quote multiword item names.
 Craft alive and outside combat, with the target directly carried, unworn and outside a
 container. Costs use plain raw-material piles. Protected modifiers refuse reroll/removal; an
  authored unprotect operation releases them. Add takes an affix ID and respects pools, tags,
@@ -7710,10 +7711,12 @@ Applied by optional MODBASE generation to standard generic items/equipment. Carr
 it; MODCRAFT performs controlled selective edits. Do not hand-attach an empty property. Use
 ItemModifiers.initialize on fresh unowned generated items; ItemModifiers.copyOf is the
 managed clone API with fresh identities and preserved values.
-Numeric deltas feed the optional combat-profile collector when correctly worn. Disabling
-items.modifiers suspends bonuses/crafting and keeps records/receipts. This first family does
- not own arbitrary AFFECT layers, new crafting currencies or staged choices. See
-docs/creator/17-item-modifiers-crafting.md.
+Numeric deltas feed the optional combat-profile collector when correctly worn. A generic
+copy (bound to another item), a corrupt record or one over the campaign's max_modifiers
+grants nothing and does not stop its wearer's combat; the log, COMBATRESULT and WORLD CHECK
+ITEMMODS name it. Disabling items.modifiers suspends bonuses/crafting and keeps
+records/receipts. This first family does not own arbitrary AFFECT layers, new crafting
+currencies or staged choices. See docs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="prop-itemset"></a>
@@ -7969,7 +7972,10 @@ ON=DEATH (a mob's default) puts it in the mob's corpse as it dies; ON=OPEN (a co
 default) the first time the container is opened, and it stays rolled until its contents
 reset (a save keeps that); ON=SPAWN or RESET as the mob is brought to life, or as a player
 first comes into the container's room.  A catalog entry (class="catalog") keeps the
-catalog's cap.  resources/randareas/loot.xml has sample tables (goblin, chest).
+catalog's cap.  A roll that gives nothing because its tracked items (MODBASE) cannot be made
+ yet, as the items.modifiers module is off or its definitions fail CHECK, is not spent: a
+container rolls at its next opening, a mob's ON=SPAWN roll is made as it dies.
+resources/randareas/loot.xml has sample tables (goblin, chest).
 ```
 
 <a id="prop-lore"></a>
@@ -11550,15 +11556,17 @@ Creator controls for optional tracked item modifiers, requiring builder/DEV or r
  permission. LIST shows base/affix/operation versions. CHECK validates itemmods/*.json and
 TRACKED entries in the existing affixes.xml without accepting edits. RELOAD swaps only valid
  definitions and accepts their provenance; a failed reload preserves the old accepted
-library. WORLD CHECK ONLY=ITEMMODS also checks loaded item records.
-A template ITEM opts in with MODBASE="base.id" and AFFIXES="2". Install/select
-items.modifiers and its combat.profiles/abilities.composition dependencies explicitly.
-Existing campaigns require adoption. Tracked XML affixes require POWER=0, no curse/AFFECT,
-VERSION/TIER/GROUP and numeric ROLL entries. Bases declare kinds, tags, pools and
-prefix/suffix capacities. Operations declare add/remove/reroll/protect/ unprotect, station,
-material cost and filters. Retain released versions: saved pins preserve exact rolls, while
-missing/changed pins suspend crafting. Existing numeric rolls remain frozen. Ordinary
-untracked affixes retain their existing rules. See
+library. WORLD CHECK ONLY=ITEMMODS also checks loaded item records; in a world that never
+opts in (no items.modifiers selected, no itemmods/) its findings are warnings.
+A template ITEM opts in with MODBASE="base.id" (variables expand) and AFFIXES="2".
+Generation runs on the game thread or at boot; a loot roll it cannot make yet is not spent.
+Install/select items.modifiers and its combat.profiles/abilities.composition dependencies
+explicitly. Existing campaigns require adoption. Tracked XML affixes require POWER=0, no
+curse/AFFECT, VERSION/TIER/GROUP and numeric ROLL entries. Bases declare kinds, tags, pools
+and prefix/suffix capacities. Operations declare add/remove/reroll/protect/ unprotect,
+station, material cost and filters. Retain released versions: saved pins preserve exact
+rolls, while missing/changed pins suspend crafting. Existing numeric rolls remain frozen.
+Ordinary untracked affixes retain their existing rules. See
 docs/creator/17-item-modifiers-crafting.md.
 ```
 

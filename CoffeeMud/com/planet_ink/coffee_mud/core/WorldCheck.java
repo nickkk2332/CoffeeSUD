@@ -340,9 +340,11 @@ public final class WorldCheck
 		final boolean all = (parts == null) || parts.isEmpty();
 		if(all || parts.contains("ITEMMODS"))
 		{
+			// a world that never opts in keeps its legacy affixes.xml as it was: warnings at most
+			final Severity level=ItemModifiers.inUse()?Severity.ERROR:Severity.WARNING;
 			final ItemModifierRules.Library lib=ItemModifiers.check();
-			for(final String error:lib.errors)out.add(new Finding(Severity.ERROR,"ITEMMODS",error));
-			for(final String error:ItemModifiers.checkItems(rooms,lib))out.add(new Finding(Severity.ERROR,"ITEMMODS",error));
+			for(final String error:lib.errors)out.add(new Finding(level,"ITEMMODS",error));
+			for(final String error:ItemModifiers.checkItems(rooms,lib))out.add(new Finding(level,"ITEMMODS",error));
 		}
 		if(all || parts.contains("COMBAT"))
 		{

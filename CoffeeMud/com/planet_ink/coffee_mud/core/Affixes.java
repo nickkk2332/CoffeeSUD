@@ -264,7 +264,8 @@ public final class Affixes
 	{
 		if(ItemModifiers.isManaged(I))
 		{
-			try { return ItemModifiers.addGenerated(I,count); } catch(final java.io.IOException e) { throw new IllegalArgumentException(e.getMessage(),e); }
+			// a tracked item that cannot take more (a generic copy, an owned or crafted one) keeps what it has; the tick or roll goes on
+			try { return ItemModifiers.addGenerated(I,count); } catch(final java.io.IOException e) { Log.errOut("Affixes", I.Name() + ": " + e.getMessage()); return 0; }
 		}
 		if((I == null) || (count <= 0) || (!available()))
 			return 0;

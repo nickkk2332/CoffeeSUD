@@ -44,7 +44,11 @@ import java.util.*;
  * resets, which brings it back new).  A container rolls once until its
  * contents reset: ROLLED=TRUE in this property's text (getStat ROLLED),
  * which a save keeps; DEVPLAN item 1's container rule is to share it.
- * Catalog entries (class="catalog") keep the catalog's cap.
+ * Catalog entries (class="catalog") keep the catalog's cap.  A roll that
+ * gives nothing because tracked items (MODBASE) cannot be made yet (the
+ * module is off, its definitions fail CHECK) is not spent: a container rolls
+ * at its next opening, and a mob's SPAWN roll is made as it dies, into its
+ * corpse.
  */
 public class Prop_LootTable extends Property
 {
@@ -83,6 +87,8 @@ public class Prop_LootTable extends Property
 	protected String	affixes	= "";
 	/** a mob's roll for its death or this life, made once */
 	protected boolean	lifeRolled	= false;
+	/** the last roll gave nothing, as tracked items could not be made yet: not spent */
+	protected boolean	unspent		= false;
 
 	@Override
 	public void setMiscText(final String newMiscText)
@@ -145,6 +151,7 @@ public class Prop_LootTable extends Property
 	public int roll(final MOB player)
 	{
 		final Physical host = affected;
+		unspent = false;
 		if((host == null) || (id.length() == 0))
 			return 0;
 		if((chance < 100) && (CMLib.dice().rollPercentage() > chance))
@@ -177,6 +184,13 @@ public class Prop_LootTable extends Property
 			}
 			catch(final CMException e)
 			{
+				if((given == 0) && ItemModifiers.unavailable(e))
+				{
+					// MODBASE cannot run yet: no gold either, and the roll waits
+					Log.errOut("Prop_LootTable", host.Name() + ": " + e.getMessage() + " (the roll is kept for later)");
+					unspent = true;
+					return 0;
+				}
 				Log.errOut("Prop_LootTable", host.Name() + ": " + e.getMessage());
 				break;
 			}
@@ -217,16 +231,17 @@ public class Prop_LootTable extends Property
 	@Override
 	public boolean okMessage(final Environmental myHost, final CMMsg msg)
 	{
-		// DEATH: into the mob's pack as it dies, so its corpse has it
+		// DEATH: into the mob's pack as it dies, so its corpse has it; a SPAWN roll not yet made, too
 		if((affected instanceof MOB)
 		&& (msg.sourceMinor() == CMMsg.TYP_DEATH)
 		&& (msg.source() == affected)
-		&& when().equals("DEATH")
+		&& (when().equals("DEATH") || (when().equals("SPAWN") && unspent))
 		&& (!lifeRolled))
 		{
 			lifeRolled = true;
 			final MOB killer = ((MOB)affected).getVictim();
 			roll(((killer != null) && killer.isPlayer()) ? killer : null);
+			lifeRolled = !unspent;
 		}
 		return super.okMessage(myHost, msg);
 	}
@@ -239,10 +254,12 @@ public class Prop_LootTable extends Property
 		if((affected instanceof MOB) && (msg.sourceMinor() == CMMsg.TYP_LIFE) && (msg.source() == affected))
 		{
 			lifeRolled = false; // a new life
+			unspent = false;
 			if(w.equals("SPAWN"))
 			{
 				lifeRolled = true;
 				roll(null);
+				lifeRolled = !unspent;
 			}
 		}
 		else
@@ -252,6 +269,8 @@ public class Prop_LootTable extends Property
 			{
 				markRolled(true);
 				roll(msg.source());
+				if(unspent)
+					markRolled(false);
 			}
 			else
 			if(w.equals("SPAWN") && (msg.targetMinor() == CMMsg.TYP_ENTER) && (msg.target() instanceof Room)
@@ -259,6 +278,8 @@ public class Prop_LootTable extends Property
 			{
 				markRolled(true);
 				roll(msg.source());
+				if(unspent)
+					markRolled(false);
 			}
 		}
 	}

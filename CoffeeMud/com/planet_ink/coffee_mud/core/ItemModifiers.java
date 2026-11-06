@@ -20,20 +20,35 @@ public final class ItemModifiers
     public static final String MODULE=ItemModifierRules.MODULE, PROPERTY="Prop_ItemModifiers";
     private static Library library;private static File root;
     public static synchronized void reset(){library=null;root=null;}
-    public static void require()throws IOException{if(!OptionalModules.enabled(MODULE))throw new IOException("items.modifiers is inactive in this campaign");}
+    /** The family cannot run now (module off, definitions failing CHECK, off the game thread). Nothing was spent: a loot table keeps its once-only roll. */
+    public static final class Unavailable extends IOException{public Unavailable(final String message){super(message);}}
+    public static boolean unavailable(final Throwable failure){for(Throwable t=failure;t!=null;t=t.getCause())if(t instanceof Unavailable)return true;return false;}
+    public static void require()throws IOException{if(!OptionalModules.enabled(MODULE))throw new Unavailable("items.modifiers is inactive in this campaign");}
     public static int limit()throws IOException{require();return ((Number)OptionalModules.setting(MODULE,"max_modifiers")).intValue();}
-    public static void gameThread()throws IOException{if(!ServiceEngine.isGameThread())throw new IOException("item mutations must run on the game thread");}
+    /** Item mutations run on the game thread. Before it starts, the boot loading the world is the only thread, and generates spawn loot. */
+    public static void gameThread()throws IOException{if(!ServiceEngine.isGameThread()&&!booting())throw new Unavailable("item mutations must run on the game thread");}
+    private static boolean booting()
+    {
+        final CMProps host=CMProps.instance(com.planet_ink.coffee_mud.core.interfaces.MudHost.MAIN_HOST);
+        return CMProps.isSinglePlayer()&&!ServiceEngine.hasGameThread()&&host!=null&&(host._isState(CMProps.HostState.BOOTING)||host._isState(CMProps.HostState.LOADINGMAP)||host._isState(CMProps.HostState.STARTING));
+    }
+    /** The world or this campaign opts in. Otherwise a legacy affixes.xml keeps its old reading, and CHECK only warns. */
+    public static boolean inUse()
+    {
+        if(OptionalModules.enabled(MODULE))return true;final File world=WorldFiles.worldDir();
+        return world!=null&&new File(world,"itemmods").exists()||OptionalModules.configuredPlan().enabled.contains(MODULE);
+    }
     public static Library check()
     {
         final File world=WorldFiles.worldDir(),file=new File(world,"affixes.xml");final List<JSONObject> records=new ArrayList<JSONObject>();
         String error=null;
-        if(file.exists()&&(Files.isSymbolicLink(file.toPath())||!file.isFile()||file.length()>262144))error="affixes.xml must be a regular world file, at most 256 KiB";
+        if(file.exists()&&(Files.isSymbolicLink(file.toPath())||!file.isFile()||file.length()>262144)){if(inUse())error="affixes.xml must be a regular world file, at most 256 KiB";}
         else if(file.exists())for(final Affixes.Affix a:Affixes.read())if(a.tracked!=null)records.add(a.tracked);
         final Library lib=ItemModifierRules.load(world,records);if(error!=null)lib.errors.add(error);
         for(final Definition d:lib.definitions.values())if(d.kind.equals("operation")&&RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)lib.errors.add(d.key()+": unknown registered material "+d.string("material"));return lib;
     }
     public static synchronized Library definitions()throws IOException
-    {if(library==null||!WorldFiles.worldDir().equals(root)){library=check();root=WorldFiles.worldDir();}if(!library.errors.isEmpty())throw new IOException(library.report());return library;}
+    {if(library==null||!WorldFiles.worldDir().equals(root)){library=check();root=WorldFiles.worldDir();}if(!library.errors.isEmpty())throw new Unavailable(library.report());return library;}
     public static synchronized String reload()throws IOException
     {final Library next=check();if(!next.errors.isEmpty())throw new IOException(next.report());library=next;root=WorldFiles.worldDir();Affixes.reload();WorldFiles.acceptItemModifierChanges();return next.report()+" Existing items retain their saved rolls and pins.";}
     public static String list()throws IOException
@@ -41,9 +56,11 @@ public final class ItemModifiers
     public static boolean isManaged(final Item item){return item!=null&&item.fetchEffect(PROPERTY)!=null;}
     static Ability property(final Item item)throws IOException
     {final Ability p=item==null?null:item.fetchEffect(PROPERTY);if(p==null||!p.getClass().getName().equals("com.planet_ink.coffee_mud.Abilities.Properties."+PROPERTY))throw new IOException("item has no supported structured modifier property");return p;}
-    public static JSONObject data(final Item item)throws IOException
+    public static JSONObject data(final Item item)throws IOException{return bound(item,property(item).text());}
+    /** The record only counts on its own item: a generic copy shares its INSTANCEID, but is not the item that ID finds. */
+    public static JSONObject bound(final Item item,final String text)throws IOException
     {
-        final JSONObject data=ItemModifierRules.parse(property(item).text());
+        final JSONObject data=ItemModifierRules.parse(text);
         if(!data.get("item").equals(InstanceIds.PREFIX+InstanceIds.existing(item))||InstanceIds.find((String)data.get("item"))!=item)throw new IOException("modifier record is bound to another item; managed copies need ItemModifiers.copyOf");
         if(!data.get("item_kind").equals(Affixes.kindOf(item)))throw new IOException("item kind differs from its modifier record");return data;
     }
@@ -108,6 +125,10 @@ public final class ItemModifiers
     {
         final Set<Item> seen=Collections.newSetFromMap(new IdentityHashMap<Item,Boolean>());final List<String> errors=new ArrayList<String>();
         for(final Room r:rooms){for(final Enumeration<Item> e=r.items();e.hasMoreElements();)seen.add(e.nextElement());for(final Enumeration<MOB> m=r.inhabitants();m.hasMoreElements();)for(final Enumeration<Item> i=m.nextElement().items();i.hasMoreElements();)seen.add(i.nextElement());}
-        for(final Item i:seen)if(isManaged(i))try{ItemModifierRules.validateSources(data(i),lib);}catch(final IOException e){errors.add(i.Name()+": "+e.getMessage());}return errors;
+        for(final Item i:seen)if(isManaged(i))try
+        {
+            final JSONObject d=data(i);ItemModifierRules.validateSources(d,lib);
+            if(OptionalModules.enabled(MODULE)&&ItemModifierRules.modifiers(d).size()>limit())throw new IOException("more modifiers than this campaign's limit of "+limit()+"; its bonuses are withheld");
+        }catch(final IOException e){errors.add(i.Name()+": "+e.getMessage());}return errors;
     }
 }

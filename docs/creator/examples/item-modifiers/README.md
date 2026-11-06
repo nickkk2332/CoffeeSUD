@@ -11,8 +11,10 @@ selects its modifier contract; AFFIXES chooses up to that many eligible tracked
 affixes. Ordinary affix definitions and consumers retain their legacy path.
 An ember-forge workstation and plain IRON materials enable the five example
 operations: add, remove, reroll, protect and unprotect.
-Attach the supplied itemmods-loot-guard.js through Prop_JScript to an OPEN
-coffer so disabling the module cannot spend its unrolled tracked loot.
+A loot table whose tracked items cannot be made (module disabled, definitions
+failing CHECK) keeps its once-only roll. Attach the supplied
+itemmods-loot-guard.js through Prop_JScript to an OPEN coffer to also tell the
+player why it waits.
 
 For a ready-to-play world use the [Ember Trial](../ember-trial/README.md).
 For schemas, versioning, controls, transaction boundaries and limitations see

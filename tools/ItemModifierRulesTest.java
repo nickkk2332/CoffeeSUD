@@ -13,6 +13,20 @@ public final class ItemModifierRulesTest
     private interface Task{void run()throws Exception;}
     private static void refuses(String name,Task task)throws Exception{boolean refused=false;try{task.run();}catch(IOException e){refused=true;}ok(refused,name);}
     private static JSONObject obj(String json)throws IOException{return ModuleDefinitions.parse(json);}
+    /** Runs a task as the game's main host would: CMLib.dice() belongs to thread group '0'. */
+    private static void inGame(Task task)throws Exception
+    {
+        final Exception[] failed={null};final Error[] broken={null};
+        final Thread t=new Thread(new ThreadGroup("0-item-rules"),()->{try{task.run();}catch(Exception e){failed[0]=e;}catch(Error e){broken[0]=e;}});t.start();t.join();
+        if(broken[0]!=null)throw broken[0];if(failed[0]!=null)throw failed[0];
+    }
+    private static boolean diceReady;
+    /** The roller crafting and generation really use (ItemModifiers.DICE), drawing from the game's dice. */
+    private static Roller production()throws Exception
+    {
+        if(!diceReady){CMProps.instance();CMLib.registerLibrary(new com.planet_ink.coffee_mud.Libraries.Dice());diceReady=true;}
+        final java.lang.reflect.Method dice=ItemModifiers.class.getDeclaredMethod("dice");dice.setAccessible(true);return (Roller)dice.invoke(null);
+    }
     private static final String UID="12345678-1234-1234-1234-123456789012",UID2="12345678-1234-1234-1234-123456789013";
     private static JSONObject affix(String id,String group,String position,int version)throws IOException
     {return obj("{\"schema\":1,\"kind\":\"affix\",\"id\":\""+id+"\",\"version\":"+version+",\"name\":\"Ward\",\"position\":\""+position+"\",\"tier\":1,\"group\":\""+group+"\",\"tags\":[\"defense\"],\"kinds\":[\"armor\"],\"minimum_level\":1,\"maximum_level\":99,\"weight\":10,\"power\":0,\"cursed\":false,\"effects\":[],\"rolls\":{\"resistance.fire\":{\"min\":10,\"max\":20}}}");}
@@ -31,7 +45,19 @@ public final class ItemModifierRulesTest
         final int[] rolls={0};Roller high=(min,max)->{rolls[0]++;return max;};Roller low=(min,max)->{rolls[0]++;return min;};
         JSONObject first=ItemModifierRules.rolled(ward,UID,high);record.put("modifiers",new Object[]{first,ItemModifierRules.rolled(suffix,UID2,low)});record=ItemModifierRules.checked(record);
         ok(ItemModifierRules.modifiers(record).size()==2,"two independently stored modifiers");
-        ok(((Number)((JSONObject)first.get("values")).get("resistance.fire")).intValue()==20,"inclusive maximum roll");
+        ok(((Number)((JSONObject)first.get("values")).get("resistance.fire")).intValue()==20,"a roller's value is stored as the roll");
+        inGame(()->{
+            final Roller dice=production();final Map<String,int[]> seen=new LinkedHashMap<String,int[]>();
+            for(int[] range:new int[][]{{10,12},{-3,-2},{0,1},{-1000000,1000000}})
+            {
+                int lo=Integer.MAX_VALUE,hi=Integer.MIN_VALUE;
+                for(int i=0;i<4000;i++){final int n=dice.roll(range[0],range[1]);lo=Math.min(lo,n);hi=Math.max(hi,n);}
+                seen.put(range[0]+".."+range[1],new int[]{lo,hi});
+            }
+            boolean inside=true;for(Map.Entry<String,int[]> e:seen.entrySet()){final String[] r=e.getKey().split("\\.\\.");inside&=e.getValue()[0]>=Integer.parseInt(r[0])&&e.getValue()[1]<=Integer.parseInt(r[1]);}
+            ok(inside,"production roller DICE stays inside its inclusive bounds");
+            ok(seen.get("10..12")[0]==10&&seen.get("10..12")[1]==12&&seen.get("-3..-2")[0]==-3&&seen.get("-3..-2")[1]==-2&&seen.get("0..1")[0]==0&&seen.get("0..1")[1]==1,"production roller DICE reaches both endpoints (inclusive minimum and maximum)");
+        });
         final String before=ModuleDefinitions.json(record);final int randomBefore=rolls[0];
         ItemModifierRules.validate(record,lib.find("test.reroll",0,"operation"),UID,lib,1);
         ok(rolls[0]==randomBefore&&ModuleDefinitions.json(record).equals(before),"eligibility preview neither mutates nor rolls");
@@ -78,12 +104,16 @@ public final class ItemModifierRulesTest
         final JSONObject pinnedBase=ItemModifierRules.pin(b);ok(lib.pinned(pinnedBase,"base").version==1,"base version pins are retained");
         JSONObject bad=affix("test.bad","bad","prefix",1);bad.put("effects",new Object[]{"arbitrary"});final JSONObject badEffects=bad;refuses("tracked family rejects unowned arbitrary effects",()->new Definition(badEffects));
         bad=affix("test.bad","bad","prefix",1);bad.put("weight",Double.NaN);final JSONObject badWeight=bad;refuses("nonfinite weights rejected",()->new Definition(badWeight));
-        final Random random=new Random(15);for(int i=0;i<120;i++)
-        {
-            final int value=10+random.nextInt(11);JSONObject r=ItemModifierRules.transform(original,lib.find("test.reroll",0,"operation"),UID,lib,1,UID2,(min,max)->value);
-            ok(((Number)((JSONObject)ItemModifierRules.modifiers(r).get(0).get("values")).get("resistance.fire")).intValue()==value,"bounded reroll preserves sampled value "+i);
-            ok(ModuleDefinitions.json(ItemModifierRules.modifiers(r).get(1)).equals(ModuleDefinitions.json(ItemModifierRules.modifiers(original).get(1))),"unselected source remains byte-equivalent "+i);
-        }
+        inGame(()->{
+            final Roller dice=production();final Set<Integer> values=new TreeSet<Integer>();boolean untouched=true;
+            for(int i=0;i<400;i++)
+            {
+                final JSONObject r=ItemModifierRules.transform(original,library.find("test.reroll",0,"operation"),UID,library,1,UID2,dice);
+                values.add(Integer.valueOf(((Number)((JSONObject)ItemModifierRules.modifiers(r).get(0).get("values")).get("resistance.fire")).intValue()));
+                untouched&=ModuleDefinitions.json(ItemModifierRules.modifiers(r).get(1)).equals(ModuleDefinitions.json(ItemModifierRules.modifiers(original).get(1)));
+            }
+            ok(values.size()==11&&values.iterator().next()==10&&((TreeSet<Integer>)values).last()==20&&untouched,"400 rerolls with the production roller cover exactly 10..20 and leave the unselected source byte-equivalent "+values);
+        });
         Files.write(dir.resolve("bad.v1.json"),"{}".getBytes("UTF-8"));ok(!ItemModifierRules.load(root.toFile(),affixes).errors.isEmpty(),"invalid files make a library unpublishable");Files.delete(dir.resolve("bad.v1.json"));
         Files.createSymbolicLink(dir.resolve("linked.v1.json"),dir.resolve("test.mantle.v1.json"));ok(!ItemModifierRules.load(root.toFile(),affixes).errors.isEmpty(),"linked definitions rejected");Files.delete(dir.resolve("linked.v1.json"));
         try(java.util.stream.Stream<Path> paths=Files.walk(root)){paths.sorted(Comparator.reverseOrder()).forEach(p->{try{Files.delete(p);}catch(IOException e){throw new RuntimeException(e);}});}

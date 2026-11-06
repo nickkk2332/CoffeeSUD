@@ -27,11 +27,13 @@ def check(condition, name, detail=''):
 
 
 def play(name, commands, restore, expected=()):
+    """A session of the game; restore None for a builder session (the publish's own character and saves)."""
     path = scratch / (name + '.input'); path.write_text(commands)
     with (scratch / (name + '.txt')).open('w') as output:
         result = subprocess.run([sys.executable, str(ROOT / 'tools/sudplay.py'), str(path),
             'WORLDDIR=' + str(dest / 'world'), 'DBSERVICE=jdbc:fakedb:' + str(dest / 'db'),
-            'SAVEDIR=' + str(dest / 'saves'), 'RESTORE=' + restore, 'TIMEMODE=TURNS', 'RANDOMSEED=42'],
+            'SAVEDIR=' + str(dest / ('.build/saves' if restore is None else 'saves')),
+            'BUILDER=1' if restore is None else 'RESTORE=' + restore, 'TIMEMODE=TURNS', 'RANDOMSEED=42'],
             cwd=ROOT, env=dict(os.environ, SUDPLAY_LIMIT='480'), stdout=output, stderr=subprocess.STDOUT, timeout=540)
     text = (scratch / (name + '.txt')).read_text(errors='replace')
     check(result.returncode == 0, name + ' process', text[-2500:])
@@ -40,6 +42,25 @@ def play(name, commands, restore, expected=()):
     for marker in expected:
         check(marker in normal, name + ' / ' + marker, text[-2500:])
     return text
+
+
+# A mob whose SPAWN loot is tracked: its life begins as the world loads, before the game thread runs.
+SPAWN_SETUP = """var CM = Packages.com.planet_ink.coffee_mud, CC = CM.core.CMClass, CL = CM.core.CMLib;
+var room = CL.map().getRoom('EmberTrial#1'), warden = CC.getMOB('GenMob');
+warden.setName('a spawn warden'); warden.setDisplayText('A spawn warden keeps watch here.');
+warden.basePhyStats().setLevel(1); warden.basePhyStats().setRejuv(CM.Common.interfaces.PhyStats.NO_REJUV); warden.recoverPhyStats();
+warden.setStartRoom(room); warden.bringToLife(room, true);
+var loot = CC.getAbility('Prop_LootTable'); // added after this life began: the next boot rolls it
+loot.setMiscText('FILE=randareas/embertrial-loot.xml ID=embertrial_mantle ON=SPAWN'); warden.addNonUninvokableEffect(loot);
+CL.database().DBUpdateMOBs(room);
+mob().tell('FIXSETUP spawn warden carries ' + warden.numItems());
+"""
+SPAWN_CHECK = """var CM = Packages.com.planet_ink.coffee_mud, IM = CM.core.ItemModifiers;
+var room = CM.core.CMLib.map().getRoom('EmberTrial#1'), warden = null, tracked = 0;
+for (var i = 0; i < room.numInhabitants(); i++) if (String(room.fetchInhabitant(i).Name()) === 'a spawn warden') warden = room.fetchInhabitant(i);
+if (warden != null) for (var j = 0; j < warden.numItems(); j++) if (IM.isManaged(warden.getItem(j)) && IM.data(warden.getItem(j)).get('modifiers').length == 2) tracked++;
+mob().tell('FIXBOOT spawn warden ' + (warden == null ? 'missing' : 'carries ' + tracked + ' tracked of ' + warden.numItems()));
+"""
 
 
 def module(slot):
@@ -139,6 +160,11 @@ try:
          'save resumed-loot\nquit\nn\n', 'suspended-loot')
     check(len(item_record('resumed-loot')['modifiers']) == 2 and iron('resumed-loot') == 8,
           'reactivated module can claim previously suspended coffer normally')
+    creator = dest / 'world/resources/creator'
+    (creator / 'fix-spawn.js').write_text(SPAWN_SETUP); (creator / 'fix-spawn-check.js').write_text(SPAWN_CHECK)
+    play('spawn-setup', 'Trialbuilder\njrun /resources/creator/fix-spawn.js\nsave\nquit\nY\n', None, ['FIXSETUP spawn warden carries 0'])
+    play('spawn-boot', 'Trialbuilder\njrun /resources/creator/fix-spawn-check.js\nquit\nY\n', None,
+         ['FIXBOOT spawn warden carries 1 tracked of 1'])  # its tracked SPAWN loot was made at boot
     print('FIXTEST done item-integration (%d checks)' % count, flush=True)
 except Exception as error:
     print('FIXTEST FAIL item-integration: ' + str(error), flush=True)

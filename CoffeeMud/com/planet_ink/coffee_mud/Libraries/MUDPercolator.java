@@ -3339,8 +3339,9 @@ public class MUDPercolator extends StdLibrary implements AreaGenerationLibrary
 			if(tracked&&(items!=null))
 			{
 				final int n=affixes==null?0:CMath.s_parseIntExpression(strFilterNow(null,null,null,affixes,piece,defined));
-				try{for(final Item I:items)ItemModifiers.initialize(I,modbase.trim(),n,"template:"+String.valueOf(piece.getParmValue("ID")));}
-				catch(final java.io.IOException e){for(final Item I:items)I.destroy();throw new CMException("MODBASE: "+e.getMessage());}
+				final String base=strFilterNow(null,null,null,modbase,piece,defined).trim(); // variables, as AFFIXES has
+				try{for(final Item I:items)ItemModifiers.initialize(I,base,n,"template:"+String.valueOf(piece.getParmValue("ID")));}
+				catch(final java.io.IOException e){for(final Item I:items)I.destroy();throw new CMException("MODBASE: "+e.getMessage(),e);} // ItemModifiers.unavailable(e): a loot roll is kept
 			}
 			return items;
 		}); // Include tracked rolls in the template's existing SEED scope.

@@ -16,8 +16,10 @@ public final class ItemCrafting
     private static volatile boolean critical=false;
     private static final ThreadLocal<Boolean> busy=new ThreadLocal<Boolean>();
     public static boolean inCommit(){return critical;}
+    private static void settling()throws IOException
+    {ItemModifiers.gameThread();ItemModifiers.require();if(Boolean.TRUE.equals(busy.get()))throw new IOException("item transaction observer cannot start another transaction");}
     private static void writable()throws IOException
-    {ItemModifiers.gameThread();ItemModifiers.require();if(Boolean.TRUE.equals(busy.get()))throw new IOException("item transaction observer cannot start another transaction");if(!Boolean.TRUE.equals(OptionalModules.setting(ItemModifiers.MODULE,"allow_crafting")))throw new IOException("crafting is disabled by this campaign");}
+    {settling();if(!Boolean.TRUE.equals(OptionalModules.setting(ItemModifiers.MODULE,"allow_crafting")))throw new IOException("crafting is disabled by this campaign");}
     private static JSONObject ledger(final MOB who)throws IOException
     {
         final JSONObject state=OptionalModules.get(ItemModifiers.MODULE,OptionalModules.character(who));
@@ -43,8 +45,15 @@ public final class ItemCrafting
     {final JSONObject d=new JSONObject();d.put("class",item.ID());d.put("text",item.text());d.put("weight",Long.valueOf(item.basePhyStats().weight()));d.put("value",Long.valueOf(item.baseGoldValue()));d.put("material",Long.valueOf(item.material()));d.put("uses",Long.valueOf(item.usesRemaining()));d.put("level",Long.valueOf(item.basePhyStats().level()));return ItemModifierRules.hash(d);}
     private static final class Cost
     {
-        final Item item;final int amount,weight,value;
-        Cost(final Item item,final int amount){this.item=item;this.amount=amount;weight=item.basePhyStats().weight();value=item.baseGoldValue();}
+        final Item item;final int amount,weight,value;final String name,display,description;
+        Cost(final Item item,final int amount){this.item=item;this.amount=amount;weight=item.basePhyStats().weight();value=item.baseGoldValue();name=item.Name();display=item.displayText();description=item.description();}
+        /** What is left of a partly spent pile. A name that shows its weight ("an 8# iron ore bundle") is made again for the new weight. */
+        void spend()
+        {
+            item.basePhyStats().setWeight(weight-amount);item.setBaseValue((int)(((long)value*(weight-amount))/weight));
+            if(name.matches("(?s).*\\b"+weight+"#.*"))CMLib.materials().adjustResourceName(item);item.recoverPhyStats();
+        }
+        void restore(){item.basePhyStats().setWeight(weight);item.setBaseValue(value);item.setName(name);item.setDisplayText(display);item.setDescription(description);item.recoverPhyStats();}
     }
     private static final class Plan
     {
@@ -124,18 +133,31 @@ public final class ItemCrafting
     public static String receipt(final MOB who,final long serial)throws IOException
     {
         ItemModifiers.require();final JSONObject state=ledger(who),receipts=field(state,"receipts");final Object value=receipts.get(Long.toString(serial));
+        if(cancelled(value))return "Request #"+serial+" was cancelled; it rolled and spent nothing.";
         return value instanceof JSONObject?ModuleDefinitions.json((JSONObject)value):serial>0&&serial<=number(state,"settled")?"Request #"+serial+" is settled/cancelled; its detailed receipt is no longer retained.":"No committed receipt for request #"+serial+".";
+    }
+    /** The last cancellation is noted among the receipts (one note at a time), so that a later COMMIT of it says so. */
+    private static boolean cancelled(final Object receipt){return receipt instanceof JSONObject&&Boolean.TRUE.equals(((JSONObject)receipt).get("cancelled"));}
+    /** At most eight receipts in 4,096 characters, the oldest dropped first; the newest is always kept. */
+    private static String pruned(final JSONObject receipts,final long newest)throws IOException
+    {
+        while(receipts.size()>8||ModuleDefinitions.json(receipts).length()>4096){long oldest=Long.MAX_VALUE;for(final String key:receipts.keySet())oldest=Math.min(oldest,Long.parseLong(key));if(oldest==newest)throw new IOException("craft receipt too large");receipts.remove(Long.toString(oldest));}
+        return ModuleDefinitions.json(receipts);
     }
     public static String cancel(final MOB who,final long requested)throws IOException
     {
-        writable();final JSONObject state=ledger(who),pending=field(state,"pending");if(pending.isEmpty())return "No pending item craft.";final long serial=number(pending,"serial");if(requested!=0&&requested!=serial)throw new IOException("that request is not pending");
-        state.put("pending","");state.put("settled",Long.valueOf(serial));save(who,state);return "Cancelled craft #"+serial+"; no random rolls or costs.";
+        // Cancelling rolls and spends nothing, so it stays open while allow_crafting is false. A suspended module's state cannot be written: the request waits.
+        if(!OptionalModules.enabled(ItemModifiers.MODULE))throw new IOException("items.modifiers is inactive in this campaign; a pending request keeps its saved state, and CANCEL works again once the module is active");
+        settling();final JSONObject state=ledger(who),pending=field(state,"pending");if(pending.isEmpty())return "No pending item craft.";final long serial=number(pending,"serial");if(requested!=0&&requested!=serial)throw new IOException("that request is not pending");
+        final JSONObject receipts=field(state,"receipts"),note=new JSONObject();for(final String key:new ArrayList<String>(receipts.keySet()))if(cancelled(receipts.get(key)))receipts.remove(key);
+        note.put("cancelled",Boolean.TRUE);receipts.put(Long.toString(serial),note);
+        state.put("receipts",pruned(receipts,serial));state.put("pending","");state.put("settled",Long.valueOf(serial));save(who,state);return "Cancelled craft #"+serial+"; no random rolls or costs.";
     }
     public static String commit(final MOB who,final long requested)throws IOException
     {
         ItemModifiers.gameThread();ItemModifiers.require();final JSONObject state=ledger(who),pending=field(state,"pending");
         final long serial=requested==0?(pending.isEmpty()?number(state,"serial"):number(pending,"serial")):requested;
-        if(serial>0&&serial<=number(state,"settled"))return "Already settled craft #"+serial+". "+receipt(who,serial);
+        if(serial>0&&serial<=number(state,"settled"))return cancelled(field(state,"receipts").get(Long.toString(serial)))?"Craft #"+serial+" was cancelled, so it cannot be committed; it rolled and spent nothing. PREPARE a new request instead.":"Already settled craft #"+serial+". "+receipt(who,serial);
         writable();if(pending.isEmpty()||number(pending,"serial")!=serial)throw new IOException("no such pending request");
         ModuleDefinitions.keys(pending,"craft request","serial","actor","item","operation","selector","item_hash","room","costs","affix");
         if(!pending.get("actor").equals(InstanceIds.reference(who))||!pending.get("room").equals(InstanceIds.reference(who.location())))throw new IOException("craft actor or room changed");
@@ -149,14 +171,13 @@ public final class ItemCrafting
             next=ItemModifiers.names(item,ItemModifierRules.transform(plan.data,op,plan.selector,ItemModifiers.definitions(),item.basePhyStats().level(),UUID.randomUUID().toString(),ItemModifiers.dice()));
             receipt=new JSONObject();receipt.put("request",Long.valueOf(serial));receipt.put("item",pending.get("item"));receipt.put("operation",pending.get("operation"));receipt.put("before",pending.get("item_hash"));receipt.put("after_modifiers",ItemModifierRules.hash(next));receipt.put("revision",next.get("revision"));receipt.put("material",op.raw.get("material"));receipt.put("units",op.raw.get("units"));receipt.put("inputs",pending.get("costs"));
             final JSONObject receipts=field(state,"receipts");receipts.put(Long.toString(serial),receipt);
-            while(receipts.size()>8||ModuleDefinitions.json(receipts).length()>4096){long oldest=Long.MAX_VALUE;for(final String key:receipts.keySet())oldest=Math.min(oldest,Long.parseLong(key));if(oldest==serial)throw new IOException("craft receipt too large");receipts.remove(Long.toString(oldest));}
-            state.put("receipts",ModuleDefinitions.json(receipts));state.put("pending","");state.put("settled",Long.valueOf(serial));box=JSEvents.deferItemEvents();
+            state.put("receipts",pruned(receipts,serial));state.put("pending","");state.put("settled",Long.valueOf(serial));box=JSEvents.deferItemEvents();
         }
         catch(final IOException|RuntimeException e){CMath.setRandState(rng.longValue());throw e;}
         boolean committed=false;busy.set(Boolean.TRUE);critical=true;
         try
         {
-            for(final Cost c:plan.costs)if(c.amount<c.weight){c.item.basePhyStats().setWeight(c.weight-c.amount);c.item.setBaseValue((int)(((long)c.value*(c.weight-c.amount))/c.weight));c.item.recoverPhyStats();}
+            for(final Cost c:plan.costs)if(c.amount<c.weight)c.spend();
             ItemModifiers.install(item,next);
             for(final Cost c:plan.costs)if(c.amount==c.weight){who.delItem(c.item);c.item.setOwner(null);}
             save(who,state);committed=true;
@@ -164,7 +185,7 @@ public final class ItemCrafting
         catch(final IOException|RuntimeException e)
         {
             ItemModifiers.property(item).setMiscText(oldText);item.setName(oldName);item.setDisplayText(oldDisplay);
-            for(final Cost c:plan.costs){c.item.basePhyStats().setWeight(c.weight);c.item.setBaseValue(c.value);c.item.recoverPhyStats();if(c.item.owner()!=who)who.addItem(c.item);}
+            for(final Cost c:plan.costs){c.restore();if(c.item.owner()!=who)who.addItem(c.item);}
             CMath.setRandState(rng.longValue());throw e;
         }
         finally

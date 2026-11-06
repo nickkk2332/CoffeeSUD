@@ -46,9 +46,13 @@ values, consumes the cost and records its receipt. A reroll can draw the same
 value again. Quote multiword item names in PREVIEW/PREPARE.
 
 Use the number printed by PREPARE; it increases across committed and cancelled
-requests. `MODCRAFT CANCEL 1` cancels without payment or random draws.
-`MODCRAFT RECEIPT 1` reads the committed receipt. Repeating COMMIT 1, including
-after a fresh-process restore, cannot charge or apply it twice.
+requests. `MODCRAFT CANCEL 1` cancels without payment or random draws, also
+while the campaign has crafting switched off (`allow_crafting false`); while
+the module itself is suspended, a pending request keeps its saved state until
+the module is active again. COMMIT or RECEIPT of the last cancelled request
+says it was cancelled. `MODCRAFT RECEIPT 1` reads the committed receipt.
+Repeating COMMIT 1, including after a fresh-process restore, cannot charge or
+apply it twice.
 
 Protect a modifier with `embertrial.protect`. Its reroll/removal then refuses
 without payment. `embertrial.unprotect` explicitly releases it; `embertrial.remove`
@@ -86,12 +90,19 @@ abilities.composition. Installing files alone activates nothing. New campaigns
 adopt the selected closure. Existing campaigns require explicit
 `WORLD MODULES ADOPT items.modifiers` after world selection. Installing this
 module grants no skills or items; author a generator, reward and workstation.
-MODBASE generation requires the active module. Guard optional reward triggers
-while it is disabled: the pack's
-[coffer script](examples/item-modifiers/js/props/itemmods-loot-guard.js) refuses
-OPEN before the native loot table spends its once-only roll. Attach it with
-Prop_JScript SCRIPT=world:js/props/itemmods-loot-guard.js, as the sample does.
-Other trigger types need the corresponding authored guard or fallback.
+MODBASE generation requires the active module and definitions that pass CHECK,
+and runs on the game thread, or while the world loads at boot, before that
+thread starts (so a mob's ON=SPAWN loot is made as it first comes to life).
+Called from anywhere else, such as a script's own Java thread, it is refused. A
+loot-table roll that gives nothing because its tracked items cannot be made for
+one of these reasons is not spent: a container stays unrolled (no ROLLED=TRUE)
+and rolls at its next opening, a mob's ON=SPAWN roll is made as it dies, into
+its corpse, and an ON=DEATH roll stays open. The log names the reason. The
+pack's [coffer script](examples/item-modifiers/js/props/itemmods-loot-guard.js)
+also tells the player why a coffer waits while the module is disabled: attach
+it with Prop_JScript SCRIPT=world:js/props/itemmods-loot-guard.js, as the sample
+does. A script's own GenCalls call gets the refusal as its error and needs its
+own fallback.
 
 ```text
 WORLD MODULES CHECK
@@ -169,7 +180,8 @@ Use the existing XML item generator and loot tables:
       PROPERWORN="body" MODBASE="myworld.mantle" AFFIXES="2" />
 ```
 
-MODBASE opts the template into tracked generation. AFFIXES asks for up to that
+MODBASE opts the template into tracked generation; like AFFIXES, its value may
+use the generator's variables (`MODBASE="$mantle_base"`). AFFIXES asks for up to that
 many eligible modifiers. The underlying item, loot-table trigger, container
 once-roll policy and seeded generation remain the existing systems. Without
 an enclosing seed, generation consumes the campaign dice stream. An ITEM SEED
@@ -187,9 +199,12 @@ the displayed name.
 
 For trusted native extensions, `ItemModifiers.initialize` initializes a fresh
 unowned generated item. `ItemModifiers.copyOf` copies a managed item with fresh
-item/modifier identities while keeping its rolls. Direct generic cloning is
-not the managed-copy API; a mismatched record binding is diagnosed. Generation
-addition is refused for owned or already crafted items. Ordinary gameplay uses
+item/modifier identities while keeping its rolls. Both run on the game thread
+(or at boot, as MODBASE does). Direct generic cloning (a rejuvenated or
+RandomItems copy) is not the managed-copy API: such a copy shares the record
+but is not the item it is bound to, so it grants no bonuses, AFFIXES adds
+nothing to it, and WORLD CHECK ITEMMODS names it. Generation addition is
+refused for owned or already crafted items. Ordinary gameplay uses
 transactions for edits.
 For catalog generation, keep the prototype untracked and apply MODBASE to each
 fresh generated copy. Publishing an already managed instance as a prototype
@@ -222,7 +237,10 @@ unknown material names; an enum spelling with underscores is not a space alias.
 The first transaction
 consumer accepts directly carried, unworn **plain GenResource piles**, with no
 scripts, behaviors or effects beyond identity metadata. It supports partial
-piles and complete consumption, preserving proportional base value. At most
+piles and complete consumption, preserving proportional base value. A partly
+spent pile whose name shows its weight (“an 8# iron ore bundle”) is renamed for
+what is left, as native crafting does; an authored name (“some cinder iron”)
+is kept. At most
 eight piles pay one operation. Decorated/enchanted resources, other currencies,
 multi-ingredient recipes, timed work and arbitrary scripts are outside this
 controlled commit family. Existing crafting skills still handle their normal
@@ -279,6 +297,10 @@ it. The general WORLD RELOAD ASSETS path does not silently acknowledge this
 family. Validation limits: 128 base/operation files, 64 KiB each, a 256 KiB world
 affix file, six modifiers/item, and 32,768 characters per saved item record. Unknown fields,
 unsupported stat paths and symlinked definition files/directories are refused.
+These are errors once the world uses the family (it selects items.modifiers,
+the campaign has it, or the world has `itemmods/`). A world that never opts in
+keeps reading its legacy `affixes.xml` as before: WORLD CHECK does not hold it
+to the size/link rule and reports tracked-entry problems as warnings only.
 
 Keep released JSON versions and XML affix versions installed. XML affixes may
 share an ID with different VERSION values; ID/version/hash identify each pin.
@@ -289,8 +311,10 @@ existing gear. Creator migrations for changing a released item's contract remain
 explicit work; no automatic reinterpretation is performed.
 
 Disabling the module suspends its bonuses/crafting and retains records and
-settlement. Re-enabling restores frozen rolls. Lowering the modifier limit can
-make over-limit worn equipment invalid for profile combat: unequip and remove
+settlement. Re-enabling restores frozen rolls. Lowering the modifier limit
+withholds an over-limit item's bonuses: the log and WORLD CHECK ITEMMODS name
+it, COMBATRESULT shows the source as withheld, and its wearer's composed combat
+goes on without it. A corrupt record is treated the same way. Unequip and remove
 enough modifiers, or restore the limit. Removal/unprotect paths remain available
 on unworn over-limit items. Changing campaign settings does not edit world
 defaults; use MODULESETTINGS for future-campaign defaults.

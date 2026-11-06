@@ -40,6 +40,9 @@ try{
  var aMods=data(seededA).modifiers,bMods=data(seededB).modifiers;for(var si=0;si<aMods.length;si++){delete aMods[si].uid;delete bMods[si].uid;}
  check('template-seed-covers-affix-selection-and-rolls',JSON.stringify(aMods)===JSON.stringify(bMods),'seeded rolls differ');
  check('template-seed-preserves-campaign-dice-stream',savedDice.equals(CMath.getRandState()),'seed leaked into campaign rolls');
+ var varTemplate=new java.io.File(root,'resources/randareas/item-vars.xml');write(varTemplate,read(template).replace('ID="embertrial_mantle"','ID="var_mantle"').replace('MODBASE="embertrial.mantle"','MODBASE="$mantle_base"'));
+ var mantleVars=new java.util.HashMap();mantleVars.put('MANTLE_BASE','embertrial.mantle');var varItem=CM.core.GenCalls.items('randareas/item-vars.xml','var_mantle',mantleVars,A,R).get(0);items.push(varItem);
+ check('modbase-expands-generator-variables',IM.isManaged(varItem)&&data(varItem).base.id==='embertrial.mantle'&&data(varItem).modifiers.length==2,String(IM.inspect(varItem)));
  var dice=CMath.getRandState(),snapshot=state(A),raw=String(item.text()),weight=material.basePhyStats().weight();
  IC.preview(A,'embertrial.reroll',item,'1');IM.inspect(item);IC.operations();IC.pool(item);CMClass.getCommand('ItemMods').execute(A,CM.core.CMParms.parse('ITEMMODS "trial mantle"'),0);
  check('preview-inspection-no-dice-state-or-item-mutation',dice.equals(CMath.getRandState())&&snapshot===state(A)&&raw===String(item.text())&&weight==material.basePhyStats().weight(),'inspection mutated');
@@ -60,6 +63,7 @@ try{
  cm.on('itemCrafted',function(who,target,receipt){if(who!==A)return;notifications++;var r=JSON.parse(String(receipt)),s=JSON.parse(state(A));settledBeforeCallback=!IC.inCommit()&&s.pending===''&&s.settled==r.request&&data(target).revision==r.revision;try{prepare(A,'reroll',item,1);}catch(e){reentrantRefused=true;}return false;},'fix-item-crafted');
  prepare(A,'reroll',item,1);var pending=JSON.parse(state(A)),request=pending.serial,before=data(item);commit(A);var after=data(item);
  check('one-cost-and-one-revision',material.basePhyStats().weight()==7&&after.revision==1,'cost/revision mismatch');
+ check('authored-pile-name-kept-after-partial-spend',String(material.Name())==='some test iron',String(material.Name()));
  check('selective-reroll-preserves-other-source',JSON.stringify(before.modifiers[1])===JSON.stringify(after.modifiers[1])&&before.modifiers[0].uid===after.modifiers[0].uid,'unselected modifier changed');
  check('advisory-event-sees-settled-state',notifications==1&&settledBeforeCallback&&reentrantRefused,'observer boundary failed');
  var committedState=state(A),committedText=String(item.text());draws=CMath.getRandState();commit(A,request);
@@ -84,16 +88,80 @@ try{
  var off=MD.load(root,'combat.profiles','');current.set(null,OM.prepare(off,String(OM.snapshot()),true));
  check('disable-suspends-bonuses-with-record-kept',CP.stats(A,CP.current()).stats.get('resistance.fire')==0&&data(item).modifiers.length==2&&String(OM.snapshot()).indexOf('"requires_handler":"items.modifiers"')>=0,'disable lost data or kept bonus');
  current.set(null,OM.prepare(plan,String(OM.snapshot()),true));check('resume-restores-frozen-rolls',CP.stats(A,CP.current()).stats.get('resistance.fire')==activeFire,'rolls reinterpreted');item.unWear();
+ // A generic copy (a rejuv, reset or RandomItems copy) carries the item's record, but is not the item it is bound to.
+ var ownFire=0,ownPen=0,mine=data(item).modifiers;for(var om=0;om<mine.length;om++){ownFire+=mine[om].values['resistance.fire']||0;ownPen+=mine[om].values['penetration.fire']||0;}
+ var generic=item.copyOf();items.push(generic);var copyOwn=generic.fetchEffect('Prop_ItemModifiers').combatStats();
+ check('fresh-generic-copy-grants-nothing',String(CM.core.InstanceIds.existing(generic))!==String(CM.core.InstanceIds.existing(item))&&copyOwn.get('resistance.fire')==0&&copyOwn.get('penetration.fire')==0,String(copyOwn.describe()));
+ // One made again from saved text (a room reset re-reading its items) keeps the INSTANCEID too: the ID still finds the first item.
+ generic.fetchEffect('ExtraData').setStat('INSTANCEID',CM.core.InstanceIds.existing(item));var sameId=String(CM.core.InstanceIds.existing(generic))===String(CM.core.InstanceIds.existing(item));
+ copyOwn=generic.fetchEffect('Prop_ItemModifiers').combatStats();var ownOwn=item.fetchEffect('Prop_ItemModifiers').combatStats();
+ check('same-id-generic-copy-grants-nothing',sameId&&copyOwn.get('resistance.fire')==0&&copyOwn.get('penetration.fire')==0&&ownOwn.get('resistance.fire')==ownFire&&ownOwn.get('penetration.fire')==ownPen,sameId+' copy '+copyOwn.describe()+' own '+ownOwn.describe());
+ // As RandomItems does: AFFIXES on the unplaced copy, which must not throw out of its tick.
+ var copyAffixes=-1,copyAffixError='';try{copyAffixes=CM.core.Affixes.apply(generic,1);}catch(e){copyAffixError=String(e);}
+ check('generated-affixes-on-a-generic-copy-do-not-escape',copyAffixError===''&&copyAffixes==0,copyAffixError+' '+copyAffixes);
+ B.addItem(generic);generic.wearAt(CM.Items.interfaces.Wearable.WORN_TORSO);item.wearAt(CM.Items.interfaces.Wearable.WORN_TORSO);
+ var copyStats=null,copyError='';try{copyStats=CP.stats(B,CP.current()).stats;CP.prepare(B,A);CP.prepare(A,B);}catch(e){copyError=String(e);}
+ check('generic-copy-grants-nothing-and-combat-goes-on',copyError===''&&copyStats.get('resistance.fire')==0&&copyStats.get('penetration.fire')==0,copyError||String(copyStats.describe()));
+ check('record-owner-keeps-its-bonuses-beside-a-copy',CP.stats(A,CP.current()).stats.get('resistance.fire')==ownFire&&CP.stats(A,CP.current()).stats.get('penetration.fire')==ownPen,String(CP.stats(A,CP.current()).stats.describe()));
+ var copyDetails=String(generic.fetchEffect('Prop_ItemModifiers').combatStatDetails());check('generic-copy-explains-withheld-bonuses',copyDetails.indexOf('withheld')>=0&&copyDetails.indexOf('another item')>=0,copyDetails);
+ var copyFindings=String(IM.checkItems(java.util.Arrays.asList(R),IM.check()));check('generic-copy-diagnosed-by-world-check',copyFindings.indexOf('bound to another item')>=0,copyFindings);
+ generic.unWear();B.delItem(generic);
+ // Lowering the campaign limit withholds an over-limit item's bonuses instead of failing its wearer's composed combat.
+ OM.configure('items.modifiers','max_modifiers','1');var limited=null,limitError='';try{limited=CP.stats(A,CP.current()).stats;CP.prepare(A,B);CP.prepare(B,A);}catch(e){limitError=String(e);}
+ check('over-limit-record-degrades-instead-of-failing-combat',limitError===''&&limited.get('resistance.fire')==0&&limited.get('penetration.fire')==0&&mine.length==2,limitError||String(limited.describe()));
+ var limitFindings=String(IM.checkItems(java.util.Arrays.asList(R),IM.check()));check('over-limit-record-diagnosed-by-world-check',limitFindings.indexOf('limit of 1')>=0,limitFindings);
+ OM.configure('items.modifiers','max_modifiers','6');check('restored-limit-restores-bonuses',CP.stats(A,CP.current()).stats.get('resistance.fire')==ownFire,String(CP.stats(A,CP.current()).stats.describe()));item.unWear();
  var extra=ore(A,3),sourceText=read(affixFile);
  prepare(A,'reroll',item,1);var validLedger=state(A),badLedger=JSON.parse(validLedger);badLedger.receipts='{"01":{}}';OM.put('items.modifiers',OM.character(A),MD.parse(JSON.stringify(badLedger)));draws=CMath.getRandState();weight=extra.basePhyStats().weight();refuse('noncanonical-receipt-key-refused-before-commit',function(){commit(A);});check('malformed-ledger-refusal-does-not-roll-or-charge',draws.equals(CMath.getRandState())&&extra.basePhyStats().weight()==weight,'bad ledger changed dice or costs');OM.put('items.modifiers',OM.character(A),MD.parse(validLedger));IC.cancel(A,0);
  write(affixFile,sourceText.replace('<ROLL','<AFFECT/><ROLL'));check('strict-xml-rejects-empty-effect-child',!IM.check().errors.isEmpty(),'empty AFFECT accepted');write(affixFile,sourceText);
  var operationFile=new java.io.File(root,'itemmods/embertrial.reroll.v1.json'),operationText=read(operationFile),materialCheck=JSON.parse(operationText);materialCheck.material='NOT_A_REGISTERED_MATERIAL';write(operationFile,JSON.stringify(materialCheck));check('definition-check-diagnoses-unregistered-material',!IM.check().errors.isEmpty(),'unknown material accepted');materialCheck.material='WHITE GOLD';write(operationFile,JSON.stringify(materialCheck));check('definition-check-accepts-native-multiword-material',IM.check().errors.isEmpty(),String(IM.check().report()));write(operationFile,operationText);
  var invalidAttributes=['POS="bogus"','POWER="bogus"','CURSED="bogus"','LEVEL="1-2-3"'];for(var ia=0;ia<invalidAttributes.length;ia++){var invalidAttribute=invalidAttributes[ia],attr=String(invalidAttribute).split('=')[0],badText=sourceText.replace('TRACKED="true"','TRACKED="true" '+invalidAttribute);if(attr!=='CURSED')badText=badText.replace(new RegExp(attr+'="[^\"]*"'),invalidAttribute);write(affixFile,badText);check('strict-xml-rejects-'+attr, !IM.check().errors.isEmpty(),String(IM.check().report()));}
+ // The pin of the affix being edited (Wardwoven), whatever the seed rolled onto the item.
+ var wardPin=IR.pin(IM.definitions().find('embertrial.fireguard1',1,'affix'));IM.definitions().pinned(wardPin,'affix');
  write(affixFile,sourceText.replace('NAME="Wardwoven"','NAME="Changed ward"'));IM.reload();
- var oldPinRejected=false;try{for(var v=0;v<original.modifiers.length;v++)IM.definitions().pinned(MD.parse(JSON.stringify(original.modifiers[v].pin)),'affix');}catch(e){oldPinRejected=true;}
- check('same-version-xml-edit-suspends-crafting',oldPinRejected||removed.pin.id!=='embertrial.fireguard1','edit silently changed pin');
+ var oldPinRejected=false,pinError='';try{IM.definitions().pinned(wardPin,'affix');}catch(e){oldPinRejected=true;pinError=String(e);}
+ check('same-version-xml-edit-suspends-crafting',oldPinRejected&&pinError.indexOf('changed without a new version')>=0,'edit silently changed pin '+pinError);
  write(affixFile,sourceText);IM.reload();prepare(A,'reroll',item,1);draws=CMath.getRandState();write(new java.io.File(root,'itemmods/bad.v1.json'),'{}');refuse('invalid-reload-atomic',function(){IM.reload();});
  check('failed-reload-keeps-old-accepted-library',IM.definitions().errors.isEmpty()&&draws.equals(CMath.getRandState()),'partial reload');new java.io.File(root,'itemmods/bad.v1.json').delete();IC.cancel(A,0);
+ // A MODBASE roll that cannot run yet (a definition fails CHECK, or off the game thread) leaves a once-only roll unspent.
+ function coffer(name){var c=CMClass.getItem('GenContainer');c.setName(name);R.addItem(c);items.push(c);var p=CMClass.getAbility('Prop_LootTable');p.setMiscText('FILE=randareas/embertrial-loot.xml ID=embertrial_mantle ON=OPEN');c.addNonUninvokableEffect(p);return p;}
+ function openCoffer(p){p.executeMsg(p.affecting(),CMClass.getMsg(A,p.affecting(),null,CMMsg.MSG_OPEN,'<S-NAME> open(s) <T-NAME>.'));var n=0;for(var ci=0;ci<R.numItems();ci++){var I=R.getItem(ci);if(I.container()==p.affecting()){n++;if(items.indexOf(I)<0)items.push(I);}}return n;}
+ var badLoot=coffer('a fix coffer'),offLoot=coffer('a fix far coffer');write(new java.io.File(root,'itemmods/bad.v1.json'),'{}');IM.reset();
+ var brokenOpen=openCoffer(badLoot);check('failed-modbase-roll-leaves-coffer-unrolled',brokenOpen==0&&String(badLoot.getStat('ROLLED'))==='FALSE'&&String(badLoot.text()).indexOf('ROLLED')<0,brokenOpen+' '+badLoot.text());
+ var spawner=CMClass.getMOB('GenMob');spawner.setName('a fix spawner');spawner.basePhyStats().setLevel(1);spawner.recoverPhyStats();actors.push(spawner);
+ var spawnLoot=CMClass.getAbility('Prop_LootTable');spawnLoot.setMiscText('FILE=randareas/embertrial-loot.xml ID=embertrial_mantle ON=SPAWN');spawner.addNonUninvokableEffect(spawnLoot);spawner.bringToLife(R,true);
+ check('failed-spawn-roll-left-unspent',spawner.numItems()==0&&field(spawnLoot,'lifeRolled')==false&&field(spawnLoot,'unspent')==true,'items '+spawner.numItems());
+ new java.io.File(root,'itemmods/bad.v1.json').delete();IM.reset();
+ var fixedOpen=openCoffer(badLoot),fixedItem=null;for(var fi=0;fi<R.numItems();fi++)if(R.getItem(fi).container()==badLoot.affecting())fixedItem=R.getItem(fi);
+ check('fixed-definitions-let-the-same-coffer-roll',fixedOpen==1&&String(badLoot.getStat('ROLLED'))==='TRUE'&&IM.isManaged(fixedItem),fixedOpen+' '+badLoot.text());
+ spawnLoot.okMessage(spawner,CMClass.getMsg(spawner,null,null,CMMsg.MSG_DEATH,null));var spawned=0;for(var sp=0;sp<spawner.numItems();sp++){if(IM.isManaged(spawner.getItem(sp)))spawned++;items.push(spawner.getItem(sp));}
+ check('unspent-spawn-roll-made-as-the-mob-dies',spawned==1&&field(spawnLoot,'lifeRolled')==true,'managed items '+spawned);
+ var worker=new java.lang.Thread(new java.lang.Runnable({run:function(){openCoffer(offLoot);}}));worker.start();worker.join();
+ check('off-game-thread-modbase-roll-leaves-coffer-unrolled',String(offLoot.getStat('ROLLED'))==='FALSE'&&openCoffer(offLoot)==1&&String(offLoot.getStat('ROLLED'))==='TRUE',String(offLoot.text()));
+ // CANCEL stays open while crafting is switched off; COMMIT and RECEIPT of a cancelled request say so.
+ prepare(A,'reroll',item,1);var cancelledId=JSON.parse(state(A)).serial;OM.configure('items.modifiers','allow_crafting','false');var cancelReply='';
+ try{cancelReply=String(IC.cancel(A,cancelledId));}catch(e){cancelReply='refused: '+e;}
+ check('cancel-works-while-crafting-is-disabled',cancelReply.indexOf('Cancelled craft #'+cancelledId)>=0&&JSON.parse(state(A)).pending==='',cancelReply);
+ var commitCancelled=String(IC.commit(A,cancelledId));check('commit-after-cancel-says-cancelled',commitCancelled.indexOf('was cancelled')>=0&&commitCancelled.indexOf('Already settled')<0,commitCancelled);
+ check('receipt-of-cancelled-request-says-cancelled',String(IC.receipt(A,cancelledId)).indexOf('was cancelled')>=0,String(IC.receipt(A,cancelledId)));
+ check('commit-of-a-committed-request-still-says-settled',String(IC.commit(A,request)).indexOf('Already settled craft #'+request)>=0,String(IC.commit(A,request)));
+ OM.configure('items.modifiers','allow_crafting','true');
+ // A partly spent pile whose name shows its weight is renamed for what is left.
+ var C=actor('Pile owner'),pileItem=make(C),pile=ore(C,8);CMLib.materials().adjustResourceName(pile);var pileBefore=String(pile.Name());prepare(C,'reroll',pileItem,1);commit(C);
+ check('partly-spent-pile-renamed-for-its-weight',pileBefore.indexOf('8#')>=0&&String(pile.Name()).indexOf('7#')>=0&&String(pile.displayText()).indexOf('7#')>=0&&pile.basePhyStats().weight()==7,pileBefore+' -> '+pile.Name()+' / '+pile.displayText());
+ // A world that never opts in keeps its legacy affixes.xml: an oversized or linked one is not a CHECK error.
+ var bare=Files.createTempDirectory('sud-item-bare-').toFile(),bareAffixes=new java.io.File(bare,'affixes.xml'),pad=new java.lang.StringBuilder(),withModule=current.get(null);
+ while(pad.length()<270000)pad.append('<!-- legacy affix notes -->\n');write(bareAffixes,'<AFFIXES>'+legacy+String(pad)+'</AFFIXES>');
+ function itemmodFindings(){var f=CM.core.WorldCheck.run(null,java.util.Collections.singleton('ITEMMODS')),out={errors:0,all:[]};for(var k=0;k<f.size();k++){out.all.push(f.get(k).severity+' '+f.get(k).what);if(String(f.get(k).severity)==='ERROR')out.errors++;}return out;}
+ try{
+  WorldFiles.configure(bare);current.set(null,OM.prepare(MD.load(bare,'',''),null,false));IM.reset();CM.core.Affixes.reload();
+  var bareBig=itemmodFindings();check('module-less-world-oversized-affixes-is-no-error',bareAffixes.length()>262144&&!IM.inUse()&&bareBig.errors==0,bareBig.all.join('; '));
+  bareAffixes['delete']();Files.createSymbolicLink(bareAffixes.toPath(),affixFile.toPath());var bareLink=itemmodFindings();check('module-less-world-linked-affixes-is-no-error',bareLink.errors==0,bareLink.all.join('; '));
+  new java.io.File(bare,'itemmods').mkdirs();var usedLink=itemmodFindings();check('opted-in-world-still-refuses-a-linked-affix-file',IM.inUse()&&usedLink.errors>0&&usedLink.all.join('; ').indexOf('affixes.xml must be a regular world file')>=0,usedLink.all.join('; '));
+ }finally{
+  WorldFiles.configure(root);current.set(null,withModule);IM.reset();CM.core.Affixes.reload();
+  var barePaths=Files.walk(bare.toPath());try{var bareList=barePaths.sorted(java.util.Comparator.reverseOrder()).iterator();while(bareList.hasNext())Files.deleteIfExists(bareList.next());}finally{barePaths.close();}
+ }
  check('receipt-retained-through-module-state-roundtrip',JSON.parse(state(A)).settled>0&&String(IC.receipt(A,request)).indexOf('"operation"')>=0,'receipt missing');
 }finally{
  CM.core.JSEvents.off('itemcrafted','fix-item-crafted');CM.core.JSEvents.off('itemlost','fix-item-cost-lost');for(var i=0;i<actors.length;i++)actors[i].destroy();for(var j=0;j<items.length;j++)items[j].destroy();R.destroy();
