@@ -3340,7 +3340,7 @@ nosneak (disallow sneaking past the requirement)
 
 -all (disallow all alignments)
 
-nofol (disallow followers of appropriate alignment)
+nofollow (disallow followers of appropriate alignment)
 
 +evil +good +neutral (create exceptions to -all)
 
@@ -3399,7 +3399,7 @@ nosneak (disallow sneaking past the requirement)
 
 -all (disallow all classes)
 
-nofol (disallow followers of appropriate class)
+nofollow (disallow followers of appropriate class)
 
 +thief +mage +bard (create exceptions to -all)
 
@@ -3433,7 +3433,7 @@ Creates restrictions for entering a room. Followers will be allowed unless expli
 
 nosneak (disallow sneaking past the requirement)
 
-nofol (disallow followers)
+nofollow (disallow followers; the help's `nofol` is ignored)
 
 actual (discount disguises)
 
@@ -3483,7 +3483,7 @@ Creates a maximum height in order to enter a room. Similar to Prop_Crawlspace.
 <=10 >=5
 ```
 
-Creates level restrictions for entering a room. Followers will be allowed unless the NOFOL parameter appears. The parameter should describe only the allowed levels. Multiple criteria are allowed. The term "NOSNEAK" may be added to the parameter to disallow sneaking past your criteria. The parm MESSAGE="message" may be added to change the error message seen. The term "SYSOP" will require admin privileges. The "ALL" flag, for some reason, just lets everyone in.
+Creates level restrictions for entering a room. Followers will be allowed unless the NOFOLLOW parameter appears. The parameter should describe only the allowed levels. Multiple criteria are allowed. The term "NOSNEAK" may be added to the parameter to disallow sneaking past your criteria. The parm MESSAGE="message" may be added to change the error message seen. The term "SYSOP" will require admin privileges. The "ALL" flag, for some reason, just lets everyone in.
 
 Notes:
 
@@ -3539,7 +3539,7 @@ nosneak (disallow sneaking past the requirement)
 
 -all (disallow all races)
 
-nofol (disallow followers of appropriate alignment)
+nofollow (disallow followers of appropriate alignment)
 
 +elf +half +human (create exceptions to -all)
 
@@ -3569,7 +3569,7 @@ Creates restrictions for entering a room. Players must pass every expression tes
 
 nosneak (disallow sneaking past the requirement)
 
-nofol (disallow followers)
+(the help also lists `nofol`, but this class reads only `nosneak`; followers are not handled separately)
 
 STRENGTH, INTELLIGENCE, WISDOM, CONSTITUTION, CHARISMA, DEXTERITY, etc..
 

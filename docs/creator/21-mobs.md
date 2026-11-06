@@ -717,8 +717,9 @@ Source: `CMGenEditor.modifyGenShopkeeper`,
 defaults) is in [09-society.md](09-society.md); this section is the mob
 side.
 
-Every `Gen*` service mob uses the shop editor. It has all the common mob fields
-(see above, in the same order up to Effects) followed by the shop block, then
+Every `Gen*` service mob uses the shop editor. It has the common mob fields
+(see above, up to Effects; here Height and Weight come right after Race and
+before the faction lines, Gender and Clan(s)) followed by the shop block, then
 Dispositions, Senses, Factions, Tattoos, Expertises, Scripts, Image and Tags as
 usual. Players deal with them using `LIST`, `BUY`, `SELL`, `VALUE`, `VIEW` and
 `INFO`, plus type-specific verbs below.

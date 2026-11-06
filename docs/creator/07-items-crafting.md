@@ -107,7 +107,7 @@ item crafting skills share these sub-commands:
 | `[SKILL] LIST` (optionally `LIST [WORDS]` or `LIST ALL`) | Lists the recipes the crafter's level allows (`ALL` also lists those above their level) |
 | `[SKILL] [ITEM]` or `[SKILL] [MATERIAL] [ITEM]` | Starts making the item. A material is needed when the item can be made from several |
 | `[SKILL] INFO [ITEM]` | Shows what the item would be like and how long it takes, without making it |
-| `[SKILL] LEARN [ITEM]` | Takes an item apart to write its recipe into a recipe book (see [learning by taking apart](#recipe-books-known-recipes-and-learning)) |
+| `[SKILL] LEARN [ITEM]` | Takes an item apart to write its recipe into a recipe book (skills that support deconstruction; see [learning by taking apart](#recipe-books-known-recipes-and-learning)) |
 | `[SKILL] BUNDLE ...` | Bundles raw material (skills that can bundle; type the command for its usage line) |
 | `[SKILL] MEND [ITEM]`, `REFIT [ITEM]` | Repairs, or resizes for another race (skills that can mend and refit) |
 | `[SKILL] STOP` | Cancels the work |
@@ -930,7 +930,8 @@ Shrimp	1	lantern eel	12	-HOUR +22
 ```
 
 A masked fishing row carries its own value, so a fish can be worth more in one
-area. Picks among several matching rows are weighted by frequency plus one.
+area. Hunting and fishing pick among the matching rows weighted by their frequency; the
+herb, flower and mushroom picks weigh each row by frequency plus one.
 `VALIDATE RECIPES ALL` checks `hunting.txt` and `fishing.txt`.
 
 ### Data gathering skills

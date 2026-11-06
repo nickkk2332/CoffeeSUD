@@ -2073,7 +2073,7 @@ All of the options for these properties are described in the property help
 | `MAXLANGUAGES` | `3` | coffeemud.ini | Stock language allowance per class. |
 | `LANGCOST` | `3 PRACTICE` | coffeemud.ini | Cost of learning a language. |
 | `JSCRIPTS` | `2` | coffeemud.ini | Approval policy for TRANSLATESCRIPT and other scripts. |
-| `LISTFILE` | `/resources/lists.ini` | coffeemud.ini | The global lists file (world copies under `world/` overlay it). |
+| `LISTFILE` | `/resources/lists.ini` | coffeemud.ini | The global lists file; a `world/resources/lists.ini` overlays it (`VOCAB LIST` shows which wins). |
 
 ## Persistence notes
 
@@ -2092,7 +2092,7 @@ All of the options for these properties are described in the property help
 A campaign never embeds a private copy of the world's lore or text files: it
 refers to them, so distribute matching world versions with a save. The
 character's own records survive edits to the files; a deleted lore entry just
-stops being listed, and a deleted language leaves a dangling ability.
+stops being listed.
 
 ## Troubleshooting
 
@@ -2129,8 +2129,8 @@ light).
 
 **A lore entry never appears.** Keys are case-insensitive but must be exactly
 the `ENTRY=`/`MPLORE` key; files must end in `.ini` and sit directly in
-`world/lore/`; a malformed properties line (a stray backslash, `\u` followed by
-non-hex) can drop an entry. `WORLD CHECK ONLY=LORE` reports it.
+`world/lore/`; a malformed `\uXXXX` escape makes Java reject the whole file
+(logged as an error). `WORLD CHECK ONLY=LORE` reports problems.
 
 **The journal has no automatic entries.** `JOURNALAUTO` is empty by default and
 cannot be set in `world.ini`.

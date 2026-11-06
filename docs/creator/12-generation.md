@@ -1271,3 +1271,388 @@ other random area.
 See [Travel, vehicles and instances](30-travel-vehicles-instances.md) for the
 instance machinery, and [Areas](20-areas-rooms-exits.md).
 
+## Guarantees: ENSURE
+
+Chance placement ("a key somewhere, one in ten times") can leave a locked
+storeroom with no key, or a key behind the door it opens. `ENSURE` (G7) is a
+child of an `AREA` that runs after all rooms are laid out and filled, and makes
+the area satisfy a rule, repairing it if needed. A rule counts things, then moves
+misplaced ones into valid places, then builds fallback copies, then removes
+extras.
+
+**Thing rules** (items and mobs):
+
+```xml
+<ENSURE name="barrow key" min="1" max="1" fallback="barrow_key"
+        where="reachable-without:keyname=barrow vault" in="mob|container" />
+<ENSURE var="__torches" min="2" fallback="torch" where="reachable" in="room" />
+```
+
+| Attribute | Meaning |
+|---|---|
+| `name` | Words in the Name of the mobs and items to count (anywhere in the area: on the floor, in containers, carried by mobs). |
+| `var` | Instead of names, count by a variable (a counter your `define` increments, such as `__torches`). The final count is stored back in the variable. |
+| `min` | At least this many must be in valid places (math). Default 0. |
+| `max` | At most this many (only with `name`); extras are destroyed, those in invalid places first. |
+| `fallback` | The `id` of an `ITEM` (or `MOB`) tag built to make up the shortfall, repeated until `min` is reached (at most `min*4+4` tries). |
+| `where` | `any` (default), `reachable` (from the entrance, through exits), or `reachable-without:keyname=KEY` (from the entrance without passing a door locked with that key name, in either direction). |
+| `in` | Where a thing may go: `ROOM` (default), `MOB` (a monster there carries it), `CONTAINER` (an unlocked-or-closed container in a room, not itself a key); combine with `\|`, commas or spaces. A thing with no suitable place goes on a room floor. |
+
+The key pattern: the locked room's `EXIT` says `keyname="barrow vault"`, the key
+item's `readabletext` is that same text, and the rule above puts the key
+only where the entrance can reach it without passing the vault door. An item in
+the wrong place is moved before a fallback is built. If there is nowhere at all
+the build fails with "nowhere <where> in 'Area' to put X". If `min` cannot be
+met a line is logged.
+
+**Room rules:**
+
+```xml
+<ENSURE room="barrow_shrine" count="1" replace="barrow_passage" />
+```
+
+`room` is the `id` of a `ROOM` tag; the area must contain at least `count`
+(default 1) rooms that came from it (a room counts if the template, or any
+group tag around it, has that id). If it lacks them, the *deepest* rooms are
+emptied (their monsters and items destroyed) and rebuilt from that template,
+keeping their exits; `replace` limits which rooms may be taken over to those
+built from another template id. The entrance is never replaced.
+
+ENSURE does not prove a scripted puzzle can be solved, only that counts and
+reachability hold. A build with a stable `SEED` plus `GENERATE PREVIEW` over many
+seeds is how you test it ([g7-ensure fixture](../../tools/fixtures/fixes/g7-ensure.js)).
+
+## Fill, regeneration and GENLOCK
+
+### GENERATE FILL on hand-built rooms
+
+```text
+GENERATE FILL forest_rooms FROM randareas/forest.xml level_range=5 AREA
+```
+
+You dig the map by hand (`DIG`, `LINK`...), then let a theme write the text,
+mobs and items. For each target room (the room you are in, or every room of
+the area with `AREA`) the command works out the layout tags the room would have
+had, from its *real* exits: `ROOMTAG_NODETYPE` (`leaf` for one exit, `street`
+for two, `square` for more), `ROOMTAG_NODERUN` (`ns`, `ew`, `ud`, `nesw`, `nwse`),
+`NODEEXITS`, `NODEFLAGS` (`corner`, `tee`, `intersection`, `gate`), the neighbours'
+`NODETYPE_x`/`ROOMTITLE_x`/`ROOMLINK_x`, `NODEGATEEXIT` and `GATEEXITROOM` for an
+exit out of the area, and the depth tags from a walk from the area's entrance.
+It then runs the named `ROOM` template on the existing room: title and
+description are rewritten (unless `KEEPTEXT`, or the room is `GENLOCK`), and
+mobs, items, effects and behaviors are *added*. **Exits are left alone** and the
+room keeps its class. Filling twice adds a second population, so trial it on
+a copy. `SEED=n` repeats the fill.
+
+### GENSOURCE and REGENERATE
+
+`GENERATE AREA` records how the area was made in a `GENSOURCE` flag (saved in the
+area's `.cmare`): the template file, the `AREA` id, the seed and the variables
+you gave. `REGENERATE` reads it:
+
+```text
+REGENERATE                      shows how the area was made and which rooms are kept
+REGENERATE AREA SEED=SAME       builds it again with the same seed
+REGENERATE AREA SEED=77 areasize=30    another seed, and a variable changed
+REGENERATE LOCK                 marks this room GENLOCK
+REGENERATE UNLOCK
+```
+
+Rooms marked **GENLOCK** (the `Prop_GenLock` property,
+[reference](23-properties-reference.md#prop_genlock)) are kept exactly as they
+are, with their exits: write or change a room by hand, `REGENERATE LOCK` it, and
+a better template can be rerun without losing it. The other rooms are replaced
+by the new build's rooms of the *same ids*; every exit into the area (the gate
+too) is pointed at the room of its id; an exit to a room the new build lacks is
+removed; players in a replaced room move to the new room. `NOSAVE` after
+`REGENERATE` keeps the database out of it. Without a `GENSOURCE` (the area was
+not made by `GENERATE AREA`) it says so.
+
+### Regenerate behavior and MPREGENERATE
+
+For an area that re-rolls itself in play, the
+[`Regenerate`](24-behaviors-and-masks.md#regenerate) behavior has
+`FILE= ID= VARS="..."` (else it uses the `GENSOURCE`), `SEED=RANDOM|DAILY|WEEKLY|SAME|n`,
+`WHEN=MUDDAY:n,MOON:phase,ONEMPTY,SCRIPT` and `KEEP="room ids"`. It never
+re-rolls while a player, or someone following one, is inside, and it keeps
+GENLOCK rooms, the `KEEP` rooms and rooms a running quest uses. `MPREGENERATE
+area|HERE [SEED=n|SAME]` triggers it from a script, and the area's
+`GENERATED_PROG` runs afterwards. Define what happens to the monsters and items
+the player left behind, and never reroll an occupied mandatory story room without
+a designed recovery policy.
+
+```text
+GENERATE AREA crypt_dungeon FROM randareas/crypt.xml areaname=Barrow areasize=30 level_range=10 aggrochance=20 theme=crypt SEED=13 UNLINKED
+REGENERATE AREA SEED=SAME
+```
+
+Worked sequence ("Old Tunnels"): bake the area unlinked, write the story rooms
+by hand, `REGENERATE LOCK` each of them, improve the template's descriptions,
+then `REGENERATE AREA SEED=SAME`: the hand-written rooms stay and the rest follow
+the new template.
+
+## Themes and set pieces
+
+A **theme** is a template file that teaches the generic dungeon structure
+how to look and who lives there. The stock themes (loaded by `example.xml` so
+`random_dungeon` can roll any) are:
+
+| File | Theme |
+|---|---|
+| `forest.xml`, `plains.xml`, `snow.xml`, `jungle.xml`, `swamp.xml`, `mountains.xml`, `desert.xml` | Overland terrain. |
+| `town.xml` | A town (streets, houses, shops, an inn; adds an `Arrest` behavior). |
+| `prison.xml`, `rats.xml`, `lair.xml`, `oceanfloor.xml` | Special-purpose dungeons. |
+| `crypt.xml`, `ruins.xml`, `castle.xml`, `volcano.xml`, `sky.xml`, `mine.xml`, `sewer.xml` | G15 themes. |
+| `planet.xml` | Loads a set of the above for planetary use. |
+
+Shared banks: `inc_roomruns.xml` (directional wording such as
+`$roomexits_desc_long`), `inc_common.xml` (races, metals, woods, junk and
+treasure item banks, `dungeon_treasure_items`), `inc_adjectives.xml`,
+`inc_dungeonblurbs.xml`, `inc_fantasynames.xml`, `inc_streetnames.xml` and
+`inc_setpieces.xml`.
+
+The shared structure is three `ROOM` groups declared with `merge="true"` in
+every theme: `hallway_rooms` (street and surround nodes), `interior_rooms`
+(square and interior nodes), `leaf_rooms` (dead ends). A theme adds a
+`ROOM select="all" condition="$theme='crypt'"` to each, so `$theme` picks which
+theme's rooms are eligible. The `AREA` tags (`maze_dungeon`, `grid_dungeon`,
+`square_dungeon`, `box_dungeon`, `cross_dungeon`, `tree_dungeon`,
+`branch_dungeon`, `spot_dungeon`, each `like=` the first with another layout)
+insert those groups.
+
+**Set pieces** (`inc_setpieces.xml`, G15): a theme includes
+`<ROOM insert="setpiece_leaf_rooms" />` among its leaves and
+`<ROOM insert="setpiece_hall_rooms" />` among its halls. Pieces: a riddle chest
+that opens to its answer spoken aloud (`Prop_OpenPassword`), a lever room (a
+`Scriptable` on the lever item that opens a cache), a healing shrine, a trapped
+corridor (`RandomTraps`), and a collapsed passage with something hidden. Each
+comes at most twice an area (the `__setpiece` counter), only two or more rooms from
+the entrance (`$roomtag_depth>=2`), and only now and then (`1?4=1`).
+
+**Starting a new theme.** Copy `resources/randareas/theme_skeleton.xml` to
+`world/resources/randareas/mytheme.xml`, change every `skeleton` to your theme's
+name (it appears once in `requires`, once in the `randomtheme` choice, and in the
+ids), and fill its slots: the layout list, the street/inner/dead-end rooms, the
+mobs and the boss. Add `<STRING load="/resources/randareas/mytheme.xml" />` to a
+copy of `example.xml` (or `load` it from your own root file) and
+`random_dungeon` rolls it too. Then:
+
+```text
+GENERATE CHECK randareas/mytheme.xml
+GENERATE PREVIEW AREA skeleton_dungeon FROM randareas/mytheme.xml areaname=X areasize=30 level_range=10 aggrochance=20 theme=skeleton
+```
+
+## Loot tables
+
+`Prop_LootTable` ([reference](23-properties-reference.md#prop_loottable)) gives
+a mob or a container a table in a template file, rolled fresh on an event.
+
+```text
+Prop_LootTable FILE=randareas/loot.xml ID=goblin ROLLS=0?2 ON=DEATH GOLD=1?10
+Prop_LootTable FILE=randareas/loot.xml ID=chest ROLLS=1?3 ON=OPEN
+```
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `FILE=` | `randareas/loot.xml` | The template file. |
+| `ID=` | none (required) | The id of an `ITEM` tag. Without it nothing happens. |
+| `ROLLS=` | `1` | How many times the tag is rolled (math: `0?2`). Each roll is fresh. |
+| `ON=` | `DEATH` on a mob, `OPEN` on a container | `DEATH`: into the mob's pack as it dies, so its corpse has it. `OPEN`: the first time the container is opened, then not again until its contents reset. `SPAWN`: as the mob is brought to life, or for a container as a player first enters its room. `RESET` is the same as `SPAWN`. |
+| `CHANCE=` | `100` | Percent chance that the whole roll happens at all. |
+| `GOLD=` | none | Money (math) given as well: to the mob, or placed in the container. |
+| `AFFIXES=` | none | Math: rolls that many [affixes](#affixes-and-random-item-properties) onto each item rolled. |
+
+Each roll defines `$mob_level` (the host's level), `$area_level` (the area's
+median level), `$theme` (the area's `THEME` blurb flag or theme name, lower
+case, `fantasy` if none) and `$player_level` (the killer's or opener's level, or
+the host's). Use them in the table: `level="$mob_level"`.
+
+**Writing the table.** An `ITEM` tag with a `select="pick-1"` and `pickweight` on
+the choices gives weighted tiers. Nest groups for tiers within tiers. Mix
+guaranteed and random entries with `select="all"` at the top. The stock
+`resources/randareas/loot.xml` has `goblin` (mostly copper and crude blades, a
+war-horn 3%) and `chest` (common 70, uncommon 25, rare 5).
+
+**Container state.** A container rolls once until its contents reset. The state
+is `ROLLED=TRUE` kept in the property's own text, which a save keeps. A mob rolls
+once per life. A table whose items could not be made (a `MODBASE` item while the
+tracked-modifier module is off or its definitions fail `CHECK`) does not count
+as a spent roll: the container rolls at its next opening, and a mob's `SPAWN`
+roll is made as it dies.
+
+**Catalog caps.** A `class="catalog"` entry copies a catalog item and honours
+the catalog's cap and once-ever rules: when the cap of copies in the world is
+reached, the entry gives nothing. So a 0.5% entry 'Fang of Grishnak' with a cap
+of 1 is the one fang, whoever kills the most goblins. The mob's death-policy
+`ITEMLOOTPOLICY` may still ruin an item on its way into the corpse. Verify cap and
+once-ever behavior across a save and restore in your own world.
+
+Loot is balanced by *both* the table and any affixes or crafted quality it
+composes with: inspect final stats and value, not only the base item.
+
+For a table on a mob made by a template:
+
+```xml
+<MOB class="GenMob" level="$level_range" race="Goblin" name="a warren goblin" display="$mob_name snarls here.">
+  <AFFECT class="Prop_LootTable" parms="FILE=randareas/loot.xml ID=goblin ROLLS=0?2 ON=DEATH GOLD=1?10" />
+</MOB>
+```
+
+Related, for random items on a schedule rather than on an event:
+[`RandomItems`](24-behaviors-and-masks.md#randomitems) (items from a file,
+a catalog list; `AFFIXES=`) and
+[`ItemGenerator`](24-behaviors-and-masks.md#itemgenerator) (crafted items weighted
+toward the cheap; `ENCHANTED=` percent chance of enchantment).
+
+## Affixes and random item properties
+
+An **affix** is a data-driven random enchantment: a name part and some
+properties. An item gets at most one prefix and one suffix that fit its kind and
+level, picked by weight.
+
+**Where the data is.** `world/affixes.xml`, else `resources/randareas/affixes.xml`
+(or the world's own copy of it in `world/resources/randareas/`). It is read once;
+`Affixes.reload()` (used by tests) rereads it, and a game restart picks up edits.
+
+**Format.** `<AFFIXES>` holds `<AFFIX>` tags:
+
+```xml
+<AFFIXES>
+  <AFFIX id="flaming" name="Flaming" pos="prefix" kinds="weapon,ammo"
+         level="5-60" pickweight="10" power="2" cursed="false">
+    <AFFECT class="Prop_FightSpellCast" parms="10%;Spell_BurningHands" />
+  </AFFIX>
+  <AFFIX id="bear" name="of the Bear" pos="suffix" kinds="armor,item"
+         level="1-60" pickweight="10">
+    <AFFECT class="Prop_WearAdjuster" parms="strength+1 hitpoints+10" />
+  </AFFIX>
+</AFFIXES>
+```
+
+| Attribute | Default | Meaning |
+|---|---|---|
+| `id` | the name, lower-cased | Identifier; one affix is never applied twice to an item. |
+| `name` | none (required; an entry without one is skipped) | The word added. |
+| `pos` | prefix | `suffix` makes a suffix; anything else is a prefix. |
+| `kinds` | `any` | Comma list of `weapon`, `armor`, `ammo`, `item` (anything else), `any`. An ammunition item is `ammo`, a weapon `weapon`, armor `armor`, all else `item`. |
+| `level` | `1-9999` | The item levels the affix goes on, `lo-hi` (an item is judged by its base level when the pick is made). |
+| `pickweight` | `10` | Relative weight. `0` or less is never picked. |
+| `power` | `1` | How much it raises the item's level. Its value rises by `power/10` of the current value (`power="0"` changes neither). |
+| `cursed` | `false` | `true` makes the item impossible to take off. |
+
+Each `<AFFECT class=... parms=... />` child adds that property to the item with
+those parameters. If the item already has the property, the parameters are
+joined (with `;` for a spell-cast property, a space otherwise). `parms` may
+instead be the tag's text.
+
+**What an affix does to the item.** The name gets the prefix after its article
+(`a short sword` + `Flaming` becomes `a Flaming short sword`; `an` is chosen
+when needed) and `of ...` after for a suffix (`of the Bear`; a suffix name that
+already starts with `of` is used as is). The room display text follows the new
+name. The level goes up by the affix's `power`, the value by a tenth of it each,
+the item is marked a bonus item, and a cursed affix makes it unremovable.
+
+**What uses affixes.**
+
+| Use | How |
+|---|---|
+| `ITEM` template tag | `affixes="0?2"` (math; at most 2 are applied). |
+| `Prop_LootTable` | `AFFIXES=1?2`. |
+| `RandomItems` behavior | `AFFIXES=...`. |
+| `ItemGenerator` behavior, `Thief_Digsite` | Random enchantment (`ENCHANTED=` percent): when affixes exist, an enchanted item gets one affix (a second a quarter of the time); only without an affix file does the old behavior (a plus/minus bump, a curse, or a random spell-cast property; ammunition gets an attack/damage adjuster) apply. |
+| `TimsLibrary.enchant` (Java) | The library call behind the last row. |
+
+**Tracked modifiers.** `affix` entries with `tracked="true"` (plus `version`, `tier`,
+`group`, `tags` and `<ROLL stat= min= max= />` children; `power` must be 0, no
+`cursed`, no `<AFFECT>` children) are the other family. They are chosen only for
+items whose template has `modbase="base.id"`, and they save each modifier's
+identity, tier, group and rolled values so the item can be crafted on selectively
+afterwards. The ordinary affixes above are untouched by them. This is documented in
+full in [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md); an item's
+`seed` covers its tracked selection and rolls, and instance ids stay distinct.
+
+## Random monsters and other random behaviors
+
+Not everything random needs a whole area. The behaviors below are described in
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md); the generator-relevant
+facts:
+
+| Behavior | What it does |
+|---|---|
+| [`RandomMonsters`](24-behaviors-and-masks.md#randommonsters) | Spawns mobs into a room or area every few ticks from a `.cmare` file of mobs, an inline `<MOBS>` block, or `catalog:name,name` (with caps) or `CATALOG="grey wolf=4,dire wolf=1"` with `WHEN`/`DESPAWN`/`NEAR`/`LEVEL`. |
+| [`RandomItems`](24-behaviors-and-masks.md#randomitems) | The same for items, including onto mobs; `AFFIXES=`. |
+| [`ItemGenerator`](24-behaviors-and-masks.md#itemgenerator) | Items from the crafting skills. |
+| [`RandomEncounters`](24-behaviors-and-masks.md#randomencounters) | Encounters from `world/encounters/NAME.enc` as the party moves ([combat and encounters](29-combat-and-encounters.md)). |
+| [`RandomTraps`](24-behaviors-and-masks.md#randomtraps) | Traps in rooms/exits/items. Used by the stock `random` theme and the trapped-corridor set piece. |
+| [`RandomQuests`](24-behaviors-and-masks.md#randomquests) | Quests from the quest `QUEST` tags; bounded attempts, then it disables itself and logs (G2). |
+| [`RandomTeleporter`](24-behaviors-and-masks.md#randomteleporter) | A mob that teleports itself. |
+
+To produce a random *individual* monster with real variation, use a `MOB` tag in
+a template with `select`ed `RACE`, `NAME` from a [name style](#name-styles), a
+`level` from a range, `AFFECT`s picked with `pick-N`, and equipment from `ITEM`
+banks, then call it with `GENERATE MOB`, `MPGENERATE MOB`, `gen.mob`, or from a
+`RandomMonsters`-style behavior on a catalog entry.
+
+## Name styles
+
+Random names (G12) are data: one file per style, `world/namegen/STYLE.ini`, else
+`resources/namegen/STYLE.ini` (or the world's own copy). Stock styles: `default`,
+`elvish`, `dwarvish`, `goblin`. Lines are `KEY=value`; `#` starts a comment; a
+key given twice adds to the first.
+
+| Key | Meaning |
+|---|---|
+| `VOWELS=`, `CONSONANTS=` | The syllables, taken in turn, each followed by a digit of flags: 4 may be in the middle, 2 first, 1 last (7 anywhere, 6 not last, 3 not in the middle). A style without them uses the default's. |
+| `START=` | `VOWEL` (the default), `CONSONANT` or `EITHER`: the first syllable. |
+| `SYLLABLES=` | `2-4`: how many when the caller asks for none. |
+| `PREFIXES=`, `SUFFIXES=` | Comma lists put before or after a made name; `PREFIXPCT=`, `SUFFIXPCT=` (25) their chance. |
+| `MALE=`, `FEMALE=`, `NEUTER=` | Given names used `GIVENPCT=` (50) percent of the time instead of a made one. |
+| `FAMILY=`, or `FAMILYSTART=` + `FAMILYEND=` | Family names (the full form only). |
+| `TITLES=`, `TITLEPCT=` (20) | Titles (the full form only). |
+| `RACES=`, `LANGUAGES=` | Races (id, name or category) and languages that use this style. A race's or language's own `NAMESTYLE` (set in its editor) comes first. |
+
+`default.ini` is the old table: replacing it in your world changes every name that
+names no style.
+
+**Using a style:**
+
+- In templates: `$SYSTEM_RANDOM_NAME:2-4:elvish` (unbraced) or
+  `${SYSTEM_RANDOM_NAME:2-4:elvish}`. The part after the range may be a style, a
+  race or a language, and `:FULL` adds the family name and title:
+  `${SYSTEM_RANDOM_NAME:2-3:dwarvish:FULL}` gives "Thrain Ironhand the Stout".
+  With no style, a `NAMESTYLE` variable the template or its theme defines is
+  used, else the mob's race's style. An unknown style is an error.
+- In MOBPROG: `RANDNAME([style|race|language] [min max] [M|F|N] [FULL])`
+  ([functions](28-mobprog-functions.md#randname)).
+- In JavaScript: `CM.core.NameStyles.make(style, min, max, gender, full)`.
+- Character creation (`NEW *` at the profile menu) and `Spell_TrueName` offer a
+  name in the race's style.
+
+## Where generated content lives
+
+| Situation | What is saved | Where |
+|---|---|---|
+| Builder mode, `GENERATE AREA ... ` (not sandbox) | The area as ordinary content, with its `GENSEED` and `GENSOURCE` blurb flags. Rooms, exits, mobs, items. | `world/areas/<name>.cmare`, written by `SAVE` or on quit (the exporter writes every live area). |
+| Builder mode, `GENERATE ROOM/MOB/ITEM` | Ordinary content in the room it was placed. | The room's data in the world files; mobs and items need `SAVE CHANGED` ([World workflow](02-world-workflow.md#unsaved-rooms-undo-and-history)). |
+| `GENERATE ... SANDBOX` | Nothing. The sandbox area and areas generated into it are unsavable. | None. |
+| `GENERATE PREVIEW` | Nothing. Built and destroyed. | None. |
+| A game in play (normal mode), `GENERATE`/`MPGENERATE`/`gen.area`/autogen instances | Areas and rooms made in play are recorded in the save as shapes (a new area's class, name and area data; new, changed and destroyed rooms), the instance children are remade by their parent, and the contents of rooms (mobs, items, doors) are applied on top as for any room. Generated quests are saved whole and made again from their scripts. | The campaign save ([state and persistence](state-and-persistence.md), [saves and party](31-saves-and-party.md)). |
+| Seed policy of autogen instances | `GAME` is one seed for the whole save; `ENTRY` creates a seed per instance and saves it. | The save's header / the instance's `GENSEED`. |
+| `Regenerate` behavior state | When the days count from, the moon last seen, a re-roll waiting. | Saved with the game as behavior state. |
+| `Prop_LootTable` state | `ROLLED=TRUE` in the property text. | With the container. |
+
+Notes:
+
+- `GEN_BACKTICKS` in `coffeemud.ini` (default true): generated apostrophes are
+  stored as backticks, the engine's convention. `GEN_BACKTICKS=false` makes
+  `GENERATE` (not `MPGENERATE`) keep real apostrophes in what it makes, which
+  makes `.cmare` files easier to read.
+- `NOSAVE` by itself is not a promise that exports omit a live generated area.
+  Use `SANDBOX` for trials.
+- Seeded generation and save persistence are separate. A seed lets you rebuild
+  an area identically; a save records what *happened* in it. Neither says when a
+  cleared dungeon should reset: decide that (`Regenerate`, `ResetWhole`,
+  instances) explicitly.
+- Use stable ids for content whose discovery must persist across template
+  versions.
+
