@@ -1112,8 +1112,9 @@ condition each time, breaking at none); the component a material, a resource,
 an item name (with `*` wildcards) or `TAG(name)`; and an optional zapper mask
 naming who needs it. `&&` and `||` combine parts. The field replaces any
 `components.txt` line for that ID. A caster without the components is refused
-(`You do not have the requirements to use this`) before anything is spent.
-Archons, mobs and holders of `COMPONENTS` are exempt.
+(`The requirements to use this spell are: ...`, with the ability's type in place
+of "spell") before the cost is taken. Holders of the `COMPONENTS` security flag
+are exempt (the shipped help also names archons and mobs).
 
 ### The saved record
 
@@ -1185,7 +1186,7 @@ Fields (stat codes are those of the saved record):
 | `ORIGINAL` | Base Ability/Skill ID | The Java ability it wraps. |
 | `NAME`, `DISPLAY`, `TRIGSTR`, `MAXRANGE`, `MINRANGE`, `CLASSIFICATION`, `FLAGS`, `OVERRIDEMANA`, `USAGEMASK`, `QUALITY`, `TICKSBETWEENCASTS`, `HELP` | as for [GenAbility](#genability-fields) | Blank keeps the original's value. |
 | `AUTOINVOKE`, `MAYENCHANT` | Is Auto-invoking, Is enchantable | Whether it is a passive ability; whether it may be put into scrolls and wands. |
-| `STRING` | Strings | A table of text replacements: the original's message strings (the English text it passes to its translation function) mapped to new text. Add a key to see its current value; a blank value removes it. |
+| `STRING` | Strings | A table of text replacements: a message string of the original (the English text its code passes to its translation function) mapped to new text. In the editor, type a string to add it (it then asks for the replacement) and type an existing string to remove it. |
 | `ACTIONCOST`, `COMBATACTIONCOST`, `COMPONENTS` | as for GenAbility | `-1` keeps the original's. |
 | `CASTMASK`, `TARGETMASK` | Cast mask, Target mask | Zapper masks checked before delegating. |
 | `POSTCASTABILITY`, `POSTCASTAFFECT` | Post-cast ability, Post-cast affect | `Prop_SpellAdder` lists cast on the target or put on it after a successful cast. |

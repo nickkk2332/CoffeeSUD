@@ -320,7 +320,11 @@ with, in the room's script:
 
 ```text
 FUNCTION_PROG waterdepth
-return $%EVAL(30 - 5 * $%VAR(* BUCKETS)%)%
+if var(* BUCKETS >= 3)
+  return 15
+else
+  return 30
+endif
 ~
 ```
 

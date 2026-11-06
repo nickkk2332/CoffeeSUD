@@ -123,7 +123,7 @@ entry below lists its own as `min/max/chance`.
 The behaviors that extend ActiveTicker are: AntiVagrant, CombatAbilities and
 its presets, CorpseEater, Decay, DelayedTransporter, Emoter, FieryRoom,
 FightFlee, Follower, GetsAllEquipped, Healer, InstantDeath, ItemGenerator,
-MOBEater, MOBHunter, MOBReSave, Mime, Mobile and its subclasses, MovingRoom,
+MOBEater, MOBHunter, MOBReSave, MOBTeacher, Mime, Mobile and its subclasses, MovingRoom,
 the three `*Abilities`, Patroller, ProtectedCitizen(s), RandomItems,
 RandomMonsters, RandomQuests, RandomTeleporter, RandomTraps, ResourceOverride,
 Scavenger, TargetPlayer and WaterCurrents.
@@ -472,7 +472,7 @@ combat round.
 | `NOSTATS` | Do not reshape the mob's stats to fit the class. |
 | `NOCOMBATSTAT` | Do not set the combat stats (attack, armor, damage, hit points, mana, move). |
 | `BSIZE=[N]` | Limit the size of the skill rotation used. |
-| `MINTICKS`, `MAXTICKS`, `CHANCE` | Accepted by the presets as written in their help. |
+| `MINTICKS=n`, `MAXTICKS=n`, `CHANCE=n` | Ticks between uses and the chance (the usual timing keys, matched by their start); default 1/1/100, one try per combat round. |
 | `SUPPORT=LEADER` (default) / `SELF` / `GROUP` / `MASK:"[ZAPPER MASK]"` | CoffeeSUD: whom it helps. LEADER is itself and the mob it follows, GROUP its group in the room, MASK anyone there the mask fits (NPCs too). |
 | `HEALAT=[N]` | CoffeeSUD: it heals only those under N% of their hit points, the most hurt first, and before anything else. |
 | `CUREFIRST=Poison,Disease` | CoffeeSUD: it cures those first, with abilities whose names say so. |
@@ -789,8 +789,8 @@ FaithHelper Odin 5 msg="OMG ATTACK!"
 
 ### FasterRecovery
 
-Hosts: rooms, areas, items (per the code; the help also lists mobs, and the
-effect reaches a mob that carries the item or rides the host). Gives all
+Hosts: rooms, areas, items (per the code; the help also lists mobs). The help
+says the room, a possessed item, or a ridden mob or item gives all
 affected mobs extra recovery ticks every normal tick, as opposed to the usual
 regeneration roughly once per 5 ticks. All parameters are optional.
 
@@ -861,7 +861,7 @@ removing a preset reset the room, save, and check the stats. The presets
 | `NOSTATS` | Leave the mob's stats alone. |
 | `NOCOMBATSTAT` | Leave the combat stats alone. |
 | `OFFENSIVE`, `DEFENSIVE`, `MIXEDOFFENSIVE`, `MIXEDDEFENSIVE` | Influences skill choice. |
-| `MINTICKS=n MAXTICKS=n CHANCE=n` | As listed in the help; the presets run on the 1/1/100 per-round timing (in the code the `MIN`/`MAX`/`CHANCE` words are skipped when reading skill names). |
+| `MINTICKS=n MAXTICKS=n CHANCE=n` | Timing, default 1/1/100 (one try per combat round). |
 | `BSIZE=n` | Rotation size. |
 | `+SKILLID`, `-SKILLID`, `OPENER=`, rotation rules, `SUPPORT=`, `HEALAT=`... | All the [CombatAbilities](#combatabilities) options. |
 

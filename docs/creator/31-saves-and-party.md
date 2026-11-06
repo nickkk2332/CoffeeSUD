@@ -347,3 +347,181 @@ helps them fight, unless AUTOASSIST is off", `HELP PARTY`).
 | Script functions `PARTYSIZE()`, `INPARTY()`, `PARTYLEADER()`, `PARTY()` | See [MOBPROG functions](28-mobprog-functions.md). The fixture `st10-party.js` exercises them. |
 | `onSwitch(from, to)` (JavaScript) | Player switch; see [JavaScript](05-javascript.md). |
 
+## Windows and the console
+
+Your terminal (standard input and output) is the game's only connection. The
+character you play there is the *played* character. Every other character of
+your profile that is in the world has a session of its own with nothing behind
+it: it receives text (so scripts, spells and messages work) but reads nothing.
+You act for it with `AS` or `SWITCH`, or give it a window.
+
+### WINDOWS
+
+With windows on, each character in the world other than the played one gets its
+own window. It shows what that character sees and takes that character's
+commands, so you can drive several characters at once without switching.
+
+| Command | Effect |
+| --- | --- |
+| `WINDOWS` | Shows whether windows are on. |
+| `WINDOWS ON` | Opens a window for each character in the world now, and for each that comes in later. Refused with "There is no display here, so the windows cannot open." when Java has no display. |
+| `WINDOWS OFF` | Closes them all. The characters stay in the world, back on plain party sessions. |
+| `WINDOWS PANEL` | Shows the panel setting. |
+| `WINDOWS PANEL ON` | Gives each window a panel beside its text with all sections. |
+| `WINDOWS PANEL OFF` | Takes the panel away. |
+| `WINDOWS PANEL STATUS,MAP,PARTY` | Shows only the sections named, in the order given (separators: comma, semicolon or space). Anything else is refused with the list of sections. |
+
+Closing a window with the mouse sends that character to rest (`PARTY REST`
+would do the same). If they led the party, the lead passes on.
+
+Start-up settings:
+
+| Key | Where | Meaning |
+| --- | --- | --- |
+| `WINDOWS=1` | `coffeemud.ini` or command line | Start with windows on. With no display the launcher prints "There is no display here, so the characters' windows (WINDOWS=1) are off." and carries on. |
+| `WINDOWPANEL=STATUS,MAP,PARTY` | `coffeemud.ini` or command line (not `world.ini`) | The panel sections at start. Blank or `OFF` for none. |
+
+Neither setting is saved with a campaign. `WINDOWS ON` made in play is lost on
+the next start.
+
+Panel sections:
+
+| Section | Shows |
+| --- | --- |
+| `STATUS` | `world/text/panel.txt` if the world has one, with the prompt codes of the `PROMPT` command (`%h`, `%H`, `%r`, `%z`, `%{VAR NAME}`, colour codes), else the character's points, room and area. |
+| `MAP` | The rooms about the character, as the regional awareness map draws them (seven rooms across). |
+| `PARTY` | Each party member in the party's order, with a bar of hit points. |
+
+The panel is drawn again at every prompt. World creators who want the status
+panel to show campaign variables use the `%{VAR ...}` prompt codes
+([Presentation and language](11-presentation-language.md)).
+
+In turn-based time a window's character is bound by the same rules as `AS`: a
+command that takes time waits for the leader's turn.
+
+### Headless runs
+
+Without a display, windows cannot open and every non-played character uses a
+plain `PartySession`. The game itself needs no display: `CHECK=1` loads the world
+and exits, and `tools/sudplay.py` and `tools/playtest.sh` drive the console
+from scripts (see [Installing and running](18-installing-and-running.md) and
+[Testing and release](13-testing-release.md)). To force headless for tests,
+launch Java with `-Djava.awt.headless=true`.
+
+## Time: real time, pause and turns
+
+CoffeeSUD owns the game clock (`GameTime`). The calendar, effects, cooldowns,
+ticks, decay and weather all read it, so changing how it moves changes
+everything at once. Logs, idle timers and "last login" dates stay on the system
+clock.
+
+### Real time
+
+In real time the clock follows the system clock, and the world ticks on its own
+(a tick is four seconds, `HELP TIMEMODE`). A game starts in real time unless
+`TIMEMODE=TURNS` is set. `MILLISPERMUDHOUR` and the other calendar keys decide how
+long a game hour is ([World simulation](10-world-simulation.md)).
+
+`TIMESCALE` speeds up or slows down real time: `TIMESCALE=8` in `coffeemud.ini`
+(or the `TIMESCALE` command) makes eight game seconds pass in each real second.
+Allowed range 0.1 to 20; the prompt shows `(x8)` when the rate is not 1. The
+command is limited to builder mode and `DEV=1` games, the setting is not saved,
+and pause and turn-based time work as before (the rate waits).
+
+### PAUSE and RESUME
+
+In single-player `PAUSE` stops the clock and `PAUSE` again (or `RESUME`,
+`UNPAUSE`, `PAUSE RESUME`) starts it. While paused:
+
+- Nothing ticks: no monster moves, no effect expires, no regeneration.
+- Commands that take time wait in the character's queue until you resume.
+- Commands that cost no time (`LOOK`, `INVENTORY`, `SCORE`, `SAVE`) work.
+- `WAIT` lets one tick (or the number you name) pass.
+- The prompt shows `(paused)`.
+- A save made while paused restores paused (`paused=true` in the header).
+
+In turn-based time `PAUSE` only reminds you that the world already waits.
+`PAUSE` raises `GAME_PROG PAUSE` and `RESUME`. (On other builds PAUSE
+suspends ticking objects; in CoffeeSUD single-player that archon use is not
+reachable by the same words.)
+
+### Turn-based time
+
+Turn-based time stops the clock and moves it only when you ask:
+
+| Command | Effect |
+| --- | --- |
+| `TIMEMODE` | Says which mode you are in. |
+| `TIMEMODE TURNS` (also `TURN`, `TURNBASED`, `TURN-BASED`) | Switches to turn-based time and unpauses. |
+| `TIMEMODE REALTIME` (also `REAL`, `REAL-TIME`) | Switches back to real time. |
+| `TIMEMODE DIALOGUE INSTANT` / `TICKS` / `DEFAULT` | Chooses whether NPCs answer at once (before your next prompt, taking no time) or on their own ticks. `DEFAULT` is instant in turn-based time and ticks in real time. Same as `DIALOGUETIME` in the ini or world. |
+| `WAIT`, `WAIT n` | Lets one (or n, up to 100) ticks pass. |
+| `WAIT n HOURS/DAYS/WEEKS`, `WAIT UNTIL ...` | Lets game time pass in long steps (up to three game days); governed by `LONGWAIT`. `HELP WAIT` lists the forms. |
+
+What moves the clock in turn-based time:
+
+1. Doing something that **takes time**: the world then moves forward by as long
+   as the action takes (the action cost divided by the character's speed, times
+   a tick). `HELP TIMEMODE` puts it as "a step is a fifth of a tick, an action
+   in combat a whole tick".
+2. `WAIT`.
+3. A long `WAIT`, which runs the game's own ticks (so one heals, shops restock,
+   things respawn and `TIME_PROG`s fire), and ends early if you are hurt,
+   attacked or moved.
+
+Things that cost no time never move the world: looking, `SCORE`, `INVENTORY`,
+`SAVE`, most `PARTY` and `WINDOWS` commands. While the world is catching up, a
+second action waits.
+
+The `TIMEMODE` key in `coffeemud.ini` or `world.ini` sets how a *new* game
+starts (the value only needs to start with `TURN`). A restored game keeps the
+mode it was saved with (`timemode=` in the header). The command can be used at
+any time, which also means a world that is designed for turn-based play (for
+example one whose puzzles assume enemies do nothing while you think) should say
+so in its text or lock the mode with [`Prop_TimeMode`](23-properties-reference.md#prop_timemode).
+
+`Prop_TimeMode MODE=TURNS|REALTIME [ONLYCOMBAT=TRUE] [RESTORE=TRUE|FALSE]
+[MSG="..."]` on a room or area holds the time mode while a player is there:
+coming in switches to MODE and says MSG, `TIMEMODE` is refused ("Time is held
+turn by turn here, and cannot be changed until you leave."), leaving puts back
+the mode that was in force (unless `RESTORE=FALSE`), and `ONLYCOMBAT` holds it
+only during a fight. The mode "before" is saved (`timemodebefore`) so a save made
+inside the zone restores correctly. The fixture `w28-timemode.js` exercises it.
+
+The script events: `GAME_PROG TIMEMODE` with detail `TURNS` or `REALTIME`.
+
+### Party turns in turn-based time
+
+When one profile has several characters in the world following a leader, only
+the **leader** moves the world. A member who is given something that takes time
+queues it as an **order**; orders run on the leader's turn. `PARTYTURNS` chooses
+how.
+
+| Setting | `LEADER` (default) | `ALL` |
+| --- | --- | --- |
+| Who is waited for | Nobody. | Every living member that is not `DISABLE`d must have an order or have used `WAIT`. |
+| What happens when the leader acts | Each member's queued order runs first (in the party order), then the leader's action, then the world moves on by as long as the leader's action took. | The leader's action is held until everyone is ready: "The turn waits for Bran to be given something to do (AS NAME COMMAND), or to WAIT." Then members placed before the leader in the party order act, the leader acts, members after act, and the world moves on by at least one tick. |
+| Leader uses `WAIT` | Members carry out their orders, then time passes. | The same. |
+| Member uses `WAIT` | "You wait for Hero's turn." | The same, and the turn no longer waits for them. |
+| Member types a time-taking command | "Bran will do that on Hero's turn." (once per turn); it is queued. | The same. |
+
+A member who is still busy with a long action, or has no actions left, keeps the
+order for a later turn. A character who is not in a party (or the only member
+playing) simply moves the world as in ordinary turn-based play. Orders are given
+with `AS name command`, by `SWITCH`ing to a member and typing, or in the
+member's window.
+
+`PARTYTURNS` alone shows the setting. `PARTY ORDER`, `PARTY LEAD`, `PARTY
+DISABLE` and `PARTY ENABLE` control who acts when. The start-up value is
+`PARTYTURNS=LEADER` or `ALL` in `coffeemud.ini`/`world.ini`; a save keeps the
+setting, the order (`partyorder`) and the "on their own" list (`partyalone`).
+
+`TURN_PROG` fires once per party turn in turn-based time, and per time-taking
+player command in real time.
+
+Source: [GameTime.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/GameTime.java),
+[Party.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java)
+(`turnOf`, `beforeLeaderActs`, `afterLeaderActs`, `passTurn`),
+`StdMOB.dequeCommand`, [Wait.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Wait.java),
+[TimeMode.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TimeMode.java).
+

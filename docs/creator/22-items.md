@@ -176,7 +176,7 @@ class adds its own:
 | `ISREADABLE`, `ISGETTABLE`, `ISDROPPABLE`, `ISREMOVABLE` | True/false flags |
 | `MATERIAL` | A resource number or name (`STEEL`) |
 | `AFFBEHAV` | Effects and behaviors, as XML |
-| `DISPOSITION` | Disposition bitmap, or a list of names (`GLOWING INVISIBLE`) |
+| `DISPOSITION` | Disposition bitmap, or a list of names (`ISGLOWING ISINVISIBLE`; spaces or commas) |
 | `WEIGHT`, `ARMOR`, `DAMAGE`, `ATTACK` | Weight, armor value, damage, attack adjustment |
 | `READABLETEXT` | The item's readable text (book text, spell list, key code, duration...) |
 | `IMG` | MXP image file name |
@@ -327,8 +327,13 @@ Toggled by letter. These are `PhyStats` disposition bits:
 | evil, good | Alignment aura (detect evil/good) |
 | unattackable | Cannot be attacked |
 
-On the command line, `MODIFY ITEM x DISPOSITION GLOWING INVISIBLE` takes the
-names `PhyStats.IS_CODES` holds, or the numeric bitmap.
+On the command line, `MODIFY ITEM x DISPOSITION ISGLOWING ISINVISIBLE` takes
+the names in `PhyStats.IS_CODES` (`ISUNSEEN`, `ISHIDDEN`, `ISINVISIBLE`,
+`ISEVIL`, `ISGOOD`, `ISSNEAKING`, `ISBONUS`, `ISDARK`, `ISGOLEM`,
+`ISSLEEPING`, `ISSITTING`, `ISFLYING`, `ISSWIMMING`, `ISGLOWING`,
+`ISCLIMBING`, `ISFALLING`, `ISLIGHT`, `ISBOUND`, `ISCLOAKED`, `ISUNSAVABLE`,
+`ISCATALOGED`, `ISUNATTACKABLE`, `ISCUSTOM`, `ISUNHELPFUL`), or the numeric
+bitmap. Note that the command replaces the whole set.
 
 ### Armor editor extras
 

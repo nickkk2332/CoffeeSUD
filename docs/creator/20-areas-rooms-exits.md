@@ -997,3 +997,222 @@ For `MODIFY EXIT [dir] [code] [value]`, `GMODIFY`, and scripts. The generic exit
 | `GOTO`, `AT`, `STAT`, `SYSMSGS` | The same-named commands |
 
 Flags can be granted for the whole world or for rooms in an area (for an area's staff). Builder mode makes the character an Archon with all of them. The full list and how to grant them are in [Configuration and administration](19-configuration-and-administration.md) and the generated [permissions table](tool-permissions.md).
+
+## How geography is saved
+
+World geography lives in one file per area, `world/areas/NAME.cmare` (areas marked as dev areas go to `world/dev/`). Builder-mode `SAVE`, and quitting, write these files from the live world; the whole format, the readable layout, protection against overwriting hand edits and the content-database cache are in [World files and editing](02-world-workflow.md). This section lists only what is specific to areas, rooms and exits.
+
+**File name.** The name is the area's name lower-cased, with every run of other characters made one `-`, trimmed, and numbered `-2`, `-3` if two areas would collide: `New Area` is `new-area.cmare`, `Hollowmere (West)` is `hollowmere-west.cmare`. Renaming an area therefore renames its file at the next save.
+
+**Area element.**
+
+| Element | Holds |
+| --- | --- |
+| `ACLAS` | The area class (`StdArea`). |
+| `ANAME`, `ADESC` | Name and description. |
+| `ACLIM` | The climate code (the bits: wet 1, cold 2, windy 4, hot 8, dry 16, void 32; `0` normal; `-1` inherited). |
+| `ASUBS` | Area staff. |
+| `ATECH` | The theme code (Fantasy 1, Technical 2, Heroic 4; `0` inherited). |
+| `ADATA` | The area's other data: `REPUTATION`, `ARCHP` (the FILE path), `PARENTS` (`PARENT/PARENTNAMED`; the default parent is left out), `CHILDREN` (`CHILD/CHILDNAMED`), `PREJFC`, `IGNMSK`, `BUDGET`, `DEVALR`, `INVRER`, `CURRENCY`, `IPRICS`, `IMG`, `BEHAVES`, `AFFECS`, `TAGS`, `AUTHOR`, `BLURBS`, `AATMO`, and for grid areas `XGRID` and `YGRID`, for auto-generated ones `AGXMLPATH` and `AGAUTOVAR`. An area's `CALENDAR` and `WEATHERPROFILE` settings are stored as blurb flags in `BLURBS`. |
+| `AROOMS` | The rooms, each an `AROOM`. |
+
+**Room element.**
+
+| Element | Holds |
+| --- | --- |
+| `ROOMID`, `RAREA`, `RCLAS` | The room ID, its area's name and the locale class. |
+| `RDISP`, `RDESC` | Title and description. |
+| `RTEXT` | The room's own data: `RCLIM` (climate code) and `RATMO` (atmosphere code, `-1` inherit), `XGRID`/`YGRID` for grids, `IMG`, `BEHAVES`, `AFFECS`, `TAGS`, scripts. Written escaped on one line in older files and as indented XML marked `xml="1"` by the current export; both read. |
+| `ROOMEXITS` | One `REXIT` for each direction that has a link or an exit. |
+| `ROOMCONTENT` | The mobs (`ROOMMOBS`) and items (`ROOMITEMS`) placed in the room. |
+
+**Exit element.** Each `REXIT` holds `XDIRE` (the direction number, see [Reference: directions](#reference-directions)), `XDOOR` (the destination room ID, empty for an exit that leads nowhere), and `XEXIT`, which is either `<XEXIT />` (a link with no exit) or `<EXID>class</EXID>` with `<EXDAT>` (the exit's own text; empty for the standard classes). A direction with neither a link nor an exit is simply absent. Grid parents also write `REXIT`s numbered from 256 for their cross exits.
+
+A generic exit's `EXDAT` holds the fields of the exit editor. For a closed, locked door:
+
+```xml
+<REXIT>
+ <XDIRE>1</XDIRE>
+ <XDOOR>Hollowmere#2</XDOOR>
+ <XEXIT>
+  <EXID>GenDoor</EXID>
+  <EXDAT>
+   <NAME>a heavy cellar door</NAME>
+   <DESC>Oak planks bound with iron, set into a stone step.</DESC>
+   <DISP />
+   <PROP>0|100|0|0|0|0|0|1.0|0|0|0|</PROP>
+   <IMG />
+   <BEHAVES />
+   <AFFECS />
+   <FLAG>240</FLAG>
+   <CLOSTX>a heavy cellar door</CLOSTX>
+   <DOORNM>door</DOORNM>
+   <OPENNM>open</OPENNM>
+   <CLOSNM>close</CLOSNM>
+   <KEYNM>hollowmere.cellar</KEYNM>
+   <OPENTK>45</OPENTK>
+  </EXDAT>
+ </XEXIT>
+</REXIT>
+```
+
+`NAME`, `DESC`, `DISP` are the name, description and display text; `PROP` is the base physical stats (ability, armor, attack, damage, disposition, level, rejuv, speed, weight, height, senses, in that order; the export may write them as named attributes); `FLAG` is a bit field (4 readable, 16 always set for doors, 32 has a door, 64 has a lock, 128 defaults closed, 256 defaults locked; the example is 16+32+64+128 = 240, a closed unlocked door with a lock, add 256 for locked); `CLOSTX`, `DOORNM`, `OPENNM`, `CLOSNM` are the closed text, door name, open word and close word; `KEYNM` is the key code (or the readable text of a readable exit); `OPENTK` is the reset delay in ticks.
+
+**Editing by hand.** You can edit a `.cmare` in a text editor (change a title, retarget `XDOOR`, add a `REXIT`), but two links must agree: every `XDOOR` has to name a room that exists, and a two-way passage needs a `REXIT` in each room. Run `WORLD CHECK` afterwards; `WORLD RELOAD [area]` loads the file into a running builder game. A file edited while a builder game runs is protected from being overwritten by the next `SAVE`; see [World files and editing](02-world-workflow.md).
+
+**Dev areas.** `WORLD DEV [area] ON` tags an area `DEV`, so that it is written to `world/dev/` and loaded only in builder mode and `DEV=1` games. Exits from shipped areas into a dev area lead nowhere in a normal game, and `WORLD CHECK EXITS` warns about them.
+
+**Starting room.** Where new characters begin is a world setting, `START=Area#number` in `world.ini` (`WORLD SET START=Hollowmere#0`), not a property of the area. See [world settings](world-settings.md).
+
+## Worked examples
+
+### Example 1: a village gate, a lane and a locked cellar
+
+Start the game in builder mode (`CoffeeMud/sud.sh BUILDER=1`), and turn on `SYSMSGS` so `LOOK` shows room IDs.
+
+```text
+CREATE AREA Hollowmere
+```
+
+Press Enter at the area type question. You are now in `Hollowmere#0`, a `StdRoom` with the default title.
+
+```text
+MODIFY ROOM CLASS CityStreet
+MODIFY ROOM NAME The Gate of Hollowmere
+MODIFY ROOM DESCRIPTION A timber gate stands open in an earth bank. A muddy lane runs east into the village.
+CREATE ROOM east CityStreet
+east
+MODIFY ROOM NAME The Muddy Lane
+MODIFY ROOM DESCRIPTION Cottages crowd the lane. A heavy cellar door is set into a stone step to the south.
+CREATE ROOM south StoneRoom
+south
+MODIFY ROOM NAME A Root Cellar
+MODIFY ROOM DESCRIPTION Sacks and barrels crowd the cool dark.
+north
+```
+
+You are back in the lane (`Hollowmere#1`; the cellar is `#2`). Make the door. The first command puts a default `GenDoor` on both ends; the second opens the exit editor on a copy of it and then writes the result to both ends:
+
+```text
+CREATE EXIT south GenDoor
+CREATE EXIT south GenDoor
+```
+
+In the editor, give it a name (`a heavy cellar door`), a description, and in the door field answer Has a door `Y`, Defaults closed `Y`, Has a lock `Y`, Defaults locked `Y`; set Closed Text to `a heavy cellar door`, and the key name to `hollowmere.cellar`. Press Enter at `Edit which?` to finish. Check both ends: `LOOK south`, then `south` and `LOOK north`.
+
+Make a key and hide it where the player can find it:
+
+```text
+CREATE ITEM GenKey
+MODIFY ITEM key
+```
+
+Set its *Assigned Key Code* to `hollowmere.cellar`, then `GET key`, go west, `DROP key` and `SAVE ROOM` (items are only saved by `SAVE ROOM`; see [World files and editing](02-world-workflow.md)). Join the village to the starter area. In the shipped world the starter room `New Area#1` has free east and west exits:
+
+```text
+GOTO New Area#1
+LINK Hollowmere#0 east
+WORLD CHECK AREA Hollowmere
+WORLD MAP AREA IDS FLAGS
+SAVE
+```
+
+`LINK` also links `Hollowmere#0` back west because that side was free. The check lists the lane, gate and cellar as needing real descriptions only if you skipped them, and `WORLD MAP` shows the locked door as `+`. `SAVE` writes `world/areas/hollowmere.cmare`.
+
+### Example 2: laying a trail, then fixing every door at once
+
+A wilderness trail of ten rooms, mostly woods:
+
+```text
+GOTO Hollowmere#0
+WORLD PATH w,w,w,nw,nw,w,w,sw,w,w TYPE=Woods NAME="A forest trail" DESC="Roots cross a narrow trail between tall pines."
+WORLD MAP RADIUS 12 IDS
+```
+
+(The `nw` and `sw` steps need `DIRECTIONS=11`; with the default 7 directions use `n` and `s`.) Every new room carries the `TODO` tag until you give it its own description, and `WORLD CHECK ONLY=TEXT` lists them. Give one a description with `EDIT DESC HERE`.
+
+Later you decide every door in the area should read "oak door" and have a new closed text. Always search first:
+
+```text
+GMODIFY AREA class=GenDoor
+GMODIFY AREA class=GenDoor&&name=[ss]door CHANGE=name=[ss]oak door
+GMODIFY AREA class=GenDoor CHANGE=closedtext=a closed oak door
+LIST UNSAVED
+SAVE
+```
+
+The first line only prints `Matched on ... from room` lines. The second replaces just the matched word in each name (`a heavy cellar door` becomes `a heavy cellar oak door` if you are not careful, so choose the substring you search for with the final name in mind). The third sets the closed text on every generic door in the area. Exits are saved with their room automatically.
+
+### Example 3: a hidden passage and a one-way chute
+
+In a room, create a hidden door to the east that leads to an existing room:
+
+```text
+CREATE ROOM east StoneRoom
+east
+CREATE EXIT west HiddenClosedDoorway
+```
+
+Now `west` from the new room is a concealed closed door: it is absent from the exit list and a character who cannot see hidden things will not find the way, while the engine still counts it as a door for `WORLD CHECK EXITS` (it warns if the room on the other side does not lead back, which here it does).
+
+A chute: from a room `Hollowmere#2`, make a one-way drop to a lower room.
+
+```text
+CREATE ROOM down StoneRoom
+down
+UNLINK up
+```
+
+`UNLINK up` removes the link back, so you can fall in but not climb out. `LIST ONEWAYDOORS AREA` now shows it, `WORLD MAP AREA FLAGS` marks the exit with an arrow, and `WORLD CHECK` does not complain, because only *doors* without a way back are warnings. If the way back should exist but is climbable only, `CREATE EXIT up ClimbableExit` after relinking with `LINK`.
+
+## Persistence notes
+
+| What | Where it lives | When it is written |
+| --- | --- | --- |
+| Rooms, exits, areas you create or change | The live world and the content database at once | The moment a `CREATE`/`MODIFY`/`DESTROY`/`LINK`/`UNLINK`/`COPY`/`GMODIFY` command runs |
+| `world/areas/NAME.cmare` | Disk, the publishable definition | Builder-mode `SAVE` or quit; never in a normal game |
+| Mobs and items in rooms | The database, then the `.cmare` | `SAVE ROOM`, `SAVE CHANGED`, plain `SAVE` ([World files and editing](02-world-workflow.md)) |
+| Builder templates | The builder's template store (`world/templates.cmare` in builder mode) | When you `TEMPLATE ADD`, then at export |
+| Area calendars and weather profiles | The area's blurb flags (`BLURBS`), so the `.cmare` | With the area |
+| A normal game's geography changes | That game's working copy and its save slots | `SAVE [slot]` ([Saves and party](31-saves-and-party.md)) |
+
+- A reload (`WORLD RELOAD [area]`) rebuilds an area from its file: unsaved room edits are lost, and the command refuses while the area has unsaved mobs or items unless `FORCE`.
+- Thin areas and thin grids load rooms on demand and drop them after about forty minutes; edits made to a loaded room are written through to the database immediately, so nothing is lost.
+- `DESTROY ROOM` and `DESTROY AREA` delete from the database at once, but the `.cmare` still has the old text until the next `SAVE`; `WORLD BACKUPS` keeps what `SAVE` replaced.
+- Renaming an area changes room IDs; any file or script that mentions the old IDs (`START=`, quests, scripts, JavaScript, `WORLD PATH` macros) needs updating.
+
+## Troubleshooting and gotchas
+
+- **"This command is invalid from within a GridLocaleChild room."** You are in a grid or maze child. `GOTO PARENT`, edit the parent, then `RESET ROOM`.
+- **"A room may not be created in that direction."** `CREATE ROOM` could not get a room ID there, typically at the edge of a `StdGridArea`.
+- **A new room's exit goes only one way.** `LINK` and `CREATE ROOM` link back only when the opposite direction of the far room is free. Check with `LIST ONEWAYDOORS AREA`.
+- **`CREATE ROOM` twice in one direction.** The first room is not removed; you keep a one-way exit from it back to you. Use `UNLINK` and `DESTROY ROOM [id]`.
+- **A door works from one side only.** You edited only one end. `CREATE EXIT [dir] GenDoor` twice, or `MODIFY EXIT` in each room.
+- **"You don't seem to have the key."** The key code does not equal the lock's key name (compare `STAT` output, remember case is ignored but spaces count), or the lock's name is empty, or a `Prop_KeyRules` mask excludes you. `WORLD CHECK ONLY=KEYS` finds locks no key exists for.
+- **A door will not stay open or unlocked.** A door that defaults closed or locked resets after its delay ticks (default 45).
+- **Players cannot pass a destroyed exit; you can.** `DESTROY EXIT` leaves the link, and builders and `GOTO` walk through; players do not. `WORLD CHECK` does not flag a link with no exit. `LIST UNLINKEDEXITS` flags the reverse (an exit with no room).
+- **Exits to nowhere after destroying a room.** `DESTROY ROOM` cuts links into the room, but a generic exit there keeps the dead room's ID in its key name and stays in the exit list. `DESTROY EXIT` them or relink.
+- **`MODIFY AREA CLIMATE` letters.** `D` sets windy rather than dry in the one-line command (see [MODIFY AREA](#modify-area)); use the stat form `MODIFY AREA CLIMATE DRY` or the editor.
+- **Technology gate only with the Heroic bit.** The theme check that stops technology (`Technology doesn't seem to work here`) is attached to the Heroic test in the engine: it runs only when the theme has Heroic and lacks Technical. A Fantasy-only area does not block technology items.
+- **`GMODIFY CHANGE=` with no criteria changes everything in scope that has the field.** Search first, add `class=`.
+- **`GMODIFY` regex without `[ss]`.** `name$wooden` must match the whole name.
+- **A copied exit is shared.** `COPY EXIT [dir] [dir]` puts the same exit object in the second place, not a copy; editing one edits both until the world is reloaded.
+- **Areas will not rename cleanly.** If a room of the new name already exists, that room keeps its old ID. Check `LIST ROOMS` afterwards.
+- **Mobs will not walk while SYSMSGS is on** in your room (shipped help for `SYSMSGS`).
+- **Dug rooms keep the `TODO` tag** until `EDIT DESC` writes their description. `MODIFY ROOM DESCRIPTION` does not clear it; remove it in the Tags field, or use `EDIT DESC HERE`.
+- **Wrong direction names.** With `DIRECTIONS=7` the diagonal names do not exist. Set `DIRECTIONS=11` in `world.ini` first if you plan to use them.
+- **Normal-game edits vanish.** Outside builder mode they stay in that game's copy only. Use `BUILDER=1` to change the world itself.
+
+## See also
+
+- [World files and editing](02-world-workflow.md): builder mode, `SAVE`, reload, undo, the file formats in full.
+- [Your first world](01-first-world.md): a beginner walk-through that uses these commands.
+- [Mobs](21-mobs.md) and [Items](22-items.md): what goes into the rooms you build.
+- [Properties reference](23-properties-reference.md) and [Behaviors and masks](24-behaviors-and-masks.md): the effects and behaviors you can give rooms, exits and areas (`Prop_ReqEntry`, `Prop_Climbable`, `Prop_LockRules`, `Prop_KeyRules`, `Prop_ReqCapacity`, ...).
+- [World simulation](10-world-simulation.md): weather, climate, time and calendars.
+- [Presentation and language](11-presentation-language.md): descriptions, `<VARIES>` text and colours.
+- [Generation](12-generation.md): random areas and the `AutoGrid`/`StdAutoGenInstance` classes.
+- [Travel, vehicles and instances](30-travel-vehicles-instances.md): ships, boardable areas, planets, instances.
+- [Configuration and administration](19-configuration-and-administration.md): `coffeemud.ini` keys and security flags; [World settings](world-settings.md).
+- [Testing and release](13-testing-release.md): `WORLD CHECK`, playtests, release checks.
+- [Engine programming](32-engine-programming.md): writing new locale, exit and area classes.

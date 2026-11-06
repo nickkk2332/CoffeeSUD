@@ -241,7 +241,8 @@ mode refuses to write it back (a typo must not become lost data) until it is
 fixed and the world loaded again, or `SAVE FORCE` writes the file as the world
 now has it. With nothing wrong it says `The world files loaded whole.` The same
 list is the DATA part of WORLD CHECK (each entry is an error) and is kept in
-`worldproblems.txt` in the world's housekeeping files. See the SAVE and
+`worldproblems.txt` beside the content database, so a later start still knows
+the file was partial. See the SAVE and
 `.builder` rules in [chapter 2](02-world-workflow.md).
 
 ### WORLD CHECK
