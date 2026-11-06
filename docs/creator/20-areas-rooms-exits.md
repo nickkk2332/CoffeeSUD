@@ -146,7 +146,7 @@ create ROOM s Plains
 ```
 
 - The direction may come first or last. `create stoneroom north` is a shorthand for `CREATE ROOM north StoneRoom`; it works for any locale class or exit class name followed by a direction.
-- The new room's title is `ClassName-roomID` and its description is empty. Write them with `MODIFY ROOM` (the `WORLD CHECK` TEXT report lists rooms that still have the default text).
+- The new room's title is `ClassName-roomID` and its description is empty. Write them with `MODIFY ROOM`. `WORLD CHECK` does **not** catch a room left like this: its TEXT part flags only the old "Brand new database room!" text, a locale class's own default title or description, and rooms tagged `TODO` by `WORLD DIG` or `WORLD PATH`. Keep your own list, or make new rooms with `WORLD DIG`/`WORLD PATH` so they carry the TODO tag.
 - The locale may also be the ID of a **builder template** (see [Templates](#templates)). A template room is copied whole: title, description, effects, behaviors, tags and the mobs and items in it, but not its exits; it gets a new ID and your current area.
 - The command is refused inside a grid child ("This command is invalid from within a GridLocaleChild room") and refused when the direction is not valid for the room ("Room was created without that possible direction" for grids that lack it, or "A room may not be created in that direction" at the edge of a grid area).
 - Creating a room in a direction that already has one does not stop you, but the result depends on the old link. If the room there links back to you, the engine still creates and saves the new room but cannot join it ("Opposite room already exists and heads this way."), so the new room is an orphan (`LIST ORPHANS` shows it): link to it with `LINK` from a free direction, or `DESTROY ROOM [room ID]`. If the old room did not link back, your link is simply moved to the new room and the old room is left behind.
@@ -630,7 +630,7 @@ Below the map it lists rooms it could not draw (up, down, or where another room 
 | `EXITS` | Error: an exit with no destination ("an exit to nowhere"). Warning: an exit from a shipped area into a dev area; a door whose far side does not lead back. |
 | `REACH` | Error: a start room (`START=` or per-race/class start) that does not exist. Warning: rooms nothing leads to from any start room, reported per area. |
 | `KEYS` | Error: a locked door or container whose key is nowhere in the world. |
-| `TEXT` | Warning: rooms still with the new-room description, a class's default title or description, or tagged `TODO`. Also mobs and items with default text. |
+| `TEXT` | Warning: rooms with the old "Brand new database room!" description, a locale class's own default title or description, or tagged `TODO`. Also generic mobs and items with their class's default name or look. An empty description and the `Class-roomID` title that `CREATE ROOM` gives are not flagged. |
 | `IDS` | Stable-identity problems (see [Testing and release](13-testing-release.md)). |
 
 ```text
@@ -1117,7 +1117,7 @@ WORLD MAP AREA IDS FLAGS
 SAVE
 ```
 
-`LINK` also links `Hollowmere#0` back west because that side was free. The check should report nothing for Hollowmere (a `TEXT` warning would mean a room still has default text). `WORLD MAP` draws the area you are standing in, so run it from inside Hollowmere; it shows the locked door as `+`. `SAVE` writes `world/areas/hollowmere.cmare`.
+`LINK` also links `Hollowmere#0` back west because that side was free. The check should report nothing for Hollowmere (a `TEXT` warning would mean a room still has a class's default text or a TODO tag; rooms left blank after `CREATE ROOM` are not reported, so read them over yourself). `WORLD MAP` draws the area you are standing in, so run it from inside Hollowmere; it shows the locked door as `+`. `SAVE` writes `world/areas/hollowmere.cmare`.
 
 ### Example 2: laying a trail, then fixing every door at once
 

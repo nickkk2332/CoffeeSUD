@@ -1576,14 +1576,17 @@ public class Prop_Sturdy extends Property
 }
 ```
 
-A property on an item normally affects the item itself. The properties meant to
-affect whoever carries, wears, rides or stands in something (the
-`Prop_Have...`, `Prop_Wear...`, `Prop_Ride...` and `Prop_Here...` families:
-`Prop_HaveAdjuster`, `Prop_WearAdjuster`...) are written to apply to the owner
-and implement `TriggeredAffect`, whose `triggerMask()` says when it applies
+A property on an item affects the item itself. To make it also reach whoever
+carries or wears the item (or the room the item lies in), override
+`bubbleAffect()` to return `true`: the item then passes its `affectPhyStats`,
+`affectCharStats` and `affectCharState` calls for that effect on to its owner
+(`StdItem.affectPhyStats` does this for each effect that bubbles). The
+`Prop_Have...`, `Prop_Wear...`, `Prop_Ride...` and `Prop_Here...` families
+(`Prop_HaveAdjuster`, `Prop_WearAdjuster`...) do so, and implement
+`TriggeredAffect`, whose `triggerMask()` says when the effect applies
 (`TRIGGER_ALWAYS`, `TRIGGER_WEAR_WIELD`, `TRIGGER_GET`, `TRIGGER_USE`,
 `TRIGGER_ENTER`, `TRIGGER_BEING_HIT`...). Copy one of those for an item
-property. Parameter parsing helpers: the
+property meant for the owner. Parameter parsing helpers: the
 `CMParms.getParm...` family reads `KEY=value` anywhere in a string (the match is
 case-insensitive and by start of word); `CMParms.parseEQParms(text)` returns a
 map. A property's help goes in `resources/help/arc_properties.ini` as

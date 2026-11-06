@@ -387,9 +387,11 @@ and the other property help entries list options.
 A quest or lever sets a world variable; the description reacts.
 
 ```text
-MODIFY ROOM DESCRIPTION
-<VARIES><IFVAR BRIDGE=1>A new plank bridge spans the gorge.</IFVAR><ELSE>Charred ropes hang over the gorge.</ELSE></VARIES> A cold wind pulls at your clothes.
+MODIFY ROOM DESCRIPTION <VARIES><IFVAR BRIDGE=1>A new plank bridge spans the gorge.</IFVAR><ELSE>Charred ropes hang over the gorge.</ELSE></VARIES> A cold wind pulls at your clothes.
 ```
+
+The text goes on the same line as the command (`MODIFY ROOM DESCRIPTION` alone prints the
+usage message). For longer text, `EDIT DESC` opens the line editor.
 
 In the carpenter's quest or script:
 
