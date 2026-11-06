@@ -2724,7 +2724,7 @@ in parentheses work the same way.
 | `+PLAYER` (`+PLAYERS`) | none | Passes at once for a player (the rest of the mask is skipped); no effect on NPCs. |
 | `-NPC` (`-MOB`, `-MOBS`) | none | Fails for an NPC; passes players. |
 | `+NPC` (`+MOB`, `+MOBS`) | none | Passes at once for an NPC (rest skipped); no effect on players. |
-| `-CHANCE` | `n` | Passes `100-n` percent of the time (fails when a d100 roll is under `n`). No `+CHANCE`. |
+| `-CHANCE` | `n` | Fails when a d100 roll comes up under `n` (so about `n` percent fail, `n-1` exactly). No `+CHANCE`. |
 | `-NAMES` (`-NAME`) | `+name` ... | Requires the host's name to equal one of them exactly (case-insensitive). Quote names with spaces. Uses the real name when `actual`. |
 | `+NAMES` (`+NAME`) | `-name` ... | Forbids those names. |
 | `-SUBNAMES` | `+text` ... | Requires the name to contain the text. `*` wildcards: `+*ending`, `+start*`, `+*inside*`. |
@@ -2840,7 +2840,7 @@ above 10).
 | `-PARENTAREA` / `+PARENTAREA` | `+name` / `-name` | The same, but an area also counts if a parent area has that name. |
 | `-AREAINSTANCE` | none | Forbids being in an area instance. **`+AREAINSTANCE` requires it.** |
 | `-AREABLURB` / `+AREABLURB` | `+blurb` or `"+blurb value"`; `+*end`, `+start*` | CoffeeSUD: requires / forbids the area's blurb flag with that name (and value, if a value is given). |
-| `-HOME` / `+HOME` | `+area` / `-area` | Requires / forbids that the mob's home (start or beacon) area, or a plane of that name, is the one named; `*` suffix allowed. |
+| `-HOME` / `+HOME` | `+area` / `-area` | Requires / forbids that the mob's home (start or beacon) area, or a plane of that name, is the one named; a leading `*` matches the end of the area name. |
 | `-ISHOME` | none | Forbids being in the home area (fails when at home). **`+ISHOME` requires being at home.** |
 | `-LOCATION` | `+OWNED` `+CLANOWNED` `+PRIV` `+ROOMID(text)` `+ROOMSTR(text)` | Requires one of: the room owned by the mob (for a non-mob: owned by anyone); owned by a clan the mob belongs to; the mob has privileges there; the room ID starts with the text; the room's title or description contains the text. |
 | `+LOCATION` | `-OWNED` ... | Forbids those. |
@@ -3041,7 +3041,7 @@ Aggressive -Elf -Female +ITEM -bone
 - A list swallows everything up to the next key. Put plain-text parameters (like
   `message="..."` of `Aggressive`) before the mask, not inside it.
 - `+PLAYER`, `+MOB`, `+SYSOP`, `+SUBOP`, `+IF` and `+JS` pass immediately.
-- `-CHANCE n` passes `100-n` percent of the time (it is "disallow n percent").
+- `-CHANCE n` fails when a d100 roll comes up under `n` (it is "disallow n percent").
 - `-ISHOME`, `-ROOMDARK`, `-OFFICER`, `-WANTED`... read against the standard
   direction: check the tables before relying on them.
 - Mob keys on a non-mob host test a blank mob; if a mask on a room says

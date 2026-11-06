@@ -499,7 +499,9 @@ The `AFFECTS` command (`AFFECT`, `AFF`, `AF`) lists a character's effects by
 their `displayText()`: the *Affect String* of a `GenAbility`
 (`DISPLAY`). Effects with an empty display text are hidden. A display text
 wrapped in parentheses, such as `(Emberward)`, has the time remaining
-appended. `AFFECTS [TYPE or DOMAIN] [NAME|TYPE|DOMAIN|REMAIN]` filters and sorts;
+appended. `AFFECTS [TYPE] [NAME|TYPE|DOMAIN|REMAIN]` filters by ability type and sorts
+(a domain word is also parsed as a filter, but in this build it computes the
+wrong mask and lists nothing, so filter by type);
 `AFFECTS spell`, `AFFECTS spell remain`, `AFFECTS common_skill name` (join the words of a
 type or domain with an underscore). A character with the `CMDMOBS` flag can say `AFFECT`
 followed by `ROOM` (or `HERE`), `AREA` (or `ZONE`) or a target's name to see the effects on that
@@ -534,6 +536,13 @@ engine computes it when the hostile message reaches the target:
    target *resists*: the engine sends a resistance message ("X shake(s) off the
    mental attack"), the effect is not applied, and damage from the ability is
    halved.
+
+The cast message of a spell, prayer, chant or superpower is itself a magic
+cast, so it is checked with the family save plus the generic magic save
+(`CAST_SPELL`). A `GenAbility` with an `ATTACKCODE` then sends a second message,
+which is checked with the family save plus the save for that kind of harm. Each
+message gets its own roll, and if either resists, the effect is not applied and
+damage is halved.
 
 Other saves that sit outside this: `SAVE_TRAPS` for traps (compared with the
 target-minus-trapper level difference), `SAVE_DISEASE` for catching a disease
@@ -1676,10 +1685,12 @@ Set the fields (menu number in brackets):
 | Help Text (43) | `<ABILITY>Usage   : CAST CINDERLASH [TARGET]` |
 
 How it plays: the caster pays 30 mana and waits two ticks before another
-cast; a proficiency roll may fail; on success the target gets a fire save
-(plus the spell-save and the level difference, [Saving throws](#saving-throws)).
-A target that resists takes half damage; one that does not takes it all and has a
-one in four chance of being slowed by `Spell_Slow` (which makes its own roll).
+cast; a proficiency roll may fail; on success the target rolls two saves (one against the cast itself, one against
+the fire message, each with the spell save and the level difference,
+[Saving throws](#saving-throws)).
+A target that resists either one takes half damage and is not slowed; one that
+resists neither takes it all and has a one in four chance of being slowed by
+`Spell_Slow` (which makes its own roll).
 The damage formula is a random 2 to 6 plus half the adjusted caster level,
 with the parentheses doing the work because evaluation is left to right.
 
