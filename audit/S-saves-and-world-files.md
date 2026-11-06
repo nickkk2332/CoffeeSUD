@@ -40,6 +40,8 @@ What survives a save and restore, what content lives in world/ (resources overla
 
 *Kind:* world option, builder tool · *Value:* high · *Effort:* small · *Decision:* yes
 
+**Status (docs audit, 2026-11):** world.ini is not part of the world checksum (world.sum does not cover it); it is read at every start. The text below is the original proposal.
+
 **Today.** Start, death and morgue rooms, the calendar, the starting kit, race and class rules and similar keys sit in `coffeemud.ini` beside the engine's own settings. `SUD.readSettings` reads only that file and the command line. A world can ship a wrapper such as `sud.sh START=Oasis#1 DEATH=Oasis#Shrine`, or a full ini selected with `BOOT=`, which replaces the whole file. No command edits ini keys, and `CREATE DISABLEFLAG` lasts only until restart. A world built for custom races breaks under someone else's ini.
 
 **Add.** Read `WORLDDIR/world.ini` after `coffeemud.ini` and before the command line, for a documented whitelist: `START*` (with `START_MASK`), `DEATH*`, `MORGUE*`, `STARTINGITEMS`, `STARTHP`, `STARTMANA`, `STARTMOVE`, `STARTSTAT`, `AWARERANGE`, the default `TIMEMODE`, calendar keys, race and class allow lists, currency, `CHARCREATIONSCRIPTS`, `DEITYPOLICY`, `FACTIONS`, `MUDTHEME`, `DISABLE`, `ENABLE`, `ADDCHARSTAT_*`, `REPLACECHARSTAT_*`, `NEWACODES`, `NEWDOMAINS`, `DEFAULTABILITYARGS`, `EXPRATE`, `FORMULA_*`, `LASTPLAYERLEVEL`, `MUD_NAME`, `INJURYSYSTEM` and `MANACOST`. Other keys are reported and ignored. In builder mode, `WORLD SET key=value` writes the file and `LIST WORLDINI` shows each value in effect and where it came from. `world.sum` covers the file.

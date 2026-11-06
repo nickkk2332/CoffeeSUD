@@ -2,6 +2,8 @@
 
 Behaviours for NPC routines and AI outside combat, companions and hirelings, conversation, MudChat, barks, rumours and LLM-driven NPCs. Part of the [builder capabilities audit](README.md).
 
+**Status (docs audit, 2026-11):** this file is a proposal, not a description of the shipped game. Sleeper is configured with `SLEEPS=` (see `AHELP BEHAVIOR_SLEEPER`); N13, N14, N23, N25 to N27 and MPDIALOG do not exist.
+
 <a id="n1"></a>
 
 ## N1. WHEN= condition on every behaviour

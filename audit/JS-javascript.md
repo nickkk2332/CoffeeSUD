@@ -319,6 +319,8 @@ JCONSOLE also gets `here`, `area` and `target`. `sud.on('save', fn)` waits for t
 
 *Kind:* JavaScript runtime upgrade · *Value:* medium · *Effort:* medium · *Decision:* yes
 
+**Status (docs audit, 2026-11):** JCONSOLE converts backticks only partly, not as completely as the text below says.
+
 **Today.** By its manifest, `lib/js.jar` is Mozilla Rhino 1.7R2, built 2011-05-09. It has commonjs and NativeJSON, so it is a late 1.7R3-era build. Scripts get no arrow functions, no template strings, no `let`/`const` by default, and no `Array.find`/`includes` or `Object.assign`. The game runs on Java 21, which current Rhino supports (1.7.14 and later need Java 11). Separately, `setScript` turns every `'` into a backtick and `getScripts` turns it back (DefaultScriptingEngine, also for `STATIC=`). JConsole input and cron do the same. A literal backtick in an inline script comes back as a quote.
 
 **Add.** Replace `lib/js.jar` with Rhino 1.7.15 or later, set language version ES6 in the shared JS runtime, and keep `RHINO.LICENSE`. Recheck the `//extends` class compiler (ClassCompiler, in CMClass) and the JConsole and JRUN scopes. Keep `<SCRIPT>` bodies out of the quote swap, or swap through an escape that cannot clash. This matters only once template literals work.

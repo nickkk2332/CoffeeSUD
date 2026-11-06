@@ -2223,9 +2223,10 @@ public class Quests extends StdLibrary implements QuestManager
 			&&(mob.session().confirm(L("Create the new quest: @x1 (y/N)? ",name),"N")))
 			{
 				final Quest Q=(Quest)CMClass.getCommon("DefaultQuest");
-				final CMFile newQF=new CMFile(Resources.makeFileResourceName("quests/"+name+".quest"),mob,CMFile.FLAG_LOGERRORS);
-				newQF.saveText(script);
-				Q.setScript("LOAD=quests/"+name+".quest",true);
+				// D-QU-4: the quest is its whole script, so that the world's quest file
+				// (world/quests) holds it all and it travels with the world; it was a
+				// LOAD= of a file written to resources/quests, outside the world
+				Q.setScript(script,true);
 				if((Q.name().trim().length()==0)||(Q.duration()<0))
 				{
 					mob.tell(L("You must specify a VALID quest string.  This one contained errors.  Try AHELP QUESTS."));
