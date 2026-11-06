@@ -1712,7 +1712,7 @@ Source help: `AHELP CATALOG`.
 | `CATALOG LIST MOBS [mask]`, `CATALOG LIST ITEMS [mask]` | Lists one kind, filtered by name |
 | `CATALOG LIST CATEGORIES` | Lists the category names |
 | `CATALOG CATEGORY [name]` | Sets the category your next additions go into. A new name asks for confirmation. `NONE` returns to the global category; `LIST` lists them. (`GLOBAL`, `NONE` and `UNCATEGORIZED` cannot be created) |
-| `CATALOG DELETE [ITEMS or MOBS] [name]` | Deletes an entry after a confirmation (a delete of more than 10 entries at once is not confirmed). Copies already placed are detached, not destroyed. `everydamnitem`, `everydamnmob` and `everydamnthing` delete in bulk |
+| `CATALOG DELETE [ITEMS or MOBS] [name]` | Deletes an entry after a confirmation. Copies already placed are detached, not destroyed. `everydamnitem`, `everydamnmob` and `everydamnthing` delete in bulk after one confirmation for the whole set |
 | `CATALOG EDIT [ITEMS or MOBS] [name]` | Edits spawn rules, cap, uniqueness and rules; see below |
 | `CATALOG ROOM\|AREA\|WORLD [MOBS\|ITEMS]` | Catalogs every mob or item there. It resets and saves the rooms, so it asks first: once for `ROOM`, twice for `AREA` or `WORLD` |
 | `CATALOG SCAN\|DBSCAN ROOM\|AREA\|WORLD [MOBS\|ITEMS]` | Reports cataloged objects, and which are falsely cataloged (tied to a missing entry). `DBSCAN` checks the saved rooms |

@@ -5954,11 +5954,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							if(FR==null)
 								value="";
 							else
+							if(FR.codeName().equalsIgnoreCase(arg2.trim()))
+								value=FR.codeName();
+							else
 								value=FR.name();
 						}
 					}
+					// D-SC-1: a band name is compared as text (a numeric compare read both sides as 0)
 					if(lastKnownLocation!=null)
-						returnable=simpleEval(ctx.scripted,value,arg2,cmp,"FACTION");
+					{
+						if(CMath.isNumber(arg2.trim()))
+							returnable=simpleEval(ctx.scripted,value,arg2,cmp,"FACTION");
+						else
+							returnable=simpleEvalStr(ctx.scripted,value,arg2.trim(),cmp,"FACTION");
+					}
 					break;
 				}
 				case 46: // numitemsroom

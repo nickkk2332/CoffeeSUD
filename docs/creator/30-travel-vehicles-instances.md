@@ -1251,7 +1251,6 @@ Test with an ordinary character, not a builder: builders bypass helm restriction
 - **A passenger took the ferry's helm.** An unowned vessel with no `Prop_HelmRestrict` allows everyone. Add `NAVMASK="-PLAYERS"` or use a `TransportLine`. `FLOAT`, `RISE`, `DIVE` and `TIEDOWN` are refused without the custom `MESSAGE`.
 - **The line never leaves.** It needs two or more stops that resolve, a route between them, and, with `DEPART`, hours inside the day's range. A closed exit along the route or a stop in non-water rooms for a ship will make it wait and retry.
 - **Fare is charged twice.** Two ticket takers (a mob and a vehicle) or `PARTY=EACH` with an unremembered receipt after reload. Use one and prefer `PARTY=LEADER`.
-- **A ticket-item taker does not block.** With a named ticket (`a red ticket`) the property says the player needs one but does not stop boarding in the current code; use a numeric fare.
 - **Journey ends at once.** The leader left the transit room (it has exits the party used, or something moved them) or died. Keep the transit room closed in.
 - **Journey will not start.** "The party cannot depart": a member is in combat, cannot afford the fare, or is refused by an entry property of the transit room. "The journey has no valid destination": a hidden port, a missing room.
 - **`DelayedTransporter` ignores my message.** A semicolon inside an option message ends the option list. Remove it.

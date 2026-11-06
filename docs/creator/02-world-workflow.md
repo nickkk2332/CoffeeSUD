@@ -1160,7 +1160,7 @@ the world file is not changed.
 | `CATALOG LIST (MOBS/ITEMS) CATEGORIES` (also `CATS`, `CATEGORY`, `CATAGORY`) | List category names. |
 | `CATALOG CATEGORY [name]` (also `CATAGORY`) | Set the category new entries go into. Asks to create a new one. `CATALOG CATEGORY NONE` returns to the global (empty) category. `CATALOG CATEGORY LIST` lists them. The reserved names `GLOBAL`, `NONE` and `UNCATEGORIZED` cannot be created. |
 | `CATALOG EDIT [item or mob name]` | Prompt for spawn mode and rules (below). |
-| `CATALOG DELETE [name]` | Remove an entry. Warns if copies are in use. Placed copies are only detached; none is destroyed. `everydamnmob`, `everydamnitem` and `everydamnthing` delete in bulk; when more than 10 entries go, there is no per-entry confirmation, so be sure. |
+| `CATALOG DELETE [name]` | Remove an entry. Warns if copies are in use. Placed copies are only detached; none is destroyed. `everydamnmob`, `everydamnitem` and `everydamnthing` delete in bulk after one confirmation for the whole set (it says how many entries and how many are in use). |
 | `CATALOG (ROOM/AREA/WORLD) (MOBS/ITEMS)` | Catalog everything in the room, area or world (rooms are reset and saved). One "are you sure" prompt for a room, a second for an area or the world. Test on a small area first. |
 | `CATALOG SCAN (ROOM/AREA/WORLD) (MOBS/ITEMS)` | Report which live objects are cataloged, and "falsely cataloged" ones. |
 | `CATALOG DBSCAN ...` | The same, against the saved rooms in the database. |

@@ -379,6 +379,32 @@ public final class WorldState
 		laterVessels.clear();
 		remadeAreas.clear();
 		remadeLasting.clear();
+		// D-SP-2: every room is in the save, so a room of the world that is not
+		// was made after it; it stays as the world has it, not emptied
+		newRooms.clear();
+		final XMLTag savedRooms = world.getPieceFromPieces("ROOMS");
+		if(savedRooms != null)
+		{
+			final Set<String> savedIDs = new HashSet<String>();
+			for(final XMLTag roomTag : savedRooms.contents())
+				savedIDs.add(CMLib.xml().restoreAngleBrackets(roomTag.getValFromPieces("ID")));
+			for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+			{
+				final Room R = r.nextElement();
+				if((R == null) || R.amDestroyed() || (R.getArea() instanceof Boardable))
+					continue;
+				final String roomID = CMLib.map().getExtendedRoomID(R);
+				if((roomID.length() > 0) && (!savedIDs.contains(roomID)))
+					newRooms.add(roomID);
+			}
+			if(newRooms.size() > 0)
+			{
+				final List<String> some = new ArrayList<String>(newRooms);
+				Collections.sort(some);
+				final String list = (some.size() > 8) ? (CMParms.toListString(some.subList(0, 8).iterator()) + ", ...") : CMParms.toListString(some.iterator());
+				SaveGame.noteWorldChange(CMLib.lang().L("@x1 room(s) are new since this save and are as the world has them now: @x2.", "" + some.size(), list));
+			}
+		}
 		clearWorld();
 		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
 		if(shapes != null)
@@ -1434,13 +1460,13 @@ public final class WorldState
 	{
 		for(final MOB M : deadMobs())
 		{
-			if(!isFresh(M.getStartRoom()))
+			if((!isFresh(M.getStartRoom())) && (!isNewRoom(M.getStartRoom())))
 				M.destroy();
 		}
 		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 		{
 			final Room R = r.nextElement();
-			if((R == null) || R.amDestroyed() || isFresh(R))
+			if((R == null) || R.amDestroyed() || isFresh(R) || isNewRoom(R))
 				continue;
 			final List<MOB> mobs = new ArrayList<MOB>();
 			for(int m = 0; m < R.numInhabitants(); m++)
@@ -1559,6 +1585,20 @@ public final class WorldState
 	 * @param R the room
 	 * @return true if its contents are not put back from the save
 	 */
+	/** D-SP-2: rooms of the world that the save being restored does not have */
+	private static final Set<String> newRooms = new HashSet<String>();
+
+	/**
+	 * D-SP-2: whether a room was made after the save being restored, so that it
+	 * is kept as the world has it.
+	 * @param R the room
+	 * @return true if the save does not have it
+	 */
+	private static boolean isNewRoom(final Room R)
+	{
+		return (R != null) && (newRooms.size() > 0) && newRooms.contains(CMLib.map().getExtendedRoomID(R));
+	}
+
 	private static boolean isFresh(final Room R)
 	{
 		if(freshAll)

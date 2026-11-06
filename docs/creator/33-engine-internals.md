@@ -431,7 +431,8 @@ load-bearing:
 ```text
 afterBoot (game thread)
   WorldState.apply(world.xml)
-    clear transient maps; clearWorld()           empty every room of boot-time mobs/items
+    clear transient maps; note newRooms          booted rooms the save does not have (D-SP-2)
+    clearWorld()                                 empty every other room of boot-time mobs/items
     ROOMSHAPES  -> putShapes                     recreate made/changed/destroyed rooms and areas
     SPACE       -> putSpace                      before rooms: a ship's rooms must exist
     ROOMS       -> fillRoom per room             skips rooms of FRESH= areas; notes missing rooms

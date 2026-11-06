@@ -70,9 +70,15 @@ public class GuildMaster extends StdBehavior
     private String kit(final MOB who, final Clan C, final boolean replace)
     {
         final String role=Organizations.memberValue(who,C,"POSITION");
-        final String names=param("KIT."+role,"");
+        // D-SE-1: KIT.<position> is read with the strict parser (getParmStr refuses a
+        // key with a dot, so no kit was ever found); a position ID with spaces is
+        // written with underscores (KIT.FIRST_CITIZEN)
+        final Map<String,String> parms=CMParms.parseExactParms(getParms());
+        final String roleKey=role.replace(' ','_');
+        String names=CMParms.getParmStr(parms,"KIT."+role,"");
+        if(names.length()==0) names=CMParms.getParmStr(parms,"KIT."+roleKey,"");
         if(names.length()==0) return "There is no kit for your rank.";
-        final String tattoo="GUILDKIT_"+C.clanID().toUpperCase().replace(' ','_')+"_"+role;
+        final String tattoo="GUILDKIT_"+C.clanID().toUpperCase().replace(' ','_')+"_"+roleKey;
         final boolean issued=who.findTattoo(tattoo)!=null;
         if(issued&&!replace) return "You have already received this rank's kit. Say kit replace for a replacement.";
         final List<Item> items=new ArrayList<Item>();

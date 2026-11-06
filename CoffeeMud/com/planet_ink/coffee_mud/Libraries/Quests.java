@@ -47,6 +47,10 @@ public class Quests extends StdLibrary implements QuestManager
 	protected String holidayFilename="quests/holidays/holidays.quest";
 	protected String holidayDefinition="LOAD="+holidayFilename;
 	protected SVector<Quest> quests=new SVector<Quest>();
+	/** D-QU-1: names of quests deleted in this session, whose characters' tracking scripts may go */
+	protected final Set<String> deletedQuests=Collections.synchronizedSet(new HashSet<String>());
+	/** D-QU-1: missing quests already reported, so the log says each once */
+	protected final Set<String> reportedMissing=Collections.synchronizedSet(new HashSet<String>());
 
 	@Override
 	public Quest objectInUse(final Environmental E)
@@ -151,6 +155,7 @@ public class Quests extends StdLibrary implements QuestManager
 			CMLib.threads().deleteTick(Q,Tickable.TICKID_QUEST);
 			Q.internalQuestDelete();
 			quests.removeElement(Q);
+			deletedQuests.add(Q.name().toUpperCase().trim());
 		}
 	}
 
@@ -1859,9 +1864,19 @@ public class Quests extends StdLibrary implements QuestManager
 					Q=findQuest(SE.defaultQuestName());
 				if(Q==null)
 				{
-					SE.stepQuest(player, player, SE.defaultQuestName());
-					SE.endQuest(player, player, SE.defaultQuestName());
-					player.delScript(SE);
+					// D-QU-1: only a quest deleted in this session takes its tracking
+					// script with it; one that failed to load or was renamed keeps it,
+					// so the character's progress comes back with the quest
+					final String name=SE.defaultQuestName().toUpperCase().trim();
+					if(deletedQuests.contains(name))
+					{
+						SE.stepQuest(player, player, SE.defaultQuestName());
+						SE.endQuest(player, player, SE.defaultQuestName());
+						player.delScript(SE);
+					}
+					else
+					if(reportedMissing.add(name))
+						Log.warnOut("Quests",player.Name()+" has the tracking script of quest '"+SE.defaultQuestName()+"', which is not loaded; it is kept (QUESTS DROP discards it).");
 				}
 				else
 					qVec.add(Q);

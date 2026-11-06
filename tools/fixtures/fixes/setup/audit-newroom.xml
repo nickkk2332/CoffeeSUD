@@ -1,0 +1,23 @@
+  <AROOM>
+   <ROOMID>New Area#7</ROOMID>
+   <RAREA>New Area</RAREA>
+   <RCLAS>StdRoom</RCLAS>
+   <RDISP>Fix Audit Annex</RDISP>
+   <RDESC>A room added to the world after the game was saved.</RDESC>
+   <RTEXT>&lt;RCLIM&gt;-1&lt;/RCLIM&gt;&lt;RATMO&gt;-1&lt;/RATMO&gt;&lt;IMG /&gt;&lt;BEHAVES /&gt;&lt;AFFECS /&gt;</RTEXT>
+   <ROOMEXITS />
+   <ROOMCONTENT>
+    <ROOMMOBS />
+    <ROOMITEMS>
+     <RITEM>
+      <ICLAS>ManualArchon</ICLAS>
+      <ILOCA />
+      <IREJV>0</IREJV>
+      <IUSES>2147483647</IUSES>
+      <ILEVL>0</ILEVL>
+      <IABLE>0</IABLE>
+      <ITEXT />
+     </RITEM>
+    </ROOMITEMS>
+   </ROOMCONTENT>
+  </AROOM>

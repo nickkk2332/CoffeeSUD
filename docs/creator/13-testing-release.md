@@ -1555,7 +1555,7 @@ ends, and a new process restores.
 | `SAVES DIFF a b` | What differs between two saves: where the character is, hit points, what they carry, variables, quests and what is in each room |
 | `SAVES COPY a b`, `SAVES DELETE name` | Copy or delete (delete asks first) |
 | `CHECKPOINT`, `ROLLBACK` | Three rotating checkpoint saves; ROLLBACK returns to the newest after asking |
-| `python3 tools/saveinspect.py SAVEDIR` | Prints a save outside the game; with `--var HOST NAME VALUE`, `--hp N` or `--room "Area#12"` it edits the save (keeping `world.xml.bak`); the game must not be running on that save |
+| `python3 tools/saveinspect.py SAVEDIR` | Prints a save outside the game; with `--var HOST NAME VALUE`, `--hp N` or `--room "Area#12"` it edits the save (keeping `world.xml.bak` and updating the checksum in `.complete`); the game must not be running on that save |
 | `python3 tools/worlddiff.py OLD NEW` | Compares two world folders object by object (also `--git REV [WORLD]` against a git revision): rooms by ID, mobs and items by name, other files as added, removed or changed |
 | `WORLD DIFF file` | A world file against what builder `SAVE` would write |
 

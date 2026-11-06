@@ -356,6 +356,7 @@ public class Prop_TicketTaker extends Property implements Travel.BoardingReceipt
 								mob.tell(L("@x1 says 'You'll need @x2 to board.'",myHost.name(),ticketName));
 							else
 								mob.tell(L("You'll need @x1 to board.",ticketName));
+							return false; // D-TI-1: without the ticket, no boarding (it only said so)
 						}
 					}
 				}

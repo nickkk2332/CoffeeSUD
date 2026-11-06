@@ -1017,10 +1017,10 @@ That means:
 - Changes to the mobs and items **placed** in a room by an area file that already
   existed when the save was made do **not** show up: the save's version of the
   room wins.
-- A room that is in the files but did not exist when the save was made has nothing in
-  the save, so, by the code (`clearWorld` and `apply`), it is emptied of its placed mobs
-  and items unless its area is taken fresh (below). Test this with your own world
-  before shipping a patch; take the area `FRESH` if it holds new rooms.
+- A room that is in the files but did not exist when the save was made is kept as
+  the world has it, with its placed mobs and items (the save holds every room, so a
+  room it does not have is new). The restore report lists such rooms: "N room(s) are
+  new since this save and are as the world has them now: ...".
 - Rooms, exits and areas the player built or changed in play are kept as built
   (`ROOMSHAPES`), unless their area is taken fresh.
 - A saved room that the files no longer have is reported, and its saved mobs and
@@ -1120,11 +1120,12 @@ points, party members, quests with their steps, and the script variables
 character. Each change rewrites `world.xml` and keeps the old one as
 `world.xml.bak`. The game must not be running on that save.
 
-Caveat: this tool predates the `.complete` manifest. A change alters `world.xml`
-but not the digest in `.complete`, so (reading `SaveSlots.complete`) the save then
-counts as damaged and is refused or rolled back to `.old-NAME`. After editing, delete
-`NAME/.complete` (the folder is then treated as a legacy snapshot and is accepted)
-or regenerate it from the files, for example:
+Each change also records the new `world.xml` checksum in the save's `.complete`
+list, so the game still takes the save as whole. (A hand edit with another tool
+must do the same: `SaveSlots.complete` checks the digest of every listed file, and
+a save whose `world.xml` no longer matches is set aside as damaged and the previous
+generation is used, or the restore is refused.) To bring `.complete` up to date
+after editing other files by hand, regenerate it from the files:
 
 ```sh
 cd CoffeeMud/saves/hero
@@ -1453,11 +1454,10 @@ sure it gets the initial state ([State and persistence](state-and-persistence.md
 | `This is an ironman game: ...` | `SAVEMODE=IRONMAN` was chosen for this campaign. Only `QUIT` and autosaves write; there is no restore in play. Start the launcher again to continue. |
 | `The game was not saved.` | A `GAME_PROG SAVE`, JavaScript `onBeforeSave` or `cm.on('save')` hook refused. Read the world's scripts. |
 | `Another game is using the save folder ... Close it or choose a different SAVEDIR.` | A second CoffeeSUD process has `saves/` open. Close it, or give this one its own `SAVEDIR=`. |
-| `The save 'x' is incomplete or damaged.` | See [Example 4](#example-4-recovering-a-damaged-save). Common cause: a hand edit of `world.xml` (for example with `saveinspect.py`) that left `.complete` stale. |
+| `The save 'x' is incomplete or damaged.` | See [Example 4](#example-4-recovering-a-damaged-save). Common cause: a hand edit of `world.xml` with a tool other than `saveinspect.py` that left `.complete` stale. |
 | `Unsupported save format N` | The save is from a newer engine. Open it with that version. |
 | `The save cannot load its optional modules: ...` | The world no longer provides the modules (or their versions) the save used; see [Optional modules](14-optional-modules.md). |
 | After a restore, my edit to a room's mobs or items is missing | By default the save's room contents win. Use `RESTORE name FRESH=CHANGED` (or name the areas), or test with `FRESH=ALL`. |
-| After a restore, a new room is empty | Its placed mobs and items are not in the save; take its area `FRESH`. |
 | A monster I summoned is gone after a restore | Not saved. `SAVES CHECK` lists such mobs. A summoned creature that follows a character is saved with that character, except one summoned with `NOSAVE` (it carries `Prop_Summoned` and is flagged unsavable), which a save leaves out. |
 | `Your party may have at most N characters in it.` | `PARTYMAX`. Remove someone (`PARTY REMOVE`) or rest them. |
 | `This world allows at most N of your characters in the world at once.` | `ACTIVECHARMAX` counts everyone in the world, party or not. `PARTY REST` one. |

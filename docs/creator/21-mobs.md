@@ -258,8 +258,12 @@ MODIFY MOB [mob name] [STAT CODE] [value]
   the valid aspects: "...but failed to specify an aspect. Try one of: ...".
 - `MODIFY MOB x LEVEL n` re-derives the mob's armor, attack, damage, speed, hit
   points, mana, movement and money from the new level (as `fillOutMOB` does,
-  see below), keeping its rejuvenation time. The command checks the builder
-  rather than the mob for generic-ness, so this happens for generic mobs too.
+  see below), keeping its rejuvenation time. For a *generic* mob it does so only
+  while its attack, damage, armor and speed are untouched (still its class's
+  defaults, or what its old level gave it); numbers you set by hand are kept and
+  the command says so ("...were set by hand, so they were kept"). A generic mob
+  keeps money you set by hand either way. `RESET MOBCOMBATSTATS ROOM` re-derives
+  everything regardless.
 
 Players are refused ("is a player! Try MODIFY USER!"). Editing reports "<mob>
 shake(s) under the transforming power" and is logged.
@@ -463,7 +467,8 @@ Setting a Level does not by itself change them, with two exceptions:
 
 1. In the editor, when the level goes from below 2 to 2 or more, the combat
    numbers are re-derived and "Combat stats rescored" is shown.
-2. `MODIFY MOB [name] LEVEL [n]` always re-derives them.
+2. `MODIFY MOB [name] LEVEL [n]` re-derives them, except a generic mob's attack,
+   damage, armor and speed that were set by hand (kept, with a message).
 
 The re-derivation is `CMLib.leveler().fillOutMOB`. It sets, from the new
 level:
@@ -1504,8 +1509,9 @@ to inherit the area's.
   and modifier on every load; they are never stored. Use the Hit Points Bonus
   Modifier, `Prop_Adjuster`, or `Prop_MobRank`.
 - **Changing the level did nothing to its attack.** Only the 1 to 2+ transition
-  in the editor and `MODIFY MOB x LEVEL n` re-derive combat numbers. Otherwise
-  set Attack, Damage and Armor yourself, or run `RESET MOBCOMBATSTATS ROOM`.
+  in the editor and `MODIFY MOB x LEVEL n` re-derive combat numbers, and the
+  latter keeps a generic mob's numbers that were set by hand. Otherwise set
+  Attack, Damage and Armor yourself, or run `RESET MOBCOMBATSTATS ROOM`.
 - **The mob's abilities are never used.** A combat behavior is needed
   (`CombatAbilities`, `Fighterness`, `Mageness`...). Do not stack two of them.
 - **Equipment is gone after a reload.** Only generic mobs save equipment; standard

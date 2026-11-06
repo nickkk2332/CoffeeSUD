@@ -1077,7 +1077,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Test:** `FACTION(who faction cmp value)`: the creature's standing with the faction. If `value` is a number the creature's faction value is compared; otherwise the name of its range (Friendly, Hostile...).
 - **Value:** `$%FACTION(who faction)%`: the name of the range the creature is in; empty if it has no standing.
 - **Example:** `IF FACTION($n alignment.ini >= 500)`
-- **Notes:** `faction` is the faction ID (the file name, such as `alignment.ini`), its name, or a band code. **Known fault:** the comparison is always done as whole numbers, so a range *name* on the right (`FACTION($n alignment.ini == GOOD)`) reads as 0 on both sides and `==` is always true. Use [FACTIONBAND](#factionband) to test a band by name and [FACTIONVALUE](#factionvalue) for the number. See [09-society.md](09-society.md).
+- **Notes:** `faction` is the faction ID (the file name, such as `alignment.ini`), its name, or a band code. A number on the right compares the creature's value; anything else is compared, as text and in any case, with the name of the band it is in (or the band's code, such as `FACTION($n alignment.ini == PNEUTRAL)`). [FACTIONBAND](#factionband) and [FACTIONVALUE](#factionvalue) do the same jobs explicitly. See [09-society.md](09-society.md).
 
 ### FACTIONVALUE
 
@@ -2127,7 +2127,7 @@ and cached for the life of the loaded script.
 
 | Symptom | Likely cause |
 | --- | --- |
-| The `IF` is always true or always false and nothing is logged | You compared a *name* with an integer engine. `FACTION($n x == GOOD)` reads both sides as 0; use `FACTIONBAND`. Decimals (`2.5`) also read as 0 in integer comparisons; use `MATH` |
+| The `IF` is always true or always false and nothing is logged | You compared a *name* with an integer engine (a name reads as 0). Decimals (`2.5`) also read as 0 in integer comparisons; use `MATH` |
 | `Unknown keyword: X` or `Unknown character` in the log | A word that is not a function, connector or parenthesis sits in the condition, or you wrote a `$` code outside a function's parentheses. `UNDERSTANDS$` and `JS$` cannot be written in a condition; use the value form |
 | `A OR B AND C` gives the wrong answer | No precedence; evaluation is left to right. Add parentheses |
 | A multi-word `$<host VAR>` argument is cut in two | Inherited functions split on spaces before expanding; quote it: `STRIN('$<WORLD SUSPECTS>' $n)` |

@@ -180,10 +180,13 @@ Details that matter:
   inline in the `.quest` file or under `resources/`.
 - `DISABLE=QUESTS` in `coffeemud.ini` turns the quest ticker off entirely: no
   quest starts, waits or expires while it is set.
-- A rename of a quest NAME is a *different* quest. Characters carrying the
-  old name lose it silently: when `QUESTS` is listed, a tracking script whose
-  quest no longer exists is stepped, ended and removed from the character.
-  Keep quest NAMEs stable; change `SET DISPLAY` for the title players see.
+- A rename of a quest NAME is a *different* quest. Characters carrying the old
+  name keep its tracking script, but `QUESTS` no longer lists it, and the log
+  says once "...has the tracking script of quest '...', which is not loaded; it is
+  kept". If the quest comes back (a failed load fixed, the name restored), their
+  progress is there again; `QUESTS DROP` discards a leftover script. Only a quest
+  deleted in the running game takes its tracking scripts with it. Keep quest
+  NAMEs stable; change `SET DISPLAY` for the title players see.
 
 ## The quest script format
 

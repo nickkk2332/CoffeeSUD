@@ -1827,9 +1827,11 @@ public class DefaultFaction implements Faction, MsgListener
 		else
 			target = source;
 
+		// D-SE-2: CHANCE=n fires n percent of the time (the roll is 1 to 100); the old
+		// test returned when the roll was under n, so it fired about (100-n) percent
 		if((event.getPctChance()<100)
 		&&(event.getPctChance()>0)
-		&& (CMLib.dice().rollPercentage()<event.getPctChance()))
+		&& (CMLib.dice().rollPercentage()>event.getPctChance()))
 			return;
 
 		double baseChangeAmount=100.0;

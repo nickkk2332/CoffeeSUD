@@ -620,6 +620,29 @@ public class Catalog extends StdCommand
 					}
 					del=new Physical[]{P};
 				}
+				// D-BW-2: a bulk delete asks once for the whole set (it skipped every
+				// question when more than 10 matched); a single entry asks for itself
+				final boolean bulk=del.length>1;
+				if(bulk)
+				{
+					int mobs=0;
+					int inUse=0;
+					for (final Physical P : del)
+					{
+						if(P instanceof MOB)
+							mobs++;
+						final CatalogLibrary.CataData data=CMLib.catalog().getCatalogData(P);
+						if((data!=null)&&(data.numReferences()>0))
+							inUse++;
+					}
+					if((mob.session()==null)
+					||(!mob.session().confirm(L("This will permanently delete @x1 catalog entries (@x2 mobs, @x3 items; @x4 in use).  Are you sure (y/N)?",
+						""+del.length,""+mobs,""+(del.length-mobs),""+inUse),"N")))
+					{
+						mob.tell(L("Nothing was deleted."));
+						return false;
+					}
+				}
 				for (final Physical P : del)
 				{
 					final CatalogLibrary.CataData data=CMLib.catalog().getCatalogData(P);
@@ -629,7 +652,7 @@ public class Catalog extends StdCommand
 						if((data!=null)&&(data.numReferences()>0))
 							prefix="Catalog MOB '"+((MOB)P).Name()+"' is currently listed as being in use '"+data.numReferences()+" times.  ";
 						if((mob.session()!=null)
-						&&((del.length>10)||(mob.session().confirm(L("@x1This will permanently delete mob '@x2' from the catalog.  Are you sure (y/N)?",prefix,((MOB)P).Name()),"N"))))
+						&&(bulk||(mob.session().confirm(L("@x1This will permanently delete mob '@x2' from the catalog.  Are you sure (y/N)?",prefix,((MOB)P).Name()),"N"))))
 						{
 							CMLib.catalog().delCatalog(P);
 							mob.tell(L("MOB '@x1 has been permanently removed from the catalog.",((MOB)P).Name()));
@@ -642,7 +665,7 @@ public class Catalog extends StdCommand
 						if((data!=null)&&(data.numReferences()>0))
 							prefix="Catalog Item '"+((Item)P).Name()+"' is currently listed as being in use '"+data.numReferences()+" times.  ";
 						if((mob.session()!=null)
-						&&((del.length>10)||(mob.session().confirm(L("@x1This will permanently delete item '@x2' from the catalog.  Are you sure (y/N)?",prefix,((Item)P).Name()),"N"))))
+						&&(bulk||(mob.session().confirm(L("@x1This will permanently delete item '@x2' from the catalog.  Are you sure (y/N)?",prefix,((Item)P).Name()),"N"))))
 						{
 							CMLib.catalog().delCatalog(P);
 							mob.tell(L("Item '@x1 has been permanently removed from the catalog.",P.Name()));

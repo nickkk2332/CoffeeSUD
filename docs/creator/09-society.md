@@ -561,7 +561,7 @@ Parameters (one parameter line; put `CLAN=` first, because the reader would othe
 | `JOINQUEST="name"` | none | A quest the speaker must have won. |
 | `RANKS=MERIT\|SCRIPT` | `MERIT` | `MERIT` re-checks merit on `join`, `rank` and `advance`. `SCRIPT` leaves advancement to your scripts. |
 | `DUES=TRUE\|FALSE` | `TRUE` | Whether saying `dues` collects arrears. |
-| `KIT.POSITION="catalog item,catalog item"` | none | Items issued to a member of that position (use the position `ID`, for example `KIT.INITIATE`). Items are names in the world [catalog](22-items.md). **Known fault:** the parameter reader (`CMParms.getParmStr`) treats a key that contains `.` as punctuation and returns the default, so in the current build a `KIT.` parameter is never read and `kit` always answers "There is no kit for your rank." (checked with a direct call; see the audit notes). `KITFEE` is unaffected. |
+| `KIT.POSITION="catalog item,catalog item"` | none | Items issued to a member of that position (use the position `ID`, for example `KIT.INITIATE`). Items are names in the world [catalog](22-items.md). A position ID with spaces is written with underscores (`KIT.FIRST_CITIZEN`). |
 | `KITFEE=n` | `0` | Charge for `kit replace`. |
 | `LEAVEMSG="text"`, `REFUSEMSG="text"` | stock lines | The reply on leaving and on a refused join. |
 
@@ -942,7 +942,7 @@ file](#the-law-file)).
 | Script item | Form | Notes |
 | --- | --- | --- |
 | `MPFACTION` | `MPFACTION $n THIEVES.INI 50`; `MPFACTION $n THIEVES.INI +50`; `MPFACTION $n THIEVES.INI --50`; `MPFACTION $n THIEVES.INI TRUSTED` | A number sets the value; `+n` adds, `--n` subtracts; a band name or code (`TRUSTED`, `THIEVES_TRUSTED`) sets the middle of the band of that faction. Tells the character what changed. |
-| `FACTION()` condition | `if faction($n THIEVES.INI > 500)` | Compares the numeric value. **Known fault:** the comparison is always numeric, so a band name on the right (`== Trusted`) reads as 0 on both sides and is always true. Test a band with `FACTIONBAND` instead: `if factionband($n THIEVES.INI == TRUSTED)`. |
+| `FACTION()` condition | `if faction($n THIEVES.INI > 500)`; `if faction($n THIEVES.INI == Trusted)` | A number compares the value; otherwise the band's display name or code, as text (any case). |
 | `$%FACTION(who id)%` | band display name | Empty when the mob has no standing. Here `id` must be the faction ID (file name, with or without `.ini`). |
 | `$%FACTIONVALUE(who id)%` | the number | |
 | `FACTIONBAND()` condition, `$%FACTIONBAND(who id)%` | `if factionband($n THIEVES.INI == TRUSTED)`; the band code | Compares the band's code name as text. |
@@ -1602,10 +1602,9 @@ CLAN="Gutter Hand" JOINMASK="-BASECLASS +Thief" JOINFEE=50 JOINQUEST="Proof of N
 
 A thief who has won "Proof of Nerve" can now say `join` to the guildmaster:
 it takes 50 gold and makes them a Footpad. The `KIT.FOOTPAD` and `KITFEE`
-parameters are meant to hand over the two catalog items (see
-[22-items.md](22-items.md)) once, but see the known fault in the
-[GuildMaster](#guildmaster) table: in the current build `KIT.` keys are never
-read, so the kit is not issued.
+parameters hand over the two catalog items (see [22-items.md](22-items.md))
+once when they join, or when they say `kit`; `kit replace` issues them again
+for 25 gold.
 
 **5. Dues.** The government says monthly, one month of grace, and the steps
 `WARN,DEMOTE,EXILE`; it does not say how much. Set it on the clan:
@@ -1855,7 +1854,6 @@ event. See [state-and-persistence.md](state-and-persistence.md) and
 | A war declaration has no effect | A war needs both clans to declare it. Use `MPCLANRELATION a b WAR MUTUAL`. |
 | Faction changes never happen | The character does not hold the faction (`FACTIONS` setting, `AUTODEFAULTS`, `ADDOUTSIDER`, `MPFACTION`), or the change needs a target who holds it (`OUTSIDER` flag), or the trigger name matches nothing (`ORGCHECK`). |
 | A faction band has no name or the wrong one | Gaps or overlaps in the `RANGE` lines. `MINIMUM`/`MAXIMUM` do not set bounds; the ranges do. |
-| `CHANCE=n` on a change seems backwards | As the code reads, a change with `CHANCE` below 100 returns when a percentile roll is under n, so it fires about (100-n) percent of the time. Test with a few runs, or leave `CHANCE` out and use a `MASK` (unverified in play). |
 | `AUTOREACTION=CLAN` factions do not appear for the player | `CLAN` must be in `AUTOREACTION`, the clan must be `NPCRUN`, and the character must be in a room (they are attached on entering). |
 | Prices ignore my `PREJUDICE` | The value is read as the shopkeeper's, else the area's, else the ini's: the shopkeeper's blank value falls through. Rules are checked in order and the first match wins; a `BUY`/`SELL` prefix is required; faction codes need the customer to hold the faction. Run `PRICECHECK`. |
 | `PRICECHECK` shows a different price from what a player sees | Archon privileges (`ABOVELAW`, `ALLPRIVS`) bypass shop restrictions; test with `FOR` a normal character. |

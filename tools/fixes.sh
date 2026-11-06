@@ -507,6 +507,21 @@ group_saves3()
 	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" >> "$W/s23-inspect.txt" 2>&1
 	expect s23-inspect.txt "Character: Saver in New Area#0"
 	expect s23-inspect.txt "hit points 7,"
+	# D-SP-1 and D-SP-2 (docs audit): the save edited by saveinspect.py is still
+	# whole (its .complete list is brought up to date), and a room added to the
+	# world after the save keeps what the world puts in it
+	cp "$W/wworld/areas/new-area.cmare" "$W/new-area.before-audit"
+	python3 -c 'import sys; p, r = sys.argv[1], open(sys.argv[2]).read(); s = open(p).read(); open(p, "w").write(s.replace(" </AROOMS>", r + " </AROOMS>", 1))' "$W/wworld/areas/new-area.cmare" "$FX/setup/audit-newroom.xml"
+	play audit-restore.txt wdb wworld 'jrun /resources/_fixes/audit-restore.js\nquit\nn\n' RESTORE=s23a TIMEMODE=TURNS
+	expect audit-restore.txt "Restored 's23a'."
+	expect audit-restore.txt "room(s) are new since this save and are as the world has them now: New Area#7."
+	jsresults audit-restore.txt
+	if ls -d "$SAVES"/.damaged-s23a* >/dev/null 2>&1; then
+		echo "  FAIL  audit-restore: the save edited by saveinspect.py was set aside as damaged"; FAIL=1
+	else
+		echo "  ok    audit-restore: the save edited by saveinspect.py is whole"
+	fi
+	cp "$W/new-area.before-audit" "$W/wworld/areas/new-area.cmare"
 
 	# S22: a character's entry limits (InstanceArea's LIMIT) and planar
 	# visits are saved, with the time they have left
