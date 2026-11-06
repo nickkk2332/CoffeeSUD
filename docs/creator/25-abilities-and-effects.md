@@ -680,7 +680,7 @@ victim, beneficial ones on itself or allies); see
 | `MPDISABLE [MOB] [ABILITY OR EXPERTISE]` | Removes the ability (or expertise). |
 | `MPCAST [ABILITY] [TARGET]` | The script's mob uses the ability at 100 percent proficiency on the target as a normal cast: costs, cooldown, masks and fizzling all apply. When the host is not a mob, its stand-in mob is restored to full strength first. |
 | `MPCASTEXT [ABILITY] [TARGET] [ARGS]` | As `MPCAST`, with the rest of the line given to the ability the way a player would type it. |
-| `MPAFFECT [ABILITY] [TARGET] [N TICKS] [PARMS]` | Puts the ability on the target as an automatic cast (no cost, never fizzles). For a property it is added permanently, or timed through a `TemporaryAffects` effect when `N TICKS` is given. For other abilities `N TICKS` sets how long the effect lasts. `property:[ID]` forces the permanent-property form for any ability. |
+| `MPAFFECT [ABILITY] [TARGET] [N]TICKS [PARMS]` | Puts the ability on the target as an automatic cast (no cost, never fizzles). The duration word is the number run straight into `TICKS`, as `120TICKS` (a space between them is not recognised). For a property it is added permanently, or timed through a `TemporaryAffects` effect when the duration is given. For other abilities it sets how long the effect lasts. `property:[ID]` forces the permanent-property form for any ability. |
 | `MPUNAFFECT [TARGET] [ABILITY ID or ALL]` | Ends the named effect, or every uninvokable effect. |
 | `MPLEARNLANG`, `MPLEARNRECIPE`, `MPTRAINS`, `MPPRACS`, `MPRESPEC`, `MPPERK` | Related progression commands. |
 
@@ -1679,8 +1679,8 @@ cast cinderlash goblin
 ```
 
 For the real game, instead list `Spell_Cinderlash` in the class's ability map
-([03-characters.md](03-characters.md)). Reread the ability's text in `HELP
-CINDERLASH`, which shows the generated header.
+([03-characters.md](03-characters.md)). Check the help page with `HELP
+CINDERLASH`; it shows the generated header.
 
 ### A timed buff handed out by a script: Emberward
 
@@ -1713,13 +1713,13 @@ if affected($n Spell_Emberward)
  say You already bear the ward, $n.
 else
  say Stand still, $n.
- mpaffect Spell_Emberward $n 120 ticks
+ mpaffect Spell_Emberward $n 120TICKS
 endif
 ~
 ```
 
 `mpaffect` casts it as an automatic cast, so the priest needs no mana and the
-roll cannot fail; `120 ticks` sets how long it lasts (the 120 in the
+roll cannot fail; `120TICKS` sets how long it lasts (the number and the word are written together) (the 120 in the
 ability's own `Duration Override` is the default when a caster uses it). A
 player who says "ember ward" gets the glow, sees `(Emberward)` with its time left
 in `AFFECTS`, and takes the extra fire and acid resistance until it fades. To
@@ -1947,7 +1947,7 @@ Round-trip anything an effect needs through `text()` or `setStat`/`getStat`.
   name the message kind, and mobs whose home is in the same area are exempt
   from a *permanent* trap, so test with a player or a mob from another area.
 - **A trap or a poison on an item never runs out.** Builder-placed effects are
-  permanent. Use a script and `MPAFFECT ... N TICKS` for a temporary one.
+  permanent. Use a script and `MPAFFECT [ID] [TARGET] [N]TICKS` for a temporary one.
 - **A summon is left behind.** Use `DISMISSONEXPIRE` and `BIND`, give the
   ability a duration (`TICKSOVERRIDE`), and test death of the summoner.
 - **Changing a definition changes every copy.** `MODIFY ABILITY` edits the one

@@ -1072,15 +1072,15 @@ changes the effective one by being an effect.
 ADJ.` charstats): training can take a stat up to that ceiling and no further.
 `BASEMINSTAT` is the floor a stat starts from.
 
-**Other charstats.** Gender; about thirty saving throws (paralysis, fire, cold,
+**Other charstats.** Gender; about twenty-five saving throws (paralysis, fire, cold,
 water, gas, mind, general, justice, acid, electricity, poison, undead, magic,
 disease, traps, detection, overlooking, doubt, blunt, pierce, slash, spells,
 prayers, songs, chants, polymorph); age and weight adjustment; critical chance
 and damage (weapon and magic); faith; recovery rate; an experience adjustment
 percent (`XP ADJUSTMENT PCT`). Races, classes, items and effects adjust these
 by name (`SAVE VS FIRE`, `CRIT WEAPON CHANCE PCT`...). A saving throw is the
-stat plus a contribution of the base stats (for example half of
-Constitution plus Strength for paralysis); see
+stat plus a contribution of the base stats (for paralysis, the average of
+Constitution and Strength); see
 [29-combat-and-encounters.md](29-combat-and-encounters.md) for how saves,
 attack and armor are used.
 

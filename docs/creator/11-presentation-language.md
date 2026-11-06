@@ -1541,3 +1541,235 @@ The first block runs for any language the guard cannot follow. See
 Testing languages: the staff-level characters have stock skills at full
 proficiency on login, so test learning, immersion and comprehension on an
 ordinary character and confirm saved proficiency after a restore.
+
+## Vocabulary, socials and help
+
+World vocabulary files live under `world/vocab/` and are UTF-8. They rename
+what the player reads without changing engine IDs, commands or saved data.
+`.ini` files here are read as Java properties (backslash escapes and `\` line
+continuation) unless this section says otherwise. Run `WORLD RELOAD ASSETS`
+after direct edits in a running game; a restart or subsystem reload may be
+needed for resource overrides (see the `VOCAB RELOAD` command below).
+
+### The glossary: world/vocab/glossary.ini
+
+Source: [Vocabulary](../../CoffeeMud/com/planet_ink/coffee_mud/core/Vocabulary.java).
+The glossary renames whole words and phrases everywhere the game prints them,
+without regular expressions. The file is checked at most once a second for
+changes.
+
+```text
+mana = aether
+gold coin(s) = crown(s)
+Hit Points = vigor; SCOPE=SCORE
+spell = working; SCOPE=HELP
+Archon = Warden; NOT: Archon Hall,Archon's Blade
+FINAL spark = ember
+```
+
+One rule per line, `term = replacement` followed by optional `; options`:
+
+| Element | Meaning |
+| --- | --- |
+| `term = replacement` | Replace the whole word or phrase. Matching ignores case; the replacement copies the case pattern of the match (`Mana` becomes `Aether`, `MANA` becomes `AETHER`, `Hit Points` becomes `Vigor`). A replacement can be quoted. |
+| `(s)` on a term | Also match the plural and the `(s)` form. `gold coin(s) = crown(s)` turns `gold coins` into `crowns` and `gold coin(s)` into `crown(s)`. |
+| `; SCOPE=ALL` (default), `HELP` or `SCORE` | Where the rule applies: everywhere, help text only, or the SCORE display only. |
+| `; NOT: a,b` | Phrases in which the term is left alone (`Archon Hall` keeps its `Archon`). |
+| `FINAL term = ...` or `; FINAL` | Apply at final output instead of with the normal translation (the very end of the output pipeline). |
+| a line `SCOPE=SCORE` by itself | The default scope for the rules that follow. |
+| a line `NOT: a,b` by itself | The default exceptions for the rules that follow. |
+| `#` or `;` at the start of a line | A comment. |
+
+How it works:
+
+- Matches are whole words: `mana` does not touch `manage`, and a term can
+  start after a colour code (`^Hmana`).
+- Rules run in file order, each on the output of the previous one. Avoid
+  cycles and cascades (`a = b` followed by `b = c`).
+- Markup attributes are left alone: text inside `^<...^>` markup and inside an
+  `<S-NAME>` style placeholder is not rewritten.
+- Normal rules run on translated messages (the `L(...)` text), on help output
+  and on SCORE; `FINAL` rules run on the last stage. Help and score output
+  also get their scoped rules.
+- The glossary renames words in text, nothing else. A creature called
+  "Archon" is still an Archon to `STAT` and to masks.
+
+`WORLD CHECK ONLY=VOCAB` flags lines without `=`, unknown scopes and unclosed
+quotes.
+
+### The translation and parser rule files and the VOCAB command
+
+The inherited rule files `resources/translation_en_TX.properties` and
+`parser_en_TX.properties` (the `LANGUAGE` and `COUNTRY` settings name them)
+rewrite text and typed commands with `REPLACE`, `REPLACEALL`, `REPLACEWHOLE`
+and `IGNORE...` rules in sections (`SESSION-TRANSLATION`, `FILTER-TRANSLATION`,
+`FINAL-TRANSLATION`, and for typed lines `COMMAND-PRE-PROCESSOR`,
+`ITEM-PRE-PROCESSOR`, `ITEM-FAIL-PROCESSOR`, `RAW-INPUT-PROCESSOR`). A world adds
+its own file under `world/resources/` with the same name. The glossary is the
+easier route for renaming terms; use these files for regular-expression
+rewrites.
+
+`VOCAB` (builder mode, a `DEV=1` game, or the CMDAREAS security flag) tests and
+edits them:
+
+```text
+VOCAB TEST the fixcolour of it
+VOCAB INPUT get sword and shield from chest
+VOCAB LIST TECH_LEVEL_NAMES
+VOCAB RELOAD
+VOCAB ADD final-translation replaceall "colour" with "color"
+```
+
+| Subcommand | Behaviour |
+| --- | --- |
+| `VOCAB TEST text` | Shows the text after session, final and filter translation, with each rule that matched. |
+| `VOCAB INPUT command line` | Shows what the raw-input parser and the command pre-processor make of a typed line: the commands it becomes and each rule that matched. |
+| `VOCAB LIST KEY` | Shows a `lists.ini` key's value in effect and the file it came from (the world's `resources/` over the game's). |
+| `VOCAB RELOAD` | Forgets the cached rule files, lists, socials and help so they are read again. |
+| `VOCAB ADD SECTION rule` | In builder mode only, appends a rule to the world's own rule file under the section; it takes effect at once. |
+
+### Local lists: Prop_LocalLists
+
+Source: [Prop_LocalLists](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_LocalLists.java).
+Targets: creatures, rooms, areas.
+
+The game keeps several global charts in `resources/lists.ini` (time-of-day
+messages, the health chart, damage words, hit and miss text, corpse blurbs, gaits,
+magic words). Prop_LocalLists replaces any of them for a creature, a room or an
+area. An underground area can announce the glowmoss brightening instead of the
+sunrise; a clockwork creature can have its own health lines.
+
+```text
+LOAD=vocab/lists_underdark.ini
+MAGIC_WORDS="mellon,ithildin"
+TOD_CHANGE_INSIDE="^JThe glowmoss brightens.^?,,,^JThe moss dims.^?"
+```
+
+Keys (all optional): `TOD_CHANGE_OUTSIDE`, `TOD_CHANGE_INSIDE`, `HEALTH_CHART`,
+`DAMAGE_WORDS`, `WEAPON_HIT_DESCS`, `WEAPON_MISS_DESCS`, `CORPSE_BLURBS`,
+`MAGIC_WORDS`, `GAIT_LIST`; and `LOAD=file`, a Java-properties file under
+`world/vocab/` (a name not starting `vocab/` is looked for there) that holds
+any of the same keys in the stock `lists.ini` shape. Inline keys win over the
+file. Quote values that contain spaces, commas or semicolons.
+
+**Lookup order.** For a given key the engine tries, in order: the creature
+acting (for combat text, the attacker), the creature, the room, the area, the
+area's parent areas, then the global list. The first Prop_LocalLists that has
+the key wins. A weapon's text uses its wielder's context (a racial natural
+weapon has no owner, so combat supplies the wielder). `Prop_SkyText`
+keeps priority for its own time-of-day text.
+
+**List shapes** (as in `lists.ini`): commas separate indexed entries, `|`
+separates random alternatives within an entry, semicolons separate grid rows.
+
+| Key | Shape |
+| --- | --- |
+| `TOD_CHANGE_OUTSIDE`, `TOD_CHANGE_INSIDE` | Four entries: dawn, day, dusk, night. An empty entry says nothing. |
+| `HEALTH_CHART` | Eleven entries, from near death to perfect health, with `<MOB>` for the creature's name. |
+| `WEAPON_HIT_DESCS`, `WEAPON_MISS_DESCS` | Six entries, one per attack category: missile, thrown, slash/bash, other, pierce, laser. Hits use `<DAMAGE>` and `<TOOLNAME>`. |
+| `DAMAGE_WORDS` | See below. |
+| `CORPSE_BLURBS` | Rows `cause=phrase\|phrase` separated by `;` (or the stock `cause,phrase,phrase` rows). The cause is an ability ID, a weapon damage type or class, or `ALL`. |
+| `MAGIC_WORDS` | A comma list; wands and the like pick one by a hash of the item. |
+| `GAIT_LIST` | Rows `NAME,present verb,arrival,departure` separated by `;`. |
+
+`WORLD CHECK ONLY=VOCAB` (and `PROPCHECK`) verify that the health chart has 11
+entries, hit and miss lists have 6, damage rows start with a damage type or
+`ALL`, and referenced files exist.
+
+### Damage words
+
+Damage words are the verbs in combat lines ("scratches", "decimates") chosen by
+how much damage was done. The stock `DAMAGE_WORDS` in `lists.ini` is a grid: a
+row per weapon damage type (`ALL`, `NATURAL`, `SLASHING`, `PIERCING`,
+`BASHING`, `BURNING`, ...), each starting with the type and then the words in
+increasing severity, with `(s)` for the plural. `DAMAGE_WORDS_THRESHOLDS` gives
+the damage thresholds; it has one more entry than a row has words.
+
+```text
+DAMAGE_WORDS="ALL,annoy(s),scratch(es),graze(s),wound(s),cut(s),damage(s),decimate(s),murder(s),massacre(s),MASSACRE(S),destroy(s),DESTROY(S),obliterate(s),OBLITERATE(S),**OBLITERATE(S)**,--==::OBLITERATE(S)::==--;BURNING,annoy(s),warm(s),heat(s),singe(s),burn(s),flame(s),scorch(es),incinerate(s),massacre(s),MASSACRE(S),destroy(s),DESTROY(S),obliterate(s),OBLITERATE(S),**OBLITERATE(S)**,--==::OBLITERATE(S)::==--"
+```
+
+Local lists use the same grid. A row whose type matches the damage type beats
+`ALL`. A local `DAMAGE_WORDS` may also be a single flat list of words with no
+leading type; it is then used for every type. A row must have as many words as
+the thresholds need. These words apply to ability and spell damage as well as
+weapon hits (`<DAMAGE>` in the message). `Prop_WeaponMessages` (below) can give
+a weapon its own damage words, which win over local words.
+
+### Per-race and per-weapon text
+
+A custom race (`GenRace`, see [chapter 3](03-characters.md)) can carry two
+fields, edited in `MODIFY RACE`:
+
+- `HEALTHCHART`: eleven health lines with `<MOB>`, with `|` alternatives. It
+  overrides the race's borrowed `HEALTHRACE` text; the local and global charts
+  remain fallbacks.
+- `CORPSEBLURBS`: `cause=phrase|alternative` pairs separated by `;`:
+
+  ```text
+  BURNING=a heap of melted springs;ALL=a pile of clockwork gears
+  ```
+
+  Race corpse text wins over local lists; then the stock corpse rules apply.
+
+`Prop_WeaponMessages` (targets weapons, including racial natural weapons) sets
+a weapon's own hit and miss lines:
+
+```text
+HIT="<S-NAME> sear(s) <T-NAMESELF> with <TOOLNAME>: <DAMAGE>." MISS="<S-NAME> swing(s) wide." DAMAGEWORDS="singes,scorches,burns,incinerates"
+```
+
+`HIT` and `MISS` may hold `|`-separated alternatives chosen at random.
+Normal source and target substitutions work, and `<TOOLNAME>` is the weapon's
+name. Weapon text overrides local hit and miss lists, and its `DAMAGEWORDS`
+override local damage words. `DAMAGEWORDS` takes either a flat severity list or
+a grid with rows starting `ALL` or a damage type, like `DAMAGE_WORDS`.
+
+### Socials and help overlays
+
+**Socials.** `world/vocab/socials.txt` is read after the stock
+`resources/socials.txt`, so a world line replaces a stock social of the same
+name. It uses the stock tab-separated format (a code, the social name with an
+optional target pattern, and the texts the actor, others and target see; look
+at `resources/socials.txt` for the columns):
+
+```text
+ss<TAB>FIXGREET<TAB>You greet the moon.<TAB>&lt;S-NAME&gt; greet(s) the moon.<TAB><TAB><TAB><TAB><TAB>
+```
+
+(`<TAB>` stands for a real tab character; the `&lt;` shown is only to keep
+this page's markup plain, write `<S-NAME>` in the file.)
+`world/vocab/socials.ini` chooses which stock socials remain:
+
+```ini
+STOCK=BOW,NOD,SMILE,WAVE
+REMOVE=CURSE
+```
+
+`STOCK` is `ALL` (default), `NONE`, or a comma list to keep; `REMOVE` is a
+comma list pruned before the world's `socials.txt` loads (so a world social
+may re-add a removed name). Builder `CREATE`/`MODIFY`/`DESTROY SOCIAL` save the
+effective set to the world file and set `STOCK=NONE`. `Prop_Socials LOAD=` also
+looks in `world/vocab/` before `resources/`.
+
+**Help.** Stock help files load alphabetically, then `world/vocab/help/*.ini`
+alphabetically, then the builder file (`world_help.ini`) last. A world entry
+overrides a stock entry with the same key. Files named `arc_*.ini` hold Archon
+help (shown by `AHELP`); the others hold normal help.
+
+- To hide stock entries: list keys one per line in `vocab/help/hide.txt`
+  (`#` comments allowed), or `HIDE=CLANS,CHANNELS` in `vocab/help/settings.ini`.
+  A key prefixed `ARC:` hides only Archon help. A world file can replace a
+  hidden key.
+- Builder `HELP` edits write `world_help.ini` and `AHELP` edits write
+  `arc_world_help.ini`. Destroying an entry records it in
+  `vocab/help/deleted.txt` (a final deletion; `ARC:KEY` for Archon help); saving
+  the topic again clears the deletion.
+- Archons see the selected entry's source file after its text.
+- Help entries can carry the lore gating metadata described in
+  [The lore codex](#the-lore-codex).
+- Do not edit the stock help files to ship a world's vocabulary; use the
+  world overlay.
+
+Run `WORLD RELOAD ASSETS` or `VOCAB RELOAD` after editing socials or help in a
+running game.
