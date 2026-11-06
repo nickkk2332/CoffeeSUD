@@ -351,10 +351,14 @@ fresh-process restore, definition migrations, preserved suspended payloads,
 refusal without source-save mutation, the restore report, creator-only commands
 and separate-world isolation.
 
-This foundation supports later feature-specific validators and lifecycle
-adapters. It does not yet provide skill supports, loot affixes, progression
-trees, arbitrary asset migration, executable migration code, or item/reward
-transactions. Those remain separately selectable work from the research catalog.
+This foundation supports feature-specific validators and lifecycle adapters.
+Three families are built on it: ability composition with its supports
+([chapter 15](15-ability-composition.md)), combat profiles
+([chapter 16](16-combat-profiles.md)), and tracked item modifiers with loot
+affixes and controlled crafting transactions
+([chapter 17](17-item-modifiers-crafting.md)). It does not provide progression
+trees, arbitrary asset migration, executable migration code, or general reward
+transactions; those remain separately selectable work from the research catalog.
 
 Implementation: [ModuleDefinitions.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ModuleDefinitions.java),
 [OptionalModules.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/OptionalModules.java),

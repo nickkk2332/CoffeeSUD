@@ -728,6 +728,18 @@ public final class SaveGame
 	 * @param header the save's header
 	 * @param fresh the FRESH= spec, or null
 	 */
+	/**
+	 * The kind of a world sum, the part before its first dash ("3" of "3-120-ab12"): sums of different
+	 * kinds, written by different versions of the game, cannot be compared.
+	 * @param sum the world sum
+	 * @return its kind, or "" if it has none
+	 */
+	static String sumKind(final String sum)
+	{
+		final int x = (sum == null) ? -1 : sum.indexOf('-');
+		return (x > 0) ? sum.substring(0, x) : "";
+	}
+
 	private static void compareWorlds(final Properties header, final String fresh)
 	{
 		final String savedSum = header.getProperty("worldsum", "");
@@ -742,27 +754,34 @@ public final class SaveGame
 		final Set<String> changed = new TreeSet<String>();
 		if((savedSum.length() > 0) && (!savedSum.equals(WorldFiles.bootChecksum())))
 		{
-			noteWorldChange(text("The world has changed since this game was saved."));
+			// a save from an older version of the game has a world sum of another kind, which cannot be
+			// compared: only its area files are, and the world is said to have changed only if one has
+			final boolean olderKind = !sumKind(savedSum).equals(sumKind(WorldFiles.bootChecksum()));
+			final List<String> areaNotes = new ArrayList<String>();
 			for(final Map.Entry<String, String> e : now.entrySet())
 			{
 				final String was = saved.get(e.getKey());
 				if(was == null)
 				{
 					changed.add(e.getKey());
-					noteWorldChange(text("New area file: @x1", e.getKey()));
+					areaNotes.add(text("New area file: @x1", e.getKey()));
 				}
 				else
 				if(!was.equals(e.getValue()))
 				{
 					changed.add(e.getKey());
-					noteWorldChange(text("Changed area file: @x1", e.getKey()));
+					areaNotes.add(text("Changed area file: @x1", e.getKey()));
 				}
 			}
 			for(final String file : saved.keySet())
 			{
 				if(!now.containsKey(file))
-					noteWorldChange(text("Area file gone: @x1", file));
+					areaNotes.add(text("Area file gone: @x1", file));
 			}
+			if((!olderKind) || (!areaNotes.isEmpty()))
+				noteWorldChange(text("The world has changed since this game was saved."));
+			for(final String note : areaNotes)
+				noteWorldChange(note);
 		}
 		if(fresh != null)
 		{
@@ -1174,7 +1193,7 @@ public final class SaveGame
 			if(slot.name.equals(currentSlot))
 				str.append(CMLib.lang().L(" (this game)"));
 			final String sum = slot.header.getProperty("worldsum", "");
-			if((sum.length() > 0) && (!sum.equals(WorldFiles.bootChecksum())))
+			if((sum.length() > 0) && (!sum.equals(WorldFiles.bootChecksum())) && sumKind(sum).equals(sumKind(WorldFiles.bootChecksum())))
 				str.append(CMLib.lang().L(" (older world)"));
 			str.append("\n\r");
 		}

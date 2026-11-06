@@ -258,7 +258,7 @@ public final class OptionalModules
                 final Definition def = plan.definitions.get(id); final Capsule capsule = capsules.get(id);
                 final String reason = problem(id); final boolean active = reason.isEmpty();
                 out.append("\n\r  ").append(id).append(" v").append(capsule != null ? capsule.version : def.version).append(active ? " ACTIVE" : capsule == null ? " OFF" : " SUSPENDED");
-                if(!reason.isEmpty()) out.append(" — ").append(reason);
+                if(!reason.isEmpty()) out.append(" - ").append(reason);
                 if(creator)
                 {
                     if(def != null) out.append("\n\r    definition: ").append(def.path).append("; selected by: ").append(plan.reasons.containsKey(id) ? plan.reasons.get(id) : "none")
@@ -304,7 +304,7 @@ public final class OptionalModules
                 {
                     if(removal.equals("refuse")) throw new IOException(id + ": restore/reload refused: damaged saved module data: " + e.getMessage(), e);
                     parsed = new Capsule(stored, id, "damaged saved module data, kept as saved: " + e.getMessage());
-                    next.notes.add(id + ": suspended — " + parsed.problem);
+                    next.notes.add(id + ": suspended - " + parsed.problem);
                 }
                 final Capsule old = parsed;
                 if(next.capsules.put(old.id, old) != null) throw new IOException("duplicate saved module " + old.id);
@@ -336,7 +336,7 @@ public final class OptionalModules
                 catch(final IOException e)
                 {
                     if(old.removal.equals("refuse")) throw new IOException(old.id + ": restore/reload refused: " + e.getMessage(), e);
-                    old.problem = e.getMessage(); next.notes.add(old.id + ": suspended — " + old.problem);
+                    old.problem = e.getMessage(); next.notes.add(old.id + ": suspended - " + old.problem);
                 }
             }
         }
@@ -355,7 +355,7 @@ public final class OptionalModules
                     {
                         final String problem = "dependency " + required + " is not active in this campaign";
                         if(capsule.removal.equals("refuse")) throw new IOException(capsule.id + ": " + problem);
-                        capsule.problem = problem; next.notes.add(capsule.id + ": suspended — " + problem); changed = true; break;
+                        capsule.problem = problem; next.notes.add(capsule.id + ": suspended - " + problem); changed = true; break;
                     }
                 }
             }

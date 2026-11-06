@@ -360,8 +360,11 @@ public final class WorldCheck
 		if(all || parts.contains("MODULES"))
 		{
 			final ModuleDefinitions.Plan modules = OptionalModules.configuredPlan();
-			for(final String error : modules.errors)
+			// what the world's selection uses must be valid; a draft or stale manifest nothing selects is a warning
+			for(final String error : modules.blocking)
 				out.add(new Finding(Severity.ERROR, "MODULES", error));
+			for(final String warning : modules.warnings())
+				out.add(new Finding(Severity.WARNING, "MODULES", warning));
 			for(final String id : modules.enabled)
 			{
 				final String clock = GameTime.isTurnBased() ? "TURNS" : "REALTIME";
