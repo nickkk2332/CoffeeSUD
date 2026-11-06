@@ -359,7 +359,7 @@ MODIFY ROOM DESCRIPTION Shelves of ingots, spare handles and rusting tools crowd
 text now; [a later step](#add-a-conditional-description) makes two of them
 change with the time of day and the quest. A longer description is easier to
 write in the multi-line editor: `EDIT DESC HERE` opens it for the room you are
-in (type your lines, press Enter on an empty line, then `S` and `Y` to save).
+in (type your lines, then a line holding only `.`, then `S` and `Y` to save).
 The same editor is described under [Give it one interaction](#give-it-one-interaction).
 The `MODIFY ROOM` menu (`MODIFY ROOM` with nothing after it) shows every field
 of the room: [Areas, rooms and exits](20-areas-rooms-exits.md).
@@ -379,9 +379,12 @@ WORLD
 
 The first two each answer `KEY=value is set in world.ini.  It takes effect the
 next time the game starts.` `WORLD` lists the settings in effect and where each
-comes from. `GAMENAME` and `START` show as set in the world file; they take
-effect after the restart that is coming. `START` is the room where a new
-character begins, so a normal game of this world opens at the green.
+comes from. Right now it still shows the old values, `GAMENAME = CoffeeSUD
+(coffeemud.ini)` and `START = New Area#0 (coffeemud.ini)`, because a setting
+takes effect only at the next start; after the restart that is coming the same
+lines read `GAMENAME = Brindlewick Tales  (world.ini)` and `START =
+Brindlewick#0  (world.ini)`. `START` is the room where a new character begins,
+so a normal game of this world opens at the green.
 
 The file you have written is `$BRIND/world/world.ini`:
 
@@ -464,7 +467,7 @@ before you create another. The fields used here:
 | Field | On | Meaning |
 | --- | --- | --- |
 | `NAME`, `DISPLAY`, `DESCRIPTION` | items and mobs | Name; the line shown in a room; the text shown by `LOOK AT` |
-| `LEVEL` | items and mobs | Level (for a mob, also refills its combat numbers) |
+| `LEVEL` | items and mobs | Level (for a mob, also refills its combat numbers, unless you set them by hand) |
 | `RACE` | mobs | A race ID such as `Human` |
 | `DAMAGE`, `WEAPONTYPE`, `WEAPONCLASS` | weapons | Damage; how it hurts (`SLASHING`); what kind (`SWORD`) |
 | `ARMOR`, `PROPERWORN` | armor | Armor value; where it is worn (`TORSO`) |
@@ -579,7 +582,8 @@ MODIFY MOB harl LEVEL 10
 
 A new generic mob is a blank "a generic shopkeeper"; always change at least
 name, display text, description, race and level. `MODIFY MOB ... LEVEL` also
-refills the mob's combat numbers for that level.
+refills the mob's combat numbers for that level (numbers you have set by hand are
+kept, so set the level first and fine-tune afterwards).
 
 Now stock his shop. The shop's goods are a list in the mob's editor, and the
 only way to stock a generic item is to name one that is in the room (or in
@@ -592,20 +596,20 @@ MODIFY harl
 (`MODIFY MOB harl` with no field is an error; `MODIFY` followed only by the
 name opens the editor for a mob or an item, and `MODIFY MOB harl MISC` does
 the same.) Read the menu for the line that
-starts `Inventory:`; on a stock build it is number 25 (the numbers shift if
+starts `Inventory:`; on a stock build it is number 24 (the numbers shift if
 your world adds factions). Type its number at `Edit which?`, then:
 
 | The game asks | You type |
 | --- | --- |
-| `Edit which?` | the number of the `Inventory` line (25 on a stock build) |
+| `Edit which?` | the number of the `Inventory` line (24 on a stock build) |
 | `Enter something to add/remove (?)` | `notched` |
 | `How many? :` | `3` |
 | `At what price? :` | `-1` |
-| `Enter something to add/remove (?)` | press Enter (the game says `(no change)`) |
+| `Enter something to add/remove (?)` | press Enter (the game says `(No change)`) |
 | `Edit which?` | press Enter |
 
 You see `GenWeapon added.` (the game names the item's class) and, on the
-menu, the stock as `Inventory: 'a notched shortsword (3)'`. A price of
+menu, the stock as `24. Inventory: 'a notched shortsword (3)'`. A price of
 `-1` lets the engine price it from the item's value; a number 0 or more sets a
 fixed price. A shop defaults to the type "anything", so it deals in weapons.
 Typing a name that is already in stock removes it.
@@ -683,14 +687,14 @@ added in the mob editor:
 MODIFY guard
 ```
 
-Find the line that starts `Behaviors:` (number 21 on a stock build) and type
+Find the line that starts `Behaviors:` (number 20 on a stock build) and type
 its number at `Edit which?`. Then:
 
 | The game asks | You type | The game says |
 | --- | --- | --- |
 | `Enter a behavior to add/remove (?)` | `Guard` | |
 | `Enter any behavior parameters (?)` | press Enter (none) | `Guard added.` |
-| `Enter a behavior to add/remove (?)` | press Enter | `(no change)` |
+| `Enter a behavior to add/remove (?)` | press Enter | `(No change)` |
 | `Edit which?` | press Enter | |
 
 Leave the `Scriptable` behavior for the next step, where you write its script
@@ -716,7 +720,7 @@ two programs:
 MODIFY guard
 ```
 
-Choose the `Behaviors:` line again (21) and add `Scriptable`:
+Choose the `Behaviors:` line again (20) and add `Scriptable`:
 
 | The game asks | You type |
 | --- | --- |
@@ -725,8 +729,10 @@ Choose the `Behaviors:` line again (21) and add `Scriptable`:
 
 Because `Scriptable` holds a script, the game opens its line editor. As the
 script is empty, it starts in Add Text mode (`You are now in Add Text mode.
-Enter an empty line to exit.`). Type these lines, one per line, each followed
-by Enter; the last empty line leaves Add Text mode:
+Enter . on a blank line to exit.`), with a line number as the prompt. Type
+these lines, one per line, each followed by Enter; the last line, a single `.`,
+leaves Add Text mode (an empty line does not: it is added to the script as a
+blank line):
 
 ```text
 GREET_PROG 100
@@ -737,10 +743,10 @@ endif
 SPEECH_PROG key storeroom
 say The storeroom key? Harl keeps it in the oak chest in the well house, south of the green.
 ~
-
+.
 ```
 
-(The final empty line is the empty line that leaves Add Text mode.) The editor
+(The final `.` is not part of the script; it leaves Add Text mode.) The editor
 then shows its menu prompt, `Menu (?/A/D/L/I/E/R/S/Q)`. Use it if you want to
 check what you typed:
 
@@ -759,7 +765,7 @@ check what you typed:
 Type `S` and then `Y`. The editor checks the script as `SCRIPTCHECK` does, and
 only if it finds a problem does it list it and ask whether to edit it again,
 keep it, or cancel. When it saves, the game says `Scriptable added.`, asks for
-another behavior (press Enter, `(no change)`), and asks `Edit which?` (Enter).
+another behavior (press Enter, `(No change)`), and asks `Edit which?` (Enter).
 
 What the lines mean:
 
@@ -786,8 +792,8 @@ EDIT SCRIPT guard
 ```
 
 `SCRIPTCHECK guard` prints `SCRIPTCHECK guard: no problems found.` `EDIT
-SCRIPT guard` reopens the same line editor on the script; use `Q` and then `Y` to
-leave it without changes.
+SCRIPT guard` reopens the same line editor on the script, at its Menu prompt; use
+`Q` and then `Y` to leave it without changes.
 Everything about the language is in the [MOBPROG guide](04-mobprog.md), its
 [triggers](26-mobprog-triggers.md), [commands](27-mobprog-commands.md) and
 [functions](28-mobprog-functions.md).
@@ -814,7 +820,8 @@ SAVE CHANGED
 them):` and one line for each of `Brindlewick#1` to `Brindlewick#4`, with the
 building commands that changed them and how many mobs and items. `SAVE
 CHANGED` saves each of those rooms, then writes the world files, and says
-`Saved the mobs and items of 4 rooms.` followed by the world-files report. Run
+`Saved the mobs and items of 4 rooms.` followed by the world-files report
+(`The world files are written: 7 changed.`). Run
 `LIST UNSAVED` again: it says there are none.
 
 `SAVE CHANGED` saves each mob into its own start room (the same as `SAVE ROOM
@@ -831,12 +838,19 @@ SAVE
 WORLD STATUS
 ```
 
-You should see `The world files are up to date.` (or `are written: N changed.`
-if anything was still pending) and, from `WORLD STATUS`, `No world file was
-changed outside the game since it was loaded or last written.` and `SAVE would
-change no world file.` The report may also list unsaved rooms, files held back
-(`WORLD PROBLEMS` says why) or `SCRIPTCHECK ALL finds N problems`; none of
-those should appear now.
+You should see `The world files are written: 1 changed.` (the
+`SAVE CHANGED` of step 15 already wrote the new files, a few helper files in
+`vfs/` among them) and, from `WORLD STATUS`, `No world file was changed outside the game
+since it was loaded or last written.` The report may also list unsaved rooms,
+files held back (`WORLD PROBLEMS` says why) or `SCRIPTCHECK ALL finds N
+problems`; none of those should appear now.
+
+One oddity: `WORLD STATUS` keeps saying `SAVE would write:
+areas/brindlewick.cmare`, and every `SAVE` writes that file again. It is
+harmless. The key lies inside the chest, and the area file names the chest with
+an identifier that changes every time the game saves, so the file always
+differs from what is on disk. (Take care with `git diff`: expect those two lines
+to change on every save.)
 
 Look at what you made. From another terminal:
 
@@ -851,7 +865,8 @@ name is made from the area's name). The `grep` should print five `ROOMID`
 lines, `Brindlewick#0` to `Brindlewick#4`. `catalog.cmare` holds the hammer. The
 mobs, items and exits are inside each room's `AROOM` element: for example the
 locked door appears as an `REXIT` with `<EXID>LockedDoor</EXID>` and
-`<EXDAT>harl.store</EXDAT>`. You can read and diff these files; do not hand-edit
+`<EXDAT>harl.store</EXDAT>`. (The world folder also holds a `vfs/` folder of
+helper files that the first `SAVE` wrote; ignore it.) You can read and diff these files; do not hand-edit
 them while the game runs unless you know the rules in
 [World files and editing](02-world-workflow.md).
 
@@ -883,8 +898,10 @@ destroy the area you are standing in; you are in Brindlewick.) `WORLD STATUS`
 now says that `SAVE would delete: areas/new-area.cmare`; the next `SAVE` (or
 the quit below) does it. Your builder character was made in `New Area#0`; if
 you would rather not find out how your character copes with that room going
-away (this chapter's author did not exercise it), skip this step and accept the
-warnings. Also remove the old test outside the game (step 17).
+away, skip this step and accept the warnings. (It works: your character is
+standing in Brindlewick, so it is not affected. When you quit, the game may say
+`Unsaved mobs or items in 1 room:` with no name; answer `Y`.) Also remove the
+old test outside the game (step 17).
 
 ### Leave the game
 
@@ -916,10 +933,12 @@ running. A quest file holds the quest's settings first, then, after the line
 ### Step 16: write the quest file
 
 Run this at the repository root. The quoted `'EOF'` keeps the `$n` codes
-exactly as written.
+exactly as written. The file is named `harls-hammer.quest`: the game names a
+quest's file after the quest with `_` changed to `-`, and a differently named
+file would be renamed (and the old name deleted) by the first `SAVE`.
 
 ```sh
-cat > "$BRIND/world/quests/harls_hammer.quest" <<'EOF'
+cat > "$BRIND/world/quests/harls-hammer.quest" <<'EOF'
 set name harls_hammer
 set display Harl's Hammer
 set category side
@@ -1040,18 +1059,20 @@ the file:
 
 ```text
 LIST QUESTS
-QUESTCHECK harls_hammer
+QUESTCHECK harls-hammer
 ```
 
-`LIST QUESTS` shows `harls_hammer`, as `loaded` and a moment later `running`
-(it starts a tick after the game begins, because of `set autostart boot`).
-`QUESTCHECK harls_hammer` reads the file and prints `QUESTCHECK
-harls_hammer.quest: 0 problems.` If the quest stayed `loaded`, start it by hand
-with `MODIFY QUEST harls_hammer START`; `QUESTINFO harls_hammer` shows the
+`LIST QUESTS` shows `harls_hammer`, as `waiting` and a moment later `running
+(*Eternal*)` (it starts a tick after the game begins, because of `set autostart
+boot`). `QUESTCHECK harls-hammer` reads the file and prints `QUESTCHECK
+harls-hammer.quest: 0 problems.` If the quest stayed `waiting`, start it by hand
+with `MODIFY QUEST harls_hammer START` (it answers `Quest 'harls_hammer'
+started.`); `QUESTINFO harls_hammer` shows the
 whole state: step, the guard it chose, the scripts it gave, and its last
 errors.
 
-`WORLD STATUS` now shows that the world files match what was loaded. In a
+`WORLD STATUS` now shows that the world files match what was loaded (it may
+still list `SAVE would write: areas/brindlewick.cmare`; see the note under Save the world files). In a
 running game, a quest file you add or edit outside the game is not read until
 you restart (for an existing quest, `WORLD RELOAD QUEST harls_hammer` reads it
 again).
@@ -1091,8 +1112,8 @@ CHECKTEXT area
 `PREVIEW` shows this room's title and description as they read under the
 conditions you name (here the green, if you did it from the green: `GOTO
 Brindlewick#0` first); it changes nothing. `CHECKTEXT area` lists tags that
-would print as text, mis-spelt tags and tags left unclosed; it should report
-nothing wrong. Other tags (`DAWN`, `DUSK`, seasons, weather, `IFVAR`,
+would print as text, mis-spelt tags and tags left unclosed; it should answer
+`CHECKTEXT: no problems found.` Other tags (`DAWN`, `DUSK`, seasons, weather, `IFVAR`,
 `FIRSTVISIT`, `MASK1`...) and the rules for combining them are in
 [Presentation and language](11-presentation-language.md).
 
@@ -1118,9 +1139,29 @@ LIST UNSAVED
 
 `WORLD CHECK` prints `WORLD CHECK: n errors, m warnings.` and then each
 finding as `[part] where: what`. With the starter area removed it should report
-`0 errors, 0 warnings`. If you kept `New Area` expect warnings that name it:
-its starter text, and rooms that nothing leads to from the start room. To
-look only at your area:
+`0 errors, 0 warnings`, with one exception that you will meet right now. While
+the quest is running, the quest has given the gate guard its accept script, and
+`WORLD CHECK` and `SCRIPTCHECK ALL` cannot find that script's file (it lives
+inside the quest file), so they report one false error:
+
+```text
+WORLD CHECK: 1 errors, 0 warnings.
+Errors:
+  [scripts] the gate guard (inline):1 LOAD=hammer_guard.script: no such file
+```
+
+Nothing is wrong with the world. To see a clean report, stop the quest for the
+check and start it again afterwards (`QUESTCHECK ALL` and the headless check in
+step 21 are not affected):
+
+```text
+MODIFY QUEST harls_hammer STOP
+WORLD CHECK
+MODIFY QUEST harls_hammer START
+```
+
+If you kept `New Area` expect warnings that name it: its starter text, and rooms
+that nothing leads to from the start room. To look only at your area:
 
 ```text
 WORLD CHECK AREA Brindlewick
@@ -1133,12 +1174,14 @@ The parts of `WORLD CHECK` that matter for this world:
 | `EXITS` | An exit to nowhere (error); a door with no way back (warning) |
 | `REACH` | A start room that does not exist (error); rooms nothing leads to from the start (warning). It reads `START`, so it needs the restart you have done |
 | `KEYS` | The storeroom door is locked with `harl.store`: an error if no such key exists anywhere. It exists, inside the chest |
-| `TEXT` | A room still on its class's default text, a generic mob or item still on `a generic ...` |
+| `TEXT` | The starter room's text, a room still on its locale's own text, a room tagged `TODO` by `WORLD DIG`/`WORLD PATH`, a generic mob or item still on its class's stand-in name or look. (A room that has no description at all is not caught: describe every room, as step 5 did) |
 | `SHOPS` | A shopkeeper with nothing to sell (Harl has the sword) |
 | `SCRIPTS`, `PROPS` | `SCRIPTCHECK` and `PROPCHECK` for the whole world |
 
-`SCRIPTCHECK ALL` and `PROPCHECK ALL` each print `... no problems found.` for a
-clean world. `ONLY=part,part` limits `WORLD CHECK` to some parts, for example
+`PROPCHECK ALL` prints `PROPCHECK the world: no problems found.` for a clean
+world, `SCRIPTCHECK ALL` the same kind of line (while the quest runs it counts
+the one false problem above) and `QUESTCHECK ALL` prints `QUESTCHECK
+world/quests: 0 problems.` `ONLY=part,part` limits `WORLD CHECK` to some parts, for example
 `WORLD CHECK ONLY=KEYS,EXITS`. `LIST UNSAVED` should say nothing is unsaved.
 Warnings need judgment; errors deserve investigation. The checkers are listed in
 [Testing and release](13-testing-release.md).
@@ -1151,7 +1194,10 @@ WORLD STATUS
 ```
 
 `SAVE` writes `areas/brindlewick.cmare` again (`The world files are written: 1
-changed.`), and `WORLD STATUS` then says nothing is pending. `SAVE` does not
+changed.` or more, if you changed other files), and `WORLD STATUS` then says no
+world file was changed outside the game (it will still offer to write the area
+file, as explained above). If `SCRIPTCHECK ALL finds 1 problems` is added to the
+`SAVE` report, that is the false error again. `SAVE` does not
 commit anything in Git; do that yourself.
 
 ### Step 19: play it as a player, inside the builder (PLAYTEST)
@@ -1169,7 +1215,7 @@ PLAYTEST OFF
 ```
 
 `PLAYTEST ON` tells you `Playtest: the world now treats you as a mortal.  A
-death brings you back here.` and the prompt says `(playtest)`. Walking east you
+death brings you back here.` and the prompt says `(Playtest)`. Walking east you
 should see the guard greet you with `Welcome to Brindlewick, Curator. ...`, and
 after `SAY where is the key` he answers with the hint about the oak chest.
 `PLAYTEST OFF` gives your powers back. While playtesting, a building command is
@@ -1215,7 +1261,7 @@ east
 #expect Welcome to Brindlewick
 #assert HERE Brindlewick#2
 say where is the key
-#expect oak chest in the well house
+#expect storeroom key?
 #wait 2
 say accept
 #expect Bring me the hammer
@@ -1229,18 +1275,18 @@ get key from chest
 inventory
 #expect brass storeroom key
 
-# the smithy: the shop, and a door that holds until it is unlocked
+# the smithy: the shop, and the key in the lock
 north
 north
 #assert HERE Brindlewick#1
-list
+list harl
 #expect notched shortsword
 look
 #expect An empty hook hangs above the anvil
-north
-#assert HERE Brindlewick#1
 unlock north
+#expect You unlock
 open north
+#expect You open
 north
 #assert HERE Brindlewick#4
 
@@ -1267,12 +1313,18 @@ look
 EOF
 ```
 
-Notes on the file: the first `north` in the smithy runs into the closed locked
-door, so the `#assert HERE Brindlewick#1` after it proves the door held; then
-`unlock north` and `open north` let the player through. `get key from chest`
-needs `open chest` first because the chest starts closed. The text after each
+Notes on the file: `unlock north` and `open north` use the brass key the
+player took from the chest, so a wrong key code in the door or the key would
+fail those two expectations. (The test character has developer powers and
+could walk through the door without the key, so the test cannot prove that the
+door holds; the by-hand run in the last section does.) `get key from chest`
+needs `open chest` first because the chest starts closed in a new game. In a
+shop the bare word `list` would be the developer's `LIST` command and answer
+`List what?`, so the test names the shopkeeper: `list harl`. The text after each
 `#expect` is what your own descriptions and scripts print, so if you changed
-the wording earlier, change the expectation to match. The `#char` line is the
+the wording earlier, change the expectation to match. The game wraps its lines
+at about 80 columns and an `#expect` must fit on one printed line, which is why
+the expectations are short phrases. The `#char` line is the
 character the disposable game creates (name, race, class). A test runs as a
 `DEV=1` game, which is why `ASSERT` works, and with fixed dice. A new game
 starts in the `START` room.
@@ -1286,10 +1338,11 @@ WORLD="$BRIND/world" python3 tools/playtest.py "$BRIND/world/tests/brindlewick.p
 
 `WORLD` names the world folder the test plays on; the runner makes a scratch
 copy of it, its own database and its own saves, so nothing in `$BRIND` changes.
-A passing run prints one line (the path is shown relative to where you ran it):
+A passing run takes a minute or two and prints one line (the path is shown
+relative to where you ran it, `..` and all; this test has 19 checks):
 
 ```text
-PASS  ../brindlewick/world/tests/brindlewick.play (N checks)
+PASS  ../brindlewick/world/tests/brindlewick.play (19 checks)
 ```
 
 and exits 0. A failing run prints `FAIL`, each failing check with its line
@@ -1304,8 +1357,11 @@ game, in a disposable campaign, with results reported when it finishes:
 WORLD TEST brindlewick.play
 ```
 
-(`PLAYTEST RUN brindlewick.play` is the same command.) It reads the files from
-the world folder, so `SAVE` first. The format of `.play` files, `ASSERT`, the
+(`PLAYTEST RUN brindlewick.play` is the same command.) It prints `WORLD TEST
+started in a disposable campaign: brindlewick.play. Results will appear here.`
+and, a minute or two later and while you are still in the game, `WORLD TEST
+PASS`, the `PASS ... (19 checks)` line and the path of a log. It reads the files
+from the world folder, so `SAVE` first. The format of `.play` files, `ASSERT`, the
 JavaScript tests and the CI uses are in
 [Testing and release](13-testing-release.md).
 
@@ -1346,8 +1402,9 @@ must have light, exits and something to do. The green has all three.
 
 **2. A title screen and a prologue.** The launcher shows `world/text/title.txt`
 when a game starts, with `@MudInfo?NAME@` replaced by your `GAMENAME`, and
-`world/text/prologue.txt` once before a new game, split into pages by a line of
-three or more dashes. Both accept colour codes such as `^c` (cyan) and `^N`
+`world/text/prologue.txt` once before a new game (a line of three or more
+dashes splits it into pages, and the game waits for Enter after each page but
+the last). Both accept colour codes such as `^c` (cyan) and `^N`
 (back to normal). Add them with a text editor:
 
 ```sh
@@ -1357,15 +1414,19 @@ cat > "$BRIND/world/text/title.txt" <<'EOF'
 ^wA small village, a lost hammer, a locked door.^N
 EOF
 cat > "$BRIND/world/text/prologue.txt" <<'EOF'
-Brindlewick has one smith, one gate guard and one problem.
----
-Talk to the guard at the east gate. Say what you are looking for.
+Brindlewick has one smith, one gate guard and one problem.  Talk to the guard at the east gate.
 EOF
 ```
 
 The next launch (of any mode except `CHECK=1`) prints the title with the game
-name `Brindlewick Tales`; a new normal game then shows the two prologue pages,
-waiting for Enter between them.
+name `Brindlewick Tales`; a new normal game then shows the prologue before
+character creation.
+
+Keep this prologue to one page while you have a `.play` test. A second page
+would make the game wait for Enter, and the test runner types the character's
+name at that point instead, so every test of the world would fail (this was
+found by trying it). A longer introduction can go into a `Prop_FirstEntry`
+message (item 3 below) instead.
 
 Items 1 and 2 need no running game. Item 3 is done in builder mode, so start
 it again first (`"$BRIND/launch.sh" BUILDER=1`, then type `Curator`).
@@ -1411,7 +1472,7 @@ settings and no `BUILDER=1`. `RESTORE=NEW` skips the saved-game menu.
 ```
 
 You see the title (`Brindlewick Tales` in cyan, if you added `title.txt`),
-the prologue pages (press Enter between them), and then character creation.
+the prologue, and then character creation.
 It asks the same questions as in [step 2](#step-2-launch-in-builder-mode-and-create-your-builder);
 this time name the character `Wanderer`. You are an ordinary character with no
 powers, standing in `The Brindlewick green`, the `START` room. Play the story
@@ -1451,16 +1512,17 @@ to the same slot again. Now quit:
 QUIT
 ```
 
-The game says it is saved as `tutorial` and asks you to confirm
-(`Quit -- the game is saved as 'tutorial' (Y), or cancel (c)?`). Answer `Y`.
-A save is a folder:
+The game asks `Quit -- save the game as 'tutorial' first (Y/n), or cancel
+(c)?`. Answer `Y` (it saves again, and says `Game saved as 'tutorial'.` once
+more). A save is a folder:
 
 ```sh
 ls "$BRIND/saves/tutorial"
 ```
 
-You should see `header.properties`, `db`, `world.xml` and `.complete`
-(among others; `.complete` proves the save is whole). The save holds the
+You should see `header.properties`, `db`, `world.xml` and
+`world-manifest.properties`, and (as a hidden file, shown by `ls -a`)
+`.complete`, which proves the save is whole. The save holds the
 characters, the live state of the world and the quest's progress.
 
 ### Step 23: restore it
@@ -1475,6 +1537,16 @@ standing: `QUESTS` or `QUESTS WON` shows it. From the menu form
 (`"$BRIND/launch.sh"` with no `RESTORE=`) the menu lists the save and you pick
 it by number or name; from inside a running game, `RESTORE tutorial` does the
 same.
+
+**Known problem with this quest.** When this chapter was checked, a restored
+game showed `QUESTS` correctly (the quest accepted, its objective, a finished
+quest still finished) but the gate guard was no longer standing at the gate, and
+`QUESTINFO harls_hammer` reported `stopped on an error` with `!mob 'THE GATE
+GUARD'`. It happens in any restored game while the quest file is in the world
+(the same world without the quest file keeps its guard), so a restored game
+cannot finish this quest. A new game is not affected, and the `.play` test
+and the by-hand run above are new games. The problem is in the engine's quest
+code, not in anything you typed.
 
 A restored game plays the *saved* world, not the current files. If you change
 the world after the save, the game tells you at login (`This save was made with
@@ -1519,8 +1591,8 @@ WORLD PATH e,e,e TYPE=Road NAME="A rutted lane" DESC="Hedges crowd the lane on b
 WORLD MAP AREA IDS
 ```
 
-`WORLD PATH` reports `WORLD PATH made 3 rooms and followed 0 exits, to
-Brindlewick#7.` The new rooms are `Brindlewick#5`, `#6` and `#7`. Every room
+`WORLD PATH` reports `WORLD PATH made 3 rooms, to Brindlewick#7; those made are
+tagged TODO for WORLD CHECK.` The new rooms are `Brindlewick#5`, `#6` and `#7`. Every room
 made by `WORLD PATH` or `WORLD DIG` is tagged `TODO`, even when you gave it a
 `NAME` and `DESC`, so that you do not forget it. `WORLD CHECK` lists them:
 
@@ -1629,7 +1701,7 @@ What is saved where in this tutorial, and when:
 | Mobs and items | The cache, per room | Only on `SAVE ROOM`, `SAVE CHANGED` (or `BUILDERAUTOSAVE=1`) |
 | The world files (`areas/brindlewick.cmare`, `catalog.cmare`) | `$BRIND/world` | On `SAVE` and on quit; only files whose text changed |
 | `world.ini` | `$BRIND/world/world.ini` | Immediately by `WORLD SET`; read at each start |
-| The quest | `$BRIND/world/quests/harls_hammer.quest` | By you; read at start. A builder `SAVE` rewrites the quest files from the quest list |
+| The quest | `$BRIND/world/quests/harls-hammer.quest` | By you; read at start. A builder `SAVE` rewrites the quest files from the quest list |
 | The catalog entry | `catalog.cmare` | On `SAVE` |
 | Your builder character | The cache | As you play; kept until the cache is deleted. It is not in any save |
 | A normal game | `$BRIND/saves/<slot>` | On `SAVE`, `QUIT` (if you agree), autosave if enabled |
@@ -1656,8 +1728,10 @@ characters and normal characters are separate. The full matrix is in
 | Stocking the shop gives the standard item, not mine | The word you typed is also a ready-made class ID (`shortsword`). Use a word from your own name |
 | The greeting never appears | `SCRIPTCHECK guard`. Common causes: a statement with a `;` in its text, a missing `~`, the script was typed into the wrong behavior |
 | `WORLD CHECK` complains the start room does not exist | `START` is read at startup. Set it, `SAVE`, quit and start again, then check |
-| The quest is `loaded`, not `running` | `set autostart boot` runs a tick after the game starts. Start it by hand with `MODIFY QUEST harls_hammer START`, and read `QUESTINFO harls_hammer` for its last errors. If it names the guard wrongly, the name in `set mob reselect` must match the mob's name exactly |
+| The quest is `waiting`, not `running` | `set autostart boot` runs a tick after the game starts. Start it by hand with `MODIFY QUEST harls_hammer START`, and read `QUESTINFO harls_hammer` for its last errors. If it names the guard wrongly, the name in `set mob reselect` must match the mob's name exactly |
 | Saving says a file was changed outside the game | You edited a world file while the game ran. `WORLD STATUS` and `WORLD DIFF name` show it; the game's version goes beside it as `.builder`. `WORLD RELOAD name` loads yours; `SAVE FORCE` writes over it |
+| `WORLD CHECK` or `SCRIPTCHECK ALL` reports `the gate guard (inline):1 LOAD=hammer_guard.script: no such file` | A false report while the quest runs: the quest has given the guard a script that lives inside the quest file. `MODIFY QUEST harls_hammer STOP` before the check, `START` after it; `CHECK=1` is not affected |
+| A new character's first prompt after the title is eaten, and every `.play` fails | `world/text/prologue.txt` has more than one page. The game waits for Enter after each page but the last, and the test runner types the name there. Keep it to one page |
 | The playtest fails on an `#expect` | Read the `transcript.txt` the runner names. Usually the wording changed, or a step needs a `#wait`. Fix the file or the world; do not loosen the expectation until it passes |
 | It passes in the test but fails in a normal game | The test runs as a `DEV=1` game with the DEV security group (it can `GOTO`, and `ASSERT` works). Play a normal new game too, as in the last section |
 | The cache is wrecked | Quit. Delete everything in `$BRIND/db` except `fakedb.schema` (builder characters go with it). The next start rebuilds the world from the files |
