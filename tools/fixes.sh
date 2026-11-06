@@ -512,6 +512,7 @@ group_saves3()
 	# world after the save keeps what the world puts in it
 	play audit-save.txt wdb wworld "Auditor\n${NEWCHAR}get book\nread book\nsave auditsp\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
 	python3 "$ROOT/tools/saveinspect.py" "$SAVES/auditsp" --hp 7 > "$W/audit-inspect.txt" 2>&1
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/auditsp" >> "$W/audit-inspect.txt" 2>&1
 	expect audit-inspect.txt "hit points 7,"
 	cp "$W/wworld/areas/new-area.cmare" "$W/new-area.before-audit"
 	python3 -c 'import sys; p, r = sys.argv[1], open(sys.argv[2]).read(); s = open(p).read(); open(p, "w").write(s.replace(" </AROOMS>", r + " </AROOMS>", 1))' "$W/wworld/areas/new-area.cmare" "$FX/setup/audit-newroom.xml"
