@@ -516,11 +516,7 @@ group_saves3()
 	expect audit-restore.txt "Restored 's23a'."
 	expect audit-restore.txt "room(s) are new since this save and are as the world has them now: New Area#7."
 	jsresults audit-restore.txt
-	if ls -d "$SAVES"/.damaged-s23a* >/dev/null 2>&1; then
-		echo "  FAIL  audit-restore: the save edited by saveinspect.py was set aside as damaged"; FAIL=1
-	else
-		echo "  ok    audit-restore: the save edited by saveinspect.py is whole"
-	fi
+	count audit-restore.txt "is incomplete or damaged" 0
 	cp "$W/new-area.before-audit" "$W/wworld/areas/new-area.cmare"
 
 	# S22: a character's entry limits (InstanceArea's LIMIT) and planar
