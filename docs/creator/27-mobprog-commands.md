@@ -2236,7 +2236,7 @@ mpshop $i PRICE 'a healing potion' 40
 
 **Behaviour:** changes one datum of a clan: the clan is named, or is the first clan of the character given. An unknown variable logs `X is not a valid clan variable`. The clan is saved if the value took.
 
-**Example:** `mpsetclandata Wolves CLANDONATEPRIZE 100`
+**Example:** `mpsetclandata Wolves PREMISE We hunt at dawn.` (the clan stats include `PREMISE`, `RECALL`, `DONATEROOM`, `MORGUE`, `TAXES`, `EXP` and `STATUS`)
 
 ### MPCLANRELATION
 

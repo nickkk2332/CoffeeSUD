@@ -490,8 +490,8 @@ a container, and every rideable is a container.
 | `GenTome` | `GenReadable` | A static paged book (`READ 3 TOME`, `READ NEXT`, `READ PREV`, `TEAR PAGE 2 FROM TOME`). Pages live in the item text, so they are in world files |
 | `GenMap` | `StdMap` | A map of one or more areas (readable text: area names separated by `;`) |
 | `GenRecipe` | `GenReadable` | A recipe book that teaches or lists crafting recipes for one skill; stat codes `SKILLID`, `RECIPES`, `NUMRECIPES` |
-| `GenDissertation` | `StdDissertation` | A scroll of instructions/lore that can be studied |
-| `GenLawBook` | `StdLawBook` | A book that holds an area's legal entries |
+| `GenDissertation` | `StdDissertation` | A scroll (a `Scroll`) that teaches: the abilities in its text are offered to the reader to learn from it |
+| `GenLawBook` | `StdLawBook` | A book of entries read with `READ [page] "law book"` and added to with `WRITE`; see [09-society.md](09-society.md) for the law system |
 | `GenQuestBoard` | `StdQuestBoard` | A notice board that lists open quests; `READ` shows them |
 
 Detail for books follows in [Readable items](#readable-items-books-journals-maps-scrolls).
@@ -571,7 +571,7 @@ create it. See [Weapons](#weapons).
 | `GenBoat` | `GenRideable` + `SiegableItem` | A simple water-based boat |
 | `GenCage`, `GenCageRideable` | | A cage holding a caged animal; a cage wagon |
 | `GenPortal` | `StdPortal` | An item that is also an exit: its readable text lists room IDs |
-| `GenMobilePortal` | `GenPortal` | A rideable portal that can be carried or moved |
+| `GenMobilePortal` | `GenPortal` | A portal that is also a `Rideable` |
 | `GenBoardable` | `StdBoardable` | An item you can enter, with its own area and rooms (a house-like vessel) |
 | `GenNavigableBoardable`, `GenSailingShip`, `GenCaravan`, `GenAirShip`, `GenBalloon` | | Boardables that move; `GenSiegableBoardable`, `GenCastle` add siege |
 | `GenSpaceBody`, `GenWormhole` | | Bodies and wormholes in space |
