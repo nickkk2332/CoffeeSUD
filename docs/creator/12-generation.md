@@ -272,12 +272,12 @@ expression (variables allowed).
 | `first-X`, `last-X` | The first X or last X. Error if X is larger than the number of children. |
 | `any` | One at random. |
 | `any-X` | X different children at random, without repeats. Error if X exceeds the number available, so cover the case where conditions have removed some. |
-| `pick-X` | X different children by weight: each child's `pickweight` (math). A child with no `pickweight` weighs 0. If every weight is 0 the choice is uniform; if some are 0 and some not, the 0-weight children are never picked. A negative weight removes the child from the draw. |
+| `pick-X` | X different children by weight: each child's `pickweight` (math). A child with no `pickweight` weighs 0. If every weight is 0 the choice is uniform; if some are 0 and some not, the 0-weight children are only picked once the weighted ones are used up. A negative weight removes the child from the draw. Error if X exceeds the number of children. |
 | `limit-X` | Up to X at random; fewer is fine, including none. |
 | `repeat-X` | X draws *with* replacement: one child may come several times. (The old guide said `repeat` takes every choice; it does not.) |
 | a bare number or expression | Treated as `any-X`. |
 
-If there are no eligible children, any mode except `any-0`, `first-0`,
+If there are no eligible children, any mode except `all`, `none`, `any-0`, `first-0`,
 `last-0`, `pick-0` and `limit-X` is an error ("Can't make selection among
 NONE"), which stops the build: guard the case with a `condition` on the parent
 or choose with `limit`.
@@ -585,7 +585,7 @@ reached, the tag silently gives nothing), or `metacraft:...` (see
 **Note:** write the base value as `basegold="75"`. The stock `loot.xml` writes
 `value="75"`, which is not a stat code of any item class, so the attribute is
 ignored and those items keep their default value. [GENERATE CHECK](#generate-check)
-flags such unknown attributes; use it on your own files.
+does **not** catch this: it accepts `value` on any tag, because `FACTION` uses it.
 
 **Children the parser reads:** `CONTENT` (items inside a container), `AFFECT`
 and `BEHAVIOR`. (The old guide listed `MOB` and `EXIT` children of an
@@ -947,7 +947,7 @@ Outside generation it is available as commands and in scripts:
 
 | Where | Syntax |
 |---|---|
-| `LIST` | `LIST SELECT: ...` (world); `LIST AREA SELECT: ...` (your area only). |
+| `LIST` | `LIST SELECT: ...` (world; needs `LISTADMIN`); `LIST AREA SELECT: ...` (your area only). |
 | `MODIFY` | `MODIFY UPDATE: ...` / `MODIFY AREA UPDATE: ...`. |
 | `DESTROY` | `DESTROY DELETE: FROM mobs WHERE ...` / `DESTROY AREA DELETE: ...` (previews what it will delete). Needs `CMDAREAS`. |
 | MOBPROG | `FOR $1 IN SELECT: * FROM MOBS` loops over a query's rows ([FOR](27-mobprog-commands.md#for)). |
@@ -1017,7 +1017,7 @@ world.
 
 ```text
 GENERATE [NOSAVE] [TYPE] [ID] (FROM [FILE]) ([VAR]=[VALUE] ...) ([DIRECTION]/[TARGET])
-GENERATE [TYPE] LIST (FROM [FILE])
+GENERATE [STRING|MOB|ITEM|QUEST] LIST (FROM [FILE])
 GENERATE CHECK [FILE]
 GENERATE PREVIEW [TYPE] [ID] ...      GENERATE PREVIEW KEEP
 GENERATE FILL [ROOM ID] ...
@@ -1028,7 +1028,7 @@ GENERATE [...] SANDBOX
 |---|---|
 | `NOSAVE` | Must be the first word after `GENERATE`. Skips the database writes of the new rooms. In CoffeeSUD builder mode this is *not* enough to keep a generated area out of the world files (see [Where generated content lives](#where-generated-content-lives)): use `SANDBOX`, or `DESTROY` the area. |
 | `TYPE` | `STRING`, `AREA`, `MOB`, `ROOM`, `ITEM`, `QUEST` or `SCRIPT`. An abbreviation works if it identifies the type by its first letters (`ARE`, `MO`, `ROO`, `IT`, `QU`), but `S` means `SCRIPT` (the last match wins), so spell `STRING`. |
-| `ID` | The `id` of the tag (case-insensitive). `LIST` prints every id the file defines, by type. `ALL` builds every tag of that type in the file, one after another (for `AREA` that is one area per id). |
+| `ID` | The `id` of the tag (case-insensitive). `LIST` prints every id the file defines, by type; use it with `STRING`, `MOB`, `ITEM` or `QUEST`, since `AREA`, `ROOM` and `SCRIPT` demand their direction or target word first. `ALL` builds every tag of that type in the file, one after another (for `AREA` that is one area per id). |
 | `FROM file` | Must be the *fourth* word, directly after the id. A path under `resources/` (or the world's overlay). Default `randareas/example.xml`. |
 | `VAR=VALUE` | Variables for the build and overrides of any detail. Math is allowed for numbers. Quote a value with spaces: `"areaname=The Old Mine"`. `SEED=` is special (see below). |
 | direction | The *last* word, required for `AREA` and `ROOM`. The result is linked to the room you stand in, in that direction. The way must be free ("A room already exists in direction ... Action aborted"). |
@@ -1555,7 +1555,7 @@ instead be the tag's text.
 (`a short sword` + `Flaming` becomes `a Flaming short sword`; `an` is chosen
 when needed) and `of ...` after for a suffix (`of the Bear`; a suffix name that
 already starts with `of` is used as is). The room display text follows the new
-name. The level goes up by the affix's `power`, the value by a tenth of it each,
+name. The level goes up by the affix's `power`, the value is multiplied by `1 + power/10` for each affix,
 the item is marked a bonus item, and a cursed affix makes it unremovable.
 
 **What uses affixes.**
@@ -1630,7 +1630,7 @@ names no style.
   used, else the mob's race's style. An unknown style is an error.
 - In MOBPROG: `RANDNAME([style|race|language] [min max] [M|F|N] [FULL])`
   ([functions](28-mobprog-functions.md#randname)).
-- In JavaScript: `CM.core.NameStyles.make(style, min, max, gender, full)`.
+- In Java: `NameStyles.make(style, min, max, gender, full)` (a test fixture reaches it as `CM.core.NameStyles`). There is no `cm` or `gen` wrapper for it; scripts use `RANDNAME()` and templates `SYSTEM_RANDOM_NAME`.
 - Character creation (`NEW *` at the profile menu) and `Spell_TrueName` offer a
   name in the race's style.
 
@@ -1719,7 +1719,7 @@ and undead that get tougher with depth. File
           where="reachable-without:keyname=barrow vault" in="mob|container" />
 </AREA>
 
-<MOB id="barrow_dead" select="any-1">
+<MOB id="barrow_dead" select="any-1" requires="level_range=int">
   <MOB class="GenMob" race="Skeleton" gender="N" level="$level_range + ($roomtag_depthpct / 10)"
        name="a barrow skeleton" display="$mob_name rattles here.">
     <BEHAVIOR class="Aggressive" />
@@ -1730,7 +1730,7 @@ and undead that get tougher with depth. File
   </MOB>
 </MOB>
 
-<MOB id="barrow_king" class="GenMob" race="Skeleton" gender="M" level="$level_range + 6"
+<MOB id="barrow_king" requires="level_range=int" class="GenMob" race="Skeleton" gender="M" level="$level_range + 6"
      name="the Barrow King" display="$mob_name sits enthroned here.">
   <BEHAVIOR class="Aggressive" />
   <AFFECT class="Prop_LootTable" parms="FILE=randareas/barrow_loot.xml ID=barrow_king ROLLS=1 ON=DEATH GOLD=60?120" />
@@ -1788,7 +1788,7 @@ extra weighted pick; `barrow_chest` is the vault's three tiers.
 <ITEM id="barrow_chest" select="pick-1">
   <ITEM pickweight="70" select="pick-1">
     <ITEM class="GenItem" level="$area_level" name="a coil of rope" display="A coil of rope lies here." material="HEMP" basegold="4" />
-    <ITEM class="GenItem" level="$area_level" name="a stub of candle" display="A stub of candle lies here." material="TALLOW" basegold="1" />
+    <ITEM class="GenItem" level="$area_level" name="a stub of candle" display="A stub of candle lies here." material="WAX" basegold="1" />
   </ITEM>
   <ITEM pickweight="25" class="GenItem" level="$area_level" name="a silver ring"
         display="A silver ring lies here." material="SILVER" basegold="60" />
@@ -1960,7 +1960,7 @@ release checklist for generated content:
 | Symptom | Cause and fix |
 |---|---|
 | `Required ids for X were missing: ...` | The `AREA`/`ROOM` `requires` list a variable you did not pass. Add `name=value` to the command; the message gives the type. |
-| `The AREA id 'x' has not been defined in the data file.` | Wrong id or wrong `FROM`; run `GENERATE AREA LIST FROM file`. Remember `FROM` must come right after the id. |
+| `The AREA id 'x' has not been defined in the data file.` | Wrong id or wrong `FROM`; run `GENERATE STRING LIST FROM file` (it lists every type). Remember `FROM` must come right after the id. |
 | `When creating an area or room, the LAST parameter to this command must be a direction` | Add a direction as the very last word (or `UNLINKED` for an area). |
 | `A room already exists in direction ...` | The way is taken; choose a free direction or `UNLINK` first. |
 | `Unable to create area 'X', you must destroy the old one first.` | An area of that name exists. Change `areaname`, or `DESTROY AREA`. |
@@ -1968,7 +1968,7 @@ release checklist for generated content:
 | `Unknown variable '$x'` | Undefined variable in a value. Declare it in `requires`, `define` it, or fix the spelling (`GENERATE CHECK` finds these). |
 | `Undefined insert: 'x'` | `insert=` names an id that is not loaded. Check the `load=` and the id's spelling. |
 | `Duplicate ID` in the log | Two tags share an id without `merge="true"` on both. |
-| A detail has no effect | It is not a stat code of that class (for example `value` on an item; use `basegold`). `GENERATE CHECK` reports "unknown attribute". |
+| A detail has no effect | It is not a stat code of that class (for example `value` on an item; use `basegold`). `GENERATE CHECK` reports "unknown attribute" for most such names, but not for `value`, which it accepts everywhere. |
 | A condition is never true | `<` and `>` unescaped (XML would reject the file), a string compared without quotes, or a variable that is a math expression (`1?3`) compared as text. Turn on `DEBUG=MUDPERCOLATOR` (with `DBGMSGS`) in `coffeemud.ini` for a trace of every condition test and define. |
 | Same seed, different dungeon | A different template, recipe set, name style, variable or engine version; a changed `areaname` changes text. Check `GEN_SEED` and the `GENSEED` area flag. |
 | `${js:...}` gives nothing | `JSCRIPTS=0`. Or an error: `JS ERRORS`. |
