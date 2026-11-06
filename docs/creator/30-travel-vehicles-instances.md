@@ -55,7 +55,7 @@ CoffeeSUD removed networking and multiplayer. Nothing here needs an account or a
 
 ## Option syntax used by the travel properties
 
-Every CoffeeSUD travel property and behavior (`Prop_TravelTime`, `Prop_Road`, `Prop_Port`, `Prop_Journey`, `Prop_Waypoint`, `Prop_HelmRestrict`, `TransportLine`, `Nanny`, `MovingRoom`, `DelayedTransporter`, `TaxiBehavior`, the new `Prop_TicketTaker` options) reads `KEY=value` options with one shared tokenizer (`AuthoringOptions`):
+The CoffeeSUD travel properties and behaviors (`Prop_TravelTime`, `Prop_Road`, `Prop_Port`, `Prop_Journey`, `Prop_Waypoint`, `Prop_HelmRestrict`, `TransportLine`, `Nanny`, `MovingRoom`, `DelayedTransporter`, `TaxiBehavior`, the new `Prop_TicketTaker` options) read `KEY=value` options. The properties use one shared tokenizer (`AuthoringOptions`); the behaviors use the equivalent `CMParms` readers. The rules that matter in practice are the same:
 
 - Options are separated by white space or a semicolon. Keys are case-insensitive. Values are case-sensitive unless a table says otherwise.
 - A value containing spaces, semicolons or equals signs goes in double quotes: `NAME="Port Azure"`. A literal quote inside a quoted value is `\"`, a literal backslash `\\`, a literal semicolon `\;`.
@@ -576,7 +576,7 @@ Source: [Concierge](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Concierg
 Both read a semicolon-separated list. The grammar is:
 
 - A bare number sets the base price (the last price in the list is the default for any place not listed).
-- `PLACE=price` gives a price for a room ID (or room name) or area name. When any places are listed, only listed places (and areas by name) are served.
+- `PLACE=price` gives a price for a room ID (or room name) or an area name. Listed places are matched first; any other place is still found by area name or by searching within `MAXRANGE` rooms, at the base price plus `PERROOM` for each room of the trail.
 - `FLAG=value` entries below. A flag is true if its value starts with `t`.
 
 | Entry | Meaning |
@@ -1130,7 +1130,7 @@ mpechoat $n The coach shudders to a stop at Stonereach.
 How it plays:
 
 1. The party walks east. Fare is checked for all, the party is moved into the coach, and `JOURNEY_PROG START` and `LEAVEMSG` fire. The clock advances one hour; the weather and hunger run.
-2. Each hour: a 12% roll for `AMBUSH`, then a 10% roll for wolves (the first success ends the roll). `AMBUSH` returns `PAUSE`, so the party must type `JOURNEY RESUME`, after talking, searching or fighting in the coach. Wolves are loaded into the coach and fighting pauses travel by itself; when the wolves are dead the next tick resumes.
+2. Each hour: a 12% roll for `AMBUSH`, then a 10% roll for wolves (the first success ends the roll). `AMBUSH` returns `PAUSE`, so the party must type `JOURNEY RESUME`, after talking, searching or fighting in the coach. Wolves (a catalog mob called `mountain wolf`, which you must have created, or a mob class ID) are loaded into the coach and fighting pauses travel by itself; when the wolves are dead the next tick resumes.
 3. `JOURNEY` at any time reports "5.0 game hours remain to Stonereach."
 4. `JOURNEY CANCEL` ends the trip. `CANCEL=RETURN` sends the present party back to `Highmark#1`; `REFUND=UNUSED` repays the fraction of the 6 coins for the hours not travelled.
 5. After the eighth hour and any final scene the party arrives; `ARRIVEMSG` and the `ARRIVE` script run.

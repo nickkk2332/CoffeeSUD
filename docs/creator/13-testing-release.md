@@ -681,7 +681,7 @@ Examples:
 ```text
 script list baker
 script fire baker TIME_PROG 5 AS Bob
-script fire innkeeper SPEECH room AS me
+script fire innkeeper SPEECH room
 script fire guard GIVE WITH pass
 script call innkeeper PayRoom 5
 script reset innkeeper ONCE

@@ -853,9 +853,10 @@ return ok
   names after the function name (as above), the words of the call are bound to
   them as `$(name)` locals, the last name taking the rest of the line
   (CoffeeSUD addition SC17); the caller's own `$(...)` locals are untouched.
-- `MPCALLFUNC otherthing funcname args` and `CALLFUNC(otherthing funcname args)`
-  call a function on **another** object (SC6). `otherthing` is a `$` code or a
-  name. A host whose behaviors include a JavaScript-scripted behavior can
+- `MPCALLFUNC otherthing funcname args` and the value form
+  `$%CALLFUNC(otherthing funcname args)%` call a function on **another** object
+  (SC6); the condition form `CALLFUNC(...)` only finds the host's own functions.
+  `otherthing` is a `$` code or a name. A host whose behaviors include a JavaScript-scripted behavior can
   answer these calls from JavaScript too.
 - A function that does not exist is logged as `MPCALLFUNC Unknown: Function:
   name` (and found by `SCRIPTCHECK` when it can see it).
@@ -1045,7 +1046,7 @@ and command and mark the CoffeeSUD ones. Where they appear in this chapter:
 | SC3 | Catalog spawns: `MPMLOAD CATALOG name [count]`, `MPOLOAD CATALOG name`, `CATALOG()`, `CATALOGCOUNT()` | [commands](27-mobprog-commands.md#mpmload) |
 | SC4 | Variables kept on one object: `@$i`, `MPSTATE`, `STATE()`, `MPSETINTERNAL VARHOST INSTANCE` | [variables](#script-variables-mpsetvar) |
 | SC5 | Read and change the message in `CNCLMSG_PROG`/`EXECMSG_PROG`: `MSG()`, `MPMSG` | [CNCLMSG_PROG](26-mobprog-triggers.md#cnclmsg_prog) |
-| SC6 | Signals and cross-object calls: `MPSIGNAL`, `SIGNAL_PROG`, `MPCALLFUNC target func`, `CALLFUNC(target func)` | [signals](#signals) |
+| SC6 | Signals and cross-object calls: `MPSIGNAL`, `SIGNAL_PROG`, `MPCALLFUNC target func`, `$%CALLFUNC(target func)%` | [signals](#signals) |
 | SC7 | `MPWAIT ticks`, `MPWAIT n HOURS`, `MPWAIT UNTIL (cond)` | [MPWAIT](#mpwait-pausing-a-program) |
 | SC8 | Party and terminal: `$u`, `ISPLAYED()`, `INPARTY()`, `PARTYSIZE()`, `PARTYLEADER()`, `PARTY()` | [party](#party-and-language-awareness) |
 | SC9 | `CMDFAIL_PROG`, the custom-verb trigger, and help brought up to date | [CMDFAIL_PROG](26-mobprog-triggers.md#cmdfail_prog) |

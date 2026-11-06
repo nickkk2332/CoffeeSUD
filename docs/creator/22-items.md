@@ -904,7 +904,7 @@ food families.
 `GenDrink` is a drink container: **Quenched/Drink** is the thirst each drink
 restores, **Amount of Drink Held** is how many drinks it holds when full (it is
 full after editing), and **liquid type** is a resource from the liquid family
-(`?` lists them: fresh water, salt water, drinkable, milk, coffee, blood,
+(`?` lists them: water, salt water, liquid, milk, coffee, blood,
 lamp oil, poison, liquor, honey, sap, perfume, dragon blood, slime...). It is
 also a container, with a lid if you give it one (a flask with a stopper).
 `GenWater` and `GenFountain` are unlimited sources, `GenEmptyDrink` starts
@@ -1205,6 +1205,12 @@ their name as `<MTRALN>` too, so they are found again if the numbers move.
 
 ### The built-in resources
 
+Resource names are the names typed in the editor and in `MODIFY ITEM x MATERIAL`
+(case-insensitive, with spaces where the Java constant has underscores). Four
+differ from their `RawMaterial.RESOURCE_` constant: `WATER` is
+`RESOURCE_FRESHWATER`, `SALT WATER` is `RESOURCE_SALTWATER`, `LIQUID` is
+`RESOURCE_DRINKABLE` and `LAMP OIL` is `RESOURCE_LAMPOIL`.
+
 Columns: **Code** is the number to store; **Value** is the base worth per unit;
 **Rarity** is the weight (lower is rarer) when the engine picks resources at
 random; **Hardness** runs from 0 to 11; **Buoyancy** is a density-like number
@@ -1255,7 +1261,7 @@ resource as FISH, BERRY or WOODY.
 | BRASS | 812 | 18 | 0 | 6 | 5500 |  |
 | PLATINUM | 839 | 175 | 1 | 6 | 21450 |  |
 | CHROMIUM | 942 | 80 | 1 | 6 | 1550 |  |
-| WHITE_GOLD | 943 | 150 | 1 | 5 | 1450 |  |
+| WHITE GOLD | 943 | 150 | 1 | 5 | 1450 |  |
 | DRAGONSCALES | 944 | 50 | 1 | 6 | 800 |  |
 | ALUMINUM | 955 | 205 | 0 | 4 | 7300 |  |
 | TITANIUM | 956 | 75 | 0 | 8 | 784 |  |
@@ -1422,13 +1428,13 @@ resource as FISH, BERRY or WOODY.
 
 | Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
 | --- | --- | --- | --- | --- | --- | --- |
-| FRESHWATER | 2876 | 0 | 10 | 0 | 1000 |  |
-| SALTWATER | 2877 | 0 | 100 | 0 | 1030 |  |
-| DRINKABLE | 2878 | 0 | 1 | 0 | 1000 |  |
+| WATER | 2876 | 0 | 10 | 0 | 1000 |  |
+| SALT WATER | 2877 | 0 | 100 | 0 | 1030 |  |
+| LIQUID | 2878 | 0 | 1 | 0 | 1000 |  |
 | MILK | 2888 | 2 | 10 | 0 | 1020 |  |
 | COFFEE | 2892 | 0 | 10 | 0 | 430 |  |
 | BLOOD | 2903 | 1 | 100 | 0 | 1025 |  |
-| LAMPOIL | 2906 | 1 | 10 | 1 | 880 |  |
+| LAMP OIL | 2906 | 1 | 10 | 1 | 880 |  |
 | POISON | 2907 | 1 | 1 | 1 | 1000 |  |
 | LIQUOR | 2908 | 10 | 1 | 1 | 790 |  |
 | HONEY | 2910 | 1 | 50 | 1 | 1600 |  |

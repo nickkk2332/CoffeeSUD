@@ -1421,7 +1421,7 @@ endif
 
 The name is the signal's name; the rest are arguments (they become `$g`); an optional trailing `DELAY <ticks>` queues it.
 
-**Behaviour:** fires `SIGNAL_PROG <name>` (or `SIGNAL_PROG ALL`) on every script of every target. The signal is queued for the next tick (or after the delay) and is silent; the receiver sees the actor as `$n` and the sender as `$o`. Errors: `no signal name`, `no one to hear it`.
+**Behaviour:** fires `SIGNAL_PROG <name>` (or `SIGNAL_PROG ALL`) on every script of every target. The signal is queued for the next tick (or after the delay) and is silent; the receiver sees the actor as `$n` and the sender as `$t` (also `$o` when the sender is an item). Errors: `no signal name`, `no one to hear it`.
 
 **Example**
 
@@ -1829,7 +1829,7 @@ mpdamage $n 5 15 POISON
 
 **Syntax:** `MPAFFECT <ability> <target> [parameters]`. Minimum: 2 words.
 
-**Arguments:** an ability name or ID; the target; the rest of the line is passed to the ability as its parameter text. A parameter text beginning with `<n> TICKS ` limits how long it lasts. Prefix the ability with `property:` (for example `property:Spell_Fly`) to apply it as a permanent effect whatever its type.
+**Arguments:** an ability name or ID; the target; the rest of the line is passed to the ability as its parameter text. A parameter text beginning with `<n>TICKS` (digits run straight into `TICKS`, no space, for example `120TICKS`) limits how long it lasts; a separate `20 TICKS` is not recognised and is passed on as parameter text. Prefix the ability with `property:` (for example `property:Spell_Fly`) to apply it as a permanent effect whatever its type.
 
 **Behaviour:** puts the ability on the target. For a *property*-type ability (or with `property:`), it is added as a permanent effect (or, with `TICKS`, as a temporary one through `TemporaryAffects`). For other abilities, it is cast on the target with auto-invocation (no cost, no checks), and with `TICKS` its expiry is set. An unknown ability logs `MPAFFECT RunTime: X is not a valid ability name.`
 
@@ -1838,7 +1838,7 @@ mpdamage $n 5 15 POISON
 ```text
 ONCE_PROG
 mpaffect Prop_ReqAlignment $i +GOOD
-mpaffect Spell_Haste $n 20 TICKS
+mpaffect Spell_Haste $n 120TICKS
 ~
 ```
 

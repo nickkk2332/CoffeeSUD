@@ -471,7 +471,7 @@ left once the options are removed.
 | --- | --- |
 | `EXAMINEONLY` (flag) | Only `EXAMINE` shows this detail; `LOOK` and `READ` skip it. |
 | `READ="text"` | Text shown by `READ keyword`. A detail with no `READ` text is not shown by `READ`. |
-| `HIGHLIGHT` (flag) | Marks the detail's keywords in the room description (the same `^H` highlight that hidden items get). |
+| `HIGHLIGHT` (flag) | On a room's Prop_Details: marks the detail's keywords in the room description (the same `^H` highlight that hidden items get). |
 | `MASK="zapper"` | The detail is available only to viewers who pass the mask. |
 | `TATTOO=name` | Given to the viewer the first time they see the detail. |
 | `SETVAR=NAME=value` | A script variable written on the viewer the first time. |
@@ -539,6 +539,14 @@ The target may be nothing (the room), `HERE`/`ROOM`, a direction (the exit), or
 an item or creature in the room or carried. These commands work in the dark.
 A target hidden from the viewer by Prop_ShowWhen is treated as absent
 (`TOUCH` answers "You cannot find that here.").
+
+**Smell.** `SNIFF` is the inherited command and uses the older
+[Prop_Smell](23-properties-reference.md#prop_smell) property on rooms, areas,
+exits and items (and creatures): `<T-NAME> smells awful!;<T-NAME> smells BAD!`
+gives several smells separated by semicolons, `CHANCE=50 ...` weights a smell,
+and on creatures `TICKS=n`, `EMOTE` and `BROADCAST` make it emote on its own.
+Prop_Senses deliberately has no smell option; use Prop_Smell for smell, or an
+Emoter `SMELL` line (below) for an ambient scent.
 
 Use senses for atmosphere and hints (an owl, a loose stud, a smell of ash).
 Because a failed `CHANCE` roll is silent, do not make a puzzle depend on one
@@ -957,7 +965,7 @@ readable item; the stock map items (`BardMap`, `GenMap`) draw their own text
 
 ### Ambient lines: Emoter and Sounder conditions
 
-Emoter and Sounder (see [chapter 24](24-behaviors-and-masks.md)) produce ambient
+[Emoter](24-behaviors-and-masks.md#emoter) and [Sounder](24-behaviors-and-masks.md#sounder) produce ambient
 lines. CoffeeSUD lets each line carry conditions, a weight, and a once-only flag:
 
 ```text
@@ -2009,13 +2017,13 @@ shipped help.
 
 | Element | Where | Purpose |
 | --- | --- | --- |
-| `MPNARRATE target file[#section] [PAUSE\|NOPAUSE] [STYLE=ALIAS]` | MOBPROG | Paged story text. |
-| `MPLORE target ADD key [PROFILE]` | MOBPROG | Unlock a lore entry. |
-| `MPJOURNAL target [category] "text"` | MOBPROG | Add a journal entry. |
-| `MPLEARNLANG who language N\|+N\|-N [FORCE]` | MOBPROG | Set or adjust a language. |
-| `MPSAYIN language text` | MOBPROG | Speak one line in a language. |
-| `NOTUNDERSTOOD_PROG [language\|ANY] [p text]` | trigger | Heard speech that is 0% understood. |
-| `UNDERSTANDS(who language)`, `UNDERSTANDS$(who language)`, `ISSPEAKING(who [language])` | function | Comprehension tests. |
+| [`MPNARRATE target file[#section] [PAUSE\|NOPAUSE] [STYLE=ALIAS]`](27-mobprog-commands.md#mpnarrate) | MOBPROG | Paged story text. |
+| [`MPLORE target ADD key [PROFILE]`](27-mobprog-commands.md#mplore) | MOBPROG | Unlock a lore entry. |
+| [`MPJOURNAL target [category] "text"`](27-mobprog-commands.md#mpjournal) | MOBPROG | Add a journal entry. |
+| [`MPLEARNLANG who language N\|+N\|-N [FORCE]`](27-mobprog-commands.md#mplearnlang) | MOBPROG | Set or adjust a language. |
+| [`MPSAYIN language text`](27-mobprog-commands.md#mpsayin) | MOBPROG | Speak one line in a language. |
+| [`NOTUNDERSTOOD_PROG [language\|ANY] [p text]`](26-mobprog-triggers.md#notunderstood_prog) | trigger | Heard speech that is 0% understood. |
+| `UNDERSTANDS(who language)`, `UNDERSTANDS$(who language)` ([28](28-mobprog-functions.md#understands)), `ISSPEAKING(who [language])` ([28](28-mobprog-functions.md#isspeaking)) | function | Comprehension tests. |
 | `SET LORE key` | quest script | Unlock a lore entry for the step's participants. |
 | `<CALL function args>` | any text | Text computed by `FUNCTION_PROG` or JavaScript. |
 
@@ -2023,20 +2031,20 @@ shipped help.
 
 | Property | Targets | Options |
 | --- | --- | --- |
-| `Prop_FirstEntry` | rooms, areas | `TEXT ONCE ID TATTOO SETVAR ALIASES LEGACYKEYS` |
-| `Prop_Details` | rooms, items, creatures | per detail: `EXAMINEONLY READ HIGHLIGHT MASK TATTOO SETVAR ID ALIASES LEGACYKEYS` |
-| `Prop_Senses` | rooms, items, creatures, exits | `SOUND TOUCH TASTE CHANCE TATTOO SETVAR ID ALIASES LEGACYKEYS` |
-| `Prop_DarkDescription` | rooms | `TITLE DESC` |
-| `Prop_ShowWhen` | items, creatures, exits, rooms | `MASK WHEN CHECK HIDEMODE ID ALIASES LEGACYKEYS` |
-| `Prop_Lore` | items, rooms, creatures | `ENTRY ON MSG SCOPE` |
-| `Prop_MapGlyph` | rooms | `CHAR COLOR LABEL LEGEND HIDE` |
-| `Prop_MapReveal` | readable items | `ROOMS AREA MARK COLOR` |
-| `Prop_Monolingual` | creatures | `LANGUAGES CONFUSED` |
-| `Prop_LanguageSpeaker` | creatures, items, rooms, exits, areas | `LANGUAGE PLAYERS NOMOBS HOMEONLY UNDERSTANDS` and a mask after `;` |
-| `Prop_LangTranslator` | creatures, items, rooms | `NOTRANSLATE`, percentages, languages, `` `words ``, `#PLAYER` |
-| `Prop_LanguageImmersion` | areas, rooms, creatures, items | `LANGUAGE HEAR READ CHANCE START MAX GRANTAFTER ID ALIASES LEGACYKEYS` |
-| `Prop_LocalLists` | areas, rooms, creatures | `LOAD` and the nine list keys |
-| `Prop_WeaponMessages` | weapons | `HIT MISS DAMAGEWORDS` |
+| [Prop_FirstEntry](23-properties-reference.md#prop_firstentry) | rooms, areas | `TEXT ONCE ID TATTOO SETVAR ALIASES LEGACYKEYS` |
+| [Prop_Details](23-properties-reference.md#prop_details) | rooms, items, creatures | per detail: `EXAMINEONLY READ HIGHLIGHT MASK TATTOO SETVAR ID ALIASES LEGACYKEYS` |
+| [Prop_Senses](23-properties-reference.md#prop_senses) | rooms, items, creatures, exits | `SOUND TOUCH TASTE CHANCE TATTOO SETVAR ID ALIASES LEGACYKEYS` |
+| [Prop_DarkDescription](23-properties-reference.md#prop_darkdescription) | rooms | `TITLE DESC` |
+| [Prop_ShowWhen](23-properties-reference.md#prop_showwhen) | items, creatures, exits, rooms | `MASK WHEN CHECK HIDEMODE ID ALIASES LEGACYKEYS` |
+| [Prop_Lore](23-properties-reference.md#prop_lore) | items, rooms, creatures | `ENTRY ON MSG SCOPE` |
+| [Prop_MapGlyph](23-properties-reference.md#prop_mapglyph) | rooms | `CHAR COLOR LABEL LEGEND HIDE` |
+| [Prop_MapReveal](23-properties-reference.md#prop_mapreveal) | readable items | `ROOMS AREA MARK COLOR` |
+| [Prop_Monolingual](23-properties-reference.md#prop_monolingual) | creatures | `LANGUAGES CONFUSED` |
+| [Prop_LanguageSpeaker](23-properties-reference.md#prop_languagespeaker) | creatures, items, rooms, exits, areas | `LANGUAGE PLAYERS NOMOBS HOMEONLY UNDERSTANDS` and a mask after `;` |
+| [Prop_LangTranslator](23-properties-reference.md#prop_langtranslator) | creatures, items, rooms | `NOTRANSLATE`, percentages, languages, `` `words ``, `#PLAYER` |
+| [Prop_LanguageImmersion](23-properties-reference.md#prop_languageimmersion) | areas, rooms, creatures, items | `LANGUAGE HEAR READ CHANCE START MAX GRANTAFTER ID ALIASES LEGACYKEYS` |
+| [Prop_LocalLists](23-properties-reference.md#prop_locallists) | areas, rooms, creatures | `LOAD` and the nine list keys |
+| [Prop_WeaponMessages](23-properties-reference.md#prop_weaponmessages) | weapons | `HIT MISS DAMAGEWORDS` |
 
 All of the options for these properties are described in the property help
 (`AHELP PROP_<NAME>`) and [chapter 23](23-properties-reference.md).

@@ -4386,6 +4386,8 @@ See Prop_HereSpellCast
 
 Casts the spells in the parameters on the next one to enter the same room. as the item, mob, or room with this property.
 
+On a room or area the spells are put on each character who enters and taken off when they leave or recall. On a mob or item (the code also allows areas, which the help omits) they are put on the host itself (an item carried by a mob casts them on the carrier) for as long as it stays; `ONCLOSED` stops a container casting while it is open. The parameters may end with `MASK=` and a zapper mask (everything after the first `MASK=` is the mask) to choose who is affected; the help of this class does not say so but every spell-casting property in this family does.
+
 Notes:
 
 - The spell list is parsed by the same code as [Prop_HereSpellCast](#prop_herespellcast): `;`-separated entries that can be a spell with optional text in parentheses (`Prayer_SummonElemental(/FIRE)`), an entry with a leading `NN% ` chance, or the flags `NOUNINVOKE`, `LEVEL=[N]`, `MAXTICKS=[N]` and `TICKS=[N]`. The code also reads an `ONCLOSED` flag that the help does not describe (see the audit notes).

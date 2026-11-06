@@ -470,7 +470,7 @@ combat round.
 | `PROFICIENT` | All skills at 100% instead of level-based. |
 | `NOSTATS` | Do not reshape the mob's stats to fit the class. |
 | `NOCOMBATSTAT` | Do not set the combat stats (attack, armor, damage, hit points, mana, move). |
-| `BSIZE=[N]` | Limit the size of the skill rotation used. |
+| `BSIZE=[N]` | Limit the size of the skill rotation used. (Unverified in play: `setParms` reads it from the previous parameter string, so it has no effect the first time the parameters are set.) |
 | `MINTICKS=n`, `MAXTICKS=n`, `CHANCE=n` | Ticks between uses and the chance (the usual timing keys, matched by their start); default 1/1/100, one try per combat round. |
 | `SUPPORT=LEADER` (default) / `SELF` / `GROUP` / `MASK:"[ZAPPER MASK]"` | CoffeeSUD: whom it helps. LEADER is itself and the mob it follows, GROUP its group in the room, MASK anyone there the mask fits (NPCs too). |
 | `HEALAT=[N]` | CoffeeSUD: it heals only those under N% of their hit points, the most hurt first, and before anything else. |
@@ -1291,7 +1291,7 @@ expertises. The parameter is a list of tokens:
 | `[N]%` | Chance that following classes or spells are known by the teacher; a later percentage overrides it. |
 | `NOTEACH` | The mob neither teaches nor uses the skills. |
 | `NOCOMMON` | Does not teach common skills. |
-| `NOEXPS` | Does not teach expertises. |
+| `NOEXPS` | Does not teach expertises (`NOHLEXPS` likewise higher-level ones). |
 | empty | Teaches all basic skills; expertises only if it otherwise qualifies; class changes only if it is that class. |
 
 CoffeeSUD teacher rules, in any order among the rest:
