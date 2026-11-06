@@ -1856,7 +1856,7 @@ MPNARRATE $n museum.txt#arrival PAUSE
 3. `LISTEN` repeats the surf line.
 4. Enter the shrine: the candle line appears once. Leave and return: nothing.
 5. `LANGUAGE PREVIEW MuseumSpeech 100 hello friend of the sea` shows `hello ->
-   sela (dictionary file)` and the rest through syllables.
+   sela (dictionary file)`; words not in the file, such as `of` and `the`, come out of the syllable banks.
 6. `SAVE`, restore, and confirm the lore, the first-entry marker and the gate
    variable survived; start a new game and confirm they did not.
 7. `WORLD CHECK ONLY=VOCAB,LORE,TEMPLATES,IDS` is clean.
@@ -1869,16 +1869,16 @@ player should see a map with a landmark.
 `world/vocab/lists_underdark.ini`:
 
 ```ini
-TOD_CHANGE_INSIDE=^JThe glowmoss brightens; the day-cycle begins.^?,,,^JThe glowmoss dims; the night-cycle begins.^?
+TOD_CHANGE_INSIDE=^JThe glowmoss brightens and the day-cycle begins.^?,,,^JThe glowmoss dims and the night-cycle begins.^?
 HEALTH_CHART=^r<MOB> is bleeding black ichor.^N,^r<MOB> is badly torn.^N,^y<MOB> is hurt.^N,^y<MOB> is scratched.^N,^g<MOB> is bruised.^N,^g<MOB> is steady.^N,^g<MOB> looks fit.^N,^c<MOB> looks strong.^N,^c<MOB> looks hale.^N,^c<MOB> looks untouched.^N,^c<MOB> is the picture of health.^N
 MAGIC_WORDS=glim,umbra,shael
 ```
 
-On the area (Properties):
+On the area, a property and a behavior:
 
 ```text
 Prop_LocalLists:  LOAD=vocab/lists_underdark.ini
-Emoter:           min=10 max=30 chance=40 RETRY NOREPEAT=2 QUIETAFTER=3;SOUND Water drips somewhere far below.;WEIGHT=2 SMELL The air smells of wet stone.;NIGHT SOUND Something large turns over in its sleep.
+Behavior Emoter:  min=10 max=30 chance=40 RETRY NOREPEAT=2 QUIETAFTER=3;SOUND Water drips somewhere far below.;WEIGHT=2 SMELL The air smells of wet stone.;NIGHT SOUND Something large turns over in its sleep.
 ```
 
 On the inn (a room):
@@ -1926,7 +1926,11 @@ On the camp's area (so everyone present is exposed):
 Prop_LanguageImmersion: LANGUAGE=Orcish HEAR=2 READ=3 CHANCE=25% START=5 MAX=40 GRANTAFTER=15 ID=orc-camp
 ```
 
-On the gate guard (Scriptable):
+On the gate guard (a property and a Scriptable behavior):
+
+```text
+Prop_Monolingual: LANGUAGES=Orcish
+```
 
 ```text
 NOTUNDERSTOOD_PROG ANY
@@ -1945,8 +1949,9 @@ On the room's description, a wall in Elvish:
 Scratched into the lintel: ^<LANG Elvish NOTE="fine, flowing script"^>The road ends at the sea.^</LANG^>
 ```
 
-Check: as a new character, speak to the chieftain and watch the frown and the
-guard's reaction. Wait in the camp for a while and use `LANGUAGES` to see
+The monolingual creatures speak Orcish themselves, which is what the camp's
+immersion property hears. Check: as a new character, speak to the chieftain and
+watch the frown and the guard's reaction. Wait in the camp for a while and use `LANGUAGES` to see
 Orcish arrive at 5% and grow. `LANGUAGE PREVIEW Orcish 40 follow me to the
 fire` shows how much of a sentence a 40% speaker gets. Give the character a
 translator charm (`Prop_LangTranslator` with `NOTRANSLATE 100% Orcish`) and confirm

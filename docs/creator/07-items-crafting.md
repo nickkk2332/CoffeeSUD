@@ -485,8 +485,7 @@ The property is created for you the first time a recipe is learned.
 | An EXPERIMENT that finds a hidden recipe | See [Experiments](#experiments) |
 | The script function `KNOWSRECIPE($n [SKILL] [NAME])` | Asks the question: true if `$n` knows it |
 
-**Profile sharing.** With `PROFILERECIPES=true` in `coffeemud.ini` (or
-`world.ini`), a recipe any character of the profile knows is known to all of
+**Profile sharing.** With `PROFILERECIPES=true` in `coffeemud.ini`, a recipe any character of the profile knows is known to all of
 them (`KnownRecipes.knows` also asks the profile's other characters, and
 `sharedLines` supplies their whole-line recipes). Off by default.
 
@@ -2056,15 +2055,15 @@ property must be tested through save and restore.
 
 | Key / file | Where | Meaning |
 | --- | --- | --- |
-| `CRAFTXP` | `coffeemud.ini` / `world.ini` | Percent of a craft's XP value every player character earns (0/blank: none) |
-| `GATHERXP` | same | XP per unit gathered, every player character |
-| `CRAFTEXPERIMENTS` | same | Experiments per character per game day (10 blank; 0 unlimited) |
-| `DISMANTLEPCT` | same | Percent of recipe materials DISMANTLE returns (50 blank; 0 off) |
-| `PROFILERECIPES` | same | `true`: recipes are shared by every character of the profile |
-| `PROFILEPROPERTY` | same | `true`: purchases are recorded as `@PROFILE` |
-| `HOMEBEACONS` | same | `true`: every owned room is a home |
-| `HOMERECALL` | same | Turns `HOME` takes (3 blank; 0 no `HOME`) |
-| `ITEMWEAR`, `ITEMBREAK` | same | Wear percent (100) and `DESTROY`/`BREAK` for worn-out items |
+| `CRAFTXP` | `coffeemud.ini` | Percent of a craft's XP value every player character earns (0/blank: none) |
+| `GATHERXP` | `coffeemud.ini` | XP per unit gathered, every player character |
+| `CRAFTEXPERIMENTS` | `coffeemud.ini` | Experiments per character per game day (10 blank; 0 unlimited) |
+| `DISMANTLEPCT` | `coffeemud.ini` | Percent of recipe materials DISMANTLE returns (50 blank; 0 off) |
+| `PROFILERECIPES` | `coffeemud.ini` | `true`: recipes are shared by every character of the profile |
+| `PROFILEPROPERTY` | `coffeemud.ini` | `true`: purchases are recorded as `@PROFILE` |
+| `HOMEBEACONS` | `coffeemud.ini` | `true`: every owned room is a home |
+| `HOMERECALL` | `coffeemud.ini` | Turns `HOME` takes (3 blank; 0 no `HOME`) |
+| `ITEMWEAR`, `ITEMBREAK` | `coffeemud.ini` | Wear percent (100) and `DESTROY`/`BREAK` for worn-out items |
 | `ADDMATERIAL_name` | `coffeemud.ini` | Older way to add a resource; `materials.txt` is preferred |
 | `resources/skills/*.txt`, `world/resources/skills/*.txt(.1-.9)` | Recipe files | Rows per skill; the world's copy is read first |
 | `resources/skills/components.txt` | Components | Ability components |
@@ -2076,8 +2075,9 @@ property must be tested through save and restore.
 | `world/itemsets.txt` | Item sets | `SET=id NAME=... TIERn=...` |
 | `world/custom/abilities/` | Data skills | One file per skill |
 
-These keys are in `CoffeeMud/coffeemud.ini` (search for the key); `world.ini`
-may set them for one world ([world-settings.md](world-settings.md)).
+These keys are in `CoffeeMud/coffeemud.ini` (search for the key). None of them is on
+the `world.ini` allowlist ([world-settings.md](world-settings.md)), so they are not
+set per world.
 
 ## See also
 

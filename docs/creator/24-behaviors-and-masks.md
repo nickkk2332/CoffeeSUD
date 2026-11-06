@@ -1192,7 +1192,7 @@ JSBehavior SCRIPT=world:js/props/bellringer.js EVERY=12
 
 ### JSWorldBehavior
 
-Hosts: rooms, areas. CoffeeSUD (no shipped help entry). The base class for a
+Hosts: rooms, areas. CoffeeSUD (no `BEHAVIOR_` help entry; the JavaScript help in arc_help.ini mentions it). The base class for a
 JavaScript class in `world/js/behaviors/` that extends
 `com.planet_ink.coffee_mud.Behaviors.JSWorldBehavior` (a `//extends` line),
 giving a room or area event hooks. The hooks, all optional: `onEnter(mob,

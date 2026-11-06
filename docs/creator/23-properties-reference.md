@@ -842,6 +842,8 @@ Affects the thing with this property depending on the time of day. By default, t
 
 Notes:
 
+- `MASK=` must come last: everything after it is read as the mask. The other words are separated by spaces, so quote a whole `"HOME=..."` or `"SHOPMSG=..."` token that has spaces. `WARNMSG<hour>` accepts hours 0 to 99.
+
 - With one world and one clock, the "home" and "area" clocks are the same clock.
 
 ### Prop_ClosedSeason
@@ -868,6 +870,8 @@ WINTER BLIZZARD MASK=-RACE +ELF
 Affects the thing with this property depending on the weather, or time of the year. By default, this property does not activate. You must specify one or more times, seasons, or conditions under which the object will no longer be visible.
 
 Notes:
+
+- The code also accepts `FOG`, `DAYTIME` and `NIGHTTIME` (not in the help). Words are matched against the area's weather, time of day and season, so the weather only counts in the area the object is in. `MASK=` must come last: everything after it is read as the mask.
 
 - With one world and one clock, the "home" and "area" clocks are the same clock.
 
@@ -961,7 +965,7 @@ This property changes the results from the use of common skills. This property r
 
 Notes:
 
-- `DISPLAYTEXT` is read (a typo previously wrote `DISPLAY`).
+- The parameter is spelled `DISPLAY` (the code reads `DISPLAY`; `DISPLAYTEXT` is only the item field it sets). `SUBTYPE=` is also read (a raw material's sub-type) though the help omits it.
 
 ### Prop_CraftXP
 
@@ -997,7 +1001,7 @@ CoffeeSUD: crafting and gathering XP for a player character of any class. When t
 height=24
 ```
 
-Forces players to crawl through the exit or room with this property. The height of the crawlspace is optionally defineable.
+Forces players to crawl through the exit or room with this property. The height of the crawlspace is optionally defineable (`HEIGHT`, default 24).
 
 ### Prop_CropRules
 

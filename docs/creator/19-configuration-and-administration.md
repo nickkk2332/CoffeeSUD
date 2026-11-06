@@ -254,7 +254,7 @@ The save and party systems themselves are described in
 
 ### Quest, NPC and dialogue keys
 
-All world-allowlisted.
+World-allowlisted, except `DUELTICKDOWN` (engine-only).
 
 | Key | Shipped | Meaning |
 | --- | --- | --- |
@@ -269,7 +269,9 @@ All world-allowlisted.
 
 ### New-character keys
 
-All world-allowlisted unless noted. Several are covered in more depth in
+World-allowlisted unless noted; `BADNAMES`, `DEFAULTPLAYERFLAGS`,
+`RECOVERRATE`, `REMORTMASK`, `REMORTRETAIN`, `EXPDEFER`, `RPAWARDS`, `LOGOUTMASK`,
+`PRIDECATS` and `PRIDECOUNT` are engine-only too. Several are covered in more depth in
 [Characters](03-characters.md).
 
 | Key | Shipped | Meaning |
@@ -296,7 +298,7 @@ All world-allowlisted unless noted. Several are covered in more depth in
 | `MAXITEMSHOWN` | `5` | Items listed by `LOOK` before it summarises. Engine-only. |
 | `MAXITEMSWORN` | `0` | Cap on worn items; `0` is no cap. Engine-only. |
 | `MAXWEARPERLOC` | `6` | Cap per body-part type; `0` is no cap. Engine-only. |
-| `BADNAMES` | a long list | Names refused for characters. Probably still checked when a character is named (unverified). |
+| `BADNAMES` | a long list | Names refused for characters (checked by `CharCreation.isBadName`, together with a built-in list). |
 | `DEFAULTPLAYERFLAGS` | blank | Player option flags on for new characters (`AUTOLOOT`, `AUTOEXITS`, ...). |
 | `RECOVERRATE` | `1` | Five-tick periods between natural recovery. |
 | `REMORTMASK`, `REMORTRETAIN` | `-LEVEL +>60`, see file | The REMORT command's rules. |
@@ -471,7 +473,7 @@ game.
 
 | Keys | Why inert |
 | --- | --- |
-| `PORT`, `PROXY`, `MPCPKEY`, `BIND`, `BACKLOG`, `DOMAIN` | The telnet listener is replaced by one console session (`MUD.runConsole`). Nothing listens. |
+| `PORT`, `PROXY`, `MPCPKEY`, `BIND`, `BACKLOG`, `DOMAIN` | The telnet listener is replaced by one console session (`MUD.runConsole`). Nothing listens. `PORT` must still be non-empty, or the host fails to start (`HOST#0 could not start any listeners.`); leave it as shipped. |
 | `MAXCONNSPERIP`, `MAXNEWPERIP`, `MAXCONNSPERACCOUNT`, `BLACKLISTFILE`, `WHITELISTIPSCONN`, `WHITELISTLOGINS`, `WHITELISTIPSNEWPLAYERS` | Connection limits and IP lists; there are no remote connections. |
 | `MUDSTATE`, `ADMINEMAIL` | Reported to intermud and MSSP, both removed. |
 | `EMAILREQ`, `IDLETIMERS`, `COMMONACCOUNTSYSTEM` | Replaced by the launcher (see above); `COMMONACCOUNTSYSTEM` is forced to 50. |
@@ -489,9 +491,11 @@ game.
 | `LANGCHAIN4J_JAR_PATH`, `LANGCHAIN4J_LLM_TYPE`, `LANGCHAIN4J_BASEURL` | Optional LLM bridge for the `LLM` command and `LLMIFY`; unrelated to world authoring. |
 
 Most entries above are inert because the system they configure has no entry
-point in a single-player game. A few (the profanity filters, `CHARSETINPUT`,
-`CHARSETOUTPUT`) may still be applied to the console stream; this was not
-traced to the end (unverified). Where unsure, leave the shipped value.
+point in a single-player game. The profanity filters may still be applied to
+some text (the engine's `isAnyINIFiltered` is called by a few spells and
+prayers); whether they reach the console was not traced (unverified).
+`CHARSETINPUT` and `CHARSETOUTPUT` are not inert: the console session uses them
+(see the [display keys](#display-and-text-keys)). Where unsure, leave the shipped value.
 
 ## world.ini, coffeemud.ini and launch overrides
 
@@ -703,7 +707,7 @@ Shipped groups:
 | Group | Contents |
 | --- | --- |
 | `QUESTMASTERS` | `POSSESS, AT, AFTER, CMDQUESTS, GOTO, COPYITEM, COPYMOB, IMMORT` |
-| `SUBOP` | Area-limited builder powers: `AHELP`, `AREA ANNOUNCE`, `AREA AT`, `AREA COPY...`, `AREA CMDROOMS`, `AREA CMDITEMS`, `AREA CMDEXITS`, `AREA CMDRACES`, `AREA GOTO`, `AREA POSSESS`, `AREA STAT`, `AREA TRANSFER`, `AREA WHERE`, `AREA RESET`, `AREA KILLDEAD`, `AREA ORDER`, `AREA ABOVELAW`, `AREA WIZINV`, `AREA CLOAK`, `AREA CMDMOBS`, `IMMORT`, `TRAILTO`, `SESSIONS`, `AREA POOF`, `AREA PURGE`, `AREA RESTRING`, `AREA LISTADMIN`, `AREA TRAILTO`, `AREA SUPERSKILL`, `AREA LOADUNLOAD`, `AREA MXPTAGS`, `CARRYALL`, `AREA GMODIFY`, `VFS: RESOURCES` |
+| `SUBOP` | Area-limited builder powers: `AHELP`, `AREA ANNOUNCE`, `AREA AT`, `AREA COPY...`, `AREA CMDROOMS`, `AREA CMDITEMS`, `AREA CMDEXITS`, `AREA CMDRACES`, `AREA GOTO`, `AREA POSSESS`, `AREA STAT`, `AREA SYSMSGS`, `AREA TRANSFER`, `AREA WHERE`, `AREA RESET`, `AREA KILLDEAD`, `AREA ORDER`, `AREA ABOVELAW`, `AREA WIZINV`, `AREA CLOAK`, `AREA CMDMOBS`, `IMMORT`, `TRAILTO`, `SESSIONS`, `AREA POOF`, `AREA PURGE`, `AREA RESTRING`, `AREA LISTADMIN`, `AREA TRAILTO`, `AREA SUPERSKILL`, `AREA LOADUNLOAD`, `AREA MXPTAGS`, `CARRYALL`, `AREA GMODIFY`, `VFS: RESOURCES` |
 | `TRAVELER` | `GOTO` |
 | `DEV` | `GOTO, AT, TRANSFER, STAT, WHERE, LISTADMIN, CMDQUESTS, CMDMOBS, JSCRIPTS, AHELP, FS: RESOURCES`. No `IMMORT` and no `ORDER`, so a test plays like play. |
 | `WIZI` | `WIZINV, ABOVELAW, CLOAK` |
