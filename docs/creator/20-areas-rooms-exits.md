@@ -300,7 +300,7 @@ CREATE EXIT east GenDoor
 ```
 
 - If the room beyond links back and has an exit there too, that far-side exit is replaced with a copy of the new one. If the far side has no exit, or no link back, only your side changes. (For separate treatment of each side, `DESTROY EXIT` one side first.)
-- If you create a generic exit (`GenDoor`, `GenExit`) over an existing generic exit of the same class on both sides, the engine copies the old far-side exit and puts you straight into the exit editor on the copy, so you can adjust it.
+- If this room already has an exit and the far room's exit back is a generic exit of the *same class* as the one you ask for, the engine copies the far-side exit, opens the exit editor on the copy, and then puts the edited result on both ends. Running `CREATE EXIT north GenDoor` twice is therefore the way to edit a door on both sides at once.
 - Creating a *generic* exit class does not prompt you; follow it with `MODIFY EXIT [direction]` to name it, set its locks and text.
 - An exit template (`TEMPLATE ADD [id] [direction]`) can be used instead of a class.
 - Needs `CMDEXITS`. Refused in a grid child.
@@ -356,11 +356,16 @@ CREATE EXIT north GenDoor
 MODIFY EXIT north
 ```
 
-In the exit editor set: Has a door `Y`, Defaults closed `Y`, Has a lock `Y`, Defaults locked `Y`, then the key name, for example `guild.gate`. Both sides: the engine's `CREATE EXIT` already copied the exit to the far side; if you modified only one side, run `MODIFY EXIT south` from the other room too, or recreate the pair. For standard classes, `CREATE EXIT north LockedDoor` then `MODIFY EXIT north TEXT guild.gate`.
+In the exit editor set: Has a door `Y`, Defaults closed `Y`, Has a lock `Y`, Defaults locked `Y`, then the key name, for example `guild.gate`. A door has two ends, one exit object in each room, and `MODIFY EXIT` changes the one in the room you stand in (and any other room still sharing that very object, as the two ends of a freshly made room link do until the world is reloaded). There are two dependable ways to get both ends right:
+
+1. Edit once, then repeat the creation: after the first `CREATE EXIT north GenDoor`, run `CREATE EXIT north GenDoor` *again*. Both ends are now a `GenDoor`, so the engine opens the exit editor on a copy of the far end, and when you leave it puts the result on *both* ends.
+2. Or run `MODIFY EXIT` in each room, one for each end.
+
+For standard classes, `CREATE EXIT north LockedDoor` then `MODIFY EXIT north TEXT guild.gate` (and the same, `south`, from the other side if the far end was not replaced; `CREATE EXIT` replaces it when it already had an exit).
 
 ### Keys
 
-A key is an item of class `StdKey` (or `GenKey`, `StdInnKey`) whose key code (its readable text, in the item editor "Key code") matches the lock's key name. Create it with `CREATE ITEM StdKey`, then set the code. The rules ([Keys](../../CoffeeMud/com/planet_ink/coffee_mud/core/Keys.java)):
+A key is an item of class `StdKey` (or `GenKey`, `StdInnKey`) whose key code matches the lock's key name. A `GenKey` has the field *Assigned Key Code* in its editor; a `StdKey` keeps the code in *Misc Text*. Create one with `CREATE ITEM GenKey` and set the code with `MODIFY ITEM` ([Items](22-items.md)). The rules ([Keys](../../CoffeeMud/com/planet_ink/coffee_mud/core/Keys.java)):
 
 - Codes compare ignoring case.
 - A key's code may be a **list** separated by semicolons (`crypt;vault`): it opens any lock named one of them.
@@ -671,13 +676,13 @@ A **locale** is a room's Java class. `LIST LOCALES` shows what is installed. Eac
 | --- | --- |
 | CITY (0) | The default. |
 | WOODS (1), PLAINS (3), JUNGLE (7), SWAMP (8), DESERT (9), HILLS (10) | Diggable terrain (the `DIG` command works here). |
-| ROCKY (2), MOUNTAINS (11) | Climbable surfaces use ROCKY or MOUNTAINS; not diggable. |
-| UNDERWATER (4) | Needs swimming or water breathing; no sky; non-swimmers who wander in sink. Diggable only if there is a room below. |
-| AIR (5) | Falling unless flying. |
-| WATERSURFACE (6) | Needs a boat, swimming or water-worthiness for NPCs to enter on their own. Diggable only if there is a room below. |
+| ROCKY (2), MOUNTAINS (11) | Rock and mountain terrain; not diggable. |
+| UNDERWATER (4) | No sky. Wandering NPCs enter only if they can swim. Diggable only if there is a room below. |
+| AIR (5) | Wandering NPCs enter only if they fly. (`InTheAir`-class rooms also drop non-flyers to the room below.) |
+| WATERSURFACE (6) | Wandering NPCs enter only if water-worthy. Diggable only if there is a room below. |
 | SPACEPORT (12), SEAPORT (13) | Ports for ships and spacecraft ([travel chapter](30-travel-vehicles-instances.md)). |
 
-Indoor domains (the same numbers plus 128): STONE, WOODEN, CAVE, MAGIC (a pocket), UNDERWATER (`IN_UNDERWATER`), AIR (`GAP`), WATERSURFACE (`CAVELAKESURFACE`), METAL, and the two seaport domains (`CAVE_SEAPORT`, `SEAPORT`). The names in parentheses are what `LIST LOCALES` and sysop `LOOK` print. Only outdoor rooms that are not underwater get a sky (`hasASky`); weather and time-of-day text reach only rooms with a sky. Wandering NPCs refuse to enter air rooms unless they fly, and underwater rooms unless they swim.
+Indoor domains (the same numbers plus 128): STONE, WOODEN, CAVE, MAGIC (a pocket), UNDERWATER (`IN_UNDERWATER`), AIR (`GAP`), WATERSURFACE (`CAVELAKESURFACE`), METAL, and the two seaport domains (`CAVE_SEAPORT`, `SEAPORT`). The names in parentheses are what `LIST LOCALES` and sysop `LOOK` print. Only outdoor rooms that are not underwater get a sky (`hasASky`), and weather reaches only rooms with a sky.
 
 ### Single rooms
 
@@ -791,7 +796,7 @@ A grid locale is one room that contains a rectangle of child rooms of one class 
 Two things to know about the table.
 
 - `ThinRoom` is an internal placeholder class; do not create it by hand.
-- Whether a class is a `GenRoom`-style generic does not exist for rooms: every locale is a Java class and `MODIFY ROOM` changes only the fields in [Reference: room editor fields](#reference-room-editor-fields). To add a locale class of your own, see [Engine programming](32-engine-programming.md).
+- Rooms have no generic class (nothing like `GenMob` or `GenDoor`): every locale is a Java class, and `MODIFY ROOM` changes only the fields in [Reference: room editor fields](#reference-room-editor-fields). To add a locale class of your own, see [Engine programming](32-engine-programming.md).
 
 ## Reference: exit classes
 
@@ -813,7 +818,7 @@ Create these with `CREATE EXIT [direction] [class]` (the shorthand `CREATE [clas
 | `HiddenClosedDoorway` | yes | no | closed | A closed door that is hidden ("a cleverly concealed door"). |
 | `HiddenWalkway` | no | no | open | An open exit that is hidden until found. |
 | `UnseenWalkway` | no | no | open | An open exit that is "not seen": it does not show in the exit list. |
-| `Impassable` | n/a | n/a | n/a | A generic exit, "a blocked way", that refuses all movement ("You can't go that way") and is flagged unhelpful. |
+| `Impassable` | generic | generic | n/a | A generic exit, "a blocked way", that refuses all movement ("You can't go that way") and is flagged unhelpful. |
 | `ClimbableExit` | no | no | open | "a sheer surface"; carries `Prop_Climbable`, so it must be climbed. |
 | `FlyingExit` | no | no | open | "the open air"; carries the flying flag. |
 | `GapExit` | no | no | open | "a crevasse". Anyone not flying or falling must jump it; a chance based on carried weight against strength and carrying capacity makes them miss and die in the fall. Use with care. |

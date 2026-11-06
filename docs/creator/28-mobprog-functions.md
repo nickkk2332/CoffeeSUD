@@ -7,8 +7,9 @@ functions used in `IF`, `ELSEIF` and `WHILE` lines (`HASTATTOO($n KNOWS_TOWER)`,
 and the rest) that script text expands before a command runs. It also gives the
 expression rules: operators, quoting, nesting, numeric versus text comparison
 and `AND`/`OR`/`NOT`. It is written for scripters and world creators; engine
-developers will find the evaluating code named in each section. 242 function
-names exist in the engine; every one has its own entry below.
+developers will find the evaluating code named in each section. The engine
+knows 242 function names; every one is covered below, `JS$` and `UNDERSTANDS$`
+under the entries for `JS` and `UNDERSTANDS`.
 
 Triggers (`*_PROG`) are in [26-mobprog-triggers.md](26-mobprog-triggers.md),
 commands (`MP*` and the control-flow words) in
@@ -32,6 +33,7 @@ commands (`MP*` and the control-flow words) in
 - [Worked examples](#worked-examples)
 - [Persistence notes](#persistence-notes)
 - [Troubleshooting](#troubleshooting)
+- [Alphabetical index](#alphabetical-index)
 - [See also](#see-also)
 
 Source: [DefaultScriptingEngine](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java)
@@ -360,7 +362,7 @@ any object (see [Object arguments](#object-arguments)); "cmp" is a comparison
 operator from [Comparison operators](#comparison-operators); "n" is a number.
 When an entry says "not inherited" the function is a CoffeeSUD addition.
 
-### Chance, numbers and arithmetic
+## Chance, numbers and arithmetic
 
 ### RAND
 
@@ -428,7 +430,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 ### WPICK
 
 - **Value:** `$%WPICK(common:70 rare:25 legendary:5)%`: a weighted random pick.
-- **Example:** `MPOLOAD $%WPICK(ring_copper:70 ring_silver:25 ring_jade:5)%`
+- **Example:** `MPECHO You find a $%WPICK(copper:70 silver:25 jade:5)% ring.`
 - **Notes:** not inherited. Each word is `name:weight`; a word without a weight counts 1; weight 0 is never picked; `""` is returned if the weights total 0. Names cannot contain spaces unless quoted with double quotes.
 
 ### ROLLNORMAL
@@ -449,7 +451,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `MPSETVAR $i DIFF $%ABS(-4)%` stores `4`.
 - **Notes:** not inherited. Whole results print without a decimal point.
 
-### Text and lists
+## Text and lists
 
 ### STRIN
 
@@ -576,7 +578,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Value:** `$%LISTPICK(list)%`: a random item.
 - **Example:** `MPSETVAR WORLD CULPRIT $%LISTPICK($<WORLD SUSPECTS>)%`
 
-### Variables, tags and script glue
+## Variables, tags and script glue
 
 ### VAR
 
@@ -704,7 +706,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF GENVAR('The Old Crypt' AREA_SIZE >= 20)`
 - **Notes:** not inherited. Empty for an area no generator made. See [12-generation.md](12-generation.md).
 
-### Creatures: who or what someone is
+## Creatures: who or what someone is
 
 ### ISNPC
 
@@ -983,7 +985,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF CHECK($n CHA 15)`; `IF CHECK($n Skill_Disarm 12 +2)`
 - **Notes:** not inherited. `STAT` is a base stat by name, short name or three-letter prefix (`CHA`, `CHARISMA`); its bonus is `(value - 10) / 2`. A skill's bonus is its proficiency divided by 10. The modifier is a small arithmetic expression and may use a value form: `CHECK($n CHA 15 $%AFFINITY($i $n)%/10)`. Each call rolls anew and has side effects: it stores the margin (total minus difficulty) as the variable `CHECKMARGIN` for the character, and tells the character the result unless the `CHECKROLLS` setting is `OFF` (`FULL` shows the roll). See [29-combat-and-encounters.md](29-combat-and-encounters.md).
 
-### Advancement, money and standing
+## Advancement, money and standing
 
 ### EXP
 
@@ -1118,7 +1120,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF SETCOUNT($n bone_armor >= 3)`
 - **Notes:** not inherited; see [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md).
 
-### Items and containers
+## Items and containers
 
 ### HAS
 
@@ -1213,7 +1215,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF CONTENTWEIGHT('stone pedestal' >= 50)`
 - **Notes:** not inherited; used by weighing puzzles.
 
-### Rooms and populations
+## Rooms and populations
 
 Unless an entry says otherwise, "the room" is the room the host is in and "the
 area" its area.
@@ -1388,7 +1390,7 @@ area" its area.
 - **Test:** `CATALOGCOUNT(name cmp n)`
 - **Example:** `IF CATALOGCOUNT(a goblin guard < 4)`
 
-### Time and weather
+## Time and weather
 
 Game time comes from the clock of the host's area (each area may keep its own
 calendar; see [10-world-simulation.md](10-world-simulation.md)). The `ISRL*`
@@ -1533,7 +1535,7 @@ turn-based single-player game.
 - **Example:** `MPECHO Today we celebrate: $%HOLIDAY()%`
 - **Notes:** not inherited.
 
-### Quests
+## Quests
 
 Quest functions take a quest *name* as written in the quest script; `*` stands
 for the quest the running script belongs to (a quest's embedded scripts
@@ -1618,7 +1620,7 @@ inherit it). Quests are described in [08-quests.md](08-quests.md).
 - **Example:** `IF QOBJECTIVE($n fixq3 drowned == 2)`
 - **Notes:** not inherited; see the quest journal in [08-quests.md](08-quests.md).
 
-### Game mode and party
+## Game mode and party
 
 ### ISBUILDER
 
@@ -1690,7 +1692,7 @@ inherit it). Quests are described in [08-quests.md](08-quests.md).
 - **Example:** `IF ISPLAYED($u)`; `IF ISPLAYED($n)`
 - **Notes:** not inherited. Party windows are described in [31-saves-and-party.md](31-saves-and-party.md).
 
-### Combat and encounters
+## Combat and encounters
 
 ### THREAT
 
@@ -1734,7 +1736,7 @@ inherit it). Quests are described in [08-quests.md](08-quests.md).
 - **Example:** `IF ALARM($i roar > 0)`
 - **Notes:** not inherited.
 
-### Shops, law and property
+## Shops, law and property
 
 "shopkeeper" is the shop's creature given as a number (1-based position in the
 room), a name or an object code; with no argument, the host if it keeps a shop,
@@ -1830,7 +1832,7 @@ store inventory; see [09-society.md](09-society.md).
 - **Example:** `IF COMFORT(HERE >= 5)`
 - **Notes:** not inherited; see [07-items-crafting.md](07-items-crafting.md).
 
-### Clans and organisations
+## Clans and organisations
 
 Clans in CoffeeSUD are the single-player organisations (guilds, factions with
 ranks) of [09-society.md](09-society.md); the functions below read them.
@@ -1911,7 +1913,7 @@ ranks) of [09-society.md](09-society.md); the functions below read them.
 - **Example:** `IF REVOLTCHANCE(Midgaard > 50)`
 - **Notes:** not inherited; empty if the area has no law behavior.
 
-### Vessels and riding
+## Vessels and riding
 
 For the vessel functions the first word is a vessel (a boardable item such as a
 ship) given as an object code, a name in reach, or the vessel's own name;
@@ -1982,7 +1984,7 @@ In JavaScript they are `ISANCHORED("the Gull")` (boolean) and
 - **Example:** `IF HULL('the Gull' < 20)`
 - **Notes:** not inherited.
 
-### Messages
+## Messages
 
 ### MSG
 
@@ -1991,7 +1993,7 @@ In JavaScript they are `ISANCHORED("the Gull")` (boolean) and
 - **Example:** `IF MSG(VALUE > 10)`; `MPECHO The wound is $%MSG(VALUE)%.`
 - **Notes:** not inherited. Meaningful only inside `CNCLMSG_PROG` and `EXECMSG_PROG` bodies; elsewhere it is empty. An unknown part logs an error. The message types are listed by `LIST MSGTYPES`; see [26-mobprog-triggers.md](26-mobprog-triggers.md).
 
-### Generators and names
+## Generators and names
 
 ### GENSTRING
 
@@ -2060,8 +2062,8 @@ compares whole numbers in the host's currency.
 ### A shrine that blesses once per game day
 
 `$%DATETIME(STAMP)%` and `MPSETVAR ... NOW` store game-clock stamps, and
-`ELAPSED` converts them back, so the cool-down follows game time (and a paused
-game does not count down).
+`ELAPSED` converts them back, so the cool-down follows game time, not the
+computer's clock.
 
 ```text
 GREET_PROG 100
@@ -2108,7 +2110,7 @@ Functions only *read* state; what they read is saved elsewhere.
 | --- | --- | --- |
 | `HASTATTOO`, `HASTATTOOTIME` | on the character (tattoos, timed ones with their remaining ticks) | travels with the character in every save slot |
 | `HASACCTATTOO` | on the profile (the single-player "account") | shared by all characters of the profile |
-| `VAR`, `$<host VAR>`, `VARNAMES` | script variable stores (by name, `WORLD`, quest scope), written with the campaign save | see [04-mobprog.md](04-mobprog.md) and [state-and-persistence.md](state-and-persistence.md) |
+| `VAR`, `$<host VAR>`, `VARNAMES` | the script variable stores (by host name, `WORLD`, quest scope, per script `SCOPE`) | which scopes are written by a save is set out in [04-mobprog.md](04-mobprog.md) and [state-and-persistence.md](state-and-persistence.md); choose the scope deliberately for durable facts |
 | `STATE`, `VAR(@$i ...)` | on the object itself, so it moves and dies with that copy | |
 | `ELAPSED`, `DATETIME(STAMP)`, `GAMETIME`, `TURNS` | game clock and turn count, saved with the game | `ISRL*` read the computer's clock and are not saved |
 | `QUEST*`, `QOBJECTIVE`, `QVAR` | quest records and quest state | [08-quests.md](08-quests.md) |
@@ -2116,9 +2118,9 @@ Functions only *read* state; what they read is saved elsewhere.
 | `CATALOG`, `CATALOGCOUNT` | the catalog and live world; counts are recomputed | |
 | `MSG`, `$g`, `$0`..`$9`, `$(name)`, `$r`/`$c` picks | nothing; they exist only while one body runs | |
 
-A world reload re-parses scripts, which clears the cached condition parse of
-every `IF`; the next trigger parses it again. Editing a script's text never
-invalidates saved variables or tattoos.
+Editing a script's text takes effect when the script is reloaded; it never
+touches saved variables, tattoos or quest records. Each `IF` line is parsed once
+and cached for the life of the loaded script.
 
 ## Troubleshooting
 
@@ -2137,9 +2139,9 @@ invalidates saved variables or tattoos.
 | A function logs `Syntax` and returns false | A required argument is missing or empty (`HASTATTOO($n)`, `WORNON($n HEAD)`). The error names the function and the offending text |
 | `MSG(...)` is empty | It is only filled inside `CNCLMSG_PROG` and `EXECMSG_PROG` |
 
-Errors go to the script error log; to see them while testing, turn on script
-debugging as described in [04-mobprog.md](04-mobprog.md) and
-[13-testing-release.md](13-testing-release.md).
+Errors go to the script error log (and the engine log), naming the function,
+the kind of error and the offending text. Debugging and test tools are in
+[04-mobprog.md](04-mobprog.md) and [13-testing-release.md](13-testing-release.md).
 
 ## Alphabetical index
 

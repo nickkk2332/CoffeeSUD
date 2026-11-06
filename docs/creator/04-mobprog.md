@@ -587,7 +587,7 @@ ends the switch is done.
 | Form | Loops over |
 | --- | --- |
 | `FOR $1 = 1 TO 5` | 1, 2, 3, 4, 5; counts down when the end is lower than the start |
-| `FOR $1 = 0 TO< 5` | 0, 1, 2, 3, 4 (`TO<` leaves out the end; `TO>` the start) |
+| `FOR $1 = 0 TO< 5` | 0, 1, 2, 3, 4 (`TO<` stops one short of the end; `TO>` goes one past it) |
 | `FOR $1 IN sword,shield` | a comma list; each item is substituted first |
 | `FOR $1 IN LIST $<WORLD SUSPECTS>` | substitutes first, then splits on spaces (quotes group) or commas |
 | `FOR $1 IN #sunaltar` | every object tagged `sunaltar` |
@@ -714,12 +714,13 @@ Read it back:
 
 ```text
 if var($n CHAPTER == 2)
-say Chapter $<$n CHAPTER>, $n.
+  say Chapter $<$n CHAPTER>, $n.
+endif
 mpsetvar WORLD OLD $%VAR($n CHAPTER)%
 ```
 
-The first line tests inside an `IF`; the second substitutes the value into text;
-the third uses the value form of the function.
+`VAR()` in the `IF` tests the value; `$<$n CHAPTER>` substitutes it into text; the
+last line uses the value form of the function.
 
 Rules and traps:
 

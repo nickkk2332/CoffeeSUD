@@ -431,10 +431,9 @@ A child area that has its own `CALENDAR` keeps it and takes the keys it
 leaves out from its parent. `SEASONOFFSET` alone does not make a new clock;
 it only shifts that area's seasons on the parent's clock.
 
-An area class `StdTimeZone` (and `StdPlanet`) also owns a clock of its own,
-saved in the save state; in a real game it started from the global calendar,
-so use `CALENDAR` to make a time zone's calendar part of the world
-definition.
+An area of class `StdTimeZone` (and `StdPlanet`, which extends it) always
+owns a clock of its own, saved with the campaign. `CALENDAR` is how a time
+zone's hours, months and start date become part of the world definition.
 
 The date itself is **save state**, not content: it lives in the campaign
 save (a `TIMECLOCK` record per clock). The world files hold only the
@@ -454,18 +453,19 @@ CALENDAR NOW
 CALENDAR HOLIDAYS
 ```
 
-- `TIME` shows the local time of day, hour, date, season, the weather in
-  words where there is a sky, and (at night) the moon phases of the area.
-  `TIME GLOBAL` shows the world clock. `DATE` is the same command.
+- `TIME` shows the time of day and hour, the date (with the weekday if the
+  calendar has weekday names), the season, and, at night under an open sky,
+  the moon's phase (or why the moon cannot be seen: rain, cloud, fog, dust;
+  `Prop_SkyText` `MOON=` replaces the phase line; a calendar with `MOONS` lists
+  each moon). `TIME GLOBAL` shows the world clock. `DATE` is the same command.
 - `CALENDAR` (the player's calendar) lists events: `CALENDAR NOW`, `SOON`,
   `RECENT`, `NEXT [n] YEAR|MONTH|DAY|WEEK`, `PAST ...`, `ADD`, `REMOVE`. In
   CoffeeSUD `CALENDAR HOLIDAYS` also lists each holiday with a game date,
   "on now" or "in n days".
 
 Scripts see the date through `TIME_PROG`, `DAY_PROG`, `ISHOUR()`, `ISDAY()`,
-`ISTIME()`, `ISSEASON()`, `ISMOON()`, `ISHOLIDAY()` and `DATETIME`-style
-variables (reference: [28-mobprog-functions.md](28-mobprog-functions.md)),
-and JavaScript through `cm.clock(area)` (see
+`ISTIME()`, `ISSEASON()`, `ISMOON()` and `ISHOLIDAY()` (reference:
+[28-mobprog-functions.md](28-mobprog-functions.md)), and JavaScript through `cm.clock(area)` (see
 [Reading time and weather from scripts](#reading-time-and-weather-from-scripts)).
 
 ## Seasons, day length and moons
@@ -620,9 +620,8 @@ the editor. `MODIFY HOLIDAY` opens a numbered editor with: name; schedule
 type (random interval, MUD-day, or real-life day), with its wait or date and
 its duration; the area list; a mask for the mobs it affects; a mood; an
 aggressive setting; shop pricing; MudChat lines; behaviors; and properties.
-These commands are builder commands (`CMDQUESTS`-class flags). They edit the
-holiday file, so a copy that ships with the world should live in the world
-folder (below).
+All three need the `CMDQUESTS` security flag. They edit the holiday quest, so a holiday set that ships with the
+world should live in the world folder (below).
 
 ### The holiday file
 
@@ -648,8 +647,7 @@ To change the stock set for one world, put your own file at
 `world/resources/quests/holidays/holidays.quest` (the world's copy of a
 resource file is read instead of the stock one; see
 [19-configuration-and-administration.md](19-configuration-and-administration.md)
-and [02-world-workflow.md](02-world-workflow.md)). Use `NAME.add` style files
-only for resources that support them.
+and [02-world-workflow.md](02-world-workflow.md)).
 
 ### When a holiday starts
 

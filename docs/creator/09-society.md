@@ -961,3 +961,222 @@ Full syntax for the commands and functions is in
 | `ORGCHECK` | `ORGCHECK (file/CLANS/GOVERNMENTS/ALL)`, in builder mode, DEV mode or with `CMDFACTIONS`. Re-reads faction files line by line and reports a key given twice, band gaps and overlaps, `CHANGE` triggers that match nothing, `REACTION` and `AFFBEHAV` IDs that are not abilities, behaviors, commands or socials, a `REACTION` range that is no band's code, and `RELATION` factions that do not exist. `CLANS` lists world-file mobs naming a missing clan; `GOVERNMENTS` checks entry and exit scripts. |
 | `CREATE/MODIFY/DESTROY/LIST FACTION` | Editors, saved to `world/resources/factions/` in builder mode. |
 | `AS <character> FACTIONS` | Another party character's standings. |
+
+## Law and crime
+
+Source: [Arrest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Arrest.java),
+[Conquerable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Conquerable.java),
+[DefaultLawSet.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultLawSet.java),
+[LawCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/LawCmd.java),
+shipped data [laws.ini](../../CoffeeMud/resources/laws.ini).
+
+The law is a behavior on an area. An area with the `Arrest` behavior has a law
+book (crimes, sentences, taxes, officers, a judge, jail rooms), and the
+engine runs the whole procedure with real NPCs: a witness sees a crime, a
+warrant is issued, an officer tracks the criminal, handcuffs them and walks
+them to the judge, the judge sentences them, and the prisoner is jailed,
+paroled, fined, banished or executed and later released. The law belongs to
+an area and its child areas (its "metro area"). An area with no legal
+behavior has no law. `Conquerable` is `Arrest` plus clan conquest, so a
+conquerable area has law too.
+
+### Setting up a legal system
+
+To give a town a law, using a copy of the shipped laws:
+
+1. Add the behavior to the area: `MODIFY AREA Riverton BEHAVIORS`, and add
+   `Arrest`. The parameter chooses the law (see below); empty uses
+   `resources/laws.ini`.
+2. Put the people in the world. **Officers** are NPCs whose name or
+   displayed description contains an `OFFICERS` word *and* that wander: they must
+   have the `Mobile` behavior. **The judge** is an NPC whose name or
+   description contains a `JUDGE` word and who does *not* wander. An NPC can
+   be forced into either role (or kept out of both) with the ambiance tags
+   `#OFFICER`, `#JUDGE` and `-OFFICER` set by `Prop_Ambiance`; see
+   [23-properties-reference.md](23-properties-reference.md).
+3. Make the **jail** and **release** rooms and name them in `JAIL` and
+   `RELEASEROOM` (a room ID, or text in the room's title; a trailing `$`
+   anchors the end of the title, so `The Jail$` matches "The Jail" but not "The
+   Jailer's Rest"; a leading `$` anchors the start).
+4. Run `LAW` in the town. It lists the law in use, the officers and judges it
+   found by name, the jail and release rooms, taxes and crime counts, and
+   explains why an NPC that looks like an officer or judge does not count.
+5. Try a crime with `LAW TEST` and `LAW ACCUSE`, and play one through.
+
+Arrest parameter forms (`Arrest` takes `[law file or custom] (; KEY=value ...)`):
+
+| Parameter | Meaning |
+| --- | --- |
+| empty | Use `laws.ini`. |
+| `laws_riverton.ini` | Use `resources/laws_riverton.ini`, or the world's copy at `world/resources/laws_riverton.ini`. The reference is saved in the area's `BEHAVES`, so every new game has it. |
+| `laws.ini;OFFICERS="watchman" JUDGE="magistrate" SALESTAX=5` | A file plus overrides applied after the file loads. Use this for small differences from a shared file. |
+| `custom` | The area has its own editable law, kept in the save, and written to `world/laws/AREA.ini` in builder mode. Law books and `LAW SET` edit it. |
+
+A `custom` law starts from the compiled default law, which has
+`ACTIVATED=FALSE`, no officers (`@`), no judge and almost no messages. It does
+nothing until you set the keys. Starting from a copy of `laws.ini` is almost
+always easier.
+
+**Where the law is read from**, in builder mode versus play:
+
+- In builder mode the law file `world/laws/AREA.ini` (the file is named like the
+  area's `.cmare`) is the law of a `custom` area, and edits to the law book (or
+  `LAW SET`) are written back to it. A new game starts from that file.
+- In a game the law as saved in the campaign wins. Changes during play (a
+  conquest, a law book edit) stay in the save and do not touch the world files.
+- Named files (`laws_x.ini`) are ordinary resources: world copy first, then stock.
+
+### The law file
+
+A law file is a Java properties file: `KEY=value` lines, `#` comments. The
+shipped [laws.ini](../../CoffeeMud/resources/laws.ini) is the reference and is
+heavily commented; copy it. Keys:
+
+| Key | Value | Meaning |
+| --- | --- | --- |
+| `ACTIVATED` | `TRUE`/`FALSE` | `FALSE` turns the law off. Absent means on in a file; the default custom law sets `FALSE`. |
+| `OFFICERS` | words | Name words of officer NPCs (they must be `Mobile`). `@` means none. |
+| `JUDGE` | words | Name words of the judge NPC (must not wander). `@` means none. |
+| `JAIL` | `room;room;...` | Jail rooms: IDs or title text. `@` means the criminal's own room. |
+| `RELEASEROOM` | same | Where released prisoners are walked. |
+| `TRESPASSROOM` | rooms | Unused by the engine. |
+| `PROTECTED` | mask | Who counts as a victim of crime. Others are fair game. The shipped value protects humanoid races. |
+| `TRESPASSERS` | mask | Who counts as trespassing (shipped: undead). |
+| `ARRESTMOBS` | `true`/`false` | Whether NPCs can commit crimes (except nudity and armed citizen). |
+| `WARNINGMSG`, `THREATMSG` | text | What an officer says for those sentences. |
+| `JAIL1MSG`..`JAIL4MSG`, `PAROLE1MSG`..`PAROLE4MSG`, `PAROLEDISMISS`, `EXECUTEMSG`, `PREVOFFMSG`, `LAWFREE` | text | The judge's lines. |
+| `CHITCHAT`, `CHITCHAT2`, `CHITCHAT3`, `CHITCHAT4` | quoted phrases | What the officer says when delivering to the judge, jail, detention and banishment. |
+| `RESISTWARNMSG`, `NORESISTMSG`, `RESISTFIGHTMSG`, `COPKILLERMSG`, `RESISTMSG` | text | Arrest-resistance lines. |
+| `JAIL1TIME`..`JAIL4TIME` | ticks (4 seconds) | Jail time. Shipped 20, 40, 80, 160. |
+| `PAROLE1TIME`..`PAROLE4TIME` | ticks | Parole time. Shipped 40, 80, 160, 320. |
+| `TREASURY` | `roomID;container` | Where tax money goes; `*` as the room with a container that may move. |
+| `PROPERTYTAX` | number | Percent of a property's price charged each game month (a value of 1 or more is divided by 100). Shipped 0.0025. |
+| `SALESTAX` | percent | Added to the price in shops under this law. |
+| `CITTAX` | percent | Taken by a `TaxCollector` from the money a citizen carries. |
+| `LENIENCY` | `RANGECODES=n;RANGECODES=n` | CoffeeSUD: shifts the sentence by town reputation. `RIVERTON_HERO=-1;RIVERTON_VILLAIN=1` makes heroes one step lighter and villains one step heavier (keeping modifier flags). Needs the area's `REPUTATION` faction. |
+
+**Crime lines.** The core crimes (`RESISTINGARREST`, `TRESPASSING`, `NUDITY`,
+`ARMED`, `ASSAULT`, `MURDER`, `PROPERTYROB`, `TAXEVASION`, `PRISONBREAK`) and
+the skill, social and contraband crimes use one form:
+
+```text
+KEY=PLACES ; FLAGS ; crime name ; SENTENCE ; message to the criminal
+ASSAULT=;;assaulting <T-NAME>;jail1;Assault is a hideous offense.
+```
+
+`<T-NAME>` in the name is replaced by the victim's name. The fields:
+
+| Field | Values |
+| --- | --- |
+| `PLACES` | Space separated: `home`, `!home`, `indoors`, `!indoors`, or a room keyword (a word found in the room's title or description: `pub`, `inn`), each negatable with `!`. All must hold. |
+| `FLAGS` | `witness`, `!witness`, `combat`, `!combat`, `recently`, `!recently`, `ignore50`, `ignore75`, `ignore90`, `ignore95`, `ignore99` (that percent chance the act is overlooked), `!ignore75` through `!ignore99` (the complement: 25, 10, 5, 1 percent). |
+| `SENTENCE` | `warning`, `threat`, `parole1`-`parole4`, `jail1`-`jail4`, `death`, optionally followed by modifiers. |
+
+Flag meanings: `witness` requires a witness in the room; `!witness` waives the
+need for one; `combat` and `!combat` require the act to happen in or out of
+combat; `recently` and `!recently` require that the criminal has or has not
+been caught for it recently. **A crime needs a witness unless it is flagged
+`!witness`.** The witness must be an intelligent NPC (an officer always
+counts), found in the criminal's room or an adjacent one, and the case dies if
+the witness dies, is a friend of the accused, or if the accused is not seen. A
+party member can never be the witness.
+
+Sentence modifiers, space separated after the punishment: `separate` (do not
+escalate with other offences), `skiptrial` (the officer punishes at once, no
+judge), `detain=ROOMID,TICKS` (hold in a detention room), `fine=AMOUNT` (also
+fine), `norelease` (do not release from prison), `punishcap=PUNISHMENT` (the
+most severe sentence for a repeat offender), `shame=DAYS` (public shaming for
+game days), `banish=DAYS[,ROOMID]` (banish for game days).
+
+Repeat offences escalate the sentence one step at a time. A criminal who has
+done a good deed of standing is treated slightly more leniently, and a victim
+who is a known trouble-maker halves the sentence. `punishcap` interacts with
+escalation in surprising ways (a capped crime may start at its cap); test
+with `LAW TEST` before trusting a sentence ladder.
+
+**Skill crimes.** A key naming an ability ID, an ability type or a domain
+makes using it a crime: `THIEF_STEAL=;;robbing <T-NAME>;jail3;...`,
+`PRAYER_MALIGNEDPORTAL`, `POISON_ALCOHOL`, and types such as `THIEF_SKILL`,
+`SPELL`, `ILLUSION`. Keys beginning with `$` make *having a status effect* a
+crime instead.
+
+**Social and emote crimes.** `CRIMEn=emote strings ; places ; flags ; name ;
+sentence ; message`. The first field is a space-delimited list of strings
+that appear in an emote or social message; quote phrases:
+`CRIME1=spit(s) spits;;witness;spitting in city limits;warning punishcap=jail1;Spitting is a dirty habit.`
+
+**Contraband.** `BANNEDn=names ; places ; flags ; name ; sentence ; message`.
+The first field lists item names (or resource names) that are illegal to
+carry; quote phrases. `BANNED1=roofie;;witness;drug possession;parole3;Drugs are bad.`
+
+### Arrest, trial and punishment
+
+1. **Accusation.** A warrant is issued for a crime the code notices: a killing
+   (`MURDER`), nudity, carrying a weapon openly, trespass, banned items, using a
+   listed skill or having a listed effect, a listed emote, robbery of a
+   property owner, or a script (`MPACCUSE`, the `Prop_ReqEntry` zap event) or
+   `LAW ACCUSE`. Officers, the judge and anyone above the law (the `ABOVELAW`
+   permission) are exempt.
+2. **Seeking and arrest.** An officer finds the criminal ("You are under
+   arrest"), and if the criminal resists, subdues them (sap, trip, attack).
+   Prisoners are handcuffed (`Skill_HandCuff`).
+3. **Trial.** The officer takes the prisoner to the judge, who pronounces the
+   sentence unless the sentence is `skiptrial`. `warning` and `threat` are
+   spoken by the judge or officer and end the case. Sentences that need a
+   judge (parole, jail, death) do nothing if the area has none.
+4. **Punishment.** `parole`: the character may not leave the area, use recall
+   and the like, or flee combat, for the parole time. `jail`: they are walked
+   to a jail room and held for the jail time. `death`: executed. Fines are
+   recorded as owed; a `TaxCollector` collects them. `detain`, `shame` and
+   `banish` run their timed effects.
+5. **Release.** When the time is up the officers walk the prisoner to the
+   release room and the warrants that jailed them are closed.
+
+A case also ends when the witness dies or is a friend of the accused, and old
+warrants expire after a fixed period (`LegalBehavior.EXPIRATION_MILLIS`, seven
+days). Warrants, fines and records are saved with the campaign. Pardoning
+everyone at once with the prayer `Prayer_Forgive` still works.
+
+Related behaviors: `TaxCollector` (collects citizen tax and fines;
+`WAIT=ms GRACE=ms`), `GateGuard`, `BribeGateGuard` and `DoorwayGuardian` (door
+and gate keepers), `Guard` and `GoodGuardian` (defend victims). They are
+described in [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
+
+### Law tools
+
+`LAW` works in builder mode, DEV mode, or with `ABOVELAW`.
+
+| Command | Meaning |
+| --- | --- |
+| `LAW` | The law in force here: behavior and parameter, officers and judges found (and why a named NPC does not qualify: "does not wander", "kept from officialdom"), jail and release rooms (and "FOUND NOWHERE"), taxes, crime counts and warrant count. |
+| `LAW CRIMES (text)` | List the crimes with name, sentence, places and flags; `text` filters. |
+| `LAW WARRANTS (name)` | List warrants (criminal, crime, victim, offence count, state). |
+| `LAW ACCUSE name crime` | Make a warrant as a witness would, by crime key. |
+| `LAW PARDON name (crime/ALL)` | Take warrants away. |
+| `LAW TEST crime (AS name) (AGAINST name)` | A dry run: says whether a warrant would be issued for the crime by that actor against that victim, and why not. It issues nothing and advances no dice; "ignore" chances use a fixed diagnostic roll. The actor and victim must be present or known; an actor above the law is refused, so choose representative characters. |
+| `LAW SET KEY=value` | Set one key in this area's law. If the area's law is not already `custom`, the current law is copied into a `custom` law first (the file reference is replaced by `custom`); then the key is set. In builder mode the change is written to `world/laws/AREA.ini`. |
+
+```text
+LAW TEST ASSAULT AS Alice AGAINST Bob
+LAW SET SALESTAX=7.25
+```
+
+`LAW SET` takes one value without line breaks or `~`.
+
+### Law and scripts
+
+| Script item | Meaning |
+| --- | --- |
+| `MPACCUSE who victim-or-'' crime` | File a warrant under the law of the host's room. `crime` is a crime key, or a complete five-field crime. |
+| `ISWANTED(who (crime))`, `WARRANTS(who)`, `FINESOWED(who)` | Condition and values about warrants and fines under the law where the script is. |
+| `MPPARDON who (crime/ALL)` | Take warrants away quietly. |
+| `MPFINE who +n / -n / n` | Add to, take from or set the fines owed (base value). |
+| `MPRELEASE who` | A prisoner's time is up: guards walk them to the release room. |
+| `MPSUPPRESSLAW crime/ALL n TICKS/HOURS/DAYS/WEEKS/MONTHS` or `OFF` | Put a crime aside for a while on the game clock; kept in the save. |
+| Masks `+WANTED (crime)`, `-WANTED (crime)`, `+OFFICER`, `-OFFICER`, `+JUDGE`, `-JUDGE` | `+WANTED` requires being wanted where the subject is; `-WANTED` the opposite. Usable in shop `IGNOREMASK`, `GateGuard`, `Prop_ReqEntry`, `<VARIES>` text. |
+| JavaScript `cm.law(room)` | `wanted(who (crime))`, `finesOwed(who)`, `addFine(who, n)`, `pardon(who)`, `suppress(crime, duration)`. See [05-javascript.md](05-javascript.md). |
+| Quest `SET AREA ... GIVE STAT SUPPRESSLAW` | Suppresses a law while a quest runs. |
+
+Examples: a corrupt magistrate, `BRIBE_PROG 500` running `MPPARDON $n ALL` if
+`ISWANTED($n)`; a shop whose `IGNOREMASK` is `+WANTED` and which refuses
+criminals.

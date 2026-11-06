@@ -1139,3 +1139,519 @@ OTHER_INSTRUMENT_TYPE (stat code `INSTTYPE`). Songs and play skills check the
 type. It is worn in a wear location (usually held). `GenPiano` is a rideable
 piano, and `GenMagicInstrument` also holds a spell like a wand.
 
+## Materials
+
+Every item has a **material**, which is one *resource* from a fixed table.
+The resource belongs to a *family* (cloth, metal, wood...). Source:
+[RawMaterial.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/RawMaterial.java).
+
+### What the material does
+
+- The **family** is the high byte of the number (`MATERIAL_MASK`, 255 << 8).
+  Crafting skills select ingredients by family (Blacksmithing works any
+  metal), armor gets a small saving-throw adjustment from it (see
+  [Armor and wear locations](#armor-and-wear-locations)), classes can restrict
+  the weapon materials they may use, and `balanceItemByLevel` picks armor
+  points and weight from the family's tables (cloth, leather, metal).
+- The **resource** (the low byte, `RESOURCE_MASK`) sets the base value per
+  unit used to price crafted items, the hardness, and how it floats.
+- Raw resources (`GenResource`, ore, logs, hides, food ingredients) are items
+  whose material is the thing they are.
+- `LIST MATERIALS` lists the table the running game has; the item editor's
+  `?` at *Material Type* lists the names.
+
+### Setting a material
+
+In the editor: `Material Type: 'STEEL'`, then enter a name (case-insensitive;
+`?` lists them). From the command line:
+
+```text
+MODIFY ITEM sword MATERIAL STEEL
+MODIFY ITEM sword MATERIAL 811
+```
+
+A resource number is `family + index`: STEEL is metal (768) + 43 = 811. In
+saved items the number is stored as `<MTRAL>`; resources added by a world carry
+their name as `<MTRALN>` too, so they are found again if the numbers move.
+
+### Families
+
+| Family | Number | Used for |
+| --- | --- | --- |
+| UNKNOWN | 0 | `NOTHING` |
+| CLOTH | 256 | fur, hide, wool, cotton, silk... |
+| LEATHER | 512 | scales, leather |
+| METAL | 768 | iron, steel, gold, silver... |
+| MITHRIL | 1024 | mithril, adamantite, atlantite (magic metals) |
+| WOODEN | 1280 | woods |
+| GLASS | 1536 | glass, clay, china, crystal |
+| VEGETATION | 1792 | crops, fruit, herbs, flowers |
+| FLESH | 2048 | meat, fish, eggs, wax |
+| PAPER | 2304 | paper |
+| ROCK | 2560 | stone, sand, bone, coal, salt |
+| LIQUID | 2816 | water, milk, blood, oil, liquor |
+| PRECIOUS | 3072 | gems, pearls, jade, diamonds |
+| ENERGY | 3328 | energy, plasma, electricity |
+| SYNTHETIC | 3584 | plastic, rubber, fibreglass |
+| GAS | 3840 | air, oxygen, hydrogen... |
+
+### The built-in resources
+
+Columns: **Code** is the number to store; **Value** is the base worth per unit;
+**Rarity** is the weight (lower is rarer) when the engine picks resources at
+random; **Hardness** runs from 0 to 11; **Buoyancy** is a density-like number
+(higher sinks); **Gathered as** says whether a gathering skill treats the
+resource as FISH, BERRY or WOODY.
+
+#### UNKNOWN (0)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| NOTHING | 0 | 0 | 0 | 0 | 0 |  |
+
+#### CLOTH (256)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| FUR | 309 | 20 | 20 | 2 | 890 |  |
+| HIDE | 311 | 4 | 20 | 2 | 920 |  |
+| WOOL | 312 | 10 | 20 | 1 | 1310 |  |
+| FEATHERS | 313 | 10 | 20 | 0 | 20 |  |
+| COTTON | 314 | 5 | 20 | 1 | 590 |  |
+| HEMP | 315 | 4 | 10 | 1 | 720 |  |
+| SILK | 341 | 200 | 5 | 3 | 1100 |  |
+| SPIDERSTEEL | 414 | 150 | 0 | 4 | 630 |  |
+| POLYESTER | 455 | 15 | 0 | 1 | 545 |  |
+| DENIM | 456 | 15 | 0 | 2 | 745 |  |
+
+#### LEATHER (512)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| SCALES | 564 | 10 | 20 | 4 | 1800 |  |
+| LEATHER | 566 | 10 | 20 | 2 | 945 |  |
+
+#### METAL (768)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| IRON | 801 | 20 | 10 | 6 | 7900 |  |
+| LEAD | 802 | 10 | 10 | 3 | 11300 |  |
+| BRONZE | 803 | 10 | 10 | 5 | 8100 |  |
+| SILVER | 804 | 30 | 2 | 4 | 10500 |  |
+| GOLD | 805 | 150 | 1 | 4 | 19320 |  |
+| ZINC | 806 | 10 | 5 | 4 | 7100 |  |
+| COPPER | 807 | 10 | 10 | 5 | 8900 |  |
+| TIN | 808 | 10 | 10 | 3 | 7300 |  |
+| STEEL | 811 | 75 | 0 | 8 | 7840 |  |
+| BRASS | 812 | 18 | 0 | 6 | 5500 |  |
+| PLATINUM | 839 | 175 | 1 | 6 | 21450 |  |
+| CHROMIUM | 942 | 80 | 1 | 6 | 1550 |  |
+| WHITE_GOLD | 943 | 150 | 1 | 5 | 1450 |  |
+| DRAGONSCALES | 944 | 50 | 1 | 6 | 800 |  |
+| ALUMINUM | 955 | 205 | 0 | 4 | 7300 |  |
+| TITANIUM | 956 | 75 | 0 | 8 | 784 |  |
+| ULTRANIUM | 958 | 175 | 0 | 11 | 900 |  |
+| DURANIUM | 959 | 159 | 0 | 10 | 300 |  |
+| PALLADIUM | 975 | 25 | 1 | 7 | 12020 |  |
+| NICKEL | 976 | 10 | 2 | 5 | 8900 |  |
+
+#### MITHRIL (1024)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| MITHRIL | 1065 | 100 | 1 | 9 | 3990 |  |
+| ADAMANTITE | 1066 | 175 | 1 | 10 | 4500 |  |
+| ATLANTITE | 1185 | 200 | 1 | 6 | 850 |  |
+
+#### WOODEN (1280)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| WOOD | 1325 | 2 | 10 | 3 | 920 |  |
+| PINE | 1326 | 4 | 10 | 3 | 650 |  |
+| BALSA | 1327 | 1 | 5 | 2 | 130 |  |
+| OAK | 1328 | 5 | 10 | 3 | 720 |  |
+| MAPLE | 1329 | 10 | 5 | 3 | 689 |  |
+| REDWOOD | 1330 | 20 | 2 | 3 | 450 |  |
+| HICKORY | 1331 | 5 | 5 | 3 | 830 |  |
+| IRONWOOD | 1364 | 25 | 5 | 4 | 990 |  |
+| YEW | 1388 | 15 | 2 | 5 | 850 |  |
+| TEAK | 1416 | 20 | 2 | 3 | 1000 |  |
+| CEDAR | 1417 | 15 | 2 | 3 | 900 |  |
+| ELM | 1418 | 15 | 2 | 3 | 1100 |  |
+| CHERRYWOOD | 1419 | 17 | 2 | 3 | 900 |  |
+| BEECHWOOD | 1420 | 12 | 2 | 3 | 975 |  |
+| WILLOW | 1421 | 12 | 2 | 1 | 1000 |  |
+| SYCAMORE | 1422 | 11 | 2 | 2 | 1000 |  |
+| SPRUCE | 1423 | 12 | 2 | 3 | 990 |  |
+| MESQUITE | 1424 | 9 | 2 | 3 | 1150 |  |
+| BAMBOO | 1436 | 15 | 10 | 4 | 120 |  |
+| REED | 1452 | 1 | 50 | 3 | 830 |  |
+
+#### GLASS (1536)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| GLASS | 1599 | 10 | 0 | 3 | 2800 |  |
+| CLAY | 1601 | 1 | 50 | 1 | 1750 |  |
+| CHINA | 1602 | 30 | 0 | 3 | 2400 |  |
+| CRYSTAL | 1604 | 10 | 5 | 5 | 2200 |  |
+
+#### VEGETATION (1792)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| WHEAT | 1799 | 1 | 20 | 1 | 770 |  |
+| CORN | 1800 | 1 | 20 | 1 | 720 |  |
+| RICE | 1801 | 1 | 20 | 1 | 750 |  |
+| CARROTS | 1802 | 1 | 5 | 1 | 720 |  |
+| TOMATOES | 1803 | 1 | 5 | 1 | 640 |  |
+| PEPPERS | 1804 | 1 | 5 | 1 | 640 |  |
+| GREENS | 1805 | 1 | 5 | 1 | 540 |  |
+| FRUIT | 1806 | 2 | 10 | 1 | 720 |  |
+| APPLES | 1807 | 2 | 10 | 1 | 640 | woody |
+| BERRIES | 1808 | 2 | 15 | 1 | 720 | berry |
+| ORANGES | 1809 | 2 | 10 | 1 | 640 | woody |
+| LEMONS | 1810 | 2 | 10 | 1 | 480 | woody |
+| GRAPES | 1811 | 3 | 5 | 1 | 680 |  |
+| OLIVES | 1812 | 2 | 5 | 1 | 640 |  |
+| POTATOES | 1813 | 1 | 5 | 1 | 770 |  |
+| CACTUS | 1814 | 2 | 5 | 1 | 680 |  |
+| DATES | 1815 | 2 | 2 | 1 | 720 |  |
+| SEAWEED | 1816 | 1 | 50 | 1 | 540 |  |
+| HOPS | 1866 | 2 | 20 | 1 | 340 |  |
+| COFFEEBEANS | 1867 | 2 | 10 | 1 | 560 |  |
+| COCOA | 1878 | 4 | 5 | 0 | 590 | woody |
+| SUGAR | 1885 | 1 | 50 | 1 | 1600 |  |
+| BARLEY | 1887 | 1 | 20 | 1 | 610 |  |
+| MUSHROOMS | 1888 | 1 | 20 | 1 | 500 |  |
+| HERBS | 1889 | 1 | 10 | 1 | 770 |  |
+| VINE | 1890 | 1 | 10 | 1 | 880 |  |
+| FLOWERS | 1891 | 1 | 10 | 1 | 720 |  |
+| NUTS | 1897 | 0 | 20 | 0 | 640 | woody |
+| BREAD | 1898 | 3 | 0 | 0 | 660 |  |
+| CRACKER | 1899 | 2 | 0 | 0 | 200 |  |
+| PIPEWEED | 1902 | 3 | 10 | 1 | 320 |  |
+| STRAWBERRIES | 1904 | 10 | 1 | 1 | 750 | berry |
+| BLUEBERRIES | 1905 | 10 | 1 | 1 | 750 | berry |
+| RASPBERRIES | 1906 | 10 | 1 | 1 | 750 | berry |
+| BOYSENBERRIES | 1907 | 10 | 1 | 1 | 750 | berry |
+| BLACKBERRIES | 1908 | 10 | 1 | 1 | 750 | berry |
+| SMURFBERRIES | 1909 | 10 | 1 | 1 | 750 | berry |
+| PEACHES | 1910 | 10 | 1 | 1 | 700 | woody |
+| PLUMS | 1911 | 10 | 1 | 1 | 710 | woody |
+| ONIONS | 1912 | 10 | 1 | 1 | 760 |  |
+| CHERRIES | 1913 | 10 | 1 | 1 | 810 | woody |
+| GARLIC | 1914 | 10 | 1 | 1 | 815 |  |
+| PINEAPPLES | 1915 | 10 | 1 | 1 | 500 |  |
+| COCONUTS | 1916 | 10 | 1 | 2 | 250 | woody |
+| BANANAS | 1917 | 10 | 1 | 1 | 790 | woody |
+| LIMES | 1918 | 10 | 1 | 1 | 690 | woody |
+| SOAP | 1949 | 1 | 0 | 1 | 430 |  |
+| ASH | 1951 | 1 | 0 | 0 | 50 |  |
+| CHEESE | 1954 | 25 | 0 | 1 | 640 |  |
+| BEANS | 1955 | 1 | 15 | 1 | 750 |  |
+| CRANBERRIES | 1956 | 10 | 1 | 1 | 750 | berry |
+| SPICE | 1996 | 100 | 5 | 1 | 750 |  |
+| FUNGUS | 1998 | 1 | 3 | 1 | 750 |  |
+| VEGETABLE | 2001 | 1 | 5 | 1 | 540 |  |
+
+#### FLESH (2048)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| MEAT | 2049 | 4 | 20 | 1 | 3000 |  |
+| BEEF | 2050 | 6 | 20 | 1 | 3000 |  |
+| PORK | 2051 | 8 | 20 | 1 | 2500 |  |
+| POULTRY | 2052 | 3 | 20 | 1 | 2000 |  |
+| MUTTON | 2053 | 4 | 20 | 1 | 2800 |  |
+| FISH | 2054 | 5 | 100 | 1 | 590 | fish |
+| EGGS | 2121 | 2 | 10 | 0 | 1120 |  |
+| WAX | 2152 | 1 | 0 | 0 | 900 |  |
+| SALMON | 2198 | 6 | 18 | 1 | 1000 | fish |
+| CARP | 2199 | 6 | 1 | 10 | 1000 | fish |
+| TROUT | 2200 | 6 | 10 | 1 | 1000 | fish |
+| SHRIMP | 2201 | 6 | 15 | 1 | 1000 | fish |
+| TUNA | 2202 | 6 | 10 | 1 | 1000 | fish |
+| CATFISH | 2203 | 6 | 10 | 1 | 1000 | fish |
+| DRAGONMEAT | 2214 | 40 | 20 | 1 | 3000 |  |
+
+#### PAPER (2304)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| PAPER | 2368 | 10 | 0 | 0 | 920 |  |
+
+#### ROCK (2560)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| STONE | 2585 | 1 | 80 | 5 | 2500 |  |
+| LIMESTONE | 2586 | 1 | 20 | 4 | 1550 |  |
+| FLINT | 2587 | 1 | 10 | 4 | 2600 |  |
+| GRANITE | 2588 | 2 | 10 | 6 | 2690 |  |
+| OBSIDIAN | 2589 | 10 | 5 | 6 | 2650 |  |
+| MARBLE | 2590 | 20 | 5 | 5 | 2560 |  |
+| SAND | 2591 | 1 | 50 | 1 | 1600 |  |
+| BONE | 2648 | 1 | 100 | 5 | 1600 |  |
+| COAL | 2649 | 1 | 50 | 1 | 1800 |  |
+| EBONY | 2662 | 5 | 5 | 5 | 2910 |  |
+| IVORY | 2663 | 5 | 5 | 3 | 1840 |  |
+| DUST | 2669 | 0 | 20 | 0 | 1120 |  |
+| BASALT | 2705 | 10 | 2 | 4 | 3300 |  |
+| SHALE | 2706 | 5 | 2 | 2 | 1200 |  |
+| PUMICE | 2707 | 5 | 2 | 4 | 600 |  |
+| SANDSTONE | 2708 | 10 | 2 | 2 | 3500 |  |
+| SOAPSTONE | 2709 | 60 | 2 | 5 | 3600 |  |
+| ALABASTER | 2733 | 5 | 10 | 4 | 1550 |  |
+| URANIUM | 2752 | 100 | 1 | 0 | 2000 |  |
+| SILICON | 2758 | 10 | 10 | 6 | 500 |  |
+| SALT | 2763 | 10 | 20 | 5 | 750 |  |
+| DIRT | 2765 | 1 | 50 | 1 | 1600 |  |
+
+#### LIQUID (2816)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| FRESHWATER | 2876 | 0 | 10 | 0 | 1000 |  |
+| SALTWATER | 2877 | 0 | 100 | 0 | 1030 |  |
+| DRINKABLE | 2878 | 0 | 1 | 0 | 1000 |  |
+| MILK | 2888 | 2 | 10 | 0 | 1020 |  |
+| COFFEE | 2892 | 0 | 10 | 0 | 430 |  |
+| BLOOD | 2903 | 1 | 100 | 0 | 1025 |  |
+| LAMPOIL | 2906 | 1 | 10 | 1 | 880 |  |
+| POISON | 2907 | 1 | 1 | 1 | 1000 |  |
+| LIQUOR | 2908 | 10 | 1 | 1 | 790 |  |
+| HONEY | 2910 | 1 | 50 | 1 | 1600 |  |
+| SAP | 2943 | 10 | 1 | 1 | 1600 | woody |
+| PERFUME | 2976 | 1 | 1 | 1 | 1000 |  |
+| DRAGONBLOOD | 2981 | 10 | 100 | 0 | 1025 |  |
+| SLIME | 2996 | 5 | 10 | 1 | 750 |  |
+| PETROLEUM | 3011 | 50 | 5 | 1 | 880 |  |
+| GASOLINE | 3012 | 80 | 0 | 0 | 880 |  |
+| DIESEL | 3013 | 70 | 0 | 0 | 880 |  |
+| TAR | 3018 | 10 | 15 | 2 | 1280 |  |
+
+#### PRECIOUS (3072)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| JADE | 3104 | 50 | 2 | 5 | 3800 |  |
+| DIAMOND | 3139 | 500 | 1 | 9 | 3510 |  |
+| GEM | 3141 | 100 | 1 | 5 | 3500 |  |
+| PEARL | 3142 | 380 | 1 | 5 | 2000 |  |
+| OPAL | 3149 | 80 | 2 | 5 | 2250 |  |
+| TOPAZ | 3150 | 200 | 2 | 5 | 3570 |  |
+| AMETHYST | 3151 | 300 | 2 | 5 | 2651 |  |
+| GARNET | 3152 | 70 | 2 | 5 | 3870 |  |
+| AMBER | 3153 | 80 | 5 | 5 | 2500 |  |
+| AQUAMARINE | 3154 | 50 | 2 | 5 | 2800 |  |
+| CHRYSOBERYL | 3155 | 50 | 2 | 5 | 2800 |  |
+| ONYX | 3200 | 70 | 1 | 8 | 3300 |  |
+| TURQUOISE | 3201 | 70 | 1 | 8 | 3300 |  |
+| PERIDOT | 3202 | 65 | 1 | 6 | 3300 |  |
+| QUARTZ | 3203 | 25 | 1 | 5 | 3300 |  |
+| LAPIS | 3204 | 70 | 1 | 6 | 3300 |  |
+| BLOODSTONE | 3205 | 85 | 1 | 8 | 3300 |  |
+| MOONSTONE | 3206 | 90 | 1 | 8 | 3300 |  |
+| ALEXANDRITE | 3207 | 95 | 1 | 9 | 3300 |  |
+| RUBY | 3239 | 300 | 1 | 3 | 3500 |  |
+| EMERALD | 3240 | 200 | 1 | 3 | 3500 |  |
+| SAPPHIRE | 3241 | 180 | 1 | 3 | 3500 |  |
+| AGATE | 3242 | 100 | 1 | 3 | 3500 |  |
+| CITRINE | 3243 | 100 | 1 | 3 | 3500 |  |
+| DIAMELS | 3266 | 5 | 20 | 9 | 3510 |  |
+| DILITHIUM | 3273 | 5000 | 0 | 7 | 5010 |  |
+
+#### ENERGY (3328)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| ENERGY | 3439 | 30 | 0 | 4 | 0 |  |
+| PLASMA | 3505 | 100 | 0 | 0 | 0 |  |
+| ELECTRICITY | 3506 | 100 | 0 | 0 | 0 |  |
+| ANTIMATTER | 3521 | 500 | 0 | 0 | 0 |  |
+
+#### SYNTHETIC (3584)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| PLASTIC | 3684 | 25 | 0 | 4 | 950 |  |
+| RUBBER | 3685 | 25 | 0 | 1 | 1506 |  |
+| DEUTERIUM | 3763 | 100 | 0 | 0 | 0 |  |
+| FIBREGLASS | 3773 | 10 | 0 | 3 | 0 |  |
+
+#### GAS (3840)
+
+| Resource | Code | Value | Rarity | Hardness | Buoyancy | Gathered as |
+| --- | --- | --- | --- | --- | --- | --- |
+| AIR | 4021 | 0 | 100 | 0 | 0 |  |
+| OXYGEN | 4022 | 10 | 100 | 0 | 0 |  |
+| HYDROGEN | 4023 | 20 | 100 | 0 | 0 |  |
+| FLOURINE | 4024 | 60 | 40 | 0 | 0 |  |
+| NITROGEN | 4025 | 10 | 100 | 0 | 0 |  |
+| CHLORINE | 4026 | 10 | 100 | 0 | 0 |  |
+
+### Adding or changing resources
+
+There are three ways to define your own resources; each new resource gets a
+code after the built-in ones (210 and up; the table holds 256 in all).
+
+1. **`world/materials.txt`** (preferred; CoffeeSUD). One resource per line,
+   fields separated by tabs: `NAME, FAMILY, VALUE, FREQUENCY, HARDNESS,
+   BUOYANCY, CATEGORY, SMELL, EFFECTS, DESCRIPTION, CODE`. A row named like a
+   built-in resource changes it; others are added, at their `CODE` if given,
+   the rest sorted by name. `AHELP WORLDMATERIALS` has the details and an
+   example. It is read at start-up, before the ini entries.
+2. **`coffeemud.ini`** `ADDMATERIAL_[NAME]` and `REPLACEMATERIAL_[NAME]`, each
+   eight comma-separated fields: material family, smell, value, rarity
+   weight (1-100, lower is rarer), hardness (0-6), buoyancy (0-30000),
+   gathering category (`FISH`, `BERRY`, `WOODY` or empty) and an optional
+   ability ID applied to the raw form when eaten:
+
+   ```ini
+   ADDMATERIAL_GRUG=flesh,strong meaty,3,15,1,2000,FISH,
+   REPLACEMATERIAL_COTTON=cloth,,0,100,0,10,,
+   ```
+
+   A name already defined in `world/materials.txt` is ignored here.
+3. **`world/resources.txt`** (`RESOURCEVARIANTS`). Named *variants* of an
+   existing resource, such as a moonpetal herb, set as a sub-type; see
+   `AHELP RESOURCEVARIANTS`. A variant is a `Rsc Sub-Type` on a `GenResource`
+   (its stat code is `RSUBTYPE`), not a new resource number.
+
+Crafting, gathering and trading of materials is in
+[07-items-crafting.md](07-items-crafting.md).
+
+## Enchantments and item properties
+
+An item becomes magical in four ways, which combine.
+
+**1. The Magical Ability number.** Any non-zero value makes a weapon or
+armor magical (it gets the `magical` disposition and shows to *detect
+magic*). On weapons it adds to damage (and 10 times to attack); on armor it
+adds to the armor value by location. It also adds 10 gold per point to the
+item's value. Wands and scrolls use it as extra caster level (up to +10 for
+wands).
+
+**2. Properties (effects).** Properties are abilities that sit on the item.
+Add them in the editor's *Effects* line: enter the property's ID (`?P` lists
+the properties that fit the item), then give its parameters when asked.
+`-ID` removes one, `=ID` or its number edits one. The most used are below;
+every one is documented, with its parameters, in
+[23-properties-reference.md](23-properties-reference.md).
+
+| Property | Effect on an item |
+| --- | --- |
+| [Prop_WearAdjuster](23-properties-reference.md#prop_wearadjuster) | While worn or wielded, adjusts stats (`str+2 dex-1 hitpoints+20`), with optional `LAYERED`, `MASK=` and `ALLSET=` |
+| [Prop_HaveAdjuster](23-properties-reference.md#prop_haveadjuster) | The same, for the item held anywhere in inventory |
+| [Prop_WearSpellCast](23-properties-reference.md#prop_wearspellcast) | While worn, the wearer is under a list of spells: `Spell_MageArmor;Spell_Shield` |
+| [Prop_HaveSpellCast](23-properties-reference.md#prop_havespellcast) | The same while carried |
+| [Prop_WearResister](23-properties-reference.md#prop_wearresister) | Resistances while worn (`fire 40% magic 20%`) |
+| [Prop_HaveResister](23-properties-reference.md#prop_haveresister) | Resistances while carried |
+| [Prop_WearEnabler](23-properties-reference.md#prop_wearenabler), [Prop_HaveEnabler](23-properties-reference.md#prop_haveenabler) | Grant abilities while worn or held |
+| [Prop_WearZapper](23-properties-reference.md#prop_wearzapper), [Prop_HaveZapper](23-properties-reference.md#prop_havezapper) | Only some characters can wear or hold the item (mask) |
+| [Prop_AddDamage](23-properties-reference.md#prop_adddamage) | Extra damage on a weapon |
+| [Prop_Invokable](23-properties-reference.md#prop_invokable) | Powers used on demand, with charges that recharge |
+| [Prop_Attunement](23-properties-reference.md#prop_attunement) | Powers that wake only after the item is attuned |
+| [Prop_Cursed](23-properties-reference.md#prop_cursed) | A hidden curse that Remove Curse ends cleanly |
+| [Prop_ItemSet](23-properties-reference.md#prop_itemset) | Tiered bonuses for wearing several pieces of a named set |
+| [Prop_ItemBinder](23-properties-reference.md#prop_itembinder) | Binds the item to whoever first picks it up or equips it |
+| [Prop_Undroppable](23-properties-reference.md#prop_undroppable) | The item cannot be dropped |
+| [Prop_Durability](23-properties-reference.md#prop_durability) | Wear-and-tear rules for this item: `MULT=`, `UNBREAKABLE`, `BREAK=true`, `NOREPAIR` |
+| [Prop_KeyRules](23-properties-reference.md#prop_keyrules), [Prop_LockRules](23-properties-reference.md#prop_lockrules) | Key and lock rules |
+| [Prop_Transform](23-properties-reference.md#prop_transform) | The item changes form over time or on a condition |
+| [Prop_ItemGrowth](23-properties-reference.md#prop_itemgrowth) | The item grows with use |
+| [Prop_RejuvWhen](23-properties-reference.md#prop_rejuvwhen) | The item returns only when its mask allows (see [Item rejuvenation](#item-rejuvenation)) |
+| [Prop_NoPurge](23-properties-reference.md#prop_nopurge) | The item survives `PURGE` |
+| [Prop_QuestItem](23-properties-reference.md#prop_questitem) | Marks an item as a quest object |
+| [Prop_ItemModifiers](23-properties-reference.md#prop_itemmodifiers) | Tracked, selective modifiers; see [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md) |
+
+Puzzle properties (`Prop_Switch`, `Prop_ComboLock`, `Prop_PressurePlate`,
+`Prop_Detector`, `Prop_Discoverable`, receptacles and blockages) are in
+[07-items-crafting.md](07-items-crafting.md).
+
+**3. Behaviors and scripts.** Behaviors on an item run while it exists. A
+MOBPROG script on the item reacts to events such as `GET_PROG`, `WEAR_PROG`,
+`REMOVE_PROG` or `READ_PROG`; see [04-mobprog.md](04-mobprog.md). Add them in
+the *Behaviors* line, and see [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
+
+**4. Generic classes that do the work.** A wand, staff, scroll, potion, pill
+or powder holds spells in the item itself; a bag of holding changes weight; a
+wand of nourishment is a specific class. See
+[Magic items](#magic-items-wands-staffs-scrolls-potions-pills).
+
+The same enchantments exist as in-game player abilities: the spells
+`Spell_EnchantWeapon`, `Spell_EnchantArmor`, `Spell_EnchantWand`,
+`Spell_MagicItem`, `Spell_Disenchant` and `Spell_IdentifyObject`, and the
+prayers `Prayer_BlessItem`, `Prayer_CurseItem` and `Prayer_ProtectItem`;
+wands and scrolls are made by the `WandMaking` and `ScrollScribing` skills.
+See [25-abilities-and-effects.md](25-abilities-and-effects.md). Random magic
+items and affixes generated at loot time are in
+[12-generation.md](12-generation.md). Tracked modifiers that survive crafting
+and saves (affixes with versions and revisions) are in
+[17-item-modifiers-crafting.md](17-item-modifiers-crafting.md).
+
+**Identification.** The *Secret Identity* text is what identify magic adds.
+Leave it blank for most items. Wands, scrolls, potions and pills generate their
+own "A wand of ..." line from their spells and put your secret identity after
+it.
+
+## Item rejuvenation
+
+"Rejuvenation" is what brings an item back after it was removed. The **Rejuv**
+field means different things depending on where the item is.
+
+### Items in rooms: ticks
+
+For an item lying in a room, **Rejuv** is the number of ticks between the item
+going missing from the room and a fresh copy appearing. A tick is `TICKTIME`
+milliseconds of `coffeemud.ini` (4000, four seconds, by default). `0` (or the
+"never" value) means it never comes back: once picked up and carried out, it is
+gone. Each top-level item with a positive value carries an `ItemRejuv` ability
+that watches the item and its contents, and puts a copy of the original (with
+contents) back in the room when it is missing.
+
+Rejuvenation starts when the room's items are loaded or saved (`SAVE ROOM`
+and `SAVE ITEMS` start it). After changing `REJUV` on a live item, save the
+room in builder mode, or `RESET ROOM`, for it to take effect.
+
+`RESET REJUV ROOM ITEMS` (or `AREA`) restores any resettable item that is
+missing. `RESET ROOM` also returns items and mobs that do not belong.
+
+A capped catalog item (see [Unique and rare items](#unique-and-rare-items))
+waits instead of returning while the cap is reached. `Prop_RejuvWhen` can make
+an item return only when a mask is true, or never, or be replaced by another
+item (see its entry in [23-properties-reference.md](23-properties-reference.md#prop_rejuvwhen)).
+
+### Items on a mob: percent chance
+
+For an item in a mob's inventory (worn, held or carried), **Rejuv** is a
+**percent chance that the item is left out** each time the mob is created or
+reset. This makes "variable equipment".
+
+| Value | Effect |
+| --- | --- |
+| 0 | Always present (the normal case) |
+| 1-99 | That percent chance the item is missing when the mob is created or comes back |
+| -1 | The item exists only when the mob is first created (at boot), never after a rejuvenation |
+
+If several items with a chance occupy the same wear location, exactly one is
+chosen at random, weighted by their values, and the rest are removed. Items
+carried loose are rolled independently. Variable items are resolved when the
+mob is placed or comes back; the roll is skipped while a builder (a player
+allowed `CMDMOBS`) is in the room. Do not copy a variable item from a mob to a
+room: the same number means ticks there. `RESET ROOM` before saving a room
+whose mobs have variable equipment, or the saved copies lose the items that
+were rolled away.
+
+The editor prompt names the two meanings: `Rejuv/Pct: ... (0=normal, -1=one
+time)` for a mob's inventory, and `Rejuv/Pct: ... (0=never)` in rooms.
+
+The command form `MODIFY ITEM x REJUV n` sets any positive `n`; any other
+value sets "never rejuvenate". Use the full editor to enter -1.
+
+Shopkeepers' stock follows the same rule for stocked items, and the mob's own
+respawn time (its Rejuv Ticks) is in [21-mobs.md](21-mobs.md).
+

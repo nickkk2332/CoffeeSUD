@@ -492,9 +492,10 @@ appended. `AFFECTS [TYPE or DOMAIN] [NAME|TYPE|DOMAIN|REMAIN]` filters and sorts
 followed by `ROOM`, `AREA` or a target's name to see the effects on that
 thing (the output includes who caused each one).
 
-To see everything on the target at the level of IDs and counters, use
-`MODIFY` on the thing and open its *Effects* field; ticks left are shown by
-the `TICKDOWN` internal stat for debugging.
+A character with the `SYSOPMSGS` attribute set also sees effects that have no
+display text, written `ID:ticks` for a timed effect and `ID+proficiency` for a
+permanent or automatic one. (The `Effects` field of an editor lists only
+permanent, savable effects.)
 
 ## Saving throws
 
@@ -536,8 +537,8 @@ reward. All four end up in the same list.
 
 Each character class has an ability map: for every ability it can have, the
 level at which it qualifies, a default proficiency, whether it is gained
-automatically at that level (*autogain*), whether it is secret (hidden in
-lists until known), an optional default parameter string, required skills
+automatically at that level (*autogain*), its visibility (`PUBLIC`; `SECRET`, never listed until
+known; or `MASKED`, secret until the mask is met), an optional default parameter string, required skills
 (`Skill_Write Skill_Trip Skill_Dirt(25)`: other abilities, optionally with a
 proficiency, that must be known first), a qualifying zapper mask and optional
 cost overrides. Races can grant abilities the same way. The class and race
@@ -577,7 +578,7 @@ prerequisite chains with learned, learnable and locked marks
 
 | Command | What it does |
 | --- | --- |
-| `TEACH [STUDENT] [SKILL]` | A character who knows the ability at 25 percent or more of the class maximum teaches it to a student in the same room. The student pays the learning cost. |
+| `TEACH [STUDENT] [SKILL]` | A character who knows the ability at 25 percent or more of the class maximum offers to teach it to a student in the same room. When the teacher is a character, the student is asked `Is this Ok (y/N)?`; the student pays the learning cost. An NPC teacher needs no confirmation. |
 | `LEARN [SKILL] ([FROM] [TEACHER])` | Says the right words to a teacher and then trains; `LEARN FROM [RECIPE BOOK]` studies a recipe book instead. |
 | `GAIN [SKILL]` | Says `GAIN ...` to the room; a teacher NPC that hears it teaches (see below). `GAIN` alone asks you to use `QUALIFY`. |
 | `TRAIN [STAT/CLASS] ([TEACHER])` | Spends a training session on a stat or a new class. |
@@ -635,8 +636,9 @@ set up deliberately:
 - [`Prop_Trainer`](23-properties-reference.md#prop_trainer) makes a mob a
   suitable target for `TRAIN` (stats, classes, expertises) and, unless
   `NOTEACH` is in its parameters, a teacher too.
-  [`Prop_StatTrainer`](23-properties-reference.md#prop_stattrainer) is the
-  stat-only variant.
+  [`Prop_StatTrainer`](23-properties-reference.md#prop_stattrainer) sets the
+  mob's six stats (default 25) so it can train stats, and likewise accepts
+  `NOTEACH`.
 
 A player teaches by saying `teach me [SKILL]` or `gain [SKILL]` to the NPC in
 the room, or by typing `LEARN [SKILL] FROM [TEACHER]` or `PRACTICE [SKILL]
@@ -674,9 +676,9 @@ victim, beneficial ones on itself or allies); see
 
 | Command | Effect |
 | --- | --- |
-| `MPENABLE [MOB] [ABILITY OR EXPERTISE] [PROF] [PARMS]` | Gives the ability at that proficiency, or changes it if known. `PROF` may be `++N` or `--N` to adjust the current value. `PARMS` becomes the ability's text. An unknown ability that is an expertise ID adds the expertise. A language is learned with `Languages.learn`. |
+| `MPENABLE [MOB] [ABILITY OR EXPERTISE] [PROF] [PARMS]` | Gives the ability at that proficiency, or changes it if known. `PROF` may be `++N` or `--N` to adjust the current value. `PARMS` becomes the ability's text. A name that is not an ability but is an expertise ID adds the expertise. A language the target does not know is learned through the language system. |
 | `MPDISABLE [MOB] [ABILITY OR EXPERTISE]` | Removes the ability (or expertise). |
-| `MPCAST [ABILITY] [TARGET]` | The script's mob uses the ability at 100 percent proficiency on the target as a normal cast: costs, cooldown, masks and fizzling all apply. A host that is not a mob has its stand-in mob restored to full mana first. |
+| `MPCAST [ABILITY] [TARGET]` | The script's mob uses the ability at 100 percent proficiency on the target as a normal cast: costs, cooldown, masks and fizzling all apply. When the host is not a mob, its stand-in mob is restored to full strength first. |
 | `MPCASTEXT [ABILITY] [TARGET] [ARGS]` | As `MPCAST`, with the rest of the line given to the ability the way a player would type it. |
 | `MPAFFECT [ABILITY] [TARGET] [N TICKS] [PARMS]` | Puts the ability on the target as an automatic cast (no cost, never fizzles). For a property it is added permanently, or timed through a `TemporaryAffects` effect when `N TICKS` is given. For other abilities `N TICKS` sets how long the effect lasts. `property:[ID]` forces the permanent-property form for any ability. |
 | `MPUNAFFECT [TARGET] [ABILITY ID or ALL]` | Ends the named effect, or every uninvokable effect. |
@@ -715,8 +717,9 @@ syntax is in [23-properties-reference.md](23-properties-reference.md).
 them. Reading a scroll casts one of its spells if the reader knows a
 "read magic" skill that matches (`Spell_ReadMagic`, `Prayer_ReadPrayer`,
 `Chant_ReadRunes`, `Song_ReadMusic`), at the scroll's level, for a small mana
-cost (none if the reader already qualifies for the spell, 25 if the reader's
-class cannot have it). The scroll loses a use. Item types are covered in
+cost (none if the reader's class level is already above the spell's qualifying
+level, 5 if not yet, 25 if the reader's class cannot have the spell at all).
+The scroll loses a use. Item types are covered in
 [22-items.md](22-items.md).
 
 ### Rewards

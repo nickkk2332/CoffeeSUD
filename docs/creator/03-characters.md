@@ -743,12 +743,13 @@ race can still reach a player three ways:
 - **An unlock tattoo.** A tattoo named `RACE_<ID>` (for example `RACE_DROW`) or
   `CHARCLASS_<ID>` on the character or its profile opens that race or class for
   it; `CHARCLASS_ALL` opens every class. An achievement can give such a tattoo
-  (`1 "TATTOO(ID=RACE_DROW DESC=\"create a drow\" ACCOUNT=true)"`; see
+  with a `TATTOO(ID=RACE_DROW DESC=...)` reward (the `REWARDS` notes at the top
+  of `resources/achievements.ini` show the quoting; see
   [Achievements](#achievements-and-titles)). The `CHARCLASS_<ID>+<STAT>` form
   waives that stat requirement, and `CHARCLASS_<ID>+RACE_<ID>` waives the race
   requirement.
-- **A template or script.** A ready-made character, an origin's `MASK`
-  or an `MPSET`/`MPCHARSTAT`-style script can put a character in any race.
+- **A template.** A ready-made character takes its race and class directly, so
+  a template can be of a race that creation does not offer.
 
 With `SHOWLOCKED=YES`, a race or class that is kept behind such a tattoo and has
 an **Unlock hint** appears in the creation lists as `Name (locked: hint)`. Write
@@ -782,9 +783,8 @@ generic one has taken its ID.
 In builder mode, SAVE (and quitting) writes each generic race and class to
 `world/custom/races/<ID>.cmare` and `world/custom/classes/<ID>.cmare` (an
 older single `world/custom.cmare` is still read); on a normal start they are
-loaded into the game and into every character and mob that uses them. Edit them
-in the game, not by hand. A race or class that mobs or characters use is kept
-when they are saved; see [Persistence notes](#persistence-notes).
+loaded with the world. Edit them in the game rather than by hand; see
+[Persistence notes](#persistence-notes).
 
 ### GenRace fields
 
@@ -823,7 +823,7 @@ record stores. Indexed codes carry a trailing number (`GETRABLE0`, `GETRABLE1`).
 | 25 | New Player CharState Adj. | `STARTASTATE` | none | The same, applied once when a new character of the race starts |
 | 26 | Resources | `NUMRSC`, `GETRSCID<n>`, `GETRSCPARM<n>` | none | Raw materials the corpse yields when butchered. `new <item>` adds a copy of an item from your inventory; name one to remove it |
 | 27 | Outfit | `NUMOFT`, `GETOFTID<n>`, `GETOFTPARM<n>` | none | Items a new character of the race starts in, and `OUTFIT` gives. `new <item>` from your inventory |
-| 28 | Natural Weapon(s) | `WEAPONCLASS`, `WEAPONXML` | fists | The weapon(s) used unarmed; one is chosen at random per attack. `new <weapon>` from your inventory |
+| 28 | Natural Weapon(s) | `WEAPONCLASS`, `WEAPONXML` | none (bare hands) | The weapon(s) used unarmed; when several are listed one is chosen at random. `new <weapon>` from your inventory |
 | 29 | Weapons Race | `WEAPONRACE` | none | A race whose random natural weapon is used |
 | 30 | Racial Abilities | `NUMRABLE`, `GETRABLE<n>`, `GETRABLELVL<n>`, `GETRABLEQUAL<n>`, `GETRABLEPROF<n>`, `GETRABLEPARM<n>` | none | Abilities members have. See below |
 | 31 | Cultural Abilities | `NUMCABLE`, `GETCABLE<n>`, `GETCABLEPROF<n>`, `GETCABLELVL<n>`, `GETCABLEGAIN<n>`, `GETCABLEPARM<n>` | none | Skills the culture teaches. See below |
@@ -849,9 +849,9 @@ it, with follow-up prompts.
 **Racial Abilities** are skills with command words. Each has: the *level* (a
 player level, not a class level) at which it is gained, whether it is
 *automatically gained* (answer N to merely qualify for it), the permanent
-*proficiency*, and default *parameters*. They are given when the race starts
-and removed with it (they are not saved with the character). Auto-invoked
-abilities cannot be named except languages.
+*proficiency*, and default *parameters*. They are given when the race starts,
+and from the level named. Auto-invoked abilities cannot be named here, except
+languages.
 
 **Cultural Abilities** are mapped to the race like a class's abilities: each has
 a default proficiency, a *character level* (0 means from the start), whether it
@@ -863,8 +863,8 @@ at 50).
 `Skill_Stonecunning`) worn permanently from a player level, with parameters. This
 is how a race gets traits that are not stat numbers.
 
-A racial ability that is not a command skill belongs under Racial Effects;
-under Racial Abilities it is refused ("it has no trigger words").
+An ability without command words cannot be a Racial Ability (the editor says
+it "has no trigger/command words"); make it a Racial Effect instead.
 
 ### GenCharClass fields
 
@@ -985,9 +985,7 @@ qualifies for and `WILLQUALIFY` shows what a class and level will give.
 `DISABLE=CLASSTRAINING` removes `TRAIN <class>` so that classes can change only
 by scripts. To design a class tree, make a base class and give each subclass
 `BASE=<base>`; under `SUB` they can be reached from the base, while `Min. Stats`,
-`Required Races` and `Qualifications` can further limit who qualifies. A class
-whose requirements a character no longer meets cannot be trained into, but one
-already taken is kept.
+`Required Races` and `Qualifications` can further limit who qualifies.
 
 ### Qualifying abilities
 
@@ -1006,8 +1004,8 @@ Lvl, Skill, Proff, Gain, Secret, Parm, Preq, Mask; adding an ability asks for:
 | pre-requisites | `GETCABLEPREQ` | A comma list of skill IDs (a trailing `*` for a family) with an optional minimum proficiency in brackets: `Skill_Trip(50),Fighter_*(10)`. These chains are what `SKILLTREE` draws |
 | requirement mask | `GETCABLEMASK` | A zapper mask the character must also pass |
 
-Auto-gained abilities come as soon as the level is reached (`MPLEVELUP` and
-the level-up routines grant them); the rest appear in `QUALIFY`. Races can
+Auto-gained abilities are given as soon as the class level is reached; the
+rest appear in `QUALIFY`. Races can
 qualify for abilities in the same way through cultural abilities, and a
 **qualify-all** list, edited with `CREATE ALLQUALIFY`, `MODIFY ALLQUALIFY` and
 `LIST ALLQUALIFYS` and stored in `resources/skills/allqualifylist.txt`, makes
@@ -1039,8 +1037,8 @@ gloves lists the glove location there.
 | 1 | Toddler | 1 |
 | 2 | Child | 3 |
 | 3 | Young adult | 15 |
-| 4 | Adult | 35 |
-| 5 | Mature (middle aged) | 53 |
+| 4 | Adult (`MATURE`) | 35 |
+| 5 | Mature (`MIDDLEAGED`) | 53 |
 | 6 | Old | 70 |
 | 7 | Venerable | 74 |
 | 8 | Ancient | 78 |

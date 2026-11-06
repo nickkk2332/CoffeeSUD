@@ -694,7 +694,7 @@ mpecho A bell rings once from the harbour wall as you cross into Brenn.
 ~
 ```
 
-**Notes.** Prop_AreaEntry and Prop_AreaBanner show text at the same border without a script (see [Properties reference](23-properties-reference.md)). Queued. Fixture: `st16-border.js`.
+**Notes.** [Prop_AreaEntry](23-properties-reference.md#prop_areaentry) and [Prop_AreaBanner](23-properties-reference.md#prop_areabanner) show text at the same border without a script (see [Properties reference](23-properties-reference.md)). Queued. Fixture: `st16-border.js`.
 
 ### AREA_LEAVE_PROG
 
@@ -1011,7 +1011,7 @@ mpunlock north
 ~
 ```
 
-**Notes.** `LIST VERBS` lists a room's verbs. `Prop_Verbs` does a simple verb with no script. The first host in reach that answers takes the line. Fixture: `st7-verb.js`.
+**Notes.** `LIST VERBS` lists a room's verbs. [`Prop_Verbs`](23-properties-reference.md#prop_verbs) does a simple verb with no script. The first host in reach that answers takes the line. Fixture: `st7-verb.js`.
 
 ## Things: items, containers, shops and puzzles
 
@@ -1522,7 +1522,7 @@ LOOK_PROG [ALL | P name | word word ...]
 
 **Arguments.** Keyword list: `ALL` or nothing for any; words, any of which may be a whole word of the thing's name (or equal its class ID); `P name` for exactly that name. See [Argument forms](#argument-forms). Matched against the thing looked at.
 
-**Fires.** When a creature other than the host looks at something the host hears. The match is against the name of the thing looked at, not the host. `LOOK_PROG` with no argument or `ALL` therefore hears every look in range. Separately, when a character looks at a keyword detail of a thing that has the `Prop_Details` property, that thing's own LOOK_PROG blocks whose argument is `100` or exactly the keyword run, with the keyword in `$g`.
+**Fires.** When a creature other than the host looks at something the host hears. The match is against the name of the thing looked at, not the host. `LOOK_PROG` with no argument or `ALL` therefore hears every look in range. Separately, when a character looks at a keyword detail of a thing that has the [`Prop_Details`](23-properties-reference.md#prop_details) property, that thing's own LOOK_PROG blocks whose argument is `100` or exactly the keyword run, with the keyword in `$g`.
 
 **Does not fire.** Looks by the host itself.
 
@@ -1783,7 +1783,7 @@ SWITCH_PROG [state | ALL]
 
 **Arguments.** A state name of the switch (`up`, `down`, `on`...), or `ALL` or nothing for any.
 
-**Fires.** When a thing carrying the Prop_Switch property changes state. The switch's own scripts hear it, and the scripts of its room.
+**Fires.** When a thing carrying the [Prop_Switch](23-properties-reference.md#prop_switch) property changes state. The switch's own scripts hear it, and the scripts of its room.
 
 **Does not fire.** Switches without Prop_Switch.
 
@@ -1812,7 +1812,7 @@ Syntax:
 SET_PROG [set id | ALL]
 ```
 
-**Arguments.** The set id of the Prop_ItemSet pieces, or `ALL` or nothing.
+**Arguments.** The set id of the [Prop_ItemSet](23-properties-reference.md#prop_itemset) pieces, or `ALL` or nothing.
 
 **Fires.** When a wearer gains or loses a tier bonus of an item set.
 
@@ -2097,7 +2097,7 @@ PHASE_PROG [number | ALL]
 
 **Arguments.** A phase number, or `ALL` or nothing for any.
 
-**Fires.** When the mob's BossPhases behaviour enters that phase.
+**Fires.** When the mob's [BossPhases](24-behaviors-and-masks.md#bossphases) behaviour enters that phase.
 
 **Does not fire.** Phases not named.
 
@@ -2128,7 +2128,7 @@ SURRENDER_PROG
 
 **Arguments.** None.
 
-**Fires.** When the host's Morale behaviour makes it surrender.
+**Fires.** When the host's [Morale](24-behaviors-and-masks.md#morale) behaviour makes it surrender.
 
 **Does not fire.** A mob that flees or fights on.
 
@@ -2218,7 +2218,7 @@ RESET_PROG
 
 **Arguments.** None.
 
-**Fires.** When the EncounterReset behaviour puts the mob back (home, healed) after its opponents left.
+**Fires.** When the [EncounterReset](24-behaviors-and-masks.md#encounterreset) behaviour puts the mob back (home, healed) after its opponents left.
 
 **Hosts.** The mob with EncounterReset.
 
@@ -2246,7 +2246,7 @@ WAVE_PROG [number | ALL]
 
 **Arguments.** A wave number from 1, or `ALL` or nothing for every wave.
 
-**Fires.** When the WaveSpawner behaviour on the room brings the wave.
+**Fires.** When the [WaveSpawner](24-behaviors-and-masks.md#wavespawner) behaviour on the room brings the wave.
 
 **Does not fire.** Other waves.
 
@@ -2333,7 +2333,7 @@ AMBUSH_PROG [SURPRISED | SPOTTED | AVOIDED | ALL]
 
 **Arguments.** The outcome to hear, or `ALL`/nothing for every outcome.
 
-**Fires.** When a Prop_Ambush on the room springs, with how it went.
+**Fires.** When a [Prop_Ambush](23-properties-reference.md#prop_ambush) on the room springs, with how it went.
 
 **Does not fire.** Other outcomes.
 
@@ -3708,7 +3708,7 @@ JOURNEY_PROG [@GLOBAL] [ALL | START | CANCEL | ARRIVE | HOUR]
 
 **Arguments.** The phase to hear, or `ALL`/nothing for every phase. `@GLOBAL` before it hears it anywhere.
 
-**Fires.** At the given phase of a Prop_JourneyState trip.
+**Fires.** At the given phase of a [Prop_JourneyState](23-properties-reference.md#prop_journeystate) trip.
 
 **Does not fire.** Other phases.
 
