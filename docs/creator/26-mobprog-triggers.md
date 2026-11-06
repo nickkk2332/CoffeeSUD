@@ -241,7 +241,7 @@ A saved game keeps which `ONCE_PROG` blocks have run (but not `ONCE_PROG BOOT`),
 
 ## Index of triggers by purpose
 
-The **Origin** column says whether the trigger is inherited from CoffeeMud (I) or added by CoffeeSUD (S); several inherited ones were extended or fixed by CoffeeSUD. **Runs** is the timing from [When a trigger runs](#when-a-trigger-runs). **No.** is the trigger's position in the engine's table (the number `SCRIPT ALARMS` and the trace use).
+The **Origin** column says whether the trigger is inherited from CoffeeMud (I) or added by CoffeeSUD (S); several inherited ones were extended or fixed by CoffeeSUD. **Runs** is the timing from [When a trigger runs](#when-a-trigger-runs). **No.** is the trigger's position in the engine's table (`ScriptingEngine.progs`, counting from 1), which the Java code uses as the trigger code.
 
 **Coming and going**
 
@@ -447,7 +447,7 @@ endif
 ~
 ```
 
-**Notes.** Queued: runs on the host's next tick. Use [ALL_GREET_PROG](#all_greet_prog) to hear sneakers as well, and [ARRIVE_PROG](#arrive_prog) for the host's own arrival. A mob in a loop of rooms can trigger itself only through other creatures: the host's own entry never counts.
+**Notes.** Queued: runs on the host's next tick. Use [ALL_GREET_PROG](#all_greet_prog) to hear sneakers as well, and [ARRIVE_PROG](#arrive_prog) for the host's own arrival.
 
 ### ALL_GREET_PROG
 
@@ -1266,7 +1266,7 @@ mpecho The bowl hums as $n lays $p in it.
 ~
 ```
 
-**Notes.** Compare [PUTTING_PROG](#putting_prog), which matches the thing put. Coins put on a room's floor container run at once. Queued otherwise.
+**Notes.** Compare [PUTTING_PROG](#putting_prog), which matches the thing put. Coins put into a container that lies in a room run at once rather than queued; other puttings are queued.
 
 ### PUTTING_PROG
 
@@ -1522,7 +1522,7 @@ LOOK_PROG [ALL | P name | word word ...]
 
 **Arguments.** Keyword list: `ALL` or nothing for any; words, any of which may be a whole word of the thing's name (or equal its class ID); `P name` for exactly that name. See [Argument forms](#argument-forms). Matched against the thing looked at.
 
-**Fires.** When a creature other than the host looks at something the host hears. The match is against the name of the thing looked at, not the host. `LOOK_PROG` with no argument or `ALL` therefore hears every look in range. A detail keyword examined with a CoffeeSUD story detail also fires it, with the keyword in `$g`.
+**Fires.** When a creature other than the host looks at something the host hears. The match is against the name of the thing looked at, not the host. `LOOK_PROG` with no argument or `ALL` therefore hears every look in range. Separately, when a character looks at a keyword detail of a thing that has the `Prop_Details` property, that thing's own LOOK_PROG blocks whose argument is `100` or exactly the keyword run, with the keyword in `$g`.
 
 **Does not fire.** Looks by the host itself.
 
@@ -1568,7 +1568,7 @@ mpechoat $n Scratched into the underside: HE WAS HERE.
 ~
 ```
 
-**Notes.** Queued. Both fire when the same thing is looked at in different ways.
+**Notes.** Queued.
 
 ### READ_PROG
 
@@ -2034,7 +2034,7 @@ KILL_PROG [@GLOBAL [zapper mask]]
 
 **Arguments.** As DEATH_PROG. With `@GLOBAL`, the mask is tested on the killer.
 
-**Fires.** When the host mob deals the blow that kills a creature (queued just before the victim dies). On an item, room or area, any kill heard.
+**Fires.** When the host mob deals the blow that kills a creature as the death message executes. On an item, room or area, any kill heard.
 
 **Does not fire.** Deaths by other means.
 
@@ -2919,7 +2919,7 @@ say The stables burned. The inn is closed tonight.
 Syntax:
 
 ```text
-QUESTFAIL_PROG quest | *
+QUESTFAIL_PROG quest|*
 ```
 
 **Arguments.** The quest's name, or `*` or `ALL` for any.
@@ -2949,7 +2949,7 @@ say Oskar is dead, and the road home is closed to you, $n.
 Syntax:
 
 ```text
-QUESTTIMEOUT_PROG [quest | *]
+QUESTTIMEOUT_PROG [quest|*]
 ```
 
 **Arguments.** A quest name, or `*`/`ALL`. With none, it fits only the script the quest gave that character.
@@ -2980,7 +2980,7 @@ mpquestfail $n bell too late
 Syntax:
 
 ```text
-ACHIEVE_PROG achievement id | * [zapper mask]
+ACHIEVE_PROG id|* [zapper mask]
 ```
 
 **Arguments.** An achievement ID, or `*`/`ALL`; then an optional zapper mask on the earner.
@@ -3253,7 +3253,7 @@ mpecho The old sage squints at $n: "Another for the road."
 Syntax:
 
 ```text
-CRAFT_PROG skill | * item-word | ALL [RUINED | SUCCESS]
+CRAFT_PROG skill|* item-word|ALL [RUINED|SUCCESS]
 ```
 
 **Arguments.** The crafting skill's ID or name (or `*`); one word (quote several) to find in the made item's name, or `ALL`; optionally `RUINED` or `SUCCESS`.
@@ -3283,7 +3283,7 @@ say A fine blade, $n. The guard captain will pay well.
 Syntax:
 
 ```text
-RECIPE_PROG skill | * item words | ALL
+RECIPE_PROG skill|* item-words|ALL
 ```
 
 **Arguments.** The skill's ID or name (or `*`), then words to find in the name of the thing the recipe makes, or `ALL`.
@@ -3311,7 +3311,7 @@ say So you have the dagger pattern now. Sharp.
 Syntax:
 
 ```text
-AFFECT_PROG ADD|REMOVE|ANY ability | *
+AFFECT_PROG ADD|REMOVE|ANY ability|*
 ```
 
 **Arguments.** The event (`ANY` for both) and the effect's ID, a word of its name, or `*`.
@@ -3379,7 +3379,7 @@ endif
 Syntax:
 
 ```text
-VAR_PROG host | * | quest variable comparison value
+VAR_PROG host|*|quest variable comparison value
 ```
 
 **Arguments.** Four words: the variable's host (or its quest name, or `*` for any, or `*GLOBAL*`), the variable name, a comparison (`==`, `=`, `!=`, `<>`, `>`, `<`, `>=`, `<=`), and a value. Numbers compare as numbers, other values as text without case.
@@ -3812,7 +3812,7 @@ Example:
 
 ```text
 IMASK_PROG howl
-mpforce $r flee
+mpecho $i growls, a low and dangerous sound.
 ~
 ```
 

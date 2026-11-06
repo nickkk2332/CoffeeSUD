@@ -340,3 +340,383 @@ Source: [TickTock](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TickTock.j
 Passive areas "sleep". When the player returns, NPC routines catch up on what
 they would have done meanwhile unless `CATCHUP=OFF` (an area tagged
 `NOCATCHUP` never does). See [06-npcs-dialogue.md](06-npcs-dialogue.md).
+
+## Calendars
+
+Audience: creators (settings, `MODIFY AREA CALENDAR`), scripters (what scripts can read).
+
+### The global calendar
+
+The world's calendar is content. Set it in the `world.ini` of the world
+folder (or in `coffeemud.ini`; `world.ini` is read after it, and the command
+line wins over both). These are world keys (listed by `WORLD` or
+`LIST WORLDINI`; in builder mode `WORLD SET KEY=VALUE` changes one in
+`world.ini`):
+
+| Key | Meaning | Default |
+| --- | --- | --- |
+| `MILLISPERMUDHOUR` | Game milliseconds in one game hour. | 600000 (ten minutes) |
+| `HOURSINDAY` | Hours in a day; the hour counter runs 0 to this minus 1. | 6 |
+| `DAYSINMONTH` | Days in a month; days count from 1. | 24 |
+| `MONTHSINYEAR` | The month **names**, comma separated, in order. The number of names is the number of months. | seven months named "the 1st month" to "the 7th month" |
+| `DAYSINWEEK` | The weekday **names**, comma separated. Empty means the world has no weekdays. | empty |
+| `DAWNHR`, `DAYHR`, `DUSKHR`, `NIGHTHR` | The hour each time of day begins, in increasing order. `-1` for a day that has no daytime or no night. Night runs until `DAWNHR`. | 0, 1, 4, 5 |
+| `YEARDESC` | Names for the years, comma separated, cycling when used up; `#` marks where the year number goes. | `year #` |
+| `STARTDATE` | The date a new game starts at: `YEAR/MONTH/DAY/HOUR`. Months and days count from 1; a missing hour is dawn. | empty |
+
+```ini
+HOURSINDAY=10
+DAYSINMONTH=30
+MONTHSINYEAR=Leafwake,Bloomtide,Highsun,Frostfall
+DAYSINWEEK=Sunday,Moonday,Fireday
+DAWNHR=0
+DAYHR=1
+DUSKHR=8
+NIGHTHR=9
+YEARDESC=Year # of the Sundering
+STARTDATE=812/2/3/1
+```
+
+Notes:
+
+- `MILLISPERMUDHOUR` also sets how long a "game day" lasts in real time:
+  `MILLISPERMUDHOUR x HOURSINDAY`. Weather steps are counted in ticks, not
+  game hours, so changing `MILLISPERMUDHOUR` changes how many weather steps
+  fit in a game day (see [Weather and climate](#weather-and-climate)).
+- With no `STARTDATE` and no saved date, the global clock starts at hour -1
+  of the 1st day of the second month of year 1000; its first tick moves it to
+  hour 0.
+- The seasons come from the month count (see
+  [Seasons](#seasons-day-length-and-moons)); a world with 8 months has two
+  months per season, and one with 7 months has one month each of winter,
+  spring and summer and four of fall.
+
+### An area's own calendar
+
+An area can have a calendar of its own. Its child areas share it. What it
+leaves out comes from its parent area's clock, else from the global clock. A
+new game starts that clock at the calendar's `START` date; a saved game goes
+on from its own date.
+
+```text
+MODIFY AREA CALENDAR
+MODIFY AREA CALENDAR HOURS=10 DAYS=30 MONTHS="Leafwake,Bloomtide,Highsun,Frostfall" DAWNHR=0 DAYHR=1 DUSKHR=8 NIGHTHR=9 START=812/2/3
+MODIFY AREA CALENDAR SEASONOFFSET=2
+MODIFY AREA CALENDAR NONE
+```
+
+With no values, `MODIFY AREA CALENDAR` describes the current calendar (the
+clock, the season and each moon's phase). `NONE` takes the calendar away. The
+command acts on the area you stand in. If a key is unknown or a value
+unreadable, the command prints the problems and changes nothing. After a
+change the clocks are rebuilt (`Calendars.applyAll`), so a new calendar takes
+effect at once. The area editor's calendar screen offers the basic settings
+too (see [20-areas-rooms-exits.md](20-areas-rooms-exits.md)).
+
+The calendar is stored as the area's `CALENDAR` blurb flag, in the area's
+data in its `.cmare` file, so it ships with the world.
+
+| Key | Value |
+| --- | --- |
+| `HOURS` | Hours in a day (1 or more). |
+| `DAYS` | Days in a month (1 or more). |
+| `MONTHS` | Month names, comma separated, in quotes if they contain spaces: `MONTHS="Leafwake,Bloomtide"`. |
+| `WEEK` | Weekday names, comma separated. |
+| `YEARS` | Year names with `#` for the number. |
+| `DAWNHR`, `DAYHR`, `DUSKHR`, `NIGHTHR` | The four time-of-day hours (numbers). |
+| `START` | `YEAR/MONTH/DAY` or `YEAR/MONTH/DAY/HOUR`, counted from 1; the hour left out is the dawn hour. Used only when the clock has no saved date. |
+| `SEASONS`, `SEASONOFFSET`, `DAYLIGHT`, `MOONS` | See [Seasons, day length and moons](#seasons-day-length-and-moons). |
+
+A child area that has its own `CALENDAR` keeps it and takes the keys it
+leaves out from its parent. `SEASONOFFSET` alone does not make a new clock;
+it only shifts that area's seasons on the parent's clock.
+
+An area class `StdTimeZone` (and `StdPlanet`) also owns a clock of its own,
+saved in the save state; in a real game it started from the global calendar,
+so use `CALENDAR` to make a time zone's calendar part of the world
+definition.
+
+The date itself is **save state**, not content: it lives in the campaign
+save (a `TIMECLOCK` record per clock). The world files hold only the
+calendar's rules and `START`. A date set in builder mode (`TICKTOCK SET`,
+`TIME SET`) is therefore not part of the shipped world; set `START` or
+`STARTDATE` for that.
+
+Source: [Calendars](../../CoffeeMud/com/planet_ink/coffee_mud/core/Calendars.java),
+[DefaultTimeClock](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java).
+
+### Reading the date
+
+```text
+TIME
+TIME GLOBAL
+CALENDAR NOW
+CALENDAR HOLIDAYS
+```
+
+- `TIME` shows the local time of day, hour, date, season, the weather in
+  words where there is a sky, and (at night) the moon phases of the area.
+  `TIME GLOBAL` shows the world clock. `DATE` is the same command.
+- `CALENDAR` (the player's calendar) lists events: `CALENDAR NOW`, `SOON`,
+  `RECENT`, `NEXT [n] YEAR|MONTH|DAY|WEEK`, `PAST ...`, `ADD`, `REMOVE`. In
+  CoffeeSUD `CALENDAR HOLIDAYS` also lists each holiday with a game date,
+  "on now" or "in n days".
+
+Scripts see the date through `TIME_PROG`, `DAY_PROG`, `ISHOUR()`, `ISDAY()`,
+`ISTIME()`, `ISSEASON()`, `ISMOON()`, `ISHOLIDAY()` and `DATETIME`-style
+variables (reference: [28-mobprog-functions.md](28-mobprog-functions.md)),
+and JavaScript through `cm.clock(area)` (see
+[Reading time and weather from scripts](#reading-time-and-weather-from-scripts)).
+
+## Seasons, day length and moons
+
+Audience: creators and scripters.
+
+### The built-in seasons
+
+With no `SEASONS` key, the year is cut into four equal seasons of
+`floor(months / 4)` months each, in the order WINTER, SPRING, SUMMER, FALL,
+with any leftover months going to FALL. (Month 1 is the first month of
+winter.) The built-in moon follows the day of the month: new moon on the
+first day, full moon about the middle, back to a waning crescent at the end.
+Day length is one set of hours for the whole year.
+
+### SEASONS
+
+`SEASONS` names seasons, says which built-in season each counts as, and gives
+its months:
+
+```text
+SEASONS="the Burn:SUMMER:1-2,the Rains:SPRING:Flood-Silt"
+```
+
+Each entry is `NAME:COUNTS:MONTHS`. `COUNTS` is `SPRING`, `SUMMER`, `FALL` or
+`WINTER`: the built-in season the named one counts as for weather, `Prop_ClosedSeason`, the climate
+tables and the like. `MONTHS` is one month or a range `from-to`, each a
+month number counted from 1 or a month's name; a range that runs past the end
+of the year wraps (`11-2`). Months no entry covers keep the built-in season.
+Entries are tried in order.
+
+Where a named season is understood:
+
+- `ISSEASON(the Burn)` and `ISSEASON(summer)` (a script function; the built-in name matches too)
+- the mask keys `-SEASON "+the Burn"` and `+SEASON ...`
+- `<the Burn>...</the Burn>` blocks in `<VARIES>` description text (as well as
+  `<SUMMER>...</SUMMER>` by the season it counts as); see
+  [11-presentation-language.md](11-presentation-language.md)
+- the `TIME` command ("It is the Burn.") and `MODIFY AREA CALENDAR`
+- `SET SEASONSTART the Burn` for holidays and `SEASON the Burn` in a quest
+  `SCHEDULE`
+- `TIME SEASON` (by the built-in season it counts as)
+
+### SEASONOFFSET
+
+`SEASONOFFSET=n` shifts that area's seasons by n months on its parent's
+clock, so a southern land can be in summer while its parent is in winter
+without a clock of its own. It is the area's own (not inherited by `HOURS`
+and the like) but child areas inherit it from their nearest parent that has
+one. `Prop_ClosedSeason`, weather odds, `ISSEASON`, masks and `VARIES` use
+the offset; `DAYLIGHT` does not (day length follows the clock's season).
+
+### DAYLIGHT
+
+`DAYLIGHT` gives a season its own dawn and night hours:
+
+```text
+DAYLIGHT="the Burn:0-5,the Rains:2-4"
+DAYLIGHT="WINTER:2-8,SUMMER:0-10"
+```
+
+Each entry is `SEASON:DAWN-NIGHT` or `SEASON:DAWN-DAY-DUSK-NIGHT`. The
+season is a named season or a built-in one. With two numbers, the day starts
+one hour after dawn (or at night if sooner) and dusk is the hour before night
+(or night's hour if there is no gap). The hours replace the calendar's
+`DAWNHR`...`NIGHTHR` for time of day while that season lasts. Tides still use the
+calendar's own day and dusk hours.
+
+### MOONS
+
+`MOONS` names moons:
+
+```text
+MOONS="Selune:24,Ember:9:3"
+```
+
+Each is `NAME:CYCLE` or `NAME:CYCLE:OFFSET`, in days. A moon has the eight
+phases of the built-in moon (NEW, WAXCRESCENT, WAXQUARTER, WAXGIBBOUS, FULL,
+WANEGIBBOUS, WANEQUARTER, WANECRESCENT), worked out from the days since the
+calendar began plus the offset. **The first moon listed is "the moon"**: tides,
+`MOON_PROG`, `ISMOON(FULL)`, `+MOON` masks and the moon-altering spells follow
+it. The others are read by name: `ISMOON(Ember full)`. At night `TIME` tells
+each moon's phase.
+
+### Putting it together
+
+```text
+MODIFY AREA CALENDAR HOURS=6 DAYS=10 MONTHS="Ash,Cinder,Flood,Silt" SEASONS="the Burn:SUMMER:1-2,the Rains:SPRING:Flood-Silt" DAYLIGHT="the Burn:0-5,the Rains:2-4" MOONS="Selune:24,Ember:9:3" START=1/1/8/0
+```
+
+This is the calendar the `w22-seasons` test fixture uses
+([w22-seasons.js](../../tools/fixtures/fixes/w22-seasons.js)). Test your own
+with `TIME SEASON` and `TIME SET` (see [Letting time pass](#letting-time-pass)).
+
+### Seasonal content
+
+A calendar gives seasons a name; these tools make the world react:
+
+| Tool | Does |
+| --- | --- |
+| `<VARIES>` text with `<WINTER>`, `<SPRING>`, `<SUMMER>`, `<FALL>`, `<DAY>`, `<NIGHT>`, `<DAWN>`, `<DUSK>`, weather names, `<HIGHTIDE>`, `<LOWTIDE>`, `<HOLIDAY name>` and your own season names | A room, mob or item description that changes with time and weather. Chapter [11](11-presentation-language.md) has the tag reference; preview with `LOOK AS` (below). |
+| [Prop_ClosedSeason](23-properties-reference.md#prop_closedseason) | Hides things, darkens a room, or closes an exit in the seasons, times or weathers it names. |
+| [Prop_ClosedDayNight](23-properties-reference.md#prop_closeddaynight) | Closes shops, rooms and exits by time of day or by `HOURS=a-b`. |
+| `ResourceOverride` behavior | Swaps the resources a room offers by `SPRING=`, `SUMMER=`, `FALL=`, `WINTER=`, `SEASON=`, `MONTH=`, `HOUR=`. See [24-behaviors-and-masks.md](24-behaviors-and-masks.md#resourceoverride). |
+| `Schedule` behavior | An NPC's daily routine by `SEASON=`, `DAYS=`, `WEATHER=` as well as the hour. See [06-npcs-dialogue.md](06-npcs-dialogue.md). |
+| Holidays and `SCHEDULE` | Quests and holidays that start or run in a season. |
+
+**Prop_ClosedSeason** takes one or more of `SUMMER SPRING WINTER FALL DAY NIGHT DUSK DAWN RAIN SLEET SNOW CLEAR HEATWAVE THUNDERSTORM BLIZZARD WINDY DROUGHT DUSTSTORM COLD HAIL CLOUDY`
+and an optional `MASK=[zapper mask]` last. While any named condition holds,
+the thing it is on is "closed": a mob or item becomes unseen, silent and
+unable to move or hear; a room becomes dark; an exit's door closes.
+`Prop_ClosedSeason WINTER` on a mountain pass exit closes it in winter; add
+`BLIZZARD` for blizzards in any season. The season tests use the season a
+named season counts as. Mobs in combat are not hidden.
+
+```text
+Prop_ClosedSeason WINTER
+Prop_ClosedSeason SPRING SUMMER FALL BLIZZARD
+Prop_ClosedSeason NIGHT MASK=-RACE +ELF
+```
+
+**Prop_ClosedDayNight** (default: closed at night; `DAY` for closed by day;
+`HOURS=a-b` for an hour window; `SLEEP`, `SIT`, `LOCKUP`, `HOME=`, `MASK=`,
+`SHOPMSG=`, `WARNMSG[hour]=`) is the shopkeeper-friendly cousin; its full
+syntax is in the properties reference.
+
+## Holidays
+
+Audience: creators (the holiday editor and the file), scripters (tests by name).
+
+A holiday is a quest without a script. It starts by the calendar, applies to
+the areas and mobs it names, and for its duration changes behaviors,
+properties and stats such as shop prices. The stock file is
+[holidays.quest](../../CoffeeMud/resources/quests/holidays/holidays.quest):
+three weather holidays (`drought`, `famine`, `harsh winter`), which apply to
+any area that meets their season and weather test, and `newyear` on day 1 of
+month 1. The world's `world/quests/holidays.quest` is the one line
+`LOAD=quests/holidays/holidays.quest`.
+
+### Editing holidays in game
+
+```text
+LIST HOLIDAYS
+CREATE HOLIDAY Moonfeast
+MODIFY HOLIDAY Moonfeast
+DESTROY HOLIDAY Moonfeast
+```
+
+`LIST HOLIDAYS` shows every defined holiday and its areas. `CREATE HOLIDAY
+name` makes a new holiday that applies to the area you stand in, then opens
+the editor. `MODIFY HOLIDAY` opens a numbered editor with: name; schedule
+type (random interval, MUD-day, or real-life day), with its wait or date and
+its duration; the area list; a mask for the mobs it affects; a mood; an
+aggressive setting; shop pricing; MudChat lines; behaviors; and properties.
+These commands are builder commands (`CMDQUESTS`-class flags). They edit the
+holiday file, so a copy that ships with the world should live in the world
+folder (below).
+
+### The holiday file
+
+Holidays are steps of one quest named `holidays`, using the quest script
+language ([08-quests.md](08-quests.md#the-quest-script-format)). Each holiday
+is a block of `SET` lines ending `STEP BREAK`:
+
+```text
+SET NAME newyear
+SET MUDDAY 1-1
+SET DURATION 900+(1?400)
+quiet
+set room
+SET MOBGROUP RESELECT MASK=+INT 3
+GIVE BEHAVIOR MUDCHAT +()\;9Happy New Year!\;9Happy New Year!\;\;(year | new year)\;9Happy New Year!\;\;
+GIVE AFFECT MOOD happy
+set mobgroup RESELECT mask=-JAVACLASS +StdShopkeeper +GenShopkeeper
+GIVE STAT PRICEMASKS 0.9 +JAVACLASS -WandArchon
+STEP BREAK
+```
+
+To change the stock set for one world, put your own file at
+`world/resources/quests/holidays/holidays.quest` (the world's copy of a
+resource file is read instead of the stock one; see
+[19-configuration-and-administration.md](19-configuration-and-administration.md)
+and [02-world-workflow.md](02-world-workflow.md)). Use `NAME.add` style files
+only for resources that support them.
+
+### When a holiday starts
+
+| Setting | Starts |
+| --- | --- |
+| `SET WAIT n` / `SET INTERVAL n` | After a random wait of about n ticks, repeatedly. |
+| `SET MUDDAY m-d` | Every game year on month m, day d (the game calendar; months and days count from 1). |
+| `SET DATE m-d` | The same, on the game calendar in CoffeeSUD (it was a real-life date in CoffeeMud). |
+| `SET WEEKDAY name` | Every week on that weekday (the world needs weekday names: `DAYSINWEEK` or `WEEK=`). |
+| `SET EVERY n DAYS FROM y/m/d` | Every n game days counted from that date (`EVERY 7 FROM 1/1/1` also reads). |
+| `SET SEASONSTART season` | The first day of that season (a built-in name or a calendar's own season name). |
+| `SET MOON phase` or `SET MOON name phase` | The first day of that moon phase: `SET MOON FULL`, `SET MOON Ember FULL`. |
+| `SET HOLIDAY name` | Runs exactly while another holiday runs. |
+
+`SET DURATION` can be ticks, an expression such as `900+(1?400)`, or game
+time: `2 DAYS` is two game days and `3 HOURS` is three game hours. The quest
+chapter's [time expressions](08-quests.md#time-expressions) apply. The
+holiday editor's choices (random interval, MUD-day, RL-day) do not offer
+`WEEKDAY`, `EVERY`, `SEASONSTART` or `MOON`: write those in the file by hand
+(and test that the editor keeps them if you also use it; see the audit notes).
+
+### Testing a holiday by name
+
+A holiday is "on" while its quest runs. Everything keys on the quest's name:
+
+| Where | Form |
+| --- | --- |
+| Script condition | `if isholiday(moonfeast)` |
+| Script value | `$%HOLIDAY()%`: the names on now |
+| Zapper mask | `+HOLIDAY moonfeast` (while it is on), `+HOLIDAY` (while any holiday is on); `-HOLIDAY moonfeast` the opposite |
+| Description text | `<HOLIDAY moonfeast>Lanterns hang from every eave.</HOLIDAY>` inside `<VARIES>` |
+| Quest | `SET HOLIDAY moonfeast` |
+| JavaScript | `cm.holiday("moonfeast")`, `cm.holidays()` |
+| Players | `CALENDAR HOLIDAYS` |
+
+A quest named `moonfeast#2` still counts as `moonfeast`.
+
+## Quest schedules
+
+A quest (not only a holiday) can run in a window of game time:
+
+```text
+SET NAME fair
+SET AREA Riverton
+SET SCHEDULE "WEEKDAY Fireday"
+SET DURATION UNTIL DUSK
+```
+
+`SET SCHEDULE "rules"` holds when **every** rule holds; the quest starts as
+the window opens, once each time. Rules:
+
+| Rule | Holds |
+| --- | --- |
+| `HOUR a-b` | The hour is from a to b on the quest's clock (a range that wraps, `22-3`, works). |
+| `WEEKDAY name` | It is that weekday. |
+| `EVERY n DAYS` | The day number is a multiple of n. Optional `AT DAWN` or `AT HOUR h` waits until that hour of such a day. |
+| `SEASON name` | The season (a named one, or the built-in one it counts as). |
+| `MONTH name-or-number` | That month. |
+| `MOON phase` or `MOON name phase` | The moon is in that phase. |
+| `HOLIDAY name` | That holiday is on. |
+| `WEATHER state` | The quest area's weather begins with that word (`WEATHER RAIN`). |
+
+Separate rules with spaces or `AND`. `SET DURATION UNTIL DUSK` ends the quest
+at dusk, `UNTIL HOUR h` at that hour, `UNTIL END` as the window closes; a
+`DURATION` in ticks or game days counts down as usual. The quest checker
+(`SCRIPTCHECK`/`QUESTCHECK`) reports a `SCHEDULE` with no rules or an
+unreadable `HOUR` or `EVERY`.
+
+Source: [Schedules](../../CoffeeMud/com/planet_ink/coffee_mud/core/Schedules.java),
+[Holidays](../../CoffeeMud/com/planet_ink/coffee_mud/core/Holidays.java).

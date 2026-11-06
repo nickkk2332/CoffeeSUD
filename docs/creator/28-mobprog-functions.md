@@ -2005,3 +2005,154 @@ In JavaScript they are `ISANCHORED("the Gull")` (boolean) and
 - **Example:** `MPECHO Call me $%RANDNAME(Elf FULL)%.`
 - **Notes:** not inherited. `style` is a name style, a race or a language; `min max` bound the syllable count; `M`, `F` or `N` pick a gender; `FULL` adds a family name. An unknown style logs an error. See [12-generation.md](12-generation.md).
 
+## Worked examples
+
+### A gate guard that reads the clock, the crowd and the visitor
+
+A `GREET_PROG` on a guard NPC. It lets known visitors through, shuts the gate
+at night when the guard is not alone, challenges low-level strangers who carry
+no pass, and otherwise issues a pass flag (a tattoo) so the question is asked
+only once.
+
+```text
+GREET_PROG 100
+if ISPC($n)
+  if HASTATTOO($n GATE_PASS)
+    mpecho $i salutes $n and steps aside.
+  elseif (ISTIME(night) OR ISTIME(dusk)) AND NUMMOBSROOM(guard >= 2)
+    mpecho $i says, 'The gate is shut after dark, $n.'
+  elseif LEVEL($n < 5) AND !HAS($n 'a town pass')
+    mpecho $i says, 'Show me a pass first, young one.'
+  else
+    mptattoo $n GATE_PASS
+    mpecho $i waves $n through.
+  endif
+endif
+~
+```
+
+Points to notice: connectors fold left to right, so the `OR` is
+parenthesised; `NUMMOBSROOM(guard >= 2)` counts creatures named guard in the
+room; a quoted multi-word item name goes in single quotes inside `HAS`; the
+tattoo makes the check a one-time event that survives saving.
+
+### A ferryman who prices by party size
+
+Value forms feed arithmetic through named locals, because a `$%...%` cannot
+contain another `$%...%`.
+
+```text
+SPEECH_PROG p ferry
+mplocal heads $%PARTYSIZE($n)%
+mplocal fare $%MATH($(heads) * 5)%
+if GOLDAMT($n >= $(fare))
+  mpecho $i says, 'That is $(fare) coins for $(heads) of you. Climb aboard.'
+else
+  mpecho $i says, 'You cannot pay $(fare) coins, $n.'
+endif
+~
+```
+
+`PARTYSIZE($n)` counts the speaker's group; `MATH` multiplies;
+`GOLDAMT($n >= $(fare))` expands `$(fare)` when the condition is evaluated and
+compares whole numbers in the host's currency.
+
+### A shrine that blesses once per game day
+
+`$%DATETIME(STAMP)%` and `MPSETVAR ... NOW` store game-clock stamps, and
+`ELAPSED` converts them back, so the cool-down follows game time (and a paused
+game does not count down).
+
+```text
+GREET_PROG 100
+if ISPC($n) AND ELAPSED($<$n BLESSED> DAYS >= 1)
+  mpsetvar $n BLESSED NOW
+  mpcast bless $n
+  mpecho The shrine glows warmly for $n.
+endif
+~
+```
+
+An unset `BLESSED` reads as an empty stamp (0), so a first visit always
+qualifies.
+
+### A parlour mystery with list functions
+
+Suppose the story script has done `MPSETVAR WORLD SUSPECTS cook butler gardener`
+and `MPSETVAR WORLD CULPRIT $%LISTPICK($<WORLD SUSPECTS>)%`. The detective NPC
+answers accusations:
+
+```text
+SPEECH_PROG p accuse
+if LISTHAS($<WORLD SUSPECTS> $g.1)
+  if EVAL('$g.1' == '$<WORLD CULPRIT>')
+    mpecho The room gasps. $g.1 confesses!
+  else
+    mpecho $i shakes his head. 'Not $g.1, $n.'
+  endif
+else
+  mpecho $i says, 'Choose among $%LISTJOIN($<WORLD SUSPECTS> ', ')%.'
+endif
+~
+```
+
+`$g.1` is the second spoken word (the accused). `LISTHAS` needs no quotes
+around the list because it expands first; `EVAL` compares the two texts
+exactly (both lower case, as `$g` is lower-cased).
+
+## Persistence notes
+
+Functions only *read* state; what they read is saved elsewhere.
+
+| Read by | Saved where | Notes |
+| --- | --- | --- |
+| `HASTATTOO`, `HASTATTOOTIME` | on the character (tattoos, timed ones with their remaining ticks) | travels with the character in every save slot |
+| `HASACCTATTOO` | on the profile (the single-player "account") | shared by all characters of the profile |
+| `VAR`, `$<host VAR>`, `VARNAMES` | script variable stores (by name, `WORLD`, quest scope), written with the campaign save | see [04-mobprog.md](04-mobprog.md) and [state-and-persistence.md](state-and-persistence.md) |
+| `STATE`, `VAR(@$i ...)` | on the object itself, so it moves and dies with that copy | |
+| `ELAPSED`, `DATETIME(STAMP)`, `GAMETIME`, `TURNS` | game clock and turn count, saved with the game | `ISRL*` read the computer's clock and are not saved |
+| `QUEST*`, `QOBJECTIVE`, `QVAR` | quest records and quest state | [08-quests.md](08-quests.md) |
+| `MEMORY`, `AFFINITY`, `THREAT`, `RANK` | NPC memory and combat tables, with the NPC | |
+| `CATALOG`, `CATALOGCOUNT` | the catalog and live world; counts are recomputed | |
+| `MSG`, `$g`, `$0`..`$9`, `$(name)`, `$r`/`$c` picks | nothing; they exist only while one body runs | |
+
+A world reload re-parses scripts, which clears the cached condition parse of
+every `IF`; the next trigger parses it again. Editing a script's text never
+invalidates saved variables or tattoos.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+| --- | --- |
+| The `IF` is always true or always false and nothing is logged | You compared a *name* with an integer engine. `FACTION($n x == GOOD)` reads both sides as 0; use `FACTIONBAND`. Decimals (`2.5`) also read as 0 in integer comparisons; use `MATH` |
+| `Unknown keyword: X` or `Unknown character` in the log | A word that is not a function, connector or parenthesis sits in the condition, or you wrote a `$` code outside a function's parentheses. `UNDERSTANDS$` and `JS$` cannot be written in a condition; use the value form |
+| `A OR B AND C` gives the wrong answer | No precedence; evaluation is left to right. Add parentheses |
+| A multi-word `$<host VAR>` argument is cut in two | Inherited functions split on spaces before expanding; quote it: `STRIN('$<WORLD SUSPECTS>' $n)` |
+| `$%A($%B()%)%` prints garbage | A `$%...%` ends at the first `%`. Put the inner value in `MPLOCAL` or `MPSETVAR` first |
+| `IF WARRANTS($n)` or `IF RANDNUM(6)` is false | Number-valued functions need a comparison: `WARRANTS($n > 0)` |
+| `CLASS($n == Mage)` is true for a Magician | The class name only has to *start* with the word; use the full name |
+| `RAND(100)` fails sometimes | A roll of 1..100 must be below the number, so 100 is 99% |
+| `$%ISTIME()%` prints `it is daytime ` | That is the value form's text; use `ISTIME(day)` |
+| `INROOM(thing == place)` is false for a place you named | The place is looked up as a room ID, `#number`, an object code or a player name; an area name is not a room. Use `INAREA` |
+| A function logs `Syntax` and returns false | A required argument is missing or empty (`HASTATTOO($n)`, `WORNON($n HEAD)`). The error names the function and the offending text |
+| `MSG(...)` is empty | It is only filled inside `CNCLMSG_PROG` and `EXECMSG_PROG` |
+
+Errors go to the script error log; to see them while testing, turn on script
+debugging as described in [04-mobprog.md](04-mobprog.md) and
+[13-testing-release.md](13-testing-release.md).
+
+## Alphabetical index
+
+All 242 names (240 headings; `JS$` is described under [JS](#js) and `UNDERSTANDS$` under [UNDERSTANDS](#understands)):
+
+[ABOARD](#aboard) [ABS](#abs) [AFFECTED](#affected) [AFFINITY](#affinity) [ALARM](#alarm) [ANAME](#aname) [AREACLAN](#areaclan) [AREACONTROL](#areacontrol) [AREAPC](#areapc) [ARG](#arg) [BANKBALANCE](#bankbalance) [BASECLASS](#baseclass) [BREATH](#breath) [CALLFUNC](#callfunc) [CANHEAR](#canhear) [CANSEE](#cansee) [CAP](#cap) [CATALOG](#catalog) [CATALOGCOUNT](#catalogcount) [CHECK](#check) [CLAMP](#clamp) [CLAN](#clan) [CLANDATA](#clandata) [CLANMEMBER](#clanmember) [CLANPOS](#clanpos) [CLANQUALIFIES](#clanqualifies) [CLANRANK](#clanrank) [CLANRELATION](#clanrelation) [CLANS](#clans) [CLASS](#class) [COMFORT](#comfort) [CONTENTWEIGHT](#contentweight) [COURSE](#course) [CURRENCY](#currency) [DATETIME](#datetime) [DEBT](#debt) [DEITY](#deity) [DENOMNAME](#denomname) [DICE](#dice) [DOORSTATE](#doorstate) [EFFECTPARM](#effectparm) [ELAPSED](#elapsed) [EVAL](#eval) [EXCHANGE](#exchange) [EXP](#exp) [EXPERTISE](#expertise) [EXPLORED](#explored) [EXPTONEXT](#exptonext) [FACTION](#faction) [FACTIONBAND](#factionband) [FACTIONVALUE](#factionvalue) [FINESOWED](#finesowed) [FLOODLEVEL](#floodlevel) [GAMETIME](#gametime) [GENSTRING](#genstring) [GENVAR](#genvar) [GOLDAMT](#goldamt) [GSTAT](#gstat) [HAS](#has) [HASACCTATTOO](#hasacctattoo) [HASNUM](#hasnum) [HASPERK](#hasperk) [HASTAG](#hastag) [HASTATTOO](#hastattoo) [HASTATTOOTIME](#hastattootime) [HASTITLE](#hastitle) [HITPRCNT](#hitprcnt) [HOLIDAY](#holiday) [HULL](#hull) [INAREA](#inarea) [INCONTAINER](#incontainer) [INLOCALE](#inlocale) [INPARTY](#inparty) [INROOM](#inroom) [IPADDRESS](#ipaddress) [ISABLE](#isable) [ISALIVE](#isalive) [ISANCHORED](#isanchored) [ISBEHAVE](#isbehave) [ISBIRTHDAY](#isbirthday) [ISBUILDER](#isbuilder) [ISCHARMED](#ischarmed) [ISCONTENT](#iscontent) [ISDARK](#isdark) [ISDAY](#isday) [ISDEV](#isdev) [ISDOCKED](#isdocked) [ISEVIL](#isevil) [ISFIGHT](#isfight) [ISFOLLOW](#isfollow) [ISGOOD](#isgood) [ISHERE](#ishere) [ISHOLIDAY](#isholiday) [ISHOUR](#ishour) [ISIMMORT](#isimmort) [ISLIKE](#islike) [ISLIT](#islit) [ISLOCKED](#islocked) [ISMONTH](#ismonth) [ISMOON](#ismoon) [ISNAME](#isname) [ISNEUTRAL](#isneutral) [ISNPC](#isnpc) [ISODD](#isodd) [ISOPEN](#isopen) [ISOWNER](#isowner) [ISPAUSED](#ispaused) [ISPC](#ispc) [ISPKILL](#ispkill) [ISPLAYED](#isplayed) [ISQUESTMOBALIVE](#isquestmobalive) [ISRECALL](#isrecall) [ISRLDAY](#isrlday) [ISRLHOUR](#isrlhour) [ISRLMONTH](#isrlmonth) [ISRLYEAR](#isrlyear) [ISSEASON](#isseason) [ISSERVANT](#isservant) [ISSPEAKING](#isspeaking) [ISTIDE](#istide) [ISTIME](#istime) [ISTURNBASED](#isturnbased) [ISWANTED](#iswanted) [ISWEATHER](#isweather) [ISWEEKDAY](#isweekday) [ISYEAR](#isyear) [ITEMCOUNT](#itemcount) [JS](#js) [KNOWSRECIPE](#knowsrecipe) [LANDTITLE](#landtitle) [LEN](#len) [LEVEL](#level) [LISTCOUNT](#listcount) [LISTFIND](#listfind) [LISTGET](#listget) [LISTHAS](#listhas) [LISTJOIN](#listjoin) [LISTPICK](#listpick) [LOWER](#lower) [MATH](#math) [MEMORY](#memory) [MOBITEM](#mobitem) [MONEYSTR](#moneystr) [MOOD](#mood) [MSG](#msg) [NAME](#name) [NUMBER](#number) [NUMITEMSMOB](#numitemsmob) [NUMITEMSROOM](#numitemsroom) [NUMITEMSSHOP](#numitemsshop) [NUMMOBS](#nummobs) [NUMMOBSINAREA](#nummobsinarea) [NUMMOBSROOM](#nummobsroom) [NUMPCSAREA](#numpcsarea) [NUMPCSROOM](#numpcsroom) [NUMRACES](#numraces) [NUMRACESINAREA](#numracesinarea) [NUMTAGGED](#numtagged) [OBJTYPE](#objtype) [OPPONENT](#opponent) [OWNER](#owner) [PADRIGHT](#padright) [PARM](#parm) [PARTY](#party) [PARTYLEADER](#partyleader) [PARTYSIZE](#partysize) [PHASE](#phase) [PICK](#pick) [PLURAL](#plural) [POSITION](#position) [PRACS](#pracs) [PRICE](#price) [QOBJECTIVE](#qobjective) [QUESTAREA](#questarea) [QUESTMOB](#questmob) [QUESTOBJ](#questobj) [QUESTOUTCOME](#questoutcome) [QUESTPOINTS](#questpoints) [QUESTROOM](#questroom) [QUESTSCRIPTED](#questscripted) [QUESTSTATUS](#queststatus) [QUESTWINAGE](#questwinage) [QUESTWINNER](#questwinner) [QUESTWINS](#questwins) [QVAR](#qvar) [RACE](#race) [RACECAT](#racecat) [RAND](#rand) [RAND0NUM](#rand0num) [RANDNAME](#randname) [RANDNUM](#randnum) [RANK](#rank) [REPLACE](#replace) [RESPAWNROOM](#respawnroom) [REVOLTCHANCE](#revoltchance) [RIDERS](#riders) [RIDING](#riding) [ROLLNORMAL](#rollnormal) [ROOMITEM](#roomitem) [ROOMMOB](#roommob) [ROOMPC](#roompc) [ROOMSTATE](#roomstate) [ROOMWEIGHT](#roomweight) [SAVESLOT](#saveslot) [SETCOUNT](#setcount) [SEX](#sex) [SHOPBUDGET](#shopbudget) [SHOPHAS](#shophas) [SHOPITEM](#shopitem) [SHOPPRICE](#shopprice) [SPEED](#speed) [STAT](#stat) [STATE](#state) [STRCONTAINS](#strcontains) [STRENDS](#strends) [STRIN](#strin) [STRPOS](#strpos) [STRSTARTS](#strstarts) [SUBSTR](#substr) [SWITCHSTATE](#switchstate) [TAGGED](#tagged) [TAGS](#tags) [THREAT](#threat) [TICKS](#ticks) [TOPTHREAT](#topthreat) [TRAINS](#trains) [TRIM](#trim) [TURNS](#turns) [UNDERSTANDS](#understands) [UPPER](#upper) [VALUE](#value) [VAR](#var) [VARNAMES](#varnames) [VESSELROOM](#vesselroom) [WARRANTS](#warrants) [WEAKEST](#weakest) [WEEKDAY](#weekday) [WORN](#worn) [WORNON](#wornon) [WPICK](#wpick)
+
+## See also
+
+- [04-mobprog.md](04-mobprog.md): hosts, files, `LOAD=`, variables and scopes, debugging, best practices.
+- [26-mobprog-triggers.md](26-mobprog-triggers.md): which of `$n`, `$t`, `$o`, `$p`, `$g`, `$0`..`$9` each trigger fills.
+- [27-mobprog-commands.md](27-mobprog-commands.md): `MPSETVAR`, `MPLOCAL`, `FOR`, `WHILE`, `SWITCH`, `MPCALLFUNC` and every other command.
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): the zapper mask language used by `ISLIKE`, `NUMMOBS` and `OPPONENT`.
+- [05-javascript.md](05-javascript.md): the JavaScript bridge (`NAME()` and `NAME$()`) and `<SCRIPT>` blocks.
+- [08-quests.md](08-quests.md), [09-society.md](09-society.md), [10-world-simulation.md](10-world-simulation.md): the systems behind the quest, clan, shop, law, time and weather functions.
+- [Scriptable.html](../../CoffeeMud/guides/Scriptable.html) and [ScriptingSUD.html](../../CoffeeMud/guides/ScriptingSUD.html): the original and CoffeeSUD supplement guides.

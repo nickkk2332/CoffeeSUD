@@ -298,7 +298,7 @@ the catalog. See [The mob catalog](#the-mob-catalog).
 | Level | The mob's level. |
 | Magical Ability | A number whose meaning depends on the class. For most it is the hit point modifier (default 11). On dragons it is the colour code (see the dragon row above); the level sets the age (level / 10). The effect may only show after the mob reloads. |
 | Rejuv Ticks | Ticks before it reappears after being killed; `0` means never. Takes effect when the room is saved. |
-| Misc Text | A raw text field that most standard classes ignore. |
+| Misc Text | A raw text field that most standard classes ignore. (On `StdShopKeeper` and its subclasses it is the Prejudice factors string.) |
 
 It cannot be given equipment, behaviors, effects or scripts that survive a save.
 To add those, use a `GenMob` with the same race.

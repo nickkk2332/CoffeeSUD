@@ -584,14 +584,18 @@ ends the switch is done.
 
 ### FOR and NEXT
 
+| Form | Loops over |
+| --- | --- |
+| `FOR $1 = 1 TO 5` | 1, 2, 3, 4, 5; counts down when the end is lower than the start |
+| `FOR $1 = 0 TO< 5` | 0, 1, 2, 3, 4 (`TO<` leaves out the end; `TO>` the start) |
+| `FOR $1 IN sword,shield` | a comma list; each item is substituted first |
+| `FOR $1 IN LIST $<WORLD SUSPECTS>` | substitutes first, then splits on spaces (quotes group) or commas |
+| `FOR $1 IN #sunaltar` | every object tagged `sunaltar` |
+| `FOR $1 IN SELECT: * FROM MOBS` | the objects an MQL query returns, from the host's point of view |
+
 ```text
-for $1 = 1 to 5          # counts 1,2,3,4,5; counts down if the end is lower
-for $1 = 0 to< 5         # 0,1,2,3,4 (TO< excludes the end; TO> the other way)
-for $1 in sword,shield   # a comma list; each item is substituted
-for $1 in LIST $<WORLD SUSPECTS>   # substitutes first, splits on spaces or commas
-for $1 in #sunaltar      # every object tagged sunaltar
-for $1 in SELECT: * from mobs      # an MQL query, from the host's point of view
-  mpecho $1
+for $1 = 1 to 3
+  mpecho Echo number $1.
 next
 ```
 
@@ -697,22 +701,25 @@ matters.
 The general-purpose store. A variable has a **host name**, a **variable name**
 and a text value:
 
-```text
-mpsetvar $n CHAPTER 2            # on the creature $n (stored under its name)
-mpsetvar WORLD GATE_OPEN 1       # on an arbitrary key; WORLD is only a convention
-mpsetvar @$i BRIBED yes          # on this one object, not its name (SC4)
-mpsetvar $n VISITS ++            # add 1;  ++ -- +5 -3 *2 /2 %7 ^2 are arithmetic
-mpsetvar $n SEEN NOW             # the area clock's stamp (SC2), for ELAPSED()
-mpsetvar $n CHAPTER              # no value: delete the variable
-```
+| Line | Effect |
+| --- | --- |
+| `mpsetvar $n CHAPTER 2` | on the creature `$n` (stored under its name) |
+| `mpsetvar WORLD GATE_OPEN 1` | on an arbitrary key; `WORLD` is only a convention |
+| `mpsetvar @$i BRIBED yes` | on this one object, not its name (SC4) |
+| `mpsetvar $n VISITS ++` | add 1; `++ -- +5 -3 *2 /2 %7 ^2` are arithmetic |
+| `mpsetvar $n SEEN NOW` | the area clock's stamp (SC2), for `ELAPSED()` |
+| `mpsetvar $n CHAPTER` | no value: delete the variable |
 
 Read it back:
 
 ```text
-if var($n CHAPTER == 2)                 # test, inside IF
-say Chapter $<$n CHAPTER>, $n.          # substitute into text
-mpsetvar WORLD OLD $%VAR($n CHAPTER)%   # the value form of the function
+if var($n CHAPTER == 2)
+say Chapter $<$n CHAPTER>, $n.
+mpsetvar WORLD OLD $%VAR($n CHAPTER)%
 ```
+
+The first line tests inside an `IF`; the second substitutes the value into text;
+the third uses the value form of the function.
 
 Rules and traps:
 
@@ -751,11 +758,11 @@ Variables live in a **scope**; each script engine has one. By default every
 script uses the same scope, called *global*, so any script can read what any
 other wrote, given the host and name. A script can change its own:
 
-```text
-mpsetinternal scope MYQUEST     # share a store with other scripts that name MYQUEST
-mpsetinternal scope *           # a private store, invisible to other scripts
-mpsetinternal scope global      # back to the shared one
-```
+| Line | Effect |
+| --- | --- |
+| `mpsetinternal scope MYQUEST` | share a store with the other scripts that name `MYQUEST` |
+| `mpsetinternal scope *` | a private store, invisible to other scripts |
+| `mpsetinternal scope global` | back to the shared one |
 
 A read looks first in the script's own scope, then in its default quest's
 scope (if `DEFAULTQUEST` or a quest set one), then in the global scope. A
@@ -907,7 +914,7 @@ event ($n, $t, $o...) is kept for the delayed command:
 mpalarm 5 say Your time is up, $n.
 mpalarm NAME=curfew 20 mpecho The bell tolls.
 mpalarmcancel curfew
-if eval($%ALARM($i curfew)% > 0)   # still pending? ALARM() is the ticks left, 0 for none
+if eval($%ALARM($i curfew)% > 0)
 ```
 
 A **named** alarm (`NAME=`) replaces an earlier one of the same name, is kept in
