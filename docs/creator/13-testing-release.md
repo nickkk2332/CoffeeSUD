@@ -1927,3 +1927,267 @@ then checks a save in a fresh process (`KEEP=1` retains passing artifacts);
 Trial. `tools/sudplay.py SCRIPTFILE NAME=VALUE...` is the generic scripted-input
 driver all of these use. A script line `#expect TEXT` waits until TEXT appears,
 and `#sleep N` waits N seconds.
+
+## Worked examples
+
+The room, mob and script names below are illustrative; the commands and file
+formats are real.
+
+### Example 1: find out why a script does not work
+
+The miller in `Dunmoor#4` should hand out a sack of flour once when a player
+says "flour", and then say a different line. Players report that nothing
+happens.
+
+1. Lint the script and everything near it.
+
+   ```text
+   scriptcheck miller
+   scriptcheck area
+   ```
+
+   The first reports `scripts/miller.script:14 unknown trigger SPEECHPROG`
+   (the underscore is missing): a typo that makes the trigger never fire and
+   that nothing else reports. Fix the file.
+2. Reload the script into the running world and look again.
+
+   ```text
+   world reload script scripts/miller.script reset
+   script list miller
+   ```
+
+   `SCRIPT LIST` now shows `1. SPEECH_PROG flour  (scripts/miller.script:14)`,
+   so the engine sees the trigger.
+3. Run the trigger without speaking, as a character who is not you, and watch
+   what the script does.
+
+   ```text
+   devlog on warn module Scripting
+   scripttrace miller
+   script fire miller SPEECH flour AS Bob
+   ```
+
+   The trace prints each line run and each variable changed. If a line is
+   wrong, SCRIPTERRORS and DEVLOG show it with its file and line.
+4. A one-shot line never repeats. Check what state the script left and put it
+   back so you can test again.
+
+   ```text
+   vars list * Bob MILLER_*
+   vars clear Bob MILLER_GAVEFLOUR
+   script reset miller ONCE
+   ```
+5. Turn the trace off and write the regression test (Example 2).
+
+   ```text
+   scripttrace off
+   devlog off
+   ```
+
+### Example 2: a regression playtest for the start of the shipped world
+
+The repository's own test, `CoffeeMud/world/tests/start.play`:
+
+```text
+# The start of the game: the first room, its book, and the way north.
+#char Wanderer,Human,Apprentice
+look
+#expect Obvious exits
+#assert HERE New Area#0
+get book
+#assert HAS book
+north
+#reject You can't go that way
+south
+#assert HERE New Area#0
+```
+
+Run it:
+
+```sh
+python3 tools/playtest.py CoffeeMud/world/tests/start.play
+```
+
+```text
+PASS  CoffeeMud/world/tests/start.play (5 checks)
+```
+
+Extend it for your own quest. Suppose `#assert VAR` is used to check a quest
+flag that the miller's script sets with `MPSETVAR $n MILLER_GAVEFLOUR 1`:
+
+```text
+# world/tests/miller.play: the miller gives flour once
+#char Tester,Human,Apprentice
+goto Dunmoor#4
+say flour
+#expect hands you a sack of flour
+#assert HAS sack of flour
+#assert VAR Tester MILLER_GAVEFLOUR = 1
+say flour
+#reject hands you a sack of flour
+#expect already
+```
+
+Notes on this file: `goto` works because the runner's character holds the DEV
+group; `#assert VAR` names the variable's host (the character `Tester`)
+and the name in capitals; the second `say flour` shows the once-only
+behavior by rejecting the first reply. To force the failure path while you
+write it, change an `#expect` to text that is not there and confirm the run
+prints `FAIL` with `expected '...'` and a transcript path; the repository's
+`tools/fixtures/fixes/setup/dt15-fail.play` is a deliberate failing file for
+that purpose. Run it before every release.
+
+To produce the first draft by playing, start a DEV=1 game with
+`RECORDINPUT=1`, or type `RECORD INPUT miller` in a DEV=1 or builder game,
+play the scene, then `RECORD INPUT OFF` and copy
+`saves/recordings/miller.play` into `world/tests/`.
+
+### Example 3: set up a mid-game tester and a headless check
+
+To test act 3 without replaying acts 1 and 2:
+
+```text
+# world/kits/act3-warrior.kit
+race Dwarf
+class Fighter
+level 12
+gold 500
+room Crypt#1
+item Longsword
+item catalog:Mithril Axe
+ability Skill_Dodge 75
+faction Merchants 2500
+var ACT 3
+```
+
+```text
+testchar Tank KIT=act3-warrior PARTY
+switch Tank
+quests
+```
+
+`TESTCHAR` made the character with no creation questions and brought them into
+the party; `SWITCH` plays them. Turn off the cheats you do not want
+(`god all off`), fight the lich, and use `COMBATDEBUG ON` to see each roll.
+When the area is right, add `#assert QUEST` or `#assert VAR` lines to a
+`.play` and let CI repeat it. For the headless side, the release gate from
+[A world's release gate](#a-worlds-release-gate) runs `CHECK=1` and the
+playtests on a clean checkout and fails the build when either does.
+
+### Example 4: ship a world update without losing saves
+
+You tuned the sunken crypt (removed a trap, moved the lich) and added a new
+area, and a player has a save from before.
+
+1. `python3 tools/worlddiff.py --git v1.0 CoffeeMud/world` lists what
+   changed: `Crypt#3: mob 'a lich' ...`, `Harbor#0: room added`.
+2. In a copy of the old release, `RESTORE` the player's save with the new
+   world, without FRESH, and read the message: it names `Changed area file:
+   crypt.cmare` and `New area file: harbor.cmare`. Walk the crypt: the lich is
+   where the save put him, because mobs follow the save.
+3. Restore again with `RESTORE slot FRESH=Crypt` (or `FRESH=CHANGED`): the
+   crypt's mobs and items are the world's now. The character, quests and
+   variables are unchanged.
+4. Write that into the release notes: "Existing saves: restore with
+   `FRESH=Crypt` to get the new lich; otherwise the old crypt contents remain."
+5. Tag, package and test a clean installation as in the
+   [release workflow](#release-workflow).
+
+## Persistence notes
+
+| What | Where it lives | Reload or restart effect |
+| --- | --- | --- |
+| Playtest files, kits, notes' target | `world/tests`, `world/kits` (in the world folder); notes in `notes/playtest.txt` outside the world and saves | Tests and kits are world files, read when used. Notes survive a world reload |
+| `PLAYTEST ON`'s mortal mode | A `Prop_Playtest` effect on the character, with the room to return to | Saved with the character in a builder-mode profile; `PLAYTEST OFF` removes it. `PLAYTEST GAME` re-applies it in its disposable campaign |
+| GOD cheats | `Prop_DevCheats` effect saved with the character | Survive save and restore until `GOD RESET` or `GOD ALL OFF`. A game started without DEV=1 takes the DEV security group away again |
+| DEVLOG settings | Builder mode: beside the database. Otherwise the `DEVLOG=` ini key | Per game |
+| VARS, quest variables | The save's script-variable stores | Saved with the campaign; `VARS SET` writes live state |
+| SCRIPT DISABLE, SCRIPTTRACE, SCRIPTPROF, COMBATDEBUG, TRACEB | Memory only | Gone at restart; not saved |
+| SCRIPTERRORS ring (last 200), DEVLOG ring (last 500) | Memory | Gone at restart |
+| TIMESCALE | Memory; `TIMESCALE=` ini key at start | The rate is not part of a save |
+| Sandbox | An unsavable area | Never in world files, database or saves |
+| World problems | `worldproblems.txt` beside the content database | Persists across restarts until the file is fixed and loaded whole |
+| Recorded input | `saves/recordings/*.play` (or the path given) | Files you keep |
+| Saves' world sums | `header.properties` (`worldsum`, `areasums`) | Compared at every restore |
+| Test scratch campaigns | Temporary folders (`sudplaytest.*`, `sud-playtest-*`) | Removed after a pass (unless `KEEP=1`); kept after a fail |
+
+TIME SET, WEATHER SET, VARS SET, PUZZLE SET and SCRIPT FIRE change live state
+and so are saved with a campaign's next save; in builder mode there are no
+saves and none of them is written to the world files (only `SAVE` writes
+those, and it writes the world's definitions rather than live state). See
+[state and persistence](state-and-persistence.md) and
+[chapter 31](31-saves-and-party.md).
+
+## Troubleshooting and gotchas
+
+- **A command is "not recognized".** Most tools are gated by mode or security
+  flag (see the [tool index](#tool-index)). In a plain DEV=1 game
+  `PREVIEW`, `CHECKTEXT`, `SANDBOX` and `DEVWATCH` need flags the DEV group
+  lacks; use builder mode or add the flags to `GROUP_DEV`.
+- **`CHECK=1` finds no problem a builder session shows.** `CHECK=1` plays a
+  new game and does not load `world/dev`; WORLD PROBLEMS is builder-mode
+  only. Run both.
+- **A `.play` test passes in the editor but fails in CI.** The runner's
+  character has the DEV group and the default seed; door and permission tests
+  need a normal game too. A world that adds creation steps changes the
+  answers the runner types.
+- **`#expect` fails but the text is on screen.** Matching is a case-sensitive
+  substring over the step's output only (everything between the previous mark
+  and this check). Text printed by a later step, or colour codes between the
+  words, does not match. Put the `#expect` after the command that prints it.
+- **A menu answer is eaten.** Group a menu command and its answer before the
+  first expectation.
+- **PLAYTEST RUN / WORLD TEST say the runner is missing.** They need
+  `../tools/playtest.py` relative to the folder the game was launched in
+  (`CoffeeMud/`), so they only work in a developer checkout, and Python 3
+  (`-Dsud.python=...` selects the executable).
+- **PLAYTEST GAME will not start.** It refuses when the world did not load
+  whole (see WORLD PROBLEMS and WORLD STATUS) or no builder database is
+  available; it tells you why rather than showing a game error.
+- **`SCRIPT FIRE` runs nothing.** Name the trigger exactly (`SPEECH_PROG` or
+  `SPEECH`) and, for word triggers, give a word the trigger answers to. `SCRIPT
+  LIST` shows which are `[off]` or `[done]`; `SCRIPT RESET target ONCE`
+  re-arms `ONCE_PROG`s.
+- **SCRIPTCHECK flags a valid `LOAD=world:...` path** or **PROPCHECK flags a
+  valid dynamic key**: known tool gaps (see above), not runtime failures.
+- **A restored save shows the old mobs.** Mobs follow the save; use `FRESH=`.
+- **`#restore` fails in the runner.** Each run has an empty save folder;
+  see the note in [The .play file format](#the-play-file-format).
+- **Concurrent fixes runs corrupt each other.** `resources/_fixes` is shared;
+  run one harness per checkout.
+- **DEVLOG WINDOW opens nothing.** There is no display; DEVLOG ON and LAST use
+  the terminal.
+- **A tool changed the world.** SCRIPT FIRE, SCRIPT CALL, PUZZLE SET/SIGNAL,
+  LAW PARDON/ACCUSE/SET, WEATHER SET, TIME SET, VARS SET/CLEAR and MODIFY QUEST
+  change live state. Use `PLAYTEST GAME` or a throwaway builder copy when that
+  matters; `UNDO` and `WORLD RELOAD` are covered in
+  [chapter 2](02-world-workflow.md).
+- **Known engine baseline failures.** `ENGINE=1 tools/check.sh` is expected to
+  match `tools/baseline/test-all.txt`; Spaceangles, Spaceinterception and
+  Spaceinterception2 fail there as on the original server.
+
+Deliberate deferrals (exact deterministic replay with `DETERMINISTIC=1`, a
+`SIMFIGHT` party-versus-encounter simulator, a generic puzzle controller, and
+the native-Java timeout boundary) are listed in the
+[developer tools audit](../../audit/developer-tools-audit.md).
+
+## See also
+
+- [World files, builder mode and the editing workflow](02-world-workflow.md):
+  SAVE, WORLD STATUS/DIFF/RELOAD/BACKUPS, UNDO, the world folder.
+- [Installing and running](18-installing-and-running.md): launch flags, modes,
+  folders, logs.
+- [Configuration and administration](19-configuration-and-administration.md):
+  `coffeemud.ini` keys, security groups, GOD and developer powers.
+- [MOBPROG scripting](04-mobprog.md), [triggers](26-mobprog-triggers.md),
+  [commands](27-mobprog-commands.md) and [functions](28-mobprog-functions.md):
+  what the script tools exercise.
+- [JavaScript](05-javascript.md): `JRUN`, `cm`, and world JS tests.
+- [Quests](08-quests.md), [combat](29-combat-and-encounters.md),
+  [society and law](09-society.md), [world simulation](10-world-simulation.md).
+- [Saves and party](31-saves-and-party.md) and
+  [state and persistence](state-and-persistence.md): what a save keeps.
+- [Engine programming](32-engine-programming.md) and
+  [engine internals](33-engine-internals.md): for the suites' subjects.
+- [Examples](examples/README.md): a playable world with `.play` and `.js` tests.
+- [Tool reference](tool-reference.md): the shipped help for every command.

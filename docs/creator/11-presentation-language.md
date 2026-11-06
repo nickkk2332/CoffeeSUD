@@ -1227,3 +1227,315 @@ A few older comments and the `WindowPanel` source comment say `world.ini` can
 set `WINDOWPANEL`; the shipped help (`HELP WINDOWS`) and the allow-list are
 right: it cannot. This is a known open item in the
 [developer tools audit](../../audit/developer-tools-audit.md#open-configuration-gap).
+
+## Languages are mechanics
+
+Source: [Languages](../../CoffeeMud/com/planet_ink/coffee_mud/core/Languages.java),
+[LanguageLexicon](../../CoffeeMud/com/planet_ink/coffee_mud/core/LanguageLexicon.java),
+[GenLanguage](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Languages/GenLanguage.java),
+[LangToolsCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/LangToolsCmd.java).
+`AHELP LANGUAGE_AUTHORING` summarises the authoring side.
+
+In CoffeeSUD, language is a gameplay system, not decoration. Whether a
+character understands speech, writing, an inscription or a creature depends on
+what they know and carry. Everything below shares one comprehension check.
+
+### The comprehension model
+
+Each language is an ability (a `Language`), known at a proficiency from 0 to
+100. A character speaks one language at a time (`SPEAK languagename`, or the
+language chosen for them by a property); `LANGUAGES` (or `LANGS`) lists what
+they know. How much of a language L a listener, reader or NPC understands is
+the **best** of:
+
+1. 100% for Common, unless the creature is made monolingual (below); 100% for
+   each language a monolingual creature declares.
+2. The proficiency of any language effect on the listener that translates L
+   (a spell such as Speak with Animals, a `Prop_LangTranslator`, or a learned
+   language).
+3. The proficiency of any learned language ability that translates L.
+4. Language effects on the room the listener is in.
+5. Language effects on items the listener carries.
+
+A language that merely **interprets** L contributes its own proficiency times
+the stated percentage: a language at 50% with `INTERPRETS=Elvish(60)` gives
+30% understanding of Elvish. Result: `UNDERSTANDS$(who language)` in a script is
+this number.
+
+What the number does:
+
+- **Speech heard.** Speech needs to be heard (and spoken within earshot). At
+  100% the listener reads the words as spoken. At 0% they get a scrambled
+  rendering (`"?"` for Common) and the unknown-speech hooks run
+  (`NOTUNDERSTOOD_PROG`, the `Prop_Monolingual` confused line). Between 0 and
+  100 the speech is partly translated: each word is either understood or
+  not, decided by a fixed hash of the language and the word, so a given word is
+  always understood at a given proficiency and raising the proficiency only
+  ever adds words. A non-Common language heard with some understanding also
+  shows the listener a private line "... (translated from Elvish)", unless a
+  translator they hold already prints its own line.
+- **Speech reaching NPCs.** Creatures only react to what they understand:
+  unintelligible speech never reaches `SPEECH_PROG`, MudChat or NPC services
+  (orders, trade and the other dialogue paths use the same check).
+- **Writing.** A readable item with a language effect, a `GenTome` page with
+  `LANG=`, and an inline `^<LANG` tag show scrambled text to a reader who does
+  not know the language, and a translation to one who does.
+- **Sign language and semaphore** are *visual* languages: they follow sight,
+  not hearing. A deaf character who can see the speaker understands them;
+  unknown words show as `?`.
+
+Learned proficiency is campaign state. Languages are learned by training
+(`LANGCOST`, shipped `3 PRACTICE`), taught by NPCs, given by scripts, or picked
+up by exposure. The number of languages a character can learn is limited by
+`MAXLANGUAGES` (shipped `3`) together with class, race and bonus allowances;
+cultural/natural languages are exempt. Scripts and properties that grant a new
+language respect that limit unless they say `FORCE`.
+
+### Prop_Monolingual: a creature that knows one language
+
+`Prop_Monolingual` (targets creatures) removes the automatic understanding of
+Common.
+
+```text
+LANGUAGES=Orcish,Goblinese CONFUSED="<S-NAME> grunt(s) and shrug(s)."
+```
+
+| Option | Meaning |
+| --- | --- |
+| `LANGUAGES=a,b` | The languages the creature understands fully (default `Common`). |
+| `CONFUSED="..."` | An emote the creature performs when it hears speech it cannot understand. It is a normal message: `<S-NAME>` is the creature. |
+
+Learned languages, translators, and room and carried-item interpreters still
+work, so a captured interpreter (`Prop_LangTranslator`) or a player who has
+learned Orcish can bargain with the chieftain; everyone else gets shrugs. When
+it is attached, a monolingual creature that speaks Common switches to its first
+declared language, so its replies are in that language.
+
+The same restriction is available on `Prop_LanguageSpeaker` with
+`UNDERSTANDS=ONLY LANGUAGE=Orcish`.
+
+### Prop_LanguageSpeaker and Prop_LangTranslator
+
+`Prop_LanguageSpeaker` forces the language its host speaks (see
+[chapter 23](23-properties-reference.md)):
+
+```text
+LANGUAGE=Dwarven players=true ; -NAMES +BOB
+LANGUAGE=Orcish UNDERSTANDS=ONLY
+```
+
+Options: `LANGUAGE`, `PLAYERS` (also affects players), `NOMOBS`, `HOMEONLY` (only
+creatures whose start area is the property's area), `UNDERSTANDS=ONLY`
+(restricts comprehension, as above), and an optional zapper mask after a `;`.
+On a creature it makes that creature speak it; on a room or area it applies to
+those who enter or are born there; on an item, to those who pick it up.
+
+`Prop_LangTranslator` (creatures, items, rooms) translates other languages
+into Common for everyone in the room, or, with `NOTRANSLATE`, quietly gives the
+holder understanding of the listed languages (optionally only for words
+prefixed with a backquote, with percentages, and with `#PLAYERNAME` trusted
+speakers). Examples: `100% Dwarven 50% Elvish`, `NOTRANSLATE 75% Dwarven`.
+Both are covered in [chapter 23](23-properties-reference.md).
+
+### Creating an invented language
+
+Invented languages are generic language objects (`GenLanguage`), stored in the
+world with the other custom objects (`custom/abilities/ID.cmare`).
+
+```text
+CREATE LANGUAGE Dunetongue
+MODIFY LANGUAGE Dunetongue
+```
+
+`CREATE LANGUAGE ID` makes a new language (the ID cannot contain a space);
+`MODIFY LANGUAGE ID` edits an existing generic one. The editor walks the fields
+below. In a world-building script the same fields are set with `setStat` on a
+`GenLanguage` copy (see the museum pack's `build.js`).
+
+| Field | Meaning |
+| --- | --- |
+| `NAME` | The language's name. |
+| `WORDS` (`N letter words`) | Fallback word lists by word length, separated by `/` (one list per length), used for unknown words when nothing else applies. |
+| `HASHEDWORDS` | An inline dictionary, `WORD=translation` pairs separated by `/`. **Wins over** the dictionary file. |
+| `INTERPRETS` | Other languages this one partly understands: `Elvish(60),Sylvan(30)`. See the comprehension model. The editor's prompt adds plain IDs (full strength); percentages are set with `setStat` or in the stored definition. |
+| `NATURALLANG` | True for a natural language of a race (exempt from the learned-language limit). |
+| `VERB`, `TRANSVERB` | The speaking and translating verbs in messages. |
+| `HELP` | Help text for the language. |
+| `NAMESTYLE` | A name-generation style for this language ([chapter 12](12-generation.md)). |
+| `WORDFILE` | A dictionary file (below). |
+| `SUFFIXES` | Inflection endings: `S:en,ED:ka`. |
+| `SYLLABLES` | Syllable banks for unknown words: `ka,ra,sa/lin,tor,esh`. |
+| `KEEPWORDS` | Words that are never translated: `Hakim,Qarth`. |
+| `KEEPNAMES` | `true` keeps capitalised words and the names of areas, creatures and catalog entries. |
+| `WRITTENNAME` | The name of the script in "translated from ..." messages (default: the language name). |
+| `TRANSLATESCRIPT` | A JavaScript rule hook (below). |
+
+**How one word is translated** (first rule that applies wins):
+
+1. `KEEPWORDS`, or `KEEPNAMES` for a word that starts with a capital or is the
+   name of a known area, creature or catalog entry. Note that with
+   `KEEPNAMES=true` the first word of a sentence is also kept, because it
+   starts with a capital.
+2. `TRANSLATESCRIPT`'s `translate(word, language)`, if the script is approved
+   and returns a non-null value (the result is used as returned).
+3. `HASHEDWORDS`.
+4. The `WORDFILE` dictionary.
+5. `SUFFIXES`: if the word ends with an ending and the rest is in the
+   dictionary, the translation of the root plus the ending's replacement is
+   used (`walked` with `ED:ka` and `WALK=tal` gives `talka`; the plural `-ies`
+   spelling falls back to `-y`).
+6. `SYLLABLES`: a word is rebuilt from one to four syllables (one per three
+   letters), picked from the banks in turn by a fixed hash of the word, so an
+   unknown word always comes out the same way.
+7. Otherwise the stock behaviour: the `WORDS` lists by length, else the word
+   is kept.
+
+Dictionary, suffix and syllable results copy the original word's case
+(lower, Title, UPPER).
+
+**Dictionary files.** `WORDFILE=desert.txt` names a file under
+`world/vocab/languages/`; a path beginning `vocab/` is used as given. Files are
+UTF-8, one `WORD=translation` per line; blank lines and lines starting with
+`#` are ignored; words are matched without regard to case. A path that leaves
+the world folder is refused. A large dictionary is easier to maintain as a
+file than as `HASHEDWORDS`.
+
+```text
+# world/vocab/languages/dunetongue.txt
+HELLO=zaal
+WATER=ésh
+WALK=tal
+CITY=qarth
+```
+
+**TRANSLATESCRIPT.** A hook for languages built by rule rather than by table:
+
+```js
+function translate(word, language) {
+    return String(word).split('').reverse().join('');
+}
+function garble(text, count) {
+    return 'encoded:' + text;
+}
+```
+
+`translate` may return `null` to fall back to the normal rules. `garble(text,
+count)`, optional, replaces how a whole text is scrambled for a listener who
+does not know the language. The script runs under the usual JavaScript time
+limit (`JSTIMELIMIT`) and approval policy (`JSCRIPTS`; the shipped `2` runs
+every script, `1` requires approval through `MODIFY JSCRIPT` in builder mode, `0`
+disables them). An unapproved script is ignored and the dictionaries are used;
+`WORLD CHECK ONLY=VOCAB` warns about it.
+
+**Previewing and measuring.** In builder mode, a `DEV=1` game, or with the
+CMDABILITIES security flag:
+
+```text
+LANGUAGE PREVIEW Dunetongue 40 the well is dry
+LANGUAGE COVERAGE Dunetongue Oasis
+LANGUAGE COVERAGE Dunetongue HERE
+```
+
+`LANGUAGE PREVIEW id [proficiency] text` (default 50%) shows what one who does
+not know the language hears, what a listener at that proficiency understands,
+how the speaker at that proficiency is heard by those who do not know it, what
+the writing looks like and what a reader at that proficiency reads, and then a
+`Words:` list showing each word's translation and its source ("dictionary",
+"dictionary file", "dictionary root and suffix", "syllable banks", "kept word
+or name", "translation script (or normal fallback)", or the word-list fallback).
+`LANGUAGE COVERAGE id target` counts how many words of a room's text (title,
+description, creatures and items), of every room in an area, or of a text file
+the dictionary covers, and lists the most common missing words, so you know what
+to add. `LANGUAGE` with any other argument is the ordinary `LANGUAGES` list.
+
+### Learning by exposure: Prop_LanguageImmersion
+
+Source: `Languages.expose`. Attach `Prop_LanguageImmersion` to an area, room,
+creature or item to let characters pick up a language by hearing and reading
+it.
+
+```text
+LANGUAGE=Orcish HEAR=1 READ=3 CHANCE=20% START=5 MAX=60 GRANTAFTER=25 ID=orc-camp
+```
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `LANGUAGE=` | `ANY` | The language, or `ANY` for whatever is heard or read. |
+| `HEAR=n` | `0` | Proficiency gained for a successful exposure by hearing speech in the language. |
+| `READ=n` | `0` | The same for reading writing in it (a written item, a tome page, an inline tag). |
+| `CHANCE=n%` | `20` | Chance that a given exposure helps. |
+| `START=n` | `5` | Proficiency a newly granted language starts at. |
+| `MAX=n` | `60` | Exposure never raises proficiency above this. |
+| `GRANTAFTER=n` | `25` | Exposures needed before an unknown language is first granted. |
+| `ID=`, `ALIASES=`, `LEGACYKEYS=` | | Stable identity of the exposure counter. |
+
+A zero `HEAR` or `READ` disables that kind of exposure. The property is
+looked for on the learner, the speaker or item, the learner's room and area,
+and the items the learner carries. Every exposure is counted (even when the
+chance roll fails); a successful roll grants the language at `START` once the
+count has reached `GRANTAFTER`, respecting the language limit, or raises a known
+language by the gain, up to `MAX`. Live effects are updated immediately.
+Counters are saved per character, and an item keeps its identity when it moves
+from room to room, so a carried teaching item does not start over.
+
+### Foreign inscriptions inside descriptions
+
+Text anywhere (room and item descriptions, readable text, echoes, help)
+can mark part of itself as written in a language:
+
+```text
+Above the door: ^<LANG Elvish NOTE="elegant runes"^>Speak friend and enter.^</LANG^>
+```
+
+The tag is the colour-markup form: `^<LANG language [NOTE="..."]^>`, the text, and
+`^</LANG^>`. Rules:
+
+- Every viewer sees the foreign rendering of the text.
+- A viewer with some comprehension also sees `(you read: "..."; translated from
+  WRITTENNAME)` after it, with unknown words still garbled at partial
+  proficiency.
+- A viewer who understands nothing sees the optional `NOTE` text before the
+  foreign text (`elegant runes: ...`).
+- The language is named by its ID or name. An unknown language shows `?` for
+  every letter, and `CHECKTEXT` reports it.
+- `LANG` tags do not nest and the closing tag takes no attributes.
+- The stored text is unchanged; only the output differs. Reading counts as a
+  `READ` exposure for Prop_LanguageImmersion.
+
+### Language commands and functions for scripts
+
+| Script element | Behaviour |
+| --- | --- |
+| `MPLEARNLANG who language N` | Set the character's proficiency to `N`. |
+| `MPLEARNLANG who language +N` / `-N` | Adjust it. |
+| `MPLEARNLANG who language N FORCE` | Also bypass the language limit for a new language. |
+| `MPSAYIN language text` | The script's host says one line in the language and then goes back to the language it was speaking (a temporary language effect it needed is removed). |
+| `NOTUNDERSTOOD_PROG [language\|ANY] [p text]` | Runs on a **listener** that hears speech it understands 0% of. `$n` is the speaker, `$g` the language, `$0` the garbled text. The optional `p text` matches when the garbled text contains `text`. The language may be omitted. |
+| `ISSPEAKING($n Elvish)` | True if the speech event (or character) is in that language. In `NOTUNDERSTOOD_PROG` it describes the event, even if the speaker changes language before a queued response runs. |
+| `UNDERSTANDS($n Elvish)` | True when `$n` has any comprehension of the language (counting translators, interpreters and the room). |
+| `UNDERSTANDS$($n Elvish)` | The comprehension, 0 to 100. |
+| `MPENABLE $n Elvish ++5` | The stock command also updates live effects and respects the language limit for a new language. |
+
+```text
+NOTUNDERSTOOD_PROG ANY
+mpechoat $n The guard looks baffled.
+mpsetvar $n SUSPICIOUS 1
+~
+NOTUNDERSTOOD_PROG Common p ???
+mpechoat $n The guard cannot follow your words.
+~
+SPEECH_PROG p mellon
+if understands($n Elvish)
+  mpechoat $n The door sighs open.
+endif
+~
+```
+
+The first block runs for any language the guard cannot follow. See
+[the trigger reference](26-mobprog-triggers.md), the command reference
+[27](27-mobprog-commands.md) and the function reference
+[28](28-mobprog-functions.md).
+
+Testing languages: the staff-level characters have stock skills at full
+proficiency on login, so test learning, immersion and comprehension on an
+ordinary character and confirm saved proficiency after a restore.

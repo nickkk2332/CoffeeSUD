@@ -320,7 +320,7 @@ TIME SEASON WINTER
 ```
 
 - `TICKTOCK [N]` advances the area's clock N hours (negative goes back);
-  `TICKTOCK [N] [HOURS|DAYS|WEEKS|MONTHS|YEARS]` bumps by that period.
+  `TICKTOCK [N] [HOUR|DAY|WEEK|MONTH|SEASON|YEAR]` (plurals work) bumps by that period.
   `TICKTOCK SET Y/M/D/H` or `M/D/Y Hh` sets the date. It needs the
   `TICKTOCK` security flag (a builder or `DEV=1` game has it). `TICKTOCK
   CLANTICK` and `TICKTOCK` with a service name also exist (see the generated
