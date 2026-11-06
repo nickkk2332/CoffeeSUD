@@ -529,7 +529,7 @@ joins gets an exit chosen from the room's `EXIT` children; `GENERATE ROOM`
 
 | Attribute | Meaning |
 |---|---|
-| `direction` | Limits this exit to one direction (`N`, `E`, `north`...). Only the first letter is compared. |
+| `direction` | Limits this exit to one direction (`N`, `E`, `north`, `up`...). Only the *first letter* you give is compared with the direction's code, so it works for `N`, `S`, `E`, `W`, `U`, `D`; the diagonals (`NE`, `NW`, `SE`, `SW`) have two-letter codes and cannot be selected this way. |
 | `roomlink` | For an exit the layout did not ask for (`$ROOMLINK_REQUIRED` is `false`): the room id of an existing room to link to. |
 | a nested `ROOM` | Instead of `roomlink`, a room template to build on the far side of this exit, in this direction. |
 

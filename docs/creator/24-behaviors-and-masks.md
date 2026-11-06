@@ -1382,9 +1382,9 @@ Mobile min=10 max=20 chance=75 leash=3 opendoors
 ### MobileAggressive
 
 Hosts: mobs. Extends [Mobile](#mobile) (timing 20/60/100). Wanders like Mobile
-and attacks any player it comes across; especially aggressive toward players
-within 16 levels in adjacent rooms. With no mask it attacks anyone within 8
-levels. It ignores archons and builders with `CMDMOBS`. Parameters: all of
+and attacks any player it comes across; like VeryAggressive it also goes after
+players in adjacent rooms (with no mask, only those within 7 levels of it; the help
+says 16). It ignores archons and builders with `CMDMOBS`. Parameters: all of
 Mobile's, plus the aggression flags of [Aggressive](#aggressive): `MESSAGE=`,
 `DELAY=`, `MOBKILL`, `NOGANG`, `MISBEHAVE`, `CHECKLEVEL`, `BRIBE=`,
 `BRIBEPAYMSG=`, `BRIBEPAIDMSG=`, and a mask (allowed is attacked).
@@ -2491,8 +2491,10 @@ and wakes after a while.
 
 Hosts: mobs. Extends [Aggressive](#aggressive). Attacks any player it detects in
 its room as soon as it enters, and also detects players in adjacent rooms and
-moves to attack them, but only when they meet all the criteria and are within 16
-levels. With no other parameters it attacks anyone within 8 levels. Ignores
+moves to attack them (on about 15% of its ticks), but only when they meet all the
+criteria. With no mask, a player next door must also be within 7 levels of the mob
+(the help says 16, the code tests 8 exclusive); with a mask there is no level
+test. In its own room it attacks anyone the mask allows. Ignores
 archons and builders with `CMDMOBS`. Parameters: `message=`, `delay=`,
 `mobkill`, `nogang`, `misbehave`, `BRIBE=`, `BRIBEPAYMSG=`, `BRIBEPAIDMSG=` and
 the mask, as for Aggressive.
@@ -2574,7 +2576,7 @@ Defaults from the code:
 | `dmgship=[formula]` | Amount of damage to the ship (the help calls this `shipdmg`; the code reads `dmgship`). It must be given with `shipdmgpct` or neither takes effect. | none |
 | `dmgname="[NAME]"` | The source name given for ship damage. | none |
 
-(The tick defaults are multiples of `Climate.WEATHER_TICK_DOWN`, 150 ticks.)
+(Most tick defaults are fractions or multiples of `Climate.WEATHER_TICK_DOWN`, 150 ticks; `rustticks` and `dustticks` are plain numbers.)
 
 ```text
 WeatherAffects windsheer=10 puddlepct=20

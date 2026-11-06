@@ -4312,7 +4312,8 @@ MSPFILE = name of msp sound file in your sounds directory
 
 Notes:
 
-- `LOAD` takes the file named as its own value.
+- `LOAD` takes the file named as its own value. The file is looked for first as `world/vocab/<name>` (a leading `vocab/` is accepted), then as a resource such as `resources/socials.txt`.
+- Alternative key spellings the code also accepts: `SOURCECODE` for `SRCCODE`; `OTHCODE`, `OTHERCODE`, `TARGETCODE` for `TGTCODE`; `OTHERSEE`, `OTHERSSEE` for `OTHSEE`; `TARGSEE`, `TARGETSEE` for `TGTSEE`; `NOTARGETSEE`, `NOTGTSEE` for `NOTARGSEE`. Defaults: `SRCCODE=M`, `TGTCODE=V`.
 
 ### Prop_Sounder
 
@@ -4838,7 +4839,7 @@ TIME=[game minutes] MOUNTED=0.5 VEHICLE=0.7 NIGHT=1.5
 TIME=30 MOUNTED=0.5 NIGHT=1.5
 ```
 
-CoffeeSUD addition. `TIME` is the game time spent per step through the host. The multipliers apply when mounted, in a vehicle, and at night. Priority: the exit, then the destination room/area, then the source room/area. Followers do not add another time charge. The scheduler runs weather, hunger, NPCs and scripts during travel. See chapter 30.
+CoffeeSUD addition. `TIME` is the game time spent per step through the host. The multipliers apply when mounted, in a vehicle, and at night (defaults when not given: `MOUNTED=0.5`, `VEHICLE=0.7`, `NIGHT=1.5`; `TIME` defaults to 0). Priority: the exit, then the destination room/area, then the source room/area. Followers do not add another time charge. The scheduler runs weather, hunger, NPCs and scripts during travel. See chapter 30.
 
 ### Prop_TweakWatch
 
@@ -5481,7 +5482,7 @@ TAG=[NAME],... (SKILLS=[SKILL ID],...) (SPEED=[PCT]) (PROF=[N]) (MAXLEVEL=[N]) (
 TAG=forge,anvil SKILLS=Blacksmithing,Weaponsmithing SPEED=25 PROF=+10 MAXLEVEL=40 QUALITY=+1
 ```
 
-CoffeeSUD: a workstation, for a crafter in the room with it (on the room, or on an item lying there). TAG is what it is, as a recipe's or skill's STATION asks for it. SKILLS are the skills it helps (all when not given). SPEED takes that percent off the time a craft takes, PROF is added to the crafter's proficiency, MAXLEVEL lets recipes up to that level be made here (above the crafter's own), and QUALITY is for quality tiers (AHELP CRAFTQUALITY). An item with a tag (TAGS) and no Prop_Workstation counts as a station of that name too, with no bonus. A recipe asks for one with STATION=\[NAME\] (AHELP RECIPEKEYS), and a data skill (GenCraftSkill) for all its recipes with its STATION field.
+CoffeeSUD: a workstation, for a crafter in the room with it (on the room, or on an item lying there). TAG is what it is, as a recipe's or skill's STATION asks for it. SKILLS are the skills it helps (all when not given). SPEED takes that percent (0 to 90) off the time a craft takes, PROF is added to the crafter's proficiency, MAXLEVEL lets recipes up to that level be made here (above the crafter's own), and QUALITY is for quality tiers (AHELP CRAFTQUALITY). An item with a tag (TAGS) and no Prop_Workstation counts as a station of that name too, with no bonus. A recipe asks for one with STATION=\[NAME\] (AHELP RECIPEKEYS), and a data skill (GenCraftSkill) for all its recipes with its STATION field.
 
 ### Prop_Yield
 
