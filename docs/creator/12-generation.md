@@ -927,9 +927,11 @@ Rules and cautions:
   `JS ERRORS`); inside a `condition` an error counts as false.
 - `GENERATE CHECK` compiles every `js:` condition and `${js:...}`.
 - With `JSCRIPTS=0` in `coffeemud.ini` no template JavaScript runs: `${js:...}`
-  gives nothing and `js:` conditions are false. Any other `JSCRIPTS` value lets
-  templates run; I found no per-script approval step or time limit in the
-  template path (the check is only for `0`).
+  gives nothing and `js:` conditions are false. With `JSCRIPTS=1` each
+  expression must be approved first, as other embedded JavaScript is (`MODIFY
+  JSCRIPTS` in builder mode; approvals are kept in the world's `jscripts.ini`);
+  until then it gives nothing and the log says once that it waits. With the
+  shipped `JSCRIPTS=2` it always runs. There is no time limit.
 - Keep expressions cheap and free of blocking calls: they run on the game
   thread during generation.
 
@@ -1993,8 +1995,6 @@ For readers who know `guides/RandomAreas.html`:
   groups, not container contents (use `CONTENT`).
 - There is no `value` attribute for items (it is `basegold`).
 - `NOSAVE` does not prevent a builder-mode export of the area.
-- Template JavaScript is not subject to the per-script approval list (see
-  [JavaScript in templates](#javascript-in-templates)).
 - GENERATE accepts the types `STRING`, `AREA`, `MOB`, `ROOM`, `ITEM`, `QUEST` and
   `SCRIPT`; the guide omitted `SCRIPT`.
 

@@ -220,8 +220,8 @@ an area may carry its own calendar (see [World simulation](10-world-simulation.m
 | `MILLISPERMUDHOUR` | `600000` | Real milliseconds in one game hour. A value smaller than `TICKTIME` becomes 600000. |
 | `HOURSINDAY` | `6` | Hours in a game day. |
 | `DAYSINMONTH` | `24` | Days in a month. |
-| `MONTHSINYEAR` | seven ordinal names | Comma-separated month names. |
-| `DAYSINWEEK` | blank | Comma-separated weekday names. |
+| `MONTHSINYEAR` | Frostmonth ... Darkmonth (seven) | Comma-separated month names. |
+| `DAYSINWEEK` | Dawnday ... Restday (seven) | Comma-separated weekday names; blank means no weeks. |
 | `DAWNHR`, `DAYHR`, `DUSKHR`, `NIGHTHR` | `0`, `1`, `4`, `5` | The hour each part of the day starts; `-1` removes that part. |
 | `YEARDESC` | `year #` | Year names; `#` is replaced by the number. |
 | `STARTDATE` | blank | `YEAR/MONTH/DAY/HOUR` a new game starts at; blank is the engine's own. A save continues from its own date. |

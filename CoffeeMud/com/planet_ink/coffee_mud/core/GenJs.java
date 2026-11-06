@@ -112,6 +112,10 @@ public final class GenJs
 
 	private static boolean	warnedOff	= false;
 
+	/** D-GE-8: template JavaScript already reported as waiting for approval */
+
+	private static final java.util.Set<String> unapproved = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
+
 	/**
 	 * Runs an expression.
 	 * @param expr the expression, without its js:
@@ -131,6 +135,14 @@ public final class GenJs
 				warnedOff = true;
 				Log.errOut("GenJs", "JavaScript in a template is off (JSCRIPTS=0): " + where);
 			}
+			return null;
+		}
+		// D-GE-8: with JSCRIPTS=1 a template's JavaScript needs approval, as
+		// other embedded JavaScript does (MODIFY JSCRIPTS; kept in jscripts.ini)
+		if(!CMSecurity.isApprovedJScript(new StringBuffer(expr)))
+		{
+			if(unapproved.add(expr))
+				Log.errOut("GenJs", "JavaScript in a template waits for approval (JSCRIPTS=1, MODIFY JSCRIPTS): " + where);
 			return null;
 		}
 		final Context cx = Context.enter();

@@ -104,6 +104,23 @@ try {
 	var listed = s(AF.getAffects(FS, flyer, true, true, null, CM.Commands.Affect.DOMAIN_FILTER | dom1));
 	var t1 = s(flyer.fetchEffect(A1.ID()).displayText()), t2 = s(flyer.fetchEffect(A2.ID()).displayText());
 	check("ab6-domain", listed.indexOf(t1) >= 0 && listed.indexOf(t2) < 0, "domain list [" + listed + "] for " + t1 + " / " + t2);
+
+	// D-GE-8: with JSCRIPTS=1 a template's JavaScript waits for approval; with 2 it runs
+	var GenJs = CM.core.GenJs, was = CMProps.getIntVar(CMProps.Int.JSCRIPTS), held, ran;
+	try {
+		CMProps.setIntVar(CMProps.Int.JSCRIPTS, 1);
+		held = GenJs.eval("40+2+0*" + (new Date().getTime() % 997), null, new java.util.HashMap(), null, "fixaudit template");
+		CMProps.setIntVar(CMProps.Int.JSCRIPTS, 2);
+		ran = GenJs.eval("40+2", null, new java.util.HashMap(), null, "fixaudit template");
+	} finally { CMProps.setIntVar(CMProps.Int.JSCRIPTS, was); }
+	check("ge8-approval", held == null && s(ran) == "42", "JSCRIPTS=1 gave " + held + ", JSCRIPTS=2 gave " + ran);
+
+	// D-CF-4: the shipped clock has a week, and month names of one word
+	var C = CMLib.time().globalClock();
+	var months = C.getMonthNames(), oneWord = true;
+	for (var i = 0; i < months.length; i++) if (s(months[i]).indexOf(" ") >= 0) oneWord = false;
+	check("cf4-week", C.getDaysInWeek() == 7 && s(CM.core.ScriptEvents.weekday(C)).length > 0, "days in week " + C.getDaysInWeek());
+	check("cf4-months", months.length == 7 && oneWord && s(months[1]) == "Thawmonth", "months " + java.util.Arrays.toString(months));
 } finally {
 	for (var i = 0; i < made.length; i++) made[i].destroy();
 }

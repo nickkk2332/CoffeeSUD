@@ -129,7 +129,7 @@ JavaScript embedded in scripts may run. Shipped value: `JSCRIPTS=2`.
 | Value | Meaning |
 | --- | --- |
 | `0` | Embedded JavaScript is never run: `<SCRIPT>` blocks, `JS()`, `MPJSFILE`, quest `<SCRIPT>` blocks, language `TRANSLATESCRIPT` and template `${js:}` are all off. |
-| `1` | Each script body must be approved first. An unapproved `<SCRIPT>` is refused (the room is told "A Javascript was not authorized. Contact an Admin to use MODIFY JSCRIPT to authorize this script.") and is recorded as waiting. |
+| `1` | Each script body must be approved first, template `${js:}` expressions included. An unapproved `<SCRIPT>` is refused (the room is told "A Javascript was not authorized. Contact an Admin to use MODIFY JSCRIPT to authorize this script.") and is recorded as waiting. |
 | `2` | (default) Always run. CoffeeSUD ships this because the player writes the world. |
 
 The value applies to the JavaScript embedded in MOBPROG and the other

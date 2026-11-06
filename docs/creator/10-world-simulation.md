@@ -359,8 +359,8 @@ line wins over both). These are world keys (listed by `WORLD` or
 | `MILLISPERMUDHOUR` | Game milliseconds in one game hour. | 600000 (ten minutes) |
 | `HOURSINDAY` | Hours in a day; the hour counter runs 0 to this minus 1. | 6 |
 | `DAYSINMONTH` | Days in a month; days count from 1. | 24 |
-| `MONTHSINYEAR` | The month **names**, comma separated, in order. The number of names is the number of months. | seven months named "the 1st month" to "the 7th month" |
-| `DAYSINWEEK` | The weekday **names**, comma separated. Empty means the world has no weekdays. | empty |
+| `MONTHSINYEAR` | The month **names**, comma separated, in order. The number of names is the number of months. | seven months: Frostmonth (winter), Thawmonth (spring), Sunmonth (summer), then Harvestmonth, Leafmonth, Mistmonth and Darkmonth (autumn). CoffeeMud shipped "the 1st month" to "the 7th month". |
+| `DAYSINWEEK` | The weekday **names**, comma separated. Empty means the world has no weekdays (and `WEEKDAY_PROG` never fires). | a seven-day week: Dawnday, Brightday, Toilday, Marketday, Hearthday, Starday, Restday |
 | `DAWNHR`, `DAYHR`, `DUSKHR`, `NIGHTHR` | The hour each time of day begins, in increasing order. `-1` for a day that has no daytime or no night. Night runs until `DAWNHR`. | 0, 1, 4, 5 |
 | `YEARDESC` | Names for the years, comma separated, cycling when used up; `#` marks where the year number goes. | `year #` |
 | `STARTDATE` | The date a new game starts at: `YEAR/MONTH/DAY/HOUR`. Months and days count from 1; a missing hour is dawn. | empty |

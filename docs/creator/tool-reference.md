@@ -5175,7 +5175,8 @@ condition="js:expr" or validate="js:expr" keeps a tag when it gives a true value
 expression sees defined (the variables, by any case; setting one defines it), obj (what is
 being built), test(condition) (a condition in the template's grammar), and cm, gen and
 require() from world/js/lib.  Math.random is the game's dice, so a seed covers it;
-JSCRIPTS=0 turns it off.  The RandomAreas guide has the rest.
+JSCRIPTS=0 turns it off, and with JSCRIPTS=1 each expression needs approval (MODIFY
+JSCRIPTS).  The RandomAreas guide has the rest.
 
 This command uses an xml file to generate random content for your mud.  This content can be
 anything from whole areas, to rooms, mobs, items, or simple strings. By default, the content

@@ -2655,7 +2655,7 @@ WEEKDAY_PROG weekday name ... | ANY
 
 **Fires.** At the start of each new day of the clock the host's area is on.
 
-**Does not fire.** Clocks with no weeks. The shipped default clock has none (`DAYSINWEEK` in `coffeemud.ini` is empty), so this trigger does nothing until the clock names its days of the week.
+**Does not fire.** Clocks with no weeks (an empty `DAYSINWEEK`). The shipped default clock has a seven-day week, Dawnday to Restday.
 
 **Hosts.** Hosts in areas on the clock, and the world's script host.
 
@@ -2681,7 +2681,7 @@ Syntax:
 MONTH_PROG number | month name ... | ANY
 ```
 
-**Arguments.** Month numbers as the clock counts them, or month names, separated by spaces or commas; `ANY` for every change. The words are split at spaces, so a month name with spaces (the shipped names are "the 1st month" and so on) cannot be matched by name: use the number.
+**Arguments.** Month numbers as the clock counts them, or month names, separated by spaces or commas; `ANY` for every change. The words are split at spaces, so a month name with spaces cannot be matched by name: use the number. The shipped names are single words (Frostmonth, Thawmonth, Sunmonth, Harvestmonth, Leafmonth, Mistmonth, Darkmonth).
 
 **Fires.** When the host's area clock enters one of the months.
 
