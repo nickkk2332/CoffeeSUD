@@ -1,0 +1,61 @@
+set name harls_hammer
+set display Harl's Hammer
+set category side
+set instructions Harl the smith lost his forge hammer in his locked storeroom.  Find the key, fetch the hammer and give it to the gate guard.
+set rewards "50 XP 2 QP"
+set repeatable no
+set autostart boot
+
+# the giver: the gate guard, who already stands in the world
+set area "Brindlewick"
+set room
+set mobgroup
+set mob reselect "the gate guard"
+give script LOAD=hammer_guard.script
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>hammer_guard.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISPC($n) and !QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=hammer_track.script
+	mpqobjective $n * ADD hammer 1 Bring Harl's forge hammer to the gate guard
+	mpqjournal $n * Harl lost his forge hammer in his locked storeroom.  The gate guard will pay for it.
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" Good.  The key is in the oak chest at the well house.  Bring me the hammer from the storeroom.
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+
+GIVE_PROG all
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		if NAME($o == 'an old forge hammer')
+			mpjunk $o
+			mpqobjective $n * DONE hammer
+			mpqjournal $n * I gave Harl's hammer to the gate guard.
+			sayto "$n" Harl will be glad of it.  Here is your reward.
+			mpquestwin $n * REWARD
+			mpendquest $n
+			mpqset * STATISTICS SUCCESS
+		endif
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>hammer_track.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS Fetch the forge hammer from Harl's storeroom and give it to the gate guard.
+~
+</DATA></FILE>

@@ -1538,15 +1538,9 @@ standing: `QUESTS` or `QUESTS WON` shows it. From the menu form
 it by number or name; from inside a running game, `RESTORE tutorial` does the
 same.
 
-**Known problem with this quest.** When this chapter was checked, a restored
-game showed `QUESTS` correctly (the quest accepted, its objective, a finished
-quest still finished) but the gate guard was no longer standing at the gate, and
-`QUESTINFO harls_hammer` reported `stopped on an error` with `!mob 'THE GATE
-GUARD'`. It happens in any restored game while the quest file is in the world
-(the same world without the quest file keeps its guard), so a restored game
-cannot finish this quest. A new game is not affected, and the `.play` test
-and the by-hand run above are new games. The problem is in the engine's quest
-code, not in anything you typed.
+Give the hammer to the gate guard in the restored game and the quest finishes
+as it would have in the first session: the guard, the quest's own mob, is back
+at the gate with the quest running.
 
 A restored game plays the *saved* world, not the current files. If you change
 the world after the save, the game tells you at login (`This save was made with

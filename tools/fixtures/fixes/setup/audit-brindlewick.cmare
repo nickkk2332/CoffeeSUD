@@ -1,0 +1,456 @@
+<AREA>
+ <ACLAS>StdArea</ACLAS>
+ <ANAME>Brindlewick</ANAME>
+ <ADESC />
+ <ACLIM>0</ACLIM>
+ <ASUBS />
+ <ATECH>0</ATECH>
+ <ADATA>
+  <REPUTATION />
+  <ARCHP />
+  <PARENTS />
+  <CHILDREN />
+  <PREJFC />
+  <IGNMSK />
+  <BUDGET />
+  <DEVALR />
+  <INVRER>0</INVRER>
+  <CURRENCY />
+  <IPRICS />
+  <IMG />
+  <BEHAVES />
+  <AFFECS />
+  <AUTHOR />
+  <BLURBS />
+  <AATMO>-1</AATMO>
+ </ADATA>
+ <AROOMS>
+  <AROOM>
+   <ROOMID>Brindlewick#0</ROOMID>
+   <RAREA>Brindlewick</RAREA>
+   <RCLAS>CityStreet</RCLAS>
+   <RDISP>The Brindlewick green</RDISP>
+   <RDESC><VARIES><NIGHT>Lantern light spills from the smithy door and the gate across the trodden grass.</NIGHT><ELSE>Sun lies warm on the trodden grass.</ELSE></VARIES> Three low stone buildings face the green: a smithy to the north, the village gate to the east and a well house with a sagging roof to the south.</RDESC>
+   <RTEXT xml="1">
+    <RCLIM>-1</RCLIM>
+    <RATMO>-1</RATMO>
+    <IMG />
+    <BEHAVES />
+    <AFFECS>
+     <AFF>
+      <ACLASS>Prop_FirstEntry</ACLASS>
+      <ATEXT>ID=brindlewick-arrival TEXT="Woodsmoke and the ring of a hammer drift across the green." ONCE=CHARACTER</ATEXT>
+     </AFF>
+    </AFFECS>
+   </RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>2</XDIRE>
+     <XDOOR>Brindlewick#2</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+    <REXIT>
+     <XDIRE>1</XDIRE>
+     <XDOOR>Brindlewick#3</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+    <REXIT>
+     <XDIRE>0</XDIRE>
+     <XDOOR>Brindlewick#1</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS />
+    <ROOMITEMS />
+   </ROOMCONTENT>
+  </AROOM>
+  <AROOM>
+   <ROOMID>Brindlewick#1</ROOMID>
+   <RAREA>Brindlewick</RAREA>
+   <RCLAS>StoneRoom</RCLAS>
+   <RDISP>Harl`s smithy</RDISP>
+   <RDESC><VARIES><QUESTWON harls_hammer>Harl`s old forge hammer hangs on its hook again, and the smithy rings with work.</QUESTWON><ELSE>An empty hook hangs above the anvil, where a hammer should be.</ELSE></VARIES> Heat shimmers over the forge. Racks of tongs and half-finished hinges line the walls, and a narrow door in the north wall leads to the storeroom.</RDESC>
+   <RTEXT xml="1">
+    <RCLIM>0</RCLIM>
+    <RATMO>-1</RATMO>
+    <IMG />
+    <BEHAVES />
+    <AFFECS />
+   </RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>1</XDIRE>
+     <XDOOR>Brindlewick#0</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+    <REXIT>
+     <XDIRE>0</XDIRE>
+     <XDOOR>Brindlewick#4</XDOOR>
+     <XEXIT>
+      <EXID>LockedDoor</EXID>
+      <EXDAT>harl.store</EXDAT>
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS>
+     <RMOB>
+      <MCLAS>GenShopkeeper</MCLAS>
+      <MLEVL>10</MLEVL>
+      <MABLE>11</MABLE>
+      <MREJV>0</MREJV>
+      <MTEXT xml="1">
+       <NAME>Harl the smith</NAME>
+       <DESC>A broad, soot-streaked man with forearms like fence posts. He has the look of someone who has lost something and will not say what.</DESC>
+       <DISP>Harl the smith pounds a glowing bar on his anvil.</DISP>
+       <PROP ABILITY="11" ARMOR="77" ATTACK="10" DAMAGE="10" DISPOSITION="0" LEVEL="10" REJUV="0" SPEED="1.0" WEIGHT="185" HEIGHT="76" SENSES="0" />
+       <PREJFC />
+       <IGNMSK />
+       <BUDGET />
+       <DEVALR />
+       <INVRER>0</INVRER>
+       <CURRENCY />
+       <IPRICS />
+       <IMG />
+       <BEHAVES />
+       <AFFECS />
+       <FLAG>0</FLAG>
+       <MONEY>5</MONEY>
+       <VARMONEY>0.0</VARMONEY>
+       <GENDER>M</GENDER>
+       <MRACE>Human</MRACE>
+       <FACTIONS>
+        <FCTN ID="ALIGNMENT.INI">10000</FCTN>
+       </FACTIONS>
+       <INVEN />
+       <ABLTYS>
+        <ABLTY>
+         <ACLASS>Chopping</ACLASS>
+         <APROF>50</APROF>
+         <ADATA>
+          <AWRAP />
+         </ADATA>
+        </ABLTY>
+        <ABLTY>
+         <ACLASS>Common</ACLASS>
+         <APROF>100</APROF>
+         <ADATA>
+          <AWRAP />
+         </ADATA>
+        </ABLTY>
+        <ABLTY>
+         <ACLASS>FireBuilding</ACLASS>
+         <APROF>0</APROF>
+         <ADATA>
+          <AWRAP />
+         </ADATA>
+        </ABLTY>
+       </ABLTYS>
+       <SELLCD>0</SELLCD>
+       <SELLIMSK />
+       <SIVTYP>BASIC</SIVTYP>
+       <STORE>
+        <SHITEM>
+         <SICLASS>GenWeapon</SICLASS>
+         <SITYPE>WEAPON</SITYPE>
+         <SISTOCK>3</SISTOCK>
+         <SIPRICE>-1</SIPRICE>
+         <SIDATA>
+          <NAME>a notched shortsword</NAME>
+          <DESC>A plain blade with a nick near the point. It is balanced well enough.</DESC>
+          <DISP>A notched shortsword leans against the anvil.</DISP>
+          <PROP ABILITY="0" ARMOR="0" ATTACK="0" DAMAGE="6" DISPOSITION="0" LEVEL="2" REJUV="0" SPEED="1.0" WEIGHT="2" HEIGHT="0" SENSES="0" />
+          <IMG />
+          <BEHAVES />
+          <AFFECS />
+          <FLAG>11</FLAG>
+          <IDENT />
+          <VALUE>30</VALUE>
+          <MTRAL>811</MTRAL>
+          <WORNL>false</WORNL>
+          <WORNB>1536</WORNB>
+          <READ />
+          <ACAPA>0</ACAPA>
+          <TYPE>1</TYPE>
+          <CLASS>8</CLASS>
+          <MINR>0</MINR>
+          <MAXR>0</MAXR>
+          <IWORN>0</IWORN>
+          <ILOC />
+          <IUSES>100</IUSES>
+          <ILEVL>2</ILEVL>
+          <IABLE>0</IABLE>
+         </SIDATA>
+        </SHITEM>
+       </STORE>
+      </MTEXT>
+      <MRIDE />
+     </RMOB>
+    </ROOMMOBS>
+    <ROOMITEMS />
+   </ROOMCONTENT>
+  </AROOM>
+  <AROOM>
+   <ROOMID>Brindlewick#2</ROOMID>
+   <RAREA>Brindlewick</RAREA>
+   <RCLAS>CityStreet</RCLAS>
+   <RDISP>The village gate</RDISP>
+   <RDESC>The gate is a gap in a low palisade, with a trampled road running east into the hills. A guard post of piled sandbags stands beside the arch.</RDESC>
+   <RTEXT xml="1">
+    <RCLIM>-1</RCLIM>
+    <RATMO>-1</RATMO>
+    <IMG />
+    <BEHAVES />
+    <AFFECS />
+   </RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>3</XDIRE>
+     <XDOOR>Brindlewick#0</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS>
+     <RMOB>
+      <MCLAS>GenMob</MCLAS>
+      <MLEVL>6</MLEVL>
+      <MABLE>11</MABLE>
+      <MREJV>0</MREJV>
+      <MTEXT xml="1">
+       <NAME>the gate guard</NAME>
+       <DESC>A young guard in a patched tabard. He watches the road and the gossip with equal attention.</DESC>
+       <DISP>A gate guard leans on a long spear here.</DISP>
+       <PROP ABILITY="11" ARMOR="88" ATTACK="6" DAMAGE="6" DISPOSITION="0" LEVEL="6" REJUV="0" SPEED="1.0" WEIGHT="179" HEIGHT="75" SENSES="0" />
+       <IMG />
+       <BEHAVES>
+        <BHAVE>
+         <BCLASS>Guard</BCLASS>
+         <BPARMS />
+        </BHAVE>
+        <BHAVE>
+         <BCLASS>Scriptable</BCLASS>
+         <BPARMS>GREET_PROG 100;if ispc($n);say Welcome to Brindlewick, $n. Harl the smith has lost his hammer. Say accept if you will help find it.;endif;~;SPEECH_PROG key storeroom;say The storeroom key? Harl keeps it in the oak chest in the well house, south of the green.;~;</BPARMS>
+        </BHAVE>
+       </BEHAVES>
+       <AFFECS />
+       <FLAG>0</FLAG>
+       <MONEY>11</MONEY>
+       <VARMONEY>0.0</VARMONEY>
+       <GENDER>M</GENDER>
+       <MRACE>Human</MRACE>
+       <FACTIONS>
+        <FCTN ID="ALIGNMENT.INI">0</FCTN>
+       </FACTIONS>
+       <INVEN />
+       <ABLTYS>
+        <ABLTY>
+         <ACLASS>Chopping</ACLASS>
+         <APROF>50</APROF>
+         <ADATA>
+          <AWRAP />
+         </ADATA>
+        </ABLTY>
+        <ABLTY>
+         <ACLASS>Common</ACLASS>
+         <APROF>100</APROF>
+         <ADATA>
+          <AWRAP />
+         </ADATA>
+        </ABLTY>
+        <ABLTY>
+         <ACLASS>FireBuilding</ACLASS>
+         <APROF>0</APROF>
+         <ADATA>
+          <AWRAP />
+         </ADATA>
+        </ABLTY>
+       </ABLTYS>
+      </MTEXT>
+      <MRIDE />
+     </RMOB>
+    </ROOMMOBS>
+    <ROOMITEMS />
+   </ROOMCONTENT>
+  </AROOM>
+  <AROOM>
+   <ROOMID>Brindlewick#3</ROOMID>
+   <RAREA>Brindlewick</RAREA>
+   <RCLAS>WoodRoom</RCLAS>
+   <RDISP>The well house</RDISP>
+   <RDESC>A squat well house keeps the rain off a mossy well. The beams creak whenever the wind blows. An oak chest stands against one wall.</RDESC>
+   <RTEXT xml="1">
+    <RCLIM>0</RCLIM>
+    <RATMO>-1</RATMO>
+    <IMG />
+    <BEHAVES />
+    <AFFECS />
+   </RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>0</XDIRE>
+     <XDOOR>Brindlewick#0</XDOOR>
+     <XEXIT>
+      <EXID>StdOpenDoorway</EXID>
+      <EXDAT />
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS />
+    <ROOMITEMS>
+     <RITEM>
+      <ICLAS>GenContainer</ICLAS>
+      <IIDEN>com.planet_ink.coffee_mud.Items.Basic.GenContainer@3b1e40a6</IIDEN>
+      <ILOCA />
+      <IREJV>0</IREJV>
+      <IUSES>2147483647</IUSES>
+      <ILEVL>0</ILEVL>
+      <IABLE>0</IABLE>
+      <ITEXT xml="1">
+       <NAME>an oak chest</NAME>
+       <DESC>A sturdy chest with a plain lid. The iron bands are rusting at the corners.</DESC>
+       <DISP>An oak chest, bound with iron, stands against the wall.</DISP>
+       <PROP ABILITY="0" ARMOR="0" ATTACK="0" DAMAGE="0" DISPOSITION="0" LEVEL="0" REJUV="0" SPEED="1.0" WEIGHT="2" HEIGHT="0" SENSES="0" />
+       <IMG />
+       <BEHAVES />
+       <AFFECS />
+       <FLAG>187</FLAG>
+       <IDENT />
+       <VALUE>5</VALUE>
+       <MTRAL>314</MTRAL>
+       <WORNL>false</WORNL>
+       <WORNB>512</WORNB>
+       <READ />
+       <CAPA>60</CAPA>
+       <CONT>0</CONT>
+       <OPENTK>30</OPENTK>
+      </ITEXT>
+     </RITEM>
+     <RITEM>
+      <ICLAS>GenKey</ICLAS>
+      <ILOCA>com.planet_ink.coffee_mud.Items.Basic.GenContainer@3b1e40a6</ILOCA>
+      <IREJV>0</IREJV>
+      <IUSES>2147483647</IUSES>
+      <ILEVL>1</ILEVL>
+      <IABLE>0</IABLE>
+      <ITEXT xml="1">
+       <NAME>a brass storeroom key</NAME>
+       <DESC>A small brass key on a loop of cord, with a tag that reads STORE.</DESC>
+       <DISP>A small brass key lies here.</DISP>
+       <PROP ABILITY="0" ARMOR="0" ATTACK="0" DAMAGE="0" DISPOSITION="0" LEVEL="1" REJUV="0" SPEED="1.0" WEIGHT="2" HEIGHT="0" SENSES="0" />
+       <IMG />
+       <BEHAVES />
+       <AFFECS />
+       <FLAG>11</FLAG>
+       <IDENT />
+       <VALUE>5</VALUE>
+       <MTRAL>801</MTRAL>
+       <WORNL>false</WORNL>
+       <WORNB>512</WORNB>
+       <READ>harl.store</READ>
+      </ITEXT>
+     </RITEM>
+    </ROOMITEMS>
+   </ROOMCONTENT>
+  </AROOM>
+  <AROOM>
+   <ROOMID>Brindlewick#4</ROOMID>
+   <RAREA>Brindlewick</RAREA>
+   <RCLAS>StoneRoom</RCLAS>
+   <RDISP>Harl`s storeroom</RDISP>
+   <RDESC>Shelves of ingots, spare handles and rusting tools crowd the storeroom. The air smells of oil and cold iron.</RDESC>
+   <RTEXT xml="1">
+    <RCLIM>0</RCLIM>
+    <RATMO>-1</RATMO>
+    <IMG />
+    <BEHAVES />
+    <AFFECS />
+   </RTEXT>
+   <ROOMEXITS>
+    <REXIT>
+     <XDIRE>1</XDIRE>
+     <XDOOR>Brindlewick#1</XDOOR>
+     <XEXIT>
+      <EXID>LockedDoor</EXID>
+      <EXDAT>harl.store</EXDAT>
+     </XEXIT>
+    </REXIT>
+   </ROOMEXITS>
+   <ROOMCONTENT>
+    <ROOMMOBS />
+    <ROOMITEMS>
+     <RITEM>
+      <ICLAS>GenItem</ICLAS>
+      <ILOCA />
+      <IREJV>0</IREJV>
+      <IUSES>2147483647</IUSES>
+      <ILEVL>1</ILEVL>
+      <IABLE>0</IABLE>
+      <ITEXT xml="1">
+       <NAME>an old forge hammer</NAME>
+       <DESC>A heavy hammer with a scorched ash handle and a worn face. A letter H is burned into the haft.</DESC>
+       <DISP>An old forge hammer lies in the dust.</DISP>
+       <PROP ABILITY="0" ARMOR="0" ATTACK="0" DAMAGE="0" DISPOSITION="1048576" LEVEL="1" REJUV="0" SPEED="1.0" WEIGHT="8" HEIGHT="0" SENSES="0" />
+       <IMG />
+       <BEHAVES />
+       <AFFECS />
+       <FLAG>11</FLAG>
+       <IDENT />
+       <VALUE>10</VALUE>
+       <MTRAL>1328</MTRAL>
+       <WORNL>false</WORNL>
+       <WORNB>512</WORNB>
+       <READ />
+      </ITEXT>
+     </RITEM>
+     <RITEM>
+      <ICLAS>GenArmor</ICLAS>
+      <ILOCA />
+      <IREJV>0</IREJV>
+      <IUSES>100</IUSES>
+      <ILEVL>1</ILEVL>
+      <IABLE>0</IABLE>
+      <ITEXT xml="1">
+       <NAME>a padded leather jerkin</NAME>
+       <DESC>Layers of quilted cloth over stiff leather. It smells of the forge.</DESC>
+       <DISP>A padded leather jerkin lies folded on a shelf.</DISP>
+       <PROP ABILITY="0" ARMOR="6" ATTACK="0" DAMAGE="0" DISPOSITION="0" LEVEL="1" REJUV="0" SPEED="1.0" WEIGHT="25" HEIGHT="0" SENSES="0" />
+       <IMG />
+       <BEHAVES />
+       <AFFECS />
+       <FLAG>27</FLAG>
+       <IDENT />
+       <VALUE>5</VALUE>
+       <MTRAL>566</MTRAL>
+       <WORNL>false</WORNL>
+       <WORNB>4</WORNB>
+       <READ />
+       <CAPA>0</CAPA>
+       <CONT>0</CONT>
+       <OPENTK>30</OPENTK>
+       <LAYR>0</LAYR>
+       <LAYA>0</LAYA>
+      </ITEXT>
+     </RITEM>
+    </ROOMITEMS>
+   </ROOMCONTENT>
+  </AROOM>
+ </AROOMS>
+</AREA>

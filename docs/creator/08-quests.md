@@ -1311,7 +1311,11 @@ What a campaign save holds for quests (`WorldState` in
 A restore that cannot find a saved quest in the world's files reports "Quest X is
 gone from the world." A quest that was running starts again, goes to its saved
 step (by name when it has one, so an edited file still restores), gets its time
-left and has its mobs and items put back or removed. The world files do not hold
+left and has its mobs and items put back or removed. It starts again before the
+rest of the world is put back, so a mob or item of the world it had taken over
+(`SET MOB`, `RESELECT`) is taken over again rather than cleared away; one that
+cannot start that early (it needs something only the save brings back) starts
+once the rooms are back. The world files do not hold
 winners or running state; those are only in the campaign save. Editing a quest
 file between a save and a restore therefore keeps the progress but may
 drop objects that no longer exist. See [Saves and party](31-saves-and-party.md).

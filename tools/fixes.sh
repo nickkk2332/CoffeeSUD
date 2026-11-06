@@ -522,6 +522,19 @@ group_saves3()
 	count audit-restore.txt "is incomplete or damaged" 0
 	jsresults audit-restore.txt
 	cp "$W/new-area.before-audit" "$W/wworld/areas/new-area.cmare"
+	# D-SP-11 (docs audit): a quest running when the game is saved, which took
+	# over a mob of the world (the tutorial's gate guard, SET MOB RESELECT), is
+	# running again after the restore and has the mob, who is back in its room
+	mkdir -p "$W/qdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/qdb/"
+	cp -r "$GAME/world" "$W/qworld"
+	mkdir -p "$W/qworld/quests"
+	cp "$FX/setup/audit-brindlewick.cmare" "$W/qworld/areas/brindlewick.cmare"
+	cp "$FX/setup/audit-harls-hammer.quest" "$W/qworld/quests/harls-hammer.quest"
+	play audit-quest-play.txt qdb qworld "Questkeeper\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/audit-quest-start.js\nsave auditq\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults audit-quest-play.txt
+	play audit-quest-restore.txt qdb qworld 'jrun /resources/_fixes/audit-quest-check.js\nquit\nn\n' RESTORE=auditq TIMEMODE=TURNS
+	expect audit-quest-restore.txt "Restored 'auditq'."
+	jsresults audit-quest-restore.txt
 
 	# S22: a character's entry limits (InstanceArea's LIMIT) and planar
 	# visits are saved, with the time they have left

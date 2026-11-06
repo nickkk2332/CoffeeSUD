@@ -432,6 +432,7 @@ load-bearing:
 afterBoot (game thread)
   WorldState.apply(world.xml)
     clear transient maps; note newRooms          booted rooms the save does not have (D-SP-2)
+    startRunningQuests(QUESTS)                   quests running at the save take over the world's mobs again (D-SP-11)
     clearWorld()                                 empty every other room of boot-time mobs/items
     ROOMSHAPES  -> putShapes                     recreate made/changed/destroyed rooms and areas
     SPACE       -> putSpace                      before rooms: a ship's rooms must exist

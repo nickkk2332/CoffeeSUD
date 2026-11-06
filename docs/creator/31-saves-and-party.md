@@ -978,9 +978,14 @@ are in [State and persistence](state-and-persistence.md).
 3. The world boots from the files; the clocks read their dates; the world's
    JavaScript `init.js` and `onBoot()` run (the world is flagged *pending* so
    scripts wait rather than run what they already ran).
-4. `WorldState.apply` empties every room of the mobs and items the boot placed
-   and puts back what the save holds, then doors, weather, area states, variables,
-   quests, rides and so on.
+4. `WorldState.apply` first starts again each quest that was running when the
+   game was saved, so that it takes over the same mobs and items of the world as
+   it did then (`SET MOB`, `RESELECT`: the save keeps a quest's objects with the
+   quest, not in their rooms). It then empties every room of the other mobs and
+   items the boot placed and puts back what the save holds, then doors, weather,
+   area states, variables, quests (their steps, timers and where their mobs
+   were), rides and so on. Rooms the save does not have, made after it, are left
+   as the world has them.
 5. The played character logs in. `finishRestore` brings the other characters back
    into the world where they were, resolves who follows whom, puts hit points and
    timed effects back, and restores fights and rides.

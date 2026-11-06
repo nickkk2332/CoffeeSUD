@@ -408,6 +408,16 @@ public final class WorldState
 					SaveGame.noteWorldChange(CMLib.lang().L("@x1 rooms are new since this save and are as the world has them now: @x2.", "" + some.size(), list));
 			}
 		}
+		// D-SP-11: a quest running when the game was saved had taken over mobs
+		// and items of the world as booted (SET MOB, RESELECT); the save left
+		// them out of their rooms, as it does every quest object.  So it starts
+		// again now, before the world is cleared, and takes them over again;
+		// clearWorld keeps them and setQuests matches them to the save.  One
+		// that cannot start yet (it needs what only the save brings back) is
+		// started again by setQuests, after the rooms.
+		final XMLTag savedQuests = world.getPieceFromPieces("QUESTS");
+		if(savedQuests != null)
+			startRunningQuests(savedQuests);
 		clearWorld();
 		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
 		if(shapes != null)
@@ -2735,6 +2745,28 @@ public final class WorldState
 	 * uses, which is then made to match the save.
 	 * @param quests the QUESTS tag
 	 */
+	/**
+	 * D-SP-11: starts each quest of the world that was running when the game
+	 * was saved and is not running now, before the world is cleared.  A quest
+	 * made in play is made again later, by setQuests.
+	 * @param quests the save's QUESTS
+	 */
+	private static void startRunningQuests(final XMLTag quests)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		for(final XMLTag tag : quests.contents())
+		{
+			if((!tag.getBoolFromPieces("RUNNING", false)) || "true".equalsIgnoreCase(tag.getParmValue("GENERATED")))
+				continue;
+			final Quest Q = CMLib.quests().fetchQuest(xml.restoreAngleBrackets(tag.getValFromPieces("NAME")));
+			if((Q == null) || Q.isCopy() || Q.running())
+				continue;
+			if("true".equals(Q.getStat("FINISHED")))
+				Q.setStat("FINISHED", "false");
+			Q.startQuest();
+		}
+	}
+
 	private static void setQuests(final XMLTag quests)
 	{
 		final XMLLibrary xml = CMLib.xml();
