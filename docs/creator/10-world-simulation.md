@@ -1684,14 +1684,15 @@ WEATHER_PROG THUNDERSTORM
 WEATHER FORECAST
 WEATHER SET THUNDERSTORM
 TIME SET 2
-ISTIDE is not a command; use HAZARDS and LOOK to see states
+TIME SET 9
+WAIT 3 HOURS
 ```
 
 `WEATHER SET THUNDERSTORM` fires the `WEATHER_PROG` and starts the stair
-rising; `TIME SET DAWN`, `TIME SET DUSK` and `TIME SET 9` step through the
-tides (watch the cove change and the causeway answer); `TIME SET` can only
-go forward, so loop with the hour numbers. `WAIT 5 HOURS` lets the stair
-actually rise, because it counts ticks.
+rising. `TIME SET 2` and `TIME SET 9` step the clock to low and then high
+tide (watch the cove change and the causeway answer; `TIME SET` only goes
+forward and wraps to the next day). The stair counts ticks, not hours, so
+`WAIT 3 HOURS` is what actually lets the water rise.
 
 ### Example 2: a winter-only pass
 
@@ -1759,7 +1760,8 @@ Prop_RoomDark ABSOLUTE=TRUE LIGHTMASK="-TAGS +DAWNLANTERN" SNUFF=100 SNUFFMSG="Y
 Prop_DarkDanger LOST=10% STUMBLE=5% LURKER=drowned_priest LURK=4% LURKMSG="A drowned priest drifts out of the black water."
 ```
 
-Give the Lantern of Dawn (a light item) the tag `DAWNLANTERN` in the item
+`drowned_priest` is a mob you saved to the catalog under that name. Give
+the Lantern of Dawn (a light item) the tag `DAWNLANTERN` in the item
 editor's Tags field. Torches go out as one swims in (`SNUFF=100`); the lantern
 works, so the character can see. Without it the hall is dark and `Prop_DarkDanger`
 sends them astray.
@@ -1780,7 +1782,7 @@ breath of air").
 player their state:
 
 ```text
-GREET_PROG all
+GREET_PROG 100
  if BREATH($n < 3)
   mpecho $n gasps, lungs burning.
  endif
@@ -1920,7 +1922,7 @@ are in [31-saves-and-party.md](31-saves-and-party.md) and
   `CALENDAR HOLIDAYS`; make sure the holiday editor did not rewrite a
   hand-written recurrence.
 - **`TIME SET` cannot go backwards.** It runs the clock forward and wraps to
-  the next day. Use `TICKTOCK -n` (the clock goes back without replaying).
+  the next day. Use `TICKTOCK -n` to move it back.
 - **Climate edits do not show.** The files are cached. `WEATHER FORECAST`
   prints "(no file: the built-in climate)" if the name is wrong.
 - **`WORLD CHECK` or the quest checker complains of `SET WEEKDAY`...** The

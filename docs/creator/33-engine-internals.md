@@ -569,7 +569,7 @@ Source: [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/Wo
 | `templates.cmare`, `clans.cmare` | `templatesText`, `clansText` | Shared builder templates (player data `SYSTEM_BTEMPLATE_SHARED`), clans with no player members. |
 | `space.cmare` | `spaceText`, `loadSpace` | Items in space; put in space at every boot (no database table holds them). |
 | `journals/NAME.xml` | `journalFiles` | Journals of world `StdJournal` items plus `SYSTEM_CRON`. |
-| `vfs/...` and `vfs/.index` | `writeVFS`, `importExtras` | One file per entry of the database file system; `.index` has tab-separated `path, flags, owner`. |
+| `vfs/...` and `vfs/.index` | `writeVFS`, `importExtras` | One file per entry of the database file system; `.index` has tab-separated `path, integer mask, author`. |
 | `laws/AREA.ini` | `lawFile`, `writeLaw` | An area's own law (builder mode). |
 | `js/`, `scripts/`, `routes/` | tracked only | JavaScript, world scripts (`WorldHost`) and route files; hand-edited. |
 | `world.ini` | `WorldSettings` | Whitelisted settings; tracked for display but excluded from the checksum and from `managedPaths()`. |
@@ -744,7 +744,7 @@ words)` and `end(command)` are called around those commands (depth counted per
 thread so nested commands are one entry); `snapshot(R)` captures a room's XML the
 first time it changes inside an entry. `end` drops entries where no room's XML
 ended up different. Entries are kept in memory and written to
-`world/.history/<n>.undo` files (read at first use): a text file of
+`world/.history/<15-digit time>-<n>.undo` files (read at first use; a `.gitignore` of `*` is written with the folder): a text file of
 `WHAT ...`, `WHEN millis`, then `ROOM <length> <roomID>` followed by that many
 characters of XML. `undo(n)` recreates each room from its XML (`restoreRoom`) with
 its contents waiting outside, and links the exits into it again. `HISTORY` lists
@@ -796,8 +796,7 @@ loader prefers the row with data), `sc3-catalog.js` (catalog loading from script
 - The exporter writes from the live world, not from the database. Anything a
   builder changes without a builder command (a script, `JRUN`) reaches the files
   only through `exportAll`, and the `cacheArea` step keeps the cache in step.
-- `fileNameFor` de-duplicates names that map to the same file; two areas whose names
-  differ only in characters it strips would collide.
+- `fileNameFor` lower-cases the name, keeps ASCII letters and digits, turns runs of anything else into one `-`, and adds `-2`, `-3` ... on a clash. Two area names that differ only in what it strips get numbered files, and the numbering follows the sorted export order, so renaming one area can rename another's file.
 - Never read `knownSums` as "what is on disk"; it is "what this process last loaded
   or wrote".
 
@@ -821,7 +820,7 @@ Rules to keep in mind when touching code that uses it:
 - A catalog entry is a row in `CMROIT` (items) or `CMROCH` (mobs) under the pseudo
   room id `CATALOG_ITEMS` / `CATALOG_MOBS` (`RoomLoader` tests
   `roomID.startsWith("CATALOG_")`). The catalog data (spawn rule, rate, cap, mask,
-  uniqueness) is stored with the row. On load, `DBReadRoomObjects`
+  uniqueness) is stored with the row. On load, `RoomLoader.DBReadContent`
   sorts rows with `RoomLoader.catalogOrder(itemNums, cataData)`: by name, and for a name
   with several rows the row **with** catalog data first; the first row of a name
   becomes the catalog's entry, later duplicates are deleted

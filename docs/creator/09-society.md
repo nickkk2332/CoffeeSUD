@@ -478,7 +478,8 @@ mode; they take effect on the next start; defaults are in `coffeemud.ini`):
 `coffeemud.ini` also holds the inherited `MINCLANLEVEL`, vote defaults
 (`CLANVOTEO/D/R`), trophy prizes (`CLANTROP*`), `CLANENCHCOST`, `PUBLICCLANCATS`
 and the unused web/forum keys. Clan trophies (awards for most members, most
-conquered areas and so on) are still computed and announced.
+conquered areas and so on) are still in the code; their prizes are the
+`CLANTROP*` settings.
 
 The shipped comment on `MAXCLANCATS` says `0` means unlimited; in the code a
 value of `0` blocks all membership of that category (the join checks test

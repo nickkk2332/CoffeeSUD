@@ -1771,3 +1771,297 @@ from recruited player characters. Training that consumes game time (P30) is not
 implemented; teachers, followers, affinity, hirelings and recruitment are
 available now.
 
+## Command quick reference
+
+Player commands (all forms are as `getAccessWords()` registers them):
+
+| Command | Use |
+| --- | --- |
+| `NEW [name] (QUICK (template))` | Profile menu: make a character |
+| `SCORE` (`SC`), `EXPERIENCE` (`XP`, `EXP`, `EXPER`) | Stats, levels, experience (and deferred experience) |
+| `TRAIN (thing) (teacher) (NOPROMPT)` (`TR`, `TRA`) | Spend trains: stats, pools, practices, class change, `GAIN` |
+| `PRACTICE [skill] (teacher)` (`PRAC`) | Raise a skill's proficiency |
+| `GAIN [skill]`, `TEACH [student] [skill]`, `TEACHLIST (teacher)` | Learn and teach skills and expertises |
+| `QUALIFY (kind)` (`QUAL`), `WILLQUALIFY (level) (class)` | What you can learn now, and at a level or in a class |
+| `SKILLS`, `EXPERTISES` (`EXPS`), `SKILLTREE (class or skill)` (`STREE`) | What you know, and the tree |
+| `PERKS`, `PERK [name]` | Perks and picks |
+| `RANKS` | Rank ladders |
+| `RESPEC (thing\|ALL)` (`RETRAIN`) | Undo purchases where a place allows |
+| `TITLE` | Choose titles |
+| `ACHIEVEMENTS (...)` | Achievements and their rewards |
+| `RECRUIT [name]` | Ask an NPC to join your profile |
+| `REMORT`, `RETIRE` | Start over; delete the character |
+
+Builder and developer commands:
+
+| Command | Use |
+| --- | --- |
+| `CREATE\|MODIFY\|DESTROY RACE <ID>`, `CREATE MIXEDRACE <MOTHER> <FATHER>` | Generic races (flag `CMDRACES`) |
+| `CREATE\|MODIFY\|DESTROY CLASS <ID>` | Generic classes (flag `CMDCLASSES`) |
+| `CREATE\|MODIFY ALLQUALIFY ...`, `LIST ALLQUALIFYS` | Skills every class (or each of several) can qualify for |
+| `LIST RACES`, `LIST RACECATS`, `LIST CLASSES`, `LIST EXPERTISES`, `LIST TITLES` | Inspect |
+| `CATALOG CATEGORY PLAYERTEMPLATE`, `CATALOG <mob>` | File a ready-made character |
+| `KIT <name> (who)`, `TESTCHAR <name> (KIT=<kit>) (PARTY)` | Apply a kit; make a test character (builder mode or `DEV=1`) |
+| `PROGRESSION <class> (race) (level)`, `PROGRESSION XP (area)` | Level curve; experience in the content |
+| `CHARGEN COMBAT\|NEW\|PLAYER\|EQUIP (class) (level)` | Example characters for balance comparison |
+| `MPEXP`, `MPLEVELUP`, `MPLEVELDOWN`, `MPPERK`, `MPRANK`, `MPRESPEC`, `MPRECRUIT`, `MPTITLE` | Script commands; see [27-mobprog-commands.md](27-mobprog-commands.md) |
+| `HASPERK()`, `RANK()`, `EXPTONEXT()`, `HASTATTOO()` | Script functions; see [28-mobprog-functions.md](28-mobprog-functions.md) |
+| `WORLD SET KEY=value` | Write a key to `world/world.ini` in builder mode (takes effect at the next start) |
+
+## Worked examples
+
+### 1. A campaign opening with origins, kits, a question and perks
+
+Goal: players choose between a temple orphan and a dockside sailor, may pick a
+starting kit, answer one personality question, and spend two points on traits;
+later characters join at the party's level.
+
+`world/world.ini`:
+
+```ini
+START=Ashford#1
+STARTHP=24
+NEWCHARLEVEL=PARTYMIN
+NEWCHARXP=FLOOR
+PROFILEMAX=6
+PARTYMAX=4
+CLASSSYSTEM=SUB
+SHOWLOCKED=YES
+```
+
+`world/creation.ini`:
+
+```ini
+STEPS=RACE,GENDER,STATS,CLASS,ORIGIN,KIT,TEMPER,TRAITS,FACTIONS,REVIEW
+
+[TEMPER]
+PROMPT=How do you meet trouble?
+CHOICE=NAME="Boldly" HELP="You step forward first." EFFECTS="1 STRENGTH"
+CHOICE=NAME="Carefully" HELP="You look before you leap." EFFECTS="1 WISDOM"
+```
+
+`world/origins.ini`:
+
+```ini
+[ORPHAN]
+NAME=Temple Orphan
+DESCRIPTION=Raised beside the temple library.
+MASK=-RACE +Human +Half-Elf
+START=Ashford#12
+ABILITIES=Prayer_Bless 25
+TATTOOS=ORPHAN
+MONEY=5
+
+[SAILOR]
+NAME=Dockside Sailor
+DESCRIPTION=Hauled rope since you could walk.
+START=Ashford#40
+ABILITIES=Skill_Recall 50
+MONEY=15
+```
+
+`world/kits/warm-clothes.kit` and `world/kits/travel-pack.kit`:
+
+```text
+starting all
+choose gear
+title Warm clothes and a lantern
+item 2 Torch
+```
+
+```text
+starting all
+choose gear
+title A pedlar's travel pack
+item 3 Ration
+gold 10
+```
+
+`world/perks.ini`:
+
+```ini
+PICKS=GENERAL every 5 levels
+TRAITS=2
+TRAIT_LUCKY NAME="Lucky" POOL=TRAIT COST=2 REWARDS="1 CHARISMA"
+TRAIT_KEEN NAME="Keen eyed" POOL=TRAIT COST=1
+FLAW_BADBACK NAME="Bad back" POOL=TRAIT COST=-1
+PERK_PACKMULE NAME="Pack mule" POOL=GENERAL REWARDS="50 MAXCARRY"
+```
+
+To test: start a new game, `NEW Tester`, and walk the flow as an ordinary
+player. You are asked race, gender, stats and class, then the origin menu
+(the orphan appears only for humans and half-elves), the kit menu (two kits in
+`gear`), `TEMPER`, the traits (Lucky costs the whole budget; Bad back gives a
+point back; `DONE` must not overspend), factions, and the review sheet where
+`BACK CLASS` returns you to the class step. After the review: the origin's
+room, the kit, the answer's `1 STRENGTH`, the trait rewards and the starting
+age are applied. Then create a second character and check it starts at the
+first one's level with the experience that level requires (`NEWCHARXP=FLOOR`).
+Check `HASTATTOO` for `ORIGIN_ORPHAN` and `CHARCR_TEMPER_BOLDLY` in a script
+of the temple, and `PERKS` in play.
+
+### 2. A new race and a new class
+
+Goal: an Emberkin race, locked until the player earns an oath, and a
+Pyromancer class that Emberkin and humans can take.
+
+In builder mode (see [18-installing-and-running.md](18-installing-and-running.md)):
+
+```text
+CREATE RACE Emberkin
+```
+
+In the editor set (type the number, then the value; Enter on the main menu to
+finish):
+
+| Field | Value |
+| --- | --- |
+| Racial Category | `new Emberkin` |
+| Availability | `9` (Fantasy skills only: not offered until unlocked) |
+| Unlock hint | `Swear the Ashen Oath in the Cinder Hall` |
+| Aging Chart | `0,1,3,15,60,90,130,150,170` |
+| Base Weight, Weight Variance | `140`, `40` |
+| Base Male/Female Height, Height Variance | `66`, `64`, `10` |
+| CharStat Adjustments | `STRENGTH` `1`, `SAVE VS FIRE` `25`, `SAVE VS COLD` `-10` |
+| Cultural Abilities | add `Common` (proficiency `100`, character level `0`, auto-gained `Y`) |
+| Racial Effects | add `Prop_Resistance`, level `1`, parameters `fire 25% cold -10%` |
+| Extra Practices/1stLvl | `1` |
+| Name style | the style your world uses for fire-folk (see [12-generation.md](12-generation.md)) |
+
+Then the class:
+
+```text
+CREATE CLASS Pyromancer
+```
+
+| Field | Value |
+| --- | --- |
+| Base Class | `Pyromancer` |
+| Availability | `1` |
+| Required Races | add `All` |
+| Level Cap | `-1` |
+| HP/Level Formula | `((@x6<@x7)/4)+(1*(1?4))` |
+| Mana/Level Formula | `((@x4<@x5)/3)+(1*(1?8))` |
+| Attack Attribute | `INTELLIGENCE` |
+| Armor Restr. | `CLOTH` |
+| Min. Stats | add `INTELLIGENCE` `12` |
+| Class Abilities | `Spell_Light` level 1, proficiency 50, auto-gained, public; `Spell_BurningHands` level 1, proficiency 25, auto-gained; `Spell_Fireball` level 5, proficiency 0, **not** auto-gained, pre-requisite `Spell_BurningHands(50)` |
+| Sub Class Switch Rule | `NONE` |
+
+Check it: `SKILLTREE Pyromancer` shows Fireball under Burning Hands, locked by
+level for a level-1 character. `LIST CLASSES` and `LIST RACES` list both. With
+`SHOWLOCKED=YES`, `NEW` shows `Emberkin (locked: Swear the Ashen Oath in the
+Cinder Hall)`. Give the oath as an achievement reward in
+`world/resources/achievements.ini`, on a profile achievement so it unlocks the
+race for later characters, or add `RACE_EMBERKIN` as a tattoo with a script. Save
+(builder mode writes `world/custom/races/Emberkin.cmare` and
+`world/custom/classes/Pyromancer.cmare`).
+
+### 3. A guild ladder, a retraining shrine and a discovery
+
+Goal: a guild with ranks that rise on their own early and are given later by
+a warden; a place to retrain; and a hidden grotto that pays experience once
+per profile.
+
+`world/ranks.ini` (see [Rank ladders](#rank-ladders)):
+
+```ini
+[LANTERN]
+NAME=Order of the Lantern
+RANKS="Initiate, Acolyte, Lantern-bearer, Warden"
+RANK1.REQUIRES="-LEVEL +>=3"
+RANK1.NEXT=reach level 3
+RANK2.REQUIRES="-LEVEL +>=8"
+RANK2.REWARDS="2 QP"
+RANK3.TITLE=*, Lantern-bearer
+RANK3.NEXT=speak to the warden at the vigil
+```
+
+The warden (a mob with this script) promotes a Lantern-bearer who asks:
+
+```text
+SPEECH_PROG p I seek the vigil
+  if hastattoo($n LANTERN_3)
+    mpechoat $n Keep the lamp lit, Lantern-bearer.
+    mprank $n LANTERN +1
+  else
+    mpechoat $n You are not yet ready for the Vigil.
+  endif
+~
+```
+
+A retraining shrine: on the shrine room (or an NPC) add the effect
+`Prop_Respec` with `WHAT="SKILLS,STATS" COST="5 per skill" ONCE=YES`. A player
+standing there types `RESPEC`, sees what was bought and what each undo costs,
+and `RESPEC ALL` refunds the trains and practices (less 5 gold per skill).
+
+A discovery: on the grotto room add `Prop_Discovery` with `XP=150
+ONCE=PROFILE MESSAGE="Behind the falls lies a hidden grotto!"
+TATTOO=FOUND_GROTTO`. The first character of a profile to enter pays; the
+profile tattoo stops later characters collecting again. Use `ONCE=PARTY` if the
+whole party should share one reward and `ONCE=CHARACTER` for one each.
+
+## Persistence notes
+
+| Thing | Lives in | Notes |
+| --- | --- | --- |
+| `world.ini` character settings | `world/world.ini` | Read at start; `WORLD SET KEY=value` writes it in builder mode and applies at the next start |
+| `coffeemud.ini` settings | `coffeemud.ini` | Engine ini; restart to change |
+| `creation.ini`, `origins.ini`, `perks.ini`, `ranks.ini`, kits | `world/` | World files, re-read as used (creation, perks and ranks cache by file time). Not stored in saved campaigns: a restored campaign uses the world files of the running world |
+| Generic races and classes | `world/custom/races/`, `world/custom/classes/` | Built into the database cache at start; builder-mode SAVE writes them back |
+| Ready-made characters | `world/catalog.cmare` | Catalog mobs in the category `PLAYERTEMPLATE` |
+| Achievements, titles, hints, `EXP_CHART` | `world/resources/...` copies of `resources/...` | A world's own copy replaces the stock file |
+| `progression.js` | `world/scripts/` | Read again when it changes |
+| A character's results | Its record in the campaign save | Race, class and levels, stats, practices and trains, abilities, expertises, factions, tattoos (`ORIGIN_`, `PERK_`, `CHARCR_`, `<KEY>_<n>` ranks, `RANKREWARD_`, `DISCOVERY_`...), titles, age and birthday, purchase records, deferred experience |
+| Profile tattoos | The profile | Shared by every character in it |
+
+Editing an origin, a kit, a perk, a question or a template changes only
+characters made afterwards; it does not rebuild or re-gift existing ones. The
+marks a character holds are names: renaming an origin, a perk, a question or a
+choice, or a rank ladder's key, orphans the marks existing characters have, so
+keep IDs stable and add new ones instead. Saved characters refer to their race
+and class by ID: do not delete or rename a generic race or class a saved
+character uses. Changing a stat definition (`ADDCHARSTAT_`, `REPLACECHARSTAT_`)
+needs a restart, and existing characters keep the stat values they were saved
+with. A new campaign (`NEW`) always starts from the world files; a restore uses
+the saved characters. Test across a save and restore as in
+[state-and-persistence.md](state-and-persistence.md).
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+| --- | --- |
+| A new class is chosen by nobody, or missing in `NEW` | **Required Races** is empty (an empty list admits no race; add `All`); **Availability** is 0; its **Base Class** is the default `Commoner` and `CLASSSYSTEM=SUB` only offers base classes and `ANY` classes at creation; its **Min. Stats** or **Qualifications** exclude the stats rolled; or `MUDTHEME` excludes its theme |
+| A new race is missing in `NEW` | **Availability** is 0 (the default for a new race), or has the skill-only bit (8 to 15), or its theme does not meet `MUDTHEME`; or `DISABLE=RACE_<ID>` / `STDRACES` |
+| The race list text names races the game does not offer | `races.txt` and `classes.txt` are hand-written; use `@RaceList@` / `@ClassList@`. The stock text still describes Drow, which is skill-only |
+| A race or class kept behind a tattoo does not show the hint | `SHOWLOCKED=YES` and an **Unlock hint** are both needed |
+| Origin or kit items are blank | `ITEMS=GenItem` and `item GenItem` make a blank generic item; use catalog names or real item classes. A name that is not an item class or in the catalog is logged and skipped |
+| A kit lowers a skill | `ability ID n` sets proficiency to n even if the character had more; leave the number off to give 100 |
+| A question's class mask never matches | The question comes before `CLASS` in `STEPS`; place it after |
+| `STEPS` is ignored in part | `RACE`, `GENDER`, `STATS`, `CLASS`, `FACTIONS`, `DEITY` keep the engine's order; the log says so |
+| The review never appears | `REVIEW` is not in `STEPS`, or the character is a template or `QUICK` |
+| `STARTINGITEMS` ignores an item | A name that is also a race ID starts a per-race list; use a catalog name instead |
+| `TRAIN GAIN` does nothing | `TRAINCOSTS` has no `GAIN` entry. The ini comment says `TRAINS 1 7 PRACTICE`, but the code (and the default) use `GAIN` |
+| No role-play experience | `RPAWARDS` is blank; no role-play experience is earned while fatigued, hungry or thirsty; the code's name for the emote-yourself award is `EMOTE-OTH` (the ini comment says `EMOTE-OTHER`) |
+| Victims give no experience at `EXPRATE=0` | In code, a victim lower than the killer gives nothing whenever `EXPRATE` is below the difference, so `EXPRATE=0` removes experience for lower-level victims rather than removing the level scaling (the ini comment says otherwise). Use a large `EXPRATE` instead |
+| A rank does not rise by itself | The next rank has no `REQUIRES`, or the mask is not met; ranks are re-checked at level-up, on `RANKS`, and by `MPRANK ... CHECK` |
+| A perk reward is repeated | `MPPERK ... -PERK` takes the perk away but its rewards stay; give repeatable bonuses by an effect, not a stat reward |
+| `SKILLTREE` shows few skills | The class's abilities have no pre-requisites (the tree is flat), or they are `SECRET`/`MASKED` with no hint |
+| Level-ups give the wrong practices or trains | A formula that does not compile is logged and falls back to the usual; check the log for `LevelGains` |
+| `NEWCHARLEVEL=PARTYAVG` gives level 1 | The profile has no other character yet |
+| A template character lacks the origin, kit or question gifts | By design: templates skip those steps (see [templates](#ready-made-characters-player-templates)) |
+| Everything works as the builder but not as a player | Builder mode makes the player an Archon; test `NEW` in an ordinary game |
+
+## See also
+
+- [Abilities and effects](25-abilities-and-effects.md): generic abilities, diseases, poisons, expertises, teaching and granting.
+- [Saves and party](31-saves-and-party.md) and [party rules](../party-rules.md): the profile, party, windows, `NEW` limits, saved games.
+- [Combat and encounters](29-combat-and-encounters.md): attack, armor, saves, downed states and death rules.
+- [Properties reference](23-properties-reference.md): `Prop_Trainer`, `Prop_Respec`, `Prop_Discovery`, `Prop_PlayerTemplate`, `Prop_Recruitable`, `Prop_ModExperience`.
+- [Behaviors and masks](24-behaviors-and-masks.md): `MOBTeacher` and the zapper masks used throughout this chapter.
+- [MOBPROG commands](27-mobprog-commands.md), [functions](28-mobprog-functions.md) and [triggers](26-mobprog-triggers.md): `MPEXP`, `MPLEVELUP`, `MPPERK`, `MPRANK`, `MPRESPEC`, `MPRECRUIT`, `HASPERK`, `RANK`, `EXPTONEXT`, `AGE_PROG`.
+- [JavaScript](05-javascript.md): `progression.js`, JS-defined races and classes.
+- [Mobs](21-mobs.md) and [items](22-items.md): building template characters, outfits and catalog gifts.
+- [Society](09-society.md): factions, clans and organisations that creation and ranks use.
+- [World simulation](10-world-simulation.md): the calendar that ages characters.
+- [World settings](world-settings.md), [configuration](19-configuration-and-administration.md), [state and persistence](state-and-persistence.md), [tool reference](tool-reference.md).

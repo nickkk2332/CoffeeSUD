@@ -948,18 +948,19 @@ Outside generation it is available as commands and in scripts:
 |---|---|
 | `LIST` | `LIST SELECT: ...` (world); `LIST AREA SELECT: ...` (your area only). |
 | `MODIFY` | `MODIFY UPDATE: ...` / `MODIFY AREA UPDATE: ...`. |
-| `DESTROY` | `DESTROY DELETE: ...` / `DESTROY AREA DELETE: ...` (shows a delete preview). Needs `CMDAREAS`. |
-| MOBPROG | `FOR x = SELECT: ...` style loops over a query's rows ([MOBPROG](04-mobprog.md)). |
+| `DESTROY` | `DESTROY DELETE: FROM mobs WHERE ...` / `DESTROY AREA DELETE: ...` (previews what it will delete). Needs `CMDAREAS`. |
+| MOBPROG | `FOR $1 IN SELECT: * FROM MOBS` loops over a query's rows ([FOR](27-mobprog-commands.md#for)). |
 
 ### Statement forms
 
 ```text
 SELECT: <what> FROM <set> [WHERE <conditions>]
-UPDATE: <what> SET <key> = <value> [, <key> = <value> ...] FROM <set> [WHERE <conditions>]
+UPDATE: <set> SET <key> = <value> [, <key> = <value> ...] [WHERE <conditions>]
+DELETE: FROM <set> [WHERE <conditions>]
 ```
 
-(`DELETE:` is `SELECT: .` run through the delete command.) The colon after the
-verb is required. Keywords are case-insensitive.
+The colon after the verb is required, and `UPDATE:` names the set directly
+(no `FROM`). Keywords are case-insensitive.
 
 **SELECT clause.** Comma-separated terms: a property of the objects in the set
 (`NAME`, `CLASS`, `LEVEL`...; unknown properties give an empty string), `*` or
@@ -994,12 +995,11 @@ expression) and `NOTMATCH`. Narrowing suffixes work in terms.
 
 ```text
 LIST SELECT: COUNT\* FROM AREAS\MOBS
-LIST AREA SELECT: name, level FROM mobs WHERE level > 20 AND name LIKE "-NAME +'goblin'"
+LIST AREA SELECT: name, level FROM mobs WHERE level > 20 AND name IN 'goblin'
 MODIFY AREA UPDATE: mobs SET level = 12 WHERE name = 'a goblin'
 ```
 
-(The second `WHERE` shows the shape of a `LIKE` mask; check masks with a small
-`LIST` before you `UPDATE` or `DELETE`.) MQL `UPDATE` and `DELETE` act on live
+Check a query with a `LIST` before you `UPDATE` or `DELETE` with it. MQL `UPDATE` and `DELETE` act on live
 objects in your area or the world; a touched room is marked unsaved
 (`LIST UNSAVED`, `SAVE CHANGED`; see
 [World workflow](02-world-workflow.md#unsaved-rooms-undo-and-history)).
