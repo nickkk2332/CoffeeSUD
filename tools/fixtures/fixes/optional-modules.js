@@ -52,6 +52,35 @@ try {
     bad=base("bad");bad.unknown=true;write("bad",bad);expectError("unknown-definition-field",plan(""),"unknown field");new java.io.File(modules,"bad.json").delete();
     bad=base("other");write("bad",bad);expectError("filename-identity",plan(""),"filename must be other.json");new java.io.File(modules,"bad.json").delete();
     bad=base("bad");bad.clock_modes=["WALLCLOCK"];write("bad",bad);expectError("unsupported-clock",plan(""),"clock_modes");new java.io.File(modules,"bad.json").delete();
+    // A draft, a stale manifest or a leftover setting the selection does not use warns; it stops no campaign.
+    raw("draft",'{"schema":1,');var stale=base("stale");stale.requires={"test.core":9};write(stale.id,stale);
+    var user=base("dep.user");user.requires={"draft":1};write(user.id,user);
+    var drafted=plan("test.feature",'{"gone.module":{"step":1},"stale":{"step":99}}'),warned=String(drafted.warnings());
+    check("unselected-problems-warn",drafted.blocking.isEmpty()&&warned.indexOf("modules/draft.json")>=0&&warned.indexOf("requires test.core version 9")>=0
+        &&warned.indexOf("unknown module gone.module")>=0&&warned.indexOf("modules/stale.json settings.step")>=0&&String(drafted.problems()).indexOf("modules/draft.json")>=0,String(drafted.problems())+" / blocking: "+String(drafted.blocking));
+    var started=false;try{OM.prepare(drafted,null,false);OM.prepare(drafted,null,true);started=true;}catch(e){started=String(e);}
+    check("unselected-draft-campaign-starts",started===true,"a draft stopped a campaign that does not select it: "+started);
+    check("selected-broken-module-blocks",!plan("draft").blocking.isEmpty()&&!plan("stale").blocking.isEmpty()&&!plan("test.feature",'{"test.feature":{"step":99}}').blocking.isEmpty(),"a selected broken module would start");
+    check("selected-dependency-file-error-blocks",String(plan("dep.user").blocking).indexOf("modules/draft.json")>=0,String(plan("dep.user").blocking));
+    throws("selected-problem-refuses-start",function(){OM.prepare(plan("stale"),null,false);});
+    new java.io.File(modules,"draft.json").delete();new java.io.File(modules,"stale.json").delete();new java.io.File(modules,"dep.user.json").delete();
+    // A UTF-8 byte order mark, as some editors write, is not part of the JSON.
+    Files.write(new java.io.File(modules,"bom.json").toPath(),new java.lang.String("\uFEFF"+JSON.stringify(base("bom"))).getBytes("UTF-8"));
+    var bom=plan("bom");check("utf8-bom-manifest-loads",bom.errors.isEmpty()&&bom.definitions.containsKey("bom"),String(bom.problems()));
+    new java.io.File(modules,"bom.json").delete();
+    // The fingerprint is of the contract's meaning: defaults written out, set orders, key order, title and layout do not change it.
+    var plainFp=base("fp.check");plainFp.settings.label.choices=["étoile 火","b"];plainFp.settings.note={type:"string",default:""};
+    write(plainFp.id,plainFp);var fpPlan=plan("fp.check"),fpBefore=String(fpPlan.definitions.get("fp.check").fingerprint);
+    var fpGame=String(OM.prepare(fpPlan,null,false).snapshot());
+    var spelled={state:{count:{max:1000,min:0,"default":0,type:"integer"}},on_disable:"suspend",handler:"data",requires:{},conflicts:[],provides:[],references:[],
+        settings:{note:{choices:[],max_length:4096,"default":"",type:"string"},label:{max_length:100,choices:["b","étoile 火"],type:"string","default":"étoile 火"},step:{max:10,min:1,type:"integer","default":1}},
+        scopes:["organization","relationship","item","profile","character","world"],clock_modes:["REALTIME","TURNS"],title:"Renamed",version:1,id:"fp.check",schema:1};
+    Files.write(new java.io.File(modules,"fp.check.json").toPath(),new java.lang.String(JSON.stringify(spelled,null,2)).getBytes("UTF-8"));
+    check("canonical-fingerprint",String(plan("fp.check").definitions.get("fp.check").fingerprint)===fpBefore,"a meaning-free edit changed the fingerprint");
+    check("canonical-fingerprint-restores",String(OM.prepare(plan("fp.check"),fpGame,true).problem("fp.check"))==="","a meaning-free edit suspended the save");
+    spelled.settings.step["default"]=2;Files.write(new java.io.File(modules,"fp.check.json").toPath(),new java.lang.String(JSON.stringify(spelled)).getBytes("UTF-8"));
+    check("fingerprint-keeps-meaning",String(plan("fp.check").definitions.get("fp.check").fingerprint)!==fpBefore,"a changed default kept the fingerprint");
+    new java.io.File(modules,"fp.check.json").delete();
     var configured=plan("test.feature",'{"test.feature":{"step":2,"label":"étoile 火"}}');valid(configured);
     var game=OM.prepare(configured,null,false);
     var alice=OM.owner("character","@instance:alice"),bob=OM.owner("character","@instance:bob");
@@ -79,6 +108,20 @@ try {
     var restored=OM.prepare(configured,saved,true);
     check("all-scope-roundtrip",Number(restored.get("test.feature",owners[4]).get("count"))===14&&Number(restored.get("test.feature",bob).get("count"))===3,"scope loss");
     check("unicode-roundtrip",String(restored.setting("test.feature","label"))==="étoile 火","Unicode lost");
+    // Damaged capsule data follows the saved policy: suspend keeps it exactly as saved; refuse refuses.
+    function damage(text, id, change) {
+        var root=MD.parse(text),list=root.get("modules");
+        for(var d=0;d<list.length;d++) if(String(list[d].get("id"))===id) change(list[d]);
+        return String(MD.json(root));
+    }
+    var hurtText=damage(saved,"test.feature",function(c){c.get("records")[0].put("owner","not an owner");});
+    var hurt=OM.prepare(configured,hurtText,true);
+    check("damaged-capsule-suspends",String(hurt.problem("test.feature")).indexOf("damaged saved module data")>=0&&String(hurt.problem("test.core"))==="",String(hurt.problem("test.feature")));
+    check("damaged-capsule-kept-as-saved",String(hurt.snapshot()).indexOf('"owner":"not an owner"')>=0&&String(hurt.snapshot()).indexOf('"count":7')>=0,"damaged data dropped");
+    check("damaged-capsule-noted",String(hurt.notes(false)).indexOf("test.feature: suspended")>=0,String(hurt.notes(false)));
+    var coreHurt=OM.prepare(configured,damage(saved,"test.core",function(c){c.put("fingerprint","zz");}),true);
+    check("damaged-dependency-suspends-dependent",String(coreHurt.problem("test.core")).indexOf("damaged")>=0&&String(coreHurt.problem("test.feature")).indexOf("dependency test.core")>=0,String(coreHurt.problem("test.feature")));
+    throws("damaged-refuse-capsule-refuses",function(){OM.prepare(configured,damage(hurtText,"test.feature",function(c){c.put("on_disable","refuse");}),true);});
     var defaultsChanged=plan("test.feature",'{"test.feature":{"step":9}}');
     var pinned=OM.prepare(defaultsChanged,saved,true);
     check("saved-settings-pinned",Number(pinned.setting("test.feature","step"))===2,"world override rewrote campaign settings");
@@ -145,8 +188,32 @@ try {
         WorldFiles.configure(directory);known.set(null,new java.util.TreeMap(WorldFiles.fileSums()));
         WorldFiles.acceptModuleChanges();
         check("module-reload-keeps-unrelated-provenance",!WorldFiles.changedOutside().containsKey("modules/notes.txt"),"non-manifest source was marked changed");
+        // The boot reads MODULESETTINGS as the launcher's startup check did: raw, with no entity conversion.
+        var launchField=java.lang.Class.forName("com.planet_ink.coffee_mud.core.OptionalModules").getDeclaredField("launched");launchField.setAccessible(true);
+        var launchedBefore=launchField.get(null);
+        try {
+            OM.launchedWith("test.feature",'{"test.feature":{"label":"a&amp;b"}}');
+            check("boot-reads-launch-settings-raw",String(OM.configuredPlan().settings.get("test.feature").get("label"))==="a&amp;b",String(OM.configuredPlan().settings));
+        } finally {launchField.set(null,launchedBefore);}
         new java.io.File(modules,"test.feature.json").delete();WorldFiles.acceptModuleChanges();
         check("module-reload-acknowledges-removal",!WorldFiles.changedOutside().containsKey("modules/test.feature.json"),"removed manifest remains changed");
+        // world/affixes.xml and the modules' folders are versioned by the modules themselves: a world that
+        // has them, but no modules, keeps the world version its saves and its content cache recorded.
+        var bare=Files.createTempDirectory("sud-module-sum-").toFile();
+        try {
+            WorldFiles.configure(bare);var bareSum=String(WorldFiles.checksum());
+            var put=function(path,text){var f=new java.io.File(bare,path);f.getParentFile().mkdirs();Files.write(f.toPath(),new java.lang.String(text).getBytes("UTF-8"));};
+            put("affixes.xml","<AFFIXES></AFFIXES>\n");put("modules/x.json","{}");put("compositions/x.json","{}");put("combat/x.json","{}");put("itemmods/x.json","{}");
+            check("module-files-outside-world-checksum",String(WorldFiles.checksum())===bareSum,"affixes.xml or a module folder changed the world version");
+            known.set(null,new java.util.TreeMap(WorldFiles.fileSums()));
+            check("module-files-outside-saved-world-version",String(WorldFiles.loadedChecksum())===bareSum&&WorldFiles.loadedManifest().containsKey("affixes.xml"),String(WorldFiles.loadedManifest()));
+            put("affixes.xml","<AFFIXES><AFFIX id=\"x\"/></AFFIXES>\n");
+            check("module-files-still-tracked",String(WorldFiles.changedOutside().get("affixes.xml"))==="edited"&&String(WorldFiles.checksum())===bareSum,WorldFiles.changedOutside());
+            put("lore/x.ini","X=1\n");check("other-assets-still-versioned",String(WorldFiles.checksum())!==bareSum,"lore no longer counts");
+        } finally {
+            var remove=function(f){var inside=f.listFiles();if(inside!=null)for(var g=0;g<inside.length;g++)remove(inside[g]);f.delete();};
+            remove(bare);
+        }
     } finally {WorldFiles.configure(originalWorld);known.set(null,originalKnown);}
     done();
 } finally {

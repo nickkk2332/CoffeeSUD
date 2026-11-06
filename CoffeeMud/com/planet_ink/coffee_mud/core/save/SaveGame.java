@@ -93,6 +93,8 @@ public final class SaveGame
 	private static volatile String nextFresh = null;
 	/** what changed in the world since the restoring save was made, told at login */
 	private static final List<String> worldReport = new ArrayList<String>();
+	/** what the restore did with the save's optional modules, told at login apart from the world's changes */
+	private static final List<String> moduleReport = new ArrayList<String>();
 
 	/**
 	 * Sets which areas the next restore takes from the world as it is now,
@@ -274,14 +276,16 @@ public final class SaveGame
 		nextBoot = slot;
 	}
 
-	/** Validate module compatibility before the launcher starts or touches a working campaign. */
-	public static String moduleStartupProblem(final Properties settings)
+	/**
+	 * Validate module compatibility before the launcher starts or touches a working campaign, with
+	 * the settings the boot reads (OptionalModules.launchedWith).
+	 */
+	public static String moduleStartupProblem()
 	{
 		if(builderMode || WorldCheck.isHeadless()) return null;
 		try
 		{
-			final ModuleDefinitions.Plan plan = ModuleDefinitions.load(WorldFiles.worldDir(), settings.getProperty("MODULES", ""), settings.getProperty("MODULESETTINGS", ""));
-			OptionalModules.prepare(plan, nextBoot == null ? null : OptionalModules.readSave(saveDir, nextBoot), nextBoot != null);
+			OptionalModules.prepare(OptionalModules.configuredPlan(), nextBoot == null ? null : OptionalModules.readSave(saveDir, nextBoot), nextBoot != null);
 			return null;
 		}
 		catch(final IOException e) { return "Optional modules: " + e.getMessage(); }
@@ -354,7 +358,12 @@ public final class SaveGame
 		try
 		{
 			OptionalModules.boot(slot == null ? null : OptionalModules.readSave(saveDir, slot), slot != null);
-			for(final String note : OptionalModules.notes()) noteWorldChange(note);
+			// not world changes: no FRESH= takes them back; ADOPT hints are for builder mode and DEV=1
+			synchronized(moduleReport)
+			{
+				moduleReport.clear();
+				moduleReport.addAll(OptionalModules.notes(builderMode || isDevMode()));
+			}
 		}
 		catch(final IOException e) { throw new IllegalStateException("Cannot load optional modules: " + e.getMessage(), e); }
 		final boolean fakeDb = (contentDbService != null) && contentDbService.startsWith(FAKEDB);
@@ -518,6 +527,21 @@ public final class SaveGame
 			for(final String line : report)
 				str.append("  ").append(line).append("\n\r");
 			str.append(CMLib.lang().L("RESTORE name FRESH=CHANGED takes the changed areas' rooms as they are now.\n\r"));
+			mob.tell(str.toString());
+		}
+		final List<String> modules;
+		synchronized(moduleReport)
+		{
+			modules = new ArrayList<String>(moduleReport);
+			moduleReport.clear();
+		}
+		if(modules.size() > 0)
+		{
+			final StringBuilder str = new StringBuilder(CMLib.lang().L("The save's optional modules:\n\r"));
+			for(int i = 0; (i < modules.size()) && (i < 20); i++)
+				str.append("  ").append(modules.get(i)).append("\n\r");
+			if(modules.size() > 20)
+				str.append("  ").append(CMLib.lang().L("... and @x1 more: MODULES lists every module.", "" + (modules.size() - 20))).append("\n\r");
 			mob.tell(str.toString());
 		}
 		if(builderMode || isDevMode())

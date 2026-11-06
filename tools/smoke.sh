@@ -91,9 +91,9 @@ expect load.txt "Bye!"
 echo "Session 3: pause and resume (one mud hour per 4-second tick)"
 # up to 30 seconds of real time, which turns the hour at least once even when
 # the machine is busy with the other games of tools/check.sh running beside
-# this one (15 seconds was once not enough)
-# Select the scenario's real-time mode explicitly before sampling the clock.
-play pause.txt 'timemode realtime\ntime\n#sleep 15\ntime\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
+# this one (15 seconds was once not enough).  The save is in real time, as
+# session 1 left it: the restore must keep that, so no TIMEMODE here
+play pause.txt 'time\n#sleep 15\ntime\n#sleep 15\ntime\npause\ntime\n#sleep 9\ntime\nnorth\nlook\nresume\n#sleep 2\nquit\nY\n' MILLISPERMUDHOUR=4000 RESTORE=hero
 expect pause.txt "The world holds still."
 expect pause.txt "(paused) "
 expect pause.txt "The world moves again."
@@ -205,8 +205,10 @@ else
 fi
 
 echo "Session 8b: a second character in the profile, then back to the first"
-# Keep the creation/menu test independent of live combat and wait for its asynchronous menu.
-play profile.txt 'purge minotaur\npurge goblin\nprofile\nlogoff\ny\n#expect Command or Name\nnew Bran\ny\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nswitch hero\nscore\nsave party\nquit\nn\n' RESTORE=hero RANDOMSEED=42 TIMEMODE=TURNS
+# while the minotaur and goblin of session 4 still fight (in real time; a
+# restore keeps the save's clock and dice, so no TIMEMODE or RANDOMSEED):
+# the menu after LOGOFF comes when the logout is done, so wait for it
+play profile.txt 'profile\nlogoff\ny\n#expect Command or Name\nnew Bran\ny\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\nscore\nswitch hero\nscore\nsave party\nquit\nn\n' RESTORE=hero
 expect profile.txt "Your characters:"
 expect profile.txt "Create a new character called 'Bran'"
 expect profile.txt "You are Bran the level 1 Apprentice."

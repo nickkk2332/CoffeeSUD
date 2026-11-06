@@ -107,6 +107,15 @@ public final class ModuleDefinitions
             if(text.length() > length || !choices.isEmpty() && !choices.contains(text)) throw new IOException(where + ": string length/choice is invalid");
             return text;
         }
+        /** The field as the engine reads it: a default written out, or choices in another order, mean the same field. */
+        JSONObject contract()
+        {
+            final JSONObject out = new JSONObject(); out.put("type", type); out.put("default", initial);
+            if(minimum != null) out.put("min", minimum);
+            if(maximum != null) out.put("max", maximum);
+            if(type.equals("string")) { out.put("max_length", Long.valueOf(length)); out.put("choices", new TreeSet<String>(choices)); }
+            return out;
+        }
     }
     private static Map<String,Field> fields(final JSONObject obj, final String where) throws IOException
     {
@@ -250,8 +259,27 @@ public final class ModuleDefinitions
                 for(final Object target : migration.stateRenames.values()) if(!state.containsKey(target)) throw new IOException("migration: unknown final state field " + target);
                 for(final Object target : migration.settingRenames.values()) if(!settings.containsKey(target)) throw new IOException("migration: unknown final setting " + target);
             }
-            final JSONObject contract = copy(obj); contract.remove("title"); contract.remove("migrations");
-            fingerprint = hash(json(contract));
+            fingerprint = hash(json(contract()));
+        }
+        /**
+         * The rule contract a save pins, in one canonical form: defaults filled in, the set-like
+         * arrays sorted, keys sorted, no whitespace. The title and migrations are not part of it.
+         */
+        private JSONObject contract()
+        {
+            final JSONObject out = new JSONObject();
+            out.put("schema", Long.valueOf(SCHEMA)); out.put("id", id); out.put("version", Long.valueOf(version));
+            out.put("handler", handler); out.put("on_disable", removal); out.put("requires", requires);
+            out.put("conflicts", new TreeSet<String>(conflicts)); out.put("clock_modes", new TreeSet<String>(modes));
+            out.put("scopes", new TreeSet<String>(scopes)); out.put("provides", new TreeSet<String>(provides));
+            final JSONObject fields = new JSONObject(), records = new JSONObject();
+            for(final Map.Entry<String,Field> entry : settings.entrySet()) fields.put(entry.getKey(), entry.getValue().contract());
+            for(final Map.Entry<String,Field> entry : state.entrySet()) records.put(entry.getKey(), entry.getValue().contract());
+            out.put("settings", fields); out.put("state", records);
+            final Map<String,JSONObject> refs = new TreeMap<String,JSONObject>();
+            for(final JSONObject ref : references) refs.put(json(ref), ref);
+            out.put("references", refs.values());
+            return out;
         }
         public List<Migration> route(final int from) throws IOException
         {
@@ -271,22 +299,37 @@ public final class ModuleDefinitions
         public final Map<String,JSONObject> settings = new TreeMap<String,JSONObject>();
         public final Map<String,Set<String>> reasons = new TreeMap<String,Set<String>>();
         public final Set<String> roots = new TreeSet<String>(), enabled = new LinkedHashSet<String>();
+        /** Every problem found, in what the selection uses or not, for WORLD MODULES CHECK and WORLD CHECK. */
         public final List<String> errors = new ArrayList<String>();
+        /** The problems in the selection and what it uses: only these stop a campaign from starting. */
+        public final List<String> blocking = new ArrayList<String>();
         public final File world;
         private Plan(final File root) { world = root; }
         public String problems() { return String.join("\n", errors); }
-        public void requireValid() throws IOException { if(!errors.isEmpty()) throw new IOException(problems()); }
+        /** Problems in manifests or settings the selection does not use: a draft, a stale manifest, a leftover setting. */
+        public List<String> warnings()
+        {
+            final List<String> result = new ArrayList<String>(errors); result.removeAll(blocking); return result;
+        }
+        public void requireValid() throws IOException { if(!blocking.isEmpty()) throw new IOException(String.join("\n", blocking)); }
     }
+    /**
+     * What a problem belongs to, when it is not one module: the selection, which always counts, or
+     * the whole library. No module ID or file name holds a NUL, so neither can be taken for these.
+     */
+    private static final String SELECTION = "\u0000selection", LIBRARY = "\u0000library";
     public static Plan load(final File world, final String selection, final String rawSettings)
     {
         final Plan plan = new Plan(world);
+        // Each problem with what it belongs to: a module ID (a manifest's, by its filename), SELECTION or LIBRARY.
+        final List<String[]> found = new ArrayList<String[]>();
         final File dir = new File(world, "modules");
-        if(dir.exists() && !dir.isDirectory()) plan.errors.add("modules/: must be a directory");
+        if(dir.exists() && !dir.isDirectory()) found.add(new String[] { LIBRARY, "modules/: must be a directory" });
         final File[] listed = dir.listFiles(f -> f.getName().endsWith(".json"));
         if(listed != null)
         {
             Arrays.sort(listed, Comparator.comparing(File::getName));
-            if(listed.length > MAX_FILES) plan.errors.add("modules/: at most " + MAX_FILES + " manifests");
+            if(listed.length > MAX_FILES) found.add(new String[] { LIBRARY, "modules/: at most " + MAX_FILES + " manifests" });
             for(int i = 0; i < Math.min(listed.length, MAX_FILES); i++)
             {
                 final File file = listed[i]; final String path = "modules/" + file.getName();
@@ -297,21 +340,24 @@ public final class ModuleDefinitions
                     if(!file.getName().equals(def.id + ".json")) throw new IOException("filename must be " + def.id + ".json");
                     if(plan.definitions.put(def.id, def) != null) throw new IOException("duplicate module ID " + def.id);
                 }
-                catch(final Exception e) { plan.errors.add(path + ": " + e.getMessage()); }
+                catch(final Exception e) { found.add(new String[] { file.getName().substring(0, file.getName().length() - 5), path + ": " + e.getMessage() }); }
             }
         }
-        try
+        JSONObject configured = new JSONObject();
+        try { if(rawSettings != null && !rawSettings.trim().isEmpty()) configured = parse(rawSettings); }
+        catch(final IOException e) { found.add(new String[] { LIBRARY, "MODULESETTINGS: " + e.getMessage() }); }
+        // Settings for a module that is not installed are a leftover, not a reason to stop every campaign.
+        for(final String name : configured.keySet()) if(!plan.definitions.containsKey(name)) found.add(new String[] { name, "MODULESETTINGS: unknown module " + name });
+        for(final Definition def : plan.definitions.values())
         {
-            final JSONObject configured = rawSettings == null || rawSettings.trim().isEmpty() ? new JSONObject() : parse(rawSettings);
-            for(final String name : configured.keySet()) if(!plan.definitions.containsKey(name)) throw new IOException("MODULESETTINGS: unknown module " + name);
-            for(final Definition def : plan.definitions.values()) plan.settings.put(def.id,
-                values(def.settings, configured.containsKey(def.id) ? object(configured.get(def.id), "MODULESETTINGS." + def.id) : new JSONObject(), def.path + " settings"));
+            try { plan.settings.put(def.id, values(def.settings, configured.containsKey(def.id) ? object(configured.get(def.id), "MODULESETTINGS." + def.id) : new JSONObject(), def.path + " settings")); }
+            catch(final IOException e) { found.add(new String[] { def.id, e.getMessage() }); }
         }
-        catch(final IOException e) { plan.errors.add(e.getMessage()); }
-        if(selection != null && !selection.trim().isEmpty()) for(final String raw : selection.split(",", -1))
+        final boolean selecting = selection != null && !selection.trim().isEmpty();
+        if(selecting) for(final String raw : selection.split(",", -1))
         {
             try { final String root = id(raw.trim()); if(!plan.roots.add(root)) throw new IOException("duplicate selected module " + root); }
-            catch(final IOException e) { plan.errors.add("MODULES: " + e.getMessage()); }
+            catch(final IOException e) { found.add(new String[] { SELECTION, "MODULES: " + e.getMessage() }); }
         }
         // Validate all definitions, including disabled ones, without enabling them.
         for(final Definition def : plan.definitions.values())
@@ -319,34 +365,43 @@ public final class ModuleDefinitions
             for(final Map.Entry<String,Integer> dep : def.requires.entrySet())
             {
                 final Definition target = plan.definitions.get(dep.getKey());
-                if(target == null || target.version != dep.getValue().intValue()) plan.errors.add(def.path + ": requires " + dep.getKey() + " version " + dep.getValue());
+                if(target == null || target.version != dep.getValue().intValue()) found.add(new String[] { def.id, def.path + ": requires " + dep.getKey() + " version " + dep.getValue() });
             }
             for(final JSONObject ref : def.references)
             {
                 final String module = (String)ref.get("module"), name = (String)ref.get("name");
                 final Definition target = plan.definitions.get(module);
                 if(target == null || !target.provides.contains(name) || !module.equals(def.id) && !def.requires.containsKey(module))
-                    plan.errors.add(def.path + ": unresolved or undeclared reference " + module + "/" + name);
+                    found.add(new String[] { def.id, def.path + ": unresolved or undeclared reference " + module + "/" + name });
             }
         }
-        final Set<String> checked = new HashSet<String>();
-        for(final String name : plan.definitions.keySet()) visit(plan, name, new LinkedHashSet<String>(), checked, null);
-        for(final String root : plan.roots) visit(plan, root, new LinkedHashSet<String>(), new HashSet<String>(), root);
+        final Set<String> checked = new HashSet<String>(), wanted = new HashSet<String>();
+        for(final String name : plan.definitions.keySet()) visit(plan, found, name, new LinkedHashSet<String>(), checked, null, wanted);
+        for(final String root : plan.roots) visit(plan, found, root, new LinkedHashSet<String>(), new HashSet<String>(), root, wanted);
         for(final String name : plan.enabled)
         {
             final Definition def = plan.definitions.get(name);
-            for(final String conflict : def.conflicts) if(plan.enabled.contains(conflict)) plan.errors.add(def.path + ": enabled conflict with " + conflict);
+            for(final String conflict : def.conflicts) if(plan.enabled.contains(conflict)) found.add(new String[] { SELECTION, def.path + ": enabled conflict with " + conflict });
+        }
+        // A problem stops a campaign only where it touches the selection or what it uses (wanted includes
+        // a selected dependency whose manifest did not load); the rest are warnings for the creator.
+        for(final String[] problem : found)
+        {
+            final boolean blocks = problem[0].equals(SELECTION) || problem[0].equals(LIBRARY) && selecting || wanted.contains(problem[0]);
+            if(!plan.errors.contains(problem[1])) plan.errors.add(problem[1]);
+            if(blocks && !plan.blocking.contains(problem[1])) plan.blocking.add(problem[1]);
         }
         return plan;
     }
-    private static void visit(final Plan plan, final String name, final Set<String> active, final Set<String> done, final String root)
+    private static void visit(final Plan plan, final List<String[]> found, final String name, final Set<String> active, final Set<String> done, final String root, final Set<String> wanted)
     {
-        if(active.contains(name)) { plan.errors.add("modules/: dependency cycle " + String.join(" -> ", active) + " -> " + name); return; }
+        if(active.contains(name)) { found.add(new String[] { root == null ? name : SELECTION, "modules/: dependency cycle " + String.join(" -> ", active) + " -> " + name }); return; }
         if(done.contains(name)) return;
+        if(root != null) wanted.add(name);
         final Definition def = plan.definitions.get(name);
-        if(def == null) { if(root != null) plan.errors.add("MODULES: unknown module " + name); return; }
+        if(def == null) { if(root != null) found.add(new String[] { SELECTION, "MODULES: unknown module " + name }); return; }
         active.add(name);
-        for(final String dep : def.requires.keySet()) visit(plan, dep, active, done, root);
+        for(final String dep : def.requires.keySet()) visit(plan, found, dep, active, done, root, wanted);
         active.remove(name); done.add(name);
         if(root != null)
         {
@@ -359,7 +414,9 @@ public final class ModuleDefinitions
         if(file.length() > MAX_FILE_BYTES) throw new IOException("file exceeds " + MAX_FILE_BYTES + " bytes");
         final byte[] bytes = Files.readAllBytes(file.toPath());
         if(bytes.length > MAX_FILE_BYTES) throw new IOException("file exceeds limit");
-        return new String(bytes, StandardCharsets.UTF_8);
+        final String text = new String(bytes, StandardCharsets.UTF_8);
+        // Some Windows editors begin UTF-8 files with a byte order mark: it is not part of the JSON.
+        return text.startsWith("\uFEFF") ? text.substring(1) : text;
     }
     public static JSONObject copy(final JSONObject obj) throws IOException { return parse(json(obj)); }
     public static JSONObject parse(final String text) throws IOException

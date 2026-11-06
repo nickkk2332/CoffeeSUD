@@ -1061,7 +1061,10 @@ public class WorldCmd extends StdCommand
 		}
 		if(commands.get(1).equalsIgnoreCase("MODULES"))
 		{
-			if(!SaveGame.isBuilderMode() && !SaveGame.isDevMode() && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))
+			// looking (the list, CHECK, PLAN, STATE) is also open to a room builder, such as an Archon;
+			// what changes the campaign's rules is for builder mode or DEV=1 only, as documented
+			final boolean creator = SaveGame.isBuilderMode() || SaveGame.isDevMode();
+			if(!creator && !CMSecurity.isAllowedAnywhere(mob, CMSecurity.SecFlag.CMDROOMS))
 			{
 				mob.tell(L("WORLD MODULES is for builder mode or a DEV=1 game. MODULES lists this campaign's modules."));
 				return false;
@@ -1069,10 +1072,18 @@ public class WorldCmd extends StdCommand
 			try
 			{
 				final String sub = commands.size() > 2 ? commands.get(2) : "";
-				if(sub.equalsIgnoreCase("CHECK"))
+				if((sub.equalsIgnoreCase("RELOAD") || sub.equalsIgnoreCase("ADOPT") || sub.equalsIgnoreCase("CONFIGURE")) && !creator)
+					mob.tell(L("WORLD MODULES @x1 changes this campaign's modules: it is for builder mode or a DEV=1 game.", sub.toUpperCase()));
+				else if(sub.equalsIgnoreCase("CHECK"))
 				{
 					final ModuleDefinitions.Plan plan = OptionalModules.configuredPlan();
-					mob.tell(plan.errors.isEmpty() ? "Module definitions and selection are valid." : plan.problems());
+					final StringBuilder str = new StringBuilder(plan.errors.isEmpty() ? "Module definitions and selection are valid." : "");
+					if(!plan.blocking.isEmpty())
+						str.append("These stop a campaign of this selection from starting:\n\r  ").append(String.join("\n\r  ", plan.blocking));
+					if(!plan.warnings().isEmpty())
+						str.append(str.length() > 0 ? "\n\r" : "").append("Warnings, in manifests or settings the selection does not use (campaigns start without them):\n\r  ")
+							.append(String.join("\n\r  ", plan.warnings()));
+					mob.tell(str.toString());
 				}
 				else if(sub.equalsIgnoreCase("PLAN") || sub.equalsIgnoreCase("RELOAD"))
 					mob.tell(OptionalModules.reload(sub.equalsIgnoreCase("RELOAD")));

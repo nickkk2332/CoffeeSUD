@@ -2884,7 +2884,9 @@ public final class WorldFiles
 		int count = 0;
 		for(final Map.Entry<String,String> entry : new TreeMap<String,String>(manifest).entrySet())
 		{
-			if(entry.getKey().startsWith(DEV_DIR + "/")) continue;
+			// the modules' own files are tracked for WORLD STATUS and their reloads, but versioned by
+			// the modules themselves: a world that does not use them has the checksum it had before
+			if(entry.getKey().startsWith(DEV_DIR + "/") || com.planet_ink.coffee_mud.core.WorldAssets.versionedApart(entry.getKey())) continue;
 			crc.update(entry.getKey().getBytes(java.nio.charset.StandardCharsets.UTF_8)); crc.update(0);
 			crc.update(entry.getValue().getBytes(java.nio.charset.StandardCharsets.UTF_8)); crc.update(0);
 			count++;

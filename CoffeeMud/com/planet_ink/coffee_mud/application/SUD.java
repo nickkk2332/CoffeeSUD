@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.planet_ink.coffee_mud.core.CMProps;
+import com.planet_ink.coffee_mud.core.OptionalModules;
 import com.planet_ink.coffee_mud.core.Party;
 import com.planet_ink.coffee_mud.core.WorldCheck;
 import com.planet_ink.coffee_mud.core.save.SaveGame;
@@ -209,7 +210,9 @@ public class SUD
 					showPrologue();
 			}
 		}
-		final String moduleProblem = SaveGame.moduleStartupProblem(settings);
+		// the boot reads these same values, as read here, not the engine's escaped copy of them
+		OptionalModules.launchedWith(settings.getProperty("MODULES", ""), settings.getProperty("MODULESETTINGS", ""));
+		final String moduleProblem = SaveGame.moduleStartupProblem();
 		if(moduleProblem != null)
 		{
 			System.out.println(moduleProblem);

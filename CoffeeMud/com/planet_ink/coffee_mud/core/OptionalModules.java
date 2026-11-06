@@ -77,19 +77,18 @@ public final class OptionalModules
         String fingerprint, removal, problem = "";
         JSONObject settings;
         final Map<String,JSONObject> records = new TreeMap<String,JSONObject>();
+        /** A capsule whose saved data did not read: kept exactly as saved, and suspended. */
+        private JSONObject damaged = null;
         Capsule(final Definition def, final JSONObject configured) throws IOException
         { id = def.id; requiredHandler = ModuleDefinitions.nativeHandler(def.handler) ? def.handler : ""; version = def.version; fingerprint = def.fingerprint; removal = def.removal; settings = ModuleDefinitions.copy(configured); }
         Capsule(final JSONObject saved) throws IOException
         {
             ModuleDefinitions.keys(saved, "saved module", "id", "version", "fingerprint", "on_disable", "settings", "records", "requires_handler");
             id = ModuleDefinitions.id(saved.get("id")); version = ModuleDefinitions.integer(saved.get("version"), "saved module version");
-            requiredHandler = saved.containsKey("requires_handler") ? ModuleDefinitions.string(saved.get("requires_handler"), "requires_handler") : ModuleDefinitions.nativeHandler(id) ? id : "";
-            if(saved.containsKey("requires_handler") && !ModuleDefinitions.nativeHandler(requiredHandler)
-                || ModuleDefinitions.nativeHandler(id) && !id.equals(requiredHandler)) throw new IOException(id + ": unavailable native module handler " + requiredHandler);
+            requiredHandler = handler(saved, id);
             fingerprint = ModuleDefinitions.string(saved.get("fingerprint"), "saved fingerprint");
             if(!fingerprint.matches("[0-9a-f]{64}")) throw new IOException(id + ": invalid saved fingerprint");
-            removal = ModuleDefinitions.string(saved.get("on_disable"), "saved on_disable");
-            if(!Arrays.asList("suspend", "refuse").contains(removal)) throw new IOException(id + ": invalid saved on_disable policy");
+            removal = policy(saved, id);
             settings = ModuleDefinitions.copy(ModuleDefinitions.object(saved.get("settings"), "saved settings"));
             for(final Object raw : ModuleDefinitions.array(saved.get("records"), "saved records"))
             {
@@ -101,8 +100,30 @@ public final class OptionalModules
                 if(records.size() > ModuleDefinitions.MAX_RECORDS) throw new IOException(id + ": too many records");
             }
         }
-        JSONObject saved()
+        /** Damaged saved data under a suspend policy: the saved object is written back as it was. */
+        Capsule(final JSONObject saved, final String id, final String problem) throws IOException
         {
+            this.id = id; requiredHandler = handler(saved, id); removal = policy(saved, id); fingerprint = "";
+            version = saved.get("version") instanceof Number ? ((Number)saved.get("version")).intValue() : 0;
+            settings = new JSONObject(); damaged = ModuleDefinitions.copy(saved); this.problem = problem;
+        }
+        /** A native capability the save needs: refused whatever the policy, as older readers refuse it. */
+        static String handler(final JSONObject saved, final String id) throws IOException
+        {
+            final String required = saved.containsKey("requires_handler") ? ModuleDefinitions.string(saved.get("requires_handler"), "requires_handler") : ModuleDefinitions.nativeHandler(id) ? id : "";
+            if(saved.containsKey("requires_handler") && !ModuleDefinitions.nativeHandler(required)
+                || ModuleDefinitions.nativeHandler(id) && !id.equals(required)) throw new IOException(id + ": unavailable native module handler " + required);
+            return required;
+        }
+        static String policy(final JSONObject saved, final String id) throws IOException
+        {
+            final String removal = ModuleDefinitions.string(saved.get("on_disable"), "saved on_disable");
+            if(!Arrays.asList("suspend", "refuse").contains(removal)) throw new IOException(id + ": invalid saved on_disable policy");
+            return removal;
+        }
+        JSONObject saved() throws IOException
+        {
+            if(damaged != null) return ModuleDefinitions.copy(damaged);
             final JSONObject out = new JSONObject(); out.put("id", id); out.put("version", Long.valueOf(version));
             if(!requiredHandler.isEmpty()) out.put("requires_handler", requiredHandler);
             out.put("fingerprint", fingerprint); out.put("on_disable", removal); out.put("settings", settings);
@@ -115,6 +136,8 @@ public final class OptionalModules
         public final Plan plan;
         private final Map<String,Capsule> capsules = new TreeMap<String,Capsule>();
         private final List<String> notes = new ArrayList<String>();
+        /** What only a creator can act on (adoption, pinned settings): kept from an ordinary player's report. */
+        private final List<String> creatorNotes = new ArrayList<String>();
         private int stateBytes, recordCount;
         private Campaign(final Plan plan) { this.plan = plan; }
 
@@ -205,7 +228,10 @@ public final class OptionalModules
             if(text.getBytes(StandardCharsets.UTF_8).length > 2 * MAX_STATE_BYTES) throw new IOException("module snapshot exceeds its storage budget");
             return text;
         }
-        public synchronized List<String> notes() { return new ArrayList<String>(notes); }
+        public synchronized List<String> notes(final boolean creator)
+        {
+            final List<String> result = new ArrayList<String>(notes); if(creator) result.addAll(creatorNotes); return result;
+        }
         /** Explicit adoption is limited to this world's selected dependency closure. No reset of suspended data. */
         public synchronized void adopt(final String id) throws IOException
         {
@@ -243,6 +269,8 @@ public final class OptionalModules
                 shown++;
             }
             if(shown == 0) out.append("\n\r  none.");
+            if(creator && !plan.blocking.isEmpty()) out.append("\n\r").append(plan.blocking.size()).append(" problems stop campaigns of this selection from starting: WORLD MODULES CHECK lists them.");
+            if(creator && !plan.warnings().isEmpty()) out.append("\n\r").append(plan.warnings().size()).append(" warnings in manifests or settings the selection does not use: WORLD MODULES CHECK lists them.");
             if(creator) out.append("\n\rMODULES source: ").append(WorldSettings.sourceOf("MODULES")).append("; MODULESETTINGS source: ").append(WorldSettings.sourceOf("MODULESETTINGS"))
                 .append("\n\rWORLD MODULES CHECK | PLAN | RELOAD | ADOPT [ID]. Settings changes take effect at the next process start.");
             return out.toString();
@@ -264,9 +292,24 @@ public final class OptionalModules
             if(ModuleDefinitions.integer(root.get("schema"), "module snapshot schema") != ModuleDefinitions.SCHEMA) throw new IOException("unsupported saved module schema");
             for(final Object raw : ModuleDefinitions.array(root.get("modules"), "saved modules"))
             {
-                final Capsule old = new Capsule(ModuleDefinitions.object(raw, "saved module"));
+                // Without an ID and a removal policy, or with a native handler this engine lacks, there is
+                // no policy to apply: the restore is refused. Other damage follows the saved policy.
+                final JSONObject stored = ModuleDefinitions.object(raw, "saved module");
+                final String id = ModuleDefinitions.id(stored.get("id"));
+                final String removal = Capsule.policy(stored, id);
+                Capsule.handler(stored, id);
+                Capsule parsed;
+                try { parsed = new Capsule(stored); }
+                catch(final IOException e)
+                {
+                    if(removal.equals("refuse")) throw new IOException(id + ": restore/reload refused: damaged saved module data: " + e.getMessage(), e);
+                    parsed = new Capsule(stored, id, "damaged saved module data, kept as saved: " + e.getMessage());
+                    next.notes.add(id + ": suspended — " + parsed.problem);
+                }
+                final Capsule old = parsed;
                 if(next.capsules.put(old.id, old) != null) throw new IOException("duplicate saved module " + old.id);
                 if(next.capsules.size() > ModuleDefinitions.MAX_FILES) throw new IOException("too many saved modules");
+                if(!old.problem.isEmpty()) continue;
                 final Definition def = plan.definitions.get(old.id);
                 try
                 {
@@ -288,7 +331,7 @@ public final class OptionalModules
                     old.records.clear(); old.records.putAll(migrated); old.settings = config;
                     if(old.version != def.version) next.notes.add(old.id + ": migrated v" + old.version + " to v" + def.version + ".");
                     old.version = def.version; old.fingerprint = def.fingerprint; old.removal = def.removal;
-                    if(!ModuleDefinitions.json(config).equals(ModuleDefinitions.json(plan.settings.get(old.id)))) next.notes.add(old.id + ": saved settings retained; world settings apply to new campaigns/adoptions.");
+                    if(!ModuleDefinitions.json(config).equals(ModuleDefinitions.json(plan.settings.get(old.id)))) next.creatorNotes.add(old.id + ": saved settings retained; world settings apply to new campaigns/adoptions.");
                 }
                 catch(final IOException e)
                 {
@@ -317,19 +360,31 @@ public final class OptionalModules
                 }
             }
         } while(changed);
-        for(final String id : plan.enabled) if(!next.capsules.containsKey(id)) next.notes.add(id + ": available for explicit WORLD MODULES ADOPT; existing campaign left unchanged.");
+        for(final String id : plan.enabled) if(!next.capsules.containsKey(id)) next.creatorNotes.add(id + ": available for explicit WORLD MODULES ADOPT; existing campaign left unchanged.");
         next.account(); return next;
     }
+    /** MODULES and MODULESETTINGS as the launcher read them, or null when it did not start this game. */
+    private static volatile String[] launched = null;
+    /**
+     * The launcher's MODULES and MODULESETTINGS, as it read them for the startup check: every boot
+     * of this process reads the same values the same way (the engine's own copy has Properties
+     * escapes and HTML entities applied). World settings take effect at the next process start.
+     */
+    public static void launchedWith(final String selection, final String settings)
+    { launched = new String[] { selection == null ? "" : selection, settings == null ? "" : settings }; }
     public static Plan configuredPlan()
     {
+        final String[] given = launched;
+        if(given != null) return ModuleDefinitions.load(WorldFiles.worldDir(), given[0], given[1]);
         return ModuleDefinitions.load(WorldFiles.worldDir(), CMProps.instance().getStr("MODULES", ""), CMProps.instance().getStr("MODULESETTINGS", ""));
     }
     /** Invoked before starting any new/restored campaign, including an in-process restore. */
     public static synchronized void boot(final String saved, final boolean restoring) throws IOException
     {
         final Plan plan = configuredPlan();
+        for(final String warning : plan.warnings()) Log.warnOut("OptionalModules", "not selected, so not stopping the game: " + warning);
         // Builders and CHECK=1 must be able to inspect/fix invalid definitions.
-        current = !plan.errors.isEmpty() && (SaveGame.isBuilderMode() || WorldCheck.isHeadless()) ? new Campaign(plan) : prepare(plan, saved, restoring);
+        current = !plan.blocking.isEmpty() && (SaveGame.isBuilderMode() || WorldCheck.isHeadless()) ? new Campaign(plan) : prepare(plan, saved, restoring);
     }
     public static synchronized void reset() { current = null; }
     public static synchronized boolean enabled(final String id) { return current != null && current.problem(id).isEmpty(); }
@@ -343,14 +398,15 @@ public final class OptionalModules
     { return current == null ? "{\"schema\":1,\"modules\":[]}" : current.snapshot(); }
     private static Campaign campaign() throws IOException
     { if(current == null) throw new IOException("optional modules are not initialized"); return current; }
-    public static synchronized List<String> notes() { return current == null ? Collections.<String>emptyList() : current.notes(); }
+    /** What the restore found, for the player's report; with creator, also what only builder tools can act on. */
+    public static synchronized List<String> notes(final boolean creator) { return current == null ? Collections.<String>emptyList() : current.notes(creator); }
     public static synchronized String describe(final String id, final boolean creator)
     { return current == null ? "Optional modules are not initialized." : current.describe(id, creator); }
     public static synchronized String reload(final boolean apply) throws IOException
     {
         final Campaign next = prepare(configuredPlan(), snapshot(), true);
         final String result = (apply ? "Module definitions reloaded." : "Module reload plan (no changes applied).") + "\n\r" + next.describe(null, true)
-            + (next.notes.isEmpty() ? "" : "\n\r" + String.join("\n\r", next.notes));
+            + (next.notes(true).isEmpty() ? "" : "\n\r" + String.join("\n\r", next.notes(true)));
         if(apply)
         {
             current = next;

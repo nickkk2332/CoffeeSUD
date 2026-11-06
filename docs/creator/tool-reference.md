@@ -5580,7 +5580,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3247.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3249.
 
 ```text
 Command : ITEMMODS
@@ -6056,7 +6056,7 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3256.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3258.
 
 ```text
 Command : MODCRAFT
@@ -6131,6 +6131,8 @@ and selected by the creator.
 Creators can use WORLD MODULES in builder mode or DEV=1 to inspect, validate, plan/reload
 definitions, explicitly adopt a world-selected module, configure a campaign setting or
 inspect saved state. See AHELP WORLD_MODULES.
+On a restore, what became of the save's modules (a migration, a suspension) is told apart
+from the world's changes, under "The save's optional modules".
 ```
 
 <a id="mycology"></a>
@@ -7701,7 +7703,7 @@ stage and the way to the next.
 
 ## PROP_ITEMMODIFIERS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3440.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3448.
 
 ```text
 Property: Prop_ItemModifiers
@@ -11547,7 +11549,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3425.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3433.
 
 ```text
 Command : WORLD ITEMMODS
@@ -11586,15 +11588,22 @@ Usage   : WORLD MODULES STATE [ID]
 Builder/DEV tooling for optional world modules. Flat JSON manifests live in
 world/modules/<id>.json. MODULES selects root IDs; MODULESETTINGS supplies typed world
 defaults as JSON. World settings take effect at the next process start.
-CHECK validates definitions and selection; WORLD CHECK ONLY=MODULES also checks the current
-clock. PLAN previews saved-state compatibility without applying it. RELOAD applies validated
- definition changes while retaining saved settings. ADOPT explicitly adds a world-selected
-module and dependencies to a campaign. CONFIGURE changes one compatible active campaign
-setting; SAVE keeps it and world defaults remain unchanged. STATE inspects a saved capsule,
-including suspended records.
+RELOAD, ADOPT and CONFIGURE change the campaign's rules and need builder mode or DEV=1. The
+list, CHECK, PLAN and STATE only look, and also serve a room builder (an Archon) in a normal
+ game.
+CHECK validates definitions and selection: problems in the selected modules and what they
+use stop campaigns from starting; problems in manifests or settings the selection does not
+use (a draft, a stale manifest, settings for a removed module) are listed apart as warnings.
+ WORLD CHECK ONLY=MODULES reports both and also checks the current clock. PLAN previews
+saved-state compatibility without applying it. RELOAD applies validated definition changes
+while retaining saved settings. ADOPT explicitly adds a world-selected module and
+dependencies to a campaign. CONFIGURE changes one compatible active campaign setting; SAVE
+keeps it and world defaults remain unchanged. STATE inspects a saved capsule, including
+suspended records.
 Saved versions, contract fingerprints, settings, removal policies and scoped state
-participate in campaign saves. Missing/incompatible modules suspend with data retained, or
-refuse restoration according to their saved policy. Version changes need declared
-migrations. Ordinary MODULES/DEMO never grant creator permissions. See
+participate in campaign saves. Missing, incompatible or damaged modules suspend with data
+retained, or refuse restoration according to their saved policy. Whitespace, key order,
+set-like array order and defaults written out do not change a fingerprint. Version changes
+need declared migrations. Ordinary MODULES/DEMO never grant creator permissions. See
 docs/creator/14-optional-modules.md and its runnable example.
 ```

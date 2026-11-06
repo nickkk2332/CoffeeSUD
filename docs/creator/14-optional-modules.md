@@ -17,15 +17,22 @@ still separate proposals, not implementations supplied by this framework.
    Dependencies are selected transitively and inspection shows the roots that
    selected them. A blank/missing value selects nothing.
 3. Set `MODULESETTINGS` to a JSON object of per-module setting overrides. Engine
-   INI, world INI and launch overrides retain their normal precedence. Restart
-   the process after changing these settings; ordinary asset reloads do not
-   silently change the selected rules.
+   INI, world INI and launch overrides retain their normal precedence. The value
+   is used as written: no HTML entities or backslash escapes are applied to it,
+   and the startup check and every boot of the process read the same value.
+   Restart the process after changing these settings; ordinary asset reloads do
+   not silently change the selected rules.
 4. In builder mode or DEV=1, run `WORLD CHECK ONLY=MODULES`, then inspect
    `WORLD MODULES`. Resolve errors before ordinary play.
 5. Test a normal new game, save, exit and restore. Inspect existing-campaign
    transitions with `WORLD MODULES PLAN` before applying definition reloads.
 6. Ship the manifests with the world. They are tracked source assets; builder
-   SAVE never generates, rewrites or deletes them.
+   SAVE never generates, rewrites or deletes them. WORLD STATUS lists them when
+   they change, but they are not part of the world version a save records (nor
+   are `world/compositions/`, `world/combat/`, `world/itemmods/` and
+   `world/affixes.xml`): the modules pin what a campaign uses themselves, so
+   adding or editing these files never reports a save as made with another
+   version of the world or rebuilds the content cache.
 
 For example, after installing the example's two manifests:
 
@@ -82,19 +89,28 @@ The following is supported JSON, not proposal syntax:
 Unknown manifest/field properties, duplicate JSON keys, trailing data, unknown
 schema versions, invalid IDs, dependency cycles and malformed definitions are
 errors. Uninstalled conflict targets are allowed; they are not dependencies.
-Every installed manifest is checked, including disabled definitions. A malformed
-draft therefore belongs outside `world/modules/` until it is valid. Builder and
-CHECK=1 runs remain available to diagnose errors; ordinary startup refuses an
-invalid module library or selection.
-When deleting a definition, also remove configuration roots and setting overrides
-that refer to it; dangling configuration IDs remain validation errors. A valid
-world selection can still restore the removed module's saved capsule as suspended.
+Every installed manifest is checked, including those nothing selects, and
+`WORLD CHECK ONLY=MODULES` (and CHECK=1) reports every problem found. Only the
+problems in the selection and what it uses stop a game: a problem in a selected
+module or one of its dependencies, a bad `MODULES` value, conflicting selected
+modules, or a malformed `MODULESETTINGS` while anything is selected. Ordinary
+startup and in-game RESTORE refuse those; builder mode and CHECK=1 still start, to
+diagnose them. A malformed draft, a manifest whose `requires` went stale, or a
+`MODULESETTINGS` entry for a module that is not installed is a warning instead:
+`WORLD MODULES CHECK` lists warnings apart, mud.log notes them at each start, and
+campaigns that do not select the module play on. A UTF-8 byte order mark at the
+start of a manifest is ignored.
+When deleting a definition, remove it from `MODULES` (a selected module that is
+missing is an error) and drop its `MODULESETTINGS` entry (left behind, a warning).
+A valid world selection can still restore the removed module's saved capsule as
+suspended.
 
 Dependencies require exact versions rather than assuming that a newer version
 is compatible. Root and dependency selection is independent of installation:
 adding a manifest alone never enables it. Conflicting roots or a conflicting
-transitive dependency are errors. Setting overrides for unknown modules/fields
-are errors rather than ignored typos.
+transitive dependency are errors. Setting overrides for unknown fields are errors
+rather than ignored typos (warnings, for a module nothing selects); an override
+for a module that is not installed is a warning.
 
 A reference must resolve to an export in the same module or a declared dependency.
 These are module-level named contracts. An export does not create an ability,
@@ -195,9 +211,16 @@ A creator can explicitly add a world-selected module to a campaign:
 WORLD MODULES ADOPT example.counter
 ```
 
-The command is restricted to builder/developer tooling, respects dependencies,
-and does not reset suspended data to evade a failed migration. Ordinary players
-cannot activate arbitrary installed modules or override the world selection.
+The command is for builder mode or DEV=1 only, respects dependencies, and does
+not reset suspended data to evade a failed migration. Ordinary players cannot
+activate arbitrary installed modules or override the world selection.
+
+On a restore, what became of the save's modules (a migration, a suspension) is
+told under "The save's optional modules", after and apart from the report of
+world changes: module notes are not world changes, and `FRESH=` does not apply
+to them. Notes only a creator can act on (a module available for ADOPT, saved
+settings that differ from the world's defaults) appear in builder mode and DEV=1
+games only.
 
 Effective settings are saved and pinned to the campaign. Changing world defaults
 supplies values for new campaigns/adoptions; it does not silently rewrite saved
@@ -218,8 +241,12 @@ defaults. `WORLD MODULES` shows source settings provenance and saved values.
 Saves record each selected module's rule version, canonical contract fingerprint,
 effective settings, removal policy and owner records. A title change is harmless.
 Changing another contract field without increasing `version` suspends or refuses
-that saved module. Whitespace and JSON object-key order do not change the
-fingerprint; array order is part of the recorded contract.
+that saved module. The fingerprint is of the contract as the engine reads it:
+whitespace, key order, the order of `clock_modes`, `scopes`, `conflicts`,
+`provides`, `references` and string `choices`, and defaults written out
+(`"handler": "data"`, `"on_disable": "suspend"`, `"requires": {}`, an empty
+array, a string field's `"max_length": 4096`) do not change it. Migrations are
+not part of it either.
 
 A version increase needs an explicit migration path even when the state shape
 stays the same. Use an empty step to acknowledge a compatible transition:
@@ -261,16 +288,25 @@ The saved policy governs the transition, even if its source manifest disappears:
 
 - **`suspend`:** preserve the module capsule and its records in subsequent saves,
   disable access to active state, and report the reason. Re-enable a compatible
-  definition to resume those records.
+  definition to resume those records. A capsule whose saved data is damaged (a
+  malformed record, owner or fingerprint) is suspended too, and written to later
+  saves exactly as it was read.
 - **`refuse`:** refuse the restore/reload before replacing the running module
-  campaign or starting a working game. The original save remains available.
+  campaign or starting a working game, damaged data included. The original save
+  remains available.
+
+A capsule without a readable ID or removal policy, or one that needs a native
+handler this engine lacks, refuses the restore whatever its policy.
 
 Schema 1 does not offer a destructive “drop all data” switch or generic refunds
 for future gameplay entities. A future feature that creates abilities, items or
 long-running jobs must implement its lifecycle against this activation contract;
 its ongoing effects cannot be made safe merely by storing a manifest.
 
-Use these commands in builder mode or DEV=1:
+Use these commands in builder mode or DEV=1. The ones that only look (the list,
+CHECK, PLAN, STATE) also serve a character with room-building power in a normal
+game, such as an Archon; RELOAD, ADOPT and CONFIGURE, which change the campaign's
+rules, are for builder mode and DEV=1 only:
 
 ```text
 WORLD MODULES
@@ -282,9 +318,10 @@ WORLD MODULES STATE example.counter
 ```
 
 CHECK reads/validates definitions and the startup selection without changing
-anything. WORLD CHECK ONLY=MODULES also checks compatibility with the current
-clock. PLAN stages definition changes against current saved module state and
-reports results without committing. RELOAD applies the same validated plan;
+anything, listing the problems that stop a campaign apart from warnings. WORLD
+CHECK ONLY=MODULES also checks compatibility with the current clock. PLAN stages
+definition changes against current saved module state and reports results
+without committing. RELOAD applies the same validated plan;
 it preserves existing campaign settings and acknowledges only module source
 files actually covered by the reload. It does not reload unrelated world assets
 or change startup selection/settings. STATE inspects a saved capsule, including
@@ -306,10 +343,13 @@ tools/fixes.sh modules
 ```
 
 The focused suite tests schemas, dependencies, conflicts, references, state
-isolation, Unicode, pinned settings, migrations, suspension/refusal and clocks.
+isolation, Unicode, pinned settings, migrations, suspension/refusal and clocks,
+warnings for what the selection does not use, byte order marks, canonical
+fingerprints, damaged capsules and the world version without module files.
 The played suite exercises normal-player use, old-save adoption, actual
 fresh-process restore, definition migrations, preserved suspended payloads,
-refusal without source-save mutation and separate-world isolation.
+refusal without source-save mutation, the restore report, creator-only commands
+and separate-world isolation.
 
 This foundation supports later feature-specific validators and lifecycle
 adapters. It does not yet provide skill supports, loot affixes, progression

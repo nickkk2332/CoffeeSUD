@@ -14,6 +14,18 @@ public final class WorldAssets
     public static final List<String> DIRECTORIES=Collections.unmodifiableList(Arrays.asList("vocab","lore","text","resources","kits","encounters","classes","modules","compositions","combat","itemmods"));
     public static final List<String> FILES=Collections.unmodifiableList(Arrays.asList("score.txt","ranks.ini","crops.txt","resources.txt","materials.txt",
         "creation.ini","origins.ini","perks.ini","combinations.txt","itemsets.txt","affixes.xml"));
+    /**
+     * The optional modules' sources, and the random-enchantment affix file they share: each
+     * subsystem pins what a save uses itself (module fingerprints, composition, combat and item
+     * rule versions), so these stay out of the world version a save records and the content
+     * cache's checksum. A world that never uses modules versions as it did before them.
+     */
+    public static final List<String> VERSIONED_APART=Collections.unmodifiableList(Arrays.asList("modules/","compositions/","combat/","itemmods/","affixes.xml"));
+    public static boolean versionedApart(final String path)
+    {
+        for(final String prefix:VERSIONED_APART) if(prefix.endsWith("/")?path.startsWith(prefix):path.equals(prefix)) return true;
+        return false;
+    }
     public static boolean contains(final String path)
     {
         if(FILES.contains(path)) return true;

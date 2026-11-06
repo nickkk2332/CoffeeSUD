@@ -71,10 +71,13 @@ try:
     config('example.counter')
     text = play('legacy', 'modules\nmodules demo example.counter\nsave old\nquit\nn\n', 'RESTORE=legacy')
     check('not adopted' in text, 'new world module not forced onto old campaign', text[-2000:])
+    check('WORLD MODULES ADOPT' not in text and 'another version of the world' not in text,
+          'no adoption hint for a player who cannot adopt', text[-2000:])
     check(not (saves / 'old/modules.json').exists(), 'legacy campaign remains module free')
 
     text = play('adopt', 'world modules adopt example.counter\nmodules demo example.counter\nsave adopted\nquit\nn\n', 'RESTORE=old', 'DEV=1')
     check('Practice journal: 2.' in text, 'explicit adoption invokes real module', text[-2000:])
+    check('available for explicit WORLD MODULES ADOPT' in text, 'adoption hint kept for DEV', text[-2000:])
     check(field('adopted') == 2, 'adopted state saved by character identity')
     # A fresh normal player can use the module, without developer or builder commands.
     text = play('active', 'Modtester\n' + newchar + 'modules demo example.counter\nmodules demo example.counter\nworld modules\npause\nsave active\nquit\nn\n', 'RESTORE=NEW')
@@ -102,6 +105,29 @@ try:
     text = play('configured', 'world modules configure example.counter step 3\nworld modules configure example.counter step 99\nmodules demo example.counter\nsave configured\nquit\nn\n', 'RESTORE=resumed', 'DEV=1')
     check('Practice journal: 11.' in text and field('configured') == 11 and module('configured')['settings']['step'] == 3,
           'explicit campaign setting is typed and invalid change is atomic', text[-2000:])
+
+    # A broken draft the selection does not use, a stale world affix file and a leftover setting stop no
+    # game; the save's module notes are not world changes; an Archon of a normal game cannot rewrite rules.
+    (world / 'modules/draft.json').write_text('{"schema":1,')
+    (world / 'affixes.xml').write_text('<AFFIXES></AFFIXES>\n')
+    (world / 'world.ini').write_text('MODULES=example.counter\nMODULESETTINGS={"example.counter":{"step":2},"gone.module":{}}\n')
+    text = play('report', 'get book\nread book\nworld modules check\nworld modules configure example.counter step 4\n'
+                'world modules adopt example.counter\nworld modules reload\nmodules demo example.counter\nquit\nn\n', 'RESTORE=configured')
+    check('another version of the world' not in text and 'FRESH=CHANGED' not in text,
+          'module notes and module files are not world changes', text[-3000:])
+    check('saved settings retained' not in text, 'creator-only module notes kept from a normal player', text[-3000:])
+    check('modules/draft.json' in text and 'unknown module gone.module' in text and 'Warnings' in text,
+          'unselected problems shown as warnings', text[-3000:])
+    words = ' '.join(text.split())  # the game wraps long lines
+    check(words.count('changes this campaign\'s modules: it is for builder mode or a DEV=1 game') == 3,
+          'rule changes refused to a normal game\'s Archon', text[-3000:])
+    check('Practice journal: 14.' in text, 'refused configure keeps the campaign setting', text[-3000:])
+    (world / 'modules/draft.json').unlink()
+    (world / 'affixes.xml').unlink()
+    text = play('report-dev', 'quit\nn\n', 'RESTORE=configured', 'DEV=1')
+    check('saved settings retained' in text and 'another version of the world' not in text,
+          'creator notes reported apart in a DEV game', text[-3000:])
+    config('example.counter')
 
     path = world / 'modules/example.counter.json'
     definition = json.loads(path.read_text())
