@@ -64,6 +64,10 @@ python docs/research/technology-scifi/verify.py
 document the checks. The runner deliberately reports existing defects; successful
 completion of the runner means the observations completed, not that the engine
 passed their proposed acceptance criteria. It uses no external network calls.
+`verify.py` checks the source snapshots against the audited commit while that commit
+can be reached, and otherwise against the working tree, counting (not failing) files
+changed since the audit. It requires each runtime finding's recorded probe line, not
+that the defect is still present, so a repair and a re-recorded run still verify.
 
 All example formats, new command names and new property names in the proposal
 and cookbook chapters are **design sketches**, not supported APIs. Existing

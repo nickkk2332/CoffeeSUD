@@ -218,7 +218,17 @@ The ordinary `FIGHT_PROG` scripts choose an enemy skill and invoke the existing
 COMPOSE adapter, paying its normal resources and honoring its cooldown. This is
 an example of authored AI, not a new generic AI support-selection system.
 
-In a builder/DEV session, configure an active campaign with:
+The WORLD MODULES CONFIGURE lines below change the campaign the session is playing. A builder session changes
+only the builder's own campaign under `.build/`; to change a player's campaign,
+launch it with `DEV=1` and the same paths `play.py` uses, restoring its save SLOT, for
+example (from the repository root):
+
+```sh
+CoffeeMud/sud.sh WORLDDIR=/tmp/sud-ember-trial/world DBSERVICE=jdbc:fakedb:/tmp/sud-ember-trial/db \
+  SAVEDIR=/tmp/sud-ember-trial/saves DEV=1 RESTORE=SLOT
+```
+
+and configure it with:
 
 ```text
 WORLD MODULES CONFIGURE embertrial.adventure safe_death false
@@ -261,7 +271,8 @@ python3 docs/creator/examples/ember-trial/check.py
 # Or through the engine's regular regression harness:
 tools/fixes.sh trial
 # On a deployment you have already published:
-WORLD=/tmp/sud-ember-trial/world python3 tools/playtest.py /tmp/sud-ember-trial/world/tests
+# (the trial's own test; the copied starter world's tests/start.play expects the starter start room)
+WORLD=/tmp/sud-ember-trial/world python3 tools/playtest.py /tmp/sud-ember-trial/world/tests/embertrial.play
 ```
 
 The main checker creates a disposable deployment, publishes it, plays with no
