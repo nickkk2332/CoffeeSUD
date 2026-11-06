@@ -65,7 +65,7 @@ The CoffeeSUD travel properties and behaviors (`Prop_TravelTime`, `Prop_Road`, `
 
 Two behaviors keep an older syntax in front of the options. `DelayedTransporter` is `min=.. max=.. chance=.. [options] ; destination ; destination ...` (the options come before the first semicolon, so do not put a semicolon inside its messages). `Concierge` and `TaxiBehavior` are a semicolon list of `price`, `place=price` and `FLAG=value` entries. Both are described in their own sections.
 
-`WORLD CHECK ROUTES` and `WORLD CHECK IDS` (see [02-world-workflow.md](02-world-workflow.md)) validate these options: unknown keys, bad enums, missing `DEST`/`DURATION`, missing stop rooms, missing route files, ambiguous waypoint names and duplicate waypoint IDs.
+`WORLD CHECK ONLY=routes` and `WORLD CHECK ONLY=ids` (see [02-world-workflow.md](02-world-workflow.md)) validate these options: unknown keys, bad enums, missing `DEST`/`DURATION`, missing stop rooms, missing route files, ambiguous waypoint names and duplicate waypoint IDs.
 
 How to attach a property or behavior is the same for everything in this chapter. In the editors (`MODIFY ROOM`, `MODIFY EXIT <dir>`, `MODIFY AREA`, `MODIFY MOB <name>`, `MODIFY ITEM <name>`), use the Effects field to add a property by class ID (`Prop_Journey`) and the Behaviors field to add a behavior (`TransportLine`); you are then asked for the parameter text. In world files they are `AFF` entries (`ACLASS`, `ATEXT`) and `BHAVE` entries (`BCLASS`, `BPARMS`); see [23-properties-reference.md](23-properties-reference.md#attaching-properties) and [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
 
@@ -181,7 +181,7 @@ A leg is `min(1, hours left)`; a `DURATION` of 2.5 gives legs of 1, 1 and 0.5 ho
 
 ### Prop_Journey options
 
-Hosts: rooms, exits, items, mobs. `DEST` and `DURATION` are required; `WORLD CHECK ROUTES` and the property editor refuse a definition without them.
+Hosts: rooms, exits, items, mobs. `DEST` and `DURATION` are required; `WORLD CHECK ONLY=routes` and the property editor refuse a definition without them.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
@@ -474,7 +474,7 @@ Write all options on one behavior line.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `STOPS` | required | At least two stops, separated by semicolons inside quotes: room IDs, port names, or area names. A stop the engine cannot resolve is a `WORLD CHECK ROUTES` error. |
+| `STOPS` | required | At least two stops, separated by semicolons inside quotes: room IDs, port names, or area names. A stop the engine cannot resolve is a `WORLD CHECK ONLY=routes` error. |
 | `DEPART` | none | Comma list of game hours of the day (`0` to hours-in-day minus 1) at which the vessel leaves a stop, for example `6,12,18`. The next listed hour after arrival is used. Replaces `WAIT`. |
 | `WAIT` | 10 | Ticks to wait at each stop when `DEPART` is not given. (A tick is about 4 seconds of game clock.) |
 | `ROUND` | `LOOP` | `LOOP` cycles through the stops and returns from the last to the first; `BACK` reverses at each end. |
@@ -706,7 +706,7 @@ Rules:
 - `DOORSDIRECTION` is the direction the car's door opens, seen from inside. The stop gets the opposite direction. Neither the car nor the stop room may already have an exit in that direction: the engine will not overwrite an authored exit, and the car then simply has no door.
 - `$disproom` is the stop's room title (the current stop when open, the next stop when moving); `$inopendir` the door direction from inside; `$outopendir` the opposite; `$traveldir` the current travel direction.
 - The route goes forward through the stops and then back; ends use the `REVERSEDIRECTION` block.
-- Route files live under `world/routes/` and are part of the world (`SAVE` publishes, `WORLD CHECK ROUTES` validates).
+- Route files live under `world/routes/` and are part of the world (`SAVE` publishes, `WORLD CHECK ONLY=routes` validates).
 
 ### Overlay: what never reaches the world file
 
@@ -790,7 +790,7 @@ Hosts: rooms and items. An item must lie in a room (or be carried, to act as the
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `NETWORK` | `DEFAULT` | Network name (case-insensitive). |
-| `NAME` | the host's name | Destination name shown in `TRAVEL` and typed after it. Names within a network should be unique; duplicate names make `WORLD CHECK ROUTES` warn. |
+| `NAME` | the host's name | Destination name shown in `TRAVEL` and typed after it. Names within a network should be unique; duplicate names make `WORLD CHECK ONLY=routes` warn. |
 | `ID` | derived | A stable author ID. Discovery is stored under it, so moving or renaming the stone never makes it a new place or loses discovery. IDs are scoped to the network and duplicates in one network are an error. Without `ID` a room waypoint is keyed by its room ID, and an item waypoint by a hidden saved identity the engine attaches to it. |
 | `ALIASES` | none | Comma list of old IDs, still recognized as the same waypoint after you change `ID`. |
 | `LEGACYKEYS` | none | Comma list of old saved discovery tokens to honor. |
@@ -845,7 +845,7 @@ To make a fast-travel network:
 
 1. In each location add `Prop_Waypoint` to a stone item (or the room): same `NETWORK`, a distinct `NAME`, a distinct `ID`.
 2. Choose `DISCOVER` and `SCOPE`, and a `COST` and `TIME`.
-3. `WORLD CHECK ROUTES,IDS` to catch duplicate IDs and names.
+3. `WORLD CHECK ONLY=routes,ids` to catch duplicate IDs and names.
 4. Test: attune, `TRAVEL`, travel with a companion, travel with too little mana, rename a stone and keep its ID.
 
 ## Instances, resets and planes
@@ -866,7 +866,7 @@ Source: [InstanceArea](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/
 
 `InstanceArea` is an Ability (property) that goes on an area. When a player character crosses into the area from outside, the party is moved into a private copy of it (a `SubThinInstance` area named `<n>_<Area Name>`), whose mobs and items are adjusted by the options. The same group entering again goes to the same copy while it exists. It can also be given to a mob, an item or a room (with `AREAMATCH` naming the areas it applies to).
 
-The parameter text is either the name of an instance type from `areainstancetypes.txt` (the shipped file defines `Triumph` and its variants, which depend on player factions), or a list of `KEY=value` options. `ID=` names the type and is required in the inline form.
+The parameter text is either the name of an instance type from `areainstancetypes.txt` (one type per line, written as a quoted name followed by `KEY=value` options, for example `"Triumph" LIKE="Triumph" DISPLAY="..."`; the shipped file defines `Triumph` and its variants, which depend on player factions; an unknown type name is an error), or a list of `KEY=value` options. `ID=` names the type and is required in the inline form.
 
 Options (`InstVar`):
 
@@ -877,7 +877,7 @@ Options (`InstVar`):
 | `INPLACE` | `true`: do not copy; scale the real area instead (below). |
 | `AREAMATCH` | Comma list of area names the property applies to when it is on a mob, item or room. |
 | `DISPLAY`, `DESCRIPTION`, `CATEGORY` | Informational: display name, text, categories. |
-| `LEVELADJ` | A formula for each mob's level. `@x1` area median level, `@x2` the mob's own level, `@x3` the instance level (the party's top level), `@x4`/`@x5` area min/max level, `@x6` experience rate plus 1, `@x7` best player faction value. A bare `@x1` leaves each mob at the party's level. |
+| `LEVELADJ` | A formula for each mob's level. `@x1` and `@x3` both evaluate to the instance level (the party's top level; the type-file header calls `@x1` the area's median level, but the code passes the instance level for both), `@x2` the mob's own level, `@x4`/`@x5` area min/max level, `@x6` experience rate plus 1, `@x7` best player faction value. A bare `@x1` or `@x3` puts each mob at the party's level. |
 | `ILEVELADJ` | The same for item levels. |
 | `ELITE` | Elite level, a number or formula; raises hit points, attack, damage and saves. |
 | `PREFIX` | Comma list of strings to prefix mob names with (one chosen at random per instance). |
@@ -956,7 +956,7 @@ An area of class `StdAutoGenInstance` builds a new random layout when entered. I
 
 A plane is a variant of an area that follows different rules, made by planeshift magic (`Spell_Planeshift`, `Prayer_PlanarTravel` and relatives). Source: [StdPlanarAbility](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdPlanarAbility.java), `resources/skills/planesofexistence.txt`.
 
-- The file defines planes (Earth, Air, Fire, Water, Astral, Ethereal, Limbo, Nirvana, Abyss, Nine Hells and others, about 37 entries) with the same style of options as instances (`PREFIX`, `LEVELADJ`, `MOBRESIST`, `BEHAVE`, `REQWEAPONS`, `ATMOSPHERE`, `SPECFLAGS`, `HOURS`, `RECOVERRATE`, `OPPOSED`, `TRANSITIONAL`, `DESCRIPTION` and more; the file header lists each).
+- The file defines planes, one per line as a quoted name followed by `KEY=value` options (Earth, Air, Fire, Water, Astral, Ethereal, Limbo, Nirvana, Abyss, Nine Hells and others, about 37 entries) with the same style of options as instances (`PREFIX`, `LEVELADJ`, `MOBRESIST`, `BEHAVE`, `REQWEAPONS`, `ATMOSPHERE`, `SPECFLAGS`, `HOURS`, `RECOVERRATE`, `OPPOSED`, `TRANSITIONAL`, `DESCRIPTION` and more; the file header lists each).
 - `CAST "PLANESHIFT" nirvana` moves the caster's group to a copy of the current area under that plane's rules, for a time. "To return home, travel to the Prime Material plane."
 - The ability `PlanarAbility` (ID `StdPlanarAbility`) on a normal area means "this is a plane": players cannot travel to that same plane from there, and only a few of the plane's attributes (`SPECFLAGS`, `BONUSDAMAGESTAT`, `RECOVERRATE`, `WEAPONMAXRANGE`, `REQWEAPONS`) apply.
 - Builders with the `PLANES` security flag edit the list in game: `CREATE PLANE <name>`, `MODIFY PLANE <name>`, `DESTROY PLANE <name>`; `LIST PLANES` shows them. Instances of planes made in play are saved with the campaign.
@@ -1034,7 +1034,7 @@ Reference: [26-mobprog-triggers.md](26-mobprog-triggers.md). Argument details ar
 | `VESSEL` | builder | `VESSEL STATUS <name>`, `VESSEL <name> ENTER\|RENAME <text>\|HOME <room>`. |
 | `LIST SHIPS`, `LIST INSTANCES`, `LIST PLANES` | builder | Inventory of vessels, instances and planes. |
 | `CREATE\|MODIFY\|DESTROY PLANE` | `PLANES` flag | Edit planes. |
-| `WORLD CHECK ROUTES`, `WORLD CHECK IDS` | builder | Validate travel definitions. |
+| `WORLD CHECK ONLY=routes`, `WORLD CHECK ONLY=ids` | builder | Validate travel definitions. |
 
 ## Worked examples
 
@@ -1077,12 +1077,12 @@ Goal: "The Gull" sails Port Azure, Saltmarsh and Gullrock at 6, 12 and 18 o'cloc
 7. **Check it.**
 
    ```text
-   WORLD CHECK ROUTES
+   WORLD CHECK ONLY=routes
    TIMETABLE
    VESSEL STATUS the Gull
    ```
 
-   `WORLD CHECK ROUTES` proves each stop resolves; `TIMETABLE` should say "the Gull: at Port Azure; next Saltmarsh, departure hour 6" (or the next listed hour).
+   `WORLD CHECK ONLY=routes` proves each stop resolves; `TIMETABLE` should say "the Gull: at Port Azure; next Saltmarsh, departure hour 6" (or the next listed hour).
 
 8. **Ride it.** As a normal character with coins, standing at Port Azure:
 
@@ -1164,7 +1164,7 @@ TRAVEL Mirewood Stone        You travel to Mirewood Stone.
 
 The party arrives together, 20 mana is charged once to the leader, and an hour of game time passes. At the Sunken Stone before the ritual, `TRAVEL` lists only the stones already discovered and `TRAVEL <name>` says "You must attune to this waypoint first."; `TRAVEL ATTUNE` runs `SINGTOSTONE` and answers "Waypoint attuned." or "The ritual is incomplete.", and the character without `ELVEN_ATTUNEMENT` gets "You cannot attune to this waypoint.".
 
-Run `WORLD CHECK ROUTES,IDS` for duplicate names and IDs, and test: a second character in the same profile sees the same discoveries (`SCOPE=PROFILE`); one with 5 mana is refused ("You cannot pay the waypoint's cost.") and nobody moves; a renamed stone with the same `ID` is still discovered.
+Run `WORLD CHECK ONLY=routes,ids` for duplicate names and IDs, and test: a second character in the same profile sees the same discoveries (`SCOPE=PROFILE`); one with 5 mana is refused ("You cannot pay the waypoint's cost.") and nobody moves; a renamed stone with the same `ID` is still discovered.
 
 ### Example 4: a scaled dungeon instance
 
@@ -1232,8 +1232,8 @@ A running journey remembers its host by a persistent ID; if the host was deleted
 
 | Tool | What it proves |
 | --- | --- |
-| `WORLD CHECK ROUTES` | Stops resolve, route XML is well formed, route files exist, waypoint names are not ambiguous, `Prop_Journey` options are valid. |
-| `WORLD CHECK IDS` | No two waypoints in a network share an `ID`. |
+| `WORLD CHECK ONLY=routes` | Stops resolve, route XML is well formed, route files exist, waypoint names are not ambiguous, `Prop_Journey` options are valid. |
+| `WORLD CHECK ONLY=ids` | No two waypoints in a network share an `ID`. |
 | `VESSEL STATUS <name>` | A vessel's real state: position, course, anchor, hull, behaviors, crew. |
 | `TIMETABLE` | Every line and moving room. |
 | `PORTS` | The ports a character knows (test with a normal and a builder character). |
@@ -1258,7 +1258,7 @@ Test with an ordinary character, not a builder: builders bypass helm restriction
 - **`DelayedTransporter` teleports through a locked gate.** `ENTRY=FORCE` is the default. Use `ENTRY=CHECK`.
 - **The moving room has no door.** The car or the stop already has an exit in the door direction; temporary links never replace authored ones. Remove that exit.
 - **Hidden port still listed.** `KNOWNMASK` replaces `HIDDEN`; a mask that everyone matches makes it public. Builders see all ports.
-- **Waypoint discovery lost or shared.** Without `ID`, a room waypoint is keyed to its room ID (renumbering the room loses discovery) and an item waypoint to a hidden saved identity. Give every waypoint an explicit `ID` before release and use `ALIASES` when changing it. A copy of a stone with an explicit `ID` shares its discovery: give the copy its own `ID` (`WORLD CHECK IDS` reports duplicates).
+- **Waypoint discovery lost or shared.** Without `ID`, a room waypoint is keyed to its room ID (renumbering the room loses discovery) and an item waypoint to a hidden saved identity. Give every waypoint an explicit `ID` before release and use `ALIASES` when changing it. A copy of a stone with an explicit `ID` shares its discovery: give the copy its own `ID` (`WORLD CHECK ONLY=ids` reports duplicates).
 - **`STABLE` does nothing.** There is no keeper with `Nanny` in the room, the animal is not owned by you, or `WATCHES` omits its kind. The ranger skill word is `STABLEMOUNT`.
 - **Two copies of one ship have the same interior.** `FIXEDINTERIOR=true` on the original. Set it back to `false`.
 - **An instance never resets.** `InstanceArea` copy mode builds a fresh copy per party; it does not reset the real area. Use `ResetWhole` for that.

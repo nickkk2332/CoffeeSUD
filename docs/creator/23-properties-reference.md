@@ -1984,7 +1984,7 @@ CoffeeSUD addition (item modifiers, optional). Applied by `MODBASE` generation t
 
 Notes:
 
-- Numeric deltas feed the optional combat-profile collector when the item is correctly worn. A generic copy bound to another item, a corrupt record, or one over the campaign's `max_modifiers` grants nothing and does not stop its wearer's combat; the log, COMBATRESULT and `WORLD CHECK ITEMMODS` name it.
+- Numeric deltas feed the optional combat-profile collector when the item is correctly worn. A generic copy bound to another item, a corrupt record, or one over the campaign's `max_modifiers` grants nothing and does not stop its wearer's combat; the log, COMBATRESULT and `WORLD CHECK ONLY=itemmods` name it.
 - Disabling `items.modifiers` suspends bonuses and crafting but keeps the records and receipts.
 - This first family does not own arbitrary AFFECT layers, new crafting currencies or staged choices. See chapter 17 (item modifiers).
 

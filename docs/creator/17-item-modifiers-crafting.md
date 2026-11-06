@@ -203,7 +203,7 @@ item/modifier identities while keeping its rolls. Both run on the game thread
 (or at boot, as MODBASE does). Direct generic cloning (a rejuvenated or
 RandomItems copy) is not the managed-copy API: such a copy shares the record
 but is not the item it is bound to, so it grants no bonuses, AFFIXES adds
-nothing to it, and WORLD CHECK ITEMMODS names it. Generation addition is
+nothing to it, and WORLD CHECK ONLY=itemmods names it. Generation addition is
 refused for owned or already crafted items. Ordinary gameplay uses
 transactions for edits.
 For catalog generation, keep the prototype untracked and apply MODBASE to each
@@ -312,7 +312,7 @@ explicit work; no automatic reinterpretation is performed.
 
 Disabling the module suspends its bonuses/crafting and retains records and
 settlement. Re-enabling restores frozen rolls. Lowering the modifier limit
-withholds an over-limit item's bonuses: the log and WORLD CHECK ITEMMODS name
+withholds an over-limit item's bonuses: the log and WORLD CHECK ONLY=itemmods name
 it, COMBATRESULT shows the source as withheld, and its wearer's composed combat
 goes on without it. A corrupt record is treated the same way. Unequip and remove
 enough modifiers, or restore the limit. Removal/unprotect paths remain available

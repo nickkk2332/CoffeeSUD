@@ -326,7 +326,7 @@ Removes the exit object in that direction (this side only). The *link* to the ro
 
 ### One-way links and exits that lead nowhere
 
-- A **one-way link**: link A to B and have B's opposite slot filled (or unlinked). `LIST ONEWAYDOORS` finds them. Use them for chutes, one-way doors or trapdoors. `WORLD CHECK EXITS` warns only when a *door* has no way back; an open one-way walkway is not a warning.
+- A **one-way link**: link A to B and have B's opposite slot filled (or unlinked). `LIST ONEWAYDOORS` finds them. Use them for chutes, one-way doors or trapdoors. `WORLD CHECK ONLY=exits` warns only when a *door* has no way back; an open one-way walkway is not a warning.
 - Use `LINK` to point a direction at a room in **another area** (cross-area links are ordinary). `WORLD MAP FLAGS` marks them `@`.
 - An exit with a missing destination ("exit to nowhere") shows in `LIST UNLINKEDEXITS` and as an `EXITS` error in `WORLD CHECK`. When a room is destroyed, the exits that led to it keep its ID in their key name as `{#Area#12#}` so you can see where they used to go.
 
@@ -1059,7 +1059,7 @@ A generic exit's `EXDAT` holds the fields of the exit editor. For a closed, lock
 
 **Editing by hand.** You can edit a `.cmare` in a text editor (change a title, retarget `XDOOR`, add a `REXIT`), but two links must agree: every `XDOOR` has to name a room that exists, and a two-way passage needs a `REXIT` in each room. Run `WORLD CHECK` afterwards; `WORLD RELOAD [area]` loads the file into a running builder game. A file edited while a builder game runs is protected from being overwritten by the next `SAVE`; see [World files and editing](02-world-workflow.md).
 
-**Dev areas.** `WORLD DEV [area] ON` tags an area `DEV`, so that it is written to `world/dev/` and loaded only in builder mode and `DEV=1` games. Exits from shipped areas into a dev area lead nowhere in a normal game, and `WORLD CHECK EXITS` warns about them.
+**Dev areas.** `WORLD DEV [area] ON` tags an area `DEV`, so that it is written to `world/dev/` and loaded only in builder mode and `DEV=1` games. Exits from shipped areas into a dev area lead nowhere in a normal game, and `WORLD CHECK ONLY=exits` warns about them.
 
 **Starting room.** Where new characters begin is a world setting, `START=Area#number` in `world.ini` (`WORLD SET START=Hollowmere#0`), not a property of the area. See [world settings](world-settings.md).
 

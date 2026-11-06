@@ -397,7 +397,10 @@ In the carpenter's quest or script:
 MPSETVAR WORLD BRIDGE 1
 ```
 
-Check with `PREVIEW var BRIDGE=1`, then `PREVIEW var BRIDGE=0`. Save a game with
+Check with `PREVIEW var BRIDGE=1`, then `PREVIEW var BRIDGE=0`, before the
+lever has ever set the world variable: `PREVIEW VAR` writes the variable on the
+reader, and `IFVAR` takes the first host that has it, so a `WORLD` value that is
+already set can win. Save a game with
 the bridge built and restore it: `WORLD` variables are campaign state, so the
 bridge stays built; a new game starts with the ropes.
 
@@ -957,7 +960,7 @@ AREA="Old Vael"
 | `ROOMS=` | Comma-separated room IDs, or ranges `Area#first-last` (a range covers at most about 10 000 rooms). |
 | `AREA="name"` | Every room of that area. |
 | `MARK=room:G:"label"` | A labelled single-character glyph on a room. The label can be quoted or one word. Several `MARK=` may be given. |
-| `COLOR=code` | Colour of the marks (default `r`). |
+| `COLOR=code` | Colour of the marks (default `r`). A room the character has not visited is still drawn dim, so the colour shows once they have been there. |
 
 A marked room is also revealed. Marks appear in the map legend. Reading the item
 again changes nothing that was already known. Use Prop_MapReveal on a plain
@@ -1083,8 +1086,8 @@ text, `^O` room titles, `^L` room descriptions, `^J` weather, `^D`/`^d`
 explored exits and doors, `^U`/`^u` unexplored ones, `^I` items, `^M` creatures,
 `^E` emotes, `^T` says, `^S` spells, and the fight colours `^f`, `^e` and `^F`.
 A 24-bit colour is written `^##RRGGBB`. `^!`, `^_` and `^/` are bold,
-underline and italics. Several codes (`^x`, `^X`, `^Z`) are unused in
-single player and a world may use them freely.
+underline and italics. The "important" codes (`^x`, `^X`, `^Z`) are used by the
+engine for headings and alarms, so prefer named aliases for your own styles.
 
 For readable, restyle-able colour, the world defines **named aliases** and text
 uses them:
@@ -1336,8 +1339,9 @@ LANGUAGE=Dwarven players=true ; -NAMES +BOB
 LANGUAGE=Orcish UNDERSTANDS=ONLY
 ```
 
-Options: `LANGUAGE`, `PLAYERS` (also affects players), `NOMOBS`, `HOMEONLY` (only
-creatures whose start area is the property's area), `UNDERSTANDS=ONLY`
+Options: `LANGUAGE`, `PLAYERS=true` (also affects players), `NOMOBS=true`,
+`HOMEONLY=true` (only creatures whose start area is the property's area; the
+three switches need the `=true`), `UNDERSTANDS=ONLY`
 (restricts comprehension, as above), and an optional zapper mask after a `;`.
 On a creature it makes that creature speak it; on a room or area it applies to
 those who enter or are born there; on an item, to those who pick it up.
@@ -1369,8 +1373,8 @@ below. In a world-building script the same fields are set with `setStat` on a
 | `NAME` | The language's name. |
 | `WORDS` (`N letter words`) | Fallback word lists by word length, separated by `/` (one list per length), used for unknown words when nothing else applies. |
 | `HASHEDWORDS` | An inline dictionary, `WORD=translation` pairs separated by `/`. **Wins over** the dictionary file. |
-| `INTERPRETS` | Other languages this one partly understands: `Elvish(60),Sylvan(30)`. See the comprehension model. The editor's prompt adds plain IDs (full strength); percentages are set with `setStat` or in the stored definition. |
-| `NATURALLANG` | Whether this is a natural (spoken or written) language. Spells such as Fluency and Read Language act only on natural languages; the default for a new language is true. |
+| `INTERPRETS` | Other languages this one partly understands: `Elvish(60),Dwarven(30)`. See the comprehension model. The editor's prompt adds plain IDs (full strength); percentages are set with `setStat` or in the stored definition. |
+| `NATURALLANG` | Whether this is a natural (spoken or written) language. Prayers such as Fluency and Read Language (`Prayer_Fluency`, `Prayer_ReadLanguage`) act only on natural languages; the default for a new language is true. |
 | `VERB`, `TRANSVERB` | The speaking and translating verbs in messages. |
 | `HELP` | Help text for the language. |
 | `NAMESTYLE` | A name-generation style for this language ([chapter 12](12-generation.md)). |
@@ -1984,8 +1988,8 @@ The sage's script when handing it over:
 MPJOURNAL $n Clues "The old smuggler's map marks a chest on the coast. (the sage)"
 ```
 
-After reading the item, `MAP` (with `MAPFOG=KNOWN`) shows the coves dim, a red
-`X` with "Buried chest" in the legend; `JOURNAL SEARCH chest` finds the clue.
+After reading the item, `MAP` (with `MAPFOG=KNOWN`) shows the coves dim, an
+`X` (dim until the character has walked to that room, then red) with "Buried chest" in the legend; `JOURNAL SEARCH chest` finds the clue.
 Under `MAPFOG=VISITED` the coves would not appear until walked.
 
 ## Quick reference
@@ -2041,7 +2045,7 @@ shipped help.
 | [Prop_MapGlyph](23-properties-reference.md#prop_mapglyph) | rooms | `CHAR COLOR LABEL LEGEND HIDE` |
 | [Prop_MapReveal](23-properties-reference.md#prop_mapreveal) | readable items | `ROOMS AREA MARK COLOR` |
 | [Prop_Monolingual](23-properties-reference.md#prop_monolingual) | creatures | `LANGUAGES CONFUSED` |
-| [Prop_LanguageSpeaker](23-properties-reference.md#prop_languagespeaker) | creatures, items, rooms, exits, areas | `LANGUAGE PLAYERS NOMOBS HOMEONLY UNDERSTANDS` and a mask after `;` |
+| [Prop_LanguageSpeaker](23-properties-reference.md#prop_languagespeaker) | creatures, items, rooms, areas | `LANGUAGE PLAYERS NOMOBS HOMEONLY UNDERSTANDS` and a mask after `;` |
 | [Prop_LangTranslator](23-properties-reference.md#prop_langtranslator) | creatures, items, rooms | `NOTRANSLATE`, percentages, languages, `` `words ``, `#PLAYER` |
 | [Prop_LanguageImmersion](23-properties-reference.md#prop_languageimmersion) | areas, rooms, creatures, items | `LANGUAGE HEAR READ CHANCE START MAX GRANTAFTER ID ALIASES LEGACYKEYS` |
 | [Prop_LocalLists](23-properties-reference.md#prop_locallists) | areas, rooms, creatures | `LOAD` and the nine list keys |

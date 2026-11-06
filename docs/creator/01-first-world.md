@@ -1365,6 +1365,9 @@ The next launch (of any mode except `CHECK=1`) prints the title with the game
 name `Brindlewick Tales`; a new normal game then shows the two prologue pages,
 waiting for Enter between them.
 
+Items 1 and 2 need no running game. Item 3 is done in builder mode, so start
+it again first (`"$BRIND/launch.sh" BUILDER=1`, then type `Curator`).
+
 **3. A first-entry message in the world.** For text that belongs to the game
 and must appear once per character, use the `Prop_FirstEntry` property on a
 room, not a line in the prologue. In builder mode, on the green:
@@ -1485,8 +1488,9 @@ rooms as they were saved. To take the changed areas from the files, restore with
 parties and slots work is in [Saves and party](31-saves-and-party.md).
 
 Test the *new game* path too, not only the restored one. A restored game keeps
-the quest at the step it was; a new game starts the quest from the beginning,
-with a closed gate guard script, a locked door and an empty-hook smithy.
+the quest, the doors and the inventory as they were saved; a new game starts
+the story from the beginning: a locked storeroom, the key in the chest and the
+empty hook in the smithy.
 
 ## Worked variations
 
@@ -1494,9 +1498,18 @@ with a closed gate guard script, a locked door and an empty-hook smithy.
 
 Task: add a three-room lane east of the gate, then write each room's own text.
 
-Go to the gate, in builder mode, and lay the path. `WORLD PATH` makes one room
-for each direction, from the room you are in, without moving you; it links each
-room to the last both ways:
+Do this in a throwaway copy of the whole deployment, so your five-room world
+stays as the rest of the chapter describes it (`launch.sh` finds its own
+folder, so the copy works as it stands):
+
+```sh
+cp -r "$BRIND" "$BRIND-lane"
+"$BRIND-lane/launch.sh" BUILDER=1
+```
+
+At the characters menu type `Curator`. Go to the gate and lay the path.
+`WORLD PATH` makes one room for each direction, starting from the room you are
+in, without moving you; each room is linked to the last both ways:
 
 ```text
 GOTO Brindlewick#2
@@ -1513,20 +1526,19 @@ made by `WORLD PATH` or `WORLD DIG` is tagged `TODO`, even when you gave it a
 WORLD CHECK ONLY=TEXT
 ```
 
-Each line says a room is `tagged TODO, as WORLD DIG or PATH made it; EDIT DESC
-gives it its own text`. The tag goes away when you give the room a description
-in the multi-line editor:
+Each finding says a room is `tagged TODO, as WORLD DIG or PATH made it; EDIT
+DESC gives it its own text`. The tag goes away when you save a description for
+the room in the multi-line editor:
 
 ```text
 GOTO Brindlewick#5
 EDIT DESC HERE
 ```
 
-Type the description (the editor starts in Add Text mode because the room has
-one line already? No: it opens with that line in the Menu; use `E`, `0` and the
-new text to replace line 0, then `S` and `Y`). A description of one line is
-enough. Repeat in `#6` and `#7`, then `WORLD CHECK ONLY=TEXT` again: the lines are
-gone.
+The room already has a one-line description, so the editor opens at its Menu
+prompt, not in Add Text mode. Type `E`, then `0` for the line number, then the
+new text, then `S` and `Y` to save. Repeat in `#6` and `#7`, then run `WORLD
+CHECK ONLY=TEXT` again: the lines are gone.
 
 The same thing as a macro. A macro is a plain list of game commands in
 `world/macros/NAME.cmd`, run by `RUNFILE`. Create the file outside the game:
@@ -1541,7 +1553,8 @@ WORLD MAP AREA IDS
 MACRO
 ```
 
-and run it in the game from a room with nothing yet in that direction:
+and run it in the game from a room with nothing yet in that direction. It
+makes three more rooms, `Brindlewick#8` to `#10`:
 
 ```text
 GOTO Brindlewick#7
@@ -1552,7 +1565,8 @@ RUNFILE lane east
 and the summary says how many lines ran and failed. Macros are not part of the
 world checksum. For richer automation use `JRUN` and its `builder` object
 ([JavaScript](05-javascript.md)). Remember `SAVE` afterwards: the rooms are
-saved as made, but the world files change only on `SAVE`.
+saved as made, but the world files change only on `SAVE`. When you are done
+with the copy, quit and delete it (`rm -r "$BRIND-lane"`).
 
 Digging by walking is the other way: `WORLD DIG ON TYPE=Woods`, walk in
 directions that have no exit, `WORLD DIG OFF`.

@@ -105,7 +105,7 @@ ID=museum-gallery SOUND="The distant surf echoes through the stone." CHANCE=100
 LOOK inscription and LISTEN expose the clues. Check a second character before
 deciding whether progress should be personal or shared. Keep `ID=museum-waves`
 when revising prose; use ALIASES/LEGACYKEYS when migrating an older source key.
-Give a separate puzzle a new ID. CHECKTEXT and WORLD CHECK IDS catch spelling
+Give a separate puzzle a new ID. CHECKTEXT and WORLD CHECK ONLY=ids catch spelling
 and duplicate-ID mistakes, not whether the clue is understandable.
 
 ## 5. An opening paragraph and an optional paged introduction
@@ -152,7 +152,7 @@ ENTRY=COAST ON=READ SCOPE=CHAR MSG="You learn the history of the coast."
 
 Check READ tablet, LORE COAST, reading again and another character's codex.
 Choose PROFILE scope for shared knowledge. The definition stays in world files;
-learned state stays in the campaign. WORLD CHECK LORE catches missing entries.
+learned state stays in the campaign. WORLD CHECK ONLY=lore catches missing entries.
 
 ## 7. A new command with saved state
 
@@ -452,7 +452,7 @@ Use `NAME="Harbour Stone" ID=harbour-stone` at the other endpoint. Touch/USE
 to discover, then TRAVEL. Check unknown destinations stay hidden, the cost is
 charged once after all passengers pass entry checks, and a second profile
 character sees shared discovery. Rename a stone without changing its ID.
-WORLD CHECK ROUTES,IDS catches ambiguous names and duplicate network IDs.
+WORLD CHECK ONLY=routes,ids catches ambiguous names and duplicate network IDs.
 
 ## 24. A crime test that leaves no warrant
 

@@ -234,6 +234,13 @@ comma list of `MOBS`, `ITEMS`, `AREAS`, `ROOMS`, `EXITS` (values 1, 2, 4, 8,
 ability is paid for, the engine refuses it when the caster and the victim are
 too close (`You are too close to X`) or too far apart. Ranges are widened by
 the caster's `XMAXRANGE` expertise. Outside combat, range has no effect.
+One more consequence (from reading `castingQuality`): against the caster's
+current victim, a hostile ability reports itself as `INDIFFERENT` when the
+fight range is greater than its `MAXRANGE`, and then the cast is not flagged
+malicious (the cast message itself then starts no fight and is not saved
+against). A hostile `GenAbility` should
+therefore set `MAXRANGE` as far as it is meant to reach; the default `MELEE`
+only suits melee fights.
 
 ## Costs, cooldowns and action time
 
@@ -996,7 +1003,8 @@ Inside a cast, these placeholders are replaced:
 `MAXTARGETS` is different: `@x1` is the adjusted caster level and `@x2` is the
 number of candidate targets. `HERESTATS` takes the same variables as text
 substitution (`hitpoints+@x9`). When a `GenAbility` is added as a property
-rather than cast, all nine are the level of the thing it is on.
+rather than cast, `@x1`, `@x2` and `@x9` are the level of the thing it is on
+(at least 1) and `@x3` to `@x8` are 0.
 
 ### What happens when it is cast
 

@@ -159,7 +159,7 @@ of a shopkeeper standing here.
 | `USES n` | Uses remaining / condition / charges (0 or more) |
 | `SAVEABLE true/false` | Whether the item is saved with its room |
 | `MISC text` | For a standard item, its free-text field. For a generic item this opens the full editor |
-| any stat code | `CLASS`'s generic stats and the class's own stat codes (below) |
+| any stat code | The generic item codes and the class's own stat codes (below) |
 
 The stat-code form is the most useful for scripts, `RUNFILE` macros and bulk
 fixes. Every generic item accepts the codes of the `GenItemCode` list, and each
@@ -1086,7 +1086,8 @@ Rider types sort furniture: a chair is `FURNITURE_SIT`, a bed
 `FURNITURE_SLEEP`, a table `FURNITURE_TABLE` (things placed on it, people sat
 at it), a boat `WATER_BASED`, a wagon `WAGON`, a tent `ENTER_IN` (riders are
 inside it). The editor asks them with a single letter; `?` lists the
-letters. `GenFurniture` is a rideable sitting furniture item that cannot be
+letters (the editor prints the names with hyphens, such as FURNITURE-SIT; the
+`RIDEBASIS` stat code is set with the underscore form, `FURNITURE_SIT`). `GenFurniture` is a rideable sitting furniture item that cannot be
 picked up by default (weight 40, 2 riders).
 
 `GenPortal`/`GenMobilePortal` are items that are also exits (the readable text
