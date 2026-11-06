@@ -1149,3 +1149,276 @@ should be a pure function); `StoryText` is read-only apart from `setVariable`.
 Tests: `ar-shared.js`, `pr1-review.js`, `pr-presentation.js`, `pr-text.js`,
 `pr-render.js`, `l-language.js`.
 
+## Script events and the trigger plumbing
+
+### Purpose
+
+CoffeeMud scripts (MOBPROG) fire on messages. CoffeeSUD adds many triggers for things
+that are not messages (a skill learned, a room discovered, a quest step, a calendar
+change, a save, a party change). `ScriptEvents` is the bridge: engine code calls a
+static method such as `ScriptEvents.game(...)`, which finds the hosts that could hear
+the event and hands each script engine the event through
+`ScriptingEngine.eventTrigger(...)`. The trigger and command reference for scripters
+is in [chapter 26](26-mobprog-triggers.md); this section is about the plumbing.
+
+Source: [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java),
+`Common/interfaces/ScriptingEngine.java` (`progs`, `eventTrigger`, `eventCheck`),
+`Common/DefaultScriptingEngine.java` (`eventTrigger`, `registerGlobalTriggers`,
+`getStateXML`, `setStateXML`), `Behaviors/Scriptable.java`, `core/WorldHost.java`,
+`core/HostScripts.java`.
+
+### Trigger codes and registration
+
+A trigger's code is its position in `ScriptingEngine.progs` plus one
+(`ScriptEvents.code(name)` returns 0 for an unknown name). The array is positional and
+saved scripts do not store codes, but internal tables do, so **append new triggers at
+the end** and never reorder. The same array is what `ScriptCheck` uses to recognise
+trigger names (`PROGS = set(ScriptingEngine.progs)`), so adding a name there also
+teaches the checker.
+
+Two tables keep an event from costing anything when nobody listens:
+
+- `used`: a `BitSet` of trigger codes that some parsed script has. A script engine
+  that parses a script calls `ScriptEvents.uses(code)` for each of its triggers
+  (`registerGlobalTriggers` in `DefaultScriptingEngine`). Every `ScriptEvents`
+  entry point starts with `if(!isUsed(X_PROG)) return;`.
+- `registry`: trigger code to a weak set of hosts that have a script with that
+  trigger (`register(host, code)`, `registered(code)` which also skips destroyed
+  hosts). This serves events that are heard anywhere in the world (GAME_PROG,
+  QUEST_PROG, TURN_PROG and the like) without walking every room.
+
+Events at a place (a room, an area) reach the same hosts a message there would:
+`hosts(Room)` is the room, its items, its inhabitants and what they carry, then the
+area and its parents (`getParentsRecurse`); `hosts(Area)` is every room's hosts plus
+the area and its parents. `deliver(hosts, msg)` hands a `CMMsg` to each host's
+scripts and to behaviours that are script engines, for events with no single room.
+
+### Firing
+
+`fire(hosts, triggerCode, source, target, msg, args, bits, test)` is the common
+tail. For each host and each of its engines (`engines(host)`: the host's scripts, and
+behaviours that are scripting engines) it calls
+`S.eventTrigger(host, code, source, target, null, msg, args, bits, test)`. `bits` is
+the format string `parseBits` uses to split the trigger line (for example `"CCr"`),
+`args` become the script's `$0`, `$1` and so on, `msg` becomes `$g` or the event's own
+text, and `test` is a predicate over the parsed trigger line that decides whether this
+script's line fits (each trigger has a `...Matches(String[] t, ...)` method, such as
+`gameMatches`, `turnMatches`, `areaMatches`).
+
+In `DefaultScriptingEngine.eventTrigger`: it returns at once if the host or source is
+null, if the recursion counter is above 2, or if the trigger is switched off
+(`canTrigger`: an `MPNOTRIGGER` cool-down held in `noTrigger` as a game-time
+deadline); it resolves the host's monster stand-in (`getMakeMOB`) and last known
+location (an area hearing an event from no room uses one of its rooms); mobs that are
+not free to be triggered (`isFreeToBeTriggered`) are skipped; then for each script of
+that code whose line fits it queues a response (`enqueResponse` or a
+`ScriptableResponse` with `ticks`) for the engine's normal dequeue, unless the
+script's engine has `noDelay`. `multiTriggers` decides whether the first matching
+script stops the search. Lines marked `@GLOBAL` (ST12) are the only ones heard by
+hosts away from the event.
+
+`eventCheck` is the synchronous variant for events that can be refused:
+`ScriptEvents.gameCheck` (GAME_PROG SAVE) uses it so that a script's `RETURN CANCEL`
+refuses a save.
+
+Stand-ins: events that do not come from a character use `source(name, area)` or
+`standIn(name)`, which return a stand-in mob ("the weather", "the sky", "the game")
+placed in a room so `$n` has a referent.
+
+### Where the events come from
+
+| Method | Trigger or hook | Called from |
+| --- | --- | --- |
+| `game(kind, mob, detail)` | GAME_PROG (`NEWGAME, RESTORE, SAVE, NEWCHAR, SWITCHTO, SWITCHFROM, PAUSE, RESUME, TIMEMODE, ANY`), `JSEvents`, `WorldJS` on-functions | `SaveGame`, the `SWITCH`, `PAUSE` and `TIMEMODE` commands, `TimeLock` |
+| `gameCheck(mob, slot)` | `onBeforeSave`, `cm.on('save')`, GAME_PROG SAVE (may refuse) | `SaveGame.writeSnapshot` |
+| `turn(leader)` | TURN_PROG, turn count (saved in the header) | `Party.passTurn` and friends, and `StdMOB` for a command that took time in real time |
+| `moved(mob, from, to)` | AREA_ENTER_PROG, AREA_LEAVE_PROG, area text | `MUDTracker` (every move), `Travel.transfer`, `SaveGame.playerLoggedIn` |
+| `skill`, `levelGrant` | SKILL_PROG | ability learning code |
+| `quest`, `questFail`, `questTimeout` | QUEST_PROG, QUESTFAIL_PROG, QUESTTIMEOUT_PROG | quest code |
+| `weatherChanged`, `timeOfDayChanged`, `dateChanged`, `calendarChanged`, `onClock` | WEATHER_PROG, MOON_PROG, SEASON_PROG, MONTH_PROG, YEAR_PROG, WEEKDAY_PROG | the climate and clocks |
+| `party`, `clan`, `faction` | PARTY_PROG, CLAN_PROG, FACTION_PROG | party/clan/faction code |
+| `boarded`, `sail`, `vesselArrived`, `vesselDocked` | BOARD_PROG, DISEMBARK_PROG, SAIL_PROG, VESSEL_ARRIVE_PROG, VESSEL_GREET_PROG, DOCK_PROG | vessels |
+| `verb`, `propVerb` | VERB_PROG | the command parser |
+| `use`, `switched`, `itemSet`, `destroyed`, `affected` | USE_PROG, COMBINE_PROG, SWITCH_PROG, SET_PROG, DESTROY_PROG, DECAY_PROG, AFFECT_PROG | item and effect code |
+| `wave`, `arenaWin`, `arenaLose`, `partyDefeat`, `ambush`, `phase`, `yielded`, `defeated`, `surrender`, `encounterReset` | WAVE_PROG, ARENAWIN_PROG, ARENALOSE_PROG, PARTYDEFEAT_PROG, AMBUSH_PROG, PHASE_PROG, YIELD_PROG, DEFEAT_PROG, SURRENDER_PROG, RESET_PROG | encounter code |
+| `talk`, `talked`, `met` | TALK_PROG, FIRSTGREET_PROG, REGREET_PROG | NPC dialogue |
+| `generated` | GENERATED_PROG | generators |
+| `varChanged` | VAR_PROG | script variable code |
+| `signal` | SIGNAL_PROG | `MPSIGNAL` |
+| `achieved` | ACHIEVE_PROG | achievements |
+
+(The list is representative; scan `ScriptEvents` for the rest. Each method's javadoc
+names its trigger line format.)
+
+### Saved script state
+
+`ScriptingEngine.getStateXML()` and `setStateXML(xml)` carry the state of the engine's
+bookkeeping across a save. The XML starts with `<HASH>` (a hash of the script list) and
+may contain: `<ONCE>` (indices of ONCE_PROGs and QUEST_TIME_PROGs already run, except
+`ONCE_PROG BOOT`, which is once per load), `TIME` and `DAY` (the hour or day each
+TIME_PROG or DAY_PROG last ran), `DELAY` (ticks left), `<EVERY>` (EVERY_PROG next
+times), `<NOTRIG>` (`MPNOTRIGGER` cool-downs as game time left), `<QUE>` (queued
+MPALARMs and delayed responses: trigger code, tick delay, script index, source,
+monster, target, items and message, plus `$0`-`$9` words for a paused `MPWAIT` body),
+`<SCOPE>`, `<VARHOST>INSTANCE` and, for an `INDIVIDUAL` scope, `<VARS>`. `WorldState.statesXML`
+wraps it as `<SSTATE KEY=...>` keyed by the hex hash code of the script text, so
+changing a script drops its stale state. A freshly restored engine holds the XML in
+`pendingState` and returns it unchanged from `getStateXML` until it has read it, so a
+save made before the first tick does not lose it.
+
+### Adding a trigger
+
+1. Append the name to `ScriptingEngine.progs` with a numbered comment, and document it
+   in the help (`resources/help/arc_behaviors.ini` lists the existing ones).
+2. Add `public static final int X_PROG = code("X_PROG");` and a `fooMatches` predicate
+   and a firing method to `ScriptEvents` following an existing one. Guard with
+   `isUsed`. Build the host list with `hosts(Room)`, `hosts(Area)`,
+   `registered(code)` or a combination.
+3. Call it from the engine code where the event happens, on the game thread.
+4. Make sure `ScriptCheck` accepts the trigger line (it reads `progs`); add arguments
+   validation in `ScriptCheck` if the line has a fixed form.
+5. If the trigger can refuse something, use `eventCheck`.
+6. Test in a `tools/fixtures/fixes` file (see `st6-game.js`, `st5-quest.js`,
+   `st2-skill.js`, `st10-party.js` for the model). The generated
+   [trigger reference](26-mobprog-triggers.md) comes from the help files.
+
+### World scripts and hosts
+
+`WorldHost` makes one hidden item named `WORLD` that carries every
+`world/scripts/*.script`, held by the player's room so it ticks wherever the player
+goes; its variables are `WORLD`'s. It is created at the first login of each game
+(`WorldHost.start(mob)`), before GAME_PROG `NEWGAME` or `RESTORE` fires, and
+`WorldHost.forget()` drops the previous game's host in `SaveGame.afterBoot`.
+`HostScripts` (P21) runs scripts that come with a thing rather than sit on it: a race's or class's `SCRIPT` runs as a hidden effect on each mob of it (an engine per mob, made when first needed, never saved), and a skill's or poison's `SCRIPT` is one engine per ID whose `ONFOUND`, `ONCRAFTED`, `ONAFFECT` and similar functions are called.
+`ScriptHooks` holds P3's hook names: a generic ability's or trap's `SCRIPT` gets a
+`FUNCTION_PROG` call of that name (`CANCAST` may `RETURN false`), and
+`ScriptHooks.maskCheck(mask, mob, target)` lets a cast mask's `+IF`/`-IF` see `$t`.
+
+### Threading and invariants
+
+- Fire on the game thread. `ScriptEvents` keeps static tables (`used`, `registry`,
+  `sources`) guarded by `synchronized` blocks, but the scripts themselves are not
+  thread-safe.
+- Never fire triggers while a restore is applying world state: `isWorldPending()`
+  suppresses `AFFECT_PROG` and others for that reason. A trigger you add that is
+  caused by objects being created or modified should check it.
+- A recursion guard (`recurseCounter` above 2) silently drops nested events; do not
+  fire a trigger from inside the handler of the same trigger and expect delivery.
+
+### Tests
+
+The `st*` fixtures (`st2-skill.js`, `st5-quest.js`, `st6-game.js`, `st7-verb.js`,
+`st8-vessel.js`, `st9-clan.js`, `st10-party.js`, `st11-calendar.js`, `st14-faction.js`,
+`st16-border.js`, `st20-generated.js`, `st22-social.js`, `st29-achieve.js`),
+`dt7-script.js`, `p21-scripts.js`, `js6-cm.js`, `js8-world.js`, and the played
+`st1`/`st6` groups.
+
+## JavaScript integration
+
+### Purpose and layers
+
+CoffeeSUD embeds Rhino. The language reference is [chapter 5](05-javascript.md); the
+Java side is a stack of small classes:
+
+| Class | Role |
+| --- | --- |
+| `JSRuntime` | Installs a global Rhino `ContextFactory` once per process (it survives engine restarts). Every `Context.enter()` gets a time limit: `JSTIMELIMIT` seconds (default 2), `JSTIMELIMIT_JRUN` for `JRUN` (default 30). Errors are recorded with where they happened (`report`, `recentErrors`, `JS ERRORS`). |
+| `JSScope` | Gives every JavaScript scope the same equipment: `require()` (sandboxed, over `world/js/lib` then `resources/js/lib`), the `cm` object (`JSCm.forScope`), `gen` (`JSGen`), `include(path)`, `debug`, a dice-backed `Math.random` (`DiceRandom`, so `RANDOMSEED` and saves cover it), and `sud`, the short names defined in the `SUD_JS` string. |
+| `JSCm` | The `cm` API object. Its members return game objects so scripts need no engine package names. The host is the thing the script runs for; the player is the character at the terminal. |
+| `JSStore` | `cm.store(key)`: plain JSON objects kept with the game. |
+| `JSEvents` | `cm.on(event, fn, key)` listeners and `waitUntil`; `fire(event, args...)` called by the engine; listeners are code, not state. |
+| `JSTimers`, `JSJobs` | `cm.every/at/after` timers on the game clock; bounded background jobs. |
+| `WorldJS` | `world/js/init.js` and its `onBoot`, `onNewGame`, `onRestore`, `onBeforeSave`, `onPlayerEnter`, `onSwitch`, `onPartyChange`, `onBuilderStart` hooks. |
+| `JSReload` | `JS RELOAD` and `JS WATCH`. |
+| `JSHooks`, `JSVerbs`, `JSCommand`, `JSMask`, `JSQuests`, `JSProgression`, `JSConsole`, `JSBuilder`, `GenJs` | Smaller feature surfaces (hooks, verbs, commands, masks, quests, progression, console, builder, generator-defined JS). |
+
+### JSScope
+
+`JSScope.prepare(cx, scope, host)` is the single place a new scope is equipped. If you
+add a global to every script, add it here, not in each runner. `compileFile(cx, path)`
+and `fileText(path)` read `resources/` paths or `world:path`, compile once while the
+file is unchanged, and refuse `..`. `libraryDirs()` is the `require()` search path.
+`worldFiles()` and `checkWorldClasses()` (used by WORLD CHECK `JS`) list and compile
+the world's JavaScript class folders (`CLASS_FOLDERS`: behaviors, abilities,
+properties, items, and so on) and validate their `//extends` lines.
+`JSScope.reload()` drops the compiled `require()` libraries and rediscovers the library folders.
+
+### JSStore
+
+A store is keyed by a string or by an object: `keyOf(holder)` gives `room:<id>` for a
+room, `instance:<uuid>` for a mob or item (via `InstanceIds.id`), `area:<name>`,
+`quest:<name>`, or the string itself (`world` if empty). Two maps hold them: `live`
+(stores as JavaScript objects) and `saved` (the not yet touched JSON of the last
+restore). Persistence:
+
+- `toXML()` writes `<JSSTATE><STORE><KEY>..</KEY><JSON>..</JSON></STORE>...</JSSTATE>`
+  into `world.xml`; `fromXML(tag)` clears everything (and `JSTimers.forget()`) and
+  fills `saved`.
+- `newGame()` (called from `ScriptEvents.game("NEWGAME", ...)`) starts a new game from
+  `world/js/state.json`, a JSON object of `key: store`, if present.
+- Only JSON-compatible data survives: a function or a Java object is lost at save.
+- **Legacy migration.** Before stores were per instance, mobs and items were keyed by
+  `mob:<room>/<name>` and `item:<where>/<name>`. `migrateLegacy(holder, key)` moves a
+  legacy store to the instance key only if exactly one world object has that legacy
+  key; if several do, it logs a warning once, keeps the legacy data under its old
+  key and gives each instance a copy.
+
+Restore order matters: `JSStore.fromXML` runs near the end of `WorldState.apply` and
+before the `onRestore` hook, so `onRestore` sees its stores.
+
+### JSReload
+
+`JSReload.reload(which)` implements `JS RELOAD [file|ALL]`. A file counts as changed
+when its modification time is later than game start or its last reload (`changed()`).
+A file that does not compile is reported with its line and left as it was. By kind:
+
+- `world/js/init.js`: `WorldJS.reload()` reads it again and calls its `onReload(old)`
+  with the old scope if it defines one (`onBoot` is not run again).
+- `world/js/lib`: scopes made from now on require the new library; existing scopes keep
+  what they have required.
+- A JavaScript class folder (behaviors, abilities, properties, ...): the class is
+  compiled again. For behaviours and effects of that class in the world, a new
+  instance is made and `migrate`d, then replaces the old one: text, invoker,
+  proficiency, savable flag, and the **declared** state codes `STATE` and `ACTIVITY`,
+  `TICKDOWN`, `CANUNINVOKE`, `NEXTCAST` (see `migrateAbility`); a behaviour copies
+  `STATE`. If the new class cannot accept the saved state (its `getStat` returns empty
+  after `setStat`), the replacement is **refused** and the live instance is kept, with
+  a warning in the log. Mobs, items and rooms made from now on use the new class;
+  those already in the world keep the old code.
+- Other files (`Prop_JScript`/`JSBehavior` script files): `reloadHolders(script)` has
+  each running holder read the file again and calls its `onReload(old)`.
+
+Arbitrary private fields and closures cannot be inferred. A JS-defined class that wants
+to be reloadable or savable must declare `STATE` (behaviours, effects) or `ACTIVITY`.
+`JSReload.watch(mob, seconds)` starts `JS WATCH ON`, which polls every few seconds.
+
+### Background jobs (JSJobs)
+
+`cm.background(worker, data, timeoutMs, callback)` calls `JSJobs.start`. The worker
+function is converted to source text and evaluated in a **fresh scope** on one of two
+daemon threads (queue of 32); it receives JSON data and returns JSON; a class shutter
+blocks `com.planet_ink.*` and `org.mozilla.*`. Timeout is 1 to 300000 ms; the deadline
+timer finishes the job with an error and cancels the work. The callback runs on the game
+thread through `executeRunnable` with `(error, result)` and only if the job's generation
+(`JSJobs.reset()` bumps it, called from `beforeBoot`) and host are still current, so a
+late result can never touch a restored world. Jobs are not saved; Java calls that ignore
+interruption can hold a worker.
+
+### Threading and invariants
+
+- All `Context` use goes through `JSRuntime.enter`, so the time limit always applies.
+  JavaScript classes (`//extends`) compile to bytecode, which instruction counting
+  cannot see; they have no instruction limit.
+- `cm.on` listeners and `every/at` registrations are recreated at boot: register them in
+  `world/js/init.js` `onBoot` with a stable key. A listener with the same key replaces
+  the earlier one; with no key, the function's own text is the key.
+- Do not capture engine objects in stored state; store ids and re-resolve.
+
+### Tests
+
+`js2-runtime.js`, `js3-require.js`, `js5-world.js`, `js6-cm.js`, `js7-store.js`,
+`js8-world.js`, `js9-props.js`, `js10-reload.js`, `js11-jscriptable.js`,
+`js19-timers.js`, `review-core.js` (store identity), `review-reload.js` (compiled
+replacement keeps declared state and refuses incompatible state),
+`review-workflows.js` (isolated jobs, native call timeout completion).
+

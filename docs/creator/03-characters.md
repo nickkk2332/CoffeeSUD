@@ -300,8 +300,9 @@ starts at `N` and the player is not asked.
 `CHARCREATIONSCRIPTS` is a comma list. Each entry is a MOBPROG script text or
 `LOAD=file`, optionally prefixed by a code and a colon. Only the `ONCE_PROG`
 of the script runs. The valid codes are `PASSWORD`, `EMAIL`, `ANSI`, `THEME`,
-`RACE`, `GENDER`, `STATS`, `CLASS`, `ORIGIN`, `FACTIONS`, `AUTHENTICATE`,
-`CHARLOGIN`, `ALLCHARLOGIN` and `END`; the default is `END`. A code may be
+`RACE`, `GENDER`, `STATS`, `CLASS`, `ORIGIN`, `FACTIONS`,
+`CHARLOGIN`, `ALLCHARLOGIN` and `END`; the default is `END`. (`AUTHENTICATE` is
+accepted but nothing runs it.) A code may be
 shortened to a prefix (`FACT:`). `CHARLOGIN` runs each time a character comes
 into the world, and `ALLCHARLOGIN` also when switching characters.
 

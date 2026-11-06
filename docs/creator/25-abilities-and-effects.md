@@ -5,8 +5,8 @@ CoffeeSUD is an *ability*: spells, prayers, chants, songs, thief and fighter
 skills, crafting and gathering skills, languages, diseases, poisons, traps and
 the "properties" that builders attach to rooms, exits, items and mobs. When an
 ability is on something and running it is also an *effect* (the engine's word is
-"affect"). This chapter is for world creators and scripters, with a section
-for engine developers at the end of each major part. It explains how abilities
+"affect"). This chapter is for world creators and scripters, with developer
+notes where they matter and a short section for engine developers. It explains how abilities
 are classified and costed, how characters and mobs obtain them, how timed
 effects behave and are saved, how to build your own without Java (`GenAbility`,
 `GenTweakAbility`, `GenPoison`, `GenDisease`, `GenTrap`), how to find the stock
@@ -269,7 +269,7 @@ kept on the ability object the caster holds; see
 How many "actions" the use takes comes from `DEFABLETIME` (out of combat,
 default `0.10`) and `DEFCOMABLETIME` (in combat, default `1.0`; `1.0` is one
 full round) in `coffeemud.ini`. Each takes a comma list of ID exceptions:
-`DEFABLETIME=0.10, Skill_Recall 2.0`. A hostile ability always uses the
+`DEFABLETIME=Skill_Recall 2.0, 0.10`. A hostile ability always uses the
 combat cost. A `GenAbility` overrides both in its own record with
 `ACTIONCOST` and `COMBATACTIONCOST` (`-1` for the default). Combat timing is
 covered in [29-combat-and-encounters.md](29-combat-and-encounters.md).
@@ -469,7 +469,8 @@ through the same hooks.
 - **Invoker.** Every effect remembers who made it (`invoker()`). Hostile
   damage over time credits the invoker with kills and experience; a trap
   without an invoker invents a stand-in at the host's level; cures such as
-  `Prayer_CureDisease` refuse to cure a disease caused by a stronger source;
+  `Prayer_CureDisease` refuse a disease that someone else caused and whose
+  difficulty is above the healer's level;
   and `MPAFFECT` makes the script's host mob the invoker.
 - **Savable.** `isSavable()` decides whether the effect is written into the
   record of the room, exit, item or mob it sits on. Casting turns it off, so a
@@ -488,7 +489,7 @@ their `displayText()`: the *Affect String* of a `GenAbility`
 (`DISPLAY`). Effects with an empty display text are hidden. A display text
 wrapped in parentheses, such as `(Emberward)`, has the time remaining
 appended. `AFFECTS [TYPE or DOMAIN] [NAME|TYPE|DOMAIN|REMAIN]` filters and sorts;
-`AFFECTS spell`, `AFFECTS name "common skill"`. An archon can say `AFFECT`
+`AFFECTS spell`, `AFFECTS name "common skill"`. A character with the `CMDMOBS` flag can say `AFFECT`
 followed by `ROOM`, `AREA` or a target's name to see the effects on that
 thing (the output includes who caused each one).
 
@@ -664,8 +665,8 @@ Prayer_Bless Prayer_Sanctuary STUDENTMASK="-CLANRANK '+Temple of Arden>=ACOLYTE'
 
 ### The mob editor
 
-In `MODIFY MOB` the *Abilities* field takes `[ABILITY ID]` to add or remove an
-ability and `[ABILITY ID](parameters)` to add one with a parameter string. A new
+In `MODIFY MOB` the *Abilities* field takes an ability ID to add or remove it
+and `ID(parameters)` to add one with a parameter string. A new
 entry starts at proficiency 75 and is switched on at once if it is automatic.
 Archon-domain abilities can be added only by a sysop. A mob casts and uses what it
 has, at its own level, as its combat AI decides (hostile abilities against the
@@ -1467,8 +1468,8 @@ ones that exist.)
 | --- | --- | --- | --- |
 | `CLASS` | (set by `CREATE`) | | The ID. |
 | `NAME` | Trap name | `an ability` | |
-| `BASELEVEL` | Level | `0` | The trap level (`CREATE TRAP` starts it at 1 through `LEVEL`). Characters need at least this level to lay it. |
-| `LEVEL` | (none) | trap's level | The running level of one instance. |
+| `BASELEVEL` | Level | `0` | The trap level of every new copy. Characters need at least this level to lay it, and damage formulas read it as `@x1`. |
+| `LEVEL` | (none) | the base level | The level of one copy; `:LEVEL/CODE:` in a copy's parameter text sets it. |
 | `ACODE` | (none) | `0` | The default ability code (bonus). |
 | `ISBOMB` | Is Bomb | `false` | Stored, but not used: `GenTrap` does not turn into a bomb in this build. |
 | `CANAFFECTMASK` | Can Affect | `ITEMS` | What it can sit on: `ITEMS`, `EXITS`, `ROOMS`. A container needs `ITEMS`. |
@@ -1882,7 +1883,7 @@ casting), then save and restart ([Persistence](#persistence)).
 | What | Where it is kept | On reload or restart |
 | --- | --- | --- |
 | A custom ability's **definition** (`GenAbility`, `GenPoison`, `GenDisease`, `GenTrap`, `GenTweakAbility`, ...) | The content database, and in builder mode the files `world/custom/abilities/*.cmare` (+ `.script`) | Loaded with the engine's classes at boot, before areas. Hand edits to the files are rebuilt at the next start. In a normal game the files are the content and the database is a cache of them ([02-world-workflow.md](02-world-workflow.md)). |
-| **Known abilities and proficiency** of a character | The character's record in the campaign | Restored with the character. An ability whose definition has gone is dropped. |
+| **Known abilities and proficiency** of a character | The character's record in the campaign | Restored with the character. An ability whose definition no longer exists cannot be restored. |
 | A **permanent effect** on a room, exit, item or mob (properties, traps, permanent spells) | In the thing's record: ID plus parameter text (`<AFF><ACLASS>..</ACLASS><ATEXT>..</ATEXT></AFF>`) | Re-created from its ID and text. Any state not in `text()` (a trap's sprung state, a GenAbility's cooldown) is lost. |
 | A **timed effect** (a cast spell, a poison, a disease, a laid trap, a crop in progress) | Not in the world files. The *campaign save* records every effect with ticks left on the player, mobs, items, rooms, exits and areas: its ID, text, ticks left, proficiency, who caused it, and the activity of a common skill | Put back with its remaining ticks by the save's loader; the cause is the character if they made it, else a nearby mob of that name, else the host. Effects that do not keep their state in `text()` come back with defaults. |
 | **Cooldowns** | On the ability object the character holds, by game time | Not guaranteed across a restart for custom abilities; do not rely on them. |

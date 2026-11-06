@@ -165,11 +165,12 @@ Javascripts require approval" unless `JSCRIPTS=1`.
 | `JSTIMELIMIT` | `2` | Most seconds a script may run at one time (script blocks, hooks, event and timer callbacks, quest and progression handlers). |
 | `JSTIMELIMIT_JRUN` | `30` | The same for `JRUN` files. |
 | `SCRIPTERRORS` | `LOG` | In a normal game: `LOG` writes errors to the log only, `NOTICE` tells each player once that a script went wrong, `SHOW` shows each error to the room it happened in. Builder mode and `DEV=1` games always tell the builder. |
-| `STARTSTAT` | (see ini) | `SCRIPT` makes new characters' stats come from `statRoll` in `progression.js`. |
+| `STARTSTAT` | `0` (also a `world.ini` key) | `SCRIPT` makes new characters' stats come from `statRoll` in `progression.js`. |
 
-A value that is not a whole number falls back to the default; the minimum is
-1. Engine-level JS settings belong in `coffeemud.ini` or a `NAME=VALUE`
-launch override, not in `world.ini` (see [world-settings](world-settings.md)).
+For `JSTIMELIMIT` and `JSTIMELIMIT_JRUN` a value that is not a whole number falls back to
+the default; the minimum is 1. Engine-level JS settings belong in `coffeemud.ini` or a
+`NAME=VALUE` launch override, not in `world.ini` (see [world-settings](world-settings.md));
+`STARTSTAT` is the exception, a `world.ini` key as well.
 
 ### Who may use the commands
 
@@ -583,8 +584,10 @@ prices.discount(20, 10);          // 18
 
 - Search order: `world/js/lib/` first, then `resources/js/lib/` (relative to
   the game's working directory). Name the file without `.js`.
-- A module sees only `exports` and whatever it `require`s. It does not see
-  the caller's variables.
+- A module has its own `exports`; do not rely on seeing the caller's variables
+  (its scope inherits from the scope `require` was installed in, so `cm` and
+  the standard objects are there; whether the caller's top-level variables are
+  also visible is unverified).
 - Each module is compiled once and re-read when the file's timestamp
   changes. A scope that has already required a module keeps the old copy;
   callers made later get the new one (see [reload](#reload-and-debugging)).
@@ -1238,12 +1241,13 @@ or size changes, and is reset at every game start.
 | `onTrain(mob, what, amount)` | After `TRAIN`; `what` is `MANA`, `MOVES`, `GAIN`, `PRACTICES`, `HITPOINTS`, a stat name (`STRENGTH`) or a class ID | ignored |
 | `onCreationStep(mob, step, answer)` | After each step of character creation | ignored |
 | `onCreated(mob)` | When the new character enters the world, before `GAME_PROG NEWCHAR` | ignored |
-| `statRoll(mob, bonus)` | With `STARTSTAT=SCRIPT` in `coffeemud.ini`: sets the new character's stats | set them on `mob`, or return an object / list |
+| `statRoll(mob, bonus)` | With `STARTSTAT=SCRIPT` in `coffeemud.ini` or `world.ini`: sets the new character's stats | set them on `mob`, or return an object / list |
 
 `xpGain` `source` strings begin with the origin: `COMBAT:<victim level>[flag]`
 for a kill, `ABILITY:<id>`, `CLASS:<id>`, `COMMAND:Teach`, `MISC:...`,
 `SCRIPT:<quest>` (from `MPEXP` and quest rewards), `DEATH:`, `FACTION:<id>`,
-`SIEGE:`, `LIEGE:...`, `COST:`. Test with `source.indexOf('COMBAT:') == 0`.
+`SIEGE:`, `LIEGE:...`, `COST:`, and a few others (`SERVICE:`, `QUEST:`, `DISCOVERY:`,
+`ACHIEVE:`, `REMORT:`, `HOMAGE...` with no colon). Test with `source.indexOf('COMBAT:') == 0`.
 The XP from your function is still subject to the difficulty's player-XP
 setting.
 
@@ -1536,7 +1540,7 @@ ran out of time is listed as "it ran longer than its time limit of N
 seconds". In builder mode and `DEV=1` games each error is also shown to you
 as it happens ("Script error: ..."); in a normal game it is logged and
 handled by the `SCRIPTERRORS` ini key. The `SCRIPTERRORS` command (builder
-mode and `DEV=1` games) lists errors of both MOBPROG and JavaScript:
+mode, `DEV=1` games, or a player with the `CMDMOBS` or `JSCRIPTS` security flag) lists errors of both MOBPROG and JavaScript:
 `SCRIPTERRORS [n] [text it must hold]` (default the last 20) and
 `SCRIPTERRORS CLEAR`. See [chapter 13](13-testing-release.md).
 
@@ -1910,7 +1914,7 @@ functions (rebuilt from text when due).
 | `cm.after` callback fails after RESTORE | It used a captured variable; pass what it needs in `data`. |
 | Stat hook flips values | A `Prop_JScript` stat hook is run each recompute; do not roll dice or count in it. |
 | A hook stopped being called | It threw once; fix the error and set the text again (or `JS RELOAD`). |
-| `JS RELOAD` says "kept old instance" | The new class cannot accept saved STATE/ACTIVITY; fix the class or re-create the instances. |
+| `JS RELOAD` reports "N incompatible instances kept (see log)" | The new class cannot accept saved STATE/ACTIVITY; fix the class or re-create the instances. |
 | `cm.cmd(mob, 'pull lever')` does nothing | `cm.cmd` is forced and skips local verb interception; type the command. |
 | `cm.store(mob)` empty after cloning | Clones get their own instance store by design. |
 | JCONSOLE multi-line `<` never runs | End the block with `>` on its own line. |

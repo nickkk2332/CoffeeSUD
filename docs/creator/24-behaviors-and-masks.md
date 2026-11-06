@@ -419,7 +419,7 @@ BrotherHelper 5 nameonly msg="omg! Attack!"
 
 ### ClanEnemyAggressive
 
-Hosts: mobs. CoffeeSUD (no shipped help entry). The mob attacks anyone in its
+Hosts: mobs. CoffeeSUD (help: the `CLANENEMYAGGRESSIVE` entry in arc_misc.ini, not a `BEHAVIOR_` key). The mob attacks anyone in its
 room who belongs to a clan its clan is in a given relation with. Flag
 `FLAG_POTENTIALLYAGGRESSIVE`.
 
@@ -1011,7 +1011,7 @@ Guard Bob
 
 ### GuildMaster
 
-Hosts: mobs. CoffeeSUD (no shipped help entry). Makes the mob the master of a
+Hosts: mobs. CoffeeSUD (help: the `GUILDMASTER` entry in arc_misc.ini, not a `BEHAVIOR_` key). Makes the mob the master of a
 clan-style guild: players speak to it in the room, and it answers. Spoken
 commands: `join`, `rank`, `advance`, `leave`, `dues`, `kit`, `kit replace`. The
 guild is a clan (government) of the world; ranks and dues come from the
@@ -2450,7 +2450,7 @@ TidalRoom SPAN=1 DESC="The sea fills the cove." WASH=2 DEEP
 
 ### TransportLine
 
-Hosts: items, mobs. CoffeeSUD (no shipped help entry). A scheduled transport: the
+Hosts: items, mobs. CoffeeSUD (help: `BEHAVIOR_TRANSPORTLINE` in arc_travel.ini). A scheduled transport: the
 host (an item vehicle, or a mob, or the thing a mob rides) travels between stops
 on a route, with a fare and a timetable. It adds the properties
 `Prop_TicketTaker` (the fare) and, for a navigable item, `Prop_HelmRestrict`

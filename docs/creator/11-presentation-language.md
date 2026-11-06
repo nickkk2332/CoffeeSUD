@@ -1586,8 +1586,9 @@ How it works:
   start after a colour code (`^Hmana`).
 - Rules run in file order, each on the output of the previous one. Avoid
   cycles and cascades (`a = b` followed by `b = c`).
-- Markup attributes are left alone: text inside `^<...^>` markup and inside an
-  `<S-NAME>` style placeholder is not rewritten.
+- Markup is left alone: a term inside a `^<...^>` markup tag (such as an MXP
+  link's command) or inside a `<...>` placeholder like `<S-NAME>` is not
+  rewritten; the text between the tags is. The term itself cannot contain `=`.
 - Normal rules run on translated messages (the `L(...)` text), on help output
   and on SCORE; `FINAL` rules run on the last stage. Help and score output
   also get their scoped rules.
@@ -1669,7 +1670,7 @@ separates random alternatives within an entry, semicolons separate grid rows.
 | `WEAPON_HIT_DESCS`, `WEAPON_MISS_DESCS` | Six entries, one per attack category: missile, thrown, slash/bash, other, pierce, laser. Hits use `<DAMAGE>` and `<TOOLNAME>`. |
 | `DAMAGE_WORDS` | See below. |
 | `CORPSE_BLURBS` | Rows `cause=phrase\|phrase` separated by `;` (or the stock `cause,phrase,phrase` rows). The cause is an ability ID, a weapon damage type or class, or `ALL`. |
-| `MAGIC_WORDS` | A comma list; wands and the like pick one by a hash of the item. |
+| `MAGIC_WORDS` | A comma list of command words for wands and the like; one is picked deterministically per item. |
 | `GAIT_LIST` | Rows `NAME,present verb,arrival,departure` separated by `;`. |
 
 `WORLD CHECK ONLY=VOCAB` (and `PROPCHECK`) verify that the health chart has 11
@@ -1686,14 +1687,16 @@ increasing severity, with `(s)` for the plural. `DAMAGE_WORDS_THRESHOLDS` gives
 the damage thresholds; it has one more entry than a row has words.
 
 ```text
-DAMAGE_WORDS="ALL,annoy(s),scratch(es),graze(s),wound(s),cut(s),damage(s),decimate(s),murder(s),massacre(s),MASSACRE(S),destroy(s),DESTROY(S),obliterate(s),OBLITERATE(S),**OBLITERATE(S)**,--==::OBLITERATE(S)::==--;BURNING,annoy(s),warm(s),heat(s),singe(s),burn(s),flame(s),scorch(es),incinerate(s),massacre(s),MASSACRE(S),destroy(s),DESTROY(S),obliterate(s),OBLITERATE(S),**OBLITERATE(S)**,--==::OBLITERATE(S)::==--"
+DAMAGE_WORDS="ALL,scuff(s),scratch(es),wound(s),maul(s),ruin(s);BURNING,warm(s),singe(s),scorch(es),char(s),incinerate(s)"
 ```
 
-Local lists use the same grid. A row whose type matches the damage type beats
-`ALL`. A local `DAMAGE_WORDS` may also be a single flat list of words with no
-leading type; it is then used for every type. A row must have as many words as
-the thresholds need. These words apply to ability and spell damage as well as
-weapon hits (`<DAMAGE>` in the message). `Prop_WeaponMessages` (below) can give
+The example above is a local list with five words per row: damage beyond the
+fifth step keeps using the last word (the stock rows have 16 words, one per
+threshold step). Local lists use the same grid. A row whose type matches the
+damage type beats `ALL`. A local `DAMAGE_WORDS` may also be a single flat list
+of words with no leading type; it is then used for every type. These words
+apply to ability and spell damage as well as weapon hits (`<DAMAGE>` in the
+message). Quote the whole value, because it contains semicolons. `Prop_WeaponMessages` (below) can give
 a weapon its own damage words, which win over local words.
 
 ### Per-race and per-weapon text
@@ -1731,14 +1734,13 @@ a grid with rows starting `ALL` or a damage type, like `DAMAGE_WORDS`.
 `resources/socials.txt`, so a world line replaces a stock social of the same
 name. It uses the stock tab-separated format (a code, the social name with an
 optional target pattern, and the texts the actor, others and target see; look
-at `resources/socials.txt` for the columns):
+at `resources/socials.txt` for the columns). In this line `<TAB>` stands for a
+real tab character:
 
 ```text
-ss<TAB>FIXGREET<TAB>You greet the moon.<TAB>&lt;S-NAME&gt; greet(s) the moon.<TAB><TAB><TAB><TAB><TAB>
+ss<TAB>GREETMOON<TAB>You greet the moon.<TAB><S-NAME> greet(s) the moon.<TAB><TAB><TAB><TAB><TAB>
 ```
 
-(`<TAB>` stands for a real tab character; the `&lt;` shown is only to keep
-this page's markup plain, write `<S-NAME>` in the file.)
 `world/vocab/socials.ini` chooses which stock socials remain:
 
 ```ini
@@ -1773,3 +1775,199 @@ help (shown by `AHELP`); the others hold normal help.
 
 Run `WORLD RELOAD ASSETS` or `VOCAB RELOAD` after editing socials or help in a
 running game.
+
+## Worked examples
+
+### Example 1: a museum gallery with clues, lore and its own language
+
+This builds on the museum pack in [examples/world](examples/world/) (its
+`build.js`, `lore/`, `text/` and `vocab/` files). The goal: a gallery whose gate
+text reflects a lever, a room with a readable inscription and a faint sound,
+a shrine with a once-only line, a tablet that unlocks a codex entry, a paged
+introduction, and a small invented language.
+
+**World files.**
+
+```ini
+# world/lore/museum.ini
+COAST=The Drowned Coast|History|The museum was built after the sea took the old harbour.
+```
+
+```text
+# world/text/museum.txt
+[arrival]
+The guide sets a ledger on the desk.
+
+'Some things here still remember the sea,' she says.
+```
+
+```text
+# world/vocab/languages/museum.txt
+HELLO=sela
+SEA=mar
+GATE=esh
+FRIEND=tavi
+```
+
+**Properties** (as typed into the builder or set by `build.js`):
+
+```text
+Entrance room description:
+<VARIES><IFVAR MUSEUM_GATE=1>The east gate stands open.</IFVAR><ELSE>The east gate is closed.</ELSE></VARIES> A guide waits beside a brass lever.
+
+Gallery room:
+  Prop_Details:  inscription,runes=Nine carved waves surround a seal. ID=museum-waves SETVAR=MUSEUM_RUNES=1
+  Prop_Senses:   ID=museum-gallery SOUND="The distant surf echoes through the stone." CHANCE=100
+
+Stone tablet (readable, ungettable item in the gallery):
+  Prop_Lore:     ENTRY=COAST ON=READ SCOPE=CHAR MSG="You learn the history of the coast."
+
+Shrine room:
+  Prop_FirstEntry: ID=museum-shrine TEXT="A single candle burns before the sea-worn altar." ONCE=CHARACTER
+```
+
+The lever is a `Prop_Switch` item whose actions run `setvar WORLD MUSEUM_GATE 1`
+(see [chapter 7](07-items-crafting.md)); the gate text reads that variable.
+
+**The invented language** (CREATE LANGUAGE MuseumSpeech, then MODIFY LANGUAGE
+MuseumSpeech; or the equivalent `setStat` calls in the script):
+
+```text
+NAME          Museum Speech
+WORDFILE      museum.txt
+SYLLABLES     sa,ta,ma/la,ri,ven
+SUFFIXES      S:en
+WRITTENNAME   Coastal Runes
+```
+
+**Narration.** The guide's script, on a player-caused trigger such as
+`GREET_PROG`:
+
+```text
+MPNARRATE $n museum.txt#arrival PAUSE
+```
+
+**Check as an ordinary character.**
+
+1. `LOOK` in the entrance: "closed". Pull the lever; `LOOK`: "open".
+2. In the gallery, `LOOK inscription` shows the carving; `READ tablet` unlocks
+   the entry; `LORE` shows `History (1)`; `LORE COAST` reads it; `JOURNAL`
+   has nothing yet unless `JOURNALAUTO=LORE`.
+3. `LISTEN` repeats the surf line.
+4. Enter the shrine: the candle line appears once. Leave and return: nothing.
+5. `LANGUAGE PREVIEW MuseumSpeech 100 hello friend of the sea` shows `hello ->
+   sela (dictionary file)` and the rest through syllables.
+6. `SAVE`, restore, and confirm the lore, the first-entry marker and the gate
+   variable survived; start a new game and confirm they did not.
+7. `WORLD CHECK ONLY=VOCAB,LORE,TEMPLATES,IDS` is clean.
+
+### Example 2: an underground area with its own words, map and sounds
+
+A cavern area where the sun never rises, light behaves differently and the
+player should see a map with a landmark.
+
+`world/vocab/lists_underdark.ini`:
+
+```ini
+TOD_CHANGE_INSIDE=^JThe glowmoss brightens; the day-cycle begins.^?,,,^JThe glowmoss dims; the night-cycle begins.^?
+HEALTH_CHART=^r<MOB> is bleeding black ichor.^N,^r<MOB> is badly torn.^N,^y<MOB> is hurt.^N,^y<MOB> is scratched.^N,^g<MOB> is bruised.^N,^g<MOB> is steady.^N,^g<MOB> looks fit.^N,^c<MOB> looks strong.^N,^c<MOB> looks hale.^N,^c<MOB> looks untouched.^N,^c<MOB> is the picture of health.^N
+MAGIC_WORDS=glim,umbra,shael
+```
+
+On the area (Properties):
+
+```text
+Prop_LocalLists:  LOAD=vocab/lists_underdark.ini
+Emoter:           min=10 max=30 chance=40 RETRY NOREPEAT=2 QUIETAFTER=3;SOUND Water drips somewhere far below.;WEIGHT=2 SMELL The air smells of wet stone.;NIGHT SOUND Something large turns over in its sleep.
+```
+
+On the inn (a room):
+
+```text
+Prop_MapGlyph: CHAR=I COLOR=y LABEL="Mushroom inn" LEGEND
+```
+
+Settings in `coffeemud.ini` (these are not `world.ini` keys):
+
+```ini
+MAPFOG=KNOWN
+COLORALIASES=LORE=##C8A060,DANGER=LIGHTRED+BOLD
+ROOMHEADER=^O%r^N ^w[%z]^N
+```
+
+And `world/vocab/glossary.ini`, renaming the world's terms:
+
+```text
+mana = focus
+sun = glow-moss
+```
+
+Check: `LOOK` shows `Room [Area]`; wait for the time of day to change inside the
+area and watch the custom message; `MAP` shows the yellow `I`, a legend and
+dim rooms you only read about; `PREVIEW night` works as described; `COLORSET
+ALIASES` lists `LORE` and `DANGER`; fight a creature and read the health line;
+turn ANSI off and check nothing leaks as literal `^{...}`.
+
+### Example 3: an orc camp and a language barrier
+
+Goal: the chieftain understands only Orcish; a guard reacts to the wrong
+language; a wall shows Elvish writing; spending time in camp teaches Orcish
+slowly.
+
+On the chieftain (a creature):
+
+```text
+Prop_Monolingual: LANGUAGES=Orcish CONFUSED="<S-NAME> frown(s) and grunt(s)."
+```
+
+On the camp's area (so everyone present is exposed):
+
+```text
+Prop_LanguageImmersion: LANGUAGE=Orcish HEAR=2 READ=3 CHANCE=25% START=5 MAX=40 GRANTAFTER=15 ID=orc-camp
+```
+
+On the gate guard (Scriptable):
+
+```text
+NOTUNDERSTOOD_PROG ANY
+mpechoat $n The guard shouts something you cannot follow and brandishes a spear.
+~
+GREET_PROG 100
+if understands($n Orcish)
+  mpechoat $n The guard nods curtly and lets you pass.
+endif
+~
+```
+
+On the room's description, a wall in Elvish:
+
+```text
+Scratched into the lintel: ^<LANG Elvish NOTE="fine, flowing script"^>The road ends at the sea.^</LANG^>
+```
+
+Check: as a new character, speak to the chieftain and watch the frown and the
+guard's reaction. Wait in the camp for a while and use `LANGUAGES` to see
+Orcish arrive at 5% and grow. `LANGUAGE PREVIEW Orcish 40 follow me to the
+fire` shows how much of a sentence a 40% speaker gets. Give the character a
+translator charm (`Prop_LangTranslator` with `NOTRANSLATE 100% Orcish`) and confirm
+the chieftain's speech is now understood. Save, restore in a new process, and
+confirm the proficiency and the exposure counter persisted.
+
+### Example 4: a treasure map that marks the world
+
+A readable item that teaches rooms and marks the dig site, and a journal
+entry from the sage who gave it:
+
+```text
+Prop_MapReveal: ROOMS=Coast#1-40,Coast#45 MARK=Coast#12:X:"Buried chest" COLOR=r
+```
+
+The sage's script when handing it over:
+
+```text
+MPJOURNAL $n Clues "The old smuggler's map marks a chest on the coast. (the sage)"
+```
+
+After reading the item, `MAP` (with `MAPFOG=KNOWN`) shows the coves dim, a red
+`X` with "Buried chest" in the legend; `JOURNAL SEARCH chest` finds the clue.
+Under `MAPFOG=VISITED` the coves would not appear until walked.
