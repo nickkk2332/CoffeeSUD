@@ -16,9 +16,9 @@ The report holds:
 
 How to read it. Each defect names the file and line, what the code does, what was expected, a severity, and the handbook chapter that documents the real behaviour. Severity: **high** silently breaks content or loses data; **medium** a documented option does nothing or misbehaves; **low** cosmetic or edge case. Java paths are relative to `CoffeeMud/com/planet_ink/coffee_mud/` unless they start with `tools/`, `audit/`, `docs/` or `CoffeeMud/`. Line numbers were taken from the notes and re-checked for the high-severity items; others may have drifted by a few lines.
 
-The handbook already documents the real behaviour wherever it differs from the code's stated intent, and warns about the traps below. Nothing here was fixed in the engine. Where a verifier corrected a writer, or the integration pass corrected both, this report follows the later conclusion. Nothing was run during the rewrite or the checks; items marked "not run" were read from code only.
+The handbook already documents the real behaviour wherever it differs from the code's stated intent, and warns about the traps below. Nothing here was fixed in the engine. Where a verifier corrected a writer, or the integration pass corrected both, this report follows the later conclusion. Almost nothing was run: a few verifiers called individual parsers directly or compiled the engine-programming chapter's example classes, and the first-world tutorial's own playtest was run in a scratch world (see its chapter's findings); everything else was read from code. Items marked "not run" were read from code only.
 
-Area codes: BW building and world files, SC scripting (MOBPROG), JS JavaScript, PR properties, BM behaviors and masks, IC items and crafting, AB abilities, CH characters and progression, QU quests, SE society and economy, WS world simulation, TI travel and instances, SP saves and party, GE generation, DT developer tools and scripts, CF configuration.
+Area codes: BW building and world files, SC scripting (MOBPROG), JS JavaScript, PR properties, BM behaviors and masks, IC items and crafting, AB abilities, CH characters and progression, QU quests, SE society and economy, WS world simulation, TI travel and instances, SP saves and party, GE generation, DT developer tools and scripts, CF configuration, ES engine structure (class loading, messages, ticking, build files).
 
 ---
 
@@ -84,6 +84,7 @@ Area codes: BW building and world files, SC scripting (MOBPROG), JS JavaScript, 
 - <a id="d-sc-29"></a>**D-SC-29. Flow-control leaks.** A stray `ELSE` runs as a game command; `CONTINUE` outside a loop returns a marker string up to the trigger; `BREAK` inside a FUNCTION_PROG leaks "BREAK" as the function's value; MPCALLFUNC shares the caller's `$0`-`$9` (only named parameters are replaced), so a function using MPARGSET or FOR can change the caller's slots. Severity: low. Handbook: [27][c27], [04][c04].
 - <a id="d-sc-30"></a>**D-SC-30. A script file in `world/scripts/` runs twice if an NPC also LOADs it.** Every `world/scripts/*.script` is attached to the hidden WORLD item (`WorldHost.start`). The handbook recommends `world/resources/progs/` for per-NPC scripts. Suggest a SCRIPTCHECK warning. Severity: medium. Handbook: [04][c04].
 - <a id="d-sc-31"></a>**D-SC-31. IFVAR / VAR with host `*` returns the first host that has the variable.** `DefaultScriptingEngine.getVar` (~996) scans every `SCRIPTVAR-` resource; order is undefined and a value of "0" or empty still counts as found. Player clues set with `StoryText.setVariable` write on the player's host, so one character's clue can make IFVAR true for all. Suggest a per-viewer tag. Severity: medium. Handbook: [11][c11].
+- <a id="d-sc-32"></a>**D-SC-32. A waiting MPPROMPT, MPCONFIRM or MPCHOOSE stops all ticks in single-player.** The script gets the `SPAWN` flag, but `DefaultScriptingEngine.dequeResponses` (~21113) calls `CMLib.threads().executeRunnable`, and `ServiceEngine.queueForGameThread` makes that a game-thread job whenever `gameThread != null` (only before the engine is RUNNING, or in multi-player, is it a pool thread). The prompt blocks in `DefaultSession.blockingIn`, which polls input directly (`CMLib.s_sleep` runs only `beforeSleep` jobs), so no tick group runs while it waits. Help and earlier chapter text said the script "runs on its own thread so the game does not freeze". Expected: prompts that wait without holding the world. Not run. Severity: medium. Handbook: [04][c04], [27][c27].
 
 ### JavaScript
 
@@ -244,6 +245,20 @@ Area codes: BW building and world files, SC scripting (MOBPROG), JS JavaScript, 
 - <a id="d-cf-9"></a>**D-CF-9. Log level labels are cut to five letters** (`Log.Type.sixChars`: `warni`, `comba`, `acces`). Severity: low. Handbook: [18][c18].
 - <a id="d-cf-10"></a>**D-CF-10. Dead flags and constants.** SecFlags with no check outside `CMSecurity` (ABILITIES, ANNOUNCE, CMD, COPY, GRAPEVINE, I3, IMC2, IMPORT, KILL, MISC, POLLS) and DisFlags with no reads (QUITREASON, MSSP, I3, IMC2, MCP, GRAPEVINE; the ini DISABLE default still lists QUITREASON); the `JSCRIPT_*` constants are named backwards (`JSCRIPT__NO_APPROVAL=0` means "never run"); `CLANVOTEO/D/R` are never read; JS approvals persist only in builder mode; RESETUTILS gates only the tail of `Reset.java`'s else-chain. Severity: low. Handbook: [19][c19].
 - <a id="d-cf-11"></a>**D-CF-11. Presentation settings that worlds cannot carry.** ROOMHEADER, ROOMFOOTER, MAPFOG, COLORALIASES, JOURNALAUTO, JOURNALTALK and WINDOWPANEL are not in `WorldSettings.KEYS`, so the allowlist drops them from every shipped world; LOGOUTMASK, PARTYDEFEAT, MAXCONNSPERACCOUNT, DEFCMDTIME, TIMESCALE are not allowlisted either (a world cannot enforce "quit only at an inn"). ROOMHEADER replaces the whole title line including disposition blurbs and the MXP tag. Severity: low. Handbook: [11][c11], [31][c31].
+- <a id="d-cf-12"></a>**D-CF-12. `CLANTYPES=%DEFAULT%` and `MCPPACKAGES=%DEFAULT%` are never read.** `CoffeeMud/coffeemud.ini` lines 2628 and 2632; no Java reads either key (`Clans.java` uses an unrelated `<CLANTYPES>` XML tag). Stale inherited keys. Severity: low. Handbook: [32][c32].
+- <a id="d-cf-13"></a>**D-CF-13. The CI workflow is stale.** `CoffeeMud/.github/workflows/build-coffeemud.yaml` still builds with Java 8 and ant, and with `build.xml`/`Makefile` references the removed `lib/jzlib.jar` (see D-CF-7); `build.sh` is the real build. Delete or update them. Severity: low. Handbook: [32][c32].
+
+### Engine structure
+
+- <a id="d-es-1"></a>**D-ES-1. World class folders break when WORLDDIR is not `world`.** `application/SUD.java:90-105` (`worldClassPaths`) checks `WorldFiles.worldDir()/classes/<key>` exists but appends the literal `world/classes/<key>` and `world/js/<kind>` to the class path (confirmed by verification). Expected: use the real WORLDDIR path. Severity: medium. Handbook: [32][c32].
+- <a id="d-es-2"></a>**D-ES-2. Some message type names do not match their constants.** `Common/interfaces/CMMsg.java:1308-1309`: `TYPE_DESCS` index 120 is "METACOMMAND" (constant `TYP_COMMAND`) and 128 is "PREMOVE" (`TYP_TRAVEL`); verification added index 110 "LOOKEXITS" (constant `TYP_LOOK_EXITS`). Anything resolving a type by name (`CMMsg.Desc`, `isTarget(String)`, script trigger parameters) sees the table's name. Expected: names equal to the constants (`COMMAND`, `TRAVEL`, `LOOK_EXITS`). Severity: medium. Handbook: [32][c32].
+- <a id="d-es-3"></a>**D-ES-3. An exception out of `tick()` silently removes the tickable.** `StdTickClient.tickTicker` returns true for a Throwable, so `StdTickGroup.run` deletes the client (confirmed). The object stops ticking with no message beyond the log. Severity: medium. Handbook: [32][c32].
+- <a id="d-es-4"></a>**D-ES-4. Standard mobs and items lose added behaviors and effects in the world file.** A non-Gen mob or item is written as class, level, ability, rejuv and `text()` only (`CoffeeMaker.getMobXML`/`getItemXML`; `CMGenEditor.modifyStdMob`/`modifyStdItem` offer only those), so behaviors and effects added in builder mode are not saved (confirmed). Severity: medium. Handbook: [32][c32], [21][c21].
+- <a id="d-es-5"></a>**D-ES-5. Adding a duplicate effect or behavior is silently ignored.** `StdMOB.addEffect`, `addNonUninvokableEffect` and `addBehavior` do nothing when the host already has one with the same ID, so a different parameter string is not applied (confirmed). Severity: low. Handbook: [32][c32].
+- <a id="d-es-6"></a>**D-ES-6. Hot-loaded `.java` is compiled at the JVM's language level.** `Commands/Load.java` uses `ToolProvider.getSystemJavaCompiler()` without `--release 8`, so a class can use newer syntax that `build.sh` would reject. Severity: low. Handbook: [32][c32].
+- <a id="d-es-7"></a>**D-ES-7. `canAffectCode()` and `canImprove` are not enforced on add.** `addNonUninvokableEffect` and `addBehavior` accept any host; the editors only highlight fitting ones (`CMGenEditor.java:4706, 4924, 5113`). Severity: low. Handbook: [32][c32], [23][c23].
+- <a id="d-es-8"></a>**D-ES-8. `core/` classes that name game classes get a second copy with separate statics.** `core/WeatherControl.java:4` and `core/JSCm.java:12` import `Commands.EnvToolsCmd`; `core/JSCommand.java:7` imports `Commands.StdCommand`. `CMClass.loadClass` hands only `core.*`, `application.*` and `.interfaces.` classes to the system loader, so those references load a separate copy. Harmless for stateless use, a trap for static state (not verified by running). Severity: low. Handbook: [32][c32].
+- <a id="d-es-9"></a>**D-ES-9. Handing the same Runnable to `executeRunnable` twice runs it once.** `ServiceEngine.gameJobs` is a `LinkedHashSet<Runnable>`, so a repeat before it runs is dropped. Not in the chapter. Severity: low. Handbook: [32][c32].
 
 ---
 
@@ -380,11 +395,18 @@ Each entry names the wrong text and what it should say.
 - <a id="h-cf-4"></a>**H-CF-4.** README says JDK 9 or newer; `findjava.bat` and `make.bat` say 8 or later. `build.sh` uses `--release 8` (needs javac 9+); `build.bat` does not. [18][c18]
 - <a id="h-cf-5"></a>**H-CF-5.** `WindowPanel.java` javadoc says WINDOWPANEL can be set in coffeemud.ini or world.ini (not in `WorldSettings.KEYS`; HELP WINDOWS agrees); `AuthoringCheck.java` ~180 labels a template check "world.ini ROOMHEADER". HELP PROMPT lists only `%{VAR NAME}`/`%{VAR HOST NAME}`; `%{PVAR}`, `%{QVAR}`, `%{TIMEMODE}`, `%{LEADER}` exist (`CoffeeUtensils.java` ~2796). HELP COLORSET lacks COLORSET ALIASES and COLORALIASES. [11][c11]
 
+### Engine structure
+
+- <a id="h-es-1"></a>**H-ES-1.** `Behaviors/interfaces/Behavior.java:96` and `core/interfaces/Environmental.java:147` say `parmsFormat()` / `miscTextFormat()` "will use the CMParms.MTFORMAT_*" constants. They do not exist; the constants are `CMParms.FORMAT_UNDEFINED` and `FORMAT_EMPTY` (`core/CMParms.java:5499-5501`). Every stock class returns `FORMAT_UNDEFINED`, so both methods are effectively unused. [32][c32]
+- <a id="h-es-2"></a>**H-ES-2.** `DEVPLAN.md:2034` says "trailer runnables run off the game thread"; in single-player `StdRoom.sendTrailermsgs` hands them to `executeRunnable`, which queues them on the game thread to run after the current job. Earlier handbook text said prompt scripts run on their own thread (D-SC-32). [32][c32], [04][c04], [27][c27]
+- <a id="h-es-3"></a>**H-ES-3.** The translation file is loaded as `"resources/translation_"+LANGUAGE+"_"+COUNTRY+".properties"` upper-cased (`Libraries/DirtyLanguage.java:761`, i.e. `translation_EN_TX.properties`); the shipped file and `coffeemud.ini:343` use `translation_en_TX.properties`. Works only if `CMFile` is case-insensitive (not checked on a case-sensitive file system). [32][c32]
+- <a id="h-es-4"></a>**H-ES-4.** Small API facts the chapter corrected: `Resources.getFileResource(String, boolean)` takes `reportErrors`, not "reload"; `StdAbility.beneficialAffect` has the tick adjustment as its last argument (only `maliciousAffect` has it second-to-last); `CMClass.CMObjectType` has separate COMPTECH and SOFTWARE entries; `EnglishParser.findCommand` inexact order is skills, commands, socials, channels, journals; `LocalizationHelper` accepts only `T` or `I` as first argument; `build.bat` does not pass `--release 8` (only `build.sh` does). [32][c32]
+
 ---
 
 ## Inherited guide differences
 
-Where the old manuals in `CoffeeMud/guides/` are wrong for CoffeeSUD. The handbook chapter named in the last column gives the real behaviour. No note covered the Programming guide.
+Where the old manuals in `CoffeeMud/guides/` are wrong for CoffeeSUD. The handbook chapter named in the last column gives the real behaviour. 
 
 | Guide | Topic | What is different | Chapter |
 |---|---|---|---|
@@ -412,6 +434,7 @@ Where the old manuals in `CoffeeMud/guides/` are wrong for CoffeeSUD. The handbo
 | ArchonGuide.html | Building tools | Describes MUDGrinder (removed), StdBoardableShip/StdSpaceShip "unimplemented", two-sided `create Door north`, LINK/UNLINK as the only way (WORLD PATH/DIG exist), blurb flags in HELP, Postman first box free | [20][c20], [21][c21] |
 | GameBuildersGuide.html | Quest step DURATION | Says earlier durations are reused; each step must set its own (`stepQuest` sets -1) | [08][c08] |
 | GameBuildersGuide.html | PERSISTANCE | Says failed start waiting is trivial; code retries after 10 ticks, doubling | [08][c08] |
+| Programming.html | Engine API | Stale: `CMClass.newMsg`, `CMClass.threads()`, `CMClass.ThreadEngine()`, `Tickable.MOB_TICK`, `Host.MY_TICK_ID`, `makeUNIX.sh`, "Java 1.8 JDK" instructions; the engine runs one game thread with real-time tick groups and `build.sh` builds it | [32][c32] |
 | GameBuildersGuide.html / earlier docs | Quest examples | `CREATE QUEST LOAD=quests/robbed/robbed.quest` names a file that is not shipped (which guide carries it was not established) | [08][c08] |
 
 ---
@@ -474,7 +497,7 @@ Claims the writers and verifiers could not confirm from code. Most need a run.
 
 **31 Saves and party.** The area-level (ADATA) effects XML. TIMESCALE's builder/DEV restriction. Multi-line output of PARTY, AS, SAVES (composed from source strings). The `.complete` regeneration snippet. Whether a room made in play survives a changed area file. D-SP-1 and D-SP-2 in play.
 
-**32 Engine programming.** Notes not available at the time of writing; nothing included.
+**32 Engine programming.** Whether a package-qualified `.class` loads from an arbitrary scanned folder (`CMClass.loadClass` retries with the short name; the chapter advises default-package classes). Overriding a stock library by a same-named class in an extra `LIBRARY=` path. Adding `addCharAbilityMapping("Mage", ...)` from an ability's own `initializeClass()` (load order reasoning only). Whether static fields of `core/` helper classes are duplicated (D-ES-8). The two fixtures in the worked examples (`tally.js`, `sturdy.js`) were not run; the example Java classes were compiled with `javac --release 8` but not run. Runtime behaviour of the LuckyCoin trailer line, the Sneezer STATE check and the `unpackMobFromXML` round trip. D-SC-32 in play. Case-insensitive loading of `translation_en_TX.properties`.
 
 **33 Engine internals.** Formats of Narration, ScriptMenus, QuestRecords, Yields, ItemCrafting ledgers, Calendars/Holidays. The `parseBits` format strings. What WorldCmd subcommands print. JSCm, JSTimers and related API detail. ProfileOwner's PROFILEPROPERTY key. Unique-item hook list (from call sites). `state-and-persistence.md`'s "temporary pause ownership" header key.
 
@@ -533,4 +556,5 @@ Help-text batch fix, in one pass over `CoffeeMud/resources/help/*.ini` and `coff
 [c29]: ../docs/creator/29-combat-and-encounters.md
 [c30]: ../docs/creator/30-travel-vehicles-instances.md
 [c31]: ../docs/creator/31-saves-and-party.md
+[c32]: ../docs/creator/32-engine-programming.md
 [c33]: ../docs/creator/33-engine-internals.md
