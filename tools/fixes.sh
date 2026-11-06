@@ -535,6 +535,21 @@ group_saves3()
 	play audit-quest-restore.txt qdb qworld 'jrun /resources/_fixes/audit-quest-check.js\nquit\nn\n' RESTORE=auditq TIMEMODE=TURNS
 	expect audit-quest-restore.txt "Restored 'auditq'."
 	jsresults audit-quest-restore.txt
+	# D-QU-4 and D-QU-7 (docs audit): the Quest Maker takes a template by its file
+	# name, lets a zero-or-more item list start empty, and writes the whole quest
+	# into the world's quests folder (not a LOAD= of a file in resources/)
+	mkdir -p "$W/qmdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/qmdb/"
+	cp -r "$GAME/world" "$W/qmworld"
+	play audit-qmaker.txt qmdb qmworld "Maker\n${NEWCHAR}create quest\nY\nstory_talk1\nfixaudit_qm\n\n\n\n\n\n\nfixgiver\n\n\n\n\n\nfixtarget\n\n\n\n\n\n\n\nY\nsave\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	count audit-qmaker.txt "is not a quest template" 0
+	count audit-qmaker.txt "You must enter one of the following" 0
+	if grep -q "set name fixaudit_qm" "$W/qmworld/quests/fixaudit-qm.quest" 2>/dev/null && ! grep -q "^LOAD=" "$W/qmworld/quests/fixaudit-qm.quest" \
+		&& [ ! -f "$GAME/resources/quests/fixaudit_qm.quest" ]; then
+		echo "  ok    audit-qmaker: the Quest Maker's quest is whole in world/quests"
+	else
+		echo "  FAIL  audit-qmaker: the Quest Maker's quest is not whole in world/quests"; FAIL=1
+	fi
+	rm -f "$GAME/resources/quests/fixaudit_qm.quest"
 
 	# S22: a character's entry limits (InstanceArea's LIMIT) and planar
 	# visits are saved, with the time they have left

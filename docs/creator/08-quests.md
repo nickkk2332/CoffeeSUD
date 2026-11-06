@@ -155,9 +155,9 @@ How a quest gets in the list:
    whose script names no quest. A normal game then loads the table after the
    map. Each quest is added to the quest list; a scheduled one starts waiting.
 2. **CREATE QUEST** adds one in play (see [Builder commands](#builder-commands)).
-3. **The Quest Maker** (`CREATE QUEST` with no script) writes a script to
-   `resources/quests/NAME.quest` and adds a quest whose script is
-   `LOAD=quests/NAME.quest`.
+3. **The Quest Maker** (`CREATE QUEST` with no script) adds a quest whose
+   script is the whole filled-in template; in builder mode SAVE writes it to
+   `world/quests` with the rest.
 4. **Generators** (random quests, quest boards) add copies in play.
 
 In builder mode SAVE writes the quest list back to `world/quests`, one file per
@@ -1117,13 +1117,16 @@ own generator document.
 
 `CREATE QUEST` with no script offers the Quest Maker wizard: you pick a template,
 fill in pages of prompts, review each page, and confirm. The wizard replaces the
-template's `$VARIABLES` in the quest text, saves it as
-`resources/quests/NAME.quest`, creates a quest whose script is
-`LOAD=quests/NAME.quest`, and saves the quest list. In builder mode, SAVE then
-writes the quest to `world/quests` as well.
+template's `$VARIABLES` in the quest text, creates a quest whose script is that
+whole text, and saves the quest list. In builder mode, SAVE writes it to
+`world/quests/NAME.quest`, complete, so it travels with the world (nothing is
+written to `resources/`).
 
-At the `Select a quest template (?):` prompt, `?` lists templates with their
-descriptions, `CANCEL` or Enter leaves.
+At the `Select a quest template (?):` prompt, give the template's number in the
+list, its name (`Story Talk #1`) or its file name (`story_talk1`). `?` lists
+them, numbered, with their file names and descriptions; `CANCEL` or Enter
+leaves. A list of items that may be empty (the carried item of Story Talk #1,
+for one) can be left empty at its first prompt.
 
 ### Templates shipped
 

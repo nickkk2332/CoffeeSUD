@@ -1907,7 +1907,7 @@ public class Quests extends StdLibrary implements QuestManager
 				{
 					final StringBuffer fullList=new StringBuffer("\n\r^HCANCEL^N -- to cancel.\n\r");
 					for(int t=0;t<questTemplates.size();t++)
-						fullList.append("^H"+(String)questTemplates.elementAt(t,1)+"^N\n\r"+(String)questTemplates.elementAt(t,2)+"\n\r");
+						fullList.append("^H"+(t+1)+") "+(String)questTemplates.elementAt(t,1)+"^N ("+templateFileBase((String)questTemplates.elementAt(t,3))+")\n\r"+(String)questTemplates.elementAt(t,2)+"\n\r");
 					mob.tell(fullList.toString());
 				}
 				else
@@ -1915,14 +1915,26 @@ public class Quests extends StdLibrary implements QuestManager
 					return null;
 				else
 				{
-					final StringBuffer list=new StringBuffer("");
-					for(int t=0;t<questTemplates.size();t++)
-						if(choice.equalsIgnoreCase((String)questTemplates.elementAt(t,1)))
+					// a template by its number in the list, its name (Story Talk #1) or its
+					// file name (story_talk1); only the name was taken
+					final String c=choice.trim();
+					if(CMath.isInteger(c)&&(CMath.s_int(c)>=1)&&(CMath.s_int(c)<=questTemplates.size()))
+						questIndex=CMath.s_int(c)-1;
+					for(int t=0;(t<questTemplates.size())&&(questIndex<0);t++)
+					{
+						final String fileName=(String)questTemplates.elementAt(t,3);
+						if(c.equalsIgnoreCase((String)questTemplates.elementAt(t,1))
+						||c.equalsIgnoreCase(fileName)
+						||c.equalsIgnoreCase(templateFileBase(fileName)))
 							questIndex=t;
-						else
-							list.append(((String)questTemplates.elementAt(t,1))+", ");
+					}
 					if(questIndex<0)
-						mob.tell(L("'@x1' is not a valid quest name, use ? for a list, or select from the following: @x2",choice,list.toString().substring(0,list.length()-2)));
+					{
+						final StringBuffer list=new StringBuffer("");
+						for(int t=0;t<questTemplates.size();t++)
+							list.append((t+1)+") "+((String)questTemplates.elementAt(t,1))+", ");
+						mob.tell(L("'@x1' is not a quest template.  Give its number, its name or its file name (? lists them, CANCEL stops): @x2",choice,list.toString().substring(0,list.length()-2)));
+					}
 				}
 			}
 			if((mob.session()==null)||(mob.session().isStopped())||(questIndex<0))
@@ -2096,7 +2108,9 @@ public class Quests extends StdLibrary implements QuestManager
 							for(int i=0;i<=itemXMLs.size();i++)
 							{
 								showValue=(i<itemXMLs.size())?(String)itemXMLs.elementAt(i):"";
-								final boolean optional=(i==0)?optionalEntry:true;
+								// D-QU-7: zero or more items may start with none (the first was
+								// required unless the template marked the field optional)
+								final boolean optional=((i==0)&&(inputCommand!=QMCommand.$ITEMXML_ZEROORMORE))?optionalEntry:true;
 								final String thisValue=addXMLQuestItem(mob, showFlag, pageDV, showValue, parm1Fixed, lastLabel, optional, step, ++showNumber);
 								if(thisValue!=null)
 								{
@@ -2242,6 +2256,23 @@ public class Quests extends StdLibrary implements QuestManager
 		{
 			return null;
 		}
+	}
+
+	/**
+	 * A quest template's file name without its folder or .quest, as the Quest
+	 * Maker lists and accepts it (story_talk1).
+	 * @param fileName the file name
+	 * @return the short name
+	 */
+	protected static String templateFileBase(final String fileName)
+	{
+		String f=(fileName==null)?"":fileName;
+		final int slash=Math.max(f.lastIndexOf('/'),f.lastIndexOf('\\'));
+		if(slash>=0)
+			f=f.substring(slash+1);
+		if(f.toLowerCase().endsWith(".quest"))
+			f=f.substring(0,f.length()-6);
+		return f;
 	}
 
 	@Override
