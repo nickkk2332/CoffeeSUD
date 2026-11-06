@@ -1515,7 +1515,7 @@ Each skill is marked one of:
 | `(learnable: ...)` | Qualified for now; the text is what it costs |
 | `(locked: level 7)` | The class level is not reached |
 | `(locked: needs Skill_Trip(50))` | A pre-requisite skill is missing |
-| `(locked: ...)` | The requirement mask is not met |
+| `(locked: you do not qualify)` | The requirement mask is not met (or the hint, if there is one) |
 | not shown | `SECRET`, or `MASKED` with the mask unmet, and no hint |
 
 A hint is a line pointing the player to where a skill is taught. Hints live in
@@ -1655,7 +1655,6 @@ on the *character* are:
 | `MORGUE`, `MORGUE_<key>` | W | Where the bodies of dead characters go: `HERE` (default), a room, `DEATH` or `START` |
 | `CORPSEGUARD` | | Who may loot a dead player's body (`ALL`, `SELFONLY`, `PKONLY`) |
 | `ITEMLOOTPOLICY` | | What becomes of a dead mob's items (`20% RUIN`...) |
-| `RACE_`/`CHARCLASS_` flags | | See [availability](#who-may-be-what-availability-and-unlocking) |
 
 **Remort and retire.** `REMORT` (inherited) strips a character of levels,
 skills, stats and personal attributes, keeping equipment, banks, properties
@@ -1675,7 +1674,7 @@ relying on them.
 Source: [Achievements.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/Achievements.java),
 [CustomAwards.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CustomAwards.java).
 Fixture: [p5-awards.js](../../tools/fixtures/fixes/p5-awards.js).
-In-game help: `AHELP ACHIEVEMENTRewards`.
+In-game help: `AHELP ACHIEVEMENTREWARDS`.
 
 An achievement is an automatically checked goal tracked on the character (or
 the profile) as a tattoo. They are defined in `resources/achievements.ini`; a
@@ -1685,7 +1684,7 @@ world's own `world/resources/achievements.ini` replaces it, and
 `[CLAN]`. Each achievement is one line:
 
 ```text
-TATTOONAME= EVENT="KILLS" NUM=50 ZAPPERMASK="-RACE +Orc" DISPLAY="Orc slayer" TITLE="*, Orc-bane" REWARDS="100 XP 1 QP"
+TATTOONAME= EVENT="KILLS" NUM=50 ZAPPERMASK="-RACE +Orc" DISPLAY="Orc slayer" TITLE="Orc-bane" REWARDS="100 XP 1 QP"
 ```
 
 `TATTOONAME` is the unique tattoo that marks it (it must not begin with a digit).
@@ -1703,7 +1702,7 @@ header of `achievements.ini` gives each event's own parameters.
 | Reward | Example |
 | --- | --- |
 | Experience, quest points, money | `10 XP`, `1 QP`, `10 "gold coins"` |
-| A stat | `2 MAXSTRENGTH`, `10 BONUSCOMMON`, `BONUSCHARSTATS`, `BONUSCHARLIMIT`, `ACCOUNT BONUSCOMMON` |
+| A stat | `2 MAXSTRENGTH`, or a bonus such as `10 BONUSCOMMON`, `BONUSCRAFT`, `BONUSNONCRAFT`, `BONUSLANGS`, `BONUSCHARSTATS` (extra point-buy points), `BONUSCHARLIMIT`; prefix `ACCOUNT` for the profile (`"ACCOUNT BONUSCOMMON"`) |
 | An ability, from a level | `17 Spell_Light`, or with settings `21 "Spell_Light(autogain=false)"` (keys `AUTOGAIN`, `MASK`, `PARMS`, `PREREQS`) |
 | An expertise | `7 VEXING1`, `12 VEXING1(autogain=false)` |
 | Trains and practices | `1 PRACTICES 1 TRAINS` |
@@ -1716,12 +1715,13 @@ header of `achievements.ini` gives each event's own parameters.
 | CoffeeSUD: a script variable | `1 VAR(NAME=chapter VALUE=2)` (`WHO=` for another name, `*` for the game's) |
 | CoffeeSUD: a known recipe | `1 RECIPE(SKILL=Weaponsmithing NAME="rune blade")` |
 
-The same reward syntax is used by perks, creation answers, ranks, `MPREWARD`
-and quest rewards. On an `[ACCOUNT]` achievement, rewards go to each *later*
+Quotes inside a `REWARDS="..."` value are escaped with backslashes; the header
+of `achievements.ini` shows the escaping. The same reward syntax is used by
+perks, creation answers, ranks, `MPREWARD` and quest rewards. On an `[ACCOUNT]` achievement, rewards go to each *later*
 character of the profile, so make once-only and repeatable grants deliberate.
 `ACHIEVEMENTS` shows what each gives (`ACHIEVEMENTS ALL`, `NOW`, `FUTURE`,
-`AWARDS`...). `CREATE ACHIEVEMENT` and `MODIFY ACHIEVEMENT` edit the file in
-builder mode (security flag `ACHIEVEMENTS`).
+`AWARDS`...). `CREATE ACHIEVEMENT` and `MODIFY ACHIEVEMENT` edit the definitions (security
+flag `ACHIEVEMENTS`).
 
 **Titles.** A title is text shown with a character's name. They come from
 achievements' `TITLE`, rank ladders' `RANK<n>.TITLE`, `MPTITLE who (-) text`

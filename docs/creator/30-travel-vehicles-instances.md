@@ -455,3 +455,261 @@ When a vessel is copied (`COPY`, the item's `copyOf`, a catalog spawn or a catal
 ### Tender, follow and siege
 
 `TENDER <other ship>` offers a gangplank to another vessel in the same room; when the other captain tenders back, crews walk between them. Both must be docked, neither in combat; sailing away or fighting disconnects them. A small boat that tenders your ship can be hoisted aboard with `RAISE <boat>` and put back with `LOWER <boat>`. `FOLLOW <ship>` makes the vessel trail another. Ship-to-ship combat, `AIM` and siege weapons are covered in [29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+## Transport lines and timetables
+
+Source: [TransportLine](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TransportLine.java), [Timetable command](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Timetable.java). Reference entry: [24-behaviors-and-masks.md](24-behaviors-and-masks.md#transportline).
+
+`TransportLine` makes a real vehicle run a scheduled route through real rooms, stopping to take on passengers. It goes on:
+
+- a navigable vessel (`GenSailingShip`, `GenCaravan`, `GenAirShip`, `GenBalloon`): the behavior plots a course with the same router as `COURSE TO` and the vessel sails it;
+- a rideable item (a `GenRideable` coach with land basis): the behavior walks it one room at a time, paying `Prop_TravelTime` step time between steps;
+- a mob driver: if the mob rides something, the thing it rides is the vehicle; otherwise the mob itself walks the route.
+
+Because it routes through ordinary rooms, the stops need not be adjacent, and all the normal terrain, door and `Prop_Road` rules apply. If no route exists, the line waits and tries again after the next stop delay.
+
+### TransportLine options
+
+Write all options on one behavior line.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `STOPS` | required | At least two stops, separated by semicolons inside quotes: room IDs, port names, or area names. A stop the engine cannot resolve is a `WORLD CHECK ROUTES` error. |
+| `DEPART` | none | Comma list of game hours of the day (`0` to hours-in-day minus 1) at which the vessel leaves a stop, for example `6,12,18`. The next listed hour after arrival is used. Replaces `WAIT`. |
+| `WAIT` | 10 | Ticks to wait at each stop when `DEPART` is not given. (A tick is about 4 seconds of game clock.) |
+| `ROUND` | `LOOP` | `LOOP` cycles through the stops and returns from the last to the first; `BACK` reverses at each end. |
+| `FARE` | 0 | Boarding price. |
+| `FARES` | none | Comma list `stop:price,...` giving a different price for boarding at a particular stop. The stop text must match the entry in `STOPS` (case ignored). |
+| `PARTY` | `LEADER` | `LEADER` (the leader pays for the nearby party) or `EACH`. See [Fares](#fares-and-ticket-takers). |
+| `PETS` | 0 | Price for each creature that is not a player character, when the leader pays. |
+| `CARGO` | 0 | Price per 100 pounds of load carried, when the leader pays. |
+| `PASSENGERONLY` | `true` | Adds `Prop_HelmRestrict NAVMASK="-PLAYERS"` to a navigable vehicle that has no helm restriction of its own, so passengers cannot steer it. |
+| `SIGN` | none | Name of a readable item in each stop room; its text is set to the current timetable every tick. |
+| `BOARDCALL` | none | Shown outside the vehicle, and on every interior room, when it is ready to board at a stop. |
+| `DEPARTMSG` | none | Shown when it sets out. |
+| `ARRIVEMSG` | none | Shown when it reaches a stop. |
+
+In the three messages `$stop` is the stop the vehicle is at (or leaving) and `$next` is the stop it is heading for. Port names are used where a stop has a `Prop_Port`; otherwise the room title.
+
+```text
+STOPS="Port Azure;Saltmarsh;Gullrock" DEPART=6,12,18 ROUND=BACK FARE=2 PARTY=LEADER PETS=5 CARGO=1 PASSENGERONLY=true BOARDCALL="Boarding for $next." DEPARTMSG="The Gull leaves $stop." ARRIVEMSG="The Gull arrives at $stop." SIGN="a timetable board"
+```
+
+What the behavior installs while it is on the host (both are temporary and not saved):
+
+- a `Prop_TicketTaker` with the current stop's fare, `PARTY`, `PETS` and `CARGO`, unless the vehicle already has one of its own (an authored property always wins);
+- a `Prop_HelmRestrict` as described for `PASSENGERONLY`.
+
+They are removed when the behavior is removed or the host changes vehicle.
+
+### How a line behaves
+
+- On its first tick the line finds which stop it is standing at (otherwise it counts as being at stop 1) and starts its wait. Starting at an end stop with `ROUND=BACK` sets the right direction.
+- At each stop it waits for `WAIT` ticks or until the next `DEPART` hour on the stop room's local clock; then it plots a course to the next stop, announces `DEPARTMSG` and goes.
+- Vessels travelling through rooms with `Prop_TravelTime` spend that time between steps; a line announces arrival only after the last step's time has passed.
+- On arrival a navigable vessel's anchor is set and its course cleared; the line announces `ARRIVEMSG`, updates the fare for the new stop, resets the wait and announces `BOARDCALL`.
+- A line does not move a player who has not boarded; a party that wants to travel boards at a stop, pays, and uses `WAIT UNTIL ARRIVAL` or `TIMETABLE` while it rides.
+
+### TIMETABLE
+
+`TIMETABLE [line name]` prints every line and moving route (matched by the host's name or by the text) in the form:
+
+```text
+the Gull: at Port Azure; next Saltmarsh, departure hour 12
+the Gull: travelling to Saltmarsh; next Saltmarsh
+the Gull: at Saltmarsh; next Gullrock, departs in 7 ticks
+```
+
+A `SIGN` item at each stop shows the same text when read. A line with fewer than two stops reports "Transport line needs at least two stops." On a ferry or coach, `WAIT UNTIL ARRIVAL` (also `STOP` or `DOCK`) waits for the next stop (`HELP WAIT`).
+
+### Making a ferry with a timetable (summary)
+
+1. Make the vessel (see [Vessels](#vessels-rideables-boardables-ships-and-caravans)) and place it at its first quay. Leave `OWNER` empty or give it a world owner name.
+2. Give each quay room a port: `Prop_Port NAME="Port Azure"`. Make a readable board item at each quay named "a timetable board".
+3. Add the `TransportLine` behavior to the ship (MODIFY ITEM, Behaviors).
+4. `TIMETABLE` to check; `WAIT` until the departure hour; `LIST SHIPS` and `VESSEL STATUS` to inspect.
+5. A worked version is [Example 1](#example-1-a-ferry-with-a-timetable).
+
+## Fares and ticket takers
+
+Source: [Prop_TicketTaker](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_TicketTaker.java), [Travel.fare](../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java). Reference entry: [23-properties-reference.md](23-properties-reference.md#prop_tickettaker).
+
+CoffeeSUD has one fare model, shared by `Prop_TicketTaker`, `TransportLine`, `TaxiBehavior`, `DelayedTransporter` and journeys: each member of the party is either a player character (a human-controlled or party character) or something else (a mount, a pet, a hireling).
+
+| Setting | Meaning |
+| --- | --- |
+| `PARTY=LEADER` | The leader pays one total for everyone, and the others board without being stopped. |
+| `PARTY=EACH` | Each player character pays their own fare. |
+| `PETS=<price>` | Under LEADER, the price of each member who is not a player character. |
+| `CARGO=<price>` | Under LEADER, a price per 100 pounds of load each member carries (weight above their own body weight, rounded up per member). |
+| `PERHEAD` | (journeys, delayed transporters) whether `FARE` is charged for each player character or once for the party. |
+
+Charging is all-or-nothing. The engine first works out every payer's charge. If anyone cannot afford it, the leader is told "X cannot afford the fare." and nobody moves and nothing is collected. Money is only taken after every passenger has passed every entry check.
+
+### Prop_TicketTaker
+
+Hosts: mobs, items. The property goes on a vehicle (a ship, coach, cart), on a mount, or on a mob standing at a gangway.
+
+Parameters (the first three forms are the original ones):
+
+| Parameter text | Meaning |
+| --- | --- |
+| `2` | A plain number: the boarding fare. |
+| `a red ticket` | Any text without `=`: the name of a ticket item each boarder must hold. The ticket is taken. |
+| `FARE=2 PARTY=LEADER PETS=5 CARGO=1` | The CoffeeSUD form. `FARE` default 0; `PARTY` default `EACH`; `PETS` and `CARGO` default 0. |
+
+It fires on `MOUNT`, `SIT`, `ENTER` (boarding) and `SLEEP` messages by player characters (monsters board free) when the host is the vehicle being boarded, or the mount a cart is hitched to, or when the host is a mob standing on or beside the vessel's gangway. Walking between a vessel's own rooms never charges again. The receipt is forgotten when the character steps off a boardable vessel into another area (and, with `PARTY=LEADER`, when they dismount), so a return trip pays again. For `PARTY=EACH` on a plain rideable that is not a boardable (a cart), the character stays remembered by name in a bounded list, so a second ride may be free; prefer `PARTY=LEADER` for carts.
+
+- With `PARTY=EACH`, a character pays once and is remembered by name. Money is judged in the host's currency (the mob's, if the host has none). A character who cannot pay is refused with "You'll need X to board."
+- With `PARTY=LEADER`, the first party member to board triggers the charge on the leader, which must be in the same room ("Your party leader must be here to pay the fare."). Everyone in the party in that room is then marked as paid for that vehicle.
+
+To put a ticket taker on a gangplank NPC: add `Prop_TicketTaker` with `FARE=3 PARTY=LEADER` to a mob who stands inside the ship's entry room. The same on a ship item charges anyone boarding the ship item.
+
+## Taxis and the Concierge
+
+Source: [Concierge](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Concierge.java), [TaxiBehavior](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TaxiBehavior.java). Reference entries: [Concierge](24-behaviors-and-masks.md#concierge), [TaxiBehavior](24-behaviors-and-masks.md#taxibehavior).
+
+`Concierge` is a guide for hire. A player says a destination to the concierge (a mob, or an item or room it is attached to); the concierge quotes a price; the player pays by giving, dropping or putting the coins; and the concierge tells the way, leads the player (`MOBILE=true`), or opens a temporary portal (`PORTAL=true`). `TaxiBehavior` is the same service where the vehicle itself drives the party there and then returns.
+
+### Parameter list
+
+Both read a semicolon-separated list. The grammar is:
+
+- A bare number sets the base price (the last price in the list is the default for any place not listed).
+- `PLACE=price` gives a price for a room ID (or room name) or area name. When any places are listed, only listed places (and areas by name) are served.
+- `FLAG=value` entries below. A flag is true if its value starts with `t`.
+
+| Entry | Meaning |
+| --- | --- |
+| `PERROOM=n` | Extra price per room along the trail to an unlisted place. Concierge default 0; TaxiBehavior default 1. |
+| `MAXRANGE=n` | How far (in rooms) to search for the destination. Default 100. |
+| `GREETING="text"` | Said to arrivals. Default "Need directions?..." (the taxi: "Need a lift? If so, come aboard."). |
+| `ENTERMSG="text"` | Said when someone mounts or enters the host. |
+| `TALKERNAME="name"` | Name the host speaks under when it is an item or room; for a vehicle, the name of a rider to speak as. |
+| `CLAN="name"` | Serve only places controlled by that clan; the word `home` means the clan's recall room. |
+| `MOBILE=true` | Lead the customer to the destination on foot (Concierge on a mob). |
+| `PORTAL=true` | Open a short-lived portal item to the destination instead of giving directions. |
+| `AREAONLY=true` | Stay inside the host's own area. |
+| `NOCLIMB`, `NOCRAWL`, `NOWATER`, `NOAIR`, `NOLOCKS`, `NOHOMES`, `NOINDOOR` | `=true` removes those kinds of rooms from the search. |
+| `PARTY`, `PETS`, `CARGO` | Read by `TaxiBehavior` only (see below). They are accepted and ignored by `Concierge`. |
+
+Players can narrow a request by ending it with `noclimb`, `nodoors`, `noswim`, `noprivate`, `nofly`, `nolocks` or `nocrawl`. A request for a place that is not served gets "I'm sorry, I don't know where 'X' is."
+
+```text
+Gullrock#0=7;Saltmarsh=5;GREETING="Where to, friend?"
+```
+
+### Taxis
+
+`TaxiBehavior` goes on a rideable item or a mob that can carry riders. The flow:
+
+1. The customer boards (mounts) the vehicle. It greets them and asks where.
+2. The customer says a destination; the vehicle quotes the price. Paying (give, drop or put coins) starts the trip.
+3. The vehicle drives itself along an outdoor, open path (indoor rooms and closed doors end the trip: "This is as far as I can go."). While it drives it cannot be tracked.
+4. At the destination: "We're here. Best of luck!" The new riders are put off and the vehicle drives back to where it started.
+
+The party options of the taxi, in the same list:
+
+```text
+PARTY=LEADER;PETS=5;Gullrock#0=7
+```
+
+With `PARTY=LEADER` the quote is the total for the party in the room (7 per player character, `PETS` per other creature, plus `CARGO` per 100 lb), the whole party boards together and all are put off together. If the vehicle cannot seat them all, the fare is returned ("The whole party cannot board."). `PARTY=EACH` (default) keeps the single-rider rule of the original taxi.
+
+The Concierge keeps quoted trips in its saved state, so a quote made before a save is honored when the character comes back.
+
+## DelayedTransporter
+
+Source: [DelayedTransporter](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/DelayedTransporter.java). Reference entry: [24-behaviors-and-masks.md](24-behaviors-and-masks.md#delayedtransporter).
+
+`DelayedTransporter` whisks anyone who stays in a room (or with a mob or item) to another room after a delay. It makes standing stones, druid circles and transit rooms. It is a ticking behavior, so the delay is in ticks, not game hours.
+
+```text
+min=3 max=3 chance=100 PARTY=LEADER PERHEAD=true FARE=2 DEST=ORDER LOOK=true MASK="-TATTOO +GROVEFRIEND" DEPARTMSG="The stones hum." ARRIVEMSG="You emerge beside the moonwell.";Moonwell#0;Grove#2
+```
+
+The text before the first semicolon is options; every later semicolon-separated entry is a destination room ID. Do not use semicolons inside the messages (use the unquoted option text only up to the first `;`).
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `min`, `max` | 5, 5 | Ticks a character must have been present before it can go (`min`) and the tick after which it always goes (`max`). |
+| `chance` | 100 | Percent chance per tick, between `min` and `max`. |
+| `DEST` | `RANDOM` | `RANDOM` picks a destination from the list; `ORDER` cycles through it in order (the position is saved). |
+| `PARTY` | false | `true` or `LEADER`, or `EACH`: the group is carried together when the first member's time is up, so nobody is left behind or sent ahead alone. Without `PARTY`, the character and those following it go. |
+| `PERHEAD` | false | Charge `FARE` for each eligible character; otherwise `FARE` is a flat charge. |
+| `FARE` | 0 | Price. Charged to the leader, or each player with `PERHEAD` and `PARTY=EACH`. |
+| `MASK` | none | Zapper mask of who is carried. A leader that does not match carries no one. |
+| `LOOK` | false | Show the arrival room to everyone after the move. |
+| `DEPARTMSG`, `ARRIVEMSG` | none | Shown in the old and the new room. |
+| `ENTRY` | `FORCE` | `FORCE` teleports regardless of exits and entry properties (the traditional behavior). `CHECK` runs the leave and enter checks of every traveller first (`Prop_ReqEntry`, closed doors, no-teleport properties) and moves nobody if one refuses. |
+
+Fares and entry refusals are settled before anyone moves. If a destination is missing, travellers are told they are "whisked nowhere at all". Each character's ticks present are saved with the destination position.
+
+## Moving rooms
+
+Source: [MovingRoom](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MovingRoom.java), [RouteStops](../../CoffeeMud/com/planet_ink/coffee_mud/core/RouteStops.java), [movingroom.xml](../../CoffeeMud/resources/movingroom.xml). Reference entry: [24-behaviors-and-masks.md](24-behaviors-and-masks.md#movingroom).
+
+A moving room is one real room (a lift, a subway car, a bus) that visits stop rooms. While it is at a stop, a temporary exit links the car and the stop room; while it is travelling the link is gone and the descriptions say so. Passengers simply walk in and out.
+
+Parameters:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `ROUTE` | none | Either route XML in quotes, or a file name (relative to `world/routes/`, `routes/` prefix allowed). A value that starts with `<` is XML. |
+| `LINE` | the file's root tag | The XML section to use when the file holds several routes. |
+| `WAIT` | 10 | Ticks the car waits at a stop. |
+| `TRAVEL` | 10 | Ticks the car takes between stops. |
+| `DEPART` | none | Game hours of day. When set, the car leaves a stop at the next listed hour instead of after `WAIT`. |
+| `SIGN` | none | Name of a readable item in each stop room that shows the line's position. |
+| `DISPLOC` | the XML's `DISPLOC` | `true` appends the current timetable text to each stop's overlay. |
+
+```text
+ROUTE=deepdelve-lift.xml WAIT=5 TRAVEL=10 DEPART=6,12,18 SIGN="a brass plate"
+```
+
+The legacy form still reads the shared file `resources/movingroom.xml`: `min=3 max=3 chance=100;SUBWAY;3;10` (section name, wait ticks, travel ticks).
+
+### Route XML
+
+```xml
+<LIFT>
+  <STOPS><STOP1>Mine#0</STOP1><STOP2>Mine#4</STOP2><STOP3>Mine#9</STOP3></STOPS>
+  <NORMALDIRECTION>
+    <TRAVELDIRECTION>down</TRAVELDIRECTION>
+    <DOORSDIRECTION>up</DOORSDIRECTION>
+    <INSIDE>
+      <ARRIVALINFO>The lift stops at $disproom and the gate opens to the $inopendir.</ARRIVALINFO>
+      <DEPARTINFO>The gate closes and the lift descends.</DEPARTINFO>
+    </INSIDE>
+    <OUTSIDE>
+      <ARRIVALINFO>The lift arrives.</ARRIVALINFO>
+      <DEPARTINFO>The lift drops out of sight.</DEPARTINFO>
+    </OUTSIDE>
+  </NORMALDIRECTION>
+  <REVERSEDIRECTION> ...same fields, for the return trip... </REVERSEDIRECTION>
+  <ROOMDESCRIPTIONS>
+    <NORMALDIRECTION>
+      <INSIDE><DOOROPENED>A gate leads to $disproom.</DOOROPENED><DOORCLOSED>The lift is moving $traveldir.</DOORCLOSED></INSIDE>
+      <OUTSIDE><DOOROPENED>A lift is waiting here.</DOOROPENED><DOORCLOSED>The shaft is empty.</DOORCLOSED></OUTSIDE>
+    </NORMALDIRECTION>
+    <REVERSEDIRECTION> ...same... </REVERSEDIRECTION>
+  </ROOMDESCRIPTIONS>
+  <LINEPRINTNAME>Mine Line</LINEPRINTNAME>
+  <ROOMPRINTNAME>Mine car</ROOMPRINTNAME>
+  <DISPLOC>true</DISPLOC>
+</LIFT>
+```
+
+Rules:
+
+- `STOP1`, `STOP2`, ... must be consecutive from 1 with no gaps or duplicates, and there must be at least two. Any problem is logged and the route is empty. The stop rooms must exist when the behavior starts.
+- `DOORSDIRECTION` is the direction the car's door opens, seen from inside. The stop gets the opposite direction. Neither the car nor the stop room may already have an exit in that direction: the engine will not overwrite an authored exit, and the car then simply has no door.
+- `$disproom` is the stop's room title (the current stop when open, the next stop when moving); `$inopendir` the door direction from inside; `$outopendir` the opposite; `$traveldir` the current travel direction.
+- The route goes forward through the stops and then back; ends use the `REVERSEDIRECTION` block.
+- Route files live under `world/routes/` and are part of the world (`SAVE` publishes, `WORLD CHECK ROUTES` validates).
+
+### Overlay: what never reaches the world file
+
+The links between the car and the stops, and the changing description text, are runtime overlays (`Travel.temporaryLink` and the `Prop_TransitView` effect). They are not saved with rooms and not written by room export, so a builder saving a stop room does not bake a door into it. Removing the behavior, or reloading the world, removes them. The route position (current stop, direction, status, remaining wait) is saved with the game.
+
+`TIMETABLE` and `SIGN` show where the car is.

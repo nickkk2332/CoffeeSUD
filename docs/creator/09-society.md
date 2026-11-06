@@ -40,7 +40,6 @@ warrants, shops, banks and diplomacy. Each section says which is which.
   - [GuildMaster](#guildmaster)
   - [Recruitment and advancement](#recruitment-and-advancement)
   - [Diplomacy and ClanEnemyAggressive](#diplomacy-and-conquest)
-  - [Rank by deeds and its alternatives](#recruitment-and-advancement)
 - [Factions](#factions)
   - [Faction files](#faction-files)
   - [Change triggers](#change-triggers)
@@ -958,7 +957,7 @@ Full syntax for the commands and functions is in
 
 | Tool | Use |
 | --- | --- |
-| `FACTIONS` (`FAC`) | `FACTIONS`: the character's standings. `FACTIONS HERE`: factions relevant to this place. `FACTIONS name`: a faction's band ladder, the current band marked, and points to the next. `FACTIONS PARTY`: a table of every visible faction by party character. Factions whose `SHOWMASK` fails show nothing or the `HIDDENNAME`. |
+| `FACTIONS` (`FAC`) | `FACTIONS`: the character's standings. `FACTIONS HERE`: factions relevant to this place. `FACTIONS name` (the faction's exact name): its band ladder, the current band marked, and points to the next; other text filters your standings by band or faction name. `FACTIONS PARTY`: a table of every visible faction by party character. Factions whose `SHOWMASK` fails show nothing or the `HIDDENNAME`. |
 | `ORGCHECK` | `ORGCHECK (file/CLANS/GOVERNMENTS/ALL)`, in builder mode, DEV mode or with `CMDFACTIONS`. Re-reads faction files line by line and reports a key given twice, band gaps and overlaps, `CHANGE` triggers that match nothing, `REACTION` and `AFFBEHAV` IDs that are not abilities, behaviors, commands or socials, a `REACTION` range that is no band's code, and `RELATION` factions that do not exist. `CLANS` lists world-file mobs naming a missing clan; `GOVERNMENTS` checks entry and exit scripts. |
 | `CREATE/MODIFY/DESTROY/LIST FACTION` | Editors, saved to `world/resources/factions/` in builder mode. |
 | `AS <character> FACTIONS` | Another party character's standings. |
@@ -1079,8 +1078,11 @@ Flag meanings: `witness` requires a witness in the room; `!witness` waives the
 need for one; `combat` and `!combat` require the act to happen in or out of
 combat; `recently` and `!recently` require that the criminal has or has not
 been caught for it recently. **A crime needs a witness unless it is flagged
-`!witness`.** The witness must be an intelligent NPC (an officer always
-counts), found in the criminal's room or an adjacent one. The case dies if
+`!witness`.** The witness must be an NPC with intelligence above 3 in the criminal's room
+or an adjacent one. An officer always notices; any other NPC notices with a
+chance that depends on the criminal's inclination (about 76 percent for a
+chaotic criminal, 51 for a neutral one and 6 for a lawful one), so repeat
+a test before deciding that a crime is not witnessed. The case dies if
 the witness dies or is a friend of the accused, and a witness who cannot see
 the criminal makes no case. Characters are never witnesses.
 
@@ -1481,3 +1483,408 @@ Summary of the economy items scripts can use (details in
 `SHOPBUDGET()`, `MPSHOP`, `MPBANK`, `MPDEBT`, `BANKBALANCE()`, `DEBT()`,
 `MPEXCHANGE`, `EXCHANGE()`; JavaScript `cm.shop(keeper)` (`remove`, `stock`,
 `setPrice`, `setBudget`, `budget`, `reset`), `cm.bank(banker)`, `cm.law(room)`.
+
+## Worked examples
+
+### Example 1: A thieves' guild with ranks and dues
+
+Goal: a guild called "Gutter Hand" that thieves join for 50 gold after a
+quest, with four ranks earned by standing and deeds, monthly dues with
+consequences, a vault only Shadows may enter, and a starting kit.
+
+**1. Make a government with these ranks.** The stock `GUILD_NPC` has fixed rank
+names, so give the guild its own government. Copy the stock file into the world
+(from the repository root; use your own world folder if it is not
+`CoffeeMud/world`):
+
+```sh
+mkdir -p CoffeeMud/world/resources
+cp CoffeeMud/resources/clangovernments.xml CoffeeMud/world/resources/clangovernments.xml
+```
+
+Add this just before `</CLANTYPES>` in the copy. The range codes in the masks
+(`GUTTER_HAND_TRUSTED`...) are the ones the clan's standing faction will have
+in step 3: the code is the clan name upper-cased with spaces turned to
+underscores.
+
+```xml
+<CLANTYPE TYPEID=15 NAME="THIEVES" CATEGORY="NPCGUILD">
+<SHORTDESC>a thieves' guild whose ranks are earned</SHORTDESC>
+<LONGDESC>Footpads become Cutpurses by earning the guild's trust, Cutpurses become Shadows by trust and a job well done, and a Shadow may be named Master.</LONGDESC>
+<POSITIONS>
+<POSITION ID="FOOTPAD" ROLEID=0 RANK=3 NAME="FOOTPAD" PLURAL="FOOTPADS" MAX=999999 INNERMASK="" PUBLIC="true">
+<POWER>LIST_MEMBERS</POWER>
+<POWER>CLAN_TITLES</POWER>
+<POWER>DEPOSIT</POWER>
+</POSITION>
+<POSITION ID="CUTPURSE" ROLEID=1 RANK=2 NAME="CUTPURSE" PLURAL="CUTPURSES" MAX=999999 INNERMASK="-FACTION +GUTTER_HAND_TRUSTED +GUTTER_HAND_HONOURED +GUTTER_HAND_EXALTED" PUBLIC="true">
+<POWER>LIST_MEMBERS</POWER>
+<POWER>CLAN_TITLES</POWER>
+<POWER>DEPOSIT</POWER>
+</POSITION>
+<POSITION ID="SHADOW" ROLEID=2 RANK=1 NAME="SHADOW" PLURAL="SHADOWS" MAX=999999 INNERMASK="-FACTION +GUTTER_HAND_HONOURED +GUTTER_HAND_EXALTED -TATTOO +GUTTER_JOB_WAREHOUSE" PUBLIC="true">
+<POWER>LIST_MEMBERS</POWER>
+<POWER>CLAN_TITLES</POWER>
+<POWER>DEPOSIT</POWER>
+</POSITION>
+<POSITION ID="MASTER" ROLEID=3 RANK=0 NAME="MASTER" PLURAL="MASTERS" MAX=2 INNERMASK="-TATTOO +GUTTER_MASTER" PUBLIC="true">
+<POWER>LIST_MEMBERS</POWER>
+<POWER>CLAN_TITLES</POWER>
+<POWER>DEPOSIT</POWER>
+<POWER>ACCEPT</POWER>
+<POWER>ASSIGN</POWER>
+<POWER>EXILE</POWER>
+<POWER>DECLARE</POWER>
+<POWER>TAX</POWER>
+<POWER>WITHDRAW</POWER>
+<POWER>PREMISE</POWER>
+</POSITION>
+</POSITIONS>
+<VOTING MAXDAYS=0 QUORUMPCT=0 />
+<AUTOPOSITION>FOOTPAD</AUTOPOSITION>
+<ACCEPTPOSITION>FOOTPAD</ACCEPTPOSITION>
+<REQUIREDMASK></REQUIREDMASK>
+<ENTRYSCRIPT></ENTRYSCRIPT>
+<EXITSCRIPT></EXITSCRIPT>
+<AUTOPROMOTEBY>MERIT</AUTOPROMOTEBY>
+<PUBLIC>true</PUBLIC>
+<FAMILYONLY>false</FAMILYONLY>
+<RIVALROUS>true</RIVALROUS>
+<OVERRIDEMINMEMBERS>0</OVERRIDEMINMEMBERS>
+<NPCFLAGS>NPCRUN</NPCFLAGS>
+<DUESPERIOD>MONTH</DUESPERIOD>
+<DUESGRACE>1</DUESGRACE>
+<DUESLATE>WARN,DEMOTE,EXILE</DUESLATE>
+<DUESAUTO>false</DUESAUTO>
+<CONQUEST><ENABLED>false</ENABLED><ITEMLOYALTY>false</ITEMLOYALTY><DEITYBASIS>false</DEITYBASIS></CONQUEST>
+<TITLES><TITLE>*, the @x2</TITLE></TITLES>
+<ABILITIES></ABILITIES>
+<EFFECTS></EFFECTS>
+</CLANTYPE>
+```
+
+`MAX=2` on the Master seat leaves room for the player because the NPC
+guildmaster created in step 2 takes the top seat (NPC members count against
+seats). Restart so the government loads, and check `LIST GOVERNMENTS`.
+
+**2. Scaffold the guild.** In builder mode stand where the guild will be:
+
+```text
+CREATE GUILD Gutter Hand TEMPLATE=THIEVES HALL=Riverton#40
+```
+
+This creates the clan, the standing faction `CLAN_GUTTER_HAND`, a guildmaster,
+a trainer, a quartermaster and a members' room. Add the world setting that
+hands every character the standing faction automatically, in
+`world/world.ini`:
+
+```ini
+AUTOREACTION=PLANAR,CLAN
+```
+
+**3. Standing.** The generated faction has the bands Shunned to Exalted. It
+drops when a character kills a member and rises when the character gives members
+money or gifts. Guild jobs raise it from scripts: in the dialogue or quest
+script of the fence, `mpfaction $n CLAN_GUTTER_HAND +60` after a delivery, and
+`mptattoo $n GUTTER_JOB_WAREHOUSE` after the warehouse job. When a character
+reaches Master, a quest ending grants `mptattoo $n GUTTER_MASTER`. To make the
+standing visible from the start, nothing is needed: its `SCOREDISPLAY` and
+`SHOWINFACTIONSCMD` are already true.
+
+**4. The guildmaster's terms.** Edit the guildmaster (`MODIFY MOB guildmaster
+BEHAVIORS`) so its `GuildMaster` parameters are:
+
+```text
+CLAN="Gutter Hand" JOINMASK="-BASECLASS +Thief" JOINFEE=50 JOINQUEST="Proof of Nerve" RANKS=MERIT DUES=TRUE KIT.FOOTPAD="a guild lockpick,a guild cloak" KITFEE=25
+```
+
+The two kit items must be in the world catalog (see
+[22-items.md](22-items.md)). A thief who has won "Proof of Nerve" can now say
+`join` to the guildmaster: it takes 50 gold, makes them a Footpad, and hands
+over the kit once.
+
+**5. Dues.** The government says monthly, one month of grace, and the steps
+`WARN,DEMOTE,EXILE`; it does not say how much. Set it on the clan:
+`MODIFY CLAN Gutter Hand` and give "Clan Dues/period" `20`. Members now owe 20
+gold per game month. They pay by saying `dues` to the guildmaster or with
+`CLANDUES PAY` while carrying coins. With one month of grace, a member who has
+paid nothing is fine after one month, warned after two, demoted a rank after
+three and expelled after four; a member who is behind is also not promoted.
+
+**6. The vault.** On the vault room add the property `Prop_ReqEntry` with
+`-CLANRANK "+Gutter Hand>=SHADOW"`. `CREATE GUILD` already gated the members'
+room with the Footpad rank.
+
+**7. Test.** As a thief character: `join` (check the refusals first: not a
+thief, no quest, no money), `kit`, `kit replace`, `rank` (it says what the next
+rank requires), `CLANDETAILS Gutter Hand`, `FACTIONS Gutter Hand standing`,
+`mpfaction` up to Honoured and watch the promotion, miss dues across game
+months, then `leave` and `join` again. Save and restore around a dues date;
+`DUESNEXT` ensures no double billing. Run `ORGCHECK` and `SAVE`.
+
+### Example 2: A town with laws and guards
+
+Goal: Riverton has a watch, a magistrate, a gaol, a 5 percent sales tax, and
+sentences softened for the town's heroes.
+
+1. Give the area its reputation and its law. Reputation first
+   (`MODIFY AREA` accepts any area field):
+
+   ```text
+   MODIFY AREA Riverton REPUTATION examples/areareaction.ini
+   ```
+
+   The reputation faction is `AREA_RIVERTON` with band codes
+   `RIVERTON_HERO`, `RIVERTON_VILLAIN` and so on.
+
+2. Add the `Arrest` behavior (`MODIFY AREA Riverton BEHAVIORS`, add `Arrest`) with
+   this parameter, on one line:
+
+   ```text
+   laws.ini;OFFICERS="watchman" JUDGE="magistrate" JAIL="Riverton Gaol$" RELEASEROOM="Riverton Market Square$" SALESTAX=5 LENIENCY="RIVERTON_HERO=-1;RIVERTON_VILLAIN=1"
+   ```
+
+3. Place the people. A mob whose name contains "watchman" with the `Mobile`
+   behavior (a watchman that never moves is not an officer), and a mob whose
+   name contains "magistrate" *without* `Mobile`, in the room where court
+   sits. Create rooms titled exactly "Riverton Gaol" and "Riverton Market
+   Square".
+
+4. Check it:
+
+   ```text
+   LAW
+   LAW CRIMES assault
+   LAW TEST ASSAULT AS Alice AGAINST Bob
+   ```
+
+   `LAW` should report `Officers (watchman): 1 found`, `Judges (magistrate): 1
+   found`, a gaol and release room each `is Riverton#nn`, and `Taxes: salestax
+   5%`. If an NPC is named as an officer but does not count, `LAW` says why.
+
+5. Play a crime through. A witness must be in the same or an adjacent room
+   or no warrant is issued; the watchman always notices. Let a thief steal in view
+   of the watchman: a
+   `THIEF_STEAL` warrant appears (`LAW WARRANTS`), the watchman hunts the thief,
+   handcuffs them and walks them to the magistrate, who sentences them. Lighten
+   or toughen the result with the town's standing: a character with the
+   `RIVERTON_HERO` band gets jail one step lighter.
+
+6. Tune with `LAW SET`, understanding what it does. `LAW SET
+   PROPERTYTAX=0` first copies the live law into a `custom` law and replaces the
+   behavior parameter with `custom`; from then on the area has its own law in
+   `world/laws/riverton.ini` and the parameter above is no longer consulted.
+   Choose one workflow and stay with it: either edit the parameter and file
+   (reproducible, good for a team), or `LAW SET` (fast, for tuning).
+
+7. Prices now include the 5 percent tax. `PRICECHECK loaf AT baker` shows the
+   step "Sales tax 5%". Close a shop to wanted customers with the shopkeeper
+   `IGNOREMASK` `+WANTED`.
+
+Guards at gates are separate from the law: add `GateGuard` or `BribeGateGuard`
+to a mob next to a door to open it for those who pass its mask.
+
+### Example 3: A faction with reputation-gated shop prices
+
+Goal: the Riverton smiths like heroes and charge them less, resent thieves, and
+sell their best hammer only to those who honour them.
+
+**1. The faction.** `world/resources/factions/smiths.ini`:
+
+```ini
+NAME=Riverton smiths' regard
+MINIMUM=-1000
+MAXIMUM=1000
+SCOREDISPLAY=TRUE
+SHOWINFACTIONSCMD=TRUE
+SPECIALREPORTED=FALSE
+EDITALONE=FALSE
+DEFAULT=0
+AUTODEFAULTS=0
+RATEMODIFIER=1.0
+EXPERIENCE=NONE
+RANGE1=-1000;-501;Shunned;SMITHS_SHUNNED;
+RANGE2=-500;-101;Distrusted;SMITHS_DISTRUSTED;
+RANGE3=-100;100;Neutral;SMITHS_NEUTRAL;
+RANGE4=101;500;Trusted;SMITHS_TRUSTED;
+RANGE5=501;800;Honoured;SMITHS_HONOURED;
+RANGE6=801;1000;Exalted;SMITHS_EXALTED;
+CHANGE1=KILL;DOWN;50%;OUTSIDER JUST100;-NAMES "+Riverton smith"
+CHANGE2=GIFT;UP;10%;OUTSIDER JUST100;-NAMES "+Riverton smith"
+CHANGE3=Thief_Steal;DOWN;40%;OUTSIDER JUST100;-NAMES "+Riverton smith"
+REACTION1=SMITHS_SHUNNED;-NAMES "+Riverton smith";Say;We do not serve your sort, <TARGET>.
+REACTION2=SMITHS_EXALTED;-NAMES "+Riverton smith";Say;Welcome back, <TARGET>. The best is yours.
+USELIGHTREACTIONS=true
+```
+
+The mask `-NAMES "+Riverton smith"` matches mobs by name, so give the smiths that
+name. List the file in `FACTIONS` (`FACTIONS=alignment.ini;smiths.ini` in `world.ini`) so
+every character starts at 0, then run `ORGCHECK smiths.ini`. Kills, gifts and
+thefts only count for characters who hold the faction, which is why
+`AUTODEFAULTS` is set.
+
+**2. Rewards from play.** A quest or dialogue gives standing:
+`mpfaction $n smiths.ini +150` after delivering iron, or
+`mpfaction $n smiths.ini TRUSTED` for a story beat. `FACTIONS Riverton smiths' regard`
+(the faction's exact name) shows the ladder and the points to the next band.
+
+**3. Prices.** On each Riverton smith set the prejudice (`MODIFY MOB smith
+PREJUDICE ...`), strictest rule first:
+
+```text
+BUY=0.7 SMITHS_EXALTED;BUY=0.85 SMITHS_HONOURED;BUY=1.5 SMITHS_DISTRUSTED;BUY=2.0 SMITHS_SHUNNED
+```
+
+Exalted customers pay 70 percent, Honoured 85, Distrusted 150, Shunned 200,
+everyone else the usual price. The band codes work because they are faction
+range codes; customers without the faction match nothing.
+
+**4. A gated item.** Give the masterwork hammer in the smith's stock a
+`Prop_StockZapper`:
+
+```text
+MASK="-FACTION +SMITHS_HONOURED +SMITHS_EXALTED" HIDE=FALSE MSG="The smith keeps that for those he honours."
+```
+
+Everyone sees the hammer in `LIST` marked as restricted; only Honoured and
+Exalted customers can buy it.
+
+**5. Test.** Give a test character standing (`MODIFY USER name` has a Factions
+line, or run `mpfaction` from a throwaway script), then check each band:
+
+```text
+PRICECHECK hammer AT smith FOR Bob
+```
+
+The output names the `PREJUDICE` rule that matched and the stock rule; with a
+normal character the numbers are what a player would pay.
+
+### Example 4: A two-currency region
+
+Goal: the highlands (Highmark) use silver-and-gold crowns, the river country
+(Rivermouth) uses clay leaves and paper notes, and a border changer converts
+between them at a believable rate.
+
+**1. Define the currencies.** `world/resources/currencies.ini`:
+
+```ini
+DEFAULT=CROWN
+CROWN=1 copper penny(s) (cp);12 silver shilling(s) (ss);240 gold crown(s) (gc)
+LEAF=1 clay leaf(s) (cl);10 bronze token(s) (bt);100 river note(s) (rn) {DESC="A stiff printed note, edge-stamped with the river sigil."}
+```
+
+Highmark and every area with no currency uses `CROWN` (the default). Restart,
+then in Rivermouth:
+
+```text
+MODIFY AREA Rivermouth CURRENCY LEAF
+```
+
+Mobs, shopkeepers and bankers in Rivermouth now count in leaves. Check with a
+script or in game: `$%MONEYSTR(120 LEAF LONG)%` is "1 river note, 2 bronze
+tokens".
+
+**2. Re-price the shops.** Item values are plain numbers: a sword worth 100 is
+100 copper pennies in Highmark and 100 clay leaves (one river note) in
+Rivermouth. Choose the numbers you want. Per-item overrides come from
+`MPSHOP Marta PRICE 'iron ingot' 40`, and `PRICEMASKS` on the shop or area
+rescale families of items.
+
+**3. The changers.** Currencies convert one to one on base value unless rates
+say otherwise: one gold crown (240) would fetch 240 leaves, which is an
+unbelievably good deal for a trader. Say a crown should fetch about 140 leaves
+and a river note about 170 pennies. In Rivermouth, a changer (coins in, leaves
+out):
+
+```text
+MoneyChanger CUT=5 RATE.CROWN=-42
+```
+
+and in Highmark (coins in, pennies out):
+
+```text
+MoneyChanger CUT=5 RATE.LEAF=+71
+```
+
+A gold crown (240) at the Rivermouth changer is 240 × 0.58 = 139 before the 5
+percent cut, so about 132 leaves.
+
+**4. Events.** A flood devalues leaf coins everywhere:
+`mpexchange LEAF 70` (coins of the currency fetch 70 percent at every
+changer); `mpexchange LEAF 100` ends it. The adjustment is kept in the save.
+
+**5. A currency nobody can spend.** `TRADEBAR=notrade;1 trade bar(s) (tb)` makes
+a reward token shops refuse and changers will not take, useful as a quest
+coin.
+
+## Persistence notes
+
+| Thing | World files | Campaign save |
+| --- | --- | --- |
+| NPC clans, clans with no player members | `world/clans.cmare` (builder `SAVE`) | Membership, ranks, dues owed, treasury, relations, experience, votes, `DUESNEXT`. A restored save wins over `clans.cmare`; clans founded in play stay in the save. |
+| Governments | `world/resources/clangovernments.xml` (builder mode writes it) | Not saved; governments load from the files. |
+| NPC clan membership | `<CLAN ROLE=...>` on the mob in the area file | The live mob state. |
+| Factions | `world/resources/factions/*.ini` | Each character's values; NPC values in area files and the save. Generated factions (`AREA_`, `CLAN_`, `NAME_`...) are rebuilt from templates unless a standing faction was saved by `CREATE GUILD`. |
+| Faction effects (`PLAYEREFFECT`) | in the faction file | Never saved; recomputed from the current band. |
+| Law | `Arrest` parameter in the area's `BEHAVES` in the `.cmare`; `world/resources/laws_*.ini`; `world/laws/AREA.ini` for `custom` | Warrants, fines owed, jail and parole, suppressed crimes, and in play the live custom law (which wins over the file in a game). |
+| Conquest | `Conquerable` behavior on the area | Control points, ruling clan, clan items and revolt state (a `<CONQUEST>` block of the law's run state). |
+| Currencies | `world/resources/currencies.ini`, `CURRENCY_*` and `DEFAULTCURRENCY` in `world.ini` | Exchange-rate adjustments (`MPEXCHANGE`) in the save header. |
+| Shop settings and stock | Shopkeeper mob and area settings in the area file | Stock, budget left and time to next restock. |
+| Bank accounts and debts | The banker mob and `BANKCHAIN` | Accounts, ledgers and debts. |
+
+Scripts that change world data from a game (`MPSHOP`, `MPCONQUER`,
+`MPCLANRELATION`) change the live game and the save, never the world files; to
+change what a new game starts with, change the files. Changing a government
+file does not retroactively edit saved clans: they keep their saved settings and
+pick up the new government rules on the next load. Test timetable jumps (dues,
+merit rechecks each game day, warrant expiry) with a saved game around the
+event. See [state-and-persistence.md](state-and-persistence.md) and
+[02-world-workflow.md](02-world-workflow.md).
+
+## Troubleshooting and gotchas
+
+| Symptom | Likely cause and fix |
+| --- | --- |
+| `CREATE GUILD` says "The hall needs a free exit" | Every direction from the hall already has an exit. Free one or choose another hall. |
+| The government will not load; log says "Bad ROLEID" or "Missing positions" | `ROLEID`s must be exactly `0` to `n-1` with no repeats, and `AUTOPOSITION` and `ACCEPTPOSITION` must name existing position IDs. `TYPEID`s must be `0` to `n-1` too. |
+| Players cannot be promoted by merit | The `INNERMASK` references a tattoo or faction band nothing grants; the position's `MAX` is full (NPC members count); the member is behind on dues. `rank` says what the next rank requires. Check with `MPTATTOO`/`MPFACTION`. |
+| `CLANAPPLY` does nothing for an NPC guild | NPC clans refuse direct applications. Join through the `GuildMaster` (say `join`). |
+| A war declaration has no effect | A war needs both clans to declare it. Use `MPCLANRELATION a b WAR MUTUAL`. |
+| Faction changes never happen | The character does not hold the faction (`FACTIONS` setting, `AUTODEFAULTS`, `ADDOUTSIDER`, `MPFACTION`), or the change needs a target who holds it (`OUTSIDER` flag), or the trigger name matches nothing (`ORGCHECK`). |
+| A faction band has no name or the wrong one | Gaps or overlaps in the `RANGE` lines. `MINIMUM`/`MAXIMUM` do not set bounds; the ranges do. |
+| `CHANCE=n` on a change seems backwards | As the code reads, a change with `CHANCE` below 100 returns when a percentile roll is under n, so it fires about (100-n) percent of the time. Test with a few runs, or leave `CHANCE` out and use a `MASK` (unverified in play). |
+| `AUTOREACTION=CLAN` factions do not appear for the player | `CLAN` must be in `AUTOREACTION`, the clan must be `NPCRUN`, and the character must be in a room (they are attached on entering). |
+| Prices ignore my `PREJUDICE` | The value is read as the shopkeeper's, else the area's, else the ini's: the shopkeeper's blank value falls through. Rules are checked in order and the first match wins; a `BUY`/`SELL` prefix is required; faction codes need the customer to hold the faction. Run `PRICECHECK`. |
+| `PRICECHECK` shows a different price from what a player sees | Archon privileges (`ABOVELAW`, `ALLPRIVS`) bypass shop restrictions; test with `FOR` a normal character. |
+| Nobody is arrested | The area has no law (`LAW` says so), the law is `ACTIVATED=FALSE` (a fresh `custom` law is), no officer qualifies (officers must have `Mobile`; judges must not), the crime needs a witness (add `!witness` or an NPC who can see it), the criminal is above the law, or the crime is suppressed. |
+| The judge never sentences | Sentences other than warnings need a judge who does not wander and whose name contains a `JUDGE` word. |
+| `LAW SET` changed my law file's behavior | It converts a file-based law into `custom` (see [Example 2](#example-2-a-town-with-laws-and-guards)). |
+| A currency edit does nothing | Restart after editing `currencies.ini`; the first definition of a code wins over later ones. |
+| Money changer refuses a coin | The coin's currency is `notrade`, or the changer lists specific currencies and the coin's is not among them, or the changer's own currency is `notrade`. |
+| `MAXCLANCATS` of `0` blocks every clan | In the code `0` is "no clans of this kind", not "unlimited". Use a large number. |
+| Dues never happen | `DUES` on the clan is `0`; set it. Also check `DUESPERIOD` and `CLANCLOCK` (`REAL` ignores the game clock). |
+
+## See also
+
+- [organizations.md](../organizations.md): the shorter option reference for
+  organisations that this chapter expands.
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): `GuildMaster`,
+  `ClanHelper`, `ClanEnemyAggressive`, `Arrest`, `Conquerable`, `MoneyChanger`,
+  `TaxCollector`, gate guards, and the mask language.
+- [23-properties-reference.md](23-properties-reference.md): `Prop_ReqEntry`,
+  `Prop_StockZapper`, `Prop_ModFaction`.
+- [21-mobs.md](21-mobs.md): shopkeeper, banker, trainer and money fields.
+- [22-items.md](22-items.md): coins, catalog items for kits, clan items.
+- [04-mobprog.md](04-mobprog.md), [26-mobprog-triggers.md](26-mobprog-triggers.md),
+  [27-mobprog-commands.md](27-mobprog-commands.md),
+  [28-mobprog-functions.md](28-mobprog-functions.md): `CLAN_PROG`,
+  `FACTION_PROG`, `MPFACTION`, `MPSETCLAN`, `MPCLANRELATION`, `MPCONQUER`,
+  `MPACCUSE`, `MPSHOP`, `MPBANK`, `MPDEBT`, `MPEXCHANGE` and their functions.
+- [05-javascript.md](05-javascript.md): `cm.shop`, `cm.bank`, `cm.law`.
+- [03-characters.md](03-characters.md): rank ladders (`world/ranks.ini`).
+- [06-npcs-dialogue.md](06-npcs-dialogue.md): NPC affinity and shop factors.
+- [08-quests.md](08-quests.md): quest rewards that grant standing and tattoos.
+- [10-world-simulation.md](10-world-simulation.md): calendars, game time and `WAIT`.
+- [02-world-workflow.md](02-world-workflow.md), [state-and-persistence.md](state-and-persistence.md),
+  [world-settings.md](world-settings.md), [tool-reference.md](tool-reference.md),
+  [cookbook.md](cookbook.md).

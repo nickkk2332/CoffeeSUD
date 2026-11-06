@@ -478,7 +478,7 @@ An `StdTimeZone` or `StdPlanet` parent also gives its children its own calendar.
 ### Theme, atmosphere and climate
 
 - **Theme** (field "Theme setting") says which of three rule-sets are allowed: Fantasy (magic), Technical, Heroic (superpowers). Values: Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. In an area whose theme has no Fantasy bit, magic fails ("Magic doesn't seem to work here"); with no Heroic bit, superpowers fail ("Powers don't seem to work here"). A third gate refuses technology ("Technology doesn't seem to work here"), but the code only reaches it when the theme has the Heroic bit and lacks the Technical bit (see [Troubleshooting and gotchas](#troubleshooting-and-gotchas)), so a plain Fantasy area does not block technology. Inherited takes the parent's theme, or at the top `MUDTHEME` (shipped `1`, Fantasy).
-- **Climate** is a set of bits: wet, cold, windy, hot, dry, void, or Normal, or Inherited. The default for a new area is Normal. It shifts the weather the [simulation chapter](10-world-simulation.md) generates and the movement cost (rooms add their own bits: a `Jungle` is wet and hot regardless of the area).
+- **Climate** is a set of bits: wet, cold, windy, hot, dry, void, or Normal, or Inherited. The default for a new area is Normal. It shifts the weather the [simulation chapter](10-world-simulation.md) generates and the movement cost. A room that fixes its own climate (see [Reference: locale classes](#reference-locale-classes)) ignores the area's.
 - **Atmosphere** is the raw material the area breathes ("AIR", "FRESHWATER", "NOTHING"...). Inherited by default. It decides what can breathe there; races list what they breathe (see [Characters](03-characters.md)).
 
 ### Calendars and climate profiles
@@ -508,7 +508,7 @@ DESTROY ROOM [direction]
 
 With a room ID, destroys that room completely and permanently, including mobs and items stored in it, from the database too. You must not be standing in it. Without `CONFIRMED` it asks `Are you ABSOLUTELY SURE (y/N)`. Every link *into* it from other rooms is cut (their destination is cleared; a generic exit there remembers the dead room's ID). The command needs `CMDROOMS` for that room. With a direction instead of an ID it only unlinks, as `UNLINK` does (needs `CMDEXITS`).
 
-`JUNK` and `TEAR` are aliases of `DESTROY`.
+`DESTROY [room ID]` without the word `ROOM` works as well when the ID names an existing room. `JUNK` and `TEAR` are aliases of `DESTROY`.
 
 ### DESTROY AREA
 
@@ -664,7 +664,7 @@ The other parts (`SHOPS`, `DATA`, `SCRIPTS`, `PROPS`, `JS`, `VOCAB`, `LORE`, `TE
 A **locale** is a room's Java class. `LIST LOCALES` shows what is installed. Each locale fixes five things.
 
 1. **Domain.** Indoors or outdoors, and the kind of terrain.
-2. **Climate bits** it adds on top of its area's (`wet`, `hot`...); "inherits" means it adds none.
+2. **Climate.** Either "inherits" (the room takes its area's climate) or a fixed set of bits (`wet`, `hot`, ... or `normal`) that *replaces* the area's for that room. A `Jungle` is wet and hot whatever its area says, and a `StoneRoom` is always normal. `MODIFY ROOM CLIMATE` overrides a single room.
 3. **Movement cost.** The base movement points one pays to enter (weather then adjusts it).
 4. **Resources.** Outdoor and cave locales hold a list of resources the room may randomly carry (for gathering skills such as mining, foraging and fishing; see `LIST ENVRESOURCES`).
 5. **Room size.** The room's "height" for size checks: 1 for indoor rooms and 10 for outdoor rooms unless the class says otherwise.
@@ -685,7 +685,7 @@ Indoor domains (the same numbers plus 128): STONE, WOODEN, CAVE, MAGIC (a pocket
 
 ### Single rooms
 
-Move is the movement cost. "in" is indoors, "out" outdoors. Rooms marked "size 5" and so on have a larger room size.
+Move is the movement cost. "in" is indoors, "out" outdoors; the domain is shown by the name of its constant (`cave_seaport`, `watersurface`...). Climate "inherits" takes the area's; any other value is the room's own. "Size" in the notes is a non-default room size.
 
 | Class | Domain | Climate | Move | Notes |
 | --- | --- | --- | --- | --- |

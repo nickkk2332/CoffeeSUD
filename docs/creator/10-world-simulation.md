@@ -1503,3 +1503,446 @@ weather `MPAFFECT Prop_Weather`.
 `cm.isTurnBased()`, `cm.passTime`, `cm.passHours`, `cm.advance`, `cm.interrupt`.
 `daypart()` returns `dawn`, `day`, `dusk` or `night`; `season()` returns the
 built-in season a named season counts as.
+
+## Reference
+
+### Settings (`world.ini` / `coffeemud.ini`)
+
+World keys can be set in the world's `world.ini` as well as `coffeemud.ini`
+(`world.ini` is read after the ini and the command line wins). See
+[world-settings.md](world-settings.md) and
+[19-configuration-and-administration.md](19-configuration-and-administration.md).
+
+| Key | World key? | Meaning |
+| --- | --- | --- |
+| `TIMEMODE` | yes | `REALTIME` (default) or `TURNS` at start. |
+| `MILLISPERMUDHOUR` | yes | Game ms per game hour (600000). |
+| `HOURSINDAY`, `DAYSINMONTH`, `MONTHSINYEAR`, `DAYSINWEEK`, `DAWNHR`, `DAYHR`, `DUSKHR`, `NIGHTHR`, `YEARDESC` | yes | The global calendar. |
+| `STARTDATE` | yes | `Y/M/D/H` a new game starts at. |
+| `LONGWAIT` | yes | `ALL` (default) or `BUILDERS`: who may `WAIT` hours/days/`UNTIL`. |
+| `BREATHTICKS` | yes | Breath formula (`@x1/3`); `0` for none. |
+| `CATCHUP` | yes | `OFF` keeps an area that wakes as it was. |
+| `DIALOGUETIME` | yes | `INSTANT`, `TICKS` or blank. |
+| `DISABLE` | yes | Flags `WEATHER`, `WEATHERCHANGES`, `WEATHERNOTIFIES`, `TODNOTIFIES`, `DARKNIGHTS`, `DARKWEATHER`, among others. |
+| `TIMESCALE` | no (`coffeemud.ini` only) | Clock rate, 0.1 to 20 (1). |
+| `AUTOWEATHERPARMS` | no | `WeatherAffects` parameters for all areas, or `NO`. |
+| `AUTOAREAPROPS` | no | Properties/behaviors added to every area, e.g. a world-wide `Prop_SkyText`. |
+
+### Commands
+
+| Command | Who | Does |
+| --- | --- | --- |
+| `TIME`, `DATE`, `TIME GLOBAL` | everyone | Local or world date and time. |
+| `TIME SET [hour\|DAWN\|DAY\|DUSK\|NIGHT]` | builders (`CMDAREAS`, builder mode, `DEV=1`) | Run the area's clock forward to that hour. |
+| `TIME SEASON [season]` | builders | Run the clock forward a month at a time to that season. |
+| `TICKTOCK [n] ([period])`, `TICKTOCK SET Y/M/D/H` | `TICKTOCK` flag | Move the calendar; running its events but not the world's ticks. |
+| `WAIT`, `WAIT n`, `WAIT n HOURS\|DAYS\|WEEKS`, `WAIT UNTIL ...` | everyone (`LONGWAIT`) | Let game time pass. |
+| `TIMEMODE [REALTIME\|TURNS]`, `TIMEMODE DIALOGUE ...` | everyone | Show or change the time mode. |
+| `PAUSE`, `RESUME`, `UNPAUSE` | everyone | Stop and start the clock. |
+| `TIMESCALE [rate]` | builder mode, `DEV=1` | Clock rate. |
+| `CALENDAR ...`, `CALENDAR HOLIDAYS` | everyone | The calendar of events; game-dated holidays. |
+| `MODIFY AREA CALENDAR ...` | builders | The area's calendar. |
+| `MODIFY AREA WEATHERPROFILE [name\|NONE]` | builders | The area's climate file. |
+| `MODIFY AREA\|ROOM CLIMATE ...`, `ATMOSPHERE ...` | builders | Climate bits and atmosphere. |
+| `WEATHER`, `WEATHER WORLD` | everyone | Current weather. |
+| `WEATHER SET\|FORECAST\|NEXT` | builders | Change, inspect, step the weather. |
+| `LOOK AS [conditions]` | builders | Preview a room's text. |
+| `HAZARDS ([area])` | builders | List hazards and spawners. |
+| `LIST\|CREATE\|MODIFY\|DESTROY HOLIDAY` | `CMDQUESTS` | Holidays. |
+| `LIST\|CREATE\|MODIFY\|DESTROY CRON` | `CMDCRON` | Cron jobs. |
+| `WORLD`, `WORLD SET KEY=VALUE` | builders | Show and edit `world.ini`. |
+
+### Properties and behaviors
+
+| ID | On | Section |
+| --- | --- | --- |
+| [Prop_TimeMode](23-properties-reference.md#prop_timemode) | room, area | [Prop_TimeMode](#prop_timemode-zones-locked-to-one-mode) |
+| [Prop_InnRoom](23-properties-reference.md#prop_innroom) | room | [Resting at an inn](#resting-at-an-inn) |
+| [Prop_Weather](23-properties-reference.md#prop_weather) | area | [Pinning and linking weather](#pinning-and-linking-weather) |
+| [LinkedWeather](24-behaviors-and-masks.md#linkedweather) | area | same |
+| [WeatherAffects](24-behaviors-and-masks.md#weatheraffects) | room, area | [How weather works](#how-weather-works) |
+| [Prop_SkyText](23-properties-reference.md#prop_skytext) | room, area | [Sky and time-of-day text](#sky-and-time-of-day-text) |
+| [Prop_ClosedSeason](23-properties-reference.md#prop_closedseason) | item, mob, room, exit | [Seasonal content](#seasonal-content) |
+| [Prop_ClosedDayNight](23-properties-reference.md#prop_closeddaynight) | item, mob, room, exit | same |
+| [Prop_TidalExit](23-properties-reference.md#prop_tidalexit) | exit | [Tides](#tides) |
+| [TidalRoom](24-behaviors-and-masks.md#tidalroom) | room | [Tides](#tides) |
+| [RoomStates](24-behaviors-and-masks.md#roomstates) | room, area | [Room states](#room-states) |
+| [Floodable](24-behaviors-and-masks.md#floodable) | room | [Flooding](#flooding) |
+| [Prop_RoomDark](23-properties-reference.md#prop_roomdark) | room, area | [Darkness](#darkness) |
+| [Prop_DarkDanger](23-properties-reference.md#prop_darkdanger) | room, area | [Darkness](#darkness) |
+| [Prop_DarkDescription](23-properties-reference.md#prop_darkdescription) | room | [Darkness](#darkness) |
+| [Prop_AirSupply](23-properties-reference.md#prop_airsupply) | item | [Breath](#breath-and-underwater-rooms) |
+| [Prop_Hazard](23-properties-reference.md#prop_hazard) | room, area | [Hazards](#hazards) |
+| [Prop_InstantDeath](23-properties-reference.md#prop_instantdeath) | mob, item, room, area | [Other hazards](#other-hazards) |
+| [ResetWhole](24-behaviors-and-masks.md#resetwhole) | room, area | [Whole-area resets](#whole-area-resets) |
+
+### Zapper mask keys
+
+Masks are the condition language of the engine (reference in
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md)). The keys that read the
+simulated world, and what a mask passes. Keys differ in which sign names the
+condition, so test a new mask with the game's mask description or a
+`Prop_Hazard` on a spare room before you rely on it.
+
+| Key | Passes |
+| --- | --- |
+| `-WEATHER +RAIN +THUNDERSTORM` | While the weather *in the character's room* is one of these. Indoor rooms always read `CLEAR`. |
+| `-SEASON +WINTER` | In that season (a calendar's own season name too: `-SEASON "+the Burn"`). `+SEASON -WINTER` passes outside it. |
+| `-HOUR`, `-MONTH`, `-DAY`, `-WEEK`, `-YEAR` | By the clock; `+X -N` forms select only that value (see `AHELP ZAPPERMASK`). |
+| `+HOLIDAY` / `+HOLIDAY name` | While any holiday / that holiday is on. `-HOLIDAY` the opposite. |
+| `-TIDE +HIGH` | At high tide. `+TIDE -HIGH` at any other time. `LOW`, `NONE`, `SPRING`, `NEAP`, `NORMAL`, `SPRING_HIGH`..., and `HIGH:2` for a span. |
+| `+ROOMDARK` | The room is dark to them. `-ROOMDARK` everyone else. |
+| `+BREATH <2` | Fewer than 2 ticks of breath. `-BREATH <2` everyone else. `<`, `<=`, `>`, `>=`, `=`, `!=`. |
+| `-DOMAIN +MOUNTAINS` | In that room domain (used by `Prop_Hazard ROOMS=`). |
+
+### Files
+
+| File | Holds |
+| --- | --- |
+| `world.ini` (world folder) | The world keys above. |
+| `world/areas/*.cmare` | Areas, with the `CALENDAR` and `WEATHERPROFILE` flags, climate/atmosphere bits and every property and behavior in this chapter. |
+| `world/climates/NAME.ini` | A named climate (else `resources/climates/NAME.ini`). |
+| `world/quests/holidays.quest` | One line, `LOAD=quests/holidays/holidays.quest`. |
+| `resources/quests/holidays/holidays.quest` (or the world's copy in `world/resources/quests/holidays/`) | The holidays. |
+| `resources/lists.ini` | The global time-of-day and weather lines (`TOD_CHANGE_OUTSIDE`, `TOD_CHANGE_INSIDE`, `WEATHER_*`). |
+| `world/journals` | Cron jobs, written in builder mode. |
+
+## Worked examples
+
+### Example 1: a coastal town with tides and storms
+
+Saltmarsh Quay has a causeway to St. Brine's Isle that is open only at low
+tide, a shore cove the sea fills, a harbour stair that floods in storms, and
+a harbourmaster who shouts when a thunderstorm comes.
+
+**1. A calendar with room in the day for a tide.** The stock six-hour day gives
+one game hour of each tide. Give the area twelve hours and a span:
+
+```text
+MODIFY AREA CALENDAR HOURS=12 DAYS=30 MONTHS="Brine,Gale,Calm,Ebb" DAWNHR=0 DAYHR=2 DUSKHR=9 NIGHTHR=11 START=1/1/1/0
+MODIFY AREA CLIMATE RW
+MODIFY AREA WEATHERPROFILE saltmarsh
+```
+
+Low tide falls in hour 2 (`DAYHR`), high tide in hour 9 (`DUSKHR`). `RW` is
+wet and windy.
+
+**2. A climate file** `world/climates/saltmarsh.ini`, edited in a text editor
+(start the game again, or reload, to read it):
+
+```ini
+# Saltmarsh Quay: wet, with summer storms
+SUMMER=RAIN 30, THUNDERSTORM 25, CLOUDY 20, WINDY 15, CLEAR 10
+ALL=CLOUDY 30, RAIN 25, FOG 20, CLEAR 15, WINDY 10
+TRANSITION=CLEAR->THUNDERSTORM=-5
+HOLD=2
+TEXT_THUNDERSTORM=Black clouds pile over the harbour and the sea heaves.|Thunder rolls across the bay.
+STOP_THUNDERSTORM=The storm blows itself out over the sea.
+```
+
+**3. The causeway** is an exit, open only around low tide (`SPAN=2` makes it
+hours 0 to 4):
+
+```text
+Prop_TidalExit OPEN=LOW SPAN=2 MSG="The causeway is under the grey water; you must wait for the ebb."
+```
+
+Add it to the exit with `MODIFY EXIT` (the effects entry of the exit
+editor) on both ends.
+
+**4. The cove** is a shore room the tide floods, washing away small things:
+
+```text
+TidalRoom SPAN=2 DESC="The sea fills the cove to the cliff foot, and weed swirls at your waist." FLOODMSG="Cold sea water surges round you." WASH=2
+```
+
+Give its normal description the other tide: `Quiet pools lie among the rocks.`
+The `ROOMSTATE(HERE)` of the cove reads `ebb` or `flooded`. A `<LOWTIDE>` or
+`<HIGHTIDE>` block in the harbour's `<VARIES>` text shows the tide in the
+description (see [11-presentation-language.md](11-presentation-language.md)).
+
+**5. The harbour stair** floods when the tide is high or a storm blows:
+
+```text
+Floodable RISE="-WEATHER +THUNDERSTORM +RAIN" TIDE=HIGH RATE=10 DRAIN=20 FLOWTO=west DESC2="Grey water slops waist-deep up the harbour stair." MSG3="The stair is under water!"
+```
+
+The stair must be an outdoor room: the weather mask reads `CLEAR` in a room
+with no sky.
+
+**6. The warning.** A Scriptable behavior on the harbourmaster:
+
+```text
+WEATHER_PROG THUNDERSTORM
+ mpecho The harbourmaster bellows: "Storm coming in! Lash down the boats!"
+~
+```
+
+**7. Test it** in builder mode:
+
+```text
+WEATHER FORECAST
+WEATHER SET THUNDERSTORM
+TIME SET 2
+ISTIDE is not a command; use HAZARDS and LOOK to see states
+```
+
+`WEATHER SET THUNDERSTORM` fires the `WEATHER_PROG` and starts the stair
+rising; `TIME SET DAWN`, `TIME SET DUSK` and `TIME SET 9` step through the
+tides (watch the cove change and the causeway answer); `TIME SET` can only
+go forward, so loop with the hour numbers. `WAIT 5 HOURS` lets the stair
+actually rise, because it counts ticks.
+
+### Example 2: a winter-only pass
+
+The Frost Road crosses a frozen lake. It can be crossed only in winter;
+in blizzards it hurts the unprepared.
+
+**1. A calendar with eight months**, so that winter is two of them:
+
+```text
+MODIFY AREA CALENDAR MONTHS="Frostmoon,Thaw,Greenleaf,Highsun,Harvest,Leaffall,Snowfall,Deepwinter"
+```
+
+With eight months each built-in season is two months, in the order WINTER,
+SPRING, SUMMER, FALL: Frostmoon and Thaw are winter. (If you would rather winter
+were Snowfall to Frostmoon, name the seasons: `SEASONS="Deepcold:WINTER:Snowfall-Thaw"`.)
+
+**2. A gate that is shut except in winter.** `Prop_ClosedSeason` closes a
+door; the exit must be a door, such as a `Gate` or `StdClosedDoorway`, and it
+locks if it has a lock:
+
+```text
+Prop_ClosedSeason SPRING SUMMER FALL
+```
+
+**3. The description** follows the season. In the lake rooms:
+
+```text
+<VARIES><WINTER>The lake is a sheet of white ice, booming under your boots.</WINTER> A grey lake stretches away.</VARIES>
+```
+
+Preview with `LOOK AS WINTER SNOW` and `LOOK AS SUMMER`.
+
+**4. The danger** is on the area:
+
+```text
+Prop_Hazard TYPE=COLD DAMAGE=1d6 SAVE=COLD WHEN="-WEATHER +BLIZZARD +SNOW +COLD" PROTECT="-EFFECTS +Spell_ResistCold" ESCALATE=20 WARN="The wind bites through your clothes."
+```
+
+Without a cold-resistance effect, the longer they stay in snow or a blizzard
+the harder it bites.
+
+**5. An alpine climate** `world/climates/alpine.ini`:
+
+```ini
+WINTER=SNOW 35, BLIZZARD 25, COLD 20, CLOUDY 10, CLEAR 10
+ALL=CLEAR 40, CLOUDY 30, WINDY 15, FOG 15
+HOLD=2
+```
+
+`MODIFY AREA WEATHERPROFILE alpine`. Use `HAZARDS` to list what you set,
+`TIME SEASON WINTER` to reach winter, `WEATHER SET BLIZZARD FOR 6 HOURS` to
+hold a storm while you test the hazard, and `WEATHER FORECAST` to read the odds.
+
+### Example 3: a cave with deep darkness and breath
+
+The Drowned Vault: a flooded temple where torches die, only the Lantern of
+Dawn lights the way, and the air runs out.
+
+**1. The flooded hall.** Set the room's atmosphere to water (or use an
+underwater locale), and make its darkness absolute:
+
+```text
+MODIFY ROOM ATMOSPHERE SALTWATER
+Prop_RoomDark ABSOLUTE=TRUE LIGHTMASK="-TAGS +DAWNLANTERN" SNUFF=100 SNUFFMSG="Your @x1 drowns in the black water."
+Prop_DarkDanger LOST=10% STUMBLE=5% LURKER=drowned_priest LURK=4% LURKMSG="A drowned priest drifts out of the black water."
+```
+
+Give the Lantern of Dawn (a light item) the tag `DAWNLANTERN` in the item
+editor's Tags field. Torches go out as one swims in (`SNUFF=100`); the lantern
+works, so the character can see. Without it the hall is dark and `Prop_DarkDanger`
+sends them astray.
+
+**2. The breath.** The character is in water, so they spend breath. At
+`BREATHTICKS=@x1/3` and constitution 12, they have 4 ticks. Give the vault
+a way to last:
+
+```text
+Prop_AirSupply TICKS=6
+```
+
+On an "air bladder" item found at the temple door. A room beyond the hall with
+the normal atmosphere (an air pocket) refills the breath ("You gasp in a
+breath of air").
+
+**3. Gentle warnings.** On the air pocket's Scriptable, a script that tells the
+player their state:
+
+```text
+GREET_PROG all
+ if BREATH($n < 3)
+  mpecho $n gasps, lungs burning.
+ endif
+~
+```
+
+**4. Make the cold bite as well** (optional, `DARKONLY` so the lantern's
+bearer is spared the cold *and* sees):
+
+```text
+Prop_Hazard TYPE=COLD DAMAGE=1d4 DARKONLY WARN="The water numbs you."
+```
+
+**Test:** `LOOK AS NIGHT` on the hall; walk in with a torch (it goes out) and
+then with the lantern; `WAIT 4` in the water to watch the breath warnings;
+`$%BREATH($n)%` in a quick script to read the count.
+
+### Example 4: a festival holiday
+
+Moonfeast in Riverton: two days on every full moon, with lanterns in the
+square, happy townsfolk and cheaper food.
+
+**1. Give Riverton moons and weekdays** (weekday names for `WEEKDAY` tests;
+the first moon is the one the holiday follows):
+
+```text
+MODIFY AREA CALENDAR MOONS="Selune:24" WEEK="Sunday,Moonday,Fireday"
+```
+
+(If you set only these keys, the other calendar values come from the
+world's.)
+
+**2. The holiday**, appended to the holiday file (put your world's copy at
+`world/resources/quests/holidays/holidays.quest`). The first lines are the
+settings; the `GIVE` lines change the town while it lasts:
+
+```text
+SET NAME moonfeast
+SET AREAGROUP "Riverton"
+SET MOON FULL
+SET DURATION 2 DAYS
+QUIET
+SET MOBGROUP RESELECT MASK=+INT 3
+GIVE BEHAVIOR MUDCHAT +()\;9Happy Moonfeast!\;9The lanterns are lit tonight!\;\;(feast | moonfeast)\;9Come and eat, friend!\;\;
+GIVE AFFECT MOOD happy
+SET MOBGROUP RESELECT MASK=-JAVACLASS +StdShopKeeper +GenShopKeeper
+GIVE STAT PRICEMASKS 0.9 -JAVACLASS +StdFood +GenFood
+STEP BREAK
+```
+
+`MODIFY HOLIDAY moonfeast` shows the same settings in the numbered editor.
+
+**3. Make the square change.** In the square's description, as a `<VARIES>`
+block:
+
+```text
+<VARIES><HOLIDAY moonfeast>Paper lanterns hang from every eave, and the smell of roast fish drifts over the stalls.</HOLIDAY> The market square is quiet.</VARIES>
+```
+
+**4. Let NPCs act on it.** A baker who sets up a stall only during the feast,
+with a `TIME_PROG` on a Scriptable:
+
+```text
+TIME_PROG DAWN
+ if ISHOLIDAY(moonfeast)
+  mpecho The baker hangs a string of lanterns over her stall.
+ endif
+~
+```
+
+**5. Check it.**
+
+```text
+CALENDAR HOLIDAYS
+```
+
+shows "moonfeast: in N days (moon full)" until it begins, and "on now"
+during it. To see it start, let the game days pass with `WAIT 2 DAYS`; a
+holiday quest counts its wait in ticks, so a plain `TICKTOCK` that only moves the
+calendar is not a reliable way to start it (unverified; test with `WAIT`).
+
+A second quest can ride along: `SET HOLIDAY moonfeast` runs exactly while the
+feast does, for example to open a stage in the square.
+
+## Persistence
+
+| What | Where | On a reload or restore |
+| --- | --- | --- |
+| Global calendar rules (`HOURSINDAY`...) | `world.ini` / `coffeemud.ini` | Read at start. |
+| An area's `CALENDAR`, climate and atmosphere bits, `WEATHERPROFILE`, `Prop_*` and behaviors | The area's `.cmare` in the world folder (saved with `SAVE` in builder mode) | Part of every new game. |
+| The current date and hour of each clock | Campaign save (`TIMECLOCK` record per clock) | Restored; a clock with no saved date starts at `START` / `STARTDATE`. Dates set by `TICKTOCK SET` are not content. |
+| Time mode, pause, `TIMESCALE` | Campaign save; ini default | Restored (the mode; the rate resets to the ini value unless set in play). Treat the rate as a test tool. |
+| Current and next weather, a hold (`WEATHER SET ... FOR`) | Campaign save | Restored. A weather put back by a restore fires no `WEATHER_PROG`. |
+| `RoomStates`/`Floodable`/`TidalRoom` current state | Campaign save (as a room change) | Restored. |
+| `ResetWhole` last visit and absence | Campaign save | Restored. |
+| Holidays and quest windows | Quest state in the campaign save | A running holiday resumes; the file is read again. |
+| Cron jobs | Definition in `world/journals`; next run in the campaign save | Resume on the game clock. |
+| JS `cm.every` / `cm.at` | Not saved | Re-register in `init.js`. |
+| JS `cm.after` | Saved | Rebuilt from its text. |
+| Climate files | `world/climates/` | Cached; re-read at start. |
+
+Breath is transient (it refills when you reload). The campaign-save details
+are in [31-saves-and-party.md](31-saves-and-party.md) and
+[state-and-persistence.md](state-and-persistence.md).
+
+## Troubleshooting
+
+- **Nothing seems to happen.** In turn-based time the world moves only when
+  you act or `WAIT`. A test that waits for the weather to change needs
+  `WAIT 100` or `TIMESCALE 20` in real time.
+- **`WAIT 8 HOURS` says only builders may.** `LONGWAIT=BUILDERS`.
+- **`WEATHER SET` has no effect.** The area has `Prop_Weather` (pinned), a
+  `LinkedWeather`, or the climate has the void bit; or you are not a builder.
+  `DISABLE=WEATHER` turns weather off for the whole world.
+- **A weather mask or `Floodable RISE=` never matches.** Masks read the weather
+  in the character's *room*; indoor rooms always read `CLEAR`. Use an outdoor
+  locale.
+- **The causeway is hardly ever open.** Without `SPAN` a tide lasts one game
+  hour. Give `Prop_TidalExit` and `TidalRoom` a `SPAN`, and a day of more
+  than six hours.
+- **Seasons are uneven.** With 7 months, fall has four. Name seasons with
+  `SEASONS`, or use a multiple of 4 months.
+- **`ISSEASON(Burn)` is false.** A named season matches its full name
+  (`the Burn`); use quotes in masks (`-SEASON "+the Burn"`).
+- **My `Prop_ClosedSeason` exit is still open.** The exit must have a door
+  (Gate, StdClosedDoorway...). An open doorway cannot close.
+- **A torch still lights a `Prop_RoomDark` room.** Plain `Prop_RoomDark` is
+  beaten by any light; add `ABSOLUTE=TRUE`.
+- **`Prop_DarkDanger` does nothing.** It acts only on players the room is dark
+  to; a lit torch, darkvision or a daylight room ends it.
+- **A character drowns at once.** `BREATHTICKS=0`, or a breath of 0 (low
+  constitution: `@x1/3` of 2 is 0). Give `Prop_AirSupply` items.
+- **The hazard never stops** after the weather clears. `Prop_Hazard` needs a
+  `WHEN`; without one it hurts always.
+- **`MODIFY AREA CLIMATE D` makes the area windy.** Known bug; use `DRY`.
+- **A holiday did not start.** `SET WEEKDAY` needs weekday names; check
+  `CALENDAR HOLIDAYS`; make sure the holiday editor did not rewrite a
+  hand-written recurrence.
+- **`TIME SET` cannot go backwards.** It runs the clock forward and wraps to
+  the next day. Use `TICKTOCK -n` (the clock goes back without replaying).
+- **Climate edits do not show.** The files are cached. `WEATHER FORECAST`
+  prints "(no file: the built-in climate)" if the name is wrong.
+- **`WORLD CHECK` or the quest checker complains of `SET WEEKDAY`...** The
+  quest checker's word list predates the new settings (see the quest
+  chapter); play-test instead.
+
+## See also
+
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md): areas, climate bits, atmosphere, locales.
+- [23-properties-reference.md](23-properties-reference.md) and
+  [24-behaviors-and-masks.md](24-behaviors-and-masks.md): every property,
+  behavior and the mask language.
+- [04-mobprog.md](04-mobprog.md),
+  [26-mobprog-triggers.md](26-mobprog-triggers.md),
+  [27-mobprog-commands.md](27-mobprog-commands.md),
+  [28-mobprog-functions.md](28-mobprog-functions.md): scripting the clock and weather.
+- [05-javascript.md](05-javascript.md): `cm` timers and world members.
+- [06-npcs-dialogue.md](06-npcs-dialogue.md): NPC schedules.
+- [08-quests.md](08-quests.md): quest scripts, holidays and schedules.
+- [09-society.md](09-society.md): law, fines, money, shops.
+- [11-presentation-language.md](11-presentation-language.md): `<VARIES>` text for time and weather.
+- [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md): travel time, vehicles and weather speed.
+- [31-saves-and-party.md](31-saves-and-party.md): pause, turns, saves.
+- [32-engine-programming.md](32-engine-programming.md): ticks and the game thread.
+- [world-settings.md](world-settings.md), [state-and-persistence.md](state-and-persistence.md).

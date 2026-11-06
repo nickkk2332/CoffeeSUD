@@ -1156,6 +1156,12 @@ on restart. See [02-world-workflow.md](02-world-workflow.md) for the folder,
 `WORLD STATUS`/`DIFF`, and what builder mode writes when, and
 [state-and-persistence.md](state-and-persistence.md).
 
+A record written by hand must contain every tag. A tag that is missing is
+read as an empty value, which blanks that field (message fields, the
+classification and the quality included) instead of leaving its default. Start
+from an exported file, or create the ability in the editor and copy the file the
+tools write.
+
 An older single file, `world/custom.cmare`, is still read when it exists; the
 exporter no longer writes it.
 
@@ -1202,3 +1208,364 @@ Note that the `-LOCALE +OUTDOORS` sample in the shipped `GENTWEAK` help is not a
 valid zapper mask in this build; use the keys in
 [24-behaviors-and-masks.md](24-behaviors-and-masks.md) (for example
 `-DOMAIN +WOODS` for "only in woods").
+
+## Poisons
+
+A poison is an ability of type POISON that sits on a mob (poisoning it over
+time) or on an item (food, drink or a weapon) that gives it to whoever eats,
+drinks or is hit. Stock poisons are the `Poison_*` classes (`Poison_Venom`,
+`Poison_Sting`, `Poison_Hallucinogen`, `Poison_Slumberall`, ...) in the folder
+`Abilities/Poisons`; `LIST POISONS` lists them and `HELP [NAME]` describes each.
+Source: [Poison.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Poisons/Poison.java),
+[GenPoison.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Poisons/GenPoison.java).
+
+### How a poison works
+
+- **On a mob** it is an ordinary timed effect. Every *delay* ticks it shows its
+  affect message and does its damage (poison-type damage). A poisoned mob that
+  is not fighting will attack the poisoner if it can see them.
+- **On a food or drink item** it poisons whoever eats or drinks; pouring a
+  poisoned drink into another container spreads it.
+- **On a weapon** it tries to poison each mob the weapon damages.
+- **In a trap, bomb or script** it is applied by ID: `Trap_Needle` takes the
+  poison's ID as its text; `MPAFFECT Poison_Venom $n`.
+- The victim gets a poison save before the poison takes hold. A save
+  always keeps at least 5 percent chance either way (the clamp in
+  [Saving throws](#saving-throws)).
+- Parameter text on the effect: `RANK=[N]` (a strength number that scales
+  generic poisons, default 1), `ITEMAMBIANCE="[TEXT]"` and
+  `MOBAMBIANCE="[TEXT]"` (ambience text added to the poisoned item or mob).
+- Poisons are cured by `Prayer_RemovePoison`, antidotes and similar.
+
+### GenPoison fields
+
+`CREATE POISON [ID]`, `MODIFY POISON [ID]`, `DESTROY POISON [ID]`
+(security flag `CMDABILITIES`). `MODIFY POISON` refuses
+`UniPoison`, a `GenPoison` variant that keeps its definition per instance
+instead of per ID.
+
+| Field | Editor prompt | Default | Meaning |
+| --- | --- | --- | --- |
+| `CLASS` | (set by `CREATE`) | | The ID. |
+| `NAME` | Poison name | `Poison` | Name shown in lists and healing messages. |
+| `TRIGSTR` | Command Words | `GPOISON` | Words for the (rarely used) command. |
+| `TICKS` | Duration Formula | `0` | Ticks it lasts. `0` means the standard hostile duration for the poisoner's level. |
+| `DELAY` | Delay Formula | `3` | Ticks between its effects (messages and damage). |
+| `STARTMSG` | Start Msg | `^G<S-NAME> turn(s) green.^?` | Shown to the room when it takes hold. `<S-NAME>` is the victim. |
+| `TARGTELLMSG` | Target Tell | none | If set, told to the victim alone instead of the start message. |
+| `AFFECTMSG` | Affect Msg | `<S-NAME> cringe(s) as the poison courses through <S-HIS-HER> blood.` | Shown each delay. |
+| `AFFECTTARG` | Affect Target | `true` | Whether it puts a lasting effect on the victim; `false` gives only the messages. |
+| `MAKEPEACE` | Force Peace | `false` | After poisoning, ends a fight that the poisoning itself started. Good for poisoned food. |
+| `DAMAGE` | Damage Formula | `@x4 + 1?@x1` | Damage each delay; `0` for none. Read left to right: a random number between `@x4 + 1` and `@x1`. |
+| `MOOD` | Mood | none | A `Mood` name held while poisoned (`AHELP MOOD`). |
+| `EFFECTS` | (a list editor) | none | Coded abilities (`Prop_SpellAdder` syntax) held while poisoned. See the note below. |
+| `DONEMSG` | Done Msg | `The poison runs its course.` | Told to the victim when it ends. |
+| `ADDCHANCE` | Addiction (0-100) Formula | `0` | Chance that a drink, food or magic dust poison also makes the victim addicted (adds an `Addictions` effect). |
+| `CASTMSG` | Cast Msg | `^F^<FIGHT^><S-NAME> attempt(s) to poison <T-NAMESELF>!^</FIGHT^>^?` | When it is applied by a character. |
+| `FAILMSG` | Cast Fail Msg | `<S-NAME> attempt(s) to poison <T-NAMESELF>, but fail(s).` | When applying it fails. |
+| `ADJUSTMENTS` | Adjustments | none | Stat changes while poisoned, in `Prop_Adjuster` syntax: `dex-1 savefir-10`. The variables below work in it. |
+| `SCRIPT` | Script | none | Functions `ONAFFECT` (it took hold), `ONTICK` (each delay) and `ONCURE` (cured or ran its course). `$n`, `$t` and `$i` are the poisoned mob. |
+| `HELP` | Help Text | `<ABILITY>This poison is not yet documented.` | The help page. |
+
+Formula variables for `TICKS`, `DELAY`, `DAMAGE`, `ADDCHANCE` and `ADJUSTMENTS`:
+`@x1` the poisoner's level, `@x2` the poisoner's `XLEVEL` expertise, `@x3` the
+victim's level, `@x4` the `RANK`. A poison that was not applied by anybody has
+all of these at 0 except what the host supplies.
+
+Note: in this build the `EFFECTS` list of a `GenPoison` is stored and shown but
+the effects it names are never built (the loop that should collect them does not
+add them), so use `ADJUSTMENTS` or `MOOD`, or `GenDisease`, for lasting extras.
+
+For the poison to appear in play, put it where it is delivered:
+
+```text
+MODIFY ITEM a rusty dagger      then edit the Effects field and add:  Poison_Emberbite
+```
+
+A poison placed on an item through the editor is permanent: a weapon so
+poisoned does not run dry.
+
+## Diseases
+
+A disease is a malicious effect of type DISEASE. It lasts a long time, shows a
+periodic message, and may spread to others by contact, nearness, food or other
+routes; a save decides whether it takes hold, and a cure removes it. Stock
+diseases are the `Disease_*` classes (`Disease_Cold`, `Disease_Flu`,
+`Disease_Plague`, `Disease_Lycanthropy`, `Disease_Cancer` ...). `LIST DISEASES`
+lists them. Source:
+[Disease.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Diseases/Disease.java),
+[GenDisease.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Diseases/GenDisease.java)
+(item P20).
+
+### How a disease spreads and is cured
+
+The *spread* of a disease is a set of ways it passes on (`spreadBitmap`). A
+route only runs when the sufferer or the carrying item is involved in it:
+
+| Spread word | Route |
+| --- | --- |
+| `STD` | Mating socials (`MATE`, `SEX`) between the sufferer and someone. |
+| `CONTACT` | Touching: hands or movement actions toward another mob (not by weapons), and handling an infected item or food. |
+| `PROXIMITY` | At each of its delays the sufferer may infect a random mob in the room. |
+| `CONSUMPTION` | Eating or drinking an infected food or drink. |
+| `DAMAGE` | The sufferer hurting someone bare-handed with a natural attack (a bite or claw), now and then. |
+| `GET` | Picking up, pushing or pulling an infected non-food item. |
+| `HEARING` | The sufferer speaking to someone who can hear them. |
+| `INHERITED` | Reserved for inherited conditions. The stock spread code does not use it; scripts and checks may. |
+
+Every catch attempt first rolls against the target's `SAVE_DISEASE`: the chance
+to catch is 100 minus the save. A target who saves is immune for a while
+(`TemporaryImmunity`). When a disease runs its course the sufferer gains the
+same short immunity.
+
+A disease has a *difficulty* from 0 to 9. A cure such as `Prayer_CureDisease` or
+`Prayer_MassCureDisease` fails to remove a disease caused by someone else when
+`difficulty * 10` is higher than the healer's adjusted level, so difficulty 2
+needs a level 20 healer. Diseases also respond to `HELP [NAME]` for their text
+and to `INFECT [MOB] [DISEASE]`, the archon skill (an archon must know
+`Archon_Infect`).
+
+### GenDisease fields
+
+`CREATE DISEASE [ID]`, `MODIFY DISEASE [ID]`, `DESTROY DISEASE [ID]`.
+`CREATE DISEASE` on the ID of a stock disease starts a generic one in its place
+from the stock disease's spread, difficulty and malice, and `MODIFY DISEASE`
+works only on generic ones. A generic disease counts everywhere a stock one
+does: cures, immunities and checks see its type.
+
+| Field | Editor prompt | Default | Meaning |
+| --- | --- | --- | --- |
+| `CLASS` | (set by `CREATE`) | | The ID. |
+| `NAME` | Disease name | `Disease` | |
+| `DISPLAY` | Display text | `(Diseased)` | What `AFFECTS` shows. |
+| `HELP` | Help Text | `<ABILITY>This disease is not yet documented.` | |
+| `TRIGSTR` | (none) | none | Words (unused for players). |
+| `TICKS` | Duration Formula (ticks) | `48` | How long it lasts. |
+| `DELAY` | Delay Formula (ticks between effects) | `5` | At least 1. |
+| `SPREAD` | Spread | none | Comma list of the spread words above. |
+| `CATCHCHANCE` | Catch chance (0-100) Formula | `100` | The chance a spread attempt goes ahead at all, before the save. |
+| `DIFFICULTY` | Difficulty | `0` | Cure difficulty, 0 to 9 (see above). |
+| `STARTMSG` | Start Msg | `^G<S-NAME> come(s) down with a disease.^?` | Shown to the room when caught. |
+| `AFFECTMSG` | Affect Msg (each delay) | `<S-NAME> ache(s) and groan(s).` | |
+| `DAMAGE` | Damage Formula (each delay) | `0` | Disease damage each delay. |
+| `DONEMSG` | Done Msg | `Your disease has run its course.` | |
+| `ADJUSTMENTS` | Adjustments | none | `Prop_Adjuster` syntax while it lasts: `con-2`. |
+| `EFFECTS` | (a list editor) | none | Coded abilities (`Prop_SpellAdder` syntax) held while it lasts. |
+| `IMMUNEMASK` | Immune mask | none | A zapper mask; a mob that *passes* it never catches the disease. `-RACE +Dwarf` passes only dwarves, so only dwarves are immune. |
+| `MALICIOUS` | Malicious | `true` | A malicious disease counts as a hostile act when given; a non-malicious one does not. |
+| `SCRIPT` | Script | none | Functions `ONAFFECT` (caught: `$n` the giver, `$t` the sufferer), `ONTICK` (each delay: `$n` the giver, `$t` the sufferer) and `ONEXPIRE` (ran its course or was cured: both the sufferer). |
+
+Formula variables for `TICKS`, `DELAY`, `CATCHCHANCE`, `DAMAGE` and
+`ADJUSTMENTS`: `@x1` the giver's level, `@x2` the giver's `XLEVEL` expertise,
+`@x3` the sufferer's level.
+
+## Traps
+
+A trap is an ability of type TRAP that sits on a room, an exit or door, a
+container or an item and *springs* when someone does the thing it watches for:
+enters a room, opens or unlocks a door or container, or picks up an item. It
+may do damage, cast a spell, run a script or all three. Source:
+[StdTrap.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Traps/StdTrap.java),
+[GenTrap.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Traps/GenTrap.java).
+
+### How traps behave
+
+- **Springing.** A trap that is not yet sprung springs on its trigger. A room
+  trap springs when somebody enters (or, for "travel through" traps such as
+  pits, when they leave the wrong way); an exit or container trap on `OPEN`, or
+  on `UNLOCK` if it is locked; an item trap on `GET`, `PUSH` or `PULL` by
+  someone who does not already carry it.
+- **Who it hits.** The person who set it, their group, and anyone the setter may
+  not fight (the player-kill rules) are spared. A *permanent* trap (one a
+  builder put there) also spares mobs whose home is in the same area and
+  whoever has property rights in the room. The target then gets a `SAVE_TRAPS`
+  save, with the difference between target and trapper level added; a saved
+  trap shows its avoid message and does nothing.
+- **Damage.** Stock traps compute damage from the trap level, the ability code
+  ("bonus"), and the victim, and often an effect or a changed room (a pit
+  exit, a cave-in). A `GenTrap` uses its formula, damage type and message type.
+- **Reset.** After springing, or after being disarmed, a trap is *disabled*
+  and re-arms after its reset time (`PERMRESET` in a `GenTrap`; default 60
+  ticks, about four minutes). Bombs are single-use.
+- **Temporary traps** (laid by a character) have a lifetime of
+  `level * 30` ticks, are not savable, and vanish when they run out.
+- **Parameter text.** An effect's text for a trap has the form
+  ``` `invoker` "spring message" "damage message" "avoid message" :LEVEL/CODE: extra ```
+  where only the parts you need are given. `:12/3:` sets trap level 12 and
+  ability code (bonus) 3; `:3:` sets only the code. Quoted strings override the
+  three messages in order. For some traps the remaining text carries a spell or
+  poison ID (`Trap_EnterSpell` casts `Spell_Fireball` when given it,
+  `Trap_Needle` uses a poison's ID).
+
+### Stock trap families
+
+`LIST TRAPS` lists the classes and `HELP [TRAP ID]` explains each. In groups:
+
+| Group | Examples (IDs) | Goes on |
+| --- | --- | --- |
+| Pits (room) | `Trap_RoomPit`, `Trap_SpikePit`, `Trap_AcidPit`, `Trap_DeepPit`, `Trap_SnakePit`, `Trap_RatPit` and the "Thru" forms | rooms |
+| Entry traps | `Trap_EnterBlade`, `Trap_EnterGas`, `Trap_EnterNeedle`, `Trap_EnterPit`, `Trap_EnterSpell`, `Trap_Enter` (random) | rooms, exits |
+| Room hazards | `Trap_Avalanche` (mountains), `Trap_Boulders`, `Trap_CaveIn`, `Trap_CrushingRoom`, `Trap_FloodRoom`, `Trap_Darkfall`, `Trap_BearTrap`, `Trap_Snare`, `Trap_Tripline`, `Trap_MonsterCage` | rooms |
+| Open / unlock traps | `Trap_OpenBlade`, `Trap_OpenGas`, `Trap_OpenNeedle`, `Trap_OpenSpell`, `Trap_Open` and the `Trap_Unlock*` forms | containers, doors |
+| Get traps | `Trap_GetBlade`, `Trap_GetGas`, `Trap_GetNeedle`, `Trap_GetSpell`, `Trap_Get`, `Trap_Gluey`, `Trap_Greasy`, `Trap_Ignition`, `Trap_Infected`, `Trap_Vanishing` | items |
+| Door and chest specials | `Trap_Needle`, `Trap_AcidSpray`, `Trap_ElectricShock`, `Trap_Launcher`, `Trap_Noise`, `Trap_PoisonGas`, `Trap_SporeTrap` | containers, doors |
+| Bombs | `Bomb_Explosive`, `Bomb_FlameBurst`, `Bomb_Heat`, `Bomb_Smoke`, `Bomb_Sonic`, `Bomb_Poison`, `Bomb_SpellBlast`, ... | an item the maker holds |
+
+`Trap_Trap` is a legacy base; do not place it.
+
+### Placing traps
+
+**As a builder.** Add the trap ID in the *Effects* field of the room, exit,
+container or item, with parameters if wanted (`:15/0:`):
+
+```text
+MODIFY ROOM              Effects: Trap_RoomPit      parameters: :5/0:
+MODIFY ITEM an oak chest Effects: Trap_Needle       parameters: :8/0: Poison_Venom
+MODIFY ROOM              Effects: Trap_EnterSpell   parameters: Spell_Fireball
+```
+
+The first is a level 5 pit; the second a needle in a chest lid that delivers
+the named poison (`Trap_Needle` reads a poison ID; other needle and gas traps
+use the plain `Poison`); the third casts a spell, written `SPELL ID` or
+`SPELL ID;words for it` for the traps whose names end in `Spell`.
+
+It is a permanent trap: it re-arms after its reset, does not time out and is
+written with the object. Traps whose `canSetTrapOn` rules say a thing is
+unsuitable (a pit in a non-room, a door trap on an item with no lid) are
+refused when a character lays them; the builder's editor does not check, so
+keep to the "Goes on" column.
+
+**As a thief.** `TRAP [ITEM|DIRECTION|ROOM] [TRAP NAME]` (`TRAP LIST` lists
+what the character can lay), `DETRAP [TARGET]` and `CHECK [TARGET]` to find
+or disarm, `BOMB [ITEM] [BOMB NAME]` to make a bomb. The traps a thief may lay
+come from the recipe file `resources/skills/traps.txt` (tab separated: name,
+level, a blank, trap ID, an extra text for the trap, and optionally the three
+messages), plus `mtraps.txt` for the minor-trapping skill. Adding a line
+there with the ID of a `GenTrap` lets thieves lay your custom trap.
+`Ranger_SetSnare`, `Thief_Caltrops`, wards (`Spell_WardArea`,
+`Prayer_*WardingGlyph`) and plant traps (`Chant_PlantTrap`) are other setters.
+
+### GenTrap fields
+
+`CREATE TRAP [ID]`, `MODIFY TRAP [ID]`, `DESTROY TRAP [ID]`. (The shipped
+`GENTRAP` help mentions `CREATE ABILITY GenTrap`; the commands above are the
+ones that exist.)
+
+| Field | Editor prompt | Default | Meaning |
+| --- | --- | --- | --- |
+| `CLASS` | (set by `CREATE`) | | The ID. |
+| `NAME` | Trap name | `an ability` | |
+| `BASELEVEL` | Level | `0` | The trap level (`CREATE TRAP` starts it at 1 through `LEVEL`). Characters need at least this level to lay it. |
+| `LEVEL` | (none) | trap's level | The running level of one instance. |
+| `ACODE` | (none) | `0` | The default ability code (bonus). |
+| `ISBOMB` | Is Bomb | `false` | Stored, but not used: `GenTrap` does not turn into a bomb in this build. |
+| `CANAFFECTMASK` | Can Affect | `ITEMS` | What it can sit on: `ITEMS`, `EXITS`, `ROOMS`. A container needs `ITEMS`. |
+| `CANTARGETMASK` | Can Target | `0` | |
+| `PERMRESET` | Reset Ticks | `60` | Ticks until a sprung or disarmed trap re-arms. |
+| `TRIGGERS` | Triggers | none | What springs it instead of the class's own triggers (below). |
+| `DISARM` | Disarm | none | A typed phrase that disarms it: `verb:cut red wire`. |
+| `ONCE` | Once | `false` | After springing once, it is removed for good. |
+| `ACOMP` | Components | `(inventory:consumed:1:METAL:)` | What a thief needs to lay it (components syntax). |
+| `AVOIDMSG` | Avoid Msg | `<S-NAME> avoid(s) setting off a trap!` | When the target saves. |
+| `TRIGMSG` | Spring Msg | `<S-NAME> set(s) off a trap!` | When it springs. |
+| `DAMMSG` | Damage Msg | `The trap <DAMAGE> <T-NAME>!` | The damage message. |
+| `DMGF` | Damage Formula | `((@x1+@x2)*(1?6))+1` | Blank for no damage. `@x1` trap level, `@x2` ability code, `@x3` the setter's level, `@x4` the victim's level. |
+| `DMGT` | Damage Type | `BURSTING` | A weapon damage type: `NATURAL SLASHING PIERCING BASHING BURNING BURSTING SHOOTING FROSTING GASSING MELTING STRIKING LASERING SONICING DISRUPTING STULTIFYING CORRUPTING SCRAPING`. |
+| `DMGM` | Dmg Msg Type | `FIRE` | The message kind of the damage (a [saving throw](#saving-throws) kind: `FIRE`, `ACID`, `GAS` ...). |
+| `ABILITY` | Ability ID | none | An ability invoked on the victim when it springs. |
+| `ABILTXT` | Ability Parms | none | Words given to it (`words/text`). |
+| `ABILTIK` | A.Tick Override | `0` | Caps the ticks of the effect it leaves. |
+| `SCRIPT` | Scriptable Parm | none | `ACT_PROG [TRAP ID]` runs when it springs (`$t` the one who sprang it). Functions `ONTRIGGER` (`$n` the victim) and `ONDISARM` (`$n` whoever disarmed it, if known). |
+| `HELP` | Help Text | `<ABILITY>This trap is not yet documented.` | |
+
+`TRIGGERS` is a comma list of message types: `SIT`, `READ`, `LOOK`, `EXAMINE`,
+`OPEN`, `CLOSE`, `WEAR`, `HOLD`, `PUT`, `DROP`, `GET` ... (any message type
+word). On an item it springs when somebody does that to the item; on a room
+the types `ENTER` and `LEAVE:[DIRECTION]` and others apply to anyone in it.
+`ONCE` and `DISARM` work with or without damage, so a `GenTrap` with an empty
+`DMGF` and an empty `ABILITY` is a scripted tripwire.
+
+## Other generic ability types
+
+These have their own editors and chapters; they are listed here so you know
+what the `CREATE`/`MODIFY`/`DESTROY` words are.
+
+| Verb | Makes | Where it is explained |
+| --- | --- | --- |
+| `LANGUAGE` | a `GenLanguage` (words, hashed words, natural flag, interpreted languages) | `AHELP LANGUAGE_AUTHORING`, [11-presentation-language.md](11-presentation-language.md) |
+| `CRAFTSKILL`, `WRIGHTSKILL` | crafting skills (a recipe file, materials, verbs, stations) | [07-items-crafting.md](07-items-crafting.md), `AHELP GENCRAFTSKILL` |
+| `GATHERSKILL` | a gathering skill (mining, fishing, hunting) | [07-items-crafting.md](07-items-crafting.md), `AHELP GENGATHERSKILL` |
+| `BUILDSKILL` | a building skill (`AHELP GENBUILDSKILL`) | [07-items-crafting.md](07-items-crafting.md) |
+| `COMPONENT` | a line of `components.txt` | `AHELP COMPONENTS` |
+| `EXPERTISE` | a line of `expertises.txt` | `AHELP EXPERTISES`, [03-characters.md](03-characters.md) |
+| `ALLQUALIFY` | a shared qualification entry | [How characters get abilities](#class-race-and-the-shared-pools) |
+
+Crafting, gathering and tweak records also accept `ACTIONCOST`,
+`COMBATACTIONCOST` and `COMPONENTS`; crafting, gathering and poison records
+accept a `SCRIPT` with the hooks listed under `AHELP SKILLSCRIPTS`
+(`ONCRAFTED`, `ONFAILED`, `ONFOUND`).
+
+*Planar abilities* (`StdPlanarAbility`) define planes of existence and are
+covered in [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md).
+*Composed skills* are a separate optional system in
+[15-ability-composition.md](15-ability-composition.md).
+
+**Developer note.** `ThinAbility` is the light base class for properties
+(no cost, cooldown or casting); `ExtAbility` (`ExtendableAbility`) is a
+shell whose name, stat adjustments, message listener and tick are supplied as
+Java callbacks, used by the engine for short-lived effects (a mob eating
+another, a craft broker). Writing a new Java ability is covered in
+[32-engine-programming.md](32-engine-programming.md).
+
+## The stock ability catalogue
+
+CoffeeSUD ships about 1,100 abilities, inherited from CoffeeMud. This
+handbook does not list them; the game does, and the lists always match the
+loaded classes.
+
+| Family | Folder | Count (Java classes, about) | How to list | Help file |
+| --- | --- | --- | --- | --- |
+| Spells | `Spells` | 420 | `LIST SPELLS` | `spell_help.ini` |
+| Prayers | `Prayers` | 365 | `LIST PRAYERS` | `prayer_help.ini` |
+| Chants (druid) | `Druid` | 315 | `LIST CHANTS` | `chant_help.ini` |
+| Songs, plays, dances | `Songs` | 115 | `LIST SONGS` | `songs_help.ini` |
+| Skills (generic) | `Skills` | 190 | `LIST SKILLS` | `skill_help.ini` |
+| Fighter, paladin, ranger skills | `Fighter`, `Paladin`, `Ranger` | 205 | `LIST SKILLS` | `skill_help.ini` |
+| Weapon and armor training | `Specializations` | 46 | `LIST SKILLS` | `skill_help.ini` |
+| Archon skills | `Archon` | 18 | `LIST SKILLS ARCHON` | `arc_misc.ini` |
+| Thief skills | `Thief` | 195 | `LIST THIEFSKILLS` | `skill_help.ini` |
+| Common skills (crafting, gathering, services) | `Common` | 170 | `LIST COMMON` | `common_help.ini` |
+| Languages | `Languages` | 59 | `LIST LANGUAGES` | built in |
+| Diseases | `Diseases` | 70 | `LIST DISEASES` | `diseases.ini` |
+| Poisons | `Poisons` | 25 | `LIST POISONS` | `poisons.ini` |
+| Traps and bombs | `Traps` | 80 | `LIST TRAPS` | `traps.ini` |
+| Properties | `Properties` | 240 | `LIST PROPERTIES` | `arc_properties.ini`; reference: [23-properties-reference.md](23-properties-reference.md) |
+| Super powers | `SuperPowers` | 5 | `LIST SUPERPOWERS` | `skill_help.ini` |
+| Racial and condition effects | `Misc` | 80 | `LIST ABILITIES` | various |
+
+Practical ways to find what you need:
+
+- `LIST ABILITIES [DOMAIN|FLAG]` with a domain word narrows by what it does:
+  `LIST ABILITIES healing`, `LIST ABILITIES warding`, `LIST ABILITIES moving`
+  (flag), `LIST ABILITIES summoning`.
+- `HELP [NAME]` prints the usage, example and who gets it at what level; the
+  help text of the flags like `ADJUSTER` (the stat changers) helps when
+  looking for a building block.
+- Look for property-like building blocks by IDs: `Prop_` for properties;
+  `Spell_Fly`, `Spell_Invisibility`, `Spell_Haste`, `Prayer_Bless`,
+  `Prayer_Sanctuary`, `Chant_Barkskin`, `Spell_Slow` and `Spell_Deafness` are
+  commonly reused as `POSTCASTAFFECT` and `POSTCASTABILITY` parts.
+- To see how a stock ability does something, read its Java: the folder names above
+  are under `CoffeeMud/com/planet_ink/coffee_mud/Abilities/`. The ones named
+  `Std*` are the base classes.
+
+Examples worth knowing by ID: `Spell_MagicMissile`, `Spell_Fireball`,
+`Spell_Lightning`, `Spell_Sleep`, `Spell_Shield`, `Spell_MageArmor`,
+`Spell_Light`, `Spell_SummonMonster`, `Spell_ReadMagic`; `Prayer_Bless`,
+`Prayer_CureLight`, `Prayer_CureDisease`, `Prayer_RemovePoison`; `Chant_Barkskin`;
+`Song_Detection`, `Play_Battlehymn`, `Dance_Ballet`; `Skill_Recall`,
+`Skill_Dodge`, `Skill_Bash`, `Skill_Trip`, `Skill_Write`, `Skill_Climb`,
+`Skill_Swim`; `Thief_Steal`, `Thief_Sneak`, `Thief_Hide`, `Thief_Trap`,
+`Thief_Poison`; `Fighter_Kick`, `Fighter_Berzerk`; `Disease_Cold`,
+`Disease_Flu`, `Disease_Plague`; `Poison_Venom`, `Poison_Sting`;
+`Trap_BearTrap`, `Trap_RoomPit`, `Bomb_Explosive`.

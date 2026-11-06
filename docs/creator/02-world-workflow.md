@@ -749,8 +749,8 @@ unsaved (add `FORCE` to drop them).
 
 ### UNDO
 
-In builder mode the last 50 building commands (the ones above plus `GMODIFY`)
-are logged, each with the rooms it changed *as they were before it*: the
+In builder mode the last 50 building commands (the ones above, except
+`REGENERATE`, plus `GMODIFY`) are logged, each with the rooms it changed *as they were before it*: the
 room's XML including its mobs and items, taken when the command starts (your
 room) and before each room's mobs or items first change. An entry is kept
 only if a room really changed. Entries are kept in memory and in

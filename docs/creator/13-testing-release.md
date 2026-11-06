@@ -1230,7 +1230,7 @@ Source:
 [TestCharCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TestCharCmd.java)
 and [KitCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/KitCmd.java).
 
-### BUILDER and DEV characters in tests
+### Testing as another character
 
 When you only need to test as a different character, use `PARTY MORTAL`,
 `SWITCH` and TESTCHAR instead of editing your own Archon. The playtest runner
@@ -1446,3 +1446,484 @@ supplies a playable test pair (`museum.play` and `museum.js`).
   restrictions.
 - Run the tests on a clean checkout of the released world, not only on your
   working folder.
+
+## Checks in a pipeline
+
+Three things make a world fit for an automated pipeline: a static check that
+exits non-zero on errors, a runner that exits non-zero on failed tests, and
+isolation so neither touches your working folders.
+
+### CHECK=1
+
+```sh
+CoffeeMud/sud.sh CHECK=1
+```
+
+`CHECK=1` loads the world as a new game would, runs WORLD CHECK over all
+parts with no player, prints the report, and exits. The prints start with
+`World check (CHECK=1): the world is loaded, checked, and the game ends.` and
+then the same report as WORLD CHECK:
+
+```text
+WORLD CHECK: 0 errors, 3 warnings.
+Warnings:
+  [text] Emberfall#4: the new room's description
+  ...
+```
+
+The exit status is 1 if there is at least one error, 0 for warnings only.
+No saves are made, and the dev
+areas (`world/dev`) are not loaded, so they are not checked. A world whose
+files fail to load at all stops before the check; run WORLD PROBLEMS in
+builder mode for that. Add `WORLDDIR=/abs/path/world` for a world other than
+`CoffeeMud/world`. To keep a pipeline hermetic give it its own cache and save
+folders, and note that the launcher builds the content cache from the world
+files on its first run:
+
+```sh
+W="$(mktemp -d)"
+mkdir -p "$W/db" && cp CoffeeMud/resources/fakedb/fakedb.schema "$W/db/"
+CoffeeMud/sud.sh CHECK=1 WORLDDIR="$PWD/mygame/world" \
+    DBSERVICE="jdbc:fakedb:$W/db" SAVEDIR="$W/saves"
+```
+
+Static checks do not prove narrative reachability, combat balance, arbitrary
+JavaScript branches or the behavior of every randomly generated combination.
+Pair them with playtest files.
+
+### A world's release gate
+
+A reasonable gate for a world kept in git (adapt the paths):
+
+```sh
+#!/bin/sh
+# gate.sh: run before tagging a release
+set -e
+W="$(mktemp -d)"
+trap 'rm -rf "$W"' EXIT
+WORLD="$PWD/mygame/world"
+
+# 1. static lint of the whole world (exit 1 on errors)
+mkdir -p "$W/db" && cp CoffeeMud/resources/fakedb/fakedb.schema "$W/db/"
+CoffeeMud/sud.sh CHECK=1 WORLDDIR="$WORLD" DBSERVICE="jdbc:fakedb:$W/db" SAVEDIR="$W/saves"
+
+# 2. the world's own play tests (exit 1 on failure)
+WORLD="$WORLD" python3 tools/playtest.py "$WORLD/tests"
+```
+
+Add your own checks to the same script. `WORLD CHECK ONLY=...` is not available
+from the command line, so extra lints (PROPCHECK ALL, SCRIPTCHECK ALL,
+QUESTCHECK ALL) belong in a `.js` test that calls `ScriptCheck.checkAll()` and
+`PropCheck.checkAll()` (the museum example does this for one host), or in a
+`.play` file with `#builder` that types the command and `#reject`s a failure
+text, such as `#reject problems:` after `scriptcheck all`. Note that WORLD
+CHECK already runs SCRIPTCHECK and PROPCHECK as its SCRIPTS and PROPS parts.
+
+A commit hook can run just step 1; it takes the time of a game start.
+
+## Save, migration and recovery tests
+
+A world changes after players have saves. Test that the saves still work
+before you ship the change.
+
+Test a **fresh process** restore at meaningful points: pending dialogue or
+narration; a delayed action; active combat or boss phase; an assisted craft;
+a journey, vehicle or instance; a quest deadline; and a changed room. Do not
+count a same-process field check as proof that startup rebinding works. The
+repository's own save tests do exactly this: a game is saved, the process
+ends, and a new process restores.
+
+### Inspect and compare saves
+
+| Tool | Use |
+| --- | --- |
+| `SAVES` | Lists your saves, newest first; marks a save `(this game)`, `[dev]`, `[cheat]` and `(older world)` (made with a different version of the world) |
+| `SAVES CHECK` | Lists what a save made now would not keep (for example summoned mobs with no one to follow, things in space) |
+| `SAVES INFO name` | What a save holds: who, where, when, the party, quests running, variables and the world it was made with |
+| `SAVES DIFF a b` | What differs between two saves: where the character is, hit points, what they carry, variables, quests and what is in each room |
+| `SAVES COPY a b`, `SAVES DELETE name` | Copy or delete (delete asks first) |
+| `CHECKPOINT`, `ROLLBACK` | Three rotating checkpoint saves; ROLLBACK returns to the newest after asking |
+| `python3 tools/saveinspect.py SAVEDIR` | Prints a save outside the game; with `--var HOST NAME VALUE`, `--hp N` or `--room "Area#12"` it edits the save (keeping `world.xml.bak`); the game must not be running on that save |
+| `python3 tools/worlddiff.py OLD NEW` | Compares two world folders object by object (also `--git REV [WORLD]` against a git revision): rooms by ID, mobs and items by name, other files as added, removed or changed |
+| `WORLD DIFF file` | A world file against what builder `SAVE` would write |
+
+`SAVEMODE`, the autosave policy and no-save properties can restrict where and
+when players may save, and save hooks may refuse; test with the mode the
+release ships with. See [chapter 31](31-saves-and-party.md).
+
+### World sums and what a restore does when the world changed
+
+Every save's `header.properties` records `worldsum`, a checksum of the world
+files the game had loaded when it saved, and `areasums`, one checksum per area
+file. The sum looks like `3-120-ab12cd34` (sum kind, number of files, CRC of
+the file names and per-file sums; dev areas and separately versioned module
+files are left out). Starting from a save, the game compares its `worldsum`
+with the world it booted. If they differ the player is told, when they come
+into the world, what changed:
+
+```text
+This save was made with another version of the world:
+  The world has changed since this game was saved.
+  Changed area file: castle.cmare
+  New area file: crypt.cmare
+  Area file gone: oldtown.cmare
+RESTORE name FRESH=CHANGED takes the changed areas' rooms as they are now.
+```
+
+Sums of an older kind (a save from an earlier version of the game) cannot be
+compared whole; only their area files are, and the world is reported changed
+only if one of those differs.
+
+A restored game boots the world as it now stands, then applies the saved live
+state over it. So room definitions that the world files own (titles,
+descriptions, exits, doors as built) follow the new world, while what the
+save recorded about each room's contents does not: its mobs and where they are
+hurt or dead, the items on the floor, effects with time left, open and locked
+doors, weather, quest state, script variables and the character. Therefore a
+mob you add to a room does not appear in an old save, and a mob you remove
+comes back with the save. A room you delete is reported (`Room X is gone, with
+N mobs and M items saved there`) and its saved contents are dropped.
+
+### FRESH=: take changed areas as they are now
+
+`FRESH` tells a restore to take some areas' rooms (their mobs and items) from
+the world as it is now rather than from the save. Everything about the
+character, party, quests and variables still comes from the save.
+
+```text
+RESTORE before-the-dragon FRESH=CHANGED
+RESTORE before-the-dragon FRESH=ALL
+RESTORE before-the-dragon FRESH=Castle,Crypt
+```
+
+```sh
+CoffeeMud/sud.sh RESTORE=before-the-dragon FRESH=CHANGED
+```
+
+`CHANGED` is the areas whose files changed (or are new) since the save;
+`ALL` is every area; a comma list names areas by area name or area file. Use
+it when you changed an area's population, and accept that anything the player
+did in that area (a looted chest, a dead boss) is lost there. It is a
+migration tool, not a promise of compatibility for arbitrary breaking
+changes: quest steps that no longer exist, removed item classes or renamed
+IDs are not repaired.
+
+### Migrating and keeping IDs stable
+
+- Keep room IDs, quest names, named quest steps, authored clue and waypoint
+  IDs and catalog names stable across releases; renaming a quest name or a
+  step strands saves in it. Use the supported alias/legacy-key mechanisms for
+  authored IDs described in [state and persistence](state-and-persistence.md).
+- Prefer adding to a world over reshaping it. A new area file is reported as
+  `New area file` on restore; rooms the save knows nothing about keep the
+  contents the world gives them.
+- When a change must be a breaking one, list it in the release notes together
+  with the save advice: "restore with `FRESH=Castle`" or "start a new game".
+- To migrate a save by hand, `tools/saveinspect.py` can set a variable, hit
+  points or room outside the game. Take a copy first.
+- Keep the engine revision the world was tested with next to the world. A
+  world is built for the classes, properties and help of that engine.
+
+### Save format and recovery
+
+New save generations carry completeness hashes and a previous complete
+generation is retained. Startup can recover an interrupted publication and
+preserve damaged generations. Saves have a format `version` (1, or 2 when a
+save also holds optional-module state); legacy version-1 saves remain
+readable and an unsupported version or world-snapshot version is rejected
+before it replaces live state, with a message such as `Unsupported save
+format 3 in 'x'. This engine supports versions 1 and 2.` Directory sync is best
+effort where the platform lacks support. See the
+[reliability notes](../../CoffeeMud/guides/ReviewReliability.md).
+
+## Release workflow
+
+A release is a world folder plus an engine revision that plays it, a way to
+launch it, and the notes that let a player or another author use it.
+
+### What to package
+
+A runnable CoffeeSUD deployment is the engine folder (`CoffeeMud/`: classes,
+`lib/js.jar`, `resources`, `coffeemud.ini`, the launch scripts) and a world
+folder. You can ship the world inside `CoffeeMud/world` or elsewhere and point
+`WORLDDIR` at it. Include:
+
+| Include | Why |
+| --- | --- |
+| The world folder: `areas/*.cmare`, `quests/`, `world.ini`, `catalog.cmare`, `custom.cmare`, `scripts/`, `js/`, `resources/` overlay (script libraries, text files, recipes, chat files, dictionaries), `kits/`, `text/`, and any other asset folders the world uses | The definition of a new game |
+| `tests/` (optional) | Lets others run the world's tests; harmless in play, but running them needs the developer tools |
+| A `coffeemud.ini` (or `world.ini` keys) with the settings the world was tested with: `TIMEMODE`, `SAVEMODE`, `DIFFICULTY`, `MODULES` and so on | The world is tested with these |
+| The engine revision: build output, or source plus `build.sh`/`build.bat` | A world is built for one engine |
+| Launch instructions, a recovery location and licenses (the repository's `LICENSE` and `NOTICE`, and your world's own) | So a clean machine can run it |
+
+Exclude:
+
+| Exclude | Why |
+| --- | --- |
+| `saves/` and any `SAVEDIR` | Players' campaigns; also your own test saves |
+| `resources/fakedb/*` except `fakedb.schema` | The content cache is rebuilt from the world on first start; it also holds the builder's own characters |
+| `mud*.log`, `SQLErrors.que`, `logs/` | Logs |
+| `*.builder` files anywhere in the world folder, and `world/.backup/` | Unreconciled builder copies and backups. Review each `.builder` file rather than blindly forcing a save, then delete it |
+| `world/dev/` | Areas for building and testing only; a normal game never loads them, but there is no reason to distribute them |
+| `notes/playtest.txt` and any `recordings/` | Your playtest notes and typed input |
+| `resources/_fixes`, `resources/quests/_smoke`, scratch `_worldtest` | Test scaffolding |
+| Temporary `PLAYTEST GAME` folders (`sud-playtest-*`) | Disposable campaigns |
+
+A `.gitignore` for a world repository can reuse the repository's own
+(`*.class`, saves, logs, the fakedb cache except its schema, test scaffolding).
+
+### Steps
+
+1. **Settle the world.** Stop watchers (`DEVWATCH OFF`). Review `LIST UNSAVED`,
+   `WORLD STATUS`, `WORLD DIFF` and `WORLD PROBLEMS`. Reconcile external edits
+   before exporting; review any `.builder` files rather than blindly forcing a
+   save. See [chapter 2](02-world-workflow.md).
+2. **Save and commit authored content.** `SAVE` in builder mode writes the
+   world files; commit them. Exclude scratch databases, temporary saves,
+   dev-only content, logs and test artifacts. Keep the required public
+   resources, script libraries and referenced text files.
+3. **Run every check against a clean copy** of what you will ship: `CHECK=1`,
+   the world's playtests, plus recipe, quest, generator and language checks
+   (`VALIDATE RECIPES`, `QUESTCHECK ALL`, `GENERATE CHECK` on each file,
+   `ORGCHECK`, `LANGUAGE COVERAGE`), `PUZZLE CHECK`, `CHECKTEXT WORLD` and
+   `PROGRESSION XP` (does the content reach the levels you intend?). Play NEW
+   without builder or DEV privileges, with `GOD` off and `PLAYTEST` off.
+4. **Verify supported older saves** with IDs, aliases and explicit migration
+   rules (see above). Preserve accepted world versions when campaigns need
+   exact assets. Record intended incompatibilities in the release notes.
+5. **Version it.** The world has no version field of its own; its identity to
+   saves is its world sum. Tag the commit (`git tag v1.2`), put the version in
+   `GAMENAME`, your release notes and, if you like, a `text/` file, and record
+   which engine revision it needs. `python3 tools/worlddiff.py --git v1.1
+   CoffeeMud/world` gives the change list between releases.
+6. **Package** the world, the compatible engine revision, runtime
+   requirements (a JDK; Python 3 only for tests), licenses, launch
+   instructions and a recovery location. Archive from a clean export of the
+   tag (`git archive`), not from your working folder.
+7. **Test a clean installation:** unpack on a machine (or folder) that has
+   never run the game, start a new game as an ordinary player, play the main
+   path, save, quit, start again, restore. Send the package only after this.
+
+### Launching a packaged world
+
+```sh
+CoffeeMud/sud.sh WORLDDIR=/path/to/release/world SAVEDIR=/path/to/saves
+```
+
+On Windows use `CoffeeMud\sud.bat` with the same options. `WORLDDIR` is
+resolved before `world.ini` is read. Keep `DBSERVICE` and `SAVEDIR` separate
+from other launchers: an ownership lock prevents two processes writing the
+same `SAVEDIR`. The [installing and running](18-installing-and-running.md)
+chapter lists launch flags.
+
+### Updating a world for existing players
+
+Players keep their `saves/`; give them the new world folder and the release
+notes. The next restore reports `This save was made with another version of the
+world` and offers `FRESH=`. If you only changed text, scripts, JavaScript and
+resources, no `FRESH` is needed. If you moved, removed or retuned mobs and
+items, say which areas to take fresh. If an update is not compatible with old
+saves, say so plainly and say how to start over.
+
+## Repository test suites
+
+This part is for engine developers working on the repository. World authors do
+not need it.
+
+All suites are shell or Python wrappers under `tools/`, run from the repository
+root, and each builds first with `CoffeeMud/build.sh` and plays in scratch
+worlds, databases and saves. They need a JDK and Python 3. The suites are heavy
+(a game start per group); do not run several at once on a small machine, do not
+run two fixes harnesses against the same checkout (they share
+`resources/_fixes`), and do not compile concurrently into one class tree. An
+isolated full checkout avoids these shared artifacts.
+
+### tools/check.sh
+
+The check for a commit. It builds once, then runs, in order:
+
+1. `tools/creator_docs.py --check`: the handbook's generated references and
+   every relative Markdown link, against the sources;
+2. `tools/composition-tests.sh`, `tools/combat-rules-tests.sh` and
+   `tools/item-modifier-tests.sh`: the Java rule suites (below);
+3. `tools/fixes.sh` and `tools/smoke.sh` side by side;
+4. with `ENGINE=1`, `tools/engine-tests.sh` as well.
+
+```sh
+tools/check.sh                       # docs, rule suites, fixes and smoke (about ten minutes)
+ENGINE=1 tools/check.sh              # also the engine's own TEST ALL suite (a quarter hour more)
+CHECKS_SERIAL=1 FIXES_JOBS=2 ENGINE=1 tools/check.sh   # small CI machines
+```
+
+It prints each suite's result (`fixes: PASS (n checks)`), the time taken and the
+folder holding each suite's full output (`sudcheck.XXXXXX` under `TMPDIR`),
+and exits 1 if anything failed. `CHECKS_SERIAL=1` runs the suites one after
+another instead of side by side; `FIXES_JOBS=n` limits how many fixes groups
+run at once (default 9, the parallel run). Use `ENGINE=1` at the end of a step
+and for changes to the engine's core. Documentation-only changes can run
+`python3 tools/creator_docs.py --check` alone.
+
+### tools/fixes.sh and fixtures
+
+`tools/fixes.sh` is the main behavior suite. Each file `tools/fixtures/fixes/NAME.js`
+is a JavaScript test. The harness puts `prelude.js` in front of it, and all
+the files run with `JRUN` in one builder-mode game on a scratch copy of the
+world (fixed seed 42, turn-based time). Then "played" groups run alongside, each
+with its own world, database and saves, for what needs real play (save and
+restore, travel, presentation, language, review, modules, composition, combat,
+the Ember Trial sample, item crafting).
+
+```sh
+tools/fixes.sh                  # every JavaScript test and every played group
+tools/fixes.sh dt1-vars dt15-assert   # only these test files (without .js)
+tools/fixes.sh saves            # only the played save tests (saves1 to saves5 in parallel)
+tools/fixes.sh saves3           # one group: st1 st6 pr5 s10 travel presentation language
+                                # review remaining modules composition combat trial
+                                # itemcraft saves saves1..saves5
+KEEP=1 tools/fixes.sh           # keep the scratch folder and print its path
+```
+
+It prints `  ok    FILE/NAME` per check, `  FAIL ...` for failures, and `PASS`
+or `FAILED.  Output kept in ...`; the exit status is 1 on any failure. It also
+fails if a test file does not reach its `done()` line (a thrown error ends a
+file early), or if the transcript shows `JavaScript error` or `JS error in
+JRUN`.
+
+#### Writing a fixture
+
+Copy the shape of an existing `dtN-*.js` file. Every file:
+
+- starts with `FIXFILE = "name";`, the file name without `.js` (the harness
+  looks for the line `FIXTEST done name`, so the name must match);
+- uses the prelude's helpers (below) and reports with `check(name, cond, why)`;
+- ends with `done();`.
+
+The prelude (`tools/fixtures/fixes/prelude.js`) defines these globals:
+
+| Helper | Meaning |
+| --- | --- |
+| `M` | The builder's mob (`mob()`) |
+| `CM`, `CMClass`, `CMLib`, `CMath`, `CMProps`, `CMSecurity`, `WorldFiles`, `CMMsg`, `Tickable` | Shortcuts to the engine packages and classes |
+| `ok(name)`, `fail(name, why)`, `check(name, cond, why)`, `done()` | Report: `FIXTEST ok FILE/NAME` or `FIXTEST FAIL FILE/NAME: why`, and `FIXTEST done FILE` |
+| `scratchRoom()` | A fresh room in the player's area, linked to nothing |
+| `newMob(cls, room)` | A level-5 mob of that class brought to life in a room |
+| `scriptOn(host, text)` | Adds a `DefaultScriptingEngine` with that script to a host |
+| `scriptedMob(name, script)` | A GenMob in the player's room with a script that runs on its next tick (use `RAND_PROG 100`) |
+| `tickMob(m)` | Ticks a mob once, as the game would |
+| `runQueued(engine)` | Runs an engine's queued responses, as ticks would |
+| `VARS`, `gvar(name)`, `clearVar(name)` | A scripting engine and readers for the global script variables of the host `FIXTEST` |
+| `otherRoom()` | Another room of the map |
+| `field(obj, name)` | Reads a private or inherited field |
+| `call(obj, name, args)` / `callTyped(obj, cls, name, typeNames, args)` | Calls a private method by name (and parameter types) |
+
+Typical pattern for testing a command's output, from `dt15-assert.js`:
+
+```javascript
+FIXFILE = "dt15-assert";
+var R = M.location();
+function has(text, part) { return ("" + text).indexOf(part) >= 0; }
+var B = newMob("GenMob", R);
+B.setName("Fixasserter");
+var BS = CMClass.getCommon("FakeSession");     // a session that keeps what it is told
+BS.initialize(null, "MEMORY");
+B.setSession(BS);
+BS.setMob(B);
+function out() { return "" + field(BS, "bout").toString(); }
+function run(cmdName, words, who) {
+    var L = new java.util.ArrayList();
+    var w = words.split(" ");
+    for (var i = 0; i < w.length; i++) L.add(w[i]);
+    CMClass.getCommand(cmdName).execute(who || M, L, 0);
+}
+run("AssertCmd", "ASSERT HERE Nowhere#99", B);
+check("here-fail", has(out(), "ASSERT FAIL: HERE Nowhere#99"), "HERE did not fail");
+B.setSession(null);
+B.destroy();
+done();
+```
+
+Rules of thumb: clean up what you create (destroy mobs, clear variables,
+delete quests) because all JavaScript tests share one game; test behavior
+rather than the field you just set; give each check a distinct name; write a
+file under `/resources/_fixes/` with `new CM.core.CMFile(path, M).saveText(...)`
+when you need a script or quest file.
+
+For tests that need real play (several processes, restore in a fresh process,
+a different world), add a `group_*` function to `fixes.sh` using its `play`
+helper (it types a script into `tools/sudplay.py` against its own world copy)
+and its `expect OUTFILE TEXT` and `count OUTFILE TEXT N` assertions, and put
+the group's name in the `case` list and the parallel list at the end of the
+script. Data a played group needs goes in `tools/fixtures/fixes/setup/`
+(`.js` files there get the prelude put in front of them and are copied to
+`resources/_fixes/`).
+
+### tools/smoke.sh
+
+The single-player smoke test: scripted sessions through `sudplay.py` against
+a scratch database and world. Sessions: create a character and play; restore
+from the startup list; pause and resume; turn-based time and a fight one WAIT
+at a time; the same `RANDOMSEED` rolling the same character; save, move and
+restore during play; change the world and restore it; a second profile
+character and a party (and its turns); a unique item across a save; a quest, a
+follower, a lit torch and a wolf's rolled stats across a restore; editing a
+world file by hand; and a builder rename on quit. It fails on missing text or
+if play wrote to the world files. `KEEP=1` keeps the scratch folder.
+
+### tools/storage-tests.sh
+
+`tools/storage-tests.sh` compiles and runs `tools/SaveStorageTest.java`, an
+isolated filesystem and process test of the save store (generations,
+completeness hashes, recovery, locks) that never reads a real campaign save
+folder and boots no engine.
+
+### The Java rule suites
+
+Standalone Java programs, compiled by their wrapper with `javac` into a
+temporary folder against the built classes, with no game boot:
+
+| Wrapper | Class | Covers |
+| --- | --- | --- |
+| `tools/composition-tests.sh` | `CompositionTest.java` | Ability composition definitions and schema properties ([chapter 15](15-ability-composition.md)); reads `docs/creator/examples/ability-composition` |
+| `tools/combat-rules-tests.sh` | `CombatRulesTest.java` | Golden combat results and conversion equivalence ([chapter 16](16-combat-profiles.md)); reads `docs/creator/examples/combat-profiles` |
+| `tools/item-modifier-tests.sh` | `ItemModifierRulesTest.java` | Selective edits, protection, source identity and versioned contracts ([chapter 17](17-item-modifiers-crafting.md)) |
+| `tools/storage-tests.sh` | `SaveStorageTest.java` | Save storage |
+
+Each prints `ok <check>` per check and fails with an `AssertionError`. The
+integration scripts `tools/combat-integration.py`, `composition-integration.py`,
+`item-modifier-integration.py`, `modules-integration.py`, `remaining-integration.py`
+and `review-integration.py` are the played counterparts, run as groups of
+`fixes.sh`.
+
+### tools/engine-tests.sh
+
+Runs the engine's own `TEST ALL` suite through the console in a copy of the
+game and compares each test's `PASS` or `FAIL` with `tools/baseline/test-all.txt`,
+recorded on the unmodified server. It passes when the results match the
+baseline, which includes tests that failed on the original: the recorded
+failures are Spaceangles, Spaceinterception and Spaceinterception2. Keep that
+baseline distinction in reports; it does not excuse a new failure.
+
+### creator_docs.py --check
+
+```sh
+python3 tools/creator_docs.py --check
+```
+
+Verifies that the generated handbook files match the sources (tool reference
+from the help files, feature index, tool permissions, world settings), that
+every feature in `audit/project-feature-status.csv` is mapped to a chapter,
+and that every local Markdown link and anchor in `docs/creator` resolves.
+`tools/check.sh` runs it first. Edit the sources and run
+`creator_docs.py --write` to regenerate; never hand-edit a generated file.
+
+### Playtest and example tooling
+
+`tools/playtest.py` (and `tools/playtest.sh`) is described under
+[World tests](#world-tests). The creator examples have their own driver:
+`python3 docs/creator/examples/check.py` builds the museum on isolated
+copies, publishes it with builder `SAVE`, runs its `.play` and `.js` tests,
+then checks a save in a fresh process (`KEEP=1` retains passing artifacts);
+`docs/creator/examples/ember-trial/check.py` does the same for the Ember
+Trial. `tools/sudplay.py SCRIPTFILE NAME=VALUE...` is the generic scripted-input
+driver all of these use. A script line `#expect TEXT` waits until TEXT appears,
+and `#sleep N` waits N seconds.

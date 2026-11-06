@@ -94,7 +94,9 @@ the menu.
 `LOGOFF` is not `QUIT`: it takes the played character out of the world and
 returns to the menu. It does not save. The mask in `LOGOUTMASK` (an optional
 `coffeemud.ini` zapper mask, empty by default) must pass for LOGOFF, QUIT and
-SWITCH alike; a hardcore world can use it to forbid quitting outside an inn.
+SWITCH alike; a hardcore setup can use it to forbid quitting outside an inn. It
+is an engine setting (`coffeemud.ini` or a launch argument), not one of the keys
+a `world.ini` may set.
 
 ### World rules for the profile
 
@@ -1042,9 +1044,8 @@ CoffeeMud/sud.sh RESTORE=hero FRESH=CHANGED
 ```
 
 In a fresh area the dead and taken lists are not applied and room shapes from the
-save are skipped: the area is as the files have it. A character inside it keeps
-their saved location, so a restore into a fresh area is as if the character walked
-into a freshly reset area.
+save are skipped: the area is as the files have it. Characters keep their saved
+locations, whatever the area.
 
 `CHANGED` only sees area files (`areas/*.cmare`); a change that is not in an area
 file (the catalog, quests, scripts) shows up in `worldsum` but names no area.
@@ -1083,4 +1084,331 @@ what the restore did with the save's module state; `FRESH=` does not affect it.
 4. Restore the old save twice: once as is (see the report) and once with
    `FRESH=CHANGED`; compare with `SAVES DIFF` after saving each as a new slot.
 5. Start a new game too, and check it has the new initial state.
+
+## Save tools
+
+### In the game
+
+| Tool | Use |
+| --- | --- |
+| `SAVES` | List saves; `(older world)` flags saves made with other world files. |
+| `SAVES CHECK` | What a save made now would lose (unsavable mobs, things in space). Run it before saving a hand-built scenario. |
+| `SAVES INFO name` | Header, party, running quests, variable counts and world sum of a save. |
+| `SAVES DIFF a b` | What changed between two saves: character, hit points, inventory, variables, quests, room contents. |
+| `SAVES COPY a b` | Keep a known-good copy before an experiment or a world patch. |
+| `SAVES DELETE name` | Delete a save and its `.old-` and `.new-` generations. |
+| `CHEAT ON/OFF`, `DEV=1` | Marks saves `[cheat]` / `[dev]`. |
+| Playtest files | `#save SLOT` and `#restore SLOT` in `.play` files ([Testing and release](13-testing-release.md)). |
+| `RECORDINPUT=1` | Writes every typed line to `recordings/input-DATE-TIME.play` in the saves folder, with a header naming the seed, mode, save and world sum. |
+
+### tools/saveinspect.py
+
+```sh
+tools/saveinspect.py CoffeeMud/saves/hero
+tools/saveinspect.py CoffeeMud/saves/hero --var Throne DOORS 1
+tools/saveinspect.py CoffeeMud/saves/hero --hp 40
+tools/saveinspect.py CoffeeMud/saves/hero --room "Millbrook#12"
+```
+
+With only the folder it prints the header keys, the character with room and
+points, party members, quests with their steps, and the script variables
+(`host name = value`). `--var HOST NAME VALUE` sets (or adds) a script variable,
+`--hp N` sets the played character's hit points, `--room ID` moves the played
+character. Each change rewrites `world.xml` and keeps the old one as
+`world.xml.bak`. The game must not be running on that save.
+
+Caveat: this tool predates the `.complete` manifest. A change alters `world.xml`
+but not the digest in `.complete`, so (reading `SaveSlots.complete`) the save then
+counts as damaged and is refused or rolled back to `.old-NAME`. After editing, delete
+`NAME/.complete` (the folder is then treated as a legacy snapshot and is accepted)
+or regenerate it from the files, for example:
+
+```sh
+cd CoffeeMud/saves/hero
+{ echo '#Complete snapshot: SHA-256 per file'
+  find . -type f ! -name .complete ! -name '*.bak' | sed 's|^\./||' | sort | while read -r f; do
+    printf '%s=%s\n' "$f" "$(sha256sum "$f" | cut -d' ' -f1)"
+  done; } > .complete
+```
+
+The next `SAVE` into that slot writes a fresh manifest. Prefer scripts and
+`jrun` for scenario setup where you can; hand edits are for rescue.
+
+### tools/worlddiff.py
+
+```sh
+tools/worlddiff.py OLD_WORLD NEW_WORLD
+tools/worlddiff.py --git v1.2 CoffeeMud/world
+```
+
+Compares two world folders object by object (rooms by ID, mobs and items by name,
+other files as added/removed/changed). Run it before you ship a patch to see what
+`FRESH=CHANGED` will take, and which placed mobs and items a normal restore will
+ignore. Exit status 1 means there are differences.
+
+### Tests and fixtures
+
+| Item | Covers |
+| --- | --- |
+| `tools/storage-tests.sh` (`tools/SaveStorageTest.java`) | The save folder: second process refused, working copies preserved, interrupted-rename recovery, damaged generation falls back and is kept as `.damaged-`, strays do not roll a whole save back, unsupported formats refused, deleting a save removes its generations, lock release. Builds the engine first. |
+| `tools/fixtures/fixes/party-controls.js` | `SWITCH` to a feigning character, `PARTYMAX`/`ACTIVECHARMAX` against `FOLLOW` and creation, `PARTYSUMMON` MEET and MASK, the merged `HELP PARTY`. |
+| `tools/fixtures/fixes/p10-rules.js` | `PROFILEMAX`, `NEWCHARS`, `PARTYROLES`, the `[cheat]` mark in `SAVES`. |
+| `tools/fixtures/fixes/st10-party.js` | `PARTY_PROG` and the party functions. |
+| `tools/fixtures/fixes/w28-timemode.js` | `Prop_TimeMode` zones, `TIMEMODE` refusal, `ONLYCOMBAT`, `RESTORE=FALSE`. |
+| `tools/fixtures/fixes/c7-checkpoint.js` | `Prop_Checkpoint` respawn points. |
+| `tools/smoke.sh`, sessions 8b to 8e | A real second character, the party, a restore that brings the party back, party turns in turn-based time, plain `SAVE` and `RESTORE`. The transcripts are the best examples of exact output. |
+| `tools/fixtures/fixes/b4-unsaved.js` | Builder-mode unsaved rooms (SAVE CHANGED). |
+
+## Worked examples
+
+### Example 1: a three-character party adventure
+
+Goal: a profile with Hero, Bran and Mira, played as a party in real time, saved
+and restored. The world sets sensible limits.
+
+`world/world.ini`:
+
+```ini
+PARTYMAX=3
+ACTIVECHARMAX=3
+PROFILEMAX=6
+PARTYROLES="healer:-BASECLASS +Cleric; scout:-BASECLASS +Thief"
+```
+
+1. Start a new game and make Hero (the first character is made without the
+   profile menu).
+2. Make the others. `LOGOFF`, answer `y`; at the profile menu type `NEW Bran`,
+   confirm `y`, and go through creation. When Bran is in the world, `LOGOFF`
+   again and `NEW Mira`. The `NEW` step warns `Your party has no healer or
+   scout.` if no character yet fills those roles (a warning, not a refusal).
+   Each `LOGOFF` takes the played character out of the world; it rests at the
+   spot where you left it.
+3. Play Mira and bring the others in:
+
+   ```text
+   PARTY ADD hero
+   PARTY ADD bran
+   PARTY
+   ```
+
+   Bran and Hero arrive beside Mira ("Bran joins your party.") because `PARTYSUMMON`
+   is `ALLOW` and `PARTY MEET` is off. `PARTY` now shows `Your party:` with Mira
+   `(you)` and `leading`, then Hero and Bran. With a fourth character in the
+   profile, a fourth `PARTY ADD` would be refused: "Your party may have at most 3
+   characters in it."
+4. Hand the lead to the fighter and give orders:
+
+   ```text
+   PARTY LEAD hero
+   AS bran say hello
+   AS hero north
+   SWITCH bran
+   ```
+
+   `AS bran say hello` shows `You say to Hero 'hello'` on your terminal (it is
+   Bran's `SAY`). `AS hero north` moves Hero alone; Mira and Bran still follow
+   him ("Bran arrives from the south." is the sort of line you see when a
+   follower comes after). `SWITCH bran` swaps the terminal to Bran; Mira stays
+   where she stands and keeps her own session.
+5. Rest someone who is not needed:
+
+   ```text
+   PARTY REST mira
+   ```
+
+   "Mira rests in your profile." She is saved, her session ends, and she no
+   longer counts for `ACTIVECHARMAX`. `PARTY` lists her under `Resting:`.
+6. Save and leave:
+
+   ```text
+   SAVE camp
+   QUIT
+   ```
+
+   (`QUIT` offers to save again under the same name.)
+7. Next day, continue (`C` at the launcher menu, or `sud.sh RESTORE=camp`).
+   The save restores Bran (the character you were playing) and Hero (who was in
+   the world with him), each in his room and in the party, with hit points and
+   effects; Mira is back in the profile, resting; the
+   party order, `PARTY MEET` and `PARTY FIGHT` are as you left them.
+
+What persisted: each character's tables, the room contents, who follows
+whom, the order. What did not: windows opened with `WINDOWS ON`, and
+anything started that the save could not keep (`SAVES CHECK` would have said).
+
+### Example 2: choosing turn-based play
+
+Goal: a tactical world where the party plans each move. Real time suits action
+games and ambient worlds; turn-based suits puzzles, careful exploration and
+combat the player wants to think through, and it is the mode in which a seeded
+game replays exactly (`RANDOMSEED`, see [Testing and release](13-testing-release.md)).
+
+In `world/world.ini`:
+
+```ini
+TIMEMODE=TURNS
+PARTYTURNS=ALL
+PARTYMAX=3
+```
+
+(or `PARTYTURNS LEADER`, the default, for a lighter touch). The player can still
+use `TIMEMODE REALTIME`; to forbid it in a dangerous place, put
+[`Prop_TimeMode`](23-properties-reference.md#prop_timemode) `MODE=TURNS
+ONLYCOMBAT=TRUE` on the area.
+
+In play, with Hero leading and Bran in the party:
+
+```text
+TIMEMODE
+AS bran south
+```
+
+`TIMEMODE` replies `Time is turn-based: the world moves only when you act, or
+WAIT.` `AS bran south` queues Bran's step: "Bran will do that on Hero's turn."
+and nothing moves yet. With `PARTYTURNS LEADER`, Hero's next time-taking
+command, say `SOUTH`, first runs Bran's order (he is south first), then Hero's step,
+then the world advances by the time Hero's step took. Now switch to `ALL`:
+
+```text
+PARTYTURNS ALL
+NORTH
+```
+
+Hero's `NORTH` is held: "The turn waits for Bran to be given something to do (AS
+NAME COMMAND), or to WAIT." Give Bran an order (`AS bran north`) or have him pass
+(`AS bran wait`, "You wait for Hero's turn."). The moment every member is ready,
+Hero's action goes, the others' orders run in the party order (`PARTY ORDER hero
+bran` changes it), and the world moves on by a whole tick at least. A member you
+do not want to micromanage can be set to act alone with `PARTY DISABLE bran`; the
+turn then never waits for him, and he does what followers do.
+
+Because the game clock only moves in turn-based time when something asks, a
+turn-based campaign saves the clock where it was (`gametime`, `timemode=TURNS`
+in the header) and restores exactly there. `PAUSE` means nothing in this mode.
+
+Checklist for a turn-based world: tell the player in the intro text (`world/text/`),
+expect `WAIT` and its long forms to be the way days pass (`LONGWAIT` limits
+who may use them), and test `AS` orders across a save. A queued order is a command
+in the member's queue, and the save does not record command queues (nothing in
+`WorldState` writes them), so save when no member has orders waiting (`PARTY`
+shows `, with orders`).
+
+### Example 3: a hardcore save-point world
+
+Goal: the player can only save in inns, never in the Sunken Temple, and gets an
+automatic save on first reaching the village. A second, stricter version is
+ironman.
+
+`world/world.ini`:
+
+```ini
+SAVEMODE=SAVEPOINTS
+PARTYMAX=3
+PARTYSUMMON=MEET
+```
+
+Properties (add each with `MODIFY ROOM AFFECTS` or `MODIFY AREA AFFECTS`):
+
+| Where | Property | Text |
+| --- | --- | --- |
+| The inn's common room and its upstairs | `Prop_SavePoint` | `MSG="You settle in for the night and set down your journey."` |
+| The whole Sunken Temple area | `Prop_NoSave` | `MSG="The water's whispering drowns your thoughts."` |
+| The village gate | `Prop_AutoSave` | `ONCE=CHAR SLOT=gate MSG="[The village remembers you.]"` |
+
+In play:
+
+```text
+SAVE            (in the field)    -> You can only save the game at a save point.
+SAVE            (in the inn)      -> You settle in for the night and set down your journey.
+                                     Game saved as 'hero'.
+SAVE            (in the temple)   -> The water's whispering drowns your thoughts.
+```
+
+The first player to walk through the village gate gets `[The village remembers
+you.]` and a save called `gate`, even though the gate is not a save point
+(autosaves ignore the save-point rule, but still skip a fight). `QUIT` in the
+field offers only `Quit without saving (n), or cancel (C)?` with the reason,
+so the player cannot quit with a save, which is the point; a world that wants the
+opposite ("you may always leave, but only keep progress at inns") sets
+`SAVEMODE=ANYWHERE` and relies on `Prop_AutoSave` instead.
+
+Notes:
+
+- The mode is chosen at new game and kept in the save. If you change `SAVEMODE`
+  in `world.ini` later, existing campaigns keep the mode they started with.
+- The hardcore edge of save points is the **restore**: players can restore any
+  save, including an old one. To remove that, use ironman:
+
+  ```ini
+  SAVEMODE=IRONMAN
+  ```
+
+  The game has one save, written by `QUIT` and by autosaves; `SAVE other`,
+  `RESTORE` and `ROLLBACK` are refused. Death does not delete the campaign by
+  itself; pair this with [death rules](29-combat-and-encounters.md) that fit the
+  design.
+- Optionally pair with `LOGOUTMASK=-LOCATION +ROOMSTR(Inn)` in `coffeemud.ini`
+  (or a launch argument) so that `LOGOFF`, `QUIT` and `SWITCH` work only in
+  inns. It is an engine setting; a world's `world.ini` cannot set it.
+- `SAVES CHECK` before announcing a save point: it lists monsters nothing will
+  keep, such as summoned creatures.
+
+For the rest of the hardcore recipe, see
+[Configuration and administration](19-configuration-and-administration.md) and
+[Combat and encounters](29-combat-and-encounters.md) (`PARTYDEFEAT`, downed and
+essential characters).
+
+### Example 4: recovering a damaged save
+
+Start with what the engine does without help. The save folder repairs itself at
+every start, listing, save and delete, so most crashes need no action:
+
+| What happened | What you see |
+| --- | --- |
+| The game crashed while writing `hero` | Nothing. The old `hero` is whole (the new one was in `.new-hero`), and it is used. |
+| Power went off between the two renames | `hero` is missing, `.new-hero` is whole: it is promoted. You have the newest save. |
+| A disk fault damaged `hero/world.xml` | `SAVES` lists `hero` with the previous save's time: the damaged folder was renamed `.damaged-hero-<ms>` and `.old-hero` promoted. You lost the last save, not the campaign. |
+| The same, but `hero` was the campaign's first save (no `.old-hero`) | The launcher says `The save 'hero' is incomplete or damaged.` |
+
+For the last case, with the game **stopped**:
+
+1. Look at the folder:
+
+   ```sh
+   ls -a CoffeeMud/saves
+   ```
+
+   Candidates: `hero` (damaged), `.damaged-hero-*`, `.old-hero`, `.new-hero`,
+   other slots (`autosave1`, `checkpoint2`, copies from `SAVES COPY`).
+2. Test each against its manifest:
+
+   ```sh
+   check() { ( cd "$1" && grep -v '^#' .complete | while IFS='=' read -r f sum; do
+       [ "$(sha256sum "$f" 2>/dev/null | cut -d' ' -f1)" = "$sum" ] || echo "BAD $f"
+     done ); }
+   check CoffeeMud/saves/.damaged-hero-1730900100000
+   ```
+
+   No output means every listed file matches. (A save without `.complete` is a
+   legacy snapshot with no integrity check.)
+3. Copy the best candidate to a new, valid name and play from it:
+
+   ```sh
+   cp -a CoffeeMud/saves/<best candidate> CoffeeMud/saves/hero-rescued
+   CoffeeMud/sud.sh RESTORE=hero-rescued
+   ```
+
+   `SAVES INFO hero-rescued` in the game confirms who and where; `SAVES DIFF
+   hero-rescued autosave1` shows what you lost compared with an autosave.
+4. If only `world.xml` is damaged and you have a `world.xml.bak` from
+   `tools/saveinspect.py`, put it back and regenerate `.complete` (see
+   [Save tools](#save-tools)); if `world.xml` is gone, the room contents are gone
+   too, though `db/` still holds the characters. There is no tool to rebuild
+   `world.xml`.
+5. Afterwards, `SAVE` normally. Delete the `.damaged-*` folder when you are done
+   with it; nothing removes it for you.
+
+Prevention: turn on `AUTOSAVE` (three rotating saves cost little), `SAVES COPY` before
+risky changes, and keep `saves/` out of cloud-sync folders that rewrite files while
+the game runs.
 

@@ -111,7 +111,7 @@ Source: [Commands/Create.java](../../CoffeeMud/com/planet_ink/coffee_mud/Command
 | `CREATE ITEM Longsword` | A standard item, placed without an editor |
 | `CREATE ITEM the Sunblade` | A copy of the catalog item of that name (see [The catalog](#the-catalog)); no editor, the copy is tied to the catalog |
 | `CREATE ITEM mysword` | A copy of one of your builder templates (see `TEMPLATE` in `AHELP TEMPLATE`) |
-| `CREATE ITEM 100 gold coins` | Money: a number plus a denomination of a currency in the room's currency set (the amounts accepted are those `CMLib.english().parseNumPossibleGold` understands). For a specific currency or denomination use `GenCoins` and its editor |
+| `CREATE ITEM 100 gold coins` | Money: a number plus the name of a denomination (here the default currency's gold coin). For a specific currency or denomination use `GenCoins` and its editor |
 
 Order of lookup: class ID, then a money amount, then the catalog, then your
 templates. A bad name reports "There's no such thing as a '...'". Some
@@ -133,7 +133,9 @@ New items that suffer wear and tear (armor) start at 100 condition
 ### MODIFY ITEM
 
 ```text
-MODIFY ITEM [ITEM NAME] (@room | @[mob name] | @[container name])
+MODIFY ITEM [ITEM NAME]
+MODIFY ITEM [ITEM NAME]@room
+MODIFY ITEM "[ITEM NAME]@[mob name or container name]"
 MODIFY ITEM [ITEM NAME] [FIELD] [VALUE]
 ```
 

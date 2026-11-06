@@ -883,10 +883,11 @@ AUTOMAP SIZE 4          save your own radius (1 to 12)
   They are different tools.
 - The default radius is the saved `AUTOMAP SIZE`, otherwise half of the world's
   `AWARERANGE` (minimum 1). `AWARERANGE` is a world setting (shipped value 3).
-- With `AUTOMAP` on, the map is printed after every room look. Automap is on by
-  default when `AWARERANGE` is above 0 or the player has set a size. A player
-  can switch it on even when `AWARERANGE` is 0 (it then uses radius 3 unless a
-  size is saved).
+- With `AUTOMAP` on, the map is printed after every room look. It is shown only
+  when the player has not switched it off and either `AWARERANGE` is above 0 or
+  the player has a saved size. A player can switch it on even when
+  `AWARERANGE` is 0 (`AUTOMAP ON` then saves radius 3 unless a size is saved).
+  `AUTOMAP` with no argument toggles. It is also a `CONFIG` option.
 - Only the floor you stand on is drawn. Exits up and down appear in the legend
   as `<` and `>` with the destination's title, from your own floor.
 - Rooms are drawn as `#` (indoors) or `o` (outdoors), `*` is you. Rooms you
@@ -1063,10 +1064,11 @@ you want either, write it into the template. Check the result with ANSI off.
 
 ### Colours and named aliases
 
-The colour codes are `^` followed by a letter: `^w` white, `^r` red, `^g`
-green, `^y` yellow, `^b` blue, `^p` purple, `^c` cyan, `^k` black (upper case
-letters are the darker or brighter pair; `^W` is grey in the in-game colour
-chart, `^N` returns to normal, `^?` to the previous colour). The game also has
+The colour codes are `^` followed by a letter: `^w` white, `^r` light red,
+`^g` light green, `^y` yellow, `^b` light blue, `^p` light purple, `^c` cyan,
+`^k` dark grey. The upper-case letter is the darker colour (`^R` maroon, `^G`
+dark green, `^B` dark blue, `^P` dark purple, `^C` dark cyan, `^Y` dark yellow,
+`^W` grey, `^K` black). `^N` returns to normal and `^?` to the previous colour. The game also has
 semantic codes that a player can recolour with `COLORSET`: `^H` highlighted
 text, `^O` room titles, `^L` room descriptions, `^J` weather, `^D`/`^d`
 explored exits and doors, `^U`/`^u` unexplored ones, `^I` items, `^M` creatures,
@@ -1103,3 +1105,125 @@ Then any text where colour codes work can say `^{LORE}The kingdom fell.^N`.
 
 Choose colours that also read on a plain terminal, and test with ANSI off,
 a narrow terminal and headless output.
+
+## Title, prologue and character windows
+
+### Title screen and game name
+
+Source: [SUD.java](../../CoffeeMud/com/planet_ink/coffee_mud/application/SUD.java).
+The launcher chapter ([chapter 18](18-installing-and-running.md)) describes the
+saved-game menu in full; the authoring rules are:
+
+- `GAMENAME` (a world setting; also in `coffeemud.ini`) is the game's name. The
+  shipped value is `CoffeeSUD`.
+- `world/text/title.txt` is printed before the saved-game menu. In it,
+  `@MudInfo?NAME@` becomes the game name. Only the launcher's colour codes
+  work here: `^w ^r ^g ^y ^b ^p ^c ^k` and their upper-case brighter forms,
+  `^N` or `^?` to reset, and `^^` for a literal `^`. Aliases (`^{LORE}`) and
+  the semantic codes (`^H`) are **not** available because the engine has not
+  started. The screen always ends in the normal colour. It is not shown for a
+  `CHECK=1` run. If the file exists, the engine does not also show the inherited
+  `resources/text/intro.txt` picture.
+- `world/text/prologue.txt` is shown for a new game (after choosing New, or
+  with `RESTORE=NEW`; never in builder mode, never when restoring). Pages are
+  separated by a line of three or more dashes (`---`); the launcher prints a
+  page, then `[Enter] `, then the next. The same limited colour codes apply.
+
+This is a launch presentation format. It cannot run NPC scripts or show
+viewer-specific text, because no character exists yet. MPNARRATE's
+`[section]`/blank-paragraph format is different and runs inside the game.
+Keep the opening readable when both files are absent.
+
+For a prologue that runs in the game (after the character exists, in the start
+room), use a creation script. `CHARCREATIONSCRIPTS` is a world setting; an
+`END:` script runs once when a new character has been made. Example
+(an adaptation of the stock `ONCE_PROG` pattern, not a shipped file):
+
+```ini
+CHARCREATIONSCRIPTS=END:LOAD=progs/prologue.script
+```
+
+```text
+ONCE_PROG
+    MPNARRATE $i prologue.txt#intro PAUSE STYLE=LORE
+~
+```
+
+with `world/text/prologue.txt` holding a `[intro]` section. Here `$i` is the
+character being created (as in the stock `chardesc.script`). Check the order of
+the prompts against your creation scripts; see [chapter 3](03-characters.md).
+
+### Character window panels
+
+Source: [WindowPanel](../../CoffeeMud/com/planet_ink/coffee_mud/core/WindowPanel.java),
+[WindowsCmd](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/WindowsCmd.java).
+
+When the game has a display, every character other than the one you play in the
+terminal can have a window of its own (`WINDOWS ON`; see
+[chapter 31](31-saves-and-party.md)). Each window can show a side panel next to
+its text, drawn again at every prompt (so after each command and each move).
+
+```text
+WINDOWS PANEL ON                 all three sections
+WINDOWS PANEL OFF                no panel
+WINDOWS PANEL STATUS,PARTY       chosen sections, in this order
+WINDOWS PANEL                    show the current setting
+```
+
+`WINDOWPANEL=STATUS,MAP,PARTY` in `coffeemud.ini` (or a launch override) starts
+a game with the panel on. Sections may be abbreviated (`STAT`, `PAR`). `ON`,
+`ALL`, `1`, `YES` and `TRUE` mean all three; `OFF`, `0`, `NO`, `FALSE` or empty
+mean none. A section that is not one of the three is refused. The `WINDOWS`
+command is available only in single-player games with the profile system.
+
+| Section | Contents |
+| --- | --- |
+| `STATUS` | `world/text/panel.txt`, one template per line, with the prompt tokens ([Prompts and templates](#prompts-and-templates)) and colour codes. Without the file: room name, area, then `HP`, `Mana` and `Moves` in the stock colours. |
+| `MAP` | The player map ([The player map](#the-player-map-map-and-automap)) around the window's character, radius 3, honouring the same fog, glyph and marker rules as `MAP`. |
+| `PARTY` | Each character of the party, in order, with a ten-segment hit-point bar and `hp/max`. Bars turn yellow below half and red below a quarter. |
+
+```text
+^w%r^N / %z
+HP %h/%H   Moves %v/%V
+Chapter %{VAR CHAPTER}
+```
+
+The panel is a view. Put durable state in script variables and quest records
+and let the template read it; the renderer keeps nothing. Headless and
+terminal play use the terminal, with no panel. Test with a second window and
+confirm that a template does not name a hidden room (the room name token is
+rendered for the window's own character).
+
+### Where presentation settings may be set
+
+Several presentation settings are read by the engine from the properties the
+engine loads at start, but a world's `world.ini` accepts only an allow-list of
+keys ([world-settings.md](world-settings.md)). The result:
+
+| Setting | `world.ini`? | Where it goes |
+| --- | --- | --- |
+| `GAMENAME` | yes | `world.ini` or `coffeemud.ini` |
+| `AWARERANGE` | yes | `world.ini` or `coffeemud.ini` |
+| `CHARCREATIONSCRIPTS` | yes | `world.ini` or `coffeemud.ini` |
+| `MAPFOG` | no | `coffeemud.ini` or a launch override |
+| `JOURNALAUTO`, `JOURNALTALK` | no | `coffeemud.ini` or a launch override |
+| `ROOMHEADER`, `ROOMFOOTER` | no | `coffeemud.ini` or a launch override |
+| `COLORALIASES` | no | `coffeemud.ini` or a launch override |
+| `WINDOWPANEL` | no | `coffeemud.ini` or a launch override (`WINDOWS PANEL` changes the running game) |
+| `LISTFILE`, `COLORSCHEME`, `LANGUAGE`, `MAXLANGUAGES` | no (engine settings) | `coffeemud.ini` |
+
+`WORLD SET` refuses the keys marked "no", and an unknown key in `world.ini` is
+reported at start and ignored. Their files and templates (lore, text, panel,
+score, glossary, dictionaries) are still world-owned, and `WORLD CHECK
+ONLY=TEMPLATES` checks `ROOMHEADER` and `ROOMFOOTER` whatever file defined
+them. A launch override is `KEY=value` on the command line:
+
+```sh
+CoffeeMud/sud.sh MAPFOG=VISITED ROOMFOOTER="Chapter %{VAR CHAPTER}"
+```
+
+(See [chapter 18](18-installing-and-running.md) for the launcher and its flags.)
+A few older comments and the `WindowPanel` source comment say `world.ini` can
+set `WINDOWPANEL`; the shipped help (`HELP WINDOWS`) and the allow-list are
+right: it cannot. This is a known open item in the
+[developer tools audit](../../audit/developer-tools-audit.md#open-configuration-gap).

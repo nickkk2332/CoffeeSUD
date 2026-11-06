@@ -206,8 +206,8 @@ for gathering and lore, described in later sections.)
 | Boatwright | BOATWRIGHTING | `boatwright.txt` |
 | Cobbling | COBBLE | `cobbler.txt` |
 | Tailoring | KNIT | `tailor.txt` |
-| MasterTailoring | (see skill help) | `mastertailor.txt` |
-| Costuming, MasterCostuming | COSTUME | `costume.txt`, `mastercostume.txt` |
+| MasterTailoring | MASTERKNIT, MKNIT, MASTERTAILOR | `mastertailor.txt` |
+| Costuming, MasterCostuming | COSTUME, MASTERCOSTUME | `costume.txt`, `mastercostume.txt` |
 | LeatherWorking, MasterLeatherWorking | LEATHERWORK, MASTERLEATHERWORKING | `leatherworking.txt`, `masterleatherworking.txt` |
 | Weaving, Textiling | WEAVING, TEXTILING | `weaving.txt`, `textiling.txt` |
 | Pottery | POT | `pottery.txt` |
@@ -216,7 +216,7 @@ for gathering and lore, described in later sections.)
 | ScrimShaw | SCRIM | `scrimshaw.txt` |
 | JewelMaking | JEWEL | `jewelmaking.txt` |
 | Smelting | SMELTING | `smelting.txt` |
-| Fletching, Gunsmithing, Siegecraft | FLETCH | `fletching.txt`, `gunsmith.txt`, `siegecraft.txt` |
+| Fletching, Gunsmithing, Siegecraft | FLETCH, GUNSMITH, SIEGECRAFT | `fletching.txt`, `gunsmith.txt`, `siegecraft.txt` |
 | InstrumentMaking | INSTRUMENTMAKING | `instruments.txt` |
 | WandMaking, ShardMaking | WANDMAKE, SHARDMAKE | `wandmaking.txt`, `shardmaking.txt` |
 | StaffMaking, Rodsmithing | STAFFMAKE, RODSMITH | `staffmaking.txt`, `rodsmithing.txt` |
@@ -224,15 +224,15 @@ for gathering and lore, described in later sections.)
 | ScrollScribing | ENSCRIBE | `scribing.txt` |
 | Alchemy, ImprovedAlchemy | BREW, IBREW | `alchemy.txt`, `improvedalchemy.txt` |
 | Herbalism, ImprovedHerbalism | HBREW, IHBREW | `herbalism.txt`, `improvedherbalism.txt` |
-| Cooking and the cooks (Baking, FoodPrep, Distilling, GaolFood, DrugCutting, Apothecary) | COOK, BAKING, FOODPREPPING, DISTILLING, DRUGCUTTING, APOTHECARY | `recipes.txt`, `bake.txt`, `foodprep.txt`, `liquors.txt`, `gaolfood.txt`, `drugs.txt`, `poisons.txt` |
+| Cooking and the cooks (Baking, FoodPrep, Distilling, GaolFood, DrugCutting, Apothecary) | COOK, BAKING, FOODPREPPING, DISTILLING, GAOLFOOD, DRUGCUTTING, APOTHECARY | `recipes.txt`, `bake.txt`, `foodprep.txt`, `liquors.txt`, `gaolfood.txt`, `drugs.txt`, `poisons.txt` |
 | Painting, Dyeing, Lacquerring (and Master versions) | PAINT, DYE, MASTERDYEING, MASTERLACQUERING | `painting.txt`, `dyeing.txt`, `lacquering.txt`, `masterdyeing.txt`, `masterlacquering.txt` |
-| Embellishing, Decorating | (see skill help) | `embellishing.txt`, `decorations.txt` |
-| SmokeRings, MasterSmokeRings | MASTERSMOKERINGS for the master | `smokerings.txt`, `mastersmokerings.txt` |
-| BodyPiercing | (see skill help) | `bodypierce.txt` |
+| Embellishing, Decorating | EMBELLISH, DECORATE | `embellishing.txt`, `decorations.txt` |
+| SmokeRings, MasterSmokeRings | SMOKERINGS, MASTERSMOKERINGS | `smokerings.txt`, `mastersmokerings.txt` |
+| BodyPiercing | BODYPIERCE | `bodypierce.txt` |
 | ClanCrafting | CLANCRAFT | `clancraft.txt` |
 | CageBuilding | BUILDCAGE | `cagebuilding.txt` |
-| Construction, Masonry, Excavation, Landscaping, Irrigation, Welding | BUILD family | `construction.txt`, `masonry.txt`, `excavation.txt`, `landscaping.txt`, `irrigation.txt`, `welding.txt` |
-| Shipwright, CaravanBuilding | SHIPBUILD | `shipbuilding.cmare`, `caravanbuilding.cmare` |
+| Construction, Masonry, Excavation, Landscaping, Irrigation, Welding | CONSTRUCT, MASONRY, EXCAVATE, LANDSCAPE, IRRIGATE, WELDING | `construction.txt`, `masonry.txt`, `excavation.txt`, `landscaping.txt`, `irrigation.txt`, `welding.txt` |
+| Shipwright, CaravanBuilding | SHIPBUILD, CARAVANBUILD | `shipbuilding.cmare`, `caravanbuilding.cmare` |
 | GenCraftSkill, GenWrightSkill, GenBuildingSkill (data skills) | set in the skill | the file named in the skill's FILENAME |
 
 Because the loader prefers the world's copy and reads `.1` to `.9` extensions,
@@ -275,11 +275,15 @@ order the columns appear.
 
 | Skill (file type) | Columns |
 | --- | --- |
-| Blacksmithing, GlassBlowing, ScrimShaw, Pottery, Sculpting and the other item crafts | `ITEM_NAME, ITEM_LEVEL, BUILD_TIME_TICKS, MATERIALS_REQUIRED, ITEM_BASE_VALUE, ITEM_CLASS_ID`, then 1 to 4 class-specific columns (see the table below), then `CODED_SPELL_LIST` |
+| Blacksmithing | `... ITEM_CLASS_ID, STATUE\|\|RIDE_BASIS\|\|CONTAINER_TYPE_OR_LIDLOCK\|\|CODED_WEAR_LOCATION, CONTAINER_CAPACITY\|\|LIQUID_CAPACITY\|\|MAX_WAND_USES\|\|LIGHT_DURATION\|\|DICE_SIDES, CODED_SPELL_LIST` |
+| GlassBlowing | `... ITEM_CLASS_ID, CONTAINER_TYPE_OR_LIDLOCK\|\|RIDE_BASIS\|\|STATUE, CONTAINER_CAPACITY\|\|LIQUID_CAPACITY\|\|MAX_WAND_USES\|\|LIGHT_DURATION\|\|DICE_SIDES, CODED_SPELL_LIST` |
+| Pottery | `... ITEM_CLASS_ID, CONTAINER_TYPE_OR_LIDLOCK\|\|STONE_FLAG\|\|STATUE, CONTAINER_CAPACITY\|\|LIQUID_CAPACITY\|\|MAX_WAND_USES, CODED_SPELL_LIST` |
+| ScrimShaw | `... ITEM_CLASS_ID, STATUE\|\|CONTAINER_TYPE_OR_LIDLOCK\|\|WEAPON_CLASS\|\|RIDE_BASIS\|\|CODED_WEAR_LOCATION, BASE_ARMOR_AMOUNT\|\|CONTAINER_CAPACITY\|\|BASE_DAMAGE\|\|LIGHT_DURATION\|\|MAX_WAND_USES\|\|DICE_SIDES, CODED_SPELL_LIST` |
+| Sculpting | `... ITEM_CLASS_ID, STATUE\|\|LID_LOCK\|\|RIDE_BASIS, CONTAINER_CAPACITY\|\|LIGHT_DURATION\|\|MAX_WAND_USES\|\|DICE_SIDES, CONTAINER_TYPE, CODED_SPELL_LIST` |
 | Armorsmithing, Cobbling | `ITEM_NAME, ITEM_LEVEL, BUILD_TIME_TICKS, MATERIALS_REQUIRED, ITEM_BASE_VALUE, ITEM_CLASS_ID, CODED_WEAR_LOCATION, CONTAINER_CAPACITY, BASE_ARMOR_AMOUNT, CONTAINER_TYPE, CODED_SPELL_LIST` |
 | Carpentry | `... ITEM_CLASS_ID, LID_LOCK\|\|RIDE_BASIS\|\|WEAPON_CLASS\|\|CODED_WEAR_LOCATION\|\|SMOKE_FLAG\|\|STATUE, CONTAINER_CAPACITY\|\|WEAPON_HANDS_REQUIRED\|\|LIQUID_CAPACITY\|\|LIGHT_DURATION\|\|MAX_WAND_USES\|\|DICE_SIDES, BASE_ARMOR_AMOUNT\|\|BASE_DAMAGE\|\|REQ_RESOURCE_OR_MATERIAL, CONTAINER_TYPE\|\|ATTACK_MODIFICATION\|\|RES_SUBTYPE, CODED_SPELL_LIST` |
 | Weaponsmithing (and Master, Legendary) | `... ITEM_CLASS_ID, WEAPON_CLASS, WEAPON_TYPE, BASE_DAMAGE, ATTACK_MODIFICATION, WEAPON_HANDS_REQUIRED, MIN_MAX_RANGE, OPTIONAL_RESOURCE_OR_MATERIAL, CODED_SPELL_LIST` |
-| Tailoring, Weaving, Costuming | `... ITEM_CLASS_ID, WEAPON_TYPE\|\|CODED_WEAR_LOCATION\|\|RIDE_BASIS (Weaving also LID_LOCK), CONTAINER_CAPACITY\|\|WEAPON_HANDS_REQUIRED, BASE_ARMOR_AMOUNT\|\|BASE_DAMAGE, CONTAINER_TYPE, CODED_SPELL_LIST` |
+| Tailoring, Weaving, Costuming | `... ITEM_CLASS_ID, WEAPON_TYPE\|\|CODED_WEAR_LOCATION\|\|RIDE_BASIS (Weaving and Costuming have WEAPON_CLASS in place of WEAPON_TYPE; Weaving also LID_LOCK), CONTAINER_CAPACITY\|\|WEAPON_HANDS_REQUIRED, BASE_ARMOR_AMOUNT\|\|BASE_DAMAGE, CONTAINER_TYPE, CODED_SPELL_LIST` |
 | LeatherWorking (and Master) | `... ITEM_CLASS_ID, WEAPON_CLASS\|\|CODED_WEAR_LOCATION, CONTAINER_CAPACITY\|\|LIQUID_CAPACITY\|\|WEAPON_HANDS_REQUIRED\|\|MAX_WAND_USES, BASE_DAMAGE\|\|BASE_ARMOR_AMOUNT, CONTAINER_TYPE\|\|MIN_MAX_RANGE, CODED_SPELL_LIST` |
 | JewelMaking | `... ITEM_CLASS_ID, STATUE\|\|CODED_WEAR_LOCATION, N_A, BASE_ARMOR_AMOUNT\|\|DICE_SIDES, OPTIONAL_RESOURCE_OR_MATERIAL, CODED_SPELL_LIST` |
 | Smelting, Textiling | `... ITEM_CLASS_ID, RESOURCE_NAME, RES_SUBTYPE, CODED_SPELL_LIST` |

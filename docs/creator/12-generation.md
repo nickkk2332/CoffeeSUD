@@ -709,3 +709,298 @@ Child of `AREA`. See [Guarantees: ENSURE](#guarantees-ensure).
 
 Children of an `AREA` with `layout="MAP"`. See [MAP layout](#map-layout).
 
+## Layouts
+
+A layout manager draws the shape of an area as a graph of **nodes** (rooms to
+be) with links, before any room exists. `layout="..."` on an `AREA` (or a
+`ROOM` for a sub-layout) names one. List what is installed:
+
+```text
+GENLAYOUT
+```
+
+| Layout | Origin | Shape |
+|---|---|---|
+| `MAZE`, `TREE`, `BRANCH`, `CROSS`, `MESH`, `SPOTTEDMESH` | inherited | Dungeon-like shapes: corridors, branches, crossing passages, meshes of rooms. |
+| `GRIDCITY`, `BOXCITY`, `BOXCITYSQUARE`, `APARTMENT` | inherited | Town-like: streets, blocks of buildings, squares, apartment blocks. |
+| `CAVE` | G16 | Smoothed random blobs and winding passages: a grid filled at random and smoothed, its largest open region grown to the size, each room joined to the one it was reached from and to about a quarter of its other open neighbours. |
+| `CLUMP` | G16 | A square block of rooms all joined to their neighbours, with short dead ends off its sides. The entrance is outside it. |
+| `LINEAR` | G16 | A road running away from the entrance (two thirds of the rooms) with spurs of one or two rooms off either side. |
+| `RING` | G16 | A loop of streets around an open middle, with short spokes in from its sides; for wall walks. The entrance is outside it. |
+| `ISLANDS` | G16 | Blobs of rooms in a row running away from the entrance, each joined to the next by a single bridge room. |
+| `MAP` | G8 | The plan is drawn by you. See [MAP layout](#map-layout). |
+
+The inherited layouts have no description in the source; draw one with
+`GENLAYOUT` to see it. Layout names are case-insensitive. Layouts are
+plain classes in `Libraries/layouts/`; an engine developer can add one (the
+percolator loads the folder, including the `LIBRARY` path's own `layouts/`
+folder).
+
+**Node types** (`$roomtag_nodetype`): `leaf` (one exit: a dead end), `street`
+(two exits in a line or corner), `square` (more than two), `interior`,
+`offleaf` (an interior beside a leaf), `surround`. **Flags**
+(`$roomtag_nodeflags`): `corner`, `gate`, `intersection`, `tee`, `offleaf`.
+**Runs** (`$roomtag_noderun`) for a street: `ns`, `ew`, `nwse`, `nesw`.
+
+**Build order.** Room templates run per node. The first node, the entrance,
+becomes room `#0` and is built first. Then **leaf groups** (in a randomised
+order), then **street groups** (a straight run of street nodes), then
+everything else. A counter such as `__boss<1` therefore fills at the first
+matching node built, which is rarely the one you want unless you use the depth
+tags or `order`.
+
+**Depth and position tags (G3).** After the layout is drawn, a breadth-first
+walk from the entrance sets `$roomtag_depth` (rooms from the entrance),
+`$roomtag_depthpct` (0-100), `$roomtag_isdeepest`, `$roomtag_index`,
+`$roomtag_x`, `$roomtag_y`, and the area's `$area_maxdepth` and `$area_numrooms`.
+Use them instead of build order:
+
+```xml
+<ROOM class="StoneRoom" condition="$roomtag_isdeepest='true' and $__boss&lt;1" define="__boss+=1">
+  <TITLE>The ogre chieftain's hall</TITLE>
+  <DESCRIPTION>Bones and trophies crowd the far wall.</DESCRIPTION>
+  <EXIT class="Open" />
+  <MOB class="GenMob" level="$level_range + 5" name="the ogre chieftain" display="$mob_name glowers here." />
+</ROOM>
+```
+
+and let monsters scale: `level="$level_range + $roomtag_depthpct / 10"`.
+Add `order="reverse-depth"` on the `AREA` to build the deepest groups before the
+shallow ones, so the "one boss" counter is spent at the far end even if your
+condition is looser.
+
+### Multi-level areas
+
+`levels="N"` on an `AREA` (or on a `ROOM` with `layout`) draws the layout N
+times, once per floor, splitting `size` between them (each floor gets at least 2
+nodes), and joins consecutive floors by a stair at a room that is not a leaf
+and not the floor's first. Stairs go `DOWN` to the next floor and `UP` back, or
+the reverse with `levelsdir="UP"`. Rooms get `$roomtag_level` (1 for the
+entrance's floor) and `$roomtag_stairs` (`up`, `down` or `up,down`); the area
+gets `$area_levels`. Draw it first: `GENLAYOUT TREE 60 LEVELS=4`.
+
+```xml
+<AREA id="goblin_mine" layout="TREE" levels="4" size="60"
+      requires="areaname=$,level_range=int"> ... </AREA>
+```
+
+### MAP layout
+
+`layout="MAP"` takes a drawn plan: put it in a `MAP` child, or in a file named
+by `mapfile=`. Characters:
+
+| Character | Meaning |
+|---|---|
+| `.` | A street room. |
+| `o` | An interior room. |
+| `L` | A leaf room. |
+| `@` | The entrance (becomes room `#0`). |
+| `^`, `v` | Stairs up and down. A `^` is joined to the `v` in the same column on the floor above (the nearest by row). |
+| any other character | A room built from the `ROOM` template named by a `<GLYPH char="B" room="boss_room"/>` tag; with no `GLYPH` for it, built from the area's rooms like the others. |
+| `-`, `|` | Join two rooms a space apart (east-west, north-south). |
+| `+` | Joins like `-`/`|` and makes a door (a `GenDoor`, both ways). |
+| `/`, `\` | Join on the diagonal. |
+| a line of `=` | Starts the floor above. |
+| a space | Nothing. |
+
+Rooms side by side are joined. The size is the number of rooms drawn. Each room
+gets `$roomtag_glyph` (the character) and `$roomtag_doors`, besides the
+normal tags, so the usual themes dress a drawn plan, and re-rolling changes
+text and monsters but keeps the floor plan. A short complete file (adapted from
+the G8 fixture):
+
+```xml
+<AREADATA>
+  <AREA id="abbey" layout="MAP" requires="areaname=$">
+    <NAME>$areaname</NAME><CLASS>StdArea</CLASS>
+    <MAP>
+  L+o-B
+    |
+    @-^
+  =====
+      v-o
+    </MAP>
+    <GLYPH char="B" room="abbey_boss" />
+    <ROOM class="StdRoom">
+      <TITLE>Abbey $roomtag_nodetype $roomtag_glyph</TITLE>
+      <DESCRIPTION>Doors: $roomtag_doors.</DESCRIPTION>
+      <EXIT class="Open" />
+    </ROOM>
+  </AREA>
+  <ROOM id="abbey_boss" class="StdRoom">
+    <TITLE>The prior's chapel</TITLE><DESCRIPTION>Candles gutter here.</DESCRIPTION>
+    <EXIT class="Open" />
+  </ROOM>
+</AREADATA>
+```
+
+A map in a file (`mapfile="world/maps/keep.txt"`) is relative to the world
+folder when it begins `world/`, else to `resources/`. Because the room count is
+taken from the map, the area needs no `size`.
+
+## Seeds and reproducibility
+
+Without a seed a build uses the game's shared dice and is different each time.
+A **seed** makes a build repeatable: the same seed, template files, variables and
+engine give the same rooms, text, mobs and items.
+
+**Where a seed comes from:**
+
+| Where | Form |
+|---|---|
+| `GENERATE ... SEED=n`; `GENERATE FILL ... SEED=n`; `GENERATE PREVIEW ... SEED=n`; `GENLAYOUT ... SEED=n` | A seed for that run. |
+| `seed="..."` on an `AREA`, `ROOM`, `MOB` or `ITEM` tag | Seeds just that tag's build. May use variables and math: `seed="$[$GAME_DAY]"` is a dungeon (or boss, or shop stock) of the day. |
+| `SEED=` variable of a `StdAutoGenInstance` or `AutoGrid` | A number, `GAME` or `ENTRY`. |
+| `MPGENERATE AREA ... SEED=n`; `gen.area(file,id,dir,seed,vars)`; `gen.layout(name,size,seed)` | The same. `MPGENERATE ITEM/MOB/ROOM/QUEST` read a `SEED=` word but do not use it. |
+| `REGENERATE AREA SEED=n\|SAME`; `Regenerate SEED=...`; `MPREGENERATE area SEED=...` | See [Fill, regeneration and GENLOCK](#fill-regeneration-and-genlock). |
+
+**Seed values:** a whole number; a math expression (`40+2`); `GAME`, the save's
+own seed (made once, kept in the save's header), mixed with the area's name so
+each named area differs but each is the same on every visit; `ENTRY`, `RANDOM`
+or nothing, a fresh seed (1 to 999999); any other text, a number made from the
+text. With no seed given, `GENERATE` picks one and says it:
+
+```text
+Seed: 482913 (SEED=482913 builds the same again).
+```
+
+**What a seed records.** An area built with a seed carries a blurb flag
+`GENSEED n` and, if `GENERATE AREA` built it, a `GENSOURCE` flag. `$GEN_SEED`
+(and `${js:defined.gen_seed}`) is the seed inside templates.
+
+**How it works.** A seeded run gives the building thread its own dice stream
+started from the seed. Dice rolled by other threads while it runs do not shift
+it, and when the run ends the game's own dice carry on as if nothing had been
+built (so a preview does not change your next combat). The generator's
+post-processing step restarts the stream from a value the seed gives, so it rolls
+the same whatever happened in between. Seeded runs also skip the item cache
+(`DISABLE=ITEMGENCACHE` does the same globally) and metacrafting takes a fixed
+number of tries instead of a time limit; crafted-equipment setup runs on its own
+stream so the first build of a seed equals later ones, even in a fresh process
+(the `g1-cold` fixture).
+
+**Limits.** The same seed gives the same result only for the same inputs: edit a
+template, a recipe set, a name style or the engine and the output changes.
+Changing `areaname` changes the text. A tag-level `seed` nests inside the run's
+seed and returns to it. `RANDOMSEED=` in `coffeemud.ini` (inherited) seeds the
+whole game's dice when the world loads and is unrelated.
+
+**Pattern: keep the dungeon you liked.** Roll `SEED=1` to `20` under
+`GENERATE PREVIEW`, keep the best, and write that `SEED=13` into the
+`StdAutoGenInstance`'s variables, or into a `Regenerate` behavior with
+`SEED=SAME`, so every new game gets that layout.
+
+## JavaScript in templates
+
+CoffeeSUD (G17). `${js:expr}` puts in what a JavaScript expression gives;
+`condition="js:expr"` and `validate="js:expr"` keep a tag when the expression is
+true. A value that begins `js:` is JavaScript for the whole value.
+
+```xml
+<STRING ID="innkeeper_name">${js:require('names').dwarven(2)}</STRING>
+<ROOM condition="js:!cm.store('world').bridgeBurnt" ...> <!-- the bridge, until the story burns it -->
+<MOB validate="js:defined.level_range &gt; 5 &amp;&amp; test('$theme = crypt')" ...>
+```
+
+| Name in the expression | What it is |
+|---|---|
+| `defined` | The generator's variables, by any case: `defined.level_range`. A number reads as a number; a string tag is filled in first. Setting one (`defined.boss='Grak'`) defines it for what is filled in after; setting it to nothing removes it. |
+| `obj` | The object being built (the mob, for its own stats; the room, for its mobs' `validate`), or `null` for a plain string. |
+| `test('cond')` | A condition in the template's own grammar: `test('$level_range > 5')`. |
+| `cm`, `gen`, `sud` | What every script scope has: `cm.store('world')`, the [generator calls](#generating-in-play), the CoffeeSUD helpers ([JavaScript](05-javascript.md)). |
+| `require('name')`, `include(file)`, `debug()` | Libraries from `world/js/lib/` and `resources/js/lib/`. |
+
+Rules and cautions:
+
+- One scope serves a whole build, so a library keeps its state while an area is
+  made. `Math.random` is the game's dice, so a seed covers it.
+- A text's variables are filled from the last to the first, so a `${js:...}`
+  that reads a variable set by a `define` later in the same text sees it.
+- Braces inside an expression must pair up. In XML write `&lt;`, `&gt;`, `&amp;`
+  for `<`, `>`, `&` in attributes. The generator also keeps `%` in an
+  expression as written (`${js:100%20}` is 0, a remainder); put a space after
+  a `%` before a hex-looking pair anyway.
+- When tags with the same id are merged, their `js:` conditions are joined with
+  `&&` (a plain one is wrapped in `test()`).
+- An error stops the build with the template, tag and line named (it is also in
+  `JS ERRORS`); inside a `condition` an error counts as false.
+- `GENERATE CHECK` compiles every `js:` condition and `${js:...}`.
+- With `JSCRIPTS=0` in `coffeemud.ini` no template JavaScript runs: `${js:...}`
+  gives nothing and `js:` conditions are false. Any other `JSCRIPTS` value lets
+  templates run; I found no per-script approval step or time limit in the
+  template path (the check is only for `0`).
+- Keep expressions cheap and free of blocking calls: they run on the game
+  thread during generation.
+
+Do not confuse the two kinds of "variables": template variables
+(`defined`, `$name`) live for one build; MOBPROG variables and `cm.store` are
+saved game state.
+
+## MQL, the query language
+
+MQL (MUD Query Language) selects, and can change or delete, objects that
+already exist in the world, with an SQL-like syntax. In generation it appears in
+`OBJECT` tags, `INSERT="SELECT: ..."`, `${SELECT: ...}` values and
+conditions (the random quest documents use it to pick real mobs and rooms).
+Outside generation it is available as commands and in scripts:
+
+| Where | Syntax |
+|---|---|
+| `LIST` | `LIST SELECT: ...` (world); `LIST AREA SELECT: ...` (your area only). |
+| `MODIFY` | `MODIFY UPDATE: ...` / `MODIFY AREA UPDATE: ...`. |
+| `DESTROY` | `DESTROY DELETE: ...` / `DESTROY AREA DELETE: ...` (shows a delete preview). Needs `CMDAREAS`. |
+| MOBPROG | `FOR x = SELECT: ...` style loops over a query's rows ([MOBPROG](04-mobprog.md)). |
+
+### Statement forms
+
+```text
+SELECT: <what> FROM <set> [WHERE <conditions>]
+UPDATE: <what> SET <key> = <value> [, <key> = <value> ...] FROM <set> [WHERE <conditions>]
+```
+
+(`DELETE:` is `SELECT: .` run through the delete command.) The colon after the
+verb is required. Keywords are case-insensitive.
+
+**SELECT clause.** Comma-separated terms: a property of the objects in the set
+(`NAME`, `CLASS`, `LEVEL`...; unknown properties give an empty string), `*` or
+`.` for the object itself, a quoted string or a number, an `$tagname` variable,
+or a parenthesised sub-`SELECT:`. `term AS alias` renames a column.
+A term may be followed by a narrowing suffix, `\COUNT`, giving how many times
+that value appears (`SELECT: name, name\count FROM areas\mobs`). A term may be
+prefixed with an aggregate and a backslash: `COUNT\*`, `MEDIAN\level`,
+`MEAN\level`, `UNIQUE\name` (and `FIRST`, `ANY` exist in the parser).
+
+**FROM clause.** A *set*: `AREAS`, `AREA` (the area in context), `ROOMS`,
+`NPROOMS` (rooms except private property), `MOBS`, `ITEMS`, `PLAYERS`, a CMFS
+path to a `.cmare` file (`::/resources/map/plains.cmare`; that is, to inspect
+exported content without it being in the world), or a parenthesised
+sub-`SELECT:`. In a script the implied set is the scripted object, so on a room
+`SELECT: * FROM mobs` is the mobs in that room.
+
+A set may be narrowed with backslash suffixes, each applying to the term before
+it: `AREAS`, `ROOMS`, `NPROOMS`, `EXITS`, `MOBS`, `MOB`, `ITEMS`, `ITEM`, `OWNER`,
+`FACTIONS` (rows with `ID` and `VALUE`), `PLAYERS`, `PLAYER`, `RESOURCES`,
+`NPCS`, `NPC`, `EQUIPMENT`, `ABILITIES`, `PROPERTIES`, `EFFECTS`, `BEHAVIORS`,
+and `TAGGED` (objects carrying the tag named by the next term).
+The parser also knows `ORPHROOMS`, `RACES`, `SHOP`, `SHOPS`, `SHOPITEMS`.
+`SELECT: * FROM AREAS\MOBS\EQUIPMENT` is every worn item of every mob.
+Make sure a suffix makes sense for the term before it.
+
+**WHERE clause.** Conditions joined by `AND` / `OR` with parentheses. A
+condition is `term comparator term`. Comparators: `=`, `<>` or `!=`, `>`, `<`,
+`>=`, `<=`, `IN` (in a set, or a substring), `NOTIN`, `LIKE` (matches a
+[zapper mask](24-behaviors-and-masks.md)), `NOTLIKE`, `MATCH` (a regular
+expression) and `NOTMATCH`. Narrowing suffixes work in terms.
+
+```text
+LIST SELECT: COUNT\* FROM AREAS\MOBS
+LIST AREA SELECT: name, level FROM mobs WHERE level > 20 AND name LIKE "-NAME +'goblin'"
+MODIFY AREA UPDATE: mobs SET level = 12 WHERE name = 'a goblin'
+```
+
+(The second `WHERE` shows the shape of a `LIKE` mask; check masks with a small
+`LIST` before you `UPDATE` or `DELETE`.) MQL `UPDATE` and `DELETE` act on live
+objects in your area or the world; a touched room is marked unsaved
+(`LIST UNSAVED`, `SAVE CHANGED`; see
+[World workflow](02-world-workflow.md#unsaved-rooms-undo-and-history)).
+
