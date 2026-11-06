@@ -301,7 +301,7 @@ CREATE EXIT east GenDoor
 
 - If the room beyond links back and has an exit there too, that far-side exit is replaced with a copy of the new one. If the far side has no exit, or no link back, only your side changes. (For separate treatment of each side, `DESTROY EXIT` one side first.)
 - If this room already has an exit and the far room's exit back is a generic exit of the *same class* as the one you ask for, the engine copies the far-side exit, opens the exit editor on the copy, and then puts the edited result on both ends. Running `CREATE EXIT north GenDoor` twice is therefore the way to edit a door on both sides at once.
-- Creating a *generic* exit class does not prompt you; follow it with `MODIFY EXIT [direction]` to name it, set its locks and text.
+- Creating a *generic* exit class does not normally prompt you (the same-class case above is the exception); follow it with `MODIFY EXIT [direction]` to name it, set its locks and text.
 - An exit template (`TEMPLATE ADD [id] [direction]`) can be used instead of a class.
 - Needs `CMDEXITS`. Refused in a grid child.
 
@@ -361,7 +361,7 @@ In the exit editor set: Has a door `Y`, Defaults closed `Y`, Has a lock `Y`, Def
 1. Edit once, then repeat the creation: after the first `CREATE EXIT north GenDoor`, run `CREATE EXIT north GenDoor` *again*. Both ends are now a `GenDoor`, so the engine opens the exit editor on a copy of the far end, and when you leave it puts the result on *both* ends.
 2. Or run `MODIFY EXIT` in each room, one for each end.
 
-For standard classes, `CREATE EXIT north LockedDoor` then `MODIFY EXIT north TEXT guild.gate` (and the same, `south`, from the other side if the far end was not replaced; `CREATE EXIT` replaces it when it already had an exit).
+For standard classes, `CREATE EXIT north LockedDoor` replaces both ends (when both had exits), and `MODIFY EXIT north TEXT guild.gate` sets the key code on your end only; go to the other room and run `MODIFY EXIT south TEXT guild.gate` there.
 
 ### Keys
 

@@ -314,7 +314,7 @@ Codes the engine also accepts as *object arguments* of functions
 | `$J` | a random player's subject pronoun | |
 | `$k` | host's possessive (his, her, its) | |
 | `$K` | a random player's possessive | |
-| `$l` | the visible creatures in the room except the host, each in double quotes, space separated | usable in `FOR $0 IN $l`-style loops |
+| `$l` | the visible creatures in the room except the host, each in double quotes, space separated | |
 | `$L` | the visible items lying loose in the room, quoted, space separated | |
 | `$m` | actor's possessive | |
 | `$M` | target's possessive | |
@@ -376,7 +376,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Test:** `RANDNUM(max cmp n)`: rolls 1..max and compares the roll.
 - **Value:** `$%RANDNUM(max)%`: a roll from 1 to max.
 - **Example:** `IF RANDNUM(6 >= 5)` (true one time in three)
-- **Notes:** `max` is a whole number or an arithmetic expression (as `MATH`). If it is not an expression, the number of *words* in it is used, so `RANDNUM($<WORLD SUSPECTS>)` picks a position in a space-separated list. `n` is read the same way. See also [RAND0NUM](#rand0num).
+- **Notes:** `max` is a whole number or an arithmetic expression (as `MATH`). If it is not an expression, the number of *words* in it is used, so `$%RANDNUM($<WORLD SUSPECTS>)%` picks a position in a space-separated list. `n` is read the same way. See also [RAND0NUM](#rand0num).
 
 ### RAND0NUM
 
@@ -627,7 +627,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Test:** `TAGGED(tag)`: true if any object in the world has the tag.
 - **Value:** `$%TAGGED(tag)%`: `true` or `false`.
 - **Example:** `IF TAGGED(grateful) AND !TAGGED(hunted)`
-- **Notes:** not inherited. Counts creatures, items, rooms and exits that carry the tag. `FOR $0 IN #tag` loops over them (see [27-mobprog-commands.md](27-mobprog-commands.md)).
+- **Notes:** not inherited. Counts every object in the world that carries the tag. `FOR $0 IN #tag` loops over them (see [27-mobprog-commands.md](27-mobprog-commands.md)).
 
 ### NUMTAGGED
 
@@ -1276,7 +1276,7 @@ area" its area.
 - **Test:** `AREAPC(number|name keywords)`: the same for the player-controlled characters in the host's whole area.
 - **Value:** `$%AREAPC(number|name)%`: the character's name.
 - **Example:** `IF AREAPC(1 anna)`
-- **Notes:** counts the controllable characters currently in the world, so a party member in another area does not count.
+- **Notes:** reads the online player sessions in the host's area, so a party member in another area does not count.
 
 ### NUMMOBSROOM
 

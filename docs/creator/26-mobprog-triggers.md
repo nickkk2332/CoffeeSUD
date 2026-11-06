@@ -96,7 +96,7 @@ There are four kinds of trigger:
 | Event | Game code reports something that is not a message (a skill learned, a quest started) through `ScriptEvents`. Nothing is looked for until some script in the world has the trigger. | `SKILL_PROG`, `QUEST_PROG`, `WEATHER_PROG`, `GAME_PROG` |
 | Called | A script or a command calls it by name. | `FUNCTION_PROG`, `SIGNAL_PROG` |
 
-There are three timings, shown in the index:
+There are four timings, shown in the index:
 
 - **before**: the trigger runs while the thing is still being decided, so `RETURN CANCEL` can stop it (`CNCLMSG_PROG`, `CMDFAIL_PROG`, `READ_PROG`, `VERB_PROG`, the `SAVE` kind of `GAME_PROG`).
 - **now**: it runs at once in the middle of the event (`DEATH_PROG`, `DAMAGE_PROG`, `TALK_PROG`, `USE_PROG`...).

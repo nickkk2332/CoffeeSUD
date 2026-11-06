@@ -990,10 +990,12 @@ To give a town a law, using a copy of the shipped laws:
 2. Put the people in the world. **Officers** are NPCs whose name or
    displayed description contains an `OFFICERS` word *and* that wander: they must
    have the `Mobile` behavior. **The judge** is an NPC whose name or
-   description contains a `JUDGE` word and who does *not* wander. An NPC can
-   be forced into either role (or kept out of both) with the ambiance tags
-   `#OFFICER`, `#JUDGE` and `-OFFICER` set by `Prop_Ambiance`; see
-   [23-properties-reference.md](23-properties-reference.md).
+   description contains a `JUDGE` word and who does *not* wander. An NPC whose
+   name has no such word can be named into a role with the ambiance tags
+   `#OFFICER` or `#JUDGE`, and `-OFFICER` keeps an NPC out of both roles;
+   `AmbianceAdder` (or `Prop_Adjuster`) attaches them (see
+   [23-properties-reference.md](23-properties-reference.md)). The wander rules
+   still apply.
 3. Make the **jail** and **release** rooms and name them in `JAIL` and
    `RELEASEROOM` (a room ID, or text in the room's title; a trailing `$`
    anchors the end of the title, so `The Jail$` matches "The Jail" but not "The
