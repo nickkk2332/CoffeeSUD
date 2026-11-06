@@ -350,7 +350,7 @@ override; all are in `core/interfaces/` unless noted):
 | `StatsAffecting` | `affectPhyStats(Physical affected, PhyStats stats)`, `affectCharStats(MOB, CharStats)`, `affectCharState(MOB, CharState)` |
 | `Contingent` | `destroy()`, `amDestroyed()`, `isSavable()`, `setSavable(boolean)` |
 | `Modifiable` | `getStatCodes()`, `getStat(String)`, `setStat(String, String)`, `isStat(String)`, `getSaveStatIndex()` |
-| `Expireable` | `expirationDate()`, `setExpirationDate(long)` (a game time; see below) |
+| `Expireable` | `expirationDate()`, `setExpirationDate(long)` (a `GameTime.now()` time) |
 | `Affectable` (`Physical`) | `basePhyStats()`, `phyStats()`, `recoverPhyStats()`, `addEffect(Ability)`, `addNonUninvokableEffect(Ability)`, `delEffect(Ability)`, `fetchEffect(String ID)`, `effects()`, `numEffects()`, `eachEffect(EachApplicable<Ability>)`, `delAllEffects(boolean)` |
 | `Behavable` (`PhysicalAgent`) | `addBehavior(Behavior)`, `delBehavior`, `fetchBehavior(String ID)`, `behaviors()`, `addScript(ScriptingEngine)`, `scripts()`, `delAllBehaviors()` |
 | `MOB` (`MOBS/interfaces`) | `baseCharStats()` / `charStats()` / `recoverCharStats()`, `baseState()` / `curState()` / `maxState()` / `recoverMaxState()` / `resetToMaxState()`, `location()` / `setLocation(Room)`, `getStartRoom()` / `setStartRoom(Room)`, `bringToLife(Room, boolean resetStats)`, `removeFromGame(...)`, `getVictim()`, `isPlayer()` / `isMonster()`, `session()`, `tell(String)`, `playerStats()`, `getMoney()`; from `ItemPossessor`: `items()`, `addItem`, `delItem`, `findItem`, `moveItemTo`; from `AbilityContainer`: `addAbility`, `fetchAbility`, `abilities()`; from `MUDCmdProcessor`: `enqueCommand`, `doCommand`, `dequeCommand`, `actions()` |
@@ -521,7 +521,7 @@ interface in the third column.
 | `CMLib.commands()` | `CommonCommands` | `CommonMsgs` | The shared bodies of common commands, as `post*` methods: `postGet`, `postDrop`, `postGive`, `postOpen`, `postWear`, `postSay`, `postLook`, `postFlee`, `postCommandFail`, `postCommandRejection`, `handleUnknownCommand` |
 | `CMLib.english()` | `EnglishParsing` | `EnglishParser` | Command and target parsing: `findCommand(mob, words)`, `fetchItemList`, `startsWithAnIndefiniteArticle`, skill invocation |
 | `CMLib.masking()` | `MaskingLibrary` | `MUDZapper` | The zapper mask language: `getPreCompiledMask(String)`, `maskCheck(...)`. See [Behaviors and masks](24-behaviors-and-masks.md) |
-| `CMLib.tracking()` | `TrackingLibrary` | `MUDTracker` | Movement and path finding: `walk`, `move`, tracking helpers |
+| `CMLib.tracking()` | `TrackingLibrary` | `MUDTracker` | Movement and path finding: `walk(mob, direction, flee, nolook)`, `findTrailToRoom(...)`, tracking helpers |
 | `CMLib.coffeeMaker()` | `GenericBuilder` | `CoffeeMaker` | Objects to and from XML: `getItemXML`, `getMobXML`, `getRoomXML`, `getAnyGenStat`, `setAnyGenStat`, `unpackItemFromXML` |
 | `CMLib.genEd()` | `GenericEditor` | `CMGenEditor` | The in-game editor screens (`modifyStdItem`, `modifyStdMob`, `modifyGenRace`, `genMiscText`...) |
 | `CMLib.catalog()` | `CatalogLibrary` | `CMCatalog` | Catalogued template mobs and items |
@@ -643,7 +643,7 @@ is not to start threads at all (see the next section).
 
 ### The seeded dice
 
-`CMath.random()`, `CMLib.dice()` and `CMath.s_int`-style helpers draw from one
+`CMath.random()` and the `CMLib.dice()` rolls draw from one
 `GameRandom` that behaves like `java.util.Random` but whose state is saved and
 restored with a campaign save, and which `RANDOMSEED=n` seeds for reproducible
 runs. Code that must replay identically (including tests) uses only these.
@@ -885,8 +885,10 @@ Rules of thumb:
    Do that work in `executeMsg`.
 4. Do not post a new message from inside `okMessage`. Post it from
    `executeMsg`, or attach it as a trailer.
-5. Never throw out of a handler; the engine logs the exception and the event
-   dies half-processed.
+5. Never let an exception escape a handler. It unwinds through the room's loop,
+   so the event is abandoned half-processed, and the code that posted it (a
+   command, a tick) fails: `StdMOB.doCommand` logs it and tells the player "you
+   ran into a game bug".
 6. The type of `msg.target()` is `Environmental`; cast only after `instanceof`.
 
 To change an existing rule without editing its class, add an effect or a
@@ -937,6 +939,11 @@ apart; the constants are in `Tickable`:
 | `TICKID_MISCELLANEOUS` (20), `TICKID_PROPERTY_SPECIAL` (21), `TICKID_ELECTRONICS` (22), `TICKID_SUPPORT` (23), `TICKID_SPECIALMANEUVER` (24), `TICKID_SPECIALCOMBAT` (25), `TICKID_BALLISTICK` (26), `TICKID_EVENT` (27) | General purpose and subsystem timers |
 | `TICKID_SOLITARYMASK` (65536) | OR it in to give the object a tick group of its own (the library service tickers use `TICKID_SUPPORT \| TICKID_SOLITARYMASK`); otherwise ticking objects with the same period share a group |
 | `TICKID_LONGERMASK` (256), `TICKID_SHORTERMASK` (255) | Masks for sorting ids by group |
+
+An exception that escapes `tick` is logged by the tick group
+(`StdTickClient.tickTicker`) and that object is dropped from its group: it never
+ticks again until something starts its tick anew. Catch what you can recover
+from inside `tick`.
 
 Objects that tick by the same period are batched into tick groups
 (`core/threads/StdTickGroup`); `OBJSPERTHREAD` (512) caps a group's size. A group
@@ -1474,8 +1481,8 @@ Getting a spell to players. The class existing is not enough; a player must
   exercised by any shipped ability).
 - **A race gets it**: list it in the race's `racialAbilityNames()`.
 - **A mob or item carries it**: add the ability to the mob (`mob.addAbility(CMClass.getAbility("Spell_Fortify"))`), or put it on an item as a spell-casting property.
-- **A script grants it**: `MPABILITY`-style commands; see the
-  [MOBPROG command reference](27-mobprog-commands.md).
+- **A script applies it**: `MPAFFECT` puts an ability on a target as an effect
+  (see [MPAFFECT](27-mobprog-commands.md#mpaffect)); it does not teach it.
 
 Give the spell a help entry so `HELP FORTIFY` works. Ability help lives in
 `resources/help/spell_help.ini` (spells), `prayer_help.ini`, `chant_help.ini`,
@@ -1514,7 +1521,7 @@ to a room, mob, item, exit or area by that ID with its parameters as the text.
 | --- | --- |
 | `ID()` | `Prop_...` |
 | `name()` | A short name for lists |
-| `canAffectCode()` | Which hosts it may be put on (`Ability.CAN_MOBS \| Ability.CAN_ITEMS ...`). Default `0`: nothing |
+| `canAffectCode()` | Which hosts it is meant for (`Ability.CAN_MOBS \| Ability.CAN_ITEMS ...`). Default `0`: nothing. The editors list and highlight the properties that fit a host (`canAffect(host)`); they do not forbid another |
 | `setMiscText(String)` | Parse the parameters into fields, then `super.setMiscText(text)` so `text()` returns them |
 | `accountForYourself()` | The description shown by identify spells and the like |
 | `affectPhyStats`, `affectCharStats`, `affectCharState` | Alter the host's numbers |
@@ -1603,7 +1610,7 @@ put the file in `Behaviors/`.
 | Method | Notes |
 | --- | --- |
 | `ID()` | The class name; this is what builders type |
-| `canImproveCode()` | Which hosts it fits (`Behavior.CAN_MOBS`, `CAN_ITEMS`, `CAN_ROOMS`, `CAN_AREAS`, `CAN_EXITS`, ORed). Default is mobs only; a wrong value makes builder commands refuse to attach it |
+| `canImproveCode()` | Which hosts it fits (`Behavior.CAN_MOBS`, `CAN_ITEMS`, `CAN_ROOMS`, `CAN_AREAS`, `CAN_EXITS`, ORed). Default is mobs only. The behavior editor's `?` list highlights the behaviors that fit the host (`canImprove(host)`); quests also test `canImprove(Behavior.CAN_MOBS)` before giving a behavior to a mob |
 | `setParms(String)` | Parse the parameters into fields; call `super.setParms` first |
 | `tick(Tickable ticking, int tickID)` | Called by the host's own tick. `ticking` is the host. A mob host sends `TICKID_MOB`, an item `TICKID_ITEM_BEHAVIOR`, a room `TICKID_ROOM_BEHAVIOR`, an area `TICKID_AREA`, an exit `TICKID_EXIT_BEHAVIOR`: test the ID you expect and return `true` for the rest. Call `super.tick` and honour a `false` |
 | `okMessage(Environmental host, CMMsg)`, `executeMsg(...)` | React to what happens around the host |
@@ -1693,6 +1700,14 @@ behaviors that already exist are listed in
 `arc_behaviors.ini` as `BEHAVIOR_SNEEZER=` (copy `BEHAVIOR_GOLDLOOTER=`).
 
 ### Item
+
+A standard item class is saved in the world as its class ID, uses, level,
+ability, rejuv and `text()` (`CoffeeMaker.getItemXML`), and its `MODIFY` screen
+offers only those (`CMGenEditor.modifyStdItem`): the name, description, value,
+behaviors and effects come from the constructor. Extend a generic class
+(`GenItem`, `GenWeapon`, or the `Gen` version of the base you chose) when builders
+should be able to change them, as the shipped `GenFood`, `GenBow` and
+`GenLightSource` do.
 
 Pick the base class that already does most of what you want, in
 `Items/Basic/`, `Items/Weapons/`, `Items/Armor/` or `Items/MiscMagic/`:
@@ -1785,8 +1800,18 @@ Most mobs need no Java at all: a builder makes a `GenMob` (or a `GenShopkeeper`,
 `GenRideable`...) and gives it behaviors, properties, equipment and scripts. Write
 a mob class when the mob needs logic that cannot be a behavior, or a fixed
 creature a builder should be able to create by class name. Base class:
-`MOBS/StdMOB` (or `StdRideable`, `StdShopKeeper`, `StdBanker`...). The
-constructor sets everything:
+`MOBS/StdMOB` (or `StdRideable`, `StdShopKeeper`, `StdBanker`...).
+
+**A standard mob class is fixed.** The world file stores such a mob as its class
+ID, level, ability, rejuvenation time and its `text()` string
+(`CoffeeMaker.getMobXML`), and the `MODIFY` screen for it offers only those four
+(`CMGenEditor.modifyStdMob`). Its name, description, stats, equipment,
+behaviors and permanent effects all come from the constructor and cannot be
+set in data. When builders should be able to configure the mob, extend a
+generic class instead (`GenMob`, as `GenUndead` does; `GenRideable`;
+`StdShopKeeper` for `GenShopkeeper`) and add your Java rules to it. The same is
+true of items: `GenFood` extends `StdFood`, `GenBow` extends `StdBow`. The
+constructor of a standard class sets everything:
 
 ```java
 package com.planet_ink.coffee_mud.MOBS;
@@ -2350,9 +2375,9 @@ persistence](state-and-persistence.md) and
 | A `.js` file with a `//extends` line (`resources/examples/Lemming.js`) | A class written in JavaScript; see [JavaScript](05-javascript.md) |
 
 Whichever you use, remember that the class set is read at boot and the world is
-built from it: a world file that names a class which is not loaded gets a
-warning in the log and the object is skipped or replaced. Test a restore as well
-as a new game.
+built from it: when a world file names an effect or behavior whose class is not
+loaded, the loader logs `Unknown behavior ... skipping` (or `Unknown ability ...
+skipping`) and drops it from that object. Test a restore as well as a new game.
 
 To see an effect or class in play quickly:
 
@@ -2384,3 +2409,450 @@ To see an effect or class in play quickly:
   locale type; see [Areas, rooms and exits](20-areas-rooms-exits.md).
 - A race or class: `MODIFY MOB` and set its race or class, or start a new
   character with a profile that allows it.
+
+## Worked examples
+
+The listings above compile against the current sources with `javac --release 8`.
+The fixture files below are modelled on `tools/fixtures/fixes/dt1-vars.js` and
+use only calls that file and `prelude.js` already make, but they were written
+for this chapter and have not been run; if one fails, its message names the
+check.
+
+### Example 1: a command, built, tested and documented
+
+Goal: a `TALLY` command that anyone in a single-player game can use.
+
+1. Save the `Tally` listing as
+   `CoffeeMud/com/planet_ink/coffee_mud/Commands/Tally.java`.
+2. Build. A new file changes the source list, so this is a clean build.
+
+   ```sh
+   CoffeeMud/build.sh
+   ```
+
+   `Build OK.` means it compiled. On `Build FAILED.` read `CoffeeMud/.build.log`.
+3. Write the test as `tools/fixtures/fixes/tally.js`. `fixes.sh` puts
+   `prelude.js` in front of it (so `M`, `R`, `CMClass`, `check`, `done` and
+   `newMob` exist) and runs it with `JRUN` in a builder-mode game on a scratch
+   copy of the world.
+
+   ```js
+   // TALLY counts what a mob carries and wears.
+   FIXFILE = "tally";
+   var R = M.location();
+   var cmd = CMClass.getCommand("Tally");
+   check("loaded", cmd != null, "the Tally command was not found");
+   // a mob whose output is kept in memory
+   var B = newMob("GenMob", R);
+   B.setName("Fixtallier");
+   var BS = CMClass.getCommon("FakeSession");
+   BS.initialize(null, "MEMORY");
+   B.setSession(BS);
+   BS.setMob(B);
+   function out() { return "" + field(BS, "bout").toString(); }
+   function tally(words) {
+   	var L = new java.util.ArrayList();
+   	L.add("TALLY");
+   	for (var i = 0; i < words.length; i++) L.add(words[i]);
+   	cmd.execute(B, L, 0);
+   }
+   // an item in the inventory
+   B.addItem(CMClass.getItem("StdItem"));
+   tally([]);
+   check("counts-carried", out().indexOf("carries 1 and wears 0") >= 0, "the output was: " + out());
+   // someone who is not here
+   tally(["nobodyatall"]);
+   check("no-such-target", out().indexOf("You don't see anyone like that here.") >= 0, "the output was: " + out());
+   done();
+   ```
+
+4. Run just this test. It builds, starts a game, runs the file and prints each
+   check:
+
+   ```sh
+   tools/fixes.sh tally
+   ```
+
+   You should see `ok    tally/loaded`, `ok    tally/counts-carried`,
+   `ok    tally/no-such-target` and `PASS`. `KEEP=1 tools/fixes.sh tally` keeps the
+   scratch folder (and prints where) so you can read the game's transcript.
+5. Add the help entry to `CoffeeMud/resources/help/help.ini` (see
+   [Command](#command)), and try it by hand:
+
+   ```sh
+   cd CoffeeMud && ./sud.sh DEV=1
+   ```
+
+   ```text
+   tally
+   ```
+
+6. Run the wider checks before committing (`tools/check.sh`, below).
+
+### Example 2: an effect and a behavior on a generic mob, saved and restored
+
+Goal: `Prop_Sturdy` and `Sneezer` on a generic mob, and proof that the mob can be
+written to a file and read back with both.
+
+1. Add the `Prop_Sturdy` and `Sneezer` listings in `Abilities/Properties/` and
+   `Behaviors/`, and build.
+2. Add `tools/fixtures/fixes/sturdy.js`:
+
+   ```js
+   // Prop_Sturdy lowers armor; Sneezer sneezes and keeps its count across a save.
+   FIXFILE = "sturdy";
+   var R = M.location();
+   var m = newMob("GenMob", R);
+   m.setName("a sturdy sneezer");
+   var base = m.basePhyStats().armor();
+   var P = CMClass.getAbility("Prop_Sturdy");
+   check("property-loaded", P != null, "Prop_Sturdy was not found");
+   P.setMiscText("BONUS=20");
+   m.addNonUninvokableEffect(P);
+   m.recoverPhyStats();
+   check("armor-lowered", m.phyStats().armor() == base - 20, "armor " + m.phyStats().armor() + " from " + base);
+   var B = CMClass.getBehavior("Sneezer");
+   check("behavior-loaded", B != null, "Sneezer was not found");
+   B.setParms("CHANCE=100");
+   m.addBehavior(B);
+   tickMob(m);
+   check("sneezed", ("" + B.getStat("STATE")).indexOf("<SNEEZES>1</SNEEZES>") >= 0, "state is '" + B.getStat("STATE") + "'");
+   // written out and read back, as the catalog and the world files do for a generic mob
+   var xml = "" + CMLib.coffeeMaker().getMobXML(m);
+   var copy = CMLib.coffeeMaker().unpackMobFromXML(xml);
+   check("copy-made", copy != null, "the mob did not unpack");
+   check("copy-property", copy.fetchEffect("Prop_Sturdy") != null && copy.fetchEffect("Prop_Sturdy").text() == "BONUS=20", "effect missing or changed");
+   check("copy-behavior", copy.fetchBehavior("Sneezer") != null && ("" + copy.fetchBehavior("Sneezer").getParms()) == "CHANCE=100", "behavior missing or changed");
+   m.destroy();
+   done();
+   ```
+
+3. `tools/fixes.sh sturdy`.
+
+What this shows about the design: the property's parameters and the behavior's
+parameters survive the round trip because they are the object's configuration
+string (`text()`, `getParms()`); the behavior's count (`sneezes`) is runtime state,
+so it survives a *campaign save* only because `getRunState()` and `setRunState()`
+write it (the campaign save, not the `getMobXML` round trip above, is where
+`STATE` is stored). To test that part, use a played save test like the
+`saves*` groups in `tools/fixes.sh`, which save with `SAVE name` and restore
+with `RESTORE=name`.
+
+### Example 3: a spell a class can learn
+
+Add `Spell_Fortify` to `Abilities/Spells/`, `Tinker` to `CharClasses/`, build, and
+start a developer game. Then:
+
+```text
+JRUN resources/scratch.js
+```
+
+with the file from [Getting your classes into a game](#getting-your-classes-into-a-game)
+changed to give yourself the ability:
+
+```js
+var CMClass = Packages.com.planet_ink.coffee_mud.core.CMClass;
+var A = CMClass.getAbility("Spell_Fortify");
+A.setProficiency(100);
+mob().addAbility(A);
+mob().tell("You now know " + A.name() + ".");
+```
+
+```text
+cast fortify
+```
+
+With no name typed, a beneficial spell takes you as its target. It costs mana,
+posts the casting message and starts a timed effect that lowers your armor
+value. When the effect ends you see `Your fortification fades.`. As a Tinker, the mapping in
+`Tinker.initializeClass()` makes it learnable at level 3.
+
+## Coding conventions
+
+The code base has one style, and a new file should look like its neighbours.
+
+- **Tabs** for indentation, never spaces. No trailing whitespace. UTF-8.
+- **Braces on their own lines** (Allman). A body of one statement takes no
+  braces. `if(`, `for(`, `while(`, `switch(` have no space before the
+  parenthesis.
+- **`else` and `if` on separate lines**: `else` alone on a line, then `if(...)` at
+  the same indent on the next, for a chain of tests.
+- **Long conditions break before the operator**, each test in its own
+  parentheses:
+
+  ```java
+  if((msg.amITarget(this))
+  &&(msg.targetMinor() == CMMsg.TYP_GET)
+  &&(!CMLib.flags().isGettable(this)))
+  ```
+
+- **`final` on every parameter and on locals that are not reassigned**, and
+  `@Override` on every override (including interface methods).
+- **Java 8 only.** No `var`, no newer library calls. Lambdas and `String.join`
+  are fine.
+- **Names**: classes and IDs `UpperCamel` (properties `Prop_Name`, spells
+  `Spell_Name`); fields and methods `lowerCamel`; constants `UPPER_CASE`;
+  `protected` rather than `private` for anything a subclass may want, since most
+  customisation is by subclassing.
+- **License header** on every file; Javadoc on public and protected methods of
+  interfaces and `core` classes. Add a short comment naming the DEVPLAN item
+  (`// N10:`) when a change implements one, as the existing code does.
+- **Use the helpers**: `CMath`, `CMStrings`, `CMParms`, `CMLib.flags()`,
+  `CMLib.commands().post...`, `CMClass.getX`. Do not re-implement them.
+- **Never call `System.out`/`System.err`** or `printStackTrace`; use `Log`.
+- **Catch narrowly and log.** `Log.errOut(ID(), e)` with the object's ID is the
+  convention. An empty `catch` needs a comment saying why it is safe.
+- **No sleeping, no blocking, no new threads** in game code (see above).
+- **Game time, seeded dice**: `GameTime.now()`, `CMath.random()`/`CMLib.dice()`.
+- **Static state**: a `static` field that holds world or save data survives an
+  in-game `RESTORE`, which restarts the engine inside the same process
+  (`SaveGame`). Reset such state in `SaveGame.beforeBoot` (look at what it
+  already resets), or keep the data on a game object instead.
+- **Dispose of what you create**: `destroy()` mobs and items that leave the game
+  (a temporary factory mob made for a message is destroyed after it is sent, as
+  `Room.showHappens` does).
+- **Iterate with the engine's helpers** (`eachEffect`, `eachItem`, `eachBehavior`,
+  the `Enumeration`s) and do not remove from a list you are walking; collect
+  first, then act.
+- **Prefer a behavior or property to a change in a `Std` class**, and a `core/`
+  helper with a one-line hook to a large change in a `Std` class. Say in a
+  comment what the hook is for.
+- **Commit style**: one logical change per commit; the checks in
+  [Testing a Java change](#testing-a-java-change) must pass.
+
+## Logging
+
+Use `core/Log` for all output. Calls take an optional module name, which is
+printed in front of the message; use your class's `ID()`:
+
+```java
+Log.sysOut(ID(), "loaded 12 recipes");            // informational
+Log.warnOut(ID(), "recipe 7 has no ingredient");  // suspicious
+Log.errOut(ID(), "could not open " + name);       // an error
+Log.errOut(ID(), exception);                      // an error with a stack trace
+Log.errOut(exception);                            // when there is no module
+Log.debugOut(ID(), "state is " + state);          // only when the DBGMSGS channel is on
+```
+
+The channels are `info` (`sysOut`, `infoOut`), `warning` (`warnOut`), `error`
+(`errOut`), `debug` (`debugOut`), `help` (`helpOut`), `kills` (`killsOut`),
+`combat` (`combatOut`) and `access` (`accessOut`), controlled by
+`SYSMSGS`, `WRNMSGS`, `ERRMSGS`, `DBGMSGS`, `HLPMSGS`, `KILMSGS`, `CBTMSGS` and
+`ACCMSGS` in `coffeemud.ini` (`ON`, `OFF`, `FILE`, `BOTH`, `OWNFILE`). The
+single-player launcher sets the first four to `FILE`, so they go to
+`CoffeeMud/mud.log` (older logs rotate to `mud1.log` ... by `NUMLOGS`) and not
+to the console. Check `Log.debugChannelOn()` (also `errorChannelOn()`, ...)
+before building an expensive message.
+
+To trace one subsystem without flooding the log, the `DEBUG=` setting turns on
+named debug flags (`CMSecurity.DbgFlag`); the useful ones are `MESSAGES`
+(every message through a room, from `StdRoom.sendAndExec`), `CLASSLOADER`
+(each class loaded), `BADSCRIPTS`, `MUDPERCOLATOR`, `GMODIFY`, `MERGE`,
+`BOOTSTRAPPER` and `EVERYTHING`. Test a flag in code with
+`CMSecurity.isDebugging(CMSecurity.DbgFlag.MESSAGES)`. Some flags in the enum
+belong to features that CoffeeSUD removed (`TELNET`, `HTTPREQ`, `I3`, `IMC2`,
+`SMTPSERVER`); they do nothing. CoffeeSUD adds a developer log of its own
+(`core/DevLog`, the `DEVLOG` and `DEVWATCH` commands, and `debug(x)` in
+scripts) that can be watched in the game; see
+[Testing and release](13-testing-release.md). The log files and where they are
+written are in [Installing and running](18-installing-and-running.md) and
+[Configuration and administration](19-configuration-and-administration.md).
+
+## Localisation
+
+Player-visible text is written in English in the code and translated by lookup
+at run time.
+
+- **`L(String text, String... values)`** is inherited by every `Std` class
+  (`StdAbility`, `StdBehavior`, `StdCommand`, `StdItem`, `StdMOB`, `StdRoom`,
+  `StdLibrary`...). It looks the text up in the current translation (the
+  `LANGUAGE` and `COUNTRY` settings choose `resources/translation_<lang>_<country>.properties`;
+  the shipped `en`/`TX` file translates nothing), then replaces `@x1`, `@x2`,
+  ... with the values, in order, **after** translating (so the translation sees
+  the sentence with its `@x` placeholders). `@x0` stands for all the values after
+  the highest one already used, joined (quoted where needed). Use placeholders;
+  never concatenate pieces of a sentence.
+- **Static strings**: where `L()` is not available (a `static` field), use
+  `CMLib.lang().L("text")`, the pattern `private final static String
+  localizedName = CMLib.lang().L("Shield");` in the shipped files.
+- **Command words**: `I(String[])` (static on `StdCommand`; `StdLibrary` has
+  both `I(String)` and `I(String[])`, `StdBehavior` has `I(String)`) translates
+  the trigger words in `getAccessWords()` and `triggerStrings()` through
+  `CMLib.lang().commandWordTranslation`.
+- **Write the argument as a plain string literal**: the
+  `application/LocalizationHelper` tool finds the strings by scanning for
+  `L("..."` and `I("..."`, and cannot extract a computed one. Run it from
+  `CoffeeMud/` to produce translation lines:
+
+  ```sh
+  cd CoffeeMud
+  java -classpath ".:./lib/js.jar" com.planet_ink.coffee_mud.application.LocalizationHelper T USE
+  ```
+
+  (`T` for strings given to `L`, `I` for those given to `I`; the command is `USE`,
+  `DEDUP`, `BROKE` or `ALL`.)
+- **Translation file format**: sections `[session-translation]`,
+  `[filter-translation]` and `[final-translation]`; commands in them such as
+  `replacewhole "text" with "text"`, `replaceexact`, `replace "regex" with "..."`,
+  `replaceall`, `ignorewhole`, `ignore`, `ignoreall`, `autoignore`. A class
+  can have its own rules in `[session-translation:fully.qualified.class.name]`.
+  The header of `resources/translation_en_TX.properties` documents each.
+- **Do not translate**: IDs, stat codes, ini keys, file names, script and command
+  syntax words in `commands` lists, log text. Log lines stay English.
+- **Glossary**: CoffeeSUD also passes translated text through a vocabulary
+  glossary (`Vocabulary.glossary`) so builders can rename terms world-wide; see
+  [Presentation and language](11-presentation-language.md).
+- Text in help files, world files and scripts is not passed through `L()`.
+
+## Testing a Java change
+
+Do not rely on compiling alone. The repository has layers of tests; run the
+smallest one that covers your change while you work, and the full set before you
+commit. Everything below runs from the repository root. Each script builds first
+(`CoffeeMud/build.sh`), runs its game or test in a scratch folder
+(`${TMPDIR:-/tmp}/sud...`), and never touches your `CoffeeMud/world` or
+`CoffeeMud/saves`.
+
+| Test | Command | What it covers | Time |
+| --- | --- | --- | --- |
+| Compile | `CoffeeMud/build.sh` | Syntax and types; `Build OK.` | about a minute |
+| One fixture | `tools/fixes.sh NAME ...` | The named files of `tools/fixtures/fixes/` (without `.js`), run with `JRUN` in a builder-mode game with `RANDOMSEED=42` and `TIMEMODE=TURNS`. The fast loop for Java changes | a minute or two |
+| All fixtures | `tools/fixes.sh` | Every `*.js` fixture (about 340 files) plus the played groups: new game, save, restore, travel, presentation, language, modules, composition, combat, crafting. Groups run side by side; `FIXES_JOBS=2` limits parallelism; `tools/fixes.sh saves` or a group name runs one group; `KEEP=1` keeps the scratch folder | many minutes |
+| Smoke test | `tools/smoke.sh` | The single-player path from a fresh checkout: creating a character, pause and turn-based time, the dice seed, save and restore, a party, a quest, a follower, a lit torch, world file edits. Fails if play wrote to `world/` | several minutes |
+| Engine suite | `tools/engine-tests.sh` | The engine's own `TEST ALL` suite in a played session (`CMTest` classes under `Tests/`), compared test by test with `tools/baseline/test-all.txt`. Fails if any result differs from the baseline | about a quarter of an hour |
+| Standalone unit tests | `tools/composition-tests.sh`, `combat-rules-tests.sh`, `item-modifier-tests.sh`, `storage-tests.sh` | Plain Java `main` programs in `tools/*Test.java`, compiled against the built classes with `--release 8` and run without booting the game; for pure logic in `core/` (rules, parsing, storage) | seconds |
+| Everything | `tools/check.sh` | The creator-docs check (`tools/creator_docs.py --check`), three of the standalone suites (composition, combat rules, item modifiers; `storage-tests.sh` is run separately), the fixtures and the smoke test | about ten minutes |
+| Everything and the engine suite | `ENGINE=1 tools/check.sh` | The above plus `engine-tests.sh`; for the end of a step and for changes to the engine's core | about 25 minutes |
+| Playtest files | `tools/playtest.sh [FILE.play ...]` | Recorded or hand-written sessions (`world/tests/*.play`) with assertions; see [Testing and release](13-testing-release.md) | |
+| World check | `CoffeeMud/sud.sh CHECK=1` | Loads the world as a new game does, runs `WORLD CHECK`, exits 1 if it found errors | a minute |
+
+`CHECKS_SERIAL=1 FIXES_JOBS=2 ENGINE=1 tools/check.sh` is the form for a small
+machine. Several of these start a Java process each; do not run two copies of
+`check.sh` at the same time on one machine.
+
+**Writing a fixture** (the usual way to test a Java class): the file
+`tools/fixtures/fixes/NAME.js` is concatenated after
+`tools/fixtures/fixes/prelude.js` and run with `JRUN`. Set `FIXFILE = "name"`,
+make checks with `check(name, condition, detailIfFalse)`, and end with `done()`.
+Output lines are `FIXTEST ok FILE/NAME` and `FIXTEST FAIL FILE/NAME: why`, and
+`FIXTEST done FILE` at the end; the run fails if any check fails, if the file
+does not reach `done()`, or if the script errors. The prelude provides:
+
+| Helper | What it gives you |
+| --- | --- |
+| `M` | The player's mob (`mob()`) |
+| `CM`, `CMClass`, `CMLib`, `CMath`, `CMMsg`, `Tickable`, `CMProps`, `CMSecurity`, `WorldFiles` | Java classes, by their `Packages.com.planet_ink.coffee_mud...` names |
+| `scratchRoom()` | A fresh room of the player's area, linked to nothing |
+| `newMob(classID, room)` | A new mob of the class, level 5, brought to life in the room |
+| `scriptOn(host, text)`, `scriptedMob(name, script)`, `tickMob(mob)`, `runQueued(engine)` | Attach a MOBPROG script, and run a mob's tick (`mob.tick(mob, TICKID_MOB)`, which ticks its behaviors and scripts) |
+| `VARS`, `gvar(name)`, `clearVar(name)` | Script variable access |
+| `field(obj, name)`, `call(obj, name, args)`, `callTyped(obj, cls, name, typeNames, args)` | Reflection to read private fields and call protected or private methods |
+| `otherRoom()` | Some other room of the area |
+
+Everything else is plain Rhino with `Packages.` access to the whole engine, so any
+Java method you wrote can be called. Messages can be sent by building a
+`CMClass.getMsg(...)` and `room.okMessage` / `room.send`; captured output is read
+from a `FakeSession` as the first example does. The files in
+`tools/fixtures/fixes/` are the best source of patterns (about 340 of them, one
+subsystem each).
+
+**Writing an engine `TEST`** (a `CMTest` under `Tests/`, see [Test](#test)) when
+the check should live in the game itself and run for every developer with
+`TEST ALL` or `TEST <name>` in builder mode. `Test.execute` prints
+`<name>: Passed` or the failure message. Keep a test self-contained and fast, and
+add its `Name : Passed` line to `tools/baseline/test-all.txt`.
+
+**Writing a standalone unit test**: copy `tools/CombatRulesTest.java` and its
+runner `tools/combat-rules-tests.sh` (about 10 lines: build, `javac --release 8 -cp
+CoffeeMud:CoffeeMud/lib/js.jar -d $W tools/XTest.java`, `java -cp ...`). The
+program needs no booted engine, so it can use `core/` classes that do not call
+`CMLib` (a booted `CMLib` is needed for anything that creates game objects).
+Print `ok NAME` per check, as the runners count those lines, and throw on
+failure.
+
+**Tests for time and chance.** Start the test game with `RANDOMSEED=42` and
+`TIMEMODE=TURNS` (what the fixture runner does) so dice and the clock are
+deterministic; advance time with `GameTime.requestAdvance` or the `WAIT`
+command, and use `tickMob` to run one tick by hand.
+
+**Debugging by hand.** `./sud.sh DEV=1` (or `BUILDER=1`) gives you `STAT` (look
+at any object), `TRACEB` and `STAT BEHAVIORS` (what a behavior decides), `LIST
+TICKS` (tick groups, `PROBLEMS` for slow ones), `SCRIPTPROF`, `GOD` cheats,
+`TIMESCALE`, `PAUSE` and `TIMEMODE TURNS` (to stop the world and step it), and the
+`DEBUG=` flags above. The exhaustive list is
+[Testing and release](13-testing-release.md) and
+[Tool reference](tool-reference.md).
+
+## Persistence notes
+
+| What | Where it lives | A reload or restore does |
+| --- | --- | --- |
+| The class files | `CoffeeMud/com/...` (or the folders in the ini or the world's `classes/`) | Nothing: they load at start. `WORLD RELOAD` does not reload Java |
+| A class's configuration (`text()`, `getParms()`) | The world file (`world/areas/*.cmare`, catalog, custom objects) and the campaign save | Reloads from the file; a campaign save carries its own copy of changed objects |
+| A class's runtime state (`getRunState`, `ACTIVITY`, timed-effect ticks) | The campaign save only | Restored by the engine when the object returns |
+| Anything else in a field | Nowhere | Lost on save and on restore. Make it derivable, or declare it |
+| A timestamp in your state | Should be game time (`GameTime.now()`) or time remaining | The clock is set from the save; absolute `System.currentTimeMillis()` values would be meaningless |
+| A static cache of world data | Nowhere | Survives an in-game restore unless reset in `SaveGame.beforeBoot` |
+| Dice state | The campaign save | Restored: the dice go on rolling where they stopped |
+
+New game versus restore: test both. A new game builds the world from the world
+files; a restore rebuilds the same objects and then applies the save's data over
+them. The formats and the order of restore are in
+[Engine internals](33-engine-internals.md).
+
+## Troubleshooting
+
+| Symptom | Likely cause and fix |
+| --- | --- |
+| `Unknown ability`, `Unknown Unknown`, a class "not found", or a builder cannot create it | The class was not scanned or failed a check. Look in `CoffeeMud/mud.log` near the start for `Possible class ID misnaming` (`ID()` is not the class name), `class failed ancestral check` (it does not implement the set's interface), `Unable to create class` (the constructor threw), `Unable to access path` (a wrong path in the ini). Check the class is `public` and not `abstract`, in the right package folder, compiled (`.class` next to the `.java`), with no `$` in its name |
+| The build says `Up to date.` but your change is not in the game | Nothing newer than `.build-stamp`: you edited a copy, or a clock is off. `touch` the file, or run `CoffeeMud/build.sh clean` |
+| An old class still loads after you renamed or deleted it | A stale `.class`. The script cleans when the file list changes; if you built some other way, run `CoffeeMud/build.sh clean` |
+| `NoSuchMethodError`, `IncompatibleClassChangeError` or `VerifyError` at run time | Class files from two builds mixed (a build was interrupted, or a branch switch left some). `CoffeeMud/build.sh clean` |
+| `NullPointerException` from `CMLib.xxx()` or `CMClass.xxx()` in code you wrote, in a thread you started | The thread is not in the game's thread group; see the thread-group note above. Prefer `CMLib.threads().executeRunnable` |
+| The game freezes, input stops echoing | Game code blocked: a `sleep`, a blocking `prompt` in a tick or an infinite loop. The scheduler thread (`Scheduler0`) is stuck; `jstack` on the process shows where. A script that runs too long is cut off after `JSTIMELIMIT` seconds, Java is not |
+| A cooldown or timer does not stop while paused, or fires at once after a restore | It uses `System.currentTimeMillis()`. Use `GameTime.now()` or a tick count |
+| Your effect changes nothing | Missing `recoverPhyStats()`; you edited `phyStats()` instead of the base or an `affect...` method; `addEffect`/`addBehavior` ignored it because the host already has one with that ID; an item property that should reach the wearer lacks `bubbleAffect()` |
+| Two mobs or items share a list or map | The class holds a mutable field and does not override `copyOf()` |
+| A property is missing from the editor's list of properties that fit a host | Its `canAffectCode()` does not include that kind of host |
+| A command is "Huh?" | The word is not upper case in `getAccessWords()`; `securityCheck` returned false for the player; the command is disabled (`DISABLE=COMMAND_...`); a skill, social or a longer command wins the prefix match; the class did not load |
+| A command works only for builders | `securityCheck`: `SaveGame.isDevMode()`/`isBuilderMode()` or a `SecFlag` your character does not have |
+| An action is blocked with no explanation | A handler returned `false` from `okMessage` without telling the source; find it with `DEBUG=MESSAGES`, or the `COMBATDEBUG` command for damage |
+| A behavior's counters reset on restore | It has no `getRunState()`/`setRunState()` |
+| A timed effect disappears on save/restore | It is not a timed effect to the saver: `canBeUninvoked()` false, or `TICKDOWN` zero, or `isAutoInvoked()`. Permanent state belongs in a property |
+| A new race or class is not offered at character creation | `availabilityCode()` lacks a theme the game uses (the `MUDTHEME` setting), or carries `THEME_SKILLONLYMASK`; creation templates can also restrict choices ([Characters](03-characters.md)) |
+| `LOAD ... .java` says it cannot instantiate the compiler | The game is running on a JRE, not a JDK |
+| `LOAD` of a class works but the next start does not have it | `LOAD` changes the running game only; put the class in a scanned folder |
+| World-folder classes (`world/classes/...`) are not found when `WORLDDIR` is not `world` | `SUD.worldClassPaths` checks `WORLDDIR/classes/...` but adds the literal path `world/classes/...` to the class path; add the folder to the ini key yourself, as a path under `CoffeeMud/` (`COMMANDS=%DEFAULT%;mine/commands`) |
+| A fixture reports `did not run to its end` | The script threw before `done()`. Look for `JavaScript error` / `JS error in JRUN` in the output (`KEEP=1`) |
+| `tools/check.sh` fails on `creator docs` | A link in the handbook is broken, or a generated reference is stale; see `tools/creator_docs.py --check` output |
+| `javac` rejects code that compiles in your IDE | The build is `--release 8`; remove newer syntax and APIs |
+
+## See also
+
+- [Engine internals](33-engine-internals.md): the CoffeeSUD subsystems in `core/`,
+  the save and world file formats, optional module APIs, script events, party and
+  travel internals.
+- [Installing and running](18-installing-and-running.md) and
+  [Configuration and administration](19-configuration-and-administration.md):
+  launch modes, `coffeemud.ini`, logs, security groups.
+- [Testing and release](13-testing-release.md): playtests, assertions, checks and
+  release packaging.
+- [State and persistence](state-and-persistence.md) and
+  [Saves and party](31-saves-and-party.md): what is saved and restored.
+- [Properties](23-properties-reference.md),
+  [Behaviors and masks](24-behaviors-and-masks.md),
+  [Abilities and effects](25-abilities-and-effects.md),
+  [Characters](03-characters.md), [Mobs](21-mobs.md), [Items](22-items.md),
+  [Areas, rooms and exits](20-areas-rooms-exits.md): what exists, from the
+  builder's side.
+- [MOBPROG](04-mobprog.md) and [JavaScript](05-javascript.md): when you do not
+  need Java.
+- [Ability composition](15-ability-composition.md),
+  [Combat profiles](16-combat-profiles.md) and
+  [Item modifiers](17-item-modifiers-crafting.md): data-driven systems that
+  replace Java for common cases.
+- [Tool reference](tool-reference.md): every in-game command, generated from the
+  help files.
+- The inherited [Programming guide](../../CoffeeMud/guides/Programming.html) for
+  the parts of the object model this chapter does not repeat (the crafting and
+  gathering skills, diseases, traps, languages).
