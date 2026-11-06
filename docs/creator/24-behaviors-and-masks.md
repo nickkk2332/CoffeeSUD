@@ -232,7 +232,7 @@ TransportLine and WaveSpawner. Others restart from their parameters. See
 | Base classes (not for direct use) | [StdBehavior](#stdbehavior), [ActiveTicker](#activeticker) |
 | CoffeeSUD additions | [BossPhases](#bossphases), [ClanEnemyAggressive](#clanenemyaggressive), [EncounterReset](#encounterreset), [Escortee](#escortee), [Floodable](#floodable), [GenBehavior](#genbehavior), [GuildMaster](#guildmaster), [ItemUpgrader](#itemupgrader), [JSBehavior](#jsbehavior), [JScriptable](#jscriptable), [JSWorldBehavior](#jsworldbehavior), [Memory](#memory), [Morale](#morale), [Pursue](#pursue), [RandomEncounters](#randomencounters), [Regenerate](#regenerate), [Riddler](#riddler), [RoomStates](#roomstates), [Scene](#scene), [Schedule](#schedule), [Sentry](#sentry), [Sleeper](#sleeper), [TargetPriority](#targetpriority), [TidalRoom](#tidalroom), [TransportLine](#transportline), [WaveSpawner](#wavespawner), and the CoffeeSUD options added to existing ones (listed in their entries). |
 
-Not behaviors: the `Dialogue` and `Companion` behaviors proposed in the audit
+Not behaviors: the `Dialogue` and `Companion` behaviors proposed earlier
 (N13, N14) do not exist in this build; use [MudChat](#mudchat), [Scene](#scene),
 [Hireling](#hireling) and the TALK command ([chapter 6](06-npcs-dialogue.md)).
 
@@ -2412,8 +2412,8 @@ its own defaults: a base price of 10 and 1 per room, and trails limited to open,
 outdoor routes. `GREETING`, `ENTERMSG` (told to a rider after they mount) and
 `TALKERNAME` (default "the driver" on an item) apply; `AREAONLY`, `MAXRANGE`,
 `PERROOM`, `NOWATER`, `NOAIR`, `NOLOCKS`, `NOHOMES`, `NOCLIMB` and `NOCRAWL` as
-for Concierge. The help also lists `INDOOROK=true` to allow indoor rooms (see the
-audit notes: the parser maps it to the same flag as `NOINDOOR`).
+for Concierge. The help also lists `INDOOROK=true` to allow indoor rooms, but the
+parser maps `INDOOROK` to the same flag as `NOINDOOR` (outdoor only), so it cannot allow them.
 
 ```text
 TaxiBehavior 1.5
