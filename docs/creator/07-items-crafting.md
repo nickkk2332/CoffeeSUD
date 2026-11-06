@@ -107,7 +107,7 @@ item crafting skills share these sub-commands:
 | `[SKILL] LIST` (optionally `LIST [WORDS]` or `LIST ALL`) | Lists the recipes the crafter's level allows (`ALL` also lists those above their level) |
 | `[SKILL] [ITEM]` or `[SKILL] [MATERIAL] [ITEM]` | Starts making the item. A material is needed when the item can be made from several |
 | `[SKILL] INFO [ITEM]` | Shows what the item would be like and how long it takes, without making it |
-| `[SKILL] LEARN [ITEM]` | Takes an item apart to write its recipe into a recipe book (see [learning by taking apart](#learning-by-taking-apart)) |
+| `[SKILL] LEARN [ITEM]` | Takes an item apart to write its recipe into a recipe book (see [learning by taking apart](#recipe-books-known-recipes-and-learning)) |
 | `[SKILL] BUNDLE ...` | Bundles raw material (skills that can bundle; type the command for its usage line) |
 | `[SKILL] MEND [ITEM]`, `REFIT [ITEM]` | Repairs, or resizes for another race (skills that can mend and refit) |
 | `[SKILL] STOP` | Cancels the work |
@@ -146,9 +146,9 @@ Blacksmithing asks for `blacksmith.txt`. These rules apply to every recipe file:
   `blacksmith.txt.1`, `blacksmith.txt.2` and so on up to `.9` and concatenates
   their rows (`CMFile.getExistingExtendedFiles`). Put your extra recipes in
   `world/resources/skills/blacksmith.txt.1` and the stock rows stay. This is the
-  safest way to extend a shipped skill, because stock updates still apply. If
-  the numbering skips (`.1` and `.3` but no `.2`), reading stops at the gap after
-  `.1`; keep the numbers consecutive.
+  safest way to extend a shipped skill, because stock updates still apply.
+  Keep the numbers consecutive: reading stops at the first missing file from
+  `.2` on, so `.3` is ignored when there is no `.2`.
 - **Rows are sorted by level.** Skills that extend `EnhancedCraftingSkill` (most
   item crafting skills) and `CraftingSkill` sort the loaded rows by their level
   column, lowest first, so file order does not matter for the player's list.
@@ -375,7 +375,7 @@ element of a world file.
 
 | Command | Use |
 | --- | --- |
-| `LIST RECIPES` | Lists the skills that have a recipe file (needs the `CMDRECIPES` or `LISTADMIN` security flag, or builder mode) |
+| `LIST RECIPES` | Lists the skills that have a recipe file (needs the `CMDRECIPES` or `LISTADMIN` security flag) |
 | `MODIFY RECIPE [SKILL]` | Opens a grid of the skill's main recipe file. Enter a line number to edit that row, `A` to add one, or a blank line to finish; each column has its own prompt and validation. Finishing asks `Save to V)FS, F)ilesystem, or C)ancel` |
 | `VALIDATE RECIPES ([SKILL]/ALL)` | Checks every row of a skill's file and its `.1`-`.9` extension files: each value as `MODIFY RECIPE` would accept it, and the number of columns. Reports every problem with file and row. `ALL` (the default) checks every skill, then `hunting.txt`, `fishing.txt` and `components.txt` |
 
@@ -1540,7 +1540,7 @@ saved variables and signals, and plan reset behaviour as part of the design.
   [state-and-persistence.md](state-and-persistence.md)).
 - Put durable facts in `setvar WORLD ...` or a `signal` instead of relying on
   the state of a description. A description can read the variable with
-  `<VARIES><IFVAR NAME=1>...</IFVAR></VARIES>`
+  `<VARIES><IFVAR MUSEUM_GATE=1>...</IFVAR></VARIES>`
   ([11-presentation-language.md](11-presentation-language.md)).
 - Use the same door action in both directions, `MPDOOR`, so both sides agree.
 - Test: operate, leave, save, restore, operate again.
@@ -1554,7 +1554,7 @@ Properties and behaviours that are there only while a condition holds.
 | Parameter | Meaning |
 | --- | --- |
 | `PROPS="Prop_X(args);Behavior_Y(args)"` | What it wraps (abilities or behaviours, `;` between), or `ID=` with `PARMS=` for one |
-| `WHEN="mask"` | A zapper mask tested on what `CHECK` says (often `-IF ISMOON(FULL)`-style conditions) |
+| `WHEN="mask"` | A zapper mask tested on what `CHECK` says (it may use an `-IF` condition, as `-IF ISMOON(FULL)`) |
 | `CHECK=` | `HOST` (the thing it is on; default), `OWNER` (an item's owner), `ROOMPLAYERS` (any of the player's side in its room), `TRIGGERER` (the last of them to come in) |
 | `EVERY=ticks` | How often it looks again (1) |
 | `CHANCE=pct` | Chance each time it would come on |
@@ -1755,3 +1755,348 @@ to do it. An item can carry its own row, without `FROM`, as `Prop_UpgradePath`
 ```text
 UPGRADE1="FROM=notched TO=\"catalog:Starfall, the reforged blade\" COST=2000 MATERIALS=\"starmetal ingot x3\" LEVEL=20 KEEP=TAGS,STATE"
 ```
+
+## Worked examples
+
+Each example is built in builder mode ([02-world-workflow.md](02-world-workflow.md)).
+Properties are added in the item's or room's **Effects** entry (`MODIFY ITEM`,
+`MODIFY ROOM`); the quoted text is the property's parameter text. Where an
+example needs a file, it goes in the world folder (paths below start at
+`world/`). Check each with a fresh restore before shipping.
+
+### 1. A forge with a custom recipe
+
+Goal: a dwarven forge in the smithy that helps Blacksmithing, serves as the
+fire, and unlocks a recipe nobody else can make.
+
+1. **The forge.** `CREATE ITEM GenItem`, then `MODIFY ITEM` it: name "a dwarven
+   forge", display text, description, and *Is Gettable* = No. Add the effect
+   `Prop_Workstation` with:
+
+   ```text
+   TAG=forge,anvil,fire SKILLS=Blacksmithing SPEED=25 PROF=+10 MAXLEVEL=30 QUALITY=+1
+   ```
+
+   The `fire` tag lets it stand in for the burning item Blacksmithing wants;
+   `MAXLEVEL=30` lets a crafter below level 30 make recipes up to 30 here.
+
+2. **The recipe.** Create `world/resources/skills/blacksmith.txt.1` (an extension
+   file, so the stock rows stay). One line, columns separated by tabs, shown here
+   with ` | `:
+
+   ```text
+   % rune chisel | 12 | 40 | 3 | 45 | GenItem |  |  |  | STATION=forge TOOL=hammer MASK="-LEVEL +>11" XP=25 TATTOO=RUNE_CHISEL FAILMSG="Only a forge can temper runes into metal."
+   ```
+
+   Columns: name (`%` is the metal), level 12, 40 ticks, 3 units of
+   metal, value 45, class `GenItem`, three empty class columns (a
+   spell column may hold `*Prop_...`), then the keys column.
+
+3. **Check.** `VALIDATE RECIPES blacksmithing` must report no problem.
+   As a player below level 12, `BLACKSMITH LIST` does not show the chisel.
+   At level 12 or more it appears; `BLACKSMITH iron rune chisel` without the
+   forge, or without a hammer, is refused with the `FAILMSG` (a recipe's
+   `FAILMSG` replaces the plain "You need a forge here." for every refusal);
+   in the smithy, with the forge and a hammer, it works faster and awards 25 XP
+   and the tattoo `RUNE_CHISEL` the first time.
+
+4. **Optional quality.** Copy `resources/skills/craftquality.txt` to
+   `world/resources/skills/craftquality.txt` and uncomment the `masterwork`
+   and `fine` tiers. Items made at the forge now roll them with `@x3` raised
+   by `QUALITY=+1`. Add `NOQUALITY=1` to a row to keep a recipe fixed.
+
+For an unusual output material, add a row to `world/materials.txt` and let the
+recipe name it; Blacksmithing already takes any METAL.
+
+### 2. A herb garden
+
+Goal: a kitchen garden that grows herbs only in warm seasons, a hedgerow that
+gives wild herbs by season and gets picked bare, and a global rule for all
+herbs.
+
+1. **Planting rules for the whole world** (`world/crops.txt`, one crop a line,
+   resource name first):
+
+   ```text
+   HERBS GROWHOURS=48 SEASONS=SPRING,SUMMER,AUTUMN YIELD=2d4 FAILMSG="Herbs will not take root in this season."
+   ```
+
+2. **The garden room.** An outdoor Plains room. Give it the effect
+   `Prop_CropRules` to be stricter than the world file:
+
+   ```text
+   SEASONS=SPRING,SUMMER GROWHOURS=24 FAILMSG="It is too late in the year to sow the kitchen garden."
+   ```
+
+   The area's rule, the room's and the seed's come over the file's, in that
+   order. Players plant with `GPLANT HERBS` after dropping a sample herb on the
+   ground; the herbs appear in the room a day (24 game hours) later.
+
+3. **The hedgerow.** A second outdoor room with the behaviour
+   `ResourceOverride`:
+
+   ```text
+   SPRING=herbs SUMMER=herbs,flowers AUTUMN=herbs WINTER=none MSG="The hedgerow changes with the season."
+   ```
+
+   and the effect `Prop_Yield`:
+
+   ```text
+   HARVESTS=4 DROP=10% REGROW=3 DAYS EMPTYMSG="The hedgerow has been picked bare."
+   ```
+
+   `FORAGE` there finds herbs in spring, summer and autumn, nothing in winter;
+   after four harvests it is bare for three game days.
+
+4. **Check.** Plant in winter and read the refusal; `FORAGE` repeatedly and
+   watch the yield fall; save and restore (growth and depletion are saved);
+   advance the clock with the time tools and see it regrow. Crop growth uses
+   game time, not the computer's clock.
+
+If the cellar should grow mushrooms in the dark, put `NEEDSUN=false
+DOMAINS=CAVE` in a `Prop_CropRules` on the cellar room.
+
+### 3. A player home
+
+Goal: a cottage the player already owns, where the party sleeps, stores things
+and crafts, and which the party can return to.
+
+1. **The room.** An indoor room "The Hearthstone Cottage". Effects:
+
+   | Effect | Text |
+   | --- | --- |
+   | `Prop_RoomForSale` | `@PROFILE/0` (already owned by the whole profile, price 0) |
+   | `Prop_HomeBeacon` | (empty) |
+   | `Prop_ReqCapacity` | `items=60 people=6` |
+
+   Every character of the profile owns it, so nothing in it is theft between
+   them, and the owner `@PROFILE` is never wiped as a nonexistent player.
+
+2. **Furniture.**
+   - A hearth: `GenItem`, not gettable, effect `Prop_Furnishing`
+     `ROOMEFFECT=Prop_RoomLit COMFORT=3 ACTS=fire`. The room is lit and the
+     hearth counts as a fire for cooking.
+   - A chest: a `GenContainer` that stays where it is.
+   - A larder: a `GenContainer` with the effect `Prop_IceBox`, so food in it
+     never spoils.
+   - Optionally a cooking pot or bench with `Prop_Workstation`.
+
+3. **A yard to build in.** The outdoor room outside can have `Prop_Homestead`
+   with `SKILLS=Construction,Masonry MAXROOMS=3 CLAIM=PROFILE`, so the party
+   can add a shed with the building skills without buying a deed.
+
+4. **Behaviour.** `SLEEP` in the cottage makes it the start room of the
+   party's characters with privileges there; `HOME` takes the whole party home
+   (not during a fight) after `HOMERECALL` turns; `HOME SET` sets it without
+   sleeping. A script can give the cottage as a reward with `MPDEED
+   Hearthstone#1 @PROFILE` (or `MPDEED ... $n`) and ask `ISOWNER($n)`.
+
+5. **Check.** From two characters of one profile: enter, use the chest, `HOME
+   SET`, leave and `HOME`. Save, restore and test again. Leave a rack of items
+   and a lit hearth: the effects go away with the item and are not saved with
+   the room.
+
+### 4. A lever and a door
+
+Goal: a rusted lever in the antechamber opens the locked stone door east; the
+door closes and locks again on its own.
+
+1. **The door.** Between `Crypt#1` (east) and `Crypt#2` (west) make a closeable,
+   lockable, closed and locked door, with no key. Put `Prop_LockRules` with
+   `PICK=NEVER` on the exit so no thief bypasses the lever.
+2. **The lever.** In `Crypt#1` make an ungettable `GenItem` "a rusted lever" and
+   add `Prop_Switch`:
+
+   ```text
+   STATES="down,up" START=down VERBS="pull,push" DESC_up="The lever is jammed upward." DESC_down="The lever is down." MSG_up="<S-NAME> heave(s) <T-NAME> upward. Something grinds in the walls." MSG_down="<S-NAME> force(s) <T-NAME> down." ACTION_up="door unlock Crypt#1 east QUIET; door open Crypt#1 east; setvar WORLD CRYPT_OPEN 1" ACTION_down="door close Crypt#1 east QUIET; door lock Crypt#1 east QUIET; setvar WORLD CRYPT_OPEN 0" RESET=60
+   ```
+
+   `PULL LEVER` moves it to `up`; the unlock and open act on **both** sides of
+   the door; after 60 ticks (about four real minutes with the default 4-second
+   tick) it returns to `down` and its `ACTION_down` shuts and locks the door.
+3. **A description that follows.** In `Crypt#1`'s description:
+   `<VARIES><IFVAR CRYPT_OPEN=1>The east door stands open.</IFVAR><ELSE>The east
+   door is sealed.</ELSE></VARIES>` (see
+   [11-presentation-language.md](11-presentation-language.md)).
+4. **Check.** `PUZZLE LIST` shows the lever with its state. Pull it, walk
+   through, and wait for the reset with the party on the other side: make sure
+   the door cannot strand them (give the other side a way back, or remove
+   `RESET`). `PUZZLE SET lever up` and `PUZZLE RESET lever` test it without a
+   player; remember `SET` runs the real actions. Save open and restore: the
+   switch and the world variable are saved, so the door's state must agree
+   with `STATE=` (a restart from the world files begins closed).
+
+The Creator Museum example pack builds the same lever
+([examples](examples/README.md); [cookbook, recipe 3](cookbook.md#3-a-lever-that-opens-a-gate)).
+
+### 5. A combination lock
+
+Goal: a vault door whose code is different every game, with a clue the player
+can read.
+
+1. **The lock.** On the exit east of `Vault#1` (a closed, locked door) add
+   `Prop_ComboLock`:
+
+   ```text
+   CODE=RANDOM DIALS=3 SYMBOLS="sun,moon,star" VAR=VAULTCODE SHOW=true TRIES=3 RELOCK=100 MSG="The vault door clicks open." ONWRONG="echo The dials shudder and the floor trembles." ONOPEN="setvar WORLD VAULT_OPEN 1"
+   ```
+
+   The lock rolls its three symbols for each new game and keeps them with the
+   lock. `SHOW=true` lets `LOOK` read the dials. Players use `TURN DIAL 1 TO
+   moon`, `SET DIALS sun moon star`, or `ENTER` for a keypad lock with
+   single-character symbols. After three wrong codes, `ONWRONG` runs; it opens
+   with a click and shuts 100 ticks later.
+2. **The clue.** `VAR=VAULTCODE` writes the rolled code into the script
+   variable `$<COMBO VAULTCODE>`. Put it on a note item (a `GenItem` readable
+   or any item) with a script (item scripts: Scriptable behavior text):
+
+   ```text
+   READ_PROG ALL
+   MPECHOAT $n The faded note reads: $<COMBO VAULTCODE>.
+   ~
+   ```
+
+   Print it the way you wish a clue to be (the player may need several
+   notes, each giving one symbol).
+3. **A fixed lock** is simply `CODE=739 SYMBOLS=0-9`. A three-dial lock with
+   `CODE=sun-star-moon` has a fixed, learnable answer, good for a riddle
+   puzzle whose answer is in a book.
+4. **Check.** Look at the lock, turn dials, enter wrong codes until
+   `ONWRONG` runs, then the right one; save and restore (the dials are kept as
+   `READ=`); start a new game and see the code change.
+
+### 6. A cursed item
+
+Goal: a ring that looks fine, tightens on first wear, costs wisdom, cannot be
+removed, and is broken by a confession in a chapel (or by a high-level priest's
+Remove Curse).
+
+1. Make a wearable `GenItem` "a gold ring" (wear location *left finger*).
+2. Add `Prop_Cursed`:
+
+   ```text
+   LEVEL=15 HIDDEN NOREMOVE PENALTY="Prop_WearAdjuster(wis-3);Prop_WearSpellCast(Prayer_CurseLuck)" REVEAL="The ring tightens on your finger!" BREAK="SAY:i confess;ENTER:Chapel#3" ONBREAK=CRUMBLE BREAKMSG="The ring crumbles to ash."
+   ```
+
+   `HIDDEN` shows nothing until it is first worn; then `REVEAL` is told.
+   `NOREMOVE` keeps it on. `PENALTY` lists the properties applied while the
+   curse holds. `BREAK` lists deeds done in order by the wearer: say "i confess"
+   and enter room `Chapel#3`. When broken, the penalties go and the ring
+   crumbles; `ONBREAK=KEEP` would leave it as an ordinary ring and
+   `BECOME:[ITEM]` would turn it into another.
+3. **Check.** Identify it as a low-level character (the curse is hidden) and
+   as a high-level one (examiner's level matters); wear it, try to remove it,
+   cast Remove Curse at too low a level, then complete the deeds; save and restore
+   with it worn.
+
+## Persistence notes
+
+| System | What is kept, and where |
+| --- | --- |
+| Recipe files, `craftquality.txt`, `hunting.txt`, `fishing.txt` | Files in `resources/skills/` and `world/resources/skills/`. Cached while running |
+| `materials.txt` | Read once at start. Items save the resource name next to its code |
+| `resources.txt`, `crops.txt`, `combinations.txt`, `itemsets.txt` | Read again when the file changes |
+| Data skills | World files, `world/custom/abilities/` |
+| Known recipes | `Prop_KnownRecipes` on the character, in the campaign save |
+| Experiment tries | In memory, per name and game date |
+| Crop growth, in-progress crafting and supported assistance | In the campaign save |
+| Gather depletion | `YIELDS` in the save, on game time |
+| Switch state, dials, found flags, curse state, charges, attunement, growth | In the property's own text (`STATE=`, `READ=`, `GOT=`, `FOUND=`, `SHOWN=`/`STEP=`, `LEFT=`, `ATTUNED=`, stage), so saves and world files keep it |
+| Prop_When, Prop_Furnishing room effects, Prop_ItemSet tier properties | The wrapped or applied pieces are **not** saved; they are recreated. `Prop_When` cooldowns and `ONCE=WORLD` are |
+| Ownership (`Prop_RoomForSale` and kin) | In the room's property text; with `@PROFILE`, every character of the profile |
+| Script variables set by puzzles (`setvar WORLD ...`) | The scripting engine's saved scopes ([state-and-persistence.md](state-and-persistence.md)) |
+
+A reload (`WORLD RELOAD`, new game) rebuilds everything from the world files;
+the live state of puzzles in a continuing campaign comes from the save. A
+puzzle whose door state lives in the exit and whose switch state lives in the
+property must be tested through save and restore.
+
+## Troubleshooting
+
+- **A custom recipe does not show.** Rows must be tab-separated; check with
+  `VALIDATE RECIPES [SKILL]`. A level above the crafter's, a failing `MASK` or
+  an unlearned `HIDDEN=1` hides it. Extension files are read in order
+  (`.1`, `.2`...); reading stops at the first missing file from `.2` on.
+- **A stock update overwrote my change.** You edited the stock file. Put a copy
+  in `world/resources/skills/`, or use `.1` extension files.
+- **A recipe key does nothing.** Keys apply only to player characters, and only
+  to rows whose column starts with `KEY=`. Check quoting (`FAILMSG="..."`).
+- **The forge is ignored.** The item must be loose in the same room, its `TAG`
+  must match `STATION=` and (for Blacksmithing) include `fire` or a burning item
+  must be present; `SKILLS=` must list the skill.
+- **No quality tier ever rolls.** The stock `craftquality.txt` has the tiers
+  commented out, the skill has `QUALITY=false`, or the recipe has `NOQUALITY=1`.
+- **EXPERIMENT does nothing.** The recipe needs both `HIDDEN=1` and
+  `EXPERIMENT=`; the crafter's level must reach the recipe's; you may have used
+  today's tries (`CRAFTEXPERIMENTS`).
+- **Gathering gives nothing.** The room's resource may not suit the skill, may
+  be depleted (`Prop_Yield`), may be blocked by a `Prop_ImproveGather AMT=0`, or
+  a masked table row did not pass.
+- **A crop will not plant.** Look at the refusal: season, sun, land, drought,
+  water. `crops.txt` rows, then area, room and seed rules each apply.
+- **A building skill refuses.** The builder needs a title, `CMDROOMS`, or a
+  `Prop_Homestead` that fits their skill and mask.
+- **A switch's actions do nothing.** The action text is a script command line;
+  semicolons separate commands and cannot be quoted inside an action. A door
+  action needs a room ID and direction that exist. Try the same line with
+  `PUZZLE SET`.
+- **A door opens on one side only.** Use `MPDOOR` (`door` in actions), which
+  changes both sides.
+- **A puzzle resets after a restore.** World files rebuild the initial state;
+  campaign saves keep the live state. Test restore from a save and from a fresh
+  start.
+- **A property key warning in `PROPCHECK`.** The `ACTION_x`/`MSG_x` keys of
+  `Prop_Switch` are valid; the warning is the validator's known gap.
+
+## Reference: ini keys and world files
+
+| Key / file | Where | Meaning |
+| --- | --- | --- |
+| `CRAFTXP` | `coffeemud.ini` / `world.ini` | Percent of a craft's XP value every player character earns (0/blank: none) |
+| `GATHERXP` | same | XP per unit gathered, every player character |
+| `CRAFTEXPERIMENTS` | same | Experiments per character per game day (10 blank; 0 unlimited) |
+| `DISMANTLEPCT` | same | Percent of recipe materials DISMANTLE returns (50 blank; 0 off) |
+| `PROFILERECIPES` | same | `true`: recipes are shared by every character of the profile |
+| `PROFILEPROPERTY` | same | `true`: purchases are recorded as `@PROFILE` |
+| `HOMEBEACONS` | same | `true`: every owned room is a home |
+| `HOMERECALL` | same | Turns `HOME` takes (3 blank; 0 no `HOME`) |
+| `ITEMWEAR`, `ITEMBREAK` | same | Wear percent (100) and `DESTROY`/`BREAK` for worn-out items |
+| `ADDMATERIAL_name` | `coffeemud.ini` | Older way to add a resource; `materials.txt` is preferred |
+| `resources/skills/*.txt`, `world/resources/skills/*.txt(.1-.9)` | Recipe files | Rows per skill; the world's copy is read first |
+| `resources/skills/components.txt` | Components | Ability components |
+| `resources/skills/craftquality.txt` | Quality tiers | Tab-separated tiers |
+| `world/materials.txt` | Resources | World materials |
+| `world/resources.txt` | Variants | Named resource variants |
+| `world/crops.txt` | Crops | `[RESOURCE or SUBTYPE] rules...` |
+| `world/combinations.txt` | USE / COMBINE | `A \| B \| RESULT \| keys` |
+| `world/itemsets.txt` | Item sets | `SET=id NAME=... TIERn=...` |
+| `world/custom/abilities/` | Data skills | One file per skill |
+
+These keys are in `CoffeeMud/coffeemud.ini` (search for the key); `world.ini`
+may set them for one world ([world-settings.md](world-settings.md)).
+
+## See also
+
+- [22-items.md](22-items.md): item classes and fields, materials, tags, catalog.
+- [23-properties-reference.md](23-properties-reference.md): every property, including
+  [Prop_Workstation](23-properties-reference.md#prop_workstation),
+  [Prop_KnownRecipes](23-properties-reference.md#prop_knownrecipes),
+  [Prop_Homestead](23-properties-reference.md#prop_homestead),
+  [Prop_Furnishing](23-properties-reference.md#prop_furnishing),
+  [Prop_Switch](23-properties-reference.md#prop_switch),
+  [Prop_ComboLock](23-properties-reference.md#prop_combolock),
+  [Prop_Cursed](23-properties-reference.md#prop_cursed).
+- [24-behaviors-and-masks.md](24-behaviors-and-masks.md): `ResourceOverride`, `Riddler`,
+  `ItemUpgrader`, and the zapper mask language used in recipe keys.
+- [20-areas-rooms-exits.md](20-areas-rooms-exits.md): doors, locks and keys, room editing.
+- [25-abilities-and-effects.md](25-abilities-and-effects.md): common skills, expertises, traps.
+- [27-mobprog-commands.md](27-mobprog-commands.md), [28-mobprog-functions.md](28-mobprog-functions.md):
+  `MPDOOR`, `MPLEARNRECIPE`, `MPDEED`, `MPGRANT`, `OWNER()`, `KNOWSRECIPE()`.
+- [17-item-modifiers-crafting.md](17-item-modifiers-crafting.md): the optional tracked
+  modifier workshop and its crafting transactions. Its costs use plain
+  raw-resource piles; the legacy recipe crafting above keeps its own rules.
+- [cookbook.md](cookbook.md): recipes 3, 16, 18, 19 and 29 for short versions of
+  switches, sets, forges and crops.
+- [tool-reference.md](tool-reference.md): generated help for `RECIPEKEYS`,
+  `CRAFTQUALITY`, `GENCRAFTSKILL`, `WORLDMATERIALS` and every property.
+- [state-and-persistence.md](state-and-persistence.md), [31-saves-and-party.md](31-saves-and-party.md).

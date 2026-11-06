@@ -659,3 +659,305 @@ fighting at once.
 
 `ClanHelper` (fellow members join each other's fights) is the defensive
 counterpart. Both need the NPC to be a member of the clan.
+
+## Factions
+
+Source: [DefaultFaction.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultFaction.java),
+[Factions.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/Factions.java),
+shipped files in [resources/factions](../../CoffeeMud/resources/factions/) and
+[resources/examples](../../CoffeeMud/resources/examples/), annotated template
+[factiontemplate.ini](../../CoffeeMud/resources/examples/factiontemplate.ini).
+
+A faction is a numeric standing that a mob or character may carry, divided
+into named bands ("ranges"). Deeds change the number according to **change
+triggers**. The band the number is in decides **reactions** (how other NPCs
+treat the holder), **effects** (what the holder gets), which **abilities** the
+holder is considered fit to use, and which text and prices they see. Shipped
+factions are `alignment.ini` (good and evil), `inclination.ini` (lawful and
+chaotic) and `triumph.ini` (an area-clearing score). A world adds its own for
+temples, guilds, towns and species.
+
+Use a faction when the player's standing is a matter of degree and history (a
+town's regard, a temple's trust). Use a clan when the player belongs, with
+powers and a rank. Use a tattoo (a simple saved flag) for yes/no facts.
+
+### Faction files
+
+A faction is a text file `resources/factions/NAME.ini`. A world's own file is
+`world/resources/factions/NAME.ini`; builder-mode edits are written there. The
+faction's ID is the file name in upper case (`THIEVES.INI`); script commands,
+`STANDINGFACTION`, `FACTIONS=` and masks accept the file name, the ID or the
+display name. Lines are `KEY=value`; `#` starts a comment; keys are case
+sensitive and upper case. Keys that come in numbered families (`RANGE1`,
+`CHANGE1`...) may use any number; only `PLAYEREFFECT` must count 1, 2, 3...
+without a gap.
+
+Create, edit and remove factions with `CREATE FACTION name.ini`,
+`MODIFY FACTION name`, `LIST FACTIONS` and `DESTROY FACTION` (permission
+`CMDFACTIONS`; `CREATE` asks to confirm and starts from the annotated
+template). Run `ORGCHECK` after hand-editing a file ([Faction tools](#faction-tools)).
+
+Factions are loaded on first use. A faction that must hand out
+`AUTODEFAULTS` values to every new character has to be loaded at start:
+list its file in the `FACTIONS` setting (semicolon list, in `world/world.ini`
+or `coffeemud.ini`; shipped value `alignment.ini`).
+
+**Settings**
+
+| Key | Values and default | Meaning |
+| --- | --- | --- |
+| `NAME` | text | What the player sees in `FACTIONS` and `SCORE`. |
+| `MINIMUM`, `MAXIMUM` | integers | Nominal bounds. In practice the engine recomputes the bounds from the ranges (lowest `low`, highest `high`), so make the ranges cover the scale you want. |
+| `SCOREDISPLAY` | `TRUE`/`FALSE` | Show in `SCORE`. |
+| `SHOWINFACTIONSCMD` | `TRUE`/`FALSE` | List in the `FACTIONS` command. |
+| `SPECIALREPORTED` | `TRUE`/`FALSE` | Average the faction into area reports. Only one faction should have it. |
+| `EDITALONE` | `TRUE`/`FALSE` | A shortcut for this faction in the mob/area editors. |
+| `INHERITED` | `TRUE`/`FALSE`, default `TRUE` | Whether offspring inherit the faction. |
+| `DEFAULT` | `value mask; value mask; value` | Value given when the faction is added by hand or by an event. The first entry whose mask the mob passes wins; a bare number is the fallback. At least one value. Default `0`. |
+| `AUTODEFAULTS` | same form | Values given automatically to mobs and characters on creation or entry to the world, only if the faction is loaded and they have no saved value. Empty means never. |
+| `AUTOCHOICES` | `value; value; value` (masks allowed) | Values a new character may choose at creation. The band names are shown as the choices. Blank means no choice. Part of the `FACTIONS` step of `CHARCREATIONSCRIPTS`. |
+| `CHOICEINTRO` | resource path | Text shown before the choice. |
+| `RATEMODIFIER` | decimal, `1.0` | Multiplier on every change. |
+| `EXPERIENCE` | `NONE` (default), `EXTREME`, `HIGHER`, `LOWER`, `FOLLOWHIGHER`, `FOLLOWLOWER` | How the faction scales experience from kills: `EXTREME` more experience for killing opposite standing; `HIGHER`/`LOWER` by the killer's own value; `FOLLOWHIGHER`/`FOLLOWLOWER` by the victim's value. At most a 25 percent swing. |
+| `USELIGHTREACTIONS` | `true`/`false` | Use the cheaper reaction engine (different holders in one room may each get some reaction) instead of the stricter one (the winning holder gets the reactions). The shipped example reaction files use `true`. |
+| `SHOWMASK` | mask | The faction appears in `FACTIONS` and `SCORE` only for holders who pass the mask (for example `-TATTOO +READ_CULT_LETTER`). |
+| `HIDDENNAME` | text | What an explicit `FACTIONS name` lookup says while the standing is hidden, instead of revealing it. |
+
+**`RANGEn = low ; high ; display name ; CODE ; alignment flag`**
+
+Bands partition the scale. `CODE` is the globally unique, simple word used in
+masks (`-FACTION +THIEVES_TRUSTED`), in `PREJUDICE` strings, in
+`PLAYEREFFECT` and `REACTION` lines and by `FACTIONBAND`. The optional last
+field marks the band as an alignment equivalent: `EVIL`, `NEUTRAL`, `GOOD`,
+`LAWFUL`, `CHAOTIC`, `MODERATE` (used by `alignment.ini` and `inclination.ini`
+so the engine can ask "is this mob evil"); leave it blank for ordinary
+factions. Do not leave gaps between bands or overlap them: values in a gap have
+no band, and overlapping bands make the first match win. `ORGCHECK` reports both.
+
+```ini
+RANGE1=-1000;-501;Shunned;THIEVES_SHUNNED;
+RANGE2=-500;-101;Distrusted;THIEVES_DISTRUSTED;
+RANGE3=-100;100;Neutral;THIEVES_NEUTRAL;
+RANGE4=101;500;Trusted;THIEVES_TRUSTED;
+RANGE5=501;800;Honoured;THIEVES_HONOURED;
+RANGE6=801;1000;Exalted;THIEVES_EXALTED;
+```
+
+**`FACTORn = gain ; loss ; mask`** Certain groups gain or lose standing more
+easily: `FACTOR1=0.5;1.5;-RACE +Dwarf` halves gains and increases losses for
+dwarves. The first matching entry applies.
+
+**`RELATIONn = FACTION.INI pct%`** Any change to this faction also changes the
+named one by that percentage of the change, positive or negative
+(`RELATION1=ALIGNMENT.INI 5.35%`). Used to make rivals move together and
+oppositely.
+
+### Change triggers
+
+`CHANGEn = TRIGGER(parameters);DIRECTION;FACTOR%;FLAGS;TARGET MASK`
+
+The five fields are separated by semicolons, and trailing fields may be
+omitted. Example: `CHANGE1=BRIBE(AMOUNT=10);UP;10%;OUTSIDER JUST100;-CLAN "+Thieves Guild"`.
+
+**Triggers**
+
+| Trigger | Fires when | Parameters |
+| --- | --- | --- |
+| `MURDER` | A holder of this faction is killed. The change goes to those who benefit from the kill (the killer and allies in the fight), with the victim as the target. | none |
+| `KILL` | A holder of this faction kills something. | `WAIT` |
+| `DYING` | A holder dies of any cause. | `WAIT` |
+| `BRIBE` | A holder gives coins to another mob (not to a shopkeeper). The gift must be at least the larger of `AMOUNT` and `PCT` percent of what the receiver carries (1 if both are zero). | `AMOUNT=n`, `PCT=n` |
+| `GIFT` | A holder gives a non-coin item to a mob. (CoffeeSUD addition.) | none |
+| `SOCIAL` | A holder uses a social on a mob. | `ID=SOCIALNAME` or `ID=ALL`, `WAIT` |
+| a social name (`HUG *`) | The same, written with the social as the trigger: its name with `<T-NAME>`, `SELF` or `*` for any variant. | `WAIT` |
+| `TALK` | A holder says something to a mob (or in a room with listening mobs) matching a regular expression. | `REGEX`, `WAIT` |
+| `MUDCHAT` | A holder converses with a `MudChat` mob and the mob replies with something new. | `WAIT` |
+| `ARRESTED` | A holder is handcuffed by an officer of the law. | none |
+| `AREAKILL` | A holder has helped kill `PCT` percent of the mobs of the area they are in. | `PCT`, `WAIT` |
+| `AREAASS` | The same for the highest-level mobs of an area. | `PCT`, `WAIT` |
+| `AREAEXPLORE` | A holder has visited `PCT` percent of the area (with no `PCT`, the first room visited in it). | `PCT`, `WAIT` |
+| `SINK`, `SUNK` | A holder sinks a ship; a holder's own ship is sunk. | `WAIT` |
+| `TIME` | Every ten ticks (about 40 seconds of real time) for the characters currently in the game. `ROUNDS=n` stretches the period to n times that. | `ROUNDS` |
+| `ADDOUTSIDER` | Every ten ticks, a character who does not hold the faction but meets the mask gets it added. Use with direction `ADD`. | none |
+| `MSG_TYPE` | Any message of that type from the holder; the name is `MSG_` plus a `CMMsg` type word (`MSG_GET`, `MSG_DROP`, `MSG_GIVE`...). | `SMSG`, `TMSG`, `OMSG` (text the message must contain), `SRC`, `TGT`, `OTH` (names; `me` means the holder), `WAIT` |
+| An ability ID | The holder uses that ability (`Thief_Steal`). | `WAIT` |
+| An ability type, domain or flag word | The holder uses any ability of that kind (`THIEF SKILL`, `ILLUSION`, `HEALING`). | `WAIT` |
+
+Parameters go in parentheses after the trigger, separated by spaces. Every
+trigger accepts `MASK="..."` (a mask the *acting* character must pass),
+`CHANCE=n`, `WITHIN=n` (only within n ticks of the event timer being reset) and
+`WAIT=n` (ticks to wait before it can fire again for the same character). For
+example `AREAKILL(PCT=80 WAIT=9999 MASK="+AREAINSTANCE")`.
+
+**Directions** (first letters are enough): `UP` and `DOWN` change the value by
+the standard amount; `TOWARDS` and `AWAY` move toward or away from the target's
+standing; `OPPOSITE` moves away from the target's side in proportion to how
+far apart they are; `MINIMUM` and `MAXIMUM` jump to the end of the scale;
+`REMOVE` takes the faction away; `ADD` gives it the `DEFAULT` value (for
+`ADDOUTSIDER`).
+
+**Factor**: a percentage multiplier on the standard change. The standard
+change is 100 points, adjusted by the level gap between actor and target
+(killing something far below you counts for nothing) unless `JUST100` is
+given, multiplied by `RATEMODIFIER`, the factor and any `FACTOR` entry. Since
+usual scales run to hundreds or thousands of points, a factor of `1%` to `10%`
+makes minor deeds and `100%` makes a major one.
+
+**Flags** (space separated)
+
+| Flag | Meaning |
+| --- | --- |
+| `OUTSIDER` | The change applies even if the target does not hold the faction. Without it, a change involving a target only happens if the target holds the faction too. |
+| `SELFOK` | Allow the actor to be its own target (needed for abilities cast on oneself). |
+| `JUST100` | Use the flat 100-point base rather than adjusting by level difference. |
+| `XP=n`, `RPXP=n` | Also award experience or roleplay experience. |
+| `RESTIME=ID` | Reset (or with a leading `-`, disable) the `WITHIN` and `WAIT` timers of the named trigger(s); `ID.n` picks the nth entry. |
+| `ANNOUNCE="text"` | A message shown to the character when the change fires. |
+
+The final field is a **target mask**: only targets who pass it count. `MURDER;
+OPPOSITE;100%;OUTSIDER;-RACE +Elf` changes standing when an elf is killed.
+
+A character gets the faction value only if the character holds the faction.
+A change to a holder that lacks the faction adds it, starting at the amount of
+the change (not at `DEFAULT` plus the change); use `AUTODEFAULTS`, `ADDOUTSIDER`
+or `MPFACTION` to give the starting value on purpose.
+
+### Abilities, effects and reactions
+
+**`ABILITYn = what ; low ; high`** Marks which skills, spells and so on suit
+which band. `what` is an ability ID, an ability type, domain, or flag words
+(prefix a flag with `!` to require its absence). The ability is "appropriate"
+for the holder only when the holder's value lies between `low` and `high`; put
+`!` in front of `low` to invert (`ABILITY6=PALADIN_COMMANDHORSE;!-4499;4500`
+means "outside -4499 to 4500"). In play this decides which prayers clerics may
+use, which abilities NPCs choose in the Nice/Nasty/Neutral ability behaviors,
+and similar gating. Typical use is `alignment.ini`; most worlds do not write
+`ABILITY` lines.
+
+**`AFFBEHAVn = ID ; parameters ; mob mask`** Gives NPCs (never characters) in
+the faction an ability or behavior while they hold it. One entry per
+behavior or ability ID in a faction. Example: `AFFBEHAV1=Aggressive;Message="Die!"
+-FACTION +SHUNNED;-RACE +ELF`.
+
+**`REACTIONn = RANGECODE ; mob mask ; ID ; parameters`** Temporary
+reactions: an NPC that passes the mob mask and stands in the same room as a
+holder whose value is in that band gets the ability, behavior or command for
+as long as the holder is there. `<TARGET>` in the parameters is replaced with
+the holder's name. This is how a town greets a hero and shuns a villain:
+
+```ini
+REACTION1=THIEVES_SHUNNED;-CLAN "+Thieves Guild";Mood;angry
+REACTION2=THIEVES_EXALTED;-CLAN "+Thieves Guild";Say;Hail, <TARGET>.
+REACTION3=THIEVES_SHUNNED;-CLAN "+Thieves Guild" -CHANCE 50;Aggressive;CHECKLEVEL -NAMES "+<TARGET>"
+```
+
+
+**`PLAYEREFFECTn = Ability ID ; parameters ; band codes or mask`** (CoffeeSUD)
+Gives the *character* an effect while the standing is in the stated bands.
+The third field is a comma list of range codes (`CULT_TRUSTED,CULT_HONOURED`)
+or a mask (starting with `-` or `+`). The effect is a live handler recomputed
+from the current band, not a saved effect: it appears when the value enters
+the band and disappears when it leaves, and it is never written to the
+character's effect list. It can be any ability or property that works in a
+property slot, including a scripted `GenAbility` whose script reacts to ticks
+and messages, which makes it the hook for "while Hated by the Varn, bounty
+hunters follow you".
+
+```ini
+PLAYEREFFECT1=Prop_Adjuster;ATTACK+5;CULT_TRUSTED,CULT_HONOURED
+PLAYEREFFECT2=MyScriptedGenAbility;MODE=FAVOURED;-TATTOO +CULT_BLESSING
+```
+
+Numbering must be consecutive from `1`; the third field's semicolons are not
+split further, so keep masks free of semicolons.
+
+### Who holds a faction
+
+- **Characters**: through `AUTODEFAULTS` when the faction is loaded, through the
+  creation choice (`AUTOCHOICES`), `ADDOUTSIDER`, an event that adjusts a
+  faction they lack (the first change adds it), or `MPFACTION`. Values are
+  saved with the character. Auto-awards and masks that test a faction are
+  rechecked when a band is crossed during play.
+- **NPCs**: through `AUTODEFAULTS` at creation (if loaded), or an explicit value
+  written in the area file: `<FACTIONS><FCTN ID="THIEVES.INI">500</FCTN></FACTIONS>`
+  on the mob. The editors do it for you: `MODIFY MOB name` has a Factions line
+  ("Enter a faction name to add or remove", then the amount). `AFFBEHAV`
+  lines apply only to NPCs.
+- **Cross-faction rules** (`RELATION`, `FACTOR`) are applied when a change
+  fires.
+
+A value is a plain integer. A character without the faction has no value at
+all; masks and functions treat that as "no standing" (`FACTION()` returns empty).
+
+### Automatic reaction factions
+
+`AUTOREACTION` (a comma list in `coffeemud.ini` or `world.ini`) switches on
+families of generated factions, each built from a template in
+`resources/examples/` with `<NAME>`, `<CODE>`, `<FACTIONID>` and `<CLASSID>`
+filled in. A generated faction can be overridden by a file of the right name.
+They exist to make mobs react to the player's history without writing a file
+per thing.
+
+| Type | Faction ID | Template | Override file |
+| --- | --- | --- | --- |
+| `AREA` | `AREA_<AREA NAME>` | `examples/areareaction.ini` | `factions/<area_name>.ini` |
+| `CLAN` | `CLAN_<CODE>` for each `NPCRUN` clan | `examples/clanreaction.ini` | `factions/clanreaction_<code>.ini` |
+| `NAME` | `NAME_<MOB NAME>` | `examples/namereaction.ini` | `factions/<mob_name>.ini` |
+| `RACE` | `RACE_<RACE>` | `examples/racereaction.ini` | `factions/<race>.ini` |
+| `DEITY` | `DEITY_<DEITY>` | `examples/deityreaction.ini` | `factions/<deity>.ini` |
+| `PLANAR` | `PLANE_<PLANE>` | factions defined by the planes of existence | none |
+
+The shipped `coffeemud.ini` sets `AUTOREACTION=PLANAR`. These systems cost CPU
+and memory in proportion to what is in play; enable only what you use.
+
+**Clan standing (CoffeeSUD).** With `CLAN` in `AUTOREACTION`, every `NPCRUN`
+clan has a faction `CLAN_<CODE>` (`<CODE>` is the clan name upper-cased, other
+characters `_`) from `clanreaction.ini`. Its bands are Shunned, Distrusted,
+Neutral, Trusted, Honoured and Exalted, with codes `<CODE>_SHUNNED` ...
+`<CODE>_EXALTED`. By default killing a member lowers standing, giving a member at least 10
+coins raises it a little, and giving a member an item raises it a little less;
+members react by band (`Mood` changes). Allied
+organisations receive half of a change and organisations at war receive the
+inverse half; changes in diplomacy update these links. `CREATE GUILD` creates
+this faction even without `CLAN` in `AUTOREACTION` but characters only receive
+it automatically with `CLAN` listed, so list it (for example
+`AUTOREACTION=PLANAR,CLAN`).
+
+**Town reputation (CoffeeSUD).** An area's `REPUTATION` setting names a
+template (`MODIFY AREA name REPUTATION examples/areareaction.ini`); an area
+with a value gets `AREA_<NAME>` from it, and blank or `NONE` means no
+reputation even if `AREA` is in `AUTOREACTION`. Bands are Hated, Villain,
+Neutral, Liked, Disliked, Hero, Loved with codes `<CODE>_HATED`, `_VILLAIN`,
+`_NEUTRAL`, `_LIKED`, `_DISLIKED`, `_HERO`, `_LOVED` where `<CODE>` is the area
+name upper-cased with spaces turned into `_` (`RIVERTON_HERO`). The shipped
+template lets natives of a town gain from time spent there, friendly
+conversation with its `MudChat` mobs and coin gifts, and makes them lose from
+kills and arrests there. Copy `areareaction.ini` and edit it for your own bands. A law's
+`LENIENCY` key uses the town band to soften or harden sentences ([The law
+file](#the-law-file)).
+
+### Scripting factions
+
+| Script item | Form | Notes |
+| --- | --- | --- |
+| `MPFACTION` | `MPFACTION $n THIEVES.INI 50`; `MPFACTION $n THIEVES.INI +50`; `MPFACTION $n THIEVES.INI --50`; `MPFACTION $n THIEVES.INI TRUSTED` | A number sets the value; `+n` adds, `--n` subtracts; a band name or code (`TRUSTED`, `THIEVES_TRUSTED`) sets the middle of the band of that faction. Tells the character what changed. |
+| `FACTION()` condition | `if faction($n THIEVES.INI > 500)`; `if faction($n THIEVES.INI == Trusted)` | A number compares the value; otherwise the band's display name. |
+| `$%FACTION(who id)%` | band display name | Empty when the mob has no standing. |
+| `$%FACTIONVALUE(who id)%` | the number | |
+| `$%FACTIONBAND(who id)%` | the band code | |
+| `FACTION_PROG` | `FACTION_PROG (@GLOBAL) id RANGE/ANY/UP/DOWN (mask)` | Fires when a standing changes or enters a band. See [26-mobprog-triggers.md](26-mobprog-triggers.md). |
+| Masks | `-FACTION +CODE`, `+FACTION -CODE` | Range codes, optionally `faction.code`. |
+
+The `id` in the functions may be the file name, the display name or a band code.
+Full syntax for the commands and functions is in
+[27-mobprog-commands.md](27-mobprog-commands.md) and
+[28-mobprog-functions.md](28-mobprog-functions.md).
+
+### Faction tools
+
+| Tool | Use |
+| --- | --- |
+| `FACTIONS` (`FAC`) | `FACTIONS`: the character's standings. `FACTIONS HERE`: factions relevant to this place. `FACTIONS name`: a faction's band ladder, the current band marked, and points to the next. `FACTIONS PARTY`: a table of every visible faction by party character. Factions whose `SHOWMASK` fails show nothing or the `HIDDENNAME`. |
+| `ORGCHECK` | `ORGCHECK (file/CLANS/GOVERNMENTS/ALL)`, in builder mode, DEV mode or with `CMDFACTIONS`. Re-reads faction files line by line and reports a key given twice, band gaps and overlaps, `CHANGE` triggers that match nothing, `REACTION` and `AFFBEHAV` IDs that are not abilities, behaviors, commands or socials, a `REACTION` range that is no band's code, and `RELATION` factions that do not exist. `CLANS` lists world-file mobs naming a missing clan; `GOVERNMENTS` checks entry and exit scripts. |
+| `CREATE/MODIFY/DESTROY/LIST FACTION` | Editors, saved to `world/resources/factions/` in builder mode. |
+| `AS <character> FACTIONS` | Another party character's standings. |

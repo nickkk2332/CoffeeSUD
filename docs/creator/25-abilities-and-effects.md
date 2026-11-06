@@ -381,3 +381,414 @@ exact words your build accepts.
 
 A word that is the start of exactly one name works (`HEAL` becomes
 `HEALING`); give full names in files you maintain.
+
+## Timed effects
+
+When an ability produces a lasting result it puts a copy of itself on its
+target. That copy is the *effect*. Everything below applies to every kind of
+ability, including the ones you build as data.
+
+### The three kinds of effect
+
+| Kind | How it gets there | Ends | Saved with the world or character? |
+| --- | --- | --- | --- |
+| **Timed** | Cast, thrown or applied by an ability (`beneficialAffect`, `maliciousAffect`, `startTickDown`) | When its tick counter runs out, when dispelled or cured, or when the ability itself ends it | Not as part of a room, mob or item record (the `savable` flag is switched off). The *campaign save* keeps its remaining ticks, see [Persistence](#persistence) |
+| **Permanent** (non-uninvokable) | Put there by a builder (the Effects field of an editor, an `effects` list in a world file) or by `addNonUninvokableEffect` | Never on its own; dispel does nothing. Remove it with the editor | Yes: its ID and parameter text are written with the room, exit, item or mob |
+| **Automatic** (auto-invoked) | A *known* ability that `isAutoInvoked()` is copied onto its owner when learned, on login and when `AUTOINVOKE` turns it on (passive skills such as Dodge, or a `GenAbility` with `AUTOINVOKE=true`) | When the owner forgets the ability or switches it off with `AUTOINVOKE` | No. It is recreated from the known ability each time |
+
+The engine's words for the distinction: `canBeUninvoked()` is true for timed
+and automatic effects and false for permanent ones; `isSavable()` is true for
+permanent effects; `isNowAnAutoEffect()` is true for automatic ones and for
+anything cast with `auto=true` (a cast that skips cost, proficiency and
+messages, which is how scripts, items and traps cast things).
+
+A *Property* is just a permanent effect with no known-ability role, which is why
+`Prop_*` classes extend a lighter base class and have no cost, cooldown or
+casting.
+
+### Duration
+
+An effect's counter, `tickDown`, drops by one on each tick of its host. At zero
+the engine calls `unInvoke()`, the effect removes itself, recalculates the
+host's stats and tells the host the ability's end message (`UNINVOKEMSG` in a
+`GenAbility`). One tick is about 4 seconds of game time at the default `TICKTIME`
+(see [10-world-simulation.md](10-world-simulation.md) for game time).
+
+If the caster does not give an exact duration, the base length is:
+
+- **Beneficial** effects: `adjusted caster level * 4 + 40` ticks, never more
+  than one game day (`TICKSPERMUDDAY`), never fewer than 5. If the caster is a
+  player (or leads one) and helps somebody else, the caster level used is capped
+  at the target's level plus `EXPRATE` (default 6), so a high-level character
+  cannot make a low-level one's buffs extremely long.
+- **Hostile** effects: `adjusted caster level * 1.1 + 25` ticks, made shorter if
+  the target is higher level than the caster and longer if lower (the
+  difference limited to `EXPRATE` and applied as a fraction `diff / (EXPRATE+1)`),
+  capped at one third of a game hour and at one game day, never fewer than 2.
+  Effects on rooms are not level-adjusted.
+
+Callers can change this. In a `GenAbility`, `TICKSOVERRIDE` is a formula: a
+positive value is the exact number of ticks (and is not capped), `0` means
+"standard", and a negative value means that many percent of the standard
+duration (`-50` is half). Other adjustments are applied afterward:
+
+- `XTIME` expertise adds 20 percent of the base length per level (not to the
+  crafting, gathering, epicurean and building common skills);
+- each of the caster's classes may adjust duration (`classDurationModifier`);
+- stat adjustments of the form `TICK+[ID/TYPE/DOMAIN/*]` from items, races and
+  properties (the `ableticks` parameter of `Prop_Adjuster` and relatives) shift
+  it by a fixed number of ticks;
+- `EFFECTCAP` in `coffeemud.ini` (default `0`, off) limits how many
+  dispellable effects a mob can carry: a new one over the cap randomly ends
+  an existing one.
+
+An effect can also last "forever": `makeLongLasting()` sets the counter to the
+maximum so it never counts down (used for properties and quiet effects),
+and `TICKS_ALMOST_FOREVER` is the value the display treats as no time limit.
+
+### What an effect can do
+
+An effect is a live participant in the game's message flow. A Java effect can:
+
+- adjust the host's stats whenever they are recalculated
+  (`affectPhyStats`, `affectCharStats`, `affectCharState`): this is how a spell
+  raises armor or lowers strength;
+- veto or react to anything done in its host's presence (`okMessage` and
+  `executeMsg`), which is how a bless reacts to damage, a sleep prevents
+  movement, and a trap springs;
+- do something every tick (`tick`);
+- clean up (`unInvoke`).
+
+A `GenAbility` exposes the first as `HERESTATS`, the second and third through
+its script, and the last as `UNINVOKEMSG` and `ONEXPIRE`
+([Script hooks](#script-hooks)). Everything a `Prop_*` property does is done
+through the same hooks.
+
+### Invoker, savable and uninvokable
+
+- **Invoker.** Every effect remembers who made it (`invoker()`). Hostile
+  damage over time credits the invoker with kills and experience; a trap
+  without an invoker invents a stand-in at the host's level; cures such as
+  `Prayer_CureDisease` refuse to cure a disease caused by a stronger source;
+  and `MPAFFECT` makes the script's host mob the invoker.
+- **Savable.** `isSavable()` decides whether the effect is written into the
+  record of the room, exit, item or mob it sits on. Casting turns it off, so a
+  spell buff is not part of the *world*; permanent effects have it on. The
+  campaign save separately stores timed effects with ticks left
+  ([Persistence](#persistence)).
+- **Uninvokable.** `makeNonUninvokable()` makes an effect permanent and
+  savable; `canBeUninvoked()` tells dispel and cure abilities whether they may
+  remove it. The flag `NOUNINVOKING` is a separate hint for effects that
+  should not be removed even by automatic clean-up.
+
+### How effects show up
+
+The `AFFECTS` command (`AFFECT`, `AFF`, `AF`) lists a character's effects by
+their `displayText()`: the *Affect String* of a `GenAbility`
+(`DISPLAY`). Effects with an empty display text are hidden. A display text
+wrapped in parentheses, such as `(Emberward)`, has the time remaining
+appended. `AFFECTS [TYPE or DOMAIN] [NAME|TYPE|DOMAIN|REMAIN]` filters and sorts;
+`AFFECTS spell`, `AFFECTS name "common skill"`. An archon can say `AFFECT`
+followed by `ROOM`, `AREA` or a target's name to see the effects on that
+thing (the output includes who caused each one).
+
+To see everything on the target at the level of IDs and counters, use
+`MODIFY` on the thing and open its *Effects* field; ticks left are shown by
+the `TICKDOWN` internal stat for debugging.
+
+## Saving throws
+
+Hostile abilities give the target a chance to resist before any effect is
+applied. A save is a percentage stored in the target's character stats; the
+engine computes it when the hostile message reaches the target:
+
+1. Start with the save for the *ability family*: `SAVE_SPELLS` for a spell,
+   `SAVE_PRAYERS`, `SAVE_CHANTS` or `SAVE_SONGS` for those types (none for
+   other types).
+2. Add the save for the *kind of harm*, taken from the message type of the
+   attack: `FIRE`, `COLD`, `WATER`, `GAS`, `MIND`, `GENERAL`, `JUSTICE`, `ACID`,
+   `ELECTRIC`, `POISON`, `UNDEAD`, `DISEASE`, `PARALYZE`, `POLYMORPH` and
+   `CAST_SPELL` (the generic magic save). In a `GenAbility` this is the
+   `ATTACKCODE` field.
+3. Add or subtract the squared level difference between target and attacker
+   (a target 5 levels higher gains 25 percentage points; one 5 lower loses 25).
+4. Clamp the result to 5 to 95 percent and roll. A roll below it means the
+   target *resists*: the engine sends a resistance message ("X shake(s) off the
+   mental attack"), the effect is not applied, and damage from the ability is
+   halved.
+
+Other saves that sit outside this: `SAVE_TRAPS` for traps (compared with the
+target-minus-trapper level difference), `SAVE_DISEASE` for catching a disease
+(the chance to catch is 100 minus the save; a successful save leaves a short
+`TemporaryImmunity` effect), and `SAVE_POISON` for poison applications.
+Saves are normal stats, so races, items and properties raise them with
+`Prop_Adjuster`-style parameters (`savefir`, `savemag`, `savespells`, ...).
+A world can add its own stat and effects of stats; see `STATEFFECT_*` and
+`AHELP STATEFFECTS`, and [world-settings.md](world-settings.md).
+
+## How characters get abilities
+
+A character can know an ability in four ways: its class (or race) grants it,
+it is learned from a teacher, a script or item grants it, or it comes from a
+reward. All four end up in the same list.
+
+### Class, race and the shared pools
+
+Each character class has an ability map: for every ability it can have, the
+level at which it qualifies, a default proficiency, whether it is gained
+automatically at that level (*autogain*), whether it is secret (hidden in
+lists until known), an optional default parameter string, required skills
+(`Skill_Write Skill_Trip Skill_Dirt(25)`: other abilities, optionally with a
+proficiency, that must be known first), a qualifying zapper mask and optional
+cost overrides. Races can grant abilities the same way. The class and race
+editors, `GenCharClass` and `GenRace`, are covered in
+[03-characters.md](03-characters.md); `CREATE ABILITY` makes the ability
+exist, the class's map is what lets characters have it.
+
+A second map, `resources/skills/allqualifylist.txt`, holds abilities every
+class can use without being listed in each class:
+
+```text
+[EACH]
+1 Bandaging
+3 FireBuilding AUTOGAIN
+
+[ALL]
+1 Digging
+1 Fishing MASK=+WIS 8
+```
+
+Each line is `[QUAL_LEVEL] [ABILITY_ID] (AUTOGAIN) (PROF=[AMT])
+(REQUIRES=[ID(PROF)]...) (MASK=[ZAPPER MASK])`. `[EACH]` skills belong to every
+class individually; `[ALL]` skills form a shared pool subject to the
+`MAXCOMMONSKILLS`, `MAXCRAFTINGSKILLS`, `MAXNONCRAFTINGSKILLS` and
+`MAXLANGUAGES` limits in `coffeemud.ini`. Edit the file or use `CREATE
+ALLQUALIFY EACH|ALL [ID]`, `MODIFY ALLQUALIFY EACH|ALL [ID]`, `DESTROY
+ALLQUALIFY EACH|ALL [ID]` (security flag `CMDABILITIES`); `LIST ALLQUALIFYS`
+shows them. The editor asks for qualifying level, auto-gain, default
+proficiency, visibility, qualifying mask and required skills.
+
+`QUALIFY` shows the abilities the player can learn now (`QUALIFY SPELLS`,
+`QUALIFY UNIQUE POISONING`). `SKILLTREE [CLASS or SKILL]` draws the
+prerequisite chains with learned, learnable and locked marks
+(`resources/skills/skillhints.ini` holds where-taught hints).
+
+### Learning and improving: TRAIN, LEARN, GAIN, PRACTICE, TEACH
+
+| Command | What it does |
+| --- | --- |
+| `TEACH [STUDENT] [SKILL]` | A character who knows the ability at 25 percent or more of the class maximum teaches it to a student in the same room. The student pays the learning cost. |
+| `LEARN [SKILL] ([FROM] [TEACHER])` | Says the right words to a teacher and then trains; `LEARN FROM [RECIPE BOOK]` studies a recipe book instead. |
+| `GAIN [SKILL]` | Says `GAIN ...` to the room; a teacher NPC that hears it teaches (see below). `GAIN` alone asks you to use `QUALIFY`. |
+| `TRAIN [STAT/CLASS] ([TEACHER])` | Spends a training session on a stat or a new class. |
+| `PRACTICE [SKILL] ([TEACHER])` | Spends a practice point to raise proficiency of a known skill, with a teacher who knows it better. |
+| `TEACHLIST ([TEACHER])` | Shows what a teacher here offers *you*, with prices, and what they refuse. |
+| `NOTEACH` | Toggles refusing to teach or be taught. |
+| `RESPEC ([THING])` | Where a retraining place exists (`Prop_Respec`), undoes purchases and refunds them. |
+| `SKILLS`, `SPELLS`, `PRAYERS`, `CHANTS`, `SONGS`, `POWERS`, `ABILITIES` | List what you know and your proficiency in it; each accepts a domain, a name and a level. |
+| `AUTOINVOKE` | Toggles which passive abilities are active. |
+
+The conditions for learning (what `canBeLearnedBy` checks), all of which a
+refused student is told:
+
+1. The student can pay the learning cost (see below).
+2. The class (or the shared pools) lists the ability, the student is high
+   enough *level*, and meets the mapping's mask and required skills.
+3. The student's intelligence is at least 2, and not so low that a skill at
+   that point in the class's list is beyond them (`INT + 6` must reach
+   `base max stat * skill level / highest level in the class list`).
+4. The student does not already know it.
+5. A teacher, if there is one, knows it at 25 percent of the maximum or more.
+6. Neither is fighting, sleeping or sitting, and neither has `NOTEACH` set
+   (NPCs have it set unless they are teachers).
+
+The proficiency a newly learned ability starts at is the class mapping's
+default proficiency (zero if none).
+
+### Costs of learning
+
+`coffeemud.ini` sets the price in `SKILLCOST` (default one training session),
+`COMMONCOST` (default one train) and `LANGCOST` (three practices): a number
+and a word `TRAIN`, `PRACTICE`, `XP`, `GOLD` or a currency name, with `@x1` the
+ability's qualifying level and `@x2` the player's level in formulas, and
+exceptions by ID:
+
+```ini
+SKILLCOST=1 TRAIN, Skill_WildernessLore 1 PRACTICE, Spell_Sleep 50*@x1 GOLD
+```
+
+A class's mapping may override the price per ability. `PRACMAXPCT` caps how
+far practice alone can take a skill. Per-level practice and train grants are
+set by `FORMULA_PRACTICESPERLEVEL`, `FORMULA_TRAINSPERLEVEL` and
+`TRAINSATLEVELS`; see [world-settings.md](world-settings.md) and
+[03-characters.md](03-characters.md).
+
+### Teacher NPCs
+
+NPCs refuse to teach unless they carry a teaching marker, so a trainer must be
+set up deliberately:
+
+- [`MOBTeacher`](24-behaviors-and-masks.md#mobteacher) (a behavior) makes the
+  mob teach skills. Its parameters list class names, ability names, expertise
+  names, percentages and flags (`NOCOMMON`, `NOEXPS`, `NOTEACH`); with none
+  it teaches everything basic. The mob is given the abilities it teaches.
+- [`Prop_Trainer`](23-properties-reference.md#prop_trainer) makes a mob a
+  suitable target for `TRAIN` (stats, classes, expertises) and, unless
+  `NOTEACH` is in its parameters, a teacher too.
+  [`Prop_StatTrainer`](23-properties-reference.md#prop_stattrainer) is the
+  stat-only variant.
+
+A player teaches by saying `teach me [SKILL]` or `gain [SKILL]` to the NPC in
+the room, or by typing `LEARN [SKILL] FROM [TEACHER]` or `PRACTICE [SKILL]
+[TEACHER]`. CoffeeSUD (item P16) adds, to both `MOBTeacher` and `Prop_Trainer`,
+the following parameters, written among the others in any order:
+
+| Parameter | Meaning |
+| --- | --- |
+| `STUDENTMASK="[ZAPPER MASK]"` | Whom it teaches at all. |
+| `REFUSEMSG="[TEXT]"` | What it says to anyone the mask turns away. |
+| `SKILLMASK.[ABILITY ID]="[ZAPPER MASK]"` | Whom it teaches that one skill. |
+| `PRICE="[N] per level"` or `PRICE=[N]` | Money it takes per lesson, on top of the normal cost (`per level` multiplies by the student's level). |
+| `HIDDEN=[ID],[ID]` | Skills it teaches but leaves off `TEACHLIST`. |
+
+These gate `TEACH ME`, `GAIN`, `PRACTICE` and `TRAIN` with that NPC, and `TRAIN`
+with no trainer named skips a trainer who refuses. Example:
+
+```text
+Prayer_Bless Prayer_Sanctuary STUDENTMASK="-CLANRANK '+Temple of Arden>=ACOLYTE'" SKILLMASK.Prayer_Sanctuary="-CLANRANK '+Temple of Arden>=PRIEST'" PRICE="5 per level"
+```
+
+## How mobs, items and rooms get abilities
+
+### The mob editor
+
+In `MODIFY MOB` the *Abilities* field takes `[ABILITY ID]` to add or remove an
+ability and `[ABILITY ID](parameters)` to add one with a parameter string. A new
+entry starts at proficiency 75 and is switched on at once if it is automatic.
+Archon-domain abilities can be added only by a sysop. A mob casts and uses what it
+has, at its own level, as its combat AI decides (hostile abilities against the
+victim, beneficial ones on itself or allies); see
+[21-mobs.md](21-mobs.md) and [29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+### Scripts
+
+| Command | Effect |
+| --- | --- |
+| `MPENABLE [MOB] [ABILITY OR EXPERTISE] [PROF] [PARMS]` | Gives the ability at that proficiency, or changes it if known. `PROF` may be `++N` or `--N` to adjust the current value. `PARMS` becomes the ability's text. An unknown ability that is an expertise ID adds the expertise. A language is learned with `Languages.learn`. |
+| `MPDISABLE [MOB] [ABILITY OR EXPERTISE]` | Removes the ability (or expertise). |
+| `MPCAST [ABILITY] [TARGET]` | The script's mob uses the ability at 100 percent proficiency on the target as a normal cast: costs, cooldown, masks and fizzling all apply. A host that is not a mob has its stand-in mob restored to full mana first. |
+| `MPCASTEXT [ABILITY] [TARGET] [ARGS]` | As `MPCAST`, with the rest of the line given to the ability the way a player would type it. |
+| `MPAFFECT [ABILITY] [TARGET] [N TICKS] [PARMS]` | Puts the ability on the target as an automatic cast (no cost, never fizzles). For a property it is added permanently, or timed through a `TemporaryAffects` effect when `N TICKS` is given. For other abilities `N TICKS` sets how long the effect lasts. `property:[ID]` forces the permanent-property form for any ability. |
+| `MPUNAFFECT [TARGET] [ABILITY ID or ALL]` | Ends the named effect, or every uninvokable effect. |
+| `MPLEARNLANG`, `MPLEARNRECIPE`, `MPTRAINS`, `MPPRACS`, `MPRESPEC`, `MPPERK` | Related progression commands. |
+
+Full syntax is in [27-mobprog-commands.md](27-mobprog-commands.md)
+([MPENABLE](27-mobprog-commands.md#mpenable),
+[MPDISABLE](27-mobprog-commands.md#mpdisable),
+[MPCAST](27-mobprog-commands.md#mpcast),
+[MPAFFECT](27-mobprog-commands.md#mpaffect),
+[MPUNAFFECT](27-mobprog-commands.md#mpunaffect)). A script can also react to
+learning: a `GenAbility`'s `ONLEARN` function runs when a mob gains it, and
+`SKILL_PROG LEARN` fires for any ability.
+
+### Items that grant or cast
+
+These properties make an item grant abilities while owned, worn, ridden or in a
+room, or cast spells on its owner. Their parameters are a list of ability IDs
+separated by semicolons, each optionally with a percentage (proficiency or
+chance) and `(parameters)`, finishing with an optional `MASK=` zapper mask. Full
+syntax is in [23-properties-reference.md](23-properties-reference.md).
+
+| Property | Gives the ability or casts the spell |
+| --- | --- |
+| [`Prop_HaveEnabler`](23-properties-reference.md#prop_haveenabler) | to the owner, while owned |
+| [`Prop_WearEnabler`](23-properties-reference.md#prop_wearenabler) | to the owner, while worn, wielded or held |
+| [`Prop_RideEnabler`](23-properties-reference.md#prop_rideenabler) | to the rider, while ridden |
+| [`Prop_HereEnabler`](23-properties-reference.md#prop_hereenabler) | to everyone in the room or area |
+| [`Prop_HaveSpellCast`](23-properties-reference.md#prop_havespellcast), [`Prop_WearSpellCast`](23-properties-reference.md#prop_wearspellcast), [`Prop_RideSpellCast`](23-properties-reference.md#prop_ridespellcast), [`Prop_HereSpellCast`](23-properties-reference.md#prop_herespellcast) | puts the spell on the owner, wearer, rider or occupants, kept up as long as the condition holds |
+| [`Prop_UseSpellCast`](23-properties-reference.md#prop_usespellcast), [`Prop_UseSpellCast2`](23-properties-reference.md#prop_usespellcast2) | on use, filling, eating or touching |
+| [`Prop_FightSpellCast`](23-properties-reference.md#prop_fightspellcast) | on a weapon: a spell on the target struck, with a chance |
+| [`Prop_SpellAdder`](23-properties-reference.md#prop_spelladder) | the same list syntax, used for rooms, items and mobs, and by `GenAbility`'s `POSTCAST*` fields |
+| [`Prop_AbilityImmunity`](23-properties-reference.md#prop_abilityimmunity), [`Prop_RestrictSpells`](23-properties-reference.md#prop_restrictspells), [`Prop_RestrictSkills`](23-properties-reference.md#prop_restrictskills), [`Prop_MagicFreedom`](23-properties-reference.md#prop_magicfreedom) | the opposite: immunity to, or a ban on, listed abilities, or on all magic |
+
+*Scrolls, wands, potions and similar items* hold spells instead of granting
+them. Reading a scroll casts one of its spells if the reader knows a
+"read magic" skill that matches (`Spell_ReadMagic`, `Prayer_ReadPrayer`,
+`Chant_ReadRunes`, `Song_ReadMusic`), at the scroll's level, for a small mana
+cost (none if the reader already qualifies for the spell, 25 if the reader's
+class cannot have it). The scroll loses a use. Item types are covered in
+[22-items.md](22-items.md).
+
+### Rewards
+
+Achievement rewards, `MPREWARD` and quest rewards can give an effect:
+`1 EFFECT(ID=Prop_Adjuster PARMS="con+1" TICKS=0)` keeps it for good with
+`TICKS=0`, else it lasts that many ticks. `AHELP ACHIEVEMENTREWARDS` lists all
+reward kinds ([08-quests.md](08-quests.md)).
+
+## Putting effects on things
+
+Every room, exit, item, mob and area has an effects list that the builder edits.
+
+### The Effects field
+
+In the editor for any such object (`MODIFY ROOM`, `MODIFY MOB`, `MODIFY ITEM` ...)
+choose the number of *Effects* and enter at the prompt:
+
+```text
+Enter an effect to add, -ID to remove, =ID or its number to edit, ?P for the properties that fit (?)
+:
+```
+
+- An effect ID adds it; the next prompt asks for its parameters (type `?` there
+  for the ability's help). Blank parameters keep the default text.
+- `-ID` removes it; `=ID` or its list number edits the parameters; `?` lists
+  every ability; `?P` lists the properties that suit this kind of object.
+- Only *savable* (permanent) effects are listed. Timed effects cast during play
+  are not part of the thing's definition.
+- Archon-domain abilities can be added only by someone who already knows them.
+
+An effect added here is permanent and non-uninvokable, and is written with the
+object. In a world file it appears as an affect element inside the object's
+extra data:
+
+```xml
+<AFFECS><AFF><ACLASS>Prop_Smell</ACLASS><ATEXT>stinky</ATEXT></AFF></AFFECS>
+```
+
+Many abilities that are not properties also work as permanent effects: a trap
+(`Trap_RoomPit`), a ward spell, `Spell_Light` on a lamp, a disease on a
+corpse, a poison on a drink. They use the ability's `text()` for their
+parameters, and a permanent spell effect never times out.
+
+### Commands that add timed effects
+
+For a timed effect, use the ability itself (`CAST`, `PRAY`, `MPCAST`,
+`MPAFFECT`), or an archon wand/item. `MPAFFECT` is the scripter's tool; the
+GOD cheat commands are in [19-configuration-and-administration.md](19-configuration-and-administration.md).
+
+## Finding abilities in game
+
+The shipped help files describe every stock ability (`spell_help.ini`,
+`prayer_help.ini`, `chant_help.ini`, `songs_help.ini`, `skill_help.ini`,
+`common_help.ini`, `diseases.ini`, `poisons.ini`, `traps.ini` under
+`resources/help/`). Each ability's entry begins with a generated header, built
+from the live ability: its name, domain, which classes get it at what level,
+cost, quality, targets and range.
+
+| Command | Use |
+| --- | --- |
+| `HELP [NAME or ID]` | The ability's help page (any player). A `GenAbility`'s page is its `HELP` field. |
+| `AHELP [TOPIC]` | Administrative topics: properties (`AHELP PROP_SPELLADDER`), behaviors, `AHELP GENABILITY`, `AHELP GENPOISON` ..., `AHELP SKILLSCRIPTS`, `AHELP COMPONENTS`, `AHELP STATEFFECTS`. |
+| `LIST ABILITIES ([TYPE|DOMAIN|FLAG])` | Every ability class loaded, including generics. Add a domain or flag word: `LIST ABILITIES healing`, `LIST ABILITIES moving`, `LIST ABILITIES enchantment/charm`. |
+| `LIST SPELLS`, `PRAYERS`, `CHANTS`, `SONGS`, `SKILLS`, `THIEFSKILLS`, `COMMON`, `LANGUAGES`, `DISEASES`, `POISONS`, `TRAPS`, `PROPERTIES`, `SUPERPOWERS` (or `POWERS`), `TECHSKILLS` | The same list for one type, each taking an optional domain or flag. |
+| `LIST ABILITYDOMAINS`, `LIST ABILITYCODES`, `LIST ABILITYFLAGS` | The exact words for classification and flags. |
+| `LIST ALLQUALIFYS`, `LIST COMPONENTS`, `LIST EXPERTISES` | The shared qualification map, components and expertises. |
+| `SKILLS`, `SPELLS`, ... `ABILITIES [NAME]` | What the current character knows; naming one shows its level and proficiency. |
+| `QUALIFY` | What the current character may learn now. |
+| `SKILLTREE` | Prerequisite chains for the class. |
+
+`LIST` commands need the matching security flags (`CMDABILITIES` or
+`LISTADMIN`); see [19-configuration-and-administration.md](19-configuration-and-administration.md).
+The generated [tool-reference.md](tool-reference.md) mirrors the help text of
+all of these commands.

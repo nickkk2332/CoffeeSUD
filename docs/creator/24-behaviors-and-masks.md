@@ -2131,7 +2131,7 @@ Parameters before an optional `;`, then an item mask (allowed is picked up).
 | Parameter | Meaning |
 | --- | --- |
 | `MIN`, `MAX`, `CHANCE` | Timing. |
-| `TRASH=[ROOMID]` | Track to that room and put the things in any ungettable container there, or on the ground. `TRASH="no"` does nothing with them (they are kept). |
+| `TRASH=[ROOMID]` | When full, track to that room and put the things in any ungettable container there, or on the ground. `TRASH="no"`: when full, do nothing more (it keeps what it has). |
 | `ATNIGHT=true` | (not in the help) at night it works every tick and dumps its haul. |
 
 ```text
@@ -2500,9 +2500,9 @@ VeryAggressive mobkill misbehave -race +elf
 
 ### WaterCurrents
 
-Hosts: areas, rooms. Timing default 3/5/75. The mob, item or boat in the room is
-drawn along in the directions given. If an exit is available in the first
-direction it is chosen, else the second, and so on.
+Hosts: areas, rooms. Timing default 3/5/75. The mobs in the room are drawn along
+in the directions given (and, with `BOATS`, boats). If an exit is available in
+the first direction it is chosen, else the second, and so on.
 
 | Parameter | Meaning |
 | --- | --- |
@@ -2523,13 +2523,13 @@ Hosts: rooms. CoffeeSUD. An arena of waves.
 | Parameter | Meaning |
 | --- | --- |
 | `WAVE1="[WAVE]"`, `WAVE2=`... | Each wave is `name*dice` joined with `+` (from the catalog, `catalog:` being optional, or a mob class), or `encounter:[TABLE]`, a roll of an encounter table (`AHELP ENCOUNTER`). |
-| `NEXT=CLEAR` / `NEXT=TICKS=[N]` | The next wave comes when the last is dead, or after N ticks. |
-| `START=ENTER` (default) / `START=CALL` | Starts when the party walks in, or when a script runs `MPWAVE START`. |
+| `NEXT=CLEAR` / `NEXT=TICKS=[N]` | The next wave comes when the last is dead (default), or after N ticks. |
+| `START=ENTER` (default) / `START=CALL` | Starts when the party walks in, or when a script runs `MPWAVE START` (`MPWAVE` also takes `NEXT`, `STOP` and `RESET`). |
 | `LOCKEXITS=true` | Keeps the party in until it is done. |
-| `ONWIN=[FUNCTION]/UNLOCK` | When the last wave is dead, the winner gets `REWARD`, `ONWIN`'s `FUNCTION_PROG` of the room's scripts runs (`$n` the winner). |
-| `REWARD="[ITEM]"` | The reward. |
-| `ONLOSE=RESET/SPARRING(:[ROOM ID])` | If the party leaves or falls, what is left of the wave leaves; `SPARRING` puts `Prop_SparringRoom` on the room while it runs, so a defeat is not death (the room ID is where the loser wakes). |
-| `RESETAFTER=[N]` | Ticks after which it may start again. |
+| `ONWIN=[FUNCTION]/UNLOCK` | When the last wave is dead: the `FUNCTION_PROG` of that name in the room's scripts runs (`$n` the party's leader), or `UNLOCK` (the default) only frees the exits. |
+| `REWARD="[ITEM]"` | The winner gets this item. |
+| `ONLOSE=RESET/SPARRING(:[ROOM ID])` (default `RESET`) | If the party leaves or falls, what is left of the wave leaves; `SPARRING` puts `Prop_SparringRoom` on the room while it runs, so a defeat is not death (the room ID is where the loser wakes). |
+| `RESETAFTER=[N]` | Ticks before it can start again after a win (default 0). |
 
 `WAVE_PROG [N]`, `ARENAWIN_PROG` and `ARENALOSE_PROG` run on the room's scripts
 and its NPCs' (an arena master's). The wave is saved. See

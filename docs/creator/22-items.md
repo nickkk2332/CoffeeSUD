@@ -811,3 +811,331 @@ A `GenShield` is armor that is held in a hand (`WORN_HELD`). Only a `Shield`
 can be held and still count as armor. `GenThinArmor` is for clothing and
 jewelry. `GenCloak` hides the wearer's name. See [Item classes](#armor).
 
+## Containers, lids, locks and keys
+
+Containers implement `Container`. Anything that can hold other things is one:
+`GenContainer`, every armor, every drink, every rideable and portal. The
+fields are the same everywhere (stat codes in parentheses).
+
+| Field | Meaning |
+| --- | --- |
+| Capacity (`CAPACITY`) | Maximum total weight of the contents (weight stands in for volume). 0 means nothing fits |
+| Can contain (`CONTAINTYPES`) | The kinds of item allowed. In the editor you enter a type name to toggle it; `ANYTHING` (the default) clears the list. Types are listed below |
+| Has a lid (`HASLID`) | Whether it opens and closes. Without a lid, contents are always reachable |
+| Defaults closed (`DEFCLOSED`) | The lid shuts again when the item resets |
+| Has a lock (`HASLOCK`) | Whether it locks (needs a lid) |
+| Defaults locked (`DEFLOCKED`) | The lock re-engages when the item resets (needs a lock and default-closed) |
+| Reset Delay (`RESETTIME`) | Ticks after it is opened or unlocked before it returns to its default state (default 30). It does not reset while a key that fits is inside it |
+| Key Code (`READABLETEXT`) | The code a key must have to fit. Shown only when it has a lid and a lock |
+
+The editor asks them as one question series: `Has a lid` (Y/n), `Defaults
+closed`, `Has a lock`, `Defaults locked`, then the delay.
+
+Container type bits (`Container.CONTAIN_*`, the `CONTAINTYPES` value is their
+sum; 0 means anything):
+
+| Name in the editor | Bit | Allows |
+| --- | --- | --- |
+| ANYTHING | 0 | everything (clears the list) |
+| LIQUID | 1 | liquids (a drink container) |
+| COINS | 2 | money |
+| SWORDS | 4 | swords |
+| DAGGERS | 8 | daggers |
+| OTHER WEAPONS | 16 | weapons that are not swords or daggers |
+| ONE-HANDED WEAPONS | 32 | one-handed weapons |
+| BODIES | 64 | corpses |
+| READABLES | 128 | readable items |
+| SCROLLS | 256 | scrolls |
+| CAGED ANIMALS | 512 | caged creatures |
+| KEYS | 1024 | keys (a key ring) |
+| DRINKABLES | 2048 | drinkable items |
+| CLOTHES | 4096 | clothes |
+| SMOKEABLES | 8192 | pipes, cigars and smokeable herbs |
+| SS COMPONENTS | 16384 | spell and skill components |
+| FOOTWEAR | 32768 | shoes and boots |
+| RAWMATERIALS | 65536 | raw resources |
+| EATABLES | 131072 | food |
+| SHIELDS | 262144 | shields |
+
+### Keys
+
+A key is a `GenKey` (or `StdKey`/`StdInnKey`). Its key code is the item's
+readable text (editor line *Assigned Key Code*). A lock opens if a key the
+character carries has a matching code. Matching rules (`Keys.fits`):
+
+- A code matches a lock name exactly, ignoring case.
+- A code may be a list separated by semicolons: `crypt;vault` fits locks named
+  `crypt` or `vault`.
+- A code ending in `*` is a master key for every lock whose name begins with
+  the text before it: `jail.*` fits `jail.1`, `jail.2`...
+- A key inside a key ring (a container whose types are `KEYS`) counts, however
+  deeply nested.
+- A lock with `Prop_LockRules KEYS=a;b` also takes those codes.
+
+Locks on exits use the same codes (see [20-areas-rooms-exits.md](20-areas-rooms-exits.md)).
+To make keys used up, personal, or locks unpickable, attach `Prop_KeyRules`
+(`CONSUME`, `BREAK`, `RETURN`, `MASK`, `MSG`) to the key and `Prop_LockRules`
+(`PICK=NEVER|LEVEL:n`, `KEYS`, `RELOCK`, `MSG`) to the lock; see
+[23-properties-reference.md](23-properties-reference.md#prop_keyrules) and
+[23-properties-reference.md](23-properties-reference.md#prop_lockrules).
+Keys that are no use unless a puzzle is solved (combinations, receptacles) are
+in [07-items-crafting.md](07-items-crafting.md).
+
+## Food, drink and light
+
+### Food
+
+`GenFood` has two numbers: **Nourishment** (hunger restored by the whole
+item) and **Bite** (restored per bite; 0 eats it all). A pill is food that
+casts the spells in its readable text. Food is edible resources too:
+`GenFoodResource` is a resource item (a loaf of bread) of a material from the
+food families.
+
+### Drink
+
+`GenDrink` is a drink container: **Quenched/Drink** is the thirst each drink
+restores, **Amount of Drink Held** is how many drinks it holds when full (it is
+full after editing), and **liquid type** is a resource from the liquid family
+(`?` lists them: fresh water, salt water, drinkable, milk, coffee, blood,
+lamp oil, poison, liquor, honey, sap, perfume, dragon blood, slime...). It is
+also a container, with a lid if you give it one (a flask with a stopper).
+`GenWater` and `GenFountain` are unlimited sources, `GenEmptyDrink` starts
+empty, and `GenPerfume` adds a list of smells (`;`-separated) seen when
+sniffed.
+
+### Light sources
+
+`GenLightSource` burns for a **duration in ticks** (its readable text; default
+200) and then goes out. The *Is destroyed after burnout* toggle chooses
+between being used up and being empty/refillable. `GenLantern` is a light
+fuelled from a liquid (lamp oil) and holds liquid; the standard `Torch`,
+`Lantern` and `OilFlask` classes are ready-made examples. A lit light source
+lights the room; an item that should shine without burning out can instead be
+given the `lightsrc` or `glowing` disposition.
+
+## Readable items: books, journals, maps, scrolls
+
+### The readable flag and readable text
+
+Every item has **readable text**. The *Is this item readable* question sets
+the `ISREADABLE` flag, which makes `READ` show that text. The editor turns the
+flag on by itself for classes whose ID ends in `Readable`, recipe books and
+maps, and forces it off for wands, scrolls, lights, containers, ammunition and
+keys. The *readable text* line is relabelled per class:
+
+| Class kind | Readable text means |
+| --- | --- |
+| generic readable | The text read |
+| Wand | Assigned Spell Name (one ability ID) |
+| Spell holder (scroll, potion, pill, powder) | Assigned Spell(s), `;`-separated, each optionally `Spell_Name(parameters)` |
+| Super pill | Assigned Spell or Parameters |
+| Ammunition | Ammunition type |
+| Key | Assigned Key Code |
+| Map | Assigned Map Area(s), `;`-separated area names |
+| Light | Light duration in ticks |
+| Land title | Assigned Property ID |
+| Exit-like item (portal) | Assigned Room IDs |
+
+`READ item` behaves as follows (`CommonMsgs.handleBeingRead`):
+
+- If the readable text begins with `FILE=`, the rest is a path of a text file
+  read at the time (a `world/...` path comes from the world folder). A missing
+  or empty file reads "There is nothing written on...".
+- If the text is empty, the item's description is read when the item has no
+  display text or cannot be picked up (a sign on the wall).
+- The text goes through the VARIES / story-text renderer, so season and
+  state variants work; see [11-presentation-language.md](11-presentation-language.md).
+- `WRITE` on a readable item appends to its readable text, except on `FILE=`
+  items ("There's no more room to write on...").
+
+### GenTome: paged books in the world file
+
+`GenTome` stores its pages in the item itself, so they travel in world files
+and appear in every new game. The readable text holds pages as blocks:
+
+```text
+<PAGE TITLE="The Founding">Ost was founded by the river.</PAGE><PAGE TITLE="Elder Words" LANG=Elvish>Mae govannen, travellers.</PAGE><PAGE TITLE="The Fall" LORE=ost.fall>The tower fell in the seventh year.</PAGE>
+```
+
+or `FILE=world/texts/ost.txt`, whose sections each start with a line
+`=== title ===` (optionally `=== title | LANG=Elvish ===`).
+
+| Page attribute | Effect |
+| --- | --- |
+| `TITLE` | Name shown in the contents and usable to turn to the page |
+| `LANG` | The reader must know the language, or the page stays closed |
+| `LORE` | Reading the page gives the reader the tattoo `LORE:key` |
+
+Commands: `READ book` (contents), `READ 3 book`, `READ NEXT book`,
+`READ PREV book`, `READ [title] book`, and `TEAR PAGE 3 FROM book`, which
+makes a `GenReadable` page and tags the book `TORN:3`. A `READ_PROG PAGE n`
+trigger fires when page `n` is read ([26-mobprog-triggers.md](26-mobprog-triggers.md)).
+Source: [GenTome.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/GenTome.java);
+fixture `tools/fixtures/fixes/i3-tome.js`.
+
+### GenBook, GenJournal, GenPaper
+
+`GenBook` keeps its chapters as journal entries named after the book, so
+writing in a book is campaign state, not world data. To give a new book its
+first chapters from the world files, put them in `world/journals/NAME.txt`
+(NAME is the book's name in lower case with spaces as `_`): each entry begins
+with a line `=== subject ===`, and an `AUTHOR: name` line before the first
+sets the author. An empty book or board is filled from it when first read
+(`JournalSeeds`). `GenJournal` is a board with read and write access set as
+masks.
+
+### Maps
+
+`GenMap` shows a drawn map of the areas named in its readable text. Setting
+the text renames the item "a map of ...". Rooms flagged unmappable are left
+out. `GenRecipe` is a recipe book (stat codes `SKILLID`, `RECIPES`); see
+[07-items-crafting.md](07-items-crafting.md).
+
+## Magic items: wands, staffs, scrolls, potions, pills
+
+Source: [Items/MiscMagic/](../../CoffeeMud/com/planet_ink/coffee_mud/Items/MiscMagic/).
+
+### Wands and staffs
+
+`GenWand` (and `GenStaff`, which is also a weapon) holds **one spell**. Fields:
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Assigned Spell Name | The ability ID that is cast | `SPELL` |
+| Enchant Type | `ANY`, `SPELL`, `PRAYER`, `CHANT` or `SKILL`: restricts which kind of ability the wand may hold and which wand skill works it | `ENCHTYPE` |
+| Uses Remaining | Current charges | `USES` |
+| Maximum Uses | Maximum charges after recharging | `MAXUSES` |
+| Level | Cast level (plus ability, up to +10) | `LEVEL` |
+| Magical Ability | Plus to the cast level | `ABILITY` |
+| Secret Identity | Extra text under the generated "A wand of ..." text | `SECRET` |
+
+To use a wand the character must hold or wield it (not just carry it) and say
+its **magic word** near the target. The word is not chosen by the builder: it
+is taken from the spell ID by a hash into the `MAGIC_WORDS` list in
+`resources/lists.ini`, and identify magic reveals it. The character also needs
+a wand-using skill matching the enchant type: `Skill_WandUse` for spell wands,
+`Skill_RelicUse` for prayers, `Skill_ShardUse` for chants (instrument wands use
+`PlayInstrument`). Each use costs some mana, burns one charge, and runs the
+spell at the wand's level. A character with no suitable wand skill, or who
+fails its proficiency check, sees the wand "glow faintly for a moment, then
+fade"; a spent wand "seems spent". A wand's value is 0 when empty.
+
+### Scrolls
+
+`GenScroll` holds one or more spells in its readable text, separated by `;`,
+each optionally with parameters in parentheses (for example
+`Spell_Portal(Somewhere else);Spell_Sleep`). The reader needs the matching
+read-magic skill (`Spell_ReadMagic`, `Prayer_ReadPrayer`, `Chant_ReadRunes`,
+`Song_ReadMusic`) for the kind of spell, and each reading uses one charge: *Uses
+Remaining* is how many times it may be read before "the markings have been read
+off the parchment". A new scroll has 0 uses, so set it to at least 1.
+
+### Potions and pills
+
+`GenPotion` is a drink container whose readable text holds spells; drinking
+the potion casts them on the drinker and the potion is marked empty (`;DRUNK`
+is appended to its spell list, and the flags prompt of the editor clears that
+mark). `GenMultiPotion` is a flask with several doses. `GenPill` is food: eating it casts its
+spells. `GenPowder` is dusted or thrown onto a target and casts its spells on
+them; `GenSuperPill` (Archon only) sets stats directly.
+
+A good rule: every magic item that has spells in it should also have a
+sensible **level** (the spell is cast at least at the spell's lowest class
+level) and a **value** consistent with the spells (the engine adds 100 per
+spell level for dissertations and scrolls it builds itself).
+
+### Other magic items
+
+`GenBagOfHolding`, `GenBagOfEndlessness` and the standard rings and wands
+under `Items/MiscMagic` are examples to copy. For effects that are not a
+single spell, give an ordinary generic item properties instead
+(see [Enchantments and item properties](#enchantments-and-item-properties)).
+
+## Money
+
+`GenCoins` is a stack of coins. The editor line is `Money data`, with three
+prompts: **currency code** (blank or `Default` is the engine's default
+currency; `?` lists the defined ones), **denomination** (a number or a
+denomination name valid for that currency; `?` lists them) and **stack
+size**. Stat codes: `NUMCOINS`, `CURRENCY`, `DENOM`. The currency of an area
+and the default currency (`DEFAULTCURRENCY`, `CURRENCY_[CODE]` and
+`resources/currencies.ini`) are described in [09-society.md](09-society.md).
+`CREATE ITEM 100 gold coins` is the quick way to drop money.
+
+## Furniture, rideables and boardables
+
+Anything creatures can sit on, lie on, ride or enter is a `Rideable`. Its
+fields (shown by the editors of rideable classes, and `GenFurniture`):
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Rideable Type | How riders use it: `LAND_BASED` (L), `WATER_BASED` (W), `AIR_FLYING` (A), `FURNITURE_SIT` (C), `FURNITURE_SLEEP` (B), `FURNITURE_TABLE` (T), `ENTER_IN` (E), `LADDER` (D), `WAGON` (G), `FURNITURE_HOOK` (H) | `RIDEBASIS` |
+| Rider capacity | How many may ride at once | `MOBSHELD` |
+| Mount Strings | The 'put', 'mount' and 'dismount' strings, such as "<S-NAME> sit(s) down on <T-NAME>" | `PUTSTR`, `MOUNTSTR`, `DISMOUNTSTR` |
+| State Strings | The 'state' ("sitting on"), 'state subject' and 'ride verb' words | `STATESTR`, `STATESUBJSTR`, `RIDERSTR` |
+
+Rider types sort furniture: a chair is `FURNITURE_SIT`, a bed
+`FURNITURE_SLEEP`, a table `FURNITURE_TABLE` (things placed on it, people sat
+at it), a boat `WATER_BASED`, a wagon `WAGON`, a tent `ENTER_IN` (riders are
+inside it). The editor asks them with a single letter; `?` lists the
+letters. `GenFurniture` is a rideable sitting furniture item that cannot be
+picked up by default (weight 40, 2 riders).
+
+`GenPortal`/`GenMobilePortal` are items that are also exits (the readable text
+is the list of destination room IDs). `GenBoardable` and the navigable
+boardables (`GenSailingShip`, `GenCaravan`, `GenAirShip`, `GenBalloon`,
+`GenCastle`, and the spacefaring `GenSpaceShip`) are items with an interior
+area. They have extra fields (`AREA`, `OWNER`, `PRICE`, `TICKSPERMOVE`,
+`TICKSPERTURN`, `WEATHERSPEED`, `FIXEDINTERIOR`, and *Moves per Tick* in place of
+magical ability). Their design, interiors, owner and travel are in
+[30-travel-vehicles-instances.md](30-travel-vehicles-instances.md).
+
+## Technology and clan items
+
+### Technology items
+
+`Items/BasicTech`, `Items/CompTech` and `Items/Software` hold electronics for
+space, ship and technological settings: power sources and generators, weapons
+(`GenLaserGun`, `GenPhaser`, `GenBlaster`, `GenCannon`, `GenTorpedo`...),
+personal and ship shields, panels and computers (`GenComputerConsole`,
+`GenElecPanel`), sensors, engines, thrusters, ship weapons and software
+(`GenSoftware`, `GenShipProgram` and the nav, sensor and tactical programs).
+Their extra editor fields:
+
+| Field | Applies to | Meaning |
+| --- | --- | --- |
+| Manufacturer | any technical item | The `Manufacturer` that built it (create with `CREATE MANUFACTURER [name]`) |
+| Pow Capacity / Pow Remaining / Activated | electronics | Battery size, charge, and whether it is switched on |
+| Panel type | electronic panels | What kind of panel |
+| Installed Factor, Pwr Recharge Rate | tech components | Installation efficiency, recharge rate |
+| Min / Max thrust, Reaction engine, Fuel Spec Impulse %, Avail. ports | ship engines | Engine performance and which sides they can fire from |
+| Max Ports, Avail. ports | directional components | Which directions the component can face |
+| Message types, Damage | ship weapons | What messages fire it and its damage |
+| Gen Amt/Tick, Consumed materials | generators | Power per tick and fuel resources used |
+| Internal Name, Parent Menu | software | The program name and its menu |
+| Technical Level | (the Magical Ability line of electronics) | Tech level |
+
+They are covered with ships in
+[30-travel-vehicles-instances.md](30-travel-vehicles-instances.md) and
+[33-engine-internals.md](33-engine-internals.md). They are rarely needed for a
+fantasy world.
+
+### Clan items
+
+`Items/ClanItems` holds `GenClan*` classes (flags, banners, tabbards, aprons,
+containers, pamphlets, castles, donation lists...). A clan item adds the
+fields **Clan** (the clan ID) and **Type**: one of FLAG, BANNER, GAVEL,
+PROPAGANDA, GATHERITEM, CRAFTITEM, SPECIALSCALES, SPECIALSCAVENGER,
+SPECIALOTHER, SPECIALTAXER, DONATIONJOURNAL, ANTI_PROPAGANDA, SPECIALAPRON,
+LEGALBADGE, TABBARD, SAILORSCAP. They matter only if your world uses clans; see
+[09-society.md](09-society.md). `LIST CLANITEMS` lists them.
+
+## Instruments
+
+`GenInstrument` has a single extra field, **Instrument Type**, one of
+CLARINETS, CYMBALS, DRUMS, FLUTES, GUITARS, HARMONICAS, HARPS, HORNS, OBOES,
+ORGANS, PIANOS, TROMBONES, TRUMPETS, TUBAS, VIOLINS, WOODS, XYLOPHONES or
+OTHER_INSTRUMENT_TYPE (stat code `INSTTYPE`). Songs and play skills check the
+type. It is worn in a wear location (usually held). `GenPiano` is a rideable
+piano, and `GenMagicInstrument` also holds a spell like a wand.
+

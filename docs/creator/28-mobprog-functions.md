@@ -251,6 +251,15 @@ use `EVAL` or `MATH` with value forms:
   group.
 - Inside function parentheses, parentheses nest, and quoted sections are skipped
   when looking for the closing `)`.
+- **Split first, expand later.** The inherited functions cut their arguments into
+  words *before* `$` codes are expanded. A `$<host VAR>` (it contains a space) or
+  a `$%FUNC(a b)%` that is not the last argument therefore has to be quoted:
+  `STRIN('$<WORLD SUSPECTS>' $n)`, `QUESTAREA('$%INAREA($t)%' *)`. The newer text
+  and list functions (`LISTJOIN`, `LISTHAS`, `SUBSTR`, `REPLACE`, `STRSTARTS`, ...)
+  expand everything first and then take their last word or words, so
+  `LISTHAS($<WORLD SUSPECTS> butler)` needs no quotes. A quote that is the last
+  word of such a call may be `'`, `` ` `` or `"`; inside a list, `` ` `` or `"` keeps
+  an item together.
 - A `$` preceded by `\` is not expanded (the backslash is left in the text).
   `$$` produces one literal `$`.
 - If a substituted value itself contains `$x`, the `$` is replaced by `_` so a
@@ -1523,4 +1532,476 @@ turn-based single-player game.
 - **Test:** `HOLIDAY(== text)` compares the whole comma-separated list exactly, so use `ISHOLIDAY(name)` to ask about one holiday.
 - **Example:** `MPECHO Today we celebrate: $%HOLIDAY()%`
 - **Notes:** not inherited.
+
+### Quests
+
+Quest functions take a quest *name* as written in the quest script; `*` stands
+for the quest the running script belongs to (a quest's embedded scripts
+inherit it). Quests are described in [08-quests.md](08-quests.md).
+
+### QUESTWINNER
+
+- **Test:** `QUESTWINNER(who quest)`: the character is on the quest's winners list. `quest` may be `previous`: the quest of the script object listed just before this one on the same host.
+- **Value:** `$%QUESTWINNER(who)%`: the names of all quests the player-controlled character has won, each followed by a space.
+- **Example:** `IF QUESTWINNER($n Rescue_Mira)`; `IF QUESTWINNER($n previous)`
+- **Notes:** `who` is matched by the character's real name; a name that is not in the room works too. `QUESTWINS` counts repeat wins.
+
+### QUESTMOB
+
+- **Test:** `QUESTMOB(thing quest)`: the creature belongs to the quest's mobs. `ALL` in place of the quest means any running quest.
+- **Value:** `$%QUESTMOB(quest)%`: the names of the quest's mobs, quoted if they contain spaces.
+- **Example:** `IF QUESTMOB($n *)`; `IF QUESTMOB($t ALL)`
+- **Notes:** with a named quest the creature is matched by name against the quest's mob list; with `ALL` the object itself is checked against every running quest.
+
+### QUESTOBJ
+
+- **Test:** `QUESTOBJ(thing quest)`: the item belongs to the quest's items; `ALL` for any running quest.
+- **Value:** `$%QUESTOBJ(quest)%`: the names of the quest's items.
+- **Example:** `IF QUESTOBJ($o *)`
+
+### ISQUESTMOBALIVE
+
+- **Test:** `ISQUESTMOBALIVE(number|name quest)`: the quest's mob with that 1-based number (or name) exists and is not dead. `ALL` as the quest searches the running quests.
+- **Value:** `$%ISQUESTMOBALIVE(quest)%`: the names of the quest's mobs that are alive in the game.
+- **Example:** `IF ISQUESTMOBALIVE(1 'Rescue_Mira')`
+
+### QUESTROOM
+
+- **Test:** `QUESTROOM(room quest)`: the room is one of the quest's rooms. `room` is an extended ID, a number, or an object code (the room that object is in).
+- **Value:** `$%QUESTROOM(quest)%`: the extended IDs of the quest's rooms.
+- **Example:** `IF QUESTROOM($g *)`
+
+### QUESTAREA
+
+- **Test:** `QUESTAREA(area quest)`: the area (or a parent or child of it) holds one of the quest's rooms.
+- **Value:** `$%QUESTAREA(quest)%`: the names of the areas the quest's rooms are in.
+- **Example:** `IF QUESTAREA('$%INAREA($t)%' *)` (the quote is needed because the area name may have spaces)
+
+### QUESTSCRIPTED
+
+- **Test:** `QUESTSCRIPTED(thing quest)`: the thing carries a script that belongs to that quest; `ALL` for any running quest.
+- **Value:** `$%QUESTSCRIPTED(who)%`: the names of the quests whose scripts the player-controlled character carries.
+- **Example:** `IF QUESTSCRIPTED($n ALL)`
+
+### QUESTWINS
+
+- **Value:** `$%QUESTWINS(who quest)%`: how many times the character has won the quest.
+- **Test:** `QUESTWINS(who quest cmp n)`
+- **Example:** `IF QUESTWINS($n fixq5bounty >= 2)`
+- **Notes:** not inherited. Records are kept per character (or per profile for a shared quest).
+
+### QUESTWINAGE
+
+- **Value:** `$%QUESTWINAGE(who quest)%`: game hours since the character last won it, `-1` if never.
+- **Test:** `QUESTWINAGE(who quest cmp n)`
+- **Example:** `IF QUESTWINAGE($n daily_delivery >= 24)`
+- **Notes:** not inherited. Handy for repeatable quests with a cool-down.
+
+### QUESTSTATUS
+
+- **Value:** `$%QUESTSTATUS(who quest)%`: `ACTIVE`, `WON`, `FAILED`, `ABANDONED`, `EXPIRED`, or empty when the character has no record.
+- **Test:** `QUESTSTATUS(who quest == WON)`
+- **Example:** `IF QUESTSTATUS($n fixq4a == WON)`
+- **Notes:** not inherited.
+
+### QUESTOUTCOME
+
+- **Value:** `$%QUESTOUTCOME(who quest)%`: the outcome word the quest recorded, or why it failed; empty if none.
+- **Test:** `QUESTOUTCOME(who quest == word)`
+- **Example:** `IF QUESTOUTCOME($n rescue == spared)`
+- **Notes:** not inherited.
+
+### QOBJECTIVE
+
+- **Value:** `$%QOBJECTIVE(who quest id)%`: the progress of the quest objective `id` for the character: a count, `DONE` or `FAILED`; empty if there is none.
+- **Test:** `QOBJECTIVE(who quest id cmp value)`
+- **Example:** `IF QOBJECTIVE($n fixq3 drowned == 2)`
+- **Notes:** not inherited; see the quest journal in [08-quests.md](08-quests.md).
+
+### Game mode and party
+
+### ISBUILDER
+
+- **Test:** `ISBUILDER()`: the game is running in builder mode.
+- **Value:** `$%ISBUILDER()%`: `true` or `false`.
+- **Example:** `IF ISBUILDER()`
+- **Notes:** not inherited. Builder, dev and play modes are in [18-installing-and-running.md](18-installing-and-running.md).
+
+### ISDEV
+
+- **Test:** `ISDEV()`: the game is running in DEV mode (and not builder mode).
+- **Value:** `$%ISDEV()%`: `true` or `false`.
+- **Example:** `IF ISDEV()`
+- **Notes:** not inherited; useful for test-only shortcuts that must never ship.
+
+### ISTURNBASED
+
+- **Test:** `ISTURNBASED()`: the game is in turn-based time mode.
+- **Value:** `$%ISTURNBASED()%`: `true` or `false`.
+- **Example:** `IF ISTURNBASED()`
+- **Notes:** not inherited; see [31-saves-and-party.md](31-saves-and-party.md).
+
+### ISPAUSED
+
+- **Test:** `ISPAUSED()`: the game clock is paused.
+- **Value:** `$%ISPAUSED()%`: `true` or `false`.
+- **Example:** `IF ISPAUSED()`
+- **Notes:** not inherited.
+
+### SAVESLOT
+
+- **Test:** `SAVESLOT(cmp name)`: compares the name of the save slot in use, as text.
+- **Value:** `$%SAVESLOT()%`: the slot name, empty if none.
+- **Example:** `IF SAVESLOT(== autosave)`
+- **Notes:** not inherited; see [31-saves-and-party.md](31-saves-and-party.md).
+
+### PARTYSIZE
+
+- **Test:** `PARTYSIZE(who cmp n)`: the size of the character's group (its leader and everyone in the group).
+- **Value:** `$%PARTYSIZE(who)%`
+- **Example:** `IF PARTYSIZE($n >= 3)`; `MPECHO I count $%PARTYSIZE($u)% of you.`
+- **Notes:** not inherited.
+
+### INPARTY
+
+- **Test:** `INPARTY(who)`: the character is in the party of the character at the terminal. `INPARTY(a b)`: `b` is in `a`'s group.
+- **Value:** `$%INPARTY(who)%` or `$%INPARTY(a b)%`: `true` or `false`.
+- **Example:** `IF INPARTY($n)`
+- **Notes:** not inherited. A hireling following the hero is in the party; a stranger is not.
+
+### PARTYLEADER
+
+- **Test:** `PARTYLEADER(who cmp name)`: compares the name of the group's leader as text.
+- **Value:** `$%PARTYLEADER(who)%`: the leader's name, empty if there is no group.
+- **Example:** `IF PARTYLEADER($n == Anna)`
+- **Notes:** not inherited.
+
+### PARTY
+
+- **Test:** `PARTY(who cmp text)`: compares the whole list of group names as text.
+- **Value:** `$%PARTY(who)%`: the names of the group's members, space separated, leader first.
+- **Example:** `MPECHO Welcome, $%PARTY($u)%.`
+- **Notes:** not inherited.
+
+### ISPLAYED
+
+- **Test:** `ISPLAYED(who)`: the character is the one at the terminal, or a party member with a window of its own. A bare test is true when the value is not `false`.
+- **Value:** `$%ISPLAYED(who)%`: `true` or `false`.
+- **Example:** `IF ISPLAYED($u)`; `IF ISPLAYED($n)`
+- **Notes:** not inherited. Party windows are described in [31-saves-and-party.md](31-saves-and-party.md).
+
+### Combat and encounters
+
+### THREAT
+
+- **Value:** `$%THREAT(npc who)%`: how much threat `who` has generated against the NPC.
+- **Test:** `THREAT(npc who cmp n)`
+- **Example:** `IF THREAT($i $n > 100)`
+- **Notes:** not inherited; see [29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+### TOPTHREAT
+
+- **Value:** `$%TOPTHREAT(npc)%`: the name of the character in the room with the most threat against the NPC; empty if none.
+- **Test:** `TOPTHREAT(npc == name)`
+- **Example:** `MPKILL $%TOPTHREAT($i)%`
+- **Notes:** not inherited.
+
+### WEAKEST
+
+- **Value:** `$%WEAKEST(npc)%`: the name of the enemy in the room with the fewest hit points left (by percentage); empty if none.
+- **Test:** `WEAKEST(npc == name)`
+- **Example:** `MPKILL $%WEAKEST($i)%`
+- **Notes:** not inherited. The returned value is a *name*, despite an in-code comment that mentions percent.
+
+### OPPONENT
+
+- **Value:** `$%OPPONENT(npc 'MASK=zapper')%`: the first enemy in the room that fits the zapper mask; empty if none.
+- **Test:** `OPPONENT(npc 'MASK=...' == name)` is rarely useful; use the value with `MPFORCE`/`MPKILL`.
+- **Example:** `MPKILL $%OPPONENT($i 'MASK=-NAMES +Cleric')%`
+- **Notes:** not inherited. Quote the mask. See [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
+
+### PHASE
+
+- **Value:** `$%PHASE(who)%`: the current phase number (from 1) of the creature's `BossPhases` behavior, `0` if it has none.
+- **Test:** `PHASE(who cmp n)`
+- **Example:** `IF PHASE($i >= 2)`
+- **Notes:** not inherited.
+
+### ALARM
+
+- **Value:** `$%ALARM(who name)%`: the ticks left before the named alarm (set with `MPALARM NAME=name ticks command`) goes off; `0` if none.
+- **Test:** `ALARM(who name cmp n)`
+- **Example:** `IF ALARM($i roar > 0)`
+- **Notes:** not inherited.
+
+### Shops, law and property
+
+"shopkeeper" is the shop's creature given as a number (1-based position in the
+room), a name or an object code; with no argument, the host if it keeps a shop,
+otherwise the first shopkeeper in the room. The shop's own item list is the
+store inventory; see [09-society.md](09-society.md).
+
+### SHOPITEM
+
+- **Test:** `SHOPITEM(shopkeeper number words)`: the shop's item at that 1-based position matches the words.
+- **Value:** `$%SHOPITEM(shopkeeper number)%`: its name.
+- **Example:** `IF SHOPITEM($i 1 sword)`
+- **Notes:** a successful test (or the value) also puts the shop's selling price in `$9`, formatted as an abbreviated coin price, or like `20xp` or `3qp` for shops that sell for experience or quest points.
+
+### NUMITEMSSHOP
+
+- **Test:** `NUMITEMSSHOP(shopkeeper cmp n)`: how many items the shop stocks.
+- **Value:** `$%NUMITEMSSHOP(shopkeeper)%`
+- **Example:** `IF NUMITEMSSHOP($i < 3)`
+
+### SHOPHAS
+
+- **Test:** `SHOPHAS(shopkeeper words)`: the shop stocks something matching the words; the price goes into `$9`.
+- **Value:** `$%SHOPHAS(shopkeeper)%`: the name of a *random* stocked item.
+- **Example:** `IF SHOPHAS($i longsword)` then `MPECHO That is $9, friend.`
+
+### SHOPPRICE
+
+- **Value:** `$%SHOPPRICE(shopkeeper item [customer])%`: what the shop asks the customer (default `$n`) for the item, in base value.
+- **Test:** `SHOPPRICE(shopkeeper item [customer] cmp n)`
+- **Example:** `IF SHOPPRICE($i 'silver ring' $n <= 100)`
+- **Notes:** not inherited. Quote an item name with spaces.
+
+### SHOPBUDGET
+
+- **Value:** `$%SHOPBUDGET(shopkeeper)%`: what is left of the shop's buying budget; `-1` for no limit.
+- **Test:** `SHOPBUDGET(shopkeeper cmp n)`
+- **Example:** `IF SHOPBUDGET($i < 50)`
+- **Notes:** not inherited.
+
+### PRICE
+
+- **Value:** `$%PRICE(item [shopkeeper])%`: what the shop asks `$n` for the item, written in coin names.
+- **Test:** `PRICE(item [shopkeeper] cmp text)`
+- **Example:** `MPECHO A fence quotes you $%PRICE('silver ring' $i)%.`
+- **Notes:** not inherited.
+
+### ISWANTED
+
+- **Test:** `ISWANTED(who [crime])`: a warrant is out against the character under the law that governs the host's area (for that crime when given).
+- **Value:** `$%ISWANTED(who [crime])%`: `true` or `false`.
+- **Example:** `IF ISWANTED($n assault)`
+- **Notes:** not inherited. See [09-society.md](09-society.md).
+
+### WARRANTS
+
+- **Value:** `$%WARRANTS(who)%`: the number of warrants out against the character.
+- **Test:** `WARRANTS(who cmp n)`
+- **Example:** `IF WARRANTS($n > 0)`
+- **Notes:** not inherited.
+
+### FINESOWED
+
+- **Value:** `$%FINESOWED(who)%`: the fines the character owes, in base value.
+- **Test:** `FINESOWED(who cmp n)`
+- **Example:** `IF FINESOWED($n >= 10)`
+- **Notes:** not inherited.
+
+### OWNER
+
+- **Value:** `$%OWNER(place)%`: the name of the owner of a room, area or item (a creature gives the room it is in); `@PROFILE` stands for the whole party's profile. Empty if unowned.
+- **Test:** `OWNER(place == name)`
+- **Example:** `MPECHO This room belongs to $%OWNER(HERE)%.`
+- **Notes:** not inherited. `place` is `HERE`, an object code, a room ID or an area name. See [07-items-crafting.md](07-items-crafting.md).
+
+### ISOWNER
+
+- **Test:** `ISOWNER(who [place])`: the character owns the place (default: the room the character is in), or another character of the same profile does, or `@PROFILE` does.
+- **Value:** `$%ISOWNER(who [place])%`: `true` or `false`.
+- **Example:** `IF ISOWNER($n)`
+- **Notes:** not inherited.
+
+### LANDTITLE
+
+- **Value:** `$%LANDTITLE(place)%`: the lot and price of the land title, like `Farmhouse#3 5000`; empty if none.
+- **Test:** `LANDTITLE(place == text)`
+- **Example:** `MPECHO For sale: $%LANDTITLE(HERE)%`
+- **Notes:** not inherited.
+
+### COMFORT
+
+- **Value:** `$%COMFORT(place)%`: the comfort rating of the furnishings (`Prop_Furnishing`) in the room.
+- **Test:** `COMFORT(place cmp n)`
+- **Example:** `IF COMFORT(HERE >= 5)`
+- **Notes:** not inherited; see [07-items-crafting.md](07-items-crafting.md).
+
+### Clans and organisations
+
+Clans in CoffeeSUD are the single-player organisations (guilds, factions with
+ranks) of [09-society.md](09-society.md); the functions below read them.
+
+### CLAN
+
+- **Test:** `CLAN(who == clanID)` or `!=`: the creature's main clan (a rivalrous one first, else its first) is that clan. `CLAN(who IN clanName)`: the creature is a member of the clan. `CLAN(who NOTIN clanName)`: it is not.
+- **Value:** `$%CLAN(who)%`: the ID of the creature's main clan, empty for none.
+- **Example:** `IF CLAN($n IN 'Thieves Guild')`; `IF CLAN($n == Mages)`
+
+### CLANRANK
+
+- **Test:** `CLANRANK(who clan cmp position)`: the creature's position in that clan against the named position, compared by seniority (a more senior position is "greater"). The legacy three-word form `CLANRANK(who cmp n)` compares the numeric role ID of the creature's first clan.
+- **Value:** `$%CLANRANK(who [clan])%`: the numeric role ID in the clan (the first clan if none is named).
+- **Example:** `IF CLANRANK($n 'Thieves Guild' >= LIEUTENANT)`
+- **Notes:** positions are those of the clan's government (see [09-society.md](09-society.md)). A non-member is false.
+
+### CLANDATA
+
+- **Test:** `CLANDATA(clan|who VARIABLE cmp value)`: a clan stat, compared as numbers when both sides are numbers, else as text. The first argument is a clan name, or a creature (its main clan).
+- **Value:** `$%CLANDATA(clan|who VARIABLE)%`
+- **Example:** `IF CLANDATA($n TAXES > 0)`
+- **Notes:** an unknown variable logs an error. The valid names are the clan's modify codes.
+
+### CLANQUALIFIES
+
+- **Test:** `CLANQUALIFIES(who clan)`: the character may apply to the clan: not already in it, not over the per-category limit, passing the clan's requirement mask (and, if it takes only family, being related to a member).
+- **Value:** `$%CLANQUALIFIES(clan)%`: the clan's requirements in words.
+- **Example:** `IF CLANQUALIFIES($n 'Thieves Guild')`
+- **Notes:** the value form takes only the clan (a text description), not a creature.
+
+### CLANPOS
+
+- **Value:** `$%CLANPOS(who clan)%`: the ID of the creature's position in the clan.
+- **Test:** `CLANPOS(who clan cmp text)`
+- **Example:** `IF CLANPOS($n 'Thieves Guild' == BOSS)`
+- **Notes:** not inherited.
+
+### CLANMEMBER
+
+- **Value:** `$%CLANMEMBER(who clan FIELD)%`: a member record field: `RANKNAME` (default), `POSITION`, `JOINDATE`, `DUESOWED`, `DONATEDGOLD` or `DONATEDXP`.
+- **Test:** `CLANMEMBER(who clan FIELD cmp value)`
+- **Example:** `IF CLANMEMBER($n 'Thieves Guild' DUESOWED > 0)`
+- **Notes:** not inherited. Empty for a non-member.
+
+### CLANS
+
+- **Value:** `$%CLANS(who)%`: the IDs of every clan the creature belongs to, comma separated.
+- **Test:** `CLANS(who cmp text)`
+- **Example:** `MPECHO You serve $%CLANS($n)%.`
+- **Notes:** not inherited.
+
+### CLANRELATION
+
+- **Value:** `$%CLANRELATION('clan one' 'clan two')%`: `NEUTRAL`, `WAR`, `HOSTILE`, `FRIENDLY` or `ALLY`; empty if either clan is unknown.
+- **Test:** `CLANRELATION('clan one' 'clan two' cmp RELATION)`
+- **Example:** `IF CLANRELATION('Fix Guild One' 'Fix Guild Two' == WAR)`
+- **Notes:** not inherited. Quote clan names with spaces.
+
+### AREACLAN
+
+- **Value:** `$%AREACLAN(area)%`: the clan that rules the area under its law, empty if none.
+- **Test:** `AREACLAN('area' cmp clan)`
+- **Example:** `IF AREACLAN('Fix Conquest County' == 'Fix Conquerors')`
+- **Notes:** not inherited; see the conquest rules in [09-society.md](09-society.md).
+
+### AREACONTROL
+
+- **Value:** `$%AREACONTROL(area clan)%`: the control points the clan holds in the area; `0` if none.
+- **Test:** `AREACONTROL(area clan cmp n)`
+- **Example:** `IF AREACONTROL(Midgaard Mages >= 50)`
+- **Notes:** not inherited.
+
+### REVOLTCHANCE
+
+- **Value:** `$%REVOLTCHANCE(area)%`: the area's chance of revolt, as the law behavior reports it.
+- **Test:** `REVOLTCHANCE(area cmp n)`
+- **Example:** `IF REVOLTCHANCE(Midgaard > 50)`
+- **Notes:** not inherited; empty if the area has no law behavior.
+
+### Vessels and riding
+
+For the vessel functions the first word is a vessel (a boardable item such as a
+ship) given as an object code, a name in reach, or the vessel's own name;
+`'the Gull'` style names need quotes. See [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md).
+In JavaScript they are `ISANCHORED("the Gull")` (boolean) and
+`VESSELROOM$("the Gull")` (text).
+
+### ABOARD
+
+- **Value:** `$%ABOARD(who)%`: the name of the vessel the creature or item is aboard; empty if none.
+- **Test:** `ABOARD(who == name)`
+- **Example:** `IF ABOARD($n == 'the Gull')`
+- **Notes:** not inherited.
+
+### RIDERS
+
+- **Value:** `$%RIDERS(rideable)%`: how many creatures ride it.
+- **Test:** `RIDERS(rideable cmp n)`
+- **Example:** `IF RIDERS('the Gull' >= 3)`
+- **Notes:** not inherited.
+
+### ISANCHORED
+
+- **Test:** `ISANCHORED(vessel)`: the vessel's anchor is down.
+- **Value:** `$%ISANCHORED(vessel)%`: `true` or `false`.
+- **Example:** `IF ISANCHORED('the Gull')`
+- **Notes:** not inherited.
+
+### ISDOCKED
+
+- **Test:** `ISDOCKED(vessel)`: the vessel is docked.
+- **Value:** `$%ISDOCKED(vessel)%`: `true` or `false`.
+- **Example:** `IF ISDOCKED('the Gull')`
+- **Notes:** not inherited.
+
+### COURSE
+
+- **Value:** `$%COURSE(vessel)%`: the directions of the vessel's current course, space separated.
+- **Test:** `COURSE(vessel cmp text)`
+- **Example:** `MPECHO She is bound $%COURSE('the Gull')%.`
+- **Notes:** not inherited.
+
+### VESSELROOM
+
+- **Value:** `$%VESSELROOM(vessel)%`: the extended ID of the room the vessel is in.
+- **Test:** `VESSELROOM(vessel == room)`
+- **Example:** `IF VESSELROOM('the Gull' == Harbor#12)`
+- **Notes:** not inherited.
+
+### RIDING
+
+- **Value:** `$%RIDING(who)%`: the name of what the creature or item rides; empty if nothing.
+- **Test:** `RIDING(who == name)`
+- **Example:** `IF RIDING($n == horse)`
+- **Notes:** not inherited.
+
+### SPEED
+
+- **Value:** `$%SPEED(vessel)%`: the vessel's top speed.
+- **Test:** `SPEED(vessel cmp n)`
+- **Example:** `IF SPEED('the Gull' >= 3)`
+- **Notes:** not inherited.
+
+### HULL
+
+- **Value:** `$%HULL(vessel)%`: the vessel's remaining hull strength (its uses remaining).
+- **Test:** `HULL(vessel cmp n)`
+- **Example:** `IF HULL('the Gull' < 20)`
+- **Notes:** not inherited.
+
+### Messages
+
+### MSG
+
+- **Value:** `$%MSG(PART)%`: a part of the message that a message-intercept trigger is reacting to. `PART` is `TYPE` (the message type name), `VALUE` (its number, such as damage), `SOURCE`, `TARGET`, `TOOL` (names), `TOOLID` (the tool's class/ability ID), `STEXT`, `TTEXT`, `OTEXT` (the source, target and others' text), `SMINOR`, `TMINOR`, `OMINOR` (the minor type names).
+- **Test:** `MSG(PART cmp value)`
+- **Example:** `IF MSG(VALUE > 10)`; `MPECHO The wound is $%MSG(VALUE)%.`
+- **Notes:** not inherited. Meaningful only inside `CNCLMSG_PROG` and `EXECMSG_PROG` bodies; elsewhere it is empty. An unknown part logs an error. The message types are listed by `LIST MSGTYPES`; see [26-mobprog-triggers.md](26-mobprog-triggers.md).
+
+### Generators and names
+
+### GENSTRING
+
+- **Value:** `$%GENSTRING(file id [VAR=VALUE ...])%`: text from a `STRING` tag of a generator file, rolled afresh each call.
+- **Example:** `MPECHO The tavern gossip: $%GENSTRING(randareas/rumors.xml rumor)%`
+- **Notes:** not inherited. `file` and `id` are the generator XML file and the string's ID; extra `VAR=VALUE` words set generator variables. Errors log under `GENSTRING`. See [12-generation.md](12-generation.md).
+
+### RANDNAME
+
+- **Value:** `$%RANDNAME([style|race|language] [min max] [M|F|N] [FULL])%`: a random name in a style.
+- **Example:** `MPECHO Call me $%RANDNAME(Elf FULL)%.`
+- **Notes:** not inherited. `style` is a name style, a race or a language; `min max` bound the syllable count; `M`, `F` or `N` pick a gender; `FULL` adds a family name. An unknown style logs an error. See [12-generation.md](12-generation.md).
 

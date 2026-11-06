@@ -29,7 +29,7 @@ the syntax they use is known to work).
 ## In this chapter
 
 - [What MOBPROG is, and when to use something else](#what-mobprog-is-and-when-to-use-something-else)
-- [Vocabulary](#vocabulary)
+- [Hosts and programs (vocabulary)](#hosts-and-programs)
 - [Attaching scripts to things](#attaching-scripts-to-things)
   ([Scriptable](#the-scriptable-behavior) ·
   [inline scripts](#inline-scripts) ·
@@ -71,7 +71,7 @@ A MOBPROG script is a list of *programs*. Each program starts with a *trigger
 line* naming an event (`SPEECH_PROG hello`), runs a list of commands when that
 event happens to its host, and ends with `~`. The language is deliberately
 small: `IF`/`ELSE`, `SWITCH`, `FOR`, `WHILE`, variables kept by name, about 150
-`MP...` commands that change the world, and about 300 functions that ask about
+`MP...` commands that change the world, and more than 220 functions that ask about
 it. Anything that is not a script word is run as an ordinary game command by the
 script's mob (`say`, `emote`, `give`, `open`).
 
@@ -94,7 +94,9 @@ of a thing (it blocks entry, it is locked by a password, it changes state when
 pulled) are usually already a property: check [chapter 23](23-properties-reference.md)
 before writing one.
 
-## Vocabulary
+## Hosts and programs
+
+The words this chapter uses:
 
 | Term | Meaning |
 | --- | --- |
@@ -1190,19 +1192,24 @@ set); the others deserve attention. `EDIT SCRIPT` runs the same check on save.
 It cannot prove external state, dynamic command construction (a command name
 built from `$` codes), timing, or that your story is right. It also has two
 limits worth knowing, both read from `ScriptCheck.expand` and the
-[audit gap](../../audit/developer-tools-audit.md#open-script-lint-path-gap):
+[audit gap](../../audit/developer-tools-audit.md#open-script-lint-path-gap).
 
-- **Current file-path lint limitation.** Runtime `LOAD` understands the
-  `world:scripts/name.script` prefix, but the checker resolves every name as a
-  resource path, so a valid `world:` source is reported `no such file`. For a
-  file that must also pass the checker, keep it at
-  `world/resources/progs/name.script`, write `LOAD=progs/name.script` and run
-  `SCRIPTCHECK progs/name.script`. The overlay keeps it world-owned.
-- **LOAD arguments (probable).** The checker takes everything after `LOAD=` up to
-  `~` as the file name, so `LOAD=progs/guard.script POST=x` is likely reported
-  as a missing file, and an `ARGDEFAULT` line is likely not recognised as one.
-  If you hit this, check the file by name (`SCRIPTCHECK progs/guard.script`) and
-  treat those two findings as false alarms after confirming with `SCRIPT LIST`.
+#### Current file-path lint limitation
+
+Runtime `LOAD` understands the `world:scripts/name.script` prefix, but the
+checker resolves every name as a resource path, so a valid `world:` source is
+reported `no such file`. For a file that must also pass the checker, keep it at
+`world/resources/progs/name.script`, write `LOAD=progs/name.script` and run
+`SCRIPTCHECK progs/name.script`. The overlay keeps it world-owned. Do not ignore
+other diagnostics just because this path issue is known.
+
+#### LOAD arguments and ARGDEFAULT lines (probable)
+
+The checker takes everything after `LOAD=` up to `~` as the file name, so
+`LOAD=progs/guard.script POST=x` is likely reported as a missing file, and an
+`ARGDEFAULT` line is likely not recognised as one. If you hit this, check the
+file by name (`SCRIPTCHECK progs/guard.script`), confirm with `SCRIPT LIST`
+that the host's triggers loaded, and treat those two findings as false alarms.
 
 ### SCRIPT: list, fire, call, reset, disable, alarms
 
@@ -1477,11 +1484,12 @@ phrase *rooms*; the second program fires on either word. Programs on different
 triggers do not interfere; two `SPEECH_PROG`s that match the same speech would
 (only the first runs).
 
-Test: `SCRIPTCHECK brim`, then arrive from another room; `SCRIPT FIRE brim GREET`
+Test: `SCRIPTCHECK brim`, then arrive from another room. `SCRIPT FIRE brim GREET`
 runs the greeting for you, and `SCRIPT FIRE brim SPEECH rooms AS Bob` tests the
-speech with a stand-in speaker. To greet again, `MPTATTOO $n -MET_BRIM` (a
-leading `-` removes a tattoo) or `SCRIPT RESET` only affects `ONCE_PROG`s and timers,
-not tattoos. If Brim is wounded below half hit points he stops responding; see
+speech as someone else who is present. `SCRIPT RESET` only re-arms `ONCE_PROG`s
+and timers, not tattoos; to see the first-time branch again, remove the tattoo
+(from a script, `mptattoo $n -MET_BRIM`; a leading `-` removes). If Brim is
+wounded below half hit points he stops responding; see
 [busy hosts](#when-a-host-is-too-busy-to-react).
 
 ### 2. A shop that notices its customers
@@ -1512,15 +1520,15 @@ say Kind of you, $n.
 
 `BUY_PROG all` hears every purchase (`BUY_PROG sword` would hear only items
 with that keyword); `$n` is the buyer and `$o` the item bought. The counter is
-a variable on the buyer's name, so it is shared by every shopkeeper that uses
-the same variable name; give each shop its own prefix (`BRIM_BOUGHT`) or key it
-on the shop with `@$i` and the buyer in the name. **Order matters** for
+a variable stored under the buyer's name, so every shopkeeper that uses the same
+variable name shares it; give each shop its own name (`BRIM_BOUGHT`).
+**Order matters** for
 `BRIBE_PROG`: the 50 comes before the 5, because only the first program that
 matches runs and a gift of 50 coins also satisfies "5 or more". A shopkeeper
 who is fighting or below half health ignores all of this.
 
-Test: buy three things (`BUY`), or `SCRIPT FIRE brim BUY` three times. Inspect
-the counter with `VARS LIST * Hero BRIM_*`.
+Test: buy three things (`BUY`), or `SCRIPT FIRE brim BUY WITH sword` three times
+with an item in your pack. Inspect the counter with `VARS LIST * <your name> BRIM_*`.
 
 ### 3. A door puzzle: three braziers and a sanctum door
 
@@ -1565,12 +1573,20 @@ need to know its name. The altar counts on itself with `@$i`, and `MPDOOR`
 changes both sides of the door with a message. Because the lit state and the
 count are saved, the puzzle survives save and restore.
 
-To let the puzzle be solved again, have the door's close handler reset both
-counts (`MPSTATE brazier lit CLEAR`, `mpsetvar @$i LIT`), or make the braziers
-re-light with a timer using `MPALARM`.
+To make the puzzle repeatable, tag the braziers `brazier`, let the altar send
+`mpsignal TAG:brazier unlit DELAY 100` after opening the door (and clear its own
+count with `mpsetvar @$i LIT`), and give the braziers a program that clears their
+flag:
 
-Test: `SCRIPTTRACE altar`, `light brazier` three times (once per brazier),
-`VARS LIST` to see the count, and `SCRIPT LIST altar`. If the door never opens,
+```text
+SIGNAL_PROG unlit
+mpstate $i lit CLEAR
+mpecho The brazier gutters out.
+~
+```
+
+Test: `SCRIPTTRACE altar`, then `light brazier` for each brazier in turn (the trace
+shows the signal arriving and the count changing) and `SCRIPT LIST altar`. If the door never opens,
 the usual causes are a missing tag (`MPSIGNAL` logs `no one to hear it`), a
 door that is not on the north exit, or `HERE` being the wrong room.
 
@@ -1622,8 +1638,9 @@ endif
 quest is accepted). `QUESTSTATUS($n petals)` is then `ACTIVE`, `WON`, `FAILED`,
 `ABANDONED` or `EXPIRED`.
 
-Test: `SCRIPT FIRE herbalist GIVE WITH moonpetal` with a petal in your pack,
-three times; check `VARS LIST * <your name> PETALS` between runs.
+Test: `SCRIPT FIRE herbalist GIVE WITH moonpetal` with a petal in your pack, three
+times; check `VARS LIST * <your name> PETALS` between runs. (`SCRIPT FIRE` runs the
+body as you; `MPJUNK` then destroys the item you named.)
 
 ### 5. A timed event: a market bell, a fuse and a promised sword
 
@@ -1722,9 +1739,9 @@ the lever/gate case better: the sender does not need the receiver's name or
 room, several receivers can listen, and `DELAY n` puts time between pull and
 effect (`mpsignal TAG:gatehouse raise DELAY 3`).
 
-Test: `SCRIPT CALL gatehouse@Gatehouse#1 raise` is not needed here; instead
-`SCRIPTTRACE lever`, `pull lever`, and watch for `no one to hear it` (missing
-tag) or a `HERE`/direction problem in the gatehouse's room.
+Test: `SCRIPTTRACE lever`, then `pull lever`; watch for `no one to hear it`
+(missing tag) or a `MPDOOR` error about the direction in the gatehouse's room
+(`SCRIPTERRORS`).
 
 ### 7. One guard script, many guards
 
@@ -1768,7 +1785,7 @@ to change them all.
 ```text
 CMDFAIL_PROG PRAY ALTAR
 mpecho $n kneels before the altar and prays.
-if !isaffected($n Prayer_Bless)
+if !affected($n Prayer_Bless)
   mpcast Prayer_Bless $n
 endif
 return cancel
@@ -1781,3 +1798,89 @@ verb typed, and `RETURN CANCEL` keeps the failure message back. For a verb
 that should always win over skills and socials, and be tied to one object, use
 `VERB_PROG` as in example 3.
 
+## Persistence notes
+
+| What | Where it is kept | What a save, restore or reload does |
+| --- | --- | --- |
+| The script text: Scriptable parameter, `LOAD=` references | The host's entry in the world files (the `Scriptable` behavior's parameters; scripts added without the behavior in the host's script list) | Written by `SAVE ROOM`, `SAVE CHANGED` and the other builder saves ([chapter 2](02-world-workflow.md)). Apostrophes in inline text appear as backticks in the file. |
+| `LOAD=` files | `world/resources/progs/*.script` (world copy) or `resources/progs/` (stock); `world/scripts/*.script` for the world host | Live files. Editing outside the game needs `WORLD RELOAD SCRIPT`. A campaign does not embed them: distribute matching world files with the save. |
+| Script variables (`MPSETVAR`) of every host and scope | The campaign save (its script-variable section) | Restored by `RESTORE`; a world reload that rebuilds the world keeps them. |
+| Per-object variables (`@$i`, `MPSTATE`) | The object's `ExtraData` effect, so they travel with the object in rooms, packs and saves | Gone when the object is destroyed; a reborn mob loses them unless `PERSIST` is set. |
+| Trigger history: `ONCE_PROG` done, `TIME`/`DAY`/`EVERY` last run, `DELAY_PROG` waits, `MPNOTRIGGER` | The host's engine state in the save | Restored; `SCRIPT RESET` clears them for testing. |
+| Queues: `MPALARM`, delayed responses and signals, `MPWAIT` bodies | The host's engine state in the save | Restored; a changed script may no longer fit a paused body, so test saves taken mid-wait after an edit. |
+| Tattoos, quest state, meetings, turn count | The character, the profile and the quest list in the save | Restored. |
+| Locals, function parameters, a running program | Memory only | Lost on save/restore (see [what a save keeps](#what-a-save-keeps)). |
+
+A restored game's scripts wait until the saved world is back, so a restore does
+not re-run a `ONCE_PROG` that already ran. A **world reload** (`WORLD RELOAD`)
+in a normal game saves, then rebuilds the world from the files, so edited script
+text takes effect and saved variables and state come back. Changing a script
+while a save holds paused bodies or alarms is allowed but can leave stale entries;
+`SCRIPT ALARMS host CLEAR` forgets them.
+
+## Troubleshooting and gotchas
+
+| Symptom | Likely cause and fix |
+| --- | --- |
+| Nothing happens at all | The host has no Scriptable (`SCRIPT LIST host` says `has no scripts`); the `LOAD=` file could not be read (`SCRIPTERRORS` shows `NOREAD`); the host is a mob that is asleep, fighting, following, or below half health (`SCRIPTTRACE` says busy); or an earlier program on the host matched first. |
+| Works with `SCRIPT FIRE`, not in play | `FIRE` skips the trigger's chance and conditions. Trace the real event with `SCRIPTTRACE`. The trigger's parameters (phrase vs word list, `p`, a chance, a mask) did not match. |
+| The next program is reported as a body line | The previous program lacks `~`. |
+| `unknown command MPxxx` | An `MP` word that is not a command; write the full name. `SCRIPTCHECK` finds these. |
+| A condition never true | A comparison outside the function's parentheses, a misspelt function (`ISAFFECTED` is `AFFECTED`), or an actor that is not who you thought (`$n` may be an NPC; `$u` the terminal character). Test with `MPDEBUG`. |
+| Only the first of several guards works / all guards share state | Variables keyed by name. Use `@$i`. Or `MPSETINTERNAL VARHOST INSTANCE`. |
+| The reply comes late | Message responses are queued one tick. Turn-based dialogue is instant; real-time waits for the host's next tick. `MPSETINTERNAL NODELAY TRUE` runs at once. |
+| A `RAND_PROG`/`DELAY_PROG` seems not to run | Passive areas (no one near), `MPSETINTERNAL PASSIVE FALSE`, or `NEEDPC TRUE`. The host must be alive. |
+| `MPWAIT` does nothing | It was inside a `FOR`/`WHILE`/`MPWHILE`, or in a function another line called. Move it to the top level of a program. |
+| `MPCALLFUNC` finds no function | Functions live on the host they are called on: call `target func` for another host, and check the spelling. |
+| Signal never received | The tag is on the sender instead of the receiver, the target is out of the sender's area (`TAG:x@WORLD`), or the receiver has no `SIGNAL_PROG` for that name (use `SIGNAL_PROG ALL`). |
+| Reward given twice | No flag set before the reward; two hosts both hear a global listener; a restore replayed a one-shot. Set a tattoo or variable first. |
+| `$n` or `$o` empty | The trigger does not provide it. Read the trigger's entry in [chapter 26](26-mobprog-triggers.md). |
+| `else if` / `ELSEIF` problems | An `ELSEIF` with no `IF`, or an `ELSE` with text after it ("Decorated ELSE is illegal"). |
+| A needed apostrophe vanishes | Commands that take the cleaned rest turn `'` into a backtick; `MPECHO` and friends take the raw rest. See [chapter 27](27-mobprog-commands.md). |
+| A name with spaces fails as a target | Quote the first argument of `MPAT`, `MPFORCE`, `MPCAST`, `MPECHOAT` (`'The Gate Room'`), or pass an object code (`$n`). |
+| A shared script file edit changes every user | That is `EDIT SCRIPT` on a `LOAD=` host: it edits the file. Use `EXTRACT SCRIPT` to split a host from a shared file, or give each host its own copy. |
+| JavaScript block does nothing | `JSCRIPTS` is 0, or 1 and the block is not approved (`MODIFY JSCRIPTS`); the block has a syntax error (`SCRIPTCHECK` compiles it). |
+| Prompt commands seem to freeze or double up | `MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` run on their own thread; do not start two on one input stream. Prefer `MPMENU`. |
+| `LOAD=world:scripts/x.script` runs twice | Every file in `world/scripts/` is also attached to the hidden `WORLD` host. Move per-NPC scripts to `world/resources/progs/`. |
+
+### Style rules that prevent most bugs
+
+1. Write the full name of every command and function. Never rely on a prefix.
+2. End every program with `~` on its own line, and add `ENDIF`/`NEXT`/`ENDSWITCH`
+   as you type the opener.
+3. One trigger, one job. Share logic with `FUNCTION_PROG`.
+4. Guard every player-facing program with `ISPC($n)` unless an NPC actor is
+   wanted.
+5. Set the "done" flag before the reward.
+6. Use `@$i` for anything per-object.
+7. Run `SCRIPTCHECK` after every edit and `SCRIPT FIRE` before every playtest.
+8. Keep a playtest file for the interaction ([chapter 13](13-testing-release.md))
+   so that a later edit that breaks it is noticed.
+
+## See also
+
+- [Triggers reference](26-mobprog-triggers.md), [commands reference](27-mobprog-commands.md),
+  [functions and `$` codes](28-mobprog-functions.md)
+- [JavaScript in CoffeeSUD](05-javascript.md): `<SCRIPT>` blocks, world JS, `cm`,
+  `cm.store()`
+- [NPC dialogue and life](06-npcs-dialogue.md): TALK, MudChat, Scene, Schedule
+- [Behaviors and masks](24-behaviors-and-masks.md) and
+  [properties](23-properties-reference.md): the no-code alternatives, and the
+  zapper mask language
+- [Quests](08-quests.md): quest scripts, objectives, journal, markers, rewards
+- [Items and puzzles](07-items-crafting.md): switches, receptacles, combinations,
+  the `PUZZLE` command
+- [World workflow](02-world-workflow.md): where script files live, saving,
+  `WORLD RELOAD`
+- [Testing and release](13-testing-release.md): `SCRIPTCHECK` in `WORLD CHECK`,
+  playtest files, assertions
+- [Saves and party](31-saves-and-party.md): `$u`, windows, turn-based time, what
+  persists
+- [Engine programming](32-engine-programming.md): how the script engine sits in
+  the Java architecture
+- [Cookbook](cookbook.md) and the runnable
+  [museum](examples/README.md) and [Ember Trial](examples/ember-trial/README.md)
+  worlds, whose `progs/*.script` files are working scripts
+- The HTML supplements:
+  [Scripting in CoffeeSUD](../../CoffeeMud/guides/ScriptingSUD.html) and the
+  inherited [Scripting in CoffeeMud 5.11](../../CoffeeMud/guides/Scriptable.html)

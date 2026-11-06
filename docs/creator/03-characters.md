@@ -658,3 +658,397 @@ template` makes that ready-made character (the name of one of the offered
 templates). With `CREATIONTEMPLATES=ONLY` and no template named, a random
 template is used.
 
+## Races and classes
+
+A race says what a character is built like and born with: stat adjustments,
+senses, body parts, size, lifespan, natural weapons, racial and cultural
+abilities, immunities and the clothes it starts in. A class says what a
+character does for a living: how its hit points, mana, moves, practices and
+trains grow, which skills it qualifies for at which level, what it may wear
+and wield, and who may take it.
+
+Both come in two kinds. **Stock** races and classes are Java classes
+(`Races/Dwarf.java`, `CharClasses/Fighter.java`). **Generic** ones (`GenRace`,
+`GenCharClass`) are data: every field below is stored in the record, so
+a world can add new ones or replace stock ones without Java. JavaScript can
+also define races and classes (see [05-javascript.md](05-javascript.md)), and
+Java can add new kinds (see [32-engine-programming.md](32-engine-programming.md)).
+
+### Stock races
+
+The engine ships about 250 race classes in
+[Races/](../../CoffeeMud/com/planet_ink/coffee_mud/Races/): the players' races,
+many monster races (animals, dire and giant versions, undead, elementals,
+mephits, golems, the were-creatures), and the base classes they share
+(`StdRace`, `GenRace`, `PlayerRace`, `Humanoid`, `Animal`...). Only eight are
+open to players by default, because their availability does not carry the
+"skill only" bit:
+
+| Race | Notes |
+| --- | --- |
+| `Human` | The only stock race open in fantasy and technological themes |
+| `Dwarf`, `Elf`, `Gnome`, `Halfling`, `HalfElf`, `HalfOgre` | Fantasy |
+| `Duergar` | Inherits `Dwarf`'s availability, so it is open too, although `Dwarf` is the usual dwarf |
+
+Every other stock race is "skill only": it exists for NPCs, for
+polymorph and mixed-race effects, and for characters who unlock it (see
+[availability](#who-may-be-what-availability-and-unlocking)). For example `Drow`
+is skill-only in this build, although the stock `races.txt` screen still
+describes it. `LIST RACES` lists every race the game knows, with its
+category; `HELP` shows a race's help text.
+
+### Stock classes
+
+About fifty classes are in
+[CharClasses/](../../CoffeeMud/com/planet_ink/coffee_mud/CharClasses/).
+They are organised in families by their **base class** (`BASE`):
+
+| Base class | Classes |
+| --- | --- |
+| `Fighter` | `Fighter`, `Barbarian`, `Cavalier`, `Monk`, `Paladin`, `Ranger` |
+| `Mage` | `Mage`, `Abjurer`, `Alterer`, `Conjurer`, `Diviner`, `Enchanter`, `Evoker`, `Illusionist`, `Transmuter`; `Wizard` and `SpecialistMage` are not open to players |
+| `Thief` | `Thief`, `Arcanist`, `Assassin`, `Burglar`, `Gypsy`, `Pirate`, `Reliquist`, `Trapper` |
+| `Cleric` | `Cleric`, `Doomsayer`, `Healer`, `Missionary`, `Necromancer`, `Oracle`, `Purist`, `Shaman`, `Templar` |
+| `Druid` | `Druid`, `Beastmaster`, `Delver`, `Gaian`, `Mer`, `SkyWatcher` |
+| `Bard` | `Bard`, `Charlatan`, `Jester`, `Minstrel`, `Prancer` |
+| `Commoner` | `Apprentice`, `Artisan`, `Gaoler`, `Sailor`, `Scholar` |
+| (each its own) | `Archon` (builders), `PlayerClass` (used when classes are disabled), `Qualifier` and `StdCharClass` (engine placeholders) |
+
+`Apprentice` is the class for "not sure yet": it has the sub-class rule `ANY`,
+so under the default `CLASSSYSTEM=SUB` a character may start as an Apprentice
+and later train into any class. Use `LIST CLASSES` to list the classes loaded.
+
+### Who may be what: availability and unlocking
+
+Each race and class has an **availability** value: a combination of the theme
+bits (fantasy 1, technological 2, heroic 4) and a "skill only" bit (8). It is
+the **Availability** field in the editors, with these values:
+
+| Value | Meaning |
+| --- | --- |
+| 0 | Unavailable |
+| 1 to 7 | Open to players in those themes (1 fantasy, 2 tech, 3 fantasy and tech, 4 heroic, 5, 6, 7 all) |
+| 8 to 15 | The same themes, but "skill only": not offered to players |
+
+A race or class is offered at creation when its theme bits meet `MUDTHEME` and
+it is not skill-only (or has been enabled), and it is not disabled. A skill-only
+race can still reach a player three ways:
+
+- **`ENABLE=RACE_OGRE, CHARCLASS_FIGHTER OGRE`** in `coffeemud.ini` or
+  `world.ini`: the race is open to everyone, and the second entry lets Ogres be
+  Fighters. `RACE_*` and `CHARCLASS_*` flags work the same way in `DISABLE`
+  (`DISABLE=RACE_HALFELF`, `CHARCLASS_SKYWATCHER`, or with a `*` ending to take
+  every ID with that start). `DISABLE=STDRACES` and `STDCLASSES` close all
+  stock ones, which suits a world that builds its own.
+- **An unlock tattoo.** A tattoo named `RACE_<ID>` (for example `RACE_DROW`) or
+  `CHARCLASS_<ID>` on the character or its profile opens that race or class for
+  it; `CHARCLASS_ALL` opens every class. An achievement can give such a tattoo
+  (`1 "TATTOO(ID=RACE_DROW DESC=\"create a drow\" ACCOUNT=true)"`; see
+  [Achievements](#achievements-and-titles)). The `CHARCLASS_<ID>+<STAT>` form
+  waives that stat requirement, and `CHARCLASS_<ID>+RACE_<ID>` waives the race
+  requirement.
+- **A template or script.** A ready-made character, an origin's `MASK`
+  or an `MPSET`/`MPCHARSTAT`-style script can put a character in any race.
+
+With `SHOWLOCKED=YES`, a race or class that is kept behind such a tattoo and has
+an **Unlock hint** appears in the creation lists as `Name (locked: hint)`. Write
+the hint as a lead, not a spoiler ("reach the Underdark").
+
+### Creating, converting and destroying
+
+All of these need the security flag `CMDRACES` or `CMDCLASSES`. The editors
+write to the world files only in builder mode (see
+[02-world-workflow.md](02-world-workflow.md)), where the player is an Archon.
+
+| Command | Effect |
+| --- | --- |
+| `CREATE RACE <ID>` | A new generic race with that ID (no spaces), and the editor opens. If `<ID>` is a stock race, asks to convert it to a `GenRace` first ("special functionality of the race may be lost") |
+| `MODIFY RACE <ID>` | Edit a generic race. A stock race is refused with "Use CREATE RACE `<ID>` to convert it" |
+| `DESTROY RACE <ID>` | Remove a generic race; destroying a converted stock race restores the Java one |
+| `CREATE MIXEDRACE <MOTHER ID> <FATHER ID>` | Make (and keep) the mixed race the engine would invent for that pair; `RACEMIXING` controls what mixing yields |
+| `CREATE CLASS <ID>` | The same for classes: a new `GenCharClass`, or conversion of a stock class (`makeGenCharClass`) |
+| `MODIFY CLASS <ID>` | Edit a generic class |
+| `DESTROY CLASS <ID>` | Remove it |
+| `LIST RACES`, `LIST RACECATS`, `LIST CLASSES` | See what is loaded |
+
+Converting a stock race or class copies what the Java code exposes into the
+fields, and the Java behaviours it does not expose are lost (the dwarf's
+infravision, a thief's level-based defence...). The editor's **Stat-Modifying
+Class**, **Special Events Class**, **Health Race**, **Event Race** and **Weapons
+Race** fields let a generic copy borrow the original's Java behaviour: give
+the original's full class name (`com.planet_ink.coffee_mud.Races.Dwarf`) when the
+generic one has taken its ID.
+
+In builder mode, SAVE (and quitting) writes each generic race and class to
+`world/custom/races/<ID>.cmare` and `world/custom/classes/<ID>.cmare` (an
+older single `world/custom.cmare` is still read); on a normal start they are
+loaded into the game and into every character and mob that uses them. Edit them
+in the game, not by hand. A race or class that mobs or characters use is kept
+when they are saved; see [Persistence notes](#persistence-notes).
+
+### GenRace fields
+
+Source: [GenRace.java](../../CoffeeMud/com/planet_ink/coffee_mud/Races/GenRace.java),
+editor: `modifyGenRace` in [CMGenEditor.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMGenEditor.java).
+Each field is a numbered prompt; type its number to edit it, Enter to leave.
+The stat code is what scripts use with `race.setStat(code, value)` and what the
+record stores. Indexed codes carry a trailing number (`GETRABLE0`, `GETRABLE1`).
+
+| # | Prompt | Stat code | Default | Meaning |
+| --- | --- | --- | --- | --- |
+| 1 | Name | `NAME` | the ID | Name shown to players. The record's `ID` is fixed at creation |
+| 2 | Racial Category | `CAT` | `Unknown` | Group shared by related races (`Elf`, `Dwarf`, `Human`...). Used by class race lists, `START_<category>`, `RACEMIXING`, name styles, masks. `new <name>` makes a category; `?` lists them |
+| 3 | Base Weight | `BWEIGHT` | 60 | Minimum weight, pounds |
+| 4 | Weight Variance | `VWEIGHT` | 10 | Up to this much more is added at random |
+| 5 | Base Male Height | `MHEIGHT` | 24 | Minimum height, inches |
+| 6 | Base Female Height | `FHEIGHT` | 24 | Minimum female height |
+| 7 | Height Variance | `VHEIGHT` | 5 | Random addition |
+| 8 | Availability | `AVAIL` | 0 | Theme and skill-only bits; see above. A new race is **unavailable** until you set this. In a file or script the value may be a number or bit names (`FANTASY\|SKILLONLY`) |
+| 9 | Disabled | `DISFLAGS` | none | Toggle flags by name: `CLASSLESS` (no classes), `LEVELLESS` (never levels), `EXPLESS` (earns no experience), `CHARMLESS`, `CHILDLESS` (cannot breed), `INFATIGUEABLE` (never tires). Numbers 1, 2, 4, 8, 16, 32 |
+| 10 | Can breathe | `BREATHES` | AIR | Resources the race can breathe (`AIR`, `WATER`, `ANYTHING`...). Add or remove by name; `?` lists. Be kind |
+| 11 | Leaving text | `LEAVE` | `leaves` | Verb when it leaves a room |
+| 12 | Arriving text | `ARRIVE` | `arrives` | Verb on arrival |
+| 13 | Health Race | `HEALTHRACE` | none | A race whose health descriptions in combat this race uses |
+| 14 | Event Race | `EVENTRACE` | none | A Java race whose special events this one runs too (a chicken laying eggs). Usually blank |
+| 15 | Body Parts | `BODY` | torso 1, head 1, neck 1, arms 2, hands 2, legs 2, feet 2, eyes 2, ears 2, nose 1, mouth 1, waist 1 | How many of each body part exist (for wearing and amputation); see [Body parts](#body-parts-wear-locations-and-ageing-charts) |
+| 16 | UNWearable locations | `WEAR` | none | Wear locations this body cannot use even with the limbs |
+| 17 | Aging Chart | `AGING` | 0,1,3,15,35,53,70,74,78 | Nine ascending years, the age each age category starts |
+| 18 | Never create corpse | `BODYKILL` | false | The body vanishes at death |
+| 19 | Rideable Player | `CANRIDE` | false | Characters of this race can be ridden |
+| 20 | XP Adjustment % | `XPADJ` | 0 | Percent added to (or, negative, taken from) experience gained or lost, including role-play experience |
+| 21 | PhysStat Adjustments | `ESTATS` | none | Adjustments to level, senses (`SENSES`), armor, damage, attack, disposition (`DISPOSITION`), weight, height. Type a stat name, then a value |
+| 22 | CharStat Adjustments | `ASTATS` | none | Adjustments to base stats, saves, max-stat adjustments, crit, age, faith and the like (descriptions such as `STRENGTH`, `SAVE VS FIRE`, `MAX STRENGTH ADJ.`) |
+| 23 | CharStat Settings | `CSTATS` | none | The same stats, but set to a value rather than adjusted |
+| 24 | CharState Adjustments | `ASTATE` | none | Adjustments to maximum hit points, mana, moves, hunger, thirst, fatigue. Hunger or thirst above two billion disables them; fatigue below minus two billion disables fatigue |
+| 25 | New Player CharState Adj. | `STARTASTATE` | none | The same, applied once when a new character of the race starts |
+| 26 | Resources | `NUMRSC`, `GETRSCID<n>`, `GETRSCPARM<n>` | none | Raw materials the corpse yields when butchered. `new <item>` adds a copy of an item from your inventory; name one to remove it |
+| 27 | Outfit | `NUMOFT`, `GETOFTID<n>`, `GETOFTPARM<n>` | none | Items a new character of the race starts in, and `OUTFIT` gives. `new <item>` from your inventory |
+| 28 | Natural Weapon(s) | `WEAPONCLASS`, `WEAPONXML` | fists | The weapon(s) used unarmed; one is chosen at random per attack. `new <weapon>` from your inventory |
+| 29 | Weapons Race | `WEAPONRACE` | none | A race whose random natural weapon is used |
+| 30 | Racial Abilities | `NUMRABLE`, `GETRABLE<n>`, `GETRABLELVL<n>`, `GETRABLEQUAL<n>`, `GETRABLEPROF<n>`, `GETRABLEPARM<n>` | none | Abilities members have. See below |
+| 31 | Cultural Abilities | `NUMCABLE`, `GETCABLE<n>`, `GETCABLEPROF<n>`, `GETCABLELVL<n>`, `GETCABLEGAIN<n>`, `GETCABLEPARM<n>` | none | Skills the culture teaches. See below |
+| 32 | Racial Effects | `NUMREFF`, `GETREFF<n>`, `GETREFFLVL<n>`, `GETREFFPARM<n>` | none | Properties the race wears permanently. See below |
+| 33 | Racial Immunities | `NUMIABLE`, `GETIABLE<n>` | none | Ability IDs this race is wholly and silently immune to |
+| 34 | Name style | `NAMESTYLE` | none | The style used when a name is drawn for this race (`NEW *`, `NAME=RANDOM`, generators); see [12-generation.md](12-generation.md) |
+| 35 | Unlock hint | `UNLOCKHINT` | none | Text shown beside the race when `SHOWLOCKED=YES` |
+| 36 | Extra Trains/1stLvl | `FSTTRAN` | 0 | Trains added at creation |
+| 37 | Extra Practices/1stLvl | `FSTPRAC` | 0 | Practices added at creation |
+| 38 | Extra Prac/Level | `LVLPRAC` | 0 | Practices added each level |
+| 39 | Extra Trains/Level | `LVLTRAIN` | 0 | Trains added each level |
+| 40 | Script | `SCRIPT` | none | A MOBPROG (or `LOAD=file`) that runs on each mob of the race as a hidden effect; its triggers (`RAND_PROG`, `GREET_PROG`...) run with `$i` the mob. Never saved with the character. See `AHELP SKILLSCRIPTS` |
+| 41 | Age effects | `AGEEFFECTS` | none | Stat changes by age category in place of the coded ones; see [Ageing](#ageing) |
+| 42 | Health chart | `HEALTHCHART` | none | Eleven comma-separated combat health lines (worst first), `<MOB>` for the name, `\|` for alternatives |
+| 43 | Corpse descriptions | `CORPSEBLURBS` | none | `CAUSE=phrase\|alternative; ALL=phrase`, the corpse text by cause of death, for example `BURNING=molten gears;ALL=a heap of springs` |
+
+Not in the editor: `HELP` (a help entry stored in the record). Fields 21 to
+25 take stat names; the editor lists the valid ones on a bad entry. Racial and
+cultural abilities, effects, and the fields that need an item in your inventory
+(`new <item>`) are edited by naming the entry to remove it or a new name to add
+it, with follow-up prompts.
+
+**Racial Abilities** are skills with command words. Each has: the *level* (a
+player level, not a class level) at which it is gained, whether it is
+*automatically gained* (answer N to merely qualify for it), the permanent
+*proficiency*, and default *parameters*. They are given when the race starts
+and removed with it (they are not saved with the character). Auto-invoked
+abilities cannot be named except languages.
+
+**Cultural Abilities** are mapped to the race like a class's abilities: each has
+a default proficiency, a *character level* (0 means from the start), whether it
+is auto-gained, and parameters. The character keeps them. Use these for a
+culture's language and crafts (the stock Dwarf has `Dwarven` at 100 and `Mining`
+at 50).
+
+**Racial Effects** are abilities (usually properties such as `Prop_...` or
+`Skill_Stonecunning`) worn permanently from a player level, with parameters. This
+is how a race gets traits that are not stat numbers.
+
+A racial ability that is not a command skill belongs under Racial Effects;
+under Racial Abilities it is refused ("it has no trigger words").
+
+### GenCharClass fields
+
+Source: [GenCharClass.java](../../CoffeeMud/com/planet_ink/coffee_mud/CharClasses/GenCharClass.java),
+editor: `modifyGenClass`. As with races, fields are numbered prompts (the numbers
+move with the number of class names and security sets).
+
+| Prompt | Stat code | Default | Meaning |
+| --- | --- | --- | --- |
+| Number of Class Names | `NUMNAME` | 1 | How many display names the class has |
+| Class Name / Class Name #n | `NAME<n>` | the ID | Display names; with several, each applies from its class level |
+| Class Name #n class level | `NAMELEVEL<n>` | 0, +1 each | The class level at which that name starts. Must be above the previous one |
+| Level Cap | `LEVELCAP` | -1 | The most levels in this class (-1 unlimited) |
+| Base Class | `BASE` | `Commoner` | The class family. For a new base class set it to the class's own ID; a subclass names its base. See [class systems](#class-systems-subclasses-and-multi-classing) |
+| Availability | `PLAYER` | 0 | As for races. A new class is **unavailable** until set |
+| HP/Level Formula | `HITPOINTSFORMULA` | `((@x6<@x7)/3)+(1*(1?6))` | Hit points per level; variables below |
+| Mana/Level Formula | `MANAFORMULA` | `((@x4<@x5)/6)+(1*(1?3))` | Mana per level |
+| Prac/Level | `LVLPRAC` | 0 | Extra practices per level |
+| Extra Trains/Level | `LVLTRAIN` | 0 | Extra trains per level |
+| Attack/Level | `LVLATT` | 0 | Extra attack bonus per level, on top of the attribute's |
+| Attack Attribute | `ATTATT` | Strength | The stat that drives the attack bonus (and the mana formula's `@x6`) |
+| Practices/1stLvl | `FSTPRAC` | 5 | Practices at creation |
+| Trains/1stLvl | `FSTTRAN` | 3 | Trains at creation |
+| Levels/Dmg Pt | `LVLDAM` | 10 | One extra point of base damage per this many levels |
+| Move/Level Formula | `MOVEMENTFORMULA` | `5*((@x2<@x3)/18)` | Moves per level |
+| Armor Restr. | `ARMOR` | ANY | `ANY`, `CLOTH`, `LEATHER`, `NONMETAL`, `VEGAN`, `METALONLY`, `OREONLY`: armour that makes the class's skills fumble |
+| Armor restricts only spells | `ARMORMINOR` | false | If true, the restriction applies only to spells, chants and prayers |
+| Limitations | `STRLMT` | none | Free text for the help screen (limits are not enforced by it) |
+| Bonuses | `STRBON` | none | Free text for the help screen |
+| Qualifications | `QUAL` | none | A zapper mask a character must pass to take the class |
+| Min. Stats | `NUMMINSTATS`, `GETMINSTAT<n>`, `GETSTATMIN<n>` | none | Minimum base stats (after the race's adjustment) to take the class |
+| Required Races | `RACQUAL` | none | Race IDs, names or categories allowed, `All`, or `-name` to exclude. **An empty list admits no race** |
+| PhysStat Adjustments | `ESTATS` | none | As for races |
+| CharStat Adjustments | `ASTATS` | none | As for races (including max-stat adjustments) |
+| CharStat Settings | `CSTATS` | none | As for races |
+| CharState Adjustments | `ASTATE` | none | Maximum hit points, mana, moves |
+| New Player CharState Adj. | `STARTASTATE` | none | Added once to a new character |
+| Extra CharClass Flags | `DISFLAGS` | 0 | 1 raceless, 2 leveless, 4 expless, 8 "thin" qualify list. The editor toggles the first three |
+| Weapon Restr. | `NUMWEP`, `GETWEP<n>` | none | Weapon classes the class fumbles with: `AXE`, `BLUNT`, `EDGED`, `FLAILED`, `HAMMER`, `KARATE`, `POLEARM`, `RANGED`, `SWORD`, `DAGGER`, `STAFF`, `THROWN` |
+| Weapon Materials | `NUMWMAT`, `GETWMAT<n>` | none | Material types the class's weapons must be made of to avoid fumbling |
+| Outfit | `NUMOFT`, `GETOFTID<n>`, `GETOFTPARM<n>` | none | Items given at creation |
+| Starting Money | `MONEY` | none | A number or `10 gold`; given at creation |
+| Unlock hint | `UNLOCKHINT` | none | Shown with `SHOWLOCKED=YES` |
+| Script | `SCRIPT` | none | A MOBPROG that runs on each mob of the class as a hidden effect |
+| Stat-Modifying Class | `STATCLASS` | none | A Java class whose special stat code runs too (use the full class name when a generic class has taken the ID) |
+| Special Events Class | `EVENTCLASS` | none | A Java class for special events |
+| Sub Class Switch Rule | `SUBRUL` | `BASEONLY` | `NONE`, `ANY`, `BASEONLY`; see below |
+| Max Non-Crafting Skills | `MAXNCS` | from ini | Cap on common skills qualified for by every class, other than crafting |
+| Max Crafting Skills | `MAXCRS` | from ini | Same for crafting skills |
+| Max All-Common Skills | `MAXCMS` | from ini | Same for all common skills together |
+| Max Languages | `MAXLGS` | from ini | Cap on languages learnable (other than the race's) |
+| Class Abilities | `NUMCABLE`, `GETCABLE<n>`... | none | See [Qualifying abilities](#qualifying-abilities) |
+| Number of Security Code Sets | `NUMSSET`, `SSET<n>`, `SSETLEVEL<n>` | 0 | Security flags (see [19-configuration-and-administration.md](19-configuration-and-administration.md)), each set applying from a class level; for builder classes like `Archon` |
+| (no prompt) | `HELP` | none | Stored help text |
+
+The three formulas use the `AHELP MATH_FORMULA` syntax: `+ - * /`, brackets,
+`a<b` (the lesser), `a>b` (the greater), and `a?b` (a random number from `a` to
+`b`). A formula is worked strictly left to right, so bracket everything. The
+variables (`@x1`, `@x2`...) differ by formula, and are stats after all
+adjustments; a "max" is `BASEMAXSTAT` plus the character's max-stat adjustment
+for that stat:
+
+| Formula | @x1 | @x2 / @x3 | @x4 / @x5 | @x6 / @x7 | @x8 | @x9 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Hit points (`HITPOINTSFORMULA`) | level | Strength / its max | Dexterity / its max | Constitution / its max | Wisdom | Intelligence |
+| Mana (`MANAFORMULA`) | level | Wisdom / its max | Intelligence / its max | Attack attribute / its max | Charisma | Constitution |
+| Moves (`MOVEMENTFORMULA`) | level | Strength / its max | Dexterity / its max | Constitution / its max | Wisdom | Intelligence |
+
+The default hit point formula, `((@x6<@x7)/3)+(1*(1?6))`, is a third of
+Constitution (capped at its max) plus a d6, each level. A world can add to
+every class's formulas with the text after the comma in `STARTHP`, `STARTMANA`
+and `STARTMOVE` (`STARTHP=20,+(@x1/20)`); `@STAT(NAME)` and `@BASESTAT(NAME)`
+read other stats (see [Stats](#stats-and-derived-values)).
+
+A minimal new base class:
+
+```text
+CREATE CLASS Boxer
+```
+
+then in the editor: Base Class `Boxer`, Availability `1`, Required Races `All`,
+Attack Attribute `STRENGTH`, then add class abilities. Without Required Races the
+class is selectable by nobody, and with the default Base Class `Commoner` it
+would not appear at creation under `CLASSSYSTEM=SUB`.
+
+### Class systems, subclasses and multi-classing
+
+`CLASSSYSTEM` (in `coffeemud.ini` or `world.ini`) decides how a character
+chooses and changes class. It is a word, optionally followed by a number or
+group, and the comma options `GAIN=n` (trains to gain a new class, default 1)
+and `SWITCH=n` (trains to switch back to a class you have, default 1):
+
+| Value | Rule |
+| --- | --- |
+| `SUB` (default) | Start in any base class (or a class whose sub-class rule is `ANY`), and later train into other classes of the same base class. `SUB-n`: at most `n` classes |
+| `NO` | No multi-classing; pick any player class and keep it |
+| `NO-BASE` | As `NO`, but only base classes may be picked |
+| `NO-SUBONLY` | As `NO`, but only sub-classes may be picked |
+| `NO-<class>` | Everyone must be that one class |
+| `NO-GRP-<base class>` | Everyone must pick within that class family |
+| `MULTI`, `MULTI-n` | Any class at any time (at most `n`) |
+| `APP-SUB`, `APP-NO`, `APP-MULTI` | Everyone starts as an Apprentice, then as `SUB`, `NO` (one change allowed) or `MULTI` |
+| `DISABLED` | No classes (the same as `DISABLE=CLASSES`; characters get `PlayerClass`) |
+
+Each class carries a **sub-class switch rule**:
+
+| `SUBRUL` | Meaning |
+| --- | --- |
+| `BASEONLY` (default) | Characters of this class may train only to a class of the same base |
+| `ANY` | May train to any class (the Apprentice) |
+| `NONE` | Dead end: cannot train away |
+
+In play a player changes class with `TRAIN <class>`, which costs a training
+session (`CLASSSYSTEM` `GAIN=`) and starts the new class at level 0; from then
+on levels go into the new class, and the character keeps the skills of the old
+one up to the level at which it switched. `QUALIFY` lists what the character
+qualifies for and `WILLQUALIFY` shows what a class and level will give.
+`DISABLE=CLASSTRAINING` removes `TRAIN <class>` so that classes can change only
+by scripts. To design a class tree, make a base class and give each subclass
+`BASE=<base>`; under `SUB` they can be reached from the base, while `Min. Stats`,
+`Required Races` and `Qualifications` can further limit who qualifies. A class
+whose requirements a character no longer meets cannot be trained into, but one
+already taken is kept.
+
+### Qualifying abilities
+
+A class lists its **Class Abilities**: each is a skill, spell, prayer, song or
+other ability with command words. The editor shows a table with the columns
+Lvl, Skill, Proff, Gain, Secret, Parm, Preq, Mask; adding an ability asks for:
+
+| Prompt | Stat code | Meaning |
+| --- | --- | --- |
+| level of this skill | `GETCABLELVL` | Class level at which the character qualifies (1 or more; 0 aborts) |
+| (default) proficiency | `GETCABLEPROF` | Proficiency when first gained (default 0) |
+| (maximum) proficiency | `GETCABLEMAXP` | Highest proficiency practice can raise it to (default 100) |
+| automatically gained | `GETCABLEGAIN` | Y: the character is given the skill at that level. N: only *qualified for*; it must be learned from a teacher, a scroll or a quest |
+| Public, Secret or Masked | `GETCABLESECR` | `PUBLIC` is listed and taught normally; `SECRET` is unknown to characters and teachers; `MASKED` is secret until the mask is met |
+| properties | `GETCABLEPARM` | Parameters the ability starts with |
+| pre-requisites | `GETCABLEPREQ` | A comma list of skill IDs (a trailing `*` for a family) with an optional minimum proficiency in brackets: `Skill_Trip(50),Fighter_*(10)`. These chains are what `SKILLTREE` draws |
+| requirement mask | `GETCABLEMASK` | A zapper mask the character must also pass |
+
+Auto-gained abilities come as soon as the level is reached (`MPLEVELUP` and
+the level-up routines grant them); the rest appear in `QUALIFY`. Races can
+qualify for abilities in the same way through cultural abilities, and a
+**qualify-all** list, edited with `CREATE ALLQUALIFY`, `MODIFY ALLQUALIFY` and
+`LIST ALLQUALIFYS` and stored in `resources/skills/allqualifylist.txt`, makes
+an ability available to every class or to each of several (the way every class
+gets common skills). Ability lists for the other kinds of grant are in
+[25-abilities-and-effects.md](25-abilities-and-effects.md).
+
+A world's achievements can grant abilities too (`17 Spell_Light` gives a
+spell at level 17, optionally with `AUTOGAIN`, `MASK`, `PARMS`, `PREREQS`),
+which is how a class-less skill can be rewarded; see
+[Achievements](#achievements-and-titles).
+
+### Body parts, wear locations and ageing charts
+
+**Body parts** (`BODY`) count how many of each part a member has, in this order:
+`ANTENNA`, `EYE`, `EAR`, `HEAD`, `NECK`, `ARM`, `HAND`, `TORSO`, `LEG`, `FOOT`,
+`NOSE`, `GILL`, `MOUTH`, `WAIST`, `TAIL`, `WING`. The editor asks for a part name
+and then a number (0 removes it). The counts decide which locations can be
+worn on and how many limbs can be lost. A snake would have a head, a torso and
+no arms; an arachnid has many legs. Together with **UNWearable locations**
+(`WEAR`) this decides what can be worn: a race that has hands but wears no
+gloves lists the glove location there.
+
+**Ageing chart** (`AGING`): nine years, ascending, for the age categories:
+
+| Index | Category | Stock default (years) |
+| --- | --- | --- |
+| 0 | Infant | 0 |
+| 1 | Toddler | 1 |
+| 2 | Child | 3 |
+| 3 | Young adult | 15 |
+| 4 | Adult | 35 |
+| 5 | Mature (middle aged) | 53 |
+| 6 | Old | 70 |
+| 7 | Venerable | 74 |
+| 8 | Ancient | 78 |
+
+A character's age category is the last entry its age has reached; "ancient"
+characters are shown with a Roman numeral for every further `Ancient -
+Venerable` span. A new character begins at the *young adult* age, born on the
+day it is created (by the game calendar of its start room). A value below zero
+in a file means "never" (`Integer.MAX_VALUE`). See [Ageing](#ageing) for
+effects.
+

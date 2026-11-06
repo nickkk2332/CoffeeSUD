@@ -343,8 +343,8 @@ Later `LOAD` and `GIVE` commands act on the current choice.
 | `SET AREAGROUP [name ...]` | A group of areas (`ALL` for every area). Becomes the room group. |
 | `SET ROOM [name]` | The current room: `ANY`, a room ID (`Brenn#12`), or words from a room title or description, searched in the current area, room group or the world. No name clears the room (not the area). Add `MASK=zapper mask` to filter rooms (`set room any mask=-SEASON +SUMMER`). |
 | `SET ROOMGROUP [name]` | A set of rooms. `ALL` for all rooms; `ANY a b c` for several. |
-| `SET ROOMGROUPAROUND radius locale` | Rooms within `radius` of the current room that match the locale. |
-| `SET LOCALE`, `SET LOCALEGROUP`, `SET LOCALEGROUPAROUND` | Same, by locale class or type name (`StdRoom`, `woods`, `underwater` ...). |
+| `SET ROOMGROUPAROUND radius [name]` | Rooms within `radius` rooms of the current room (a room must already be set), filtered by room name as `SET ROOMGROUP` is. |
+| `SET LOCALE`, `SET LOCALEGROUP`, `SET LOCALEGROUPAROUND radius locale` | Same, by locale class or type name (`StdRoom`, `woods`, `underwater` ...); the AROUND form takes rooms within `radius` of the current room. |
 | `SET MOB [RESELECT] [name]` | The current mob, an *existing* mob matching the name (or `MASK=...`), brought into the designated room if there is one. A mob already used by the quest is not picked again unless `RESELECT` is used by both picks. Mobs with the `QuestBound` property set to `*` are never picked. |
 | `SET MOBGROUP [RESELECT] [name]` | A group of existing mobs (`ALL` for all). Scripts see them via `QUESTMOB`. |
 | `SET MOBTYPE [RESELECT] [class]` | An existing mob by Java class name. |
@@ -1312,3 +1312,629 @@ winners or running state; those are only in the campaign save. Editing a quest
 file between a save and a restore therefore keeps the progress but may
 drop objects that no longer exist. See [Saves and party](31-saves-and-party.md).
 
+## Worked examples
+
+The examples below use area and mob names (`Brenn`, `Old Ned`) that your world
+must have; change the names to ones that exist. They use only commands shown
+in the shipped templates and fixtures. For each, run `QUESTCHECK name` before
+starting, play it through normally once, then use `QUESTINFO name`.
+
+All four are single files you can put in `world/quests/NAME.quest`. The quest
+script comes first; after the `<?xml version="1.0"?>` line come the MOBPROG
+files it hands out, each between `<FILE><NAME>` and `</DATA></FILE>`. A
+`~` on its own line ends each MOBPROG trigger or function. (With CREATE QUEST
+you would type one `;`-separated line; a file is much easier to edit.)
+
+### Example 1: a fetch quest
+
+Old Ned lost the chapel bell in the moor. The player takes the quest by
+walking into Ned's room and answering `y`, finds the bell, brings it back, and
+is paid. Needs: an existing mob "Old Ned" in the area "Brenn"; an area "Moor";
+a catalog item named "the sunken bell" (`CATALOG` is described in [Mobs](21-mobs.md)
+and [Items](22-items.md): build the item, then add it to the catalog).
+
+`world/quests/bell.quest`:
+
+```text
+set name bell
+set display The Sunken Bell
+set category side
+set instructions Old Ned lost the chapel bell in the moor.  Find it and give it to him.
+set rewards "50 XP 2 QP"
+set repeatable no
+
+# the giver: an existing mob
+set area "Brenn"
+set room
+set mobgroup
+set mob reselect "Old Ned"
+give stat keyplayer true
+give script LOAD=bell_ned.script
+give affect Prop_QuestGiver QUEST="bell" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=bell READYFUNC=CAN_COMPLETE
+
+# the bell: a catalog item, hidden in a random room of the moor
+set mob
+set area "Moor"
+set room any
+load item catalog the sunken bell
+give affect Prop_QuestItem QUEST=bell NODROP NOSELL REMOVEON=WON
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>bell_ned.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISPC($n) and !QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=bell_track.script
+	mpqobjective $n * ADD bell 1 Find the chapel bell AT=Moor
+	mpqjournal $n * Old Ned lost the chapel bell in the moor.
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" Bring it back and I will pay you.
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *)
+		if HAS($n 'the sunken bell')
+			RETURN TRUE
+		endif
+	endif
+	RETURN
+~
+
+GIVE_PROG all
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		if NAME($o == 'the sunken bell')
+			mpjunk $o
+			mpqobjective $n * DONE bell
+			mpqjournal $n * I gave the bell back to Old Ned.
+			sayto "$n" The chapel will ring again.
+			mpquestwin $n * REWARD
+			mpendquest $n
+			mpqset * STATISTICS SUCCESS
+		endif
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>bell_track.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS Find the chapel bell in the moor and give it to Old Ned.
+~
+
+RAND_PROG 25
+	IF !isquestmobalive(1 'bell')
+		mpqjournal $i * Old Ned is gone.
+		mpquestfail $i * the giver is gone
+	ENDIF
+~
+</DATA></FILE>
+```
+
+How it works:
+
+- `set mob reselect "Old Ned"` borrows the world's Old Ned (the first quest mob).
+  `give script` adds the accept script; the `Prop_QuestGiver` offers (ENTER on a mob
+  is a character entering its room); `Prop_QuestMarker` shows `(!)`, `(?)`.
+- `load item catalog ...` puts a copy of the catalog item in a random moor room.
+  `Prop_QuestItem` stops the player selling or dropping it.
+- Taking the quest gives the character `bell_track.script` (that is what
+  `QUESTSCRIPTED` tests) and an objective at the moor. `QUESTS` shows
+  `[ ] Find the chapel bell (Moor)` and `QUESTS WHERE 1` the way.
+- Giving the bell to Ned triggers `GIVE_PROG`; `MPQUESTWIN ... REWARD` records
+  the win and pays `50 XP 2 QP` with one message. `MPENDQUEST $n` removes the
+  tracking script. The only payment path is `REWARD`: do not also `mpexp`.
+- `set repeatable no`: the engine refuses a second offer after a win. Everything
+  else about the quest staying `finished` is Q1: `set duration 0` plus no
+  schedule means it runs for ever once started.
+
+Start and test:
+
+```text
+questcheck bell
+modify quest bell start
+questinfo bell
+quests
+```
+
+If the quest is only `loaded`, `MODIFY QUEST bell START` begins it. To make it
+begin by itself when the game starts, add `set autostart boot` (it then runs once
+and finishes) or use a schedule such as `set wait 1` and `set interval 1`.
+
+### Example 2: a branching story quest
+
+"Bandits of the Fen": Captain Hale sends the player to the bandit chief, who
+offers a choice. Each choice is its own step, both rejoin at an epilogue, and
+the captain pays differently. Needs existing mobs "Captain Hale" (area "Brenn")
+and "the bandit chief" (area "Fen"). Adapted from fixture `q6-steps.js` and
+the `story_choice1` template.
+
+`world/quests/bandits.quest`:
+
+```text
+set name bandits
+set display Bandits of the Fen
+set category main
+set droppable false
+set repeatable no
+set instructions Captain Hale wants the bandit chief in the Fen dealt with.
+set duration 0
+
+# step 1: the captain offers it
+set area "Brenn"
+set room
+set mobgroup
+set mob reselect "Captain Hale"
+give stat keyplayer true
+give script LOAD=bandits_captain.script
+give affect Prop_QuestGiver QUEST="bandits" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=bandits
+
+# step 2, "confront": the chief decides
+step confront
+set duration 0
+set mobgroup
+set mob
+set area "Fen"
+set room
+set mob reselect "the bandit chief"
+give script LOAD=bandits_chief.script
+give affect Prop_QuestMarker QUEST=bandits READYFUNC=CAN_DECIDE AVAILABLE= ACTIVE=
+
+# step 3, "spared", and step 4, "slain": each lasts a few ticks, then
+# moves itself on to the epilogue
+step spared
+set duration 5
+set journal The chief took his men and left the Fen.
+step goto epilogue
+step auto slain
+set duration 5
+set journal The chief is dead, and the Fen is quiet.
+step goto epilogue
+step auto epilogue
+
+# step 5, "epilogue": back to the captain
+set duration 0
+set mobgroup
+set mob
+set area "Brenn"
+set room
+set mob reselect "Captain Hale"
+give script LOAD=bandits_epilogue.script
+
+<?xml version="1.0"?>
+<FILE><NAME>bandits_captain.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISPC($n) and !QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=bandits_track.script
+	mpqobjective $n * ADD chief 1 Decide the fate of the bandit chief AT=Fen
+	mpqjournal $n * Captain Hale sent me to deal with the bandit chief.
+	mpqset * STATISTICS ACCEPTED
+	MPSTEPQUEST bandits =confront
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" Find him in the Fen.  Then do what you think right.
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>bandits_chief.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_DECIDE
+	if QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+	RETURN
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		sayto "$n" So Hale sent you.  What will it be?
+		mpchoose $n CHOICE AB A Spare him (A) or kill him (B)?
+		MPCALLFUNC DECIDE
+	endif
+~
+
+FUNCTION_PROG DECIDE
+	if !QUESTSCRIPTED($n *)
+		RETURN
+	endif
+	mpqobjective $n * DONE chief
+	if VAR($n CHOICE == B)
+		sayto "$n" Then be quick about it.
+		mpqset * FATE slain
+		mpslay $i
+		MPSTEPQUEST bandits =slain
+	else
+		sayto "$n" You will not regret this.  I leave the Fen today.
+		mpqset * FATE spared
+		MPSTEPQUEST bandits =spared
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>bandits_epilogue.script</NAME>
+<DATA>
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		if QVAR(* FATE == spared)
+			sayto "$n" You let him go?  Well, the Fen is quiet.
+			mpreward $n "10% XP"
+		else
+			sayto "$n" He is dead.  The pass is open again.
+			mpreward $n "100 CURRENCY"
+		endif
+		mpqjournal $n * Captain Hale heard what became of the chief.
+		mpquestwin $n * OUTCOME $%QVAR(* FATE)%
+		mpendquest $n
+		mpqset * STATISTICS SUCCESS
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>bandits_track.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS Find the bandit chief in the Fen and decide his fate.
+~
+</DATA></FILE>
+```
+
+Points to copy:
+
+- Step 1 is everything before `step confront`. `step confront` ends it and
+  *names* the next step. The names are `confront`, `spared`, `slain`, `epilogue`
+  (steps 2 to 5), each given by the `step` line before it. Every step sets
+  `duration`.
+- `MPSTEPQUEST bandits =spared` jumps to a name. `step goto epilogue` inside
+  steps 3 and 4 makes the epilogue the step after either. They end with
+  `step auto ...`, so each moves on by itself when its 5 ticks run out (a plain
+  `step` would wait for an `MPSTEPQUEST`). The epilogue step is named by the
+  last `step auto epilogue`.
+- A step change cleans up the step before: the captain's accept script goes when
+  the quest steps to "confront", and the chief is released at "spared"/"slain".
+  Because the script that calls `MPSTEPQUEST` is itself given by a step
+  that ends, it is the **last line** of its block; nothing after it is relied on.
+  The character's `bandits_track.script` is on the player, not on a quest
+  object, so it survives the steps.
+- The branch is remembered in a quest variable (`mpqset * FATE ...`), saved with
+  the quest, and read back with `QVAR(* FATE == spared)` and
+  `$%QVAR(* FATE)%`. `QUESTOUTCOME($n bandits == spared)` then answers from
+  `OUTCOME`; `QUESTS WON` shows `bandits (spared)`.
+- `set droppable false`: `QUESTS DROP bandits` refuses (the main story).
+- The saved game stores the step number *and* its name, so editing the file and
+  adding a step above does not send a restored game to the wrong step.
+- This quest steps for the whole world. In a single-player game that is
+  the story's chapter; do not use this shape for a quest that several
+  characters take independently ([Q12](#q12-credit-for-the-party-or-the-profile)).
+
+Test branches without playing them: with the quest running,
+`MODIFY QUEST bandits STEP spared` jumps to a step by name; `ASSERT QUEST bandits STEP 3`
+(from a test file) checks it; `MODIFY QUEST bandits WIN Name` / `UNWIN Name` set
+and clear a win.
+
+### Example 3: a repeatable job, and a job board
+
+A wolf bounty the ranger posts every game day. Up to ten wins. Adapted from
+the `story_bounty1` template (the Quest Maker would write the same quest).
+
+`world/quests/wolf_bounty.quest`:
+
+```text
+set name wolf_bounty
+set display Wolf Bounty
+set category side
+set instructions Kill five wolves in the woods, then come back to be paid.
+set rewards "30 CURRENCY"
+set repeatable 1 mudday
+set maxwins 10
+
+set area "Brenn"
+set room
+set mobgroup
+set mob reselect "Ranger Tam"
+give stat keyplayer true
+give script LOAD=wolf_giver.script
+give affect Prop_QuestGiver QUEST="wolf_bounty" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=wolf_bounty READYFUNC=CAN_COMPLETE
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>wolf_giver.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISPC($n) and !QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=wolf_track.script
+	mpqobjective $n * ADD kills 5 Kill wolves
+	mpqjournal $n * Tam posted a wolf bounty.
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" Five pelts, and I pay.
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *) and QOBJECTIVE($n * kills == DONE)
+		RETURN TRUE
+	endif
+	RETURN
+~
+
+GREET_PROG 100
+	if ISPC($n) and QUESTSCRIPTED($n *) and QOBJECTIVE($n * kills == DONE)
+		sayto "$n" Good work.  Here is what I owe you.
+		mpqjournal $n * Tam paid the bounty.
+		mpquestwin $n * REWARD
+		mpendquest $n
+		mpqset * STATISTICS SUCCESS
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>wolf_track.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS Kill five wolves, then return to Ranger Tam.
+~
+
+EXECMSG_PROG STO=DEATH ALL
+	if ISNPC($n) and ISLIKE($n '+NAMES "a wolf"') and !QOBJECTIVE($i * kills == DONE)
+		mpqobjective $i * BUMP kills
+	endif
+~
+</DATA></FILE>
+```
+
+The repeating comes from three lines: `set repeatable 1 mudday` (a game day
+after the last win, counted on the game clock, so a pause holds it),
+`set maxwins 10`, and the missing `QUESTWINNER` test in `CAN_ACCEPT`. Checks:
+
+- Right after a win the marker `(!)` and the offer disappear for that
+  character; a game day later they come back.
+- `QUESTS WON` shows `Wolf Bounty (3 wins)`; `QUESTWINS($n wolf_bounty >= 10)`
+  is the test for the follow-up.
+- A follow-up quest that only opens after ten bounties:
+  `set playermask -QUESTWINS +wolf_bounty:>=10` in *its* script.
+
+The same shape works as a generated job: put a board in a room.
+
+```text
+Prop_QuestBoard COUNT=3 REFRESH="1 mudday" TEMPLATE=normal LEVELRANGE=3 FILE=quests/random/all.xml
+```
+
+as an effect of an item (add it in the item's MODIFY menu, see
+[Items](22-items.md)) or of a room used as a notice-board room. When the player
+looks at it, three generated jobs appear numbered; `ACCEPT 2` takes the second;
+after a game day finished jobs go and new ones come.
+If you want a board to offer *your* hand-written jobs, put a `StdQuestBoard` or
+`GenQuestBoard` item in the room instead: it lists every running quest the
+reader can accept (the quest needs a `DISPLAY`, `INSTRUCTIONS` and an accept
+script). Start `wolf_bounty` (`MODIFY QUEST wolf_bounty START`) and it is listed.
+
+### Example 4: a timed quest
+
+Healer Wren gives the player a vial for Farmer Pell's feverish boy, to be
+carried within six game hours. Needs mobs "Healer Wren" (area "Brenn") and
+"Farmer Pell" (area "Fenwick"), and a catalog item "a vial of medicine".
+
+`world/quests/medicine.quest`:
+
+```text
+set name medicine
+set display Medicine for Pell
+set category side
+set instructions Carry Wren's vial to Farmer Pell in Fenwick before the fever peaks.
+set rewards "75 CURRENCY 5% XP"
+set repeatable no
+
+set area "Brenn"
+set room
+set mobgroup
+set mob reselect "Healer Wren"
+give stat keyplayer true
+load item catalog a vial of medicine
+give item
+give script LOAD=medicine_wren.script
+give affect Prop_QuestGiver QUEST="medicine" TRIGGER=ENTER REOFFER=ALWAYS
+give affect Prop_QuestMarker QUEST=medicine
+
+set item
+set mob
+set area "Fenwick"
+set room
+set mob reselect "Farmer Pell"
+give script LOAD=medicine_pell.script
+give affect Prop_QuestMarker QUEST=medicine READYFUNC=CAN_COMPLETE AVAILABLE= ACTIVE=
+
+set duration 0
+
+<?xml version="1.0"?>
+<FILE><NAME>medicine_wren.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_ACCEPT
+	if ISPC($n) and !QUESTSCRIPTED($n *)
+		RETURN TRUE
+	endif
+	RETURN CANCEL
+~
+
+FUNCTION_PROG DO_ACCEPT
+	mpscript $n INDIVIDUAL SAVABLE STATIC=LOAD=medicine_track.script
+	give "a vial of medicine" "$n"
+	mpqobjective $n * ADD deliver 1 Take the vial to Farmer Pell AT=Fenwick
+	mpqjournal $n * Wren gave me medicine for Pell's boy.  The fever will not wait.
+	MPQTIMER $n * 6 mudhours
+	mpqset * STATISTICS ACCEPTED
+~
+
+SPEECH_PROG p i accept
+	if CALLFUNC(CAN_ACCEPT)
+		sayto "$n" Run!  You have six hours at the most.
+		MPCALLFUNC DO_ACCEPT
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>medicine_pell.script</NAME>
+<DATA>
+FUNCTION_PROG CAN_COMPLETE
+	if QUESTSCRIPTED($n *)
+		if HAS($n 'a vial of medicine')
+			RETURN TRUE
+		endif
+	endif
+	RETURN
+~
+
+GIVE_PROG all
+	if ISPC($n) and QUESTSCRIPTED($n *)
+		if NAME($o == 'a vial of medicine')
+			mpjunk $o
+			mpqobjective $n * DONE deliver
+			mpqjournal $n * Pell's boy drank the medicine in time.
+			sayto "$n" Bless you.  He is already cooler.
+			mpquestwin $n * REWARD
+			mpendquest $n
+		endif
+	endif
+~
+</DATA></FILE>
+<FILE><NAME>medicine_track.script</NAME>
+<DATA>
+ONCE_PROG 100
+	mpsetvar $i INSTRUCTIONS Take the vial to Farmer Pell before the fever peaks.
+~
+
+QUESTTIMEOUT_PROG
+	mpechoat $n The boy is past helping.
+	mpjunk a vial of medicine
+	mpqjournal $n * I was too late with the medicine.
+	mpquestfail $n * the fever won
+~
+</DATA></FILE>
+```
+
+What it shows:
+
+- `MPQTIMER $n * 6 mudhours` is the character's own deadline, from the moment
+  they accept (not the quest's start). `QUESTS` shows
+  `Medicine for Pell (time left: about 5 game hours)` counted on the game clock,
+  so pausing the game or playing in turn mode holds it.
+- When it comes, the bare `QUESTTIMEOUT_PROG` on the tracking script runs. It
+  records the failure with `MPQUESTFAIL` (status FAILED, reason `the fever
+  won`, shown by `QUESTS FAILED`). Without that trigger the quest would fail
+  by itself as EXPIRED; keep the trigger when you want a custom ending.
+- `mpquestwin` clears the deadline.
+- Make the whole quest time-limited for everyone instead with `set duration 6
+  mudhours` in the quest: when it ends, everything the quest loaded or gave is
+  removed (the vial among it), and `QUEST_PROG END quest EXPIRED` fires. Use
+  `STEP AUTO` to move on at the deadline instead of ending.
+- Use the personal timer (Q11) for "from when the player took it", and `DURATION`
+  for "while this event lasts".
+
+## Quest verification checklist
+
+Run QUESTCHECK, inspect QUESTINFO, and use its test controls for start, step,
+win and reset (`MODIFY QUEST ... STEP`, `WIN`, `UNWIN`, `RESETWINNERS`, `REOPEN`,
+`VAR`, `RELOAD`). Play the whole quest normally at least once. Verify:
+
+- First offer, refusal, acceptance, duplicate offer and returning later
+  (`QUESTS OFFERED`).
+- Wrong order, missing/destroyed item, dead giver and alternate branch.
+- Win, failure, expiry and abandonment, including cleanup and repeat cooldown.
+- Two-character sharing and exactly-once rewards.
+- Save in each important step, quit, restore in a fresh process and finish.
+- That `QUESTS`, `QUESTS WHERE` and the markers say the same thing as the
+  accept script.
+
+The fixtures `tools/fixtures/fixes/q1-finished.js` through `q16-where.js`,
+`dt2-questinfo.js` and `dt32-questcheck.js` are the examples of the
+objective, reward, deadline, sharing and test-control APIs. Static lint cannot
+prove a complete story or all possible player choices. See
+[Testing and release](13-testing-release.md).
+
+## Troubleshooting and gotchas
+
+| Symptom | Cause and fix |
+| --- | --- |
+| Quest listed `loaded` and never starts | No schedule. Start it (`MODIFY QUEST x START`, `MPSTARTQUEST`) or add `SET AUTOSTART BOOT` or a WAIT and INTERVAL. |
+| `SET WAIT` quest never starts | A WAIT needs an INTERVAL (`set interval 1`). QUESTCHECK warns. The quest is then FINISHED after its first stop rather than deleted. |
+| "Quest NOT started -- check your mud.log" | The script raised an error: a `SET MOB` that found no such mob, a `LOAD` with nothing imported, an unknown word. Read `mud.log`, then `QUESTINFO` ("Last errors"). Use `OPTIONAL` before a command that may fail, and `QUIET` to keep the log clean. |
+| "No duration, quest not started" | A step with no `SET DURATION`. Add one (0 is fine). |
+| Giver never offers | The quest has no accept script; the quest is not running; the mob is not the first thing selected (a different mob got the `Prop_QuestGiver`); the player already carries or has won it (`REPEATABLE`); `SET PLAYERMASK` fails them; the trigger does not suit the host (a mob's default is DEATH). |
+| `QUESTS` shows nothing after a rename | The tracking script's quest name no longer exists: it is removed from the character the next time `QUESTS` is listed. Keep quest NAMEs. |
+| Reward paid twice | `MPQUESTWIN ... REWARD` plus hand-written `mpexp`/`give`, or two win paths (script and JavaScript). Use one. |
+| Quest ends when a mob dies | `GIVE STAT KEYPLAYER TRUE` resets the quest on death. Use `FAIL` to fail it for the characters instead, or no keyplayer. |
+| A step's objects vanished | They are cleaned up at the next step. `SET PRESERVE n` keeps them `n` steps, or select them again in the new step. |
+| Edited a quest file, nothing changed | `WORLD RELOAD QUEST name`, `MODIFY QUEST name RELOAD`, or `DEVWATCH ON`. In builder mode a changed file is not overwritten by SAVE if it changed outside the game; see [World workflow](02-world-workflow.md). |
+| Random quests / board report "ALL_QUESTS has not been defined" | `PATH`/`FILE` left at the default. Set it to `quests/random/all.xml` or your document. |
+| Board shows no jobs | Generation failed (see the log), or the reader cannot take them (`PLAYERMASK`, level criteria). Quests listed by a `StdQuestBoard` need `DISPLAY`, `INSTRUCTIONS` and an accept script. |
+| Marker shows `(!)` for a quest the player cannot take | `CAN_ACCEPT` and the marker agree by construction (the marker asks the same engine). Check the player's `QUESTS OFFERED`; remember the party and per-character windows: the marker is per viewer. |
+| QUESTCHECK reports `SET WEEKDAY unknown` etc. | Known limits of its word list (see [Builder commands](#builder-commands)). |
+
+Other points:
+
+- Chat commands in a MudChat script or semicolons: inline scripts need `\;`;
+  files do not.
+- Tick timers inside quest scripts (`DELAY_PROG`) are not saved; use
+  `MPQTIMER` (character) or a quest `DURATION` (quest) for anything that must
+  survive a save.
+- Decide whether pausing and travel should preserve or advance urgency, and say
+  the deadline in dates the player can see (`QUESTS` shows game time left).
+- Unlocking a profile achievement does not mean every character accepted a
+  personal quest: `SET SHARED PROFILE` shares the *win* and status, not
+  acceptance.
+- Generated quests and the stock `normal_*` templates still announce on
+  `$QUEST_ANNOUNCECHANNEL`; set it blank in single-player games.
+
+## See also
+
+- [04-mobprog.md](04-mobprog.md), [26-mobprog-triggers.md](26-mobprog-triggers.md),
+  [27-mobprog-commands.md](27-mobprog-commands.md),
+  [28-mobprog-functions.md](28-mobprog-functions.md): the scripts quests hand out.
+- [05-javascript.md](05-javascript.md): JavaScript handlers and stores.
+- [06-npcs-dialogue.md](06-npcs-dialogue.md): talking to quest givers.
+- [21-mobs.md](21-mobs.md), [22-items.md](22-items.md): the mobs, items and
+  catalog quests use.
+- [23-properties-reference.md](23-properties-reference.md),
+  [24-behaviors-and-masks.md](24-behaviors-and-masks.md): Prop_Quest*, QuestBound,
+  RandomQuests, zapper masks.
+- [12-generation.md](12-generation.md): the random-quest generator documents.
+- [10-world-simulation.md](10-world-simulation.md): holidays, schedules, game time.
+- [02-world-workflow.md](02-world-workflow.md), [13-testing-release.md](13-testing-release.md),
+  [31-saves-and-party.md](31-saves-and-party.md),
+  [state-and-persistence.md](state-and-persistence.md): files, tests and saves.
+- [tool-reference.md](tool-reference.md#questinfo): generated command help.
+- The CoffeeSUD [scripting supplement](../../CoffeeMud/guides/ScriptingSUD.html)
+  (the Quests section) and the inherited
+  [GameBuildersGuide](../../CoffeeMud/guides/GameBuildersGuide.html) (Quests;
+  its MUDGrinder and online-player text does not apply).

@@ -54,7 +54,7 @@ Every room in the world has a unique **room ID** of the form `Area Name#number`,
 - **Grid areas** (`StdGridArea`) instead encode the grid position into the number, so a room's ID depends on its coordinates and direction of creation.
 - **Grid children.** Rooms inside a grid or maze locale have no ID of their own (their `roomID()` is empty). They are addressed as `ParentID#(x,y)`, for example `Coffee Grounds#19#(0,2)`. You cannot `MODIFY` a grid child; modify the grid's parent room instead.
 - **Typing IDs.** Commands that take a room ID accept the full ID, case-insensitive. `MODIFY ROOM ID` also accepts just the number (`12`), `#12`, or `Area Name#12`. Many commands (`GOTO`, `AT`, `LINK`) also accept room text, such as part of a title, and find the best match.
-- **Changing an ID.** `MODIFY ROOM ID 25` renumbers the room you are in. The new ID must start with the room's own area name and must be unused. See [Room commands](#room-commands-in-detail).
+- **Changing an ID.** `MODIFY ROOM ID 25` renumbers the room you are in. The new ID must start with the room's own area name and must be unused. See [MODIFY ROOM](#modify-room).
 
 ### Directions
 
@@ -636,3 +636,359 @@ WORLD CHECK ONLY=KEYS,TEXT LOG
 ```
 
 The other parts (`SHOPS`, `DATA`, `SCRIPTS`, `PROPS`, `JS`, `VOCAB`, `LORE`, `TEMPLATES`, `ROUTES`, `MODULES`, `COMPOSITIONS`, `COMBAT`, `ITEMMODS`) belong to other chapters. `sud.sh CHECK=1` runs the check on a scratch copy and exits with status 1 on errors, suitable for a commit hook ([Testing and release](13-testing-release.md)).
+
+## Reference: directions
+
+| Code | Name | Letters | Opposite | Needs |
+| --- | --- | --- | --- | --- |
+| 0 | North | `N` | South | |
+| 1 | South | `S` | North | |
+| 2 | East | `E` | West | |
+| 3 | West | `W` | East | |
+| 4 | Up | `U` | Down | |
+| 5 | Down | `D` | Up | |
+| 6 | "There" (the gate direction) | `V` | itself | |
+| 7 | Northeast | `NE` | Southwest | `DIRECTIONS=11` |
+| 8 | Northwest | `NW` | Southeast | `DIRECTIONS=11` |
+| 9 | Southeast | `SE` | Northwest | `DIRECTIONS=11` |
+| 10 | Southwest | `SW` | Northeast | `DIRECTIONS=11` |
+
+`DIRECTIONS` is `7` in the shipped `coffeemud.ini`; `11` adds the four diagonals. It is a world setting (`WORLD SET DIRECTIONS=11` in builder mode, effective at the next start; see [world settings](world-settings.md)). Commands take the full name or the letters, in any case. Ships show the names fore/aft/starboard/port and caravans forward/back/right/left, but the commands still use the compass words. The `V` direction is for portals and special links with no compass sense.
+
+## Reference: locale classes
+
+A **locale** is a room's Java class. `LIST LOCALES` shows what is installed. Each locale fixes five things.
+
+1. **Domain.** Indoors or outdoors, and the kind of terrain.
+2. **Climate bits** it adds on top of its area's (`wet`, `hot`...); "inherits" means it adds none.
+3. **Movement cost.** The base movement points one pays to enter (weather then adjusts it).
+4. **Resources.** Outdoor and cave locales hold a list of resources the room may randomly carry (for gathering skills such as mining, foraging and fishing; see `LIST ENVRESOURCES`).
+5. **Room size.** The room's "height" for size checks: 1 for indoor rooms and 10 for outdoor rooms unless the class says otherwise.
+
+### Domains
+
+| Outdoor domain (number) | Notes |
+| --- | --- |
+| CITY (0) | The default. |
+| WOODS (1), PLAINS (3), JUNGLE (7), SWAMP (8), DESERT (9), HILLS (10) | Diggable terrain (the `DIG` command works here). |
+| ROCKY (2), MOUNTAINS (11) | Climbable surfaces use ROCKY or MOUNTAINS; not diggable. |
+| UNDERWATER (4) | Needs swimming or water breathing; no sky; non-swimmers who wander in sink. Diggable only if there is a room below. |
+| AIR (5) | Falling unless flying. |
+| WATERSURFACE (6) | Needs a boat, swimming or water-worthiness for NPCs to enter on their own. Diggable only if there is a room below. |
+| SPACEPORT (12), SEAPORT (13) | Ports for ships and spacecraft ([travel chapter](30-travel-vehicles-instances.md)). |
+
+Indoor domains (the same numbers plus 128): STONE, WOODEN, CAVE, MAGIC (a pocket), UNDERWATER (`IN_UNDERWATER`), AIR (`GAP`), WATERSURFACE (`CAVELAKESURFACE`), METAL, and the two seaport domains (`CAVE_SEAPORT`, `SEAPORT`). The names in parentheses are what `LIST LOCALES` and sysop `LOOK` print. Only outdoor rooms that are not underwater get a sky (`hasASky`); weather and time-of-day text reach only rooms with a sky. Wandering NPCs refuse to enter air rooms unless they fly, and underwater rooms unless they swim.
+
+### Single rooms
+
+Move is the movement cost. "in" is indoors, "out" outdoors. Rooms marked "size 5" and so on have a larger room size.
+
+| Class | Domain | Climate | Move | Notes |
+| --- | --- | --- | --- | --- |
+| `CaveRoom` | in cave | normal | 2 | A cave (size 5; resources are stone and ores). |
+| `CaveSeaPort` | in cave_seaport | wet | 2 | A cave sea port. |
+| `CaveSurface` | in cave | normal | 4 | A climbable cave wall, indoors. |
+| `CityStreet` | out city | inherits | 1 | A street. Movement cost 1. |
+| `ClimbableLedge` | out rocks | inherits | 4 | A climbable ledge; same behavior as ClimbableSurface. |
+| `ClimbableSurface` | out rocks | inherits | 4 | A surface that must be climbed (carries Prop_Climbable). Name "the surface". |
+| `DarkStoneRoom` | in stone | normal | 1 | A StoneRoom that is dark: it needs a light source. |
+| `Desert` | out desert | hot,dry | 2 |  |
+| `FrozenMountains` | out mountains | cold | 5 | Cold mountains. |
+| `FrozenPlains` | out plains | cold | 2 | Cold plains (resources include fur). |
+| `HideoutShelter` | in wood | normal | 0 | A wooden "Secret Hideout" with the same protections as MagicShelter; cost 0. |
+| `Hills` | out hills | inherits | 3 |  |
+| `HotRoom` | in stone | hot | 1 | An indoor stone room whose climate is hot. |
+| `IcePlains` | out plains | cold,wet | 2 | Cold and wet plains. |
+| `IceRoom` | in stone | cold | 1 | An indoor stone room whose climate is cold. |
+| `InTheAir` | out air | inherits | 1 | Open air. A character not flying falls (a Falling effect) and may take damage; the game builds a fall to the room below. |
+| `IndoorInTheAir` | in air | inherits | 1 | Air inside a cave or building (domain "GAP" in the indoors list). |
+| `IndoorShallowWater` | in watersurface | wet | 2 | Shallow water inside. |
+| `IndoorUnderWater` | in underwater | inherits | 3 | Underwater inside a cave or building (size 5). |
+| `IndoorWaterSurface` | in watersurface | wet | 2 | A water surface inside a cave or building (size 5). |
+| `IndoorWaterSurfaceColumn` | in watersurface | wet | 2 | Indoor surface with a column grid below. |
+| `IndoorWaterThinSurface` | in watersurface | wet | 2 | Indoor surface; see the audit note about its missing thin grid class. |
+| `Jungle` | out jungle | wet,hot | 3 |  |
+| `LargeCaveRoom` | in cave | normal | 4 | A big cave (size 8, cost 4). |
+| `LargeStoneRoom` | in stone | normal | 3 | A big stone room (size 5, cost 3). |
+| `LargeWoodRoom` | in wood | normal | 3 | A big wooden room (size 5, cost 3). |
+| `LongRoad` | out plains | inherits | 5 | A road that costs 5 to cross. |
+| `LongerRoad` | out plains | inherits | 10 | A road that costs 10 to cross. |
+| `LongestRoad` | out plains | inherits | 20 | A road that costs 20 to cross. |
+| `MagicFreeRoom` | in stone | normal | 1 | A stone room with Prop_MagicFreedom (magic fails here). |
+| `MagicShelter` | in magic | normal | 0 | A safe pocket: Prop_PeaceMaker, NoRecall, NoSummon, NoTeleport, NoTeleportOut; cost 0. |
+| `MetalRoom` | in metal | normal | 1 | A metal-walled room (ships, stations). |
+| `MountainSurface` | out mountains | inherits | 6 | A climbable mountain face, cost 6. |
+| `Mountains` | out mountains | inherits | 5 |  |
+| `OverTheLedge` | out air | inherits | 1 | Air beyond a ledge (an InTheAir room). |
+| `Plains` | out plains | inherits | 2 | Open country. |
+| `Road` | out plains | inherits | 1 | A road. Movement cost 1. |
+| `SaltWaterSurface` | out watersurface | wet | 2 | Sea surface (salt water; not drinkable); builds a salt underwater grid. |
+| `SaltWaterSurfaceColumn` | out watersurface | wet | 2 | Salt surface with a column grid below. |
+| `SaltWaterThinSurface` | out watersurface | wet | 2 | Salt surface with a thin grid below. |
+| `SeaPort` | out seaport | wet | 2 | A shore room that is a sea port (domain SEAPORT), for ships; see the travel chapter. |
+| `SewerRoom` | in cave | wet | 2 | A sewer; wet; domain cave. |
+| `ShallowWater` | out watersurface | wet | 2 | Wading water, outdoors (drinkable fresh water). |
+| `ShipDeck` | out city | inherits | 1 | A WoodenDeck with `Prop_ReqCapacity` `items=20 weight=300 siegeweapons=0`. |
+| `ShipHeavyGunDeck` | out city | inherits | 1 | A deck with `Prop_ReqCapacity` `items=20 weight=1000 siegeweapons=3`. |
+| `ShipHold` | in wood | normal | 1 | A wooden room with `Prop_ReqCapacity` `items=100 weight=10000`. |
+| `ShipLightGunDeck` | out city | inherits | 1 | A deck with `Prop_ReqCapacity` `items=20 weight=400 siegeweapons=1`. |
+| `ShipMagazine` | in wood | normal | 1 | A wooden room with `Prop_ReqCapacity` `items=200 weight=1000`. |
+| `ShipMedGunDeck` | out city | inherits | 1 | A deck with `Prop_ReqCapacity` `items=20 weight=600 siegeweapons=2`. |
+| `ShipQuarter` | in wood | normal | 1 | A wooden room with `Prop_ReqCapacity` `items=100 weight=1000`. |
+| `Shore` | out desert | wet | 2 | The shore; wet. Name "the shore". |
+| `SpacePort` | out spaceport | inherits | 1 | A spaceport: outdoors SPACEPORT domain, a LocationRoom (has a direction from the planet core). |
+| `StdRoom` | out city | inherits | 2 | The default locale. Cheap to create; behaves as a generic outdoor place. |
+| `StoneRoom` | in stone | normal | 1 | A plain stone room. The usual dungeon or building room. |
+| `Swamp` | out swamp | wet | 3 |  |
+| `ThinRoom` | out city | inherits |  | Internal placeholder used by thin areas; do not create it. |
+| `TreeSurface` | out woods | inherits | 4 | A climbable tree, cost 4. |
+| `UnderSaltWater` | out underwater | wet | 3 | Underwater, salt water. |
+| `UnderWater` | out underwater | wet | 3 | Underwater, fresh water. Needs swimming or water breathing; items sink. |
+| `UndergroundCityStreet` | in stone | normal | 2 | An underground street (a LargeStoneRoom, cost 2). |
+| `UnderwaterCityStreet` | out underwater | wet | 3 | An underwater street (size 5, cost 3). |
+| `Void` | out air | void | 1 | Out of the world: air domain, atmosphere NOTHING, climate VOID (no weather). |
+| `WaterSurface` | out watersurface | wet | 2 | Fresh water surface, swimmable and drinkable; makes an underwater grid below it. |
+| `WaterSurfaceColumn` | out watersurface | wet | 2 | WaterSurface that builds a column-shaped underwater grid below. |
+| `WaterThinSurface` | out watersurface | wet | 2 | WaterSurface with a thin underwater grid below. |
+| `WetCaveRoom` | in cave | wet | 2 | A wet cave. |
+| `WoodRoom` | in wood | normal | 1 | A wooden building room. |
+| `WoodSeaPort` | in seaport | wet | 2 | A wooden-building sea port. |
+| `WoodenDeck` | out city | inherits | 1 | A ship deck (outdoors). |
+| `Woods` | out woods | inherits | 3 | Forest. |
+
+### Grids, thin grids and mazes
+
+A grid locale is one room that contains a rectangle of child rooms of one class (see [Grid rooms and mazes](#grid-rooms-and-mazes)). Each family below fills with the child locale shown. A **grid** builds every child at once; a **thin grid** builds them as they are visited; a **maze** links the children as a random maze. Sizes default to 5 by 5. The climate, domain and cost are the child's. Odd ones: `WetCaveGrid` is a maze (it extends `StdMaze`), `EndlessOcean`, `EndlessThinOcean`, `EndlessSky` and `EndlessThinSky` wrap their edges back to the middle so they never end, `Whirlpool` (movement cost 30) links its water-surface children its own way and gives them a `WaterCurrents` behavior (read the class for the exact shape), and `AutoGrid` builds its children from a random-area XML file (fields `AutoGen Xml File Path` and `AutoGen Variables`; see [Generation](12-generation.md)).
+
+| Child locale | Grid | Thin grid | Maze |
+| --- | --- | --- | --- |
+| `CaveRoom` | `CaveGrid` |  | `CaveMaze` |
+| `Desert` | `DesertGrid` | `DesertThinGrid` | `DesertMaze` |
+| `Hills` | `HillsGrid` | `HillsThinGrid` |  |
+| `InTheAir` | `EndlessSky` | `EndlessThinSky` |  |
+| `IndoorUnderWater` | `IndoorUnderWaterColumnGrid`, `IndoorUnderWaterGrid` | `IndoorUnderWaterThinGrid` |  |
+| `Jungle` | `JungleGrid` | `JungleThinGrid` |  |
+| `MetalRoom` |  |  | `MetalRoomMaze` |
+| `MountainSurface` | `MountainSurfaceGrid` | `MountainSurfaceThinGrid` |  |
+| `Mountains` | `MountainsGrid` | `MountainsThinGrid` | `MountainsMaze` |
+| `Plains` | `PlainsGrid` | `PlainsThinGrid` |  |
+| `Road` | `RoadGrid` | `RoadThinGrid` |  |
+| `SaltWaterSurface` | `EndlessOcean`, `OceanGrid` | `OceanThinGrid` |  |
+| `SaltWaterThinSurface` |  | `EndlessThinOcean` |  |
+| `SewerRoom` |  |  | `SewerMaze` |
+| `Shore` | `ShoreGrid` |  |  |
+| `StdRoom` | `AutoGrid`, `StdGrid` | `StdThinGrid` | `StdMaze` |
+| `StoneRoom` | `StoneGrid` | `StoneThinGrid` | `StoneMaze` |
+| `Swamp` | `SwampGrid` | `SwampThinGrid` |  |
+| `UnderSaltWater` | `UnderSaltWaterColumnGrid`, `UnderSaltWaterGrid` | `UnderSaltWaterThinGrid` | `UnderSaltWaterMaze` |
+| `UnderWater` | `UnderWaterColumnGrid`, `UnderWaterGrid` | `UnderWaterThinGrid` | `UnderWaterMaze` |
+| `WaterSurface` | `GreatLake`, `Whirlpool` | `GreatThinLake` |  |
+| `WetCaveRoom` |  |  | `WetCaveGrid`, `WetCaveMaze` |
+| `WoodRoom` | `WoodRoomGrid` | `WoodRoomThinGrid` | `WoodRoomMaze` |
+| `Woods` | `WoodsGrid` | `WoodsThinGrid` | `WoodsMaze` |
+
+
+Two things to know about the table.
+
+- `ThinRoom` is an internal placeholder class; do not create it by hand.
+- Whether a class is a `GenRoom`-style generic does not exist for rooms: every locale is a Java class and `MODIFY ROOM` changes only the fields in [Reference: room editor fields](#reference-room-editor-fields). To add a locale class of your own, see [Engine programming](32-engine-programming.md).
+
+## Reference: exit classes
+
+Create these with `CREATE EXIT [direction] [class]` (the shorthand `CREATE [class] [direction]` also works). `LIST EXITS` lists what is installed. "Door" is the class's built-in door, "Lock" its lock, "Starts" its state. Generic classes (`Gen...`) are fully editable with `MODIFY EXIT`.
+
+| Class | Door | Lock | Starts | Notes |
+| --- | --- | --- | --- | --- |
+| `StdExit` | no | no | open | The base class. Name "a walkway". |
+| `StdOpenDoorway` | no | no | open | An open doorway. What `CREATE ROOM` and `LINK` use. Name "a walkway". |
+| `Open` | no | no | open | The same as `StdOpenDoorway`. Older guides call it "the Open exit". |
+| `StdClosedDoorway` | yes | no | closed | A wooden door: "a door", closed text "a closed door", door name "door". |
+| `Door` | yes | no | closed | The same as `StdClosedDoorway`. |
+| `StdLockedDoorway` | yes | yes | locked | A locked door; closed text "a closed, locked door". Its key code is the exit's text (`MODIFY EXIT [dir] TEXT [code]`). |
+| `LockedDoor` | yes | yes | locked | The same as `StdLockedDoorway`. |
+| `AjarDoor` | yes | no | open | A door that starts open and can be closed. |
+| `Gate` | yes | no | closed | "a gate": door name "gate", closed text "a closed gate". |
+| `LockedGate` | yes | yes | locked | A `Gate` with a lock; closed text "a closed, locked gate". |
+| `Grate` | yes | no | closed | "a barred grate"; open word "remove". |
+| `HiddenClosedDoorway` | yes | no | closed | A closed door that is hidden ("a cleverly concealed door"). |
+| `HiddenWalkway` | no | no | open | An open exit that is hidden until found. |
+| `UnseenWalkway` | no | no | open | An open exit that is "not seen": it does not show in the exit list. |
+| `Impassable` | n/a | n/a | n/a | A generic exit, "a blocked way", that refuses all movement ("You can't go that way") and is flagged unhelpful. |
+| `ClimbableExit` | no | no | open | "a sheer surface"; carries `Prop_Climbable`, so it must be climbed. |
+| `FlyingExit` | no | no | open | "the open air"; carries the flying flag. |
+| `GapExit` | no | no | open | "a crevasse". Anyone not flying or falling must jump it; a chance based on carried weight against strength and carrying capacity makes them miss and die in the fall. Use with care. |
+| `PitOpen` | no | no | open | "a pit"; carries the trap `Trap_EnterPit`. |
+| `Skyway` | no | no | open | "the sky"; looking at it describes the sky (weather, time) when the room has one. |
+| `NeedleDoor` | yes | no | closed | A door trapped with `Trap_OpenNeedle`. |
+| `TrappedDoor` | yes | no | closed | A door trapped with `Trap_Open`. |
+| `TrappedLockedDoor` | yes | yes | locked | A locked door trapped with `Trap_Trap`. |
+| `OpenNameable` | no | no | open | An open exit whose name, display text and description are all its text. `MODIFY EXIT [dir] TEXT through the archway`. |
+| `OpenDescriptable` | no | no | open | Named "the ground"; display text and description are its text. |
+| `OpenPrepositional` | no | no | open | Like `OpenNameable`, and the enter and exit messages read "through [text]". |
+| `NamedRedirectable` | no | no | open | An open exit with its own name, display and description (set in code or by its generic fields) that remembers the first room it was used from and sends anyone entering it back to that room. Rare; used by portal-style content. |
+| `GenExit` | optional | optional | by setting | The generic exit: name "a walkway", no door until you turn one on. |
+| `GenDoor` | yes | optional | closed | A generic door: "a door", description "An ordinary wooden door with hinges and a latch.", closed text "a closed door". |
+| `GenCurtain` | yes | no | closed | A generic curtain: it hides what is beyond while closed but anyone can walk straight through it. "a curtain". |
+| `GenAirLock` | yes | no | closed | A generic air lock door: "an air lock door", closed text "a closed air lock door". |
+
+Standard (non-generic) classes cannot be edited beyond their text. If you want a different name or message on a door, create a `GenDoor`.
+
+## Reference: room editor fields
+
+`MODIFY ROOM` (and `STAT ROOM`, read only) lists these in this order. A field that does not apply to the room's class is left out, so the numbers shift; type the number shown.
+
+| Field | Applies to | Meaning and values |
+| --- | --- | --- |
+| Type | all | The locale class. `?` lists the choices. Changing it asks you to confirm (see [Changing a room's locale class](#changing-a-rooms-locale-class)). |
+| Display | all | The title shown above the description (253 characters at most). `null` makes it empty. In a grid parent, `<P>` separates alternative titles. |
+| Description | all | The long text. `+` opens the multi-line editor. Supports colour codes and `<VARIES>`. In a grid parent, `<P>` separates alternatives. |
+| Size (X), Size (Y) | grid and maze locales | Dimensions of the grid. |
+| Horiz. Dir From Core, Vert. Dir From Core | `SpacePort` (location rooms) | Degrees 0-360 from the planet's core, to place the port. |
+| AutoGen Xml File Path, AutoGen Variables (VAR=VAL format) | `AutoGrid` | The random-area XML file and its variables. |
+| Tags | all | Add or remove a tag by typing it (a tag that exists is removed). Tags are free labels used by `GMODIFY #tag`, masks and scripts. `TODO` marks a room that still needs a description. |
+| Behaviors | all | The behaviors editor ([behaviors reference](24-behaviors-and-masks.md)). |
+| Effects | all | The effects editor: an ID adds, `-ID` removes, `=ID` or a number edits, `?` lists all, `?P` lists the fitting ones ([properties reference](23-properties-reference.md)). |
+| further fields | engine modules | An optional module can add stat codes, and each gets its own numbered field after Effects. |
+
+Not in the numbered editor, but settable with `MODIFY ROOM [stat] [value]`: `IMAGE` (an MXP image name), `CLIMATE`, `ATMOSPHERE`, `ROOMID`, `TEXT`, `AFFBEHAV`. A room's climate bits are normally left to its locale and area.
+
+## Reference: exit editor fields
+
+`MODIFY EXIT [direction]` on a generic exit lists these in order.
+
+| Field | Meaning and values |
+| --- | --- |
+| Name | What the exit is called ("a door"). |
+| Display | The line shown in the room's exit list when the exit is open. Empty (`null`) = see-through: the list shows the room beyond. |
+| Description | What `LOOK [direction]` and `EXAMINE` show. |
+| Level | The exit's level number. |
+| Has a door / Defaults closed / Has a lock / Defaults locked / Reset delay | The door settings from [Doors, locks and keys](#doors-locks-and-keys), asked one after the other. Turning "Has a door" off turns off the rest. The reset delay is in ticks. |
+| Closed Text | (if a door) Shown in the exit list while closed. `null` blanks it. |
+| Door Name | (if a door) What the door is called in messages. |
+| Open Word | (if a door) The opening verb, shown in messages and used for the "already open" message. |
+| Close Word | (if a door) The closing verb. |
+| Assigned Key Item | (if a lock) The key code that fits. `null` clears it. Without a lock, this field instead asks "Is this door readable" and the text `READ` shows. |
+| Dispositions | A toggled list: invisible, hide, unseen, magical, glowing, lightsrc, fly, climb, sleep, sit, sneak, swimmer, evil, good, unattackable. |
+| Behaviors, Effects | As for rooms (an exit can hold both). |
+| MXP Image filename | The image name for MXP clients. |
+| Tags | As for rooms. |
+| Scripts | Shown only if the exit has scripts. |
+
+### Exit stat codes
+
+For `MODIFY EXIT [dir] [code] [value]`, `GMODIFY`, and scripts. The generic exit's codes, in [GenExit](../../CoffeeMud/com/planet_ink/coffee_mud/Exits/GenExit.java):
+
+| Code | Meaning |
+| --- | --- |
+| `CLASS` | The exit's class (read only here). |
+| `NAME` | Name. |
+| `DISPLAY` | Display text. |
+| `DESCRIPTION` | Description. |
+| `DOOR` | Door name. |
+| `LEVEL`, `ABILITY` | Level and ability numbers (math expressions allowed). |
+| `ISREADABLE` | `true` if readable. |
+| `READABLETEXT` | The text shown when read. |
+| `AFFBEHAV` | Effects and behaviors as XML. |
+| `DISPOSITION` | A number, or a comma list of `ISUNSEEN`, `ISHIDDEN`, `ISINVISIBLE`, `ISEVIL`, `ISGOOD`, `ISSNEAKING`, `ISBONUS`, `ISDARK`, `ISGOLEM`, `ISSLEEPING`, `ISSITTING`, `ISFLYING`, `ISSWIMMING`, `ISGLOWING`, `ISCLIMBING`, `ISFALLING`, `ISLIGHT`, `ISBOUND`, `ISCLOAKED`, `ISUNSAVABLE`, `ISCATALOGED`, `ISUNATTACKABLE`, `ISCUSTOM`, `ISUNHELPFUL`. |
+| `HASADOOR`, `DEFCLOSED`, `HASALOCK`, `DEFLOCKED` | `true` or `false`. |
+| `KEYNAME` | The key code. |
+| `RESETTIME` | The reset delay in ticks. |
+| `CLOSEWORD`, `OPENWORD`, `CLOSEDTEXT` | The words and the closed text. |
+| `TAGS` | Comma list; replaces all tags. |
+
+## Reference: area editor fields
+
+`MODIFY AREA` (and `STAT AREA`, read only) lists these in order; fields that do not apply to the area's class are left out.
+
+| Field | Applies to | Meaning and values |
+| --- | --- | --- |
+| Name | all | The area's name, which is also the prefix of its room IDs. Changing it offers to renumber the rooms ([Renaming an area](#renaming-an-area)). |
+| Display | ships (boardable areas) | The display text of the ship area. |
+| Description | all | Shown in the area's help entry (`HELP [area name]`) and the area lists. Multi-line editor with `+`. |
+| Author | all | The creator's name, free text. `AREAS SORT=AUTHOR` can sort by it. |
+| Theme setting | all | Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. `?` lists them. |
+| Climate | all | A screen toggling I (inherited), R (wet), H (hot), C (cold), W (windy), D (dry); the engine also has a void bit not reachable from this screen. |
+| Atmosphere | all | A raw material name (`AIR`, `FRESHWATER`, `SALTWATER`, `NOTHING`...) or `Inherited`. `?` lists them. |
+| Calendar | all | The clock settings screen: shows `Default` for an area on the world clock and `Inherited` for one on its parent's; offers hours per day, dawn, day, dusk and night hours, days per month, weekdays, months and year titles, or `global` to return to the world clock. |
+| Player Level | all | `0` means use the median level of the area's mobs when judging suggested levels; any other number is used instead. |
+| Parent Areas | all | Area names to add or remove; `*clear*` removes all. |
+| Children areas | all | The same for children. |
+| Area staff names | all | A user name to add or remove. |
+| Area Blurb Flags | all | Flags with optional text, shown in the area's help. Enter a flag to remove it, `A` to add one. |
+| Reputation template | all | A reputation template name; blank or `NONE` disables it. |
+| Size (X), Size (Y) | grid areas | The dimensions; the room maximum is X times Y. |
+| AutoGen Xml File Path, AutoGen Variables | `StdAutoGenInstance` | The random-area XML and its `VAR=VALUE` variables. |
+| Radius, Coordinates in Space, and movement | space-object areas | Planet and moon size and position. Distances take units (`LIST` shows them in the error message). |
+| Behaviors, Effects | all | As for rooms. |
+| MXP Image filename | all | |
+| Tags | all | As for rooms. |
+| Currency | all | `DEFAULT`, a currency code (such as `GOLD`) or a full definition with `=`. |
+| Prejudice | all | Shopkeeper prejudice factors ([Society](09-society.md)). |
+| Item Pricing Factors | all | `A` adds a price multiplier for items matching a mask; a number removes one. |
+| Budget | all | Shopkeepers' budget. |
+| Devaluation rate(s) | all | |
+| Inventory reset rate [ticks] | all | |
+| Ignore Mask | all | Items shopkeepers here ignore. |
+
+### Area stat codes
+
+`CLASS`, `CLIMATE`, `DESCRIPTION`, `TEXT`, `THEME`, `BLURBS`, `PREJUDICE`, `BUDGET`, `DEVALRATE`, `INVRESETRATE`, `IGNOREMASK`, `PRICEMASKS`, `ATMOSPHERE`, `AUTHOR`, `NAME`, `PLAYERLEVEL`, `PASSIVEMINS`, `CURRENCY`, `AFFBEHAV`, `TAGS`, `REPUTATION`, plus any an optional module adds. See [MODIFY AREA](#modify-area) for value formats.
+
+## Reference: area classes
+
+`CREATE AREA` asks for one of these. `Area` classes are under [Areas/](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/).
+
+| Class | What it is |
+| --- | --- |
+| `StdArea` | The standard area. All its rooms are loaded at start. It gets the automatic weather behavior and `AUTOAREAPROPS`. Best for areas under about 700 rooms and rich in features. With `DISABLE=FATAREAS`, a new `StdArea` is made as a `StdThinArea`. |
+| `StdThinArea` | Rooms are loaded from the database only when something needs them, and are dropped again after about 40 minutes unused. For huge, quiet areas. Law and conquest systems work badly in it because officers and judges may not be loaded. |
+| `StdGridArea` | A standard area whose rooms sit on a fixed grid. XGRID and YGRID default to 100 by 100; room IDs come from grid positions. Useful with a grid-based map. |
+| `StdThinGridArea` | The thin version of `StdGridArea`. |
+| `StdTimeZone` | A standard area with its own clock; its child areas use that clock. |
+| `StdPlanet` | A space object and time zone: has coordinates and a radius (random unless placed with `@`). Its first room is a `SpacePort`. |
+| `StdThinPlanet`, `Planet`, `Moon` | Thin planets; `Planet` and `Moon` differ in radius range and names. |
+| `StdThinInstance` | A thin area that makes its own copy for each party that enters, so each sees it fresh. Copies are discarded when empty. See [Travel, vehicles and instances](30-travel-vehicles-instances.md). |
+| `SubThinInstance` | An instance whose name is `Something_Original` or `Something Original`, a thin copy of the existing instance-parent area `Original`. |
+| `StdAutoGenInstance` | An instance generated on entry from a random-area XML file (default `randareas/example.xml`) with variables; see [Generation](12-generation.md). |
+| `StdBoardableShip`, `StdSpaceShip` | The interior of a ship item. They are created with the ship, not by hand, though `CREATE AREA` lists them. |
+
+## Reference: command syntax
+
+| Command | Syntax | Notes |
+| --- | --- | --- |
+| `CREATE ROOM` | `CREATE ROOM [dir] [locale/template]` | Shorthand `CREATE [locale] [dir]`. |
+| `CREATE EXIT` | `CREATE EXIT [dir] [exit class/template]` | Shorthand `CREATE [exit class] [dir]`. |
+| `CREATE AREA` | `CREATE AREA [name]` (`@ [coords or distance FROM object]` for space areas) | Prompts for the area type. |
+| `MODIFY ROOM` | `MODIFY ROOM` / `MODIFY ROOM [field] [value]` / `MODIFY ROOM [room ID]` | Fields: NAME, DESCRIPTION, CLASS, ID, AREA, XGRID, YGRID, AFFECTS, BEHAVIORS, stat codes. |
+| `MODIFY EXIT` | `MODIFY EXIT [dir]` / `MODIFY EXIT [dir] TEXT [value]` / `MODIFY EXIT [dir] [stat] [value]` | |
+| `MODIFY AREA` | `MODIFY AREA` / `MODIFY AREA [name]` / `MODIFY AREA ([name]) [field] [value]` | Fields: NAME, DESC, CLIMATE, FILE, PASSIVE, ACTIVE, FROZEN, STOPPED, XGRID, YGRID, ADDSUB, DELSUB, AFFECTS, BEHAVIORS, CALENDAR, WEATHERPROFILE, stat codes. |
+| `DESTROY ROOM` | `DESTROY ROOM [room ID] (CONFIRMED)` / `DESTROY ROOM [dir]` | |
+| `DESTROY EXIT` | `DESTROY EXIT [dir]` | |
+| `DESTROY AREA` | `DESTROY AREA [name] (CONFIRMED)` / `DESTROY AREA ALL EXCEPT [name]...` | |
+| `LINK` | `LINK [room ID or text] [dir]` | |
+| `UNLINK` | `UNLINK [dir]` | |
+| `COPY` | `COPY ([n]) [dir]` / `COPY [room ID] [dir]` / `COPY ROOM [dir] [dir]` / `COPY EXIT [dir] [dir]` / `COPY [area]` | |
+| `TEMPLATE` | `TEMPLATE LIST/ADD/DELETE/TOGGLE ...` | |
+| `GMODIFY` | `GMODIFY (AREA/ROOM/WORLD/#TAG) [criteria] (CHANGE=[changes])` | |
+| `WORLD DIG` | `WORLD DIG ON (TYPE=) (LINK=)` / `WORLD DIG OFF` | Builder mode only. |
+| `WORLD PATH` | `WORLD PATH [dirs] (TYPE=) (NAME=) (DESC=) (LINK=)` | Builder mode only. |
+| `WORLD MAP` | `WORLD MAP (RADIUS n) (AREA) (IDS) (FLAGS) (HTML=file)` | |
+| `WORLD CHECK` | `WORLD CHECK (AREA name) (LOG) (ONLY=parts)` | |
+| `EDIT DESC` | `EDIT DESC [HERE/AREA/target]` | Multi-line description editor. |
+| `GOTO`, `AT`, `STAT`, `EXITS`, `LIST ...` | see [Orientation and inspection commands](#orientation-and-inspection-commands) | |
+| `UNDO` | `UNDO ([n])` / `UNDO LIST ([n])` | |
+| `RESET` | `RESET ROOM` / `RESET AREA` | |
+| `SAVE` | `SAVE` / `SAVE ROOM (HOME/ALL)` / `SAVE CHANGED` / `SAVE FORCE` | See [World files and editing](02-world-workflow.md). |
+
+### Security flags
+
+| Flag | Gates |
+| --- | --- |
+| `CMDROOMS` | `CREATE ROOM`, `MODIFY ROOM`, `DESTROY ROOM [id]`, `WORLD MAP`, `WORLD CHECK`, `LIST` room reports |
+| `CMDEXITS` | `CREATE`, `MODIFY` and `DESTROY EXIT`, `LINK`, `UNLINK`, `DESTROY ROOM [dir]` |
+| `CMDAREAS` | `CREATE`, `MODIFY`, `DESTROY AREA`, copying an area |
+| `COPYROOMS` | `COPY` of rooms, exits, areas |
+| `GMODIFY` | `GMODIFY` (the `WORLD` scope needs it everywhere) |
+| `GOTO`, `AT`, `STAT`, `SYSMSGS` | The same-named commands |
+
+Flags can be granted for the whole world or for rooms in an area (for an area's staff). Builder mode makes the character an Archon with all of them. The full list and how to grant them are in [Configuration and administration](19-configuration-and-administration.md) and the generated [permissions table](tool-permissions.md).

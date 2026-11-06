@@ -66,7 +66,7 @@ world folder (`world/`) is the publishable definition of a game, and the
 database is a working cache. Build in *builder mode*, launched with `BUILDER=1`
 (see [18-installing-and-running.md](18-installing-and-running.md)), and `SAVE`
 writes your mobs back into the world files. In a normal game the same commands
-work, but `warnAboutBuilding` tells you the mobs you make stay in that game and
+work, but the game warns you that the mobs you make stay in that game and
 its saves only, not in the world other games start from. See
 [02-world-workflow.md](02-world-workflow.md) for the world files and
 [31-saves-and-party.md](31-saves-and-party.md) for campaign saves.
@@ -215,6 +215,18 @@ After the mob is placed:
 
 Because a new generic mob is a blank "a generic mob", always change at least its
 Name, Display, Description, Level and Race.
+
+### To create, test and save a basic mob
+
+1. Start in builder mode and `GOTO` the room it belongs in.
+2. `CREATE MOB GenMob`. In the editor set Name, Display, Description, Level and
+   Race; set Rejuv Ticks (for example `150`); add behaviors; press ENTER to leave.
+3. Equip it if needed ([Equipment and inventory](#equipment-and-inventory)).
+4. Look at it: `LOOK [name]`, `STAT [name]` and `CONSIDER [name]`.
+5. `SAVE ROOM`, and later `SAVE` to write the world files.
+6. Test as an ordinary character (`PLAYTEST ON`, see
+   [13-testing-release.md](13-testing-release.md)): fight it, kill it, wait out the
+   rejuvenation time, leave and return.
 
 ## Editing a mob
 
@@ -631,28 +643,37 @@ generic or not, can be carried or worn.
 
 To equip a mob in builder mode:
 
-1. Create or fetch the item, putting it in the mob's inventory with the `@`
-   form of `CREATE ITEM`:
+1. Get the item into **your own inventory**. Create it and pick it up:
 
    ```text
-   CREATE ITEM Longsword@town guard
-   CREATE ITEM the iron breastplate@town guard
+   CREATE ITEM Longsword
+   GET longsword
    ```
-
-   or `GIVE` an item you carry to the mob.
 
 2. Make the mob wear or wield it with `DRESS` (a builder power; the target must
-   be a monster in the room):
+   be a monster in the room). `DRESS` takes the item from your inventory, gives
+   it to the mob and puts it on in one step:
 
    ```text
-   DRESS guard longsword
+   DRESS town guard longsword
    ```
 
-   `DRESS [mob] [item]` takes the mob first and a *single word* for the item last.
-   The mob puts the item on in the first slot that fits, or holds it if nothing
-   fits.
+   `DRESS [mob] [item]` takes the mob first and a *single word* for the item
+   last. The mob puts the item on in the first slot that fits, or holds it if
+   nothing fits. (Everything before the last word is the mob's name, so
+   `DRESS town guard longsword` means the mob `town guard` and the item
+   `longsword`.)
 
 3. Save the room (`SAVE ROOM`, see [How mobs are saved](#how-mobs-are-saved)).
+
+To give a mob something to *carry* (loot, a key, goods), without wearing it,
+create the item straight into its pack with the `@` form, or `GIVE` it:
+
+```text
+CREATE ITEM StdKey@town guard
+```
+
+Carried or worn, the item is saved with the mob.
 
 Edit a carried item with `MODIFY ITEM sword@guard`. The item types and their
 fields are in [22-items.md](22-items.md).
@@ -779,8 +800,8 @@ Removing a type also removes stock it no longer covers.
 Bankers are offered only types `C` and `N`; post offices `S` and `T`; the
 auctioneer has no type prompt. All other shop mobs (including librarians and
 craft brokers) are offered every type except `C`, `N`, `S` and `T`.
-`GenShopkeeper` accepts either the numeric mask or a type name in its
-`WHATISELL` stat code.
+The `WHATISELL` stat code accepts a type name, a single type number (0 to 35, the
+code's position in this table) or the full stored bit mask.
 
 ### Inventory (stock)
 
@@ -1194,7 +1215,7 @@ decides its definition.
 | --- | --- |
 | `COPY ([number]) [mob name]` | Makes copies of a mob (found in the room, or the nearest anywhere in the world). Each copy is placed in your room and that room becomes its start room. Needs `COPYMOBS`. `COPY Longsword@orc` puts a copy of an item into a mob's inventory. |
 | `DESTROY MOB [name]` | Removes a mob in the room (a player is refused). `DESTROY MOB ALL [name]`, `ALL.[name]` and `[name].ALL` remove every match. If the mob was saved with the room, `SAVE ROOM` afterwards makes it permanent; until then it returns on reset. |
-| `GMODIFY (AREA\|ROOM\|WORLD\|#TAG) [FIELD=VALUE](&&\|\|...) (CHANGE=[FIELD=VALUE])` | Selects mobs (and items) by field values and optionally changes them. `GMODIFY ?` lists the fields. Preview your selection first and keep version control: this edits everything that matches. |
+| `GMODIFY (AREA\|ROOM\|WORLD\|#TAG) [FIELD=VALUE] (&& or \|\| more FIELD=VALUE tests) (CHANGE=[FIELD=VALUE])` | Selects mobs (and items) by field values and optionally changes them. `GMODIFY ?` lists the fields. Preview your selection first and keep version control: this edits everything that matches. |
 | `RESET ROOM`, `RESET AREA` | Revives mobs and returns strays to their start rooms; unsaved changes to those rooms are lost. `RESET REJUV ROOM` revives dead mobs only. |
 | `RESET MOBCOMBATSTATS (ROOM\|AREA\|WORLD\|CATALOG) (NOSAVE) ([AREA NAME])` | Re-normalizes the combat numbers of mobs from their level. `NOSAVE` previews. |
 | `DEVIATIONS MOBS (ROOM\|AREA\|METRO) (SORTBY NAME\|LEVEL\|PLEVEL\|TYPE)` | Shows how mobs deviate from the norms for their level. |
@@ -1205,9 +1226,8 @@ decides its definition.
 Name multiple-word mobs in quotes in commands that take a token: `MODIFY MOB
 "the town guard" MISC`.
 
-Stat changes made with `MODIFY MOB` or `GMODIFY` to a placed mob change that
-mob in the live game. `GMODIFY` writes changes to the rooms (in builder mode
-they are saved on `SAVE`); see `AHELP GMODIFY`.
+Changes from `MODIFY MOB` and `GMODIFY` apply to the live mobs first; in builder
+mode they reach the world files when the rooms are saved. See `AHELP GMODIFY`.
 
 ## How mobs are saved
 
@@ -1310,8 +1330,6 @@ where it will live; set fields by their labels.
 ### A weapon and armor shopkeeper
 
 ```text
-CREATE ITEM Longsword
-CREATE ITEM Dagger
 CREATE MOB GenShopkeeper
 ```
 
@@ -1330,11 +1348,11 @@ Answers:
 | Prejudice | `BUY=0.9 Dwarf ; BUY=1.0 ; SELL=1.0` |
 | Budget | `2000 DAY` |
 
-Then delete the loose test items (`DESTROY ITEM Longsword`), and `SAVE ROOM`.
-Check the prices with `PRICECHECK longsword`. A dwarf customer pays 10% less. To
-make him a trainer or caster too, add types `8` (TRAINER) or `9` (CASTER) and stock ability
-IDs. To stock a generic item, build it first, leave it on the floor, and type
-its name at the Inventory prompt.
+Then `SAVE ROOM`. Check the prices with `PRICECHECK longsword`. A dwarf
+customer pays 10% less. To make him a trainer or caster too, add type `8`
+(TRAINER) or `9` (CASTER) and stock ability IDs (a shop may not be both). To
+stock a generic item, build it first, leave it on the floor of the shop room,
+and type its name at the Inventory prompt.
 
 ### A town guard
 
@@ -1350,15 +1368,16 @@ CREATE MOB GenMob
 | Hit Points Bonus Modifier | `13` |
 | Rejuv Ticks | `150` |
 | Behaviors | `Fighterness` with parameter `Fighter`; `Guard`; `Mobile` with `min=10 max=20 chance=50 leash=3 opendoors` |
-| Effects | `Prop_MobRank` with `RANK=NORMAL` (optional) |
 
 Dress him:
 
 ```text
-CREATE ITEM Longsword@town guard
-CREATE ITEM LeatherArmor@town guard
-DRESS guard Longsword
-DRESS guard LeatherArmor
+CREATE ITEM Longsword
+GET longsword
+DRESS town guard longsword
+CREATE ITEM LeatherArmor
+GET armor
+DRESS town guard armor
 SAVE ROOM
 ```
 
@@ -1407,7 +1426,7 @@ CREATE MOB GenHorse
 Then make a `GenShopkeeper` ("the stablemaster"), choose type `5` (PETS) and, at
 the Inventory prompt, type `chestnut mare` (the mob standing in the room is
 copied into the shop) with a count of `1` and a price such as `120`. Destroy the
-original horse so only the shop copy remains. A buyer receives the mount and
+original horse so only the shop copy remains. A buyer gets the animal and
 can `MOUNT` it. See
 [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md) for stables.
 
@@ -1467,8 +1486,9 @@ to inherit the area's.
 
 1. Build `Gruk` as above and place him in the furnace room with `Rejuv Ticks` set
    to `500`.
-2. Add `Prop_RejuvWhen` with `WHEN="-IF !VAR(* FURNACE == COLD)" ELSE="REPLACE:a cold slag heap"` (the quest or a
-   script sets the world variable `FURNACE` to `COLD`).
+2. Add `Prop_RejuvWhen` with `WHEN="-IF !VAR(* FURNACE == COLD)" ELSE="REPLACE:a cold slag heap"` (a script sets the
+   variable the mask tests; see the `VAR` condition in
+   [28-mobprog-functions.md](28-mobprog-functions.md)).
 3. Catalog "a cold slag heap" as a harmless `GenMob` named so.
 4. Kill Gruk. While the furnace is lit he comes back after 500 ticks; once the
    variable is `COLD`, the next rejuvenation puts the slag heap there for good.
@@ -1490,9 +1510,8 @@ to inherit the area's.
 - **Equipment is gone after a reload.** Only generic mobs save equipment; standard
   mobs rebuild theirs. For variable gear, remember the Rejuv/Pct rules and use
   `RESET ROOM` before editing.
-- **Duplicate mobs.** A mob that wandered out of its room is saved with the room
-  it is *homed* in, but `RESET ROOM` can also make a replacement; do not both
-  rejuvenate and spawn into the same slot. `SAVE ROOM` lists strays it skipped.
+- **Duplicate mobs.** Do not both rejuvenate a mob and spawn into the same slot.
+  `SAVE ROOM` lists strays it skipped; save the room each mob is homed in.
 - **A mob never comes back.** Rejuv Ticks is 0, its start room was destroyed,
   `Prop_RejuvWhen` said `WAIT` or `NEVER`, or a player is camping its start room
   and the mob or room is flagged can't-be-camped.

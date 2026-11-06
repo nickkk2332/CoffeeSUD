@@ -65,7 +65,7 @@ Because `;` ends a line, a command that must carry whole script text inside itse
 
 ### Command lookup
 
-For each command line the engine takes the first word, upper-cases it and looks for it in the command table (the `methods` array, 150-odd names). The result decides what happens:
+For each command line the engine takes the first word, upper-cases it and looks for it in the command table (the `methods` array, 164 distinct names). The result decides what happens:
 
 1. **An exact name** runs that command.
 2. **A word starting with `MP` that is not a name**: the engine looks for command names that *start with* that word. If exactly one does, it runs (so `MPECHOA`... is ambiguous, but `MPEXCH` runs `MPEXCHANGE`). If none do, it logs `unknown command` and goes on to the next line. If several do, it logs `ambiguous command` listing them and goes on. An `MP` word is *never* run as a game command.
@@ -84,7 +84,7 @@ Most commands split their line into *bits*. A bit is a run of non-blank characte
 
 Each command takes some bits as separate arguments and the *rest of the line* as one last argument. The rest of the line comes in two flavours that matter for apostrophes:
 
-- Rest taken **raw** (`MPECHO`, `MPECHOAT`, `MPECHOAROUND`, `MPFORCE`, `MPAT`, `MPAFFECT`, `MPBEHAVE`, `MPASOUND`, `MPPOSSESS` ...): the text is used exactly as written, so `mpecho Bob's sword gleams.` prints the apostrophe.
+- Rest taken **raw** (`MPECHO`, `MPECHOAT`, `MPECHOAROUND`, `MPFORCE`, `MPAT`, `MPAFFECT`, `MPBEHAVE`, `MPASOUND`, `MPSCRIPT`, `MPENABLE` ...): the text is used exactly as written, so `mpecho Bob's sword gleams.` prints the apostrophe.
 - Rest taken **cleaned** (most others): surrounding single quotes are stripped, and every remaining `'` becomes a backtick `` ` ``. A name such as `Bob's sword` will not match an item called `Bob's sword`; write the search name without the apostrophe, or use a `$` code.
 
 An argument that names a person or thing and has several words must be quoted: `mpat 'The Gate Room' say hello`, `mptransfer 'a guard' Midgaard#3001`. Inside the *first* argument of `MPAT`, `MPFORCE`, `MPCAST`, `MPECHOAT` and similar, a multi-word name needs `'...'`.
@@ -151,7 +151,7 @@ file:line MPGOTO Syntax: ... (a guard @ Midgaard#3001, world:scripts/guard.scrip
 
 The `file:line` prefix names the script file and line; the part in parentheses is the host and where it is. Read them with `SCRIPTERRORS` in the game, or watch the log (see [04](04-mobprog.md) and [13](13-testing-release.md)). A normal game does not show script errors to the player; the builder sees them in builder mode. Typical outcomes:
 
-- Unknown target, unknown stat, bad direction, bad room: logged, nothing happens.
+- Unknown stat, bad direction, bad room, unknown ability or quest: logged, nothing happens. A target that cannot be found is often skipped *silently*, with no log line.
 - A syntax problem in an `IF` (no `ENDIF`, a condition that does not parse): logged, and the **rest of that program level is abandoned**. The same for `SWITCH` without `ENDSWITCH` and `FOR` without `NEXT`, or with a bad loop variable.
 - A command that fails inside `FOR` or `MPWHILE` fails once per pass.
 - `MPDEBUG` and the trace tools log extra lines (see [MPDEBUG](#mpdebug)).
@@ -530,7 +530,7 @@ GREET_PROG 100
 
 ## Messages and speech
 
-Echo commands print text as a game message: the text is `$`-substituted, then shown with a normal "action" message type, so it respects blindness, sleeping and so on for each viewer (a blind character does not read a visual echo). Start the text with `NOSOUND ` to make it a *visual-only* message (a sight with no sound, so a deaf viewer still gets it); `NOSOUND` is removed from the text. Echoes appear for the player as plain lines; use `^` colour codes in the text as elsewhere in the game.
+Echo commands print text as a game message: the text is `$`-substituted, then shown with a normal "action" message type, so it respects blindness, sleeping and so on for each viewer (a blind character does not read a visual echo). Start the text with `NOSOUND ` (in capitals) to make it a *visual-only* message (a sight with no sound, so a deaf viewer still gets it); `NOSOUND` is removed from the text. Echoes appear for the player as plain lines; use `^` colour codes in the text as elsewhere in the game.
 
 ### MPECHO
 
@@ -2514,7 +2514,8 @@ Players answer the wind-up by leaving, hiding, or typing `duck`; a stun, or enou
 | `MPSET`, `MPGSET`, `MPBEHAVE`, `MPAFFECT`, `MPSCRIPT` | the object | in the game save yes; the *world files* are unchanged, so a world reload (see [02](02-world-workflow.md)) restores the authored state |
 | `MPSAVEVAR` | the local data store | yes |
 | Quests, `MPQOBJECTIVE`, `MPQJOURNAL`, `MPQTIMER`, `MPJOURNAL`, `MPLORE` | the character's record | yes |
-| `MPCATALOG`-style copies (`CATALOG` loads) | counted by the catalog | yes; the cap counts all copies in the world, including saved ones |
+| `CATALOG` loads (`MPMLOAD CATALOG ...`) | counted by the catalog | yes; the cap counts all copies in the world, including saved ones |
+| `MPMENU` choices, `MPNARRATE ... PAUSE` unread pages | the character's pending input | yes: a pending menu and unread pages are saved; editing the source script can cancel a pending choice |
 
 `ONCE_PROG` runs again after each restore (see the [scripting supplement](../../CoffeeMud/guides/ScriptingSUD.html)); keep once-per-character facts in a tattoo or variable. See [state-and-persistence.md](state-and-persistence.md) for the full model.
 
