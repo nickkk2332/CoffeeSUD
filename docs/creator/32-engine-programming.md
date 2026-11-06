@@ -931,11 +931,11 @@ apart; the constants are in `Tickable`:
 | `TICKID_MOB` (0) | Every mob; also passed to the effects and behaviors a mob ticks |
 | `TICKID_ITEM_BEHAVIOR` (1), `TICKID_ROOM_BEHAVIOR` (8), `TICKID_EXIT_BEHAVIOR` (11) | Hosts that tick only because they have a behavior; stops when the last one is removed |
 | `TICKID_AREA` (9) | Every area |
-| `TICKID_SPELL_AFFECT` (12) | Effects on non-mob hosts |
+| `TICKID_SPELL_AFFECT` (12) | Defined for effects; only a few properties (`Prop_WeakBridge`) start it. A timed effect on a non-mob host registers itself with `TICKID_MOB` (`StdAbility.addEffect`) |
 | `TICKID_EXIT_REOPEN` (2), `TICKID_DEADBODY_DECAY` (3), `TICKID_LIGHT_FLICKERS` (4), `TICKID_TRAP_RESET` (5), `TICKID_TRAP_DESTRUCTION` (6), `TICKID_ITEM_BOUNCEBACK` (7), `TICKID_ROOM_ITEM_REJUV` (10) | Their named timers |
 | `TICKID_QUEST` (13), `TICKID_CLAN` (14), `TICKID_CLANITEM` (15), `TICKID_LIVEAUCTION` (18), `TICKID_TIMEAUCTION` (19) | Quests, clans, auctions |
 | `TICKID_MISCELLANEOUS` (20), `TICKID_PROPERTY_SPECIAL` (21), `TICKID_ELECTRONICS` (22), `TICKID_SUPPORT` (23), `TICKID_SPECIALMANEUVER` (24), `TICKID_SPECIALCOMBAT` (25), `TICKID_BALLISTICK` (26), `TICKID_EVENT` (27) | General purpose and subsystem timers |
-| `TICKID_SOLITARYMASK` (65536) | OR it in to give the object a tick group of its own (`TICKID_EMAIL` and the library service tickers do); otherwise ticking objects with the same period share a group |
+| `TICKID_SOLITARYMASK` (65536) | OR it in to give the object a tick group of its own (the library service tickers use `TICKID_SUPPORT \| TICKID_SOLITARYMASK`); otherwise ticking objects with the same period share a group |
 | `TICKID_LONGERMASK` (256), `TICKID_SHORTERMASK` (255) | Masks for sorting ids by group |
 
 Objects that tick by the same period are batched into tick groups
@@ -952,7 +952,10 @@ The default ticks:
   (`A.tick(...)`; one that returns `false` is `unInvoke()`d), its **behaviors**,
   its **scripts**. So an `Ability`'s `tick` is called by its host, not by the
   scheduler, with `tickID == TICKID_MOB`.
-- An **item, room or exit** is ticked only when it has behaviors or scripts.
+- An ordinary **item, room or exit** is ticked only when it has behaviors or
+  scripts (adding the first one starts the tick, removing the last stops it);
+  items with their own timers (lights, corpses, traps) and the doors that
+  reopen start those timers themselves.
 - An **area** ticks every tick.
 - A timed effect counts its own life down in `StdAbility.tick`: each tick it
   decrements `tickDown`, and at zero calls `unInvoke()` and returns `false`.
@@ -1016,13 +1019,18 @@ runs on worker thread pools as in CoffeeMud.) Consequences:
   and from the mob's tick) runs it when the mob has enough action points and the
   clock allows.
 - **Never block it.** A `Thread.sleep`, a blocking read, a network call or a long
-  loop freezes the whole game, including input echo. Wait by being ticked: record
-  that you are waiting, return from `tick`, and continue on a later tick. To
-  prompt the player, use an input callback (the session's asynchronous prompt
-  methods with an `InputCallback`) rather than a blocking `prompt(...)` from a
-  tick. If you must sleep (rare), call `CMLib.s_sleep(ms)`, which first runs
-  the jobs queued for the game thread so a hand-off that waits for itself still
-  finishes.
+  loop freezes the world. Wait by being ticked: record that you are waiting,
+  return from `tick`, and continue on a later tick. A command that waits in a
+  blocking `session.prompt(...)` (the `MODIFY` editors do) holds the game thread
+  until the answer arrives: while it waits only the queued jobs run (the wait
+  loop calls `CMLib.s_sleep`, which calls `ServiceEngine.beforeSleep`), and no
+  tick group runs. That is acceptable for builder screens and character
+  creation, and wrong for anything a player does in play. To ask the player a
+  question without stopping the world, use the session's asynchronous prompt,
+  `session.prompt(InputCallback)`, which returns at once and calls you back.
+  If you must sleep, call `CMLib.s_sleep(ms)` and not `Thread.sleep`: it first
+  runs the jobs queued for the game thread, so a hand-off that waits for itself
+  still finishes.
 - **Work handed to `executeRunnable` runs later on the same thread.**
   `CMLib.threads().executeRunnable(Runnable)` (and the `String` and `char`
   group-name overloads) queue the job for the game thread, to run after the
@@ -1033,7 +1041,7 @@ runs on worker thread pools as in CoffeeMud.) Consequences:
   waits out a pause and stops with turn-based play.
 - **Jobs that should wait for a quiet moment**: `ServiceEngine.runWhenStill(Runnable)`
   runs a job once the stopped clock has nothing left to run (the world is
-  between player turns). Seeding the dice and saving use it.
+  between player turns). The only caller is the `RANDOMSEED` seeding in `MUD.java`.
 - **Detecting the thread**: `ServiceEngine.isGameThread()` and
   `ServiceEngine.hasGameThread()` are static. `core/ItemModifiers.gameThread()`
   refuses item mutations made elsewhere, and a save runs on the game thread.

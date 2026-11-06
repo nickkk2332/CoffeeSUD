@@ -1394,3 +1394,296 @@ The property is documented under
 
 Run `SAVE` and `PROPCHECK ROOM` afterwards (`PROPCHECK this room: no problems
 found.`).
+
+## Start a normal game, save and restore
+
+Everything so far was builder mode. Players never see builder mode: they start
+a normal game from the world files. Start one now, using the same three
+settings and no `BUILDER=1`. `RESTORE=NEW` skips the saved-game menu.
+
+```sh
+"$BRIND/launch.sh" RESTORE=NEW
+```
+
+You see the title (`Brindlewick Tales` in cyan, if you added `title.txt`),
+the prologue pages (press Enter between them), and then character creation.
+It asks the same questions as in [step 2](#step-2-launch-in-builder-mode-and-create-your-builder);
+this time name the character `Wanderer`. You are an ordinary character with no
+powers, standing in `The Brindlewick green`, the `START` room. Play the story
+by hand, the way the test file did:
+
+```text
+LOOK
+EAST
+SAY where is the key
+SAY accept
+QUESTS
+```
+
+You should meet the guard's greeting, the hint about the oak chest, the
+guard's `Bring me the hammer from the storeroom.` after `SAY accept`, and then
+`QUESTS` shows `Harl's Hammer` with the objective `[ ] Bring Harl's forge
+hammer to the gate guard`. Carry on: `WEST`, `SOUTH`, `OPEN CHEST`, `GET KEY
+FROM CHEST`, `NORTH`, `NORTH`, `UNLOCK NORTH`, `OPEN NORTH`, `NORTH`, `GET
+HAMMER`, back to the guard, `GIVE HAMMER TO GUARD`. Then `QUESTS WON` lists the
+quest and the smithy's description has changed.
+
+### Step 22: save the game and leave
+
+In a normal game `SAVE` saves the campaign. It is not the builder's `SAVE`: it
+writes a slot in `$BRIND/saves` and never touches the world files.
+
+```text
+SAVE tutorial
+```
+
+You see `Game saved as 'tutorial'.` A slot name is 1 to 32 letters, digits,
+`-` or `_`, starting with a letter or digit. With no name, `SAVE` uses the
+character's name in lower case, and after the first save a bare `SAVE` writes
+to the same slot again. Now quit:
+
+```text
+QUIT
+```
+
+The game says it is saved as `tutorial` and asks you to confirm
+(`Quit -- the game is saved as 'tutorial' (Y), or cancel (c)?`). Answer `Y`.
+A save is a folder:
+
+```sh
+ls "$BRIND/saves/tutorial"
+```
+
+You should see `header.properties`, `db`, `world.xml` and `.complete`
+(among others; `.complete` proves the save is whole). The save holds the
+characters, the live state of the world and the quest's progress.
+
+### Step 23: restore it
+
+```sh
+"$BRIND/launch.sh" RESTORE=tutorial
+```
+
+The game prints `Restored 'tutorial'.` and puts you where you saved, with the
+inventory you had, the doors open or shut as you left them, and your quest
+standing: `QUESTS` or `QUESTS WON` shows it. From the menu form
+(`"$BRIND/launch.sh"` with no `RESTORE=`) the menu lists the save and you pick
+it by number or name; from inside a running game, `RESTORE tutorial` does the
+same.
+
+A restored game plays the *saved* world, not the current files. If you change
+the world after the save, the game tells you at login (`This save was made with
+another version of the world:` and the changed area files) and keeps the
+rooms as they were saved. To take the changed areas from the files, restore with
+`FRESH`:
+
+```sh
+"$BRIND/launch.sh" RESTORE=tutorial FRESH=CHANGED
+```
+
+`FRESH=ALL` takes every area, and `FRESH=Brindlewick` names areas. How saves,
+parties and slots work is in [Saves and party](31-saves-and-party.md).
+
+Test the *new game* path too, not only the restored one. A restored game keeps
+the quest at the step it was; a new game starts the quest from the beginning,
+with a closed gate guard script, a locked door and an empty-hook smithy.
+
+## Worked variations
+
+### Example 1: grow the village with WORLD PATH and a macro
+
+Task: add a three-room lane east of the gate, then write each room's own text.
+
+Go to the gate, in builder mode, and lay the path. `WORLD PATH` makes one room
+for each direction, from the room you are in, without moving you; it links each
+room to the last both ways:
+
+```text
+GOTO Brindlewick#2
+WORLD PATH e,e,e TYPE=Road NAME="A rutted lane" DESC="Hedges crowd the lane on both sides."
+WORLD MAP AREA IDS
+```
+
+`WORLD PATH` reports `WORLD PATH made 3 rooms and followed 0 exits, to
+Brindlewick#7.` The new rooms are `Brindlewick#5`, `#6` and `#7`. Every room
+made by `WORLD PATH` or `WORLD DIG` is tagged `TODO`, even when you gave it a
+`NAME` and `DESC`, so that you do not forget it. `WORLD CHECK` lists them:
+
+```text
+WORLD CHECK ONLY=TEXT
+```
+
+Each line says a room is `tagged TODO, as WORLD DIG or PATH made it; EDIT DESC
+gives it its own text`. The tag goes away when you give the room a description
+in the multi-line editor:
+
+```text
+GOTO Brindlewick#5
+EDIT DESC HERE
+```
+
+Type the description (the editor starts in Add Text mode because the room has
+one line already? No: it opens with that line in the Menu; use `E`, `0` and the
+new text to replace line 0, then `S` and `Y`). A description of one line is
+enough. Repeat in `#6` and `#7`, then `WORLD CHECK ONLY=TEXT` again: the lines are
+gone.
+
+The same thing as a macro. A macro is a plain list of game commands in
+`world/macros/NAME.cmd`, run by `RUNFILE`. Create the file outside the game:
+
+```sh
+mkdir -p "$BRIND/world/macros"
+cat > "$BRIND/world/macros/lane.cmd" <<'MACRO'
+# world/macros/lane.cmd   run with:  RUNFILE lane east
+STOPONERROR
+WORLD PATH $1,$1,$1 TYPE=Road NAME="A rutted lane" DESC="Hedges crowd the lane on both sides."
+WORLD MAP AREA IDS
+MACRO
+```
+
+and run it in the game from a room with nothing yet in that direction:
+
+```text
+GOTO Brindlewick#7
+RUNFILE lane east
+```
+
+`$1` is the first argument. `STOPONERROR` stops at the first line that fails,
+and the summary says how many lines ran and failed. Macros are not part of the
+world checksum. For richer automation use `JRUN` and its `builder` object
+([JavaScript](05-javascript.md)). Remember `SAVE` afterwards: the rooms are
+saved as made, but the world files change only on `SAVE`.
+
+Digging by walking is the other way: `WORLD DIG ON TYPE=Woods`, walk in
+directions that have no exit, `WORLD DIG OFF`.
+
+### Example 2: the same world as a script
+
+The shipped example pack builds a small museum world with a JavaScript file
+(`JRUN`) instead of typed commands, and tests it with a `.play` file and an API
+test. Run its automated tour from the repository root to see a complete
+authored, saved, tested and restored world, and read
+[its build script](examples/world/resources/creator/build.js) beside this
+chapter:
+
+```sh
+python3 docs/creator/examples/check.py
+```
+
+It builds in a temporary folder, so it changes nothing in your tutorial world.
+The [example pack](examples/README.md) explains each file. The
+[cookbook](cookbook.md) has 29 short recipes that start where this chapter
+stops (a lever and a gate, dialogue menus, clues, languages, bosses, loot).
+
+## Command summary
+
+Every command used in this chapter, with what it did. The chapter named in the
+last column has the full syntax.
+
+| Command | Used for | Chapter |
+| --- | --- | --- |
+| `CoffeeMud/sud.sh BUILDER=1 WORLDDIR=... DBSERVICE=... SAVEDIR=...` | Start builder mode on a separate world | [18](18-installing-and-running.md) |
+| `CoffeeMud/sud.sh RESTORE=NEW` / `RESTORE=name` / `CHECK=1` | New game, restore a save, headless world check | [18](18-installing-and-running.md) |
+| `AHELP BUILDING`, `WORLD`, `LOOK`, `STAT`, `GOTO room-id` | Orient yourself, move | [02](02-world-workflow.md), [19](19-configuration-and-administration.md) |
+| `CREATE AREA name` | A new area and its first room | [20](20-areas-rooms-exits.md) |
+| `CREATE ROOM direction locale` | A linked room | [20](20-areas-rooms-exits.md) |
+| `MODIFY ROOM NAME text`, `MODIFY ROOM DESCRIPTION text`, `MODIFY ROOM CLASS locale`, `MODIFY ROOM AFFECTS` | Room title, description, locale, effects | [20](20-areas-rooms-exits.md) |
+| `EDIT DESC target`, `EDIT SCRIPT target`, `EXTRACT SCRIPT target` | The line editor for text and scripts | [02](02-world-workflow.md) |
+| `CREATE EXIT direction class`, `MODIFY EXIT direction TEXT code` | Doors and locks | [20](20-areas-rooms-exits.md) |
+| `LINK`, `UNLINK`, `WORLD PATH`, `WORLD DIG`, `WORLD MAP` | Link, dig, draw | [20](20-areas-rooms-exits.md) |
+| `CREATE ITEM class`, `CREATE ITEM class@container`, `MODIFY ITEM name FIELD value`, `DESTROY ITEM name` | Items | [22](22-items.md) |
+| `CREATE MOB class`, `MODIFY MOB name FIELD value`, `MODIFY name` | Mobs, and the full editor | [21](21-mobs.md) |
+| `CATALOG name`, `CATALOG LIST ITEMS` | The catalog | [21](21-mobs.md), [22](22-items.md) |
+| `WORLD SET KEY=value` | Write `world.ini` | [world settings](world-settings.md) |
+| `LIST UNSAVED`, `SAVE ROOM`, `SAVE CHANGED`, `SAVE`, `WORLD STATUS` | Save and see what is pending | [02](02-world-workflow.md) |
+| `UNDO`, `UNDO LIST` | Put back room changes | [02](02-world-workflow.md) |
+| `SCRIPTCHECK`, `PROPCHECK`, `QUESTCHECK`, `WORLD CHECK`, `CHECKTEXT`, `PREVIEW` | Linters and previews | [13](13-testing-release.md) |
+| `LIST QUESTS`, `QUESTINFO name`, `MODIFY QUEST name START` | Quests | [08](08-quests.md) |
+| `PLAYTEST ON/OFF/GAME/RUN`, `WORLD TEST`, `ASSERT` | Playing and replaying as a player | [13](13-testing-release.md) |
+| `tools/playtest.py` | Headless replay of `.play` files | [13](13-testing-release.md) |
+| `SAVE name`, `QUIT`, `RESTORE name`, `QUESTS` | Campaign saves and quest status in a normal game | [31](31-saves-and-party.md), [08](08-quests.md) |
+
+## Persistence notes
+
+What is saved where in this tutorial, and when:
+
+| Thing | Where it lives | When it is written |
+| --- | --- | --- |
+| Rooms, exits, areas, room text | The cache (`$BRIND/db`) | As you edit (`MODIFY ROOM`, exit edits, `CREATE ROOM`) |
+| Mobs and items | The cache, per room | Only on `SAVE ROOM`, `SAVE CHANGED` (or `BUILDERAUTOSAVE=1`) |
+| The world files (`areas/brindlewick.cmare`, `catalog.cmare`) | `$BRIND/world` | On `SAVE` and on quit; only files whose text changed |
+| `world.ini` | `$BRIND/world/world.ini` | Immediately by `WORLD SET`; read at each start |
+| The quest | `$BRIND/world/quests/harls_hammer.quest` | By you; read at start. A builder `SAVE` rewrites the quest files from the quest list |
+| The catalog entry | `catalog.cmare` | On `SAVE` |
+| Your builder character | The cache | As you play; kept until the cache is deleted. It is not in any save |
+| A normal game | `$BRIND/saves/<slot>` | On `SAVE`, `QUIT` (if you agree), autosave if enabled |
+| The quest's progress, a character's inventory, an open door | The campaign save | On `SAVE`; never in the world files |
+| `PLAYTEST ON` changes | The builder world | Whatever you did stays; `PLAYTEST GAME` and `.play` runs discard theirs |
+
+A reload (`RESTORE`) builds a fresh working copy of the world's content from
+the cache, lays the save's state over it, and puts the live world back. A new
+game never uses anything you did in builder mode as a character: builder
+characters and normal characters are separate. The full matrix is in
+[state and persistence](state-and-persistence.md).
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `Unable to read ini file: 'coffeemud.ini'` | The game was started from the wrong folder. Start with `sud.sh`, which changes into `CoffeeMud/`, and give absolute paths |
+| `MODIFY MOB harl` prints a usage error | A mob needs a field when you write `MODIFY MOB`. Use `MODIFY harl` for the editor, or `MODIFY MOB harl LEVEL 10` for one field |
+| `There's no such thing as a 'x'.` from `CREATE` | The class ID is misspelt, or it is not a mob, item or catalog name. `LIST ITEMS` and `LIST MOBS` show the classes you can create |
+| `I don't see 'x here.` | The word does not match anything in the room or your inventory. Items inside a container need `@container` (`key@chest`) |
+| Items and mobs vanished after a restart | They were never saved. `LIST UNSAVED` before you quit, and `SAVE CHANGED` |
+| The door will not unlock | The key code and the exit's `TEXT` differ, one side of the door has no key text, or the key is not in your inventory. `STAT` the key and look at `READABLETEXT`; `MODIFY EXIT` on both sides |
+| The shop is empty | The stock is a list inside the editor. Open `MODIFY harl`, find `Inventory:`, add the item by a word from its name. `WORLD CHECK ONLY=SHOPS` finds empty shops |
+| Stocking the shop gives the standard item, not mine | The word you typed is also a ready-made class ID (`shortsword`). Use a word from your own name |
+| The greeting never appears | `SCRIPTCHECK guard`. Common causes: a statement with a `;` in its text, a missing `~`, the script was typed into the wrong behavior |
+| `WORLD CHECK` complains the start room does not exist | `START` is read at startup. Set it, `SAVE`, quit and start again, then check |
+| The quest is `loaded`, not `running` | `set autostart boot` runs a tick after the game starts. Start it by hand with `MODIFY QUEST harls_hammer START`, and read `QUESTINFO harls_hammer` for its last errors. If it names the guard wrongly, the name in `set mob reselect` must match the mob's name exactly |
+| Saving says a file was changed outside the game | You edited a world file while the game ran. `WORLD STATUS` and `WORLD DIFF name` show it; the game's version goes beside it as `.builder`. `WORLD RELOAD name` loads yours; `SAVE FORCE` writes over it |
+| The playtest fails on an `#expect` | Read the `transcript.txt` the runner names. Usually the wording changed, or a step needs a `#wait`. Fix the file or the world; do not loosen the expectation until it passes |
+| It passes in the test but fails in a normal game | The test runs as a `DEV=1` game with the DEV security group (it can `GOTO`, and `ASSERT` works). Play a normal new game too, as in the last section |
+| The cache is wrecked | Quit. Delete everything in `$BRIND/db` except `fakedb.schema` (builder characters go with it). The next start rebuilds the world from the files |
+| `Another game is using the save folder` | Two normal games share one `SAVEDIR`. Close one, or give a launcher its own `SAVEDIR`. Builder mode takes no such lock, so two builders on one cache is a mistake you must avoid yourself |
+
+## Next steps
+
+You have used each system once. Pick the next piece by what you want.
+
+| You want to | Read |
+| --- | --- |
+| Make bigger geography: grids, climates, area fields, parent areas | [Areas, rooms and exits](20-areas-rooms-exits.md) |
+| Give mobs real stats, equipment, money, spawn rules; shopkeeper types, bankers, mounts | [Mobs](21-mobs.md) |
+| Every item class, material, wear location, recharge and rejuvenation rule | [Items](22-items.md) |
+| Add locks, switches, receptacles, traps, crafting and houses | [Items and crafting](07-items-crafting.md) |
+| Put rules on a room, exit or item (entry requirements, passwords, adjusters) | [Properties reference](23-properties-reference.md) |
+| Give mobs ongoing behavior (wander, guard, sleep, patrol, remember) and write zapper masks | [Behaviors and masks](24-behaviors-and-masks.md) |
+| Learn the scripting language properly | [MOBPROG guide](04-mobprog.md), then [triggers](26-mobprog-triggers.md), [commands](27-mobprog-commands.md), [functions](28-mobprog-functions.md) |
+| Use JavaScript for logic, commands and state | [JavaScript](05-javascript.md) |
+| Make conversations, schedules, barks and escorts | [NPCs and dialogue](06-npcs-dialogue.md) |
+| Make fights, bosses, waves and encounters | [Combat and encounters](29-combat-and-encounters.md) |
+| Build longer quests: objectives, journals, rewards, boards | [Quests](08-quests.md) |
+| Make calendars, weather, seasons and darkness matter | [World simulation](10-world-simulation.md) |
+| Write descriptions, lore, maps and languages | [Presentation and language](11-presentation-language.md) |
+| Generate areas, loot and names | [Generation](12-generation.md) |
+| Set the opening, races, classes, kits, perks and training | [Characters](03-characters.md) |
+| Add factions, law, clans and an economy | [Society](09-society.md) |
+| Add boats, journeys and instances | [Travel, vehicles and instances](30-travel-vehicles-instances.md) |
+| Debug, test, package and release | [Testing and release](13-testing-release.md) |
+| Switch on the optional systems | [Optional modules](14-optional-modules.md), [ability composition](15-ability-composition.md), [combat profiles](16-combat-profiles.md), [item modifiers](17-item-modifiers-crafting.md) |
+| See a bigger finished sample | [The Ember Trial](examples/ember-trial/README.md) and the [example pack](examples/README.md) |
+| Look up a launch option, an ini key or a permission | [Installing and running](18-installing-and-running.md), [Configuration and administration](19-configuration-and-administration.md) |
+
+## See also
+
+- [Handbook index](README.md)
+- [Installing and running](18-installing-and-running.md) for the builder, normal,
+  DEV and check modes and the folder layout
+- [World files and editing](02-world-workflow.md) for every world file and the
+  full `SAVE`, `WORLD` and `UNDO` reference
+- [Areas, rooms and exits](20-areas-rooms-exits.md), [Mobs](21-mobs.md),
+  [Items](22-items.md)
+- [Cookbook](cookbook.md) and [example pack](examples/README.md)
+- [Tool reference](tool-reference.md), generated from the shipped help
+- [World settings](world-settings.md) and [state and persistence](state-and-persistence.md)

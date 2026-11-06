@@ -1186,7 +1186,7 @@ here. Playtest files, assertions and recording one by hand (`RECORD INPUT`,
 
 | Tool | What it does |
 | --- | --- |
-| `tools/check.sh` | The checks for a commit: the creator-docs check, the composition, combat and item-modifier suites, the fixes suite and the smoke test (about ten minutes). `ENGINE=1 tools/check.sh` adds the engine's own `TEST ALL` suite. |
+| `tools/check.sh` | The checks for a commit: the creator-docs check, the composition, combat and item-modifier suites, the fixes suite and the smoke test (10 to 30 minutes depending on the machine; the fixes suite is the slowest part). `ENGINE=1 tools/check.sh` adds the engine's own `TEST ALL` suite, which runs alongside the others. |
 | `tools/fixes.sh [NAME ...]` | One or more of the JavaScript fix tests in `tools/fixtures/fixes/`, each run with `JRUN` in a builder-mode game on a scratch world. |
 | `tools/smoke.sh` | The single-player path on its own: character creation, save, restore, pause, turn-based time, party, the world files, builder edits. `KEEP=1` keeps the scratch folder. |
 | `tools/engine-tests.sh` | The engine's `TEST ALL` suite (about 15 minutes). |

@@ -1762,7 +1762,7 @@ The check for a commit. It builds once, then runs, in order:
 4. with `ENGINE=1`, `tools/engine-tests.sh` as well.
 
 ```sh
-tools/check.sh                       # docs, rule suites, fixes and smoke (about ten minutes)
+tools/check.sh                       # docs, rule suites, fixes and smoke (10 to 30 minutes)
 ENGINE=1 tools/check.sh              # also the engine's own TEST ALL suite (a quarter hour more)
 CHECKS_SERIAL=1 FIXES_JOBS=2 ENGINE=1 tools/check.sh   # small CI machines
 ```
