@@ -371,7 +371,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 
 - **Test:** `RAND0NUM(max cmp n)`: rolls 0..max-1 and compares.
 - **Value:** `$%RAND0NUM(max)%`: a roll from 0 to max-1.
-- **Example:** `IF RAND0NUM(3 == 0)`; `MPSETVAR $i PICK $%RAND0NUM($<$i LINES>.LENGTH#)%` then `MPECHO $<$i LINES>.$<$i PICK>`
+- **Example:** `IF RAND0NUM(3 == 0)`; `MPSETVAR $i PICK $%RAND0NUM($<$i LINES>.LENGTH#)%`
 - **Notes:** like [RANDNUM](#randnum) but zero-based, which suits the `.N` word suffix (`$<$i LINES>.2`).
 
 ### NUMBER
@@ -678,7 +678,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 
 - **Test:** `JS(expression)`: runs a JavaScript expression and is true if the result is truthy.
 - **Value:** `$%JS(expression)%` or `$%JS$(expression)%`: the result as text (whole numbers without a decimal point, nothing for `undefined`).
-- **Example:** `IF JS(cm.random(100) < 30)`; `MPECHO Hits: $%JS$(host().getHitPoints())%`
+- **Example:** `IF JS(1 > 2)`; `IF JS(('' + cm.host().Name()).length > 3)`; `MPECHO The host is $%JS(host().Name())%`; `$%JS$(6 * 7)%` is `42`
 - **Notes:** not inherited. The expression runs in the same scope as a `<SCRIPT>` block (`host()`, `source()`, `target()`, `cm` and so on) and is subject to the same JavaScript approval rule; an unapproved expression logs a `Security` error and is false/empty. `JS$` is a second spelling of the value form. See [05-javascript.md](05-javascript.md).
 
 ### MEMORY

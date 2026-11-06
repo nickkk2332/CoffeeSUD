@@ -1464,12 +1464,10 @@ PHASE_PROG 2
 YIELD_PROG
   say Enough! The key is yours.
   mpoload the crypt key
-  mpgoto the void
 ~
 ```
 
-(MPGOTO and the like are standard script commands; the real names and arguments
-are in [27-mobprog-commands.md](27-mobprog-commands.md). Check each against it.)
+Command names and arguments are in [27-mobprog-commands.md](27-mobprog-commands.md).
 
 ## Designing encounters
 
@@ -1506,7 +1504,7 @@ Behaviors:
   MOBHelper
   Fighterness
   Pursue CHANCE=60 MAXROOMS=2 LEASH=3
-  Morale BREAK=LEADERDEAD LEADER="+NAMES a gate sergeant" ACTION=FLEE RALLY=HOME REGROUP=10
+  Morale BREAK=50%DEAD ACTION=FLEE RALLY=HOME REGROUP=10
 Effects:
   Prop_MobRank RANK=NORMAL
 ```
@@ -1514,13 +1512,12 @@ Effects:
 How it plays: a visitor gets two warning lines, one per tick, before the attack.
 `BACKOFF=true` spares a visitor who sits down or holds no weapon. When a guard is hit,
 `MOBHelper` brings the others. A visitor who flees is chased up to three rooms (a
-leash of four rooms from the post), then they walk home. When the sergeant dies the
-guards break and flee to their start room, wait ten ticks, and come back together.
+leash of four rooms from the post), then they walk home. When half of the guard's
+side has fallen the survivors break and flee to their start room, wait ten ticks,
+and come back together; the sergeant yields at 15%.
 
 Checks: `CONSIDER ALL` before fighting; fight at the party's level; flee past the
 leash; kill the sergeant first and again last; save and restore mid-fight.
-(`LEADER="+NAMES ..."` uses the zapper mask NAMES test; check it in
-[24-behaviors-and-masks.md](24-behaviors-and-masks.md).)
 
 ### An ambush on the road
 
@@ -1573,7 +1570,7 @@ Effects:
   Prop_MobRank RANK=BOSS
   Prop_PartyScaler BASE=3 HP=+20%/MEMBER DAMAGE=+8%/MEMBER ADDS="catalog:a bone minion/MEMBER-ABOVE-3"
 Behaviors:
-  Mageness OFFENSIVE +Spell_MagicMissile(EVERY=2) +Spell_Sleep(ONCE FIRST=3) OPENER=Spell_Blind
+  Mageness OFFENSIVE OPENER=Spell_Sleep +Spell_MagicMissile(EVERY=2) +Spell_Fireball(WEIGHT=2)
   TargetPriority PREFER=HEALER,CASTER,LOWESTHP SWITCH=40 STICKY=4 TAUNTABLE
   BossPhases ONENGAGE: SAY "You should have left."; AT=70%: SAY "Rise!", SUMMON a bone minion x2, ROOM EMOTE "Bones claw out of the floor."; AT=35%: SAY "Not yet!", HEAL 15%, IMMUNE 2, AFFECT Prop_AbilityImmunity "WEAPONS" 4; AT=ADDSDEAD: SAY "My servants!"; ONDEATH: ROOM EMOTE "The phylactery cracks."; RESET=LEASH
   EncounterReset RADIUS=1 IDLE=5 HEAL=100 DESPAWNADDS=true
@@ -1587,8 +1584,9 @@ PHASE_PROG 3
 ~
 ```
 
-How it plays: phase 1 is a caster fight with a predictable `Spell_MagicMissile`
-every second round and a sleep on round three at the earliest. At 70% it says its
+How it plays: phase 1 is a caster fight that opens with `Spell_Sleep`, then casts
+`Spell_MagicMissile` every second round and `Spell_Fireball` at random in between
+(the preset also gives the mob level-appropriate mage spells). At 70% it says its
 line and raises two minions, which follow it and attack the party's foe; they are
 tagged `SUMMONED`. `PHASE_PROG 2` runs. At 35% it heals 15%, is immune to all damage for two ticks, and takes a
 weapon immunity for four, so the party must use spells, then phase 3 starts and
@@ -1603,16 +1601,17 @@ immunity with spells), and a predictable reset policy. Add a telegraph (below) f
 big hit. Remember `BossPhases` thresholds fire once per fight; do not use an unguarded
 `HITPRCNT` trigger to award a one-time reward each tick.
 
-Add a telegraphed nova:
+Add a telegraphed nova: change the 35% phase to end with `CALL NOVA`, and give the
+lich a script (see [C5](#c5-telegraphed-attacks)):
 
 ```text
-Prop_Telegraph NAME=NOVA TICKS=2 WARNING="<S-NAME> gathers a sphere of black fire!" INTERRUPT=STUN,DAMAGE>15% AVOID=LEAVE,COMMAND:duck
+FUNCTION_PROG NOVA
+  mptelegraph NAME=NOVA 2 "<S-NAME> gathers a sphere of black fire!" mpdamage $n 60 90 INTERRUPT=STUN,DAMAGE>15% AVOID=LEAVE,COMMAND:duck
+~
 ```
 
-then trigger it from a phase with `CALL NOVA` and a `FUNCTION_PROG NOVA` in the
-lich's scripts that runs `MPTELEGRAPH 2 "..." MPDAMAGE $n 60 90 AVOID=COMMAND:duck`
-(see [C5](#c5-telegraphed-attacks)); use one mechanism, the property or the
-script command, not both, for the same attack.
+Whoever has not left the room or typed `duck` after two ticks takes 60 to 90 damage,
+unless the lich is stunned or loses 15% of its hit points meanwhile.
 
 ### A defense wave
 
@@ -1645,7 +1644,7 @@ ARENALOSE_PROG
 `world/encounters/raid_boss.enc` holds the final wave as a table roll:
 
 ```text
-MOBS "a raider chief" LEADER="a raider chief" WEIGHT=1
+MOBS "a raider chief,a raider*2" WEIGHT=1
 ```
 
 How it plays: walking in starts wave 1 and locks the exits; the next wave comes
@@ -1694,7 +1693,8 @@ Each attack by or on a watched character is explained on one line, prefixed
 tells whether it is on and whom it watches. `LOG` also writes every line to a
 file you name.
 
-A line looks like this (adapted from the DT35 fixture `dt35-combat.js`):
+A line looks like this (illustrative; the pieces are those asserted by the DT35
+fixture `dt35-combat.js`, joined by `; `):
 
 ```text
 [dbg] a fixes goblin -> a fixes dummy: atk 58 vs ac -32, fudge -4, hit 50% roll 31 HIT; dmg 7 (TARGETED, from 5); FUDGE(-2 lvls) 6; damage 6 by a rusty sword; Prop_AbsorbDamage(50% +ALL) on a fixes dummy -> 3; deals 3
@@ -1712,7 +1712,8 @@ Read it left to right:
 | `FUDGE(L lvls) N` | The level-difference fudge applied (L is attacker level minus target level). |
 | `damage N by X` | The damage message posted, and its source. |
 | `Prop_...(parms) on X -> N` | An effect or item that changed the damage and the new value (an absorb, a resistance, a ward). |
-| `stopped` | Something refused the damage. |
+| `X on NAME stopped it`, `ITEM of NAME stopped it` | An effect or an item refused the damage. |
+| `stopped` | The damage message was refused. |
 | `deals N` | What was finally dealt. |
 
 Damage outside an attack (a spell's) gets a line of its own. A fight with nobody

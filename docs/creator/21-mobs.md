@@ -664,8 +664,9 @@ from an item lying in a room. In a mob's pack:
 
 | Value | Meaning |
 | --- | --- |
-| `0` (or anything out of range) | Always there. |
-| `1` to `99` | N% chance, each time the mob is created or rejuvenates, that the item is *absent*. |
+| `0` | Always there. |
+| `1` to `99` | N% chance, each time the mob is created or rejuvenates, that the item is *absent* (the engine removes it when a 1-100 roll is below N). |
+| `100` or more | Absent almost every time; not a useful setting. |
 | `-1` | Present only the first time (at boot or creation); gone after the mob rejuvenates. |
 
 If several items on the same mob have a value and share a wear location, exactly

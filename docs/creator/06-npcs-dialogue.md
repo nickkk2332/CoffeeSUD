@@ -736,7 +736,7 @@ at different points:
 
 | Player types | Message | Who reacts |
 | --- | --- | --- |
-| `SAY hello` | Speech to the room (or to a likely target if only one other is in the room). | MudChat answers only if **fewer than three player characters** are in the room; scripts' SPEECH_PROG fire for everyone who hears. |
+| `SAY hello` | Speech to the room. | MudChat answers only if **fewer than three player characters** are in the room; scripts' SPEECH_PROG fire for everyone who hears. |
 | `SAYTO innkeeper hello`, `ASK innkeeper about mine` | Speech targeted at the NPC. | MudChat and SPEECH_PROG, even in a crowded room. `ASK` is SAY with the verb "ask". |
 | `TALK innkeeper [ABOUT topic]` | Opens a conversation (see [TALK](#talk-and-talk_prog)). | `TALK_PROG` first; if none fits, the topic (or "Hello") is said to the NPC for MudChat and SPEECH_PROG. |
 | A bare `SAY ...` after TALK | The NPC you are talking with becomes the target while you are both in the room. | As SAYTO. |
@@ -1130,7 +1130,7 @@ Rules:
 - The player sees `1. label` lines and `Choose 1-N (Enter: label):`.
 - Answering a menu is not a command: it costs no time in turn-based play.
 - **One menu at a time per character**; opening another replaces it.
-- If the FUNCTION does not exist the script reports an error when it runs.
+- If the FUNCTION does not exist the script reports an error and no menu opens.
 - Work that depends on the answer belongs in the answer's FUNCTION_PROG, not in
   the lines after MPMENU.
 - Pending menus persist across save and restore (options and binding); a

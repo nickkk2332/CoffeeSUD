@@ -577,3 +577,457 @@ using items made with ClanCraft (see CONQUEST help and
 ```text
 Conquerable JOURNAL="The Conquest Times" LAW=FALSE OWNERSHIP=FALSE
 ```
+
+### CorpseEater
+
+Hosts: mobs. Timing default 5/20/75. The mob appears to eat any corpse it comes
+across. It does not eat the items in the corpse unless `EATITEMS` is given, and
+ignores player corpses unless `+PLAYER` is given. `-MOB` or `-NPC` stops it
+eating mob corpses. Any other text is a mask (allowed is eaten, disallowed is
+not) to give it a specific diet.
+
+```text
+CorpseEater min=10 max=20 chance=75 -LEVEL +<17
+CorpseEater min=10 max=20 chance=75 -RACE +Elf
+```
+
+### CorpseLooter
+
+Hosts: mobs. No parameters. Turns on the mob's `AUTOLOOT` flag so it loots the
+items (not the gold) from corpses it kills.
+
+### Decay
+
+Hosts: items, mobs. Timing default 50/50/100 (the countdown is the timing).
+The host vanishes when the countdown ends and the chance roll succeeds. The
+countdown starts on a trigger: for a mob when it is attacked, for an item when
+it is picked up, for a weapon when first wielded, for armor when first worn, for
+a rideable when mounted. The remaining time is kept in a `remain=N` parameter
+(written back into the saved parameters).
+
+| Parameter | Meaning |
+| --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing. |
+| `USE2=true` | Use the second trigger set: a scroll or book read, a drink drunk, food eaten, a pipe smoked, a rideable mob mounted. |
+| `ANSWER="..."` | Text appended to the item's name when it decays (default ` vanishes!`). |
+| `NOTRIGGER` | Start decaying at once. |
+| `REMAIN=n` | Ticks left (maintained by the behavior; you can set it). |
+| mask | The countdown only starts for a triggerer the mask allows; disallowed is ignored. |
+
+```text
+Decay min=10 max=20 chance=75 answer=" goes poof!"
+Decay notrigger answer=" " use2=true
+Decay min=10 max=20 chance=75 -CLASS +Paladin
+```
+
+### DelayedTransporter
+
+Hosts: items, mobs, rooms. Timing default 5/5/100. Defines destination rooms
+separated by `;`; the first section may hold the timing and options.
+When the countdown ends and the chance roll succeeds, every mob in the same room
+as the host is teleported to one of the listed rooms, chosen at random.
+
+```text
+DelayedTransporter min=10 max=20 chance=25;Midgaard#3001;Sewers#6020;Midgaard#3020
+```
+
+CoffeeSUD options go in the first section, before the first `;`:
+
+| Option | Meaning |
+| --- | --- |
+| `PARTY=true/LEADER/EACH` | `true` shares a group countdown and keeps a follower from leaving alone; `LEADER` charges the leader; `EACH` charges individual shares. |
+| `FARE=[price]` | Fare. |
+| `PERHEAD=true` | Fare per eligible character. |
+| `MASK="[passenger mask]"` | Who may ride (a zapper mask). |
+| `DEST=ORDER/RANDOM` | Destinations in listed order, or random. |
+| `LOOK=true` | Passengers are shown the destination. |
+| `DEPARTMSG="[text]"`, `ARRIVEMSG="[text]"` | Messages. |
+| `ENTRY=CHECK` | Check every passenger's leaving and entering first; move none if any is refused. |
+
+Without `PARTY`, a character goes with their followers. The move is a forced
+teleport whatever the rooms would allow. All payment (and with `ENTRY=CHECK`,
+entry) checks complete before anyone moves or pays. The countdown and ordered
+destination progress are saved.
+
+### DoorwayGuardian
+
+Hosts: mobs. The mob does not allow any other mob or player to open or move
+through a doored exit; it must be killed to get by. Parameter text:
+
+```text
+[NOSNEAK] [ALWAYS] [direction ...] [mask] ; [rejection message]
+```
+
+| Word | Meaning |
+| --- | --- |
+| a direction (`north`, `east`...) | Guards only that exit (several allowed). With none it guards all exits. |
+| `NOSNEAK` | The guard cannot be sneaked past. |
+| `ALWAYS` | The guard still blocks when in combat or badly hurt. |
+| mask words | Who is blocked; with no mask it blocks everyone. Allowed passes. |
+| `;[message]` | Overrides the rejection message (default `<S-NAME> won't let <T-NAME> through there.`). Use `\;` for a literal semicolon. |
+
+```text
+DoorwayGuardian always north
+DoorwayGuardian nosneak east -class +mage -race +elf -evil
+DoorwayGuardian east north;<S-NAME> smack(s) <T-NAME> and push(es) <T-HIM-HER> back!
+```
+
+### Drowness
+
+Hosts: mobs. No parameters. A complete kit (weapons, armor, spells, combat
+behavior) whose details differ between male and female drow. Do not use it with
+any CombatAbilities behavior, and do not add equipment to the mob.
+
+### Druidness
+
+Hosts: mobs. A [CombatAbilities](#combatabilities) preset: the mob becomes a
+Druid by class with druid skills suited to its level. Parameters as in
+[Fighterness](#fighterness).
+
+```text
+Druidness SkyWatcher DEFENSIVE
+```
+
+### Emoter
+
+Hosts: all except exit-less cases (valid on areas, exits, items, mobs and
+rooms). Timing default 10/30/50. A series of random emotes separated by `;`
+(or by `/` if there is no `;`). The first field, which may be empty, holds the
+settings:
+
+| First-field setting | Meaning |
+| --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing (chance is per countdown). |
+| `EXPIRES=n` | Number of emotes before the behavior removes itself (0 = never; the count left is saved). |
+| `INROOM="ID,ID"` | The host must be in one of these rooms. |
+| `MASK="zapper"` | CoffeeSUD: only for a viewer the mask fits. |
+| `SOUND` (or `NOISE`), `SMELL` (or `AROMA`), `SIGHT` (or `VISUAL`), `SOCIAL`, `PUFF` | The type of emote; default sight. |
+| `BROADCAST` / `NOBROADCAST` | Also emote to adjacent rooms. |
+| `PRIVATE` / `NOPRIVATE` | Keep emotes private. |
+| `EMOTEONLY` | Do not respect visibility, smellability and hearing. |
+| `NOREPEAT=n` | CoffeeSUD: do not repeat the last n lines. |
+| `RETRY` | CoffeeSUD: if the line chosen cannot be used, pick another. |
+| `QUIETAFTER=n` | CoffeeSUD: quiet during combat or reading for n ticks. |
+
+Each following field is one emote. It may start with a type word (`SIGHT`,
+`SMELL`, `NOISE`, `SOCIAL`, `PUFF`) or end with one, which gives that one emote a
+different type than the default. CoffeeSUD lets each line begin with
+conditions before its type: `DAY`, `NIGHT`, `DAWN`, `DUSK`, a season, `RAIN`,
+`SNOW`, `FOG`, `INDOORS`, `OUTDOORS`, `IFVAR name=value`, `MASK="zapper"`,
+`ONCE` (saved per character), `WEIGHT=n`. Area emotes test each room's own
+conditions.
+
+```text
+Emoter min=10 max=20 chance=25;wiggles his bottom.;smiles evilly.;burps!
+Emoter smell chance=25 expires=10;smells horrible!;is really stinky!
+Emoter chance=100 inroom="Here#1,Here#2";looks horrible!;is bad!
+Emoter broadcast sound chance=25;grumbles!;eeeks!
+Emoter min=1 max=2 chance=25;sound grumbles!;visual leers broadly.;social smile
+Emoter min=8 max=20 chance=40 RETRY NOREPEAT=2;NIGHT SOUND an owl hoots.;IFVAR WOLVES=1 WEIGHT=3 ONCE SOUND wolves howl.
+```
+
+### EncounterReset
+
+Hosts: mobs, rooms. CoffeeSUD. A boss the party walks away from resets. After
+a fight, when none of those it fought has been within `RADIUS` rooms for `IDLE`
+ticks, the mob goes back to its start room, heals, sheds what was cast on it to
+harm it, loses the adds it summoned, forgets its threat, and its scripts'
+`RESET_PROG` runs.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `RADIUS=n` | Rooms from the boss within which a former foe still counts (0 is its own room). | 1 |
+| `IDLE=n` | Ticks with no foe within the radius. | 5 |
+| `HEAL=n` | Percent of hit points restored (all mana and moves too). | 100 |
+| `HOME=true/false` | Return to its start room. | true |
+| `DESPAWNADDS=true/false` | Remove NPCs following it that have no home, or are tagged `SUMMONED`. | true |
+| `ROOM=true/false` | Reset every NPC of its start room together. On a room, every NPC there is reset together. | false |
+
+```text
+EncounterReset RADIUS=1 IDLE=5 HEAL=100
+EncounterReset IDLE=10 ROOM=true
+```
+
+### Escortee
+
+Hosts: mobs. CoffeeSUD. An NPC escorted to a destination. Its leader is the one
+it follows when the escort begins (typically a quest's `MPFORCE $i follow $n`);
+until then it waits. Arrived, it stops following. The leader, arrival and
+remarks are saved.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `DEST=[ROOM ID]` | Destination. | required |
+| `MODE=LEAD/FOLLOW` | `FOLLOW`: follows its leader. `LEAD`: stops following and walks the way itself, a step a tick, and the party follows. | FOLLOW |
+| `WAITFOR=LEADER` | While its leader is not with it, it does not go on. | off |
+| `WAITCALL=n` | Ticks before it calls for the leader. | 3 |
+| `WAITMSG="..."` | What it calls. | `Wait for me!` |
+| `PANIC=FLEE/HIDE/COWER` | When attacked: flee, dive for cover or cower (the last two stop the fight). | none |
+| `AVOID=[ROOM ID],...` | Rooms (by ID, or the end of one) it will not enter. | none |
+| `TALK="[ROOM ID]:[TEXT]"` (also `TALK1=` to `TALK9=`) | A remark the first time it comes to that room. | none |
+| `ONARRIVE="[MOBPROG]"`, `ONDEATH="[MOBPROG]"` | Script lines, `;` between them, run with the leader as `$n`: a word, `MPSETVAR`, `MPCALLFUNC`, `MPQUESTWIN`. | none |
+| `TIMEOUT=n` with `ONTIMEOUT="[MOBPROG]"` | After n ticks run the line. | 0 (off) |
+
+```text
+Escortee DEST=Riverford#1 MODE=LEAD WAITFOR=LEADER PANIC=COWER TALK="Bridge#3:They say trolls live under here." ONARRIVE="say Thank you, friends!;mpsetvar $n ESCORTED 1"
+```
+
+### EvilExecutioner
+
+Hosts: mobs. The mob attacks any good or paladin non-player mob it detects. With
+the parameter `PLAYERS` it attacks players too.
+
+### FaithHelper
+
+Hosts: mobs, rooms, areas. On a mob, gives the mob a deity and makes it join a
+fight on the side of a mob of the same faith. On a room or area, gives mobs of
+the area a particular faith at spawn time only. Parameters:
+`[DEITY NAME] ([MAX COMBATANTS]) (MSG="[ATTACK MESSAGE]")`; a maximum of 1
+effectively turns off the combat part.
+
+```text
+FaithHelper Odin 5 msg="OMG ATTACK!"
+```
+
+### FasterRecovery
+
+Hosts: rooms, areas, items (per the code; the help also lists mobs, and the
+effect reaches a mob that carries the item or rides the host). Gives all
+affected mobs extra recovery ticks every normal tick, as opposed to the usual
+regeneration roughly once per 5 ticks. All parameters are optional.
+
+| Parameter | Meaning |
+| --- | --- |
+| `HEALTH=n` | Extra recovery ticks of every kind: 2 means 1 extra regen per tick, 3 means 2 extra, and so on. Values of 1 or less do nothing. |
+| `BURST=n` | Bursts of extra speed. |
+| `HITS=n`, `MANA=n`, `MOVE=n` | The same, for one pool. |
+| `n` | a number; `+n`/`-n` an exact adjustment (not another full recovery tick); `n%` a percentage of the current recovery amount (a chance when used with the next form). |
+| `n/ticks` | Temper it: a single extra burst every `ticks` ticks (`MANA=2/5`). A percentage first number is the chance that it happens. |
+
+```text
+FasterRecovery burst=2
+FasterRecovery health=50%
+FasterRecovery hits=2/5 mana=50% move=50%/1
+FasterRecovery mana=+5 hits=+10
+FasterRecovery burst=2 health=5
+```
+
+### FieryRoom
+
+Hosts: rooms. Timing default 5/10/100. Makes a room burn: damage to
+inhabitants, flammable equipment burns and non-flammable heats up (so is
+dropped), burning emotes, and finally the room becomes a burnt-out room.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `DAMAGE=n` | Damage to inhabitants each behavior tick. | 10 |
+| `TITLE="..."` | Room title when burnt out. | `A Charred Ruin` |
+| `DESCRIPTION="..."` | Room description when burnt out. | `Whatever was once here is now nothing more than ash.` |
+| `EQCHANCE=n` | How unlikely equipment bursts into flames or heats (the help calls it the "unlikeliness"). | 0 (no equipment destruction) |
+| `BURNTICKS=n` | Behavior ticks to keep burning. | 12 |
+| `NOSTOP` | Never burn out (title, description, burnticks are then moot). | off |
+| `NONPC` | No damage or equipment burning to NPCs. | off |
+| `NOFIRETEXT` | No burning emotes. | off |
+
+```text
+FieryRoom min=5 max=10 chance=100;damage=77 Title="A Horribly Blackened Spot" Description="This place was once just like any part of the road.  Now it is nothing more than a sooty pit." NOSTOP eqchance=50
+```
+
+### FightFlee
+
+Hosts: mobs. Timing default 1/1/33. In combat the mob flees according to the
+timing and chance.
+
+```text
+FightFlee min=10 max=20 chance=75
+```
+
+### Fighterness
+
+Hosts: mobs. A [CombatAbilities](#combatabilities) preset: the mob becomes a
+Fighter by class with fighter skills suited to its level. After the behavior
+first runs a `RESET` is often needed for level changes to take effect. It also
+modifies the mob's stats (see `NOSTATS`, `NOCOMBATSTAT`), so after adding or
+removing a preset reset the room, save, and check the stats. The presets
+(Fighterness, Mageness, Clericness, Druidness, Thiefness, Bardness) take:
+
+| Parameter | Meaning |
+| --- | --- |
+| a class name | A subclass of the preset's class to become (`Paladin`, `Templar`, `Assassin`, `Illusionist`...). |
+| `PROFICIENT` | All skills at 100%. |
+| `NOSTATS` | Leave the mob's stats alone. |
+| `NOCOMBATSTAT` | Leave the combat stats alone. |
+| `OFFENSIVE`, `DEFENSIVE`, `MIXEDOFFENSIVE`, `MIXEDDEFENSIVE` | Influences skill choice. |
+| `MINTICKS=n MAXTICKS=n CHANCE=n` | As listed in the help; the presets run on the 1/1/100 per-round timing (in the code the `MIN`/`MAX`/`CHANCE` words are skipped when reading skill names). |
+| `BSIZE=n` | Rotation size. |
+| `+SKILLID`, `-SKILLID`, `OPENER=`, rotation rules, `SUPPORT=`, `HEALAT=`... | All the [CombatAbilities](#combatabilities) options. |
+
+Thiefness also gives non-combat abilities: sneaking, hiding, backstabbing,
+picking pockets and, at high levels, stealing.
+
+```text
+Fighterness Paladin
+Mageness Illusionist MIXEDDEFENSIVE
+Thiefness Assassin MIXEDOFFENSIVE
+```
+
+### Floodable
+
+Hosts: rooms (and areas). CoffeeSUD, built on [RoomStates](#roomstates). A room
+that floods in levels: 0 dry, 1 ankle-deep, 2 waist-deep (one swims; loose
+things weighing up to `FLOAT` float away through `FLOWTO`), 3 full (the air is
+water: one drowns once one's breath runs out). While any of `RISE`, `ONVAR` or
+`TIDE` holds the water rises a level each `RATE` ticks; otherwise it drains one
+level each `DRAIN` ticks. Rising water puts out lights. Each level may have its
+own title, description and message. `FLOODLEVEL([ROOM ID/HERE/CODE])` reads the
+level in scripts. The state is saved.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `RISE="[MASK]"` | A mask on someone standing there. | none |
+| `ONVAR="[HOST] [VAR]==[VALUE]"` | A script variable. | none |
+| `TIDE=HIGH` | At high tide. | none |
+| `RATE=n` | Ticks per rising level. | 10 |
+| `DRAIN=n` | Ticks per draining level. | see help |
+| `FLOWTO=[DIR]` | Where loose things float to. | away |
+| `FLOAT=n` | Weight that floats. | 2 |
+| `TITLE1=` to `TITLE3=`, `DESC1=` to `DESC3=`, `MSG1=` to `MSG3=` | Per-level texts. | none |
+
+```text
+Floodable RISE="-WEATHER +RAIN +THUNDERSTORM" RATE=15 DRAIN=30 FLOWTO=east
+Floodable ONVAR="pump sluice==open" RATE=5
+```
+
+### Follower
+
+Hosts: mobs, items. Timing is 0/0/100: following is instant by default (min
+and max -1 and no `GROUP` also mean instant). The mob follows any other mob
+that leaves the room.
+
+| Parameter | Meaning |
+| --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing of non-grouping following; `CHANCE` 1 to 100 randomises the opportunity. |
+| `GROUP` | Join the target's group instead of just following. |
+| `NOFOLLOWERS` | Do not trigger when the mob has someone following it. |
+| `WANDER` | May leave its home area. |
+| `INVENTORY` (or `INV`) | For an item: reappear in the inventory of the first person to pick it up; otherwise it reappears in the room of the first it meets. |
+| `NAME=[name]` | Only follow that name. |
+| mask | Allowed is followed, disallowed ignored. |
+
+An item with Follower follows mobs around; items with it cannot be sold to
+shopkeepers.
+
+```text
+Follower min=1 max=1 chance=50 -race +elf
+Follower group nofollowers -race +elf +gnome
+Follower min=4 max=20 chance=100 inv -race +elf +gnome
+```
+
+### GateGuard
+
+Hosts: mobs. When standing next to a doorway and a player enters, the mob
+opens the door for the player and closes it after them. It also locks the door
+at night if there is a lock. The guard acts according to whether any player in
+the room meets the mask. With no parameters it always acts.
+
+| Flag | Meaning |
+| --- | --- |
+| `KEEPLOCKED` | If the door has a lock, keep it locked. |
+| `ALLNIGHT` | Does not behave differently at night than by day. |
+
+Only one of the two flags is read: the parser stops at the first it finds, so
+give just one. The rest of the text is the mask.
+
+```text
+GateGuard -class +mage -race +elf -evil
+```
+
+### GenBehavior
+
+Hosts: set by its `CANIMPROVE` (MOBS, ITEMS, ROOMS, AREAS, EXITS). CoffeeSUD:
+a behavior defined as data in builder mode. `CREATE BEHAVIOR TollKeeper` makes
+one and opens its editor with these fields:
+
+| Field | Meaning |
+| --- | --- |
+| `NAME` | The behavior ID. |
+| `HELP` | What `AHELP TOLLKEEPER` shows. |
+| `CANIMPROVE` | Valid hosts, comma separated: MOBS, ITEMS, ROOMS, AREAS, EXITS. |
+| `PARMS` | Parameters and their defaults, such as `price=20 exit=north`. |
+| `SCRIPT` | MOBPROG text, optionally with `<SCRIPT>` JavaScript, or `LOAD=[FILE]`. |
+| `ACCOUNT` | What it says it is doing. |
+| `VARSCOPE` | Empty: its variables are its host's, as a Scriptable's. `*`: its own. |
+
+The script reads parameters with `PARM(price)`, `$%PARM(price)%` in text,
+`IF PARM(free)` (set, and not 0 or false) and `parm('price')` in JavaScript.
+Then `TollKeeper price=5 exit=west` goes wherever a behavior ID goes: on a mob
+or item, `MPBEHAVE`, a quest's `GIVE BEHAVIOR`, a faction or a plane. Each copy
+has its own engine and values; all share the definition, so `MODIFY BEHAVIOR
+TollKeeper` changes every one at once. `MODIFY BEHAVIOR [ID] [FIELD] [VALUE]`
+sets one field without the editor (`\\n` in a `SCRIPT` is a new line).
+`WHEN=`, `TOD=` and `HOURS=` work in its parameters. `DESTROY BEHAVIOR [ID]`
+removes it (what has it keeps it until the world is loaded again). `SAVE`
+writes it to `world/custom/behaviors/`, its script in a file beside it. See
+[chapter 4](04-mobprog.md).
+
+```text
+CREATE BEHAVIOR TollKeeper
+TollKeeper price=5 exit=west
+```
+
+### GetsAllEquipped
+
+Hosts: mobs. Deprecated. On reset the mob grabs everything in its default room
+and tries to wear it. It does the same whenever someone in the room dies, so it
+doubles as autoloot.
+
+### GoldLooter
+
+Hosts: mobs. No parameters. Turns on the mob's `AUTOGOLD` flag so it loots the
+gold from corpses it kills.
+
+### GoodExecutioner
+
+Hosts: mobs. The mob attacks any evil or thief non-player mob it detects. With
+`PLAYERS` it attacks players too.
+
+### GoodGuardian
+
+Hosts: mobs. No parameters. If the mob detects an evil mob attacking a good one
+in the same room or an adjacent room, it attacks the evil one. If evil mobs are
+fighting each other it does nothing; if two good or neutral mobs are fighting
+it stops the fight.
+
+### Guard
+
+Hosts: mobs. If any mob or player in the room is attacked, this mob comes to
+the victim's defence. A parameter limits it to a victim with that name.
+
+```text
+Guard Bob
+```
+
+### GuildMaster
+
+Hosts: mobs. CoffeeSUD (no shipped help entry). Makes the mob the master of a
+clan-style guild: players speak to it in the room, and it answers. Spoken
+commands: `join`, `rank`, `advance`, `leave`, `dues`, `kit`, `kit replace`. The
+guild is a clan (government) of the world; ranks and dues come from the
+organisations system ([chapter 9](09-society.md)).
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `CLAN=[name]` | The guild's clan (required; without it the mob says "This guild is not configured."). | none |
+| `JOINMASK="[mask]"` | A mask a joiner must also meet (single quotes may be used for names with spaces). | the clan's basic requirement |
+| `JOINQUEST=[quest]` | A quest the joiner must have won. | none |
+| `JOINFEE=n` | Gold to join. | 0 |
+| `REFUSEMSG="..."` | Said when a joiner is refused. | `You have not met our requirements.` |
+| `RANKS=MERIT` | Ranks are by merit (`rank` or `advance` recalculates). | MERIT |
+| `DUES=TRUE/FALSE` | Whether `dues` pays dues here. | TRUE |
+| `LEAVEMSG="..."` | Said on leaving. | `You have left [clan].` |
+| `KIT.[ROLE]="[catalog item],[catalog item]"` | Catalog items issued to a member of that role at `kit`. | none |
+| `KITFEE=n` | Fee for `kit replace` (a replacement kit). | 0 |
+
+```text
+GuildMaster CLAN="Iron Guard" JOINFEE=50 KIT.MEMBER="iron badge" KITFEE=10
+```

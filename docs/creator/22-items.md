@@ -239,3 +239,206 @@ Prompts follow a few conventions:
   attack, armor, weight and value to the engine's norms for that level
   (`balanceItemByLevel`). Set Level first, then adjust the other fields.
 
+## The item editor, field by field
+
+Source: [Libraries/CMGenEditor.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMGenEditor.java).
+Which editor opens depends on the first match, in this order, of the item's
+interfaces (`genMiscSet`):
+
+| If the item is a... | Editor |
+| --- | --- |
+| room map (`RoomMap`: `GenMap`) | Map editor |
+| `Armor` (all `GenArmor` classes, `GenShield`, `GenCloak`, `GenEarring`...) | Armor editor |
+| `MusicalInstrument` (`GenInstrument`, `GenPiano`, `GenMagicInstrument`) | Instrument editor |
+| `Food` (`GenFood`, `GenPill`, `GenFoodResource`...) | Food editor |
+| item that is also a `Drink` (`GenDrink`, `GenPotion`, `GenWater`, `GenFountain`, `GenPerfume`, `GenLiquidResource`...) | Drink editor |
+| `Weapon` (`GenWeapon`, `GenStaff`, `GenBow`, `GenSling`, `GenSiegeWeapon`, `GenBoffWeapon`...) | Weapon editor |
+| `Container` (`GenContainer`, `GenRideable` and furniture, `GenBoardable`, `GenPortal`...) | Container editor |
+| class ID `GenWallpaper` | Wallpaper editor (name, description, readable text) |
+| anything else generic (`GenItem`, `GenKey`, `GenCoins`, `GenReadable`, `GenWand`, `GenScroll`, `GenLightSource`, `GenBook`...) | General item editor |
+| a non-generic (standard) item | Short editor: Level, Magical Ability, Rejuv, Uses Remaining, Misc Text |
+
+Numbers in the editor are not fixed: a field that does not apply to the class
+is skipped and later numbers shift. Edit by number, or use the name forms of
+`MODIFY ITEM x FIELD value` where the field has a stat code.
+
+### Fields every generic item has
+
+| Field (prompt text) | What it is | Stat code | Notes |
+| --- | --- | --- | --- |
+| Name | The item's name, which players type: "a rusty sword" | `NAME` | If the display text started with the old name, it is rewritten with the new name |
+| Display | Text shown in the room listing ("a rusty sword lies here."). `null` makes it blank, which hides it from the room listing (a "blended" item shown only when examined) | `DISPLAY` | |
+| Description | What `LOOK AT` shows. `+` opens the multi-line editor | `DESCRIPTION` | Supports VARIES/story text, see [11-presentation-language.md](11-presentation-language.md) |
+| Level | Level of the item. Wearers below this level cannot wear, wield or hold it | `LEVEL` | Default 1 for most generics, 5 for `GenWeapon`, 0 for `GenStaff`. Re-balances weapons and armor |
+| Material Type | The resource the item is made of, which gives it its family (metal, cloth...), weight/hardness effects and its value basis. `?` lists names | `MATERIAL` | See [Materials](#materials) |
+| Secret Identity | Text shown by identify magic. Blank to use the class default. For raw resources this slot is replaced by *Rsc Sub-Type* | `SECRET` | |
+| Rejuv/Pct | Item rejuvenation. Meaning depends on where the item is | `REJUV` (via `MODIFY ITEM x REJUV`) | See [Item rejuvenation](#item-rejuvenation) |
+| Magical Ability | The item's "plus". Weapons add it to damage (and 10x to attack); armor adds to the armor value by location; any non-zero value also marks the item magical. Shown as *Technical Level* on electronics | `ABILITY` | |
+| Uses Remaining | Charges, ammunition, or condition. For armor and weapons that suffer wear and tear it is the *Condition* (100 = perfect) and the prompt is relabeled. For ammunition it is *Ammo Remaining* | `USES` | |
+| Base Value | The item's base gold value, before shopkeeper pricing | `BASEGOLD` | Real value = base value + 10 x magical ability; armor value falls with condition |
+| Weight | Weight in the engine's units. Containers weigh their contents too | `WEIGHT` | |
+| Dispositions | Toggles listed below | `DISPOSITION` | |
+| Behaviors | Add or remove behaviors by ID; `?` lists them | (`AFFBEHAV`) | See [24-behaviors-and-masks.md](24-behaviors-and-masks.md) |
+| Effects | Add (`ID`), remove (`-ID`), edit (`=ID` or its number); `?` lists abilities, `?P` lists the properties that fit this item | (`AFFBEHAV`) | See [23-properties-reference.md](23-properties-reference.md) |
+| MXP Image | Image file name for MXP-aware displays | `IMG` | |
+| Tags | Free tags to add or remove (entering an existing tag removes it) | `TAGS` | Used by scripts and filters |
+| Scripts | Edit MOBPROG scripts on the item. Only shown when the item already has scripts | | Add scripts with the Effects/Behaviors editors (`Scriptable`) or script commands |
+| *extras* | Any `EXTVAR_[ClassID]` fields from `coffeemud.ini` | | See below |
+
+Class-specific stat codes (`getStatCodes()`) beyond these appear as extra
+numbered lines at the end of the list only when they are *extension* fields.
+Extension fields come from the ini: `EXTVAR_GenWeapon=SHININESS,COLOR` adds two
+free-text variables to every GenWeapon (and subclasses of the named class),
+saved with the item.
+
+#### Gettable / droppable flags
+
+One numbered prompt shows these letters; type a letter to toggle, Enter when
+done. They set sense flags on the item.
+
+| Letter | Flag | Meaning when true |
+| --- | --- | --- |
+| A | Is Gettable | `GET` works. If false, the item is fixed in place |
+| B | Is Droppable | It can be dropped |
+| C | Is Removable | It can be taken off once worn |
+| D | Non-Locatable | Locate magic cannot find it |
+| E | Blend Display | Item is always compressed into the room's item summary |
+| F | Semi-Hidden | Hidden in plain sight (found with a search) |
+| G | Contents Access (containers) | Contents can be seen/reached from outside |
+| G | Is Two-Handed (weapons) | The weapon needs both hands (`WORNAND`) |
+
+A, B, C are stored as the "deprecated" `FLAG` bits 2, 1 and 8 in item XML
+(plus 4 for readable); that is why a fresh generic item has `FLAG` 11
+(gettable, droppable, removable).
+
+#### Dispositions
+
+Toggled by letter. These are `PhyStats` disposition bits:
+
+| Disposition | Meaning on an item |
+| --- | --- |
+| invisible | Cannot be seen without see-invisible |
+| hide | Hidden |
+| unseen | `IS_NOT_SEEN`: not seen at all |
+| magical | `IS_BONUS`: shows as magical (detect magic) |
+| glowing | Glows (item light via `IS_GLOWING`) |
+| lightsrc | Gives light (`IS_LIGHTSOURCE`) |
+| fly, climb, sleep, sit, sneak, swimmer | Gives that disposition to a mobile item, relevant for rideables and similar |
+| evil, good | Alignment aura (detect evil/good) |
+| unattackable | Cannot be attacked |
+
+On the command line, `MODIFY ITEM x DISPOSITION GLOWING INVISIBLE` takes the
+names `PhyStats.IS_CODES` holds, or the numeric bitmap.
+
+### Armor editor extras
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Wear locations | Which body locations it fits and whether it needs *all* or *any one* of them | `PROPERWORN`, `WORNAND` |
+| Layer | Layer number, plus see-through and multi-wear flags (see [Armor and wear locations](#armor-and-wear-locations)) | `LAYER`, `LAYERATTRIB` |
+| Armor (higher-better) | The armor value this item adds to the wearer | `ARMOR` |
+| Condition | Wear-and-tear score (100 is new), if the item suffers wear | `USES` |
+| Capacity, Can contain, Lid/Lock, Key Code, Size | If the armor is also a container (`GenCloak`, `GenGangline`-type armor and so on) | `CAPACITY`, `CONTAINTYPES`... |
+| Cloak Name | For `GenCloak` only: the cloak's concealed name (`READABLETEXT`) | `READABLETEXT` |
+| Size | Height the armor is cut for; must fit the wearer's height to within a tolerance (see below) | `HEIGHT` via `MODIFY ITEM x HEIGHT n` |
+
+### Weapon editor extras
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Attack Adjustment | Added to the wielder's attack roll | `ATTACK` |
+| Damage | Base damage | `DAMAGE` |
+| Weapon Attack Type | How it hurts: see [Weapons](#weapons) | `WEAPONTYPE` |
+| Weapon Classification | Weapon skill category | `WEAPONCLASS` |
+| Minimum/Maximum Ranges | Distance in rooms at which it works; 0/0 is melee | `MINRANGE`, `MAXRANGE` |
+| Ammunition | Whether it needs ammunition, the ammunition type, capacity | `AMMOTYPE`, `AMMOCAPACITY` |
+| Condition | Wear-and-tear (skipped for ammo weapons and wands) | `USES` |
+| Rideable fields | For rideable weapons (siege engines) | see [Furniture](#furniture-rideables-and-boardables) |
+| Wand fields | For `GenStaff`: readable/spell text, uses, maximum uses, enchant type | `SPELL`, `MAXUSES`, `ENCHTYPE` |
+
+### Container editor extras
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Capacity | The maximum weight that fits inside (weight is used as volume) | `CAPACITY` |
+| Can contain | Types of item allowed; none selected means anything | `CONTAINTYPES` |
+| Has a lid / lock | See [Containers, lids, locks and keys](#containers-lids-locks-and-keys) | `HASLID`, `HASLOCK`, `DEFCLOSED`, `DEFLOCKED`, `RESETTIME` |
+| Key Code | Shown when it has a lid and a lock and is not readable | `READABLETEXT`-style key name via the editor; stored as the item's key name |
+
+### Food editor extras
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Nourishment/Eat | Hunger restored by eating the whole item | `NOURISHMENT` |
+| Bite/Eat (0=all) | Nourishment per bite; 0 eats it all at once | `BITE` |
+
+### Drink editor extras
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Quenched/Drink | Thirst quenched per drink | `QUENCHED` |
+| Amount of Drink Held | Number of drinks it holds when full (it is set full when edited) | `LIQUIDHELD` |
+| Current liquid type | A liquid resource (`?` lists them) | `LIQUIDTYPE` |
+| Capacity, Can contain, Lid | If the drink is also a container (wineskin, flask) | `CAPACITY`... |
+| Smells list | For perfumes: smells separated by `;` | `SMELLLST` |
+
+### Instrument editor extras
+
+| Field | Meaning | Stat code |
+| --- | --- | --- |
+| Instrument Type | One of: CLARINETS, CYMBALS, DRUMS, FLUTES, GUITARS, HARMONICAS, HARPS, HORNS, OBOES, ORGANS, PIANOS, TROMBONES, TRUMPETS, TUBAS, VIOLINS, WOODS, XYLOPHONES, OTHER_INSTRUMENT_TYPE | `INSTTYPE` |
+
+The type decides which Play skills can use the instrument (see
+[25-abilities-and-effects.md](25-abilities-and-effects.md)).
+
+### Other conditional fields in the general editor
+
+| Applies to | Field | Meaning |
+| --- | --- | --- |
+| Books (`Book`) | Max Pages, Chars/Page | 0 means unlimited |
+| Recipe books (`RecipesBook`) | Recipes | The skill and the recipe lines the book teaches (see `GenRecipe`) |
+| Lights (`Light`) | Is destroyed after burnout | Toggle; the burn duration is the *readable text* |
+| Coins | Money data | Currency, denomination, stack size |
+| Wands | Maximum Uses, Enchant Type | See [Magic items](#magic-items-wands-staffs-scrolls-potions-pills) |
+| Resources (`RawMaterial`) | Rsc Sub-Type | `BOLT` or `SEED`, or a world resource variant name |
+| Packages | Number of items in the package | |
+| Private property (titles, ships) | Owner, Price | |
+| Land titles | Land plot ID | A room ID |
+| Boardables | `TICKSPERMOVE`, `TICKSPERTURN`, `WEATHERSPEED`, `FIXEDINTERIOR` | See [30-travel-vehicles-instances.md](30-travel-vehicles-instances.md) |
+| Electronics/tech | Manufacturer, power capacity/remaining, Activated, installed factor, recharge rate, thrust fields, ports | See [Technology and clan items](#technology-and-clan-items) |
+| Clan items | Clan id and item type | |
+
+### Stat codes by class
+
+`MODIFY ITEM x CODE value` accepts the generic item codes above plus these,
+per class (from each class's `getStatCodes()`):
+
+| Class | Extra stat codes |
+| --- | --- |
+| `GenWeapon`, `GenBow`... | `MINRANGE`, `MAXRANGE`, `WEAPONTYPE`, `WEAPONCLASS`, `AMMOTYPE`, `AMMOCAPACITY` |
+| `GenStaff`, `GenWand` | `ENCHTYPE`, `SPELL`, `MAXUSES` |
+| `GenMagicInstrument` | `ENCHTYPE`, `SPELL`, `INSTTYPE`, `MAXUSES` |
+| `GenArmor` and subclasses | `HASLOCK`, `HASLID`, `CAPACITY`, `CONTAINTYPES`, `RESETTIME`, `LAYER`, `LAYERATTRIB`, `DEFCLOSED`, `DEFLOCKED` |
+| `GenContainer`, `GenBagOfHolding`, `GenBagOfEndlessness` | `CLASS`, `HASLOCK`, `HASLID`, `CAPACITY`, `CONTAINTYPES`, `RESETTIME`, `DEFCLOSED`, `DEFLOCKED` |
+| `GenFood` | `NOURISHMENT`, `BITE` |
+| `GenPill` | `NOURISHMENT` |
+| `GenDrink`, `GenPotion` | `HASLOCK`, `HASLID`, `CAPACITY`, `CONTAINTYPES`, `RESETTIME`, `QUENCHED`, `LIQUIDHELD`, `LIQUIDTYPE`, `DEFCLOSED`, `DEFLOCKED` |
+| `GenPerfume` | the drink codes plus `SMELLLST` |
+| `GenLantern` | `LIQUIDHELD`, `LIQUIDTYPE` |
+| `GenResource` | `DOMAINSRC`, `RSUBTYPE` |
+| `GenBook`, `GenPaper` | `MAXPAGES`, `MAXCHARSPAGE` |
+| `GenCoins` | `NUMCOINS`, `CURRENCY`, `DENOM` |
+| `GenInstrument` | `INSTTYPE` |
+| `GenRecipe` | `SKILLID`, `RECIPES`, `NUMRECIPES` |
+| `GenRideable`, furniture | lock/lid/capacity codes plus `RIDEBASIS`, `MOBSHELD`, `PUTSTR`, `MOUNTSTR`, `DISMOUNTSTR`, `STATESTR`, `STATESUBJSTR`, `RIDERSTR` |
+| `GenTub` | the rideable codes plus `QUENCHED`, `LIQUIDHELD`, `LIQUIDTYPE` |
+| `GenPortal` | lock codes plus `RIDEBASIS`, `MOBSHELD`, `EXITNAME`, `CLOSEDTEXT`, `CLOSEWORD`, `OPENWORD` |
+| `GenBoardable` | lock codes plus `RIDEBASIS`, `MOBSHELD`, `AREA`, `OWNER`, `PRICE`, `EXITNAME`, the rideable strings, `FIXEDINTERIOR` |
+| `GenNavigableBoardable` and ships | the boardable codes plus `TICKSPERMOVE`, `TICKSPERTURN`, `WEATHERSPEED` |
+| `GenTitle` | `OWNER`, `PRICE` |
+| `GenStove` | `CONSUMEDTYPES` |
+
+Classes not in this table (for example `GenItem`, `GenKey`, `GenReadable`,
+`GenScroll`, `GenLightSource`, `GenJournal`, `GenMap`) have only the generic
+codes. Their special value lives in `READABLETEXT`.
+
