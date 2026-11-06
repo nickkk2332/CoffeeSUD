@@ -151,25 +151,26 @@ For the rest of the tutorial, every launch uses the same three settings. To
 save typing, make a small launcher script outside the repository:
 
 ```sh
-cat > "$BRIND/launch.sh" <<'EOF'
+sed "s|@REPO@|$PWD|" > "$BRIND/launch.sh" <<'EOF'
 #!/bin/sh
 # Usage: launch.sh [extra NAME=VALUE settings]  (run from anywhere)
 BRIND="$(cd "$(dirname "$0")" && pwd)"
-REPO="${SUD_REPO:-$HOME/CoffeeSUD}"
-exec "$REPO/CoffeeMud/sud.sh" \
+exec "@REPO@/CoffeeMud/sud.sh" \
   WORLDDIR="$BRIND/world" \
   DBSERVICE="jdbc:fakedb:$BRIND/db" \
   SAVEDIR="$BRIND/saves" "$@"
 EOF
 chmod +x "$BRIND/launch.sh"
-export SUD_REPO="$PWD"
 ```
 
-Run that from the repository root, so that `SUD_REPO` is the repository. (If
-you prefer not to use a script, type the full line from the next step each
-time.) Paths must be absolute because the launcher changes into `CoffeeMud/`
-before it starts the game. On Windows use `CoffeeMud\sud.bat`, absolute paths
-without spaces, and the same `NAME=VALUE` settings.
+Run that from the repository root: `sed` writes the repository's path into the
+script, and the script finds the world, cache and saves beside itself. (If you
+prefer not to use a script, type the full line from the next step each time.)
+Paths must be absolute because the launcher changes into `CoffeeMud/` before it
+starts the game. Every `sh` block in this chapter assumes `BRIND` is set and
+that you run it from the repository root, so set `BRIND` again in a new
+terminal. On Windows use `CoffeeMud\sud.bat`, absolute paths without spaces, and
+the same `NAME=VALUE` settings.
 
 ### Step 2: launch in builder mode and create your builder
 
@@ -602,8 +603,8 @@ your world adds factions). Type its number at `Edit which?`, then:
 | `Enter something to add/remove (?)` | press Enter (the game says `(no change)`) |
 | `Edit which?` | press Enter |
 
-You see `a notched shortsword added.` (it names the item's class ID) and, on
-the menu, the stock as `Inventory: 'a notched shortsword (3)'`. A price of
+You see `GenWeapon added.` (the game names the item's class) and, on the
+menu, the stock as `Inventory: 'a notched shortsword (3)'`. A price of
 `-1` lets the engine price it from the item's value; a number 0 or more sets a
 fixed price. A shop defaults to the type "anything", so it deals in weapons.
 Typing a name that is already in stock removes it.
@@ -1284,10 +1285,10 @@ WORLD="$BRIND/world" python3 tools/playtest.py "$BRIND/world/tests/brindlewick.p
 
 `WORLD` names the world folder the test plays on; the runner makes a scratch
 copy of it, its own database and its own saves, so nothing in `$BRIND` changes.
-A passing run prints one line:
+A passing run prints one line (the path is shown relative to where you ran it):
 
 ```text
-PASS  /home/you/brindlewick/world/tests/brindlewick.play (N checks)
+PASS  ../brindlewick/world/tests/brindlewick.play (N checks)
 ```
 
 and exits 0. A failing run prints `FAIL`, each failing check with its line
