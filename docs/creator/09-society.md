@@ -1,7 +1,7 @@
 # Society: clans, factions, organisations, law and economy
 
 [Handbook](README.md) · [Organization option reference](../organizations.md)
-· [F feature index](feature-index.md#f)
+· [F feature index](feature-index.md#f-factions-and-organizations)
 
 This chapter covers the systems that make a world feel inhabited by groups
 rather than individuals: who belongs to what (clans, governments and NPC
@@ -39,7 +39,7 @@ warrants, shops, banks and diplomacy. Each section says which is which.
   - [Scaffold a guild](#scaffold-a-guild)
   - [GuildMaster](#guildmaster)
   - [Recruitment and advancement](#recruitment-and-advancement)
-  - [Diplomacy and ClanEnemyAggressive](#diplomacy-and-conquest)
+  - [Diplomacy and ClanEnemyAggressive](#diplomacy-and-clanenemyaggressive)
 - [Factions](#factions)
   - [Faction files](#faction-files)
   - [Change triggers](#change-triggers)
@@ -58,7 +58,7 @@ warrants, shops, banks and diplomacy. Each section says which is which.
 - [Economy](#economy)
   - [Currencies](#currencies)
   - [Money handling](#money-handling)
-  - [Shops and shopkeeper pricing](#shops-banks-and-currencies)
+  - [Shops and shopkeeper pricing](#shops-and-shopkeeper-pricing)
   - [Banks and debts](#banks-and-debts)
   - [Money changers and exchange rates](#money-changers-and-exchange-rates)
   - [Economy scripting](#economy-scripting)
@@ -395,7 +395,7 @@ otherwise the first clan the character holds the power in is used.
 | `CLANTAX` | `CLANTAX (clan) (percent)` | Set the share of members' experience the clan takes. | `TAX` |
 | `CLANDUES` | `CLANDUES PAY (clan)`; `CLANDUES (clan) (amount)`; `CLANDUES FORGIVE member (clan)` | Pay arrears from carried money; list who is behind and set the per-period charge; forgive a debt. | `TAX` for all but `PAY` |
 | `CLANVOTE` | `CLANVOTE (clan) (number)` | List and cast votes on open ballots. | `VOTE_*` |
-| `CLANHOMESET`, `CLANDONATESET`, `CLANMORGUESET` | `CLANxxxSET (clan)` | Set the current room as the clan's home, donation room or morgue. | `SET_HOME`, `SET_DONATE`, `MORGUE` |
+| `CLANHOMESET`, `CLANDONATESET`, `CLANMORGUESET` | `CLANxxxSET (clan)` | Set the current room as the clan's home, donation room or morgue. The room must be owned by the clan. | `SET_HOME`, `SET_DONATE`; for the morgue, `MORGUE` to pick the clan and `SET_HOME` to do it |
 | `CLANKILLS`, `CLANPVPKILLS` | `CLANKILLS (clan)` | Members ranked by kills of rival-clan mobs (and players). | membership |
 | `CALENDAR CLAN` | see `CALENDAR` | Add clan events. | `CREATE_CALENDAR` |
 | `ORDER` | see `ORDER` | Command lower-ranked members. | `ORDER_UNDERLINGS` |
@@ -488,7 +488,7 @@ value of `0` blocks all membership of that category (the join checks test
 ### Party-founded clans
 
 Each party character is a separate member and, under `CLANVOTES=CHARACTER`, a
-separate voter. `CLANCREATE <name> PARTY` founds a `FELLOWSHIP` for the party:
+separate voter. `CLANCREATE <name> PARTY` (single-player games only) founds a `FELLOWSHIP` for the party:
 every character joins, the founding cost is paid once from the founder, and
 the founder takes the top position. All characters must belong to the
 founder's profile and pass the government's requirements. With
@@ -551,7 +551,7 @@ speaker. Phrases (case-insensitive, nothing else in the sentence): `join`,
 `rank`, `advance`, `leave`, `dues`, `kit`, `kit replace`. Each party character
 is handled on its own.
 
-Parameters (one parameter line):
+Parameters (one parameter line; put `CLAN=` first, because the reader would otherwise mistake the `CLAN` inside a `-CLANRANK` mask for the key):
 
 | Parameter | Default | Meaning |
 | --- | --- | --- |
@@ -561,7 +561,7 @@ Parameters (one parameter line):
 | `JOINQUEST="name"` | none | A quest the speaker must have won. |
 | `RANKS=MERIT\|SCRIPT` | `MERIT` | `MERIT` re-checks merit on `join`, `rank` and `advance`. `SCRIPT` leaves advancement to your scripts. |
 | `DUES=TRUE\|FALSE` | `TRUE` | Whether saying `dues` collects arrears. |
-| `KIT.POSITION="catalog item,catalog item"` | none | Items issued to a member of that position (use the position `ID`, for example `KIT.INITIATE`). Items are names in the world [catalog](22-items.md). |
+| `KIT.POSITION="catalog item,catalog item"` | none | Items issued to a member of that position (use the position `ID`, for example `KIT.INITIATE`). Items are names in the world [catalog](22-items.md). **Known fault:** the parameter reader (`CMParms.getParmStr`) treats a key that contains `.` as punctuation and returns the default, so in the current build a `KIT.` parameter is never read and `kit` always answers "There is no kit for your rank." (checked with a direct call; see the audit notes). `KITFEE` is unaffected. |
 | `KITFEE=n` | `0` | Charge for `kit replace`. |
 | `LEAVEMSG="text"`, `REFUSEMSG="text"` | stock lines | The reply on leaving and on a refused join. |
 
@@ -612,7 +612,7 @@ dues or diplomacy, a tattoo rank ladder (`world/ranks.ini`, `MPRANK`, the
 all. Use a clan when you want powers, dues, relations, shop prices by clan, or
 `-CLANRANK` masks.
 
-### Diplomacy and conquest
+### Diplomacy and ClanEnemyAggressive
 
 Clans declare a relation toward each other: `NEUTRAL`, `WAR`, `HOSTILE`,
 `FRIENDLY` or `ALLY`. A relation matters when it is **mutual**: the combined
@@ -790,7 +790,7 @@ trigger accepts `MASK="..."` (a mask the *acting* character must pass),
 `WAIT=n` (ticks to wait before it can fire again for the same character). For
 example `AREAKILL(PCT=80 WAIT=9999 MASK="+AREAINSTANCE")`.
 
-**Directions** (first letters are enough): `UP` and `DOWN` change the value by
+**Directions** (written in upper case; the first letters are enough): `UP` and `DOWN` change the value by
 the standard amount; `TOWARDS` and `AWAY` move toward or away from the target's
 standing; `OPPOSITE` moves away from the target's side in proportion to how
 far apart they are; `MINIMUM` and `MAXIMUM` jump to the end of the scale;
@@ -943,13 +943,13 @@ file](#the-law-file)).
 | --- | --- | --- |
 | `MPFACTION` | `MPFACTION $n THIEVES.INI 50`; `MPFACTION $n THIEVES.INI +50`; `MPFACTION $n THIEVES.INI --50`; `MPFACTION $n THIEVES.INI TRUSTED` | A number sets the value; `+n` adds, `--n` subtracts; a band name or code (`TRUSTED`, `THIEVES_TRUSTED`) sets the middle of the band of that faction. Tells the character what changed. |
 | `FACTION()` condition | `if faction($n THIEVES.INI > 500)`; `if faction($n THIEVES.INI == Trusted)` | A number compares the value; otherwise the band's display name. |
-| `$%FACTION(who id)%` | band display name | Empty when the mob has no standing. |
+| `$%FACTION(who id)%` | band display name | Empty when the mob has no standing. Here `id` must be the faction ID (file name, with or without `.ini`). |
 | `$%FACTIONVALUE(who id)%` | the number | |
 | `$%FACTIONBAND(who id)%` | the band code | |
 | `FACTION_PROG` | `FACTION_PROG (@GLOBAL) id RANGE/ANY/UP/DOWN (mask)` | Fires when a standing changes or enters a band. See [26-mobprog-triggers.md](26-mobprog-triggers.md). |
 | Masks | `-FACTION +CODE`, `+FACTION -CODE` | Range codes, optionally `faction.code`. |
 
-The `id` in the functions may be the file name, the display name or a band code.
+The `id` in the `FACTION()` condition, `$%FACTIONVALUE%` and `$%FACTIONBAND%` may be the file name, the display name or a band code.
 Full syntax for the commands and functions is in
 [27-mobprog-commands.md](27-mobprog-commands.md) and
 [28-mobprog-functions.md](28-mobprog-functions.md).
@@ -994,8 +994,8 @@ To give a town a law, using a copy of the shipped laws:
    description contains a `JUDGE` word and who does *not* wander. An NPC whose
    name has no such word can be named into a role with the ambiance tags
    `#OFFICER` or `#JUDGE`, and `-OFFICER` keeps an NPC out of both roles;
-   `AmbianceAdder` (or `Prop_Adjuster`) attaches them (see
-   [23-properties-reference.md](23-properties-reference.md)). The wander rules
+   `AmbianceAdder` attaches them (see
+   [23-properties-reference.md](23-properties-reference.md#ambianceadder)). The wander rules
    still apply.
 3. Make the **jail** and **release** rooms and name them in `JAIL` and
    `RELEASEROOM` (a room ID, or text in the room's title; a trailing `$`
@@ -1321,7 +1321,7 @@ in a named currency (see [21-mobs.md](21-mobs.md) and
 | Fines | Owed under the law: `MPFINE`, `FINESOWED()`; collected by a `TaxCollector`. |
 | Clan money | A clan's `TREASURY` setting or a clan bank account. |
 
-### Shops, banks and currencies
+### Shops and shopkeeper pricing
 
 A shopkeeper is a mob with a shelf, a deal type and pricing rules. Creating and
 configuring shopkeepers, bankers and other service mobs (`GenShopkeeper`,
@@ -1364,7 +1364,7 @@ is 1.
 | `BUY=0.8 MASK(-CLANRANK "+Knights of the Rose>=KNIGHT")` | A customer who passes the mask. |
 | `RANGE=3` or `RANGE=25%` | Not a price: the shop refuses to buy items whose level is more than that far from the area's median level. |
 
-Example: `BUY=0.7 SMITHS_EXALTED;BUY=0.85 SMITHS_HONOURED;BUY=1.5 SMITHS_SHUNNED SELL=0.8 CLAN:Smiths_Guild`.
+Example: `BUY=0.7 SMITHS_EXALTED;BUY=0.85 SMITHS_HONOURED;BUY=1.5 SMITHS_SHUNNED;SELL=0.8 CLAN:Smiths_Guild`.
 Put the strictest rule first, since the first match wins.
 
 **How the price is worked out.** This is the order the engine uses, and
@@ -1418,7 +1418,7 @@ cancel one sale with `CNCLMSG_PROG` on the shopkeeper.
 conditional restocking and a persistent supply-and-demand market are not
 implemented: restock with `RESET`/`STOCK` on a timer script if you want that.
 
-**PRICECHECK.** In builder mode, DEV mode or with `CMDMOBS`:
+**PRICECHECK.** In builder mode, DEV mode or with `CMDAREAS` or `CMDMOBS`:
 
 ```text
 PRICECHECK [item] (AT [shopkeeper]) (FOR [character]) (SELL)
@@ -1429,7 +1429,8 @@ area, a parent area, the ini, or a running quest that gave it a `PRICEMASKS`)
 and then each step of the sum above for that customer; with `SELL` it works
 out what the shop pays instead. The item is looked for in the shop's stock,
 then the character's and your own inventory, then the room. Without `AT` the
-first non-player shopkeeper here is used; without `FOR`, yourself. Always test
+first non-player shopkeeper here is used; without `FOR`, yourself. The
+shopkeeper and the customer must be in the room. Always test
 with a normal character: an Archon's privileges may bypass restrictions.
 
 ### Banks and debts
@@ -1599,10 +1600,12 @@ BEHAVIORS`) so its `GuildMaster` parameters are:
 CLAN="Gutter Hand" JOINMASK="-BASECLASS +Thief" JOINFEE=50 JOINQUEST="Proof of Nerve" RANKS=MERIT DUES=TRUE KIT.FOOTPAD="a guild lockpick,a guild cloak" KITFEE=25
 ```
 
-The two kit items must be in the world catalog (see
-[22-items.md](22-items.md)). A thief who has won "Proof of Nerve" can now say
-`join` to the guildmaster: it takes 50 gold, makes them a Footpad, and hands
-over the kit once.
+A thief who has won "Proof of Nerve" can now say `join` to the guildmaster:
+it takes 50 gold and makes them a Footpad. The `KIT.FOOTPAD` and `KITFEE`
+parameters are meant to hand over the two catalog items (see
+[22-items.md](22-items.md)) once, but see the known fault in the
+[GuildMaster](#guildmaster) table: in the current build `KIT.` keys are never
+read, so the kit is not issued.
 
 **5. Dues.** The government says monthly, one month of grace, and the steps
 `WARN,DEMOTE,EXILE`; it does not say how much. Set it on the clan:
@@ -1617,7 +1620,7 @@ three and expelled after four; a member who is behind is also not promoted.
 room with the Footpad rank.
 
 **7. Test.** As a thief character: `join` (check the refusals first: not a
-thief, no quest, no money), `kit`, `kit replace`, `rank` (it says what the next
+thief, no quest, no money), `rank` (it says what the next
 rank requires), `CLANDETAILS Gutter Hand`, `FACTIONS Gutter Hand standing`,
 `mpfaction` up to Honoured and watch the promotion, miss dues across game
 months, then `leave` and `join` again. Save and restore around a dues date;
@@ -1660,8 +1663,7 @@ sentences softened for the town's heroes.
    ```
 
    `LAW` should report `Officers (watchman): 1 found`, `Judges (magistrate): 1
-   found`, a gaol and release room each `is Riverton#nn`, and `Taxes: salestax
-   5%`. If an NPC is named as an officer but does not count, `LAW` says why.
+   found`, a gaol and release room each `is Riverton#nn`, and a `Taxes:` line that starts `salestax 5%` (the other non-empty tax keys of `laws.ini`, `cittax` and `propertytax`, follow it). If an NPC is named as an officer but does not count, `LAW` says why.
 
 5. Play a crime through. A witness must be in the same or an adjacent room
    or no warrant is issued; the watchman always notices. Let a thief steal in view
