@@ -14,6 +14,11 @@ fresh-process save compatibility without changing this museum or the default wor
 The [ability-composition pack](ability-composition/README.md) adds a separately
 enabled Ember bolt skill with chaining, burning and power supports.
 
+The [Ember Trial](ember-trial/README.md) is Stage 4's complete playable sample:
+seven rooms, training, support builds, equipment, scripted enemies, a boss and
+saved completion. Its creation tool publishes a separate deployment ready for
+ordinary play, using the opt-in Stage 1–3 systems.
+
 ## Automated tour
 
 From the repository root, with a JDK on PATH:

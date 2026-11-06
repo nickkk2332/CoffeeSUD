@@ -1,0 +1,7 @@
+{
+  "schema": 1, "kind": "skill", "id": "embertrial.scorch", "version": 1,
+  "name": "Cinder spit", "tags": ["spell", "fire"],
+  "mask": "-TATTOO +EMBERTRIAL_ENEMY",
+  "damage": {"fire": 16},
+  "stats": {"mana": 1, "actions": 1, "cooldown": 1, "range": 5}
+}

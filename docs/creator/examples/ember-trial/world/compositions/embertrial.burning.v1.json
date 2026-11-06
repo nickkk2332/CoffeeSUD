@@ -1,0 +1,9 @@
+{
+  "schema": 1, "kind": "support", "id": "embertrial.burning", "version": 1,
+  "name": "Lingering flame", "requires_all": ["fire"], "adds_tags": ["burning"],
+  "modifiers": [
+    {"stat": "burn_damage", "op": "flat", "value": 5},
+    {"stat": "burn_ticks", "op": "flat", "value": 6},
+    {"stat": "mana", "op": "flat", "value": 2}
+  ]
+}

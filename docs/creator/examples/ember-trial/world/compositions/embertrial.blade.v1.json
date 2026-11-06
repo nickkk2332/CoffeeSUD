@@ -1,0 +1,6 @@
+{
+  "schema": 1, "kind": "skill", "id": "embertrial.blade", "version": 1,
+  "name": "Tempered strike", "tags": ["attack", "melee", "physical"],
+  "damage": {"physical": 30},
+  "stats": {"mana": 3, "movement": 2, "actions": 1, "cooldown": 1, "range": 5}
+}

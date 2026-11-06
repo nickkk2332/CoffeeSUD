@@ -32,6 +32,11 @@ versus type-history conversion, explicit defenses, removable stat sources,
 version-pinned profiles and inspection of actual resolved events. Native combat,
 further ailments and recovery pools remain separate work. It is also default off.
 
+Stage 4's [Ember Trial](../../creator/examples/ember-trial/README.md) combines
+Stages 1–3 into an isolated playable sample with training, support builds,
+defense equipment, scripted enemies, a boss and persistent completion. It adds
+example content and authoring recipes rather than more engine mechanic families.
+
 ## Reading routes
 
 | Start here if you want… | Guide |

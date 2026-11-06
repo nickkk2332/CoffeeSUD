@@ -9,6 +9,9 @@ and power supports to Ember bolt.
 For optional armor, resistance, penetration, block, criticals and alternative
 conversion rules, follow the [combat-profile recipe](16-combat-profiles.md#install-and-play)
 and [stat-property examples](16-combat-profiles.md#add-defense-and-offense-stats).
+For a complete Stage 4 adventure using all three foundations, build and play
+[the Ember Trial](examples/ember-trial/README.md): training, gear choices,
+scripted enemies, a boss and persistent completion in an isolated deployment.
 
 These recipes combine systems rather than listing hypothetical features.
 The museum pack supplies a tested end-to-end world for recipes 1–7, 17 and 21's

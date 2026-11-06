@@ -1,0 +1,9 @@
+{
+  "schema": 1, "kind": "support", "id": "embertrial.power", "version": 1,
+  "name": "Concentrated power", "requires_any": ["spell", "attack"],
+  "modifiers": [
+    {"stat": "damage", "op": "more", "value": 50},
+    {"stat": "mana", "op": "more", "value": 50},
+    {"stat": "actions", "op": "more", "value": 25}
+  ]
+}

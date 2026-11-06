@@ -1,0 +1,12 @@
+{
+  "schema": 1, "kind": "skill", "id": "embertrial.transmute", "version": 1,
+  "name": "Transmuted shard", "tags": ["spell", "projectile", "fire", "physical"],
+  "damage": {"physical": 20},
+  "stats": {"mana": 6, "actions": 1, "cooldown": 2, "range": 5},
+  "modifiers": [
+    {"op": "convert", "from": "physical", "to": "fire", "value": 100},
+    {"stat": "damage", "op": "increased", "value": 20},
+    {"stat": "damage.physical", "op": "increased", "value": 50},
+    {"stat": "damage.fire", "op": "increased", "value": 100}
+  ]
+}

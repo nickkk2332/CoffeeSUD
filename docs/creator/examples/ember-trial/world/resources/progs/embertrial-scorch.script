@@ -1,0 +1,4 @@
+# An authored NPC chooses a particular composed skill; no generic AI extension.
+FIGHT_PROG 100
+mpforce $i compose cast embertrial.scorch $n
+~

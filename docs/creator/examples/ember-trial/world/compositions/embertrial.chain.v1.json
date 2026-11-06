@@ -1,0 +1,11 @@
+{
+  "schema": 1, "kind": "support", "id": "embertrial.chain", "version": 1,
+  "name": "Forking embers", "group": "chain",
+  "requires_all": ["projectile"], "excludes_tags": ["melee"],
+  "adds_tags": ["chaining"],
+  "modifiers": [
+    {"stat": "chains", "op": "flat", "value": 2},
+    {"stat": "damage", "op": "more", "value": -20},
+    {"stat": "mana", "op": "more", "value": 25}
+  ]
+}

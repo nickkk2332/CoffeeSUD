@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "id": "embertrial.adventure",
+  "version": 1,
+  "title": "The Ember Trial sample adventure",
+  "requires": {"combat.profiles": 1},
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["world", "character"],
+  "on_disable": "suspend",
+  "settings": {
+    "safe_death": {"type": "boolean", "default": true},
+    "camp_rest": {"type": "boolean", "default": true},
+    "allow_profile_switch": {"type": "boolean", "default": true}
+  },
+  "state": {
+    "initialized": {"type": "boolean", "default": false},
+    "cleared": {"type": "string", "default": "{}", "max_length": 1024},
+    "claimed": {"type": "boolean", "default": false},
+    "rescues": {"type": "integer", "default": 0, "min": 0, "max": 100000}
+  }
+}

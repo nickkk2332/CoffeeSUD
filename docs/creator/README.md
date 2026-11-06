@@ -29,6 +29,7 @@ names such as `Harbour#2` are placeholders; create them or substitute your IDs.
 | Select optional modules and preserve their scoped campaign state | [Optional modules](14-optional-modules.md) |
 | Author optional tagged skills, supports, chains and burning | [Ability composition](15-ability-composition.md) |
 | Choose optional damage/defense rules and explain actual combat results | [Combat profiles](16-combat-profiles.md) |
+| Play and adapt a complete optional ARPG sample adventure | [The Ember Trial](examples/ember-trial/README.md) |
 
 ## References and examples
 

@@ -1,0 +1,7 @@
+{
+  "schema": 1, "kind": "skill", "id": "embertrial.slam", "version": 1,
+  "name": "Slag hammer", "tags": ["attack", "melee", "physical"],
+  "mask": "-TATTOO +EMBERTRIAL_ENEMY",
+  "damage": {"physical": 14},
+  "stats": {"mana": 1, "actions": 1, "cooldown": 1, "range": 5}
+}

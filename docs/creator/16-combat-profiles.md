@@ -10,6 +10,9 @@ casts. Ordinary weapon attacks, native spells and existing effects retain their
 native combat rules. Profile stats do not automatically alter those abilities.
 This is a foundation for further adapters, rather than a global combat replacement.
 
+Stage 4's [Ember Trial](examples/ember-trial/README.md) is a ready-to-build
+playable example combining these rules with skills, equipment, enemies and a boss.
+
 ## Install and play
 
 In a [separate deployment](examples/README.md), install the parent composition

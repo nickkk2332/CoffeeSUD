@@ -1,0 +1,21 @@
+# Publish the sample first. Each .play file starts a disposable campaign.
+#char Trialvisitor,Human,Apprentice
+trial status
+#expect Cooling heart: unclaimed
+trial rules history
+compose show embertrial.transmute
+#expect damage.fire=54
+trial rules final
+compose show embertrial.transmute
+#expect damage.fire=44
+east
+compose link embertrial.ember embertrial.burning
+compose cast embertrial.ember ward effigy
+#expect You use Ember lance
+#wait 1
+combatresult
+#expect HP removed 3
+trial leave
+#assert HERE EmberTrial#0
+trial rest
+#expect The brazier restores

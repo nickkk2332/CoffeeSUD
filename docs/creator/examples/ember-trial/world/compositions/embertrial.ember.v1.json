@@ -1,0 +1,6 @@
+{
+  "schema": 1, "kind": "skill", "id": "embertrial.ember", "version": 1,
+  "name": "Ember lance", "tags": ["spell", "projectile", "fire"],
+  "damage": {"fire": 24},
+  "stats": {"mana": 6, "actions": 1, "cooldown": 2, "range": 5}
+}

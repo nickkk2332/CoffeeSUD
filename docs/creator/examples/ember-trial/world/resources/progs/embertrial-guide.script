@@ -1,0 +1,16 @@
+SPEECH_PROG p lessons
+mpmenu $n EMBERTRIAL_LESSON "Choose a lesson:" embers:"Embers and supports" steel:"Armor and equipment" conversion:"Two conversion rules" bye:"Goodbye" bye
+~
+
+FUNCTION_PROG EMBERTRIAL_LESSON
+switch $0
+case embers
+  mpechoat $n Try COMPOSE LINK embertrial.ember embertrial.burning, then COMPOSE CAST embertrial.ember ward effigy. Read COMBATRESULT afterward. Add embertrial.chain and embertrial.power for the road.
+case steel
+  mpechoat $n The armory holds an ember mantle, a quilted mantle, a piercing signet and critical bracers. GET and WEAR them. REMOVE one mantle before wearing the other. COMBATRESULT STATS shows what changed.
+case conversion
+  mpechoat $n At camp, TRIAL RULES FINAL or TRIAL RULES HISTORY changes this campaign's preset. COMPOSE SHOW embertrial.transmute displays 44 or 54 fire before defenses. Existing burns keep their original profile.
+case bye
+  mpechoat $n The keeper points north. Recover the cooling heart, and return alive.
+endswitch
+~
