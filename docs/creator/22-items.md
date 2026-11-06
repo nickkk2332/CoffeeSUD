@@ -501,9 +501,10 @@ Detail for books follows in [Readable items](#readable-items-books-journals-maps
 | Class | Based on | What it is / adds |
 | --- | --- | --- |
 | `GenWeapon` | `StdWeapon` | The general weapon. Wield or hold, steel, damage 5, level 5. Adds attack type, classification, ranges, ammunition |
-| `GenBow`, `GenHandBow` | `StdBow` | Ranged weapons with ammunition (arrows), ranges 1-3, two-handed (bows) |
-| `GenSling` | `StdSling` | Ranged weapon fired with stones |
-| `GenSpear` | `StdSpear` | A thrown or held spear |
+| `GenBow` | `StdBow` | Ranged weapon with ammunition (arrows), ranges 1-3, two-handed, 20 shots |
+| `GenHandBow` | `StdBow` | A hand crossbow: ammunition type `bolts` |
+| `GenSling` | `StdSling` | Ranged weapon with ammunition type `bullets`, ranges 1-2 |
+| `GenSpear` | `StdSpear` | A spear that can be thrown: ranges 0-3 |
 | `GenBoffWeapon` | `StdBoffWeapon` | A harmless "boff" weapon that deals soft hits ("puff", "boff") for practice and play |
 | `GenLasso`, `GenNet` | `StdLasso`, `StdNet` | Entangling tools used as weapons |
 | `GenStaff` | `GenWeapon` + `Wand` | A staff that is both a weapon and a wand (spell, charges, enchant type) |
@@ -545,7 +546,7 @@ create it. See [Weapons](#weapons).
 | `GenSuperPill` | `GenPill` | Archon pill: stat/training boosts. Archon only |
 | `GenPotion` | `StdPotion` | A potion that casts spells on drinking |
 | `GenMultiPotion` | `GenDrink` + `Potion` | A flask with several doses |
-| `GenPowder` | `StdPowder` | Magic dust (`MagicDust`), thrown or scattered |
+| `GenPowder` | `StdPowder` | Magic dust (`MagicDust`): thrown or dusted on a target, it casts its spells on them |
 | `GenLightSource` | `LightSource` | A light that burns for a duration (readable text) and may be destroyed when it runs out |
 
 ### Magic items
@@ -565,8 +566,9 @@ create it. See [Weapons](#weapons).
 | --- | --- | --- |
 | `GenRideable` | `StdRideable` | The base for anything creatures can sit on, sleep on or ride. Default is a generic boat |
 | `GenFurniture` | `GenRideable` | Furniture (sit, 2 riders, not gettable, oak, weight 40) |
-| `GenChair`, `GenBed`, `GenTable`, `GenTent`, `GenScale` | `GenRideable` | Seat, bed, table, tent and scales with the right rider basis |
-| `GenBoat` | `GenRideable` + `SiegableItem` | A simple boat |
+| `GenChair`, `GenBed`, `GenTable`, `GenTent` | `GenRideable` | Seat, bed, table and tent with the right rider basis |
+| `GenScale` | `GenRideable` | A set of scales: things placed on it (capacity 10000) or sat on it are weighed |
+| `GenBoat` | `GenRideable` + `SiegableItem` | A simple water-based boat |
 | `GenCage`, `GenCageRideable` | | A cage holding a caged animal; a cage wagon |
 | `GenPortal` | `StdPortal` | An item that is also an exit: its readable text lists room IDs |
 | `GenMobilePortal` | `GenPortal` | A rideable portal that can be carried or moved |

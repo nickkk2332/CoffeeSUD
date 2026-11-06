@@ -1135,7 +1135,7 @@ Templates are `resources/quests/templates/*.quest`.
 | `story_explore1` | Go to a place (Story Explore #1). |
 | `story_bounty1` | A kill count, paid at the giver, offered again after a cooldown (`SET REPEATABLE`) (Story Bounty #1). |
 | `normal_capture1-4`, `normal_collect1-5`, `normal_delivery1-4`, `normal_dispel1`, `normal_escort1-2`, `normal_killer1-2`, `normal_mystery1-2`, `normal_protect1-2`, `normal_travel1-4` | The inherited one-player-at-a-time quest shapes, also the shapes that `RandomQuests` generates. They use `set wait 1 / set interval 1` so they start by themselves, and announce on `$QUEST_ANNOUNCECHANNEL` if set. |
-| `auto_*` | The inherited "auto" variants (the quest takes itself on). |
+| `auto_*` | The inherited "auto" variants: on its schedule the quest picks the player characters that match the criteria (`SET PCMOBGROUP RESELECT ANY MASK=...`) and `GIVE SCRIPT`s them its accept script, so they are put on it with no giver. |
 | `competitive_*` | Race between several players. Marked `#!QUESTMAKER_MODE MULTIPLAYER`: hidden from the wizard's list in a single-player game, but loadable by name. |
 
 The story templates share one shape: they pick an *existing* giver by area,
@@ -1247,9 +1247,10 @@ Reading a board adds each job it shows to `QUESTS OFFERED`.
   (`mql_viable_questgivers`: named mobs with an intelligence over 5, not
   aggressive, with exits) and, for a collect or capture, suitable targets. In a
   tiny world generation may often fail.
-- **Level criteria.** Generated quests set `QUEST_CRITERIA` with a level window
-  and `+SYSOP` (in the shipped `normal_travel2.xml`). Check a generated quest's
-  `QUESTINFO` if a character cannot take it.
+- **Level criteria.** Generated quests set `QUEST_CRITERIA` to a level window
+  (`+SYSOP +LEVELS -<n ->n` in the shipped `normal_travel2.xml`: archons always
+  pass). If a character cannot take a generated quest, read its script with
+  `QUESTINFO` and check the criteria.
 
 ## JavaScript quest handlers
 

@@ -2162,3 +2162,193 @@ mpshop $i PRICE 'a healing potion' 40
 
 **Example:** `mpgrant $o $n NAME='The Gull'`
 
+## Law, factions, clans and relationships
+
+### MPACCUSE
+
+**Syntax:** `MPACCUSE <accused> <victim | ''> <crime>`. Minimum: 3 words.
+
+**Arguments:** the accused mob or player; the victim (a mob, or `''` for none); the crime: either an ID of a crime in the host's room's law (a basic, tax or skill crime), as one word, or the whole crime given in five words (where, flags, name, sentence, warning).
+
+**Behaviour:** files a warrant against the accused under the law of the host's room, as if the law's guards had seen the crime. Errors: `X is not found`, `No law at <room>`, `Wrong arguments.`
+
+**Example:** `mpaccuse $n '' TRESPASSING`
+
+**Notes:** see [09](09-society.md) for the law system.
+
+### MPPARDON
+
+**Syntax:** `MPPARDON <who> [crime | ALL]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** takes the character's warrants away, quietly: those for the named crime (by its name or a word of it), or all. The law is that of the host's room (else where the character is); with no law there it logs `there is no law here`.
+
+### MPFINE
+
+**Syntax:** `MPFINE <who> <+amount | -amount | amount>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** adds to (`+`), takes from (`-`), or sets (no sign) the fines the character owes under that law, in base value. A `TaxCollector` collects them. Read with `FINESOWED()`. A non-number logs `MPFINE who +amount|-amount|amount`.
+
+**Example:** `mpfine $n +25`
+
+### MPRELEASE
+
+**Syntax:** `MPRELEASE <who>`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** a prisoner's time is up: the guards come to walk them to the release room, and the warrants that jailed them are done. One being taken in is let go for now.
+
+### MPSUPPRESSLAW
+
+**Syntax:** `MPSUPPRESSLAW <crime | ALL> <n> [TICKS | HOURS | DAYS | WEEKS | MONTHS]` or `MPSUPPRESSLAW <crime | ALL> OFF`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** no warrants for the crime (or for any, with `ALL`) under the law of the host's room for a while, on the game clock (a bare number is ticks). `OFF` ends it. A save keeps it.
+
+**Example:** `mpsuppresslaw ALL 2 DAYS` during a festival.
+
+### MPFACTION
+
+**Syntax:** `MPFACTION <who> <faction> <value>`. Minimum: 3 words.
+
+**Arguments:** the character; the faction by ID or name; the value: a number, `+n` (add), `--n` (subtract), or the name or code of one of the faction's ranges (the character is set to the middle of it).
+
+**Behaviour:** changes the character's standing and tells them (`You gain 20 faction with X.`). An unknown faction or range is logged.
+
+**Example:** `mpfaction $n Brenn +200`; `mpfaction $n Brenn --50`; `mpfaction $n Brenn Friendly`
+
+**Notes:** see [09](09-society.md) for factions.
+
+### MPAFFINITY
+
+**Syntax:** `MPAFFINITY <npc> <who> <+n | -n | =n>`. **CoffeeSUD.** Minimum: 3 words.
+
+**Behaviour:** raises, lowers or sets the NPC's opinion of the character (the `Prop_Affinity` score), kept in the game's variables. `who` may be a name that is not present. Read with `AFFINITY(npc who)`; see [06](06-npcs-dialogue.md).
+
+**Example:** `mpaffinity $i $n +5`
+
+### MPSETCLAN
+
+**Syntax:** `MPSETCLAN <who> <clan> <role>`. Minimum: 3 words.
+
+**Behaviour:** puts the character in the clan (by ID or name) with the role (a number, or the role's name). A player joins as a member does, with the clan's entry script and `CLAN_PROG`; an NPC just gets the clan and role. An unknown clan does nothing.
+
+### MPSETCLANDATA
+
+**Syntax:** `MPSETCLANDATA <clan | who> <variable> <value>`. Minimum: 3 words.
+
+**Behaviour:** changes one datum of a clan: the clan is named, or is the first clan of the character given. An unknown variable logs `X is not a valid clan variable`. The clan is saved if the value took.
+
+**Example:** `mpsetclandata Wolves CLANDONATEPRIZE 100`
+
+### MPCLANRELATION
+
+**Syntax:** `MPCLANRELATION <clan A> <clan B> <NEUTRAL | WAR | HOSTILE | FRIENDLY | ALLY> [MUTUAL]`. **CoffeeSUD.** Minimum: 3 words.
+
+**Behaviour:** sets A's relation to B; with `MUTUAL` also B's to A. Any other form logs `MPCLANRELATION Syntax`.
+
+**Example:** `mpclanrelation Wolves Crows WAR MUTUAL`
+
+### MPCONQUER
+
+**Syntax:** `MPCONQUER <area> <clan> <+n | -n | =n | RULE | FREE>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** changes a clan's control of an area that has the `Conquerable` behaviour: adds or removes control points (`+10`, `-5`), sets them (`=50`), makes the clan the ruler (`RULE`), or ends its rule (`FREE`). It uses the same transitions and events as normal conquest. See [09](09-society.md).
+
+**Example:** `mpconquer Midgaard Wolves +25`
+
+## World, weather, time and generation
+
+### MPWEATHER
+
+**Syntax:** `MPWEATHER <area | HERE> <weather> [NEXT] [FOR <n> <HOURS|DAYS>] [QUIET]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** changes an area's weather now, with the usual end and start messages to everyone under the sky and the `WEATHER_PROG`s (`QUIET`: no messages), or, with `NEXT`, only the weather that comes next. `FOR` holds it there for that much game time; each change of weather comes back to it, then the weather goes its own way. A save keeps the hold. The weather word is one of the `WEATHER` list (`CLEAR`, `RAIN`, `HEAT` ...).
+
+**Example:** `mpweather HERE RAIN FOR 6 HOURS`
+
+### MPROOMSTATE
+
+**Syntax:** `MPROOMSTATE <room | HERE | area> <state>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** the `RoomStates` behaviour of the room (or its area, or the area named) changes to that state now. Without the behaviour it logs `no RoomStates there`; an unknown state logs `no state X`. See [10](10-world-simulation.md).
+
+**Example:** `mproomstate HERE flooded`
+
+### MPREGENERATE
+
+**Syntax:** `MPREGENERATE <area | HERE> [SEED=<n> | SEED=SAME]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** re-rolls the area, as its `Regenerate` behaviour would, with its `KEEP` and `SEED` unless a seed is given. If the party is inside, it waits until they have left. An area without `Regenerate` is re-rolled from its `GENSOURCE` at once, unless a player is inside. Errors are logged as `MPREGENERATE RunTime`. See [12](12-generation.md).
+
+**Example:** `MPREGENERATE Fixg14Maze SEED=7`
+
+### MPPASSTIME
+
+Makes game time pass; see [MPPASSTIME](#mppasstime) under *Calling, timing and script management*.
+
+## Travel and vessels
+
+These commands move boats, ships and mounts; they are described with the travel system in [30](30-travel-vehicles-instances.md). Quote a multi-word vessel name with single quotes. A vessel is found by name across the whole world.
+
+### MPSAIL
+
+**Syntax:** `MPSAIL <vessel> TO <room | area | port>` or `MPSAIL <vessel> <direction> [<direction> ...]`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** sets a navigable vessel's course: to a destination by the ordinary route, or along a list of directions, and raises its anchor. Errors: `Unknown vessel`, `Vessel is not navigable`, `Unknown or inaccessible destination`, `There is no navigable route to that destination`, `The vessel is already there`.
+
+**Example:** `mpsail 'the Gull' TO Brenn#1`
+
+### MPANCHOR
+
+**Syntax:** `MPANCHOR <vessel> <UP | DOWN>`. **CoffeeSUD.** Minimum: 1 word (needs 2).
+
+**Behaviour:** raises (`UP`) or drops (`DOWN`) the anchor. Anything else logs `Use UP or DOWN`.
+
+### MPMOVEVESSEL
+
+**Syntax:** `MPMOVEVESSEL <vessel> <room>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** moves the vessel to the room and docks it there at once, with no voyage; any course is cleared and the anchor dropped. Fires the vessel's arrival triggers.
+
+### MPBOARD
+
+**Syntax:** `MPBOARD <who> <vessel> [interior room]`. **CoffeeSUD.** Minimum: 1 word (needs 2).
+
+**Behaviour:** carries the character and the party near them aboard the vessel, to the interior room given (a room ID in the vessel's area) or its first room. A refused boarding logs `Boarding was refused.`
+
+### MPHITCH
+
+**Syntax:** `MPHITCH <rider> <mount>`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** makes an item or creature ride a mount or rideable (a cart behind a horse). The two must be in the same room, and a riding loop is refused.
+
+### MPUNHITCH
+
+**Syntax:** `MPUNHITCH <rider>`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** takes the rider off what it rides.
+
+## Logging, debugging and miscellany
+
+### MPLOG
+
+**Syntax:** `MPLOG <ERROR | INFO | DEBUG> <header> <message>`. Minimum: 3 words.
+
+**Behaviour:** writes a line to the game log: `ERROR` to the error log, `INFO` (or `SYSTEM`) to the info log, `DEBUG` to the debug log, as `[header] message`. An unknown type logs `Unknown log type`.
+
+**Example:** `mplog INFO bell The bell was rung by $n`
+
+### MPDEBUG
+
+**Syntax:** `MPDEBUG <message>`. Minimum: 1 word.
+
+**Behaviour:** only in builder mode or with `DEV=1`: writes the message to the developer log as `[debug host@room file:line] message`. In a normal game a line left in does nothing. `debug(x)` in a `<SCRIPT>` does the same. See [13](13-testing-release.md).
+
+**Example:** `mpdebug the player is $n and the variable is $<$n STEP>`
+
+### MPPOSSESS
+
+**Syntax:** `MPPOSSESS <player> <mob>`. Minimum: 1 word.
+
+**Behaviour:** the player takes over the NPC (as `POSSESS` does); the mob must be an NPC and not an administrator. Anything else logs `X is not a player` or `X is not a mob`. `QUIT` brings them back.
+
+**Notes:** inherited from multi-user CoffeeMud, where it moved a connection from one body to another. CoffeeSUD has one local terminal and a party system for controlling several characters (see [31](31-saves-and-party.md)); do not use `MPPOSSESS` in new content.
+

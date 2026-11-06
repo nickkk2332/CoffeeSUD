@@ -1558,7 +1558,7 @@ GREET_FIRST: SAY Fresh flour, stranger! Ask what I [[grind]].;GREET: COOLDOWN=30
 9"Hello.
 
 >hobb
-?AFFINITY($i $t >= 25)
+?AFFINITY($i $t > 24)
 (hello|hi|morning)
 9"Ah, $t! My best customer. Flour today?
 (hello|hi|morning)
@@ -1597,7 +1597,7 @@ How the pieces cooperate:
   restricts trading only to the `DAY` entry.
 - Sounder barks greet arrivals when he is awake and in the room; the first greeting
   teaches the topic "grind", and MudChat has an entry for it.
-- The MudChat guard `?AFFINITY($i $t >= 25)` gives friends the warmer greeting.
+- The MudChat guard `?AFFINITY($i $t > 24)` (FRIENDLY starts at 25) gives friends the warmer greeting.
   Gifts of flowers raise Affinity; `SHOPFACTOR` discounts friends; Prop_NPCLines
   (also masked by affinity) rewords stock lines for friends.
 - Memory's `STOLE` fact (theft from him) makes him refuse to deal; `GREETIF=MET>2`
@@ -1667,26 +1667,27 @@ instead, answer it with a script: `SPEECH_PROG harbourmaster` that runs `MPMENU`
 
 Tarn the sellsword sits in the inn for hire: 150 gold for three days, wages of
 2 a day, quits in a fight below 30 percent unless he likes you, will not drop
-or give away your things. Buying him ale builds loyalty.
+or give away your things. Giving him ale builds loyalty.
 
 Behaviour `Hireling`:
 
 ```text
-150;3;KEYWORDS=SWORD,MERCENARY,HIRE CONTRACT=DAYS UPKEEP=2 FLEEHP=30 LOYAL=40 MSG_OFFER="A sword for @x1, @x2. Ask me what I can do." MSG_HIRED="Done, @x1. @x2. Lead on." MSG_EXPIRE="My days are up. It's been good steel." REFUSE=DROP,GIVE MSG_NOORDER="That's not what you pay me for."
+150;3;KEYWORDS=SWORD,MERCENARY,HIRE CONTRACT=DAYS UPKEEP=2 FLEEHP=30 LOYAL=40 MSG_OFFER="A sword for @x1, @x2. Ask me what I can do." MSG_HIRED="Done, @x1. I can do: @x2. Lead on." MSG_EXPIRE="My days are up. It's been good steel." REFUSE=DROP,GIVE MSG_NOORDER="That's not what you pay me for."
 ```
 
 Effect `Prop_Affinity` (so loyalty can be earned): `GIFT(ale)=+10 TALK(brave)=+5 DECAY=1`.
 
 Effect `Prop_NPCLines`: `ONTHEJOB="Still on your coin, boss."|"Three days, I said." SKILLS="Here is what I can do: @x1."`
 
-Behaviour `MudChat` with a short file:
+Behaviour `MudChat` with a short file. Keep its words away from Hireling's own
+keywords (`sword`, `mercenary`, `hire`, `work`, `time`, ...), or both would answer:
 
 ```text
 >tarn
-(sword|blade)
-9"Forty fights, no regrets. [[hire|Hire]] me if you want a second blade.
-(hire|work|price)
-9"Ask and I'll tell you my terms.
+(fights|battles|past)
+9"Forty fights, no regrets. Ask me about the [[goblin war]] if you want a story.
+(goblin war|goblins)
+9"Burned three villages before we broke them. I kept this scar.
 ```
 
 Play it:
@@ -1695,13 +1696,13 @@ Play it:
 talk tarn          (the menu offers "Hire (its terms)")
 hire tarn          (terms as a menu; choose 1)
 order tarn kill rat
-say sword          (on the job: he says how long)
+say hire           (on the job: he says how long)
 wait 2 days        (watch the wages; give him ale)
 ```
 
 Things to check: he follows you; refusing `ORDER tarn drop sword`; below 30
 percent of his hit points in a fight he quits unless `AFFINITY` is at least 40
-(buy him ale first); after two unpaid days he leaves; at expiry he returns to his
+(give him ale first); after two unpaid days he leaves; at expiry he returns to his
 start room (`allDone` walks him home). Remember that `CONTRACT=DAYS` makes the
 second number days, not minutes.
 

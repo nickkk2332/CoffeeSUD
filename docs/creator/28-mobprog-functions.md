@@ -1133,10 +1133,10 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 
 ### WORNON
 
-- **Test:** `WORNON(who LOCATION item words)`: true if what is worn on that body location matches the words; with empty words, true if nothing is worn there.
-- **Value:** `$%WORNON(who LOCATION)%`: the names of the items worn there.
-- **Example:** `IF WORNON($n WIELD sword)`; `IF WORNON($n HEAD '')`
-- **Notes:** `LOCATION` is a wear-location name such as `HEAD`, `WIELD`, `TORSO`, `FEET` (see [22-items.md](22-items.md)); an unknown one logs an error.
+- **Test:** `WORNON(who LOCATION item words)`: true if something worn on that body location matches the words.
+- **Value:** `$%WORNON(who LOCATION)%`: the names of the items worn there, each followed by a space.
+- **Example:** `IF WORNON($n WIELD sword)`
+- **Notes:** `LOCATION` is a wear-location name such as `HEAD`, `WIELD`, `TORSO`, `FEET` (see [22-items.md](22-items.md)); an unknown one logs an error and is false. The item words may not be empty (that logs a `Syntax` error); read the value form (`$%WORNON($n HEAD)%`) if you need to know whether a slot is empty.
 
 ### ITEMCOUNT
 
@@ -1185,7 +1185,7 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 
 ### DOORSTATE
 
-- **Value:** `$%DOORSTATE(room direction)%` or `$%DOORSTATE(container)%`: `open`, `closed` or `locked`; empty if there is nothing there.
+- **Value:** `$%DOORSTATE(room direction)%` or `$%DOORSTATE(room container)%`: `open`, `closed` or `locked`; empty if there is nothing there.
 - **Test:** `DOORSTATE(room direction == locked)`
 - **Example:** `IF DOORSTATE(HERE north == locked)`
 - **Notes:** not inherited. `room` is `HERE`, a room ID, or a thing whose room is used.
