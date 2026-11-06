@@ -942,3 +942,248 @@ Type `D` (or `F` for clan members) sells the rooms of the shopkeeper's area
 that have `Prop_RoomForSale`, `Prop_RoomsForSale`, `Prop_LotForSale` or
 `Prop_LotsForSale`; `P` and `Q` sell ships. Housing is covered in
 [07-items-crafting.md](07-items-crafting.md).
+
+## Rideable mobs and mounts
+
+A rideable mob is a creature other mobs and characters can mount: `GenRideable`,
+`GenHorse`, `GenRideableUndead` or the non-generic `Horse`, `Pegasus`,
+`PegasusGreater` and `StdRideable`. `CREATE MOB` with a race flagged for riding
+(Equine, Pachyderm, Centaur, Dragon, Drider, GiantSeaHorse, Mustelid,
+RustMonster, or a custom race with `CANRIDE`) makes a `GenRideable` rather than
+a `GenMob`.
+
+Players ride with `MOUNT [name]` (also `BOARD`, `RIDE`, `M`) and leave with
+`DISMOUNT`. Skills such as `Fighter_CallSteed`, `Skill_StableMount` and
+`Skill_MountedCombat` work on these classes; stables and travel are in
+[30-travel-vehicles-instances.md](30-travel-vehicles-instances.md).
+
+To make a horse:
+
+```text
+CREATE MOB GenHorse
+```
+
+and in the editor set Name ("a chestnut mare"), Display, Description, Level,
+Race `Horse`, Rideable Type `L` and Rider capacity (1 or 2). The default
+`GenRideable` is a land mount with capacity 2.
+
+| Rideable Type | Letter | Used for |
+| --- | --- | --- |
+| land-based | `L` | Horses, camels, wagons' pullers. |
+| water-based | `W` | Swimming mounts. |
+| air-flying | `A` | Griffons, pegasi, dragons. Gives the rider flight while mounted. |
+| furniture-sit | `C` | A chair-like mob or object. |
+| furniture-sleep | `B` | A bed. |
+| furniture-table | `T` | A table. |
+| enter-in | `E` | Something you enter (a wagon cab). |
+| ladder | `D` | Something you climb. |
+| wagon | `G` | A cart or wagon. |
+| furniture-hook | `H` | A hook or perch. |
+
+The **Mount Strings** are the words in the messages: "put" (default "on"),
+"mount" (default "mount(s)") and "dismount" (default "dismount(s)"). The **State
+Strings** are "state" ("being ridden by" by default), "state subject" ("riding
+on") and the "ride verb" for how the rider describes it. Leaving one empty
+(or typing the default) uses the engine default.
+
+A rideable can also be a normal fighting mob: give it behaviors, abilities and
+a level as for a `GenMob`. A rideable that wanders will carry its riders; give
+it `Prop_Resistance`, `Skill_Dodge` or armor as needed. A mount that should
+not wander off needs no `Mobile` behavior.
+
+## Deities
+
+A `GenDeity` is a god that clerics work for and characters worship. Place it
+in a protected room (give the room `Prop_NoSummon` and `Prop_NoTeleport`, so
+nobody drags the god away or kills it) and give it weapons if you want its
+worshippers' divine magic to follow its weapon type. In addition to the common
+fields it has:
+
+| Label | Meaning |
+| --- | --- |
+| Cleric Requirements | A mask (the `Prop_WearZapper` syntax) for who may serve as its cleric. |
+| Cleric Ritual | The actions a cleric performs to receive all the god's blessings. |
+| Worshiper Requirements | A mask for who may worship it. |
+| Worshiper Ritual | The actions a worshiper performs to receive one random blessing. |
+| Blessings | Abilities it grants (each flagged for clerics only or for everyone). |
+| Cleric Sin, Worshiper Sin | The actions that bring its curses on a cleric (all) or worshiper (one random). |
+| Curses | Abilities inflicted as punishment. |
+| Cleric Power Ritual | The ritual that earns a cleric one of its Powers; the power is taken away if the cleric rebukes the deity. |
+| Powers | Abilities it may give its clerics. |
+| Service Ritual | The steps of a religious service held in a room infused with the deity. |
+
+Ritual fields share one step syntax, shown with `?` at the prompt and in
+`AHELP` for the property of the same family. The stat codes are `CLERREQ`,
+`CLERRIT`, `WORREQ`, `WORRIT` and `SVCRIT`. Characters join a faith in play with
+the commands described in [03-characters.md](03-characters.md).
+
+## Start rooms, rejuvenation and death
+
+**Start room.** Every placed mob has a start room, its home. `CREATE MOB` and
+`COPY` set it to the room you stand in. `SAVE ROOM` writes each mob into its own
+start room (see [How mobs are saved](#how-mobs-are-saved)). `RESET ROOM` sends
+strays that wandered into the room home and brings back mobs that belong here.
+
+**Rejuvenation** is a countdown after death. The Rejuv Ticks field is the
+number of mob ticks (the engine's 4-second tick; about 15 per minute) a dead mob
+waits before it returns to its start room at full health ("appears!"). Rules:
+
+- `0` (stored as "no rejuvenation") means it never returns in this run of the
+  world. It is gone until the world is loaded again.
+- A value above 0 is the delay in ticks. `CREATE MOB` uses about 37 ticks (2.5
+  minutes); `fillOutMOB` uses `FORMULA_NPCREJUV` game minutes (2 plus half the
+  level, at most 20 by default).
+- If the start room is gone, the mob is destroyed instead.
+- If the mob or its start room is flagged "can't be camped" and a player is in
+  the start room, it waits (tries again next tick) unless an admin is present.
+- A mob's variable equipment is re-rolled on each rejuvenation.
+
+**`Prop_RejuvWhen`** makes the return conditional on the story. Add it as an
+effect with:
+
+```text
+WHEN="[ZAPPER MASK]" ELSE=WAIT|NEVER|REPLACE:[NAME]
+```
+
+The mask is tested on the mob as if it were back in its start room (its hour,
+season, room text and `-IF`/`+IF` script conditions). If it fails, `WAIT` (the
+default) tries again at the next rejuvenation, `NEVER` leaves the mob gone, and
+`REPLACE:name` puts the catalog mob (or class) called `name` there for good.
+Examples from the help:
+
+```text
+WHEN="-IF !VAR(* OLDMILL == CLEARED)" ELSE="REPLACE:a settler"
+WHEN="-HOUR +20 +21 +22 +23 +0 +1 +2 +3 +4" ELSE=WAIT
+```
+
+**What happens on death.** `MOBDEATH` in `coffeemud.ini` is `DEATH` (the mob
+dies, leaves a corpse, then rejuvenates) or `OUT <expression>` (the mob is
+knocked out for a number of ticks instead). Story-driven alternatives, where a
+mob yields or is knocked out rather than killed, are `Prop_Essential` (`MODE=YIELD`
+or `MODE=KNOCKOUT`), and area or room rules are `Prop_DeathRules`; see
+[29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+**Not a respawn.** A mob that is killed or sent away by a script and is not
+brought back by rejuvenation returns only when its room is reset or the world is
+loaded. If you want a population that stays fluid, use a spawner instead
+([Spawning](#spawning)). Do not combine a rejuvenating mob and a spawner that
+fills the same slot, or you will get duplicates.
+
+## Spawning
+
+A placed, saved mob is *fixed* population. Mobs that appear on their own are
+*spawned*. CoffeeSUD gives you several ways; each is documented in depth
+elsewhere, and this is the map.
+
+| Mechanism | Where | What it does |
+| --- | --- | --- |
+| `RandomMonsters` behavior | on a room or area | Keeps a number of monsters alive, replacing dead ones. Monsters come from a `.cmare` file, pasted XML, or the catalog. |
+| `WaveSpawner` | on a room | Wave and arena fights: successive groups (`WAVE1="catalog:goblin*3" WAVE2="..."`), finished when cleared. |
+| `RandomEncounters`, `world/encounters/*.enc` | on a room or area | Random encounters on entering, from encounter tables, with level or budget. |
+| `EncounterReset` | on a mob or room | Not a spawner: a boss that the party walks away from resets (heals, goes home, drops its summoned adds). |
+| Catalog auto-spawn | the catalog | A cataloged mob spawns by itself in matching rooms up to a cap. See [The mob catalog](#the-mob-catalog). |
+| `MPMLOAD` and scripts | MOBPROG | `MPMLOAD` brings a mob into the room: by class, or `MPMLOAD CATALOG name (count)` from the catalog. |
+| Quest `LOAD MOB` | quests | A quest creates its mobs; see [08-quests.md](08-quests.md). |
+| `Prop_RejuvWhen REPLACE:` | the mob | Replaces a mob by another once the story moves on. |
+
+The `RandomMonsters` parameters, from its help:
+
+```text
+[min/max ticks] [% chance] [min/max monsters] [locale mask]; [xml/filename]
+min=10 max=20 chance=75 minmonsters=1 maxmonsters=10;monsters.cmare
+minmonsters=2 maxmonsters=4;catalog:a goblin,a goblin shaman
+maxmonsters=6 CATALOG="grey wolf=4,dire wolf=1" WHEN="-SEASON +WINTER" DESPAWN=DAWN NEAR=PARTY:3 LEVEL=PARTY+-2
+```
+
+Before the semicolon you set the rate, the chance, how many to keep alive and
+which kinds of room (`-ALL +CITY` and similar). After it you name the source.
+CoffeeSUD adds `CATALOG="name=weight,..."` (weighted picks, counted against
+each entry's cap), `WHEN="[mask]"` (tested on the room a spawn would go to),
+`DESPAWN=WHENFALSE|DAWN|TICKS=n` (spawns that leave unseen), `NEAR=PARTY:n`
+(only within n rooms of the player's side), `MAXAREA=n` (spawn nothing while the
+area holds n spawns) and `LEVEL=PARTY|PARTY+n|PARTY-n|PARTY+-n` (match the
+party's highest level). Spawned mobs carry the tag `SPAWNED`. See
+[24-behaviors-and-masks.md](24-behaviors-and-masks.md#randommonsters) and
+[29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+Fixed or spawned? Decide per area. A town is fixed (saved and rejuvenating); a
+forest is spawned (`RandomMonsters` on the area, catalog weights). Quest actors
+are loaded by the quest. Observe a room while the despawn condition changes,
+leave and return, then save and restore, to check the numbers hold.
+
+## The mob catalog
+
+Source: [`Commands/Catalog.java`](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Catalog.java),
+`Libraries/CMCatalog.java`. Needs the `CATALOG` security flag.
+
+The catalog is a name-keyed list of finished (usually generic) mobs and items,
+sorted into categories. Once a mob is in the catalog, every placed copy that is
+*tied* to it stays identical: change one and (after you confirm) all change.
+Think of it as a class for your own creatures.
+
+Rules:
+
+- Only **one mob per name** in the whole catalog, whatever its category.
+- A mob in the catalog must keep its Java class; cataloging a different class
+  under an existing name is refused.
+- The catalog is stored in the world as `catalog.cmare` (mobs as `CATMOB`
+  entries, with their category and spawn data), and in builder mode `SAVE`
+  writes it.
+- A mob placed from the catalog is tied to its entry. Changing its name or
+  choosing **D** at the update prompt detaches it.
+
+### CATALOG commands
+
+| Command | Does |
+| --- | --- |
+| `CATALOG [mob name]` | Adds the mob in your room (or `ME`) to the catalog in your current category, or updates the entry. If a different version is already there, it lists the differences and asks. A `CATALOG` of an item works the same way. |
+| `CATALOG LIST (MOBS\|ITEMS\|CATEGORIES) [name mask]` | Lists entries: name, number of copies in use (`#`), spawn kind and rate and mask. `MOBS` and `ITEMS` may be shortened (`M`, `I`). |
+| `CATALOG DELETE [MOBS\|ITEMS] [name]` | Removes an entry after asking. `everydamnmob`, `everydamnitem`, `everydamnthing` delete all of a kind. |
+| `CATALOG EDIT [mob name]` | Edits the spawn rules (below). |
+| `CATALOG CATEGORY LIST` | Lists categories. |
+| `CATALOG CATEGORY [name]` | Sets the category new entries go in (you are asked before a new category is created). `NONE` returns to the global category. The words `GLOBAL`, `NONE` and `UNCATEGORIZED` cannot be new categories. |
+| `CATALOG (ROOM\|AREA\|WORLD) (MOBS\|ITEMS)` | Catalogs everything of that kind in the room, area or world, then resets and saves those rooms (after confirmations; AREA and WORLD ask twice). |
+| `CATALOG SCAN (ROOM\|AREA\|WORLD) (MOBS\|ITEMS)` | Reports tied objects and whether their catalog entry exists. `DBSCAN` reads from the saved database copy instead. |
+| `CATALOG OVERLOOK (ROOM\|AREA\|WORLD) (MOBS\|ITEMS)` | Reports objects that are *not* tied but have a catalog entry of their name ("should be tied"), or none. `DBOVERLOOK` as above. |
+| `CATALOG CLEAN (ROOM\|AREA\|WORLD) (MOBS\|ITEMS)` | Detaches objects tied to an entry that no longer exists. |
+
+### Creating from the catalog
+
+`CREATE MOB [catalog name]` (the exact name) places a tied copy and skips the
+editor. In scripts, `MPMLOAD CATALOG name` and `RandomMonsters catalog:` do the
+same and respect each entry's cap.
+
+### Cap, auto-spawn and the CATALOG EDIT prompts
+
+For a mob, `CATALOG EDIT` asks:
+
+| Prompt | Meaning |
+| --- | --- |
+| Auto-Spawn: N)o, R)oom | `N` is none. `R` lets the engine place copies of the mob by itself. |
+| Enter a new Max number in world | The cap (must be above 0 when auto-spawn is on). With `N`, the cap is cleared to 0 (no limit) for mobs. |
+| Enter a new Drop Rate | A percentage chance, per catalog pass, that a missing copy is made. |
+| Enter new Room selection mask | A zapper mask for rooms (for example `-LOCATION +ROOMSTR(moonlit)`, `-AREA +Greenwood`). Leaving it empty removes the rule. `?` explains masks. |
+
+The catalog's support thread (about once an hour of real time; it can be turned
+off with the `CATALOGTHREAD` disable flag) makes new copies, only while fewer
+than the cap exist. Copies made this way are marked not savable, so they are not
+written with the world, and they count against the cap.
+
+The spawn room is picked from the rooms that match your mask, skipping rooms
+flagged hidden. With an empty mask the engine instead accepts only randomly
+chosen rooms that *are* flagged hidden, so in practice always give a mask.
+
+### Reasons to catalog a mob
+
+- Many copies of the same guard, merchant or monster throughout the world.
+- Quest actors loaded by scripts (`MPMLOAD CATALOG`) and encounter tables.
+- A once-ever or capped population (`CATALOG EDIT`'s cap).
+- `Prop_RejuvWhen ELSE="REPLACE:name"` targets.
+- Player templates: catalog mobs in the category `PLAYERTEMPLATE` with a
+  `Prop_PlayerTemplate` effect are offered as ready-made characters at creation
+  (`CREATIONTEMPLATES` in `coffeemud.ini`); see
+  [03-characters.md](03-characters.md).
+
+A catalog mob is still a normal object when placed: its per-instance state (who
+it likes, what it carries, variables) is its own. The catalog entry only
+decides its definition.

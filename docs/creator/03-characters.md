@@ -335,3 +335,326 @@ and `classes.txt` are hand-written lists (they still describe Drow and Duergar,
 which are not open to players by default); replace them with the macros when
 your content differs.
 
+## Creation data
+
+| File/system | Purpose | Important distinction |
+| --- | --- | --- |
+| `world/creation.ini` | Step order, steps left unasked, and the world's own questions | Absent: the default order, no review |
+| `world/origins.ini` | Background choices with a start room, items, skills, standing, tattoos, money and a script | Sectioned file at the world root, not under `data/` |
+| `world/kits/*.kit` | Starting equipment and selectable kit groups | The same files serve `TESTCHAR` and `KIT` |
+| `world/perks.ini` | Perks, traits and flaws, picks per level, trait points | One line per perk, not sectioned |
+| Catalog category `PLAYERTEMPLATE` | Ready-made characters | Catalog mobs with `Prop_PlayerTemplate` |
+| `CHARCREATIONSCRIPTS` | MOBPROG hooks around engine steps | Not a file format |
+| `world/scripts/progression.js` | JavaScript hooks for creation and progression | Return values can change XP, practices, trains and stat rolls |
+
+All the `.ini` files above share one syntax: a line ending in `\` continues on
+the next line, and `#` or `;` at the start of a line starts a comment. They
+are read from the world folder, re-read when they change (`creation.ini`,
+`perks.ini`, `ranks.ini`) or at each use (`origins.ini`, kits), so you can
+edit them while testing `NEW`.
+
+### creation.ini: steps and questions
+
+Source: [CreationSteps.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CreationSteps.java).
+Fixture: [p12-creation.js](../../tools/fixtures/fixes/p12-creation.js).
+
+The file has two kinds of line. Before any `[SECTION]` header they are
+settings; after a header they belong to a question.
+
+**Top-level settings**
+
+| Line | Meaning |
+| --- | --- |
+| `STEPS=RACE,GENDER,STATS,CLASS,ORIGIN,KIT,TRAITS,FACTIONS,DEITY` | The steps to run, in this order. This is also the default when the file or the line is missing. Add `REVIEW` for the review sheet. Names of your own questions go here, uppercase, spaces as `_` |
+| `<STEP>=ASK` or `RANDOM` or `SKIP` | How a listed standard step is taken. `RANDOM` picks for the player. `SKIP` (or `NO`) skips `ORIGIN`, `KIT`, `TRAITS`, `FACTIONS`, `DEITY` and the world's questions, but for `RACE`, `GENDER`, `STATS`, `CLASS` it also means "random", because the character needs them |
+| `GENDER=RANDOM` | Example of the above |
+
+A standard step left out of `STEPS` is not asked: `RACE`, `GENDER`, `STATS`
+and `CLASS` are drawn at random, the rest skipped. `RANDOM` for `TRAITS` takes
+no traits. `RACE`, `GENDER`, `STATS`, `CLASS`, `FACTIONS` and `DEITY` keep the
+engine's order; if `STEPS` lists them differently the engine logs a message and
+uses its own order. A `STEPS` name that is neither a standard step nor a
+`[NAME]` question is logged.
+
+**A question** is a section with these lines:
+
+| Line | Meaning |
+| --- | --- |
+| `[NAME]` | Header; the name is uppercased with spaces as `_`. It may not be the name of a standard step |
+| `PROMPT=text` | The question shown |
+| `INTRO=file` | A text file shown first: looked up in `world/`, then `resources/` |
+| `SHOWIF=zapper mask` | The question is asked only of characters who pass the mask (race, class and stats are already known when it comes after them) |
+| `MODE=RANDOM` | The engine answers at random from the choices open to the character |
+| `CHOICE=NAME="..." HELP="..." MASK="..." EFFECTS="..." FACTION="..." START="..." SCRIPT="..."` | One answer; repeat the line for each. `NAME` is required. Quote values that contain spaces |
+
+A choice's fields:
+
+| Field | Meaning |
+| --- | --- |
+| `NAME` | What the player types (number, name, or the start of the name) |
+| `HELP` | Shown beside the name in the menu |
+| `MASK` | Zapper mask; the choice is offered only to characters who pass |
+| `EFFECTS` | Achievement-style rewards, as `"1 CHARISMA 50 XP"` (see [Achievements](#achievements-and-titles)) |
+| `FACTION` | A faction ID or name and an amount to add: `"alignment.ini 100"` |
+| `START` | A room ID: the character's start room |
+| `SCRIPT` | A script, as `"ONCE_PROG 100;mpechoat $i Welcome home;~"` (lines between semicolons) or `LOAD=file` |
+
+The answer is kept as the tattoo `CHARCR_<QUESTION>_<CHOICE>` (uppercase;
+every run of other characters becomes `_`), so masks and scripts can read it
+(`-TATTOOS +CHARCR_UPBRINGING_NOBLE`, `HASTATTOO(...)`). The choice's
+`EFFECTS`, `FACTION`, `START` and `SCRIPT` are applied at the end of creation
+(see [What creation gives](#what-creation-gives-and-when)); the script runs
+once in the character's start room.
+
+```ini
+# world/creation.ini
+STEPS=RACE,GENDER,STATS,CLASS,UPBRINGING,ORIGIN,KIT,FACTIONS,REVIEW
+GENDER=RANDOM
+
+[UPBRINGING]
+PROMPT=Where were you raised?
+SHOWIF=-RACE +Human
+CHOICE=NAME="Noble" HELP="Born in the manor." EFFECTS="1 CHARISMA" FACTION="alignment.ini 100" START="Manor#1"
+CHOICE=NAME="Street urchin" HELP="The docks raised you." MASK="-CLASS +Thief"
+CHOICE=NAME="Farmhand" HELP="Fields and cows."
+```
+
+(The faction file name `alignment.ini` is the stock alignment faction; use the
+ID of a faction your world loads, see [09-society.md](09-society.md).)
+An unknown key in a question section is logged and ignored. Two cautions:
+EFFECTS rewards are real rewards, so a choice that gives experience or a
+tattoo is given once per character made, not once per profile; and a mask on
+`SHOWIF` is evaluated when the question comes up, so put it after the steps
+whose results it tests.
+
+### origins.ini: origins
+
+Source: [Origins.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Origins.java).
+Fixture: [p6-origins.js](../../tools/fixtures/fixes/p6-origins.js).
+In-game help: `AHELP ORIGINS`.
+
+An origin is a background the player picks after the class. Each is a `[ID]`
+section of `KEY=VALUE` lines (spaces in the ID become `_`). When any origin is
+open to the character, creation asks for one by number, ID or name (or the
+start of either). The choice is kept as the tattoo `ORIGIN_<ID>` (uppercase),
+for masks (`-TATTOOS +ORIGIN_ORPHAN`) and scripts; a character holds only one.
+
+| Key | Meaning |
+| --- | --- |
+| `NAME` | Name in the menu (the ID if missing) |
+| `DESCRIPTION` | One line shown beside the name |
+| `MASK` | Zapper mask: who may take it, as `-RACE +Human +Half-Elf` |
+| `UNLOCK` | A tattoo the character or its profile must have (for example one a profile achievement gives); otherwise the origin is hidden |
+| `START` | A room ID (`Area#12`): the character's start room. Logged if no such room |
+| `ITEMS` | Comma list of catalog item names or item class IDs, a count first for more than one (`2 Torch, a travelling cloak`). The catalog is tried before the class IDs; the count is limited to 1 to 100. Logged if neither exists |
+| `ABILITIES` | Comma list of `ID proficiency` (`Prayer_Bless 25`). Proficiency defaults to the ability's own. A skill the character has is raised, never lowered |
+| `FACTIONS` | Comma list of `faction ID-or-name amount`; the amount is added to the character's standing |
+| `TATTOOS` | Comma- or space-separated tattoos to add (uppercased) |
+| `MONEY` | A number, in the character's currency |
+| `SCRIPT` | A MOBPROG, `ONCE_PROG 100;mpecho Welcome home.;~` (lines between semicolons) or `LOAD=file`. Run once, as the character's creation script |
+
+Unknown keys are ignored. The origin's gifts come at the end of creation,
+first of all, after the class outfit and start room are set, so an origin's
+`START` overrides the `START_` rules. `CHARCREATIONSCRIPTS` `ORIGIN:` scripts
+run just after the origin's gifts. `ORIGIN=RANDOM` in `creation.ini` picks one
+at random; with no origin open to a character the step is skipped.
+
+```ini
+# world/origins.ini
+[ORPHAN]
+NAME=Temple Orphan
+DESCRIPTION=Raised beside the temple library.
+MASK=-RACE +Human +Half-Elf
+START=Ashford#12
+ITEMS=a worn prayer book, 2 Torch
+ABILITIES=Prayer_Bless 25
+FACTIONS=alignment.ini 100
+TATTOOS=ORPHAN
+MONEY=10
+SCRIPT=ONCE_PROG 100;mpechoat $i The temple bells ring for you.;~
+
+[EXILE]
+NAME=Exile
+DESCRIPTION=Cast out, \
+  and far from home.
+UNLOCK=EXILE_UNLOCKED
+```
+
+Use catalog item names (create them in the catalog first; see
+[22-items.md](22-items.md)) for meaningful gifts. An item class such as
+`GenItem` creates a blank item.
+
+### Kits
+
+Source: [StartingKits.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/StartingKits.java),
+[KitCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/KitCmd.java).
+Fixture: [p7-kits.js](../../tools/fixtures/fixes/p7-kits.js).
+
+A kit is a text file `world/kits/NAME.kit` of directive lines (a word, then
+its value; `#` starts a comment). Kits serve two purposes. For builders and
+testing, `KIT NAME [character or mob]` applies a kit, and `TESTCHAR NAME
+KIT=NAME (PARTY)` makes a whole character from one (builder mode or a `DEV=1`
+game). For creation, a kit with a `starting` line is given to new characters.
+
+| Directive | Meaning | Used by |
+| --- | --- | --- |
+| `starting all` or `starting <zapper mask>` | Makes it a starting kit, given to every new character it lets in (`starting -BASECLASS +Fighter`, `starting -TATTOOS +ORIGIN_NOBLE`). Without it the kit is for `KIT`/`TESTCHAR` only | creation |
+| `choose GROUP` | Kits with the same group are a menu in the `KIT` step; one is taken. A group of one is taken without a question. Kits without `choose` are all given | creation |
+| `title text` | The kit's name in the menu (the file name if missing) | creation |
+| `wear no` | Do not put the kit's items on | creation |
+| `item [count] <item class, catalog name, or catalog:NAME>` | An item. A leading number repeats it (1 to 100). The item class is tried first, then the catalog; `catalog:` forces the catalog. Items are worn if they can be, unless `wear no` | all |
+| `gold N` | Money, added to what the character has | all |
+| `ability ID [proficiency]` | Gives the skill at that proficiency (100 if not given), even setting it lower than before | all |
+| `faction ID value` | Sets standing with that faction ID | all |
+| `var NAME value` | A global script variable of the character | all |
+| `race`, `class`, `gender`, `alignment`, `level`, `room` | Shape a test character | `KIT`, `TESTCHAR` only (ignored for new characters) |
+
+Matching automatic kits and the kits the player chose are all applied, after
+the origin. A problem (no such item or ability) is logged and the rest of the
+kit still applies.
+
+```text
+# world/kits/scout.kit
+starting -BASECLASS +Fighter +Thief
+choose equipment
+title A scout's travelling kit
+item Dagger
+item 2 Torch
+gold 20
+ability Skill_Recall 50
+```
+
+```text
+# world/kits/pack.kit  (the alternative in the same group)
+starting all
+choose equipment
+title A pedlar's pack
+item catalog:a pedlar's pack
+wear no
+```
+
+### perks.ini: perks, traits and flaws
+
+Source: [Perks.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Perks.java),
+[PerkCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/PerkCmd.java).
+Fixture: [p13-perks.js](../../tools/fixtures/fixes/p13-perks.js).
+In-game help: `AHELP PERKSINI`.
+
+Perks are choices spent from pools of picks. Traits and flaws are a special pool
+bought at creation. The file has three kinds of line (one per line; `\`
+continues a line):
+
+| Line | Meaning |
+| --- | --- |
+| `PICKS=pool every N levels; pool at L1,L2,...` | How many picks each pool gives. `;` separates entries; several `PICKS=` lines add up. `GENERAL every 3 levels` gives a pick at level 3, 6, 9...; `CLASS:Fighter at 1,5,10` gives picks at those levels *of that class* (a `CLASS:name` pool counts that class's own levels, other pools the character level). The word after the number (`levels`) is ignored |
+| `TRAITS=N` | Trait points to spend at creation |
+| `ID key=value ...` | A perk: its ID, then keys below. The ID is uppercased and becomes the tattoo a character gets |
+
+Perk keys (quote values with spaces):
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `NAME` | the ID without `PERK_`, underscores as spaces, capitalised | Shown name; the perk can be taken by name, ID, or the start of its name |
+| `POOL` | `GENERAL` | Which pool pays for it: `GENERAL`, `CLASS`, any name of your own, or `TRAIT` for creation traits and flaws |
+| `MASK` | none | Zapper mask the character must pass (`-LEVEL +>=3`) |
+| `REQUIRES` | none | Perk IDs (or tattoos) needed first; commas or spaces between |
+| `COST` | `1` | Picks (points for `TRAIT`) it costs. A flaw has a cost below 0 and gives points back. A cost of 0 is free |
+| `REWARDS` | none | Achievement-style rewards given when taken (`"1 CHARISMA 50 XP"`) |
+| `HELP` | none | A line shown in `PERKS` |
+
+A character's picks in a pool are the picks its levels earned, less the cost
+of the perks of that pool it took. Perks other than traits are taken after
+creation with `PERK NAME`, once enough picks are left; traits are taken in the
+`TRAITS` step (take or drop by typing the name, then `DONE`) and their rewards
+come at the end of creation. Taking a perk adds its ID as a tattoo, so
+`HASPERK(who PERK)` (see [28-mobprog-functions.md](28-mobprog-functions.md#hasperk))
+and `-TATTOOS +PERK_PACKMULE` masks work. `MPPERK who PERK` gives a perk from a
+script and `MPPERK who -PERK` takes it off (its rewards stay; see
+[27-mobprog-commands.md](27-mobprog-commands.md#mpperk)).
+
+```ini
+# world/perks.ini
+PICKS=GENERAL every 3 levels; CLASS:Fighter at 1,5,10
+TRAITS=2
+PERK_PACKMULE NAME="Pack mule" POOL=GENERAL HELP="Carry more." REWARDS="50 MAXCARRY"
+PERK_IRONWILL NAME="Iron will" POOL=GENERAL MASK="-LEVEL +>=3" REQUIRES=PERK_PACKMULE COST=1
+PERK_SHIELDWALL NAME="Shield wall" POOL=CLASS MASK="-CLASS +Fighter"
+TRAIT_LUCKY NAME="Lucky" POOL=TRAIT COST=2 REWARDS="1 CHARISMA"
+TRAIT_KEEN NAME="Keen eyed" POOL=TRAIT COST=1
+FLAW_BADBACK NAME="Bad back" POOL=TRAIT COST=-1
+```
+
+At level 1 a Fighter has one `CLASS` pick and no `GENERAL` pick. `PERKS`
+lists what the character has, can take and cannot yet (with why), and the
+picks left.
+
+### Ready-made characters (player templates)
+
+Source: [PlayerTemplates.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/PlayerTemplates.java),
+[Prop_PlayerTemplate](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_PlayerTemplate.java).
+Fixture: [p8-templates.js](../../tools/fixtures/fixes/p8-templates.js).
+In-game help: `AHELP PLAYERTEMPLATES`.
+
+A template is a catalog mob in the category `PLAYERTEMPLATE` that carries the
+property `Prop_PlayerTemplate`. To make one:
+
+1. Build a mob with `CREATE MOB` or `MODIFY MOB`: the race, gender, class and
+   class level you want, level, base stats, abilities (with proficiencies),
+   expertises, factions, tattoos, inventory (worn items stay worn), money and
+   description (see [21-mobs.md](21-mobs.md)). Its name is the template's name
+   in the menu.
+2. Add the effect `Prop_PlayerTemplate` in its effects editor, with parameters:
+
+   | Parameter | Meaning |
+   | --- | --- |
+   | `PITCH="..."` | The one-line description in the menu |
+   | `LOCK=NAME,GENDER` | Keep the template's name and/or gender; the player is not asked. A `LOCK=NAME` template can be made only once (it is refused if a character of that name exists) |
+   | `NAME=RANDOM` | Draw a name in the style of the character's race |
+
+3. Put it in the catalog in that category:
+
+   ```text
+   CATALOG CATEGORY PLAYERTEMPLATE
+   CATALOG Hale
+   ```
+
+`NEW` then lists the templates (`Ready-made characters:`) with `0) Make your own`
+unless `CREATIONTEMPLATES=ONLY`. Picking one gives the new character the
+template's race, gender, class and level (reached by real level-ups, so hit
+points, practices and trains are earned), base stats, abilities (at the higher
+of the two proficiencies), expertises, factions, tattoos, items, money and
+description. The typed name is kept unless `LOCK=NAME` or `NAME=RANDOM` says
+otherwise; the gender is asked unless `LOCK=GENDER`. The `Prop_PlayerTemplate`
+itself is not given to the character. Origins, kits, traits, creation
+questions and `NEWCHARLEVEL` do not apply to a template character, and its
+start room comes from the `START` rules. `JavaScript onCreationStep` is called
+with the step `template`.
+
+```ini
+# world.ini
+CREATIONTEMPLATES=ONLY
+START=Yard#1
+```
+
+Example: a dwarven inspector, level 3, who cannot be renamed: `PITCH="A tired
+inspector of the Yard." LOCK=NAME,GENDER`.
+
+### Review, BACK and QUICK
+
+Source: [CreationReview.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CreationReview.java).
+Fixture: [p27-review.js](../../tools/fixtures/fixes/p27-review.js).
+
+Listing `REVIEW` in `STEPS` makes the engine show a character sheet before the
+gifts are given: race, class, stats, standing, deity, origin, kits, answers and
+the start room. The prompt is `BACK [step], or DONE`. `DONE` (or Enter, `D`,
+`Y`) finishes creation. `BACK CLASS` puts the character back as it was when
+the class step began and asks that step and every step after it again (stats
+are kept); the steps you can go back to are named in the prompt. The review
+shows the sheet only to a character made by the questions: template characters
+and `QUICK` characters skip it.
+
+`NEW name QUICK` takes every step at random with no review. `NEW name QUICK
+template` makes that ready-made character (the name of one of the offered
+templates). With `CREATIONTEMPLATES=ONLY` and no template named, a random
+template is used.
+

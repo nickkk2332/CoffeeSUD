@@ -173,9 +173,8 @@ RandomMonsters, RandomTraps) accept locale words in their parameters. They are
   `CAVELAKESURFACE`, `METAL`, `INNERSEAPORT`, `CAVESEAPORT`.
 
 These are not zapper masks (although `-ALL` looks like one). In the spawner
-behaviors the locale words stand in the settings part before the first `;`
-(RandomMonsters and RandomItems read them from the part after the file field;
-see their entries).
+behaviors they are written in the settings part before the first `;`
+(RandomMonsters and RandomItems also read them from after a second `;`).
 
 ### How behaviors save
 
@@ -1533,4 +1532,561 @@ MudChat smurf
 MudChat chat.dat=smurf+(smurfy);9Smurfy!
 MudChat mychat.dat=cityguard
 MudChat +(here there);9neither;5well, where?;1nowhere
+```
+
+### Nanny
+
+Hosts: mobs. Makes the mob a protector and watcher of mobs and items for money
+(a stable, nursery, parking place). Parameters:
+
+```text
+RATE=[PRICE] NAME="[PLACE NAME]" WATCHES="[CODES]" (|~| [XML])
+```
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `RATE=n` | Base gold value charged for each thing dropped off, per hour. | 2.0 |
+| `NAME="..."` | A description of the place he runs. | `nursery` |
+| `WATCHES="a,b"` | Comma-separated kinds (no spaces) he will watch: `babies` (baby items from breeding), `children`, `mounts` (rideable mobs), `cars` (land-rideable non-wagon items), `aircars`, `wagons`, `followers` (mobs that are not children or mounts), `boats`. | `Babies,Children` |
+| `NETWORK=[name]` | CoffeeSUD: links sister stables. Owners can collect mounts from another keeper in the network, paying accrued keep plus the send fee. | none |
+| `SENDFEE=[price]` | CoffeeSUD: the remote retrieval fee. | 0 |
+
+The mob saves the items and mobs in the room he watches and keeps them from
+decaying. Combat against him or mobs under protection is forbidden, as is
+removing any mob or item not paid for. The first mud-hour is free; protection
+does not start until the owner leaves. `STABLE <mount>`, `STABLE LIST` and
+`RETRIEVE <mount>` manage explicit custody; these requests also work in speech.
+Custody and payment records survive saves. Do not put Nanny on a mob that is in
+the CATALOG, because of the way it stores its records.
+
+```text
+Nanny rate=2.5 name="The Stables" watches="mounts,wagons"
+```
+
+### NastyAbilities
+
+Hosts: mobs. Timing default 10/20/100. The mob uses any of its malicious
+abilities (spells, prayers, songs...) to the detriment of random player mobs in
+the same room. Parameters before the optional `;`, then a mask (the nasty acts
+only on those it allows).
+
+| Parameter | Meaning |
+| --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing. |
+| `FIGHTOK` | The spells may start combat (otherwise they do not). |
+| `CHECKLEVEL` | Do not pick on lower level creatures (the help also calls this `LEVELCHECK`; the code reads `CHECKLEVEL`). |
+
+```text
+NastyAbilities min=10 max=20 chance=75 fightok
+NastyAbilities min=1 fightok ; -RACE +ELF
+```
+
+### NeutralAbilities
+
+Hosts: mobs. Timing default 10/20/100. The mob uses any of its indifferent
+abilities on random player mobs in the room, optionally limited to the matching
+of a mask after `;`. `SKILLS="[id],[id],..."` limits the skills used.
+
+```text
+NeutralAbilities min=10 max=20 chance=75
+NeutralAbilities min=1 SKILLS="Spell_Light,Spell_Fly" ; -RACE +ELF
+```
+
+### NiceAbilities
+
+Hosts: mobs. Timing default 10/20/100. The mob uses its benevolent abilities on
+player mobs in the room, only for those a mask after `;` allows. CoffeeSUD:
+`HEALAT=[N]` (before the `;`) has it heal the most hurt of those it helps who
+are under N% of their hit points, and nothing else.
+
+```text
+NiceAbilities min=10 max=20 chance=75
+NiceAbilities min=1 max=1 HEALAT=60 ; -RACE +Goblin
+```
+
+### NoCombatAssist
+
+Hosts: mobs. No parameters. Makes sure the mob does not assist in combat when it
+follows a player or another mob.
+
+### ObjectGuardian
+
+Hosts: mobs. Prevents any other mob from taking or removing any object in the
+room (you have to kill it). Dropping is also forbidden unless `DROPOK`.
+
+| Parameter | Meaning |
+| --- | --- |
+| `SENTINAL` (or `SENTINEL`) | Even more vigilant: combat and severe damage do not deter it. |
+| `DROPOK` | Dropping items is allowed. |
+| `MOBMASK="[MASK]"` | Zapper mask filtering which mobs it stops. |
+| `ITEMMASK="[MASK]"` | Zapper mask filtering which items it protects. |
+
+```text
+ObjectGuardian SENTINAL
+```
+
+### Patroller
+
+Hosts: mobs, items. Timing default 5/10/100. The host walks the path given in
+the parameters. Parameters: `settings;step;step;...`.
+
+| Setting (before the first `;`) | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing. | 5/10/100 |
+| `RIDEOK=true/only/false` | Rideable mobs and items stop patrolling when ridden; `true` makes them continue though passengers can drive them; `only` keeps them on track and prevents driving. | false |
+| `DIAMETER=n` | Enlarge when the patroller can get more than 20 rooms off track. | 20 |
+| `RESUME=true` | After a fight, walk back to where it left its route before going on. | false |
+
+| Step | Meaning |
+| --- | --- |
+| a room ID | Tracks there from its current position even if not adjacent. |
+| a direction | Must be valid from the current position. |
+| `RESTART` | Start the path from the beginning. With no `RESTART` the object retraces its steps back to the beginning. |
+| `.` | Pause one step. |
+| `WAIT=[N]` | CoffeeSUD: wait N ticks. |
+| `DO=[COMMAND]` | Do a command (`DO=lock door`, `DO=say Gate secure.`). |
+| `EMOTE=[TEXT]` | Emote. |
+| `IF=[MASK]` | Go on only if the mask fits the patroller, else to the next `RESTART` (or the start). |
+| `ROUTE=[NAME]:[FIRST STEP]` | Start a named route; its steps run to the next `ROUTE=`. The one named for the time of day (`DAWN`, `DAY`, `DUSK` or `NIGHT`) is walked, else `ROUTE=DEFAULT`, else the first; from its start when it changes. |
+
+The new steps are not walked back on a route with no `RESTART`. Mobs unlock and
+open doors on the route; items ignore doors. See `Prop_StayAboard` for patrollers
+with riders ([chapter 23](23-properties-reference.md)).
+
+```text
+Patroller min=10 max=20 chance=75 rideok=true;Midgaard#3001;#3002;#3003;RESTART
+Patroller min=10 max=20 chance=15;east;.;north;north;east
+Patroller min=3 max=3;Gate#1;WAIT=5;DO=say Gate secure.;Wall#4;EMOTE=peers over the battlements.;RESTART
+Patroller min=3 max=3;ROUTE=DAY:Gate#1;Wall#4;RESTART;ROUTE=NIGHT:Barracks#1;Barracks#2;RESTART
+```
+
+### PlayerHelper
+
+Hosts: mobs. Comes to the defence of any player mob against any non-player mob.
+Optional: a number (most combatants that can join) and `MSG="[ATTACK MESSAGE]"`.
+
+```text
+PlayerHelper 5 msg="OMG ATTACK!"
+```
+
+### PokerDealer
+
+Hosts: mobs (the help also lists rooms; the code allows mobs). Makes the host a
+dealer of poker, managing hands, betting, draws and more. The dealer cannot
+play, so at least 2 players are needed.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `GAME=[n or name]` | `0` Straight Poker, `1` Five Card Stud, `2` Seven Card Stud, `3` Draw Poker (or the name). | 0 |
+| `MINPLAYERS=n` | Minimum players to start a game. | 2 |
+| `ANTI=amount` | Currency required to ante and join. | 1.0 |
+
+```text
+PokerDealer game=2 minplayers=4 anti=5.0
+```
+
+### ProtectedCitizen
+
+Hosts: mobs. Timing default 1/3/99. The mob screams for help during combat.
+Parameters: `settings;guardian mask;yell strings`.
+
+| Setting | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Ticks between screams, and the percent chance. | 1/3/99 |
+| `RADIUS=n` | Rooms around the mob searched for a guardian. | 7 |
+| `MAXASSISTS=n` | Most mobs that will assist. | 1 |
+| `WANDER` | Allow mobs from adjacent areas to be drawn in. | off |
+
+Whenever it screams the system searches `RADIUS` rooms for another mob that fits
+the mask after the first semicolon (the guardian mask: allowed is assisted). If
+the mob has a Mobile-family behavior, it is moved one room closer to the
+screamer; arrived, it joins the defence. The remaining `;` separated strings are
+what the screamer yells; start one with a comma to have it emoted instead.
+Once a mob has come to its defence it stops screaming.
+
+```text
+ProtectedCitizen min=1 max=5 chance=25 radius=7 maxassists=1;-NAME +cityguard;HELP ME!!!;Save me!
+ProtectedCitizen WANDER radius=20;-NAME +cityguard;HELP ME!!!;,screams for his life!
+```
+
+### ProtectedCitizens
+
+Hosts: mobs, rooms, areas. As [ProtectedCitizen](#protectedcitizen) but the host
+also has a citizen mask: the settings are followed by `;citizen mask;guardian
+mask;yell strings`. Mobs the citizen mask fits scream for help. Same defaults
+(1/3/99, radius 7, maxassists 1).
+
+```text
+ProtectedCitizens radius=5 maxassists=7;-NAME +citizen;-NAME +cityguard;HELP ME!!!;Save me!
+```
+
+### PuddleMaker
+
+Hosts: rooms, areas. After rain, sleet, thunderstorm or similar, the host
+generates a puddle or some snow (or dust after a dust storm) on the given
+percent chance. They evaporate after a time. The only parameter is the percent
+(default 50).
+
+```text
+PuddleMaker 34
+```
+
+### Pursue
+
+Hosts: mobs. CoffeeSUD. The mob chases one who flees it.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `CHANCE=n` | Percent chance it gives chase. | 60 |
+| `MASK="[ZAPPER MASK]"` | Whom it chases. | anyone |
+| `MAXROOMS=n` | Rooms in all before it gives up. | 3 |
+| `DELAY=n` | Ticks before each room step (a room a tick after that). | 1 |
+| `LEASH=n` | Gives up past n rooms from home. | 0 (none) |
+| `STAY` | On giving up, stay where it is instead of walking home. | off |
+| `GIVEUPMSG="..."` | Said on giving up. | `<S-NAME> give(s) up the chase.` |
+| `REMEMBER=n` | One who fled and comes back within n ticks is attacked on sight. | 0 |
+
+It attacks them where it catches them; it also gives up when it loses the trail.
+
+```text
+Pursue CHANCE=80 MAXROOMS=4 LEASH=8
+Pursue CHANCE=50 MAXROOMS=10 MASK="-RACES +Goblin" REMEMBER=30
+```
+
+### QuestChat
+
+Hosts: mobs. Extends [MudChat](#mudchat) (same parameters) with a feature for
+quests. When the first character of the parameters is a `+`, a `;` delimited
+list of chat data follows; the trigger pattern of an entry may be followed by
+`::` and immediately a variable string, which makes that pattern answered only
+once for each player. The string is added to a list under the player's name in
+any quest object, available through the `QVAR(questname CHAT:PLAYERNAME)`
+function; this lasts for the run of the quest, and a saved game keeps it.
+
+```text
+QuestChat +(speak | talk | words::DONE_SPEAKING);9only said this to YOU once.
+```
+
+### ROMGangMember
+
+Hosts: mobs. Supports ROM area files. The mob attacks any other mob that has
+this behavior but is in a different gang. Not active when a mob with
+[ROMPatrolman](#rompatrolman) is in the room. Parameters:
+`[GANG NAME](;[ATTACK MESSAGE]...)`: the first is the gang, the rest are things
+the mob says before attacking.
+
+```text
+ROMGangMember Troll;I`m gonna kill you!;I`ve got you now!;DIE!
+```
+
+### ROMPatrolman
+
+Hosts: mobs. No parameters. Supports ROM area files. The mob complains whenever
+a fight goes on in its room, and may do nothing, join the fight, or break it up.
+
+### RaceHelper
+
+Hosts: mobs. Joins a fight on the side of an identical mob or one of the same
+race. Optional: a number (most combatants) and `MSG="[ATTACK MESSAGE]"`.
+
+```text
+RaceHelper 5 msg="OMG ATTACK!"
+```
+
+### RandomEncounters
+
+Hosts: areas, rooms. CoffeeSUD. As the party moves, each room it enters may
+bring an encounter from the table `world/encounters/NAME.enc` (`AHELP
+ENCOUNTER`), rolled on the next tick for the one who leads the party in (if
+still there).
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `TABLE=[NAME]` | The encounter table. | required |
+| `CHANCE=[N]%` | Percent per room entered. | 10 |
+| `COOLDOWN=[N]` or `[N]DAYS` | N rooms must go by after an encounter, or N game days. | 0 |
+| `LOCALES="[KIND],[KIND]"` | Kinds of room (WOODS, PLAINS, CITY...). | all |
+| `TRIGGER="[ZAPPER MASK]"` | A mask on the one who came in. | none |
+| `MAXACTIVE=[N]` | Monsters of its encounters about at once. | 6 |
+| `DESPAWN=[N]` | Ticks they stay once the party has left them, unless fighting. | 10 |
+| `BUDGET=[N]%` | Adds the table's MOBS entries until the monsters' power is that share of the party's (mob ranks count). | 0 |
+
+See [chapter 29](29-combat-and-encounters.md).
+
+```text
+RandomEncounters TABLE=darkwood CHANCE=10% COOLDOWN=6
+RandomEncounters TABLE=moors CHANCE=15% LOCALES="PLAINS,HILLS" TRIGGER="-LEVEL +>3" BUDGET=80%
+```
+
+### RandomItems
+
+Hosts: areas, rooms, mobs, items (containers). Reads a list of items from a
+`.cmare` file made with `EXPORT AREA ITEMS` or `EXPORT ROOM ITEMS`; the path is
+the last parameter, after a `;`, relative to the `resources` directory. The
+XML itself (`<ITEMS><ITEM>...`) may be pasted in instead. Parameters before the
+`;` give the rate and amount.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | It tries to generate every min to max ticks if the chance roll succeeds. | 10/30/100 |
+| `MINITEMS`, `MAXITEMS` | At least and at most this many items. Duplicates allowed. | 1 and 1 |
+| `MOBS` | Put the items on a mob if possible (worn if possible); on a shopkeeper the items go up for sale. Automatic on a mob host. | off |
+| locale words | On an area, restrict room types (see [Locale restriction words](#locale-restriction-words)). | all rooms |
+| `AFFIXES=[...]` | CoffeeSUD: item affixes applied to generated items (see [chapter 12](12-generation.md)). | none |
+
+Items taken away are replaced, even when looted. On a room all items appear in
+that room; on an area a random room is picked.
+
+CoffeeSUD spawn rules (also in RandomMonsters), written before the `;`, or with
+no `;` and no file:
+
+| Rule | Meaning |
+| --- | --- |
+| `CATALOG="name=weight,name=weight"` | Picks catalog entries by weight (counted and capped as `catalog:` is). |
+| `WHEN="[ZAPPER MASK]"` | Tested on the room a spawn would go to (`-SEASON +WINTER`, `-HOUR +20`, `-LOCATION +ROOMSTR(moonlit)`...); nothing spawns where it fails. |
+| `DESPAWN=WHENFALSE / DAWN / TICKS=[N]` | Makes a spawn leave, unseen: `WHENFALSE` when the mask no longer passes where it is, `DAWN` at dawn or by day, `TICKS=N` N of the behavior's ticks after it came. Not while a player is in its room, nor while it fights. |
+| `NEAR=PARTY:[N]` | On an area: spawns only within N rooms of the player's side. |
+| `MAXAREA=[N]` | On an area: spawns nothing while the area holds N spawns (of any spawner). |
+
+For RandomItems the rules for rooms (`WHEN`, `NEAR`, `MAXAREA`, `DESPAWN`) are
+for items left in rooms.
+
+```text
+RandomItems min=10 max=20 chance=75 minitems=1 maxitems=10;myitems.cmare
+RandomItems minitems=10 maxitems=20 MOBS -ALL +CITY;stuff.cmare
+RandomItems maxitems=3 CATALOG="pine cone=5,amber=1" DESPAWN=TICKS=200
+```
+
+### RandomMonsters
+
+Hosts: areas, rooms. As [RandomItems](#randomitems) but for monsters. The list
+is read from a `.cmare` made with `EXPORT AREA MOBS` or `EXPORT ROOM MOBS`; the
+last parameter may be pasted `<MOBS>` XML, or `catalog:NAME,NAME` (the catalog's
+mobs: their copies are counted, and none is made past an entry's cap).
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Timing. | 10/30/100 |
+| `MINMONSTERS`, `MAXMONSTERS` | At least and at most this many. | 1 and 1 |
+| locale words | Restrict room types on an area. By default non-flying mobs are never generated in air rooms, nor non-swimmers underwater. | all rooms |
+| `LEVEL=PARTY / PARTY+[N] / PARTY-[N] / PARTY+-[N]` | CoffeeSUD: each spawn gets the party's highest level (give or take), its stats by the level formulas. | off |
+| `CATALOG`, `WHEN`, `DESPAWN`, `NEAR`, `MAXAREA` | CoffeeSUD spawn rules, as in [RandomItems](#randomitems). | none |
+
+Monsters that die are replaced, even if they wander out of the room or area. On
+a room all appear there; on an area a random room is picked.
+
+```text
+RandomMonsters min=10 max=20 chance=75 minmonsters=1 maxmonsters=10;monsters.cmare
+RandomMonsters minmonsters=10 maxmonsters=20 -ALL +CITY;criminals.cmare
+RandomMonsters minmonsters=2 maxmonsters=4;catalog:a goblin,a goblin shaman
+RandomMonsters maxmonsters=6 CATALOG="grey wolf=4,dire wolf=1" WHEN="-SEASON +WINTER" DESPAWN=DAWN NEAR=PARTY:3 LEVEL=PARTY+-2
+```
+
+### RandomQuests
+
+Hosts: areas, mobs. Timing default 10/20/100. Generates random quests inside
+the host area, or on behalf of a host mob. Be generous with the timing; quest
+generation is CPU-intensive.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | How often an attempt is made. | 10/20/100 |
+| `MINQUESTS`, `MAXQUESTS` | How many quests are generated at one time; elapsed quests are replaced. If several are offered by one mob the player must complete them in order. | 1 and 3 |
+| `PATH` | XML document the random quest data is read from. | `randareas/example.xml` |
+| `TAGID` | Tag of the QUEST object in the document. | `all_quests` |
+| `EXPIRE` | How long a quest runs before expiring forever, even if accepted moments before. | `3 hours` |
+| `MAXATTEMPTS` | Attempts to generate one quest (not all areas or people support every type). | 3 |
+| `INLINE` | (code only, not in the help) read the quest data in-line. | false |
+
+Other `VAR=value` pairs are passed to the generator (defined by
+`resources/quests/random/*.xml`): `TEMPLATE` (default `normal`), `AVOIDSCANS`,
+`AREA_NAME`, `SOURCE_NAME`, `TARGETAREA_NAME`, `MULTIAREA`, `TARGETNAME`,
+`NUM_TARGETS`, `AGGRESSION`, `XP_AMOUNT_AWARDED`, `GOLD_AMOUNT_AWARDED`,
+`SOURCE_FACTION` and `SOURCE_FACTION_AMT`, `QUEST_POINT_AWARDED`,
+`QUEST_MULTIPLE` (YES, NO or PREV), `ANNOUNCECHANNEL`, `TARGET_MIN_AREALEVEL`,
+`TARGET_MAX_AREALEVEL`. A saved game keeps the quests this behavior generated,
+whole, with their progress; a restore makes them again, and the behavior takes
+them back rather than generating others. See [chapter 8](08-quests.md).
+
+```text
+RandomQuests minquests=3 maxquests=5 template=normal_capture1
+```
+
+### RandomTeleporter
+
+Hosts: mobs. Timing default 1/5/100. The mob teleports itself to a random room on
+the map, by default anywhere in the world.
+
+| Parameter | Meaning |
+| --- | --- |
+| `NOWANDER` | Keep it in its area. |
+| locale words | Restrict the room types (`-air -underwater`). |
+| `"POOFIN=[MESSAGE]"` | Message when it arrives (spacing and quotation sensitive). |
+| `"POOFOUT=[MESSAGE]"` | Message when it leaves. Known defect: in the code `POOFOUT=` assigns the poof-in message (see the audit notes). |
+
+```text
+RandomTeleporter min=10 max=20 chance=75 -air -underwater
+RandomTeleporter min=10 max=20 chance=75 nowander "poofin=<S-NAME> Arrives!"
+```
+
+### RandomTraps
+
+Hosts: areas, rooms. Timing default 10/30/100. Generates traps in the room or
+area.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `MIN`, `MAX`, `CHANCE` | Frequency and chance. | 10/30/100 |
+| `MINTRAPS`, `MAXTRAPS` | Number of traps generated. | 1 and 1 |
+| `ROOMS=YES/NO` | Allow trapping rooms. | NO |
+| `EXITS=DOORS/LOCKED/NO` | `DOORS`: all doors; `LOCKED`: only locked doors; `NO`: none. A `Y` start also means DOORS. | `LOCKED` (only closed, locked doors) |
+| `ITEMS=YES/CONT/LID/LOCK/NO` | `YES`: any items; `CONT`: containers only; `LID`: containers with lids; `LOCK`: containers with locks; `NO`: never. | NO |
+| locale words | Which room types are checked (`-ALL +CityStreet`). | all |
+
+The settings go before the first `;`.
+
+```text
+RandomTraps min=10 max=20 chance=25 mintraps=1 maxtraps=10 EXITS="YES" ITEMS="YES" ROOMS="YES"
+RandomTraps min=10 max=20 chance=25 ROOMS="YES" ITEMS="NO" -ALL +CityStreet
+```
+
+### Regenerate
+
+Hosts: areas. CoffeeSUD. The area re-rolls itself. It is built again from `FILE`
+and `ID` (with `VARS`), or from its `GENSOURCE` (what `GENERATE AREA` recorded)
+when they are left out, as `REGENERATE AREA` does. Rooms marked `GENLOCK`, rooms
+named in `KEEP`, rooms a running quest uses (or with someone or something in
+them) stay as they are; the rest are made again, and the gate and every other
+exit go to the rooms of the same IDs. It never re-rolls while a player, or one
+following a player, is inside: it waits for them to leave. The area's
+`GENERATED_PROG` runs after.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `FILE=[TEMPLATE]` | Template file. | the area's GENSOURCE |
+| `ID=[AREA ID]` | Template ID. | the area's GENSOURCE |
+| `VARS="[VAR]=[VAL] ..."` | Variables. | none |
+| `SEED=RANDOM/DAILY/WEEKLY/SAME/[N]` | `RANDOM` is new each time; `DAILY`/`WEEKLY` one seed for the game day or week; `SAME` the GENSOURCE's; or a number. | RANDOM |
+| `WHEN=` a comma list of `MUDDAY:N`, `MOON:FULL` (or another phase: NEW, WAXCRESCENT... as it begins), `ONEMPTY`, `SCRIPT` | When it re-rolls: every N days of the area's calendar; at that moon phase; as the party leaves; or only when `MPREGENERATE` asks. | SCRIPT |
+| `KEEP="[ROOM ID] ..."` | Rooms to keep. | none |
+
+Its state (when the days count from, the moon last seen, a re-roll waiting) is
+saved; the rooms are kept as rooms changed in play. See
+[chapter 12](12-generation.md).
+
+```text
+Regenerate WHEN=MOON:FULL SEED=RANDOM
+Regenerate WHEN=ONEMPTY SEED=DAILY KEEP="Old Tunnels#0"
+```
+
+### ResetWhole
+
+Hosts: rooms, areas. A different way of resetting rooms and areas: the system
+totally resets a room (mobs and items) that no player has visited for the given
+time. An area with this behavior skips rooms that have it too, so rooms can
+have their own total reset times. It does not override the usual rejuvenation of
+mobs and items; to use ResetWhole exclusively set the rejuv rate of every mob and
+item to 0.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| a bare number | Ticks of inactivity before the reset. | 30000 ms (see below) |
+| `TICKS=n` | The same. A tick is `TICKTIME` ms. | |
+| `DAYS=n` | CoffeeSUD: game days on the area's calendar after the party was last there, instead of ticks. | |
+| `RLHOUR=h` | Real-life hour (0 to 23) of the reset. Reads the real clock, which means nothing with pause and turn-based time; use `MUDHOUR` or `DAYS`. | |
+| `MUDHOUR=h` | Game hour of the day. | |
+| `EXCEPT="[MASK]"` | CoffeeSUD: mobs and items that never come back once gone: a slain boss or taken loot stays gone; one still there at the reset stays. Names with spaces in single quotes: `+'the Goblin King'`. | none |
+| `MSG="[TEXT]"` (or `RESETMSG=`) | Shown to the first who comes in after a reset. | none |
+| `ONREENTRY=true` | CoffeeSUD: resets on return after everyone has left. | false |
+| `MINAWAY=[game hours]` | Minimum absence. | 0 |
+| `SKIPROOMS="[room mask]"` | Matching rooms are left unchanged, for example `SKIPROOMS="-LOCATION '+ROOMSTR(Sanctum)'"`. | none |
+
+Last access and absence survive saves. `InstanceArea INPLACE=true` reapplies its
+type adjustments after resetting the real rooms, using the entering leader's
+level.
+
+```text
+ResetWhole 4000
+ResetWhole DAYS=7 EXCEPT="-NAME +'the Goblin King'" MSG="Fresh tracks lead into the tunnels."
+```
+
+### ResourceOverride
+
+Hosts: rooms, areas, mobs. Timing default 10/30/100 (its countdown starts at
+1). Overrides the resources that rooms generate for common skills (mining,
+chopping, farming...), or those corpses give when butchered. It randomly picks
+from the list given instead of the normal list. On an area, name room types to
+apply the new resources to.
+
+Parameters: `MIN`, `MAX`, `CHANCE`; resource names or code numbers;
+room types (`STONE`, `WOODEN`, `CAVE`, `MAGIC`, `UNDERWATER`, `AIR`,
+`WATERSURFACE`, `METAL`, `CITY`, `WOODS`, `ROCKY`, `PLAINS`, `JUNGLE`, `SWAMP`,
+`DESERT`, `HILLS`, `MOUNTAINS`); a resource in double quotes followed by a space
+and a sub-type (`"CORN WIERDCORN"`); and a custom resource by putting the name
+in quotes followed by the resource type and sub-type in parentheses
+(`"some weird corn(CORN WIERDCORN)"`).
+
+CoffeeSUD calendar keys, by the room's area calendar:
+
+| Key | Meaning |
+| --- | --- |
+| `SPRING=`, `SUMMER=`, `AUTUMN=` (or `FALL=`), `WINTER=` | Each gives a season its own comma list of resources (`none` for nothing), swapped in as the season turns. A season with no list uses the plain list, if there is one, else the rooms' own. |
+| `SEASON=`, `MONTH=`, `HOUR=` | Comma lists, with ranges as `20-23`; limit when it applies at all. Outside them the rooms have their own resources back. |
+| `MSG="[TEXT]"` (or `MESSAGE=`) | Shown in a room when the calendar changes its resource. |
+| `MOBMASK=[MASK]` | (not in the help) a mask of mobs it applies to; must come last, the rest of the text is the mask. |
+
+When changing the parameters of an existing ResourceOverride on an area use
+`RESET AREA` to change back rooms previously affected.
+
+```text
+ResourceOverride MIN=5 MAX=5 CHANCE=100 CORN WHEAT RICE
+ResourceOverride CORN "some weird corn(CORN WIERDCORN)" "CORN WIERDCORN"
+ResourceOverride SPRING=flowers,herbs SUMMER=blueberries AUTUMN=apples WINTER=none MSG="The orchard turns with the season."
+ResourceOverride MUSHROOMS SEASON=autumn HOUR=20-23,0-4
+```
+
+### Riddler
+
+Hosts: mobs, items. CoffeeSUD. A mob or thing that asks riddles.
+
+| Parameter | Meaning | Default |
+| --- | --- | --- |
+| `RIDDLE="[TEXT]"`, `ANSWERS="[ANSWER]\|[ANSWER]"` | The riddle and its accepted answers. More with `RIDDLE1` to `RIDDLE9` and `ANSWERS1` to `ANSWERS9`. | none |
+| `RANDOM=true` | Pick one riddle at random. | the first |
+| `FUZZY=[N]` | Forgive N wrong letters (or two swapped). Case, a, an, the and punctuation never count. | 0 |
+| `ASK=GREET,LOOK,COMMAND` | Who is asked: one of the player's side who comes in, one who looks at it, one who types `RIDDLE`. | all three |
+| `TRIES=[N]` | Wrong answers before `ONOUT` runs. | 3 |
+| `ONRIGHT`, `ONWRONG`, `ONOUT` `="[ACTIONS]"` | Script commands run on each right answer, each wrong one, and when tries run out (`MP` may be left off; `$n` who answered; as `Prop_Switch`'s). | none |
+| `RIGHTMSG`, `WRONGMSG` | Told on a right or wrong answer. | `That is right.` / `That is not right.` |
+| `ONCE=CHARACTER/SAVE/NONE` | `CHARACTER`: asks each character until they solve it. `SAVE`: until anyone does (kept with it). `NONE`: always. | CHARACTER |
+
+Answer by saying it (`SAY`) or with `ANSWER [TEXT]`.
+
+```text
+Riddler RIDDLE="What has roots nobody sees, and is taller than trees?" ANSWERS="mountain|mountains" FUZZY=1 TRIES=3 ONRIGHT="door open here north; exp $n 100" ONOUT="force $i kill $n"
+```
+
+### RoomStates
+
+Hosts: rooms, areas. CoffeeSUD. Named versions of a room, declared in one place;
+clauses go with a `;` between them. A saved game keeps the state; `MPROOMSTATE`
+sets it and `ROOMSTATE()` reads it.
+
+```text
+STATE=[NAME] (TITLE=) (DESC=) (ATMOSPHERE=) (CLIMATE=) (ADD="[ID]([PARMS]);...") (BLOCK=[DIRS]) (OPEN=[DIRS]) (ENTERMSG=); TO=[NAME] (FROM=[NAMES]) (WHEN="[MASK]") (AFTER=[TICKS]) (TICKS=[N]) (ONVAR="[HOST] [VAR]==[VALUE]"); START=[NAME]; (ROOMS=[ROOM IDS])
+```
+
+A `STATE` sets the room's title, description, atmosphere (`WATER`, `AIR`...) and
+climate (`WET`, `COLD`...), gives it effects and behaviors (`ADD`, with their
+parameters in brackets; taken away when the state ends), refuses ways out
+(`BLOCK`), opens doors (`OPEN`) and says `ENTERMSG` to those coming in. What it
+leaves unset is the room's own. A transition (`TO`) goes from the states named
+(`FROM`, or any) when `WHEN` holds (a mask on someone standing there, such as
+`-WEATHER +RAIN`), `AFTER` ticks in a row, after `TICKS` in the state, or when
+a script variable holds (`ONVAR`, host `*` if not given). `START` names the
+first state. On an area all its rooms (or `ROOMS=`) change together.
+[TidalRoom](#tidalroom) and [Floodable](#floodable) are built on it.
+
+```text
+RoomStates STATE=dry TITLE="A dusty shaft"; STATE=collapsed TITLE="A collapsed shaft" ADD="Prop_RoomDark()" BLOCK=down; TO=collapsed ONVAR="mine collapse==1"; START=dry
 ```

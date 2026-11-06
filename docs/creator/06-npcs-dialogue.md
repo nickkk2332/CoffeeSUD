@@ -634,8 +634,8 @@ CoffeeSUD has no general "companion" behaviour (feature N13 is deferred; see
 with the party are:
 
 - **Hireling** above: it follows its employer and takes ORDERs.
-- **A script** that runs `MPFORCE $i follow $n` (or `MPFORCE` with `GROUP`) to
-  recruit after a conversation or quest step. The party chapter explains
+- **A script** that runs `MPFORCE $i follow $n` to recruit after a conversation
+  or quest step. The party chapter explains
   recruited characters, CONTROL and AS ([31](31-saves-and-party.md)).
 - **Escortee** with `MODE=FOLLOW`: follows its leader to a destination.
 - **Follower** (inherited behaviour): follows any mob that leaves the room;
@@ -795,7 +795,7 @@ entries; an entry has a pattern and weighted replies. The behaviour:
 whose names match the NPC's name (leading article removed); its race name; its
 class name; finally the first group in the file (the entries before any `>`
 line). A group header can also hold zapper masks between slashes
-(`>guard /+LEVEL >10/`), so a group can match by mask instead of by name.
+(`>guard /-LEVEL +>10/`), so a group can match by mask instead of by name.
 Matching is by whole name, not by word: `>miller` matches an NPC named "the
 miller", not "Brenn the miller". For anything else, name the group in the
 parameters.
@@ -1078,12 +1078,14 @@ Using them:
 - `ASK <npc> ABOUT` or `TALK <npc> ABOUT` with **no topic** lists the topics the
   character knows that this NPC answers to. A plain `TALK` lists them too, when
   there are any. An NPC "answers" a topic if: a SPEECH_PROG word or phrase (not `ALL`
-  or `*`), a TALK_PROG word, or a MudChat entry whose words contain the topic's
-  words. A catch-all entry such as `()` does not count.
+  or `*`), a TALK_PROG word, or a MudChat say entry (not a combat one) that
+  matches the topic phrase and is found through one of the topic's own words. A
+  catch-all entry such as `()` does not count, and guards are not consulted.
 - **Hints.** `HINTTOPICS=true` in coffeemud.ini or world.ini, or the **tag**
   `HINTTOPICS` on an individual NPC, makes the NPC tell, and teach, its topics
   the first time a character talks with it (via TALK): its scripts' words and
-  its own chat file's entries (not the default chat file's). The NPCs that have
+  the first word or phrase of each say entry in its own chat file or inline
+  entries (never the default `chat.dat`'s). The NPCs that have
   already told a character are kept in `TOPICS_HINTED`.
 - **Journal.** With `JOURNALTALK=true` in coffeemud.ini, what a character
   learns is also written to their journal ("People" chronicle), once per new
@@ -1658,9 +1660,11 @@ The first TALK falls through to MudChat as "Hello", teaching "old lighthouse".
 grows to include "wreck", then "harbourmaster". The repeat answer appears once
 the flag is set. `CHATTEST` shows which entry fires and why.
 
-To hand her topics out without markup, set the tag `HINTTOPICS` on her instead,
-but then every word of her chat entries (including "hello") becomes a topic, so
-the markup is cleaner for a quest chain. If a topic should open a numbered menu
+To hand her topics out without markup, set the tag `HINTTOPICS` on her instead:
+the first time a character talks with her she lists, and teaches, the first
+word or phrase of each of her chat entries (including "hello" and "wreck"). The
+markup is cleaner for a quest chain, because it reveals each topic only when the
+story reaches it. If a topic should open a numbered menu
 instead, answer it with a script: `SPEECH_PROG harbourmaster` that runs `MPMENU`.
 
 ### Example 3: a hireling
@@ -1866,8 +1870,8 @@ instance reparses them; a changed schedule starts again from its new entries.
 - **Replies feel late in turn-based play.** Check `TIMEMODE DIALOGUE`.
   `INSTANT` is the default in turn-based time.
 - **A bark never fires.** Check the event name against the table, the cooldown,
-  the chance and the mask; `IDLE` needs a `CHANCE=`; a sleeping NPC does not bark
-  at arrivals.
+  the chance and the mask; `IDLE` needs a `CHANCE=`; bark text cannot contain
+  `;` or `|`.
 - **Escort stalls.** The leader is whoever it follows; if it never followed
   anyone (`mpforce $i follow $n` never ran) it is "not yet escorted" (see
   `STAT BEHAVIORS`). In `FOLLOW` mode it never walks on its own.

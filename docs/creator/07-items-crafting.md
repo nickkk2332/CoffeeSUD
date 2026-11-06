@@ -1130,3 +1130,628 @@ building skill for description changes.
 A linked chest shared by the profile (`Prop_SharedStash`, CR22) is deferred.
 Ordinary chests and profile-owned property work. Test a home from two
 characters of one profile, after leaving it, and after a restore.
+
+## Item definitions and powers
+
+Choose the item class that already does the mechanical thing you need: a
+container, weapon, armour, light, food, drink, wand, recipe book, rideable,
+key, readable book, or a plain `GenItem`. Set material, weight, value, wear
+positions, level and the descriptive text. The fields of every class, the
+wear locations and the item editor are in [22-items.md](22-items.md). Use
+**tags** (the editor's *Tags* entry, `TAGS` in a world file) for your own
+categories, because several systems here match on a tag (`tag:anvil` in a
+component, `-TAGS +rune` in a mask, `tag:X` in a combination). A prose label
+in the name does not replace the material code or a tag.
+
+**Giving an item behaviour.** Everything in this chapter is a *property*
+(an ability that sits on the item) or a *behaviour*. In the item editor
+(`MODIFY ITEM`), the **Effects** entry takes properties (`Enter an effect to add,
+-ID to remove, =ID or its number to edit, ?P for the properties that fit`) and
+the **Behaviors** entry takes behaviours. In JavaScript world builders and
+tests you create one with `CMClass.getAbility("Prop_Switch")`, call
+`setMiscText("...")` and `item.addNonUninvokableEffect(effect)`; the Creator
+Museum example does exactly that
+([build.js](examples/world/resources/creator/build.js)). A property's
+parameter text is saved with the item in the world file.
+
+**Books.** `GenTome` (`CREATE ITEM GenTome`) keeps its pages in the item, so
+they go into world files and every new game. Its readable text holds
+`<PAGE TITLE="..." LANG=Elvish LORE=ost.fall>text</PAGE>` pages one after
+another, or `FILE=world/texts/ost.txt`, in which a line `=== The Fall of Ost
+===` (or `=== The Fall of Ost | LANG=Elvish LORE=ost.fall ===`) starts each
+page. `READ BOOK` lists pages; `READ 3 BOOK`, `READ NEXT BOOK`, `READ PREV
+BOOK` and `READ [TITLE] BOOK` read one. A page in a language is read only by one
+who knows it; `LORE=key` gives the reader the tattoo `LORE:key`; `READ_PROG
+PAGE 7` (or `PAGE [TITLE]`) fires a script for that page; `TEAR PAGE 3 FROM
+BOOK` gives a loose page. Ship the `FILE=` text with the world; `CHECKTEXT`
+checks missing links. `READ [DIRECTION]` reads writing on an exit. Help:
+`AHELP GENTOME`.
+
+| Property / system | What it adds |
+| --- | --- |
+| [Prop_When](#prop_when) | Properties and behaviours that exist only while a condition holds |
+| [Prop_Transform](#prop_transform) / [MPTRANSFORM](#mptransform) | Change form over time or condition; replace an item in place |
+| [Prop_ItemSet](#prop_itemset) | Named sets, worn counts, tier effects, identification progress |
+| [Prop_Cursed](#prop_cursed) | A curse that Remove Curse ends cleanly |
+| [Prop_Invokable](#prop_invokable) | Powers on demand: words, charges, recharge, cooldown, masks |
+| [Prop_Attunement](#prop_attunement) | Powers that wake only after an attunement |
+| [Prop_ItemGrowth](#prop_itemgrowth) | Growth with use, with saved progress |
+| [Durability options](#prop_durability) | Wear rate, broken instead of destroyed, unbreakable |
+| [ItemUpgrader](#itemupgrader-and-prop_upgradepath) | Upgrade paths at a smith or workbench |
+| Prop_ImproveGather | A gathering tool; see [Gathering skills](#gathering-skills) |
+| Prop_Workstation, Prop_Furnishing | Workstations and furniture; see above |
+
+## Puzzle primitives
+
+CoffeeSUD gives world creators these pieces. None needs Java or a script,
+although each can run script commands when something happens.
+
+| Primitive | Where | Player action / author contract |
+| --- | --- | --- |
+| [Prop_Switch](#prop_switch) | Item or exit | Pull, push, turn, press or flip; named or numeric states; actions per state; reset; one-shot |
+| [Prop_PressurePlate](#prop_pressureplate) | Room, item | Weight or presence activates and releases |
+| [Prop_ComboLock](#prop_combolock) | Exit, container | Dials, code words, a keypad |
+| [Receptacles](#receptacles-prop_limitedcontents) | Container, room | Accept, count or consume the right items; run actions |
+| [Riddler](#riddler) | Mob or item | Questions with several answers, tries, consequences |
+| [Prop_Discoverable](#prop_discoverable) | Item, exit, mob | Hidden things found by SEARCH or EXAMINE |
+| [Prop_BlockedExit](#prop_blockedexit) | Exit | A blockage cleared by digging, hitting or burning |
+| [Prop_Detector](#prop_detector) | Item | A carried tool that reacts to what is near |
+| [Keys and locks](#keys-and-locks) | Key, exit, container | Master keys, consumable keys, unpickable locks |
+| [USE and COMBINE](#use-and-combine) | Any two things | Event scripts and rows of `world/combinations.txt` |
+| [Traps](#traps) | Room, exit, item | Authored triggers and disarms |
+| [PUZZLE](#the-puzzle-command) | Command | List, set, reset and signal the above |
+
+### Actions
+
+Most puzzle properties take **actions**: a string of script commands to run when
+something happens (`ACTION_up=`, `ON=`, `OFF=`, `ONOPEN=`, `ONWRONG=`,
+`ONFULL=`, `ONCLEAR=`, `ONRIGHT=`, `ONOUT=`, `ONSTART=`, `ONEND=`, a combination
+row's `ACTIONS=`, a Cursed item's deeds). Rules (`core/Actions`):
+
+- Commands are separated by `;` (or a newline). A semicolon inside quotes does
+  not split.
+- They are MOBPROG commands, and the `MP` prefix may be left off: `door open
+  Gate#3 east; signal WORLD gate1 up; unhide 'a narrow stair'` runs `MPDOOR`,
+  `MPSIGNAL` and `MPUNHIDE`. A word that is a command in its own right is not
+  prefixed. The full command list is [27-mobprog-commands.md](27-mobprog-commands.md).
+- They run as the object's own script would, `$n` being the one who did it.
+  For an exit, they run for the room of the one who did it.
+- The commonest are `door [OPEN|CLOSE|LOCK|UNLOCK|TOGGLE] [ROOM] [DIR|CONTAINER]
+  [QUIET|"message"]` (`MPDOOR`, below), `signal [ROOM|AREA|WORLD|TARGET] [NAME]
+  [ARGS]` (`MPSIGNAL`), `setvar [SCOPE] [NAME] [VALUE]`, `echo`, `exp $n 100`,
+  `cast [SPELL] $n`, `unhide '[item]'`.
+
+**`MPDOOR OPEN|CLOSE|LOCK|UNLOCK|TOGGLE room dir|container [QUIET|"message"]`**
+changes a door or container the way a character would: **both sides** at
+once, with a message in both rooms, and it starts the door's relock timer.
+`room` is `HERE`, a room ID, or a thing whose room it is, so a lever can open a
+door in a faraway room. `DOORSTATE(room dir|container)` reads it back as
+`open`, `closed` or `locked`.
+
+### Prop_Switch
+
+A lever, button, crank or dial that **keeps its state**, on an item or an exit.
+
+| Parameter | Meaning |
+| --- | --- |
+| `VERBS="pull,push,turn,press,flip"` | Words that move it to the next state (this is the default list). `ACTIVATE` and `DEACTIVATE` always work: second and first state |
+| `STATES="down,up"` | State names (words, commas between) or a number range `1-8` for a dial. Default `down,up` |
+| `START=` | The first state (default: the first listed) |
+| `DESC_[state]=` | Text added to LOOK and EXAMINE in that state |
+| `MSG_[state]=` | What the room sees when it moves to that state (`<S-NAME>` who, `<T-NAME>` it); a default `<S-NAME> pulls <T-NAME>.` otherwise |
+| `ACTION_[state]=` | [Actions](#actions) run on arriving in that state |
+| `RESET=ticks` | After that many ticks away from `START`, it goes back to `START`, running that state's action |
+| `REQUIRES=` (or `MASK=`) | Zapper mask on who may move it; `REQMSG=` is told to the others (default "It will not move.") |
+| `ONCE=true` | It can be moved once only; later tries get `REQMSG`. `PUZZLE RESET` rearms |
+
+Players type `PULL LEVER`, `TURN DIAL` (to the next state), `TURN DIAL TO 3`
+(a specific one), `ACTIVATE LEVER`. The verb is taken *before* the game's own
+command of that name. State names are lower-cased, and the keys use them:
+`ACTION_up`. The current state is kept in the property's text as `STATE=` (and
+`MOVED=true`), so saves and world files keep it. Scripts read it with
+`SWITCHSTATE(thing)` or `SWITCHSTATE(room:dir)` and react with the trigger
+`SWITCH_PROG [state|ALL]` on the switch's own scripts or its room's
+([26-mobprog-triggers.md](26-mobprog-triggers.md)).
+
+```text
+STATES="down,up" START=down MSG_up="The east gate grinds open." MSG_down="The east gate grinds shut." ACTION_up="door open CreatorMuseum#0 east QUIET; setvar WORLD MUSEUM_GATE 1" ACTION_down="door close CreatorMuseum#0 east QUIET; setvar WORLD MUSEUM_GATE 0"
+VERBS=turn STATES=1-8 ACTION_5="signal WORLD vault dial5"
+```
+
+`PROPCHECK` may warn about the `MSG_up`-style keys even though they are
+valid (a known validator gap, see
+[developer tools audit](../../audit/developer-tools-audit.md#open-property-key-validation-gap)).
+A switch is not a multi-step puzzle by itself; give a puzzle with several
+switches shared state with `setvar` and `signal`, below.
+
+### Prop_PressurePlate
+
+A pressure plate on a **room** weighs the mobs there (with all they carry) and the items lying there. On a
+**fixture** (an item) it weighs what is on or in it and who sits on it.
+
+| Parameter | Meaning |
+| --- | --- |
+| `WEIGHT=test` | Total weight test |
+| `COUNT=test` | Number of mobs test |
+| `MASK=` | A zapper mask for what counts |
+| `ON=` / `OFF=` | [Actions](#actions) when it goes down / comes up again |
+| `MSGON=` / `MSGOFF=` | Messages shown there |
+| `DELAY=ticks` | It comes back up that many ticks after the weight leaves; pressed again meanwhile, it stays down |
+
+A *test* is `>=120`, `>50`, `<=10`, `<3`, `=2`, or a bare number (at least).
+The plate looks again whenever someone enters or leaves, things are got, put
+or dropped, or someone sits or stands on it. Scripts get `ROOMWEIGHT(room)` and
+`CONTENTWEIGHT(thing)`.
+
+```text
+WEIGHT=">=50" OFF="cast Spell_Lightning $n" MSGOFF="The pedestal rises with a click!"
+COUNT=">=2" ON="door open here north" OFF="door close here north" DELAY=2
+```
+
+### Prop_ComboLock
+
+A combination lock on an exit or a container.
+
+| Parameter | Meaning |
+| --- | --- |
+| `CODE=` | The code: `739`, `7-3-9`, `sun-moon-star`, or `RANDOM` |
+| `SYMBOLS=` | Each dial's symbols: `0-9` (default), or a list `"sun,moon,star"` |
+| `DIALS=` | Number of dials (default: as many as the code has; 3 for RANDOM) |
+| `VERB=` | The word for turning a dial (default `turn`) |
+| `SHOW=true` | LOOK reads what the dials show |
+| `TRIES=n` | After n wrong codes, `ONWRONG` runs (0 = never) |
+| `ONWRONG=`, `ONOPEN=` | [Actions](#actions) |
+| `RELOCK=ticks` | After opening, it shuts and locks again that many ticks later |
+| `MSG=` | What is seen when it opens |
+| `VAR=NAME` | With `CODE=RANDOM`: the rolled code is put in the script variable `$<COMBO NAME>` so a clue can print it |
+
+Players: `TURN DIAL 2 TO 3` (one dial), `SET DIALS 7 3 9` (all), `ENTER 739` (a
+keypad code); `ON [THING]` picks the lock when there are several. When the
+dials read the code it unlocks and opens, on both sides of a door, runs
+`MSG` and `ONOPEN`. `CODE=RANDOM` is rolled for each new game and kept with the
+lock. The dials are kept as `READ=` and a rolled code as `GOT=` in the text.
+
+```text
+CODE=sun-star-moon SYMBOLS="sun,moon,star" SHOW=true TRIES=3 ONWRONG="cast Spell_ShockingGrasp $n"
+CODE=739 RELOCK=30
+CODE=RANDOM DIALS=4 VAR=VAULTCODE
+```
+
+### Receptacles: Prop_LimitedContents
+
+A **receptacle** is a container (or room) that reacts to the right objects.
+`Prop_LimitedContents` takes `[MAX NUM] ([MASK])`, and several such
+clauses separated by `;`. No more than `NUM` items matching the mask may be
+put in a container (or dropped in a room). The first clause whose mask the item
+matches applies; matching none means no limit. CoffeeSUD adds:
+
+| Parameter | Meaning |
+| --- | --- |
+| `MSG="text"` | Refusal text |
+| `ACTUAL=true\|false` | Count the real contents |
+| `LOCKIN=true` | What is put in cannot be taken out; `LOCKMSG` is told |
+| `CONSUME=true` | What is put in vanishes but is still counted (kept as `TALLY=`) |
+| `ONPUT=` | [Actions](#actions) run when something goes in |
+| `ONFULL=` | Run when each limit above 0 is met |
+| `ONEMPTY=` | Run when the last thing is taken out |
+
+```text
+2 -TAGS +DRAGONEYE;0;MSG="It does not fit.";LOCKIN=true;ONFULL="door open here north; echo The dragon's mouth grinds open."
+3 -javaclass +genweapon
+```
+
+The mask is an item zapper mask (see [24-behaviors-and-masks.md](24-behaviors-and-masks.md)).
+In the example, two items tagged `DRAGONEYE` fit; anything else (a limit of 0)
+is refused; when the second goes in, the door opens.
+
+### Riddler
+
+`Riddler` is a behaviour on a mob or an item that asks riddles.
+
+| Parameter | Meaning |
+| --- | --- |
+| `RIDDLE=`, `ANSWERS="a\|b"` | The question and its accepted answers. `RIDDLE1`..`RIDDLE9` with `ANSWERS1`..`ANSWERS9` add more; `RANDOM=true` picks one, else the first |
+| `FUZZY=n` | Forgives n wrong letters (1 forgives one wrong letter, or two swapped). Case, a/an/the and punctuation never count |
+| `ASK=` | `GREET` (asks one of the player's side who comes in), `LOOK` (one who looks at it), `COMMAND` (one who types `RIDDLE`). All three by default |
+| `TRIES=n` | After n wrong answers (3), `ONOUT` runs |
+| `ONRIGHT=`, `ONWRONG=`, `ONOUT=` | [Actions](#actions); `$n` is who answered, `$i` the riddler |
+| `RIGHTMSG=`, `WRONGMSG=` | Text for each answer |
+| `ONCE=` | `CHARACTER` (default): asks each character until they solve it; `SAVE`: until anyone does, kept with it; `NONE`: always |
+
+Players answer by saying it (`SAY mountain`) or `ANSWER mountain`.
+
+```text
+RIDDLE="What has roots nobody sees, and is taller than trees?" ANSWERS="mountain|mountains" FUZZY=1 TRIES=3 ONRIGHT="door open here north; exp $n 100" ONOUT="force $i kill $n"
+```
+
+### Prop_Discoverable
+
+Something hidden that anyone can find, on an item, an exit or a mob. Until it
+is found nobody sees it, and nobody goes through a hidden exit.
+
+| Parameter | Meaning |
+| --- | --- |
+| `FOUNDBY=` | `search`, `examine:[THING]` or `look:[THING]`, separated by `\|`. `SEARCH` needs no skill, and one SEARCH looks for everything hidden in the room. Default `search` |
+| `CHECK="INT 12"` | A d20 plus the stat's (N-10)/2 plus a tenth of Searching's or Thief_Search's proficiency against the number. No check means found at once |
+| `DC=n`, `STAT=` | The same check in two parameters |
+| `MSG=` | What the finder is told |
+| `HINT=` | Text added when one of its `FOUNDBY` things is examined or looked at |
+| `STAYS=false` | It hides again `RESET` ticks (30) after being found |
+
+Once found it stays found (`FOUND=true` kept in the text).
+
+```text
+FOUNDBY=examine:tapestry MSG="Behind the tapestry is a narrow door." HINT="The tapestry stirs in a draught."
+FOUNDBY=search|examine:fireplace CHECK="INT 12"
+```
+
+### Prop_BlockedExit
+
+A blockage on an exit that the player must clear. While it stands, nobody goes
+that way and LOOK at the exit says so.
+
+| Parameter | Meaning |
+| --- | --- |
+| `NAME=` | The blockage's name ("a pile of rubble") |
+| `HP=n` | Hit points (default 40) |
+| `TOOL=` | A zapper mask on the tool held or wielded (`-TAGS +PICKAXE`) |
+| `SKILL=STAT+SKILL` | Adds a stat's (N-10)/2 and a skill's proficiency/10 to each try |
+| `FIRE=true` | `BURN` with a lit light in hand clears it at once |
+| `MSG=` | Shown with each try |
+| `CLEARMSG=` | Shown on both sides when it is gone |
+| `ONCLEAR=` | [Actions](#actions) |
+| `RESPAWN=ticks` | It comes back that many ticks later (0 = never) |
+
+`CLEAR`, `DIG`, `SMASH`, `HIT` or `ATTACK` the direction (or the blockage by name)
+wears it down by 1d6 plus the skill each try. A weapon strike uses normal
+combat-adjusted damage and the normal message hooks; digging and clearing keep
+their tool and skill rules. What is left is kept with it (`LEFT=`), and a
+blockage on the other side of the exit is kept the same.
+
+```text
+NAME="a pile of rubble" HP=40 TOOL="-TAGS +PICKAXE" SKILL=Digging+STR CLEARMSG="The rubble gives way to a dark tunnel."
+NAME="a wall of vines" HP=60 FIRE=true RESPAWN=3000
+```
+
+### Prop_Detector
+
+An item that reacts to what is near.
+
+| Parameter | Meaning |
+| --- | --- |
+| `DETECT="mask"` | Mobs it detects (a zapper mask) |
+| `DETECTITEM="mask"` | Items it detects (an item mask) |
+| `RANGE=0-3` | Rooms away it can sense (0 = same room) |
+| `WHERE=` | `WORN`, `HELD` or `ANY` (carried, or lying anywhere) |
+| `EVERY=ticks` | How often it looks (1) |
+| `AMBIANCE=` | Shown on the item while it finds something |
+| `MSG=`, `STOPMSG=` | Told to the carrier when it starts and stops (`$p` the item) |
+
+```text
+DETECT="-RACECAT +Orc +Goblinoid" RANGE=2 WHERE=WORN AMBIANCE="(glowing blue)" MSG="$p glows faintly blue." STOPMSG="$p's glow fades."
+DETECTITEM="-TAGS +TREASURE" MSG="$p twitches in your hands." WHERE=HELD
+```
+
+### Keys and locks
+
+Doors, locks and the key item itself are described in
+[20-areas-rooms-exits.md](20-areas-rooms-exits.md). CoffeeSUD adds two
+properties for richer rules.
+
+**`Prop_KeyRules`** on a key:
+
+| Parameter | Meaning |
+| --- | --- |
+| `CONSUME=true` | The key crumbles once it has unlocked something |
+| `BREAK=pct` | That percent of the time it snaps when used |
+| `RETURN=ROOM_ID` | Once used it goes back to that room |
+| `MASK=`, `MSG=` | Who may use it; what the others are told |
+
+A key's code may be a **list** (`crypt;vault` opens both) or end in `*`
+(`jail.*` is a master key for `jail.1`, `jail.2`...). A key on a key ring is
+found however deep the ring is in a pack.
+
+**`Prop_LockRules`** on an exit or container:
+
+| Parameter | Meaning |
+| --- | --- |
+| `PICK=NEVER` or `PICK=LEVEL:n` | No thief picks it, or only one of level n or more (`MSG` tells the others) |
+| `KEYS=code;code` | Key codes it takes besides its own (a code ending in `*` takes all that begin so) |
+| `RELOCK=ticks` | That many ticks after it is unlocked it shuts and locks again |
+| `MSG=` | Text for refusals |
+
+`Prop_CloseCommand` on an open container or exit makes a phrase close it
+(`twist knob;tw knob;noclose`; `noclose` also disables the normal `CLOSE`): a
+way to block ordinary actions and require the puzzle's own wording.
+
+### USE and COMBINE
+
+`USE [ITEM] (ON [TARGET])` and `COMBINE [ITEM] WITH [ITEM]` do whatever the
+world says. What happens is one of:
+
+1. A `USE_PROG` or `COMBINE_PROG` script on either thing: `USE_PROG
+   ([KEYWORDS]/ALL)`; `$n` who, `$o` the first, `$t` the second (or the first
+   alone); the keywords are looked for in the other thing's name.
+2. A row of `world/combinations.txt` (only if no script took it). Otherwise
+   "Nothing happens."
+
+Each row is `A | B | RESULT | keys`, one per line, `#` for a note:
+
+| Field | Meaning |
+| --- | --- |
+| `A`, `B` | A name (or part of one), `tag:X`, or `catalog:X`. `B` empty means `USE A` alone. The order does not matter |
+| `RESULT` | A catalog item or class given to the user; blank for nothing |
+| `VERB=` | `USE` or `COMBINE` (either by default) |
+| `CONSUME=` | `A`, `B`, `BOTH` or `NONE`: which things are used up |
+| `MASK=` | Zapper mask on who does it |
+| `SKILL=` | A skill the user must have |
+| `FAILMSG=` | What a failure says (default "You do not know how.") |
+| `MSG=` | What the room sees (`<S-NAME>` who, `<O-NAME>` the first, `<T-NAME>` the second) |
+| `ACTIONS=` | [Actions](#actions) for the first thing |
+
+```text
+a torn map | a torn map | the old smuggler's map | VERB=COMBINE CONSUME=BOTH MSG="<S-NAME> fit(s) the torn halves together."
+oil flask | squeaky hinge | | VERB=USE CONSUME=A ACTIONS="setvar WORLD HINGE oiled" MSG="<S-NAME> oil(s) <T-NAME>."
+tag:WAND | | | VERB=USE MASK="-NAMES +Bo" FAILMSG="You cannot make it work."
+```
+
+The file is re-read when it changes.
+
+### Traps
+
+`GenTrap` is a data-defined trap (`CREATE ABILITY GenTrap`, `MODIFY ABILITY
+[ID]`). Besides its messages, damage and ability it has:
+
+| Field | Meaning |
+| --- | --- |
+| `TRIGGERS` | What springs it instead of its class default: message types (`SIT`, `READ`, `LOOK`, `EXAMINE`, `OPEN`, `CLOSE`, `WEAR`, `HOLD`, `PUT`, `DROP`, `GET`), commas between; on a room `ENTER`, `LEAVE:[DIRECTION]` and the others, by anyone there |
+| `DISARM` | `verb:[PHRASE]`, typed there, disarms it until it resets, besides the usual skills |
+| `ONCE` | It springs once and is gone |
+| Script | `ACT_PROG [TRAP ID]` when it springs, `$t` the one who sprang it; `FUNCTION_PROG ONTRIGGER` ( `$n` who sprang it) and `ONDISARM` (`$n` who disarmed, if known). It runs with or without an ability |
+
+Help: `AHELP GENTRAP`. See also [25-abilities-and-effects.md](25-abilities-and-effects.md).
+
+### The PUZZLE command
+
+```text
+PUZZLE LIST ([AREA])
+PUZZLE CHECK (AREA [NAME])
+PUZZLE SET [TARGET] [STATE]
+PUZZLE RESET [TARGET]
+PUZZLE SIGNAL [ROOM/AREA/WORLD/TARGET] [NAME] ([ARGS])
+```
+
+`LIST` shows the switches, plates and blockages and the script signal wiring.
+`CHECK` checks rooms, doors and loadable objects the puzzle refers to. `SET`
+moves a switch and **runs its real actions** (it changes the world); `RESET`
+returns it to `START` and rearms `ONCE`. `SIGNAL` uses the normal `SIGNAL_PROG`
+delivery path. This console works with the existing primitives; a generic
+puzzle controller (I12) is deferred. Build multi-step puzzles with explicit
+saved variables and signals, and plan reset behaviour as part of the design.
+
+### Designing a puzzle
+
+- Provide a **recoverable path** after a wrong input, a dropped component, an
+  NPC's death, or leaving halfway through. `RESET=` on a switch, `RELOCK=` on
+  a lock, `RESPAWN=` on a blockage, and `PUZZLE RESET` for the builder.
+- Store a solved clue **per character or profile**, or per physical puzzle
+  instance, and not by its current description. Duplicate source IDs
+  intentionally share clue state (see
+  [state-and-persistence.md](state-and-persistence.md)).
+- Put durable facts in `setvar WORLD ...` or a `signal` instead of relying on
+  the state of a description. A description can read the variable with
+  `<VARIES><IFVAR NAME=1>...</IFVAR></VARIES>`
+  ([11-presentation-language.md](11-presentation-language.md)).
+- Use the same door action in both directions, `MPDOOR`, so both sides agree.
+- Test: operate, leave, save, restore, operate again.
+
+## Changing items: transformation, growth, attunement and more
+
+### Prop_When
+
+Properties and behaviours that are there only while a condition holds.
+
+| Parameter | Meaning |
+| --- | --- |
+| `PROPS="Prop_X(args);Behavior_Y(args)"` | What it wraps (abilities or behaviours, `;` between), or `ID=` with `PARMS=` for one |
+| `WHEN="mask"` | A zapper mask tested on what `CHECK` says (often `-IF ISMOON(FULL)`-style conditions) |
+| `CHECK=` | `HOST` (the thing it is on; default), `OWNER` (an item's owner), `ROOMPLAYERS` (any of the player's side in its room), `TRIGGERER` (the last of them to come in) |
+| `EVERY=ticks` | How often it looks again (1) |
+| `CHANCE=pct` | Chance each time it would come on |
+| `COOLDOWN=ticks` or `nH` | Ticks, or game hours with `H`, before it may come on again |
+| `ONCE=CHAR\|PROFILE\|WORLD` | Once a character (a tattoo), a profile, or a game |
+| `ONSTART=`, `ONEND=` | [Actions](#actions) |
+| `ELSEMSG=` | Told to one who comes in while it is off |
+
+What it wraps is added when the condition comes true and removed when it
+stops; it is **not** saved. Its cooldown and `ONCE=WORLD` are.
+
+```text
+WHEN="-IF ISMOON(FULL)" PROPS="RandomMonsters(catalog:werewolf;3;5);Emoter(min=5 max=10 howls)"
+CHECK=ROOMPLAYERS COOLDOWN=24H ONCE=CHAR PROPS="Prop_Transporter(Feywild#1)"
+```
+
+### Prop_Transform
+
+A thing that changes form.
+
+| Parameter | Meaning |
+| --- | --- |
+| `AFTER=ticks` / `DAYS=n` | The time: ticks or game days; what is left is kept (`LEFT=`) |
+| `WHEN=` | Instead: `NIGHT`, `DAY`, `DAWN`, `DUSK`, `FULLMOON`, a season (`WINTER`...), or a zapper mask tested on its room |
+| `START=` | When the timer runs: `GET` (carried), `DROP` (lying in a room), `WEAR` (worn), `ALWAYS` (default) |
+| `RESET=true` | Start again when `START` stops holding |
+| `ONLYIN=` | `ROOM`, `CONTAINER` or `CARRIED`: where the time runs |
+| `INTO="item"` | An item (from the catalog, or a class) in its place |
+| `MOB="mob"` | A mob appears there instead |
+| `SET="NAME=.. DISPLAY=.. DESC=.. PROPS=.."` | Changes it in place (`PROPS` adds properties) |
+| `REVERT=true` | With `WHEN`, changes back when it ends |
+| `KEEP=` | `FOLLOW` (a mob follows the carrier), plus `STATE,TAGS,USES,CONTAINER,WORN` (the last two by default) |
+| `MSG=` | Shown (`$p` is what it became) |
+
+What it becomes may have its own `Prop_Transform`: a chain.
+
+```text
+DAYS=3 START=GET ONLYIN=CARRIED MOB="a wyrmling" KEEP=FOLLOW MSG="$p cracks open!"
+WHEN=NIGHT REVERT=true MOB="a stone gargoyle" MSG="$p stirs and spreads its wings!"
+```
+
+### MPTRANSFORM
+
+`MPTRANSFORM item name [KEEP=state,tags,uses,container,worn|ALL|NONE]`
+replaces an item in place (carried by the same one or lying in the same room;
+`$p` is the new one). JavaScript has `transform()`. The same engine
+(`core/Transform`) serves Prop_Transform and ItemUpgrader. `KEEP`: `STATE` (script
+variables and states), `TAGS`, `USES` (uses or condition), `CONTAINER`, `WORN`.
+Contents stay in it (or fall out if the new item holds nothing).
+
+### Prop_ItemSet
+
+A piece of an item set.
+
+| Parameter | Meaning |
+| --- | --- |
+| `SET=id` | The set's id. Every piece has it |
+| `NAME=` | Display name |
+| `COUNT=` | `WORN` (default) or `HELD` (carrying counts) |
+| `TIERn="Prop_X(args);..."` | What wearing n pieces gives. Every tier met applies; its properties go on one of the counted pieces, unsaved, and come off when a piece does |
+| `PIECES=n` | How many pieces there are |
+| `ONMSG=`, `OFFMSG=` | Told as a tier comes and goes (`$t` the tier) |
+| `MASK=` | Who may have the tiers |
+
+One piece carries the tiers; the others need only `SET=id`. A set may instead
+be defined in `world/itemsets.txt`, one `SET=[ID] NAME=... TIER2=...` line per
+set, for a set none of whose pieces says. LOOK at a piece shows
+"Set: 3/5 worn" and each tier, and identification shows active and inactive
+tiers. Scripts: `SETCOUNT([CODE] [SET])` and `SET_PROG`. The legacy
+`ALLSET="name-3"` option on `Prop_HaveAdjuster`/`Prop_WearAdjuster` gives each
+piece its own number of pieces needed. Count correctly worn pieces, not items
+merely carried (unless `COUNT=HELD`). Test equip, remove, destruction, death and
+restore.
+
+```text
+SET=coastguard NAME="Coastguard's Oath" PIECES=2 TIER2="Prop_WearAdjuster(con+2)"
+SET=coastguard
+SET=drowned_king NAME="Regalia of the Drowned King" PIECES=5 TIER2="Prop_WearAdjuster(savewat+20)" TIER4="Prop_WearSpellCast(Spell_WaterBreathing);Prop_WearEnabler(Chant_Tsunami)" ONMSG="The regalia stirs."
+```
+
+### Prop_Cursed
+
+A curse on an item that Remove Curse ends cleanly. It is of the cursing
+domain, so Remove Curse finds it, but only a priest of `LEVEL` or more lifts
+it.
+
+| Parameter | Meaning |
+| --- | --- |
+| `LEVEL=n` | Least level of the priest who can lift it |
+| `HIDDEN` | Shows nothing until first worn, when `REVEAL` is told. Detection also depends on the examiner's level |
+| `REVEAL="text"` | Told when it first shows |
+| `NOREMOVE`, `NODROP` | It will not come off, or be dropped |
+| `PENALTY="Prop_X(args);..."` | What it does while it holds |
+| `BREAK="SAY:words;ENTER:ROOM_ID"` | Deeds, in order, by the one who has it, that break the curse |
+| `BREAKMASK="mask"` | A mask the wearer comes to fit |
+| `ONBREAK=` | `KEEP` (default), `CRUMBLE` (the item goes), or `BECOME:[ITEM]` |
+| `BREAKMSG=` | Told when it breaks |
+
+Lifted or broken, its penalties go with it. Its state is kept in the text
+(`SHOWN=`, `STEP=`).
+
+### Prop_Invokable
+
+An item's powers on demand, for anyone, with no class skill.
+
+| Parameter | Meaning |
+| --- | --- |
+| `WORD="Ignis"` | The holder says it. Without `WORD`, the user types `VERB` and its name (`INVOKE [ITEM]` by default) |
+| `VERB=` | The command word |
+| `SPELLS="Spell_Fireball;LEVEL=12,Spell_Light"` | What it casts; each at `LEVEL` (or the item's level) |
+| `TARGET=` | `SELF`, `ENEMY` or `ROOM` |
+| `CHARGES=n` | Uses held; what is left is kept with it (`LEFT=`) |
+| `RECHARGE=` | `DAWN`, `DAILY` or `TICKS=n` |
+| `COOLDOWN=ticks` | Ticks between uses |
+| `REQUIRE=` | `WORN` or `HELD` |
+| `MASK=` | Who may use it |
+| `MSG=`, `EMPTYMSG=` | What the room sees (`<S-NAME>`, `<T-NAME>`); what the user is told when it is spent |
+
+Identifying it tells its charges and recharge.
+
+```text
+WORD=Ignis SPELLS="Spell_Fireball;LEVEL=12" TARGET=ENEMY CHARGES=3 RECHARGE=DAWN REQUIRE=WORN EMPTYMSG="The ring is cold."
+```
+
+### Prop_Attunement
+
+Powers that stay inert until the item is attuned.
+
+| Parameter | Meaning |
+| --- | --- |
+| `PROPS="Prop_X(args);..."` | What wakes on attunement |
+| `HOW=REST:ticks` | Attune by resting (sitting or sleeping) with it that long |
+| `RITUAL="INROOM ROOM_ID & SAY words"` | Attune by a ritual: in the room, saying the words (either part may be left out) |
+| `ON=EQUIP` | Attune by wearing it |
+| `LIMIT=n` | How many items one may be attuned to (3) |
+| `BIND=true` | It stays inert in anyone else's hands |
+| `MSG=`, `MASK=` | Told to the one who attunes; who may |
+
+`UNATTUNE [ITEM]` frees one so the character can attune another. The bond is
+kept as `ATTUNED=name` in the text. Identification says it needs attunement.
+
+### Prop_ItemGrowth
+
+An item that grows with use.
+
+| Parameter | Meaning |
+| --- | --- |
+| `GAIN=` | `KILL` (kills by the wielder or wearer; `KILLMASK` says which), `HIT`, `USE`, `WORNTICK` |
+| `XP="formula"` | XP per event (`@x1` the slain's level; default 1) |
+| `KILLMASK="mask"` | Which kills count |
+| `STAGES="100:NAME='a humming blade' PROPS=Prop_WearAdjuster(dam+2);400:NAME='Dawnbringer' PROPS=..."` | At each amount the item takes that stage's `NAME` (and `DISPLAY`) and `PROPS` |
+| `MSG=` | Told to its holder on a new stage (`$p`) |
+| `BIND=CHARACTER` | It grows for its first owner only |
+
+Growth, stage and owner are kept with it, and identification shows the stage
+and the way to the next.
+
+### Prop_Durability
+
+An item's own wear and tear. Defaults come from `ITEMWEAR` (percent of usual
+wear, 100) and `ITEMBREAK` (`DESTROY`, or `BREAK` for unusable-until-mended)
+in `coffeemud.ini`.
+
+| Parameter | Meaning |
+| --- | --- |
+| `MULT=pct` | Percent of the usual wear it takes |
+| `UNBREAKABLE` | No wear at all |
+| `NOREPAIR` | Nobody mends it |
+| `BREAK=true` | Worn out, it breaks rather than goes |
+| `BROKENNAME="a shattered %s"` | Names the broken item (`%s` the old name); also implies breaking |
+
+A broken item cannot be worn, held or wielded, gives no armour or damage, and
+shows `(broken)` until mended (MEND, a smith). Below half its condition it shows
+`(worn)`. This is the same "wear" as a recipe component's `wear(n)`, applied to
+tools.
+
+### ItemUpgrader and Prop_UpgradePath
+
+`ItemUpgrader` is a behaviour on a smith (mob) or a workbench (item). Its rows
+are `UPGRADE1=` to `UPGRADE9=`, or one per line in the file named by
+`UPGRADES=` (for example `world/upgrades.txt`). A row:
+
+| Key | Meaning |
+| --- | --- |
+| `FROM=name\|tag:X\|catalog:X` | What it takes (`\|` between alternatives) |
+| `TO=catalog:ITEM` | The item becomes this in its place |
+| `ADJ="dam+2 att+5 arm+3"` | Or the same item improved (`dam`, `att`, `arm`, `lvl`) |
+| `COST=gold` | Price |
+| `MATERIALS="starmetal ingot x3, coal"` | What is used up (`x3` for three) |
+| `LEVEL=n` | Least level |
+| `KEEP=` | As MPTRANSFORM's (`STATE`, `TAGS`, `USES`...) |
+| `MSG=` | What is seen |
+
+Players type `UPGRADE [ITEM]` to see what it takes and `UPGRADE [ITEM] CONFIRM`
+to do it. An item can carry its own row, without `FROM`, as `Prop_UpgradePath`
+(`TO="catalog:Starfall, the reforged blade" COST=2000 MATERIALS="starmetal ingot x3"`).
+
+```text
+UPGRADE1="FROM=notched TO=\"catalog:Starfall, the reforged blade\" COST=2000 MATERIALS=\"starmetal ingot x3\" LEVEL=20 KEEP=TAGS,STATE"
+```

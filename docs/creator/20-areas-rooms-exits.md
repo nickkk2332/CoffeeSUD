@@ -92,10 +92,10 @@ SYSMSGS
 | Command | What it does |
 | --- | --- |
 | `GOTO [room ID / room text / mob or player name / area name]` | Moves you there. An area name takes you to a random room of that area. `GOTO AREA [text]` searches only the area you are in. `GOTO PARENT` leaves a grid child for its grid's parent room. `GOTO PREVIOUS` goes back along your last ten GOTO locations. Needs the `GOTO` flag. Source: [Goto](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Goto.java). |
-| `AT [room ID / room text / PLAYERS] [command...]` | Runs one command as if you stood in that room, then returns you. `AT PLAYERS` runs it in every other player's room (there are no other players in CoffeeSUDs single-player game, so it is mostly for old scripts). Needs the `AT` flag. |
+| `AT [room ID / room text / PLAYERS] [command...]` | Runs one command as if you stood in that room, then returns you. `AT PLAYERS` runs it in every other player's room; CoffeeSUD is a single-player game, so it rarely finds one. Needs the `AT` flag. |
 | `STAT ROOM [name or ID]` | Shows the room's whole editor listing (every field, no prompts). Searches your area first, then the world. |
 | `STAT AREA [name]` | The same for an area. |
-| `SYSMSGS` | Toggles sysop messages. With it on, `LOOK` shows the room ID and locale (`Area :(...)`, `Locale:(...)`, and the ID before the title), and the exit list shows the exit class. Turn it on while building. |
+| `SYSMSGS` | Toggles sysop messages. With it on, `LOOK` first prints `Area  :` (the area name), `RoomID:` (the room ID, and `#(x,y)` inside a grid) and a line with the locale class, its domain, climate words, resource and movement cost, e.g. `Plains: PLAINS wet <> 2mv`. The exit list shows each exit's class, and `LOOK` at an exit shows its `Type` and `Misc` text. Turn it on while building. It needs the `SYSMSGS` flag, and the shipped help warns that a wandering mob cannot enter or leave a room while a character with SYSMSGS on is in it, so turn it off when you test mob movement. |
 | `EXITS` (or `EX`) | Shows the exits of the current room. `EXITS SHORT` is brief. |
 | `AUTOEXITS [ON/OFF]` | Toggles showing the exit list when you look. This is a player setting. |
 | `AREAS` | The player-facing list of areas, with `SORT=` options. |
@@ -148,7 +148,7 @@ create ROOM s Plains
 
 - The direction may come first or last. `create stoneroom north` is a shorthand for `CREATE ROOM north StoneRoom`; it works for any locale class or exit class name followed by a direction.
 - The new room's title is `ClassName-roomID` and its description is empty. Write them with `MODIFY ROOM` (the `WORLD CHECK` TEXT report lists rooms that still have the default text).
-- The locale may also be the ID of a **builder template** (see [Templates](#templates)). A template room is copied whole: title, description, effects, behaviors, tags and contents, but it gets a new ID and your current area.
+- The locale may also be the ID of a **builder template** (see [Templates](#templates)). A template room is copied whole: title, description, effects, behaviors, tags and the mobs and items in it, but not its exits; it gets a new ID and your current area.
 - The command is refused inside a grid child ("This command is invalid from within a GridLocaleChild room") and refused when the direction is not valid for the room ("Room was created without that possible direction" for grids that lack it, or "A room may not be created in that direction" at the edge of a grid area).
 - Making a room where one already exists does not stop you. `create StoneRoom north` twice leaves the first new room in place with a link from it back to you; you now have a one-way exit to the old room, and a new room to the north. Use `LINK` and `UNLINK` to tidy.
 - Needs `CMDROOMS`.
@@ -242,7 +242,7 @@ A wrong field name prints the list of valid ones: `NAME,AREA,DESCRIPTION,AFFECTS
 
 ### Changing a room's locale class
 
-`MODIFY ROOM CLASS [locale]` and the editor's field 1 ("Type") swap the room for a new one of the other class, keeping its ID, title, description, exits, mobs and items. The editor asks you to confirm, and warns that it permanently saves any mobs and items in the room. Use `LIST LOCALES` for the names.
+`MODIFY ROOM CLASS [locale]` and the editor's field 1 ("Type") swap the room for a new one of the other class, keeping its ID, links, exits, title, description, mobs, items, behaviors and permanent effects. The editor asks you to confirm, and warns that it permanently saves any mobs and items in the room. Use `LIST LOCALES` for the names.
 
 ### Titles and descriptions
 
@@ -280,7 +280,7 @@ LINK [room ID or room text] [direction]
 UNLINK [direction]
 ```
 
-`LINK midgaard#3001 north` makes the room you stand in lead north into that room. The new link uses a `StdOpenDoorway` exit unless the direction already has an exit. If the target room has nothing yet in the opposite direction, the engine also links it back, using the same exit object; if the opposite slot is occupied, the link you made is one-way, and the command says "Opposite room already exists and heads this way. One-way link created." when it points back at you already. A bad ID gives `Room "x" is unknown. Try again.` In an outdoors-only ship area, `LINK outside [direction]` links to the ship's own location. You can link to a grid child (`Area#12#(3,2)`). Needs `CMDEXITS`.
+`LINK midgaard#3001 north` makes the room you stand in lead north into that room. The new link uses a `StdOpenDoorway` exit unless the direction already has an exit. If the target room has nothing yet in the opposite direction, the engine also links it back, using the same exit object; if the opposite slot is occupied, the link you made is one-way. If the direction you are linking already led to a room that linked back to you, that room keeps its link back and the command says "Opposite room already exists and heads this way. One-way link created." A bad ID gives `Room "x" is unknown. Try again.` In a ship or other boardable area, `LINK outside [direction]` links to the room the ship sits in. You can link to a grid child (`Area#12#(3,2)`). Needs `CMDEXITS`.
 
 `UNLINK north` removes the link and exit to the north *from this room only*. The room to the north keeps its link back, so you may need to go there and `UNLINK south` too. It is the same command as `DESTROY ROOM north`. Needs `CMDEXITS`.
 
@@ -467,13 +467,13 @@ Typical area additions: weather behaviors, law and conquest behaviors (`Arrest`)
 
 ### Parent and child areas
 
-An area can have **parents** and **children**, forming a tree (no cycles; a ship cannot be one). A child inherits from its parents anything it leaves as *Inherited*: climate, atmosphere, theme, currency, prejudice, pricing and the calendar (see below), and behaviors and effects on the parent affect the child's messages. Messages go up the tree, not down. In the area editor, the *Parent Areas* and *Children areas* fields take an area name to add it or remove it (typing a name already related removes it); `*clear*` removes all; the engine refuses a circular reference. `DEFAULTPARENTAREA=` in `coffeemud.ini` gives every area that uses the default clock a common parent, a convenient way to apply a property to a whole world.
+An area can have **parents** and **children**, forming a tree (no cycles; a ship cannot be one). A child inherits from its parents anything it leaves as *Inherited*: climate, atmosphere, theme, currency, prejudice, pricing and the calendar (see below). Behaviors and effects on a parent see, and can veto, events that happen in its child areas, because messages are passed up the tree (never down). In the area editor, the *Parent Areas* and *Children areas* fields take an area name to add it or remove it (typing a name already related removes it); `*clear*` removes all; the engine refuses a circular reference. `DEFAULTPARENTAREA=` in `coffeemud.ini` gives every area that uses the default clock a common parent, a convenient way to apply a property to a whole world.
 
 An `StdTimeZone` or `StdPlanet` parent also gives its children its own calendar.
 
 ### Theme, atmosphere and climate
 
-- **Theme** (field "Theme setting") says which of three rule-sets are allowed: Fantasy (magic), Technical, Heroic (superpowers). Values: Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. In an area whose theme has no Fantasy bit, magic fails ("Magic doesn't seem to work here"); with no Heroic bit, superpowers fail ("Powers don't seem to work here"); with Heroic but no Technical bit, technology devices refuse to work. Inherited takes the parent's theme, or at the top `MUDTHEME` (shipped `1`, Fantasy).
+- **Theme** (field "Theme setting") says which of three rule-sets are allowed: Fantasy (magic), Technical, Heroic (superpowers). Values: Inherited, Fantasy, Technical, Fantasy & Technical, Heroic, Heroic & Fantasy, Heroic & Technical, All Allowed. In an area whose theme has no Fantasy bit, magic fails ("Magic doesn't seem to work here"); with no Heroic bit, superpowers fail ("Powers don't seem to work here"). A third gate refuses technology ("Technology doesn't seem to work here"), but the code only reaches it when the theme has the Heroic bit and lacks the Technical bit (see [Troubleshooting and gotchas](#troubleshooting-and-gotchas)), so a plain Fantasy area does not block technology. Inherited takes the parent's theme, or at the top `MUDTHEME` (shipped `1`, Fantasy).
 - **Climate** is a set of bits: wet, cold, windy, hot, dry, void, or Normal, or Inherited. The default for a new area is Normal. It shifts the weather the [simulation chapter](10-world-simulation.md) generates and the movement cost (rooms add their own bits: a `Jungle` is wet and hot regardless of the area).
 - **Atmosphere** is the raw material the area breathes ("AIR", "FRESHWATER", "NOTHING"...). Inherited by default. A character who cannot breathe it suffers.
 

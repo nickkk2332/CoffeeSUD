@@ -224,7 +224,7 @@ IF <condition>
 ENDIF
 ```
 
-**Arguments:** the rest of the line is one condition, built from condition functions such as `ISPC($n)` or `VAR($n QUESTSTEP == 2)`, combined with `AND`, `OR`, `NOT` and parentheses. Every condition function and the comparison forms are in [28](28-mobprog-functions.md). Minimum: 1 word.
+**Arguments:** the rest of the line is one condition, built from condition functions such as `ISPC($n)` or `VAR($n QUESTSTEP == 2)`, combined with `AND`, `OR`, `NOT` (or `!`), `ANDNOT`, `ORNOT` and parentheses. Every condition function and the comparison forms are in [28](28-mobprog-functions.md). Minimum: 1 word.
 
 **Behaviour:** the condition is evaluated; if true the lines up to `ELSEIF`/`ELSE`/`ENDIF` run, otherwise the `ELSE` lines run. `IF` blocks nest; the engine pairs each `ELSE` and `ENDIF` with the nearest open `IF` (text inside a `<SCRIPT>` block is skipped when it counts them). A condition that cannot be parsed is logged (`IF Syntax: ...`) and ends the current program level. An `IF` with no `ENDIF` logs `IF Syntax: Without ENDIF!` and ends the program.
 
@@ -1391,7 +1391,7 @@ if ispc($n)
   mpwait 2
   mpecho A voice whispers your name, $n.
   mpwait 3
-  if not isaffected($n Prayer_Bless)
+  if not affected($n Prayer_Bless)
     mpcast Prayer_Bless $n
   endif
 endif
@@ -1789,7 +1789,7 @@ The target of these commands is a character: a `$` code or a name; many accept N
 **Example**
 
 ```text
-GET_PROG
+GET_PROG all
 mpecho A needle springs from the chest!
 mpdamage $n 5 15 POISON
 ~
@@ -2352,3 +2352,203 @@ These commands move boats, ships and mounts; they are described with the travel 
 
 **Notes:** inherited from multi-user CoffeeMud, where it moved a connection from one body to another. CoffeeSUD has one local terminal and a party system for controlling several characters (see [31](31-saves-and-party.md)); do not use `MPPOSSESS` in new content.
 
+## Game commands in scripts
+
+A line whose first word is neither a control word nor an `MP` command is run as an **ordinary game command** by the mob the script runs as (the mob host, or the stand-in for an item, room, exit or area host). The whole line is `$`-substituted first (the command word too), split into words (single-quoted words stay together), and handed to the command processor at once, flagged as script-forced.
+
+```text
+say Welcome to the Gilded Stag, $n.
+emote polishes a mug.
+give 'a loaf of bread' $n
+wear sword
+follow $n
+kill $n
+```
+
+Rules and limits:
+
+- The command runs **now**, inside the program; it takes no game time and ignores the mob's command queue and its action cost.
+- It is the mob's own command: it needs the mob to be able to do it (not asleep or bound), to hold what it gives or wears, and to follow the usual rules of the command. A failure is shown in the room as for any mob, not logged as a script error (a command with a wrong word is just "Huh?" to nobody). `SCRIPTCHECK` flags a line whose first word is not a known command, social or ability.
+- Anything a mob can do is allowed: speech (`say`, `yell`, `emote`), socials (`smile $n`), movement (`north`, `follow`, `flee`), item handling (`get`, `drop`, `give`, `wear`, `wield`, `sit`), fighting (`kill`), skills (`cast`, `backstab`) and so on. For a skill with fixed arguments, `MPCAST` and `MPCASTEXT` are safer: they ignore the mob's practice and mana state for non-mob hosts.
+- A mob that is not the host can be driven with [MPFORCE](#mpforce): `mpforce $n sit`, `mpforce $b kill $n`. A stand-in for an item or room is a real mob in the room: `say`, `emote` and friends work, but it has no inventory of its own except what the script gives it.
+- A line whose first word starts with `MP` is never run as a game command (it is an unknown or ambiguous command error instead). To use a game verb that begins with `MP`, use [MPFORCE](#mpforce).
+
+### MPFORCE
+
+**Syntax:** `MPFORCE <mob> <command>`. Minimum: 2 words.
+
+**Arguments:** the mob (quote a multi-word name: `'a city guard'`; the special name `$GOD` forces the game's deity); the rest of the line is the command, any script line.
+
+**Behaviour:** makes the mob run the line **as that mob**, immediately. The line may be a game command or any MOBPROG command or control statement, so `mpforce $b mpecho ...` and `mpforce $n north` are both valid. For an item, room, exit or area target the engine gives it a stand-in mob first. The command text is `$`-substituted *before* the mob runs it, in the forcing script's context, so a `$i` in it is still the forcing host, not the forced mob; name the forced mob (`$b`, `$n`) where you mean it.
+
+**Example**
+
+```text
+HITPRCNT_PROG 50
+mpmload catalog goblin guard
+mpforce $b kill $n
+~
+```
+
+**Notes**
+
+- It does not check that the mob is willing or able; the forced command follows its own rules (a player forced to `sit` sits).
+- The forced line is a one-line function; `MPFORCE` cannot span lines. Use `MPCALLFUNC` for several.
+
+## Worked examples
+
+### A gate guard who can be bribed
+
+The guard holds one gate. Giving him coins opens it for a while; he closes it again later. The bribe state is kept on the guard himself, so five guards named alike do not share it.
+
+```text
+# on the guard (a mob) in the room north of the gate
+GIVE_PROG all
+if goldamt($o >= 5)
+  mpsetvar @$i BRIBED 1
+  mpjunk $o
+  say Move along, then, $n. I saw nothing.
+  mpopen $xn
+  mpalarm 20 mpclose $xn
+  mpalarm 20 mpsetvar @$i BRIBED
+else
+  say I have no use for that.
+endif
+~
+```
+
+(`GOLDAMT` is a condition function, see [28](28-mobprog-functions.md); `mpsetvar @$i BRIBED` with no value clears the variable.) The `MPALARM` lines are queued ticks: after twenty ticks the guard shuts the gate and forgets the bribe.
+
+### A three-brazier puzzle
+
+Three braziers are tagged `sunaltar`. When one is lit it tells every tagged thing in the area; the altar counts the signals and opens the door at three.
+
+```text
+# each brazier (an item with Scriptable) is tagged: MPTAG $i ADD sunaltar in its ONCE_PROG
+ONCE_PROG
+mptag $i ADD sunaltar
+~
+
+SPEECH_PROG p light
+mpecho The brazier flares into flame.
+mpsignal TAG:sunaltar lit
+~
+
+# the altar (an item or mob)
+SIGNAL_PROG lit
+mpsetvar @$i LIT ++
+if var(@$i LIT >= 3)
+  mpecho The sanctum door grinds open.
+  mpdoor OPEN Keep#14 north
+  mpsetvar @$i LIT
+endif
+~
+```
+
+### A quest giver with a menu, journal and reward
+
+```text
+# on Old Ned
+GREET_PROG 100
+if ispc($n) and not hastattoo($n BELLQUEST)
+  mpmenu $n NED "Old Ned wrings his cap." ask:"Ask about the bell" bye:"Leave" bye
+endif
+~
+
+FUNCTION_PROG NED
+switch $0
+case ask
+  say The bell sank in the marsh. Bring it home.
+  mptattoo $n BELLQUEST
+  mpstartquest bell
+  mpqobjective $n bell ADD bell 1 Find the drowned bell
+  mpqjournal $n bell Old Ned asked me to find the bell.
+endswitch
+~
+
+# when the player returns the bell
+GIVE_PROG bell
+mpjunk $o
+mpqobjective $n bell DONE bell
+mpquestwin $n bell OUTCOME returned REWARD
+say Bless you, $n.
+~
+```
+
+(`SET REWARDS` on the quest defines what `REWARD` pays; see [08](08-quests.md).)
+
+### A boss who winds up an attack and calls help
+
+```text
+# on the boss mob
+HITPRCNT_PROG 50
+mpecho The chieftain bellows for his guard!
+mpmload catalog goblin guard 2
+mpforce $b kill $n
+~
+
+FUNCTION_PROG BREATH
+mptelegraph 3 "<S-NAME> draws a deep, smoking breath!" mpdamage $n 20 40 FIRE INTERRUPT=STUN,DAMAGE>25% AVOID=COMMAND:duck
+~
+
+RAND_PROG 8
+if isfight($i)
+  mpcallfunc BREATH
+endif
+~
+```
+
+Players answer the wind-up by leaving, hiding, or typing `duck`; a stun, or enough damage before it lands, interrupts it. For more encounter tools see [29](29-combat-and-encounters.md).
+
+## Persistence notes
+
+| What the command changes | Where it lives | Survives a save and load? |
+| --- | --- | --- |
+| Script variables (`MPSETVAR`, `MPLIST`, `MPPROMPT` ... answers) in the shared or a named scope | the game's script variable store | yes, with the game; a script's own scope (`SCOPE *`) is kept with its engine |
+| `@host` variables and `MPSTATE` | the object's extra data | yes, with that object (a mob's are cleared on rejuvenation unless `PERSIST`) |
+| `MPLOCAL`, a function's parameters, `$0`-`$9` | the running program | no (except the words of a program `MPWAIT` paused) |
+| `MPALARM`, `MPWAIT`, a delayed `MPSIGNAL`, `MPTELEGRAPH` | the host's queue | yes: queued work is saved |
+| `MPNOTRIGGER` | the engine | yes |
+| `MPTATTOO`, `MPTITLE`, `MPFACTION`, `MPEXP`, stats, abilities, `MPENABLE` | the character | yes, with the character in the save |
+| `MPACCTATTOO`, `MPLORE ... PROFILE` | the profile | yes, with the profile |
+| `MPMLOAD`, `MPOLOAD` and friends | the world as a normal mob or item | yes, as part of the saved game; a loaded mob has no start room, so a reload of the *world file* does not bring it back |
+| `MPLINK` exits | the room, unsaved | no: the exit is gone after a reload |
+| `MPSET`, `MPGSET`, `MPBEHAVE`, `MPAFFECT`, `MPSCRIPT` | the object | in the game save yes; the *world files* are unchanged, so a world reload (see [02](02-world-workflow.md)) restores the authored state |
+| `MPSAVEVAR` | the local data store | yes |
+| Quests, `MPQOBJECTIVE`, `MPQJOURNAL`, `MPQTIMER`, `MPJOURNAL`, `MPLORE` | the character's record | yes |
+| `MPCATALOG`-style copies (`CATALOG` loads) | counted by the catalog | yes; the cap counts all copies in the world, including saved ones |
+
+`ONCE_PROG` runs again after each restore (see the [scripting supplement](../../CoffeeMud/guides/ScriptingSUD.html)); keep once-per-character facts in a tattoo or variable. See [state-and-persistence.md](state-and-persistence.md) for the full model.
+
+## Troubleshooting and gotchas
+
+- **Nothing happens and no error.** Many commands do nothing when the target is not found. Check the target with `MPECHO $n` first, use `$` codes instead of names, and run `SCRIPTCHECK` and `SCRIPTERRORS`. Turn tracing on with `MPSETINTERNAL TRACE TRUE` or the `SCRIPTTRACE` command.
+- **`unknown command MPSOMETHING` or `ambiguous command`.** Write the full, exact command name; see [Command lookup](#command-lookup).
+- **A name with an apostrophe never matches.** Cleaned arguments turn `'` into a backtick. Use a `$` code or leave the apostrophe out of the search.
+- **A multi-word name is treated as two arguments.** Quote it with single quotes.
+- **`;` and `~` end things early.** Inside text passed to `MPSCRIPT` or another command that holds script, write `\;` and `\~`.
+- **`MPSETVAR $i X` is shared by every mob of that name.** Use `MPSETVAR @$i X` for per-object state.
+- **A variable "disappears".** Setting it to an empty value deletes it. Beware `MPSETVAR $n X $<$n Y>` when Y is unset.
+- **`MPWAIT` does not wait.** It cannot pause inside a `FOR`, `WHILE`, `MPWHILE` or a function that another line called. Move it to the top level of the program.
+- **A `FOR` counter "is already in use".** Nested loops need different variables, and a variable holding a number from `MPARGSET` cannot be a counter.
+- **`MPWHILE` stops after four seconds, `FOR` after ten.** Use a counter in a variable, or `WHILE (cond) n` with a pass limit.
+- **A loaded mob keeps its template's equipment but cannot wear it.** Equip with `MPFORCE $b wear <item>` after `MPOLOAD`/`MPFORCE`.
+- **`MPDAMAGE` does not kill.** Add `KILL`, or use `MPSLAY`.
+- **`MPPURGE` on a player.** It sends the player home and stops their session. Do not.
+- **A cancelling trigger does not cancel.** Only the cancel-family triggers honour `RETURN CANCEL`; see [26](26-mobprog-triggers.md).
+- **A script runs twice for one event.** Several hosts (room, mob, item) listen to the same event; narrow the trigger or `MPNOTRIGGER` it.
+- **`MPREJUV area ITEMS` seems to do nothing.** The `items` and `mobs` words must be lower case.
+- **`MPECHOAT` seen by the player but also by a script.** Echoes are real messages and can set off `ACT_PROG` in the target's room.
+- **A prompt never returns.** `MPPROMPT`, `MPCONFIRM` and `MPCHOOSE` need a player with a session; aimed at an NPC they do nothing. Time-outs end the program.
+
+## See also
+
+- [MOBPROG guide](04-mobprog.md): structure, hosts, files, `LOAD=`, debugging, best practice
+- [Triggers](26-mobprog-triggers.md): what starts a program, and each trigger's `$` codes
+- [Functions and `$` codes](28-mobprog-functions.md): `IF` conditions, `$%FUNC()%`, `$` codes
+- [JavaScript](05-javascript.md): `<SCRIPT>` blocks and `JRUN`
+- [Behaviors and masks](24-behaviors-and-masks.md): `Scriptable`, `MPBEHAVE` targets, the zapper mask language
+- [Properties](23-properties-reference.md): `MPAFFECT` properties, `Prop_Checkpoint`, `Prop_Telegraph`
+- [Quests](08-quests.md), [NPC life and dialogue](06-npcs-dialogue.md), [Society](09-society.md), [Combat and encounters](29-combat-and-encounters.md), [World simulation](10-world-simulation.md), [Travel](30-travel-vehicles-instances.md), [Generation](12-generation.md)
+- [Testing and release](13-testing-release.md): `SCRIPTCHECK`, `SCRIPTTRACE`, `SCRIPTERRORS`
+- [Scripting in CoffeeSUD (supplement)](../../CoffeeMud/guides/ScriptingSUD.html) and the original [Scriptable guide](../../CoffeeMud/guides/Scriptable.html)

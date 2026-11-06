@@ -594,3 +594,220 @@ are mainly filler and examples; for your own world, copy a generic class.
 Names in `Items/` that end in `Wrapper` (`StdItemWrapper` and so on) are
 engine helpers for proxying objects, not items to create.
 
+## Weapons
+
+Weapon classes implement `Weapon` (and `AmmunitionWeapon` for ranged ones).
+They are wielded or held, add their damage and attack to the wielder's attack,
+and are what `Natural` creature attacks mimic.
+
+### Fields that matter
+
+| Field | Meaning |
+| --- | --- |
+| Damage | Base damage per hit. Magical Ability adds to it, and each point of ability adds 10 to the attack adjustment |
+| Attack Adjustment | Added to the wielder's attack. Only applies while the weapon is wielded (not merely held) |
+| Level | Wielders below this level are told the weapon "looks too advanced for you". Editing it re-balances damage, attack and value with `balanceItemByLevel` |
+| Weapon Attack Type | The damage type, below |
+| Weapon Classification | The weapon skill category |
+| Minimum / Maximum Ranges | Reach in rooms. `0/0` is melee. A bow is `1/3`, a sling `1/2`, a thrown spear `0/3` |
+| Ammunition | Whether the weapon needs ammunition, its type (a word, such as `arrows`) and capacity. When on, the weapon's *Uses Remaining* is the rounds loaded |
+| Condition | For weapons with no ammunition: 100 is perfect. Below 100 the damage scales down by that percent |
+| Two-handed | Toggle G in the *Is Gettable* prompt: the weapon needs both hands (`WORNAND` true). Without it the weapon is one-handed and may also be held |
+
+A new `GenWeapon` is wield-or-hold (`WORN_WIELD | WORN_HELD`), steel, weight 2,
+damage 5, level 5, value 5, condition 100.
+
+### Weapon attack types
+
+`Weapon.TYPE_DESCS`. The editor offers the letter-coded first seven; use
+`MODIFY ITEM x WEAPONTYPE [name]` for all of them. The message type is the
+kind of damage the engine reports for resistances and saves.
+
+| Index | Name | Editor letter | Damage message type |
+| --- | --- | --- | --- |
+| 0 | NATURAL | N | physical |
+| 1 | SLASHING | S | physical |
+| 2 | PIERCING | P | physical |
+| 3 | BASHING | B | physical |
+| 4 | BURNING | F | fire |
+| 5 | BURSTING | M | physical |
+| 6 | SHOOTING | R | physical |
+| 7 | FROSTING | | cold |
+| 8 | GASSING | | gas |
+| 9 | MELTING | | acid |
+| 10 | STRIKING | | electric |
+| 11 | LASERING | | laser |
+| 12 | SONICING | | sonic |
+| 13 | DISRUPTING | | poison |
+| 14 | STULTIFYING | | paralysis |
+| 15 | CORRUPTING | | undead/unholy |
+| 16 | SCRAPING | | water |
+
+### Weapon classifications
+
+`Weapon.CLASS_DESCS`; the word is also what class weapon restrictions name
+(see [03-characters.md](03-characters.md)).
+
+| Index | Name | Editor letter |
+| --- | --- | --- |
+| 0 | AXE | A |
+| 1 | BLUNT | B |
+| 2 | EDGED | E |
+| 3 | FLAILED | F |
+| 4 | HAMMER | H |
+| 5 | KARATE (natural attacks) | K |
+| 6 | POLEARM | P |
+| 7 | RANGED | R |
+| 8 | SWORD | S |
+| 9 | DAGGER | D |
+| 10 | STAFF | T |
+| 11 | THROWN | N |
+
+### Ammunition
+
+To make a ranged weapon that needs ammunition:
+
+1. Create the weapon (`GenBow`, `GenSling`, `GenHandBow` or `GenWeapon`) and, at
+   *Does this weapon require ammunition*, answer `Y`. Enter the ammunition
+   type and the capacity (how many it holds).
+2. Create a `GenAmmunition` item. Its **readable text** is the ammunition type
+   (it must equal the weapon's `AMMOTYPE`), and its **Uses Remaining** is how
+   many rounds the stack holds.
+3. Players `LOAD` or the weapon reloads from carried ammunition of the type.
+
+(The editor's reminder text says to put the type in the "secret identity" of
+the ammunition; the code reads the readable text. See the audit notes.)
+
+### Ranged and special weapons
+
+`StdBow`, `StdSling`, `StdSpear`, `StdLasso`, `StdNet`, `StdBoffWeapon` and
+`StdSiegeWeapon` are the base classes behind the `Gen*` variants above. A
+lasso and a net entangle; a boff weapon deals only play damage; a siege weapon
+is rideable and has ranges up to 10.
+
+## Armor and wear locations
+
+### How armor works
+
+`GenArmor` classes add their **Armor** value to the wearer's armor, which is
+"higher is better" on an item and subtracted from the wearer's armor class.
+Magical Ability on armor adds more: x5 at the torso, x2 on the head or in the
+hand, x1 elsewhere, unless the piece is flagged multi-wear.
+
+The material gives the wearer a small saving-throw adjustment while worn:
+metal -10 to the electric save, leather +10 to acid, mithril +10 magic, cloth
+and paper -10 fire, glass/rock/precious/vegetation/flesh/synthetic +10 fire,
+energy +10 paralysis.
+
+Armor is subject to wear and tear while its condition (Uses Remaining) is
+between 0 and 1000: it loses condition when the wearer is struck, shows
+messages as it degrades, and its value falls with condition. To make a piece
+that never wears, give it more than 1000 uses, or add the `Prop_Durability`
+property with `UNBREAKABLE`. Thin armor never wears. See coffeemud.ini
+`ITEMWEAR` (percent of the usual wear, 100 by default, 0 for none) and
+`ITEMBREAK` (`DESTROY` by default, or `BREAK`, which leaves a broken item that
+can be mended); both are described in
+[23-properties-reference.md](23-properties-reference.md#prop_durability).
+
+Note: `Integer.MAX_VALUE` (the usual "no limit") is silently converted to 100
+when set on armor.
+
+### Wear locations
+
+An item says where it can be worn in two fields: the **wear location bitmap**
+(`PROPERWORN`) and **wornAnd** (`WORNAND`). With *wornAnd* false the item fits
+on **any one** of the ticked locations; with it true the item occupies **all**
+of them (a robe on torso, arms and legs; a two-handed weapon on wield and
+held). A new `GenArmor` has no location (it cannot be worn until you give
+it one). In the editor, `0: Done`, `1:` toggles any/all, and the locations
+are numbered from 2: type a number (or the first letters of the name) to
+toggle one.
+
+| Name | Bit value | Code constant | Usual item name | Armor strength | Notes |
+| --- | --- | --- | --- | --- | --- |
+| head | 1 | `WORN_HEAD` | hat | 1.0 | |
+| neck | 2 | `WORN_NECK` | necklace | 0.5 | |
+| torso | 4 | `WORN_TORSO` | shirt | 3.0 | |
+| arms | 8 | `WORN_ARMS` | sleeves | 1.0 | |
+| left wrist | 16 | `WORN_LEFT_WRIST` | bracelet | 0.5 | |
+| right wrist | 32 | `WORN_RIGHT_WRIST` | bracelet | 0.5 | |
+| left finger | 64 | `WORN_LEFT_FINGER` | ring | 0.25 | |
+| right finger | 128 | `WORN_RIGHT_FINGER` | ring | 0.25 | |
+| feet | 256 | `WORN_FEET` | shoe | 0.5 | |
+| held | 512 | `WORN_HELD` | gizmo | 2.0 | Hand-held; a shield counts here |
+| wield | 1024 | `WORN_WIELD` | weapon | 1.0 | Weapon hand |
+| hands | 2048 | `WORN_HANDS` | gloves | 0.5 | |
+| floating nearby | 4096 | `WORN_FLOATING_NEARBY` | floaty | 0.01 | Orbits the wearer |
+| waist | 8192 | `WORN_WAIST` | belt | 0.5 | |
+| legs | 16384 | `WORN_LEGS` | pants | 2.0 | |
+| eyes | 32768 | `WORN_EYES` | eyeglasses | 0.25 | |
+| ears | 65536 | `WORN_EARS` | earmuffs | 0.25 | |
+| body | 131072 | `WORN_ABOUT_BODY` | cloak | 1.5 | Worn "about the body" (cloaks) |
+| mouth | 262144 | `WORN_MOUTH` | mouthpiece | 0.01 | |
+| back | 524288 | `WORN_BACK` | cape | 1.0 | |
+
+Inventory (carried, not worn) is bit 0. Source:
+[Wearable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/Wearable.java).
+The "armor strength" is the location's share of a full suit of armor
+(`DEFAULT_WORN_WEIGHTS`); the engine's item-balancing code uses it with a
+per-material weight (cloth, leather, metal) to compute the armor value and
+weight of a piece for its level, which is what `balanceItemByLevel` and
+`RESET ITEMSTATS` apply.
+
+A race can lack some locations (no hands, no ears); items for those locations
+cannot be worn by that race. A character's free slots at a location are also
+bounded by the layers below.
+
+Extra locations are defined in `coffeemud.ini`:
+
+```ini
+# ADDWEARLOC_[NAME]=dependencies|...,armorStrength,order,clothWeight,leatherWeight,metalWeight
+ADDWEARLOC_FACE=eyes|mouth,0.2,16,0.5,0.7,1.0
+REPLACEWEARLOC_EYES=,0.1,7,0.1,0.2,0.3
+```
+
+The six fields, in order: wear locations that depend on this one separated
+by `|`, the armor score (0.0-2.0), the displayed order (0-n), and the weight
+scores for cloth, leather and metal (0.0-10.0). Exactly six fields are
+required; a row with any other count is logged as an error and skipped. An
+added location is appended after the built-in ones and appears in the editor's
+location list; `REPLACEWEARLOC_` takes the name of a built-in location. These
+are engine-wide settings, so make them once, before building. They are also
+documented in `coffeemud.ini`.
+
+### Layers
+
+Layers let a character wear several pieces on one location (a shirt, a tunic
+and a coat on the torso). Each piece has a **layer** number and two flags.
+
+| Setting | Meaning |
+| --- | --- |
+| Layer | `0` is the baseline. Positive layers are worn over it (coats, shawls); negative layers are worn under it (underwear, hose). Default for most armor is 0. `GenEarring` is -10 |
+| See-through | `LAYERMASK_SEETHROUGH` (1). A piece on the top layer that is see-through lets the pieces below show |
+| Multi-wear | `LAYERMASK_MULTIWEAR` (2). Many such pieces may share the same layer (rings, earrings). Magical Ability does not stack armor for these |
+
+In the editor: `Enter a new layer`, then `Is see-through (Y/N)?` and
+`Is multi-wear (Y/N)?`. Stat codes: `LAYER`, `LAYERATTRIB` (the sum of the
+flag values). A character cannot wear two pieces on the same location at the
+same layer unless one is multi-wear. The `LAYERED` option of
+`Prop_WearAdjuster`, `Prop_WearSpellCast` and `Prop_WearResister` makes only
+the top layer's bonus count.
+
+### Size
+
+Armor is cut for a height (the **Size** prompt, stat `HEIGHT`). The check
+runs only when both the armor's size and the wearer's height are above 0, so
+size 0 fits anyone. If the wearer's height differs from the armor's by more
+than the allowance, the wear is refused with "it's too big" or "it's too
+small". The allowance depends on the item's locations: 20 if it uses the
+torso, legs, waist, arms, hands or feet; 1000 for eyes or ears, 5000 for the
+neck; no check for floating or mouth items; 200 otherwise. The check is
+skipped when `EQUIPSIZE` is in the `DISABLE` list of `coffeemud.ini`
+(`CMSecurity.DisFlag.EQUIPSIZE`).
+
+### Shields and other armor kinds
+
+A `GenShield` is armor that is held in a hand (`WORN_HELD`). Only a `Shield`
+can be held and still count as armor. `GenThinArmor` is for clothing and
+jewelry. `GenCloak` hides the wearer's name. See [Item classes](#armor).
+

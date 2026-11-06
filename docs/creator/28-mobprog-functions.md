@@ -1204,3 +1204,323 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Example:** `IF CONTENTWEIGHT('stone pedestal' >= 50)`
 - **Notes:** not inherited; used by weighing puzzles.
 
+### Rooms and populations
+
+Unless an entry says otherwise, "the room" is the room the host is in and "the
+area" its area.
+
+### INROOM
+
+- **Test:** `INROOM(room)`: the host is in that room. `INROOM(thing cmp room)`: the thing is (`==`) or is not (`!=`) in it.
+- **Value:** `$%INROOM(thing)%`: the extended room ID of the thing's room (the host's room when the argument is empty).
+- **Example:** `IF INROOM(Midgaard#3001)`; `IF INROOM($n == $i)`; `IF INROOM(BEACON)`
+- **Notes:** `room` may be an extended ID (`Area#number`), `#number` or a bare number (in the host's area), a player's name, or an object code (`$i`, `$n`: that object's room). Special words: `BEACON` is the start room of the creature (the host, or the thing in the comparison); `MYPROPERTY` a room the creature owns; `ANYPROPERTY` any room with a land title; `ANYSPECIAL` the host's start room or any property. An empty room argument gives true. Comparisons are on the room IDs as text.
+
+### INAREA
+
+- **Test:** `INAREA(area)`: the host is in that area. `INAREA(thing cmp area)`.
+- **Value:** `$%INAREA(thing)%`: the area's name, `Nowhere` if it has none; the host's own area if the argument is empty.
+- **Example:** `IF INAREA(Midgaard)`; `IF INAREA($n != 'Old Keep')`
+- **Notes:** `area` is a name (exact, then by containing the text) or an object code (that object's area). An instance of an area counts as its parent area. In JavaScript, `INAREA$()` is the value form.
+
+### ISRECALL
+
+- **Test:** `ISRECALL(room)`: the host's start (recall) room is that room. `ISRECALL(thing cmp room)`.
+- **Value:** `$%ISRECALL(thing)%`: the thing's start room ID.
+- **Example:** `IF ISRECALL($n == $i)` (both call the same place home)
+
+### INLOCALE
+
+- **Test:** `INLOCALE(text)`: the host's room is of that locale. `INLOCALE(thing text)`.
+- **Value:** `$%INLOCALE(thing)%`: the room's name (the host's room with no argument).
+- **Example:** `IF INLOCALE($i INDOORS)`; `IF INLOCALE($n CITY)`
+- **Notes:** true if the room's class ID contains the text (`WoodRoom`), or its domain name contains it (`CITY`, `WOODS`, `STONE`, `CAVE`...), or the text starts `INDOOR`/`OUTDOOR` and the room is of that kind. An empty text is true.
+
+### ISHERE
+
+- **Test:** `ISHERE(name)`: an item or creature matching the name is in the room.
+- **Value:** `$%ISHERE()%`: the name of the area (not the room; this value form is not very useful).
+- **Example:** `IF ISHERE($o)`; `IF ISHERE('the golden idol')`
+
+### ROOMMOB
+
+- **Test:** `ROOMMOB(number|name keywords)`: the creature at that 1-based position (or of that name) in the room matches the keywords (by name or display text).
+- **Value:** `$%ROOMMOB(number|name)%`: that creature's name in the form the room's contents would name it (`second orc`).
+- **Example:** `IF ROOMMOB(1 guard)`; `FOR`-style use: `$%ROOMMOB($0)%`
+
+### ROOMITEM
+
+- **Test:** `ROOMITEM(number keywords)`: the loose item at that 1-based position in the room matches the keywords.
+- **Value:** `$%ROOMITEM(number)%`: its name as the room's contents would name it.
+- **Example:** `IF ROOMITEM(1 coin)`
+
+### ROOMPC
+
+- **Test:** `ROOMPC(number|name keywords)`: the player-controlled character at that 1-based position (or of that name) in the room matches the keywords.
+- **Value:** `$%ROOMPC(number|name)%`: its context name.
+- **Example:** `IF ROOMPC(1 anna)`
+
+### AREAPC
+
+- **Test:** `AREAPC(number|name keywords)`: the same for the player-controlled characters in the host's whole area.
+- **Value:** `$%AREAPC(number|name)%`: the character's name.
+- **Example:** `IF AREAPC(1 anna)`
+- **Notes:** counts the controllable characters currently in the world, so a party member in another area does not count.
+
+### NUMMOBSROOM
+
+- **Test:** `NUMMOBSROOM(cmp n)`: the creatures in the room. `NUMMOBSROOM(name cmp n)`: those whose name or display text contains the name. `NUMMOBSROOM(MASK=mask cmp n)`: those passing the zapper mask. `*` counts everyone.
+- **Value:** `$%NUMMOBSROOM(name)%`: the count (all creatures with no argument or `*`).
+- **Example:** `IF NUMMOBSROOM(orc >= 3)`; `IF NUMMOBSROOM('MASK=-PLAYERS' == 0)`
+- **Notes:** the host and every player-controlled character count, unless a mask or name excludes them. Quote a mask that has spaces. See [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
+
+### NUMITEMSROOM
+
+- **Test:** `NUMITEMSROOM(cmp n)`: loose items in the room (those not inside a container).
+- **Value:** `$%NUMITEMSROOM()%`
+- **Example:** `IF NUMITEMSROOM(== 0)`
+
+### NUMPCSROOM
+
+- **Test:** `NUMPCSROOM(cmp n)`: player-controlled characters in the room.
+- **Value:** `$%NUMPCSROOM()%`
+- **Example:** `IF NUMPCSROOM(>= 2)`
+
+### NUMPCSAREA
+
+- **Test:** `NUMPCSAREA(cmp n)`: player-controlled characters in the host's area.
+- **Value:** `$%NUMPCSAREA()%`
+- **Example:** `IF NUMPCSAREA(== 0)`
+
+### NUMMOBS
+
+- **Test:** `NUMMOBS(name|MASK=mask cmp n)`: the creatures in the whole world whose name contains the text, or that pass the mask.
+- **Value:** `$%NUMMOBS(name|MASK=mask)%`
+- **Example:** `IF NUMMOBS(dragon > 0)`; `IF NUMMOBS(MASK=-PLAYERS > 0)`
+- **Notes:** scans every loaded room, so use it sparingly in frequent triggers.
+
+### NUMMOBSINAREA
+
+- **Test:** `NUMMOBSINAREA(name|MASK=mask|* cmp n)`: the same, limited to the host's area; `*` counts every creature there.
+- **Value:** `$%NUMMOBSINAREA(name|MASK=mask|*)%`
+- **Example:** `IF NUMMOBSINAREA(guard < 2)`
+
+### NUMRACES
+
+- **Test:** `NUMRACES(race cmp n)`: creatures of that race (exact race name) in the whole world.
+- **Value:** `$%NUMRACES(race)%`
+- **Example:** `IF NUMRACES(Dragon >= 1)`
+
+### NUMRACESINAREA
+
+- **Test:** `NUMRACESINAREA(race cmp n)`: creatures of that race in the host's area.
+- **Value:** `$%NUMRACESINAREA(race)%`
+- **Example:** `IF NUMRACESINAREA(Orc > 5)`
+
+### ROOMWEIGHT
+
+- **Value:** `$%ROOMWEIGHT(room)%`: the combined weight of the creatures (with what they carry) and items in the room.
+- **Test:** `ROOMWEIGHT(room cmp n)`
+- **Example:** `IF ROOMWEIGHT(HERE >= 200)`
+- **Notes:** not inherited; for pressure-plate puzzles. `room` is `HERE`, a room ID or a thing whose room is used.
+
+### RESPAWNROOM
+
+- **Value:** `$%RESPAWNROOM(who)%`: the room ID of the character's respawn checkpoint, empty if none.
+- **Test:** `RESPAWNROOM(who == room)`
+- **Example:** `IF RESPAWNROOM($n == Midgaard#3001)`
+- **Notes:** not inherited; see [29-combat-and-encounters.md](29-combat-and-encounters.md).
+
+### ROOMSTATE
+
+- **Value:** `$%ROOMSTATE(room|HERE|area)%`: the current state of the `RoomStates` behavior on the room (else its area's), empty if none.
+- **Test:** `ROOMSTATE(HERE == FLOODED)`
+- **Example:** `IF ROOMSTATE(HERE == DARK)`
+- **Notes:** not inherited; see [10-world-simulation.md](10-world-simulation.md) and the `RoomStates` behavior in [24-behaviors-and-masks.md](24-behaviors-and-masks.md).
+
+### ISDARK
+
+- **Test:** `ISDARK(room|HERE|thing)`: the room is dark (night, a dark place and no light source in it).
+- **Value:** `$%ISDARK(room|HERE|thing)%`: `true` or `false`.
+- **Example:** `IF ISDARK(HERE)`
+- **Notes:** not inherited.
+
+### ISLIT
+
+- **Test:** `ISLIT(room|HERE|thing)`: the opposite of `ISDARK` (false when the room cannot be found).
+- **Value:** `$%ISLIT(room|HERE|thing)%`: `true` or `false`.
+- **Example:** `IF ISLIT(HERE)`
+- **Notes:** not inherited. A room that cannot be found counts as not dark: `ISLIT` is then true and `ISDARK` false, so check your argument.
+
+### FLOODLEVEL
+
+- **Value:** `$%FLOODLEVEL(room|HERE)%`: the water level from a `Floodable` behavior: 0 (dry) to 3 (full); `0` if there is none.
+- **Test:** `FLOODLEVEL(HERE >= 2)`
+- **Example:** `IF FLOODLEVEL(HERE >= 2)`
+- **Notes:** not inherited; see [10-world-simulation.md](10-world-simulation.md).
+
+### ISTIDE
+
+- **Test:** `ISTIDE(room HIGH|LOW|NONE|SPRING|NEAP[:span])`: the tide at the room is in that state now.
+- **Value:** `$%ISTIDE(room STATE)%`: `true` or `false`.
+- **Example:** `IF ISTIDE(HERE HIGH)`
+- **Notes:** not inherited; see [10-world-simulation.md](10-world-simulation.md).
+
+### CATALOG
+
+- **Test:** `CATALOG(name)`: a catalog creature or item of that name exists and a copy may be made (it is not at its cap, and a unique item has not appeared).
+- **Value:** `$%CATALOG(name)%`: `true` or `false`.
+- **Example:** `IF CATALOG(a fixsc3 sunblade)` then `MPOLOAD CATALOG the Sunblade`
+- **Notes:** not inherited. The catalog is the world's list of shared prototypes (see [02-world-workflow.md](02-world-workflow.md)). The whole text is the name, no quotes needed.
+
+### CATALOGCOUNT
+
+- **Value:** `$%CATALOGCOUNT(name)%`: how many copies of the catalog entry exist in the world (for unique items, those that count against the cap).
+- **Test:** `CATALOGCOUNT(name cmp n)`
+- **Example:** `IF CATALOGCOUNT(a goblin guard < 4)`
+
+### Time and weather
+
+Game time comes from the clock of the host's area (each area may keep its own
+calendar; see [10-world-simulation.md](10-world-simulation.md)). The `ISRL*`
+functions use the computer's real clock and have little meaning in a
+turn-based single-player game.
+
+### ISTIME
+
+- **Test:** `ISTIME(word)`: `DAYTIME`, `DAWN`, `DUSK`, `NIGHTTIME` (any start of those, so `night` works), or an hour number 0 to the day's last hour.
+- **Value:** `$%ISTIME()%`: the time-of-day phrase in lower case with a trailing space (`it is daytime `, `it is nighttime `).
+- **Example:** `IF ISTIME(night)`; `IF ISTIME(DAWN) OR ISTIME(DUSK)`
+- **Notes:** use the test form. The value form returns the clock's descriptive sentence fragment, not a single word.
+
+### ISHOUR
+
+- **Test:** `ISHOUR(hour)`: the hour of the day equals the number.
+- **Value:** `$%ISHOUR()%`: the current hour.
+- **Example:** `IF ISHOUR(6)`
+
+### ISDAY
+
+- **Test:** `ISDAY(day)`: the day of the month equals the number.
+- **Value:** `$%ISDAY()%`: the day of the month.
+- **Example:** `IF ISDAY(1)`
+
+### ISMONTH
+
+- **Test:** `ISMONTH(month)`: the month number equals the number (as the calendar counts them).
+- **Value:** `$%ISMONTH()%`
+- **Example:** `IF ISMONTH(12)`
+
+### ISYEAR
+
+- **Test:** `ISYEAR(year)`
+- **Value:** `$%ISYEAR()%`
+- **Example:** `IF ISYEAR(1201)`
+
+### ISSEASON
+
+- **Test:** `ISSEASON(name)`: the area's season is that one: `SPRING`, `SUMMER`, `FALL`, `WINTER` (or the start of the name), or the area's calendar's own named season (spaces allowed).
+- **Value:** `$%ISSEASON()%`: the calendar's season name, else the built-in one.
+- **Example:** `IF ISSEASON(winter)`; `IF ISSEASON(the Burn)`
+- **Notes:** a calendar can name its seasons and say which built-in season each counts as; `ISSEASON(summer)` is true during a named season that counts as summer.
+
+### ISWEATHER
+
+- **Test:** `ISWEATHER(name)`: the weather at the host's room starts with the name.
+- **Value:** `$%ISWEATHER()%`: the current weather name.
+- **Example:** `IF ISWEATHER(rain)`
+- **Notes:** the names are `CLEAR`, `CLOUDY`, `WINDY`, `RAIN`, `THUNDERSTORM`, `SNOW`, `HAIL`, `HEAT`, `SLEET`, `BLIZZARD`, `DUST`, `DROUGHT`, `COLD`, `FOG`.
+
+### ISMOON
+
+- **Test:** `ISMOON(phase)`: the moon is in that phase: `NEW`, `WAXCRESCENT`, `WAXQUARTER`, `WAXGIBBOUS`, `FULL`, `WANEGIBBOUS`, `WANEQUARTER`, `WANECRESCENT`, `BLUE` (any start of those). `ISMOON(name phase)` names one of the calendar's moons (`ISMOON(Ember full)`); `ISMOON(name)` is true when that moon is in the sky. `ISMOON()` is true when any moon is out (the stars can be seen).
+- **Value:** `$%ISMOON()%`: the current phase name.
+- **Example:** `IF ISMOON(full)`; `IF ISMOON(Ember full)`
+
+### ISWEEKDAY
+
+- **Test:** `ISWEEKDAY(name)`: today is that weekday of the area's calendar (case-insensitive, whole name).
+- **Value:** `$%ISWEEKDAY(name)%`: `true` or `false`.
+- **Example:** `IF ISWEEKDAY(Marketday)`
+- **Notes:** not inherited. False if the calendar has no weekdays. `$%WEEKDAY()%` gives the name.
+
+### WEEKDAY
+
+- **Value:** `$%WEEKDAY()%`: today's weekday name on the area's calendar, empty if it has none.
+- **Test:** `WEEKDAY(== name)` compares the weekday name as text (`ISWEEKDAY(name)` is the plainer test).
+- **Example:** `MPECHO It is $%WEEKDAY()%.`
+- **Notes:** not inherited.
+
+### DATETIME
+
+- **Test:** `DATETIME(PERIOD cmp n)`: the current number for that period. `PERIOD` is `HOUR`, `DAY` (day of month, `DATE` also works), `WEEK` (week of the year), `MONTH`, `SEASON` (0 to 3 for the built-in seasons), `YEAR`; plural spellings are accepted.
+- **Value:** `$%DATETIME(PERIOD)%`; also `$%DATETIME(STAMP)%` (the clock's hours counted from year 0, for use with `ELAPSED`), `$%DATETIME(DAYOFYEAR)%` and `$%DATETIME(WEEKDAY)%` (the weekday name).
+- **Example:** `IF DATETIME(HOUR >= 18)`; `MPSETVAR $n SEEN $%DATETIME(STAMP)%`
+- **Notes:** `ALLTIME` gives 0. The clock is the area's of the host. `STAMP`, `DAYOFYEAR` and `WEEKDAY` exist only as values.
+
+### GAMETIME
+
+- **Test:** `GAMETIME(cmp n)`: the game clock in milliseconds since the game began.
+- **Value:** `$%GAMETIME()%`: those milliseconds; `$%GAMETIME(HOURS|DAYS|MONTHS|YEARS)%`: whole game hours, days, months or years counted from year 0 of the area's calendar.
+- **Example:** `IF EVAL($%GAMETIME(DAYS)% >= 100)`
+- **Notes:** not inherited. The test form has no unit; use `EVAL` or `MATH` with the value form for units.
+
+### ELAPSED
+
+- **Value:** `$%ELAPSED(stamp [HOURS|DAYS|WEEKS|MONTHS])%`: whole units of game time since the stamp (hours by default).
+- **Test:** `ELAPSED(stamp DAYS >= 3)`
+- **Example:** `MPSETVAR $i ORDERED NOW` earlier, then `IF ELAPSED($<$i ORDERED> DAYS >= 3)`
+- **Notes:** not inherited. A stamp is what `$%DATETIME(STAMP)%` returns or what `MPSETVAR host var NOW` stores. Counted on the area's calendar.
+
+### TICKS
+
+- **Value:** `$%TICKS(n [HOURS|DAYS|WEEKS|MONTHS])%`: the number of game ticks in that much game time.
+- **Test:** `TICKS(3 DAYS > 500)`
+- **Example:** `MPTATTOO $n '$%TICKS(2 DAYS)% DAZED'`
+- **Notes:** not inherited. Timed tattoos count down in ticks; this converts a calendar span for them.
+
+### TURNS
+
+- **Test:** `TURNS(cmp n)`: turns since the game began.
+- **Value:** `$%TURNS()%`
+- **Example:** `IF TURNS(>= 1000)`
+- **Notes:** not inherited; the count is saved with the game and is what `TURN_PROG` receives in `$g`.
+
+### ISRLHOUR
+
+- **Test:** `ISRLHOUR(hour)`: the computer's real hour (0 to 23).
+- **Value:** `$%ISRLHOUR()%`
+- **Example:** `IF ISRLHOUR(23)`
+
+### ISRLDAY
+
+- **Test:** `ISRLDAY(day)`: the real day of the month.
+- **Value:** `$%ISRLDAY()%`
+- **Example:** `IF ISRLDAY(25)`
+
+### ISRLMONTH
+
+- **Test:** `ISRLMONTH(month)`: the real month, 1 to 12.
+- **Value:** `$%ISRLMONTH()%`
+- **Example:** `IF ISRLMONTH(12)`
+
+### ISRLYEAR
+
+- **Test:** `ISRLYEAR(year)`
+- **Value:** `$%ISRLYEAR()%`
+- **Example:** `IF ISRLYEAR(2027)`
+
+### ISHOLIDAY
+
+- **Test:** `ISHOLIDAY(name)`: the holiday (a holiday quest) of that name is running.
+- **Value:** `$%ISHOLIDAY(name)%`: `true` or `false`.
+- **Example:** `IF ISHOLIDAY(MoonFeast)`
+- **Notes:** not inherited; see [10-world-simulation.md](10-world-simulation.md).
+
+### HOLIDAY
+
+- **Value:** `$%HOLIDAY()%`: the names of the holidays on now, comma separated.
+- **Test:** `HOLIDAY(== text)` compares the whole comma-separated list exactly, so use `ISHOLIDAY(name)` to ask about one holiday.
+- **Example:** `MPECHO Today we celebrate: $%HOLIDAY()%`
+- **Notes:** not inherited.
+

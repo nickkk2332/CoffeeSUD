@@ -730,7 +730,8 @@ Rules and traps:
   works on whole numbers (64-bit). `MPSETVAR host var -5` *subtracts* 5; to store
   a negative number write `=-5`, `=` meaning "this literal text".
 - An empty value deletes the variable. Reading an unset variable gives an empty
-  string; `VAR($n X == )` tests for "unset".
+  string, which is not a number: before doing arithmetic or `ELAPSED()` on a
+  variable, make sure it was set (keep a separate `yes` flag if you need to).
 - `MPLIST host var ADD|ADDUNIQUE|DEL|CLEAR|SHUFFLE|SORT words` treats a variable
   as a space-separated list (SC1); `LISTCOUNT()`, `LISTHAS()`, `LISTGET()`,
   `LISTFIND()`, `LISTPICK()` and `LISTJOIN()` read lists
@@ -904,7 +905,7 @@ event ($n, $t, $o...) is kept for the delayed command:
 mpalarm 5 say Your time is up, $n.
 mpalarm NAME=curfew 20 mpecho The bell tolls.
 mpalarmcancel curfew
-if alarm($i curfew)               # still pending?
+if eval($%ALARM($i curfew)% > 0)   # still pending? ALARM() is the ticks left, 0 for none
 ```
 
 A **named** alarm (`NAME=`) replaces an earlier one of the same name, is kept in
@@ -1129,4 +1130,654 @@ Notes on choosing:
 - Several triggers accept either a percent chance or a **mask** (a mask
   replaces the chance and is tested against the actor). A percent is rolled at
   the moment of the event: `GREET_PROG 25` runs for a quarter of the arrivals.
+
+## Debugging
+
+Scripts fail quietly by design: a bad command logs one line and the program
+goes on. The tools below are for builders (builder mode, a `DEV=1` game, or the
+`CMDMOBS`/`CMDITEMS`/`CMDROOMS` flags; see
+[chapter 19](19-configuration-and-administration.md)).
+
+### A debugging workflow
+
+1. **Lint first.** `SCRIPTCHECK` the file or host before playing.
+2. **Fire it by hand.** `SCRIPT FIRE` and `SCRIPT CALL` run a program without
+   staging the event.
+3. **Trace what you cannot see.** `SCRIPTTRACE host` shows the chance rolled, the
+   lines run and every variable changed.
+4. **Read the errors.** `SCRIPTERRORS`, or `DEVLOG`, gives the file and line.
+5. **Check state.** `VARS LIST`, `STAT SCRIPTS`, `SCRIPT LIST`, `SCRIPT ALARMS`.
+6. **Test the edges** in a disposable save: a wrong answer, walking away
+   mid-conversation, two identical hosts, a wounded or sleeping host, combat
+   interrupting, a save and restore half-way, and both real-time and turn-based
+   modes.
+
+### SCRIPTCHECK
+
+```text
+SCRIPTCHECK progs/guard.script     a script file, as LOAD= names it
+SCRIPTCHECK guard                  a mob or item here or carried (ROOM, name@room too)
+SCRIPTCHECK AREA                   every script in this area
+SCRIPTCHECK ALL                    every script in the world
+```
+
+It reads scripts without running them and lists, by `file:line`, what would
+go wrong: unknown triggers (`GREETPROG`); unknown commands and functions; an `MP`
+word that is only the start of one or several commands (`MPSE is not a command;
+write MPSET or MPSETVAR in full`); `IF` without `ENDIF`, `ELSE`/`ENDIF` without
+`IF`, `SWITCH`/`CASE`/`ENDSWITCH`, `FOR`/`NEXT` and `WHILE`/`ENDWHILE` out of
+balance; unbalanced parentheses in `IF` and `MPWHILE`; `<SCRIPT>` without
+`</SCRIPT>`, JavaScript that does not compile, or an unapproved block when
+approval is on; `LOAD=` files that are missing; `MPCALLFUNC` to a function the
+scripts do not declare; room IDs that do not exist in `MPGOTO`, `MPTRANSFER` and
+`MPOLOADROOM`; and, as *warnings*, commands with too few arguments and variables
+read (`$<host name>`) that no script in the unit assigns. `WORLD CHECK` includes
+the same pass, and builder `SAVE` says how many problems `SCRIPTCHECK ALL`
+finds.
+
+```text
+SCRIPTCHECK progs/guard.script: 3 problems:
+progs/guard.script:2 unknown trigger GREETPROG
+progs/guard.script:7 unknown command MPECHOT
+progs/guard.script:8 MPSE is not a command; write MPSET or MPSETVAR in full
+```
+
+Findings prefixed `warning:` are judgment calls (a variable another script may
+set); the others deserve attention. `EDIT SCRIPT` runs the same check on save.
+
+#### What SCRIPTCHECK does not do
+
+It cannot prove external state, dynamic command construction (a command name
+built from `$` codes), timing, or that your story is right. It also has two
+limits worth knowing, both read from `ScriptCheck.expand` and the
+[audit gap](../../audit/developer-tools-audit.md#open-script-lint-path-gap):
+
+- **Current file-path lint limitation.** Runtime `LOAD` understands the
+  `world:scripts/name.script` prefix, but the checker resolves every name as a
+  resource path, so a valid `world:` source is reported `no such file`. For a
+  file that must also pass the checker, keep it at
+  `world/resources/progs/name.script`, write `LOAD=progs/name.script` and run
+  `SCRIPTCHECK progs/name.script`. The overlay keeps it world-owned.
+- **LOAD arguments (probable).** The checker takes everything after `LOAD=` up to
+  `~` as the file name, so `LOAD=progs/guard.script POST=x` is likely reported
+  as a missing file, and an `ARGDEFAULT` line is likely not recognised as one.
+  If you hit this, check the file by name (`SCRIPTCHECK progs/guard.script`) and
+  treat those two findings as false alarms after confirming with `SCRIPT LIST`.
+
+### SCRIPT: list, fire, call, reset, disable, alarms
+
+```text
+SCRIPT LIST [TARGET]
+SCRIPT FIRE [TARGET] [TRIGGER] ([WORDS]) (AS [WHO]) (WITH [ITEM])
+SCRIPT CALL [TARGET] [FUNCTION] ([ARGUMENTS])
+SCRIPT RESET [TARGET] (ONCE/DELAY/TIME/ALL)
+SCRIPT DISABLE/ENABLE [TARGET] ([TRIGGER])
+SCRIPT ALARMS [TARGET] (LIST/CLEAR)
+```
+
+`TARGET` is a mob or item here (or carried), `ROOM`, `AREA` or `name@room`.
+
+- `LIST` numbers the host's triggers with where each is written (`inline:4`, or
+  `progs/guard.script:12`), marks `[off]` for a disabled one and `[done]` for a
+  `ONCE_PROG` that ran: `3. ONCE_PROG 100  (inline:7) [done]`. Use it to learn
+  which file and line a misbehaving trigger comes from.
+- `FIRE` runs the programs of a kind **now**, as if `WHO` (you by default) had
+  caused them, **ignoring their own chance and conditions**. With words it runs
+  only those that answer to them (`SCRIPT FIRE guard SPEECH password AS Bob`;
+  the words become `$g`); `WITH sword` supplies `$o`; `TIME_PROG 6` fires the
+  one for hour 6 without moving the clock. The trigger may be written with or
+  without `_PROG`. It says `Ran 1 SPEECH_PROG of the guard, as Bob.` or `has no
+  SPEECH_PROG answering 'goodbye'`.
+- `CALL` runs a `FUNCTION_PROG` and prints `NAME returned 'value'.`
+- `RESET` lets `ONCE_PROG`s, `DELAY_PROG` waits and this hour's `TIME_PROG`/
+  `DAY_PROG` marks run again; `DISABLE`/`ENABLE` do from outside what
+  `MPNOTRIGGER` does inside.
+- `ALARMS` lists what is queued to run (`MPALARM`s and triggers waiting for their
+  tick) and `CLEAR` forgets it.
+
+Because `FIRE` skips the chance and the conditions of the *trigger line*, it
+proves the body works, not that the trigger would have fired. For the second
+question use `SCRIPTTRACE` and the real action.
+
+### SCRIPTTRACE
+
+```text
+SCRIPTTRACE [TARGET/ROOM/AREA] ([TRIGGER])
+SCRIPTTRACE OFF
+```
+
+Shows, to your session only, until `OFF`: each trigger's chance as it is rolled
+and whether it ran, triggers turned off, a host too busy to be triggered, each
+line run, and each variable changed. One trace at a time; it is not saved. A
+trigger name after the target traces that trigger only. A script can trace
+itself with `MPSETINTERNAL TRACE TRUE` (builder mode or a `DEV=1` game).
+
+```text
+[trace a guard] GREET_PROG 50: rolled 73 of 50, skipped
+[trace a guard] GREET_PROG 50: rolled 12 of 50, runs
+[trace a guard] runs GREET_PROG 50
+[trace a guard]   1: if ispc($n)
+[trace a guard]   2: mpsetvar $n VISITS ++
+[trace a guard]   Bob VISITS = '2'
+[trace a guard] SPEECH_PROG: off (MPNOTRIGGER or SCRIPT DISABLE), skipped
+[trace a guard] busy (asleep, fighting, bound or the like), so its triggers wait
+```
+
+The number before each line is its position in the program (1 is the first line
+after the trigger line), not the file line; `SCRIPT LIST` and `SCRIPTERRORS` give
+file lines. The variable line is `host NAME = 'value'`. `ISBUILDER()` and `ISDEV()` let a script
+behave differently while you test it.
+
+### SCRIPTERRORS and the error format
+
+```text
+SCRIPTERRORS ([NUMBER]) ([TEXT])
+SCRIPTERRORS CLEAR
+```
+
+The last 200 script errors, MOBPROG and JavaScript, oldest first (20 by default,
+or as many as the number says, or those holding the text). Each says where the
+error is, the command, what went wrong, and the host and room:
+
+```text
+progs/elder.script:212 MPECHOT Syntax: unknown command MPECHOT (the elder @ Town#4)
+inline:5 MPCALLFUNC Unknown: Function: nosuchfunc
+_fixes/dt10err.script:4 MPNOSUCHTHING Syntax: unknown command MPNOSUCHTHING
+```
+
+`inline:N` means the script is written on the object itself; a file name means a
+`LOAD=` file, with the *file's* line number. A JavaScript error reports
+`<SCRIPT> in file line N`. In builder mode and a `DEV=1` game every error is
+also told to you as it happens; in a normal game `SCRIPTERRORS=` in
+`coffeemud.ini` decides: `LOG` (the default) only logs them, `NOTICE` tells the
+player once that a script went wrong, `SHOW` shows each to the room it happened
+in.
+
+Common messages:
+
+| Message | Meaning |
+| --- | --- |
+| `Unexpected prog start -- missing '~'?` | A trigger word appeared in a body: the previous program has no `~`. |
+| `unknown command X` / `ambiguous command X: A, B` | An `MP` word that is no command, or the start of several. Write the full name. |
+| `IF Syntax: Without ENDIF!` | A missing `ENDIF`; the rest of the block is abandoned. |
+| `Unknown keyword: X` | A condition the parser could not read (usually a bare comparison, a misspelt function, or a missing parenthesis). |
+| `MPCALLFUNC Unknown: Function: name` | No `FUNCTION_PROG` of that name on the host. |
+| `... is not a valid trigger` (`BAD_TRIGGER`) | The first line of a program is not a known trigger. |
+| `LOAD NOREAD name` | A `LOAD=` file could not be read. |
+| `no one to hear it` (MPSIGNAL) | The signal's target matched nothing. |
+| `FOR loop ... violates 10 second rule` / `WHILE ... stopped after N passes` / `MPWHILE cut off after 4 seconds` | A loop hit its bound. |
+| `Attempt to enque more than 25 events` | A runaway queue (see [the execution model](#from-event-to-running-program)). |
+
+### VARS
+
+```text
+VARS LIST ([SCOPE]) ([HOST]) ([MASK])
+VARS SCOPES
+VARS SET [HOST] [NAME] [VALUE] (SCOPE [SCOPE])
+VARS CLEAR [HOST] ([NAME]/*) (SCOPE [SCOPE])
+VARS WATCH ([HOST] [NAME]) / VARS UNWATCH
+VARS DUMP [FILE]
+```
+
+Shows and changes the variables scripts keep. `LIST` gives each one's scope, host,
+name and value (`*` is a wild card for scope, host or name). `SET` behaves as
+`MPSETVAR` would, so `++` and `+5` add. `WATCH * DRAGONMOOD` tells you of every
+change to that name, with the script file and room that made it. `DUMP` writes the
+list to a file so two runs can be compared. A script can list names too:
+`$%VARNAMES(host prefix)%`. In playtest files, `ASSERT VAR host name = value`
+checks one ([chapter 13](13-testing-release.md)).
+
+### MPDEBUG, MPLOG and DEVLOG
+
+`MPDEBUG message` writes a line to the developer log as
+`[debug host@room file:line] message`, in builder mode and `DEV=1` games only
+(it does nothing in a normal game, so leaving one in is harmless). `debug(x)`
+in a `<SCRIPT>` block does the same for any JavaScript value. `DEVLOG ON` shows
+the log live (`DEVLOG ON WARN module Scripting`), `DEVLOG LAST 30 ERROR` replays
+it. `MPLOG ERROR|INFO|DEBUG header message` writes to the ordinary server log
+(`mud.log`) in every mode.
+
+```text
+mpsetvar $i TRIES ++
+mpdebug tries=$<$i TRIES> actor=$n item=$o text=$g
+```
+
+### SCRIPTPROF and SCRIPTSLOW
+
+`SCRIPTPROF ON` counts and times each trigger's whole run (with the functions and
+loops it calls); `SCRIPTPROF REPORT [N] [AREA]` lists the slowest by file and
+line with their share, runs, longest run and the host of that run; `OFF` stops
+and `RESET` forgets. `SCRIPTSLOW=ms` in `coffeemud.ini` logs every trigger that
+runs longer than that to `mud.log`. Scripts run on the single game thread, so a
+slow trigger is a stutter for the whole game.
+
+### Where else to look
+
+| Question | Tool |
+| --- | --- |
+| What scripts does this thing really have? | `STAT SCRIPTS name`, `SCRIPT LIST`, `STAT BEHAVIORS` |
+| Why did a mask or tattoo test fail? | `STAT TATTOOS name`, `ISLIKE()` in a trace |
+| Is a puzzle wired correctly? | `PUZZLE` command ([chapter 7](07-items-crafting.md)) |
+| A quest script, not a MOBPROG | `QUESTCHECK`, `QUESTINFO` ([chapter 8](08-quests.md)) |
+| Automated regression | playtest files and `ASSERT` ([chapter 13](13-testing-release.md)) |
+| JavaScript inside a script | `JS ERRORS`, `JCONSOLE`, `JRUN` ([chapter 5](05-javascript.md)) |
+
+## Performance and safety practices
+
+Everything a script does happens on the game thread, in the tick that triggered
+it. Scripts are cheap when they are narrow and expensive when they are broad.
+
+**Make triggers narrow.**
+
+- Prefer a specific trigger (`SPEECH_PROG p password`) over a broad one
+  (`ALL_GREET_PROG`, `MASK_PROG`, `ACT_PROG` with common words) filtered by `IF`.
+  Every scripted host sees every message in its room.
+- Put a percent chance or a mask on `GREET_PROG`/`RAND_PROG` and test cheap
+  conditions first. `RAND_PROG 100` on hundreds of hosts runs hundreds of programs
+  per tick; `RAND_PROG 5` or `DELAY_PROG 20 60` is almost always enough.
+- Keep global listeners (`@GLOBAL`, `LOGIN`, `LEVEL`, `QUEST_PROG`,
+  `EXECMSG_PROG` on a common message type) few, and put a mask or a first-line
+  `IF` return on them.
+- Use `MPNOTRIGGER trigger ms` to silence a trigger for a while so a crowd does
+  not run it over and over.
+
+**Avoid expensive lookups in hot paths.**
+
+- Name rooms by ID (`Midgaard#3001`). A room given by name is searched for in the
+  area, then liberally across the world, and a name matching several rooms
+  picks one at random.
+- Whole-world functions (`NUMMOBS`, `NUMRACES`, scans with `FOR ... IN SELECT:`)
+  are fine in a `TIME_PROG`, not in `RAND_PROG 100`.
+- `MPSIGNAL AREA` and `WORLD` reach every scripted object; prefer a target, a
+  `TAG:`, or `ROOM`.
+
+**Bound everything.**
+
+- Loops: `FOR` (10 real seconds), `WHILE` (1000 passes, or your number),
+  `MPWHILE` (4 real seconds). Count to a small number you know.
+- Do not poll. Use `MPWAIT UNTIL (cond) max` or a signal, not an `MPWHILE`
+  that spins.
+- Do not let two scripts call each other forever. A message-triggered program
+  that causes the same message again is cut off after three levels; a function
+  that calls itself is not.
+- Do not queue unbounded work (`mpalarm` in a loop, signals to `WORLD` in a
+  `RAND_PROG`). A queue over 25 entries is discarded with an error.
+
+**State safely.**
+
+- Use `@$i` (or `MPSETINTERNAL VARHOST INSTANCE`) whenever several hosts share a
+  script. Name collisions are the largest source of "it worked on the first
+  guard" bugs.
+- Set a flag (`MPTATTOO`, `MPSETVAR`) *before* long or delayed work, and test it
+  first, so a restore or an interrupted program cannot reward twice.
+- Guard rewards once per character with a tattoo, once per profile with an
+  account tattoo, and let a quest's own win/outcome state decide anything the
+  journal shows.
+- Do not subtract hit points in an unrelated output event; use `MPDAMAGE`, or
+  change the message in `CNCLMSG_PROG`.
+
+**Be careful with what you let a script run.**
+
+- A game command in a script runs as the mob; a command that needs a target in
+  the room fails quietly if the target left. Test with `$n` gone.
+- `MPFORCE`, `MPAT`, `MPTRANSFER`, `MPPURGE`, `MPSLAY`, `MPEXP`, `MPRESET` and
+  `MPREJUV` are blunt tools; restrict them with conditions.
+- `<SCRIPT>` JavaScript blocks have full access to the engine. In this fork
+  `JSCRIPTS=2` runs them, because the player writes the world; keep them short and
+  put real logic in a JS file ([chapter 5](05-javascript.md)).
+- Unsaved edits: a script written in memory is not part of the world files until
+  you save ([chapter 2](02-world-workflow.md)).
+
+**Write for people.**
+
+- Put a header comment (`# purpose, host, who calls me`) at the top of each file.
+- One file per NPC or object kind; share through `LOAD=` arguments instead of
+  copies.
+- Name `FUNCTION_PROG`s in upper case with a prefix (`GUARD_RAISE`), since
+  functions are found by name on the host and by `MPCALLFUNC` across hosts.
+
+## Worked examples
+
+All examples are MOBPROG. File examples live in `world/resources/progs/` and the
+host's Scriptable parameter is `LOAD=progs/NAME.script`. Replace room IDs, item
+names and tattoo names with your own; items named in `MPOLOAD` must exist in the
+world or catalog (`MPOLOAD CATALOG name` takes a catalog entry). Each example
+ends with how to test it.
+
+### 1. A greeter that remembers
+
+Host: an innkeeper mob. File `progs/brim.script`.
+
+```text
+# Brim the innkeeper: greets each character once, then remembers them.
+GREET_PROG 100
+if ispc($n)
+  if hastattoo($n MET_BRIM)
+    mpechoat $n Brim nods at you. 'Back again, $n?'
+    mpechoaround $n Brim nods at $n.
+  else
+    say Welcome to the Lantern, $n. First time?
+    mptattoo $n MET_BRIM
+  endif
+endif
+~
+SPEECH_PROG p rooms
+say Rooms are five coins a night, $n.
+~
+SPEECH_PROG help advice
+say Ask me about rooms, or the cellar.
+~
+```
+
+How it works: `GREET_PROG 100` runs for every arrival, so it guards with
+`ISPC($n)` (an NPC walking in is not greeted). The tattoo is a per-character
+flag that is saved and survives a restore; a profile-wide greeting would use
+`HASACCTATTOO`/`MPACCTATTOO`. `SPEECH_PROG p rooms` fires when someone says the
+phrase *rooms*; the second program fires on either word. Programs on different
+triggers do not interfere; two `SPEECH_PROG`s that match the same speech would
+(only the first runs).
+
+Test: `SCRIPTCHECK brim`, then arrive from another room; `SCRIPT FIRE brim GREET`
+runs the greeting for you, and `SCRIPT FIRE brim SPEECH rooms AS Bob` tests the
+speech with a stand-in speaker. To greet again, `MPTATTOO $n -MET_BRIM` (a
+leading `-` removes a tattoo) or `SCRIPT RESET` only affects `ONCE_PROG`s and timers,
+not tattoos. If Brim is wounded below half hit points he stops responding; see
+[busy hosts](#when-a-host-is-too-busy-to-react).
+
+### 2. A shop that notices its customers
+
+Host: a shopkeeper mob (see [chapter 21](21-mobs.md) and
+[chapter 9](09-society.md) for shopkeepers). File `progs/brim-shop.script`.
+
+```text
+BUY_PROG all
+mpsetvar $n BRIM_BOUGHT ++
+if var($n BRIM_BOUGHT == 3)
+  say Third time this week, $n. Here, a little something on the house.
+  mpoload a stale biscuit
+  give biscuit $n
+  mpsetvar $n BRIM_BOUGHT 0
+endif
+~
+SELL_PROG all
+say Hm, $o. I can use that, $n.
+~
+BRIBE_PROG 50
+say Fifty coins for a favour? Then know this: the cellar door sticks, lift as you push.
+~
+BRIBE_PROG 5
+say Kind of you, $n.
+~
+```
+
+`BUY_PROG all` hears every purchase (`BUY_PROG sword` would hear only items
+with that keyword); `$n` is the buyer and `$o` the item bought. The counter is
+a variable on the buyer's name, so it is shared by every shopkeeper that uses
+the same variable name; give each shop its own prefix (`BRIM_BOUGHT`) or key it
+on the shop with `@$i` and the buyer in the name. **Order matters** for
+`BRIBE_PROG`: the 50 comes before the 5, because only the first program that
+matches runs and a gift of 50 coins also satisfies "5 or more". A shopkeeper
+who is fighting or below half health ignores all of this.
+
+Test: buy three things (`BUY`), or `SCRIPT FIRE brim BUY` three times. Inspect
+the counter with `VARS LIST * Hero BRIM_*`.
+
+### 3. A door puzzle: three braziers and a sanctum door
+
+Three braziers must be lit before the sanctum door opens. Hosts: three
+brazier items in the antechamber (fixed, not gettable), one altar item tagged
+`sunaltar`, and a closed, locked door on the antechamber's north exit.
+
+Brazier, file `progs/brazier.script`, on each of the three items:
+
+```text
+VERB_PROG light
+if state($i lit)
+  mpechoat $n The brazier already burns.
+  return
+endif
+mpstate $i lit 1
+mpecho The brazier flares with golden light.
+mpsignal TAG:sunaltar lit
+~
+```
+
+Altar, file `progs/altar.script`, with its **Tags** line set to `sunaltar`
+(edit the tag in `MODIFY ITEM`):
+
+```text
+SIGNAL_PROG lit
+mpsetvar @$i LIT ++
+if var(@$i LIT == 3)
+  mpecho The three braziers burn as one. A deep note sounds from the north wall.
+  mpdoor unlock HERE north QUIET
+  mpdoor open HERE north "Stone grinds on stone as the sanctum door swings open."
+endif
+~
+```
+
+How it works: `VERB_PROG light` gives the brazier its own verb: when a player
+types `light brazier`, the script runs before any skill or social named LIGHT.
+`MPSTATE`/`STATE()` keep a flag on *that brazier* (not on the name shared by all
+three). `MPSIGNAL TAG:sunaltar lit` goes to every object in the area **carrying
+the tag**, so the tag belongs on the receiver (the altar), and the senders do not
+need to know its name. The altar counts on itself with `@$i`, and `MPDOOR`
+changes both sides of the door with a message. Because the lit state and the
+count are saved, the puzzle survives save and restore.
+
+To let the puzzle be solved again, have the door's close handler reset both
+counts (`MPSTATE brazier lit CLEAR`, `mpsetvar @$i LIT`), or make the braziers
+re-light with a timer using `MPALARM`.
+
+Test: `SCRIPTTRACE altar`, `light brazier` three times (once per brazier),
+`VARS LIST` to see the count, and `SCRIPT LIST altar`. If the door never opens,
+the usual causes are a missing tag (`MPSIGNAL` logs `no one to hear it`), a
+door that is not on the north exit, or `HERE` being the wrong room.
+
+### 4. A quest step: bring three moonpetals
+
+Host: a herbalist mob. File `progs/herbalist.script`.
+
+```text
+GIVE_PROG moonpetal
+mpjunk $o
+mpsetvar $n PETALS ++
+if var($n PETALS >= 3)
+  say That is all three. The fever will break, thanks to you, $n.
+  mpsetvar $n PETALS
+  mptattoo $n CURED_FEVER
+  mpoload a vial of moon tonic
+  give vial $n
+else
+  say $%VAR($n PETALS)% of three, $n. Bring me more.
+endif
+~
+SPEECH_PROG p fever
+if hastattoo($n CURED_FEVER)
+  say The fever is behind us, thanks to you, $n.
+else
+  say I need three moonpetals from the marsh.
+endif
+~
+```
+
+`GIVE_PROG moonpetal` runs when the herbalist is given an item whose name
+contains the word; `$o` is the item, which `MPJUNK` consumes. The counter is a
+variable on the character; a tattoo records completion and also lets masks gate
+other content. This is a *story* in variables. For the official quest journal
+(objectives shown by `QUESTS`, outcomes, rewards, a deadline), make the step a
+real quest ([chapter 8](08-quests.md)) and use the same hooks:
+
+```text
+GIVE_PROG moonpetal
+mpjunk $o
+mpqobjective $n petals BUMP petals
+if qobjective($n petals petals == DONE)
+  mpquestwin $n petals
+endif
+~
+```
+
+(with `MPQOBJECTIVE $n petals ADD petals 3 Gather 3 moonpetals` run when the
+quest is accepted). `QUESTSTATUS($n petals)` is then `ACTIVE`, `WON`, `FAILED`,
+`ABANDONED` or `EXPIRED`.
+
+Test: `SCRIPT FIRE herbalist GIVE WITH moonpetal` with a petal in your pack,
+three times; check `VARS LIST * <your name> PETALS` between runs.
+
+### 5. A timed event: a market bell, a fuse and a promised sword
+
+Hosts: the market bell (an item in the square); the demolition expert; the smith.
+
+```text
+# progs/market-bell.script on the bell
+TIME_PROG 8 12 18
+mpecho The market bell rings out over the square.
+~
+EVERY_PROG 1 DAYS CATCHUP
+# $g is how many days came due while the bell did not tick (after a long rest)
+mpsetvar WORLD MARKET_DAYS +$g
+~
+```
+
+```text
+# progs/fuse.script on the expert
+SPEECH_PROG p light the fuse
+if eval($%ALARM($i fuse)% > 0)
+  say It is already lit!
+else
+  mpecho The fuse hisses and sparks.
+  mpalarm NAME=fuse 5 mpecho The charge goes off with a roar!
+endif
+~
+SPEECH_PROG p cut the fuse
+if eval($%ALARM($i fuse)% > 0)
+  mpalarmcancel fuse
+  mpecho $n snips the fuse just in time.
+endif
+~
+```
+
+```text
+# progs/smith.script on the smith
+SPEECH_PROG sword
+mpsetvar $n SWORD_ORDERED NOW
+mpsetvar $n SWORD_PENDING yes
+say Come back in three days.
+~
+GREET_PROG 100
+if ispc($n)
+  if var($n SWORD_PENDING == yes)
+    if elapsed($<$n SWORD_ORDERED> DAYS >= 3)
+      mpoload a fine longsword
+      give longsword $n
+      mpsetvar $n SWORD_PENDING
+      mpsetvar $n SWORD_ORDERED
+    endif
+  endif
+endif
+~
+```
+
+`TIME_PROG` runs once at each listed hour of the area's clock (not the
+computer's); `EVERY_PROG` is a saved game-time schedule that tells the script
+how many periods it missed; `MPALARM NAME=` creates an alarm that is saved,
+cancellable and readable with `ALARM()`; and `MPSETVAR ... NOW` stamps the area
+clock for `ELAPSED(... DAYS)`. None of these use real time, so they behave when the
+game is paused or turn-based. The smith checks the pending flag first because
+`ELAPSED` on an unset stamp is meaningless.
+
+Test: `SCRIPT FIRE bell TIME_PROG 8`; `SCRIPT ALARMS expert` shows the fuse
+queued; advance time with `TIME SET` or `MPPASSTIME` ([chapter 10](10-world-simulation.md)).
+
+### 6. A cross-object signal: a lever and a portcullis
+
+The lever is in a guardroom; the gatehouse (a mob that stays put) is in another
+room beside the portcullis. File `progs/lever.script` on the lever:
+
+```text
+VERB_PROG pull
+mpechoat $n You heave the lever down. Chains rattle somewhere above.
+mpsignal TAG:gatehouse raise
+~
+```
+
+File `progs/gatehouse.script` on the gatehouse mob, with its **Tags** line set
+to `gatehouse`:
+
+```text
+SIGNAL_PROG raise
+# $n is who pulled the lever, $t the lever
+mpdoor unlock HERE north QUIET
+mpdoor open HERE north "Chains clatter and the portcullis lifts."
+mpalarm NAME=drop 15 mpdoor close HERE north QUIET
+mpecho The gatehouse guard mutters about the noise.
+~
+```
+
+If sender and receiver are in the same room you can skip the signal and call a
+function directly: `mpcallfunc Gatehouse raise` (a `FUNCTION_PROG raise` on the
+receiver), and `$%CALLFUNC(Gatehouse height)%` reads a value back. Signals suit
+the lever/gate case better: the sender does not need the receiver's name or
+room, several receivers can listen, and `DELAY n` puts time between pull and
+effect (`mpsignal TAG:gatehouse raise DELAY 3`).
+
+Test: `SCRIPT CALL gatehouse@Gatehouse#1 raise` is not needed here; instead
+`SCRIPTTRACE lever`, `pull lever`, and watch for `no one to hear it` (missing
+tag) or a `HERE`/direction problem in the gatehouse's room.
+
+### 7. One guard script, many guards
+
+File `progs/gate-guard.script`, shared by every gate guard:
+
+```text
+ARGDEFAULT DIR=north GREETING="Halt. State your business."
+# Trigger lines are read once, as written: ARG() works in bodies, not on them.
+GREET_PROG 100
+if ispc($n)
+  say $%ARG(GREETING)%
+endif
+~
+BRIBE_PROG 10
+if var(@$i BRIBED == yes)
+  say You already paid, $n.
+else
+  mpsetvar @$i BRIBED yes
+  say Ten coins will do. Through you go.
+  mpdoor unlock HERE $%ARG(DIR)% QUIET
+  mpdoor open HERE $%ARG(DIR)% "The guard hauls the gate open."
+  mpalarm NAME=reclose 20 mpdoor close HERE $%ARG(DIR)% QUIET
+endif
+~
+```
+
+Hosts:
+
+```text
+LOAD=progs/gate-guard.script DIR=east GREETING="Halt! The east gate is closed at night."
+LOAD=progs/gate-guard.script
+```
+
+The second guard uses the defaults. Each guard keeps its own `BRIBED` flag
+because the variable is on `@$i`; with `$i` instead, every guard of the same name
+would share it. Edit the file once and `WORLD RELOAD SCRIPT progs/gate-guard.script`
+to change them all.
+
+### 8. A custom verb on a room
+
+```text
+CMDFAIL_PROG PRAY ALTAR
+mpecho $n kneels before the altar and prays.
+if !isaffected($n Prayer_Bless)
+  mpcast Prayer_Bless $n
+endif
+return cancel
+~
+```
+
+On the altar's room, `pray at altar` now works: `CMDFAIL_PROG` runs when a command
+fails or is unknown (before the player would see "Huh?"), the first word is the
+verb typed, and `RETURN CANCEL` keeps the failure message back. For a verb
+that should always win over skills and socials, and be tied to one object, use
+`VERB_PROG` as in example 3.
 
