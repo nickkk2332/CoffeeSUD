@@ -1941,12 +1941,14 @@ CoffeeSUD: an item's powers on demand, for anyone, with no class skill. Its hold
 ```text
 TO=CHARACTER/ACCOUNT/GROUP/CLAN/PLAYER/NPC/NOONE ON=PICKUP/EQUIP
 : (MESSAGE=[ZAPMSG]) (DEATHKEEP=TRUE/FALSE)
+: (ALLOT="[name]") (ALLOTFOR="[time]") (TRADE=NONE/ALLOWED/ANY) (SOURCE="[text]") (EXPIRES="[time]")
 ```
 
 **Example:**
 
 ```text
 TO=CHARACTER ON=PICKUP MESSAGE="Bound -- you can't do that."
+TO=CHARACTER ON=PICKUP ALLOT="Ann" ALLOTFOR="1 mudhour" TRADE=NONE SOURCE="the furnace warden" EXPIRES="2 mudhours"
 ```
 
 Allows an item to be bound when an event occurs to the person, account, or clan that either picks it up or first equips it. Once bound, an item can only be picked up by that same player, account, or clan. The zap message is also configureable, as is whether the item persists with the player over death.
@@ -1955,6 +1957,21 @@ Notes:
 
 - `GROUP` is accepted by the code but missing from the help. `TO=` and `ON=` take a full name or an abbreviation (`TO=CH`); the default is `TO=CHARACTER ON=PICKUP`, and `BOUND=` is written back by the engine to record who it is bound to.
 - `ON=` values match abbreviations correctly now (it compared against the TO string). In single-player the binding is to a character name.
+- Once bound, it can be neither worn, held or wielded by another nor given to another (stage 1 of phase 2 closed those routes).
+- CoffeeSUD keeps the binding's other fields apart (I20):
+
+| Field | Meaning |
+| --- | --- |
+| `ALLOT` | Allocation: only this character may pick it up, until `ALLOTFOR` (a time, as `1 mudhour`) has passed; with no `ALLOTFOR`, until it is claimed. |
+| `TRADE` | Trade once bound: `NONE` (never given or sold), `ALLOWED` (the default: given only to whom it is bound to, never sold) or `ANY` (given and sold freely; only using it stays the bound one's). |
+| `SOURCE` | Where it came from, shown on inspection. |
+| `EXPIRES` | Expiry: how long a binding lasts; after it, anyone may use it and it binds no more. |
+
+The times (`ALLOTAT`, `BOUNDAT`) and an ended binding (`FREED`) are written into
+the text, so they are saved with the item. Inspection shows each field and how
+long is left: "Allotted to: Ann for 1 mud hour(s) more; Binds to character on
+pickup, for 2 mud hours; Trade: cannot be given or sold once bound; From: the
+furnace warden". Test: [i20-binding.js](../../tools/fixtures/fixes/i20-binding.js).
 
 ### Prop_ItemGrowth
 
