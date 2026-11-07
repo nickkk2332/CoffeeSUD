@@ -921,8 +921,35 @@ public class StdMOB implements MOB
 	}
 
 	@SuppressWarnings("unchecked")
+	/** P03: the class last seen, to check memberships again when it changes */
+	protected String affiliationClass = null;
+	protected boolean affiliationCheck = false;
+
 	@Override
 	public void recoverCharStats()
+	{
+		recoverCharStatsOnly();
+		final CharClass cc = baseCharStats.getCurrentClass();
+		final String now = (cc == null) ? "" : cc.ID();
+		if(affiliationClass == null)
+			affiliationClass = now;
+		else
+		if(!affiliationClass.equals(now) && !affiliationCheck)
+		{
+			affiliationClass = now;
+			affiliationCheck = true;
+			try
+			{
+				Affiliations.recheck(this);
+			}
+			finally
+			{
+				affiliationCheck = false;
+			}
+		}
+	}
+
+	protected void recoverCharStatsOnly()
 	{
 		baseCharStats.setClassLevel(baseCharStats.getCurrentClass(), basePhyStats().level() - baseCharStats().combinedSubLevels());
 		baseCharStats.copyInto(charStats);

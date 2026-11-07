@@ -682,7 +682,20 @@ Check: joining a second guild is refused; a third association is refused; a
 member of the Night Hand cannot join the type with that mask. Grants follow
 membership: a government's `ABILITIES` and `EFFECTS` by clan level are
 recomputed from the clans a character is in now, so leaving one takes away its
-automatic grants. Skills a character learned through a clan stay learned.
+automatic grants. Skills a character learned through a clan stay learned,
+unless the world's affiliation rules say otherwise.
+
+A mask on one side forbids the pair one way. For both ways, and for what
+leaving takes away, use `world/affiliations.ini`
+([chapter 9](09-society.md#affiliation-rules)):
+
+```text
+CONFLICT|The Night Hand|The City Watch
+LEAVE|The Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide
+```
+
+Joining either while in the other is refused, from any route; leaving the
+Night Hand takes its mark and its hiding skill.
 
 ## 35. A challenge book with hidden entries
 

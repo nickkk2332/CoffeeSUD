@@ -833,6 +833,16 @@ public class DefaultClan implements Clan
 	{
 		final Pair<Clan,Integer> before=M.getClanRole(clanID());
 		final int oldRole=(before==null)?-1:before.second.intValue();
+		// P03: joining, however it comes about, is refused while in an organization it cannot be held with
+		if(((oldRole<0)||isApplicantRole(oldRole))&&(!isApplicantRole(role)))
+		{
+			final String why=com.planet_ink.coffee_mud.core.Affiliations.refuses(M,this);
+			if(why.length()>0)
+			{
+				M.tell(why+".");
+				return;
+			}
+		}
 		transientSize=-1;
 		M.setClan(clanID(),role);
 		if(M.isPlayer()) CMLib.database().DBUpdateClanMembership(M.Name(), clanID(), role); // a character not in the world too; NPC members have no rows
@@ -917,7 +927,10 @@ public class DefaultClan implements Clan
 		M.setClan(clanID(),-1);
 		updateClanPrivileges(M);
 		if(wasIn)
+		{
 			ScriptEvents.clan("LEAVE",clanID(),M,null,"","");
+			com.planet_ink.coffee_mud.core.Affiliations.left(M,this); // P03: what leaving takes away, by the world's LEAVE rule
+		}
 	}
 
 	@Override

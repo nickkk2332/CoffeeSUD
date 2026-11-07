@@ -485,6 +485,29 @@ The shipped comment on `MAXCLANCATS` says `0` means unlimited; in the code a
 value of `0` blocks all membership of that category (the join checks test
 `size() >= max`). Use a large number instead.
 
+### Affiliation rules
+
+`world/affiliations.ini` keeps the rules between organizations, one a line,
+its parts between bars:
+
+```text
+TAG|The Night Hand|OUTLAW
+TAG|The City Watch|LAWFUL
+CONFLICT|OUTLAW|LAWFUL
+KEEP|The City Watch|-CLASSES +Fighter +Paladin
+LEAVE|The Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide
+```
+
+| Rule | Meaning |
+| --- | --- |
+| `TAG\|org\|tag...` | An organization's tags. Its own name and its type's `CATEGORY` are tags of it too. |
+| `CONFLICT\|tag\|tag` | Two tags that cannot be held together, either way: joining an organization of one while in one of the other is refused, however the joining comes about (`CLANAPPLY`, a guildmaster, a script), so rejoining too. A promotion within one is no joining. |
+| `KEEP\|org\|mask` | What a member must keep passing. It is checked again whenever their class changes; failing it, they leave and are told why. |
+| `LEAVE\|org\|...` | What leaving takes away, however it comes about: `TATTOOS=` and `ABILITIES=` (their effects end too). The government's own grants by level follow membership already. |
+
+The refusal says which two cannot be held together and by which tags.
+Test: [p03-affiliations.js](../../tools/fixtures/fixes/p03-affiliations.js).
+
 ### Party-founded clans
 
 Each party character is a separate member and, under `CLANVOTES=CHARACTER`, a
