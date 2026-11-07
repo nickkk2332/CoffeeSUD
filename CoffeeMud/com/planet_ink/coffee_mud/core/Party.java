@@ -351,6 +351,32 @@ public final class Party
 		return sorted;
 	}
 
+	/**
+	 * The group a character is with, in a room: the party of its leader, in
+	 * the party's order, then those following the group, each once, alive
+	 * and in the character's room.  The character is always first or among
+	 * them.
+	 * @param mob the character
+	 * @return the group here
+	 */
+	public static List<MOB> here(final MOB mob)
+	{
+		final List<MOB> out = new ArrayList<MOB>();
+		final Room R = mob.location();
+		final MOB top = leaderOf(mob);
+		final Set<MOB> all = new java.util.LinkedHashSet<MOB>(inOrder(top));
+		final MOB group = (top.getGroupLeader() == null) ? top : top.getGroupLeader();
+		all.addAll(group.getGroupMembers(new java.util.LinkedHashSet<MOB>()));
+		for(final MOB M : all)
+		{
+			if((M != null) && (M.location() == R) && !M.amDead() && !out.contains(M))
+				out.add(M);
+		}
+		if(!out.contains(mob))
+			out.add(0, mob);
+		return out;
+	}
+
 	private static int place(final MOB M, final MOB leader, final List<MOB> all)
 	{
 		final int placed = order.indexOf(M.Name());

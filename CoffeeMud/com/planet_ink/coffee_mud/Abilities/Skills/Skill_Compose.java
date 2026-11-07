@@ -142,6 +142,7 @@ public class Skill_Compose extends StdAbility
             if(NamedResources.enabled())
                 for(final Map.Entry<String,Long> gain : compiled.resourceGains().entrySet())
                     NamedResources.gain(mob, gain.getKey(), gain.getValue().longValue(), compiled.skill.id);
+            ProgressionTracks.cast(mob, compiled.skill.id); // P01: a resolved composed cast
             return true;
         }
         finally { if(previous == null) CAST.remove(); else CAST.set(previous); AbilityTriggers.leaveCast(); }

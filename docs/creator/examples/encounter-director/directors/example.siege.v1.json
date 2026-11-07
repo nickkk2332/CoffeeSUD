@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "example.siege",
+  "version": 1,
+  "title": "Hold the gate",
+  "kind": "waves",
+  "activity": "example.trial",
+  "reward": "example.room-two",
+  "bank": true,
+  "bind": ["keeper=the old keeper"],
+  "protect": "keeper",
+  "budget": {"actors": 3, "actions": 0, "loot": 1},
+  "on_wipe": "fail",
+  "on_retreat": "fail",
+  "retreat_ticks": 3,
+  "phases": [
+    {"id": "first", "enter": {"on": "start"}, "warning": "Raiders at the gate!",
+     "spawn": [{"mob": "a raider", "count": 2, "role": "raider"}]},
+    {"id": "second", "enter": {"on": "cleared"}, "warning": "More raiders!",
+     "spawn": [{"mob": "a raider", "count": 2, "role": "raider"}]},
+    {"id": "last", "enter": {"on": "cleared"}, "warning": "Their captain comes!",
+     "spawn": [{"mob": "a raider captain", "role": "captain"}]}
+  ],
+  "complete": {"when": "cleared"}
+}

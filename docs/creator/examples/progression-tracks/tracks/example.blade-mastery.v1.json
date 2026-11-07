@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "example.blade-mastery",
+  "version": 1,
+  "title": "Blade mastery",
+  "owner": "item",
+  "points": "notches",
+  "earn": [{"on": "kill", "amount": 1}],
+  "curve": {"type": "table", "points": [3, 10]},
+  "milestones": [
+    {"level": 1, "title": "Blooded", "stats": {"schema": 1, "accuracy": 10}},
+    {"level": 2, "title": "Trusted", "stats": {"schema": 1, "crit_chance": 5}}
+  ]
+}

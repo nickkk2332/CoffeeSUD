@@ -198,6 +198,7 @@ public final class ItemCrafting
             // Consumed objects are destroyed before advisory listeners can see them.
             for(final Cost c:plan.costs)if(c.amount==c.weight)try{c.item.destroy();}catch(final RuntimeException e){Log.errOut("ItemCrafting",e);}
             box.finish(true);JSEvents.fire("itemcrafted",who,item,ModuleDefinitions.json(receipt));
+            ProgressionTracks.crafted(who,InstanceIds.id(who)+"#"+serial); // P01: one settled craft, once
         }
         finally{busy.remove();}
         return "Committed craft #"+serial+": "+op.name+"; consumed "+op.number("units")+" "+op.string("material")+"; item revision "+next.get("revision")+". Repeating this request cannot consume or apply it again.";

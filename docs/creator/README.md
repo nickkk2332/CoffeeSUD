@@ -83,6 +83,10 @@ These systems are off unless a world selects them.
 | [Item modifiers and crafting](17-item-modifiers-crafting.md) | Tracked equipment modifiers and selective, protected crafting |
 | [Named resources](34-named-resources.md) | Heat, focus and charges, with costs, gains and changes over time |
 | [Causal triggers](35-causal-triggers.md) | Reactions to blocks and kills, with budgets, depth limits and saved cooldowns |
+| [Reward escrow](36-reward-escrow.md) | Provisional, banked, forfeited and claimed rewards, with activity policies |
+| [Encounter director](37-encounter-director.md) | Phased bosses and defense waves as one saved state machine, with budgets |
+| [Expeditions](38-expeditions.md) | Charts, entry contracts, seeded instances with modifiers, attempts and recovery |
+| [Progression tracks](39-progression-tracks.md) | Character disciplines, organization research and item mastery, with milestones and migration |
 | [The Ember Trial](examples/ember-trial/README.md) | A complete playable sample adventure using all of the above |
 
 ### Engine development

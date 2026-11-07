@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "id": "encounters.director",
+  "title": "Encounter director",
+  "version": 1,
+  "handler": "encounters.director",
+  "requires": {"rewards.escrow": 1},
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["world"],
+  "on_disable": "suspend"
+}

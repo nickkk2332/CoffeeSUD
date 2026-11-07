@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "example.warden",
+  "version": 1,
+  "title": "The Cinder Warden",
+  "kind": "boss",
+  "activity": "example.trial",
+  "reward": "example.room-three",
+  "scaling": {"rule": "party_size", "per_member": 25, "max_members": 4},
+  "budget": {"actors": 4, "actions": 2, "loot": 1},
+  "on_wipe": "reset",
+  "on_retreat": "reset",
+  "retreat_ticks": 5,
+  "phases": [
+    {"id": "wakes", "title": "The Warden wakes", "enter": {"on": "start"},
+     "warning": "The Cinder Warden raises its hammer.",
+     "spawn": [{"mob": "the Cinder Warden", "role": "boss"}]},
+    {"id": "imps", "title": "The Warden calls its imps", "enter": {"on": "hp_below", "role": "boss", "percent": 66},
+     "warning": "Imps pour out of the furnace!",
+     "spawn": [{"mob": "a cinder imp", "count": 2, "role": "imp"}],
+     "say": ["The Warden roars: Burn them!"]},
+    {"id": "cracked", "title": "The cracked Warden", "enter": {"on": "hp_below", "role": "boss", "percent": 33},
+     "warning": "The Warden's armor cracks and it burns brighter. Stand back from the furnace!",
+     "say": ["Heat pours from the cracks."]}
+  ],
+  "complete": {"when": "defeated", "role": "boss"}
+}

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "example.room-three",
+  "version": 1,
+  "title": "Spoils of room three",
+  "kind": "bundle",
+  "money": 150
+}

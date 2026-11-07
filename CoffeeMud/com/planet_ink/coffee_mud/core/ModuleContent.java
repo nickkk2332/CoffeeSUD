@@ -631,6 +631,10 @@ public final class ModuleContent
 	private static final String[] KNOWN = {
 		"com.planet_ink.coffee_mud.core.NamedResources",
 		"com.planet_ink.coffee_mud.core.AbilityTriggers",
+		"com.planet_ink.coffee_mud.core.RewardEscrow",
+		"com.planet_ink.coffee_mud.core.EncounterDirectors",
+		"com.planet_ink.coffee_mud.core.Expeditions",
+		"com.planet_ink.coffee_mud.core.ProgressionTracks",
 	};
 
 	/** resets every family, at boot */

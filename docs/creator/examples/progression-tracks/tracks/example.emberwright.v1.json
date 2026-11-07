@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "example.emberwright",
+  "version": 1,
+  "title": "Emberwright discipline",
+  "owner": "character",
+  "points": "embers",
+  "earn": [
+    {"on": "kill", "amount": 5},
+    {"on": "cast", "skill": "example.ember", "amount": 2}
+  ],
+  "curve": {"type": "table", "points": [10, 30, 60]},
+  "milestones": [
+    {"level": 1, "title": "Kindled", "stats": {"schema": 1, "penetration": {"fire": 5}}, "message": "Your embers burn deeper."},
+    {"level": 3, "title": "Emberwright", "unlock": "emberwright"}
+  ],
+  "reset": "command"
+}
