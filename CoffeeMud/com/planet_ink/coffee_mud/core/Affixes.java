@@ -9,20 +9,20 @@ import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 import java.util.*;
 
 /*
-   Copyright 2026 CoffeeSUD contributors
+Copyright 2026 CoffeeSUD contributors
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
 /**
  * G10: data-driven affixes for random enchantment: world/affixes.xml, else
  * resources/randareas/affixes.xml (or the world's own copy there).  Each
@@ -44,21 +44,21 @@ public final class Affixes
 	public static final class Affix
 	{
 		/** its id and name */
-		public final String			id, name;
+		public final String id, name;
 		/** true for a prefix, false for a suffix */
-		public final boolean		prefix;
+		public final boolean prefix;
 		/** the kinds of item it goes on: weapon, armor, ammo, item, any */
-		public final Set<String>	kinds	= new HashSet<String>();
+		public final Set<String> kinds = new HashSet<String>();
 		/** the item levels it goes on */
-		public final int			lo, hi;
+		public final int lo, hi;
 		/** its weight in the pick */
-		public final double			weight;
+		public final double weight;
 		/** how much it raises the item's level */
-		public final int			power;
+		public final int power;
 		/** a cursed affix: the item cannot be taken off */
-		public final boolean		cursed;
+		public final boolean cursed;
 		/** its effects: class and parameters */
-		public final List<String[]>	affects	= new ArrayList<String[]>();
+		public final List<String[]> affects = new ArrayList<String[]>();
 		/** Optional opt-in structured record; legacy affixes retain their old path. */
 		public JSONObject tracked = null;
 
@@ -75,7 +75,7 @@ public final class Affixes
 		}
 	}
 
-	private static volatile List<Affix>	cache	= null;
+	private static volatile List<Affix> cache = null;
 
 	/** drops the affixes read, so the file is read again */
 	public static void reload()
@@ -102,7 +102,9 @@ public final class Affixes
 		List<Affix> L = cache;
 		if(L != null)
 			return L;
-		L = read(); cache = L; return L;
+		L = read();
+		cache = L;
+		return L;
 	}
 
 	/** A fresh read for validation without replacing the accepted legacy cache. */
@@ -145,7 +147,8 @@ public final class Affixes
 						}
 					}
 					final String tracked = a.getParmValue("TRACKED");
-					if(tracked != null && !tracked.equalsIgnoreCase("false")) X.tracked = tracked(a,X);
+					if(tracked != null && !tracked.equalsIgnoreCase("false"))
+						X.tracked = tracked(a,X);
 					L.add(X);
 				}
 			}
@@ -154,31 +157,79 @@ public final class Affixes
 	}
 
 	private static Object whole(final String text)
-	{ try { return Long.valueOf(text); } catch(final Exception e) { return text == null ? "" : text; } }
+	{
+		try
+		{
+			return Long.valueOf(text);
+		}
+		catch(final Exception e)
+		{
+			return text == null ? "" : text;
+		}
+	}
 	private static JSONObject tracked(final XMLTag tag, final Affix a)
 	{
-		final JSONObject out=new JSONObject();out.put("schema",Long.valueOf(1));out.put("kind","affix");out.put("id",a.id);out.put("name",a.name);
-		out.put("version",whole(tag.getParmValue("VERSION")));out.put("tier",whole(tag.getParmValue("TIER")));out.put("group",tag.getParmValue("GROUP"));
-		out.put("position",a.prefix?"prefix":"suffix");out.put("kinds",new TreeSet<String>(a.kinds).toArray());
-		out.put("minimum_level",Long.valueOf(a.lo));out.put("maximum_level",Long.valueOf(a.hi));out.put("weight",Double.valueOf(a.weight));out.put("power",Long.valueOf(a.power));out.put("cursed",Boolean.valueOf(a.cursed));
-		out.put("effects",a.affects.toArray());final String tags=tag.getParmValue("TAGS");out.put("tags",tags==null||tags.trim().isEmpty()?new Object[0]:tags.trim().split("\\s*,\\s*"));
+		final JSONObject out=new JSONObject();
+		out.put("schema",Long.valueOf(1));
+		out.put("kind","affix");
+		out.put("id",a.id);
+		out.put("name",a.name);
+		out.put("version",whole(tag.getParmValue("VERSION")));
+		out.put("tier",whole(tag.getParmValue("TIER")));
+		out.put("group",tag.getParmValue("GROUP"));
+		out.put("position",a.prefix?"prefix":"suffix");
+		out.put("kinds",new TreeSet<String>(a.kinds).toArray());
+		out.put("minimum_level",Long.valueOf(a.lo));
+		out.put("maximum_level",Long.valueOf(a.hi));
+		out.put("weight",Double.valueOf(a.weight));
+		out.put("power",Long.valueOf(a.power));
+		out.put("cursed",Boolean.valueOf(a.cursed));
+		out.put("effects",a.affects.toArray());
+		final String tags=tag.getParmValue("TAGS");
+		out.put("tags",tags==null||tags.trim().isEmpty()?new Object[0]:tags.trim().split("\\s*,\\s*"));
 		final String pos=tag.getParmValue("POS"),power=tag.getParmValue("POWER"),cursed=tag.getParmValue("CURSED"),level=tag.getParmValue("LEVEL");
-		if(pos!=null&&!pos.equalsIgnoreCase("prefix")&&!pos.equalsIgnoreCase("suffix"))out.put("invalid_position",pos);
-		if(power!=null)out.put("power",whole(power));
-		if(cursed!=null&&!cursed.equalsIgnoreCase("true")&&!cursed.equalsIgnoreCase("false"))out.put("invalid_curse",cursed);
-		if(level!=null&&!level.matches("[0-9]+(?:\\s*-\\s*[0-9]+)?"))out.put("invalid_level",level);
-		final JSONObject rolls=new JSONObject();out.put("rolls",rolls);
-		final Set<String> allowed=new HashSet<String>(Arrays.asList("ID","NAME","POS","KINDS","LEVEL","PICKWEIGHT","POWER","CURSED","TRACKED","VERSION","TIER","GROUP","TAGS"));
-		for(final String key:tag.parms().keySet())if(!allowed.contains(key.toUpperCase()))out.put("unknown_attribute_"+key,tag.getParmValue(key));
-		if(!"true".equalsIgnoreCase(tag.getParmValue("TRACKED")))out.put("invalid_tracked_flag",tag.getParmValue("TRACKED"));
-		if(tag.contents()!=null)for(final XMLTag r:tag.contents())
-		{
-			if(r.tag().equalsIgnoreCase("AFFECT")){out.put("unsupported_effect_entry",Boolean.TRUE);continue;}
-			if(!r.tag().equalsIgnoreCase("ROLL")){out.put("unknown_element_"+r.tag(),r.value());continue;}
-			final String stat=r.getParmValue("STAT");final JSONObject range=new JSONObject();range.put("min",whole(r.getParmValue("MIN")));range.put("max",whole(r.getParmValue("MAX")));
-			for(final String key:r.parms().keySet())if(!Arrays.asList("STAT","MIN","MAX").contains(key.toUpperCase()))range.put(key,r.getParmValue(key));
-			if(stat==null||rolls.containsKey(stat))out.put("duplicate_or_missing_roll_stat",String.valueOf(stat));else rolls.put(stat,range);
-		}
+		if(pos!=null&&!pos.equalsIgnoreCase("prefix")&&!pos.equalsIgnoreCase("suffix"))
+			out.put("invalid_position",pos);
+		if(power!=null)
+			out.put("power",whole(power));
+		if(cursed!=null&&!cursed.equalsIgnoreCase("true")&&!cursed.equalsIgnoreCase("false"))
+			out.put("invalid_curse",cursed);
+		if(level!=null&&!level.matches("[0-9]+(?:\\s*-\\s*[0-9]+)?"))
+			out.put("invalid_level",level);
+		final JSONObject rolls=new JSONObject();
+		out.put("rolls",rolls);
+		final Set<String> allowed=new HashSet<String>(Arrays
+			.asList("ID","NAME","POS","KINDS","LEVEL","PICKWEIGHT","POWER","CURSED","TRACKED","VERSION","TIER","GROUP","TAGS"));
+		for(final String key:tag.parms().keySet())
+			if(!allowed.contains(key.toUpperCase()))
+				out.put("unknown_attribute_"+key,tag.getParmValue(key));
+		if(!"true".equalsIgnoreCase(tag.getParmValue("TRACKED")))
+			out.put("invalid_tracked_flag",tag.getParmValue("TRACKED"));
+		if(tag.contents()!=null)
+			for(final XMLTag r:tag.contents())
+			{
+				if(r.tag().equalsIgnoreCase("AFFECT"))
+				{
+					out.put("unsupported_effect_entry",Boolean.TRUE);
+					continue;
+				}
+				if(!r.tag().equalsIgnoreCase("ROLL"))
+				{
+					out.put("unknown_element_"+r.tag(),r.value());
+					continue;
+				}
+				final String stat=r.getParmValue("STAT");
+				final JSONObject range=new JSONObject();
+				range.put("min",whole(r.getParmValue("MIN")));
+				range.put("max",whole(r.getParmValue("MAX")));
+				for(final String key:r.parms().keySet())
+					if(!Arrays.asList("STAT","MIN","MAX").contains(key.toUpperCase()))
+						range.put(key,r.getParmValue(key));
+				if(stat==null||rolls.containsKey(stat))
+					out.put("duplicate_or_missing_roll_stat",String.valueOf(stat));
+				else
+					rolls.put(stat,range);
+			}
 		return out;
 	}
 
@@ -187,7 +238,9 @@ public final class Affixes
 	 */
 	public static boolean available()
 	{
-		for(final Affix a:all())if(a.tracked==null)return true;
+		for(final Affix a:all())
+			if(a.tracked==null)
+				return true;
 		return false;
 	}
 
@@ -215,8 +268,8 @@ public final class Affixes
 		for(final Affix A : all())
 		{
 			if(A.tracked != null || ((prefix != null) && (A.prefix != prefix.booleanValue())) || used.contains(A.id)
-			|| ((!A.kinds.contains(kind)) && (!A.kinds.contains("any")))
-			|| (level < A.lo) || (level > A.hi) || (A.weight <= 0))
+				|| ((!A.kinds.contains(kind)) && (!A.kinds.contains("any")))
+				|| (level < A.lo) || (level > A.hi) || (A.weight <= 0))
 				continue;
 			fit.add(A);
 			total += A.weight;
@@ -246,7 +299,8 @@ public final class Affixes
 		{
 			if(lower.startsWith(art))
 			{
-				final String a = (art.equals("a ") || art.equals("an ")) ? ("aeiou".indexOf(Character.toLowerCase(prefix.charAt(0))) >= 0 ? "an " : "a ") : name.substring(0, art.length());
+				final String a = (art.equals("a ") || art.equals("an "))
+					? ("aeiou".indexOf(Character.toLowerCase(prefix.charAt(0))) >= 0 ? "an " : "a ") : name.substring(0, art.length());
 				return a + prefix + " " + name.substring(art.length());
 			}
 		}
@@ -265,7 +319,15 @@ public final class Affixes
 		if(ItemModifiers.isManaged(I))
 		{
 			// a tracked item that cannot take more (a generic copy, an owned or crafted one) keeps what it has; the tick or roll goes on
-			try { return ItemModifiers.addGenerated(I,count); } catch(final java.io.IOException e) { Log.errOut("Affixes", I.Name() + ": " + e.getMessage()); return 0; }
+			try
+			{
+				return ItemModifiers.addGenerated(I,count);
+			}
+			catch(final java.io.IOException e)
+			{
+				Log.errOut("Affixes", I.Name() + ": " + e.getMessage());
+				return 0;
+			}
 		}
 		if((I == null) || (count <= 0) || (!available()))
 			return 0;
@@ -303,7 +365,8 @@ public final class Affixes
 				}
 				final String parms = (e[1] == null) ? "" : e[1].trim();
 				final Ability had = I.fetchEffect(X.ID());
-				if(had != null) // one of a kind on an item: the parameters join it (a spell list with ;)
+				if(had != null)
+					// one of a kind on an item: the parameters join it (a spell list with ;)
 					had.setMiscText((had.text().trim() + (X.ID().endsWith("SpellCast") ? ";" : " ") + parms).trim());
 				else
 				{
