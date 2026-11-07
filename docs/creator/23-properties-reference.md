@@ -181,7 +181,7 @@ Rooms and areas players can buy, inns, homes, what shopkeepers refuse, purchase 
 
 What an item does or is: artifacts, curses, binding, growth, durability, transformation, sets, uses.
 
-[Prop_Artifact](#prop_artifact), [Prop_Attunement](#prop_attunement), [Prop_Cursed](#prop_cursed), [Prop_Detector](#prop_detector), [Prop_Invokable](#prop_invokable), [Prop_ItemBinder](#prop_itembinder), [Prop_ItemGrowth](#prop_itemgrowth), [Prop_ItemSet](#prop_itemset), [Prop_ItemModifiers](#prop_itemmodifiers), [Prop_Durability](#prop_durability), [Prop_Broken](#prop_broken), [Prop_Transform](#prop_transform), [Prop_LimitedEquip](#prop_limitedequip), [Prop_LimitedItems](#prop_limiteditems), [Prop_LocationBound](#prop_locationbound), [Prop_Furnishing](#prop_furnishing), [Prop_QuestItem](#prop_questitem), [Prop_UpgradePath](#prop_upgradepath), [Prop_ScrapExplode](#prop_scrapexplode), [Prop_SalvageYield](#prop_salvageyield), [Prop_NoCraftability](#prop_nocraftability), [Prop_StayAboard](#prop_stayaboard), [Prop_Retainable](#prop_retainable), [Prop_Workstation](#prop_workstation), [Prop_Summoned](#prop_summoned), [Prop_ItemTransporter](#prop_itemtransporter), [Prop_ItemTransReceiver](#prop_itemtransreceiver)
+[Prop_Artifact](#prop_artifact), [Prop_Attunement](#prop_attunement), [Prop_Cursed](#prop_cursed), [Prop_Detector](#prop_detector), [Prop_Invokable](#prop_invokable), [Prop_ItemBinder](#prop_itembinder), [Prop_Unknown](#prop_unknown), [Prop_ItemGrowth](#prop_itemgrowth), [Prop_ItemSet](#prop_itemset), [Prop_ItemModifiers](#prop_itemmodifiers), [Prop_Durability](#prop_durability), [Prop_Broken](#prop_broken), [Prop_Transform](#prop_transform), [Prop_LimitedEquip](#prop_limitedequip), [Prop_LimitedItems](#prop_limiteditems), [Prop_LocationBound](#prop_locationbound), [Prop_Furnishing](#prop_furnishing), [Prop_QuestItem](#prop_questitem), [Prop_UpgradePath](#prop_upgradepath), [Prop_ScrapExplode](#prop_scrapexplode), [Prop_SalvageYield](#prop_salvageyield), [Prop_NoCraftability](#prop_nocraftability), [Prop_StayAboard](#prop_stayaboard), [Prop_Retainable](#prop_retainable), [Prop_Workstation](#prop_workstation), [Prop_Summoned](#prop_summoned), [Prop_ItemTransporter](#prop_itemtransporter), [Prop_ItemTransReceiver](#prop_itemtransreceiver)
 
 ### Wearing, holding and riding (item-conferred powers)
 
@@ -1972,6 +1972,38 @@ the text, so they are saved with the item. Inspection shows each field and how
 long is left: "Allotted to: Ann for 1 mud hour(s) more; Binds to character on
 pickup, for 2 mud hours; Trade: cannot be given or sold once bound; From: the
 furnace warden". Test: [i20-binding.js](../../tools/fixtures/fixes/i20-binding.js).
+
+### Prop_Unknown
+
+**Hosts:** items
+
+**Parameters:**
+
+```text
+KIND=[id] (NAME="[name]") (DISPLAY="[look]") (DESC="[text]") (VALUE=[n])
+(REVEAL=IDENTIFY,APPRAISE,EXAMINE,USE) (MASK="[zapper mask]")
+```
+
+**Example:**
+
+```text
+KIND=embertrial.alloy NAME="a dull ingot" DISPLAY="A dull ingot lies here." DESC="A lump of metal you cannot place." VALUE=2 REVEAL=IDENTIFY,EXAMINE
+```
+
+A23: one rule for knowing a thing. Until a character knows the item's `KIND`,
+everything that names the item for them uses `NAME`, `DISPLAY` and `DESC`:
+their inventory, the room, every message (the engine's per-viewer name, so
+combat and trade messages too), a shop's list. They can refer to it by `NAME`
+as well as by its real name. Appraisal and the price a shop pays them go by
+`VALUE` (the real value when it is left out); identification says "you cannot
+tell what it is".
+
+The ways listed in `REVEAL` (`IDENTIFY` by default: Identify Object, a thief's
+lore) teach the kind to one who passes `MASK`, once: "You recognize a dull
+ingot: it is an ember-bronze ingot." From then on they know every item of that
+kind, by a tattoo `KNOWN_[KIND]`, saved with them; others still see the unknown
+name. Looking, examining without a reveal, or appraising again changes nothing.
+Test: [a23-knowledge.js](../../tools/fixtures/fixes/a23-knowledge.js).
 
 ### Prop_ItemGrowth
 

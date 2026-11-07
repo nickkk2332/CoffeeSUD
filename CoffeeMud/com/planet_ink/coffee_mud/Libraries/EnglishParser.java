@@ -3187,7 +3187,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr))
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr))
 						{
 							if((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0)))
 							{
@@ -3204,7 +3204,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 				for (final Environmental E : list)
 				{
 					if((E!=null)
-					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr))
+					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr))
 					&&((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0))))
 					{
 						if((--myOccurrance)<=0)
@@ -3330,7 +3330,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr)
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr)
 						||((Exit)E).doorName().equalsIgnoreCase(srchStr)
 						||((Exit)E).closedText().equalsIgnoreCase(srchStr))
 						{
@@ -3350,7 +3350,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 				{
 					if((E instanceof Exit)
 					&&(containsString(E.name(),srchStr)
-						||containsString(E.Name(),srchStr)
+						||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr)
 						||containsString(((Exit)E).doorName(),srchStr)
 						||containsString(((Exit)E).closedText(),srchStr))
 					&&((!allFlag)||((E.displayText()!=null)&&(E.displayText().length()>0))))
@@ -3406,7 +3406,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr))
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr))
 						{
 							if((!allFlag)
 							||(E instanceof Ability)
@@ -3427,7 +3427,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					final Environmental E=iter.next();
 					if((E!=null)
 					&&(containsString(E.name(),srchStr)
-						||containsString(E.Name(),srchStr)
+						||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr)
 						||containsString(E.displayText(),srchStr)
 						||((E instanceof MOB)&&containsString(((MOB)E).genericName(),srchStr)))
 					&&((!allFlag)
@@ -3472,7 +3472,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr))
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr))
 						{
 							if((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0)))
 							{
@@ -3491,7 +3491,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					final Environmental E=iter.nextElement();
 					if((E!=null)
 					&&(containsString(E.name(),srchStr)
-						||containsString(E.Name(),srchStr)
+						||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr)
 						||containsString(E.displayText(),srchStr)
 						||((E instanceof MOB)&&containsString(((MOB)E).genericName(),srchStr)))
 					&&((!allFlag)
@@ -3538,7 +3538,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr))
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr))
 						{
 							if((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0)))
 							{
@@ -3555,7 +3555,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 				for (final Environmental E : list)
 				{
 					if((E!=null)
-					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr))
+					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr))
 					&&((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0))))
 					{
 						if((--myOccurrance)<=0)
@@ -3613,7 +3613,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 				if(E!=null)
 				{
 					if(E.ID().equalsIgnoreCase(srchStr)
-					||E.Name().equalsIgnoreCase(srchStr)
+					||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr)
 					||E.name().equalsIgnoreCase(srchStr))
 					{
 						if((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0)))
@@ -3632,7 +3632,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 			{
 				E=list.get(string);
 				if((E!=null)
-				&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr))
+				&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr))
 				&&((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0))))
 				{
 					if((--myOccurrance)<=0)
@@ -3689,7 +3689,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					&&(flags.filter.passesFilter(I))
 					&&((srchStr.length()==0)
 					  ||I.ID().equalsIgnoreCase(srchStr)
-					  ||(I.Name().equalsIgnoreCase(srchStr))
+					  ||(I.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(I).equalsIgnoreCase(srchStr))
 					  ||(I.name().equalsIgnoreCase(srchStr))))
 					{
 						if((!allFlag)
@@ -3716,7 +3716,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					&&(I.container()==goodLocation)
 					&&(flags.filter.passesFilter(I))
 					&&((srchStr.length()==0)
-					   ||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)))
+					   ||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)||containsString(ItemKnowledge.alias(I),srchStr)))
 					&&((!allFlag)
 						||((I.displayText()!=null)&&(I.displayText().length()>0))))
 					{
@@ -3784,7 +3784,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					&&(flags.filter.passesFilter(I))
 					&&((srchStr.length()==0)
 					   ||I.ID().equalsIgnoreCase(srchStr)
-					   ||(I.Name().equalsIgnoreCase(srchStr))
+					   ||(I.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(I).equalsIgnoreCase(srchStr))
 					   ||(I.name().equalsIgnoreCase(srchStr))))
 					{
 						if((!allFlag)||((I.displayText()!=null)&&(I.displayText().length()>0)))
@@ -3805,7 +3805,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					if((I.container()==goodLocation)
 					&&(flags.filter.passesFilter(I))
 					&&((srchStr.length()==0)
-						||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)))
+						||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)||containsString(ItemKnowledge.alias(I),srchStr)))
 					&&((!allFlag)||((I.displayText()!=null)&&(I.displayText().length()>0))))
 					{
 						if((--myOccurrance)<=0)
@@ -3868,7 +3868,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 						&&(flags.filter.passesFilter(I))
 						&&((srchStr.length()==0)
 						   ||(ID().equalsIgnoreCase(srchStr))
-						   ||(I.Name().equalsIgnoreCase(srchStr))
+						   ||(I.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(I).equalsIgnoreCase(srchStr))
 						   ||(I.name().equalsIgnoreCase(srchStr))))
 						{
 							if((!allFlag)||(E instanceof Ability)||((I.displayText()!=null)&&(I.displayText().length()>0)))
@@ -3883,7 +3883,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					if(E!=null)
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr)
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr))
 						{
 							if((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0)))
@@ -3906,7 +3906,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 						if((I.container()==goodLocation)
 						&&(flags.filter.passesFilter(I))
 						&&((srchStr.length()==0)
-							||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)))
+							||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)||containsString(ItemKnowledge.alias(I),srchStr)))
 						&&((!allFlag)||(E instanceof Ability)||((I.displayText()!=null)&&(I.displayText().length()>0))))
 						{
 							if((--myOccurrance)<=0)
@@ -3916,7 +3916,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					}
 					else
 					if((E!=null)
-					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr))
+					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr))
 					&&((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0))))
 					{
 						if((--myOccurrance)<=0)
@@ -3995,7 +3995,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 						&&(flags.filter.passesFilter(I))
 						&&((srchStr.length()==0)
 							||(I.ID().equalsIgnoreCase(srchStr)
-							||(I.Name().equalsIgnoreCase(srchStr))
+							||(I.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(I).equalsIgnoreCase(srchStr))
 							||(I.name().equalsIgnoreCase(srchStr)))))
 						{
 							if((!allFlag)||(E instanceof Ability)||((I.displayText()!=null)&&(I.displayText().length()>0)))
@@ -4010,7 +4010,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					if(E!=null)
 					{
 						if(E.ID().equalsIgnoreCase(srchStr)
-						||E.Name().equalsIgnoreCase(srchStr)
+						||E.Name().equalsIgnoreCase(srchStr)||ItemKnowledge.alias(E).equalsIgnoreCase(srchStr)
 						||E.name().equalsIgnoreCase(srchStr))
 						{
 							if((!allFlag)
@@ -4035,7 +4035,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 						if((I.container()==goodLocation)
 						&&(flags.filter.passesFilter(I))
 						&&((srchStr.length()==0)
-							||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)))
+							||(containsString(I.name(),srchStr)||containsString(I.Name(),srchStr)||containsString(ItemKnowledge.alias(I),srchStr)))
 						&&((!allFlag)||(E instanceof Ability)||((I.displayText()!=null)&&(I.displayText().length()>0))))
 						{
 							if((--myOccurrance)<=0)
@@ -4045,7 +4045,7 @@ public class EnglishParser extends StdLibrary implements EnglishParsing
 					}
 					else
 					if((E!=null)
-					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr))
+					&&(containsString(E.name(),srchStr)||containsString(E.Name(),srchStr)||containsString(ItemKnowledge.alias(E),srchStr))
 					&&((!allFlag)||(E instanceof Ability)||((E.displayText()!=null)&&(E.displayText().length()>0))))
 					{
 						if((--myOccurrance)<=0)

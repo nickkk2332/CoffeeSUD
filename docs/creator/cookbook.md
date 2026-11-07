@@ -699,3 +699,21 @@ Check: `ACHIEVEMENTS ALL` lists the visible entries (give them a common
 prefix, such as "Trials:"); a hidden entry appears once its `VISIBLEMASK` passes; each is
 earned once and kept as a tattoo, so a save keeps the book. A "book" view with a
 count of hidden entries, and personal records, are P13's extension.
+
+## 36. A familiar's sense, and a dust only it can name
+
+A familiar shares its senses with its owner while they are in the same room:
+an owl familiar gives infravision, a dog sight of what is hidden, a bat lifts
+blindness (`FIND FAMILIAR`, or a mob with `Prop_Familiar owl` that follows its
+owner). The familiar's property is copied onto the owner, so a mask can ask
+for it. Here a dust that a character recognizes only with a familiar about
+([Prop_Unknown](23-properties-reference.md#prop_unknown)):
+
+```text
+Prop_Unknown KIND=embertrial.ash NAME="a pinch of grey dust" REVEAL=EXAMINE MASK="-EFFECTS +Prop_Familiar"
+```
+
+Check: without a familiar, `EXAMINE dust` shows the unknown description and
+teaches nothing; with one, it says "You recognize a pinch of grey dust: it is
+..." and every item of that kind is known to that character from then on, saved
+with them. Test: [a23-knowledge.js](../../tools/fixtures/fixes/a23-knowledge.js).

@@ -1613,6 +1613,14 @@ Leave it blank for most items. Wands, scrolls, potions and pills generate their
 own "A wand of ..." line from their spells and put your secret identity after
 it.
 
+## Things a character must learn
+
+An item with [Prop_Unknown](23-properties-reference.md#prop_unknown) is of a
+kind a character learns once. Until then they see its unknown name, look and
+description everywhere the engine names it for them, refer to it by that name,
+and appraise it or sell it for what it seems. Identifying, appraising,
+examining or using it (as its `REVEAL` says) teaches the kind, saved with them.
+
 ## Item rejuvenation
 
 "Rejuvenation" is what brings an item back after it was removed. The **Rejuv**

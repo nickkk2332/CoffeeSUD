@@ -102,10 +102,12 @@ public class Thief_Appraise extends ThiefSkill
 	public String getAppraisal(final MOB mob, final Item target, final boolean success)
 	{
 		double realValue=0.0;
+		// A23: appraising reveals an unknown kind when its REVEAL allows; until then it is worth what it seems
+		final String learned=ItemKnowledge.reveal(mob,target,"APPRAISE");
 		if(target instanceof Coins)
 			realValue = ((Coins)target).getTotalValue();
 		else
-			realValue=target.value();
+			realValue=ItemKnowledge.value(mob,target,target.value());
 		int materialCode=target.material();
 		int weight=target.basePhyStats().weight();
 		int height=target.basePhyStats().height();
@@ -119,7 +121,7 @@ public class Thief_Appraise extends ThiefSkill
 			height=(int)Math.round(CMath.mul(height,deviance));
 			allWeight=(int)Math.round(CMath.mul(allWeight,deviance));
 		}
-		final StringBuffer str=new StringBuffer("");
+		final StringBuffer str=new StringBuffer(learned.length()>0?learned+"\n\r":"");
 		str.append(L("@x1 is made of @x2",target.name(mob),RawMaterial.CODES.NAME(materialCode)));
 		str.append(L(" and worth about @x1.",CMLib.beanCounter().nameCurrencyShort(mob,realValue)));
 		if(target instanceof Armor)
@@ -134,17 +136,19 @@ public class Thief_Appraise extends ThiefSkill
 	public String getWorth(final MOB mob, final Item target, final boolean success)
 	{
 		double realValue=0.0;
+		// A23: appraising reveals an unknown kind when its REVEAL allows; until then it is worth what it seems
+		final String learned=ItemKnowledge.reveal(mob,target,"APPRAISE");
 		if(target instanceof Coins)
 			realValue = ((Coins)target).getTotalValue();
 		else
-			realValue=target.value();
+			realValue=ItemKnowledge.value(mob,target,target.value());
 		if(!success)
 		{
 			final double deviance=CMath.div(CMLib.dice().roll(1,100,0)+50,100);
 			realValue=CMath.mul(realValue,deviance);
 		}
-		final StringBuffer str=new StringBuffer("");
-		str.append(L("@x1 is worth about @x2.",target.name(),CMLib.beanCounter().nameCurrencyShort(mob,realValue)));
+		final StringBuffer str=new StringBuffer(learned.length()>0?learned+"\n\r":"");
+		str.append(L("@x1 is worth about @x2.",target.name(mob),CMLib.beanCounter().nameCurrencyShort(mob,realValue)));
 		return str.toString();
 	}
 
