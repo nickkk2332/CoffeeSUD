@@ -114,8 +114,8 @@ try:
     check(0 <= before <= 2, 'guarantee counter saved', str(before))
 
     # a real restore: the opened coffer stays rolled, the second coffer makes policy items but no second token
-    # the restored coffer comes back closed: open it again
-    second = play('second', 'world loot preview example.coffer 1\nopen policy coffer\n#expect You open\nloot policy coffer\nopen 2.policy coffer\n#expect You open\nloot 2.policy coffer\n'
+    # the restored coffer comes back open, as it was saved, and still rolled
+    second = play('second', 'world loot preview example.coffer 1\nopen policy coffer\n#expect already open\nloot policy coffer\nopen 2.policy coffer\n#expect You open\nloot 2.policy coffer\n'
                   'save second\nquit\nn\n', 'first', 'DEV=1')
     again = loot_views(second)
     check(len(again) == 2, 'two LOOT listings after the restore', second[-2500:])

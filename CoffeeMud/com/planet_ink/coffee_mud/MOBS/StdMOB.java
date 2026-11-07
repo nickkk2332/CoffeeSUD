@@ -1385,6 +1385,11 @@ public class StdMOB implements MOB
 		location().show(this, null, CMMsg.MSG_BRINGTOLIFE, null);
 		if(!amDestroyed)
 		{
+			// a restored player is shown the room once the restore has put back what they carry and their lights
+			if(isPlayer() && com.planet_ink.coffee_mud.core.save.WorldState.isRestoredPlayer(this))
+			{
+			}
+			else
 			if(CMLib.flags().isSleeping(this))
 				tell(L("(You are asleep)"));
 			else

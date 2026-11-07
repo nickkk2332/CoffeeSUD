@@ -388,6 +388,7 @@ public final class WorldState
 		laterRides.clear();
 		laterRooms.clear();
 		laterVessels.clear();
+		laterLights.clear();
 		remadeAreas.clear();
 		remadeLasting.clear();
 		// D-SP-2: every room is in the save, so a room of the world that is not
@@ -1262,6 +1263,16 @@ public final class WorldState
 				str.append(xml.convertXMLtoTag("RESPAWNS", "true"));
 			if(com.planet_ink.coffee_mud.core.Uniques.wasRolled(I))
 				str.append(xml.convertXMLtoTag("ROLLED", "true")); // item 1
+			// a chest left open or locked, a lantern alight and how long it has left
+			if((I instanceof Container) && ((Container)I).hasADoor())
+			{
+				str.append(xml.convertXMLtoTag("OPEN", ((Container)I).isOpen()));
+				str.append(xml.convertXMLtoTag("LOCKED", ((Container)I).isLocked()));
+			}
+			if((I instanceof Light) && ((Light)I).isLit())
+				str.append(xml.convertXMLtoTag("LIT", "true"));
+			if(I instanceof com.planet_ink.coffee_mud.Items.Basic.LightSource)
+				str.append(xml.convertXMLtoTag("BURN", ((com.planet_ink.coffee_mud.Items.Basic.LightSource)I).burnLeft()));
 			str.append(effectsXML(I));
 			str.append(statesXML(I));
 			str.append("</ITEM>");
@@ -1317,6 +1328,16 @@ public final class WorldState
 			putStates(I, tag);
 			if(tag.getBoolFromPieces("ROLLED", false))
 				com.planet_ink.coffee_mud.core.Uniques.markRolled(I); // item 1
+			if((I instanceof Container) && ((Container)I).hasADoor())
+			{
+				final Container C = (Container)I;
+				C.setDoorsNLocks(C.hasADoor(), tag.getBoolFromPieces("OPEN", C.isOpen()), C.defaultsClosed(),
+								 C.hasALock(), tag.getBoolFromPieces("LOCKED", C.isLocked()), C.defaultsLocked());
+			}
+			if((I instanceof com.planet_ink.coffee_mud.Items.Basic.LightSource) && (tag.getValFromPieces("BURN", "").length() > 0))
+				((com.planet_ink.coffee_mud.Items.Basic.LightSource)I).setBurnLeft(tag.getIntFromPieces("BURN", 0));
+			if((I instanceof Light) && tag.getBoolFromPieces("LIT", false))
+				laterLights.add((Light)I); // lit once it is where it belongs, which starts its burning
 			items.add(I);
 		}
 		for(int i = 0; i < tags.size(); i++)
@@ -1582,6 +1603,8 @@ public final class WorldState
 
 	/** things restored with timed effects, put on them once the player is in */
 	private static final List<Pair<Physical, XMLTag>>	laterEffects	= new ArrayList<Pair<Physical, XMLTag>>();
+	/** lights that were alight, lit again once they are back with their owners */
+	private static final List<Light>					laterLights		= new ArrayList<Light>();
 
 	/** areas a FRESH= restore takes as they are now: by file or area name */
 	private static volatile Set<String>	freshAreas	= null;
@@ -1691,6 +1714,29 @@ public final class WorldState
 	 * @param P the thing
 	 * @param tag its tag, which may hold EFFECTS
 	 */
+	/** lights the lights that were alight when the game was saved, now that they are where they belong */
+	private static void relight()
+	{
+		final List<Light> todo = new ArrayList<Light>(laterLights);
+		laterLights.clear();
+		for(final Light L : todo)
+		{
+			if(L.amDestroyed() || L.isLit())
+				continue;
+			L.light(true);
+			L.recoverPhyStats();
+			if(L.owner() instanceof MOB)
+			{
+				((MOB)L.owner()).recoverPhyStats();
+				if(((MOB)L.owner()).location() != null)
+					((MOB)L.owner()).location().recoverRoomStats();
+			}
+			else
+			if(L.owner() instanceof Room)
+				((Room)L.owner()).recoverRoomStats();
+		}
+	}
+
 	private static void laterEffects(final Physical P, final XMLTag tag)
 	{
 		final XMLTag effects = tag.getPieceFromPieces("EFFECTS");
@@ -1721,8 +1767,37 @@ public final class WorldState
 		}
 	}
 
+	/**
+	 * Where the restored player was when the game was saved, so that the login
+	 * brings them into the game there, and shows them that room: a room the
+	 * database does not keep, in an instance or a plane, is known only to the
+	 * save.
+	 * @param mob the player logging in
+	 * @return the room, or null if this is not that player's restore or the room is gone
+	 */
+	public static Room savedRoom(final MOB mob)
+	{
+		return isRestoredPlayer(mob) ? getRoom(player.getValFromPieces("ROOM")) : null;
+	}
+
+	/**
+	 * Whether this is the player a restore is bringing back, whose room the
+	 * login does not show: what they carry, their lights and their effects
+	 * come back after the login, and then the restore shows them the room.
+	 * @param mob the character coming into the game
+	 * @return true if the restore will show them the room
+	 */
+	public static boolean isRestoredPlayer(final MOB mob)
+	{
+		final XMLTag playerTag = player;
+		return (playerTag != null)
+			&& (mob != null)
+			&& mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")));
+	}
+
 	private static void finishRestoring(final MOB mob)
 	{
+		final boolean showRoom = isRestoredPlayer(mob);
 		final XMLTag playerTag = player;
 		player = null;
 		final List<XMLTag> partyTags = party;
@@ -1770,6 +1845,7 @@ public final class WorldState
 			if(!p.first.amDestroyed())
 				putEffects(p.first, p.second, mob);
 		}
+		relight();
 		com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
 		putBackCombat();
 		for(final com.planet_ink.coffee_mud.Abilities.Common.CommonSkill activity : activityLinks)
@@ -1791,6 +1867,14 @@ public final class WorldState
 		InstanceIds.visit(resolve);
 		resolve.accept(mob);
 		if(mob.location()!=null)for(final Enumeration<MOB> e=mob.location().inhabitants();e.hasMoreElements();)resolve.accept(e.nextElement());
+		// the login left the room unshown (isRestoredPlayer): now that everything is back, show it
+		if(showRoom && (mob.location() != null))
+		{
+			if(CMLib.flags().isSleeping(mob))
+				mob.tell(CMLib.lang().L("(You are asleep)"));
+			else
+				CMLib.commands().postLook(mob, true);
+		}
 	}
 
 	/**

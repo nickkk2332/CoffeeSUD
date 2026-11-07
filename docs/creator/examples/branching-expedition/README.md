@@ -83,10 +83,11 @@ REWARDS
 EXPEDITION STATUS
 ```
 
-`REWARDS` shows `1. claimed, Spoils of the Branching Depths: 75 in coin`, and
-`EXPEDITION STATUS` says `You are not on an expedition.`: the run is complete.
-A completed run no longer holds the gated crypt open, so a save made inside it
-resumes at the trial's camp. Save before the last foe instead, and the restored
-run is still open, in the same instance with the same attempts left.
+You are back in the crypt where you saved. `REWARDS` shows `1. claimed, Spoils
+of the Branching Depths: 75 in coin`, and `EXPEDITION STATUS` says `You are not
+on an expedition.`: the run is complete, and once you leave the crypt its stair
+no longer lets you back in. Save before the last foe
+instead, and the restored run is still open, in the same instance with the same
+attempts left.
 
 Tested by [packs-integration.py](../../../../tools/packs-integration.py) (`tools/fixes.sh packs`).

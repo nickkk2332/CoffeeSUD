@@ -82,11 +82,12 @@ try:
          expected=['Your party founded The Ember Lab', 'You set out an unfinished lab mantle', 'Prepared craft #1', 'Committed craft #1',
                    'stage 1 of 2 (Cut the cloth)', 'Work piece an unfinished lab mantle: Weave a laboratory mantle, 1 of 2 stages done; next Bind the seams'])
     # restored: the piece kept its stage; the last stage makes the mantle and the fellowship's research grows
-    lab = play('lab2', 'modcraft status\nmodcraft prepare lab.mantle-work "unfinished lab mantle"\nmodcraft commit\ntracks\nledger\n'
+    lab = play('lab2', 'look in supply coffer\nmodcraft status\nmodcraft prepare lab.mantle-work "unfinished lab mantle"\nmodcraft commit\ntracks\nledger\n'
                "get charm\n#expect You get\nwear charm\n#expect charm\neast\n#expect training stones\ncompose cast embertrial.ember cinder moth\n#expect is DEAD\n"
                'tracks\nlook\nsave lab2\nquit\nn\n', 'lab1',
                expected=['1 of 2 stages done; next Bind the seams', 'Committed craft #2', 'is finished', 'Laboratory research: level 1 of 2',
                          '[x] 1. Benches set up', 'items.modifiers (craft): Committed craft #2'])
+    check('a supply coffer is closed' not in lab, 'the coffer opened before the save is still open', lab[:1500])
     # the bonded familiar: the kill called the wisp and began the bond
     check('appears at Labmaker' in lab and 'Familiar bond: level 1 of 3' in lab and '[x] 1. The wisp knows you' in lab, 'the wisp answers the kill', lab[-2500:])
 
@@ -99,11 +100,14 @@ try:
     check("You can't see anything" not in run, 'the lantern lights the crypt', run[-2500:])
     foes = re.search(r'FIXINFO the instance (.+?) holds (\d+) foes', run)
     check(foes is not None and 'Branching Depths' in foes.group(1) and int(foes.group(2)) > 0, 'the generated crypt held foes', run[-2000:])
-    # restored: the claim is kept; the completed run no longer holds the crypt open, so the save resumes at camp;
-    # the crypt's foe was the familiar bond's second kill
-    after = play('exp2', 'rewards\nexpedition status\ntracks\nquit\nn\n', 'exp1',
-                 expected=['Restored', 'The pilgrims camp', '1. claimed, Spoils of the Branching Depths: 75 in coin', 'You are not on an expedition.',
+    # restored where it was saved, in the cleared crypt, and shown that room first (not the start room); the lantern
+    # still lights it; the claim is kept; the crypt's foe was the familiar bond's second kill
+    after = play('exp2', 'look\nrewards\nexpedition status\ntracks\nquit\nn\n', 'exp1',
+                 expected=['Restored', '1. claimed, Spoils of the Branching Depths: 75 in coin', 'You are not on an expedition.',
                            'Familiar bond: level 2 of 3', 'Laboratory research: level 1 of 2'])
+    first = after.split("Restored 'exp1'.", 1)[1][:300]
+    check('Branching Depths' in first and 'A keeper shelters beside a cooling brazier' not in first and "You can't see anything" not in after,
+          'restored in the lit crypt', first)
     check('provisional' not in after and 'banked' not in after, 'nothing left unclaimed', after[-1500:])
     print('FIXTEST done packs-integration (%d checks)' % count, flush=True)
 except Exception as error:

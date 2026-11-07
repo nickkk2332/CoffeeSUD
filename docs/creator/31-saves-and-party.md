@@ -906,7 +906,7 @@ changed), and a restore lays the *campaign state* over it.
 | Areas, rooms (names, descriptions, exits, locales), room and area effects and behaviours | The profile and every character: stats, skills, items, followers, accounts, journals, clans (the state tables) |
 | Mobs and items as placed, the catalog | What is in each room now: mobs (and how hurt they are), items on the floor, with their saved state |
 | Custom races, classes, abilities, commands, quests (definitions), scripts, JavaScript, text, help, `world.ini` | Dead mobs waiting to respawn and items taken from where they belong |
-| Optional-module definitions | Open/locked doors, weather, room states, timed effects with time left |
+| Optional-module definitions | Open/locked doors, open/locked containers, lights that are lit and their burn time left, weather, room states, timed effects with time left |
 | Whatever `resources/` holds | Script variables, JavaScript `cm.store` data, quest state and variables, per-object script and behaviour state, rides, fights under way, unique items found, crafting yields |
 | | The game clock, time mode, pause, dice, difficulty, party order and settings |
 | | Rooms and areas built or changed in play (a normal game), vessels |

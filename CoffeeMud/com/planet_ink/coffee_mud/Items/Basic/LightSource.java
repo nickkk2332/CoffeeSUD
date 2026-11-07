@@ -80,6 +80,24 @@ public class LightSource extends StdItem implements Light
 		return durationTicks;
 	}
 
+	/**
+	 * The ticks of light it has left, for the save.
+	 * @return the ticks left
+	 */
+	public int burnLeft()
+	{
+		return durationTickDown;
+	}
+
+	/**
+	 * Puts back the ticks of light it had left, from the save.
+	 * @param ticks the ticks left
+	 */
+	public void setBurnLeft(final int ticks)
+	{
+		durationTickDown = ticks;
+	}
+
 	@Override
 	public boolean destroyedWhenBurnedOut()
 	{
