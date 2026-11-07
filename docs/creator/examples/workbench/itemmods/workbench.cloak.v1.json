@@ -1,0 +1,7 @@
+{
+  "schema": 1, "kind": "base", "id": "workbench.cloak", "version": 1,
+  "name": "Workbench cloak modifier contract", "item_kind": "armor",
+  "prefixes": 1, "suffixes": 1, "tags": ["cloth", "workbench"],
+  "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"],
+  "successor": "workbench.greatcloak"
+}

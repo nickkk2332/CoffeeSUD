@@ -32,7 +32,7 @@ FAIL=0
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 # a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|st6|pr5|s10|travel|presentation|language|review|remaining|modules|composition|combat|trial|itemcraft|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in st1|st6|pr5|s10|travel|presentation|language|review|remaining|modules|composition|combat|trial|itemcraft|expeditions|loot|simulate|packs|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -507,6 +507,49 @@ group_saves3()
 	python3 "$ROOT/tools/saveinspect.py" "$SAVES/s23a" >> "$W/s23-inspect.txt" 2>&1
 	expect s23-inspect.txt "Character: Saver in New Area#0"
 	expect s23-inspect.txt "hit points 7,"
+	# D-SP-1 and D-SP-2 (docs audit): a save edited by saveinspect.py is still
+	# whole (its .complete list is brought up to date), and a room added to the
+	# world after the save keeps what the world puts in it
+	play audit-save.txt wdb wworld "Auditor\n${NEWCHAR}get book\nread book\nsave auditsp\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/auditsp" --hp 7 > "$W/audit-inspect.txt" 2>&1
+	python3 "$ROOT/tools/saveinspect.py" "$SAVES/auditsp" >> "$W/audit-inspect.txt" 2>&1
+	expect audit-inspect.txt "hit points 7,"
+	cp "$W/wworld/areas/new-area.cmare" "$W/new-area.before-audit"
+	python3 -c 'import sys; p, r = sys.argv[1], open(sys.argv[2]).read(); s = open(p).read(); open(p, "w").write(s.replace(" </AROOMS>", r + " </AROOMS>", 1))' "$W/wworld/areas/new-area.cmare" "$FX/setup/audit-newroom.xml"
+	play audit-restore.txt wdb wworld 'jrun /resources/_fixes/audit-restore.js\nquit\nn\n' RESTORE=auditsp TIMEMODE=TURNS
+	expect audit-restore.txt "Restored 'auditsp'."
+	expect audit-restore.txt "1 room is new since this save and is as the world has it now: New Area#7."
+	count audit-restore.txt "is incomplete or damaged" 0
+	jsresults audit-restore.txt
+	cp "$W/new-area.before-audit" "$W/wworld/areas/new-area.cmare"
+	# D-SP-11 (docs audit): a quest running when the game is saved, which took
+	# over a mob of the world (the tutorial's gate guard, SET MOB RESELECT), is
+	# running again after the restore and has the mob, who is back in its room
+	mkdir -p "$W/qdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/qdb/"
+	cp -r "$GAME/world" "$W/qworld"
+	mkdir -p "$W/qworld/quests"
+	cp "$FX/setup/audit-brindlewick.cmare" "$W/qworld/areas/brindlewick.cmare"
+	cp "$FX/setup/audit-harls-hammer.quest" "$W/qworld/quests/harls-hammer.quest"
+	play audit-quest-play.txt qdb qworld "Questkeeper\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/audit-quest-start.js\nsave auditq\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults audit-quest-play.txt
+	play audit-quest-restore.txt qdb qworld 'jrun /resources/_fixes/audit-quest-check.js\nquit\nn\n' RESTORE=auditq TIMEMODE=TURNS
+	expect audit-quest-restore.txt "Restored 'auditq'."
+	jsresults audit-quest-restore.txt
+	# D-QU-4 and D-QU-7 (docs audit): the Quest Maker takes a template by its file
+	# name, lets a zero-or-more item list start empty, and writes the whole quest
+	# into the world's quests folder (not a LOAD= of a file in resources/)
+	mkdir -p "$W/qmdb" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/qmdb/"
+	cp -r "$GAME/world" "$W/qmworld"
+	play audit-qmaker.txt qmdb qmworld "Maker\n${NEWCHAR}create quest\nY\nstory_talk1\nfixaudit_qm\n\n\n\n\n\n\nfixgiver\n\n\n\n\n\nfixtarget\n\n\n\n\n\n\n\nY\nsave\nquit\nY\n" BUILDER=1 RANDOMSEED=42 TIMEMODE=TURNS
+	count audit-qmaker.txt "is not a quest template" 0
+	count audit-qmaker.txt "You must enter one of the following" 0
+	if grep -q "set name fixaudit_qm" "$W/qmworld/quests/fixaudit-qm.quest" 2>/dev/null && ! grep -q "^LOAD=" "$W/qmworld/quests/fixaudit-qm.quest" \
+		&& [ ! -f "$GAME/resources/quests/fixaudit_qm.quest" ]; then
+		echo "  ok    audit-qmaker: the Quest Maker's quest is whole in world/quests"
+	else
+		echo "  FAIL  audit-qmaker: the Quest Maker's quest is not whole in world/quests"; FAIL=1
+	fi
+	rm -f "$GAME/resources/quests/fixaudit_qm.quest"
 
 	# S22: a character's entry limits (InstanceArea's LIMIT) and planar
 	# visits are saved, with the time they have left
@@ -701,6 +744,16 @@ group_saves5()
 	expect s17-restore.txt "Restored 's17'."
 	jsresults s17-restore.txt
 
+	# phase 2 stage 1: formation rows kept in a save, the player's own and a follower's
+	play p2rows-play.txt ydb yworld "Rower\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/p2-rows-play.js\nsave p2rows\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults p2rows-play.txt
+	play p2rows-check.txt ydb yworld 'jrun /resources/_fixes/p2-rows-check.js\nquit\nn\n' RESTORE=p2rows TIMEMODE=TURNS
+	jsresults p2rows-check.txt
+	play p2load-play.txt ydb yworld "Packer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/p2-loadout-play.js\nsave p2load\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults p2load-play.txt
+	play p2load-check.txt ydb yworld 'jrun /resources/_fixes/p2-loadout-check.js\nquit\nn\n' RESTORE=p2load TIMEMODE=TURNS
+	jsresults p2load-check.txt
+
 	# S19 and S18: areas made in play survive a save: an instance (the
 	# crypt's), with its rooms, its dead, its timer and its group, and the
 	# player in it; and a generated dungeon (the mines'), the same after
@@ -861,6 +914,37 @@ group_itemcraft()
     jsresults itemcraft.txt
 }
 
+group_packs()
+{
+    echo "Played: Q10 worked packs: a guild laboratory, a bonded familiar and a branching expedition, built and played across restores"
+    python3 "$ROOT/tools/packs-integration.py" "$W/packs" > "$W/packs.txt" 2>&1 || FAIL=1
+    jsresults packs.txt
+}
+
+group_simulate()
+{
+    echo "Played: Q04 simulation: two builds against a fixed boss over seeds, determinism, stalls and limits"
+    python3 "$ROOT/tools/simulate-test.py" "$W/simulate" > "$W/simulate.txt" 2>&1 || FAIL=1
+    jsresults simulate.txt
+}
+
+group_loot()
+{
+    echo "Played: I02 loot policies: coffers making policy items beside a unique token, LOOT and its filter, a real restore"
+    python3 "$ROOT/tools/loot-policy-integration.py" "$W/loot" > "$W/loot.txt" 2>&1 || FAIL=1
+    jsresults loot.txt
+    echo "Played: I07 and I17 saved choices: veiled charms revealed and offered, a real restore showing the same options, each settled once"
+    python3 "$ROOT/tools/choices-integration.py" "$W/choices" > "$W/choices.txt" 2>&1 || FAIL=1
+    jsresults choices.txt
+}
+
+group_expeditions()
+{
+    echo "Played: G01 expeditions: a gated destination, a chart previewed and opened, a seeded instance, a restore, a death, the recovery path"
+    python3 "$ROOT/tools/expedition-integration.py" "$W/expeditions" > "$W/expeditions.txt" 2>&1 || FAIL=1
+    jsresults expeditions.txt
+}
+
 # the groups share nothing (each has its own world, database and saves), so
 # with no tests named they run side by side; each writes its own log, and a
 # FAIL in any fails the run
@@ -870,7 +954,7 @@ if [ $# -eq 0 ]; then
 	LIMIT=${FIXES_JOBS:-9}
 	case "$LIMIT" in ''|*[!0-9]*|0) LIMIT=9;; esac
 	PIDS=""; RUNNING=0
-	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation language review remaining modules composition combat trial itemcraft; do
+	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation language review remaining modules composition combat trial itemcraft expeditions loot simulate packs; do
 		"group_$GROUP" > "$W/group_$GROUP.log" 2>&1 &
 		PIDS="$PIDS $!"; RUNNING=$((RUNNING+1))
 		if [ "$RUNNING" -ge "$LIMIT" ]; then
@@ -879,8 +963,8 @@ if [ $# -eq 0 ]; then
 		fi
 	done
 	for PID in $PIDS; do wait "$PID"; done
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log"; then FAIL=1; fi
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log" "$W/group_expeditions.log" "$W/group_loot.log" "$W/group_simulate.log" "$W/group_packs.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log" "$W/group_expeditions.log" "$W/group_loot.log" "$W/group_simulate.log" "$W/group_packs.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!

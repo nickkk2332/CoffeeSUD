@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "id": "example.trial",
+  "version": 1,
+  "title": "The trial of three rooms",
+  "kind": "activity",
+  "on_leave": "forfeit",
+  "on_fail": "forfeit",
+  "on_death": "forfeit",
+  "on_restore": "keep"
+}

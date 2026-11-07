@@ -225,6 +225,7 @@ public class GenPoison extends Poison implements SpellHolder
 				A.makeNonUninvokable();
 				A.makeLongLasting();
 				A.setAffectedOne(affected);
+				neffects.add(A); // D-AB-1: each copy was made but never kept
 			}
 			effects = neffects;
 		}

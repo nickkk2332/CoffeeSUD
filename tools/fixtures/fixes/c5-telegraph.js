@@ -69,7 +69,7 @@ R.send(V, CMClass.getMsg(V, dragon, null, CMMsg.MSG_LOOK, null));
 check("look", has(out(), "is gathering power"), "LOOK does not show it");
 tam.basePhyStats().setDisposition(tam.basePhyStats().disposition() | CM.Common.interfaces.PhyStats.IS_HIDDEN); tam.recoverPhyStats();
 CMLib.commands().handleUnknownCommand(bo, new java.util.ArrayList(java.util.Arrays.asList(["brace"])));
-check("brace", field(P, "avoided").contains(bo), "bracing did not count");
+check("brace", field(P, "avoided").contains(CM.core.InstanceIds.reference(bo)), "bracing did not count");
 tickMob(dragon);
 check("each-tick", has(out(), "rears back") && dragon.fetchEffect("Prop_Telegraph") != null && gvar("FIXC5H_Fixc5pip") == "", "no warning on the tick, or too soon");
 tickMob(dragon);

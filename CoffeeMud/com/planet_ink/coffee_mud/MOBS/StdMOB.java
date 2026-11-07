@@ -921,8 +921,35 @@ public class StdMOB implements MOB
 	}
 
 	@SuppressWarnings("unchecked")
+	/** P03: the class last seen, to check memberships again when it changes */
+	protected String affiliationClass = null;
+	protected boolean affiliationCheck = false;
+
 	@Override
 	public void recoverCharStats()
+	{
+		recoverCharStatsOnly();
+		final CharClass cc = baseCharStats.getCurrentClass();
+		final String now = (cc == null) ? "" : cc.ID();
+		if(affiliationClass == null)
+			affiliationClass = now;
+		else
+		if(!affiliationClass.equals(now) && !affiliationCheck)
+		{
+			affiliationClass = now;
+			affiliationCheck = true;
+			try
+			{
+				Affiliations.recheck(this);
+			}
+			finally
+			{
+				affiliationCheck = false;
+			}
+		}
+	}
+
+	protected void recoverCharStatsOnly()
 	{
 		baseCharStats.setClassLevel(baseCharStats.getCurrentClass(), basePhyStats().level() - baseCharStats().combinedSubLevels());
 		baseCharStats.copyInto(charStats);
@@ -1385,6 +1412,11 @@ public class StdMOB implements MOB
 		location().show(this, null, CMMsg.MSG_BRINGTOLIFE, null);
 		if(!amDestroyed)
 		{
+			// a restored player is shown the room once the restore has put back what they carry and their lights
+			if(isPlayer() && com.planet_ink.coffee_mud.core.save.WorldState.isRestoredPlayer(this))
+			{
+			}
+			else
 			if(CMLib.flags().isSleeping(this))
 				tell(L("(You are asleep)"));
 			else
@@ -1651,9 +1683,13 @@ public class StdMOB implements MOB
 			return;
 		if(other == this)
 			return;
+		final boolean fightEnds = (victim != null) && (other == null);
 		victim = other;
 		if(other == null)
 			setRangeToTarget(-1);
+		// A20: pools that reset when a fight ends
+		if(fightEnds && NamedResources.enabled())
+			NamedResources.combatEnded(this);
 		recoverPhyStats();
 		recoverCharStats();
 		recoverMaxState();
@@ -5371,7 +5407,10 @@ public class StdMOB implements MOB
 	{
 		if(to == null)
 			return;
-		if(fetchEffect(to.ID()) != null)
+		// A14: a character can hold several reservations; any other kind of effect only once
+		if((fetchEffect(to.ID()) != null) && (!(to instanceof NamedResources.Reserver)))
+			return;
+		if(affects.contains(to))
 			return;
 		to.makeNonUninvokable();
 		to.makeLongLasting();
@@ -5398,7 +5437,7 @@ public class StdMOB implements MOB
 	{
 		if(to == null)
 			return;
-		if(fetchEffect(to.ID()) != null)
+		if(((fetchEffect(to.ID()) != null) && (!(to instanceof NamedResources.Reserver))) || affects.contains(to))
 			return;
 		affects.addElement(to);
 		to.setAffectedOne(this);
@@ -6187,6 +6226,17 @@ public class StdMOB implements MOB
 				return thisItem;
 		}
 		return null;
+	}
+
+	/**
+	 * A19: forgets which items were found wielded and held, so the next look
+	 * finds them again (after gear is changed without the wear messages).
+	 */
+	@Override
+	public void forgetWornItems()
+	{
+		possWieldedItem = null;
+		possHeldItem = null;
 	}
 
 	@Override

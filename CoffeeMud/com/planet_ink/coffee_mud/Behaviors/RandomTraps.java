@@ -94,8 +94,10 @@ public class RandomTraps extends ActiveTicker
 		String oldParms=newParms;
 		restrictedLocales=null;
 		if(x>=0)
-		{
 			oldParms=newParms.substring(0,x).trim();
+		// D-BM-5: ROOMS=, ITEMS=, EXITS= and the locale words are read with or
+		// without a ';' (they were read only when the text had one)
+		{
 			String p=CMParms.getParmStr(oldParms,"ROOMS","NO").toUpperCase().trim();
 			if(p.startsWith("Y"))
 				doRooms=true;

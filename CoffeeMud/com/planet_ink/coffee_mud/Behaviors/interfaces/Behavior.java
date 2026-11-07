@@ -92,9 +92,11 @@ public interface Behavior extends Tickable, MsgListener, Contingent, Modifiable
 	public void setParms(String parameters);
 
 	/**
-	 * Unimplemented as of yet, but will hold a string telling the system what
-	 * the proper format of any parms data.  Will use the CMParms.MTFORMAT_*
-	 * constants for definition.
+	 * Unimplemented as of yet: meant to hold a string telling the system what
+	 * the proper format of any parms data is.  The only values are
+	 * CMParms.FORMAT_UNDEFINED and CMParms.FORMAT_EMPTY (there are no
+	 * MTFORMAT_* constants); every stock class returns FORMAT_UNDEFINED, so
+	 * nothing uses it.
 	 * @see com.planet_ink.coffee_mud.core.CMParms
 	 * @see Behavior#getParms()
 	 * @see Behavior#setParms(String)

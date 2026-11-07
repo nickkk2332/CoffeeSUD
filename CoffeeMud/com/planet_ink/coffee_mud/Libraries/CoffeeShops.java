@@ -1121,6 +1121,14 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 			priceNote("Base price"+((number!=1.0)?" of one of "+priceNum(number):"")+": "+priceNum(val.absoluteGoldPrice)
 				+((stockPrice>=0)?", the shop's own price for it.":", from "+basePriceSource(product,shop)+"."));
 
+			// A23: one who does not know what they sell is paid for what it seems
+			if((sellerCustM!=null)&&(product instanceof Item)&&!ItemKnowledge.knows(sellerCustM,(Item)product))
+			{
+				final double seen=ItemKnowledge.value(sellerCustM,(Item)product,val.absoluteGoldPrice);
+				if(seen!=val.absoluteGoldPrice)
+					priceNote("You do not know what it is: it is priced as it seems, "+priceNum(seen)+".");
+				val.absoluteGoldPrice=seen;
+			}
 			if(sellerCustM==null)
 			{
 				val.absoluteGoldPrice *= number;

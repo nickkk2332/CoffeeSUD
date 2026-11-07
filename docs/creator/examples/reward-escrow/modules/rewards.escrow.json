@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "rewards.escrow",
+  "title": "Reward escrow",
+  "version": 1,
+  "handler": "rewards.escrow",
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character"],
+  "on_disable": "suspend",
+  "state": {
+    "ledger": {"type": "string", "default": "", "max_length": 4096},
+    "runs": {"type": "string", "default": "", "max_length": 4096},
+    "keys": {"type": "string", "default": "", "max_length": 4096}
+  }
+}

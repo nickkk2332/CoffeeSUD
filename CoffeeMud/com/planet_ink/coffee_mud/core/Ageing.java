@@ -28,9 +28,12 @@ import com.planet_ink.coffee_mud.core.interfaces.PhysicalAgent;
 
 /**
  * P29: ageing as data.  A GenRace's AGEEFFECTS ("MIDDLEAGED: STR-1 DEX-1
- * WIS+1; VENERABLE: ...") takes the place of the coded effects of each age;
- * AGEDISEASES ("VENERABLE:Disease_Cancer:0.01, ANCIENT:Disease_Arthritis:1")
- * the place of the coded ageing diseases, each a percent chance at each check
+ * WIS+1; VENERABLE: ...") takes the place of the coded effects of each age
+ * (it changes the character's stat itself, where the stock coded ageing
+ * changes the stats' MAX adjustments);
+ * AGEDISEASES, a global CMProps key (coffeemud.ini or world.ini, not a
+ * GenRace field: "VENERABLE:Disease_Cancer:0.01, ANCIENT:Disease_Arthritis:1"),
+ * takes the place of the coded ageing diseases, each a percent chance at each check
  * from that age on; AGE_PROG and the AGECATEGORY achievement event come on
  * each birthday and new age; STARTAGE_[NAME]="[mask]:[years]" starts a
  * character older or younger.
@@ -41,7 +44,12 @@ public class Ageing
 	{
 	}
 
-	/** the age categories' words, by Race.AGE_ constant */
+	/**
+	 * the age categories' words, by Race.AGE_ constant.  Race.AGE_DESCS, the
+	 * words shown to players, names the two middle ones differently: its
+	 * "Adult" is AGE_MATURE (MATURE here) and its "Mature" is AGE_MIDDLEAGED
+	 * (MIDDLEAGED here).  category() accepts either set of words.
+	 */
 	public static final String[] AGE_NAMES = { "INFANT", "TODDLER", "CHILD", "YOUNGADULT", "MATURE", "MIDDLEAGED", "OLD", "VENERABLE", "ANCIENT" };
 
 	/**

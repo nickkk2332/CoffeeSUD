@@ -36,8 +36,11 @@ import java.util.*;
 /**
  * The live world in a saved game.  The database holds the world as built:
  * a restored game boots that, with every mob and item where the builder put
- * it, and {@link #apply(String)} then makes the world as it was when saved.
- * Saved here:
+ * it, and {@link #apply(String)} then makes the world as it was when saved
+ * (it first starts the quests of the world that were running at the save, so
+ * that they take over their mobs and items again before the world is cleared,
+ * and it keeps rooms that the save does not have, made since, as the world has
+ * them rather than emptying them).  Saved here, as tags of world.xml:
  * <ul>
  * <li>what is in each room: its mobs, where they belong and how hurt they are,
  * with what they carry, and the items on the floor;</li>
@@ -62,7 +65,14 @@ import java.util.*;
  * <li>what the behaviours and scripts of mobs, items, rooms and areas have
  * built up while running (their STATE): which ONCE_PROGs have run, DELAY
  * countdowns, queued MPALARMs, their own variables, and each behaviour's
- * own.</li>
+ * own;</li>
+ * <li>ROOMSHAPES, the rooms' exits and sizes where they differ from the
+ * database's; COMBAT, the fights under way, joined again once the player is
+ * in; RIDES and VESSELS, who rides what and the ships and their rooms;
+ * UNIQUES, how many of each unique catalog item have appeared and when
+ * copies were lost; JSSTATE, what JavaScript has stored for the world;
+ * MENUS, the script menus; NARRATION, the narration cursor; QUESTRECORDS,
+ * the quests' records; and YIELDS, what the gathering skills have used up.</li>
  * </ul>
  * Mobs that cannot be saved, such as summoned ones, are left out unless they
  * follow the player, and things a quest is using are left to the quest.  The
@@ -75,6 +85,7 @@ public final class WorldState
 	/** the file in a save that holds the world */
 	public static final String	FILE	= "world.xml";
 
+	/** the version of this file's XML (world.xml's VERSION); unrelated to SaveGame.VERSION (the save's manifest) and SaveSlots.MODULE_FORMAT_VERSION (modules.json) */
 	private static final int	VERSION	= 1;
 
 	private WorldState()
@@ -326,6 +337,10 @@ public final class WorldState
 		final MOB leader = player.amFollowing();
 		if((leader != null) && leader.isPlayer())
 			str.append(xml.convertXMLtoTag("LEADER", xml.parseOutAngleBrackets(leader.Name())));
+		// the formation row: where they stand behind their leader, or the leader's own
+		final int row = (leader != null) ? leader.fetchFollowerOrder(player) : player.fetchFollowerOrder(player);
+		if(row >= 0)
+			str.append(xml.convertXMLtoTag("ROW", row));
 		str.append(xml.convertXMLtoTag("HP", player.curState().getHitPoints()));
 		str.append(xml.convertXMLtoTag("MANA", player.curState().getMana()));
 		str.append(xml.convertXMLtoTag("MOVE", player.curState().getMovement()));
@@ -343,7 +358,8 @@ public final class WorldState
 		final List<MOB> followers = followersOf(player);
 		for(final MOB F : followers)
 		{
-			str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\">");
+			final int fRow = (F.amFollowing() != null) ? F.amFollowing().fetchFollowerOrder(F) : -1;
+			str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\" ROW=\"").append(fRow).append("\">");
 			str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(F.location()))));
 			str.append(mobXML(F, "MOB"));
 			str.append("</FOLLOWER>");
@@ -377,8 +393,48 @@ public final class WorldState
 		laterRides.clear();
 		laterRooms.clear();
 		laterVessels.clear();
+		laterLights.clear();
 		remadeAreas.clear();
 		remadeLasting.clear();
+		// D-SP-2: every room is in the save, so a room of the world that is not
+		// was made after it; it stays as the world has it, not emptied
+		newRooms.clear();
+		final XMLTag savedRooms = world.getPieceFromPieces("ROOMS");
+		if(savedRooms != null)
+		{
+			final Set<String> savedIDs = new HashSet<String>();
+			for(final XMLTag roomTag : savedRooms.contents())
+				savedIDs.add(CMLib.xml().restoreAngleBrackets(roomTag.getValFromPieces("ID")));
+			for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+			{
+				final Room R = r.nextElement();
+				if((R == null) || R.amDestroyed() || (R.getArea() instanceof Boardable))
+					continue;
+				final String roomID = CMLib.map().getExtendedRoomID(R);
+				if((roomID.length() > 0) && (!savedIDs.contains(roomID)))
+					newRooms.add(roomID);
+			}
+			if(newRooms.size() > 0)
+			{
+				final List<String> some = new ArrayList<String>(newRooms);
+				Collections.sort(some);
+				final String list = (some.size() > 8) ? (CMParms.toListString(some.subList(0, 8).iterator()) + ", ...") : CMParms.toListString(some.iterator());
+				if(some.size() == 1)
+					SaveGame.noteWorldChange(CMLib.lang().L("1 room is new since this save and is as the world has it now: @x1.", list));
+				else
+					SaveGame.noteWorldChange(CMLib.lang().L("@x1 rooms are new since this save and are as the world has them now: @x2.", "" + some.size(), list));
+			}
+		}
+		// D-SP-11: a quest running when the game was saved had taken over mobs
+		// and items of the world as booted (SET MOB, RESELECT); the save left
+		// them out of their rooms, as it does every quest object.  So it starts
+		// again now, before the world is cleared, and takes them over again;
+		// clearWorld keeps them and setQuests matches them to the save.  One
+		// that cannot start yet (it needs what only the save brings back) is
+		// started again by setQuests, after the rooms.
+		final XMLTag savedQuests = world.getPieceFromPieces("QUESTS");
+		if(savedQuests != null)
+			startRunningQuests(savedQuests);
 		clearWorld();
 		final XMLTag shapes = world.getPieceFromPieces("ROOMSHAPES");
 		if(shapes != null)
@@ -799,7 +855,7 @@ public final class WorldState
 				final MOB M = R.fetchInhabitant(m);
 				if((M == null) || (!M.isMonster()) || followers.contains(M) || isQuestObject(M) || isSavedHere(M))
 					continue;
-				final MOB leader = M.getGroupLeader();
+				final MOB leader = Party.leaderOf(M);
 				if((leader != null) && (leader != M) && (!leader.isMonster()))
 					continue; // follows a character, so saved with them
 				final boolean scripted = M.scripts().hasMoreElements() || (M.fetchBehavior("Scriptable") != null);
@@ -866,7 +922,7 @@ public final class WorldState
 		final boolean aboard = (M.location() != null) && (M.location().getArea() instanceof Boardable);
 		if(aboard ? CMath.bset(M.basePhyStats().disposition(), PhyStats.IS_UNSAVABLE) : (!savableBesidesPlayers(M)))
 			return false;
-		final MOB leader = M.getGroupLeader();
+		final MOB leader = Party.leaderOf(M); // a character anywhere above it: saved with them
 		return (leader == null) || leader.isMonster();
 	}
 
@@ -969,7 +1025,7 @@ public final class WorldState
 			final MOB M = R.fetchInhabitant(m);
 			if((M == null) || (!M.isMonster()) || isQuestObject(M))
 				continue;
-			final MOB leader = M.getGroupLeader();
+			final MOB leader = Party.leaderOf(M);
 			if((leader == null) || leader.isMonster())
 				mobs.add(M);
 		}
@@ -1212,6 +1268,16 @@ public final class WorldState
 				str.append(xml.convertXMLtoTag("RESPAWNS", "true"));
 			if(com.planet_ink.coffee_mud.core.Uniques.wasRolled(I))
 				str.append(xml.convertXMLtoTag("ROLLED", "true")); // item 1
+			// a chest left open or locked, a lantern alight and how long it has left
+			if((I instanceof Container) && ((Container)I).hasADoor())
+			{
+				str.append(xml.convertXMLtoTag("OPEN", ((Container)I).isOpen()));
+				str.append(xml.convertXMLtoTag("LOCKED", ((Container)I).isLocked()));
+			}
+			if((I instanceof Light) && ((Light)I).isLit())
+				str.append(xml.convertXMLtoTag("LIT", "true"));
+			if(I instanceof com.planet_ink.coffee_mud.Items.Basic.LightSource)
+				str.append(xml.convertXMLtoTag("BURN", ((com.planet_ink.coffee_mud.Items.Basic.LightSource)I).burnLeft()));
 			str.append(effectsXML(I));
 			str.append(statesXML(I));
 			str.append("</ITEM>");
@@ -1267,6 +1333,16 @@ public final class WorldState
 			putStates(I, tag);
 			if(tag.getBoolFromPieces("ROLLED", false))
 				com.planet_ink.coffee_mud.core.Uniques.markRolled(I); // item 1
+			if((I instanceof Container) && ((Container)I).hasADoor())
+			{
+				final Container C = (Container)I;
+				C.setDoorsNLocks(C.hasADoor(), tag.getBoolFromPieces("OPEN", C.isOpen()), C.defaultsClosed(),
+								 C.hasALock(), tag.getBoolFromPieces("LOCKED", C.isLocked()), C.defaultsLocked());
+			}
+			if((I instanceof com.planet_ink.coffee_mud.Items.Basic.LightSource) && (tag.getValFromPieces("BURN", "").length() > 0))
+				((com.planet_ink.coffee_mud.Items.Basic.LightSource)I).setBurnLeft(tag.getIntFromPieces("BURN", 0));
+			if((I instanceof Light) && tag.getBoolFromPieces("LIT", false))
+				laterLights.add((Light)I); // lit once it is where it belongs, which starts its burning
 			items.add(I);
 		}
 		for(int i = 0; i < tags.size(); i++)
@@ -1434,13 +1510,13 @@ public final class WorldState
 	{
 		for(final MOB M : deadMobs())
 		{
-			if(!isFresh(M.getStartRoom()))
+			if((!isFresh(M.getStartRoom())) && (!isNewRoom(M.getStartRoom())))
 				M.destroy();
 		}
 		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
 		{
 			final Room R = r.nextElement();
-			if((R == null) || R.amDestroyed() || isFresh(R))
+			if((R == null) || R.amDestroyed() || isFresh(R) || isNewRoom(R))
 				continue;
 			final List<MOB> mobs = new ArrayList<MOB>();
 			for(int m = 0; m < R.numInhabitants(); m++)
@@ -1532,6 +1608,8 @@ public final class WorldState
 
 	/** things restored with timed effects, put on them once the player is in */
 	private static final List<Pair<Physical, XMLTag>>	laterEffects	= new ArrayList<Pair<Physical, XMLTag>>();
+	/** lights that were alight, lit again once they are back with their owners */
+	private static final List<Light>					laterLights		= new ArrayList<Light>();
 
 	/** areas a FRESH= restore takes as they are now: by file or area name */
 	private static volatile Set<String>	freshAreas	= null;
@@ -1559,6 +1637,20 @@ public final class WorldState
 	 * @param R the room
 	 * @return true if its contents are not put back from the save
 	 */
+	/** D-SP-2: rooms of the world that the save being restored does not have */
+	private static final Set<String> newRooms = new HashSet<String>();
+
+	/**
+	 * D-SP-2: whether a room was made after the save being restored, so that it
+	 * is kept as the world has it.
+	 * @param R the room
+	 * @return true if the save does not have it
+	 */
+	private static boolean isNewRoom(final Room R)
+	{
+		return (R != null) && (newRooms.size() > 0) && newRooms.contains(CMLib.map().getExtendedRoomID(R));
+	}
+
 	private static boolean isFresh(final Room R)
 	{
 		if(freshAll)
@@ -1627,6 +1719,29 @@ public final class WorldState
 	 * @param P the thing
 	 * @param tag its tag, which may hold EFFECTS
 	 */
+	/** lights the lights that were alight when the game was saved, now that they are where they belong */
+	private static void relight()
+	{
+		final List<Light> todo = new ArrayList<Light>(laterLights);
+		laterLights.clear();
+		for(final Light L : todo)
+		{
+			if(L.amDestroyed() || L.isLit())
+				continue;
+			L.light(true);
+			L.recoverPhyStats();
+			if(L.owner() instanceof MOB)
+			{
+				((MOB)L.owner()).recoverPhyStats();
+				if(((MOB)L.owner()).location() != null)
+					((MOB)L.owner()).location().recoverRoomStats();
+			}
+			else
+			if(L.owner() instanceof Room)
+				((Room)L.owner()).recoverRoomStats();
+		}
+	}
+
 	private static void laterEffects(final Physical P, final XMLTag tag)
 	{
 		final XMLTag effects = tag.getPieceFromPieces("EFFECTS");
@@ -1657,13 +1772,43 @@ public final class WorldState
 		}
 	}
 
+	/**
+	 * Where the restored player was when the game was saved, so that the login
+	 * brings them into the game there, and shows them that room: a room the
+	 * database does not keep, in an instance or a plane, is known only to the
+	 * save.
+	 * @param mob the player logging in
+	 * @return the room, or null if this is not that player's restore or the room is gone
+	 */
+	public static Room savedRoom(final MOB mob)
+	{
+		return isRestoredPlayer(mob) ? getRoom(player.getValFromPieces("ROOM")) : null;
+	}
+
+	/**
+	 * Whether this is the player a restore is bringing back, whose room the
+	 * login does not show: what they carry, their lights and their effects
+	 * come back after the login, and then the restore shows them the room.
+	 * @param mob the character coming into the game
+	 * @return true if the restore will show them the room
+	 */
+	public static boolean isRestoredPlayer(final MOB mob)
+	{
+		final XMLTag playerTag = player;
+		return (playerTag != null)
+			&& (mob != null)
+			&& mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")));
+	}
+
 	private static void finishRestoring(final MOB mob)
 	{
+		final boolean showRoom = isRestoredPlayer(mob);
 		final XMLTag playerTag = player;
 		player = null;
 		final List<XMLTag> partyTags = party;
 		party = null;
 		final Map<MOB, String> leaders = new HashMap<MOB, String>();
+		final Map<MOB, Integer> rows = new HashMap<MOB, Integer>();
 		if((playerTag != null)
 		&& (mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")))))
 		{
@@ -1673,6 +1818,7 @@ public final class WorldState
 				savedR.bringMobHere(mob, true);
 			putBackPlayer(mob, playerTag);
 			leaders.put(mob, CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("LEADER")));
+			rows.put(mob, Integer.valueOf(playerTag.getIntFromPieces("ROW", -1)));
 			if(partyTags != null)
 			{
 				for(final XMLTag tag : partyTags)
@@ -1682,13 +1828,22 @@ public final class WorldState
 						continue;
 					putBackPlayer(M, tag);
 					leaders.put(M, CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("LEADER")));
+					rows.put(M, Integer.valueOf(tag.getIntFromPieces("ROW", -1)));
 				}
 			}
 			for(final Map.Entry<MOB, String> e : leaders.entrySet())
 			{
 				final MOB leader = (e.getValue().length() > 0) ? CMLib.players().getPlayer(e.getValue()) : null;
+				final int row = rows.containsKey(e.getKey()) ? rows.get(e.getKey()).intValue() : -1;
 				if((leader != null) && (leader != e.getKey()) && CMLib.flags().isInTheGame(leader, true))
+				{
 					e.getKey().setFollowing(leader);
+					if(row >= 0)
+						leader.addFollower(e.getKey(), row); // back in their formation row
+				}
+				else
+				if(row >= 0)
+					e.getKey().addFollower(e.getKey(), row); // a leader's own row
 			}
 		}
 		// the characters' own vessels are back with them, so their rooms can be
@@ -1706,6 +1861,7 @@ public final class WorldState
 			if(!p.first.amDestroyed())
 				putEffects(p.first, p.second, mob);
 		}
+		relight();
 		com.planet_ink.coffee_mud.Behaviors.MovingRoom.restoreAll();
 		putBackCombat();
 		for(final com.planet_ink.coffee_mud.Abilities.Common.CommonSkill activity : activityLinks)
@@ -1727,6 +1883,14 @@ public final class WorldState
 		InstanceIds.visit(resolve);
 		resolve.accept(mob);
 		if(mob.location()!=null)for(final Enumeration<MOB> e=mob.location().inhabitants();e.hasMoreElements();)resolve.accept(e.nextElement());
+		// the login left the room unshown (isRestoredPlayer): now that everything is back, show it
+		if(showRoom && (mob.location() != null))
+		{
+			if(CMLib.flags().isSleeping(mob))
+				mob.tell(CMLib.lang().L("(You are asleep)"));
+			else
+				CMLib.commands().postLook(mob, true);
+		}
 	}
 
 	/**
@@ -1967,6 +2131,9 @@ public final class WorldState
 				final int leader = CMath.s_int(tag.getParmValue("LEADER"));
 				final MOB L = ((leader >= 0) && (leader < made.size() - 1) && (made.get(leader) != null)) ? made.get(leader) : mob;
 				F.setFollowing(L);
+				final int row = CMath.s_int(tag.getParmValue("ROW"));
+				if((tag.getParmValue("ROW") != null) && (row >= 0))
+					L.addFollower(F, row);
 			}
 		}
 	}
@@ -2429,7 +2596,7 @@ public final class WorldState
 				for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
 				{
 					final MOB M = m.nextElement();
-					final MOB leader = (M == null) ? null : M.getGroupLeader();
+					final MOB leader = (M == null) ? null : Party.leaderOf(M);
 					if((M != null) && ((!M.isMonster()) || ((leader != null) && (!leader.isMonster()))))
 						parentA.addInstanceChildMember(A, M);
 				}
@@ -2692,6 +2859,28 @@ public final class WorldState
 	 * uses, which is then made to match the save.
 	 * @param quests the QUESTS tag
 	 */
+	/**
+	 * D-SP-11: starts each quest of the world that was running when the game
+	 * was saved and is not running now, before the world is cleared.  A quest
+	 * made in play is made again later, by setQuests.
+	 * @param quests the save's QUESTS
+	 */
+	private static void startRunningQuests(final XMLTag quests)
+	{
+		final XMLLibrary xml = CMLib.xml();
+		for(final XMLTag tag : quests.contents())
+		{
+			if((!tag.getBoolFromPieces("RUNNING", false)) || "true".equalsIgnoreCase(tag.getParmValue("GENERATED")))
+				continue;
+			final Quest Q = CMLib.quests().fetchQuest(xml.restoreAngleBrackets(tag.getValFromPieces("NAME")));
+			if((Q == null) || Q.isCopy() || Q.running())
+				continue;
+			if("true".equals(Q.getStat("FINISHED")))
+				Q.setStat("FINISHED", "false");
+			Q.startQuest();
+		}
+	}
+
 	private static void setQuests(final XMLTag quests)
 	{
 		final XMLLibrary xml = CMLib.xml();

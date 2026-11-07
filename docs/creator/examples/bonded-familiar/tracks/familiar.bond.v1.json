@@ -1,0 +1,11 @@
+{
+  "schema": 1, "id": "familiar.bond", "version": 1, "title": "Familiar bond",
+  "owner": "character", "points": "bond",
+  "earn": [{"on": "kill", "amount": 1}],
+  "curve": {"type": "linear", "per_level": 1, "cap": 3},
+  "milestones": [
+    {"level": 1, "title": "The wisp knows you", "stats": {"schema": 1, "resistance": {"fire": 5}}, "message": "The wisp's warmth settles on you."},
+    {"level": 3, "title": "Bonded", "unlock": "bonded-wisp"}
+  ],
+  "reset": "command"
+}

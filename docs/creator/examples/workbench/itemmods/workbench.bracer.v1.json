@@ -1,0 +1,8 @@
+{
+  "schema": 1, "kind": "base", "id": "workbench.bracer", "version": 1,
+  "name": "Workbench bracer modifier contract", "item_kind": "armor",
+  "prefixes": 1, "suffixes": 1, "tags": ["metal", "workbench"],
+  "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"],
+  "quality": {"max": 3, "tags": ["defense"], "percent": 10},
+  "traits": {"conductivity": {"stat": "penetration.electric", "per": 2}}
+}

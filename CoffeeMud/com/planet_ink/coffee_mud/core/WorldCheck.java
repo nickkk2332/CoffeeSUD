@@ -1,6 +1,7 @@
 package com.planet_ink.coffee_mud.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -60,7 +61,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT", "ITEMMODS" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT", "ITEMMODS", "REFS" };
 
 	/** one thing found */
 	public static final class Finding
@@ -325,6 +326,24 @@ public final class WorldCheck
 			for(final String p : e.getValue())
 				out.add(new Finding(Severity.ERROR, "DATA", e.getKey() + ": " + p));
 		}
+		// A05: perks.ini's trees, links and keys
+		for(final String p : Perks.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", "perks.ini: " + p));
+		// P15: talents.ini's lore and abilities
+		for(final String p : Talents.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P13: challenges.ini's books and entries
+		for(final String p : Challenges.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P06: formations.ini's roles
+		for(final String p : FormationRoles.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P11: cultures.ini's abilities, and origins' cultures
+		for(final String p : Cultures.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P08: orgpools.ini's kinds of pool
+		for(final String p : OrgPools.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
 	}
 
 	/**
@@ -333,11 +352,50 @@ public final class WorldCheck
 	 * @param parts the parts to run (PARTS), or null for all
 	 * @return what was found, errors first
 	 */
+	/**
+	 * The parts WORLD CHECK ONLY= takes: {@link #PARTS} and the later module
+	 * families' parts.
+	 * @return the parts
+	 */
+	public static List<String> parts()
+	{
+		final List<String> out = new ArrayList<String>(Arrays.asList(PARTS));
+		for(final ModuleContent.Family f : ModuleContent.families())
+		{
+			if(!out.contains(f.part()))
+				out.add(f.part());
+		}
+		return out;
+	}
+
 	public static List<Finding> run(final Area only, final Set<String> parts)
 	{
 		final List<Finding> out = new ArrayList<Finding>();
 		final List<Room> rooms = roomsOf(only);
 		final boolean all = (parts == null) || parts.isEmpty();
+		// the later module families: their problems stop a world that selects them, and warn in one that does not
+		final Set<String> selected = new HashSet<String>(OptionalModules.configuredPlan().enabled);
+		for(final ModuleContent.Family f : ModuleContent.families())
+		{
+			if(all || parts.contains(f.part()))
+			{
+				final Severity level = selected.contains(f.module()) ? Severity.ERROR : Severity.WARNING;
+				for(final String problem : f.check())
+					out.add(new Finding(level, f.part(), problem));
+			}
+		}
+		if(all || parts.contains("REFS"))
+		{
+			// Q02: the references between families, each where it is written; a broken one stops a world that selects its family
+			for(final CrossRefs.Ref r : CrossRefs.resolve())
+			{
+				if(r.status.equals("ok"))
+					continue;
+				final String module = CrossRefs.moduleOf(r.file);
+				final Severity level = (r.status.equals("error") && (module == null || selected.contains(module))) ? Severity.ERROR : Severity.WARNING;
+				out.add(new Finding(level, "REFS", (r.status.equals("unknown") ? "unknown: " : "") + r.where() + ": " + r.note));
+			}
+		}
 		if(all || parts.contains("ITEMMODS"))
 		{
 			// a world that never opts in keeps its legacy affixes.xml as it was: warnings at most
@@ -353,6 +411,7 @@ public final class WorldCheck
 			final String selection = CombatProfiles.selectionProblem(profiles);
 			if(!selection.isEmpty()) out.add(new Finding(Severity.ERROR, "COMBAT", selection));
 			for(final String error : CombatProfiles.checkProperties(rooms)) out.add(new Finding(Severity.ERROR, "COMBAT", error));
+			for(final String warning : CombatProfiles.checkAilments(profiles)) out.add(new Finding(Severity.WARNING, "COMBAT", warning));
 		}
 		if(all || parts.contains("COMPOSITIONS"))
 			for(final String error : AbilityComposition.check().errors)

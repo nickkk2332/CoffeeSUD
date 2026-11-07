@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "expeditions.contracts",
+  "title": "Expedition contracts",
+  "version": 1,
+  "handler": "expeditions.contracts",
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["world"],
+  "on_disable": "suspend",
+  "state": {
+    "runs": {"type": "string", "default": "", "max_length": 4096}
+  }
+}

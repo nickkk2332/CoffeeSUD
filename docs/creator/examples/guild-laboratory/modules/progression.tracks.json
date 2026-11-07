@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "progression.tracks",
+  "title": "Progression tracks",
+  "version": 1,
+  "handler": "progression.tracks",
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character", "organization", "item"],
+  "on_disable": "suspend",
+  "state": {
+    "tracks": {"type": "string", "default": "", "max_length": 4096}
+  }
+}

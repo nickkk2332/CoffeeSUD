@@ -29,14 +29,15 @@ import java.util.*;
  * N20: an NPC escorted to a place.  Its leader is the one it follows when
  * the escort begins (a quest's MPFORCE $i follow $n, say).  DEST=room id,
  * MODE=FOLLOW (it follows its leader, the default) or LEAD (it walks the
- * way itself, a step a tick, and the party follows it); WAITFOR=LEADER:
+ * way itself, a step a tick, and the head of its leader's party follows
+ * it, the party with them, until it arrives); WAITFOR=LEADER:
  * while its leader is not with it, it does not go on, and after WAITCALL=n
  * ticks (3) it calls WAITMSG ("Wait for me!"); PANIC=FLEE|HIDE|COWER when
- * attacked; AVOID=room id,room id: it will not go into those;
+ * attacked (another word is reported by STAT BEHAVIORS and ignored); AVOID=room id,room id: it will not go into those;
  * TALK=room:line (and TALK1= to TALK9=) a remark on coming there;
  * ONARRIVE=, ONDEATH= and, with TIMEOUT=n ticks, ONTIMEOUT=: MOBPROG
  * lines run with its leader as $n (say Thank you!;mpsetvar $n ESCORTED 1).
- * Its leader, arrival and time are kept in a saved game.
+ * Its leader, arrival, time and lead are kept in a saved game.
  */
 public class Escortee extends StdBehavior
 {
@@ -70,6 +71,8 @@ public class Escortee extends StdBehavior
 	protected int					waitCall	= 3;
 	protected String				waitMsg		= "Wait for me!";
 	protected String				panic		= "";
+	/** the PANIC word, when it is none of FLEE, HIDE and COWER */
+	protected String				badPanic	= null;
 	protected final List<String>	avoid		= new ArrayList<String>();
 	protected final List<String[]>	talk		= new ArrayList<String[]>();
 	protected String				onArrive	= "";
@@ -86,6 +89,8 @@ public class Escortee extends StdBehavior
 	protected boolean				called		= false;
 	protected Room					lastRoom	= null;
 	protected final Set<String>		remarked	= new HashSet<String>();
+	/** with MODE=LEAD: whether it has taken the lead, and its party followed */
+	protected boolean				led			= false;
 	/** the panic message on its way, after an attack */
 	protected String				panicking	= null;
 
@@ -103,6 +108,13 @@ public class Escortee extends StdBehavior
 		waitCall = CMParms.getParmInt(p, "WAITCALL", 3);
 		waitMsg = P.containsKey("WAITMSG") ? P.get("WAITMSG") : "Wait for me!";
 		panic = P.containsKey("PANIC") ? P.get("PANIC").trim().toUpperCase() : "";
+		badPanic = null;
+		if((panic.length() > 0) && (!panic.equals("FLEE")) && (!panic.equals("HIDE")) && (!panic.equals("COWER")))
+		{
+			badPanic = panic;
+			panic = "";
+			Log.warnOut("Escortee", "PANIC=" + badPanic + " is not FLEE, HIDE or COWER, and is ignored.");
+		}
 		avoid.clear();
 		if(P.containsKey("AVOID"))
 			avoid.addAll(CMParms.parseCommas(P.get("AVOID"), true));
@@ -176,6 +188,50 @@ public class Escortee extends StdBehavior
 		return leader;
 	}
 
+	/**
+	 * MODE=LEAD: it stops following its leader, and the head of their party
+	 * (the player's character who leads it) follows it instead, so that the
+	 * party comes along as it walks.  Once only: one who then stops
+	 * following it is not made to again.
+	 * @param mob the escortee
+	 * @param L its leader
+	 */
+	protected void takeLead(final MOB mob, final MOB L)
+	{
+		if(mob.amFollowing() != null)
+			mob.setFollowing(null);
+		if(led)
+			return;
+		final MOB head = Party.leaderOf(L);
+		if((head == null) || (head == mob) || (head.location() != mob.location()))
+			return; // when they are together
+		led = true;
+		if(head.amFollowing() == null)
+			CMLib.commands().postFollow(head, mob, false);
+	}
+
+	/**
+	 * The escort is over: the player's characters who follow it stop.
+	 * @param mob the escortee
+	 */
+	protected void release(final MOB mob)
+	{
+		final List<MOB> them = new ArrayList<MOB>();
+		for(int f = 0; f < mob.numFollowers(); f++)
+		{
+			final MOB F = mob.fetchFollower(f);
+			if((F != null) && (F.amFollowing() == mob) && F.isPlayer())
+				them.add(F);
+		}
+		for(final MOB F : them)
+		{
+			if(F.location() == mob.location())
+				CMLib.commands().postFollow(F, null, false);
+			if(F.amFollowing() == mob)
+				F.setFollowing(null);
+		}
+	}
+
 	@Override
 	public boolean tick(final Tickable ticking, final int tickID)
 	{
@@ -190,8 +246,8 @@ public class Escortee extends StdBehavior
 		final MOB L = leaderOf(mob);
 		if(L == null)
 			return true; // not escorted yet
-		if(lead && (mob.amFollowing() != null))
-			mob.setFollowing(null); // it leads: the party follows it
+		if(lead)
+			takeLead(mob, L);
 		ticks++;
 		// a remark on coming somewhere
 		if(here != lastRoom)
@@ -209,12 +265,14 @@ public class Escortee extends StdBehavior
 			if(mob.amFollowing() != null)
 				mob.setFollowing(null);
 			act(mob, onArrive);
+			release(mob);
 			return true;
 		}
 		if((timeout > 0) && (ticks >= timeout))
 		{
 			done = true;
 			act(mob, onTimeout);
+			release(mob);
 			return true;
 		}
 		final boolean withLeader = (L.location() == here);
@@ -284,6 +342,7 @@ public class Escortee extends StdBehavior
 				done = true;
 				leaderOf(mob);
 				act(mob, onDeath);
+				release(mob);
 			}
 			return;
 		}
@@ -323,6 +382,8 @@ public class Escortee extends StdBehavior
 		str.append(" LEADER=\"").append(CMLib.xml().parseOutAngleBrackets(leaderName)).append("\"");
 		str.append(" DONE=\"").append(done).append("\"");
 		str.append(" TICKS=\"").append(ticks).append("\"");
+		if(led)
+			str.append(" LED=\"true\"");
 		str.append(" SAID=\"").append(CMLib.xml().parseOutAngleBrackets(CMParms.toListString(remarked))).append("\"");
 		return str.append(" />").toString();
 	}
@@ -340,6 +401,7 @@ public class Escortee extends StdBehavior
 		leader = null;
 		done = CMath.s_bool(tag.getParmValue("DONE"));
 		ticks = CMath.s_int(tag.getParmValue("TICKS"));
+		led = CMath.s_bool(tag.getParmValue("LED"));
 		remarked.clear();
 		for(final String s : CMParms.parseCommas(CMLib.xml().restoreAngleBrackets(tag.getParmValue("SAID")), true))
 			remarked.add(s.toUpperCase());
@@ -348,6 +410,8 @@ public class Escortee extends StdBehavior
 	@Override
 	protected String debugState()
 	{
-		return super.debugState() + "; " + (done ? "done" : ("to " + dest + ((leaderName.length() > 0) ? (" with " + leaderName) : ", not yet escorted") + ", " + ticks + " ticks"));
+		return super.debugState() + "; " + (done ? "done" : ("to " + dest + ((leaderName.length() > 0) ? (" with " + leaderName) : ", not yet escorted") + ", " + ticks + " ticks"
+			+ (led ? ", leading" : "")))
+			+ ((badPanic != null) ? ("; PANIC=" + badPanic + " is not FLEE, HIDE or COWER, and is ignored") : "");
 	}
 }

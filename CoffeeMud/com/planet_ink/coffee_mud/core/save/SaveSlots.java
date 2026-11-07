@@ -35,11 +35,26 @@ import java.util.*;
  * <pre>
  * SAVEDIR/
  *   NAME/              one saved game
- *     header.properties  who, where, when, the game clock and the dice
+ *     header.properties  who, where, when, the game clock and the dice, and
+ *                        "version" (see SaveGame.VERSION, MODULE_FORMAT_VERSION)
  *     db/                the saved tables, as fake database files
- *     ...                other files the save writes, such as the world
+ *     world.xml          the live world (WorldState)
+ *     world-manifest.properties
+ *                        the world files' checksums the game had loaded
+ *     modules.json       the optional modules' state, if any are on
+ *     .complete          written last: each file's digest; a folder whose
+ *                        files do not match it is not a complete save
  *   .play-TIME/        the working database of a running game
+ *   .new-NAME/         a save being written; .old-NAME/ the one it replaces
+ *                      until the swap is done (recover() repairs an
+ *                      interrupted swap when the folder is next opened)
+ *   .damaged-NAME-TIME/ a save found incomplete, put aside
+ *   .owner.lock        held while a game owns the whole SAVEDIR
  * </pre>
+ * Three unrelated numbers are called versions: SaveGame.VERSION (1) is the
+ * save's header format, MODULE_FORMAT_VERSION (2) is the header version of a
+ * save that carries module state (older readers refuse it), and
+ * WorldState.VERSION (1) is the world.xml's own format.
  */
 public final class SaveSlots
 {
@@ -53,7 +68,12 @@ public final class SaveSlots
 	/** the file in a slot that describes it */
 	public static final String HEADER_FILE = "header.properties";
 
-	/** Saves carrying module state require a reader that understands its lifecycle. */
+	/**
+	 * The header "version" of a save that carries module state (modules.json);
+	 * saves without modules stay at SaveGame.VERSION (1).  Saves carrying module
+	 * state require a reader that understands its lifecycle.  Not the same
+	 * number as SaveGame.VERSION or WorldState.VERSION.
+	 */
 	public static final int MODULE_FORMAT_VERSION = 2;
 
 	private static final String DB_DIR = "db";

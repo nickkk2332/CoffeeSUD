@@ -1,0 +1,13 @@
+<AREADATA>
+ <ITEM ID="choices_veiled" CLASS="GenArmor" LEVEL="1" NAME="a seer's charm"
+       DISPLAY="A seer's charm lies here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+       PROPERWORN="neck" MODBASE="POLICY=choices.veiled" />
+ <ITEM ID="choices_supply" SELECT="all">
+  <ITEM ID="choices_veiled1" CLASS="GenArmor" LEVEL="1" NAME="a seer's charm"
+        DISPLAY="A seer's charm lies here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+        PROPERWORN="neck" MODBASE="POLICY=choices.veiled" />
+  <ITEM ID="choices_veiled2" CLASS="GenArmor" LEVEL="1" NAME="a seer's charm"
+        DISPLAY="A seer's charm lies here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+        PROPERWORN="neck" MODBASE="POLICY=choices.veiled" />
+ </ITEM>
+</AREADATA>

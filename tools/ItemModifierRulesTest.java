@@ -114,6 +114,48 @@ public final class ItemModifierRulesTest
             }
             ok(values.size()==11&&values.iterator().next()==10&&((TreeSet<Integer>)values).last()==20&&untouched,"400 rerolls with the production roller cover exactly 10..20 and leave the unselected source byte-equivalent "+values);
         });
+        // I06: targeted draws. Affixes of several tags, a distribution from the operation and catalysts, and a guaranteed family.
+        final Definition fire=new Definition(obj(ModuleDefinitions.json(affix("test.fire","fire","prefix",1)).replace("[\"defense\"]","[\"offense\",\"elemental\"]")));
+        final Definition guard=new Definition(obj(ModuleDefinitions.json(affix("test.guard","guard","prefix",1)).replace("[\"defense\"]","[\"defense\"]")));
+        final Definition edge=new Definition(obj(ModuleDefinitions.json(affix("test.edge","edge","suffix",1)).replace("[\"defense\"]","[\"offense\"]")));
+        final List<Definition> pool=Arrays.asList(fire,guard,edge);
+        final JSONObject blank=ItemModifierRules.record(b,"@instance:"+UID,"a mantle","a mantle lies here.","test");
+        final Bias coal=Bias.of(obj("{\"weights\":{\"offense\":4}}"),"coal"),flux=Bias.of(obj("{\"weights\":{\"offense\":2,\"elemental\":3}}"),"flux");
+        final Bias both=coal.plus(flux);
+        ok(both.multiplier(fire)==24&&both.multiplier(edge)==8&&both.multiplier(guard)==1,"multipliers for an affix's tags multiply together, from every source");
+        final Bias amber=Bias.of(obj("{\"guarantee\":\"defense\"}"),"amber"),pearl=Bias.of(obj("{\"guarantee\":\"offense\"}"),"pearl");
+        refuses("two different guarantees cannot both hold",()->amber.plus(pearl));
+        ok(amber.plus(Bias.of(obj("{\"guarantee\":\"defense\"}"),"amber2")).guarantee.equals("defense"),"the same guarantee twice is one guarantee");
+        refuses("a guaranteed family cannot be excluded",()->amber.plus(Bias.of(obj("{\"exclude_tags\":[\"defense\"]}"),"ash")));
+        refuses("a multiplier of zero is refused (exclude_tags leaves a tag out)",()->Bias.of(obj("{\"weights\":{\"offense\":0}}"),"x"));
+        final List<Odds> plain=ItemModifierRules.odds(blank,pool,Bias.NONE,true,ItemModifierRules.OPEN,0,1);
+        ok(ItemModifierRules.total(plain)==30&&plain.get(0).weight==10,"with no distribution an affix's weight is its own");
+        final List<Odds> ashed=ItemModifierRules.odds(blank,pool,Bias.of(obj("{\"exclude_tags\":[\"offense\"]}"),"ash"),true,ItemModifierRules.OPEN,0,1);
+        ok(ItemModifierRules.total(ashed)==10&&ashed.get(0).why.equals("tag offense is excluded by ash"),"an excluded tag leaves its affixes out, saying which source excluded it");
+        final double[] units={0.0,0.3,0.6,0.99};final int[] at={0};
+        boolean always=true;
+        for(int i=0;i<40;i++)
+        {
+            final List<JSONObject> got=ItemModifierRules.draw(blank,pool,amber.plus(coal),1,2,ItemModifierRules.OPEN,()->units[(at[0]++)%units.length],(lo,hi)->lo,()->UUID.randomUUID().toString());
+            always&=got.size()==2&&((Object[])((JSONObject)got.get(0)).get("tags"))[0].equals("defense");
+        }
+        ok(always,"the first modifier drawn is always of the guaranteed family, and later picks are drawn as usual");
+        final JSONObject guarded=ModuleDefinitions.copy(blank);guarded.put("modifiers",new Object[]{ItemModifierRules.rolled(guard,UID,low)});
+        refuses("a guarantee no affix can meet refuses the draw before anything is drawn",()->ItemModifierRules.draw(guarded,pool,amber,1,1,ItemModifierRules.OPEN,()->0.5,(lo,hi)->{throw new IllegalStateException("drew");},()->UID2));
+        refuses("only drawing operations take a distribution",()->new Definition(obj(ModuleDefinitions.json(op("protect")).replace("\"affixes\":[]","\"affixes\":[],\"weights\":{\"offense\":2}"))));
+        ok(new Definition(obj(ModuleDefinitions.json(op("imbue")).replace("\"affixes\":[]","\"affixes\":[],\"weights\":{\"offense\":2}"))).string("action").equals("imbue"),"an imbue operation takes weights");
+        refuses("a catalyst shapes the draw somehow",()->new Definition(obj("{\"schema\":1,\"kind\":\"catalyst\",\"id\":\"test.dud\",\"version\":1,\"name\":\"Dud\",\"material\":\"COAL\",\"units\":1}")));
+        // I09: a base's consumers. Quality raises only the modifiers of its tags, rounded half away from zero; a trait counts only where read.
+        final Definition bracer=new Definition(obj("{\"schema\":1,\"kind\":\"base\",\"id\":\"test.bracer\",\"version\":1,\"name\":\"Bracer\",\"item_kind\":\"armor\",\"prefixes\":1,\"suffixes\":1,\"tags\":[\"metal\"],\"pool\":[\"test.ward\"],"
+            +"\"quality\":{\"max\":3,\"tags\":[\"defense\"],\"percent\":10},\"traits\":{\"conductivity\":{\"stat\":\"penetration.electric\",\"per\":2}}}"));
+        final JSONObject warded=ItemModifierRules.rolled(ward,UID,(lo,hi)->15),edged=ItemModifierRules.rolled(edge,UID2,(lo,hi)->15);
+        ok(((Number)ItemModifierRules.counted(bracer,warded,1).get("resistance.fire")).intValue()==17&&((Number)ItemModifierRules.counted(bracer,warded,3).get("resistance.fire")).intValue()==20
+            &&((Number)ItemModifierRules.counted(bracer,edged,3).get("resistance.fire")).intValue()==15,"quality raises its tags' modifiers only (15 at +10% is 17, half away from zero)");
+        final Definition bronze=new Definition(obj("{\"schema\":1,\"kind\":\"material\",\"id\":\"test.bronze\",\"version\":1,\"name\":\"Bronze\",\"material\":\"BRONZE\",\"traits\":{\"conductivity\":3,\"density\":2}}"));
+        ok(ModuleDefinitions.json(ItemModifierRules.traitStats(bracer,bronze)).equals("{\"penetration.electric\":6}")&&ItemModifierRules.traitStats(b,bronze).isEmpty(),"a trait gives per times its value where a base reads it, nothing elsewhere");
+        ok(String.join("|",ItemModifierRules.explain(blank,bracer,bronze,"BRONZE")).contains("density 2: nothing on this item reads it"),"a trait nothing reads is said to do nothing");
+        refuses("a trait consumer of zero is refused",()->new Definition(obj(ModuleDefinitions.json(bracer.raw).replace("\"per\":2","\"per\":0"))));
+        refuses("a trait consumer's stat must be a combat stat",()->new Definition(obj(ModuleDefinitions.json(bracer.raw).replace("penetration.electric","luck"))));
         Files.write(dir.resolve("bad.v1.json"),"{}".getBytes("UTF-8"));ok(!ItemModifierRules.load(root.toFile(),affixes).errors.isEmpty(),"invalid files make a library unpublishable");Files.delete(dir.resolve("bad.v1.json"));
         Files.createSymbolicLink(dir.resolve("linked.v1.json"),dir.resolve("test.mantle.v1.json"));ok(!ItemModifierRules.load(root.toFile(),affixes).errors.isEmpty(),"linked definitions rejected");Files.delete(dir.resolve("linked.v1.json"));
         try(java.util.stream.Stream<Path> paths=Files.walk(root)){paths.sorted(Comparator.reverseOrder()).forEach(p->{try{Files.delete(p);}catch(IOException e){throw new RuntimeException(e);}});}

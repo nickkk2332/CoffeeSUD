@@ -39,7 +39,7 @@ goto :advice
 :nojavac
 echo Could not find javac, the Java compiler.
 :advice
-echo Install a JDK, version 8 or later, then set JAVA_HOME to its folder,
+echo Install a JDK, version 9 or later (the README's minimum), then set JAVA_HOME to its folder,
 echo for example:  setx JAVA_HOME "C:\Program Files\Java\jdk-21"
 echo and open a new command window.
 exit /b 1

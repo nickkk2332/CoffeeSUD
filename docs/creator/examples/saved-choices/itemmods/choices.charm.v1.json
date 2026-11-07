@@ -1,0 +1,7 @@
+{
+  "schema": 1, "kind": "base", "id": "choices.charm", "version": 1,
+  "name": "Seer's charm modifier contract", "item_kind": "armor",
+  "prefixes": 2, "suffixes": 1, "tags": ["charm"],
+  "pool": ["embertrial.fireguard1", "embertrial.frostguard", "embertrial.stormguard", "embertrial.ironhide",
+           "embertrial.piercing", "embertrial.keen"]
+}

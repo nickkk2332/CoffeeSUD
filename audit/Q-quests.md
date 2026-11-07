@@ -136,6 +136,8 @@ Quest scripts, quest state and outcomes, branching, rewards, offers, the quest l
 
 *Kind:* quest fix and documentation · *Value:* medium · *Effort:* small · *Decision:* yes
 
+**Status (docs audit, 2026-11):** QUIET and OPTIONAL are prefix words or switches in a quest script (`DefaultQuest.java` ~1447-1490); there is no `SET QUIET ON/OFF`.
+
 **Today.** In DefaultQuest, `SET QUIET ON/OFF` sets the quiet flag from the OPTIONAL state (`q.beQuiet=optional`, line 1131). Some features are found only in the code: MPSTEPQUEST's +N/=N forms, MPQUESTWIN -name (removes a win), TIME_REMAINING_TYPE, QUEST_TIME_PROG -1/-2, and MPRUN and JCONSOLE as test tools. MPSTEPQUEST is missing from AHELP's command list and Scriptable.html. The rest is scattered over Scriptable.html, ArchonGuide.html and GameBuildersGuide.html, which still describes MUDGrinder and online-player rules.
 
 **Add.** The QUIET fix. A CoffeeSUD quest page, AHELP QUESTSCRIPT and a guide section, that walks one single-player story quest from offer to reward, gathers these features and the new ones, and drops the MUDGrinder and online-player text.

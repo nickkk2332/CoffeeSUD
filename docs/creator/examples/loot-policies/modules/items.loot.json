@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "items.loot",
+  "title": "Loot policies",
+  "version": 1,
+  "handler": "items.loot",
+  "requires": {"items.modifiers": 1},
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["world", "character"],
+  "on_disable": "suspend",
+  "state": {
+    "guarantees": {"type": "string", "default": "", "max_length": 4096},
+    "filter": {"type": "string", "default": "", "max_length": 4096}
+  }
+}

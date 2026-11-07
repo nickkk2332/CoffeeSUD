@@ -42,6 +42,9 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  * ONCE_PROG, lines between semicolons, or LOAD=file).  When there are origins,
  * character creation asks for one after the class; the choice is kept as the
  * tattoo ORIGIN_[ID], and the origin is given where the start room is set.
+ * CULTURE names a culture (world/cultures.ini) the character is of from the
+ * start: adopted by the same rules as later (core/Cultures), so it can be
+ * left again.
  */
 public class Origins
 {
@@ -351,6 +354,18 @@ public class Origins
 		final double money = CMath.s_double(O.get("MONEY"));
 		if(money > 0)
 			CMLib.beanCounter().giveSomeoneMoney(mob, money);
+		final String culture = O.get("CULTURE");
+		if(culture.length() > 0)
+		{
+			try
+			{
+				Cultures.adopt(mob, culture, "origin");
+			}
+			catch(final java.io.IOException e)
+			{
+				Log.errOut("Origins", where + "CULTURE: " + e.getMessage());
+			}
+		}
 		final String script = O.get("SCRIPT");
 		if(script.length() > 0)
 			runScript(mob, script);

@@ -40,8 +40,8 @@ import java.util.*;
  * GOLD= money (math) as well.  ON=DEATH (a mob: into its corpse as it
  * dies), OPEN (a container: the first time it is opened), SPAWN or RESET (as
  * the host comes into the world: a mob as it is brought to life, a
- * container as a player first comes into its room; again after its room
- * resets, which brings it back new).  A container rolls once until its
+ * container as a player first comes into its room; RESET is the same as
+ * SPAWN, and does not roll again after its room resets).  A container rolls once until its
  * contents reset: ROLLED=TRUE in this property's text (getStat ROLLED),
  * which a save keeps; DEVPLAN item 1's container rule is to share it.
  * Catalog entries (class="catalog") keep the catalog's cap.  A roll that

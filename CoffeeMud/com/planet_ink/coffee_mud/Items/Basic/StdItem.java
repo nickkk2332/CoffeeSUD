@@ -134,13 +134,14 @@ public class StdItem implements Item
 	@Override
 	public String displayText(final MOB viewerMob)
 	{
-		return StoryText.render(viewerMob,this,displayText());
+		// A23: one who does not know its kind sees its unknown look
+		return StoryText.render(viewerMob,this,ItemKnowledge.display(viewerMob,this,displayText()));
 	}
 
 	@Override
 	public String name(final MOB viewerMob)
 	{
-		return name();
+		return ItemKnowledge.name(viewerMob,this,name()); // A23: and its unknown name
 	}
 
 	@Override
@@ -905,7 +906,7 @@ public class StdItem implements Item
 	@Override
 	public String description(final MOB viewerMob)
 	{
-		return StoryText.render(viewerMob,this,description());
+		return StoryText.render(viewerMob,this,ItemKnowledge.description(viewerMob,this,description())); // A23
 	}
 
 	@Override

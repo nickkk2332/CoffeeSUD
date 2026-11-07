@@ -508,6 +508,13 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 		&&(isRoom((Room)msg.target()))
 		&&(((msg.source().getStartRoom()==null)||(msg.source().getStartRoom().getArea()!=this))))
 		{
+			// G01: a gated expedition destination opens only for a group with a run for it
+			final String gated = Expeditions.gate(msg.source(), this);
+			if(gated.length() > 0)
+			{
+				msg.source().tell(gated);
+				return false;
+			}
 			final Set<MOB> grp = msg.source().getGroupMembers(new HashSet<MOB>());
 			if(msg.source().isMonster())
 			{
@@ -519,6 +526,14 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 					msg.source().tell(L("You'll need to be accompanied by an adult to enter there."));
 					return false;
 				}
+			}
+			// G01: a member of an expedition run rejoins the run's instance, across deaths and restores
+			final String rejoin = Expeditions.existing(msg.source(), this);
+			if(rejoin != null)
+			{
+				final Area child = CMLib.map().getArea(rejoin);
+				if(child != null)
+					addInstanceChildMember(child, msg.source());
 			}
 			final List<AreaInstanceChild> childSearchGroup;
 			synchronized(instanceChildren)
@@ -678,6 +693,7 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 						definedIDs.put(key.toUpperCase(),val);
 					}
 				}
+				Expeditions.variables(msg.source(), this, definedIDs); // G01: the run's seed and variables over the area's own
 				final int levelBase = msg.source().basePhyStats().level(); // use highestLevel?
 				definedIDs.put("AREANAME", Name());
 				if(!definedIDs.containsKey("AREASIZE"))
@@ -785,6 +801,7 @@ public class StdAutoGenInstance extends StdArea implements AutoGenArea
 				CMLib.map().addArea(newA);
 				newA.parentArea = new WeakReference<Area>(this);
 				newA.setAreaState(Area.State.ACTIVE); // starts ticking
+				Expeditions.made(msg.source(), this, newA); // G01: the instance is the run's, with its modifiers
 				final List<WeakReference<MOB>> newMobList = new SVector<WeakReference<MOB>>(5);
 				newMobList.add(new WeakReference<MOB>(msg.source()));
 				final AreaInstanceChild child = new AreaInstanceChild(redirectA,newMobList);

@@ -65,6 +65,15 @@ public class Prop_Invokable extends Property implements VerbTaker
 			b.append("; ").append(left).append(" of ").append(charges).append(" charges");
 		if(recharge.length() > 0)
 			b.append("; recharges ").append(recharge.toLowerCase());
+		if(cooldown > 0)
+			b.append("; ").append(cooldown).append(" ticks between uses").append((coolLeft > 0) ? (", ready in " + coolLeft) : "");
+		if(refuse.size() > 0)
+			b.append("; does nothing (and is not spent) ").append(refuse.contains("HEALTHY") ? "at full health" : "")
+				.append((refuse.size() > 1) ? " or " : "").append(refuse.contains("NOAILMENT") ? "with nothing to cure" : "");
+		if(refillKill > 0)
+			b.append("; each kill by its holder refills ").append(refillKill);
+		if(autoBelow > 0)
+			b.append("; used by itself when its holder falls below ").append(autoBelow).append("% health");
 		if(word.length() > 0)
 			b.append("; the word is '").append(word).append("'");
 		return b.toString();
@@ -88,6 +97,14 @@ public class Prop_Invokable extends Property implements VerbTaker
 	protected String						lastTod		= "";
 	protected int							lastDay		= -1;
 	protected boolean						ticking		= false;
+	/** A18: REFUSE=HEALTHY,NOAILMENT: when it does nothing, and is not spent */
+	protected final Set<String>				refuse		= new HashSet<String>();
+	/** A18: REFILL=KILL:n: charges back for each kill by its holder */
+	protected int							refillKill	= 0;
+	/** A18: AUTO=HP<n: used by itself when its holder is below n% health */
+	protected int							autoBelow	= 0;
+	/** A18: used this tick already, so a manual and an automatic use cannot both spend */
+	protected boolean						usedThisTick	= false;
 
 	@Override
 	public void setMiscText(final String newText)
@@ -120,10 +137,21 @@ public class Prop_Invokable extends Property implements VerbTaker
 			rechargeTicks = 200;
 		rechargeDown = rechargeTicks;
 		cooldown = Math.max(0, CMParms.getParmInt(parms, "COOLDOWN", 0));
+		// from a save: the cooldown still to run, and how long until the next recharge
+		coolLeft = Math.max(0, Math.min(cooldown, CMParms.getParmInt(parms, "COOLLEFT", 0)));
+		if((rechargeTicks > 0) && parms.containsKey("RECHARGEIN"))
+			rechargeDown = Math.max(1, Math.min(rechargeTicks, CMParms.getParmInt(parms, "RECHARGEIN", rechargeTicks)));
 		require = CMParms.getParmStr(parms, "REQUIRE", "").toUpperCase();
+		refuse.clear();
+		for(final String r : CMParms.parseCommas(CMParms.getParmStr(parms, "REFUSE", "").toUpperCase(), true))
+			refuse.add(r);
+		final String refill = CMParms.getParmStr(parms, "REFILL", "").toUpperCase().trim();
+		refillKill = refill.startsWith("KILL") ? Math.max(1, CMath.s_int(refill.replaceAll("[^0-9]", ""))) : 0;
+		final String auto = CMParms.getParmStr(parms, "AUTO", "").toUpperCase().replace(" ", "");
+		autoBelow = auto.startsWith("HP<") ? Math.max(0, Math.min(99, CMath.s_int(auto.substring(3).replace("%", "")))) : 0;
 		final String m = CMParms.getParmStr(parms, "MASK", "").trim();
 		mask = (m.length() == 0) ? null : CMLib.masking().getPreCompiledMask(m);
-		base = t.replaceAll("(?i)\\s*\\bLEFT=\\S*", "").trim();
+		base = t.replaceAll("(?i)\\s*\\b(LEFT|COOLLEFT|RECHARGEIN)=\\S*", "").trim();
 		if(verb.length() > 0)
 			ScriptEvents.propVerbsSeen();
 	}
@@ -131,14 +159,21 @@ public class Prop_Invokable extends Property implements VerbTaker
 	@Override
 	public String text()
 	{
-		return ((charges > 0) && (left != charges)) ? (base + " LEFT=" + left) : base;
+		final StringBuilder s = new StringBuilder(base);
+		if((charges > 0) && (left != charges))
+			s.append(" LEFT=").append(left);
+		if(coolLeft > 0)
+			s.append(" COOLLEFT=").append(coolLeft);
+		if((rechargeTicks > 0) && (charges > 0) && (left < charges) && (rechargeDown != rechargeTicks))
+			s.append(" RECHARGEIN=").append(rechargeDown);
+		return s.toString();
 	}
 
 	@Override
 	public void setAffectedOne(final Physical P)
 	{
 		super.setAffectedOne(P);
-		if((P != null) && (!ticking) && ((recharge.length() > 0) || (cooldown > 0)))
+		if((P != null) && (!ticking) && ((recharge.length() > 0) || (cooldown > 0) || (autoBelow > 0)))
 		{
 			ticking = true;
 			CMLib.threads().startTickDown(this, Tickable.TICKID_PROPERTY_SPECIAL, 1);
@@ -202,6 +237,13 @@ public class Prop_Invokable extends Property implements VerbTaker
 			mob.tell(mob, I, null, CMLib.lang().L("<T-NAME> is not ready yet."));
 			return true;
 		}
+		// A18: nothing to do: refused, and nothing is spent
+		final String refusal = refusal(mob);
+		if(refusal != null)
+		{
+			mob.tell(mob, I, null, CMParms.getParmStr(parms, "REFUSEMSG", refusal));
+			return true;
+		}
 		MOB victim = null;
 		if(target.equals("ENEMY"))
 		{
@@ -227,13 +269,42 @@ public class Prop_Invokable extends Property implements VerbTaker
 			left--;
 		if(cooldown > 0)
 			coolLeft = cooldown;
+		usedThisTick = true;
 		return true;
+	}
+
+	/**
+	 * A18: why it would do nothing for someone now, or null if it would work.
+	 * @param mob who would use it
+	 * @return the reason, or null
+	 */
+	public String refusal(final MOB mob)
+	{
+		if(refuse.contains("HEALTHY") && (mob.curState().getHitPoints() >= mob.maxState().getHitPoints()))
+			return CMLib.lang().L("You are not hurt; <T-NAME> would do nothing.");
+		if(refuse.contains("NOAILMENT"))
+		{
+			boolean ailing = false;
+			for(final Enumeration<Ability> e = mob.effects(); e.hasMoreElements();)
+			{
+				final Ability A = e.nextElement();
+				ailing = ailing || ((A != null) && (A.abstractQuality() == Ability.QUALITY_MALICIOUS) && A.canBeUninvoked());
+			}
+			if(!ailing)
+				return CMLib.lang().L("Nothing ails you; <T-NAME> would do nothing.");
+		}
+		return null;
 	}
 
 	@Override
 	public void executeMsg(final Environmental myHost, final CMMsg msg)
 	{
 		super.executeMsg(myHost, msg);
+		// A18: REFILL=KILL:n: a kill by its holder (a death names its killer as the tool)
+		if((refillKill > 0) && (charges > 0) && (affected instanceof Item)
+		&& (msg.sourceMinor() == CMMsg.TYP_DEATH) && (msg.tool() != null)
+		&& (msg.tool() == ((Item)affected).owner()) && (msg.source() != msg.tool()))
+			left = Math.min(charges, left + refillKill);
 		if((word.length() == 0) || (!(affected instanceof Item)) || (msg.sourceMinor() != CMMsg.TYP_SPEAK) || (msg.sourceMessage() == null))
 			return;
 		final Item I = (Item)affected;
@@ -269,6 +340,18 @@ public class Prop_Invokable extends Property implements VerbTaker
 		}
 		if(coolLeft > 0)
 			coolLeft--;
+		final boolean usedNow = usedThisTick;
+		usedThisTick = false;
+		// A18: AUTO=HP<n: its holder hurt badly enough uses it by itself, as a manual use would, but not in a tick
+		// it was already used in by hand
+		if((autoBelow > 0) && (!usedNow) && (((Item)affected).owner() instanceof MOB))
+		{
+			final MOB holder = (MOB)((Item)affected).owner();
+			if((holder.maxState().getHitPoints() > 0)
+			&& ((holder.curState().getHitPoints() * 100) < (autoBelow * holder.maxState().getHitPoints()))
+			&& ((charges <= 0) || (left > 0)) && (coolLeft <= 0) && placed(holder) && (refusal(holder) == null))
+				use(holder);
+		}
 		if(left >= charges)
 			return true;
 		if(rechargeTicks > 0)

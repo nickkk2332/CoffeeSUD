@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "example.heat",
+  "version": 1,
+  "title": "Heat",
+  "kind": "pool",
+  "max": 100,
+  "start": 0,
+  "change": {"amount": -5, "every": 1, "clock": "ticks"}
+}

@@ -5954,11 +5954,20 @@ public class DefaultScriptingEngine implements ScriptingEngine
 							if(FR==null)
 								value="";
 							else
+							if(FR.codeName().equalsIgnoreCase(arg2.trim()))
+								value=FR.codeName();
+							else
 								value=FR.name();
 						}
 					}
+					// D-SC-1: a band name is compared as text (a numeric compare read both sides as 0)
 					if(lastKnownLocation!=null)
-						returnable=simpleEval(ctx.scripted,value,arg2,cmp,"FACTION");
+					{
+						if(CMath.isNumber(arg2.trim()))
+							returnable=simpleEval(ctx.scripted,value,arg2,cmp,"FACTION");
+						else
+							returnable=simpleEvalStr(ctx.scripted,value,arg2.trim(),cmp,"FACTION");
+					}
 					break;
 				}
 				case 46: // numitemsroom
@@ -17190,6 +17199,27 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
 			String id=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			// A06: MPPERK $n PICKS pool +n|-n|n: a pool's picks of its own; MPPERK $n CLEAR pool: that pool's perks go
+			final List<String> pw=CMParms.parse(id);
+			if((W instanceof MOB)&&(pw.size()>=2)&&pw.get(0).equalsIgnoreCase("CLEAR"))
+			{
+				Perks.clear((MOB)W,pw.get(1).toUpperCase());
+				return null;
+			}
+			if((W instanceof MOB)&&(pw.size()>=3)&&pw.get(0).equalsIgnoreCase("PICKS"))
+			{
+				final String pool=pw.get(1).toUpperCase();
+				final String n=pw.get(2);
+				final int now=Perks.given((MOB)W,pool);
+				final int to=(n.startsWith("+")||n.startsWith("-"))?(now+CMath.s_int(n.replace("+",""))):CMath.s_int(n);
+				if(!CMath.isInteger(n.replace("+","")))
+				{
+					logError(ctx,"MPPERK","Syntax","MPPERK $n PICKS pool +n|-n|n: "+line);
+					return null;
+				}
+				Perks.setGiven((MOB)W,pool,Math.max(0,to));
+				return null;
+			}
 			final boolean minus=id.startsWith("-");
 			if(minus)
 				id=id.substring(1).trim();
@@ -17586,6 +17616,76 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return null;
 		}
+		case "MPCULTURE": // P11: MPCULTURE who ADOPT culture | LEAVE (FORCE): a culture taken up or left, by the rules of core/Cultures
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String what=varify(ctx,CMParms.getCleanBit(line,2)).trim().toUpperCase();
+			final String rest=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(W instanceof MOB))||!(what.equals("ADOPT")||what.equals("LEAVE"))||(what.equals("ADOPT")&&(rest.length()==0)))
+			{
+				logError(ctx,"MPCULTURE","Syntax","MPCULTURE who ADOPT culture (FORCE) | LEAVE (FORCE): "+line);
+				return null;
+			}
+			try
+			{
+				final boolean force=rest.toUpperCase().endsWith("FORCE")&&(what.equals("LEAVE")||(rest.trim().indexOf(' ')>0));
+				final String id=force&&what.equals("ADOPT")?rest.substring(0,rest.length()-5).trim():rest;
+				((MOB)W).tell(what.equals("ADOPT")?Cultures.adopt((MOB)W,id,force?"force":"script"):Cultures.leave((MOB)W,force?"force":"script"));
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPCULTURE","RunTime",e.getMessage());
+			}
+			return null;
+		}
+		case "MPRECORD": // P13: MPRECORD who book record value (LOW): a personal record, its first value and its best kept
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String book=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final String key=varify(ctx,CMParms.getCleanBit(line,3)).trim();
+			final String val=varify(ctx,CMParms.getCleanBit(line,4)).trim();
+			final boolean lower=varify(ctx,CMParms.getPastBitClean(line,4)).trim().equalsIgnoreCase("LOW");
+			if((!(W instanceof MOB))||(book.length()==0)||(key.length()==0)||(!CMath.isNumber(val)))
+			{
+				logError(ctx,"MPRECORD","Syntax","MPRECORD who book record value (LOW): "+line);
+				return null;
+			}
+			try
+			{
+				Challenges.record((MOB)W,book,key,CMath.s_double(val),lower);
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPRECORD","RunTime",e.getMessage());
+			}
+			return null;
+		}
+		case "MPDIRECTOR": // G06: MPDIRECTOR START|RESET [room id]: the EncounterDirector of the room
+		{
+			final String w=varify(ctx,CMParms.getCleanBit(line,1)).trim().toUpperCase();
+			final String where=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			Room R=(ctx.scripted instanceof Room)?(Room)ctx.scripted:lastKnownLocation;
+			if(where.length()>0)
+				R=CMLib.map().getRoom(where);
+			final Behavior B=(R==null)?null:R.fetchBehavior("EncounterDirector");
+			if((!(B instanceof com.planet_ink.coffee_mud.Behaviors.EncounterDirector))||(!(w.equals("START")||w.equals("RESET"))))
+			{
+				logError(ctx,"MPDIRECTOR","RunTime","MPDIRECTOR START|RESET [room], in or naming a room with EncounterDirector: "+line);
+				return null;
+			}
+			try
+			{
+				if(w.equals("START"))
+					((com.planet_ink.coffee_mud.Behaviors.EncounterDirector)B).start();
+				else
+					((com.planet_ink.coffee_mud.Behaviors.EncounterDirector)B).resetEncounter("a script");
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPDIRECTOR","RunTime","the director cannot start: "+e.getMessage());
+			}
+			return null;
+		}
 		case "MPWAVE": // C20: MPWAVE START|NEXT|STOP|RESET: the WaveSpawner of the room
 		{
 			final String w=varify(ctx,CMParms.getCleanBit(line,1)).trim().toUpperCase();
@@ -17637,7 +17737,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			final StringBuilder opts=new StringBuilder("");
-			final java.util.regex.Pattern opt=java.util.regex.Pattern.compile("(?i)\\s(INTERRUPT|AVOID|INTERRUPTMSG)=(\"[^\"]*\"|\\S+)\\s*$");
+			final java.util.regex.Pattern opt=java.util.regex.Pattern.compile("(?i)\\s(INTERRUPT|AVOID|INTERRUPTMSG|RESPOND|THEN)=(\"[^\"]*\"|\\S+)\\s*$");
 			for(java.util.regex.Matcher m=opt.matcher(rest);m.find();m=opt.matcher(rest))
 			{
 				opts.append(' ').append(m.group(1).toUpperCase()).append('=').append(m.group(2));
@@ -21052,6 +21152,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(T==null)
 			return; // interrupted
 		final List<MOB> targets=T.telegraphTargets();
+		final Map<MOB,String> instead=new HashMap<MOB,String>();
+		for(final MOB M : targets)
+		{
+			final String c=T.telegraphCommand(M); // A10: a response's own outcome
+			if(c!=null)
+				instead.put(M,c);
+		}
+		final String then=T.telegraphThen();
 		T.telegraphDone();
 		for(final MOB M : targets)
 		{
@@ -21060,11 +21168,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			hit.target=M;
 			final SubScript s=new SubScriptImpl(ctx.script);
 			s.add(new ScriptLn("FUNCTION_PROG TELEGRAPH_"+name,null,null));
-			s.add(new ScriptLn(cmd,null,null));
+			s.add(new ScriptLn(instead.containsKey(M)?instead.get(M):cmd,null,null));
 			hit.script=s;
 			hit.line=1;
 			execute(hit);
 		}
+		if((then!=null)&&(then.length()>0))
+			callFunction(mob,then,"",mob); // A10: the next step of a chained attack
 	}
 
 	public void prequeResponse(final int triggerCode, final MPContext ctx, final SubScript script, final int ticks)

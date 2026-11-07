@@ -211,7 +211,7 @@ public class CombatAbilities extends ActiveTicker implements Threat.Holder // C1
 		minTicks=1;
 		maxTicks=1;
 		chance=100;
-		bucketSize=CMParms.getParmInt(parms,"bsize",0);
+		bucketSize=CMParms.getParmInt(newParms,"bsize",0); // D-BM-4: parms still held the old text here
 		if(bucketSize == 0)
 			bucket = null;
 		else

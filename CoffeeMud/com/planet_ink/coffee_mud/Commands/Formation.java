@@ -53,6 +53,42 @@ public class Formation extends StdCommand
 		commands.remove(0);
 		final MOB leader=mob.getGroupLeader();
 		final List<MOB>[] done=CMLib.combat().getFormation(mob);
+		// P06: named roles (core/FormationRoles)
+		if((commands.size()==1)&&commands.get(0).equalsIgnoreCase("ROLES"))
+		{
+			mob.tell(FormationRoles.list());
+			return false;
+		}
+		if((commands.size()>=3)&&commands.get(commands.size()-2).equalsIgnoreCase("ROLE"))
+		{
+			final String role=commands.get(commands.size()-1);
+			final String name=CMParms.combine(commands.subList(0,commands.size()-2),0);
+			MOB who=null;
+			for(final List<MOB> row : done)
+			{
+				if(row==null)
+					continue;
+				for(final MOB M : row)
+				{
+					if((who==null)&&(CMLib.english().containsString(M.name(),name)||CMLib.english().containsString(M.Name(),name)))
+						who=M;
+				}
+			}
+			if(who==null)
+				CMLib.commands().postCommandFail(mob,origCmds,L("There is no one in your formation called @x1.",name));
+			else
+			{
+				try
+				{
+					mob.tell(FormationRoles.assign(who,role));
+				}
+				catch(final java.io.IOException e)
+				{
+					CMLib.commands().postCommandFail(mob,origCmds,L("Formation: @x1.",e.getMessage()));
+				}
+			}
+			return false;
+		}
 		if(commands.size()==0)
 		{
 			final StringBuffer str=new StringBuffer("");
@@ -65,7 +101,10 @@ public class Formation extends StdCommand
 					else
 						str.append(L("^xrow +@x1 - ^.^?",""+i));
 					for(int i2=0;i2<done[i].size();i2++)
-						str.append(((i2>0)?", ":"")+done[i].get(i2).name());
+					{
+						final com.planet_ink.coffee_mud.core.Origins.Origin role=FormationRoles.of(done[i].get(i2));
+						str.append(((i2>0)?", ":"")+done[i].get(i2).name()+((role==null)?"":" ("+role.name()+")"));
+					}
 					str.append("\n\r");
 				}
 			}

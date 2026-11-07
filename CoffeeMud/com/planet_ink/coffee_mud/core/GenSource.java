@@ -264,7 +264,7 @@ public final class GenSource
 
 	private static boolean followsAPlayer(final MOB M)
 	{
-		final MOB L = M.getGroupLeader();
+		final MOB L = Party.leaderOf(M);
 		return (L != null) && (L != M) && !L.isMonster();
 	}
 

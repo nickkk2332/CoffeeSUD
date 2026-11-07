@@ -28,7 +28,8 @@ import java.util.*;
 */
 /**
  * P13: PERKS lists the perks a character has, can take and cannot yet (with
- * why), and the picks left; PERK [name] takes one (world/perks.ini).
+ * why), and the picks left; PERK [name] takes one (world/perks.ini).  A05:
+ * PERKS TREE [name] shows a tree; PERK REFUND [name] gives one back.
  */
 public class PerkCmd extends StdCommand
 {
@@ -48,9 +49,32 @@ public class PerkCmd extends StdCommand
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
 	{
+		if((commands.size() >= 3) && commands.get(1).equalsIgnoreCase("TREE"))
+		{
+			mob.tell(Perks.tree(mob, CMParms.combine(commands, 2)));
+			return false;
+		}
 		if((commands.size() < 2) || commands.get(0).toUpperCase().startsWith("PERKS"))
 		{
 			mob.tell(Perks.list(mob));
+			return false;
+		}
+		if((commands.size() >= 3) && commands.get(1).equalsIgnoreCase("REFUND"))
+		{
+			final String what = CMParms.combine(commands, 2);
+			final Perks.Perk K = Perks.perk(what);
+			if(K == null)
+			{
+				mob.tell(L("There is no perk called '@x1'.  PERKS lists them.", what));
+				return false;
+			}
+			final String why = Perks.refund(mob, K);
+			if(why != null)
+			{
+				mob.tell(L("You cannot give back @x1: @x2.", K.name, why));
+				return false;
+			}
+			mob.tell(L("You give back @x1; its pick is yours to spend again.", K.name));
 			return false;
 		}
 		final String name = CMParms.combine(commands, 1);

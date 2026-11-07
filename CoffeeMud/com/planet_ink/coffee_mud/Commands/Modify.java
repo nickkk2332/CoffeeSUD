@@ -69,7 +69,8 @@ public class Modify extends StdCommand
 		if(commands.size()<3)
 		{
 			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY ITEM [ITEM NAME](@ room/[MOB NAME]) "
-					+ "[LEVEL, ABILITY, REJUV, USES, MISC, ?] [NUMBER, TEXT]\n\r"));
+					+ "[LEVEL, ABILITY, HEIGHT, REJUV, USES, SAVEABLE, MISC, or a stat code] [NUMBER, TEXT]\n\r"
+					+ "To use the editor instead, enter MODIFY [ITEM NAME] (a generic item) or MODIFY ITEM [ITEM NAME] MISC.\n\r"));
 			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
 			return;
 		}
@@ -287,15 +288,16 @@ public class Modify extends StdCommand
 
 	protected void flunkRoomCmd(final MOB mob)
 	{
-		mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY ROOM [NAME, AREA, DESCRIPTION, "
-				+ "AFFECTS, BEHAVIORS, CLASS, XGRID, YGRID, ?] [TEXT]\n\r"));
+		mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY ROOM [NAME, DESCRIPTION, "
+				+ "ID, AREA, CLASS, XGRID, YGRID, AFFECTS, BEHAVIORS, or a stat code] [TEXT]\n\r"));
 		mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 	}
 
 	protected void flunkAreaCmd(final MOB mob)
 	{
 		mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY AREA [NAME, DESCRIPTION, CLIMATE, "
-				+ "FILE, AFFECTS, BEHAVIORS, ADDSUB, DELSUB, XGRID, YGRID, ?] [TEXT]\n\r"));
+				+ "FILE, AFFECTS, BEHAVIORS, ADDSUB, DELSUB, XGRID, YGRID, PASSIVE, ACTIVE, FROZEN, STOPPED, "
+				+ "WEATHERPROFILE, CALENDAR, or a stat code] [TEXT]\n\r"));
 		mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 	}
 
@@ -2821,7 +2823,8 @@ public class Modify extends StdCommand
 
 		if(commands.size()<4)
 		{
-			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY MOB [MOB NAME] [LEVEL, ABILITY, REJUV, MISC, ?] [NUMBER, TEXT]\n\r"));
+			mob.tell(L("You have failed to specify the proper fields.\n\rThe format is MODIFY MOB [MOB NAME] [LEVEL, ABILITY, REJUV, MISC, or a stat code] [NUMBER, TEXT]\n\r"
+					+ "To use the editor instead, enter MODIFY [MOB NAME] or MODIFY MOB [MOB NAME] MISC.\n\r"));
 			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a powerful spell."));
 			return;
 		}
@@ -2908,20 +2911,71 @@ public class Modify extends StdCommand
 			mob.tell(L("...but failed to specify an aspect.  Try one of: @x1",CMParms.toListString(set)));
 			mob.location().showOthers(mob,null,CMMsg.MSG_OK_ACTION,L("<S-NAME> flub(s) a spell.."));
 		}
-		if((!mob.isGeneric())
-		&&(modMOB.basePhyStats().level() != oldLevel))
+		// D-BW-1: a new level re-derives the combat numbers, but a generic mob's
+		// numbers set by hand are kept (the old test looked at the builder, so
+		// every level change overwrote them)
+		if(modMOB.basePhyStats().level() != oldLevel)
 		{
-			final int oldRejuv = modMOB.basePhyStats().rejuv();
-			CMLib.leveler().fillOutMOB(modMOB, modMOB.basePhyStats().level());
-			modMOB.basePhyStats().setRejuv(oldRejuv);
-			modMOB.recoverCharStats();
-			modMOB.recoverPhyStats();
-			modMOB.recoverMaxState();
-			modMOB.resetToMaxState();
+			if((!modMOB.isGeneric()) || combatStatsUntouched(copyMOB, oldLevel))
+			{
+				final int oldRejuv = modMOB.basePhyStats().rejuv();
+				final int oldMoney = modMOB.getMoney();
+				CMLib.leveler().fillOutMOB(modMOB, modMOB.basePhyStats().level());
+				modMOB.basePhyStats().setRejuv(oldRejuv);
+				if(modMOB.isGeneric() && (oldMoney != prototypeMoney(modMOB)))
+					modMOB.setMoney(oldMoney);
+				modMOB.recoverCharStats();
+				modMOB.recoverPhyStats();
+				modMOB.recoverMaxState();
+				modMOB.resetToMaxState();
+			}
+			else
+				mob.tell(L("@x1's attack, damage, armor and speed were set by hand, so they were kept. "
+						+"RESET MOBCOMBATSTATS ROOM re-derives them from the level.",modMOB.Name()));
 		}
 		if(!modMOB.sameAs(copyMOB))
 			Log.sysOut("Mobs",mob.Name()+" modified mob "+modMOB.Name()+".");
 		copyMOB.destroy();
+	}
+
+	/**
+	 * D-BW-1: whether a generic mob's combat numbers are still ones nobody set
+	 * by hand: those of a new mob of its class, or those its level gave it.
+	 * @param before the mob as it was before this MODIFY
+	 * @param oldLevel its level before this MODIFY
+	 * @return true if a new level may re-derive them
+	 */
+	protected boolean combatStatsUntouched(final MOB before, final int oldLevel)
+	{
+		final MOB proto = CMClass.getMOBPrototype(before.ID());
+		if((proto != null) && sameCombatStats(before, proto))
+			return true;
+		final MOB derived = (MOB)before.copyOf();
+		try
+		{
+			CMLib.leveler().fillOutMOB(derived, oldLevel);
+			return sameCombatStats(before, derived);
+		}
+		finally
+		{
+			derived.destroy();
+		}
+	}
+
+	private static boolean sameCombatStats(final MOB a, final MOB b)
+	{
+		final PhyStats pa = a.basePhyStats();
+		final PhyStats pb = b.basePhyStats();
+		return (pa.armor() == pb.armor())
+			&& (pa.attackAdjustment() == pb.attackAdjustment())
+			&& (pa.damage() == pb.damage())
+			&& (Math.abs(pa.speed() - pb.speed()) < 0.0001);
+	}
+
+	private static int prototypeMoney(final MOB M)
+	{
+		final MOB proto = CMClass.getMOBPrototype(M.ID());
+		return (proto == null) ? 0 : proto.getMoney();
 	}
 
 	public boolean errorOut(final MOB mob)

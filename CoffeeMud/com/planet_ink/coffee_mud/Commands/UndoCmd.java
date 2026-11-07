@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * B6, for builders: UNDO (n) puts back the rooms the last n building
  * commands changed (core/UndoLog), newest first; UNDO LIST (n) lists them,
- * newest first, as HISTORY would (HISTORY is the command history).
+ * newest first (HISTORY is the typed-command history, not this log).
  */
 public class UndoCmd extends StdCommand
 {

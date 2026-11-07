@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "example.riposte",
+  "version": 1,
+  "title": "Riposte",
+  "on": "block",
+  "priority": 60,
+  "cooldown": {"amount": 3, "clock": "ticks"},
+  "action": {"type": "cast", "skill": "example.ember", "target": "other"}
+}

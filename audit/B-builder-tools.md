@@ -86,6 +86,8 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 *Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
+**Status (docs audit, 2026-11):** The builder log is read with `UNDO LIST`, not HISTORY (HISTORY is the typed-command history). The text below is the original proposal.
+
 **Today.** There is no undo. A wrong `MODIFY`, `DESTROY`, `COPY` or `GMODIFY CHANGE=` is permanent once saved, and `GMODIFY` only writes to Log.sysOut. `writeOrDelete` and `writeFolder` overwrite or delete world files in place, with no backup, so a destroyed area's file goes on the next `SAVE`. `RESET ROOM` or `RESET AREA` reverts unsaved live changes only. Git covers only committed states.
 
 **Add.** Before a building command changes an object, its XML (`getMobXML`, `getItemXML`, `getRoomXML` with content, exit XML) goes into an undo log of the last 50 actions, in memory and in world/.history/. `UNDO (n)` puts changes back. `HISTORY` lists them ("MODIFY MOB the guard @Gate#1"). `exportAll` copies each file it overwrites or deletes to world/.backup/NAME.TIMESTAMP, keeping the last N, with `WORLD BACKUPS` and `WORLD RESTOREFILE name (timestamp)`.
@@ -132,6 +134,8 @@ Commands and editors for building in builder mode: tracking and protecting chang
 
 *Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
 
+**Status (docs audit, 2026-11):** Shipped as `WORLD DIG` and `WORLD PATH`, not `BUILD DIG` or `BUILD PATH`. The text below is the original proposal.
+
 **Today.** `CREATE ROOM <dir> <type>` takes a locale class or a builder template (`getBuilderTemplateObject`), whose title, description, behaviours, effects and contents are copied. `COPY <dir>` clones the current room (`COPY <roomid> <dir>` clones any room), and `COPY 5 <dir>` lays a straight chain of five linked copies in one command; `LINK` sets exits, and `GENERATE` builds from randareas XML. Still, a path that bends or changes room type takes a command per leg and a walk to its end, and one made from a locale class gets the placeholder '\<Locale>-' and no description. An `ALIAS` with '~'-separated commands only approximates a path.
 
 **Add.** `BUILD DIG ON|OFF (TYPE=locale|template) (LINK=two-way|one-way)`: while on, moving where there is no exit creates a room of that type and links it. Plain `DIG` is taken by the player command (Commands/Dig.java). `BUILD PATH e,e,n,ne (TYPE=x) (NAME="A forest trail") (DESC="...")` lays out a chain in one command. New rooms are marked dirty or saved, and tagged TODO so `WORLD CHECK` lists them until edited.
@@ -147,6 +151,8 @@ Commands and editors for building in builder mode: tracking and protecting chang
 ## B10. MAP of an area, in the terminal and as HTML
 
 *Kind:* presentation · *Value:* medium · *Effort:* medium · *Decision:* yes
+
+**Status (docs audit, 2026-11):** Shipped as `WORLD MAP` (with `HTML=FILE`), not `MAP` or `EXPORT MAP`. The text below is the original proposal.
 
 **Today.** The LOOK mini-map shows a few rooms around the player (AWARERANGE, default 3), without room IDs. A GenMap item whose map-areas field (`RoomMap.setMapArea`) names an area can be READ to see the whole area laid out by `StdMap.placeRooms`, but with no IDs and no marks for problems. `LIST LINKAGES` gives the connections as text. The MUDGrinder map went with the web server; its GrinderFlatMap layout survives only in the archive.
 

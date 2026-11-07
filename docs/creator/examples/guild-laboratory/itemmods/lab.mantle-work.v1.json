@@ -1,0 +1,9 @@
+{
+  "schema": 1, "kind": "recipe", "id": "lab.mantle-work", "version": 1,
+  "name": "Weave a laboratory mantle", "station": "guild-lab", "piece": "an unfinished lab mantle",
+  "stages": [
+    {"name": "Cut the cloth", "material": "IRON", "units": 1},
+    {"name": "Bind the seams", "material": "IRON", "units": 1}
+  ],
+  "result": {"catalog": "a lab mantle", "base": "embertrial.mantle", "modifiers": 1}
+}

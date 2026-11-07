@@ -40,7 +40,7 @@ public final class Waits
 	{
 	}
 
-	/** the longest wait (three game days, by the default calendar) */
+	/** the longest wait, in game hours (72: three days only with 24-hour days; 12 days with the stock 6-hour day) */
 	public static final long	MAX_HOURS	= 72;
 
 	private static volatile MOB		waiter		= null;

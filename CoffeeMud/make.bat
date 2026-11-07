@@ -1,4 +1,6 @@
-REM Make sure you are building with java v1.8 or higher
+REM Make sure you are building with java v9 or higher, as the README says
+REM (this older script passes no --release; build.sh passes --release 8,
+REM which needs javac 9 or newer)
 REM SET Java_Home="C:\Program Files\Java\jdk1.8.0_01"
 set CLASSPATH=.;%Java_Home%\lib\dt.jar;%Java_Home%\lib\tools.jar;.\lib\js.jar;.\lib\jzlib.jar
 SET JAVACPATH="%Java_Home%\bin\javac" -g -nowarn -deprecation

@@ -225,7 +225,7 @@ public final class GameDifficulty
 			return false;
 		if(M.playerStats() != null)
 			return true;
-		final MOB lead = M.getGroupLeader();
+		final MOB lead = Party.leaderOf(M);
 		return (lead != null) && (lead != M) && (lead.playerStats() != null);
 	}
 

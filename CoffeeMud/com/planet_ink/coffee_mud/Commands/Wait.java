@@ -166,7 +166,7 @@ public class Wait extends StdCommand
 			}
 			if(ms > max)
 			{
-				mob.tell(L("You can wait three days at most."));
+				mob.tell(L("You can wait @x1 game hours at most.",""+Waits.MAX_HOURS));
 				ms = max;
 			}
 			what = L("You wait @x1 @x2.", words.get(0), words.get(1).toLowerCase());

@@ -500,7 +500,7 @@ public interface Race extends Tickable, StatsAffecting, MsgListener, CMObject, M
 	public final static int AGE_VENERABLE=7;
 	/** Age constant for the very very old*/
 	public final static int AGE_ANCIENT=8;
-	/** Constant string list for the names of the age constants, in their order of value */
+	/** Constant string list for the names of the age constants, in their order of value.  Note that "Adult" is AGE_MATURE and "Mature" is AGE_MIDDLEAGED; Ageing.AGE_NAMES uses the constants' own words */
 	public final static String[] AGE_DESCS=new String[]
 	{
 		CMLib.lang().L("Infant"),

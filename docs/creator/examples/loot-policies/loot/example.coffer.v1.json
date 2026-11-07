@@ -1,0 +1,13 @@
+{
+  "schema": 1, "id": "example.coffer", "version": 1, "title": "Supply coffer drops",
+  "base": "embertrial.mantle",
+  "rarities": [
+    {"id": "plain", "title": "Plain", "weight": 60, "modifiers": 0},
+    {"id": "magic", "title": "Magic", "weight": 30, "modifiers": 1},
+    {"id": "rare", "title": "Rare", "weight": 10, "modifiers": 2}
+  ],
+  "tiers": [{"level": 1, "max_tier": 1}, {"level": 10, "max_tier": 2}],
+  "tags": ["elemental"],
+  "budget": 2,
+  "guarantee": {"rarity": "rare", "after": 5}
+}

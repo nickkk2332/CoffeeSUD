@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "abilities.resources",
+  "title": "Named resources",
+  "version": 1,
+  "handler": "abilities.resources",
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character"],
+  "on_disable": "suspend",
+  "state": {
+    "pools": {"type": "string", "default": "", "max_length": 4096}
+  }
+}

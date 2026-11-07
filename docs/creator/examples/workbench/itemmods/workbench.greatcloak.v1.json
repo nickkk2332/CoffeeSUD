@@ -1,0 +1,6 @@
+{
+  "schema": 1, "kind": "base", "id": "workbench.greatcloak", "version": 1,
+  "name": "Workbench greatcloak modifier contract", "item_kind": "armor",
+  "prefixes": 2, "suffixes": 1, "tags": ["cloth", "workbench"],
+  "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"]
+}

@@ -8,6 +8,8 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 
 *Kind:* script trigger · *Value:* high · *Effort:* small · *Decision:* yes (owner: "Absolutely")
 
+**Status (docs audit, 2026-11):** Stale: scripts now register their hosts when parsed, and the world-wide triggers (QUEST_PROG, GAME_PROG, TURN_PROG, LOGIN_PROG and the rest) work in a restored game (see handbook chapter 26). The text below is the original proposal.
+
 **Today.** `LOGIN_PROG`, `LEVEL_PROG` and `CHANNEL_PROG` register their host for world-wide events only inside `executeMsg`, so only after the host has heard some other message. A login is sent only as a global message, so a quiet room or item misses it. `RESTORE` reboots the engine and clears every registration, so each restore starts from nothing. `LOGOFF_PROG` never registers. It fires only in the rooms of the character who quits and of their group. As a result these triggers fire "sometimes". The only workaround is JavaScript calling `CMLib.map().addGlobalHandler`, which needs `JSCRIPTS` approval.
 
 **Add.** When a script is parsed (`getScripts` or `setScript`), register its host at once: LOGIN for `LOGIN_PROG`, LEVEL for `LEVEL_PROG`, QUIT for `LOGOFF_PROG`, CHANNEL for `CHANNEL_PROG`. There is no syntax change. Unregistering mostly comes free, because `sendGlobalMessage` already drops hosts that have left the game. ST5 and ST12 build on this.
@@ -91,6 +93,8 @@ New, fixed and widened MOBPROG triggers: the game, world, clock, party and objec
 ## ST6. GAME_PROG and TURN_PROG: new game, save, restore, switch, pause and turns
 
 *Kind:* script trigger, script function, JavaScript hook · *Value:* high · *Effort:* medium · *Decision:* yes
+
+**Status (docs audit, 2026-11):** Stale: GAME_PROG exists with NEWGAME, RESTORE, SAVE, NEWCHAR, SWITCHTO, SWITCHFROM, PAUSE, RESUME, TIMEMODE and ANY; there are no NEWGAME_PROG, RESTORE_PROG or SAVE_PROG triggers. The text below is the original proposal.
 
 **Today.** A new game, a restore, `SWITCH` and `PARTY ADD` all send LOGIN, so `LOGIN_PROG` cannot tell an intro from a reload. `CHARCREATIONSCRIPTS` in `coffeemud.ini` runs scripts at three stages: END (after a new character is made), CHARLOGIN, and ALLCHARLOGIN (also on `SWITCH`). They run on a throwaway engine, only `ONCE_PROG` fires, and the character is briefly in a random room. Save, restore, pause and time mode reach no script, and no function reports the game's mode. `DELAY_PROG` already counts turns in turn-based time.
 

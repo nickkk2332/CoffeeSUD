@@ -2,7 +2,9 @@ package com.planet_ink.coffee_mud.core;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 
@@ -351,6 +353,32 @@ public final class Party
 		return sorted;
 	}
 
+	/**
+	 * The group a character is with, in a room: the party of its leader, in
+	 * the party's order, then those following the group, each once, alive
+	 * and in the character's room.  The character is always first or among
+	 * them.
+	 * @param mob the character
+	 * @return the group here
+	 */
+	public static List<MOB> here(final MOB mob)
+	{
+		final List<MOB> out = new ArrayList<MOB>();
+		final Room R = mob.location();
+		final MOB top = leaderOf(mob);
+		final Set<MOB> all = new java.util.LinkedHashSet<MOB>(inOrder(top));
+		final MOB group = (top.getGroupLeader() == null) ? top : top.getGroupLeader();
+		all.addAll(group.getGroupMembers(new java.util.LinkedHashSet<MOB>()));
+		for(final MOB M : all)
+		{
+			if((M != null) && (M.location() == R) && !M.amDead() && !out.contains(M))
+				out.add(M);
+		}
+		if(!out.contains(mob))
+			out.add(0, mob);
+		return out;
+	}
+
 	private static int place(final MOB M, final MOB leader, final List<MOB> all)
 	{
 		final int placed = order.indexOf(M.Name());
@@ -645,12 +673,26 @@ public final class Party
 	public static void handOver(final MOB leader, final MOB to)
 	{
 		final List<MOB> members = inOrder(leader);
+		// each keeps their formation row; the old leader takes the new leader's
+		final Map<MOB, Integer> rows = new HashMap<MOB, Integer>();
+		for(final MOB M : members)
+			rows.put(M, Integer.valueOf((M == leader) ? leader.fetchFollowerOrder(leader) : leader.fetchFollowerOrder(M)));
+		final int toRow = rows.containsKey(to) ? rows.get(to).intValue() : -1;
+		rows.put(leader, Integer.valueOf(toRow));
+		rows.put(to, Integer.valueOf(leader.fetchFollowerOrder(leader)));
 		to.setFollowing(null);
 		for(final MOB M : members)
 		{
 			if(M != to)
+			{
 				M.setFollowing(to);
+				final int row = rows.containsKey(M) ? rows.get(M).intValue() : -1;
+				if(row >= 0)
+					to.addFollower(M, row);
+			}
 		}
+		if(rows.get(to).intValue() >= 0)
+			to.addFollower(to, rows.get(to).intValue());
 		ScriptEvents.party("LEAD", to, to); // ST10
 	}
 
@@ -726,14 +768,26 @@ public final class Party
 
 	/**
 	 * Returns the leader of the party a character is in: the one at the head
-	 * of the group they follow.
+	 * of the group they follow.  When the group follows an NPC (an escort
+	 * leading the way, say), the party is still led by the player's character
+	 * nearest that head: the last character in the chain of whom each
+	 * follows who.
 	 * @param mob the character
 	 * @return the leader, which is the character if they follow no one
 	 */
 	public static MOB leaderOf(final MOB mob)
 	{
-		final MOB leader = mob.getGroupLeader();
-		return (leader == null) ? mob : leader;
+		MOB leader = null;
+		final Set<MOB> seen = new HashSet<MOB>();
+		for(MOB M = mob; (M != null) && seen.add(M); M = M.amFollowing())
+		{
+			if(M.isPlayer())
+				leader = M;
+		}
+		if(leader != null)
+			return leader;
+		final MOB top = mob.getGroupLeader();
+		return (top == null) ? mob : top;
 	}
 
 	/**

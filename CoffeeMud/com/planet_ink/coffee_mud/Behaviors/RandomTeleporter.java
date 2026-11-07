@@ -104,7 +104,7 @@ public class RandomTeleporter extends ActiveTicker
 				poofin=s.substring(7);
 			else
 			if(s.toUpperCase().startsWith("POOFOUT="))
-				poofin=s.substring(8);
+				poofout=s.substring(8); // D-BM-1: it set poofin
 			else
 			if((s.startsWith("+")||(s.startsWith("-")))&&(s.length()>1))
 			{

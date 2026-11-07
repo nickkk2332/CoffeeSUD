@@ -3201,7 +3201,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			if((((Item)P).owner() instanceof MOB)&&(((MOB)((Item)P).owner()).isMonster()))
 				mob.tell(L("@x1. Rejuv/Pct: '@x2' (0=normal, -1=one time).",""+showNumber,rejuvStr));
 			else
-				mob.tell(L("@x1. Rejuv/Pct: '@x2' (0=never).",""+showNumber,rejuvStr));
+				mob.tell(L("@x1. Rejuv/Pct: '@x2' (ticks until a fresh copy returns after it goes missing; 0=never).",""+showNumber,rejuvStr));
 		}
 		else
 			mob.tell(L("@x1. Rejuv Ticks: '@x2' (0=never).",""+showNumber,rejuvStr));
@@ -3464,7 +3464,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 	protected void genHitPoints(final MOB mob, final MOB M, final int showNumber, final int showFlag) throws IOException
 	{
 		if(M.isMonster())
-			M.basePhyStats().setAbility(prompt(mob,M.basePhyStats().ability(),showNumber,showFlag,L("Hit Points Bonus Modifier"),L("Hit points = (level*level) + (random*level*THIS)")));
+			M.basePhyStats().setAbility(prompt(mob,M.basePhyStats().ability(),showNumber,showFlag,L("Hit Points Bonus Modifier"),L("Maximum hit points are rolled from the level and this number by FORMULA_NPCHITPOINTS (coffeemud.ini) whenever the mob is loaded or reset; higher is tougher.")));
 		else
 			M.basePhyStats().setAbility(prompt(mob,M.basePhyStats().ability(),showNumber,showFlag,L("Ability -- unused")));
 	}
@@ -3672,7 +3672,7 @@ public class CMGenEditor extends StdLibrary implements GenericEditor
 			if(newName.length()>0)
 			{
 				AW.setAmmunitionType(newName);
-				mob.tell(L("(Remember to create a GenAmmunition item with '@x1' in the secret identity, and the uses remaining above 0!",AW.ammunitionType()));
+				mob.tell(L("(Remember to create a GenAmmunition item with '@x1' as its Ammunition type (its readable text, not the secret identity), and the uses remaining above 0!",AW.ammunitionType()));
 			}
 			else
 				mob.tell(L("(no change)"));

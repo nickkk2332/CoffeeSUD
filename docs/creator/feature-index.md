@@ -14,7 +14,7 @@ lookup labels, not expanded promises about every edge case.
 | Family | Chapter | Entries |
 | --- | --- | --- |
 | [B: World editing](#b) | [World editing](02-world-workflow.md) | 14 |
-| [C: Combat and encounters](#c) | [Combat and encounters](06-npcs-combat.md) | 25 |
+| [C: Combat and encounters](#c) | [Combat and encounters](29-combat-and-encounters.md) | 25 |
 | [CR: Crafting, gathering and housing](#cr) | [Crafting, gathering and housing](07-items-crafting.md) | 22 |
 | [DT: Testing and debugging](#dt) | [Testing and debugging](13-testing-release.md) | 39 |
 | [F: Factions and organizations](#f) | [Factions and organizations](09-society.md) | 22 |
@@ -22,15 +22,15 @@ lookup labels, not expanded promises about every edge case.
 | [I: Items and puzzles](#i) | [Items and puzzles](07-items-crafting.md) | 27 |
 | [JS: JavaScript](#js) | [JavaScript](05-javascript.md) | 21 |
 | [L: Languages and vocabulary](#l) | [Languages and vocabulary](11-presentation-language.md) | 14 |
-| [N: NPCs and dialogue](#n) | [NPCs and dialogue](06-npcs-combat.md) | 29 |
+| [N: NPCs and dialogue](#n) | [NPCs and dialogue](06-npcs-dialogue.md) | 29 |
 | [P: Characters and progression](#p) | [Characters and progression](03-characters.md) | 30 |
 | [PR: Presentation](#pr) | [Presentation](11-presentation-language.md) | 20 |
 | [Q: Quests](#q) | [Quests](08-quests.md) | 16 |
-| [S: Saves and world files](#s) | [Saves and world files](02-world-workflow.md) | 24 |
-| [SC: MOBPROG commands and functions](#sc) | [MOBPROG commands and functions](04-mobprog.md) | 17 |
-| [ST: MOBPROG triggers](#st) | [MOBPROG triggers](04-mobprog.md) | 27 |
-| [T: Travel, vehicles and instances](#t) | [Travel, vehicles and instances](10-simulation-travel.md) | 16 |
-| [W: World simulation](#w) | [World simulation](10-simulation-travel.md) | 29 |
+| [S: Saves and world files](#s) | [Saves and world files](31-saves-and-party.md) | 24 |
+| [SC: MOBPROG commands and functions](#sc) | [MOBPROG commands and functions](27-mobprog-commands.md) | 17 |
+| [ST: MOBPROG triggers](#st) | [MOBPROG triggers](26-mobprog-triggers.md) | 27 |
+| [T: Travel, vehicles and instances](#t) | [Travel, vehicles and instances](30-travel-vehicles-instances.md) | 16 |
+| [W: World simulation](#w) | [World simulation](10-world-simulation.md) | 29 |
 
 ## Deferred work
 
@@ -208,13 +208,13 @@ Examples/regressions: [b13-help.js](../../tools/fixtures/fixes/b13-help.js).
 
 ## C: Combat and encounters
 
-Teaching chapter: [Combat and encounters](06-npcs-combat.md).
+Teaching chapter: [Combat and encounters](29-combat-and-encounters.md).
 
 <a id="c1"></a>
 
 ### C1: Healing and support aimed at the ally who needs it
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [CombatAbilities.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/CombatAbilities.java) · [Healer.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Healer.java) · [NiceAbilities.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/NiceAbilities.java) · [SupportPicker.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/SupportPicker.java).
 
@@ -224,7 +224,7 @@ Examples/regressions: [c1-support.js](../../tools/fixtures/fixes/c1-support.js).
 
 ### C2: Morale: mobs and groups that flee, rally or surrender
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Morale.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Morale.java) · [DefaultFaction.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultFaction.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -234,7 +234,7 @@ Examples/regressions: [c2-morale.js](../../tools/fixtures/fixes/c2-morale.js).
 
 ### C3: BossPhases: boss phases that fire once per fight
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Current note: Saved early rounds, engagement, immunity, summon bindings and combat targets.
 
@@ -246,7 +246,7 @@ Examples/regressions: [c3-phases.js](../../tools/fixtures/fixes/c3-phases.js).
 
 ### C4: Spawners with catalog weights, conditions and despawn
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [RandomItems.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RandomItems.java) · [RandomMonsters.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RandomMonsters.java) · [SpawnRules.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/SpawnRules.java).
 
@@ -256,7 +256,7 @@ Examples/regressions: [c4-spawner.js](../../tools/fixtures/fixes/c4-spawner.js).
 
 ### C5: Telegraphed attacks: named, cancellable, saved alarms
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [GenAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/GenAbility.java) · [Prop_Telegraph.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Telegraph.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [CMGenEditor.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMGenEditor.java) · [Telegraph.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Telegraph.java).
 
@@ -266,7 +266,7 @@ Examples/regressions: [c5-telegraph.js](../../tools/fixtures/fixes/c5-telegraph.
 
 ### C6: Prop_PartyScaler: scale fights to the party's size
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_PartyScaler.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_PartyScaler.java) · [Consider.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Consider.java) · [PartyScale.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/PartyScale.java).
 
@@ -276,7 +276,7 @@ Examples/regressions: [c6-scaler.js](../../tools/fixtures/fixes/c6-scaler.js).
 
 ### C7: Checkpoints: per-character respawn points
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_Checkpoint.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Checkpoint.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [CharCreation.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CharCreation.java) · [Checkpoints.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Checkpoints.java) · [CMUniqNameSortSVec.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/collections/CMUniqNameSortSVec.java).
 
@@ -286,7 +286,7 @@ Examples/regressions: [c7-checkpoint.js](../../tools/fixtures/fixes/c7-checkpoin
 
 ### C8: A downed state and rules for when the whole party falls
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_Downed.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Downed.java) · [Revive.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Revive.java) · [MUDFight.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDFight.java) · [Downed.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Downed.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -296,7 +296,7 @@ Examples/regressions: [c8-downed.js](../../tools/fixtures/fixes/c8-downed.js).
 
 ### C9: Random encounters on entering a room, from encounter tables
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [RandomEncounters.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RandomEncounters.java) · [WaveSpawner.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/WaveSpawner.java) · [EncounterCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/EncounterCmd.java) · [DefaultQuest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Encounters.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Encounters.java) · [ScriptLib.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptLib.java).
 
@@ -306,7 +306,7 @@ Examples/regressions: [c9-encounters.js](../../tools/fixtures/fixes/c9-encounter
 
 ### C10: TargetPriority: which party member a monster attacks
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [TargetPriority.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TargetPriority.java).
 
@@ -316,7 +316,7 @@ Examples/regressions: [c10-target.js](../../tools/fixtures/fixes/c10-target.js).
 
 ### C11: Pursue: chase a fleeing target, then go home
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Pursue.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Pursue.java).
 
@@ -326,7 +326,7 @@ Examples/regressions: [c11-pursue.js](../../tools/fixtures/fixes/c11-pursue.js).
 
 ### C12: Target masks and life steal on damage properties
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_AbsorbDamage.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AbsorbDamage.java) · [Prop_AddDamage.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AddDamage.java) · [Prop_HaveResister.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_HaveResister.java).
 
@@ -336,7 +336,7 @@ Examples/regressions: [c12-masks.js](../../tools/fixtures/fixes/c12-masks.js).
 
 ### C13: A difficulty setting and a player-side flag in combat formulas
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Difficulty.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Difficulty.java) · [CoffeeLevels.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeLevels.java) · [MUDFight.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDFight.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [CMath.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMath.java) · [GameDifficulty.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/GameDifficulty.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java).
 
@@ -346,7 +346,7 @@ Examples/regressions: [c13-difficulty.js](../../tools/fixtures/fixes/c13-difficu
 
 ### C14: Ini formulas for NPC armor, attack, damage, speed, rejuv and money
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [CoffeeLevels.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeLevels.java) · [CMProps.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMProps.java).
 
@@ -356,7 +356,7 @@ Examples/regressions: [c14-npcformulas.js](../../tools/fixtures/fixes/c14-npcfor
 
 ### C15: Prop_MobRank: minion, normal, elite and boss presets
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_MobRank.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_MobRank.java) · [Consider.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Consider.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [CoffeeLevels.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeLevels.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java) · [FightOdds.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/FightOdds.java) · [MobRanks.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/MobRanks.java).
 
@@ -366,7 +366,7 @@ Examples/regressions: [c15-mobrank.js](../../tools/fixtures/fixes/c15-mobrank.js
 
 ### C16: Prop_DeathRules: death and defeat rules per area or room
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_DeathRules.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_DeathRules.java) · [CoffeeUtensils.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeUtensils.java) · [MUDFight.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDFight.java) · [DeathRules.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/DeathRules.java).
 
@@ -376,7 +376,7 @@ Examples/regressions: [c16-deathrules.js](../../tools/fixtures/fixes/c16-deathru
 
 ### C17: Essential and yielding mobs
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_Essential.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Essential.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -386,7 +386,7 @@ Examples/regressions: [c17-essential.js](../../tools/fixtures/fixes/c17-essentia
 
 ### C18: Threat and target picking in scripts
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [CombatAbilities.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/CombatAbilities.java) · [TargetPriority.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TargetPriority.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [MUDFight.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDFight.java) · [Threat.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Threat.java).
 
@@ -396,7 +396,7 @@ Examples/regressions: [c18-threat.js](../../tools/fixtures/fixes/c18-threat.js).
 
 ### C19: Respawns that follow the story
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [ItemRejuv.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/ItemRejuv.java) · [Prop_RejuvWhen.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_RejuvWhen.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [RejuvRules.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/RejuvRules.java).
 
@@ -406,7 +406,7 @@ Examples/regressions: [c19-rejuv.js](../../tools/fixtures/fixes/c19-rejuv.js).
 
 ### C20: Wave and arena rooms
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [WaveSpawner.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/WaveSpawner.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Encounters.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Encounters.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -416,7 +416,7 @@ Examples/regressions: [c20-waves.js](../../tools/fixtures/fixes/c20-waves.js).
 
 ### C21: Leash and reset for bosses
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [BossPhases.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/BossPhases.java) · [EncounterReset.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/EncounterReset.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -426,7 +426,7 @@ Examples/regressions: [c21-reset.js](../../tools/fixtures/fixes/c21-reset.js).
 
 ### C22: Ability rotations for CombatAbilities
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Current note: Saved rotation round, cooldown/ONCE history, threat and scheduling state.
 
@@ -438,7 +438,7 @@ Examples/regressions: [c22-rotation.js](../../tools/fixtures/fixes/c22-rotation.
 
 ### C23: Ambushes with a perception check and surprise
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Prop_Ambush.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Ambush.java) · [Prop_Surprised.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Surprised.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -448,13 +448,13 @@ Examples/regressions: [c23-ambush.js](../../tools/fixtures/fixes/c23-ambush.js).
 
 ### C24: Invasions and raids on an area
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](29-combat-and-encounters.md)
 
 <a id="c25"></a>
 
 ### C25: CONSIDER ALL for the whole fight
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](29-combat-and-encounters.md)
 
 Implementation: [Consider.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Consider.java) · [FightOdds.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/FightOdds.java).
 
@@ -2107,13 +2107,13 @@ Examples/regressions: [l-vocab.js](../../tools/fixtures/fixes/l-vocab.js).
 
 ## N: NPCs and dialogue
 
-Teaching chapter: [NPCs and dialogue](06-npcs-combat.md).
+Teaching chapter: [NPCs and dialogue](06-npcs-dialogue.md).
 
 <a id="n1"></a>
 
 ### N1: WHEN= condition on every behaviour
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [StdArea.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdArea.java) · [GenBehavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/GenBehavior.java) · [Scene.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Scene.java) · [TraceBCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TraceBCmd.java) · [StdExit.java](../../CoffeeMud/com/planet_ink/coffee_mud/Exits/StdExit.java) · [StdItem.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdItem.java) · [StdRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Locales/StdRoom.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [AreaCatchUp.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/AreaCatchUp.java) · [BehaviorWhen.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/BehaviorWhen.java).
 
@@ -2123,7 +2123,7 @@ Examples/regressions: [n1-when.js](../../tools/fixtures/fixes/n1-when.js).
 
 ### N2: MPMENU: numbered dialogue choices that do not block
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Current note: Pending choices persist with displayed options and source binding; restore reissues or visibly cancels changed/missing sources.
 
@@ -2135,7 +2135,7 @@ Examples/regressions: [n2-menu.js](../../tools/fixtures/fixes/n2-menu.js).
 
 ### N3: Schedule behaviour: daily routines over several places
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Schedule.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Schedule.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -2145,7 +2145,7 @@ Examples/regressions: [n3-schedule.js](../../tools/fixtures/fixes/n3-schedule.js
 
 ### N4: Sleeper behaviour: sleeping NPCs woken by noise
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Sleeper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Sleeper.java) · [NpcAlarm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcAlarm.java).
 
@@ -2155,7 +2155,7 @@ Examples/regressions: [n4-sleeper.js](../../tools/fixtures/fixes/n4-sleeper.js).
 
 ### N5: Sentry behaviour: lookouts who spot sneakers and raise the alarm
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Alerted.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/Alerted.java) · [Patroller.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Patroller.java) · [Schedule.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Schedule.java) · [Sentry.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Sentry.java) · [NpcAlarm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcAlarm.java).
 
@@ -2165,7 +2165,7 @@ Examples/regressions: [n5-sentry.js](../../tools/fixtures/fixes/n5-sentry.js).
 
 ### N6: Memory behaviour: NPCs remember what each character did
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Memory.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Memory.java).
 
@@ -2175,7 +2175,7 @@ Examples/regressions: [n6-memory.js](../../tools/fixtures/fixes/n6-memory.js).
 
 ### N7: GenBehavior: named behaviours with parameters, defined as data
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [GenBehavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/GenBehavior.java) · [Create.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Create.java) · [Destroy.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Destroy.java) · [Modify.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modify.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [MUDHelp.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDHelp.java) · [BehaviorWhen.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/BehaviorWhen.java) · [CMClass.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMClass.java) · [GenBehaviors.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/GenBehaviors.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java).
 
@@ -2185,7 +2185,7 @@ Examples/regressions: [n7-genbehavior.js](../../tools/fixtures/fixes/n7-genbehav
 
 ### N8: Catch-up hook when an area wakes
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Prop_ClosedDayNight.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_ClosedDayNight.java) · [Prop_JScript.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_JScript.java) · [Ability.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/interfaces/Ability.java) · [StdArea.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdArea.java) · [JSBehavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/JSBehavior.java) · [Mobile.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Mobile.java) · [Patroller.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Patroller.java) · [Schedule.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Schedule.java) · [Sleeper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Sleeper.java) · [Behavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/interfaces/Behavior.java) · [AreaCatchUp.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/AreaCatchUp.java).
 
@@ -2195,7 +2195,7 @@ Examples/regressions: [n8-catchup.js](../../tools/fixtures/fixes/n8-catchup.js).
 
 ### N9: TALK command and TALK_PROG trigger
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Say.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Say.java) · [Talk.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Talk.java) · [Conversations.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Conversations.java) · [NpcAffinity.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcAffinity.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [ScriptMenus.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptMenus.java).
 
@@ -2205,7 +2205,7 @@ Examples/regressions: [n9-talk.js](../../tools/fixtures/fixes/n9-talk.js).
 
 ### N10: Replies arrive at once in turn-based time
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java) · [Behavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/interfaces/Behavior.java) · [TimeMode.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TimeMode.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [DialogueTime.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/DialogueTime.java) · [Waits.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Waits.java).
 
@@ -2215,7 +2215,7 @@ Examples/regressions: [n10-dialogue.js](../../tools/fixtures/fixes/n10-dialogue.
 
 ### N11: MudChat: readable conditions, script effects and per-player saved state
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java).
 
@@ -2225,7 +2225,7 @@ Examples/regressions: [n11-mudchat.js](../../tools/fixtures/fixes/n11-mudchat.js
 
 ### N12: Prop_NPCLines: per-NPC wording for stock service lines
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Prop_NPCLines.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_NPCLines.java) · [CommonMsgs.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CommonMsgs.java) · [NpcLines.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcLines.java).
 
@@ -2235,19 +2235,19 @@ Examples/regressions: [n12-npclines.js](../../tools/fixtures/fixes/n12-npclines.
 
 ### N13: Companion behaviour: NPC party members who take orders and comment
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](06-npcs-dialogue.md)
 
 <a id="n14"></a>
 
 ### N14: Dialogue trees: a Dialogue behaviour and .dlg files
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](06-npcs-dialogue.md)
 
 <a id="n15"></a>
 
 ### N15: Prop_Affinity: one NPC's opinion of each character
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Prop_Affinity.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Affinity.java) · [Talk.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Talk.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [CoffeeShops.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeShops.java) · [NpcAffinity.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcAffinity.java) · [NpcLines.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcLines.java).
 
@@ -2257,7 +2257,7 @@ Examples/regressions: [n15-affinity.js](../../tools/fixtures/fixes/n15-affinity.
 
 ### N16: Patroller waypoints that wait, act and change route by time
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Patroller.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Patroller.java).
 
@@ -2267,7 +2267,7 @@ Examples/regressions: [n16-waypoints.js](../../tools/fixtures/fixes/n16-waypoint
 
 ### N17: Warning before aggression
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Aggressive.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Aggressive.java) · [MobileAggressive.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MobileAggressive.java) · [AggroWarning.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/AggroWarning.java).
 
@@ -2277,7 +2277,7 @@ Examples/regressions: [n17-warning.js](../../tools/fixtures/fixes/n17-warning.js
 
 ### N18: Fix the NPC behaviour bugs a world will hit
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [MOBTeacher.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MOBTeacher.java) · [Nanny.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Nanny.java) · [Hireling.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Hireling.java).
 
@@ -2287,7 +2287,7 @@ Examples/regressions: [n18-behaviours.js](../../tools/fixtures/fixes/n18-behavio
 
 ### N19: Fix the MudChat defects
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java).
 
@@ -2297,7 +2297,7 @@ Examples/regressions: [n19-mudchat.js](../../tools/fixtures/fixes/n19-mudchat.js
 
 ### N20: Escortee: an NPC that travels with the party to a destination
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Escortee.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Escortee.java).
 
@@ -2307,7 +2307,7 @@ Examples/regressions: [n20-escortee.js](../../tools/fixtures/fixes/n20-escortee.
 
 ### N21: A configurable Hireling
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Hireling.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Hireling.java) · [Hire.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Hire.java).
 
@@ -2317,7 +2317,7 @@ Examples/regressions: [n21-hireling.js](../../tools/fixtures/fixes/n21-hireling.
 
 ### N22: Event barks with conditions and cooldowns, in Sounder
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Sounder.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Sounder.java) · [Barks.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Barks.java).
 
@@ -2327,13 +2327,13 @@ Examples/regressions: [n22-barks.js](../../tools/fixtures/fixes/n22-barks.js).
 
 ### N23: Rumours: a world list, gossiping NPCs, rumours from events
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](06-npcs-dialogue.md)
 
 <a id="n24"></a>
 
 ### N24: Topic keywords the player can learn and list
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java) · [ChattyBehavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/interfaces/ChattyBehavior.java) · [Say.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Say.java) · [Talk.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Talk.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [CommonMsgs.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CommonMsgs.java) · [NpcTopics.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcTopics.java).
 
@@ -2343,25 +2343,25 @@ Examples/regressions: [n24-topics.js](../../tools/fixtures/fixes/n24-topics.js).
 
 ### N25: LLM calls off the game thread
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](06-npcs-dialogue.md)
 
 <a id="n26"></a>
 
 ### N26: LLM NPCs with lore files and saved memory per player
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](06-npcs-dialogue.md)
 
 <a id="n27"></a>
 
 ### N27: LLM NPCs that act from a declared whitelist
 
-**deferred** · [Guide](06-npcs-combat.md)
+**deferred** · [Guide](06-npcs-dialogue.md)
 
 <a id="n28"></a>
 
 ### N28: Scene: NPC exchanges the player overhears
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [Scene.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Scene.java).
 
@@ -2371,7 +2371,7 @@ Examples/regressions: [n28-scene.js](../../tools/fixtures/fixes/n28-scene.js).
 
 ### N29: CHECK(): a skill check for dialogue
 
-**implemented** · [Guide](06-npcs-combat.md)
+**implemented** · [Guide](06-npcs-dialogue.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3057,13 +3057,13 @@ Examples/regressions: [q16-where.js](../../tools/fixtures/fixes/q16-where.js).
 
 ## S: Saves and world files
 
-Teaching chapter: [Saves and world files](02-world-workflow.md).
+Teaching chapter: [Saves and world files](31-saves-and-party.md).
 
 <a id="s1"></a>
 
 ### S1: Quest state that survives SAVE and RESTORE
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Prop_QuestGiver.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_QuestGiver.java) · [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java) · [QuestChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/QuestChat.java) · [DefaultQuest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Quest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/Quest.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [CoffeeMaker.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeMaker.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3073,7 +3073,7 @@ Examples/regressions: [s1-build.js](../../tools/fixtures/fixes/setup/s1-build.js
 
 ### S2: Save rules: save points, no-save zones, no saving in combat, autosave
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Prop_AutoSave.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AutoSave.java) · [Prop_NoSave.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_NoSave.java) · [Prop_SavePoint.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_SavePoint.java) · [Quit.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Quit.java) · [Restore.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Restore.java) · [Save.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Save.java) · [MUD.java](../../CoffeeMud/com/planet_ink/coffee_mud/application/MUD.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java).
 
@@ -3083,7 +3083,7 @@ Examples/regressions: [s2-fight.js](../../tools/fixtures/fixes/setup/s2-fight.js
 
 ### S3: world/world.ini for the settings that define the game
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [ListCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ListCmd.java) · [WorldCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/WorldCmd.java) · [SUD.java](../../CoffeeMud/com/planet_ink/coffee_mud/application/SUD.java) · [CMSecurity.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMSecurity.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java) · [WorldSettings.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldSettings.java).
 
@@ -3093,7 +3093,7 @@ Examples/regressions: [s20-disable.js](../../tools/fixtures/fixes/s20-disable.js
 
 ### S4: Riding kept in saves and world files
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [CoffeeMaker.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeMaker.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3103,7 +3103,7 @@ Examples/regressions: [s4-build.js](../../tools/fixtures/fixes/setup/s4-build.js
 
 ### S5: SAVE keeps conquests
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Arrest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Arrest.java) · [Conquerable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Conquerable.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3113,7 +3113,7 @@ Examples/regressions: [s5-law.js](../../tools/fixtures/fixes/s5-law.js) · [s12-
 
 ### S6: A world/resources overlay for every data file
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Armorsmithing.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Armorsmithing.java) · [Blacksmithing.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Blacksmithing.java) · [Boatwright.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Boatwright.java) · [Carpentry.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Carpentry.java) · [ClanCrafting.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/ClanCrafting.java) · [Cobbling.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Cobbling.java) · [CommonSkill.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/CommonSkill.java) · [Costuming.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Costuming.java) · [Fletching.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Fletching.java) · [GenCraftSkill.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/GenCraftSkill.java) · [GenWrightSkill.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/GenWrightSkill.java) · [GlassBlowing.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/GlassBlowing.java) · [InstrumentMaking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/InstrumentMaking.java) · [JewelMaking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/JewelMaking.java) · [LeatherWorking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/LeatherWorking.java) · [MasterLeatherWorking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/MasterLeatherWorking.java) · [Painting.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Painting.java) · [PaperMaking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/PaperMaking.java) · [Pottery.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Pottery.java) · [ScrimShaw.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/ScrimShaw.java) · [Sculpting.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Sculpting.java) · [Shipwright.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Shipwright.java) · [Smelting.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Smelting.java) · [StaffMaking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/StaffMaking.java) · [Tailoring.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Tailoring.java) · [Textiling.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Textiling.java) · [Torturesmithing.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Torturesmithing.java) · [Wainwrighting.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Wainwrighting.java) · [WandMaking.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/WandMaking.java) · [Weaponsmithing.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Weaponsmithing.java) · [Weaving.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Common/Weaving.java) · [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java) · [Create.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Create.java) · [Destroy.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Destroy.java) · [Modify.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modify.java) · [DirtyLanguage.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/DirtyLanguage.java) · [SUD.java](../../CoffeeMud/com/planet_ink/coffee_mud/application/SUD.java) · [CMFile.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMFile.java) · [CMSecurity.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMSecurity.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java) · [WorldSettings.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldSettings.java).
 
@@ -3123,7 +3123,7 @@ Examples/regressions: [FixWorld.js](../../tools/fixtures/fixes/classes/FixWorld.
 
 ### S7: Script engine state in the save: ONCE, TIME, DAY, DELAY, alarms, local variables
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Current note: Queued actor references now use persistent instance references with legacy name compatibility.
 
@@ -3135,7 +3135,7 @@ Examples/regressions: [s7-build.js](../../tools/fixtures/fixes/setup/s7-build.js
 
 ### S8: Generated quests survive save and restore
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Prop_QuestGiver.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_QuestGiver.java) · [RandomQuests.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RandomQuests.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3145,7 +3145,7 @@ Examples/regressions: [s9-states.js](../../tools/fixtures/fixes/s9-states.js) ·
 
 ### S9: A save hook for behaviour state: contracts, bribes, routes, dialogue
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Aggressive.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Aggressive.java) · [BribeGateGuard.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/BribeGateGuard.java) · [Concierge.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Concierge.java) · [Decay.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Decay.java) · [Emoter.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Emoter.java) · [Hireling.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Hireling.java) · [MOBEater.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MOBEater.java) · [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java) · [Nanny.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Nanny.java) · [Patroller.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Patroller.java) · [Scriptable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Scriptable.java) · [StdBehavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/StdBehavior.java) · [Restore.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Restore.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3155,7 +3155,7 @@ Examples/regressions: [s9-states.js](../../tools/fixtures/fixes/s9-states.js) ·
 
 ### S10: Templates, NPC clans, cron jobs, board posts and VFS files in world/
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java).
 
@@ -3165,7 +3165,7 @@ Examples/regressions: [s10-build.js](../../tools/fixtures/fixes/setup/s10-build.
 
 ### S11: One file per custom object, with scripts beside it
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [CoffeeMaker.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeMaker.java) · [GenericBuilder.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/GenericBuilder.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java).
 
@@ -3175,7 +3175,7 @@ Examples/regressions: [s11-build.js](../../tools/fixtures/fixes/setup/s11-build.
 
 ### S12: Warrants, fines and criminal records in the save
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Arrest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Arrest.java) · [Conquerable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Conquerable.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3185,7 +3185,7 @@ Examples/regressions: [s5-law.js](../../tools/fixtures/fixes/s5-law.js) · [s12-
 
 ### S13: World version in saves, a compatibility report and RESTORE ... FRESH=
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Current note: Expanded asset catalog and accepted loaded-version/per-file save manifest, including explicit reloads.
 
@@ -3197,7 +3197,7 @@ Examples/regressions: [s13-play.js](../../tools/fixtures/fixes/setup/s13-play.js
 
 ### S15: Vessels that save and restore exactly
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [StdNavigableBoardable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdNavigableBoardable.java) · [NavigableItem.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/NavigableItem.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3207,7 +3207,7 @@ Examples/regressions: [s15-build.js](../../tools/fixtures/fixes/setup/s15-build.
 
 ### S16: Crops and crafts in progress survive a save
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Current note: Ability-valued activity links serialize owner identity and ability ID, retain pending references across saves and rebind before assistance ticks. Shipwright helpers remain active without separate work items.
 
@@ -3219,7 +3219,7 @@ Examples/regressions: [s16-check.js](../../tools/fixtures/fixes/setup/s16-check.
 
 ### S17: Rooms and areas changed in play survive saves
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [TemporaryAffects.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/TemporaryAffects.java) · [FieryRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/FieryRoom.java) · [MovingRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MovingRoom.java) · [CoffeeMaker.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CoffeeMaker.java) · [GenericBuilder.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/GenericBuilder.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3229,7 +3229,7 @@ Examples/regressions: [s9-states.js](../../tools/fixtures/fixes/s9-states.js) ·
 
 ### S18: Generated dungeons survive a save
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [InstanceArea.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/InstanceArea.java) · [StdPlanarAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdPlanarAbility.java) · [StdAutoGenInstance.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdAutoGenInstance.java) · [StdThinInstance.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdThinInstance.java) · [Area.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/interfaces/Area.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3239,7 +3239,7 @@ Examples/regressions: [s18-again.js](../../tools/fixtures/fixes/setup/s18-again.
 
 ### S19: Instances and planes survive a save
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [InstanceArea.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/InstanceArea.java) · [StdPlanarAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdPlanarAbility.java) · [StdAutoGenInstance.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdAutoGenInstance.java) · [StdThinInstance.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdThinInstance.java) · [Area.java](../../CoffeeMud/com/planet_ink/coffee_mud/Areas/interfaces/Area.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3249,7 +3249,7 @@ Examples/regressions: [s18-again.js](../../tools/fixtures/fixes/setup/s18-again.
 
 ### S20: Opt out of stock achievements, titles and socials; wildcard disables
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [MudChat.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MudChat.java) · [ListCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ListCmd.java) · [WorldCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/WorldCmd.java) · [SUD.java](../../CoffeeMud/com/planet_ink/coffee_mud/application/SUD.java) · [CMFile.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMFile.java) · [CMSecurity.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/CMSecurity.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java) · [WorldSettings.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldSettings.java).
 
@@ -3259,7 +3259,7 @@ Examples/regressions: [FixWorld.js](../../tools/fixtures/fixes/classes/FixWorld.
 
 ### S21: World cron jobs in files, on the game clock
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [Create.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Create.java) · [ListCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ListCmd.java) · [Modify.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modify.java) · [CMJournals.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMJournals.java).
 
@@ -3269,7 +3269,7 @@ Examples/regressions: [s21-mark.js](../../tools/fixtures/fixes/setup/s21-mark.js
 
 ### S22: Save instance limits and planar visit timers
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [StdPlanarAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdPlanarAbility.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3279,7 +3279,7 @@ Examples/regressions: [s22-check.js](../../tools/fixtures/fixes/setup/s22-check.
 
 ### S23: Save tools: info, delete, copy, diff, checkpoints, autosave
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Current note: Process ownership, active-copy protection, validated recovery generations, synced snapshot files and compatibility gates.
 
@@ -3289,7 +3289,7 @@ Implementation: [Checkpoint.java](../../CoffeeMud/com/planet_ink/coffee_mud/Comm
 
 ### S24: Space objects in world files and saves
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Implementation: [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -3299,7 +3299,7 @@ Examples/regressions: [s24-build.js](../../tools/fixtures/fixes/setup/s24-build.
 
 ### S25: Readable world files and a world diff
 
-**implemented** · [Guide](02-world-workflow.md)
+**implemented** · [Guide](31-saves-and-party.md)
 
 Current note: Readable world export preserves literal presentation/property markup; creator museum covers publish, play and fresh-process restore.
 
@@ -3311,13 +3311,13 @@ Examples/regressions: [s11-build.js](../../tools/fixtures/fixes/setup/s11-build.
 
 ## SC: MOBPROG commands and functions
 
-Teaching chapter: [MOBPROG commands and functions](04-mobprog.md).
+Teaching chapter: [MOBPROG commands and functions](27-mobprog-commands.md).
 
 <a id="sc1"></a>
 
 ### SC1: Lists in variables: loop, add, remove, shuffle
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptLib.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptLib.java).
 
@@ -3327,7 +3327,7 @@ Examples/regressions: [sc1-lists.js](../../tools/fixtures/fixes/sc1-lists.js).
 
 ### SC2: Absolute game time, elapsed time and weekdays
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3337,7 +3337,7 @@ Examples/regressions: [sc2-time.js](../../tools/fixtures/fixes/sc2-time.js).
 
 ### SC3: Load mobs and items from the catalog
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [RandomMonsters.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RandomMonsters.java) · [DefaultQuest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java) · [ScriptLib.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptLib.java).
 
@@ -3347,7 +3347,7 @@ Examples/regressions: [sc3-catalog.js](../../tools/fixtures/fixes/sc3-catalog.js
 
 ### SC4: Saved variables per object, not per name
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [ObjectVars.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ObjectVars.java).
 
@@ -3357,7 +3357,7 @@ Examples/regressions: [sc4-objvars.js](../../tools/fixtures/fixes/sc4-objvars.js
 
 ### SC5: Read and change the message a script reacts to
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java).
 
@@ -3367,7 +3367,7 @@ Examples/regressions: [n17-warning.js](../../tools/fixtures/fixes/n17-warning.js
 
 ### SC6: Signals and function calls between scripts
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3377,7 +3377,7 @@ Examples/regressions: [sc6-signals.js](../../tools/fixtures/fixes/sc6-signals.js
 
 ### SC7: MPWAIT: pause a script and resume it later
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java).
 
@@ -3387,7 +3387,7 @@ Examples/regressions: [sc7-wait.js](../../tools/fixtures/fixes/sc7-wait.js).
 
 ### SC8: Party and terminal awareness in scripts
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3397,7 +3397,7 @@ Examples/regressions: [sc8-party.js](../../tools/fixtures/fixes/sc8-party.js).
 
 ### SC9: Bring the trigger and message-type help up to date
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3407,7 +3407,7 @@ Examples/regressions: [sc9-fixes.js](../../tools/fixtures/fixes/sc9-fixes.js).
 
 ### SC10: String functions
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptLib.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptLib.java).
 
@@ -3417,7 +3417,7 @@ Examples/regressions: [sc10-strings.js](../../tools/fixtures/fixes/sc10-strings.
 
 ### SC11: Numbers, dice and weighted picks
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [Scene.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Scene.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [NpcAffinity.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcAffinity.java) · [NpcTopics.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/NpcTopics.java) · [ScriptLib.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptLib.java).
 
@@ -3427,7 +3427,7 @@ Examples/regressions: [sc11-numbers.js](../../tools/fixtures/fixes/sc11-numbers.
 
 ### SC12: Add, remove and count tags from scripts
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3437,7 +3437,7 @@ Examples/regressions: [sc12-tags.js](../../tools/fixtures/fixes/sc12-tags.js).
 
 ### SC13: Script files with parameters
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3447,7 +3447,7 @@ Examples/regressions: [sc13-loadargs.js](../../tools/fixtures/fixes/sc13-loadarg
 
 ### SC14: Fix the confirmed MOBPROG bugs
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Current note: The original scriptableTest.script is automated. Its literal SCRIPT keyword is escaped; the harness supplies its legacy local channel and explicit lock/key setup.
 
@@ -3459,7 +3459,7 @@ Examples/regressions: [sc14-mobprog.js](../../tools/fixtures/fixes/sc14-mobprog.
 
 ### SC15: A CoffeeSUD edition of the Scriptable guide
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [Scriptable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Scriptable.java).
 
@@ -3467,7 +3467,7 @@ Implementation: [Scriptable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Beha
 
 ### SC16: +ANYINGROUP and +ALLINGROUP mask keys
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java).
 
@@ -3477,7 +3477,7 @@ Examples/regressions: [sc16-groupmask.js](../../tools/fixtures/fixes/sc16-groupm
 
 ### SC17: ELSEIF, WHILE blocks, CONTINUE, named locals and parameters
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](27-mobprog-commands.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java).
 
@@ -3487,13 +3487,13 @@ Examples/regressions: [sc17-grammar.js](../../tools/fixtures/fixes/sc17-grammar.
 
 ## ST: MOBPROG triggers
 
-Teaching chapter: [MOBPROG triggers](04-mobprog.md).
+Teaching chapter: [MOBPROG triggers](26-mobprog-triggers.md).
 
 <a id="st1"></a>
 
 ### ST1: Register LOGIN, LEVEL, LOGOFF and CHANNEL triggers when the script loads
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Scriptable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Scriptable.java).
 
@@ -3503,7 +3503,7 @@ Examples/regressions: [st1-global-triggers.js](../../tools/fixtures/fixes/st1-gl
 
 ### ST2: SKILL_PROG: skill learned, improved, mastered or failed
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [StdAbility.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/StdAbility.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3513,7 +3513,7 @@ Examples/regressions: [st2-skill.js](../../tools/fixtures/fixes/st2-skill.js) ·
 
 ### ST3: DISCOVER_PROG: first visit to a room or area
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3523,7 +3523,7 @@ Examples/regressions: [st2-skill.js](../../tools/fixtures/fixes/st2-skill.js) ·
 
 ### ST4: Weather and moon changes as messages and triggers
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultClimate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClimate.java) · [DefaultTimeClock.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java) · [CMMsg.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/CMMsg.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3533,7 +3533,7 @@ Examples/regressions: [st4-weather.js](../../tools/fixtures/fixes/st4-weather.js
 
 ### ST5: QUEST_PROG: quest start, accept, step, win, fail and end, anywhere
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultQuest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3543,7 +3543,7 @@ Examples/regressions: [st5.quest](../../tools/fixtures/fixes/setup/st5.quest) ·
 
 ### ST6: GAME_PROG and TURN_PROG: new game, save, restore, switch, pause and turns
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Switch.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Switch.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [Party.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [WorldHost.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/WorldHost.java) · [WorldJS.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/WorldJS.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java).
 
@@ -3553,7 +3553,7 @@ Examples/regressions: [st6-init.js](../../tools/fixtures/fixes/setup/st6-init.js
 
 ### ST7: VERB_PROG: verbs on objects that win over skills and socials
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Prop_Verbs.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Verbs.java) · [ListCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ListCmd.java) · [ScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/ScriptingEngine.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3563,7 +3563,7 @@ Examples/regressions: [st7-verb.js](../../tools/fixtures/fixes/st7-verb.js).
 
 ### ST8: Vessel triggers: board, disembark, sail, arrive and dock
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [StdNavigableBoardable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdNavigableBoardable.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [Waits.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Waits.java).
 
@@ -3573,7 +3573,7 @@ Examples/regressions: [st8-vessel.js](../../tools/fixtures/fixes/st8-vessel.js).
 
 ### ST9: CLAN_PROG, and entry and exit scripts on every membership change
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Conquerable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Conquerable.java) · [ClanAccept.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ClanAccept.java) · [ClanApply.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ClanApply.java) · [ClanExile.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ClanExile.java) · [ClanResign.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ClanResign.java) · [DefaultClan.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClan.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3583,7 +3583,7 @@ Examples/regressions: [st9-clan.js](../../tools/fixtures/fixes/st9-clan.js).
 
 ### ST10: PARTY_PROG and party functions
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [PartyCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/PartyCmd.java) · [Switch.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Switch.java) · [Party.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3593,7 +3593,7 @@ Examples/regressions: [st10-party.js](../../tools/fixtures/fixes/st10-party.js).
 
 ### ST11: Calendar triggers: named times of day, ranges, season, month, year, weekday
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [DefaultTimeClock.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3603,7 +3603,7 @@ Examples/regressions: [st11-calendar.js](../../tools/fixtures/fixes/st11-calenda
 
 ### ST12: @GLOBAL modifier for EXECMSG_PROG, DEATH_PROG and KILL_PROG
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3613,7 +3613,7 @@ Examples/regressions: [st12-global.js](../../tools/fixtures/fixes/st12-global.js
 
 ### ST13: CRAFT_PROG and RECIPE_PROG
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3623,7 +3623,7 @@ Examples/regressions: [st13-craft.js](../../tools/fixtures/fixes/st13-craft.js).
 
 ### ST14: FACTION_PROG: faction change and range crossing
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3633,7 +3633,7 @@ Examples/regressions: [st14-faction.js](../../tools/fixtures/fixes/st14-faction.
 
 ### ST15: COMBAT_PROG: combat start, end and flight
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3643,7 +3643,7 @@ Examples/regressions: [st15-combat.js](../../tools/fixtures/fixes/st15-combat.js
 
 ### ST16: Area border triggers and an area entry banner
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Prop_AreaBanner.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AreaBanner.java) · [Prop_AreaEntry.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AreaEntry.java) · [MUDTracker.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDTracker.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java).
 
@@ -3653,7 +3653,7 @@ Examples/regressions: [st16-border.js](../../tools/fixtures/fixes/st16-border.js
 
 ### ST17: LEVEL_PROG for level loss, with the new level in $g
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -3663,7 +3663,7 @@ Examples/regressions: [st17-level.js](../../tools/fixtures/fixes/st17-level.js).
 
 ### ST18: Fix RIDE_PROG; add DISMOUNT_PROG and REMOVING_PROG
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [StdRideable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdRideable.java).
 
@@ -3673,7 +3673,7 @@ Examples/regressions: [st18-ride-triggers.js](../../tools/fixtures/fixes/st18-ri
 
 ### ST19: READ_PROG for books, signs and inscriptions
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3683,7 +3683,7 @@ Examples/regressions: [st19-read.js](../../tools/fixtures/fixes/st19-read.js).
 
 ### ST20: GENERATED_PROG after a generator runs
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Generate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Generate.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [CMMsg.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/CMMsg.java) · [MUDPercolator.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDPercolator.java) · [GenSource.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/GenSource.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3693,7 +3693,7 @@ Examples/regressions: [st20-generated.js](../../tools/fixtures/fixes/st20-genera
 
 ### ST21: First and repeat meetings: FIRSTGREET_PROG, REGREET_PROG, MEMORY()
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Talk.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Talk.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3703,7 +3703,7 @@ Examples/regressions: [st21-meet.js](../../tools/fixtures/fixes/st21-meet.js).
 
 ### ST22: SOCIAL_PROG: exact names and socials aimed at the mob
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3713,7 +3713,7 @@ Examples/regressions: [st22-social.js](../../tools/fixtures/fixes/st22-social.js
 
 ### ST24: EVERY_PROG: saved game-time timer that catches up
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3723,7 +3723,7 @@ Examples/regressions: [st24-every.js](../../tools/fixtures/fixes/st24-every.js).
 
 ### ST25: VAR_PROG: react when a variable meets a condition
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3733,7 +3733,7 @@ Examples/regressions: [st25-var.js](../../tools/fixtures/fixes/st25-var.js).
 
 ### ST26: AFFECT_PROG: effect added or worn off
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [StdItem.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdItem.java) · [StdRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Locales/StdRoom.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3743,7 +3743,7 @@ Examples/regressions: [st26-affect.js](../../tools/fixtures/fixes/st26-affect.js
 
 ### ST27: DESTROY_PROG and DECAY_PROG for items
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [StdItem.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdItem.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3753,7 +3753,7 @@ Examples/regressions: [st27-destroy.js](../../tools/fixtures/fixes/st27-destroy.
 
 ### ST29: ACHIEVE_PROG: achievement earned
 
-**implemented** · [Guide](04-mobprog.md)
+**implemented** · [Guide](26-mobprog-triggers.md)
 
 Implementation: [Achievements.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/Achievements.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java).
 
@@ -3763,13 +3763,13 @@ Examples/regressions: [st29-achieve.js](../../tools/fixtures/fixes/st29-achieve.
 
 ## T: Travel, vehicles and instances
 
-Teaching chapter: [Travel, vehicles and instances](10-simulation-travel.md).
+Teaching chapter: [Travel, vehicles and instances](30-travel-vehicles-instances.md).
 
 <a id="t2"></a>
 
 ### T2: Dungeons that reset when the party comes back
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [InstanceArea.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/InstanceArea.java) · [ResetWhole.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/ResetWhole.java).
 
@@ -3777,7 +3777,7 @@ Implementation: [InstanceArea.java](../../CoffeeMud/com/planet_ink/coffee_mud/Ab
 
 ### T3: Script commands to sail, anchor, dock, board and hitch
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Port.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Port.java).
 
@@ -3785,7 +3785,7 @@ Implementation: [Prop_Port.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abili
 
 ### T4: Travel time on rooms, exits and areas
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Road.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Road.java) · [Prop_TravelTime.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_TravelTime.java).
 
@@ -3793,7 +3793,7 @@ Implementation: [Prop_Road.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abili
 
 ### T5: Timetabled ferry, coach and airship lines
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_HelmRestrict.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_HelmRestrict.java) · [TransportLine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TransportLine.java).
 
@@ -3801,7 +3801,7 @@ Implementation: [Prop_HelmRestrict.java](../../CoffeeMud/com/planet_ink/coffee_m
 
 ### T6: Journeys: passages that take hours, with events on the way
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Journey.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Journey.java).
 
@@ -3809,7 +3809,7 @@ Implementation: [Prop_Journey.java](../../CoffeeMud/com/planet_ink/coffee_mud/Ab
 
 ### T7: Script functions for riding and vessels
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Port.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Port.java).
 
@@ -3817,7 +3817,7 @@ Implementation: [Prop_Port.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abili
 
 ### T8: Crew-only helm for world-owned vessels
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_HelmRestrict.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_HelmRestrict.java) · [TransportLine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TransportLine.java).
 
@@ -3825,7 +3825,7 @@ Implementation: [Prop_HelmRestrict.java](../../CoffeeMud/com/planet_ink/coffee_m
 
 ### T9: Builder-set vessel pacing
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_HelmRestrict.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_HelmRestrict.java) · [TransportLine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TransportLine.java).
 
@@ -3833,7 +3833,7 @@ Implementation: [Prop_HelmRestrict.java](../../CoffeeMud/com/planet_ink/coffee_m
 
 ### T10: DelayedTransporter with messages, fares, conditions and party handling
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [DelayedTransporter.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/DelayedTransporter.java).
 
@@ -3841,7 +3841,7 @@ Implementation: [DelayedTransporter.java](../../CoffeeMud/com/planet_ink/coffee_
 
 ### T11: Unique interiors when vessels are copied, and a VESSEL command
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [VesselCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/VesselCmd.java).
 
@@ -3849,7 +3849,7 @@ Implementation: [VesselCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Comma
 
 ### T12: Waypoint network: fast travel between places found
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Waypoint.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Waypoint.java).
 
@@ -3857,7 +3857,7 @@ Implementation: [Prop_Waypoint.java](../../CoffeeMud/com/planet_ink/coffee_mud/A
 
 ### T14: Named ports, and COURSE TO a place
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Port.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Port.java).
 
@@ -3865,7 +3865,7 @@ Implementation: [Prop_Port.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abili
 
 ### T16: MovingRoom routes in the world files, with saved position
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [MovingRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MovingRoom.java).
 
@@ -3873,7 +3873,7 @@ Implementation: [MovingRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Beha
 
 ### T17: Fares for the whole party
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Travel.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java) · [TaxiBehavior.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TaxiBehavior.java).
 
@@ -3881,7 +3881,7 @@ Implementation: [Travel.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Tra
 
 ### T18: Builder-marked roads for caravans
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Prop_Road.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Road.java) · [Prop_TravelTime.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_TravelTime.java).
 
@@ -3889,7 +3889,7 @@ Implementation: [Prop_Road.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abili
 
 ### T19: Sister stables for mounts
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](30-travel-vehicles-instances.md)
 
 Implementation: [Nanny.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Nanny.java).
 
@@ -3897,13 +3897,13 @@ Implementation: [Nanny.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors
 
 ## W: World simulation
 
-Teaching chapter: [World simulation](10-simulation-travel.md).
+Teaching chapter: [World simulation](10-world-simulation.md).
 
 <a id="w1"></a>
 
 ### W1: Warrants and fines in scripts and masks
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Arrest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Arrest.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java) · [Laws.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Laws.java).
 
@@ -3913,7 +3913,7 @@ Examples/regressions: [w1-law.js](../../tools/fixtures/fixes/w1-law.js).
 
 ### W2: Currency file and a world default currency
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [BeanCounter.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/BeanCounter.java) · [Exchange.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Exchange.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java).
 
@@ -3923,7 +3923,7 @@ Examples/regressions: [w2-currency.js](../../tools/fixtures/fixes/w2-currency.js
 
 ### W3: Typed hazard zones: Prop_Hazard
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_Hazard.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Hazard.java) · [Prop_InstantDeath.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_InstantDeath.java).
 
@@ -3933,7 +3933,7 @@ Examples/regressions: [w3-hazard.js](../../tools/fixtures/fixes/w3-hazard.js).
 
 ### W4: Letting time pass: long WAIT, WAIT UNTIL, MPPASSTIME
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_InnRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_InnRoom.java) · [Wait.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Wait.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [GameTime.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/GameTime.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [Waits.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Waits.java).
 
@@ -3943,7 +3943,7 @@ Examples/regressions: [w4-wait.js](../../tools/fixtures/fixes/w4-wait.js).
 
 ### W5: Area calendars and the start date as content
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Modify.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modify.java) · [WorldCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/WorldCmd.java) · [DefaultTimeClock.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java) · [CMGenEditor.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMGenEditor.java) · [Calendars.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Calendars.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java).
 
@@ -3953,7 +3953,7 @@ Examples/regressions: [w5-calendar.js](../../tools/fixtures/fixes/w5-calendar.js
 
 ### W6: Holidays: more recurrences and tests by name
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [CalendarCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/CalendarCmd.java) · [DefaultQuest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [DefaultTimeClock.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java) · [Calendars.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Calendars.java) · [Holidays.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Holidays.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java).
 
@@ -3963,7 +3963,7 @@ Examples/regressions: [w6-holidays.js](../../tools/fixtures/fixes/w6-holidays.js
 
 ### W7: RoomStates: named versions of a room
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [RoomStates.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/RoomStates.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [BehaviorWhen.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/BehaviorWhen.java).
 
@@ -3973,7 +3973,7 @@ Examples/regressions: [w7-roomstates.js](../../tools/fixtures/fixes/w7-roomstate
 
 ### W8: Tides for builders
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_TidalExit.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_TidalExit.java) · [TidalRoom.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/TidalRoom.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [CommonMsgs.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CommonMsgs.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java) · [Room.java](../../CoffeeMud/com/planet_ink/coffee_mud/Locales/interfaces/Room.java) · [Tides.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Tides.java).
 
@@ -3983,7 +3983,7 @@ Examples/regressions: [w8-tides.js](../../tools/fixtures/fixes/w8-tides.js).
 
 ### W9: ResetWhole: DAYS, EXCEPT and MSG
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [ResetWhole.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/ResetWhole.java).
 
@@ -3993,7 +3993,7 @@ Examples/regressions: [w9-resetwhole.js](../../tools/fixtures/fixes/w9-resetwhol
 
 ### W10: Darkness tests, and dangers in the dark
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_DarkDanger.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_DarkDanger.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java).
 
@@ -4003,7 +4003,7 @@ Examples/regressions: [w10-dark.js](../../tools/fixtures/fixes/w10-dark.js).
 
 ### W11: Darkness that torches cannot beat
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_RoomDark.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_RoomDark.java).
 
@@ -4013,7 +4013,7 @@ Examples/regressions: [w11-deepdark.js](../../tools/fixtures/fixes/w11-deepdark.
 
 ### W12: MPWEATHER, and WEATHER SET, FORECAST and NEXT
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [EnvToolsCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/EnvToolsCmd.java) · [Weather.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Weather.java) · [DefaultClimate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClimate.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Climate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/interfaces/Climate.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java) · [WeatherControl.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/WeatherControl.java) · [WorldState.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldState.java).
 
@@ -4023,7 +4023,7 @@ Examples/regressions: [w12-weather.js](../../tools/fixtures/fixes/w12-weather.js
 
 ### W13: Sky and weather lines per area: Prop_SkyText
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_SkyText.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_SkyText.java) · [DefaultClimate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClimate.java) · [DefaultTimeClock.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java) · [SkyText.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/SkyText.java) · [KeyedLines.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/interfaces/KeyedLines.java).
 
@@ -4033,7 +4033,7 @@ Examples/regressions: [w13-skytext.js](../../tools/fixtures/fixes/w13-skytext.js
 
 ### W14: MPSHOP: remove, restock and reprice shop stock
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [StdShopKeeper.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdShopKeeper.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java) · [Shops.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Shops.java) · [ShopKeeper.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/interfaces/ShopKeeper.java).
 
@@ -4043,7 +4043,7 @@ Examples/regressions: [w14-shop.js](../../tools/fixtures/fixes/w14-shop.js).
 
 ### W15: Bank accounts and debts in scripts
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [BeanCounter.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/BeanCounter.java) · [Banks.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Banks.java) · [JSCm.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/JSCm.java).
 
@@ -4053,7 +4053,7 @@ Examples/regressions: [w15-bank.js](../../tools/fixtures/fixes/w15-bank.js).
 
 ### W16: Coin descriptions, materials and weights
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [StdCoins.java](../../CoffeeMud/com/planet_ink/coffee_mud/Items/Basic/StdCoins.java) · [BeanCounter.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/BeanCounter.java) · [MoneyLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MoneyLibrary.java).
 
@@ -4063,7 +4063,7 @@ Examples/regressions: [w16-coins.js](../../tools/fixtures/fixes/w16-coins.js).
 
 ### W17: Money formatting for scripts
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Shops.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Shops.java).
 
@@ -4073,7 +4073,7 @@ Examples/regressions: [w17-money.js](../../tools/fixtures/fixes/w17-money.js).
 
 ### W18: A breath count before drowning
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_AirSupply.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_AirSupply.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [MaskingLibrary.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/interfaces/MaskingLibrary.java) · [StdMOB.java](../../CoffeeMud/com/planet_ink/coffee_mud/MOBS/StdMOB.java) · [Breath.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Breath.java).
 
@@ -4083,7 +4083,7 @@ Examples/regressions: [w18-breath.js](../../tools/fixtures/fixes/w18-breath.js).
 
 ### W19: Floodable rooms driven by weather, tide or a variable
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Floodable.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Floodable.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java).
 
@@ -4093,7 +4093,7 @@ Examples/regressions: [w19-flood.js](../../tools/fixtures/fixes/w19-flood.js).
 
 ### W20: Climates and weather texts as data, chosen per area
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Modify.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/Modify.java) · [DefaultClimate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClimate.java) · [ClimateProfiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ClimateProfiles.java) · [WeatherControl.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/WeatherControl.java).
 
@@ -4103,7 +4103,7 @@ Examples/regressions: [w20-climate.js](../../tools/fixtures/fixes/w20-climate.js
 
 ### W21: Law book edits in builder mode saved to the world files
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Arrest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Arrest.java) · [WorldFiles.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/WorldFiles.java).
 
@@ -4113,7 +4113,7 @@ Examples/regressions: [w21-lawfile.js](../../tools/fixtures/fixes/w21-lawfile.js
 
 ### W22: Custom seasons, seasonal day length and named moons
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_ClosedSeason.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_ClosedSeason.java) · [DefaultClimate.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultClimate.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [DefaultTimeClock.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultTimeClock.java) · [CommonMsgs.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CommonMsgs.java) · [MUDZapper.java](../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/MUDZapper.java) · [Calendars.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Calendars.java).
 
@@ -4123,7 +4123,7 @@ Examples/regressions: [w22-seasons.js](../../tools/fixtures/fixes/w22-seasons.js
 
 ### W23: Game-time schedules for quests
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [DefaultQuest.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultQuest.java) · [Schedules.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Schedules.java).
 
@@ -4133,31 +4133,31 @@ Examples/regressions: [w23-schedule.js](../../tools/fixtures/fixes/w23-schedule.
 
 ### W24: Gradual and conditional restocking
 
-**deferred** · [Guide](10-simulation-travel.md)
+**deferred** · [Guide](10-world-simulation.md)
 
 <a id="w25"></a>
 
 ### W25: Exposure: body temperature from climate, shelter and clothing
 
-**deferred** · [Guide](10-simulation-travel.md)
+**deferred** · [Guide](10-world-simulation.md)
 
 <a id="w26"></a>
 
 ### W26: Bounty hunters and wanted posters
 
-**deferred** · [Guide](10-simulation-travel.md)
+**deferred** · [Guide](10-world-simulation.md)
 
 <a id="w27"></a>
 
 ### W27: Market: supply and demand that remembers and recovers
 
-**deferred** · [Guide](10-simulation-travel.md)
+**deferred** · [Guide](10-world-simulation.md)
 
 <a id="w28"></a>
 
 ### W28: Prop_TimeMode: zones locked to turn-based or real time
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [Prop_TimeMode.java](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_TimeMode.java) · [TimeMode.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/TimeMode.java) · [ScriptEvents.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ScriptEvents.java) · [TimeLock.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/TimeLock.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java).
 
@@ -4167,7 +4167,7 @@ Examples/regressions: [w28-timemode.js](../../tools/fixtures/fixes/w28-timemode.
 
 ### W29: Exchange rates that can change
 
-**implemented** · [Guide](10-simulation-travel.md)
+**implemented** · [Guide](10-world-simulation.md)
 
 Implementation: [MoneyChanger.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/MoneyChanger.java) · [DefaultScriptingEngine.java](../../CoffeeMud/com/planet_ink/coffee_mud/Common/DefaultScriptingEngine.java) · [Exchange.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Exchange.java) · [SaveGame.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/save/SaveGame.java).
 

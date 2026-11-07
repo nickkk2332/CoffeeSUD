@@ -7,10 +7,13 @@
     tools/saveinspect.py SAVE --room "Area#12"    move the character to a room
 
 SAVE is the save's folder, such as CoffeeMud/saves/hero.  A change writes
-world.xml again, and keeps the old one as world.xml.bak.  The game must not
-be running on that save.  world.xml is CoffeeSUD's own XML, read here with
+world.xml again, keeps the old one as world.xml.bak, and records the new
+world.xml's checksum in the save's .complete list, so the game still takes the
+save as whole (without that it would set the save aside as damaged and go back
+to the one before).  The game must not be running on that save.  world.xml is CoffeeSUD's own XML, read here with
 patterns rather than an XML parser, since its text is escaped only for < and >.
 """
+import hashlib
 import os
 import re
 import sys
@@ -74,11 +77,59 @@ def show(folder):
             print("Variable: %s %s = %s" % (tag(body, "HOST"), tag(body, "NAME"), tag(body, "VALUE")))
 
 
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(65536), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def manifest_key(line):
+    """The key of a Java properties line, or None for a comment or a blank."""
+    s = line.lstrip()
+    if not s or s[0] in "#!":
+        return None
+    key = []
+    i = 0
+    while i < len(s) and s[i] not in "=: \t\r\n":
+        if s[i] == "\\" and i + 1 < len(s):
+            i += 1
+        key.append(s[i])
+        i += 1
+    return "".join(key)
+
+
+def update_manifest(folder, name):
+    """D-SP-1: put the new checksum of a changed file in the save's .complete list.
+    SaveSlots.complete() checks every listed file, so a stale entry makes the
+    game treat the save as damaged.  A save without the list (format 1) needs
+    nothing."""
+    marker = os.path.join(folder, ".complete")
+    if not os.path.isfile(marker):
+        return
+    with open(marker, encoding="iso-8859-1") as f:
+        lines = f.read().splitlines()
+    digest = sha256(os.path.join(folder, name))
+    found = False
+    for i, line in enumerate(lines):
+        if manifest_key(line) == name:
+            lines[i] = name + "=" + digest
+            found = True
+    if not found:
+        lines.append(name + "=" + digest)
+    tmp = marker + ".tmp"
+    with open(tmp, "w", encoding="iso-8859-1", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+    os.replace(tmp, marker)
+
+
 def write(folder, world):
     path = os.path.join(folder, "world.xml")
     os.replace(path, path + ".bak")
     with open(path, "w", encoding="utf-8") as f:
         f.write(world)
+    update_manifest(folder, "world.xml")
 
 
 def set_player_field(folder, name, value):

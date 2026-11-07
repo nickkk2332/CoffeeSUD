@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "example.foundry",
+  "version": 1,
+  "title": "The guild foundry",
+  "owner": "organization",
+  "points": "research",
+  "earn": [
+    {"on": "contribute", "money_per_point": 10},
+    {"on": "kill", "amount": 1}
+  ],
+  "curve": {"type": "linear", "per_level": 50, "cap": 3},
+  "milestones": [
+    {"level": 3, "title": "The guild forge", "unlock": "guild-forge", "message": "The guild's forge is lit."}
+  ]
+}

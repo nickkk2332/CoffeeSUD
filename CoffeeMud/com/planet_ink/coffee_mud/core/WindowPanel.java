@@ -30,8 +30,9 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
 */
 /**
  * The panel beside the text of a character's window: what it shows, and
- * whether there is one.  WINDOWPANEL=STATUS,MAP,PARTY (in coffeemud.ini or
- * world.ini, or on the command line) or WINDOWS PANEL ON turns it on, with
+ * whether there is one.  WINDOWPANEL=STATUS,MAP,PARTY (in coffeemud.ini or on
+ * the command line; world.ini does not take it, as it is not in
+ * WorldSettings.KEYS) or WINDOWS PANEL ON turns it on, with
  * the sections given, in their order:
  * <ul>
  * <li>STATUS: world/text/panel.txt, with the prompt's codes (%h, %r, %z,

@@ -79,6 +79,56 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 
 	protected String msgStr=defaultMessage();
 
+	/** I20: TRADE: whether a bound item may be given or sold: NONE, ALLOWED (only to whom it allows, the default) or ANY */
+	protected enum Trade
+	{
+		NONE,
+		ALLOWED,
+		ANY
+	}
+
+	protected Trade		trade		= Trade.ALLOWED;
+	/** I20: who it is allotted to (ALLOT), and for how long (ALLOTFOR, empty for as long as it lies unclaimed) */
+	protected String	allot		= "";
+	protected long		allotFor	= 0;
+	protected long		allotAt		= -1;
+	/** I20: where it came from (SOURCE), for inspection */
+	protected String	source		= "";
+	/** I20: how long a binding lasts (EXPIRES, empty for ever), when it was made, and whether it has ended */
+	protected long		expires		= 0;
+	protected long		boundAt		= -1;
+	protected boolean	freed		= false;
+
+	/** I20: a duration in words, as "2 mudhours", in game milliseconds; 0 for none */
+	protected static long duration(final String words)
+	{
+		if((words==null)||(words.trim().length()==0))
+			return 0;
+		try
+		{
+			final int ticks=CMLib.time().parseTickExpression(CMLib.time().globalClock(),words.trim());
+			return (ticks>0)?(long)ticks*CMProps.getTickMillis():0;
+		}
+		catch(final com.planet_ink.coffee_mud.core.exceptions.CMException e)
+		{
+			return 0;
+		}
+	}
+
+	/** I20: the text with KEY="value" set (or taken away, for null) */
+	protected static String withParm(final String text,final String key,final String value)
+	{
+		String t=text.replaceAll("(?i)(^|\\s)"+key+"=(\"[^\"]*\"|\\S*)","").trim();
+		if(value!=null)
+			t=(t+" "+key+"=\""+CMStrings.escape(value)+"\"").trim();
+		return t;
+	}
+
+	protected void store(final String key,final String value)
+	{
+		super.miscText=withParm(text(),key,value);
+	}
+
 	@Override
 	public void setMiscText(final String text)
 	{
@@ -105,7 +155,61 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 		boundToName = CMStrings.deEscape(CMParms.getParmStr(text, "BOUND", ""));
 		keepOverDeath = CMParms.getParmBool(text, "DEATHKEEP", false);
 		msgStr=CMParms.getParmStr(text,"MESSAGE",defaultMessage());
+		// I20: the fields beside the binding: trade, allotment, source, expiry, and when each began
+		final Trade t=(Trade)CMath.s_valueOf(Trade.class,CMParms.getParmStr(text,"TRADE","ALLOWED").toUpperCase().trim());
+		trade=(t==null)?Trade.ALLOWED:t;
+		allot=CMStrings.deEscape(CMParms.getParmStr(text,"ALLOT",""));
+		allotFor=duration(CMStrings.deEscape(CMParms.getParmStr(text,"ALLOTFOR","")));
+		allotAt=CMath.s_long(CMParms.getParmStr(text,"ALLOTAT","-1"));
+		source=CMStrings.deEscape(CMParms.getParmStr(text,"SOURCE",""));
+		expires=duration(CMStrings.deEscape(CMParms.getParmStr(text,"EXPIRES","")));
+		boundAt=CMath.s_long(CMParms.getParmStr(text,"BOUNDAT","-1"));
+		freed=CMParms.getParmBool(text,"FREED",false);
 		super.setMiscText(text);
+		if((allot.length()>0)&&(allotAt<0)&&(allotFor>0))
+		{
+			allotAt=GameTime.now();
+			store("ALLOTAT",Long.toString(allotAt));
+		}
+	}
+
+	/** I20: who it is allotted to now, or "" once claimed or the allotment has run out */
+	protected String allottedTo()
+	{
+		if(allot.length()==0)
+			return "";
+		if((allotFor>0)&&(allotAt>=0)&&((GameTime.now()-allotAt)>=allotFor))
+			return "";
+		return allot;
+	}
+
+	/** I20: ends a binding whose time is up: the item is free, and binds no more */
+	protected void expire()
+	{
+		if((boundToName.length()>0)&&(expires>0)&&(boundAt>=0)&&((GameTime.now()-boundAt)>=expires))
+		{
+			boundToName="";
+			freed=true;
+			String t=withParm(text(),"BOUND",null);
+			t=withParm(t,"BOUNDAT",null);
+			super.miscText=withParm(t,"FREED","true");
+		}
+	}
+
+	protected void bound(final String name)
+	{
+		boundToName=name;
+		boundAt=GameTime.now();
+		String t=withParm(text(),"BOUND",boundToName);
+		if(expires>0)
+			t=withParm(t,"BOUNDAT",Long.toString(boundAt));
+		super.miscText=t;
+	}
+
+	protected static String mudHours(final long ms)
+	{
+		final long hour=Math.max(1,CMProps.getMillisPerMudHour());
+		return Math.max(1,(ms+hour-1)/hour)+" mud hour(s)";
 	}
 
 	protected String defaultMessage()
@@ -128,9 +232,24 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 	@Override
 	public String accountForYourself()
 	{
+		expire();
+		// I20: each field on its own: allocation, use, trade, source, expiry
+		final List<String> out=new ArrayList<String>();
+		final String allotted=allottedTo();
+		if(allotted.length()>0)
+			out.add("Allotted to: "+allotted+((allotFor>0)?" for "+mudHours(allotFor-(GameTime.now()-allotAt))+" more":""));
 		if(boundToName.length()>0)
-			return "Bound to: "+boundToName;
-		return "Binds to "+this.to.toString().toLowerCase()+" on "+this.on.toString().toLowerCase();
+			out.add("Bound to: "+boundToName+((expires>0)&&(boundAt>=0)?" for "+mudHours(expires-(GameTime.now()-boundAt))+" more":""));
+		else
+		if(freed)
+			out.add("Its binding has ended; anyone may use it");
+		else
+		if(to!=BoundTo.NOONE)
+			out.add("Binds to "+this.to.toString().toLowerCase()+" on "+this.on.toString().toLowerCase()+((expires>0)?", for "+mudHours(expires):""));
+		out.add("Trade: "+((trade==Trade.NONE)?"cannot be given or sold once bound":(trade==Trade.ANY)?"may be given or sold, bound or not":"once bound, given only to whom it is bound to, and not sold"));
+		if(source.length()>0)
+			out.add("From: "+source);
+		return String.join("; ",out);
 	}
 
 	@Override
@@ -143,67 +262,30 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 		if(mob.location()==null)
 			return true;
 
+		expire();
+		// I20: an allotted item is taken first by the one it is allotted to, until the allotment runs out
+		final String allotted=allottedTo();
+		if(msg.amITarget(affected)&&(msg.targetMinor()==CMMsg.TYP_GET)&&(allotted.length()>0)
+		&&(!(affected instanceof Item)||!(((Item)affected).owner() instanceof MOB))&&!allotted.equals(mob.Name()))
+		{
+			mob.tell(L("@x1 is allotted to @x2.",affected.name(),allotted));
+			return false;
+		}
 		if(msg.amITarget(affected) && (to != BoundTo.NOONE))
 		{
 			switch(msg.targetMinor())
 			{
 			case CMMsg.TYP_HOLD:
-				break;
 			case CMMsg.TYP_WEAR:
-				break;
 			case CMMsg.TYP_WIELD:
-				break;
 			case CMMsg.TYP_GET:
 			case CMMsg.TYP_EAT:
 			case CMMsg.TYP_DRINK:
-				if(this.boundToName.length()>0)
+				// once bound, only those it is bound to may take, use or put it on
+				if((this.boundToName.length()>0) && (!allows(msg.source())))
 				{
-					boolean zap = true;
-					switch(to)
-					{
-					case NOONE:
-						zap = false;
-						break;
-					case CHARACTER:
-						if(this.boundToName.equals(msg.source().Name()))
-							zap=false;
-						break;
-					case PLAYER:
-						if((this.boundToName.equals(msg.source().Name()))
-						||(!msg.source().isPlayer()))
-							zap=false;
-						break;
-					case NPC:
-						if((this.boundToName.equals(msg.source().Name()))
-						||(msg.source().isPlayer()))
-							zap=false;
-						break;
-					case GROUP:
-					{
-						final List<String> names=CMParms.parse(this.boundToName);
-						if(names.contains(msg.source().Name()))
-							zap=false;
-						break;
-					}
-					case ACCOUNT:
-						if((msg.source().playerStats()!=null)
-						&&(msg.source().playerStats().getAccount()!=null)
-						&&(this.boundToName.equals(msg.source().playerStats().getAccount().getAccountName())))
-							zap=false;
-						break;
-					case CLAN:
-					{
-						final Pair<Clan,Integer> pI=msg.source().getClanRole(this.boundToName);
-						if(pI!=null)
-							zap=false;
-						break;
-					}
-					}
-					if(zap)
-					{
-						mob.location().show(mob,null,affected,CMMsg.MSG_OK_ACTION,msgStr);
-						return false;
-					}
+					mob.location().show(mob,null,affected,CMMsg.MSG_OK_ACTION,msgStr);
+					return false;
 				}
 				break;
 			default:
@@ -212,13 +294,59 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 		}
 		else
 		if((this.boundToName.length()>0)
+		&&(trade!=Trade.ANY)
 		&&(msg.tool()==affected)
 		&&(msg.sourceMinor()==CMMsg.TYP_SELL))
 		{
 			msg.source().tell(L("@x1 is bound to @x2, and can not be sold.",affected.name(),this.boundToName));
 			return false;
 		}
+		else
+		if((this.boundToName.length()>0)
+		&&(to != BoundTo.NOONE)
+		&&(trade!=Trade.ANY)
+		&&(msg.tool()==affected)
+		&&(msg.targetMinor()==CMMsg.TYP_GIVE)
+		&&(msg.target() instanceof MOB)
+		&&((trade==Trade.NONE)||(!allows((MOB)msg.target()))))
+		{
+			msg.source().tell(L("@x1 is bound to @x2, and can not be given away.",affected.name(),this.boundToName));
+			return false;
+		}
 		return true;
+	}
+
+	/**
+	 * Whether someone may have this bound item: the one it is bound to, or one
+	 * of the group, profile or organization it is bound to.
+	 * @param who the one taking, using, or being given it
+	 * @return true if they may
+	 */
+	protected boolean allows(final MOB who)
+	{
+		if((who == null) || (this.boundToName.length()==0))
+			return true;
+		switch(to)
+		{
+		case NOONE:
+			return true;
+		case CHARACTER:
+			return this.boundToName.equals(who.Name());
+		case PLAYER:
+			return this.boundToName.equals(who.Name()) || (!who.isPlayer());
+		case NPC:
+			return this.boundToName.equals(who.Name()) || who.isPlayer();
+		case GROUP:
+			return CMParms.parse(this.boundToName).contains(who.Name());
+		case ACCOUNT:
+			return (who.playerStats()!=null)
+				&&(who.playerStats().getAccount()!=null)
+				&&(this.boundToName.equals(who.playerStats().getAccount().getAccountName()));
+		case CLAN:
+			return who.getClanRole(this.boundToName)!=null;
+		default:
+			return true;
+		}
 	}
 
 	final String getBindyName(final MOB mob)
@@ -283,26 +411,30 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 			case CMMsg.TYP_EAT:
 			case CMMsg.TYP_DRINK:
 				if((this.boundToName.length()==0)
+				&&(!freed)
 				&&(on == BoundOn.EQUIP))
 				{
-					this.boundToName = getBindyName(msg.source());
-					if(this.boundToName.length()>0)
-						super.miscText = text()+" BOUND=\""+CMStrings.escape(this.boundToName)+"\"";
+					final String name = getBindyName(msg.source());
+					if(name.length()>0)
+						bound(name);
 				}
 				break;
 			case CMMsg.TYP_GET:
+				if((allot.length()>0)&&(allottedTo().equals(msg.source().Name())||(allottedTo().length()==0)))
+				{
+					// I20: the allotment ends once it is claimed
+					allot="";
+					super.miscText=withParm(withParm(withParm(text(),"ALLOT",null),"ALLOTFOR",null),"ALLOTAT",null);
+				}
 				if((this.boundToName.length()==0)
+				&&(!freed)
 				&&(on == BoundOn.PICKUP)
 				&&((!(msg.source() instanceof ShopKeeper)))
 				&&((!msg.source().isMonster())||(msg.source().amFollowing()!=null)))
 				{
-					this.boundToName = getBindyName(msg.source());
-					if(this.boundToName.length()>0)
-					{
-						final String boundStr=" BOUND=\""+CMStrings.escape(this.boundToName)+"\"";
-						if(text().indexOf(boundStr)<0)
-							super.miscText = text()+boundStr;
-					}
+					final String name = getBindyName(msg.source());
+					if(name.length()>0)
+						bound(name);
 				}
 				break;
 			default:

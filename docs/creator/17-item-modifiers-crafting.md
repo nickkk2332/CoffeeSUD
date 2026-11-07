@@ -203,7 +203,7 @@ item/modifier identities while keeping its rolls. Both run on the game thread
 (or at boot, as MODBASE does). Direct generic cloning (a rejuvenated or
 RandomItems copy) is not the managed-copy API: such a copy shares the record
 but is not the item it is bound to, so it grants no bonuses, AFFIXES adds
-nothing to it, and WORLD CHECK ITEMMODS names it. Generation addition is
+nothing to it, and WORLD CHECK ONLY=itemmods names it. Generation addition is
 refused for owned or already crafted items. Ordinary gameplay uses
 transactions for edits.
 For catalog generation, keep the prototype untracked and apply MODBASE to each
@@ -221,10 +221,90 @@ does not make generic catalog cloning the managed-copy API.
 }
 ```
 
-Actions: add, remove, reroll, protect, unprotect. Item/modifier tag lists require
-all listed tags. An add operation's nonempty affixes list further restricts the
-base pool; an empty list uses the whole base pool. Other actions target one
-modifier UID resolved from its current displayed number when preparing.
+Actions: add, remove, reroll, protect, unprotect, replace, upgrade and refine
+([quality](#materials-and-quality)), and the two that draw their modifiers,
+imbue and reforge
+([targeted crafting](#targeted-crafting-imbue-reforge-and-catalysts)).
+Item/modifier tag lists require all listed tags. An add or replace operation's
+nonempty affixes list further restricts the base pool; an empty list uses the
+whole base pool. Remove, reroll, protect and unprotect target one modifier UID
+resolved from its current displayed number when preparing.
+
+- **replace** takes a modifier number and the affix to put in its place:
+  `MODCRAFT PREPARE workbench.replace "workbench cloak" 2 embertrial.piercing`.
+  The old modifier is removed and the new one added, rolled, in one settlement
+  and one revision. The new affix must fit once the old one is gone: its group,
+  its position's capacity, its level and the pools. A protected modifier
+  cannot be replaced. `modifier_tags` apply to both the old and the new.
+- **upgrade** takes no selector: `MODCRAFT PREPARE workbench.upgrade "workbench cloak"`.
+  It moves the item to its base's declared `successor`, keeping every modifier,
+  its rolls, identity and protection. The successor must be for the same item
+  kind, hold every modifier's affix in its pool, and have room for them.
+
+A base declares its successor with an optional field:
+
+```json
+{"schema": 1, "kind": "base", "id": "workbench.cloak", "version": 1, "name": "...",
+ "item_kind": "armor", "prefixes": 1, "suffixes": 1, "tags": ["cloth", "workbench"],
+ "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"],
+ "successor": "workbench.greatcloak"}
+```
+
+**A refusal says why.** PREVIEW and PREPARE explain an invalid target: "modifier
+is protected: Wardwoven, group fire-resistance; unprotect it first", "exclusive
+group fire-resistance already present: Wardwoven (protected)", "no such modifier
+number", "workbench.greatcloak.v1 declares no successor to upgrade to", "need 2
+weight unit(s) of plain IRON in your inventory". Each ends "Nothing was spent or
+drawn": a refused validation consumes nothing and draws no random value.
+
+## Staged recipes
+
+A staged recipe makes a new item in stages, each settled on its own, its progress
+kept on a work piece:
+
+```json
+{
+  "schema": 1, "kind": "recipe", "id": "workbench.cloak-work", "version": 1,
+  "name": "Make a woven cloak", "station": "ember-forge", "piece": "an unfinished cloak",
+  "stages": [
+    {"name": "Spin the cloth", "material": "COTTON", "units": 2},
+    {"name": "Stitch the hem", "material": "COTTON", "units": 1},
+    {"name": "Rivet the clasp", "material": "IRON", "units": 1}
+  ],
+  "result": {"catalog": "a woven cloak", "base": "workbench.cloak", "modifiers": 1}
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `station` | The workstation tag every stage needs. |
+| `piece` | The work piece's name. |
+| `stages` | 1 to 6, each a `name`, a registered `material` and its `units`, paid as an operation's cost is. |
+| `result` | `catalog`: the catalog item made (a GenArmor, GenWeapon, GenItem or GenAmmunition), and either `base` and `modifiers` (tracked generation, as MODBASE and AFFIXES) or `policy` (a [loot policy](40-loot-policies.md)). |
+
+```text
+MODCRAFT BEGIN workbench.cloak-work
+MODCRAFT PREVIEW workbench.cloak-work "unfinished cloak"
+MODCRAFT PREPARE workbench.cloak-work "unfinished cloak"
+MODCRAFT COMMIT
+MODCRAFT STATUS
+```
+
+BEGIN, at the station, sets out the work piece (`Prop_WorkOrder`, which holds
+the recipe's pin and the stage reached); it spends and draws nothing. Each
+PREPARE and COMMIT settles the next stage, through the same request ledger as
+the operations: the stage's materials are paid once, the piece moves on, and a
+repeated COMMIT cannot pay or advance it again. The piece keeps its progress in
+the save. The last stage makes the product, gives it to the crafter and takes
+the piece away; it is the only stage that draws random values (the product's
+modifiers). STATUS lists the work pieces you carry and each one's next stage.
+The recipe is pinned when the piece is set out, so a newer version of it does
+not change a piece already begun.
+
+Each settled stage fires `itemCrafted` with its receipt, whose `stage` field
+says which. As for operations, a listener sees the settled state; returning
+false, throwing or calling COMMIT again does not repeat the stage, and it cannot
+start another craft.
 
 Station uses the existing `Workstations.has` rule: a room/item Prop_Workstation
 with the tag, or an appropriately tagged top-level room item. This slice uses
@@ -245,6 +325,142 @@ eight piles pay one operation. Decorated/enchanted resources, other currencies,
 multi-ingredient recipes, timed work and arbitrary scripts are outside this
 controlled commit family. Existing crafting skills still handle their normal
 recipes and materials.
+
+## Targeted crafting: imbue, reforge and catalysts
+
+Two actions draw their modifiers instead of being told which:
+
+- **imbue** adds one modifier, drawn by weight among the base's pool;
+- **reforge** draws again every unprotected modifier (as many as there were),
+  keeping the protected ones as they are.
+
+Each pick is drawn among the affixes the item can hold now (kind, level,
+group and slot), within the operation's `affixes` allow-list and with its
+`modifier_tags`. Three fields shape the draw:
+
+| Field | Meaning |
+| --- | --- |
+| `exclude_tags` | Affixes with any of these tags cannot be drawn. |
+| `weights` | A multiplier (0.01 to 100) for affixes with a tag. An affix with several weighted tags multiplies them all, and so do the operation and each catalyst. |
+| `guarantee` | A tag: the first modifier drawn must have it. If no affix with it can be drawn, the craft is refused. |
+
+An operation can carry them itself, and it names the **catalysts** it takes.
+A catalyst is a definition of its own: an ingredient with a cost and the same
+three fields.
+
+```json
+{"schema": 1, "kind": "operation", "id": "workbench.imbue", "version": 1,
+ "name": "Weave in a drawn modifier", "action": "imbue", "station": "ember-forge",
+ "material": "IRON", "units": 2, "item_tags": ["workbench"], "modifier_tags": [], "affixes": [],
+ "catalysts": ["workbench.coal", "workbench.ash", "workbench.amber"]}
+```
+
+```json
+{"schema": 1, "kind": "catalyst", "id": "workbench.coal", "version": 1,
+ "name": "Forge coal", "material": "COAL", "units": 1, "weights": {"offense": 4}}
+```
+
+The player names catalysts after WITH, at most three, each once:
+
+```text
+MODCRAFT PREVIEW workbench.imbue "plain workbench cloak" WITH workbench.coal
+MODCRAFT PREPARE workbench.imbue "plain workbench cloak" WITH workbench.ash, workbench.amber
+MODCRAFT COMMIT
+```
+
+A catalyst is paid with the craft, in the same settlement: its material and
+units are added to the operation's (both IRON and COAL here), and the request
+and its receipt keep the catalysts' pins. Two guarantees of different families
+cannot both hold, and a guaranteed family cannot also be excluded: such a craft
+is refused.
+
+**The preview shows the draw.** PREVIEW lists the distribution and every affix
+of the pool, with its chance or why it cannot be drawn:
+
+```text
+Distribution: offense x4 (catalyst workbench.coal)
+The modifier drawn:
+  embertrial.fireguard1 (Wardwoven, prefix tier 1): 19.2%
+  embertrial.fireguard2 (Flameward, prefix tier 2): 3.8%
+  embertrial.piercing (Embers, suffix tier 1): 76.9% (weight 10, offense catalyst workbench.coal x4)
+```
+
+A reason reads, for example, "tag offense is excluded by catalyst
+workbench.ash", "not of the guaranteed defense family (catalyst
+workbench.amber)" or "exclusive group fire-resistance already present:
+Wardwoven". For a reforge, the first pick is shown; later picks leave out the
+groups and slots the earlier ones took.
+
+**An empty pool is refused before paying.** When nothing can be drawn (every
+slot or group is taken, or every affix that fits is excluded), or when the
+guarantee cannot hold, PREVIEW and PREPARE refuse with that list, and nothing is
+spent or drawn. A reforge of an item whose modifiers are all protected is
+refused too.
+
+**A recipe takes catalysts at its last stage**, the one that draws the product.
+Its `catalysts` field lists the ones it takes; naming one at an earlier stage is
+refused. The last stage's PREVIEW shows the product's first modifier, with or
+without catalysts. A recipe whose result draws no modifiers (`"modifiers": 0`)
+cannot list catalysts. For a policy result, the rarity still decides how many
+modifiers the product gets: a catalyst shapes them but adds none, so a rarity
+that gives none gives none.
+
+The workbench pack has the example: `workbench.imbue`, `workbench.reforge`
+(which leans to defense itself, `"weights": {"defense": 2}`), the catalysts
+`workbench.coal` (offense x4), `workbench.ash` (excludes offense) and
+`workbench.amber` (guarantees defense), and the recipe `workbench.ward-cloak`.
+Test: [i06-targeted.js](../../tools/fixtures/fixes/i06-targeted.js).
+
+## Materials and quality
+
+A tracked item's **material** (its registered raw resource, as BRONZE) can have
+named numeric traits, and its record a **quality** tier. Neither does anything
+on its own: a trait counts only where the item's base declares a consumer for
+it, and quality raises only the modifiers its base names.
+
+```json
+{"schema": 1, "kind": "material", "id": "workbench.bronze", "version": 1,
+ "name": "Ember bronze", "material": "BRONZE", "traits": {"conductivity": 3, "density": 2}}
+```
+
+A `material` definition gives one registered resource 1 to 16 traits, each a
+whole number from -1000 to 1000. One definition says a resource's traits (its
+latest version counts); CHECK refuses a second definition for the same
+resource and an unregistered resource name.
+
+A base declares what it reads:
+
+```json
+{"schema": 1, "kind": "base", "id": "workbench.bracer", "version": 1, "name": "...",
+ "item_kind": "armor", "prefixes": 1, "suffixes": 1, "tags": ["metal", "workbench"],
+ "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"],
+ "quality": {"max": 3, "tags": ["defense"], "percent": 10},
+ "traits": {"conductivity": {"stat": "penetration.electric", "per": 2}}}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `traits` | 1 to 8 traits it reads: each adds `per` (-100 to 100, not 0) times the material's value to a combat `stat` (a numeric stat path, as a roll's). |
+| `quality` | `max` (1 to 10) tiers; each tier raises the values of modifiers carrying any of `tags` by `percent` (1 to 100), rounded half away from zero. |
+
+The rolls stored on the item never change: the bonuses are worked out from the
+item's material and quality as they are when they count, so a changed material
+(a resize, a repair, a builder's edit) or quality shows at once. ITEMMODS says
+what each trait does on this item, and names a trait nothing reads:
+
+```text
+Material: Ember bronze (BRONZE): conductivity 3: penetration.electric +6 (2 per point); density 2: nothing on this item reads it
+Quality: tier 1 of 3; each tier raises modifiers tagged defense by 10%, now +10%
+  modifier 1 counts {"resistance.fire":17} (quality +10%)
+```
+
+A `refine` operation raises the quality by one tier, up to the base's `max`;
+it takes no selector (`MODCRAFT PREPARE workbench.refine "workbench bracer"`),
+and PREVIEW says what the next tier raises. A base with no `quality` refuses it
+("nothing would read it"), and so does one at its most. An upgrade keeps the
+tier only into a successor that allows it.
+
+Test: [i09-materials.js](../../tools/fixtures/fixes/i09-materials.js).
 
 ## Requests, atomicity and persistence
 
@@ -312,7 +528,7 @@ explicit work; no automatic reinterpretation is performed.
 
 Disabling the module suspends its bonuses/crafting and retains records and
 settlement. Re-enabling restores frozen rolls. Lowering the modifier limit
-withholds an over-limit item's bonuses: the log and WORLD CHECK ITEMMODS name
+withholds an over-limit item's bonuses: the log and WORLD CHECK ONLY=itemmods name
 it, COMBATRESULT shows the source as withheld, and its wearer's composed combat
 goes on without it. A corrupt record is treated the same way. Unequip and remove
 enough modifiers, or restore the limit. Removal/unprotect paths remain available
@@ -329,7 +545,7 @@ defeated enemies. Updating campaign content is separate from module adoption.
 
 ```sh
 tools/item-modifier-tests.sh
-tools/fixes.sh item-modifiers g6-loot g10-affixes
+tools/fixes.sh item-modifiers i04-workbench g6-loot g10-affixes
 tools/fixes.sh itemcraft
 tools/fixes.sh trial
 python3 tools/creator_docs.py --check
@@ -341,7 +557,8 @@ deferred observers, stale requests, cloning and legacy isolation. Played tests
 use ordinary player commands across fresh-process requests, settlement, locks,
 loot reuse, module suspension/reactivation and new campaigns.
 
-Further work includes independently owned arbitrary effect layers, more rarity
-policies, crafting currency families, staged choice reveals, corruption,
-recombination, base upgrades and escrowed encounter rewards. These are separate
-contracts, not behavior implied by this numeric modifier family.
+Rarity policies are [chapter 40](40-loot-policies.md); escrowed rewards are
+[chapter 36](36-reward-escrow.md). Further work includes independently owned
+arbitrary effect layers, crafting currency families, staged choice reveals,
+corruption and recombination. These are separate contracts, not behavior implied
+by this numeric modifier family.

@@ -20,6 +20,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [AFFIXES](#affixes)
 - [AGEING](#ageing)
 - [AHELP](#ahelp)
+- [ALERTED](#alerted)
 - [ARMORSMITHING](#armorsmithing)
 - [AS](#as)
 - [ASK](#ask)
@@ -29,6 +30,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [BEHAVIOR_ARREST](#behavior-arrest)
 - [BEHAVIOR_BOSSPHASES](#behavior-bossphases)
 - [BEHAVIOR_BRIBEGATEGUARD](#behavior-bribegateguard)
+- [BEHAVIOR_CLANENEMYAGGRESSIVE](#behavior-clanenemyaggressive)
 - [BEHAVIOR_COMBATABILITIES](#behavior-combatabilities)
 - [BEHAVIOR_CONCIERGE](#behavior-concierge)
 - [BEHAVIOR_CONQUERABLE](#behavior-conquerable)
@@ -40,12 +42,14 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [BEHAVIOR_FIERYROOM](#behavior-fieryroom)
 - [BEHAVIOR_FLOODABLE](#behavior-floodable)
 - [BEHAVIOR_GENBEHAVIOR](#behavior-genbehavior)
+- [BEHAVIOR_GUILDMASTER](#behavior-guildmaster)
 - [BEHAVIOR_HEALER](#behavior-healer)
 - [BEHAVIOR_HIRELING](#behavior-hireling)
 - [BEHAVIOR_ITEMGENERATOR](#behavior-itemgenerator)
 - [BEHAVIOR_ITEMUPGRADER](#behavior-itemupgrader)
 - [BEHAVIOR_JSBEHAVIOR](#behavior-jsbehavior)
 - [BEHAVIOR_JSCRIPTABLE](#behavior-jscriptable)
+- [BEHAVIOR_JSWORLDBEHAVIOR](#behavior-jsworldbehavior)
 - [BEHAVIOR_MEMORY](#behavior-memory)
 - [BEHAVIOR_MOBEATER](#behavior-mobeater)
 - [BEHAVIOR_MOBILE](#behavior-mobile)
@@ -69,17 +73,20 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [BEHAVIOR_RESOURCEOVERRIDE](#behavior-resourceoverride)
 - [BEHAVIOR_RIDDLER](#behavior-riddler)
 - [BEHAVIOR_ROOMSTATES](#behavior-roomstates)
+- [BEHAVIOR_SCAVENGER](#behavior-scavenger)
 - [BEHAVIOR_SCENE](#behavior-scene)
 - [BEHAVIOR_SCHEDULE](#behavior-schedule)
 - [BEHAVIOR_SCRIPTABLE](#behavior-scriptable)
 - [BEHAVIOR_SENTRY](#behavior-sentry)
 - [BEHAVIOR_SLEEPER](#behavior-sleeper)
 - [BEHAVIOR_SOUNDER](#behavior-sounder)
+- [BEHAVIOR_STDBEHAVIOR](#behavior-stdbehavior)
 - [BEHAVIOR_TARGETPRIORITY](#behavior-targetpriority)
 - [BEHAVIOR_TAXIBEHAVIOR](#behavior-taxibehavior)
 - [BEHAVIOR_TIDALROOM](#behavior-tidalroom)
 - [BEHAVIOR_TRANSPORTLINE](#behavior-transportline)
 - [BEHAVIOR_VERYAGGRESSIVE](#behavior-veryaggressive)
+- [BEHAVIOR_WATERCURRENTS](#behavior-watercurrents)
 - [BEHAVIOR_WAVESPAWNER](#behavior-wavespawner)
 - [BEHAVIOR_WHEN](#behavior-when)
 - [BLACKSMITHING](#blacksmithing)
@@ -139,6 +146,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [GLASSBLOWING](#glassblowing)
 - [GMODIFY](#gmodify)
 - [GOD](#god)
+- [GOINGHOME](#goinghome)
 - [HAZARDS](#hazards)
 - [HELP](#help)
 - [HERBOLOGY](#herbology)
@@ -194,16 +202,22 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_AFFINITY](#prop-affinity)
 - [PROP_AIRSUPPLY](#prop-airsupply)
 - [PROP_AMBUSH](#prop-ambush)
+- [PROP_AREABANNER](#prop-areabanner)
+- [PROP_AREAENTRY](#prop-areaentry)
 - [PROP_AREAFORSALE](#prop-areaforsale)
 - [PROP_ATTUNEMENT](#prop-attunement)
+- [PROP_AUTHORIDENTITY](#prop-authoridentity)
 - [PROP_AUTOSAVE](#prop-autosave)
 - [PROP_BLOCKEDEXIT](#prop-blockedexit)
+- [PROP_BROKEN](#prop-broken)
 - [PROP_CHECKPOINT](#prop-checkpoint)
+- [PROP_CLANEQUIPMENT](#prop-clanequipment)
 - [PROP_CLOSECOMMAND](#prop-closecommand)
 - [PROP_CLOSEDDAYNIGHT](#prop-closeddaynight)
 - [PROP_CLOSEDSEASON](#prop-closedseason)
 - [PROP_COMBATSTATS](#prop-combatstats)
 - [PROP_COMBOLOCK](#prop-combolock)
+- [PROP_COMPOSESUPPORT](#prop-composesupport)
 - [PROP_CRAFTXP](#prop-craftxp)
 - [PROP_CROPRULES](#prop-croprules)
 - [PROP_CURSED](#prop-cursed)
@@ -218,6 +232,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_DOWNED](#prop-downed)
 - [PROP_DURABILITY](#prop-durability)
 - [PROP_ESSENTIAL](#prop-essential)
+- [PROP_FACTIONEFFECTS](#prop-factioneffects)
 - [PROP_FIRSTENTRY](#prop-firstentry)
 - [PROP_FURNISHING](#prop-furnishing)
 - [PROP_GENLOCK](#prop-genlock)
@@ -230,10 +245,14 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_INNROOM](#prop-innroom)
 - [PROP_INSTANTDEATH](#prop-instantdeath)
 - [PROP_INVOKABLE](#prop-invokable)
+- [PROP_ITEMBINDER](#prop-itembinder)
 - [PROP_ITEMGROWTH](#prop-itemgrowth)
 - [PROP_ITEMMODIFIERS](#prop-itemmodifiers)
 - [PROP_ITEMSET](#prop-itemset)
+- [PROP_ITEMSLOT](#prop-itemslot)
 - [PROP_JOURNEY](#prop-journey)
+- [PROP_JOURNEYPASSENGER](#prop-journeypassenger)
+- [PROP_JOURNEYSTATE](#prop-journeystate)
 - [PROP_JSCRIPT](#prop-jscript)
 - [PROP_KEYRULES](#prop-keyrules)
 - [PROP_KNOWNRECIPES](#prop-knownrecipes)
@@ -244,15 +263,20 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_LOCKRULES](#prop-lockrules)
 - [PROP_LOOTTABLE](#prop-loottable)
 - [PROP_LORE](#prop-lore)
+- [PROP_MAPGLYPH](#prop-mapglyph)
 - [PROP_MAPREVEAL](#prop-mapreveal)
 - [PROP_MOBRANK](#prop-mobrank)
+- [PROP_MONOLINGUAL](#prop-monolingual)
 - [PROP_NOSAVE](#prop-nosave)
 - [PROP_NPCLINES](#prop-npclines)
+- [PROP_OFFERBOOK](#prop-offerbook)
 - [PROP_PARTYSCALER](#prop-partyscaler)
 - [PROP_PLAYERTEMPLATE](#prop-playertemplate)
+- [PROP_PLAYTEST](#prop-playtest)
 - [PROP_PORT](#prop-port)
 - [PROP_PRESSUREPLATE](#prop-pressureplate)
 - [PROP_PRIVATEPROPERTY](#prop-privateproperty)
+- [PROP_PURCHASES](#prop-purchases)
 - [PROP_QUESTBOARD](#prop-questboard)
 - [PROP_QUESTGIVER](#prop-questgiver)
 - [PROP_QUESTITEM](#prop-questitem)
@@ -268,7 +292,11 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_SALVAGEYIELD](#prop-salvageyield)
 - [PROP_SAVEPOINT](#prop-savepoint)
 - [PROP_SENSES](#prop-senses)
+- [PROP_SERVICE](#prop-service)
+- [PROP_SHOWWHEN](#prop-showwhen)
 - [PROP_SKYTEXT](#prop-skytext)
+- [PROP_STOCKZAPPER](#prop-stockzapper)
+- [PROP_STORYRECORDS](#prop-storyrecords)
 - [PROP_SUMMONED](#prop-summoned)
 - [PROP_SURPRISED](#prop-surprised)
 - [PROP_SWITCH](#prop-switch)
@@ -278,8 +306,12 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [PROP_TIMEMODE](#prop-timemode)
 - [PROP_TRAINER](#prop-trainer)
 - [PROP_TRANSFORM](#prop-transform)
+- [PROP_TRANSITVIEW](#prop-transitview)
 - [PROP_TRAVELTIME](#prop-traveltime)
+- [PROP_TWEAKWATCH](#prop-tweakwatch)
+- [PROP_UNKNOWN](#prop-unknown)
 - [PROP_UPGRADEPATH](#prop-upgradepath)
+- [PROP_VERBS](#prop-verbs)
 - [PROP_WAYPOINT](#prop-waypoint)
 - [PROP_WEAPONIMMUNITY](#prop-weaponimmunity)
 - [PROP_WEAPONMESSAGES](#prop-weaponmessages)
@@ -301,6 +333,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [RECORD](#record)
 - [RECRUIT](#recruit)
 - [REGENERATE](#regenerate)
+- [RESOURCES](#resources)
 - [RESOURCEVARIANTS](#resourcevariants)
 - [RESPEC](#respec)
 - [RESTORE](#restore)
@@ -373,7 +406,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 
 ## ACCEPT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2117.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2168.
 
 ```text
 Command : ACCEPT
@@ -388,7 +421,7 @@ its name.  Without a board, it takes on a quest offered to you, as QUESTS ACCEPT
 
 ## ACHIEVEMENTREWARDS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1239.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1255.
 
 ```text
 CoffeeSUD: rewards an achievement's REWARDS (and MPREWARD, and quest rewards) may give
@@ -419,10 +452,11 @@ Each <AFFIX id="flaming" name="Flaming" pos="prefix" (or suffix) kinds="weapon,a
 (weapon, armor, ammo, item, any) level="5-30" pickweight="10" power="1" cursed="false">
 holds <AFFECT class="Prop_WearAdjuster" parms="damage+2"/> tags.  An item gets at most one
 prefix and one suffix that fit its kind and level, picked by weight: its name takes them (a
-Flaming short sword of Bleeding), its level rises by the power, its value by a tenth for
-each, and a cursed one cannot be taken off.  Random enchantment (ItemGenerator ENCHANTED=)
-uses them when the file has any, as do AFFIXES=[MATH] on Prop_LootTable and RandomItems and
-AFFIXES="0?2" on a template ITEM.
+Flaming short sword of Bleeding), its level rises by the power (1 if not given), its value
+is multiplied by 1 + power/10 for each (so they compound, and power=0 leaves the value
+alone), and a cursed one cannot be taken off.  Random enchantment (ItemGenerator ENCHANTED=)
+ uses them when the file has any, as do AFFIXES=[MATH] on Prop_LootTable and RandomItems and
+ AFFIXES="0?2" on a template ITEM.
 Optional tracked numeric entries add TRACKED="true", VERSION, TIER, GROUP, TAGS and ROLL
 STAT/MIN/MAX children; POWER must be 0, with no CURSED=true or AFFECT children.
 MODBASE="base.id" on a template opts into saved per-modifier records and selective crafting
@@ -434,7 +468,7 @@ WORLD_ITEMMODS and docs/creator/17-item-modifiers-crafting.md.
 
 ## AGEING
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1074.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1080.
 
 ```text
 CoffeeSUD: ageing as data.  A GenRace's AGEEFFECTS="MIDDLEAGED: STR-1 DEX-1 WIS+1;
@@ -463,6 +497,25 @@ Usage   : AHELP [TOPICNAME]
 Example : ahelp ahelp
 Short(s):
 A command to view the Administrative help commands.
+```
+
+<a id="alerted"></a>
+
+## ALERTED
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4415.
+
+```text
+Property   : Alerted
+Targets    : MOBs
+Parameters : ROOM="[ROOM ID]" INTRUDER="[NAME]"
+Example    : ROOM="Keep#12" INTRUDER="Bob"
+Description:
+CoffeeSUD: an NPC an alarm has roused (the ALARM of Sleeper and Sentry), put on by the game
+for the ALERTTICKS (40 by default) of the Sentry that raised it.  The NPC heads for ROOM, or
+ for the INTRUDER if it knows where they are, and attacks them or any of their party when it
+ finds them (with no INTRUDER, a player's character).  Schedule and Patroller wait while it
+lasts, and Mobile is held off.  It shows as (Alert).  Not for builders to give.
 ```
 
 <a id="armorsmithing"></a>
@@ -512,19 +565,17 @@ Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 58.
 
 ```text
 Command : AS
-Usage   : AS [PLAYERNAME/MOBNAME]/(PORT X)/PLAYERS (HERE) [COMMAND]
+Usage   : AS [PLAYERNAME/MOBNAME]/PLAYERS (HERE) [COMMAND]
 Example : as "bob" inventory
 Example : as bob here drop all
 Example : as PLAYERS here drop all
 Example : as bob cast fireball monster
-Example : as port 2325 list users
 Short(s):
 A command that allows one to issue other commands as if they were another player or mob.
 Anyone can use it on their own characters in the world: see PARTY.  This is the best way to
 manage a players inventory or bank accounts from the command line. The optional "here"
 parameter should follow the name if the command is to be issued with the player in the same
-room as the archon. The optional "port x" parameter can be used to execute commands on other
- mud hosts, so long as the admin qualifies as a SysOp on the target port.
+room as the archon.
 
 ```
 
@@ -532,7 +583,7 @@ room as the archon. The optional "port x" parameter can be used to execute comma
 
 ## ASK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 335.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 362.
 
 ```text
 Command : ASK
@@ -553,7 +604,7 @@ name, whom you are talking with).
 
 ## ASSERT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1785.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1807.
 
 ```text
 Command  : ASSERT
@@ -561,16 +612,19 @@ Usage    : ASSERT HERE [ROOM ID]
 Usage    : ASSERT HAS [ITEM]
 Usage    : ASSERT VAR [HOST] [NAME] [=/!=/</>/<=/>=] [VALUE]
 Usage    : ASSERT QUEST [NAME] STEP [NUMBER]
+Usage    : ASSERT MARK [N]
 Example  : assert here Moor#1
 Example  : assert var Hero PAIDTROLL = 1
 Short(s) :
 In builder mode or a DEV=1 game, answers ASSERT ok: ... or ASSERT FAIL: ... and why, for
 playtest files: you are in the room, carry the item, a global script variable compares so
-(numbers as numbers), or a quest is running at the step. Playtest files, world/tests/*.play,
- hold one command a line and #expect TEXT, #reject TEXT, #assert ..., #wait N, #save SLOT,
-#seed N, #char NAME,RACE,CLASS and #restore SLOT; tools/playtest.sh runs them, each in a new
- game on a scratch copy of the world, in turns with a fixed seed, prints PASS or FAIL for
-each with the failing lines, and exits 1 if any failed.
+(numbers as numbers), or a quest is running at the step.  ASSERT MARK [N] prints PLAYSTEP
+[N]: the playtest runner puts it after each step so #expect knows where the step's output
+ends. Playtest files, world/tests/*.play, hold one command a line and #expect TEXT, #reject
+TEXT, #assert ..., #wait N, #save SLOT, #seed N, #char NAME,RACE,CLASS and #restore SLOT;
+tools/playtest.sh runs them, each in a new game on a scratch copy of the world, in turns
+with a fixed seed, prints PASS or FAIL for each with the failing lines, and exits 1 if any
+failed.
 ```
 
 <a id="behavior-activeticker"></a>
@@ -598,9 +652,9 @@ Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), l
 Behavior   : Aggressive
 Targets    : MOBs
 Parameters : aggression flags (MESSAGE=[msg]) aggression masks
-Example    : +elf -fighter
-Example    : message="All must die!!" -elf +fighter
-Example    : MOBKILL MISBEHAVE +elf -fighter
+Example    : -RACE +Elf -Fighter
+Example    : message="All must die!!" -Elf -CLASS +Fighter
+Example    : MOBKILL MISBEHAVE -RACE +Elf -Fighter
 Description:
 Makes the mob attack any player mob it can detect in the same room, from the moment the new
 mob enters.  Horribly wounded mobs are not aggressive. Mobs will also not be aggressive
@@ -612,8 +666,11 @@ delay=x (makes the mob delay x ticks before looking for a victim)
 mobkill (makes this behavior attack mobs as well as players)
 nogang (makes this behavior pass over players already in combat)
 misbehave (makes this mob attack even when wounded or a follower)
-checklevel (makes this mob attack only those within 6 levels below him)
-BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY] - this is a comma-delimited
+checklevel (makes this mob skip anyone who is EXPRATE (coffeemud.ini, default 6) or more
+levels below him)
+BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY] - the mob demands a bribe instead: the amount
+ in base gold (default 1), how many ticks a payment buys (default 100), and how long a new
+arrival has before ordinary aggression resumes (default 20000); comma-delimited
 BRIBEPAYMSG=x, BRIBEPAIDMSG=x, (see also ahelp on AGGRESSIVE BRIBE)
 WARN="[LINE]|[LINE]" - CoffeeSUD: a warning first, one line a tick, then the attack if they
 are still
@@ -708,6 +765,27 @@ merely make sure they can't see sneaking or invis - whichever.  The hiding playe
 to wait for another player to get the door open to sneak through.
 ```
 
+<a id="behavior-clanenemyaggressive"></a>
+
+## BEHAVIOR_CLANENEMYAGGRESSIVE
+
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3692.
+
+```text
+Behavior   : ClanEnemyAggressive
+Targets    : MOBs
+Parameters : (CLAN="[OWN CLAN]") (STATES=[WAR,HOSTILE]) (CHANCE=[PCT]) (CHECKLEVEL)
+(MESSAGE="[ATTACK LINE]")
+Example    : STATES=WAR,HOSTILE CHANCE=100 MESSAGE="Death to the Black Hand!"
+Example    : CLAN="Temple of Arden" STATES=WAR
+Description:
+CoffeeSUD: attacks members of organisations with a live hostile relation to its clan.  CLAN
+is the clan the NPC stands for (the NPC's own clan if not given), STATES which relations
+count (WAR and HOSTILE), CHANCE the percent chance each time, CHECKLEVEL skips targets more
+than 5 levels above it, and MESSAGE the line it says when it attacks.  It reads the combined
+ relation each time, so peace takes effect immediately.  See ORGANIZATIONS.
+```
+
 <a id="behavior-combatabilities"></a>
 
 ## BEHAVIOR_COMBATABILITIES
@@ -716,7 +794,8 @@ Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), l
 
 ```text
 Behavior   : CombatAbilities
-Targets    : MOBs
+Targets    : MOBs (any host is accepted by the code, which inherits that from ActiveTicker;
+it is meant for mobs)
 Parameters : (as derived class) and +SKILLID -SKILLID
 Parameters : (MINTICKS=[NUM] MAXTICKS=[NUM] CHANCE=[NUM])
 Parameters : (BSIZE=[NUM])
@@ -767,8 +846,8 @@ Example    : OPENER=Skill_Trip +Poison_Sting(EVERY=2) +Fighter_Kick(WEIGHT=3)
 Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 375.
 
 ```text
-Behavior   : Conceirge
-Targets    : MOBs, Items, Rooms, Areas
+Behavior   : Concierge
+Targets    : MOBs, Items, Rooms, Areas, Exits
 Parameters : [ALL PRICE]/[AREA/ROOM]=[PRICE]/[PARAM]=[VALUE]; ... ;
 Example    : 1.5
 Example    : Midgaard#3001=1.5; Smurfville=2.0; =70 ; AREAONLY=true
@@ -789,12 +868,14 @@ who mount the concierge (rideables only).  TALKERNAME=name will change the appar
 the speaker. PERROOM=number will set a per-room price for the distance from the current room
  to the one sought.  NOWATER=true to prevent trails over water. NOAIR=true, to prevent
 trails through the air. NOLOCKS=true to prevent trails through locked doors. NOHOMES=true to
- prevent trails through private homes. NOINDOOR=true to prevent finding or trailing through
-indoor rooms. NOCLIMB to prevent trails through climbable exits. NOCRAWL to prevent trails
-through crawlable exits.  Use PORTAL=true to have the concierge create a magical portal
-instead of giving directions. Use CLAN=[CLAN NAME] to have the concierge restrict
-destinations to clan conquered or property rooms.  Use MOBILE=true to have a concierge mob
-force the player to follow them to the destination.
+ prevent trails through private homes. INDOOROK=true to allow indoor destinations, and
+NOINDOOR=true to forbid finding or trailing through indoor rooms. NOCLIMB to prevent trails
+through climbable exits. NOCRAWL to prevent trails through crawlable exits.  Use PORTAL=true
+ to have the concierge create a magical portal instead of giving directions. Use CLAN=[CLAN
+NAME] to have the concierge restrict destinations to clan conquered or property rooms.  Use
+MOBILE=true to have a concierge mob force the player to follow them to the destination.
+PARTY, PETS and CARGO are accepted in the list but a concierge does nothing with them; they
+are for a taxi (AHELP TAXIBEHAVIOR).
 ```
 
 <a id="behavior-conquerable"></a>
@@ -826,12 +907,13 @@ the killer a targets level can be to get Points, with default equal to coffeemud
 
 ## BEHAVIOR_DECAY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 419.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 420.
 
 ```text
 Behavior   : Decay
 Targets    : MOBs, Items
-Parameters : min, max ticks, a percent chance, trigger masks
+Parameters : min, max ticks, a percent chance, trigger masks (REMAIN=[TICKS], written by the
+ game)
 Example    : min=10 max=20 chance=75 answer=" goes poof!"
 Example    : min=10 max=20 chance=75 -LEVEL +<17
 Example    : notrigger answer=" " use2=true
@@ -849,14 +931,16 @@ any masks specified.   You may force the object to decay immediately by placing 
 NOTRIGGER mask inside your parameter string.  The message seen when the object decays can
 also be modified by changing the ANSWER parameter. For value masks to determine whether a
 countdown begins,
-see AHELP ZAPPERMASK, where allowed is decayed, and disallowed is ignored.
+see AHELP ZAPPERMASK, where allowed is decayed, and disallowed is ignored.  The game writes
+REMAIN=[TICKS] (the ticks left) at the front of the parameters when it saves them, so that
+the countdown goes on after a save; it is not a setting to choose.
 ```
 
 <a id="behavior-delayedtransporter"></a>
 
 ## BEHAVIOR_DELAYEDTRANSPORTER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3240.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3317.
 
 ```text
 Behavior   : Delayed Transporter
@@ -885,11 +969,11 @@ progress survive saves.
 
 ## BEHAVIOR_EMOTER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 548.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 551.
 
 ```text
 Behavior   : Emoter
-Targets    : Room, MOBs, Items, Areas
+Targets    : Rooms, MOBs, Items, Areas, Exits
 Parameters : Flags, Max/Min ticks, pct chance, expires, emote strings, ';' separated.
 Example    : min=10 max=20 chance=25;wiggles his bottom.;smiles evilly.;burps!
 Example    : smell chance=25 expires=10;smells horrible!;is really stinky!
@@ -919,11 +1003,15 @@ and SOCIAL PUFF, as the first word in each emote string.  This denotes the type 
  the rest of the string.  The last example shows how to enter a mixed emote.  Each emote
 type will respect visibility, smellability, hearingness, etc.. unless the EMOTEONLY flag is
 used.
-CoffeeSUD: first-field options NOREPEAT=n, RETRY and QUIETAFTER=n select eligible lines,
-suppress recent repeats, and quiet ambience during combat or reading. Each line may begin
-with DAY/NIGHT/DAWN/DUSK, seasons, RAIN/SNOW/FOG, INDOORS/OUTDOORS, IFVAR name=value,
-MASK="zapper", ONCE and WEIGHT=n before its SIGHT/SOUND/SMELL/SOCIAL type. ONCE is saved per
- character. Area emotes test each room's own conditions.
+CoffeeSUD: MASK="[ZAPPER MASK]" in the first field limits whom the emoting is for: the
+emoter (when it is a mob), and whoever sniffs or hears it, must fit the mask. First-field
+options NOREPEAT=n, RETRY and QUIETAFTER=n select eligible lines, suppress recent repeats,
+and quiet ambience while a player there is in combat or being narrated to, and for n ticks
+after reading (QUIETAFTER acts only when n is above 0, and only Emoter reads it, not
+Sounder). Each line may begin with DAY/NIGHT/DAWN/DUSK, seasons, RAIN/SNOW/FOG,
+INDOORS/OUTDOORS, IFVAR name=value, MASK="zapper", ONCE and WEIGHT=n before its
+SIGHT/SOUND/SMELL/SOCIAL type. ONCE is saved per character. Area emotes test each room's own
+ conditions.
 Example: min=8 max=20 chance=40 RETRY NOREPEAT=2;NIGHT SOUND an owl hoots.;IFVAR WOLVES=1
 WEIGHT=3 ONCE SOUND wolves howl.
 ```
@@ -932,7 +1020,7 @@ WEIGHT=3 ONCE SOUND wolves howl.
 
 ## BEHAVIOR_ENCOUNTERRESET
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 712.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 715.
 
 ```text
 Behavior   : EncounterReset
@@ -955,7 +1043,7 @@ with it; on a room, every NPC there is reset together.
 
 ## BEHAVIOR_ESCORTEE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 727.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 741.
 
 ```text
 Behavior   : Escortee
@@ -969,20 +1057,23 @@ Description:
 CoffeeSUD: an NPC escorted to DEST.  Its leader is the one it follows when the escort begins
  (a quest's MPFORCE $i follow $n); until then it waits.  MODE=FOLLOW (the default): it
 follows its leader; MODE=LEAD: it stops following and walks the way itself, a step a tick,
-and the party follows it.  WAITFOR=LEADER: while its leader is not with it, it does not go
-on, and after WAITCALL ticks (3) it calls WAITMSG ("Wait for me!").  PANIC: when attacked it
- flees, dives for cover or cowers (both stop the fight).  AVOID: rooms (by ID, or the end of
- one) it will not go into.  TALK (and TALK1= to TALK9=): a remark the first time it comes to
- that room.  ONARRIVE, ONDEATH and, after TIMEOUT ticks, ONTIMEOUT: MOBPROG lines, ; between
- them, run with its leader as $n: a word, MPSETVAR, MPCALLFUNC, MPQUESTWIN.  Arrived, it
-stops following.  Its leader, arrival and remarks are kept in a saved game.
+and the head of its leader's party follows it, so the party comes along, until it arrives
+(one who stops following it, with FOLLOW SELF, is not made to again).  WAITFOR=LEADER: while
+ its leader is not with it, it does not go on, and after WAITCALL ticks (3) it calls WAITMSG
+ ("Wait for me!").  PANIC: when attacked it flees (FLEE), dives for cover (HIDE) or cowers
+(COWER) (the last two stop the fight); another word is ignored, and STAT BEHAVIORS reports
+it.  AVOID: rooms (by ID, or the end of one) it will not go into.  TALK (and TALK1= to
+TALK9=): a remark the first time it comes to that room.  ONARRIVE, ONDEATH and, after
+TIMEOUT ticks, ONTIMEOUT: MOBPROG lines, ; between them, run with its leader as $n: a word,
+MPSETVAR, MPCALLFUNC, MPQUESTWIN.  Arrived, it stops following.  Its leader, arrival,
+remarks and lead are kept in a saved game.
 ```
 
 <a id="behavior-fieryroom"></a>
 
 ## BEHAVIOR_FIERYROOM
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 676.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 679.
 
 ```text
 Behavior   : FieryRoom
@@ -1023,11 +1114,11 @@ BURNTICKS=12
 
 ## BEHAVIOR_FLOODABLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1910.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1943.
 
 ```text
 Behavior   : Floodable
-Targets    : Rooms
+Targets    : Rooms, Areas
 Parameters : (RISE="[MASK]") (ONVAR="[HOST] [VAR]==[VALUE]") (TIDE=HIGH) (RATE=[TICKS])
 (DRAIN=[TICKS]) (FLOWTO=[DIR]) (FLOAT=[WEIGHT]) (TITLE1= to TITLE3=) (DESC1= to DESC3=)
 (MSG1= to MSG3=)
@@ -1047,7 +1138,7 @@ told).  FLOODLEVEL() reads the level.
 
 ## BEHAVIOR_GENBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 800.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 817.
 
 ```text
 Behavior   : GenBehavior (a generic behaviour: CREATE BEHAVIOR [ID])
@@ -1072,11 +1163,37 @@ loaded again.  SAVE writes it to the world's custom/behaviors/ folder, its scrip
 beside it.
 ```
 
+<a id="behavior-guildmaster"></a>
+
+## BEHAVIOR_GUILDMASTER
+
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3677.
+
+```text
+Behavior   : GuildMaster
+Targets    : MOBs
+Parameters : CLAN="[CLAN NAME]" (JOINMASK="[ZAPPER MASK]") (JOINFEE=[N]) (JOINQUEST="[QUEST
+NAME]") (RANKS=[MERIT/SCRIPT])
+Parameters : (DUES=TRUE) (KIT.[POSITION ID]="[CATALOG ITEM],[CATALOG ITEM]") (KITFEE=[N])
+(LEAVEMSG="[REPLY]") (REFUSEMSG="[REPLY]")
+Example    : CLAN="Temple of Arden" JOINMASK="-LEVEL +>4" JOINFEE=50 RANKS=MERIT DUES=TRUE
+Example    : CLAN="Temple of Arden" KIT.FIRST_CITIZEN="a plain tabard,a wooden holy symbol"
+KITFEE=25
+Description:
+CoffeeSUD: an NPC guild membership behavior.  It answers join, rank, advance, leave, dues,
+kit, and kit replace for the speaking character.  Kits are issued once per rank;
+replacements charge KITFEE.  A position ID with spaces is written with underscores in
+KIT.[ID], as KIT.FIRST_CITIZEN.  Joining and leaving use the normal clan scripts.  MERIT
+promotion checks INNERMASK and MAX; MERIT_DEMOTE also permits demotion.  Put CLAN= first in
+the parameters: if a parameter with a + or - before its = (as a mask, JOINMASK for one)
+comes before it, CLAN= is not found.  See ORGANIZATIONS.
+```
+
 <a id="behavior-healer"></a>
 
 ## BEHAVIOR_HEALER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 862.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 879.
 
 ```text
 Behavior   : Healer
@@ -1084,14 +1201,14 @@ Targets    : MOBs
 Parameters : min, max ticks, and a percent chance
 Example    : min=10 max=20 chance=75
 Description:
-The mob with this behavior gains Cure Disease, Cure Light Wounds, Cure Serious Wounds,
-Bless, and Sanctuary.  At random, the mob will cast these spells on any player-mobs in the
-room.
+The mob with this behavior gains six prayers: Cure Blindness, Cure Disease, Cure Light
+Wounds, Remove Curse, Bless, and Sanctuary.  At random, the mob will cast these prayers on
+any player-mobs in the room.
 
-CoffeeSUD: SPELLS=[ID],[ID] its own spells in place of those six; HEALAT=[N] heals only
-those under N% of their hit points, the most hurt first (its cures, for poison and disease,
-first of all); TARGET=GROUP (its group) or TARGET=MASK:"[ZAPPER MASK]" whom it heals, NPCs
-too.  With any of them it chooses whom it heals rather than at random.
+CoffeeSUD: SPELLS=[ID],[ID] its own spells in place of those six prayers; HEALAT=[N] heals
+only those under N% of their hit points, the most hurt first (its cures, for poison and
+disease, first of all); TARGET=GROUP (its group) or TARGET=MASK:"[ZAPPER MASK]" whom it
+heals, NPCs too.  With any of them it chooses whom it heals rather than at random.
 Example    : min=1 max=2 chance=100 HEALAT=70 SPELLS=Prayer_CureSerious,Prayer_CureDisease
 TARGET=MASK:"-NPC"
 ```
@@ -1100,18 +1217,23 @@ TARGET=MASK:"-NPC"
 
 ## BEHAVIOR_HIRELING
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 878.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 895.
 
 ```text
 Behavior   : Hireling
 Targets    : MOBs
-Parameters : price to hire;minutes of service
+Parameters : price to hire;minutes of service(;[ZAPPER MASK])
 Example    : 10000;30
 Description:
 Allows a mob to hire him or herself out for a given amount of time. The first parameter is
-the price to hire the mob, followed by a semicolon and the number of minutes that amount of
-money purchases.  Additional money may be given by the player to extend the time.  When the
-time expires, the mob returns to his or her start room.
+the price to hire the mob, followed by a semicolon and the number of minutes of play that
+amount of money buys (minutes of the game clock: real minutes at normal speed, stopped while
+ the game is paused; with CONTRACT=DAYS, game days), and, after a second semicolon, an
+optional zapper mask that those who pay must fit (the mob says "I wouldn't work for the
+likes of you." to the rest, or MSG_REFUSE).  Additional money may be given by the player to
+extend the time, at the same rate, in the contract's unit.  The mob tells every time in game
+ time: its terms and what is left in game hours, or in game days with CONTRACT=DAYS.  When
+the time expires, the mob returns to his or her start room.
 
 CoffeeSUD: terms, KEY=value after them (quote a value with spaces): KEYWORDS=[WORD],... the
 words that ask its terms (HIRE, HIRELING, WORK, WORKS, TIME, AVAILABLE); MSG_OFFER (@x1 the
@@ -1132,7 +1254,7 @@ Example    : 500;0;CONTRACT="QUEST:goblinwar" UPKEEP=5 MSG_HIRED="My blade is yo
 
 ## BEHAVIOR_ITEMGENERATOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 916.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 936.
 
 ```text
 Behavior   : ItemGenerator
@@ -1177,7 +1299,7 @@ where allowed is generated, and disallowed is not.
 
 ## BEHAVIOR_ITEMUPGRADER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1024.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1044.
 
 ```text
 Behavior   : ItemUpgrader
@@ -1201,7 +1323,7 @@ what it would take; UPGRADE [ITEM] CONFIRM does it.
 
 ## BEHAVIOR_JSBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1038.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1058.
 
 ```text
 Behavior   : JSBehavior
@@ -1220,7 +1342,7 @@ onRemoved(host) and catchUp(host, ticks) (AHELP CATCHUP).  A behaviour is not as
 
 ## BEHAVIOR_JSCRIPTABLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1050.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1070.
 
 ```text
 Behavior   : JScriptable
@@ -1239,11 +1361,33 @@ CMMsg and state, the host's cm.store, saved with the game.  A SCOPE other than I
 shares one script among the hosts that name it.  guides/JavaScriptSUD.html has a ferryman.
 ```
 
+<a id="behavior-jsworldbehavior"></a>
+
+## BEHAVIOR_JSWORLDBEHAVIOR
+
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3664.
+
+```text
+Behavior   : JSWorldBehavior
+Targets    : Rooms, Areas
+Parameters : (what the JavaScript class defines)
+Example    :
+Description:
+CoffeeSUD: the base for a room's or area's behavior written in JavaScript.  A class in
+world/js/behaviors/ begins with //extends
+com.planet_ink.coffee_mud.Behaviors.JSWorldBehavior and defines any of the hooks
+onEnter(mob, room), onLeave(mob, room), onWeather(area, was, now) and onDaypart(area, was,
+now), the first two for each room it is on (or one of its area's), the others as the weather
+ and the time of day change in the area.  Helpers in the class: echo(text) to the host,
+roll("3d6"), spawn(catalogName), room(), area() and parm(name).  See AHELP JSCRIPTABLE and
+WORLD CHECK's JS part, which lists the classes that do not compile or extend nothing.
+```
+
 <a id="behavior-memory"></a>
 
 ## BEHAVIOR_MEMORY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1082.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1102.
 
 ```text
 Behavior   : Memory
@@ -1261,16 +1405,16 @@ MEM_[FACT]_[NAME], so a script reads VAR($i MEM_ATTACKED_$n) or $<$i MEM_GAVE_$n
  kept in a saved game.  FORGET=30d (or 12h) lets a fact fade that long, in game time, after
 it last grew.  HOSTILEIF: it attacks them on sight.  GREETIF with GREET: it greets them when
  they come in ($n is their name).  REFUSEIF with REFUSE: it will not buy, sell or teach for
-them.  A condition is FACT>N, FACT>=N, FACT=N or FACT<N, joined by & or |.  SHARE=AREA, or a
- mask, tells what it learns to the other Memory NPCs in its area (those the mask fits): rob
-one villager and the village knows.
+them.  A condition is FACT>N, FACT>=N, FACT=N, FACT<N, FACT<=N or FACT!=N, joined by & or |.
+  SHARE=AREA, or a mask, tells what it learns to the other Memory NPCs in its area (those
+the mask fits): rob one villager and the village knows.
 ```
 
 <a id="behavior-mobeater"></a>
 
 ## BEHAVIOR_MOBEATER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1109.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1129.
 
 ```text
 Behavior   : MOBEater
@@ -1289,7 +1433,7 @@ with this behavior is twice the weight of the target.
 
 ## BEHAVIOR_MOBILE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1160.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1180.
 
 ```text
 Behavior   : Mobile
@@ -1316,39 +1460,42 @@ HILLS, MOUNTAINS, SPACEPORT, SEAPORT
 
 ## BEHAVIOR_MOBILEAGGRESSIVE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1184.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1204.
 
 ```text
 Behavior   : MobileAggressive
 Targets    : MOBs
 Parameters : min, max ticks, a percent chance, flags, message=[msg], and masks
-Example    : min=10 max=20 chance=75 -underwater -thief +elf
-Example    : min=10 max=20 chance=75 wander -air -elf
-Example    : min=10 max=20 chance=75 message="aha!" -air -elf
+Example    : min=10 max=20 chance=75 -underwater -Thief -RACE +Elf
+Example    : min=10 max=20 chance=75 wander -air -Elf
+Example    : min=10 max=20 chance=75 message="aha!" -air -Elf
 Example    : min=10 max=20 chance=75 mobkill misbehave
 Description:
 According to the timing and percent chance described by the parameters, the mob with this
 behavior will travel in a random available direction. The mob will attack any player mob it
-comes across. They will be especially aggressive towards players within 16 levels of
-themselves in adjacent rooms. If no other parameters are given, the mob will attack anyone,
-anywhere. The wander flag is required if the mob is allowed to leave his or her area. The
-TYPE of room from which the mob is restricted may also be entered. -ALL to disallow all
-locales, followed by +AIR +CITY +JUNGLE (etc) to reallow certain locales.  -CITY -UNDERWATER
- and others may be used to restrict certain locales. The full locale list is: STONE, WOODEN,
- CAVE, MAGIC, UNDERWATER, AIR, WATERSURFACE, METAL , CITY, WOODS, ROCKY, PLAINS, JUNGLE,
-SWAMP, DESERT, HILLS, MOUNTAINS, SPACEPORT, SEAPORT.
+comes across. They will be especially aggressive towards players within 7 levels of
+themselves in adjacent rooms (checked on about 15% of ticks). If no other parameters are
+given, the mob will attack anyone, anywhere. The wander flag is required if the mob is
+allowed to leave his or her area. The TYPE of room from which the mob is restricted may also
+ be entered. -ALL to disallow all locales, followed by +AIR +CITY +JUNGLE (etc) to reallow
+certain locales.  -CITY -UNDERWATER and others may be used to restrict certain locales. The
+full locale list is: STONE, WOODEN, CAVE, MAGIC, UNDERWATER, AIR, WATERSURFACE, METAL ,
+CITY, WOODS, ROCKY, PLAINS, JUNGLE, SWAMP, DESERT, HILLS, MOUNTAINS, SPACEPORT, SEAPORT.
 
 Masks may also be used to specify who the mob is likely to attack.  Mobs will not be mobile
 or aggressive towards Archons and builders with the CMDMOBS security flag. If no other masks
- are given, the mob will attack anyone within 8 levels.
+ are given, the mob will attack anyone within 7 levels.
 Valid aggressive masks include:
 message=[msg] something for the mob to say whenever he's fixing to attack
 delay=x (makes the mob delay x ticks before looking for a victim)
 mobkill (makes this behavior attack mobs as well as players)
 nogang (makes this behavior pass over players already in combat)
 misbehave (makes this mob attack even when wounded or a follower)
-checklevel (makes this mob attack only those within 6 levels below him)
-BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY] - this is a comma-delimited
+checklevel (makes this mob skip anyone who is EXPRATE (coffeemud.ini, default 6) or more
+levels below him)
+BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY] - the mob demands a bribe instead: the amount
+ in base gold (default 1), how many ticks a payment buys (default 100), and how long a new
+arrival has before ordinary aggression resumes (default 20000); comma-delimited
 BRIBEPAYMSG=x, BRIBEPAIDMSG=x, (see also ahelp on AGGRESSIVE BRIBE)
 See AHELP ZAPPERMASK, where allowed is attacked, and disallowed is spared.
 ```
@@ -1357,11 +1504,12 @@ See AHELP ZAPPERMASK, where allowed is attacked, and disallowed is spared.
 
 ## BEHAVIOR_MOBTEACHER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1257.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1277.
 
 ```text
 Behavior   : MOBTeacher
-Targets    : MOBs
+Targets    : MOBs (any host is accepted by the code, which inherits that from ActiveTicker;
+it is meant for mobs)
 Parameters : Char class name(s), ability name(s), expertise name(s), [pct%],
 Parameters : noteach flag, nocommon flag, noexps flag, or empty=teach all.
 Example    : mage evoker illusionist transmuter
@@ -1404,17 +1552,17 @@ teacher offers them.
 
 ## BEHAVIOR_MONEYCHANGER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1293.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1313.
 
 ```text
 Behavior   : MoneyChanger
 Targets    : MOBs
-Parameters : (CUT=[NUM]) (DEFAULT=[NUM]) ([CURRENCY]=[NUM])
+Parameters : (CUT=[NUM]) ([CURRENCY]=[NUM])
 Parameters : (CUT=[NUM]) (SPACEMAXCUT=[NUM]) (SPACEMAXDISTANCE=[PCT])
 Parameters : (RATE.[CURRENCY]=+[PCT]/-[PCT])
 Example    :
 Example    : cut=5
-Example    : default=0 GOLD=5 INGITS=10
+Example    : GOLD=5 INGITS=10
 Example    : cut=5 spacemaxcut=90 spacemaxdistance=35
 Example    : cut=5 RATE.CROWN=-30 RATE.LEAF=+10
 Description:
@@ -1426,7 +1574,9 @@ Whenever a player gives the money changer coins, the money changer will give bac
 player a bag containing an equivalent amount of money in the money changers native currency.
   The "cut" that the money changer takes, in general, can be defined with the CUT parameter,
  by making CUT equal to a percentage.  If you wish, you can also define exchange rates for
-the several currencies in your system by setting each currency name equal to a percentage.
+the several currencies in your system by setting each currency name equal to a percentage;
+once any is given the changer takes only those currencies (a DEFAULT=[NUM] entry is read by
+nothing, but counts as one and so also restricts what is taken).  CUT is 5 if not given.
 
 When dealing with intersteller currencies, there are two other parameters, which can be used
  to automatically calculate a scaled "cut" of the exchange based on how far away the
@@ -1440,7 +1590,7 @@ maximum.
 
 ## BEHAVIOR_MORALE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1322.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1344.
 
 ```text
 Behavior   : Morale
@@ -1469,16 +1619,22 @@ fought).  BRAVE: those the mask fits never break.
 
 ## BEHAVIOR_MOVINGROOM
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1408.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1430.
 
 ```text
-Behavior   : Mover
+Behavior   : MovingRoom
 Targets    : Rooms
 Parameters : min=3 max=3 chance=100;[xmlsection];[ticks at stops];[ticks between stops]
+Parameters : ROUTE=[file in world/routes/, or XML] (LINE=[section]) (WAIT=[ticks])
+(TRAVEL=[ticks]) (DEPART=[game hours]) (SIGN=[item name]) (DISPLOC=true)
 Example    : min=3 max=3 chance=100;SUBWAY;3;10
 Description:
 The above example would set the room's parameters to the ones listed in the SUBWAY section
-of the file resources/moving.xml.  There is a subway example already there.
+of the file resources/movingroom.xml.  There is a subway example already there.  The newer
+ROUTE= form takes a route file (or XML) and a line in it; WAIT and TRAVEL are the ticks at
+and between stops, DEPART the game hours of day it leaves (instead of WAIT), SIGN the name
+of a readable item at each stop that shows the line's position, and DISPLOC=true appends the
+ timetable to each stop's text (AHELP TIMETABLE).
 NOTE!      : The follow conditions -must- be met before setting the room to this behaviour.
 1.
 The rooms that you want this room to open out to -must- already be defined before you make
@@ -1531,7 +1687,7 @@ position. The legacy file is resources/movingroom.xml.
 
 ## BEHAVIOR_MUDCHAT
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1340.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1362.
 
 ```text
 Behavior   : MudChat
@@ -1613,7 +1769,7 @@ These requests also work in speech; custody and payment records survive saves.
 
 ## BEHAVIOR_NICEABILITIES
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1490.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1516.
 
 ```text
 Behavior   : NiceAbilities
@@ -1636,7 +1792,7 @@ Example    : min=1 max=1 HEALAT=60 ; -RACE +Goblin
 
 ## BEHAVIOR_PATROLLER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1530.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1556.
 
 ```text
 Behavior   : Patroller
@@ -1684,7 +1840,7 @@ max=3;ROUTE=DAY:Gate#1;Wall#4;RESTART;ROUTE=NIGHT:Barracks#1;Barracks#2;RESTART
 
 ## BEHAVIOR_PURSUE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1593.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1619.
 
 ```text
 Behavior   : Pursue
@@ -1706,7 +1862,7 @@ comes back within N ticks is attacked on sight.
 
 ## BEHAVIOR_QUESTCHAT
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1378.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1400.
 
 ```text
 Behavior   : QuestChat
@@ -1741,7 +1897,7 @@ strings under the players name in any Quest object. This list will then be avail
 
 ## BEHAVIOR_RANDOMENCOUNTERS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1619.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1645.
 
 ```text
 Behavior   : RandomEncounters
@@ -1765,7 +1921,7 @@ party's (C15's mob ranks count).
 
 ## BEHAVIOR_RANDOMITEMS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1634.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1660.
 
 ```text
 Behavior   : RandomItems
@@ -1817,7 +1973,7 @@ rooms.
 
 ## BEHAVIOR_RANDOMMONSTERS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1683.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1709.
 
 ```text
 Behavior   : RandomMonsters
@@ -1870,12 +2026,13 @@ level of the party's highest, give or take, its stats by the level formulas.
 
 ## BEHAVIOR_RANDOMQUESTS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1731.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1757.
 
 ```text
 Behavior   : RandomQuests
 Targets    : Areas, Mobs
-Parameters : (MIN=[TICKS]) (MAX=[TICKS]) (CHANCE=[0-100]) ([var=value] ...)
+Parameters : (MIN=[TICKS]) (MAX=[TICKS]) (CHANCE=[0-100]) (INLINE=[TRUE/FALSE]) ([var=value]
+ ...)
 Example    : minquests=3 maxquests=5 template=normal_capture1
 Description:
 This behavior will generate a random quest inside a host area, or generate a random quest on
@@ -1888,14 +2045,17 @@ existing quests ellapse, then new ones will be generated.  Default is 1-3 quests
 multiple quests are offered by the same mob, then, by default, the player must complete each
  one in order.
 PATH is used to specify the xml document to read the random quest data from. Default is
-randareas/example.xml.
+quests/random/all.xml, the shipped generator.
 TAGID is the tag of the QUEST object inside the PATH document to generate. Default is
 "all_quests".
 EXPIRE is the amount of time a quest will run for before expiring forever. Expiration occurs
- even if a quest is accepted moments before.  The default is "3 hours".
+ even if a quest is accepted moments before.  The default is "6 hours".
 MAXATTEMPTS is the number of attempts that will be made to generate a particular quest.
 This is necessary because not all areas, people, or circumstances will support evey quest
 type.  The default is 3.
+INLINE=true makes the quests be generated at once, on the tick that wants them (as many as
+are wanted, trying again on a later tick if one fails), rather than by a background job,
+which is what happens if it is not given.  Prop_QuestGiver's GENERATE: asks for it.
 
 A saved game keeps the quests this behavior generated, whole, with their progress, and a
 restore makes them again; the behavior takes them back rather than generating others.
@@ -1928,7 +2088,7 @@ areas
 
 ## BEHAVIOR_REGENERATE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1799.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1828.
 
 ```text
 Behavior   : Regenerate
@@ -1958,7 +2118,7 @@ rooms are kept as rooms changed in play.
 
 ## BEHAVIOR_RESETWHOLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1820.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1849.
 
 ```text
 Behavior   : ResetWhole
@@ -1973,7 +2133,9 @@ Description:
 This behavior provides an alternative means of resetting your rooms and areas.  The system
 will total reset a room (mobs and items) which has not been visited by a player in the given
  amount of ticks.  Remember that a tick is about 4 seconds. You can alternatively specify a
-real life hour (0-23) or mud hour of the day with the RLHOUR or MUDHOUR parameters.
+real life hour (0-23) or mud hour of the day with the RLHOUR or MUDHOUR parameters.  With no
+ parameter at all it means 30000 milliseconds (about 7 ticks), not a large number; the form
+used is the first found of a bare number, TICKS, DAYS, RLHOUR, MUDHOUR, in that order.
 CoffeeSUD: DAYS is game days on the area's calendar after the party was last there, in place
  of TICKS. EXCEPT is a mask of the mobs and items that never come back once gone: a slain
 boss or taken loot stays gone, one still there at the reset stays; a name with spaces goes
@@ -1995,7 +2157,7 @@ resetting the real rooms, using the entering leader level.
 
 ## BEHAVIOR_RESOURCEOVERRIDE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1847.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1878.
 
 ```text
 Behavior   : ResourceOverride
@@ -2030,14 +2192,16 @@ WINTER= each give a season its own comma list of resources (none for nothing), w
  as the season turns; a season with no list uses the plain list, if there is one, or else
 the rooms' own.  SEASON=, MONTH= and HOUR= (comma lists, with ranges as 20-23) limit when it
  applies at all; outside them the rooms have their own resources back.  MSG="[TEXT]" is
-shown in a room when the calendar changes its resource.
+shown in a room when the calendar changes its resource.  MOBMASK=[ZAPPER MASK], put last on
+the line (everything after it is the mask), limits the override to gatherers that fit the
+mask: on a room or area, the one who gathers, and on a mob, the one who butchers its corpse.
 ```
 
 <a id="behavior-riddler"></a>
 
 ## BEHAVIOR_RIDDLER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1924.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1957.
 
 ```text
 Behavior   : Riddler
@@ -2050,21 +2214,23 @@ Example    : RIDDLE="What has roots nobody sees, and is taller than trees?"
 ANSWERS="mountain|mountains" FUZZY=1 TRIES=3 ONRIGHT="door open here north; exp $n 100"
 ONOUT="force $i kill $n"
 Description:
-CoffeeSUD: a mob or a thing that asks riddles.  RIDDLE and ANSWERS (more with RIDDLE1 to 9
-and ANSWERS1 to 9; RANDOM picks one, else the first); case, a, an, the and punctuation do
-not count, and FUZZY=1 forgives one wrong letter (or two swapped).  ASK (all three by
-default): GREET asks one of the player's side who comes in, LOOK one who looks at it,
-COMMAND one who types RIDDLE.  They answer by saying it (SAY) or with ANSWER [TEXT].  After
-TRIES wrong answers (3) ONOUT runs; ONRIGHT and ONWRONG run on each answer (script commands,
- MP left off if you like, $n who answered; as Prop_Switch's).  ONCE=CHARACTER (the default)
-asks each character until they solve it, SAVE until anyone does (kept with it), NONE always.
+CoffeeSUD: a mob or a thing that asks riddles.  (The game adds SOLVED=true to the parameters
+ when the riddle has been answered, so a save remembers it; it is not a setting to choose.)
+  RIDDLE and ANSWERS (more with RIDDLE1 to 9 and ANSWERS1 to 9; RANDOM picks one, else the
+first); case, a, an, the and punctuation do not count, and FUZZY=1 forgives one wrong letter
+ (or two swapped).  ASK (all three by default): GREET asks one of the player's side who
+comes in, LOOK one who looks at it, COMMAND one who types RIDDLE.  They answer by saying it
+(SAY) or with ANSWER [TEXT].  After TRIES wrong answers (3) ONOUT runs; ONRIGHT and ONWRONG
+run on each answer (script commands, MP left off if you like, $n who answered; as
+Prop_Switch's).  ONCE=CHARACTER (the default) asks each character until they solve it, SAVE
+until anyone does (kept with it), NONE always.
 ```
 
 <a id="behavior-roomstates"></a>
 
 ## BEHAVIOR_ROOMSTATES
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1882.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1915.
 
 ```text
 Behavior   : RoomStates
@@ -2087,11 +2253,39 @@ holds (ONVAR, the host * when not given). On an area, all its rooms (or ROOMS=) 
 together.  MPROOMSTATE and ROOMSTATE() set and read it; a save keeps it.
 ```
 
+<a id="behavior-scavenger"></a>
+
+## BEHAVIOR_SCAVENGER
+
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2015.
+
+```text
+Behavior   : Scavenger
+Targets    : MOBs
+Parameters : (MIN=[TICKS]) (MAX=[TICKS]) (CHANCE=[NUM%]) (TRASH=[ROOMID]) (ATNIGHT=TRUE)
+Parameters : ... (; [ITEM ZAPPERMASK]) Example    : min=10 max=20 chance=75
+Example    : min=10 max=20 chance=75 trash="no"
+Example    : min=10 max=20 chance=75 trash="Midgaard#3021"
+Example    : min=10 max=20 chance=75 ; -JAVACLASS +GENWEAPON
+Description:
+According to the timing and percent chance described by the parameters, the mob with this
+behavior will attempt to pick up and take away random objects in the same room as the mob.
+Scavengers will not do their work when a PC is in the room, however.  If they get "filled
+up" on items, they will destroy them, unless the trash flag is present.  If it is set to NO,
+ they will do nothing.  If it is set to a roomid, the mob will track to that room and put
+the things in any ungettable container therein, or on the ground if that is not an option.
+An optional semicolon at the end of the arguments may be followed by a zapper mask to limit
+the types of items the scavenger will pick up.  See AHELP ZAPPERMASK.  CoffeeSUD:
+ATNIGHT=TRUE (false if not given) makes it work every tick at night whatever its timing, and
+ once each night, if it has picked up more than it began with, it empties itself out at the
+TRASH place (or drops everything) as if it were full, its money too.
+```
+
 <a id="behavior-scene"></a>
 
 ## BEHAVIOR_SCENE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2002.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2038.
 
 ```text
 Behavior   : Scene
@@ -2126,7 +2320,7 @@ Where it is in a scene is kept in a saved game; STAT BEHAVIORS shows it and any 
 
 ## BEHAVIOR_SCHEDULE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1960.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1993.
 
 ```text
 Behavior   : Schedule
@@ -2157,11 +2351,11 @@ stays where it is.  STAT($i SCHEDULE) is the entry in force, and STAT BEHAVIORS 
 
 ## BEHAVIOR_SCRIPTABLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2060.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2096.
 
 ```text
 Behavior   : Scriptable
-Targets    : MOBs, Items, Rooms
+Targets    : MOBs, Items, Rooms (the engine also hosts scripts on exits and areas)
 Parameters : (see below)
 Example    : LOAD=progs/mrinfo.script~
 Description:
@@ -2171,12 +2365,17 @@ file for your script, then each script command line must be terminated by a line
 semicolon.  If you choose to put your entire script into the parameters, you must terminate
 EVERY line with a semicolon (;).
 Multiple scripts with multiple triggers may be included.  Each script and trigger must be
-separated by the ~ character.  See examples in the resources/progs directory!
+separated by the ~ character.  For a message trigger the first block that fires ends the
+message's handling (the later blocks do not run) unless MPSETINTERNAL MULTITRIGGER TRUE.  An
+ engine's queue drops identical waiting responses past five, and empties itself past 25 (150
+ for an area); a trigger caused by a script's own commands about three levels deep is
+ignored.  See examples in the resources/progs directory!
 Now to the script itself:
 The first line must be a trigger word followed by any parameters.  Valid triggers and
 parameters are as follows:
 LOAD=[SCRIPT PATH] - insert a new script from another file.  Ex: LOAD=progs/my.script~
-GREET_PROG [PCT CHANCE] - When players enter the room, given the chance.
+GREET_PROG [PCT CHANCE] - When another creature enters the room and the mob can see it
+arrive (not just players: test with ISPC() or a -PLAYER mask), given the chance.
 ARRIVE_PROG [PCT CHANCE] - When the mob enters a new room, or enters the game.
 ALL_GREET_PROG [PCT CHANCE] - Same as GREET_PROG, but works with sneakers too.
 LOGIN_PROG [PCT CHANCE] - When players logs into the game, given the chance.
@@ -2184,6 +2383,9 @@ LOGOFF_PROG [PCT CHANCE] - When players log out of the game, given the chance.
 LEVEL_PROG (GAIN/LOSS/ANY) [PCT CHANCE/MASK] - When a player anywhere gains a level (or
 loses one), given the chance. $g is the new level.
 SPEECH_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When someone says the words.
+NOTUNDERSTOOD_PROG [LANGUAGE/ANY] (P) [TEXT] - CoffeeSUD: when the host hears speech in a
+language it knows not a word of, so the words reach it garbled; TEXT limits it to garbled
+text containing it.
 BRIBE_PROG [AMOUNT OF GOLD] - When the amount or better is given to the monster.
 GIVE_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When something is given to the monster.
 RAND_PROG [PCT CHANCE] - Triggers at random, given the chance.
@@ -2228,10 +2430,10 @@ the mob instead, for its MudChat and SPEECH_PROGs, and with no topic is shown it
 MEMORY(npc who LASTTOPIC) is the topic.
 SET_PROG ([SET]/ALL) - CoffeeSUD: on a piece of an item set (Prop_ItemSet) or its wearer: a
 tier came on or went off; $0 the tier, $1 ON or OFF, $n the wearer.
-USE_PROG ([KEYWORDS]/ALL) - CoffeeSUD: on either thing of USE X (ON Y): it was used; the
-keywords are looked for in the other thing's name (none, or ALL, for any); $n who, $o the
-first, $t the second (or the first, alone).  Without one, world/combinations.txt is looked
-at.
+USE_PROG ([KEYWORDS]/ALL) - CoffeeSUD: on either thing of USE X (ON Y), or of TOUCH X: it
+was used; the keywords are looked for in the other thing's name (none, or ALL, for any); $n
+who, $o the first, $t the second (or the first, alone).  Without one, world/combinations.txt
+ is looked at.
 COMBINE_PROG ([KEYWORDS]/ALL) - CoffeeSUD: on either thing of COMBINE X WITH Y, as USE_PROG.
 SWITCH_PROG ([STATE]/ALL) - CoffeeSUD: on a thing with Prop_Switch, or its room: it moved to
  that state; $0 the state, $n who moved it.
@@ -2264,7 +2466,11 @@ third hour.
 DAY_PROG [LIST OF DAYS] - Mob runs program at listed days of the month, or ranges of them
 (1-7).
 DELAY_PROG [LOW TICKS] [HIGH TICKS] - Mob runs program at the given interval range.
-LOOK_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When matching something is looked at.
+LOOK_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When matching something is looked at.  When a
+ character looks at a keyword detail of a thing with Prop_Details, that thing's own
+LOOK_PROG blocks whose argument is 100 or exactly the keyword run too, with the keyword in
+$g; such a look is not a look at the thing itself, which is what Prop_QuestGiver's
+TRIGGER=LOOK answers.
 LLOOK_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When matching something is llooked at.
 GET_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When matching something is gotten.
 OPEN_PROG (P) [A PHRASE]/[ONE OR MORE WORDS] - When matching something is opened.
@@ -2305,18 +2511,18 @@ DROUGHT, COLD, FOG), from the old one if given. $g is the new weather, $0 the ol
 forecast. EXECMSG_PROG WEATHERCHANGE, TODCHANGE and DATECHANGE hear a change of weather, of
 the time of day, and a new day, in the area.
 MOON_PROG [PHASE/ANY] - When the moon over the host's area becomes the phase (NEW,
-WAXCRESCENT, WAXQUARTER, WAXGIBBOUS, FULL, WANEGIBBOUS, WANEQUARTER, WANECRESCENT). $g is
-the phase, $0 the one before.
+WAXCRESCENT, WAXQUARTER, WAXGIBBOUS, FULL, WANEGIBBOUS, WANEQUARTER, WANECRESCENT, BLUE for
+a blue moon). $g is the phase, $0 the one before.
 GAME_PROG [NEWGAME/RESTORE/SAVE/NEWCHAR/SWITCHTO/SWITCHFROM/PAUSE/RESUME/TIMEMODE/ANY]
 (MASK) - When the game starts new or restored, is saved, a character is made, the player
 switches characters, pauses, resumes or changes the time mode; heard by every object with
 the trigger. $n is the character, $g the save's name for SAVE and RESTORE and otherwise the
 event, $0 the event, $1 the detail (the other character, or TURNS or REALTIME). SAVE runs at
  once, before the save is made, so what it sets is saved; RETURN CANCEL refuses the save.
-TURN_PROG (EVERY N) (MASK) - At the end of each turn: a party's turn in turn-based time, a
-player's command that takes time in real time; every N turns if given. Heard by objects with
- the trigger in the leader's area, the area, and the world's scripts. $n is the leader, $g
-the turns since the game began.
+TURN_PROG (N) (MASK) - At the end of each turn: a party's turn in turn-based time, a
+player's command that takes time in real time; every N turns if a bare number N comes first.
+ Heard by objects with the trigger in the leader's area, the area, and the world's scripts.
+$n is the leader, $g the turns since the game began.
 The files in world/scripts/ are scripts on one hidden object, WORLD (its variables are
 WORLD's), that goes where the player goes and ticks every tick: GAME_PROG, QUEST_PROG and
 TURN_PROG there hear the whole game.
@@ -2333,12 +2539,12 @@ with the trigger. $n is the member, $t the leader, $g the event.
 SEASON_PROG [SPRING/SUMMER/FALL/WINTER/ANY], MONTH_PROG [NUMBERS OR NAMES/ANY], YEAR_PROG
 [YEAR/ANY], WEEKDAY_PROG [DAY NAMES/ANY] - When the area's clock comes to a new season,
 month or year, or each new day of the week. $g is the new one, $0 the one before.
-CLAN_PROG [JOIN/LEAVE/PROMOTE/DEMOTE/EXILE/RELATION/CONQUER/LOSEAREA/LEVEL/ALL] (CLAN/ALL) -
- When a member joins or leaves a clan (however it comes about), is promoted, demoted or
-exiled, the clan's relation to another changes, it wins or loses an area, or changes level;
-heard in the member's room, the clan's recall room and the area. $n is the member, $t the
-area, $g the new rank, relation or level, $0 the event, $1 the clan, $2 the detail, $3 the
-other clan or the area.
+CLAN_PROG [JOIN/LEAVE/PROMOTE/DEMOTE/EXILE/RELATION/CONQUER/LOSEAREA/LEVEL/DUESLATE/ALL]
+(CLAN/ANY/ALL) - When a member joins or leaves a clan (however it comes about), is promoted,
+ demoted or exiled, the clan's relation to another changes, it wins or loses an area,
+changes level, or a member's dues are overdue (DUESLATE); heard in the member's room, the
+clan's recall room and the area. $n is the member, $t the area, $g the new rank, relation or
+ level, $0 the event, $1 the clan, $2 the detail, $3 the other clan or the area.
 CRAFT_PROG [SKILL ID/*] [ITEM WORDS/ALL] (RUINED/SUCCESS) - When a crafter here makes
 something with the skill (heard by the room, its area, and things and mobs around). $n is
 the crafter, $o and $t the thing made, $g the skill.
@@ -2359,8 +2565,9 @@ and Prop_AreaBanner show text on an area's border.
 BOARD_PROG (MASK) and DISEMBARK_PROG (MASK) - When someone boards a vessel or leaves it;
 heard by the vessel, its rooms and crew, and the room outside. $n is the one, $t the vessel,
  $g its name.
-SAIL_PROG [COURSE/ANCHOR/STEER/ALL] - When one allowed to gives the vessel an order. $n is
-the helmsman, $g the order, $0 its kind.
+SAIL_PROG [COURSE/ANCHOR/STEER/ALL/ANY, or a command word: RISE, DIVE, TENDER, RAISE, LOWER,
+ JUMP, FOLLOW] - When one allowed to gives the vessel an order. $n is the helmsman, $g the
+order, $0 its kind.
 VESSEL_ARRIVE_PROG [ROOM ID/AREA/ALL] - On the vessel and its crew, when it comes into a
 room. $g is the room's ID, $0 its area. VESSEL_GREET_PROG [VESSEL WORDS/ALL] - On a room a
 vessel comes into, and what is there. DOCK_PROG - When the vessel's anchor drops; heard
@@ -2466,6 +2673,20 @@ conditions with () and use the following functions as part of its evaluation:
  - ISNAME([CODE] [WORDS])  if the given item is named with given words.
  - CURRENCY([CODE] == [NAME])  if the native currency of the mob or coins is the name. Where
  == may be !=.
+ - CLANMEMBER([CODE] [CLAN] [FIELD] [CMP] [VALUE])  CoffeeSUD: a clan member record field:
+RANKNAME, POSITION, JOINDATE, DUESOWED, DONATEDGOLD or DONATEDXP.
+ - CLANPOS([CODE] [CLAN] [CMP] [TEXT])  CoffeeSUD: the ID of the mob's position in the clan.
+ - CLANS([CODE] [CMP] [TEXT])  CoffeeSUD: the IDs of the clans the mob belongs to, comma
+separated.
+ - CLANRELATION(['CLAN ONE'] ['CLAN TWO'] [CMP] [RELATION])  CoffeeSUD: NEUTRAL, WAR,
+HOSTILE, FRIENDLY or ALLY.
+ - AREACLAN([AREA] [CMP] [CLAN])  CoffeeSUD: the clan that rules the area, if any.
+ - AREACONTROL([AREA] [CLAN] [CMP] [N])  CoffeeSUD: the control points the clan holds in the
+ area.
+ - REVOLTCHANCE([AREA] [CMP] [N])  CoffeeSUD: the area's chance of revolt, from its law
+behavior.
+ - UPPER([TEXT]), LOWER([TEXT]), CAP([TEXT]), TRIM([TEXT]) and LEN([TEXT] [CMP] [N])
+CoffeeSUD: text functions, most used as $%UPPER(text)% values (LEN also as a test).
  - NUMMOBSINAREA([MOB NAME] == [NUM]) if comparison of number of mobs of that name in area.
 Where == may be !=, >, <, <=, <=.
  - NUMMOBS([MOB NAME] == [NUM]) if comparison of number of mobs of that name in world. Where
@@ -2507,8 +2728,9 @@ mask syntax
  - ISODD([AMT]) whether the given argument is an odd whole number
  - VAR([CODE] [VAR NAME] == [VALUE]) if the var for the given mob has value.  Where == may
 be !=, >, <, >=, <=.
- - FACTION([CODE] [FACT] == [VALUE]) if the faction for the given mob has value.  Where ==
-may be !=, >, <, >=, <=.
+ - FACTION([CODE] [FACT] == [VALUE]) if the faction for the given mob has value (a number),
+or, if VALUE is not a number, is in the band of that name or code, compared as text and in
+any case.  Where == may be !=, >, <, >=, <=.
  - SEX([CODE] == [M/F/N]) evaluates sex.  Where == may also be !=.
  - POSITION([CODE] == [SLEEPING/STANDING/SITTING] Evaluates position.
  - LEVEL([CODE] == [LVL]) evaluates level.  Where == may be !=, <, >, >=, <=.
@@ -2778,12 +3000,13 @@ MPSET [MOB/ITEM] [VAR NAME] [VALUE] - use with care! sets a stat for a mob or it
 MPGSET [MOB/ITEM] [VAR NAME] [VALUE] - like MPSET but player data accessible. See GSTAT.
 MPTRANSFER [ALL/MOB NAME] [ROOM ID/NAME/DESC] - transfer mobs to the given room.
 MPBEACON [ROOM ID/NAME/DESC] [ALL/MOB NAME] - Makes given room start room for players.
-MPFORCE [MOB NAME] [COMMAND] - force the given mob to do the given command.
+MPFORCE [MOB NAME] [COMMAND] - force the given mob to do the given command; $ codes in it
+are filled in first, in the forcing script's context ($i is still the forcing host).
 MPPROMPT [PC NAME] [VARIABLE NAME] [PROMPT].  Store user entered value in variable.  See
 Guide.
 MPCONFIRM [PC NAME] [VARIABLE NAME] [DEFAULT VALUE] [PROMPT].  Y or N.  See Guide.
-MPCHOOSE [PC NAME] [VARIABLE NAME] [CHOICES] [DEFAULT VALUE] [PROMPT].  Hotkey choices.  See
- Guide.
+MPCHOOSE [PC NAME] [VARIABLE NAME] [CHOICES] [DEFAULT VALUE] [PROMPT].  Hotkey choices
+(CHOICES are upper-case keys, such as YNM).  See Guide.
 MPMENU [PC NAME] [FUNCTION] "[PROMPT]" [KEY]:"[LABEL]"([IF CONDITION]) ... ([DEFAULT KEY]) -
  CoffeeSUD: a numbered menu that does not wait: the script goes on at once, and the
 character's next line answers it, by number or key (Enter, or an answer that is none of
@@ -2849,6 +3072,9 @@ alarm (TELEGRAPH unless NAME=), so ALARM($i TELEGRAPH) and MPALARMCANCEL work on
 meanwhile, MOVE when it leaves the room.  Example: MPTELEGRAPH 2 "<S-NAME> rears back,
 flames gathering in <S-HIS-HER> throat!" MPDAMAGE $n 30 60 INTERRUPT=STUN,DAMAGE>20%
 AVOID=COMMAND:brace
+MPDIRECTOR START/RESET ([ROOM ID]) - CoffeeSUD: starts or ends the run of the
+EncounterDirector of the room (or of the room named).  When a run ends, the room's scripts
+hear SIGNAL_PROG DIRECTOR_COMPLETE or DIRECTOR_FAILED, with the encounter and run in $g.
 MPWAVE START/NEXT/STOP/RESET - CoffeeSUD: starts the WaveSpawner of the room (START=CALL),
 brings its next wave, ends it as a loss, or clears it to start again.
 MPSETRESPAWN [CODE] [ROOM ID]/HERE/CLEAR - CoffeeSUD: sets or clears a character's respawn
@@ -2887,11 +3113,11 @@ MPEXCHANGE [CURRENCY]/DEFAULT [PERCENT] - CoffeeSUD: what coins of a currency fe
  money changer, in percent of their value (100: as they are, which ends it), on top of each
 changer's own RATE and cut; a save keeps it.
 MPGENERATE ITEM/MOB/ROOM/AREA/QUEST [FILE] [ID] ([VAR]=[VALUE] ...) (INTO [CONTAINER]/TO
-[MOB]/HERE/AT [ROOM]/[DIRECTION]) (SEED=[N]) - CoffeeSUD: generates from a template file (as
- GENERATE, a fresh roll each time): an item here, into a container or to a mob; a mob here
-or at a room; a room or an area off the host's room in a free direction; or a quest,
-started.  $b is the first thing made.  PLAYER_LEVEL, PARTY_SIZE, AREA_LEVEL, AREA_THEME,
-HOUR, SEASON, WEATHER and GAME_DAY are defined for the template unless given.
+[MOB]/HERE/AT [ROOM]/[DIRECTION]) (SEED=[N], for AREA only) - CoffeeSUD: generates from a
+template file (as GENERATE, a fresh roll each time): an item here, into a container or to a
+mob; a mob here or at a room; a room or an area off the host's room in a free direction; or
+a quest, started.  $b is the first thing made.  PLAYER_LEVEL, PARTY_SIZE, AREA_LEVEL,
+AREA_THEME, HOUR, SEASON, WEATHER and GAME_DAY are defined for the template unless given.
 MPGRANT [ITEM] [MOB NAME]/NOBODY (PROFILE) (NAME=[NEW NAME]) - CoffeeSUD: gives property: a
 deed (its land changes hands and the deed goes to them), a vessel (kept with that character
 so it saves with them, renamed with no prompt, which fills the [NAME] in its name, and
@@ -2944,8 +3170,8 @@ MPROOMSTATE [ROOM ID/HERE/AREA NAME] [STATE] - CoffeeSUD: the RoomStates of the 
  area), or of the area named, changes to that state now.
 MPPASSTIME [N] HOURS/DAYS/WEEKS / UNTIL DAWN/DUSK/HOUR [N]/... (INTERRUPTIBLE) (QUIET) -
 CoffeeSUD: game time passes, the world going on as it would (the clock paused for it if it
-runs), up to three game days, the player told each hour (QUIET: not); INTERRUPTIBLE ends it
-if they are hurt, attacked or moved.
+runs), up to 72 game hours, the player told each hour (QUIET: not); INTERRUPTIBLE ends it if
+ they are hurt, attacked or moved.
 MPINTERRUPT [CODE] ([MESSAGE]) - CoffeeSUD: ends the wait (WAIT, MPPASSTIME) or journey of
 that character or their party, with the message.
 MPDEBT [CODE] [TO WHOM] +[AMOUNT]/-[AMOUNT] (INTEREST [PERCENT]) (DUE [N]
@@ -2959,10 +3185,15 @@ range, or +NUM, --NUM.
 MPWHILE ([IF CONDITION]) [COMMAND] - repeatedly executes commmand.
 MPDAMAGE [MOB/ITEM] [MIN] [MAX] (KILL)- does random damage to the target. Kills only when
 KILL parm given.
-MPREJUV AREA/ROOM/[ROOMID]/[AREAID] (ITEMS/MOBS) - rejuv dead mobs, lost items from area or
-room
+MPCLANRELATION [CLAN A] [CLAN B] [NEUTRAL/WAR/HOSTILE/FRIENDLY/ALLY] (MUTUAL) - CoffeeSUD:
+sets A's relation to B, and B's to A too with MUTUAL.
+MPCONQUER [AREA] [CLAN] [+N/-N/=N/RULE/FREE] - CoffeeSUD: changes a clan's control points of
+ an area with the Conquerable behavior, makes it the ruler (RULE) or ends its rule (FREE).
+MPREJUV AREA/ROOM/[ROOMID]/[AREAID] (items/mobs, in lower case) - rejuv dead mobs, lost
+items from area or room
 MPRESET AREA/ROOM/[ROOMID]/[AREAID] - reload an area or room from the database
-MPLOG ERROR/INFO/DEBUG HEADER MESSAGE - add an entry to the coffeemud server log
+MPLOG ERROR/INFO/DEBUG HEADER MESSAGE (SYSTEM is INFO) - add an entry to the coffeemud
+server log
 MPDEBUG MESSAGE - in builder mode or DEV=1 only, the message to the developer log (DEVLOG)
 as [debug host@room file:line] MESSAGE; nothing in a normal game. debug(x) in a <SCRIPT>
 does the same.
@@ -3063,7 +3294,10 @@ dated on the game calendar (QUESTS [QUEST], QUESTS LOG).
 MPCHANNEL (!)[CHANNEL] MESSAGE - send a message to a channel
 MPTRACKTO [MOB NAME] - forces the mob to track down the given mob.
 MPWALKTO [MOB NAME] - forces the mob to track down the given mob, land surface only.
-MPAFFECT [SPELL] [MOB NAME] [PARMS] - automatically casts a spell on a mob.
+MPAFFECT [SPELL] [MOB NAME] [PARMS] - automatically casts a spell on a mob, no cost and no
+checks.  A word of digits run straight into TICKS in PARMS (120TICKS, no space) limits how
+long it lasts; a property (or property:[ID], such as property:Spell_Fly) is added as a
+permanent effect.
 MPBEHAVE [BEHAVIOR] [MOB NAME] [PARMS] - adds a behavior to the mob.
 MPUNBEHAVE [BEHAVIOR] [MOB NAME] - removes a behavior from a  mob.
 MPTATTOO [MOB] (-)[TATTOONAME] - adds or removes the given tattoo for the mob.
@@ -3078,14 +3312,14 @@ MPM2I2M [MOB/ITEM] - this strange command turns a mob into an item and back into
 MPHIDE [MOB/ITEM/EXIT] - makes the target undetectable by any means.
 MPUNHIDE [MOB/ITEM/EXIT] - reverses the affects of MPHIDE -- does not affect Hide or other
 skills.
-MPOPEN [ITEM/EXIT] - opens a closed container or door: that one side only, silently, and
-with no relock timer (MPDOOR changes both sides, with a message).
-MPCLOSE [ITEM/EXIT] - closes an open container or door: that one side only, silently (MPDOOR
- does both).
+MPOPEN [ITEM/EXIT] - opens a closed container or door, and clears any lock on it: that one
+side only, silently, and with no relock timer (MPDOOR changes both sides, with a message).
+MPCLOSE [ITEM/EXIT] - closes an open container or door, left unlocked: that one side only,
+silently (MPDOOR does both).
 MPLOCK [ITEM/EXIT] - closes and locks a lockable container or door: that one side only,
 silently (MPDOOR does both).
-MPUNLOCK [ITEM/EXIT] - unlocks a locked container or door, but does not open: that one side
-only, silently (MPDOOR does both).
+MPUNLOCK [ITEM/EXIT] - unlocks a locked container or door and leaves it closed: that one
+side only, silently (MPDOOR does both).
 MPSETCLANDATA [CLAN] [VAR] [VALUE] - changes a datum about the given clan.
 MPARGSET [$VAR] [VALUE] - changes internal $(i,n,t,0,1,..9) object to one specified by
 value.
@@ -3094,7 +3328,8 @@ object.
 MPUNLOADSCRIPT [SCRIPT FILE NAME] - unloads a file script from the resources cache for
 refreshing
 MPQSET [QUEST] [QVARNAME] [VALUE] - set temp quest var to given value.
-BREAK -- return/break out of the current if condition or program script.
+BREAK -- ends the nearest FOR or WHILE loop, from however deep inside IF and SWITCH blocks;
+outside a loop it ends the program.
 RETURN [OPTIONAL STRING] - exits the existing script, returning the string given.
 <SCRIPT> - embed Javascript in Scriptable event.  Must be closed with </SCRIPT>.
 [COMMAND] [PARMS]- any valid coffee mud command!
@@ -3380,7 +3615,7 @@ if $o evaluates to "a magic wand", $o.1.. would evaluate to "magic wand".
 
 ## BEHAVIOR_SENTRY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2026.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2062.
 
 ```text
 Behavior   : Sentry
@@ -3406,7 +3641,7 @@ tent by tent.
 
 ## BEHAVIOR_SLEEPER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2043.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2079.
 
 ```text
 Behavior   : Sleeper
@@ -3432,11 +3667,11 @@ LOOK at it says it is sleeping soundly, or that it stirs when something nearly w
 
 ## BEHAVIOR_SOUNDER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 475.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 478.
 
 ```text
 Behavior   : Sounder
-Targets    : Room, MOBs, Items, Areas
+Targets    : Rooms, MOBs, Items, Areas, Exits
 Parameters : (Max/Min ticks;) ([EMOTE CODE] [EMOTE STRING];)
 Example    : sound 80 wiggles his bottom.;sound 60 smiles evilly.;sound 20 burps!
 Example    : min=20 max=20;wear $p looks good on you.;remove Now you don't look so
@@ -3526,11 +3761,31 @@ sheathed.;WIELD(+WEAPONCLASS SWORD): SAY Put that away in the city!;NIGHT: SAY C
 the bell.;HURT<30: SAY To me! Guards!
 ```
 
+<a id="behavior-stdbehavior"></a>
+
+## BEHAVIOR_STDBEHAVIOR
+
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3652.
+
+```text
+Behavior   : StdBehavior
+Targets    : MOBs
+Parameters :
+Example    :
+Description:
+The standard base class that the behaviors extend, and the one a behavior gets when its own
+class cannot be made.  By itself it does nothing: it has no tick, answers no message, holds
+whatever parameters it is given (and keeps them when saved), and is for mobs only.  A
+behavior that wants other hosts says so in its own code (each behavior's own help names
+them), and many of the combat behaviors (Fighterness, Clericness, CombatAbilities and the
+rest) accept every kind of host through ActiveTicker.  It is of no use to put on anything.
+```
+
 <a id="behavior-targetpriority"></a>
 
 ## BEHAVIOR_TARGETPRIORITY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3348.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3426.
 
 ```text
 Behavior   : TargetPriority
@@ -3558,7 +3813,7 @@ taunt) comes before the list.
 
 ## BEHAVIOR_TAXIBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3385.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3463.
 
 ```text
 Behavior   : TaxiBehavior
@@ -3582,21 +3837,28 @@ who enter the room its in. ENTERMSG will give a message to players after they mo
 taxi.  TALKERNAME=name will change the apparent name of the speaker, allowing you to turn a
 mounted mob into a "driver" if you wish. PERROOM=number will set a per-room price for the
 distance from the current room to the one sought. INDOOROK=true will allow the taxi to
-traverse indoor rooms if convenient. NOWATER=true to prevent trails over water. NOAIR=true,
-to prevent trails through the air. NOLOCKS=true to prevent trails through locked doors.
+traverse indoor rooms if convenient (a taxi keeps to the outdoors otherwise), and
+NOINDOOR=true forbids them. NOWATER=true to prevent trails over water. NOAIR=true, to
+prevent trails through the air. NOLOCKS=true to prevent trails through locked doors.
 NOHOMES=true to prevent trails through private homes. NOCLIMB to prevent trails through
 climbable exits. NOCRAWL to prevent trails through crawlable exits.
+
+CoffeeSUD: PARTY=LEADER or EACH (EACH if not given) says who pays for a party: with EACH,
+each member pays the price; with LEADER, the one who asks pays for everyone near, the price
+for each player's character, PETS=[PRICE] for each follower that is not a player's character
+ (the price if not given is 0), and CARGO=[PRICE] for each 100 pounds a member carries
+beyond their own weight (0 if not given).
 ```
 
 <a id="behavior-tidalroom"></a>
 
 ## BEHAVIOR_TIDALROOM
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1898.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1931.
 
 ```text
 Behavior   : TidalRoom
-Targets    : Rooms
+Targets    : Rooms, Areas
 Parameters : (SPAN=[HOURS]) (TITLE=) (DESC=) (FLOODMSG=) (DEEP) (WASH=[WEIGHT])
 Example    : SPAN=1 DESC="The sea fills the cove." WASH=2 DEEP
 Description:
@@ -3611,59 +3873,94 @@ ROOMSTATE() says ebb, flooded or deep.
 
 ## BEHAVIOR_TRANSPORTLINE
 
-Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 39.
+Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 60.
 
 ```text
-Behavior: TransportLine
-Targets: Navigable vessels, rideables, mounted MOB drivers
-Parameters: STOPS="[room IDs or port names separated by semicolons]" WAIT=[ticks]
-DEPART=[game hours, comma separated] ROUND=LOOP|BACK FARE=[price] FARES="[stop:price,...]"
-PARTY=LEADER|EACH PETS=[price] CARGO=[price per 100 lbs] PASSENGERONLY=true SIGN="[item
-name]" BOARDCALL="[text]" DEPARTMSG="[text]" ARRIVEMSG="[text]"
-Routes between stops with the ordinary movement system. DEPART replaces WAIT with calendar
-departure hours. BACK reverses at endpoints; LOOP cycles. Messages substitute $stop and
-$next. SIGN publishes the timetable at stops; TIMETABLE also shows it. Progress, direction,
-departure and arrival count are saved.
-Generated ticket and crew-only helm properties are temporary; explicit authored properties
-take priority. PARTY=LEADER pays for the group, EACH uses individual fares. WAIT UNTIL
-ARRIVAL stops at a line arrival.
+Behavior   : TransportLine
+Targets    : Navigable vessels, rideables, mounted MOB drivers
+Parameters : STOPS="[ROOM IDS OR PORT NAMES SEPARATED BY SEMICOLONS]" (WAIT=[TICKS])
+(DEPART=[GAME HOURS, COMMA SEPARATED])
+Parameters : (ROUND=[LOOP/BACK]) (FARE=[PRICE]) (FARES="[STOP:PRICE,...]")
+(PARTY=[LEADER/EACH]) (PETS=[PRICE])
+Parameters : (CARGO=[PRICE PER 100 LBS]) (PASSENGERONLY=[TRUE/FALSE]) (SIGN="[ITEM NAME]")
+(BOARDCALL="[TEXT]")
+Parameters : (DEPARTMSG="[TEXT]") (ARRIVEMSG="[TEXT]")
+Example    : STOPS="Harbor#1;Isle#3" WAIT=10 ROUND=BACK FARE=5
+Example    : STOPS="Saltmarsh Quay;Smugglers' Cove" DEPART=6,18 ROUND=LOOP FARES="Smugglers'
+ Cove:12" PETS=2
+Description:
+CoffeeSUD: Routes between stops with the ordinary movement system. DEPART replaces WAIT with
+ calendar departure hours. BACK reverses at endpoints; LOOP cycles. Messages substitute
+$stop and $next. SIGN publishes the timetable at stops; TIMETABLE also shows it. Progress,
+direction, departure and arrival count are saved.
+PASSENGERONLY is true if not given: a navigable vessel with a TransportLine gets a crew-only
+ helm (Prop_HelmRestrict NAVMASK="-PLAYERS") unless it has its own Prop_HelmRestrict;
+PASSENGERONLY=false leaves the helm open.  Generated ticket and crew-only helm properties
+are temporary; explicit authored properties take priority. PARTY=LEADER pays for the group,
+EACH uses individual fares. WAIT UNTIL ARRIVAL stops at a line arrival.
 ```
 
 <a id="behavior-veryaggressive"></a>
 
 ## BEHAVIOR_VERYAGGRESSIVE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3420.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3503.
 
 ```text
 Behavior   : VeryAggressive
 Targets    : MOBs
 Parameters : aggression flags (message=[msg]) aggression masks
-Example    : -race +elf message="die! You!"
-Example    : -race +elf
-Example    : mobkill misbehave -race +elf
+Example    : -RACE +Elf message="die! You!"
+Example    : -RACE +Elf
+Example    : mobkill misbehave -RACE +Elf
 Description:
 Makes the mob attack any player mob it can detect in the same room, from the moment the new
 mob enters.  In addition, this behavior will detect any mobs in adjacent rooms, and move to
-attack those as well, but only if those players meet all the other criteria, and are within
-16 levels of the mob. Mobs will not be aggressive towards Archons and builders with the
-CMDMOBS security flag. Horribly wounded mobs are not aggressive. If no other parameters are
-given, the mob will attack anyone within 8 levels. Valid aggressive masks include:
+attack those as well, but only if those players meet all the other criteria, and (with no
+mask) are within 7 levels of the mob. Mobs will not be aggressive towards Archons and
+builders with the CMDMOBS security flag. Horribly wounded mobs are not aggressive. If no
+other parameters are given, the mob will attack anyone within 7 levels. Valid aggressive
+masks include:
 message=[msg] something for the mob to say whenever he's fixing to attack
 delay=x (makes the mob delay x ticks before looking for a victim)
 mobkill (makes this behavior attack mobs as well as players)
 nogang (makes this behavior pass over players already in combat)
 misbehave (makes this mob attack even when wounded or a follower)
-BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY] - this is a comma-delimited
+BRIBE=[AMOUNT],[TICKS OF PEACE],[TICKS TO PAY] - the mob demands a bribe instead: the amount
+ in base gold (default 1), how many ticks a payment buys (default 100), and how long a new
+arrival has before ordinary aggression resumes (default 20000); comma-delimited
 BRIBEPAYMSG=x, BRIBEPAIDMSG=x, (see also ahelp on AGGRESSIVE BRIBE)
 See AHELP ZAPPERMASK, where allowed is attacked, and disallowed is spared.
+```
+
+<a id="behavior-watercurrents"></a>
+
+## BEHAVIOR_WATERCURRENTS
+
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3546.
+
+```text
+Behavior   : WaterCurrents
+Targets    : Areas, Rooms
+Parameters : min, max ticks, % chance, GO=[DIRECTION] [DIRECTION] [etc..]
+Parameters : ... INMSG="[INCOMING MSG]" OUTMSG="[OUTGOING MSG]" (BOATS)
+Example    : min=1 max=3 chance=99 go=east south
+Example    : east=true south=true inmsg="<S-NAME> enter(s) from @x1."
+Description:
+The mob will be drawn along in the directions specified by the parameters.  If an exit is
+available in the first direction, it will be chosen, otherwise the second one, etc.  The
+min, max, and chance dictate how often the currents will strike.  The INMSG and OUTMSG are
+the incoming and outgoing messages; you can use <S-NAME> and <S-IS-ARE> codes for the object
+ being swept, and @x1 for the direction entering or leaving from/to.  CoffeeSUD: the word
+BOATS also lets the currents carry boats that have riders (and Boardable things), which they
+ otherwise leave where they are; without it, only loose items are swept.
 ```
 
 <a id="behavior-wavespawner"></a>
 
 ## BEHAVIOR_WAVESPAWNER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3445.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3528.
 
 ```text
 Behavior   : WaveSpawner
@@ -3767,7 +4064,7 @@ Chopping skill.
 
 ## BUILDERMODE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2223.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2248.
 
 Help alias for **BUILDING**.
 
@@ -3801,14 +4098,16 @@ JRUN with its builder object for scripts.  EDIT SCRIPT and EDIT DESC open the li
 plays as a player, BUILD runs one builder command meanwhile.
 6. Not in the world folder: the characters (the database's), the game's own resources/
 unless a world copy is made (builder mode writes changes to the world's copy), and
-coffeemud.ini; ERRMSGS=BOTH and JSCRIPTS=2 there help while building.
+coffeemud.ini; JSCRIPTS=2 there helps while building.  (The single-player launcher forces
+SYSMSGS, ERRMSGS, WRNMSGS and DBGMSGS to FILE over the ini, so ERRMSGS=BOTH there does
+nothing: give it on the command line, as sud.sh ERRMSGS=BOTH, or watch DEVLOG.)
 ```
 
 <a id="building"></a>
 
 ## BUILDING
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2184.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2207.
 
 ```text
 Topic    : BUILDING
@@ -3840,14 +4139,16 @@ JRUN with its builder object for scripts.  EDIT SCRIPT and EDIT DESC open the li
 plays as a player, BUILD runs one builder command meanwhile.
 6. Not in the world folder: the characters (the database's), the game's own resources/
 unless a world copy is made (builder mode writes changes to the world's copy), and
-coffeemud.ini; ERRMSGS=BOTH and JSCRIPTS=2 there help while building.
+coffeemud.ini; JSCRIPTS=2 there helps while building.  (The single-player launcher forces
+SYSMSGS, ERRMSGS, WRNMSGS and DBGMSGS to FILE over the ini, so ERRMSGS=BOTH there does
+nothing: give it on the command line, as sud.sh ERRMSGS=BOTH, or watch DEVLOG.)
 ```
 
 <a id="calendar"></a>
 
 ## CALENDAR
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2595.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2625.
 
 ```text
 CoffeeSUD: MODIFY AREA CALENDAR [KEY=VALUE ...] gives an area, and its child areas, a
@@ -3912,7 +4213,7 @@ items.
 
 ## CATALOG
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 113.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 110.
 
 ```text
 Command  : CATALOG
@@ -3920,7 +4221,8 @@ Usage    : CATALOG LIST (MOBS/ITEMS/CATEGORIES/) [NAME MASK]
 Usage    : CATALOG (DELETE) [ITEM/MOB NAME]
 Usage    : CATALOG (ROOM/AREA/WORLD) (MOBS/ITEMS/)
 Usage    : CATALOG EDIT [ITEM NAME]
-Usage    : CATALOG CATEGORY [CATEGORY NAME]
+Usage    : CATALOG CATEGORY [CATEGORY NAME] (also spelled CATAGORY)
+Usage    : CATALOG CLEAN (ROOM/AREA/WORLD) (MOBS/ITEMS/)
 Usage    : CATALOG SCAN/DBSCAN (ROOM/AREA/WORLD) (MOBS/ITEMS/)
 Usage    : CATALOG OVERLOOK/DBOVERLOOK (ROOM/AREA/WORLD) (MOBS/ITEMS/)
 Example  : catalog list
@@ -3952,11 +4254,15 @@ parameter, or in your saved rooms with dboverlook.
 
 You may delete an object from your catalog to stop using it as a global template. Deleting
 an object from the catalog only detaches instances of a cataloged object from all others,
-but does not destroy any actual instances.
+but does not destroy any actual instances.  Deleting everydamnmob, everydamnitem or
+everydamnthing deletes in bulk, and asks once for the whole set.  CATALOG CLEAN detaches the
+ objects (in the room, area or world you name) whose catalog entry no longer exists, and
+saves their rooms.
 
 The catalog is also used to manage a global random item-drop table.  Items can be set to
 randomly appear in the inventories of selected mobs when those mobs are brought to life, or
-at the moment of their death. Use CATALOG EDIT <item name> to change drop settings.
+at the moment of their death. Use CATALOG EDIT <item name> to change drop settings.  In the
+EDIT prompts, Enter keeps a mask as it was; only NULL clears it.
 
 CoffeeSUD: an item may also be found in containers (C)ontainer: when a matching container is
  first opened, on a timer, or both), have several rules sharing its cap, and be unique at a
@@ -3968,7 +4274,7 @@ See AHELP UNIQUES.
 
 ## CHATTEST
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3109.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3141.
 
 ```text
 Command  : CHATTEST
@@ -3994,7 +4300,7 @@ talks from it; in builder mode an edited chat file is read again by itself.
 
 ## CHEAT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 159.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 184.
 
 ```text
 Command : CHEAT
@@ -4010,7 +4316,7 @@ save, and SAVES marks such a save [cheat].  CHEAT OFF closes them.
 
 ## CHECKPOINT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2849.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2906.
 
 ```text
 Command : CHECKPOINT
@@ -4027,7 +4333,7 @@ another area.
 
 ## CHECKTEXT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2355.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2380.
 
 Help alias for **PREVIEW**.
 
@@ -4048,16 +4354,17 @@ WINDY, CLOUDY...), FROM a direction or FROM UNKNOWN, VISITED or FIRSTVISIT, AS a
 reader, put back after).  Only rooms' texts vary (<VARIES>).  CHECKTEXT lists what in rooms'
  titles and descriptions would print as text instead of varying: variation tags in a text
 that does not start with <VARIES>, tags that are none (<nigth>), tags in small letters
-(their end is found only in capitals), tags opened and not closed or closed and not opened,
-a MASK whose mask has a > in it (write &gt;), and a colour code left open at the end.
-<FROMUNKNOWN> is the same as <FROMUNKOWN>, as the code long spelled it.
+(still reported, though a closing tag is found whatever its letters; only a leading <VARIES>
+ must be in capitals), tags opened and not closed or closed and not opened, a MASK whose
+mask has a > in it (write &gt;), and a colour code left open at the end. <FROMUNKNOWN> is
+the same as <FROMUNKOWN>, as the code long spelled it.
 ```
 
 <a id="clanaccept"></a>
 
 ## CLANACCEPT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 809.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 841.
 
 ```text
 Command : CLANACCEPT
@@ -4072,7 +4379,7 @@ Accept an applicant for membership to your clan.
 
 ## CLANAPPLY
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 759.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 791.
 
 ```text
 Command : CLANAPPLY
@@ -4112,7 +4419,7 @@ some material types require smaller amounts to make the same items.
 
 ## CLANEXILE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 834.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 870.
 
 ```text
 Command : CLANEXILE
@@ -4126,7 +4433,7 @@ Exile an applicant for membership to your clan.
 
 ## CLANRESIGN
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 850.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 886.
 
 ```text
 Command : CLANRESIGN
@@ -4173,7 +4480,7 @@ the same items. The player may also scan the room or other players for equipment
 
 ## COMBATDEBUG
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2062.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2085.
 
 ```text
 Command  : COMBATDEBUG
@@ -4193,7 +4500,7 @@ or that stopped it, and what was dealt.  Damage outside an attack, a spell's, ge
 
 ## COMBATRESULT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3218.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3282.
 
 ```text
 Command : COMBATRESULT
@@ -4214,7 +4521,7 @@ selection, validation and broader inspection.
 
 ## COMBINE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2394.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2445.
 
 ```text
 Command : COMBINE
@@ -4244,7 +4551,7 @@ maintained in resources/skills/components.txt
 
 ## COMPOSE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3198.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3256.
 
 ```text
 Ability : Ability composition (Skill_Compose)
@@ -4252,11 +4559,16 @@ Usage   : COMPOSE (LIST)
 Usage   : COMPOSE LEARN/SHOW/FORGET [skill ID]
 Usage   : COMPOSE LINK/UNLINK [skill ID] [support ID]
 Usage   : COMPOSE CAST [skill ID] [target]
+Usage   : COMPOSE COMPARE [skill ID] [skill ID] ([target])
 Requires the optional abilities.composition module and the learned Skill_Compose ability.
 Installing the module does not grant it. LEARN selects an eligible authored skill version;
 LINK adds a compatible support. SHOW explains the compiled values and each modifier's
 source. UNLINK removes one support. FORGET removes a chosen skill; neither it nor LEARN
-resets cooldowns.
+resets cooldowns. COMPARE puts two of your skills, with their supports, side by side against
+ a target here (or one with the combat profile's defaults): costs, cooldowns, the exact
+chances to hit, be blocked and strike critically, what lands, and the expected damage per
+cast. It rolls, pays and cools down nothing; the target's own stats are shown only to a
+creator (builder mode or DEV=1).
 Up to four chosen skills and three supports per skill are supported; the creator may lower
 limits. Each character keeps separate choices. Existing skills retain their selected
 versions across save/restore and content upgrades. LEARN explicitly adopts the latest
@@ -4271,7 +4583,7 @@ See AHELP WORLD_COMPOSITIONS for creator tools.
 
 ## CONSIDER
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 980.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1020.
 
 ```text
 Command : CONSIDER
@@ -4326,7 +4638,7 @@ parameter. The raw materials for costuming are created using the Papermake skill
 
 ## CRAFTQUALITY
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1286.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1302.
 
 ```text
 CoffeeSUD: quality tiers for what players craft, in resources/skills/craftquality.txt (a
@@ -4349,7 +4661,7 @@ are: masterwork, (@x2/25)+(@x1/4)+(@x3*3), 1.5, 1.1, 1.1, 1.2, 3
 
 ## CREATE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 249.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 251.
 
 ```text
 Command : CREATE
@@ -4359,28 +4671,38 @@ Example : create item Longsword
 Example : create item Longsword@room
 Example : create item Longsword@an orc
 Example : create StdExit east
+Example : create 3 Longsword
+Example : create 20 iron
+Example : create guild Knights of the Rose template=ORDER hall=Castle#14
 Example : create news
 Short(s):
 A command for the creation of an EXIT, ITEM, QUEST, FACTION, COMPONENT, GOVERNMENT, HOLIDAY,
  CLAN, MOB, RACE, MIXEDRACE, ABILITY, LANGUAGE, CRAFTSKILL, HELP/AHELP, ACHIEVEMENT,
-MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, WEBSERVER, DISABLEFLAG, ENABLEFLAG, NEWS, USER,
-TRAP, WRIGHTSKILL, GATHERSKILL, BUILDSKILL, DISEASE, CRON, TITLE, AWARD, or ROOM. Enter
-CREATE or CREATE X for more information on command usage. Use AHELP QUESTS for more
-information on creating quests.  CoffeeSUD: CREATE QUEST's Quest Maker has story templates
-for one player: Story Talk #1 (speak with someone, perhaps handing something over), Story
-Chain #1 (three stages in turn), Story Choice #1 (two outcomes, each with its own reward and
- outcome word), Story Use-Item #1 (leave an item in a room), Story Explore #1 (find a room)
-and Story Bounty #1 (a repeatable kill count with a cooldown).  They offer the quest with a
-yes/no question, mark givers and turn-ins, and keep objectives and the journal.  The
-competitive templates, which race several players, are not listed.  CREATE BEHAVIOR [ID]
-makes a behaviour defined as data, a script with parameters (AHELP GENBEHAVIOR).
+MANUFACTURER, ALLQUALIFY, CLASS, DEBUGFLAG, GUILD, WEBSERVER, DISABLEFLAG, ENABLEFLAG, NEWS,
+ USER, TRAP, WRIGHTSKILL, GATHERSKILL, BUILDSKILL, DISEASE, CRON, TITLE, AWARD, or ROOM.
+Enter CREATE or CREATE X for more information on command usage. The kind of thing may be
+left out when the word is not another kind: CREATE [class ID or catalog name] is CREATE ITEM
+ or CREATE MOB, whichever it names (a race name makes a mob too; a builder template's ID
+makes an item); a number first repeats the command (CREATE 3 Longsword), and a number before
+ a material makes that many raw resources (CREATE 20 iron).  CREATE GUILD [name]
+(TEMPLATE=[government]) (HALL=[room ID]) builds an NPC guild (AHELP GUILDMASTER).  CREATE
+ROOM takes a room class or type; there is no LINK form (use the exits, or WORLD DIG).  Use
+AHELP QUESTS for more information on creating quests.  CoffeeSUD: CREATE QUEST's Quest Maker
+ has story templates for one player: Story Talk #1 (speak with someone, perhaps handing
+something over), Story Chain #1 (three stages in turn), Story Choice #1 (two outcomes, each
+with its own reward and outcome word), Story Use-Item #1 (leave an item in a room), Story
+Explore #1 (find a room) and Story Bounty #1 (a repeatable kill count with a cooldown).
+They offer the quest with a yes/no question, mark givers and turn-ins, and keep objectives
+and the journal.  The competitive templates, which race several players, are not listed.
+CREATE BEHAVIOR [ID] makes a behaviour defined as data, a script with parameters (AHELP
+GENBEHAVIOR).
 ```
 
 <a id="creationscreens"></a>
 
 ## CREATIONSCREENS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1194.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1204.
 
 ```text
 CoffeeSUD: the creation texts in resources/text (races.txt, classes.txt, deities.txt) are
@@ -4400,7 +4722,7 @@ includes the skill-only flag).
 
 ## CREATIONSTEPS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1174.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1184.
 
 ```text
 CoffeeSUD: the steps of character creation and the world's own questions, in
@@ -4432,7 +4754,7 @@ makes that ready-made character (AHELP PLAYERTEMPLATES).
 
 ## CURRENCY_FILE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2577.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2607.
 
 ```text
 CoffeeSUD: a world's currencies, in world/resources/currencies.ini (the stock
@@ -4458,7 +4780,7 @@ note, bill and dollar are paper), WEIGHT what one coin weighs (else a hundred to
 
 ## DESTROY
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 274.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 286.
 
 ```text
 Command : DESTROY
@@ -4481,7 +4803,7 @@ information on command usage.  CoffeeSUD: DESTROY BEHAVIOR [ID] removes a generi
 
 ## DEVLOG
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1760.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1782.
 
 ```text
 Command  : DEVLOG
@@ -4501,10 +4823,11 @@ skipped.  ON takes the level (ERROR, WARN, the default, INFO or DEBUG, each with
  it) and a mask of modules (names separated by commas, * for any letters).  Each line comes
 as one coloured line with its level and module; a line repeated is told once, and how many
 more times when something else comes.  LAST replays the last lines kept (500), the repeats
-counted, by level (DEBUG, all, by default) and module; CLEAR forgets them.  In builder mode
-the setting is kept beside the database for the next time; the DEVLOG= key in coffeemud.ini
-(DEVLOG=WARN Scripting,Quest*) gives it otherwise. WINDOW opens a separate display-only log
-with its own filters and recent history; WINDOW OFF closes it. Without a display, ON and
+counted, by level (DEBUG, all, by default) and module, the last 20 unless you give a number;
+ CLEAR forgets them.  In builder mode the setting is kept beside the database for the next
+time; the DEVLOG= key in coffeemud.ini (DEVLOG=WARN Scripting,Quest*: level, then the mask
+by itself, with no word MODULE) gives it otherwise. WINDOW opens a separate display-only log
+ with its own filters and recent history; WINDOW OFF closes it. Without a display, ON and
 LAST show the log in this terminal.
 ```
 
@@ -4512,7 +4835,7 @@ LAST show the log in this terminal.
 
 ## DEVWATCH
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2152.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2175.
 
 Help alias for **WORLD**.
 
@@ -4522,6 +4845,13 @@ Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
+Usage    : WORLD MODULES REPORT/STREAMS
+Usage    : WORLD POOLS LIST/CHECK/RELOAD/SHOW/SET
+Usage    : WORLD TRIGGERS LIST/CHECK/RELOAD/SHOW/LAST
+Usage    : WORLD REWARDS LIST/CHECK/RELOAD/SHOW/OFFER/BANK/END
+Usage    : WORLD ENCOUNTERS LIST/CHECK/RELOAD/SHOW
+Usage    : WORLD EXPEDITIONS LIST/CHECK/RELOAD/RUNS/CHART
+Usage    : WORLD TRACKS LIST/CHECK/RELOAD/GRANT
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
@@ -4531,6 +4861,7 @@ Usage    : WORLD DEV (([AREA]) ON/OFF)
 Usage    : WORLD STATUS
 Usage    : WORLD DIFF [FILE]
 Usage    : WORLD RELOAD ([AREA]) [NAME] (FORCE)
+Usage    : WORLD RELOAD AREA (FORCE)
 Usage    : WORLD RELOAD SCRIPT [FILE]/ALL (RESET)
 Usage    : WORLD RELOAD QUEST [NAME]/QUESTS/CATALOG/ASSETS/CHANGED
 Usage    : WORLD BACKUPS ([FILE])
@@ -4564,42 +4895,48 @@ carried, in shops or the catalog), TEXT (the new room's description, rooms, gene
  items with their class's text), SHOPS (shopkeepers with nothing to sell), DATA (WORLD
 PROBLEMS), SCRIPTS (SCRIPTCHECK), PROPS (PROPCHECK), JS (the world's JavaScript classes),
 VOCAB (languages, glossary, lists and help), LORE (entries/files), TEMPLATES (presentation
-text/options), ROUTES (travel and route references) and IDS (stable author identities);
-ONLY= picks parts, LOG writes the report to the log too.  sud.sh CHECK=1 loads the world as
-a new game would, on a scratch copy, runs it with no player, prints it and exits 1 if it
-found errors: for a script or a commit hook.  WORLD DEV lists the dev areas: those in
-world/dev, for building and testing only, which builder mode and DEV=1 games load and a
-normal game never does (DEVSTART= in coffeemud.ini can start new characters in one, such as
-a hub with portals and test gear).  In builder mode, WORLD DEV [AREA] ON makes an area one
-(SAVE writes it to world/dev) and OFF a shipped one again; WORLD CHECK warns of an exit from
- a shipped area into a dev area, which leads nowhere in a normal game.  In builder mode,
-SAVE does not write over or delete a world file changed outside the game (edited, added or
-deleted since the game loaded or last wrote it): what it would write goes beside it, as
-NAME.builder, and SAVE FORCE writes over it.  WORLD STATUS lists the files changed outside
-the game, and what SAVE would write, delete and leave; WORLD DIFF [FILE] shows a file
-(castle, areas/castle.cmare, quests/hunt.quest) against what SAVE would write, - for its
-lines on disk and + for SAVE's.  WORLD RELOAD loads world files again into the running game:
- an area (by its name or its file's), whose players and their followers wait outside it and
-come back, and whose exits from other areas are linked again (refused while rooms of it have
- unsaved mobs or items, as LIST UNSAVED lists them, unless FORCE); SCRIPT, the scripts that
-name a file (or ALL), their triggers reset with RESET; QUEST, a quest stopped, read again
-from its file in world/quests and started again at its step; QUESTS, each of them; CATALOG,
-the catalog's entries from its file; CHANGED, each file WORLD STATUS lists as changed
-outside the game.  In a normal game it saves the game as world-reload and restores it, which
- builds the world from its files again.  DEVWATCH ON ([SECONDS]) looks at the world files
-and resources' scripts every few seconds and runs the reload that matches what changed, each
- noted in DEVLOG; DEVWATCH OFF stops it.  Before SAVE writes over or deletes a world file it
- keeps a copy in world/.backup/ (the last BACKUPS= in coffeemud.ini of each, 5 if not set):
-WORLD BACKUPS lists the files with backups, WORLD BACKUPS FILE the times of one's, and WORLD
- RESTOREFILE FILE (TIME) puts the newest (or that one) back, changed outside the game, for
-WORLD RELOAD to load.  WORLD DIG ON makes a room, as CREATE ROOM does (of the room's own
-kind, or TYPE=, a locale or a builder template), wherever you walk and there is no exit, and
- goes into it, linked back unless LINK=ONE-WAY; WORLD DIG OFF stops it.  WORLD PATH lays out
- a chain of rooms, one for each direction, following the exits there already, each with
-NAME= and DESC= if given, and leaves you where you are.  Rooms made so are saved and tagged
-TODO, which WORLD CHECK lists until EDIT DESC gives them their own text.  WORLD MAP draws
-the rooms around you (5 steps out, or RADIUS N) or the whole area (AREA), north up, laid out
- by walking their exits from your room (*); a room above or below, or where another is, is
+text/options), ROUTES (travel and route references) and IDS (stable author identities),
+MODULES (the optional-module plan), COMPOSITIONS (composed abilities), COMBAT (combat
+profiles), ITEMMODS (item modifier libraries and tracked items) and REFS (the references
+between the optional module families, each with its file and JSON path; what a script does
+is reported as unknown, not checked); ONLY= picks parts, LOG writes the report to the log
+too.  sud.sh CHECK=1 loads the world as a new game would (it makes no copy of it and saves
+nothing, and its content cache is built in resources/fakedb unless DBSERVICE is given), runs
+ it with no player, prints it and exits 1 if it found errors: for a script or a commit hook.
+  WORLD DEV lists the dev areas: those in world/dev, for building and testing only, which
+builder mode and DEV=1 games load and a normal game never does (DEVSTART= in coffeemud.ini
+can start new characters in one, such as a hub with portals and test gear).  In builder
+mode, WORLD DEV [AREA] ON makes an area one (SAVE writes it to world/dev) and OFF a shipped
+one again; WORLD CHECK warns of an exit from a shipped area into a dev area, which leads
+nowhere in a normal game.  In builder mode, SAVE does not write over or delete a world file
+changed outside the game (edited, added or deleted since the game loaded or last wrote it):
+what it would write goes beside it, as NAME.builder, and SAVE FORCE writes over it.  WORLD
+STATUS lists the files changed outside the game, and what SAVE would write, delete and
+leave; WORLD DIFF [FILE] shows a file (castle, areas/castle.cmare, quests/hunt.quest)
+against what SAVE would write, - for its lines on disk and + for SAVE's.  WORLD RELOAD loads
+ world files again into the running game: an area (by its name or its file's; AREA alone is
+your own area), whose players and their followers wait outside it and come back, and whose
+exits from other areas are linked again (refused while rooms of it have unsaved mobs or
+items, as LIST UNSAVED lists them, unless FORCE); SCRIPT, the scripts that name a file (or
+ALL), their triggers reset with RESET; QUEST, a quest stopped, read again from its file in
+world/quests and started again at its step; QUESTS, each of them; CATALOG, the catalog's
+entries from its file; CHANGED, each file WORLD STATUS lists as changed outside the game.
+In a normal game it ignores its arguments (AREA, SCRIPT, QUEST and the rest work only in
+builder mode), saves the game as world-reload and restores it, which builds the world from
+its files again.  DEVWATCH ON ([SECONDS]) looks at the world files and resources' scripts
+every few seconds and runs the reload that matches what changed, each noted in DEVLOG;
+DEVWATCH OFF stops it.  Before SAVE writes over or deletes a world file it keeps a copy in
+world/.backup/ (the last BACKUPS= in coffeemud.ini of each, 5 if not set): WORLD BACKUPS
+lists the files with backups, WORLD BACKUPS FILE the times of one's, and WORLD RESTOREFILE
+FILE (TIME) puts the newest (or that one) back, changed outside the game, for WORLD RELOAD
+to load.  WORLD DIG ON makes a room, as CREATE ROOM does (of the room's own kind, or TYPE=,
+a locale or a builder template), wherever you walk and there is no exit, and goes into it,
+linked back unless LINK=ONE-WAY; WORLD DIG OFF stops it.  WORLD PATH lays out a chain of
+rooms, one for each direction, following the exits there already, each with NAME= and DESC=
+if given, and leaves you where you are.  Rooms made so are saved and tagged TODO, which
+WORLD CHECK lists until EDIT DESC gives them their own text.  WORLD MAP draws the rooms
+around you (5 steps out, or RADIUS N) or the whole area (AREA), north up, laid out by
+walking their exits from your room (*); a room above or below, or where another is, is
 listed instead.  IDS numbers the rooms and lists them; FLAGS marks what to look at: > < v ^
 an exit that does not lead back, + a locked door, @ an exit to another area, s a room with
 scripts, and lists the rooms of the area nothing leads to from here.  HTML=FILE writes the
@@ -4610,7 +4947,7 @@ area's map to world/maps/FILE.html, each room with its exits as links.
 
 ## DIFFICULTY
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1082.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1122.
 
 ```text
 Command : DIFFICULTY
@@ -4630,7 +4967,7 @@ differently, or offer more; DIFFICULTY lists them.  The game remembers it in you
 
 ## EDIT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2106.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2129.
 
 ```text
 Command  : EDIT
@@ -4661,7 +4998,7 @@ EDITORCOMMAND= names (or $VISUAL or $EDITOR), on a temporary file.
 
 ## ENCOUNTER
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1997.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2020.
 
 ```text
 Command  : ENCOUNTER
@@ -4692,7 +5029,7 @@ back, ADD checks an entry before it goes in, ROLL rolls the table for you where 
 
 ## EXTRACT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2150.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2173.
 
 Help alias for **EDIT**.
 
@@ -4797,7 +5134,7 @@ Without this skill, all flowers found are unknown to the player, being known onl
 
 ## FORMULA_NPCARMOR
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 203.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 205.
 
 Help alias for **NPCFORMULAS**.
 
@@ -4849,7 +5186,7 @@ Composting skill.
 
 ## GATHERTABLES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1251.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1267.
 
 ```text
 CoffeeSUD: the tables gathering skills choose from take a MASK column, a zapper mask the
@@ -4867,7 +5204,7 @@ fishing row, with tabs where the commas are: Salmon, 5, lantern eel, 12, -AREA +
 
 ## GENABILITY
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1085.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1091.
 
 ```text
 CoffeeSUD: a generic ability (CREATE ABILITY [ID], MODIFY ABILITY [ID]) is a spell, skill or
@@ -4883,14 +5220,19 @@ comparison goes inside the brackets: effectparm(LOUD == yes)).  A worked example
 haunting: CREATE ABILITY Prop_Haunted, with the SCRIPT   RAND_PROG 10   if effectparm(LOUD
 == yes)    mpecho Something moans behind the walls!   else    mpecho A cold draft slips
 through the room.   endif   ~ then on each room that needs it: MODIFY ROOM, then add
-Prop_Haunted in its effects editor with LOUD=no, or LOUD=yes for a loud one.  It is kept in
-world/custom.cmare like any generic ability.  LIST ABILITYFLAGS shows the flag values.
-Named hooks: its SCRIPT may have FUNCTION_PROG CANCAST (before any cost is paid; RETURN
-false refuses the cast), ONCAST (once it is cast, $t the target), ONTICK (each tick it is on
- something), ONEXPIRE (when it wears off) and ONLEARN (when a mob gains it), each with $n
-the caster or learner, $t the target and $0... the words given.  CASTMASK sees the target as
- $t in its +IF and -IF (a condition in quotes, as -IF "isname($t wolf)"), and CASTFAILMSG is
- what a caster who fails it is told (<T-NAME> the target), in place of "You do not meet the
+Prop_Haunted in its effects editor with LOUD=no, or LOUD=yes for a loud one.  It is kept
+like any generic ability, one file for each in world/custom/abilities/ (an older
+world/custom.cmare is still read).  LIST ABILITYFLAGS shows the flag values.  ATTACKCODE
+(FIRE, COLD, WATER, GAS, MIND, GENERAL, ACID, ELECTRIC, POISON, ...) sends a second message
+of that kind to the target after the cast message, so that the target's matching saving
+throw applies: a target of such an ability gets two independent saving throws, one against
+the cast and one against this attack, and it also names the damage's message type.  Named
+hooks: its SCRIPT may have FUNCTION_PROG CANCAST (before any cost is paid; RETURN false
+refuses the cast), ONCAST (once it is cast, $t the target), ONTICK (each tick it is on
+something), ONEXPIRE (when it wears off) and ONLEARN (when a mob gains it), each with $n the
+ caster or learner, $t the target and $0... the words given.  CASTMASK sees the target as $t
+ in its +IF and -IF (a condition in quotes, as -IF "isname($t wolf)"), and CASTFAILMSG is
+what a caster who fails it is told (<T-NAME> the target), in place of "You do not meet the
 requirements".  Example: Moonblade's   FUNCTION_PROG CANCAST   if !istime(night)    mpecho
 The moon is hidden.    return false   endif   ~ and an ONEXPIRE that echoes "the moonlight
 fades".  A GenTrap has ONTRIGGER and ONDISARM (AHELP GENTRAP).  TARGETMODE makes it an area
@@ -4901,14 +5243,14 @@ cost come once; then each target is cast at in turn, with its own target mask (a
 turns away is passed over), cast message, saving throw, damage or healing, HERESTATS,
 effects, extra castings and script event (ONCAST with $t).  MAXTARGETS, a formula (@x1 the
 caster's level, @x2 how many there are), keeps only that many; AOEMSG is shown once, before
-them.  Example: Thunderclap, TARGETMODE=ALLENEMIES, damage 2d6+@x1/2 and Spell_Deafness for
-3 ticks after; Marching Cadence, TARGETMODE=ALLALLIES with HERESTATS for movement.
-ACTIONCOST and COMBATACTIONCOST are what it takes in actions out of a fight and in one (or
-when it is malicious), -1 for the default (DEFABLETIME and DEFCOMABLETIME in coffeemud.ini).
-  COMPONENTS is a components.txt line kept in the ability's own record, as
-(inventory:consumed:1:pinch of salt:), and takes the place of a line for this ID there
-(AHELP COMPONENTS).  Data craft and gather skills and TWEAK abilities have the same three
-fields.  Example: Greater Ward, COMBATACTIONCOST=2.0,
+them.  Example: Thunderclap, TARGETMODE=ALLENEMIES, damage 2?6+@x1/2 (worked left to right,
+so ((2?6)+@x1)/2) and Spell_Deafness for 3 ticks after; Marching Cadence,
+TARGETMODE=ALLALLIES with HERESTATS for movement.  ACTIONCOST and COMBATACTIONCOST are what
+it takes in actions out of a fight and in one (or when it is malicious), -1 for the default
+(DEFABLETIME and DEFCOMABLETIME in coffeemud.ini).  COMPONENTS is a components.txt line kept
+ in the ability's own record, as (inventory:consumed:1:pinch of salt:), and takes the place
+of a line for this ID there (AHELP COMPONENTS).  Data craft and gather skills and TWEAK
+abilities have the same three fields.  Example: Greater Ward, COMBATACTIONCOST=2.0,
 COMPONENTS=(inventory:consumed:1:salt:).  SUMMON, a catalog mob's name or a mob class,
 brings that mob when the cast works: SUMMONCOUNT of them (a formula, @x1 the caster's level;
  1 when blank) at SUMMONLEVEL (a formula; blank keeps the mob's own level).  SUMMONFLAGS:
@@ -4924,7 +5266,7 @@ SUMMONCOUNT=1+(@x1/10), TICKSOVERRIDE=20, SUMMONFLAGS=FOLLOW ASSIST DISMISSONEXP
 
 ## GENBUILDSKILL
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 984.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 990.
 
 ```text
 CoffeeSUD: a building skill as data, as Construction or Masonry are in code: CREATE
@@ -4943,7 +5285,7 @@ walls and an igloo roof from ICE.
 
 ## GENCRAFTSKILL
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 975.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 981.
 
 ```text
 CoffeeSUD: what a data crafting skill (CREATE CRAFTSKILL, MODIFY CRAFTSKILL) has besides its
@@ -4961,7 +5303,7 @@ on a generic ability (AHELP GENABILITY).
 
 ## GENDISEASE
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 993.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 999.
 
 ```text
 CoffeeSUD: a disease as data, as the Disease_ ones are in code: CREATE DISEASE [ID] makes
@@ -4975,9 +5317,10 @@ the room, each delay), CONSUMPTION (eaten or drunk), DAMAGE (bites and blows), G
 up), HEARING (spoken to) and INHERITED; CATCHCHANCE (0-100, a formula), the chance a spread
 goes ahead before the disease save; DIFFICULTY, which a cure (Prayer_CureDisease) cannot
 beat when it times 10 is over the healer's level; STARTMSG, AFFECTMSG (each delay) and
-DONEMSG; DAMAGE each delay (a formula, 1?4 is 1d4); ADJUSTMENTS (Prop_Adjuster's, as con-2)
-and EFFECTS (Prop_SpellAdder's) while it lasts; IMMUNEMASK, who never catches it (-RACE
-+Dwarf); MALICIOUS; HELP; and SCRIPT, a script run with it, whose functions ONAFFECT
+DONEMSG; DAMAGE each delay (a formula: ? is a random number between its two sides, so 1?4 is
+ 1 to 4; it is worked left to right, and 2d6 is not syntax); ADJUSTMENTS (Prop_Adjuster's,
+as con-2) and EFFECTS (Prop_SpellAdder's) while it lasts; IMMUNEMASK, who never catches it
+(-RACE +Dwarf); MALICIOUS; HELP; and SCRIPT, a script run with it, whose functions ONAFFECT
 (caught), ONTICK (each delay) and ONEXPIRE (run its course or cured) are called.  Example:
 Ash Lung, SPREAD=PROXIMITY ADJUSTMENTS=con-2 DELAY=5 DAMAGE=1?4 DIFFICULTY=2
 IMMUNEMASK="-RACE +Dwarf".
@@ -4987,7 +5330,7 @@ IMMUNEMASK="-RACE +Dwarf".
 
 ## GENERATE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 323.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 335.
 
 ```text
 Command : GENERATE
@@ -5083,17 +5426,19 @@ condition="js:expr" or validate="js:expr" keeps a tag when it gives a true value
 expression sees defined (the variables, by any case; setting one defines it), obj (what is
 being built), test(condition) (a condition in the template's grammar), and cm, gen and
 require() from world/js/lib.  Math.random is the game's dice, so a seed covers it;
-JSCRIPTS=0 turns it off.  The RandomAreas guide has the rest.
+JSCRIPTS=0 turns it off, and with JSCRIPTS=1 each expression needs approval (MODIFY
+JSCRIPTS).  The RandomAreas guide has the rest.
 
 This command uses an xml file to generate random content for your mud.  This content can be
 anything from whole areas, to rooms, mobs, items, or simple strings. By default, the content
  is built from the file in resources/randareas/example.xml, though the builder may specify
 his or her own xml file path as one of the many arguments.  The arguments, briefly, are:
 
-OBJ TYPE: One of the following: AREA, ROOM, MOB, ITEM, SCRIPT, or STRING.
+OBJ TYPE: One of the following: AREA, ROOM, MOB, ITEM, QUEST, SCRIPT, or STRING.
 
 ID      : one of the "id" xml attributes defined on any tag in the XML file. Use GENERATE
-STRING LIST for a list of all "id" attributes defined in your file.
+STRING LIST for a list of all "id" attributes defined in your file (it lists every type);
+LIST works with STRING, MOB, ITEM and QUEST, not with AREA, ROOM or SCRIPT.
 
 FROM "F": An optional argument to specify your own xml file, with the resources directory
 being the default root.
@@ -5128,7 +5473,7 @@ to construct your own.
 
 ## GENGATHERSKILL
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1138.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1148.
 
 ```text
 CoffeeSUD: what a data gathering skill (CREATE GATHERSKILL, MODIFY GATHERSKILL) finds.  Each
@@ -5173,7 +5518,7 @@ WORLD_VOCABULARY, LANGUAGE_SCRIPTING.
 
 ## GENLAYOUT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1516.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1528.
 
 ```text
 Command : GENLAYOUT
@@ -5192,7 +5537,7 @@ GENLAYOUT alone lists the layouts.
 
 ## GENTOME
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2626.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2656.
 
 ```text
 CoffeeSUD: a GenTome (CREATE ITEM GenTome) is a book whose pages are kept in it, so that
@@ -5215,11 +5560,11 @@ line before the first names the writer.
 
 ## GENTRAP
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2642.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2672.
 
 ```text
-CoffeeSUD: a GenTrap (CREATE ABILITY GenTrap, MODIFY ABILITY [ID]) has, besides its
-messages, damage, ability and script:
+CoffeeSUD: a GenTrap (CREATE TRAP GenTrap, MODIFY TRAP [ID], DESTROY TRAP [ID]) has, besides
+ its messages, damage, ability and script:
 TRIGGERS: what springs it, instead of its class's (entering a room, opening or unlocking an
 exit or container, getting an item): message types, commas between, such as SIT, READ, LOOK,
  EXAMINE, OPEN, CLOSE, WEAR, HOLD, PUT, DROP, GET; on a room ENTER, LEAVE:[DIRECTION] and
@@ -5236,20 +5581,20 @@ skill), $n the one who did, if known.
 
 ## GENTWEAK
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1019.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1025.
 
 ```text
 CoffeeSUD: a tweak (CREATE TWEAK [ID], MODIFY TWEAK [ID]) is a coded ability (its ORIGINAL)
 under a new name, with its words, range, cost, cooldown and messages changed (STRING),
 keeping all it does.  Cast, it casts the original with the caster's proficiency.  More it
-can have: CASTMASK, who may cast it, and where (-LOCALE +OUTDOORS); TARGETMASK, whom or what
- it works on; POSTCASTAFFECT, effects put on the target after a cast that worked, and
-POSTCASTABILITY, abilities cast on it after (Prop_SpellAdder's form: 20%;Fighter_Trip);
+can have: CASTMASK, who may cast it, and where (-DOMAIN +WOODS +PLAINS); TARGETMASK, whom or
+ what it works on; POSTCASTAFFECT, effects put on the target after a cast that worked, and
+POSTCASTABILITY, abilities cast on it after (Prop_SpellAdder's form: 20%;Skill_Trip);
 DURATIONMULT, times how long the effects it leaves last, and DAMAGEMULT, times the damage
 the cast and those effects do (1 for none); and SCRIPT, a script whose functions are called:
  CANCAST before (return false or CANCEL to stop it, $t the target), ONCAST after a cast that
  worked, and ONEXPIRE when the effect it left wears off.  Example: Stormcall, a tweak of
-Spell_Lightning, CASTMASK="-LOCALE +OUTDOORS", POSTCASTABILITY= "20%;Fighter_Trip".
+Spell_Lightning, CASTMASK="-DOMAIN +WOODS +PLAINS", POSTCASTABILITY= "20%;Skill_Trip".
 ```
 
 <a id="glassblowing"></a>
@@ -5280,7 +5625,7 @@ on the ground.  The raw sand for glass blowing is obtained by using the Digging 
 
 ## GMODIFY
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2655.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2685.
 
 ```text
 Command : GMODIFY
@@ -5312,8 +5657,9 @@ FIELD$VALUE, FIELD>VALUE, FIELD<VALUE, FIELD>=VALUE, or FIELD<=VALUE.  Where FIE
  valid search field.  Enter GMODIFY ? for a complete list of all valid fields.  Not all
 fields will apply to all object types, so take this into account especially when using < or
 != operators.  The operators are all normal except for the new one, $, which means that the
-value is really a regular expression. The VALUE portion of the criteria may be prefixed with
- modifiers, which include:
+value is really a regular expression, which must match the field's whole value unless the
+VALUE has the [ss] modifier. The VALUE portion of the criteria may be prefixed with
+modifiers, which include:
 [ss] to specify that the value refers to a substring of the fields whole value.
 [cs] to specify that the search is case sensitive (case insensitive is implied).
 
@@ -5336,14 +5682,14 @@ first, to make sure you are matching Exactly what you expect, before doing a cha
 
 Exits are matched and changed too, with their own fields (CLOSEDTEXT, KEYNAME, DOORNAME and
 the like), each room's saved with it; an area's own fields (AUTHOR, CURRENCY, PLAYERLEVEL
-and the like) are known as well: gmodify area name$wooden change=name=stone
+and the like) are known as well: gmodify area name=[ss]wooden change=name=[ss]stone
 ```
 
 <a id="god"></a>
 
 ## GOD
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2737.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2768.
 
 ```text
 Command  : GOD
@@ -5369,11 +5715,29 @@ with ON gives it back.  ALL is every cheat: ALL OFF plays as a mortal would.  RE
 them all.  The cheats are kept with the character (Prop_DevCheats).
 ```
 
+<a id="goinghome"></a>
+
+## GOINGHOME
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4427.
+
+```text
+Property   : GoingHome
+Targets    : MOBs
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: HOME under way (AHELP HOME).  After its turns (HOMERECALL in the ini, 3 by
+default) the character's whole party, followers too, is brought to the leader's home (AHELP
+PROP_HOMEBEACON); a fight stops it before that, with a message.  It shows as (Going home).
+Not for builders to give.
+```
+
 <a id="hazards"></a>
 
 ## HAZARDS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1830.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1853.
 
 ```text
 Command  : HAZARDS
@@ -5408,7 +5772,7 @@ made-up conditions, as PREVIEW does.
 
 ## HELP
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1587.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1636.
 
 ```text
 Command : HELP
@@ -5447,7 +5811,7 @@ for herbology are obtained by using the Foraging skill.
 
 ## HIRE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1640.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1689.
 
 ```text
 Command : HIRE
@@ -5496,7 +5860,7 @@ ever).
 
 ## HOME
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1627.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1676.
 
 ```text
 Command : HOME
@@ -5580,7 +5944,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3249.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3395.
 
 ```text
 Command : ITEMMODS
@@ -5610,7 +5974,7 @@ This ability governs rejuvenating items
 
 ## JCONSOLE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 448.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 460.
 
 ```text
 Command : JCONSOLE
@@ -5677,7 +6041,7 @@ Mining skill.
 
 ## JRUN
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3018.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3048.
 
 ```text
 Command  : JRUN
@@ -5697,7 +6061,7 @@ command'), each as you.
 
 ## JS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3032.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3062.
 
 ```text
 Command  : JS ERRORS
@@ -5785,17 +6149,22 @@ cm.command('dig', {help: 'DIG [DIRECTION]', cost: 1, combatCost: 2, words: ['exc
 function(mob, args) {...}) makes a command of the world's (DIG ? shows its help);
 cm.verb(thing, 'pull lever', function(mob, rest) {...}) makes a phrase that works near that
 room, item or mob only.  Register them in init.js's onBoot.
-world/scripts/progression.js: onCreated(mob), onCreationStep(mob, step, answer), xpGain(mob,
- source, amount) (returns the experience), onLevel(mob, level), practicesForLevel(mob) and
-trainsForLevel(mob) (return the numbers), onLearn(mob, abilityId), onTrain(mob, what,
-amount), and statRoll(mob, bonus) when STARTSTAT=SCRIPT.
+world/scripts/progression.js: onCreated(mob), onCreationStep(mob, step, answer) (step: race,
+ gender, stats, class, factions, deity, traits, template, origin, kit, or the lower-cased
+name of another creation.ini question), xpGain(mob, source, amount) (returns the
+experience), onLevel(mob, level), practicesForLevel(mob) and trainsForLevel(mob) (return the
+ numbers), onLearn(mob, abilityId), onTrain(mob, what, amount), and statRoll(mob, bonus)
+when STARTSTAT=SCRIPT.  An xpGain source begins with its origin: COMBAT:<victim level><flag>
+ for a kill, ABILITY:<id>, CLASS:<id>, COMMAND:Teach, MISC:..., SCRIPT:<quest>, DEATH:,
+FACTION:<id>, SIEGE:, LIEGE:, COST:, SERVICE:, QUEST:, DISCOVERY:, ACHIEVE:, REMORT: and
+HOMAGE... (no colon): test it with source.indexOf('COMBAT:') == 0.
 ```
 
 <a id="junk"></a>
 
 ## JUNK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1174.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1214.
 
 Help alias for **DESTROY**.
 
@@ -5820,7 +6189,7 @@ information on command usage.  CoffeeSUD: DESTROY BEHAVIOR [ID] removes a generi
 
 ## KIT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1828.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1851.
 
 Help alias for **TESTCHAR**.
 
@@ -5853,7 +6222,7 @@ its items in the pack.
 
 ## LANGS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1694.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1743.
 
 Help alias for **LANGUAGES**.
 
@@ -5870,7 +6239,7 @@ type SPEAK [LANGUAGE NAME].
 
 ## LANGUAGES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1695.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1744.
 
 ```text
 Command : LANGUAGES
@@ -5885,7 +6254,7 @@ type SPEAK [LANGUAGE NAME].
 
 ## LAW
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1861.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1884.
 
 ```text
 Command  : LAW
@@ -5917,7 +6286,7 @@ custom definition is exported with the world.
 
 ## LEARN
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2861.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2918.
 
 ```text
 Command : LEARN
@@ -5971,7 +6340,7 @@ leather for leather working is found using the Butchering skill.
 
 ## LIST
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 536.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 548.
 
 ```text
 Command : LIST
@@ -6001,7 +6370,7 @@ Additional help *may* be available by entering HELP LIST [X] where X is one of t
 
 ## LOOK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1744.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1793.
 
 ```text
 Command : LOOK
@@ -6056,13 +6425,21 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3258.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3404.
 
 ```text
 Command : MODCRAFT
 Usage   : MODCRAFT LIST / STATUS / POOL "[item name]"
 Usage   : MODCRAFT PREVIEW/PREPARE [operation ID] "[item name]" [modifier number or affix
 ID]
+Usage   : MODCRAFT PREVIEW/PREPARE [replace operation ID] "[item name]" [modifier number]
+[affix ID]
+Usage   : MODCRAFT PREVIEW/PREPARE [upgrade or refine operation ID] "[item name]"
+Usage   : MODCRAFT PREVIEW/PREPARE [imbue or reforge operation ID] "[item name]" (WITH
+[catalyst ID], [catalyst ID])
+Usage   : MODCRAFT BEGIN [recipe ID]
+Usage   : MODCRAFT PREVIEW/PREPARE [recipe ID] "[work piece]" (WITH [catalyst ID] at the
+last stage)
 Usage   : MODCRAFT COMMIT/CANCEL ([request number])
 Usage   : MODCRAFT RECEIPT [request number]
 Requires the optional items.modifiers module. LIST shows operations, costs and stations;
@@ -6076,23 +6453,42 @@ was cancelled. Quote multiword item names.
 Craft alive and outside combat, with the target directly carried, unworn and outside a
 container. Costs use plain raw-material piles. Protected modifiers refuse reroll/removal; an
  authored unprotect operation releases them. Add takes an affix ID and respects pools, tags,
- levels, groups and capacity. In the Ember Trial, open the supply coffer at camp and collect
- the mantle/iron, then try MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT
-spends iron and rolls values. A stale request requires cancellation and fresh preparation.
-See docs/creator/17-item-modifiers-crafting.md.
+ levels, groups and capacity. Replace takes a modifier number and the affix to put in its
+place, removed and added in one settlement. Upgrade moves the item to its base's declared
+successor, keeping every modifier. Refine raises the item's quality one tier, up to its
+base's; the base says which modifiers each tier counts more, and ITEMMODS shows it, with
+what the item's material traits do on it (or that nothing reads one). Imbue draws one
+modifier and reforge draws again every unprotected one, by weight, among the base's pool;
+the operation and the catalysts named after WITH (at most three, each paid with the craft)
+can leave tags out, multiply the weights of tags and guarantee the family of the first
+modifier drawn. PREVIEW shows each affix's chance or why it cannot be drawn; a draw that
+could find nothing, or a guarantee that cannot hold, is refused before anything is paid. A
+refused PREVIEW or PREPARE says why (a protected modifier, the group in the way and who
+holds it, a target that is not there) and spends and draws nothing. A staged recipe: BEGIN
+sets out its work piece at the station; each PREPARE and COMMIT settles the next stage once,
+ its progress kept on the piece; the last stage makes the product, and only it draws random
+values; catalysts go in at that stage. STATUS lists your work pieces and their next stage.
+In the Ember Trial, open the supply coffer at camp and collect the mantle/iron, then try
+MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT spends iron and rolls
+values. A stale request requires cancellation and fresh preparation. See
+docs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="modify"></a>
 
 ## MODIFY
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1577.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1589.
 
 ```text
 Command : MODIFY
 Usage   : MODIFY [ITEM TYPE] ...
+Usage   : MODIFY [NAME]
+Usage   : MODIFY MOB [NAME] MISC/LEVEL [N]/ABILITY [N]/REJUV [N]/[STAT CODE] [VALUE]
 Example : modify room name The Grassy Knole
-Example : modify mob orc
+Example : modify orc
+Example : modify mob orc misc
+Example : modify mob orc level 12
 Example : modify item longsword
 Example : modify item "longsword@an orc"
 Example : modify jscript
@@ -6102,20 +6498,27 @@ A command for the modification of an ITEM, RACE, CLASS, ABILITY, LANGUAGE, CRAFT
 GATHERSKILL, WRIGHTSKILL, BUILDSKILL, DISEASE, ALLQUALIFY, AREA, EXIT, COMPONENT, RECIPE,
 EXPERTISE, QUEST, MOB, USER, HOLIDAY, ACHIEVEMENT, MANUFACTURER, HELP/AHELP, TRAP, CRON,
 GOVERNMENT, JSCRIPT, FACTION, SOCIAL, CLAN, NEWS, DAY, MONTH, YEAR, TIME, HOUR, UPDATE:
-(MQL), or ROOM. Enter MODIFY or MODIFY X for more information on command usage.  In the
-Effects field, an ID adds that effect, -ID removes one, and =ID or its number edits one's
-parameters, the current ones shown and kept if none are given; ?P lists the properties and
-effects that can affect the thing, each with a line of its help.  An effect it has already
-is offered Prop_MultiEffects, which holds both copies, as a second copy alone would be
-ignored.  CoffeeSUD: MODIFY BEHAVIOR [ID] edits a generic behaviour, and MODIFY BEHAVIOR
-[ID] [FIELD] [VALUE] sets one field of it (AHELP GENBEHAVIOR).
+(MQL), or ROOM. Enter MODIFY or MODIFY X for more information on command usage.  MODIFY
+[NAME] alone opens the editor for the mob, item or the like of that name; MODIFY MOB [NAME]
+MISC opens a generic mob's editor.  MODIFY MOB [NAME] with only a name is an error (it needs
+ an aspect), and any word that is not an aspect lists the valid ones; ? is not special.
+MODIFY ITEM [NAME] of a standard item lists its fields.  MODIFY MOB [NAME] LEVEL [N]
+re-derives a standard mob's armor, attack, damage, speed, hit points, mana, movement and
+money from the new level, but a generic mob keeps the attack, damage, armor, speed and money
+ that were set by hand.  In the Effects field, an ID adds that effect, -ID removes one, and
+=ID or its number edits one's parameters, the current ones shown and kept if none are given;
+ ?P lists the properties and effects that can affect the thing, each with a line of its
+help.  An effect it has already is offered Prop_MultiEffects, which holds both copies, as a
+second copy alone would be ignored.  CoffeeSUD: MODIFY BEHAVIOR [ID] edits a generic
+behaviour, and MODIFY BEHAVIOR [ID] [FIELD] [VALUE] sets one field of it (AHELP
+GENBEHAVIOR).
 ```
 
 <a id="modules"></a>
 
 ## MODULES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3232.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3296.
 
 ```text
 Command : MODULES
@@ -6155,7 +6558,7 @@ are obtained by using the Foraging skill.
 
 ## NAMESTYLES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1300.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1316.
 
 ```text
 CoffeeSUD: random names by culture, one file per style: world/namegen/STYLE.ini, else
@@ -6180,7 +6583,7 @@ True Name on a dwarf.
 
 ## NOTE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1902.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1925.
 
 ```text
 Command  : NOTE
@@ -6203,7 +6606,7 @@ you to the note's room.
 
 ## NOTES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1901.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1924.
 
 Help alias for **NOTE**.
 
@@ -6228,7 +6631,7 @@ you to the note's room.
 
 ## NPCFORMULAS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 178.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 180.
 
 ```text
 Topic   : NPCFORMULAS
@@ -6260,7 +6663,7 @@ WORLD.
 
 ## ORGCHECK
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2091.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2114.
 
 ```text
 Command  : ORGCHECK
@@ -6280,12 +6683,12 @@ ENTRYSCRIPT does not pass SCRIPTCHECK, and ALL, the default, does it all.
 
 ## ORIGINS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1149.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1159.
 
 ```text
 CoffeeSUD: character origins (backgrounds), in world/origins.ini.  Each starts with [ID] and
  has KEY=VALUE lines (a line ending in \\ goes on to the next; # starts a comment): NAME,
-DESCRIPTION, MASK (a zapper mask of who may take it, as -RACE +Human +Half-Elf), UNLOCK (a
+DESCRIPTION, MASK (a zapper mask of who may take it, as -RACE +Human +HalfElf), UNLOCK (a
 tattoo the profile or the character must have, as one a profile achievement gives), START (a
  room ID, the start room), ITEMS (catalog item names or item classes, a count before one for
  more, as 2 a worn prayer book, a torch), ABILITIES (an ID and a proficiency each, as
@@ -6295,8 +6698,8 @@ and SCRIPT (a ONCE_PROG, lines between semicolons, as ONCE_PROG 100;mpecho Welco
 or name); the choice is kept as the tattoo ORIGIN_[ID], for masks and scripts (-TATTOO
 +ORIGIN_ORPHAN), and what it gives comes as the start room is set, after the class's outfit.
   CHARCREATIONSCRIPTS=ORIGIN:LOAD=... runs scripts just after.  Example: [ORPHAN]
-NAME=Temple Orphan, MASK=-RACE +Human +Half-Elf, START=Ashford#12, ITEMS=a worn prayer book,
- ABILITIES=Prayer_Bless 25, FACTIONS=faithofash.ini 1000, TATTOOS=ORPHAN.
+NAME=Temple Orphan, MASK=-RACE +Human +HalfElf, START=Ashford#12, ITEMS=a worn prayer book,
+ABILITIES=Prayer_Bless 25, FACTIONS=faithofash.ini 1000, TATTOOS=ORPHAN.
 ```
 
 <a id="painting"></a>
@@ -6386,7 +6789,7 @@ them, or AS name command to give an order. PARTY CLANS lists memberships and ran
 
 ## PAUSE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2510.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2540.
 
 ```text
 Command : PAUSE
@@ -6406,18 +6809,21 @@ object.
 
 ## PERK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 127.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 131.
 
 Help alias for **PERKS**.
 
 ```text
 Command : PERKS
-Usage   : PERKS, PERK [NAME]
+Usage   : PERKS, PERK [NAME], PERK REFUND [NAME], PERKS TREE [NAME]
 Example : perk pack mule
 Short(s):
 CoffeeSUD: in a world with perks, PERKS shows the perks you have, those you can take now and
- those you cannot yet, with what they need, and the picks you have left.  Levels give picks;
- PERK [NAME] spends one on a perk.
+ those you cannot yet, with what they need, and the picks you have left.  Levels give picks
+(and some pools are given by deeds); PERK [NAME] spends one on a perk.  In a tree, a perk is
+ taken next to one you have.  PERKS TREE [NAME] shows a tree: [x] yours, [ ] can be taken,
+[-] not yet.  PERK REFUND [NAME] gives a perk back, and its pick, where the world allows it
+and nothing you have stands on it.
 ```
 
 <a id="perks"></a>
@@ -6428,19 +6834,22 @@ Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 119.
 
 ```text
 Command : PERKS
-Usage   : PERKS, PERK [NAME]
+Usage   : PERKS, PERK [NAME], PERK REFUND [NAME], PERKS TREE [NAME]
 Example : perk pack mule
 Short(s):
 CoffeeSUD: in a world with perks, PERKS shows the perks you have, those you can take now and
- those you cannot yet, with what they need, and the picks you have left.  Levels give picks;
- PERK [NAME] spends one on a perk.
+ those you cannot yet, with what they need, and the picks you have left.  Levels give picks
+(and some pools are given by deeds); PERK [NAME] spends one on a perk.  In a tree, a perk is
+ taken next to one you have.  PERKS TREE [NAME] shows a tree: [x] yours, [ ] can be taken,
+[-] not yet.  PERK REFUND [NAME] gives a perk back, and its pick, where the world allows it
+and nothing you have stands on it.
 ```
 
 <a id="perksini"></a>
 
 ## PERKSINI
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1204.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1214.
 
 ```text
 CoffeeSUD: perks, traits and flaws, in world/perks.ini.  A perk is a line: its ID, then
@@ -6454,16 +6863,22 @@ shows what they have, can take and cannot yet, and why; PERK [name] takes one: i
 becomes a tattoo (HASPERK(), -TATTOO masks) and its rewards are given.  POOL=TRAIT perks are
  traits and flaws, bought in the TRAITS step of creation (after KIT, AHELP CREATIONSTEPS)
 with TRAITS=[N] points; a flaw has a COST below 0 and gives points back.  Their rewards come
- at the end of creation.  MPPERK gives or takes one from a script.  Example: PERK_PACKMULE
-NAME="Pack mule" POOL=GENERAL REWARDS="50 MAXCARRY"; TRAIT_LUCKY POOL=TRAIT COST=2;
-FLAW_BADBACK POOL=TRAIT COST=-1.
+ at the end of creation.  MPPERK gives or takes one from a script.  Build trees: TREE=name
+puts a perk in a tree, ROOT=YES makes it a way in, LINKS=PERK_X,... the perks it is next to
+(both ways); a perk of a tree is taken next to one held.  REQUIRESANY= needs one of several;
+ GROUP=name lets only one of a group be held; EFFECTS="Prop_Adjuster;STR+1" are held while
+the perk is.  REFUNDS=YES (or a perk's REFUND=YES/NO) lets PERK REFUND give one back when
+nothing held stands on it.  MPPERK $n PICKS pool +n gives a pool picks of its own; MPPERK $n
+ CLEAR pool takes back that pool's perks.  WORLD CHECK reports trees with no root and bad
+links.  Example: PERK_PACKMULE NAME="Pack mule" POOL=GENERAL REWARDS="1 STRENGTH";
+TRAIT_LUCKY POOL=TRAIT COST=2; FLAW_BADBACK POOL=TRAIT COST=-1.
 ```
 
 <a id="playertemplates"></a>
 
 ## PLAYERTEMPLATES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1163.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1173.
 
 ```text
 CoffeeSUD: ready-made characters.  A catalog mob in the category PLAYERTEMPLATE (CATALOG it
@@ -6483,7 +6898,7 @@ tired inspector of the Yard." LOCK=NAME,GENDER.
 
 ## PLAYTEST
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2245.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2270.
 
 ```text
 Command  : PLAYTEST
@@ -6538,7 +6953,7 @@ on the ground.  The Clay is obtained by using the Gem Digging skill.
 
 ## PRACTICE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2010.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2059.
 
 ```text
 Command : PRACTICE
@@ -6555,7 +6970,7 @@ have at least 1 practice point to practice a skill or spell.
 
 ## PREVIEW
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2333.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2358.
 
 ```text
 Command  : PREVIEW
@@ -6574,16 +6989,17 @@ WINDY, CLOUDY...), FROM a direction or FROM UNKNOWN, VISITED or FIRSTVISIT, AS a
 reader, put back after).  Only rooms' texts vary (<VARIES>).  CHECKTEXT lists what in rooms'
  titles and descriptions would print as text instead of varying: variation tags in a text
 that does not start with <VARIES>, tags that are none (<nigth>), tags in small letters
-(their end is found only in capitals), tags opened and not closed or closed and not opened,
-a MASK whose mask has a > in it (write &gt;), and a colour code left open at the end.
-<FROMUNKNOWN> is the same as <FROMUNKOWN>, as the code long spelled it.
+(still reported, though a closing tag is found whatever its letters; only a leading <VARIES>
+ must be in capitals), tags opened and not closed or closed and not opened, a MASK whose
+mask has a > in it (write &gt;), and a colour code left open at the end. <FROMUNKNOWN> is
+the same as <FROMUNKOWN>, as the code long spelled it.
 ```
 
 <a id="pricecheck"></a>
 
 ## PRICECHECK
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2225.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2250.
 
 ```text
 Command  : PRICECHECK
@@ -6624,7 +7040,7 @@ characters, and the account expiration date, if applicable.
 
 ## PROGRESSION
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2076.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2099.
 
 ```text
 Command  : PROGRESSION
@@ -6649,7 +7065,7 @@ Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini),
 
 ```text
 Property   : Prop_AbsorbDamage
-Targets    : Items, Mobs, Areas, Rooms
+Targets    : Mobs, Items
 Parameters : Damage Absorption percentages or amounts, the list of absorbed damage types
 Example    : 50% +ALL -SILVER -CLOTH -LEATHER
 Example    : 5 +ALL -MAGIC -SLASHING -FROSTING
@@ -6811,7 +7227,7 @@ village's opinion, shared by its NPCs that have none of their own.  It is kept i
 
 ## PROP_AIRSUPPLY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 996.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1009.
 
 ```text
 Property   : Prop_AirSupply
@@ -6847,6 +7263,52 @@ surprise for SURPRISE rounds (1; Prop_Surprised), unable to move or strike.  Spo
 party sees SPOTMSG and may strike first or walk on (the ambushers go) before WAIT ticks (2)
 are up, when they attack.  It springs once, or again RESET ticks later.  AMBUSH_PROG
 SURPRISED, SPOTTED or AVOIDED runs on the room's scripts and its NPCs'.
+```
+
+<a id="prop-areabanner"></a>
+
+## PROP_AREABANNER
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4269.
+
+```text
+Property   : Prop_AreaBanner
+Targets    : Areas
+Parameters : (TITLE="[TEXT]") (TEXT="[TEXT]") (ONCE/EACH) (MASK="[ZAPPER MASK]")
+(COLOR="[COLOR CODE]")
+Parameters : (ENTER="[TEXT]") (FIRST="[TEXT]") (LEAVE="[TEXT]")
+Example    :
+Example    : TEXT="Welcome to the market." ONCE
+Description:
+CoffeeSUD: the entry banner of an area, shown to a character who comes into it from another
+area: the area's name (in capitals, or TITLE), any TEXT and then the area's description.
+EACH, the default, shows it at every entry; ONCE only the first time.  It takes the rest of
+Prop_AreaEntry's keys (ENTER, FIRST, LEAVE, MASK, COLOR); see PROP_AREAENTRY.
+```
+
+<a id="prop-areaentry"></a>
+
+## PROP_AREAENTRY
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4254.
+
+```text
+Property   : Prop_AreaEntry
+Targets    : Areas
+Parameters : (ENTER="[TEXT]") (FIRST="[TEXT]") (LEAVE="[TEXT]") (TITLE="[TEXT]") (SHOWNAME)
+(TEXT="[TEXT]")
+Parameters : (DESC) (ONCE) (MASK="[ZAPPER MASK]") (COLOR="[COLOR CODE]")
+Example    : TITLE="The Ashen Reach" TEXT="Ash drifts down like grey snow." ONCE
+Example    : ENTER="You pass the border stones." FIRST="The old road ends here." LEAVE="The
+ash thins behind you." MASK="-PLAYERS"
+Description:
+CoffeeSUD: text on an area's border, for a player's character who comes in from another area
+ (or into the world) or leaves it.  ENTER is told each time they come in, FIRST only the
+first time they come into the area, and LEAVE on leaving.  TITLE (or SHOWNAME, the area's
+name) and TEXT make a banner, shown in COLOR (the highlight color, if not given); DESC adds
+the area's description.  ONCE shows the banner (title, text and description) only the first
+time in; ENTER and FIRST are unaffected.  MASK says whom it is for.  Prop_AreaBanner is this
+ with the area's name as the title and the description on, unless told otherwise.
 ```
 
 <a id="prop-areaforsale"></a>
@@ -6902,6 +7364,24 @@ told; MASK is who may.  Identifying it says it requires attunement, or to whom i
 attuned.
 ```
 
+<a id="prop-authoridentity"></a>
+
+## PROP_AUTHORIDENTITY
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4369.
+
+```text
+Property   : Prop_AuthorIdentity
+Targets    : Rooms, Areas, Items, Mobs, Exits
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  A saved identity for a source of authored text that has no ID= of its
+own (a once-only message, a waypoint, a lore entry), written as AUTO:[a random id] against
+the kind of record.  A room or area needs none: its identity comes from its room ID or its
+name.  Giving a property an ID=[stable id] avoids it altogether.  Not for builders to give.
+```
+
 <a id="prop-autosave"></a>
 
 ## PROP_AUTOSAVE
@@ -6927,7 +7407,7 @@ point would refuse a SAVE.  In an ironman game it writes the game's one save.
 
 ## PROP_BLOCKEDEXIT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 589.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 593.
 
 ```text
 Property   : Prop_BlockedExit
@@ -6947,11 +7427,30 @@ ONCLEAR's actions run; RESPAWN ticks later it is back (0: never).  What is left 
 kept with it (LEFT=), and one on the other side of the exit is kept the same.
 ```
 
+<a id="prop-broken"></a>
+
+## PROP_BROKEN
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4295.
+
+```text
+Property   : Prop_Broken
+Targets    : Items
+Parameters : (ORIGINAL=[THE ITEM'S OLD NAME])
+Example    : ORIGINAL="a steel longsword"
+Description:
+CoffeeSUD: put on an item when it is broken (ITEMBREAK=BREAK, or Prop_Durability's BREAK).
+A broken item cannot be worn, held or wielded, gives no armour and does no damage, and shows
+ as (broken).  When it is mended (its uses are above 0 again), the property goes and the
+item has the name ORIGINAL back.  The game adds it; a builder seldom needs to.  See
+PROP_DURABILITY.
+```
+
 <a id="prop-checkpoint"></a>
 
 ## PROP_CHECKPOINT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 604.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 608.
 
 ```text
 Property   : Prop_Checkpoint
@@ -6970,15 +7469,32 @@ brings the area's dead mobs back; SAVE saves the game (AUTO, or a slot's name). 
  it with MPSETRESPAWN and read it with RESPAWNROOM().
 ```
 
+<a id="prop-clanequipment"></a>
+
+## PROP_CLANEQUIPMENT
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 623.
+
+```text
+Property   : Prop_ClanEquipment
+Targets    : Items
+Parameters : [TYPE] [POWER#] [CLAN NAME] [CLAN TYPE]
+Example    : Acid 5 "The Skooters" "Guild"
+Description:
+Base property for clan equipment.  Do not use independent of the clan spells.  Legacy: it
+depends on the inherited clan spells, and clans as a player-run feature are not part of
+single-player play in CoffeeSUD, so no clan equipment is made.
+```
+
 <a id="prop-closecommand"></a>
 
 ## PROP_CLOSECOMMAND
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 635.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 641.
 
 ```text
 Property   : Prop_CloseCommand
-Targets    : Containers, Exits
+Targets    : Exits, Items
 Parameters : [COMMAND WORD] ([PARMS...]/NOCLOSE/MESSAGE=[STR];...
 Example    : twist knob;tw knob;twi knob;noclose
 Example    : smack botto*
@@ -6998,7 +7514,7 @@ MESSAGE= to change the message sent to the room, which can use <S-NAME> for the 
 
 ## PROP_CLOSEDDAYNIGHT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 652.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 658.
 
 ```text
 Property   : Prop_ClosedDayNight
@@ -7027,7 +7543,7 @@ the day, etc..
 
 ## PROP_CLOSEDSEASON
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 676.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 682.
 
 ```text
 Property   : Prop_Closedseason
@@ -7049,32 +7565,35 @@ conditions under which the object will no longer be visible.
 
 ## PROP_COMBATSTATS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3389.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4452.
 
 ```text
-Property : Combat profile stats
-Parameters: strict JSON, e.g.
+Property   : Prop_CombatStats
+Targets    : MOBs, Items
+Parameters : [STRICT JSON], as
 {"schema":1,"armor":200,"resistance":{"fire":50},"penetration":{"fire":20}}
-CoffeeSUD optional profile combat only. Attach to a MOB or owned worn top-level item. Adds
-accuracy/evasion/armor, block/spell_block/crit_chance/crit_multiplier points, typed
-resistance/penetration and immune type lists. Types: physical, fire, cold, electric, acid;
-immunity also accepts burning. Critical multiplier is additive points: +50 changes default
-150% to 200%. Unequipping/removing the source removes the bonus; ordinary engine stats are
-not changed.
-At most 64 sources per actor and 8192 characters per property. Invalid primary stats reject
-casts before costs. WORLD CHECK ONLY=COMBAT diagnoses properties. See AHELP WORLD_COMBAT and
- docs/creator/16-combat-profiles.md for ranges and order.
+Example    : {"schema":1,"armor":200,"resistance":{"fire":50},"penetration":{"fire":20}}
+Description:
+CoffeeSUD optional profile combat only.  Attach it to a MOB or to an owned, worn, top-level
+item.  Adds accuracy/evasion/armor, block/spell_block/crit_chance/crit_multiplier points,
+typed resistance/penetration and immune type lists.  Types: physical, fire, cold, electric,
+acid; immunity also accepts burning.  The critical multiplier is additive points: +50
+changes the default 150% to 200%.  Unequipping or removing the source removes the bonus;
+ordinary engine stats are not changed.
+At most 64 sources per actor and 8192 characters per property.  Invalid primary stats reject
+ casts before costs.  WORLD CHECK ONLY=COMBAT diagnoses properties.  See AHELP WORLD_COMBAT
+and docs/creator/16-combat-profiles.md for ranges and order.
 ```
 
 <a id="prop-combolock"></a>
 
 ## PROP_COMBOLOCK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 706.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 712.
 
 ```text
 Property   : Prop_ComboLock
-Targets    : Exits, Containers
+Targets    : Exits, Items
 Parameters : CODE=[CODE]/RANDOM (SYMBOLS="[SYMBOL],[SYMBOL]"/[N]-[N]) (DIALS=[N])
 (VERB=[VERB]) (SHOW=true) (TRIES=[N]) (ONWRONG="[ACTIONS]") (ONOPEN="[ACTIONS]")
 (RELOCK=[TICKS]) (MSG="[TEXT]") (VAR=[NAME])
@@ -7094,11 +7613,30 @@ puts it in the script variable $<COMBO [NAME]> for a clue to print.  Actions are
 commands, as in Prop_Switch.
 ```
 
+<a id="prop-composesupport"></a>
+
+## PROP_COMPOSESUPPORT
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1609.
+
+```text
+Property   : Prop_ComposeSupport
+Targets    : ITEMS
+Parameters : SUPPORTS=[ID],[ID]
+Example    : SUPPORTS=example.burning
+Description:
+CoffeeSUD: while the item is worn, wielded or held (or a gem with it in its ADDS is socketed
+ in something worn), its wearer's composed skills (the optional module
+abilities.composition) get these supports, beyond the ones linked, wherever a support fits
+the skill; at most two come from gear.  COMPOSE SHOW lists them under "From your gear", with
+ any that do not fit.
+```
+
 <a id="prop-craftxp"></a>
 
 ## PROP_CRAFTXP
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 747.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 753.
 
 ```text
 Property   : Prop_CraftXP
@@ -7121,7 +7659,7 @@ see it, and an Artisan earns it on top of their own.
 
 ## PROP_CROPRULES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 762.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 768.
 
 ```text
 Property   : Prop_CropRules
@@ -7140,14 +7678,15 @@ this one or those next to it (a pond Irrigation digs counts), it needs.  YIELD i
 2d6+1, in place of 1d7, still times the skill's yield.  FAILMSG is told when one of them
 refuses.  A world can give a crop its rules in world/crops.txt, a line each: the resource or
  subtype, then these rules, as WHEAT GROWHOURS=240 SEASONS=AUTUMN.  The area's, the room's
-and the seed's come over the file's, in that order.
+and the seed's come over the file's, in that order.  With any row in crops.txt, Gardening
+and Farming skip their up-front refusal and apply each crop's own rules instead.
 ```
 
 <a id="prop-cursed"></a>
 
 ## PROP_CURSED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 788.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 795.
 
 ```text
 Property   : Prop_Cursed
@@ -7165,14 +7704,17 @@ so Remove Curse finds it, but only a priest of LEVEL or more lifts it.  HIDDEN s
 PENALTY is what it does (properties and their arguments, a semicolon between).  BREAK is a
 list of deeds, done in order by the one who has it (SAY:[WORDS], ENTER:[ROOM ID]); BREAKMASK
  a mask they come to fit.  Lifted or broken, its penalties go with it, and the item stays
-(KEEP), crumbles (CRUMBLE), or becomes another (BECOME:[ITEM]).
+(KEEP), crumbles (CRUMBLE), or becomes another (BECOME:[ITEM]).  The game keeps the curse's
+state in its own text as SHOWN=true (it has been revealed) and STEP=[N] (how far through the
+ BREAK deeds), which it writes itself and a builder need not set; REMOVECURSE (the ability)
+is the thing that lifts it.
 ```
 
 <a id="prop-darkdanger"></a>
 
 ## PROP_DARKDANGER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 968.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 981.
 
 ```text
 Property   : Prop_DarkDanger
@@ -7191,19 +7733,23 @@ name (or a mob class) comes out of the dark, LURK percent of the time (LURKMSG).
 
 ## PROP_DARKDESCRIPTION
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4027.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4210.
 
 ```text
-Targets: rooms. TITLE="Somewhere dark" DESC="Cold water laps at your knees." Describes a
-dark room without revealing its contents. VARIES is allowed. Alternatively place DARK and
-LIT blocks in the room description.
+Property   : Prop_DarkDescription
+Targets    : Rooms
+Parameters : TITLE="[TEXT]" DESC="[TEXT]"
+Example    : TITLE="Somewhere dark" DESC="Cold water laps at your knees."
+Description:
+CoffeeSUD: describes a dark room without revealing its contents.  VARIES is allowed.
+Alternatively place DARK and LIT blocks in the room description.
 ```
 
 <a id="prop-deathrules"></a>
 
 ## PROP_DEATHRULES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 802.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 812.
 
 ```text
 Property   : Prop_DeathRules
@@ -7228,22 +7774,36 @@ with them, so the party stays together: a jailbreak instead of a reload.  MASK i
 
 ## PROP_DETAILS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4021.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4181.
 
 ```text
-Targets: rooms, items, mobs. keyword,alias=description;other=description. Per-detail
-options: EXAMINEONLY READ="text" MASK="zapper" HIGHLIGHT SETVAR=key=value TATTOO=name
-ID=stable-id ALIASES=old-id LEGACYKEYS=old-token. Quote option values containing spaces or
-semicolons. LOOK/EXAMINE/READ try details after real objects fail. LOOK keyword ON object
-qualifies the host. Clue options run only on the first use; LOOK_PROG gets the keyword in
-$g.
+Property   : Prop_Details
+Targets    : Rooms, Items, Mobs
+Parameters : [KEYWORD],[ALIAS]=[DESCRIPTION];[OTHER KEYWORD]=[DESCRIPTION]
+Parameters : Each detail may end with (EXAMINEONLY) (READ="[TEXT]") (MASK="[ZAPPER MASK]")
+(HIGHLIGHT)
+Parameters : ... (SETVAR=[KEY]=[VALUE]) (TATTOO=[NAME]) (ID=[STABLE ID]) (ALIASES=[OLD ID])
+(LEGACYKEYS=[OLD TOKEN])
+Example    : mural,painting=Faded figures march along the wall. HIGHLIGHT;lever=A rusty
+lever. EXAMINEONLY
+Example    : tome=A thick, dusty tome. READ="The pages crumble at a touch." TATTOO=readtome
+Description:
+CoffeeSUD: keywords in a description that can be looked at.  LOOK, EXAMINE and READ try the
+details after the real objects fail to match; LOOK [KEYWORD] ON [OBJECT] names the host.
+EXAMINEONLY lets only EXAMINE show it, READ is what READ shows, MASK limits who sees it, and
+ HIGHLIGHT marks the keyword in the host's text.  Quote option values that hold spaces or
+semicolons.  Clue options (SETVAR, TATTOO) run only on the first use.
+LOOK_PROG: a detail that is shown also runs the host's LOOK_PROG scripts, with the keyword
+in $g; a bare keyword (or 100) in the trigger line picks the keyword (AHELP SCRIPTABLE).
+Looking at the host itself is the ordinary look, which Prop_QuestGiver's TRIGGER=LOOK
+answers; a detail is not that look.
 ```
 
 <a id="prop-detector"></a>
 
 ## PROP_DETECTOR
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 817.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 827.
 
 ```text
 Property   : Prop_Detector
@@ -7265,7 +7825,7 @@ lies in) is told MSG when it starts and STOPMSG when it stops; $p is the item.
 
 ## PROP_DEVCHEATS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 830.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 840.
 
 ```text
 Property   : Prop_DevCheats
@@ -7277,14 +7837,17 @@ A developer's cheats, which the GOD command sets: see AHELP GOD for what each do
 cheat's name turns it on; a minus and a cheat's name turns it off, even where a sysop power
 would give it; a minus and a security flag (as in AHELP SECURITY) suspends that power for
 the character.  -NODEATH suspends IMMORT.  The cheats are NOCLIP, NOCOST, NODAMAGE, NODEATH,
- SEEALL and NOAGGRO.  It is saved with the character like any effect.
+ SEEALL and NOAGGRO.  A character who has the matching security flag has some of them
+without the property: GOTO gives NOCLIP, ALLSKILLS gives NOCOST, and ORDER or CMDROOMS gives
+ NOAGGRO (a cheat's name after a minus still turns it off).  It is saved with the character
+like any effect.
 ```
 
 <a id="prop-discoverable"></a>
 
 ## PROP_DISCOVERABLE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 855.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 868.
 
 ```text
 Property   : Prop_Discoverable
@@ -7309,7 +7872,7 @@ again RESET ticks (30) later.
 
 ## PROP_DISCOVERY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 925.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 938.
 
 ```text
 Property   : Prop_Discovery
@@ -7334,7 +7897,7 @@ level, @x2 the area's median level).
 
 ## PROP_DOWNED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 843.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 856.
 
 ```text
 Property   : Prop_Downed
@@ -7354,7 +7917,7 @@ list applies.
 
 ## PROP_DURABILITY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1050.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1063.
 
 ```text
 Property   : Prop_Durability
@@ -7376,7 +7939,7 @@ NOREPAIR: nobody mends it.  Below half its condition it shows as (worn).
 
 ## PROP_ESSENTIAL
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1113.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1126.
 
 ```text
 Property   : Prop_Essential
@@ -7394,24 +7957,52 @@ MODE=KNOCKOUT: a blow that would kill it leaves it at 1 hit point, out cold, and
 one who beat it gains the experience of a kill, unless NOXP.
 ```
 
+<a id="prop-factioneffects"></a>
+
+## PROP_FACTIONEFFECTS
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4316.
+
+```text
+Property   : Prop_FactionEffects
+Targets    : MOBs
+Parameters : [FACTION ID]
+Example    : alignment.ini
+Description:
+CoffeeSUD: internal.  It is put on a player's character by the game for each faction with
+PLAYEREFFECT rules (AHELP FACTIONPLAYEREFFECTS), and runs those rules' effects as transient
+handlers, chosen by the band the character stands in or by the rule's zapper mask.  They are
+ rebuilt from the faction's data and never saved with the character.  Not for builders to
+give.
+```
+
 <a id="prop-firstentry"></a>
 
 ## PROP_FIRSTENTRY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4015.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4154.
 
 ```text
-Targets: rooms, areas. TEXT="..." ONCE=CHARACTER|PROFILE SETVAR=key=value TATTOO=name
-ID=stable-id ALIASES=old-id LEGACYKEYS=old-token. Once-only message; text accepts VARIES.
-SETVAR is on the entering character. A stable ID keeps the same once marker after renaming
-the host.
+Property   : Prop_FirstEntry
+Targets    : Rooms, Areas
+Parameters : TEXT="[TEXT]" (ONCE=CHARACTER/PROFILE) (SETVAR=[KEY]=[VALUE]) (TATTOO=[NAME])
+Parameters : (ID=[STABLE ID]) (ALIASES=[OLD ID]) (LEGACYKEYS=[OLD TOKEN])
+Example    : TEXT="A cold draught greets you." ONCE=CHARACTER
+Example    : TEXT="<VARIES><NIGHT>The vault is dark.</NIGHT></VARIES>" ONCE=PROFILE
+TATTOO=seenvault
+Description:
+CoffeeSUD: a once-only message, shown to a character the first time they enter the room or
+area.  The text accepts VARIES.  ONCE says whether the marker is kept for the character or
+for all of their profile.  SETVAR sets a script variable on the entering character, and
+TATTOO gives them the tattoo.  A stable ID keeps the same once marker after renaming the
+host; ALIASES and LEGACYKEYS name old IDs and tokens whose markers still count.
 ```
 
 <a id="prop-furnishing"></a>
 
 ## PROP_FURNISHING
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2188.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2283.
 
 ```text
 Property   : Prop_Furnishing
@@ -7433,7 +8024,7 @@ PROP_WORKSTATION): ACTS=fire serves a craft that needs a fire.
 
 ## PROP_GENLOCK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2201.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2296.
 
 ```text
 Property   : Prop_GenLock
@@ -7451,7 +8042,7 @@ off.
 
 ## PROP_HAVEADJUSTER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1204.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1221.
 
 ```text
 Property   : Prop_HaveAdjuster
@@ -7463,18 +8054,21 @@ Example    : str+2 ableprofs="spell_fireball(10)" MASK=-Race +Dwarf
 Description:
 So long as the item with this property is owned, the listed effects will be given to the
 owner.  All parameters use the + or - adjuster, except the class, race, gender, ableprofs,
-and ablelvls parameters. Valid parameters are as follows:
+ableticks, ablehpcosts, ablemncosts, ablemvcosts, and ablelvls parameters. Valid parameters
+are as follows:
 strength dexterity constitution charisma wisdom intelligence
 maxstr maxdex maxcon maxcha maxwis maxint (maximum trainable)
 savepar savefir savecol savewat savegas savemin savegen savejus
-saveaci saveele savepoi saveund savemag savedis savetra
+saveaci saveele savepoi saveund savemag savedis savetra allsaves (every saving throw at
+once),
 ability (magical level), armor, attacks (prowess), damage (max), disposition (see AHELP
 ADJDISPOSITION), level, rejuv(!NO!), senses (see AHELP ADJSENSES), speed (#attacks), height,
  weight, ambiance+``,gender, class, race, hitpoints, hunger (stomach size), mana, movement,
 thirst (stomach size) conversion weightadj saveblunt savepierce saveslash savespells
 saveprayers savesongs savechants critpctweapons critpctmagic critdmgweapons critdmgmagic
-faith deity rejuvrate xpadjpct. Ableprofs and ablelvls is a commma-delimited list of
-ablityids followed by a number in parenthesis to adjust proficiency or casting level by.
+faith deity rejuvrate xpadjpct. Ableprofs, ableticks, ablehpcosts, ablemncosts, ablemvcosts
+and ablelvls is a commma-delimited list of ablityids followed by a number in parenthesis to
+adjust proficiency, duration, mana, movement or hit point costs, or casting level by.
 
 By default, the values + or - are added to the existing values.  However, if MULTIPLYPH=true
  is included in the parameters, then attack, armor, damage, weight and height will instead
@@ -7496,7 +8090,7 @@ for more information on zapper mask syntax.
 
 ## PROP_HAVERESISTER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1266.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1283.
 
 ```text
 Property   : Prop_HaveResister
@@ -7530,7 +8124,7 @@ for more information on zapper mask syntax.
 
 ## PROP_HAZARD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 979.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 992.
 
 ```text
 Property   : Prop_Hazard
@@ -7560,22 +8154,24 @@ NONPC: players only.  NAME is what hurts (the biting cold), MSG the damage line.
 
 ## PROP_HELMRESTRICT
 
-Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 19.
+Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 26.
 
 ```text
-Property: Prop_HelmRestrict
-Targets: Items
-Parameters: NAVMASK="[mask]" MESSAGE="[refusal]" ONFAIL=[function]
-Restricts anchor, brake, course, steering, sailing and tender commands. Sailor NPC crew
-aboard the vessel and builders with item permissions pass. ONFAIL calls a function on the
-vessel. Example: NAVMASK="-PLAYERS".
+Property   : Prop_HelmRestrict
+Targets    : Items
+Parameters : NAVMASK="[ZAPPER MASK]" (MESSAGE="[REFUSAL]") (ONFAIL=[FUNCTION])
+Example    : NAVMASK="-PLAYERS"
+Description:
+CoffeeSUD: Restricts anchor, brake, course, steering, sailing and tender commands. Sailor
+NPC crew aboard the vessel and builders with item permissions pass. ONFAIL calls a function
+on the vessel. Example: NAVMASK="-PLAYERS".
 ```
 
 <a id="prop-homebeacon"></a>
 
 ## PROP_HOMEBEACON
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1410.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1429.
 
 ```text
 Property   : Prop_HomeBeacon
@@ -7593,7 +8189,7 @@ HOMEBEACONS=true in the ini makes every owned room a home without it; HOMERECALL
 
 ## PROP_HOMESTEAD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1421.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1440.
 
 ```text
 Property   : Prop_Homestead
@@ -7617,7 +8213,7 @@ with no title at all.
 
 ## PROP_INNROOM
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1015.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1028.
 
 ```text
 Property   : Prop_InnRoom
@@ -7633,7 +8229,7 @@ default) ends with the one who waited fully rested: hit points, mana and moves.
 
 ## PROP_INSTANTDEATH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1475.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1494.
 
 ```text
 Property   : Prop_InstantDeath
@@ -7654,7 +8250,7 @@ See AHELP ZAPPERMASK, where allowed is killed, and disallowed is spared.
 
 ## PROP_INVOKABLE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1489.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1508.
 
 ```text
 Property   : Prop_Invokable
@@ -7662,6 +8258,7 @@ Targets    : Items
 Parameters : (WORD="[WORD]") (VERB=[VERB]) SPELLS="[ID];LEVEL=[N],[ID]"
 (TARGET=SELF/ENEMY/ROOM) (CHARGES=[N]) (RECHARGE=DAWN/DAILY/TICKS=[N]) (COOLDOWN=[TICKS])
 (REQUIRE=WORN/HELD) (MASK="[ZAPPER MASK]") (MSG="[TEXT]") (EMPTYMSG="[TEXT]")
+(REFUSE=HEALTHY,NOAILMENT) (REFUSEMSG="[TEXT]") (REFILL=KILL:[N]) (AUTO=HP<[N])
 Example    : WORD=Ignis SPELLS="Spell_Fireball;LEVEL=12" TARGET=ENEMY CHARGES=3
 RECHARGE=DAWN REQUIRE=WORN EMPTYMSG="The ring is cold."
 Description:
@@ -7672,14 +8269,52 @@ them (ROOM).  CHARGES is how many uses it holds (what is left is kept with it); 
 fills them again at dawn, each game day, or every N ticks.  COOLDOWN ticks pass between
 uses.  REQUIRE: it must be worn, or held.  MASK is who may use it.  MSG is what the room
 sees (<S-NAME> the user, <T-NAME> the item); EMPTYMSG what they are told when it is spent.
-Identifying it tells its charges and recharge.
+REFUSE: it does nothing, and spends nothing, when there is nothing to do: HEALTHY at full
+health, NOAILMENT with no harmful effect to cure (REFUSEMSG says so).  REFILL=KILL:N gives N
+ charges back for each kill by its holder.  AUTO=HP<N: its holder below N% of their hit
+points uses it by itself, at most once a tick and not in a tick they used it by hand.  Its
+charges, cooldown and recharge countdown are kept with it in a save.  Identifying it tells
+its charges, recharge, cooldown, refusals, refill and automatic use.
+```
+
+<a id="prop-itembinder"></a>
+
+## PROP_ITEMBINDER
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1538.
+
+```text
+Property   : Prop_ItemBinder
+Targets    : Items
+Parameters : TO=CHARACTER/ACCOUNT/GROUP/CLAN/PLAYER/NPC/NOONE ON=PICKUP/EQUIP
+           : (MESSAGE=[ZAPMSG]) (DEATHKEEP=TRUE/FALSE)
+           : (ALLOT="[name]") (ALLOTFOR="[time]") (TRADE=NONE/ALLOWED/ANY) (SOURCE="[text]")
+ (EXPIRES="[time]")
+Example    : TO=CHARACTER ON=PICKUP MESSAGE="Bound -- you can't do that."
+Example    : TO=CHARACTER ON=PICKUP ALLOT="Ann" ALLOTFOR="1 mudhour" TRADE=NONE SOURCE="the
+furnace warden" EXPIRES="2 mudhours"
+Description:
+Allows an item to be bound when an event occurs to the person, account, or clan that either
+picks it up or first equips it.  Once bound, an item can only be picked up, worn, held or
+wielded by that same player, account, or clan, and cannot be given to anyone else.  TO=GROUP
+ binds it to everyone in the group of the character who picks it up (or equips it) first, as
+ the group stood then; any of them can take it, and nobody else.  The zap message is also
+configureable, as is whether the item persists with the player over death.  CoffeeSUD: the
+binding's other fields, each on its own.  ALLOT: who may take it first (only that character
+may pick it up), for ALLOTFOR (a time, as "1 mudhour"; for as long as it lies unclaimed when
+ left out), after which anyone may.  TRADE: once bound, NONE (it is never given or sold),
+ALLOWED (the default: given only to whom it is bound to, never sold) or ANY (given and sold
+freely; only using it stays the bound one's).  SOURCE: where it came from, shown on
+inspection.  EXPIRES: how long a binding lasts (a time); after it, anyone may use it and it
+binds no more.  The times are kept in its text, so they are saved with the item; inspection
+shows each field and how long is left.
 ```
 
 <a id="prop-itemgrowth"></a>
 
 ## PROP_ITEMGROWTH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1526.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1562.
 
 ```text
 Property   : Prop_ItemGrowth
@@ -7703,29 +8338,33 @@ stage and the way to the next.
 
 ## PROP_ITEMMODIFIERS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3448.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4543.
 
 ```text
-Property: Prop_ItemModifiers
-Applied by optional MODBASE generation to standard generic items/equipment. Carries a strict
- saved JSON record with item identity, base pin/revision, display baselines and per-modifier
- identity, source pin, tier, group, tags, numeric rolls and protection. ITEMMODS inspects
-it; MODCRAFT performs controlled selective edits. Do not hand-attach an empty property. Use
-ItemModifiers.initialize on fresh unowned generated items; ItemModifiers.copyOf is the
-managed clone API with fresh identities and preserved values.
-Numeric deltas feed the optional combat-profile collector when correctly worn. A generic
+Property   : Prop_ItemModifiers
+Targets    : Items
+Parameters : (kept by the game: a strict saved JSON record)
+Example    :
+Description:
+Applied by optional MODBASE generation to standard generic items and equipment.  It carries
+a strict saved JSON record with item identity, base pin/revision, display baselines and
+per-modifier identity, source pin, tier, group, tags, numeric rolls and protection.
+ITEMMODS inspects it; MODCRAFT performs controlled selective edits.  Do not hand-attach an
+empty property.  Use ItemModifiers.initialize on fresh unowned generated items;
+ItemModifiers.copyOf is the managed clone API with fresh identities and preserved values.
+Numeric deltas feed the optional combat-profile collector when correctly worn.  A generic
 copy (bound to another item), a corrupt record or one over the campaign's max_modifiers
 grants nothing and does not stop its wearer's combat; the log, COMBATRESULT and WORLD CHECK
-ITEMMODS name it. Disabling items.modifiers suspends bonuses/crafting and keeps
-records/receipts. This first family does not own arbitrary AFFECT layers, new crafting
-currencies or staged choices. See docs/creator/17-item-modifiers-crafting.md.
+ONLY=ITEMMODS name it.  Disabling items.modifiers suspends bonuses/crafting and keeps
+records/receipts.  This first family does not own arbitrary AFFECT layers, new crafting
+currencies or staged choices.  See docs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="prop-itemset"></a>
 
 ## PROP_ITEMSET
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1611.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1705.
 
 ```text
 Property   : Prop_ItemSet
@@ -7750,38 +8389,115 @@ SETCOUNT([CODE] [SET]) and SET_PROG.  The ALLSET of Prop_HaveAdjuster and Prop_W
 now gives each piece its own number of pieces needed.
 ```
 
+<a id="prop-itemslot"></a>
+
+## PROP_ITEMSLOT
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1585.
+
+```text
+Property   : Prop_ItemSlot
+Targets    : ITEM
+Parameters : (NUM=[SLOTS COUNT]) (TYPE=[STRING]) (LEVEL=NONE/HIGH/ADD)
+Parameters : (REMOVABLE=[TRUE/FALSE]) (ONLOSS=DESTROY/KEEP) ; [XML]
+Example    : NUM=4 TYPE=Gems REMOVABLE=TRUE
+Description:
+When placed on an item, that item will have available slots into which other items, those
+with the Prop_ItemSlotFiller property, can be PUT using the PUT command. When this is done,
+the item with this property will gain the effect benefits of the other item in addition to
+its own.
+
+The NUM parameter determines how many slots are available.  The TYPE parameter must match
+the TYPE parameter from the Prop_ItemSlotFiller of the item being PUT.  The REMOVABLE
+property sets whether the items in the slots may be removed.  The LEVEL argument affects how
+ slot fillers affect the item level: none, equal to the highest, or added together. See also
+ Prop_ItemSlotFiller.
+
+CoffeeSUD: TYPE may name a type per slot, as TYPE="Gems,Gems,Runes" (the last repeats for
+any slots left): a filler goes only into empty slots of its own type.  ONLOSS=KEEP: when the
+ item goes (destroyed, or this property taken off it), what is socketed goes back to the
+item's owner, or onto the floor; by default (DESTROY) it goes with the item.  A filler whose
+ ADDS include Prop_ComposeSupport gives its supports while the item is worn.
+```
+
 <a id="prop-journey"></a>
 
 ## PROP_JOURNEY
 
-Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 25.
+Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 34.
 
 ```text
-Property: Prop_Journey
-Targets: Exits, Rooms, Items, MOBs
-Parameters: DEST=[room or port] DURATION=[game hours] VIA=[transit room] FARE=[price]
-PARTY=LEADER|EACH PERHEAD=true MISSING=WAIT|CONTINUE|RESCUE|CANCEL|RETURN
-DEAD=CONTINUE|WAIT|CANCEL|RETURN DISCONNECTED=TRAVEL|WAIT|CONTINUE|CANCEL|RETURN
-CANCEL=HERE|RETURN REFUND=NONE|FULL|UNUSED LEAVEMSG="[text]" ARRIVEMSG="[text]"
-EVENTS="[chance%:action;...]"
-Entering the host or JOURNEY <host> starts a passage for the nearby party. Each game hour
-rolls EVENTS: a script function, LOAD MOB <spec>, or CATALOG <encounter table>. A function
-returning PAUSE waits for JOURNEY RESUME. Combat pauses travel. Saves retain elapsed hours,
-remaining leg time, scenes and individual passengers.
+Property   : Prop_Journey
+Targets    : Exits, Rooms, Items, MOBs
+Parameters : DEST=[ROOM ID OR PORT] (required) DURATION=[GAME HOURS] (required)
+(VIA=[TRANSIT ROOM]) (FARE=[PRICE])
+Parameters : (PARTY=[LEADER/EACH]) (PERHEAD=[TRUE/FALSE])
+(MISSING=[WAIT/CONTINUE/RESCUE/CANCEL/RETURN])
+Parameters : (DEAD=[CONTINUE/WAIT/CANCEL/RETURN])
+(DISCONNECTED=[TRAVEL/WAIT/CONTINUE/CANCEL/RETURN])
+Parameters : (CANCEL=[HERE/RETURN]) (REFUND=[NONE/FULL/UNUSED]) (LEAVEMSG="[TEXT]")
+(ARRIVEMSG="[TEXT]")
+Parameters : (EVENTS="[CHANCE%:ACTION;...]")
+Example    : DEST=Harbor#1 DURATION=6 FARE=25 PARTY=EACH
+Example    : DEST="Saltmarsh Quay" DURATION=12 VIA=Sea#1 EVENTS="10%:CATALOG
+gale;5%:calm_seas"
+Description:
+CoffeeSUD: Entering the host or JOURNEY <host> starts a passage for the nearby party. Each
+game hour rolls EVENTS: a script function, LOAD MOB <spec>, or CATALOG <encounter table>. A
+function returning PAUSE waits for JOURNEY RESUME. Combat pauses travel. Saves retain
+elapsed hours, remaining leg time, scenes and individual passengers.
 Missing/dead/disconnected passenger policies are checked before advancing or arriving. WAIT
 pauses without spending time; CONTINUE releases the seat. RESCUE obeys movement checks.
 RETURN brings the present party to the origin; refused returns stay paused. Saved fare
 receipts support full or unused-time refunds once per payer. Defaults: MISSING=WAIT
-DEAD=CONTINUE DISCONNECTED=TRAVEL CANCEL=HERE REFUND=NONE.
+DEAD=CONTINUE DISCONNECTED=TRAVEL CANCEL=HERE REFUND=NONE.  Any REFUND value but NONE
+refunds, in full unless it is UNUSED.
 JOURNEY_PROG START|HOUR|ARRIVE|CANCEL|ALL: $g is the stage, $0 completed game hours and $1
 the destination room ID.
+```
+
+<a id="prop-journeypassenger"></a>
+
+## PROP_JOURNEYPASSENGER
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4339.
+
+```text
+Property   : Prop_JourneyPassenger
+Targets    : MOBs
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  A saved identity for each passenger of a journey (AHELP PROP_JOURNEY),
+ including mounts that share a name, so that the passage's seats still match after a save.
+Shown as nothing.  Not for builders to give.
+```
+
+<a id="prop-journeystate"></a>
+
+## PROP_JOURNEYSTATE
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4327.
+
+```text
+Property   : Prop_JourneyState
+Targets    : MOBs
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  One passage in progress (AHELP PROP_JOURNEY), kept on the party's
+leader: the journey's definition, origin, destination and transit room, the hours done and
+the time left on the leg, the fares paid, who is aboard and what is paused.  It shows as
+(Travelling), is saved with the character, and its alarms are rebuilt from the time
+remaining.  Not for builders to give or change; JOURNEY RESUME and the journey's own
+settings are the way to steer a passage.
 ```
 
 <a id="prop-jscript"></a>
 
 ## PROP_JSCRIPT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1628.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1722.
 
 ```text
 Property   : Prop_JScript
@@ -7802,7 +8518,7 @@ ticks) (AHELP CATCHUP).  The other parameters are the file's parms, numbers as n
 
 ## PROP_KEYRULES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1642.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1736.
 
 ```text
 Property   : Prop_KeyRules
@@ -7823,7 +8539,7 @@ room; MASK: who may use it (MSG is told to the others).  A key's code may also b
 
 ## PROP_KNOWNRECIPES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1655.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1749.
 
 ```text
 Property   : Prop_KnownRecipes
@@ -7843,29 +8559,33 @@ the profile knows what any of them knows.
 
 ## PROP_LANGUAGEIMMERSION
 
-Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 28.
+Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 30.
 
 ```text
 Property   : Prop_LanguageImmersion
 Targets    : Areas, Rooms, Mobs, Items
-Parameters : LANGUAGE=Orcish HEAR=1 READ=3 CHANCE=20% START=5 MAX=60 GRANTAFTER=25
-ID=stable-id ALIASES=old-id LEGACYKEYS=old-token
-LANGUAGE=ANY covers all languages. HEAR and READ give proficiency gains per successful
-exposure; CHANCE is checked per exposure. Unknown languages can be granted at START after
-GRANTAFTER exposures, within MAXLANGUAGES. Knowledge grows to MAX, immediately updating live
- effects. Exposure counters and learned abilities survive saves. The property can be
-carried, granted to a creature, or placed on the room or area where immersion happens.
+Parameters : LANGUAGE=[LANGUAGE/ANY] (HEAR=[N]) (READ=[N]) (CHANCE=[PCT]) (START=[N])
+(MAX=[N]) (GRANTAFTER=[N])
+Parameters : (ID=[STABLE ID]) (ALIASES=[OLD ID]) (LEGACYKEYS=[OLD TOKEN])
+Example    : LANGUAGE=Orcish HEAR=1 READ=3 CHANCE=20% START=5 MAX=60 GRANTAFTER=25
+Description:
+CoffeeSUD: LANGUAGE=ANY covers all languages. HEAR and READ give proficiency gains per
+successful exposure; CHANCE is checked per exposure. Unknown languages can be granted at
+START after GRANTAFTER exposures, within MAXLANGUAGES. Knowledge grows to MAX, immediately
+updating live effects. Exposure counters and learned abilities survive saves. The property
+can be carried, granted to a creature, or placed on the room or area where immersion
+happens.
 ```
 
 <a id="prop-languagespeaker"></a>
 
 ## PROP_LANGUAGESPEAKER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1691.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1785.
 
 ```text
 Property   : Prop_LanguageSpeaker
-Targets    : Mobs, Items, Rooms, Exits, Areas
+Targets    : Mobs, Items, Rooms, Areas
 Parameters : LANGUAGE=[LANGUAGE] (UNDERSTANDS=ONLY) (HOMEONLY=TRUE/FALSE)
 (NOMOBS=TRUE/FALSE)
 Parms(Cont):    (PLAYERS=TRUE/FALSE) (; [ZAPPER MASK])
@@ -7892,7 +8612,7 @@ zapper mask may follow a semicolon to add additional masks. <ZAP=disallow>
 
 ## PROP_LIMITEDCONTENTS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1715.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1809.
 
 ```text
 Property   : Prop_LimitedContents
@@ -7911,22 +8631,24 @@ masks means no limit of those items.  CoffeeSUD: a container is also a receptacl
 keeps what is put in it in it (LOCKMSG is told); CONSUME makes what is put in vanish, while
 still counting it (kept as TALLY=).  ONPUT runs when something goes in, ONFULL when each
 limit above 0 is met, ONEMPTY when the last thing is taken out: script commands, a semicolon
- between them, MP left off if you like, $n who did it (as Prop_Switch's).  A semicolon
-inside quotes does not split the parts.
+ between them, MP left off if you like, $n who did it (as Prop_Switch's).  The ONPUT, ONFULL
+ and ONEMPTY text is split into commands at every semicolon, quoted or not.
 ```
 
 <a id="prop-locallists"></a>
 
 ## PROP_LOCALLISTS
 
-Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 39.
+Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 44.
 
 ```text
 Property   : Prop_LocalLists
 Targets    : Areas, Rooms, Mobs
-Parameters : LOAD=vocab/lists_underdark.ini or KEY="value" ...
-Keys: TOD_CHANGE_OUTSIDE, TOD_CHANGE_INSIDE, HEALTH_CHART, DAMAGE_WORDS, WEAPON_HIT_DESCS,
-WEAPON_MISS_DESCS, CORPSE_BLURBS, MAGIC_WORDS, GAIT_LIST.
+Parameters : LOAD=[FILE UNDER world/vocab/] / [KEY]="[VALUE]" ...
+Example    : LOAD=vocab/lists_underdark.ini
+Description:
+CoffeeSUD: Keys: TOD_CHANGE_OUTSIDE, TOD_CHANGE_INSIDE, HEALTH_CHART, DAMAGE_WORDS,
+WEAPON_HIT_DESCS, WEAPON_MISS_DESCS, CORPSE_BLURBS, MAGIC_WORDS, GAIT_LIST.
 Inline values override LOAD. Lookup tries the creature, room, area, parents, then global
 lists. LOAD resolves under world/vocab/. Lists use the stock lists.ini format: comma-indexed
  entries, pipe alternatives, semicolon grid rows. Health has eleven entries using <MOB>. Hit
@@ -7939,11 +8661,11 @@ Prop_SkyText overrides its own time-of-day text first.
 
 ## PROP_LOCKRULES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1788.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1882.
 
 ```text
 Property   : Prop_LockRules
-Targets    : Exits, Containers
+Targets    : Exits, Items
 Parameters : (PICK=NEVER/LEVEL:[N]) (KEYS=[CODE];[CODE]) (RELOCK=[TICKS]) (MSG="[TEXT]")
 Example    : PICK=NEVER KEYS=spare;guard.* RELOCK=20
 Description:
@@ -7957,7 +8679,7 @@ ending in * takes all that begin so).  RELOCK: that many ticks after it is unloc
 
 ## PROP_LOOTTABLE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1035.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1048.
 
 ```text
 Property   : Prop_LootTable
@@ -7972,11 +8694,11 @@ world's own), rolled ROLLS times, each a fresh roll with $mob_level, $area_level
  $player_level set, if CHANCE (a percent, 100 by default) allows, and GOLD as money.
 ON=DEATH (a mob's default) puts it in the mob's corpse as it dies; ON=OPEN (a container's
 default) the first time the container is opened, and it stays rolled until its contents
-reset (a save keeps that); ON=SPAWN or RESET as the mob is brought to life, or as a player
-first comes into the container's room.  A catalog entry (class="catalog") keeps the
-catalog's cap.  A roll that gives nothing because its tracked items (MODBASE) cannot be made
- yet, as the items.modifiers module is off or its definitions fail CHECK, is not spent: a
-container rolls at its next opening, a mob's ON=SPAWN roll is made as it dies.
+reset (a save keeps that); ON=SPAWN (RESET means the same) as the mob is brought to life, or
+ as a player first comes into the container's room.  A catalog entry (class="catalog") keeps
+ the catalog's cap.  A roll that gives nothing because its tracked items (MODBASE) cannot be
+ made yet, as the items.modifiers module is off or its definitions fail CHECK, is not spent:
+ a container rolls at its next opening, a mob's ON=SPAWN roll is made as it dies.
 resources/randareas/loot.xml has sample tables (goblin, chest).
 ```
 
@@ -7984,31 +8706,64 @@ resources/randareas/loot.xml has sample tables (goblin, chest).
 
 ## PROP_LORE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4018.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4168.
 
 ```text
-Targets: items, rooms, mobs. ENTRY=key ON=READ|GET|EXAMINE|ENTER|KILL|DEATH MSG="..."
-SCOPE=CHAR|PROFILE. Unlocks world/lore/*.ini entries. KILL awards the killer of this host;
-DEATH awards the dying character. Script: MPLORE $n ADD key [PROFILE]. See HELP LORE.
+Property   : Prop_Lore
+Targets    : Items, Rooms, Mobs
+Parameters : ENTRY=[KEY] ON=[READ/GET/EXAMINE/ENTER/KILL/DEATH] (MSG="[TEXT]")
+(SCOPE=CHAR/PROFILE)
+Example    : ENTRY=founding ON=READ MSG="You learn of the founding." SCOPE=PROFILE
+Example    : ENTRY=dragon_weakness ON=KILL
+Description:
+CoffeeSUD: unlocks an entry of world/lore/*.ini when the event ON happens to the host: it is
+ read, picked up, examined, entered (a room), or its killer (KILL awards the killer of this
+host) or the dying character (DEATH) is the one who learns it.  MSG is shown when it
+unlocks, and SCOPE says whether it is kept for the character or for the whole profile.  A
+script gives one with MPLORE $n ADD [KEY] [PROFILE].  See HELP LORE.
+```
+
+<a id="prop-mapglyph"></a>
+
+## PROP_MAPGLYPH
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4219.
+
+```text
+Property   : Prop_MapGlyph
+Targets    : Rooms
+Parameters : CHAR=[CHARACTER] (COLOR=[COLOR CODE]) (LABEL="[TEXT]") (LEGEND) / HIDE
+Example    : CHAR=I COLOR=y LABEL="Inn" LEGEND
+Example    : HIDE
+Description:
+CoffeeSUD: a custom glyph and legend entry for the room on MAP, AUTOMAP and the window
+panel.  HIDE leaves the room off the map.  Unmappable rooms and areas remain excluded.
 ```
 
 <a id="prop-mapreveal"></a>
 
 ## PROP_MAPREVEAL
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4033.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4229.
 
 ```text
-Targets: readable items. ROOMS=Area#1-40,Area#45 or AREA="Area name"; MARK=Area#12:X:"Buried
- chest" COLOR=r. Reading teaches saved map knowledge, without counting as a visit. Revealed
-rooms are dim on MAP under MAPFOG=KNOWN.
+Property   : Prop_MapReveal
+Targets    : Items
+Parameters : ROOMS=[ROOM IDS] / AREA="[AREA NAME]" (MARK=[ROOM ID]:[CHARACTER]:"[LABEL]")
+(COLOR=[COLOR CODE])
+Example    : ROOMS=Area#1-40,Area#45 MARK=Area#12:X:"Buried chest" COLOR=r
+Example    : AREA="Old Quarter"
+Description:
+CoffeeSUD: on a readable item.  Reading it teaches saved map knowledge of the rooms (a list
+or a range, or a whole area) and puts the marks on the map, without counting as a visit.
+Revealed rooms are dim on MAP under MAPFOG=KNOWN.
 ```
 
 <a id="prop-mobrank"></a>
 
 ## PROP_MOBRANK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1900.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1994.
 
 ```text
 Property   : Prop_MobRank
@@ -8028,11 +8783,30 @@ ATTACK+20 ARMOR-20 XP*5 TAG=[boss].  A world may add ranks of its own
 RANK($i == BOSS); masks take -RANK +ELITE +BOSS (only those) and +RANK -MINION (not those).
 ```
 
+<a id="prop-monolingual"></a>
+
+## PROP_MONOLINGUAL
+
+Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 18.
+
+```text
+Property   : Prop_Monolingual
+Targets    : Mobs
+Parameters : LANGUAGES=[LANGUAGE],[LANGUAGE] (CONFUSED="[TEXT]")
+Example    : LANGUAGES=Orcish,Goblinese CONFUSED="<S-NAME> grunt(s) and shrug(s)."
+Description:
+CoffeeSUD: Removes automatic Common comprehension. The listed languages are understood
+fully. Learned languages and translators still apply. Unknown speech reaches
+NOTUNDERSTOOD_PROG instead of SPEECH_PROG or MudChat. An optional CONFUSED line is shown. If
+ no foreign language is selected, replies use the first declared language.
+Prop_LanguageSpeaker also accepts UNDERSTANDS=ONLY for its LANGUAGE.
+```
+
 <a id="prop-nosave"></a>
 
 ## PROP_NOSAVE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2211.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2306.
 
 ```text
 Property   : Prop_NoSave
@@ -8049,7 +8823,7 @@ player is told MSG, or that they cannot save here.  On an area, it covers every 
 
 ## PROP_NPCLINES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2287.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2390.
 
 ```text
 Property   : Prop_NPCLines
@@ -8071,11 +8845,35 @@ TOODEAR, OFFER (@x1 the price, @x2 the item), FIRM, TOOADVANCED, TOOLOW, CLANSON
 TIMEUP, GOODBYE, WONTWORK, SKILLS.  Any other line the NPC says may be named in quotes.
 ```
 
+<a id="prop-offerbook"></a>
+
+## PROP_OFFERBOOK
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1620.
+
+```text
+Property   : Prop_OfferBook
+Targets    : MOBS, ITEMS
+Parameters : JSON: items (catalog names, or {"name", "weight"}), size, price, reroll,
+refresh
+Example    : {"items":[{"name":"a steel sword","weight":3},"a leather cap","a
+lantern"],"size":2,"price":150,"reroll":25,"refresh":"1 mudday"}
+Description:
+CoffeeSUD: a seller's offer book.  The first OFFERS here draws size (1-8, default 3)
+different items of the list, by weight, from the campaign's offers stream, each priced at
+price percent (default 100) of its value; the book is kept in this property's text, so it is
+ saved with the seller, and is drawn again only when refresh (a quest board's REFRESH,
+default one mud day) has passed.  OFFERS HOLD keeps one offer through refreshes and rerolls;
+ OFFERS REROLL draws the others again for reroll (0, the default, for none), refused before
+anything is drawn when it cannot be paid; OFFERS BUY takes the price and gives a catalog
+copy.  See docs/creator/42-saved-choices.md.
+```
+
 <a id="prop-partyscaler"></a>
 
 ## PROP_PARTYSCALER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2350.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2453.
 
 ```text
 Property   : Prop_PartyScaler
@@ -8100,7 +8898,7 @@ It counts builders too, so PLAYTEST shows it as a player would see it.
 
 ## PROP_PLAYERTEMPLATE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 905.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 918.
 
 ```text
 Property   : Prop_PlayerTemplate
@@ -8113,26 +8911,48 @@ NEW offers (AHELP PLAYERTEMPLATES).  PITCH is its line in the menu; LOCK keeps t
 template's own name or gender; NAME=RANDOM draws a name.  It does nothing in play.
 ```
 
+<a id="prop-playtest"></a>
+
+## PROP_PLAYTEST
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4306.
+
+```text
+Property   : Prop_Playtest
+Targets    : MOBs
+Parameters : [ROOM ID THE PLAYTEST BEGAN IN]
+Example    : Ember#1
+Description:
+CoffeeSUD: put on a builder by PLAYTEST ON, and not saved.  While it is on them their sysop
+powers are suspended, so that the game treats them as a mortal, and a death takes them back,
+ whole, to the room in the parameter, where the playtest began.  PLAYTEST OFF takes it away.
+  See PLAYTEST.
+```
+
 <a id="prop-port"></a>
 
 ## PROP_PORT
 
-Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 13.
+Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 17.
 
 ```text
-Property: Prop_Port
-Targets: Rooms
-Parameters: NAME="[port name]" KIND=SEA|ROAD|AIR|SPACE HIDDEN=false KNOWNMASK="[mask]"
-PORTS lists known ports. A hidden port requires a matching KNOWNMASK. COURSE TO, SAIL TO and
- DRIVE TO accept a known port, room ID, area or numbered Sea Charting point. Routes follow
-open exits and the vessel terrain rules.
+Property   : Prop_Port
+Targets    : Rooms
+Parameters : NAME="[PORT NAME]" KIND=[SEA/ROAD/AIR/SPACE] (HIDDEN=[TRUE/FALSE])
+(KNOWNMASK="[ZAPPER MASK]")
+Example    : NAME="Saltmarsh Quay" KIND=SEA
+Example    : NAME="Smugglers' Cove" KIND=SEA HIDDEN=true KNOWNMASK="-TATTOO +KNOWSCOVE"
+Description:
+CoffeeSUD: PORTS lists known ports. A hidden port requires a matching KNOWNMASK. COURSE TO,
+SAIL TO and DRIVE TO accept a known port, room ID, area or numbered Sea Charting point.
+Routes follow open exits and the vessel terrain rules.
 ```
 
 <a id="prop-pressureplate"></a>
 
 ## PROP_PRESSUREPLATE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2385.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2488.
 
 ```text
 Property   : Prop_PressurePlate
@@ -8157,7 +8977,7 @@ or stands on it.  Actions are script commands, as in Prop_Switch.  Scripts have 
 
 ## PROP_PRIVATEPROPERTY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2401.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2504.
 
 ```text
 Property   : Prop_PrivateProperty
@@ -8173,11 +8993,28 @@ given.  CoffeeSUD: OWNER="@PROFILE" is the whole profile, and every character of
  counts as the owner of what another of them owns.
 ```
 
+<a id="prop-purchases"></a>
+
+## PROP_PURCHASES
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4349.
+
+```text
+Property   : Prop_Purchases
+Targets    : MOBs
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  A hidden record, saved with the character, of what they bought with
+trains and practices (skills taught, gained, trained and so on), so that MPRESPEC and the
+like can give back what each cost.  Not for builders to give or change.
+```
+
 <a id="prop-questboard"></a>
 
 ## PROP_QUESTBOARD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2130.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2224.
 
 ```text
 Property   : Prop_QuestBoard
@@ -8187,23 +9024,24 @@ Parameters : (COUNT=[N]) (REFRESH="[GAME TIME]") (TEMPLATE=[TEMPLATE]) (VARS="[N
 Example    : COUNT=3 REFRESH="1 mudday" TEMPLATE=normal LEVELRANGE=3
 Description:
 CoffeeSUD: a board of jobs, quests generated as the RandomQuests behavior makes them
-(TEMPLATE, FILE as its PATH, TAGID, and its other parameters, such as SOURCENAME= for the
-giver, are passed on; VARS sets more of the generator's variables).  LOOK at the board (or
-READ it, if the item is readable; LOOK in the room, on a room) lists the jobs the reader may
- take, COUNT of them (3), and ACCEPT [NUMBER] takes one.  At each REFRESH (1 MUDDAY, or
-MUDDAY:1), on the game clock, the jobs done or given up go and new ones come up to COUNT, or
- with none taken the oldest is replaced; a job taken stays until it is done.  The generator
-is told the reader's PLAYER_LEVEL, PARTY_SIZE (the players' characters of their group),
-PLAYER_FACTION_[ID] and QUESTS_DONE, and with LEVELRANGE=[N] TARGET_MIN_AREALEVEL and
-TARGET_MAX_AREALEVEL that far around the level.  A job waits on the board with no expiry
-unless EXPIRE= says one.  The jobs are kept in a saved game with the board.
+(TEMPLATE, FILE as its PATH (quests/random/all.xml, the shipped generator, if none is
+given), TAGID, and its other parameters, such as SOURCENAME= for the giver, are passed on;
+VARS sets more of the generator's variables).  LOOK at the board (or READ it, if the item is
+ readable; LOOK in the room, on a room) lists the jobs the reader may take, COUNT of them
+(3), and ACCEPT [NUMBER] takes one.  At each REFRESH (1 MUDDAY, or MUDDAY:1), on the game
+clock, the jobs done or given up go and new ones come up to COUNT, or with none taken the
+oldest is replaced; a job taken stays until it is done.  The generator is told the reader's
+PLAYER_LEVEL, PARTY_SIZE (the players' characters of their group), PLAYER_FACTION_[ID] and
+QUESTS_DONE, and with LEVELRANGE=[N] TARGET_MIN_AREALEVEL and TARGET_MAX_AREALEVEL that far
+around the level.  A job waits on the board with no expiry unless EXPIRE= says one.  The
+jobs are kept in a saved game with the board.
 ```
 
 <a id="prop-questgiver"></a>
 
 ## PROP_QUESTGIVER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2415.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2518.
 
 ```text
 Property   : Prop_QuestGiver
@@ -8211,32 +9049,37 @@ Targets    : Areas, Exits, Items, Mobs, Rooms
 Parameters : QUEST="[NAME]/GENERATE:([ARGS])" (MESSAGE="[ANNOUNCEMENT]")
 Parameters : (DETAILS="TRUE/FALSE") (OPTIONAL="TRUE/FALSE") (REOFFER="ALWAYS/ONCE/[GAME
 TIME]")
-Parameters : (TRIGGER="GET/ENTER/LEAVE/PUTIN/DEATH/SPEAK/WEAR/WIELD/READ")
+Parameters : (TRIGGER="GET/ENTER/LEAVE/PUTIN/DEATH/SPEAK/WEAR/WIELD/READ/LOOK")
 Example    : quest="save_the_day" message="You found a quest item" trigger=GET
 Description:
 Makes the item, room, whatever capable of offering a quest to the player who triggers it.
 The trigger has a default for each object type, but you can set it explicitly with the
 TRIGGER argument.  The quest can be made non-optional with the OPTIONAL argument.  The
 MESSAGE is shown before the quest is offered. The quest details will be as well, unless the
-DETAILS argument is set to false. The quest itself can be specified by name, or you can have
- one generated by the RandomQuests behavior by putting GENERATE: followed by optional quest
-parameters. The quest must have an accept script (FUNCTION_PROG CAN_ACCEPT and DO_ACCEPT on
-something it loads), and must be running.  On an area, with the ENTER, LEAVE, LOOK, SPEAK,
-READ, DEATH, GET, WEAR, WIELD or PUTIN triggers, each player is offered the quest once in
-each run of the quest; this is kept in the quest variable OFFERED:PLAYERNAME (QVAR), which a
- saved game keeps.  CoffeeSUD: REOFFER says how often to offer it, on any target: ALWAYS
-whenever the trigger comes, ONCE in a run of the quest, or a game time (such as 1 MUDDAY)
-after the last offer; without it, an area offers once and the rest whenever their trigger
-comes.  The details show the quest's SET REWARDS as Reward:.  A quest offered, or read on a
-quest board, is listed by QUESTS OFFERED while the player may still take it, and QUESTS
-ACCEPT takes it on.
+DETAILS argument is set to false. TRIGGER=LOOK offers the quest when the host itself is
+looked at (on an area, when anyone looks at anything in it); a keyword detail looked at
+through Prop_Details is not a look at the host, though it runs the host's LOOK_PROG scripts.
+ The quest itself can be specified by name, or you can have one generated by the
+RandomQuests behavior by putting GENERATE: followed by optional quest parameters (with no
+PATH it uses the shipped generator, quests/random/all.xml; the arguments are given to a
+RandomQuests behavior made for the purpose, which is already set to MINQUESTS=1 MAXQUESTS=1
+INLINE=true MIN=1 MAX=1 CHANCE=100, and your arguments follow those). The quest must have an
+ accept script (FUNCTION_PROG CAN_ACCEPT and DO_ACCEPT on something it loads), and must be
+running.  On an area, with the ENTER, LEAVE, LOOK, SPEAK, READ, DEATH, GET, WEAR, WIELD or
+PUTIN triggers, each player is offered the quest once in each run of the quest; this is kept
+ in the quest variable OFFERED:PLAYERNAME (QVAR), which a saved game keeps.  CoffeeSUD:
+REOFFER says how often to offer it, on any target: ALWAYS whenever the trigger comes, ONCE
+in a run of the quest, or a game time (such as 1 MUDDAY) after the last offer; without it,
+an area offers once and the rest whenever their trigger comes.  The details show the quest's
+ SET REWARDS as Reward:.  A quest offered, or read on a quest board, is listed by QUESTS
+OFFERED while the player may still take it, and QUESTS ACCEPT takes it on.
 ```
 
 <a id="prop-questitem"></a>
 
 ## PROP_QUESTITEM
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2149.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2243.
 
 ```text
 Property   : Prop_QuestItem
@@ -8256,12 +9099,13 @@ lists what the character carries for it.
 
 ## PROP_QUESTLOG
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2161.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2255.
 
 ```text
 Property   : Prop_QuestLog
 Targets    : MOBs
-Parameters : (kept by the game)
+Parameters : (kept by the game: each quest's objectives and journal entries)
+Example    :
 Description:
 CoffeeSUD: a character's quest journal, the objectives and entries that MPQOBJECTIVE,
 MPQJOURNAL and a quest's SET OBJECTIVE and SET JOURNAL give, kept in this hidden effect so
@@ -8272,7 +9116,7 @@ that it is saved with the character.  QUESTS shows it.  Not for builders to give
 
 ## PROP_QUESTMARKER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2171.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2266.
 
 ```text
 Property   : Prop_QuestMarker
@@ -8296,7 +9140,7 @@ QUESTMARKERS=AUTO in coffeemud.ini or world.ini marks every running quest's firs
 
 ## PROP_RECRUITABLE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 915.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 928.
 
 ```text
 Property   : Prop_Recruitable
@@ -8314,7 +9158,7 @@ CoffeeSUD: a player may RECRUIT this NPC: if MASK lets them in and they pay COST
 
 ## PROP_REJUVWHEN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2441.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2551.
 
 ```text
 Property   : Prop_RejuvWhen
@@ -8335,7 +9179,7 @@ for good.
 
 ## PROP_RESPEC
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 939.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 952.
 
 ```text
 Property   : Prop_Respec
@@ -8358,21 +9202,24 @@ may.  MPRESPEC does it from a script.
 
 ## PROP_ROAD
 
-Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 7.
+Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 9.
 
 ```text
-Property: Prop_Road
-Targets: Rooms, Areas
-Parameters: TIME=[multiplier] NOTFOR="[vehicle names or IDs, comma separated]"
-Allows caravans to use the existing terrain without changing its locale, resources or
-description. TIME multiplies Prop_TravelTime. NOTFOR excludes matching vehicles.
+Property   : Prop_Road
+Targets    : Rooms, Areas
+Parameters : TIME=[MULTIPLIER] (NOTFOR="[VEHICLE NAMES OR IDS, COMMA SEPARATED]")
+Example    : TIME=0.5 NOTFOR="the Gull,ore cart"
+Description:
+CoffeeSUD: Allows caravans to use the existing terrain without changing its locale,
+resources or description. TIME multiplies Prop_TravelTime. NOTFOR excludes matching
+vehicles.
 ```
 
 <a id="prop-roomdark"></a>
 
 ## PROP_ROOMDARK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2828.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2937.
 
 ```text
 Property   : Prop_RoomDark
@@ -8395,7 +9242,7 @@ go dark while they are in it, but those that pass LIGHTMASK (a mask on the light
 
 ## PROP_ROOMFORSALE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2843.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2952.
 
 ```text
 Property   : Prop_RoomForSale
@@ -8420,7 +9267,8 @@ purchasing a room may be GIVEn or SELLed to change possession of the property. T
 rental followed by a space may precede the price to make the price of the property be
 charged every month automatically out of a Bankers account.  Failure to make rent returns
 the property to sellable status.The word ALLOWTHEFT disables robbery law enforcement on the
-property.
+property. The game itself writes TAX[N]X (the back property taxes owed, as TAX3X) into the
+parameters of a property whose owner has not paid; do not set it by hand.
 
 When property is sold, it will be listed as the owner with a slash and the price.  Entering
 this sort of parameter directly is the quick way to give players or clans property.
@@ -8433,7 +9281,7 @@ See also Prop_ReqCapacity for the means to set limits on players building abilit
 
 ## PROP_ROOMVIEW
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2956.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3067.
 
 ```text
 Property   : Prop_RoomView
@@ -8455,7 +9303,7 @@ to view the rooms below.
 
 ## PROP_SALVAGEYIELD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2701.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2810.
 
 ```text
 Property   : Prop_SalvageYield
@@ -8480,7 +9328,7 @@ the materials its recipe uses, times the crafter's proficiency.
 
 ## PROP_SAVEPOINT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2718.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2827.
 
 ```text
 Property   : Prop_SavePoint
@@ -8497,21 +9345,74 @@ area, it covers every room in it.
 
 ## PROP_SENSES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4024.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4199.
 
 ```text
-Targets: rooms, items, mobs, exits. SOUND="water drips|a stone shifts";TOUCH="nine studs;
-one loose";TASTE="salt" CHANCE=100 SETVAR=key=value TATTOO=name ID=stable-id ALIASES=old-id
-LEGACYKEYS=old-token. LISTEN [target], TOUCH/FEEL target and TASTE target work in darkness.
-Quote texts; | separates alternatives. First-use clues are tracked separately for each
-sense. SNIFF retains Prop_Smell.
+Property   : Prop_Senses
+Targets    : Rooms, Items, Mobs, Exits
+Parameters : (SOUND="[TEXT]|[TEXT]") (TOUCH="[TEXT]") (TASTE="[TEXT]") (CHANCE=[PCT])
+Parameters : ... (SETVAR=[KEY]=[VALUE]) (TATTOO=[NAME]) (ID=[STABLE ID]) (ALIASES=[OLD ID])
+(LEGACYKEYS=[OLD TOKEN])
+Example    : SOUND="water drips|a stone shifts";TOUCH="nine studs; one loose";TASTE="salt"
+CHANCE=100
+Description:
+CoffeeSUD: what LISTEN [TARGET], TOUCH or FEEL [TARGET] and TASTE [TARGET] tell of the host,
+ which work in darkness.  Quote the texts; a | separates alternatives, one of which is
+chosen.  First-use clues (SETVAR, TATTOO) are tracked separately for each sense.  SNIFF
+still uses Prop_Smell.
+```
+
+<a id="prop-service"></a>
+
+## PROP_SERVICE
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1634.
+
+```text
+Property   : Prop_Service
+Targets    : MOBS
+Parameters : JSON: services, each id, title, words, mask, refusal, hours, station, cost
+({money} or {pool, units, org})
+Example    :
+{"services":[{"id":"heal","title":"Healing","words":["heal"],"cost":{"money":10}}]}
+Description:
+CoffeeSUD: the NPC's services, as one record.  A service may be had only within its hours
+(from-to), only at a workstation with its station tag, only by those who pass its mask
+(refused with its refusal) and only by those who can pay its cost: money, or units from a
+shared pool of their organization (a receipt in its ledger).  TALK's menu offers the ones
+one may have now and says why not the rest; SERVICES lists them; saying a word to the NPC is
+ refused, before its scripts hear it, for the same reasons, and otherwise paid.  What the
+service does is the NPC's script answering the word.  See docs/creator/06-npcs-dialogue.md.
+```
+
+<a id="prop-showwhen"></a>
+
+## PROP_SHOWWHEN
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4240.
+
+```text
+Property   : Prop_ShowWhen
+Targets    : Items, Mobs, Exits, Rooms
+Parameters : MASK="[ZAPPER MASK]" (CHECK=VIEWER/ROOMPLAYERS/ANYPLAYER/HOST)
+WHEN="[CONDITION]"
+Parameters : ... (HIDEMODE=UNSEEN/HIDDEN) (ID=[STABLE ID]) (ALIASES=[OLD ID])
+(LEGACYKEYS=[OLD TOKEN])
+Example    : MASK="-TATTOO +SPIRITSIGHT" CHECK=VIEWER HIDEMODE=UNSEEN
+Example    : WHEN="IFVAR GHOSTS=1" CHECK=ANYPLAYER HIDEMODE=HIDDEN
+Description:
+CoffeeSUD: the host shows only while a condition holds.  MASK checks the selected viewer(s):
+ the one looking, the players in the room, any player, or the host itself, as CHECK says.
+WHEN accepts a VARIES tag and argument or a zapper mask.  Until allowed, the host is
+invisible and cannot be handled or crossed.  A successful SEARCH reveals HIDDEN hosts to
+that character; UNSEEN hosts require the condition.  SYSOPMSGS bypasses this for builders.
 ```
 
 <a id="prop-skytext"></a>
 
 ## PROP_SKYTEXT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 953.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 966.
 
 ```text
 Property   : Prop_SkyText
@@ -8532,11 +9433,49 @@ parents'; what none sets comes from the area's climate file (AHELP WEATHERPROFIL
 resources/lists.ini.
 ```
 
+<a id="prop-stockzapper"></a>
+
+## PROP_STOCKZAPPER
+
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1539.
+
+```text
+Property   : Prop_StockZapper
+Targets    : Items
+Parameters : MASK="[ZAPPER MASK]" (HIDE=[TRUE/FALSE]) (MSG="[REFUSAL]")
+Example    : MASK="-CLAN +Thieves Guild" HIDE=TRUE MSG="Members only."
+Example    : MASK="-LEVEL +>9" HIDE=FALSE
+Description:
+CoffeeSUD: a shop stock item's customer access rule.  A customer who fails the MASK does not
+ see the stock, and BUY is refused with MSG ("You are not permitted to buy that item." if
+not given), when HIDE is TRUE, which it is if not given.  With HIDE=FALSE the stock is
+listed, marked restricted.  Membership and rank masks are evaluated for the buyer.  See
+ORGANIZATIONS.
+```
+
+<a id="prop-storyrecords"></a>
+
+## PROP_STORYRECORDS
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4359.
+
+```text
+Property   : Prop_StoryRecords
+Targets    : MOBs
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  The saved journal, the map knowledge, the unread lore and the colour
+choices of a character (the things that Prop_Lore, Prop_MapReveal and the like teach, and
+JOURNAL, MAP and LORE show), kept in this one hidden effect so that they travel with the
+character.  Not for builders to give or edit.
+```
+
 <a id="prop-summoned"></a>
 
 ## PROP_SUMMONED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3250.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3378.
 
 ```text
 Property   : Prop_Summoned
@@ -8554,7 +9493,7 @@ summoner is the caster, or after a restore the mob it follows.
 
 ## PROP_SURPRISED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2986.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3097.
 
 ```text
 Property   : Prop_Surprised
@@ -8570,7 +9509,7 @@ CoffeeSUD: caught by surprise (Prop_Ambush puts it on): for TICKS rounds the mob
 
 ## PROP_SWITCH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3261.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3389.
 
 ```text
 Property   : Prop_Switch
@@ -8599,13 +9538,15 @@ state is kept in the property's text (STATE=), so saves and world files keep it.
 
 ## PROP_TELEGRAPH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3326.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3454.
 
 ```text
 Property   : Prop_Telegraph
 Targets    : MOBs
 Parameters : (NAME=[NAME]) (TICKS=[N]) (WARNING="[TEXT]") (INTERRUPT=STUN,DAMAGE>[N]%,MOVE)
-(AVOID=LEAVE,HIDE,COMMAND:[WORD]) (INTERRUPTMSG="[TEXT]") (ABILITY=[ID] TARGET=[NAME])
+(AVOID=LEAVE,HIDE,COMMAND:[WORD]) (INTERRUPTMSG="[TEXT]")
+(RESPOND="[WORD]=SPARE/INTERRUPT/[COMMAND]|...") (THEN=[FUNCTION]) (ABILITY=[ID]
+TARGET=[NAME])
 Example    : TICKS=2 WARNING="<S-NAME> rears back!" INTERRUPT=STUN,DAMAGE>20%
 AVOID=COMMAND:brace
 Description:
@@ -8615,16 +9556,21 @@ WARNING shows at the start and each tick, and LOOK at the mob tells that it is g
 power.  A stun, sleep, hold or binding always interrupts it; INTERRUPT adds DAMAGE>N% (that
 share of its hit points taken meanwhile) and MOVE (it leaves the room); INTERRUPTMSG is what
  the room sees.  AVOID: those who leave the room are never hit; HIDE spares those hidden,
-and COMMAND:word those who type the word (brace, duck...).  A generic ability's WINDUP field
- (ticks; MODIFY ABILITY, or WINDUP= in its XML) and WINDUPMSG (the warning, <T-NAME> its
-target) make a monster wind it up first and use it on its target when the time is up.
+and COMMAND:word those who type the word (brace, duck...).  RESPOND gives words to type
+while it winds up, each with an outcome: SPARE (not hit), INTERRUPT (stops it at once), or a
+ script command run on them instead of the blow; only a foe's first word counts.  THEN names
+ the mob's FUNCTION_PROG run once the blow lands (not after an interrupt), to chain the next
+ wind-up.  Its ticks left, damage taken and who avoided or answered it are kept in a save.
+A generic ability's WINDUP field (ticks; MODIFY ABILITY, or WINDUP= in its XML) and
+WINDUPMSG (the warning, <T-NAME> its target) make a monster wind it up first and use it on
+its target when the time is up.
 ```
 
 <a id="prop-tickettaker"></a>
 
 ## PROP_TICKETTAKER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3342.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3475.
 
 ```text
 Property   : Prop_TicketTaker
@@ -8641,14 +9587,15 @@ either be just outside or just inside the ship or caravan type boardable.
 CoffeeSUD: also accepts FARE=[price] PARTY=LEADER|EACH PETS=[price per pet] CARGO=[price per
  100 lbs]. LEADER charges once for the nearby party and admits its companions on the same
 payment. Disembarking clears the receipt. EACH preserves individual payment. The original
-numeric and named-ticket formats still work.
+numeric and named-ticket formats still work: with a ticket item's name as the parameter, a
+boarder who does not hold that ticket is refused, and the ticket is taken.
 ```
 
 <a id="prop-tidalexit"></a>
 
 ## PROP_TIDALEXIT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1006.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1019.
 
 ```text
 Property   : Prop_TidalExit
@@ -8664,7 +9611,7 @@ CoffeeSUD: an exit passable only at one tide: low tide in the hour the day start
 
 ## PROP_TIMEMODE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1024.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1037.
 
 ```text
 Property   : Prop_TimeMode
@@ -8682,7 +9629,7 @@ before comes back, unless RESTORE=FALSE.  ONLYCOMBAT holds it only while one fig
 
 ## PROP_TRAINER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3358.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3491.
 
 ```text
 Property   : Prop_Trainer
@@ -8714,7 +9661,7 @@ teacher offers them.
 
 ## PROP_TRANSFORM
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3378.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3511.
 
 ```text
 Property   : Prop_Transform
@@ -8740,6 +9687,23 @@ REVERT=true changes it back when WHEN ends.  MSG is shown ($p is what it became)
 becomes may have a Prop_Transform of its own.
 ```
 
+<a id="prop-transitview"></a>
+
+## PROP_TRANSITVIEW
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4380.
+
+```text
+Property   : Prop_TransitView
+Targets    : Rooms
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  The text of the view from a MovingRoom (AHELP MOVINGROOM) while it
+travels, added to what LOOK shows in the room; the room's own description is left as it is.
+  Not saved, and not for builders to give.
+```
+
 <a id="prop-traveltime"></a>
 
 ## PROP_TRAVELTIME
@@ -8747,19 +9711,63 @@ becomes may have a Prop_Transform of its own.
 Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 1.
 
 ```text
-Property: Prop_TravelTime
-Targets: Exits, Rooms, Areas
-Parameters: TIME=[game minutes] MOUNTED=0.5 VEHICLE=0.7 NIGHT=1.5
-TIME is the time spent per step. Multipliers apply when mounted, in a vehicle and at night.
-Priority: exit, destination room/area, source room/area. Followers do not add another time
-charge. The scheduler runs weather, hunger, NPCs and scripts during travel.
+Property   : Prop_TravelTime
+Targets    : Exits, Rooms, Areas
+Parameters : TIME=[GAME MINUTES] (MOUNTED=[MULTIPLIER]) (VEHICLE=[MULTIPLIER])
+(NIGHT=[MULTIPLIER])
+Example    : TIME=30 MOUNTED=0.5 VEHICLE=0.7 NIGHT=1.5
+Description:
+CoffeeSUD: TIME is the time spent per step. Multipliers apply when mounted, in a vehicle and
+ at night. Priority: exit, destination room/area, source room/area. Followers do not add
+another time charge. The scheduler runs weather, hunger, NPCs and scripts during travel.
+```
+
+<a id="prop-tweakwatch"></a>
+
+## PROP_TWEAKWATCH
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4389.
+
+```text
+Property   : Prop_TweakWatch
+Targets    : MOBs
+Parameters : (kept by the game)
+Example    :
+Description:
+CoffeeSUD: internal.  Left beside the effect that a TWEAK ability (AHELP GENTWEAK) put on a
+mob: its text is the tweak's ID and then the effect's.  When the effect is gone it runs the
+tweak script's ONEXPIRE and takes itself away.  Hidden and not saved; not for builders to
+give.
+```
+
+<a id="prop-unknown"></a>
+
+## PROP_UNKNOWN
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1648.
+
+```text
+Property   : Prop_Unknown
+Targets    : ITEMS
+Parameters : KIND=[id] (NAME="[name]") (DISPLAY="[look]") (DESC="[text]") (VALUE=[n])
+(REVEAL=IDENTIFY,APPRAISE,EXAMINE,USE) (MASK="[mask]")
+Example    : KIND=embertrial.alloy NAME="a dull ingot" DISPLAY="A dull ingot lies here."
+DESC="A lump of metal you cannot place." VALUE=2 REVEAL=IDENTIFY,EXAMINE
+Description:
+CoffeeSUD: the item is of a kind a character must learn.  Until they know KIND, everything
+shows them its NAME, its DISPLAY in the room and its DESC: inventory, rooms, messages and
+shops; they can refer to it by that name too.  Appraising it and a shop's price for it go by
+ VALUE (by its real value when VALUE is left out); identifying it says they cannot tell what
+ it is.  The ways in REVEAL (IDENTIFY by default) teach the kind, once, to one who passes
+MASK: then they know every item of it, by a tattoo KNOWN_[KIND] kept in the save.  Looking
+or appraising again changes nothing.
 ```
 
 <a id="prop-upgradepath"></a>
 
 ## PROP_UPGRADEPATH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3460.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3593.
 
 ```text
 Property   : Prop_UpgradePath
@@ -8773,31 +9781,58 @@ CoffeeSUD: an item's own way up, for any ItemUpgrader (a smith, a workbench): it
 without FROM.  See BEHAVIOR_ITEMUPGRADER.
 ```
 
+<a id="prop-verbs"></a>
+
+## PROP_VERBS
+
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4282.
+
+```text
+Property   : Prop_Verbs
+Targets    : Areas, Rooms, Items, Mobs, Exits
+Parameters : VERBS="[VERB],[VERB]..." MSG="[WHAT THE ONE WHO DOES IT SEES]" (OTHERS="[WHAT
+THE OTHERS SEE]")
+Example    : VERBS="pull,yank" MSG="You haul on the rope and a bell clangs far above."
+OTHERS="<S-NAME> hauls on the rope.  A bell clangs."
+Example    : VERBS="turn,rotate" MSG="The wheel creaks round."
+Description:
+CoffeeSUD: verbs for an object without a script.  A command whose first word is one of the
+VERBS (the whole word, not a prefix), and whose rest names the object it is on, shows MSG to
+ the character and OTHERS to the rest of the room, instead of the command, skill or social
+of that word.  On a room or an area the rest of the line need not name anything.  The same
+is done with a script by VERB_PROG (AHELP SCRIPTABLE); LIST VERBS lists what is in a room.
+```
+
 <a id="prop-waypoint"></a>
 
 ## PROP_WAYPOINT
 
-Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 33.
+Source: [arc_travel.ini](../../CoffeeMud/resources/help/arc_travel.ini), line 49.
 
 ```text
-Property: Prop_Waypoint
-Targets: Rooms, Items
-Parameters: NETWORK=[name] NAME="[destination]" ID=[stable author ID] ALIASES=[old IDs]
-LEGACYKEYS=[old tokens] DISCOVER=ENTER|TOUCH|RITUAL|QUEST SCOPE=CHARACTER|PROFILE
-COST="mana|moves|gold [number]" TIME=[game hours] MASK="[mask]" MSG="[text]"
-RITUAL=[function] QUEST="[quest name]"
-TRAVEL lists discovered destinations in the current network and TRAVEL <name> moves the
-nearby party. Discovery is saved per character, or shared with the account/profile. ID keeps
- the key stable when a waypoint is moved or renamed. TRAVEL ATTUNE checks masks and
-ritual/quest requirements. TOUCH and USE activate touch waypoints. Cost is charged once,
-after every passenger passes entry checks.
+Property   : Prop_Waypoint
+Targets    : Rooms, Items
+Parameters : NETWORK=[NAME] NAME="[DESTINATION]" (ID=[STABLE AUTHOR ID]) (ALIASES=[OLD IDS])
+ (LEGACYKEYS=[OLD TOKENS])
+Parameters : (DISCOVER=[ENTER/TOUCH/RITUAL/QUEST]) (SCOPE=[CHARACTER/PROFILE])
+(COST="[mana/moves/movement/gold/money] [NUMBER]")
+Parameters : (TIME=[GAME HOURS]) (MASK="[ZAPPER MASK]") (MSG="[TEXT]") (RITUAL=[FUNCTION])
+(QUEST="[QUEST NAME]")
+Example    : NETWORK=ley NAME="The Standing Stones" DISCOVER=TOUCH COST="mana 20" TIME=1
+Example    : NETWORK=ley NAME="Hollow Oak" DISCOVER=ENTER SCOPE=PROFILE
+Description:
+CoffeeSUD: TRAVEL lists discovered destinations in the current network and TRAVEL <name>
+moves the nearby party. Discovery is saved per character, or shared with the
+account/profile. ID keeps the key stable when a waypoint is moved or renamed. TRAVEL ATTUNE
+checks masks and ritual/quest requirements. TOUCH and USE activate touch waypoints. Cost is
+charged once, after every passenger passes entry checks.
 ```
 
 <a id="prop-weaponimmunity"></a>
 
 ## PROP_WEAPONIMMUNITY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3630.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3765.
 
 ```text
 Property   : Prop_WeaponImmunity
@@ -8830,7 +9865,12 @@ magical weapons.
 -MAGICSKILLS - Creates an exception to the +ALL rule by permitting damage from magical
 spells, chants, songs, or prayers.
 +MAGICSKILLS - If +ALL is not used, this will create an immunity to magical spells, chants,
-songs, and prayers.
+songs, and prayers.  MAGICSPELLS is read the same as MAGICSKILLS, and for spells and the
+like +MAGIC counts too.
+-NONMAGIC - Creates an exception to the +ALL rule by permitting damage from weapons that are
+ not magical.
++NONMAGIC - If +ALL is not used, this will create an immunity to weapons that are not
+magical (those with no magical bonus).
 -LEVELX - Creates an exception to the +ALL rule by permitting damage from weapons whose
 level is X or better. Example: -LEVEL1, -LEVEL5, -LEVEL10, etc.
 +LEVELX - Can be used instead of +ALL to create an immunity to weapons whose level is X or
@@ -8873,16 +9913,18 @@ spells.
 
 ## PROP_WEAPONMESSAGES
 
-Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 53.
+Source: [arc_language_authoring.ini](../../CoffeeMud/resources/help/arc_language_authoring.ini), line 60.
 
 ```text
 Property   : Prop_WeaponMessages
 Targets    : Weapons, including racial natural weapons
-Parameters : HIT="<S-NAME> sear(s) <T-NAMESELF> with <TOOLNAME>: <DAMAGE>." MISS="<S-NAME>
+Parameters : (HIT="[TEXT]") (MISS="[TEXT]") (DAMAGEWORDS="[WORD],[WORD]...")
+Example    : HIT="<S-NAME> sear(s) <T-NAMESELF> with <TOOLNAME>: <DAMAGE>." MISS="<S-NAME>
 swing(s) wide." DAMAGEWORDS="singes,scorches,burns,incinerates"
-HIT and MISS may contain pipe-separated random alternatives. Normal combat source, target
-and damage substitutions apply. This property's text wins over local hit/miss lists; its
-damage words win over local damage words.
+Description:
+CoffeeSUD: HIT and MISS may contain pipe-separated random alternatives. Normal combat
+source, target and damage substitutions apply. This property's text wins over local hit/miss
+ lists; its damage words win over local damage words.
 GenRace HEALTHCHART holds eleven comma-separated health lines with <MOB> and pipe
 alternatives. CORPSEBLURBS uses cause=phrase|alternative pairs separated by semicolons, such
  as BURNING=molten gears;ALL=a heap of springs. Empty fields retain HEALTHRACE and
@@ -8893,7 +9935,7 @@ local/global fallbacks. Both fields are in MODIFY RACE.
 
 ## PROP_WEARRESISTER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3757.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3897.
 
 ```text
 Property   : Prop_WearResister
@@ -8934,7 +9976,7 @@ properties. Each property keeps its own threshold; the default is two pieces.
 
 ## PROP_WHEN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3857.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3997.
 
 ```text
 Property   : Prop_When
@@ -8963,7 +10005,7 @@ ONCE=WORLD are.
 
 ## PROP_WORKSTATION
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3874.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4014.
 
 ```text
 Property   : Prop_Workstation
@@ -8976,18 +10018,19 @@ Description:
 CoffeeSUD: a workstation, for a crafter in the room with it (on the room, or on an item
 lying there).  TAG is what it is, as a recipe's or skill's STATION asks for it.  SKILLS are
 the skills it helps (all when not given).  SPEED takes that percent off the time a craft
-takes, PROF is added to the crafter's proficiency, MAXLEVEL lets recipes up to that level be
- made here (above the crafter's own), and QUALITY is for quality tiers (AHELP CRAFTQUALITY).
-  An item with a tag (TAGS) and no Prop_Workstation counts as a station of that name too,
-with no bonus.  A recipe asks for one with STATION=[NAME] (AHELP RECIPEKEYS), and a data
-skill (GenCraftSkill) for all its recipes with its STATION field.
+takes (0 to 90; more or less is made to fit), PROF is added to the crafter's proficiency,
+MAXLEVEL lets recipes up to that level be made here (above the crafter's own), and QUALITY
+is for quality tiers (AHELP CRAFTQUALITY).  An item with a tag (TAGS) and no
+Prop_Workstation counts as a station of that name too, with no bonus.  A recipe asks for one
+ with STATION=[NAME] (AHELP RECIPEKEYS), and a data skill (GenCraftSkill) for all its
+recipes with its STATION field.
 ```
 
 <a id="prop-yield"></a>
 
 ## PROP_YIELD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3888.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4028.
 
 ```text
 Property   : Prop_Yield
@@ -9011,7 +10054,7 @@ then rest a week.
 
 ## PUZZLE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2035.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2058.
 
 ```text
 Command  : PUZZLE
@@ -9030,7 +10073,7 @@ deferred.
 
 ## QUESTBOUND
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3911.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4051.
 
 ```text
 Property   : QuestBound
@@ -9050,7 +10093,7 @@ prevents unwanted properties/behaviors/changes from being saved to the database 
 
 ## QUESTCHECK
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2018.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2041.
 
 ```text
 Command  : QUESTCHECK
@@ -9072,7 +10115,7 @@ world/quests, which builder mode also checks at the start, in one line.
 
 ## QUESTINFO
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3130.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3162.
 
 ```text
 Command  : QUESTINFO
@@ -9102,7 +10145,7 @@ variables.
 
 ## QUESTS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2917.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2970.
 
 ```text
 Quests are defined as a definable tasks which are completed by players for prizes. These
@@ -9131,20 +10174,62 @@ SET NAME [QUEST NAME] - the *unique* name of your quest. This is a required comm
 SET DURATION [#TICKS] - # of ticks (4 second periods) the quest will last once started.
 0=eternal. This is a required command!
 
+SET DISPLAY [TEXT] - CoffeeSUD: the friendly name players see in QUESTS, offers and boards
+(the NAME if not given).
+
+SET INSTRUCTIONS [TEXT] - CoffeeSUD: the text players see in QUESTS [QUEST NAME].  A quest
+board lists only quests that have it.
+
+SET CATEGORY [WORD] - CoffeeSUD: groups the character's quests in QUESTS under that word
+("main" first).
+
+SET QUESTTYPE [WORD] - CoffeeSUD: a free word that quest boards can filter by (TYPFILTER);
+templates set it to their own name.
+
+SET AUTHOR [NAME] - CoffeeSUD: who made the quest (the Quest Maker fills in its creator).
+
+SET SPAWNABLE [NO/TRUE/FIRST/ALL/ONCE/ALLONCE/ANY/ANYONCE] - CoffeeSUD: when the quest
+starts it spawns copies of itself instead of running: TRUE or FIRST makes its first step a
+copy, ALL makes every step its own copy, ANY a random step; the ONCE forms allow only one
+copy of a name at a time.  Copies share the winners and delete themselves when they stop.
+NO is the default.
+
+SET PERSISTANCE [TRUE/FALSE] - CoffeeSUD (the spelling is the engine's): if the quest has an
+ error while starting, try again, after 10 ticks and then twice as long each time, instead
+of giving up until its next time.  False is the default.
+
+SET EXPIRATION [TIME] - CoffeeSUD: makes the quest a temporary copy that lives that long (a
+tick count or a game time) and is then removed from the list for good (RandomQuests sets
+it).  0, the default, is a permanent quest.
+
+SET LORE [KEY] - CoffeeSUD: in a step, unlocks the lore entry (AHELP LORE) for each
+character on the quest as the step starts, and for whoever accepts it during the step.
+
+SET PRESERVE [#STEPS] - CoffeeSUD: before a GIVE or LOAD, keeps the object that command
+designates for that many further steps, instead of cleaning it up when the step ends.
+
+SET PCMOB ([RESELECT]) ([NAME]) and SET PCMOBGROUP ([RESELECT]) ([NAME]) - as SET MOB and
+SET MOBGROUP, but they select only player characters (in the designated room or area, or the
+ designated mob group), and take a MASK= too.
+
+SET ABILITY ([NAME]) and SET ABILITYGROUP ([NAME]) - the current ability, or a group of
+them, chosen from the abilities (effects) on the rooms of the designated area, or from the
+designated ABILITYGROUP, the way SET MOB chooses a mob; a MASK= may follow the name.
+
 SET WAIT [#TICKS] - minimum # ticks to wait between auto-starts of the quest. Required for
 auto-quests only!
 
-SET DATE [#DAY]-[#MONTH] - The real-life start-date of the quest. This is a valid substitute
- for the SET WAIT requirement.
+SET DATE [#MONTH]-[#DAY] - The start date of the quest, a month and day of the game's
+calendar (as SET MUDDAY). This is a valid substitute for the SET WAIT requirement.
 
-SET MUDDAY [#DAY]-[#MONTH] - The start mud-date of the quest, according to the default
-global mud calendar. This is a valid substitute for the SET WAIT requirement.
+SET MUDDAY [#MONTH]-[#DAY] - The start mud-date of the quest, according to the game's
+calendar. This is a valid substitute for the SET WAIT requirement.
 
 SET INTERVAL [#TICKS] - random # ticks (1-#TICKS) to wait between auto-starting the quest,
 AFTER the WAIT period (see above) is over. Required for auto-quests!
 
 SET MINPLAYERS [#PLAYERS] - Minimum number of players who must be online for a timed quest
-to automatically start. See SET PLAYERMASK.
+to automatically start (not asked when DURATION is 0). See SET PLAYERMASK.
 
 SET PLAYERMASK [MASKSTRING] - If this string is empty or not specified, then anyone is
 considered a player for the purposes of the MINPLAYERS setting above. However, you can
@@ -9153,7 +10238,8 @@ specify a "zapper mask" to narrow down the definition of a player.  See HELP ZAP
 
 SET RUNLEVEL [#LEVEL] - Normally, a timed quest will always run when its time comes up.
 Setting a value above -1 will prevent this quest from running when its time comes up if
-another quest is also running at the same or LOWER run level.
+another quest is also running at the same or LOWER run level (only running quests that have
+a duration count).
 
 SET RESTART [ALWAYS/NEVER/GAME TIME] - CoffeeSUD: a quest with no WAIT, INTERVAL or DATE
 stays listed when it stops, FINISHED, with its winners, in saves too; only DESTROY QUEST
@@ -9735,7 +10821,7 @@ quest!.
 
 ## QUESTWINS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1739.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1761.
 
 ```text
 Command : QUESTS
@@ -9754,7 +10840,7 @@ information on the mundane use of the command.
 
 ## QUIT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2216.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2267.
 
 ```text
 Command : QUIT
@@ -9768,7 +10854,7 @@ Exit the mud and close your connection.
 
 ## RANKLADDERS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1030.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1036.
 
 ```text
 CoffeeSUD: rank ladders, in world/ranks.ini: [KEY] starts one, then NAME="Thieves' Guild",
@@ -9788,7 +10874,7 @@ is won on reaching a rank.
 
 ## RANKS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 129.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 154.
 
 ```text
 Command : RANKS
@@ -9803,7 +10889,7 @@ rank, how far up it is, and what the next rank needs.
 
 ## READ
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2232.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2283.
 
 ```text
 Command : READ
@@ -9843,19 +10929,27 @@ KEY_VALUE_PARMS column, or, for any crafting skill, in a column of its own (the 
 the skill's own) that starts with one of them.  MASK="[ZAPPER MASK]" is about the crafter:
 one who fails it does not see the recipe in the list and cannot make it.  ROOMMASK="[ZAPPER
 MASK]" is about where they are, as -LOCATION +ROOMID(Deepforge#3) or -AREA +Deepforge;
-TOOL="[ITEM NAME]" is an item held, carried or in the room; when either fails,
-FAILMSG="[MESSAGE]" is what they are told (else a plain refusal).  XP=[N] is experience on
-each success, and TATTOO=[NAME] a tattoo given on the first, and STATION=[NAME] asks for a
-workstation of that tag in the room (AHELP PROP_WORKSTATION), and HIDDEN=1 keeps a recipe
-from all who do not know it (AHELP PROP_KNOWNRECIPES).  EXPERIMENT=[THING],[THING],... (with
- HIDDEN=1) is what a crafter must offer together to find the recipe with [SKILL] EXPERIMENT
-[THING] [THING]..., and HINT=[WORDS] is told when they offer at least half of it; a found
-recipe is known for good and gives XP= (or ten a level), and any other try uses up one of
-the things offered.  CRAFTEXPERIMENTS in the ini is how many tries a character has a game
-day (10; 0 for no limit).  NOQUALITY=1 means what it makes rolls no quality tier (AHELP
+TOOL="[ITEM NAME]" is an item held, carried or in the room; when any of ROOMMASK, TOOL,
+HIDDEN or STATION fails, FAILMSG="[MESSAGE]" is what they are told (else a plain refusal).
+The keys apply only to a player.  XP=[N] is experience on each success, and TATTOO=[NAME] a
+tattoo given on the first, and STATION=[NAME] asks for a workstation of that tag in the room
+ (AHELP PROP_WORKSTATION), and HIDDEN=1 keeps a recipe from all who do not know it (AHELP
+PROP_KNOWNRECIPES).  EXPERIMENT=[THING],[THING],... (with HIDDEN=1) is what a crafter must
+offer together to find the recipe with [SKILL] EXPERIMENT [THING] [THING]..., and
+HINT=[WORDS] is told when they offer at least half of it; a found recipe is known for good
+and gives XP= (or ten a level), and a find does not use up what was offered, while any other
+ try uses up one of the things offered.  CRAFTEXPERIMENTS in the ini is how many tries a
+character has a game day (10; 0 for no limit); the tries are counted in memory and start
+over when the game restarts.  NOQUALITY=1 means what it makes rolls no quality tier (AHELP
 CRAFTQUALITY).  None of them becomes a stat of the item made.  Example: MASK="-TATTOO
 +RUNE_TRAINED" ROOMMASK="-LOCATION +ROOMID(Deepforge#3)" TOOL="rune chisel" XP=200
-FAILMSG="Only the Deepforge burns hot enough."
+FAILMSG="Only the Deepforge burns hot enough."The recipe's spell column (the list of
+abilities and properties the finished item gets, in semicolon-separated entries) has one
+special form: an entry written *[ID];__DELETE__ (a * entry whose parameter is __DELETE__)
+takes that effect or behavior off the item, or else the first effect or behavior whose
+parameters contain that text, instead of adding one.  __DELETE__ is not read in any other
+place or form: without the leading * and the semicolon before it, it is just taken as an
+ability name.
 ```
 
 <a id="record"></a>
@@ -9891,7 +10985,7 @@ the world.
 
 ## RECRUIT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 150.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 175.
 
 ```text
 Command : RECRUIT
@@ -9907,7 +11001,7 @@ join only certain people.
 
 ## REGENERATE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1527.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1539.
 
 ```text
 Command : REGENERATE
@@ -9928,11 +11022,26 @@ Regenerate behaviour (AHELP BEHAVIOR_REGENERATE) and MPREGENERATE re-roll an are
 on a schedule, at a moon or when the party leaves, and its GENERATED_PROG runs after.
 ```
 
+<a id="resources"></a>
+
+## RESOURCES
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3313.
+
+```text
+Command : RESOURCES
+Usage   : RESOURCES
+Your named resources, such as heat, focus or charges, each as a value of its maximum, with
+how it changes over time ("Heat: 40 of 100 (loses 5 every tick)"). They belong to the
+optional module abilities.resources, which a world may select; composed skills can cost and
+gain them. Costs are all checked before any is spent. RESOURCES takes no game time.
+```
+
 <a id="resourcevariants"></a>
 
 ## RESOURCEVARIANTS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1274.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1290.
 
 ```text
 CoffeeSUD: named variants of resources, as moonpetal herbs, in world/resources.txt, one a
@@ -9953,7 +11062,7 @@ HERBS, silvery moonpetal, 40, , A pale petal that glows in the dark., sweet, Spe
 
 ## RESPEC
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 137.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 162.
 
 ```text
 Command : RESPEC
@@ -9971,7 +11080,7 @@ and some let you do it only once.
 
 ## RESTORE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2822.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2879.
 
 ```text
 Command : RESTORE
@@ -10003,7 +11112,7 @@ also CHECKPOINT.
 
 ## RESUME
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2806.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2860.
 
 Help alias for **PAUSE**.
 
@@ -10025,7 +11134,7 @@ object.
 
 ## RETRAIN
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 148.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 173.
 
 Help alias for **RESPEC**.
 
@@ -10045,7 +11154,7 @@ and some let you do it only once.
 
 ## REVIVE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2402.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2453.
 
 ```text
 Command : REVIVE
@@ -10063,7 +11172,7 @@ PARTYDEFEAT setting.
 
 ## ROLLBACK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2859.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2916.
 
 Help alias for **CHECKPOINT**.
 
@@ -10082,7 +11191,7 @@ another area.
 
 ## RUNFILE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2154.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2177.
 
 ```text
 Command  : RUNFILE
@@ -10101,7 +11210,7 @@ as if you typed them: $1 to $9 are the args, $room your room's ID and $area its 
 
 ## SANDBOX
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2168.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2191.
 
 ```text
 Command  : SANDBOX
@@ -10122,13 +11231,16 @@ leave.  GENERATE ... SANDBOX generates there, NOSAVE, and an area it makes is un
 
 ## SAVE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2481.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2506.
 
 ```text
 Command : SAVE
 Usage   : SAVE [ROOM, MOBS, ITEMS, QUESTS, FACTION, USERS]
 Usage   : SAVE (FORCE)
 Usage   : SAVE ROOM (HOME/ALL)
+Usage   : SAVE AREA ROOM (HOME/ALL)
+Usage   : SAVE AREA ITEMS
+Usage   : SAVE AREA MOBS
 Usage   : SAVE CHANGED
 Example : save room
 Example : save users
@@ -10137,18 +11249,20 @@ Example : save faction area_my_area
 Short(s):
 A command to permanently save the contents of a room, the mobs in the room, the current
 quests list, a specific faction, or the users who are logged in.  The command will apply to
-the room in which your Character is located.  In builder mode, SAVE alone writes the world
-files; a file that loaded only in part (see WORLD PROBLEMS) is not written until it is
-fixed, and SAVE FORCE writes it anyway, as the world has it.  In builder mode, SAVE ROOM is
-SAVE ROOM HOME: each mob is saved into its own start room, wherever it stands, so one that
-wandered in from elsewhere is left out (and named) and this room's own that wandered off are
- kept.  SAVE ROOM ALL saves every mob standing here.  A world file changed outside the game
-is not written over or deleted (see WORLD STATUS), and SAVE FORCE writes over it.  SAVE
-CHANGED saves the mobs and items of each room a building command changed (LIST UNSAVED lists
- them), then the world files; plain SAVE names them, as the world files do not have them,
-QUIT asks whether to save them first, and GMODIFY CHANGE=, which resets each room first,
-asks before it drops them.  BUILDERAUTOSAVE=1 in coffeemud.ini saves them after each
-command, and %U in a prompt is their number.
+the room in which your Character is located.  SAVE AREA by itself is not a form: it must be
+followed by ROOM, ITEMS or MOBS (HOME or ALL only after ROOM), and each asks before it saves
+ every room of your area.  In builder mode, SAVE alone writes the world files; a file that
+loaded only in part (see WORLD PROBLEMS) is not written until it is fixed, and SAVE FORCE
+writes it anyway, as the world has it.  In builder mode, SAVE ROOM is SAVE ROOM HOME: each
+mob is saved into its own start room, wherever it stands, so one that wandered in from
+elsewhere is left out (and named) and this room's own that wandered off are kept.  SAVE ROOM
+ ALL saves every mob standing here.  A world file changed outside the game is not written
+over or deleted (see WORLD STATUS), and SAVE FORCE writes over it.  SAVE CHANGED saves the
+mobs and items of each room a building command changed (LIST UNSAVED lists them), then the
+world files; plain SAVE names them, as the world files do not have them, QUIT asks whether
+to save them first, and GMODIFY CHANGE=, which resets each room first, asks before it drops
+them.  BUILDERAUTOSAVE=1 in coffeemud.ini saves them after each command, and %U in a prompt
+is their number.
 ```
 
 <a id="saves"></a>
@@ -10168,7 +11282,7 @@ Traps can all be saved from.
 
 ## SAY
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2423.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2474.
 
 ```text
 Command : SAY
@@ -10185,7 +11299,7 @@ not-targeting.
 
 ## SAYTO
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2413.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2464.
 
 ```text
 Command : SAYTO
@@ -10246,7 +11360,7 @@ found using the Butchering skill.
 
 ## SCRIPT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2393.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2418.
 
 ```text
 Command  : SCRIPT
@@ -10279,7 +11393,7 @@ run (MPALARMs and triggers waiting their tick), and CLEAR forgets it.
 
 ## SCRIPTPROF
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2047.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2070.
 
 ```text
 Command  : SCRIPTPROF
@@ -10300,7 +11414,7 @@ cut off at its 4-second cap now says so.
 
 ## SCRIPTTRACE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2295.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2320.
 
 ```text
 Command  : SCRIPTTRACE
@@ -10313,10 +11427,11 @@ Traces the scripts of a mob or item here (or carried, or name@room), of everythi
 room (ROOM), or in this area (AREA), to your session only, not the log, until SCRIPTTRACE
 OFF: each trigger's chance as it is rolled and whether it ran (GREET_PROG 50: rolled 73 of
 50, skipped), a trigger turned off (MPNOTRIGGER or SCRIPT DISABLE), a host too busy to be
-triggered (asleep, fighting...), each line run, and each variable changed.  A trigger after
-the target traces that trigger only.  One trace at a time; it is not saved.  A script can
-trace itself with MPSETINTERNAL TRACE TRUE (in builder mode or a DEV=1 game), and ask
-whether the game is in builder mode with ISBUILDER(), as a condition or as $%ISBUILDER()%.
+triggered (asleep, fighting...), each line run (numbered by its position in the program, not
+ its line in the file), and each variable changed.  A trigger after the target traces that
+trigger only.  One trace at a time; it is not saved.  A script can trace itself with
+MPSETINTERNAL TRACE TRUE (in builder mode or a DEV=1 game), and ask whether the game is in
+builder mode with ISBUILDER(), as a condition or as $%ISBUILDER()%.
 ```
 
 <a id="sculpting"></a>
@@ -10386,7 +11501,7 @@ found using the Chopping skill.
 
 ## SKILLSCRIPTS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1008.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1014.
 
 ```text
 CoffeeSUD: scripts that come with a thing, set in its editor's Script field (MOBPROG text,
@@ -10406,7 +11521,7 @@ GENDISEASE) and tweaks have scripts of their own (AHELP GENABILITY).
 
 ## SKILLTREE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2182.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2233.
 
 ```text
 Command : SKILLTREE
@@ -10446,7 +11561,7 @@ home room and begin their duties.
 
 ## SLEEP
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2524.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2575.
 
 ```text
 Command : SLEEP
@@ -10535,7 +11650,7 @@ the staff for additional benefits using the PUT [CROWN] [STAFF] command.
 
 ## STAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2421.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2446.
 
 ```text
 Command : STAT
@@ -10599,7 +11714,7 @@ adjusted value.
 
 ## STATEFFECTS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1040.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1046.
 
 ```text
 CoffeeSUD: what a stat does, ADDCHARSTAT's new ones above all, in the ini or world.ini:
@@ -10641,7 +11756,7 @@ planesofexistence.txt
 
 ## STREE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2196.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2247.
 
 Help alias for **SKILLTREE**.
 
@@ -10664,7 +11779,7 @@ resources/skills/skillhints.ini.
 
 ## SWITCH
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3021.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3078.
 
 ```text
 Command : SWITCH
@@ -10725,7 +11840,7 @@ letter at the post office, or use the EMAIL command.
 
 ## TEACHLIST
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2681.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2732.
 
 ```text
 Command : TEACHLIST
@@ -10741,7 +11856,7 @@ ME [SKILL] to the teacher; PRACTICE it with them after.
 
 ## TEAR
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1171.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1211.
 
 Help alias for **DESTROY**.
 
@@ -10766,7 +11881,7 @@ information on command usage.  CoffeeSUD: DESTROY BEHAVIOR [ID] removes a generi
 
 ## TEMPORARYAFFECTS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3954.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4094.
 
 ```text
 Property   : Temporary Affects
@@ -10796,7 +11911,7 @@ mob or object in the same room. If the parms (following any optional +) is prefi
 
 ## TESTCHAR
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1803.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1826.
 
 ```text
 Command  : TESTCHAR
@@ -10845,14 +11960,16 @@ placed the constituent cloths he or she wishes to make the bolt from on the grou
 
 ## TIME
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2746.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2797.
 
 ```text
 Command : TIME
 Usage   : TIME
+Usage   : TIME SET [HOUR/DAWN/DAY/DUSK/NIGHT] / TIME SEASON [SEASON] (builders)
 Example : time
 Shows you the local time, date, and season where you are, as well as your birthday (which
-may not be on the local calendar).
+may not be on the local calendar).  Builders also have TIME SET and TIME SEASON (AHELP
+HAZARDS).
 Local calendar information:
 <CALENDAR>
 ```
@@ -10861,7 +11978,7 @@ Local calendar information:
 
 ## TIMEMODE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2755.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2807.
 
 ```text
 Command : TIMEMODE
@@ -10872,20 +11989,22 @@ Example : timemode turns
 Example : timemode realtime
 Shows or changes how time passes.  In REALTIME, the world runs on its own, a tick every four
  seconds, and PAUSE stops it.  When time is TURNS (turn-based), the world moves only when
-you do something that takes time, and then by as long as that takes: a step is a fifth of a
-tick, an action in combat a whole tick.  Looking, checking your score and other things that
-take no time never move the world.  Use WAIT to let time pass without doing anything.  The
-TIMEMODE setting in coffeemud.ini picks how a game starts.  TIMEMODE DIALOGUE INSTANT has
-those you speak to (or give to, or greet with a social) answer before your next prompt,
-taking no time; TICKS has them answer on their own time; DEFAULT is INSTANT when time is
-turn-based and TICKS in real time (DIALOGUETIME in coffeemud.ini).
+you do something that takes time, and then by as long as that takes: a command that takes
+time (a step, a skill, an attack) costs DEFCMDTIME actions out of combat (0.20, a fifth of a
+ tick) or DEFCOMCMDTIME in combat (1.0, a whole tick), divided by your speed; a command with
+ no cost of its own, such as SAVE, takes none.  Looking, checking your score and other
+things that take no time never move the world.  Use WAIT to let time pass without doing
+anything.  The TIMEMODE setting in coffeemud.ini picks how a game starts.  TIMEMODE DIALOGUE
+ INSTANT has those you speak to (or give to, or greet with a social) answer before your next
+ prompt, taking no time; TICKS has them answer on their own time; DEFAULT is INSTANT when
+time is turn-based and TICKS in real time (DIALOGUETIME in coffeemud.ini).
 ```
 
 <a id="timescale"></a>
 
 ## TIMESCALE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1888.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1911.
 
 ```text
 Command  : TIMESCALE
@@ -10925,7 +12044,7 @@ metal gathered with the Mining skill.  Most items require that the victim be bou
 
 ## TRACEB
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2357.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2382.
 
 ```text
 Command  : TRACEB
@@ -10948,7 +12067,7 @@ OFF stops it.
 
 ## TRAIN
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2891.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2948.
 
 ```text
 Command : TRAIN
@@ -10975,7 +12094,7 @@ else.
 
 ## UNATTUNE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2376.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2427.
 
 ```text
 Command : UNATTUNE
@@ -10991,7 +12110,7 @@ again.
 
 ## UNDO
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2134.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2157.
 
 ```text
 Command  : UNDO
@@ -11013,7 +12132,7 @@ changed (HISTORY lists the commands typed).
 
 ## USE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2384.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2435.
 
 ```text
 Command : USE
@@ -11030,7 +12149,7 @@ combinations.txt; otherwise nothing happens.  See also COMBINE.
 
 ## VALIDATE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1942.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1965.
 
 ```text
 Command  : VALIDATE
@@ -11050,7 +12169,7 @@ fishing.txt and components.txt (each entry as the game parses it, and its abilit
 
 ## VARS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3153.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3185.
 
 ```text
 Command  : VARS
@@ -11079,7 +12198,7 @@ file, to compare two runs. Scripts can list names too: $%VARNAMES(host prefix)%.
 
 ## VESSEL
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1919.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1942.
 
 ```text
 Command  : VESSEL
@@ -11109,7 +12228,7 @@ PACING for movement and interior-copy stats.
 
 ## VOCAB
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1957.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 1980.
 
 ```text
 Command  : VOCAB
@@ -11160,7 +12279,7 @@ wood listed. The raw wood for building is found using the Chopping skill.
 
 ## WAIT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2774.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2828.
 
 ```text
 Command : WAIT
@@ -11172,17 +12291,17 @@ Example : wait 10
 Example : wait 8 hours
 Example : wait until dawn
 While time is turn-based or the game is paused, lets one tick, or the given number of ticks
-(up to 100), pass.  A wait of several ticks ends early if you are hurt, attacked or moved,
-so in a fight WAIT 10 lets the fight go on until the next blow lands, and when someone
-speaks to you.  In real time, time passes on its own. In a party (see PARTYTURNS), only the
-leader's WAIT lets time pass, once the others have carried out their orders; another
-member's WAIT has them sit out the leader's next turn.  CoffeeSUD: WAIT [N] HOURS, DAYS or
-WEEKS, or WAIT UNTIL a time of day, an hour, a day of the month, or (on a vessel or mount)
-ARRIVAL, STOP or DOCK, lets up to three game days pass, in turn-based or real time (the
-clock stops for it and starts again after): the world goes on as it would, you are told each
- hour, and it ends early as a long WAIT does. In an inn's room a wait of an hour or more
-ends with a full rest.  Builders may also WAIT UNTIL VAR [HOST] [NAME] [OP] [VALUE] or QUEST
- [NAME] STEP [N] or DONE.
+(up to 100; more than that is a long wait, as LONGWAIT in coffeemud.ini says who may), pass.
+  A wait of several ticks ends early if you are hurt, attacked or moved, so in a fight WAIT
+10 lets the fight go on until the next blow lands, and when someone speaks to you.  In real
+time, time passes on its own. In a party (see PARTYTURNS), only the leader's WAIT lets time
+pass, once the others have carried out their orders; another member's WAIT has them sit out
+the leader's next turn.  CoffeeSUD: WAIT [N] HOURS, DAYS or WEEKS, or WAIT UNTIL a time of
+day, an hour, a day of the month, or (on a vessel or mount) ARRIVAL, STOP or DOCK, lets up
+to 72 game hours pass, in turn-based or real time (the clock stops for it and starts again
+after): the world goes on as it would, you are told each hour, and it ends early as a long
+WAIT does. In an inn's room a wait of an hour or more ends with a full rest.  Builders may
+also WAIT UNTIL VAR [HOST] [NAME] [OP] [VALUE] or QUEST [NAME] STEP [N] or DONE.
 ```
 
 <a id="wandmaking"></a>
@@ -11248,21 +12367,23 @@ some material types require smaller amounts to make the same items.
 
 ## WEATHER
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3060.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3117.
 
 ```text
 Command : WEATHER
 Usage   : WEATHER
+Usage   : WEATHER SET/FORECAST/NEXT (builders)
 Example : weather
 Short(s): weath
-Reminds you about the weather where you are.
+Reminds you about the weather where you are.  Builders also have WEATHER SET, WEATHER
+FORECAST and WEATHER NEXT (AHELP HAZARDS).
 ```
 
 <a id="weatherprofile"></a>
 
 ## WEATHERPROFILE
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2614.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2644.
 
 ```text
 CoffeeSUD: MODIFY AREA WEATHERPROFILE [NAME] (NONE takes it away) gives an area, and its
@@ -11344,7 +12465,7 @@ a world's world.ini cannot set it) starts a game with it.
 
 ## WORLD
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3177.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3209.
 
 ```text
 Command  : WORLD
@@ -11352,6 +12473,13 @@ Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
+Usage    : WORLD MODULES REPORT/STREAMS
+Usage    : WORLD POOLS LIST/CHECK/RELOAD/SHOW/SET
+Usage    : WORLD TRIGGERS LIST/CHECK/RELOAD/SHOW/LAST
+Usage    : WORLD REWARDS LIST/CHECK/RELOAD/SHOW/OFFER/BANK/END
+Usage    : WORLD ENCOUNTERS LIST/CHECK/RELOAD/SHOW
+Usage    : WORLD EXPEDITIONS LIST/CHECK/RELOAD/RUNS/CHART
+Usage    : WORLD TRACKS LIST/CHECK/RELOAD/GRANT
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
@@ -11361,6 +12489,7 @@ Usage    : WORLD DEV (([AREA]) ON/OFF)
 Usage    : WORLD STATUS
 Usage    : WORLD DIFF [FILE]
 Usage    : WORLD RELOAD ([AREA]) [NAME] (FORCE)
+Usage    : WORLD RELOAD AREA (FORCE)
 Usage    : WORLD RELOAD SCRIPT [FILE]/ALL (RESET)
 Usage    : WORLD RELOAD QUEST [NAME]/QUESTS/CATALOG/ASSETS/CHANGED
 Usage    : WORLD BACKUPS ([FILE])
@@ -11394,42 +12523,48 @@ carried, in shops or the catalog), TEXT (the new room's description, rooms, gene
  items with their class's text), SHOPS (shopkeepers with nothing to sell), DATA (WORLD
 PROBLEMS), SCRIPTS (SCRIPTCHECK), PROPS (PROPCHECK), JS (the world's JavaScript classes),
 VOCAB (languages, glossary, lists and help), LORE (entries/files), TEMPLATES (presentation
-text/options), ROUTES (travel and route references) and IDS (stable author identities);
-ONLY= picks parts, LOG writes the report to the log too.  sud.sh CHECK=1 loads the world as
-a new game would, on a scratch copy, runs it with no player, prints it and exits 1 if it
-found errors: for a script or a commit hook.  WORLD DEV lists the dev areas: those in
-world/dev, for building and testing only, which builder mode and DEV=1 games load and a
-normal game never does (DEVSTART= in coffeemud.ini can start new characters in one, such as
-a hub with portals and test gear).  In builder mode, WORLD DEV [AREA] ON makes an area one
-(SAVE writes it to world/dev) and OFF a shipped one again; WORLD CHECK warns of an exit from
- a shipped area into a dev area, which leads nowhere in a normal game.  In builder mode,
-SAVE does not write over or delete a world file changed outside the game (edited, added or
-deleted since the game loaded or last wrote it): what it would write goes beside it, as
-NAME.builder, and SAVE FORCE writes over it.  WORLD STATUS lists the files changed outside
-the game, and what SAVE would write, delete and leave; WORLD DIFF [FILE] shows a file
-(castle, areas/castle.cmare, quests/hunt.quest) against what SAVE would write, - for its
-lines on disk and + for SAVE's.  WORLD RELOAD loads world files again into the running game:
- an area (by its name or its file's), whose players and their followers wait outside it and
-come back, and whose exits from other areas are linked again (refused while rooms of it have
- unsaved mobs or items, as LIST UNSAVED lists them, unless FORCE); SCRIPT, the scripts that
-name a file (or ALL), their triggers reset with RESET; QUEST, a quest stopped, read again
-from its file in world/quests and started again at its step; QUESTS, each of them; CATALOG,
-the catalog's entries from its file; CHANGED, each file WORLD STATUS lists as changed
-outside the game.  In a normal game it saves the game as world-reload and restores it, which
- builds the world from its files again.  DEVWATCH ON ([SECONDS]) looks at the world files
-and resources' scripts every few seconds and runs the reload that matches what changed, each
- noted in DEVLOG; DEVWATCH OFF stops it.  Before SAVE writes over or deletes a world file it
- keeps a copy in world/.backup/ (the last BACKUPS= in coffeemud.ini of each, 5 if not set):
-WORLD BACKUPS lists the files with backups, WORLD BACKUPS FILE the times of one's, and WORLD
- RESTOREFILE FILE (TIME) puts the newest (or that one) back, changed outside the game, for
-WORLD RELOAD to load.  WORLD DIG ON makes a room, as CREATE ROOM does (of the room's own
-kind, or TYPE=, a locale or a builder template), wherever you walk and there is no exit, and
- goes into it, linked back unless LINK=ONE-WAY; WORLD DIG OFF stops it.  WORLD PATH lays out
- a chain of rooms, one for each direction, following the exits there already, each with
-NAME= and DESC= if given, and leaves you where you are.  Rooms made so are saved and tagged
-TODO, which WORLD CHECK lists until EDIT DESC gives them their own text.  WORLD MAP draws
-the rooms around you (5 steps out, or RADIUS N) or the whole area (AREA), north up, laid out
- by walking their exits from your room (*); a room above or below, or where another is, is
+text/options), ROUTES (travel and route references) and IDS (stable author identities),
+MODULES (the optional-module plan), COMPOSITIONS (composed abilities), COMBAT (combat
+profiles), ITEMMODS (item modifier libraries and tracked items) and REFS (the references
+between the optional module families, each with its file and JSON path; what a script does
+is reported as unknown, not checked); ONLY= picks parts, LOG writes the report to the log
+too.  sud.sh CHECK=1 loads the world as a new game would (it makes no copy of it and saves
+nothing, and its content cache is built in resources/fakedb unless DBSERVICE is given), runs
+ it with no player, prints it and exits 1 if it found errors: for a script or a commit hook.
+  WORLD DEV lists the dev areas: those in world/dev, for building and testing only, which
+builder mode and DEV=1 games load and a normal game never does (DEVSTART= in coffeemud.ini
+can start new characters in one, such as a hub with portals and test gear).  In builder
+mode, WORLD DEV [AREA] ON makes an area one (SAVE writes it to world/dev) and OFF a shipped
+one again; WORLD CHECK warns of an exit from a shipped area into a dev area, which leads
+nowhere in a normal game.  In builder mode, SAVE does not write over or delete a world file
+changed outside the game (edited, added or deleted since the game loaded or last wrote it):
+what it would write goes beside it, as NAME.builder, and SAVE FORCE writes over it.  WORLD
+STATUS lists the files changed outside the game, and what SAVE would write, delete and
+leave; WORLD DIFF [FILE] shows a file (castle, areas/castle.cmare, quests/hunt.quest)
+against what SAVE would write, - for its lines on disk and + for SAVE's.  WORLD RELOAD loads
+ world files again into the running game: an area (by its name or its file's; AREA alone is
+your own area), whose players and their followers wait outside it and come back, and whose
+exits from other areas are linked again (refused while rooms of it have unsaved mobs or
+items, as LIST UNSAVED lists them, unless FORCE); SCRIPT, the scripts that name a file (or
+ALL), their triggers reset with RESET; QUEST, a quest stopped, read again from its file in
+world/quests and started again at its step; QUESTS, each of them; CATALOG, the catalog's
+entries from its file; CHANGED, each file WORLD STATUS lists as changed outside the game.
+In a normal game it ignores its arguments (AREA, SCRIPT, QUEST and the rest work only in
+builder mode), saves the game as world-reload and restores it, which builds the world from
+its files again.  DEVWATCH ON ([SECONDS]) looks at the world files and resources' scripts
+every few seconds and runs the reload that matches what changed, each noted in DEVLOG;
+DEVWATCH OFF stops it.  Before SAVE writes over or deletes a world file it keeps a copy in
+world/.backup/ (the last BACKUPS= in coffeemud.ini of each, 5 if not set): WORLD BACKUPS
+lists the files with backups, WORLD BACKUPS FILE the times of one's, and WORLD RESTOREFILE
+FILE (TIME) puts the newest (or that one) back, changed outside the game, for WORLD RELOAD
+to load.  WORLD DIG ON makes a room, as CREATE ROOM does (of the room's own kind, or TYPE=,
+a locale or a builder template), wherever you walk and there is no exit, and goes into it,
+linked back unless LINK=ONE-WAY; WORLD DIG OFF stops it.  WORLD PATH lays out a chain of
+rooms, one for each direction, following the exits there already, each with NAME= and DESC=
+if given, and leaves you where you are.  Rooms made so are saved and tagged TODO, which
+WORLD CHECK lists until EDIT DESC gives them their own text.  WORLD MAP draws the rooms
+around you (5 steps out, or RADIUS N) or the whole area (AREA), north up, laid out by
+walking their exits from your room (*); a room above or below, or where another is, is
 listed instead.  IDS numbers the rooms and lists them; FLAGS marks what to look at: > < v ^
 an exit that does not lead back, + a locked door, @ an exit to another area, s a room with
 scripts, and lists the rooms of the area nothing leads to from here.  HTML=FILE writes the
@@ -11440,15 +12575,16 @@ area's map to world/maps/FILE.html, each room with its exits as links.
 
 ## WORLDMATERIALS
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1260.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1276.
 
 ```text
 CoffeeSUD: a world's own materials (resources), in world/materials.txt, one a line, the
 fields between tabs: NAME, FAMILY (CLOTH, LEATHER, METAL, MITHRIL, WOODEN, GLASS,
 VEGETATION, FLESH, PAPER, ROCK, LIQUID, PRECIOUS, ENERGY, SYNTHETIC...), VALUE, FREQUENCY
-(1-10, how common), HARDNESS (1-10), BUOYANCY, CATEGORY (FISH, BERRY or WOODY, or blank),
-SMELL, EFFECTS (on the raw resource, as Spell_Light;Prop_HaveResister(fire 5)), DESCRIPTION
-(of the raw resource) and CODE.  A # starts a comment, and a first line starting NAME is a
+(the rarity weight, 1-100, lower is rarer), HARDNESS (0-11), BUOYANCY (a density-like
+number, higher sinks; the built-ins reach 21450), CATEGORY (FISH, BERRY or WOODY, or blank),
+ SMELL, EFFECTS (on the raw resource, as Spell_Light;Prop_HaveResister(fire 5)), DESCRIPTION
+ (of the raw resource) and CODE.  A # starts a comment, and a first line starting NAME is a
 heading.  A row named as a built-in resource (IRON, OAK...) changes it.  The others come
 after the built-ins (0-209; there is room for 256 in all): at their CODE when they have one,
  the rest sorted by name, so adding one moves only those after it; and an item made of one
@@ -11464,7 +12600,7 @@ Prop_HaveResister(fire 5), A sliver of metal that never cools.
 
 ## WORLDRULES
 
-Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1217.
+Source: [arc_misc.ini](../../CoffeeMud/resources/help/arc_misc.ini), line 1233.
 
 ```text
 CoffeeSUD: the world's rules for the profile and the party, in coffeemud.ini or world.ini.
@@ -11498,7 +12634,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3369.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3503.
 
 ```text
 Command : WORLD COMBAT
@@ -11525,7 +12661,7 @@ schema, formulas and limitations.
 
 ## WORLD_COMPOSITIONS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3352.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3399.
 
 ```text
 Command : WORLD COMPOSITIONS
@@ -11549,7 +12685,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3433.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3561.
 
 ```text
 Command : WORLD ITEMMODS
@@ -11576,7 +12712,7 @@ docs/creator/17-item-modifiers-crafting.md.
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3402.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3523.
 
 ```text
 Command : WORLD MODULES
@@ -11585,6 +12721,7 @@ Usage   : WORLD MODULES CHECK/PLAN/RELOAD
 Usage   : WORLD MODULES ADOPT [ID]
 Usage   : WORLD MODULES CONFIGURE [ID] [SETTING] [VALUE]
 Usage   : WORLD MODULES STATE [ID]
+Usage   : WORLD MODULES REPORT/STREAMS
 Builder/DEV tooling for optional world modules. Flat JSON manifests live in
 world/modules/<id>.json. MODULES selects root IDs; MODULESETTINGS supplies typed world
 defaults as JSON. World settings take effect at the next process start.
@@ -11600,6 +12737,12 @@ while retaining saved settings. ADOPT explicitly adds a world-selected module an
 dependencies to a campaign. CONFIGURE changes one compatible active campaign setting; SAVE
 keeps it and world defaults remain unchanged. STATE inspects a saved capsule, including
 suspended records.
+REPORT counts this session's optional module work by family, source and measure (reactions
+and their roots, refusals, duplicate events suppressed, transactions prepared, committed,
+cancelled and refused, rewards offered and claimed, catch-up periods settled) and each
+limited measure's highest reading against its declared limit, naming the source that passed
+one; it carries no character's name or room. STREAMS shows the campaign's random streams and
+ where each will draw next.
 Saved versions, contract fingerprints, settings, removal policies and scoped state
 participate in campaign saves. Missing, incompatible or damaged modules suspend with data
 retained, or refuse restoration according to their saved policy. Whitespace, key order,

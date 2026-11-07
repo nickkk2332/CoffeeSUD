@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "id": "branch.depths",
+  "version": 1,
+  "title": "The Branching Depths",
+  "destination": {
+    "area": "Branching Depths",
+    "gated": true
+  },
+  "return_room": "EmberTrial#0",
+  "modifiers": [
+    {
+      "id": "hardy",
+      "title": "The hardy branch: foes with half again their health",
+      "mob_hp_percent": 50
+    },
+    {
+      "id": "marked",
+      "title": "The marked branch: burning foes",
+      "mob_effect": {
+        "id": "Prop_CombatStats",
+        "text": "{\"schema\":1,\"penetration\":{\"fire\":10}}"
+      }
+    }
+  ],
+  "offer": 2,
+  "choose": 1,
+  "attempts": 2,
+  "party": {
+    "max": 4
+  },
+  "activity": "branch.run",
+  "complete": "cleared",
+  "reward": "branch.spoils"
+}

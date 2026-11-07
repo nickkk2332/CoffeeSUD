@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "example.cinder",
+  "version": 1,
+  "title": "Cinder",
+  "kind": "charges",
+  "max": 3,
+  "start": 0,
+  "change": {"amount": -1, "every": 10, "clock": "ticks"}
+}

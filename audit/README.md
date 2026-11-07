@@ -9,6 +9,9 @@ The newer optional [item-modifier and crafting validation](item-modifiers-crafti
 records Stage 5's boundaries, regression results and legacy scenario replays,
 separately from the original 409-item inventory.
 
+The [documentation audit](docs-audit-2026-11.md) lists the engine defects, help-text mismatches and
+guide differences found while the creator handbook was rewritten and checked against the code (November 2026).
+
 This is a list of engine additions that would let the owner build the world
 without editing the engine's Java: new script triggers, functions and
 commands, JavaScript hooks, behaviours, properties, quest features, builder

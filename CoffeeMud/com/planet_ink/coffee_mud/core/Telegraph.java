@@ -54,6 +54,27 @@ public final class Telegraph
 
 		/** shows its warning to the room, as each tick */
 		public void telegraphWarn();
+
+		/**
+		 * A10: what a foe's response does instead of the wind-up's own blow: a
+		 * command to run for them ($n), or null for the blow itself.
+		 * @param target a foe it hits
+		 * @return the command, or null
+		 */
+		public default String telegraphCommand(final MOB target)
+		{
+			return null;
+		}
+
+		/**
+		 * A10: the host script's function called once when it lands, which can
+		 * start the next step of a chained attack.
+		 * @return the function's name, or ""
+		 */
+		public default String telegraphThen()
+		{
+			return "";
+		}
 	}
 
 	/** set while a wound-up ability is released, so that it does not wind up again */

@@ -4,6 +4,8 @@ REM Compiles every source file in place.  CMClass finds game classes by
 REM scanning the package folders, so the output must sit next to the
 REM sources.  It always starts clean, so that no class file from a deleted
 REM source is left behind to be loaded.  Takes about a minute.
+REM Unlike build.sh it does not pass --release 8: it compiles at the level of
+REM the JDK that findjava.bat finds (JDK 9 or newer is the README's minimum).
 cd /d "%~dp0"
 call findjava.bat
 if errorlevel 1 exit /b 1

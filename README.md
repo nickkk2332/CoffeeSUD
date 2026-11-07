@@ -72,7 +72,8 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
 
 ## Requirements
 
-- A Java JDK, version 9 or newer. It is developed with JDK 21.
+- A Java JDK, version 9 or newer. It is developed with JDK 21. (`build.sh` compiles with
+  `--release 8`, which needs `javac` 9 or newer; `build.bat` does not pass `--release`.)
 - Python 3, only for the test tools in `tools/`.
 - Linux, macOS or Windows.
 

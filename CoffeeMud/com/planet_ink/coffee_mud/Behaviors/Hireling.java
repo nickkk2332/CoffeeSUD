@@ -16,7 +16,6 @@ import com.planet_ink.coffee_mud.MOBS.interfaces.*;
 import com.planet_ink.coffee_mud.Races.interfaces.*;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /*
    Copyright 2003-2025 Bo Zimmerman
@@ -389,9 +388,48 @@ public class Hireling extends StdBehavior
 
 	protected double gamehours()
 	{
-		final double d=CMath.div((minutes() * 60L * 1000L),CMProps.getMillisPerMudHour());
+		return gamehours(minutes());
+	}
+
+	/**
+	 * @param mins minutes of play (the game clock's, real minutes at normal speed)
+	 * @return them in game hours, to a tenth
+	 */
+	protected static double gamehours(final long mins)
+	{
+		final double d=CMath.div((mins * 60L * 1000L),CMProps.getMillisPerMudHour());
 		final long d2=Math.round(d*10.0);
 		return CMath.div(d2,10.0);
+	}
+
+	/** whether the contract runs for a time: MINUTES or DAYS, not a quest or until fired */
+	protected boolean timed()
+	{
+		return contract.equals("MINUTES")||contract.equals("DAYS");
+	}
+
+	/**
+	 * How long a span of the contract is, in the game time its terms are
+	 * told in: game days for CONTRACT=DAYS, else game "hours".
+	 * @param ms the span, in milliseconds of the game clock
+	 * @return the span in words
+	 */
+	protected String spanText(final long ms)
+	{
+		if(contract.equals("DAYS"))
+			return L("@x1 days",""+CMath.div(Math.round(CMath.div(ms,dayMillis())*10.0),10.0));
+		return L("@x1 \"hours\"",""+CMath.div(Math.round(CMath.div(ms,CMProps.getMillisPerMudHour())*10.0),10.0));
+	}
+
+	/** what it says when asked how long it is on the job */
+	protected String onTheJobLine()
+	{
+		if(!timed())
+			return L("I'm on the job @x1.",termsText());
+		final long l = onTheJobUntil - GameTime.now();
+		if(l > 0)
+			return L("I'm on the job for @x1 more.",spanText(l));
+		return L("I'm on the job, but don't know why.");
 	}
 
 	public void allDone(final MOB observer)
@@ -462,10 +500,12 @@ public class Hireling extends StdBehavior
 			}
 			else
 			{
+				// the extension is in the contract's own unit: minutes of play, or game days
+				final long more=contract.equals("DAYS")?(additional*dayMillis()):(additional*TimeManager.MILI_MINUTE);
 				if(talkTo!=null)
-					CMLib.commands().postSay(observer,talkTo,L("Your base time is up, but you've paid for @x1 more minutes, so I'll hang around.",
-							""+additional),true,false);
-				onTheJobUntil+=(additional*TimeManager.MILI_MINUTE);
+					CMLib.commands().postSay(observer,talkTo,L("Your base time is up, but you've paid for @x1 more, so I'll hang around.",
+							spanText(more)),true,false);
+				onTheJobUntil+=more;
 			}
 		}
 		else
@@ -482,7 +522,7 @@ public class Hireling extends StdBehavior
 			}
 		}
 		else
-		if(GameTime.now() > nextWarn)
+		if((GameTime.now() > nextWarn) && timed())
 		{
 			final long l = onTheJobUntil - GameTime.now();
 			if((l/2) < 20000)
@@ -490,7 +530,7 @@ public class Hireling extends StdBehavior
 			else
 				nextWarn = GameTime.now() + (l/2);
 			if(l > 0)
-				CMLib.commands().postSay(observer, null, L("I'm on the job for @x1 more.",CMLib.time().date2EllapsedTime(l,TimeUnit.MINUTES, false)));
+				CMLib.commands().postSay(observer, null, onTheJobLine());
 		}
 		return true;
 	}
@@ -587,13 +627,7 @@ public class Hireling extends StdBehavior
 				if(onTheJobUntil==0)
 					CMLib.commands().postSay(observer,null,offerLine(observer),false,false);
 				else
-				{
-					final long l = onTheJobUntil - GameTime.now();
-					if(l > 0)
-						CMLib.commands().postSay(observer, null, L("I'm on the job for @x1 more.",CMLib.time().date2EllapsedTime(l,TimeUnit.MINUTES, false)));
-					else
-						CMLib.commands().postSay(observer, null, L("I'm on the job, but don't know why."));
-				}
+					CMLib.commands().postSay(observer, null, onTheJobLine());
 			}
 			else
 			if((CMStrings.containsWord(upperSrcMsg, "FIRED"))
@@ -641,10 +675,16 @@ public class Hireling extends StdBehavior
 					if(workingFor.equals(source.Name()))
 						CMLib.commands().postSay(observer,source,L("I'm still working for you.  I'll put that towards an extension though."),true,false);
 					else
+					if(contract.equals("MINUTES"))
 						CMLib.commands().postSay(observer,source,L("Sorry, I'm on the job right now.  Give me @x1 more later on and I'll work for @x2 \"hours\".",CMLib.beanCounter().nameCurrencyShort(observer,(price()-given)),""+gamehours()),true,false);
+					else
+						CMLib.commands().postSay(observer,source,L("Sorry, I'm on the job right now.  Give me @x1 more later on and I'll work @x2.",CMLib.beanCounter().nameCurrencyShort(observer,(price()-given)),termsText()),true,false);
 				}
 				else
+				if(contract.equals("MINUTES"))
 					CMLib.commands().postSay(observer,source,L("My price is @x1.  Give me @x2 more and I'll work for you for @x3 \"hours\".",CMLib.beanCounter().nameCurrencyShort(observer,price()),CMLib.beanCounter().nameCurrencyShort(observer,(price()-given)),""+gamehours()),true,false);
+				else
+					CMLib.commands().postSay(observer,source,L("My price is @x1.  Give me @x2 more and I'll work for you @x3.",CMLib.beanCounter().nameCurrencyShort(observer,price()),CMLib.beanCounter().nameCurrencyShort(observer,(price()-given)),termsText()),true,false);
 				partials.put(msg.source().Name(),Double.valueOf(given));
 			}
 			else

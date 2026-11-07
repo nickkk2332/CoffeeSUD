@@ -30,7 +30,7 @@ import java.util.*;
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-public class Prop_ItemSlot extends Property
+public class Prop_ItemSlot extends Property implements com.planet_ink.coffee_mud.core.AbilityComposition.EffectHolder
 {
 	@Override
 	public String ID()
@@ -60,6 +60,10 @@ public class Prop_ItemSlot extends Property
 	protected Ability[] slotProps	= new Ability[0];
 
 	protected String	slotType	= "";
+	/** I05: each slot's type, when they differ */
+	protected String[]	slotTypes	= new String[0];
+	/** I05: what happens to the socketed items when the host goes: DESTROY (with it) or KEEP (back to its owner) */
+	protected boolean	keepOnLoss	= false;
 	protected boolean	removable	= true;
 	protected int		levelShift	= 0;
 	protected int		levelDiff	= 0;
@@ -103,6 +107,89 @@ public class Prop_ItemSlot extends Property
 	}
 
 	@Override
+	public void setAffectedOne(final Physical P)
+	{
+		final Physical was = affected;
+		// I05: ONLOSS=KEEP: when the host goes (destroyed, or the sockets taken off it), what was socketed goes back to its owner
+		if((P == null) && (was instanceof Item) && keepOnLoss)
+		{
+			final ItemPossessor owner = ((Item)was).owner();
+			final Set<Item> back = new LinkedHashSet<Item>();
+			for(int i=0;i<slots.length;i++)
+			{
+				if(slots[i]!=null)
+					back.add(slots[i]);
+				slots[i]=null;
+			}
+			for(int i=0;i<slotProps.length;i++)
+				slotProps[i]=null;
+			for(final Item I : back)
+			{
+				final Ability A=I.fetchEffect("Prop_ItemSlotFiller");
+				if(A!=null)
+					A.setAffectedOne(I);
+				if(owner instanceof MOB)
+				{
+					((MOB)owner).addItem(I);
+					((MOB)owner).tell(CMLib.lang().L("@x1 comes free of @x2.", I.name(), was.name()));
+				}
+				else
+				if(owner instanceof Room)
+					((Room)owner).addItem(I, ItemPossessor.Expire.Player_Drop);
+			}
+		}
+		super.setAffectedOne(P);
+	}
+
+	/** I05: the effects the socketed items give (for composed-skill supports held in gems) */
+	@Override
+	public List<Ability> heldEffects()
+	{
+		final List<Ability> out = new ArrayList<Ability>();
+		for(final Ability A : slotProps)
+		{
+			if(A instanceof Prop_ItemSlotFiller)
+			{
+				final Ability[] fx = ((Prop_ItemSlotFiller)A).getAffects();
+				if(fx != null)
+					out.addAll(Arrays.asList(fx));
+			}
+		}
+		return out;
+	}
+
+	/** I05: the type of one slot: its own (TYPE="Gems,Gems,Runes"), or the one type of them all */
+	protected String typeOf(final int slot)
+	{
+		if((slotTypes.length == 0) || (slot < 0))
+			return slotType;
+		return slotTypes[Math.min(slot, slotTypes.length - 1)];
+	}
+
+	/** I05: whether any slot takes this type */
+	protected boolean takes(final String type)
+	{
+		for(int i=0;i<slots.length;i++)
+		{
+			if(typeOf(i).equalsIgnoreCase(type))
+				return true;
+		}
+		return false;
+	}
+
+	/** I05: the empty slots of this type */
+	protected int getNumberOfEmptySlots(final String type)
+	{
+		int num=0;
+		for(int i=0;i<slots.length;i++)
+		{
+			if((slots[i]==null)&&typeOf(i).equalsIgnoreCase(type))
+				num++;
+		}
+		return num;
+	}
+
+	@Override
 	public void setMiscText(String text)
 	{
 		super.setMiscText("");
@@ -129,6 +216,14 @@ public class Prop_ItemSlot extends Property
 		if(lvlCode.startsWith("H"))
 			levelShift=2;
 		slotType= CMParms.getParmStr(text, "TYPE", "");
+		slotTypes = new String[0];
+		if(slotType.indexOf(',')>=0)
+		{
+			final List<String> ts=CMParms.parseCommas(slotType, true);
+			slotTypes = ts.toArray(new String[0]);
+			slotType = slotTypes.length > 0 ? slotTypes[0] : "";
+		}
+		keepOnLoss = CMParms.getParmStr(text, "ONLOSS", "DESTROY").trim().equalsIgnoreCase("KEEP");
 		removable = CMParms.getParmBool(text, "REMOVEABLE", CMParms.getParmBool(text, "REMOVABLE", true));
 		levelDiff=0;
 		if(itemXml.length()>0)
@@ -173,7 +268,9 @@ public class Prop_ItemSlot extends Property
 		final StringBuilder str=new StringBuilder("");
 		str.append("NUM="+slots.length+" ");
 		str.append("REMOVABLE="+(""+removable).toUpperCase()+" ");
-		str.append("TYPE=\""+slotType+"\" ");
+		str.append("TYPE=\""+((slotTypes.length>0)?CMParms.combineWith(Arrays.asList(slotTypes), ','):slotType)+"\" ");
+		if(keepOnLoss)
+			str.append("ONLOSS=KEEP ");
 		final String[] levelShifts = new String[] {"NONE","ADD","HIGH"};
 		if(levelShift != 0)
 			str.append("LEVEL=\""+levelShifts[levelShift]+"\" ");
@@ -235,14 +332,14 @@ public class Prop_ItemSlot extends Property
 			}
 			final String aSlotType= CMParms.getParmStr(A.text(), "TYPE", "");
 			final int aSlotNumbs= CMParms.getParmInt(A.text(), "NUM", 1);
-			if(!aSlotType.equalsIgnoreCase(slotType))
+			if(!takes(aSlotType))
 			{
 				msg.source().tell(msg.source(),msg.target(),msg.tool(),L("<O-NAME> will not fit in <T-NAME>."));
 				return false;
 			}
-			if(getNumberOfEmptySlots() < aSlotNumbs)
+			if(getNumberOfEmptySlots(aSlotType) < aSlotNumbs)
 			{
-				if((aSlotNumbs > 1) && (getNumberOfEmptySlots() > 0))
+				if((aSlotNumbs > 1) && (getNumberOfEmptySlots(aSlotType) > 0))
 				{
 					if(removable)
 						msg.source().tell(msg.source(),msg.target(),msg.tool(),L("<T-NAME> doesn't have enough empty slots.  It requires @x1.  You should remove something first.",""+aSlotNumbs));
@@ -314,14 +411,14 @@ public class Prop_ItemSlot extends Property
 					}
 					final String aSlotType= CMParms.getParmStr(A.text(), "TYPE", "");
 					final int aSlotNumbs= CMParms.getParmInt(A.text(), "NUM", 1);
-					if(!aSlotType.equalsIgnoreCase(slotType))
+					if(!takes(aSlotType))
 					{
 						msg.setSourceMessage(L("@x1 will not fit in @x2.",slotItem.name(),affected.name()));
 						return true;
 					}
-					if(getNumberOfEmptySlots() < aSlotNumbs)
+					if(getNumberOfEmptySlots(aSlotType) < aSlotNumbs)
 					{
-						if((aSlotNumbs > 1) && (getNumberOfEmptySlots() > 0))
+						if((aSlotNumbs > 1) && (getNumberOfEmptySlots(aSlotType) > 0))
 						{
 							if(removable)
 								msg.setSourceMessage(L("@x1 doesn't have enough empty slots.  It requires @x2.  You should remove something first.",affected.name(),""+aSlotNumbs));
@@ -440,9 +537,10 @@ public class Prop_ItemSlot extends Property
 				{
 					int islot=0;
 					int aSlotNumbs= CMParms.getParmInt(A.text(), "NUM", 1);
+					final String aSlotType= CMParms.getParmStr(A.text(), "TYPE", "");
 					for(islot=0;islot<slots.length;islot++)
 					{
-						if(slots[islot]==null)
+						if((slots[islot]==null)&&typeOf(islot).equalsIgnoreCase(aSlotType))
 						{
 							slotItem.removeFromOwnerContainer();
 							slotItem.setOwner(null);

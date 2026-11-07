@@ -154,6 +154,7 @@ public final class Conversations
 			if(B.ID().equals("Hireling"))
 				list.add(new String[] { "HIRE", CMLib.lang().L("Hire (its terms)"), "SAYTO \"" + npc.name() + "\" hire" });
 		}
+		list.addAll(Services.menu(who, npc)); // P04: its service records, only those one may have now
 		if(QuestMarkers.marker(npc, who).trim().length() > 0)
 			list.add(new String[] { "QUESTS", CMLib.lang().L("Quests (QUESTS OFFERED)"), "QUESTS OFFERED" });
 		if(!list.isEmpty())
@@ -171,10 +172,14 @@ public final class Conversations
 	public static boolean offerServices(final MOB who, final MOB npc)
 	{
 		final List<String[]> services = services(who, npc);
-		if(services.isEmpty())
+		final List<String> notNow = Services.notNow(who, npc);
+		if(services.isEmpty() && notNow.isEmpty())
 			return false;
+		if(services.isEmpty())
+			services.add(new String[] { "BYE", CMLib.lang().L("Goodbye"), "TALK BYE" });
 		final ScriptMenus.Menu M = new ScriptMenus.Menu();
-		M.prompt = CMLib.lang().L("@x1 can help you with:", npc.name());
+		M.prompt = CMLib.lang().L("@x1 can help you with:", npc.name())
+			+ (notNow.isEmpty() ? "" : "\n" + CMLib.lang().L("Not now: @x1.", String.join("; ", notNow)));
 		M.who = who;
 		M.dflt = "BYE";
 		for(final String[] s : services)

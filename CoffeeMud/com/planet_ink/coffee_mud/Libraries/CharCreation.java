@@ -5243,6 +5243,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 
 	protected Room getSpawnRoom(final MOB mob)
 	{
+		// a restore brings the player in where they saved, also in an instance's room, which the database does not keep
+		final Room saved = CMProps.isSinglePlayer() ? com.planet_ink.coffee_mud.core.save.WorldState.savedRoom(mob) : null;
+		if(saved != null)
+			return saved;
 		Room spawnRoom = CMLib.map().getRoom(mob.location());
 		if(spawnRoom==null)
 		{

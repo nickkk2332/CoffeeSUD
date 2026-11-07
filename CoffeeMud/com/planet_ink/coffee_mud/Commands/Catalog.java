@@ -252,7 +252,7 @@ public class Catalog extends StdCommand
 	{
 		if(data.getCap()>0)
 		{
-			final String how=mob.session().choose(L("Unique: T)at a time, O)nce ever, W)once for a while (@x1): ",
+			final String how=mob.session().choose(L("Unique: T)IME (at a time), O)NCE (once ever), W)HILE (once for a while) (@x1): ",
 					""+data.getUnique().charAt(0)),("TOW"), ""+data.getUnique().charAt(0));
 			if(how.trim().length()>0)
 				data.setUnique(how.trim());
@@ -620,6 +620,29 @@ public class Catalog extends StdCommand
 					}
 					del=new Physical[]{P};
 				}
+				// D-BW-2: a bulk delete asks once for the whole set (it skipped every
+				// question when more than 10 matched); a single entry asks for itself
+				final boolean bulk=del.length>1;
+				if(bulk)
+				{
+					int mobs=0;
+					int inUse=0;
+					for (final Physical P : del)
+					{
+						if(P instanceof MOB)
+							mobs++;
+						final CatalogLibrary.CataData data=CMLib.catalog().getCatalogData(P);
+						if((data!=null)&&(data.numReferences()>0))
+							inUse++;
+					}
+					if((mob.session()==null)
+					||(!mob.session().confirm(L("This will permanently delete @x1 catalog entries (@x2 mobs, @x3 items; @x4 in use).  Are you sure (y/N)?",
+						""+del.length,""+mobs,""+(del.length-mobs),""+inUse),"N")))
+					{
+						mob.tell(L("Nothing was deleted."));
+						return false;
+					}
+				}
 				for (final Physical P : del)
 				{
 					final CatalogLibrary.CataData data=CMLib.catalog().getCatalogData(P);
@@ -629,7 +652,7 @@ public class Catalog extends StdCommand
 						if((data!=null)&&(data.numReferences()>0))
 							prefix="Catalog MOB '"+((MOB)P).Name()+"' is currently listed as being in use '"+data.numReferences()+" times.  ";
 						if((mob.session()!=null)
-						&&((del.length>10)||(mob.session().confirm(L("@x1This will permanently delete mob '@x2' from the catalog.  Are you sure (y/N)?",prefix,((MOB)P).Name()),"N"))))
+						&&(bulk||(mob.session().confirm(L("@x1This will permanently delete mob '@x2' from the catalog.  Are you sure (y/N)?",prefix,((MOB)P).Name()),"N"))))
 						{
 							CMLib.catalog().delCatalog(P);
 							mob.tell(L("MOB '@x1 has been permanently removed from the catalog.",((MOB)P).Name()));
@@ -642,7 +665,7 @@ public class Catalog extends StdCommand
 						if((data!=null)&&(data.numReferences()>0))
 							prefix="Catalog Item '"+((Item)P).Name()+"' is currently listed as being in use '"+data.numReferences()+" times.  ";
 						if((mob.session()!=null)
-						&&((del.length>10)||(mob.session().confirm(L("@x1This will permanently delete item '@x2' from the catalog.  Are you sure (y/N)?",prefix,((Item)P).Name()),"N"))))
+						&&(bulk||(mob.session().confirm(L("@x1This will permanently delete item '@x2' from the catalog.  Are you sure (y/N)?",prefix,((Item)P).Name()),"N"))))
 						{
 							CMLib.catalog().delCatalog(P);
 							mob.tell(L("Item '@x1 has been permanently removed from the catalog.",P.Name()));
@@ -674,7 +697,7 @@ public class Catalog extends StdCommand
 					else
 					{
 						mob.tell(L("Now: @x1",Uniques.describe(P.Name(),data))); // item 1
-						choice=mob.session().choose(L("Auto-Spawn: N)o, L)ive mobs,  D)ead mobs, R)oom, C)ontainer  (@x1): ",
+						choice=mob.session().choose(L("Auto-Spawn: N)o, L)ive mobs,  D)rop on corpses, R)oom, C)ontainer  (@x1): ",
 								""+data.getSpawn().name().charAt(0)),("NLDRC"), ""+data.getSpawn().name().charAt(0));
 					}
 					if(choice.trim().length()>0)
@@ -740,7 +763,7 @@ public class Catalog extends StdCommand
 								data.setWhen(w.trim());
 							while(newMask.equalsIgnoreCase("?"))
 							{
-								newMask=mob.session().prompt(L("Enter new Container selection mask, or NULL for any (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
+								newMask=mob.session().prompt(L("Enter new Container selection mask (Enter keeps this one; NULL for any) (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
 								if(newMask.equalsIgnoreCase("?"))
 									mob.tell(CMLib.masking().maskHelp("\n","disallow"));
 							}
@@ -754,7 +777,7 @@ public class Catalog extends StdCommand
 						{
 							while(newMask.equalsIgnoreCase("?"))
 							{
-								newMask=mob.session().prompt(L("Enter new Room selection mask, or NULL (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
+								newMask=mob.session().prompt(L("Enter new Room selection mask (Enter keeps this one; NULL clears) (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
 								if(newMask.equalsIgnoreCase("?"))
 									mob.tell(CMLib.masking().maskHelp("\n","disallow"));
 							}
@@ -764,7 +787,7 @@ public class Catalog extends StdCommand
 						{
 							while(newMask.equalsIgnoreCase("?"))
 							{
-								newMask=mob.session().prompt(L("Enter new MOB selection mask, or NULL (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
+								newMask=mob.session().prompt(L("Enter new MOB selection mask (Enter keeps this one; NULL clears) (@x1)\n\r: ",data.getMaskStr()),data.getMaskStr());
 								if(newMask.equalsIgnoreCase("?"))
 									mob.tell(CMLib.masking().maskHelp("\n","disallow"));
 							}

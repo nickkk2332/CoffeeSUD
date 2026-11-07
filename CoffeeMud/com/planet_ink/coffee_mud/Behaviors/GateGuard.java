@@ -61,20 +61,19 @@ public class GateGuard extends StdBehavior
 		keepLocked=false;
 		allnight=false;
 		final Vector<String> V=CMParms.parse(parm);
-		for(int v=0;v<V.size();v++)
+		// D-BM-2: both words may be given (the loop stopped at the first)
+		for(int v=V.size()-1;v>=0;v--)
 		{
 			if(V.elementAt(v).equalsIgnoreCase("keeplocked"))
 			{
 				keepLocked=true;
 				V.removeElementAt(v);
-				break;
 			}
 			else
 			if(V.elementAt(v).equalsIgnoreCase("allnight"))
 			{
 				allnight=true;
 				V.removeElementAt(v);
-				break;
 			}
 		}
 		final String maskStr = CMParms.combineQuoted(V, 0);

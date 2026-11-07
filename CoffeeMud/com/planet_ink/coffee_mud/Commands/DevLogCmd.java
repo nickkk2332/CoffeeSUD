@@ -43,7 +43,7 @@ public class DevLogCmd extends StdCommand
 
 	private static final String USAGE = "DEVLOG ON (ERROR/WARN/INFO/DEBUG) (MODULE [MASK]), DEVLOG OFF, DEVLOG LAST ([N]) ([LEVEL]) (MODULE [MASK]), DEVLOG CLEAR, DEVLOG WINDOW ([LEVEL]) (MODULE [MASK]), DEVLOG WINDOW OFF";
 
-	/** reads [level] [MODULE mask] from the words after the verb: [level, mask, n] */
+	/** reads [level] [MODULE mask] from the words after the verb: [level, mask, n].  The word MODULE must come before the mask here; the DEVLOG key in coffeemud.ini takes the bare mask */
 	private static Object[] options(final List<String> words, final Level defLevel)
 	{
 		Level level = defLevel;

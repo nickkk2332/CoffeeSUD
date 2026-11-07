@@ -1291,7 +1291,7 @@ public interface Clan extends Cloneable, Tickable, CMCommon, Modifiable, Tattooa
 		CLAN_BENEFITS,
 		/** constant for the clan function of getting clan titles. @see Clan#getAuthority(int,Function) */
 		CLAN_TITLES,
-		/** constant for the clan function writing MOTD messages. @see Clan#getAuthority(int,Function) */
+		/** constant for the clan function that picks the clan for CLANMOTD and is checked, with CREATE_MOTD, before the MOTD is written (despite the name, not only reading). @see Clan#getAuthority(int,Function) */
 		READ_MOTD,
 		/** constant for the clan function writing Journal messages. @see Clan#getAuthority(int,Function) */
 		JOURNAL,

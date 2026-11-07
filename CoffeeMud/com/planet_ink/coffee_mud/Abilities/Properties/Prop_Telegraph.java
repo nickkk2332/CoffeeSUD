@@ -30,8 +30,11 @@ import java.util.*;
  * is gathering power.  INTERRUPT=STUN,DAMAGE&gt;n%,MOVE: what stops it (it is
  * always stopped when it dies, sleeps, or is held or bound), with
  * INTERRUPTMSG=.  AVOID=LEAVE,HIDE,COMMAND:word: those who leave the room,
- * hide, or type the word are not hit.  ABILITY=id TARGET=name: a GenAbility
- * with a windup, used on its target at the end.
+ * hide, or type the word are not hit.  RESPOND="word=outcome|...": words a foe
+ * types while it winds up, each SPARE, INTERRUPT or a command run on them
+ * instead of the blow (A10); THEN=fn: the host's function run once the blow
+ * lands.  ABILITY=id TARGET=name: a GenAbility with a windup, used on its
+ * target at the end.
  */
 public class Prop_Telegraph extends Property implements Telegraph.Effect
 {
@@ -74,13 +77,47 @@ public class Prop_Telegraph extends Property implements Telegraph.Effect
 	protected String			interruptMsg	= "<S-NAME> <S-IS-ARE> interrupted!";
 	protected boolean			avoidHide		= false;
 	protected String			avoidWord		= null;
+	/** A10: response words, in order, and what each does: SPARE, INTERRUPT, or a command run instead of the blow */
+	protected final Map<String, String>	responses	= new LinkedHashMap<String, String>();
+	/** A10: the host script's function called once when it lands */
+	protected String			then			= "";
 	protected String			abilityID		= null;
 	protected String			targetName		= null;
 
-	// while it winds up
+	// while it winds up; kept in its text (LEFT=, TAKEN=, AVOIDED=), so a save in mid-wind-up keeps them
 	protected int				damageTaken		= 0;
-	protected final Set<MOB>	avoided			= new HashSet<MOB>();
+	/** who braced, dodged or the like: by their instance references, which a restore keeps */
+	protected final Set<String>	avoided			= new HashSet<String>();
+	/** A10: who responded with which word, by instance reference */
+	protected final Map<String, String>	responded	= new LinkedHashMap<String, String>();
 	protected boolean			done			= false;
+
+	/** its parameters without the state of a wind-up under way */
+	protected static String withoutState(final String text)
+	{
+		return text.replaceAll("(?i)\\s*\\b(LEFT|TAKEN)=\\S*", "").replaceAll("(?i)\\s*\\b(AVOIDED|RESPONDED)=\"[^\"]*\"", "").trim();
+	}
+
+	@Override
+	public String text()
+	{
+		final String base = withoutState(super.text());
+		if(done || (!(affected instanceof MOB)))
+			return base;
+		final StringBuilder s = new StringBuilder(base).append(" LEFT=").append(ticksLeft);
+		if(damageTaken > 0)
+			s.append(" TAKEN=").append(damageTaken);
+		if(avoided.size() > 0)
+			s.append(" AVOIDED=\"").append(CMParms.toListString(new ArrayList<String>(avoided))).append("\"");
+		if(responded.size() > 0)
+		{
+			final List<String> pairs = new ArrayList<String>();
+			for(final Map.Entry<String, String> e : responded.entrySet())
+				pairs.add(e.getKey() + "=" + e.getValue());
+			s.append(" RESPONDED=\"").append(CMParms.toListString(pairs)).append("\"");
+		}
+		return s.toString();
+	}
 
 	@Override
 	public void setMiscText(final String newText)
@@ -89,6 +126,29 @@ public class Prop_Telegraph extends Property implements Telegraph.Effect
 		final Map<String, String> q = CMParms.parseExactParms((newText == null) ? "" : newText);
 		tgName = CMParms.getParmStr(q, "NAME", "TELEGRAPH").trim().toUpperCase();
 		ticksLeft = Math.max(0, CMParms.getParmInt(q, "TICKS", 2));
+		// a wind-up under way, from a save
+		if(q.containsKey("LEFT"))
+			ticksLeft = CMParms.getParmInt(q, "LEFT", ticksLeft);
+		damageTaken = Math.max(0, CMParms.getParmInt(q, "TAKEN", 0));
+		avoided.clear();
+		for(final String ref : CMParms.parseCommas(CMParms.getParmStr(q, "AVOIDED", ""), true))
+			avoided.add(ref);
+		responded.clear();
+		for(final String pair : CMParms.parseCommas(CMParms.getParmStr(q, "RESPONDED", ""), true))
+		{
+			final int eq = pair.lastIndexOf('=');
+			if(eq > 0)
+				responded.put(pair.substring(0, eq).trim(), pair.substring(eq + 1).trim().toLowerCase());
+		}
+		// A10: RESPOND="dodge=SPARE|brace=mpdamage $n 5 10|parry=INTERRUPT"
+		responses.clear();
+		for(final String pair : CMParms.getParmStr(q, "RESPOND", "").split("\\|"))
+		{
+			final int eq = pair.indexOf('=');
+			if(eq > 0)
+				responses.put(pair.substring(0, eq).trim().toLowerCase(), pair.substring(eq + 1).trim());
+		}
+		then = CMParms.getParmStr(q, "THEN", "").trim().toUpperCase();
 		warning = CMParms.getParmStr(q, "WARNING", "");
 		interruptMsg = CMParms.getParmStr(q, "INTERRUPTMSG", "<S-NAME> <S-IS-ARE> interrupted!");
 		onDamage = false;
@@ -165,13 +225,44 @@ public class Prop_Telegraph extends Property implements Telegraph.Effect
 			return list;
 		for(final MOB M : Telegraph.foesHere((MOB)affected))
 		{
-			if(avoided.contains(M))
+			if(avoided.contains(InstanceIds.reference(M)))
+				continue;
+			final String word = responded.get(InstanceIds.reference(M));
+			if((word != null) && "SPARE".equalsIgnoreCase(responses.get(word)))
 				continue;
 			if(avoidHide && CMLib.flags().isHidden(M))
 				continue;
 			list.add(M);
 		}
 		return list;
+	}
+
+	@Override
+	public String telegraphCommand(final MOB target)
+	{
+		final String word = responded.get(InstanceIds.reference(target));
+		if(word == null)
+			return null;
+		final String outcome = responses.get(word);
+		if((outcome == null) || outcome.equalsIgnoreCase("SPARE") || outcome.equalsIgnoreCase("INTERRUPT"))
+			return null;
+		return outcome;
+	}
+
+	@Override
+	public String telegraphThen()
+	{
+		return then;
+	}
+
+	/**
+	 * A10: what a response word is, for the help and the tests.
+	 * @param word a response word
+	 * @return SPARE, INTERRUPT, a command, or null if it is not one
+	 */
+	public String responseOutcome(final String word)
+	{
+		return responses.get((word == null) ? "" : word.toLowerCase());
 	}
 
 	@Override
@@ -225,9 +316,21 @@ public class Prop_Telegraph extends Property implements Telegraph.Effect
 			if(A == null)
 				A = CMClass.getAbility(abilityID);
 			final MOB target = abilityTarget(mob);
+			final String word = (target == null) ? null : responded.get(InstanceIds.reference(target));
+			final String outcome = (word == null) ? null : responses.get(word);
+			final String after = then;
 			telegraphDone();
+			if((outcome != null) && outcome.equalsIgnoreCase("SPARE"))
+			{
+				// they got out of the way
+			}
+			else
+			if((outcome != null) && (!outcome.equalsIgnoreCase("INTERRUPT")))
+				Actions.run(mob, target, outcome);
+			else
 			if(A != null)
 				Telegraph.release(mob, A, target);
+			callThen(mob, after);
 			return true;
 		}
 		if(ticksLeft > 0)
@@ -238,11 +341,52 @@ public class Prop_Telegraph extends Property implements Telegraph.Effect
 		return true;
 	}
 
+	/** A10: the host's script function that starts the next step, once */
+	protected static void callThen(final MOB mob, final String fn)
+	{
+		if((fn == null) || (fn.length() == 0) || (mob == null))
+			return;
+		for(final Enumeration<ScriptingEngine> e = mob.scripts(); e.hasMoreElements();)
+		{
+			final ScriptingEngine S = e.nextElement();
+			if(S.callFunction(mob, fn, "", mob) != null)
+				return;
+		}
+	}
+
 	@Override
 	public boolean okMessage(final Environmental myHost, final CMMsg msg)
 	{
 		if(!super.okMessage(myHost, msg))
 			return false;
+		// A10: RESPOND words: each foe's first response counts; INTERRUPT stops the wind-up at once
+		if((responses.size() > 0) && (!done)
+		&& (msg.sourceMinor() == CMMsg.TYP_HUH)
+		&& (msg.source() != affected)
+		&& (msg.targetMessage() != null)
+		&& (affected instanceof MOB))
+		{
+			final List<String> w = CMParms.parse(msg.targetMessage());
+			final String word = (w.size() > 0) ? w.get(0).toLowerCase() : "";
+			if(responses.containsKey(word))
+			{
+				final String ref = InstanceIds.reference(msg.source());
+				if(responded.containsKey(ref))
+				{
+					msg.source().tell(CMLib.lang().L("You are already ready (@x1).", responded.get(ref)));
+					return false;
+				}
+				responded.put(ref, word);
+				msg.source().tell(CMLib.lang().L("You @x1, ready for it.", word));
+				final Room R = msg.source().location();
+				if(R != null)
+					R.show(msg.source(), null, null, CMMsg.NO_EFFECT, null, CMMsg.NO_EFFECT, null, CMMsg.MSG_OK_VISUAL,
+						CMLib.lang().L("<S-NAME> @x1(s), ready for it.", word));
+				if("INTERRUPT".equalsIgnoreCase(responses.get(word)))
+					interrupt((MOB)affected);
+				return false;
+			}
+		}
 		// AVOID=COMMAND:word: they brace, dive behind a pillar...
 		if((avoidWord != null) && (!done)
 		&& (msg.sourceMinor() == CMMsg.TYP_HUH)
@@ -252,7 +396,7 @@ public class Prop_Telegraph extends Property implements Telegraph.Effect
 			final List<String> w = CMParms.parse(msg.targetMessage());
 			if((w.size() > 0) && w.get(0).equalsIgnoreCase(avoidWord))
 			{
-				avoided.add(msg.source());
+				avoided.add(InstanceIds.reference(msg.source()));
 				msg.source().tell(CMLib.lang().L("You @x1, ready for it.", avoidWord));
 				final Room R = msg.source().location();
 				if(R != null)

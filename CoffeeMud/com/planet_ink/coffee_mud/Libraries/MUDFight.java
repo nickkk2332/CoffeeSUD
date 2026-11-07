@@ -654,6 +654,11 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 
 		CMLib.map().sendGlobalMessage(deadM,CMMsg.TYP_DEATH, CMClass.getMsg(deadM,null,killerM, CMMsg.TYP_DEATH,null, CMMsg.TYP_DEATH,null, CMMsg.TYP_DEATH,null));
 		JSEvents.fire("death",deadM,killerM); // JS8
+		AbilityTriggers.died(deadM,killerM); // A03: the killer's (or a summoned killer's owner's) kill reactions, after this
+		RewardEscrow.died(deadM); // I18: each reward activity under way does what it declares for a death
+		EncounterDirectors.died(deadM); // G03: the director that spawned or bound them counts the defeat
+		Expeditions.died(deadM); // G01: a death in an expedition's instance uses an attempt
+		ProgressionTracks.died(deadM,killerM); // P01: the killer's, their organizations' and their equipment's tracks
 		final CMMsg msg2=CMClass.getMsg(deadM,null,killerM, CMMsg.MSG_DEATH,null, CMMsg.MSG_DEATH,targetMsg, CMMsg.MSG_DEATH,null);
 		if(addHere!=null)
 		{
@@ -3478,6 +3483,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 
 		final CombatSystem combatSystem=CombatSystem.values()[CMProps.getIntVar(CMProps.Int.COMBATSYSTEM) % CombatSystem.values().length];
 
+		FormationRoles.round(fighter); // P06: a member's named role reacts and picks its target
 		subtickBeforeAttack(fighter, combatSystem);
 
 		final int folrange=(fighter.isAttributeSet(MOB.Attrib.AUTOMELEE)

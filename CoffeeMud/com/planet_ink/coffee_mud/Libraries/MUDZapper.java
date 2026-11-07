@@ -6736,6 +6736,9 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 							if(CMParms.indexOf(entry.parms(), Integer.valueOf(((Weapon)W).weaponClassification())) >= 0)
 								return false;
 						}
+						else
+						if((E instanceof MOB) && (W == null) && (CMParms.indexOf(entry.parms(), Integer.valueOf(Weapon.CLASS_NATURAL)) >= 0))
+							return false; // CoffeeSUD: one wielding nothing fights NATURAL
 					}
 					break;
 				case _WEAPONCLASS: // -weaponclass
@@ -6746,6 +6749,9 @@ public class MUDZapper extends StdLibrary implements MaskingLibrary
 							if(CMParms.indexOf(entry.parms(), Integer.valueOf(((Weapon)W).weaponClassification())) < 0)
 								return false;
 						}
+						else
+						if((E instanceof MOB) && (W == null) && (CMParms.indexOf(entry.parms(), Integer.valueOf(Weapon.CLASS_NATURAL)) < 0))
+							return false; // CoffeeSUD: -WEAPONCLASS +SWORD means wielding a sword, not bare hands
 					}
 					break;
 				case _OFFICER: // -officer

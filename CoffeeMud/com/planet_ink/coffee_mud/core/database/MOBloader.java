@@ -2469,7 +2469,7 @@ public class MOBloader
 							{
 								final MOB rideM=(MOB)leadR;
 								if((rideM.isMonster())
-								&&((rideM.amFollowing()==null)||(!rideM.getGroupLeader().isPlayer()))
+								&&((rideM.amFollowing()==null)||(!com.planet_ink.coffee_mud.core.Party.leaderOf(rideM).isPlayer()))
 								&&(rideM.location()==R))
 									fakeR.addInhabitant(rideM); // will not affect location
 								leadR=rideM.riding();

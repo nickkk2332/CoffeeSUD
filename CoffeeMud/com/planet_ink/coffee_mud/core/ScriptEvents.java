@@ -121,7 +121,9 @@ public final class ScriptEvents
 
 	/**
 	 * Notes that a parsed script has a trigger, so that its events are looked
-	 * for from now on.
+	 * for from now on.  The set only grows: it is never cleared or refreshed,
+	 * not even by an in-process restore of a save, so a trigger once parsed is
+	 * looked for until the process ends.
 	 * @param triggerCode the trigger's code, its place in ScriptingEngine.progs plus one
 	 */
 	public static void uses(final int triggerCode)
@@ -2444,7 +2446,9 @@ public final class ScriptEvents
 
 	/**
 	 * ST27: why the items destroyed on this thread go, until set again:
-	 * JUNKED, BROKEN, CONSUMED, or null.
+	 * JUNKED (the only reason code sets, for MPJUNK), or null.  An item past
+	 * its expiry date with no reason set is DECAY.  BROKEN and CONSUMED are
+	 * accepted here but nothing sets them.
 	 * @param why the reason
 	 */
 	public static void destroyReason(final String why)
@@ -2458,8 +2462,8 @@ public final class ScriptEvents
 	/**
 	 * ST27: an item is being destroyed: DESTROY_PROG reason|ALL and, for rot
 	 * and expiry, DECAY_PROG, run at once on the item, its room and its owner
-	 * (the item's scripts are gone after).  $g is DECAY, BROKEN, CONSUMED,
-	 * JUNKED or "".
+	 * (the item's scripts are gone after).  $g is DECAY, JUNKED or ""
+	 * (BROKEN and CONSUMED are never set).
 	 * @param I the item
 	 */
 	public static void destroyed(final Item I)

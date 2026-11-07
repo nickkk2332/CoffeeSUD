@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "example.harvest",
+  "version": 1,
+  "title": "Cinder harvest",
+  "on": "kill",
+  "include_summons": true,
+  "action": {"type": "gain", "pool": "example.cinder", "amount": 1}
+}

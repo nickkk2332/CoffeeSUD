@@ -310,6 +310,8 @@ public class Prop_HaveAdjuster extends Property implements TriggeredAffect
 				"MULTIPLYPH", "MULTIPLYCH", "abi", "arm", "att", "dam", "dis", "lev",
 				"rej", "sen", "spe", "wei", "hei", "gen", "cla", "cls", "rac", "hit",
 				"hun", "man", "mov", "thi", "ALLSAVES", "ABLEPROFS", "ABLELVLS","chr","hp",
+				// D-PR-1: applied by addAbleAdjustments, but missing here, so the parser dropped them
+				"ABLETICKS", "ABLEHPCOSTS", "ABLEMNCOSTS", "ABLEMVCOSTS",
 				"ALLSET","RONDEATH","AMBIANCE","DEITY"
 			}));
 			for(final int i : CharStats.CODES.BASECODES())

@@ -127,6 +127,9 @@ public class Affect extends StdCommand
 		return msg.toString();
 	}
 
+	/** D-AB-6: marks a filter mask as an ability domain (the domain code is below it), not an ability type */
+	public static final int DOMAIN_FILTER = 1 << 24;
+
 	public String getAffects(final Session S, final Physical P, final boolean xtra, final boolean autosAlso, final SortField field, final int mask)
 	{
 		final StringBuffer msg=new StringBuffer("");
@@ -195,14 +198,14 @@ public class Affect extends StdCommand
 				continue;
 			if(mask >= 0)
 			{
-				if(mask < Ability.ALL_ACODES)
+				if((mask & DOMAIN_FILTER)==0)
 				{
 					if((A.classificationCode()&Ability.ALL_ACODES)!=mask)
 						continue;
 				}
 				else
 				{
-					if((A.classificationCode()&Ability.ALL_DOMAINS)!=mask)
+					if((A.classificationCode()&Ability.ALL_DOMAINS)!=(mask & ~DOMAIN_FILTER))
 						continue;
 				}
 			}
@@ -291,7 +294,7 @@ public class Affect extends StdCommand
 				if(typ >= 0)
 				{
 					commands.remove(commands.size()-1);
-					mask = (typ +1) << 5 ;
+					mask = typ | DOMAIN_FILTER; // D-AB-6: typ is already the shifted domain code; it was shifted again, so nothing matched
 				}
 			}
 		}

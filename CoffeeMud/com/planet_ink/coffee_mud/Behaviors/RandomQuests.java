@@ -118,7 +118,7 @@ public class RandomQuests extends ActiveTicker
 	protected boolean				inline		= false;
 	protected String				expireTime	= "6 hours";
 	protected String				tagId		= "all_quests";
-	protected String				filePath	= "randareas/example.xml";
+	protected String				filePath	= "quests/random/all.xml"; // D-QU-2: the shipped generator; randareas/example.xml has no all_quests
 	protected Map<String, String>	varMap		= new Hashtable<String, String>(1);
 
 	protected SVector<Reference<Quest>> myQuests = new SVector<Reference<Quest>>();

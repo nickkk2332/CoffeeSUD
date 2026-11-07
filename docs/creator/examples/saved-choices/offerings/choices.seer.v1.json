@@ -1,0 +1,7 @@
+{
+  "schema": 1, "id": "choices.seer", "version": 1, "title": "The seer's reading",
+  "kind": "reveal", "station": "seer-table",
+  "cost": {"material": "AMBER", "units": 1},
+  "options": 3,
+  "discovery": "25 XP"
+}

@@ -118,6 +118,8 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 
 *Kind:* builder tool · *Value:* high · *Effort:* medium · *Decision:* yes
 
+**Status (docs audit, 2026-11):** PLAYTEST PARTY/KIT/DIFFICULTY, PLAYTEST GAME and per-member PARTY MORTAL/ARCHON all exist (`IsolatedPlaytest.java`, `PartyCmd.java:77`). The text below is the original proposal.
+
 **Today.** Builder mode makes every character that logs in an Archon (`SaveGame.makeArchon`), party members too. Holders of `ORDER`, `CMDROOMS` or `CMDMOBS` are spared by `Aggressive` and `Follower`, are not scaled to by `Prop_Doppleganger`, get no rolled variable equipment, and see `Prop_Uncampable` mobs respawn. Workarounds: `POSSESS` a GenMob with `SYSMSGS` off (no XP, quests or player prompt), which also lets `Mobile` mobs leave; or quit for a normal game, since `SaveGame.restore` refuses in builder mode.
 
 **Add.** `PLAYTEST ON|OFF`. While on, one shared exemption test makes AI, scaling and spawning treat the builder as a mortal, and the prompt shows `(playtest)`. Building commands run with `BUILD <command>`. ON takes a restore point that death returns to, and can set party and difficulty as a new game. OFF restores HP and makes peace. Larger: `PLAYTEST GAME (NAME) (AT room) (LEVEL= CLASS= RACE= KIT=)` exports the world and restarts in process as a normal game; there, plain `BUILD` restarts into builder mode at that room. Also `PARTY MORTAL|ARCHON <name>`, respected by `makeArchon`, so the builder can `SWITCH` to a mortal tester.
@@ -133,6 +135,8 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 ## DT9. DEVLOG: live errors and debug lines for the builder
 
 *Kind:* debug tool · *Value:* high · *Effort:* medium · *Decision:* yes
+
+**Status (docs audit, 2026-11):** DEVLOG WINDOW exists (`DevLogCmd.java:124`). The text below is the original proposal.
 
 **Today.** Single-player forces every log stream to mud.log. Script errors show only to the room the host is in. `<SCRIPT>` JavaScript errors, `MPLOG`, `SCRIPTTRACE`, loader skips and quest failures go only to the file. Launching with `sud.sh ERRMSGS=BOTH WRNMSGS=BOTH` (the ini does not work, SUD overrides it) prints raw lines on the terminal, mixed with game output, never in character windows, and fixed for the session. `LIST LOG LAST n` and `LIST SCRIPTS ERRORS` read the file afterwards.
 
@@ -227,6 +231,8 @@ Checkers and lints, inspectors, tracing and error display, playtest and develope
 ## DT15. Playtest files with assertions, and a runner that fails
 
 *Kind:* builder tool and data file · *Value:* high · *Effort:* medium · *Decision:* yes
+
+**Status (docs audit, 2026-11):** In-game PLAYTEST RUN and WORLD TEST exist (`PlaytestRunner.java`), running .play, .test and .js files. The text below is the original proposal.
 
 **Today.** `tools/sudplay.py` drives the real game from input lines and passes ini overrides (`TIMEMODE=TURNS`, `RANDOMSEED=`, a scratch `DBSERVICE=`, `SAVEDIR`, `WORLDDIR`, `RESTORE=`). But its `#expect` waits up to 30 minutes and never fails, so each test needs its own greps afterwards, as `smoke.sh` does. A builder cannot keep regression playtests of the world as content.
 
@@ -342,6 +348,8 @@ Each behaviour answers `getStat("DEBUG")`; the default gives tickDown and chance
 ## DT21. LAW: inspect and test an area's legal system
 
 *Kind:* builder tool · *Value:* medium · *Effort:* small · *Decision:* yes
+
+**Status (docs audit, 2026-11):** LAW TEST and LAW SET exist (`LawCmd.java:204-240`). The text below is the original proposal.
 
 **Today.** The law finds its people and places by name (`OFFICERS=cityguard`, `JUDGE=justice judge`, `JAIL=The Jail$`). A name that matches nothing fails silently, and the reasons go only to the debug log, under the `ARREST` flag. `STAT CRIMES` gives daily counts, not current warrants. The only way to look inside is `JCONSOLE` with raw calls such as `CMLib.law().getLegalBehavior(...).getWarrantsOf(...)`.
 
@@ -556,6 +564,8 @@ It also runs the MOBPROG parser on each embedded script to catch unknown trigger
 ## DT33. PUZZLE command: see, test, reset and check puzzle wiring
 
 *Kind:* builder tool · *Value:* medium · *Effort:* medium · *Decision:* yes
+
+**Status (docs audit, 2026-11):** PUZZLE has more than CHECK: LIST, SET, SIGNAL and RESET exist (`PuzzleCmd.java:35-100`). The text below is the original proposal.
 
 **Today.** STAT on an object dumps its script variables as raw XML. LIST SCRIPTS (AREA) lists scripted objects, LIST SCRIPTS ERRORS pulls runtime script errors from the log, and LIST UNLINKEDEXITS and LIST ONEWAYDOORS check the map. Nothing shows a room's switches, plates, receptacles and controllers with their state and targets. Nothing checks that a room, direction, door or catalog name in a script or property exists. A bad one shows up only in play.
 

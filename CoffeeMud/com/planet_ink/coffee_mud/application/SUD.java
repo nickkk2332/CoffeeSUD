@@ -57,8 +57,10 @@ import com.planet_ink.coffee_mud.core.save.WorldSettings;
  * <li>DEV=1 makes a developer's game: a normal game, with saves, in which
  * each character has the developer security group (DEVGROUP, DEV by
  * default); saves made in it are marked [dev].</li>
- * <li>CHECK=1 loads the world as a new game would, on a scratch copy, runs
- * WORLD CHECK with no player, prints it, and exits 1 if it found errors.</li>
+ * <li>CHECK=1 loads the world as a new game would, runs WORLD CHECK with no
+ * player, prints it, and exits 1 if it found errors.  It makes no copy of the
+ * world: it builds the content database (resources/fakedb, unless DBSERVICE
+ * is overridden) as a normal start does.</li>
  * </ul>
  *
  * Any NAME=VALUE argument overrides the ini file, as with {@link MUD}.
@@ -161,7 +163,7 @@ public class SUD
 		final boolean checkOnly = check.equals("1") || check.startsWith("Y") || check.startsWith("T") || check.equals("ON");
 		if(checkOnly)
 		{
-			// a new game's world, on a scratch copy, checked with no one in it
+			// a new game's world, built as a normal start builds it, checked with no one in it
 			WorldCheck.setHeadless(true);
 			System.out.println("World check (CHECK=1): the world is loaded, checked, and the game ends.");
 			SaveGame.setNextBoot(null);

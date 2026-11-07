@@ -23,7 +23,18 @@ var month = TC.getMonth();
 for (var i = 0; i < 200 && TC.getMonth() == month; i++) { TC.tickTock(TC.getHoursInDay()); hours += TC.getHoursInDay(); }
 runQueued(SM);
 check("month", gvar("FIXST11M") == TC.getMonth() + ":" + month, "FIXST11M='" + gvar("FIXST11M") + "', month " + month + " to " + TC.getMonth());
-check("weekday", TC.getDaysInWeek() == 0 || gvar("FIXST11W") == SEv.weekday(TC), "FIXST11W='" + gvar("FIXST11W") + "', today " + SEv.weekday(TC));
+// WEEKDAY_PROG: over the month's many days the queue merges repeats, so the
+// variable holds one of the week's days; one day on, it is that day
+if (TC.getDaysInWeek() > 0) {
+	var names = java.util.Arrays.asList(TC.getWeekNames());
+	check("weekday-many", names.contains(gvar("FIXST11W")), "FIXST11W='" + gvar("FIXST11W") + "', week " + names);
+	for (var q = 0; q < 10; q++) runQueued(SM);
+	clearVar("FIXST11W");
+	TC.tickTock(TC.getHoursInDay()); hours += TC.getHoursInDay();
+	runQueued(SM);
+	check("weekday", gvar("FIXST11W") == SEv.weekday(TC), "FIXST11W='" + gvar("FIXST11W") + "', today " + SEv.weekday(TC));
+} else
+	check("weekday", true, "");
 var season = "" + TC.getSeasonCode();
 var year = TC.getYear();
 for (var i = 0; i < 40 && (("" + TC.getSeasonCode()) == season || TC.getYear() == year); i++) { TC.tickTock(TC.getHoursInDay() * TC.getDaysInMonth()); hours += TC.getHoursInDay() * TC.getDaysInMonth(); runQueued(SS); }

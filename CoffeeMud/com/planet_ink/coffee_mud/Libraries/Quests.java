@@ -47,6 +47,10 @@ public class Quests extends StdLibrary implements QuestManager
 	protected String holidayFilename="quests/holidays/holidays.quest";
 	protected String holidayDefinition="LOAD="+holidayFilename;
 	protected SVector<Quest> quests=new SVector<Quest>();
+	/** D-QU-1: names of quests deleted in this session, whose characters' tracking scripts may go */
+	protected final Set<String> deletedQuests=Collections.synchronizedSet(new HashSet<String>());
+	/** D-QU-1: missing quests already reported, so the log says each once */
+	protected final Set<String> reportedMissing=Collections.synchronizedSet(new HashSet<String>());
 
 	@Override
 	public Quest objectInUse(final Environmental E)
@@ -151,6 +155,7 @@ public class Quests extends StdLibrary implements QuestManager
 			CMLib.threads().deleteTick(Q,Tickable.TICKID_QUEST);
 			Q.internalQuestDelete();
 			quests.removeElement(Q);
+			deletedQuests.add(Q.name().toUpperCase().trim());
 		}
 	}
 
@@ -1859,9 +1864,19 @@ public class Quests extends StdLibrary implements QuestManager
 					Q=findQuest(SE.defaultQuestName());
 				if(Q==null)
 				{
-					SE.stepQuest(player, player, SE.defaultQuestName());
-					SE.endQuest(player, player, SE.defaultQuestName());
-					player.delScript(SE);
+					// D-QU-1: only a quest deleted in this session takes its tracking
+					// script with it; one that failed to load or was renamed keeps it,
+					// so the character's progress comes back with the quest
+					final String name=SE.defaultQuestName().toUpperCase().trim();
+					if(deletedQuests.contains(name))
+					{
+						SE.stepQuest(player, player, SE.defaultQuestName());
+						SE.endQuest(player, player, SE.defaultQuestName());
+						player.delScript(SE);
+					}
+					else
+					if(reportedMissing.add(name))
+						Log.warnOut("Quests",player.Name()+" has the tracking script of quest '"+SE.defaultQuestName()+"', which is not loaded; it is kept (QUESTS DROP discards it).");
 				}
 				else
 					qVec.add(Q);
@@ -1892,7 +1907,7 @@ public class Quests extends StdLibrary implements QuestManager
 				{
 					final StringBuffer fullList=new StringBuffer("\n\r^HCANCEL^N -- to cancel.\n\r");
 					for(int t=0;t<questTemplates.size();t++)
-						fullList.append("^H"+(String)questTemplates.elementAt(t,1)+"^N\n\r"+(String)questTemplates.elementAt(t,2)+"\n\r");
+						fullList.append("^H"+(t+1)+") "+(String)questTemplates.elementAt(t,1)+"^N ("+templateFileBase((String)questTemplates.elementAt(t,3))+")\n\r"+(String)questTemplates.elementAt(t,2)+"\n\r");
 					mob.tell(fullList.toString());
 				}
 				else
@@ -1900,14 +1915,26 @@ public class Quests extends StdLibrary implements QuestManager
 					return null;
 				else
 				{
-					final StringBuffer list=new StringBuffer("");
-					for(int t=0;t<questTemplates.size();t++)
-						if(choice.equalsIgnoreCase((String)questTemplates.elementAt(t,1)))
+					// a template by its number in the list, its name (Story Talk #1) or its
+					// file name (story_talk1); only the name was taken
+					final String c=choice.trim();
+					if(CMath.isInteger(c)&&(CMath.s_int(c)>=1)&&(CMath.s_int(c)<=questTemplates.size()))
+						questIndex=CMath.s_int(c)-1;
+					for(int t=0;(t<questTemplates.size())&&(questIndex<0);t++)
+					{
+						final String fileName=(String)questTemplates.elementAt(t,3);
+						if(c.equalsIgnoreCase((String)questTemplates.elementAt(t,1))
+						||c.equalsIgnoreCase(fileName)
+						||c.equalsIgnoreCase(templateFileBase(fileName)))
 							questIndex=t;
-						else
-							list.append(((String)questTemplates.elementAt(t,1))+", ");
+					}
 					if(questIndex<0)
-						mob.tell(L("'@x1' is not a valid quest name, use ? for a list, or select from the following: @x2",choice,list.toString().substring(0,list.length()-2)));
+					{
+						final StringBuffer list=new StringBuffer("");
+						for(int t=0;t<questTemplates.size();t++)
+							list.append((t+1)+") "+((String)questTemplates.elementAt(t,1))+", ");
+						mob.tell(L("'@x1' is not a quest template.  Give its number, its name or its file name (? lists them, CANCEL stops): @x2",choice,list.toString().substring(0,list.length()-2)));
+					}
 				}
 			}
 			if((mob.session()==null)||(mob.session().isStopped())||(questIndex<0))
@@ -2081,7 +2108,9 @@ public class Quests extends StdLibrary implements QuestManager
 							for(int i=0;i<=itemXMLs.size();i++)
 							{
 								showValue=(i<itemXMLs.size())?(String)itemXMLs.elementAt(i):"";
-								final boolean optional=(i==0)?optionalEntry:true;
+								// D-QU-7: zero or more items may start with none (the first was
+								// required unless the template marked the field optional)
+								final boolean optional=((i==0)&&(inputCommand!=QMCommand.$ITEMXML_ZEROORMORE))?optionalEntry:true;
 								final String thisValue=addXMLQuestItem(mob, showFlag, pageDV, showValue, parm1Fixed, lastLabel, optional, step, ++showNumber);
 								if(thisValue!=null)
 								{
@@ -2208,9 +2237,10 @@ public class Quests extends StdLibrary implements QuestManager
 			&&(mob.session().confirm(L("Create the new quest: @x1 (y/N)? ",name),"N")))
 			{
 				final Quest Q=(Quest)CMClass.getCommon("DefaultQuest");
-				final CMFile newQF=new CMFile(Resources.makeFileResourceName("quests/"+name+".quest"),mob,CMFile.FLAG_LOGERRORS);
-				newQF.saveText(script);
-				Q.setScript("LOAD=quests/"+name+".quest",true);
+				// D-QU-4: the quest is its whole script, so that the world's quest file
+				// (world/quests) holds it all and it travels with the world; it was a
+				// LOAD= of a file written to resources/quests, outside the world
+				Q.setScript(script,true);
 				if((Q.name().trim().length()==0)||(Q.duration()<0))
 				{
 					mob.tell(L("You must specify a VALID quest string.  This one contained errors.  Try AHELP QUESTS."));
@@ -2226,6 +2256,23 @@ public class Quests extends StdLibrary implements QuestManager
 		{
 			return null;
 		}
+	}
+
+	/**
+	 * A quest template's file name without its folder or .quest, as the Quest
+	 * Maker lists and accepts it (story_talk1).
+	 * @param fileName the file name
+	 * @return the short name
+	 */
+	protected static String templateFileBase(final String fileName)
+	{
+		String f=(fileName==null)?"":fileName;
+		final int slash=Math.max(f.lastIndexOf('/'),f.lastIndexOf('\\'));
+		if(slash>=0)
+			f=f.substring(slash+1);
+		if(f.toLowerCase().endsWith(".quest"))
+			f=f.substring(0,f.length()-6);
+		return f;
 	}
 
 	@Override

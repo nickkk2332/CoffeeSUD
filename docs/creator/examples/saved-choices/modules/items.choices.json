@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "items.choices",
+  "title": "Saved choices: reveals and offerings",
+  "version": 1,
+  "handler": "items.choices",
+  "requires": {"items.modifiers": 1},
+  "clock_modes": ["TURNS", "REALTIME"],
+  "scopes": ["character"],
+  "on_disable": "suspend",
+  "state": {
+    "offering": {"type": "string", "default": "", "max_length": 4096},
+    "codex": {"type": "string", "default": "", "max_length": 4096}
+  }
+}

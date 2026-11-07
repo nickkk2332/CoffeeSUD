@@ -243,8 +243,9 @@ public class MUD extends Thread implements MudHost
 			if(!restoring)
 			{
 				SaveGame.setSaveMode(SaveGame.parseSaveMode(CMProps.instance().getStr("SAVEMODE","ANYWHERE")));
-				Party.setMeetWhereLeft(CMProps.instance().getStr("PARTYMEET","0").trim().equals("1"));
-				Party.setFightEachOther(CMProps.instance().getStr("PARTYFIGHT","0").trim().equals("1"));
+				// D-CF-2: the same yes words as WINDOWS (only a literal 1 was read)
+				Party.setMeetWhereLeft(yesWord(CMProps.instance().getStr("PARTYMEET","0")));
+				Party.setFightEachOther(yesWord(CMProps.instance().getStr("PARTYFIGHT","0")));
 				Party.setTurns(CMProps.instance().getStr("PARTYTURNS","LEADER").trim().equalsIgnoreCase("ALL") ? Party.Turns.ALL : Party.Turns.LEADER);
 				Party.setOrder("");
 				Party.setOnTheirOwn("");
@@ -1527,7 +1528,13 @@ public class MUD extends Thread implements MudHost
 					Log.newInstance();
 					Log.instance().configureLogFile(logName,page.getInt("NUMLOGS"));
 					for(final Log.Type logType : Log.Type.values())
-						Log.instance().configureLog(logType, page.getStr(logType.getLogCode()));
+					{
+						String setting=page.getStr(logType.getLogCode());
+						// D-CF-1: coffeemud.ini long spelled the kills log KILMSGS; the log reads KILLMSGS
+						if(((setting==null)||(setting.trim().length()==0))&&(logType==Log.Type.kills))
+							setting=page.getStr("KILMSGS");
+						Log.instance().configureLog(logType, setting);
+					}
 				}
 				if((page.getRawPrivateStr("SYSOPMASK")!=null)
 				||(page.getRawPrivateStr("DISABLE")!=null)
@@ -1696,6 +1703,18 @@ public class MUD extends Thread implements MudHost
 	 *
 	 * @param a Command-line arguments passed to the application
 	 */
+	/**
+	 * D-CF-2: whether a setting says yes: 1, ON, or a word starting Y or T
+	 * (as WINDOWS reads it).
+	 * @param value the setting
+	 * @return true for yes
+	 */
+	public static boolean yesWord(final String value)
+	{
+		final String v = (value == null) ? "" : value.trim().toUpperCase();
+		return v.equals("1") || v.equals("ON") || v.startsWith("Y") || v.startsWith("T");
+	}
+
 	public static void main(final String a[])
 	{
 		// every script runs with a time limit, and its errors say where it is

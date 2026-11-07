@@ -1,0 +1,2 @@
+{"schema": 1, "id": "branch.run", "version": 1, "title": "A run of the Branching Depths", "kind": "activity",
+ "on_leave": "keep", "on_fail": "forfeit", "on_death": "keep", "on_restore": "keep"}
