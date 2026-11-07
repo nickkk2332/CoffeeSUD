@@ -134,9 +134,9 @@ public class WorldCmd extends StdCommand
 				for(final String p : w.substring(5).split(","))
 				{
 					final String part=p.trim().toUpperCase();
-					if(!Arrays.asList(WorldCheck.PARTS).contains(part))
+					if(!WorldCheck.parts().contains(part))
 					{
-						mob.tell(L("'@x1' is not a part of WORLD CHECK: @x2.",p,String.join(", ",WorldCheck.PARTS).toLowerCase()));
+						mob.tell(L("'@x1' is not a part of WORLD CHECK: @x2.",p,String.join(", ",WorldCheck.parts()).toLowerCase()));
 						return;
 					}
 					parts.add(part);
@@ -155,7 +155,7 @@ public class WorldCmd extends StdCommand
 			}
 			else
 			{
-				mob.tell(L("WORLD CHECK (AREA [NAME]) (LOG) (ONLY=@x1)",String.join(",",WorldCheck.PARTS).toLowerCase()));
+				mob.tell(L("WORLD CHECK (AREA [NAME]) (LOG) (ONLY=@x1)",String.join(",",WorldCheck.parts()).toLowerCase()));
 				return;
 			}
 		}
@@ -987,6 +987,28 @@ public class WorldCmd extends StdCommand
 			mob.tell(PlaytestRunner.start(mob, CMParms.combine(commands, 2)));
 			return false;
 		}
+		final ModuleContent.Family family=ModuleContent.family(commands.get(1));
+		if(family!=null)
+		{
+			// the later module families: WORLD [FAMILY] LIST/CHECK/RELOAD and the family's own words
+			if(!SaveGame.isBuilderMode()&&!SaveGame.isDevMode()&&!CMSecurity.isAllowedAnywhere(mob,CMSecurity.SecFlag.CMDROOMS))
+				mob.tell(L("WORLD @x1 is for builder mode or DEV=1.",family.part()));
+			else try
+			{
+				final List<String> words=new ArrayList<String>(commands.subList(2,commands.size()));
+				final String sub=words.isEmpty()?"LIST":words.get(0).toUpperCase(java.util.Locale.ROOT);
+				if(sub.equals("LIST")&&words.size()<=1)mob.tell(family.list());
+				else if(sub.equals("CHECK")&&words.size()==1){final List<String> found=family.check();mob.tell(found.isEmpty()?L("@x1: no problems.",family.part()):String.join("\n",found));}
+				else if(sub.equals("RELOAD")&&words.size()==1){if(!SaveGame.isBuilderMode()&&!SaveGame.isDevMode())mob.tell(L("RELOAD is for builder mode or DEV=1."));else mob.tell(family.reload());}
+				else
+				{
+					final String said=family.world(mob,words);
+					mob.tell((said!=null)?said:L("WORLD @x1 LIST/CHECK/RELOAD; AHELP @x2 for the rest.",family.part(),family.part()));
+				}
+			}
+			catch(final java.io.IOException e){mob.tell(family.part()+": "+e.getMessage());}
+			return false;
+		}
 		if(commands.get(1).equalsIgnoreCase("ITEMMODS"))
 		{
 			if(!SaveGame.isBuilderMode()&&!SaveGame.isDevMode()&&!CMSecurity.isAllowedAnywhere(mob,CMSecurity.SecFlag.CMDROOMS))mob.tell("WORLD ITEMMODS is for builder mode or DEV=1. ITEMMODS inspects your own equipment.");
@@ -1087,6 +1109,10 @@ public class WorldCmd extends StdCommand
 				}
 				else if(sub.equalsIgnoreCase("PLAN") || sub.equalsIgnoreCase("RELOAD"))
 					mob.tell(OptionalModules.reload(sub.equalsIgnoreCase("RELOAD")));
+				else if(sub.equalsIgnoreCase("REPORT") && commands.size() == 3)
+					mob.tell(ModuleStats.report()); // Q12: the work the modules did in this session
+				else if(sub.equalsIgnoreCase("STREAMS") && commands.size() == 3)
+					mob.tell(RandomStreams.describe()); // Q09: where each random stream is
 				else if(sub.equalsIgnoreCase("ADOPT") && commands.size() == 4)
 				{
 					OptionalModules.adopt(commands.get(3));

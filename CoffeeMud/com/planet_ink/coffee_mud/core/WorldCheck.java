@@ -1,6 +1,7 @@
 package com.planet_ink.coffee_mud.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -333,11 +334,38 @@ public final class WorldCheck
 	 * @param parts the parts to run (PARTS), or null for all
 	 * @return what was found, errors first
 	 */
+	/**
+	 * The parts WORLD CHECK ONLY= takes: {@link #PARTS} and the later module
+	 * families' parts.
+	 * @return the parts
+	 */
+	public static List<String> parts()
+	{
+		final List<String> out = new ArrayList<String>(Arrays.asList(PARTS));
+		for(final ModuleContent.Family f : ModuleContent.families())
+		{
+			if(!out.contains(f.part()))
+				out.add(f.part());
+		}
+		return out;
+	}
+
 	public static List<Finding> run(final Area only, final Set<String> parts)
 	{
 		final List<Finding> out = new ArrayList<Finding>();
 		final List<Room> rooms = roomsOf(only);
 		final boolean all = (parts == null) || parts.isEmpty();
+		// the later module families: their problems stop a world that selects them, and warn in one that does not
+		final Set<String> selected = new HashSet<String>(OptionalModules.configuredPlan().enabled);
+		for(final ModuleContent.Family f : ModuleContent.families())
+		{
+			if(all || parts.contains(f.part()))
+			{
+				final Severity level = selected.contains(f.module()) ? Severity.ERROR : Severity.WARNING;
+				for(final String problem : f.check())
+					out.add(new Finding(level, f.part(), problem));
+			}
+		}
 		if(all || parts.contains("ITEMMODS"))
 		{
 			// a world that never opts in keeps its legacy affixes.xml as it was: warnings at most

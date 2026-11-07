@@ -332,6 +332,7 @@ public final class SaveGame
 		AbilityComposition.reset();
 		CombatProfiles.reset();
 		ItemModifiers.reset();
+		ModuleContent.resetAll(); // the later families, random streams and work counts
 		JSJobs.reset();
 		ScriptMenus.fromXML(null); Narration.clear();
 		bootOverrides.clear();
@@ -460,6 +461,7 @@ public final class SaveGame
 		GameDifficulty.restore((header == null) ? null : header.getProperty("difficulty")); // C13
 		Exchange.restore((header == null) ? null : header.getProperty("exchange")); // W29
 		GenSeed.restore((header == null) ? null : header.getProperty("genseed")); // G1: SEED=GAME's
+		RandomStreams.restore((header == null) ? null : header.getProperty("streams")); // Q09: after the seed they are drawn from
 		if(header == null)
 			return;
 		restoring = null;
@@ -1087,6 +1089,7 @@ public final class SaveGame
 		header.setProperty("difficulty", GameDifficulty.current()); // C13
 		header.setProperty("exchange", Exchange.saved()); // W29
 		header.setProperty("genseed", GenSeed.saved()); // G1
+		header.setProperty("streams", RandomStreams.saved()); // Q09
 		header.setProperty("savemode", saveMode.name());
 		if(CMLib.time().globalClock() != null)
 			header.setProperty("gamedate", CMLib.time().globalClock().getShortTimeDescription());
