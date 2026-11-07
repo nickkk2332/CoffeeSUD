@@ -329,6 +329,9 @@ public final class WorldCheck
 		// A05: perks.ini's trees, links and keys
 		for(final String p : Perks.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", "perks.ini: " + p));
+		// P15: talents.ini's lore and abilities
+		for(final String p : Talents.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
 	}
 
 	/**

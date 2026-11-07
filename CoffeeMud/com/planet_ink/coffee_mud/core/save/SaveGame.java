@@ -513,6 +513,7 @@ public final class SaveGame
 			mob.setActions(mob.phyStats().speed());
 		WorldState.finishRestore(mob);
 		com.planet_ink.coffee_mud.core.Perks.sync(mob); // A05: perk effects as perks.ini has them now
+		com.planet_ink.coffee_mud.core.Talents.recheck(mob); // P15: a talent the world added since, whose needs are met, is decided
 		if(Boolean.getBoolean("sud.isolated.playtest") && mob.fetchEffect("Prop_Playtest")==null)
 		{
 			final com.planet_ink.coffee_mud.Abilities.interfaces.Ability test=CMClass.getAbility("Prop_Playtest");

@@ -123,7 +123,7 @@ level-up (upstream's rule; P02, deferred).
 | 6 | Ailments and defense pools: A12, A13 | families | Done |
 | 7 | Encounters: A24 traits (with G08's possession), G04 trials (with G08's devices), G06 director hooks | family, extensions | Done |
 | 8 | Items: I05 sockets, I06 targeted crafting, I07 and I17 saved choices, I09 materials, I14 offer books, I16 inventory views, I20 binding | extensions | Done |
-| 9 | Knowledge: A23 unknown names and reveals, P15 latent talents | extensions |  |
+| 9 | Knowledge: A23 unknown names and reveals, P15 latent talents | extensions | Done |
 | 10 | Organizations: P03 affiliations, P04 services, P06 formation roles, P08 shared pools, P11 cultures, P13 challenge books | extensions |  |
 | 11 | The atlas: G02 | family | Deferred |
 | 12 | Companion bonds: P05 | family | Deferred |

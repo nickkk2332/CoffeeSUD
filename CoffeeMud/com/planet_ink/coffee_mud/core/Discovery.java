@@ -179,6 +179,7 @@ public class Discovery
 		final String journal = CMParms.getParmStr(text, "JOURNAL", "").trim();
 		if(journal.length() > 0)
 			QuestJournal.journal(mob, "", journal);
+		Talents.recheck(mob); // P15: a talent this discovery completes is decided now, once
 		return true;
 	}
 

@@ -96,6 +96,7 @@ public final class LoreBook
 		{
 			final Entry e=entries().get(k);
 			Chronicle.auto(who,"LORE","Learned "+(e==null?k:e.title)+".",source);
+			Talents.recheck(who); // P15: a talent this lore completes is decided now, once
 		}
 		return fresh;
 	}

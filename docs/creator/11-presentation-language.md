@@ -754,6 +754,34 @@ if there is none.
 The command defined here is the one players reach with `LORE`; do not give the
 same word a second meaning in your own content.
 
+### Latent talents
+
+`world/talents.ini` declares talents that lore awakens, one a line:
+
+```ini
+HERBALIST=TITLE="Herb-sense" LORE="HERBS_1,HERBS_2,HERBS_3" ABILITY=Herbalism PROFICIENCY=25 MESSAGE="The plants' names come to you unbidden."
+SEER=TITLE="Second sight" LORE="HERBS_2" CHANCE=50
+```
+
+| Key | Meaning |
+| --- | --- |
+| `LORE` | The lore entries it needs, all of them (known to the character or, for profile lore, to their profile). |
+| `MASK` | A zapper mask the character must pass too. |
+| `CHANCE` | 0 to 100 (default 100): the chance it awakens once its needs are met. |
+| `ABILITY`, `PROFICIENCY` | An ability it teaches, at that proficiency. |
+| `TATTOO` | A tattoo it gives, for masks and scripts. |
+| `MESSAGE` | What the character is told when it awakens. |
+
+Whenever a character learns lore or makes a discovery, and when they come
+into the game, their talents not yet decided are checked again. One whose
+needs are met is decided at once and for good: with a chance below 100, by one
+draw from the campaign's `talents` stream. It awakens or stays dormant, and
+either is a tattoo (`TALENT_[ID]` or `TALENT_[ID]_DORMANT`), so reading the
+lore again, checking again or a restore never decides it again. `TALENTS`
+lists each talent: awakened, dormant, or the lore it still waits for. WORLD
+CHECK names a talent with no lore or an ability that does not exist. Test:
+[p15-talents.js](../../tools/fixtures/fixes/p15-talents.js).
+
 ### The personal journal
 
 Source: [Chronicle](../../CoffeeMud/com/planet_ink/coffee_mud/core/Chronicle.java),
