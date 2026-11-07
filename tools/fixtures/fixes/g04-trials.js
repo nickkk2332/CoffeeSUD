@@ -1,5 +1,5 @@
 // G04 escalating trials (with G08's devices): between rounds the director offers modifiers drawn from its stream; the
-// next round waits; TRIAL CHOOSE takes one (later foes tougher, or with traits) and goes on; TRIAL STOP banks what was won
+// next round waits; TRIALS CHOOSE takes one (later foes tougher, or with traits) and goes on; TRIALS STOP banks what was won
 // and ends the trial (DIRECTOR_STOPPED); a chosen modifier's reward is paid on completion; the state is saved.
 FIXFILE = "g04-trials";
 var ED = CM.core.EncounterDirectors, RE = CM.core.RewardEscrow, MD = CM.core.ModuleDefinitions, OM = CM.core.OptionalModules;

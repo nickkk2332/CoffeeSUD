@@ -533,7 +533,7 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 			offers.add(left.get(i).id);
 			s.append(" ").append(i + 1).append(". ").append(left.get(i).title).append(".");
 		}
-		tellRoom(s.append(" TRIAL CHOOSE [number] to go on; TRIAL STOP to take what you have won.").toString());
+		tellRoom(s.append(" TRIALS CHOOSE [number] to go on; TRIALS STOP to take what you have won.").toString());
 		note("offered " + offers + " before " + next.id);
 		ModuleStats.count(EncounterDirectors.FAMILY, encounter, "trial offers");
 		return true;
@@ -572,7 +572,7 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 					s.append(" Offered:");
 					for(int i = 0; i < offers.size(); i++)
 						s.append(" ").append(i + 1).append(". ").append(modifier(d, offers.get(i)).title).append(".");
-					s.append(" TRIAL CHOOSE [number] or TRIAL STOP.");
+					s.append(" TRIALS CHOOSE [number] or TRIALS STOP.");
 				}
 				return s.toString();
 			}
@@ -608,7 +608,7 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 					enter(phase + 1);
 				return "You choose " + m.title + ".";
 			}
-			return "TRIAL, TRIAL CHOOSE [number] or TRIAL STOP.";
+			return "TRIALS, TRIALS CHOOSE [number] or TRIALS STOP.";
 		}
 		catch(final IOException e)
 		{

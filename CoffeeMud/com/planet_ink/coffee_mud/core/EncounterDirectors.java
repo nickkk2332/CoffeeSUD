@@ -337,7 +337,7 @@ public final class EncounterDirectors
 
 		String describe(MOB viewer, boolean creator);
 
-		/** G04: TRIAL, TRIAL CHOOSE n, TRIAL STOP; @return what to tell them */
+		/** G04: TRIALS, TRIALS CHOOSE n, TRIALS STOP; @return what to tell them */
 		String trial(MOB mob, String what);
 	}
 

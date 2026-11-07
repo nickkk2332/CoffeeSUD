@@ -22,9 +22,10 @@ import java.util.*;
    limitations under the License.
 */
 /**
- * G04: TRIAL shows the escalating trial here (its round, what was chosen and
- * what is offered); TRIAL CHOOSE [n] takes an offered modifier and goes on;
- * TRIAL STOP banks what was won and ends the trial.
+ * G04: TRIALS shows the escalating trial here (its round, what was chosen and
+ * what is offered); TRIALS CHOOSE [n] takes an offered modifier and goes on;
+ * TRIALS STOP banks what was won and ends the trial.  The word is TRIALS, not
+ * TRIAL, so that a world's own TRIAL command (cm.command('trial')) keeps its word.
  */
 public class TrialCmd extends StdCommand
 {
@@ -32,7 +33,7 @@ public class TrialCmd extends StdCommand
 	{
 	}
 
-	private final String[] access = I(new String[] { "TRIAL" });
+	private final String[] access = I(new String[] { "TRIALS" });
 
 	@Override
 	public String[] getAccessWords()

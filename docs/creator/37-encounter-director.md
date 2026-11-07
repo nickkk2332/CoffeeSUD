@@ -148,9 +148,9 @@ A director with a `trial` offers a choice between rounds (fixture
   offers modifiers not yet chosen, in an order drawn from the encounters stream,
   and the phase waits: `The trial offers a choice before the next round: 1. Hardy
   foes. 2. A bounty.` Each round is offered once.
-- **`TRIAL`** shows the round, what was chosen and what is offered;
-  **`TRIAL CHOOSE n`** takes one and the next round begins at once, its foes
-  changed by every modifier chosen so far; **`TRIAL STOP`** ends the trial
+- **`TRIALS`** shows the round, what was chosen and what is offered;
+  **`TRIALS CHOOSE n`** takes one and the next round begins at once, its foes
+  changed by every modifier chosen so far; **`TRIALS STOP`** ends the trial
   there: the run's activity is banked for the participants (what was won is
   kept, [chapter 36](36-reward-escrow.md)), the completion and the modifiers'
   rewards are not paid, and the room's scripts hear `DIRECTOR_STOPPED`.
@@ -190,7 +190,7 @@ director rebinds them by instance ID and goes on.
 | Command | Who | What it does |
 | --- | --- | --- |
 | `OBJECTIVE` | players | The encounter here: its phase, warning, objective and each foe with its health, in plain text. No game time. |
-| `TRIAL`, `TRIAL CHOOSE n`, `TRIAL STOP` | players | An escalating trial here: what is chosen and offered; take an offer; end the trial and bank what was won. |
+| `TRIALS`, `TRIALS CHOOSE n`, `TRIALS STOP` | players | An escalating trial here: what is chosen and offered; take an offer; end the trial and bank what was won. |
 | `WORLD DIRECTORS LIST` / `CHECK` / `RELOAD` | builder, DEV=1 | Definitions, running directors; problems (a catalog mob, reward or activity that is not there, a role no earlier phase spawns); a fresh read. |
 | `WORLD DIRECTORS SHOW` | builder, DEV=1 | The encounter here with its run, scale, budgets used and notes. |
 | `WORLD MODULES REPORT` | builder, DEV=1 | Per encounter: runs, phases, actors spawned, removed and defeated, wipes, retreats, resets, completions, and the highest number of actors at once. |
