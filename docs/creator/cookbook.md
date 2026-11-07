@@ -697,8 +697,25 @@ ACH_TRIALS=EVENT="ACHIEVER" DISPLAY="Trials: the whole book" TITLE="*, Tried" RE
 
 Check: `ACHIEVEMENTS ALL` lists the visible entries (give them a common
 prefix, such as "Trials:"); a hidden entry appears once its `VISIBLEMASK` passes; each is
-earned once and kept as a tattoo, so a save keeps the book. A "book" view with a
-count of hidden entries, and personal records, are P13's extension.
+earned once and kept as a tattoo, so a save keeps the book.
+
+Name the book in `world/challenges.ini`, by a prefix of its achievements' IDs
+(or `ENTRIES="ACH_A,ACH_B"`), and `CHALLENGES` shows it as a book:
+
+```ini
+TRIALS=TITLE="Trials of the forge" PREFIX="ACH_TRIAL_"
+```
+
+```text
+Trials of the forge: 1 of 10 done; 3 hidden entries
+```
+
+`CHALLENGES trials` lists the entries you may see, done or not, and "...and 3
+hidden entries". Personal records go in a book too: `MPRECORD $n trials "warden
+time" 45 LOW` (or `cm.record(mob, 'trials', 'warden time', 45, true)`) keeps
+the first value and the best, each with when, saved with the character, and
+`CHALLENGES trials` lists them. WORLD CHECK names a book entry that is no
+achievement. Test: [p13-challenges.js](../../tools/fixtures/fixes/p13-challenges.js).
 
 ## 36. A familiar's sense, and a dust only it can name
 

@@ -332,6 +332,9 @@ public final class WorldCheck
 		// P15: talents.ini's lore and abilities
 		for(final String p : Talents.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P13: challenges.ini's books and entries
+		for(final String p : Challenges.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
 	}
 
 	/**

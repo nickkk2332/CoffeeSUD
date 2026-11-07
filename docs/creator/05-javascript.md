@@ -417,6 +417,7 @@ variables, like `@` in MOBPROG). A Room is named by its extended ID.
 | Member | Effect |
 | --- | --- |
 | `cm.command(name[, opts], fn)` | New game command; returns its ID (`JS` + upper-case name). |
+| `cm.record(mob, book, record, value, lower)` | A personal record in a challenge book: the first value and the best (lowest when `lower`), kept; returns `"first"`, `"best"` or `""`. |
 | `cm.uncommand(name)` | Remove it; true if there was one. |
 | `cm.verb(thing, phrase, fn)` | A phrase that works near one room, item or mob. |
 | `cm.unverb(thing, phrase)` | Remove it; returns how many. |

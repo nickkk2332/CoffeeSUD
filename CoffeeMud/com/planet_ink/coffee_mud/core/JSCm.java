@@ -808,6 +808,28 @@ public class JSCm
 	}
 
 	/**
+	 * P13: a personal record in a challenge book: its first value and its best
+	 * are kept, each with when.
+	 * @param mob whose record
+	 * @param book the book's ID or title
+	 * @param key the record's name
+	 * @param value the value
+	 * @param lower true when lower is better (a time), false when higher is
+	 * @return "first", "best" (a new best), or ""
+	 */
+	public String record(final MOB mob, final String book, final String key, final double value, final boolean lower)
+	{
+		try
+		{
+			return Challenges.record(mob, book, key, value, lower);
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.record: " + e.getMessage());
+		}
+	}
+
+	/**
 	 * A phrase that works near one thing only (not saved: register in init.js's onBoot).
 	 * @param thing the room, item or mob
 	 * @param phrase as 'pull lever': the first word the command's, the rest needed among what follows

@@ -17616,6 +17616,28 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return null;
 		}
+		case "MPRECORD": // P13: MPRECORD who book record value (LOW): a personal record, its first value and its best kept
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String book=varify(ctx,CMParms.getCleanBit(line,2)).trim();
+			final String key=varify(ctx,CMParms.getCleanBit(line,3)).trim();
+			final String val=varify(ctx,CMParms.getCleanBit(line,4)).trim();
+			final boolean lower=varify(ctx,CMParms.getPastBitClean(line,4)).trim().equalsIgnoreCase("LOW");
+			if((!(W instanceof MOB))||(book.length()==0)||(key.length()==0)||(!CMath.isNumber(val)))
+			{
+				logError(ctx,"MPRECORD","Syntax","MPRECORD who book record value (LOW): "+line);
+				return null;
+			}
+			try
+			{
+				Challenges.record((MOB)W,book,key,CMath.s_double(val),lower);
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPRECORD","RunTime",e.getMessage());
+			}
+			return null;
+		}
 		case "MPDIRECTOR": // G06: MPDIRECTOR START|RESET [room id]: the EncounterDirector of the room
 		{
 			final String w=varify(ctx,CMParms.getCleanBit(line,1)).trim().toUpperCase();
