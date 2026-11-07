@@ -127,9 +127,98 @@ public final class AbilityComposition
 	public static Compiled compiled(final MOB mob, final String id) throws IOException
 	{
 		final JSONObject bindings = field(state(mob), "loadouts");
-		final Compiled result = compile(mob, library(), binding(bindings, id));
-		if(!result.skill.id.equals(id))
+		final Compiled linked = compile(mob, library(), binding(bindings, id));
+		if(!linked.skill.id.equals(id))
 			throw new IOException("skill binding ID mismatch");
+		return withGear(mob, linked, null);
+	}
+
+	/** I05: a property that gives its wearer composed-skill supports (Prop_ComposeSupport) */
+	public interface SupportSource
+	{
+		/** @return the support IDs it gives */
+		List<String> heldSupports();
+	}
+
+	/** I05: a property that holds other effects for its host (Prop_ItemSlot: the socketed items' effects) */
+	public interface EffectHolder
+	{
+		/** @return the effects it holds */
+		List<com.planet_ink.coffee_mud.Abilities.interfaces.Ability> heldEffects();
+	}
+
+	/** the most supports a character's gear can add to one composed skill */
+	public static final int GEAR_SUPPORTS = 2;
+
+	/** I05: the supports the character's worn and wielded gear gives, socketed items' included */
+	public static List<String> gearSupports(final MOB mob)
+	{
+		final List<String> out = new ArrayList<String>();
+		for(int i = 0; i < mob.numItems(); i++)
+		{
+			final com.planet_ink.coffee_mud.Items.interfaces.Item I = mob.getItem(i);
+			if((I == null) || I.amWearingAt(com.planet_ink.coffee_mud.Items.interfaces.Wearable.IN_INVENTORY) || (I.container() != null))
+				continue;
+			for(final Enumeration<com.planet_ink.coffee_mud.Abilities.interfaces.Ability> e = I.effects(); e.hasMoreElements();)
+			{
+				final Object A = e.nextElement();
+				if(A instanceof SupportSource)
+					for(final String sid : ((SupportSource)A).heldSupports())
+						if(!out.contains(sid))
+							out.add(sid);
+				if(A instanceof EffectHolder)
+					for(final Object H : ((EffectHolder)A).heldEffects())
+						if(H instanceof SupportSource)
+							for(final String sid : ((SupportSource)H).heldSupports())
+								if(!out.contains(sid))
+									out.add(sid);
+			}
+		}
+		return out;
+	}
+
+	/**
+	 * I05: a composed skill with the supports the character's gear gives added
+	 * (at most GEAR_SUPPORTS, beyond the linked ones and the campaign limit);
+	 * a support that does not fit the skill is left out, and why is noted.
+	 */
+	private static Compiled withGear(final MOB mob, final Compiled linked, final List<String> why) throws IOException
+	{
+		final List<String> gear = gearSupports(mob);
+		if(gear.isEmpty())
+			return linked;
+		final Library lib = library();
+		final List<Definition> supports = new ArrayList<Definition>(linked.supports);
+		Compiled result = linked;
+		int added = 0;
+		for(final String sid : gear)
+		{
+			if(added >= GEAR_SUPPORTS)
+			{
+				if(why != null)
+					why.add(sid + ": your gear already gives " + GEAR_SUPPORTS + " supports");
+				break;
+			}
+			boolean already = false;
+			for(final Definition d : supports)
+				already = already || d.id.equals(sid);
+			if(already)
+				continue;
+			try
+			{
+				final Definition d = lib.latest(sid, "support");
+				final List<Definition> next = new ArrayList<Definition>(supports);
+				next.add(d);
+				result = CompositionDefinitions.compile(linked.skill, next);
+				supports.add(d);
+				added++;
+			}
+			catch(final IOException e)
+			{
+				if(why != null)
+					why.add(sid + ": " + e.getMessage());
+			}
+		}
 		return result;
 	}
 	public static String list(final MOB mob) throws IOException
@@ -280,7 +369,12 @@ public final class AbilityComposition
 	public static String show(final MOB mob, final String id) throws IOException
 	{
 		final Compiled c = compiled(mob, id);
-		return (OptionalModules.enabled(CombatRules.MODULE) ? CombatProfiles.describe(mob, c) : c.describe()) + "\nCampaign limits: "
+		final List<String> why = new ArrayList<String>();
+		final JSONObject bindings = field(state(mob), "loadouts");
+		withGear(mob, compile(mob, library(), binding(bindings, id)), why);
+		final List<String> gear = gearSupports(mob);
+		final String fromGear = gear.isEmpty() ? "" : "\nFrom your gear: " + gear + (why.isEmpty() ? "" : " (not used: " + String.join("; ", why) + ")");
+		return (OptionalModules.enabled(CombatRules.MODULE) ? CombatProfiles.describe(mob, c) : c.describe()) + fromGear + "\nCampaign limits: "
 			+ setting("max_supports", 0, 3) + " supports; " + setting("max_chains", 0, 8)
 			+ " chain hops; " + setting("event_budget", 1, 64) + " damage/secondary events per cast."
 			+ "\nCooldown remaining: " + remaining(mob, id) + " ticks. Engine damage adjustments still apply.";

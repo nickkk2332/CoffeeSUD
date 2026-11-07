@@ -155,6 +155,10 @@ optional `when_tags` and `condition` (`always`, `target_wounded`,
 `target_burning`, or `status:<ailment>` under a combat profile that declares
 the ailment, see [16](16-combat-profiles.md#ailments-guard-pools-and-leech)).
 Skills and supports may also carry `ailments` and `leech` for that chapter.
+Gear can add supports too: an item with `Prop_ComposeSupport SUPPORTS=id,id`,
+worn, wielded or held (or socketed in something worn), gives those supports to
+every composed skill they fit, beyond the linked ones and the campaign limit,
+at most two from gear; `COMPOSE SHOW` lists them under `From your gear`.
 The deterministic order is:
 
 1. Base values plus all `flat` modifiers.

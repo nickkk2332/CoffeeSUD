@@ -653,6 +653,14 @@ takes it out again, only while the blade is not worn and only if `REMOVABLE`.
 The gems are saved inside the host's text. Destroying the host destroys its
 gems with it.
 
+Give each slot its own type with a list (`TYPE="Gems,Gems,Runes"`): a gem goes
+only into an empty gem slot, a rune into the rune slot. `ONLOSS=KEEP` returns
+the gems to the owner when the host is destroyed; without it they are lost
+with it. A gem can carry a composed-skill support: give its filler
+`ADDS="Prop_ComposeSupport(SUPPORTS=example.burning)"`, and while the host is
+worn the wearer's composed skills get that support (`COMPOSE SHOW`: `From your
+gear`). Fixture: `i05-sockets.js`.
+
 ## 34. One guild, two associations, and a forbidden pair
 
 Give the organization types a category in the government file
