@@ -150,7 +150,7 @@ public class Skill_Compose extends StdAbility
 					return false;
 				}
 				if(args.size() >= 2 && args.get(0).equalsIgnoreCase("CAST"))
-					return cast(mob, args, givenTarget, asLevel);
+					return cast(mob, args, givenTarget, auto, asLevel);
 				// even scripted/auto calls pay costs and pass all gates
 				if(args.size() >= 3 && args.get(0).equalsIgnoreCase("COMPARE"))
 				{
@@ -175,7 +175,7 @@ public class Skill_Compose extends StdAbility
 			return false;
 		}
 	}
-	private boolean cast(final MOB mob, final List<String> args, final Physical givenTarget, final int asLevel) throws IOException
+	private boolean cast(final MOB mob, final List<String> args, final Physical givenTarget, final boolean auto, final int asLevel) throws IOException
 	{
 		if(CAST.get() != null)
 			throw new IOException("composed casts cannot recursively trigger another composed cast");
@@ -217,7 +217,7 @@ public class Skill_Compose extends StdAbility
 				NamedResources.spend(mob, resourceCosts, compiled.skill.id);
 			// paid with the native costs
 			AbilityComposition.cooldown(mob, compiled.skill.id, (int)Math.ceil(compiled.value("cooldown")));
-			if(!proficiencyCheck(mob, 0, false))
+			if(!proficiencyCheck(mob, 0, auto)) // a reaction (auto) is not rolled: it cannot fizzle
 			{
 				CombatProfiles.failed(mob,target,compiled,profile,"Native proficiency fizzle; cooldown retained.");
 				return maliciousFizzle(mob, target, "<S-NAME> fail(s) to use " + compiled.skill.name + ".");
@@ -249,19 +249,33 @@ public class Skill_Compose extends StdAbility
 				if(candidate != target && legal(mob, candidate, room))
 					targets.add(candidate);
 			}
+			// A20: a cast lands when at least one of its targets is hurt or killed by it
+			boolean landed = false;
 			for(final MOB victim : targets)
 			{
 				if(budget.left <= 0 || !legal(mob, victim, room))
 					continue;
+				final int before = victim.curState().getHitPoints();
 				if(profile == null)
 					hit(mob, victim, compiled, budget);
 				else
 					CombatProfiles.hit(mob, victim, this, compiled, profile, budget);
+				if(victim.amDead() || victim.amDestroyed() || (victim.curState().getHitPoints() < before))
+					landed = true;
 			}
-			// A15: gains come once the cast has resolved, the skill's then its supports'
+			// A15: gains come once the cast has resolved, the skill's then its supports'; A20: with gain_on hit, only
+			// when the cast landed, and a cast that missed every target resets the pools that reset on a miss
 			if(NamedResources.enabled())
-				for(final Map.Entry<String,Long> gain : compiled.resourceGains().entrySet())
-					NamedResources.gain(mob, gain.getKey(), gain.getValue().longValue(), compiled.skill.id);
+			{
+				if(landed || !compiled.gainsOnHit())
+					for(final Map.Entry<String,Long> gain : compiled.resourceGains().entrySet())
+						NamedResources.gain(mob, gain.getKey(), gain.getValue().longValue(), compiled.skill.id);
+				if(!landed)
+					NamedResources.event(mob, "miss", compiled.skill.id);
+			}
+			// A12: the caster sheds the ailments the cast cleanses
+			if(!compiled.cleanses().isEmpty())
+				Ailments.cleanse(mob, compiled.cleanses());
 			ProgressionTracks.cast(mob, compiled.skill.id);
 			// P01: a resolved composed cast
 			return true;

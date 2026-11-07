@@ -283,8 +283,11 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 		}
 		if(!spawned.add(p.id))
 			return; // spawned already in this run: never again
-		for(final Spawn s : p.spawns)
+		for(int si = 0; si < p.spawns.size(); si++)
 		{
+			final Spawn s = p.spawns.get(si);
+			// A24: a pack's traits, the same for all of it; each actor's own, picked within its budget
+			final String packKey = encounter + "#" + run; // the encounter's actors are one pack
 			for(int n = 0; n < s.count; n++)
 			{
 				if(!ModuleStats.reading(EncounterDirectors.FAMILY, encounter, "actors at once", alive() + 1) || (alive() >= d.budgetActors))
@@ -305,6 +308,21 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 					M.baseState().setHitPoints((int)Math.max(1, ((long)M.baseState().getHitPoints() * scale) / 100));
 					M.recoverMaxState();
 					M.resetToMaxState();
+				}
+				if(s.traits != null)
+				{
+					try
+					{
+						final List<String> mine = new ArrayList<String>(s.traits.pack);
+						mine.addAll(EliteTraits.pick(s.traits, s.traits.pack));
+						EliteTraits.apply(M, mine, packKey);
+						if(!mine.isEmpty())
+							note(M.Name() + " has " + mine);
+					}
+					catch(final IOException e)
+					{
+						note("traits for " + M.Name() + " not given: " + e.getMessage());
+					}
 				}
 				final Actor a = new Actor();
 				a.ref = InstanceIds.reference(M);
@@ -445,6 +463,7 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 			Expeditions.completed(host); // G01: an encounter in an expedition's instance completes it
 			note("run " + run + " complete");
 			ModuleStats.count(EncounterDirectors.FAMILY, encounter, "completions");
+			hook("DIRECTOR_COMPLETE");
 			return;
 		}
 		if(phase + 1 < d.phases.size())
@@ -512,9 +531,25 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 				}
 			}
 			tellRoom("The encounter is lost.");
+			hook("DIRECTOR_FAILED");
 			return;
 		}
 		resetEncounter(why);
+	}
+
+	/**
+	 * G06: the scripts here (the room, what is in it, its area) hear the end
+	 * of a run: SIGNAL_PROG DIRECTOR_COMPLETE or DIRECTOR_FAILED, with the
+	 * encounter's ID and the run as its arguments ($g), a participant as $n.
+	 */
+	protected void hook(final String signal)
+	{
+		if(host == null)
+			return;
+		final List<MOB> here = present();
+		final MOB actor = here.isEmpty() ? (host.numInhabitants() > 0 ? host.fetchInhabitant(0) : null) : here.get(0);
+		if(actor != null)
+			ScriptEvents.signal(ScriptEvents.hosts(host), signal, encounter + " " + run, actor, host, 0);
 	}
 
 	/** ends the run: the actors it spawned leave, and the encounter waits for a new one */

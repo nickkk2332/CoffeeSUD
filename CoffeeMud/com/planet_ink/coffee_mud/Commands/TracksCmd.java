@@ -54,8 +54,9 @@ public class TracksCmd extends StdCommand
 	{
 		try
 		{
-			if((words.size() == 4) && words.get(1).equalsIgnoreCase("CONTRIBUTE") && CMath.isLong(words.get(3)))
-				mob.tell(ProgressionTracks.contribute(mob, words.get(2).toLowerCase(), CMath.s_long(words.get(3))));
+			if((words.size() >= 4) && words.get(1).equalsIgnoreCase("CONTRIBUTE") && CMath.isLong(words.get(3)))
+				mob.tell(ProgressionTracks.contribute(mob, words.get(2).toLowerCase(), CMath.s_long(words.get(3)),
+					(words.size() > 4) ? CMParms.combine(words, 4) : null));
 			else
 			if((words.size() == 3) && words.get(1).equalsIgnoreCase("RESET"))
 			{

@@ -338,6 +338,14 @@ member.
 Characters who follow the leader also help fight ("Who follows the leader also
 helps them fight, unless AUTOASSIST is off", `HELP PARTY`).
 
+### Formation
+
+`FORMATION` shows the group's rows; `FORMATION name row` puts someone in a row
+(row 0 is the front line). The rows set how far each member starts from the foe
+in a fight ([chapter 29](29-combat-and-encounters.md), "Range"). A save keeps
+every character's and follower's row, and `PARTY LEAD` keeps them too: the new
+leader and the old one swap rows, and everyone else keeps theirs.
+
 ### Script hooks
 
 | Hook | Fires |

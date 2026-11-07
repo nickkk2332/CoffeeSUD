@@ -228,6 +228,55 @@ public final class AbilityComposition
 
 		}
 	}
+	/**
+	 * A19: the character's chosen skills and their linked supports, as a copy
+	 * (a loadout keeps it), or null while the module is off.
+	 */
+	public static JSONObject bindings(final MOB mob)
+	{
+		try
+		{
+			if(!OptionalModules.enabled(MODULE))
+				return null;
+			return ModuleDefinitions.parse(ModuleDefinitions.json(field(state(mob), "loadouts")));
+		}
+		catch(final IOException e)
+		{
+			return null;
+		}
+	}
+
+	/**
+	 * A19: checks that a set of chosen skills and supports could be used now:
+	 * each compiles, each definition is one the character may use.
+	 * @throws IOException with the reason
+	 */
+	public static void checkBindings(final MOB mob, final JSONObject bindings) throws IOException
+	{
+		require();
+		final Library lib = library();
+		for(final String id : bindings.keySet())
+		{
+			final Compiled c = compile(mob, lib, binding(bindings, id));
+			access(mob, c.skill);
+			for(final Definition d : c.supports)
+				access(mob, d);
+		}
+	}
+
+	/**
+	 * A19: puts back a set of chosen skills and supports, all or none.
+	 * @throws IOException with the reason, having changed nothing
+	 */
+	public static void setBindings(final MOB mob, final JSONObject bindings) throws IOException
+	{
+		synchronized(mob)
+		{
+			checkBindings(mob, bindings);
+			write(mob, state(mob), "loadouts", ModuleDefinitions.parse(ModuleDefinitions.json(bindings)));
+		}
+	}
+
 	public static String show(final MOB mob, final String id) throws IOException
 	{
 		final Compiled c = compiled(mob, id);

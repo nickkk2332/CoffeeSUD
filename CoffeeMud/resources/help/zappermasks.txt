@@ -94,7 +94,7 @@
 +WEIGHT X (<WORD> those weighing at most X)
 -ARMOR/-DAMAGE/-ATTACK X (<WORD> armor/damage/attack bonus of at least X)
 +ARMOR/+DAMAGE/+ATTACK X (<WORD> armor/damage/attack bonus of at most X)
-+-WEAPONTYPE, +-WEAPONCLASS, and +-WEAPONAMMO for wielded weaponchecks
++-WEAPONTYPE, +-WEAPONCLASS, and +-WEAPONAMMO for wielded weaponchecks (WEAPONCLASS: one wielding nothing counts as NATURAL)
 -WORNON "+TORSO" etc.. (<WORD> only items wearable on +locations)
 +WORNON "-NECK" etc.. (Do not <WORD> items wearable on -locations)
 -DISPOSITION "+ISHIDDEN" etc.. (<WORD> only with +dispositions)

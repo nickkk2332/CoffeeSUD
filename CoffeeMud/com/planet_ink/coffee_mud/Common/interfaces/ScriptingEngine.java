@@ -960,6 +960,7 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPCLANRELATION", "MPCONQUER",
 		"MPSAIL", "MPANCHOR", "MPMOVEVESSEL", "MPBOARD", "MPHITCH", "MPUNHITCH",
         "MPLORE", "MPJOURNAL", "MPNARRATE", "MPLEARNLANG", "MPSAYIN",
+		"MPDIRECTOR", // G06
 	};
 
 	/**

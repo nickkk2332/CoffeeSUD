@@ -49,6 +49,9 @@ public final class NamedResources
 	public static final String[] CLOCKS	= { "turns", "ticks", "hours" };
 
 	/** one pool or charge definition */
+	/** A20: the events a pool can reset on */
+	public static final String[] RESETS = { "miss", "combat_end" };
+
 	public static final class Pool
 	{
 		public final boolean	charges;
@@ -59,10 +62,12 @@ public final class NamedResources
 		public final long		every;
 		public final String		clock;
 		public final boolean	reservable;
+		/** A20: what sets the pool back to its start: "miss" (a composed cast that hurt no one), "combat_end" */
+		public final Set<String> reset;
 
 		Pool(final Node n) throws IOException
 		{
-			n.allow("schema", "id", "version", "title", "kind", "max", "start", "change", "reservable");
+			n.allow("schema", "id", "version", "title", "kind", "max", "start", "change", "reservable", "reset");
 			charges = n.choice("kind", "pool", "pool", "charges").equals("charges");
 			max = n.integer("max", 1, charges ? 10 : 1000000);
 			start = n.integer("start", 0, 0, max);
@@ -83,11 +88,30 @@ public final class NamedResources
 				clock = c.choice("clock", "ticks", CLOCKS);
 			}
 			reservable = n.bool("reservable", false);
+			final Set<String> r = new TreeSet<String>();
+			for(final String on : n.strings("reset", RESETS.length, false))
+			{
+				if(!Arrays.asList(RESETS).contains(on))
+					throw n.error("reset", "must name only " + String.join(", ", RESETS) + ", not " + on);
+				r.add(on);
+			}
+			reset = Collections.unmodifiableSet(r);
 		}
 
 		public boolean changes()
 		{
 			return amount != 0;
+		}
+
+		/** A20: when the pool resets, in words */
+		public String resetText()
+		{
+			final List<String> on = new ArrayList<String>();
+			if(reset.contains("miss"))
+				on.add("on a miss");
+			if(reset.contains("combat_end"))
+				on.add("when a fight ends");
+			return String.join(" and ", on);
 		}
 
 		/** the change in words */
@@ -213,6 +237,48 @@ public final class NamedResources
 		OptionalModules.put(MODULE, OptionalModules.character(mob), rec);
 	}
 
+	/**
+	 * A14: what holds part of a pool while it lasts: Prop_Reserve, on the
+	 * character (an aura, a stance) or on a follower of theirs (a minion).
+	 */
+	public interface Reserver
+	{
+		/** @return the pool it reserves */
+		String reservedPool();
+
+		/** @return how much */
+		long reservedAmount();
+
+		/** @return its name, as RESOURCES shows it */
+		String reservationName();
+
+		/** @return true when it reserves from the one its host follows (or was summoned by) */
+		boolean reservesFromLeader();
+
+		/** @return the game time it was made (its place in line), 0 if not yet */
+		long reservedSince();
+
+		/** @return what it is, without its state: the same reservation always has the same spec */
+		String reservationSpec();
+	}
+
+	/** A14: one named reservation of a pool, and whether it fits now */
+	public static final class Reservation
+	{
+		public final String		name;
+		public final long		amount;
+		public final boolean	active;
+		public final Reserver	holder;
+
+		Reservation(final Reserver holder, final boolean active)
+		{
+			this.holder = holder;
+			this.name = holder.reservationName();
+			this.amount = holder.reservedAmount();
+			this.active = active;
+		}
+	}
+
 	/** one pool of a character, settled to now */
 	public static final class Held
 	{
@@ -222,8 +288,15 @@ public final class NamedResources
 		public final long			max;
 		final long					at;
 		final boolean				changed;
+		/** A14: the named reservations held now, in order; those that do not fit are suspended */
+		public final List<Reservation> named;
 
 		Held(final Entry<Pool> def, final long value, final long reserved, final long max, final long at, final boolean changed)
+		{
+			this(def, value, reserved, max, at, changed, Collections.<Reservation>emptyList());
+		}
+
+		Held(final Entry<Pool> def, final long value, final long reserved, final long max, final long at, final boolean changed, final List<Reservation> named)
 		{
 			this.def = def;
 			this.value = value;
@@ -231,12 +304,25 @@ public final class NamedResources
 			this.max = max;
 			this.at = at;
 			this.changed = changed;
+			this.named = named;
+		}
+
+		/** A14: what the named reservations that fit hold */
+		public long reservedByName()
+		{
+			long n = 0;
+			for(final Reservation r : named)
+			{
+				if(r.active)
+					n += r.amount;
+			}
+			return n;
 		}
 
 		/** what can be spent: the value less what is reserved */
 		public long available()
 		{
-			return Math.max(0, value - reserved);
+			return Math.max(0, value - reserved - reservedByName());
 		}
 
 		JSONObject record()
@@ -247,6 +333,8 @@ public final class NamedResources
 			o.put("at", Long.valueOf(at));
 			if(reserved > 0)
 				o.put("reserved", Long.valueOf(reserved));
+			if(def.value.changes() && (at > reading(def.value.clock)))
+				o.put("held", Boolean.TRUE);
 			return o;
 		}
 
@@ -255,8 +343,17 @@ public final class NamedResources
 			final StringBuilder s = new StringBuilder(def.title).append(def.value.charges ? " charges: " : ": ").append(value).append(" of ").append(max);
 			if(reserved > 0)
 				s.append(", ").append(reserved).append(" reserved");
+			final List<String> on = new ArrayList<String>(), off = new ArrayList<String>();
+			for(final Reservation r : named)
+				(r.active ? on : off).add(r.name + " " + r.amount);
+			if(on.size() > 0)
+				s.append(", reserved: ").append(String.join(", ", on));
+			if(off.size() > 0)
+				s.append(", suspended (not enough): ").append(String.join(", ", off));
 			if(def.value.changes())
 				s.append(" (").append(def.value.changeText()).append(")");
+			if(!def.value.reset.isEmpty())
+				s.append(" (back to ").append(def.value.start).append(" ").append(def.value.resetText()).append(")");
 			return s.toString();
 		}
 	}
@@ -272,7 +369,7 @@ public final class NamedResources
 		final Library<Pool> lib = definitions();
 		Entry<Pool> def;
 		long value, at, reserved = 0;
-		boolean changed = false;
+		boolean changed = false, held = false;
 		if(rec == null)
 		{
 			def = lib.latest(id);
@@ -305,6 +402,7 @@ public final class NamedResources
 			}
 			value = ((Number)rec.get("value")).longValue();
 			at = ((Number)rec.get("at")).longValue();
+			held = Boolean.TRUE.equals(rec.get("held"));
 			if(rec.get("reserved") instanceof Number)
 				reserved = ((Number)rec.get("reserved")).longValue();
 		}
@@ -314,8 +412,12 @@ public final class NamedResources
 			final long now = reading(def.value.clock);
 			if(now < at)
 			{
-				at = now; // the clock went back, as after switching clocks; nothing is owed
-				changed = true;
+				// A13: held (a recharge delay after a hit): the change waits until then
+				if(!held)
+				{
+					at = now; // the clock went back, as after switching clocks; nothing is owed
+					changed = true;
+				}
 			}
 			else
 			{
@@ -346,7 +448,90 @@ public final class NamedResources
 			reserved = value;
 			changed = true;
 		}
-		return new Held(def, value, reserved, max, at, changed);
+		return new Held(def, value, reserved, max, at, changed, live(mob, id, def.value.reservable ? (value - reserved) : -1));
+	}
+
+	/**
+	 * A14: the named reservations of a pool, read from what holds them now
+	 * (nothing is stored, so none can outlive its holder): the character's
+	 * own, then their followers' in order.  Each fits while there is room,
+	 * and one that does not is suspended until there is.
+	 */
+	private static List<Reservation> live(final MOB mob, final String id, final long room)
+	{
+		final List<Reserver> holders = new ArrayList<Reserver>();
+		if(mob == null)
+			return Collections.<Reservation>emptyList();
+		for(final Enumeration<Ability> e = mob.effects(); e.hasMoreElements();)
+		{
+			final Ability A = e.nextElement();
+			if((A instanceof Reserver) && (!((Reserver)A).reservesFromLeader()) && id.equals(((Reserver)A).reservedPool()))
+				holders.add((Reserver)A);
+		}
+		for(int f = 0; f < mob.numFollowers(); f++)
+		{
+			final MOB F = mob.fetchFollower(f);
+			if((F == null) || (F == mob) || F.amDestroyed())
+				continue;
+			for(final Enumeration<Ability> e = F.effects(); e.hasMoreElements();)
+			{
+				final Ability A = e.nextElement();
+				if((A instanceof Reserver) && ((Reserver)A).reservesFromLeader() && id.equals(((Reserver)A).reservedPool()))
+					holders.add((Reserver)A);
+			}
+		}
+		if(holders.isEmpty())
+			return Collections.<Reservation>emptyList();
+		// in the order they were made: a newer one never pushes out an older one
+		final List<Reserver> inOrder = new ArrayList<Reserver>(holders);
+		Collections.sort(inOrder, new Comparator<Reserver>()
+		{
+			@Override
+			public int compare(final Reserver a, final Reserver b)
+			{
+				final long x = (a.reservedSince() <= 0) ? Long.MAX_VALUE : a.reservedSince();
+				final long y = (b.reservedSince() <= 0) ? Long.MAX_VALUE : b.reservedSince();
+				return (x < y) ? -1 : (x > y) ? 1 : (holders.indexOf(a) - holders.indexOf(b));
+			}
+		});
+		holders.clear();
+		holders.addAll(inOrder);
+		final List<Reservation> out = new ArrayList<Reservation>();
+		long left = room;
+		for(final Reserver R : holders)
+		{
+			final boolean fits = (left >= 0) && (R.reservedAmount() <= left);
+			if(fits)
+				left -= R.reservedAmount();
+			out.add(new Reservation(R, fits));
+		}
+		return out;
+	}
+
+	/**
+	 * A14: whether a reservation fits now; false when the pool is not the
+	 * character's, the module is off, or there is not enough.
+	 */
+	public static boolean fits(final MOB owner, final Reserver R)
+	{
+		if((owner == null) || (R == null) || (!enabled()))
+			return false;
+		try
+		{
+			final Held h = held(owner, R.reservedPool());
+			if(h == null)
+				return false;
+			for(final Reservation r : h.named)
+			{
+				if(r.holder == R)
+					return r.active;
+			}
+		}
+		catch(final IOException e)
+		{
+			return false;
+		}
+		return false;
 	}
 
 	private static JSONObject recordOf(final JSONObject pools, final String id) throws IOException
@@ -399,6 +584,74 @@ public final class NamedResources
 		store(mob, pools);
 		ModuleStats.add(FAMILY, id, "gained", to - h.value);
 		return to - h.value;
+	}
+
+	/**
+	 * A13: holds a pool's change for a while (a defense pool's recharge delay
+	 * after a hit): it resumes that many of its clock's units from now.
+	 */
+	public static synchronized void delay(final MOB mob, final String id, final long units) throws IOException
+	{
+		require();
+		if(units <= 0)
+			return;
+		final JSONObject pools = ledger(mob);
+		final JSONObject rec = recordOf(pools, id);
+		if(rec == null)
+			return;
+		final Held h = settle(mob, id, rec);
+		if(!h.def.value.changes())
+			return;
+		final long until = reading(h.def.value.clock) + units;
+		pools.put(id, new Held(h.def, h.value, h.reserved, h.max, Math.max(h.at, until), true).record());
+		store(mob, pools);
+	}
+
+	/**
+	 * A20: sets every pool of a character that resets on this event back to its start,
+	 * keeping what is reserved within it.
+	 * @return the pools that changed
+	 */
+	public static synchronized List<String> event(final MOB mob, final String event, final String cause) throws IOException
+	{
+		final List<String> changed = new ArrayList<String>();
+		if(!enabled() || (mob == null))
+			return changed;
+		final JSONObject pools = ledger(mob);
+		for(final String id : new TreeSet<String>(pools.keySet()))
+		{
+			final Held h;
+			try
+			{
+				h = settle(mob, id, recordOf(pools, id));
+			}
+			catch(final IOException e)
+			{
+				continue; // a pool whose definition is gone keeps its record
+			}
+			if(!h.def.value.reset.contains(event) || (h.value == Math.min(h.max, h.def.value.start)))
+				continue;
+			final long to = Math.min(h.max, h.def.value.start);
+			pools.put(id, new Held(h.def, to, Math.min(h.reserved, to), h.max, h.at, true).record());
+			ModuleStats.count(FAMILY, id, "reset on " + event);
+			changed.add(id);
+		}
+		if(!changed.isEmpty())
+			store(mob, pools);
+		return changed;
+	}
+
+	/** A20: a fight ended for this character (it no longer has anyone to fight) */
+	public static void combatEnded(final MOB mob)
+	{
+		try
+		{
+			event(mob, "combat_end", "combat");
+		}
+		catch(final IOException e)
+		{
+			// a character whose pools cannot be read keeps them as they are
+		}
 	}
 
 	/** adds to a pool, for scripts */
@@ -641,6 +894,8 @@ public final class NamedResources
 					s.append(", ").append(e.value.changeText());
 				if(e.value.reservable)
 					s.append(", reservable");
+				if(!e.value.reset.isEmpty())
+					s.append(", back to ").append(e.value.start).append(" ").append(e.value.resetText());
 			}
 			if(!lib.errors.isEmpty())
 				s.append("\n").append(String.join("\n", lib.errors));

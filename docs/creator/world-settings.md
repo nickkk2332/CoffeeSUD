@@ -82,6 +82,8 @@ read the comments in [coffeemud.ini](../../CoffeeMud/coffeemud.ini), the
 - `DAYSCLANDEATH`
 - `DAYSCLANOVERTHROW`
 - `DISCOVERYXP`
+- `LOADOUTS`
+- `LOADOUTCOST`
 - `AGEDISEASES`
 - `NEWCHARLEVEL`
 - `NEWCHARXP`

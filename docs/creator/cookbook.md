@@ -558,3 +558,136 @@ the module to check suspension preserves rolls/receipts. The
 [complete guide](17-item-modifiers-crafting.md) supplies schemas, limits and
 the post-commit itemCrafted event. This family uses numeric profile deltas and
 plain resource costs; arbitrary effect-layer ownership remains future work.
+
+## 30. A guarded shrine that blesses whoever claims it
+
+Setup: a shrine room. A guardian mob with the behavior `ObjectGuardian` and the
+parameter `SENTINAL`: nobody takes anything from the room while it stands. A
+gettable item, `a shrine ember`, with two properties.
+
+`Prop_Invokable`, the blessing: held and used, it casts a timed spell once, and
+the shrine renews it each game day.
+
+```text
+VERB=CLAIM SPELLS=Prayer_Bless TARGET=SELF CHARGES=1 RECHARGE=DAILY REQUIRE=HELD MSG="<S-NAME> raise(s) <T-NAME>, and warmth spills over <S-HIM-HER>." EMPTYMSG="The ember is cold until tomorrow."
+```
+
+`Prop_LocationBound`, so the ember cannot leave the shrine's area:
+
+```text
+AREA
+```
+
+Check: as an ordinary character, `GET ember` is refused while the guardian
+stands. Defeat it, `GET ember`, `CLAIM ember`: the blessing is a normal timed
+effect and runs out. `CLAIM ember` again is refused until the next game day.
+Save and restore: the ember keeps its charge state (`LEFT=`) and its recharge.
+The ember cannot be carried out of the area. For a shrine with no item, the
+[once-a-day shrine](28-mobprog-functions.md#a-shrine-that-blesses-once-per-game-day)
+script does the same from a room's `GREET_PROG`.
+
+## 31. Weapon mastery and an egg that hatches
+
+A **weapon-family mastery**: an achievement counting kills made with a sword
+(`PLAYERMASK` is tested on the killer, so `-WEAPONCLASS` is what they wield),
+in `achievements.ini` under `[PLAYER]`:
+
+```ini
+ACH_BLADEADEPT=EVENT="KILLS" DISPLAY="Win 25 fights with a sword" TITLE="*, Blade Adept" REWARDS="" NUM=25 ZAPPERMASK="-LEVEL +>=0" PLAYERMASK="-WEAPONCLASS +SWORD"
+```
+
+A `KILLS` achievement must have a `ZAPPERMASK` (on the slain); `-LEVEL +>=0`
+counts every kill.
+
+`ACHIEVEMENTS` shows the count so far (`ACHIEVEMENTS NOW`), and the title comes
+once. Under `[ACCOUNT]` instead, it counts for the whole profile.
+
+An **incubator**: an egg that grows while held in fights. Put
+`Prop_ItemGrowth` on a GenItem `a warm egg` (it counts the kills of whoever
+holds or wears it, not of one who only carries it):
+
+```text
+GAIN=KILL STAGES="5:NAME='a cracking egg' DISPLAY='A cracking egg twitches here.';12:NAME='a hatchling drake' DISPLAY='A hatchling drake curls here.' PROPS=Prop_HaveAdjuster(STR+1)" MSG="$p changes!" BIND=CHARACTER
+```
+
+Check: `HOLD egg`, kill five things, and its name changes; `IDENTIFY`
+shows its stage and how far the next one is. Growth and stage are kept with the
+item, so they survive a save. The [item-mastery track](39-progression-tracks.md)
+is the module version, with milestones and a tree.
+
+## 32. A collection with hints
+
+Six entries and a completion, as achievements. Each entry counts the first time
+a matching item is picked up; the display text is the hint.
+
+```ini
+ACH_SHELL_1=EVENT="GOTITEM" DISPLAY="Tide shell: found where the river meets the sea" TITLE="" REWARDS="" NUM=1 ITEMMASK="-NAMES \"+a tide shell\""
+ACH_SHELL_2=EVENT="GOTITEM" DISPLAY="Ember shell: kept by the furnace warden" TITLE="" REWARDS="" NUM=1 ITEMMASK="-NAMES \"+an ember shell\""
+...
+ACH_SHELLS=EVENT="ACHIEVER" DISPLAY="The full shell collection" TITLE="*, Shell Keeper" REWARDS="" ACHIEVEMENTLIST="ACH_SHELL_1,ACH_SHELL_2,ACH_SHELL_3,ACH_SHELL_4,ACH_SHELL_5,ACH_SHELL_6"
+```
+
+Check: `ACHIEVEMENTS ALL` lists the entries still to find with their hints;
+picking up a shell marks its entry once; once all six are marked, the
+completion comes at the engine's next achievement check (shortly after, or at
+once when the player types `ACHIEVEMENTS`). Tell
+the collectable copies from ordinary ones by name or by a tag in the mask. The
+completion reward is optional, so missing it costs nothing else.
+
+## 33. Sockets for gems
+
+The host has `Prop_ItemSlot`; each gem has `Prop_ItemSlotFiller` with the same
+`TYPE`. The host gains the gems' effects while they are in it.
+
+```text
+NUM=2 TYPE=Gems REMOVABLE=TRUE
+```
+
+```text
+TYPE=Gems ADDS="Prop_HaveAdjuster(STR+1)"
+```
+
+Check: `PUT ruby INTO blade` fills a slot (a gem of another `TYPE` is refused,
+and so is a third gem). `LOOK blade` lists the slots. `REMOVE ruby FROM blade`
+takes it out again, only while the blade is not worn and only if `REMOVABLE`.
+The gems are saved inside the host's text. Destroying the host destroys its
+gems with it.
+
+## 34. One guild, two associations, and a forbidden pair
+
+Give the organization types a category in the government file
+(`CATEGORY="GUILD"`, `CATEGORY="ASSOC"`), and cap memberships per category in
+`coffeemud.ini` or `world.ini`:
+
+```ini
+MAXCLANCATS=GUILD 1, ASSOC 2, NPCGUILD 10, 1
+```
+
+A character can then be in one guild and two associations at once. To forbid a
+pair, give one type's `REQUIREDMASK` (or one clan's `JOINMASK`) a clan mask:
+
+```text
++CLAN "-The Night Hand"
+```
+
+Check: joining a second guild is refused; a third association is refused; a
+member of the Night Hand cannot join the type with that mask. Grants follow
+membership: a government's `ABILITIES` and `EFFECTS` by clan level are
+recomputed from the clans a character is in now, so leaving one takes away its
+automatic grants. Skills a character learned through a clan stay learned.
+
+## 35. A challenge book with hidden entries
+
+Ten achievements, some visible and some only once a condition is met, and one
+completion. `VISIBLEMASK` hides an entry from those who do not pass it:
+
+```ini
+ACH_TRIAL_1=EVENT="KILLS" DISPLAY="Trials: defeat the furnace warden" TITLE="" REWARDS="" NUM=1 ZAPPERMASK="-NAMES \"+the furnace warden\""
+ACH_TRIAL_7=EVENT="KILLS" DISPLAY="Trials: defeat the warden without armor" TITLE="" REWARDS="" NUM=1 ZAPPERMASK="-NAMES \"+the furnace warden\"" VISIBLEMASK="-TATTOOS +ACH_TRIAL_1"
+ACH_TRIALS=EVENT="ACHIEVER" DISPLAY="Trials: the whole book" TITLE="*, Tried" REWARDS="" ACHIEVEMENTLIST="ACH_TRIAL_1,ACH_TRIAL_2,ACH_TRIAL_3,ACH_TRIAL_4,ACH_TRIAL_5,ACH_TRIAL_6,ACH_TRIAL_7,ACH_TRIAL_8,ACH_TRIAL_9,ACH_TRIAL_10"
+```
+
+Check: `ACHIEVEMENTS ALL` lists the visible entries (give them a common
+prefix, such as "Trials:"); a hidden entry appears once its `VISIBLEMASK` passes; each is
+earned once and kept as a tattoo, so a save keeps the book. A "book" view with a
+count of hidden entries, and personal records, are P13's extension.

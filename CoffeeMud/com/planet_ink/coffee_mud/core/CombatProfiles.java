@@ -95,11 +95,54 @@ public final class CombatProfiles
 		OptionalModules.configure(MODULE, "profile", pin);
 		return "Selected " + current().key() + " for this campaign; SAVE preserves the exact pin. Existing burns retain their own profile.";
 	}
+	/**
+	 * A12, A13: compositions naming an ailment no profile declares, and a
+	 * guard pool that is not installed.
+	 */
+	public static List<String> checkAilments(final Library profiles)
+	{
+		final List<String> out = new ArrayList<String>();
+		final Set<String> known = new TreeSet<String>();
+		for(final Profile p : profiles.profiles.values())
+		{
+			known.addAll(p.ailments.keySet());
+			if(!p.guardPool.isEmpty())
+			{
+				try
+				{
+					if(!NamedResources.load().has(p.guardPool))
+						out.add(p.path + ": /guard/pool: no pool " + p.guardPool + " is installed in pools/");
+				}
+				catch(final Exception e)
+				{
+					out.add(p.path + ": /guard/pool: the pools cannot be read: " + e.getMessage());
+				}
+			}
+		}
+		for(final CompositionDefinitions.Definition d : CompositionDefinitions.load(ModuleContent.world()).definitions.values())
+		{
+			final Set<String> named = new TreeSet<String>(d.buildup.keySet());
+			named.addAll(d.consumes);
+			named.addAll(d.cleanses);
+			for(final String a : named)
+				if(!known.contains(a))
+					out.add(d.path + ": /ailments: no combat profile declares the ailment " + a);
+		}
+		return out;
+	}
 	public static String list() throws IOException
 	{
 		final StringBuilder out = new StringBuilder();
 		for(final Profile p : definitions().profiles.values())
+		{
 			out.append(p.key()).append(" - ").append(p.title).append(" (conversion: ").append(p.conversion).append(")\n");
+			for(final CombatRules.Ailment a : p.ailments.values())
+				out.append("  ailment ").append(a.describe()).append("\n");
+			if(!p.guardPool.isEmpty())
+				out.append("  guard pool ").append(p.guardPool).append(", spent before hit points; its recharge waits ").append(p.guardDelay).append(" after a hit\n");
+			if(p.leechCap > 0)
+				out.append("  life leech at most ").append(p.leechCap).append(" a tick\n");
+		}
 		return out.length() == 0 ? "No authored combat profiles." : out.toString();
 	}
 	public static final class Collected
@@ -295,6 +338,7 @@ public final class CombatProfiles
 			conditions.add("target_wounded");
 		if(target.fetchEffect("CompositionBurn") != null)
 			conditions.add("target_burning");
+		conditions.addAll(Ailments.conditions(target)); // A12: status:<ailment>
 		lines.add("Target conditions: " + conditions);
 		final Offense offense = CombatRules.offense(c, conditions, cast.profile.conversion);
 		lines.addAll(offense.lines);
@@ -304,7 +348,8 @@ public final class CombatProfiles
 		if(resolved.blocked)
 			AbilityTriggers.blocked(target, caster, c.skill.id);
 		// A03: the blocker's reactions, after this cast
-		boolean hurt = false, announced = true;
+		boolean hurt = false, announced = true, guarded = false;
+		long removed = 0;
 		if(!resolved.hit || resolved.blocked && cast.profile.blockReduction >= 100)
 		{
 			budget.take();
@@ -322,9 +367,18 @@ public final class CombatProfiles
 					lines.add(type + ": event budget exhausted; not delivered");
 					continue;
 				}
-				final int damage = resolved.damage.get(type).intValue();
+				int damage = resolved.damage.get(type).intValue();
 				if(damage <= 0)
 					continue;
+				// A13: the guard pool takes what it can before hit points (the world's own absorbs come next, in the damage message)
+				if(!cast.profile.guardPool.isEmpty() && legal(caster, target, room))
+				{
+					final int taken = guard(target, cast.profile, damage, !guarded, lines, type);
+					guarded = true;
+					damage -= taken;
+					if(damage <= 0)
+						continue;
+				}
 				if(!OptionalModules.enabled(MODULE) || !legal(caster, target, room))
 				{
 					lines.add(type + ": profile disabled or participant unavailable/no longer legal; not delivered");
@@ -340,7 +394,31 @@ public final class CombatProfiles
 				final Receipt receipt = post(caster, target, tool, damage, MESSAGES[i], WEAPONS[i], c.skill.name + " <DAMAGE> <T-NAME>!");
 				lines.add(receipt.describe(type));
 				hurt |= receipt.applied > 0;
+				removed += Math.max(0, receipt.applied);
 			}
+		// A12: a landed hit builds up its ailments and consumes the statuses it names
+		if(hurt && !c.buildup().isEmpty() || !c.consumes().isEmpty())
+		{
+			if(hurt && (target.location() == room) && !target.amDead() && !target.amDestroyed())
+			{
+				lines.addAll(Ailments.consume(target, c.consumes()));
+				lines.addAll(Ailments.build(target, cast.profile, c.buildup()));
+			}
+			else
+				lines.add("Ailments: none, the hit removed no hit points or the target is gone.");
+		}
+		// A13: life leech, over time, at most the profile's cap a tick
+		if(hurt && (c.leech() > 0))
+		{
+			if(cast.profile.leechCap <= 0)
+				lines.add("Leech: the profile allows none (leech.cap_per_tick is 0).");
+			else
+			{
+				final long back = Math.round(removed * c.leech() / 100.0);
+				Ailments.leech(caster, back, cast.profile.leechCap);
+				lines.add("Leech: " + back + " of " + removed + " hit points removed come back, at most " + cast.profile.leechCap + " a tick.");
+			}
+		}
 		final Map<String,Double> values = c.values(conditions);
 		if(hurt && legal(caster, target, room) && values.get("burn_damage") >= .5 && values.get("burn_ticks") >= 1)
 		{
@@ -363,6 +441,38 @@ public final class CombatProfiles
 			}
 		}
 		record(caster, target, cast.profile, "hit", lines);
+	}
+	/**
+	 * A13: the profile's guard pool (a named resource) takes what it can of a
+	 * component before hit points; any hit holds its recharge for the delay.
+	 * @return how much it took
+	 */
+	private static int guard(final MOB target, final Profile p, final int damage, final boolean first, final List<String> lines, final String type)
+	{
+		if(!NamedResources.enabled())
+		{
+			lines.add(type + ": guard pool " + p.guardPool + " not used (named resources are off)");
+			return 0;
+		}
+		try
+		{
+			final NamedResources.Held h = NamedResources.held(target, p.guardPool);
+			if(h == null)
+				return 0;
+			final int take = (int)Math.min(damage, h.available());
+			if(take > 0)
+				NamedResources.spend(target, p.guardPool, take, "guard");
+			if(first && (p.guardDelay > 0))
+				NamedResources.delay(target, p.guardPool, p.guardDelay);
+			lines.add(type + ": guard pool " + h.def.title + " took " + take + " of " + damage + " (" + (h.available() - take) + " left)"
+				+ ((first && (p.guardDelay > 0)) ? "; its recharge waits " + p.guardDelay : ""));
+			return take;
+		}
+		catch(final IOException e)
+		{
+			lines.add(type + ": guard pool " + p.guardPool + " not used: " + e.getMessage());
+			return 0;
+		}
 	}
 	/** The burn stores offense and the profile pin; target defenses are sampled each tick. False ends it. */
 	public static boolean burn(final MOB caster, final MOB target, final Ability tool, final int amount, final JSONObject pin, final double penetration)

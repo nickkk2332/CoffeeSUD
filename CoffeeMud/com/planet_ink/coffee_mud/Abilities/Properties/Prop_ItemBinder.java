@@ -148,62 +148,16 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 			switch(msg.targetMinor())
 			{
 			case CMMsg.TYP_HOLD:
-				break;
 			case CMMsg.TYP_WEAR:
-				break;
 			case CMMsg.TYP_WIELD:
-				break;
 			case CMMsg.TYP_GET:
 			case CMMsg.TYP_EAT:
 			case CMMsg.TYP_DRINK:
-				if(this.boundToName.length()>0)
+				// once bound, only those it is bound to may take, use or put it on
+				if((this.boundToName.length()>0) && (!allows(msg.source())))
 				{
-					boolean zap = true;
-					switch(to)
-					{
-					case NOONE:
-						zap = false;
-						break;
-					case CHARACTER:
-						if(this.boundToName.equals(msg.source().Name()))
-							zap=false;
-						break;
-					case PLAYER:
-						if((this.boundToName.equals(msg.source().Name()))
-						||(!msg.source().isPlayer()))
-							zap=false;
-						break;
-					case NPC:
-						if((this.boundToName.equals(msg.source().Name()))
-						||(msg.source().isPlayer()))
-							zap=false;
-						break;
-					case GROUP:
-					{
-						final List<String> names=CMParms.parse(this.boundToName);
-						if(names.contains(msg.source().Name()))
-							zap=false;
-						break;
-					}
-					case ACCOUNT:
-						if((msg.source().playerStats()!=null)
-						&&(msg.source().playerStats().getAccount()!=null)
-						&&(this.boundToName.equals(msg.source().playerStats().getAccount().getAccountName())))
-							zap=false;
-						break;
-					case CLAN:
-					{
-						final Pair<Clan,Integer> pI=msg.source().getClanRole(this.boundToName);
-						if(pI!=null)
-							zap=false;
-						break;
-					}
-					}
-					if(zap)
-					{
-						mob.location().show(mob,null,affected,CMMsg.MSG_OK_ACTION,msgStr);
-						return false;
-					}
+					mob.location().show(mob,null,affected,CMMsg.MSG_OK_ACTION,msgStr);
+					return false;
 				}
 				break;
 			default:
@@ -218,7 +172,51 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 			msg.source().tell(L("@x1 is bound to @x2, and can not be sold.",affected.name(),this.boundToName));
 			return false;
 		}
+		else
+		if((this.boundToName.length()>0)
+		&&(to != BoundTo.NOONE)
+		&&(msg.tool()==affected)
+		&&(msg.targetMinor()==CMMsg.TYP_GIVE)
+		&&(msg.target() instanceof MOB)
+		&&(!allows((MOB)msg.target())))
+		{
+			msg.source().tell(L("@x1 is bound to @x2, and can not be given away.",affected.name(),this.boundToName));
+			return false;
+		}
 		return true;
+	}
+
+	/**
+	 * Whether someone may have this bound item: the one it is bound to, or one
+	 * of the group, profile or organization it is bound to.
+	 * @param who the one taking, using, or being given it
+	 * @return true if they may
+	 */
+	protected boolean allows(final MOB who)
+	{
+		if((who == null) || (this.boundToName.length()==0))
+			return true;
+		switch(to)
+		{
+		case NOONE:
+			return true;
+		case CHARACTER:
+			return this.boundToName.equals(who.Name());
+		case PLAYER:
+			return this.boundToName.equals(who.Name()) || (!who.isPlayer());
+		case NPC:
+			return this.boundToName.equals(who.Name()) || who.isPlayer();
+		case GROUP:
+			return CMParms.parse(this.boundToName).contains(who.Name());
+		case ACCOUNT:
+			return (who.playerStats()!=null)
+				&&(who.playerStats().getAccount()!=null)
+				&&(this.boundToName.equals(who.playerStats().getAccount().getAccountName()));
+		case CLAN:
+			return who.getClanRole(this.boundToName)!=null;
+		default:
+			return true;
+		}
 	}
 
 	final String getBindyName(final MOB mob)

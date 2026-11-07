@@ -238,6 +238,75 @@ process-local: at most eight entries per participant, 256 participants, bounded
 detail per result, with final delivery outcomes retained. Boot/restore clears
 them. Reading a trace is inspection of an actual event, not replay simulation.
 
+## Ailments, guard pools and leech
+
+A profile can also declare ailments that composed hits build up, a defense pool
+spent before hit points, and how fast life leech comes back (fixture
+`a12-ailments.js`):
+
+```json
+"ailments": {
+  "chill": {"title": "Chilled", "threshold": 100, "decay": 10, "status_ticks": 2, "immune_ticks": 3, "effects": "Prop_Adjuster;DEX-5"}
+},
+"guard": {"pool": "example.ward", "recharge_delay": 3},
+"leech": {"cap_per_tick": 5}
+```
+
+| Ailment field | Default | Meaning |
+| --- | --- | --- |
+| `title` | the ID | What players see (`Bo is chilled!`). |
+| `threshold` | 100 | The meter's size: at it, the status begins and the meter empties. |
+| `decay` | 0 | What the meter loses each tick while no status or immunity is on. |
+| `status_ticks` | 3 | How long the status holds. |
+| `immune_ticks` | 0 | After the status ends (or is consumed), how long no buildup of it is taken. |
+| `effects` | none | What the status does while it holds, in `Prop_SpellAdder` syntax (stat, state, resistance and message properties, worked through the ailment). |
+
+At most eight ailments. A composition (skill or support) names what its landed
+hits do with them:
+
+```json
+"ailments": {"build": {"chill": 60}, "consume": ["chill"], "cleanse": ["chill"]},
+"leech": 50
+```
+
+- **Buildup.** Each landed hit (one that removes hit points) adds its `build`
+  amounts, the skill's and its supports' together. A hit on a target whose
+  status is on, or who is immune, adds nothing; the trace says which.
+- **Payoff.** A modifier's `condition` may be `status:chill`: it applies while
+  the target has the status (`{"stat": "damage", "op": "more", "value": 100,
+  "condition": "status:chill"}`). A landed hit that `consume`s the status ends
+  it at once, and the immunity window starts. The condition is read before the
+  hit, so the consuming hit gets its bonus.
+- **Cleansing.** A cast with `cleanse` sheds those ailments from the caster:
+  meters, status and immunity. `MPUNAFFECT $n CompositionAilment` takes them
+  all off a character.
+- **Saved.** A character's meters are the text of the `CompositionAilment`
+  effect, so a save keeps them, with the rule each was built under; `AFFECTS`
+  style listings show `chill 50/100 (losing 10 a tick)`, `Chilled (2 ticks
+  left)` or `immune to chill (3 ticks)`.
+
+**The guard pool.** `guard.pool` names a [named resource](34-named-resources.md)
+pool (with `abilities.resources` on). Each component of a composed hit is taken
+from the target's pool first, as much as is not reserved, and only the rest
+goes on. The order is fixed: the guard pool, then the world's own absorbing
+properties (in the damage message), then hit points, then death prevention
+(`Prop_Downed`, `Prop_Essential`). After a hit, the pool's change (its refill)
+waits `recharge_delay` of the pool's clock units before resuming. A hit the
+pool takes whole removes no hit points, so it builds no ailment and leeches
+nothing.
+
+**Leech.** A composition's `leech` (0 to 100, the skill's and supports'
+together, at most 100) is the share of the hit points its landed hits remove
+that comes back to the caster. It comes back over time, at most the profile's
+`leech.cap_per_tick` each tick (the `CompositionLeech` effect holds what is
+still to come, in its text). With no cap set, a profile allows no leech.
+
+`WORLD COMBAT LIST` shows each profile's ailments, guard pool and leech cap.
+`WORLD CHECK ONLY=COMBAT` warns of a composition naming an ailment no profile
+declares and of a guard pool that is not installed. Ailments, guard pools and
+leech belong to composed skills under a profile; native spells and weapons do
+not build ailments.
+
 ## Select, pin and update profiles
 
 ```text

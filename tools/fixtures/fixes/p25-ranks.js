@@ -43,6 +43,15 @@ try {
 	var qp1 = P.getQuestPoint();
 	RK.change(P, "LANTERN", "+1");
 	check("rewards once", RK.rank(P, "LANTERN") == 2 && P.getQuestPoint() == qp1, P.getQuestPoint() + "/" + qp1);
+	// an effect of the same kind from another source is neither taken for the rank's nor removed with it
+	var other = CMClass.getAbility("Prop_Smell"); other.setMiscText("sea salt"); P.addNonUninvokableEffect(other);
+	RK.change(P, "LANTERN", "=3");
+	function smells() { var out = []; for (var e = 0; e < P.numEffects(); e++) { var E = P.fetchEffect(e); if (E != null && s(E.ID()) == "Prop_Smell") out.push(s(E.text())); } return out.sort().join("|"); }
+	check("one of a kind", smells() == "sea salt", smells()); // the engine keeps one effect of a kind
+	RK.change(P, "LANTERN", "-1");
+	check("other effect kept", smells() == "sea salt", smells());
+	P.delEffect(other);
+	RK.change(P, "LANTERN", "=2");
 	// RANKUP: reaching rank 4
 	RK.change(P, "LANTERN", "=4");
 	check("rankup", P.findTattoo("ACH_FIXP25WARDEN") != null, "no achievement");

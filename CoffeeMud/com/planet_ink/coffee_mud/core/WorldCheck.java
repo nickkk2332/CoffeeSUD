@@ -326,6 +326,9 @@ public final class WorldCheck
 			for(final String p : e.getValue())
 				out.add(new Finding(Severity.ERROR, "DATA", e.getKey() + ": " + p));
 		}
+		// A05: perks.ini's trees, links and keys
+		for(final String p : Perks.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", "perks.ini: " + p));
 	}
 
 	/**
@@ -393,6 +396,7 @@ public final class WorldCheck
 			final String selection = CombatProfiles.selectionProblem(profiles);
 			if(!selection.isEmpty()) out.add(new Finding(Severity.ERROR, "COMBAT", selection));
 			for(final String error : CombatProfiles.checkProperties(rooms)) out.add(new Finding(Severity.ERROR, "COMBAT", error));
+			for(final String warning : CombatProfiles.checkAilments(profiles)) out.add(new Finding(Severity.WARNING, "COMBAT", warning));
 		}
 		if(all || parts.contains("COMPOSITIONS"))
 			for(final String error : AbilityComposition.check().errors)

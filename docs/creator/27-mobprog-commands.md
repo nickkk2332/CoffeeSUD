@@ -135,6 +135,7 @@ A script lives on a *host*: a mob, an item, a room, an exit or an area (see [04]
 | `MPJUNK` | the mob's items | the stand-in's items, or a room host's floor |
 | `MPKILL`, `MPHIT`, `MPCAST`, `MPCASTEXT`, `MPTRACKTO`, `MPWALKTO`, `MPSTOP` | the mob | the stand-in (it fights and casts for the host) |
 | `MPTELEGRAPH` | the mob | refused: "only a mob in a room can wind up an attack" |
+| `MPDIRECTOR` | the room the mob is in, or the room named | the host room itself (`EncounterDirector` there) |
 | `MPWAVE` | the room the mob is in | the host room itself (`WaveSpawner` there) |
 | `MPOLOADSHOP`, `MPMLOADSHOP` | the host if a shopkeeper, else the shopkeeper in its room | same |
 | `MPPURGE self` | a mob with a start room is killed (and may rejuvenate); one without is destroyed | destroys the host object |
@@ -194,7 +195,7 @@ Entries added by CoffeeSUD (not in the original CoffeeMud) are marked **CoffeeSU
 | Calling and timing | [MPCALLFUNC](#mpcallfunc), [MPFORCE](#mpforce), [MPALARM](#mpalarm), [MPALARMCANCEL](#mpalarmcancel), [MPWAIT](#mpwait), [MPSIGNAL](#mpsignal), [MPNOTRIGGER](#mpnotrigger), [MPINTERRUPT](#mpinterrupt), [MPPASSTIME](#mppasstime), [MPSCRIPT](#mpscript), [MPUNLOADSCRIPT](#mpunloadscript), [MPJSFILE](#mpjsfile), [MPBEHAVE](#mpbehave), [MPUNBEHAVE](#mpunbehave) |
 | Asking the player | [MPPROMPT](#mpprompt), [MPCONFIRM](#mpconfirm), [MPCHOOSE](#mpchoose), [MPMENU](#mpmenu), [MPLLM](#mpllm) |
 | Stats and progression | [MPEXP](#mpexp), [MPRPEXP](#mprpexp), [MPLEVELUP](#mplevelup), [MPLEVELDOWN](#mpleveldown), [MPQUESTPOINTS](#mpquestpoints), [MPTRAINS](#mptrains), [MPPRACS](#mppracs), [MPENABLE](#mpenable), [MPDISABLE](#mpdisable), [MPLEARNRECIPE](#mplearnrecipe), [MPLEARNLANG](#mplearnlang), [MPPERK](#mpperk), [MPRANK](#mprank), [MPRESPEC](#mprespec), [MPPLAYERCLASS](#mpplayerclass), [MPTITLE](#mptitle), [MPTATTOO](#mptattoo), [MPACCTATTOO](#mpacctattoo), [MPACHIEVE](#mpachieve), [MPRECRUIT](#mprecruit) |
-| Combat and effects | [MPKILL](#mpkill), [MPHIT](#mphit), [MPDAMAGE](#mpdamage), [MPHEAL](#mpheal), [MPCAST](#mpcast), [MPCASTEXT](#mpcastext), [MPAFFECT](#mpaffect), [MPUNAFFECT](#mpunaffect), [MPSTOP](#mpstop), [MPTHREAT](#mpthreat), [MPTELEGRAPH](#mptelegraph), [MPWAVE](#mpwave), [MPREJUV](#mprejuv), [MPRESET](#mpreset) |
+| Combat and effects | [MPKILL](#mpkill), [MPHIT](#mphit), [MPDAMAGE](#mpdamage), [MPHEAL](#mpheal), [MPCAST](#mpcast), [MPCASTEXT](#mpcastext), [MPAFFECT](#mpaffect), [MPUNAFFECT](#mpunaffect), [MPSTOP](#mpstop), [MPTHREAT](#mpthreat), [MPTELEGRAPH](#mptelegraph), [MPDIRECTOR](#mpdirector), [MPWAVE](#mpwave), [MPREJUV](#mprejuv), [MPRESET](#mpreset) |
 | Quests | [MPSTARTQUEST](#mpstartquest), [MPSTEPQUEST](#mpstepquest), [MPENDQUEST](#mpendquest), [MPQUESTWIN](#mpquestwin), [MPQUESTFAIL](#mpquestfail), [MPREWARD](#mpreward), [MPQSET](#mpqset), [MPLOADQUESTOBJ](#mploadquestobj), [MPQOBJECTIVE](#mpqobjective), [MPQJOURNAL](#mpqjournal), [MPQTIMER](#mpqtimer) |
 | Journal, lore, narration | [MPJOURNAL](#mpjournal), [MPLORE](#mplore), [MPNARRATE](#mpnarrate) |
 | Money, shops, property | [MPMONEY](#mpmoney), [MPSHOP](#mpshop), [MPBANK](#mpbank), [MPDEBT](#mpdebt), [MPEXCHANGE](#mpexchange), [MPDEED](#mpdeed), [MPUNDEED](#mpundeed), [MPGRANT](#mpgrant) |
@@ -204,7 +205,7 @@ Entries added by CoffeeSUD (not in the original CoffeeMud) are marked **CoffeeSU
 | Logging and debugging | [MPLOG](#mplog), [MPDEBUG](#mpdebug) |
 | Legacy and rarely useful | [MPPOSSESS](#mppossess), [MPSCRIPT](#mpscript), [MPRLOAD](#mprload) |
 
-CoffeeSUD additions (everything not in the original CoffeeMud 5.11 command list): `MPALARM NAME=`, `MPALARMCANCEL`, `MPTELEGRAPH`, `MPWAVE`, `MPSETRESPAWN`, `MPTHREAT`, `MPAFFINITY`, `MPMENU`, `MPMSG`, `MPSIGNAL`, `MPWAIT`, `MPLIST`, `MPTAG`, `MPSTATE`, `MPLOCAL`, `WHILE`/`ENDWHILE`/`CONTINUE`/`ELSEIF`, `MPJSFILE`, `MPDOOR`, `MPTRANSFORM`, `MPQOBJECTIVE`, `MPQJOURNAL`, `MPQUESTFAIL`, `MPREWARD`, `MPQTIMER`, `MPGENERATE`, `MPREGENERATE`, `MPGRANT`, `MPDEED`, `MPUNDEED`, `MPLEARNRECIPE`, `MPLEARNLANG`, `MPSAYIN`, `MPPERK`, `MPRECRUIT`, `MPLEVELUP`, `MPLEVELDOWN`, `MPRESPEC`, `MPRANK`, `MPPARDON`, `MPFINE`, `MPRELEASE`, `MPSUPPRESSLAW`, `MPSHOP`, `MPBANK`, `MPDEBT`, `MPEXCHANGE`, `MPWEATHER`, `MPROOMSTATE`, `MPPASSTIME`, `MPINTERRUPT`, `MPCLANRELATION`, `MPCONQUER`, `MPSAIL`, `MPANCHOR`, `MPMOVEVESSEL`, `MPBOARD`, `MPHITCH`, `MPUNHITCH`, `MPLORE`, `MPJOURNAL`, `MPNARRATE`, plus the `CATALOG`, `ENCOUNTER` and `FROMFILE ... ALL` forms of `MPMLOAD`/`MPOLOAD` and the `NOW`, `@host`, `=`, `%` and `^` forms of `MPSETVAR`.
+CoffeeSUD additions (everything not in the original CoffeeMud 5.11 command list): `MPALARM NAME=`, `MPALARMCANCEL`, `MPTELEGRAPH`, `MPDIRECTOR`, `MPWAVE`, `MPSETRESPAWN`, `MPTHREAT`, `MPAFFINITY`, `MPMENU`, `MPMSG`, `MPSIGNAL`, `MPWAIT`, `MPLIST`, `MPTAG`, `MPSTATE`, `MPLOCAL`, `WHILE`/`ENDWHILE`/`CONTINUE`/`ELSEIF`, `MPJSFILE`, `MPDOOR`, `MPTRANSFORM`, `MPQOBJECTIVE`, `MPQJOURNAL`, `MPQUESTFAIL`, `MPREWARD`, `MPQTIMER`, `MPGENERATE`, `MPREGENERATE`, `MPGRANT`, `MPDEED`, `MPUNDEED`, `MPLEARNRECIPE`, `MPLEARNLANG`, `MPSAYIN`, `MPPERK`, `MPRECRUIT`, `MPLEVELUP`, `MPLEVELDOWN`, `MPRESPEC`, `MPRANK`, `MPPARDON`, `MPFINE`, `MPRELEASE`, `MPSUPPRESSLAW`, `MPSHOP`, `MPBANK`, `MPDEBT`, `MPEXCHANGE`, `MPWEATHER`, `MPROOMSTATE`, `MPPASSTIME`, `MPINTERRUPT`, `MPCLANRELATION`, `MPCONQUER`, `MPSAIL`, `MPANCHOR`, `MPMOVEVESSEL`, `MPBOARD`, `MPHITCH`, `MPUNHITCH`, `MPLORE`, `MPJOURNAL`, `MPNARRATE`, plus the `CATALOG`, `ENCOUNTER` and `FROMFILE ... ALL` forms of `MPMLOAD`/`MPOLOAD` and the `NOW`, `@host`, `=`, `%` and `^` forms of `MPSETVAR`.
 
 ## Control flow
 
@@ -1700,9 +1701,11 @@ The target of these commands is a character: a `$` code or a name; many accept N
 
 ### MPPERK
 
-**Syntax:** `MPPERK <who> <perk id>` or `MPPERK <who> -<perk id>`. **CoffeeSUD.** Minimum: 2 words.
+**Syntax:** `MPPERK <who> <perk id>`, `MPPERK <who> -<perk id>`, `MPPERK <who> PICKS <pool> +n|-n|n` or `MPPERK <who> CLEAR <pool>`. **CoffeeSUD.** Minimum: 2 words.
 
-**Behaviour:** gives the character a perk of `world/perks.ini` with its rewards, or (with `-`) takes it off; the rewards stay. An unknown perk logs `MPPERK $n [-]perk (a perk of world/perks.ini)`. See [03](03-characters.md).
+**Behaviour:** gives the character a perk of `world/perks.ini` with its rewards and effects, or (with `-`) takes it off; the rewards stay, the effects go. `PICKS` gives (`+n`), takes (`-n`) or sets the picks of a pool that scripts have given, beside those its levels give. `CLEAR` takes back every perk of that pool and no other. An unknown perk logs `MPPERK $n [-]perk (a perk of world/perks.ini)`. See [03](03-characters.md#build-trees).
+
+**Example:** `mpperk $n PICKS FIRE +1`
 
 ### MPRANK
 
@@ -1873,7 +1876,7 @@ mpaffect Spell_Haste $n 120TICKS
 **Syntax**
 
 ```text
-MPTELEGRAPH [NAME=<name>] <ticks> "<warning>" <command> [INTERRUPT=<list>] [AVOID=<list>] [INTERRUPTMSG="<text>"]
+MPTELEGRAPH [NAME=<name>] <ticks> "<warning>" <command> [INTERRUPT=<list>] [AVOID=<list>] [INTERRUPTMSG="<text>"] [RESPOND="<word>=<outcome>|..."] [THEN=<function>]
 ```
 
 **CoffeeSUD.** Minimum: 2 words. **Host:** a mob in a room.
@@ -1885,6 +1888,8 @@ MPTELEGRAPH [NAME=<name>] <ticks> "<warning>" <command> [INTERRUPT=<list>] [AVOI
 | `INTERRUPT=STUN,DAMAGE>20%,MOVE` | what stops the wind-up: a stun, a sleep or a hold always does; `DAMAGE>n%` when it loses that share of its hit points meanwhile; `MOVE` when it leaves the room |
 | `AVOID=LEAVE,HIDE,COMMAND:brace` | how a foe avoids it: leaving, hiding, typing the word `brace` |
 | `INTERRUPTMSG="text"` | shown when it is interrupted |
+| `RESPOND="dodge=SPARE\|brace=mpdamage $n 5 10\|parry=INTERRUPT"` | words a foe can type while it winds up, each with an outcome: `SPARE` (not hit), `INTERRUPT` (stops it at once), or a command run on them instead of the blow; only a foe's first word counts |
+| `THEN=STOMP` | a `FUNCTION_PROG` of the mob run once the blow has landed (not after an interrupt): the next step of a chained attack |
 
 It is a named alarm (`TELEGRAPH` unless `NAME=` is given), so `ALARM($i TELEGRAPH)` and [MPALARMCANCEL](#mpalarmcancel) work on it. A second telegraph of the same name replaces the first.
 
@@ -1897,6 +1902,14 @@ mptelegraph 2 "<S-NAME> rears back, flames gathering in its throat!" mpdamage $n
 ```
 
 **Notes:** for an item or room host it logs `only a mob in a room can wind up an attack`. The `Prop_Telegraph` property holds the state; see [29](29-combat-and-encounters.md).
+
+### MPDIRECTOR
+
+**Syntax:** `MPDIRECTOR START|RESET [room id]`. **CoffeeSUD.** Minimum: 1 word.
+
+**Behaviour:** starts (`START`) or ends (`RESET`) the run of the `EncounterDirector` in the script's room, or in the room named. A director with `"start": "script"` waits for this. An unknown room or one with no director logs `MPDIRECTOR START|RESET [room], in or naming a room with EncounterDirector`. When a run ends the room's scripts hear `SIGNAL_PROG DIRECTOR_COMPLETE` or `DIRECTOR_FAILED`. See [37](37-encounter-director.md#scripts-and-hooks).
+
+**Example:** `mpdirector START`
 
 ### MPWAVE
 

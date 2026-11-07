@@ -59,6 +59,19 @@ public class WorldRules
 		return (P == null) ? dflt : P.getStr(key, dflt).trim();
 	}
 
+	/** @return A19: LOADOUTS, how many loadouts a character may keep; 0 (the default) turns LOADOUT off */
+	public static int loadoutsMax()
+	{
+		return Math.max(0, Math.min(20, CMath.s_int(str("LOADOUTS", "0"))));
+	}
+
+	/** @return A19: LOADOUTCOST, the actions a swap costs for each thing it changes (1) */
+	public static double loadoutCost()
+	{
+		final String v = str("LOADOUTCOST", "1");
+		return CMath.isNumber(v) ? Math.max(0.0, CMath.s_double(v)) : 1.0;
+	}
+
 	/** @return PARTYMAX, the most characters in the party at once, 0 for no limit */
 	public static int partyMax()
 	{

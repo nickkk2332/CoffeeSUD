@@ -1671,17 +1671,70 @@ An item's powers on demand, for anyone, with no class skill.
 | `SPELLS="Spell_Fireball;LEVEL=12,Spell_Light"` | What it casts; each at `LEVEL` (or the item's level) |
 | `TARGET=` | `SELF`, `ENEMY` or `ROOM` |
 | `CHARGES=n` | Uses held; what is left is kept with it (`LEFT=`) |
-| `RECHARGE=` | `DAWN`, `DAILY` or `TICKS=n` |
-| `COOLDOWN=ticks` | Ticks between uses |
+| `RECHARGE=` | `DAWN`, `DAILY` or `TICKS=n`; for `TICKS`, the time to the next recharge is kept (`RECHARGEIN=`) |
+| `COOLDOWN=ticks` | Ticks between uses; a cooldown still running is kept with it (`COOLLEFT=`) |
 | `REQUIRE=` | `WORN` or `HELD` |
 | `MASK=` | Who may use it |
 | `MSG=`, `EMPTYMSG=` | What the room sees (`<S-NAME>`, `<T-NAME>`); what the user is told when it is spent |
+| `REFUSE=HEALTHY,NOAILMENT` | It does nothing, and spends nothing, at full health (`HEALTHY`) or with no harmful effect to cure (`NOAILMENT`) |
+| `REFUSEMSG=` | What the user is told then |
+| `REFILL=KILL:n` | Each kill by its holder gives `n` charges back, up to `CHARGES` |
+| `AUTO=HP<n` | Its holder below `n`% of their hit points uses it by itself (as by hand, with every rule above), at most once a tick and not in a tick they used it by hand |
 
-Identifying it tells its charges and recharge.
+Identifying it tells its charges, recharge, cooldown, refusals, refill and
+automatic use.
 
 ```text
 WORD=Ignis SPELLS="Spell_Fireball;LEVEL=12" TARGET=ENEMY CHARGES=3 RECHARGE=DAWN REQUIRE=WORN EMPTYMSG="The ring is cold."
 ```
+
+A flask that refills in a fight and drinks itself in an emergency (fixture
+`a18-flasks.js`):
+
+```text
+VERB=QUAFF SPELLS=Prayer_CureLight TARGET=SELF CHARGES=3 REQUIRE=HELD REFUSE=HEALTHY REFILL=KILL:1 AUTO=HP<30
+```
+
+### Loadouts
+
+Source: [Loadouts.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Loadouts.java),
+[LoadoutCmd.java](../../CoffeeMud/com/planet_ink/coffee_mud/Commands/LoadoutCmd.java).
+Fixture: [a19-loadouts.js](../../tools/fixtures/fixes/a19-loadouts.js).
+
+A loadout is a named set of gear a character can change into at once: a melee
+set and a bow set, a day set and a stealth set. It is off unless the world sets
+`LOADOUTS=` (how many a character may keep, up to 20) in `world.ini`;
+`LOADOUTCOST=` is what a swap costs in actions for each thing it changes
+(default 1; `0.5`, or `0` for free).
+
+| Command | What it does |
+| --- | --- |
+| `LOADOUT SAVE name` | Keeps what the character wears and wields now (each item, and where), their composed skills' linked supports (with `abilities.composition` on), and their own reservations (`Prop_Reserve` with `OF=SELF`, see [34](34-named-resources.md#reservations)). Saving under a name already used replaces it. |
+| `LOADOUT name` (or `LOADOUT USE name`) | The swap: everything the loadout has, at once, or nothing. |
+| `LOADOUT SHOW name` | What the swap would change (`take off`, `put on ... (wield)`, `begin`, `end`, links) and what it would cost; changes nothing. |
+| `LOADOUT` | The loadouts kept: `in use`, the changes each would make, or why one cannot be used now. |
+| `LOADOUT FORGET name` | Forgets one. |
+
+The rules:
+
+- **All or nothing.** The items must be with the character, in the main
+  inventory (not in a container). Each item taken off is asked as `REMOVE`
+  asks, and each put on as `WEAR`, `WIELD` or `HOLD` ask, so a curse
+  (`Prop_Cursed NOREMOVE`), a binding (`Prop_ItemBinder`), a mask or a
+  location already taken refuses the swap. The new reservations must all fit,
+  and the composed links must be ones the character can use now. If anything is
+  refused, everything already changed is put back: `You cannot use loadout
+  'ranged': you cannot take off a helm.  Nothing was changed.`
+- **What it does not keep.** Items in containers, what a character carries but
+  does not wear, followers, and reservations held by minions (those come and go
+  with the minion).
+- **Its cost in time.** In turn-based time a swap that changes four things at
+  `LOADOUTCOST=0.5` takes two actions; one that changes nothing takes none. In
+  real time the same number is the command's delay.
+- **Saved with the character.** The loadouts are the text of a
+  `Prop_Loadouts` property on the character, so the save keeps them. An item
+  that is gone (sold, destroyed) makes that loadout unusable until it is saved
+  again: `a hood is not with you`.
 
 ### Prop_Attunement
 

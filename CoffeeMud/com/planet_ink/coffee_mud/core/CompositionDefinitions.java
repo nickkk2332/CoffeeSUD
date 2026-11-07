@@ -88,7 +88,8 @@ public final class CompositionDefinitions
 			stat(stat);
 			condition = string(obj, "condition", "always");
 			when = tags(obj, "when_tags");
-			if(!Arrays.asList("always", "target_wounded", "target_burning").contains(condition))
+			// A12: status:<ailment> is true while the target has that ailment's status
+			if(!Arrays.asList("always", "target_wounded", "target_burning").contains(condition) && !condition.matches("status:[a-z0-9][a-z0-9._-]{0,63}"))
 				throw new IOException("unknown modifier condition " + condition);
 			if(!condition.equals("always") && !damage(stat) && !stat.equals("burn_damage"))
 				throw new IOException("target conditions are only allowed on damage and burn_damage");
@@ -132,9 +133,16 @@ public final class CompositionDefinitions
 		public final List<Modifier> modifiers;
 		/** A15: named resources the skill or support costs and gains, by pool ID */
 		public final Map<String,Long> resourceCost, resourceGain;
+		/** A20: true when the gains come only from a cast that lands (hurts at least one target), not from any cast */
+		public final boolean gainOnHit;
+		/** A12: buildup each landed hit adds, by ailment; statuses a landed hit consumes; ones the caster sheds when it casts */
+		public final Map<String,Long> buildup;
+		public final Set<String> consumes, cleanses;
+		/** A13: the share (percent) of the hit points a landed hit removes that come back to the caster, over time */
+		public final int leech;
 		public Definition(final JSONObject obj, final String path) throws IOException
 		{
-			ModuleDefinitions.keys(obj, "composition definition", "schema", "id", "version", "name", "kind", "tags", "requires_ability", "mask", "stats", "damage", "modifiers", "requires_all", "requires_any", "excludes_tags", "adds_tags", "group", "resources");
+			ModuleDefinitions.keys(obj, "composition definition", "schema", "id", "version", "name", "kind", "tags", "requires_ability", "mask", "stats", "damage", "modifiers", "requires_all", "requires_any", "excludes_tags", "adds_tags", "group", "resources", "ailments", "leech");
 			if(ModuleDefinitions.integer(obj.get("schema"), "schema") != 1)
 				throw new IOException("unsupported composition schema");
 			id = ModuleDefinitions.id(obj.get("id"));
@@ -204,7 +212,7 @@ public final class CompositionDefinitions
 			if(obj.containsKey("resources"))
 			{
 				final JSONObject res = ModuleDefinitions.object(obj.get("resources"), "resources");
-				ModuleDefinitions.keys(res, "resources", "cost", "gain");
+				ModuleDefinitions.keys(res, "resources", "cost", "gain", "gain_on");
 				for(final String which : Arrays.asList("cost", "gain"))
 				{
 					if(!res.containsKey(which))
@@ -223,6 +231,43 @@ public final class CompositionDefinitions
 			}
 			resourceCost = Collections.unmodifiableMap(cost);
 			resourceGain = Collections.unmodifiableMap(gain);
+			boolean onHit = false;
+			if(obj.containsKey("resources") && ((JSONObject)obj.get("resources")).containsKey("gain_on"))
+			{
+				final Object on = ((JSONObject)obj.get("resources")).get("gain_on");
+				if(!"cast".equals(on) && !"hit".equals(on))
+					throw new IOException("resources.gain_on must be \"cast\" or \"hit\"");
+				onHit = "hit".equals(on);
+			}
+			gainOnHit = onHit;
+			final Map<String,Long> build = new TreeMap<String,Long>();
+			final Set<String> consume = new TreeSet<String>(), cleanse = new TreeSet<String>();
+			if(obj.containsKey("ailments"))
+			{
+				final JSONObject ail = ModuleDefinitions.object(obj.get("ailments"), "ailments");
+				ModuleDefinitions.keys(ail, "ailments", "build", "consume", "cleanse");
+				if(ail.containsKey("build"))
+				{
+					final JSONObject amounts = ModuleDefinitions.object(ail.get("build"), "ailments.build");
+					if(amounts.size() > 8)
+						throw new IOException("ailments.build: at most 8 ailments");
+					for(final String key : amounts.keySet())
+					{
+						final int n = ModuleDefinitions.integer(amounts.get(key), "ailments.build." + key);
+						if(n < 1 || n > 100000)
+							throw new IOException("ailments.build." + key + " must be from 1 to 100000");
+						build.put(ModuleDefinitions.id(key), Long.valueOf(n));
+					}
+				}
+				consume.addAll(tags(ail, "consume"));
+				cleanse.addAll(tags(ail, "cleanse"));
+			}
+			buildup = Collections.unmodifiableMap(build);
+			consumes = Collections.unmodifiableSet(consume);
+			cleanses = Collections.unmodifiableSet(cleanse);
+			leech = obj.containsKey("leech") ? (int)Math.min(1000, ModuleDefinitions.count(obj.get("leech"), "leech")) : 0;
+			if(leech < 0 || leech > 100)
+				throw new IOException("leech must be from 0 to 100 (percent)");
 			try
 			{
 				final byte[] bytes = MessageDigest.getInstance("SHA-256").digest(ModuleDefinitions.json(obj).getBytes(StandardCharsets.UTF_8));
@@ -431,6 +476,51 @@ public final class CompositionDefinitions
 		{
 			return sum(false);
 		}
+		/** A20: the skill's resources.gain_on is "hit": a cast that hurts no one gains nothing, and counts as a miss */
+		public boolean gainsOnHit()
+		{
+			return skill.gainOnHit;
+		}
+		/** A12: buildup each landed hit adds, the skill's and its supports' together */
+		public Map<String,Long> buildup()
+		{
+			final Map<String,Long> out = new TreeMap<String,Long>();
+			for(final Definition d : definitions())
+				for(final Map.Entry<String,Long> e : d.buildup.entrySet())
+					out.put(e.getKey(), Long.valueOf(Math.min(100000, (out.containsKey(e.getKey()) ? out.get(e.getKey()).longValue() : 0) + e.getValue().longValue())));
+			return out;
+		}
+		/** A12: statuses a landed hit consumes */
+		public Set<String> consumes()
+		{
+			final Set<String> out = new TreeSet<String>();
+			for(final Definition d : definitions())
+				out.addAll(d.consumes);
+			return out;
+		}
+		/** A12: ailments the caster sheds when the cast resolves */
+		public Set<String> cleanses()
+		{
+			final Set<String> out = new TreeSet<String>();
+			for(final Definition d : definitions())
+				out.addAll(d.cleanses);
+			return out;
+		}
+		/** A13: life leech percent, at most 100 */
+		public int leech()
+		{
+			int n = 0;
+			for(final Definition d : definitions())
+				n += d.leech;
+			return Math.min(100, n);
+		}
+		private List<Definition> definitions()
+		{
+			final List<Definition> all = new ArrayList<Definition>();
+			all.add(skill);
+			all.addAll(supports);
+			return all;
+		}
 		private Map<String,Long> sum(final boolean costs)
 		{
 			final Map<String,Long> out = new TreeMap<String,Long>();
@@ -466,8 +556,16 @@ public final class CompositionDefinitions
 				.append(" cooldown ticks.");
 			if(!resourceCosts().isEmpty())
 				out.append("\nResource costs, all checked before anything is spent: ").append(resourceCosts());
+			if(!buildup().isEmpty())
+				out.append("\nAilment buildup on a landed hit: ").append(buildup());
+			if(!consumes().isEmpty())
+				out.append("\nConsumes on a landed hit: ").append(consumes());
+			if(!cleanses().isEmpty())
+				out.append("\nThe caster sheds: ").append(cleanses());
+			if(leech() > 0)
+				out.append("\nLife leech: ").append(leech()).append("% of the hit points it removes, over time");
 			if(!resourceGains().isEmpty())
-				out.append("\nResource gains, once the cast resolves: ").append(resourceGains());
+				out.append(gainsOnHit() ? "\nResource gains, once the cast lands (hurts a target): " : "\nResource gains, once the cast resolves: ").append(resourceGains());
 			out.append("\nTarget conditions are evaluated separately for each hit; chained targets are unique, in the same room.");
 			for(final Modifier mod : modifiers)
 				out.append("\n  ").append(mod);
@@ -510,7 +608,11 @@ public final class CompositionDefinitions
 		final Compiled compiled = new Compiled(skill, supports, tags, mods);
 		// All supported dynamic conditions must also obey cap/floor contracts.
 		compiled.values(Collections.<String>emptySet());
-		compiled.values(new HashSet<String>(Arrays.asList("target_wounded", "target_burning")));
+		final Set<String> every = new HashSet<String>(Arrays.asList("target_wounded", "target_burning"));
+		for(final Modifier mod : mods)
+			if(mod.condition.startsWith("status:"))
+				every.add(mod.condition);
+		compiled.values(every);
 		return compiled;
 	}
 }

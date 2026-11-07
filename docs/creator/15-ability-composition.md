@@ -151,7 +151,11 @@ fight as it would against any other attack.
 ## Modifier algebra
 
 Both skills and supports accept `modifiers`, with `stat`, `op`, numeric `value`,
-optional `when_tags` and `condition`. The deterministic order is:
+optional `when_tags` and `condition` (`always`, `target_wounded`,
+`target_burning`, or `status:<ailment>` under a combat profile that declares
+the ailment, see [16](16-combat-profiles.md#ailments-guard-pools-and-leech)).
+Skills and supports may also carry `ailments` and `leech` for that chapter.
+The deterministic order is:
 
 1. Base values plus all `flat` modifiers.
 2. One simultaneous damage conversion pass using those pools.

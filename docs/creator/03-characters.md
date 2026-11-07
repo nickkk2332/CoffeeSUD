@@ -564,6 +564,17 @@ Perk keys (quote values with spaces):
 | `COST` | `1` | Picks (points for `TRAIT`) it costs. A flaw has a cost below 0 and gives points back. A cost of 0 is free |
 | `REWARDS` | none | Achievement-style rewards given when taken (`"1 CHARISMA 50 XP"`) |
 | `HELP` | none | A line shown in `PERKS` |
+| `TREE` | none | The tree the perk is in (see [Build trees](#build-trees)) |
+| `ROOT` | `NO` | `YES`: a way into its tree, taken without a linked perk |
+| `LINKS` | none | Perks of the same tree it is next to; a link goes both ways |
+| `REQUIRESANY` | none | Perk IDs (or tattoos) of which one is needed |
+| `GROUP` | none | Only one perk of a group can be held (`GROUP=AFFINITY`) |
+| `EFFECTS` | none | Effects held while the perk is (`Prop_SpellAdder` syntax: `Prop_Adjuster;STR+1`) |
+| `REFUND` | as `REFUNDS=` | `YES` or `NO`: whether `PERK REFUND` can give it back |
+
+Two more lines: `REFUNDS=YES` lets every perk (but traits) be given back unless
+its own `REFUND=NO` says otherwise; without it, none can be unless its own
+`REFUND=YES` says so.
 
 A character's picks in a pool are the picks its levels earned, less the cost
 of the perks of that pool it took. Perks other than traits are taken after
@@ -590,6 +601,62 @@ FLAW_BADBACK NAME="Bad back" POOL=TRAIT COST=-1
 At level 1 a Fighter has one `CLASS` pick and no `GENERAL` pick. `PERKS`
 lists what the character has, can take and cannot yet (with why), and the
 picks left.
+
+#### Build trees
+
+Fixture: [a05-perks.js](../../tools/fixtures/fixes/a05-perks.js).
+
+Perks with the same `TREE` make a tree. A `ROOT` perk can be taken at any time
+(with a pick and its other rules met); any other perk of the tree only when the
+character holds a perk it `LINKS` to, or that links to it. A tree needs at least
+one root. A pool can be given to one tree, so the tree has picks of its own.
+
+```ini
+# world/perks.ini
+REFUNDS=YES
+PERK_SPARK  NAME="Spark"  POOL=FIRE TREE=Fire ROOT=YES LINKS=PERK_FLAME EFFECTS="Prop_Adjuster;STR+1"
+PERK_FLAME  NAME="Flame"  POOL=FIRE TREE=Fire LINKS=PERK_BLAZE,PERK_EMBER
+PERK_BLAZE  NAME="Blaze"  POOL=FIRE TREE=Fire GROUP=AFFINITY
+PERK_EMBER  NAME="Ember"  POOL=FIRE TREE=Fire GROUP=AFFINITY
+PERK_WARD   NAME="Ward"   POOL=GUILD REQUIRESANY=PERK_BLAZE,PERK_EMBER REFUND=NO
+```
+
+| Rule | What the player sees when it is not met |
+| --- | --- |
+| Next to a perk held (`LINKS`) | `not next to a perk you have in Fire (Spark or Blaze or Ember)` |
+| One of several (`REQUIRESANY`) | `needs one of Blaze, Ember` |
+| One of a group (`GROUP`) | `you have Blaze, and only one of affinity can be held` |
+
+**Held effects.** A perk's `EFFECTS` are put on when it is taken and come off
+when it goes. As with a rank, a character already holding an effect of the same
+kind from elsewhere keeps that one, and only the perk's own effect is ever taken
+off. When perks.ini changes, the effects follow at the next login or `PERKS`:
+an effect added to a perk is put on, one taken off it comes off.
+
+**Giving perks back.** `PERK REFUND name` gives a perk back, and its pick with
+it, when the perk can be refunded and nothing the character holds stands on it:
+a perk that `REQUIRES` it, one whose `REQUIRESANY` only it meets, or a perk of
+its tree that would be cut off from every root without it
+(`first give back what stands on it: Blaze`). Give back the leaves first. The
+perk's `REWARDS` stay; its effects go.
+
+**A pool of its own (secondary trees).** A pool need not come from levels:
+`MPPERK $n PICKS FIRE +1` gives a pick of `FIRE` (from a boss's death, a
+track's reward script, a quest), `-1` takes one, and a plain number sets how
+many scripts have given. `MPPERK $n CLEAR GUILD` takes back every `GUILD` perk
+(when the character leaves the guild, say) and leaves the other pools alone;
+`MPPERK $n PICKS GUILD 0` takes the guild's picks too.
+
+**A perk taken out of perks.ini.** The character keeps its tattoo (masks and
+`HASPERK` still see it), its effects come off at the next login or `PERKS`, its
+pick is free again, and `PERKS` lists it under `No longer in this world`.
+
+**Inspection.** `PERKS` marks each perk's tree and which can be given back.
+`PERKS TREE Fire` shows the tree: `[x]` held, `[ ]` can be taken, `[-]` not
+yet (with why), the ways in, and what each perk is next to. `WORLD CHECK`
+(the `DATA` part) reports a tree with no root, a link to a perk that is not
+there or is in another tree, `ROOT` or `LINKS` without a `TREE`, a trait in a
+tree or group, a perk defined twice and a key it does not know.
 
 ### Ready-made characters (player templates)
 
@@ -1549,7 +1616,8 @@ rules should agree with the chains.
 
 See [perks.ini](#perksini-perks-traits-and-flaws). During play, `PERKS` shows
 what the character has, can take now and cannot yet (with the reason), and the
-picks left in each pool; `PERK <name>` takes one. A level-up that leaves a
+picks left in each pool; `PERK <name>` takes one, `PERK REFUND <name>` gives one
+back and `PERKS TREE <name>` shows a tree ([Build trees](#build-trees)). A level-up that leaves a
 pick to spend says so. `HASPERK`, `MPPERK` and the perk tattoo let quests and
 shops respond to a choice.
 
@@ -1571,7 +1639,7 @@ file changes):
 | `FACTION=` | A faction ID whose standing `RANKS` shows beside the rank |
 | `RANK<n>.REQUIRES="mask"` | A zapper mask. When the character meets it, they rise to rank *n* **by themselves** (at level-up, when they look at `RANKS`, or on `MPRANK who KEY CHECK`). With no `REQUIRES`, only a script raises a character to that rank |
 | `RANK<n>.REWARDS="2 QP 100 XP"` | Achievement-style rewards, given **once** the first time the rank is reached (a hidden tattoo `RANKREWARD_<KEY>_<n>` remembers) |
-| `RANK<n>.EFFECTS=Prop_Smell;lamp oil` | Effects held while at the rank (`Prop_SpellAdder` syntax: ID, `;`, parameters), taken off when the rank is left |
+| `RANK<n>.EFFECTS=Prop_Smell;lamp oil` | Effects held while at the rank (`Prop_SpellAdder` syntax: ID, `;`, parameters), taken off when the rank is left. A character already holding an effect of the same kind from elsewhere keeps that one, and leaving the rank does not take it off |
 | `RANK<n>.TITLE="*, the Cutpurse"` | A title added while at the rank (`*` is the character's name) |
 | `RANK<n>.NEXT=text` | What `RANKS` says the next rank needs |
 

@@ -842,6 +842,14 @@ public interface MOB extends Rider, DBIdentifiable, PhysicalAgent, ItemPossessor
 	public Item fetchWieldedItem();
 
 	/**
+	 * Forgets which items were found wielded and held, so the next look finds
+	 * them again (after gear is changed without the wear messages).
+	 */
+	public default void forgetWornItems()
+	{
+	}
+
+	/**
 	 * Returns the item being wielded in the HELD position by this player/mob.  Its a really
 	 * quick way to get the mobs secondary weapon or shield.
 	 * @see MOB#fetchFirstWornItem(long)

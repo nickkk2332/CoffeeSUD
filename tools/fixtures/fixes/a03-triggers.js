@@ -60,6 +60,9 @@ try {
 	write(new java.io.File(folder, "triggers/fix.patience.v1.json"), { schema: 1, id: "fix.patience", version: 1, on: "kill", cooldown: { amount: 5, clock: "turns" }, action: { type: "gain", pool: "example.heat", amount: 10 } });
 	write(new java.io.File(folder, "triggers/fix.counter.v1.json"), { schema: 1, id: "fix.counter", version: 1, on: "block", action: { type: "cast", skill: "example.ember", target: "other" } });
 	write(new java.io.File(folder, "triggers/fix.wisp.v1.json"), { schema: 1, id: "fix.wisp", version: 1, on: "kill", action: { type: "summon", mob: "a fixa03 wisp", ticks: 5 } });
+	// A20: set and drain
+	write(new java.io.File(folder, "triggers/fix.zero.v1.json"), { schema: 1, id: "fix.zero", version: 1, on: "kill", action: { type: "set", pool: "example.heat", amount: 0 } });
+	write(new java.io.File(folder, "triggers/fix.bleed.v1.json"), { schema: 1, id: "fix.bleed", version: 1, on: "kill", action: { type: "drain", pool: "example.heat", amount: 7 } });
 	WorldFiles.configure(folder);
 
 	// the manifest's contract: bounded integer settings
@@ -74,7 +77,7 @@ try {
 	check("manifest-valid", plan.errors.isEmpty() && AT.enabled(), s(plan.problems()));
 	check("profile-on", OM.enabled("combat.profiles"), "combat.profiles: " + s(currentField.get(null).problem("combat.profiles")));
 	var lib = AT.definitions();
-	check("definitions", lib.errors.isEmpty() && lib.entries.size() == 6, s(lib.report()));
+	check("definitions", lib.errors.isEmpty() && lib.entries.size() == 8, s(lib.report()));
 
 	// on kill: the killer's trigger, through the real death; the same death again changes nothing
 	var ann = actor("Trigger Ann"), victim = actor("Trigger Victim");
@@ -121,6 +124,14 @@ try {
 	var p3 = actor("Patience Three"); AT.died(p3, ann); AT.drain();
 	check("cooldown-over", NR.value(ann, "example.heat") == 20, "heat " + NR.value(ann, "example.heat"));
 
+	// A20: a trigger that sets a pool, and one that drains what it can
+	var cid = actor("Trigger Cid"); grant(cid, "fix.zero"); NR.grant(cid, "example.heat"); NR.set(cid, "example.heat", 40);
+	AT.died(actor("Zero Prey"), cid); AT.drain();
+	check("action-set", NR.value(cid, "example.heat") == 0 && last().indexOf("set example.heat to 0") >= 0, "heat " + NR.value(cid, "example.heat") + " / " + last());
+	var dee = actor("Trigger Dee"); grant(dee, "fix.bleed"); NR.grant(dee, "example.heat"); NR.set(dee, "example.heat", 5);
+	AT.died(actor("Bleed Prey"), dee); AT.drain();
+	check("action-drain", NR.value(dee, "example.heat") == 0 && last().indexOf("drained 5 example.heat") >= 0, "heat " + NR.value(dee, "example.heat") + " / " + last());
+
 	// two ripostes: a block makes a riposte, whose hit is blocked and makes the other's; then each has run once in the root
 	var xan = actor("Riposte Xan"), yul = actor("Riposte Yul");
 	var xs = composer(xan); composer(yul); blocker(xan); blocker(yul);
@@ -129,7 +140,7 @@ try {
 	var chain = last() + " / cast " + castOk;
 	check("mutual-stops", chain.indexOf("Riposte Yul / example.riposte (block): used example.ember on Riposte Xan") >= 0
 		&& chain.indexOf("Riposte Xan / example.riposte (block): used example.ember on Riposte Yul") >= 0
-		&& chain.indexOf("already ran in this root") >= 0, chain);
+		&& chain.indexOf("already ran in this root") >= 0, chain + " / yul " + s(CP.trace(yul, 1)).substring(0, 900));
 	xan.makePeace(true); yul.makePeace(true);
 	// the depth limit: a reaction to a reaction is refused at depth 1 (the campaign's setting, as WORLD MODULES CONFIGURE sets it)
 	OM.configure("abilities.triggers", "max_depth", "1");

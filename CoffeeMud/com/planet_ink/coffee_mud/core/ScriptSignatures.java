@@ -141,6 +141,7 @@ final class ScriptSignatures
         add("MPPARDON", 1, true);
         add("MPPASSTIME", 1, true);
         add("MPPERK", 2, true);
+        add("MPDIRECTOR", 1, true);
         add("MPQJOURNAL", 2, true);
         add("MPQOBJECTIVE", 3, true);
         add("MPQTIMER", 2, true);

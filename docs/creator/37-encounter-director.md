@@ -61,7 +61,7 @@ A phase:
 | `id`, `title` | Its name. |
 | `enter` | `{"on": "start"}` (the first phase only); `{"on": "hp_below", "role": "boss", "percent": 66}`; `{"on": "cleared"}` (the previous phase's foes all defeated or removed); `{"on": "after", "ticks": 20}`. |
 | `warning` | Told to the room as plain text, "Warning: ...", when the phase begins, and shown again by `OBJECTIVE`. |
-| `spawn` | Up to ten catalog mobs, each with a `count` and a `role`. |
+| `spawn` | Up to ten catalog mobs, each with a `count`, a `role` and optional `traits` (see [Elite traits](#elite-traits)). |
 | `say` | Up to four lines the director tells the room; each is one director action. |
 | `reward` | A bundle offered when the phase ends. |
 
@@ -86,6 +86,63 @@ A phase:
   new run. A failure ends the activity's run for the participants with
   `on_fail` (chapter 36).
 
+## Elite traits
+
+A trait makes a spawned foe an elite: `world/traits/<id>.v<version>.json`
+(fixture `a24-traits.js`):
+
+```json
+{"schema": 1, "id": "example.storm", "version": 1, "title": "Stormcaller",
+ "line": "Sparks crawl over its skin.", "power": 2,
+ "effects": "Prop_Adjuster;hit+20", "excludes": ["example.frost"], "possess": false}
+```
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `title` | from the ID | What `LOOK` calls it (`a ghoul is Stormcaller.`). |
+| `line` | none | A sentence `LOOK` adds after it. |
+| `power` | 1 | What it costs of an actor's budget (0 to 100). |
+| `effects` | none | What it does, in `Prop_SpellAdder` syntax (stat, state, resistance and message properties, worked through `Prop_EliteTraits`). |
+| `excludes` | none | Traits it is never paired with (either way round). |
+| `possess` | false | When its host dies, the trait passes to a living member of the same pack in the room ("The power of a bearer passes into a ghoul!"). |
+
+A spawn entry names them:
+
+```json
+{"mob": "a ghoul", "count": 3, "role": "ghoul",
+ "traits": {"pack": ["example.fury"], "pick": 2, "budget": 3, "from": ["example.storm", "example.frost", "example.giant"]}}
+```
+
+- **Pack traits** (`pack`) go to every actor of the entry.
+- **Picked traits**: for each actor, the candidates in `from` are put in an
+  order drawn from the encounters stream (so a saved seed picks the same), and
+  each is taken while fewer than `pick` are taken, its `power` fits what is left
+  of the `budget`, and nothing taken excludes it. One whose power is above the
+  budget is never picked.
+- **The pack** is the encounter's run: every actor it spawned, whatever its
+  entry or phase. A possessing trait passes only within it.
+- **Saved.** An actor's traits are the text of its `Prop_EliteTraits`, as they
+  were when it was spawned; editing a trait changes later spawns only.
+- `WORLD DIRECTORS CHECK` reports a trait that is not installed and a trait
+  file's own problems. The director's notes say what each actor was given.
+
+## Scripts and hooks
+
+A director with `"start": "script"` waits for `MPDIRECTOR START` (from any
+script in its room, or `MPDIRECTOR START <room id>` from elsewhere);
+`MPDIRECTOR RESET` ends the run. When a run ends, every script in the room (the
+room, what is in it, and its area) hears a signal: `SIGNAL_PROG
+DIRECTOR_COMPLETE` or `SIGNAL_PROG DIRECTOR_FAILED`, with the encounter's ID
+and the run number as its arguments (`$g`) and a participant as `$n`. A guarded
+cache, for example: a chest that opens on `DIRECTOR_COMPLETE`.
+
+```text
+SIGNAL_PROG DIRECTOR_COMPLETE
+mpecho The vault's last guardian falls, and a coffer rises from the floor.
+mpoload a sealed coffer
+~
+```
+
 ## Saves
 
 The director's state is the room's behavior state in the save: the pinned
@@ -105,4 +162,5 @@ director rebinds them by instance ID and goes on.
 
 Implementation: [EncounterDirectors.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/EncounterDirectors.java),
 [EncounterDirector.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/EncounterDirector.java).
-Tests: [g03-director.js](../../tools/fixtures/fixes/g03-director.js).
+Tests: [g03-director.js](../../tools/fixtures/fixes/g03-director.js),
+[a24-traits.js](../../tools/fixtures/fixes/a24-traits.js).

@@ -51,15 +51,19 @@ public final class EncounterDirectors
 		public final String	mob;
 		public final int	count;
 		public final String	role;
+		/** A24: the traits its actors get, or null */
+		public final EliteTraits.Rules traits;
 
 		Spawn(final Node n) throws IOException
 		{
-			n.allow("mob", "count", "role");
+			n.allow("mob", "count", "role", "traits");
 			mob = n.string("mob");
 			if(mob.trim().length() == 0)
 				throw n.error("mob", "required");
 			count = (int)n.integer("count", 1, 1, 20);
 			role = n.string("role", "foe", 40);
+			final Node t = n.object("traits");
+			traits = (t == null) ? null : new EliteTraits.Rules(t);
 		}
 	}
 
@@ -271,6 +275,7 @@ public final class EncounterDirectors
 	public static synchronized void reset()
 	{
 		library = null;
+		EliteTraits.reset();
 		synchronized(directors)
 		{
 			directors.clear();
@@ -422,6 +427,8 @@ public final class EncounterDirectors
 		{
 			final Library<Def> lib = load();
 			final List<String> out = new ArrayList<String>(lib.errors);
+			EliteTraits.reset();
+			out.addAll(EliteTraits.definitions().errors); // A24
 			final Library<RewardEscrow.Def> rewards = RewardEscrow.load();
 			for(final Entry<Def> e : lib.entries.values())
 			{
@@ -433,6 +440,8 @@ public final class EncounterDirectors
 					{
 						if((CMLib.catalog() != null) && (CMLib.catalog().getCatalogMob(p.spawns.get(j).mob) == null))
 							out.add(e.path + ": /phases/" + i + "/spawn/" + j + "/mob: no catalog mob '" + p.spawns.get(j).mob + "'");
+						if(p.spawns.get(j).traits != null)
+							out.addAll(EliteTraits.check(e.path + ": /phases/" + i + "/spawn/" + j, p.spawns.get(j).traits));
 					}
 					if(!p.reward.isEmpty() && !rewards.has(p.reward))
 						out.add(e.path + ": /phases/" + i + "/reward: no reward " + p.reward + " is installed in rewards/");

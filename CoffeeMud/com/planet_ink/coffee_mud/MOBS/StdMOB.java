@@ -1656,9 +1656,13 @@ public class StdMOB implements MOB
 			return;
 		if(other == this)
 			return;
+		final boolean fightEnds = (victim != null) && (other == null);
 		victim = other;
 		if(other == null)
 			setRangeToTarget(-1);
+		// A20: pools that reset when a fight ends
+		if(fightEnds && NamedResources.enabled())
+			NamedResources.combatEnded(this);
 		recoverPhyStats();
 		recoverCharStats();
 		recoverMaxState();
@@ -5376,7 +5380,10 @@ public class StdMOB implements MOB
 	{
 		if(to == null)
 			return;
-		if(fetchEffect(to.ID()) != null)
+		// A14: a character can hold several reservations; any other kind of effect only once
+		if((fetchEffect(to.ID()) != null) && (!(to instanceof NamedResources.Reserver)))
+			return;
+		if(affects.contains(to))
 			return;
 		to.makeNonUninvokable();
 		to.makeLongLasting();
@@ -5403,7 +5410,7 @@ public class StdMOB implements MOB
 	{
 		if(to == null)
 			return;
-		if(fetchEffect(to.ID()) != null)
+		if(((fetchEffect(to.ID()) != null) && (!(to instanceof NamedResources.Reserver))) || affects.contains(to))
 			return;
 		affects.addElement(to);
 		to.setAffectedOne(this);
@@ -6192,6 +6199,17 @@ public class StdMOB implements MOB
 				return thisItem;
 		}
 		return null;
+	}
+
+	/**
+	 * A19: forgets which items were found wielded and held, so the next look
+	 * finds them again (after gear is changed without the wear messages).
+	 */
+	@Override
+	public void forgetWornItems()
+	{
+		possWieldedItem = null;
+		possHeldItem = null;
 	}
 
 	@Override

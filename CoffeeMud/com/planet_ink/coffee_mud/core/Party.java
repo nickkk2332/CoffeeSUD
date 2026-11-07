@@ -2,7 +2,9 @@ package com.planet_ink.coffee_mud.core;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 
@@ -671,12 +673,26 @@ public final class Party
 	public static void handOver(final MOB leader, final MOB to)
 	{
 		final List<MOB> members = inOrder(leader);
+		// each keeps their formation row; the old leader takes the new leader's
+		final Map<MOB, Integer> rows = new HashMap<MOB, Integer>();
+		for(final MOB M : members)
+			rows.put(M, Integer.valueOf((M == leader) ? leader.fetchFollowerOrder(leader) : leader.fetchFollowerOrder(M)));
+		final int toRow = rows.containsKey(to) ? rows.get(to).intValue() : -1;
+		rows.put(leader, Integer.valueOf(toRow));
+		rows.put(to, Integer.valueOf(leader.fetchFollowerOrder(leader)));
 		to.setFollowing(null);
 		for(final MOB M : members)
 		{
 			if(M != to)
+			{
 				M.setFollowing(to);
+				final int row = rows.containsKey(M) ? rows.get(M).intValue() : -1;
+				if(row >= 0)
+					to.addFollower(M, row);
+			}
 		}
+		if(rows.get(to).intValue() >= 0)
+			to.addFollower(to, rows.get(to).intValue());
 		ScriptEvents.party("LEAD", to, to); // ST10
 	}
 

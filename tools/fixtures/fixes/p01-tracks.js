@@ -16,7 +16,7 @@ function write(file, obj) { Files.write(file.toPath(), new JString(JSON.stringif
 function copyDir(from, to) { var fs = from.listFiles(); for (var i = 0; i < fs.length; i++) write(new java.io.File(to, s(fs[i].getName())), JSON.parse(read(fs[i]))); }
 function dir(name) { var d = new java.io.File(folder, name); d.mkdirs(); return d; }
 function throws(name, fn, part) { var why = ""; try { fn(); } catch (e) { why = s(e); } check(name, why.length > 0 && (!part || why.indexOf(part) >= 0), "expected a refusal" + (part ? " naming '" + part + "'" : "") + ": " + why); }
-var room = scratchRoom(), actors = [], clan = null;
+var room = scratchRoom(), actors = [], clan = null, clan2 = null;
 function actor(name) { var m = newMob("GenMob", room); m.setName(name); actors.push(m); return m; }
 function pts(owner, id) { return PT.progress(owner, id)[0]; }
 function lvl(owner, id) { return PT.progress(owner, id)[1]; }
@@ -69,6 +69,16 @@ try {
 	PT.contribute(bo, "example.foundry", 1000);
 	check("unlocked", pts(G, "example.foundry") == 150 && PT.unlockedFor(bo, "guild-forge"), "guild " + pts(G, "example.foundry"));
 	throws("complete", function () { PT.contribute(bo, "example.foundry", 100); }, "is complete");
+	check("givers", s(PT.tree(G)).indexOf("Given by: Track Bo 150") >= 0 || s(PT.tree(G)).indexOf("Given by: Track Bo 149") >= 0, s(PT.tree(G)));
+	// a member of two organizations names the one they give to; the gift is credited there, not to the last one joined
+	clan2 = CMClass.getCommon("DefaultClan"); clan2.setName("Fixp01 Second Guild"); clan2.setGovernmentID(0); CMLib.clans().addClan(clan2);
+	var di = actor("Track Di"); di.setClan(clan.clanID(), clan.getGovernment().getAcceptPos()); di.setClan(clan2.clanID(), clan2.getGovernment().getAcceptPos());
+	CMLib.beanCounter().addMoney(di, CMLib.beanCounter().getCurrency(di), 200.0);
+	throws("several-organizations", function () { PT.contribute(di, "example.foundry", 100); }, "name one");
+	var said2 = s(PT.contribute(di, "example.foundry", 100, "Fixp01 Second Guild"));
+	check("named-organization", pts(PT.of(clan2), "example.foundry") == 10 && said2.indexOf("Fixp01 Second Guild") >= 0 && pts(G, "example.foundry") == 150,
+		said2 + " / second " + pts(PT.of(clan2), "example.foundry") + " / first " + pts(G, "example.foundry"));
+	throws("not-a-member", function () { PT.contribute(bo, "example.foundry", 100, "Fixp01 Second Guild"); }, "not in");
 
 	// an item's mastery: kills while it is wielded, on the item, not its wielder; another copy has its own
 	var cy = actor("Track Cy");
@@ -109,6 +119,7 @@ try {
 } finally {
 	for (var i = 0; i < actors.length; i++) if (!actors[i].amDestroyed()) actors[i].destroy();
 	if (clan != null) CMLib.clans().removeClan(clan);
+	if (clan2 != null) CMLib.clans().removeClan(clan2);
 	room.destroy();
 	WorldFiles.configure(originalWorld); knownField.set(null, previousKnown); currentField.set(null, previousCampaign); PT.reset();
 	var stream = Files.walk(folder.toPath()); try { var paths = stream.sorted(java.util.Comparator.reverseOrder()).iterator(); while (paths.hasNext()) Files.deleteIfExists(paths.next()); } finally { stream.close(); }

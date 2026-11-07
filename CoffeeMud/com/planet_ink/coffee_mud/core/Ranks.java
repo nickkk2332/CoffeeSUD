@@ -249,11 +249,17 @@ public class Ranks
 			mob.delTattoo(mob.findTattoo(L.key + "_" + was));
 			for(final Ability A : effectsOf(L.rank(was, "EFFECTS")))
 			{
-				final Ability E = mob.fetchEffect(A.ID());
-				if(E != null)
+				// only the effect the rank put on (lasting, with its text): not one of
+				// the same kind from a spell, an item or another ladder
+				for(int e = mob.numEffects() - 1; e >= 0; e--)
 				{
-					E.unInvoke();
-					mob.delEffect(E);
+					final Ability E = mob.fetchEffect(e);
+					if((E != null) && E.ID().equals(A.ID()) && (!E.canBeUninvoked()) && E.text().equals(A.text()))
+					{
+						E.unInvoke();
+						mob.delEffect(E);
+						break;
+					}
 				}
 			}
 			final String t = title(L, was);

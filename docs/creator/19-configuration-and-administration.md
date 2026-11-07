@@ -244,6 +244,8 @@ an area may carry its own calendar (see [World simulation](10-world-simulation.m
 | `ACTIVECHARMAX` | `0` | Cap on profile characters active in the world. |
 | `PARTYSUMMON` | `ALLOW` | `ALLOW`, `MEET` or `MASK`. |
 | `PARTYSUMMONMASK`, `PARTYSUMMONMESSAGE` | blank | Mask and refusal text for `MASK` mode. |
+| `LOADOUTS` | `0` | How many loadouts a character may keep (up to 20); `0` turns `LOADOUT` off. See [07](07-items-crafting.md#loadouts). |
+| `LOADOUTCOST` | `1` | Actions a loadout swap costs for each thing it changes (`0.5`, `0` for free). |
 | `PARTYROLES` | blank | `"role:mask; role:mask"` for the roles the party warns about. |
 | `PROFILEMAX` | `0` | Most characters in the profile; `0` is no limit. |
 | `NEWCHARS` | `ALWAYS` | `ALWAYS`, `FIRSTONLY`, `CHEAT` or `MASK`. With `NEWCHARMASK` and `NEWCHARMESSAGE` (allowlisted, not in the shipped file). |

@@ -59,6 +59,14 @@ public final class ModuleDefinitions
 			throw new IOException(where + " must be a positive 32-bit integer");
 		return (int)number;
 	}
+	/** a whole number of at least 0 */
+	public static long count(final Object value, final String where) throws IOException
+	{
+		final long number = whole(value, where);
+		if(number < 0)
+			throw new IOException(where + " must be 0 or more");
+		return number;
+	}
 	private static long whole(final Object value, final String where) throws IOException
 	{
 		if(!(value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte))

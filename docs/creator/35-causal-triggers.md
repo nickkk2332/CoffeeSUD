@@ -69,8 +69,10 @@ The actions:
 
 | `type` | Fields | What happens |
 | --- | --- | --- |
-| `cast` | `skill`, `target` | The owner uses a composed skill they have learned, paying its costs. `target` is `other` (for a block, the attacker), `enemy` (the owner's current opponent) or `self`. A kill's `other` is the dead, so CHECK refuses it. |
+| `cast` | `skill`, `target` | The owner uses a composed skill they have learned, paying its costs. `target` is `other` (for a block, the attacker), `enemy` (the owner's current opponent) or `self`. A kill's `other` is the dead, so CHECK refuses it. The reaction is not rolled against the skill's proficiency, so it cannot fizzle. |
 | `gain` | `pool`, `amount` | The owner gains a named resource. |
+| `set` | `pool`, `amount` (0 or more) | The owner's pool is set to the amount, within its bounds (a combo back to 0, a charge filled). |
+| `drain` | `pool`, `amount` | The owner loses up to the amount, as much as is not reserved; a character without the pool loses nothing. |
 | `heal` | `amount` | The owner recovers hit points. |
 | `summon` | `mob`, `ticks` | A copy of a catalog mob appears and follows the owner for that many ticks. It belongs to the owner: its `Prop_Summoned` names them, it leaves if they do, and it is not saved. |
 

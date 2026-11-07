@@ -174,6 +174,32 @@ public final class CombatRules
 		}
 		return new Stats(out,immune);
 	}
+	/** A12: an ailment a profile's composed hits can build up: its threshold, decay, status and immunity window */
+	public static final class Ailment
+	{
+		public final String id, title, effects;
+		public final int threshold, decay, statusTicks, immuneTicks;
+		Ailment(final String id, final JSONObject obj) throws IOException
+		{
+			ModuleDefinitions.keys(obj, "ailment " + id, "title", "threshold", "decay", "status_ticks", "immune_ticks", "effects");
+			this.id = id;
+			title = string(obj, "title", CMStrings.capitalizeAndLower(id));
+			if(title.isEmpty() || title.length() > 40 || title.matches("(?s).*[\\x00-\\x1f^<>].*"))
+				throw new IOException("ailment " + id + ": title must be 1..40 plain text characters");
+			threshold = (int)number(obj, "threshold", 100, 1, 100000);
+			decay = (int)number(obj, "decay", 0, 0, 100000);
+			statusTicks = (int)number(obj, "status_ticks", 3, 1, 100);
+			immuneTicks = (int)number(obj, "immune_ticks", 0, 0, 1000);
+			effects = string(obj, "effects", "");
+			if(effects.length() > 500)
+				throw new IOException("ailment " + id + ": effects longer than 500 characters");
+		}
+		public String describe()
+		{
+			return title + " (" + id + "): at " + threshold + ", losing " + decay + " a tick; then " + statusTicks + " ticks"
+				+ (effects.isEmpty() ? "" : " of " + effects) + (immuneTicks > 0 ? ", then immune for " + immuneTicks + " ticks" : "");
+		}
+	}
 	public static final class Profile
 	{
 		public final String id, title, conversion, hash, path;
@@ -181,9 +207,16 @@ public final class CombatRules
 		public final double minHit, maxHit, armorConstant, armorCap, resistanceFloor, resistanceCap, blockCap, blockReduction;
 		public final int maxDamage;
 		public final Stats defaults;
+		/** A12: the ailments its composed hits can build up, by ID */
+		public final Map<String,Ailment> ailments;
+		/** A13: the named resource pool spent before hit points ("" for none), and its recharge delay after a hit */
+		public final String guardPool;
+		public final int guardDelay;
+		/** A13: the most life leech a character recovers in a tick (0: no leech) */
+		public final int leechCap;
 		public Profile(final JSONObject obj, final String path) throws IOException
 		{
-			ModuleDefinitions.keys(obj, "combat profile", "schema", "id", "version", "title", "conversion", "hit", "armor", "resistance", "block_cap", "block_reduction", "maximum_damage", "defaults");
+			ModuleDefinitions.keys(obj, "combat profile", "schema", "id", "version", "title", "conversion", "hit", "armor", "resistance", "block_cap", "block_reduction", "maximum_damage", "defaults", "ailments", "guard", "leech");
 			if(ModuleDefinitions.integer(obj.get("schema"), "combat profile schema") != 1)
 				throw new IOException("unsupported combat profile schema");
 			id = ModuleDefinitions.id(obj.get("id"));
@@ -212,6 +245,20 @@ public final class CombatRules
 			if(maxDamage > 1000000)
 				throw new IOException("maximum_damage exceeds 1000000");
 			defaults = stats(optional(obj, "defaults"), false);
+			final Map<String,Ailment> ails = new TreeMap<String,Ailment>();
+			final JSONObject rawAilments = optional(obj, "ailments");
+			if(rawAilments.size() > 8)
+				throw new IOException("at most 8 ailments");
+			for(final String key : rawAilments.keySet())
+				ails.put(ModuleDefinitions.id(key), new Ailment(ModuleDefinitions.id(key), ModuleDefinitions.object(rawAilments.get(key), "ailment " + key)));
+			ailments = Collections.unmodifiableMap(ails);
+			final JSONObject guard = optional(obj, "guard");
+			ModuleDefinitions.keys(guard, "guard", "pool", "recharge_delay");
+			guardPool = guard.containsKey("pool") ? ModuleDefinitions.id(guard.get("pool")) : "";
+			guardDelay = (int)number(guard, "recharge_delay", 0, 0, 1000);
+			final JSONObject leech = optional(obj, "leech");
+			ModuleDefinitions.keys(leech, "leech", "cap_per_tick");
+			leechCap = (int)number(leech, "cap_per_tick", 0, 0, 100000);
 			this.path = path;
 			try
 			{

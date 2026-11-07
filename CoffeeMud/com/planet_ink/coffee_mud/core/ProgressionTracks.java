@@ -325,6 +325,53 @@ public final class ProgressionTracks
 	}
 
 	/** an owner's record of a track, or a new one */
+	/** remembers who gave how many points to an organization's track */
+	private static void gave(final Owner o, final String trackId, final MOB giver, final long points) throws IOException
+	{
+		final JSONObject all = records(o);
+		final Entry<Track> t = definitions().latest(trackId);
+		final JSONObject r = record(all, t);
+		final JSONObject givers = (r.get("givers") instanceof JSONObject) ? (JSONObject)r.get("givers") : new JSONObject();
+		final String ref = InstanceIds.reference(giver);
+		final JSONObject g = (givers.get(ref) instanceof JSONObject) ? (JSONObject)givers.get(ref) : new JSONObject();
+		g.put("name", giver.Name());
+		g.put("points", Long.valueOf(((g.get("points") instanceof Number) ? ((Number)g.get("points")).longValue() : 0) + points));
+		givers.put(ref, g);
+		while(givers.size() > MAX_GIVERS)
+		{
+			String least = null;
+			long low = Long.MAX_VALUE;
+			for(final String k : givers.keySet())
+			{
+				final long p = ((Number)((JSONObject)givers.get(k)).get("points")).longValue();
+				if((!k.equals(ref)) && (p < low))
+				{
+					low = p;
+					least = k;
+				}
+			}
+			givers.remove(least);
+		}
+		r.put("givers", givers);
+		store(o, all);
+	}
+
+	/** who gave to an organization's track, most first, for the tree */
+	private static String givers(final JSONObject r)
+	{
+		if(!(r.get("givers") instanceof JSONObject))
+			return "";
+		final JSONObject givers = (JSONObject)r.get("givers");
+		final List<JSONObject> list = new ArrayList<JSONObject>();
+		for(final String k : givers.keySet())
+			list.add((JSONObject)givers.get(k));
+		Collections.sort(list, (a, b) -> Long.compare(((Number)b.get("points")).longValue(), ((Number)a.get("points")).longValue()));
+		final StringBuilder s = new StringBuilder();
+		for(final JSONObject g : list)
+			s.append((s.length() == 0) ? "" : ", ").append(g.get("name")).append(" ").append(g.get("points"));
+		return s.toString();
+	}
+
 	private static JSONObject record(final JSONObject all, final Entry<Track> t)
 	{
 		if(all.get(t.id) instanceof JSONObject)
@@ -518,6 +565,24 @@ public final class ProgressionTracks
 	/** an organization member gives coin to an organization track */
 	public static synchronized String contribute(final MOB mob, final String trackId, final long coin) throws IOException
 	{
+		return contribute(mob, trackId, coin, null);
+	}
+
+	/** the most givers an organization track remembers; the smallest gift is forgotten first */
+	public static final int MAX_GIVERS = 24;
+
+	/**
+	 * An organization member gives coin to an organization track: to the one
+	 * organization they are in, or the one named. Who gave is remembered.
+	 * @param mob the giver
+	 * @param trackId the track
+	 * @param coin how much
+	 * @param orgName the organization, or null for the only one they are in
+	 * @return what happened
+	 * @throws IOException why it was refused (nothing is taken)
+	 */
+	public static synchronized String contribute(final MOB mob, final String trackId, final long coin, final String orgName) throws IOException
+	{
 		require();
 		ModuleContent.gameThread();
 		final Entry<Track> t = definitions().latest(trackId);
@@ -532,10 +597,20 @@ public final class ProgressionTracks
 		if(rule == null)
 			throw new IOException(t.title + " takes no contributions");
 		Clan clan = null;
+		final List<String> names = new ArrayList<String>();
 		for(final Pair<Clan, Integer> c : mob.clans())
-			clan = c.first;
+		{
+			names.add(c.first.getName());
+			if((orgName == null) || c.first.getName().equalsIgnoreCase(orgName) || c.first.clanID().equalsIgnoreCase(orgName))
+			{
+				if((orgName == null) && (clan != null))
+					throw new IOException("you are in several organizations (" + CMParms.toListString(names.iterator()) + "...): name one");
+				if(clan == null)
+					clan = c.first;
+			}
+		}
 		if(clan == null)
-			throw new IOException("you are in no organization");
+			throw new IOException((orgName == null) ? "you are in no organization" : ("you are not in " + orgName));
 		final long points = coin / rule.moneyPerPoint;
 		if(points < 1)
 			throw new IOException("a point costs " + rule.moneyPerPoint);
@@ -551,6 +626,7 @@ public final class ProgressionTracks
 		final long take = Math.min(points, room);
 		CMLib.beanCounter().subtractMoney(mob, cur, (double)(take * rule.moneyPerPoint));
 		earn(o, trackId, take, null);
+		gave(o, trackId, mob, take);
 		return "You give " + CMLib.beanCounter().nameCurrencyShort(mob, (double)(take * rule.moneyPerPoint)) + " to " + t.title + " for " + clan.getName()
 			+ ": " + take + " " + t.value.points + ".";
 	}
@@ -660,6 +736,9 @@ public final class ProgressionTracks
 				s.append(" (complete)");
 			for(final Milestone m : t.value.milestones)
 				s.append("\n  ").append((m.level <= level) ? "[x] " : "[ ] ").append(m.level).append(". ").append(m.describe());
+			final String given = givers(r);
+			if(given.length() > 0)
+				s.append("\n  Given by: ").append(given);
 		}
 		return s.toString();
 	}

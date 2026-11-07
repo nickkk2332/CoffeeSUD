@@ -1,6 +1,8 @@
 # Phase 2: build plan
 
-Status: proposed, for review. Nothing in it is built yet.
+Status: in progress. Agreed: everything except the three large families (G02,
+P05, P02), which are deferred; the three merges; ailments and defense pools for
+composed skills only.
 
 This plans the 35 phase 2 entries of [proposals.csv](proposals.csv) that remain
 (Q09, Q10 and Q11 were built with [phase 1](phase1-plan.md)). Each is built to
@@ -76,48 +78,57 @@ In all: 3 recipes, 21 extensions, 8 new families, 3 merged into others.
 
 ## Defects the audit found
 
-These are bugs in what exists, not phase 2 features. Each is confirmed with a
-failing test before it is fixed.
+Bugs in what exists, fixed in stage 1, each with a test:
 
-- **Telegraphs:** who braced or dodged and the damage taken during a wind-up are
-  kept in memory only, so a restore in mid-wind-up may forget them.
-- **`Prop_Invokable`:** the cooldown and a `TICKS` recharge countdown are not
-  saved; a restore resets the cooldown.
-- **`Prop_ItemBinder`:** a bound item can be given away, and the receiver can
-  wear it.
-- **`Prop_ItemSlot`:** items installed in a host vanish when the host is destroyed.
-- **Ranks:** leaving a rank removes its effects by ability ID, which can remove
-  the same effect given by another source.
-- **Perks:** a perk removed from perks.ini leaves its tattoo while its pick
-  quietly comes back.
-- **Practices:** practices per level use current Wisdom, so a temporary buff at
-  level-up gives permanent practices.
-- **Formation:** rows are lost on restore and on `PARTY LEAD`.
-- **`TRACKS CONTRIBUTE`:** records no contributor, and credits the member's last
-  organization rather than a chosen one.
-- **`TALK` services:** the menu ignores a service's eligibility, hours and closed
-  state.
-- **Docs:** chapter 29 says `FORMATION` is covered in chapter 31; it is not. The
-  upstream socket properties are not taught.
+- **Telegraphs:** who braced or dodged, the damage taken and the ticks left during
+  a wind-up were kept in memory only; now they are kept in the property's text,
+  so a save in mid-wind-up keeps them.
+- **`Prop_Invokable`:** the cooldown and a `TICKS` recharge countdown were not
+  saved; now they are (`COOLLEFT=`, `RECHARGEIN=`).
+- **`Prop_ItemBinder`:** a bound item could be given away, and the receiver could
+  wear it; now neither.
+- **Ranks:** leaving a rank removed its effects by ability ID, which could remove
+  the same kind of effect given by another source; now only its own.
+- **Formation:** rows were lost on restore and on `PARTY LEAD`; now kept.
+- **`TRACKS CONTRIBUTE`:** recorded no contributor and credited the member's last
+  organization; now it credits the one named (or the only one) and keeps who gave.
+- **Docs:** chapter 29 pointed to a `FORMATION` section that did not exist.
+
+Found while building (each fixed, with a test):
+
+- **`-WEAPONCLASS` on a character wielding nothing** passed, so a sword mastery
+  counted bare-handed kills; a character wielding nothing now counts as `NATURAL`.
+- **Causal triggers:** a reaction's composed cast was rolled against
+  proficiency despite being cast as automatic, so it fizzled one time in twenty;
+  it no longer does.
+- **Cookbook:** a kill achievement with `ZAPPERMASK=""` is refused by the engine;
+  an egg grows only while held, not carried; a collection completes at the next
+  achievement check, not at once.
+
+Found by the audit but belonging to an entry, so handled there: a socketed host's
+gems going with it when destroyed (upstream's behaviour; I05 adds a custody
+option), a perk removed from perks.ini (A05), the `TALK` services menu ignoring
+eligibility (P04's service records), and practices counting a buffed Wisdom at
+level-up (upstream's rule; P02, deferred).
 
 ## Stages
 
-| Stage | Contents | Kind |
-| --- | --- | --- |
-| 1 | The defects above | fixes |
-| 2 | Recipes: G05 shrines, I12 incubators and mastery, I19 collections; teaching what exists: sockets, `FORMATION`, affiliation slots, achievement books | handbook |
-| 3 | Combat on existing properties: A10 telegraph chains and responses, A18 flasks and charms, A20 combo rules | extensions |
-| 4 | Build trees: A05 on perks, with A06's secondary pools | extension |
-| 5 | Reservations, then loadouts: A14, A19 | families |
-| 6 | Ailments and defense pools: A12, A13 | families |
-| 7 | Encounters: A24 traits (with G08's possession), G04 trials (with G08's devices), G06 director hooks | family, extensions |
-| 8 | Items: I05 sockets, I06 targeted crafting, I07 and I17 saved choices, I09 materials, I14 offer books, I16 inventory views, I20 binding | extensions |
-| 9 | Knowledge: A23 unknown names and reveals, P15 latent talents | extensions |
-| 10 | Organizations: P03 affiliations, P04 services, P06 formation roles, P08 shared pools, P11 cultures, P13 challenge books | extensions |
-| 11 | The atlas: G02 | family |
-| 12 | Companion bonds: P05 | family |
-| 13 | Specialty access: P02 | family |
-| 14 | Catalog status, handbook index, a full check | docs |
+| Stage | Contents | Kind | Status |
+| --- | --- | --- | --- |
+| 1 | The defects above | fixes | Done |
+| 2 | Recipes: G05 shrines, I12 incubators and mastery, I19 collections; teaching what exists: sockets, `FORMATION`, affiliation slots, achievement books | handbook | Done |
+| 3 | Combat on existing properties: A10 telegraph chains and responses, A18 flasks and charms, A20 combo rules | extensions | Done |
+| 4 | Build trees: A05 on perks, with A06's secondary pools | extension | Done |
+| 5 | Reservations, then loadouts: A14, A19 | families | Done |
+| 6 | Ailments and defense pools: A12, A13 | families | Done |
+| 7 | Encounters: A24 traits (with G08's possession), G04 trials (with G08's devices), G06 director hooks | family, extensions | A24, G06 done |
+| 8 | Items: I05 sockets, I06 targeted crafting, I07 and I17 saved choices, I09 materials, I14 offer books, I16 inventory views, I20 binding | extensions |  |
+| 9 | Knowledge: A23 unknown names and reveals, P15 latent talents | extensions |  |
+| 10 | Organizations: P03 affiliations, P04 services, P06 formation roles, P08 shared pools, P11 cultures, P13 challenge books | extensions |  |
+| 11 | The atlas: G02 | family | Deferred |
+| 12 | Companion bonds: P05 | family | Deferred |
+| 13 | Specialty access: P02 | family | Deferred |
+| 14 | Catalog status, handbook index, a full check | docs |  |
 
 The order puts the cheap and immediately useful work first (fixes, recipes, small
 extensions), then the families in dependency order: A14 before A19, the
@@ -127,9 +138,8 @@ alone, so they can be reordered or dropped without affecting the rest.
 
 ## Decisions
 
-1. **Ailments and defense pools (A12, A13):** for composed skills only, like the
-   combat profiles (M each), or for native combat too (L each). Recommended:
-   composed skills only, as chapter 16's model already is.
-2. **Merges:** A06 into A05, G08 into A24 and G04, I17 into I07. Recommended: yes.
+1. **Ailments and defense pools (A12, A13):** for composed skills only, as the
+   combat profiles are.
+2. **Merges:** A06 into A05, G08 into A24 and G04, I17 into I07.
 3. **The large families:** the atlas (G02), bonds (P05) and specialty access
-   (P02) are each the size of a phase 1 family. Recommended: keep them, last.
+   (P02) are deferred.

@@ -17199,6 +17199,27 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
 			String id=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			// A06: MPPERK $n PICKS pool +n|-n|n: a pool's picks of its own; MPPERK $n CLEAR pool: that pool's perks go
+			final List<String> pw=CMParms.parse(id);
+			if((W instanceof MOB)&&(pw.size()>=2)&&pw.get(0).equalsIgnoreCase("CLEAR"))
+			{
+				Perks.clear((MOB)W,pw.get(1).toUpperCase());
+				return null;
+			}
+			if((W instanceof MOB)&&(pw.size()>=3)&&pw.get(0).equalsIgnoreCase("PICKS"))
+			{
+				final String pool=pw.get(1).toUpperCase();
+				final String n=pw.get(2);
+				final int now=Perks.given((MOB)W,pool);
+				final int to=(n.startsWith("+")||n.startsWith("-"))?(now+CMath.s_int(n.replace("+",""))):CMath.s_int(n);
+				if(!CMath.isInteger(n.replace("+","")))
+				{
+					logError(ctx,"MPPERK","Syntax","MPPERK $n PICKS pool +n|-n|n: "+line);
+					return null;
+				}
+				Perks.setGiven((MOB)W,pool,Math.max(0,to));
+				return null;
+			}
 			final boolean minus=id.startsWith("-");
 			if(minus)
 				id=id.substring(1).trim();
@@ -17595,6 +17616,32 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return null;
 		}
+		case "MPDIRECTOR": // G06: MPDIRECTOR START|RESET [room id]: the EncounterDirector of the room
+		{
+			final String w=varify(ctx,CMParms.getCleanBit(line,1)).trim().toUpperCase();
+			final String where=varify(ctx,CMParms.getPastBitClean(line,1)).trim();
+			Room R=(ctx.scripted instanceof Room)?(Room)ctx.scripted:lastKnownLocation;
+			if(where.length()>0)
+				R=CMLib.map().getRoom(where);
+			final Behavior B=(R==null)?null:R.fetchBehavior("EncounterDirector");
+			if((!(B instanceof com.planet_ink.coffee_mud.Behaviors.EncounterDirector))||(!(w.equals("START")||w.equals("RESET"))))
+			{
+				logError(ctx,"MPDIRECTOR","RunTime","MPDIRECTOR START|RESET [room], in or naming a room with EncounterDirector: "+line);
+				return null;
+			}
+			try
+			{
+				if(w.equals("START"))
+					((com.planet_ink.coffee_mud.Behaviors.EncounterDirector)B).start();
+				else
+					((com.planet_ink.coffee_mud.Behaviors.EncounterDirector)B).resetEncounter("a script");
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPDIRECTOR","RunTime","the director cannot start: "+e.getMessage());
+			}
+			return null;
+		}
 		case "MPWAVE": // C20: MPWAVE START|NEXT|STOP|RESET: the WaveSpawner of the room
 		{
 			final String w=varify(ctx,CMParms.getCleanBit(line,1)).trim().toUpperCase();
@@ -17646,7 +17693,7 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				return null;
 			}
 			final StringBuilder opts=new StringBuilder("");
-			final java.util.regex.Pattern opt=java.util.regex.Pattern.compile("(?i)\\s(INTERRUPT|AVOID|INTERRUPTMSG)=(\"[^\"]*\"|\\S+)\\s*$");
+			final java.util.regex.Pattern opt=java.util.regex.Pattern.compile("(?i)\\s(INTERRUPT|AVOID|INTERRUPTMSG|RESPOND|THEN)=(\"[^\"]*\"|\\S+)\\s*$");
 			for(java.util.regex.Matcher m=opt.matcher(rest);m.find();m=opt.matcher(rest))
 			{
 				opts.append(' ').append(m.group(1).toUpperCase()).append('=').append(m.group(2));
@@ -21061,6 +21108,14 @@ public class DefaultScriptingEngine implements ScriptingEngine
 		if(T==null)
 			return; // interrupted
 		final List<MOB> targets=T.telegraphTargets();
+		final Map<MOB,String> instead=new HashMap<MOB,String>();
+		for(final MOB M : targets)
+		{
+			final String c=T.telegraphCommand(M); // A10: a response's own outcome
+			if(c!=null)
+				instead.put(M,c);
+		}
+		final String then=T.telegraphThen();
 		T.telegraphDone();
 		for(final MOB M : targets)
 		{
@@ -21069,11 +21124,13 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			hit.target=M;
 			final SubScript s=new SubScriptImpl(ctx.script);
 			s.add(new ScriptLn("FUNCTION_PROG TELEGRAPH_"+name,null,null));
-			s.add(new ScriptLn(cmd,null,null));
+			s.add(new ScriptLn(instead.containsKey(M)?instead.get(M):cmd,null,null));
 			hit.script=s;
 			hit.line=1;
 			execute(hit);
 		}
+		if((then!=null)&&(then.length()>0))
+			callFunction(mob,then,"",mob); // A10: the next step of a chained attack
 	}
 
 	public void prequeResponse(final int triggerCode, final MPContext ctx, final SubScript script, final int ticks)

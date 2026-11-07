@@ -194,7 +194,7 @@ Ranges"). An attack can only be made when the distance is between them. With
 target; with `AUTOMELEE OFF` it never advances and instead spends actions
 retreating when it is too close (needs at least 25 movement). So a mage or an
 archer turns `AUTOMELEE` off; a swordsman leaves it on. Formation (`FORMATION`
-command, see [31-saves-and-party.md](31-saves-and-party.md)) sets the starting
+command, see [Formation](31-saves-and-party.md#formation)) sets the starting
 distance of group members. Ranged weapons (class `RANGED`, `THROWN`) use the
 ranged damage formulas below. The help topic `RANGE` explains the same rules.
 
@@ -745,18 +745,19 @@ that survives save and restore.
 Source:
 [Prop_Telegraph](../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Telegraph.java),
 [Telegraph](../../CoffeeMud/com/planet_ink/coffee_mud/core/Telegraph.java).
-Fixture: `c5-telegraph.js`.
+Fixtures: `c5-telegraph.js`, `a10-responses.js`.
 
 Three ways to use it:
 
 1. In a script, `MPTELEGRAPH (NAME=name) TICKS "warning" COMMAND (INTERRUPT=...)
-   (AVOID=...) (INTERRUPTMSG="...")`. After TICKS the command runs once for each
-   foe in the room who did not avoid it (`$n` is each one). Reference:
-   [MPTELEGRAPH](27-mobprog-commands.md#mptelegraph).
+   (AVOID=...) (INTERRUPTMSG="...") (RESPOND="...") (THEN=function)`. After TICKS
+   the command runs once for each foe in the room who did not avoid it (`$n` is
+   each one). Reference: [MPTELEGRAPH](27-mobprog-commands.md#mptelegraph).
 2. `Prop_Telegraph` on the mob, parameters
    `NAME=` (default `TELEGRAPH`), `TICKS=` (2), `WARNING="..."`,
    `INTERRUPT=STUN,DAMAGE>N%,MOVE`, `AVOID=LEAVE,HIDE,COMMAND:word`,
-   `INTERRUPTMSG="..."`, `ABILITY=Id TARGET=name`. Reference:
+   `INTERRUPTMSG="..."`, `RESPOND="..."`, `THEN=function`,
+   `ABILITY=Id TARGET=name`. Reference:
    [Prop_Telegraph](23-properties-reference.md#prop_telegraph).
 3. A generic ability with `WINDUP` (ticks) and `WINDUPMSG` (the warning; `<T-NAME>`
    is the target): when a monster uses it, it winds up first and uses it on its
@@ -775,6 +776,42 @@ held.
 ```text
 MPTELEGRAPH 2 "<S-NAME> rears back, flames gathering in <S-HIS-HER> throat!" MPDAMAGE $n 30 60 INTERRUPT=STUN,DAMAGE>20% AVOID=COMMAND:brace
 ```
+
+#### Responses and chains
+
+`RESPOND="word=outcome|word=outcome|..."` gives the party words to type while
+the mob winds up, each with its own outcome:
+
+| Outcome | What happens to the one who typed the word |
+| --- | --- |
+| `SPARE` | Not hit at all (as `AVOID=COMMAND:word`). |
+| `INTERRUPT` | The wind-up stops at once: no one is hit, and no `THEN` follows. |
+| any other text | A script command run on them instead of the blow (`$n` is them). |
+
+Only a foe's first word counts (`You are already ready (dodge).`), and the room
+sees it (`Pip dodges, ready for it.`). A word that is not listed is an ordinary
+command. `THEN=function` names a `FUNCTION_PROG` of the same mob that runs once
+the blow has landed, so a boss can chain one wind-up into the next: the
+function starts the next `MPTELEGRAPH`.
+
+```text
+FUNCTION_PROG SWEEP
+mptelegraph 2 "<S-NAME> sweeps its tail back!" mpdamage $n 30 50 RESPOND="dodge=SPARE|brace=mpdamage $n 5 10|parry=INTERRUPT" THEN=STOMP
+~
+FUNCTION_PROG STOMP
+mptelegraph NAME=STOMP 1 "<S-NAME> rears up to stomp!" mpdamage $n 40 60 AVOID=LEAVE
+~
+```
+
+Here a dodge takes nothing, a brace takes 5 to 10 instead of 30 to 50, and a
+parry stops the sweep and the stomp after it. In turn-based time a wind-up's
+ticks are turns, so the party has that many turns to answer; commands that
+take no time, such as `LOOK`, do not use one.
+
+A save in the middle of a wind-up keeps it: the ticks left, the damage taken,
+who avoided it and who answered with which word are kept in the property's
+text (`LEFT=`, `TAKEN=`, `AVOIDED=`, `RESPONDED=`), as are a script's named
+alarms.
 
 Test stun, displacement, death, escape and re-entry during the delay.
 

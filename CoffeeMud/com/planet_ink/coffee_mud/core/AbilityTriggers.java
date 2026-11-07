@@ -96,7 +96,7 @@ public final class AbilityTriggers
 			if(includeSummons && !on.equals("kill"))
 				throw n.error("include_summons", "is for kill triggers");
 			final Node a = n.required("action");
-			action = a.choice("type", "", "cast", "gain", "heal", "summon");
+			action = a.choice("type", "", "cast", "gain", "heal", "summon", "set", "drain");
 			if(action.equals("cast"))
 			{
 				a.allow("type", "skill", "target");
@@ -110,11 +110,19 @@ public final class AbilityTriggers
 				skill = "";
 				target = "self";
 			}
-			if(action.equals("gain"))
+			if(action.equals("gain") || action.equals("drain"))
 			{
 				a.allow("type", "pool", "amount");
 				pool = a.id("pool");
 				amount = a.integer("amount", 1, 1000000);
+			}
+			else
+			if(action.equals("set"))
+			{
+				// A20: set a pool to a value (a combo back to 0, a charge filled)
+				a.allow("type", "pool", "amount");
+				pool = a.id("pool");
+				amount = a.integer("amount", 0, 1000000);
 			}
 			else
 			if(action.equals("heal"))
@@ -150,6 +158,10 @@ public final class AbilityTriggers
 				return "uses " + skill + " on " + (target.equals("other") ? (on.equals("block") ? "the attacker" : "them") : target.equals("enemy") ? "their enemy" : "themselves");
 			if(action.equals("gain"))
 				return "gains " + amount + " " + pool;
+			if(action.equals("set"))
+				return "sets " + pool + " to " + amount;
+			if(action.equals("drain"))
+				return "loses up to " + amount + " " + pool;
 			if(action.equals("heal"))
 				return "heals " + amount;
 			return "summons " + mob + " for " + ticks + " ticks";
@@ -608,6 +620,20 @@ public final class AbilityTriggers
 			final long n = NamedResources.gain(owner, t.pool, t.amount, p.trigger.id);
 			return "gained " + n + " " + t.pool;
 		}
+		if(t.action.equals("set"))
+		{
+			final long n = NamedResources.set(owner, t.pool, t.amount);
+			return "set " + t.pool + " to " + n;
+		}
+		if(t.action.equals("drain"))
+		{
+			// A20: loses what it can, up to the amount; a character without the pool loses nothing
+			final NamedResources.Held h = NamedResources.held(owner, t.pool);
+			final long n = (h == null) ? 0 : Math.min(h.available(), t.amount);
+			if(n > 0)
+				NamedResources.spend(owner, t.pool, n, p.trigger.id);
+			return "drained " + n + " " + t.pool;
+		}
 		if(t.action.equals("heal"))
 		{
 			final int before = owner.curState().getHitPoints();
@@ -758,7 +784,7 @@ public final class AbilityTriggers
 				final Trigger t = e.value;
 				if(t.action.equals("cast") && !skills.contains(t.skill))
 					out.add(e.path + ": /action/skill: no composed skill " + t.skill + " is installed in compositions/");
-				if(t.action.equals("gain") && !pools.has(t.pool))
+				if((t.action.equals("gain") || t.action.equals("set") || t.action.equals("drain")) && !pools.has(t.pool))
 					out.add(e.path + ": /action/pool: no pool " + t.pool + " is installed in pools/");
 				for(final String p : t.cost.keySet())
 				{

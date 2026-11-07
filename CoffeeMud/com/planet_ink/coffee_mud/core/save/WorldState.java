@@ -337,6 +337,10 @@ public final class WorldState
 		final MOB leader = player.amFollowing();
 		if((leader != null) && leader.isPlayer())
 			str.append(xml.convertXMLtoTag("LEADER", xml.parseOutAngleBrackets(leader.Name())));
+		// the formation row: where they stand behind their leader, or the leader's own
+		final int row = (leader != null) ? leader.fetchFollowerOrder(player) : player.fetchFollowerOrder(player);
+		if(row >= 0)
+			str.append(xml.convertXMLtoTag("ROW", row));
 		str.append(xml.convertXMLtoTag("HP", player.curState().getHitPoints()));
 		str.append(xml.convertXMLtoTag("MANA", player.curState().getMana()));
 		str.append(xml.convertXMLtoTag("MOVE", player.curState().getMovement()));
@@ -354,7 +358,8 @@ public final class WorldState
 		final List<MOB> followers = followersOf(player);
 		for(final MOB F : followers)
 		{
-			str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\">");
+			final int fRow = (F.amFollowing() != null) ? F.amFollowing().fetchFollowerOrder(F) : -1;
+			str.append("<FOLLOWER LEADER=\"").append(followers.indexOf(F.amFollowing())).append("\" ROW=\"").append(fRow).append("\">");
 			str.append(xml.convertXMLtoTag("ROOM", xml.parseOutAngleBrackets(CMLib.map().getExtendedRoomID(F.location()))));
 			str.append(mobXML(F, "MOB"));
 			str.append("</FOLLOWER>");
@@ -1803,6 +1808,7 @@ public final class WorldState
 		final List<XMLTag> partyTags = party;
 		party = null;
 		final Map<MOB, String> leaders = new HashMap<MOB, String>();
+		final Map<MOB, Integer> rows = new HashMap<MOB, Integer>();
 		if((playerTag != null)
 		&& (mob.Name().equalsIgnoreCase(CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("NAME")))))
 		{
@@ -1812,6 +1818,7 @@ public final class WorldState
 				savedR.bringMobHere(mob, true);
 			putBackPlayer(mob, playerTag);
 			leaders.put(mob, CMLib.xml().restoreAngleBrackets(playerTag.getValFromPieces("LEADER")));
+			rows.put(mob, Integer.valueOf(playerTag.getIntFromPieces("ROW", -1)));
 			if(partyTags != null)
 			{
 				for(final XMLTag tag : partyTags)
@@ -1821,13 +1828,22 @@ public final class WorldState
 						continue;
 					putBackPlayer(M, tag);
 					leaders.put(M, CMLib.xml().restoreAngleBrackets(tag.getValFromPieces("LEADER")));
+					rows.put(M, Integer.valueOf(tag.getIntFromPieces("ROW", -1)));
 				}
 			}
 			for(final Map.Entry<MOB, String> e : leaders.entrySet())
 			{
 				final MOB leader = (e.getValue().length() > 0) ? CMLib.players().getPlayer(e.getValue()) : null;
+				final int row = rows.containsKey(e.getKey()) ? rows.get(e.getKey()).intValue() : -1;
 				if((leader != null) && (leader != e.getKey()) && CMLib.flags().isInTheGame(leader, true))
+				{
 					e.getKey().setFollowing(leader);
+					if(row >= 0)
+						leader.addFollower(e.getKey(), row); // back in their formation row
+				}
+				else
+				if(row >= 0)
+					e.getKey().addFollower(e.getKey(), row); // a leader's own row
 			}
 		}
 		// the characters' own vessels are back with them, so their rooms can be
@@ -2115,6 +2131,9 @@ public final class WorldState
 				final int leader = CMath.s_int(tag.getParmValue("LEADER"));
 				final MOB L = ((leader >= 0) && (leader < made.size() - 1) && (made.get(leader) != null)) ? made.get(leader) : mob;
 				F.setFollowing(L);
+				final int row = CMath.s_int(tag.getParmValue("ROW"));
+				if((tag.getParmValue("ROW") != null) && (row >= 0))
+					L.addFollower(F, row);
 			}
 		}
 	}

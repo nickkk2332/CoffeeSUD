@@ -512,6 +512,7 @@ public final class SaveGame
 		if(mob.actions() < mob.phyStats().speed())
 			mob.setActions(mob.phyStats().speed());
 		WorldState.finishRestore(mob);
+		com.planet_ink.coffee_mud.core.Perks.sync(mob); // A05: perk effects as perks.ini has them now
 		if(Boolean.getBoolean("sud.isolated.playtest") && mob.fetchEffect("Prop_Playtest")==null)
 		{
 			final com.planet_ink.coffee_mud.Abilities.interfaces.Ability test=CMClass.getAbility("Prop_Playtest");

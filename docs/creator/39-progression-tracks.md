@@ -90,7 +90,7 @@ not still be installed.
 | Command | Who | What it does |
 | --- | --- | --- |
 | `TRACKS` | players | Your tracks, your organizations' and your equipment's, as a tree: each track's level, points and what the next level needs, and each milestone marked `[x]` reached or `[ ]` not. No game time. |
-| `TRACKS CONTRIBUTE track coin` | players | Gives coin to your organization's track, whole points only. |
+| `TRACKS CONTRIBUTE track coin (organization)` | players | Gives coin to your organization's track, whole points only. In several organizations, name the one; who gave is kept, and `TRACKS` shows the givers. |
 | `TRACKS RESET track` | players | Resets a track whose `reset` is `command`. |
 | `WORLD TRACKS LIST` / `CHECK` / `RELOAD` | builder, DEV=1 | Definitions; problems (a skill that is not installed, a replaced track still installed, a curve that does not rise); a fresh read. |
 | `WORLD TRACKS GRANT track n [key]` | builder, DEV=1 | Points to yourself, your organization or your wielded item. |

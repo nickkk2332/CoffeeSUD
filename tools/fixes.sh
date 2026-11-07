@@ -744,6 +744,16 @@ group_saves5()
 	expect s17-restore.txt "Restored 's17'."
 	jsresults s17-restore.txt
 
+	# phase 2 stage 1: formation rows kept in a save, the player's own and a follower's
+	play p2rows-play.txt ydb yworld "Rower\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/p2-rows-play.js\nsave p2rows\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults p2rows-play.txt
+	play p2rows-check.txt ydb yworld 'jrun /resources/_fixes/p2-rows-check.js\nquit\nn\n' RESTORE=p2rows TIMEMODE=TURNS
+	jsresults p2rows-check.txt
+	play p2load-play.txt ydb yworld "Packer\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/p2-loadout-play.js\nsave p2load\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults p2load-play.txt
+	play p2load-check.txt ydb yworld 'jrun /resources/_fixes/p2-loadout-check.js\nquit\nn\n' RESTORE=p2load TIMEMODE=TURNS
+	jsresults p2load-check.txt
+
 	# S19 and S18: areas made in play survive a save: an instance (the
 	# crypt's), with its rooms, its dead, its timer and its group, and the
 	# player in it; and a generated dungeon (the mines'), the same after

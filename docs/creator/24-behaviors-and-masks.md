@@ -2887,7 +2887,7 @@ carries or wields as stated.
 | `-RESOURCES` (`-RESOURCE`) / `+RESOURCES` | `+OAK` ... | Requires / forbids a resource (exact resource name, or a resource flag name that expands to its resources). |
 | `-WORNON` / `+WORNON` | `+TORSO` ... | Requires / forbids items wearable on those locations. |
 | `-WEAPONTYPE` / `+WEAPONTYPE` | `+SLASHING` ... | The type of the wielded weapon (`SLASHING`, `PIERCING`, `BASHING`...). |
-| `-WEAPONCLASS` / `+WEAPONCLASS` | `+SWORD` ... | The class of the wielded weapon (`SWORD`, `AXE`, `DAGGER`...). |
+| `-WEAPONCLASS` / `+WEAPONCLASS` | `+SWORD` ... | The class of the wielded weapon (`SWORD`, `AXE`, `DAGGER`...). Tested on a character wielding nothing, the class is `NATURAL`: `-WEAPONCLASS +SWORD` fails bare-handed, `-WEAPONCLASS +NATURAL` passes only then. |
 | `-WEAPONAMMO` / `+WEAPONAMMO` | `+arrow` ... | The ammunition type the wielded weapon uses. |
 | `-DISPOSITION` / `+DISPOSITION` | `+ISHIDDEN` ... | Requires / forbids a disposition flag: `ISUNSEEN`, `ISHIDDEN`, `ISINVISIBLE`, `ISEVIL`, `ISGOOD`, `ISSNEAKING`, `ISBONUS`, `ISDARK`, `ISGOLEM`, `ISSLEEPING`, `ISSITTING`, `ISFLYING`, `ISSWIMMING`, `ISGLOWING`, `ISCLIMBING`, `ISFALLING`, `ISLIGHT`, `ISBOUND`, `ISCLOAKED`, `ISUNSAVABLE`, `ISCATALOGED`, `ISUNATTACKABLE`, `ISCUSTOM`, `ISUNHELPFUL`. |
 | `-SENSES` / `+SENSES` | `+CANSEEDARK` ... | Requires / forbids a sense flag: `CANNOTSEE`, `CANSEEHIDDEN`, `CANSEEINVISIBLE`, `CANSEEEVIL`, `CANSEEGOOD`, `CANSEESNEAKERS`, `CANSEEBONUS`, `CANSEEDARK`, `CANSEEINFRARED`, `CANNOTHEAR`, `CANNOTMOVE`, `CANNOTSMELL`, `CANNOTTASTE`, `CANNOTSPEAK`, `CANNOTBREATHE`, `CANSEEVICTIM`, `CANSEEMETAL`, `CANNOTTHINK`, `CANNOTTRACK`, `CANNOTAUTOATTACK`, `CANNOTBECAMPED`, `CANGRUNTWHENSTUPID`, `CANSEEITEMSHIDDEN`. |
