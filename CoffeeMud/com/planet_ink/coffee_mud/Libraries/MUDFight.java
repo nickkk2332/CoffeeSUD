@@ -3483,6 +3483,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 
 		final CombatSystem combatSystem=CombatSystem.values()[CMProps.getIntVar(CMProps.Int.COMBATSYSTEM) % CombatSystem.values().length];
 
+		FormationRoles.round(fighter); // P06: a member's named role reacts and picks its target
 		subtickBeforeAttack(fighter, combatSystem);
 
 		final int folrange=(fighter.isAttributeSet(MOB.Attrib.AUTOMELEE)

@@ -406,7 +406,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 
 ## ACCEPT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2159.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2168.
 
 ```text
 Command : ACCEPT
@@ -4316,7 +4316,7 @@ save, and SAVES marks such a save [cheat].  CHEAT OFF closes them.
 
 ## CHECKPOINT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2897.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2906.
 
 ```text
 Command : CHECKPOINT
@@ -4500,7 +4500,7 @@ or that stopped it, and what was dealt.  Damage outside an attack, a spell's, ge
 
 ## COMBATRESULT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3273.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3282.
 
 ```text
 Command : COMBATRESULT
@@ -4521,7 +4521,7 @@ selection, validation and broader inspection.
 
 ## COMBINE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2436.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2445.
 
 ```text
 Command : COMBINE
@@ -4551,7 +4551,7 @@ maintained in resources/skills/components.txt
 
 ## COMPOSE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3247.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3256.
 
 ```text
 Ability : Ability composition (Skill_Compose)
@@ -5772,7 +5772,7 @@ made-up conditions, as PREVIEW does.
 
 ## HELP
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1627.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1636.
 
 ```text
 Command : HELP
@@ -5811,7 +5811,7 @@ for herbology are obtained by using the Foraging skill.
 
 ## HIRE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1680.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1689.
 
 ```text
 Command : HIRE
@@ -5860,7 +5860,7 @@ ever).
 
 ## HOME
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1667.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1676.
 
 ```text
 Command : HOME
@@ -5944,7 +5944,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3386.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3395.
 
 ```text
 Command : ITEMMODS
@@ -6222,7 +6222,7 @@ its items in the pack.
 
 ## LANGS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1734.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1743.
 
 Help alias for **LANGUAGES**.
 
@@ -6239,7 +6239,7 @@ type SPEAK [LANGUAGE NAME].
 
 ## LANGUAGES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1735.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1744.
 
 ```text
 Command : LANGUAGES
@@ -6286,7 +6286,7 @@ custom definition is exported with the world.
 
 ## LEARN
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2909.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2918.
 
 ```text
 Command : LEARN
@@ -6370,7 +6370,7 @@ Additional help *may* be available by entering HELP LIST [X] where X is one of t
 
 ## LOOK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1784.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 1793.
 
 ```text
 Command : LOOK
@@ -6425,7 +6425,7 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3395.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3404.
 
 ```text
 Command : MODCRAFT
@@ -6518,7 +6518,7 @@ GENBEHAVIOR).
 
 ## MODULES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3287.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3296.
 
 ```text
 Command : MODULES
@@ -6953,7 +6953,7 @@ on the ground.  The Clay is obtained by using the Gem Digging skill.
 
 ## PRACTICE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2050.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2059.
 
 ```text
 Command : PRACTICE
@@ -10840,7 +10840,7 @@ information on the mundane use of the command.
 
 ## QUIT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2258.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2267.
 
 ```text
 Command : QUIT
@@ -10889,7 +10889,7 @@ rank, how far up it is, and what the next rank needs.
 
 ## READ
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2274.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2283.
 
 ```text
 Command : READ
@@ -11026,7 +11026,7 @@ on a schedule, at a moon or when the party leaves, and its GENERATED_PROG runs a
 
 ## RESOURCES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3304.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3313.
 
 ```text
 Command : RESOURCES
@@ -11080,7 +11080,7 @@ and some let you do it only once.
 
 ## RESTORE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2870.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2879.
 
 ```text
 Command : RESTORE
@@ -11112,7 +11112,7 @@ also CHECKPOINT.
 
 ## RESUME
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2851.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2860.
 
 Help alias for **PAUSE**.
 
@@ -11154,7 +11154,7 @@ and some let you do it only once.
 
 ## REVIVE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2444.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2453.
 
 ```text
 Command : REVIVE
@@ -11172,7 +11172,7 @@ PARTYDEFEAT setting.
 
 ## ROLLBACK
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2907.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2916.
 
 Help alias for **CHECKPOINT**.
 
@@ -11282,7 +11282,7 @@ Traps can all be saved from.
 
 ## SAY
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2465.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2474.
 
 ```text
 Command : SAY
@@ -11299,7 +11299,7 @@ not-targeting.
 
 ## SAYTO
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2455.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2464.
 
 ```text
 Command : SAYTO
@@ -11521,7 +11521,7 @@ GENDISEASE) and tweaks have scripts of their own (AHELP GENABILITY).
 
 ## SKILLTREE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2224.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2233.
 
 ```text
 Command : SKILLTREE
@@ -11561,7 +11561,7 @@ home room and begin their duties.
 
 ## SLEEP
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2566.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2575.
 
 ```text
 Command : SLEEP
@@ -11756,7 +11756,7 @@ planesofexistence.txt
 
 ## STREE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2238.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2247.
 
 Help alias for **SKILLTREE**.
 
@@ -11779,7 +11779,7 @@ resources/skills/skillhints.ini.
 
 ## SWITCH
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3069.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3078.
 
 ```text
 Command : SWITCH
@@ -11840,7 +11840,7 @@ letter at the post office, or use the EMAIL command.
 
 ## TEACHLIST
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2723.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2732.
 
 ```text
 Command : TEACHLIST
@@ -11960,7 +11960,7 @@ placed the constituent cloths he or she wishes to make the bolt from on the grou
 
 ## TIME
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2788.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2797.
 
 ```text
 Command : TIME
@@ -11978,7 +11978,7 @@ Local calendar information:
 
 ## TIMEMODE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2798.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2807.
 
 ```text
 Command : TIMEMODE
@@ -12067,7 +12067,7 @@ OFF stops it.
 
 ## TRAIN
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2939.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2948.
 
 ```text
 Command : TRAIN
@@ -12094,7 +12094,7 @@ else.
 
 ## UNATTUNE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2418.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2427.
 
 ```text
 Command : UNATTUNE
@@ -12132,7 +12132,7 @@ changed (HISTORY lists the commands typed).
 
 ## USE
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2426.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2435.
 
 ```text
 Command : USE
@@ -12279,7 +12279,7 @@ wood listed. The raw wood for building is found using the Chopping skill.
 
 ## WAIT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2819.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 2828.
 
 ```text
 Command : WAIT
@@ -12367,7 +12367,7 @@ some material types require smaller amounts to make the same items.
 
 ## WEATHER
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3108.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3117.
 
 ```text
 Command : WEATHER

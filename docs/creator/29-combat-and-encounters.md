@@ -195,7 +195,8 @@ target; with `AUTOMELEE OFF` it never advances and instead spends actions
 retreating when it is too close (needs at least 25 movement). So a mage or an
 archer turns `AUTOMELEE` off; a swordsman leaves it on. Formation (`FORMATION`
 command, see [Formation](31-saves-and-party.md#formation)) sets the starting
-distance of group members. Ranged weapons (class `RANGED`, `THROWN`) use the
+distance of group members, and [formation roles](31-saves-and-party.md#formation-roles)
+give members rules for whom they fight, whom they guard and when they fall back. Ranged weapons (class `RANGED`, `THROWN`) use the
 ranged damage formulas below. The help topic `RANGE` explains the same rules.
 
 There is no command file named `ADVANCE` or `RETREAT` in `Commands/`: advancing

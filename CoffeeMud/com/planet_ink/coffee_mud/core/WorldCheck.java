@@ -335,6 +335,9 @@ public final class WorldCheck
 		// P13: challenges.ini's books and entries
 		for(final String p : Challenges.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P06: formations.ini's roles
+		for(final String p : FormationRoles.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
 		// P11: cultures.ini's abilities, and origins' cultures
 		for(final String p : Cultures.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));

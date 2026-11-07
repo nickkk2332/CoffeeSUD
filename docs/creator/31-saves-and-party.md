@@ -346,6 +346,57 @@ in a fight ([chapter 29](29-combat-and-encounters.md), "Range"). A save keeps
 every character's and follower's row, and `PARTY LEAD` keeps them too: the new
 leader and the old one swap rows, and everyone else keeps theirs.
 
+#### Formation roles
+
+Source: [FormationRoles](../../CoffeeMud/com/planet_ink/coffee_mud/core/FormationRoles.java).
+Test: [p06-roles.js](../../tools/fixtures/fixes/p06-roles.js). Help: `HELP FORMATION`.
+
+A row says where a member stands; a role says what it does there.
+`world/formations.ini` names the roles, one `[ID]` section each, in the format
+of `origins.ini`:
+
+```ini
+[GUARD]
+NAME=Guard
+ROW=0
+TARGET=ATTACKER
+INTERCEPT=50
+
+[ARCHER]
+NAME=Archer
+ROW=2
+TARGET=WEAKEST
+FALLBACK=30
+
+[SHIELD]
+NAME=Shield-bearer
+ROW=1
+GUARDS=ARCHER
+INTERCEPT=100
+```
+
+| Key | Meaning |
+| --- | --- |
+| `NAME` | How it is shown (the ID if missing) |
+| `ROW` | The row it takes when given (0 by default) |
+| `TARGET` | Whom it fights: `LEADER` (the leader's foe, the default), `WEAKEST` (the foe with the least share of its hit points), `STRONGEST` (the most), `CASTER` (the foe with the most mana), `ATTACKER` (a foe attacking the one it guards) |
+| `GUARDS` | Whom it guards: `LEADER` (the default) or a role, the member who holds it |
+| `INTERCEPT` | A share of hit points: when the one it guards is at or below it, the role draws one of their attackers on to itself, each round (`100`: always) |
+| `FALLBACK` | A share of hit points: below it, the role steps behind everyone (a row of its own at the rear), and stays there until moved |
+
+`FORMATION ROLES` lists the roles and how each works, in words.
+`FORMATION name ROLE guard` gives a member a role and puts it in the role's
+row; `ROLE NONE` takes it away. `FORMATION` shows each member's role after its
+name. A role is kept as the tattoo `ROLE_<ID>` on the member, so a save keeps
+it, masks can test it (`-TATTOOS +ROLE_GUARD`), and a group of NPCs can have
+roles too: give its members the tattoo (`MPTATTOO`, or the mob's tattoos).
+
+Each round of a fight, before its attacks, a member with a role reacts and
+picks its foe: an interception or a fall back is shown to the room; a change of
+foe is quiet. A guard that has just drawn an attacker fights that attacker.
+`WORLD CHECK` names an unknown `TARGET`, a `GUARDS` that names no role, and a
+`ROW`, `INTERCEPT` or `FALLBACK` that is no number.
+
 ### Script hooks
 
 | Hook | Fires |
