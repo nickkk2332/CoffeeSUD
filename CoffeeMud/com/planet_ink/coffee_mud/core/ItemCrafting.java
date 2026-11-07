@@ -384,7 +384,7 @@ public final class ItemCrafting
 		final String action=op.string("action");
 		if(action.equals("add"))
 			return ModuleDefinitions.id(input.trim());
-		if(action.equals("upgrade")||ItemModifierRules.DRAWS.contains(action))
+		if(action.equals("upgrade")||action.equals("refine")||ItemModifierRules.DRAWS.contains(action))
 		{
 			if(input.trim().length()>0)
 				throw new IOException(action+" takes no modifier or affix; name catalysts after WITH");
@@ -449,6 +449,18 @@ public final class ItemCrafting
 			for(final JSONObject m:ItemModifierRules.modifiers(plan.data))
 				if(m.get("uid").equals(choice))
 					ranges=ModuleDefinitions.json((JSONObject)ItemModifiers.definitions().pinned(m.get("pin"),"affix").raw.get("rolls"));
+		if(action.equals("refine"))
+		{
+			// I09: what the next tier raises
+			final Definition base=ItemModifiers.definitions().pinned(plan.data.get("base"),"base");
+			final JSONObject q=(JSONObject)base.raw.get("quality");
+			final List<String> tags=new ArrayList<String>();
+			for(final Object t:ModuleDefinitions.array(q.get("tags"),"quality tags"))
+				tags.add(String.valueOf(t));
+			return plan.describe()+"\nRefines "+item.Name()+" to quality tier "+(ItemModifierRules.quality(plan.data)+1)+" of "+q.get("max")+": modifiers tagged "
+				+String.join(" or ",tags)+" count "+((ItemModifierRules.quality(plan.data)+1)*((Number)q.get("percent")).intValue())
+				+"% more. The rolls kept on the item do not change.";
+		}
 		if(action.equals("upgrade"))
 			return plan.describe()+"\nUpgrades to "+ItemModifierRules.successor(plan.data,ItemModifiers.definitions()).key()
 				+", keeping every modifier and its rolls.";

@@ -1,0 +1,5 @@
+{
+  "schema": 1, "kind": "material", "id": "workbench.bronze", "version": 1,
+  "name": "Ember bronze", "material": "BRONZE",
+  "traits": {"conductivity": 3, "density": 2}
+}

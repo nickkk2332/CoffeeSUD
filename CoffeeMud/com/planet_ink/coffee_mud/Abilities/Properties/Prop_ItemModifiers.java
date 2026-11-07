@@ -6,6 +6,7 @@ import com.planet_ink.coffee_mud.Abilities.StdAbility;
 import com.planet_ink.coffee_mud.Abilities.interfaces.Ability;
 import com.planet_ink.coffee_mud.Items.interfaces.Item;
 import com.planet_ink.coffee_mud.core.*;
+import com.planet_ink.coffee_mud.core.ItemModifierRules.Definition;
 import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 import com.planet_ink.coffee_mud.core.interfaces.CombatStatSource;
 
@@ -41,12 +42,19 @@ public class Prop_ItemModifiers extends StdAbility implements CombatStatSource
 		{
 			if(!(affected instanceof Item))
 				throw new IOException("not on an item");
-			final List<JSONObject> mods=ItemModifierRules.modifiers(ItemModifiers.bound((Item)affected,text()));
-			if(mods.size()>ItemModifiers.limit())
+			final JSONObject record=ItemModifiers.bound((Item)affected,text());
+			final List<JSONObject> mods=ItemModifierRules.modifiers(record);
+			if(ItemModifierRules.slots(record)>ItemModifiers.limit())
 				throw new IOException("more modifiers than this campaign's limit of "+ItemModifiers.limit());
+			// I09: each modifier as its base's quality counts it, and what the base reads of the item's material
+			final Definition base=ItemModifiers.definitions().pinned(record.get("base"),"base");
+			final int quality=ItemModifierRules.quality(record);
 			final List<CombatRules.Stats> stats=new ArrayList<CombatRules.Stats>();
 			for(final JSONObject m:mods)
-				stats.add(ItemModifierRules.stats((JSONObject)m.get("values")));
+				stats.add(ItemModifierRules.stats(ItemModifierRules.counted(base,m,quality)));
+			final JSONObject traits=ItemModifierRules.traitStats(base,ItemModifiers.materialOf((Item)affected));
+			if(!traits.isEmpty())
+				stats.add(ItemModifierRules.stats(traits));
 			withheld="";
 			return stats;
 		}
@@ -77,11 +85,19 @@ public class Prop_ItemModifiers extends StdAbility implements CombatStatSource
 		if(granted()==null)
 			return Collections.singletonList("tracked modifiers withheld: "+withheld);
 		final List<String> out=new ArrayList<String>();
-		for(final JSONObject m:ItemModifierRules.modifiers(ItemModifierRules.parse(text())))
+		final JSONObject record=ItemModifierRules.parse(text());
+		final Definition base=ItemModifiers.definitions().pinned(record.get("base"),"base");
+		final int quality=ItemModifierRules.quality(record);
+		for(final JSONObject m:ItemModifierRules.modifiers(record))
 		{
 			final JSONObject pin=(JSONObject)m.get("pin");
-			out.add(pin.get("id")+" v"+pin.get("version")+" tier "+m.get("tier")+": "+ModuleDefinitions.json((JSONObject)m.get("values")));
+			final int pct=ItemModifierRules.qualityPercent(base,m,quality);
+			out.add(pin.get("id")+" v"+pin.get("version")+" tier "+m.get("tier")+": "+ModuleDefinitions.json(ItemModifierRules.counted(base,m,quality))
+				+(pct>0?" (quality +"+pct+"%)":""));
 		}
+		final JSONObject traits=ItemModifierRules.traitStats(base,ItemModifiers.materialOf((Item)affected));
+		if(!traits.isEmpty())
+			out.add("material traits: "+ModuleDefinitions.json(traits));
 		return Collections.unmodifiableList(out);
 	}
 }

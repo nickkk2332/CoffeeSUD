@@ -32,6 +32,13 @@ MODCRAFT PREPARE workbench.imbue "plain workbench cloak" WITH workbench.ash
 MODCRAFT COMMIT
 ```
 
+Materials and quality ([chapter 17](../../17-item-modifiers-crafting.md#materials-and-quality)):
+`workbench.bronze` gives BRONZE conductivity 3 and density 2; the base
+`workbench.bracer` reads conductivity (2 electric penetration a point) and
+nothing reads density; its quality, three tiers that `workbench.refine`
+(1 IRON) raises, counts its defense modifiers 10% more a tier. The template
+`workbench_bracer` makes a bronze bracer with two modifiers.
+
 All need an `ember-forge` workstation. The template
 `randareas/workbench.xml` makes a cloak with two modifiers (ID
 `workbench_cloak`) and one with none (ID `workbench_plain`).
@@ -54,5 +61,6 @@ MODCRAFT COMMIT
 MODCRAFT STATUS
 ```
 
-Tests: [i04-workbench.js](../../../../tools/fixtures/fixes/i04-workbench.js) and
-[i06-targeted.js](../../../../tools/fixtures/fixes/i06-targeted.js).
+Tests: [i04-workbench.js](../../../../tools/fixtures/fixes/i04-workbench.js),
+[i06-targeted.js](../../../../tools/fixtures/fixes/i06-targeted.js) and
+[i09-materials.js](../../../../tools/fixtures/fixes/i09-materials.js).

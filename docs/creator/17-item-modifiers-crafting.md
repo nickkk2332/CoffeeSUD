@@ -221,8 +221,9 @@ does not make generic catalog cloning the managed-copy API.
 }
 ```
 
-Actions: add, remove, reroll, protect, unprotect, replace and upgrade, and the
-two that draw their modifiers, imbue and reforge
+Actions: add, remove, reroll, protect, unprotect, replace, upgrade and refine
+([quality](#materials-and-quality)), and the two that draw their modifiers,
+imbue and reforge
 ([targeted crafting](#targeted-crafting-imbue-reforge-and-catalysts)).
 Item/modifier tag lists require all listed tags. An add or replace operation's
 nonempty affixes list further restricts the base pool; an empty list uses the
@@ -409,6 +410,57 @@ The workbench pack has the example: `workbench.imbue`, `workbench.reforge`
 `workbench.coal` (offense x4), `workbench.ash` (excludes offense) and
 `workbench.amber` (guarantees defense), and the recipe `workbench.ward-cloak`.
 Test: [i06-targeted.js](../../tools/fixtures/fixes/i06-targeted.js).
+
+## Materials and quality
+
+A tracked item's **material** (its registered raw resource, as BRONZE) can have
+named numeric traits, and its record a **quality** tier. Neither does anything
+on its own: a trait counts only where the item's base declares a consumer for
+it, and quality raises only the modifiers its base names.
+
+```json
+{"schema": 1, "kind": "material", "id": "workbench.bronze", "version": 1,
+ "name": "Ember bronze", "material": "BRONZE", "traits": {"conductivity": 3, "density": 2}}
+```
+
+A `material` definition gives one registered resource 1 to 16 traits, each a
+whole number from -1000 to 1000. One definition says a resource's traits (its
+latest version counts); CHECK refuses a second definition for the same
+resource and an unregistered resource name.
+
+A base declares what it reads:
+
+```json
+{"schema": 1, "kind": "base", "id": "workbench.bracer", "version": 1, "name": "...",
+ "item_kind": "armor", "prefixes": 1, "suffixes": 1, "tags": ["metal", "workbench"],
+ "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"],
+ "quality": {"max": 3, "tags": ["defense"], "percent": 10},
+ "traits": {"conductivity": {"stat": "penetration.electric", "per": 2}}}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `traits` | 1 to 8 traits it reads: each adds `per` (-100 to 100, not 0) times the material's value to a combat `stat` (a numeric stat path, as a roll's). |
+| `quality` | `max` (1 to 10) tiers; each tier raises the values of modifiers carrying any of `tags` by `percent` (1 to 100), rounded half away from zero. |
+
+The rolls stored on the item never change: the bonuses are worked out from the
+item's material and quality as they are when they count, so a changed material
+(a resize, a repair, a builder's edit) or quality shows at once. ITEMMODS says
+what each trait does on this item, and names a trait nothing reads:
+
+```text
+Material: Ember bronze (BRONZE): conductivity 3: penetration.electric +6 (2 per point); density 2: nothing on this item reads it
+Quality: tier 1 of 3; each tier raises modifiers tagged defense by 10%, now +10%
+  modifier 1 counts {"resistance.fire":17} (quality +10%)
+```
+
+A `refine` operation raises the quality by one tier, up to the base's `max`;
+it takes no selector (`MODCRAFT PREPARE workbench.refine "workbench bracer"`),
+and PREVIEW says what the next tier raises. A base with no `quality` refuses it
+("nothing would read it"), and so does one at its most. An upgrade keeps the
+tier only into a successor that allows it.
+
+Test: [i09-materials.js](../../tools/fixtures/fixes/i09-materials.js).
 
 ## Requests, atomicity and persistence
 

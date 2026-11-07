@@ -99,7 +99,8 @@ public final class ItemModifierRules
 			if(kind.equals("base"))
 			{
 				ModuleDefinitions.keys(obj,"modifier base","schema","kind","id","version","name","item_kind","prefixes","suffixes","tags","pool",
-					"successor");
+					"successor","quality","traits");
+				consumers(obj);
 				if(obj.containsKey("successor")&&ModuleDefinitions.id(obj.get("successor")).equals(id))
 					throw new IOException("a base cannot be its own successor");
 				if(!Arrays.asList("armor","weapon","ammo","item").contains(obj.get("item_kind")))
@@ -150,7 +151,7 @@ public final class ItemModifierRules
 			{
 				ModuleDefinitions.keys(obj,"craft operation","schema","kind","id","version","name","action","station","material","units","item_tags",
 					"modifier_tags","affixes","exclude_tags","weights","guarantee","catalysts");
-				if(!Arrays.asList("add","remove","reroll","protect","unprotect","replace","upgrade","imbue","reforge").contains(obj.get("action")))
+				if(!Arrays.asList("add","remove","reroll","protect","unprotect","replace","upgrade","imbue","reforge","refine").contains(obj.get("action")))
 					throw new IOException("unknown operation action");
 				// I06: only the operations that draw their modifiers take a distribution and catalysts
 				final boolean draws=DRAWS.contains(obj.get("action"));
@@ -207,6 +208,21 @@ public final class ItemModifierRules
 						throw new IOException("a policy result's rarity decides its modifiers");
 				}
 			}
+			else if(kind.equals("material"))
+			{
+				// I09: a registered raw material's named numeric traits, for the bases that declare consumers of them
+				ModuleDefinitions.keys(obj,"material","schema","kind","id","version","name","material","traits");
+				if(!ModuleDefinitions.string(obj.get("material"),"material").matches("[A-Z][A-Z0-9 _-]{0,79}"))
+					throw new IOException("material must be an uppercase resource name");
+				final JSONObject traits=ModuleDefinitions.object(obj.get("traits"),"traits");
+				if(traits.isEmpty()||traits.size()>16)
+					throw new IOException("a material has 1..16 traits");
+				for(final String t:traits.keySet())
+				{
+					ModuleDefinitions.id(t);
+					integer(traits.get(t),"trait "+t,-1000,1000);
+				}
+			}
 			else if(kind.equals("catalyst"))
 			{
 				// I06: an ingredient named at PREPARE that shapes what a craft draws, paid with its costs
@@ -242,6 +258,123 @@ public final class ItemModifierRules
 		{
 			return raw.containsKey(field)?ids(raw.get(field),field,32):Collections.<String>emptyList();
 		}
+	}
+	/** I09: a base's consumers: what its quality raises and what its material's traits give; checked */
+	static void consumers(final JSONObject obj) throws IOException
+	{
+		if(obj.containsKey("quality"))
+		{
+			final JSONObject q=ModuleDefinitions.object(obj.get("quality"),"quality");
+			ModuleDefinitions.keys(q,"quality","max","tags","percent");
+			integer(q.get("max"),"quality max",1,10);
+			if(ids(q.get("tags"),"quality tags",16).isEmpty())
+				throw new IOException("quality raises the modifiers of 1..16 tags");
+			integer(q.get("percent"),"quality percent",1,100);
+		}
+		if(obj.containsKey("traits"))
+		{
+			final JSONObject t=ModuleDefinitions.object(obj.get("traits"),"traits");
+			if(t.isEmpty()||t.size()>8)
+				throw new IOException("a base reads 1..8 traits");
+			for(final String name:t.keySet())
+			{
+				ModuleDefinitions.id(name);
+				final JSONObject c=ModuleDefinitions.object(t.get(name),"trait "+name);
+				ModuleDefinitions.keys(c,"trait "+name,"stat","per");
+				final int per=integer(c.get("per"),"trait "+name+" per",-100,100);
+				if(per==0)
+					throw new IOException("trait "+name+": per must not be 0");
+				final JSONObject probe=new JSONObject();
+				probe.put(ModuleDefinitions.string(c.get("stat"),"trait stat"),Long.valueOf(1));
+				stats(probe);
+			}
+		}
+	}
+	/** I09: a record's quality tier */
+	public static int quality(final JSONObject record)
+	{
+		final Object q=record.get("quality");
+		return (q instanceof Number)?((Number)q).intValue():0;
+	}
+	/** I09: how much a base's quality raises a modifier (a percentage), or 0 when the modifier is not one it raises */
+	public static int qualityPercent(final Definition base,final JSONObject mod,final int quality)throws IOException
+	{
+		if(quality<=0||!base.raw.containsKey("quality"))
+			return 0;
+		final JSONObject q=(JSONObject)base.raw.get("quality");
+		final List<String> tags=ids(q.get("tags"),"quality tags",16),has=ids(mod.get("tags"),"modifier tags",16);
+		for(final String t:tags)
+			if(has.contains(t))
+				return ((Number)q.get("percent")).intValue()*Math.min(quality,((Number)q.get("max")).intValue());
+		return 0;
+	}
+	/** I09: a modifier's values as they count: raised by the item's quality when the base's quality raises it (rounded half away from zero) */
+	public static JSONObject counted(final Definition base,final JSONObject mod,final int quality)throws IOException
+	{
+		final JSONObject values=ModuleDefinitions.copy((JSONObject)mod.get("values"));
+		final int pct=qualityPercent(base,mod,quality);
+		if(pct>0)
+			for(final String k:new ArrayList<String>(values.keySet()))
+			{
+				final long v=((Number)values.get(k)).longValue();
+				values.put(k,Long.valueOf(v+Math.round(v*pct/100.0)));
+			}
+		return values;
+	}
+	/** I09: what a base reads of a material's traits: stat to amount; nothing for no material */
+	public static JSONObject traitStats(final Definition base,final Definition material)throws IOException
+	{
+		final JSONObject out=new JSONObject();
+		if(material==null||!base.raw.containsKey("traits"))
+			return out;
+		final JSONObject reads=(JSONObject)base.raw.get("traits"),has=(JSONObject)material.raw.get("traits");
+		for(final String t:reads.keySet())
+			if(has.containsKey(t))
+			{
+				final JSONObject c=(JSONObject)reads.get(t);
+				final String stat=(String)c.get("stat");
+				final long add=((Number)has.get(t)).longValue()*((Number)c.get("per")).longValue();
+				out.put(stat,Long.valueOf((out.containsKey(stat)?((Number)out.get(stat)).longValue():0)+add));
+			}
+		return out;
+	}
+	/** I09: the material and quality of an item, in words: each trait with what it does on this base, or that nothing reads it */
+	public static List<String> explain(final JSONObject record,final Definition base,final Definition material,final String materialName)throws IOException
+	{
+		final List<String> out=new ArrayList<String>();
+		final JSONObject reads=base.raw.containsKey("traits")?(JSONObject)base.raw.get("traits"):new JSONObject();
+		if(material==null)
+			out.add("Material: "+materialName+(reads.isEmpty()?"":"; it has no traits, so "+String.join(", ",reads.keySet())+" give nothing"));
+		else
+		{
+			final JSONObject has=(JSONObject)material.raw.get("traits");
+			final List<String> words=new ArrayList<String>();
+			for(final String t:has.keySet())
+			{
+				if(reads.containsKey(t))
+				{
+					final JSONObject c=(JSONObject)reads.get(t);
+					words.add(t+" "+has.get(t)+": "+c.get("stat")+" "+signed(((Number)has.get(t)).longValue()*((Number)c.get("per")).longValue())+" ("+c.get("per")+" per point)");
+				}
+				else
+					words.add(t+" "+has.get(t)+": nothing on this item reads it");
+			}
+			out.add("Material: "+material.name+" ("+materialName+"): "+String.join("; ",words));
+		}
+		if(base.raw.containsKey("quality"))
+		{
+			final JSONObject q=(JSONObject)base.raw.get("quality");
+			final int tier=quality(record);
+			out.add("Quality: tier "+tier+" of "+q.get("max")+"; each tier raises modifiers tagged "+String.join(" or ",ids(q.get("tags"),"quality tags",16))+" by "
+				+q.get("percent")+"%"+(tier>0?", now +"+(tier*((Number)q.get("percent")).intValue())+"%":""));
+		}
+		else if(quality(record)>0)
+			out.add("Quality: tier "+quality(record)+"; nothing on this item reads it");
+		return out;
+	}
+	static String signed(final long n)
+	{
+		return (n>=0?"+":"")+n;
 	}
 	/** I06: the operations that draw their modifiers */
 	public static final List<String> DRAWS=Collections.unmodifiableList(Arrays.asList("imbue","reforge"));
@@ -696,7 +829,9 @@ public final class ItemModifierRules
 	public static JSONObject checked(final JSONObject raw)throws IOException
 	{
 		ModuleDefinitions.keys(raw,"item modifier record","schema","item","base","revision","item_kind","prefixes","suffixes","tags","source",
-			"base_name","rendered_name","base_display","rendered_display","name_override","display_override","modifiers","veiled");
+			"base_name","rendered_name","base_display","rendered_display","name_override","display_override","modifiers","veiled","quality");
+		if(raw.containsKey("quality"))
+			integer(raw.get("quality"),"quality",0,10);
 		if(ModuleDefinitions.integer(raw.get("schema"),"record schema")!=1)
 			throw new IOException("unsupported modifier record schema");
 		if(!ModuleDefinitions.string(raw.get("item"),"item reference").matches("@instance:[0-9a-f-]{36}"))
@@ -869,6 +1004,8 @@ public final class ItemModifierRules
 				throw new IOException("base contract differs from its pin");
 		if(!ids(record.get("tags"),"item tags",16).equals(baseContract.list("tags")))
 			throw new IOException("base tags differ from their pin");
+		if(quality(record)>0&&(!baseContract.raw.containsKey("quality")||quality(record)>((Number)((JSONObject)baseContract.raw.get("quality")).get("max")).intValue()))
+			throw new IOException("quality tier "+quality(record)+" is more than "+baseContract.key()+" declares");
 		for(final JSONObject m:modifiers(record))
 		{
 			final Definition a=lib.pinned(m.get("pin"),"affix");
@@ -968,6 +1105,8 @@ public final class ItemModifierRules
 				pre++;
 			else
 				suf++;
+		if(quality(record)>0&&(!next.raw.containsKey("quality")||quality(record)>((Number)((JSONObject)next.raw.get("quality")).get("max")).intValue()))
+			throw new IOException("successor "+next.key()+" cannot keep quality tier "+quality(record));
 		if(pre>next.number("prefixes")||suf>next.number("suffixes"))
 			throw new IOException("successor "+next.key()+" has room for "+next.number("prefixes")+" prefix / "+next.number("suffixes")
 				+" suffix, fewer than the item has");
@@ -1049,6 +1188,16 @@ public final class ItemModifierRules
 		}
 		else if(action.equals("upgrade"))
 			successor(record,lib);
+		else if(action.equals("refine"))
+		{
+			// I09: one quality tier more, up to the base's
+			final Definition base=lib.pinned(record.get("base"),"base");
+			if(!base.raw.containsKey("quality"))
+				throw new IOException(base.key()+" declares no quality: nothing would read it");
+			final int max=((Number)((JSONObject)base.raw.get("quality")).get("max")).intValue();
+			if(quality(record)>=max)
+				throw new IOException("quality is at its most, tier "+max);
+		}
 		else if(DRAWS.contains(action))
 		{
 			if(action.equals("reforge")&&modifiers(reforged(record)).size()==modifiers(record).size())
@@ -1095,6 +1244,8 @@ public final class ItemModifierRules
 		}
 		else if(action.equals("add"))
 			mods.add(rolled(lib.find(selector,0,"affix"),addedUID,dice));
+		else if(action.equals("refine"))
+			next.put("quality",Long.valueOf(quality(original)+1));
 		else if(action.equals("upgrade"))
 		{
 			final Definition up=successor(original,lib);

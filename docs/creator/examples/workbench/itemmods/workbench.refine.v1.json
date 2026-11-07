@@ -1,0 +1,5 @@
+{
+  "schema": 1, "kind": "operation", "id": "workbench.refine", "version": 1,
+  "name": "Hone the bracer", "action": "refine", "station": "ember-forge",
+  "material": "IRON", "units": 1, "item_tags": ["metal"], "modifier_tags": [], "affixes": []
+}

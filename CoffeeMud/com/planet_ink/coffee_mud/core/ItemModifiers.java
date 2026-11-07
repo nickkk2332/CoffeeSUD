@@ -95,6 +95,17 @@ public final class ItemModifiers
 		for(final Definition d:lib.definitions.values())
 			if(d.kind.equals("catalyst")&&RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)
 				lib.errors.add(d.key()+": unknown registered material "+d.string("material"));
+		// I09: a material's traits are of one registered resource, and one definition (its latest version) says them
+		final Map<String,String> traitsOf=new HashMap<String,String>();
+		for(final Definition d:lib.definitions.values())
+			if(d.kind.equals("material"))
+			{
+				if(RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)
+					lib.errors.add(d.key()+": unknown registered material "+d.string("material"));
+				final String other=traitsOf.put(d.string("material"),d.id);
+				if(other!=null&&!other.equals(d.id))
+					lib.errors.add(d.key()+": "+d.string("material")+" has its traits from "+other+" already");
+			}
 		for(final Definition d:lib.definitions.values())
 			if(d.kind.equals("recipe"))
 				for(final Object st:(Object[])d.raw.get("stages"))
@@ -344,6 +355,25 @@ public final class ItemModifiers
 				.append(ModuleDefinitions.json((JSONObject)m.get("values"))).append("; source ").append(pin.get("id")).append(" v")
 				.append(pin.get("version")).append("; group ").append(m.get("group"));
 		}
+		// I09: the material's traits and the quality, each with what reads it (inspection goes on when the definitions cannot be read)
+		try
+		{
+			final Library lib=definitions();
+			final Definition base=lib.pinned(data.get("base"),"base");
+			for(final String line:ItemModifierRules.explain(data,base,materialOf(item),RawMaterial.CODES.NAME(item.material())))
+				out.append("\n").append(line);
+			for(int i=0;i<mods.size();i++)
+			{
+				final int pct=ItemModifierRules.qualityPercent(base,mods.get(i),ItemModifierRules.quality(data));
+				if(pct>0)
+					out.append("\n  modifier ").append(i+1).append(" counts ").append(ModuleDefinitions.json(ItemModifierRules.counted(base,mods.get(i),ItemModifierRules.quality(data))))
+						.append(" (quality +").append(pct).append("%)");
+			}
+		}
+		catch(final IOException e)
+		{
+			out.append("\nMaterial and quality: not shown (").append(e.getMessage()).append(')');
+		}
 		// I07: veiled modifiers, and a revealed one's options
 		final List<JSONObject> veils=ItemModifierRules.veils(data);
 		for(int i=0;i<veils.size();i++)
@@ -365,6 +395,18 @@ public final class ItemModifiers
 			}
 		}
 		return out.toString();
+	}
+	/** I09: the material definition of an item's resource, its latest version, or null */
+	public static Definition materialOf(final Item item)throws IOException
+	{
+		if(item==null)
+			return null;
+		final String name=RawMaterial.CODES.NAME(item.material());
+		Definition best=null;
+		for(final Definition d:definitions().definitions.values())
+			if(d.kind.equals("material")&&d.string("material").equals(name)&&(best==null||d.version>best.version))
+				best=d;
+		return best;
 	}
 	/** I06: the first pick of a recipe's product (its base's or its policy's) at a level, shaped by catalysts */
 	public static List<Odds> firstPick(final String baseOrPolicy,final int level,final Bias bias)throws IOException
