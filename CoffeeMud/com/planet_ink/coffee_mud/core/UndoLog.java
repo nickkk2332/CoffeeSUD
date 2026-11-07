@@ -401,7 +401,7 @@ public final class UndoLog
 			wait = outside(R);
 			for(final MOB M : new ArrayList<MOB>(new com.planet_ink.coffee_mud.core.collections.XVector<MOB>(R.inhabitants())))
 			{
-				final MOB lead = (M == null) ? null : M.getGroupLeader();
+				final MOB lead = (M == null) ? null : Party.leaderOf(M);
 				if((M != null) && ((M.playerStats() != null) || ((lead != null) && (lead.playerStats() != null))))
 					moved.add(M);
 			}

@@ -277,7 +277,7 @@ public final class Downed
 				else
 				if(w.equals("CHECKPOINT"))
 				{
-					final MOB lead = (M.getGroupLeader() != null) ? M.getGroupLeader() : M;
+					final MOB lead = Party.leaderOf(M);
 					final Room to = Checkpoints.roomOf(lead);
 					if(to != null)
 					{

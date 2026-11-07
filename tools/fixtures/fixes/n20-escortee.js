@@ -89,7 +89,16 @@ var C = CMClass.getBehavior("Escortee");
 C.setParms("DEST=Fixn20Road#3 MODE=LEAD");
 c.addBehavior(C);
 follow(c, pip);
-for (var i = 0; i < 4; i++) tick(c, C);
+var dog = newMob("GenMob", rooms[0]);
+dog.setName("Fixn20dog");
+follow(dog, pip);
+tick(c, C);
+// pip's own follower comes too, and still counts as following pip: saved with pip, not with the world, and on
+// the player's side
+check("led-follower", where(dog) == "1" && dog.amFollowing() == pip, "dog at " + where(dog));
+check("led-follower-saved", callTyped(null, java.lang.Class.forName("com.planet_ink.coffee_mud.core.save.WorldState"), "isSavedHere", ["MOB"], [dog]) == false
+	&& CM.core.GameDifficulty.playerSide(dog) && CM.core.Party.leaderOf(dog) == pip, "the dog counts as the world's");
+for (var i = 0; i < 3; i++) tick(c, C);
 check("led-there", where(c) == "3" && where(pip) == "3", "courier at " + where(c) + ", pip at " + where(pip));
 check("led-released", pip.amFollowing() == null && has(s(C.getStat("STATE")), "DONE=\"true\""), "pip still follows " + pip.amFollowing());
 
@@ -136,7 +145,7 @@ check("before-timeout", gvar("FIXN20LATE") == "", "too soon");
 tick(t, TB);
 check("timeout", gvar("FIXN20LATE") == "yes", "'" + gvar("FIXN20LATE") + "'");
 
-[m, c, g, t, u, foe, w1.mob, w2.mob].forEach(function (x) { if (!x.amDestroyed()) x.destroy(); });
+[m, c, dog, g, t, u, foe, w1.mob, w2.mob].forEach(function (x) { if (!x.amDestroyed()) x.destroy(); });
 pip.setPlayerStats(null); pip.destroy();
 CMLib.map().obliterateMapArea(X);
 done();

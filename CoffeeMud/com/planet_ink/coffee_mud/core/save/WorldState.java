@@ -849,7 +849,7 @@ public final class WorldState
 				final MOB M = R.fetchInhabitant(m);
 				if((M == null) || (!M.isMonster()) || followers.contains(M) || isQuestObject(M) || isSavedHere(M))
 					continue;
-				final MOB leader = M.getGroupLeader();
+				final MOB leader = Party.leaderOf(M);
 				if((leader != null) && (leader != M) && (!leader.isMonster()))
 					continue; // follows a character, so saved with them
 				final boolean scripted = M.scripts().hasMoreElements() || (M.fetchBehavior("Scriptable") != null);
@@ -916,7 +916,7 @@ public final class WorldState
 		final boolean aboard = (M.location() != null) && (M.location().getArea() instanceof Boardable);
 		if(aboard ? CMath.bset(M.basePhyStats().disposition(), PhyStats.IS_UNSAVABLE) : (!savableBesidesPlayers(M)))
 			return false;
-		final MOB leader = M.getGroupLeader();
+		final MOB leader = Party.leaderOf(M); // a character anywhere above it: saved with them
 		return (leader == null) || leader.isMonster();
 	}
 
@@ -1019,7 +1019,7 @@ public final class WorldState
 			final MOB M = R.fetchInhabitant(m);
 			if((M == null) || (!M.isMonster()) || isQuestObject(M))
 				continue;
-			final MOB leader = M.getGroupLeader();
+			final MOB leader = Party.leaderOf(M);
 			if((leader == null) || leader.isMonster())
 				mobs.add(M);
 		}
@@ -2493,7 +2493,7 @@ public final class WorldState
 				for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
 				{
 					final MOB M = m.nextElement();
-					final MOB leader = (M == null) ? null : M.getGroupLeader();
+					final MOB leader = (M == null) ? null : Party.leaderOf(M);
 					if((M != null) && ((!M.isMonster()) || ((leader != null) && (!leader.isMonster()))))
 						parentA.addInstanceChildMember(A, M);
 				}
