@@ -654,6 +654,7 @@ public class MUDFight extends StdLibrary implements CombatLibrary
 
 		CMLib.map().sendGlobalMessage(deadM,CMMsg.TYP_DEATH, CMClass.getMsg(deadM,null,killerM, CMMsg.TYP_DEATH,null, CMMsg.TYP_DEATH,null, CMMsg.TYP_DEATH,null));
 		JSEvents.fire("death",deadM,killerM); // JS8
+		AbilityTriggers.died(deadM,killerM); // A03: the killer's (or a summoned killer's owner's) kill reactions, after this
 		final CMMsg msg2=CMClass.getMsg(deadM,null,killerM, CMMsg.MSG_DEATH,null, CMMsg.MSG_DEATH,targetMsg, CMMsg.MSG_DEATH,null);
 		if(addHere!=null)
 		{

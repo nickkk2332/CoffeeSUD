@@ -182,6 +182,7 @@ public final class CombatProfiles
         lines.add("Target conditions: " + conditions);
         final Offense offense = CombatRules.offense(c, conditions, cast.profile.conversion); lines.addAll(offense.lines);
         final Resolution resolved = CombatRules.resolve(cast.profile, offense.damage, cast.attacker.stats, defender.stats, c.tags.contains("spell"), false, DICE); lines.addAll(resolved.lines);
+        if(resolved.blocked) AbilityTriggers.blocked(target, caster, c.skill.id); // A03: the blocker's reactions, after this cast
         boolean hurt = false, announced = true;
         if(!resolved.hit || resolved.blocked && cast.profile.blockReduction >= 100)
         {

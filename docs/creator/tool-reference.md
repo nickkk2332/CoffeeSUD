@@ -4833,6 +4833,7 @@ Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
 Usage    : WORLD MODULES REPORT/STREAMS
 Usage    : WORLD POOLS LIST/CHECK/RELOAD/SHOW/SET
+Usage    : WORLD TRIGGERS LIST/CHECK/RELOAD/SHOW/LAST
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
@@ -5924,7 +5925,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3281.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3289.
 
 ```text
 Command : ITEMMODS
@@ -6405,7 +6406,7 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3290.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3298.
 
 ```text
 Command : MODCRAFT
@@ -8225,7 +8226,7 @@ stage and the way to the next.
 
 ## PROP_ITEMMODIFIERS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4399.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4409.
 
 ```text
 Property   : Prop_ItemModifiers
@@ -12254,6 +12255,7 @@ Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
 Usage    : WORLD MODULES REPORT/STREAMS
 Usage    : WORLD POOLS LIST/CHECK/RELOAD/SHOW/SET
+Usage    : WORLD TRIGGERS LIST/CHECK/RELOAD/SHOW/LAST
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
@@ -12407,7 +12409,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3422.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3436.
 
 ```text
 Command : WORLD COMBAT
@@ -12434,7 +12436,7 @@ schema, formulas and limitations.
 
 ## WORLD_COMPOSITIONS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3392.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3393.
 
 ```text
 Command : WORLD COMPOSITIONS
@@ -12458,7 +12460,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3473.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3487.
 
 ```text
 Command : WORLD ITEMMODS
@@ -12485,7 +12487,7 @@ docs/creator/17-item-modifiers-crafting.md.
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3442.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3456.
 
 ```text
 Command : WORLD MODULES

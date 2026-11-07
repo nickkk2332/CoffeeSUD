@@ -82,6 +82,7 @@ These systems are off unless a world selects them.
 | [Combat profiles](16-combat-profiles.md) | Versioned damage and defense rules and explained combat results |
 | [Item modifiers and crafting](17-item-modifiers-crafting.md) | Tracked equipment modifiers and selective, protected crafting |
 | [Named resources](34-named-resources.md) | Heat, focus and charges, with costs, gains and changes over time |
+| [Causal triggers](35-causal-triggers.md) | Reactions to blocks and kills, with budgets, depth limits and saved cooldowns |
 | [The Ember Trial](examples/ember-trial/README.md) | A complete playable sample adventure using all of the above |
 
 ### Engine development

@@ -218,7 +218,7 @@ public final class ModuleDefinitions
                         throw new IOException("abilities.composition requires bounded integer settings." + keys[i] + " within " + mins[i] + ".." + maxes[i]);
                 }
             }
-            if(ModuleContent.ofModule(handler) != null) familyContract(ModuleContent.ofModule(handler), scopes, state, requires);
+            if(ModuleContent.ofModule(handler) != null) familyContract(ModuleContent.ofModule(handler), scopes, settings, state, requires);
             if(handler.equals("example.counter") && (state.size() != 1 || !state.containsKey("count") || !state.get("count").type.equals("integer")
                 || !settings.containsKey("step") || !settings.get("step").type.equals("integer") || !scopes.contains("character")))
                 throw new IOException("example.counter requires integer state.count, integer settings.step and character scope");
@@ -435,8 +435,15 @@ public final class ModuleDefinitions
      * JSON-object string state fields (empty by default, 4096 characters), and
      * the modules it requires.
      */
-    static void familyContract(final ModuleContent.Family family, final Set<String> scopes, final Map<String,Field> state, final Map<String,Integer> requires) throws IOException
+    static void familyContract(final ModuleContent.Family family, final Set<String> scopes, final Map<String,Field> settings, final Map<String,Field> state, final Map<String,Integer> requires) throws IOException
     {
+        for(final Map.Entry<String,long[]> e : family.integerSettings().entrySet())
+        {
+            final Field field = settings.get(e.getKey());
+            if(field == null || !field.type.equals("integer") || field.minimum == null || field.maximum == null
+                || field.minimum.longValue() < e.getValue()[0] || field.maximum.longValue() > e.getValue()[1])
+                throw new IOException(family.module() + " requires bounded integer settings." + e.getKey() + " within " + e.getValue()[0] + ".." + e.getValue()[1]);
+        }
         final String id = family.module();
         for(final String scope : family.scopes())
             if(!scopes.contains(scope)) throw new IOException(id + " requires " + scope + " scope");

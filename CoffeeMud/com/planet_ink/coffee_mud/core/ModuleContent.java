@@ -539,6 +539,12 @@ public final class ModuleContent
 		/** the modules this one's manifest must require */
 		List<String> requires();
 
+		/**
+		 * The integer settings the manifest must declare, each with a min and
+		 * max inside the two given bounds.
+		 */
+		Map<String, long[]> integerSettings();
+
 		/** forgets loaded definitions and runtime state, at boot */
 		void reset();
 
@@ -624,6 +630,7 @@ public final class ModuleContent
 	/** the family classes, each registering itself when loaded */
 	private static final String[] KNOWN = {
 		"com.planet_ink.coffee_mud.core.NamedResources",
+		"com.planet_ink.coffee_mud.core.AbilityTriggers",
 	};
 
 	/** resets every family, at boot */

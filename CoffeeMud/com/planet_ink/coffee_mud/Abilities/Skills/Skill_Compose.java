@@ -90,6 +90,7 @@ public class Skill_Compose extends StdAbility
         if(CAST.get() != null) throw new IOException("composed casts cannot recursively trigger another composed cast");
         final Compiled compiled = AbilityComposition.compiled(mob, args.get(1));
         final Compiled previous = CAST.get(); CAST.set(compiled);
+        AbilityTriggers.enterCast(); // A03: reactions to this cast run once it is over
         try
         {
             final MOB target = getTarget(mob, new ArrayList<String>(args.subList(2, args.size())), givenTarget);
@@ -143,7 +144,7 @@ public class Skill_Compose extends StdAbility
                     NamedResources.gain(mob, gain.getKey(), gain.getValue().longValue(), compiled.skill.id);
             return true;
         }
-        finally { if(previous == null) CAST.remove(); else CAST.set(previous); }
+        finally { if(previous == null) CAST.remove(); else CAST.set(previous); AbilityTriggers.leaveCast(); }
     }
     private boolean legal(final MOB caster, final MOB target, final Room room)
     {

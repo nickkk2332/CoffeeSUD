@@ -586,6 +586,12 @@ public final class NamedResources
 		}
 
 		@Override
+		public Map<String, long[]> integerSettings()
+		{
+			return new TreeMap<String, long[]>();
+		}
+
+		@Override
 		public void reset()
 		{
 			NamedResources.reset();

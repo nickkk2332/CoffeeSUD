@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "example.second-wind",
+  "version": 1,
+  "title": "Second wind",
+  "on": "kill",
+  "chance": 50,
+  "cost": {"example.focus": 10},
+  "action": {"type": "heal", "amount": 20}
+}
