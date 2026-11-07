@@ -52,7 +52,7 @@ character's LOOT filter); its state is two string fields, `guarantees` and
 | Field | Default | Meaning |
 | --- | --- | --- |
 | `base` | required | A modifier base in `world/itemmods/`. Its pool, item kind and capacity apply. |
-| `rarities` | required | 1 to 8, in order from common to rare. `weight` (default 1) is its share; `modifiers` (0 to 6) how many the item gets. `title` is what LOOT shows. |
+| `rarities` | required | 1 to 8, in order from common to rare. `weight` (default 1) is its share; `modifiers` (0 to 6) how many the item gets; `veiled` (0 up to `modifiers`) how many of them come veiled, to be revealed ([chapter 42](42-saved-choices.md)). `title` is what LOOT shows. |
 | `tiers` | none | Tier limits, by the item's level: from `level` on, affixes up to `max_tier`. Below the first entry no affix is allowed; with no entries, any tier. Levels must rise. |
 | `tags` | none | Only affixes carrying every one of these tags. |
 | `budget` | 0 (none) | The tiers of an item's modifiers add up to at most this. |

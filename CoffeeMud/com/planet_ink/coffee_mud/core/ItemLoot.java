@@ -63,14 +63,17 @@ public final class ItemLoot
 		public final String	id, title;
 		public final double	weight;
 		public final int	modifiers;
+		/** I07: how many of its modifiers come veiled, to be revealed later */
+		public final int	veiled;
 
 		Rarity(final Node n) throws IOException
 		{
-			n.allow("id", "title", "weight", "modifiers");
+			n.allow("id", "title", "weight", "modifiers", "veiled");
 			id = n.id("id");
 			title = n.string("title", id, 40);
 			weight = n.number("weight", 1, 0.000001, 1000000);
 			modifiers = (int)n.integer("modifiers", 0, 0, ItemModifierRules.MAX_MODS);
+			veiled = (int)n.integer("veiled", 0, 0, modifiers);
 		}
 	}
 
@@ -213,6 +216,8 @@ public final class ItemLoot
 		public Rarity					rarity;
 		public boolean					guaranteed;
 		public final List<JSONObject>	mods	= new ArrayList<JSONObject>();
+		/** I07: the veiled ones, each holding the slot of a pick, with no affix yet */
+		public final List<JSONObject>	veils	= new ArrayList<JSONObject>();
 	}
 
 	/** why an affix cannot be a policy's next pick for this record, or "" when it can */
@@ -292,6 +297,16 @@ public final class ItemLoot
 		final ItemModifierRules.Roller dice = (min, max) -> min + (int)Long.remainderUnsigned(src.draw(), (long)max - min + 1);
 		d.mods.addAll(ItemModifierRules.draw(record, pool(base, lib), bias, level, Math.min(d.rarity.modifiers, limit), limits(p, level), () -> unit(src), dice,
 											 () -> UUID.randomUUID().toString()));
+		// I07: the rarity's last picks come veiled: each keeps its pick's slot (its position), not its affix
+		for(int k = 0; (k < d.rarity.veiled) && !d.mods.isEmpty(); k++)
+		{
+			final JSONObject m = d.mods.remove(d.mods.size() - 1);
+			final JSONObject v = new JSONObject();
+			v.put("uid", m.get("uid"));
+			v.put("position", m.get("position"));
+			v.put("source", "a " + d.rarity.title + " drop");
+			d.veils.add(0, v);
+		}
 		return d;
 	}
 
@@ -309,6 +324,25 @@ public final class ItemLoot
 		final JSONObject rec = OptionalModules.get(MODULE, OptionalModules.world());
 		rec.put("guarantees", text);
 		OptionalModules.put(MODULE, OptionalModules.world(), rec);
+	}
+
+	/**
+	 * I17: a drop of a policy drawn from a source (an offering's options), with
+	 * no guarantee and no counter: an option is not a drop.
+	 */
+	static Drop offer(final String policyId, final int level, final Source src) throws IOException
+	{
+		if(!enabled())
+			throw new ItemModifiers.Unavailable(MODULE + " is inactive in this campaign");
+		final Entry<Policy> e = definitions().latest(policyId);
+		final Definition base = baseOf(e);
+		return roll(e.value, base, ItemModifiers.definitions(), blank(base), level, ItemModifiers.limit(), src, null);
+	}
+
+	/** the modifier base a policy makes */
+	static Definition base(final String policyId) throws IOException
+	{
+		return baseOf(definitions().latest(policyId));
 	}
 
 	/** drops since the policy's guaranteed rarity last fell */
@@ -371,6 +405,8 @@ public final class ItemLoot
 		final long since = since(e.id);
 		final Drop d = roll(p, base, ItemModifiers.definitions(), data, item.basePhyStats().level(), ItemModifiers.limit(), LIVE, forced(p, since), bias);
 		data.put("modifiers", d.mods.toArray());
+		if(!d.veils.isEmpty())
+			data.put("veiled", d.veils.toArray());
 		data.put("source", ("loot:" + e.key() + ":" + d.rarity.id + " from " + source).substring(0, Math.min(500, ("loot:" + e.key() + ":" + d.rarity.id + " from " + source).length())));
 		final Ability prop = CMClass.getAbility(ItemModifiers.PROPERTY);
 		prop.setMiscText(ModuleDefinitions.json(ItemModifierRules.checked(data)));
@@ -407,7 +443,8 @@ public final class ItemLoot
 		final double total = p.totalWeight();
 		s.append("\nRarities:");
 		for(final Rarity r : p.rarities)
-			s.append("\n  ").append(r.title).append(" (").append(r.id).append("): ").append(String.format(Locale.ROOT, "%.1f%%", 100.0 * r.weight / total)).append(", up to ").append(r.modifiers).append(" modifier(s)");
+			s.append("\n  ").append(r.title).append(" (").append(r.id).append("): ").append(String.format(Locale.ROOT, "%.1f%%", 100.0 * r.weight / total)).append(", up to ").append(r.modifiers).append(" modifier(s)")
+			 .append(r.veiled > 0 ? ", the last " + r.veiled + " veiled" : "");
 		if(p.guarantee.length() > 0)
 			s.append("\nGuarantee: after ").append(p.after - 1).append(" drop(s) without ").append(p.rarity(p.guarantee).title).append(", the next is ").append(p.rarity(p.guarantee).title)
 			 .append(". Drops since the last: ").append(since(e.id)).append(forced(p, since(e.id)) != null ? " (the next drop is guaranteed)" : "").append('.');
@@ -661,8 +698,11 @@ public final class ItemLoot
 			shown++;
 			s.append("\n  ").append(title).append(": ").append(I.Name());
 			final List<String> mods = new ArrayList<String>();
-			for(final JSONObject m : ItemModifierRules.modifiers(ItemModifierRules.parse(I.fetchEffect(ItemModifiers.PROPERTY).text())))
+			final JSONObject rec = ItemModifierRules.parse(I.fetchEffect(ItemModifiers.PROPERTY).text());
+			for(final JSONObject m : ItemModifierRules.modifiers(rec))
 				mods.add(m.get("name") + " (" + values(m) + ")");
+			for(final JSONObject v : ItemModifierRules.veils(rec))
+				mods.add("a veiled " + v.get("position"));
 			s.append(mods.isEmpty() ? ", no modifiers" : "; " + String.join("; ", mods));
 		}
 		if(shown == 0)

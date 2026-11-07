@@ -1,0 +1,7 @@
+{
+  "schema": 1, "id": "choices.veiled", "version": 1, "title": "Veiled charms",
+  "base": "choices.charm",
+  "rarities": [
+    {"id": "veiled", "title": "Veiled", "weight": 1, "modifiers": 2, "veiled": 1}
+  ]
+}

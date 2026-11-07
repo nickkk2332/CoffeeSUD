@@ -91,7 +91,8 @@ public final class ItemCrafting
 		d.put("level",Long.valueOf(item.basePhyStats().level()));
 		return ItemModifierRules.hash(d);
 	}
-	private static final class Cost
+	/** a pile that pays part of a cost; I07 offerings and reveals pay through it too */
+	static final class Cost
 	{
 		final Item item;
 		final int amount,weight,value;
@@ -227,7 +228,7 @@ public final class ItemCrafting
 			out.put(c.string("material"),Integer.valueOf((out.containsKey(c.string("material"))?out.get(c.string("material")).intValue():0)+c.number("units")));
 		return out;
 	}
-	private static List<Cost> payAll(final MOB who,final Item item,final Map<String,Integer> needs)throws IOException
+	static List<Cost> payAll(final MOB who,final Item item,final Map<String,Integer> needs)throws IOException
 	{
 		final List<Cost> out=new ArrayList<Cost>();
 		for(final Map.Entry<String,Integer> e:needs.entrySet())
@@ -271,7 +272,7 @@ public final class ItemCrafting
 		return ItemModifiers.definitions().pinned(pin,d.kind);
 	}
 	/** The material piles that pay a cost, smallest set from the top of the inventory, or a refusal. */
-	private static List<Cost> pay(final MOB who,final Item item,final String materialName,final int units)throws IOException
+	static List<Cost> pay(final MOB who,final Item item,final String materialName,final int units)throws IOException
 	{
 		final int material=RawMaterial.CODES.FIND_CaseSensitive(materialName);
 		if(material<0)
@@ -294,7 +295,7 @@ public final class ItemCrafting
 			throw new IOException("combine materials into at most eight plain piles first");
 		return costs;
 	}
-	private static void custody(final MOB who,final Item item)throws IOException
+	static void custody(final MOB who,final Item item)throws IOException
 	{
 		if(who==null||who.amDead()||who.amDestroyed()||who.location()==null||who.isInCombat())
 			throw new IOException("craft outside combat, alive in a room");
@@ -323,7 +324,7 @@ public final class ItemCrafting
 		final JSONObject data=ItemModifiers.data(item);
 		final Bias bias=ItemModifierRules.bias(op,catalysts);
 		ItemModifierRules.validate(data,op,selector,ItemModifiers.definitions(),item.basePhyStats().level(),bias);
-		if((op.string("action").equals("add")||op.string("action").equals("imbue"))&&ItemModifierRules.modifiers(data).size()>=ItemModifiers.limit())
+		if((op.string("action").equals("add")||op.string("action").equals("imbue"))&&ItemModifierRules.slots(data)>=ItemModifiers.limit())
 			throw new IOException("campaign modifier limit reached");
 		final Map<String,Integer> needs=needs(op.string("material"),op.number("units"),catalysts);
 		return new Plan(item,data,op,selector,payAll(who,item,needs),-1,catalysts,bias,needs);

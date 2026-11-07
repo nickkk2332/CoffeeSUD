@@ -1,0 +1,9 @@
+{
+  "schema": 1, "id": "choices.altar", "version": 1, "title": "The ember altar",
+  "kind": "offering", "station": "ember-altar",
+  "cost": {"material": "AMBER", "units": 1},
+  "accepts": {"tags": ["charm"]},
+  "options": 3,
+  "result": {"catalog": "an altar charm", "base": "choices.charm", "modifiers": 2},
+  "refund": "cost"
+}

@@ -89,6 +89,7 @@ These systems are off unless a world selects them.
 | [Progression tracks](39-progression-tracks.md) | Character disciplines, organization research and item mastery, with milestones and migration |
 | [Loot policies](40-loot-policies.md) | Rarities, tier limits, budgets and a guarantee counter for tracked loot, with preview, sampling and LOOT |
 | [Inspection and limits](41-inspection-and-limits.md) | Cross-family references, build comparison with exact chances, ledgers with provenance, build simulation and work limits |
+| [Saved choices](42-saved-choices.md) | Veiled modifiers revealed into kept options, offerings that take an item for kept replacements, a codex of reveals |
 | [The Ember Trial](examples/ember-trial/README.md) | A complete playable sample adventure using all of the above |
 | [Worked packs](examples/README.md#worked-packs) | A guild laboratory, a bonded familiar and a branching expedition, built on the Ember Trial and played across a save and restore |
 

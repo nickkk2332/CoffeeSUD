@@ -933,6 +933,9 @@ group_loot()
     echo "Played: I02 loot policies: coffers making policy items beside a unique token, LOOT and its filter, a real restore"
     python3 "$ROOT/tools/loot-policy-integration.py" "$W/loot" > "$W/loot.txt" 2>&1 || FAIL=1
     jsresults loot.txt
+    echo "Played: I07 and I17 saved choices: veiled charms revealed and offered, a real restore showing the same options, each settled once"
+    python3 "$ROOT/tools/choices-integration.py" "$W/choices" > "$W/choices.txt" 2>&1 || FAIL=1
+    jsresults choices.txt
 }
 
 group_expeditions()

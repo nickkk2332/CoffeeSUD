@@ -16,4 +16,25 @@
          TIER="1" GROUP="fire-penetration" TAGS="offense,elemental">
     <ROLL STAT="penetration.fire" MIN="5" MAX="15" />
   </AFFIX>
+  <!-- Four more for the saved-choices pack's charm, in no base of this pack's -->
+  <AFFIX ID="embertrial.frostguard" NAME="Rimewoven" POS="prefix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="10" POWER="0" TRACKED="true" VERSION="1"
+         TIER="1" GROUP="cold-resistance" TAGS="defense,elemental">
+    <ROLL STAT="resistance.cold" MIN="10" MAX="20" />
+  </AFFIX>
+  <AFFIX ID="embertrial.stormguard" NAME="Stormwoven" POS="prefix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="10" POWER="0" TRACKED="true" VERSION="1"
+         TIER="1" GROUP="electric-resistance" TAGS="defense,elemental">
+    <ROLL STAT="resistance.electric" MIN="10" MAX="20" />
+  </AFFIX>
+  <AFFIX ID="embertrial.ironhide" NAME="Ironhide" POS="prefix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="5" POWER="0" TRACKED="true" VERSION="1"
+         TIER="1" GROUP="armor" TAGS="defense">
+    <ROLL STAT="armor" MIN="5" MAX="10" />
+  </AFFIX>
+  <AFFIX ID="embertrial.keen" NAME="Keenness" POS="suffix" KINDS="armor"
+         LEVEL="1-99" PICKWEIGHT="10" POWER="0" TRACKED="true" VERSION="1"
+         TIER="1" GROUP="accuracy" TAGS="offense">
+    <ROLL STAT="accuracy" MIN="5" MAX="15" />
+  </AFFIX>
 </AFFIXES>

@@ -696,7 +696,7 @@ public final class ItemModifierRules
 	public static JSONObject checked(final JSONObject raw)throws IOException
 	{
 		ModuleDefinitions.keys(raw,"item modifier record","schema","item","base","revision","item_kind","prefixes","suffixes","tags","source",
-			"base_name","rendered_name","base_display","rendered_display","name_override","display_override","modifiers");
+			"base_name","rendered_name","base_display","rendered_display","name_override","display_override","modifiers","veiled");
 		if(ModuleDefinitions.integer(raw.get("schema"),"record schema")!=1)
 			throw new IOException("unsupported modifier record schema");
 		if(!ModuleDefinitions.string(raw.get("item"),"item reference").matches("@instance:[0-9a-f-]{36}"))
@@ -715,11 +715,62 @@ public final class ItemModifierRules
 		if(!(raw.get("name_override") instanceof Boolean)||!(raw.get("display_override") instanceof Boolean))
 			throw new IOException("display override flags must be boolean");
 		final Object[] mods=ModuleDefinitions.array(raw.get("modifiers"),"modifiers");
-		if(mods.length>MAX_MODS)
-			throw new IOException("at most six modifiers");
+		final Object[] veils=raw.containsKey("veiled")?ModuleDefinitions.array(raw.get("veiled"),"veiled"):new Object[0];
+		if(mods.length+veils.length>MAX_MODS)
+			throw new IOException("at most six modifiers, veiled ones included");
 		final Set<String> uids=new HashSet<String>(),groups=new HashSet<String>();
 		int prefixes=0,suffixes=0;
+		// I07: a veiled modifier holds a slot of its position, and gives nothing until it is revealed and one of its options chosen
+		for(final Object entry:veils)
+		{
+			final JSONObject v=ModuleDefinitions.object(entry,"veiled modifier");
+			ModuleDefinitions.keys(v,"veiled modifier","uid","position","source","options","by");
+			final String uid=ModuleDefinitions.string(v.get("uid"),"veil UID");
+			if(!uid.matches("[0-9a-f-]{36}")||!uids.add(uid))
+				throw new IOException("invalid/duplicate veil UID");
+			if("prefix".equals(v.get("position")))
+				prefixes++;
+			else if("suffix".equals(v.get("position")))
+				suffixes++;
+			else
+				throw new IOException("invalid veil position");
+			if(ModuleDefinitions.string(v.get("source"),"veil source").length()>160)
+				throw new IOException("veil source too long");
+			if(v.containsKey("options"))
+			{
+				final Object[] options=ModuleDefinitions.array(v.get("options"),"veil options");
+				if(options.length<1||options.length>5)
+					throw new IOException("a revealed veil has 1..5 options");
+				for(final Object o:options)
+				{
+					final JSONObject m=modifier(o,new HashSet<String>());
+					if(!v.get("position").equals(m.get("position")))
+						throw new IOException("a veil's option is of its position");
+				}
+				checkPin(v.get("by"));
+			}
+			else if(v.containsKey("by"))
+				throw new IOException("only a revealed veil names what revealed it");
+		}
 		for(final Object entry:mods)
+		{
+			final JSONObject m=modifier(entry,uids);
+			if(!groups.add(ModuleDefinitions.id(m.get("group"))))
+				throw new IOException("exclusive modifier group repeated");
+			if("prefix".equals(m.get("position")))
+				prefixes++;
+			else
+				suffixes++;
+		}
+		if(prefixes>pre||suffixes>suf)
+			throw new IOException("modifier capacity exceeded");
+		if(ModuleDefinitions.json(raw).length()>MAX_TEXT)
+			throw new IOException("modifier record exceeds 32 KiB");
+		return ModuleDefinitions.copy(raw);
+	}
+	/** one stored modifier, checked; its UID is added to the given set, which must not have it */
+	private static JSONObject modifier(final Object entry,final Set<String> uids)throws IOException
+	{
 		{
 			final JSONObject m=ModuleDefinitions.object(entry,"modifier");
 			ModuleDefinitions.keys(m,"modifier","uid","pin","name","position","tier","group","tags","values","protected");
@@ -729,14 +780,9 @@ public final class ItemModifierRules
 			checkPin(m.get("pin"));
 			text(m.get("name"),"modifier name");
 			integer(m.get("tier"),"modifier tier",1,100);
-			if(!groups.add(ModuleDefinitions.id(m.get("group"))))
-				throw new IOException("exclusive modifier group repeated");
+			ModuleDefinitions.id(m.get("group"));
 			ids(m.get("tags"),"modifier tags",16);
-			if("prefix".equals(m.get("position")))
-				prefixes++;
-			else if("suffix".equals(m.get("position")))
-				suffixes++;
-			else
+			if(!"prefix".equals(m.get("position"))&&!"suffix".equals(m.get("position")))
 				throw new IOException("invalid modifier position");
 			if(!(m.get("protected") instanceof Boolean))
 				throw new IOException("protected must be boolean");
@@ -746,12 +792,32 @@ public final class ItemModifierRules
 			for(final String key:values.keySet())
 				integer(values.get(key),"rolled value",-1000000,1000000);
 			stats(values);
+			return m;
 		}
-		if(prefixes>pre||suffixes>suf)
-			throw new IOException("modifier capacity exceeded");
-		if(ModuleDefinitions.json(raw).length()>MAX_TEXT)
-			throw new IOException("modifier record exceeds 32 KiB");
-		return ModuleDefinitions.copy(raw);
+	}
+	/** I07: the slots a record's modifiers hold, veiled ones included */
+	public static int slots(final JSONObject record)throws IOException
+	{
+		return modifiers(record).size()+veils(record).size();
+	}
+	/** I07: a record's veiled modifiers */
+	public static List<JSONObject> veils(final JSONObject record)throws IOException
+	{
+		final List<JSONObject> out=new ArrayList<JSONObject>();
+		if(record.containsKey("veiled"))
+			for(final Object v:ModuleDefinitions.array(record.get("veiled"),"veiled"))
+				out.add(ModuleDefinitions.copy((JSONObject)v));
+		return out;
+	}
+	/** I07: the record with its veils replaced (none: the field goes) */
+	public static JSONObject withVeils(final JSONObject record,final List<JSONObject> veils)throws IOException
+	{
+		final JSONObject next=ModuleDefinitions.copy(record);
+		if(veils.isEmpty())
+			next.remove("veiled");
+		else
+			next.put("veiled",veils.toArray());
+		return next;
 	}
 	public static JSONObject parse(final String text)throws IOException
 	{
@@ -787,6 +853,9 @@ public final class ItemModifierRules
 			if(m.get("position").equals(affix.raw.get("position")))
 				count++;
 		}
+		for(final JSONObject v:veils(record))
+			if(v.get("position").equals(affix.raw.get("position")))
+				count++; // I07: a veil holds its slot
 		return count<((Number)record.get(affix.string("position").equals("prefix")?"prefixes":"suffixes")).intValue()?""
 			:affix.string("position")+" capacity is full";
 	}
@@ -817,6 +886,16 @@ public final class ItemModifierRules
 				integer(values.get(key),key,((Number)range.get("min")).intValue(),((Number)range.get("max")).intValue());
 			}
 		}
+		// I07: a revealed veil's options are of the base's pool, each as its pin says
+		for(final JSONObject v:veils(record))
+			if(v.containsKey("options"))
+				for(final Object o:ModuleDefinitions.array(v.get("options"),"veil options"))
+				{
+					final JSONObject m=(JSONObject)o;
+					final Definition a=lib.pinned(m.get("pin"),"affix");
+					if(!baseContract.list("pool").contains(a.id)||!m.get("position").equals(a.raw.get("position")))
+						throw new IOException("a veil's option is outside its base pool or position");
+				}
 	}
 	/** I04 replace: the selector is the modifier's UID, then the affix that takes its place. */
 	public static String[] replacement(final String selector)throws IOException
@@ -884,6 +963,11 @@ public final class ItemModifierRules
 			else
 				suf++;
 		}
+		for(final JSONObject v:veils(record))
+			if(v.get("position").equals("prefix"))
+				pre++;
+			else
+				suf++;
 		if(pre>next.number("prefixes")||suf>next.number("suffixes"))
 			throw new IOException("successor "+next.key()+" has room for "+next.number("prefixes")+" prefix / "+next.number("suffixes")
 				+" suffix, fewer than the item has");

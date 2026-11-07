@@ -229,6 +229,47 @@ public final class ItemModifiers
 			throw e;
 		}
 	}
+	/**
+	 * I17: makes a fresh unowned item a tracked item of a base with modifiers
+	 * (and veils) already drawn, as an offering's chosen option: each gets a
+	 * new identity of the item's own.
+	 */
+	public static void initializeWith(final Item item,final Definition base,final List<JSONObject> mods,final List<JSONObject> veils,final String source)throws IOException
+	{
+		gameThread();
+		require();
+		if(item==null||item.owner()!=null||item.amDestroyed()||isManaged(item))
+			throw new IOException("a chosen option needs a fresh unowned item");
+		if(!base.string("item_kind").equals(Affixes.kindOf(item)))
+			throw new IOException("base "+base.key()+" is for "+base.string("item_kind")+", the catalog item is "+Affixes.kindOf(item));
+		final JSONObject data=ItemModifierRules.record(base,InstanceIds.reference(item),item.Name(),item.displayText(),source);
+		final List<JSONObject> own=new ArrayList<JSONObject>(),ownVeils=new ArrayList<JSONObject>();
+		for(final JSONObject m:mods)
+		{
+			final JSONObject c=ModuleDefinitions.copy(m);
+			c.put("uid",uid());
+			own.add(c);
+		}
+		for(final JSONObject v:veils)
+		{
+			final JSONObject c=ModuleDefinitions.copy(v);
+			c.put("uid",uid());
+			ownVeils.add(c);
+		}
+		data.put("modifiers",own.toArray());
+		final Ability p=CMClass.getAbility(PROPERTY);
+		p.setMiscText(ModuleDefinitions.json(ItemModifierRules.checked(ItemModifierRules.withVeils(data,ownVeils))));
+		item.addNonUninvokableEffect(p);
+		try
+		{
+			install(item,names(item,data(item)));
+		}
+		catch(final IOException|RuntimeException e)
+		{
+			item.delEffect(p);
+			throw e;
+		}
+	}
 	/** Generation-only addition through the old AFFIXES consumers. Owned objects use transactions. */
 	public static int addGenerated(final Item item,final int count)throws IOException
 	{
@@ -250,7 +291,7 @@ public final class ItemModifiers
 		final List<Definition> pool=new ArrayList<Definition>();
 		for(final String id:base.list("pool"))
 			pool.add(lib.find(id,0,"affix"));
-		final int count2=Math.max(0,Math.min(Math.min(ItemModifierRules.MAX_MODS,Math.max(0,count)),limit()-mods.size()));
+		final int count2=Math.max(0,Math.min(Math.min(ItemModifierRules.MAX_MODS,Math.max(0,count)),limit()-ItemModifierRules.slots(data)));
 		final List<JSONObject> drawn=ItemModifierRules.draw(data,pool,bias,item.basePhyStats().level(),count2,ItemModifierRules.OPEN,
 			()->CMLib.dice().getRandomizer().nextDouble(),DICE,ItemModifiers::uid);
 		mods.addAll(drawn);
@@ -275,7 +316,16 @@ public final class ItemModifiers
 		for(final JSONObject m:mods)
 			m.put("uid",uid());
 		data.put("modifiers",mods.toArray());
-		store(copy,data);
+		// I07: a copy's veils, and their options, are its own
+		final List<JSONObject> veils=ItemModifierRules.veils(data);
+		for(final JSONObject v:veils)
+		{
+			v.put("uid",uid());
+			if(v.containsKey("options"))
+				for(final Object o:(Object[])v.get("options"))
+					((JSONObject)o).put("uid",uid());
+		}
+		store(copy,ItemModifierRules.withVeils(data,veils));
 		return copy;
 	}
 	public static String inspect(final Item item)throws IOException
@@ -293,6 +343,26 @@ public final class ItemModifiers
 				.append(m.get("tier")).append(Boolean.TRUE.equals(m.get("protected"))?" [protected]":"").append(" - ")
 				.append(ModuleDefinitions.json((JSONObject)m.get("values"))).append("; source ").append(pin.get("id")).append(" v")
 				.append(pin.get("version")).append("; group ").append(m.get("group"));
+		}
+		// I07: veiled modifiers, and a revealed one's options
+		final List<JSONObject> veils=ItemModifierRules.veils(data);
+		for(int i=0;i<veils.size();i++)
+		{
+			final JSONObject v=veils.get(i);
+			out.append("\nVeiled ").append(i+1).append(". a veiled ").append(v.get("position")).append(" (").append(v.get("source")).append(")");
+			if(!v.containsKey("options"))
+				out.append(": not yet revealed; it gives nothing until it is");
+			else
+			{
+				final Object[] options=(Object[])v.get("options");
+				out.append(": revealed; CHOICES PICK \"").append(item.Name()).append("\" [number] settles one of:");
+				for(int k=0;k<options.length;k++)
+				{
+					final JSONObject m=(JSONObject)options[k];
+					out.append("\n   ").append(k+1).append(") ").append(m.get("name")).append(" tier ").append(m.get("tier")).append(" - ")
+						.append(ModuleDefinitions.json((JSONObject)m.get("values"))).append("; group ").append(m.get("group"));
+				}
+			}
 		}
 		return out.toString();
 	}
@@ -327,7 +397,7 @@ public final class ItemModifiers
 				{
 					final JSONObject d=data(i);
 					ItemModifierRules.validateSources(d,lib);
-					if(OptionalModules.enabled(MODULE)&&ItemModifierRules.modifiers(d).size()>limit())
+					if(OptionalModules.enabled(MODULE)&&ItemModifierRules.slots(d)>limit())
 						throw new IOException("more modifiers than this campaign's limit of "+limit()+"; its bonuses are withheld");
 				}
 				catch(final IOException e)

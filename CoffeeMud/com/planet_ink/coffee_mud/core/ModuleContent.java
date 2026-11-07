@@ -636,6 +636,7 @@ public final class ModuleContent
 		"com.planet_ink.coffee_mud.core.Expeditions",
 		"com.planet_ink.coffee_mud.core.ProgressionTracks",
 		"com.planet_ink.coffee_mud.core.ItemLoot",
+		"com.planet_ink.coffee_mud.core.ItemChoices",
 	};
 
 	/** resets every family, at boot */
