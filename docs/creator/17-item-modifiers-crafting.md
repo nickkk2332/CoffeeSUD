@@ -221,10 +221,87 @@ does not make generic catalog cloning the managed-copy API.
 }
 ```
 
-Actions: add, remove, reroll, protect, unprotect. Item/modifier tag lists require
-all listed tags. An add operation's nonempty affixes list further restricts the
-base pool; an empty list uses the whole base pool. Other actions target one
-modifier UID resolved from its current displayed number when preparing.
+Actions: add, remove, reroll, protect, unprotect, replace and upgrade.
+Item/modifier tag lists require all listed tags. An add or replace operation's
+nonempty affixes list further restricts the base pool; an empty list uses the
+whole base pool. Remove, reroll, protect and unprotect target one modifier UID
+resolved from its current displayed number when preparing.
+
+- **replace** takes a modifier number and the affix to put in its place:
+  `MODCRAFT PREPARE workbench.replace "workbench cloak" 2 embertrial.piercing`.
+  The old modifier is removed and the new one added, rolled, in one settlement
+  and one revision. The new affix must fit once the old one is gone: its group,
+  its position's capacity, its level and the pools. A protected modifier
+  cannot be replaced. `modifier_tags` apply to both the old and the new.
+- **upgrade** takes no selector: `MODCRAFT PREPARE workbench.upgrade "workbench cloak"`.
+  It moves the item to its base's declared `successor`, keeping every modifier,
+  its rolls, identity and protection. The successor must be for the same item
+  kind, hold every modifier's affix in its pool, and have room for them.
+
+A base declares its successor with an optional field:
+
+```json
+{"schema": 1, "kind": "base", "id": "workbench.cloak", "version": 1, "name": "...",
+ "item_kind": "armor", "prefixes": 1, "suffixes": 1, "tags": ["cloth", "workbench"],
+ "pool": ["embertrial.fireguard1", "embertrial.fireguard2", "embertrial.piercing"],
+ "successor": "workbench.greatcloak"}
+```
+
+**A refusal says why.** PREVIEW and PREPARE explain an invalid target: "modifier
+is protected: Wardwoven, group fire-resistance; unprotect it first", "exclusive
+group fire-resistance already present: Wardwoven (protected)", "no such modifier
+number", "workbench.greatcloak.v1 declares no successor to upgrade to", "need 2
+weight unit(s) of plain IRON in your inventory". Each ends "Nothing was spent or
+drawn": a refused validation consumes nothing and draws no random value.
+
+## Staged recipes
+
+A staged recipe makes a new item in stages, each settled on its own, its progress
+kept on a work piece:
+
+```json
+{
+  "schema": 1, "kind": "recipe", "id": "workbench.cloak-work", "version": 1,
+  "name": "Make a woven cloak", "station": "ember-forge", "piece": "an unfinished cloak",
+  "stages": [
+    {"name": "Spin the cloth", "material": "COTTON", "units": 2},
+    {"name": "Stitch the hem", "material": "COTTON", "units": 1},
+    {"name": "Rivet the clasp", "material": "IRON", "units": 1}
+  ],
+  "result": {"catalog": "a woven cloak", "base": "workbench.cloak", "modifiers": 1}
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `station` | The workstation tag every stage needs. |
+| `piece` | The work piece's name. |
+| `stages` | 1 to 6, each a `name`, a registered `material` and its `units`, paid as an operation's cost is. |
+| `result` | `catalog`: the catalog item made (a GenArmor, GenWeapon, GenItem or GenAmmunition), and either `base` and `modifiers` (tracked generation, as MODBASE and AFFIXES) or `policy` (a [loot policy](40-loot-policies.md)). |
+
+```text
+MODCRAFT BEGIN workbench.cloak-work
+MODCRAFT PREVIEW workbench.cloak-work "unfinished cloak"
+MODCRAFT PREPARE workbench.cloak-work "unfinished cloak"
+MODCRAFT COMMIT
+MODCRAFT STATUS
+```
+
+BEGIN, at the station, sets out the work piece (`Prop_WorkOrder`, which holds
+the recipe's pin and the stage reached); it spends and draws nothing. Each
+PREPARE and COMMIT settles the next stage, through the same request ledger as
+the operations: the stage's materials are paid once, the piece moves on, and a
+repeated COMMIT cannot pay or advance it again. The piece keeps its progress in
+the save. The last stage makes the product, gives it to the crafter and takes
+the piece away; it is the only stage that draws random values (the product's
+modifiers). STATUS lists the work pieces you carry and each one's next stage.
+The recipe is pinned when the piece is set out, so a newer version of it does
+not change a piece already begun.
+
+Each settled stage fires `itemCrafted` with its receipt, whose `stage` field
+says which. As for operations, a listener sees the settled state; returning
+false, throwing or calling COMMIT again does not repeat the stage, and it cannot
+start another craft.
 
 Station uses the existing `Workstations.has` rule: a room/item Prop_Workstation
 with the tag, or an appropriately tagged top-level room item. This slice uses
@@ -329,7 +406,7 @@ defeated enemies. Updating campaign content is separate from module adoption.
 
 ```sh
 tools/item-modifier-tests.sh
-tools/fixes.sh item-modifiers g6-loot g10-affixes
+tools/fixes.sh item-modifiers i04-workbench g6-loot g10-affixes
 tools/fixes.sh itemcraft
 tools/fixes.sh trial
 python3 tools/creator_docs.py --check
@@ -341,7 +418,8 @@ deferred observers, stale requests, cloning and legacy isolation. Played tests
 use ordinary player commands across fresh-process requests, settlement, locks,
 loot reuse, module suspension/reactivation and new campaigns.
 
-Further work includes independently owned arbitrary effect layers, more rarity
-policies, crafting currency families, staged choice reveals, corruption,
-recombination, base upgrades and escrowed encounter rewards. These are separate
-contracts, not behavior implied by this numeric modifier family.
+Rarity policies are [chapter 40](40-loot-policies.md); escrowed rewards are
+[chapter 36](36-reward-escrow.md). Further work includes independently owned
+arbitrary effect layers, crafting currency families, staged choice reveals,
+corruption and recombination. These are separate contracts, not behavior implied
+by this numeric modifier family.

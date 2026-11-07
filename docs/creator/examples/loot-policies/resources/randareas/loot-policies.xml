@@ -1,0 +1,10 @@
+<AREADATA>
+ <ITEM ID="lootpolicy_supply" SELECT="all">
+  <ITEM ID="lootpolicy_mantle" CLASS="GenArmor" LEVEL="1" NAME="a coffer mantle"
+        DISPLAY="A coffer mantle lies folded here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+        PROPERWORN="body" MODBASE="POLICY=example.coffer" />
+  <ITEM ID="lootpolicy_mantle2" CLASS="GenArmor" LEVEL="1" NAME="a coffer mantle"
+        DISPLAY="A coffer mantle lies folded here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+        PROPERWORN="body" MODBASE="POLICY=example.coffer" />
+ </ITEM>
+</AREADATA>

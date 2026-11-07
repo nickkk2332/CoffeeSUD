@@ -51,7 +51,8 @@ public final class ItemModifierRules
             id=ModuleDefinitions.id(obj.get("id"));version=ModuleDefinitions.integer(obj.get("version"),"version");kind=ModuleDefinitions.string(obj.get("kind"),"kind");name=text(obj.get("name"),"name");raw=ModuleDefinitions.copy(obj);
             if(kind.equals("base"))
             {
-                ModuleDefinitions.keys(obj,"modifier base","schema","kind","id","version","name","item_kind","prefixes","suffixes","tags","pool");
+                ModuleDefinitions.keys(obj,"modifier base","schema","kind","id","version","name","item_kind","prefixes","suffixes","tags","pool","successor");
+                if(obj.containsKey("successor")&&ModuleDefinitions.id(obj.get("successor")).equals(id))throw new IOException("a base cannot be its own successor");
                 if(!Arrays.asList("armor","weapon","ammo","item").contains(obj.get("item_kind")))throw new IOException("unknown item_kind");
                 final int pre=integer(obj.get("prefixes"),"prefixes",0,3),suf=integer(obj.get("suffixes"),"suffixes",0,3);if(pre+suf<1)throw new IOException("base needs modifier capacity");
                 ids(obj.get("tags"),"base tags",16);if(ids(obj.get("pool"),"affix pool",32).isEmpty())throw new IOException("empty affix pool");
@@ -75,9 +76,25 @@ public final class ItemModifierRules
             else if(kind.equals("operation"))
             {
                 ModuleDefinitions.keys(obj,"craft operation","schema","kind","id","version","name","action","station","material","units","item_tags","modifier_tags","affixes");
-                if(!Arrays.asList("add","remove","reroll","protect","unprotect").contains(obj.get("action")))throw new IOException("unknown operation action");
+                if(!Arrays.asList("add","remove","reroll","protect","unprotect","replace","upgrade").contains(obj.get("action")))throw new IOException("unknown operation action");
                 ModuleDefinitions.id(obj.get("station"));final String material=ModuleDefinitions.string(obj.get("material"),"material");if(!material.matches("[A-Z][A-Z0-9 _-]{0,79}"))throw new IOException("material must be an uppercase resource name");integer(obj.get("units"),"material units",1,1000);
                 ids(obj.get("item_tags"),"item tags",16);ids(obj.get("modifier_tags"),"modifier tags",16);ids(obj.get("affixes"),"allowed affixes",32);
+            }
+            else if(kind.equals("recipe"))
+            {
+                // I04: a staged production recipe: a work piece, stages settled one at a time, then the result
+                ModuleDefinitions.keys(obj,"staged recipe","schema","kind","id","version","name","station","piece","stages","result");
+                ModuleDefinitions.id(obj.get("station"));text(obj.get("piece"),"piece");
+                final Object[] stages=ModuleDefinitions.array(obj.get("stages"),"stages");if(stages.length<1||stages.length>6)throw new IOException("a recipe has 1..6 stages");
+                for(final Object st:stages)
+                {
+                    final JSONObject stage=ModuleDefinitions.object(st,"stage");ModuleDefinitions.keys(stage,"stage","name","material","units");text(stage.get("name"),"stage name");
+                    if(!ModuleDefinitions.string(stage.get("material"),"stage material").matches("[A-Z][A-Z0-9 _-]{0,79}"))throw new IOException("stage material must be an uppercase resource name");integer(stage.get("units"),"stage units",1,1000);
+                }
+                final JSONObject result=ModuleDefinitions.object(obj.get("result"),"result");ModuleDefinitions.keys(result,"result","catalog","base","modifiers","policy");text(result.get("catalog"),"result catalog item");
+                if(result.containsKey("policy")==result.containsKey("base"))throw new IOException("a recipe result names a base (with modifiers) or a loot policy");
+                if(result.containsKey("base")){ModuleDefinitions.id(result.get("base"));integer(result.get("modifiers"),"result modifiers",0,MAX_MODS);}
+                else{ModuleDefinitions.id(result.get("policy"));if(result.containsKey("modifiers"))throw new IOException("a policy result's rarity decides its modifiers");}
             }
             else throw new IOException("unknown item definition kind");
             hash=hash(raw);
@@ -119,6 +136,9 @@ public final class ItemModifierRules
         {
             if(d.kind.equals("base"))for(final String id:d.list("pool"))lib.find(id,0,"affix");
             if(d.kind.equals("operation"))for(final String id:d.list("affixes"))lib.find(id,0,"affix");
+            if(d.kind.equals("base")&&d.raw.containsKey("successor"))
+            {final Definition next=lib.find(d.string("successor"),0,"base");if(!next.string("item_kind").equals(d.string("item_kind")))throw new IOException("successor "+next.key()+" is for "+next.string("item_kind")+", not "+d.string("item_kind"));}
+            if(d.kind.equals("recipe")&&((JSONObject)d.raw.get("result")).containsKey("base"))lib.find((String)((JSONObject)d.raw.get("result")).get("base"),0,"base");
         }catch(final IOException e){lib.errors.add(d.key()+": "+e.getMessage());}
         return lib;
     }
@@ -184,7 +204,7 @@ public final class ItemModifierRules
         if(!affix.kind.equals("affix"))return "not an affix";
         if(!affix.list("kinds").contains("any")&&!affix.list("kinds").contains(record.get("item_kind")))return "item kind does not match";
         if(itemLevel<affix.number("minimum_level")||itemLevel>affix.number("maximum_level"))return "item level outside "+affix.number("minimum_level")+".."+affix.number("maximum_level");
-        int count=0;for(final JSONObject m:modifiers(record)){if(m.get("group").equals(affix.raw.get("group")))return "exclusive group "+affix.string("group")+" already present";if(m.get("position").equals(affix.raw.get("position")))count++;}
+        int count=0;for(final JSONObject m:modifiers(record)){if(m.get("group").equals(affix.raw.get("group")))return "exclusive group "+affix.string("group")+" already present: "+m.get("name")+(Boolean.TRUE.equals(m.get("protected"))?" (protected)":"");if(m.get("position").equals(affix.raw.get("position")))count++;}
         return count<((Number)record.get(affix.string("position").equals("prefix")?"prefixes":"suffixes")).intValue()?"":affix.string("position")+" capacity is full";
     }
     /** Diagnose persisted contract/value drift without requiring a particular operation. */
@@ -202,37 +222,68 @@ public final class ItemModifierRules
             for(final String key:values.keySet()){final JSONObject range=(JSONObject)rolls.get(key);integer(values.get(key),key,((Number)range.get("min")).intValue(),((Number)range.get("max")).intValue());}
         }
     }
+    /** I04 replace: the selector is the modifier's UID, then the affix that takes its place. */
+    public static String[] replacement(final String selector)throws IOException
+    {final int at=selector.indexOf('>');if(at<1||at==selector.length()-1)throw new IOException("replace names a modifier and the affix to put in its place");return new String[]{selector.substring(0,at),selector.substring(at+1)};}
+    private static void addable(final JSONObject record,final Definition op,final Definition a,final Library lib,final int level)throws IOException
+    {
+        final Definition base=lib.pinned(record.get("base"),"base");
+        if(!base.list("pool").contains(a.id)||!op.list("affixes").isEmpty()&&!op.list("affixes").contains(a.id))throw new IOException("affix "+a.id+" is outside this base/operation pool");
+        final String reason=ineligible(record,a,level);if(!reason.isEmpty())throw new IOException(reason);
+        if(!a.list("tags").containsAll(op.list("modifier_tags")))throw new IOException("affix "+a.id+" lacks required modifier tags "+op.list("modifier_tags"));
+    }
+    /** The modifier an operation targets, explained when it cannot be: gone, missing a tag, protected or not. */
+    private static JSONObject target(final JSONObject record,final Definition op,final String uid)throws IOException
+    {
+        JSONObject found=null;for(final JSONObject m:modifiers(record))if(m.get("uid").equals(uid))found=m;
+        if(found==null)throw new IOException("modifier no longer exists");
+        if(!ids(found.get("tags"),"modifier tags",16).containsAll(op.list("modifier_tags")))throw new IOException("modifier "+found.get("name")+" lacks required tags "+op.list("modifier_tags"));
+        final boolean locked=Boolean.TRUE.equals(found.get("protected"));final String action=op.string("action");
+        if(locked&&!action.equals("unprotect"))throw new IOException("modifier is protected: "+found.get("name")+", group "+found.get("group")+"; unprotect it first");
+        if(!locked&&action.equals("unprotect"))throw new IOException("modifier is not protected: "+found.get("name"));return found;
+    }
+    private static JSONObject without(final JSONObject record,final String uid)throws IOException
+    {final JSONObject next=ModuleDefinitions.copy(record);final List<JSONObject> mods=modifiers(next);mods.removeIf(m->m.get("uid").equals(uid));next.put("modifiers",mods.toArray());return next;}
+    /** I04 upgrade: the base's declared successor, which must hold every modifier the item has. */
+    public static Definition successor(final JSONObject record,final Library lib)throws IOException
+    {
+        final Definition base=lib.pinned(record.get("base"),"base");if(!base.raw.containsKey("successor"))throw new IOException(base.key()+" declares no successor to upgrade to");
+        final Definition next=lib.find(base.string("successor"),0,"base");if(!next.string("item_kind").equals(record.get("item_kind")))throw new IOException("successor "+next.key()+" is for another item kind");
+        int pre=0,suf=0;
+        for(final JSONObject m:modifiers(record))
+        {final Definition a=lib.pinned(m.get("pin"),"affix");if(!next.list("pool").contains(a.id))throw new IOException("successor "+next.key()+" cannot hold "+m.get("name")+" ("+a.id+")");if(m.get("position").equals("prefix"))pre++;else suf++;}
+        if(pre>next.number("prefixes")||suf>next.number("suffixes"))throw new IOException("successor "+next.key()+" has room for "+next.number("prefixes")+" prefix / "+next.number("suffixes")+" suffix, fewer than the item has");
+        return next;
+    }
     /** Eligibility only. It must run before payment and before calling any roller. */
     public static void validate(final JSONObject record,final Definition op,final String selector,final Library lib,final int level)throws IOException
     {
         validateSources(record,lib);if(!op.kind.equals("operation"))throw new IOException("not an operation");
         if(((Number)record.get("revision")).longValue()>=1000000000)throw new IOException("modifier revision counter is full");
-        if(!ids(record.get("tags"),"item tags",16).containsAll(op.list("item_tags")))throw new IOException("item lacks required tags");
-        if(op.string("action").equals("add"))
-        {
-            final Definition a=lib.find(selector,0,"affix"),base=lib.pinned(record.get("base"),"base");
-            if(!base.list("pool").contains(a.id)||!op.list("affixes").isEmpty()&&!op.list("affixes").contains(a.id))throw new IOException("affix is outside this base/operation pool");
-            final String reason=ineligible(record,a,level);if(!reason.isEmpty())throw new IOException(reason);
-            if(!a.list("tags").containsAll(op.list("modifier_tags")))throw new IOException("affix lacks required modifier tags");
-        }
-        else
-        {
-            JSONObject found=null;for(final JSONObject m:modifiers(record))if(m.get("uid").equals(selector))found=m;
-            if(found==null)throw new IOException("modifier no longer exists");if(!ids(found.get("tags"),"modifier tags",16).containsAll(op.list("modifier_tags")))throw new IOException("modifier lacks required tags");
-            final boolean locked=Boolean.TRUE.equals(found.get("protected"));final String action=op.string("action");
-            if(locked&&!action.equals("unprotect"))throw new IOException("modifier is protected");if(!locked&&action.equals("unprotect"))throw new IOException("modifier is not protected");
-        }
+        if(!ids(record.get("tags"),"item tags",16).containsAll(op.list("item_tags")))throw new IOException("item lacks required tags "+op.list("item_tags"));
+        final String action=op.string("action");
+        if(action.equals("add"))addable(record,op,lib.find(selector,0,"affix"),lib,level);
+        else if(action.equals("replace")){final String[] r=replacement(selector);target(record,op,r[0]);addable(without(record,r[0]),op,lib.find(r[1],0,"affix"),lib,level);}
+        else if(action.equals("upgrade"))successor(record,lib);
+        else target(record,op,selector);
     }
     public static JSONObject transform(final JSONObject original,final Definition op,final String selector,final Library lib,final int level,final String addedUID,final Roller dice)throws IOException
     {
         validate(original,op,selector,lib,level);final JSONObject next=ModuleDefinitions.copy(original);final List<JSONObject> mods=modifiers(next);final String action=op.string("action");
         if(action.equals("add"))mods.add(rolled(lib.find(selector,0,"affix"),addedUID,dice));
-        else for(int i=0;i<mods.size();i++)if(mods.get(i).get("uid").equals(selector))
+        else if(action.equals("upgrade"))
+        {final Definition up=successor(original,lib);next.put("base",pin(up));next.put("prefixes",up.raw.get("prefixes"));next.put("suffixes",up.raw.get("suffixes"));next.put("tags",up.raw.get("tags"));}
+        else
         {
-            final JSONObject old=mods.get(i);
-            if(action.equals("remove"))mods.remove(i);
-            else if(action.equals("reroll"))mods.set(i,rolled(lib.pinned(old.get("pin"),"affix"),selector,dice));
-            else old.put("protected",Boolean.valueOf(action.equals("protect")));break;
+            final String uid=action.equals("replace")?replacement(selector)[0]:selector;
+            for(int i=0;i<mods.size();i++)if(mods.get(i).get("uid").equals(uid))
+            {
+                final JSONObject old=mods.get(i);
+                if(action.equals("remove"))mods.remove(i);
+                else if(action.equals("replace"))mods.set(i,rolled(lib.find(replacement(selector)[1],0,"affix"),addedUID,dice)); // removed and added in one settlement
+                else if(action.equals("reroll"))mods.set(i,rolled(lib.pinned(old.get("pin"),"affix"),selector,dice));
+                else old.put("protected",Boolean.valueOf(action.equals("protect")));break;
+            }
         }
         next.put("revision",Long.valueOf(((Number)original.get("revision")).longValue()+1));next.put("modifiers",mods.toArray());return checked(next);
     }

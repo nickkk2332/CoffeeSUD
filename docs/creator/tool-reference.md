@@ -5929,7 +5929,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3327.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3337.
 
 ```text
 Command : ITEMMODS
@@ -6410,13 +6410,18 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3336.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3346.
 
 ```text
 Command : MODCRAFT
 Usage   : MODCRAFT LIST / STATUS / POOL "[item name]"
 Usage   : MODCRAFT PREVIEW/PREPARE [operation ID] "[item name]" [modifier number or affix
 ID]
+Usage   : MODCRAFT PREVIEW/PREPARE [replace operation ID] "[item name]" [modifier number]
+[affix ID]
+Usage   : MODCRAFT PREVIEW/PREPARE [upgrade operation ID] "[item name]"
+Usage   : MODCRAFT BEGIN [recipe ID]
+Usage   : MODCRAFT PREVIEW/PREPARE [recipe ID] "[work piece]"
 Usage   : MODCRAFT COMMIT/CANCEL ([request number])
 Usage   : MODCRAFT RECEIPT [request number]
 Requires the optional items.modifiers module. LIST shows operations, costs and stations;
@@ -6430,10 +6435,17 @@ was cancelled. Quote multiword item names.
 Craft alive and outside combat, with the target directly carried, unworn and outside a
 container. Costs use plain raw-material piles. Protected modifiers refuse reroll/removal; an
  authored unprotect operation releases them. Add takes an affix ID and respects pools, tags,
- levels, groups and capacity. In the Ember Trial, open the supply coffer at camp and collect
- the mantle/iron, then try MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT
-spends iron and rolls values. A stale request requires cancellation and fresh preparation.
-See docs/creator/17-item-modifiers-crafting.md.
+ levels, groups and capacity. Replace takes a modifier number and the affix to put in its
+place, removed and added in one settlement. Upgrade moves the item to its base's declared
+successor, keeping every modifier. A refused PREVIEW or PREPARE says why (a protected
+modifier, the group in the way and who holds it, a target that is not there) and spends and
+draws nothing. A staged recipe: BEGIN sets out its work piece at the station; each PREPARE
+and COMMIT settles the next stage once, its progress kept on the piece; the last stage makes
+ the product, and only it draws random values. STATUS lists your work pieces and their next
+stage. In the Ember Trial, open the supply coffer at camp and collect the mantle/iron, then
+try MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT spends iron and rolls
+values. A stale request requires cancellation and fresh preparation. See
+docs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="modify"></a>
@@ -8230,7 +8242,7 @@ stage and the way to the next.
 
 ## PROP_ITEMMODIFIERS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4441.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4451.
 
 ```text
 Property   : Prop_ItemModifiers
@@ -12417,7 +12429,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3486.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3500.
 
 ```text
 Command : WORLD COMBAT
@@ -12468,7 +12480,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3537.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3551.
 
 ```text
 Command : WORLD ITEMMODS
@@ -12495,7 +12507,7 @@ docs/creator/17-item-modifiers-crafting.md.
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3506.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3520.
 
 ```text
 Command : WORLD MODULES

@@ -32,7 +32,7 @@ FAIL=0
 "$GAME/build.sh" > "$W/build.txt" 2>&1 || { cat "$W/build.txt"; exit 1; }
 
 # a played group by name (st1, st6, pr5, saves1 to saves5) runs alone, without the JavaScript tests
-case "$1" in st1|st6|pr5|s10|travel|presentation|language|review|remaining|modules|composition|combat|trial|itemcraft|expeditions|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
+case "$1" in st1|st6|pr5|s10|travel|presentation|language|review|remaining|modules|composition|combat|trial|itemcraft|expeditions|loot|saves|saves1|saves2|saves3|saves4|saves5) ONLYSAVES=1;; *) ONLYSAVES="";; esac
 if [ -n "$ONLYSAVES" ]; then TESTS=""; elif [ $# -gt 0 ]; then TESTS="$*"; else
 	TESTS="$(cd "$FX" && ls *.js | sed 's/\.js$//' | grep -v '^prelude$')"
 fi
@@ -904,6 +904,13 @@ group_itemcraft()
     jsresults itemcraft.txt
 }
 
+group_loot()
+{
+    echo "Played: I02 loot policies: coffers making policy items beside a unique token, LOOT and its filter, a real restore"
+    python3 "$ROOT/tools/loot-policy-integration.py" "$W/loot" > "$W/loot.txt" 2>&1 || FAIL=1
+    jsresults loot.txt
+}
+
 group_expeditions()
 {
     echo "Played: G01 expeditions: a gated destination, a chart previewed and opened, a seeded instance, a restore, a death, the recovery path"
@@ -920,7 +927,7 @@ if [ $# -eq 0 ]; then
 	LIMIT=${FIXES_JOBS:-9}
 	case "$LIMIT" in ''|*[!0-9]*|0) LIMIT=9;; esac
 	PIDS=""; RUNNING=0
-	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation language review remaining modules composition combat trial itemcraft expeditions; do
+	for GROUP in jrun st1 st6 pr5 saves saves2 saves3 saves4 saves5 travel presentation language review remaining modules composition combat trial itemcraft expeditions loot; do
 		"group_$GROUP" > "$W/group_$GROUP.log" 2>&1 &
 		PIDS="$PIDS $!"; RUNNING=$((RUNNING+1))
 		if [ "$RUNNING" -ge "$LIMIT" ]; then
@@ -929,8 +936,8 @@ if [ $# -eq 0 ]; then
 		fi
 	done
 	for PID in $PIDS; do wait "$PID"; done
-	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log" "$W/group_expeditions.log"
-	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log" "$W/group_expeditions.log"; then FAIL=1; fi
+	cat "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log" "$W/group_expeditions.log" "$W/group_loot.log"
+	if grep -q "^  FAIL" "$W/group_jrun.log" "$W/group_st1.log" "$W/group_st6.log" "$W/group_pr5.log" "$W/group_saves.log" "$W/group_saves2.log" "$W/group_saves3.log" "$W/group_saves4.log" "$W/group_saves5.log" "$W/group_travel.log" "$W/group_presentation.log" "$W/group_language.log" "$W/group_review.log" "$W/group_remaining.log" "$W/group_modules.log" "$W/group_composition.log" "$W/group_combat.log" "$W/group_trial.log" "$W/group_itemcraft.log" "$W/group_expeditions.log" "$W/group_loot.log"; then FAIL=1; fi
 elif [ "$1" = "saves" ]; then
 	group_saves > "$W/group_saves.log" 2>&1 &
 	V_PID=$!

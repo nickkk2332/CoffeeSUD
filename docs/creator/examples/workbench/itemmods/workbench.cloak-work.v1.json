@@ -1,0 +1,10 @@
+{
+  "schema": 1, "kind": "recipe", "id": "workbench.cloak-work", "version": 1,
+  "name": "Make a woven cloak", "station": "ember-forge", "piece": "an unfinished cloak",
+  "stages": [
+    {"name": "Spin the cloth", "material": "COTTON", "units": 2},
+    {"name": "Stitch the hem", "material": "COTTON", "units": 1},
+    {"name": "Rivet the clasp", "material": "IRON", "units": 1}
+  ],
+  "result": {"catalog": "a woven cloak", "base": "workbench.cloak", "modifiers": 1}
+}

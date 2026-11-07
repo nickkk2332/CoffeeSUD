@@ -1,0 +1,5 @@
+{
+  "schema": 1, "kind": "operation", "id": "workbench.upgrade", "version": 1,
+  "name": "Extend the cloak", "action": "upgrade", "station": "ember-forge",
+  "material": "IRON", "units": 3, "item_tags": ["workbench"], "modifier_tags": [], "affixes": []
+}

@@ -87,6 +87,7 @@ These systems are off unless a world selects them.
 | [Encounter director](37-encounter-director.md) | Phased bosses and defense waves as one saved state machine, with budgets |
 | [Expeditions](38-expeditions.md) | Charts, entry contracts, seeded instances with modifiers, attempts and recovery |
 | [Progression tracks](39-progression-tracks.md) | Character disciplines, organization research and item mastery, with milestones and migration |
+| [Loot policies](40-loot-policies.md) | Rarities, tier limits, budgets and a guarantee counter for tracked loot, with preview, sampling and LOOT |
 | [The Ember Trial](examples/ember-trial/README.md) | A complete playable sample adventure using all of the above |
 
 ### Engine development

@@ -140,20 +140,28 @@ default: a world that selects no module behaves exactly as before.
 - MVP: a character discipline, an organization research project and an item
   mastery track.
 
-### I02 Loot policies and I04 operations: `items.modifiers`
+### I02 Loot policies: `items.loot`; I04 operations: `items.modifiers`
 
-- Loot policies in `world/itemmods/` (`kind: "loot"`): rarities with weights
-  and modifier counts, eligible pools and tags, tier limits by level, a power
-  budget, and a guarantee counter (after N drops without a rarity, the next is
-  that rarity) saved per character. `MODBASE` takes `POLICY=id`.
-- `WORLD ITEMMODS PREVIEW policy level` gives eligibility and chances;
-  `WORLD ITEMMODS SAMPLE policy n` samples on a scenario stream and must agree
-  with the preview.
+- Loot policies are their own family, `items.loot` (requires
+  `items.modifiers` 1), in `world/loot/`: rarities with weights and modifier
+  counts, a base's pool filtered by tags, tier limits by level, a power budget,
+  and a guarantee (after N drops without a rarity, the next is that rarity).
+  `MODBASE` takes `POLICY=id`. A separate module keeps the pinned
+  `items.modifiers` manifest (version 1, required exactly by the Ember Trial)
+  unchanged. The guarantee counter is campaign-wide (world state): drops made
+  with no one present (spawn loot) count, and a party shares one luck.
+- `WORLD LOOT PREVIEW policy level` gives eligibility and chances;
+  `WORLD LOOT SAMPLE policy n level` samples on a cursor at the loot stream's
+  next draw (it moves nothing, and predicts the next real drops) and checks
+  itself against the preview.
 - New operations: `replace` (remove and add, settled together), `upgrade`
-  (a base to its declared successor, keeping modifiers) and one staged
-  production recipe (stages settled one at a time, progress saved).
-- Q07 loot view: a corpse or container's tracked loot summarised by rarity,
-  with a per-character filter.
+  (a base to its declared `successor`, keeping modifiers) and a staged recipe
+  (`kind: "recipe"`: a work piece carrying `Prop_WorkOrder`, stages settled one
+  at a time through the craft ledger, the product made by a base or a policy
+  at the last stage). Refusals explain protected modifiers and the group in
+  the way.
+- Q07 loot view: `LOOT [container]` summarises tracked loot by rarity, with a
+  per-character `LOOT FILTER` (character state).
 
 ## Q tools
 
@@ -185,14 +193,14 @@ before anything is merged.
 
 | Stage | Contents | Status |
 | --- | --- | --- |
-| 1 | ModuleContent, RandomStreams (Q09), ModuleStats (Q12 counters) | |
-| 2 | A15 resources | |
-| 3 | A03 triggers | |
-| 4 | I18 escrow | |
-| 5 | G03 director, Q08 budgets, Q07 warnings | |
-| 6 | G01 expeditions, Q03 preflight | |
-| 7 | P01 tracks, Q06 rename test, Q07 tree | |
-| 8 | I02 loot policies, I04 operations, Q07 loot view | |
+| 1 | ModuleContent, RandomStreams (Q09), ModuleStats (Q12 counters) | Done |
+| 2 | A15 resources | Done |
+| 3 | A03 triggers | Done |
+| 4 | I18 escrow | Done |
+| 5 | G03 director, Q08 budgets, Q07 warnings | Done |
+| 6 | G01 expeditions, Q03 preflight | Done |
+| 7 | P01 tracks, Q06 rename test, Q07 tree | Done |
+| 8 | I02 loot policies, I04 operations, Q07 loot view | Done |
 | 9 | Q02 references, Q03 compare, Q05 ledgers, Q12 report | |
 | 10 | Q04 simulation | |
 | 11 | Q10 packs, handbook chapters, catalog status | |

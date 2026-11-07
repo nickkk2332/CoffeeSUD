@@ -45,7 +45,10 @@ public final class ItemModifiers
         if(file.exists()&&(Files.isSymbolicLink(file.toPath())||!file.isFile()||file.length()>262144)){if(inUse())error="affixes.xml must be a regular world file, at most 256 KiB";}
         else if(file.exists())for(final Affixes.Affix a:Affixes.read())if(a.tracked!=null)records.add(a.tracked);
         final Library lib=ItemModifierRules.load(world,records);if(error!=null)lib.errors.add(error);
-        for(final Definition d:lib.definitions.values())if(d.kind.equals("operation")&&RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)lib.errors.add(d.key()+": unknown registered material "+d.string("material"));return lib;
+        for(final Definition d:lib.definitions.values())if(d.kind.equals("operation")&&RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)lib.errors.add(d.key()+": unknown registered material "+d.string("material"));
+        for(final Definition d:lib.definitions.values())if(d.kind.equals("recipe"))for(final Object st:(Object[])d.raw.get("stages")) // I04: a staged recipe's materials
+            if(RawMaterial.CODES.FIND_CaseSensitive((String)((JSONObject)st).get("material"))<0)lib.errors.add(d.key()+": unknown registered material "+((JSONObject)st).get("material"));
+        return lib;
     }
     public static synchronized Library definitions()throws IOException
     {if(library==null||!WorldFiles.worldDir().equals(root)){library=check();root=WorldFiles.worldDir();}if(!library.errors.isEmpty())throw new Unavailable(library.report());return library;}
@@ -85,6 +88,7 @@ public final class ItemModifiers
     {
         gameThread();require();if(item==null||item.owner()!=null||item.amDestroyed()||isManaged(item))throw new IOException("MODBASE needs a fresh unowned item");
         if(!Arrays.asList("GenArmor","GenWeapon","GenItem","GenAmmunition").contains(item.ID()))throw new IOException("first modifier family supports standard generic equipment/items only");
+        if(baseID.regionMatches(true,0,"POLICY=",0,7)){ItemLoot.initialize(item,baseID.substring(7).trim(),source);return;} // I02: a loot policy decides rarity and modifiers
         final Definition base=definitions().find(baseID,0,"base");if(!base.string("item_kind").equals(Affixes.kindOf(item)))throw new IOException("MODBASE kind does not match template");
         final JSONObject data=ItemModifierRules.record(base,InstanceIds.reference(item),item.Name(),item.displayText(),source);
         final Ability p=CMClass.getAbility(PROPERTY);p.setMiscText(ModuleDefinitions.json(data));item.addNonUninvokableEffect(p);

@@ -1,0 +1,5 @@
+{
+  "schema": 1, "kind": "operation", "id": "workbench.protect", "version": 1,
+  "name": "Bind one modifier", "action": "protect", "station": "ember-forge",
+  "material": "IRON", "units": 1, "item_tags": ["workbench"], "modifier_tags": [], "affixes": []
+}
