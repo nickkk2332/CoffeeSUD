@@ -201,6 +201,6 @@ before anything is merged.
 | 6 | G01 expeditions, Q03 preflight | Done |
 | 7 | P01 tracks, Q06 rename test, Q07 tree | Done |
 | 8 | I02 loot policies, I04 operations, Q07 loot view | Done |
-| 9 | Q02 references, Q03 compare, Q05 ledgers, Q12 report | |
+| 9 | Q02 references, Q03 compare, Q05 ledgers, Q12 report | Done |
 | 10 | Q04 simulation | |
 | 11 | Q10 packs, handbook chapters, catalog status | |

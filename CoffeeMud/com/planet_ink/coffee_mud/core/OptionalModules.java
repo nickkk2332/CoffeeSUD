@@ -208,6 +208,17 @@ public final class OptionalModules
             final JSONObject record = capsule.records.get(who.index());
             return record == null ? ModuleDefinitions.values(def.state, new JSONObject(), id + " state") : ModuleDefinitions.copy((JSONObject)record.get("values"));
         }
+        /** Q05: what each module keeps for one owner, by module ID: copies, read-only; nothing is allocated. */
+        public synchronized Map<String,JSONObject> stored(final Owner who)
+        {
+            final Map<String,JSONObject> out = new TreeMap<String,JSONObject>();
+            for(final Capsule capsule : capsules.values())
+            {
+                final JSONObject record = capsule.records.get(who.index());
+                if(record != null) try { out.put(capsule.id, ModuleDefinitions.copy((JSONObject)record.get("values"))); } catch(final IOException e) { out.put(capsule.id, new JSONObject()); }
+            }
+            return out;
+        }
         /** Replace one complete typed record atomically. Reads do not allocate persistent records. */
         public synchronized void put(final String id, final Owner who, final JSONObject values) throws IOException
         {
@@ -394,6 +405,7 @@ public final class OptionalModules
     public static synchronized void put(final String id, final Owner who, final JSONObject values) throws IOException { campaign().put(id, who, values); }
     public static synchronized void putJSON(final String id, final Owner who, final String values) throws IOException { put(id, who, ModuleDefinitions.parse(values)); }
     public static synchronized String getJSON(final String id, final Owner who) throws IOException { return ModuleDefinitions.json(get(id, who)); }
+    public static synchronized Map<String,JSONObject> stored(final Owner who) { return current == null ? new TreeMap<String,JSONObject>() : current.stored(who); }
     public static synchronized String snapshot() throws IOException
     { return current == null ? "{\"schema\":1,\"modules\":[]}" : current.snapshot(); }
     private static Campaign campaign() throws IOException

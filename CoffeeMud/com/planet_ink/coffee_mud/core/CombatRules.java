@@ -290,14 +290,21 @@ public final class CombatRules
         final int roll = dice.roll(reason); if(roll < 1 || roll > 100) throw new IOException("invalid percentile roll");
         final boolean success = d(roll).compareTo(d(chance)) <= 0; lines.add(reason + ": roll " + roll + " <= " + display(chance) + "%: " + success); return success;
     }
+    /** The chance in percent that a weapon hit (not a spell, not a burn) lands, exactly as resolve rolls it. */
+    public static double hitChance(final Profile p, final Stats attacker, final Stats target)
+    {
+        final BigDecimal accuracy = attacker.values.get("accuracy"), evasion = target.values.get("evasion"), total = accuracy.add(evasion, MC);
+        return bound(total.signum() == 0 ? ZERO : accuracy.multiply(HUNDRED, MC).divide(total, MC), p.minHit, p.maxHit).doubleValue();
+    }
+    /** Q03/Q04: the exact probability of a percentile roll succeeding: a whole roll 1..100 at most the chance. */
+    public static double probability(final double chance) { if(chance <= 0) return 0; if(chance >= 100) return 1; return Math.floor(chance) / 100.0; }
     public static Resolution resolve(final Profile p, final Map<String,Double> offense, final Stats attacker, final Stats target, final boolean spell, final boolean dot, final Roller dice) throws IOException
     {
         final Map<String,Integer> result = new LinkedHashMap<String,Integer>(); for(final String type : TYPES) result.put(type, Integer.valueOf(0));
         final List<String> lines = new ArrayList<String>();
         if(!dot && !spell)
         {
-            final BigDecimal accuracy = attacker.values.get("accuracy"), evasion = target.values.get("evasion"), total = accuracy.add(evasion, MC);
-            final double chance = bound(total.signum() == 0 ? ZERO : accuracy.multiply(HUNDRED, MC).divide(total, MC), p.minHit, p.maxHit).doubleValue();
+            final double chance = hitChance(p, attacker, target);
             if(!succeeds(chance, "hit", dice, lines)) return new Resolution(result, lines, false, false, false);
         }
         else lines.add(dot ? "Burn tick: no hit, block or critical roll." : "Spell: no accuracy roll.");

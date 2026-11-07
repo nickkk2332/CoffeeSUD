@@ -43,7 +43,7 @@ public class Skill_Compose extends StdAbility
         final List<String> result = new ArrayList<String>(commands);
         if(!result.isEmpty() && result.get(0).equalsIgnoreCase("COMPOSE")) result.remove(0);
         if(result.size() > 1) result.set(1, result.get(1).toLowerCase(Locale.ROOT));
-        if(result.size() > 2 && (result.get(0).equalsIgnoreCase("LINK") || result.get(0).equalsIgnoreCase("UNLINK")))
+        if(result.size() > 2 && (result.get(0).equalsIgnoreCase("LINK") || result.get(0).equalsIgnoreCase("UNLINK") || result.get(0).equalsIgnoreCase("COMPARE")))
             result.set(2, result.get(2).toLowerCase(Locale.ROOT));
         return result;
     }
@@ -79,7 +79,20 @@ public class Skill_Compose extends StdAbility
                 }
                 if(args.size() >= 2 && args.get(0).equalsIgnoreCase("CAST"))
                     return cast(mob, args, givenTarget, asLevel); // even scripted/auto calls pay costs and pass all gates
-                mob.tell("COMPOSE [LIST], LEARN/SHOW/FORGET [skill], LINK/UNLINK [skill] [support], CAST [skill] [target].");
+                if(args.size() >= 3 && args.get(0).equalsIgnoreCase("COMPARE"))
+                {
+                    // Q03: two skills side by side against a target here (or the profile's defaults); nothing is rolled or paid
+                    MOB against = null;
+                    if(args.size() > 3)
+                    {
+                        final String name = CMParms.combine(args, 3);
+                        against = (mob.location() == null) ? null : mob.location().fetchInhabitant(name);
+                        if(against == null) throw new IOException("you see no '" + name + "' here");
+                    }
+                    mob.tell(BuildCompare.compare(mob, args.get(1), args.get(2), against));
+                    return false;
+                }
+                mob.tell("COMPOSE [LIST], LEARN/SHOW/FORGET [skill], LINK/UNLINK [skill] [support], CAST [skill] [target], COMPARE [skill] [skill] ([target]).");
             }
             catch(final IOException e) { mob.tell("Composition: " + e.getMessage()); }
             return false;

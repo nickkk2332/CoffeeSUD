@@ -499,5 +499,6 @@ public final class EncounterDirectors
 	static
 	{
 		ModuleContent.register(FAMILY_ENTRY);
+		ModuleStats.limit(FAMILY, "actors at once", 50); // Q12: the most a budget allows
 	}
 }

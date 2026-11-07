@@ -641,6 +641,7 @@ public final class ModuleContent
 	/** resets every family, at boot */
 	public static void resetAll()
 	{
+		Provenance.reset(); // Q05: events are of this game, since it began or was restored
 		for(final Family f : families())
 		{
 			try

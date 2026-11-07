@@ -397,6 +397,7 @@ public final class ProgressionTracks
 	{
 		ModuleStats.count(FAMILY, t.id, "milestones reached");
 		final String text = t.title + ": " + m.title + "." + (m.message.isEmpty() ? "" : " " + m.message);
+		Provenance.event((o.mob != null) ? o.mob : (com.planet_ink.coffee_mud.core.interfaces.Physical)o.item, MODULE, t.key(), "milestone " + m.level + " reached: " + m.title); // Q05
 		if(o.mob != null)
 		{
 			o.mob.tell(text);

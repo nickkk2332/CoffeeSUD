@@ -4491,7 +4491,7 @@ or that stopped it, and what was dealt.  Damage outside an attack, a spell's, ge
 
 ## COMBATRESULT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3242.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3248.
 
 ```text
 Command : COMBATRESULT
@@ -4550,11 +4550,16 @@ Usage   : COMPOSE (LIST)
 Usage   : COMPOSE LEARN/SHOW/FORGET [skill ID]
 Usage   : COMPOSE LINK/UNLINK [skill ID] [support ID]
 Usage   : COMPOSE CAST [skill ID] [target]
+Usage   : COMPOSE COMPARE [skill ID] [skill ID] ([target])
 Requires the optional abilities.composition module and the learned Skill_Compose ability.
 Installing the module does not grant it. LEARN selects an eligible authored skill version;
 LINK adds a compatible support. SHOW explains the compiled values and each modifier's
 source. UNLINK removes one support. FORGET removes a chosen skill; neither it nor LEARN
-resets cooldowns.
+resets cooldowns. COMPARE puts two of your skills, with their supports, side by side against
+ a target here (or one with the combat profile's defaults): costs, cooldowns, the exact
+chances to hit, be blocked and strike critically, what lands, and the expected damage per
+cast. It rolls, pays and cools down nothing; the target's own stats are shown only to a
+creator (builder mode or DEV=1).
 Up to four chosen skills and three supports per skill are supported; the creator may lower
 limits. Each character keeps separate choices. Existing skills retain their selected
 versions across save/restore and content upgrades. LEARN explicitly adopts the latest
@@ -4883,49 +4888,50 @@ PROBLEMS), SCRIPTS (SCRIPTCHECK), PROPS (PROPCHECK), JS (the world's JavaScript 
 VOCAB (languages, glossary, lists and help), LORE (entries/files), TEMPLATES (presentation
 text/options), ROUTES (travel and route references) and IDS (stable author identities),
 MODULES (the optional-module plan), COMPOSITIONS (composed abilities), COMBAT (combat
-profiles) and ITEMMODS (item modifier libraries and tracked items); ONLY= picks parts, LOG
-writes the report to the log too.  sud.sh CHECK=1 loads the world as a new game would (it
-makes no copy of it and saves nothing, and its content cache is built in resources/fakedb
-unless DBSERVICE is given), runs it with no player, prints it and exits 1 if it found
-errors: for a script or a commit hook.  WORLD DEV lists the dev areas: those in world/dev,
-for building and testing only, which builder mode and DEV=1 games load and a normal game
-never does (DEVSTART= in coffeemud.ini can start new characters in one, such as a hub with
-portals and test gear).  In builder mode, WORLD DEV [AREA] ON makes an area one (SAVE writes
- it to world/dev) and OFF a shipped one again; WORLD CHECK warns of an exit from a shipped
-area into a dev area, which leads nowhere in a normal game.  In builder mode, SAVE does not
-write over or delete a world file changed outside the game (edited, added or deleted since
-the game loaded or last wrote it): what it would write goes beside it, as NAME.builder, and
-SAVE FORCE writes over it.  WORLD STATUS lists the files changed outside the game, and what
-SAVE would write, delete and leave; WORLD DIFF [FILE] shows a file (castle,
-areas/castle.cmare, quests/hunt.quest) against what SAVE would write, - for its lines on
-disk and + for SAVE's.  WORLD RELOAD loads world files again into the running game: an area
-(by its name or its file's; AREA alone is your own area), whose players and their followers
-wait outside it and come back, and whose exits from other areas are linked again (refused
-while rooms of it have unsaved mobs or items, as LIST UNSAVED lists them, unless FORCE);
-SCRIPT, the scripts that name a file (or ALL), their triggers reset with RESET; QUEST, a
-quest stopped, read again from its file in world/quests and started again at its step;
-QUESTS, each of them; CATALOG, the catalog's entries from its file; CHANGED, each file WORLD
- STATUS lists as changed outside the game.  In a normal game it ignores its arguments (AREA,
- SCRIPT, QUEST and the rest work only in builder mode), saves the game as world-reload and
-restores it, which builds the world from its files again.  DEVWATCH ON ([SECONDS]) looks at
-the world files and resources' scripts every few seconds and runs the reload that matches
-what changed, each noted in DEVLOG; DEVWATCH OFF stops it.  Before SAVE writes over or
-deletes a world file it keeps a copy in world/.backup/ (the last BACKUPS= in coffeemud.ini
-of each, 5 if not set): WORLD BACKUPS lists the files with backups, WORLD BACKUPS FILE the
-times of one's, and WORLD RESTOREFILE FILE (TIME) puts the newest (or that one) back,
-changed outside the game, for WORLD RELOAD to load.  WORLD DIG ON makes a room, as CREATE
-ROOM does (of the room's own kind, or TYPE=, a locale or a builder template), wherever you
-walk and there is no exit, and goes into it, linked back unless LINK=ONE-WAY; WORLD DIG OFF
-stops it.  WORLD PATH lays out a chain of rooms, one for each direction, following the exits
- there already, each with NAME= and DESC= if given, and leaves you where you are.  Rooms
-made so are saved and tagged TODO, which WORLD CHECK lists until EDIT DESC gives them their
-own text.  WORLD MAP draws the rooms around you (5 steps out, or RADIUS N) or the whole area
- (AREA), north up, laid out by walking their exits from your room (*); a room above or
-below, or where another is, is listed instead.  IDS numbers the rooms and lists them; FLAGS
-marks what to look at: > < v ^ an exit that does not lead back, + a locked door, @ an exit
-to another area, s a room with scripts, and lists the rooms of the area nothing leads to
-from here.  HTML=FILE writes the area's map to world/maps/FILE.html, each room with its
-exits as links.
+profiles), ITEMMODS (item modifier libraries and tracked items) and REFS (the references
+between the optional module families, each with its file and JSON path; what a script does
+is reported as unknown, not checked); ONLY= picks parts, LOG writes the report to the log
+too.  sud.sh CHECK=1 loads the world as a new game would (it makes no copy of it and saves
+nothing, and its content cache is built in resources/fakedb unless DBSERVICE is given), runs
+ it with no player, prints it and exits 1 if it found errors: for a script or a commit hook.
+  WORLD DEV lists the dev areas: those in world/dev, for building and testing only, which
+builder mode and DEV=1 games load and a normal game never does (DEVSTART= in coffeemud.ini
+can start new characters in one, such as a hub with portals and test gear).  In builder
+mode, WORLD DEV [AREA] ON makes an area one (SAVE writes it to world/dev) and OFF a shipped
+one again; WORLD CHECK warns of an exit from a shipped area into a dev area, which leads
+nowhere in a normal game.  In builder mode, SAVE does not write over or delete a world file
+changed outside the game (edited, added or deleted since the game loaded or last wrote it):
+what it would write goes beside it, as NAME.builder, and SAVE FORCE writes over it.  WORLD
+STATUS lists the files changed outside the game, and what SAVE would write, delete and
+leave; WORLD DIFF [FILE] shows a file (castle, areas/castle.cmare, quests/hunt.quest)
+against what SAVE would write, - for its lines on disk and + for SAVE's.  WORLD RELOAD loads
+ world files again into the running game: an area (by its name or its file's; AREA alone is
+your own area), whose players and their followers wait outside it and come back, and whose
+exits from other areas are linked again (refused while rooms of it have unsaved mobs or
+items, as LIST UNSAVED lists them, unless FORCE); SCRIPT, the scripts that name a file (or
+ALL), their triggers reset with RESET; QUEST, a quest stopped, read again from its file in
+world/quests and started again at its step; QUESTS, each of them; CATALOG, the catalog's
+entries from its file; CHANGED, each file WORLD STATUS lists as changed outside the game.
+In a normal game it ignores its arguments (AREA, SCRIPT, QUEST and the rest work only in
+builder mode), saves the game as world-reload and restores it, which builds the world from
+its files again.  DEVWATCH ON ([SECONDS]) looks at the world files and resources' scripts
+every few seconds and runs the reload that matches what changed, each noted in DEVLOG;
+DEVWATCH OFF stops it.  Before SAVE writes over or deletes a world file it keeps a copy in
+world/.backup/ (the last BACKUPS= in coffeemud.ini of each, 5 if not set): WORLD BACKUPS
+lists the files with backups, WORLD BACKUPS FILE the times of one's, and WORLD RESTOREFILE
+FILE (TIME) puts the newest (or that one) back, changed outside the game, for WORLD RELOAD
+to load.  WORLD DIG ON makes a room, as CREATE ROOM does (of the room's own kind, or TYPE=,
+a locale or a builder template), wherever you walk and there is no exit, and goes into it,
+linked back unless LINK=ONE-WAY; WORLD DIG OFF stops it.  WORLD PATH lays out a chain of
+rooms, one for each direction, following the exits there already, each with NAME= and DESC=
+if given, and leaves you where you are.  Rooms made so are saved and tagged TODO, which
+WORLD CHECK lists until EDIT DESC gives them their own text.  WORLD MAP draws the rooms
+around you (5 steps out, or RADIUS N) or the whole area (AREA), north up, laid out by
+walking their exits from your room (*); a room above or below, or where another is, is
+listed instead.  IDS numbers the rooms and lists them; FLAGS marks what to look at: > < v ^
+an exit that does not lead back, + a locked door, @ an exit to another area, s a room with
+scripts, and lists the rooms of the area nothing leads to from here.  HTML=FILE writes the
+area's map to world/maps/FILE.html, each room with its exits as links.
 ```
 
 <a id="difficulty"></a>
@@ -5929,7 +5935,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3337.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3357.
 
 ```text
 Command : ITEMMODS
@@ -6410,7 +6416,7 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3346.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3366.
 
 ```text
 Command : MODCRAFT
@@ -6492,7 +6498,7 @@ GENBEHAVIOR).
 
 ## MODULES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3256.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3262.
 
 ```text
 Command : MODULES
@@ -10822,7 +10828,7 @@ on a schedule, at a moon or when the party leaves, and its GENERATED_PROG runs a
 
 ## RESOURCES
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3273.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3279.
 
 ```text
 Command : RESOURCES
@@ -12321,49 +12327,50 @@ PROBLEMS), SCRIPTS (SCRIPTCHECK), PROPS (PROPCHECK), JS (the world's JavaScript 
 VOCAB (languages, glossary, lists and help), LORE (entries/files), TEMPLATES (presentation
 text/options), ROUTES (travel and route references) and IDS (stable author identities),
 MODULES (the optional-module plan), COMPOSITIONS (composed abilities), COMBAT (combat
-profiles) and ITEMMODS (item modifier libraries and tracked items); ONLY= picks parts, LOG
-writes the report to the log too.  sud.sh CHECK=1 loads the world as a new game would (it
-makes no copy of it and saves nothing, and its content cache is built in resources/fakedb
-unless DBSERVICE is given), runs it with no player, prints it and exits 1 if it found
-errors: for a script or a commit hook.  WORLD DEV lists the dev areas: those in world/dev,
-for building and testing only, which builder mode and DEV=1 games load and a normal game
-never does (DEVSTART= in coffeemud.ini can start new characters in one, such as a hub with
-portals and test gear).  In builder mode, WORLD DEV [AREA] ON makes an area one (SAVE writes
- it to world/dev) and OFF a shipped one again; WORLD CHECK warns of an exit from a shipped
-area into a dev area, which leads nowhere in a normal game.  In builder mode, SAVE does not
-write over or delete a world file changed outside the game (edited, added or deleted since
-the game loaded or last wrote it): what it would write goes beside it, as NAME.builder, and
-SAVE FORCE writes over it.  WORLD STATUS lists the files changed outside the game, and what
-SAVE would write, delete and leave; WORLD DIFF [FILE] shows a file (castle,
-areas/castle.cmare, quests/hunt.quest) against what SAVE would write, - for its lines on
-disk and + for SAVE's.  WORLD RELOAD loads world files again into the running game: an area
-(by its name or its file's; AREA alone is your own area), whose players and their followers
-wait outside it and come back, and whose exits from other areas are linked again (refused
-while rooms of it have unsaved mobs or items, as LIST UNSAVED lists them, unless FORCE);
-SCRIPT, the scripts that name a file (or ALL), their triggers reset with RESET; QUEST, a
-quest stopped, read again from its file in world/quests and started again at its step;
-QUESTS, each of them; CATALOG, the catalog's entries from its file; CHANGED, each file WORLD
- STATUS lists as changed outside the game.  In a normal game it ignores its arguments (AREA,
- SCRIPT, QUEST and the rest work only in builder mode), saves the game as world-reload and
-restores it, which builds the world from its files again.  DEVWATCH ON ([SECONDS]) looks at
-the world files and resources' scripts every few seconds and runs the reload that matches
-what changed, each noted in DEVLOG; DEVWATCH OFF stops it.  Before SAVE writes over or
-deletes a world file it keeps a copy in world/.backup/ (the last BACKUPS= in coffeemud.ini
-of each, 5 if not set): WORLD BACKUPS lists the files with backups, WORLD BACKUPS FILE the
-times of one's, and WORLD RESTOREFILE FILE (TIME) puts the newest (or that one) back,
-changed outside the game, for WORLD RELOAD to load.  WORLD DIG ON makes a room, as CREATE
-ROOM does (of the room's own kind, or TYPE=, a locale or a builder template), wherever you
-walk and there is no exit, and goes into it, linked back unless LINK=ONE-WAY; WORLD DIG OFF
-stops it.  WORLD PATH lays out a chain of rooms, one for each direction, following the exits
- there already, each with NAME= and DESC= if given, and leaves you where you are.  Rooms
-made so are saved and tagged TODO, which WORLD CHECK lists until EDIT DESC gives them their
-own text.  WORLD MAP draws the rooms around you (5 steps out, or RADIUS N) or the whole area
- (AREA), north up, laid out by walking their exits from your room (*); a room above or
-below, or where another is, is listed instead.  IDS numbers the rooms and lists them; FLAGS
-marks what to look at: > < v ^ an exit that does not lead back, + a locked door, @ an exit
-to another area, s a room with scripts, and lists the rooms of the area nothing leads to
-from here.  HTML=FILE writes the area's map to world/maps/FILE.html, each room with its
-exits as links.
+profiles), ITEMMODS (item modifier libraries and tracked items) and REFS (the references
+between the optional module families, each with its file and JSON path; what a script does
+is reported as unknown, not checked); ONLY= picks parts, LOG writes the report to the log
+too.  sud.sh CHECK=1 loads the world as a new game would (it makes no copy of it and saves
+nothing, and its content cache is built in resources/fakedb unless DBSERVICE is given), runs
+ it with no player, prints it and exits 1 if it found errors: for a script or a commit hook.
+  WORLD DEV lists the dev areas: those in world/dev, for building and testing only, which
+builder mode and DEV=1 games load and a normal game never does (DEVSTART= in coffeemud.ini
+can start new characters in one, such as a hub with portals and test gear).  In builder
+mode, WORLD DEV [AREA] ON makes an area one (SAVE writes it to world/dev) and OFF a shipped
+one again; WORLD CHECK warns of an exit from a shipped area into a dev area, which leads
+nowhere in a normal game.  In builder mode, SAVE does not write over or delete a world file
+changed outside the game (edited, added or deleted since the game loaded or last wrote it):
+what it would write goes beside it, as NAME.builder, and SAVE FORCE writes over it.  WORLD
+STATUS lists the files changed outside the game, and what SAVE would write, delete and
+leave; WORLD DIFF [FILE] shows a file (castle, areas/castle.cmare, quests/hunt.quest)
+against what SAVE would write, - for its lines on disk and + for SAVE's.  WORLD RELOAD loads
+ world files again into the running game: an area (by its name or its file's; AREA alone is
+your own area), whose players and their followers wait outside it and come back, and whose
+exits from other areas are linked again (refused while rooms of it have unsaved mobs or
+items, as LIST UNSAVED lists them, unless FORCE); SCRIPT, the scripts that name a file (or
+ALL), their triggers reset with RESET; QUEST, a quest stopped, read again from its file in
+world/quests and started again at its step; QUESTS, each of them; CATALOG, the catalog's
+entries from its file; CHANGED, each file WORLD STATUS lists as changed outside the game.
+In a normal game it ignores its arguments (AREA, SCRIPT, QUEST and the rest work only in
+builder mode), saves the game as world-reload and restores it, which builds the world from
+its files again.  DEVWATCH ON ([SECONDS]) looks at the world files and resources' scripts
+every few seconds and runs the reload that matches what changed, each noted in DEVLOG;
+DEVWATCH OFF stops it.  Before SAVE writes over or deletes a world file it keeps a copy in
+world/.backup/ (the last BACKUPS= in coffeemud.ini of each, 5 if not set): WORLD BACKUPS
+lists the files with backups, WORLD BACKUPS FILE the times of one's, and WORLD RESTOREFILE
+FILE (TIME) puts the newest (or that one) back, changed outside the game, for WORLD RELOAD
+to load.  WORLD DIG ON makes a room, as CREATE ROOM does (of the room's own kind, or TYPE=,
+a locale or a builder template), wherever you walk and there is no exit, and goes into it,
+linked back unless LINK=ONE-WAY; WORLD DIG OFF stops it.  WORLD PATH lays out a chain of
+rooms, one for each direction, following the exits there already, each with NAME= and DESC=
+if given, and leaves you where you are.  Rooms made so are saved and tagged TODO, which
+WORLD CHECK lists until EDIT DESC gives them their own text.  WORLD MAP draws the rooms
+around you (5 steps out, or RADIUS N) or the whole area (AREA), north up, laid out by
+walking their exits from your room (*); a room above or below, or where another is, is
+listed instead.  IDS numbers the rooms and lists them; FLAGS marks what to look at: > < v ^
+an exit that does not lead back, + a locked door, @ an exit to another area, s a room with
+scripts, and lists the rooms of the area nothing leads to from here.  HTML=FILE writes the
+area's map to world/maps/FILE.html, each room with its exits as links.
 ```
 
 <a id="worldmaterials"></a>
@@ -12429,7 +12436,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3500.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3502.
 
 ```text
 Command : WORLD COMBAT
@@ -12456,7 +12463,7 @@ schema, formulas and limitations.
 
 ## WORLD_COMPOSITIONS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3397.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3399.
 
 ```text
 Command : WORLD COMPOSITIONS
@@ -12480,7 +12487,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3551.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3560.
 
 ```text
 Command : WORLD ITEMMODS
@@ -12507,7 +12514,7 @@ docs/creator/17-item-modifiers-crafting.md.
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3520.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3522.
 
 ```text
 Command : WORLD MODULES
@@ -12516,6 +12523,7 @@ Usage   : WORLD MODULES CHECK/PLAN/RELOAD
 Usage   : WORLD MODULES ADOPT [ID]
 Usage   : WORLD MODULES CONFIGURE [ID] [SETTING] [VALUE]
 Usage   : WORLD MODULES STATE [ID]
+Usage   : WORLD MODULES REPORT/STREAMS
 Builder/DEV tooling for optional world modules. Flat JSON manifests live in
 world/modules/<id>.json. MODULES selects root IDs; MODULESETTINGS supplies typed world
 defaults as JSON. World settings take effect at the next process start.
@@ -12531,6 +12539,12 @@ while retaining saved settings. ADOPT explicitly adds a world-selected module an
 dependencies to a campaign. CONFIGURE changes one compatible active campaign setting; SAVE
 keeps it and world defaults remain unchanged. STATE inspects a saved capsule, including
 suspended records.
+REPORT counts this session's optional module work by family, source and measure (reactions
+and their roots, refusals, duplicate events suppressed, transactions prepared, committed,
+cancelled and refused, rewards offered and claimed, catch-up periods settled) and each
+limited measure's highest reading against its declared limit, naming the source that passed
+one; it carries no character's name or room. STREAMS shows the campaign's random streams and
+ where each will draw next.
 Saved versions, contract fingerprints, settings, removal policies and scoped state
 participate in campaign saves. Missing, incompatible or damaged modules suspend with data
 retained, or refuse restoration according to their saved policy. Whitespace, key order,

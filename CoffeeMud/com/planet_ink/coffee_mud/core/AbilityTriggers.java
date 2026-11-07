@@ -574,6 +574,9 @@ public final class AbilityTriggers
 			p.cause.root.consumed.add(consumedKey);
 			p.cause.root.left--;
 			ModuleStats.count(FAMILY, t.id, "actions");
+			ModuleStats.reading(FAMILY, t.id, "actions in one root", actionBudget() - p.cause.root.left); // Q12
+			ModuleStats.reading(FAMILY, t.id, "depth", p.cause.depth);
+			Provenance.event(owner, MODULE, p.trigger.key(), t.value.actionText() + " (on " + t.value.on + ")"); // Q05
 			final Cause before = current.get();
 			current.set(p.cause);
 			try
@@ -819,5 +822,7 @@ public final class AbilityTriggers
 	static
 	{
 		ModuleContent.register(FAMILY_ENTRY);
+		ModuleStats.limit(FAMILY, "actions in one root", 64); // Q12: the most action_budget allows
+		ModuleStats.limit(FAMILY, "depth", 8);
 	}
 }

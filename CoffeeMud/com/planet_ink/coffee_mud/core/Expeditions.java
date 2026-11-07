@@ -278,6 +278,12 @@ public final class Expeditions
 		return out;
 	}
 
+	/** Q05: the open run a character is part of, as its number and record, or null; it reads only */
+	public static Map.Entry<String, JSONObject> runOfCharacter(final MOB mob) throws IOException
+	{
+		return runOf(state(), mob);
+	}
+
 	/** the open run a character is part of, as its number and record, or null */
 	private static Map.Entry<String, JSONObject> runOf(final JSONObject st, final MOB mob)
 	{
@@ -439,7 +445,10 @@ public final class Expeditions
 		final List<MOB> go = partyHere(mob, d.partyMax);
 		final String refusal = refusal(mob, d, go);
 		if(refusal.length() > 0)
+		{
+			Provenance.refused(mob, MODULE, e.key(), refusal, "EXPEDITION PREVIEW shows what opening needs; the chart and its cost were not taken"); // Q05
 			throw new IOException(refusal);
+		}
 		// the chart's seed: drawn now if it never was, the scenario recorded first so it can be drawn again
 		final JSONObject rules = new JSONObject();
 		rules.put("expedition", e.pin());
@@ -483,6 +492,8 @@ public final class Expeditions
 		store(st);
 		chart.destroy();
 		ModuleStats.count(FAMILY, e.id, "opened");
+		for(final MOB M : go)
+			Provenance.event(M, MODULE, e.key(), "expedition " + n + " opened by " + mob.Name()); // Q05
 		for(final MOB M : go)
 		{
 			if(M != mob)
@@ -657,6 +668,7 @@ public final class Expeditions
 			final long left = ((Number)run.get("left")).longValue() - 1;
 			run.put("left", Long.valueOf(Math.max(0, left)));
 			ModuleStats.count(FAMILY, defOfRun(run).id, "attempts used");
+			Provenance.event(victim, MODULE, defOfRun(run).key(), "died in expedition " + r.getKey() + ": " + Math.max(0, left) + " attempt(s) left"); // Q05
 			if(left > 0)
 			{
 				store(st);

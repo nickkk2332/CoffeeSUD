@@ -3,6 +3,7 @@
 // exactly and moves nothing; the counter forces the guaranteed rarity and resets; an inactive module keeps the roll;
 // LOOT shows a container's loot by rarity through each character's filter, in plain text, for no game time.
 FIXFILE = "i02-loot";
+var diceAtStart = CMath.getRandState(); // restored at the end: later fixtures roll as they would without this one
 var IL = CM.core.ItemLoot, IM = CM.core.ItemModifiers, MD = CM.core.ModuleDefinitions, OM = CM.core.OptionalModules, RS = CM.core.RandomStreams, MS = CM.core.ModuleStats;
 var Files = java.nio.file.Files, JString = java.lang.String;
 var root = Files.createTempDirectory("sud-i02-").toFile();
@@ -121,6 +122,7 @@ try {
 	check("check-refs", found.indexOf("loot/fix.nobase.v1.json: /base: no modifier base fix.missing in itemmods/") >= 0
 		&& found.indexOf("loot/fix.badluck.v1.json: /guarantee/rarity: no rarity rare in this policy") >= 0, found);
 } finally {
+	CMath.setRandState(diceAtStart.longValue());
 	for (var i = 0; i < items.length; i++) if (!items[i].amDestroyed()) items[i].destroy();
 	for (var i = 0; i < actors.length; i++) if (!actors[i].amDestroyed()) actors[i].destroy();
 	R.destroy();

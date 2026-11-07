@@ -3,6 +3,7 @@
 // listener cannot retry the craft; replace removes and adds in one settlement; upgrade keeps every modifier; each stage of
 // the recipe settles once, its progress on the work piece, and only the last stage draws the product's rolls.
 FIXFILE = "i04-workbench";
+var diceAtStart = CMath.getRandState(); // restored at the end: later fixtures roll as they would without this one
 var IM = CM.core.ItemModifiers, IC = CM.core.ItemCrafting, MD = CM.core.ModuleDefinitions, OM = CM.core.OptionalModules, RS = CM.core.RandomStreams;
 var Files = java.nio.file.Files, JString = java.lang.String;
 var root = Files.createTempDirectory("sud-i04-").toFile();
@@ -117,6 +118,7 @@ try {
 		&& s(data(product).source).indexOf("recipe:workbench.cloak-work.v1") == 0 && piece.amDestroyed() && carried(A, "an unfinished cloak") == null, said + " / " + (product == null ? "no product" : s(IM.inspect(product))));
 	check("no-piece-left", s(IC.status(A)).indexOf("Work piece") < 0, s(IC.status(A)));
 } finally {
+	CMath.setRandState(diceAtStart.longValue());
 	CM.core.JSEvents.off("itemcrafted", "fix-i04-listener");
 	if (catalogued != null) { var c = CMLib.catalog().getCatalogItem(catalogued); if (c != null) CMLib.catalog().delCatalog(c); }
 	for (var i = 0; i < items.length; i++) if (!items[i].amDestroyed()) items[i].destroy();

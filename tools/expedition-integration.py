@@ -128,12 +128,14 @@ mob().tell('FIXINFO instance ' + A.Name() + ' rooms ' + A.numberOfProperIDedRoom
 """)
     # GOD ALL OFF: a DEV=1 character walks through refusals (GOTO gives NOCLIP); this one plays as a mortal
     text = play('open', 'Explorer\n' + newchar + 'god all off\njrun /resources/creator/exp-chart.js\n' + way + '\nlook\n'
-                'expedition preview a fix depths chart\njrun /resources/creator/exp-open.js\n' + way + '\njrun /resources/creator/exp-in.js\n'
+                'expedition preview a fix depths chart\njrun /resources/creator/exp-open.js\n' + way + '\njrun /resources/creator/exp-in.js\nledger expedition\n'
                 'save exp1\nquit\nn\n', 'RESTORE=NEW', 'DEV=1')
     normal = ' '.join(text.split())
     check('Only an opened expedition chart leads there.' in normal, 'gated', text[-2500:])
     check('Seed: ' in normal and 'not yet drawn' in normal and 'Modifiers offered (choose 1):' in normal and 'It can be opened here.' in normal,
           'preview', text[-2500:])
+    # Q05: the expedition's ledger: its definition pin, seed and the scenario that draws it again, its party
+    check('Ledger of expedition 1:' in normal and 'drawn from the expeditions stream at draw' in normal and 'Party: Explorer;' in normal, 'ledger', text[-2500:])
     first = saved_run('exp1')
     check(first['status'] == 'entered' and first['instance'] != '' and first['left'] == 2, 'saved run', json.dumps(first))
 

@@ -61,7 +61,7 @@ public final class WorldCheck
 	}
 
 	/** the parts of the check */
-	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT", "ITEMMODS" };
+	public static final String[] PARTS = { "EXITS", "REACH", "KEYS", "TEXT", "SHOPS", "DATA", "SCRIPTS", "PROPS", "JS", "VOCAB", "LORE", "TEMPLATES", "ROUTES", "IDS", "MODULES", "COMPOSITIONS", "COMBAT", "ITEMMODS", "REFS" };
 
 	/** one thing found */
 	public static final class Finding
@@ -364,6 +364,18 @@ public final class WorldCheck
 				final Severity level = selected.contains(f.module()) ? Severity.ERROR : Severity.WARNING;
 				for(final String problem : f.check())
 					out.add(new Finding(level, f.part(), problem));
+			}
+		}
+		if(all || parts.contains("REFS"))
+		{
+			// Q02: the references between families, each where it is written; a broken one stops a world that selects its family
+			for(final CrossRefs.Ref r : CrossRefs.resolve())
+			{
+				if(r.status.equals("ok"))
+					continue;
+				final String module = CrossRefs.moduleOf(r.file);
+				final Severity level = (r.status.equals("error") && (module == null || selected.contains(module))) ? Severity.ERROR : Severity.WARNING;
+				out.add(new Finding(level, "REFS", (r.status.equals("unknown") ? "unknown: " : "") + r.where() + ": " + r.note));
 			}
 		}
 		if(all || parts.contains("ITEMMODS"))

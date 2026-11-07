@@ -369,6 +369,8 @@ public final class RewardEscrow
 		L.dirty = true;
 		L.save();
 		ModuleStats.count(FAMILY, activity, "offered");
+		ModuleStats.reading(FAMILY, activity, "ledger entries", L.entries.size()); // Q12
+		Provenance.event(mob, MODULE, bundle.key(), "reward " + n + " offered in " + activity + ", provisional"); // Q05
 		return n;
 	}
 
@@ -488,7 +490,22 @@ public final class RewardEscrow
 	 * @param which an entry's number, or 0 for every banked reward claimable here
 	 * @return the receipt in words
 	 */
+	/** claims banked rewards; a refusal is noted (Q05) with what to do, and gives nothing */
 	public static synchronized String claim(final MOB mob, final long which) throws IOException
+	{
+		try
+		{
+			return claimChecked(mob, which);
+		}
+		catch(final IOException e)
+		{
+			Provenance.refused(mob, MODULE, (which == 0) ? "claim of every banked reward" : "claim of reward " + which, e.getMessage(),
+				"put right what stops it (room to carry, the place it is claimed at, a reward still provisional), then REWARDS CLAIM again; nothing was given");
+			throw e;
+		}
+	}
+
+	private static String claimChecked(final MOB mob, final long which) throws IOException
 	{
 		ModuleContent.gameThread();
 		final Ledger L = ledger(mob);
@@ -588,6 +605,7 @@ public final class RewardEscrow
 		}
 		mob.recoverPhyStats();
 		ModuleStats.add(FAMILY, "claim", "claimed", chosen.size());
+		Provenance.event(mob, MODULE, "claim", "claimed " + String.join(", ", chosen) + ": " + String.join(", ", given)); // Q05
 		return "Claimed reward" + ((chosen.size() > 1) ? "s " : " ") + String.join(", ", chosen) + ": " + String.join(", ", given) + "."
 			+ (elsewhere.isEmpty() ? "" : " (" + elsewhere.size() + " more are claimed elsewhere.)");
 	}
@@ -791,6 +809,7 @@ public final class RewardEscrow
 	static
 	{
 		ModuleContent.register(FAMILY_ENTRY);
+		ModuleStats.limit(FAMILY, "ledger entries", MAX_ENTRIES); // Q12
 	}
 
 	/** the area an activity's Prop_RewardActivity marks, for leaving */

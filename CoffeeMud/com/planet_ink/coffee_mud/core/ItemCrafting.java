@@ -172,7 +172,7 @@ public final class ItemCrafting
         pending.put("item_hash",fingerprint(item));pending.put("room",InstanceIds.reference(who.location()));pending.put("costs",costs(plan.costs,true));
         final String added=staged?null:op.string("action").equals("add")?choice:op.string("action").equals("replace")?ItemModifierRules.replacement(choice)[1]:null;
         if(added!=null)pending.put("affix",ItemModifierRules.pin(ItemModifiers.definitions().find(added,0,"affix")));
-        final String encoded=ModuleDefinitions.json(pending);if(encoded.length()>4096)throw new IOException("request exceeds storage limit");state.put("serial",Long.valueOf(serial+1));state.put("pending",encoded);save(who,state);
+        final String encoded=ModuleDefinitions.json(pending);if(encoded.length()>4096)throw new IOException("request exceeds storage limit");state.put("serial",Long.valueOf(serial+1));state.put("pending",encoded);save(who,state);ModuleStats.count("items","crafts","prepared");
         return "Prepared craft #"+(serial+1)+": "+plan.describe()+"\nMODCRAFT COMMIT "+(serial+1)+" settles it; MODCRAFT CANCEL "+(serial+1)+" discards it. Preparation has no random outcome to shop around for.";
     }
     public static String status(final MOB who)throws IOException
@@ -222,9 +222,25 @@ public final class ItemCrafting
         settling();final JSONObject state=ledger(who),pending=field(state,"pending");if(pending.isEmpty())return "No pending item craft.";final long serial=number(pending,"serial");if(requested!=0&&requested!=serial)throw new IOException("that request is not pending");
         final JSONObject receipts=field(state,"receipts"),note=new JSONObject();for(final String key:new ArrayList<String>(receipts.keySet()))if(cancelled(receipts.get(key)))receipts.remove(key);
         note.put("cancelled",Boolean.TRUE);receipts.put(Long.toString(serial),note);
-        state.put("receipts",pruned(receipts,serial));state.put("pending","");state.put("settled",Long.valueOf(serial));save(who,state);return "Cancelled craft #"+serial+"; no random rolls or costs.";
+        state.put("receipts",pruned(receipts,serial));state.put("pending","");state.put("settled",Long.valueOf(serial));save(who,state);ModuleStats.count("items","crafts","cancelled");return "Cancelled craft #"+serial+"; no random rolls or costs.";
     }
+    /** Commits a request; Q12 counts it and Q05 notes it, settled or refused (with the way to recover). */
     public static String commit(final MOB who,final long requested)throws IOException
+    {
+        try
+        {
+            final String said=commitChecked(who,requested);
+            if(said.startsWith("Committed")){ModuleStats.count("items","crafts","committed");Provenance.event(who,ItemModifiers.MODULE,"craft",said.length()>160?said.substring(0,160):said);}
+            return said;
+        }
+        catch(final IOException e)
+        {
+            ModuleStats.count("items","crafts","refused");
+            Provenance.refused(who,ItemModifiers.MODULE,"craft request",e.getMessage(),"MODCRAFT STATUS shows the request; MODCRAFT CANCEL it and PREPARE again; nothing was spent or drawn");
+            throw e;
+        }
+    }
+    private static String commitChecked(final MOB who,final long requested)throws IOException
     {
         ItemModifiers.gameThread();ItemModifiers.require();final JSONObject state=ledger(who),pending=field(state,"pending");
         final long serial=requested==0?(pending.isEmpty()?number(state,"serial"):number(pending,"serial")):requested;
