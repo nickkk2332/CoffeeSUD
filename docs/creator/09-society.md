@@ -508,6 +508,37 @@ LEAVE|The Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide
 The refusal says which two cannot be held together and by which tags.
 Test: [p03-affiliations.js](../../tools/fixtures/fixes/p03-affiliations.js).
 
+### Shared pools
+
+`world/orgpools.ini` names the kinds of pool an organization can keep, one a
+line:
+
+```text
+SUPPLIES=TITLE="Supplies" MAX=100 MONEY=5
+ORE=TITLE="Ore stock" MAX=500 MATERIAL=IRON
+```
+
+`MAX` is the most a pool holds (1000 by default). A member gives to it with
+`POOLS GIVE [n] [pool] (TO [organization])`: each unit costs `MONEY` in their
+currency, or a weight unit of plain `MATERIAL` from their inventory (a pile is
+partly spent and keeps the rest). A gift past `MAX`, from someone who is not a
+member, or that cannot be paid is refused and takes nothing.
+
+A [service record](23-properties-reference.md#prop_service) spends from a pool
+(`"cost": {"pool": "SUPPLIES", "units": 2}`); a spend the pool cannot cover is
+refused and spends nothing. Every gift and spend gets a receipt number in the
+organization's ledger, which keeps the last 20 entries and each giver's and
+user's totals by pool. `POOLS` shows one's organizations' pools, who gave and
+who used them, and the last entries. The pools and the ledger are organization
+settings (`POOLS`, `POOLLEDGER`), so they are saved with the organization.
+`WORLD CHECK` reports a kind no one can give to (neither `MONEY` nor
+`MATERIAL`) and an unknown material.
+
+From a script, the core class `OrgPools` gives the same calls: `units(org,
+pool)`, `give(member, org, pool, n)` and `spend(org, pool, n, forWhom, what)`,
+which returns the receipt number.
+Test: [p08-pools.js](../../tools/fixtures/fixes/p08-pools.js).
+
 ### Party-founded clans
 
 Each party character is a separate member and, under `CLANVOTES=CHARACTER`, a

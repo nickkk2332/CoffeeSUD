@@ -1039,8 +1039,11 @@ command, and "Goodbye" runs `TALK BYE`:
 | A banker | "Banking (LIST, DEPOSIT, WITHDRAW)" | `LIST` |
 | Has `MOBTeacher` | "Learn (QUALIFY, then SAYTO it TEACH ME a skill)" | `QUALIFY` |
 | Has `Hireling` | "Hire (its terms)" | `SAYTO <npc> hire` |
+| Has `Prop_Service` | each service one may have now, as its title and cost | `SAYTO <npc> <its word>` |
 | A quest giver (a quest marker) | "Quests (QUESTS OFFERED)" | `QUESTS OFFERED` |
 
+Services one may not have now are listed under the prompt on a "Not now:"
+line, each with why ([Service records](#service-records)).
 No menu appears for an NPC with none of these. The menu uses the same
 mechanism as [MPMENU](#mpmenu-numbered-choices): it does not block, an Enter
 takes the default (Goodbye).
@@ -1057,6 +1060,47 @@ mpecho $i spits. 'Nobody mines there since the collapse.'
 `MEMORY($i $n LASTTOPIC)` returns the last topic of a TALK
 ([28](28-mobprog-functions.md#memory)). A TALK counts as a meeting in the `MEMORY()` record and feeds Prop_Affinity
 `TALK(word)` rules.
+
+### Service records
+
+Source: [Services](../../CoffeeMud/com/planet_ink/coffee_mud/core/Services.java).
+Reference: [Prop_Service](23-properties-reference.md#prop_service). Help:
+`HELP SERVICES`. Test: [p04-services.js](../../tools/fixtures/fixes/p04-services.js).
+
+A healer who heals for money, an innkeeper whose rooms an order pays for, a
+smith who forges only at the anvil: the NPC carries one record of its
+services, and the menu, the list and the service itself all read it.
+
+```text
+{"services":[
+  {"id":"heal","title":"Healing","words":["heal","mend wounds"],"cost":{"money":10}},
+  {"id":"forge","title":"Forging","words":["forge"],"station":"anvil","hours":"6-20"},
+  {"id":"lodging","title":"Lodging","words":["lodge"],"cost":{"pool":"SUPPLIES","units":2,"org":"The Order"}}]}
+```
+
+```text
+> services
+the healer:
+  Healing - say heal; 10 gold coins; you may
+  Forging - say forge; open 6-20; not now: the healer works only at the anvil
+  Lodging - say lodge; 2 from The Order's supplies; not now: only for members of The Order
+> sayto healer heal
+You pay 10 gold coins for Healing.
+```
+
+The record decides who may have a service and takes the payment; what the
+service does is the NPC's script, answering its word:
+
+```text
+SPEECH_PROG heal mend
+  mpcast Cure_Light_Wounds $n
+~
+```
+
+Asked when the record says no, the request is refused before the script hears
+it ("Healing: not now, it costs 10 gold coins."), so the script never runs for
+someone who has not paid. Words said to the whole room ask no one: a service
+is asked for to the NPC, as `TALK`'s menu does.
 
 ### Topics: [[words]], ASK and hints
 

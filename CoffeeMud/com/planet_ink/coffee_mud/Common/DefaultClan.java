@@ -2954,7 +2954,8 @@ public class DefaultClan implements Clan
 		"NAME", // 22
 		"FLAGS", // 23
 		"DUES", //24
-		"DUESPERIOD", "DUESGRACE", "DUESLATE", "DUESAUTO", "STANDINGFACTION", "DUESNEXT", "TREASURY", "NPCFLAGS", "MEMBERACTIVITY"
+		"DUESPERIOD", "DUESGRACE", "DUESLATE", "DUESAUTO", "STANDINGFACTION", "DUESNEXT", "TREASURY", "NPCFLAGS", "MEMBERACTIVITY",
+		"POOLS", "POOLLEDGER" // P08: shared pools and their ledger (core/OrgPools)
 	};
 
 	@Override

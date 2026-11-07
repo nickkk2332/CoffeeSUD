@@ -175,7 +175,7 @@ Combination locks, lock and key rules, remote open/close, pressure plates, switc
 
 Rooms and areas players can buy, inns, homes, what shopkeepers refuse, purchase records.
 
-[Prop_AreaForSale](#prop_areaforsale), [Prop_LotForSale](#prop_lotforsale), [Prop_LotsForSale](#prop_lotsforsale), [Prop_RoomForSale](#prop_roomforsale), [Prop_RoomPlusForSale](#prop_roomplusforsale), [Prop_RoomsForSale](#prop_roomsforsale), [Prop_PrivateProperty](#prop_privateproperty), [Prop_Homestead](#prop_homestead), [Prop_HomeBeacon](#prop_homebeacon), [Prop_InnRoom](#prop_innroom), [Prop_Unsellable](#prop_unsellable), [Prop_Undroppable](#prop_undroppable), [Prop_Purchases](#prop_purchases), [Prop_ItemNoRuin](#prop_itemnoruin)
+[Prop_AreaForSale](#prop_areaforsale), [Prop_LotForSale](#prop_lotforsale), [Prop_LotsForSale](#prop_lotsforsale), [Prop_RoomForSale](#prop_roomforsale), [Prop_RoomPlusForSale](#prop_roomplusforsale), [Prop_RoomsForSale](#prop_roomsforsale), [Prop_PrivateProperty](#prop_privateproperty), [Prop_Homestead](#prop_homestead), [Prop_HomeBeacon](#prop_homebeacon), [Prop_InnRoom](#prop_innroom), [Prop_Service](#prop_service), [Prop_Unsellable](#prop_unsellable), [Prop_Undroppable](#prop_undroppable), [Prop_Purchases](#prop_purchases), [Prop_ItemNoRuin](#prop_itemnoruin)
 
 ### Item behaviour, binding and growth
 
@@ -4229,6 +4229,50 @@ SOUND="water drips|a stone shifts";TOUCH="nine studs; one loose";TASTE="salt" CH
 ```
 
 CoffeeSUD addition. Gives the host text for the senses other than sight. `LISTEN [target]`, `TOUCH`/`FEEL target` and `TASTE target` work even in darkness (`LISTEN` needs the listener to be able to hear). Quote texts; `|` separates random alternatives, one of which is chosen each time. `CHANCE` (default 100) is the percent chance the text is delivered; on a failed roll the sense returns silently. First-use clues (`SETVAR`, `TATTOO`) are tracked separately for each sense. `SNIFF` is still [Prop_Smell](#prop_smell).
+
+### Prop_Service
+
+**Hosts:** mobs
+
+**Parameters:** JSON, a list of service records:
+
+```text
+{"services": [{"id", "title", "words": [...], "mask", "refusal", "hours": "from-to",
+  "station", "cost": {"money": n} or {"pool": id, "units": n, "org": name}}]}
+```
+
+**Example:**
+
+```text
+{"services":[{"id":"heal","title":"Healing","words":["heal","mend wounds"],"cost":{"money":10}},
+ {"id":"lodging","title":"Lodging","words":["lodge"],"cost":{"pool":"SUPPLIES","units":2,"org":"The Order"}},
+ {"id":"bless","title":"A blessing","words":["bless"],"mask":"-FACTIONS +GOOD","refusal":"the priest blesses only the faithful"}]}
+```
+
+P04: the NPC's services, as one record that every place reads the same way.
+Each needs an `id` and at least one word; `title` is how it is shown. It may
+be had now only within its `hours` (from-to on the area's clock; 20-6 wraps
+past midnight), only at a workstation with the `station` tag in the room, only
+by someone who passes `mask` (refused with `refusal`, or with the mask's
+description), and only by someone who can pay its `cost`: `money` in the NPC's
+currency, or `units` from a shared pool of an organization they are in (`org`
+names it; without it, their first organization).
+
+- `TALK`'s services menu lists the services one may have now, each running
+  `SAYTO npc word`, and the others on a "Not now:" line with why.
+- `SERVICES` lists the services of everyone in the room with their word, cost,
+  hours and whether one may have each now.
+- Saying a word to the NPC (`SAYTO`, as the menu does) is refused, before its
+  behaviours and scripts hear it, for the same reasons; otherwise the cost is
+  paid once it is said, a pool's spend with a receipt in the organization's
+  ledger. Words said to the room ask no one.
+
+What the service does is the NPC's own: its script answers the word (a
+`SPEECH_PROG`), as it would without the record. A record that cannot be read
+offers nothing; the property's description (`STAT`, `PROPCHECK`) says why.
+See [09 Shared pools](09-society.md#shared-pools) and
+[06 Service records](06-npcs-dialogue.md#service-records).
+Test: [p04-services.js](../../tools/fixtures/fixes/p04-services.js).
 
 ### Prop_ShortEffects
 

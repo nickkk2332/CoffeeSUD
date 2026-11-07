@@ -335,6 +335,9 @@ public final class WorldCheck
 		// P13: challenges.ini's books and entries
 		for(final String p : Challenges.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// P08: orgpools.ini's kinds of pool
+		for(final String p : OrgPools.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
 	}
 
 	/**
