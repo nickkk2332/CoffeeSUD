@@ -46,8 +46,47 @@ reference system; each guide says what it leaves out.
 | Q11 | Built | Module composition, conflicts and retirement | [Ch. 14](../../creator/14-optional-modules.md) | modules-integration.py |
 | Q12 | Built | `WORLD MODULES REPORT`, declared limits | [Ch. 41](../../creator/41-inspection-and-limits.md#work-and-limits) | q12-stress.js |
 
-Phase 2 is planned, with each remaining entry audited against what the engine
-already does, in the [phase 2 plan](phase2-plan.md).
+Phase 2 followed the [phase 2 plan](phase2-plan.md), which audited each remaining
+entry against what the engine already did. The three large families (G02, P05,
+P02) are deferred; the other entries are built, merged or taught as recipes:
+
+| ID | Status | Where | Guide | Tests |
+| --- | --- | --- | --- | --- |
+| A05 | Built (extension) | Build trees on perks (`perks.ini`) | [Ch. 3](../../creator/03-characters.md#build-trees) | a05-perks.js |
+| A06 | Merged into A05 | A pool of its own for a tree | [Ch. 3](../../creator/03-characters.md#build-trees) | a05-perks.js |
+| A10 | Built (extension) | `Prop_Telegraph` responses and chains | [Ch. 29](../../creator/29-combat-and-encounters.md) | a10-responses.js, c5-telegraph.js |
+| A12 | Built (family) | `combat.profiles` ailments | [Ch. 16](../../creator/16-combat-profiles.md#ailments-guard-pools-and-leech) | a12-ailments.js |
+| A13 | Built (family) | `combat.profiles` guard pools | [Ch. 16](../../creator/16-combat-profiles.md#ailments-guard-pools-and-leech) | a12-ailments.js |
+| A14 | Built (family) | `abilities.resources` reservations | [Ch. 34](../../creator/34-named-resources.md) | a14-reserve.js |
+| A18 | Built (extension) | Flasks and charms on existing properties | [Ch. 7](../../creator/07-items-crafting.md) | a18-flasks.js |
+| A19 | Built (family) | Weapon and action loadouts | [Ch. 7](../../creator/07-items-crafting.md) | a19-loadouts.js |
+| A20 | Built (extension) | `abilities.resources` combos | [Ch. 34](../../creator/34-named-resources.md#combos) | a20-combos.js |
+| A23 | Built (extension) | `Prop_Unknown`, `ItemKnowledge` | [Ch. 22](../../creator/22-items.md), [Ch. 23](../../creator/23-properties-reference.md#prop_unknown) | a23-knowledge.js |
+| A24 | Built (family) | `encounters.director` elite traits | [Ch. 37](../../creator/37-encounter-director.md#elite-traits) | a24-traits.js |
+| G02 | Deferred |  |  |  |
+| G04 | Built (extension) | `encounters.director` trials, `TRIALS` | [Ch. 37](../../creator/37-encounter-director.md#escalating-trials) | g04-trials.js |
+| G05 | Recipe | Cookbook recipe 30 | [Cookbook](../../creator/cookbook.md) | p2-recipes.js |
+| G06 | Built (extension) | `MPDIRECTOR START`, director completion hooks | [Ch. 37](../../creator/37-encounter-director.md), [Ch. 27](../../creator/27-mobprog-commands.md#mpdirector) | a24-traits.js |
+| G08 | Merged into A24 and G04 | Possessing traits; trial devices | [Ch. 37](../../creator/37-encounter-director.md) | a24-traits.js, g04-trials.js |
+| I05 | Built (extension) | `Prop_ItemSlot`, `Prop_ComposeSupport` | [Ch. 15](../../creator/15-ability-composition.md) | i05-sockets.js |
+| I06 | Built (extension) | `items.modifiers` catalysts, weights, guarantees | [Ch. 17](../../creator/17-item-modifiers-crafting.md) | i06-targeted.js |
+| I07 | Built (family) | `items.choices`, `CHOICES` | [Ch. 42](../../creator/42-saved-choices.md) | i07-choices.js, choices-integration.py |
+| I09 | Built (extension) | `items.modifiers` materials, quality, traits | [Ch. 17](../../creator/17-item-modifiers-crafting.md) | i09-materials.js |
+| I12 | Recipe | Cookbook recipe 31 | [Cookbook](../../creator/cookbook.md) | p2-recipes.js |
+| I14 | Built (extension) | `Prop_OfferBook`, `OFFERS` | [Ch. 42](../../creator/42-saved-choices.md#offer-books) | i14-offers.js, choices-integration.py |
+| I16 | Built (extension) | `LOOT SELF`, untracked filters | [Ch. 40](../../creator/40-loot-policies.md) | i16-views.js |
+| I17 | Merged into I07 | Offerings | [Ch. 42](../../creator/42-saved-choices.md) | i07-choices.js |
+| I19 | Recipe | Cookbook recipe 32 | [Cookbook](../../creator/cookbook.md) | p2-recipes.js |
+| I20 | Built (extension) | `Prop_ItemBinder` fields | [Ch. 23](../../creator/23-properties-reference.md#prop_itembinder) | i20-binding.js |
+| P02 | Deferred |  |  |  |
+| P03 | Built (extension) | `affiliations.ini` | [Ch. 9](../../creator/09-society.md#affiliation-rules) | p03-affiliations.js |
+| P04 | Built (extension) | `Prop_Service`, `SERVICES`, `TALK` | [Ch. 6](../../creator/06-npcs-dialogue.md#service-records) | p04-services.js |
+| P05 | Deferred |  |  |  |
+| P06 | Built (extension) | `formations.ini`, `FORMATION ROLE` | [Ch. 31](../../creator/31-saves-and-party.md#formation-roles) | p06-roles.js |
+| P08 | Built (extension) | `orgpools.ini`, `POOLS` | [Ch. 9](../../creator/09-society.md#shared-pools) | p08-pools.js |
+| P11 | Built (extension) | `cultures.ini`, `CULTURE`, `MPCULTURE` | [Ch. 3](../../creator/03-characters.md#culturesini-cultures) | p11-cultures.js |
+| P13 | Built (extension) | `challenges.ini`, `CHALLENGES`, `MPRECORD` | [Ch. 27](../../creator/27-mobprog-commands.md#mprecord), [Cookbook](../../creator/cookbook.md) | p13-challenges.js |
+| P15 | Built (extension) | `talents.ini`, `TALENTS` | [Ch. 11](../../creator/11-presentation-language.md) | p15-talents.js |
 
 The support build of Q10 is the [ability-composition pack](../../creator/examples/ability-composition/README.md)
 played in the [Ember Trial](../../creator/examples/ember-trial/README.md). Tests run

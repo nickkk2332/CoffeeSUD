@@ -128,7 +128,7 @@ level-up (upstream's rule; P02, deferred).
 | 11 | The atlas: G02 | family | Deferred |
 | 12 | Companion bonds: P05 | family | Deferred |
 | 13 | Specialty access: P02 | family | Deferred |
-| 14 | Catalog status, handbook index, a full check | docs |  |
+| 14 | Catalog status, handbook index, a full check | docs | Done |
 
 The order puts the cheap and immediately useful work first (fixes, recipes, small
 extensions), then the families in dependency order: A14 before A19, the

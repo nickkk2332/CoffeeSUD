@@ -31,17 +31,17 @@ terminal from the repository root. Paths beginning with `world/` are relative to
 | --- | --- |
 | [Areas, rooms and exits](20-areas-rooms-exits.md) | Areas, every locale class, creating and linking rooms, exits, doors, locks and keys, field references, bulk tools |
 | [Mobs](21-mobs.md) | Every mob class, the mob editor field by field, equipment, shopkeepers and other services, mounts, rejuvenation, the mob catalog |
-| [Items](22-items.md) | Every item class and field, weapons, armor and wear locations, containers, magic items, materials, the item catalog, unique and rare items |
-| [Crafting, gathering, housing and puzzles](07-items-crafting.md) | Recipes and crafting skills, gathering and farming, materials, homes and furniture, switches, locks, combinations and other interactive items |
+| [Items](22-items.md) | Every item class and field, weapons, armor and wear locations, containers, magic items, materials, the item catalog, unique and rare items, items one must learn to know |
+| [Crafting, gathering, housing and puzzles](07-items-crafting.md) | Recipes and crafting skills, gathering and farming, materials, homes and furniture, switches, locks, combinations, flasks, loadouts and other interactive items |
 | [Generation](12-generation.md) | The random-generation XML language tag by tag, GENERATE commands, generators, loot tables, affixes, names |
 
 ### Characters and abilities
 
 | Chapter | What it covers |
 | --- | --- |
-| [Characters and progression](03-characters.md) | Races, classes, character creation, stats, levels and experience, training, skill trees, ranks, ageing, death and rebirth |
+| [Characters and progression](03-characters.md) | Races, classes, character creation, origins and cultures, stats, levels and experience, training, skill trees and build trees, ranks, ageing, death and rebirth |
 | [Abilities and effects](25-abilities-and-effects.md) | Skills, spells and every ability family, flags and costs, timed effects, custom abilities (GenAbility), poisons, diseases and traps |
-| [Saves, party and the single-player model](31-saves-and-party.md) | The profile, the party, AS and SWITCH, windows, pause and turn-based time, SAVE and RESTORE, save rules, the save folder, restoring after the world changed |
+| [Saves, party and the single-player model](31-saves-and-party.md) | The profile, the party, formations and formation roles, AS and SWITCH, windows, pause and turn-based time, SAVE and RESTORE, save rules, the save folder, restoring after the world changed |
 
 ### Scripting
 
@@ -57,13 +57,13 @@ terminal from the repository root. Paths beginning with `world/` are relative to
 
 | Chapter | What it covers |
 | --- | --- |
-| [NPCs and dialogue](06-npcs-dialogue.md) | Schedules, sentries, memory, affinity, escorts, hirelings, MudChat, TALK and topics, menus, barks, scenes |
+| [NPCs and dialogue](06-npcs-dialogue.md) | Schedules, sentries, memory, affinity, escorts, hirelings, MudChat, TALK and topics, service records, menus, barks, scenes |
 | [Combat and encounters](29-combat-and-encounters.md) | How native combat works, the encounter toolkit (morale, boss phases, telegraphs, waves, downed and essential characters, threat, difficulty), encounter design, combat debugging |
 | [Quests](08-quests.md) | The quest script format, quest commands, quest state, journal, markers, rewards, templates, boards, generated quests |
-| [Society](09-society.md) | Clans and governments, factions, NPC organisations, law and crime, conquest, currencies, shops and banks |
+| [Society](09-society.md) | Clans and governments, affiliation rules, shared pools, factions, NPC organisations, law and crime, conquest, currencies, shops and banks |
 | [World simulation](10-world-simulation.md) | Time and time modes, calendars, holidays, weather and climate, seasons, tides, darkness, breath, hazards, room states, resets |
 | [Travel, vehicles and instances](30-travel-vehicles-instances.md) | Travel time, journeys, transport lines, taxis, fares, ships and mounts, stables, waypoints, instances |
-| [Presentation and language](11-presentation-language.md) | Conditional descriptions, lore, journal, narration, maps, prompts and panels, colours, vocabulary, languages |
+| [Presentation and language](11-presentation-language.md) | Conditional descriptions, lore and latent talents, journal, narration, maps, prompts and panels, colours, vocabulary, languages |
 
 ### Testing and release
 
@@ -78,16 +78,16 @@ These systems are off unless a world selects them.
 | Chapter | What it covers |
 | --- | --- |
 | [Optional modules](14-optional-modules.md) | Module manifests, selection, campaign state, versions, migrations, disabling |
-| [Ability composition](15-ability-composition.md) | Tagged skills, supports, chains and burning |
-| [Combat profiles](16-combat-profiles.md) | Versioned damage and defense rules and explained combat results |
-| [Item modifiers and crafting](17-item-modifiers-crafting.md) | Tracked equipment modifiers and selective, protected crafting |
-| [Named resources](34-named-resources.md) | Heat, focus and charges, with costs, gains and changes over time |
+| [Ability composition](15-ability-composition.md) | Tagged skills, supports (gear and sockets too), chains and burning |
+| [Combat profiles](16-combat-profiles.md) | Versioned damage and defense rules, ailments and guard pools, and explained combat results |
+| [Item modifiers and crafting](17-item-modifiers-crafting.md) | Tracked equipment modifiers; selective, protected, targeted crafting; materials and quality |
+| [Named resources](34-named-resources.md) | Heat, focus and charges, with costs, gains, reservations, combos and changes over time |
 | [Causal triggers](35-causal-triggers.md) | Reactions to blocks and kills, with budgets, depth limits and saved cooldowns |
 | [Reward escrow](36-reward-escrow.md) | Provisional, banked, forfeited and claimed rewards, with activity policies |
-| [Encounter director](37-encounter-director.md) | Phased bosses and defense waves as one saved state machine, with budgets |
+| [Encounter director](37-encounter-director.md) | Phased bosses, defense waves, elite traits and escalating trials as one saved state machine, with budgets |
 | [Expeditions](38-expeditions.md) | Charts, entry contracts, seeded instances with modifiers, attempts and recovery |
 | [Progression tracks](39-progression-tracks.md) | Character disciplines, organization research and item mastery, with milestones and migration |
-| [Loot policies](40-loot-policies.md) | Rarities, tier limits, budgets and a guarantee counter for tracked loot, with preview, sampling and LOOT |
+| [Loot policies](40-loot-policies.md) | Rarities, tier limits, budgets and a guarantee counter for tracked loot, with preview, sampling, LOOT and LOOT SELF |
 | [Inspection and limits](41-inspection-and-limits.md) | Cross-family references, build comparison with exact chances, ledgers with provenance, build simulation and work limits |
 | [Saved choices](42-saved-choices.md) | Veiled modifiers revealed into kept options, offerings that take an item for kept replacements, a codex of reveals, sellers' offer books with a hold and a paid reroll |
 | [The Ember Trial](examples/ember-trial/README.md) | A complete playable sample adventure using all of the above |
@@ -121,19 +121,19 @@ These systems are off unless a world selects them.
 | --- | --- |
 | Get the game built and running | [Installing and running](18-installing-and-running.md) |
 | Make rooms, exits and areas | [Areas, rooms and exits](20-areas-rooms-exits.md), [First world](01-first-world.md) |
-| Make creatures, shopkeepers, guards and bosses | [Mobs](21-mobs.md), [NPCs and dialogue](06-npcs-dialogue.md), [Combat and encounters](29-combat-and-encounters.md) |
+| Make creatures, shopkeepers, guards and bosses | [Mobs](21-mobs.md), [NPCs and dialogue](06-npcs-dialogue.md) (service NPCs: [service records](06-npcs-dialogue.md#service-records)), [Combat and encounters](29-combat-and-encounters.md) |
 | Make equipment, containers, keys and magic items | [Items](22-items.md), [Properties](23-properties-reference.md) |
 | Make puzzles, crafting, gathering and homes | [Crafting, gathering, housing and puzzles](07-items-crafting.md) |
 | Choose the opening, races, classes and advancement | [Characters and progression](03-characters.md) |
 | Make custom spells, skills, poisons and traps | [Abilities and effects](25-abilities-and-effects.md) |
 | React to events and keep state | [MOBPROG scripting](04-mobprog.md) and its references, [JavaScript](05-javascript.md) |
 | Build quest arcs, jobs and rewards | [Quests](08-quests.md) |
-| Build guilds, factions, laws and economies | [Society](09-society.md) |
+| Build guilds, factions, laws and economies | [Society](09-society.md) ([affiliation rules](09-society.md#affiliation-rules), [shared pools](09-society.md#shared-pools)), [cultures](03-characters.md#culturesini-cultures) |
 | Set time, weather, seasons and hazards | [World simulation](10-world-simulation.md) |
 | Add travel, ships, fast travel and instances | [Travel, vehicles and instances](30-travel-vehicles-instances.md) |
 | Write descriptions, lore, maps and languages | [Presentation and language](11-presentation-language.md) |
 | Generate dungeons, loot and names | [Generation](12-generation.md) |
-| Control saving, the party and turn-based play | [Saves, party and the single-player model](31-saves-and-party.md) |
+| Control saving, the party and turn-based play | [Saves, party and the single-player model](31-saves-and-party.md), [formation roles](31-saves-and-party.md#formation-roles) |
 | Configure the engine and permissions | [Configuration and administration](19-configuration-and-administration.md) |
 | Diagnose problems, automate tests and release | [Testing, debugging and release](13-testing-release.md) |
 | Change or extend the Java engine | [Engine programming](32-engine-programming.md), [Engine internals](33-engine-internals.md) |
