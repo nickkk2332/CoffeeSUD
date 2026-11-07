@@ -10,7 +10,9 @@ at them without changing anything:
 - **LEDGER** shows what the modules hold for a character, an item, a pair or an
   expedition, with the rule behind each thing (Q05);
 - **WORLD MODULES REPORT** counts the work done and reads it against declared
-  limits (Q12).
+  limits (Q12);
+- **tools/simulate.py** fights builds against a fixed boss over seeds, and keeps
+  what it observed apart from the exact chances (Q04).
 
 The previews of the earlier chapters belong here too: `MODCRAFT PREVIEW` (a
 craft), `EXPEDITION PREVIEW` (a chart), `WORLD LOOT PREVIEW` and `SAMPLE` (a loot
@@ -105,6 +107,65 @@ L.character(mob()); L.item(item); L.between(a, b); L.expedition(mob());
 Packages.com.planet_ink.coffee_mud.core.Provenance.event(mob(), "my.module", "my.rule.v1", "what happened");
 ```
 
+## Simulating builds
+
+`tools/simulate.py` (Q04) fights builds against a fixed boss over a set of seeds,
+headless, and reports what it saw apart from what the combat profile says
+exactly. A scenario file names everything:
+
+```json
+{
+  "schema": 1,
+  "title": "A supported ember bolt against a heavy strike, on a training warden",
+  "packs": ["ability-composition", "combat-profiles"],
+  "modules": "abilities.composition,combat.profiles",
+  "definitions": {"compositions": [{"schema": 1, "kind": "skill", "id": "sim.strike", "version": 1, "name": "Heavy strike",
+                    "tags": ["attack", "melee"], "damage": {"physical": 20}, "stats": {"mana": 2, "actions": 1, "cooldown": 0, "range": 1}}]},
+  "builds": [
+    {"name": "ember", "skills": [{"id": "example.ember", "supports": ["example.power"]}], "stats": {"schema": 1, "crit_chance": 10}},
+    {"name": "strike", "skills": [{"id": "sim.strike"}], "stats": {"schema": 1, "accuracy": 150, "crit_chance": 10}}
+  ],
+  "boss": {"name": "a training warden", "hp": 300, "stats": {"schema": 1, "evasion": 100, "block": 10, "armor": 20, "resistance": {"fire": 25}}},
+  "seeds": [11, 12, 13, 14, 15, 16],
+  "turn_limit": 120, "stall_turns": 15, "work_limit": 2000
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `packs` | Example packs copied over the base world, in order. |
+| `definitions` | Extra definitions, by folder (`compositions`, `combat`, ...), each written as `id.vN.json`. |
+| `modules` | The world's `MODULES`. |
+| `builds` | 1 to 8: a name, composed skills with their supports (cast in the order given, the first ready one each turn), the caster's combat stats (as `Prop_CombatStats` takes them), and `mana` (refilled each turn; the simulation measures damage). |
+| `boss` | Its name, hit points, level and combat stats. It does not act. |
+| `seeds` | 1 to 64. Each run seeds the campaign dice with one. |
+| `turn_limit`, `stall_turns`, `work_limit` | A run stops at the turn limit, or when it has done no damage for `stall_turns` turns (stalled), or when the build has cast `work_limit` times in all. |
+
+```bash
+python3 tools/simulate.py docs/creator/examples/simulation/ember-vs-strike.json --json results.json
+```
+
+Each build runs in its own engine process. A turn casts the first ready skill
+and moves the clock one tick, so cooldowns pass. The report, per build:
+
+```text
+Build strike (its own engine process):
+  Observed over 6 seeded runs (sampled):
+    killed 6; stalled 0; stopped at the turn limit 0; at the work limit 0
+    turns to kill: min 23, median 26.0, mean 26.17, max 29
+    damage per turn: 11.46
+  Exact, from the combat profile's chances (not sampled):
+    sim.strike: expected 11.44 damage per resolved cast (hit 71%, blocked 10%, critical 10%); cooldown 0 tick(s)
+    analytical estimate: 26.23 turns to kill (hit points over the expected damage of a cast, one cast whenever the skill is ready)
+```
+
+The observed part is sampled: the cast's proficiency check (a cast can fizzle),
+damage that overshoots the last hit points and the world's own rules are in it.
+The exact part is COMPOSE COMPARE's figure for each skill against the boss, and
+the estimate that follows for a one-skill build. The same scenario and seeds give
+the same runs. `--seeds 1,2,3` runs other seeds; `--work DIR` keeps each batch's
+world and output.
+
 ## Work and limits
 
 `WORLD MODULES REPORT` (builder or DEV=1) counts this session's module work by
@@ -145,6 +206,7 @@ Implementation: [CrossRefs.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/
 [Ledgers.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Ledgers.java),
 [Provenance.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Provenance.java),
 [ModuleStats.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/ModuleStats.java).
+Simulation: [simulate.py](../../tools/simulate.py), tested by [simulate-test.py](../../tools/simulate-test.py) (`tools/fixes.sh simulate`).
 Tests: [q02-refs.js](../../tools/fixtures/fixes/q02-refs.js), [q03-compare.js](../../tools/fixtures/fixes/q03-compare.js),
 [q05-ledger.js](../../tools/fixtures/fixes/q05-ledger.js), [q12-stress.js](../../tools/fixtures/fixes/q12-stress.js),
 and the expedition ledger in [expedition-integration.py](../../tools/expedition-integration.py).

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "title": "A supported ember bolt against a heavy strike, on a training warden",
+  "packs": ["ability-composition", "combat-profiles"],
+  "modules": "abilities.composition,combat.profiles",
+  "definitions": {
+    "compositions": [
+      {"schema": 1, "kind": "skill", "id": "sim.strike", "version": 1, "name": "Heavy strike",
+       "tags": ["attack", "melee"], "damage": {"physical": 20}, "stats": {"mana": 2, "actions": 1, "cooldown": 0, "range": 1}}
+    ]
+  },
+  "builds": [
+    {"name": "ember", "skills": [{"id": "example.ember", "supports": ["example.power"]}], "stats": {"schema": 1, "crit_chance": 10}},
+    {"name": "strike", "skills": [{"id": "sim.strike"}], "stats": {"schema": 1, "accuracy": 150, "crit_chance": 10}}
+  ],
+  "boss": {"name": "a training warden", "hp": 300,
+           "stats": {"schema": 1, "evasion": 100, "block": 10, "armor": 20, "resistance": {"fire": 25}}},
+  "seeds": [11, 12, 13, 14, 15, 16],
+  "turn_limit": 120,
+  "stall_turns": 15,
+  "work_limit": 2000
+}

@@ -202,5 +202,5 @@ before anything is merged.
 | 7 | P01 tracks, Q06 rename test, Q07 tree | Done |
 | 8 | I02 loot policies, I04 operations, Q07 loot view | Done |
 | 9 | Q02 references, Q03 compare, Q05 ledgers, Q12 report | Done |
-| 10 | Q04 simulation | |
+| 10 | Q04 simulation | Done |
 | 11 | Q10 packs, handbook chapters, catalog status | |
