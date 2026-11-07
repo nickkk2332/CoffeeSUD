@@ -42,7 +42,8 @@ try {
 	var bob = actor("Combo Bob"), target = actor("Combo Target");
 	target.baseState().setHitPoints(5000); target.recoverMaxState(); target.resetToMaxState();
 	var a = CMClass.getAbility("Skill_Compose"); a.setProficiency(100); bob.addAbility(a); AC.learn(bob, "example.ember");
-	function cast() { return a.invoke(bob, CM.core.CMParms.parse("CAST example.ember"), target, false, 0); }
+	// auto: a cast that cannot fizzle (proficiency 100 still fails 5% of the time, and the dice depend on the tests run before this one); costs and gates still apply
+	function cast() { return a.invoke(bob, CM.core.CMParms.parse("CAST example.ember"), target, true, 0); }
 	check("sheet", s(AC.show(bob, "example.ember")).indexOf("once the cast lands") >= 0, s(AC.show(bob, "example.ember")));
 	check("landed-1", cast() && NR.value(bob, "fix.combo") == 1, "combo " + NR.value(bob, "fix.combo"));
 	check("landed-2", cast() && NR.value(bob, "fix.combo") == 2, "combo " + NR.value(bob, "fix.combo"));
@@ -73,7 +74,7 @@ try {
 	AC.reset(); AC.learn(bob, "fix.spark");
 	cast(); cast();
 	bob.addNonUninvokableEffect(nd);
-	a.invoke(bob, CM.core.CMParms.parse("CAST fix.spark"), target, false, 0);
+	a.invoke(bob, CM.core.CMParms.parse("CAST fix.spark"), target, true, 0);
 	check("gain-on-cast", NR.value(bob, "example.cinder") == 1 && NR.value(bob, "fix.combo") == 0, "cinder " + NR.value(bob, "example.cinder") + " combo " + NR.value(bob, "fix.combo"));
 	bob.delEffect(nd); bob.makePeace(true); target.makePeace(true);
 

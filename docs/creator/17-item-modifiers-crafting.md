@@ -221,7 +221,9 @@ does not make generic catalog cloning the managed-copy API.
 }
 ```
 
-Actions: add, remove, reroll, protect, unprotect, replace and upgrade.
+Actions: add, remove, reroll, protect, unprotect, replace and upgrade, and the
+two that draw their modifiers, imbue and reforge
+([targeted crafting](#targeted-crafting-imbue-reforge-and-catalysts)).
 Item/modifier tag lists require all listed tags. An add or replace operation's
 nonempty affixes list further restricts the base pool; an empty list uses the
 whole base pool. Remove, reroll, protect and unprotect target one modifier UID
@@ -322,6 +324,91 @@ eight piles pay one operation. Decorated/enchanted resources, other currencies,
 multi-ingredient recipes, timed work and arbitrary scripts are outside this
 controlled commit family. Existing crafting skills still handle their normal
 recipes and materials.
+
+## Targeted crafting: imbue, reforge and catalysts
+
+Two actions draw their modifiers instead of being told which:
+
+- **imbue** adds one modifier, drawn by weight among the base's pool;
+- **reforge** draws again every unprotected modifier (as many as there were),
+  keeping the protected ones as they are.
+
+Each pick is drawn among the affixes the item can hold now (kind, level,
+group and slot), within the operation's `affixes` allow-list and with its
+`modifier_tags`. Three fields shape the draw:
+
+| Field | Meaning |
+| --- | --- |
+| `exclude_tags` | Affixes with any of these tags cannot be drawn. |
+| `weights` | A multiplier (0.01 to 100) for affixes with a tag. An affix with several weighted tags multiplies them all, and so do the operation and each catalyst. |
+| `guarantee` | A tag: the first modifier drawn must have it. If no affix with it can be drawn, the craft is refused. |
+
+An operation can carry them itself, and it names the **catalysts** it takes.
+A catalyst is a definition of its own: an ingredient with a cost and the same
+three fields.
+
+```json
+{"schema": 1, "kind": "operation", "id": "workbench.imbue", "version": 1,
+ "name": "Weave in a drawn modifier", "action": "imbue", "station": "ember-forge",
+ "material": "IRON", "units": 2, "item_tags": ["workbench"], "modifier_tags": [], "affixes": [],
+ "catalysts": ["workbench.coal", "workbench.ash", "workbench.amber"]}
+```
+
+```json
+{"schema": 1, "kind": "catalyst", "id": "workbench.coal", "version": 1,
+ "name": "Forge coal", "material": "COAL", "units": 1, "weights": {"offense": 4}}
+```
+
+The player names catalysts after WITH, at most three, each once:
+
+```text
+MODCRAFT PREVIEW workbench.imbue "plain workbench cloak" WITH workbench.coal
+MODCRAFT PREPARE workbench.imbue "plain workbench cloak" WITH workbench.ash, workbench.amber
+MODCRAFT COMMIT
+```
+
+A catalyst is paid with the craft, in the same settlement: its material and
+units are added to the operation's (both IRON and COAL here), and the request
+and its receipt keep the catalysts' pins. Two guarantees of different families
+cannot both hold, and a guaranteed family cannot also be excluded: such a craft
+is refused.
+
+**The preview shows the draw.** PREVIEW lists the distribution and every affix
+of the pool, with its chance or why it cannot be drawn:
+
+```text
+Distribution: offense x4 (catalyst workbench.coal)
+The modifier drawn:
+  embertrial.fireguard1 (Wardwoven, prefix tier 1): 19.2%
+  embertrial.fireguard2 (Flameward, prefix tier 2): 3.8%
+  embertrial.piercing (Embers, suffix tier 1): 76.9% (weight 10, offense catalyst workbench.coal x4)
+```
+
+A reason reads, for example, "tag offense is excluded by catalyst
+workbench.ash", "not of the guaranteed defense family (catalyst
+workbench.amber)" or "exclusive group fire-resistance already present:
+Wardwoven". For a reforge, the first pick is shown; later picks leave out the
+groups and slots the earlier ones took.
+
+**An empty pool is refused before paying.** When nothing can be drawn (every
+slot or group is taken, or every affix that fits is excluded), or when the
+guarantee cannot hold, PREVIEW and PREPARE refuse with that list, and nothing is
+spent or drawn. A reforge of an item whose modifiers are all protected is
+refused too.
+
+**A recipe takes catalysts at its last stage**, the one that draws the product.
+Its `catalysts` field lists the ones it takes; naming one at an earlier stage is
+refused. The last stage's PREVIEW shows the product's first modifier, with or
+without catalysts. A recipe whose result draws no modifiers (`"modifiers": 0`)
+cannot list catalysts. For a policy result, the rarity still decides how many
+modifiers the product gets: a catalyst shapes them but adds none, so a rarity
+that gives none gives none.
+
+The workbench pack has the example: `workbench.imbue`, `workbench.reforge`
+(which leans to defense itself, `"weights": {"defense": 2}`), the catalysts
+`workbench.coal` (offense x4), `workbench.ash` (excludes offense) and
+`workbench.amber` (guarantees defense), and the recipe `workbench.ward-cloak`.
+Test: [i06-targeted.js](../../tools/fixtures/fixes/i06-targeted.js).
 
 ## Requests, atomicity and persistence
 

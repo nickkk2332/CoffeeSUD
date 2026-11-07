@@ -55,7 +55,7 @@ public final class ItemCrafting
 		}
 		if(!pending.isEmpty())
 		{
-			ModuleDefinitions.keys(pending,"craft request","serial","actor","item","operation","selector","item_hash","room","costs","affix");
+			ModuleDefinitions.keys(pending,"craft request","serial","actor","item","operation","selector","item_hash","room","costs","affix","catalysts");
 			final int id=ModuleDefinitions.integer(pending.get("serial"),"request serial");
 			if(id!=number(state,"serial")||id<=number(state,"settled"))
 				throw new IOException("pending craft counter differs from ledger");
@@ -133,11 +133,12 @@ public final class ItemCrafting
 		final String selector;
 		final List<Cost> costs;
 		final int stage;
-		Plan(final Item item,final JSONObject data,final Definition op,final String selector,final List<Cost> costs)
-		{
-			this(item,data,op,selector,costs,-1);
-		}
-		Plan(final Item item,final JSONObject data,final Definition op,final String selector,final List<Cost> costs,final int stage)
+		/** I06: the catalysts named, the distribution they and the craft make, and the units of each material paid */
+		final List<Definition> catalysts;
+		final Bias bias;
+		final Map<String,Integer> needs;
+		Plan(final Item item,final JSONObject data,final Definition op,final String selector,final List<Cost> costs,final int stage,
+			final List<Definition> catalysts,final Bias bias,final Map<String,Integer> needs)
 		{
 			this.item=item;
 			this.data=data;
@@ -145,20 +146,93 @@ public final class ItemCrafting
 			this.selector=selector;
 			this.costs=costs;
 			this.stage=stage;
+			this.catalysts=catalysts;
+			this.bias=bias;
+			this.needs=needs;
+		}
+		/** what it pays, in words */
+		String paid()
+		{
+			final List<String> out=new ArrayList<String>();
+			for(final Map.Entry<String,Integer> e:needs.entrySet())
+				out.add(e.getValue()+" "+e.getKey());
+			return String.join(" and ",out);
+		}
+		String cost()
+		{
+			final List<String> out=new ArrayList<String>();
+			for(final Map.Entry<String,Integer> e:needs.entrySet())
+				out.add(e.getValue()+" weight unit(s) of plain "+e.getKey());
+			final List<String> names=new ArrayList<String>();
+			for(final Definition c:catalysts)
+				names.add(c.name+" ("+c.id+": "+c.number("units")+" "+c.string("material")+")");
+			return String.join(" and ",out)+(names.isEmpty()?"":", with the catalyst(s) "+String.join(", ",names));
 		}
 		String describe()
 		{
 			if(stage>=0)
 			{
 				final JSONObject st=stageOf(op,stage);
-				return op.name+" / stage "+(stage+1)+" of "+stages(op).length+" ("+st.get("name")+") on "+item.Name()+"; cost "+st.get("units")
-					+" weight unit(s) of plain "+st.get("material")+" at "+op.string("station")
+				return op.name+" / stage "+(stage+1)+" of "+stages(op).length+" ("+st.get("name")+") on "+item.Name()+"; cost "+cost()
+					+" at "+op.string("station")
 					+(stage==stages(op).length-1?"; this last stage makes "+((JSONObject)op.raw.get("result")).get("catalog"):"")
 					+". No inputs spent or random outcomes drawn.";
 			}
-			return op.name+" / "+op.string("action")+" on "+item.Name()+"; cost "+op.number("units")+" weight unit(s) of plain "+op.string("material")
+			return op.name+" / "+op.string("action")+" on "+item.Name()+"; cost "+cost()
 				+" at "+op.string("station")+". No inputs spent or random outcomes drawn.";
 		}
+	}
+	/** I06: "[selector] WITH [catalyst], [catalyst]": the selector, and the catalysts by ID (at most three, each once) */
+	static String[] withSplit(final String input)
+	{
+		final java.util.regex.Matcher m=java.util.regex.Pattern.compile("(?i)(?:^|\\s)WITH\\s+").matcher(input);
+		if(!m.find())
+			return new String[]{input.trim(),""};
+		return new String[]{input.substring(0,m.start()).trim(),input.substring(m.end()).trim()};
+	}
+	private static List<Definition> catalysts(final String names)throws IOException
+	{
+		final List<Definition> out=new ArrayList<Definition>();
+		if(names.trim().isEmpty())
+			return out;
+		for(final String w:names.trim().split("[,\\s]+"))
+		{
+			if(w.isEmpty()||w.equalsIgnoreCase("and"))
+				continue;
+			final String id=ModuleDefinitions.id(w.toLowerCase(Locale.ROOT));
+			final Definition c;
+			try
+			{
+				c=ItemModifiers.definitions().find(id,0,"catalyst");
+			}
+			catch(final IOException e)
+			{
+				throw new IOException("no catalyst "+id);
+			}
+			for(final Definition d:out)
+				if(d.id.equals(c.id))
+					throw new IOException("name each catalyst once: "+id);
+			out.add(c);
+		}
+		if(out.size()>3)
+			throw new IOException("at most three catalysts in one craft");
+		return out;
+	}
+	/** the units of each material: the craft's own, then each catalyst's */
+	private static Map<String,Integer> needs(final String material,final int units,final List<Definition> catalysts)
+	{
+		final Map<String,Integer> out=new LinkedHashMap<String,Integer>();
+		out.put(material,Integer.valueOf(units));
+		for(final Definition c:catalysts)
+			out.put(c.string("material"),Integer.valueOf((out.containsKey(c.string("material"))?out.get(c.string("material")).intValue():0)+c.number("units")));
+		return out;
+	}
+	private static List<Cost> payAll(final MOB who,final Item item,final Map<String,Integer> needs)throws IOException
+	{
+		final List<Cost> out=new ArrayList<Cost>();
+		for(final Map.Entry<String,Integer> e:needs.entrySet())
+			out.addAll(pay(who,item,e.getKey(),e.getValue().intValue()));
+		return out;
 	}
 	static Object[] stages(final Definition recipe)
 	{
@@ -238,7 +312,7 @@ public final class ItemCrafting
 				return false;
 		return true;
 	}
-	private static Plan plan(final MOB who,final Item item,final Definition op,final String selector)throws IOException
+	private static Plan plan(final MOB who,final Item item,final Definition op,final String selector,final List<Definition> catalysts)throws IOException
 	{
 		ItemModifiers.require();
 		if(!Boolean.TRUE.equals(OptionalModules.setting(ItemModifiers.MODULE,"allow_crafting")))
@@ -247,13 +321,15 @@ public final class ItemCrafting
 		if(!Workstations.has(who.location(),op.string("station")))
 			throw new IOException("required workstation: "+op.string("station"));
 		final JSONObject data=ItemModifiers.data(item);
-		ItemModifierRules.validate(data,op,selector,ItemModifiers.definitions(),item.basePhyStats().level());
-		if(op.string("action").equals("add")&&ItemModifierRules.modifiers(data).size()>=ItemModifiers.limit())
+		final Bias bias=ItemModifierRules.bias(op,catalysts);
+		ItemModifierRules.validate(data,op,selector,ItemModifiers.definitions(),item.basePhyStats().level(),bias);
+		if((op.string("action").equals("add")||op.string("action").equals("imbue"))&&ItemModifierRules.modifiers(data).size()>=ItemModifiers.limit())
 			throw new IOException("campaign modifier limit reached");
-		return new Plan(item,data,op,selector,pay(who,item,op.string("material"),op.number("units")));
+		final Map<String,Integer> needs=needs(op.string("material"),op.number("units"),catalysts);
+		return new Plan(item,data,op,selector,payAll(who,item,needs),-1,catalysts,bias,needs);
 	}
 	/** I04: the next stage of a staged recipe on its work piece. */
-	private static Plan planStage(final MOB who,final Item piece,final Definition recipe)throws IOException
+	private static Plan planStage(final MOB who,final Item piece,final Definition recipe,final List<Definition> catalysts)throws IOException
 	{
 		ItemModifiers.require();
 		if(!Boolean.TRUE.equals(OptionalModules.setting(ItemModifiers.MODULE,"allow_crafting")))
@@ -269,7 +345,24 @@ public final class ItemCrafting
 		if(stage>=stages(pinned).length)
 			throw new IOException(piece.Name()+" has no stage left");
 		final JSONObject st=stageOf(pinned,stage);
-		return new Plan(piece,order,pinned,"stage:"+stage,pay(who,piece,(String)st.get("material"),((Number)st.get("units")).intValue()),stage);
+		final boolean last=stage==stages(pinned).length-1;
+		if(!catalysts.isEmpty()&&!last)
+			throw new IOException("catalysts go in at the last stage ("+stages(pinned).length+"), which draws the product");
+		final Bias bias=ItemModifierRules.bias(pinned,catalysts);
+		if(!catalysts.isEmpty()&&ItemModifierRules.total(productPick(pinned,bias))<=0)
+			throw new IOException((bias.guarantee.length()>0?"no affix of the guaranteed "+bias.guarantee+" family ("+bias.guaranteedBy+") can be drawn"
+				:"no affix can be drawn")+" for the product:"+ItemModifierRules.describe(productPick(pinned,bias)));
+		final Map<String,Integer> needs=needs((String)st.get("material"),((Number)st.get("units")).intValue(),catalysts);
+		return new Plan(piece,order,pinned,"stage:"+stage,payAll(who,piece,needs),stage,catalysts,bias,needs);
+	}
+	/** I06: the product's first pick: its base's or its policy's, at the catalog item's level */
+	private static List<Odds> productPick(final Definition recipe,final Bias bias)throws IOException
+	{
+		final JSONObject r=(JSONObject)recipe.raw.get("result");
+		final Item proto=CMLib.catalog().getCatalogItem((String)r.get("catalog"));
+		if(proto==null)
+			throw new IOException("no catalog item '"+r.get("catalog")+"' for the result");
+		return ItemModifiers.firstPick(r.containsKey("policy")?"POLICY="+r.get("policy"):(String)r.get("base"),proto.basePhyStats().level(),bias);
 	}
 	/** A work piece's order: its recipe pin and the stage it is at. */
 	static JSONObject workOrder(final Item piece)throws IOException
@@ -290,8 +383,12 @@ public final class ItemCrafting
 		final String action=op.string("action");
 		if(action.equals("add"))
 			return ModuleDefinitions.id(input.trim());
-		if(action.equals("upgrade"))
+		if(action.equals("upgrade")||ItemModifierRules.DRAWS.contains(action))
+		{
+			if(input.trim().length()>0)
+				throw new IOException(action+" takes no modifier or affix; name catalysts after WITH");
 			return "-";
+		}
 		final String[] words=input.trim().split("\\s+");
 		if(action.equals("replace")&&words.length!=2)
 			throw new IOException("replace takes a modifier number shown by ITEMMODS and the affix ID to put in its place");
@@ -313,11 +410,34 @@ public final class ItemCrafting
 	public static String preview(final MOB who,final String operation,final Item item,final String input)throws IOException
 	{
 		final Definition op=craftDef(operation);
+		final String[] split=withSplit(input);
+		final List<Definition> cats=catalysts(split[1]);
 		if(op.kind.equals("recipe"))
-			return planStage(who,item,op).describe();
-		final String choice=selector(ItemModifiers.data(item),op,input);
-		final Plan plan=plan(who,item,op,choice);
+		{
+			final Plan stage=planStage(who,item,op,cats);
+			final JSONObject r=(JSONObject)stage.op.raw.get("result");
+			if(stage.stage<stages(stage.op).length-1||!r.containsKey("policy")&&((Number)r.get("modifiers")).intValue()==0)
+				return stage.describe();
+			// I06: the last stage's product: what its first modifier can be
+			return stage.describe()+"\nDistribution: "+stage.bias.describe()+(stage.op.optional("catalysts").isEmpty()?""
+				:"; catalysts this recipe takes: "+String.join(", ",stage.op.optional("catalysts")))+"\nThe product's first modifier:"
+				+ItemModifierRules.describe(productPick(stage.op,stage.bias))
+				+(r.containsKey("policy")?"\nIts rarity decides how many modifiers it gets; a rarity that gives none gives none.":"");
+		}
+		final String choice=selector(ItemModifiers.data(item),op,split[0]);
+		final Plan plan=plan(who,item,op,choice,cats);
 		final String action=op.string("action");
+		if(ItemModifierRules.DRAWS.contains(action))
+		{
+			// I06: the player's preview: each affix's chance in the first pick, or why it cannot be drawn
+			final int n=action.equals("imbue")?1:ItemModifierRules.modifiers(plan.data).size()
+				-ItemModifierRules.modifiers(ItemModifierRules.reforged(plan.data)).size();
+			return plan.describe()+"\nDistribution: "+plan.bias.describe()+(op.optional("catalysts").isEmpty()?""
+				:"; catalysts this operation takes: "+String.join(", ",op.optional("catalysts")))+"\n"
+				+(action.equals("imbue")?"The modifier drawn:":"Reforge draws "+n+" modifier(s) in place of the unprotected ones; the first:")
+				+ItemModifierRules.describe(ItemModifierRules.firstPick(plan.data,op,ItemModifiers.definitions(),item.basePhyStats().level(),plan.bias))
+				+(n>1?"\nLater picks leave out the groups and slots already taken.":"");
+		}
 		String ranges="";
 		if(action.equals("add"))
 			ranges=ModuleDefinitions.json((JSONObject)ItemModifiers.definitions().find(choice,0,"affix").raw.get("rolls"));
@@ -341,7 +461,8 @@ public final class ItemCrafting
 		for(final Definition op:lib.definitions.values())
 			if(op.kind.equals("operation")&&lib.find(op.id,0,"operation")==op)
 				out.append(op.id).append(" - ").append(op.name).append(" (").append(op.string("action")).append("); ").append(op.number("units"))
-					.append(' ').append(op.string("material")).append("; station ").append(op.string("station")).append('\n');
+					.append(' ').append(op.string("material")).append("; station ").append(op.string("station"))
+					.append(op.optional("catalysts").isEmpty()?"":"; catalysts "+String.join(", ",op.optional("catalysts"))).append('\n');
 		for(final Definition r:lib.definitions.values())
 			if(r.kind.equals("recipe")&&lib.find(r.id,0,"recipe")==r)
 			{
@@ -353,8 +474,13 @@ public final class ItemCrafting
 					out.append(i==0?" ":", ").append(i+1).append(". ").append(st.get("name")).append(" (").append(st.get("units")).append(' ')
 						.append(st.get("material")).append(')');
 				}
-				out.append("; makes ").append(((JSONObject)r.raw.get("result")).get("catalog")).append('\n');
+				out.append("; makes ").append(((JSONObject)r.raw.get("result")).get("catalog"))
+					.append(r.optional("catalysts").isEmpty()?"":"; catalysts at the last stage "+String.join(", ",r.optional("catalysts"))).append('\n');
 			}
+		for(final Definition c:lib.definitions.values())
+			if(c.kind.equals("catalyst")&&lib.find(c.id,0,"catalyst")==c)
+				out.append("catalyst ").append(c.id).append(" - ").append(c.name).append("; ").append(c.number("units")).append(' ').append(c.string("material"))
+					.append("; ").append(Bias.of(c.raw,c.id).rules()).append('\n');
 		return out.length()==0?"No modifier crafting operations are installed.":out.toString();
 	}
 	public static String pool(final Item item)throws IOException
@@ -395,8 +521,10 @@ public final class ItemCrafting
 		writable();
 		final Definition op=craftDef(operation);
 		final boolean staged=op.kind.equals("recipe");
-		final String choice=staged?null:selector(ItemModifiers.data(item),op,input);
-		final Plan plan=staged?planStage(who,item,op):plan(who,item,op,choice);
+		final String[] split=withSplit(input);
+		final List<Definition> cats=catalysts(split[1]);
+		final String choice=staged?null:selector(ItemModifiers.data(item),op,split[0]);
+		final Plan plan=staged?planStage(who,item,op,cats):plan(who,item,op,choice,cats);
 		final JSONObject state=ledger(who);
 		if(!((String)state.get("pending")).isEmpty())
 			throw new IOException("a request is pending; commit or cancel it first");
@@ -416,6 +544,8 @@ public final class ItemCrafting
 			?ItemModifierRules.replacement(choice)[1]:null;
 		if(added!=null)
 			pending.put("affix",ItemModifierRules.pin(ItemModifiers.definitions().find(added,0,"affix")));
+		if(!cats.isEmpty())
+			pending.put("catalysts",pins(cats));
 		final String encoded=ModuleDefinitions.json(pending);
 		if(encoded.length()>4096)
 			throw new IOException("request exceeds storage limit");
@@ -425,6 +555,22 @@ public final class ItemCrafting
 		ModuleStats.count("items","crafts","prepared");
 		return "Prepared craft #"+(serial+1)+": "+plan.describe()+"\nMODCRAFT COMMIT "+(serial+1)+" settles it; MODCRAFT CANCEL "+(serial+1)
 			+" discards it. Preparation has no random outcome to shop around for.";
+	}
+	private static Object[] pins(final List<Definition> defs)
+	{
+		final List<Object> out=new ArrayList<Object>();
+		for(final Definition d:defs)
+			out.add(ItemModifierRules.pin(d));
+		return out.toArray();
+	}
+	/** I06: a request's catalysts, by their pins */
+	private static List<Definition> pinnedCatalysts(final JSONObject pending)throws IOException
+	{
+		final List<Definition> out=new ArrayList<Definition>();
+		if(pending.containsKey("catalysts"))
+			for(final Object pin:ModuleDefinitions.array(pending.get("catalysts"),"catalysts"))
+				out.add(pinnedDef(pin));
+		return out;
 	}
 	public static String status(final MOB who)throws IOException
 	{
@@ -559,7 +705,7 @@ public final class ItemCrafting
 		writable();
 		if(pending.isEmpty()||number(pending,"serial")!=serial)
 			throw new IOException("no such pending request");
-		ModuleDefinitions.keys(pending,"craft request","serial","actor","item","operation","selector","item_hash","room","costs","affix");
+		ModuleDefinitions.keys(pending,"craft request","serial","actor","item","operation","selector","item_hash","room","costs","affix","catalysts");
 		if(!pending.get("actor").equals(InstanceIds.reference(who))||!pending.get("room").equals(InstanceIds.reference(who.location())))
 			throw new IOException("craft actor or room changed");
 		final Object found=InstanceIds.find((String)pending.get("item"));
@@ -567,9 +713,10 @@ public final class ItemCrafting
 			throw new IOException("craft item is unavailable");
 		final Item item=(Item)found;
 		final Definition op=pinnedDef(pending.get("operation"));
+		final List<Definition> cats=pinnedCatalysts(pending);
 		if(op.kind.equals("recipe"))
-			return commitStage(who,state,pending,serial,item,op);
-		final Plan plan=plan(who,item,op,(String)pending.get("selector"));
+			return commitStage(who,state,pending,serial,item,op,cats);
+		final Plan plan=plan(who,item,op,(String)pending.get("selector"),cats);
 		if(!pending.get("item_hash").equals(fingerprint(item))
 			||!ModuleDefinitions.json((JSONObject)pending.get("costs")).equals(ModuleDefinitions.json(costs(plan.costs,false))))
 			throw new IOException("item or material piles changed; cancel and prepare again");
@@ -586,7 +733,7 @@ public final class ItemCrafting
 		{
 			next=ItemModifiers.names(item,
 				ItemModifierRules.transform(plan.data,op,plan.selector,ItemModifiers.definitions(),item.basePhyStats().level(),
-				UUID.randomUUID().toString(),ItemModifiers.dice()));
+				UUID.randomUUID().toString(),ItemModifiers.dice(),plan.bias));
 			receipt=new JSONObject();
 			receipt.put("request",Long.valueOf(serial));
 			receipt.put("item",pending.get("item"));
@@ -597,6 +744,8 @@ public final class ItemCrafting
 			receipt.put("material",op.raw.get("material"));
 			receipt.put("units",op.raw.get("units"));
 			receipt.put("inputs",pending.get("costs"));
+			if(pending.containsKey("catalysts"))
+				receipt.put("catalysts",pending.get("catalysts"));
 			final JSONObject receipts=field(state,"receipts");
 			receipts.put(Long.toString(serial),receipt);
 			state.put("receipts",pruned(receipts,serial));
@@ -608,6 +757,17 @@ public final class ItemCrafting
 		{
 			CMath.setRandState(rng.longValue());
 			throw e;
+		}
+		// I06: what a drawing operation drew, for the message
+		final List<String> drew=new ArrayList<String>();
+		if(ItemModifierRules.DRAWS.contains(op.string("action")))
+		{
+			final Set<String> had=new HashSet<String>();
+			for(final JSONObject m:ItemModifierRules.modifiers(plan.data))
+				had.add((String)m.get("uid"));
+			for(final JSONObject m:ItemModifierRules.modifiers(next))
+				if(!had.contains(m.get("uid")))
+					drew.add(m.get("name")+" ("+((JSONObject)m.get("pin")).get("id")+")");
 		}
 		boolean committed=false;
 		busy.set(Boolean.TRUE);
@@ -672,8 +832,9 @@ public final class ItemCrafting
 		{
 			busy.remove();
 		}
-		return "Committed craft #"+serial+": "+op.name+"; consumed "+op.number("units")+" "+op.string("material")+"; item revision "
-			+next.get("revision")+". Repeating this request cannot consume or apply it again.";
+		return "Committed craft #"+serial+": "+op.name+"; consumed "+plan.paid()+"; item revision "
+			+next.get("revision")+(ItemModifierRules.DRAWS.contains(op.string("action"))?"; drew "+(drew.isEmpty()?"nothing":String.join(", ",drew)):"")
+			+". Repeating this request cannot consume or apply it again.";
 	}
 	/** I04: MODCRAFT BEGIN [recipe]: a work piece for a staged recipe, set out at its station. It spends and draws nothing. */
 	public static String begin(final MOB who,final String recipeID)throws IOException
@@ -703,9 +864,9 @@ public final class ItemCrafting
 	}
 	/** One stage of a staged recipe, settled once: its materials spent, the piece's stage advanced, and after the last the product made. */
 	private static String commitStage(final MOB who,final JSONObject state,final JSONObject pending,final long serial,final Item piece,
-		final Definition recipe)throws IOException
+		final Definition recipe,final List<Definition> cats)throws IOException
 	{
-		final Plan plan=planStage(who,piece,recipe);
+		final Plan plan=planStage(who,piece,recipe,cats);
 		if(!pending.get("selector").equals(plan.selector))
 			throw new IOException(piece.Name()+" is at another stage now; cancel and prepare again");
 		if(!pending.get("item_hash").equals(fingerprint(piece))
@@ -722,7 +883,7 @@ public final class ItemCrafting
 		try
 		{
 			if(last)
-				result=product(plan.op);
+				result=product(plan.op,plan.bias);
 			// the only random draws of a recipe: the product's modifiers, at its last stage
 			receipt=new JSONObject();
 			receipt.put("request",Long.valueOf(serial));
@@ -733,6 +894,8 @@ public final class ItemCrafting
 			receipt.put("material",st.get("material"));
 			receipt.put("units",st.get("units"));
 			receipt.put("inputs",pending.get("costs"));
+			if(pending.containsKey("catalysts"))
+				receipt.put("catalysts",pending.get("catalysts"));
 			if(result!=null)
 				receipt.put("result",InstanceIds.reference(result));
 			final JSONObject receipts=field(state,"receipts");
@@ -837,12 +1000,12 @@ public final class ItemCrafting
 			busy.remove();
 		}
 		return "Committed craft #"+serial+": "+plan.op.name+", stage "+(plan.stage+1)+" of "+stages(plan.op).length+" ("+st.get("name")+"); consumed "
-			+st.get("units")+" "+st.get("material")+". "
+			+plan.paid()+". "
 			+(last?result.Name()+" is finished.":piece.Name()+" waits for stage "+(plan.stage+2)+".")
 			+" Repeating this request cannot consume or apply it again.";
 	}
 	/** A recipe's finished product: its catalog item, made with its base's modifiers or by its loot policy. */
-	private static Item product(final Definition recipe)throws IOException
+	private static Item product(final Definition recipe,final Bias bias)throws IOException
 	{
 		final JSONObject r=(JSONObject)recipe.raw.get("result");
 		final Item proto=CMLib.catalog().getCatalogItem((String)r.get("catalog"));
@@ -855,7 +1018,7 @@ public final class ItemCrafting
 		try
 		{
 			ItemModifiers.initialize(made,r.containsKey("policy")?"POLICY="+r.get("policy"):(String)r.get("base"),r.containsKey("modifiers")
-				?((Number)r.get("modifiers")).intValue():0,"recipe:"+recipe.key());
+				?((Number)r.get("modifiers")).intValue():0,"recipe:"+recipe.key(),bias);
 		}
 		catch(final IOException|RuntimeException e)
 		{

@@ -37,7 +37,8 @@ try {
 	check("weights", choices.size() == 4 && tally.drift > tally.shell * 3 && tally.shell > 0 && tally.amber == 0 && tally.bottle == 0 && tally.none == 0, JSON.stringify(tally));
 	// the mask passes at a higher level
 	V.basePhyStats().setLevel(60); V.recoverPhyStats();
-	var amber = 0; for (var i = 0; i < 300; i++) { var f = call(A, "pickFind", [V, choices]); if (f != null && has(f.Name(), "amber")) amber++; }
+	// amber weighs 1 against 100: 300 picks would miss it about one run in twenty, 3000 practically never
+	var amber = 0; for (var i = 0; i < 3000; i++) { var f = call(A, "pickFind", [V, choices]); if (f != null && has(f.Name(), "amber")) amber++; }
 	V.basePhyStats().setLevel(10); V.recoverPhyStats();
 	check("mask", amber > 0, "" + amber);
 	// NOTHINGFREQ

@@ -1,0 +1,10 @@
+{
+  "schema": 1, "kind": "recipe", "id": "workbench.ward-cloak", "version": 1,
+  "name": "Weave a warded cloak", "station": "ember-forge", "piece": "a warded weave",
+  "stages": [
+    {"name": "Lay the warp", "material": "COTTON", "units": 1},
+    {"name": "Weave the ward", "material": "COTTON", "units": 1}
+  ],
+  "result": {"catalog": "a woven cloak", "base": "workbench.greatcloak", "modifiers": 2},
+  "catalysts": ["workbench.coal", "workbench.ash", "workbench.amber"]
+}

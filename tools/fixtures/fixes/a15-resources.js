@@ -104,10 +104,10 @@ try {
 	var target = actor("Pool Target"); target.baseState().setHitPoints(5000); target.recoverMaxState(); target.resetToMaxState();
 	NR.grant(bob, "example.focus"); NR.set(bob, "example.focus", 10);
 	var mana = bob.curState().getMana();
-	check("cost-refused", !a.invoke(bob, CM.core.CMParms.parse("CAST example.ember"), target, false, 0) && bob.curState().getMana() == mana && NR.value(bob, "example.focus") == 10,
+	check("cost-refused", !a.invoke(bob, CM.core.CMParms.parse("CAST example.ember"), target, true, 0) && bob.curState().getMana() == mana && NR.value(bob, "example.focus") == 10,
 		"focus " + NR.value(bob, "example.focus") + " mana " + bob.curState().getMana() + "/" + mana);
 	NR.set(bob, "example.focus", 30);
-	check("cast", a.invoke(bob, CM.core.CMParms.parse("CAST example.ember"), target, false, 0), "the paid cast failed");
+	check("cast", a.invoke(bob, CM.core.CMParms.parse("CAST example.ember"), target, true, 0), "the paid cast failed");
 	check("paid-and-gained", NR.value(bob, "example.focus") == 10 && NR.value(bob, "example.heat") == 15 && NR.value(bob, "example.cinder") == 1,
 		"focus " + NR.value(bob, "example.focus") + " heat " + NR.value(bob, "example.heat") + " cinder " + NR.value(bob, "example.cinder"));
 	check("sheet", s(AC.show(bob, "example.ember")).indexOf("Resource costs") >= 0, s(AC.show(bob, "example.ember")));

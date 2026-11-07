@@ -66,7 +66,7 @@ public class ModCraft extends StdCommand
 				mob.tell(ItemCrafting.begin(mob,words.get(2).toLowerCase(java.util.Locale.ROOT)));
 			else if((sub.equals("PREVIEW")||sub.equals("PREPARE"))&&words.size()>=4)
 			{
-				// the selector: a modifier number, an affix ID, "number affix" for replace, nothing for upgrade and recipe stages
+				// the selector: a modifier number, an affix ID, "number affix" for replace, nothing for upgrade, imbue, reforge and recipe stages; then WITH and catalysts (I06)
 				final Item item=mob.findItem(null,words.get(3));
 				if(item==null)
 					throw new java.io.IOException("no such carried item; quote a multiword name");
@@ -82,7 +82,7 @@ public class ModCraft extends StdCommand
 				}
 			}
 			else
-				mob.tell("MODCRAFT LIST / STATUS / POOL \"[item name]\" / PREVIEW or PREPARE [operation ID] \"[item name]\" [modifier number, affix ID, or for replace both]; BEGIN [recipe ID]; PREVIEW or PREPARE [recipe ID] \"[work piece]\"; COMMIT/CANCEL [request number]; RECEIPT [request number]. ITEMMODS lists modifier numbers. Preview/preparation are free; only commit rolls and spends materials.");
+				mob.tell("MODCRAFT LIST / STATUS / POOL \"[item name]\" / PREVIEW or PREPARE [operation ID] \"[item name]\" [modifier number, affix ID, or for replace both] (WITH [catalyst IDs] for imbue, reforge and a recipe's last stage); BEGIN [recipe ID]; PREVIEW or PREPARE [recipe ID] \"[work piece]\"; COMMIT/CANCEL [request number]; RECEIPT [request number]. ITEMMODS lists modifier numbers. Preview/preparation are free; only commit rolls and spends materials.");
 		}
 		catch(final java.io.IOException e)
 		{

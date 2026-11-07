@@ -221,13 +221,38 @@ public final class ItemLoot
 		final String why = ItemModifierRules.ineligible(record, a, level);
 		if(why.length() > 0)
 			return why;
-		if(a.number("tier") > p.maxTier(level))
-			return "tier " + a.number("tier") + " is above the limit of " + p.maxTier(level) + " at level " + level;
-		if(!a.list("tags").containsAll(p.tags))
-			return "lacks the policy's tags " + p.tags;
-		if((p.budget > 0) && ((used + a.number("tier")) > p.budget))
-			return "tier " + a.number("tier") + " would pass the power budget (" + used + " of " + p.budget + " used)";
-		return "";
+		return limits(p, level).barred(a, record, used);
+	}
+
+	/** a policy's own rules on a pick at a level: its tier limit, its tags and its power budget */
+	static ItemModifierRules.Filter limits(final Policy p, final int level)
+	{
+		return (a, record, used) ->
+		{
+			if(a.number("tier") > p.maxTier(level))
+				return "tier " + a.number("tier") + " is above the limit of " + p.maxTier(level) + " at level " + level;
+			if(!a.list("tags").containsAll(p.tags))
+				return "lacks the policy's tags " + p.tags;
+			if((p.budget > 0) && ((used + a.number("tier")) > p.budget))
+				return "tier " + a.number("tier") + " would pass the power budget (" + used + " of " + p.budget + " used)";
+			return "";
+		};
+	}
+
+	private static List<Definition> pool(final Definition base, final ItemModifierRules.Library lib) throws IOException
+	{
+		final List<Definition> out = new ArrayList<Definition>();
+		for(final String id : base.list("pool"))
+			out.add(lib.find(id, 0, "affix"));
+		return out;
+	}
+
+	/** I06: a policy's first pick at a level, shaped by a recipe's catalysts: each affix's chance, or why it cannot be drawn */
+	public static List<ItemModifierRules.Odds> firstPick(final String policyId, final int level, final ItemModifierRules.Bias bias) throws IOException
+	{
+		final Entry<Policy> e = definitions().latest(policyId);
+		final Definition base = baseOf(e);
+		return ItemModifierRules.odds(blank(base), pool(base, ItemModifiers.definitions()), bias, true, limits(e.value, level), 0, level);
 	}
 
 	/**
@@ -236,6 +261,13 @@ public final class ItemLoot
 	 */
 	static Drop roll(final Policy p, final Definition base, final ItemModifierRules.Library lib, final JSONObject record, final int level, final int limit,
 					 final Source src, final String forced) throws IOException
+	{
+		return roll(p, base, lib, record, level, limit, src, forced, ItemModifierRules.Bias.NONE);
+	}
+
+	/** the same, with a recipe's catalysts shaping the modifiers (I06); with none, exactly the draws it always made */
+	static Drop roll(final Policy p, final Definition base, final ItemModifierRules.Library lib, final JSONObject record, final int level, final int limit,
+					 final Source src, final String forced, final ItemModifierRules.Bias bias) throws IOException
 	{
 		final Drop d = new Drop();
 		if(forced != null)
@@ -257,39 +289,9 @@ public final class ItemLoot
 				}
 			}
 		}
-		final JSONObject rec = ModuleDefinitions.copy(record);
 		final ItemModifierRules.Roller dice = (min, max) -> min + (int)Long.remainderUnsigned(src.draw(), (long)max - min + 1);
-		int used = 0;
-		for(int n = 0; n < Math.min(d.rarity.modifiers, limit); n++)
-		{
-			final List<Definition> fit = new ArrayList<Definition>();
-			double total = 0;
-			for(final String id : base.list("pool"))
-			{
-				final Definition a = lib.find(id, 0, "affix");
-				if(barred(p, a, rec, level, used).isEmpty())
-				{
-					fit.add(a);
-					total += ((Number)a.raw.get("weight")).doubleValue();
-				}
-			}
-			if(fit.isEmpty())
-				break;
-			double at = unit(src) * total;
-			Definition chosen = fit.get(fit.size() - 1);
-			for(final Definition a : fit)
-			{
-				at -= ((Number)a.raw.get("weight")).doubleValue();
-				if(at < 0)
-				{
-					chosen = a;
-					break;
-				}
-			}
-			d.mods.add(ItemModifierRules.rolled(chosen, UUID.randomUUID().toString(), dice));
-			rec.put("modifiers", d.mods.toArray());
-			used += chosen.number("tier");
-		}
+		d.mods.addAll(ItemModifierRules.draw(record, pool(base, lib), bias, level, Math.min(d.rarity.modifiers, limit), limits(p, level), () -> unit(src), dice,
+											 () -> UUID.randomUUID().toString()));
 		return d;
 	}
 
@@ -351,6 +353,12 @@ public final class ItemLoot
 	 */
 	public static void initialize(final Item item, final String policyId, final String source) throws IOException
 	{
+		initialize(item, policyId, source, ItemModifierRules.Bias.NONE);
+	}
+
+	/** the same, with a recipe's catalysts shaping the modifiers (I06) */
+	public static void initialize(final Item item, final String policyId, final String source, final ItemModifierRules.Bias bias) throws IOException
+	{
 		if(!enabled())
 			throw new ItemModifiers.Unavailable(MODULE + " is inactive in this campaign");
 		final Library<Policy> lib = definitions();
@@ -361,7 +369,7 @@ public final class ItemLoot
 			throw new IOException("POLICY " + policyId + ": base " + base.key() + " is for " + base.string("item_kind") + ", the template is " + Affixes.kindOf(item));
 		final JSONObject data = ItemModifierRules.record(base, InstanceIds.reference(item), item.Name(), item.displayText(), "x");
 		final long since = since(e.id);
-		final Drop d = roll(p, base, ItemModifiers.definitions(), data, item.basePhyStats().level(), ItemModifiers.limit(), LIVE, forced(p, since));
+		final Drop d = roll(p, base, ItemModifiers.definitions(), data, item.basePhyStats().level(), ItemModifiers.limit(), LIVE, forced(p, since), bias);
 		data.put("modifiers", d.mods.toArray());
 		data.put("source", ("loot:" + e.key() + ":" + d.rarity.id + " from " + source).substring(0, Math.min(500, ("loot:" + e.key() + ":" + d.rarity.id + " from " + source).length())));
 		final Ability prop = CMClass.getAbility(ItemModifiers.PROPERTY);

@@ -2,4 +2,7 @@
  <ITEM ID="workbench_cloak" CLASS="GenArmor" LEVEL="1" NAME="a workbench cloak"
        DISPLAY="A workbench cloak lies folded here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
        PROPERWORN="body" MODBASE="workbench.cloak" AFFIXES="2" />
+ <ITEM ID="workbench_plain" CLASS="GenArmor" LEVEL="1" NAME="a plain workbench cloak"
+       DISPLAY="A plain workbench cloak lies folded here." MATERIAL="COTTON" WEIGHT="1" VALUE="10"
+       PROPERWORN="body" MODBASE="workbench.cloak" AFFIXES="0" />
 </AREADATA>

@@ -15,9 +15,26 @@ the [item-modifier pack](../item-modifiers/README.md) (whose affixes it uses):
 - `workbench.cloak-work`, a staged recipe: spin (2 COTTON), stitch (1 COTTON)
   and rivet (1 IRON), then a woven cloak with one modifier.
 
+Targeted crafting ([chapter 17](../../17-item-modifiers-crafting.md#targeted-crafting-imbue-reforge-and-catalysts)):
+
+- `workbench.imbue` draws one modifier (2 IRON); `workbench.reforge` draws
+  again every unprotected one (3 IRON), leaning to defense (`defense` x2);
+- three catalysts, named after WITH and paid with the craft:
+  `workbench.coal` (1 COAL, offense x4), `workbench.ash` (1 ASH, excludes
+  offense) and `workbench.amber` (1 AMBER, the first modifier drawn is of the
+  defense family);
+- `workbench.ward-cloak`, a two-stage recipe whose last stage takes the same
+  catalysts: a woven greatcloak with up to two modifiers.
+
+```text
+MODCRAFT PREVIEW workbench.imbue "plain workbench cloak" WITH workbench.coal
+MODCRAFT PREPARE workbench.imbue "plain workbench cloak" WITH workbench.ash
+MODCRAFT COMMIT
+```
+
 All need an `ember-forge` workstation. The template
-`randareas/workbench.xml` (ID `workbench_cloak`) makes a cloak with two
-modifiers.
+`randareas/workbench.xml` makes a cloak with two modifiers (ID
+`workbench_cloak`) and one with none (ID `workbench_plain`).
 
 Install into a world that has the item-modifier pack:
 
@@ -37,4 +54,5 @@ MODCRAFT COMMIT
 MODCRAFT STATUS
 ```
 
-Tests: [i04-workbench.js](../../../../tools/fixtures/fixes/i04-workbench.js).
+Tests: [i04-workbench.js](../../../../tools/fixtures/fixes/i04-workbench.js) and
+[i06-targeted.js](../../../../tools/fixtures/fixes/i06-targeted.js).

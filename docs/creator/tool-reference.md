@@ -6431,8 +6431,11 @@ ID]
 Usage   : MODCRAFT PREVIEW/PREPARE [replace operation ID] "[item name]" [modifier number]
 [affix ID]
 Usage   : MODCRAFT PREVIEW/PREPARE [upgrade operation ID] "[item name]"
+Usage   : MODCRAFT PREVIEW/PREPARE [imbue or reforge operation ID] "[item name]" (WITH
+[catalyst ID], [catalyst ID])
 Usage   : MODCRAFT BEGIN [recipe ID]
-Usage   : MODCRAFT PREVIEW/PREPARE [recipe ID] "[work piece]"
+Usage   : MODCRAFT PREVIEW/PREPARE [recipe ID] "[work piece]" (WITH [catalyst ID] at the
+last stage)
 Usage   : MODCRAFT COMMIT/CANCEL ([request number])
 Usage   : MODCRAFT RECEIPT [request number]
 Requires the optional items.modifiers module. LIST shows operations, costs and stations;
@@ -6448,14 +6451,20 @@ container. Costs use plain raw-material piles. Protected modifiers refuse reroll
  authored unprotect operation releases them. Add takes an affix ID and respects pools, tags,
  levels, groups and capacity. Replace takes a modifier number and the affix to put in its
 place, removed and added in one settlement. Upgrade moves the item to its base's declared
-successor, keeping every modifier. A refused PREVIEW or PREPARE says why (a protected
-modifier, the group in the way and who holds it, a target that is not there) and spends and
-draws nothing. A staged recipe: BEGIN sets out its work piece at the station; each PREPARE
-and COMMIT settles the next stage once, its progress kept on the piece; the last stage makes
- the product, and only it draws random values. STATUS lists your work pieces and their next
-stage. In the Ember Trial, open the supply coffer at camp and collect the mantle/iron, then
-try MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT spends iron and rolls
-values. A stale request requires cancellation and fresh preparation. See
+successor, keeping every modifier. Imbue draws one modifier and reforge draws again every
+unprotected one, by weight, among the base's pool; the operation and the catalysts named
+after WITH (at most three, each paid with the craft) can leave tags out, multiply the
+weights of tags and guarantee the family of the first modifier drawn. PREVIEW shows each
+affix's chance or why it cannot be drawn; a draw that could find nothing, or a guarantee
+that cannot hold, is refused before anything is paid. A refused PREVIEW or PREPARE says why
+(a protected modifier, the group in the way and who holds it, a target that is not there)
+and spends and draws nothing. A staged recipe: BEGIN sets out its work piece at the station;
+ each PREPARE and COMMIT settles the next stage once, its progress kept on the piece; the
+last stage makes the product, and only it draws random values; catalysts go in at that
+stage. STATUS lists your work pieces and their next stage. In the Ember Trial, open the
+supply coffer at camp and collect the mantle/iron, then try MODCRAFT PREVIEW
+embertrial.reroll "trial mantle" 1. Only COMMIT spends iron and rolls values. A stale
+request requires cancellation and fresh preparation. See
 docs/creator/17-item-modifiers-crafting.md.
 ```
 

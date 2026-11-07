@@ -93,6 +93,9 @@ public final class ItemModifiers
 			if(d.kind.equals("operation")&&RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)
 				lib.errors.add(d.key()+": unknown registered material "+d.string("material"));
 		for(final Definition d:lib.definitions.values())
+			if(d.kind.equals("catalyst")&&RawMaterial.CODES.FIND_CaseSensitive(d.string("material"))<0)
+				lib.errors.add(d.key()+": unknown registered material "+d.string("material"));
+		for(final Definition d:lib.definitions.values())
 			if(d.kind.equals("recipe"))
 				for(final Object st:(Object[])d.raw.get("stages"))
 					// I04: a staged recipe's materials
@@ -192,6 +195,11 @@ public final class ItemModifiers
 	}
 	public static void initialize(final Item item,final String baseID,final int count,final String source)throws IOException
 	{
+		initialize(item,baseID,count,source,Bias.NONE);
+	}
+	/** The same, with a recipe's catalysts shaping the drawn modifiers (I06). */
+	public static void initialize(final Item item,final String baseID,final int count,final String source,final Bias bias)throws IOException
+	{
 		gameThread();
 		require();
 		if(item==null||item.owner()!=null||item.amDestroyed()||isManaged(item))
@@ -200,7 +208,7 @@ public final class ItemModifiers
 			throw new IOException("first modifier family supports standard generic equipment/items only");
 		if(baseID.regionMatches(true,0,"POLICY=",0,7))
 		{
-			ItemLoot.initialize(item,baseID.substring(7).trim(),source);
+			ItemLoot.initialize(item,baseID.substring(7).trim(),source,bias);
 			return;
 		}
 		// I02: a loot policy decides rarity and modifiers
@@ -213,7 +221,7 @@ public final class ItemModifiers
 		item.addNonUninvokableEffect(p);
 		try
 		{
-			addGenerated(item,count);
+			addGenerated(item,count,bias);
 		}
 		catch(final IOException e)
 		{
@@ -223,6 +231,11 @@ public final class ItemModifiers
 	}
 	/** Generation-only addition through the old AFFIXES consumers. Owned objects use transactions. */
 	public static int addGenerated(final Item item,final int count)throws IOException
+	{
+		return addGenerated(item,count,Bias.NONE);
+	}
+	/** The same, shaped by a recipe's catalysts (I06); with none, exactly the draws it always made. */
+	public static int addGenerated(final Item item,final int count,final Bias bias)throws IOException
 	{
 		gameThread();
 		require();
@@ -234,39 +247,16 @@ public final class ItemModifiers
 		final Library lib=definitions();
 		final Definition base=lib.pinned(data.get("base"),"base");
 		final List<JSONObject> mods=ItemModifierRules.modifiers(data);
-		int done=0;
-		for(int n=0;n<Math.min(ItemModifierRules.MAX_MODS,Math.max(0,count))&&mods.size()<limit();n++)
-		{
-			final List<Definition> fit=new ArrayList<Definition>();
-			double total=0;
-			for(final String id:base.list("pool"))
-			{
-				final Definition a=lib.find(id,0,"affix");
-				if(ItemModifierRules.fits(data,a,item.basePhyStats().level()))
-				{
-					fit.add(a);
-					total+=((Number)a.raw.get("weight")).doubleValue();
-				}
-			}
-			if(fit.isEmpty())
-				break;
-			double at=CMLib.dice().getRandomizer().nextDouble()*total;
-			Definition chosen=fit.get(fit.size()-1);
-			for(final Definition a:fit)
-			{
-				at-=((Number)a.raw.get("weight")).doubleValue();
-				if(at<0)
-				{
-					chosen=a;
-					break;
-				}
-			}
-			mods.add(ItemModifierRules.rolled(chosen,uid(),DICE));
-			data.put("modifiers",mods.toArray());
-			done++;
-		}
+		final List<Definition> pool=new ArrayList<Definition>();
+		for(final String id:base.list("pool"))
+			pool.add(lib.find(id,0,"affix"));
+		final int count2=Math.max(0,Math.min(Math.min(ItemModifierRules.MAX_MODS,Math.max(0,count)),limit()-mods.size()));
+		final List<JSONObject> drawn=ItemModifierRules.draw(data,pool,bias,item.basePhyStats().level(),count2,ItemModifierRules.OPEN,
+			()->CMLib.dice().getRandomizer().nextDouble(),DICE,ItemModifiers::uid);
+		mods.addAll(drawn);
+		data.put("modifiers",mods.toArray());
 		install(item,names(item,data));
-		return done;
+		return drawn.size();
 	}
 	/** Explicit managed clone: preserve rolls, assign a new item and per-item modifier identities. */
 	public static Item copyOf(final Item original)throws IOException
@@ -305,6 +295,19 @@ public final class ItemModifiers
 				.append(pin.get("version")).append("; group ").append(m.get("group"));
 		}
 		return out.toString();
+	}
+	/** I06: the first pick of a recipe's product (its base's or its policy's) at a level, shaped by catalysts */
+	public static List<Odds> firstPick(final String baseOrPolicy,final int level,final Bias bias)throws IOException
+	{
+		if(baseOrPolicy.regionMatches(true,0,"POLICY=",0,7))
+			return ItemLoot.firstPick(baseOrPolicy.substring(7).trim(),level,bias);
+		final Library lib=definitions();
+		final Definition base=lib.find(baseOrPolicy,0,"base");
+		final List<Definition> pool=new ArrayList<Definition>();
+		for(final String id:base.list("pool"))
+			pool.add(lib.find(id,0,"affix"));
+		return ItemModifierRules.odds(ItemModifierRules.record(base,"@instance:00000000-0000-0000-0000-000000000000","an item","An item lies here.","preview"),
+			pool,bias,true,ItemModifierRules.OPEN,0,level);
 	}
 	public static List<String> checkItems(final Collection<Room> rooms,final Library lib)
 	{

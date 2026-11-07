@@ -1,0 +1,5 @@
+{
+  "schema": 1, "kind": "catalyst", "id": "workbench.coal", "version": 1,
+  "name": "Forge coal", "material": "COAL", "units": 1,
+  "weights": {"offense": 4}
+}

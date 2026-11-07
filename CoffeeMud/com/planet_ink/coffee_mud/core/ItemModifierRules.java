@@ -149,9 +149,16 @@ public final class ItemModifierRules
 			else if(kind.equals("operation"))
 			{
 				ModuleDefinitions.keys(obj,"craft operation","schema","kind","id","version","name","action","station","material","units","item_tags",
-					"modifier_tags","affixes");
-				if(!Arrays.asList("add","remove","reroll","protect","unprotect","replace","upgrade").contains(obj.get("action")))
+					"modifier_tags","affixes","exclude_tags","weights","guarantee","catalysts");
+				if(!Arrays.asList("add","remove","reroll","protect","unprotect","replace","upgrade","imbue","reforge").contains(obj.get("action")))
 					throw new IOException("unknown operation action");
+				// I06: only the operations that draw their modifiers take a distribution and catalysts
+				final boolean draws=DRAWS.contains(obj.get("action"));
+				if(!draws&&(obj.containsKey("exclude_tags")||obj.containsKey("weights")||obj.containsKey("guarantee")||obj.containsKey("catalysts")))
+					throw new IOException("exclude_tags, weights, guarantee and catalysts belong to operations that draw (imbue, reforge)");
+				Bias.of(obj,"operation "+id);
+				if(obj.containsKey("catalysts"))
+					ids(obj.get("catalysts"),"catalysts",8);
 				ModuleDefinitions.id(obj.get("station"));
 				final String material=ModuleDefinitions.string(obj.get("material"),"material");
 				if(!material.matches("[A-Z][A-Z0-9 _-]{0,79}"))
@@ -164,7 +171,9 @@ public final class ItemModifierRules
 			else if(kind.equals("recipe"))
 			{
 				// I04: a staged production recipe: a work piece, stages settled one at a time, then the result
-				ModuleDefinitions.keys(obj,"staged recipe","schema","kind","id","version","name","station","piece","stages","result");
+				ModuleDefinitions.keys(obj,"staged recipe","schema","kind","id","version","name","station","piece","stages","result","catalysts");
+				if(obj.containsKey("catalysts"))
+					ids(obj.get("catalysts"),"catalysts",8);
 				ModuleDefinitions.id(obj.get("station"));
 				text(obj.get("piece"),"piece");
 				final Object[] stages=ModuleDefinitions.array(obj.get("stages"),"stages");
@@ -188,6 +197,8 @@ public final class ItemModifierRules
 				{
 					ModuleDefinitions.id(result.get("base"));
 					integer(result.get("modifiers"),"result modifiers",0,MAX_MODS);
+					if(obj.containsKey("catalysts")&&integer(result.get("modifiers"),"result modifiers",0,MAX_MODS)==0)
+						throw new IOException("catalysts shape the modifiers a product draws; this result draws none");
 				}
 				else
 				{
@@ -195,6 +206,16 @@ public final class ItemModifierRules
 					if(result.containsKey("modifiers"))
 						throw new IOException("a policy result's rarity decides its modifiers");
 				}
+			}
+			else if(kind.equals("catalyst"))
+			{
+				// I06: an ingredient named at PREPARE that shapes what a craft draws, paid with its costs
+				ModuleDefinitions.keys(obj,"catalyst","schema","kind","id","version","name","material","units","exclude_tags","weights","guarantee");
+				if(!ModuleDefinitions.string(obj.get("material"),"material").matches("[A-Z][A-Z0-9 _-]{0,79}"))
+					throw new IOException("material must be an uppercase resource name");
+				integer(obj.get("units"),"material units",1,1000);
+				if(Bias.of(obj,"catalyst "+id).none())
+					throw new IOException("a catalyst excludes tags, weights tags or guarantees a family");
 			}
 			else
 				throw new IOException("unknown item definition kind");
@@ -216,6 +237,279 @@ public final class ItemModifierRules
 		{
 			return ids(raw.get(field),field,32);
 		}
+		/** a list field that may be left out */
+		public List<String> optional(final String field) throws IOException
+		{
+			return raw.containsKey(field)?ids(raw.get(field),field,32):Collections.<String>emptyList();
+		}
+	}
+	/** I06: the operations that draw their modifiers */
+	public static final List<String> DRAWS=Collections.unmodifiableList(Arrays.asList("imbue","reforge"));
+	/**
+	 * I06: what shapes a draw: tags that leave affixes out, multipliers on the
+	 * weights of affixes with a tag (all that apply multiply together), and a
+	 * family (a tag) that the first modifier drawn must have.  An operation's own
+	 * fields and each catalyst's add up; each part remembers where it came from,
+	 * for the preview.
+	 */
+	public static final class Bias
+	{
+		public static final Bias NONE=new Bias();
+		public final Map<String,String> excluded=new TreeMap<String,String>();
+		public final Map<String,Double> weights=new TreeMap<String,Double>();
+		public final Map<String,List<String>> weightedBy=new TreeMap<String,List<String>>();
+		public String guarantee="", guaranteedBy="";
+		public final List<String> sources=new ArrayList<String>();
+
+		/** a definition's exclude_tags, weights and guarantee */
+		public static Bias of(final JSONObject raw,final String source) throws IOException
+		{
+			final Bias b=new Bias();
+			if(raw.containsKey("exclude_tags"))
+				for(final String t:ids(raw.get("exclude_tags"),"exclude_tags",16))
+					b.excluded.put(t,source);
+			if(raw.containsKey("weights"))
+			{
+				final JSONObject w=ModuleDefinitions.object(raw.get("weights"),"weights");
+				if(w.size()>16)
+					throw new IOException("weights: at most 16 tags");
+				for(final String tag:w.keySet())
+				{
+					ModuleDefinitions.id(tag);
+					final Object v=w.get(tag);
+					if(!(v instanceof Number)||!Double.isFinite(((Number)v).doubleValue())||((Number)v).doubleValue()<0.01||((Number)v).doubleValue()>100)
+						throw new IOException("weights: "+tag+" must be a multiplier from 0.01 to 100 (exclude_tags leaves a tag out)");
+					b.weights.put(tag,Double.valueOf(((Number)v).doubleValue()));
+					b.weightedBy.put(tag,new ArrayList<String>(Arrays.asList(source+" x"+fmt(((Number)v).doubleValue()))));
+				}
+			}
+			if(raw.containsKey("guarantee"))
+			{
+				b.guarantee=ModuleDefinitions.id(raw.get("guarantee"));
+				b.guaranteedBy=source;
+				if(b.excluded.containsKey(b.guarantee))
+					throw new IOException("guarantee "+b.guarantee+" is also an excluded tag");
+			}
+			if(!b.none())
+				b.sources.add(source);
+			return b;
+		}
+
+		/** @return whether it shapes nothing */
+		public boolean none()
+		{
+			return excluded.isEmpty()&&weights.isEmpty()&&guarantee.isEmpty();
+		}
+
+		/** this and another together; two different guarantees cannot both hold, and a family cannot be excluded */
+		public Bias plus(final Bias o) throws IOException
+		{
+			final Bias b=new Bias();
+			b.excluded.putAll(excluded);
+			for(final Map.Entry<String,String> e:o.excluded.entrySet())
+				if(!b.excluded.containsKey(e.getKey()))
+					b.excluded.put(e.getKey(),e.getValue());
+			for(final String t:weights.keySet())
+			{
+				b.weights.put(t,weights.get(t));
+				b.weightedBy.put(t,new ArrayList<String>(weightedBy.get(t)));
+			}
+			for(final String t:o.weights.keySet())
+			{
+				b.weights.put(t,Double.valueOf((b.weights.containsKey(t)?b.weights.get(t).doubleValue():1.0)*o.weights.get(t).doubleValue()));
+				if(!b.weightedBy.containsKey(t))
+					b.weightedBy.put(t,new ArrayList<String>());
+				b.weightedBy.get(t).addAll(o.weightedBy.get(t));
+			}
+			b.guarantee=guarantee;
+			b.guaranteedBy=guaranteedBy;
+			if(o.guarantee.length()>0)
+			{
+				if((guarantee.length()>0)&&!guarantee.equals(o.guarantee))
+					throw new IOException("two guarantees cannot both hold: "+guarantee+" ("+guaranteedBy+") and "+o.guarantee+" ("+o.guaranteedBy+")");
+				b.guarantee=o.guarantee;
+				b.guaranteedBy=guarantee.length()>0?guaranteedBy+", "+o.guaranteedBy:o.guaranteedBy;
+			}
+			if(b.guarantee.length()>0&&b.excluded.containsKey(b.guarantee))
+				throw new IOException("the guaranteed family "+b.guarantee+" ("+b.guaranteedBy+") is excluded by "+b.excluded.get(b.guarantee));
+			b.sources.addAll(sources);
+			for(final String s:o.sources)
+				if(!b.sources.contains(s))
+					b.sources.add(s);
+			return b;
+		}
+
+		/** why an affix is left out, or "" */
+		public String excludes(final Definition a) throws IOException
+		{
+			for(final String t:a.list("tags"))
+				if(excluded.containsKey(t))
+					return "tag "+t+" is excluded by "+excluded.get(t);
+			return "";
+		}
+
+		/** the product of the multipliers for the affix's tags */
+		public double multiplier(final Definition a) throws IOException
+		{
+			double m=1;
+			for(final String t:a.list("tags"))
+				if(weights.containsKey(t))
+					m*=weights.get(t).doubleValue();
+			return m;
+		}
+
+		/** the multipliers that apply, in words, or "" */
+		public String why(final Definition a) throws IOException
+		{
+			final List<String> out=new ArrayList<String>();
+			for(final String t:a.list("tags"))
+				if(weights.containsKey(t))
+					out.add(t+" "+String.join(" and ",weightedBy.get(t)));
+			return String.join("; ",out);
+		}
+
+		/** the rules in words, each with where it came from */
+		public String describe()
+		{
+			return words(true);
+		}
+
+		/** the rules in words alone */
+		public String rules()
+		{
+			return words(false);
+		}
+
+		private String words(final boolean sourced)
+		{
+			if(none())
+				return "no exclusions, multipliers or guarantee";
+			final List<String> out=new ArrayList<String>();
+			for(final Map.Entry<String,String> e:excluded.entrySet())
+				out.add("excludes "+e.getKey()+(sourced?" ("+e.getValue()+")":""));
+			for(final String t:weights.keySet())
+			{
+				// one source: its name; several: each with its own multiplier
+				final List<String> by=weightedBy.get(t);
+				out.add(t+" x"+fmt(weights.get(t).doubleValue())+(!sourced?"":" ("+(by.size()==1?by.get(0).replaceAll(" x[0-9.]+$",""):String.join(", ",by))+")"));
+			}
+			if(guarantee.length()>0)
+				out.add("the first modifier drawn is of the "+guarantee+" family"+(sourced?" ("+guaranteedBy+")":""));
+			return String.join("; ",out);
+		}
+	}
+	static String fmt(final double d)
+	{
+		return (d==Math.rint(d))?Long.toString((long)d):String.format(Locale.ROOT,"%.2f",Double.valueOf(d)).replaceAll("0+$","");
+	}
+	/** I06: a further rule a draw keeps (a loot policy's tiers, tags and budget), given the tiers already used; "" when the affix may be drawn */
+	public interface Filter
+	{
+		String barred(Definition affix,JSONObject record,int used) throws IOException;
+	}
+	public static final Filter OPEN=(a,r,u)->"";
+	/** I06: one affix's place in a draw: its weight after multipliers, or why it is out */
+	public static final class Odds
+	{
+		public final Definition affix;
+		public final double weight;
+		public final String why, multipliers;
+		Odds(final Definition affix,final double weight,final String why,final String multipliers)
+		{
+			this.affix=affix;
+			this.weight=weight;
+			this.why=why;
+			this.multipliers=multipliers;
+		}
+	}
+	/**
+	 * I06: each candidate's weight in the next pick, or why it cannot be drawn:
+	 * the item (kind, level, group, capacity), the further filter, an excluded
+	 * tag, and for the first pick the guaranteed family.
+	 */
+	public static List<Odds> odds(final JSONObject record,final List<Definition> pool,final Bias bias,final boolean first,final Filter filter,final int used,
+		final int level) throws IOException
+	{
+		final List<Odds> out=new ArrayList<Odds>();
+		for(final Definition a:pool)
+		{
+			String why=ineligible(record,a,level);
+			if(why.isEmpty())
+				why=filter.barred(a,record,used);
+			if(why.isEmpty())
+				why=bias.excludes(a);
+			if(why.isEmpty()&&first&&(bias.guarantee.length()>0)&&!a.list("tags").contains(bias.guarantee))
+				why="not of the guaranteed "+bias.guarantee+" family ("+bias.guaranteedBy+")";
+			final double w=((Number)a.raw.get("weight")).doubleValue();
+			out.add(new Odds(a,why.isEmpty()?w*bias.multiplier(a):0,why,bias.why(a)));
+		}
+		return out;
+	}
+	/** I06: the total weight of the affixes that can be drawn */
+	public static double total(final List<Odds> odds)
+	{
+		double t=0;
+		for(final Odds o:odds)
+			if(o.why.isEmpty())
+				t+=o.weight;
+		return t;
+	}
+	/** I06: the odds in words: each affix's chance, or why it cannot be drawn */
+	public static String describe(final List<Odds> odds)
+	{
+		final double t=total(odds);
+		final StringBuilder s=new StringBuilder();
+		for(final Odds o:odds)
+		{
+			s.append("\n  ").append(o.affix.id).append(" (").append(o.affix.name).append(", ").append(o.affix.string("position")).append(" tier ")
+				.append(o.affix.number("tier")).append("): ");
+			if(o.why.isEmpty())
+				s.append(String.format(Locale.ROOT,"%.1f%%",Double.valueOf(100.0*o.weight/t))).append(o.multipliers.isEmpty()?"":" (weight "+fmt(((Number)o.affix.raw.get("weight")).doubleValue())+", "+o.multipliers+")");
+			else
+				s.append("cannot be drawn: ").append(o.why);
+		}
+		return s.toString();
+	}
+	/**
+	 * I06: draws up to count modifiers for a record, one at a time by weight,
+	 * each pick leaving out the groups and slots the ones before it took.  The
+	 * first pick must be of the guaranteed family; if none can be, nothing is
+	 * drawn and the draw is refused.  For each pick, one unit draw chooses the
+	 * affix, then the dice roll its values.
+	 */
+	public static List<JSONObject> draw(final JSONObject record,final List<Definition> pool,final Bias bias,final int level,final int count,
+		final Filter filter,final java.util.function.DoubleSupplier unit,final Roller dice,final java.util.function.Supplier<String> uids) throws IOException
+	{
+		final JSONObject rec=ModuleDefinitions.copy(record);
+		final List<JSONObject> mods=modifiers(rec), drawn=new ArrayList<JSONObject>();
+		int used=0;
+		for(int n=0;n<count;n++)
+		{
+			final List<Odds> odds=odds(rec,pool,bias,n==0,filter,used,level);
+			final double total=total(odds);
+			if(total<=0)
+			{
+				if((n==0)&&(bias.guarantee.length()>0))
+					throw new IOException("no affix of the guaranteed "+bias.guarantee+" family ("+bias.guaranteedBy+") can be drawn for this item");
+				break;
+			}
+			double at=unit.getAsDouble()*total;
+			Definition chosen=null;
+			for(final Odds o:odds)
+				if(o.why.isEmpty())
+				{
+					chosen=o.affix;
+					at-=o.weight;
+					if(at<0)
+						break;
+				}
+			final JSONObject m=rolled(chosen,uids.get(),dice);
+			drawn.add(m);
+			mods.add(m);
+			rec.put("modifiers",mods.toArray());
+			used+=chosen.number("tier");
+		}
+		return drawn;
 	}
 	public static final class Library
 	{
@@ -309,6 +603,9 @@ public final class ItemModifierRules
 					if(!next.string("item_kind").equals(d.string("item_kind")))
 						throw new IOException("successor "+next.key()+" is for "+next.string("item_kind")+", not "+d.string("item_kind"));
 				}
+				if(d.kind.equals("operation")||d.kind.equals("recipe"))
+					for(final String id:d.optional("catalysts"))
+						lib.find(id,0,"catalyst");
 				if(d.kind.equals("recipe")&&((JSONObject)d.raw.get("result")).containsKey("base"))
 					lib.find((String)((JSONObject)d.raw.get("result")).get("base"),0,"base");
 			}
@@ -592,8 +889,63 @@ public final class ItemModifierRules
 				+" suffix, fewer than the item has");
 		return next;
 	}
+	/** I06: an operation's or recipe's own distribution with the catalysts named for it */
+	public static Bias bias(final Definition craft,final List<Definition> catalysts)throws IOException
+	{
+		Bias b=Bias.of(craft.raw,craft.kind+" "+craft.id);
+		for(final Definition c:catalysts)
+		{
+			if(!c.kind.equals("catalyst"))
+				throw new IOException(c.id+" is not a catalyst");
+			if(!craft.optional("catalysts").contains(c.id))
+				throw new IOException(craft.name+" takes "+(craft.optional("catalysts").isEmpty()?"no catalysts":"only the catalysts "+craft.optional("catalysts"))+", not "+c.id);
+			b=b.plus(Bias.of(c.raw,"catalyst "+c.id));
+		}
+		return b;
+	}
+	/** I06: what an operation draws among: its base's pool, every affix, so that the preview can say why each is left out */
+	public static List<Definition> drawPool(final JSONObject record,final Library lib)throws IOException
+	{
+		final List<Definition> out=new ArrayList<Definition>();
+		for(final String id:lib.pinned(record.get("base"),"base").list("pool"))
+			out.add(lib.find(id,0,"affix"));
+		return out;
+	}
+	/** I06: an operation's own limits on its draw: its allow-list and its required modifier tags */
+	public static Filter limits(final Definition op)throws IOException
+	{
+		final List<String> allowed=op.list("affixes"),tags=op.list("modifier_tags");
+		return (a,r,u)->!allowed.isEmpty()&&!allowed.contains(a.id)?"outside this operation's affixes":!a.list("tags").containsAll(tags)
+			?"lacks the operation's required tags "+tags:"";
+	}
+	/** I06 reforge: the record with only its protected modifiers left, and how many go */
+	public static JSONObject reforged(final JSONObject record)throws IOException
+	{
+		final JSONObject next=ModuleDefinitions.copy(record);
+		final List<JSONObject> kept=new ArrayList<JSONObject>();
+		for(final JSONObject m:modifiers(record))
+			if(Boolean.TRUE.equals(m.get("protected")))
+				kept.add(m);
+		next.put("modifiers",kept.toArray());
+		return next;
+	}
+	/** I06: the record an operation's first pick draws for (an imbue's item; a reforge's protected modifiers) */
+	public static JSONObject drawsFor(final JSONObject record,final Definition op)throws IOException
+	{
+		return op.string("action").equals("reforge")?reforged(record):record;
+	}
+	/** I06: the first pick's odds of an operation that draws */
+	public static List<Odds> firstPick(final JSONObject record,final Definition op,final Library lib,final int level,final Bias bias)throws IOException
+	{
+		return odds(drawsFor(record,op),drawPool(record,lib),bias,true,limits(op),0,level);
+	}
 	/** Eligibility only. It must run before payment and before calling any roller. */
 	public static void validate(final JSONObject record,final Definition op,final String selector,final Library lib,final int level)throws IOException
+	{
+		validate(record,op,selector,lib,level,bias(op,Collections.<Definition>emptyList()));
+	}
+	/** Eligibility only, with the distribution (the operation's and its catalysts'). It must run before payment and before calling any roller. */
+	public static void validate(final JSONObject record,final Definition op,final String selector,final Library lib,final int level,final Bias bias)throws IOException
 	{
 		validateSources(record,lib);
 		if(!op.kind.equals("operation"))
@@ -613,17 +965,51 @@ public final class ItemModifierRules
 		}
 		else if(action.equals("upgrade"))
 			successor(record,lib);
+		else if(DRAWS.contains(action))
+		{
+			if(action.equals("reforge")&&modifiers(reforged(record)).size()==modifiers(record).size())
+				throw new IOException(modifiers(record).isEmpty()?"the item has no modifiers to reforge":"every modifier is protected; nothing would be reforged");
+			final List<Odds> first=firstPick(record,op,lib,level,bias);
+			if(total(first)<=0)
+				throw new IOException((bias.guarantee.length()>0?"no affix of the guaranteed "+bias.guarantee+" family ("+bias.guaranteedBy+") can be drawn"
+					:"no affix can be drawn")+" for this item:"+describe(first));
+		}
 		else
 			target(record,op,selector);
+	}
+	/** I06: a unit draw from the dice, for operations that draw */
+	static java.util.function.DoubleSupplier unit(final Roller dice)
+	{
+		return ()->dice.roll(0,(1<<30)-1)/(double)(1<<30);
 	}
 	public static JSONObject transform(final JSONObject original,final Definition op,final String selector,final Library lib,final int level,
 		final String addedUID,final Roller dice)throws IOException
 	{
-		validate(original,op,selector,lib,level);
+		return transform(original,op,selector,lib,level,addedUID,dice,bias(op,Collections.<Definition>emptyList()));
+	}
+	public static JSONObject transform(final JSONObject original,final Definition op,final String selector,final Library lib,final int level,
+		final String addedUID,final Roller dice,final Bias bias)throws IOException
+	{
+		validate(original,op,selector,lib,level,bias);
 		final JSONObject next=ModuleDefinitions.copy(original);
 		final List<JSONObject> mods=modifiers(next);
 		final String action=op.string("action");
-		if(action.equals("add"))
+		if(DRAWS.contains(action))
+		{
+			// I06: imbue draws one more; reforge draws again as many as were not protected
+			final JSONObject from=drawsFor(original,op);
+			final int count=action.equals("imbue")?1:mods.size()-modifiers(from).size();
+			final String[] first={addedUID};
+			final List<JSONObject> drawn=draw(from,drawPool(original,lib),bias,level,count,limits(op),unit(dice),dice,()->{
+				final String u=first[0]!=null?first[0]:UUID.randomUUID().toString();
+				first[0]=null;
+				return u;
+			});
+			mods.clear();
+			mods.addAll(modifiers(from));
+			mods.addAll(drawn);
+		}
+		else if(action.equals("add"))
 			mods.add(rolled(lib.find(selector,0,"affix"),addedUID,dice));
 		else if(action.equals("upgrade"))
 		{

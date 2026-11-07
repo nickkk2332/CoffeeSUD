@@ -132,11 +132,12 @@ try {
 	AT.died(actor("Bleed Prey"), dee); AT.drain();
 	check("action-drain", NR.value(dee, "example.heat") == 0 && last().indexOf("drained 5 example.heat") >= 0, "heat " + NR.value(dee, "example.heat") + " / " + last());
 
+	// (the root casts are auto, which cannot fizzle: the dice depend on the tests run before this one)
 	// two ripostes: a block makes a riposte, whose hit is blocked and makes the other's; then each has run once in the root
 	var xan = actor("Riposte Xan"), yul = actor("Riposte Yul");
 	var xs = composer(xan); composer(yul); blocker(xan); blocker(yul);
 	grant(xan, "example.riposte"); grant(yul, "example.riposte");
-	var castOk = xs.invoke(xan, CM.core.CMParms.parse("CAST example.ember"), yul, false, 0);
+	var castOk = xs.invoke(xan, CM.core.CMParms.parse("CAST example.ember"), yul, true, 0);
 	var chain = last() + " / cast " + castOk;
 	check("mutual-stops", chain.indexOf("Riposte Yul / example.riposte (block): used example.ember on Riposte Xan") >= 0
 		&& chain.indexOf("Riposte Xan / example.riposte (block): used example.ember on Riposte Yul") >= 0
@@ -146,14 +147,14 @@ try {
 	OM.configure("abilities.triggers", "max_depth", "1");
 	var xan2 = actor("Counter Xan"), yul2 = actor("Counter Yul");
 	var xs2 = composer(xan2); composer(yul2); blocker(xan2); blocker(yul2); grant(xan2, "fix.counter"); grant(yul2, "fix.counter");
-	var ok2 = xs2.invoke(xan2, CM.core.CMParms.parse("CAST example.ember"), yul2, false, 0);
+	var ok2 = xs2.invoke(xan2, CM.core.CMParms.parse("CAST example.ember"), yul2, true, 0);
 	check("depth", last().indexOf("Counter Yul / fix.counter (block): used example.ember on Counter Xan") >= 0 && last().indexOf("refused: deeper than 1") >= 0, last() + " / cast " + ok2 + " granted " + AT.grantedIDs(yul2) + " trace " + s(CP.trace(xan2, 1)).substring(0, 400));
 	xan2.makePeace(true); yul2.makePeace(true);
 	// the action budget: one action in the root
 	OM.configure("abilities.triggers", "max_depth", "3"); OM.configure("abilities.triggers", "action_budget", "1");
 	var xan3 = actor("Budget Xan"), yul3 = actor("Budget Yul");
 	var xs3 = composer(xan3); composer(yul3); blocker(xan3); blocker(yul3); grant(xan3, "fix.counter"); grant(yul3, "fix.counter");
-	xs3.invoke(xan3, CM.core.CMParms.parse("CAST example.ember"), yul3, false, 0);
+	xs3.invoke(xan3, CM.core.CMParms.parse("CAST example.ember"), yul3, true, 0);
 	check("budget", last().indexOf("Budget Yul / fix.counter (block): used example.ember on Budget Xan") >= 0 && last().indexOf("refused: the root's action budget is spent") >= 0, last());
 	xan3.makePeace(true); yul3.makePeace(true);
 	OM.configure("abilities.triggers", "action_budget", "8");
