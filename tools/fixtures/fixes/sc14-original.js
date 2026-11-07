@@ -7,6 +7,8 @@ R.setRoomID('UNKNOWN1');N.setRoomID('UNKNOWN2');R.setArea(A);N.setArea(A);
 R.rawDoors()[CM.core.Directions.NORTH]=N;R.setRawExit(CM.core.Directions.NORTH,CMClass.getExit('Open'));
 N.rawDoors()[CM.core.Directions.SOUTH]=R;N.setRawExit(CM.core.Directions.SOUTH,CMClass.getExit('Open'));
 var shoppy=CMClass.getMOB('GenShopkeeper');shoppy.setName('Shoppy');shoppy.bringToLife(R,true);
+// the self-test is of scripts, not of combat: Shoppy's blows must not kill the orc before the script's own kill step
+shoppy.basePhyStats().setDamage(1);shoppy.recoverPhyStats();
 shoppy.getShop().addStoreInventory(CMClass.getWeapon('Dagger'),10,-1);shoppy.getShop().addStoreInventory(CMClass.getWeapon('Shortsword'),10,-1);
 var S=scriptOn(shoppy,'LOAD=progs/scriptableTest.script');
 var oldChannels=''+CMProps.instance().getStr('CHANNELS');

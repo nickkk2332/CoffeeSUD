@@ -98,7 +98,9 @@ def main():
                 'north\ncompose cast embertrial.ember Ashling Red\nwait 2\ntrial status\n'
                 'east\nget ember mantle\nget quilted mantle\nget piercing signet\nwear quilted mantle\nwear piercing signet\ncombatresult stats\n'
                 'west\nnorth\ncompose cast embertrial.ember Slag Sentinel\nwait 2\ntrial status\n'
-                'remove quilted mantle\nwear ember mantle\ncombatresult stats\nnorth\n'
+                # back to camp to rest before the Warden, as the trial advises: the fight is then won from full
+                # health, not by however much the earlier fights happened to leave
+                'remove quilted mantle\nwear ember mantle\ncombatresult stats\nsouth\nsouth\ntrial rest\nnorth\nnorth\nnorth\n'
                 + ('compose cast embertrial.ember Furnace Warden\nwait 2\n' * 5)
                 + 'trial status\nnorth\ntrial claim\ntrial claim\nsouth\nsouth\nsouth\nsouth\ntrial rest\n'
                 + 'trial rules history\nnorth\nnorth\nnorth\nnorth\nsave victory\nquit\nn\n')
