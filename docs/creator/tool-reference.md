@@ -12436,7 +12436,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3502.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3503.
 
 ```text
 Command : WORLD COMBAT
@@ -12487,7 +12487,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3560.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3561.
 
 ```text
 Command : WORLD ITEMMODS
@@ -12514,7 +12514,7 @@ docs/creator/17-item-modifiers-crafting.md.
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3522.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3523.
 
 ```text
 Command : WORLD MODULES

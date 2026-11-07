@@ -19,6 +19,28 @@ seven rooms, training, support builds, equipment, scripted enemies, a boss and
 saved completion. Its creation tool publishes a separate deployment ready for
 ordinary play, using the opt-in Stage 1–3 systems.
 
+## Worked packs
+
+Three packs build on the Ember Trial and use several module families together.
+Each guide gives the create, play, save and restore steps; they install into
+one Ember Trial deployment together:
+
+- [the guild laboratory](guild-laboratory/README.md): a fellowship's research
+  track, advanced by a staged recipe at a laboratory bench;
+- [the bonded familiar](bonded-familiar/README.md): a charm whose kill calls an
+  ember wisp, and a bond track that grows with each kill;
+- [the branching expedition](branching-expedition/README.md): a chart's branch,
+  a generated crypt to clear, and spoils banked until claimed.
+
+The support build is the [ability-composition pack](ability-composition/README.md)
+played in the Ember Trial. Each optional module family also has a small pack of
+its own: [named resources](named-resources/README.md),
+[causal triggers](causal-triggers/README.md), [reward escrow](reward-escrow/README.md),
+[the encounter director](encounter-director/README.md), [expeditions](expeditions/README.md),
+[progression tracks](progression-tracks/README.md), [item modifiers](item-modifiers/README.md),
+[the workbench](workbench/README.md), [loot policies](loot-policies/README.md),
+[combat profiles](combat-profiles/README.md) and a [build simulation](simulation/README.md).
+
 ## Automated tour
 
 From the repository root, with a JDK on PATH:

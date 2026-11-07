@@ -57,7 +57,9 @@ string field, `runs`.
 | `attempts` | 1 | Deaths inside the instance the run survives. |
 | `party` | 4 | The most characters who go: the opener and their party in the room. |
 | `tier` | 1 | The chart's tier is kept within `min` and `max`, and given to the generator as `TIER`. |
-| `activity` | none | A [reward escrow](36-reward-escrow.md) activity: a failed run ends it for the party with `on_fail`. |
+| `activity` | none | A [reward escrow](36-reward-escrow.md) activity: a failed run ends it for the party with `on_fail`; a completed run ends it as completed, which banks its rewards. |
+| `complete` | `encounter` | What completes the run: `encounter`, an [encounter](37-encounter-director.md) completed inside the instance; `cleared`, the last foe inside defeated. |
+| `reward` | none | A reward bundle each member is offered in the run's `activity` when the run is completed (the activity is required). |
 | `variables` | none | Generator variables set for the instance (upper case; `SEED` is the chart's own). |
 
 ## Charts
@@ -95,8 +97,14 @@ restore, rejoin the same instance.
 - **Attempts.** A participant's death inside the run's instance uses an attempt.
   When none is left, the run fails: the party is brought to the return room, the
   instance goes, and the run's escrow activity ends with `on_fail`.
-- **Completion.** An [encounter](37-encounter-director.md) completed inside the
-  instance completes the run.
+- **Completion.** With `"complete": "encounter"`, an [encounter](37-encounter-director.md)
+  completed inside the instance completes the run. With `"cleared"`, the run is
+  complete when a foe falls and none is left standing inside: a foe is a monster
+  that is not in the party, not summoned and not following a participant. Each
+  member is told `The expedition is complete.`; the `reward` is offered to each
+  in the activity, and the activity ends as completed, banking what it holds. The
+  [branching expedition](examples/branching-expedition/README.md) is a worked
+  example.
 - **Saves.** The run is in the campaign save with its instance's name; the
   generated instance is saved with the world (chapter 31), so a restore finds
   the same instance with the same attempts left.

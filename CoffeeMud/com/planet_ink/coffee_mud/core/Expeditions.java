@@ -116,11 +116,15 @@ public final class Expeditions
 		public final int				tierMin;
 		public final int				tierMax;
 		public final String				activity;
+		/** how the run completes: an encounter completed inside ("encounter"), or every foe in the instance defeated ("cleared") */
+		public final String				complete;
+		/** a reward bundle offered to each participant when the run completes, then banked with the activity */
+		public final String				reward;
 		public final Map<String, String>	variables	= new TreeMap<String, String>();
 
 		Def(final Node n) throws IOException
 		{
-			n.allow("schema", "id", "version", "title", "destination", "return_room", "modifiers", "offer", "choose", "costs", "attempts", "party", "tier", "activity", "variables");
+			n.allow("schema", "id", "version", "title", "destination", "return_room", "modifiers", "offer", "choose", "costs", "attempts", "party", "tier", "activity", "variables", "complete", "reward");
 			final Node d = n.required("destination");
 			d.allow("area", "gated");
 			area = d.string("area");
@@ -172,6 +176,10 @@ public final class Expeditions
 				tierMax = (int)t.integer("max", tierMin, tierMin, 100);
 			}
 			activity = n.has("activity") ? n.id("activity") : "";
+			complete = n.choice("complete", "encounter", "encounter", "cleared");
+			reward = n.has("reward") ? n.id("reward") : "";
+			if((reward.length() > 0) && activity.isEmpty())
+				throw n.error("reward", "a completion reward is offered in the run's activity: name one");
 			final Node v = n.object("variables");
 			if(v != null)
 			{
@@ -276,6 +284,35 @@ public final class Expeditions
 				out.add(String.valueOf(o));
 		}
 		return out;
+	}
+
+	/** a foe fell: in the instance of an open run that completes when cleared, the run completes once no foe is left */
+	private static void foeFell(final JSONObject st, final MOB victim) throws IOException
+	{
+		final Area A = (victim.location() == null) ? null : victim.location().getArea();
+		if(A == null)
+			return;
+		for(final String k : runs(st).keySet())
+		{
+			final JSONObject run = (JSONObject)runs(st).get(k);
+			if(!open(run) || !A.Name().equals(run.get("instance")) || !defOfRun(run).value.complete.equals("cleared"))
+				continue;
+			final List<String> party = party(run);
+			for(final Enumeration<Room> e = A.getProperMap(); e.hasMoreElements();)
+			{
+				final Room R = e.nextElement();
+				for(int i = 0; i < R.numInhabitants(); i++)
+				{
+					final MOB M = R.fetchInhabitant(i);
+					if((M == null) || (M == victim) || M.amDead() || !M.isMonster() || party.contains(InstanceIds.reference(M))
+					|| (M.fetchEffect("Prop_Summoned") != null) || ((M.amFollowing() != null) && party.contains(InstanceIds.reference(M.amFollowing()))))
+						continue;
+					return; // a foe is left
+				}
+			}
+			completed(victim.location());
+			return;
+		}
 	}
 
 	/** Q05: the open run a character is part of, as its number and record, or null; it reads only */
@@ -661,7 +698,10 @@ public final class Expeditions
 			final JSONObject st = state();
 			final Map.Entry<String, JSONObject> r = runOf(st, victim);
 			if(r == null)
+			{
+				foeFell(st, victim); // a foe: a run that completes when cleared may be complete
 				return;
+			}
 			final JSONObject run = r.getValue();
 			if(!victim.location().getArea().Name().equals(run.get("instance")))
 				return;
@@ -721,7 +761,31 @@ public final class Expeditions
 				{
 					run.put("status", "complete");
 					store(st);
-					ModuleStats.count(FAMILY, defOfRun(run).id, "completed");
+					final Entry<Def> e = defOfRun(run);
+					ModuleStats.count(FAMILY, e.id, "completed");
+					// the completion reward, offered to each participant and banked with the run's activity
+					for(final String ref : party(run))
+					{
+						final Object o = InstanceIds.find(ref);
+						if(!(o instanceof MOB))
+							continue;
+						final MOB M = (MOB)o;
+						try
+						{
+							if(!e.value.activity.isEmpty() && RewardEscrow.enabled())
+							{
+								if(!e.value.reward.isEmpty())
+									RewardEscrow.offer(M, e.value.activity, e.value.reward, "expedition:" + k);
+								RewardEscrow.end(M, e.value.activity, "complete");
+							}
+						}
+						catch(final IOException x)
+						{
+							Log.errOut("Expeditions", M.Name() + "'s completion reward: " + x.getMessage());
+						}
+						Provenance.event(M, MODULE, e.key(), "expedition " + k + " complete"); // Q05
+						M.tell("The expedition is complete." + (e.value.reward.isEmpty() ? "" : " Its reward waits for you: REWARDS."));
+					}
 					return;
 				}
 			}

@@ -51,7 +51,7 @@ An earning rule has `on` and an `amount` (default 1):
 | --- | --- | --- |
 | `kill` | A character track: the killer. An organization track: each of the killer's organizations. An item track: each item the killer wears or wields that carries the track. | A kill. |
 | `cast` | As for kills. With `skill`, only that composed skill counts. | A composed cast resolves. |
-| `craft` | As for kills. | A [modifier craft](17-item-modifiers-crafting.md) settles. |
+| `craft` | As for kills. | A [modifier craft](17-item-modifiers-crafting.md) settles; a staged recipe counts once, when its last stage makes the product. |
 | `contribute` | An organization track. | A member gives coin with `TRACKS CONTRIBUTE`, at `money_per_point`. |
 | `script` | Any. | A script grants points (below). |
 

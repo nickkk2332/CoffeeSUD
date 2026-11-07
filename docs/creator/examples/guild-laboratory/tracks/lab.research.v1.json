@@ -1,0 +1,11 @@
+{
+  "schema": 1, "id": "lab.research", "version": 1, "title": "Laboratory research",
+  "owner": "organization", "points": "research",
+  "earn": [{"on": "craft", "amount": 3}, {"on": "contribute", "money_per_point": 10}],
+  "curve": {"type": "table", "points": [3, 9]},
+  "milestones": [
+    {"level": 1, "title": "Benches set up", "unlock": "lab-benches", "message": "The laboratory's benches are set up."},
+    {"level": 2, "title": "Furnace lit", "unlock": "lab-furnace", "message": "The laboratory's furnace is lit."}
+  ],
+  "reset": "never"
+}

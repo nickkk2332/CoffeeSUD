@@ -1,6 +1,6 @@
 # Phase 1 and the Q proposals: build plan
 
-Status: in progress. This is the working plan for finishing every Q proposal
+Status: done (see the catalog's [implementation status](proposals.md#implementation-status)). This was the working plan for finishing every Q proposal
 (Q01 to Q12) and the dossier's phase 1 (A01, A02, A03, A04, A09, A15, I01, I02,
 I03, I04, I18, G01, G03, P01, with Q03, Q05, Q06, Q07, Q08 and Q12 alongside).
 Each item is built to the MVP and acceptance lines of
@@ -203,4 +203,4 @@ before anything is merged.
 | 8 | I02 loot policies, I04 operations, Q07 loot view | Done |
 | 9 | Q02 references, Q03 compare, Q05 ledgers, Q12 report | Done |
 | 10 | Q04 simulation | Done |
-| 11 | Q10 packs, handbook chapters, catalog status | |
+| 11 | Q10 packs, handbook chapters, catalog status | Done |

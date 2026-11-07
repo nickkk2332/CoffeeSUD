@@ -287,3 +287,11 @@ The engine's `.play` runner uses DEV for ASSERT diagnostics; movement gates and
 creator-command denial are verified in the main checker's ordinary campaigns.
 Headless CHECK=1 reports zero errors; two warnings concern the retained starter
 area's disconnected rooms and scaffold text, rather than the adventure.
+
+## Worked packs
+
+Three [worked packs](../README.md#worked-packs) extend a published Ember Trial
+deployment: a [guild laboratory](../guild-laboratory/README.md), a
+[bonded familiar](../bonded-familiar/README.md) and a
+[branching expedition](../branching-expedition/README.md). The guild
+laboratory's guide shows how to install them.

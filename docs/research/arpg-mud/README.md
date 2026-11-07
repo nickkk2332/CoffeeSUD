@@ -45,6 +45,14 @@ receipts. The Ember Trial adds a playable forge. Arbitrary effect layers,
 rarity/guarantee policies, new currencies, staged choices and escrow remain
 proposals. The new family remains default off.
 
+Phase 1 and every Q entry are now built to their smallest useful version and
+acceptance line, as default-off modules: named resources, causal triggers,
+reward escrow, the encounter director, expeditions, progression tracks, loot
+policies and item operations, with cross-family references, build comparison,
+ledgers, simulation and work limits for creators, and three worked packs. The
+catalog's [implementation status](proposals.md#implementation-status) lists each
+entry with its guide and tests; everything else remains a proposal.
+
 ## Reading routes
 
 | Start here if you want… | Guide |

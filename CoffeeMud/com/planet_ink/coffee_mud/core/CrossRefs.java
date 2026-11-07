@@ -132,6 +132,7 @@ public final class CrossRefs
 			for(int m = 0; m < e.value.modifiers.size(); m++)
 				add(out, e.path, "/modifiers/" + m + "/mob_effect/id", "ability", e.value.modifiers.get(m).effectId);
 			add(out, e.path, "/activity", "activity", e.value.activity);
+			add(out, e.path, "/reward", "reward", e.value.reward);
 		}
 		// P01 tracks
 		for(final Entry<ProgressionTracks.Track> e : ProgressionTracks.load().entries.values())
