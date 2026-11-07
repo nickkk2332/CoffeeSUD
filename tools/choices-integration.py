@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""I07 and I17 saved choices in real play, across fresh processes: a coffer's veiled charms; a reveal at the seer's table
-and an offering at the ember altar, each drawn once; a real save and restore show the same options; a pick then settles
-each, once."""
+"""I07 and I17 saved choices, and I14 offer books, in real play, across fresh processes: a coffer's veiled charms; a reveal
+at the seer's table and an offering at the ember altar, each drawn once; a seller's offer book with one offer held; a real
+save and restore show the same options and the same book; a pick then settles each choice, once."""
 import importlib.util
 import os
 from pathlib import Path
@@ -66,8 +66,16 @@ room.addItem(C);
 var A = CC.getItem('GenResource'); A.setName('some ember amber'); A.setMaterial(CM.Items.interfaces.RawMaterial.RESOURCE_AMBER); A.basePhyStats().setWeight(4); A.setBaseValue(4); A.recoverPhyStats(); room.addItem(A);
 var T = CC.getArmor('GenArmor'); T.setName('an altar charm'); T.setDisplayText('An altar charm lies here.'); T.recoverPhyStats(); CL.catalog().addCatalog(T); T.destroy();
 CL.database().DBUpdateItem('CATALOG_ITEMS', CL.catalog().getCatalogItem('an altar charm'));
+['a trader lamp', 'a trader rope', 'a trader drum', 'a trader cap'].forEach(function (n, i) {
+	var W = CC.getItem('GenItem'); W.setName(n); W.setDisplayText(n + ' lies here.'); W.setBaseValue(10 * (i + 1)); W.recoverPhyStats(); CL.catalog().addCatalog(W); W.destroy();
+	CL.database().DBUpdateItem('CATALOG_ITEMS', CL.catalog().getCatalogItem(n));
+});
+var V = CC.getMOB('GenMob'); V.setName('Trader Tam'); V.setDisplayText('Trader Tam keeps a book of offers here.'); V.basePhyStats().setLevel(1); V.recoverPhyStats();
+var B = CC.getAbility('Prop_OfferBook'); B.setMiscText(JSON.stringify({items: ['a trader lamp', 'a trader rope', 'a trader drum', 'a trader cap'], size: 3, reroll: 5}));
+V.addNonUninvokableEffect(B); V.bringToLife(room, true);
 CL.database().DBUpdateItems(room);
-mob().tell('FIXSETUP seer and altar ready');
+CL.database().DBUpdateMOBs(room);
+mob().tell('FIXSETUP seer, altar and trader ready');
 """
 
 try:
@@ -76,22 +84,26 @@ try:
     creator = world / 'resources/creator'; creator.mkdir(parents=True, exist_ok=True)
     (creator / 'choices-build.js').write_text(BUILD)
     built = play('build', 'Trialbuilder\njrun /resources/creator/choices-build.js\nworld check only=modules,itemmods,loot,choices\nsave\nquit\nY\n', None)
-    check('FIXSETUP seer and altar ready' in built and 'WORLD CHECK: 0 errors' in built, 'stations, coffer and catalog item set up', built[-2500:])
+    check('FIXSETUP seer, altar and trader ready' in built and 'WORLD CHECK: 0 errors' in built, 'stations, coffer and catalog item set up', built[-2500:])
 
     # a new game: two veiled charms; reveal the first, offer the second; save
     first = play('first', 'Seeker\n' + newchar + 'open seer coffer\n#expect You open\nget all from seer coffer\nget amber\n'
-                 'choices open choices.seer charm\nchoices open choices.altar 2.charm\nchoices\nsave first\nquit\nn\n', 'NEW')
+                 'choices open choices.seer charm\nchoices open choices.altar 2.charm\nchoices\noffers\noffers hold 2\noffers\nsave first\nquit\nn\n', 'NEW')
     norm = ' '.join(first.split())
     check('You reveal veiled modifier 1 of' in norm and 'it is gone' in norm, 'revealed and offered', first[-3000:])
-    shown = options(first)
+    shown = [l for l in options(first) if ' - ' not in l or '(' in l.split(' - ')[0]]
+    book = [l for l in options(first) if re.match(r'^\d\) a trader ', l)]
+    check(len(book) == 6 and '[held for you]' in book[4] and '[held for you]' not in ''.join(book[:3]), 'the offer book drawn, one offer held', '\n'.join(book))
     # the open commands' menus, then CHOICES lists both again: the same lines
     half = len(shown) // 2
     check(half >= 4 and sorted(shown[:half]) == sorted(shown[half:]), 'CHOICES lists what was drawn', '\n'.join(shown))
 
     # a real restore: the same options; opening the reveal again is refused; each pick settles once
-    second = play('second', 'choices\nchoices open choices.seer charm\nchoices pick charm 1\nchoices pick charm 1\nchoices pick offering 1\n'
+    second = play('second', 'offers\nchoices\nchoices open choices.seer charm\nchoices pick charm 1\nchoices pick charm 1\nchoices pick offering 1\n'
                   'choices pick offering 1\ninventory\nsave second\nquit\nn\n', 'first')
-    again = options(second)
+    again = [l for l in options(second) if not re.match(r'^\d\) a trader ', l)]
+    restored = [l for l in options(second) if re.match(r'^\d\) a trader ', l)]
+    check(restored[:3] == book[3:], 'the same offer book after the restore, the hold kept', '\n'.join(book[3:]) + '\n--\n' + '\n'.join(restored))
     listed = again[:half]
     check(sorted(listed) == sorted(shown[half:]), 'the same options after the restore', '\n'.join(shown[half:]) + '\n--\n' + '\n'.join(listed))
     norm2 = ' '.join(second.split())

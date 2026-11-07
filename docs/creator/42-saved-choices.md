@@ -1,4 +1,4 @@
-# Saved choices: reveals and offerings
+# Saved choices: reveals, offerings and offer books
 
 [Handbook](README.md) · [Example pack](examples/saved-choices/README.md)
 
@@ -6,13 +6,16 @@ The optional module `items.choices` keeps a few options until the player
 chooses one. Each choice is drawn **once**, from the campaign's own `offers`
 random stream (`WORLD MODULES STREAMS`), and kept: opening it again, or
 restoring a save, shows the same options, and choosing settles it once. There
-are two kinds:
+are three kinds:
 
 - a **reveal** turns a *veiled* modifier of a tracked item into a few legal
   affixes, kept on the item, of which the player picks one;
 - an **offering** takes an item for good and offers a few replacements, kept on
   the character, of which the player takes one, or abandons them all by the
-  offering's refund rule.
+  offering's refund rule;
+- a seller's **offer book** (no module needed) keeps a few offers, drawn the
+  same way and kept with the seller until its refresh, with one offer the
+  player can hold and a paid reroll.
 
 ## Turn it on
 
@@ -127,6 +130,42 @@ settle it once: a second one finds no offering open. The open offering is
 kept in 4,096 characters, so an offering has at most three options of three
 modifiers; WORLD CHECK flags a policy whose rarities give more.
 
+## Offer books
+
+A seller's **offer book** works the same way, with no module to turn on: a
+`Prop_OfferBook` on a mob (or an item) holds the seller's list and the book.
+
+```text
+Prop_OfferBook {"items":[{"name":"a steel sword","weight":3},"a leather cap","a lantern","a rope"],
+ "size":3,"price":150,"reroll":25,"refresh":"1 mudday"}
+```
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `items` | required | 1 to 32 catalog item names, or `{"name", "weight"}` (weight above 0, default 1). |
+| `size` | 3 | How many offers, 1 to 8, each a different item. |
+| `price` | 100 | Each offer's price, in percent of the item's value (at least 1). |
+| `reroll` | 0 | The fee to draw the book again on request; 0 for none. |
+| `refresh` | `1 mudday` | How long a drawn book lasts, as a quest board's `REFRESH`. |
+
+The first `OFFERS` in the seller's room draws the book from the `offers`
+stream; it is kept in the property's text, so it is saved with the seller, and
+`OFFERS` shows the same book until the refresh has passed. Then the offers not
+held are drawn again.
+
+- `OFFERS HOLD n` keeps one offer for you: it stays through rerolls and
+  refreshes until you buy it or `OFFERS RELEASE` it. Holding another lets the
+  first go.
+- `OFFERS REROLL` draws every offer not held again, for the fee, as one
+  transaction: when you cannot pay, it is refused and nothing is drawn.
+- `OFFERS BUY n` takes the price (in the seller's currency) and gives you a
+  copy of the catalog item; its place stays empty until the book is drawn
+  again.
+
+A property whose text cannot be read, or names an item not in the catalog,
+says so when inspected. Test: [i14-offers.js](../../tools/fixtures/fixes/i14-offers.js);
+the played test below also saves and restores a book with an offer held.
+
 ## Inspect and test
 
 - `CHOICES` lists the open offering, the revealed veils on what you carry, and
@@ -136,6 +175,7 @@ modifiers; WORLD CHECK flags a policy whose rarities give more.
 - `WORLD MODULES STREAMS` shows the `offers` stream's counter: a preview never
   moves it, an opening moves it by what it drew.
 
-Tests: [i07-choices.js](../../tools/fixtures/fixes/i07-choices.js) (the rules)
-and [choices-integration.py](../../tools/choices-integration.py) (real play, a
-real save and restore).
+Tests: [i07-choices.js](../../tools/fixtures/fixes/i07-choices.js) and
+[i14-offers.js](../../tools/fixtures/fixes/i14-offers.js) (the rules), and
+[choices-integration.py](../../tools/choices-integration.py) (real play, a real
+save and restore of the choices and of an offer book).
