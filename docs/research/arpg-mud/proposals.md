@@ -46,6 +46,9 @@ reference system; each guide says what it leaves out.
 | Q11 | Built | Module composition, conflicts and retirement | [Ch. 14](../../creator/14-optional-modules.md) | modules-integration.py |
 | Q12 | Built | `WORLD MODULES REPORT`, declared limits | [Ch. 41](../../creator/41-inspection-and-limits.md#work-and-limits) | q12-stress.js |
 
+Phase 2 is planned, with each remaining entry audited against what the engine
+already does, in the [phase 2 plan](phase2-plan.md).
+
 The support build of Q10 is the [ability-composition pack](../../creator/examples/ability-composition/README.md)
 played in the [Ember Trial](../../creator/examples/ember-trial/README.md). Tests run
 from `tools/fixes.sh` (the `.js` fixtures) and `tools/check.sh`.
