@@ -94,6 +94,10 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 	protected final Set<String>		spawned			= new TreeSet<String>();
 	protected final Set<String>		granted			= new TreeSet<String>();
 	protected final List<String>	notes			= new ArrayList<String>();
+	/** G04: the modifiers offered now, those chosen this run, and the rounds already offered before */
+	protected final List<String>	offers			= new ArrayList<String>();
+	protected final List<String>	chosen			= new ArrayList<String>();
+	protected final Set<String>		offered			= new TreeSet<String>();
 	protected Room					host			= null;
 
 	@Override
@@ -220,6 +224,9 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 		actors.clear();
 		spawned.clear();
 		notes.clear();
+		offers.clear();
+		chosen.clear();
+		offered.clear();
 		for(final MOB P : players())
 			participants.add(InstanceIds.reference(P));
 		if(d.value.scaling.equals("party_size"))
@@ -303,11 +310,30 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 				}
 				final MOB M = (MOB)proto.copyOf();
 				M.bringToLife(host, true);
-				if(scale != 100)
+				// G04: a trial's chosen modifiers make later rounds' foes tougher
+				int hpScale = scale;
+				final List<String> trialTraits = new ArrayList<String>();
+				for(final EncounterDirectors.Modifier m : chosenModifiers(d))
 				{
-					M.baseState().setHitPoints((int)Math.max(1, ((long)M.baseState().getHitPoints() * scale) / 100));
+					hpScale += m.hp;
+					trialTraits.addAll(m.traits);
+				}
+				if(hpScale != 100)
+				{
+					M.baseState().setHitPoints((int)Math.max(1, ((long)M.baseState().getHitPoints() * hpScale) / 100));
 					M.recoverMaxState();
 					M.resetToMaxState();
+				}
+				if(!trialTraits.isEmpty())
+				{
+					try
+					{
+						EliteTraits.apply(M, trialTraits, encounter + "#" + run);
+					}
+					catch(final IOException e)
+					{
+						note("trial traits for " + M.Name() + " not given: " + e.getMessage());
+					}
 				}
 				if(s.traits != null)
 				{
@@ -454,6 +480,8 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 			final Phase last = d.phases.get(phase);
 			reward(last.reward, "phase-" + last.id);
 			reward(d.reward, "complete");
+			for(final EncounterDirectors.Modifier m : chosenModifiers(d))
+				reward(m.reward, "trial-" + m.id); // G08: a chosen device changes what the trial pays
 			if(d.bank && RewardEscrow.enabled())
 			{
 				for(final MOB P : present())
@@ -470,8 +498,130 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 		{
 			final Phase next = d.phases.get(phase + 1);
 			if(begins(next))
+			{
+				// G04: a trial offers its modifiers before each later round, once; the round waits for a choice
+				if(!d.modifiers.isEmpty() && !offered.contains(next.id) && offer(d, next))
+					return;
+				if(!offers.isEmpty())
+					return;
 				enter(phase + 1);
+			}
 		}
+	}
+
+	/** G04: the modifiers not yet chosen, in an order drawn from the encounters stream; false when none is left */
+	protected boolean offer(final Def d, final Phase next)
+	{
+		offered.add(next.id);
+		final List<EncounterDirectors.Modifier> left = new ArrayList<EncounterDirectors.Modifier>();
+		for(final EncounterDirectors.Modifier m : d.modifiers)
+			if(!chosen.contains(m.id))
+				left.add(m);
+		if(left.isEmpty())
+			return false;
+		for(int i = left.size() - 1; i > 0; i--)
+		{
+			final int j = RandomStreams.roll(RandomStreams.draw(RandomStreams.ENCOUNTERS), i + 1) - 1;
+			final EncounterDirectors.Modifier t = left.get(i);
+			left.set(i, left.get(j));
+			left.set(j, t);
+		}
+		offers.clear();
+		final StringBuilder s = new StringBuilder("The trial offers a choice before the next round:");
+		for(int i = 0; (i < left.size()) && (i < d.offers); i++)
+		{
+			offers.add(left.get(i).id);
+			s.append(" ").append(i + 1).append(". ").append(left.get(i).title).append(".");
+		}
+		tellRoom(s.append(" TRIAL CHOOSE [number] to go on; TRIAL STOP to take what you have won.").toString());
+		note("offered " + offers + " before " + next.id);
+		ModuleStats.count(EncounterDirectors.FAMILY, encounter, "trial offers");
+		return true;
+	}
+
+	/** G04: the chosen modifiers */
+	protected List<EncounterDirectors.Modifier> chosenModifiers(final Def d)
+	{
+		final List<EncounterDirectors.Modifier> out = new ArrayList<EncounterDirectors.Modifier>();
+		for(final EncounterDirectors.Modifier m : d.modifiers)
+			if(chosen.contains(m.id))
+				out.add(m);
+		return out;
+	}
+
+	@Override
+	public synchronized String trial(final MOB mob, final String what)
+	{
+		try
+		{
+			final Def d = def().value;
+			if(d.modifiers.isEmpty())
+				return "This encounter is not a trial.";
+			final List<String> w = CMParms.parse((what == null) ? "" : what);
+			if(w.isEmpty())
+			{
+				final StringBuilder s = new StringBuilder("Trial: ").append(d.phases.size()).append(" rounds; round ").append(phase + 1).append(".");
+				if(!chosenModifiers(d).isEmpty())
+				{
+					s.append(" Chosen:");
+					for(final EncounterDirectors.Modifier m : chosenModifiers(d))
+						s.append(" ").append(m.title).append(m.hp > 0 ? " (foes +" + m.hp + "% health)" : "").append(m.traits.isEmpty() ? "" : " (foes " + m.traits + ")").append(m.reward.isEmpty() ? "" : " (reward " + m.reward + ")").append(";");
+				}
+				if(!offers.isEmpty())
+				{
+					s.append(" Offered:");
+					for(int i = 0; i < offers.size(); i++)
+						s.append(" ").append(i + 1).append(". ").append(modifier(d, offers.get(i)).title).append(".");
+					s.append(" TRIAL CHOOSE [number] or TRIAL STOP.");
+				}
+				return s.toString();
+			}
+			if(!stage.equals("active") || offers.isEmpty())
+				return "There is no choice to make now: the trial offers one between rounds.";
+			if(w.get(0).equalsIgnoreCase("STOP"))
+			{
+				offers.clear();
+				if(!d.activity.isEmpty() && RewardEscrow.enabled())
+				{
+					for(final MOB P : present())
+						RewardEscrow.bank(P, d.activity);
+				}
+				stage = "complete";
+				note("run " + run + " stopped by " + mob.Name() + " after round " + (phase + 1));
+				tellRoom(mob.Name() + " ends the trial; what was won is banked.");
+				ModuleStats.count(EncounterDirectors.FAMILY, encounter, "trials stopped");
+				hook("DIRECTOR_STOPPED");
+				return "You end the trial after round " + (phase + 1) + ".";
+			}
+			if(w.get(0).equalsIgnoreCase("CHOOSE") && (w.size() > 1) && CMath.isInteger(w.get(1)))
+			{
+				final int n = CMath.s_int(w.get(1));
+				if((n < 1) || (n > offers.size()))
+					return "Choose 1 to " + offers.size() + ".";
+				final EncounterDirectors.Modifier m = modifier(d, offers.get(n - 1));
+				chosen.add(m.id);
+				offers.clear();
+				note(mob.Name() + " chose " + m.id);
+				tellRoom(mob.Name() + " chooses " + m.title + ".");
+				ModuleStats.count(EncounterDirectors.FAMILY, m.id, "chosen");
+				if(phase + 1 < d.phases.size())
+					enter(phase + 1);
+				return "You choose " + m.title + ".";
+			}
+			return "TRIAL, TRIAL CHOOSE [number] or TRIAL STOP.";
+		}
+		catch(final IOException e)
+		{
+			return "The trial is unavailable: " + e.getMessage();
+		}
+	}
+
+	private static EncounterDirectors.Modifier modifier(final Def d, final String id) throws IOException
+	{
+		for(final EncounterDirectors.Modifier m : d.modifiers)
+			if(m.id.equals(id))
+				return m;
+		throw new IOException("no modifier " + id);
 	}
 
 	protected boolean complete(final Def d)
@@ -566,6 +716,9 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 		actors.clear();
 		participants.clear();
 		spawned.clear();
+		offers.clear();
+		chosen.clear();
+		offered.clear();
 		stage = "idle";
 		phase = -1;
 		awayTicks = 0;
@@ -672,6 +825,9 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 		o.put("actors", as.toArray(new JSONObject[0]));
 		o.put("spawned", spawned.toArray(new String[0]));
 		o.put("granted", granted.toArray(new String[0]));
+		o.put("offers", offers.toArray(new String[0]));
+		o.put("chosen", chosen.toArray(new String[0]));
+		o.put("offered", offered.toArray(new String[0]));
 		return "<DIRECTOR>" + CMLib.xml().parseOutAngleBrackets(ModuleDefinitions.json(o)) + "</DIRECTOR>";
 	}
 
@@ -717,6 +873,18 @@ public class EncounterDirector extends StdBehavior implements EncounterDirectors
 			granted.clear();
 			for(final Object p : (Object[])o.get("granted"))
 				granted.add(String.valueOf(p));
+			offers.clear();
+			chosen.clear();
+			offered.clear();
+			if(o.get("offers") instanceof Object[])
+				for(final Object p : (Object[])o.get("offers"))
+					offers.add(String.valueOf(p));
+			if(o.get("chosen") instanceof Object[])
+				for(final Object p : (Object[])o.get("chosen"))
+					chosen.add(String.valueOf(p));
+			if(o.get("offered") instanceof Object[])
+				for(final Object p : (Object[])o.get("offered"))
+					offered.add(String.valueOf(p));
 		}
 		catch(final Exception e)
 		{

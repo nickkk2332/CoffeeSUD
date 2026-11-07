@@ -126,13 +126,47 @@ A spawn entry names them:
 - `WORLD DIRECTORS CHECK` reports a trait that is not installed and a trait
   file's own problems. The director's notes say what each actor was given.
 
+## Escalating trials
+
+A director with a `trial` offers a choice between rounds (fixture
+`g04-trials.js`):
+
+```json
+"trial": {"offers": 2, "modifiers": [
+  {"id": "hardy", "title": "Hardy foes", "hp": 100},
+  {"id": "fury", "title": "Furious foes", "traits": ["example.fury"]},
+  {"id": "bounty", "title": "A bounty", "reward": "example.room-two"}
+]}
+```
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `offers` | 3 | How many modifiers are offered at once (1 to 5). |
+| `modifiers` | required | One to twelve: `id`, `title`, and what choosing it does: `hp` (percent more health for every later foe, 0 to 500), `traits` (up to four [elite traits](#elite-traits) for every later foe), `reward` (a bundle paid when the trial completes: a device that changes what the trial pays). |
+
+- **Between rounds.** When a later phase would begin, the director first
+  offers modifiers not yet chosen, in an order drawn from the encounters stream,
+  and the phase waits: `The trial offers a choice before the next round: 1. Hardy
+  foes. 2. A bounty.` Each round is offered once.
+- **`TRIAL`** shows the round, what was chosen and what is offered;
+  **`TRIAL CHOOSE n`** takes one and the next round begins at once, its foes
+  changed by every modifier chosen so far; **`TRIAL STOP`** ends the trial
+  there: the run's activity is banked for the participants (what was won is
+  kept, [chapter 36](36-reward-escrow.md)), the completion and the modifiers'
+  rewards are not paid, and the room's scripts hear `DIRECTOR_STOPPED`.
+- **Completion** pays the encounter's reward and then each chosen modifier's.
+- **Saved.** The offers, the choices and the rounds already offered are in the
+  director's saved state.
+- `WORLD DIRECTORS CHECK` reports a modifier naming a trait or reward that is
+  not installed.
+
 ## Scripts and hooks
 
 A director with `"start": "script"` waits for `MPDIRECTOR START` (from any
 script in its room, or `MPDIRECTOR START <room id>` from elsewhere);
 `MPDIRECTOR RESET` ends the run. When a run ends, every script in the room (the
 room, what is in it, and its area) hears a signal: `SIGNAL_PROG
-DIRECTOR_COMPLETE` or `SIGNAL_PROG DIRECTOR_FAILED`, with the encounter's ID
+DIRECTOR_COMPLETE`, `DIRECTOR_FAILED` or (a trial stopped) `DIRECTOR_STOPPED`, with the encounter's ID
 and the run number as its arguments (`$g`) and a participant as `$n`. A guarded
 cache, for example: a chest that opens on `DIRECTOR_COMPLETE`.
 
@@ -156,6 +190,7 @@ director rebinds them by instance ID and goes on.
 | Command | Who | What it does |
 | --- | --- | --- |
 | `OBJECTIVE` | players | The encounter here: its phase, warning, objective and each foe with its health, in plain text. No game time. |
+| `TRIAL`, `TRIAL CHOOSE n`, `TRIAL STOP` | players | An escalating trial here: what is chosen and offered; take an offer; end the trial and bank what was won. |
 | `WORLD DIRECTORS LIST` / `CHECK` / `RELOAD` | builder, DEV=1 | Definitions, running directors; problems (a catalog mob, reward or activity that is not there, a role no earlier phase spawns); a fresh read. |
 | `WORLD DIRECTORS SHOW` | builder, DEV=1 | The encounter here with its run, scale, budgets used and notes. |
 | `WORLD MODULES REPORT` | builder, DEV=1 | Per encounter: runs, phases, actors spawned, removed and defeated, wipes, retreats, resets, completions, and the highest number of actors at once. |
@@ -163,4 +198,5 @@ director rebinds them by instance ID and goes on.
 Implementation: [EncounterDirectors.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/EncounterDirectors.java),
 [EncounterDirector.java](../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/EncounterDirector.java).
 Tests: [g03-director.js](../../tools/fixtures/fixes/g03-director.js),
-[a24-traits.js](../../tools/fixtures/fixes/a24-traits.js).
+[a24-traits.js](../../tools/fixtures/fixes/a24-traits.js),
+[g04-trials.js](../../tools/fixtures/fixes/g04-trials.js).

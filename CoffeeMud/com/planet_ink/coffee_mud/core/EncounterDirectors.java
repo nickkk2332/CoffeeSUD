@@ -120,9 +120,32 @@ public final class EncounterDirectors
 		}
 	}
 
+	/** G04: a modifier a trial offers between rounds (G08: a device that changes the rewards) */
+	public static final class Modifier
+	{
+		public final String			id;
+		public final String			title;
+		public final int			hp;
+		public final List<String>	traits;
+		public final String			reward;
+
+		Modifier(final Node n) throws IOException
+		{
+			n.allow("id", "title", "hp", "traits", "reward");
+			id = n.id("id");
+			title = n.string("title", id, 80);
+			hp = (int)n.integer("hp", 0, 0, 500);
+			traits = Collections.unmodifiableList(n.strings("traits", 4, true));
+			reward = n.has("reward") ? n.id("reward") : "";
+		}
+	}
+
 	/** one encounter */
 	public static final class Def
 	{
+		/** G04: an escalating trial: offers between rounds, or none */
+		public final List<Modifier>	modifiers	= new ArrayList<Modifier>();
+		public final int			offers;
 		public final List<Phase>	phases	= new ArrayList<Phase>();
 		public final String			start;
 		public final String			complete;
@@ -146,7 +169,25 @@ public final class EncounterDirectors
 		Def(final Node n) throws IOException
 		{
 			n.allow("schema", "id", "version", "title", "kind", "start", "phases", "complete", "protect", "bind", "scaling", "budget", "on_wipe", "on_retreat",
-				"retreat_ticks", "activity", "reward", "bank");
+				"retreat_ticks", "activity", "reward", "bank", "trial");
+			final Node tr = n.object("trial");
+			if(tr == null)
+				offers = 0;
+			else
+			{
+				tr.allow("offers", "modifiers");
+				offers = (int)tr.integer("offers", 3, 1, 5);
+				final Set<String> mids = new HashSet<String>();
+				for(final Node m : tr.objects("modifiers", 12))
+				{
+					final Modifier mod = new Modifier(m);
+					if(!mids.add(mod.id))
+						throw m.error("id", "duplicate modifier " + mod.id);
+					modifiers.add(mod);
+				}
+				if(modifiers.isEmpty())
+					throw tr.error("modifiers", "a trial needs at least one modifier");
+			}
 			n.choice("kind", "boss", "boss", "waves", "event");
 			start = n.choice("start", "enter", "enter", "script");
 			final List<Node> ps = n.objects("phases", 8);
@@ -295,6 +336,9 @@ public final class EncounterDirectors
 		Room room();
 
 		String describe(MOB viewer, boolean creator);
+
+		/** G04: TRIAL, TRIAL CHOOSE n, TRIAL STOP; @return what to tell them */
+		String trial(MOB mob, String what);
 	}
 
 	/** the directors running, for the death hook and inspection */
@@ -457,6 +501,15 @@ public final class EncounterDirectors
 				}
 				if(!d.reward.isEmpty() && !rewards.has(d.reward))
 					out.add(e.path + ": /reward: no reward " + d.reward + " is installed in rewards/");
+				for(int m = 0; m < d.modifiers.size(); m++)
+				{
+					final Modifier mod = d.modifiers.get(m);
+					if(!mod.reward.isEmpty() && !rewards.has(mod.reward))
+						out.add(e.path + ": /trial/modifiers/" + m + "/reward: no reward " + mod.reward + " is installed in rewards/");
+					for(final String t : mod.traits)
+						if(!EliteTraits.definitions().has(t))
+							out.add(e.path + ": /trial/modifiers/" + m + "/traits: no trait " + t + " is installed in traits/");
+				}
 				if(!d.activity.isEmpty() && !rewards.has(d.activity))
 					out.add(e.path + ": /activity: no activity " + d.activity + " is installed in rewards/");
 			}
