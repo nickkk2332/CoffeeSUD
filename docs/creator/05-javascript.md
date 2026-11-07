@@ -417,6 +417,8 @@ variables, like `@` in MOBPROG). A Room is named by its extended ID.
 | Member | Effect |
 | --- | --- |
 | `cm.command(name[, opts], fn)` | New game command; returns its ID (`JS` + upper-case name). |
+| `cm.adoptCulture(mob, culture, force)` | Takes up a culture of `world/cultures.ini`, by the same rules as `MPCULTURE`; returns what changed, in words. Throws when refused. |
+| `cm.leaveCulture(mob, force)` | Leaves the character's culture: what it gave goes, but its `KEEP`. Throws when refused (`LEAVE=NEVER` without `force`). |
 | `cm.record(mob, book, record, value, lower)` | A personal record in a challenge book: the first value and the best (lowest when `lower`), kept; returns `"first"`, `"best"` or `""`. |
 | `cm.uncommand(name)` | Remove it; true if there was one. |
 | `cm.verb(thing, phrase, fn)` | A phrase that works near one room, item or mob. |

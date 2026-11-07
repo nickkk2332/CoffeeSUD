@@ -194,7 +194,7 @@ Entries added by CoffeeSUD (not in the original CoffeeMud) are marked **CoffeeSU
 | Variables and state | [MPSETVAR](#mpsetvar), [MPSAVEVAR](#mpsavevar), [MPLOADVAR](#mploadvar), [MPLIST](#mplist), [MPLOCAL](#mplocal), [MPARGSET](#mpargset), [MPSTATE](#mpstate), [MPTAG](#mptag), [MPSET](#mpset), [MPGSET](#mpgset), [MPSETINTERNAL](#mpsetinternal) |
 | Calling and timing | [MPCALLFUNC](#mpcallfunc), [MPFORCE](#mpforce), [MPALARM](#mpalarm), [MPALARMCANCEL](#mpalarmcancel), [MPWAIT](#mpwait), [MPSIGNAL](#mpsignal), [MPNOTRIGGER](#mpnotrigger), [MPINTERRUPT](#mpinterrupt), [MPPASSTIME](#mppasstime), [MPSCRIPT](#mpscript), [MPUNLOADSCRIPT](#mpunloadscript), [MPJSFILE](#mpjsfile), [MPBEHAVE](#mpbehave), [MPUNBEHAVE](#mpunbehave) |
 | Asking the player | [MPPROMPT](#mpprompt), [MPCONFIRM](#mpconfirm), [MPCHOOSE](#mpchoose), [MPMENU](#mpmenu), [MPLLM](#mpllm) |
-| Stats and progression | [MPEXP](#mpexp), [MPRPEXP](#mprpexp), [MPLEVELUP](#mplevelup), [MPLEVELDOWN](#mpleveldown), [MPQUESTPOINTS](#mpquestpoints), [MPTRAINS](#mptrains), [MPPRACS](#mppracs), [MPENABLE](#mpenable), [MPDISABLE](#mpdisable), [MPLEARNRECIPE](#mplearnrecipe), [MPLEARNLANG](#mplearnlang), [MPPERK](#mpperk), [MPRANK](#mprank), [MPRESPEC](#mprespec), [MPPLAYERCLASS](#mpplayerclass), [MPTITLE](#mptitle), [MPTATTOO](#mptattoo), [MPACCTATTOO](#mpacctattoo), [MPACHIEVE](#mpachieve), [MPRECRUIT](#mprecruit) |
+| Stats and progression | [MPEXP](#mpexp), [MPRPEXP](#mprpexp), [MPLEVELUP](#mplevelup), [MPLEVELDOWN](#mpleveldown), [MPQUESTPOINTS](#mpquestpoints), [MPTRAINS](#mptrains), [MPPRACS](#mppracs), [MPENABLE](#mpenable), [MPDISABLE](#mpdisable), [MPLEARNRECIPE](#mplearnrecipe), [MPLEARNLANG](#mplearnlang), [MPPERK](#mpperk), [MPRANK](#mprank), [MPRESPEC](#mprespec), [MPPLAYERCLASS](#mpplayerclass), [MPTITLE](#mptitle), [MPTATTOO](#mptattoo), [MPACCTATTOO](#mpacctattoo), [MPACHIEVE](#mpachieve), [MPRECRUIT](#mprecruit), [MPCULTURE](#mpculture) |
 | Combat and effects | [MPKILL](#mpkill), [MPHIT](#mphit), [MPDAMAGE](#mpdamage), [MPHEAL](#mpheal), [MPCAST](#mpcast), [MPCASTEXT](#mpcastext), [MPAFFECT](#mpaffect), [MPUNAFFECT](#mpunaffect), [MPSTOP](#mpstop), [MPTHREAT](#mpthreat), [MPTELEGRAPH](#mptelegraph), [MPDIRECTOR](#mpdirector), [MPRECORD](#mprecord), [MPWAVE](#mpwave), [MPREJUV](#mprejuv), [MPRESET](#mpreset) |
 | Quests | [MPSTARTQUEST](#mpstartquest), [MPSTEPQUEST](#mpstepquest), [MPENDQUEST](#mpendquest), [MPQUESTWIN](#mpquestwin), [MPQUESTFAIL](#mpquestfail), [MPREWARD](#mpreward), [MPQSET](#mpqset), [MPLOADQUESTOBJ](#mploadquestobj), [MPQOBJECTIVE](#mpqobjective), [MPQJOURNAL](#mpqjournal), [MPQTIMER](#mpqtimer) |
 | Journal, lore, narration | [MPJOURNAL](#mpjournal), [MPLORE](#mplore), [MPNARRATE](#mpnarrate) |
@@ -205,7 +205,7 @@ Entries added by CoffeeSUD (not in the original CoffeeMud) are marked **CoffeeSU
 | Logging and debugging | [MPLOG](#mplog), [MPDEBUG](#mpdebug) |
 | Legacy and rarely useful | [MPPOSSESS](#mppossess), [MPSCRIPT](#mpscript), [MPRLOAD](#mprload) |
 
-CoffeeSUD additions (everything not in the original CoffeeMud 5.11 command list): `MPALARM NAME=`, `MPALARMCANCEL`, `MPTELEGRAPH`, `MPDIRECTOR`, `MPRECORD`, `MPWAVE`, `MPSETRESPAWN`, `MPTHREAT`, `MPAFFINITY`, `MPMENU`, `MPMSG`, `MPSIGNAL`, `MPWAIT`, `MPLIST`, `MPTAG`, `MPSTATE`, `MPLOCAL`, `WHILE`/`ENDWHILE`/`CONTINUE`/`ELSEIF`, `MPJSFILE`, `MPDOOR`, `MPTRANSFORM`, `MPQOBJECTIVE`, `MPQJOURNAL`, `MPQUESTFAIL`, `MPREWARD`, `MPQTIMER`, `MPGENERATE`, `MPREGENERATE`, `MPGRANT`, `MPDEED`, `MPUNDEED`, `MPLEARNRECIPE`, `MPLEARNLANG`, `MPSAYIN`, `MPPERK`, `MPRECRUIT`, `MPLEVELUP`, `MPLEVELDOWN`, `MPRESPEC`, `MPRANK`, `MPPARDON`, `MPFINE`, `MPRELEASE`, `MPSUPPRESSLAW`, `MPSHOP`, `MPBANK`, `MPDEBT`, `MPEXCHANGE`, `MPWEATHER`, `MPROOMSTATE`, `MPPASSTIME`, `MPINTERRUPT`, `MPCLANRELATION`, `MPCONQUER`, `MPSAIL`, `MPANCHOR`, `MPMOVEVESSEL`, `MPBOARD`, `MPHITCH`, `MPUNHITCH`, `MPLORE`, `MPJOURNAL`, `MPNARRATE`, plus the `CATALOG`, `ENCOUNTER` and `FROMFILE ... ALL` forms of `MPMLOAD`/`MPOLOAD` and the `NOW`, `@host`, `=`, `%` and `^` forms of `MPSETVAR`.
+CoffeeSUD additions (everything not in the original CoffeeMud 5.11 command list): `MPALARM NAME=`, `MPALARMCANCEL`, `MPTELEGRAPH`, `MPDIRECTOR`, `MPRECORD`, `MPCULTURE`, `MPWAVE`, `MPSETRESPAWN`, `MPTHREAT`, `MPAFFINITY`, `MPMENU`, `MPMSG`, `MPSIGNAL`, `MPWAIT`, `MPLIST`, `MPTAG`, `MPSTATE`, `MPLOCAL`, `WHILE`/`ENDWHILE`/`CONTINUE`/`ELSEIF`, `MPJSFILE`, `MPDOOR`, `MPTRANSFORM`, `MPQOBJECTIVE`, `MPQJOURNAL`, `MPQUESTFAIL`, `MPREWARD`, `MPQTIMER`, `MPGENERATE`, `MPREGENERATE`, `MPGRANT`, `MPDEED`, `MPUNDEED`, `MPLEARNRECIPE`, `MPLEARNLANG`, `MPSAYIN`, `MPPERK`, `MPRECRUIT`, `MPLEVELUP`, `MPLEVELDOWN`, `MPRESPEC`, `MPRANK`, `MPPARDON`, `MPFINE`, `MPRELEASE`, `MPSUPPRESSLAW`, `MPSHOP`, `MPBANK`, `MPDEBT`, `MPEXCHANGE`, `MPWEATHER`, `MPROOMSTATE`, `MPPASSTIME`, `MPINTERRUPT`, `MPCLANRELATION`, `MPCONQUER`, `MPSAIL`, `MPANCHOR`, `MPMOVEVESSEL`, `MPBOARD`, `MPHITCH`, `MPUNHITCH`, `MPLORE`, `MPJOURNAL`, `MPNARRATE`, plus the `CATALOG`, `ENCOUNTER` and `FROMFILE ... ALL` forms of `MPMLOAD`/`MPOLOAD` and the `NOW`, `@host`, `=`, `%` and `^` forms of `MPSETVAR`.
 
 ## Control flow
 
@@ -1918,6 +1918,14 @@ mptelegraph 2 "<S-NAME> rears back, flames gathering in its throat!" mpdamage $n
 **Behaviour:** sets a personal record of `who` in a challenge book (`world/challenges.ini`, by its ID or title): the first value recorded is kept, and the best, the highest (or with `LOW` the lowest, as for a time), each with the game time it was set, in the character's story records; `CHALLENGES [book]` shows them. A record's name is up to 40 letters, digits and spaces. An unknown book or a value that is no number logs an error. See the [cookbook, recipe 35](cookbook.md#35-a-challenge-book-with-hidden-entries).
 
 **Example:** `mprecord $n trials "warden time" $<$n duel.time> LOW`
+
+### MPCULTURE
+
+**Syntax:** `MPCULTURE <who> ADOPT <culture> [FORCE]` or `MPCULTURE <who> LEAVE [FORCE]`. **CoffeeSUD.** Minimum: 2 words.
+
+**Behaviour:** `who` takes up a culture of `world/cultures.ini` (by ID or name), or leaves theirs, by the rules of [cultures](03-characters.md#culturesini-cultures): the culture held is left first, adopting gives only what they lack, leaving takes what it gave but its `KEEP`. Its `MASK` applies; its `ADOPT=COMMAND` does not (a script may adopt any culture). `FORCE` passes a `LEAVE=NEVER`. `who` is told what changed. A refusal (the mask, `LEAVE=NEVER` without `FORCE`, no such culture) logs an error.
+
+**Example:** `mpculture $n ADOPT riverfolk`
 
 ### MPWAVE
 

@@ -28,6 +28,7 @@ and saved games are the subject of [31-saves-and-party.md](31-saves-and-party.md
 - [Creation data](#creation-data)
   - [creation.ini: steps and questions](#creationini-steps-and-questions)
   - [origins.ini: origins](#originsini-origins)
+  - [cultures.ini: cultures](#culturesini-cultures)
   - [Kits](#kits)
   - [perks.ini: perks, traits and flaws](#perksini-perks-traits-and-flaws)
   - [Ready-made characters (player templates)](#ready-made-characters-player-templates)
@@ -455,6 +456,7 @@ for masks (`-TATTOOS +ORIGIN_ORPHAN`) and scripts; a character holds only one.
 | `TATTOOS` | Comma- or space-separated tattoos to add (uppercased) |
 | `MONEY` | A number, in the character's currency |
 | `SCRIPT` | A MOBPROG, `ONCE_PROG 100;mpecho Welcome home.;~` (lines between semicolons) or `LOAD=file`. Run once, as the character's creation script |
+| `CULTURE` | A culture of `cultures.ini` the character is of from the start, adopted by the same rules as later ([cultures](#culturesini-cultures)), so it can be left again. Logged if it cannot be adopted |
 
 Unknown keys are ignored. The origin's gifts come at the end of creation,
 first of all, after the class outfit and start room are set, so an origin's
@@ -486,6 +488,62 @@ UNLOCK=EXILE_UNLOCKED
 Use catalog item names (create them in the catalog first; see
 [22-items.md](22-items.md)) for meaningful gifts. An item class such as
 `GenItem` creates a blank item.
+
+### cultures.ini: cultures
+
+Source: [Cultures.java](../../CoffeeMud/com/planet_ink/coffee_mud/core/Cultures.java).
+Fixture: [p11-cultures.js](../../tools/fixtures/fixes/p11-cultures.js).
+In-game help: `HELP CULTURE`.
+
+An origin is where a character comes from, once. A culture is how they live:
+a source of skills and languages of its own, which they can take up and leave
+in play. `world/cultures.ini` has an `[ID]` section for each, in the format of
+`origins.ini`:
+
+| Key | Meaning |
+| --- | --- |
+| `NAME`, `DESCRIPTION` | As for origins |
+| `MASK` | Who may adopt it |
+| `ABILITIES` | Comma list of `ID proficiency`, languages too (`Elvish 75, Fishing 40`) |
+| `TATTOOS` | Tattoos it gives |
+| `ADOPT` | `COMMAND`: the player may take it up with `CULTURE ADOPT`. Otherwise it comes from an origin, a script or a mentor (`MPCULTURE`) |
+| `LEAVE` | `NEVER`: it cannot be left, nor another adopted, but by a script's `FORCE` |
+| `KEEP` | Abilities that stay on leaving, as a mother tongue |
+
+The rules, the same at creation and later:
+
+- A character holds one culture at a time, as the tattoo `CULTURE_<ID>` (for
+  masks: `-TATTOOS +CULTURE_RIVERFOLK`). Adopting another leaves the one held
+  first, under its rules.
+- Adopting gives only what the character lacks, and records what it gave in
+  their story records (saved with them). An ability they had already, or learn
+  otherwise, is theirs: the culture neither raises it nor takes it.
+- Leaving takes away exactly what it gave, but `KEEP`, and the tattoos it
+  gave. Adopting again gives again what is missing.
+- Each adopting and leaving, and how (`origin`, `command`, `script`, `force`),
+  is kept in the story records' history (the last 20).
+
+```ini
+# world/cultures.ini
+[RIVERFOLK]
+NAME=River folk
+DESCRIPTION=Boat people of the delta.
+ABILITIES=Fishing 40, Elvish 75, Skill_Swim 60
+KEEP=Elvish
+ADOPT=COMMAND
+
+[CLOISTER]
+NAME=The cloister
+ABILITIES=Skill_Climb 30
+LEAVE=NEVER
+```
+
+`CULTURE` shows the character's culture and what it gave; `CULTURE LIST` every
+culture and whether they may adopt it, or why not. A script adopts with
+`MPCULTURE $n ADOPT CLOISTER` and leaves with `MPCULTURE $n LEAVE` (`FORCE`
+past `LEAVE=NEVER`); JavaScript with `cm.adoptCulture(mob, id, force)` and
+`cm.leaveCulture(mob, force)`. `WORLD CHECK` names an unknown ability and an
+origin's `CULTURE` that names no culture.
 
 ### Kits
 

@@ -808,6 +808,44 @@ public class JSCm
 	}
 
 	/**
+	 * P11: takes up a culture (core/Cultures), by the same rules as anywhere:
+	 * the one held is left first, under its rules.
+	 * @param mob who
+	 * @param culture its ID or name
+	 * @param force true to pass a LEAVE=NEVER of the one held
+	 * @return what happened, in words
+	 */
+	public String adoptCulture(final MOB mob, final String culture, final boolean force)
+	{
+		try
+		{
+			return Cultures.adopt(mob, culture, force ? "force" : "script");
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.adoptCulture: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * P11: leaves one's culture: what it gave goes, but its KEEP.
+	 * @param mob who
+	 * @param force true to pass its LEAVE=NEVER
+	 * @return what happened, in words
+	 */
+	public String leaveCulture(final MOB mob, final boolean force)
+	{
+		try
+		{
+			return Cultures.leave(mob, force ? "force" : "script");
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.leaveCulture: " + e.getMessage());
+		}
+	}
+
+	/**
 	 * P13: a personal record in a challenge book: its first value and its best
 	 * are kept, each with when.
 	 * @param mob whose record

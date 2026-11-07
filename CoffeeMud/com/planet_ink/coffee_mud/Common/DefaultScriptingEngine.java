@@ -17616,6 +17616,28 @@ public class DefaultScriptingEngine implements ScriptingEngine
 			}
 			return null;
 		}
+		case "MPCULTURE": // P11: MPCULTURE who ADOPT culture | LEAVE (FORCE): a culture taken up or left, by the rules of core/Cultures
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String what=varify(ctx,CMParms.getCleanBit(line,2)).trim().toUpperCase();
+			final String rest=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(W instanceof MOB))||!(what.equals("ADOPT")||what.equals("LEAVE"))||(what.equals("ADOPT")&&(rest.length()==0)))
+			{
+				logError(ctx,"MPCULTURE","Syntax","MPCULTURE who ADOPT culture (FORCE) | LEAVE (FORCE): "+line);
+				return null;
+			}
+			try
+			{
+				final boolean force=rest.toUpperCase().endsWith("FORCE")&&(what.equals("LEAVE")||(rest.trim().indexOf(' ')>0));
+				final String id=force&&what.equals("ADOPT")?rest.substring(0,rest.length()-5).trim():rest;
+				((MOB)W).tell(what.equals("ADOPT")?Cultures.adopt((MOB)W,id,force?"force":"script"):Cultures.leave((MOB)W,force?"force":"script"));
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPCULTURE","RunTime",e.getMessage());
+			}
+			return null;
+		}
 		case "MPRECORD": // P13: MPRECORD who book record value (LOW): a personal record, its first value and its best kept
 		{
 			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
