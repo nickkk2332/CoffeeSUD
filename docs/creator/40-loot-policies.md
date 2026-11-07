@@ -132,15 +132,32 @@ In a policy coffer:
 
 `LOOT FILTER rare magic` makes your LOOT list only those rarities and count the
 others ("2 tracked item(s) your filter leaves out"); `LOOT FILTER ALL` lists
-everything again. Each character has their own filter, kept in the save. LOOT
-takes no game time and changes nothing; a closed container says so.
+everything again. Beside the rarities, the filter takes `untracked` (untracked
+items, which LOOT then lists too) and `tracked` (tracked items no policy
+dropped); a rarity cannot have either as its ID. Each character has their own filter, kept in the save. LOOT takes no
+game time and changes nothing; a closed container says so.
+
+`LOOT SELF` is the same view over everything you carry, worn and in containers
+too, and names each item your filter leaves out with why:
+
+```text
+You carry:
+  Untracked: a rope (in a pack)
+  Untracked: a ring (worn)
+Left out by your filter (LOOT FILTER ALL shows them):
+  a Wardwoven workbench cloak of Embers: Tracked (tracked), and your filter shows untracked
+  a coffer mantle: Plain (plain), and your filter shows untracked
+```
+
+Test: [i16-views.js](../../tools/fixtures/fixes/i16-views.js).
 
 ## Commands
 
 | Command | Who | What it does |
 | --- | --- | --- |
 | `LOOT [container]` | players | Its tracked loot by rarity, through your filter. No game time. |
-| `LOOT FILTER [rarity...]` / `ALL` | players | The rarities your LOOT lists. |
+| `LOOT SELF` | players | Everything you carry, through your filter, each item left out named with why. No game time. |
+| `LOOT FILTER [rarity, untracked or tracked...]` / `ALL` | players | What your LOOT lists. |
 | `WORLD LOOT LIST` / `CHECK` / `RELOAD` | builder, DEV=1 | Policies; problems (a base not installed, tags no affix carries, a guaranteed rarity the policy lacks), with file and JSON path; a fresh read. |
 | `WORLD LOOT PREVIEW [policy] ([level])` | builder, DEV=1 | Chances, limits and each affix's eligibility. Draws nothing. |
 | `WORLD LOOT SAMPLE [policy] [n] ([level])` | builder, DEV=1 | n drops on a cursor; agreement with the preview. Moves nothing. |

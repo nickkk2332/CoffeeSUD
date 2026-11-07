@@ -122,7 +122,7 @@ level-up (upstream's rule; P02, deferred).
 | 5 | Reservations, then loadouts: A14, A19 | families | Done |
 | 6 | Ailments and defense pools: A12, A13 | families | Done |
 | 7 | Encounters: A24 traits (with G08's possession), G04 trials (with G08's devices), G06 director hooks | family, extensions | Done |
-| 8 | Items: I05 sockets, I06 targeted crafting, I07 and I17 saved choices, I09 materials, I14 offer books, I16 inventory views, I20 binding | extensions | I05, I06, I07 with I17, I09, I14 done |
+| 8 | Items: I05 sockets, I06 targeted crafting, I07 and I17 saved choices, I09 materials, I14 offer books, I16 inventory views, I20 binding | extensions | I05, I06, I07 with I17, I09, I14, I16 done |
 | 9 | Knowledge: A23 unknown names and reveals, P15 latent talents | extensions |  |
 | 10 | Organizations: P03 affiliations, P04 services, P06 formation roles, P08 shared pools, P11 cultures, P13 challenge books | extensions |  |
 | 11 | The atlas: G02 | family | Deferred |

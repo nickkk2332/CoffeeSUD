@@ -62,7 +62,12 @@ public class LootCmd extends StdCommand
 			}
 			if(words.size() < 2)
 			{
-				mob.tell(L("LOOT [container or corpse] shows its tracked loot by rarity; LOOT FILTER [rarity...] or LOOT FILTER ALL chooses what it shows."));
+				mob.tell(L("LOOT [container or corpse] shows its tracked loot by rarity; LOOT SELF shows what you carry; LOOT FILTER [rarity, UNTRACKED or TRACKED...] or LOOT FILTER ALL chooses what it shows."));
+				return false;
+			}
+			if((words.size() == 2) && (words.get(1).equalsIgnoreCase("SELF") || words.get(1).equalsIgnoreCase("INVENTORY")))
+			{
+				mob.tell(ItemLoot.selfView(mob)); // I16: the same view over your own inventory
 				return false;
 			}
 			final String name = CMParms.combine(words, 1);

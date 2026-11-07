@@ -5941,7 +5941,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3383.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3386.
 
 ```text
 Command : ITEMMODS
@@ -6422,7 +6422,7 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3392.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3395.
 
 ```text
 Command : MODCRAFT

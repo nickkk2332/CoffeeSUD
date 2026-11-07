@@ -70,6 +70,8 @@ public final class ItemLoot
 		{
 			n.allow("id", "title", "weight", "modifiers", "veiled");
 			id = n.id("id");
+			if(id.equals(PLAIN) || id.equals(TRACKED))
+				throw n.error("id", "'" + id + "' is a LOOT FILTER word, not a rarity's ID");
 			title = n.string("title", id, 40);
 			weight = n.number("weight", 1, 0.000001, 1000000);
 			modifiers = (int)n.integer("modifiers", 0, 0, ItemModifierRules.MAX_MODS);
@@ -606,6 +608,9 @@ public final class ItemLoot
 				for(final Rarity r : e.value.rarities)
 					known.add(r.id);
 			}
+			// I16: beside the rarities, untracked items and tracked ones that no policy dropped
+			known.add(PLAIN);
+			known.add(TRACKED);
 			for(final String w : words)
 			{
 				final String id = w.toLowerCase(Locale.ROOT);
@@ -621,7 +626,81 @@ public final class ItemLoot
 		final JSONObject rec = OptionalModules.get(MODULE, OptionalModules.character(mob));
 		rec.put("filter", text);
 		OptionalModules.put(MODULE, OptionalModules.character(mob), rec);
-		return all ? "LOOT now shows every item." : "LOOT now shows " + String.join(", ", ids) + " items, and counts the rest.";
+		return all ? "LOOT now shows every item." : "LOOT now shows " + String.join(", ", ids) + " items, and counts the rest (LOOT SELF says why each of yours is left out).";
+	}
+
+	/** I16: filter words beside the rarities: untracked items, and tracked items that no policy dropped */
+	public static final String	PLAIN	= "untracked", TRACKED = "tracked";
+
+	/** I16: an item's place in a filter: its rarity's ID, tracked, or plain; and the title shown for it */
+	private static String[] category(final Item I, final Library<Policy> lib)
+	{
+		if(!ItemModifiers.isManaged(I))
+			return new String[] { PLAIN, "Untracked" };
+		final String[] drop = dropOf(I);
+		if(drop == null)
+			return new String[] { TRACKED, "Tracked" };
+		String title = drop[2];
+		for(final Entry<Policy> e : lib.entries.values())
+		{
+			if(e.id.equals(drop[0]) && (e.value.rarity(drop[2]) != null))
+				title = e.value.rarity(drop[2]).title;
+		}
+		return new String[] { drop[2], title };
+	}
+
+	private static String modsOf(final Item I) throws IOException
+	{
+		if(!ItemModifiers.isManaged(I))
+			return "";
+		final List<String> mods = new ArrayList<String>();
+		final JSONObject rec = ItemModifierRules.parse(I.fetchEffect(ItemModifiers.PROPERTY).text());
+		for(final JSONObject m : ItemModifierRules.modifiers(rec))
+			mods.add(m.get("name") + " (" + values(m) + ")");
+		for(final JSONObject v : ItemModifierRules.veils(rec))
+			mods.add("a veiled " + v.get("position"));
+		return mods.isEmpty() ? ", no modifiers" : "; " + String.join("; ", mods);
+	}
+
+	/**
+	 * I16: LOOT SELF: everything a character carries (worn and in containers
+	 * too), through their own filter: each item shown by rarity (or tracked, or
+	 * untracked) with its modifiers, and each item left out named with why.
+	 * It takes no game time and changes nothing.
+	 */
+	public static String selfView(final MOB viewer) throws IOException
+	{
+		if(!enabled())
+			throw new IOException("loot policies (" + MODULE + ") are not active in this campaign");
+		final List<String> filter = filterOf(viewer);
+		final Library<Policy> lib = definitions();
+		final StringBuilder s = new StringBuilder("You carry:");
+		final List<String> left = new ArrayList<String>();
+		int shown = 0;
+		for(final Enumeration<Item> e = viewer.items(); e.hasMoreElements();)
+		{
+			final Item I = e.nextElement();
+			if((I == null) || I.amDestroyed())
+				continue;
+			final String[] cat = category(I, lib);
+			final String where = (I.container() != null) ? " (in " + I.container().Name() + ")" : !I.amWearingAt(Wearable.IN_INVENTORY) ? " (worn)" : "";
+			if(!filter.isEmpty() && !filter.contains(cat[0]))
+			{
+				left.add(I.Name() + where + ": " + cat[1] + " (" + cat[0] + "), and your filter shows " + String.join(", ", filter));
+				continue;
+			}
+			shown++;
+			s.append("\n  ").append(cat[1]).append(": ").append(I.Name()).append(where).append(modsOf(I));
+		}
+		if(shown == 0)
+			s.append("\n  nothing your filter shows");
+		if(!left.isEmpty())
+		{
+			s.append("\nLeft out by your filter (LOOT FILTER ALL shows them):");
+			for(final String l : left)
+				s.append("\n  ").append(l);
+		}
+		return s.toString();
 	}
 
 	private static String values(final JSONObject m)
@@ -677,10 +756,16 @@ public final class ItemLoot
 			final String[] drop = dropOf(I);
 			if(!ItemModifiers.isManaged(I))
 			{
-				plain++;
+				if(filter.contains(PLAIN))
+				{
+					shown++;
+					s.append("\n  Untracked: ").append(I.Name());
+				}
+				else
+					plain++;
 				continue;
 			}
-			final String rarity = (drop == null) ? "" : drop[2];
+			final String rarity = (drop == null) ? TRACKED : drop[2];
 			if(!filter.isEmpty() && !filter.contains(rarity))
 			{
 				hidden++;
