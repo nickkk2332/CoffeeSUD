@@ -98,10 +98,19 @@ public class Skill_Compose extends StdAbility
             AbilityComposition.canCast(mob, compiled.skill.id);
             final int chains = Math.min((int)Math.floor(compiled.value("chains")), AbilityComposition.setting("max_chains", 0, 8));
             final Budget budget = new Budget(AbilityComposition.setting("event_budget", 1, 64));
+            // A15: every named resource cost is checked before anything is spent; a refused cost spends nothing
+            final Map<String,Long> resourceCosts = compiled.resourceCosts();
+            if(!resourceCosts.isEmpty())
+            {
+                NamedResources.require();
+                final String why = NamedResources.unaffordable(mob, resourceCosts);
+                if(why.length() > 0) { mob.tell("You cannot use " + compiled.skill.name + ": " + why + "."); return false; }
+            }
             final int manaBefore = mob.curState().getMana(), movementBefore = mob.curState().getMovement();
             final boolean invoked = super.invoke(mob, args, target, false, asLevel);
             CombatProfiles.paid(profile, Math.max(0,manaBefore-mob.curState().getMana()), Math.max(0,movementBefore-mob.curState().getMovement()));
             if(!invoked) { CombatProfiles.failed(mob,target,compiled,profile,"Native invocation rejected."); return false; }
+            if(!resourceCosts.isEmpty()) NamedResources.spend(mob, resourceCosts, compiled.skill.id); // paid with the native costs
             AbilityComposition.cooldown(mob, compiled.skill.id, (int)Math.ceil(compiled.value("cooldown")));
             if(!proficiencyCheck(mob, 0, false))
             {
@@ -128,6 +137,10 @@ public class Skill_Compose extends StdAbility
                 if(profile == null) hit(mob, victim, compiled, budget);
                 else CombatProfiles.hit(mob, victim, this, compiled, profile, budget);
             }
+            // A15: gains come once the cast has resolved, the skill's then its supports'
+            if(NamedResources.enabled())
+                for(final Map.Entry<String,Long> gain : compiled.resourceGains().entrySet())
+                    NamedResources.gain(mob, gain.getKey(), gain.getValue().longValue(), compiled.skill.id);
             return true;
         }
         finally { if(previous == null) CAST.remove(); else CAST.set(previous); }

@@ -530,6 +530,15 @@ public final class ModuleContent
 		/** the world folder */
 		String folder();
 
+		/** the state-owner scopes the module's manifest must allow */
+		List<String> scopes();
+
+		/** the module's JSON-object string state fields, empty by default */
+		List<String> stringState();
+
+		/** the modules this one's manifest must require */
+		List<String> requires();
+
 		/** forgets loaded definitions and runtime state, at boot */
 		void reset();
 
@@ -614,6 +623,7 @@ public final class ModuleContent
 
 	/** the family classes, each registering itself when loaded */
 	private static final String[] KNOWN = {
+		"com.planet_ink.coffee_mud.core.NamedResources",
 	};
 
 	/** resets every family, at boot */

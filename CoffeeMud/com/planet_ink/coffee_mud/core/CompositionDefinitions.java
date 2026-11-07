@@ -91,9 +91,11 @@ public final class CompositionDefinitions
         public final Set<String> tags, all, any, none, adds;
         public final Map<String,Double> base;
         public final List<Modifier> modifiers;
+        /** A15: named resources the skill or support costs and gains, by pool ID */
+        public final Map<String,Long> resourceCost, resourceGain;
         public Definition(final JSONObject obj, final String path) throws IOException
         {
-            ModuleDefinitions.keys(obj, "composition definition", "schema", "id", "version", "name", "kind", "tags", "requires_ability", "mask", "stats", "damage", "modifiers", "requires_all", "requires_any", "excludes_tags", "adds_tags", "group");
+            ModuleDefinitions.keys(obj, "composition definition", "schema", "id", "version", "name", "kind", "tags", "requires_ability", "mask", "stats", "damage", "modifiers", "requires_all", "requires_any", "excludes_tags", "adds_tags", "group", "resources");
             if(ModuleDefinitions.integer(obj.get("schema"), "schema") != 1) throw new IOException("unsupported composition schema");
             id = ModuleDefinitions.id(obj.get("id")); version = ModuleDefinitions.integer(obj.get("version"), "version");
             if(version < 1) throw new IOException("version must be positive");
@@ -133,6 +135,25 @@ public final class CompositionDefinitions
             if(obj.containsKey("modifiers")) for(final Object raw : ModuleDefinitions.array(obj.get("modifiers"), "modifiers")) mods.add(new Modifier(ModuleDefinitions.object(raw, "modifier"), id + " v" + version));
             if(mods.size() > 32) throw new IOException("at most 32 modifiers per definition");
             modifiers = Collections.unmodifiableList(mods); this.path = path;
+            final Map<String,Long> cost = new TreeMap<String,Long>(), gain = new TreeMap<String,Long>();
+            if(obj.containsKey("resources"))
+            {
+                final JSONObject res = ModuleDefinitions.object(obj.get("resources"), "resources");
+                ModuleDefinitions.keys(res, "resources", "cost", "gain");
+                for(final String which : Arrays.asList("cost", "gain"))
+                {
+                    if(!res.containsKey(which)) continue;
+                    final JSONObject amounts = ModuleDefinitions.object(res.get(which), "resources." + which);
+                    if(amounts.size() > 8) throw new IOException("resources." + which + ": at most 8 pools");
+                    for(final String pool : amounts.keySet())
+                    {
+                        final int n = ModuleDefinitions.integer(amounts.get(pool), "resources." + which + "." + pool);
+                        if(n < 1 || n > 1000000) throw new IOException("resources." + which + "." + pool + " must be from 1 to 1000000");
+                        (which.equals("cost") ? cost : gain).put(ModuleDefinitions.id(pool), Long.valueOf(n));
+                    }
+                }
+            }
+            resourceCost = Collections.unmodifiableMap(cost); resourceGain = Collections.unmodifiableMap(gain);
             try
             {
                 final byte[] bytes = MessageDigest.getInstance("SHA-256").digest(ModuleDefinitions.json(obj).getBytes(StandardCharsets.UTF_8));
@@ -259,6 +280,18 @@ public final class CompositionDefinitions
             return Collections.unmodifiableMap(result);
         }
         public double value(final String key) throws IOException { return values(Collections.<String>emptySet()).get(key); }
+        /** A15: the named resources the cast costs, the skill's and its supports' together */
+        public Map<String,Long> resourceCosts() { return sum(true); }
+        /** A15: the named resources the cast gains once it resolves, the skill's then its supports' */
+        public Map<String,Long> resourceGains() { return sum(false); }
+        private Map<String,Long> sum(final boolean costs)
+        {
+            final Map<String,Long> out = new TreeMap<String,Long>();
+            final List<Definition> all = new ArrayList<Definition>(); all.add(skill); all.addAll(supports);
+            for(final Definition d : all) for(final Map.Entry<String,Long> e : (costs ? d.resourceCost : d.resourceGain).entrySet())
+                out.put(e.getKey(), Long.valueOf((out.containsKey(e.getKey()) ? out.get(e.getKey()).longValue() : 0) + e.getValue().longValue()));
+            return out;
+        }
         /** Numeric values before engine proficiency, saves, criticals, and damage adjustments. */
         public String describe() throws IOException
         { return describeDamage(null, ""); }
@@ -275,6 +308,8 @@ public final class CompositionDefinitions
             out.append("\nBase: ").append(display(skill.base)).append("\nUnconditional result: ").append(display(result));
             out.append("\nCast boundary: ").append((int)Math.ceil(result.get("mana"))).append(" mana, ").append((int)Math.ceil(result.get("movement")))
                 .append(" movement, ").append(display(result.get("actions"))).append(" actions, ").append((int)Math.ceil(result.get("cooldown"))).append(" cooldown ticks.");
+            if(!resourceCosts().isEmpty()) out.append("\nResource costs, all checked before anything is spent: ").append(resourceCosts());
+            if(!resourceGains().isEmpty()) out.append("\nResource gains, once the cast resolves: ").append(resourceGains());
             out.append("\nTarget conditions are evaluated separately for each hit; chained targets are unique, in the same room.");
             for(final Modifier mod : modifiers) out.append("\n  ").append(mod);
             return out.toString();

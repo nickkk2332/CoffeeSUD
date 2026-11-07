@@ -327,6 +327,7 @@ CoffeeMud or server administration do not reintroduce removed network services.
 - [RECORD](#record)
 - [RECRUIT](#recruit)
 - [REGENERATE](#regenerate)
+- [RESOURCES](#resources)
 - [RESOURCEVARIANTS](#resourcevariants)
 - [RESPEC](#respec)
 - [RESTORE](#restore)
@@ -4830,6 +4831,8 @@ Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
+Usage    : WORLD MODULES REPORT/STREAMS
+Usage    : WORLD POOLS LIST/CHECK/RELOAD/SHOW/SET
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
@@ -5921,7 +5924,7 @@ crafted with balsa can be done with half the required wood listed, while instrum
 
 ## ITEMMODS
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3273.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3281.
 
 ```text
 Command : ITEMMODS
@@ -6402,7 +6405,7 @@ leather for leather working is found using the Butchering skill.
 
 ## MODCRAFT
 
-Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3282.
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3290.
 
 ```text
 Command : MODCRAFT
@@ -8222,7 +8225,7 @@ stage and the way to the next.
 
 ## PROP_ITEMMODIFIERS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4389.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4399.
 
 ```text
 Property   : Prop_ItemModifiers
@@ -10798,6 +10801,21 @@ Regenerate behaviour (AHELP BEHAVIOR_REGENERATE) and MPREGENERATE re-roll an are
 on a schedule, at a moon or when the party leaves, and its GENERATED_PROG runs after.
 ```
 
+<a id="resources"></a>
+
+## RESOURCES
+
+Source: [help.ini](../../CoffeeMud/resources/help/help.ini), line 3273.
+
+```text
+Command : RESOURCES
+Usage   : RESOURCES
+Your named resources, such as heat, focus or charges, each as a value of its maximum, with
+how it changes over time ("Heat: 40 of 100 (loses 5 every tick)"). They belong to the
+optional module abilities.resources, which a world may select; composed skills can cost and
+gain them. Costs are all checked before any is spent. RESOURCES takes no game time.
+```
+
 <a id="resourcevariants"></a>
 
 ## RESOURCEVARIANTS
@@ -12234,6 +12252,8 @@ Usage    : WORLD (LIST)
 Usage    : WORLD SET [KEY]=[VALUE]
 Usage    : WORLD PROBLEMS
 Usage    : WORLD MODULES ([ID])/CHECK/PLAN/RELOAD/ADOPT/CONFIGURE/STATE
+Usage    : WORLD MODULES REPORT/STREAMS
+Usage    : WORLD POOLS LIST/CHECK/RELOAD/SHOW/SET
 Usage    : WORLD COMPOSITIONS CHECK/RELOAD
 Usage    : WORLD COMBAT LIST/CHECK/RELOAD/PIN/USE/TRACE/STATS
 Usage    : WORLD ITEMMODS LIST/CHECK/RELOAD
@@ -12387,7 +12407,7 @@ trainsForLevel, when set, have the last word.
 
 ## WORLD_COMBAT
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3407.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3422.
 
 ```text
 Command : WORLD COMBAT
@@ -12414,7 +12434,7 @@ schema, formulas and limitations.
 
 ## WORLD_COMPOSITIONS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3390.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3392.
 
 ```text
 Command : WORLD COMPOSITIONS
@@ -12438,7 +12458,7 @@ No arbitrary scripts execute inside the modifier compiler. Existing abilities ar
 
 ## WORLD_ITEMMODS
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3458.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3473.
 
 ```text
 Command : WORLD ITEMMODS
@@ -12465,7 +12485,7 @@ docs/creator/17-item-modifiers-crafting.md.
 
 ## WORLD_MODULES
 
-Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3427.
+Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 3442.
 
 ```text
 Command : WORLD MODULES

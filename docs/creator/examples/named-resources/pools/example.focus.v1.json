@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "id": "example.focus",
+  "version": 1,
+  "title": "Focus",
+  "kind": "pool",
+  "max": 50,
+  "start": 50,
+  "change": {"amount": 1, "every": 2, "clock": "ticks"},
+  "reservable": true
+}

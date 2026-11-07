@@ -81,6 +81,7 @@ These systems are off unless a world selects them.
 | [Ability composition](15-ability-composition.md) | Tagged skills, supports, chains and burning |
 | [Combat profiles](16-combat-profiles.md) | Versioned damage and defense rules and explained combat results |
 | [Item modifiers and crafting](17-item-modifiers-crafting.md) | Tracked equipment modifiers and selective, protected crafting |
+| [Named resources](34-named-resources.md) | Heat, focus and charges, with costs, gains and changes over time |
 | [The Ember Trial](examples/ember-trial/README.md) | A complete playable sample adventure using all of the above |
 
 ### Engine development

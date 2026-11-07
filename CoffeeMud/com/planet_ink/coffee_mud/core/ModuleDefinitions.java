@@ -12,7 +12,7 @@ import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 public final class ModuleDefinitions
 {
     /** Native consumers that must be present before their saved abilities/effects can be restored. */
-    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler) || "combat.profiles".equals(handler) || "items.modifiers".equals(handler); }
+    public static boolean nativeHandler(final String handler) { return "abilities.composition".equals(handler) || "combat.profiles".equals(handler) || "items.modifiers".equals(handler) || ModuleContent.ofModule(handler) != null; }
     private ModuleDefinitions() { }
     public static final int SCHEMA = 1;
     public static final int MAX_FILES = 256, MAX_FILE_BYTES = 262144, MAX_RECORDS = 10000;
@@ -182,7 +182,7 @@ public final class ModuleDefinitions
             removal = obj.containsKey("on_disable") ? string(obj.get("on_disable"), "on_disable") : "suspend";
             if(!names("suspend", "refuse").contains(removal)) throw new IOException("on_disable must be suspend or refuse");
             handler = obj.containsKey("handler") ? string(obj.get("handler"), "handler") : "data";
-            if(!names("data", "example.counter", "abilities.composition", "combat.profiles", "items.modifiers").contains(handler)) throw new IOException("unsupported handler '" + handler + "'");
+            if(!names("data", "example.counter", "abilities.composition", "combat.profiles", "items.modifiers").contains(handler) && ModuleContent.ofModule(handler) == null) throw new IOException("unsupported handler '" + handler + "'");
             if(nativeHandler(handler) && !id.equals(handler) || nativeHandler(id) && !handler.equals(id))
                 throw new IOException("native modules require their registered handler and matching module ID");
             final Map<String,Integer> deps = new TreeMap<String,Integer>();
@@ -218,6 +218,7 @@ public final class ModuleDefinitions
                         throw new IOException("abilities.composition requires bounded integer settings." + keys[i] + " within " + mins[i] + ".." + maxes[i]);
                 }
             }
+            if(ModuleContent.ofModule(handler) != null) familyContract(ModuleContent.ofModule(handler), scopes, state, requires);
             if(handler.equals("example.counter") && (state.size() != 1 || !state.containsKey("count") || !state.get("count").type.equals("integer")
                 || !settings.containsKey("step") || !settings.get("step").type.equals("integer") || !scopes.contains("character")))
                 throw new IOException("example.counter requires integer state.count, integer settings.step and character scope");
@@ -428,6 +429,25 @@ public final class ModuleDefinitions
         }
         catch(final IOException e) { throw e; }
         catch(final Exception e) { throw new IOException("invalid JSON: " + e.getMessage(), e); }
+    }
+    /**
+     * The native contract of a later module family: the scopes it needs, its
+     * JSON-object string state fields (empty by default, 4096 characters), and
+     * the modules it requires.
+     */
+    static void familyContract(final ModuleContent.Family family, final Set<String> scopes, final Map<String,Field> state, final Map<String,Integer> requires) throws IOException
+    {
+        final String id = family.module();
+        for(final String scope : family.scopes())
+            if(!scopes.contains(scope)) throw new IOException(id + " requires " + scope + " scope");
+        for(final String key : family.stringState())
+        {
+            final Field field = state.get(key);
+            if(field == null || !field.type.equals("string") || field.length != 4096 || !field.choices.isEmpty() || !"".equals(field.initial))
+                throw new IOException(id + " requires string state." + key + " with max_length 4096 and an empty default");
+        }
+        for(final String dep : family.requires())
+            if(!requires.containsKey(dep)) throw new IOException(id + " requires " + dep);
     }
     /** Sorted-key, Unicode-preserving JSON used for save data and contract hashes. */
     public static String json(final Object value)
