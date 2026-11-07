@@ -549,11 +549,11 @@ Until then it waits.
 | Parameter | Default | Meaning |
 | --- | --- | --- |
 | `DEST=room id` | required | The destination. The end of an ID also matches (`Riverford#1`). Arriving there ends the escort. |
-| `MODE=FOLLOW\|LEAD` | FOLLOW | FOLLOW: it follows its leader and never walks on its own. LEAD: it stops following and walks to `DEST` itself, a step a tick; the party must keep up. |
+| `MODE=FOLLOW\|LEAD` | FOLLOW | FOLLOW: it follows its leader and never walks on its own. LEAD: it stops following and walks to `DEST` itself, a step a tick, and the head of its leader's party follows it ("You follow Old Tam east."), so the party comes along. On arrival (or timeout, or its death) they stop following it. One who stops following it (`FOLLOW SELF`) is not made to again. |
 | `WAITFOR=LEADER` | off | While the leader is not in its room it does not go on. |
 | `WAITCALL=n` | 3 | Ticks the leader is away before it calls. |
 | `WAITMSG="text"` | "Wait for me!" | What it calls. |
-| `PANIC=FLEE\|HIDE\|COWER` | none | When attacked it flees, or dives for cover or cowers (both stop the fight). |
+| `PANIC=FLEE\|HIDE\|COWER` | none | When attacked it flees, or dives for cover or cowers (both stop the fight). Another word is ignored; `STAT BEHAVIORS` shows it as "PANIC=RUN is not FLEE, HIDE or COWER, and is ignored". |
 | `AVOID=id,id` | none | Rooms it will not enter ("I won't go there."). |
 | `TALK=room:text`, `TALK1=` to `TALK9=` | none | A remark the first time it comes to that room. |
 | `ONARRIVE="MOBPROG lines"` | none | Run on arrival, `;` between lines, the NPC as host and its leader as `$n`. |
@@ -563,8 +563,11 @@ Until then it waits.
 Lines in `ONARRIVE`, `ONDEATH` and `ONTIMEOUT` are MOBPROG commands, for
 example `say Thank you, friends!;mpsetvar $n ESCORTED 1`, `mpcallfunc ...`, or
 `mpquestwin $n <quest>` ([27](27-mobprog-commands.md)). On arrival the NPC stops
-following. The leader, completion, tick count and remarks already made are kept
-in a saved game.
+following. The leader, completion, tick count, remarks already made and whether
+it has taken the lead are kept in a saved game. While the party follows a
+leading escortee, the party is still led by the player's character at its head:
+party turns, `PARTY` and the rest treat that character as the leader, not the
+NPC.
 
 ```text
 DEST=Riverford#1 MODE=LEAD WAITFOR=LEADER PANIC=COWER TALK="Bridge#3:They say trolls live under here." ONARRIVE="say Thank you, friends!;mpsetvar $n ESCORTED 1"
@@ -580,9 +583,15 @@ An NPC that works for money. The parameter string starts with the basic terms
 `price;minutes` (optionally `;zapper mask` on who may hire), followed by
 CoffeeSUD `KEY=value` terms anywhere in the string (quote values with spaces).
 
-Basic: `10000;30` means 10000 base-currency units for 30 minutes of (real-time)
-service; the offer shows the term converted to game "hours". More money given
-extends the time pro rata. When time runs out, the NPC
+Basic: `10000;30` means 10000 base-currency units for 30 minutes of play: minutes
+of the game clock, so real minutes at normal speed, stopped while the game is
+paused. The NPC tells every time in game time: the offer, the hire and "I'm on
+the job for 3.0 "hours" more." all give game hours (30 minutes is 3 game hours
+with the shipped clock), and with `CONTRACT=DAYS` the number and every time it
+tells are game days. More money given extends the time pro rata, in the
+contract's unit (with `CONTRACT=DAYS`, more days). A `QUEST:` or `UNTILFIRED`
+contract has no time to tell: asked, it says "I'm on the job until you let me
+go." (or until the quest is done). When time runs out, the NPC
 says goodbye and returns to its start room.
 
 How the player hires:
@@ -1744,8 +1753,9 @@ on without you); attack him (he cowers); try the bog road (he refuses with "I
 won't go there."); reach Riverford#1 (ONARRIVE runs, he stops following); let
 the timeout run; save and restore mid-escort (leader, tick count and remarks
 survive). For a courier who walks ahead instead, use `MODE=LEAD`; he then walks
-the shortest way to `DEST` himself, a step a tick, and `WAITFOR=LEADER` makes
-him stop when you fall behind.
+the shortest way to `DEST` himself, a step a tick, with you following him. If
+you stop following (`FOLLOW SELF`), `WAITFOR=LEADER` makes him stop when you
+fall behind.
 
 ### Example 5: an ambient town crier
 

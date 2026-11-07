@@ -762,7 +762,7 @@ to wait for another player to get the door open to sneak through.
 
 ## BEHAVIOR_CLANENEMYAGGRESSIVE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3676.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3680.
 
 ```text
 Behavior   : ClanEnemyAggressive
@@ -933,7 +933,7 @@ the countdown goes on after a save; it is not a setting to choose.
 
 ## BEHAVIOR_DELAYEDTRANSPORTER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3301.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3305.
 
 ```text
 Behavior   : Delayed Transporter
@@ -1050,14 +1050,16 @@ Description:
 CoffeeSUD: an NPC escorted to DEST.  Its leader is the one it follows when the escort begins
  (a quest's MPFORCE $i follow $n); until then it waits.  MODE=FOLLOW (the default): it
 follows its leader; MODE=LEAD: it stops following and walks the way itself, a step a tick,
-and the party must keep up (nothing makes it follow).  WAITFOR=LEADER: while its leader is
-not with it, it does not go on, and after WAITCALL ticks (3) it calls WAITMSG ("Wait for
-me!").  PANIC: when attacked it flees (FLEE), dives for cover (HIDE) or cowers (COWER, and
-any other word) (the last two stop the fight).  AVOID: rooms (by ID, or the end of one) it
-will not go into.  TALK (and TALK1= to TALK9=): a remark the first time it comes to that
-room.  ONARRIVE, ONDEATH and, after TIMEOUT ticks, ONTIMEOUT: MOBPROG lines, ; between them,
- run with its leader as $n: a word, MPSETVAR, MPCALLFUNC, MPQUESTWIN.  Arrived, it stops
-following.  Its leader, arrival and remarks are kept in a saved game.
+and the head of its leader's party follows it, so the party comes along, until it arrives
+(one who stops following it, with FOLLOW SELF, is not made to again).  WAITFOR=LEADER: while
+ its leader is not with it, it does not go on, and after WAITCALL ticks (3) it calls WAITMSG
+ ("Wait for me!").  PANIC: when attacked it flees (FLEE), dives for cover (HIDE) or cowers
+(COWER) (the last two stop the fight); another word is ignored, and STAT BEHAVIORS reports
+it.  AVOID: rooms (by ID, or the end of one) it will not go into.  TALK (and TALK1= to
+TALK9=): a remark the first time it comes to that room.  ONARRIVE, ONDEATH and, after
+TIMEOUT ticks, ONTIMEOUT: MOBPROG lines, ; between them, run with its leader as $n: a word,
+MPSETVAR, MPCALLFUNC, MPQUESTWIN.  Arrived, it stops following.  Its leader, arrival,
+remarks and lead are kept in a saved game.
 ```
 
 <a id="behavior-fieryroom"></a>
@@ -1105,7 +1107,7 @@ BURNTICKS=12
 
 ## BEHAVIOR_FLOODABLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1928.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1932.
 
 ```text
 Behavior   : Floodable
@@ -1129,7 +1131,7 @@ told).  FLOODLEVEL() reads the level.
 
 ## BEHAVIOR_GENBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 804.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 806.
 
 ```text
 Behavior   : GenBehavior (a generic behaviour: CREATE BEHAVIOR [ID])
@@ -1158,7 +1160,7 @@ beside it.
 
 ## BEHAVIOR_GUILDMASTER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3661.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3665.
 
 ```text
 Behavior   : GuildMaster
@@ -1184,7 +1186,7 @@ comes before it, CLAN= is not found.  See ORGANIZATIONS.
 
 ## BEHAVIOR_HEALER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 866.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 868.
 
 ```text
 Behavior   : Healer
@@ -1208,7 +1210,7 @@ TARGET=MASK:"-NPC"
 
 ## BEHAVIOR_HIRELING
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 882.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 884.
 
 ```text
 Behavior   : Hireling
@@ -1217,12 +1219,14 @@ Parameters : price to hire;minutes of service(;[ZAPPER MASK])
 Example    : 10000;30
 Description:
 Allows a mob to hire him or herself out for a given amount of time. The first parameter is
-the price to hire the mob, followed by a semicolon and the number of minutes that amount of
-money purchases (real minutes, shown to the player as game hours; game days with
-CONTRACT=DAYS), and, after a second semicolon, an optional zapper mask that those who pay
-must fit (the mob says "I wouldn't work for the likes of you." to the rest, or MSG_REFUSE).
-  Additional money may be given by the player to extend the time.  When the time expires,
-the mob returns to his or her start room.
+the price to hire the mob, followed by a semicolon and the number of minutes of play that
+amount of money buys (minutes of the game clock: real minutes at normal speed, stopped while
+ the game is paused; with CONTRACT=DAYS, game days), and, after a second semicolon, an
+optional zapper mask that those who pay must fit (the mob says "I wouldn't work for the
+likes of you." to the rest, or MSG_REFUSE).  Additional money may be given by the player to
+extend the time, at the same rate, in the contract's unit.  The mob tells every time in game
+ time: its terms and what is left in game hours, or in game days with CONTRACT=DAYS.  When
+the time expires, the mob returns to his or her start room.
 
 CoffeeSUD: terms, KEY=value after them (quote a value with spaces): KEYWORDS=[WORD],... the
 words that ask its terms (HIRE, HIRELING, WORK, WORKS, TIME, AVAILABLE); MSG_OFFER (@x1 the
@@ -1243,7 +1247,7 @@ Example    : 500;0;CONTRACT="QUEST:goblinwar" UPKEEP=5 MSG_HIRED="My blade is yo
 
 ## BEHAVIOR_ITEMGENERATOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 921.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 925.
 
 ```text
 Behavior   : ItemGenerator
@@ -1288,7 +1292,7 @@ where allowed is generated, and disallowed is not.
 
 ## BEHAVIOR_ITEMUPGRADER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1029.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1033.
 
 ```text
 Behavior   : ItemUpgrader
@@ -1312,7 +1316,7 @@ what it would take; UPGRADE [ITEM] CONFIRM does it.
 
 ## BEHAVIOR_JSBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1043.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1047.
 
 ```text
 Behavior   : JSBehavior
@@ -1331,7 +1335,7 @@ onRemoved(host) and catchUp(host, ticks) (AHELP CATCHUP).  A behaviour is not as
 
 ## BEHAVIOR_JSCRIPTABLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1055.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1059.
 
 ```text
 Behavior   : JScriptable
@@ -1354,7 +1358,7 @@ shares one script among the hosts that name it.  guides/JavaScriptSUD.html has a
 
 ## BEHAVIOR_JSWORLDBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3648.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3652.
 
 ```text
 Behavior   : JSWorldBehavior
@@ -1376,7 +1380,7 @@ WORLD CHECK's JS part, which lists the classes that do not compile or extend not
 
 ## BEHAVIOR_MEMORY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1087.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1091.
 
 ```text
 Behavior   : Memory
@@ -1403,7 +1407,7 @@ the mask fits): rob one villager and the village knows.
 
 ## BEHAVIOR_MOBEATER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1114.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1118.
 
 ```text
 Behavior   : MOBEater
@@ -1422,7 +1426,7 @@ with this behavior is twice the weight of the target.
 
 ## BEHAVIOR_MOBILE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1165.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1169.
 
 ```text
 Behavior   : Mobile
@@ -1449,7 +1453,7 @@ HILLS, MOUNTAINS, SPACEPORT, SEAPORT
 
 ## BEHAVIOR_MOBILEAGGRESSIVE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1189.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1193.
 
 ```text
 Behavior   : MobileAggressive
@@ -1493,7 +1497,7 @@ See AHELP ZAPPERMASK, where allowed is attacked, and disallowed is spared.
 
 ## BEHAVIOR_MOBTEACHER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1262.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1266.
 
 ```text
 Behavior   : MOBTeacher
@@ -1541,7 +1545,7 @@ teacher offers them.
 
 ## BEHAVIOR_MONEYCHANGER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1298.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1302.
 
 ```text
 Behavior   : MoneyChanger
@@ -1579,7 +1583,7 @@ maximum.
 
 ## BEHAVIOR_MORALE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1329.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1333.
 
 ```text
 Behavior   : Morale
@@ -1608,7 +1612,7 @@ fought).  BRAVE: those the mask fits never break.
 
 ## BEHAVIOR_MOVINGROOM
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1415.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1419.
 
 ```text
 Behavior   : MovingRoom
@@ -1676,7 +1680,7 @@ position. The legacy file is resources/movingroom.xml.
 
 ## BEHAVIOR_MUDCHAT
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1347.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1351.
 
 ```text
 Behavior   : MudChat
@@ -1758,7 +1762,7 @@ These requests also work in speech; custody and payment records survive saves.
 
 ## BEHAVIOR_NICEABILITIES
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1501.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1505.
 
 ```text
 Behavior   : NiceAbilities
@@ -1781,7 +1785,7 @@ Example    : min=1 max=1 HEALAT=60 ; -RACE +Goblin
 
 ## BEHAVIOR_PATROLLER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1541.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1545.
 
 ```text
 Behavior   : Patroller
@@ -1829,7 +1833,7 @@ max=3;ROUTE=DAY:Gate#1;Wall#4;RESTART;ROUTE=NIGHT:Barracks#1;Barracks#2;RESTART
 
 ## BEHAVIOR_PURSUE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1604.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1608.
 
 ```text
 Behavior   : Pursue
@@ -1851,7 +1855,7 @@ comes back within N ticks is attacked on sight.
 
 ## BEHAVIOR_QUESTCHAT
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1385.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1389.
 
 ```text
 Behavior   : QuestChat
@@ -1886,7 +1890,7 @@ strings under the players name in any Quest object. This list will then be avail
 
 ## BEHAVIOR_RANDOMENCOUNTERS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1630.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1634.
 
 ```text
 Behavior   : RandomEncounters
@@ -1910,7 +1914,7 @@ party's (C15's mob ranks count).
 
 ## BEHAVIOR_RANDOMITEMS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1645.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1649.
 
 ```text
 Behavior   : RandomItems
@@ -1962,7 +1966,7 @@ rooms.
 
 ## BEHAVIOR_RANDOMMONSTERS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1694.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1698.
 
 ```text
 Behavior   : RandomMonsters
@@ -2015,7 +2019,7 @@ level of the party's highest, give or take, its stats by the level formulas.
 
 ## BEHAVIOR_RANDOMQUESTS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1742.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1746.
 
 ```text
 Behavior   : RandomQuests
@@ -2077,7 +2081,7 @@ areas
 
 ## BEHAVIOR_REGENERATE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1813.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1817.
 
 ```text
 Behavior   : Regenerate
@@ -2107,7 +2111,7 @@ rooms are kept as rooms changed in play.
 
 ## BEHAVIOR_RESETWHOLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1834.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1838.
 
 ```text
 Behavior   : ResetWhole
@@ -2146,7 +2150,7 @@ resetting the real rooms, using the entering leader level.
 
 ## BEHAVIOR_RESOURCEOVERRIDE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1863.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1867.
 
 ```text
 Behavior   : ResourceOverride
@@ -2190,7 +2194,7 @@ mask: on a room or area, the one who gathers, and on a mob, the one who butchers
 
 ## BEHAVIOR_RIDDLER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1942.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1946.
 
 ```text
 Behavior   : Riddler
@@ -2219,7 +2223,7 @@ until anyone does (kept with it), NONE always.
 
 ## BEHAVIOR_ROOMSTATES
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1900.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1904.
 
 ```text
 Behavior   : RoomStates
@@ -2246,7 +2250,7 @@ together.  MPROOMSTATE and ROOMSTATE() set and read it; a save keeps it.
 
 ## BEHAVIOR_SCAVENGER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2000.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2004.
 
 ```text
 Behavior   : Scavenger
@@ -2274,7 +2278,7 @@ TRASH place (or drops everything) as if it were full, its money too.
 
 ## BEHAVIOR_SCENE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2023.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2027.
 
 ```text
 Behavior   : Scene
@@ -2309,7 +2313,7 @@ Where it is in a scene is kept in a saved game; STAT BEHAVIORS shows it and any 
 
 ## BEHAVIOR_SCHEDULE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1978.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1982.
 
 ```text
 Behavior   : Schedule
@@ -2340,7 +2344,7 @@ stays where it is.  STAT($i SCHEDULE) is the entry in force, and STAT BEHAVIORS 
 
 ## BEHAVIOR_SCRIPTABLE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2081.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2085.
 
 ```text
 Behavior   : Scriptable
@@ -3601,7 +3605,7 @@ if $o evaluates to "a magic wand", $o.1.. would evaluate to "magic wand".
 
 ## BEHAVIOR_SENTRY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2047.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2051.
 
 ```text
 Behavior   : Sentry
@@ -3627,7 +3631,7 @@ tent by tent.
 
 ## BEHAVIOR_SLEEPER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2064.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2068.
 
 ```text
 Behavior   : Sleeper
@@ -3751,7 +3755,7 @@ the bell.;HURT<30: SAY To me! Guards!
 
 ## BEHAVIOR_STDBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3636.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3640.
 
 ```text
 Behavior   : StdBehavior
@@ -3771,7 +3775,7 @@ rest) accept every kind of host through ActiveTicker.  It is of no use to put on
 
 ## BEHAVIOR_TARGETPRIORITY
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3410.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3414.
 
 ```text
 Behavior   : TargetPriority
@@ -3799,7 +3803,7 @@ taunt) comes before the list.
 
 ## BEHAVIOR_TAXIBEHAVIOR
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3447.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3451.
 
 ```text
 Behavior   : TaxiBehavior
@@ -3840,7 +3844,7 @@ beyond their own weight (0 if not given).
 
 ## BEHAVIOR_TIDALROOM
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1916.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 1920.
 
 ```text
 Behavior   : TidalRoom
@@ -3890,7 +3894,7 @@ EACH uses individual fares. WAIT UNTIL ARRIVAL stops at a line arrival.
 
 ## BEHAVIOR_VERYAGGRESSIVE
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3487.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3491.
 
 ```text
 Behavior   : VeryAggressive
@@ -3923,7 +3927,7 @@ See AHELP ZAPPERMASK, where allowed is attacked, and disallowed is spared.
 
 ## BEHAVIOR_WATERCURRENTS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3530.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3534.
 
 ```text
 Behavior   : WaterCurrents
@@ -3946,7 +3950,7 @@ BOATS also lets the currents carry boats that have riders (and Boardable things)
 
 ## BEHAVIOR_WAVESPAWNER
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3512.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 3516.
 
 ```text
 Behavior   : WaveSpawner
@@ -9917,7 +9921,7 @@ variables.
 
 ## QUESTS
 
-Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2954.
+Source: [arc_behaviors.ini](../../CoffeeMud/resources/help/arc_behaviors.ini), line 2958.
 
 ```text
 Quests are defined as a definable tasks which are completed by players for prizes. These

@@ -1,5 +1,6 @@
 // N21: Hireling terms: KEYWORDS=, MSG_OFFER=/MSG_HIRED=, CONTRACT=QUEST:/DAYS/UNTILFIRED, UPKEEP= (two unpaid days and it
-// leaves), REFUSE= orders, FLEEHP= unless LOYAL= (its opinion), the HIRE menu and HIRE PAY, the saved state.
+// leaves), REFUSE= orders, FLEEHP= unless LOYAL= (its opinion), the HIRE menu and HIRE PAY, the saved state, the time left
+// told in game time and an extension in the contract's unit.
 FIXFILE = "n21-hireling";
 var SM = CM.core.ScriptMenus;
 var NA = CM.core.NpcAffinity;
@@ -89,7 +90,34 @@ check("flees", s(coward.B.getStat("WORKING")) == "" && !coward.mob.isInCombat(),
 check("loyal", s(brave.B.getStat("WORKING")) == "Fixn21pip", "the loyal one left");
 brave.mob.makePeace(true); foe.makePeace(true);
 
-[merc.mob, coward.mob, brave.mob, foe].forEach(function (m) { m.destroy(); });
+// how long it is on the job, told in the game time of its terms: game "hours" for minutes of play, game days with
+// CONTRACT=DAYS, the terms themselves for a quest or until fired; an extension in the contract's own unit
+function ask(h, what) { R.send(pip, CMClass.getMsg(pip, h.mob, null, CMMsg.MSG_SPEAK, "<S-NAME> say(s) to <T-NAMESELF> '" + what + "'.")); return out(); }
+function setUntil(B, t) { var f = B.getClass().getDeclaredField("onTheJobUntil"); f.setAccessible(true); f.setLong(B, t); }
+function until(B) { var f = B.getClass().getDeclaredField("onTheJobUntil"); f.setAccessible(true); return f.getLong(B); }
+var hours = 30 * 60000 / CMProps.getMillisPerMudHour();
+var guard = hireling("Fixn21guard", "10;30");
+CMLib.beanCounter().addMoney(pip, cur, 50.0);
+out();
+hireDirect(guard);
+out();
+var said = ask(guard, "how much time?");
+check("left-hours", has(said, "I'm on the job for " + hours.toFixed(1) + " \"hours\" more.") && !has(said, "minute"), said);
+said = ask(brave, "how much time?");
+check("left-untilfired", has(said, "I'm on the job until you let me go."), said);
+var porter = hireling("Fixn21porter", "10;2;CONTRACT=DAYS");
+var c20 = CMLib.beanCounter().makeBestCurrency(cur, 20.0); pip.addItem(c20);
+R.send(pip, CMClass.getMsg(pip, porter.mob, c20, CMMsg.MSG_GIVE, "<S-NAME> give(s) <O-NAME> to <T-NAMESELF>."));
+out();
+said = ask(porter, "how much time?");
+check("left-days", has(said, "I'm on the job for 2.0 days more."), said);
+setUntil(porter.B, CM.core.GameTime.now() - 1);
+tick(porter);
+said = out();
+var left = until(porter.B) - CM.core.GameTime.now();
+check("extend-days", left > 1.9 * day && left <= 2 * day && has(said, "you've paid for 2.0 days more"), "left " + left + " of a day " + day + ": " + said);
+
+[merc.mob, coward.mob, brave.mob, guard.mob, porter.mob, foe].forEach(function (m) { m.destroy(); });
 pip.setPlayerStats(null); pip.destroy();
 R.destroy();
 done();

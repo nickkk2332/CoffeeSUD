@@ -1,4 +1,4 @@
-// N20: Escortee: MODE=LEAD walks to DEST a step a tick, WAITFOR=LEADER waits and calls WAITMSG, TALK= remarks,
+// N20: Escortee: MODE=LEAD walks to DEST a step a tick with its party following, WAITFOR=LEADER waits and calls WAITMSG, TALK= remarks,
 // ONARRIVE= with the leader as $n; MODE=FOLLOW with AVOID=; PANIC=COWER; ONDEATH=; TIMEOUT= and ONTIMEOUT=; its state.
 FIXFILE = "n20-escortee";
 var PS = CM.Common.interfaces.PhyStats;
@@ -51,14 +51,22 @@ tick(m, E);
 check("not-yet", where(m) == "0", "it went with no leader");
 follow(m, pip);
 tick(m, E);
+// it takes the lead: it follows no one, and the one it followed follows it, so comes along
 check("leads", where(m) == "1" && m.amFollowing() == null, "at " + where(m));
+check("party-follows", pip.amFollowing() == m && where(pip) == "1", "pip at " + where(pip) + ", following " + pip.amFollowing());
+// the party is still led by the player's character, not the NPC they follow
+check("party-leader", CM.core.Party.leaderOf(pip) == pip, "leader " + CM.core.Party.leaderOf(pip));
+// pip stops following and stays behind: it waits, and calls
+CMLib.commands().postFollow(pip, null, true);
+rooms[0].bringMobHere(pip, false);
 tick(m, E);
 check("waits", where(m) == "1" && !has(heard(w1), "Fixn20 wait for me!"), "at " + where(m));
 tick(m, E);
 check("calls", where(m) == "1" && has(heard(w1), "Fixn20 wait for me!"), "no call");
 rooms[1].bringMobHere(pip, false);
 tick(m, E);
-check("goes-on", where(m) == "2", "at " + where(m));
+// once pip has stopped following, it is not made to again
+check("goes-on", where(m) == "2" && where(pip) == "1" && pip.amFollowing() == null, "at " + where(m) + ", pip at " + where(pip));
 tick(m, E);
 check("remark", has(heard(w2), "Fixn20 they say trolls live here."), "no remark at the bridge");
 rooms[2].bringMobHere(pip, false);
@@ -71,6 +79,19 @@ var E2 = CMClass.getBehavior("Escortee");
 E2.setParms(s(E.getParms()));
 E2.setStat("STATE", state);
 check("restored", s(E2.getStat("STATE")) == state, s(E2.getStat("STATE")));
+check("led-kept", has(state, "LED=\"true\""), state);
+
+// leading the party the whole way: pip follows it to the end, and then stops
+rooms[0].bringMobHere(pip, false);
+var c = newMob("GenMob", rooms[0]);
+c.setName("Fixn20courier");
+var C = CMClass.getBehavior("Escortee");
+C.setParms("DEST=Fixn20Road#3 MODE=LEAD");
+c.addBehavior(C);
+follow(c, pip);
+for (var i = 0; i < 4; i++) tick(c, C);
+check("led-there", where(c) == "3" && where(pip) == "3", "courier at " + where(c) + ", pip at " + where(pip));
+check("led-released", pip.amFollowing() == null && has(s(C.getStat("STATE")), "DONE=\"true\""), "pip still follows " + pip.amFollowing());
 
 // following, but not into a room it avoids; cowering when attacked; its death
 rooms[1].bringMobHere(pip, false);
@@ -88,6 +109,18 @@ foe.setName("Fixn20foe");
 rooms[1].send(foe, CMClass.getMsg(foe, g, null, CMMsg.MSG_NOISYMOVEMENT | CMMsg.MASK_MALICIOUS, "<S-NAME> shove(s) <T-NAME>."));
 check("cower", !g.isInCombat() && has(heard(w1), "cower"), "it fought on");
 foe.makePeace(true);
+// a PANIC word that is none of FLEE, HIDE and COWER is reported and ignored, not taken for COWER
+var u = newMob("GenMob", rooms[1]);
+u.setName("Fixn20stoic");
+var UB = CMClass.getBehavior("Escortee");
+UB.setParms("DEST=Fixn20Road#3 PANIC=RUN");
+u.addBehavior(UB);
+var heardBefore = heard(w1).length;
+rooms[1].send(foe, CMClass.getMsg(foe, u, null, CMMsg.MSG_NOISYMOVEMENT | CMMsg.MASK_MALICIOUS, "<S-NAME> shove(s) <T-NAME>."));
+var after = heard(w1).substring(heardBefore);
+check("panic-unknown", has(s(UB.getStat("DEBUG")), "PANIC=RUN is not FLEE, HIDE or COWER") && !has(after, "cower") && !has(after, "panic"),
+	s(UB.getStat("DEBUG")) + " / " + after);
+foe.makePeace(true); u.makePeace(true);
 rooms[1].send(g, CMClass.getMsg(g, null, foe, CMMsg.MSG_OK_VISUAL, null, CMMsg.MSG_OK_VISUAL, null, CMMsg.MSG_DEATH, "<S-NAME> is DEAD!!!"));
 check("ondeath", gvar("FIXN20DEAD") == "Fixn20pip", "'" + gvar("FIXN20DEAD") + "'");
 
@@ -103,7 +136,7 @@ check("before-timeout", gvar("FIXN20LATE") == "", "too soon");
 tick(t, TB);
 check("timeout", gvar("FIXN20LATE") == "yes", "'" + gvar("FIXN20LATE") + "'");
 
-[m, g, t, foe, w1.mob, w2.mob].forEach(function (x) { if (!x.amDestroyed()) x.destroy(); });
+[m, c, g, t, u, foe, w1.mob, w2.mob].forEach(function (x) { if (!x.amDestroyed()) x.destroy(); });
 pip.setPlayerStats(null); pip.destroy();
 CMLib.map().obliterateMapArea(X);
 done();

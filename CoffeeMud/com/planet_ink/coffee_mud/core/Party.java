@@ -726,14 +726,26 @@ public final class Party
 
 	/**
 	 * Returns the leader of the party a character is in: the one at the head
-	 * of the group they follow.
+	 * of the group they follow.  When the group follows an NPC (an escort
+	 * leading the way, say), the party is still led by the player's character
+	 * nearest that head: the last character in the chain of whom each
+	 * follows who.
 	 * @param mob the character
 	 * @return the leader, which is the character if they follow no one
 	 */
 	public static MOB leaderOf(final MOB mob)
 	{
-		final MOB leader = mob.getGroupLeader();
-		return (leader == null) ? mob : leader;
+		MOB leader = null;
+		final Set<MOB> seen = new HashSet<MOB>();
+		for(MOB M = mob; (M != null) && seen.add(M); M = M.amFollowing())
+		{
+			if(M.isPlayer())
+				leader = M;
+		}
+		if(leader != null)
+			return leader;
+		final MOB top = mob.getGroupLeader();
+		return (top == null) ? mob : top;
 	}
 
 	/**
