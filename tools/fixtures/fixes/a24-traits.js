@@ -23,7 +23,7 @@ function find(R, name) { var out = []; for (var i = 0; i < R.numInhabitants(); i
 function calm(R) { for (var i = 0; i < R.numInhabitants(); i++) R.fetchInhabitant(i).makePeace(true); }
 function traitsOf(M) { var T = M.fetchEffect("Prop_EliteTraits"); return T == null ? [] : s(T.traitIDs()).replace(/[\[\] ]/g, "").split(","); }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	var mods = dir("modules");
 	copyDir(new java.io.File(ex, "reward-escrow/modules"), mods);
 	copyDir(new java.io.File(ex, "encounter-director/modules"), mods);

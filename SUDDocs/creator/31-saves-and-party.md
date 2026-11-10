@@ -290,7 +290,7 @@ Ordinary `FOLLOW` observes `PARTYMAX` too, for characters of the same profile
 follow each other instead of using `PARTY ADD`. NPC followers (pets, hirelings, charmed creatures) do not count; only
 profile characters do.
 
-Example (also in [`docs/party-rules.md`](../party-rules.md)):
+Example (also in [`SUDDocs/party-rules.md`](../party-rules.md)):
 
 ```ini
 # world/world.ini

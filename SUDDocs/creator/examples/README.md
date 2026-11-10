@@ -46,7 +46,7 @@ its own: [named resources](named-resources/README.md),
 From the repository root, with a JDK on PATH:
 
 ```sh
-python3 docs/creator/examples/check.py
+python3 SUDDocs/creator/examples/check.py
 ```
 
 The script makes an isolated deployment, starts the builder, runs the authoring
@@ -58,7 +58,7 @@ launcher/test tools. It does not modify `CoffeeMud/world` or a user's saves.
 ## Build and explore by hand
 
 ```sh
-python3 docs/creator/examples/make_world.py /tmp/sud-museum
+python3 SUDDocs/creator/examples/make_world.py /tmp/sud-museum
 CoffeeMud/sud.sh BUILDER=1 WORLDDIR=/tmp/sud-museum/world DBSERVICE=jdbc:fakedb:/tmp/sud-museum/db SAVEDIR=/tmp/sud-museum/saves TIMEMODE=TURNS
 ```
 

@@ -34,7 +34,7 @@ function cast(a, who, id, at) {
 }
 function ail(m) { return m.fetchEffect("CompositionAilment"); }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	var mods = dir("modules");
 	copyDir(new java.io.File(ex, "ability-composition/modules"), mods);
 	copyDir(new java.io.File(ex, "named-resources/modules"), mods);

@@ -1,6 +1,6 @@
 # Property defects from DOCS b075 to b078
 
-The four property chapters of DOCS (`DOCS/conditions/b075` to `b078`) end
+The four property chapters of DOCS (`archive/oldenginedocs/conditions/b075` to `b078`) end
 with a list of problems found by reading the code. This file says what was
 done with each, in the chapters' order. I1 (step 2a) fixed the first few
 (PropSetter's trigger bits, LimitedContents' count, ItemBinder's ON values,

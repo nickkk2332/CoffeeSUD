@@ -16,7 +16,7 @@
     "generated_references_fresh": true
   },
   "museum": {
-    "command": "python3 docs/creator/examples/check.py",
+    "command": "python3 SUDDocs/creator/examples/check.py",
     "passed": true,
     "player_checks": 15,
     "javascript_test_cases": 6,

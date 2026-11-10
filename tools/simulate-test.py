@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-EXAMPLE = ROOT / 'docs/creator/examples/simulation/ember-vs-strike.json'
+EXAMPLE = ROOT / 'SUDDocs/creator/examples/simulation/ember-vs-strike.json'
 scratch = Path(sys.argv[1]).resolve()
 scratch.mkdir(parents=True, exist_ok=True)
 count = 0

@@ -16,7 +16,7 @@ import textwrap
 from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
-DOC = ROOT / 'docs' / 'creator'
+DOC = ROOT / 'SUDDocs' / 'creator'
 CHAPTERS = {
     'B': ('World editing', '02-world-workflow.md'),
     'C': ('Combat and encounters', '29-combat-and-encounters.md'),
@@ -274,7 +274,7 @@ def check_links():
     errors = []
     files = list(DOC.rglob('*.md')) + [ROOT / 'audit/developer-tools-audit.md',
                                     ROOT / 'README.md', ROOT / 'audit/README.md']
-    files += [ROOT / 'docs' / (name + '.md') for name in
+    files += [ROOT / 'SUDDocs' / (name + '.md') for name in
               ('authoring-reliability', 'languages', 'organizations',
                'party-rules', 'presentation', 'travel')]
     for path in files:

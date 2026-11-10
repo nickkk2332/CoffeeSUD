@@ -39,7 +39,7 @@ option; a cyberpunk city or post-apocalyptic world should not need it.
 ## Evidence and boundaries
 
 This is a current-code audit, rather than another survey of commercial games.
-The primary sources are the repository. The older `DOCS/` analyses were used as
+The primary sources are the repository. The older `archive/oldenginedocs/` analyses were used as
 leads, then checked against current code; they are not a current implementation
 contract. Absence claims mean no dedicated reusable system was located in the
 scoped code, not that a creator cannot script a similar scene. Stock classes and
@@ -56,8 +56,8 @@ its known baseline failure; this work changes no engine code.
 Reproduce the observations in an isolated game copy:
 
 ```sh
-python docs/research/technology-scifi/run-probes.py --output /tmp/technology-audit
-python docs/research/technology-scifi/verify.py
+python SUDDocs/research/technology-scifi/run-probes.py --output /tmp/technology-audit
+python SUDDocs/research/technology-scifi/verify.py
 ```
 
 [Recorded observations](observations.txt) and [verification report](verification.json)

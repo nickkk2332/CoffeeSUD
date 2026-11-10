@@ -13,7 +13,7 @@ kill, damage per turn, how each run stopped), and the combat profile's exact exp
 each skill (COMPOSE COMPARE's figures), with the analytical estimate of turns that follows from them. The same
 scenario and seeds give the same results.
 
-    python3 tools/simulate.py docs/creator/examples/simulation/ember-vs-strike.json
+    python3 tools/simulate.py SUDDocs/creator/examples/simulation/ember-vs-strike.json
     python3 tools/simulate.py SCENARIO --seeds 1,2,3 --json results.json
 """
 import argparse
@@ -29,7 +29,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 GAME = ROOT / 'CoffeeMud'
-EXAMPLES = ROOT / 'docs/creator/examples'
+EXAMPLES = ROOT / 'SUDDocs/creator/examples'
 NEWCHAR = 'Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
 
 HARNESS = r"""

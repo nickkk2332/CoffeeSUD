@@ -142,7 +142,7 @@ exactly. A scenario file names everything:
 | `turn_limit`, `stall_turns`, `work_limit` | A run stops at the turn limit, or when it has done no damage for `stall_turns` turns (stalled), or when the build has cast `work_limit` times in all. |
 
 ```bash
-python3 tools/simulate.py docs/creator/examples/simulation/ember-vs-strike.json --json results.json
+python3 tools/simulate.py SUDDocs/creator/examples/simulation/ember-vs-strike.json --json results.json
 ```
 
 Each build runs in its own engine process. A turn casts the first ready skill

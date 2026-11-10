@@ -106,7 +106,7 @@ choosing ideas; it is not a clone specification for any of the five games.
 From the repository root:
 
 ```sh
-python docs/research/arpg-mud/verify.py
+python SUDDocs/research/arpg-mud/verify.py
 ```
 
 The check verifies local links, cited-source registration, proposal IDs and

@@ -903,7 +903,7 @@ group_combat()
 group_trial()
 {
     echo "Played: Ember Trial sample publication, mortal combat, completion and fresh-process persistence"
-    python3 "$ROOT/docs/creator/examples/ember-trial/check.py" > "$W/trial.txt" 2>&1 || FAIL=1
+    python3 "$ROOT/SUDDocs/creator/examples/ember-trial/check.py" > "$W/trial.txt" 2>&1 || FAIL=1
     jsresults trial.txt
 }
 

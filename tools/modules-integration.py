@@ -16,7 +16,7 @@ world, db, saves = (scratch / name for name in ('world', 'db', 'saves'))
 shutil.copytree(GAME / 'world', world)
 db.mkdir()
 shutil.copyfile(GAME / 'resources/fakedb/fakedb.schema', db / 'fakedb.schema')
-shutil.copytree(ROOT / 'docs/creator/examples/optional-modules/modules', world / 'modules')
+shutil.copytree(ROOT / 'SUDDocs/creator/examples/optional-modules/modules', world / 'modules')
 count = 0
 newchar = 'Y\nN\nHuman\nY\nM\nN\nApprentice\nY\ngood\n\n'
 
@@ -154,7 +154,7 @@ try:
     check('definition removed' in text and field('removed', 'total') == 11,
           'removed definition retains capsule through actual restore', text[-2000:])
 
-    definition = json.loads((ROOT / 'docs/creator/examples/optional-modules/modules/example.counter.json').read_text())
+    definition = json.loads((ROOT / 'SUDDocs/creator/examples/optional-modules/modules/example.counter.json').read_text())
     config('example.counter')
     definition['on_disable'] = 'refuse'
     path.write_text(json.dumps(definition))

@@ -777,7 +777,7 @@ returns the accepted settings in file order and lists ignored keys. `SUD` places
 between the fixed single-player settings and the command line; `sourceOf(key)`
 reports whether a key's effective value came from `coffeemud.ini`, `world.ini` or
 the command line (`FROM_INI`, `FROM_WORLD`, `FROM_COMMAND`). To let a world set a new
-key, add it to `KEYS` (or a prefix); `docs/creator/world-settings.md` is generated
+key, add it to `KEYS` (or a prefix); `SUDDocs/creator/world-settings.md` is generated
 from that list, so run the generator rather than editing it by hand.
 
 ### Tests

@@ -461,7 +461,7 @@ Optional tracked numeric entries add TRACKED="true", VERSION, TIER, GROUP, TAGS 
 STAT/MIN/MAX children; POWER must be 0, with no CURSED=true or AFFECT children.
 MODBASE="base.id" on a template opts into saved per-modifier records and selective crafting
 when items.modifiers is enabled. Ordinary affixes retain the behavior above. See AHELP
-WORLD_ITEMMODS and docs/creator/17-item-modifiers-crafting.md.
+WORLD_ITEMMODS and SUDDocs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="ageing"></a>
@@ -4071,7 +4071,7 @@ Help alias for **BUILDING**.
 ```text
 Topic    : BUILDING
 Short(s) : BUILDERMODE
-The creator handbook is docs/creator/README.md in the developer checkout: workflows, a
+The creator handbook is SUDDocs/creator/README.md in the developer checkout: workflows, a
 cookbook, runnable examples and current tool references.
 Building in CoffeeSUD, with BUILDER=1.  The world lives in its folder (WORLDDIR, world/ by
 default): areas/*.cmare, quests/*.quest, the catalog, custom objects, templates, clans and
@@ -4112,7 +4112,7 @@ Source: [arc_help.ini](../../CoffeeMud/resources/help/arc_help.ini), line 2207.
 ```text
 Topic    : BUILDING
 Short(s) : BUILDERMODE
-The creator handbook is docs/creator/README.md in the developer checkout: workflows, a
+The creator handbook is SUDDocs/creator/README.md in the developer checkout: workflows, a
 cookbook, runnable examples and current tool references.
 Building in CoffeeSUD, with BUILDER=1.  The world lives in its folder (WORLDDIR, world/ by
 default): areas/*.cmare, quests/*.quest, the catalog, custom objects, templates, clans and
@@ -6471,7 +6471,7 @@ values; catalysts go in at that stage. STATUS lists your work pieces and their n
 In the Ember Trial, open the supply coffer at camp and collect the mantle/iron, then try
 MODCRAFT PREVIEW embertrial.reroll "trial mantle" 1. Only COMMIT spends iron and rolls
 values. A stale request requires cancellation and fresh preparation. See
-docs/creator/17-item-modifiers-crafting.md.
+SUDDocs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="modify"></a>
@@ -7582,7 +7582,7 @@ changes the default 150% to 200%.  Unequipping or removing the source removes th
 ordinary engine stats are not changed.
 At most 64 sources per actor and 8192 characters per property.  Invalid primary stats reject
  casts before costs.  WORLD CHECK ONLY=COMBAT diagnoses properties.  See AHELP WORLD_COMBAT
-and docs/creator/16-combat-profiles.md for ranges and order.
+and SUDDocs/creator/16-combat-profiles.md for ranges and order.
 ```
 
 <a id="prop-combolock"></a>
@@ -8357,7 +8357,7 @@ copy (bound to another item), a corrupt record or one over the campaign's max_mo
 grants nothing and does not stop its wearer's combat; the log, COMBATRESULT and WORLD CHECK
 ONLY=ITEMMODS name it.  Disabling items.modifiers suspends bonuses/crafting and keeps
 records/receipts.  This first family does not own arbitrary AFFECT layers, new crafting
-currencies or staged choices.  See docs/creator/17-item-modifiers-crafting.md.
+currencies or staged choices.  See SUDDocs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="prop-itemset"></a>
@@ -8866,7 +8866,7 @@ price percent (default 100) of its value; the book is kept in this property's te
 default one mud day) has passed.  OFFERS HOLD keeps one offer through refreshes and rerolls;
  OFFERS REROLL draws the others again for reroll (0, the default, for none), refused before
 anything is drawn when it cannot be paid; OFFERS BUY takes the price and gives a catalog
-copy.  See docs/creator/42-saved-choices.md.
+copy.  See SUDDocs/creator/42-saved-choices.md.
 ```
 
 <a id="prop-partyscaler"></a>
@@ -9382,7 +9382,8 @@ CoffeeSUD: the NPC's services, as one record.  A service may be had only within 
 shared pool of their organization (a receipt in its ledger).  TALK's menu offers the ones
 one may have now and says why not the rest; SERVICES lists them; saying a word to the NPC is
  refused, before its scripts hear it, for the same reasons, and otherwise paid.  What the
-service does is the NPC's script answering the word.  See docs/creator/06-npcs-dialogue.md.
+service does is the NPC's script answering the word.  See
+SUDDocs/creator/06-npcs-dialogue.md.
 ```
 
 <a id="prop-showwhen"></a>
@@ -12653,8 +12654,8 @@ highest installed version. Keep old profile files for saved choices and pending 
 Missing/changed pins suspend affected events.
 TRACE reads the latest actual result; STATS reads merged profile stats. Player COMBATRESULT
 reads only their own history, unless player_trace is disabled. Histories are bounded and
-clear on boot/restore. Inspection rolls no dice. See docs/creator/16-combat-profiles.md for
-schema, formulas and limitations.
+clear on boot/restore. Inspection rolls no dice. See SUDDocs/creator/16-combat-profiles.md
+for schema, formulas and limitations.
 ```
 
 <a id="world-compositions"></a>
@@ -12676,7 +12677,7 @@ through normal progression or creator tools; then COMPOSE lets players select sk
 link compatible supports. Data definitions control typed damage, tags, prerequisites,
 modifiers, costs, timing, bounded chaining and burning. SAVE preserves hand-authored files
 and character-owned choices.
-See docs/creator/15-ability-composition.md and its runnable example pack.
+See SUDDocs/creator/15-ability-composition.md and its runnable example pack.
 No arbitrary scripts execute inside the modifier compiler. Existing abilities are unaffected
  unless explicitly integrated into an opt-in adapter.
 ```
@@ -12705,7 +12706,7 @@ and prefix/suffix capacities. Operations declare add/remove/reroll/protect/ unpr
 station, material cost and filters. Retain released versions: saved pins preserve exact
 rolls, while missing/changed pins suspend crafting. Existing numeric rolls remain frozen.
 Ordinary untracked affixes retain their existing rules. See
-docs/creator/17-item-modifiers-crafting.md.
+SUDDocs/creator/17-item-modifiers-crafting.md.
 ```
 
 <a id="world-modules"></a>
@@ -12748,5 +12749,5 @@ participate in campaign saves. Missing, incompatible or damaged modules suspend 
 retained, or refuse restoration according to their saved policy. Whitespace, key order,
 set-like array order and defaults written out do not change a fingerprint. Version changes
 need declared migrations. Ordinary MODULES/DEMO never grant creator permissions. See
-docs/creator/14-optional-modules.md and its runnable example.
+SUDDocs/creator/14-optional-modules.md and its runnable example.
 ```

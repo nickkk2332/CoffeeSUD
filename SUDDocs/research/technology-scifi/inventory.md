@@ -72,7 +72,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [StdArea.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdArea.java) · [Technical.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/Technical.java) · [03-characters.md](../../../docs/creator/03-characters.md).
+**Sources:** [StdArea.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Areas/StdArea.java) · [Technical.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/Technical.java) · [03-characters.md](../../../SUDDocs/creator/03-characters.md).
 
 <a id="v02"></a>
 
@@ -276,7 +276,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [Sailor.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Sailor.java) · [Party.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java) · [06-npcs-combat.md](../../../docs/creator/06-npcs-combat.md).
+**Sources:** [Sailor.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Behaviors/Sailor.java) · [Party.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java) · [06-npcs-combat.md](../../../SUDDocs/creator/06-npcs-combat.md).
 
 <a id="v19"></a>
 
@@ -300,7 +300,7 @@ and integration checks below.
 
 **Findings:** F23, F26.
 
-**Sources:** [ListCmd.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ListCmd.java) · [CMGenEditor.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMGenEditor.java) · [WorldCheck.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/WorldCheck.java) · [tool-reference.md](../../../docs/creator/tool-reference.md).
+**Sources:** [ListCmd.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Commands/ListCmd.java) · [CMGenEditor.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Libraries/CMGenEditor.java) · [WorldCheck.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/WorldCheck.java) · [tool-reference.md](../../../SUDDocs/creator/tool-reference.md).
 
 <a id="v21"></a>
 
@@ -312,7 +312,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [GenAbility.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/GenAbility.java) · [GenCharClass.java](../../../CoffeeMud/com/planet_ink/coffee_mud/CharClasses/GenCharClass.java) · [Prop_Resistance.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Resistance.java) · [Telegraph.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Telegraph.java) · [06-npcs-combat.md](../../../docs/creator/06-npcs-combat.md).
+**Sources:** [GenAbility.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/GenAbility.java) · [GenCharClass.java](../../../CoffeeMud/com/planet_ink/coffee_mud/CharClasses/GenCharClass.java) · [Prop_Resistance.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Properties/Prop_Resistance.java) · [Telegraph.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Telegraph.java) · [06-npcs-combat.md](../../../SUDDocs/creator/06-npcs-combat.md).
 
 <a id="v22"></a>
 
@@ -324,7 +324,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [GenRace.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Races/GenRace.java) · [MetalGolem.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Races/MetalGolem.java) · [Party.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java) · [03-characters.md](../../../docs/creator/03-characters.md).
+**Sources:** [GenRace.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Races/GenRace.java) · [MetalGolem.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Races/MetalGolem.java) · [Party.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Party.java) · [03-characters.md](../../../SUDDocs/creator/03-characters.md).
 
 <a id="v23"></a>
 
@@ -336,7 +336,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [FalseLimb.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/FalseLimb.java) · [Amputation.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/Amputation.java) · [07-items-crafting.md](../../../docs/creator/07-items-crafting.md).
+**Sources:** [FalseLimb.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Items/interfaces/FalseLimb.java) · [Amputation.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Misc/Amputation.java) · [07-items-crafting.md](../../../SUDDocs/creator/07-items-crafting.md).
 
 <a id="v24"></a>
 
@@ -360,7 +360,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [SalvageYield.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/SalvageYield.java) · [CraftQuality.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/CraftQuality.java) · [WorldMaterials.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/WorldMaterials.java) · [07-items-crafting.md](../../../docs/creator/07-items-crafting.md).
+**Sources:** [SalvageYield.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/SalvageYield.java) · [CraftQuality.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/CraftQuality.java) · [WorldMaterials.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/WorldMaterials.java) · [07-items-crafting.md](../../../SUDDocs/creator/07-items-crafting.md).
 
 <a id="v26"></a>
 
@@ -372,7 +372,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [Organizations.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java) · [09-society.md](../../../docs/creator/09-society.md) · [07-items-crafting.md](../../../docs/creator/07-items-crafting.md).
+**Sources:** [Organizations.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java) · [09-society.md](../../../SUDDocs/creator/09-society.md) · [07-items-crafting.md](../../../SUDDocs/creator/07-items-crafting.md).
 
 <a id="v27"></a>
 
@@ -384,7 +384,7 @@ and integration checks below.
 
 **Findings:** F25.
 
-**Sources:** [ShipTelnetProgram.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Items/Software/ShipTelnetProgram.java) · [07-items-crafting.md](../../../docs/creator/07-items-crafting.md).
+**Sources:** [ShipTelnetProgram.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Items/Software/ShipTelnetProgram.java) · [07-items-crafting.md](../../../SUDDocs/creator/07-items-crafting.md).
 
 <a id="v28"></a>
 
@@ -396,7 +396,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [Organizations.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java) · [08-quests.md](../../../docs/creator/08-quests.md) · [09-society.md](../../../docs/creator/09-society.md).
+**Sources:** [Organizations.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java) · [08-quests.md](../../../SUDDocs/creator/08-quests.md) · [09-society.md](../../../SUDDocs/creator/09-society.md).
 
 <a id="v29"></a>
 
@@ -408,7 +408,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [Presentation.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Presentation.java) · [Languages.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Languages.java) · [LanguageLexicon.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/LanguageLexicon.java) · [11-presentation-language.md](../../../docs/creator/11-presentation-language.md) · [feature-index.md](../../../docs/creator/feature-index.md).
+**Sources:** [Presentation.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Presentation.java) · [Languages.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Languages.java) · [LanguageLexicon.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/LanguageLexicon.java) · [11-presentation-language.md](../../../SUDDocs/creator/11-presentation-language.md) · [feature-index.md](../../../SUDDocs/creator/feature-index.md).
 
 <a id="v30"></a>
 
@@ -420,7 +420,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [Travel.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java) · [10-simulation-travel.md](../../../docs/creator/10-simulation-travel.md) · [travel.md](../../../docs/travel.md).
+**Sources:** [Travel.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/Travel.java) · [10-simulation-travel.md](../../../SUDDocs/creator/10-simulation-travel.md) · [travel.md](../../../SUDDocs/travel.md).
 
 <a id="v31"></a>
 
@@ -432,7 +432,7 @@ and integration checks below.
 
 **Findings:** no specific defect claimed.
 
-**Sources:** [03-characters.md](../../../docs/creator/03-characters.md) · [07-items-crafting.md](../../../docs/creator/07-items-crafting.md) · [AstroEngineering.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Tech/AstroEngineering.java).
+**Sources:** [03-characters.md](../../../SUDDocs/creator/03-characters.md) · [07-items-crafting.md](../../../SUDDocs/creator/07-items-crafting.md) · [AstroEngineering.java](../../../CoffeeMud/com/planet_ink/coffee_mud/Abilities/Tech/AstroEngineering.java).
 
 <a id="v32"></a>
 
@@ -456,7 +456,7 @@ and integration checks below.
 
 **Findings:** F18, F21.
 
-**Sources:** [GameTime.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/GameTime.java) · [10-simulation-travel.md](../../../docs/creator/10-simulation-travel.md) · [13-testing-release.md](../../../docs/creator/13-testing-release.md).
+**Sources:** [GameTime.java](../../../CoffeeMud/com/planet_ink/coffee_mud/core/GameTime.java) · [10-simulation-travel.md](../../../SUDDocs/creator/10-simulation-travel.md) · [13-testing-release.md](../../../SUDDocs/creator/13-testing-release.md).
 
 <a id="v34"></a>
 
@@ -468,4 +468,4 @@ and integration checks below.
 
 **Findings:** F26.
 
-**Sources:** [s24-build.js](../../../tools/fixtures/fixes/setup/s24-build.js) · [s24-where.js](../../../tools/fixtures/fixes/setup/s24-where.js) · [README.md](../../../docs/creator/examples/README.md).
+**Sources:** [s24-build.js](../../../tools/fixtures/fixes/setup/s24-build.js) · [s24-where.js](../../../tools/fixtures/fixes/setup/s24-where.js) · [README.md](../../../SUDDocs/creator/examples/README.md).

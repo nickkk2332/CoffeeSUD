@@ -805,8 +805,8 @@ report PASS or FAIL. See [Testing and release](13-testing-release.md).
 | `CoffeeMud/` | The engine and the launchers. The game's working directory. |
 | `CoffeeMud/world/` | The world a new game starts from (below). |
 | `tools/` | Test runners, fixtures and inspectors (Python and shell). |
-| `docs/creator/` | This handbook. |
-| `DOCS/` | An analysis of CoffeeMud's engine, written before the fork. |
+| `SUDDocs/creator/` | This handbook. |
+| `archive/oldenginedocs/` | An analysis of CoffeeMud's engine, written before the fork. |
 | `audit/` | The feature audit and per-theme reports. |
 | `archive/mudgrinder/` | CoffeeMud's web editor, kept for reference only. |
 | `PLAN.md`, `DEVPLAN.md`, `LATER.md` | How CoffeeMud became CoffeeSUD, the capabilities added since, and deferred work. |
@@ -1192,7 +1192,7 @@ here. Playtest files, assertions and recording one by hand (`RECORD INPUT`,
 | `tools/engine-tests.sh` | The engine's `TEST ALL` suite (about 15 minutes). |
 | `tools/saveinspect.py SAVE` | Prints a saved game's contents, and with `--var`, `--hp` or `--room` edits a few things in it (the game must not be running on that save; the old `world.xml` is kept as `world.xml.bak`, and the checksum in `.complete` is updated). |
 | `tools/worlddiff.py OLD NEW` or `--git REV` | Compares two world folders object by object. Exit 1 if they differ. |
-| `python3 docs/creator/examples/check.py` | The museum example's automated tour (builds a world, publishes it, plays it, restores it in a fresh process). |
+| `python3 SUDDocs/creator/examples/check.py` | The museum example's automated tour (builds a world, publishes it, plays it, restores it in a fresh process). |
 
 All of them use their own scratch worlds, databases and save folders, so they
 do not touch your `saves/` or your cache. They run `sud.sh` underneath, which

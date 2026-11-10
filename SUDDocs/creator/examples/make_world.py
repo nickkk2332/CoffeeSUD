@@ -20,7 +20,7 @@ def create(destination):
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        sys.exit('Usage: python3 docs/creator/examples/make_world.py NEW_DESTINATION')
+        sys.exit('Usage: python3 SUDDocs/creator/examples/make_world.py NEW_DESTINATION')
     dest = create(sys.argv[1])
     print('Created isolated world, database and saves under ' + str(dest))
     print('Launch in builder mode with the paths described in examples/README.md.')

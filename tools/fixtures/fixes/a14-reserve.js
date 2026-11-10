@@ -20,7 +20,7 @@ var room = scratchRoom(), actors = [];
 function actor(name) { var m = newMob("GenMob", room); m.setName(name); actors.push(m); return m; }
 function reserve(host, text) { var P = CMClass.getAbility("Prop_Reserve"); P.setMiscText(text); host.addNonUninvokableEffect(P); P.tick(host, TM); return P; }
 try {
-	var example = new java.io.File("../docs/creator/examples");
+	var example = new java.io.File("../SUDDocs/creator/examples");
 	var mods = new java.io.File(folder, "modules"); mods.mkdirs();
 	var pools = new java.io.File(folder, "pools"); pools.mkdirs();
 	write(new java.io.File(mods, "abilities.resources.json"), JSON.parse(read(new java.io.File(example, "named-resources/modules/abilities.resources.json"))));

@@ -34,7 +34,7 @@ lever, examine the gallery, read the tablet and visit the shrine. The pack's
 [build.js](examples/world/resources/creator/build.js) shows the complete object
 setup, not just fragments of property text.
 
-Check: `python3 docs/creator/examples/check.py` builds, publishes, plays,
+Check: `python3 SUDDocs/creator/examples/check.py` builds, publishes, plays,
 checks API behavior and restores a campaign in a fresh process. It preserves
 failure transcripts. This is also a template for developing your own example
 world without changing the repository's starter world or personal save slots.

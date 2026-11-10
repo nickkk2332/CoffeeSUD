@@ -16,7 +16,7 @@ shutil.copytree(GAME / 'world', world)
 db.mkdir()
 shutil.copyfile(GAME / 'resources/fakedb/fakedb.schema', db / 'fakedb.schema')
 for part in ('modules', 'compositions'):
-    shutil.copytree(ROOT / 'docs/creator/examples/ability-composition' / part, world / part)
+    shutil.copytree(ROOT / 'SUDDocs/creator/examples/ability-composition' / part, world / part)
 # Long-lived snapshots allow several commands/save/quit while keeping both effects underway.
 ember = world / 'compositions/example.ember.v1.json'
 data = json.loads(ember.read_text())

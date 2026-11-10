@@ -25,7 +25,7 @@ function carried(a, name) { for (var i = 0; i < a.numItems(); i++) if (s(a.getIt
 function made(a, name) { for (var i = 0; i < a.numItems(); i++) { var I = a.getItem(i); if (IM.isManaged(I) && data(I).base_name == name) return I; } return null; }
 var RM = CM.Items.interfaces.RawMaterial;
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "ability-composition/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/combat"), new java.io.File(root, "combat"));

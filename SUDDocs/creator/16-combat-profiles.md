@@ -19,8 +19,8 @@ In a [separate deployment](examples/README.md), install the parent composition
 pack first, then merge these directories into its world:
 
 ```sh
-cp -R docs/creator/examples/combat-profiles/combat /your/deployment/world/
-cp docs/creator/examples/combat-profiles/modules/*.json /your/deployment/world/modules/
+cp -R SUDDocs/creator/examples/combat-profiles/combat /your/deployment/world/
+cp SUDDocs/creator/examples/combat-profiles/modules/*.json /your/deployment/world/modules/
 ```
 
 Merge this root selection into `world.ini`, preserving other modules/settings:

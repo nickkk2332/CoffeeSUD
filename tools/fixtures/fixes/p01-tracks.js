@@ -23,7 +23,7 @@ function lvl(owner, id) { return PT.progress(owner, id)[1]; }
 var plan = null;
 function boot(snapshot) { plan = MD.load(folder, "progression.tracks", ""); currentField.set(null, OM.prepare(plan, snapshot, snapshot != null)); PT.reset(); }
 try {
-	var ex = new java.io.File("../docs/creator/examples/progression-tracks");
+	var ex = new java.io.File("../SUDDocs/creator/examples/progression-tracks");
 	var mods = dir("modules"); copyDir(new java.io.File(ex, "modules"), mods);
 	var tracks = dir("tracks"); copyDir(new java.io.File(ex, "tracks"), tracks);
 	write(new java.io.File(tracks, "fix.old.v1.json"), { schema: 1, id: "fix.old", version: 1, owner: "character", earn: [{ on: "script" }], curve: { type: "linear", per_level: 5, cap: 4 } });

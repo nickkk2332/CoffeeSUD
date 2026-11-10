@@ -10,7 +10,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent.parent
-pack = ROOT / 'docs/creator/examples/ember-trial'
+pack = ROOT / 'SUDDocs/creator/examples/ember-trial'
 spec = importlib.util.spec_from_file_location('forge_sample', pack / 'make_world.py')
 factory = importlib.util.module_from_spec(spec); spec.loader.exec_module(factory)
 scratch = Path(sys.argv[1]).resolve(); scratch.mkdir(parents=True, exist_ok=True)

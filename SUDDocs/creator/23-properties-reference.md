@@ -1362,7 +1362,7 @@ CoffeeSUD: a mob the story needs alive, or one that gives up. MODE=YIELD: under 
 
 **Parameters:** the faction ID (for example `elves.ini`). Set by the engine.
 
-CoffeeSUD internal (DefaultFaction). A faction file can define player effects with `PLAYEREFFECT1`, `PLAYEREFFECT2`, ... keys of the form `AbilityID;parameters;band codes or a zapper mask` (see `AHELP FACTIONPLAYEREFFECTS` and [docs/organizations.md](../organizations.md)). For a player character in such a faction, the engine attaches one Prop_FactionEffects. It reads the faction rules each time, instantiates the listed abilities for the bands the character currently falls in (or whose mask they fit), forwards stat, tick and message handling to them, and drops them when the character leaves the band.
+CoffeeSUD internal (DefaultFaction). A faction file can define player effects with `PLAYEREFFECT1`, `PLAYEREFFECT2`, ... keys of the form `AbilityID;parameters;band codes or a zapper mask` (see `AHELP FACTIONPLAYEREFFECTS` and [SUDDocs/organizations.md](../organizations.md)). For a player character in such a faction, the engine attaches one Prop_FactionEffects. It reads the faction rules each time, instantiates the listed abilities for the bands the character currently falls in (or whose mask they fit), forwards stat, tick and message handling to them, and drops them when the character leaves the band.
 
 Notes:
 
@@ -4585,7 +4585,7 @@ MASK="[zapper mask]" HIDE=TRUE|FALSE MSG="[refusal]"
 MASK="+CLAN Thieves" HIDE=TRUE MSG="That is for guild members only."
 ```
 
-CoffeeSUD addition. A shop stock item's customer access rule. A customer who fails the mask is refused `BUY` with `MSG`; with `HIDE=TRUE` the stock is also hidden from them, with `HIDE=FALSE` it is listed marked as restricted. Membership and rank masks are evaluated for the buyer. See `AHELP ORGANIZATIONS` and docs/organizations.md.
+CoffeeSUD addition. A shop stock item's customer access rule. A customer who fails the mask is refused `BUY` with `MSG`; with `HIDE=TRUE` the stock is also hidden from them, with `HIDE=FALSE` it is listed marked as restricted. Membership and rank masks are evaluated for the buyer. See `AHELP ORGANIZATIONS` and SUDDocs/organizations.md.
 
 ### Prop_StoryRecords
 

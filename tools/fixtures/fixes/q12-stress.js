@@ -19,7 +19,7 @@ var room = scratchRoom(), actors = [];
 function actor(name) { var m = newMob("GenMob", room); m.setName(name); m.baseState().setHitPoints(5000); m.recoverMaxState(); m.resetToMaxState(); actors.push(m); return m; }
 function grant(m, ids) { var p = m.fetchEffect("Prop_Triggers"); if (p != null) { p.setMiscText(s(p.text()) + "," + ids); return; } p = CMClass.getAbility("Prop_Triggers"); p.setMiscText("TRIGGERS=" + ids); m.addNonUninvokableEffect(p); }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	var packs = ["ability-composition", "combat-profiles", "named-resources", "causal-triggers", "reward-escrow", "progression-tracks"];
 	for (var i = 0; i < packs.length; i++) copy(new java.io.File(ex, packs[i]), folder);
 	new java.io.File(folder, "README.md").delete();

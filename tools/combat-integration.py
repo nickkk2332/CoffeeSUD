@@ -19,7 +19,7 @@ shutil.copyfile(GAME / 'resources/fakedb/fakedb.schema', db / 'fakedb.schema')
 for pack, parts in [('ability-composition', ('modules', 'compositions')),
                     ('combat-profiles', ('modules', 'combat'))]:
     for part in parts:
-        shutil.copytree(ROOT / 'docs/creator/examples' / pack / part, world / part, dirs_exist_ok=True)
+        shutil.copytree(ROOT / 'SUDDocs/creator/examples' / pack / part, world / part, dirs_exist_ok=True)
 # Stable thresholds and long-lived effects are fixture changes, not world defaults.
 for profile in (world / 'combat').glob('*.json'):
     data = json.loads(profile.read_text())

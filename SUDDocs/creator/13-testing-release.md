@@ -1896,8 +1896,8 @@ temporary folder against the built classes, with no game boot:
 
 | Wrapper | Class | Covers |
 | --- | --- | --- |
-| `tools/composition-tests.sh` | `CompositionTest.java` | Ability composition definitions and schema properties ([chapter 15](15-ability-composition.md)); reads `docs/creator/examples/ability-composition` |
-| `tools/combat-rules-tests.sh` | `CombatRulesTest.java` | Golden combat results and conversion equivalence ([chapter 16](16-combat-profiles.md)); reads `docs/creator/examples/combat-profiles` |
+| `tools/composition-tests.sh` | `CompositionTest.java` | Ability composition definitions and schema properties ([chapter 15](15-ability-composition.md)); reads `SUDDocs/creator/examples/ability-composition` |
+| `tools/combat-rules-tests.sh` | `CombatRulesTest.java` | Golden combat results and conversion equivalence ([chapter 16](16-combat-profiles.md)); reads `SUDDocs/creator/examples/combat-profiles` |
 | `tools/item-modifier-tests.sh` | `ItemModifierRulesTest.java` | Selective edits, protection, source identity and versioned contracts ([chapter 17](17-item-modifiers-crafting.md)) |
 | `tools/storage-tests.sh` | `SaveStorageTest.java` | Save storage |
 
@@ -1925,7 +1925,7 @@ python3 tools/creator_docs.py --check
 Verifies that the generated handbook files match the sources (tool reference
 from the help files, feature index, tool permissions, world settings), that
 every feature in `audit/project-feature-status.csv` is mapped to a chapter,
-and that every local Markdown link and anchor in `docs/creator` resolves.
+and that every local Markdown link and anchor in `SUDDocs/creator` resolves.
 `tools/check.sh` runs it first. Edit the sources and run
 `creator_docs.py --write` to regenerate; never hand-edit a generated file.
 
@@ -1933,10 +1933,10 @@ and that every local Markdown link and anchor in `docs/creator` resolves.
 
 `tools/playtest.py` (and `tools/playtest.sh`) is described under
 [World tests](#world-tests). The creator examples have their own driver:
-`python3 docs/creator/examples/check.py` builds the museum on isolated
+`python3 SUDDocs/creator/examples/check.py` builds the museum on isolated
 copies, publishes it with builder `SAVE`, runs its `.play` and `.js` tests,
 then checks a save in a fresh process (`KEEP=1` retains passing artifacts);
-`docs/creator/examples/ember-trial/check.py` does the same for the Ember
+`SUDDocs/creator/examples/ember-trial/check.py` does the same for the Ember
 Trial. `tools/sudplay.py SCRIPTFILE NAME=VALUE...` is the generic scripted-input
 driver all of these use. A script line `#expect TEXT` waits until TEXT appears,
 and `#sleep N` waits N seconds.

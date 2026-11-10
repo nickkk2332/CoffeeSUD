@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-EXAMPLES = ROOT / 'docs/creator/examples'
+EXAMPLES = ROOT / 'SUDDocs/creator/examples'
 spec = importlib.util.spec_from_file_location('forge_sample', EXAMPLES / 'ember-trial/make_world.py')
 factory = importlib.util.module_from_spec(spec); spec.loader.exec_module(factory)
 scratch = Path(sys.argv[1]).resolve(); scratch.mkdir(parents=True, exist_ok=True)

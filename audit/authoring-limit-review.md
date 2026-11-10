@@ -14,7 +14,7 @@ are also substantial creative capabilities worth adding after that foundation.
 ## First consolidation pass
 
 Items 1–7 are addressed by the reliability changes described in
-[authoring identities, checks and recovery](../docs/authoring-reliability.md):
+[authoring identities, checks and recovery](../SUDDocs/authoring-reliability.md):
 shared NPC comprehension, persistent source IDs and migration aliases, quoted
 option parsing and typed schemas, authoritative help edits/deletions, broader
 world asset tracking, dedicated validation domains and configurable journey
@@ -203,7 +203,7 @@ party budget covering profile characters, pets, summons and hirelings would
 also be useful; the new profile/party settings are not a single policy for all
 those categories, which still involve legacy follower rules.
 
-Evidence: [organisation guide](../docs/organizations.md),
+Evidence: [organisation guide](../SUDDocs/organizations.md),
 [Organizations.java](../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java#L146),
 [dues](../CoffeeMud/com/planet_ink/coffee_mud/core/Organizations.java#L268),
 [WorldRules.java](../CoffeeMud/com/planet_ink/coffee_mud/core/WorldRules.java#L237),

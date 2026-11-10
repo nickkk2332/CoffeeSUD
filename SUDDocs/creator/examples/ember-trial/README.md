@@ -18,8 +18,8 @@ not an implementation of the remaining ARPG/research proposals.
 From the repository root, with Python 3.8+ and a JDK on PATH:
 
 ```sh
-python3 docs/creator/examples/ember-trial/make_world.py /tmp/sud-ember-trial
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-ember-trial
+python3 SUDDocs/creator/examples/ember-trial/make_world.py /tmp/sud-ember-trial
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-ember-trial
 ```
 
 Choose a new destination: the creator refuses to overwrite an existing directory.
@@ -267,7 +267,7 @@ delete rooms or turn the remaining content into a balanced native-combat game.
 ## Run the checks
 
 ```sh
-python3 docs/creator/examples/ember-trial/check.py
+python3 SUDDocs/creator/examples/ember-trial/check.py
 # Or through the engine's regular regression harness:
 tools/fixes.sh trial
 # On a deployment you have already published:

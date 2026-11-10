@@ -13,7 +13,7 @@ points, evasion 100, block 10, armor 20 and 25% fire resistance:
 Each build runs six seeded fights in its own engine process:
 
 ```bash
-python3 tools/simulate.py docs/creator/examples/simulation/ember-vs-strike.json
+python3 tools/simulate.py SUDDocs/creator/examples/simulation/ember-vs-strike.json
 ```
 
 The report gives each build's observed results over the seeds (kills, turns to

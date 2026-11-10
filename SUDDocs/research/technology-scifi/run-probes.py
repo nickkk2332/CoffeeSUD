@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run audit observations in an isolated game copy; no source/world edits.
 
-Usage: python docs/research/technology-scifi/run-probes.py --output /tmp/tech-audit
+Usage: python SUDDocs/research/technology-scifi/run-probes.py --output /tmp/tech-audit
 Output contains a transcript and a compact observations.txt. These deliberately
 report existing defects, rather than assert that the engine is correct.
 """
