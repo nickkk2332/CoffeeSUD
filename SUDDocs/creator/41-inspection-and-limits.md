@@ -11,8 +11,8 @@ at them without changing anything:
   expedition, with the rule behind each thing (Q05);
 - **WORLD MODULES REPORT** counts the work done and reads it against declared
   limits (Q12);
-- **tools/simulate.py** fights builds against a fixed boss over seeds, and keeps
-  what it observed apart from the exact chances (Q04).
+- **tools/simulate.py** fights builds against a fixed boss (passive, or fighting
+  back) over seeds, and keeps what it observed apart from the exact chances (Q04).
 
 The previews of the earlier chapters belong here too: `MODCRAFT PREVIEW` (a
 craft), `EXPEDITION PREVIEW` (a chart), `WORLD LOOT PREVIEW` and `SAMPLE` (a loot
@@ -132,7 +132,8 @@ Packages.com.planet_ink.coffee_mud.core.Provenance.event(mob(), "my.module", "my
 
 `tools/simulate.py` (Q04) fights builds against a fixed boss over a set of seeds,
 headless, and reports what it saw apart from what the combat profile says
-exactly. A scenario file names everything:
+exactly. The boss stands still by default, or [fights back](#a-boss-that-fights-back).
+A scenario file names everything:
 
 ```json
 {
@@ -157,8 +158,9 @@ exactly. A scenario file names everything:
 | `packs` | Example packs copied over the base world, in order. |
 | `definitions` | Extra definitions, by folder (`compositions`, `combat`, ...), each written as `id.vN.json`. |
 | `modules` | The world's `MODULES`. |
-| `builds` | 1 to 8: a name, composed skills with their supports (cast in the order given, the first ready one each turn), the caster's combat stats (as `Prop_CombatStats` takes them), and `mana` (refilled each turn; the simulation measures damage). |
-| `boss` | Its name, hit points, level and combat stats. It does not act. |
+| `profile` | Optional `{"id", "version"}`: the combat profile the runs use, chosen as `WORLD COMBAT USE` chooses it, when it is not the module's default (one defined in `definitions`, say). |
+| `builds` | 1 to 8: a name, composed skills with their supports (cast in the order given, the first ready one each turn: off its cooldown, and its named resource costs payable), the caster's combat stats (as `Prop_CombatStats` takes them), and `mana` (refilled each turn; the simulation measures damage). Optional: `hp` (the caster's hit points; 100000 unless the boss acts), `pools` (named resource pools it holds from the start, at their start values: a guard pool, a combo) and `effects` (properties put on it, each `{"id", "text"}`: a `Prop_Reserve` reservation, say). |
+| `boss` | Its name, hit points, level and combat stats. It does not act unless `acts` is true ([below](#a-boss-that-fights-back)); it can have elite `traits`, `pools` and `effects` either way. |
 | `seeds` | 1 to 64. Each run seeds the campaign dice with one. |
 | `turn_limit`, `stall_turns`, `work_limit` | A run stops at the turn limit, or when it has done no damage for `stall_turns` turns (stalled), or when the build has cast `work_limit` times in all. |
 
@@ -167,7 +169,8 @@ python3 tools/simulate.py SUDDocs/creator/examples/simulation/ember-vs-strike.js
 ```
 
 Each build runs in its own engine process. A turn casts the first ready skill
-and moves the clock one tick, so cooldowns pass. The report, per build:
+and moves the clock one tick (and the turn count one), so cooldowns pass and
+pools change. The report, per build:
 
 ```text
 Build strike (its own engine process):
@@ -186,6 +189,85 @@ The exact part is COMPOSE COMPARE's figure for each skill against the boss, and
 the estimate that follows for a one-skill build. The same scenario and seeds give
 the same runs. `--seeds 1,2,3` runs other seeds; `--work DIR` keeps each batch's
 world and output.
+
+### A boss that fights back
+
+With `"acts": true` the boss fights the caster with the engine's own combat, so
+the caster's hit points, its guard pool and the ailments the boss inflicts
+matter ([example](examples/simulation/frost-warden.json)):
+
+```json
+"profile": {"id": "sim.frost", "version": 1},
+"formations": "[GUARD]\nNAME=Guard\nROW=0\nTARGET=ATTACKER\nINTERCEPT=50\n",
+"builds": [{"name": "warded", "hp": 150, "pools": ["sim.ward"], "skills": [{"id": "sim.finisher"}, {"id": "sim.strike"}]}],
+"allies": [{"name": "Gil the shield-bearer", "hp": 80, "role": "guard"}],
+"boss": {"name": "a frost warden", "hp": 300, "level": 3, "acts": true, "skills": [{"id": "sim.frostclaw"}], "traits": ["sim.brute"]}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `boss.acts` | The boss fights back. Each build then needs `hp`, and a run also stops when the caster falls. |
+| `boss.skills` | Composed skills the boss casts at its foe, the first ready one each turn, as a build's are. They need `acts`. |
+| `boss.traits` | [Elite traits](37-encounter-director.md#elite-traits) from the world's `traits/`, given to the boss as the encounter director gives them to a foe it spawns: their effects work, and the hit points they add count (the report gives the boss's hit points with them). |
+| `boss.damage`, `boss.attack`, `boss.armor` | Its native melee figures (what a combat round uses), over what its level gives. |
+| `allies` | Up to six, each with a `name` and `hp`, and optionally `level`, `damage`, `attack`, `armor`, `stats` (as `Prop_CombatStats` takes them: their defenses against the boss's composed skills) and a `role`. They follow the caster and fight the boss. They need `acts`. |
+| `formations` | The text of the run's `formations.ini`: the [formation roles](31-saves-and-party.md#formation-roles) the allies' `role` names. An ally is given its role as `FORMATION name ROLE role` gives it. |
+
+A turn, with the boss acting:
+
+1. The caster casts its first ready skill at the boss.
+2. Each ally standing takes a combat round (`tickCombat`): its role reacts
+   (draws an attacker off, falls back) and picks its foe, then it attacks.
+3. The boss turns on its foe: the caster, or whoever drew it off (back to the
+   caster when that one falls). It casts its first ready composed skill at it,
+   or, with none ready, takes a combat round with its natural attack.
+4. Every fighter's effects tick once: ailment meters decay and statuses and
+   immunity count down, burns burn, leech comes back, the traits' effects tick.
+5. The clock moves one tick and the turn count one.
+
+The fight is not broken off between turns (a combo that resets when a fight
+ends keeps its steps), while a passive boss is still made peaceful after each
+turn. The report adds, per build: how often the caster fell, its hit points
+left on average (a fallen caster counts 0) and the damage it took per turn; the
+boss's composed casts and combat rounds; the allies fallen and the damage they
+dealt; the ailments begun on each side (a status beginning: `on the caster chill
+6`); what the guard pool absorbed of the boss's hits on the caster and of the
+caster's on the boss; the turns a reservation on the caster did not fit; and
+the optional modules' own counters over the runs, as `WORLD MODULES REPORT`
+counts them (`encounters | sim.brute | traits given`, `resources | sim.combo |
+gained`, `reset on miss`, `spent`, `formations | guard | interceptions`).
+Under the exact figures it adds the boss's skills against the caster:
+
+```text
+Build bare (its own engine process):
+  Observed over 6 seeded runs (sampled):
+    killed 3; stalled 0; stopped at the turn limit 0; at the work limit 0; the caster fell 3
+    turns to kill: min 27, median 30, mean 30, max 33
+    damage per turn: 12.14 (the allies dealt 129 in all)
+    the caster (150 hit points): 29.33 left on average (a fallen caster counts 0); 3.73 damage taken per turn
+    the boss: 97 composed casts and 94 combat rounds in all
+    allies fallen: 6 in all
+    ailments begun: on the allies chill 6; on the caster chill 10
+  Exact, from the combat profile's chances (not sampled):
+    the boss's sim.frostclaw on the caster: expected 9.50 damage per resolved cast (hit 95%, blocked 0%, critical 0%); cooldown 2 tick(s)
+```
+
+What it leaves out:
+
+- **Guard pools and ailments come with composed hits only**, as in play: a
+  combat round (the boss's natural attack, the allies' attacks) goes to hit
+  points by the world's own rules and builds no ailment. A boss inflicts
+  ailments and meets a guard pool through its `skills`.
+- **Only the effects tick.** The fighters' own ticks are not run: no hit point
+  or mana recovery, no behaviors or scripts, no fleeing; mana is refilled before
+  each cast. The allies have no composed skills or pools of their own.
+- **Traits are named, not drawn.** The scenario gives the boss its traits; a
+  director's picks within a power budget are not made, and a trait that
+  possesses never passes on (the boss has no pack).
+- **Reservations have no engine counter**: the simulation counts the turns
+  each reservation on the caster does not fit (`NamedResources.fits`).
+- **The exact figures** are still the composed skills' against their target;
+  combat rounds, allies, guard pools and ticks are only observed.
 
 ## Work and limits
 
