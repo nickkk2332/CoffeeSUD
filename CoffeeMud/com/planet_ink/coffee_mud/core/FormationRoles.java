@@ -252,6 +252,7 @@ public final class FormationRoles
 				M.amFollowing().addFollower(M, back);
 				M.location().show(M, null, CMMsg.MSG_OK_ACTION, CMLib.lang().L("<S-NAME> fall(s) back."));
 				ModuleStats.count(FAMILY, R.id.toLowerCase(Locale.ROOT), "fallbacks");
+				Provenance.event(M, FAMILY, "formations.ini [" + R.id + "]", "fell back to row " + back + " below " + R.get("FALLBACK") + "% hit points");
 				did.add("fell back to row " + back);
 			}
 		}
@@ -329,6 +330,7 @@ public final class FormationRoles
 		final MOB lead = (who.amFollowing() != null) ? who.amFollowing() : who;
 		lead.addFollower(who, row);
 		ModuleStats.count(FAMILY, R.id.toLowerCase(Locale.ROOT), "assigned");
+		Provenance.event(who, FAMILY, "formations.ini [" + R.id + "]", "given the role " + R.name() + ", row " + row);
 		return CMLib.lang().L("@x1 is your @x2 now (row @x3): @x4.", who.name(), R.name().toLowerCase(Locale.ROOT), "" + row, explain(R));
 	}
 

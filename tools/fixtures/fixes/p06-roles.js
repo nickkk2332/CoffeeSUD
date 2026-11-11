@@ -82,6 +82,9 @@ try {
 	// no role: nothing
 	out = form(["Fixp06ash", "ROLE", "none"]);
 	check("none", out.indexOf("Fixp06ash has no role now.") >= 0 && a.findTattoo("ROLE_ARCHER") == null && s(FR.round(a)) == "", out);
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ev = evs(g), led = s(CM.core.Ledgers.character(g));
+	check("ledger", ev.indexOf("given the role Guard, row 0") >= 0 && led.indexOf("Formation role: Guard") >= 0 && evs(a).indexOf("fell back to row 4") >= 0, ev + " / " + led);
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) { m.setVictim(null); m.destroy(); } });
 	R.destroy();

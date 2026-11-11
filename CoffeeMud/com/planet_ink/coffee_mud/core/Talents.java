@@ -150,6 +150,8 @@ public final class Talents
 				continue;
 			final boolean awakens = (t.chance >= 100) || ((t.chance > 0) && (RandomStreams.roll(STREAM, 100) <= t.chance));
 			ModuleStats.count(FAMILY, t.id.toLowerCase(Locale.ROOT), awakens ? "awakened" : "dormant");
+			Provenance.event(who, FAMILY, "talents.ini " + t.id, (awakens ? "awakened: " : "did not awaken, and will not: ") + t.title
+				+ (((t.chance > 0) && (t.chance < 100)) ? " (a " + t.chance + "% chance, drawn once)" : ""));
 			if(!awakens)
 			{
 				who.addTattoo("TALENT_" + t.id + "_DORMANT");

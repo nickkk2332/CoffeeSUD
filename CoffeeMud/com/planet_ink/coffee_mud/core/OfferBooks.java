@@ -293,6 +293,7 @@ public final class OfferBooks
 		for(final JSONObject o : offers)
 			o.put("held", Boolean.valueOf(o == chosen));
 		store(S.fetchEffect(PROPERTY), b, offers, b.drawn());
+		Provenance.event(mob, FAMILY, S.Name(), "held the offer of " + chosen.get("name"));
 		return S.Name() + " holds " + chosen.get("name") + " for you. It stays through rerolls and refreshes until you buy it or OFFERS RELEASE it.";
 	}
 
@@ -342,6 +343,7 @@ public final class OfferBooks
 		}
 		settle(c, start);
 		ModuleStats.count(FAMILY, S.Name(), "rerolls");
+		Provenance.event(mob, FAMILY, S.Name(), "paid " + money(S, b.reroll) + " to draw the offer book again");
 		final StringBuilder s = new StringBuilder("You pay ").append(money(S, b.reroll)).append(" and ").append(S.Name()).append(" draws the book again:");
 		for(int i = 0; i < offers.size(); i++)
 			s.append("\n  ").append(i + 1).append(") ").append(offers.get(i).get("name")).append(" - ").append(money(S, ((Number)offers.get(i).get("price")).doubleValue()))
@@ -379,6 +381,8 @@ public final class OfferBooks
 		}
 		mob.addItem(made);
 		ModuleStats.count(FAMILY, S.Name(), "sales");
+		Provenance.event(mob, FAMILY, S.Name(), "bought " + made.Name() + " for " + money(S, price));
+		Provenance.event(made, FAMILY, S.Name(), "bought by " + mob.Name() + " for " + money(S, price));
 		return "You buy " + made.Name() + " from " + S.Name() + " for " + money(S, price) + ".";
 	}
 

@@ -70,6 +70,11 @@ try {
 	var hist = SR.read(P).get("cultures").get("history");
 	var kinds = []; for (var i = 0; i < hist.length; i++) kinds.push(s(hist[i].get("culture")) + " " + s(hist[i].get("what")) + " " + s(hist[i].get("how")));
 	check("history", kinds.join(", ") == "RIVERFOLK adopted origin, RIVERFOLK left command, RIVERFOLK adopted command, RIVERFOLK left script, CLOISTER adopted script, CLOISTER left force", kinds.join(", "));
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	// LEDGER: each taking up and leaving, the culture held, the last refusal
+	var led = s(CM.core.Ledgers.character(P)), ev = evs(P);
+	check("ledger", ev.indexOf("took up River folk (origin); it gave Fishing, Elvish") >= 0 && ev.indexOf("left The cloister (force)") >= 0
+		&& s(CM.core.Provenance.lastRefusal(P).describe()).indexOf("you are of The cloister, which cannot be left") >= 0, ev + " / " + led);
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) m.destroy(); });
 	WorldFiles.configure(originalWorld); knownField.set(null, previousKnown);

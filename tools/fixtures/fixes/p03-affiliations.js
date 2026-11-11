@@ -45,6 +45,10 @@ try {
 	check("class-change", !member(watch, P), "a thief stayed in the watch");
 	hand.addMember(P, role);
 	check("rejoin-allowed", member(hand, P), "could not rejoin the night hand once out of the watch");
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ref = CM.core.Provenance.lastRefusal(P), ev = evs(P);
+	check("ledger", ref != null && s(ref.describe()).indexOf("affiliations.ini CONFLICT") >= 0 && ev.indexOf("took away") >= 0 && ev.indexOf("left Fixp03 City Watch") >= 0,
+		(ref == null ? "no refusal" : s(ref.describe())) + " / " + ev);
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) m.destroy(); });
 	clans.forEach(function (c) { c.destroyClan(); });

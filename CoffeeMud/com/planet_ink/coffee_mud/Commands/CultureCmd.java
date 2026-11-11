@@ -60,6 +60,8 @@ public class CultureCmd extends StdCommand
 		catch(final java.io.IOException e)
 		{
 			mob.tell(L("Culture: @x1.",e.getMessage()));
+			if(w.equals("LEAVE"))
+				Provenance.refused(mob,Cultures.FAMILY,"CULTURE LEAVE",e.getMessage(),"a culture that cannot be left is left only by the world's own scripts");
 		}
 		return false;
 	}

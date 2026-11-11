@@ -46,6 +46,9 @@ try {
 	var again = LB.unlock(ann, "HERBS_3", false, null);
 	check("read-again", !again && ann.fetchAbility("Herbalism").proficiency() == 60 && RS.counter("talents") == at, "reading again granted or drew");
 	check("broken-waits", s(T.decided(ann, "BROKEN")) == "", "a talent with unknown lore was decided");
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ev = evs(ann), led = s(CM.core.Ledgers.character(ann));
+	check("ledger", ev.indexOf("awakened: Herb-sense") >= 0 && ev.indexOf("did not awaken, and will not: Dream-sight") >= 0 && led.indexOf("Herb-sense (awakened)") >= 0, ev + " / " + led);
 } finally {
 	if (ann != null) ann.destroy();
 	R.destroy();

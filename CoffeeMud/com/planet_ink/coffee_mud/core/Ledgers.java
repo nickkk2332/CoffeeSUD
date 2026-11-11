@@ -103,8 +103,32 @@ public final class Ledgers
 		section(s, ProgressionTracks.MODULE, () -> ProgressionTracks.describe(mob));
 		section(s, ItemModifiers.MODULE, () -> "Pending transactions: " + ItemCrafting.status(mob));
 		section(s, Expeditions.MODULE, () -> Expeditions.status(mob));
+		phase2(s, mob);
 		provenance(s, mob);
 		return s.toString();
+	}
+
+	/** phase 2's state of a character, where it has any: their culture, their talents, their formation role */
+	private static void phase2(final StringBuilder s, final MOB mob)
+	{
+		final Origins.Origin C = Cultures.current(mob);
+		if(C != null)
+		{
+			final List<String> gave = Cultures.gave(mob);
+			s.append("\nCulture: ").append(C.name()).append(gave.isEmpty() ? "" : "; from it: " + String.join(", ", gave));
+		}
+		final List<String> talents = new ArrayList<String>();
+		for(final Talents.Talent t : Talents.talents().values())
+		{
+			final String d = Talents.decided(mob, t.id);
+			if(d.length() > 0)
+				talents.add(t.title + " (" + d + ")");
+		}
+		if(!talents.isEmpty())
+			s.append("\nTalents: ").append(String.join(", ", talents));
+		final Origins.Origin R = FormationRoles.of(mob);
+		if(R != null)
+			s.append("\nFormation role: ").append(R.name()).append(" (").append(FormationRoles.explain(R)).append(")");
 	}
 
 	/** LEDGER ITEM [item] */
@@ -140,6 +164,12 @@ public final class Ledgers
 				final String tree = ProgressionTracks.tree(ProgressionTracks.of(I));
 				return tree.trim().isEmpty() ? "Tracks it carries: " + String.join(", ", ProgressionTracks.itemTracks(I)) + "; none earned yet" : tree;
 			});
+		final Ability bind = I.fetchEffect("Prop_ItemBinder");
+		if(bind != null)
+			s.append("\nBinding: ").append(bind.text().trim().isEmpty() ? "on its defaults" : bind.text().trim());
+		final String kind = ItemKnowledge.kind(I);
+		if(!kind.isEmpty())
+			s.append("\nOf a kind one must learn: ").append(kind).append(" (shown as ").append(ItemKnowledge.alias(I)).append(" until then)");
 		provenance(s, I);
 		return s.toString();
 	}

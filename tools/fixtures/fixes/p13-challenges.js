@@ -42,6 +42,9 @@ try {
 	check("kept", s(P.fetchEffect("Prop_StoryRecords").text()).indexOf("warden time") >= 0, "the records are not in the story records");
 	var bad = ""; try { C.record(P, "nosuchbook", "x", 1, false); } catch (e) { bad = s(e); }
 	check("unknown-book", bad.indexOf("no challenge book 'nosuchbook'") >= 0, bad);
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ev = evs(P);
+	check("ledger", ev.indexOf("a first record of warden time: 80") >= 0 && ev.indexOf("a new best at warden time: 45") >= 0, ev);
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) m.destroy(); });
 	achs.forEach(function (a) { CMLib.achievements().deleteAchievement(a); });

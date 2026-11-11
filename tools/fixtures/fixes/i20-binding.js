@@ -44,6 +44,9 @@ try {
 	var e = thing("a fixi20 band", 'TO=CHARACTER ON=PICKUP BOUND="Fixi20 Ann"');
 	ann.addItem(e[0]);
 	check("trade-allowed", !give(ann, bob, e[0], e[1]) && s(e[1].accountForYourself()).indexOf("given only to whom it is bound to, and not sold") >= 0, s(e[1].accountForYourself()));
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ev = evs(I);
+	check("ledger", ev.indexOf("bound to Fixi20 Ann") >= 0 && ev.indexOf("freed from Fixi20 Ann: its binding ran out") >= 0, ev);
 } finally {
 	for (var i = 0; i < items.length; i++) if (!items[i].amDestroyed()) items[i].destroy();
 	for (var i = 0; i < mobs.length; i++) { mobs[i]["setFollowing(com.planet_ink.coffee_mud.MOBS.interfaces.MOB)"](null); if (!mobs[i].amDestroyed()) mobs[i].destroy(); }

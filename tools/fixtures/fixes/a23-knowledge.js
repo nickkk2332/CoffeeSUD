@@ -49,6 +49,9 @@ try {
 	var F = CMClass.getAbility("Prop_Familiar"); F.setMiscText("owl"); cid.addNonUninvokableEffect(F);
 	four.fetchEffect("Prop_Unknown").executeMsg(four, CMClass.getMsg(cid, four, null, CMMsg.MSG_EXAMINE, null));
 	check("familiar-sense", !without && K.knows(cid, four), "without a familiar " + without + ", with one " + K.knows(cid, four));
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var led = s(CM.core.Ledgers.item(one));
+	check("ledger", led.indexOf("Of a kind one must learn: EMBERTRIAL.ALLOY (shown as a dull ingot until then)") >= 0, led);
 } finally {
 	for (var i = 0; i < items.length; i++) if (!items[i].amDestroyed()) items[i].destroy();
 	for (var i = 0; i < mobs.length; i++) if (!mobs[i].amDestroyed()) mobs[i].destroy();

@@ -262,7 +262,10 @@ public final class Challenges
 		all.put("records", records);
 		StoryRecords.write(who, all);
 		if(said.length() > 0)
+		{
 			ModuleStats.count(FAMILY, b.id.toLowerCase(Locale.ROOT), said.equals("first") ? "first records" : "new bests");
+			Provenance.event(who, FAMILY, "challenges.ini " + b.id, (said.equals("first") ? "a first record of " : "a new best at ") + key + ": " + value);
+		}
 		return said;
 	}
 }

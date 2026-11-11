@@ -153,7 +153,10 @@ public final class Cultures
 		final Origin C = find(id);
 		final String why = why(M, C, how);
 		if(!why.isEmpty())
+		{
+			Provenance.refused(M, FAMILY, "cultures.ini " + id, why, "CULTURE LIST says which cultures you may take up, and why not the others");
 			throw new IOException(why);
+		}
 		final StringBuilder said = new StringBuilder();
 		if(current(M) != null)
 			said.append(leave(M, how)).append(' ');
@@ -192,6 +195,7 @@ public final class Cultures
 		history(rec, C.id, how, "adopted");
 		StoryRecords.write(M, data);
 		ModuleStats.count(FAMILY, C.id.toLowerCase(Locale.ROOT), "adopted by " + how.toLowerCase(Locale.ROOT));
+		Provenance.event(M, FAMILY, "cultures.ini [" + C.id + "]", "took up " + C.name() + " (" + how.toLowerCase(Locale.ROOT) + ")" + (names.isEmpty() ? "" : "; it gave " + String.join(", ", names)));
 		said.append(CMLib.lang().L("You are now of @x1.", C.name()));
 		if(!names.isEmpty())
 			said.append(' ').append(CMLib.lang().L("It gives you: @x1.", String.join(", ", names)));
@@ -257,6 +261,7 @@ public final class Cultures
 		history(rec, C.id, how, "left");
 		StoryRecords.write(M, data);
 		ModuleStats.count(FAMILY, C.id.toLowerCase(Locale.ROOT), "left by " + how.toLowerCase(Locale.ROOT));
+		Provenance.event(M, FAMILY, "cultures.ini [" + C.id + "]", "left " + C.name() + " (" + how.toLowerCase(Locale.ROOT) + ")" + (gone.isEmpty() ? "" : "; it took away " + String.join(", ", gone)));
 		final StringBuilder s = new StringBuilder(CMLib.lang().L("You leave @x1.", C.name()));
 		if(!gone.isEmpty())
 			s.append(' ').append(CMLib.lang().L("It takes away: @x1.", String.join(", ", gone)));

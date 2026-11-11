@@ -94,12 +94,20 @@ mode or DEV=1).
 
 | Command | Shows |
 | --- | --- |
-| `LEDGER` / `LEDGER [character]` | Who controls the character; what each active module holds for them (composed skills, pools, triggers, combat sources, rewards, tracks, a pending craft, an expedition); their recent events; their last refused transition. A player reads their own and their party's. |
-| `LEDGER ITEM [item]` | Who holds it; its modifier record (base, revision, how it was made, each modifier's source and protection); a work piece's order, a chart, its tracks. |
+| `LEDGER` / `LEDGER [character]` | Who controls the character; what each active module holds for them (composed skills, pools, triggers, combat sources, rewards, tracks, a pending craft, an expedition); their culture and what it gave, their decided talents, their formation role; their recent events; their last refused transition. A player reads their own and their party's. |
+| `LEDGER ITEM [item]` | Who holds it; its modifier record (base, revision, how it was made, each modifier's source and protection); a work piece's order, a chart, its tracks; its binding; the kind one must learn to know it. |
 | `LEDGER BETWEEN [a] [b]` | Who follows whom, a shared party, and every module's relationship record between the two, in each order. |
 | `LEDGER EXPEDITION` | Your run: its definition pin, status, attempts, tier, seed and the scenario that draws it again (the stream, the draw and the campaign seed), modifiers, instance and party. |
 
-The recent events name the module and the rule each came from:
+The recent events name the module and the rule each came from. Besides the
+module families, they hold the character's service payments, holds and refunds
+(`services`), their gifts to and takings from shared pools and the spends made
+for them (`orgpools`), each culture taken up or left (`cultures`), each talent
+decided (`talents`), new personal records (`challenges`), formation roles given
+and falls back (`formations`), what leaving an organization took
+(`affiliations`), offers held, rerolled and bought (`offers`); and an item's
+binding and its end (`binding`). A refused service, pool action, offer, culture
+or join is the last refused transition:
 
 ```text
 Recent events (since this game began or was restored):

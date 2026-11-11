@@ -175,6 +175,7 @@ public final class Affiliations
 		{
 			ModuleStats.count(FAMILY, C.getName(), "leavings that took something");
 			M.tell(CMLib.lang().L("Leaving @x1 takes away: @x2.", C.getName(), String.join(", ", gone)));
+			Provenance.event(M, FAMILY, "affiliations.ini LEAVE|" + C.getName(), "leaving " + C.getName() + " took away " + String.join(", ", gone));
 		}
 	}
 
@@ -195,6 +196,7 @@ public final class Affiliations
 				continue;
 			out.add(C.getName());
 			M.tell(CMLib.lang().L("You no longer meet what @x1 asks of its members (@x2), and leave it.", C.getName(), CMLib.masking().maskDesc(mask)));
+			Provenance.event(M, FAMILY, "affiliations.ini KEEP|" + C.getName(), "left " + C.getName() + ": no longer " + CMLib.masking().maskDesc(mask));
 			C.delMember(M);
 			ModuleStats.count(FAMILY, C.getName(), "left on a class change");
 		}
